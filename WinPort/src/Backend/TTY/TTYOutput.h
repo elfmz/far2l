@@ -30,9 +30,12 @@ class TTYOutput
 	} _attr;
 
 	int _out;
+	unsigned int _pending_spaces = 0;
 	std::vector<char> _rawbuf;
 	void WriteReally(const char *str, int len);
 
+	void Space();
+	void FinalizeSpaces();
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
 public:

@@ -68,8 +68,38 @@ void TTYOutput::WriteReally(const char *str, int len)
 	}
 }
 
+void TTYOutput::Space()
+{
+	_pending_spaces++;
+}
+
+void TTYOutput::FinalizeSpaces()
+{
+	if (!_pending_spaces) {
+		return;
+	}
+
+	const size_t ofs = _rawbuf.size();
+
+	if (_pending_spaces <= 10) {
+		_rawbuf.resize(ofs + _pending_spaces);
+		memset(&_rawbuf[ofs], ' ', _pending_spaces);
+
+	} else {
+		_rawbuf.resize(ofs + 32);
+		int r = sprintf(&_rawbuf[ofs],
+			"\033[%uX\033[%uC", _pending_spaces, _pending_spaces);
+		if (r >= 0) {
+			_rawbuf.resize(ofs + r);
+		}
+	}
+
+	_pending_spaces = 0;
+}
+
 void TTYOutput::Write(const char *str, int len)
 {
+	FinalizeSpaces();
 	const size_t prev_size = _rawbuf.size();
 	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
 		Flush();
@@ -85,6 +115,7 @@ void TTYOutput::Write(const char *str, int len)
 
 void TTYOutput::Format(const char *fmt, ...)
 {
+	FinalizeSpaces();
 	const size_t prev_size = _rawbuf.size();
 	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
 	for (;;) {
@@ -109,6 +140,7 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
+	FinalizeSpaces();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());
 		_rawbuf.resize(0);
@@ -137,14 +169,16 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
 	for (;cnt; ++ci,--cnt) {
+		const bool is_space = (ci->Char.UnicodeChar <= 0x1f
+			|| ci->Char.UnicodeChar == ' ' || ci->Char.UnicodeChar == 0x7f);
+
 		Attributes attr(ci->Attributes);
-		if (_attr != attr) {
+		if (_attr != attr && (!is_space || _attr.background != attr.background
+				|| _attr.background_intensive != attr.background_intensive) ) {
+
 			tmp = ESC "[";
 			if (_attr.foreground_intensive != attr.foreground_intensive)
 				tmp+= attr.foreground_intensive ? "1;" : "22;";
-
-//			if (_attr.underline != attr.underline)
-//				tmp+= attr.underline ? "4;" : "24;";
 
 			if (_attr.foreground != attr.foreground
 			 || _attr.foreground_intensive != attr.foreground_intensive) {
@@ -152,6 +186,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 				tmp+= '0' + attr.foreground;
 				tmp+= ';';
 			}
+
 			if (_attr.background != attr.background
 			 || _attr.background_intensive != attr.background_intensive) {
 				if (attr.background_intensive) {
@@ -168,8 +203,8 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		if (ci->Char.UnicodeChar <= 0x1f || ci->Char.UnicodeChar == ' ' || ci->Char.UnicodeChar == 0x7f) {
-			Write(" ", 1);
+		if (is_space) {
+			Space();
 
 		} else {
 			UTF8 buf[16] = {};

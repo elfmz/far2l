@@ -4,12 +4,11 @@
 class TTYRawMode
 {
 	termios _ts{};
-	bool _applied = false;
-	int _fd;
+	int _fd = -1;
 
 public:
-	TTYRawMode(int fd);
+	TTYRawMode(int std_in, int std_out);
 	~TTYRawMode();
 
-	bool Applied() const {return _applied; }
+	bool Applied() const { return _fd != -1; }
 };

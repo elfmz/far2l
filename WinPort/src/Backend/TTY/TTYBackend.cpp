@@ -269,7 +269,11 @@ void TTYBackend::WriterThread()
 void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
 	struct winsize w = {};
-	if (ioctl(_stdout, TIOCGWINSZ, &w) == 0) {
+	int r = ioctl(_stdout, TIOCGWINSZ, &w);
+	if (r != 0) {
+		r = ioctl(_stdin, TIOCGWINSZ, &w);
+	}
+	if (r == 0) {
 		if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
 			_cur_width = w.ws_col;
 			_cur_height = w.ws_row;

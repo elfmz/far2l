@@ -137,7 +137,7 @@ public:
 	void Revert()
 	{
 		if (_raw && !_tty_raw_mode) {
-			_tty_raw_mode.reset(new TTYRawMode(_std_out));
+			_tty_raw_mode.reset(new TTYRawMode(_std_in, _std_out));
 		}
 
 		if (_far2l_tty && !_far2l_tty_actual) {
@@ -331,7 +331,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 //	tcgetattr(std_out, &g_ts_tstp);
 
-	std::unique_ptr<TTYRawMode> tty_raw_mode(new TTYRawMode(std_out));
+	std::unique_ptr<TTYRawMode> tty_raw_mode(new TTYRawMode(std_in, std_out));
 	if (!arg_opts.nodetect) {
 //		tty_raw_mode.reset(new TTYRawMode(std_out));
 		if (tty_raw_mode->Applied()) {
@@ -371,7 +371,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 	if (arg_opts.tty) {
 		if (!tty_raw_mode) {
-			tty_raw_mode.reset(new TTYRawMode(std_out));
+			tty_raw_mode.reset(new TTYRawMode(std_in, std_out));
 		}
 		if (arg_opts.mortal) {
 			SudoAskpassImpl askass_impl;

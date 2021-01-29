@@ -254,6 +254,7 @@ void TTYBackend::WriterThread()
 				DispatchFar2lInterract(tty_out);
 
 			tty_out.Flush();
+			tcdrain(_stdout);
 		}
 
 	} catch (const std::exception &e) {

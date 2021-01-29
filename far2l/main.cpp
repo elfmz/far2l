@@ -173,7 +173,7 @@ static int MainProcess(
 		ControlObject CtrlObj;
 		WORD InitAttributes=0;
 		Console.GetTextAttributes(InitAttributes);
-		SetRealColor(COL_COMMANDLINEUSERSCREEN);
+		SetColor(COL_COMMANDLINEUSERSCREEN, true);
 
 		if (Opt.OnlyEditorViewerUsed != Options::NOT_ONLY_EDITOR_VIEWER)
 		{

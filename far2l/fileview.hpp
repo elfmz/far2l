@@ -109,4 +109,4 @@ class FileViewer:public Frame
 };
 
 void ModalViewFile(const std::string &pathname, bool scroll_to_end);
-void ModalViewTempFile(const std::string &pathname, bool scroll_to_end, bool autoclose = false);//erases file internally
+void ModalViewConsoleHistory(bool scroll_to_end, bool autoclose = false);

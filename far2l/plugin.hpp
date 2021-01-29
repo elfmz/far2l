@@ -1485,7 +1485,8 @@ struct ViewerMode
 	int Wrap;
 	int WordWrap;
 	int Hex;
-	DWORD Reserved[4];
+	int Processed;
+	DWORD Reserved[3];
 };
 
 struct ViewerInfo

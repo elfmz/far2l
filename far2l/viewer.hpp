@@ -43,14 +43,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* $ 10.07.2000 tran
    ! modified MAXSCRY from 120 to 300
    on win200, with Console height FAR work, but trap on viewer... */
-#define  MAXSCRY     300
+#define  MAXSCRY     0x400
 
 /* $ 12.07.2000 SVS
   - из-за увеличения длины строки до 0x800 вылетал FAR
     по Alt-F7. Сократим MAX_VIEWLINE до 1024 (0x400)
 */
-#define MAX_VIEWLINE  0x800 // 0x400
-#define MAX_VIEWLINEB 0x80f // 0x40f
+#define MAX_VIEWLINE  0x2000 // 0x400
+#define MAX_VIEWLINEB 0x200f // 0x40f
 
 #define VIEWER_UNDO_COUNT   64
 
@@ -118,7 +118,7 @@ class Viewer:public ScreenObject
 
 		FAR_FIND_DATA_EX ViewFindData;
 
-		FARString strTempViewName;
+		FARString strTempViewName, strProcessedViewName;
 
 		BOOL DeleteFolder;
 
@@ -195,6 +195,9 @@ class Viewer:public ScreenObject
 		void SetFileSize();
 		int GetStrBytesNum(const wchar_t *Str, int Length);
 
+		FARString ComposeCacheName();
+		void SavePosCache();
+
 	public:
 		Viewer(bool bQuickView = false, UINT aCodePage = CP_AUTODETECT);
 		virtual ~Viewer();
@@ -216,6 +219,8 @@ class Viewer:public ScreenObject
 		void SetWrapType(int TypeWrap);
 		void KeepInitParameters();
 		void GetFileName(FARString &strName);
+		void SetProcessed(bool Processed);
+		bool GetProcessed() const { return VM.Processed; }
 		virtual void ShowConsoleTitle();
 
 		void SetTempViewName(const wchar_t *Name, BOOL DeleteFolder);

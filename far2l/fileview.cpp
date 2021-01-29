@@ -525,9 +525,10 @@ void FileViewer::OnChangeFocus(int focus)
 }
 
 static void ModalViewFileInternal(const std::string &pathname, int DisableHistory, 
-	int DisableEdit, bool scroll_to_end, bool autoclose)
+	int DisableEdit, bool scroll_to_end, bool autoclose, UINT codepage)
 {
-	FileViewer Viewer(StrMB2Wide(pathname).c_str(), FALSE, DisableHistory, DisableEdit);
+	FileViewer Viewer(StrMB2Wide(pathname).c_str(),
+		FALSE, DisableHistory, DisableEdit, -1, nullptr, nullptr, FALSE, codepage);
 	Viewer.SetDynamicallyBorn(false);
 	if (scroll_to_end)
 		Viewer.ProcessKey(KEY_END);
@@ -541,11 +542,15 @@ static void ModalViewFileInternal(const std::string &pathname, int DisableHistor
 
 void ModalViewFile(const std::string &pathname, bool scroll_to_end)
 {
-	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end, false);
+	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end, false, CP_AUTODETECT);
 }
 
-void ModalViewTempFile(const std::string &pathname, bool scroll_to_end, bool autoclose)
+void ModalViewConsoleHistory(bool scroll_to_end, bool autoclose)
 {
-	ModalViewFileInternal(pathname, TRUE, TRUE, scroll_to_end, autoclose);
-	unlink(pathname.c_str());
+	const std::string &histfile = CtrlObject->CmdLine->GetConsoleLog(true);
+	if (histfile.empty())
+		return;
+
+	ModalViewFileInternal(histfile, TRUE, TRUE, scroll_to_end, autoclose, CP_UTF8);
+	unlink(histfile.c_str());
 }

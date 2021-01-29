@@ -566,11 +566,12 @@ void Text(int X, int Y, int Color, const WCHAR *Str)
 	Text(Str);
 }
 
-void Text(const WCHAR *Str)
+void Text(const WCHAR *Str, size_t Length)
 {
-	size_t Length=StrLength(Str);
+	if (Length == (size_t)-1)
+		Length = StrLength(Str);
 
-	if (Length<=0)
+	if (Length == 0)
 		return;
 
 	CHAR_INFO StackBuffer[StackBufferSize];
@@ -762,15 +763,25 @@ void vmprintf(const WCHAR *fmt,...)
 }
 
 
-void SetColor(int Color)
+void SetColor(int Color, bool ApplyToConsole)
 {
-	CurColor=FarColorToReal(Color);
+	CurColor = FarColorToReal(Color);
+	if (ApplyToConsole) {
+		Console.SetTextAttributes(CurColor);
+	}
 }
 
-void SetRealColor(int Color)
+void SetRealColor(WORD wAttributes, bool ApplyToConsole)
 {
-	CurColor=FarColorToReal(Color);
-	Console.SetTextAttributes(CurColor);
+	CurColor = wAttributes;
+	if (ApplyToConsole) {
+		Console.SetTextAttributes(CurColor);
+	}
+}
+
+WORD GetRealColor()
+{
+	return CurColor;
 }
 
 void ClearScreen(int Color)

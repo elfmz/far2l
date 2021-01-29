@@ -182,7 +182,7 @@ class FileEditor : public Frame
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void ModalEditTempFile(const std::string &pathname, bool scroll_to_end);//erases file internally
+void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally
 
 struct BaseEditedFileUploader : public FileEditor::ISaveObserver
 {

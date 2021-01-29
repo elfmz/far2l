@@ -134,6 +134,7 @@ vtcompletor.cpp
 InterThreadCall.cpp
 DetectCodepage.cpp
 SafeMMap.cpp
+AnsiEsc.cpp
 )
 
 # Set target names for the executables

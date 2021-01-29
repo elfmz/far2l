@@ -287,7 +287,7 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 		}
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
-		tty_out.MoveCursor(1, 1);
+		tty_out.MoveCursorStrict(1, 1);
 		_prev_height = _prev_width = 0;
 		_prev_output.swap(tmp);// ensure memory released
 	}
@@ -308,7 +308,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
 		if (y >= _prev_height) {
-			tty_out.MoveCursor(y + 1, 1);
+			tty_out.MoveCursorStrict(y + 1, 1);
 			tty_out.WriteLine(cur_line, _cur_width);
 		} else {
 			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
@@ -324,9 +324,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 				if (x >= _prev_width
 					  || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
 					  || cur_line[x].Attributes != last_line[x].Attributes) {
-					if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
-						tty_out.MoveCursor(y + 1, x + 1);
-					}
+					tty_out.MoveCursorLazy(y + 1, x + 1);
 					tty_out.WriteLine(&cur_line[x], 1);
 
 				} else if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
@@ -356,9 +354,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 #else
 	for (unsigned int y = 0; y < _cur_height; ++y) {
 		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		if (tty_out.ShouldMoveCursor(y + 1, 1)) {
-			tty_out.MoveCursor(y + 1, 1);
-		}
+		tty_out.MoveCursorLazy(y + 1, 1);
 		tty_out.WriteLine(cur_line, _cur_width);
 	}
 #endif
@@ -369,9 +365,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	UCHAR cursor_height = 1;
 	bool cursor_visible = false;
 	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
-	if (tty_out.ShouldMoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1)) {
-		tty_out.MoveCursor(cursor_pos.Y + 1, cursor_pos.X + 1);
-	}
+	tty_out.MoveCursorLazy(cursor_pos.Y + 1, cursor_pos.X + 1);
 	tty_out.ChangeCursor(cursor_visible);
 
 	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {

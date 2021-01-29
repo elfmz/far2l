@@ -68,38 +68,52 @@ void TTYOutput::WriteReally(const char *str, int len)
 	}
 }
 
-void TTYOutput::Space()
+void TTYOutput::FinalizeSameChars()
 {
-	_pending_spaces++;
-}
-
-void TTYOutput::FinalizeSpaces()
-{
-	if (!_pending_spaces) {
+	if (!_same_chars.count) {
 		return;
 	}
 
+	//Repeat character: \033[#b
 	const size_t ofs = _rawbuf.size();
 
-	if (_pending_spaces <= 10) {
-		_rawbuf.resize(ofs + _pending_spaces);
-		memset(&_rawbuf[ofs], ' ', _pending_spaces);
+	if (_same_chars.count <= 5) {
+		_rawbuf.reserve(ofs + _same_chars.count);
+		do {
+			_rawbuf.emplace_back(_same_chars.ch);
+		} while (--_same_chars.count);
 
 	} else {
 		_rawbuf.resize(ofs + 32);
 		int r = sprintf(&_rawbuf[ofs],
-			"\033[%uX\033[%uC", _pending_spaces, _pending_spaces);
+			"%c" ESC "[%ub", _same_chars.ch, _same_chars.count - 1);
 		if (r >= 0) {
 			_rawbuf.resize(ofs + r);
 		}
 	}
 
-	_pending_spaces = 0;
+	_same_chars.count = 0;
 }
 
 void TTYOutput::Write(const char *str, int len)
 {
-	FinalizeSpaces();
+	if (len <= 1) {
+		if (len <= 0)
+			return;
+
+		if (_same_chars.count == 0) {
+			_same_chars.ch = *str;
+
+		} else if (_same_chars.ch != *str) {
+			FinalizeSameChars();
+			_same_chars.ch = *str;
+		}
+		_same_chars.count++;
+		return;
+	}
+
+	FinalizeSameChars();
+
 	const size_t prev_size = _rawbuf.size();
 	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
 		Flush();
@@ -108,21 +122,22 @@ void TTYOutput::Write(const char *str, int len)
 	} else if (len > 0) {
 		_rawbuf.resize(prev_size + len);
 		memcpy(&_rawbuf[prev_size], str, len);
-		if (_rawbuf.size() >= AUTO_FLUSH_THRESHOLD)
+		if (_rawbuf.size() >= AUTO_FLUSH_THRESHOLD) {
 			Flush();
+		}
 	}
 }
 
 void TTYOutput::Format(const char *fmt, ...)
 {
-	FinalizeSpaces();
+	FinalizeSameChars();
 	const size_t prev_size = _rawbuf.size();
 	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
 	for (;;) {
 		va_list va;
 		va_start(va, fmt);
 		size_t append_limit = _rawbuf.size() - prev_size;
-		int r = vsnprintf (&_rawbuf[prev_size], append_limit, fmt, va);
+		int r = vsnprintf(&_rawbuf[prev_size], append_limit, fmt, va);
 		va_end(va);
 		if (r < 0) {
 			_rawbuf.resize(prev_size);
@@ -140,7 +155,7 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
-	FinalizeSpaces();
+	FinalizeSameChars();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());
 		_rawbuf.resize(0);
@@ -157,12 +172,43 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 	}
 }
 
-void TTYOutput::MoveCursor(unsigned int y, unsigned int x)
+void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
-	Format(ESC "[%d;%dH", y, x);
+	if (x == 1) {
+		if (y == 1) {
+			Write(ESC "[H", 3);
+		} else {
+			Format(ESC "[%dH", y);
+		}
+	} else {
+		Format(ESC "[%d;%dH", y, x);
+	}
 	_cursor.x = x;
 	_cursor.y = y;
+}
+
+void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
+{
+	if (_cursor.y != y && _cursor.x != x) {
+		MoveCursorStrict(y, x);
+
+	} else if (x != _cursor.x) {
+		if (x != 1) {
+			Format(ESC "[%uG", x);
+		} else {
+			Write(ESC "[G", 3);
+		}
+		_cursor.x = x;
+
+	} else if (y != _cursor.y) {
+		if (y != 1) {
+			Format(ESC "[%ud", y);
+		} else {
+			Write(ESC "[d", 3);
+		}
+		_cursor.y = y;
+	}
 }
 
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
@@ -204,7 +250,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 		}
 
 		if (is_space) {
-			Space();
+			Write(" ", 1);
 
 		} else {
 			UTF8 buf[16] = {};

@@ -30,12 +30,14 @@ class TTYOutput
 	} _attr;
 
 	int _out;
-	unsigned int _pending_spaces = 0;
 	std::vector<char> _rawbuf;
-	void WriteReally(const char *str, int len);
+	struct {
+		char ch = 0;
+		unsigned int count = 0;
+	} _same_chars;
 
-	void Space();
-	void FinalizeSpaces();
+	void WriteReally(const char *str, int len);
+	void FinalizeSameChars();
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
 public:
@@ -46,7 +48,8 @@ public:
 
 	void ChangeCursor(bool visible, bool force = false);
 	inline bool ShouldMoveCursor(unsigned int y, unsigned int x) const { return x != _cursor.x || y != _cursor.y; }
-	void MoveCursor(unsigned int y, unsigned int x);
+	void MoveCursorStrict(unsigned int y, unsigned int x);
+	void MoveCursorLazy(unsigned int y, unsigned int x);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);
 	void ChangeKeypad(bool app);
 	void ChangeMouse(bool enable);

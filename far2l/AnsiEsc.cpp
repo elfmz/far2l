@@ -253,8 +253,11 @@ int Printer::Length(const wchar_t *str)
 		const wchar_t *end_of_esc = tmp_parser.Parse(ch);
 		if (end_of_esc) {
 			ch = end_of_esc;
-			if (tmp_parser.suffix == L'C') {
-				out+= tmp_parser.args[0];
+			if (tmp_parser.suffix == L'C') { // skip N chars
+				out+= tmp_parser.args[0] ? tmp_parser.args[0] : 1;
+			}
+			else if (tmp_parser.suffix == L'b') { // repeate last char N times
+				out+= tmp_parser.args[0] ? tmp_parser.args[0] : 1;
 			}
 		} else {
 			++ch;
@@ -289,9 +292,15 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 				break;
 			}
 			if (suffix == L'C') {
-				for (int i = 0; i < args[0]; ++i, ++processed ) {
+				for (int i = 0; i < args[0] || i < 1; ++i, ++processed ) {
 				    if (processed >= skip_len && processed < skip_len + print_len) {
 						Text(L" ", 1);
+					}
+				}
+			} else if (suffix == L'b') {
+				for (int i = 0; i < args[0] || i < 1; ++i, ++processed ) {
+				    if (processed >= skip_len && processed < skip_len + print_len) {
+						Text(&_last_char, 1);
 					}
 				}
 			} else if (suffix == L'm') {
@@ -302,6 +311,7 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 		}
 		else
 		{
+			_last_char = *ch;
 			++ch;
 		}
 	}

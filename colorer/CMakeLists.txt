@@ -42,6 +42,12 @@ FIND_PACKAGE(fmt)
 # so have to copy it into intermediate var but only if fmt_FOUND
 if (fmt_FOUND)
     set(fmt_LIBRARY_OPTIONAL "${fmt_LIBRARY}")
+    # add libfmt package into far2l dependencies if needed
+    IF(PACKAGE_DEPENDENCIES)
+        SET(PACKAGE_DEPENDENCIES "${PACKAGE_DEPENDENCIES}, libfmt7" PARENT_SCOPE)
+    ELSE(PACKAGE_DEPENDENCIES)
+        SET(PACKAGE_DEPENDENCIES "libfmt7" PARENT_SCOPE)
+    ENDIF(PACKAGE_DEPENDENCIES)
 else()
     set(fmt_LIBRARY_OPTIONAL "")
 endif()

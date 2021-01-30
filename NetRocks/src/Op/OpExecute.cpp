@@ -67,7 +67,7 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 	try {
 		int fd_stdin = 0, fd_stdout = 1, fd_stderr = 2;
 
-		TTYRawMode tty_raw_mode(fd_stdout);
+		TTYRawMode tty_raw_mode(fd_stdin, fd_stdout);
 
 		FDScope fd_err(open((fifo + ".err").c_str(), O_RDONLY));
 		FDScope fd_out(open((fifo + ".out").c_str(), O_RDONLY));

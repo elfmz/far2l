@@ -104,8 +104,6 @@ class Viewer:public ScreenObject
 
 		struct ViewerOptions ViOpt;
 
-		bool Signature;
-
 		NamesList ViewNamesList;
 		KeyBar *ViewKeyBar;
 
@@ -138,7 +136,6 @@ class Viewer:public ScreenObject
 		int CRSym;
 		int64_t SelectPos,SelectSize;
 		DWORD SelectFlags;
-		int64_t SelectPosOffSet; // Используется для коррекции позиции выделения в юникодных файлах
 		int ShowStatusLine,HideCursor;
 
 		FARString strTitle;

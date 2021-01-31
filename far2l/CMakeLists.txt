@@ -135,6 +135,7 @@ InterThreadCall.cpp
 DetectCodepage.cpp
 SafeMMap.cpp
 AnsiEsc.cpp
+ViewerPrinter.cpp
 )
 
 # Set target names for the executables

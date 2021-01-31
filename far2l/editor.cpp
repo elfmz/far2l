@@ -2861,6 +2861,15 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	Edit *NewPtr;
 	int NewDist,Dist;
 
+
+	// Shift + Mouse click -> adhoc quick edit
+	if ( (MouseEvent->dwControlKeyState & SHIFT_PRESSED) != 0
+	&& (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0
+	&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0 ) {
+		WINPORT(BeginConsoleAdhocQuickEdit)();
+		return TRUE;
+	}
+
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
 	if ((MouseEvent->dwButtonState & 3))
 	{

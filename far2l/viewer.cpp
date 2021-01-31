@@ -1476,6 +1476,7 @@ int Viewer::ProcessKey(int Key)
 			FARString reopenFileName = strFileName;
 			if (VM.Processed || !strProcessedViewName.IsEmpty())
 			{
+				DefCodePage=VM.CodePage;
 				OpenFile(reopenFileName, TRUE);
 			}
 			Show();

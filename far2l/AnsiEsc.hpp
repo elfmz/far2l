@@ -41,5 +41,7 @@ namespace AnsiEsc
 		FontState _font_state;
 		WORD _initial_attr;
 		wchar_t _last_char = L' ';
+
+		void EnforceStateColor();
 	};
 }

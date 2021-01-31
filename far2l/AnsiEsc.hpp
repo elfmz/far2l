@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "ViewerPrinter.hpp"
 
 namespace AnsiEsc
 {
@@ -27,15 +28,16 @@ namespace AnsiEsc
 		const wchar_t *Parse(const wchar_t *str);
 	};
 
-	struct Printer : protected Parser
+	struct Printer : ViewerPrinter
 	{
 		Printer(WORD wAttributes);
-		~Printer();
+		virtual ~Printer();
 
-		int Length(const wchar_t *str);
-		void Print(int skip_len, int print_len, const wchar_t *str);
+		virtual int Length(const wchar_t *str, int limit = -1);
+		virtual void Print(int skip_len, int print_len, const wchar_t *str);
 
 	private:
+		Parser _parser;
 		FontState _font_state;
 		WORD _initial_attr;
 		wchar_t _last_char = L' ';

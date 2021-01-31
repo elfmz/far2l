@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "ViewerPrinter.hpp"
 #include "interf.hpp"
+#include "colors.hpp"
 
 static const wchar_t s_many_spaces[] = L"                                                                ";
 
@@ -17,6 +18,11 @@ void ViewerPrinter::PrintSpaces(size_t cnt)
 void ViewerPrinter::EnableBOMSkip()
 {
 	_bom_skip = true;
+}
+
+void ViewerPrinter::SetSelection(bool selection)
+{
+	_selection = selection;
 }
 
 bool ViewerPrinter::ShouldSkip(wchar_t ch)
@@ -52,7 +58,7 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 
 void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 {
-	SetColor(_color);
+	SetColor(_selection ? COL_VIEWERSELECTEDTEXT : _color);
 	while (*str && skip_len) {
 		--skip_len;
 		++str;

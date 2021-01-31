@@ -6,7 +6,7 @@ struct ViewerPrinter
 {
 	void PrintSpaces(size_t cnt);
 	void EnableBOMSkip();
-	bool ShouldSkip(wchar_t ch);
+	void SetSelection(bool selection);
 
 	virtual ~ViewerPrinter() {};
 
@@ -14,7 +14,10 @@ struct ViewerPrinter
 	virtual void Print(int skip_len, int print_len, const wchar_t *str) = 0;
 
 protected:
+	bool ShouldSkip(wchar_t ch);
+
 	bool _bom_skip = false;
+	bool _selection = false;
 };
 
 struct PlainViewerPrinter : ViewerPrinter

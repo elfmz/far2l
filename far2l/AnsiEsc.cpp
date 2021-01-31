@@ -1,6 +1,7 @@
 #include "headers.hpp"
 #include "AnsiEsc.hpp"
 #include "interf.hpp"
+#include "colors.hpp"
 
 namespace AnsiEsc
 {
@@ -274,10 +275,18 @@ int Printer::Length(const wchar_t *str, int limit)
 	return out;
 }
 
+void Printer::EnforceStateColor()
+{
+	if (_selection)
+		SetColor(COL_VIEWERSELECTEDTEXT);
+	else
+		SetRealColor(_font_state.ToConsoleAttributes());
+}
+
 void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 {
 	int processed = 0;
-	SetRealColor(_font_state.ToConsoleAttributes());
+	EnforceStateColor();
 	for (const wchar_t *ch = str; ;) {
 		const wchar_t *end_of_chunk = (*ch && !ShouldSkip(*ch)) ? _parser.Parse(ch) : ch;
 		if (end_of_chunk)
@@ -316,7 +325,7 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 				}
 			} else if (_parser.suffix == L'm') {
 				_font_state.ParseSuffixM(_parser.args.data(), (int)_parser.args.size());
-				SetRealColor(_font_state.ToConsoleAttributes());
+				EnforceStateColor();
 			}
 			str = ch = end_of_chunk;
 

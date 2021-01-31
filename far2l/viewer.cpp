@@ -624,37 +624,35 @@ void Viewer::ShowPage(int nMode)
 			if (SelectSize && Strings[I]->bSelection)
 			{
 				auto visualSelStart = printer->Length(Strings[I]->lpData, Strings[I]->nSelStart);
+				auto visualSelLength = printer->Length(&Strings[I]->lpData[Strings[I]->nSelStart],
+														Strings[I]->nSelEnd - Strings[I]->nSelStart);
 
-				if (!VM.Wrap && (visualSelStart < LeftPos || visualSelStart > LeftPos + XX2 - X1))
+fprintf(stderr, "visualSelStart=%ld visualSelLength=%ld\n", (long)visualSelStart, (long)visualSelLength);
+				if (!VM.Wrap && AdjustSelPosition &&
+					(visualSelStart < LeftPos || (visualSelStart > LeftPos
+												&& visualSelStart + visualSelLength > LeftPos + XX2 - X1)))
 				{
-					if (AdjustSelPosition)
-					{
-						LeftPos = visualSelStart-1;
-						AdjustSelPosition = FALSE;
-						Show();
-						return;
-					}
+					LeftPos = visualSelStart > 1 ? visualSelStart - 1 : 0;
+					AdjustSelPosition = FALSE;
+					Show();
+					return;
 				}
-				else
-				{
-					int SelX1 = X1, SelSkip = 0;
-					if (visualSelStart > LeftPos)
-						SelX1+= visualSelStart - LeftPos;
-					else if (visualSelStart < LeftPos)
-						SelSkip = LeftPos - visualSelStart;
 
-					auto visualSelLength = printer->Length(&Strings[I]->lpData[Strings[I]->nSelStart],
-															Strings[I]->nSelEnd - Strings[I]->nSelStart);
+				int SelX1 = X1, SelSkip = 0;
+				if (visualSelStart > LeftPos)
+					SelX1+= visualSelStart - LeftPos;
+				else if (visualSelStart < LeftPos)
+					SelSkip = LeftPos - visualSelStart;
 
-					if (visualSelLength > SelSkip) {
-						GotoXY((int)SelX1, Y);
-						PlainViewerPrinter selPrinter(COL_VIEWERSELECTEDTEXT);
-						if (IsUnicodeOrUtfCodePage(VM.CodePage))
-							selPrinter.EnableBOMSkip();
-
-						selPrinter.Print(SelSkip,
-							visualSelLength - SelSkip, &Strings[I]->lpData[Strings[I]->nSelStart]);
-					}
+				if (visualSelLength > SelSkip) {
+					GotoXY((int)SelX1, Y);
+//					PlainViewerPrinter selPrinter(COL_VIEWERSELECTEDTEXT);
+//					if (IsUnicodeOrUtfCodePage(VM.CodePage))
+//						selPrinter.EnableBOMSkip();
+					printer->SetSelection(true);
+					printer->Print(SelSkip,
+						visualSelLength - SelSkip, &Strings[I]->lpData[Strings[I]->nSelStart]);
+					printer->SetSelection(false);
 				}
 			}
 
@@ -3375,7 +3373,7 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[1024];
+	wchar_t Buf[MAX_VIEWLINE];
 	int64_t StartLinePos=-1,SearchLinePos=MatchPos-sizeof(Buf)/sizeof(wchar_t);
 
 	if (SearchLinePos<0)

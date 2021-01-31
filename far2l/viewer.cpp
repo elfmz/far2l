@@ -172,9 +172,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	CtrlObject->Plugins.CurViewer=this;
 	OpenFailed=false;
 	HostFileViewer=nullptr;
-	SelectPosOffSet=0;
 	bVE_READ_Sent = false;
-	Signature = false;
 }
 
 FARString Viewer::ComposeCacheName()
@@ -421,7 +419,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 
 		if (VM.CodePage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(VM.CodePage))
 		{
-			Detect = GetFileFormat2(strFileName,CodePage,&Signature,Opt.ViOpt.AutoDetectCodePage!=0,true);
+			Detect = GetFileFormat2(strFileName,CodePage,nullptr,Opt.ViOpt.AutoDetectCodePage!=0,true);
 		}
 
 		if (VM.CodePage==CP_AUTODETECT)
@@ -608,75 +606,53 @@ void Viewer::ShowPage(int nMode)
 
 	if (nMode != SHOW_HEX)
 	{
-		std::unique_ptr<AnsiEsc::Printer> ae_printer;
+		std::unique_ptr<ViewerPrinter> printer;
 		if (VM.Processed)
-		{
-			ae_printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
-		}
+			printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
+		else
+			printer.reset(new PlainViewerPrinter(COL_VIEWERTEXT));
+		if (IsUnicodeOrUtfCodePage(VM.CodePage))
+			printer->EnableBOMSkip();
 
 		for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 		{
-			int StrLen;
-			if (ae_printer)
-			{
-				StrLen = ae_printer->Length(Strings[I]->lpData);
-			}
-			else
-			{
-				StrLen = StrLength(Strings[I]->lpData);
-				SetColor(COL_VIEWERTEXT);
-			}
+			int StrLen = printer->Length(Strings[I]->lpData);
 			GotoXY(X1,Y);
 
-			const wchar_t *data = &Strings[I]->lpData[0];
-			if (IsUnicodeOrUtfCodePage(VM.CodePage) && Signature && !I && !Strings[I]->nFilePos)
-					++data;
-
-			if (ae_printer)
-			{
-				ae_printer->Print(LeftPos, Width, data);
-			}
-			else if (StrLen > LeftPos)
-			{
-				FS<<fmt::LeftAlign()<<fmt::Width(Width)<<fmt::Precision(Width)<<&data[LeftPos];
-			}
-			else
-			{
-				FS<<fmt::Width(Width)<<L"";
-			}
+			printer->Print(LeftPos, Width, Strings[I]->lpData);
 
 			if (SelectSize && Strings[I]->bSelection)
 			{
-				int64_t SelX1;
+				auto visualSelStart = printer->Length(Strings[I]->lpData, Strings[I]->nSelStart);
+				auto visualSelLength = printer->Length(&Strings[I]->lpData[Strings[I]->nSelStart],
+														Strings[I]->nSelEnd - Strings[I]->nSelStart);
 
-				if (LeftPos > Strings[I]->nSelStart)
-					SelX1 = X1;
-				else
-					SelX1 = Strings[I]->nSelStart-LeftPos;
-
-				if (!VM.Wrap && (Strings[I]->nSelStart < LeftPos || Strings[I]->nSelStart > LeftPos+XX2-X1))
+fprintf(stderr, "visualSelStart=%ld visualSelLength=%ld\n", (long)visualSelStart, (long)visualSelLength);
+				if (!VM.Wrap && AdjustSelPosition &&
+					(visualSelStart < LeftPos || (visualSelStart > LeftPos
+												&& visualSelStart + visualSelLength > LeftPos + XX2 - X1)))
 				{
-					if (AdjustSelPosition)
-					{
-						LeftPos = Strings[I]->nSelStart-1;
-						AdjustSelPosition = FALSE;
-						Show();
-						return;
-					}
+					LeftPos = visualSelStart > 1 ? visualSelStart - 1 : 0;
+					AdjustSelPosition = FALSE;
+					Show();
+					return;
 				}
-				else
-				{
-					SetColor(COL_VIEWERSELECTEDTEXT);
-					GotoXY(static_cast<int>(X1+SelX1),Y);
-					int64_t Length = Strings[I]->nSelEnd-Strings[I]->nSelStart;
 
-					if (LeftPos > Strings[I]->nSelStart)
-						Length = Strings[I]->nSelEnd-LeftPos;
+				int SelX1 = X1, SelSkip = 0;
+				if (visualSelStart > LeftPos)
+					SelX1+= visualSelStart - LeftPos;
+				else if (visualSelStart < LeftPos)
+					SelSkip = LeftPos - visualSelStart;
 
-					if (LeftPos > Strings[I]->nSelEnd)
-						Length = 0;
-
-					FS<<fmt::Precision(static_cast<int>(Length))<<&Strings[I]->lpData[static_cast<size_t>(SelX1+LeftPos+SelectPosOffSet)];
+				if (visualSelLength > SelSkip) {
+					GotoXY((int)SelX1, Y);
+//					PlainViewerPrinter selPrinter(COL_VIEWERSELECTEDTEXT);
+//					if (IsUnicodeOrUtfCodePage(VM.CodePage))
+//						selPrinter.EnableBOMSkip();
+					printer->SetSelection(true);
+					printer->Print(SelSkip,
+						visualSelLength - SelSkip, &Strings[I]->lpData[Strings[I]->nSelStart]);
+					printer->SetSelection(false);
 				}
 			}
 
@@ -1225,6 +1201,19 @@ int64_t Viewer::VMProcess(int OpCode,void *vParam,int64_t iParam)
 */
 int Viewer::ProcessKey(int Key)
 {
+	if (Key == KEY_SHIFTLEFT || Key == KEY_SHIFTRIGHT)
+	{
+		if (SelectSize > 0 && (SelectPos > 0 || Key == KEY_SHIFTRIGHT))
+		{
+			int64_t NewSelectSize = SelectSize + 1;
+			int64_t NewSelectPos = SelectPos;
+			if (Key == KEY_SHIFTLEFT)
+				--NewSelectPos;
+			fprintf(stderr, "SELECTIO CHANGE: [%ld +%ld)\n", (unsigned long)NewSelectPos, NewSelectSize);
+			SelectText(NewSelectPos, NewSelectSize, SelectFlags);
+		}
+		return TRUE;
+	}
 	ViewerString vString;
 
 	/* $ 22.01.2001 IS
@@ -1539,7 +1528,7 @@ int Viewer::ProcessKey(int Key)
 			UINT nCodePage = SelectCodePage(VM.CodePage, true, true, false, true);
 			if (nCodePage == CP_AUTODETECT)
 			{
-				if (!GetFileFormat2(strFileName,nCodePage,&Signature,true,true))
+				if (!GetFileFormat2(strFileName,nCodePage,nullptr,true,true))
 					return TRUE;
 			}
 
@@ -1951,6 +1940,14 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	if (!(MouseEvent->dwButtonState & 3))
 		return FALSE;
+
+	// Shift + Mouse click -> adhoc quick edit
+	if ( (MouseEvent->dwControlKeyState & SHIFT_PRESSED) != 0
+	&& (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0
+	&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0 ) {
+		WINPORT(BeginConsoleAdhocQuickEdit)();
+		return TRUE;
+	}
 
 	/* $ 22.01.2001 IS
 	     Происходят какие-то манипуляции -> снимем выделение
@@ -3376,7 +3373,7 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[1024];
+	wchar_t Buf[MAX_VIEWLINE];
 	int64_t StartLinePos=-1,SearchLinePos=MatchPos-sizeof(Buf)/sizeof(wchar_t);
 
 	if (SearchLinePos<0)
@@ -3423,15 +3420,6 @@ void Viewer::SelectText(const int64_t &MatchPos,const int64_t &SearchLength, con
 			Show();  //update OutStr
 		}
 
-		/* $ 13.03.2001 IS
-		   Если найденное расположено в самой первой строке юникодного файла и файл
-		   имеет в начале fffe или feff, то для более правильного выделения, его
-		   позицию нужно уменьшить на единицу (из-за того, что пустой символ не
-		   показывается)
-		*/
-		SelectPosOffSet=(IsUnicodeOrUtfCodePage(VM.CodePage) && Signature
-		                 && (MatchPos+SelectSize<=ObjWidth && MatchPos<(int64_t)StrLength(Strings[0]->lpData)))?1:0;
-		SelectPos-=SelectPosOffSet;
 		int64_t Length=SelectPos-StartLinePos-1;
 
 		if (VM.Wrap)

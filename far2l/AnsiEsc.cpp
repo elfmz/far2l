@@ -1,6 +1,7 @@
 #include "headers.hpp"
 #include "AnsiEsc.hpp"
 #include "interf.hpp"
+#include "colors.hpp"
 
 namespace AnsiEsc
 {
@@ -245,13 +246,17 @@ Printer::~Printer()
 	SetRealColor(_initial_attr);
 }
 
-int Printer::Length(const wchar_t *str)
+int Printer::Length(const wchar_t *str, int limit)
 {
 	Parser tmp_parser;
-	int out = 0;
-	for (const wchar_t *ch = str; *ch;) {
+	size_t out = 0;
+	for (const wchar_t *ch = str; *ch && limit != 0;) {
 		const wchar_t *end_of_esc = tmp_parser.Parse(ch);
 		if (end_of_esc) {
+			if (end_of_esc - ch > limit) {
+				return out;
+			}
+			limit-= end_of_esc - ch;
 			ch = end_of_esc;
 			if (tmp_parser.suffix == L'C') { // skip N chars
 				out+= tmp_parser.args[0] ? tmp_parser.args[0] : 1;
@@ -260,19 +265,30 @@ int Printer::Length(const wchar_t *str)
 				out+= tmp_parser.args[0] ? tmp_parser.args[0] : 1;
 			}
 		} else {
+			if (!ShouldSkip(*ch)) {
+				++out;
+			}
 			++ch;
-			++out;
+			--limit;
 		}
 	}
 	return out;
 }
 
+void Printer::EnforceStateColor()
+{
+	if (_selection)
+		SetColor(COL_VIEWERSELECTEDTEXT);
+	else
+		SetRealColor(_font_state.ToConsoleAttributes());
+}
+
 void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 {
 	int processed = 0;
-	SetRealColor(_font_state.ToConsoleAttributes());
+	EnforceStateColor();
 	for (const wchar_t *ch = str; ;) {
-		const wchar_t *end_of_chunk = *ch ? Parse(ch) : ch;
+		const wchar_t *end_of_chunk = (*ch && !ShouldSkip(*ch)) ? _parser.Parse(ch) : ch;
 		if (end_of_chunk)
 		{
 			if (skip_len >= processed) {
@@ -291,26 +307,29 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 			if (!*ch) {
 				break;
 			}
-			if (suffix == L'C') {
-				for (int i = 0; i < args[0] || i < 1; ++i, ++processed ) {
+			if (ShouldSkip(*ch)) {
+				str = ++ch;
+				continue;
+			}
+			if (_parser.suffix == L'C') {
+				for (int i = 0; i < _parser.args[0] || i < 1; ++i, ++processed ) {
 				    if (processed >= skip_len && processed < skip_len + print_len) {
 						Text(L" ", 1);
 					}
 				}
-			} else if (suffix == L'b') {
-				for (int i = 0; i < args[0] || i < 1; ++i, ++processed ) {
+			} else if (_parser.suffix == L'b') {
+				for (int i = 0; i < _parser.args[0] || i < 1; ++i, ++processed ) {
 				    if (processed >= skip_len && processed < skip_len + print_len) {
 						Text(&_last_char, 1);
 					}
 				}
-			} else if (suffix == L'm') {
-				_font_state.ParseSuffixM(args.data(), (int)args.size());
-				SetRealColor(_font_state.ToConsoleAttributes());
+			} else if (_parser.suffix == L'm') {
+				_font_state.ParseSuffixM(_parser.args.data(), (int)_parser.args.size());
+				EnforceStateColor();
 			}
 			str = ch = end_of_chunk;
-		}
-		else
-		{
+
+		} else {
 			_last_char = *ch;
 			++ch;
 		}
@@ -318,9 +337,8 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
     while (processed < skip_len) {
 		++processed;
 	}
-    while (processed < skip_len + print_len) {
-		Text(L" ", 1);
-		++processed;
+	if (processed < skip_len + print_len) {
+		PrintSpaces(skip_len + print_len - processed);
 	}
 }
 

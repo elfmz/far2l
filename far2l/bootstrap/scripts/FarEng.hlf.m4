@@ -2454,6 +2454,7 @@ $ #Viewer: control keys#
     #Ctrl-Shift-Right#   End of lines on the screen
     #Home, Ctrl-Home#    Start of file
     #End, Ctrl-End#      End of file
+    #Shift-Left/Right#   Grow existing text selection left/right
 
     #F1#                 Help
     #F2#                 Toggle line wrap/unwrap

@@ -1203,6 +1203,19 @@ int64_t Viewer::VMProcess(int OpCode,void *vParam,int64_t iParam)
 */
 int Viewer::ProcessKey(int Key)
 {
+	if (Key == KEY_SHIFTLEFT || Key == KEY_SHIFTRIGHT)
+	{
+		if (SelectSize > 0 && (SelectPos > 0 || Key == KEY_SHIFTRIGHT))
+		{
+			int64_t NewSelectSize = SelectSize + 1;
+			int64_t NewSelectPos = SelectPos;
+			if (Key == KEY_SHIFTLEFT)
+				--NewSelectPos;
+			fprintf(stderr, "SELECTIO CHANGE: [%ld +%ld)\n", (unsigned long)NewSelectPos, NewSelectSize);
+			SelectText(NewSelectPos, NewSelectSize, SelectFlags);
+		}
+		return TRUE;
+	}
 	ViewerString vString;
 
 	/* $ 22.01.2001 IS

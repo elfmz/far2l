@@ -66,11 +66,20 @@ FarEditor::FarEditor(PluginStartupInfo *inf, ParserFactory *pf):
 
 FarEditor::~FarEditor()
 {
-  delete baseEditor;
-  delete ret_str;
   delete cursorRegion;
+  cursorRegion = nullptr;
+
   delete structOutliner;
+  structOutliner = nullptr;
+
   delete errorOutliner;
+  errorOutliner = nullptr;
+
+  delete baseEditor;
+  baseEditor = nullptr;
+
+  delete ret_str;
+  ret_str = nullptr;
 }
 
 void FarEditor::endJob(size_t lno)

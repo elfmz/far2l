@@ -113,44 +113,46 @@ void TTYOutput::Write(const char *str, int len)
 	}
 
 	FinalizeSameChars();
-
-	const size_t prev_size = _rawbuf.size();
-	if (2 * len >= AUTO_FLUSH_THRESHOLD) {
-		Flush();
-		WriteReally(str, len);
-
-	} else if (len > 0) {
-		_rawbuf.resize(prev_size + len);
-		memcpy(&_rawbuf[prev_size], str, len);
-		if (_rawbuf.size() >= AUTO_FLUSH_THRESHOLD) {
-			Flush();
-		}
-	}
+	_rawbuf.insert(_rawbuf.end(), str, str + len);
 }
 
 void TTYOutput::Format(const char *fmt, ...)
 {
 	FinalizeSameChars();
-	const size_t prev_size = _rawbuf.size();
-	_rawbuf.resize(prev_size + strlen(fmt) + 0x40);
-	for (;;) {
-		va_list va;
-		va_start(va, fmt);
+
+	char tmp[0x100];
+
+	va_list args, args_copy;
+	va_start(args, fmt);
+
+	va_copy(args_copy, args);
+	int r = vsnprintf(tmp, sizeof(tmp), fmt, args_copy);
+	va_end(args_copy);
+
+	if (r >= (int)sizeof(tmp)) {
+		const size_t prev_size = _rawbuf.size();
+		_rawbuf.resize(prev_size + r + 0x10);
 		size_t append_limit = _rawbuf.size() - prev_size;
-		int r = vsnprintf(&_rawbuf[prev_size], append_limit, fmt, va);
-		va_end(va);
-		if (r < 0) {
+
+		va_copy(args_copy, args);
+		r = vsnprintf(&_rawbuf[prev_size], append_limit, fmt, args_copy);
+		va_end(args_copy);
+
+		if (r > 0) {
+			_rawbuf.resize(prev_size + std::min(append_limit, (size_t)r));
+		} else {
 			_rawbuf.resize(prev_size);
-			throw std::runtime_error("TTYOutput::Format: bad format");
 		}
-		if ((size_t)r < append_limit) {
-			_rawbuf.resize(prev_size + r);
-			break;
-		}
-		_rawbuf.resize(_rawbuf.size() + _rawbuf.size() / 2 + 0x100);
+
+	} else if (r > 0) {
+		_rawbuf.insert(_rawbuf.end(), &tmp[0], &tmp[r]);
 	}
-	if (_rawbuf.size() >= AUTO_FLUSH_THRESHOLD)
-		Flush();
+
+	va_end(args);
+
+	if (r < 0) {
+		throw std::runtime_error("TTYOutput::Format: bad format");
+	}
 }
 
 void TTYOutput::Flush()

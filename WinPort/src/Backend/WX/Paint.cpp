@@ -456,7 +456,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetRight(((int)area.Right + 1) * _font_width);
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
-#if 0
+
 	if (area.Left != 0 && _noticed_combinings) {
 		if (_line_combinings_inspected.size() <= (size_t)area.Bottom) {
 			_line_combinings_inspected.resize(((size_t)area.Bottom) + 1);
@@ -478,7 +478,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 		}
 
 	}
-#endif
+
 	_window->Refresh(false, &rc);
 }
 

@@ -6,8 +6,6 @@
 
 class TTYOutput
 {
-	enum { AUTO_FLUSH_THRESHOLD = 0x1000 };
-
 	struct Cursor
 	{
 		unsigned int y = -1, x = -1;

@@ -367,6 +367,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	if (area.Right < area.Left || area.Bottom < area.Top) return;
 
 	wxString tmp;
+	_line.resize(cw);
 	ApplyFont(dc);
 
 	CursorProps cursor_props(_cursor_state);
@@ -379,70 +380,74 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			continue;
 		}
 
+		const CHAR_INFO *line;
+		{
+			// dont keep console output locked for a long time to avoid output slowdown
+			ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
+			line = dla.Line();
+			unsigned int cur_cw = line ? dla.Width() : 0;
+			if (cur_cw < cw) {
+				memcpy(&_line[0], line, cur_cw * sizeof(*line));
+				memset(&_line[cur_cw], 0, (cw - cur_cw) * sizeof(*line));
+			} else {
+				memcpy(&_line[0], line, cw * sizeof(*line));
+			}
+			line = &_line[0];
+		}
+
 		painter.LineBegin(cy);
 
-		ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
-		const CHAR_INFO *line = dla.Line();
-		if (line) {
-			// HACK: combinings characters are kind of characters that combined with prceeding character
-			// FAR internally doesn't know about them, treating them as separate characters
-			// so here is workaround: when renedring line check each character to be combinings and if so
-			// left-adjust positions of all subsequent characters until pseudographic, that typically end of
-			// panel
-			unsigned int affecting_combinings = 0;
-			unsigned short attributes = line->Attributes;
-			for (unsigned int char_index = 0, edge = std::min(cw, dla.Width()); char_index != edge; ++char_index) {
-				const auto c = line[char_index].Char.UnicodeChar;
+		// HACK: combinings characters are kind of characters that combined with prceeding character
+		// FAR internally doesn't know about them, treating them as separate characters
+		// so here is workaround: when renedring line check each character to be combinings and if so
+		// left-adjust positions of all subsequent characters until pseudographic, that typically end of
+		// panel
+		unsigned int affecting_combinings = 0;
+		unsigned short attributes = line->Attributes;
+		for (unsigned int char_index = 0; char_index != cw; ++char_index) {
+			const auto c = line[char_index].Char.UnicodeChar;
 
-				if (UNI_IS_COMBINING(c)) {
-					++affecting_combinings;
-					// Bit dirty optimization - activate combinings area update
-					// correction only if during rendering combinings characters
-					// were encountered. So by design there can be single one
-					// glitch per whole process life time ..
-					_noticed_combinings = true;
-				}
-				else if (affecting_combinings && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
-					// reached panel's edge - space-fill gap caused by combinings
-					for (int i = affecting_combinings; i >= 0; --i) {
-						painter.NextChar(char_index - i, attributes, ' ');
-					}
-					painter.LineFlush(char_index);
-					affecting_combinings = 0;
-				}
-
-
-				const unsigned int cx = char_index - affecting_combinings;
-				if (cy == cursor_props.y && char_index == cursor_props.x) {
-					cursor_props.x = cx;
-				}
-
-				if (cx > (unsigned)area.Right) {
-					break;
-				}
-
-				if (cx >= (unsigned)area.Left) {
-					attributes = line[char_index].Attributes;
-					if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
-						&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
-						attributes^= ALL_ATTRIBUTES;
-					}
-
-					painter.NextChar(cx, attributes, c);
-
-				}
+			if (UNI_IS_COMBINING(c)) {
+				++affecting_combinings;
+				// Bit dirty optimization - activate combinings area update
+				// correction only if during rendering combinings characters
+				// were encountered. So by design there can be single one
+				// glitch per whole process life time ..
+				_noticed_combinings = true;
 			}
-			// space-fill gap caused by combinings if any at the end of line
-//			for (int i = affecting_combinings; i >= 0; --i) {
-//				painter.NextChar(area.Right + 1 - i, attributes, ' ');
-//			}
+			else if (affecting_combinings && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
+				// reached panel's edge - space-fill gap caused by combinings
+				for (int i = affecting_combinings; i >= 0; --i) {
+					painter.NextChar(char_index - i, attributes, ' ');
+				}
+				painter.LineFlush(char_index);
+				affecting_combinings = 0;
+			}
 
-		} else {
-			// screen resized while painted? empty fill extra space for a while
-			for (unsigned int cx = 0; cx <= (unsigned)area.Right; ++cx) {
-				painter.NextChar(cx, 0, ' ');
+			const unsigned int cx = char_index - affecting_combinings;
+			if (cy == cursor_props.y && char_index == cursor_props.x) {
+				cursor_props.x = cx;
+			}
+
+			if (cx > (unsigned)area.Right) {
+				break;
+			}
+
+			if (cx >= (unsigned)area.Left) {
+				attributes = line[char_index].Attributes;
+				if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
+					&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
+					attributes^= ALL_ATTRIBUTES;
+				}
+
+				painter.NextChar(cx, attributes, c);
+
 			}
 		}
+		// space-fill gap caused by combinings if any at the end of line
+//		for (int i = affecting_combinings; i >= 0; --i) {
+//			painter.NextChar(area.Right + 1 - i, attributes, ' ');
+//		}
 
 		painter.LineFlush(area.Right + 1);
 	}		

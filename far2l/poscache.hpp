@@ -1,5 +1,5 @@
 #pragma once
-
+#include "KeyFileHelper.h"
 /*
 poscache.hpp
 
@@ -76,27 +76,25 @@ struct PosCache
 	DWORD64 *Position[4];
 };
 
+enum FilePositionCacheKind
+{
+	FPCK_VIEWER,
+	FPCK_EDITOR,
+};
+
 class FilePositionCache
 {
 	private:
-		int IsMemory;
-		int CurPos;
+		FilePositionCacheKind _kind;
+		std::unique_ptr<KeyFileHelper> _kfh;
 
-		FARString *Names;
-		BYTE *Param;
-		BYTE *Position;
-
-	private:
-		int FindPosition(const wchar_t *FullName);
+		void NeedKeyFileHelper();
+		void DontNeedKeyFileHelper();
 
 	public:
-		FilePositionCache();
+		FilePositionCache(FilePositionCacheKind kind);
 		~FilePositionCache();
 
-	public:
-		void AddPosition(const wchar_t *Name,PosCache& poscache);
-		bool GetPosition(const wchar_t *Name,PosCache& poscache);
-
-		bool Read(const wchar_t *Key);
-		bool Save(const wchar_t *Key);
+		void AddPosition(const wchar_t *Name, PosCache& poscache);
+		bool GetPosition(const wchar_t *Name, PosCache& poscache);
 };

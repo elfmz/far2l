@@ -64,6 +64,16 @@ unsigned int KeyFileValues::GetUInt(const char *name, unsigned int def) const
 	return def;
 }
 
+unsigned long long KeyFileValues::GetULL(const char *name, unsigned long long def) const
+{
+	const auto &it = find(name);
+	if (it != end()) {
+		sscanf(it->second.c_str(), "%llu", &def);
+	}
+
+	return def;
+}
+
 std::vector<std::string> KeyFileValues::EnumKeys() const
 {
 	std::vector<std::string> out;
@@ -237,10 +247,21 @@ std::vector<std::string> KeyFileReadHelper::EnumKeys(const char *section) const
 	return std::vector<std::string>();
 }
 
+size_t KeyFileReadHelper::SectionsCount() const
+{
+	return _kf.size();
+}
+
 bool KeyFileReadHelper::HasSection(const char *section) const
 {
 	auto it = _kf.find(section);
 	return (it != _kf.end());
+}
+
+const KeyFileValues *KeyFileReadHelper::GetSectionValues(const char *section) const
+{
+	auto it = _kf.find(section);
+	return (it != _kf.end()) ? &it->second : nullptr;
 }
 
 bool KeyFileReadHelper::HasKey(const char *section, const char *name) const
@@ -295,6 +316,16 @@ unsigned int KeyFileReadHelper::GetUInt(const char *section, const char *name, u
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
 		return it->second.GetUInt(name, def);
+	}
+
+	return def;
+}
+
+unsigned long long KeyFileReadHelper::GetULL(const char *section, const char *name, unsigned long long def) const
+{
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		return it->second.GetULL(name, def);
 	}
 
 	return def;
@@ -460,4 +491,13 @@ void KeyFileHelper::PutUInt(const char *section, const char *name, unsigned int 
 	sprintf(tmp, "%u", value);
 	PutString(section, name, tmp);
 }
+
+void KeyFileHelper::PutULL(const char *section, const char *name, unsigned long long value)
+{
+	_dirty = true;
+	char tmp[64];
+	sprintf(tmp, "%llu", value);
+	PutString(section, name, tmp);
+}
+
 

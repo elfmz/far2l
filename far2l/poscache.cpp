@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <algorithm>
 
 #include "poscache.hpp"
 #include "udlist.hpp"
@@ -49,259 +49,120 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 LPCWSTR EmptyPos=L"0,0,0,0,0,\"$\"";
 
-FilePositionCache::FilePositionCache():
-	IsMemory(0),
-	CurPos(0),
-	Param(nullptr),
-	Position(nullptr)
+
+FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
+	:_kind(kind)
 {
-	if (!Opt.MaxPositionCache)
-	{
-		GetRegKey(L"System",L"MaxPositionCache",Opt.MaxPositionCache,MAX_POSITIONS);
-	}
-
-	Names=new FARString[Opt.MaxPositionCache];
-
-	if (Names )
-	{
-		Param=(BYTE*)xf_malloc(MSIZE_PARAM);
-		Position=(BYTE*)xf_malloc(MSIZE_POSITION);
-
-		if (Param && Position)
-		{
-			memset(Param,0,MSIZE_PARAM);
-			memset(Position,0xFF,MSIZE_POSITION);
-			IsMemory=1;
-		}
-		else
-		{
-			if (Param)       { xf_free(Param);       Param=nullptr; }
-
-			if (Position)    { xf_free(Position);    Position=nullptr; }
-		}
-	}
 }
 
 FilePositionCache::~FilePositionCache()
 {
-	if (Names)
-	{
-		delete[] Names;
-	}
-
-	if (Param)
-	{
-		xf_free(Param);
-	}
-
-	if (Position)
-	{
-		xf_free(Position);
-	}
+	DontNeedKeyFileHelper();
 }
 
-void FilePositionCache::AddPosition(const wchar_t *Name,PosCache& poscache)
+void FilePositionCache::NeedKeyFileHelper()
 {
-	if (!IsMemory)
+	if (_kfh) {
 		return;
+	}
 
-	FARString strFullName;
+	_kfh.reset(new KeyFileHelper(
+		InMyConfig( (_kind == FPCK_VIEWER) ? "Viewer.CachePos" : "Editor.CachePos").c_str()));
+}
 
-	if (*Name==L'<')
-		strFullName = Name;
-	else
-		ConvertNameToFull(Name,strFullName);
+void FilePositionCache::DontNeedKeyFileHelper()
+{
+	if ( (_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
+		|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) )
+ 	{
+		if (_kfh->Save()) {
+			_kfh.reset();
+		}
+	}
+}
 
-	int FoundPos, Pos;
-	Pos = FoundPos = FindPosition(strFullName);
+void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
+{
+	NeedKeyFileHelper();
 
-	if (Pos < 0)
-		Pos = CurPos;
-
-	Names[Pos] = strFullName;
-	memcpy(Param+PARAM_POS(Pos),&poscache,MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
-	memset(Position+POSITION_POS(Pos,0),0xFF,MSIZE_POSITION1);
-
-	for (size_t i=0; i<4; i++)
+	if (!Opt.MaxPositionCache)
 	{
-		if (poscache.Position[i])
+		GetRegKey(L"System", L"MaxPositionCache", Opt.MaxPositionCache, MAX_POSITIONS);
+	}
+
+	if ((int)_kfh->SectionsCount() > Opt.MaxPositionCache + Opt.MaxPositionCache/2 + 16)
+	{
+		std::vector<std::string> sections = _kfh->EnumSections();
+		std::sort(sections.begin(), sections.end(), 
+			[&](const std::string & a, const std::string & b) -> bool
 		{
-			memcpy(Position+POSITION_POS(Pos,i),poscache.Position[i],BOOKMARK_COUNT*sizeof(DWORD64));
+			return _kfh->GetULL(a.c_str(), "Timestamp", 0)
+					<  _kfh->GetULL(b.c_str(), "Timestamp", 0);
+		});
+
+		size_t cnt = sections.size() - Opt.MaxPositionCache;
+		for (size_t i = 0; i < cnt && i < sections.size(); ++i) {
+			_kfh->RemoveSection(sections[i].c_str());
 		}
 	}
 
-	if (FoundPos < 0)
-		if (++CurPos>=Opt.MaxPositionCache)
-			CurPos=0;
-}
+	std::string section;
+	Wide2MB(name, section);
 
-
-
-bool FilePositionCache::GetPosition(const wchar_t *Name,PosCache& poscache)
-{
-	bool Result=false;
-	if (IsMemory)
-	{
-		FARString strFullName;
-
-		if (*Name==L'<')
-			strFullName = Name;
-		else
-			ConvertNameToFull(Name, strFullName);
-
-		int Pos = FindPosition(strFullName);
-		//memset(Position+POSITION_POS(CurPos,0),0xFF,(BOOKMARK_COUNT*4)*SizeValue);
-		//memcpy(Param+PARAM_POS(CurPos),PosCache,SizeValue*5); // При условии, что в TPosCache?? Param стоит первым :-)
-
-		if (Pos >= 0)
-		{
-			memcpy(&poscache,Param+PARAM_POS(Pos),MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
-
-			for (size_t i=0; i<4; i++)
-			{
-				if (poscache.Position[i])
-				{
-					memcpy(poscache.Position[i],Position+POSITION_POS(Pos,i),BOOKMARK_COUNT*sizeof(DWORD64));
-				}
-			}
-			Result=true;
-		}
-		return Result;
+	char key[64];
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Param); ++i) {
+		sprintf(key, "Param_%u", i);
+		_kfh->PutULL(section.c_str(), key, poscache.Param[i]);
 	}
-
-	memset(&poscache,0,sizeof(DWORD64)*5); // При условии, что в TPosCache?? Param стоит первым :-)
-	return FALSE;
-}
-
-int FilePositionCache::FindPosition(const wchar_t *FullName)
-{
-	for (int i=1; i<=Opt.MaxPositionCache; i++)
-	{
-		int Pos=CurPos-i;
-
-		if (Pos<0)
-			Pos+=Opt.MaxPositionCache;
-
-		int CmpRes=0;
-
-		CmpRes = StrCmp(Names[Pos],FullName);
-
-		if (!CmpRes)
-			return Pos;
-	}
-
-	return -1;
-}
-
-bool FilePositionCache::Read(const wchar_t *Key)
-{
-	bool Result=false;
-	if (IsMemory)
-	{
-		BYTE DefPos[MSIZE_POSITION1];
-		memset(DefPos,0xff,MSIZE_POSITION1);
-
-		for (int i=0; i < Opt.MaxPositionCache; i++)
-		{
-			FormatString strItem;
-			strItem<<L"Item"<<i;
-			FormatString strShort;
-			strShort<<L"Short"<<i;
-			GetRegKey(Key,strShort,(LPBYTE)Position+POSITION_POS(i,0),(LPBYTE)DefPos,MSIZE_POSITION1);
-			FARString strDataStr;
-			GetRegKey(Key,strItem,strDataStr,EmptyPos);
-
-			if (!StrCmp(strDataStr,EmptyPos))
-			{
-				Names[i].Clear();
-				memset(Param+PARAM_POS(i),0,sizeof(DWORD64)*5);
-			}
-			else
-			{
-				UserDefinedList DataList(0,0,0);
-
-				if (DataList.Set(strDataStr))
-				{
-					DataList.Reset();
-					for(int j=0;const wchar_t *DataPtr=DataList.GetNext();j++)
-					{
-						if (*DataPtr==L'$')
-						{
-							Names[i] = DataPtr+1;
-						}
-						else if (j >= 0 && j <= 4)
-						{
-							*reinterpret_cast<PDWORD64>(Param+PARAM_POS(i)+j*sizeof(DWORD64)) = _wtoi64(DataPtr);
-						}
-					}
-				}
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+		for (unsigned int j = 0; j < BOOKMARK_COUNT; ++j) {
+			sprintf(key, "Position_%u_%u", i, j);
+			if (poscache.Position[i]) {
+				_kfh->PutULL(section.c_str(), key, poscache.Position[i][j]);
+			} else {
+				_kfh->RemoveKey(section.c_str(), key);
 			}
 		}
-		Result=true;
 	}
-	return Result;
+
+	_kfh->PutULL(section.c_str(), "Timestamp", time(NULL));
+
+	DontNeedKeyFileHelper();
 }
 
-
-bool FilePositionCache::Save(const wchar_t *Key)
+bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 {
-	bool Result=false;
-	if (IsMemory)
-	{
-		for (int i=0; i < Opt.MaxPositionCache; i++)
-		{
-			FormatString strItem;
-			strItem<<L"Item"<<i;
-			FormatString strShort;
-			strShort<<L"Short"<<i;
-			int Pos=CurPos+i;
-			if (Pos>=Opt.MaxPositionCache)
-			{
-				Pos-=Opt.MaxPositionCache;
-			}
-			PDWORD64 Ptr=reinterpret_cast<PDWORD64>(Param+PARAM_POS(Pos));
+	NeedKeyFileHelper();
 
-			//Имя файла должно быть взято в кавычки, т.к. оно может содержать символы-разделители
-			FormatString strDataStr;
-			strDataStr<<(uint64_t)Ptr[0]<<L","<<(uint64_t)Ptr[1]<<L","<<(uint64_t)Ptr[2]<<L","<<(uint64_t)Ptr[3]<<L","<<(uint64_t)Ptr[4]<<L",\"$"<<Names[Pos]<<L"\"";
+	std::string section;
+	Wide2MB(name, section);
+	const auto *values = _kfh->GetSectionValues(section.c_str());
+	if (!values) {
+		return false;
+	}
 
-			//Пустая позиция?
-			if (!StrCmp(strDataStr,EmptyPos))
-			{
-				DeleteRegValue(Key,strItem);
-				continue;
-			}
+	char key[64];
 
-			SetRegKey(Key,strItem,strDataStr);
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Param); ++i) {
+		sprintf(key, "Param_%u", i);
+		poscache.Param[i] = values->GetULL(key, poscache.Param[i]);
+	}
 
-			if ((Opt.ViOpt.SaveShortPos && Opt.ViOpt.SavePos) || (Opt.EdOpt.SaveShortPos && Opt.EdOpt.SavePos))
-			{
-				// Если не запоминались позиции по RCtrl+<N>, то и не записываем их
-				bool found=false;
-				for (int j=0; j < 4; j++)
-				{
-					DWORD64 *CurLine=reinterpret_cast<PDWORD64>(Position+POSITION_POS(Pos,j));
-					// просмотр всех BOOKMARK_COUNT позиций.
-					for (int k=0; k < BOOKMARK_COUNT; ++k)
-					{
-						if (CurLine[k] != POS_NONE)
-						{
-							found=true;
-							break;
-						}
-					}
-
-					if (found)
-						break;
-				}
-
-				if (found)
-					SetRegKey(Key,strShort,Position+POSITION_POS(Pos,0),MSIZE_POSITION1);
-				else
-					DeleteRegValue(Key,strShort);
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+		for (unsigned int j = 0; j < BOOKMARK_COUNT; ++j) {
+			if (poscache.Position[i]) {
+				sprintf(key, "Position_%u_%u", i, j);
+				poscache.Position[i][j] = values->GetULL(key, 0);
 			}
 		}
-		Result=true;
 	}
-	return Result;
+
+	// values = nullptr;
+
+	_kfh->PutULL(section.c_str(), "Timestamp", time(NULL));
+
+	DontNeedKeyFileHelper();
+
+	return true;
 }
+

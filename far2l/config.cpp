@@ -1054,8 +1054,6 @@ void ReadConfig()
 
 	Opt.EdOpt.strWordDiv = Opt.strWordDiv;
 	FileList::ReadPanelModes();
-	CtrlObject->EditorPosCache->Read(L"Editor/LastPositions");
-	CtrlObject->ViewerPosCache->Read(L"Viewer/LastPositions");
 	// уточняем системную политику
 	// для дисков HKCU может только отменять показ
 	Opt.Policies.ShowHiddenDrives&=OptPolicies_ShowHiddenDrives;

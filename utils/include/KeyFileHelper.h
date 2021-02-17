@@ -11,6 +11,7 @@ struct KeyFileValues : std::unordered_map<std::string, std::string>
 	std::wstring GetString(const char *name, const wchar_t *def) const;
 	int GetInt(const char *name, int def = 0) const;
 	unsigned int GetUInt(const char *name, unsigned int def = 0) const;
+	unsigned long long GetULL(const char *name, unsigned long long def = 0) const;
 	std::vector<std::string> EnumKeys() const;
 };
 
@@ -36,13 +37,20 @@ public:
 
 	bool IsLoaded() const { return _loaded; }
 
+	size_t SectionsCount() const;
+
 	bool HasSection(const char *section) const;
+
+	// returned value valid only until next modify operation
+	const KeyFileValues *GetSectionValues(const char *section) const;
+
 	bool HasKey(const char *section, const char *name) const;
 	std::string GetString(const char *section, const char *name, const char *def = "") const;
 	std::wstring GetString(const char *section, const char *name, const wchar_t *def) const;
 	void GetChars(char *buffer, size_t buf_size, const char *section, const char *name, const char *def = "") const;
 	int GetInt(const char *section, const char *name, int def = 0) const;
 	unsigned int GetUInt(const char *section, const char *name, unsigned int def = 0) const;
+	unsigned long long GetULL(const char *section, const char *name, unsigned long long def = 0) const;
 	std::vector<std::string> EnumSections() const;
 	std::vector<std::string> EnumSectionsAt(const char *parent_section, bool recursed = false) const;
 	std::vector<std::string> EnumKeys(const char *section) const;
@@ -63,6 +71,7 @@ public:
 	void PutString(const char *section, const char *name, const wchar_t *value);
 	void PutInt(const char *section, const char *name, int value);
 	void PutUInt(const char *section, const char *name, unsigned int value);
+	void PutULL(const char *section, const char *name, unsigned long long value);
 	bool RemoveSection(const char *section);
 	size_t RemoveSectionsAt(const char *parent_section);
 	void RemoveKey(const char *section, const char *name);

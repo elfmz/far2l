@@ -22,6 +22,8 @@ class ConsolePaintContext
 	wxString _buffer;
 	wxString _cft_tmp;
 
+	std::vector<CHAR_INFO> _line;
+
 	std::map<WinPortRGB, wxBrush> _color2brush;
 	wxPen _transparent_pen{wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT};
 	

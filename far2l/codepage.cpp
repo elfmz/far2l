@@ -587,7 +587,7 @@ void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7, bool b
 	favoriteCodePages = normalCodePages = 0;
 	CodePages->DeleteItems();
 
-	UnicodeString title = MSG(MGetCodePageTitle);
+	FARString title = MSG(MGetCodePageTitle);
 	if (Opt.CPMenuMode)
 		title += L" *";
 	CodePages->SetTitle(title);

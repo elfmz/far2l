@@ -17,6 +17,9 @@
 
 namespace Mounts
 {
+	static FARString strRootPath(L"/"), strRootName(L"&/");
+	static FARString strHomeName(L"&~"), strSameName(L"&-");
+
 	Enum::Enum(FARString &another_curdir)
 	{
 		std::string cmd = GetMyScriptQuoted("mounts.sh");
@@ -61,11 +64,11 @@ namespace Mounts
 		}
 
 		if (!has_rootfs) {
-			emplace(begin(), Entry{ L"/", L"&/"});
+			emplace(begin(), Entry{ strRootPath, strRootName});
 		}
 
-		emplace(begin(), Entry(GetMyHome(), L"&~"));
-		emplace(begin(), Entry(another_curdir, L"&-"));
+		emplace(begin(), Entry(GetMyHome(), strHomeName));
+		emplace(begin(), Entry(another_curdir, strSameName));
 
 		for (const auto &m : *this) {
 			if (max_path < m.path.GetLength())

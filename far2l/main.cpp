@@ -621,7 +621,6 @@ int FarAppMain(int argc, char **argv)
 	}
 
 	WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
-	SetHighlighting();
 	initMacroVarTable(1);
 
 	CheckForImportLegacyShortcuts();

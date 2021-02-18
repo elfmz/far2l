@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
 	: _kind(kind),
-	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "Viewer.pos" : "Editor.pos"))
+	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "viewer.pos" : "editor.pos"))
 {
 }
 
@@ -63,8 +63,7 @@ void FilePositionCache::ApplyElementsLimit()
 	{
 		std::vector<std::string> sections = _kfh->EnumSections();
 		std::sort(sections.begin(), sections.end(),
-			[&](const std::string &a, const std::string &b) -> bool
-		{
+			[&](const std::string &a, const std::string &b) -> bool {
 			return _kfh->GetULL(a.c_str(), "TS", 0) <  _kfh->GetULL(b.c_str(), "TS", 0);
 		});
 

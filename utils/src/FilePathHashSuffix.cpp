@@ -21,7 +21,8 @@ void FilePathHashSuffix(std::string &pathname)
 	}
 
 	for (auto &c : pathname) {
-		if (c == '[' || c == ']' || c == '\r' || c == '\n' || c == '\t' || c == ' ') {
+		if (c == '#' || c == ';' || c == '[' || c == ']'
+				|| c == '\r' || c == '\n' || c == '\t' || c == ' ') {
 			suffix = crc64(suffix, (const unsigned char *)&c, 1);
 			c = '_';
 		}

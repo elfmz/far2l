@@ -96,11 +96,8 @@ static std::string SortgroupsIni()
 }
 
 
-static void SetHighlighting()
+static void SetDefaultHighlighting()
 {
-	KeyFileHelper kfh(HighlightIni().c_str());
-
-	FARString strRegKey;
 	static const wchar_t *Masks[]=
 	{
 		/* 0 */ L"*.*",
@@ -142,27 +139,15 @@ static void SetHighlighting()
 	    };
 
 
+	KeyFileHelper kfh(HighlightIni().c_str());
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
 	{
-		std::string Section = StrPrintf("Group%d", I);
-		strRegKey.Format(L"%ls/Group%d",RegColorsHighlight,I);
-
-		FARString strMask;
-		GetRegKey(strRegKey, FARString(HLS.Mask), strMask, StdHighlightData[I].Mask);
-
-		kfh.PutString(Section.c_str(), HLS.Mask, strMask.CPtr());
-
-		kfh.PutUInt(Section.c_str(), HLS.IgnoreMask,
-			GetRegKey(strRegKey, FARString(HLS.IgnoreMask), StdHighlightData[I].IgnoreMask));
-
-		kfh.PutUInt(Section.c_str(), HLS.IncludeAttributes,
-			GetRegKey(strRegKey, FARString(HLS.IncludeAttributes), StdHighlightData[I].IncludeAttr));
-
-		kfh.PutUInt(Section.c_str(), HLS.NormalColor,
-			GetRegKey(strRegKey, FARString(HLS.NormalColor), StdHighlightData[I].NormalColor));
-
-		kfh.PutUInt(Section.c_str(), HLS.CursorColor,
-			GetRegKey(strRegKey, FARString(HLS.CursorColor), StdHighlightData[I].CursorColor));
+		const std::string &Section = StrPrintf("Group%d", I);
+		kfh.PutString(Section.c_str(), HLS.Mask, StdHighlightData[I].Mask);
+		kfh.PutUInt(Section.c_str(), HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
+		kfh.PutUInt(Section.c_str(), HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
+		kfh.PutUInt(Section.c_str(), HLS.NormalColor, StdHighlightData[I].NormalColor);
+		kfh.PutUInt(Section.c_str(), HLS.CursorColor, StdHighlightData[I].CursorColor);
 	}
 }
 
@@ -178,7 +163,7 @@ HighlightFiles::HighlightFiles()
 		SaveHiData();
 
 	} else {
-		SetHighlighting();
+		SetDefaultHighlighting();
 		InitHighlightFiles();
 	}
 
@@ -313,27 +298,25 @@ void HighlightFiles::InitHighlightFiles()
 
 			if (GroupDelta[j] != DEFAULT_SORT_GROUP)
 			{
-				strMask = kfh.GetString(".", strGroupName.c_str(), "");
 				if (!kfh.HasKey(".", strGroupName.c_str()))
 					break;
+				strMask = kfh.GetString(".", strGroupName.c_str(), "");
 			}
 			else
 			{
-				strMask = Values->GetString(HLS.Mask, "");
 				if (!Values->HasKey(HLS.Mask))
 					break;
+				strMask = Values->GetString(HLS.Mask, "");
 			}
 			FileFilterParams *HData = HiData.addItem();
 
-			if (HData)
-			{
-				LoadFilter(HData, Values, strMask,
-					GroupDelta[j] + (GroupDelta[j] == DEFAULT_SORT_GROUP ? 0 : i),
-					(GroupDelta[j] == DEFAULT_SORT_GROUP ? false : true));
-				(*(Count[j]))++;
-			}
-			else
+			if (!HData)
 				break;
+
+			LoadFilter(HData, Values, strMask,
+				GroupDelta[j] + (GroupDelta[j] == DEFAULT_SORT_GROUP ? 0 : i),
+				(GroupDelta[j] == DEFAULT_SORT_GROUP ? false : true));
+			(*(Count[j]))++;
 		}
 	}
 }
@@ -668,7 +651,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 					remove(HighlightIni().c_str());
 					//DeleteKeyTree(RegColorsHighlight);
-					SetHighlighting();
+					SetDefaultHighlighting();
 					HiMenu.Hide();
 					ClearData();
 					InitHighlightFiles();

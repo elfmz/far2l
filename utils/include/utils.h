@@ -70,7 +70,7 @@ bool TranslateInstallPath_Share2Lib(std::string &path);
 
 // converts /some/path/to/filename.extension into form "filename@HASH"
 // where HASH produced from path and extension and also filename has
-// chars '\r' '\n' '[' ']' ' ' replaced by '_' and affected HASH
+// some special for ini files chars replaced by '_' and affected HASH
 void FilePathHashSuffix(std::string &pathname);
 
 void CheckedCloseFD(int &fd);

@@ -81,8 +81,10 @@ void FilePositionCache::CheckForSave()
 	// will see other's changes too.
 	// If save is disabled then keep _kfh - it will serve as in memory
 	// storage for our instance lifetime or until user will enable saving.
-	if ( (_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
-		|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) )
+
+	if (_kfh &&
+			((_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
+			|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) ) )
  	{
 		if (_kfh->Save()) {
 			_kfh.reset();

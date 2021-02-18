@@ -175,6 +175,7 @@ HighlightFiles::HighlightFiles()
 
 	} else if (CheckRegKey(FARString(RegColorsHighlight))) {
 		InitHighlightFilesFromReg();
+		SaveHiData();
 
 	} else {
 		SetHighlighting();

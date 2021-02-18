@@ -539,10 +539,24 @@ void KeyFileHelper::PutUInt(const char *section, const char *name, unsigned int 
 	PutString(section, name, tmp);
 }
 
+void KeyFileHelper::PutUIntAsHex(const char *section, const char *name, unsigned int value)
+{
+	char tmp[32];
+	sprintf(tmp, "0x%x", value);
+	PutString(section, name, tmp);
+}
+
 void KeyFileHelper::PutULL(const char *section, const char *name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "%llu", value);
+	PutString(section, name, tmp);
+}
+
+void KeyFileHelper::PutULLAsHex(const char *section, const char *name, unsigned long long value)
+{
+	char tmp[64];
+	sprintf(tmp, "0x%llx", value);
 	PutString(section, name, tmp);
 }
 

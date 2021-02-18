@@ -173,7 +173,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			}
 		}
 
-		_kfh->PutULL(section.c_str(), "TS", time(NULL));
+		_kfh->PutULLAsHex(section.c_str(), "TS", time(NULL));
 
 	} else {
 		_kfh->RemoveSection(section.c_str());

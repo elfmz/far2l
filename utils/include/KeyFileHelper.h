@@ -73,7 +73,9 @@ public:
 	void PutString(const char *section, const char *name, const wchar_t *value);
 	void PutInt(const char *section, const char *name, int value);
 	void PutUInt(const char *section, const char *name, unsigned int value);
+	void PutUIntAsHex(const char *section, const char *name, unsigned int value);
 	void PutULL(const char *section, const char *name, unsigned long long value);
+	void PutULLAsHex(const char *section, const char *name, unsigned long long value);
 	void PutBytes(const char *section, const char *name, const unsigned char *buf, size_t len);
 	bool RemoveSection(const char *section);
 	size_t RemoveSectionsAt(const char *parent_section);

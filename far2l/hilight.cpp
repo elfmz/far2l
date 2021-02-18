@@ -895,20 +895,20 @@ static void SaveFilter(FileFilterParams *CurHiData, KeyFileHelper &kfh, const ch
 	kfh.PutString(Section, HLS.SizeBelow, SizeBelow);
 	DWORD AttrSet = 0, AttrClear = 0;
 	kfh.PutUInt(Section, HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
-	kfh.PutUInt(Section, bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes, AttrSet);
-	kfh.PutUInt(Section, bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes, AttrClear);
+	kfh.PutUIntAsHex(Section, bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes, AttrSet);
+	kfh.PutUIntAsHex(Section, bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes, AttrClear);
 	HighlightDataColor Colors;
 	CurHiData->GetColors(&Colors);
-	kfh.PutUInt(Section, HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
-	kfh.PutUInt(Section, HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
-	kfh.PutUInt(Section, HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	kfh.PutUInt(Section, HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	kfh.PutUInt(Section, HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
-	kfh.PutUInt(Section, HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
-	kfh.PutUInt(Section, HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	kfh.PutUInt(Section, HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	kfh.PutUInt(Section, HLS.MarkChar, Colors.MarkChar);
-	kfh.PutUInt(Section, HLS.ContinueProcessing, (CurHiData->GetContinueProcessing()?1:0));
+	kfh.PutUIntAsHex(Section, HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
+	kfh.PutUIntAsHex(Section, HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
+	kfh.PutUIntAsHex(Section, HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	kfh.PutUIntAsHex(Section, HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	kfh.PutUIntAsHex(Section, HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
+	kfh.PutUIntAsHex(Section, HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
+	kfh.PutUIntAsHex(Section, HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	kfh.PutUIntAsHex(Section, HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	kfh.PutUIntAsHex(Section, HLS.MarkChar, Colors.MarkChar);
+	kfh.PutUInt(Section, HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
 
 void HighlightFiles::SaveHiData()
@@ -935,21 +935,21 @@ void HighlightFiles::SaveHiData()
 			std::string strGroupName = StrPrintf(GroupNames[j], i - Count[j][0]);
 			FileFilterParams *CurHiData = HiData.getItem(i);
 
-			if (j && j!=3)
+			if (j == 1 || j == 2)
 			{
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
 				kfh.PutString(".", strGroupName.c_str(), Mask);
 			}
 
-			SaveFilter(CurHiData, kfh, strGroupName.c_str(), (j && j != 3) );
+			SaveFilter(CurHiData, kfh, strGroupName.c_str(), (j == 1 || j == 2) );
 		}
 
 		for (int i=0; i<5; i++)
 		{
 			std::string strGroupName = StrPrintf(GroupNames[j], Count[j][1] - Count[j][0] + i);
 
-			if (j && j!=3)
+			if (j == 1 || j == 2)
 			{
 				kfh.RemoveKey(".", strGroupName.c_str());
 			}

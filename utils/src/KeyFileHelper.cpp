@@ -48,7 +48,12 @@ int KeyFileValues::GetInt(const char *name, int def) const
 {
 	const auto &it = find(name);
 	if (it != end()) {
-		sscanf(it->second.c_str(), "%d", &def);
+		const char *sz = it->second.c_str();
+		if (sz[0] == '0' && sz[1] == 'x') {
+			sscanf(sz + 2, "%x", &def);
+		} else {
+			sscanf(sz, "%d", &def);
+		}
 	}
 
 	return def;
@@ -58,7 +63,12 @@ unsigned int KeyFileValues::GetUInt(const char *name, unsigned int def) const
 {
 	const auto &it = find(name);
 	if (it != end()) {
-		sscanf(it->second.c_str(), "%u", &def);
+		const char *sz = it->second.c_str();
+		if (sz[0] == '0' && sz[1] == 'x') {
+			sscanf(sz + 2, "%x", &def);
+		} else {
+			sscanf(sz, "%u", &def);
+		}
 	}
 
 	return def;
@@ -68,7 +78,12 @@ unsigned long long KeyFileValues::GetULL(const char *name, unsigned long long de
 {
 	const auto &it = find(name);
 	if (it != end()) {
-		sscanf(it->second.c_str(), "%llu", &def);
+		const char *sz = it->second.c_str();
+		if (sz[0] == '0' && sz[1] == 'x') {
+			sscanf(sz + 2, "%llx", &def);
+		} else {
+			sscanf(sz, "%llu", &def);
+		}
 	}
 
 	return def;

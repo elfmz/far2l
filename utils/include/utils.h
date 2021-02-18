@@ -14,6 +14,14 @@ template <class C> static size_t tzlen(const C *ptz)
 }
 
 
+// converts given hex digit to value between 0x0 and 0xf
+// in case of error returns 0xff
+unsigned char digit_htob(const char c);
+
+// converts given value between 0x0 and 0xf to hex digit
+// in case of error returns 0
+char digit_btoh(const unsigned char c);
+
 unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
 unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
 
@@ -60,7 +68,10 @@ bool TranslateInstallPath_Lib2Share(std::string &path);
 bool TranslateInstallPath_Share2Lib(std::wstring &path);
 bool TranslateInstallPath_Share2Lib(std::string &path);
 
-
+// converts /some/path/to/filename.extension into form "filename@HASH"
+// where HASH produced from path and extension and also filename has
+// chars '\r' '\n' '[' ']' ' ' replaced by '_' and affected HASH
+void FilePathHashSuffix(std::string &pathname);
 
 void CheckedCloseFD(int &fd);
 void CheckedCloseFDPair(int *fd);

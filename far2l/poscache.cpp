@@ -39,39 +39,49 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "registry.hpp"
 #include "config.hpp"
 
-#define MSIZE_PARAM1           (sizeof(DWORD64)*5)
-#define MSIZE_PARAM            (Opt.MaxPositionCache*MSIZE_PARAM1)
-#define MSIZE_POSITION1        (BOOKMARK_COUNT*sizeof(DWORD64)*4)
-#define MSIZE_POSITION         (Opt.MaxPositionCache*MSIZE_POSITION1)
-
-#define PARAM_POS(Pos)         ((Pos)*MSIZE_PARAM1)
-#define POSITION_POS(Pos,Idx)  (((Pos)*4+(Idx))*BOOKMARK_COUNT*sizeof(DWORD64))
-
-LPCWSTR EmptyPos=L"0,0,0,0,0,\"$\"";
-
-
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
-	:_kind(kind)
+	: _kind(kind),
+	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "Viewer.pos" : "Editor.pos"))
 {
 }
 
 FilePositionCache::~FilePositionCache()
 {
-	DontNeedKeyFileHelper();
+	CheckForSave();
 }
 
-void FilePositionCache::NeedKeyFileHelper()
+void FilePositionCache::ApplyElementsLimit()
 {
-	if (_kfh) {
-		return;
+	int MaxPositionCache = Opt.MaxPositionCache;
+
+	if (!MaxPositionCache)
+	{
+		GetRegKey(L"System", L"MaxPositionCache", MaxPositionCache, POSCACHE_MAX_ELEMENTS);
 	}
 
-	_kfh.reset(new KeyFileHelper(
-		InMyConfig( (_kind == FPCK_VIEWER) ? "Viewer.CachePos" : "Editor.CachePos").c_str()));
+	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16)
+	{
+		std::vector<std::string> sections = _kfh->EnumSections();
+		std::sort(sections.begin(), sections.end(),
+			[&](const std::string &a, const std::string &b) -> bool
+		{
+			return _kfh->GetULL(a.c_str(), "TS", 0) <  _kfh->GetULL(b.c_str(), "TS", 0);
+		});
+
+		int cnt = (int)sections.size() - MaxPositionCache;
+		for (int i = 0; i < cnt; ++i) {
+			_kfh->RemoveSection(sections[i].c_str());
+		}
+	}
 }
 
-void FilePositionCache::DontNeedKeyFileHelper()
+void FilePositionCache::CheckForSave()
 {
+	// If saving enabled then save _kfh to file and release,
+	// so other instances will see changes immediately and our instance
+	// will see other's changes too.
+	// If save is disabled then keep _kfh - it will serve as in memory
+	// storage for our instance lifetime or until user will enable saving.
 	if ( (_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
 		|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) )
  	{
@@ -81,87 +91,129 @@ void FilePositionCache::DontNeedKeyFileHelper()
 	}
 }
 
-void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
+static void MakeSectionName(const wchar_t *name, std::string &section)
 {
-	NeedKeyFileHelper();
+	if (*name != L'<') {
+		FARString full_name;
+		ConvertNameToFull(name, full_name);
+		Wide2MB(full_name, section);
 
-	if (!Opt.MaxPositionCache)
-	{
-		GetRegKey(L"System", L"MaxPositionCache", Opt.MaxPositionCache, MAX_POSITIONS);
+	} else {
+		Wide2MB(name, section);
 	}
 
-	if ((int)_kfh->SectionsCount() > Opt.MaxPositionCache + Opt.MaxPositionCache/2 + 16)
-	{
-		std::vector<std::string> sections = _kfh->EnumSections();
-		std::sort(sections.begin(), sections.end(), 
-			[&](const std::string & a, const std::string & b) -> bool
-		{
-			return _kfh->GetULL(a.c_str(), "Timestamp", 0)
-					<  _kfh->GetULL(b.c_str(), "Timestamp", 0);
-		});
+	FilePathHashSuffix(section);
+}
 
-		size_t cnt = sections.size() - Opt.MaxPositionCache;
-		for (size_t i = 0; i < cnt && i < sections.size(); ++i) {
-			_kfh->RemoveSection(sections[i].c_str());
+static size_t ParamCountToSave(const DWORD64 *param)
+{
+	for (size_t i = POSCACHE_PARAM_COUNT; i != 0; --i) {
+		if (param[i - 1] != 0) {
+			return i;
 		}
 	}
 
-	std::string section;
-	Wide2MB(name, section);
+	return 0;
+}
 
-	char key[64];
-	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Param); ++i) {
-		sprintf(key, "Param_%u", i);
-		_kfh->PutULL(section.c_str(), key, poscache.Param[i]);
+static size_t PositionCountToSave(const DWORD64 *position)
+{
+	if (position) {
+		for (size_t i = POSCACHE_BOOKMARK_COUNT; i != 0; --i) {
+			if (position[i - 1] != POS_NONE) {
+				return i;
+			}
+		}
 	}
-	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
-		for (unsigned int j = 0; j < BOOKMARK_COUNT; ++j) {
-			sprintf(key, "Position_%u_%u", i, j);
-			if (poscache.Position[i]) {
-				_kfh->PutULL(section.c_str(), key, poscache.Position[i][j]);
+
+	return 0;
+}
+
+void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
+{
+	if (!_kfh) {
+		_kfh.reset(new KeyFileHelper(_kf_path.c_str()));
+	}
+
+	ApplyElementsLimit();
+
+	bool have_some_to_save = true;
+	std::string section;
+	MakeSectionName(name, section);
+
+	size_t save_count = ParamCountToSave(poscache.Param);
+	if (save_count) {
+		_kfh->PutBytes(section.c_str(), "Par",
+			(unsigned char *)&poscache.Param[0], save_count * sizeof(poscache.Param[0]));
+
+	} else {
+		have_some_to_save = false;
+		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+			if (PositionCountToSave(poscache.Position[i]) ){
+				have_some_to_save = true;
+				break;
+			}
+		}
+		if (have_some_to_save) {
+			_kfh->RemoveKey(section.c_str(), "Par");
+		}
+	}
+
+	if (have_some_to_save) {
+		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+			char key[64];
+			sprintf(key, "Pos%u", i);
+			save_count = PositionCountToSave(poscache.Position[i]);
+			if (save_count) {
+				_kfh->PutBytes(section.c_str(), key,
+					(unsigned char *)poscache.Position[i], save_count * sizeof(poscache.Position[i][0]));
 			} else {
 				_kfh->RemoveKey(section.c_str(), key);
 			}
 		}
+
+		_kfh->PutULL(section.c_str(), "TS", time(NULL));
+
+	} else {
+		_kfh->RemoveSection(section.c_str());
 	}
 
-	_kfh->PutULL(section.c_str(), "Timestamp", time(NULL));
-
-	DontNeedKeyFileHelper();
+	CheckForSave();
 }
 
 bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 {
-	NeedKeyFileHelper();
-
 	std::string section;
-	Wide2MB(name, section);
-	const auto *values = _kfh->GetSectionValues(section.c_str());
-	if (!values) {
-		return false;
-	}
+	MakeSectionName(name, section);
 
-	char key[64];
-
-	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Param); ++i) {
-		sprintf(key, "Param_%u", i);
-		poscache.Param[i] = values->GetULL(key, poscache.Param[i]);
-	}
-
-	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
-		for (unsigned int j = 0; j < BOOKMARK_COUNT; ++j) {
-			if (poscache.Position[i]) {
-				sprintf(key, "Position_%u_%u", i, j);
-				poscache.Position[i][j] = values->GetULL(key, 0);
-			}
+	std::unique_ptr<KeyFileReadSection> tmp_kfrs;
+	const KeyFileValues *values;
+	if (_kfh) {
+		values = _kfh->GetSectionValues(section.c_str());
+		if (!values) {
+			return false;
 		}
+
+	} else {
+		tmp_kfrs.reset(new KeyFileReadSection(_kf_path.c_str(), section.c_str()));
+		if (!tmp_kfrs->SectionLoaded()) {
+			return false;
+		}
+		values = tmp_kfrs.get();
 	}
 
-	// values = nullptr;
+	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
+	values->GetBytes("Par",
+		(unsigned char *)&poscache.Param[0], sizeof(poscache.Param));
 
-	_kfh->PutULL(section.c_str(), "Timestamp", time(NULL));
-
-	DontNeedKeyFileHelper();
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
+		memset(poscache.Position[i], 0xff,
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+		char key[64];
+		sprintf(key, "Pos%u", i);
+		values->GetBytes(key, (unsigned char *)poscache.Position[i],
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+	}
 
 	return true;
 }

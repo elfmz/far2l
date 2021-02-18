@@ -74,6 +74,22 @@ unsigned long long KeyFileValues::GetULL(const char *name, unsigned long long de
 	return def;
 }
 
+size_t KeyFileValues::GetBytes(const char *name, unsigned char *buf, size_t len) const
+{
+	const auto &it = find(name);
+	if (it == end()) {
+		return 0;
+	}
+
+	size_t i;
+
+	for (i = 0; i < len && i * 2 + 1 < it->second.size(); ++i) {
+		buf[i] = (digit_htob(it->second[i * 2]) << 4) | digit_htob(it->second[i * 2 + 1]);
+	}
+
+	return i;
+}
+
 std::vector<std::string> KeyFileValues::EnumKeys() const
 {
 	std::vector<std::string> out;
@@ -332,6 +348,16 @@ unsigned long long KeyFileReadHelper::GetULL(const char *section, const char *na
 }
 
 
+size_t KeyFileReadHelper::GetBytes(const char *section, const char *name, unsigned char *buf, size_t len) const
+{
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		return it->second.GetBytes(name, buf, len);
+	}
+
+	return 0;
+}
+
 
 /////////////////////////////////////////////////////////////
 KeyFileHelper::KeyFileHelper(const char *filename, bool load)
@@ -409,7 +435,7 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 		return false;
 	}
 
-	_dirty  = false;
+	_dirty = false;
 	return true;
 }
 
@@ -460,25 +486,32 @@ void KeyFileHelper::RemoveKey(const char *section, const char *name)
 
 void KeyFileHelper::PutString(const char *section, const char *name, const char *value)
 {
-	_dirty = true;
 	if (!value) {
 		value = "";
 	}
-	_kf[section][name] = value;
+
+	auto &ref = _kf[section][name];
+	if (!*value || ref != value) {
+		ref = value;
+		_dirty = true;
+	}
 }
 
 void KeyFileHelper::PutString(const char *section, const char *name, const wchar_t *value)
 {
-	_dirty = true;
 	if (!value) {
 		value = L"";
 	}
-	_kf[section][name] = Wide2MB(value);
+	const std::string &value_mb = Wide2MB(value);
+	auto &ref = _kf[section][name];
+	if (value_mb.empty() || ref != value_mb) {
+		ref = value_mb;
+		_dirty = true;
+	}
 }
 
 void KeyFileHelper::PutInt(const char *section, const char *name, int value)
 {
-	_dirty = true;
 	char tmp[32];
 	sprintf(tmp, "%d", value);
 	PutString(section, name, tmp);
@@ -486,7 +519,6 @@ void KeyFileHelper::PutInt(const char *section, const char *name, int value)
 
 void KeyFileHelper::PutUInt(const char *section, const char *name, unsigned int value)
 {
-	_dirty = true;
 	char tmp[32];
 	sprintf(tmp, "%u", value);
 	PutString(section, name, tmp);
@@ -494,10 +526,28 @@ void KeyFileHelper::PutUInt(const char *section, const char *name, unsigned int 
 
 void KeyFileHelper::PutULL(const char *section, const char *name, unsigned long long value)
 {
-	_dirty = true;
 	char tmp[64];
 	sprintf(tmp, "%llu", value);
 	PutString(section, name, tmp);
 }
 
-
+void KeyFileHelper::PutBytes(const char *section, const char *name, const unsigned char *buf, size_t len)
+{
+	std::string &v = _kf[section][name];
+	if (v.size() != len * 2) {
+		v.resize(len * 2);
+		_dirty = true;
+	}
+	for (size_t i = 0; i < len; ++i) {
+		char dig = digit_btoh(buf[i] >> 4);
+		if (v[i * 2] != dig) {
+			v[i * 2] = dig;
+			_dirty = true;
+		}
+		dig = digit_btoh(buf[i] & 0xf);
+		if (v[i * 2 + 1] != dig) {
+			v[i * 2 + 1] = dig;
+			_dirty = true;
+		}
+	}
+}

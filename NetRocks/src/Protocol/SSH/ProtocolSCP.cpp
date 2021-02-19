@@ -218,7 +218,7 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw 
 		throw ProtocolError("Simulated getmode error");
 #endif
 
-	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | 
+	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// |
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -261,7 +261,7 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 		throw ProtocolError("Simulated getsize error");
 #endif
 
-	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | SSH_SCP_RECURSIVE
+	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -298,7 +298,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
 		throw ProtocolError("Simulated getinfo error");
 #endif
-	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, QuotedArg(path).c_str()));// | SSH_SCP_RECURSIVE
+	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -361,7 +361,7 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 		throw ProtocolError("Simulated mkdir error");
 #endif
 
-	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, QuotedArg(ExtractFilePath(path)).c_str()));// 
+	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, ExtractFilePath(path).c_str()));//
 	int rc = ssh_scp_init(scp);
   	if (rc != SSH_OK){
 		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
@@ -376,7 +376,7 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
 {
 	SimpleCommand sc(_conn);
-	int rc = sc.Execute("rename %s %s", QuotedArg(path_old).c_str(), QuotedArg(path_new).c_str());
+	int rc = sc.Execute("mv %s %s", QuotedArg(path_old).c_str(), QuotedArg(path_new).c_str());
 	if (rc != 0) {
 		throw ProtocolError(sc.Error().c_str(), rc);
 	}
@@ -562,7 +562,7 @@ public:
 	SCPFileReader(std::shared_ptr<SSHConnection> &conn, const std::string &path)
 	:
 		_conn(conn),
-		_scp(ssh_scp_new(conn->ssh, SSH_SCP_READ, QuotedArg(path).c_str()))
+		_scp(ssh_scp_new(conn->ssh, SSH_SCP_READ, path.c_str()))
 	{
 		int rc = ssh_scp_init(_scp);
   		if (rc != SSH_OK){
@@ -640,7 +640,7 @@ public:
 	SCPFileWriter(std::shared_ptr<SSHConnection> &conn, const std::string &path, mode_t mode, unsigned long long size_hint)
 	:
 		_conn(conn),
-		_scp(ssh_scp_new(conn->ssh, SSH_SCP_WRITE, QuotedArg(ExtractFilePath(path)).c_str())),
+		_scp(ssh_scp_new(conn->ssh, SSH_SCP_WRITE, ExtractFilePath(path).c_str())),
 		_pending_size(size_hint)
 	{
 		mode&= 0777;

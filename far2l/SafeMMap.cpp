@@ -55,7 +55,7 @@ static void SignalSafeLToA(long l, char *str, size_t last_char_ofs)
 {
 	while (l) {
 		char x = (l % 16);
-		str[last_char_ofs] = (x < 10) ? '0' + x : 'A' + x;
+		str[last_char_ofs] = (x < 10) ? '0' + x : 'A' + (x - 10);
 		l/= 16;
 		if (!last_char_ofs) break;
 		--last_char_ofs;

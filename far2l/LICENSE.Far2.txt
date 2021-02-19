@@ -47,7 +47,7 @@ scrobj.hpp scrsaver.cpp scrsaver.hpp setattr.cpp setattr.hpp setcolor.cpp setcol
 stddlg.cpp stddlg.hpp strmix.cpp strmix.hpp svn_tag_build.m4 synchro.cpp synchro.hpp 
 syntax.cpp syntax.hpp syslog.cpp syslog.hpp TaskBar.cpp TaskBar.hpp tools.m4 
 TPreRedrawFunc.cpp TPreRedrawFunc.hpp treelist.cpp treelist.hpp TStack.hpp tvar.cpp 
-tvar.hpp udlist.cpp udlist.hpp UnicodeString.cpp UnicodeString.hpp usermenu.cpp 
+tvar.hpp udlist.cpp udlist.hpp FARString.cpp FARString.hpp usermenu.cpp 
 usermenu.hpp vbuild.m4 vc10u.cpp viewer.cpp viewer.hpp vmenu.cpp vmenu.hpp 
 wakeful.hpp window.cpp window.hpp wrap.cpp xlat.cpp xlat.hpp
 

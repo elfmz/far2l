@@ -66,6 +66,7 @@ class HighlightFiles
 
 	private:
 		void InitHighlightFiles();
+		void InitHighlightFilesFromReg();
 		void ClearData();
 
 		int  MenuPosToRealPos(int MenuPos, int **Count, bool Insert=false);
@@ -84,5 +85,3 @@ class HighlightFiles
 
 		void SaveHiData();
 };
-
-void SetHighlighting();

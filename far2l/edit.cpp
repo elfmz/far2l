@@ -3070,7 +3070,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 					CurPos--;
 				}
 
-				InsertString(ComplMenu.GetItemPtr(0)->strName+SelStart);
+				InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
 				Select(SelStart, GetLength());
 				Show();
 			}
@@ -3142,7 +3142,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 										}
 
 										DisableCallback DC(m_Callback.Active);
-										InsertString(ComplMenu.GetItemPtr(0)->strName+SelStart);
+										InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
 										if(X2-X1>GetLength())
 											SetLeftPos(0);
 										Select(SelStart, GetLength());

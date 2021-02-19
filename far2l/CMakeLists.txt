@@ -118,7 +118,7 @@ TPreRedrawFunc.cpp
 treelist.cpp
 tvar.cpp
 udlist.cpp
-UnicodeString.cpp
+FARString.cpp
 usermenu.cpp
 viewer.cpp
 vmenu.cpp

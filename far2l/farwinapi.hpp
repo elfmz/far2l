@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "plugin.hpp"
-#include "UnicodeString.hpp"
+#include "FARString.hpp"
 #include "noncopyable.hpp"
 #include <string.h>
 #include <map>

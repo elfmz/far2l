@@ -556,7 +556,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						{
 							if (item->pPlugin)
 							{
-								FARString strName = ChDisk.GetItemPtr(SelPos)->strName + 3;
+								FARString strName = ChDisk.GetItemPtr(SelPos)->strName.SubStr(3);
 								RemoveExternalSpaces(strName);
 
 								if (CtrlObject->Plugins.SetHotKeyDialog(strName,

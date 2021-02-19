@@ -32,276 +32,190 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <algorithm>
 
 #include "poscache.hpp"
 #include "udlist.hpp"
 #include "registry.hpp"
 #include "config.hpp"
 
-#define MSIZE_PARAM1           (sizeof(DWORD64)*5)
-#define MSIZE_PARAM            (Opt.MaxPositionCache*MSIZE_PARAM1)
-#define MSIZE_POSITION1        (BOOKMARK_COUNT*sizeof(DWORD64)*4)
-#define MSIZE_POSITION         (Opt.MaxPositionCache*MSIZE_POSITION1)
-
-#define PARAM_POS(Pos)         ((Pos)*MSIZE_PARAM1)
-#define POSITION_POS(Pos,Idx)  (((Pos)*4+(Idx))*BOOKMARK_COUNT*sizeof(DWORD64))
-
-LPCWSTR EmptyPos=L"0,0,0,0,0,\"$\"";
-
-FilePositionCache::FilePositionCache():
-	IsMemory(0),
-	CurPos(0),
-	Param(nullptr),
-	Position(nullptr)
+FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
+	: _kind(kind),
+	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "viewer.pos" : "editor.pos"))
 {
-	if (!Opt.MaxPositionCache)
-	{
-		GetRegKey(L"System",L"MaxPositionCache",Opt.MaxPositionCache,MAX_POSITIONS);
-	}
-
-	Names=new FARString[Opt.MaxPositionCache];
-
-	if (Names )
-	{
-		Param=(BYTE*)xf_malloc(MSIZE_PARAM);
-		Position=(BYTE*)xf_malloc(MSIZE_POSITION);
-
-		if (Param && Position)
-		{
-			memset(Param,0,MSIZE_PARAM);
-			memset(Position,0xFF,MSIZE_POSITION);
-			IsMemory=1;
-		}
-		else
-		{
-			if (Param)       { xf_free(Param);       Param=nullptr; }
-
-			if (Position)    { xf_free(Position);    Position=nullptr; }
-		}
-	}
 }
 
 FilePositionCache::~FilePositionCache()
 {
-	if (Names)
+	CheckForSave();
+}
+
+void FilePositionCache::ApplyElementsLimit()
+{
+	int MaxPositionCache = Opt.MaxPositionCache;
+
+	if (!MaxPositionCache)
 	{
-		delete[] Names;
+		GetRegKey(L"System", L"MaxPositionCache", MaxPositionCache, POSCACHE_MAX_ELEMENTS);
 	}
 
-	if (Param)
+	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16)
 	{
-		xf_free(Param);
-	}
+		std::vector<std::string> sections = _kfh->EnumSections();
+		std::sort(sections.begin(), sections.end(),
+			[&](const std::string &a, const std::string &b) -> bool {
+			return _kfh->GetULL(a.c_str(), "TS", 0) <  _kfh->GetULL(b.c_str(), "TS", 0);
+		});
 
-	if (Position)
-	{
-		xf_free(Position);
+		int cnt = (int)sections.size() - MaxPositionCache;
+		for (int i = 0; i < cnt; ++i) {
+			_kfh->RemoveSection(sections[i].c_str());
+		}
 	}
 }
 
-void FilePositionCache::AddPosition(const wchar_t *Name,PosCache& poscache)
+void FilePositionCache::CheckForSave()
 {
-	if (!IsMemory)
-		return;
+	// If saving enabled then save _kfh to file and release,
+	// so other instances will see changes immediately and our instance
+	// will see other's changes too.
+	// If save is disabled then keep _kfh - it will serve as in memory
+	// storage for our instance lifetime or until user will enable saving.
 
-	FARString strFullName;
+	if (_kfh &&
+			((_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
+			|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) ) )
+ 	{
+		if (_kfh->Save()) {
+			_kfh.reset();
+		}
+	}
+}
 
-	if (*Name==L'<')
-		strFullName = Name;
-	else
-		ConvertNameToFull(Name,strFullName);
+static void MakeSectionName(const wchar_t *name, std::string &section)
+{
+	if (*name != L'<') {
+		FARString full_name;
+		ConvertNameToFull(name, full_name);
+		Wide2MB(full_name, section);
 
-	int FoundPos, Pos;
-	Pos = FoundPos = FindPosition(strFullName);
+	} else {
+		Wide2MB(name, section);
+	}
 
-	if (Pos < 0)
-		Pos = CurPos;
+	FilePathHashSuffix(section);
+}
 
-	Names[Pos] = strFullName;
-	memcpy(Param+PARAM_POS(Pos),&poscache,MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
-	memset(Position+POSITION_POS(Pos,0),0xFF,MSIZE_POSITION1);
-
-	for (size_t i=0; i<4; i++)
-	{
-		if (poscache.Position[i])
-		{
-			memcpy(Position+POSITION_POS(Pos,i),poscache.Position[i],BOOKMARK_COUNT*sizeof(DWORD64));
+static size_t ParamCountToSave(const DWORD64 *param)
+{
+	for (size_t i = POSCACHE_PARAM_COUNT; i != 0; --i) {
+		if (param[i - 1] != 0) {
+			return i;
 		}
 	}
 
-	if (FoundPos < 0)
-		if (++CurPos>=Opt.MaxPositionCache)
-			CurPos=0;
+	return 0;
 }
 
-
-
-bool FilePositionCache::GetPosition(const wchar_t *Name,PosCache& poscache)
+static size_t PositionCountToSave(const DWORD64 *position)
 {
-	bool Result=false;
-	if (IsMemory)
-	{
-		FARString strFullName;
-
-		if (*Name==L'<')
-			strFullName = Name;
-		else
-			ConvertNameToFull(Name, strFullName);
-
-		int Pos = FindPosition(strFullName);
-		//memset(Position+POSITION_POS(CurPos,0),0xFF,(BOOKMARK_COUNT*4)*SizeValue);
-		//memcpy(Param+PARAM_POS(CurPos),PosCache,SizeValue*5); // При условии, что в TPosCache?? Param стоит первым :-)
-
-		if (Pos >= 0)
-		{
-			memcpy(&poscache,Param+PARAM_POS(Pos),MSIZE_PARAM1); // При условии, что в TPosCache?? Param стоит первым :-)
-
-			for (size_t i=0; i<4; i++)
-			{
-				if (poscache.Position[i])
-				{
-					memcpy(poscache.Position[i],Position+POSITION_POS(Pos,i),BOOKMARK_COUNT*sizeof(DWORD64));
-				}
-			}
-			Result=true;
-		}
-		return Result;
-	}
-
-	memset(&poscache,0,sizeof(DWORD64)*5); // При условии, что в TPosCache?? Param стоит первым :-)
-	return FALSE;
-}
-
-int FilePositionCache::FindPosition(const wchar_t *FullName)
-{
-	for (int i=1; i<=Opt.MaxPositionCache; i++)
-	{
-		int Pos=CurPos-i;
-
-		if (Pos<0)
-			Pos+=Opt.MaxPositionCache;
-
-		int CmpRes=0;
-
-		CmpRes = StrCmp(Names[Pos],FullName);
-
-		if (!CmpRes)
-			return Pos;
-	}
-
-	return -1;
-}
-
-bool FilePositionCache::Read(const wchar_t *Key)
-{
-	bool Result=false;
-	if (IsMemory)
-	{
-		BYTE DefPos[MSIZE_POSITION1];
-		memset(DefPos,0xff,MSIZE_POSITION1);
-
-		for (int i=0; i < Opt.MaxPositionCache; i++)
-		{
-			FormatString strItem;
-			strItem<<L"Item"<<i;
-			FormatString strShort;
-			strShort<<L"Short"<<i;
-			GetRegKey(Key,strShort,(LPBYTE)Position+POSITION_POS(i,0),(LPBYTE)DefPos,MSIZE_POSITION1);
-			FARString strDataStr;
-			GetRegKey(Key,strItem,strDataStr,EmptyPos);
-
-			if (!StrCmp(strDataStr,EmptyPos))
-			{
-				Names[i].Clear();
-				memset(Param+PARAM_POS(i),0,sizeof(DWORD64)*5);
-			}
-			else
-			{
-				UserDefinedList DataList(0,0,0);
-
-				if (DataList.Set(strDataStr))
-				{
-					DataList.Reset();
-					for(int j=0;const wchar_t *DataPtr=DataList.GetNext();j++)
-					{
-						if (*DataPtr==L'$')
-						{
-							Names[i] = DataPtr+1;
-						}
-						else if (j >= 0 && j <= 4)
-						{
-							*reinterpret_cast<PDWORD64>(Param+PARAM_POS(i)+j*sizeof(DWORD64)) = _wtoi64(DataPtr);
-						}
-					}
-				}
+	if (position) {
+		for (size_t i = POSCACHE_BOOKMARK_COUNT; i != 0; --i) {
+			if (position[i - 1] != POS_NONE) {
+				return i;
 			}
 		}
-		Result=true;
 	}
-	return Result;
+
+	return 0;
 }
 
-
-bool FilePositionCache::Save(const wchar_t *Key)
+void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 {
-	bool Result=false;
-	if (IsMemory)
-	{
-		for (int i=0; i < Opt.MaxPositionCache; i++)
-		{
-			FormatString strItem;
-			strItem<<L"Item"<<i;
-			FormatString strShort;
-			strShort<<L"Short"<<i;
-			int Pos=CurPos+i;
-			if (Pos>=Opt.MaxPositionCache)
-			{
-				Pos-=Opt.MaxPositionCache;
-			}
-			PDWORD64 Ptr=reinterpret_cast<PDWORD64>(Param+PARAM_POS(Pos));
+	if (!_kfh) {
+		_kfh.reset(new KeyFileHelper(_kf_path.c_str()));
+	}
 
-			//Имя файла должно быть взято в кавычки, т.к. оно может содержать символы-разделители
-			FormatString strDataStr;
-			strDataStr<<(uint64_t)Ptr[0]<<L","<<(uint64_t)Ptr[1]<<L","<<(uint64_t)Ptr[2]<<L","<<(uint64_t)Ptr[3]<<L","<<(uint64_t)Ptr[4]<<L",\"$"<<Names[Pos]<<L"\"";
+	ApplyElementsLimit();
 
-			//Пустая позиция?
-			if (!StrCmp(strDataStr,EmptyPos))
-			{
-				DeleteRegValue(Key,strItem);
-				continue;
-			}
+	bool have_some_to_save = true;
+	std::string section;
+	MakeSectionName(name, section);
 
-			SetRegKey(Key,strItem,strDataStr);
+	size_t save_count = ParamCountToSave(poscache.Param);
+	if (save_count) {
+		_kfh->PutBytes(section.c_str(), "Par",
+			(unsigned char *)&poscache.Param[0], save_count * sizeof(poscache.Param[0]));
 
-			if ((Opt.ViOpt.SaveShortPos && Opt.ViOpt.SavePos) || (Opt.EdOpt.SaveShortPos && Opt.EdOpt.SavePos))
-			{
-				// Если не запоминались позиции по RCtrl+<N>, то и не записываем их
-				bool found=false;
-				for (int j=0; j < 4; j++)
-				{
-					DWORD64 *CurLine=reinterpret_cast<PDWORD64>(Position+POSITION_POS(Pos,j));
-					// просмотр всех BOOKMARK_COUNT позиций.
-					for (int k=0; k < BOOKMARK_COUNT; ++k)
-					{
-						if (CurLine[k] != POS_NONE)
-						{
-							found=true;
-							break;
-						}
-					}
-
-					if (found)
-						break;
-				}
-
-				if (found)
-					SetRegKey(Key,strShort,Position+POSITION_POS(Pos,0),MSIZE_POSITION1);
-				else
-					DeleteRegValue(Key,strShort);
+	} else {
+		have_some_to_save = false;
+		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+			if (PositionCountToSave(poscache.Position[i]) ){
+				have_some_to_save = true;
+				break;
 			}
 		}
-		Result=true;
+		if (have_some_to_save) {
+			_kfh->RemoveKey(section.c_str(), "Par");
+		}
 	}
-	return Result;
+
+	if (have_some_to_save) {
+		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
+			char key[64];
+			sprintf(key, "Pos%u", i);
+			save_count = PositionCountToSave(poscache.Position[i]);
+			if (save_count) {
+				_kfh->PutBytes(section.c_str(), key,
+					(unsigned char *)poscache.Position[i], save_count * sizeof(poscache.Position[i][0]));
+			} else {
+				_kfh->RemoveKey(section.c_str(), key);
+			}
+		}
+
+		_kfh->PutULLAsHex(section.c_str(), "TS", time(NULL));
+
+	} else {
+		_kfh->RemoveSection(section.c_str());
+	}
+
+	CheckForSave();
 }
+
+bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
+{
+	std::string section;
+	MakeSectionName(name, section);
+
+	std::unique_ptr<KeyFileReadSection> tmp_kfrs;
+	const KeyFileValues *values;
+	if (_kfh) {
+		values = _kfh->GetSectionValues(section.c_str());
+		if (!values) {
+			return false;
+		}
+
+	} else {
+		tmp_kfrs.reset(new KeyFileReadSection(_kf_path.c_str(), section.c_str()));
+		if (!tmp_kfrs->SectionLoaded()) {
+			return false;
+		}
+		values = tmp_kfrs.get();
+	}
+
+	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
+	values->GetBytes("Par",
+		(unsigned char *)&poscache.Param[0], sizeof(poscache.Param));
+
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
+		memset(poscache.Position[i], 0xff,
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+		char key[64];
+		sprintf(key, "Pos%u", i);
+		values->GetBytes(key, (unsigned char *)poscache.Position[i],
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+	}
+
+	return true;
+}
+

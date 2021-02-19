@@ -585,7 +585,7 @@ void TreeList::SaveTreeFile()
 		else
 		{
 			DWORD Size=static_cast<DWORD>((ListData[I]->strName.GetLength()-RootLength)*sizeof(WCHAR));
-			Success=Cache.Write(ListData[I]->strName+RootLength,Size);
+			Success=Cache.Write(ListData[I]->strName.SubStr(RootLength),Size);
 			Size=1*sizeof(WCHAR);
 			Success=Cache.Write(L"\n",Size);
 		}

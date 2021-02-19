@@ -534,26 +534,47 @@ char * itoa(int i, char *a, int radix)
 }
 #endif
 
+char digit_btoh(const unsigned char c)
+{
+	if (c >= 0 && c <= 9) {
+		return '0' + c;
+	}
+
+	if (c >= 0xa && c <= 0xf) {
+		return 'a' + (c - 0xa);
+	}
+
+	return 0;
+}
+
+unsigned char digit_htob(const char c)
+{
+	if (c >= '0' && c <= '9') {
+		return c - '0';
+	}
+
+	if (c >= 'a' && c <= 'f') {
+		return 10 + (c - 'a');
+	}
+
+	if (c >= 'A' && c <= 'F') {
+		return 10 + (c - 'A');
+	}
+
+	return 0xff;
+}
 
 unsigned long htoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
 
 	for (size_t i = 0; i != maxlen; ++i) {
-		if (str[i] >= '0' && str[i] <= '9') {
-			out<<= 4;
-			out+= str[i] - '0';
-
-		} else if (str[i] >= 'a' && str[i] <= 'f') {
-			out<<= 4;
-			out+= 10 + (str[i] - 'a');
-
-		} else if (str[i] >= 'A' && str[i] <= 'F') {
-			out<<= 4;
-			out+= 10 + (str[i] - 'A');
-
-		} else
+		unsigned char x = digit_htob(str[i]);
+		if (x == 0xff) {
 			break;
+		}
+		out<<= 4;
+		out|= (unsigned char)x;
 	}
 
 	return out;

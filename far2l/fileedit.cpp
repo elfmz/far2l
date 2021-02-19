@@ -2485,7 +2485,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 			if (!Flags.Check(FFILEEDIT_OPENFAILED) && Param)
 			{
 				EditorBookMarks *ebm = reinterpret_cast<EditorBookMarks*>(Param);
-				for(size_t i = 0; i < BOOKMARK_COUNT; i++)
+				for(size_t i = 0; i < POSCACHE_BOOKMARK_COUNT; i++)
 				{
 					if (ebm->Line)
 					{

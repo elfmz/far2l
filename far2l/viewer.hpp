@@ -70,8 +70,8 @@ struct ViewerString
 
 struct InternalViewerBookMark
 {
-	DWORD64 SavePosAddr[BOOKMARK_COUNT];
-	DWORD64 SavePosLeft[BOOKMARK_COUNT];
+	DWORD64 SavePosAddr[POSCACHE_BOOKMARK_COUNT];
+	DWORD64 SavePosLeft[POSCACHE_BOOKMARK_COUNT];
 };
 
 struct ViewerUndoData

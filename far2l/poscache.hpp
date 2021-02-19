@@ -1,5 +1,5 @@
 #pragma once
-
+#include "KeyFileHelper.h"
 /*
 poscache.hpp
 
@@ -33,13 +33,16 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-const DWORD64 POS_NONE=_UI64_MAX;
+const DWORD64 POS_NONE = _UI64_MAX;
 
 // Максимальное количество элементов в кэше
-#define MAX_POSITIONS 512
+#define POSCACHE_MAX_ELEMENTS     512
 
 // Количество закладок в редакторе/вьювере на одну позицию
-#define BOOKMARK_COUNT   10
+#define POSCACHE_BOOKMARK_COUNT   10
+
+#define POSCACHE_PARAM_COUNT      5
+#define POSCACHE_POSITION_COUNT   4
 
 struct PosCache
 {
@@ -58,45 +61,44 @@ struct PosCache
 			Param[3] = 0
 			Param[4] = CodePage
     */
-	DWORD64 Param[5];
+	DWORD64 Param[POSCACHE_PARAM_COUNT];
 
     /*
     Position
     	Editor:
-			Position[0] = [BOOKMARK_COUNT] Line
-			Position[1] = [BOOKMARK_COUNT] Cursor
-			Position[2] = [BOOKMARK_COUNT] ScreenLine
-			Position[3] = [BOOKMARK_COUNT] LeftPos
+			Position[0] = [POSCACHE_BOOKMARK_COUNT] Line
+			Position[1] = [POSCACHE_BOOKMARK_COUNT] Cursor
+			Position[2] = [POSCACHE_BOOKMARK_COUNT] ScreenLine
+			Position[3] = [POSCACHE_BOOKMARK_COUNT] LeftPos
 		Viewer:
-			Position[0] = [BOOKMARK_COUNT] SavePosAddr
-			Position[1] = [BOOKMARK_COUNT] SavePosLeft
-			Position[2] = [BOOKMARK_COUNT] 0
-			Position[3] = [BOOKMARK_COUNT] 0
+			Position[0] = [POSCACHE_BOOKMARK_COUNT] SavePosAddr
+			Position[1] = [POSCACHE_BOOKMARK_COUNT] SavePosLeft
+			Position[2] = [POSCACHE_BOOKMARK_COUNT] 0
+			Position[3] = [POSCACHE_BOOKMARK_COUNT] 0
     */
-	DWORD64 *Position[4];
+	DWORD64 *Position[POSCACHE_POSITION_COUNT];
+};
+
+enum FilePositionCacheKind
+{
+	FPCK_VIEWER,
+	FPCK_EDITOR,
 };
 
 class FilePositionCache
 {
 	private:
-		int IsMemory;
-		int CurPos;
+		FilePositionCacheKind _kind;
+		std::string _kf_path;
+		std::unique_ptr<KeyFileHelper> _kfh;
 
-		FARString *Names;
-		BYTE *Param;
-		BYTE *Position;
-
-	private:
-		int FindPosition(const wchar_t *FullName);
+		void ApplyElementsLimit();
+		void CheckForSave();
 
 	public:
-		FilePositionCache();
+		FilePositionCache(FilePositionCacheKind kind);
 		~FilePositionCache();
 
-	public:
-		void AddPosition(const wchar_t *Name,PosCache& poscache);
-		bool GetPosition(const wchar_t *Name,PosCache& poscache);
-
-		bool Read(const wchar_t *Key);
-		bool Save(const wchar_t *Key);
+		void AddPosition(const wchar_t *Name, PosCache& poscache);
+		bool GetPosition(const wchar_t *Name, PosCache& poscache);
 };

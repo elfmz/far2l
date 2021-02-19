@@ -168,10 +168,10 @@ void KeyBar::RefreshObject(bool Render)
 		else if (i<KeyCounts [KBL_MAIN] && !(DisableMask & (1<<i)))
 			Label=KeyTitles [KBL_MAIN][i];
 
-		if (i >= PrevFKeyTitles.size() || PrevFKeyTitles[i] != Label)
+		if (i >= (int)PrevFKeyTitles.size() || PrevFKeyTitles[i] != Label)
 		{
 			FKeyTitlesChanged = true;
-			if (i >= PrevFKeyTitles.size()) {
+			if (i >= (int)PrevFKeyTitles.size()) {
 				PrevFKeyTitles.emplace_back(Label);
 			} else
 				PrevFKeyTitles[i] = Label;
@@ -207,9 +207,9 @@ void KeyBar::RefreshObject(bool Render)
 	{
 		std::string str_titles[CONSOLE_FKEYS_COUNT];
 		const char *titles[ARRAYSIZE(str_titles)];
-		for (int i = 0; i < ARRAYSIZE(str_titles); ++i)
+		for (int i = 0; i < (int)ARRAYSIZE(str_titles); ++i)
 		{
-			if (i < PrevFKeyTitles.size()) {
+			if (i < (int)PrevFKeyTitles.size()) {
 				StrWide2MB(PrevFKeyTitles[i], str_titles[i]);
 				titles[i] = str_titles[i].c_str();
 			} else {

@@ -155,7 +155,7 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 //#endif
 
 #include "farrtl.hpp"
-#include "UnicodeString.hpp"
+#include "FARString.hpp"
 #include "format.hpp"
 #include "global.hpp"
 #include "local.hpp"

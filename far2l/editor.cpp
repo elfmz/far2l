@@ -5512,7 +5512,7 @@ int Editor::EditorControl(int Command,void *Param)
 					Info->Options|=EOPT_SHOWWHITESPACE;
 
 				Info->TabSize=EdOpt.TabSize;
-				Info->BookMarkCount=BOOKMARK_COUNT;
+				Info->BookMarkCount=POSCACHE_BOOKMARK_COUNT;
 				Info->CurState=Flags.Check(FEDITOR_LOCKMODE)?ECSTATE_LOCKED:0;
 				Info->CurState|=!Flags.Check(FEDITOR_MODIFIED)?ECSTATE_SAVED:0;
 				Info->CurState|=Flags.Check(FEDITOR_MODIFIED|FEDITOR_WASCHANGED)?ECSTATE_MODIFIED:0;
@@ -5983,7 +5983,7 @@ int Editor::EditorControl(int Command,void *Param)
 
 int Editor::SetBookmark(DWORD Pos)
 {
-	if (Pos < BOOKMARK_COUNT)
+	if (Pos < POSCACHE_BOOKMARK_COUNT)
 	{
 		SavePos.Line[Pos]=NumLine;
 		SavePos.Cursor[Pos]=CurLine->GetCurPos();
@@ -5997,7 +5997,7 @@ int Editor::SetBookmark(DWORD Pos)
 
 int Editor::GotoBookmark(DWORD Pos)
 {
-	if (Pos < BOOKMARK_COUNT)
+	if (Pos < POSCACHE_BOOKMARK_COUNT)
 	{
 		if (SavePos.Line[Pos]!=POS_NONE)
 		{

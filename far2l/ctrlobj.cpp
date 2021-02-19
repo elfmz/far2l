@@ -60,8 +60,8 @@ ControlObject::ControlObject():
 	_OT(SysLog(L"[%p] ControlObject::ControlObject()", this));
 	CtrlObject=this;
 	HiFiles = new HighlightFiles;
-	ViewerPosCache = new FilePositionCache();
-	EditorPosCache = new FilePositionCache();
+	ViewerPosCache = new FilePositionCache(FPCK_VIEWER);
+	EditorPosCache = new FilePositionCache(FPCK_EDITOR);
 	FrameManager = new Manager;
 	//Macro.LoadMacros();
 	ReadConfig();
@@ -161,14 +161,7 @@ ControlObject::~ControlObject()
 	delete CmdLine;
 	delete HiFiles;
 
-	if (Opt.ViOpt.SavePos)
-		ViewerPosCache->Save(L"Viewer/LastPositions");
-
 	delete ViewerPosCache;
-
-	if (Opt.EdOpt.SavePos)
-		EditorPosCache->Save(L"Editor/LastPositions");
-
 	delete EditorPosCache;
 
 	delete FrameManager;

@@ -24,6 +24,7 @@ set(SOURCES
   src/ini.c
   src/TTYRawMode.cpp
   src/LocalSocket.cpp
+  src/FilePathHashSuffix.cpp
 )
 
 add_library (utils ${SOURCES})

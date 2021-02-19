@@ -53,7 +53,4 @@ public:
 	uint8_t PopU8();
 	uint16_t PopU16();
 	uint32_t PopU32();
-
-
-
 };

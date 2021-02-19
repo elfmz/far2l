@@ -185,23 +185,9 @@ static std::string PluginSettingsName(const FARString &strModuleName)
 		Wide2MB(strModuleName.CPtr(), pathname);
 	}
 
-	uint64_t suffix = 0xC001000CAC4E;
+	FilePathHashSuffix(pathname);
 
-	size_t p = pathname.rfind('/');
-	if (p != std::string::npos) {
-		suffix = crc64(suffix,
-			(const unsigned char *)pathname.c_str(), p);
-		pathname.erase(0, p + 1);
-	}
-
-	p = pathname.rfind('.');
-	if (p != std::string::npos) {
-		suffix = crc64(suffix,
-			(const unsigned char *)pathname.c_str() + p, pathname.size() - p);
-		pathname.resize(p);
-	}
-
-	return StrPrintf("%s@%llx", pathname.c_str(), (unsigned long long)suffix);
+	return pathname;
 }
 
 static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)

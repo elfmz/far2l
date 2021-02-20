@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "plugin.hpp"
 #include "filefilterparams.hpp"
+#include "ConfigRW.hpp"
 
 class VMenu;
 class Panel;

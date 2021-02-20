@@ -64,7 +64,7 @@ ControlObject::ControlObject():
 	EditorPosCache = new FilePositionCache(FPCK_EDITOR);
 	FrameManager = new Manager;
 	//Macro.LoadMacros();
-	ReadConfig();
+	ApplyConfig();
 	CmdHistory=new History(HISTORYTYPE_CMD,Opt.HistoryCount,L"SavedHistory",&Opt.SaveHistory,false);
 	FolderHistory=new History(HISTORYTYPE_FOLDER,Opt.FoldersHistoryCount,L"SavedFolderHistory",&Opt.SaveFoldersHistory,true);
 	ViewHistory=new History(HISTORYTYPE_VIEW,Opt.ViewHistoryCount,L"SavedViewHistory",&Opt.SaveViewHistory,true);
@@ -76,7 +76,6 @@ ControlObject::ControlObject():
 void ControlObject::Init()
 {
 	TreeList::ClearCache(0);
-	FileFilter::InitFilter();
 	SetColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0,ScrY-3);
 	ShowCopyright();

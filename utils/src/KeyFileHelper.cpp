@@ -51,9 +51,9 @@ int KeyFileValues::GetInt(const char *name, int def) const
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			def = (int)strtol(sz + 2, nullptr, 16);
+			return (int)strtol(sz + 2, nullptr, 16);
 		} else {
-			def = (int)strtol(sz, nullptr, 10);
+			return (int)strtol(sz, nullptr, 10);
 		}
 	}
 
@@ -66,9 +66,9 @@ unsigned int KeyFileValues::GetUInt(const char *name, unsigned int def) const
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			def = (unsigned int)strtoul(sz + 2, nullptr, 16);
+			return (unsigned int)strtoul(sz + 2, nullptr, 16);
 		} else {
-			def = (unsigned int)strtoul(sz, nullptr, 10);
+			return (unsigned int)strtoul(sz, nullptr, 10);
 		}
 	}
 
@@ -81,16 +81,16 @@ unsigned long long KeyFileValues::GetULL(const char *name, unsigned long long de
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			def = strtoull(sz + 2, nullptr, 16);
+			return strtoull(sz + 2, nullptr, 16);
 		} else {
-			def = strtoull(sz, nullptr, 10);
+			return strtoull(sz, nullptr, 10);
 		}
 	}
 
 	return def;
 }
 
-size_t KeyFileValues::GetBytes(const char *name, unsigned char *buf, size_t len, const unsigned char *def) const
+size_t KeyFileValues::GetBytes(const char *name, size_t len, unsigned char *buf, const unsigned char *def) const
 {
 	const auto &it = find(name);
 	if (it == end()) {
@@ -379,11 +379,11 @@ unsigned long long KeyFileReadHelper::GetULL(const char *section, const char *na
 }
 
 
-size_t KeyFileReadHelper::GetBytes(const char *section, const char *name, unsigned char *buf, size_t len, const unsigned char *def) const
+size_t KeyFileReadHelper::GetBytes(const char *section, const char *name, size_t len, unsigned char *buf, const unsigned char *def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		return it->second.GetBytes(name, buf, len);
+		return it->second.GetBytes(name, len, buf);
 
 	} else if (def) {
 		memcpy(buf, def, len);
@@ -584,7 +584,7 @@ void KeyFileHelper::PutULLAsHex(const char *section, const char *name, unsigned 
 	PutString(section, name, tmp);
 }
 
-void KeyFileHelper::PutBytes(const char *section, const char *name, const unsigned char *buf, size_t len, bool spaced)
+void KeyFileHelper::PutBytes(const char *section, const char *name, size_t len, const unsigned char *buf, bool spaced)
 {
 	const size_t slen = (len * 2 + ((spaced && len > 1) ? len - 1 : 0));
 	std::string &v = _kf[section][name];

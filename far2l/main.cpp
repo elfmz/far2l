@@ -593,8 +593,8 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal=FALSE;
 	}
 
+	ReadConfig();
 	InitConsole();
-	GetRegKey(L"Language",L"Main",Opt.strLanguage,L"English");
 
 	if (!Lang.Init(g_strFarPath,true,MNewFileName))
 	{

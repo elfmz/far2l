@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "poscache.hpp"
 #include "udlist.hpp"
-#include "registry.hpp"
 #include "config.hpp"
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
@@ -52,12 +51,8 @@ FilePositionCache::~FilePositionCache()
 
 void FilePositionCache::ApplyElementsLimit()
 {
+	AssertConfigLoaded();
 	int MaxPositionCache = Opt.MaxPositionCache;
-
-	if (!MaxPositionCache)
-	{
-		GetRegKey(L"System", L"MaxPositionCache", MaxPositionCache, POSCACHE_MAX_ELEMENTS);
-	}
 
 	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16)
 	{
@@ -145,7 +140,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 	size_t save_count = ParamCountToSave(poscache.Param);
 	if (save_count) {
 		_kfh->PutBytes(section.c_str(), "Par",
-			(unsigned char *)&poscache.Param[0], save_count * sizeof(poscache.Param[0]));
+			save_count * sizeof(poscache.Param[0]), (unsigned char *)&poscache.Param[0]);
 
 	} else {
 		have_some_to_save = false;
@@ -167,7 +162,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
 				_kfh->PutBytes(section.c_str(), key,
-					(unsigned char *)poscache.Position[i], save_count * sizeof(poscache.Position[i][0]));
+					save_count * sizeof(poscache.Position[i][0]), (unsigned char *)poscache.Position[i]);
 			} else {
 				_kfh->RemoveKey(section.c_str(), key);
 			}
@@ -205,15 +200,15 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 
 	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
 	values->GetBytes("Par",
-		(unsigned char *)&poscache.Param[0], sizeof(poscache.Param));
+		sizeof(poscache.Param), (unsigned char *)&poscache.Param[0]);
 
 	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
 		memset(poscache.Position[i], 0xff,
 			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
 		char key[64];
 		sprintf(key, "Pos%u", i);
-		values->GetBytes(key, (unsigned char *)poscache.Position[i],
-			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+		values->GetBytes(key, sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT,
+			(unsigned char *)poscache.Position[i]);
 	}
 
 	return true;

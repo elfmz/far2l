@@ -3017,15 +3017,6 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 		case oldfar::ACTL_GETFARVERSION:
 		{
 			DWORD FarVer=(DWORD)FarAdvControl(ModuleNumber,ACTL_GETFARVERSION,nullptr);
-			int OldFarVer;
-			GetRegKey(L"wrapper",L"version",OldFarVer,FarVer);
-
-			if (
-			    //не выше текущей версии
-			    (LOWORD(OldFarVer)<LOWORD(FarVer) || ((LOWORD(OldFarVer)==LOWORD(FarVer)) && HIWORD(OldFarVer)<HIWORD(FarVer))) &&
-			    //и не ниже 1.70.1
-			    LOWORD(OldFarVer)>=0x0146 && HIWORD(OldFarVer)>=0x1)
-				FarVer=OldFarVer;
 
 			if (Param)
 				*(DWORD*)Param=FarVer;

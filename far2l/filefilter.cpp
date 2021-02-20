@@ -51,6 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "interf.hpp"
 
+#define FILEFILTERS_INI "file_filters.ini"
+
 static int _cdecl ExtSort(const void *el1,const void *el2);
 
 static TPointerArray<FileFilterParams> FilterData, TempFilterData;
@@ -423,7 +425,9 @@ bool FileFilter::FilterEdit()
 		ProcessSelection(&FilterList);
 
 	if (Opt.AutoSaveSetup)
+	{
 		SaveFilters();
+	}
 
 	if (ExitCode!=-1 || bNeedUpdate)
 	{
@@ -781,19 +785,21 @@ bool FileFilter::IsEnabledOnPanel()
 	return false;
 }
 
+static const wchar_t *IMPOSSIBILIMO = L"!!!ImPoSsIbIlImO!!!";
+
 void FileFilter::InitFilter()
 {
 	FilterData.Free();
 	TempFilterData.Free();
-	FARString strRegKey;
-	FARString strTitle, strMask, strSizeBelow, strSizeAbove;
-
+	ConfigReader cfg_reader(FILEFILTERS_INI);
 	while (1)
 	{
-		strRegKey.Format(L"Filters/Filter%d",FilterData.getCount());
+		cfg_reader.SelectSectionFmt("Filters/Filter%d", FilterData.getCount());
 
-		if (!GetRegKey(strRegKey,L"Title",strTitle,L""))
+		FARString strTitle = cfg_reader.GetString("Title", IMPOSSIBILIMO);
+		if (strTitle == IMPOSSIBILIMO) {
 			break;
+		}
 
 		FileFilterParams *NewFilter = FilterData.addItem();
 
@@ -802,27 +808,26 @@ void FileFilter::InitFilter()
 			//Дефолтные значения выбраны так чтоб как можно правильней загрузить
 			//настройки старых версий фара.
 			NewFilter->SetTitle(strTitle);
-			GetRegKey(strRegKey,L"Mask",strMask,L"");
-			NewFilter->SetMask(GetRegKey(strRegKey,L"UseMask",1)!=0,
-			                   strMask);
+			FARString strMask = cfg_reader.GetString("Mask", L"");
+			NewFilter->SetMask(cfg_reader.GetUInt("UseMask", 1) != 0, strMask);
+
 			FILETIME DateAfter, DateBefore;
-			GetRegKey(strRegKey,L"DateAfter",(BYTE *)&DateAfter,nullptr,sizeof(DateAfter));
-			GetRegKey(strRegKey,L"DateBefore",(BYTE *)&DateBefore,nullptr,sizeof(DateBefore));
-			NewFilter->SetDate(GetRegKey(strRegKey,L"UseDate",0)!=0,
-			                   (DWORD)GetRegKey(strRegKey,L"DateType",0),
-			                   DateAfter,
-			                   DateBefore,
-			                   GetRegKey(strRegKey,L"RelativeDate",0)!=0);
-			GetRegKey(strRegKey,L"SizeAboveS",strSizeAbove,L"");
-			GetRegKey(strRegKey,L"SizeBelowS",strSizeBelow,L"");
-			NewFilter->SetSize(GetRegKey(strRegKey,L"UseSize",0)!=0,
-			                   strSizeAbove,
-			                   strSizeBelow);
-			NewFilter->SetAttr(GetRegKey(strRegKey,L"UseAttr",1)!=0,
-			                   (DWORD)GetRegKey(strRegKey,L"AttrSet",0),
-			                   (DWORD)GetRegKey(strRegKey,L"AttrClear",FILE_ATTRIBUTE_DIRECTORY));
-			DWORD Flags[FFFT_COUNT];
-			GetRegKey(strRegKey,L"FFlags",(BYTE *)Flags,nullptr,sizeof(Flags));
+			cfg_reader.GetBytes("DateAfter", sizeof(DateAfter), (BYTE *)&DateAfter);
+			cfg_reader.GetBytes("DateBefore", sizeof(DateBefore), (BYTE *)&DateBefore);
+			NewFilter->SetDate(cfg_reader.GetUInt("UseDate", 0) != 0,
+			                   (DWORD)cfg_reader.GetUInt("DateType", 0),
+			                   DateAfter, DateBefore,
+			                   cfg_reader.GetUInt("RelativeDate", 0) != 0);
+			FARString strSizeAbove = cfg_reader.GetString("SizeAboveS", L"");
+			FARString strSizeBelow = cfg_reader.GetString("SizeBelowS", L"");
+			NewFilter->SetSize(cfg_reader.GetUInt("UseSize", 0) != 0,
+			                   strSizeAbove, strSizeBelow);
+			NewFilter->SetAttr(cfg_reader.GetUInt("UseAttr", 1) != 0,
+			                   (DWORD)cfg_reader.GetUInt("AttrSet", 0),
+			                   (DWORD)cfg_reader.GetUInt("AttrClear", FILE_ATTRIBUTE_DIRECTORY));
+
+			DWORD Flags[FFFT_COUNT]{};
+			cfg_reader.GetBytes("FFlags",sizeof(Flags), (BYTE *)Flags);
 
 			for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 				NewFilter->SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -833,20 +838,21 @@ void FileFilter::InitFilter()
 
 	while (1)
 	{
-		strRegKey.Format(L"Filters/PanelMask%d",TempFilterData.getCount());
-
-		if (!GetRegKey(strRegKey,L"Mask",strMask,L""))
+		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", TempFilterData.getCount());
+		FARString strMask = cfg_reader.GetString("Mask", IMPOSSIBILIMO);
+		if (strMask == IMPOSSIBILIMO) {
 			break;
+		}
 
 		FileFilterParams *NewFilter = TempFilterData.addItem();
 
 		if (NewFilter)
 		{
-			NewFilter->SetMask(1,strMask);
+			NewFilter->SetMask(1, strMask);
 			//Авто фильтры они только для файлов, папки не должны к ним подходить
-			NewFilter->SetAttr(1,0,FILE_ATTRIBUTE_DIRECTORY);
-			DWORD Flags[FFFT_COUNT];
-			GetRegKey(strRegKey,L"FFlags",(BYTE *)Flags,nullptr,sizeof(Flags));
+			NewFilter->SetAttr(1, 0, FILE_ATTRIBUTE_DIRECTORY);
+			DWORD Flags[FFFT_COUNT]{};
+			cfg_reader.GetBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
 
 			for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 				NewFilter->SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -856,10 +862,11 @@ void FileFilter::InitFilter()
 	}
 
 	{
+		cfg_reader.SelectSectionFmt("Filters");
 		FoldersFilter.SetMask(0,L"");
 		FoldersFilter.SetAttr(1,FILE_ATTRIBUTE_DIRECTORY,0);
-		DWORD Flags[FFFT_COUNT];
-		GetRegKey(L"Filters",L"FoldersFilterFFlags",(BYTE *)Flags,nullptr,sizeof(Flags));
+		DWORD Flags[FFFT_COUNT]{};
+		cfg_reader.GetBytes("FoldersFilterFFlags", sizeof(Flags), (BYTE *)Flags);
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			FoldersFilter.SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -875,64 +882,64 @@ void FileFilter::CloseFilter()
 
 void FileFilter::SaveFilters()
 {
-	FARString strRegKey;
-	DeleteKeyTree(L"Filters");
-	FileFilterParams *CurFilterData;
+	ConfigWriter cfg_writer(FILEFILTERS_INI);
+	cfg_writer.RemoveSectionAndSubsections("Filters");
 
 	for (size_t i=0; i<FilterData.getCount(); i++)
 	{
-		strRegKey.Format(L"Filters/Filter%d",i);
-		CurFilterData = FilterData.getItem(i);
-		SetRegKey(strRegKey,L"Title",CurFilterData->GetTitle());
-		const wchar_t *Mask;
-		SetRegKey(strRegKey,L"UseMask",CurFilterData->GetMask(&Mask)?1:0);
-		SetRegKey(strRegKey,L"Mask",Mask);
+		cfg_writer.SelectSectionFmt("Filters/Filter%d", i);
+		FileFilterParams *CurFilterData = FilterData.getItem(i);
+		cfg_writer.PutString("Title", CurFilterData->GetTitle());
+		const wchar_t *Mask = nullptr;
+		cfg_writer.PutUInt("UseMask", CurFilterData->GetMask(&Mask) ? 1 : 0);
+		cfg_writer.PutString("Mask", Mask);
 		DWORD DateType;
 		FILETIME DateAfter, DateBefore;
 		bool bRelative;
-		SetRegKey(strRegKey,L"UseDate",CurFilterData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative)?1:0);
-		SetRegKey(strRegKey,L"DateType",DateType);
-		SetRegKey(strRegKey,L"DateAfter",(BYTE *)&DateAfter,sizeof(DateAfter));
-		SetRegKey(strRegKey,L"DateBefore",(BYTE *)&DateBefore,sizeof(DateBefore));
-		SetRegKey(strRegKey,L"RelativeDate",bRelative?1:0);
+		cfg_writer.PutUInt("UseDate", CurFilterData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
+		cfg_writer.PutUInt("DateType", DateType);
+		cfg_writer.PutBytes("DateAfter", sizeof(DateAfter), (BYTE *)&DateAfter);
+		cfg_writer.PutBytes("DateBefore",sizeof(DateBefore), (BYTE *)&DateBefore);
+		cfg_writer.PutUInt("RelativeDate", bRelative ? 1 : 0);
 		const wchar_t *SizeAbove, *SizeBelow;
-		SetRegKey(strRegKey,L"UseSize",CurFilterData->GetSize(&SizeAbove, &SizeBelow)?1:0);
-		SetRegKey(strRegKey,L"SizeAboveS",SizeAbove);
-		SetRegKey(strRegKey,L"SizeBelowS",SizeBelow);
+		cfg_writer.PutUInt("UseSize", CurFilterData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
+		cfg_writer.PutString("SizeAboveS", SizeAbove);
+		cfg_writer.PutString("SizeBelowS", SizeBelow);
 		DWORD AttrSet, AttrClear;
-		SetRegKey(strRegKey,L"UseAttr",CurFilterData->GetAttr(&AttrSet, &AttrClear)?1:0);
-		SetRegKey(strRegKey,L"AttrSet",AttrSet);
-		SetRegKey(strRegKey,L"AttrClear",AttrClear);
-		DWORD Flags[FFFT_COUNT];
+		cfg_writer.PutUInt("UseAttr", CurFilterData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
+		cfg_writer.PutUInt("AttrSet", AttrSet);
+		cfg_writer.PutUInt("AttrClear", AttrClear);
+		DWORD Flags[FFFT_COUNT]{};
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		SetRegKey(strRegKey,L"FFlags",(BYTE *)Flags,sizeof(Flags));
+		cfg_writer.PutBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
 	}
 
 	for (size_t i=0; i<TempFilterData.getCount(); i++)
 	{
-		strRegKey.Format(L"Filters/PanelMask%d",i);
-		CurFilterData = TempFilterData.getItem(i);
+		cfg_writer.SelectSectionFmt("Filters/PanelMask%d", i);
+		FileFilterParams *CurFilterData = TempFilterData.getItem(i);
 		const wchar_t *Mask;
 		CurFilterData->GetMask(&Mask);
-		SetRegKey(strRegKey,L"Mask",Mask);
+		cfg_writer.PutString("Mask", Mask);
 		DWORD Flags[FFFT_COUNT];
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		SetRegKey(strRegKey,L"FFlags",(BYTE *)Flags,sizeof(Flags));
+		cfg_writer.PutBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
 	}
 
 	{
-		DWORD Flags[FFFT_COUNT];
+		cfg_writer.SelectSectionFmt("Filters");
+		DWORD Flags[FFFT_COUNT]{};
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = FoldersFilter.GetFlags((enumFileFilterFlagsType)i);
 
-		SetRegKey(L"Filters",L"FoldersFilterFFlags",(BYTE *)Flags,sizeof(Flags));
+		cfg_writer.PutBytes("FoldersFilterFFlags", sizeof(Flags), (BYTE *)Flags);
 	}
 }
 

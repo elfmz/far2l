@@ -181,8 +181,8 @@ static void LoadFilter(FileFilterParams *HData,
 		HData->SetMask(Values->GetUInt(HLS.IgnoreMask, 0) == 0, FARString(Mask));
 
 	FILETIME DateAfter{}, DateBefore{};
-	Values->GetBytes(HLS.DateAfter, (unsigned char *)&DateAfter, sizeof(DateAfter));
-	Values->GetBytes(HLS.DateBefore, (unsigned char *)&DateBefore, sizeof(DateBefore));
+	Values->GetBytes(HLS.DateAfter, sizeof(DateAfter), (unsigned char *)&DateAfter);
+	Values->GetBytes(HLS.DateBefore, sizeof(DateBefore), (unsigned char *)&DateBefore);
 	HData->SetDate(Values->GetUInt(HLS.UseDate, 0) != 0,
 					(DWORD)Values->GetUInt(HLS.DateType, 0),
 					DateAfter, DateBefore,
@@ -869,8 +869,8 @@ static void SaveFilter(FileFilterParams *CurHiData, KeyFileHelper &kfh, const ch
 	bool bRelative = false;
 	kfh.PutUInt(Section, HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
 	kfh.PutUInt(Section, HLS.DateType, DateType);
-	kfh.PutBytes(Section, HLS.DateAfter, (BYTE *)&DateAfter, sizeof(DateAfter));
-	kfh.PutBytes(Section, HLS.DateBefore, (BYTE *)&DateBefore, sizeof(DateBefore));
+	kfh.PutBytes(Section, HLS.DateAfter, sizeof(DateAfter), (BYTE *)&DateAfter);
+	kfh.PutBytes(Section, HLS.DateBefore, sizeof(DateBefore), (BYTE *)&DateBefore);
 	kfh.PutUInt(Section, HLS.DateRelative, bRelative ? 1 : 0);
 	const wchar_t *SizeAbove = nullptr, *SizeBelow = nullptr;
 	kfh.PutUInt(Section, HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);

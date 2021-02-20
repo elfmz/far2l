@@ -76,11 +76,10 @@ const FileTypeStrings FTS=
 
 
 
-int GetDescriptionWidth(const wchar_t *Name=nullptr)
+static int GetDescriptionWidth(const wchar_t *Name=nullptr)
 {
 	int Width=0;
 	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
-
 	for (int NumLine=0;; NumLine++)
 	{
 		FARString strRegKey;

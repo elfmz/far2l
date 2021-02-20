@@ -136,6 +136,7 @@ DetectCodepage.cpp
 SafeMMap.cpp
 AnsiEsc.cpp
 ViewerPrinter.cpp
+ConfigRW.cpp
 )
 
 # Set target names for the executables

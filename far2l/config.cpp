@@ -63,8 +63,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "datetime.hpp"
 #include "FarDlgBuilder.hpp"
 #include "vtshell.h"
-#include "KeyFileHelper.h"
+#include "ConfigRW.hpp"
 
+#define CONFIG_INI		"config.ini"
 Options Opt={0};
 
 // Стандартный набор разделителей
@@ -840,6 +841,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyHelp, "ActivateURL",&Opt.HelpURLRules,1, 0},
 
 	{1, REG_SZ,     NKeyLanguage, "Help",&Opt.strHelpLanguage, 0, L"English"},
+	{1, REG_SZ,     NKeyLanguage, "Main",&Opt.strLanguage, 0, L"English"},
 
 	{1, REG_DWORD,  NKeyConfirmations, "Copy",&Opt.Confirm.Copy,1, 0},
 	{1, REG_DWORD,  NKeyConfirmations, "Move",&Opt.Confirm.Move,1, 0},
@@ -945,10 +947,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyVMenu, "MBtnClick",&Opt.VMenu.MBtnClick, VMENUCLICK_APPLY, 0},
 };
 
-static std::string ConfigIni()
-{
-	return InMyConfig("config.ini");
-}
+static bool g_config_ready = false;
 
 void ReadConfig()
 {
@@ -956,26 +955,19 @@ void ReadConfig()
 	FARString strPersonalPluginsPath;
 	size_t I;
 
-	std::unique_ptr<KeyFileReadHelper> kfh;
-	struct stat s{};
-	if (stat(ConfigIni().c_str(), &s) == 0) {
-		kfh.reset(new KeyFileReadHelper(ConfigIni().c_str()));
-	}
-
 	SetRegRootKey(HKEY_CURRENT_USER);
+	ConfigReader cfg_reader(CONFIG_INI);
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	if (kfh) {
-		Opt.LoadPlug.strPersonalPluginsPath = kfh->GetString(NKeySystem, "PersonalPluginsPath", L"");
-	} else {/// TODO: Remove this and similar else-branches after 2022/02/20
-		GetRegKey(FARString(NKeySystem), L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath, L"");
-	}
+	cfg_reader.SelectSection(NKeySystem);
+	Opt.LoadPlug.strPersonalPluginsPath = cfg_reader.GetString("PersonalPluginsPath", L"");
 	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
 	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 
 	for (I=0; I < ARRAYSIZE(CFG); ++I)
 	{
+		cfg_reader.SelectSection(CFG[I].KeyName);
 		switch (CFG[I].ValType)
 		{
 			case REG_DWORD:
@@ -984,26 +976,13 @@ void ReadConfig()
 					// so saved settings must differ for that two modes
 					CFG[I].KeyName = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
 				}
-				if (kfh) {
-					*(unsigned int *)CFG[I].ValPtr = kfh->GetUInt(CFG[I].KeyName, CFG[I].ValName, (unsigned int)CFG[I].DefDWord);
-				} else {
-					GetRegKey(FARString(CFG[I].KeyName), FARString(CFG[I].ValName), *(int *)CFG[I].ValPtr, (DWORD)CFG[I].DefDWord);
-				}
+				*(unsigned int *)CFG[I].ValPtr = cfg_reader.GetUInt(CFG[I].ValName, (unsigned int)CFG[I].DefDWord);
 				break;
 			case REG_SZ:
-				if (kfh) {
-					*(FARString *)CFG[I].ValPtr = kfh->GetString(CFG[I].KeyName, CFG[I].ValName, CFG[I].DefStr);
-				} else {
-					GetRegKey(FARString(CFG[I].KeyName), FARString(CFG[I].ValName), *(FARString *)CFG[I].ValPtr, CFG[I].DefStr);
-				}
+				*(FARString *)CFG[I].ValPtr = cfg_reader.GetString(CFG[I].ValName, CFG[I].DefStr);
 				break;
 			case REG_BINARY:
-				int Size;
-				if (kfh) {
-					Size = kfh->GetBytes(CFG[I].KeyName, CFG[I].ValName, (BYTE*)CFG[I].ValPtr, CFG[I].DefDWord, (BYTE*)CFG[I].DefStr);
-				} else {
-					Size = GetRegKey(FARString(CFG[I].KeyName), FARString(CFG[I].ValName), (BYTE*)CFG[I].ValPtr, (BYTE*)CFG[I].DefStr, CFG[I].DefDWord);
-				}
+				int Size = cfg_reader.GetBytes(CFG[I].ValName, CFG[I].DefDWord, (BYTE*)CFG[I].ValPtr, (BYTE*)CFG[I].DefStr);
 				if (Size > 0 && Size < (int)CFG[I].DefDWord)
 					memset(((BYTE*)CFG[I].ValPtr)+Size,0,CFG[I].DefDWord-Size);
 
@@ -1065,20 +1044,14 @@ void ReadConfig()
 	if (Opt.ViOpt.TabSize<1 || Opt.ViOpt.TabSize>512)
 		Opt.ViOpt.TabSize=8;
 
-	if (kfh) {
-		strKeyNameFromReg = kfh->GetString(NKeyKeyMacros, "KeyRecordCtrlDot", szCtrlDot);
-	} else {
-		GetRegKey(FARString(NKeyKeyMacros), L"KeyRecordCtrlDot", strKeyNameFromReg, szCtrlDot);
-	}
+	cfg_reader.SelectSection(NKeyKeyMacros);
+
+	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlDot", szCtrlDot);
 
 	if ((Opt.Macro.KeyMacroCtrlDot=KeyNameToKey(strKeyNameFromReg)) == KEY_INVALID)
 		Opt.Macro.KeyMacroCtrlDot=KEY_CTRLDOT;
 
-	if (kfh) {
-		strKeyNameFromReg = kfh->GetString(NKeyKeyMacros, "KeyRecordCtrlShiftDot", szCtrlShiftDot);
-	} else {
-		GetRegKey(FARString(NKeyKeyMacros), L"KeyRecordCtrlShiftDot", strKeyNameFromReg, szCtrlShiftDot);
-	}
+	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlShiftDot", szCtrlShiftDot);
 
 	if ((Opt.Macro.KeyMacroCtrlShiftDot=KeyNameToKey(strKeyNameFromReg)) == KEY_INVALID)
 		Opt.Macro.KeyMacroCtrlShiftDot=KEY_CTRLSHIFTDOT;
@@ -1092,12 +1065,8 @@ void ReadConfig()
 	{
 		Opt.XLat.CurrentLayout=0;
 		memset(Opt.XLat.Layouts,0,sizeof(Opt.XLat.Layouts));
-		FARString strXLatLayouts;
-		if (kfh) {
-			strXLatLayouts = kfh->GetString(NKeyXLat, "Layouts", L"");
-		} else {
-			GetRegKey(FARString(NKeyXLat), L"Layouts", strXLatLayouts, L"");
-		}
+		cfg_reader.SelectSection(NKeyXLat);
+		FARString strXLatLayouts = cfg_reader.GetString("Layouts", L"");
 
 		if (!strXLatLayouts.IsEmpty())
 		{
@@ -1138,11 +1107,26 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnCount);
 	}
 
-	ApplySudoConfiguration();
-	ApplyConsoleTweaks();
+	FileFilter::InitFilter();
+
+	g_config_ready = true;
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
+void ApplyConfig()
+{
+	ApplySudoConfiguration();
+	ApplyConsoleTweaks();
+}
+
+void AssertConfigLoaded()
+{
+	if (!g_config_ready)
+	{
+		fprintf(stderr, "%s: oops\n", __FUNCTION__);
+		abort();
+	}
+}
 
 void SaveConfig(int Ask)
 {
@@ -1193,27 +1177,31 @@ void SaveConfig(int Ask)
 	RightPanel->GetCurBaseName(Opt.strRightCurFile);
 	CtrlObject->HiFiles->SaveHiData();
 
-	KeyFileHelper kfh(ConfigIni().c_str());
+	ConfigWriter cfg_writer(CONFIG_INI);
 
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-	kfh.PutString(NKeySystem, "PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
-	kfh.PutString(NKeyLanguage, "Main", Opt.strLanguage);
+	cfg_writer.SelectSection(NKeySystem);
+	cfg_writer.PutString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
+//	cfg_writer.PutString(NKeyLanguage, "Main", Opt.strLanguage);
 
 	for (size_t I=0; I < ARRAYSIZE(CFG); ++I)
 	{
 		if (CFG[I].IsSave)
+		{
+			cfg_writer.SelectSection(CFG[I].KeyName);
 			switch (CFG[I].ValType)
 			{
 				case REG_DWORD:
-					kfh.PutUInt(CFG[I].KeyName, CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
+					cfg_writer.PutUInt(CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
 					break;
 				case REG_SZ:
-					kfh.PutString(CFG[I].KeyName, CFG[I].ValName, ((FARString *)CFG[I].ValPtr)->CPtr());
+					cfg_writer.PutString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
 					break;
 				case REG_BINARY:
-					kfh.PutBytes(CFG[I].KeyName, CFG[I].ValName, (const BYTE*)CFG[I].ValPtr, CFG[I].DefDWord, true);
+					cfg_writer.PutBytes(CFG[I].ValName, CFG[I].DefDWord, (const BYTE*)CFG[I].ValPtr);
 					break;
 			}
+		}
 	}
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */

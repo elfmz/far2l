@@ -1,5 +1,6 @@
 #include "KeyFileHelper.h"
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <atomic>
@@ -50,9 +51,9 @@ int KeyFileValues::GetInt(const char *name, int def) const
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			sscanf(sz + 2, "%x", &def);
+			def = (int)strtol(sz + 2, nullptr, 16);
 		} else {
-			sscanf(sz, "%d", &def);
+			def = (int)strtol(sz, nullptr, 10);
 		}
 	}
 
@@ -65,9 +66,9 @@ unsigned int KeyFileValues::GetUInt(const char *name, unsigned int def) const
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			sscanf(sz + 2, "%x", &def);
+			def = (unsigned int)strtoul(sz + 2, nullptr, 16);
 		} else {
-			sscanf(sz, "%u", &def);
+			def = (unsigned int)strtoul(sz, nullptr, 10);
 		}
 	}
 
@@ -80,9 +81,9 @@ unsigned long long KeyFileValues::GetULL(const char *name, unsigned long long de
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
-			sscanf(sz + 2, "%llx", &def);
+			def = strtoull(sz + 2, nullptr, 16);
 		} else {
-			sscanf(sz, "%llu", &def);
+			def = strtoull(sz, nullptr, 10);
 		}
 	}
 

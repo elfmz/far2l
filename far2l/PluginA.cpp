@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lasterror.hpp"
 #include "execute.hpp"
 #include "flink.hpp"
+#include "ConfigRW.hpp"
 #include "wrap.cpp"
 #include <KeyFileHelper.h>
 

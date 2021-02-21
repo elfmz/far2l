@@ -3408,9 +3408,8 @@ UINT GetEditorCodePageA()
 
 int GetEditorCodePageFavA()
 {
-	UINT CodePage=GetEditorCodePageA(),nCP;
-	DWORD selectType,Index=0,FavIndex=2;
-	FARString sTableName;
+	UINT CodePage=GetEditorCodePageA();
+	DWORD FavIndex=2;
 	int result=-((int)CodePage+2);
 
 	if (WINPORT(GetOEMCP)()==CodePage)
@@ -3423,11 +3422,14 @@ int GetEditorCodePageFavA()
 	}
 	else
 	{
-		while (EnumRegValue(FavoriteCodePagesKey,Index++,sTableName,(BYTE*)&selectType,sizeof(selectType)))
+		ConfigReader cfg_reader;
+		const auto &codepages = cfg_reader.EnumKeys();
+		for (const auto &cp : codepages)
 		{
+			int selectType = cfg_reader.GetInt(cp.c_str(), 0);
 			if (!(selectType&CPST_FAVORITE)) continue;
 
-			nCP=_wtoi(sTableName);
+			UINT nCP = atoi(cp.c_str());
 
 			if (nCP==CodePage)
 			{
@@ -3460,7 +3462,6 @@ void MultiByteRecode(UINT nCPin, UINT nCPout, char *szBuffer, int nLength)
 
 UINT ConvertCharTableToCodePage(int Command)
 {
-	FARString sTableName;
 	UINT nCP = 0;
 
 	if (Command<0)
@@ -3475,18 +3476,17 @@ UINT ConvertCharTableToCodePage(int Command)
 			case 1 /* ANSI */:	nCP = WINPORT(GetACP)(); 	break;
 			default:
 			{
-				DWORD selectType,Index=0;
 				int FavIndex=2;
-
-				for (;;)
+				ConfigReader cfg_reader;
+				const auto &codepages = cfg_reader.EnumKeys();
+				for (const auto &cp : codepages)
 				{
-					if (!EnumRegValue(FavoriteCodePagesKey,Index++,sTableName,(BYTE*)&selectType,sizeof(selectType))) return CP_AUTODETECT;
-
+					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
 					if (!(selectType&CPST_FAVORITE)) continue;
 
 					if (FavIndex==Command)
 					{
-						nCP=_wtoi(sTableName);
+						nCP = atoi(cp.c_str());
 						break;
 					}
 

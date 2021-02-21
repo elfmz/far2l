@@ -617,3 +617,25 @@ void KeyFileHelper::PutBytes(const char *section, const char *name, size_t len, 
 		++j;
 	}
 }
+
+void KeyFileHelper::RenameSection(const char *src, const char *dst, bool recursed)
+{
+	auto it = _kf.find(src);
+	if (it != _kf.end()) {
+		auto section_values = it->second;
+		_kf.erase(it);
+		_kf[dst] = section_values;
+		_dirty = true;
+	}
+
+	if (recursed) {
+		const auto subsections = EnumSectionsAt(src, true);
+		for (auto subsection : subsections) {
+			auto section_values = _kf[subsection];
+			_kf.erase(subsection);
+			subsection.replace(0, strlen(src), dst);
+			_kf[subsection] = section_values;
+			_dirty = true;
+		}
+	}
+}

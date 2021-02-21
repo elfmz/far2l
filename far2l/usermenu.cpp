@@ -106,7 +106,7 @@ int PrepareHotKey(FARString &strHotKey)
 	return FuncNum;
 }
 
-void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool SingleItemMenu=false)
+static void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool SingleItemMenu=false)
 {
 	for (int i=0;;i++)
 	{
@@ -454,7 +454,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 }
 
 // заполнение меню
-int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
+static int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
 {
 	UserMenu.DeleteItems();
 	int NumLines=0;

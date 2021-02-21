@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include "InterThreadCall.hpp"
 #include "SafeMMap.hpp"
+#include "ConfigRW.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -387,7 +388,6 @@ static void SetupFarPath(int argc, char **argv)
 
 int FarAppMain(int argc, char **argv)
 {
-
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
@@ -403,6 +403,8 @@ int FarAppMain(int argc, char **argv)
 
 	SetRegRootKey(HKEY_CURRENT_USER);
 	Opt.strRegRoot = L"Software/Far2";
+	CheckForConfigUpgrade();
+
 	// По умолчанию - брать плагины из основного каталога
 	Opt.LoadPlug.MainPluginDir=TRUE;
 	Opt.LoadPlug.PluginsPersonal=TRUE;

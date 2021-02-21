@@ -65,7 +65,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "ConfigRW.hpp"
 
-#define CONFIG_INI		"config.ini"
 Options Opt={0};
 
 // Стандартный набор разделителей
@@ -956,7 +955,7 @@ void ReadConfig()
 	size_t I;
 
 	SetRegRootKey(HKEY_CURRENT_USER);
-	ConfigReader cfg_reader(CONFIG_INI);
+	ConfigReader cfg_reader;
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
 	cfg_reader.SelectSection(NKeySystem);
@@ -1057,7 +1056,7 @@ void ReadConfig()
 		Opt.Macro.KeyMacroCtrlShiftDot=KEY_CTRLSHIFTDOT;
 
 	Opt.EdOpt.strWordDiv = Opt.strWordDiv;
-	FileList::ReadPanelModes();
+	FileList::ReadPanelModes(cfg_reader);
 
 	if (Opt.strExecuteBatchType.IsEmpty()) // предохраняемся
 		Opt.strExecuteBatchType=constBatchExt;
@@ -1107,7 +1106,7 @@ void ReadConfig()
                                   Opt.FindOpt.OutColumnCount);
 	}
 
-	FileFilter::InitFilter();
+	FileFilter::InitFilter(cfg_reader);
 
 	g_config_ready = true;
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
@@ -1177,7 +1176,7 @@ void SaveConfig(int Ask)
 	RightPanel->GetCurBaseName(Opt.strRightCurFile);
 	CtrlObject->HiFiles->SaveHiData();
 
-	ConfigWriter cfg_writer(CONFIG_INI);
+	ConfigWriter cfg_writer;
 
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 	cfg_writer.SelectSection(NKeySystem);
@@ -1205,8 +1204,8 @@ void SaveConfig(int Ask)
 	}
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
-	FileFilter::SaveFilters();
-	FileList::SavePanelModes();
+	FileFilter::SaveFilters(cfg_writer);
+	FileList::SavePanelModes(cfg_writer);
 
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();

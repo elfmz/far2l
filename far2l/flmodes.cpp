@@ -206,9 +206,8 @@ void FileList::SetFilePanelModes()
 }
 
 
-void FileList::ReadPanelModes()
+void FileList::ReadPanelModes(ConfigReader &cfg_reader)
 {
-	ConfigReader cfg_reader(PANELMODES_INI);
 	for (int I=0; I<10; I++)
 	{
 		cfg_reader.SelectSectionFmt("Panel/ViewModes/Mode%d", I);
@@ -241,9 +240,8 @@ void FileList::ReadPanelModes()
 }
 
 
-void FileList::SavePanelModes()
+void FileList::SavePanelModes(ConfigWriter &cfg_writer)
 {
-	ConfigWriter cfg_writer(PANELMODES_INI);
 	for (int I=0; I<10; I++)
 	{
 		cfg_writer.SelectSectionFmt("Panel/ViewModes/Mode%d", I);

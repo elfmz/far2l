@@ -42,7 +42,7 @@ enum CPSelectType
 	CPST_FIND = 2
 };
 
-extern const wchar_t *FavoriteCodePagesKey;
+extern const char *FavoriteCodePagesKey;
 
 inline bool IsUTF7(UINT CP) {return (CP==CP_UTF7); };
 inline bool IsUTF8(UINT CP) {return (CP==CP_UTF8); };

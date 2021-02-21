@@ -423,7 +423,7 @@ enum FINDDLG
 	FD_BUTTON_STOP,
 };
 
-void InitInFileSearch()
+static void InitInFileSearch()
 {
 	if (!InFileSearchInited && !strFindStr.IsEmpty())
 	{
@@ -475,16 +475,19 @@ void InitInFileSearch()
 			// Формируем список кодовых страниц
 			if (CodePage == CP_AUTODETECT)
 			{
-				DWORD data;
-				FARString codePageName;
+				// FARString codePageName;
 				bool hasSelected = false;
-
 				// Проверяем наличие выбранных страниц символов
-				for (int i=0; EnumRegValue(FavoriteCodePagesKey, i, codePageName, (BYTE *)&data, sizeof(data)); i++)
+				ConfigReader cfg_reader;
+				cfg_reader.SelectSection(FavoriteCodePagesKey);
+				const auto &codepages = cfg_reader.EnumKeys();
+				for (const auto &cp : codepages)
 				{
-					if (data & CPST_FIND)
+					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+					if (selectType & CPST_FIND)
 					{
 						hasSelected = true;
+						// codePageName = cp;
 						break;
 					}
 				}
@@ -513,11 +516,12 @@ void InitInFileSearch()
 				}
 
 				// Добавляем стандартные таблицы символов
-				for (int i=0; EnumRegValue(FavoriteCodePagesKey, i, codePageName, (BYTE *)&data, sizeof(data)); i++)
+				for (const auto &cp : codepages)
 				{
-					if (data & (hasSelected?CPST_FIND:CPST_FAVORITE))
+					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+					if (selectType & (hasSelected?CPST_FIND:CPST_FAVORITE))
 					{
-						UINT codePage = _wtoi(codePageName);
+						UINT codePage = atoi(cp.c_str());
 
 						// Проверяем дубли
 						if (!hasSelected)
@@ -527,7 +531,7 @@ void InitInFileSearch()
 							for (int j = 0; j<StandardCPCount; j++)
 								if (codePage == codePages[j].CodePage)
 								{
-									isDouble =true;
+									isDouble = true;
 									break;
 								}
 
@@ -973,27 +977,28 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 							if (Position.SelectPos > 1 && Position.SelectPos < FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0))
 							{
 								// Преобразуем номер таблицы сиволов к строке
-								FARString strCodePageName;
-								strCodePageName.Format(L"%u", SelectedCodePage);
+								const std::string &strCodePageName = StrPrintf("%u", SelectedCodePage);
+								//strCodePageName.Format(L"%u", SelectedCodePage);
 								// Получаем текущее состояние флага в реестре
-								int SelectType = 0;
-								GetRegKey(FavoriteCodePagesKey, strCodePageName, SelectType, 0);
+								int SelectType = ConfigReader(FavoriteCodePagesKey).GetInt(strCodePageName.c_str(), 0);
 
 								// Отмечаем/разотмечаем таблицу символов
 								if (Item.Item.Flags & LIF_CHECKED)
 								{
 									// Для стандартных таблиц символов просто удаляем значение из рееста, для
 									// любимых же оставляем в реестре флаг, что таблица символов любимая
+									ConfigWriter cfg_writer(FavoriteCodePagesKey);
 									if (SelectType & CPST_FAVORITE)
-										SetRegKey(FavoriteCodePagesKey, strCodePageName, CPST_FAVORITE);
+										cfg_writer.PutInt(strCodePageName.c_str(), CPST_FAVORITE);
 									else
-										DeleteRegValue(FavoriteCodePagesKey, strCodePageName);
+										cfg_writer.RemoveKey(strCodePageName.c_str());
 
 									Item.Item.Flags &= ~LIF_CHECKED;
 								}
 								else
 								{
-									SetRegKey(FavoriteCodePagesKey, strCodePageName, CPST_FIND | (SelectType & CPST_FAVORITE ?  CPST_FAVORITE : 0));
+									ConfigWriter(FavoriteCodePagesKey).PutInt(strCodePageName.c_str(),
+										CPST_FIND | (SelectType & CPST_FAVORITE ?  CPST_FAVORITE : 0));
 									Item.Item.Flags |= LIF_CHECKED;
 								}
 
@@ -2785,7 +2790,7 @@ struct THREADPARAM
 	bool bDone;
 };
 
-DWORD ThreadRoutine(LPVOID Param)
+static DWORD ThreadRoutine(LPVOID Param)
 {
 	InitInFileSearch();
 	THREADPARAM* tParam=reinterpret_cast<THREADPARAM*>(Param);

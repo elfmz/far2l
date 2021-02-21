@@ -80,4 +80,5 @@ public:
 	bool RemoveSection(const char *section);
 	size_t RemoveSectionsAt(const char *parent_section);
 	void RemoveKey(const char *section, const char *name);
+	void RenameSection(const char *src, const char *dst, bool recursed);
 };

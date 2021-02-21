@@ -51,8 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "interf.hpp"
 
-#define FILEFILTERS_INI "file_filters.ini"
-
 static int _cdecl ExtSort(const void *el1,const void *el2);
 
 static TPointerArray<FileFilterParams> FilterData, TempFilterData;
@@ -426,7 +424,8 @@ bool FileFilter::FilterEdit()
 
 	if (Opt.AutoSaveSetup)
 	{
-		SaveFilters();
+		ConfigWriter cfg_writer;
+		SaveFilters(cfg_writer);
 	}
 
 	if (ExitCode!=-1 || bNeedUpdate)
@@ -785,13 +784,10 @@ bool FileFilter::IsEnabledOnPanel()
 	return false;
 }
 
-static const wchar_t *IMPOSSIBILIMO = L"!!!ImPoSsIbIlImO!!!";
-
-void FileFilter::InitFilter()
+void FileFilter::InitFilter(ConfigReader &cfg_reader)
 {
 	FilterData.Free();
 	TempFilterData.Free();
-	ConfigReader cfg_reader(FILEFILTERS_INI);
 	while (1)
 	{
 		cfg_reader.SelectSectionFmt("Filters/Filter%d", FilterData.getCount());
@@ -880,10 +876,10 @@ void FileFilter::CloseFilter()
 	TempFilterData.Free();
 }
 
-void FileFilter::SaveFilters()
+void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 {
-	ConfigWriter cfg_writer(FILEFILTERS_INI);
-	cfg_writer.RemoveSectionAndSubsections("Filters");
+	cfg_writer.SelectSection("Filters");
+	cfg_writer.RemoveSection();
 
 	for (size_t i=0; i<FilterData.getCount(); i++)
 	{

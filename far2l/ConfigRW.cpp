@@ -72,6 +72,11 @@ void ConfigSection::SelectSection(const char *section)
 	}
 }
 
+void ConfigSection::SelectSection(const wchar_t *section)
+{
+	SelectSection(Wide2MB(section).c_str());
+}
+
 void ConfigSection::SelectSectionFmt(const char *format, ...)
 {
 	va_list args;

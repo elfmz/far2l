@@ -114,24 +114,7 @@ static CodePagesCallbackCallSource CallbackCallSource;
 
 static std::unique_ptr<ConfigReader> s_cfg_reader;
 
-struct CodePageConfigReader
-{
-	CodePageConfigReader()
-	{
-		s_cfg_reader.reset(new ConfigReader);
-	}
-	~CodePageConfigReader()
-	{
-		s_cfg_reader.reset();
-	}
-
-	static void Update()
-	{
-		s_cfg_reader.reset(new ConfigReader);
-	}
-};
-
-wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length, bool &IsCodePageNameCustom);
+static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length, bool &IsCodePageNameCustom);
 
 #ifdef CP_DBG
 static const char *levelNames[] = {"QUIET", "ERROR", "WARN", "TRACE", "INFO"};
@@ -515,7 +498,7 @@ static void ProcessSelected(bool select)
 				cfg_writer.RemoveKey(strCPName.c_str());
 		}
 
-		CodePageConfigReader::Update();
+		GlobalConfigReader::Update(s_cfg_reader);
 
 		// Создаём новый элемент меню
 		MenuItemEx newItem;
@@ -633,14 +616,14 @@ static void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7,
 }
 
 // Форматируем имя таблицы символов
-wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length)
+static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length)
 {
 	bool IsCodePageNameCustom;
 	return FormatCodePageName(CodePage, CodePageName, Length, IsCodePageNameCustom);
 }
 
 // Форматируем имя таблицы символов
-wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length, bool &IsCodePageNameCustom)
+static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length, bool &IsCodePageNameCustom)
 {
 	if (!CodePageName || !Length)
 		return CodePageName;
@@ -718,7 +701,7 @@ static LONG_PTR WINAPI EditDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR
 				else
 					cfg_writer.PutString(strCodePage.c_str(), strCodePageName.CPtr());
 			}
-			CodePageConfigReader::Update();
+			GlobalConfigReader::Update(s_cfg_reader);
 			// Получаем информацию о кодовой странице
 			CPINFOEX cpiex;
 			if (GetCodePageInfo(CodePage, cpiex))
@@ -774,7 +757,7 @@ static void EditCodePageName()
 
 UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7, bool bShowAuto)
 {
-	CodePageConfigReader cpcr;
+	GlobalConfigReader gcr(s_cfg_reader);
 	CallbackCallSource = CodePageSelect;
 	currentCodePage = nCurrent;
 	// Создаём меню
@@ -828,7 +811,7 @@ UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowU
 // Заполняем список таблицами символов
 UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool allowAuto, bool allowAll)
 {
-	CodePageConfigReader cpcr;
+	GlobalConfigReader gcr(s_cfg_reader);
 	CallbackCallSource = CodePagesFill;
 	// Устанавливаем переменные для доступа из каллбака
 	dialog = dialogHandle;

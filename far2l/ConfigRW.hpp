@@ -12,6 +12,7 @@ protected:
 
 public:
 	void SelectSection(const char *section);
+	void SelectSection(const wchar_t *section);
 	void SelectSectionFmt(const char *format, ...);
 };
 
@@ -57,3 +58,27 @@ public:
 };
 
 void CheckForConfigUpgrade();
+
+class GlobalConfigReader
+{
+	std::unique_ptr<ConfigReader> &_cfg_reader;
+
+public:
+	GlobalConfigReader(std::unique_ptr<ConfigReader> &cfg_reader)
+		: _cfg_reader(cfg_reader)
+	{
+		_cfg_reader.reset(new ConfigReader);
+	}
+
+	~GlobalConfigReader()
+	{
+		_cfg_reader.reset();
+	}
+
+	static void Update(std::unique_ptr<ConfigReader> &cfg_reader)
+	{
+		cfg_reader.reset();
+		cfg_reader.reset(new ConfigReader);
+	}
+};
+

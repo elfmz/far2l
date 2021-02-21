@@ -97,8 +97,6 @@ UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowU
 
 UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool allowAuto, bool allowAll);
 
-wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length);
-
 //#define CP_DBG
 
 #ifdef __cplusplus

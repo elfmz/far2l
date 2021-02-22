@@ -134,7 +134,15 @@ class HostRemoteBroker : protected IPCEndpoint
 		for (;;) {
 			size_t len = 0;
 			RecvPOD(len);
+			if (_io_buf.size() < len) {
+				_io_buf.resize(len);
+			}
+
 			if (!error_str.empty()) {
+				if (len) {
+					// still have to fetch buffer to ensure proper IPC sequencing
+					Recv(&_io_buf[0], len);
+				}
 				SendCommand(IPC_ERROR);
 				SendString(error_str);
 				break;
@@ -145,10 +153,6 @@ class HostRemoteBroker : protected IPCEndpoint
 				break;
 			}
 			SendCommand(IPC_FILE_PUT);
-
-			if (_io_buf.size() < len) {
-				_io_buf.resize(len);
-			}
 
 			Recv(&_io_buf[0], len);
 			try {

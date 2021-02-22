@@ -35,6 +35,9 @@ static const char *Section2Ini(const std::string &section)
 	if (IsSectionOrSubsection(section, "CodePages"))
 		return "settings/codepages.ini";
 
+	if (IsSectionOrSubsection(section, "XLat"))
+		return "settings/xlat.ini";
+
 	if (IsSectionOrSubsection(section, "Colors")
 		|| IsSectionOrSubsection(section, "SortGroups") )
 		return "settings/colors.ini";

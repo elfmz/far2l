@@ -113,7 +113,7 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 		      руками переключили раскладку,
 		      снова конвертим и...
 		*/
-		GetRegKey(L"XLat",strLayoutName,Opt.XLat.Rules[2],L"");
+		Opt.XLat.Rules[2] = ConfigReader("XLat").GetString(strLayoutName, L"");
 
 		if (!Opt.XLat.Rules[2].IsEmpty())
 			ProcessLayoutName=TRUE;

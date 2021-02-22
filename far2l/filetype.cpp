@@ -84,8 +84,8 @@ static int GetDescriptionWidth(ConfigReader &cfg_reader, const wchar_t *Name=nul
 	for (int NumLine=0;; NumLine++)
 	{
 		cfg_reader.SelectSectionFmt(FTS.TypeFmt, NumLine);
-		FARString strMask = cfg_reader.GetString(FTS.Mask, IMPOSSIBILIMO);
-		if (strMask == IMPOSSIBILIMO)
+		FARString strMask;
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
 
 		CFileMask FMask;
@@ -147,15 +147,14 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 	int DizWidth = GetDescriptionWidth(cfg_reader, Name);
 	int ActualCmdCount=0; // отображаемых ассоциаций в меню
 	CFileMask FMask; // для работы с масками файлов
-	FARString strCommand, strDescription;
+	FARString strCommand, strDescription, strMask;
 	int CommandCount=0;
 
 	for (int I=0;; I++)
 	{
 		strCommand.Clear();
 		cfg_reader.SelectSectionFmt(FTS.TypeFmt, I);
-		FARString strMask = cfg_reader.GetString(FTS.Mask, IMPOSSIBILIMO);
-		if (strMask == IMPOSSIBILIMO)
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
 
 		if (FMask.Set(strMask, FMF_SILENT))
@@ -389,8 +388,8 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 	for (;; NumLine++)
 	{
 		cfg_reader.SelectSectionFmt(FTS.TypeFmt, NumLine);
-		FARString strMask = cfg_reader.GetString(FTS.Mask, IMPOSSIBILIMO);
-		if (strMask == IMPOSSIBILIMO)
+		FARString strMask;
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
 
 		TypesMenuItem.Clear();

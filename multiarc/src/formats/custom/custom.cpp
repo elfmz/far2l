@@ -730,7 +730,7 @@ int HexCharToNum(int HexChar)
 
 static bool GetSectionName(const std::string &FileName, int &Num, std::string &Name)
 {
-	KeyFileHelper kfh(FileName.c_str());
+	KeyFileHelper kfh(FileName);
 	const std::vector<std::string> &sections = kfh.EnumSections();
 	if (Num < (int)sections.size()) {
 		Name = sections[Num];
@@ -756,7 +756,7 @@ void GetIniString(LPCSTR lpAppName,LPCSTR lpKeyName,LPCSTR lpDefault, std::strin
 	out = lpDefault;
 
 	for (const auto &n : FormatFileNames) {
-		out = KeyFileHelper(n.c_str()).GetString(lpAppName,lpKeyName, out.c_str());
+		out = KeyFileHelper(n).GetString(lpAppName,lpKeyName, out.c_str());
 	}
 
 	size_t len = out.size();
@@ -779,7 +779,7 @@ UINT GetIniInt(LPCSTR lpAppName,LPCSTR lpKeyName,INT lpDefault)
 {
 	UINT v = lpDefault;
 	for (const auto &n : FormatFileNames) {
-		v = KeyFileHelper(n.c_str()).GetInt(lpAppName, lpKeyName, v);
+		v = KeyFileHelper(n).GetInt(lpAppName, lpKeyName, v);
 	}
 	return v;
 }

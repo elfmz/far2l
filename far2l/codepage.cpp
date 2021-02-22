@@ -275,7 +275,7 @@ static void AddStandardCodePage(const wchar_t *codePageName, UINT codePage, int 
 	if (selectedCodePages && codePage!=CP_AUTODETECT)
 	{
 		s_cfg_reader->SelectSection(FavoriteCodePagesKey);
-		int selectType = s_cfg_reader->GetInt(StrPrintf("%u", codePage).c_str(), 0);
+		int selectType = s_cfg_reader->GetInt(StrPrintf("%u", codePage), 0);
 
 		if (selectType & CPST_FIND)
 			checked = true;
@@ -394,7 +394,7 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 	wchar_t *codePageName = FormatCodePageName(_wtoi(lpwszCodePage), cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t), IsCodePageNameCustom);
 	// Получаем признак выбранности таблицы символов
 	s_cfg_reader->SelectSection(FavoriteCodePagesKey);
-	int selectType = s_cfg_reader->GetInt(Wide2MB(lpwszCodePage).c_str(), 0);
+	int selectType = s_cfg_reader->GetInt(Wide2MB(lpwszCodePage), 0);
 
 	// Добавляем таблицу символов либо в нормальные, либо в выбранные таблицы симовлов
 	if (selectType & CPST_FAVORITE)
@@ -484,18 +484,18 @@ static void ProcessSelected(bool select)
 		// Получаем текущее состояние флага в реестре
 		std::string strCPName = StrPrintf("%u", codePage);
 		s_cfg_reader->SelectSection(FavoriteCodePagesKey);
-		int selectType = s_cfg_reader->GetInt(strCPName.c_str(), 0);
+		int selectType = s_cfg_reader->GetInt(strCPName, 0);
 
 		// Удаляем/добавляем в ресестре информацию о выбранной кодовой странице
 		{
 			ConfigWriter cfg_writer;
 			cfg_writer.SelectSection(FavoriteCodePagesKey);
 			if (select)
-				cfg_writer.PutInt(strCPName.c_str(), CPST_FAVORITE | (selectType & CPST_FIND ? CPST_FIND : 0));
+				cfg_writer.PutInt(strCPName, CPST_FAVORITE | (selectType & CPST_FIND ? CPST_FIND : 0));
 			else if (selectType & CPST_FIND)
-				cfg_writer.PutInt(strCPName.c_str(), CPST_FIND);
+				cfg_writer.PutInt(strCPName, CPST_FIND);
 			else
-				cfg_writer.RemoveKey(strCPName.c_str());
+				cfg_writer.RemoveKey(strCPName);
 		}
 
 		GlobalConfigReader::Update(s_cfg_reader);
@@ -631,10 +631,10 @@ static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t 
 	// Пытаемся получить заданное пользоваталем имя таблицы символов
 	//FormatString strCodePage;
 	//strCodePage<<CodePage;
-	const std::string &strCodePage = StrPrintf("%u", CodePage);
 	s_cfg_reader->SelectSection(NamesOfCodePagesKey);
-	FARString strCodePageName = s_cfg_reader->GetString(strCodePage.c_str(), IMPOSSIBILIMO);
-	if (strCodePageName != IMPOSSIBILIMO)
+	FARString strCodePageName;
+	const std::string &strCodePage = StrPrintf("%u", CodePage);
+	if (s_cfg_reader->GetString(strCodePageName, strCodePage, L""))
 	{
 		Length = Min(Length-1, strCodePageName.GetLength());
 		IsCodePageNameCustom = true;
@@ -658,7 +658,7 @@ static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t 
 		{
 			if (Name && strCodePageName==Name)
 			{
-				ConfigWriter(NamesOfCodePagesKey).RemoveKey(strCodePage.c_str());
+				ConfigWriter(NamesOfCodePagesKey).RemoveKey(strCodePage);
 				IsCodePageNameCustom = false;
 				return Name ? Name : CodePageName;
 			}
@@ -697,9 +697,9 @@ static LONG_PTR WINAPI EditDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR
 				cfg_writer.SelectSection(NamesOfCodePagesKey);
 				// Если имя кодовой страницы пустое, то считаем, что имя не задано
 				if (!strCodePageName.GetLength())
-					cfg_writer.RemoveKey(strCodePage.c_str());
+					cfg_writer.RemoveKey(strCodePage);
 				else
-					cfg_writer.PutString(strCodePage.c_str(), strCodePageName.CPtr());
+					cfg_writer.PutString(strCodePage, strCodePageName.CPtr());
 			}
 			GlobalConfigReader::Update(s_cfg_reader);
 			// Получаем информацию о кодовой странице

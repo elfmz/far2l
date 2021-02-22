@@ -423,22 +423,22 @@ std::string SiteSpecification::ToString() const
 
 SitesConfig::SitesConfig(const SitesConfigLocation &sites_cfg_location)
 	:
-	KeyFileHelper(sites_cfg_location.TranslateToSitesConfigPath().c_str()),
+	KeyFileHelper(sites_cfg_location.TranslateToSitesConfigPath()),
 	_encrypt_passwords(!sites_cfg_location.IsStandaloneConfig())
 {
 }
 
 bool SitesConfig::Export(const std::string &fs_path, const std::string &site)
 {
-	KeyFileHelper kfh(fs_path.c_str(), false);
-	const std::vector<std::string> &keys = EnumKeys(site.c_str());
+	KeyFileHelper kfh(fs_path, false);
+	const std::vector<std::string> &keys = EnumKeys(site);
 	for (const auto &key : keys) {
-		std::string s = GetString(site.c_str(), key.c_str());
+		std::string s = GetString(site, key.c_str());
 		if (key == "Password") {
 			StringDeobfuscate(s);
-			kfh.PutString(site.c_str(), "PasswordPlain", s.c_str());
+			kfh.PutString(site, "PasswordPlain", s.c_str());
 		} else {
-			kfh.PutString(site.c_str(), key.c_str(), s.c_str());
+			kfh.PutString(site, key, s.c_str());
 		}
 	}
 
@@ -447,7 +447,7 @@ bool SitesConfig::Export(const std::string &fs_path, const std::string &site)
 
 bool SitesConfig::Import(const std::string &fs_path)
 {
-	KeyFileHelper kfh(fs_path.c_str(), true);
+	KeyFileHelper kfh(fs_path, true);
 	if (!kfh.IsLoaded()) {
 		return false;
 	}
@@ -458,14 +458,14 @@ bool SitesConfig::Import(const std::string &fs_path)
 	}
 
 	for (const auto &site : sites) {
-		const std::vector<std::string> &keys = kfh.EnumKeys(site.c_str());
+		const std::vector<std::string> &keys = kfh.EnumKeys(site);
 		for (const auto &key : keys) {
-			std::string s = kfh.GetString(site.c_str(), key.c_str());
+			std::string s = kfh.GetString(site, key);
 			if (_encrypt_passwords && key == "PasswordPlain") {
 				StringObfuscate(s);
-				PutString(site.c_str(), "Password", s.c_str());
+				PutString(site, "Password", s.c_str());
 			} else {
-				PutString(site.c_str(), key.c_str(), s.c_str());
+				PutString(site, key, s.c_str());
 			}
 		}
 	}
@@ -476,74 +476,74 @@ bool SitesConfig::Import(const std::string &fs_path)
 
 std::string SitesConfig::GetProtocol(const std::string &site)
 {
-	return GetString(site.c_str(), "Protocol");
+	return GetString(site, "Protocol");
 }
 
 void SitesConfig::PutProtocol(const std::string &site, const std::string &value)
 {
-	PutString(site.c_str(), "Protocol", value.c_str());
+	PutString(site, "Protocol", value.c_str());
 }
 
 
 std::string SitesConfig::GetHost(const std::string &site)
 {
-	return GetString(site.c_str(), "Host");
+	return GetString(site, "Host");
 }
 
 void SitesConfig::PutHost(const std::string &site, const std::string &value)
 {
-	PutString(site.c_str(), "Host", value.c_str());
+	PutString(site, "Host", value.c_str());
 }
 
 
 std::string SitesConfig::GetDirectory(const std::string &site)
 {
-	return GetString(site.c_str(), "Directory");
+	return GetString(site, "Directory");
 }
 
 void SitesConfig::PutDirectory(const std::string &site, const std::string &value)
 {
-	PutString(site.c_str(), "Directory", value.c_str());
+	PutString(site, "Directory", value.c_str());
 }
 
 
 unsigned int SitesConfig::GetPort(const std::string &site, unsigned int def)
 {
-	return (unsigned int)GetInt(site.c_str(), "Port", def);
+	return (unsigned int)GetInt(site, "Port", def);
 }
 
 void SitesConfig::PutPort(const std::string &site, unsigned int value)
 {
-	PutInt(site.c_str(), "Port", value);
+	PutInt(site, "Port", value);
 }
 
 unsigned int SitesConfig::GetLoginMode(const std::string &site, unsigned int def)
 {
-	return (unsigned int)GetInt(site.c_str(), "LoginMode", def);
+	return (unsigned int)GetInt(site, "LoginMode", def);
 }
 
 void SitesConfig::PutLoginMode(const std::string &site, unsigned int value)
 {
-	PutInt(site.c_str(), "LoginMode", value);
+	PutInt(site, "LoginMode", value);
 }
 
 
 std::string SitesConfig::GetUsername(const std::string &site)
 {
-	return GetString(site.c_str(), "Username");
+	return GetString(site, "Username");
 }
 
 void SitesConfig::PutUsername(const std::string &site, const std::string &value)
 {
-	PutString(site.c_str(), "Username", value.c_str());
+	PutString(site, "Username", value.c_str());
 }
 
 
 std::string SitesConfig::GetPassword(const std::string &site)
 {
-	std::string s = GetString(site.c_str(), "Password");
+	std::string s = GetString(site, "Password");
 	if (s.empty()) {
-		s = GetString(site.c_str(), "PasswordPlain");
+		s = GetString(site, "PasswordPlain");
 	} else {
 		StringDeobfuscate(s);
 	}
@@ -555,35 +555,35 @@ void SitesConfig::PutPassword(const std::string &site, const std::string &value)
 	if (_encrypt_passwords) {
 		std::string s(value);
 		StringObfuscate(s);
-		PutString(site.c_str(), "Password", s.c_str());
-		RemoveKey(site.c_str(), "PasswordPlain");
+		PutString(site, "Password", s.c_str());
+		RemoveKey(site, "PasswordPlain");
 	} else {
-		PutString(site.c_str(), "PasswordPlain", value.c_str());
-		RemoveKey(site.c_str(), "Password");
+		PutString(site, "PasswordPlain", value.c_str());
+		RemoveKey(site, "Password");
 	}
 }
 
 std::string SitesConfig::GetProtocolOptions(const std::string &site, const std::string &protocol)
 {
-	return GetString(site.c_str(), std::string("Options_").append(protocol).c_str());
+	return GetString(site, std::string("Options_").append(protocol).c_str());
 }
 
 void SitesConfig::PutProtocolOptions(const std::string &site, const std::string &protocol, const std::string &options)
 {
-	PutString(site.c_str(), std::string("Options_").append(protocol).c_str(), options.c_str());
+	PutString(site, std::string("Options_").append(protocol).c_str(), options.c_str());
 }
 
 bool SitesConfig::Transfer(SitesConfig &dst, const std::string &site, bool mv)
 {
-	const auto keys = KeyFileHelper::EnumKeys(site.c_str());
-	dst.RemoveSection(site.c_str());
+	const auto keys = KeyFileHelper::EnumKeys(site);
+	dst.RemoveSection(site);
 	for (const auto &key : keys) {
-		const std::string &value = GetString(site.c_str(), key.c_str());
-		dst.PutString(site.c_str(), key.c_str(), value.c_str());
+		const std::string &value = GetString(site, key);
+		dst.PutString(site, key, value.c_str());
 	}
 
 	if (mv) {
-		RemoveSection(site.c_str());
+		RemoveSection(site);
 	}
 	return true;
 }

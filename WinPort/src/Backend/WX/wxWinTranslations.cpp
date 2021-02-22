@@ -113,7 +113,7 @@ static void SavePalette(KeyFileHelper &kfh)
 bool InitPalettes()
 {
 	const std::string &palette_file = InMyConfig(PALETTE_CONFIG);
-	KeyFileHelper kfh(palette_file.c_str());
+	KeyFileHelper kfh(palette_file);
 	if (!kfh.IsLoaded()) {
 		InitDefaultPalette();
 		SavePalette(kfh);

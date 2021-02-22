@@ -339,7 +339,7 @@ bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
 {
 	KeyFileHelper kfh(PluginsIni());
 	const std::string &SettingsName = PluginSettingsName(lpwszModuleName);
-	if (!kfh.RemoveSection(SettingsName.c_str()))
+	if (!kfh.RemoveSection(SettingsName))
 	{
 		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
 		return false;
@@ -550,7 +550,7 @@ void PluginManager::LoadPluginsFromCache()
 	{
 		if (s != SettingsSection)
 		{
-			const std::string &module = kfh.GetString(s.c_str(), "Module");
+			const std::string &module = kfh.GetString(s, "Module");
 			if (!module.empty()) {
 				strModuleName = module;
 				LoadPlugin(strModuleName, false);
@@ -1286,10 +1286,10 @@ void PluginManager::Configure(int StartPos)
 						{
 							KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
-							if (!kfh.HasKey(key.c_str()))
+							if (!kfh.HasKey(key))
 								break;
 
-							strName = kfh.GetString(key.c_str(), "");
+							strName = kfh.GetString(key, "");
 						}
 						else
 						{
@@ -1462,9 +1462,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						if (bCached)
 						{
 							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
-							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key))
 								break;
-							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key, "");
 						}
 						else
 						{
@@ -1648,7 +1648,7 @@ std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber,
 void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
 	strHotKey = KeyFileReadSection(PluginsIni(), SettingsSection).GetString(
-		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
+		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType));
 }
 
 bool PluginManager::SetHotKeyDialog(
@@ -1673,7 +1673,7 @@ bool PluginManager::SetHotKeyDialog(
 
 	KeyFileHelper kfh(PluginsIni());
 	PluginDlg[2].strData = kfh.GetString(
-		SettingsSection, SettingName.c_str());
+		SettingsSection, SettingName);
 
 	int ExitCode;
 	{
@@ -1690,11 +1690,11 @@ bool PluginManager::SetHotKeyDialog(
 
 		if (PluginDlg[2].strData.IsEmpty())
 		{
-			kfh.RemoveKey(SettingsSection, SettingName.c_str());
+			kfh.RemoveKey(SettingsSection, SettingName);
 		}
 		else
 		{
-			kfh.PutString(SettingsSection, SettingName.c_str(), PluginDlg[2].strData.CPtr());
+			kfh.PutString(SettingsSection, SettingName, PluginDlg[2].strData.CPtr());
 		}
 
 		return true;
@@ -1721,7 +1721,7 @@ bool PluginManager::GetDiskMenuItem(
 	{
 		KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 		strPluginText = kfh.GetString(
-			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
+			StrPrintf(FmtDiskMenuStringD, PluginItem), "");
 		ItemPresent = !strPluginText.IsEmpty();
 		return true;
 	}
@@ -1795,7 +1795,7 @@ void PluginManager::DiscardCache()
 	for (const auto &s : sections)
 	{
 		if (s != SettingsSection)
-			kfh.RemoveSection(s.c_str());
+			kfh.RemoveSection(s);
 	}
 }
 

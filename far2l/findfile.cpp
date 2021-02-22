@@ -483,7 +483,7 @@ static void InitInFileSearch()
 				const auto &codepages = cfg_reader.EnumKeys();
 				for (const auto &cp : codepages)
 				{
-					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+					int selectType = cfg_reader.GetInt(cp, 0);
 					if (selectType & CPST_FIND)
 					{
 						hasSelected = true;
@@ -518,7 +518,7 @@ static void InitInFileSearch()
 				// Добавляем стандартные таблицы символов
 				for (const auto &cp : codepages)
 				{
-					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+					int selectType = cfg_reader.GetInt(cp, 0);
 					if (selectType & (hasSelected?CPST_FIND:CPST_FAVORITE))
 					{
 						UINT codePage = atoi(cp.c_str());
@@ -980,7 +980,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								const std::string &strCodePageName = StrPrintf("%u", SelectedCodePage);
 								//strCodePageName.Format(L"%u", SelectedCodePage);
 								// Получаем текущее состояние флага в реестре
-								int SelectType = ConfigReader(FavoriteCodePagesKey).GetInt(strCodePageName.c_str(), 0);
+								int SelectType = ConfigReader(FavoriteCodePagesKey).GetInt(strCodePageName, 0);
 
 								// Отмечаем/разотмечаем таблицу символов
 								if (Item.Item.Flags & LIF_CHECKED)
@@ -989,15 +989,15 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									// любимых же оставляем в реестре флаг, что таблица символов любимая
 									ConfigWriter cfg_writer(FavoriteCodePagesKey);
 									if (SelectType & CPST_FAVORITE)
-										cfg_writer.PutInt(strCodePageName.c_str(), CPST_FAVORITE);
+										cfg_writer.PutInt(strCodePageName, CPST_FAVORITE);
 									else
-										cfg_writer.RemoveKey(strCodePageName.c_str());
+										cfg_writer.RemoveKey(strCodePageName);
 
 									Item.Item.Flags &= ~LIF_CHECKED;
 								}
 								else
 								{
-									ConfigWriter(FavoriteCodePagesKey).PutInt(strCodePageName.c_str(),
+									ConfigWriter(FavoriteCodePagesKey).PutInt(strCodePageName,
 										CPST_FIND | (SelectType & CPST_FAVORITE ?  CPST_FAVORITE : 0));
 									Item.Item.Flags |= LIF_CHECKED;
 								}

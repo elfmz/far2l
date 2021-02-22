@@ -17,7 +17,7 @@ bool FSClipboardBackend::OnClipboardOpen()
 	if (!_shared_resource.LockWrite(5))
 		return false;
 
-	_kfh = std::make_shared<KeyFileHelper>(InMyConfig("fsclipboard.ini").c_str(), true);
+	_kfh = std::make_shared<KeyFileHelper>(InMyConfig("fsclipboard.ini"), true);
 	return true;
 }
 
@@ -92,7 +92,7 @@ UINT FSClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 		return 0;
 
 	const std::string &str_format_name = Wide2MB(lpszFormat);
-	int id = _kfh->GetInt("Formats", str_format_name.c_str(), 0);
+	int id = _kfh->GetInt("Formats", str_format_name, 0);
 	if (id == 0) {
 		id = _kfh->GetInt("Global", "LastRegisteredFormat", 0);
 		++id;
@@ -101,7 +101,7 @@ UINT FSClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 
 		_kfh->PutInt("Global", "LastRegisteredFormat", id);
 
-		_kfh->PutInt("Formats", str_format_name.c_str(), id);
+		_kfh->PutInt("Formats", str_format_name, id);
 	}
 
 	return (UINT)id;

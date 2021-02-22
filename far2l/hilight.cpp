@@ -157,8 +157,8 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		HData->SetMask(cfg_reader.GetInt(HLS.IgnoreMask, 0) == 0, Mask);
 
 	FILETIME DateAfter{}, DateBefore{};
-	cfg_reader.GetBytes(HLS.DateAfter, sizeof(DateAfter), (BYTE *)&DateAfter);
-	cfg_reader.GetBytes(HLS.DateBefore, sizeof(DateBefore), (BYTE *)&DateBefore);
+	cfg_reader.GetPOD(HLS.DateAfter, DateAfter);
+	cfg_reader.GetPOD(HLS.DateBefore, DateBefore);
 	HData->SetDate(cfg_reader.GetInt(HLS.UseDate, 1) != 0,
 					(DWORD)cfg_reader.GetUInt(HLS.DateType, 0),
 					DateAfter, DateBefore,
@@ -224,16 +224,16 @@ void HighlightFiles::InitHighlightFiles()
 			if (GroupDelta[j]!=DEFAULT_SORT_GROUP)
 			{
 				cfg_reader->SelectSection(KeyNames[j]);
-				strMask = cfg_reader->GetString(strGroupName.c_str(), IMPOSSIBILIMO);
-				cfg_reader->SelectSection(strRegKey.c_str());
+				if (!cfg_reader->GetString(strMask, strGroupName, L""))
+					break;
+				cfg_reader->SelectSection(strRegKey);
 			}
 			else
 			{
-				cfg_reader->SelectSection(strRegKey.c_str());
-				strMask = cfg_reader->GetString(HLS.Mask, IMPOSSIBILIMO);
+				cfg_reader->SelectSection(strRegKey);
+				if (!cfg_reader->GetString(strMask, HLS.Mask, L""))
+					break;
 			}
-			if (strMask == IMPOSSIBILIMO)
-				break;
 			FileFilterParams *HData = HiData.addItem();
 
 			if (HData)
@@ -753,8 +753,8 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	bool bRelative;
 	cfg_writer.PutInt(HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
 	cfg_writer.PutUInt(HLS.DateType, DateType);
-	cfg_writer.PutBytes(HLS.DateAfter, sizeof(DateAfter), (BYTE *)&DateAfter);
-	cfg_writer.PutBytes(HLS.DateBefore, sizeof(DateBefore), (BYTE *)&DateBefore);
+	cfg_writer.PutPOD(HLS.DateAfter, DateAfter);
+	cfg_writer.PutPOD(HLS.DateBefore, DateBefore);
 	cfg_writer.PutInt(HLS.DateRelative, bRelative ? 1 : 0);
 	const wchar_t *SizeAbove = nullptr, *SizeBelow = nullptr;
 	cfg_writer.PutInt(HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
@@ -807,9 +807,9 @@ void HighlightFiles::SaveHiData()
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
 				cfg_writer.SelectSection(KeyNames[j]);
-				cfg_writer.PutString(strGroupName.c_str(), Mask);
+				cfg_writer.PutString(strGroupName, Mask);
 			}
-			cfg_writer.SelectSection(strRegKey.c_str());
+			cfg_writer.SelectSection(strRegKey);
 			SaveFilter(CurHiData, cfg_writer, (j == 1 || j == 2) );
 		}
 
@@ -823,9 +823,9 @@ void HighlightFiles::SaveHiData()
 			if (j == 1 || j == 2)
 			{
 				cfg_writer.SelectSection(KeyNames[j]);
-				cfg_writer.RemoveKey(strGroupName.c_str());
+				cfg_writer.RemoveKey(strGroupName);
 			}
-			cfg_writer.SelectSection(strRegKey.c_str());
+			cfg_writer.SelectSection(strRegKey);
 			cfg_writer.RemoveSection();
 		}
 	}

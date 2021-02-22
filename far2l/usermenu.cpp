@@ -113,9 +113,9 @@ static void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& C
 	for (int i=0;;i++)
 	{
 		const std::string &strItemKey = StrPrintf("%ls/Item%d", MenuKey, i);
-		s_cfg_reader->SelectSection(strItemKey.c_str());
-		FARString strLabel = s_cfg_reader->GetString("Label", IMPOSSIBILIMO);
-		if (strLabel == IMPOSSIBILIMO) {
+		s_cfg_reader->SelectSection(strItemKey);
+		FARString strLabel;
+		if (!s_cfg_reader->GetString(strLabel, "Label", L"")) {
 			break;
 		}
 
@@ -136,8 +136,8 @@ static void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& C
 		{
 			for (int i=0;; i++)
 			{
-				FARString strCommand = s_cfg_reader->GetString(StrPrintf("Command%d", i).c_str(), IMPOSSIBILIMO);
-				if (strCommand == IMPOSSIBILIMO) {
+				FARString strCommand;
+				if (!s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", i), L"")) {
 					break;
 				}
 
@@ -217,7 +217,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 			}
 
 			{
-				ConfigWriter cfg_writer(strItemKey.GetMB().c_str());
+				ConfigWriter cfg_writer(strItemKey.GetMB());
 				cfg_writer.PutString("HotKey", strHotKey);
 				cfg_writer.PutString("Label", strLabel);
 				cfg_writer.PutInt("Submenu", SubMenu);
@@ -233,7 +233,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 				RemoveLeadingSpaces(MenuStr);
 				const std::string &strLineName = StrPrintf("Command%d", CommandNumber);
 				++CommandNumber;
-				{ ConfigWriter(strItemKey.GetMB().c_str()).PutString(strLineName.c_str(), MenuStr); }
+				{ ConfigWriter(strItemKey.GetMB()).PutString(strLineName, MenuStr); }
 				GlobalConfigReader::Update(s_cfg_reader);
 			}
 		}
@@ -761,11 +761,10 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		if (SubMenu)
 		{
 			/* $ 20.08.2001 VVM + При вложенных меню показывает заголовки предыдущих */
-			FARString strSubMenuKey, strSubMenuTitle;
+			FARString strSubMenuKey, strSubMenuTitle, strSubMenuLabel;
 			strSubMenuKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
 			s_cfg_reader->SelectSection(strSubMenuKey);
-			FARString strSubMenuLabel = s_cfg_reader->GetString("Label", IMPOSSIBILIMO);
-			if (strSubMenuLabel != IMPOSSIBILIMO)
+			if (s_cfg_reader->GetString(strSubMenuLabel, "Label", L""))
 			{
 				SubstFileName(strSubMenuLabel,strName,nullptr,nullptr,TRUE);
 				apiExpandEnvironmentStrings(strSubMenuLabel, strSubMenuLabel);
@@ -811,14 +810,12 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		for (;;)
 		{
 			FormatString strLineName;
+			FARString strCommand, strListName, strAnotherListName;
 			strLineName<<L"Command"<<CurLine;
 
 			s_cfg_reader->SelectSection(strCurrentKey);
-			FARString strCommand = s_cfg_reader->GetString(FARString(strLineName).GetMB().c_str(), IMPOSSIBILIMO);
-			if (strCommand == IMPOSSIBILIMO)
+			if (!s_cfg_reader->GetString(strCommand, FARString(strLineName).GetMB(), L""))
 				break;
-
-			FARString strListName, strAnotherListName;
 
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
@@ -1088,17 +1085,11 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 				здесь добавка строк из "Command%d" в EMR_MEMOEDIT
 				...
 			*/
-			FARString strBuffer;
+			FARString strBuffer, strCommand;
 			int CommandNumber=0;
 
-			while (true)
+			while (s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
 			{
-				FARString strCommand = s_cfg_reader->GetString(
-					StrPrintf("Command%d", CommandNumber).c_str(), IMPOSSIBILIMO);
-
-				if (strCommand == IMPOSSIBILIMO)
-					break;
-
 				strBuffer+=strCommand;
 				strBuffer+=L"\n";    //??? "\n\r"
 				CommandNumber++;
@@ -1110,10 +1101,8 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 			while (CommandNumber < DI_EDIT_COUNT)
 			{
-				FARString strCommand = s_cfg_reader->GetString(
-					StrPrintf("Command%d", CommandNumber).c_str(), IMPOSSIBILIMO);
-
-				if (strCommand == IMPOSSIBILIMO)
+				FARString strCommand;
+				if (!s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
 					break;
 
 				EditDlg[EM_EDITLINE_0+CommandNumber].strData = strCommand;
@@ -1140,7 +1129,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 			}
 
 			{
-				ConfigWriter cfg_writer(FARString(strItemKey).GetMB().c_str());
+				ConfigWriter cfg_writer(FARString(strItemKey).GetMB());
 				cfg_writer.PutString("HotKey", EditDlg[EM_HOTKEY_EDIT].strData.CPtr());
 				cfg_writer.PutString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
 				cfg_writer.PutInt("Submenu", SubMenu ? 1 : 0);
@@ -1165,9 +1154,9 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 						const std::string &strCommandName = StrPrintf("Command%d", i);
 
 						if (i>=CommandNumber)
-							cfg_writer.RemoveKey(strCommandName.c_str());
+							cfg_writer.RemoveKey(strCommandName);
 						else
-							cfg_writer.PutString(strCommandName.c_str(), EditDlg[i+EM_EDITLINE_0].strData.CPtr());
+							cfg_writer.PutString(strCommandName, EditDlg[i+EM_EDITLINE_0].strData.CPtr());
 					}
 #endif
 				}

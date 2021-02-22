@@ -3426,7 +3426,7 @@ int GetEditorCodePageFavA()
 		const auto &codepages = cfg_reader.EnumKeys();
 		for (const auto &cp : codepages)
 		{
-			int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+			int selectType = cfg_reader.GetInt(cp, 0);
 			if (!(selectType&CPST_FAVORITE)) continue;
 
 			UINT nCP = atoi(cp.c_str());
@@ -3481,7 +3481,7 @@ UINT ConvertCharTableToCodePage(int Command)
 				const auto &codepages = cfg_reader.EnumKeys();
 				for (const auto &cp : codepages)
 				{
-					int selectType = cfg_reader.GetInt(cp.c_str(), 0);
+					int selectType = cfg_reader.GetInt(cp, 0);
 					if (!(selectType&CPST_FAVORITE)) continue;
 
 					if (FavIndex==Command)

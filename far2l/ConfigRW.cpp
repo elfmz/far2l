@@ -4,8 +4,6 @@
 #include <assert.h>
 #include <algorithm>
 
-const wchar_t *IMPOSSIBILIMO = L"!!!ImPoSsIbIlImO!!!";
-
 #define CONFIG_INI "settings/config.ini"
 
 static bool IsSectionOrSubsection(const std::string &haystack, const char *needle)
@@ -59,12 +57,12 @@ static const char *Section2Ini(const std::string &section)
 	return CONFIG_INI;
 }
 
-static bool IsNiceLookingSection(const char *section)
+static bool IsNiceLookingSection(const std::string &section)
 {
 	return (IsSectionOrSubsection(section, "Colors"));
 }
 
-void ConfigSection::SelectSection(const char *section)
+void ConfigSection::SelectSection(const std::string &section)
 {
 	if (_section != section) {
 		_section = section;
@@ -74,7 +72,7 @@ void ConfigSection::SelectSection(const char *section)
 
 void ConfigSection::SelectSection(const wchar_t *section)
 {
-	SelectSection(Wide2MB(section).c_str());
+	SelectSection(Wide2MB(section));
 }
 
 void ConfigSection::SelectSectionFmt(const char *format, ...)
@@ -84,27 +82,28 @@ void ConfigSection::SelectSectionFmt(const char *format, ...)
 	const std::string &section = StrPrintfV(format, args);
 	va_end(args);
 
-	SelectSection(section.c_str());
+	SelectSection(section);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-
-ConfigReader::ConfigReader(const char *preselect_section)
+ConfigReader::ConfigReader()
 {
-	if (preselect_section) {
-		SelectSection(preselect_section);
-	}
+}
+
+ConfigReader::ConfigReader(const std::string &preselect_section)
+{
+	SelectSection(preselect_section);
 }
 
 void ConfigReader::OnSectionSelected()
 {
-	const char *ini = Section2Ini(_section.c_str());
+	const char *ini = Section2Ini(_section);
 	auto &selected_kfh = _ini2kfh[ini];
 	if (!selected_kfh) {
-		selected_kfh.reset(new KeyFileReadHelper(InMyConfig(ini).c_str()));
+		selected_kfh.reset(new KeyFileReadHelper(InMyConfig(ini)));
 	}
 	
-	_selected_section_values = selected_kfh->GetSectionValues(_section.c_str());
+	_selected_section_values = selected_kfh->GetSectionValues(_section);
 
 	if (!_selected_section_values) {
 		_has_section = false;
@@ -126,75 +125,92 @@ std::vector<std::string> ConfigReader::EnumKeys()
 	return out;
 }
 
-FARString ConfigReader::GetString(const char *name, const wchar_t *def) const
+bool ConfigReader::HasKey(const std::string &name) const
+{
+	assert(_selected_section_values != nullptr);
+	return _selected_section_values->HasKey(name);
+}
+
+FARString ConfigReader::GetString(const std::string &name, const wchar_t *def) const
 {
 	assert(_selected_section_values != nullptr);
 	return _selected_section_values->GetString(name, def);
 }
 
-int ConfigReader::GetInt(const char *name, int def) const
+bool ConfigReader::GetString(FARString &out, const std::string &name, const wchar_t *def) const
+{
+	assert(_selected_section_values != nullptr);
+	if (!_selected_section_values->HasKey(name)) {
+		return false;
+	}
+	out = _selected_section_values->GetString(name, def);
+	return true;
+}
+
+int ConfigReader::GetInt(const std::string &name, int def) const
 {
 	assert(_selected_section_values != nullptr);
 	return _selected_section_values->GetInt(name, def);
 }
 
-unsigned int ConfigReader::GetUInt(const char *name, unsigned int def) const
+unsigned int ConfigReader::GetUInt(const std::string &name, unsigned int def) const
 {
 	assert(_selected_section_values != nullptr);
 	return _selected_section_values->GetUInt(name, def);
 }
 
-unsigned long long ConfigReader::GetULL(const char *name, unsigned long long def) const
+unsigned long long ConfigReader::GetULL(const std::string &name, unsigned long long def) const
 {
 	assert(_selected_section_values != nullptr);
 	return _selected_section_values->GetULL(name, def);
 }
 
-size_t ConfigReader::GetBytes(const char *name, size_t len, unsigned char *buf, const unsigned char *def) const
+size_t ConfigReader::GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
 {
 	assert(_selected_section_values != nullptr);
 	return _selected_section_values->GetBytes(name, len, buf, def);
 }
 
 ////
-
-ConfigWriter::ConfigWriter(const char *preselect_section)
+ConfigWriter::ConfigWriter()
 {
-	if (preselect_section) {
-		SelectSection(preselect_section);
-	}
+}
+
+ConfigWriter::ConfigWriter(const std::string &preselect_section)
+{
+	SelectSection(preselect_section);
 }
 
 void ConfigWriter::OnSectionSelected()
 {
-	const char *ini = Section2Ini(_section.c_str());
+	const char *ini = Section2Ini(_section);
 	auto &selected_kfh = _ini2kfh[ini];
 	if (!selected_kfh) {
-		selected_kfh.reset(new KeyFileHelper(InMyConfig(ini).c_str()));
+		selected_kfh.reset(new KeyFileHelper(InMyConfig(ini)));
 	}
 	_selected_kfh =	selected_kfh.get();
-	_nice_looking_section = IsNiceLookingSection(_section.c_str());
+	_nice_looking_section = IsNiceLookingSection(_section);
 }
 
 void ConfigWriter::RemoveSection()
 {
-	_selected_kfh->RemoveSectionsAt(_section.c_str());
-	_selected_kfh->RemoveSection(_section.c_str());
+	_selected_kfh->RemoveSectionsAt(_section);
+	_selected_kfh->RemoveSection(_section);
 }
 
-void ConfigWriter::RenameSection(const char *new_section)
+void ConfigWriter::RenameSection(const std::string &new_section)
 {
 	if (_section != new_section) {
-		const char *old_ini = Section2Ini(_section.c_str());
+		const char *old_ini = Section2Ini(_section);
 		const char *new_ini = Section2Ini(new_section);
 		if (strcmp(old_ini, new_ini)) {
 			fprintf(stderr,
 				"%s: different ini files '%s' [%s] -> '%s' [%s]\n",
 				__FUNCTION__,
-				_section.c_str(), old_ini, new_section, new_ini);
+				_section.c_str(), old_ini, new_section.c_str(), new_ini);
 			abort();
 		}
-		_selected_kfh->RenameSection(_section.c_str(), new_section, true);
+		_selected_kfh->RenameSection(_section, new_section, true);
 	}
 }
 
@@ -222,7 +238,7 @@ void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 	for (size_t i = 0; i < sections.size(); ++i) {
 		const std::string &expected_section = StrPrintf("%s%lu", indexed_prefix, (unsigned long)i);
 		if (sections[i] != expected_section) {
-			_selected_kfh->RenameSection(sections[i].c_str(), expected_section.c_str(), true);
+			_selected_kfh->RenameSection(sections[i], expected_section, true);
 			if (_section == sections[i]) {
 				_section = expected_section;
 			}
@@ -231,34 +247,34 @@ void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 }
 
 
-void ConfigWriter::PutString(const char *name, const wchar_t *value)
+void ConfigWriter::PutString(const std::string &name, const wchar_t *value)
 {
-	_selected_kfh->PutString(_section.c_str(), name, value);
+	_selected_kfh->PutString(_section, name, value);
 }
 
-void ConfigWriter::PutInt(const char *name, int value)
+void ConfigWriter::PutInt(const std::string &name, int value)
 {
-	_selected_kfh->PutInt(_section.c_str(), name, value);
+	_selected_kfh->PutInt(_section, name, value);
 }
 
-void ConfigWriter::PutUInt(const char *name, unsigned int value)
+void ConfigWriter::PutUInt(const std::string &name, unsigned int value)
 {
-	_selected_kfh->PutUIntAsHex(_section.c_str(), name, value);
+	_selected_kfh->PutUIntAsHex(_section, name, value);
 }
 
-void ConfigWriter::PutULL(const char *name, unsigned long long value)
+void ConfigWriter::PutULL(const std::string &name, unsigned long long value)
 {
-	_selected_kfh->PutULLAsHex(_section.c_str(), name, value);
+	_selected_kfh->PutULLAsHex(_section, name, value);
 }
 
-void ConfigWriter::PutBytes(const char *name, size_t len, const unsigned char *buf)
+void ConfigWriter::PutBytes(const std::string &name, size_t len, const unsigned char *buf)
 {
-	_selected_kfh->PutBytes(_section.c_str(), name, len, buf, _nice_looking_section);
+	_selected_kfh->PutBytes(_section, name, len, buf, _nice_looking_section);
 }
 
-void ConfigWriter::RemoveKey(const char *name)
+void ConfigWriter::RemoveKey(const std::string &name)
 {
-	_selected_kfh->RemoveKey(_section.c_str(), name);
+	_selected_kfh->RemoveKey(_section, name);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -289,7 +305,7 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 			}
 		}
 
-		cfg_writer.SelectSection(virtual_path.c_str());
+		cfg_writer.SelectSection(virtual_path);
 
 		std::vector<BYTE> databuf(0x400);
 		for (DWORD i = 0; ;) {
@@ -308,20 +324,20 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 				std::string name = Wide2MB(&namebuf[0]);
 				switch (tip) {
 					case REG_DWORD: {
-						cfg_writer.PutUInt(name.c_str(), *(const unsigned int *)&databuf[0]);
+						cfg_writer.PutUInt(name, *(const unsigned int *)&databuf[0]);
 					} break;
 					case REG_QWORD: {
-						cfg_writer.PutULL(name.c_str(), *(const unsigned long long *)&databuf[0]);
+						cfg_writer.PutULL(name, *(const unsigned long long *)&databuf[0]);
 					} break;
 					case REG_SZ: case REG_EXPAND_SZ: {
 						std::wstring str((const WCHAR *)&databuf[0], datalen / sizeof(WCHAR));
 						if (!str.empty() && !str.back()) {
 							str.resize(str.size() - 1);
 						}
-						cfg_writer.PutString(name.c_str(), str.c_str());
+						cfg_writer.PutString(name, str.c_str());
 					} break;
 					default: {
-						cfg_writer.PutBytes(name.c_str(), datalen, &databuf[0]);
+						cfg_writer.PutBytes(name, datalen, &databuf[0]);
 					} break;
 				}
 				++i;

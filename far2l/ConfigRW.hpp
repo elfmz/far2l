@@ -2,8 +2,6 @@
 #include <KeyFileHelper.h>
 #include <memory>
 
-extern const wchar_t *IMPOSSIBILIMO;
-
 class ConfigSection
 {
 protected:
@@ -11,7 +9,7 @@ protected:
 	virtual void OnSectionSelected() {}
 
 public:
-	void SelectSection(const char *section);
+	void SelectSection(const std::string &section);
 	void SelectSection(const wchar_t *section);
 	void SelectSectionFmt(const char *format, ...);
 };
@@ -26,14 +24,20 @@ class ConfigReader : public ConfigSection
 	virtual void OnSectionSelected();
 
 public:
-	ConfigReader(const char *preselect_section = nullptr);
+	ConfigReader();
+	ConfigReader(const std::string &preselect_section);
+
 	std::vector<std::string> EnumKeys();
 	inline bool HasSection() const { return _has_section; };
-	FARString GetString(const char *name, const wchar_t *def = L"") const;
-	int GetInt(const char *name, int def = 0) const;
-	unsigned int GetUInt(const char *name, unsigned int def = 0) const;
-	unsigned long long GetULL(const char *name, unsigned long long def = 0) const;
-	size_t GetBytes(const char *name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
+	bool HasKey(const std::string &name) const;
+	FARString GetString(const std::string &name, const wchar_t *def = L"") const;
+	bool GetString(FARString &out, const std::string &name, const wchar_t *def) const;
+	int GetInt(const std::string &name, int def = 0) const;
+	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
+	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
+	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
+	template <class POD> void GetPOD(const std::string &name, const POD &pod)
+		{ GetBytes(name, sizeof(pod), (unsigned char *)&pod); }
 };
 
 class ConfigWriter : public ConfigSection
@@ -44,17 +48,21 @@ class ConfigWriter : public ConfigSection
 
 	virtual void OnSectionSelected();
 public:
-	ConfigWriter(const char *preselect_section = nullptr);
+	ConfigWriter();
+	ConfigWriter(const std::string &preselect_section);
+
 	void RemoveSection();
-	void RenameSection(const char *new_section);
+	void RenameSection(const std::string &new_section);
 	void DefragIndexedSections(const char *indexed_prefix);
 
-	void PutString(const char *name, const wchar_t *value);
-	void PutInt(const char *name, int value);
-	void PutUInt(const char *name, unsigned int value);
-	void PutULL(const char *name, unsigned long long value);
-	void PutBytes(const char *name, size_t len, const unsigned char *buf);
-	void RemoveKey(const char *name);
+	void PutString(const std::string &name, const wchar_t *value);
+	void PutInt(const std::string &name, int value);
+	void PutUInt(const std::string &name, unsigned int value);
+	void PutULL(const std::string &name, unsigned long long value);
+	void PutBytes(const std::string &name, size_t len, const unsigned char *buf);
+	template <class POD> void PutPOD(const std::string &name, const POD &pod)
+		{ PutBytes(name, sizeof(pod), (const unsigned char *)&pod); }
+	void RemoveKey(const std::string &name);
 };
 
 void CheckForConfigUpgrade();

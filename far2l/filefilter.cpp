@@ -792,8 +792,8 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 	{
 		cfg_reader.SelectSectionFmt("Filters/Filter%d", FilterData.getCount());
 
-		FARString strTitle = cfg_reader.GetString("Title", IMPOSSIBILIMO);
-		if (strTitle == IMPOSSIBILIMO) {
+		FARString strTitle;
+		if (!cfg_reader.GetString(strTitle, "Title", L"")) {
 			break;
 		}
 
@@ -808,8 +808,8 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 			NewFilter->SetMask(cfg_reader.GetUInt("UseMask", 1) != 0, strMask);
 
 			FILETIME DateAfter, DateBefore;
-			cfg_reader.GetBytes("DateAfter", sizeof(DateAfter), (BYTE *)&DateAfter);
-			cfg_reader.GetBytes("DateBefore", sizeof(DateBefore), (BYTE *)&DateBefore);
+			cfg_reader.GetPOD("DateAfter", DateAfter);
+			cfg_reader.GetPOD("DateBefore", DateBefore);
 			NewFilter->SetDate(cfg_reader.GetUInt("UseDate", 0) != 0,
 			                   (DWORD)cfg_reader.GetUInt("DateType", 0),
 			                   DateAfter, DateBefore,
@@ -823,7 +823,7 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 			                   (DWORD)cfg_reader.GetUInt("AttrClear", FILE_ATTRIBUTE_DIRECTORY));
 
 			DWORD Flags[FFFT_COUNT]{};
-			cfg_reader.GetBytes("FFlags",sizeof(Flags), (BYTE *)Flags);
+			cfg_reader.GetPOD("FFlags", Flags);
 
 			for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 				NewFilter->SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -835,8 +835,8 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 	while (1)
 	{
 		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", TempFilterData.getCount());
-		FARString strMask = cfg_reader.GetString("Mask", IMPOSSIBILIMO);
-		if (strMask == IMPOSSIBILIMO) {
+		FARString strMask;
+		if (!cfg_reader.GetString(strMask, "Mask", L"")) {
 			break;
 		}
 
@@ -848,7 +848,7 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 			//Авто фильтры они только для файлов, папки не должны к ним подходить
 			NewFilter->SetAttr(1, 0, FILE_ATTRIBUTE_DIRECTORY);
 			DWORD Flags[FFFT_COUNT]{};
-			cfg_reader.GetBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
+			cfg_reader.GetPOD("FFlags", Flags);
 
 			for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 				NewFilter->SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -862,7 +862,7 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 		FoldersFilter.SetMask(0,L"");
 		FoldersFilter.SetAttr(1,FILE_ATTRIBUTE_DIRECTORY,0);
 		DWORD Flags[FFFT_COUNT]{};
-		cfg_reader.GetBytes("FoldersFilterFFlags", sizeof(Flags), (BYTE *)Flags);
+		cfg_reader.GetPOD("FoldersFilterFFlags", Flags);
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			FoldersFilter.SetFlags((enumFileFilterFlagsType)i, Flags[i]);
@@ -894,8 +894,8 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		bool bRelative;
 		cfg_writer.PutUInt("UseDate", CurFilterData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
 		cfg_writer.PutUInt("DateType", DateType);
-		cfg_writer.PutBytes("DateAfter", sizeof(DateAfter), (BYTE *)&DateAfter);
-		cfg_writer.PutBytes("DateBefore",sizeof(DateBefore), (BYTE *)&DateBefore);
+		cfg_writer.PutPOD("DateAfter", DateAfter);
+		cfg_writer.PutPOD("DateBefore", DateBefore);
 		cfg_writer.PutUInt("RelativeDate", bRelative ? 1 : 0);
 		const wchar_t *SizeAbove, *SizeBelow;
 		cfg_writer.PutUInt("UseSize", CurFilterData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
@@ -910,7 +910,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
+		cfg_writer.PutPOD("FFlags", Flags);
 	}
 
 	for (size_t i=0; i<TempFilterData.getCount(); i++)
@@ -925,7 +925,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutBytes("FFlags", sizeof(Flags), (BYTE *)Flags);
+		cfg_writer.PutPOD("FFlags", Flags);
 	}
 
 	{
@@ -935,7 +935,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = FoldersFilter.GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutBytes("FoldersFilterFFlags", sizeof(Flags), (BYTE *)Flags);
+		cfg_writer.PutPOD("FoldersFilterFFlags", Flags);
 	}
 }
 

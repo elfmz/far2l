@@ -46,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 
-#include "registry.hpp"
+#include "ConfigRW.hpp"
 #include "config.hpp"
 #include "xlat.hpp"
 #include "console.hpp"
@@ -113,7 +113,7 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 		      руками переключили раскладку,
 		      снова конвертим и...
 		*/
-		Opt.XLat.Rules[2] = ConfigReader("XLat").GetString(strLayoutName, L"");
+		Opt.XLat.Rules[2] = ConfigReader("XLat").GetString(strLayoutName.GetMB(), L"");
 
 		if (!Opt.XLat.Rules[2].IsEmpty())
 			ProcessLayoutName=TRUE;

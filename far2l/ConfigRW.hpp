@@ -18,6 +18,7 @@ class ConfigReader : public ConfigSection
 {
 	std::map<std::string, std::unique_ptr<KeyFileReadHelper> > _ini2kfh;
 	std::unique_ptr<KeyFileValues> _empty_values;
+	KeyFileReadHelper *_selected_kfh = nullptr;
 	const KeyFileValues *_selected_section_values = nullptr;
 	bool _has_section;
 
@@ -28,6 +29,7 @@ public:
 	ConfigReader(const std::string &preselect_section);
 
 	std::vector<std::string> EnumKeys();
+	std::vector<std::string> EnumSectionsAt();
 	inline bool HasSection() const { return _has_section; };
 	bool HasKey(const std::string &name) const;
 	FARString GetString(const std::string &name, const wchar_t *def = L"") const;
@@ -50,6 +52,9 @@ class ConfigWriter : public ConfigSection
 public:
 	ConfigWriter();
 	ConfigWriter(const std::string &preselect_section);
+
+	inline bool Save()
+		{ return _selected_kfh->Save(); }
 
 	void RemoveSection();
 	void RenameSection(const std::string &new_section);

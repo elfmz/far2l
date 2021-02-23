@@ -105,8 +105,8 @@ void ConfigReader::OnSectionSelected()
 	if (!selected_kfh) {
 		selected_kfh.reset(new KeyFileReadHelper(InMyConfig(ini)));
 	}
-	
-	_selected_section_values = selected_kfh->GetSectionValues(_section);
+	_selected_kfh = selected_kfh.get();
+	_selected_section_values = _selected_kfh->GetSectionValues(_section);
 
 	if (!_selected_section_values) {
 		_has_section = false;
@@ -124,6 +124,14 @@ std::vector<std::string> ConfigReader::EnumKeys()
 {
 	assert(_selected_section_values != nullptr);
 	std::vector<std::string> out = _selected_section_values->EnumKeys();
+	std::sort(out.begin(), out.end());
+	return out;
+}
+
+std::vector<std::string> ConfigReader::EnumSectionsAt()
+{
+	assert(_selected_kfh != nullptr);
+	std::vector<std::string> out = _selected_kfh->EnumSectionsAt(_section);
 	std::sort(out.begin(), out.end());
 	return out;
 }
@@ -309,6 +317,8 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 		}
 
 		cfg_writer.SelectSection(virtual_path);
+		const bool macro_type_prefix =
+			(virtual_path == "KeyMacros/Vars" || virtual_path == "KeyMacros/Consts");
 
 		std::vector<BYTE> databuf(0x400);
 		for (DWORD i = 0; ;) {
@@ -323,25 +333,48 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 				}
 				namebuf.resize(namebuf.size() + 0x400);
 				databuf.resize(databuf.size() + 0x400);			
+
 			} else {
-				std::string name = Wide2MB(&namebuf[0]);
+				std::string name(Wide2MB(&namebuf[0]));
+				FARString tmp_str;
 				switch (tip) {
 					case REG_DWORD: {
-						cfg_writer.PutUInt(name, *(const unsigned int *)&databuf[0]);
+						if (macro_type_prefix) {
+							tmp_str.Format(L"INT:%ld", (long)*(int32_t *)&databuf[0]);
+							cfg_writer.PutString(name, tmp_str);
+						} else {
+							cfg_writer.PutUInt(name, (long)*(uint32_t *)&databuf[0]);
+						}
 					} break;
 					case REG_QWORD: {
-						cfg_writer.PutULL(name, *(const unsigned long long *)&databuf[0]);
-					} break;
-					case REG_SZ: case REG_EXPAND_SZ: {
-						std::wstring str((const WCHAR *)&databuf[0], datalen / sizeof(WCHAR));
-						if (!str.empty() && !str.back()) {
-							str.resize(str.size() - 1);
+						if (macro_type_prefix) {
+							tmp_str.Format(L"INT:%lld", (long long)*(int64_t *)&databuf[0]);
+							cfg_writer.PutString(name, tmp_str);
+						} else {
+							cfg_writer.PutULL(name, *(uint64_t *)&databuf[0]);
 						}
-						cfg_writer.PutString(name, str.c_str());
 					} break;
-					default: {
-						cfg_writer.PutBytes(name, datalen, &databuf[0]);
-					} break;
+					default:
+						if (tip == REG_SZ || tip == REG_EXPAND_SZ
+							|| (tip == REG_MULTI_SZ && macro_type_prefix)) {
+							if (macro_type_prefix) {
+								tmp_str = L"STR:";
+							}
+							for (size_t i = 0; i < datalen ; i+= sizeof(WCHAR)) {
+								if (!databuf[i]) {
+									if (i + sizeof(WCHAR) >= datalen || tip != REG_MULTI_SZ) {
+										break;
+									}
+									tmp_str+= L'\n';
+								} else {
+									tmp_str+= *(const WCHAR *)&databuf[i];
+								}
+							}
+							cfg_writer.PutString(name, tmp_str);
+
+						} else {
+							cfg_writer.PutBytes(name, datalen, &databuf[0]);
+						}
 				}
 				++i;
 			}

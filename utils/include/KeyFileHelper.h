@@ -63,6 +63,8 @@ class KeyFileHelper : public KeyFileReadHelper
 	std::string _filename;
 	bool _dirty;
 
+	void PutRaw(const std::string &section, const std::string &name, const char *value);
+
 public:
 	KeyFileHelper(const std::string &filename, bool load = true);
 	~KeyFileHelper();

@@ -19,6 +19,101 @@
 // KeyFileHelper to tell KeyFileReadHelper don't load anything
 static const char *sDontLoadSectionName = "][";
 
+class KFEscaping
+{
+	std::string _result;
+
+	void Encode(const std::string &s, bool key)
+	{
+		_result = '\"';
+		for (const auto &c : s) switch (c) {
+			case '\r': _result+= "\\r"; break;
+			case '\n': _result+= "\\n"; break;
+			case '\t': _result+= "\\t"; break;
+			case '\\': _result+= "\\\\"; break;
+			default: if (key && c == '=') {
+				_result+= "\\E";
+			} else {
+				_result+= c;
+			}
+		}
+		_result+= '\"';
+	}
+
+public:
+	const std::string &EncodeSection(const std::string &s)
+	{
+		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
+				&& s.find_first_of("\r\n") == std::string::npos)) {
+			return s;
+		}
+//fprintf(stderr, "%s: '%s'\n", __FUNCTION__, s.c_str());
+		Encode(s, false);
+		return _result;
+	}
+
+	const std::string &EncodeKey(const std::string &s)
+	{
+		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
+				&& s.find_first_of("\r\n=") == std::string::npos
+				&& s.front() != ';' && s.front() != '#' && s.front() != '['
+				&& s.front() != ' ' && s.front() != '\t'
+				&& s.back() != ' ' && s.back() != '\t')) {
+			return s;
+		}
+//fprintf(stderr, "%s: '%s'\n", __FUNCTION__, s.c_str());
+		Encode(s, true);
+		return _result;
+	}
+
+	const std::string &EncodeValue(const std::string &s)
+	{
+		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
+				&& s.find_first_of("\r\n") == std::string::npos
+				&& s.front() != ' ' && s.front() != '\t'
+				&& s.back() != ' ' && s.back() != '\t')) {
+			return s;
+		}
+//fprintf(stderr, "%s: '%s'\n", __FUNCTION__, s.c_str());
+		Encode(s, false);
+		return _result;
+	}
+
+	const std::string &Decode(const std::string &s)
+	{
+		if (s.size() < 2 || s.front() != '\"' || s.back() != '\"') {
+			return s;
+		}
+
+		_result.clear();
+
+		for (size_t i = 1; i < s.size() - 1; ++i) {
+			if (s[i] == '\\') {
+				++i;
+				switch (s[i]) {
+					case 'E': _result+= '='; break;
+					case 'r': _result+= '\r'; break;
+					case 'n': _result+= '\n'; break;
+					case 't': _result+= '\t'; break;
+					case '\\': _result+= '\\'; break;
+					default: // WTF???
+						fprintf(stderr,
+							"%s: bad escape sequence in '%s' at %ld\n",
+							__FUNCTION__, s.c_str(), (unsigned long)i);
+						_result+= '\\';
+						_result+= s[i];
+				}
+			} else {
+				_result+= s[i];
+			}
+		}
+		return _result;
+	}
+};
+
+////////////////////////////////////////////////////////////////
+
+
 
 bool KeyFileValues::HasKey(const std::string &name) const
 {
@@ -175,7 +270,8 @@ static bool LoadKeyFile(const std::string &filename, mode_t &filemode, ValuesPro
 		// usleep random time to effectively avoid long waits on mutual conflicts
 		usleep(10000 + 1000 * (rand() % 100));
 	}
-	
+
+	KFEscaping esc, esc_val;
 	std::string line, value;
 	KeyFileValues *values = nullptr;
 	for (size_t line_start = 0; line_start < content.size();) {
@@ -186,18 +282,27 @@ static bool LoadKeyFile(const std::string &filename, mode_t &filemode, ValuesPro
 
 		line = content.substr(line_start, line_end - line_start);
 		StrTrim(line, " \t\r");
-		if (!line.empty() && line[0] != ';' && line[0] != '#') {
-			if (line[0] == '[' && line[line.size() - 1] == ']') {
-				values = values_provider(line.substr(1, line.size() - 2));
+		if (!line.empty()) {
+			if (line.front() == '[') {
+				if (line.back() == ']') {
+					const auto &section = line.substr(1, line.size() - 2);
+					values = values_provider(esc.Decode(section));
 
-			} else if (values != nullptr) {
+				} else {
+					fprintf(stderr,
+						"%s: leading section marker without trailing - '%s'\n",
+						__FUNCTION__, line.c_str());
+				}
+
+			} else if (line.front() != ';' && line.front() != '#' && values != nullptr) {
 				size_t p = line.find('=');
 				if (p != std::string::npos) {
 					value = line.substr(p + 1);
 					StrTrimLeft(value);
 					line.resize(p);
 					StrTrimRight(line);
-					(*values)[line] = value;
+					// dedicated escaping for values to be used in single expression with esc
+					(*values)[esc.Decode(line)] = esc_val.Decode(value);
 				}
 			}
 		}
@@ -429,6 +534,7 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 			sections.emplace_back(i_kf.first);
 		}
 		std::sort(sections.begin(), sections.end());
+		KFEscaping esc;
 		for (const auto &s : sections) {
 			auto &kmap = _kf[s];
 			keys.clear();
@@ -436,11 +542,19 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 				keys.emplace_back(i_kmap.first);
 			}
 			std::sort(keys.begin(), keys.end());
-			content.append("[").append(s).append("]\n");
+
+			content+= '[';
+			content+= esc.EncodeSection(s);
+			content+= "]\n";
+
 			for (const auto &k : keys) {
-				content.append(k).append("=").append(kmap[k]).append("\n");
+				content+= esc.EncodeKey(k);
+				content+= '=';
+				content+= esc.EncodeValue(kmap[k]);
+				content+= '\n';
 			}
-			content.append("\n");
+			content+= '\n';
+
 			if (content.size() >= 0x10000) {
 				if (WriteAll(fd, content.c_str(), content.size()) != content.size()) {
 					throw std::runtime_error("write file failed");
@@ -519,11 +633,8 @@ void KeyFileHelper::RemoveKey(const std::string &section, const std::string &nam
 	}
 }
 
-void KeyFileHelper::PutString(const std::string &section, const std::string &name, const char *value)
+void KeyFileHelper::PutRaw(const std::string &section, const std::string &name, const char *value)
 {
-	if (!value) {
-		value = "";
-	}
 	auto &s = _kf[section];
 
 	auto it = s.find(name);
@@ -540,47 +651,55 @@ void KeyFileHelper::PutString(const std::string &section, const std::string &nam
 	_dirty = true;
 }
 
+void KeyFileHelper::PutString(const std::string &section, const std::string &name, const char *value)
+{
+	if (!value) {
+		value = "";
+	}
+	PutRaw(section, name, value);
+}
+
 void KeyFileHelper::PutString(const std::string &section, const std::string &name, const wchar_t *value)
 {
 	if (!value) {
 		value = L"";
 	}
-	PutString(section, name, Wide2MB(value).c_str());
+	PutRaw(section, name, Wide2MB(value).c_str());
 }
 
 void KeyFileHelper::PutInt(const std::string &section, const std::string &name, int value)
 {
 	char tmp[32];
 	sprintf(tmp, "%d", value);
-	PutString(section, name, tmp);
+	PutRaw(section, name, tmp);
 }
 
 void KeyFileHelper::PutUInt(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
 	sprintf(tmp, "%u", value);
-	PutString(section, name, tmp);
+	PutRaw(section, name, tmp);
 }
 
 void KeyFileHelper::PutUIntAsHex(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
 	sprintf(tmp, "0x%x", value);
-	PutString(section, name, tmp);
+	PutRaw(section, name, tmp);
 }
 
 void KeyFileHelper::PutULL(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "%llu", value);
-	PutString(section, name, tmp);
+	PutRaw(section, name, tmp);
 }
 
 void KeyFileHelper::PutULLAsHex(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "0x%llx", value);
-	PutString(section, name, tmp);
+	PutRaw(section, name, tmp);
 }
 
 void KeyFileHelper::PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, bool spaced)

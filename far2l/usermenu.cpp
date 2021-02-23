@@ -47,7 +47,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "manager.hpp"
 #include "constitle.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "usermenu.hpp"
 #include "filetype.hpp"
@@ -208,7 +207,6 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 			FARString strLabel=ChPtr+1;
 			RemoveLeadingSpaces(strLabel);
 			bool SubMenu=(GetStr.PeekString(&MenuStr, MenuCP, MenuStrLength) && *MenuStr==L'{');
-			UseSameRegKey();
 
 			// Support for old 1.x separator format
 			if(MenuCP==CP_OEMCP && strHotKey==L"-" && strLabel.IsEmpty())
@@ -261,7 +259,9 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
 	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
-	DeleteKeyTree(strLocalMenuKey);
+	{
+		ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
+	}
 	MenuModified=MenuNeedRefresh=false;
 
 	if (ChoiceMenuType)
@@ -394,7 +394,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 			}
 
 			// ...почистим реестр.
-			DeleteKeyTree(strLocalMenuKey);
+			ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
 		}
 
 		// что было после вызова меню?
@@ -710,7 +710,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								return 0;
 							}
 						}
-						DeleteKeyTree(strCurrentKey);
+						{ ConfigWriter(strCurrentKey.GetMB()).RemoveSection(); }
 						GetFileString GetStr(MenuFile);
 						MenuFileToReg(strCurrentKey, MenuFile, GetStr, Key==KEY_ALTSHIFTF4);
 						MenuFile.Close();
@@ -1120,16 +1120,15 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 		if (Dlg.GetExitCode()==EM_BUTTON_OK)
 		{
 			MenuModified=true;
-
-			if (Create)
-			{
-				FARString strKeyMask;
-				strKeyMask.Format(L"%ls/Item%%d",MenuKey);
-				InsertKeyRecord(strKeyMask,EditPos,TotalRecords);
-			}
-
 			{
 				ConfigWriter cfg_writer(FARString(strItemKey).GetMB());
+
+				if (Create)
+				{
+					cfg_writer.ReserveIndexedSection(
+						StrPrintf("%ls/Item", MenuKey).c_str(), (unsigned int)EditPos);
+				}
+
 				cfg_writer.PutString("HotKey", EditDlg[EM_HOTKEY_EDIT].strData.CPtr());
 				cfg_writer.PutString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
 				cfg_writer.PutInt("Submenu", SubMenu ? 1 : 0);
@@ -1160,10 +1159,9 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 					}
 #endif
 				}
-
-				GlobalConfigReader::Update(s_cfg_reader);
 			}
 
+			GlobalConfigReader::Update(s_cfg_reader);
 			Result=true;
 		}
 	}
@@ -1186,23 +1184,24 @@ int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 
 	MenuModified=MenuNeedRefresh=true;
 	strRegKey.Clear();
-	strRegKey<<MenuKey<<L"/Item%d";
-	DeleteKeyRecord(strRegKey,DeletePos);
+	strRegKey << MenuKey << L"/Item";
+	FARString DefragPrefix(strRegKey);
+	strRegKey << DeletePos;
+	ConfigWriter cfg_writer(FARString(strRegKey).GetMB());
+	cfg_writer.RemoveSection();
+	cfg_writer.DefragIndexedSections(DefragPrefix.GetMB().c_str());
 	return TRUE;
 }
 
 bool UserMenu::MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos)
 {
-	FormatString strSrc,strDst,strTmp;
-	strSrc<<MenuKey<<L"/Item"<<Pos;
-	strDst<<MenuKey<<L"/Item"<<NewPos;
-	strTmp<<MenuKey<<L"/Item"<<WINPORT(GetTickCount)();
-	CopyLocalKeyTree(strDst,strTmp);
-	DeleteKeyTree(strDst);
-	CopyLocalKeyTree(strSrc,strDst);
-	DeleteKeyTree(strSrc);
-	CopyLocalKeyTree(strTmp,strSrc);
-	DeleteKeyTree(strTmp);
-	MenuModified=MenuNeedRefresh=true;
+	if (Pos != NewPos)
+	{
+		FormatString strSrc, strDst;
+		strSrc << MenuKey << L"/Item" << Pos;
+		strDst << MenuKey << L"/Item" << NewPos;
+		ConfigWriter(FARString(strSrc).GetMB()).RenameSection(FARString(strDst).GetMB());
+		MenuModified = MenuNeedRefresh=true;
+	}
 	return true;
 }

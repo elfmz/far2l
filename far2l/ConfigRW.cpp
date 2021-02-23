@@ -1,5 +1,4 @@
 #include "headers.hpp"
-#include "registry.hpp"
 #include "ConfigRW.hpp"
 #include <assert.h>
 #include <algorithm>
@@ -98,6 +97,15 @@ ConfigReader::ConfigReader(const std::string &preselect_section)
 	SelectSection(preselect_section);
 }
 
+struct stat ConfigReader::sSectionStat(const std::string &section)
+{
+	struct stat out;
+	if (stat(InMyConfig(Section2Ini(section)).c_str(), &out) == -1) {
+		memset(&out, 0, sizeof(out));
+	}
+	return out;
+}
+
 void ConfigReader::OnSectionSelected()
 {
 	const char *ini = Section2Ini(_section);
@@ -182,6 +190,12 @@ size_t ConfigReader::GetBytes(const std::string &name, size_t len, unsigned char
 	return _selected_section_values->GetBytes(name, len, buf, def);
 }
 
+bool ConfigReader::GetBytes(const std::string &name, std::vector<unsigned char> &out) const
+{
+	assert(_selected_section_values != nullptr);
+	return _selected_section_values->GetBytes(name, out);
+}
+
 ////
 ConfigWriter::ConfigWriter()
 {
@@ -225,7 +239,7 @@ void ConfigWriter::RenameSection(const std::string &new_section)
 	}
 }
 
-void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
+std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_prefix)
 {
 	const size_t indexed_prefix_len = strlen(indexed_prefix);
 	std::vector<std::string> sections = _selected_kfh->EnumSections();
@@ -246,6 +260,13 @@ void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 		return atoi(a.c_str() + indexed_prefix_len) < atoi(b.c_str() + indexed_prefix_len);
 	});
 
+	return sections;
+}
+
+void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
+{
+	std::vector<std::string> sections = EnumIndexedSections(indexed_prefix);
+
 	for (size_t i = 0; i < sections.size(); ++i) {
 		const std::string &expected_section = StrPrintf("%s%lu", indexed_prefix, (unsigned long)i);
 		if (sections[i] != expected_section) {
@@ -254,6 +275,20 @@ void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 				_section = expected_section;
 			}
 		}
+	}
+}
+
+void ConfigWriter::ReserveIndexedSection(const char *indexed_prefix, unsigned int index)
+{
+	DefragIndexedSections(indexed_prefix);
+
+	std::vector<std::string> sections = EnumIndexedSections(indexed_prefix);
+
+	for (size_t i = sections.size(); i > index;) {
+		const std::string &new_name = StrPrintf("%s%lu", indexed_prefix, (unsigned long)i);
+		--i;
+		const std::string &old_name = StrPrintf("%s%lu", indexed_prefix, (unsigned long)i);
+		_selected_kfh->RenameSection(old_name, new_name, true);
 	}
 }
 

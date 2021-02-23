@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rdrwdsk.hpp"
 #include "savescr.hpp"
 #include "CFileMask.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "interf.hpp"
 #include "config.hpp"
@@ -559,13 +558,13 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 
 	if (Dlg.GetExitCode() == ETR_BUTTON_OK)
 	{
-		if (NewRec)
-		{
-			//InsertKeyRecord(FTS.TypeFmt,EditPos,TotalRecords);
-		}
-
 		ConfigWriter cfg_writer;
 		cfg_writer.SelectSectionFmt(FTS.TypeFmt, EditPos);
+
+		if (NewRec)
+		{
+			cfg_writer.ReserveIndexedSection(FTS.Type0, (unsigned int)EditPos);
+		}
 
 		cfg_writer.PutString(FTS.Mask, EditDlg[ETR_EDIT_MASKS].strData);
 		cfg_writer.PutString(FTS.Desc, EditDlg[ETR_EDIT_DESCR].strData);

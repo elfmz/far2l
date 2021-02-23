@@ -185,19 +185,10 @@ unsigned long long KeyFileValues::GetULL(const std::string &name, unsigned long 
 	return def;
 }
 
-size_t KeyFileValues::GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
-{
-	const auto &it = find(name);
-	if (it == end()) {
-		if (def) {
-			memcpy(buf, def, len);
-			return len;
-		}
-		return 0;
-	}
 
+static size_t DecodeBytes(const std::string &str, size_t len, unsigned char *buf)
+{
 	size_t out;
-	const auto &str = it->second;
 
 	for (size_t i = out = 0; out != len && i != str.size(); ++out) {
 		buf[out] = (digit_htob(str[i]) << 4);
@@ -216,6 +207,33 @@ size_t KeyFileValues::GetBytes(const std::string &name, size_t len, unsigned cha
 	return out;
 }
 
+size_t KeyFileValues::GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
+{
+	const auto &it = find(name);
+	if (it == end()) {
+		if (def) {
+			memcpy(buf, def, len);
+			return len;
+		}
+		return 0;
+	}
+
+	return DecodeBytes(it->second, len, buf);
+}
+
+bool KeyFileValues::GetBytes(const std::string &name, std::vector<unsigned char> &out) const
+{
+	const auto &it = find(name);
+	if (it == end()) {
+		return false;
+	}
+
+	out.resize(it->second.size() / 2 + 1);
+	size_t actual_size = DecodeBytes(it->second, out.size(), &out[0]);
+    out.resize(actual_size);
+	return true;
+}
+
 std::vector<std::string> KeyFileValues::EnumKeys() const
 {
 	std::vector<std::string> out;
@@ -228,34 +246,39 @@ std::vector<std::string> KeyFileValues::EnumKeys() const
 
 ///////////////////////////////////////////
 
+static inline mode_t MakeFileMode(struct stat &filestat)
+{
+	return (filestat.st_mode | 0600) & 0777;
+}
+
 template <class ValuesProviderT>
-static bool LoadKeyFile(const std::string &filename, mode_t &filemode, ValuesProviderT values_provider)
+static bool LoadKeyFile(const std::string &filename, struct stat &filestat, ValuesProviderT values_provider)
 {
 	std::string content;
 
 	for (size_t load_attempts = 0;; ++load_attempts) {
-		struct stat s {};
-		if (stat(filename.c_str(), &s) == -1) {
+		if (stat(filename.c_str(), &filestat) == -1) {
 			return false;
 		}
 
-		filemode = (s.st_mode | 0600) & 0777;
-
-		FDScope fd(open(filename.c_str(), O_RDONLY, filemode));
+		FDScope fd(open(filename.c_str(), O_RDONLY, MakeFileMode(filestat)));
 		if (!fd.Valid()) {
 			fprintf(stderr, "%s: error=%d opening '%s'\n", __FUNCTION__, errno, filename.c_str());
 			return false;
 		}
 
-		if (s.st_size == 0) {
+		if (filestat.st_size == 0) {
 			return true;
 		}
 
-		content.resize(s.st_size);
+		content.resize(filestat.st_size);
 		ssize_t r = ReadAll(fd, &content[0], content.size());
-		if (r == (ssize_t)s.st_size) {
+		if (r == (ssize_t)filestat.st_size) {
 			struct stat s2 {};
-			if (stat(filename.c_str(), &s2) == -1 || s.st_mtime == s2.st_mtime) {
+			if (stat(filename.c_str(), &s2) == -1
+				|| (filestat.st_mtime == s2.st_mtime
+					&& filestat.st_ino == s2.st_ino
+					&& filestat.st_size == s2.st_size)) {
 				break;
 			}
 		}
@@ -319,8 +342,8 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 	:
 	_section_loaded(false)
 {
-	mode_t filemode;
-	LoadKeyFile(filename, filemode,
+	struct stat filestat{};
+	LoadKeyFile(filename, filestat,
 		[&] (const std::string &section_name)->KeyFileValues *
 		{
 			if (section_name == section) {
@@ -338,7 +361,7 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *load_only_section)
 	: _loaded(false)
 {
-	_loaded = LoadKeyFile(filename, _filemode,
+	_loaded = LoadKeyFile(filename, _filestat,
 		[&] (const std::string &section_name)->KeyFileValues *
 		{
 			if (load_only_section == nullptr || section_name == load_only_section) {
@@ -483,7 +506,6 @@ unsigned long long KeyFileReadHelper::GetULL(const std::string &section, const s
 	return def;
 }
 
-
 size_t KeyFileReadHelper::GetBytes(const std::string &section, const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
 {
 	auto it = _kf.find(section);
@@ -496,6 +518,16 @@ size_t KeyFileReadHelper::GetBytes(const std::string &section, const std::string
 	}
 
 	return 0;
+}
+
+bool KeyFileReadHelper::GetBytes(const std::string &section, const std::string &name, std::vector<unsigned char> &out) const
+{
+	auto it = _kf.find(section);
+	if (it != _kf.end()) {
+		return it->second.GetBytes(name, out);
+	}
+
+	return false;
 }
 
 
@@ -523,7 +555,7 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 	unsigned int  tmp_uniq = ++s_tmp_uniq;
 	tmp+= StrPrintf(".%u-%u", getpid(), tmp_uniq);
 	try {
-		FDScope fd(creat(tmp.c_str(), _filemode));
+		FDScope fd(creat(tmp.c_str(), MakeFileMode(_filestat)));
 		if (!fd.Valid()) {
 			throw std::runtime_error("create file failed");
 		}

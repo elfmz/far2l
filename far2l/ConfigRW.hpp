@@ -26,7 +26,10 @@ class ConfigReader : public ConfigSection
 
 public:
 	ConfigReader();
-	ConfigReader(const std::string &preselect_section);
+	ConfigReader(const std::string &section);
+
+	static struct stat sSectionStat(const std::string &section);
+	inline const struct stat &SectionStat() const { return _selected_kfh->LoadedFileStat(); }
 
 	std::vector<std::string> EnumKeys();
 	std::vector<std::string> EnumSectionsAt();
@@ -38,8 +41,10 @@ public:
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
+	bool GetBytes(const std::string &name, std::vector<unsigned char> &out) const;
 	template <class POD> void GetPOD(const std::string &name, const POD &pod)
 		{ GetBytes(name, sizeof(pod), (unsigned char *)&pod); }
+
 };
 
 class ConfigWriter : public ConfigSection
@@ -49,6 +54,9 @@ class ConfigWriter : public ConfigSection
 	bool _nice_looking_section = false;
 
 	virtual void OnSectionSelected();
+
+	std::vector<std::string> EnumIndexedSections(const char *indexed_prefix);
+
 public:
 	ConfigWriter();
 	ConfigWriter(const std::string &preselect_section);
@@ -58,7 +66,9 @@ public:
 
 	void RemoveSection();
 	void RenameSection(const std::string &new_section);
+
 	void DefragIndexedSections(const char *indexed_prefix);
+	void ReserveIndexedSection(const char *indexed_prefix, unsigned int index);
 
 	void PutString(const std::string &name, const wchar_t *value);
 	void PutInt(const std::string &name, int value);

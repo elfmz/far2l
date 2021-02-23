@@ -13,6 +13,7 @@ struct KeyFileValues : std::unordered_map<std::string, std::string>
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
+	bool GetBytes(const std::string &name, std::vector<unsigned char> &out) const;
 	std::vector<std::string> EnumKeys() const;
 };
 
@@ -30,13 +31,15 @@ class KeyFileReadHelper
 {
 protected:
 	struct Sections : std::unordered_map<std::string, KeyFileValues> {} _kf;
-	mode_t _filemode = 0640;
+	struct stat _filestat;
 	bool _loaded;
 
 public:
 	KeyFileReadHelper(const std::string &filename, const char *load_only_section = nullptr);
 
 	bool IsLoaded() const { return _loaded; }
+
+	inline const struct stat &LoadedFileStat() const { return _filestat; }
 
 	size_t SectionsCount() const;
 
@@ -53,6 +56,7 @@ public:
 	unsigned int GetUInt(const std::string &section, const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &section, const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(const std::string &section, const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
+	bool GetBytes(const std::string &section, const std::string &name, std::vector<unsigned char> &out) const;
 	std::vector<std::string> EnumSections() const;
 	std::vector<std::string> EnumSectionsAt(const std::string &parent_section, bool recursed = false) const;
 	std::vector<std::string> EnumKeys(const std::string &section) const;

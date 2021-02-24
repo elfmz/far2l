@@ -22,7 +22,7 @@ void WINAPI FP_Screen::Save(void)
 	if(nSaveCount == 0)
 	{
 		hScreen = FP_Info->SaveScreen(0,0,-1,-1);
-		WINPORT(GetConsoleTitle)(SaveTitle,sizeof(SaveTitle));
+		WINPORT(GetConsoleTitle)(SaveTitle,ARRAYSIZE(SaveTitle));
 	}
 
 	nSaveCount++;

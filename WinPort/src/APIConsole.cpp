@@ -47,9 +47,7 @@ extern "C" {
 	WINPORT_DECL(GetConsoleTitle,DWORD,(WCHAR *title, DWORD max_size))
 	{
 		const std::wstring &s = g_winport_con_out.GetTitle();
-		if (s.size() < max_size) 
-			wcscpy(title, s.c_str());
-		
+		wcsncpy(title, s.c_str(), max_size);
 		return (DWORD)(s.size() + 1);
 	}
 

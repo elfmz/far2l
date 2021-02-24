@@ -322,6 +322,7 @@ static int     ArcChapters;
 
 static const char Str_TypeName[] = "TypeName";
 
+static bool CurSilent;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Library function pointers
@@ -473,7 +474,7 @@ DWORD WINAPI _export CUSTOM_GetSFXPos(void)
 }
 
 
-BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
+BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 {
     std::string TypeName;
     std::string Command;
@@ -523,7 +524,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     cmd+= "  >"; //2>/dev/null
     cmd+= TempName;
     DWORD ExitCode = system(cmd.c_str());
-	if (ExitCode)
+	if (ExitCode && !CurSilent)
 	{
 		std::string ToolNotFoundMsg;
 		GetIniString(TypeName.c_str(), "ToolNotFound", "", ToolNotFoundMsg);
@@ -586,6 +587,8 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
         free(OutData);
 		OutData = nullptr;
     }
+
+	CurSilent = Silent;
 	
     return (ExitCode);
 }

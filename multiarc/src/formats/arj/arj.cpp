@@ -146,7 +146,7 @@ BOOL WINAPI _export ARJ_IsArchive(const char *Name,const unsigned char *Data,int
 }
 
 
-BOOL WINAPI _export ARJ_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export ARJ_OpenArchive(const char *Name,int *Type,bool Silent)
 {
   struct ARJHd1
   {

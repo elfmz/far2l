@@ -172,7 +172,7 @@ static void ArcTM(FILETIME &dst, time_t sec, unsigned long nsec)
 
 static std::unique_ptr<LibArchOpenRead> s_arc;
 
-BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type)
+BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type, bool Silent)
 {
 	try {
 		LibArchOpenRead *arc = new LibArchOpenRead(Name, "", "");

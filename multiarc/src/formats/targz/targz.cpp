@@ -203,7 +203,7 @@ BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,i
 }
 
 
-BOOL WINAPI _export TARGZ_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export TARGZ_OpenArchive(const char *Name,int *Type,bool Silent)
 {
   ArcHandle=WINPORT(CreateFile)(MB2Wide(Name).c_str(),GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,
                        NULL,OPEN_EXISTING,FILE_FLAG_SEQUENTIAL_SCAN,NULL);

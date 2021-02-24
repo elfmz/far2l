@@ -26,7 +26,7 @@ void PluginClass::GetCommandFormat(int Command,char *Format,int FormatSize)
 
 int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
 {
-  char Command[512],AllFilesMask[32];
+  char Command[MA_MAX_SIZE_COMMAND_NAME],AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
   if (ItemsNumber==0)
     return FALSE;
   if ((OpMode & OPM_SILENT)==0)

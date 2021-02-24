@@ -306,21 +306,21 @@ class MetaReplacer
 ///////////////////////////////////////////////////////////////////////////////
 // Variables
 
-int     CurType = 0;
-char    *OutData = nullptr;
-DWORD   OutDataPos = 0, OutDataSize = 0;
+static int     CurType = 0;
+static char    *OutData = nullptr;
+static DWORD   OutDataPos = 0, OutDataSize = 0;
 
 static std::list<std::string> FormatFileNames;
 
 static std::string StartText, EndText;
 
-CustomStringList *Format = 0;
-CustomStringList *IgnoreStrings = 0;
+static CustomStringList *Format = 0;
+static CustomStringList *IgnoreStrings = 0;
 
-int     IgnoreErrors;
-int     ArcChapters;
+static int     IgnoreErrors;
+static int     ArcChapters;
 
-const char Str_TypeName[] = "TypeName";
+static const char Str_TypeName[] = "TypeName";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -511,16 +511,16 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     WINPORT(GetConsoleMode)(NULL, &ConsoleMode);
     WINPORT(SetConsoleMode)(NULL, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT |
                    ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
-    WCHAR SaveTitle[512];
+    WCHAR SaveTitle[512]{};
 
-    WINPORT(GetConsoleTitle)(SaveTitle, sizeof(SaveTitle));
+    WINPORT(GetConsoleTitle)(SaveTitle, ARRAYSIZE(SaveTitle) - 1);
     WINPORT(SetConsoleTitle)(StrMB2Wide(Command).c_str());
 
     //char ExpandedCmd[512];
 
     //WINPORT(ExpandEnvironmentStrings)(Command, ExpandedCmd, sizeof(ExpandedCmd));
     std::string cmd = Command;
-    cmd+= " 2>&1 >";
+    cmd+= "  >"; //2>/dev/null
     cmd+= TempName;
     DWORD ExitCode = system(cmd.c_str());
 	if (ExitCode)

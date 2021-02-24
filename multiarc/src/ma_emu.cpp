@@ -81,7 +81,7 @@ int main(int argc,char *argv[])
   if(IsArchive(argv[1],(const unsigned char *)Buff,sizeof(Buff)))
   {
     int TypeArc;
-    char FormatName[NM], DefaultExt[NM], Command[512];
+    char FormatName[NM], DefaultExt[NM], Command[MA_MAX_SIZE_COMMAND_NAME];
 
     if(OpenArchive(argv[1],&TypeArc) != FALSE)
     {

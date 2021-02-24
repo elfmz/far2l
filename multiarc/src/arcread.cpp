@@ -61,7 +61,7 @@ int PluginClass::PreReadArchive(const char *Name)
   return TRUE;
 }
 
-int PluginClass::ReadArchive(const char *Name)
+int PluginClass::ReadArchive(const char *Name,int OpMode)
 {
   bGOPIFirstCall=true;
   FreeArcData();
@@ -70,7 +70,7 @@ int PluginClass::ReadArchive(const char *Name)
   if (sdc_stat(Name, &ArcStat) == -1)
     return FALSE;
 
-  if (!ArcPlugin->OpenArchive(ArcPluginNumber,Name,&ArcPluginType))
+  if (!ArcPlugin->OpenArchive(ArcPluginNumber,Name,&ArcPluginType,(OpMode & OPM_SILENT)!=0))
     return FALSE;
 
   memset(&ItemsInfo,0,sizeof(ItemsInfo));
@@ -257,7 +257,7 @@ int PluginClass::ReadArchive(const char *Name)
   return TRUE;
 }
 
-bool PluginClass::EnsureFindDataUpToDate()
+bool PluginClass::EnsureFindDataUpToDate(int OpMode)
 {
   if (ArcData != NULL)
   {
@@ -284,7 +284,7 @@ bool PluginClass::EnsureFindDataUpToDate()
   DWORD SFXSize = 0;
 
   bool ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read_size, &SFXSize)
-              && ReadArchive(ArcName));
+              && ReadArchive(ArcName, OpMode));
 
   free(Data);
 
@@ -293,7 +293,7 @@ bool PluginClass::EnsureFindDataUpToDate()
 
 int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
 {
-  if (!EnsureFindDataUpToDate())
+  if (!EnsureFindDataUpToDate(OpMode))
     return FALSE;
 
   size_t CurDirLength = strlen(CurDir);

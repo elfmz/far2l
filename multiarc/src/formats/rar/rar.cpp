@@ -141,7 +141,7 @@ BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int
 }
 
 
-BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type,bool Silent)
 {
   DWORD ReadSize;
 
@@ -156,7 +156,8 @@ BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type)
      return FALSE;
 
   Flags=OpenArchiveData.Flags;
-  RARSetCallback(hArcData, CallbackProc, 0);
+  if (!Silent)
+    RARSetCallback(hArcData, CallbackProc, 0);
   HeaderData.CmtBuf=NULL;
   HeaderData.CmtBufSize=0;
   /*

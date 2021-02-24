@@ -60,7 +60,7 @@ struct ArcItemUserData{
 
 typedef DWORD (WINAPI *PLUGINLOADFORMATMODULE)(const char *ModuleName);
 typedef BOOL (WINAPI *PLUGINISARCHIVE)(const char *Name,const unsigned char *Data,int DataSize);
-typedef BOOL (WINAPI *PLUGINOPENARCHIVE)(const char *Name,int *Type);
+typedef BOOL (WINAPI *PLUGINOPENARCHIVE)(const char *Name,int *Type,bool Silent);
 typedef int (WINAPI *PLUGINGETARCITEM)(struct PluginPanelItem *Item,struct ArcItemInfo *Info);
 typedef BOOL (WINAPI *PLUGINCLOSEARCHIVE)(struct ArcInfo *Info);
 typedef BOOL (WINAPI *PLUGINGETFORMATNAME)(int Type,char *FormatName,char *DefaultExt);
@@ -110,7 +110,7 @@ class ArcPlugins
   public:
     int  IsArchive(const char *Name,const unsigned char *Data,int DataSize);
     BOOL IsArchive(int ArcPluginNumber, const char *Name,const unsigned char *Data,int DataSize, DWORD* SFXSize);
-    BOOL OpenArchive(int PluginNumber,const char *Name,int *Type);
+    BOOL OpenArchive(int PluginNumber,const char *Name,int *Type,bool Silent);
     int  GetArcItem(int PluginNumber,struct PluginPanelItem *Item,struct ArcItemInfo *Info);
     void CloseArchive(int PluginNumber,struct ArcInfo *Info);
     BOOL GetFormatName(int PluginNumber,int Type,char *FormatName,char *DefaultExt);
@@ -158,7 +158,8 @@ class PluginClass
     void GetCommandFormat(int Command,char *Format,int FormatSize);
     void FreeArcData();
     bool FarLangChanged();
-    bool EnsureFindDataUpToDate();
+    bool EnsureFindDataUpToDate(int OpMode);
+    int ReadArchive(const char *Name,int OpMode);
 
   public:
     PluginClass(int ArcPluginNumber);
@@ -166,7 +167,6 @@ class PluginClass
 
   public:
     int PreReadArchive(const char *Name);
-    int ReadArchive(const char *Name);
     int GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode);
     void FreeFindData(PluginPanelItem *PanelItem,int ItemsNumber);
     int SetDirectory(const char *Dir,int OpMode);

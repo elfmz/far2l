@@ -40,10 +40,9 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
   if(Recur.Count>1 && OpMode&(OPM_VIEW|OPM_QUICKVIEW))
     return 0;
 
-  char SaveDir[NM];
-  if (!sdc_getcwd(SaveDir, sizeof(SaveDir)))
-	  strcpy(SaveDir, ".");
-  char Command[512],AllFilesMask[32];
+  char SaveDirBuf[NM];
+  char *SaveDir = sdc_getcwd(SaveDirBuf, sizeof(SaveDirBuf));
+  char Command[MA_MAX_SIZE_COMMAND_NAME],AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
   if (ItemsNumber==0)
     return /*0*/1; //$ 07.02.2002 AA чтобы многотомные CABы нормально распаковывались
   if (*DestPath)
@@ -195,7 +194,12 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
   Opt.Background=0; // $ 06.02.2002 AA
 
   Opt.HideOutput=SaveHideOut;
-  if (sdc_chdir(SaveDir)) fprintf(stderr, "sdc_chdir('%s') - %u\n", SaveDir, errno);
+  if (!SaveDir || !*SaveDir) {
+    fprintf(stderr, "%s: SaveDir not saved\n", __FUNCTION__);
+  } else if (sdc_chdir(SaveDir) != 0) {
+    fprintf(stderr, "%s: sdc_chdir('%s') - %u\n", __FUNCTION__, SaveDir, errno);
+  }
+
   if (!IgnoreErrors && ArcCmd.GetExecCode()!=0)
     if (!(OpMode & OPM_VIEW))
       return 0;

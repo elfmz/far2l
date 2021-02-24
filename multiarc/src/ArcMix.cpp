@@ -234,8 +234,8 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
   WINPORT(SetConsoleMode)(StdInput,ENABLE_PROCESSED_INPUT|ENABLE_LINE_INPUT|
                  ENABLE_ECHO_INPUT|ENABLE_MOUSE_INPUT);
 
-  WCHAR SaveTitle[512];
-  WINPORT(GetConsoleTitle)(SaveTitle,sizeof(SaveTitle));
+  WCHAR SaveTitle[512]{};
+  WINPORT(GetConsoleTitle)(SaveTitle, ARRAYSIZE(SaveTitle) - 1);
   if (ShowCommand)
     WINPORT(SetConsoleTitle)(StrMB2Wide(CmdStr).c_str());
 

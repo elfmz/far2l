@@ -326,15 +326,18 @@ const char Str_TypeName[] = "TypeName";
 ///////////////////////////////////////////////////////////////////////////////
 // Library function pointers
 
-FARSTDMKTEMP        MkTemp;
-
+static FARSTDMKTEMP        MkTemp = NULL;
+static FARAPIMESSAGE       FarMessage = NULL;
+static INT_PTR             FarModuleNumber = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported functions
 
 void WINAPI _export CUSTOM_SetFarInfo(const struct PluginStartupInfo *Info)
 {
-    MkTemp = Info->FSF->MkTemp;
+	MkTemp = Info->FSF->MkTemp;
+	FarMessage = Info->Message;
+	FarModuleNumber = Info->ModuleNumber;
 }
 
 static bool HasCustomIni()
@@ -366,6 +369,38 @@ DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 	return (0);
 }
 
+
+static bool CheckID(const std::string &ID, int IDPos, const unsigned char *Data, int DataSize)
+{
+	unsigned char IDData[256];
+	const unsigned char *CurID = (const unsigned char *) ID.c_str();
+	int IDLength = 0;
+
+	while (IDLength < sizeof(IDData))
+	{
+		while(isspace(*CurID))
+			CurID++;
+		if(*CurID == 0)
+			break;
+		IDData[IDLength++] = HexCharToNum(CurID[0]) * 16 + HexCharToNum(CurID[1]);
+		while(*CurID && !isspace(*CurID))
+			CurID++;
+	}
+
+	int Found = FALSE;
+
+	if (IDPos >= 0)
+		return (IDPos <= DataSize - IDLength) && (memcmp(Data + IDPos, IDData, IDLength) == 0);
+
+	for (int I = 0; I <= DataSize - IDLength; I++)
+	{
+		if (memcmp(Data + I, IDData, IDLength) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Data, int DataSize)
 {
 	if (!HasCustomIni())//just for optimization
@@ -374,10 +409,10 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Dat
     char *Dot = strrchr((char *) FName, '.');
 
 	std::string TypeName, Name, Ext, ID;
-    for(int I = 0;; I++)
-    {
-        int IDPos;
+	char IDName[32];
 
+    for (int I = 0;; I++)
+    {
         if(!GetSectionName(I, TypeName))
             break;
 
@@ -386,50 +421,40 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Dat
         if (Name.empty())
             break;
 
-        GetIniString(TypeName.c_str(), "ID", "", ID);
-        IDPos = GetIniInt(TypeName.c_str(), "IDPos", -1);
+		bool SpecifiedID = false, FoundID = false;
+		for (unsigned int J = 0; J != (unsigned int)-1; ++J)
+		{
+			if (J != 0)
+				sprintf(IDName, "ID%u", J);
+			else
+				strcpy(IDName, "ID");
 
-        if (!ID.empty())
-        {
-            unsigned char IDData[256];
-			const unsigned char *CurID = (const unsigned char *) ID.c_str();
-            int IDLength = 0;
+			ID.clear();
+	        GetIniString(TypeName.c_str(), IDName, "", ID);
+	        if (ID.empty()) {
+				break;
+			}
+			SpecifiedID = true;
 
-            while(1)
-            {
-                while(isspace(*CurID))
-                    CurID++;
-                if(*CurID == 0)
-                    break;
-                IDData[IDLength++] = HexCharToNum(CurID[0]) * 16 + HexCharToNum(CurID[1]);
-                while(*CurID && !isspace(*CurID))
-                    CurID++;
-            }
+			strcat(IDName, "Pos");
+			int IDPos = GetIniInt(TypeName.c_str(), IDName, -1);
 
-            int Found = FALSE;
+			FoundID = CheckID(ID, IDPos, Data, DataSize);
+			if (FoundID)
+				break;
+		}
 
-            if(IDPos >= 0)
-                Found = (IDPos <= DataSize - IDLength) && (memcmp(Data + IDPos, IDData, IDLength) == 0);
-            else
-            {
-                for(int I = 0; I <= DataSize - IDLength; I++)
-                    if(memcmp(Data + I, IDData, IDLength) == 0)
-                    {
-                        Found = TRUE;
-                        break;
-                    }
-            }
-            if(Found)
-            {
-                if(GetIniInt(TypeName.c_str(), "IDOnly", 0))
-                {
-                    CurType = I;
-                    return (TRUE);
-                }
-            }
-            else
-                continue;
-        }
+		if (SpecifiedID)
+		{
+			if (!FoundID)
+				continue;
+
+			if (GetIniInt(TypeName.c_str(), "IDOnly", 0))
+			{
+				CurType = I;
+				return (TRUE);
+			}
+		}
 
         GetIniString(TypeName.c_str(), "Extension", "", Ext);
 
@@ -498,7 +523,23 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type)
     cmd+= " 2>&1 >";
     cmd+= TempName;
     DWORD ExitCode = system(cmd.c_str());
-	
+	if (ExitCode)
+	{
+		std::string ToolNotFoundMsg;
+		GetIniString(TypeName.c_str(), "ToolNotFound", "", ToolNotFoundMsg);
+		if (!ToolNotFoundMsg.empty())
+		{
+			cmd.insert(0, "command -v ");
+			if (system(cmd.c_str()) != 0)
+			{
+				std::string title = "MultiArc: ";
+				title+= TypeName;
+				const char *MsgItems[] = { title.c_str(), ToolNotFoundMsg.c_str() };
+				FarMessage(FarModuleNumber, FMSG_WARNING | FMSG_MB_OK, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
+			}
+		}
+	}
+
 
     if(ExitCode)
     {

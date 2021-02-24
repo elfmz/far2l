@@ -32,7 +32,9 @@ bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out) : _out(out)
+TTYOutput::TTYOutput(int out, bool support_esc_b)
+	:
+	_out(out), _support_esc_b(support_esc_b)
 {
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
 	ChangeKeypad(true);
@@ -74,10 +76,9 @@ void TTYOutput::FinalizeSameChars()
 		return;
 	}
 
-	//Repeat character: \033[#b
+	// Use repeat char sequence when possible & makes sense: \033[#b
 	const size_t ofs = _rawbuf.size();
-
-	if (_same_chars.count <= 5) {
+	if (_same_chars.count <= 5 || !_support_esc_b) {
 		_rawbuf.reserve(ofs + _same_chars.count);
 		do {
 			_rawbuf.emplace_back(_same_chars.ch);
@@ -90,9 +91,8 @@ void TTYOutput::FinalizeSameChars()
 		if (r >= 0) {
 			_rawbuf.resize(ofs + r);
 		}
+		_same_chars.count = 0;
 	}
-
-	_same_chars.count = 0;
 }
 
 void TTYOutput::Write(const char *str, int len)

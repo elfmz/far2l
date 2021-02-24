@@ -33,13 +33,14 @@ class TTYOutput
 		char ch = 0;
 		unsigned int count = 0;
 	} _same_chars;
+	bool _support_esc_b;
 
 	void WriteReally(const char *str, int len);
 	void FinalizeSameChars();
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
 public:
-	TTYOutput(int out);
+	TTYOutput(int out, bool support_esc_b);
 	~TTYOutput();
 
 	void Flush();

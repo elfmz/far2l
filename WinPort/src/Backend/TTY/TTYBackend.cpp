@@ -222,7 +222,14 @@ void TTYBackend::ReaderLoop()
 void TTYBackend::WriterThread()
 {
 	try {
-		TTYOutput tty_out(_stdout);
+		bool support_esc_b = true;
+#ifdef __linux__
+		unsigned char state = 6;
+		if (ioctl(_stdin, TIOCLINUX, &state) == 0) {
+			support_esc_b = false; // #925
+		}
+#endif
+		TTYOutput tty_out(_stdout, support_esc_b);
 
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;

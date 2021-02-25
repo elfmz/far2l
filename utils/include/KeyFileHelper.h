@@ -14,7 +14,7 @@ struct KeyFileValues : std::unordered_map<std::string, std::string>
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
 	bool GetBytes(const std::string &name, std::vector<unsigned char> &out) const;
-	std::vector<std::string> EnumKeys() const;
+	std::vector<std::string> EnumKeys(bool sorted = true) const;
 };
 
 class KeyFileReadSection : public KeyFileValues
@@ -57,9 +57,9 @@ public:
 	unsigned long long GetULL(const std::string &section, const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(const std::string &section, const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
 	bool GetBytes(const std::string &section, const std::string &name, std::vector<unsigned char> &out) const;
-	std::vector<std::string> EnumSections() const;
-	std::vector<std::string> EnumSectionsAt(const std::string &parent_section, bool recursed = false) const;
-	std::vector<std::string> EnumKeys(const std::string &section) const;
+	std::vector<std::string> EnumSections(bool sorted = true) const;
+	std::vector<std::string> EnumSectionsAt(const std::string &parent_section, bool recursed = false, bool sorted = true) const;
+	std::vector<std::string> EnumKeys(const std::string &section, bool sorted = true) const;
 };
 
 class KeyFileHelper : public KeyFileReadHelper

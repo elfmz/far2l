@@ -247,12 +247,15 @@ bool KeyFileValues::GetBytes(const std::string &name, std::vector<unsigned char>
 	return true;
 }
 
-std::vector<std::string> KeyFileValues::EnumKeys() const
+std::vector<std::string> KeyFileValues::EnumKeys(bool sorted) const
 {
 	std::vector<std::string> out;
 	out.reserve(size());
 	for (const auto &it : *this) {
 		out.emplace_back(it.first);
+	}
+	if (sorted) {
+		std::sort(out.begin(), out.end());
 	}
 	return out;
 }
@@ -396,17 +399,20 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 	}
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSections() const
+std::vector<std::string> KeyFileReadHelper::EnumSections(bool sorted) const
 {
 	std::vector<std::string> out;
 	out.reserve(_kf.size());
 	for (const auto &s : _kf) {
 		out.push_back(s.first);
 	}
+	if (sorted) {
+		std::sort(out.begin(), out.end());
+	}
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &parent_section, bool recursed) const
+std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &parent_section, bool recursed, bool sorted) const
 {
 	std::string prefix = parent_section;
 	if (prefix == "/") {
@@ -425,15 +431,19 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 			out.push_back(s.first);
 		}
 	}
+	if (sorted) {
+		std::sort(out.begin(), out.end());
+	}
+
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumKeys(const std::string &section) const
+std::vector<std::string> KeyFileReadHelper::EnumKeys(const std::string &section, bool sorted) const
 {
 	std::vector<std::string> out;
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		return it->second.EnumKeys();
+		return it->second.EnumKeys(sorted);
 	}
 	return std::vector<std::string>();
 }

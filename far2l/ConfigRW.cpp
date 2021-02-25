@@ -126,17 +126,13 @@ void ConfigReader::OnSectionSelected()
 std::vector<std::string> ConfigReader::EnumKeys()
 {
 	assert(_selected_section_values != nullptr);
-	std::vector<std::string> out = _selected_section_values->EnumKeys();
-	std::sort(out.begin(), out.end());
-	return out;
+	return _selected_section_values->EnumKeys();
 }
 
 std::vector<std::string> ConfigReader::EnumSectionsAt()
 {
 	assert(_selected_kfh != nullptr);
-	std::vector<std::string> out = _selected_kfh->EnumSectionsAt(_section);
-	std::sort(out.begin(), out.end());
-	return out;
+	return _selected_kfh->EnumSectionsAt(_section);
 }
 
 bool ConfigReader::HasKey(const std::string &name) const

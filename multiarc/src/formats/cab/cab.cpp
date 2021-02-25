@@ -99,7 +99,7 @@ static void CloseArcHandle()
 	ArcHandle = -1;	
 }
 
-BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
 {
   struct CFHEADER MainHeader;
   int ReadSize;

@@ -143,7 +143,7 @@ BOOL WINAPI _export ACE_IsArchive(const char *Name,const unsigned char *Data,int
 }
 
 
-BOOL WINAPI _export ACE_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export ACE_OpenArchive(const char *Name,int *Type,bool Silent)
 {
   DWORD ReadSize;
 

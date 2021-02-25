@@ -202,7 +202,7 @@ BOOL WINAPI _export SEVENZ_IsArchive(const char *Name,const unsigned char *Data,
 }
 
 
-BOOL WINAPI _export SEVENZ_OpenArchive(const char *Name,int *Type)
+BOOL WINAPI _export SEVENZ_OpenArchive(const char *Name,int *Type,bool Silent)
 {
 	Traverser *t = new Traverser(Name);
 	if (!t->Valid()) {

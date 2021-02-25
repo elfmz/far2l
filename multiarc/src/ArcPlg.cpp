@@ -156,11 +156,11 @@ BOOL ArcPlugins::IsArchive(int ArcPluginNumber, const char *Name,const unsigned 
   return FALSE;
 }
 
-BOOL ArcPlugins::OpenArchive(int PluginNumber, const char *Name,int *Type)
+BOOL ArcPlugins::OpenArchive(int PluginNumber, const char *Name,int *Type,bool Silent)
 {
   *Type=0; //$ AA 12.11.2001
   if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pOpenArchive)
-    return PluginsData[PluginNumber].pOpenArchive(Name,Type);
+    return PluginsData[PluginNumber].pOpenArchive(Name,Type,Silent);
   return FALSE;
 }
 

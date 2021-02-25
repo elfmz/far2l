@@ -530,6 +530,10 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 		GetIniString(TypeName.c_str(), "ToolNotFound", "", ToolNotFoundMsg);
 		if (!ToolNotFoundMsg.empty())
 		{
+			size_t trim_pos = cmd.find_first_of("|>");
+			if (trim_pos != std::string::npos) {
+				cmd.resize(trim_pos);
+			}
 			cmd.insert(0, "command -v ");
 			if (system(cmd.c_str()) != 0)
 			{

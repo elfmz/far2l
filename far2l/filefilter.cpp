@@ -44,7 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scantree.hpp"
 #include "array.hpp"
 #include "filelist.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"

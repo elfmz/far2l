@@ -56,7 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "treelist.hpp"
 #include "TStack.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
+#include "ConfigRW.hpp"
 #include "plugapi.hpp"
 #include "plugin.hpp"
 #include "plugins.hpp"
@@ -482,8 +482,6 @@ class TVMStack: public TStack<TVar>
 
 TVMStack VMStack;
 
-static LONG _RegWriteString(const wchar_t *Key,const wchar_t *ValueName,const wchar_t *Data);
-
 // функция преобразования кода макроклавиши в текст
 BOOL WINAPI KeyMacroToText(uint32_t Key,FARString &strKeyText0)
 {
@@ -521,7 +519,7 @@ uint32_t WINAPI KeyNameMacroToKey(const wchar_t *Name)
 }
 
 KeyMacro::KeyMacro():
-	MacroVersion(GetRegKey(L"KeyMacros",L"MacroVersion",0)),
+	MacroVersion(ConfigReader("KeyMacros").GetInt("MacroVersion", 0)),
 	Recording(MACROMODE_NOMACRO),
 	InternalInput(0),
 	IsRedrawEditor(0),
@@ -2908,73 +2906,68 @@ static bool editorsetFunc(const TMacroFunction*)
 	return Ret.i()==-1;
 }
 
+static bool DeserializeVar(TVar &v, FARString &ValSerialized)
+{
+	if (ValSerialized.Begins(L"INT:"))
+	{
+		v = (int64_t)wcstoll(ValSerialized.CPtr() + 4, nullptr, 10);
+		return true;
+	}
+	if (ValSerialized.Begins(L"STR:"))
+	{
+		v = ValSerialized.CPtr() + 4;
+		return true;
+	}
+	if (ValSerialized.Begins(L"DBL:"))
+	{
+		v = wcstod(ValSerialized.CPtr() + 4, nullptr);
+		return true;
+	}
+	return false;
+}
+
+static bool SerializeVar(TVar &v, FARString &ValSerialized)
+{
+	if (v.isInteger())
+	{
+		ValSerialized.Format(L"INT:%lld", (long long)v.i());
+		return true;
+	}
+	if (v.isString())
+	{
+		ValSerialized.Format(L"STR:%ls", v.s());
+		return true;
+	}
+	if (v.isDouble())
+	{
+		ValSerialized.Format(L"DBL:%f", v.d());
+		return true;
+	}
+	return false;
+}
+
 // b=mload(var)
 static bool mloadFunc(const TMacroFunction*)
 {
 	TVar Val;
 	VMStack.Pop(Val);
 	TVarTable *t = &glbVarTable;
-	const wchar_t *Name=Val.s();
+	const wchar_t *Name = Val.s();
 
-	if (!Name || *Name!= L'%')
+	if (!Name || *Name != L'%')
 	{
 		VMStack.Push(tviZero);
 		return false;
 	}
 
-	DWORD Ret=(DWORD)-1;
-	DWORD ValType;
-
-	if (CheckRegValue(L"KeyMacros/Vars",Name, &ValType))
+	bool Ret = false;
+	FARString ValSerialized = ConfigReader("KeyMacros/Vars").GetString(Wide2MB(Name), L"");
+	if (ValSerialized != L"")
 	{
-		switch(ValType)
-		{
-			case REG_SZ:
-			case REG_MULTI_SZ:
-			{
-				FARString strSData;
-				strSData.Clear();
-				GetRegKey(L"KeyMacros/Vars",Name,strSData,L"");
-
-				if (ValType == REG_MULTI_SZ)
-				{
-					wchar_t *ptrSData = strSData.GetBuffer();
-					for (;;)
-					{
-						ptrSData+=StrLength(ptrSData);
-
-						if (!ptrSData[0] && !ptrSData[1])
-							break;
-
-						*ptrSData=L'\n';
-					}
-					strSData.ReleaseBuffer();
-				}
-
-				varInsert(*t, Name+1)->value = strSData.CPtr();
-
-				Ret=ERROR_SUCCESS;
-
-				break;
-			}
-			case REG_DWORD:
-			{
-				varInsert(*t, Name+1)->value = GetRegKey(L"KeyMacros/Vars",Name,0);
-				Ret=ERROR_SUCCESS;
-				break;
-			}
-			case REG_QWORD:
-			{
-				varInsert(*t, Name+1)->value = GetRegKey64(L"KeyMacros/Vars",Name,0);
-				Ret=ERROR_SUCCESS;
-				break;
-			}
-
-		}
+		Ret = DeserializeVar(varInsert(*t, Name+1)->value, ValSerialized);
 	}
-
-	VMStack.Push(TVar(Ret==ERROR_SUCCESS?1:0));
-	return Ret==ERROR_SUCCESS;
+	VMStack.Push(TVar(Ret ? 1 : 0));
+	return Ret;
 }
 
 // b=msave(var)
@@ -2999,33 +2992,20 @@ static bool msaveFunc(const TMacroFunction*)
 		return false;
 	}
 
-	TVar Result=tmpVarSet->value;
-	DWORD Ret=(DWORD)-1;
+	TVar Result = tmpVarSet->value;
+	bool Ret = false;
 	FARString strValueName = Val.s();
-
-	switch (Result.type())
+	FARString strValueData;
+	if (SerializeVar(Result, strValueData))
 	{
-		case vtInteger:
-		{
-			int64_t rrr=Result.toInteger();
-			Ret=SetRegKey64(L"KeyMacros/Vars",strValueName,rrr);
-			break;
-		}
-		case vtDouble:
-		{
-			Ret=(DWORD)_RegWriteString(L"KeyMacros/Vars",strValueName,Result.toString());
-			break;
-		}
-		case vtString:
-		{
-			Ret=(DWORD)_RegWriteString(L"KeyMacros/Vars",strValueName,Result.toString());
-			break;
-		}
-		case vtUnknown: break;
+		ConfigWriter cfg_writer("KeyMacros/Vars");
+		cfg_writer.PutString(strValueName.GetMB(), strValueData);
+		Ret = cfg_writer.Save();
 	}
 
-	VMStack.Push(TVar(Ret==ERROR_SUCCESS?1:0));
-	return Ret==ERROR_SUCCESS;
+	VMStack.Push(TVar(Ret ? 1 : 0));
+
+	return Ret;
 }
 
 // V=Clip(N[,V])
@@ -4711,7 +4691,7 @@ done:
 						if (!(MR->Flags&MFLAGS_DISABLEOUTPUT))
 							RBuf.Flags &= ~MFLAGS_DISABLEOUTPUT;
 
-						if (!PostNewMacro(Val.toString(),RBuf.Flags&(~MFLAGS_REG_MULTI_SZ),RBuf.Key))
+						if (!PostNewMacro(Val.toString(),RBuf.Flags,RBuf.Key))
 							PopState();
 						else
 							Ret=1;
@@ -5166,16 +5146,18 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 	//WriteVarsConst(MACRO_VARS);
 	//WriteVarsConst(MACRO_CONSTS);
 
+	ConfigWriter cfg_writer;
 	for (int I=0; I<MacroLIBCount; I++)
 	{
 		if (!AllSaved  && !(MacroLIB[I].Flags&MFLAGS_NEEDSAVEMACRO))
 			continue;
 
 		MkRegKeyName(I, strRegKeyName);
+		cfg_writer.SelectSection(strRegKeyName);
 
 		if (!MacroLIB[I].BufferSize || !MacroLIB[I].Src)
 		{
-			DeleteRegKey(strRegKeyName);
+			cfg_writer.RemoveSection();
 			continue;
 		}
 
@@ -5191,43 +5173,21 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 			xf_free(TextBuffer);
 
 #endif
-		BOOL Ok=TRUE;
-
-		if (MacroLIB[I].Flags&MFLAGS_REG_MULTI_SZ)
-		{
-			int Len=StrLength(MacroLIB[I].Src)+2;
-			wchar_t *ptrSrc=(wchar_t *)xf_malloc(Len*sizeof(wchar_t));
-
-			if (ptrSrc)
-			{
-				wcscpy(ptrSrc,MacroLIB[I].Src);
-
-				for (int J=0; ptrSrc[J]; ++J)
-					if (ptrSrc[J] == L'\n')
-						ptrSrc[J]=0;
-
-				ptrSrc[Len-1]=0;
-				SetRegKey(strRegKeyName,L"Sequence",ptrSrc,Len*sizeof(wchar_t),REG_MULTI_SZ);
-				xf_free(ptrSrc);
-				Ok=FALSE;
-			}
-		}
-
-		if (Ok)
-			SetRegKey(strRegKeyName,L"Sequence",MacroLIB[I].Src);
+		cfg_writer.PutString("Sequence", MacroLIB[I].Src);
 
 		if (MacroLIB[I].Description)
-			SetRegKey(strRegKeyName,L"Description",MacroLIB[I].Description);
+			cfg_writer.PutString("Description", MacroLIB[I].Description);
 		else
-			DeleteRegValue(strRegKeyName,L"Description");
+			cfg_writer.RemoveKey("Description");
 
 		// подсократим кодУ...
 		for (int J=0; J < int(ARRAYSIZE(MKeywordsFlags)); ++J)
 		{
+			FARString KeywordName(MKeywordsFlags[J].Name);
 			if (MacroLIB[I].Flags & MKeywordsFlags[J].Value)
-				SetRegKey(strRegKeyName,MKeywordsFlags[J].Name,1);
+				cfg_writer.PutUInt(KeywordName.GetMB(), 1);
 			else
-				DeleteRegValue(strRegKeyName,MKeywordsFlags[J].Name);
+				cfg_writer.RemoveKey(KeywordName.GetMB());
 		}
 	}
 }
@@ -5235,11 +5195,11 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 
 int KeyMacro::WriteVarsConst(int WriteMode)
 {
-	FARString strUpKeyName=L"KeyMacros/";
-	strUpKeyName+=(WriteMode==MACRO_VARS?L"Vars":L"Consts");
-	FARString strValueName;
-	TVarTable *t = (WriteMode==MACRO_VARS)?&glbVarTable:&glbConstTable;
+	std::string strUpKeyName = "KeyMacros/";
+	strUpKeyName+= (WriteMode == MACRO_VARS) ? "Vars": "Consts";
+	TVarTable *t = (WriteMode == MACRO_VARS) ? &glbVarTable : &glbConstTable;
 
+	ConfigWriter cfg_writer(strUpKeyName);
 	for (int I=0; I < V_TABLE_SIZE; I++)
 		for (int J=0;; ++J)
 		{
@@ -5248,22 +5208,13 @@ int KeyMacro::WriteVarsConst(int WriteMode)
 			if (!var)
 				break;
 
-			strValueName = var->str;
-			strValueName = (WriteMode==MACRO_VARS?L"%":L"")+strValueName;
+			FARString strValueName = (WriteMode == MACRO_VARS) ? L"%" : L"";
+			strValueName+= var->str;
 
-			switch (var->value.type())
+			FARString strValueData;
+			if (SerializeVar(var->value, strValueData))
 			{
-				case vtInteger:
-					SetRegKey64(strUpKeyName,strValueName,var->value.i());
-					break;
-				case vtDouble:
-					//_RegWriteString(strUpKeyName,strValueName,var->value.d());
-					break;
-				case vtString:
-					_RegWriteString(strUpKeyName,strValueName,var->value.s());
-					break;
-					
-				case vtUnknown: break;
+				cfg_writer.PutString(strValueName.GetMB(), strValueData);
 			}
 		}
 
@@ -5277,62 +5228,34 @@ int KeyMacro::WriteVarsConst(int WriteMode)
 */
 int KeyMacro::ReadVarsConst(int ReadMode, FARString &strSData)
 {
-	FARString strValueName;
-	long IData;
-	int64_t IData64;
-	FARString strUpKeyName=L"KeyMacros/";
-	strUpKeyName+=(ReadMode==MACRO_VARS?L"Vars":L"Consts");
-	TVarTable *t = (ReadMode==MACRO_VARS)?&glbVarTable:&glbConstTable;
+	std::string strUpKeyName = "KeyMacros/";
+	strUpKeyName+= (ReadMode==MACRO_VARS) ? "Vars" : "Consts";
+	TVarTable *t = (ReadMode==MACRO_VARS) ? &glbVarTable : &glbConstTable;
 
-	for (int i=0; ; i++)
+	ConfigReader cfg_reader(strUpKeyName);
+	const auto &Names = cfg_reader.EnumKeys();
+	for (const auto & Name : Names)
 	{
-		IData=0;
-		strValueName.Clear();
-		strSData.Clear();
-		int Type=EnumRegValueEx(strUpKeyName,i,strValueName,strSData,(LPDWORD)&IData,(int64_t*)&IData64);
-
-		if (Type == REG_NONE)
-			break;
-
-		if (ReadMode == MACRO_VARS &&  !(strValueName.At(0) == L'%' && strValueName.At(1) == L'%'))
+		if (ReadMode == MACRO_VARS && !(Name[0] == L'%' && Name[1] == L'%')) // BUG??? should really check [1] ???
 			continue;
 
-		const wchar_t *lpwszValueName=strValueName.CPtr()+(ReadMode==MACRO_VARS);
-
-		if (Type == REG_SZ)
-			varInsert(*t, lpwszValueName)->value = strSData.CPtr();
-		else if (Type == REG_MULTI_SZ)
+		FARString ValSerialized = cfg_reader.GetString(Name, L"");
+		if (ValSerialized != L"")
 		{
-			// Различаем так же REG_MULTI_SZ
-			wchar_t *ptrSData = strSData.GetBuffer();
-
-			for (;;)
-			{
-				ptrSData+=StrLength(ptrSData);
-
-				if (!ptrSData[0] && !ptrSData[1])
-					break;
-
-				*ptrSData=L'\n';
-			}
-
-			strSData.ReleaseBuffer();
-			varInsert(*t, lpwszValueName)->value = strSData.CPtr();
+			FARString strValueName(Name);
+			const wchar_t *lpwszValueName = strValueName.CPtr() + ((ReadMode == MACRO_VARS) ? 1 : 0);
+			DeserializeVar(varInsert(*t, lpwszValueName)->value, ValSerialized);
 		}
-		else if (Type == REG_DWORD)
-			varInsert(*t, lpwszValueName)->value = (int64_t)IData;
-		else if (Type == REG_QWORD)
-			varInsert(*t, lpwszValueName)->value = IData64;
 	}
 
 	if (ReadMode == MACRO_CONSTS)
 	{
-		SetMacroConst(constMsX,tviZero);
-		SetMacroConst(constMsY,tviZero);
-		SetMacroConst(constMsButton,tviZero);
-		SetMacroConst(constMsCtrlState,tviZero);
-		SetMacroConst(constMsEventFlags,tviZero);
-		SetMacroConst(constRCounter,tviZero);
+		SetMacroConst(constMsX, tviZero);
+		SetMacroConst(constMsY, tviZero);
+		SetMacroConst(constMsButton, tviZero);
+		SetMacroConst(constMsCtrlState, tviZero);
+		SetMacroConst(constMsEventFlags, tviZero);
+		SetMacroConst(constRCounter, tviZero);
 	}
 
 	return TRUE;
@@ -5390,81 +5313,47 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 	if (ReadMode == MACRO_FUNCS)
 	{
 #if 1
-		int I;
-		FARString strUpKeyName=L"KeyMacros/Funcs";
-		FARString strRegKeyName;
-		FARString strFuncName;
-		FARString strSyntax;
-		DWORD  nParams;
-		DWORD  oParams;
-		DWORD  Flags;
-		FARString strGUID;
-		FARString strDescription;
-		DWORD regType=0;
-
-		for (I=0;; I++)
+		std::string strUpKeyName = "KeyMacros/Funcs";
+		ConfigReader cfg_reader(strUpKeyName);
+		const auto &Sections = cfg_reader.EnumSectionsAt();
+		for (const auto &strFuncSection : Sections)
 		{
-			if (!EnumRegKey(strUpKeyName,I,strRegKeyName))
-				break;
+			cfg_reader.SelectSection(strFuncSection);
 
-			size_t pos;
-
-			strRegKeyName.RPos(pos,L'/');
-			strFuncName = strRegKeyName;
-			strFuncName.LShift(pos+1);
-
-			if (GetRegKey(strRegKeyName,L"Sequence",strBuffer,L"",&regType) && regType == REG_MULTI_SZ)
-			{
-				wchar_t *ptrBuffer = strBuffer.GetBuffer();
-
-				for (;;)
-				{
-					ptrBuffer+=StrLength(ptrBuffer);
-
-					if (!ptrBuffer[0] && !ptrBuffer[1])
-						break;
-
-					*ptrBuffer=L'\n';
-				}
-
-				strBuffer.ReleaseBuffer();
-			}
-
+			strBuffer = cfg_reader.GetString("Sequence", L"");
 			RemoveExternalSpaces(strBuffer);
-			nParams=GetRegKey(strRegKeyName,L"nParams",0);
-			oParams=GetRegKey(strRegKeyName,L"oParams",0);
-			Flags=GetRegKey(strRegKeyName,L"Flags",0);
 
-			regType=0;
+			DWORD nParams = cfg_reader.GetUInt("nParams", 0);
+			DWORD oParams = cfg_reader.GetUInt("oParams", 0);
+			DWORD Flags = cfg_reader.GetUInt("Flags", 0);
 
-			if (GetRegKey(strRegKeyName,L"GUID",strGUID,L"",&regType))
+			FARString strSyntax, strGUID, strDescription;
+
+			if (cfg_reader.GetString(strGUID, "GUID", L""))
 				RemoveExternalSpaces(strGUID);
 
-			regType=0;
-
-			if (GetRegKey(strRegKeyName,L"Syntax",strSyntax,L"",&regType))
+			if (cfg_reader.GetString(strSyntax, "Syntax", L""))
 				RemoveExternalSpaces(strSyntax);
 
-			regType=0;
-
-			if (GetRegKey(strRegKeyName,L"Description",strDescription,L"",&regType))
+			if (cfg_reader.GetString(strDescription, "Description", L""))
 				RemoveExternalSpaces(strDescription);
 
 			MacroRecord mr{};
-			bool UsePluginFunc=true;
 			if (!strBuffer.IsEmpty())
 			{
-				if (!ParseMacroString(&mr,strBuffer.CPtr()))
-					mr.Buffer=nullptr;
+				if (!ParseMacroString(&mr, strBuffer.CPtr()))
+					mr.Buffer = nullptr;
 			}
 
 			// использовать Sequence вместо плагина; оно же будет юзаться, если GUID пуст
-			if ((Flags & 2) && (mr.Buffer || strGUID.IsEmpty()))
-			{
-				UsePluginFunc=false;
-			}
+			bool UsePluginFunc = !((Flags & 2) && (mr.Buffer || strGUID.IsEmpty()));
 
 			// зарегистрировать функцию
+			FARString strFuncName(strFuncSection);
+			size_t pos;
+			if (strFuncName.RPos(pos, L'/'))
+				strFuncName.LShift(pos + 1);
+
 			TMacroFunction MFunc={
 				strFuncName.CPtr(),
 				(int)nParams,
@@ -5475,7 +5364,7 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 				mr.Buffer,
 				strSyntax.CPtr(),
 				0,
-				(UsePluginFunc?pluginsFunc:usersFunc)
+				(UsePluginFunc ? pluginsFunc : usersFunc)
 			};
 
 			KeyMacro::RegisterMacroFunction(&MFunc);
@@ -5619,70 +5508,47 @@ DWORD KeyMacro::GetNewOpCode()
 
 int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 {
-	int I, J;
+	int J;
 	MacroRecord CurMacro{};
-	FARString strUpKeyName=L"KeyMacros/";
-	strUpKeyName+=GetSubKey(ReadMode);
-	FARString strRegKeyName, strKeyText;
+	std::string strUpKeyName = "KeyMacros/";
+	strUpKeyName+= Wide2MB(GetSubKey(ReadMode));
+	FARString strKeyText;
 	FARString strDescription;
 	int ErrorCount=0;
 
-	for (I=0;; I++)
+	ConfigReader cfg_reader(strUpKeyName);
+	const auto &Sections = cfg_reader.EnumSectionsAt();
+	for (const auto &MacroSection : Sections)
 	{
-		DWORD MFlags=0;
-
-		if (!EnumRegKey(strUpKeyName,I,strRegKeyName))
-			break;
-
+		DWORD MFlags = 0;
+		strKeyText = MacroSection;
 		size_t pos;
 
-		if (strRegKeyName.RPos(pos,L'/'))
+		if (strKeyText.RPos(pos, L'/'))
 		{
-			strKeyText = strRegKeyName;
-			strKeyText.LShift(pos+1);
-
-			// ПОМНИМ! что название макроса, начинающееся на символ ~ - это
-			// блокированный макрос!!!
-			if (strKeyText.At(0) == L'~' && strKeyText.At(1))
-			{
-				pos = 1;
-
-				while (strKeyText.At(pos) && strKeyText.At(pos) == L'~')// && IsSpace(KeyText[1]))
-					++pos;
-
-				strKeyText.LShift(pos);
-				MFlags|=MFLAGS_DISABLEMACRO;
-			}
+			strKeyText.LShift(pos + 1);
 		}
-		else
-			strKeyText.Clear();
 
-		uint32_t KeyCode=KeyNameToKey(strKeyText);
+		// ПОМНИМ! что название макроса, начинающееся на символ ~ - это
+		// блокированный макрос!!!
+		if (strKeyText.At(0) == L'~' && strKeyText.At(1))
+		{
+			pos = 1;
+
+			while (strKeyText.At(pos) && strKeyText.At(pos) == L'~')// && IsSpace(KeyText[1]))
+				++pos;
+
+			strKeyText.LShift(pos);
+			MFlags|= MFLAGS_DISABLEMACRO;
+		}
+
+		uint32_t KeyCode = KeyNameToKey(strKeyText);
 
 		if (KeyCode == KEY_INVALID)
 			continue;
 
-		DWORD regType=0;
-
-		if (GetRegKey(strRegKeyName,L"Sequence",strBuffer,L"",&regType) && regType == REG_MULTI_SZ)
-		{
-			//BUGBUG а каким боком REG_MULTI_SZ засунули в string?
-			// Различаем так же REG_MULTI_SZ
-			wchar_t *ptrBuffer = strBuffer.GetBuffer();
-
-			for (;;)
-			{
-				ptrBuffer+=StrLength(ptrBuffer);
-
-				if (!ptrBuffer[0] && !ptrBuffer[1])
-					break;
-
-				*ptrBuffer=L'\n';
-			}
-
-			strBuffer.ReleaseBuffer();
-		}
-
+		cfg_reader.SelectSection(MacroSection);
+		strBuffer = cfg_reader.GetString("Sequence");
 		RemoveExternalSpaces(strBuffer);
 
 		if (strBuffer.IsEmpty())
@@ -5691,15 +5557,15 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 			continue;
 		}
 
-		CurMacro.Key=KeyCode;
-		CurMacro.Buffer=nullptr;
-		CurMacro.Src=nullptr;
-		CurMacro.Description=nullptr;
-		CurMacro.BufferSize=0;
-		CurMacro.Flags=MFlags|(ReadMode&MFLAGS_MODEMASK)|(regType == REG_MULTI_SZ?MFLAGS_REG_MULTI_SZ:0);
+		CurMacro.Key = KeyCode;
+		CurMacro.Buffer = nullptr;
+		CurMacro.Src = nullptr;
+		CurMacro.Description = nullptr;
+		CurMacro.BufferSize = 0;
+		CurMacro.Flags = MFlags | (ReadMode & MFLAGS_MODEMASK);
 
 		for (J=0; J < int(ARRAYSIZE(MKeywordsFlags)); ++J)
-			CurMacro.Flags|=GetRegKey(strRegKeyName,MKeywordsFlags[J].Name,0)?MKeywordsFlags[J].Value:0;
+			CurMacro.Flags|= cfg_reader.GetInt(Wide2MB(MKeywordsFlags[J].Name), 0) ? MKeywordsFlags[J].Value : 0;
 
 		if (ReadMode == MACRO_EDITOR || ReadMode == MACRO_DIALOG || ReadMode == MACRO_VIEWER)
 		{
@@ -5731,9 +5597,8 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 
 		MacroLIB=NewMacros;
 		CurMacro.Src=xf_wcsdup(strBuffer);
-		regType=0;
 
-		if (GetRegKey(strRegKeyName,L"Description",strDescription,L"",&regType))
+		if (cfg_reader.GetString(strDescription, "Description", L""))
 		{
 			CurMacro.Description=xf_wcsdup(strDescription);
 		}
@@ -6050,7 +5915,7 @@ M1:
 						if (Opt.AutoSaveSetup)
 						{
 							// удалим старую запись из реестра
-							DeleteRegKey(strRegKeyName);
+							ConfigWriter(strRegKeyName.GetMB()).RemoveSection();
 						}
 						// раздисаблим
 						Mac->Flags&=~MFLAGS_DISABLEMACRO;
@@ -6377,45 +6242,6 @@ int KeyMacro::PostNewMacro(const wchar_t *PlainText,DWORD Flags,DWORD AKey,BOOL 
 	wchar_t *Buffer=(wchar_t *)PlainText;
 	bool allocBuffer=false;
 
-	if (Flags&MFLAGS_REG_MULTI_SZ) // Различаем так же REG_MULTI_SZ
-	{
-		size_t lenPlainText=0;
-
-		for (;;)
-		{
-			if (!PlainText[lenPlainText] && !PlainText[lenPlainText+1])
-			{
-				lenPlainText+=2;
-				break;
-			}
-
-			lenPlainText++;
-		}
-
-		//lenPlainText++;
-		Buffer=(wchar_t*)xf_malloc((lenPlainText+1)*(int)sizeof(wchar_t));
-
-		if (Buffer)
-		{
-			allocBuffer=true;
-			wmemmove(Buffer,PlainText,lenPlainText);
-			Buffer[lenPlainText]=0; // +1
-			wchar_t *ptrBuffer=Buffer;
-
-			for (;;)
-			{
-				ptrBuffer+=StrLength(ptrBuffer);
-
-				if (!ptrBuffer[0] && !ptrBuffer[1])
-					break;
-
-				*ptrBuffer=L'\n';
-			}
-		}
-		else
-			return FALSE;
-	}
-
 	// сначала смотрим на парсер
 	BOOL parsResult=ParseMacroString(&NewMacroWORK2,Buffer,onlyCheck);
 
@@ -6703,24 +6529,22 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 	{
 		if (FromReg)
 		{
-			FARString strUpKeyName;
-			FARString strRegKeyName;
-			strUpKeyName.Format(L"KeyMacros/%ls",GetSubKey(Mode));
+			const std::string &strUpKeyName = StrPrintf("KeyMacros/%ls", GetSubKey(Mode));
+
+			ConfigReader cfg_reader(strUpKeyName);
 
 			if (Mode >= MACRO_OTHER || Mode == MACRO_FUNCS)
 			{
-				FARString strSyntax, strDescr;
-
-				if (!EnumRegKey(strUpKeyName,Pos,strRegKeyName))
+				const auto &Sections = cfg_reader.EnumSectionsAt();
+				if (Pos < 0 || Pos >= (int)Sections.size())
 					return -1;
 
-				DWORD regType=0;
-				GetRegKey(strRegKeyName,L"Description",strDescr,L"",&regType);
+				cfg_reader.SelectSection(Sections[Pos]);
 
+				FARString strDescr = cfg_reader.GetString("Description", L"");
 				if (Mode == MACRO_FUNCS)
 				{
-					regType=0;
-					GetRegKey(strRegKeyName,L"Syntax",strSyntax,L"",&regType);
+					FARString strSyntax = cfg_reader.GetString("Syntax", L"");
 					strDescription = strSyntax + (strSyntax.GetLength() > 0 ? L" - " : L"") + strDescr;
 				}
 				else
@@ -6728,43 +6552,36 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 					strDescription = strDescr;
 				}
 
+				strKeyName = Sections[Pos];
 				size_t pos;
 
-				if (strRegKeyName.RPos(pos,L'/'))
-					strKeyName = strRegKeyName.SubStr(pos+1);
-				else
-					strKeyName.Clear();
+				if (strKeyName.RPos(pos, L'/'))
+					strKeyName.LShift(pos + 1);
 
-				return Pos+1;
+				return Pos + 1;
+
 			}
 			else
 			{
-				FARString strSData;
-				DWORD IData;
-				int64_t IData64;
-				DWORD Type;
-
-				if (!EnumRegValueEx(strUpKeyName,Pos,strRegKeyName,strSData, &IData, &IData64, &Type))
+				const auto &Names = cfg_reader.EnumKeys();
+				if (Pos < 0 || Pos >= (int)Names.size())
 					return -1;
 
-				strKeyName = strRegKeyName;
+				strKeyName = Names[Pos];
 
-				switch (Type)
+				FARString ValSerialized = cfg_reader.GetString(Names[Pos], L"");
+
+				if (ValSerialized.Begins(L"INT:"))
 				{
-					case REG_DWORD:
-						strDescription.Format(MSG(MMacroOutputFormatForHelpDWord), IData, IData);
-						break;
-					case REG_QWORD:
-						strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), IData64, IData64);
-						break;
-					case REG_SZ:
-					case REG_EXPAND_SZ:
-					case REG_MULTI_SZ:
-						strDescription.Format(MSG(MMacroOutputFormatForHelpSz), strSData.CPtr());
-						break;
+					long long v = wcstoll(ValSerialized.CPtr() + 4, nullptr, 10);
+					strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), v, v);
+				}
+				else
+				{
+					strDescription.Format(MSG(MMacroOutputFormatForHelpSz), ValSerialized.CPtr() + 4);
 				}
 
-				return Pos+1;
+				return Pos + 1;
 			}
 		}
 		else
@@ -7154,34 +6971,4 @@ BOOL KeyMacro::GetMacroParseError(FARString *Err1, FARString *Err2, FARString *E
 bool KeyMacro::IsOpCode(DWORD p)
 {
 	return (!(p&KEY_MACRO_BASE) || p == MCODE_OP_ENDKEYS)?false:true;
-}
-
-static LONG _RegWriteString(const wchar_t *Key,const wchar_t *ValueName,const wchar_t *Data)
-{
-	LONG Ret=-1;
-
-	if (wcschr(Data,L'\n'))
-	{
-		int Len=StrLength(Data)+2;
-		wchar_t *ptrSrc=(wchar_t *)xf_malloc(Len*sizeof(wchar_t));
-
-		if (ptrSrc)
-		{
-			wcscpy(ptrSrc,Data);
-
-			for (int J=0; ptrSrc[J]; ++J)
-				if (ptrSrc[J] == L'\n')
-					ptrSrc[J]=0;
-
-			ptrSrc[Len-1]=0;
-			Ret=SetRegKey(Key,ValueName,ptrSrc,(DWORD)Len*sizeof(wchar_t),REG_MULTI_SZ);
-			xf_free(ptrSrc);
-		}
-	}
-	else
-	{
-		Ret=SetRegKey(Key,ValueName,Data);
-	}
-
-	return Ret;
 }

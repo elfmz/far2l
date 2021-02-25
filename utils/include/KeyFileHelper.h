@@ -31,7 +31,7 @@ class KeyFileReadHelper
 {
 protected:
 	struct Sections : std::unordered_map<std::string, KeyFileValues> {} _kf;
-	struct stat _filestat;
+	struct stat _filestat {};
 	bool _loaded;
 
 public:
@@ -67,14 +67,13 @@ class KeyFileHelper : public KeyFileReadHelper
 	std::string _filename;
 	bool _dirty;
 
-	void PutRaw(const std::string &section, const std::string &name, const char *value);
-
 public:
 	KeyFileHelper(const std::string &filename, bool load = true);
 	~KeyFileHelper();
 
 	bool Save(bool only_if_dirty = true);
 
+	void PutString(const std::string &section, const std::string &name, const std::string &value);
 	void PutString(const std::string &section, const std::string &name, const char *value);
 	void PutString(const std::string &section, const std::string &name, const wchar_t *value);
 	void PutInt(const std::string &section, const std::string &name, int value);
@@ -82,7 +81,7 @@ public:
 	void PutUIntAsHex(const std::string &section, const std::string &name, unsigned int value);
 	void PutULL(const std::string &section, const std::string &name, unsigned long long value);
 	void PutULLAsHex(const std::string &section, const std::string &name, unsigned long long value);
-	void PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, bool spaced = false);
+	void PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval = 0);
 	bool RemoveSection(const std::string &section);
 	size_t RemoveSectionsAt(const std::string &parent_section);
 	void RemoveKey(const std::string &section, const std::string &name);

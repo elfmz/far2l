@@ -40,7 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "vmenu.hpp"
 #include "dialog.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "strmix.hpp"
 #include "panelmix.hpp"

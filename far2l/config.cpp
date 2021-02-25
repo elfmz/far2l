@@ -49,7 +49,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "findfile.hpp"
 #include "hilight.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
 #include "palette.hpp"
@@ -954,7 +953,6 @@ void ReadConfig()
 	FARString strPersonalPluginsPath;
 	size_t I;
 
-	SetRegRootKey(HKEY_CURRENT_USER);
 	ConfigReader cfg_reader;
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */

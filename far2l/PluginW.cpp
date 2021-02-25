@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "plclass.hpp"
 #include "PluginW.hpp"
-#include "registry.hpp"
 #include "keyboard.hpp"
 #include "message.hpp"
 #include "clipboard.hpp"

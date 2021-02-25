@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
-#include "registry.hpp"
 #include "plugapi.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
@@ -1242,6 +1241,43 @@ struct PluginMenuItemData
    ! При настройке "параметров внешних модулей" закрывать окно с их
      списком только при нажатии на ESC
 */
+
+bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType)
+{
+	for (int I=0; I<PluginsCount; I++)
+	{
+		Plugin *pPlugin = PluginsData[I];
+		PluginInfo Info{};
+		bool bCached = pPlugin->CheckWorkFlags(PIWF_CACHED) ? true : false;
+		if (!bCached && !pPlugin->GetPluginInfo(&Info))
+		{
+			continue;
+		}
+
+		for (int J = 0; ; ++J)
+		{
+			if (bCached)
+			{
+				KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
+				if (!kfh.HasKey(StrPrintf(FmtPluginConfigStringD, J)))
+					break;
+			}
+			else if (J >= Info.PluginConfigStringsNumber)
+			{
+				break;
+			}
+
+			FARString strHotKey;
+			GetPluginHotKey(pPlugin, J, HotKeyType, strHotKey);
+			if (!strHotKey.IsEmpty())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void PluginManager::Configure(int StartPos)
 {
 	// Полиция 4 - Параметры внешних модулей
@@ -1257,8 +1293,7 @@ void PluginManager::Configure(int StartPos)
 		{
 			BOOL NeedUpdateItems=TRUE;
 			int MenuItemNumber=0;
-			FARString strFirstHotKey;
-			int HotKeysPresent=EnumRegKey(L"PluginHotkeys",0,strFirstHotKey);
+			bool HotKeysPresent = CheckIfHotkeyPresent("ConfHotkey");
 
 			if (NeedUpdateItems)
 			{
@@ -1420,8 +1455,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 		while (!Done)
 		{
-			FARString strFirstHotKey;
-			int HotKeysPresent=EnumRegKey(L"PluginHotkeys",0,strFirstHotKey);
+			bool HotKeysPresent = CheckIfHotkeyPresent("Hotkey");
 
 			if (NeedUpdateItems)
 			{

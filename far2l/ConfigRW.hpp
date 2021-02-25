@@ -28,8 +28,8 @@ public:
 	ConfigReader();
 	ConfigReader(const std::string &section);
 
-	static struct stat sSectionStat(const std::string &section);
-	inline const struct stat &SectionStat() const { return _selected_kfh->LoadedFileStat(); }
+	static struct stat SavedSectionStat(const std::string &section);
+	inline const struct stat &LoadedSectionStat() const { return _selected_kfh->LoadedFileStat(); }
 
 	std::vector<std::string> EnumKeys();
 	std::vector<std::string> EnumSectionsAt();
@@ -37,6 +37,7 @@ public:
 	bool HasKey(const std::string &name) const;
 	FARString GetString(const std::string &name, const wchar_t *def = L"") const;
 	bool GetString(FARString &out, const std::string &name, const wchar_t *def) const;
+	bool GetString(std::string &out, const std::string &name, const char *def) const;
 	int GetInt(const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
@@ -51,7 +52,7 @@ class ConfigWriter : public ConfigSection
 {
 	std::map<std::string, std::unique_ptr<KeyFileHelper> > _ini2kfh;
 	KeyFileHelper *_selected_kfh = nullptr;
-	bool _nice_looking_section = false;
+	size_t _bytes_space_interval = 0;
 
 	virtual void OnSectionSelected();
 
@@ -61,8 +62,7 @@ public:
 	ConfigWriter();
 	ConfigWriter(const std::string &preselect_section);
 
-	inline bool Save()
-		{ return _selected_kfh->Save(); }
+	bool Save();
 
 	void RemoveSection();
 	void RenameSection(const std::string &new_section);
@@ -71,6 +71,7 @@ public:
 	void ReserveIndexedSection(const char *indexed_prefix, unsigned int index);
 
 	void PutString(const std::string &name, const wchar_t *value);
+	void PutString(const std::string &name, const std::string &value);
 	void PutInt(const std::string &name, int value);
 	void PutUInt(const std::string &name, unsigned int value);
 	void PutULL(const std::string &name, unsigned long long value);

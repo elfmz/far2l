@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrbuf.hpp"
 #include "language.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 //#include "localOEM.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
@@ -401,7 +400,6 @@ int FarAppMain(int argc, char **argv)
 	// если под дебагером, то отключаем исключения однозначно,
 	//  иначе - смотря что указал юзвер.
 
-	SetRegRootKey(HKEY_CURRENT_USER);
 	Opt.strRegRoot = L"Software/Far2";
 	CheckForConfigUpgrade();
 

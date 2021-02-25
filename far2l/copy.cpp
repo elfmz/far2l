@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileview.hpp"
 #include "TPreRedrawFunc.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 #include "cddrv.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"

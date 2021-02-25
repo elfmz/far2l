@@ -59,11 +59,6 @@ static const char *Section2Ini(const std::string &section)
 	return CONFIG_INI;
 }
 
-static bool IsNiceLookingSection(const std::string &section)
-{
-	return (IsSectionOrSubsection(section, "Colors"));
-}
-
 void ConfigSection::SelectSection(const std::string &section)
 {
 	if (_section != section) {
@@ -97,7 +92,7 @@ ConfigReader::ConfigReader(const std::string &preselect_section)
 	SelectSection(preselect_section);
 }
 
-struct stat ConfigReader::sSectionStat(const std::string &section)
+struct stat ConfigReader::SavedSectionStat(const std::string &section)
 {
 	struct stat out;
 	if (stat(InMyConfig(Section2Ini(section)).c_str(), &out) == -1) {
@@ -166,6 +161,16 @@ bool ConfigReader::GetString(FARString &out, const std::string &name, const wcha
 	return true;
 }
 
+bool ConfigReader::GetString(std::string &out, const std::string &name, const char *def) const
+{
+	assert(_selected_section_values != nullptr);
+	if (!_selected_section_values->HasKey(name)) {
+		return false;
+	}
+	out = _selected_section_values->GetString(name, def);
+	return true;
+}
+
 int ConfigReader::GetInt(const std::string &name, int def) const
 {
 	assert(_selected_section_values != nullptr);
@@ -206,6 +211,19 @@ ConfigWriter::ConfigWriter(const std::string &preselect_section)
 	SelectSection(preselect_section);
 }
 
+bool ConfigWriter::Save()
+{
+	bool out = true;
+
+	for (const auto &it : _ini2kfh) {
+		if (!it.second->Save()) {
+			out = false;
+		}
+	}
+
+	return out;
+}
+
 void ConfigWriter::OnSectionSelected()
 {
 	const char *ini = Section2Ini(_section);
@@ -214,7 +232,20 @@ void ConfigWriter::OnSectionSelected()
 		selected_kfh.reset(new KeyFileHelper(InMyConfig(ini)));
 	}
 	_selected_kfh =	selected_kfh.get();
-	_nice_looking_section = IsNiceLookingSection(_section);
+
+	if (IsSectionOrSubsection(_section, "Colors")) {
+		_bytes_space_interval = 1;
+
+	} else if (IsSectionOrSubsection(_section, "SavedHistory")
+		|| IsSectionOrSubsection(_section, "SavedDialogHistory")
+		|| IsSectionOrSubsection(_section, "SavedFolderHistory")
+		|| IsSectionOrSubsection(_section, "SavedViewHistory")) {
+
+		_bytes_space_interval = sizeof(FILETIME);
+
+	} else {
+		_bytes_space_interval = 0;
+	}
 }
 
 void ConfigWriter::RemoveSection()
@@ -298,6 +329,11 @@ void ConfigWriter::PutString(const std::string &name, const wchar_t *value)
 	_selected_kfh->PutString(_section, name, value);
 }
 
+void ConfigWriter::PutString(const std::string &name, const std::string &value)
+{
+	_selected_kfh->PutString(_section, name, value);
+}
+
 void ConfigWriter::PutInt(const std::string &name, int value)
 {
 	_selected_kfh->PutInt(_section, name, value);
@@ -315,7 +351,7 @@ void ConfigWriter::PutULL(const std::string &name, unsigned long long value)
 
 void ConfigWriter::PutBytes(const std::string &name, size_t len, const unsigned char *buf)
 {
-	_selected_kfh->PutBytes(_section, name, len, buf, _nice_looking_section);
+	_selected_kfh->PutBytes(_section, name, len, buf, _bytes_space_interval);
 }
 
 void ConfigWriter::RemoveKey(const std::string &name)
@@ -389,27 +425,39 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 							cfg_writer.PutULL(name, *(uint64_t *)&databuf[0]);
 						}
 					} break;
-					default:
-						if (tip == REG_SZ || tip == REG_EXPAND_SZ
-							|| (tip == REG_MULTI_SZ && macro_type_prefix)) {
+					case REG_SZ: case REG_EXPAND_SZ: case REG_MULTI_SZ: {
 							if (macro_type_prefix) {
 								tmp_str = L"STR:";
 							}
-							for (size_t i = 0; i < datalen ; i+= sizeof(WCHAR)) {
-								if (!databuf[i]) {
-									if (i + sizeof(WCHAR) >= datalen || tip != REG_MULTI_SZ) {
+							for (size_t i = 0; i + sizeof(WCHAR) <= datalen ; i+= sizeof(WCHAR)) {
+								WCHAR wc = *(const WCHAR *)&databuf[i];
+								if (!wc) {
+									if (i + sizeof(WCHAR) >= datalen) {
 										break;
 									}
-									tmp_str+= L'\n';
+									// REG_MULTI_SZ was used only in macroses and history.
+									// Macroses did inter-strings zeroes translated to \n.
+									// Now macroses code doesn't do that translation, just need
+									// to one time translate data imported from legacy registry.
+									// History code now also uses '\n' chars as string separators.
+									if (tip == REG_MULTI_SZ) {
+										if (i + 2 * sizeof(WCHAR) >= datalen) {
+											// skip last string terminator translation
+											break;
+										}
+										tmp_str+= L'\n';
+									} else {
+										tmp_str.Append(wc);
+									}
 								} else {
-									tmp_str+= *(const WCHAR *)&databuf[i];
+									tmp_str.Append(wc);
 								}
 							}
 							cfg_writer.PutString(name, tmp_str);
+					} break;
 
-						} else {
-							cfg_writer.PutBytes(name, datalen, &databuf[0]);
-						}
+					default:
+						cfg_writer.PutBytes(name, datalen, &databuf[0]);
 				}
 				++i;
 			}
@@ -422,7 +470,7 @@ void CheckForConfigUpgrade()
 {
 	const std::string &cfg_ini = InMyConfig(CONFIG_INI);
 	struct stat s{};
-	if (stat(cfg_ini.c_str(), &s) != 0) {
+	if (stat(cfg_ini.c_str(), &s) == -1) {
 		ConfigWriter cfg_writer;
 		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
 	}

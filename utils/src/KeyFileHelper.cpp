@@ -23,15 +23,16 @@ class KFEscaping
 {
 	std::string _result;
 
-	void Encode(const std::string &s, bool key)
+	void Encode(const std::string &s, bool key_name)
 	{
 		_result = '\"';
 		for (const auto &c : s) switch (c) {
 			case '\r': _result+= "\\r"; break;
 			case '\n': _result+= "\\n"; break;
 			case '\t': _result+= "\\t"; break;
+			case 0: _result+= "\\0"; break;
 			case '\\': _result+= "\\\\"; break;
-			default: if (key && c == '=') {
+			default: if (c == '=' && key_name) {
 				_result+= "\\E";
 			} else {
 				_result+= c;
@@ -40,11 +41,22 @@ class KFEscaping
 		_result+= '\"';
 	}
 
+	bool ContainsEscRequiringChars(const std::string &s, bool key_name)
+	{
+		for (const auto &c : s) {
+			if (c == '\r' || c == '\n' || c == 0 || (key_name && c == '=')) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 public:
 	const std::string &EncodeSection(const std::string &s)
 	{
 		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
-				&& s.find_first_of("\r\n") == std::string::npos)) {
+				&& !ContainsEscRequiringChars(s, false))) {
 			return s;
 		}
 //fprintf(stderr, "%s: '%s'\n", __FUNCTION__, s.c_str());
@@ -55,7 +67,7 @@ public:
 	const std::string &EncodeKey(const std::string &s)
 	{
 		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
-				&& s.find_first_of("\r\n=") == std::string::npos
+				&& !ContainsEscRequiringChars(s, true)
 				&& s.front() != ';' && s.front() != '#' && s.front() != '['
 				&& s.front() != ' ' && s.front() != '\t'
 				&& s.back() != ' ' && s.back() != '\t')) {
@@ -69,7 +81,7 @@ public:
 	const std::string &EncodeValue(const std::string &s)
 	{
 		if (s.empty() || ( (s.front() != '\"' || s.back() != '\"')
-				&& s.find_first_of("\r\n") == std::string::npos
+				&& !ContainsEscRequiringChars(s, false)
 				&& s.front() != ' ' && s.front() != '\t'
 				&& s.back() != ' ' && s.back() != '\t')) {
 			return s;
@@ -91,17 +103,18 @@ public:
 			if (s[i] == '\\') {
 				++i;
 				switch (s[i]) {
-					case 'E': _result+= '='; break;
-					case 'r': _result+= '\r'; break;
-					case 'n': _result+= '\n'; break;
-					case 't': _result+= '\t'; break;
-					case '\\': _result+= '\\'; break;
+					case 'E': _result.append(1, '='); break;
+					case 'r': _result.append(1, '\r'); break;
+					case 'n': _result.append(1, '\n'); break;
+					case 't': _result.append(1, '\t'); break;
+					case '0': _result.append(1, 0); break;
+					case '\\': _result.append(1, '\\'); break;
 					default: // WTF???
 						fprintf(stderr,
 							"%s: bad escape sequence in '%s' at %ld\n",
 							__FUNCTION__, s.c_str(), (unsigned long)i);
-						_result+= '\\';
-						_result+= s[i];
+						_result.append(1, '\\');
+						_result.append(1, s[i]);
 				}
 			} else {
 				_result+= s[i];
@@ -378,6 +391,9 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 			return nullptr;
 		}
 	);
+	if (!_loaded) {
+		memset(&_filestat, 0, sizeof(_filestat));
+	}
 }
 
 std::vector<std::string> KeyFileReadHelper::EnumSections() const
@@ -665,7 +681,7 @@ void KeyFileHelper::RemoveKey(const std::string &section, const std::string &nam
 	}
 }
 
-void KeyFileHelper::PutRaw(const std::string &section, const std::string &name, const char *value)
+void KeyFileHelper::PutString(const std::string &section, const std::string &name, const std::string &value)
 {
 	auto &s = _kf[section];
 
@@ -688,7 +704,21 @@ void KeyFileHelper::PutString(const std::string &section, const std::string &nam
 	if (!value) {
 		value = "";
 	}
-	PutRaw(section, name, value);
+
+	auto &s = _kf[section];
+
+	auto it = s.find(name);
+	if (it != s.end()) {
+		if (it->second.compare(value) == 0) {
+			return;
+		}
+		it->second = value;
+
+	} else {
+		s.emplace(name, value);
+	}
+
+	_dirty = true;
 }
 
 void KeyFileHelper::PutString(const std::string &section, const std::string &name, const wchar_t *value)
@@ -696,76 +726,57 @@ void KeyFileHelper::PutString(const std::string &section, const std::string &nam
 	if (!value) {
 		value = L"";
 	}
-	PutRaw(section, name, Wide2MB(value).c_str());
+	PutString(section, name, Wide2MB(value));
 }
 
 void KeyFileHelper::PutInt(const std::string &section, const std::string &name, int value)
 {
 	char tmp[32];
 	sprintf(tmp, "%d", value);
-	PutRaw(section, name, tmp);
+	PutString(section, name, tmp);
 }
 
 void KeyFileHelper::PutUInt(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
 	sprintf(tmp, "%u", value);
-	PutRaw(section, name, tmp);
+	PutString(section, name, tmp);
 }
 
 void KeyFileHelper::PutUIntAsHex(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
 	sprintf(tmp, "0x%x", value);
-	PutRaw(section, name, tmp);
+	PutString(section, name, tmp);
 }
 
 void KeyFileHelper::PutULL(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "%llu", value);
-	PutRaw(section, name, tmp);
+	PutString(section, name, tmp);
 }
 
 void KeyFileHelper::PutULLAsHex(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "0x%llx", value);
-	PutRaw(section, name, tmp);
+	PutString(section, name, tmp);
 }
 
-void KeyFileHelper::PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, bool spaced)
+void KeyFileHelper::PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval)
 {
-	const size_t slen = (len * 2 + ((spaced && len > 1) ? len - 1 : 0));
-	std::string &v = _kf[section][name];
-	if (slen != v.size()) {
-		v.resize(slen);
-		_dirty = true;
+	std::string str;
+	str.reserve(len * 2 + (space_interval ? (len / space_interval) + 1 : 0) );
+	for (size_t i = 0; i != len; ++i) {
+		str+= digit_btoh(buf[i] >> 4);
+		str+= digit_btoh(buf[i] & 0xf);
+		if (i && i + 1 != len && space_interval && (i % space_interval) == 0) {
+			str+= ' ';
+		}
 	}
 
-	for (size_t i = 0, j = 0; i != len; ++i) {
-		if (spaced && i != 0) {
-			if (v[j] != ' ') {
-				v[j] = ' ';
-				_dirty = true;
-			}
-			++j;
-		}
-
-		char c = digit_btoh(buf[i] >> 4);
-		if (v[j] != c) {
-			v[j] = c;
-			_dirty = true;
-		}
-		++j;
-
-		c = digit_btoh(buf[i] & 0xf);
-		if (v[j] != c) {
-			v[j] = c;
-			_dirty = true;
-		}
-		++j;
-	}
+	PutString(section, name, str);
 }
 
 void KeyFileHelper::RenameSection(const std::string &src, const std::string &dst, bool recursed)

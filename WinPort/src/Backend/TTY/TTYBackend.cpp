@@ -222,13 +222,24 @@ void TTYBackend::ReaderLoop()
 void TTYBackend::WriterThread()
 {
 	try {
-		bool support_esc_b = true;
+		bool support_esc_b = true; // #925 #929
+		if (!_far2l_tty) {
+			const char *term = getenv("TERM");
+			if (!term || strncmp(term, "xterm", 5) != 0) {
+				support_esc_b = false;
+				fprintf(stderr, "ESC..b disabled due to TERM='%s'\n", term);
+			}
+		}
 #ifdef __linux__
 		unsigned char state = 6;
-		if (ioctl(_stdin, TIOCLINUX, &state) == 0) {
-			support_esc_b = false; // #925
+		if (support_esc_b && ioctl(_stdin, TIOCLINUX, &state) == 0) {
+			support_esc_b = false;
+			fprintf(stderr, "ESC..b disabled due to TIOCLINUX\n");
 		}
 #endif
+//		if (support_esc_b) {
+//			fprintf(stderr, "ESC..b enabled\n");
+//		}
 		TTYOutput tty_out(_stdout, support_esc_b);
 
 		while (!_exiting && !_deadio) {

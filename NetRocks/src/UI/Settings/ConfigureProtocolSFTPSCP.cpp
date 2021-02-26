@@ -20,7 +20,7 @@
 | Connection timeout, seconds:                [###]          |
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
-| [ ] Enable sandbox (if you dont trust server)              |
+| [ ] Use OpenSSH config files                               |
 |------------------------------------------------------------|
 |             [  OK    ]        [        Cancel       ]      |
  ============================================================
@@ -36,7 +36,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
-	//int _i_enable_sandbox = -1;
+	int _i_use_openssh_configs = -1;
 
 	FarListWrapper _di_authmode;
 	FarListWrapper _di_compression;
@@ -164,8 +164,8 @@ public:
 		_di.NextLine();
 		_i_tcp_quickack = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPQuickAck);
 
-	//	_di.NextLine();
-	//	_i_enable_sandbox = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPEnableSandbox);
+		_di.NextLine();
+		_i_use_openssh_configs = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPUseOpenSSHConfigs);
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,61, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -207,6 +207,7 @@ public:
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
+		SetCheckedDialogControl(_i_use_openssh_configs, sc.GetInt("UseOpenSSHConfigs", 0) != 0);
 
 		LongLongToDialogControl(_i_connect_retries, std::max((int)1, sc.GetInt("ConnectRetries", 2)));
 		LongLongToDialogControl(_i_connect_timeout, std::max((int)1, sc.GetInt("ConnectTimeout", 10)));
@@ -239,6 +240,7 @@ public:
 			}
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);
+			sc.SetInt("UseOpenSSHConfigs", IsCheckedDialogControl(_i_use_openssh_configs) ? 1 : 0);
 
 			sc.SetInt("ConnectRetries", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_retries)));
 			sc.SetInt("ConnectTimeout", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_timeout)));

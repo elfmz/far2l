@@ -214,6 +214,7 @@
 "Enable TCP_&QUICKACK option"
 "Automatically retr&y connect, times:"
 "Connection t&imeout, seconds:"
+"Use &OpenSSH configuration files"
 "Enable &sandbox (if you dont trust server)"
 
 "File Protocol options"

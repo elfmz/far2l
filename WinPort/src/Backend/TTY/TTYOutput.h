@@ -30,17 +30,18 @@ class TTYOutput
 	int _out;
 	std::vector<char> _rawbuf;
 	struct {
-		char ch = 0;
+		WCHAR wch = 0;
 		unsigned int count = 0;
 	} _same_chars;
-	bool _support_esc_b;
+	bool _far2l_tty;
 
 	void WriteReally(const char *str, int len);
 	void FinalizeSameChars();
+	void WriteWChar(WCHAR wch);
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
 public:
-	TTYOutput(int out, bool support_esc_b);
+	TTYOutput(int out, bool far2l_tty);
 	~TTYOutput();
 
 	void Flush();

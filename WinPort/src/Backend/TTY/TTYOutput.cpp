@@ -78,18 +78,25 @@ void TTYOutput::FinalizeSameChars()
 
 	// Use repeat char sequence when possible & makes sense: \033[#b
 	const size_t ofs = _rawbuf.size();
-	if (_same_chars.count <= 5 || !_support_esc_b) {
+	if (_same_chars.count <= 5
+			|| (!_support_esc_b && (_same_chars.ch != ' ' || _same_chars.count <= 8))) {
 		_rawbuf.reserve(ofs + _same_chars.count);
 		do {
 			_rawbuf.emplace_back(_same_chars.ch);
 		} while (--_same_chars.count);
 
 	} else {
-		_rawbuf.resize(ofs + 32);
-		int r = sprintf(&_rawbuf[ofs],
-			"%c" ESC "[%ub", _same_chars.ch, _same_chars.count - 1);
+		char tmp[64]{};
+		int r;
+		if (_support_esc_b) {
+			r = sprintf(tmp,
+				"%c" ESC "[%ub", _same_chars.ch, _same_chars.count - 1);
+		} else {
+			r = sprintf(tmp,
+				ESC "[%uX" ESC "[%uC", _same_chars.count, _same_chars.count);
+		}
 		if (r >= 0) {
-			_rawbuf.resize(ofs + r);
+			_rawbuf.insert(_rawbuf.end(), &tmp[0], &tmp[r]);
 		}
 		_same_chars.count = 0;
 	}

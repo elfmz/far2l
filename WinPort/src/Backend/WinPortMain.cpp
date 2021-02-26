@@ -2,12 +2,18 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <termios.h> 
-#include <ScopeHelpers.h>
-#include <TTYRawMode.h>
-#ifdef __FreeBSD__
+
+#ifdef __linux__
+# include <termios.h>
+# include <linux/kd.h>
+# include <linux/keyboard.h>
+#elif defined(__FreeBSD__)
 # include <sys/ioctl.h>
 # include <sys/kbio.h>
 #endif
+
+#include <ScopeHelpers.h>
+#include <TTYRawMode.h>
 
 #include "TTY/TTYRevive.h"
 #include "TTY/TTYNegotiateFar2l.h"

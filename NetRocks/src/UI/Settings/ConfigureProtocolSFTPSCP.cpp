@@ -13,6 +13,7 @@
 | [EDIT....................................................] |
 | [ ] Custom subsystem request:                              |
 | [EDIT....................................................] |
+| Compression:          [COMBOBOX Compressed traffic       ] |
 | Max read block size, bytes:                 [9999999]      |
 | Max write block size, bytes:                [9999999]      |
 | Automatically retry connect, times:         [##]           |
@@ -31,12 +32,14 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_ok = -1, _i_cancel = -1;
 	int _i_auth_mode = -1, _i_privkey_path = -1;
 	int _i_use_custom_subsystem = -1, _i_custom_subsystem = -1;
+	int _i_compression = -1;
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	//int _i_enable_sandbox = -1;
 
 	FarListWrapper _di_authmode;
+	FarListWrapper _di_compression;
 
 	bool _keypath_enabled = true, _subsystem_enabled = true, _ok_enabled = true;
 
@@ -113,18 +116,27 @@ public:
 		_di_authmode.Add(MSFTPAuthModeKeyFile);
 		_di_authmode.Add(MSFTPAuthModeSSHAgent);
 
+		_di_compression.Add(MSFTPCompressionNone);
+		_di_compression.Add(MSFTPCompressionIncoming);
+		_di_compression.Add(MSFTPCompressionOutgoing);
+		_di_compression.Add(MSFTPCompressionAll);
+
 		_di.SetBoxTitleItem(scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPAuthMode);
 		_i_auth_mode = _di.AddAtLine(DI_COMBOBOX, 27,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 		_di[_i_auth_mode].ListItems = _di_authmode.Get();
-
 		_di.NextLine();
 		_i_privkey_path = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
+		_di.NextLine();
+
+		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPCompression);
+		_i_compression = _di.AddAtLine(DI_COMBOBOX, 27,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di[_i_compression].ListItems = _di_compression.Get();
+		_di.NextLine();
 
 		if (!scp)  {
-			_di.NextLine();
 			_i_use_custom_subsystem = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPCustomSubsystem);
 			_di.NextLine();
 			_i_custom_subsystem = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
@@ -136,8 +148,9 @@ public:
 			_di.NextLine();
 			_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPMaxWriteBlockSize);
 			_i_max_write_block_size = _di.AddAtLine(DI_FIXEDIT, 51,60, DIF_MASKEDIT, "32768", "9999999999");
+			_di.NextLine();
 		}
-		_di.NextLine();
+
 		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPConnectRetries);
 		_i_connect_retries = _di.AddAtLine(DI_FIXEDIT, 51,52, DIF_MASKEDIT, "1", "99");
 
@@ -180,6 +193,9 @@ public:
 			SetDialogListPosition(_i_auth_mode, 0);
 		}
 
+		SetDialogListPosition(_i_compression, // 0 - none, 1 - incoming, 2 - outgoing, 3 - all
+			std::min(std::max(0, sc.GetInt("Compression", 0)), 3));
+
 		TextToDialogControl(_i_privkey_path, sc.GetString("PrivKeyPath"));
 
 		if (_i_max_read_block_size != -1) {
@@ -209,6 +225,8 @@ public:
 				case 1: sc.SetInt("PrivKeyEnable", 1); break;
 				case 2: sc.SetInt("SSHAgentEnable", 1); break;
 			}
+
+			sc.SetInt("Compression", GetDialogListPosition(_i_compression));
 
 			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);

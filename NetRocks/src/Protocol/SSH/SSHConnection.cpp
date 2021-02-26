@@ -82,11 +82,12 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	if (protocol_options.GetInt("UseOpenSSHConfigs", 0) ) {
 		struct stat s{};
 		if (stat("/etc/ssh/ssh_config", &s) == 0) {
-			ssh_config_parse_file(ssh, "/etc/ssh/ssh_config");
+			ssh_options_parse_config(ssh, "/etc/ssh/ssh_config");
 		}
-		const std::string &per_user_config = InMyHome(".ssh/config");
+		std::string per_user_config = GetMyHome();
+		per_user_config+= "/.ssh/config";
 		if (stat(per_user_config.c_str(), &s) == 0) {
-			ssh_config_parse_file(ssh, per_user_config.c_str());
+			ssh_options_parse_config(ssh, per_user_config.c_str());
 		}
 	}
 

@@ -227,8 +227,7 @@ void TTYBackend::ReaderLoop()
 void TTYBackend::WriterThread()
 {
 	try {
-		bool support_esc_b = _far2l_tty; // #925 #929
-		TTYOutput tty_out(_stdout, support_esc_b);
+		TTYOutput tty_out(_stdout, _far2l_tty);
 
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;

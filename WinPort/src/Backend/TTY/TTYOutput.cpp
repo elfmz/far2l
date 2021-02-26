@@ -32,9 +32,9 @@ bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out, bool support_esc_b)
+TTYOutput::TTYOutput(int out, bool far2l_tty)
 	:
-	_out(out), _support_esc_b(support_esc_b)
+	_out(out), _far2l_tty(far2l_tty)
 {
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
 	ChangeKeypad(true);
@@ -55,9 +55,6 @@ TTYOutput::~TTYOutput()
 	}
 }
 
-
-
-
 void TTYOutput::WriteReally(const char *str, int len)
 {
 	while (len > 0) {
@@ -76,51 +73,76 @@ void TTYOutput::FinalizeSameChars()
 		return;
 	}
 
-	// Use repeat char sequence when possible & makes sense: \033[#b
-	const size_t ofs = _rawbuf.size();
+	char buf[64];
+	int len = 1;
+
+	if (_same_chars.wch >= 0x80) {
+		UTF8 *dst = (UTF8 *)&buf[0];
+#if (__WCHAR_MAX__ > 0xffff)
+		const UTF32* src = (const UTF32*)&_same_chars.wch;
+		if (ConvertUTF32toUTF8 (&src, src + 1, &dst,
+				dst + ARRAYSIZE(buf), lenientConversion) == conversionOK) {
+#else
+		const UTF16* src = (const UTF16*)&_same_chars.wch;
+		if (ConvertUTF16toUTF8 (&src, src + 1, &dst,
+				dst + ARRAYSIZE(buf), lenientConversion) == conversionOK) {
+#endif
+			len = (int)(dst - (UTF8 *)&buf[0]);
+			assert(len <= ARRAYSIZE(buf));
+		} else {
+			buf[0] = '?';
+		}
+	} else {
+		buf[0] = (char)(unsigned char)_same_chars.wch;
+	}
+
+	// When have queued enough count of same characters:
+	// - Use repeat last char sequence when (#925 #929) terminal is far2l that definately supports it
+	// - Under other terminals and if repeated char is space - use erase chars + move cursor forward
+	// - Otherwise just output copies of repeated char sequence
 	if (_same_chars.count <= 5
-			|| (!_support_esc_b && (_same_chars.ch != ' ' || _same_chars.count <= 8))) {
-		_rawbuf.reserve(ofs + _same_chars.count);
+			|| (!_far2l_tty && (_same_chars.wch != L' ' || _same_chars.count <= 8))) {
+		// output plain <count> copies of repeated char sequence
+		_rawbuf.reserve(_rawbuf.size() + len * _same_chars.count);
 		do {
-			_rawbuf.emplace_back(_same_chars.ch);
+			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
 		} while (--_same_chars.count);
 
 	} else {
-		char tmp[64]{};
-		int r;
-		if (_support_esc_b) {
-			r = sprintf(tmp,
-				"%c" ESC "[%ub", _same_chars.ch, _same_chars.count - 1);
+		if (_far2l_tty) {
+			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
+			len = sprintf(buf, // repeat last character <count-1> times
+				ESC "[%ub", _same_chars.count - 1);
 		} else {
-			r = sprintf(tmp,
+			len = sprintf(buf, // erase <count> chars and move cursor forward by <count>
 				ESC "[%uX" ESC "[%uC", _same_chars.count, _same_chars.count);
 		}
-		if (r >= 0) {
-			_rawbuf.insert(_rawbuf.end(), &tmp[0], &tmp[r]);
+		if (len >= 0) {
+			assert(len <= ARRAYSIZE(buf));
+			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
 		}
 		_same_chars.count = 0;
 	}
 }
 
+void TTYOutput::WriteWChar(WCHAR wch)
+{
+	if (_same_chars.count == 0) {
+		_same_chars.wch = wch;
+
+	} else if (_same_chars.wch != wch) {
+		FinalizeSameChars();
+		_same_chars.wch = wch;
+	}
+	_same_chars.count++;
+}
+
 void TTYOutput::Write(const char *str, int len)
 {
-	if (len <= 1) {
-		if (len <= 0)
-			return;
-
-		if (_same_chars.count == 0) {
-			_same_chars.ch = *str;
-
-		} else if (_same_chars.ch != *str) {
-			FinalizeSameChars();
-			_same_chars.ch = *str;
-		}
-		_same_chars.count++;
-		return;
+	if (len > 0) {
+		FinalizeSameChars();
+		_rawbuf.insert(_rawbuf.end(), str, str + len);
 	}
-
-	FinalizeSameChars();
-	_rawbuf.insert(_rawbuf.end(), str, str + len);
 }
 
 void TTYOutput::Format(const char *fmt, ...)
@@ -258,34 +280,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		if (is_space) {
-			Write(" ", 1);
-
-		} else {
-			UTF8 buf[16] = {};
-			UTF8 *targetStart = &buf[0];
-
-#if (__WCHAR_MAX__ > 0xffff)
-			const UTF32* sourceStart = (const UTF32*)&ci->Char.UnicodeChar;
-
-			if (ConvertUTF32toUTF8 (&sourceStart, sourceStart + 1, &targetStart,
-				targetStart + sizeof(buf), lenientConversion) == conversionOK) {
-				Write((const char *)&buf[0], targetStart - &buf[0]);
-			} else {
-				Write("?", 1);
-			}
-
-#else
-			const UTF16* sourceStart = (const UTF16*)&ci->Char.UnicodeChar;
-
-			if (ConvertUTF16toUTF8 (&sourceStart, sourceStart + 1, &targetStart,
-				targetStart + sizeof(buf), lenientConversion) == conversionOK) {
-				Write((const char *)&buf[0], targetStart - &buf[0]);
-			} else {
-				Write("?", 1);
-			}
-#endif
-		}
+		WriteWChar(is_space ? L' ' : ci->Char.UnicodeChar);
 		++_cursor.x;
 	}
 }

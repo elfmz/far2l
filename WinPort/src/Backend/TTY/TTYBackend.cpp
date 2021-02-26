@@ -4,11 +4,16 @@
 #include <fcntl.h>
 #include <exception>
 #include <sys/ioctl.h>
+
 #ifdef __linux__
 # include <termios.h>
 # include <linux/kd.h>
 # include <linux/keyboard.h>
+#elif defined(__FreeBSD__)
+# include <sys/ioctl.h>
+# include <sys/kbio.h>
 #endif
+
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
 #include <sudo.h>
@@ -224,22 +229,8 @@ void TTYBackend::WriterThread()
 	try {
 		bool support_esc_b = true; // #925 #929
 		if (!_far2l_tty) {
-			const char *term = getenv("TERM");
-			if (!term || strncmp(term, "xterm", 5) != 0) {
-				support_esc_b = false;
-				fprintf(stderr, "ESC..b disabled due to TERM='%s'\n", term);
-			}
-		}
-#ifdef __linux__
-		unsigned char state = 6;
-		if (support_esc_b && ioctl(_stdin, TIOCLINUX, &state) == 0) {
 			support_esc_b = false;
-			fprintf(stderr, "ESC..b disabled due to TIOCLINUX\n");
 		}
-#endif
-//		if (support_esc_b) {
-//			fprintf(stderr, "ESC..b enabled\n");
-//		}
 		TTYOutput tty_out(_stdout, support_esc_b);
 
 		while (!_exiting && !_deadio) {
@@ -735,16 +726,18 @@ DWORD TTYBackend::OnQueryControlKeys()
 			out|= LEFT_ALT_PRESSED;
 		}
 	}
+#endif
 
-	state = 0;
-	if (ioctl (_stdin, KDGETLED, &state) == 0) {
-		if (state & 1) {
+#if defined(__FreeBSD__) || defined(__linux__)
+	unsigned int leds = 0;
+	if (ioctl(_stdin, KDGETLED, &leds) == 0) {
+		if (leds & 1) {
 			out|= SCROLLLOCK_ON;
 		}
-		if (state & 2) {
+		if (leds & 2) {
 			out|= NUMLOCK_ON;
 		}
-		if (state & 4) {
+		if (leds & 4) {
 			out|= CAPSLOCK_ON;
 		}
 	}

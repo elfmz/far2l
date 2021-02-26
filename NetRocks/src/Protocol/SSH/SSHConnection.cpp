@@ -79,6 +79,18 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 
 	ssh_options_set(ssh, SSH_OPTIONS_USER, username.c_str());
 
+	if (protocol_options.GetInt("UseOpenSSHConfigs", 0) ) {
+		struct stat s{};
+		if (stat("/etc/ssh/ssh_config", &s) == 0) {
+			ssh_options_parse_config(ssh, "/etc/ssh/ssh_config");
+		}
+		std::string per_user_config = GetMyHome();
+		per_user_config+= "/.ssh/config";
+		if (stat(per_user_config.c_str(), &s) == 0) {
+			ssh_options_parse_config(ssh, per_user_config.c_str());
+		}
+	}
+
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))
 	if (protocol_options.GetInt("TcpNoDelay", 1) ) {
 		int nodelay = 1;

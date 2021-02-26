@@ -94,6 +94,14 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	}
 	ssh_options_set(ssh, SSH_OPTIONS_LOG_VERBOSITY, &ssh_verbosity);
 
+	const int compression = protocol_options.GetInt("Compression", 0);
+	if (compression & 1) {
+		ssh_options_set(ssh, SSH_OPTIONS_COMPRESSION_S_C, "yes");
+	}
+	if (compression & 2) {
+		ssh_options_set(ssh, SSH_OPTIONS_COMPRESSION_C_S, "yes");
+	}
+
 	ssh_key priv_key {};
 	std::string key_path_spec;
 	if (protocol_options.GetInt("PrivKeyEnable", 0) != 0) {

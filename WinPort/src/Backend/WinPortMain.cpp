@@ -2,8 +2,19 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <termios.h> 
+
+#ifdef __linux__
+# include <termios.h>
+# include <linux/kd.h>
+# include <linux/keyboard.h>
+#elif defined(__FreeBSD__)
+# include <sys/ioctl.h>
+# include <sys/kbio.h>
+#endif
+
 #include <ScopeHelpers.h>
 #include <TTYRawMode.h>
+
 #include "TTY/TTYRevive.h"
 #include "TTY/TTYNegotiateFar2l.h"
 
@@ -278,12 +289,12 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 {
 	ArgOptions arg_opts;
 
-#ifdef __linux__
-	unsigned char state = 6;
-	if (ioctl(0, TIOCLINUX, &state) == 0) {
+#if defined(__linux__) || defined(__FreeBSD__)
+	unsigned int leds = 0;
+	if (ioctl(0, KDGETLED, &leds) == 0) {
 		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
 		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
-		// so lets default to mortal mode in Linux TTY
+		// so lets default to mortal mode in Linux/BSD TTY
 		arg_opts.mortal = true;
 		arg_opts.tty = true;
 	}

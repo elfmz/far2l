@@ -5,6 +5,8 @@
 #include "../../etc/plugs.h"
 #include <algorithm>
 #include <ctype.h>
+#include <utils.h>
+#include <KeyFileHelper.h>
 
 #ifndef UNICODE
 #define _cFileName    cFileName
@@ -23,6 +25,9 @@
 #define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 #define CheckDisabled(i) (!((int)Info.SendDlgMessage(hDlg,DM_ENABLE,i,-1)))
 #endif
+
+#define INI_LOCATION	InMyConfig("plugins/compare/settings.ini")
+#define INI_SECTION		"Settings"
 
 /****************************************************************************
  * 
@@ -248,28 +253,28 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     unsigned char X1, Y1, X2, Y2;
     int           Data;
     int           DefaultRegValue;
-    const TCHAR   *SelectedRegValue;
+    const char   *SelectedRegValue;
     unsigned int  Flags;
     int          *StoreTo;
   } InitItems[] = {
     /* 0*/ { DI_DOUBLEBOX,    3,  1, 62, 20, MCmpTitle,                0, NULL,                                    0, NULL },
     /* 1*/ { DI_TEXT,         5,  2,  0,  0, MProcessBox,              0, NULL,                                    0, NULL },
-    /* 2*/ { DI_CHECKBOX,     5,  3,  0,  0, MProcessSubfolders,       0, _T("ProcessSubfolders"),                 0, &Opt.ProcessSubfolders },
-    /* 3*/ { DI_CHECKBOX,     9,  4,  0,  0, MUseMaxScanDepth,         0, _T("UseMaxScanDepth"),                   0, &Opt.UseMaxScanDepth },
-    /* 4*/ { DI_FIXEDIT,      0,  4,  4,  0, MNoLngStringDefined,     99, _T("MaxScanDepth"),           DIF_MASKEDIT, &Opt.MaxScanDepth },
-    /* 5*/ { DI_CHECKBOX,     5,  5,  0,  0, MProcessSelected,         0, _T("ProcessSelected"),                   0, &Opt.ProcessSelected },
+    /* 2*/ { DI_CHECKBOX,     5,  3,  0,  0, MProcessSubfolders,       0, ("ProcessSubfolders"),                 0, &Opt.ProcessSubfolders },
+    /* 3*/ { DI_CHECKBOX,     9,  4,  0,  0, MUseMaxScanDepth,         0, ("UseMaxScanDepth"),                   0, &Opt.UseMaxScanDepth },
+    /* 4*/ { DI_FIXEDIT,      0,  4,  4,  0, MNoLngStringDefined,     99, ("MaxScanDepth"),           DIF_MASKEDIT, &Opt.MaxScanDepth },
+    /* 5*/ { DI_CHECKBOX,     5,  5,  0,  0, MProcessSelected,         0, ("ProcessSelected"),                   0, &Opt.ProcessSelected },
     /* 6*/ { DI_TEXT,         0,  6,  0,  0, MNoLngStringDefined,      0, NULL,                        DIF_SEPARATOR, NULL },
     /* 7*/ { DI_TEXT,         5,  7,  0,  0, MCompareBox,              0, NULL,                                    0, NULL },
-    /* 8*/ { DI_CHECKBOX,     5,  8,  0,  0, MCompareTime,             1, _T("CompareTime"),                       0, &Opt.CompareTime },
-    /* 9*/ { DI_CHECKBOX,     9,  9,  0,  0, MCompareLowPrecision,     1, _T("LowPrecisionTime"),                  0, &Opt.LowPrecisionTime },
-    /*10*/ { DI_CHECKBOX,     9, 10,  0,  0, MCompareIgnoreTimeZone,   1, _T("IgnorePossibleTimeZoneDifferences"), 0, &Opt.IgnorePossibleTimeZoneDifferences },
-    /*11*/ { DI_CHECKBOX,     5, 11,  0,  0, MCompareSize,             1, _T("CompareSize"),                       0, &Opt.CompareSize },
-    /*12*/ { DI_CHECKBOX,     5, 12,  0,  0, MCompareContents,         0, _T("CompareContents"),                   0, &Opt.CompareContents },
-    /*13*/ { DI_CHECKBOX,     9, 13,  0,  0, MCompareContentsIgnore,   0, _T("CompareContentsIgnore"),             0, &Opt.CompareContentsIgnore },
-    /*14*/ { DI_RADIOBUTTON, 13, 14,  0,  0, MCompareIgnoreNewLines,   1, _T("IgnoreNewLines"),            DIF_GROUP, &Opt.IgnoreNewLines },
-    /*15*/ { DI_RADIOBUTTON, 13, 15,  0,  0, MCompareIgnoreWhitespace, 0, _T("IgnoreWhitespace"),                  0, &Opt.IgnoreWhitespace },
+    /* 8*/ { DI_CHECKBOX,     5,  8,  0,  0, MCompareTime,             1, ("CompareTime"),                       0, &Opt.CompareTime },
+    /* 9*/ { DI_CHECKBOX,     9,  9,  0,  0, MCompareLowPrecision,     1, ("LowPrecisionTime"),                  0, &Opt.LowPrecisionTime },
+    /*10*/ { DI_CHECKBOX,     9, 10,  0,  0, MCompareIgnoreTimeZone,   1, ("IgnorePossibleTimeZoneDifferences"), 0, &Opt.IgnorePossibleTimeZoneDifferences },
+    /*11*/ { DI_CHECKBOX,     5, 11,  0,  0, MCompareSize,             1, ("CompareSize"),                       0, &Opt.CompareSize },
+    /*12*/ { DI_CHECKBOX,     5, 12,  0,  0, MCompareContents,         0, ("CompareContents"),                   0, &Opt.CompareContents },
+    /*13*/ { DI_CHECKBOX,     9, 13,  0,  0, MCompareContentsIgnore,   0, ("CompareContentsIgnore"),             0, &Opt.CompareContentsIgnore },
+    /*14*/ { DI_RADIOBUTTON, 13, 14,  0,  0, MCompareIgnoreNewLines,   1, ("IgnoreNewLines"),            DIF_GROUP, &Opt.IgnoreNewLines },
+    /*15*/ { DI_RADIOBUTTON, 13, 15,  0,  0, MCompareIgnoreWhitespace, 0, ("IgnoreWhitespace"),                  0, &Opt.IgnoreWhitespace },
     /*16*/ { DI_TEXT,         0, 16,  0,  0, MNoLngStringDefined,      0, NULL,                        DIF_SEPARATOR, NULL },
-    /*17*/ { DI_CHECKBOX,     5, 17,  0,  0, MMessageWhenNoDiff,       0, _T("MessageWhenNoDiff"),                 0, &Opt.MessageWhenNoDiff },
+    /*17*/ { DI_CHECKBOX,     5, 17,  0,  0, MMessageWhenNoDiff,       0, ("MessageWhenNoDiff"),                 0, &Opt.MessageWhenNoDiff },
     /*18*/ { DI_TEXT,         0, 18,  0,  0, MNoLngStringDefined,      0, NULL,                        DIF_SEPARATOR, NULL },
     /*19*/ { DI_BUTTON,       0, 19,  0,  0, MOK,                      0, NULL,                      DIF_CENTERGROUP, NULL },
     /*20*/ { DI_BUTTON,       0, 19,  0,  0, MCancel,                  0, NULL,                      DIF_CENTERGROUP, NULL }
@@ -281,11 +286,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 #endif
 
   memset(DialogItems,0,sizeof(DialogItems));
-
-  HKEY hKey;
-  if (!PluginRootKey ||
-       RegOpenKeyEx(HKEY_CURRENT_USER, PluginRootKey, 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
-    hKey = 0;
+  KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
 
   size_t DlgData=0;
   bool bNoFocus = true;
@@ -293,7 +294,6 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
   for (i = 0; i < ARRAYSIZE(InitItems); i++)
   {
     DWORD dwRegValue;
-    DWORD dwSize                  = sizeof(DWORD);
     DialogItems[i].Type           = InitItems[i].Type;
     DialogItems[i].X1             = InitItems[i].X1;
     DialogItems[i].Y1             = InitItems[i].Y1;
@@ -308,10 +308,11 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     DialogItems[i].PtrData = (InitItems[i].Data == MNoLngStringDefined)
             ? L"" : GetMsg(InitItems[i].Data);
 #endif
-    dwRegValue = (hKey && InitItems[i].SelectedRegValue &&
-                  RegQueryValueEx(hKey, InitItems[i].SelectedRegValue, NULL,
-                  NULL, (LPBYTE)&dwRegValue, &dwSize)
-                  == ERROR_SUCCESS ) ? dwRegValue : InitItems[i].DefaultRegValue;
+
+    dwRegValue = InitItems[i].SelectedRegValue
+        ? kfh.GetInt(InitItems[i].SelectedRegValue, InitItems[i].DefaultRegValue)
+        : InitItems[i].DefaultRegValue;
+
     if (DialogItems[i].Type == DI_CHECKBOX || DialogItems[i].Type == DI_RADIOBUTTON)
       DialogItems[i].Param.Selected = dwRegValue;
     else if (DialogItems[i].Type == DI_FIXEDIT)
@@ -419,9 +420,6 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     }
   }
 
-  if (hKey)
-    RegCloseKey(hKey);
-
 #ifndef UNICODE
   int ExitCode = Info.DialogEx(Info.ModuleNumber, -1, -1, 66, 22, _T("Contents"),
                                DialogItems, ARRAYSIZE(DialogItems), 0, 0,
@@ -450,19 +448,13 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 #undef PtrData
 #endif
 
-    DWORD dwDisposition;
-    if (PluginRootKey &&
-        RegCreateKeyEx(HKEY_CURRENT_USER, PluginRootKey, 0, NULL, 0,
-        KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition) == ERROR_SUCCESS)
-    {
-      for (i = 0; i < ARRAYSIZE(InitItems); i++)
-        if (!(CheckDisabled((int)i)) && InitItems[i].SelectedRegValue)
-        {
-          DWORD dwValue = *InitItems[i].StoreTo;
-          RegSetValueEx(hKey, InitItems[i].SelectedRegValue, 0, REG_DWORD, (BYTE *)&dwValue, sizeof(dwValue));
-        }
-      RegCloseKey(hKey);
-    }
+    KeyFileHelper kfh(INI_LOCATION);
+    for (i = 0; i < ARRAYSIZE(InitItems); i++)
+      if (!(CheckDisabled((int)i)) && InitItems[i].SelectedRegValue)
+      {
+        kfh.PutInt(INI_SECTION, InitItems[i].SelectedRegValue, *InitItems[i].StoreTo);
+      }
+    kfh.Save();
 
     if (bPluginPanels)
     {
@@ -1322,15 +1314,10 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
   SetConsoleTitle(cBuffer);
 
   // 
-  HKEY hKey;
-  if ( !PluginRootKey || RegOpenKeyEx(HKEY_CURRENT_USER, PluginRootKey, 0, KEY_QUERY_VALUE, &hKey) !=
-       ERROR_SUCCESS )
-    hKey = 0;
-  DWORD dwSize = sizeof(DWORD);
-  bufSize = ( hKey && (RegQueryValueEx(hKey, _T("CompareBufferSize"), NULL, NULL, (LPBYTE)&bufSize,
-              &dwSize) == ERROR_SUCCESS) && (bufSize > 32767) ) ? bufSize : 32768;
-  if (hKey)
-    RegCloseKey(hKey);
+
+  bufSize = KeyFileReadSection(INI_LOCATION, INI_SECTION).GetInt("CompareBufferSize", 32768);
+  if (bufSize > 32768) bufSize = 32768;
+
   ABuf = (char*)malloc(bufSize);
   PBuf = (char*)malloc(bufSize);
 

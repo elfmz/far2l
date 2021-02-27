@@ -212,7 +212,11 @@ void HighlightFiles::InitHighlightFiles()
 	FirstCount=UpperCount=LowerCount=LastCount=0;
 
 	std::unique_ptr<ConfigReader> cfg_reader(new ConfigReader(RegColorsHighlight));
-	if (!cfg_reader->HasSection()) {
+	// fast check if has root section that is created by SetDefaultHighlighting
+	// if no - slower check that has no any subsections
+	// if no root section and no subsections - apply default settings
+	if (!cfg_reader->HasSection()
+			&& cfg_reader->EnumSectionsAt().empty()) {
 		SetDefaultHighlighting();
 		cfg_reader.reset(new ConfigReader);
 	}

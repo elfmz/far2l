@@ -765,11 +765,11 @@ void KeyFileHelper::PutBytes(const std::string &section, const std::string &name
 	std::string str;
 	str.reserve(len * 2 + (space_interval ? (len / space_interval) + 1 : 0) );
 	for (size_t i = 0; i != len; ++i) {
-		str+= MakeHexDigit(buf[i] >> 4);
-		str+= MakeHexDigit(buf[i] & 0xf);
-		if (i && i + 1 != len && space_interval && (i % space_interval) == 0) {
+		if (i && space_interval && (i % space_interval) == 0) {
 			str+= ' ';
 		}
+		str+= MakeHexDigit(buf[i] >> 4);
+		str+= MakeHexDigit(buf[i] & 0xf);
 	}
 
 	PutString(section, name, str);

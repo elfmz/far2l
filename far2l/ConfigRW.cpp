@@ -359,7 +359,7 @@ void ConfigWriter::RemoveKey(const std::string &name)
 #ifdef WINPORT_REGISTRY
 static bool ShouldImportRegSettings(const std::string &virtual_path)
 {
-	// skip stuff that goes to Plugins.ini
+	// skip stuff that goes to plugins/state.ini
 	return (virtual_path != "Plugins" && virtual_path != "PluginHotkeys");
 }
 
@@ -469,6 +469,7 @@ void CheckForConfigUpgrade()
 	if (stat(cfg_ini.c_str(), &s) == -1) {
 		ConfigWriter cfg_writer;
 		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
+		rename(InMyConfig("plugins.ini").c_str(), InMyConfig("plugins/state.ini").c_str());
 	}
 }
 

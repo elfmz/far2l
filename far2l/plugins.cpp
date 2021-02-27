@@ -158,7 +158,7 @@ enum PluginType
 
 const char *PluginsIni()
 {
-	static std::string s_out(InMyConfig("plugins.ini"));
+	static std::string s_out(InMyConfig("plugins/state.ini"));
 	return s_out.c_str();
 }
 
@@ -1687,7 +1687,7 @@ void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char 
 
 bool PluginManager::SetHotKeyDialog(
     const wchar_t *DlgPluginTitle,		// имя плагина
-    const std::string &SettingName		// ключ, откуда берем значение в plugins.ini/Settings
+    const std::string &SettingName		// ключ, откуда берем значение в state.ini/Settings
 )
 {
 	/*

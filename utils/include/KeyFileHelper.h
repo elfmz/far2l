@@ -1,10 +1,10 @@
 #pragma once
 #include <sys/stat.h>
 #include <string>
-#include <unordered_map>
 #include <vector>
+#include <map>
 
-struct KeyFileValues : std::unordered_map<std::string, std::string>
+struct KeyFileValues : std::map<std::string, std::string>
 {
 	bool HasKey(const std::string &name) const;
 	std::string GetString(const std::string &name, const char *def = "") const;
@@ -30,7 +30,7 @@ public:
 class KeyFileReadHelper
 {
 protected:
-	struct Sections : std::unordered_map<std::string, KeyFileValues> {} _kf;
+	struct Sections : std::map<std::string, KeyFileValues> {} _kf;
 	struct stat _filestat {};
 	bool _loaded;
 

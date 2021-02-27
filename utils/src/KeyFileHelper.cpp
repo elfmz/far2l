@@ -9,7 +9,6 @@
 
 #include <WinCompat.h>
 #include <string.h>
-#include <mutex>
 #include <stdlib.h>
 
 #include "ScopeHelpers.h"
@@ -204,14 +203,14 @@ static size_t DecodeBytes(const std::string &str, size_t len, unsigned char *buf
 	size_t out;
 
 	for (size_t i = out = 0; out != len && i != str.size(); ++out) {
-		buf[out] = (digit_htob(str[i]) << 4);
+		buf[out] = (ParseHexDigit(str[i]) << 4);
 		do {
 			++i;
 		} while (i != str.size() && (str[i] == ' ' || str[i] == '\t'));
 		if (i == str.size()) {
 			break;
 		}
-		buf[out]|= digit_htob(str[i]);
+		buf[out]|= ParseHexDigit(str[i]);
 		do {
 			++i;
 		} while (i != str.size() && (str[i] == ' ' || str[i] == '\t'));
@@ -253,9 +252,6 @@ std::vector<std::string> KeyFileValues::EnumKeys(bool sorted) const
 	out.reserve(size());
 	for (const auto &it : *this) {
 		out.emplace_back(it.first);
-	}
-	if (sorted) {
-		std::sort(out.begin(), out.end());
 	}
 	return out;
 }
@@ -406,9 +402,6 @@ std::vector<std::string> KeyFileReadHelper::EnumSections(bool sorted) const
 	for (const auto &s : _kf) {
 		out.push_back(s.first);
 	}
-	if (sorted) {
-		std::sort(out.begin(), out.end());
-	}
 	return out;
 }
 
@@ -430,9 +423,6 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 
 			out.push_back(s.first);
 		}
-	}
-	if (sorted) {
-		std::sort(out.begin(), out.end());
 	}
 
 	return out;
@@ -587,28 +577,17 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 		}
 
 		std::string content;
-		std::vector<std::string> keys, sections;
-		for (const auto &i_kf : _kf) {
-			sections.emplace_back(i_kf.first);
-		}
-		std::sort(sections.begin(), sections.end());
 		KFEscaping esc;
-		for (const auto &s : sections) {
-			auto &kmap = _kf[s];
-			keys.clear();
-			for (const auto &i_kmap : kmap) {
-				keys.emplace_back(i_kmap.first);
-			}
-			std::sort(keys.begin(), keys.end());
-
+		for (const auto &si : _kf) {
 			content+= '[';
-			content+= esc.EncodeSection(s);
+			content+= esc.EncodeSection(si.first);
 			content+= "]\n";
 
-			for (const auto &k : keys) {
-				content+= esc.EncodeKey(k);
+			const auto &kmap = si.second;
+			for (const auto &ki : kmap) {
+				content+= esc.EncodeKey(ki.first);
 				content+= '=';
-				content+= esc.EncodeValue(kmap[k]);
+				content+= esc.EncodeValue(ki.second);
 				content+= '\n';
 			}
 			content+= '\n';
@@ -779,8 +758,8 @@ void KeyFileHelper::PutBytes(const std::string &section, const std::string &name
 	std::string str;
 	str.reserve(len * 2 + (space_interval ? (len / space_interval) + 1 : 0) );
 	for (size_t i = 0; i != len; ++i) {
-		str+= digit_btoh(buf[i] >> 4);
-		str+= digit_btoh(buf[i] & 0xf);
+		str+= MakeHexDigit(buf[i] >> 4);
+		str+= MakeHexDigit(buf[i] & 0xf);
 		if (i && i + 1 != len && space_interval && (i % space_interval) == 0) {
 			str+= ' ';
 		}

@@ -70,31 +70,31 @@ public:
 	void DefragIndexedSections(const char *indexed_prefix);
 	void ReserveIndexedSection(const char *indexed_prefix, unsigned int index);
 
-	void PutString(const std::string &name, const wchar_t *value);
-	void PutString(const std::string &name, const std::string &value);
-	void PutInt(const std::string &name, int value);
-	void PutUInt(const std::string &name, unsigned int value);
-	void PutULL(const std::string &name, unsigned long long value);
-	void PutBytes(const std::string &name, size_t len, const unsigned char *buf);
-	template <class POD> void PutPOD(const std::string &name, const POD &pod)
-		{ PutBytes(name, sizeof(pod), (const unsigned char *)&pod); }
+	void SetString(const std::string &name, const wchar_t *value);
+	void SetString(const std::string &name, const std::string &value);
+	void SetInt(const std::string &name, int value);
+	void SetUInt(const std::string &name, unsigned int value);
+	void SetULL(const std::string &name, unsigned long long value);
+	void SetBytes(const std::string &name, size_t len, const unsigned char *buf);
+	template <class POD> void SetPOD(const std::string &name, const POD &pod)
+		{ SetBytes(name, sizeof(pod), (const unsigned char *)&pod); }
 	void RemoveKey(const std::string &name);
 };
 
 void CheckForConfigUpgrade();
 
-class GlobalConfigReader
+class ConfigReaderScope
 {
 	std::unique_ptr<ConfigReader> &_cfg_reader;
 
 public:
-	GlobalConfigReader(std::unique_ptr<ConfigReader> &cfg_reader)
+	ConfigReaderScope(std::unique_ptr<ConfigReader> &cfg_reader)
 		: _cfg_reader(cfg_reader)
 	{
 		_cfg_reader.reset(new ConfigReader);
 	}
 
-	~GlobalConfigReader()
+	~ConfigReaderScope()
 	{
 		_cfg_reader.reset();
 	}

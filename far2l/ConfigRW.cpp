@@ -1,6 +1,7 @@
 #include "headers.hpp"
 #include "ConfigRW.hpp"
 #include <assert.h>
+#include <errno.h>
 #include <algorithm>
 
 #define CONFIG_INI "settings/config.ini"
@@ -320,34 +321,34 @@ void ConfigWriter::ReserveIndexedSection(const char *indexed_prefix, unsigned in
 }
 
 
-void ConfigWriter::PutString(const std::string &name, const wchar_t *value)
+void ConfigWriter::SetString(const std::string &name, const wchar_t *value)
 {
-	_selected_kfh->PutString(_section, name, value);
+	_selected_kfh->SetString(_section, name, value);
 }
 
-void ConfigWriter::PutString(const std::string &name, const std::string &value)
+void ConfigWriter::SetString(const std::string &name, const std::string &value)
 {
-	_selected_kfh->PutString(_section, name, value);
+	_selected_kfh->SetString(_section, name, value);
 }
 
-void ConfigWriter::PutInt(const std::string &name, int value)
+void ConfigWriter::SetInt(const std::string &name, int value)
 {
-	_selected_kfh->PutInt(_section, name, value);
+	_selected_kfh->SetInt(_section, name, value);
 }
 
-void ConfigWriter::PutUInt(const std::string &name, unsigned int value)
+void ConfigWriter::SetUInt(const std::string &name, unsigned int value)
 {
-	_selected_kfh->PutUIntAsHex(_section, name, value);
+	_selected_kfh->SetUInt(_section, name, value);
 }
 
-void ConfigWriter::PutULL(const std::string &name, unsigned long long value)
+void ConfigWriter::SetULL(const std::string &name, unsigned long long value)
 {
-	_selected_kfh->PutULLAsHex(_section, name, value);
+	_selected_kfh->SetULL(_section, name, value);
 }
 
-void ConfigWriter::PutBytes(const std::string &name, size_t len, const unsigned char *buf)
+void ConfigWriter::SetBytes(const std::string &name, size_t len, const unsigned char *buf)
 {
-	_selected_kfh->PutBytes(_section, name, len, buf, _bytes_space_interval);
+	_selected_kfh->SetBytes(_section, name, len, buf, _bytes_space_interval);
 }
 
 void ConfigWriter::RemoveKey(const std::string &name)
@@ -363,7 +364,7 @@ static bool ShouldImportRegSettings(const std::string &virtual_path)
 	return (virtual_path != "Plugins" && virtual_path != "PluginHotkeys");
 }
 
-static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar_t *subpath, const std::string &virtual_path)
+static void ConfigUgrade_RegKey(FILE *lf, ConfigWriter &cfg_writer, HKEY root, const wchar_t *subpath, const std::string &virtual_path)
 {
 	HKEY key = 0;
 	LONG r = WINPORT(RegOpenKeyEx)(root, subpath, 0, GENERIC_READ, &key);
@@ -379,10 +380,14 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 			}
 			virtual_subpath+= Wide2MB(&namebuf[0]);
 			if (ShouldImportRegSettings(virtual_subpath)) {
-				ConfigUgrade_RegKey(cfg_writer, key, &namebuf[0], virtual_subpath);
+				fprintf(lf, "%s: RECURSE '%s'\n", __FUNCTION__, virtual_subpath.c_str());
+				ConfigUgrade_RegKey(lf, cfg_writer, key, &namebuf[0], virtual_subpath);
+			} else {
+				fprintf(lf, "%s: SKIP '%s'\n", __FUNCTION__, virtual_subpath.c_str());
 			}
 		}
 
+		fprintf(lf, "%s: ENUM '%s'\n", __FUNCTION__, virtual_path.c_str());
 		cfg_writer.SelectSection(virtual_path);
 		const bool macro_type_prefix =
 			(virtual_path == "KeyMacros/Vars" || virtual_path == "KeyMacros/Consts");
@@ -402,23 +407,30 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 				databuf.resize(databuf.size() + 0x400);			
 
 			} else {
+				fprintf(lf, "%s: SET [%s] '%ls' TYPE=%u DATA={",
+					__FUNCTION__, virtual_path.c_str(), &namebuf[0], tip);
+				for (size_t j = 0; j < datalen; ++j) {
+					fprintf(lf, "%02x ", (unsigned int)databuf[j]);
+				}
+				fprintf(lf, "}\n");
+
 				std::string name(Wide2MB(&namebuf[0]));
 				FARString tmp_str;
 				switch (tip) {
 					case REG_DWORD: {
 						if (macro_type_prefix) {
 							tmp_str.Format(L"INT:%ld", (long)*(int32_t *)&databuf[0]);
-							cfg_writer.PutString(name, tmp_str);
+							cfg_writer.SetString(name, tmp_str);
 						} else {
-							cfg_writer.PutUInt(name, (long)*(uint32_t *)&databuf[0]);
+							cfg_writer.SetUInt(name, (unsigned int)*(uint32_t *)&databuf[0]);
 						}
 					} break;
 					case REG_QWORD: {
 						if (macro_type_prefix) {
 							tmp_str.Format(L"INT:%lld", (long long)*(int64_t *)&databuf[0]);
-							cfg_writer.PutString(name, tmp_str);
+							cfg_writer.SetString(name, tmp_str);
 						} else {
-							cfg_writer.PutULL(name, *(uint64_t *)&databuf[0]);
+							cfg_writer.SetULL(name, *(uint64_t *)&databuf[0]);
 						}
 					} break;
 					case REG_SZ: case REG_EXPAND_SZ: case REG_MULTI_SZ: {
@@ -449,11 +461,11 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 									tmp_str.Append(wc);
 								}
 							}
-							cfg_writer.PutString(name, tmp_str);
+							cfg_writer.SetString(name, tmp_str);
 					} break;
 
 					default:
-						cfg_writer.PutBytes(name, datalen, &databuf[0]);
+						cfg_writer.SetBytes(name, datalen, &databuf[0]);
 				}
 				++i;
 			}
@@ -462,25 +474,53 @@ static void ConfigUgrade_RegKey(ConfigWriter &cfg_writer, HKEY root, const wchar
 	}
 }
 
+static void Upgrade_MoveFile(FILE *lf, const char *src, const char *dst)
+{
+	const std::string &str_src = InMyConfig(src);
+	const std::string &str_dst = InMyConfig(dst);
+	int r = rename(str_src.c_str(), str_dst.c_str());
+	if (r == 0) {
+		fprintf(lf, "%s('%s', '%s') - DONE\n", __FUNCTION__, str_src.c_str(), str_dst.c_str());
+	} else {
+		fprintf(lf, "%s('%s', '%s') - ERROR=%d\n", __FUNCTION__, str_src.c_str(), str_dst.c_str(), errno);
+	}
+}
+
 void CheckForConfigUpgrade()
 {
 	const std::string &cfg_ini = InMyConfig(CONFIG_INI);
 	struct stat s{};
 	if (stat(cfg_ini.c_str(), &s) == -1) {
-		ConfigWriter cfg_writer;
-		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
-		rename(InMyConfig("bookmarks.ini").c_str(), InMyConfig("settings/bookmarks.ini").c_str());
-		rename(InMyConfig("plugins.ini").c_str(), InMyConfig("plugins/state.ini").c_str());
-		rename(InMyConfig("viewer.pos").c_str(), InMyConfig("history/viewer.pos").c_str());
-		rename(InMyConfig("editor.pos").c_str(), InMyConfig("history/editor.pos").c_str());
+		FILE *lf = fopen(InMyConfig("upgrade.log").c_str(), "a");
+		try {
+			time_t now = time(NULL);
+			fprintf(lf, "---- Upgrade started on %s\n", ctime(&now));
+			ConfigWriter cfg_writer;
+			ConfigUgrade_RegKey(lf, cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
+			Upgrade_MoveFile(lf, "bookmarks.ini", "settings/bookmarks.ini");
+			Upgrade_MoveFile(lf, "plugins.ini", "plugins/state.ini");
+			Upgrade_MoveFile(lf, "viewer.pos", "history/viewer.pos");
+			Upgrade_MoveFile(lf, "editor.pos", "history/editor.pos");
 
-		const std::string &cmd = StrPrintf("mv -f \"%s\" \"%s\"",
-					InMyConfig("NetRocks").c_str(),
-					InMyConfig("plugins/").c_str());
-		int r = system(cmd.c_str());
-		if (r != 0) {
-			fprintf(stderr, "%s: exit code %d for cmd '%s'\n", __FUNCTION__, r, cmd.c_str());
+			const std::string &cmd = StrPrintf("mv -f \"%s\" \"%s\"",
+						InMyConfig("NetRocks").c_str(),
+						InMyConfig("plugins/").c_str());
+			int r = system(cmd.c_str());
+			if (r != 0) {
+				fprintf(stderr, "%s: ERROR=%d CMD='%s'\n", __FUNCTION__, r, cmd.c_str());
+				fprintf(lf, "%s: ERROR=%d CMD='%s'\n", __FUNCTION__, r, cmd.c_str());
+			} else {
+				fprintf(lf, "%s: DONE CMD='%s'\n", __FUNCTION__, cmd.c_str());
+			}
+
+			now = time(NULL);
+			fprintf(lf, "---- Upgrade finished on %s\n", ctime(&now));
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: EXCEPTION: %s\n", __FUNCTION__, e.what());
+			fprintf(lf, "%s: EXCEPTION: %s\n", __FUNCTION__, e.what());
 		}
+		fclose(lf);
 	}
 }
 

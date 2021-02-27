@@ -988,7 +988,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 									// любимых же оставляем в реестре флаг, что таблица символов любимая
 									ConfigWriter cfg_writer(FavoriteCodePagesKey);
 									if (SelectType & CPST_FAVORITE)
-										cfg_writer.PutInt(strCodePageName, CPST_FAVORITE);
+										cfg_writer.SetInt(strCodePageName, CPST_FAVORITE);
 									else
 										cfg_writer.RemoveKey(strCodePageName);
 
@@ -996,7 +996,7 @@ LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 								}
 								else
 								{
-									ConfigWriter(FavoriteCodePagesKey).PutInt(strCodePageName,
+									ConfigWriter(FavoriteCodePagesKey).SetInt(strCodePageName,
 										CPST_FIND | (SelectType & CPST_FAVORITE ?  CPST_FAVORITE : 0));
 									Item.Item.Flags |= LIF_CHECKED;
 								}

@@ -490,14 +490,14 @@ static void ProcessSelected(bool select)
 			ConfigWriter cfg_writer;
 			cfg_writer.SelectSection(FavoriteCodePagesKey);
 			if (select)
-				cfg_writer.PutInt(strCPName, CPST_FAVORITE | (selectType & CPST_FIND ? CPST_FIND : 0));
+				cfg_writer.SetInt(strCPName, CPST_FAVORITE | (selectType & CPST_FIND ? CPST_FIND : 0));
 			else if (selectType & CPST_FIND)
-				cfg_writer.PutInt(strCPName, CPST_FIND);
+				cfg_writer.SetInt(strCPName, CPST_FIND);
 			else
 				cfg_writer.RemoveKey(strCPName);
 		}
 
-		GlobalConfigReader::Update(s_cfg_reader);
+		ConfigReaderScope::Update(s_cfg_reader);
 
 		// Создаём новый элемент меню
 		MenuItemEx newItem;
@@ -698,9 +698,9 @@ static LONG_PTR WINAPI EditDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR
 				if (!strCodePageName.GetLength())
 					cfg_writer.RemoveKey(strCodePage);
 				else
-					cfg_writer.PutString(strCodePage, strCodePageName.CPtr());
+					cfg_writer.SetString(strCodePage, strCodePageName.CPtr());
 			}
-			GlobalConfigReader::Update(s_cfg_reader);
+			ConfigReaderScope::Update(s_cfg_reader);
 			// Получаем информацию о кодовой странице
 			CPINFOEX cpiex;
 			if (GetCodePageInfo(CodePage, cpiex))
@@ -756,7 +756,7 @@ static void EditCodePageName()
 
 UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7, bool bShowAuto)
 {
-	GlobalConfigReader gcr(s_cfg_reader);
+	ConfigReaderScope grs(s_cfg_reader);
 	CallbackCallSource = CodePageSelect;
 	currentCodePage = nCurrent;
 	// Создаём меню
@@ -810,7 +810,7 @@ UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowU
 // Заполняем список таблицами символов
 UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool allowAuto, bool allowAll)
 {
-	GlobalConfigReader gcr(s_cfg_reader);
+	ConfigReaderScope grs(s_cfg_reader);
 	CallbackCallSource = CodePagesFill;
 	// Устанавливаем переменные для доступа из каллбака
 	dialog = dialogHandle;

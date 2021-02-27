@@ -82,7 +82,6 @@ SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcF
   DialogItem->ListItems=NULL;
   Items=NULL;
   Count=0;
-  KeyFileReadHelper kfh(INI_LOCATION);
   for(int i=0; i<ArcPlugin->FmtCount(); i++)
   {
     for(int j=0; ; j++)
@@ -95,7 +94,7 @@ SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcF
       //*Buffer=0; //$ AA сбросится в GetDefaultCommands
       ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, Buffer);
       //хитрый финт - подстановка Buffer в качестве дефолта для самого Buffer
-      kfh.GetChars(Buffer, sizeof(Buffer), Format, CmdNames[CMD_ADD], Buffer);
+      KeyFileReadSection(INI_LOCATION, Format).GetChars(Buffer, sizeof(Buffer), CmdNames[CMD_ADD], Buffer);
 
       if(*Buffer == 0)
         continue;
@@ -236,9 +235,9 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
       case PDI_SAVEBTN:
       {
         KeyFileHelper kfh(INI_LOCATION);
-        kfh.PutString(INI_SECTION,"DefaultFormat",pdd->ArcFormat);
+        kfh.SetString(INI_SECTION,"DefaultFormat",pdd->ArcFormat);
         Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
-        kfh.PutString(INI_SECTION,"AddSwitches",pdd->ArcFormat);
+        kfh.SetString(INI_SECTION,"AddSwitches",pdd->ArcFormat);
 
         //Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
         //Info.SendDlgMessage(hDlg, DM_ADDHISTORY, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
@@ -296,15 +295,14 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
   }
   else if(Msg == MAM_SETDISABLE)
   {
-    KeyFileReadHelper kfh(INI_LOCATION);
     ArcPlugin->GetDefaultCommands(pdd->Self->ArcPluginNumber,pdd->Self->ArcPluginType,CMD_ADD,Buffer);
-    kfh.GetChars(Buffer,sizeof(Buffer),pdd->ArcFormat,CmdNames[CMD_ADD],Buffer);
+    KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetChars(Buffer,sizeof(Buffer),CmdNames[CMD_ADD],Buffer);
     Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_ADDBTN, *Buffer != 0);
   }
   else if(Msg == MAM_ARCSWITCHES)
   {
     // Выставляем данные из AddSwitches
-    KeyFileReadHelper(INI_LOCATION).GetChars(Buffer,sizeof(Buffer),pdd->ArcFormat,"AddSwitches","");
+    KeyFileReadSection(INI_LOCATION,pdd->ArcFormat).GetChars(Buffer,sizeof(Buffer),"AddSwitches","");
     Info.SendDlgMessage(hDlg,DM_SETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
     if (*Buffer && Opt.UseLastHistory)
     {
@@ -334,7 +332,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
     BOOL IsDelOldDefExt=(BOOL)Info.SendDlgMessage(hDlg, MAM_DELDEFEXT, 0, 0);
     IsDelOldDefExt=IsDelOldDefExt && Info.SendDlgMessage(hDlg, DM_GETCHECK, PDI_EXACTNAMECHECK, 0);
 
-    KeyFileReadHelper(INI_LOCATION).GetChars(Buffer,sizeof(Buffer),pdd->ArcFormat,"DefExt","");
+    KeyFileReadSection(INI_LOCATION,pdd->ArcFormat).GetChars(Buffer,sizeof(Buffer),"DefExt","");
     BOOL Ret=TRUE;
     if(*Buffer==0)
       Ret=ArcPlugin->GetFormatName(pdd->Self->ArcPluginNumber,pdd->Self->ArcPluginType,pdd->ArcFormat,Buffer);
@@ -423,7 +421,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   if (ArcPluginNumber==-1)
   {
     char DefaultFormat[100];
-    KeyFileReadHelper(INI_LOCATION).GetChars(DefaultFormat,sizeof(DefaultFormat),INI_SECTION,"DefaultFormat","");
+    KeyFileReadSection(INI_LOCATION,INI_SECTION).GetChars(DefaultFormat,sizeof(DefaultFormat),"DefaultFormat","");
     if (!FormatToPlugin(DefaultFormat,ArcPluginNumber,ArcPluginType))
     {
       ArcPluginNumber=ArcPluginType=0;
@@ -445,10 +443,9 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   /* raVen $ */
   Opt.PriorityClass=2;
 
-  KeyFileReadHelper kfh(INI_LOCATION);
   while (1)
   {
-    kfh.GetChars(pdd.DefExt,sizeof(pdd.DefExt),pdd.ArcFormat,"DefExt","");
+    KeyFileReadSection(INI_LOCATION,pdd.ArcFormat).GetChars(pdd.DefExt,sizeof(pdd.DefExt),"DefExt","");
     if (*pdd.DefExt==0)
       Ret=ArcPlugin->GetFormatName(ArcPluginNumber,ArcPluginType,pdd.ArcFormat,pdd.DefExt);
     if (!Ret)
@@ -625,7 +622,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       else
         Opt.AdvFlags.ExactArcName=DialogItems[PDI_EXACTNAMECHECK].Selected;
       //SetRegKey(HKEY_CURRENT_USER, "", "ExactArcName", Opt.ExactArcName);
-      { KeyFileHelper(INI_LOCATION).PutInt(INI_SECTION, "AdvFlags", (int)Opt.AdvFlags); }
+      { KeyFileHelper(INI_LOCATION).SetInt(INI_SECTION, "AdvFlags", (int)Opt.AdvFlags); }
 
       FSF.Unquote(DialogItems[PDI_ARCNAMEEDT].Data);
       if (AskCode!=PDI_ADDBTN || *DialogItems[PDI_ARCNAMEEDT].Data==0)
@@ -664,11 +661,13 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       CommandType=Recurse ? CMD_ADDRECURSE:CMD_ADD;
 
     Opt.Background=OpMode & OPM_SILENT ? 0 : Opt.UserBackground;
-
-    ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CommandType,Command);
-    kfh.GetChars(Command,sizeof(Command),pdd.ArcFormat,CmdNames[CommandType],Command);
-    ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CMD_ALLFILESMASK,AllFilesMask);
-    kfh.GetChars(AllFilesMask,sizeof(AllFilesMask),pdd.ArcFormat,"AllFilesMask",AllFilesMask);
+    {
+      KeyFileReadSection kfh(INI_LOCATION, pdd.ArcFormat);
+      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CommandType,Command);
+      kfh.GetChars(Command,sizeof(Command),CmdNames[CommandType],Command);
+      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CMD_ALLFILESMASK,AllFilesMask);
+      kfh.GetChars(AllFilesMask,sizeof(AllFilesMask),"AllFilesMask",AllFilesMask);
+    }
     if (*CurDir && strstr(Command,"%%R")==NULL && strstr(Command,"%%r")==NULL)
     {
       const char *MsgItems[]={GetMsg(MWarning),GetMsg(MCannotPutToFolder),
@@ -761,14 +760,13 @@ BOOL PluginClass::GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, Pa
 
   //под курсором должен быть файл с расширением архива
   char Format[100],DefExt[NM];
-  KeyFileReadHelper kfh(INI_LOCATION);
   for(i=0; i<ArcPlugin->FmtCount(); i++)
     for(j=0; ; j++)
     {
       if(!ArcPlugin->GetFormatName(i, j, Format, DefExt))
         break;
       //хитрый хинт, чтение ключа с дефолтом из DefExt
-      kfh.GetChars(DefExt, sizeof(DefExt), Format, "DefExt", DefExt);
+      KeyFileReadSection(INI_LOCATION, Format).GetChars(DefExt, sizeof(DefExt), "DefExt", DefExt);
 
       if(!strcasecmp(Dot, DefExt))
       {

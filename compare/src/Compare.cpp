@@ -452,7 +452,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     for (i = 0; i < ARRAYSIZE(InitItems); i++)
       if (!(CheckDisabled((int)i)) && InitItems[i].SelectedRegValue)
       {
-        kfh.PutInt(INI_SECTION, InitItems[i].SelectedRegValue, *InitItems[i].StoreTo);
+        kfh.SetInt(INI_SECTION, InitItems[i].SelectedRegValue, *InitItems[i].StoreTo);
       }
     kfh.Save();
 

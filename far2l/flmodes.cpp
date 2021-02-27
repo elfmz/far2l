@@ -253,15 +253,15 @@ void FileList::SavePanelModes(ConfigWriter &cfg_writer)
 		ViewSettingsToText(NewSettings.StatusColumnType,NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,
 		                   NewSettings.StatusColumnCount,strStatusColumnTitles,strStatusColumnWidths);
 
-		cfg_writer.PutString("Columns", strColumnTitles.CPtr());
-		cfg_writer.PutString("ColumnWidths", strColumnWidths.CPtr());
-		cfg_writer.PutString("StatusColumns", strStatusColumnTitles.CPtr());
-		cfg_writer.PutString("StatusColumnWidths", strStatusColumnWidths.CPtr());
-		cfg_writer.PutInt("FullScreen", NewSettings.FullScreen);
-		cfg_writer.PutInt("AlignExtensions", NewSettings.AlignExtensions);
-		cfg_writer.PutInt("FolderAlignExtensions", NewSettings.FolderAlignExtensions);
-		cfg_writer.PutInt("FolderUpperCase", NewSettings.FolderUpperCase);
-		cfg_writer.PutInt("FileLowerCase", NewSettings.FileLowerCase);
-		cfg_writer.PutInt("FileUpperToLowerCase", NewSettings.FileUpperToLowerCase);
+		cfg_writer.SetString("Columns", strColumnTitles.CPtr());
+		cfg_writer.SetString("ColumnWidths", strColumnWidths.CPtr());
+		cfg_writer.SetString("StatusColumns", strStatusColumnTitles.CPtr());
+		cfg_writer.SetString("StatusColumnWidths", strStatusColumnWidths.CPtr());
+		cfg_writer.SetInt("FullScreen", NewSettings.FullScreen);
+		cfg_writer.SetInt("AlignExtensions", NewSettings.AlignExtensions);
+		cfg_writer.SetInt("FolderAlignExtensions", NewSettings.FolderAlignExtensions);
+		cfg_writer.SetInt("FolderUpperCase", NewSettings.FolderUpperCase);
+		cfg_writer.SetInt("FileLowerCase", NewSettings.FileLowerCase);
+		cfg_writer.SetInt("FileUpperToLowerCase", NewSettings.FileUpperToLowerCase);
 	}
 }

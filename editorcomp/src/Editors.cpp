@@ -49,7 +49,7 @@ PluginStartupInfo &Editors::getInfo() {
 
 void Editors::setAutoEnabling(bool enabled) {
     KeyFileHelper kfh(this->iniPath);
-    kfh.PutInt(this->iniSection, ENABLED_ENTRY, enabled);
+    kfh.SetInt(this->iniSection, ENABLED_ENTRY, enabled);
     if (kfh.Save())
         this->autoEnabling = enabled;
 }
@@ -60,7 +60,7 @@ bool Editors::getAutoEnabling() {
 
 void Editors::setFileMasks(const std::wstring &masks) {
     KeyFileHelper kfh(this->iniPath);
-    kfh.PutString(this->iniSection, FILE_MASKS_ENTRY, masks.c_str());
+    kfh.SetString(this->iniSection, FILE_MASKS_ENTRY, masks.c_str());
     if (kfh.Save())
         this->fileMasks = masks;
 }

@@ -884,32 +884,32 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 	{
 		cfg_writer.SelectSectionFmt("Filters/Filter%d", i);
 		FileFilterParams *CurFilterData = FilterData.getItem(i);
-		cfg_writer.PutString("Title", CurFilterData->GetTitle());
+		cfg_writer.SetString("Title", CurFilterData->GetTitle());
 		const wchar_t *Mask = nullptr;
-		cfg_writer.PutUInt("UseMask", CurFilterData->GetMask(&Mask) ? 1 : 0);
-		cfg_writer.PutString("Mask", Mask);
+		cfg_writer.SetUInt("UseMask", CurFilterData->GetMask(&Mask) ? 1 : 0);
+		cfg_writer.SetString("Mask", Mask);
 		DWORD DateType;
 		FILETIME DateAfter, DateBefore;
 		bool bRelative;
-		cfg_writer.PutUInt("UseDate", CurFilterData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
-		cfg_writer.PutUInt("DateType", DateType);
-		cfg_writer.PutPOD("DateAfter", DateAfter);
-		cfg_writer.PutPOD("DateBefore", DateBefore);
-		cfg_writer.PutUInt("RelativeDate", bRelative ? 1 : 0);
+		cfg_writer.SetUInt("UseDate", CurFilterData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
+		cfg_writer.SetUInt("DateType", DateType);
+		cfg_writer.SetPOD("DateAfter", DateAfter);
+		cfg_writer.SetPOD("DateBefore", DateBefore);
+		cfg_writer.SetUInt("RelativeDate", bRelative ? 1 : 0);
 		const wchar_t *SizeAbove, *SizeBelow;
-		cfg_writer.PutUInt("UseSize", CurFilterData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
-		cfg_writer.PutString("SizeAboveS", SizeAbove);
-		cfg_writer.PutString("SizeBelowS", SizeBelow);
+		cfg_writer.SetUInt("UseSize", CurFilterData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
+		cfg_writer.SetString("SizeAboveS", SizeAbove);
+		cfg_writer.SetString("SizeBelowS", SizeBelow);
 		DWORD AttrSet, AttrClear;
-		cfg_writer.PutUInt("UseAttr", CurFilterData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
-		cfg_writer.PutUInt("AttrSet", AttrSet);
-		cfg_writer.PutUInt("AttrClear", AttrClear);
+		cfg_writer.SetUInt("UseAttr", CurFilterData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
+		cfg_writer.SetUInt("AttrSet", AttrSet);
+		cfg_writer.SetUInt("AttrClear", AttrClear);
 		DWORD Flags[FFFT_COUNT]{};
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutPOD("FFlags", Flags);
+		cfg_writer.SetPOD("FFlags", Flags);
 	}
 
 	for (size_t i=0; i<TempFilterData.getCount(); i++)
@@ -918,13 +918,13 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		FileFilterParams *CurFilterData = TempFilterData.getItem(i);
 		const wchar_t *Mask;
 		CurFilterData->GetMask(&Mask);
-		cfg_writer.PutString("Mask", Mask);
+		cfg_writer.SetString("Mask", Mask);
 		DWORD Flags[FFFT_COUNT];
 
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = CurFilterData->GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutPOD("FFlags", Flags);
+		cfg_writer.SetPOD("FFlags", Flags);
 	}
 
 	{
@@ -934,7 +934,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		for (DWORD i=FFFT_FIRST; i < FFFT_COUNT; i++)
 			Flags[i] = FoldersFilter.GetFlags((enumFileFilterFlagsType)i);
 
-		cfg_writer.PutPOD("FoldersFilterFFlags", Flags);
+		cfg_writer.SetPOD("FoldersFilterFFlags", Flags);
 	}
 }
 

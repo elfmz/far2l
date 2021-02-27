@@ -8,7 +8,7 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/compare/config.ini")
+#define INI_LOCATION	InMyConfig("plugins/align/config.ini")
 #define INI_SECTION		"Settings"
 
 #ifndef UNICODE
@@ -85,10 +85,10 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
   Reformat=GetCheck(3);
   SmartMode=GetCheck(4);
   Justify=GetCheck(5);
-  kfh.PutInt(INI_SECTION,("Reformat"),Reformat);
-  kfh.PutInt(INI_SECTION,("RightMargin"),RightMargin);
-  kfh.PutInt(INI_SECTION,("SmartMode"),SmartMode);
-  kfh.PutInt(INI_SECTION,("Justify"),Justify);
+  kfh.SetInt(INI_SECTION,("Reformat"),Reformat);
+  kfh.SetInt(INI_SECTION,("RightMargin"),RightMargin);
+  kfh.SetInt(INI_SECTION,("SmartMode"),SmartMode);
+  kfh.SetInt(INI_SECTION,("Justify"),Justify);
   Info.EditorControl(ECTL_TURNOFFMARKINGBLOCK,NULL);
   if (Reformat)
     ReformatBlock(RightMargin,SmartMode,Justify);

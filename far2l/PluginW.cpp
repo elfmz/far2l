@@ -252,7 +252,7 @@ bool PluginW::SaveToCache()
 		return false;
 	}
 
-	kfh.PutString(GetSettingsName(), "Module", module.c_str());
+	kfh.SetString(GetSettingsName(), "Module", module.c_str());
 
 	PluginInfo Info;
 	GetPluginInfo(&Info);
@@ -260,53 +260,53 @@ bool PluginW::SaveToCache()
 
 	if ((Info.Flags & PF_PRELOAD) != 0)
 	{
-		kfh.PutInt(GetSettingsName(), szCache_Preload, 1);
+		kfh.SetInt(GetSettingsName(), szCache_Preload, 1);
 		WorkFlags.Change(PIWF_PRELOADED, TRUE);
 		return true;
 	}
 	WorkFlags.Change(PIWF_PRELOADED, FALSE);
 
-	kfh.PutString(GetSettingsName(), "ID", m_strModuleID.c_str());
+	kfh.SetString(GetSettingsName(), "ID", m_strModuleID.c_str());
 
 	for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
 	{
-		kfh.PutString(GetSettingsName(),
+		kfh.SetString(GetSettingsName(),
 			StrPrintf(FmtDiskMenuStringD, i).c_str(),
 				Info.DiskMenuStrings[i]);
 	}
 
 	for (int i = 0; i < Info.PluginMenuStringsNumber; i++)
 	{
-		kfh.PutString(GetSettingsName(),
+		kfh.SetString(GetSettingsName(),
 			StrPrintf(FmtPluginMenuStringD, i).c_str(),
 				Info.PluginMenuStrings[i]);
 	}
 
 	for (int i = 0; i < Info.PluginConfigStringsNumber; i++)
 	{
-		kfh.PutString(GetSettingsName(),
+		kfh.SetString(GetSettingsName(),
 			StrPrintf(FmtPluginConfigStringD, i).c_str(),
 				Info.PluginConfigStrings[i]);
 	}
 
-	kfh.PutString(GetSettingsName(), "CommandPrefix", Info.CommandPrefix);
-	kfh.PutUInt(GetSettingsName(), "Flags", Info.Flags);
+	kfh.SetString(GetSettingsName(), "CommandPrefix", Info.CommandPrefix);
+	kfh.SetUInt(GetSettingsName(), "Flags", Info.Flags);
 
-	kfh.PutUInt(GetSettingsName(), szCache_SysID, SysID);
-	kfh.PutUInt(GetSettingsName(), szCache_OpenPlugin, pOpenPluginW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_OpenFilePlugin, pOpenFilePluginW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_SetFindList, pSetFindListW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessEditorInput, pProcessEditorInputW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessEditorEvent, pProcessEditorEventW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessViewerEvent, pProcessViewerEventW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessDialogEvent, pProcessDialogEventW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessSynchroEvent, pProcessSynchroEventW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_SysID, SysID);
+	kfh.SetUInt(GetSettingsName(), szCache_OpenPlugin, pOpenPluginW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_OpenFilePlugin, pOpenFilePluginW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_SetFindList, pSetFindListW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorInput, pProcessEditorInputW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorEvent, pProcessEditorEventW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessViewerEvent, pProcessViewerEventW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessDialogEvent, pProcessDialogEventW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessSynchroEvent, pProcessSynchroEventW!=nullptr);
 #if defined(PROCPLUGINMACROFUNC)
-	kfh.PutUInt(GetSettingsName(), szCache_ProcessMacroFunc, pProcessMacroFuncW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessMacroFunc, pProcessMacroFuncW!=nullptr);
 #endif
-	kfh.PutUInt(GetSettingsName(), szCache_Configure, pConfigureW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_Analyse, pAnalyseW!=nullptr);
-	kfh.PutUInt(GetSettingsName(), szCache_GetCustomData, pGetCustomDataW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_Configure, pConfigureW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_Analyse, pAnalyseW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_GetCustomData, pGetCustomDataW!=nullptr);
 
 	return true;
 }

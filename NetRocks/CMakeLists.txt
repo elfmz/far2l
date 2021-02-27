@@ -66,6 +66,9 @@ add_executable (NetRocks-FILE
 	src/Host/HostLocal.cpp
 )
 
+# get rid of warning: dynamic exception specifications are deprecated in C++11
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+
 target_link_libraries(NetRocks-FILE utils)
 target_include_directories(NetRocks-FILE PRIVATE src)
 set_target_properties(NetRocks-FILE

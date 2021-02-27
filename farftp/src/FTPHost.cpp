@@ -568,9 +568,9 @@ BOOL FTPHost::ReadINI(LPCSTR nm)
 	   pwd[MAX_PATH];
 	HexToPassword_cb DecodeProc = NULL;
 	Init();
-	KeyFileHelper kfh(nm);
+	KeyFileReadSection kfh(nm, "FarFTP");
 	
-	kfh.GetChars(hst,ARRAYSIZE(hst), "FarFTP","Version");
+	kfh.GetChars(hst,ARRAYSIZE(hst), "Version");
 
 	if(hst[0] == '1')
 	{
@@ -602,7 +602,7 @@ BOOL FTPHost::ReadINI(LPCSTR nm)
 		DecodeProc = HexToPassword_CUR;
 	}
 
-	kfh.GetChars(hst,ARRAYSIZE(hst),"FarFTP","Url");
+	kfh.GetChars(hst,ARRAYSIZE(hst),"Url");
 
 	if(!hst[0])
 		return FALSE;
@@ -611,31 +611,31 @@ BOOL FTPHost::ReadINI(LPCSTR nm)
 	usr[1] = 0;
 	hex[0] = '2';
 	hex[1] = 0;
-	kfh.GetChars(usr, ARRAYSIZE(usr), "FarFTP", "User");
-	kfh.GetChars(hex, ARRAYSIZE(hex), "FarFTP", "Password");
+	kfh.GetChars(usr, ARRAYSIZE(usr), "User");
+	kfh.GetChars(hex, ARRAYSIZE(hex), "Password");
 
 	if(!DecodeProc(hex,pwd) ||
 	        !SetHostName(hst,usr,pwd))
 		return FALSE;
 
-	kfh.GetChars(HostDescr,ARRAYSIZE(HostDescr),"FarFTP","Description");
-	AskLogin    = kfh.GetInt("FarFTP","AskLogin",  0);
-	AsciiMode   = kfh.GetInt("FarFTP","AsciiMode",   0);
-	PassiveMode = kfh.GetInt("FarFTP","PassiveMode", Opt.PassiveMode);
-	UseFirewall = kfh.GetInt("FarFTP","UseFirewall", *Opt.Firewall!=0);
-	ExtCmdView  = kfh.GetInt("FarFTP","ExtCmdView",  Opt.ExtCmdView);
-	ExtList     = kfh.GetInt("FarFTP","ExtList",     FALSE);
-	ServerType  = kfh.GetInt("FarFTP","ServerType",  Opt.ServerType);
-	ProcessCmd  = kfh.GetInt("FarFTP","ProcessCmd",  TRUE);
-	CodeCmd     = kfh.GetInt("FarFTP","CodeCmd",     TRUE);
-	kfh.GetChars(ListCMD,ARRAYSIZE(ListCMD),"FarFTP","ListCMD");
-	IOBuffSize  = kfh.GetInt("FarFTP","IOBuffSize",  Opt.IOBuffSize);
-	FFDup       = kfh.GetInt("FarFTP","FFDup",       Opt.FFDup);
-	UndupFF     = kfh.GetInt("FarFTP","UndupFF",     Opt.UndupFF);
-	DecodeCmdLine = kfh.GetInt("FarFTP","DecodeCmdLine", TRUE);
-	SendAllo    = kfh.GetInt("FarFTP","SendAllo",    FALSE);
-	UseStartSpaces = kfh.GetInt("FarFTP","UseStartSpaces",    TRUE);
-	kfh.GetChars(HostTable,ARRAYSIZE(HostTable),"FarFTP","CharTable");
+	kfh.GetChars(HostDescr,ARRAYSIZE(HostDescr),"Description");
+	AskLogin    = kfh.GetInt("AskLogin",  0);
+	AsciiMode   = kfh.GetInt("AsciiMode",   0);
+	PassiveMode = kfh.GetInt("PassiveMode", Opt.PassiveMode);
+	UseFirewall = kfh.GetInt("UseFirewall", *Opt.Firewall!=0);
+	ExtCmdView  = kfh.GetInt("ExtCmdView",  Opt.ExtCmdView);
+	ExtList     = kfh.GetInt("ExtList",     FALSE);
+	ServerType  = kfh.GetInt("ServerType",  Opt.ServerType);
+	ProcessCmd  = kfh.GetInt("ProcessCmd",  TRUE);
+	CodeCmd     = kfh.GetInt("CodeCmd",     TRUE);
+	kfh.GetChars(ListCMD,ARRAYSIZE(ListCMD),"ListCMD");
+	IOBuffSize  = kfh.GetInt("IOBuffSize",  Opt.IOBuffSize);
+	FFDup       = kfh.GetInt("FFDup",       Opt.FFDup);
+	UndupFF     = kfh.GetInt("UndupFF",     Opt.UndupFF);
+	DecodeCmdLine = kfh.GetInt("DecodeCmdLine", TRUE);
+	SendAllo    = kfh.GetInt("SendAllo",    FALSE);
+	UseStartSpaces = kfh.GetInt("UseStartSpaces",    TRUE);
+	kfh.GetChars(HostTable,ARRAYSIZE(HostTable),"CharTable");
 	IOBuffSize = Max((DWORD)FTR_MINBUFFSIZE,IOBuffSize);
 	return TRUE;
 }
@@ -661,30 +661,30 @@ BOOL FTPHost::WriteINI(LPCSTR nm)
 	KeyFileHelper kfh(nm, false);
 	//WritePrivateProfileString(NULL,NULL,NULL,nm);
 	PasswordToHex(Password,HexStr);
-	kfh.PutString("FarFTP","Version",  FTPHOST_VERSION);
-	kfh.PutString("FarFTP","Version",  FTPHOST_VERSION);
-	kfh.PutString("FarFTP","Version",            FTPHOST_VERSION);
-	kfh.PutString("FarFTP","Url",                HostName) ;
-	kfh.PutString("FarFTP","User",               User);
-	kfh.PutString("FarFTP","Password",           HexStr);
-	kfh.PutString("FarFTP","Description",        HostDescr);
-	kfh.PutInt("FarFTP","AskLogin",           AskLogin);
-	kfh.PutInt("FarFTP","AsciiMode",          AsciiMode);
-	kfh.PutInt("FarFTP","PassiveMode",        PassiveMode);
-	kfh.PutInt("FarFTP","UseFirewall",        UseFirewall);
-	kfh.PutInt("FarFTP","ExtCmdView",         ExtCmdView);
-	kfh.PutInt("FarFTP","ExtList",            ExtList);
-	kfh.PutInt("FarFTP","ServerType",         ServerType);
-	kfh.PutInt("FarFTP","CodeCmd",            CodeCmd);
-	kfh.PutString("FarFTP","ListCMD",            "LIST -la");
-	kfh.PutInt("FarFTP","IOBuffSize",         IOBuffSize);
-	kfh.PutInt("FarFTP","FFDup",              FFDup);
-	kfh.PutInt("FarFTP","UndupFF",            UndupFF);
-	kfh.PutInt("FarFTP","DecodeCmdLine",      DecodeCmdLine);
-	kfh.PutInt("FarFTP","SendAllo",           SendAllo);
-	kfh.PutInt("FarFTP","UseStartSpaces",  UseStartSpaces);
-	kfh.PutInt("FarFTP","ProcessCmd",         ProcessCmd);
-	kfh.PutString("FarFTP","CharTable", HostTable);
+	kfh.SetString("FarFTP","Version",  FTPHOST_VERSION);
+	kfh.SetString("FarFTP","Version",  FTPHOST_VERSION);
+	kfh.SetString("FarFTP","Version",            FTPHOST_VERSION);
+	kfh.SetString("FarFTP","Url",                HostName) ;
+	kfh.SetString("FarFTP","User",               User);
+	kfh.SetString("FarFTP","Password",           HexStr);
+	kfh.SetString("FarFTP","Description",        HostDescr);
+	kfh.SetInt("FarFTP","AskLogin",           AskLogin);
+	kfh.SetInt("FarFTP","AsciiMode",          AsciiMode);
+	kfh.SetInt("FarFTP","PassiveMode",        PassiveMode);
+	kfh.SetInt("FarFTP","UseFirewall",        UseFirewall);
+	kfh.SetInt("FarFTP","ExtCmdView",         ExtCmdView);
+	kfh.SetInt("FarFTP","ExtList",            ExtList);
+	kfh.SetInt("FarFTP","ServerType",         ServerType);
+	kfh.SetInt("FarFTP","CodeCmd",            CodeCmd);
+	kfh.SetString("FarFTP","ListCMD",            "LIST -la");
+	kfh.SetInt("FarFTP","IOBuffSize",         IOBuffSize);
+	kfh.SetInt("FarFTP","FFDup",              FFDup);
+	kfh.SetInt("FarFTP","UndupFF",            UndupFF);
+	kfh.SetInt("FarFTP","DecodeCmdLine",      DecodeCmdLine);
+	kfh.SetInt("FarFTP","SendAllo",           SendAllo);
+	kfh.SetInt("FarFTP","UseStartSpaces",  UseStartSpaces);
+	kfh.SetInt("FarFTP","ProcessCmd",         ProcessCmd);
+	kfh.SetString("FarFTP","CharTable", HostTable);
 
 	//if(res)
 	//	WritePrivateProfileString(NULL,NULL,NULL,nm);

@@ -139,7 +139,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 
 	size_t save_count = ParamCountToSave(poscache.Param);
 	if (save_count) {
-		_kfh->PutBytes(section, "Par",
+		_kfh->SetBytes(section, "Par",
 			save_count * sizeof(poscache.Param[0]), (unsigned char *)&poscache.Param[0]);
 
 	} else {
@@ -161,14 +161,14 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			sprintf(key, "Pos%u", i);
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
-				_kfh->PutBytes(section, key,
+				_kfh->SetBytes(section, key,
 					save_count * sizeof(poscache.Position[i][0]), (unsigned char *)poscache.Position[i]);
 			} else {
 				_kfh->RemoveKey(section, key);
 			}
 		}
 
-		_kfh->PutULLAsHex(section, "TS", time(NULL));
+		_kfh->SetULL(section, "TS", time(NULL));
 
 	} else {
 		_kfh->RemoveSection(section);

@@ -436,9 +436,9 @@ bool SitesConfig::Export(const std::string &fs_path, const std::string &site)
 		std::string s = GetString(site, key.c_str());
 		if (key == "Password") {
 			StringDeobfuscate(s);
-			kfh.PutString(site, "PasswordPlain", s.c_str());
+			kfh.SetString(site, "PasswordPlain", s.c_str());
 		} else {
-			kfh.PutString(site, key, s.c_str());
+			kfh.SetString(site, key, s.c_str());
 		}
 	}
 
@@ -463,9 +463,9 @@ bool SitesConfig::Import(const std::string &fs_path)
 			std::string s = kfh.GetString(site, key);
 			if (_encrypt_passwords && key == "PasswordPlain") {
 				StringObfuscate(s);
-				PutString(site, "Password", s.c_str());
+				SetString(site, "Password", s.c_str());
 			} else {
-				PutString(site, key, s.c_str());
+				SetString(site, key, s.c_str());
 			}
 		}
 	}
@@ -479,9 +479,9 @@ std::string SitesConfig::GetProtocol(const std::string &site)
 	return GetString(site, "Protocol");
 }
 
-void SitesConfig::PutProtocol(const std::string &site, const std::string &value)
+void SitesConfig::SetProtocol(const std::string &site, const std::string &value)
 {
-	PutString(site, "Protocol", value.c_str());
+	SetString(site, "Protocol", value.c_str());
 }
 
 
@@ -490,9 +490,9 @@ std::string SitesConfig::GetHost(const std::string &site)
 	return GetString(site, "Host");
 }
 
-void SitesConfig::PutHost(const std::string &site, const std::string &value)
+void SitesConfig::SetHost(const std::string &site, const std::string &value)
 {
-	PutString(site, "Host", value.c_str());
+	SetString(site, "Host", value.c_str());
 }
 
 
@@ -501,9 +501,9 @@ std::string SitesConfig::GetDirectory(const std::string &site)
 	return GetString(site, "Directory");
 }
 
-void SitesConfig::PutDirectory(const std::string &site, const std::string &value)
+void SitesConfig::SetDirectory(const std::string &site, const std::string &value)
 {
-	PutString(site, "Directory", value.c_str());
+	SetString(site, "Directory", value.c_str());
 }
 
 
@@ -512,9 +512,9 @@ unsigned int SitesConfig::GetPort(const std::string &site, unsigned int def)
 	return (unsigned int)GetInt(site, "Port", def);
 }
 
-void SitesConfig::PutPort(const std::string &site, unsigned int value)
+void SitesConfig::SetPort(const std::string &site, unsigned int value)
 {
-	PutInt(site, "Port", value);
+	SetInt(site, "Port", value);
 }
 
 unsigned int SitesConfig::GetLoginMode(const std::string &site, unsigned int def)
@@ -522,9 +522,9 @@ unsigned int SitesConfig::GetLoginMode(const std::string &site, unsigned int def
 	return (unsigned int)GetInt(site, "LoginMode", def);
 }
 
-void SitesConfig::PutLoginMode(const std::string &site, unsigned int value)
+void SitesConfig::SetLoginMode(const std::string &site, unsigned int value)
 {
-	PutInt(site, "LoginMode", value);
+	SetInt(site, "LoginMode", value);
 }
 
 
@@ -533,9 +533,9 @@ std::string SitesConfig::GetUsername(const std::string &site)
 	return GetString(site, "Username");
 }
 
-void SitesConfig::PutUsername(const std::string &site, const std::string &value)
+void SitesConfig::SetUsername(const std::string &site, const std::string &value)
 {
-	PutString(site, "Username", value.c_str());
+	SetString(site, "Username", value.c_str());
 }
 
 
@@ -550,15 +550,15 @@ std::string SitesConfig::GetPassword(const std::string &site)
 	return s;
 }
 
-void SitesConfig::PutPassword(const std::string &site, const std::string &value)
+void SitesConfig::SetPassword(const std::string &site, const std::string &value)
 {
 	if (_encrypt_passwords) {
 		std::string s(value);
 		StringObfuscate(s);
-		PutString(site, "Password", s.c_str());
+		SetString(site, "Password", s.c_str());
 		RemoveKey(site, "PasswordPlain");
 	} else {
-		PutString(site, "PasswordPlain", value.c_str());
+		SetString(site, "PasswordPlain", value.c_str());
 		RemoveKey(site, "Password");
 	}
 }
@@ -568,9 +568,9 @@ std::string SitesConfig::GetProtocolOptions(const std::string &site, const std::
 	return GetString(site, std::string("Options_").append(protocol).c_str());
 }
 
-void SitesConfig::PutProtocolOptions(const std::string &site, const std::string &protocol, const std::string &options)
+void SitesConfig::SetProtocolOptions(const std::string &site, const std::string &protocol, const std::string &options)
 {
-	PutString(site, std::string("Options_").append(protocol).c_str(), options.c_str());
+	SetString(site, std::string("Options_").append(protocol).c_str(), options.c_str());
 }
 
 bool SitesConfig::Transfer(SitesConfig &dst, const std::string &site, bool mv)
@@ -579,7 +579,7 @@ bool SitesConfig::Transfer(SitesConfig &dst, const std::string &site, bool mv)
 	dst.RemoveSection(site);
 	for (const auto &key : keys) {
 		const std::string &value = GetString(site, key);
-		dst.PutString(site, key, value.c_str());
+		dst.SetString(site, key, value.c_str());
 	}
 
 	if (mv) {

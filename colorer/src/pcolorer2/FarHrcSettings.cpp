@@ -164,7 +164,7 @@ void FarHrcSettings::writeUserProfile()
         const String* v = type->getParamUserValue(p);
         if (v != nullptr) {
           StringBuffer tmp(p);
-          kfh.PutString(type->getName()->getChars(), tmp.getChars(), v->getChars());
+          kfh.SetString(type->getName()->getChars(), tmp.getChars(), v->getChars());
         }
       }
     }

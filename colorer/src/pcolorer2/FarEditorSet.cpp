@@ -1181,14 +1181,14 @@ const wchar_t *FarEditorSet::GetMsg(int msg)
 void FarEditorSet::enableColorer(bool fromEditor)
 {
   rEnabled = true;
-  { KeyFileHelper(settingsIni).PutInt(cSectionName, cRegEnabled, rEnabled); }
+  { KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, rEnabled); }
   ReloadBase();
 }
 
 void FarEditorSet::disableColorer()
 {
   rEnabled = false;
-  { KeyFileHelper(settingsIni).PutInt(cSectionName, cRegEnabled, rEnabled); }
+  { KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, rEnabled); }
   dropCurrentEditor(true);
 
   delete regionMapper;
@@ -1306,35 +1306,35 @@ void FarEditorSet::ReadSettings()
 void FarEditorSet::SetDefaultSettings()
 {
   KeyFileHelper kfh(settingsIni);
-  kfh.PutInt(cSectionName, cRegEnabled, cEnabledDefault);
-  kfh.PutString(cSectionName, cRegHrdName, cHrdNameDefault);
-  kfh.PutString(cSectionName, cRegHrdNameTm, cHrdNameTmDefault);
-  kfh.PutString(cSectionName, cRegCatalog, cCatalogDefault);
-  kfh.PutInt(cSectionName, cRegCrossDraw, cCrossDrawDefault); 
-  kfh.PutInt(cSectionName, cRegPairsDraw, cPairsDrawDefault); 
-  kfh.PutInt(cSectionName, cRegSyntaxDraw, cSyntaxDrawDefault); 
-  kfh.PutInt(cSectionName, cRegOldOutLine, cOldOutLineDefault); 
-  kfh.PutInt(cSectionName, cRegTrueMod, cTrueMod); 
-  kfh.PutInt(cSectionName, cRegChangeBgEditor, cChangeBgEditor); 
-  kfh.PutString(cSectionName, cRegUserHrdPath, cUserHrdPathDefault);
-  kfh.PutString(cSectionName, cRegUserHrcPath, cUserHrcPathDefault);
+  kfh.SetInt(cSectionName, cRegEnabled, cEnabledDefault);
+  kfh.SetString(cSectionName, cRegHrdName, cHrdNameDefault);
+  kfh.SetString(cSectionName, cRegHrdNameTm, cHrdNameTmDefault);
+  kfh.SetString(cSectionName, cRegCatalog, cCatalogDefault);
+  kfh.SetInt(cSectionName, cRegCrossDraw, cCrossDrawDefault); 
+  kfh.SetInt(cSectionName, cRegPairsDraw, cPairsDrawDefault); 
+  kfh.SetInt(cSectionName, cRegSyntaxDraw, cSyntaxDrawDefault); 
+  kfh.SetInt(cSectionName, cRegOldOutLine, cOldOutLineDefault); 
+  kfh.SetInt(cSectionName, cRegTrueMod, cTrueMod); 
+  kfh.SetInt(cSectionName, cRegChangeBgEditor, cChangeBgEditor); 
+  kfh.SetString(cSectionName, cRegUserHrdPath, cUserHrdPathDefault);
+  kfh.SetString(cSectionName, cRegUserHrcPath, cUserHrcPathDefault);
 }
 
 void FarEditorSet::SaveSettings()
 {
   KeyFileHelper kfh(settingsIni);
-  kfh.PutInt(cSectionName, cRegEnabled, rEnabled); 
-  kfh.PutString(cSectionName, cRegHrdName, sHrdName->getWChars());
-  kfh.PutString(cSectionName, cRegHrdNameTm, sHrdNameTm->getWChars());
-  kfh.PutString(cSectionName, cRegCatalog, sCatalogPath->getWChars());
-  kfh.PutInt(cSectionName, cRegCrossDraw, drawCross); 
-  kfh.PutInt(cSectionName, cRegPairsDraw, drawPairs); 
-  kfh.PutInt(cSectionName, cRegSyntaxDraw, drawSyntax); 
-  kfh.PutInt(cSectionName, cRegOldOutLine, oldOutline); 
-  kfh.PutInt(cSectionName, cRegTrueMod, TrueModOn); 
-  kfh.PutInt(cSectionName, cRegChangeBgEditor, ChangeBgEditor); 
-  kfh.PutString(cSectionName, cRegUserHrdPath, sUserHrdPath->getWChars());
-  kfh.PutString(cSectionName, cRegUserHrcPath, sUserHrcPath->getWChars());
+  kfh.SetInt(cSectionName, cRegEnabled, rEnabled); 
+  kfh.SetString(cSectionName, cRegHrdName, sHrdName->getWChars());
+  kfh.SetString(cSectionName, cRegHrdNameTm, sHrdNameTm->getWChars());
+  kfh.SetString(cSectionName, cRegCatalog, sCatalogPath->getWChars());
+  kfh.SetInt(cSectionName, cRegCrossDraw, drawCross); 
+  kfh.SetInt(cSectionName, cRegPairsDraw, drawPairs); 
+  kfh.SetInt(cSectionName, cRegSyntaxDraw, drawSyntax); 
+  kfh.SetInt(cSectionName, cRegOldOutLine, oldOutline); 
+  kfh.SetInt(cSectionName, cRegTrueMod, TrueModOn); 
+  kfh.SetInt(cSectionName, cRegChangeBgEditor, ChangeBgEditor); 
+  kfh.SetString(cSectionName, cRegUserHrdPath, sUserHrdPath->getWChars());
+  kfh.SetString(cSectionName, cRegUserHrcPath, sUserHrcPath->getWChars());
 }
 
 bool FarEditorSet::checkConEmu()

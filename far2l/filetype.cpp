@@ -258,7 +258,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 	TypesMenu.GetUserData(Command,Size,ExitCode);
 	strCommand.ReleaseBuffer(Size);
 	FARString strListName, strAnotherListName;
-	int PreserveLFN=SubstFileName(strCommand,Name,&strListName,&strAnotherListName);
+	/*int PreserveLFN=*/SubstFileName(strCommand,Name,&strListName,&strAnotherListName);
 	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 	{
@@ -343,7 +343,7 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHis
 	FARString strExecStr = Command;
 	FARString strFullExecStr = Command;
 	{
-		int PreserveLFN=SubstFileName(strExecStr,Name,&strListName,&strAnotherListName);
+		/*int PreserveLFN=*/SubstFileName(strExecStr,Name,&strListName,&strAnotherListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 		//PreserveLongName PreserveName(PreserveLFN);
@@ -566,14 +566,14 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 			cfg_writer.ReserveIndexedSection(FTS.Type0, (unsigned int)EditPos);
 		}
 
-		cfg_writer.PutString(FTS.Mask, EditDlg[ETR_EDIT_MASKS].strData);
-		cfg_writer.PutString(FTS.Desc, EditDlg[ETR_EDIT_DESCR].strData);
-		cfg_writer.PutString(FTS.Execute, EditDlg[ETR_EDIT_EXEC].strData);
-		cfg_writer.PutString(FTS.AltExec, EditDlg[ETR_EDIT_ALTEXEC].strData);
-		cfg_writer.PutString(FTS.View, EditDlg[ETR_EDIT_VIEW].strData);
-		cfg_writer.PutString(FTS.AltView, EditDlg[ETR_EDIT_ALTVIEW].strData);
-		cfg_writer.PutString(FTS.Edit, EditDlg[ETR_EDIT_EDIT].strData);
-		cfg_writer.PutString(FTS.AltEdit, EditDlg[ETR_EDIT_ALTEDIT].strData);
+		cfg_writer.SetString(FTS.Mask, EditDlg[ETR_EDIT_MASKS].strData);
+		cfg_writer.SetString(FTS.Desc, EditDlg[ETR_EDIT_DESCR].strData);
+		cfg_writer.SetString(FTS.Execute, EditDlg[ETR_EDIT_EXEC].strData);
+		cfg_writer.SetString(FTS.AltExec, EditDlg[ETR_EDIT_ALTEXEC].strData);
+		cfg_writer.SetString(FTS.View, EditDlg[ETR_EDIT_VIEW].strData);
+		cfg_writer.SetString(FTS.AltView, EditDlg[ETR_EDIT_ALTVIEW].strData);
+		cfg_writer.SetString(FTS.Edit, EditDlg[ETR_EDIT_EDIT].strData);
+		cfg_writer.SetString(FTS.AltEdit, EditDlg[ETR_EDIT_ALTEDIT].strData);
 		DWORD State = 0;
 
 		for (int i = FILETYPE_EXEC,Item=ETR_COMBO_EXEC; i <= FILETYPE_ALTEDIT; i++, Item+= 2)
@@ -584,7 +584,7 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 			}
 		}
 
-		cfg_writer.PutUInt(FTS.State, State);
+		cfg_writer.SetUInt(FTS.State, State);
 		Result = true;
 	}
 

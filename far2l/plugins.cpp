@@ -1728,7 +1728,7 @@ bool PluginManager::SetHotKeyDialog(
 		}
 		else
 		{
-			kfh.PutString(SettingsSection, SettingName, PluginDlg[2].strData.CPtr());
+			kfh.SetString(SettingsSection, SettingName, PluginDlg[2].strData.CPtr());
 		}
 
 		return true;

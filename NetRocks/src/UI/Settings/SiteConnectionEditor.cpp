@@ -142,14 +142,14 @@ bool SiteConnectionEditor::Save()
 	}
 
 	SitesConfig sc(_sites_cfg_location);
-	sc.PutProtocol(_display_name, _protocol);
-	sc.PutHost(_display_name, _host);
-	sc.PutPort(_display_name, _port);
-	sc.PutLoginMode(_display_name, _login_mode);
-	sc.PutUsername(_display_name, _username);
-	sc.PutPassword(_display_name, _password);
-	sc.PutDirectory(_display_name, _directory);
-	sc.PutProtocolOptions(_display_name, _protocol, _protocol_options);
+	sc.SetProtocol(_display_name, _protocol);
+	sc.SetHost(_display_name, _host);
+	sc.SetPort(_display_name, _port);
+	sc.SetLoginMode(_display_name, _login_mode);
+	sc.SetUsername(_display_name, _username);
+	sc.SetPassword(_display_name, _password);
+	sc.SetDirectory(_display_name, _directory);
+	sc.SetProtocolOptions(_display_name, _protocol, _protocol_options);
 
 	if (_display_name != _initial_display_name && !_initial_display_name.empty()) {
 		sc.RemoveSite(_initial_display_name);

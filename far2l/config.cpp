@@ -1178,8 +1178,8 @@ void SaveConfig(int Ask)
 
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 	cfg_writer.SelectSection(NKeySystem);
-	cfg_writer.PutString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
-//	cfg_writer.PutString(NKeyLanguage, "Main", Opt.strLanguage);
+	cfg_writer.SetString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
+//	cfg_writer.SetString(NKeyLanguage, "Main", Opt.strLanguage);
 
 	for (size_t I=0; I < ARRAYSIZE(CFG); ++I)
 	{
@@ -1189,13 +1189,13 @@ void SaveConfig(int Ask)
 			switch (CFG[I].ValType)
 			{
 				case REG_DWORD:
-					cfg_writer.PutUInt(CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
+					cfg_writer.SetUInt(CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
 					break;
 				case REG_SZ:
-					cfg_writer.PutString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
+					cfg_writer.SetString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
 					break;
 				case REG_BINARY:
-					cfg_writer.PutBytes(CFG[I].ValName, CFG[I].DefDWord, (const BYTE*)CFG[I].ValPtr);
+					cfg_writer.SetBytes(CFG[I].ValName, CFG[I].DefDWord, (const BYTE*)CFG[I].ValPtr);
 					break;
 			}
 		}

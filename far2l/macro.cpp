@@ -2999,7 +2999,7 @@ static bool msaveFunc(const TMacroFunction*)
 	if (SerializeVar(Result, strValueData))
 	{
 		ConfigWriter cfg_writer("KeyMacros/Vars");
-		cfg_writer.PutString(strValueName.GetMB(), strValueData);
+		cfg_writer.SetString(strValueName.GetMB(), strValueData);
 		Ret = cfg_writer.Save();
 	}
 
@@ -5173,10 +5173,10 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 			xf_free(TextBuffer);
 
 #endif
-		cfg_writer.PutString("Sequence", MacroLIB[I].Src);
+		cfg_writer.SetString("Sequence", MacroLIB[I].Src);
 
 		if (MacroLIB[I].Description)
-			cfg_writer.PutString("Description", MacroLIB[I].Description);
+			cfg_writer.SetString("Description", MacroLIB[I].Description);
 		else
 			cfg_writer.RemoveKey("Description");
 
@@ -5185,7 +5185,7 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 		{
 			FARString KeywordName(MKeywordsFlags[J].Name);
 			if (MacroLIB[I].Flags & MKeywordsFlags[J].Value)
-				cfg_writer.PutUInt(KeywordName.GetMB(), 1);
+				cfg_writer.SetUInt(KeywordName.GetMB(), 1);
 			else
 				cfg_writer.RemoveKey(KeywordName.GetMB());
 		}
@@ -5214,7 +5214,7 @@ int KeyMacro::WriteVarsConst(int WriteMode)
 			FARString strValueData;
 			if (SerializeVar(var->value, strValueData))
 			{
-				cfg_writer.PutString(strValueName.GetMB(), strValueData);
+				cfg_writer.SetString(strValueName.GetMB(), strValueData);
 			}
 		}
 
@@ -5512,8 +5512,6 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 	MacroRecord CurMacro{};
 	std::string strUpKeyName = "KeyMacros/";
 	strUpKeyName+= Wide2MB(GetSubKey(ReadMode));
-	FARString strKeyText;
-	FARString strDescription;
 	int ErrorCount=0;
 
 	ConfigReader cfg_reader(strUpKeyName);
@@ -5521,7 +5519,7 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 	for (const auto &MacroSection : Sections)
 	{
 		DWORD MFlags = 0;
-		strKeyText = MacroSection;
+		FARString strKeyText = MacroSection;
 		size_t pos;
 
 		if (strKeyText.RPos(pos, L'/'))
@@ -5530,7 +5528,7 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 		}
 
 		// ПОМНИМ! что название макроса, начинающееся на символ ~ - это
-		// блокированный макрос!!!
+		// заблокированный макрос!!!
 		if (strKeyText.At(0) == L'~' && strKeyText.At(1))
 		{
 			pos = 1;
@@ -5598,6 +5596,7 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 		MacroLIB=NewMacros;
 		CurMacro.Src=xf_wcsdup(strBuffer);
 
+		FARString strDescription;
 		if (cfg_reader.GetString(strDescription, "Description", L""))
 		{
 			CurMacro.Description=xf_wcsdup(strDescription);
@@ -6569,18 +6568,29 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 
 				strKeyName = Names[Pos];
 
-				FARString ValSerialized = cfg_reader.GetString(Names[Pos], L"");
-
-				if (ValSerialized.Begins(L"INT:"))
+				FARString Val = cfg_reader.GetString(Names[Pos], L"");
+				if (Val.Begins(L"INT:"))
 				{
-					long long v = wcstoll(ValSerialized.CPtr() + 4, nullptr, 10);
-					strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), v, v);
+					long long llVal = wcstoll(Val.CPtr() + 4, nullptr, 10);
+					strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), llVal, llVal);
+				}
+				else if (Val.Begins(L"STR:") || Val.Begins(L"DBL:"))
+				{
+					strDescription.Format(MSG(MMacroOutputFormatForHelpSz), Val.CPtr() + 4);
 				}
 				else
-				{
-					strDescription.Format(MSG(MMacroOutputFormatForHelpSz), ValSerialized.CPtr() + 4);
+				{ // guess who
+				    wchar_t *llEnd = nullptr;
+					long long llVal = wcstoll(Val.CPtr(), &llEnd, 10);
+					if (!Val.IsEmpty() && llEnd && !*llEnd)
+					{
+						strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), llVal, llVal);
+					}
+					else
+					{
+						strDescription.Format(MSG(MMacroOutputFormatForHelpSz), Val.CPtr() + 4);
+					}
 				}
-
 				return Pos + 1;
 			}
 		}

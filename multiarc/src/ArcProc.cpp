@@ -20,7 +20,7 @@ void PluginClass::GetCommandFormat(int Command,char *Format,int FormatSize)
   if(!GetFormatName(ArcFormat))
     return;
   ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,Command,Format);
-  KeyFileReadHelper(INI_LOCATION).GetChars(Format,FormatSize,ArcFormat,CmdNames[Command],Format);
+  KeyFileReadSection(INI_LOCATION,ArcFormat).GetChars(Format, FormatSize, CmdNames[Command],Format);
 }
 
 
@@ -213,7 +213,6 @@ int PluginClass::SelectFormat(char *ArcFormat,int AddOnly)
   #endif
 
   BreakKeys[1]=(AddOnly)?0:VK_RETURN;
-  KeyFileReadHelper kfh(INI_LOCATION);
 
   while(1)
   {
@@ -228,7 +227,7 @@ int PluginClass::SelectFormat(char *ArcFormat,int AddOnly)
         {
           char Buffer[MA_MAX_SIZE_COMMAND_NAME];
           ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, Buffer);
-          kfh.GetChars(Buffer,sizeof(Buffer),Format,CmdNames[CMD_ADD],Buffer);
+          KeyFileReadSection(INI_LOCATION, Format).GetChars(Buffer,sizeof(Buffer),CmdNames[CMD_ADD],Buffer);
           if(*Buffer==0)
             continue;
         }

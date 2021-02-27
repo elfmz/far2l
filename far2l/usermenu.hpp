@@ -44,7 +44,7 @@ class UserMenu
 			MM_FAR, // Меню из каталога ФАРа
 			MM_MAIN, // Главное меню
 		};
-		GlobalConfigReader gcr;
+		ConfigReaderScope grs;
 
 		MENUMODE MenuMode;
 		bool MenuModified;

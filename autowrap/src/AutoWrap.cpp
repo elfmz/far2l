@@ -22,11 +22,11 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info=*Info;
   FSF=*Info->FSF;
   ::Info.FSF=&FSF;
-  KeyFileReadHelper kfh(INI_LOCATION);
-  Opt.Wrap=kfh.GetInt(INI_SECTION,("Wrap"),0);
-  Opt.RightMargin=kfh.GetInt(INI_SECTION,("RightMargin"),75);
-  kfh.GetChars(Opt.FileMasks,ARRAYSIZE(Opt.FileMasks),INI_SECTION,"FileMasks",L"*.*");
-  kfh.GetChars(Opt.ExcludeFileMasks,ARRAYSIZE(Opt.ExcludeFileMasks),INI_SECTION,"ExcludeFileMasks",L"");
+  KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
+  Opt.Wrap=kfh.GetInt(("Wrap"),0);
+  Opt.RightMargin=kfh.GetInt(("RightMargin"),75);
+  kfh.GetChars(Opt.FileMasks, ARRAYSIZE(Opt.FileMasks), "FileMasks",L"*.*");
+  kfh.GetChars(Opt.ExcludeFileMasks, ARRAYSIZE(Opt.ExcludeFileMasks), "ExcludeFileMasks",L"");
 }
 
 
@@ -45,10 +45,10 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
   if (Builder.ShowDialog())
   {
     KeyFileHelper kfh(INI_LOCATION);
-    kfh.PutInt(INI_SECTION,("Wrap"),Opt.Wrap);
-    kfh.PutInt(INI_SECTION,("RightMargin"),Opt.RightMargin);
-    kfh.PutString(INI_SECTION,("FileMasks"),Opt.FileMasks);
-    kfh.PutString(INI_SECTION,("ExcludeFileMasks"),Opt.ExcludeFileMasks);
+    kfh.SetInt(INI_SECTION,("Wrap"),Opt.Wrap);
+    kfh.SetInt(INI_SECTION,("RightMargin"),Opt.RightMargin);
+    kfh.SetString(INI_SECTION,("FileMasks"),Opt.FileMasks);
+    kfh.SetString(INI_SECTION,("ExcludeFileMasks"),Opt.ExcludeFileMasks);
   }
   return INVALID_HANDLE_VALUE;
 }

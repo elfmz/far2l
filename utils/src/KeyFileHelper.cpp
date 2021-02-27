@@ -14,9 +14,9 @@
 #include "ScopeHelpers.h"
 #include "utils.h"
 
-// intentionally invalid section name to be used internally by
+// pseudo section name literal to be used internally by
 // KeyFileHelper to tell KeyFileReadHelper don't load anything
-static const char *sDontLoadSectionName = "][";
+static char sDontLoadLiteral[] = "][";
 
 class KFEscaping
 {
@@ -152,6 +152,20 @@ std::wstring KeyFileValues::GetString(const std::string &name, const wchar_t *de
 	return def ? def : L"";
 }
 
+void KeyFileValues::GetChars(char *buffer, size_t maxchars, const std::string &name, const char *def) const
+{
+	const std::string &out = GetString(name, def);
+	strncpy(buffer, out.c_str(), maxchars);
+	buffer[maxchars - 1] = 0;
+}
+
+void KeyFileValues::GetChars(wchar_t *buffer, size_t maxchars, const std::string &name, const wchar_t *def) const
+{
+	const std::wstring &out = GetString(name, def);
+	wcsncpy(buffer, out.c_str(), maxchars);
+	buffer[maxchars - 1] = 0;
+}
+
 int KeyFileValues::GetInt(const std::string &name, int def) const
 {
 	const auto &it = find(name);
@@ -246,7 +260,7 @@ bool KeyFileValues::GetBytes(std::vector<unsigned char> &out, const std::string 
 	return true;
 }
 
-std::vector<std::string> KeyFileValues::EnumKeys(bool sorted) const
+std::vector<std::string> KeyFileValues::EnumKeys() const
 {
 	std::vector<std::string> out;
 	out.reserve(size());
@@ -371,8 +385,12 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 ///////////////////////////////////
 
 KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *load_only_section)
-	: _loaded(false)
 {
+	// intentially comparing pointer values
+	if (load_only_section == &sDontLoadLiteral[0]) {
+		return;
+	}
+
 	_loaded = LoadKeyFile(filename, _filestat,
 		[&] (const std::string &section_name)->KeyFileValues *
 		{
@@ -390,12 +408,13 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 			return nullptr;
 		}
 	);
+
 	if (!_loaded) {
 		memset(&_filestat, 0, sizeof(_filestat));
 	}
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSections(bool sorted) const
+std::vector<std::string> KeyFileReadHelper::EnumSections() const
 {
 	std::vector<std::string> out;
 	out.reserve(_kf.size());
@@ -405,7 +424,7 @@ std::vector<std::string> KeyFileReadHelper::EnumSections(bool sorted) const
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &parent_section, bool recursed, bool sorted) const
+std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &parent_section, bool recursed) const
 {
 	std::string prefix = parent_section;
 	if (prefix == "/") {
@@ -428,12 +447,12 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 	return out;
 }
 
-std::vector<std::string> KeyFileReadHelper::EnumKeys(const std::string &section, bool sorted) const
+std::vector<std::string> KeyFileReadHelper::EnumKeys(const std::string &section) const
 {
 	std::vector<std::string> out;
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		return it->second.EnumKeys(sorted);
+		return it->second.EnumKeys();
 	}
 	return std::vector<std::string>();
 }
@@ -483,20 +502,6 @@ std::wstring KeyFileReadHelper::GetString(const std::string &section, const std:
 	}
 
 	return def ? def : L"";
-}
-
-void KeyFileReadHelper::GetChars(char *buffer, size_t maxchars, const std::string &section, const std::string &name, const char *def) const
-{
-	const std::string &out = GetString(section, name, def);
-	strncpy(buffer, out.c_str(), maxchars);
-	buffer[maxchars - 1] = 0;
-}
-
-void KeyFileReadHelper::GetChars(wchar_t *buffer, size_t maxchars, const std::string &section, const std::string &name, const wchar_t *def) const
-{
-	const std::wstring &out = GetString(section, name, def);
-	wcsncpy(buffer, out.c_str(), maxchars);
-	buffer[maxchars - 1] = 0;
 }
 
 int KeyFileReadHelper::GetInt(const std::string &section, const std::string &name, int def) const
@@ -557,7 +562,7 @@ bool KeyFileReadHelper::GetBytes(std::vector<unsigned char> &out, const std::str
 /////////////////////////////////////////////////////////////
 KeyFileHelper::KeyFileHelper(const std::string &filename, bool load)
 	:
-	KeyFileReadHelper(filename, load ? nullptr : sDontLoadSectionName),
+	KeyFileReadHelper(filename, load ? nullptr : &sDontLoadLiteral[0]),
 	_filename(filename),
 	_dirty(!load)
 {
@@ -677,7 +682,7 @@ void KeyFileHelper::RemoveKey(const std::string &section, const std::string &nam
 	}
 }
 
-void KeyFileHelper::PutString(const std::string &section, const std::string &name, const std::string &value)
+void KeyFileHelper::SetString(const std::string &section, const std::string &name, const std::string &value)
 {
 	auto &s = _kf[section];
 
@@ -695,7 +700,7 @@ void KeyFileHelper::PutString(const std::string &section, const std::string &nam
 	_dirty = true;
 }
 
-void KeyFileHelper::PutString(const std::string &section, const std::string &name, const char *value)
+void KeyFileHelper::SetString(const std::string &section, const std::string &name, const char *value)
 {
 	if (!value) {
 		value = "";
@@ -717,50 +722,36 @@ void KeyFileHelper::PutString(const std::string &section, const std::string &nam
 	_dirty = true;
 }
 
-void KeyFileHelper::PutString(const std::string &section, const std::string &name, const wchar_t *value)
+void KeyFileHelper::SetString(const std::string &section, const std::string &name, const wchar_t *value)
 {
 	if (!value) {
 		value = L"";
 	}
-	PutString(section, name, Wide2MB(value));
+	SetString(section, name, Wide2MB(value));
 }
 
-void KeyFileHelper::PutInt(const std::string &section, const std::string &name, int value)
+void KeyFileHelper::SetInt(const std::string &section, const std::string &name, int value)
 {
 	char tmp[32];
 	sprintf(tmp, "%d", value);
-	PutString(section, name, tmp);
+	SetString(section, name, tmp);
 }
 
-void KeyFileHelper::PutUInt(const std::string &section, const std::string &name, unsigned int value)
-{
-	char tmp[32];
-	sprintf(tmp, "%u", value);
-	PutString(section, name, tmp);
-}
-
-void KeyFileHelper::PutUIntAsHex(const std::string &section, const std::string &name, unsigned int value)
+void KeyFileHelper::SetUInt(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
 	sprintf(tmp, "0x%x", value);
-	PutString(section, name, tmp);
+	SetString(section, name, tmp);
 }
 
-void KeyFileHelper::PutULL(const std::string &section, const std::string &name, unsigned long long value)
-{
-	char tmp[64];
-	sprintf(tmp, "%llu", value);
-	PutString(section, name, tmp);
-}
-
-void KeyFileHelper::PutULLAsHex(const std::string &section, const std::string &name, unsigned long long value)
+void KeyFileHelper::SetULL(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
 	sprintf(tmp, "0x%llx", value);
-	PutString(section, name, tmp);
+	SetString(section, name, tmp);
 }
 
-void KeyFileHelper::PutBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval)
+void KeyFileHelper::SetBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval)
 {
 	std::string str;
 	str.reserve(len * 2 + (space_interval ? (len / space_interval) + 1 : 0) );
@@ -772,7 +763,7 @@ void KeyFileHelper::PutBytes(const std::string &section, const std::string &name
 		str+= MakeHexDigit(buf[i] & 0xf);
 	}
 
-	PutString(section, name, str);
+	SetString(section, name, str);
 }
 
 void KeyFileHelper::RenameSection(const std::string &src, const std::string &dst, bool recursed)

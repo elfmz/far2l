@@ -31,12 +31,12 @@ void RestoreConfig(void)
 void SaveConfig(void)
 {
   KeyFileHelper kfh(INI_LOCATION);
-  kfh.PutInt(INI_SECTION,sKeyCaseSensitive,bCaseSensitive);
-  kfh.PutInt(INI_SECTION,sKeyKeepSelection,bKeepSelection);
-  kfh.PutInt(INI_SECTION,sKeyBeepOnMismatch,bBeepOnMismatch);
-  kfh.PutInt(INI_SECTION,sKeyRestartEOF,bRestartEOF);
-  kfh.PutInt(INI_SECTION,sKeyUseSelection,bUseSelection);
-  kfh.PutInt(INI_SECTION,sKeyAutoNext,bAutoNext);
-  kfh.PutInt(INI_SECTION,sKeyBSunroll,bBSunroll);
+  kfh.SetInt(INI_SECTION,sKeyCaseSensitive,bCaseSensitive);
+  kfh.SetInt(INI_SECTION,sKeyKeepSelection,bKeepSelection);
+  kfh.SetInt(INI_SECTION,sKeyBeepOnMismatch,bBeepOnMismatch);
+  kfh.SetInt(INI_SECTION,sKeyRestartEOF,bRestartEOF);
+  kfh.SetInt(INI_SECTION,sKeyUseSelection,bUseSelection);
+  kfh.SetInt(INI_SECTION,sKeyAutoNext,bAutoNext);
+  kfh.SetInt(INI_SECTION,sKeyBSunroll,bBSunroll);
 }
 }

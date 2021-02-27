@@ -216,11 +216,11 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 
 			{
 				ConfigWriter cfg_writer(strItemKey.GetMB());
-				cfg_writer.PutString("HotKey", strHotKey);
-				cfg_writer.PutString("Label", strLabel);
-				cfg_writer.PutInt("Submenu", SubMenu);
+				cfg_writer.SetString("HotKey", strHotKey);
+				cfg_writer.SetString("Label", strLabel);
+				cfg_writer.SetInt("Submenu", SubMenu);
 			}
-			GlobalConfigReader::Update(s_cfg_reader);
+			ConfigReaderScope::Update(s_cfg_reader);
 			//CloseSameRegKey();
 			CommandNumber=0;
 		}
@@ -231,8 +231,8 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 				RemoveLeadingSpaces(MenuStr);
 				const std::string &strLineName = StrPrintf("Command%d", CommandNumber);
 				++CommandNumber;
-				{ ConfigWriter(strItemKey.GetMB()).PutString(strLineName, MenuStr); }
-				GlobalConfigReader::Update(s_cfg_reader);
+				{ ConfigWriter(strItemKey.GetMB()).SetString(strLineName, MenuStr); }
+				ConfigReaderScope::Update(s_cfg_reader);
 			}
 		}
 
@@ -241,7 +241,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 }
 
 UserMenu::UserMenu(bool ChoiceMenuType)
-	: gcr(s_cfg_reader)
+	: grs(s_cfg_reader)
 {
 	ProcessUserMenu(ChoiceMenuType);
 }
@@ -844,7 +844,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					}
 					*/
 					//;
-					int PreserveLFN=SubstFileName(strCommand,strName,&strListName,&strAnotherListName, FALSE, strCmdLineDir);
+					/*int PreserveLFN=*/SubstFileName(strCommand,strName,&strListName,&strAnotherListName, FALSE, strCmdLineDir);
 					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 					{
@@ -1129,9 +1129,9 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 						StrPrintf("%ls/Item", MenuKey).c_str(), (unsigned int)EditPos);
 				}
 
-				cfg_writer.PutString("HotKey", EditDlg[EM_HOTKEY_EDIT].strData.CPtr());
-				cfg_writer.PutString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
-				cfg_writer.PutInt("Submenu", SubMenu ? 1 : 0);
+				cfg_writer.SetString("HotKey", EditDlg[EM_HOTKEY_EDIT].strData.CPtr());
+				cfg_writer.SetString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
+				cfg_writer.SetInt("Submenu", SubMenu ? 1 : 0);
 
 				if (!SubMenu)
 				{
@@ -1155,13 +1155,13 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 						if (i>=CommandNumber)
 							cfg_writer.RemoveKey(strCommandName);
 						else
-							cfg_writer.PutString(strCommandName, EditDlg[i+EM_EDITLINE_0].strData.CPtr());
+							cfg_writer.SetString(strCommandName, EditDlg[i+EM_EDITLINE_0].strData.CPtr());
 					}
 #endif
 				}
 			}
 
-			GlobalConfigReader::Update(s_cfg_reader);
+			ConfigReaderScope::Update(s_cfg_reader);
 			Result=true;
 		}
 	}

@@ -210,12 +210,12 @@ int Config()
     if (i<ColumnTypes)
     {
       *((int*)OptionsList[i].Option)=GetCheck(OptionsList[i].DialogItem);
-      kfh.PutInt(INI_SECTION, REGStr[i], *(int *)OptionsList[i].Option);
+      kfh.SetInt(INI_SECTION, REGStr[i], *(int *)OptionsList[i].Option);
     }
     else
     {
       FSF.Trim(lstrcpy((TCHAR*)OptionsList[i].Option,GetDataPtr(OptionsList[i].DialogItem)));
-      kfh.PutString(INI_SECTION, REGStr[i], (wchar_t *)OptionsList[i].Option);
+      kfh.SetString(INI_SECTION, REGStr[i], (wchar_t *)OptionsList[i].Option);
     }
   }
   kfh.Save();

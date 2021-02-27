@@ -304,9 +304,9 @@ public:
 	virtual bool SettingsSet(const char *name, const std::wstring *sval, const int *ival)
 	{
 		if (sval)
-			_settings_kfh->PutString("Settings", name, StrWide2MB(*sval).c_str());
+			_settings_kfh->SetString("Settings", name, StrWide2MB(*sval).c_str());
 		else if (ival)
-			_settings_kfh->PutInt("Settings", name, *ival);
+			_settings_kfh->SetInt("Settings", name, *ival);
 		else
 			return false;
 

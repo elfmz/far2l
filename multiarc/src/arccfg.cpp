@@ -65,18 +65,18 @@ int ConfigGeneral()
   Opt.UpdateDescriptions=DialogItems[14].Selected;
 
   KeyFileHelper kfh(INI_LOCATION);
-  kfh.PutInt(INI_SECTION,"HideOutput",Opt.HideOutput);
-  kfh.PutInt(INI_SECTION,"UseLastHistory",Opt.UseLastHistory);
-  kfh.PutInt(INI_SECTION,"ProcessShiftF1",Opt.ProcessShiftF1);
-  kfh.PutString(INI_SECTION,"DescriptionNames",Opt.DescriptionNames);
-  kfh.PutInt(INI_SECTION,"ReadDescriptions",Opt.ReadDescriptions);
-  kfh.PutInt(INI_SECTION,"UpdateDescriptions",Opt.UpdateDescriptions);
-  kfh.PutInt(INI_SECTION,"AllowChangeDir",Opt.AllowChangeDir);
+  kfh.SetInt(INI_SECTION,"HideOutput",Opt.HideOutput);
+  kfh.SetInt(INI_SECTION,"UseLastHistory",Opt.UseLastHistory);
+  kfh.SetInt(INI_SECTION,"ProcessShiftF1",Opt.ProcessShiftF1);
+  kfh.SetString(INI_SECTION,"DescriptionNames",Opt.DescriptionNames);
+  kfh.SetInt(INI_SECTION,"ReadDescriptions",Opt.ReadDescriptions);
+  kfh.SetInt(INI_SECTION,"UpdateDescriptions",Opt.UpdateDescriptions);
+  kfh.SetInt(INI_SECTION,"AllowChangeDir",Opt.AllowChangeDir);
 
-  //kfh.PutInt(INI_SECTION,"DeleteExtFile",Opt.DeleteExtFile);
-  //kfh.PutInt(INI_SECTION,"AddExtArchive",Opt.AddExtArchive);
-  //kfh.PutInt(INI_SECTION,"AutoResetExactArcName",Opt.AutoResetExactArcName);
-  kfh.PutInt(INI_SECTION,"AdvFlags",(int)Opt.AdvFlags);
+  //kfh.SetInt(INI_SECTION,"DeleteExtFile",Opt.DeleteExtFile);
+  //kfh.SetInt(INI_SECTION,"AddExtArchive",Opt.AddExtArchive);
+  //kfh.SetInt(INI_SECTION,"AutoResetExactArcName",Opt.AutoResetExactArcName);
+  kfh.SetInt(INI_SECTION,"AdvFlags",(int)Opt.AdvFlags);
 
   return TRUE;
 }
@@ -119,7 +119,7 @@ LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
         }
         if(!Param1) // if not Reset
         {
-          KeyFileReadHelper(INI_LOCATION).GetChars(Command,sizeof(Command),FormatInfo->ArcFormat,CmdNames[J],Command);
+          KeyFileReadSection(INI_LOCATION,FormatInfo->ArcFormat).GetChars(Command,sizeof(Command),CmdNames[J],Command);
         }
         Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,I,(LONG_PTR)Command);
       }
@@ -209,7 +209,7 @@ int ConfigCommands(char *ArcFormat,int IDFocus,BOOL FastAccess,int PluginNumber,
 
   KeyFileHelper kfh(INI_LOCATION);
   for (I=2,J=0;I<=32;I+=2,J++)
-    kfh.PutString(ArcFormat,CmdNames[J],DialogItems[I].Data);
+    kfh.SetString(ArcFormat,CmdNames[J],DialogItems[I].Data);
 
   return TRUE;
 }

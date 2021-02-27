@@ -46,7 +46,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
     assert(SysWordDivLen <= (int)ARRAYSIZE(SysWordDiv));
     WordDiv.append(SysWordDiv, SysWordDivLen);
   }
-  WordDiv+= KeyFileReadHelper(INI_LOCATION).GetString(INI_SECTION, "AddWordDiv", L"#");
+  WordDiv+= KeyFileReadSection(INI_LOCATION, INI_SECTION).GetString("AddWordDiv", L"#");
 }
 
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)

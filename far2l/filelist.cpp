@@ -2255,7 +2255,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 {
 	FileListItem *CurPtr;
 	FARString strFileName;
-	const wchar_t *ExtPtr;
+	//const wchar_t *ExtPtr;
 
 	if (CurFile>=FileCount)
 		return;
@@ -2349,7 +2349,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			return;
 		}
 
-		ExtPtr=wcsrchr(strFileName,L'.');
+		//ExtPtr=wcsrchr(strFileName,L'.');
 
 		if (EnableExec && IsExecutableFilePath(strFileName.GetMB().c_str()))
 		{
@@ -3642,7 +3642,7 @@ void FileList::CompareDir()
 	Another->ClearSelection();
 	FARString strTempName1, strTempName2;
 	const wchar_t *PtrTempName1, *PtrTempName2;
-	BOOL OpifRealnames1=FALSE, OpifRealnames2=FALSE;
+	//BOOL OpifRealnames1=FALSE, OpifRealnames2=FALSE;
 
 	// помечаем ВСЕ, кроме каталогов на активной панели
 	for (int I=0; I < FileCount; I++)
@@ -3668,7 +3668,7 @@ void FileList::CompareDir()
 		if (Info.Flags & OPIF_COMPAREFATTIME)
 			CompareFatTime=TRUE;
 
-		OpifRealnames1=Info.Flags & OPIF_REALNAMES;
+		//OpifRealnames1=Info.Flags & OPIF_REALNAMES;
 	}
 
 	if (Another->PanelMode==PLUGIN_PANEL && !CompareFatTime)
@@ -3679,7 +3679,7 @@ void FileList::CompareDir()
 		if (Info.Flags & OPIF_COMPAREFATTIME)
 			CompareFatTime=TRUE;
 
-		OpifRealnames2=Info.Flags & OPIF_REALNAMES;
+		//OpifRealnames2=Info.Flags & OPIF_REALNAMES;
 	}
 
 	if (PanelMode==NORMAL_PANEL && Another->PanelMode==NORMAL_PANEL)
@@ -4439,7 +4439,7 @@ bool FileList::ApplyCommand()
 	{
 		FARString strListName, strAnotherListName;
 		FARString strConvertedCommand = strCommand;
-		int PreserveLFN=SubstFileName(strConvertedCommand,strSelName,&strListName,&strAnotherListName);
+		/*int PreserveLFN=*/SubstFileName(strConvertedCommand,strSelName,&strListName,&strAnotherListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 		{

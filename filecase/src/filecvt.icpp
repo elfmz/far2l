@@ -155,12 +155,12 @@ void CaseConvertion()
       if (!GetCheck(18))
       {
 	    KeyFileHelper kfh(INI_LOCATION);
-        kfh.PutString(INI_SECTION,("WordDiv"),Opt.WordDiv);
-        kfh.PutInt(INI_SECTION,("ConvertMode"),Opt.ConvertMode);
-        kfh.PutInt(INI_SECTION,("ConvertModeExt"),Opt.ConvertModeExt);
-        kfh.PutInt(INI_SECTION,("SkipMixedCase"),Opt.SkipMixedCase);
-        kfh.PutInt(INI_SECTION,("ProcessSubDir"),Opt.ProcessSubDir);
-        kfh.PutInt(INI_SECTION,("ProcessDir"),Opt.ProcessDir);
+        kfh.SetString(INI_SECTION,("WordDiv"),Opt.WordDiv);
+        kfh.SetInt(INI_SECTION,("ConvertMode"),Opt.ConvertMode);
+        kfh.SetInt(INI_SECTION,("ConvertModeExt"),Opt.ConvertModeExt);
+        kfh.SetInt(INI_SECTION,("SkipMixedCase"),Opt.SkipMixedCase);
+        kfh.SetInt(INI_SECTION,("ProcessSubDir"),Opt.ProcessSubDir);
+        kfh.SetInt(INI_SECTION,("ProcessDir"),Opt.ProcessDir);
       }
       else
         memcpy(&Opt,&Backup,sizeof(Opt));

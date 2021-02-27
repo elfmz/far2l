@@ -226,13 +226,13 @@ bool History::SaveHistory()
 		}
 
 		ConfigWriter cfg_writer(strRegKey);
-		cfg_writer.PutString("Lines", strLines.c_str());
+		cfg_writer.SetString("Lines", strLines.c_str());
 		if (SaveType) {
-			cfg_writer.PutString("Types", strTypes.c_str());
+			cfg_writer.SetString("Types", strTypes.c_str());
 		}
-		cfg_writer.PutString("Locks", strLocks.c_str());
-		cfg_writer.PutBytes("Times", vTimes.size() * sizeof(FILETIME), (const unsigned char *)&vTimes[0]);
-		cfg_writer.PutInt("Position", Position);
+		cfg_writer.SetString("Locks", strLocks.c_str());
+		cfg_writer.SetBytes("Times", vTimes.size() * sizeof(FILETIME), (const unsigned char *)&vTimes[0]);
+		cfg_writer.SetInt("Position", Position);
 
 		ret = cfg_writer.Save();
 		if (ret) {

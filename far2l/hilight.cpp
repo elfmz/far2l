@@ -132,11 +132,11 @@ static void SetDefaultHighlighting()
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
 	{
 		cfg_writer.SelectSectionFmt("%s/Group%d", RegColorsHighlight, I);
-		cfg_writer.PutString(HLS.Mask, StdHighlightData[I].Mask);
-		cfg_writer.PutInt(HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
-		cfg_writer.PutUInt(HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
-		cfg_writer.PutUInt(HLS.NormalColor, StdHighlightData[I].NormalColor);
-		cfg_writer.PutUInt(HLS.CursorColor, StdHighlightData[I].CursorColor);
+		cfg_writer.SetString(HLS.Mask, StdHighlightData[I].Mask);
+		cfg_writer.SetInt(HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
+		cfg_writer.SetUInt(HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
+		cfg_writer.SetUInt(HLS.NormalColor, StdHighlightData[I].NormalColor);
+		cfg_writer.SetUInt(HLS.CursorColor, StdHighlightData[I].CursorColor);
 	}
 }
 
@@ -738,43 +738,43 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 {
 	if (bSortGroup)
 	{
-		cfg_writer.PutInt(HLS.UseMask, CurHiData->GetMask(nullptr) ? 1  : 0);
+		cfg_writer.SetInt(HLS.UseMask, CurHiData->GetMask(nullptr) ? 1  : 0);
 	}
 	else
 	{
 		const wchar_t *Mask = nullptr;
-		cfg_writer.PutInt(HLS.IgnoreMask, (CurHiData->GetMask(&Mask) ? 0 : 1));
-		cfg_writer.PutString(HLS.Mask, Mask);
+		cfg_writer.SetInt(HLS.IgnoreMask, (CurHiData->GetMask(&Mask) ? 0 : 1));
+		cfg_writer.SetString(HLS.Mask, Mask);
 	}
 
 	DWORD DateType;
 	FILETIME DateAfter, DateBefore;
 	bool bRelative;
-	cfg_writer.PutInt(HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
-	cfg_writer.PutUInt(HLS.DateType, DateType);
-	cfg_writer.PutPOD(HLS.DateAfter, DateAfter);
-	cfg_writer.PutPOD(HLS.DateBefore, DateBefore);
-	cfg_writer.PutInt(HLS.DateRelative, bRelative ? 1 : 0);
+	cfg_writer.SetInt(HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
+	cfg_writer.SetUInt(HLS.DateType, DateType);
+	cfg_writer.SetPOD(HLS.DateAfter, DateAfter);
+	cfg_writer.SetPOD(HLS.DateBefore, DateBefore);
+	cfg_writer.SetInt(HLS.DateRelative, bRelative ? 1 : 0);
 	const wchar_t *SizeAbove = nullptr, *SizeBelow = nullptr;
-	cfg_writer.PutInt(HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
-	cfg_writer.PutString(HLS.SizeAbove, SizeAbove);
-	cfg_writer.PutString(HLS.SizeBelow, SizeBelow);
+	cfg_writer.SetInt(HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
+	cfg_writer.SetString(HLS.SizeAbove, SizeAbove);
+	cfg_writer.SetString(HLS.SizeBelow, SizeBelow);
 	DWORD AttrSet = 0, AttrClear = 0;
-	cfg_writer.PutInt(HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
-	cfg_writer.PutUInt((bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes), AttrSet);
-	cfg_writer.PutUInt((bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes), AttrClear);
+	cfg_writer.SetInt(HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
+	cfg_writer.SetUInt((bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes), AttrSet);
+	cfg_writer.SetUInt((bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes), AttrClear);
 	HighlightDataColor Colors{};
 	CurHiData->GetColors(&Colors);
-	cfg_writer.PutUInt(HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
-	cfg_writer.PutUInt(HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
-	cfg_writer.PutUInt(HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	cfg_writer.PutUInt(HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	cfg_writer.PutUInt(HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
-	cfg_writer.PutUInt(HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
-	cfg_writer.PutUInt(HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	cfg_writer.PutUInt(HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	cfg_writer.PutUInt(HLS.MarkChar, Colors.MarkChar);
-	cfg_writer.PutInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
+	cfg_writer.SetUInt(HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
+	cfg_writer.SetUInt(HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
+	cfg_writer.SetUInt(HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
+	cfg_writer.SetUInt(HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
+	cfg_writer.SetUInt(HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkChar, Colors.MarkChar);
+	cfg_writer.SetInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
 
 void HighlightFiles::SaveHiData()
@@ -806,7 +806,7 @@ void HighlightFiles::SaveHiData()
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
 				cfg_writer.SelectSection(KeyNames[j]);
-				cfg_writer.PutString(strGroupName, Mask);
+				cfg_writer.SetString(strGroupName, Mask);
 			}
 			cfg_writer.SelectSection(strRegKey);
 			SaveFilter(CurHiData, cfg_writer, (j == 1 || j == 2) );

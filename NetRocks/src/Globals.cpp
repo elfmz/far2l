@@ -49,8 +49,8 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 		info = *Info;
 		fsf = *(Info->FSF);
 		info.FSF = &fsf;
-		_global_config.reset(new KeyFileHelper(InMyConfig("NetRocks/options.cfg")));
-		tsocks_config = InMyConfig("NetRocks/tsocks.cfg");
+		_global_config.reset(new KeyFileHelper(InMyConfig("plugins/NetRocks/options.cfg")));
+		tsocks_config = InMyConfig("plugins/NetRocks/tsocks.cfg");
 		if (!GetGlobalConfigBool("ImportFarFtpSitesDone", false)) {
 			if (ImportFarFtpSites()) {
 				GlobalConfigWriter w = GetGlobalConfigWriter();

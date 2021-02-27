@@ -21,7 +21,7 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/editcase/settings.ini")
+#define INI_LOCATION	InMyConfig("plugins/editcase/config.ini")
 #define INI_SECTION		"Settings"
 
 

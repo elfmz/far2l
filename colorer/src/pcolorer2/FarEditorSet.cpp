@@ -79,7 +79,7 @@ FarEditorSet::FarEditorSet():
   sUserHrcPathExp(nullptr),
   viewFirst(0)
 {
-  settingsIni = InMyConfig("plugins/colorer/settings.ini");
+  settingsIni = InMyConfig("plugins/colorer/config.ini");
   struct stat s;
   if (stat(settingsIni.c_str(), &s) == -1) {
     SetDefaultSettings();

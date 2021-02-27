@@ -17,7 +17,7 @@ Temporary panel configuration
 #define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 #endif
 
-#define INI_LOCATION	InMyConfig("plugins/tmppanel/settings.ini")
+#define INI_LOCATION	InMyConfig("plugins/tmppanel/config.ini")
 #define INI_SECTION		"Settings"
 
 enum

@@ -469,9 +469,18 @@ void CheckForConfigUpgrade()
 	if (stat(cfg_ini.c_str(), &s) == -1) {
 		ConfigWriter cfg_writer;
 		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
+		rename(InMyConfig("bookmarks.ini").c_str(), InMyConfig("settings/bookmarks.ini").c_str());
 		rename(InMyConfig("plugins.ini").c_str(), InMyConfig("plugins/state.ini").c_str());
 		rename(InMyConfig("viewer.pos").c_str(), InMyConfig("history/viewer.pos").c_str());
 		rename(InMyConfig("editor.pos").c_str(), InMyConfig("history/editor.pos").c_str());
+
+		const std::string &cmd = StrPrintf("mv -f \"%s\" \"%s\"",
+					InMyConfig("NetRocks").c_str(),
+					InMyConfig("plugins/").c_str());
+		int r = system(cmd.c_str());
+		if (r != 0) {
+			fprintf(stderr, "%s: exit code %d for cmd '%s'\n", __FUNCTION__, r, cmd.c_str());
+		}
 	}
 }
 

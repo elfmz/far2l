@@ -11,7 +11,7 @@ static int getEditorId(const PluginStartupInfo &info) {
 Editors::Editors(const PluginStartupInfo &info, const FarStandardFunctions &fsf) : info(info), fsf(fsf) {
     this->info.FSF = &this->fsf;
 
-    this->iniPath = InMyConfig("plugins/editorcomp/settings.ini");
+    this->iniPath = InMyConfig("plugins/editorcomp/config.ini");
     this->iniSection  = "Settings";
 
     KeyFileReadSection kfh(this->iniPath, this->iniSection);

@@ -8,7 +8,7 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/autowrap/settings.ini")
+#define INI_LOCATION	InMyConfig("plugins/autowrap/config.ini")
 #define INI_SECTION		"Settings"
 
 #include "FileMix.icpp"

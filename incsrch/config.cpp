@@ -2,7 +2,7 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/incsrch/settings.ini")
+#define INI_LOCATION	InMyConfig("plugins/incsrch/config.ini")
 #define INI_SECTION		"Settings"
 
 

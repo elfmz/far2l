@@ -273,7 +273,7 @@ public:
 
 	virtual bool SettingsBegin()
 	{
-		_settings_kfh.reset(new KeyFileHelper(InMyConfig("calc.ini")));
+		_settings_kfh.reset(new KeyFileHelper(InMyConfig("plugins/calc/config.ini")));
 		return true;
 	}
 

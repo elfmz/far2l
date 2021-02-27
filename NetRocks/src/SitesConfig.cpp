@@ -95,7 +95,7 @@ static bool SitesConfig_AppendSubParts(std::vector<std::string> &parts, const st
 
 static std::string SitesConfig_TranslateToDir(const std::vector<std::string> &parts)
 {
-	std::string out = InMyConfig("NetRocks/");
+	std::string out = InMyConfig("plugins/NetRocks/");
 	for (const auto &part : parts) {
 		out+= part;
 		out+= ".sites/";

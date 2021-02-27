@@ -8,7 +8,7 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/compare/settings.ini")
+#define INI_LOCATION	InMyConfig("plugins/compare/config.ini")
 #define INI_SECTION		"Settings"
 
 #ifndef UNICODE

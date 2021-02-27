@@ -79,7 +79,7 @@ static int LegacyShortcut_Get(int Pos, FARString *pDestFolder,
 
 void CheckForImportLegacyShortcuts()
 {
-	const auto &new_path = InMyConfig("bookmarks.ini");
+	const auto &new_path = InMyConfig("settings/bookmarks.ini");
 	struct stat s{};
 	if (stat(new_path.c_str(), &s) == 0)
 		return;

@@ -28,7 +28,7 @@ Folder shortcuts
 #include "plugins.hpp"
 
 Bookmarks::Bookmarks()
-	: _kfh(InMyConfig("bookmarks.ini").c_str(), true)
+	: _kfh(InMyConfig("settings/bookmarks.ini").c_str(), true)
 {
 }
 

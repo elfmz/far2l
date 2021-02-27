@@ -13,7 +13,7 @@
 using namespace oldfar;
 #include "fmt.hpp"
 
-#define INI_LOCATION (InMyConfig("plugins/multiarc/settings.ini"))
+#define INI_LOCATION (InMyConfig("plugins/multiarc/config.ini"))
 #define INI_SECTION ("Settings")
 
 //#define _NEW_ARC_SORT_

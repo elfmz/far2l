@@ -124,15 +124,8 @@ void InitConsole(int FirstInit)
 
 	GetVideoMode(CurSize);
 	ScrBuf.FillBuf();
-
-	// было sizeof(Palette)
-	/*$ 14.02.2001 SKV
-	  для consoledetach не нужно, что бы инитилась палитра.
-	*/
-	if (FirstInit)
-		memcpy(Palette,DefaultPalette,SizeArrayPalette);
-
 }
+
 void CloseConsole()
 {
 	ScrBuf.Flush();

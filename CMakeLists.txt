@@ -208,6 +208,27 @@ endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
+if (NOT DEFINED LEGACY)
+	# TODO: default it to NO  somewhere in 2022, after all obsolete settings
+	# registry-upgrade-to-ini stuff will be safe to remove
+	set(LEGACY "YES")
+endif()
+
+if(FARFTP)
+	if(NOT LEGACY)
+		set(LEGACY "YES")
+		message(STATUS "Force-enable LEGACY due to enabled FARFTP")
+	endif()
+endif ()
+
+if (LEGACY)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINPORT_REGISTRY")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPORT_REGISTRY")
+	message(STATUS "Enabling registry support due to enabled LEGACY")
+else()
+	message(STATUS "LEGACY is not enabled, your old registry settings will be forgotten, if any")
+endif()
+
 if(CMAKE_VERSION VERSION_GREATER "3.3")
   cmake_policy(SET CMP0063 NEW)
   cmake_policy(SET CMP0057 NEW)
@@ -218,7 +239,6 @@ include_directories(utils/include)
 add_subdirectory (farlng)
 add_subdirectory (WinPort)
 add_subdirectory (utils)
-add_subdirectory (FARStdlib)
 add_subdirectory (far2l)
 add_dependencies (far2l farlng)
 
@@ -228,6 +248,7 @@ set_target_properties(farlng
 )
 
 if(FARFTP)
+	add_subdirectory (FARStdlib)
 	add_subdirectory (farftp)
 endif ()
 

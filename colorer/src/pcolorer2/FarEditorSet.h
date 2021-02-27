@@ -199,7 +199,6 @@ private:
   RegionMapper *regionMapper;
   HRCParser *hrcParser;
 
-  HKEY hPluginRegistry;
   /**current value*/
   SString hrdClass;
   SString hrdName;

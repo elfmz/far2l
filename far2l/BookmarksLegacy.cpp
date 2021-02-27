@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 
 // TODO: remove this code after 2022/01/13
+#ifdef WINPORT_REGISTRY
 
 static void LegacyShortcut_GetRecord(const wchar_t *RecTypeName, int RecNumber, FARString *pValue)
 {
@@ -100,3 +101,9 @@ void CheckForImportLegacyShortcuts()
 		}
 	}
 }
+
+#else // WINPORT_REGISTRY
+
+void CheckForImportLegacyShortcuts() {}
+
+#endif // WINPORT_REGISTRY

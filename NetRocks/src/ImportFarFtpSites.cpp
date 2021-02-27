@@ -3,6 +3,9 @@
 #include "SitesConfig.h"
 #include "StringConfig.h"
 
+// TODO: remove this code in year >= 2022
+#ifdef WINPORT_REGISTRY
+
 #define FTP_PWD_LEN 150  //max crypted pwd length
 
 bool SplitLocationSpecification(const char *specification,
@@ -116,3 +119,8 @@ bool ImportFarFtpSites()
 
 	return out;
 }
+#else
+
+bool ImportFarFtpSites() { return true; }
+
+#endif

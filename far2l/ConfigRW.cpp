@@ -356,7 +356,7 @@ void ConfigWriter::RemoveKey(const std::string &name)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-
+#ifdef WINPORT_REGISTRY
 static bool ShouldImportRegSettings(const std::string &virtual_path)
 {
 	// skip stuff that goes to Plugins.ini
@@ -471,3 +471,9 @@ void CheckForConfigUpgrade()
 		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
 	}
 }
+
+#else // WINPORT_REGISTRY
+
+void CheckForConfigUpgrade() { }
+
+#endif // WINPORT_REGISTRY

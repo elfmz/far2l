@@ -91,7 +91,6 @@ FarEditorSet::FarEditorSet():
 FarEditorSet::~FarEditorSet()
 {
   dropAllEditors(false);
-  WINPORT(RegCloseKey)(hPluginRegistry);
   delete sHrdName;
   delete sHrdNameTm;
   delete sCatalogPath;

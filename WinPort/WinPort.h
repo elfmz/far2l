@@ -82,6 +82,7 @@ extern "C" {
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles));
 
+#ifdef WINPORT_REGISTRY
 	///Registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));
 	WINPORT_DECL(RegCreateKeyEx, LONG, (HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, 
@@ -107,6 +108,7 @@ extern "C" {
 
 	WINPORT_DECL(RegWipeBegin, VOID, ());
 	WINPORT_DECL(RegWipeEnd, VOID, ());
+#endif
 
 //other
 	WINPORT_DECL(TranslateErrno, VOID, ());
@@ -292,7 +294,7 @@ struct __attribute__ ((visibility("default"))) WINPORT(LastErrorGuard)
 	~ WINPORT(LastErrorGuard)();
 };
 
-
+#ifdef WINPORT_REGISTRY
 struct RegWipeScope
 {
 	inline RegWipeScope()
@@ -304,4 +306,6 @@ struct RegWipeScope
 		WINPORT(RegWipeEnd)();
 	}
 };
+#endif
+
 #endif

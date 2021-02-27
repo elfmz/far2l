@@ -214,13 +214,10 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 				strHotKey+=L"-";
 			}
 
-			{
-				ConfigWriter cfg_writer(strItemKey.GetMB());
-				cfg_writer.SetString("HotKey", strHotKey);
-				cfg_writer.SetString("Label", strLabel);
-				cfg_writer.SetInt("Submenu", SubMenu);
-			}
-			ConfigReaderScope::Update(s_cfg_reader);
+			ConfigWriter cfg_writer(strItemKey.GetMB());
+			cfg_writer.SetString("HotKey", strHotKey);
+			cfg_writer.SetString("Label", strLabel);
+			cfg_writer.SetInt("Submenu", SubMenu);
 			//CloseSameRegKey();
 			CommandNumber=0;
 		}
@@ -231,10 +228,11 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 				RemoveLeadingSpaces(MenuStr);
 				const std::string &strLineName = StrPrintf("Command%d", CommandNumber);
 				++CommandNumber;
-				{ ConfigWriter(strItemKey.GetMB()).SetString(strLineName, MenuStr); }
-				ConfigReaderScope::Update(s_cfg_reader);
+				ConfigWriter(strItemKey.GetMB()).SetString(strLineName, MenuStr);
 			}
 		}
+
+		ConfigReaderScope::Update(s_cfg_reader);
 
 		SingleItemMenu=false;
 	}
@@ -259,9 +257,8 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
 	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
-	{
-		ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
-	}
+	{ ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection(); }
+	ConfigReaderScope::Update(s_cfg_reader);
 	MenuModified=MenuNeedRefresh=false;
 
 	if (ChoiceMenuType)
@@ -394,7 +391,8 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 			}
 
 			// ...почистим реестр.
-			ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
+			{ ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection(); }
+			ConfigReaderScope::Update(s_cfg_reader);
 		}
 
 		// что было после вызова меню?
@@ -711,6 +709,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 							}
 						}
 						{ ConfigWriter(strCurrentKey.GetMB()).RemoveSection(); }
+						ConfigReaderScope::Update(s_cfg_reader);
 						GetFileString GetStr(MenuFile);
 						MenuFileToReg(strCurrentKey, MenuFile, GetStr, Key==KEY_ALTSHIFTF4);
 						MenuFile.Close();
@@ -1187,9 +1186,12 @@ int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 	strRegKey << MenuKey << L"/Item";
 	FARString DefragPrefix(strRegKey);
 	strRegKey << DeletePos;
-	ConfigWriter cfg_writer(FARString(strRegKey).GetMB());
-	cfg_writer.RemoveSection();
-	cfg_writer.DefragIndexedSections(DefragPrefix.GetMB().c_str());
+	{
+		ConfigWriter cfg_writer(FARString(strRegKey).GetMB());
+		cfg_writer.RemoveSection();
+		cfg_writer.DefragIndexedSections(DefragPrefix.GetMB().c_str());
+	}
+	ConfigReaderScope::Update(s_cfg_reader);
 	return TRUE;
 }
 
@@ -1203,5 +1205,6 @@ bool UserMenu::MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos)
 		ConfigWriter(FARString(strSrc).GetMB()).RenameSection(FARString(strDst).GetMB());
 		MenuModified = MenuNeedRefresh=true;
 	}
+	ConfigReaderScope::Update(s_cfg_reader);
 	return true;
 }

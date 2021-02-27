@@ -101,8 +101,10 @@ public:
 
 	static void Update(std::unique_ptr<ConfigReader> &cfg_reader)
 	{
-		cfg_reader.reset();
-		cfg_reader.reset(new ConfigReader);
+		if (cfg_reader) {
+			cfg_reader.reset();
+			cfg_reader.reset(new ConfigReader);
+		}
 	}
 };
 

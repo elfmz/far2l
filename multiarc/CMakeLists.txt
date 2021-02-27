@@ -7,7 +7,6 @@ set(SOURCES
     src/arccfg.cpp
     src/arcget.cpp
     src/arcput.cpp
-    src/arcreg.cpp
     src/ArcMix.cpp
     src/ArcProc.cpp
     src/global.cpp

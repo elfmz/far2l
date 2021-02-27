@@ -352,7 +352,7 @@ DWORD WINAPI _export CUSTOM_LoadFormatModule(const char *ModuleName)
 	}
 
 	FormatFileNameKFH.emplace_back(
-		std::make_pair(InMyConfig("multiarc/custom.ini", false), nullptr));
+		std::make_pair(InMyConfig("plugins/multiarc/custom.ini", false), nullptr));
 
 	CheckIniFiles();
 	return (0);

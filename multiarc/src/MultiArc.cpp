@@ -41,26 +41,27 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
   if (ArcPlugin==NULL)
     ArcPlugin=new ArcPlugins(Info->ModuleName);
 
-  Opt.HideOutput=GetRegKey(HKEY_CURRENT_USER,"","HideOutput",0);
-  Opt.ProcessShiftF1=GetRegKey(HKEY_CURRENT_USER,"","ProcessShiftF1",1);
-  Opt.UseLastHistory=GetRegKey(HKEY_CURRENT_USER,"","UseLastHistory",0);
+  KeyFileReadHelper kfh(INI_LOCATION);
+  Opt.HideOutput=kfh.GetInt(INI_SECTION,"HideOutput",0);
+  Opt.ProcessShiftF1=kfh.GetInt(INI_SECTION,"ProcessShiftF1",1);
+  Opt.UseLastHistory=kfh.GetInt(INI_SECTION,"UseLastHistory",0);
 
   //Opt.DeleteExtFile=GetRegKey(HKEY_CURRENT_USER,"","DeleteExtFile",1);
   //Opt.AddExtArchive=GetRegKey(HKEY_CURRENT_USER,"","AddExtArchive",0);
 
   //Opt.AutoResetExactArcName=GetRegKey(HKEY_CURRENT_USER,"","AutoResetExactArcName",1);
   //Opt.ExactArcName=GetRegKey(HKEY_CURRENT_USER, "", "ExactArcName", 0);
-  Opt.AdvFlags=GetRegKey(HKEY_CURRENT_USER, "", "AdvFlags", 2);
+  Opt.AdvFlags=kfh.GetInt(INI_SECTION,"AdvFlags", 2);
 
-  GetRegKey(HKEY_CURRENT_USER,"","DescriptionNames",Opt.DescriptionNames,
-            "descript.ion,files.bbs",sizeof(Opt.DescriptionNames));
-  Opt.ReadDescriptions=GetRegKey(HKEY_CURRENT_USER,"","ReadDescriptions",0);
-  Opt.UpdateDescriptions=GetRegKey(HKEY_CURRENT_USER,"","UpdateDescriptions",0);
+  kfh.GetChars(Opt.DescriptionNames,sizeof(Opt.DescriptionNames),
+			INI_SECTION,"DescriptionNames","descript.ion,files.bbs");
+  Opt.ReadDescriptions=kfh.GetInt(INI_SECTION,"ReadDescriptions",0);
+  Opt.UpdateDescriptions=kfh.GetInt(INI_SECTION,"UpdateDescriptions",0);
   //Opt.UserBackground=GetRegKey(HKEY_CURRENT_USER,"","Background",0); // $ 06.02.2002 AA
   Opt.OldUserBackground=0; // $ 02.07.2002 AY
-  Opt.AllowChangeDir=GetRegKey(HKEY_CURRENT_USER,"","AllowChangeDir",0);
+  Opt.AllowChangeDir=kfh.GetInt(INI_SECTION,"AllowChangeDir",0);
 
-  GetRegKey(HKEY_CURRENT_USER,"","Prefix1",Opt.CommandPrefix1,"ma",sizeof(Opt.CommandPrefix1));
+  kfh.GetChars(Opt.CommandPrefix1,sizeof(Opt.CommandPrefix1), INI_SECTION,"Prefix1","ma");
 
   #ifdef _NEW_ARC_SORT_
   strcpy(IniFile, Info->ModuleName);

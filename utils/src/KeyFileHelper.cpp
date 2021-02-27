@@ -198,42 +198,42 @@ unsigned long long KeyFileValues::GetULL(const std::string &name, unsigned long 
 }
 
 
-static size_t DecodeBytes(const std::string &str, size_t len, unsigned char *buf)
+static size_t DecodeBytes(unsigned char *out, size_t len, const std::string &str)
 {
-	size_t out;
+	size_t cnt;
 
-	for (size_t i = out = 0; out != len && i != str.size(); ++out) {
-		buf[out] = (ParseHexDigit(str[i]) << 4);
+	for (size_t i = cnt = 0; cnt != len && i != str.size(); ++cnt) {
+		out[cnt] = (ParseHexDigit(str[i]) << 4);
 		do {
 			++i;
 		} while (i != str.size() && (str[i] == ' ' || str[i] == '\t'));
 		if (i == str.size()) {
 			break;
 		}
-		buf[out]|= ParseHexDigit(str[i]);
+		out[cnt]|= ParseHexDigit(str[i]);
 		do {
 			++i;
 		} while (i != str.size() && (str[i] == ' ' || str[i] == '\t'));
  	}
 
-	return out;
+	return cnt;
 }
 
-size_t KeyFileValues::GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
+size_t KeyFileValues::GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def) const
 {
 	const auto &it = find(name);
 	if (it == end()) {
 		if (def) {
-			memcpy(buf, def, len);
+			memcpy(out, def, len);
 			return len;
 		}
 		return 0;
 	}
 
-	return DecodeBytes(it->second, len, buf);
+	return DecodeBytes(out, len, it->second);
 }
 
-bool KeyFileValues::GetBytes(const std::string &name, std::vector<unsigned char> &out) const
+bool KeyFileValues::GetBytes(std::vector<unsigned char> &out, const std::string &name) const
 {
 	const auto &it = find(name);
 	if (it == end()) {
@@ -241,7 +241,7 @@ bool KeyFileValues::GetBytes(const std::string &name, std::vector<unsigned char>
 	}
 
 	out.resize(it->second.size() / 2 + 1);
-	size_t actual_size = DecodeBytes(it->second, out.size(), &out[0]);
+	size_t actual_size = DecodeBytes(&out[0], out.size(), it->second);
     out.resize(actual_size);
 	return true;
 }
@@ -529,11 +529,11 @@ unsigned long long KeyFileReadHelper::GetULL(const std::string &section, const s
 	return def;
 }
 
-size_t KeyFileReadHelper::GetBytes(const std::string &section, const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
+size_t KeyFileReadHelper::GetBytes(unsigned char *buf, size_t len, const std::string &section, const std::string &name, const unsigned char *def) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		return it->second.GetBytes(name, len, buf);
+		return it->second.GetBytes(buf, len, name);
 
 	} else if (def) {
 		memcpy(buf, def, len);
@@ -543,11 +543,11 @@ size_t KeyFileReadHelper::GetBytes(const std::string &section, const std::string
 	return 0;
 }
 
-bool KeyFileReadHelper::GetBytes(const std::string &section, const std::string &name, std::vector<unsigned char> &out) const
+bool KeyFileReadHelper::GetBytes(std::vector<unsigned char> &out, const std::string &section, const std::string &name) const
 {
 	auto it = _kf.find(section);
 	if (it != _kf.end()) {
-		return it->second.GetBytes(name, out);
+		return it->second.GetBytes(out, name);
 	}
 
 	return false;

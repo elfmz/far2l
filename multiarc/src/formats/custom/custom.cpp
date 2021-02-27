@@ -403,7 +403,7 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Dat
 			else
 				strcpy(IDName, "ID");
 
-	        if (!Values->GetBytes(IDName, ID) || ID.empty()) {
+	        if (!Values->GetBytes(ID, IDName) || ID.empty()) {
 				break;
 			}
 			SpecifiedID = true;

@@ -278,7 +278,7 @@ bool History::ReadHistory(bool bOnlyLines)
 	if (!bOnlyLines)
 	{
 		Position = cfg_reader.GetInt("Position", Position);
-		cfg_reader.GetBytes("Times", vTimes);
+		cfg_reader.GetBytes(vTimes, "Times");
 		cfg_reader.GetString(strLocks, "Locks", L"");
 		cfg_reader.GetString(strTypes, "Types", L"");
 	}

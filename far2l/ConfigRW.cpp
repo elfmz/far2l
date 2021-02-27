@@ -185,16 +185,16 @@ unsigned long long ConfigReader::GetULL(const std::string &name, unsigned long l
 	return _selected_section_values->GetULL(name, def);
 }
 
-size_t ConfigReader::GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def) const
+size_t ConfigReader::GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def) const
 {
 	assert(_selected_section_values != nullptr);
-	return _selected_section_values->GetBytes(name, len, buf, def);
+	return _selected_section_values->GetBytes(out, len, name, def);
 }
 
-bool ConfigReader::GetBytes(const std::string &name, std::vector<unsigned char> &out) const
+bool ConfigReader::GetBytes(std::vector<unsigned char> &out, const std::string &name) const
 {
 	assert(_selected_section_values != nullptr);
-	return _selected_section_values->GetBytes(name, out);
+	return _selected_section_values->GetBytes(out, name);
 }
 
 ////

@@ -979,7 +979,7 @@ void ReadConfig()
 				*(FARString *)CFG[I].ValPtr = cfg_reader.GetString(CFG[I].ValName, CFG[I].DefStr);
 				break;
 			case REG_BINARY:
-				int Size = cfg_reader.GetBytes(CFG[I].ValName, CFG[I].DefDWord, (BYTE*)CFG[I].ValPtr, (BYTE*)CFG[I].DefStr);
+				int Size = cfg_reader.GetBytes((BYTE*)CFG[I].ValPtr, CFG[I].DefDWord, CFG[I].ValName, (BYTE*)CFG[I].DefStr);
 				if (Size > 0 && Size < (int)CFG[I].DefDWord)
 					memset(((BYTE*)CFG[I].ValPtr)+Size,0,CFG[I].DefDWord-Size);
 

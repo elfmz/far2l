@@ -41,10 +41,10 @@ public:
 	int GetInt(const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
-	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
-	bool GetBytes(const std::string &name, std::vector<unsigned char> &out) const;
+	size_t GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def = nullptr) const;
+	bool GetBytes(std::vector<unsigned char> &out, const std::string &name) const;
 	template <class POD> void GetPOD(const std::string &name, const POD &pod)
-		{ GetBytes(name, sizeof(pod), (unsigned char *)&pod); }
+		{ GetBytes((unsigned char *)&pod, sizeof(pod), name); }
 
 };
 

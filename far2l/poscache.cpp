@@ -199,16 +199,15 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 	}
 
 	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
-	values->GetBytes("Par",
-		sizeof(poscache.Param), (unsigned char *)&poscache.Param[0]);
+	values->GetBytes((unsigned char *)&poscache.Param[0], sizeof(poscache.Param), "Par");
 
 	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
 		memset(poscache.Position[i], 0xff,
 			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
 		char key[64];
 		sprintf(key, "Pos%u", i);
-		values->GetBytes(key, sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT,
-			(unsigned char *)poscache.Position[i]);
+		values->GetBytes((unsigned char *)poscache.Position[i],
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT, key);
 	}
 
 	return true;

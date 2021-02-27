@@ -12,8 +12,8 @@ struct KeyFileValues : std::map<std::string, std::string>
 	int GetInt(const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
-	size_t GetBytes(const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
-	bool GetBytes(const std::string &name, std::vector<unsigned char> &out) const;
+	size_t GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def = nullptr) const;
+	bool GetBytes(std::vector<unsigned char> &out, const std::string &name) const;
 	std::vector<std::string> EnumKeys(bool sorted = true) const;
 };
 
@@ -56,8 +56,8 @@ public:
 	int GetInt(const std::string &section, const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &section, const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &section, const std::string &name, unsigned long long def = 0) const;
-	size_t GetBytes(const std::string &section, const std::string &name, size_t len, unsigned char *buf, const unsigned char *def = nullptr) const;
-	bool GetBytes(const std::string &section, const std::string &name, std::vector<unsigned char> &out) const;
+	size_t GetBytes(unsigned char *out, size_t len, const std::string &section, const std::string &name, const unsigned char *def = nullptr) const;
+	bool GetBytes(std::vector<unsigned char> &out, const std::string &section, const std::string &name) const;
 	std::vector<std::string> EnumSections(bool sorted = true) const;
 	std::vector<std::string> EnumSectionsAt(const std::string &parent_section, bool recursed = false, bool sorted = true) const;
 	std::vector<std::string> EnumKeys(const std::string &section, bool sorted = true) const;

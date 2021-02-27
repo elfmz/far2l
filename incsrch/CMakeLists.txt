@@ -5,9 +5,10 @@ set(SOURCES
 clip.c
 control.c
 incsrch.c
-locale.c
+loc.c
 search.c
 util.c
+config.cpp
 )
 
 add_library (incsrch MODULE ${SOURCES})
@@ -15,6 +16,7 @@ add_library (incsrch MODULE ${SOURCES})
 target_link_libraries(incsrch utils far2l)
 
 target_compile_definitions(incsrch PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
+set_property(TARGET incsrch PROPERTY C_STANDARD 11)
 
 target_include_directories(incsrch PRIVATE ../far2l)
 target_include_directories(incsrch PRIVATE ../far2l/Include)

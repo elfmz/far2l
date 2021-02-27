@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TPreRedrawFunc.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "scrsaver.hpp"
@@ -512,61 +511,6 @@ static DWORD KeyMsClick2ButtonState(DWORD Key,DWORD& Event)
 	return 0;
 }
 
-void ReloadEnvironment()
-{
-	struct addr
-	{
-		HKEY Key;
-		LPCWSTR SubKey;
-	}
-	Addr[]=
-	{
-		{HKEY_LOCAL_MACHINE, L"SYSTEM/CurrentControlSet/Control/Session Manager/Environment"},
-		{HKEY_CURRENT_USER, L"Environment"},
-		{HKEY_CURRENT_USER, L"Volatile Environment"}
-	};
-	FARString strName, strData;
-	FARString strOptRegRoot(Opt.strRegRoot);
-	Opt.strRegRoot.Clear();
-
-	for(size_t i=0; i<ARRAYSIZE(Addr); i++)
-	{
-		SetRegRootKey(Addr[i].Key);
-		DWORD Types[]={REG_SZ,REG_EXPAND_SZ}; // REG_SZ first
-		for(size_t t=0; t<ARRAYSIZE(Types); t++) // two passes
-		{
-			DWORD Type;
-			for(int j=0; EnumRegValueEx(Addr[i].SubKey, j, strName, strData, nullptr, nullptr, &Type); j++)
-			{
-				if(Type==Types[t])
-				{
-					if(Type==REG_EXPAND_SZ)
-					{
-						apiExpandEnvironmentStrings(strData, strData);
-					}
-					if(Addr[i].Key==HKEY_CURRENT_USER)
-					{
-						// see http://support.microsoft.com/kb/100843 for details
-						if(!StrCmpI(strName, L"path") || !StrCmpI(strName, L"libpath") || !StrCmpI(strName, L"os2libpath"))
-						{
-							FARString strMergedPath;
-							apiGetEnvironmentVariable(strName, strMergedPath);
-							if(strMergedPath.At(strMergedPath.GetLength()-1)!=L';')
-							{
-								strMergedPath+=L';';
-							}
-							strData=strMergedPath+strData;
-						}
-					}
-					WINPORT(SetEnvironmentVariable)(strName, strData);
-				}
-			}
-		}
-	}
-
-	Opt.strRegRoot=strOptRegRoot;
-}
-
 DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool AllowSynchro)
 {
 	_KEYMACRO(CleverSysLog Clev(L"GetInputRecord()"));
@@ -704,11 +648,6 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			ChangeVideoMode(25,80);
 		}
 		FullscreenState=CurrentFullscreenState;
-
-		/*if(Events.EnvironmentChangeEvent.Signaled())
-		{
-			ReloadEnvironment();
-		}*/
 
 		/* $ 26.04.2001 VVM
 		   ! Убрал подмену колесика */

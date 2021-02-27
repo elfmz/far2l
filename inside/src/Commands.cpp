@@ -9,7 +9,7 @@ namespace Commands
 	void Enum(const char *section, std::set<std::string> &out)
 	{
 		for (const auto &config : G.configs) {
-			KeyFileHelper kfh(config.c_str());
+			KeyFileHelper kfh(config);
 			const std::vector<std::string> &commands = kfh.EnumKeys(section);
 			out.insert(commands.begin(), commands.end());
 		}
@@ -19,8 +19,8 @@ namespace Commands
 	std::string Get(const char *section, const std::string &name)
 	{
 		for (const auto &config : G.configs) {
-			KeyFileHelper kfh(config.c_str());
-			const std::string &cmd = kfh.GetString(section, name.c_str());
+			KeyFileHelper kfh(config);
+			const std::string &cmd = kfh.GetString(section, name);
 			if (!cmd.empty()) {
 				return cmd;
 			}

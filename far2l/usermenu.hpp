@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "ConfigRW.hpp"
+
 class UserMenu
 {
 		// Режимы показа меню (Menu mode)
@@ -42,6 +44,7 @@ class UserMenu
 			MM_FAR, // Меню из каталога ФАРа
 			MM_MAIN, // Главное меню
 		};
+		ConfigReaderScope grs;
 
 		MENUMODE MenuMode;
 		bool MenuModified;

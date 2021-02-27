@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "plugin.hpp"
 #include "filefilterparams.hpp"
+#include "ConfigRW.hpp"
 
 class VMenu;
 class Panel;
@@ -73,8 +74,8 @@ class FileFilter
 		bool FileInFilter(const FAR_FIND_DATA& fd,enumFileInFilterType *foundType=nullptr);
 		bool IsEnabledOnPanel();
 
-		static void InitFilter();
+		static void InitFilter(ConfigReader &cfg_reader);
 		static void CloseFilter();
 		static void SwapFilter();
-		static void SaveFilters();
+		static void SaveFilters(ConfigWriter &cfg_writer);
 };

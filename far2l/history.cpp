@@ -39,10 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keys.hpp"
 #include "vmenu.hpp"
 #include "lang.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "clipboard.hpp"
 #include "config.hpp"
+#include "ConfigRW.hpp"
 #include "strmix.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
@@ -55,7 +55,7 @@ static uint64_t RegKey2ID(const FARString &str)
 	return crc64(0, (const unsigned char *)s.c_str(), s.size());
 }
 
-History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t *RegKey, const int *EnableSave, bool SaveType):
+History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const std::string &RegKey, const int *EnableSave, bool SaveType):
 	strRegKey(RegKey),
 	EnableAdd(true),
 	KeepSelectedPos(false),
@@ -64,8 +64,7 @@ History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t
 	TypeHistory(TypeHistory),
 	HistoryCount(HistoryCount),
 	EnableSave(EnableSave),
-	CurrentItem(nullptr),
-	SharedRes("history", RegKey2ID(strRegKey))
+	CurrentItem(nullptr)
 {
 	if (*EnableSave)
 		ReadHistory();
@@ -174,8 +173,7 @@ bool History::SaveHistory()
 
 	if (!HistoryList.Count())
 	{
-		SharedResource::Writer w(SharedRes, 30);
-		DeleteRegKey(strRegKey);
+		ConfigWriter(strRegKey).RemoveSection();
 		return true;
 	}
 
@@ -196,319 +194,148 @@ bool History::SaveHistory()
 		}
 	}
 
-	wchar_t *TypesBuffer=nullptr;
-
-	if (SaveType)
-	{
-		TypesBuffer=(wchar_t *)xf_malloc((HistoryList.Count()+1)*sizeof(wchar_t));
-
-		if (!TypesBuffer)
-			return false;
-	}
-
-	wchar_t *LocksBuffer=nullptr;
-
-	if (!(LocksBuffer=(wchar_t *)xf_malloc((HistoryList.Count()+1)*sizeof(wchar_t))))
-	{
-		if (TypesBuffer)
-			xf_free(TypesBuffer);
-
-		return false;
-	}
-
-	FILETIME *TimesBuffer=nullptr;
-
-	if (!(TimesBuffer=(FILETIME *)xf_malloc((HistoryList.Count()+1)*sizeof(FILETIME))))
-	{
-		if (LocksBuffer)
-			xf_free(LocksBuffer);
-
-		if (TypesBuffer)
-			xf_free(TypesBuffer);
-
-		return false;
-	}
-
-	memset(TimesBuffer,0,(HistoryList.Count()+1)*sizeof(FILETIME));
-	wmemset(LocksBuffer,0,HistoryList.Count()+1);
-
-	if (SaveType)
-		wmemset(TypesBuffer,0,HistoryList.Count()+1);
-
-	HKEY hKey = nullptr;
 	bool ret = false;
-	wchar_t *BufferLines=nullptr, *PtrBuffer;
-	size_t SizeLines=0, SizeTypes=0, SizeLocks=0, SizeTimes=0;
-	int Position = -1;
-	size_t i=HistoryList.Count()-1;
-
-	for (const HistoryRecord *HistoryItem=HistoryList.Last(); HistoryItem ; HistoryItem=HistoryList.Prev(HistoryItem))
-	{
-		if (!(PtrBuffer=(wchar_t*)xf_realloc(BufferLines,(SizeLines+HistoryItem->strName.GetLength()+2)*sizeof(wchar_t))))
+	try {
+		std::wstring strTypes, strLines, strLocks;
+		std::vector<FILETIME> vTimes;
+		int Position = -1;
+		size_t i = HistoryList.Count();
+		for (const HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem ; HistoryItem = HistoryList.Prev(HistoryItem))
 		{
-			ret = false;
-			goto end;
+			FARString rectifiedName = HistoryItem->strName;
+
+			size_t p;
+			while (rectifiedName.Pos(p, L'\n'))
+				rectifiedName.Replace(p, 1, L'\r');
+
+			if (i != HistoryList.Count())
+				strLines+= L'\n';
+
+			strLines.append(rectifiedName.CPtr(), rectifiedName.GetLength());
+
+			if (SaveType)
+				strTypes+= L'0' + HistoryItem->Type;
+
+			strLocks+= L'0' + HistoryItem->Lock;
+			vTimes.emplace_back(HistoryItem->Timestamp);
+
+			--i;
+
+			if (HistoryItem == CurrentItem)
+				Position = static_cast<int>(i);
 		}
 
-		BufferLines=PtrBuffer;
-		xwcsncpy(BufferLines+SizeLines,HistoryItem->strName,HistoryItem->strName.GetLength()+1);
-		SizeLines+=HistoryItem->strName.GetLength()+1;
-
-		if (SaveType)
-			TypesBuffer[SizeTypes++]=HistoryItem->Type+L'0';
-
-		LocksBuffer[SizeLocks++]=HistoryItem->Lock+L'0';
-		TimesBuffer[SizeTimes].dwLowDateTime=HistoryItem->Timestamp.dwLowDateTime;
-		TimesBuffer[SizeTimes].dwHighDateTime=HistoryItem->Timestamp.dwHighDateTime;
-		SizeTimes++;
-
-		if (HistoryItem == CurrentItem)
-			Position = static_cast<int>(i);
-
-		i--;
-	}
-
-	hKey=CreateRegKey(strRegKey);
-
-	if (hKey)
-	{
-		SharedResource::Writer w(SharedRes, 30);
-		WINPORT(RegSetValueEx)(hKey,L"Lines",0,REG_MULTI_SZ,(unsigned char *)BufferLines,static_cast<DWORD>(SizeLines*sizeof(wchar_t)));
-
+		ConfigWriter cfg_writer(strRegKey);
+		cfg_writer.SetString("Lines", strLines.c_str());
 		if (SaveType) {
-			WINPORT(RegSetValueEx)(hKey,L"Types",0,REG_SZ,(unsigned char *)TypesBuffer,static_cast<DWORD>((SizeTypes+1)*sizeof(wchar_t)));
+			cfg_writer.SetString("Types", strTypes.c_str());
+		}
+		cfg_writer.SetString("Locks", strLocks.c_str());
+		cfg_writer.SetBytes("Times", vTimes.size() * sizeof(FILETIME), (const unsigned char *)&vTimes[0]);
+		cfg_writer.SetInt("Position", Position);
+
+		ret = cfg_writer.Save();
+		if (ret) {
+			LoadedStat = ConfigReader::SavedSectionStat(strRegKey);
 		}
 
-		WINPORT(RegSetValueEx)(hKey,L"Locks",0,REG_SZ,(unsigned char *)LocksBuffer,static_cast<DWORD>((SizeLocks+1)*sizeof(wchar_t)));
-		WINPORT(RegSetValueEx)(hKey,L"Times",0,REG_BINARY,(unsigned char *)TimesBuffer,(DWORD)SizeTimes*sizeof(FILETIME));
-		WINPORT(RegSetValueEx)(hKey,L"Position",0,REG_DWORD,(BYTE *)&Position,sizeof(Position));
-		WINPORT(RegCloseKey)(hKey);
-		ret = true;
+	} catch (std::exception &e) {
 	}
-
-end:
-
-	if (BufferLines)
-		xf_free(BufferLines);
-
-	if (TypesBuffer)
-		xf_free(TypesBuffer);
-
-	if (LocksBuffer)
-		xf_free(LocksBuffer);
-
-	if (TimesBuffer)
-		xf_free(TimesBuffer);
 
 	return ret;
 }
 
-bool History::ReadLastItem(const wchar_t *RegKey, FARString &strStr)
+bool History::ReadLastItem(const char *RegKey, FARString &strStr)
 {
 	strStr.Clear();
-	HKEY hKey=OpenRegKey(RegKey);
 
-	if (!hKey)
+	ConfigReader cfg_reader(RegKey);
+	if (!cfg_reader.HasSection())
 		return false;
 
-	DWORD Type;
-	DWORD Size=0;
-
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || Size<sizeof(wchar_t)) // Нету ничерта
+	if (!cfg_reader.GetString(strStr, "Lines", L""))
 		return false;
 
-	wchar_t *Buffer=(wchar_t*)xf_malloc(Size);
+	// last item is first in config
+	size_t p;
+	if (strStr.Pos(p, L'\n'))
+		strStr.Remove(p, strStr.GetLength() - p);
 
-	if (!Buffer)
-		return false;
-
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,(unsigned char *)Buffer,&Size)!=ERROR_SUCCESS)
-	{
-		xf_free(Buffer);
-		return false;
-	}
-
-	Buffer[Size/sizeof(wchar_t)-1]=0; //safety
-	strStr = Buffer; //last item is first in registry, null terminated
-	xf_free(Buffer);
 	return true;
 }
 
 bool History::ReadHistory(bool bOnlyLines)
 {
-	SharedResource::Reader r(SharedRes, 30);
-	HKEY hKey=OpenRegKey(strRegKey);
+	int Position = -1;
+	FARString strLines, strLocks, strTypes;
+	std::vector<unsigned char> vTimes;
 
-	if (!hKey)
+	ConfigReader cfg_reader(strRegKey);
+
+	if (!cfg_reader.GetString(strLines, "Lines", L""))
 		return false;
 
-	bool ret = false;
-	wchar_t *TypesBuffer=nullptr;
-	wchar_t *LocksBuffer=nullptr;
-	FILETIME *TimesBuffer=nullptr;
-	wchar_t *Buffer=nullptr;
-	int Position=-1;
-	DWORD Size=sizeof(Position);
-	DWORD Type;
-
-	if (!bOnlyLines) {
-		WINPORT(RegQueryValueEx)(hKey,L"Position",0,&Type,(BYTE *)&Position,&Size);
+	if (!bOnlyLines)
+	{
+		Position = cfg_reader.GetInt("Position", Position);
+		cfg_reader.GetBytes(vTimes, "Times");
+		cfg_reader.GetString(strLocks, "Locks", L"");
+		cfg_reader.GetString(strTypes, "Types", L"");
 	}
 
-	bool NeedReadType=false;
-	bool NeedReadLock=false;
-	bool NeedReadTime=false;
-	Size=0;
-
-	if (!bOnlyLines && SaveType && WINPORT(RegQueryValueEx)(hKey,L"Types",0,&Type,nullptr,&Size)==ERROR_SUCCESS && Size>0)
+	size_t StrPos = 0, LinesPos = 0, TypesPos = 0, LocksPos = 0, TimePos = 0;
+	while (LinesPos < strLines.GetLength() && StrPos < HistoryCount)
 	{
-		NeedReadType=true;
-		Size=Max(Size,(DWORD)((HistoryCount+2)*sizeof(wchar_t)));
-		TypesBuffer=(wchar_t *)xf_malloc(Size);
+		size_t LineEnd;
+		if (!strLines.Pos(LineEnd, L'\n', LinesPos))
+			LineEnd = strLines.GetLength();
 
-		if (TypesBuffer)
+		HistoryRecord AddRecord;
+		AddRecord.strName = strLines.SubStr(LinesPos, LineEnd - LinesPos);
+		LinesPos = LineEnd + 1;
+
+		if (TypesPos < strTypes.GetLength())
 		{
-			memset(TypesBuffer,0,Size);
-
-			if (WINPORT(RegQueryValueEx)(hKey,L"Types",0,&Type,(BYTE *)TypesBuffer,&Size)!=ERROR_SUCCESS)
-				goto end;
+			if (iswdigit(strTypes[TypesPos]))
+			{
+				AddRecord.Type = strTypes[TypesPos] - L'0';
+			}
+			++TypesPos;
 		}
-		else
-			goto end;
-	}
 
-	Size=0;
-
-	if (!bOnlyLines && WINPORT(RegQueryValueEx)(hKey,L"Locks",0,&Type,nullptr,&Size)==ERROR_SUCCESS && Size>0)
-	{
-		NeedReadLock=true;
-		Size=Max(Size,(DWORD)((HistoryCount+2)*sizeof(wchar_t)));
-		LocksBuffer=(wchar_t *)xf_malloc(Size);
-
-		if (LocksBuffer)
+		if (LocksPos < strLocks.GetLength())
 		{
-			memset(LocksBuffer,0,Size);
-
-			if (WINPORT(RegQueryValueEx)(hKey,L"Locks",0,&Type,(BYTE *)LocksBuffer,&Size)!=ERROR_SUCCESS)
-				goto end;
+			if (iswdigit(strLocks[LocksPos]))
+			{
+				AddRecord.Lock = (strLocks[LocksPos] != L'0');
+			}
+			++LocksPos;
 		}
-		else
-			goto end;
-	}
 
-	Size=0;
-
-	if (!bOnlyLines && WINPORT(RegQueryValueEx)(hKey,L"Times",0,&Type,nullptr,&Size)==ERROR_SUCCESS && Size>0)
-	{
-		NeedReadTime=true;
-		Size=Max(Size,(DWORD)((HistoryCount+2)*sizeof(FILETIME)));
-		TimesBuffer=(FILETIME *)xf_malloc(Size);
-
-		if (TimesBuffer)
+		if (TimePos + sizeof(FILETIME) <= vTimes.size())
 		{
-			memset(TimesBuffer,0,Size);
-
-			if (WINPORT(RegQueryValueEx)(hKey,L"Times",0,&Type,(BYTE *)TimesBuffer,&Size)!=ERROR_SUCCESS)
-				goto end;
+			AddRecord.Timestamp = *(const FILETIME *)&vTimes[TimePos];
+			++TimePos;
 		}
-		else
-			goto end;
+
+		HistoryList.Unshift(&AddRecord);
+
+		if ((int)StrPos == Position)
+			CurrentItem = HistoryList.First();
 	}
 
-	Size=0;
+	LoadedStat = cfg_reader.LoadedSectionStat();
 
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,nullptr,&Size)!=ERROR_SUCCESS || !Size) // Нету ничерта
-	{
-		ret = true;
-		goto end;
-	}
-
-	if (!(Buffer=(wchar_t*)xf_malloc(Size)))
-		goto end;
-
-	if (WINPORT(RegQueryValueEx)(hKey,L"Lines",0,&Type,(unsigned char *)Buffer,&Size)==ERROR_SUCCESS)
-	{
-		CurrentItem=nullptr;
-		wchar_t *TypesBuf=TypesBuffer;
-		wchar_t *LockBuf=LocksBuffer;
-		FILETIME *TimeBuf=TimesBuffer;
-		size_t StrPos=0;
-		wchar_t *Buf=Buffer;
-		Size/=sizeof(wchar_t);
-		Buf[Size-1]=0; //safety
-
-		while (Size > 1 && StrPos < HistoryCount)
-		{
-			int Length=StrLength(Buf)+1;
-			HistoryRecord AddRecord;
-			AddRecord.strName = Buf;
-			Buf+=Length;
-			Size-=Length;
-
-			if (NeedReadType)
-			{
-				if (iswdigit(*TypesBuf))
-				{
-					AddRecord.Type = *TypesBuf-L'0';
-					TypesBuf++;
-				}
-			}
-
-			if (NeedReadLock)
-			{
-				if (iswdigit(*LockBuf))
-				{
-					AddRecord.Lock = (*LockBuf-L'0')? true:false;
-					LockBuf++;
-				}
-			}
-
-			if (NeedReadTime)
-			{
-				AddRecord.Timestamp.dwLowDateTime=TimeBuf->dwLowDateTime;
-				AddRecord.Timestamp.dwHighDateTime=TimeBuf->dwHighDateTime;
-				TimeBuf++;
-			}
-
-			if (AddRecord.strName.GetLength())
-			{
-				HistoryList.Unshift(&AddRecord);
-
-				if (StrPos == static_cast<size_t>(Position))
-					CurrentItem=HistoryList.First();
-			}
-
-			StrPos++;
-		}
-	}
-	else
-		goto end;
-
-	ret=true;
-end:
-	WINPORT(RegCloseKey)(hKey);
-
-	if (TypesBuffer)
-		xf_free(TypesBuffer);
-
-	if (Buffer)
-		xf_free(Buffer);
-
-	if (LocksBuffer)
-		xf_free(LocksBuffer);
-
-	if (TimesBuffer)
-		xf_free(TimesBuffer);
-
-	//if (!ret)
-	//clear();
-	return ret;
+	return true;
 }
 
 void History::SyncChanges()
 {
-	if (SharedRes.IsModified()) {
-		fprintf(stderr, "History::SyncChanges: %ls\n", strRegKey.CPtr());
+	const struct stat &CurrentStat = ConfigReader::SavedSectionStat(strRegKey);
+	if (LoadedStat.st_ino != CurrentStat.st_ino
+			|| LoadedStat.st_size != CurrentStat.st_size
+			|| LoadedStat.st_mtime != CurrentStat.st_mtime) {
+		fprintf(stderr, "History::SyncChanges: %s\n", strRegKey.c_str());
 		CurrentItem = nullptr;
 		HistoryList.Clear();
 		ReadHistory();

@@ -1,3 +1,5 @@
+#ifdef WINPORT_REGISTRY
+
 #include <set>
 #include <string>
 #include <locale> 
@@ -804,3 +806,8 @@ extern "C" {
 	}
 
 }
+#else
+
+extern "C" void WinPortInitRegistry() { }
+
+#endif // WINPORT_REGISTRY

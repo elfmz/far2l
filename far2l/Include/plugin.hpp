@@ -44,7 +44,7 @@ other possible license with no implications from the above license on them.
 */
 
 #define FARMANAGERVERSION_MAJOR 2
-#define FARMANAGERVERSION_MINOR 2
+#define FARMANAGERVERSION_MINOR 3
 
 #ifndef RC_INVOKED
 
@@ -1216,7 +1216,6 @@ enum FARKEYSEQUENCEFLAGS
 {
 	KSFLAGS_DISABLEOUTPUT       = 0x00000001,
 	KSFLAGS_NOSENDKEYSTOPLUGINS = 0x00000002,
-	KSFLAGS_REG_MULTI_SZ        = 0x00100000,
 	KSFLAGS_SILENTCHECK         = 0x00000001,
 };
 

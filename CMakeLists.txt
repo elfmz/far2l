@@ -179,8 +179,8 @@ if(NOT LibArchive_FOUND)
 	message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -ffunction-sections -fdata-sections -Wl,--gc-sections -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2")
 set(TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
@@ -193,6 +193,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(INSTALL_DIR ${APP_DIR}/${APP_NAME}.app/Contents/MacOS)
 	set(EXECUTABLE_NAME ${APP_NAME})
 else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
 	set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 	set(EXECUTABLE_NAME far2l)
 endif()

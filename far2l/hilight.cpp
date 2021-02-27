@@ -87,6 +87,8 @@ static const char RegColorsHighlight[] = "Colors/Highlight";
 
 static void SetDefaultHighlighting()
 {
+	fprintf(stderr, "SetDefaultHighlighting\n");
+
 	ConfigWriter cfg_writer;
 	static const wchar_t *Masks[]=
 	{
@@ -138,6 +140,9 @@ static void SetDefaultHighlighting()
 		cfg_writer.SetUInt(HLS.NormalColor, StdHighlightData[I].NormalColor);
 		cfg_writer.SetUInt(HLS.CursorColor, StdHighlightData[I].CursorColor);
 	}
+
+	cfg_writer.SelectSection(RegColorsHighlight);
+	cfg_writer.SetInt("Initialized", 1);
 }
 
 HighlightFiles::HighlightFiles()

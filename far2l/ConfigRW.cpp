@@ -45,16 +45,16 @@ static const char *Section2Ini(const std::string &section)
 		return "settings/user_menu.ini";
 
 	if (IsSectionOrSubsection(section, "SavedDialogHistory"))
-		return "history/dialogs.ini";
+		return "history/dialogs.hst";
 
 	if (IsSectionOrSubsection(section, "SavedHistory"))
-		return "history/commands.ini";
+		return "history/commands.hst";
 
 	if (IsSectionOrSubsection(section, "SavedFolderHistory"))
-		return "history/folders.ini";
+		return "history/folders.hst";
 
 	if (IsSectionOrSubsection(section, "SavedViewHistory"))
-		return "history/view.ini";
+		return "history/view.hst";
 
 	return CONFIG_INI;
 }
@@ -470,6 +470,8 @@ void CheckForConfigUpgrade()
 		ConfigWriter cfg_writer;
 		ConfigUgrade_RegKey(cfg_writer, HKEY_CURRENT_USER, L"Software/Far2", "");
 		rename(InMyConfig("plugins.ini").c_str(), InMyConfig("plugins/state.ini").c_str());
+		rename(InMyConfig("viewer.pos").c_str(), InMyConfig("history/viewer.pos").c_str());
+		rename(InMyConfig("editor.pos").c_str(), InMyConfig("history/editor.pos").c_str());
 	}
 }
 

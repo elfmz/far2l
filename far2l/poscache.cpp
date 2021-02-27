@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
 	: _kind(kind),
-	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "viewer.pos" : "editor.pos"))
+	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "history/viewer.pos" : "history/editor.pos"))
 {
 }
 

@@ -38,4 +38,3 @@ void ProcessName(const TCHAR *OldFullName, DWORD FileAttributes);
 
 static struct PluginStartupInfo Info;
 static struct FarStandardFunctions FSF;
-TCHAR PluginRootKey[80];

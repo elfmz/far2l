@@ -1,23 +1,27 @@
 #include <colorer/xml/XmlInputSource.h>
 #include <colorer/parsers/ParserFactoryException.h>
+#include <sys/stat.h>
+#include <KeyFileHelper.h>
+#include <utils.h>
 #if 0
 #include <g3log/g3log.hpp>
 #endif
 #include"FarEditorSet.h"
 
+const std::string cSectionName = "Settings";
 //registry keys
-const wchar_t cRegEnabled[] = L"Enabled";
-const wchar_t cRegHrdName[] = L"HrdName";
-const wchar_t cRegHrdNameTm[] = L"HrdNameTm";
-const wchar_t cRegCatalog[] = L"Catalog";
-const wchar_t cRegCrossDraw[] = L"CrossDraw";
-const wchar_t cRegPairsDraw[] = L"PairsDraw";
-const wchar_t cRegSyntaxDraw[] = L"SyntaxDraw";
-const wchar_t cRegOldOutLine[] = L"OldOutlineView";
-const wchar_t cRegTrueMod[] = L"TrueMod";
-const wchar_t cRegChangeBgEditor[] = L"ChangeBgEditor";
-const wchar_t cRegUserHrdPath[] = L"UserHrdPath";
-const wchar_t cRegUserHrcPath[] = L"UserHrcPath";
+const char cRegEnabled[] = "Enabled";
+const char cRegHrdName[] = "HrdName";
+const char cRegHrdNameTm[] = "HrdNameTm";
+const char cRegCatalog[] = "Catalog";
+const char cRegCrossDraw[] = "CrossDraw";
+const char cRegPairsDraw[] = "PairsDraw";
+const char cRegSyntaxDraw[] = "SyntaxDraw";
+const char cRegOldOutLine[] = "OldOutlineView";
+const char cRegTrueMod[] = "TrueMod";
+const char cRegChangeBgEditor[] = "ChangeBgEditor";
+const char cRegUserHrdPath[] = "UserHrdPath";
+const char cRegUserHrcPath[] = "UserHrcPath";
 
 //values of registry keys by default
 const bool cEnabledDefault = true;
@@ -75,15 +79,11 @@ FarEditorSet::FarEditorSet():
   sUserHrcPathExp(nullptr),
   viewFirst(0)
 {
-  wchar_t key[255];
-  swprintf(key,255, L"%ls/colorer", Info.RootKey);
-
-  DWORD res =rOpenKey(HKEY_CURRENT_USER, key, hPluginRegistry);
-  if (res == REG_CREATED_NEW_KEY){
+  settingsIni = InMyConfig("plugins/colorer/config.ini");
+  struct stat s;
+  if (stat(settingsIni.c_str(), &s) == -1) {
     SetDefaultSettings();
   }
-
-  rEnabled = !!rGetValueDw(hPluginRegistry, cRegEnabled, cEnabledDefault);
 
   ReloadBase();
 }
@@ -91,7 +91,6 @@ FarEditorSet::FarEditorSet():
 FarEditorSet::~FarEditorSet()
 {
   dropAllEditors(false);
-  WINPORT(RegCloseKey)(hPluginRegistry);
   delete sHrdName;
   delete sHrdNameTm;
   delete sCatalogPath;
@@ -1016,6 +1015,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
 
 void FarEditorSet::ReloadBase()
 {
+  ReadSettings();
   if (!rEnabled){
     return;
   }
@@ -1030,7 +1030,6 @@ void FarEditorSet::ReloadBase()
   parserFactory = nullptr;
   regionMapper = nullptr;
 
-  ReadSettings();
   consoleAnnotationAvailable=checkConsoleAnnotationAvailable() && TrueModOn;
   if (consoleAnnotationAvailable){
     // зачем было запрещать DString присваивание константному rvalue???
@@ -1182,15 +1181,14 @@ const wchar_t *FarEditorSet::GetMsg(int msg)
 void FarEditorSet::enableColorer(bool fromEditor)
 {
   rEnabled = true;
-  rSetValue(hPluginRegistry, cRegEnabled, rEnabled);
+  { KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, rEnabled); }
   ReloadBase();
 }
 
 void FarEditorSet::disableColorer()
 {
   rEnabled = false;
-  rSetValue(hPluginRegistry, cRegEnabled, rEnabled);
-
+  { KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, rEnabled); }
   dropCurrentEditor(true);
 
   delete regionMapper;
@@ -1258,11 +1256,12 @@ void FarEditorSet::dropAllEditors(bool clean)
 
 void FarEditorSet::ReadSettings()
 {
-  wchar_t *hrdName = rGetValueSz(hPluginRegistry, cRegHrdName, cHrdNameDefault);
-  wchar_t *hrdNameTm = rGetValueSz(hPluginRegistry, cRegHrdNameTm, cHrdNameTmDefault);
-  wchar_t *catalogPath = rGetValueSz(hPluginRegistry, cRegCatalog, cCatalogDefault);
-  wchar_t *userHrdPath = rGetValueSz(hPluginRegistry, cRegUserHrdPath, cUserHrdPathDefault);
-  wchar_t *userHrcPath = rGetValueSz(hPluginRegistry, cRegUserHrcPath, cUserHrcPathDefault);
+  KeyFileReadSection kfh(settingsIni, cSectionName);
+  std::wstring hrdName = kfh.GetString(cRegHrdName, cHrdNameDefault);
+  std::wstring hrdNameTm = kfh.GetString(cRegHrdNameTm, cHrdNameTmDefault);
+  std::wstring catalogPath = kfh.GetString(cRegCatalog, cCatalogDefault);
+  std::wstring userHrdPath = kfh.GetString(cRegUserHrdPath, cUserHrdPathDefault);
+  std::wstring userHrcPath = kfh.GetString(cRegUserHrcPath, cUserHrcPathDefault);
 
   delete sHrdName;
   delete sHrdNameTm;
@@ -1280,66 +1279,62 @@ void FarEditorSet::ReadSettings()
   sUserHrcPath = nullptr;
   sUserHrcPathExp = nullptr;
 
-  sHrdName = new SString(StringBuffer(hrdName));
-  sHrdNameTm = new SString(StringBuffer(hrdNameTm));
-  sCatalogPath = new SString(StringBuffer(catalogPath));
-  sCatalogPathExp = PathToFullS(catalogPath,false);
+  sHrdName = new SString(StringBuffer(hrdName.c_str()));
+  sHrdNameTm = new SString(StringBuffer(hrdNameTm.c_str()));
+  sCatalogPath = new SString(StringBuffer(catalogPath.c_str()));
+  sCatalogPathExp = PathToFullS(catalogPath.c_str(),false);
   if (!sCatalogPathExp || !sCatalogPathExp->length()){
     delete sCatalogPathExp;
     sCatalogPathExp = GetConfigPath(SString(FarCatalogXml));
   }
 
-  sUserHrdPath = new SString(StringBuffer(userHrdPath));
-  sUserHrdPathExp = PathToFullS(userHrdPath,false);
-  sUserHrcPath = new SString(StringBuffer(userHrcPath));
-  sUserHrcPathExp = PathToFullS(userHrcPath,false);
-
-  delete[] hrdName;
-  delete[] hrdNameTm;
-  delete[] catalogPath;
-  delete[] userHrdPath;
-  delete[] userHrcPath;
+  sUserHrdPath = new SString(StringBuffer(userHrdPath.c_str()));
+  sUserHrdPathExp = PathToFullS(userHrdPath.c_str(),false);
+  sUserHrcPath = new SString(StringBuffer(userHrcPath.c_str()));
+  sUserHrcPathExp = PathToFullS(userHrcPath.c_str(),false);
 
   // two '!' disable "Compiler Warning (level 3) C4800" and slightly faster code
-  rEnabled = !!rGetValueDw(hPluginRegistry, cRegEnabled, cEnabledDefault);
-  drawCross = rGetValueDw(hPluginRegistry, cRegCrossDraw, cCrossDrawDefault);
-  drawPairs = !!rGetValueDw(hPluginRegistry, cRegPairsDraw, cPairsDrawDefault);
-  drawSyntax = !!rGetValueDw(hPluginRegistry, cRegSyntaxDraw, cSyntaxDrawDefault);
-  oldOutline = !!rGetValueDw(hPluginRegistry, cRegOldOutLine, cOldOutLineDefault);
-  TrueModOn = !!rGetValueDw(hPluginRegistry, cRegTrueMod, cTrueMod);
-  ChangeBgEditor = !!rGetValueDw(hPluginRegistry, cRegChangeBgEditor, cChangeBgEditor);
+  rEnabled = !!kfh.GetInt(cRegEnabled, cEnabledDefault);
+  drawCross = kfh.GetInt(cRegCrossDraw, cCrossDrawDefault);
+  drawPairs = !!kfh.GetInt(cRegPairsDraw, cPairsDrawDefault);
+  drawSyntax = !!kfh.GetInt(cRegSyntaxDraw, cSyntaxDrawDefault);
+  oldOutline = !!kfh.GetInt(cRegOldOutLine, cOldOutLineDefault);
+  TrueModOn = !!kfh.GetInt(cRegTrueMod, cTrueMod);
+  ChangeBgEditor = !!kfh.GetInt(cRegChangeBgEditor, cChangeBgEditor);
 }
 
 void FarEditorSet::SetDefaultSettings()
 {
-  rSetValue(hPluginRegistry, cRegEnabled, cEnabledDefault); 
-  rSetValue(hPluginRegistry, cRegHrdName, REG_SZ, cHrdNameDefault, static_cast<DWORD>(sizeof(wchar_t)*(wcslen(cHrdNameDefault)+1)));
-  rSetValue(hPluginRegistry, cRegHrdNameTm, REG_SZ, cHrdNameTmDefault, static_cast<DWORD>(sizeof(wchar_t)*(wcslen(cHrdNameTmDefault)+1)));
-  rSetValue(hPluginRegistry, cRegCatalog, REG_SZ, cCatalogDefault, static_cast<DWORD>(sizeof(wchar_t)*(wcslen(cCatalogDefault)+1)));
-  rSetValue(hPluginRegistry, cRegCrossDraw, cCrossDrawDefault); 
-  rSetValue(hPluginRegistry, cRegPairsDraw, cPairsDrawDefault); 
-  rSetValue(hPluginRegistry, cRegSyntaxDraw, cSyntaxDrawDefault); 
-  rSetValue(hPluginRegistry, cRegOldOutLine, cOldOutLineDefault); 
-  rSetValue(hPluginRegistry, cRegTrueMod, cTrueMod); 
-  rSetValue(hPluginRegistry, cRegChangeBgEditor, cChangeBgEditor); 
-  rSetValue(hPluginRegistry, cRegUserHrdPath, REG_SZ, cUserHrdPathDefault, static_cast<DWORD>(sizeof(wchar_t)*(wcslen(cUserHrdPathDefault)+1)));
-  rSetValue(hPluginRegistry, cRegUserHrcPath, REG_SZ, cUserHrcPathDefault, static_cast<DWORD>(sizeof(wchar_t)*(wcslen(cUserHrcPathDefault)+1)));
+  KeyFileHelper kfh(settingsIni);
+  kfh.SetInt(cSectionName, cRegEnabled, cEnabledDefault);
+  kfh.SetString(cSectionName, cRegHrdName, cHrdNameDefault);
+  kfh.SetString(cSectionName, cRegHrdNameTm, cHrdNameTmDefault);
+  kfh.SetString(cSectionName, cRegCatalog, cCatalogDefault);
+  kfh.SetInt(cSectionName, cRegCrossDraw, cCrossDrawDefault); 
+  kfh.SetInt(cSectionName, cRegPairsDraw, cPairsDrawDefault); 
+  kfh.SetInt(cSectionName, cRegSyntaxDraw, cSyntaxDrawDefault); 
+  kfh.SetInt(cSectionName, cRegOldOutLine, cOldOutLineDefault); 
+  kfh.SetInt(cSectionName, cRegTrueMod, cTrueMod); 
+  kfh.SetInt(cSectionName, cRegChangeBgEditor, cChangeBgEditor); 
+  kfh.SetString(cSectionName, cRegUserHrdPath, cUserHrdPathDefault);
+  kfh.SetString(cSectionName, cRegUserHrcPath, cUserHrcPathDefault);
 }
 
 void FarEditorSet::SaveSettings()
 {
-  rSetValue(hPluginRegistry, cRegEnabled, rEnabled); 
-  rSetValue(hPluginRegistry, cRegHrdName, REG_SZ, sHrdName->getWChars(), sizeof(wchar_t)*(sHrdName->length()+1));
-  rSetValue(hPluginRegistry, cRegHrdNameTm, REG_SZ, sHrdNameTm->getWChars(), sizeof(wchar_t)*(sHrdNameTm->length()+1));
-  rSetValue(hPluginRegistry, cRegCatalog, REG_SZ, sCatalogPath->getWChars(), sizeof(wchar_t)*(sCatalogPath->length()+1));
-  rSetValue(hPluginRegistry, cRegCrossDraw, drawCross); 
-  rSetValue(hPluginRegistry, cRegPairsDraw, drawPairs); 
-  rSetValue(hPluginRegistry, cRegSyntaxDraw, drawSyntax); 
-  rSetValue(hPluginRegistry, cRegOldOutLine, oldOutline); 
-  rSetValue(hPluginRegistry, cRegTrueMod, TrueModOn); 
-  rSetValue(hPluginRegistry, cRegChangeBgEditor, ChangeBgEditor); 
-  rSetValue(hPluginRegistry, cRegUserHrdPath, REG_SZ, sUserHrdPath->getWChars(), sizeof(wchar_t)*(sUserHrdPath->length()+1));
-  rSetValue(hPluginRegistry, cRegUserHrcPath, REG_SZ, sUserHrcPath->getWChars(), sizeof(wchar_t)*(sUserHrcPath->length()+1));
+  KeyFileHelper kfh(settingsIni);
+  kfh.SetInt(cSectionName, cRegEnabled, rEnabled); 
+  kfh.SetString(cSectionName, cRegHrdName, sHrdName->getWChars());
+  kfh.SetString(cSectionName, cRegHrdNameTm, sHrdNameTm->getWChars());
+  kfh.SetString(cSectionName, cRegCatalog, sCatalogPath->getWChars());
+  kfh.SetInt(cSectionName, cRegCrossDraw, drawCross); 
+  kfh.SetInt(cSectionName, cRegPairsDraw, drawPairs); 
+  kfh.SetInt(cSectionName, cRegSyntaxDraw, drawSyntax); 
+  kfh.SetInt(cSectionName, cRegOldOutLine, oldOutline); 
+  kfh.SetInt(cSectionName, cRegTrueMod, TrueModOn); 
+  kfh.SetInt(cSectionName, cRegChangeBgEditor, ChangeBgEditor); 
+  kfh.SetString(cSectionName, cRegUserHrdPath, sUserHrdPath->getWChars());
+  kfh.SetString(cSectionName, cRegUserHrcPath, sUserHrcPath->getWChars());
 }
 
 bool FarEditorSet::checkConEmu()

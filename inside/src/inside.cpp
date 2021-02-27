@@ -1,8 +1,8 @@
 #include "Globals.h"
-#include "elf/PluginImplELF.h"
 #include "plain/PluginImplPlain.h"
 #include <fcntl.h>
 #ifndef __APPLE__
+# include "elf/PluginImplELF.h"
 # include <elf.h>
 #endif
 #include <sudo.h>

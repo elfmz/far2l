@@ -14,7 +14,7 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 		s.resize(p + 1);
 		s+= "config.ini";
 	}
-	configs.emplace_back(InMyConfig("inside/config.ini", false));
+	configs.emplace_back(InMyConfig("plugins/inside/config.ini", false));
 	configs.emplace_back(s);
 	if (TranslateInstallPath_Lib2Share(s))
 		configs.emplace_back(s);

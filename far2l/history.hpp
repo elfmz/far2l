@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "DList.hpp"
-#include "SharedResource.h"
 
 class Dialog;
 class VMenu;
@@ -81,7 +80,7 @@ struct HistoryRecord
 class History
 {
 	private:
-		FARString strRegKey;
+		std::string strRegKey;
 		bool EnableAdd, KeepSelectedPos, SaveType;
 		int RemoveDups;
 		enumHISTORYTYPE TypeHistory;
@@ -89,7 +88,7 @@ class History
 		const int *EnableSave;
 		DList<HistoryRecord> HistoryList;
 		HistoryRecord *CurrentItem;
-		SharedResource SharedRes;
+		struct stat LoadedStat{};
 
 	private:
 		void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);
@@ -101,12 +100,12 @@ class History
 		void SyncChanges();
 
 	public:
-		History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const wchar_t *RegKey, const int *EnableSave, bool SaveType);
+		History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const std::string &RegKey, const int *EnableSave, bool SaveType);
 		~History();
 
 	public:
 		void AddToHistory(const wchar_t *Str, int Type=0, const wchar_t *Prefix=nullptr, bool SaveForbid=false);
-		static bool ReadLastItem(const wchar_t *RegKey, FARString &strStr);
+		static bool ReadLastItem(const char *RegKey, FARString &strStr);
 		int  Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type);
 		int  Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr);
 		void GetPrev(FARString &strStr);

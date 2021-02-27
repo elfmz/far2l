@@ -28,7 +28,7 @@ Folder shortcuts
 #include "plugins.hpp"
 
 Bookmarks::Bookmarks()
-	: _kfh(InMyConfig("bookmarks.ini").c_str(), true)
+	: _kfh(InMyConfig("settings/bookmarks.ini").c_str(), true)
 {
 }
 
@@ -43,10 +43,10 @@ bool Bookmarks::Set(int index, const FARString *path,
 	char sec[32]; sprintf(sec, "%u", index);
 	_kfh.RemoveSection(sec);
 
-	_kfh.PutString(sec, "Path", path ? path->GetMB().c_str() : "");
-	_kfh.PutString(sec, "Plugin", plugin ? plugin->GetMB().c_str() : "");
-	_kfh.PutString(sec, "PluginFile", plugin_file ? plugin_file->GetMB().c_str() : "");
-	_kfh.PutString(sec, "PluginData", plugin_data ? plugin_data->GetMB().c_str() : "");
+	_kfh.SetString(sec, "Path", path ? path->GetMB().c_str() : "");
+	_kfh.SetString(sec, "Plugin", plugin ? plugin->GetMB().c_str() : "");
+	_kfh.SetString(sec, "PluginFile", plugin_file ? plugin_file->GetMB().c_str() : "");
+	_kfh.SetString(sec, "PluginData", plugin_data ? plugin_data->GetMB().c_str() : "");
 
 	return _kfh.Save();
 }

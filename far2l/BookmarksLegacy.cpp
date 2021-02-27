@@ -34,16 +34,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include "Bookmarks.hpp"
-#include "registry.hpp"
 #include <fcntl.h>
 
 // TODO: remove this code after 2022/01/13
+#ifdef WINPORT_REGISTRY
 
-static int LegacyShortcut_GetRecord(const wchar_t *RecTypeName, int RecNumber, FARString *pValue)
+static void LegacyShortcut_GetRecord(const wchar_t *RecTypeName, int RecNumber, FARString *pValue)
 {
-	FARString strValueName;
-	strValueName.Format(RecTypeName, RecNumber);
-	return GetRegKey(L"FolderShortcuts", strValueName, *pValue, L"");
+	pValue->Clear();
+
+	HKEY key = NULL;
+	if (WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, L"Software/Far2", 0, GENERIC_READ, &key) == ERROR_SUCCESS) {
+		FARString strValueName;
+		strValueName.Format(RecTypeName, RecNumber);
+		std::vector<WCHAR> data(0x10000);
+		DWORD tip, data_len = (data.size() - 1) * sizeof(WCHAR);
+		if (WINPORT(RegQueryValueEx)(key, strValueName, NULL, &tip, (LPBYTE)&data[0], &data_len) == ERROR_SUCCESS) {
+			*pValue = &data[0];
+		}
+		WINPORT(RegCloseKey)(key);
+	}
 }
 
 static int LegacyShortcut_Get(int Pos, FARString *pDestFolder,
@@ -69,7 +79,7 @@ static int LegacyShortcut_Get(int Pos, FARString *pDestFolder,
 
 void CheckForImportLegacyShortcuts()
 {
-	const auto &new_path = InMyConfig("bookmarks.ini");
+	const auto &new_path = InMyConfig("settings/bookmarks.ini");
 	struct stat s{};
 	if (stat(new_path.c_str(), &s) == 0)
 		return;
@@ -91,3 +101,9 @@ void CheckForImportLegacyShortcuts()
 		}
 	}
 }
+
+#else // WINPORT_REGISTRY
+
+void CheckForImportLegacyShortcuts() {}
+
+#endif // WINPORT_REGISTRY

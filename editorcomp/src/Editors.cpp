@@ -1,5 +1,6 @@
 #include "Editors.h"
-#include "Registry.h"
+#include <KeyFileHelper.h>
+#include <utils.h>
 
 static int getEditorId(const PluginStartupInfo &info) {
     EditorInfo ei = {0};
@@ -10,13 +11,12 @@ static int getEditorId(const PluginStartupInfo &info) {
 Editors::Editors(const PluginStartupInfo &info, const FarStandardFunctions &fsf) : info(info), fsf(fsf) {
     this->info.FSF = &this->fsf;
 
-    this->registryRootKey = info.RootKey;
-    this->registryRootKey += PLUGIN_REGISTRY_BRANCH;
+    this->iniPath = InMyConfig("plugins/editorcomp/config.ini");
+    this->iniSection  = "Settings";
 
-    Registry reg(this->registryRootKey);
-    this->autoEnabling = reg.read(ENABLED_REGISTRY_ENTRY, DEFAULT_ENABLED);
-    this->fileMasks = DEFAULT_FILE_MASKS;
-    reg.read(FILE_MASKS_ENTRY, this->fileMasks);
+    KeyFileReadSection kfh(this->iniPath, this->iniSection);
+    this->autoEnabling = !!kfh.GetInt(ENABLED_ENTRY, DEFAULT_ENABLED);
+    this->fileMasks = kfh.GetString(FILE_MASKS_ENTRY, DEFAULT_FILE_MASKS);
 }
 
 Editor *Editors::getEditor(void *params) {
@@ -48,8 +48,9 @@ PluginStartupInfo &Editors::getInfo() {
 }
 
 void Editors::setAutoEnabling(bool enabled) {
-    Registry reg(this->registryRootKey);
-    if (reg.write(ENABLED_REGISTRY_ENTRY, enabled))
+    KeyFileHelper kfh(this->iniPath);
+    kfh.SetInt(this->iniSection, ENABLED_ENTRY, enabled);
+    if (kfh.Save())
         this->autoEnabling = enabled;
 }
 
@@ -58,8 +59,9 @@ bool Editors::getAutoEnabling() {
 }
 
 void Editors::setFileMasks(const std::wstring &masks) {
-    Registry reg(this->registryRootKey);
-    if (reg.write(FILE_MASKS_ENTRY, masks))
+    KeyFileHelper kfh(this->iniPath);
+    kfh.SetString(this->iniSection, FILE_MASKS_ENTRY, masks.c_str());
+    if (kfh.Save())
         this->fileMasks = masks;
 }
 

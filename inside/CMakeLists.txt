@@ -4,6 +4,7 @@ set(SOURCES
 src/inside.cpp
 src/Globals.cpp
 src/Commands.cpp
+src/ItemList.cpp
 src/PluginImpl.cpp
 
 src/plain/PluginImplPlain.cpp
@@ -24,12 +25,11 @@ endif()
 
 add_library (inside MODULE ${SOURCES})
 
-target_link_libraries(inside utils FARStdlib far2l)
+target_link_libraries(inside utils far2l)
 
 target_include_directories(inside PRIVATE src)
 target_include_directories(inside PRIVATE src/elf)
 target_include_directories(inside PRIVATE src/plain)
-target_include_directories(inside PRIVATE ../FARStdlib/include)
 target_include_directories(inside PRIVATE ../WinPort)
 target_include_directories(inside PRIVATE ../far2l)
 target_include_directories(inside PRIVATE ../far2l/Include)

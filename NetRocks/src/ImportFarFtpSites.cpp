@@ -3,6 +3,9 @@
 #include "SitesConfig.h"
 #include "StringConfig.h"
 
+// TODO: remove this code in year >= 2022
+#ifdef WINPORT_REGISTRY
+
 #define FTP_PWD_LEN 150  //max crypted pwd length
 
 bool SplitLocationSpecification(const char *specification,
@@ -100,14 +103,14 @@ bool ImportFarFtpSites()
 				StringConfig sc("");
 				sc.SetInt("Passive", passive_mode ? 1 : 0);
 
-				sites_cfg.PutProtocol(site, "ftp");
-				sites_cfg.PutHost(site, spec_host);
-				sites_cfg.PutUsername(site, spec_username);
-				sites_cfg.PutPassword(site, spec_password);
-				sites_cfg.PutDirectory(site, spec_directory);
-				sites_cfg.PutPort(site, spec_port);
-				sites_cfg.PutLoginMode(site, ask_login ? 0 : 2);
-				sites_cfg.PutProtocolOptions(site, "ftp", sc.Serialize());
+				sites_cfg.SetProtocol(site, "ftp");
+				sites_cfg.SetHost(site, spec_host);
+				sites_cfg.SetUsername(site, spec_username);
+				sites_cfg.SetPassword(site, spec_password);
+				sites_cfg.SetDirectory(site, spec_directory);
+				sites_cfg.SetPort(site, spec_port);
+				sites_cfg.SetLoginMode(site, ask_login ? 0 : 2);
+				sites_cfg.SetProtocolOptions(site, "ftp", sc.Serialize());
 
 			}
 		}
@@ -116,3 +119,8 @@ bool ImportFarFtpSites()
 
 	return out;
 }
+#else
+
+bool ImportFarFtpSites() { return true; }
+
+#endif

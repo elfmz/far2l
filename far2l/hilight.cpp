@@ -46,14 +46,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "savescr.hpp"
 #include "ctrlobj.hpp"
 #include "scrbuf.hpp"
-#include "registry.hpp"
 #include "palette.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "interf.hpp"
-#include "KeyFileHelper.h"
+#include "ConfigRW.hpp"
 
-static const struct HighlightStrings
+struct HighlightStrings
 {
 	const char *UseAttr,*IncludeAttributes,*ExcludeAttributes,*AttrSet,*AttrClear,
 	*IgnoreMask,*UseMask,*Mask,
@@ -62,9 +61,11 @@ static const struct HighlightStrings
 	*MarkChar,
 	*ContinueProcessing,
 	*UseDate,*DateType,*DateAfter,*DateBefore,*DateRelative,
-	*UseSize,*SizeAbove,*SizeBelow;
-//	*HighlightEdit,*HighlightList;
-} HLS=
+	*UseSize,*SizeAbove,*SizeBelow,
+	*HighlightEdit,*HighlightList;
+};
+
+static const HighlightStrings HLS=
 {
 	"UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
 	"IgnoreMask", "UseMask", "Mask",
@@ -73,31 +74,20 @@ static const struct HighlightStrings
 	"MarkChar",
 	"ContinueProcessing",
 	"UseDate", "DateType", "DateAfter", "DateBefore", "DateRelative",
-	"UseSize", "SizeAboveS", "SizeBelowS"
-//	"HighlightEdit", "HighlightList"
+	"UseSize", "SizeAboveS", "SizeBelowS",
+	"HighlightEdit", "HighlightList"
 };
 
-static const char fmtFirstGroup[]= "Group%d";
-static const char fmtUpperGroup[]= "UpperGroup%d";
-static const char fmtLowerGroup[]= "LowerGroup%d";
-static const char fmtLastGroup[]= "LastGroup%d";
-static const char SortGroupsKeyName[]= "SortGroups";
-static const char HighlightKeyName[]= "Highlight";
-static const char RegColorsHighlight[]= "Colors/Highlight";
-
-static std::string HighlightIni()
-{
-	return InMyConfig("highlight.ini");
-}
-
-static std::string SortgroupsIni()
-{
-	return InMyConfig("sortgroups.ini");
-}
-
+static const char fmtFirstGroup[] = "Group%d";
+static const char fmtUpperGroup[] = "UpperGroup%d";
+static const char fmtLowerGroup[] = "LowerGroup%d";
+static const char fmtLastGroup[] = "LastGroup%d";
+static const char SortGroupsKeyName[] = "SortGroups";
+static const char RegColorsHighlight[] = "Colors/Highlight";
 
 static void SetDefaultHighlighting()
 {
+	ConfigWriter cfg_writer;
 	static const wchar_t *Masks[]=
 	{
 		/* 0 */ L"*.*",
@@ -139,220 +129,115 @@ static void SetDefaultHighlighting()
 	    };
 
 
-	KeyFileHelper kfh(HighlightIni().c_str());
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
 	{
-		const std::string &Section = StrPrintf("Group%d", I);
-		kfh.PutString(Section.c_str(), HLS.Mask, StdHighlightData[I].Mask);
-		kfh.PutUInt(Section.c_str(), HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
-		kfh.PutUInt(Section.c_str(), HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
-		kfh.PutUInt(Section.c_str(), HLS.NormalColor, StdHighlightData[I].NormalColor);
-		kfh.PutUInt(Section.c_str(), HLS.CursorColor, StdHighlightData[I].CursorColor);
+		cfg_writer.SelectSectionFmt("%s/Group%d", RegColorsHighlight, I);
+		cfg_writer.SetString(HLS.Mask, StdHighlightData[I].Mask);
+		cfg_writer.SetInt(HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
+		cfg_writer.SetUInt(HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
+		cfg_writer.SetUInt(HLS.NormalColor, StdHighlightData[I].NormalColor);
+		cfg_writer.SetUInt(HLS.CursorColor, StdHighlightData[I].CursorColor);
 	}
 }
 
 HighlightFiles::HighlightFiles()
 {
-	struct stat s{};
-
-	if (stat(HighlightIni().c_str(), &s) == 0) {
-		InitHighlightFiles();
-
-	} else if (CheckRegKey(FARString(RegColorsHighlight))) {
-		InitHighlightFilesFromReg();
-		SaveHiData();
-
-	} else {
-		SetDefaultHighlighting();
-		InitHighlightFiles();
-	}
-
+	InitHighlightFiles();
 	UpdateCurrentTime();
 }
 
-static void LoadFilter(FileFilterParams *HData,
-		const KeyFileValues *Values, const std::string &Mask, int SortGroup, bool bSortGroup)
+static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const wchar_t *Mask, int SortGroup, bool bSortGroup)
 {
 	//Дефолтные значения выбраны так чтоб как можно правильней загрузить
 	//настройки старых версий фара.
 	if (bSortGroup)
-		HData->SetMask(Values->GetUInt(HLS.UseMask, 1) != 0, FARString(Mask));
+		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
 	else
-		HData->SetMask(Values->GetUInt(HLS.IgnoreMask, 0) == 0, FARString(Mask));
+		HData->SetMask(cfg_reader.GetInt(HLS.IgnoreMask, 0) == 0, Mask);
 
 	FILETIME DateAfter{}, DateBefore{};
-	Values->GetBytes(HLS.DateAfter, (unsigned char *)&DateAfter, sizeof(DateAfter));
-	Values->GetBytes(HLS.DateBefore, (unsigned char *)&DateBefore, sizeof(DateBefore));
-	HData->SetDate(Values->GetUInt(HLS.UseDate, 0) != 0,
-					(DWORD)Values->GetUInt(HLS.DateType, 0),
+	cfg_reader.GetPOD(HLS.DateAfter, DateAfter);
+	cfg_reader.GetPOD(HLS.DateBefore, DateBefore);
+	HData->SetDate(cfg_reader.GetInt(HLS.UseDate, 1) != 0,
+					(DWORD)cfg_reader.GetUInt(HLS.DateType, 0),
 					DateAfter, DateBefore,
-					Values->GetUInt(HLS.DateRelative, 0) != 0);
-	FARString strSizeAbove(Values->GetString(HLS.SizeAbove, L""));
-	FARString strSizeBelow(Values->GetString(HLS.SizeBelow, L""));
-	HData->SetSize(Values->GetUInt(HLS.UseSize, 0) != 0, strSizeAbove, strSizeBelow);
+					cfg_reader.GetInt(HLS.DateRelative, 0) != 0);
+	FARString strSizeAbove = cfg_reader.GetString(HLS.SizeAbove, L"");
+	FARString strSizeBelow = cfg_reader.GetString(HLS.SizeBelow, L"");
+	HData->SetSize(cfg_reader.GetInt(HLS.UseSize, 0) != 0,
+	               strSizeAbove, strSizeBelow);
 
 	if (bSortGroup)
 	{
-		HData->SetAttr(Values->GetUInt(HLS.UseAttr, 1) != 0,
-						(DWORD)Values->GetUInt(HLS.AttrSet, 0),
-						(DWORD)Values->GetUInt(HLS.AttrClear, FILE_ATTRIBUTE_DIRECTORY));
+		HData->SetAttr(cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
+		               (DWORD)cfg_reader.GetUInt(HLS.AttrSet, 0),
+		               (DWORD)cfg_reader.GetUInt(HLS.AttrClear, FILE_ATTRIBUTE_DIRECTORY));
 	}
 	else
 	{
-		HData->SetAttr(Values->GetUInt(HLS.UseAttr, 1) != 0,
-						(DWORD)Values->GetUInt(HLS.IncludeAttributes, 0),
-						(DWORD)Values->GetUInt(HLS.ExcludeAttributes, 0));
+		HData->SetAttr(cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
+		               (DWORD)cfg_reader.GetUInt(HLS.IncludeAttributes, 0),
+		               (DWORD)cfg_reader.GetUInt(HLS.ExcludeAttributes, 0));
 	}
 
 	HData->SetSortGroup(SortGroup);
 	HighlightDataColor Colors;
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL] = (WORD)Values->GetUInt(HLS.NormalColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED] = (WORD)Values->GetUInt(HLS.SelectedColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR] = (WORD)Values->GetUInt(HLS.CursorColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = (WORD)Values->GetUInt(HLS.SelectedCursorColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL] = (WORD)Values->GetUInt(HLS.MarkCharNormalColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED] = (WORD)Values->GetUInt(HLS.MarkCharSelectedColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR] = (WORD)Values->GetUInt(HLS.MarkCharCursorColor, 0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = (WORD)Values->GetUInt(HLS.MarkCharSelectedCursorColor, 0);
-	Colors.MarkChar = Values->GetUInt(HLS.MarkChar, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL] = (WORD)cfg_reader.GetUInt(HLS.NormalColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED] = (WORD)cfg_reader.GetUInt(HLS.SelectedColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR] = (WORD)cfg_reader.GetUInt(HLS.CursorColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = (WORD)cfg_reader.GetUInt(HLS.SelectedCursorColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL] = (WORD)cfg_reader.GetUInt(HLS.MarkCharNormalColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED] = (WORD)cfg_reader.GetUInt(HLS.MarkCharSelectedColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR] = (WORD)cfg_reader.GetUInt(HLS.MarkCharCursorColor, 0);
+	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = (WORD)cfg_reader.GetUInt(HLS.MarkCharSelectedCursorColor, 0);
+	Colors.MarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 	HData->SetColors(&Colors);
-	HData->SetContinueProcessing(Values->GetUInt(HLS.ContinueProcessing, 0) != 0);
-}
-
-
-/// TODO: Remove this function and its invokation after 2022/02/20
-static void LoadFilterFromReg(FileFilterParams *HData, const wchar_t *RegKey, const wchar_t *Mask, int SortGroup, bool bSortGroup)
-{
-	//Дефолтные значения выбраны так чтоб как можно правильней загрузить
-	//настройки старых версий фара.
-	if (bSortGroup)
-		HData->SetMask(GetRegKey(RegKey,FARString(HLS.UseMask),1)!=0, Mask);
-	else
-		HData->SetMask(!GetRegKey(RegKey,FARString(HLS.IgnoreMask),0), Mask);
-	FILETIME DateAfter, DateBefore;
-	GetRegKey(RegKey,FARString(HLS.DateAfter),(BYTE *)&DateAfter,nullptr,sizeof(DateAfter));
-	GetRegKey(RegKey,FARString(HLS.DateBefore),(BYTE *)&DateBefore,nullptr,sizeof(DateBefore));
-	HData->SetDate(GetRegKey(RegKey,FARString(HLS.UseDate),0)!=0,
-	               (DWORD)GetRegKey(RegKey,FARString(HLS.DateType),0),
-	               DateAfter, DateBefore,
-	               GetRegKey(RegKey,FARString(HLS.DateRelative),0)!=0);
-	FARString strSizeAbove;
-	FARString strSizeBelow;
-	GetRegKey(RegKey,FARString(HLS.SizeAbove),strSizeAbove,L"");
-	GetRegKey(RegKey,FARString(HLS.SizeBelow),strSizeBelow,L"");
-	HData->SetSize(GetRegKey(RegKey,FARString(HLS.UseSize),0)!=0, strSizeAbove, strSizeBelow);
-
-	if (bSortGroup)
-	{
-		HData->SetAttr(GetRegKey(RegKey,FARString(HLS.UseAttr),1)!=0,
-		               (DWORD)GetRegKey(RegKey,FARString(HLS.AttrSet),0),
-		               (DWORD)GetRegKey(RegKey,FARString(HLS.AttrClear),FILE_ATTRIBUTE_DIRECTORY));
-	}
-	else
-	{
-		HData->SetAttr(GetRegKey(RegKey,FARString(HLS.UseAttr),1)!=0,
-		               (DWORD)GetRegKey(RegKey,FARString(HLS.IncludeAttributes),0),
-		               (DWORD)GetRegKey(RegKey,FARString(HLS.ExcludeAttributes),0));
-	}
-
-	HData->SetSortGroup(SortGroup);
-	HighlightDataColor Colors;
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]=(WORD)GetRegKey(RegKey,FARString(HLS.NormalColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]=(WORD)GetRegKey(RegKey,FARString(HLS.SelectedColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]=(WORD)GetRegKey(RegKey,FARString(HLS.CursorColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]=(WORD)GetRegKey(RegKey,FARString(HLS.SelectedCursorColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]=(WORD)GetRegKey(RegKey,FARString(HLS.MarkCharNormalColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]=(WORD)GetRegKey(RegKey,FARString(HLS.MarkCharSelectedColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]=(WORD)GetRegKey(RegKey,FARString(HLS.MarkCharCursorColor),0);
-	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]=(WORD)GetRegKey(RegKey,FARString(HLS.MarkCharSelectedCursorColor),0);
-	Colors.MarkChar=GetRegKey(RegKey,FARString(HLS.MarkChar),0);
-	HData->SetColors(&Colors);
-	HData->SetContinueProcessing(GetRegKey(RegKey,FARString(HLS.ContinueProcessing),0)!=0);
+	HData->SetContinueProcessing(cfg_reader.GetInt(HLS.ContinueProcessing, 0) != 0);
 }
 
 void HighlightFiles::InitHighlightFiles()
 {
-	KeyFileReadHelper kfh_highlight(HighlightIni().c_str());
-	KeyFileReadHelper kfh_sortgroups(SortgroupsIni().c_str());
-
-	const int GroupDelta[4] = {DEFAULT_SORT_GROUP, 0, DEFAULT_SORT_GROUP + 1, DEFAULT_SORT_GROUP};
-	const char *GroupNames[4] = {fmtFirstGroup, fmtUpperGroup, fmtLowerGroup, fmtLastGroup};
-	int *Count[4] = {&FirstCount, &UpperCount, &LowerCount, &LastCount};
-	HiData.Free();
-	FirstCount = UpperCount = LowerCount = LastCount=0;
-			
-	std::unique_ptr<KeyFileValues> emptyValues;
-	for (int j=0; j<4; j++)
-	{
-		KeyFileReadHelper &kfh = (j == 1 || j == 2) ? kfh_sortgroups : kfh_highlight;
-		for (int i=0;; i++)
-		{
-			std::string strGroupName = StrPrintf(GroupNames[j], i), strMask;
-			const KeyFileValues *Values = kfh.GetSectionValues(strGroupName.c_str());
-			if (!Values)
-			{
-				if (!emptyValues)
-					emptyValues.reset(new KeyFileValues);
-				Values = emptyValues.get();
-			}
-
-			if (GroupDelta[j] != DEFAULT_SORT_GROUP)
-			{
-				if (!kfh.HasKey(".", strGroupName.c_str()))
-					break;
-				strMask = kfh.GetString(".", strGroupName.c_str(), "");
-			}
-			else
-			{
-				if (!Values->HasKey(HLS.Mask))
-					break;
-				strMask = Values->GetString(HLS.Mask, "");
-			}
-			FileFilterParams *HData = HiData.addItem();
-
-			if (!HData)
-				break;
-
-			LoadFilter(HData, Values, strMask,
-				GroupDelta[j] + (GroupDelta[j] == DEFAULT_SORT_GROUP ? 0 : i),
-				(GroupDelta[j] == DEFAULT_SORT_GROUP ? false : true));
-			(*(Count[j]))++;
-		}
-	}
-}
-
-void HighlightFiles::InitHighlightFilesFromReg()
-{
-	FARString strRegKey, strGroupName, strMask;
+	FARString strMask;
+	std::string strGroupName, strRegKey;
 	const int GroupDelta[4]={DEFAULT_SORT_GROUP,0,DEFAULT_SORT_GROUP+1,DEFAULT_SORT_GROUP};
 	const char *KeyNames[4]={RegColorsHighlight,SortGroupsKeyName,SortGroupsKeyName,RegColorsHighlight};
 	const char *GroupNames[4]={fmtFirstGroup,fmtUpperGroup,fmtLowerGroup,fmtLastGroup};
 	int  *Count[4] = {&FirstCount,&UpperCount,&LowerCount,&LastCount};
 	HiData.Free();
 	FirstCount=UpperCount=LowerCount=LastCount=0;
-			
+
+	std::unique_ptr<ConfigReader> cfg_reader(new ConfigReader(RegColorsHighlight));
+	if (!cfg_reader->HasSection()) {
+		SetDefaultHighlighting();
+		cfg_reader.reset(new ConfigReader);
+	}
+
 	for (int j=0; j<4; j++)
 	{
 		for (int i=0;; i++)
 		{
-			strGroupName.Format(FARString(GroupNames[j]), i);
-			strRegKey=KeyNames[j];
-			strRegKey+=L"/"+strGroupName;
+			strGroupName = StrPrintf(GroupNames[j], i);
+			strRegKey = KeyNames[j];
+			strRegKey+= '/';
+			strRegKey+= strGroupName;
 			if (GroupDelta[j]!=DEFAULT_SORT_GROUP)
 			{
-				if (!GetRegKey(FARString(KeyNames[j]),strGroupName,strMask,L""))
+				cfg_reader->SelectSection(KeyNames[j]);
+				if (!cfg_reader->GetString(strMask, strGroupName, L""))
 					break;
+				cfg_reader->SelectSection(strRegKey);
 			}
 			else
 			{
-				if (!GetRegKey(strRegKey,FARString(HLS.Mask),strMask,L""))
+				cfg_reader->SelectSection(strRegKey);
+				if (!cfg_reader->GetString(strMask, HLS.Mask, L""))
 					break;
 			}
 			FileFilterParams *HData = HiData.addItem();
 
 			if (HData)
 			{
-				LoadFilterFromReg(HData,strRegKey,strMask,GroupDelta[j]+(GroupDelta[j]==DEFAULT_SORT_GROUP?0:i),(GroupDelta[j]==DEFAULT_SORT_GROUP?false:true));
+				LoadFilter(HData,*cfg_reader,strMask,GroupDelta[j]+(GroupDelta[j]==DEFAULT_SORT_GROUP?0:i),(GroupDelta[j]==DEFAULT_SORT_GROUP?false:true));
 				(*(Count[j]))++;
 			}
 			else
@@ -375,7 +260,7 @@ void HighlightFiles::ClearData()
 
 static const DWORD FarColor[] = {COL_PANELTEXT,COL_PANELSELECTEDTEXT,COL_PANELCURSOR,COL_PANELSELECTEDCURSOR};
 
-void ApplyDefaultStartingColors(HighlightDataColor *Colors)
+static void ApplyDefaultStartingColors(HighlightDataColor *Colors)
 {
 	for (int j=0; j<2; j++)
 		for (int i=0; i<4; i++)
@@ -384,7 +269,7 @@ void ApplyDefaultStartingColors(HighlightDataColor *Colors)
 	Colors->MarkChar=0x00FF0000;
 }
 
-void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
+static void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
 {
 	for (int i=0; i<4; i++)
 	{
@@ -399,7 +284,7 @@ void ApplyBlackOnBlackColors(HighlightDataColor *Colors)
 	}
 }
 
-void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcColors)
+static void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcColors)
 {
 	//Обработаем black on black чтоб наследовать правильные цвета
 	//и чтоб после наследования были правильные цвета.
@@ -440,7 +325,7 @@ bool HasTransparent(HighlightDataColor *Colors)
 }
 */
 
-void ApplyFinalColors(HighlightDataColor *Colors)
+static void ApplyFinalColors(HighlightDataColor *Colors)
 {
 	//Обработаем black on black чтоб после наследования были правильные цвета.
 	ApplyBlackOnBlackColors(Colors);
@@ -619,7 +504,7 @@ int HighlightFiles::MenuPosToRealPos(int MenuPos, int **Count, bool Insert)
 void HighlightFiles::HiEdit(int MenuPos)
 {
 	VMenu HiMenu(MSG(MHighlightTitle),nullptr,0,ScrY-4);
-	HiMenu.SetHelp(L"HighlightList");
+	HiMenu.SetHelp(FARString(HLS.HighlightList));
 	HiMenu.SetFlags(VMENU_WRAPMODE|VMENU_SHOWAMPERSAND);
 	HiMenu.SetPosition(-1,-1,0,0);
 	HiMenu.SetBottomTitle(MSG(MHighlightBottom));
@@ -649,9 +534,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 					            MSG(MYes),MSG(MCancel)))
 						break;
 
-					remove(HighlightIni().c_str());
-					//DeleteKeyTree(RegColorsHighlight);
-					SetDefaultHighlighting();
+					{ ConfigWriter(RegColorsHighlight).RemoveSection(); }
 					HiMenu.Hide();
 					ClearData();
 					InitHighlightFiles();
@@ -851,55 +734,53 @@ void HighlightFiles::HiEdit(int MenuPos)
 	}
 }
 
-static void SaveFilter(FileFilterParams *CurHiData, KeyFileHelper &kfh, const char *Section, bool bSortGroup)
+static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bool bSortGroup)
 {
 	if (bSortGroup)
 	{
-		kfh.PutUInt(Section, HLS.UseMask, CurHiData->GetMask(nullptr));
+		cfg_writer.SetInt(HLS.UseMask, CurHiData->GetMask(nullptr) ? 1  : 0);
 	}
 	else
 	{
 		const wchar_t *Mask = nullptr;
-		kfh.PutUInt(Section, HLS.IgnoreMask, (CurHiData->GetMask(&Mask) ? 0 : 1));
-		kfh.PutString(Section, HLS.Mask, Mask);
+		cfg_writer.SetInt(HLS.IgnoreMask, (CurHiData->GetMask(&Mask) ? 0 : 1));
+		cfg_writer.SetString(HLS.Mask, Mask);
 	}
 
-	DWORD DateType = 0;
-	FILETIME DateAfter{}, DateBefore{};
-	bool bRelative = false;
-	kfh.PutUInt(Section, HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
-	kfh.PutUInt(Section, HLS.DateType, DateType);
-	kfh.PutBytes(Section, HLS.DateAfter, (BYTE *)&DateAfter, sizeof(DateAfter));
-	kfh.PutBytes(Section, HLS.DateBefore, (BYTE *)&DateBefore, sizeof(DateBefore));
-	kfh.PutUInt(Section, HLS.DateRelative, bRelative ? 1 : 0);
+	DWORD DateType;
+	FILETIME DateAfter, DateBefore;
+	bool bRelative;
+	cfg_writer.SetInt(HLS.UseDate, CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
+	cfg_writer.SetUInt(HLS.DateType, DateType);
+	cfg_writer.SetPOD(HLS.DateAfter, DateAfter);
+	cfg_writer.SetPOD(HLS.DateBefore, DateBefore);
+	cfg_writer.SetInt(HLS.DateRelative, bRelative ? 1 : 0);
 	const wchar_t *SizeAbove = nullptr, *SizeBelow = nullptr;
-	kfh.PutUInt(Section, HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
-	kfh.PutString(Section, HLS.SizeAbove, SizeAbove);
-	kfh.PutString(Section, HLS.SizeBelow, SizeBelow);
+	cfg_writer.SetInt(HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
+	cfg_writer.SetString(HLS.SizeAbove, SizeAbove);
+	cfg_writer.SetString(HLS.SizeBelow, SizeBelow);
 	DWORD AttrSet = 0, AttrClear = 0;
-	kfh.PutUInt(Section, HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
-	kfh.PutUIntAsHex(Section, bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes, AttrSet);
-	kfh.PutUIntAsHex(Section, bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes, AttrClear);
-	HighlightDataColor Colors;
+	cfg_writer.SetInt(HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
+	cfg_writer.SetUInt((bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes), AttrSet);
+	cfg_writer.SetUInt((bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes), AttrClear);
+	HighlightDataColor Colors{};
 	CurHiData->GetColors(&Colors);
-	kfh.PutUIntAsHex(Section, HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
-	kfh.PutUIntAsHex(Section, HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
-	kfh.PutUIntAsHex(Section, HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	kfh.PutUIntAsHex(Section, HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	kfh.PutUIntAsHex(Section, HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
-	kfh.PutUIntAsHex(Section, HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
-	kfh.PutUIntAsHex(Section, HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
-	kfh.PutUIntAsHex(Section, HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	kfh.PutUIntAsHex(Section, HLS.MarkChar, Colors.MarkChar);
-	kfh.PutUInt(Section, HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
+	cfg_writer.SetUInt(HLS.NormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
+	cfg_writer.SetUInt(HLS.SelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
+	cfg_writer.SetUInt(HLS.CursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.SelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkCharNormalColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_NORMAL]);
+	cfg_writer.SetUInt(HLS.MarkCharSelectedColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTED]);
+	cfg_writer.SetUInt(HLS.MarkCharCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkCharSelectedCursorColor, (DWORD)Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
+	cfg_writer.SetUInt(HLS.MarkChar, Colors.MarkChar);
+	cfg_writer.SetInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
 
 void HighlightFiles::SaveHiData()
 {
-	KeyFileHelper kfh_highlight(HighlightIni().c_str());
-	KeyFileHelper kfh_sortgroups(SortgroupsIni().c_str());
-
-//	const wchar_t *KeyNames[4]={RegColorsHighlight,SortGroupsKeyName,SortGroupsKeyName,RegColorsHighlight};
+	std::string strRegKey, strGroupName;
+	const char *KeyNames[4]={RegColorsHighlight,SortGroupsKeyName,SortGroupsKeyName,RegColorsHighlight};
 	const char *GroupNames[4]={fmtFirstGroup,fmtUpperGroup,fmtLowerGroup,fmtLastGroup};
 	const int Count[4][2] =
 	{
@@ -909,35 +790,42 @@ void HighlightFiles::SaveHiData()
 		{FirstCount+UpperCount+LowerCount,FirstCount+UpperCount+LowerCount+LastCount}
 	};
 
+	ConfigWriter cfg_writer;
 	for (int j=0; j<4; j++)
 	{
-		KeyFileHelper &kfh = (j == 1 || j == 2) ? kfh_sortgroups : kfh_highlight;
-
 		for (int i=Count[j][0]; i<Count[j][1]; i++)
 		{
-			std::string strGroupName = StrPrintf(GroupNames[j], i - Count[j][0]);
+			strGroupName = StrPrintf(GroupNames[j], i-Count[j][0]);
+			strRegKey = KeyNames[j];
+			strRegKey+='/';
+			strRegKey+= strGroupName;
 			FileFilterParams *CurHiData = HiData.getItem(i);
 
-			if (j == 1 || j == 2)
+			if (j == 1 || j == 2 )
 			{
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
-				kfh.PutString(".", strGroupName.c_str(), Mask);
+				cfg_writer.SelectSection(KeyNames[j]);
+				cfg_writer.SetString(strGroupName, Mask);
 			}
-
-			SaveFilter(CurHiData, kfh, strGroupName.c_str(), (j == 1 || j == 2) );
+			cfg_writer.SelectSection(strRegKey);
+			SaveFilter(CurHiData, cfg_writer, (j == 1 || j == 2) );
 		}
 
 		for (int i=0; i<5; i++)
 		{
-			std::string strGroupName = StrPrintf(GroupNames[j], Count[j][1] - Count[j][0] + i);
+			strGroupName = StrPrintf(GroupNames[j], Count[j][1]-Count[j][0]+i);
+			strRegKey = KeyNames[j];
+			strRegKey+= '/';
+			strRegKey+= strGroupName;
 
 			if (j == 1 || j == 2)
 			{
-				kfh.RemoveKey(".", strGroupName.c_str());
+				cfg_writer.SelectSection(KeyNames[j]);
+				cfg_writer.RemoveKey(strGroupName);
 			}
-
-			kfh.RemoveSection(strGroupName.c_str());
+			cfg_writer.SelectSection(strRegKey);
+			cfg_writer.RemoveSection();
 		}
 	}
 }

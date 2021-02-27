@@ -8,15 +8,14 @@
 class Editors {
 private:
     static const bool DEFAULT_ENABLED = true;
-    static constexpr const wchar_t *PLUGIN_REGISTRY_BRANCH = L"/editorcomp";
-    static constexpr const wchar_t *ENABLED_REGISTRY_ENTRY = L"Enabled";
-
-    static constexpr const wchar_t *FILE_MASKS_ENTRY = L"fileMasks";
+    static constexpr const char *ENABLED_ENTRY = "Enabled";
+    static constexpr const char *FILE_MASKS_ENTRY = "fileMasks";
     static constexpr const wchar_t *DEFAULT_FILE_MASKS = L"*.c;*.cpp;*.cxx;*.h;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh";
 
     PluginStartupInfo info;
     FarStandardFunctions fsf;
-    std::wstring registryRootKey, fileMasks;
+    std::string iniPath, iniSection;
+    std::wstring fileMasks;
     const std::wstring emptyString;
     bool autoEnabling;
 

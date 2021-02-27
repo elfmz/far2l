@@ -22,7 +22,6 @@
 #if 0
 #include <g3log/logworker.hpp>
 #endif
-#include "registry_wide.h"
 // new colorer don't have class StringBuffer
 #include "StringBuffer.h"
 

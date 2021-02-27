@@ -63,7 +63,7 @@ namespace FailTolerantUTF8
 		for (size_t p = dst.find(ESCAPE_CHAR); p!=std::string::npos; p = dst.find(ESCAPE_CHAR, p)) {
 			if ( p + 2 >= dst.size()) break;
 			char hex[] = {dst[p + 1], dst[p + 2], 0};
-			unsigned char c = Hex2Byte(hex);
+			unsigned char c = ParseHexByte(hex);
 			dst.replace(p, 3, 1, (char)c);
 			p++;
 		}
@@ -201,8 +201,20 @@ std::wstring StrMB2Wide(const std::string &src)
 
 
 ////////////////////////////
+char MakeHexDigit(const unsigned char c)
+{
+	if (c >= 0 && c <= 9) {
+		return '0' + c;
+	}
 
-unsigned char Hex2Digit(const char hex)
+	if (c >= 0xa && c <= 0xf) {
+		return 'a' + (c - 0xa);
+	}
+
+	return 0;
+}
+
+unsigned char ParseHexDigit(const char hex)
 {
 	if (hex>='0' && hex<='9')
 		return hex - '0';
@@ -211,15 +223,17 @@ unsigned char Hex2Digit(const char hex)
 	if (hex>='A' && hex<='F')
 		return 10 + hex - 'A';
 
-	return 0;
+	return 0xff;
 }
 
-unsigned char Hex2Byte(const char *hex)
+unsigned char ParseHexByte(const char *hex)
 {
-	unsigned char r = Hex2Digit(hex[0]);
-	r<<=4;
-	r+= Hex2Digit(hex[1]);
-	return r;
+	const unsigned char rh = ParseHexDigit(hex[0]);
+	const unsigned char rl = ParseHexDigit(hex[1]);
+	if (rh == 0xff || rl == 0xff) {
+		return 0;
+	}
+	return ((rh << 4) | rl);
 }
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle)
@@ -534,42 +548,12 @@ char * itoa(int i, char *a, int radix)
 }
 #endif
 
-char digit_btoh(const unsigned char c)
-{
-	if (c >= 0 && c <= 9) {
-		return '0' + c;
-	}
-
-	if (c >= 0xa && c <= 0xf) {
-		return 'a' + (c - 0xa);
-	}
-
-	return 0;
-}
-
-unsigned char digit_htob(const char c)
-{
-	if (c >= '0' && c <= '9') {
-		return c - '0';
-	}
-
-	if (c >= 'a' && c <= 'f') {
-		return 10 + (c - 'a');
-	}
-
-	if (c >= 'A' && c <= 'F') {
-		return 10 + (c - 'A');
-	}
-
-	return 0xff;
-}
-
 unsigned long htoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
 
 	for (size_t i = 0; i != maxlen; ++i) {
-		unsigned char x = digit_htob(str[i]);
+		unsigned char x = ParseHexDigit(str[i]);
 		if (x == 0xff) {
 			break;
 		}

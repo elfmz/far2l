@@ -190,6 +190,7 @@ void InfoList::DisplayObject()
 	                            &VolumeNumber,&MaxNameLength,&FileSystemFlags,
 	                            &strFileSystemName))
 	{
+#if 0
 		int IdxMsgID=-1;
 		int DriveType=FAR_GetDriveType(strCurDir,nullptr,TRUE);
 
@@ -217,8 +218,7 @@ void InfoList::DisplayObject()
 
 				break;
 		}
-
-		LPCWSTR DiskType=(IdxMsgID!=-1)?MSG(IdxMsgID):L"";
+		//LPCWSTR DiskType=(IdxMsgID!=-1)?MSG(IdxMsgID):L"";
 //		wchar_t LocalName[]={ExtractPathRoot(strCurDir).At(0),L':',L'\0'}; // strDriveRoot?
 		FARString strAssocPath;
 
@@ -229,9 +229,10 @@ void InfoList::DisplayObject()
 		}
 		else */if(DriveType == DRIVE_FIXED/* && GetVHDName(LocalName,strAssocPath)*/)
 		{
-			DiskType = MSG(MInfoVirtual);
+			//DiskType = MSG(MInfoVirtual);
 			DriveType=DRIVE_VIRTUAL;
 		}
+#endif
 
 
 //		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";

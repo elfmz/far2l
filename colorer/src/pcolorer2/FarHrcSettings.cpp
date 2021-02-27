@@ -1,4 +1,6 @@
 #include "FarHrcSettings.h"
+#include <utils.h>
+#include <KeyFileHelper.h>
 #include <colorer/xml/XmlParserErrorHandler.h>
 #include <colorer/parsers/ParserFactoryException.h>
 #include <xercesc/parsers/XercesDOMParser.hpp>
@@ -7,6 +9,13 @@ const char* FarCatalogXml = "/base/catalog.xml";
 const char* FarProfileXml = "/plug/hrcsettings.xml";
 
 XERCES_CPP_NAMESPACE_USE
+
+FarHrcSettings::FarHrcSettings(ParserFactory *_parserFactory)
+  :
+  parserFactory(_parserFactory),
+  profileIni(InMyConfig("plugins/colorer/HrcSettings.ini"))
+{
+}
 
 void FarHrcSettings::readProfile()
 {
@@ -106,131 +115,58 @@ void FarHrcSettings::UpdatePrototype(DOMElement* elem, bool userValue)
 
 void FarHrcSettings::readUserProfile()
 {
-  wchar_t key[MAX_KEY_LENGTH];
-  swprintf(key,MAX_KEY_LENGTH, L"%ls/colorer/HrcSettings", Info.RootKey);
-  HKEY dwKey = nullptr;
-
-  if (WINPORT(RegOpenKeyEx)( HKEY_CURRENT_USER, key, 0, KEY_READ, &dwKey) == ERROR_SUCCESS ){
-    readProfileFromRegistry(dwKey);
-  }
-
-  WINPORT(RegCloseKey)(dwKey);
-}
-
-void FarHrcSettings::readProfileFromRegistry(HKEY dwKey)
-{
-  DWORD dwKeyIndex=0;
-  wchar_t szNameOfKey[MAX_KEY_LENGTH]; 
-  DWORD dwBufferSize=MAX_KEY_LENGTH;
+  KeyFileReadHelper kfh(profileIni);
+  const auto &sections = kfh.EnumSections();
 
   HRCParser *hrcParser = parserFactory->getHRCParser();
-
-  // enum all the sections in HrcSettings
-  while(WINPORT(RegEnumKeyEx)(dwKey, dwKeyIndex++, szNameOfKey, &dwBufferSize, nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
+  for (const auto &s : sections)
   {
-    //check whether we have such a scheme
-    StringBuffer ssk(szNameOfKey);
+    StringBuffer ssk(s.c_str());
     FileTypeImpl *type = (FileTypeImpl *)hrcParser->getFileType(&ssk);
-    if (type== nullptr){
-      //restore buffer size value
-      dwBufferSize=MAX_KEY_LENGTH;
+    if (type == nullptr){
       continue;
-    };
-
-    wchar_t key[MAX_KEY_LENGTH];
-    HKEY hkKey;
-
-    swprintf(key,MAX_KEY_LENGTH, L"%ls/colorer/HrcSettings/%ls", Info.RootKey,szNameOfKey);
-
-    if (WINPORT(RegOpenKeyEx)( HKEY_CURRENT_USER, key, 0, KEY_READ, &hkKey) == ERROR_SUCCESS ){
-
-      DWORD dwValueIndex=0;
-      wchar_t szNameOfValue[MAX_VALUE_NAME]; 
-      DWORD dwNameOfValueBufferSize=MAX_VALUE_NAME;
-      DWORD dwValueBufferSize;
-      DWORD nValueType;
-      // enum all params in the section
-      while(WINPORT(RegEnumValue)(hkKey, dwValueIndex, szNameOfValue, &dwNameOfValueBufferSize, nullptr, &nValueType, nullptr, &dwValueBufferSize) == ERROR_SUCCESS)
-      { 
-        if (nValueType==REG_SZ){
-          
-          wchar_t *szValue= new wchar_t[(dwValueBufferSize / sizeof(wchar_t))+1];
-          if (WINPORT(RegQueryValueEx)(hkKey, szNameOfValue, 0, nullptr, (PBYTE)szValue, &dwValueBufferSize) == ERROR_SUCCESS){
-            StringBuffer ssn(szNameOfValue);
-            if (type->getParamValue(ssn)==nullptr){
-              type->addParam(&ssn);
-            }
-            delete type->getParamUserValue(ssn);
-            StringBuffer ssv(szValue);
-            type->setParamValue(ssn, &ssv);
-          }
-          delete [] szValue;
-        }
-
-        //restore buffer size value
-        dwNameOfValueBufferSize=MAX_VALUE_NAME;
-        dwValueIndex++;
-      }
     }
-    WINPORT(RegCloseKey)(hkKey);
-
-    //restore buffer size value
-    dwBufferSize=MAX_KEY_LENGTH;
+    const auto *Values = kfh.GetSectionValues(s);
+    if (!Values) {
+      continue;
+    }
+    const auto &Names = Values->EnumKeys();
+    for (const auto &n : Names) {
+      StringBuffer ssn(n.c_str());
+      if (type->getParamValue(ssn)==nullptr){
+        type->addParam(&ssn);
+      }
+      delete type->getParamUserValue(ssn);
+      const auto &v = Values->GetString(n, L"");
+      StringBuffer ssv(v.c_str());
+      type->setParamValue(ssn, &ssv);
+    }
   }
-
 }
 
 void FarHrcSettings::writeUserProfile()
 {
-  wchar_t key[MAX_KEY_LENGTH];
-  swprintf(key,MAX_KEY_LENGTH, L"%ls/colorer/HrcSettings", Info.RootKey);
-  HKEY dwKey;
-
-  //create or open key
-  if (WINPORT(RegCreateKeyEx)(HKEY_CURRENT_USER, key, 0, nullptr, 0, KEY_ALL_ACCESS,
-              nullptr, &dwKey, nullptr) == ERROR_SUCCESS ){
-    writeProfileToRegistry();
-  }
-
-  WINPORT(RegCloseKey)(dwKey);
-}
-
-void FarHrcSettings::writeProfileToRegistry()
-{
+  KeyFileHelper kfh(profileIni);
   HRCParser *hrcParser = parserFactory->getHRCParser();
-  FileTypeImpl *type = nullptr;
 
   // enum all FileTypes
-  for (int idx = 0; ; idx++){
-    type =(FileTypeImpl *) hrcParser->enumerateFileTypes(idx);
-
-    if (!type){
+  for (int idx = 0; ; ++idx) {
+    FileTypeImpl *type = (FileTypeImpl *)hrcParser->enumerateFileTypes(idx);
+    if (!type) {
       break;
     }
 
-    wchar_t key[MAX_KEY_LENGTH];
-    swprintf(key,MAX_KEY_LENGTH, L"%ls/colorer/HrcSettings/%ls", Info.RootKey,type->getName()->getWChars());
-
-    WINPORT(RegDeleteKey)(HKEY_CURRENT_USER,key);
+    kfh.RemoveSection(type->getName()->getChars());
     if (type->getParamCount() && type->getParamUserValueCount()){// params>0 and user values >0
-      const String* v = nullptr;
       std::vector<SString> params = type->enumParams();
       // enum all params
       for (const auto &p: params) {
-        v=type->getParamUserValue(p);
-        if (v!=nullptr){
-          HKEY hkKey;
-
-          if (WINPORT(RegCreateKeyEx)(HKEY_CURRENT_USER, key, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkKey, nullptr) == ERROR_SUCCESS ){
-            StringBuffer tmp(p);
-            WINPORT(RegSetValueEx)(hkKey, tmp.getWChars(), 0, REG_SZ,
-                    (const BYTE*)v->getWChars(),
-                    sizeof(wchar_t) * (v->length() + 1));
-          }
-          WINPORT(RegCloseKey)(hkKey);
+        const String* v = type->getParamUserValue(p);
+        if (v != nullptr) {
+          StringBuffer tmp(p);
+          kfh.SetString(type->getName()->getChars(), tmp.getChars(), v->getChars());
         }
       }
     }
   }
-
 }

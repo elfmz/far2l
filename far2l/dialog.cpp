@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lockscrn.hpp"
 #include "TPreRedrawFunc.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "palette.hpp"
 #include "message.hpp"
@@ -1125,7 +1124,7 @@ void Dialog::ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex)
 	{
 		FARString strRegKey=fmtSavedDialogHistory;
 		strRegKey+=CurItem->strHistory;
-		History::ReadLastItem(strRegKey, strData);
+		History::ReadLastItem(strRegKey.GetMB().c_str(), strData);
 
 		if (MsgIndex != -1)
 		{
@@ -4213,7 +4212,7 @@ BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem,
 	int ret=0;
 	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
-	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
+	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey.GetMB(), &Opt.Dialogs.EditHistory, false);
 	DlgHist.ResetPosition();
 	{
 		// создание пустого вертикального меню
@@ -4256,7 +4255,7 @@ int Dialog::AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName)
 
 	FARString strRegKey=fmtSavedDialogHistory;
 	strRegKey+=HistoryName;
-	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey, &Opt.Dialogs.EditHistory, false);
+	History DlgHist(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strRegKey.GetMB(), &Opt.Dialogs.EditHistory, false);
 	DlgHist.AddToHistory(AddStr);
 	return TRUE;
 }

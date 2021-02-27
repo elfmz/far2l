@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "manager.hpp"
 #include "scrbuf.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 #include "palette.hpp"
 #include "strmix.hpp"
 #include "console.hpp"
@@ -88,7 +87,7 @@ void InitConsole(int FirstInit)
 	CONSOLE_CURSOR_INFO InitCursorInfo;
 	Console.GetCursorInfo(InitCursorInfo);
 
-	GetRegKey(L"Interface",L"Mouse",Opt.Mouse,1);
+	AssertConfigLoaded();
 
 	// размер клавиатурной очереди = 1024 кода клавиши
 	if (!KeyQueue)
@@ -100,10 +99,6 @@ void InitConsole(int FirstInit)
 	   если размер консольного буфера больше размера окна, выставим
 	   их равными
 	*/
-	if(!Opt.WindowMode)
-	{
-		GetRegKey(L"System",L"WindowMode",Opt.WindowMode, 0);
-	}
 	if (FirstInit)
 	{
 		SMALL_RECT WindowRect;
@@ -540,8 +535,8 @@ void InitRecodeOutTable()
 			0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B,
 			0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
 		};
-		// перед [пере]инициализацией восстановим буфер (либо из реестра, либо...)
-		GetRegKey(L"System",L"BoxSymbols",(BYTE *)BoxSymbols,(BYTE*)_BoxSymbols,sizeof(_BoxSymbols));
+		// перед [пере]инициализацией восстановим буфер
+		memcpy(BoxSymbols,(BYTE*)_BoxSymbols,sizeof(_BoxSymbols));
 
 		if (Opt.NoGraphics)
 		{

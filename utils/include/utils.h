@@ -14,14 +14,6 @@ template <class C> static size_t tzlen(const C *ptz)
 }
 
 
-// converts given hex digit to value between 0x0 and 0xf
-// in case of error returns 0xff
-unsigned char digit_htob(const char c);
-
-// converts given value between 0x0 and 0xf to hex digit
-// in case of error returns 0
-char digit_btoh(const unsigned char c);
-
 unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
 unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
 
@@ -38,8 +30,17 @@ std::string StrWide2MB(const std::wstring &src);
 void StrMB2Wide(const std::string &src, std::wstring &dst);
 std::wstring StrMB2Wide(const std::string &src);
 
-unsigned char Hex2Digit(const char hex);
-unsigned char Hex2Byte(const char *hex);
+// converts given value between 0x0 and 0xf to hex digit
+// in case of error returns 0
+char MakeHexDigit(const unsigned char c);
+
+// converts given hex digit to value between 0x0 and 0xf
+// in case of error returns 0xff
+unsigned char ParseHexDigit(const char hex);
+
+// converts given two hex digits to value between 0x0 and 0xff
+// in case of error returns 0
+unsigned char ParseHexByte(const char *hex);
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
 size_t StrEndsBy(const std::string &haystack, const char *needle);

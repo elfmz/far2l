@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrbuf.hpp"
 #include "language.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 //#include "localOEM.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
@@ -73,12 +72,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include "InterThreadCall.hpp"
 #include "SafeMMap.hpp"
+#include "ConfigRW.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
 #endif
-
-static void CopyGlobalSettings();
 
 static void print_help(const char *self)
 {
@@ -389,7 +387,6 @@ static void SetupFarPath(int argc, char **argv)
 
 int FarAppMain(int argc, char **argv)
 {
-
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
@@ -403,8 +400,9 @@ int FarAppMain(int argc, char **argv)
 	// если под дебагером, то отключаем исключения однозначно,
 	//  иначе - смотря что указал юзвер.
 
-	SetRegRootKey(HKEY_CURRENT_USER);
 	Opt.strRegRoot = L"Software/Far2";
+	CheckForConfigUpgrade();
+
 	// По умолчанию - брать плагины из основного каталога
 	Opt.LoadPlug.MainPluginDir=TRUE;
 	Opt.LoadPlug.PluginsPersonal=TRUE;
@@ -595,8 +593,8 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal=FALSE;
 	}
 
+	ReadConfig();
 	InitConsole();
-	GetRegKey(L"Language",L"Main",Opt.strLanguage,L"English");
 
 	if (!Lang.Init(g_strFarPath,true,MNewFileName))
 	{
@@ -752,25 +750,3 @@ int _cdecl main(int argc, char *argv[])
 }
 
 
-/* $ 03.08.2000 SVS
-  ! Не срабатывал шаблон поиска файлов для под-юзеров
-*/
-void CopyGlobalSettings()
-{
-	if (CheckRegKey(L"")) // при существующем - вываливаемся
-		return;
-
-	// такого извера нету - перенесем данные!
-	SetRegRootKey(HKEY_LOCAL_MACHINE);
-	CopyKeyTree(L"Software/Far2",Opt.strRegRoot,L"Software/Far2/Users\0");
-	SetRegRootKey(HKEY_CURRENT_USER);
-	CopyKeyTree(L"Software/Far2",Opt.strRegRoot,L"Software/Far2/Users/Software/Far2/PluginsCache\0");
-	//  "Вспомним" путь по шаблону!!!
-	SetRegRootKey(HKEY_LOCAL_MACHINE);
-	GetRegKey(L"System",L"TemplatePluginsPath",Opt.LoadPlug.strPersonalPluginsPath,L"");
-	// удалим!!!
-	DeleteRegKey(L"System");
-	// запишем новое значение!
-	SetRegRootKey(HKEY_CURRENT_USER);
-	SetRegKey(L"System",L"PersonalPluginsPath",Opt.LoadPlug.strPersonalPluginsPath);
-}

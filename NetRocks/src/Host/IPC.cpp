@@ -151,4 +151,3 @@ IPCEndpoint::IPCEndpoint(int fd_recv, int fd_send)
 	: IPCRecver(fd_recv), IPCSender(fd_send)
 {
 }
-

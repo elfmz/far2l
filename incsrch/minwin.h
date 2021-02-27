@@ -126,4 +126,5 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define NO_SHLWAPI_REG
 #define NO_SHLWAPI_STREAM
 #define NO_SHLWAPI_STRFCNS
+#include <time.h>
 #include <windows.h>

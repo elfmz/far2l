@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 void PasteSearchText(void)
 {
     TCHAR *p;
-    UINT nFmt;
     size_t len=0,i;
     TCHAR pData[MAX_STR];
 
@@ -62,7 +61,7 @@ OEM:            len=_tstrnlen(p,MAX_STR);
     p=GetClipboardData(CF_OEMTEXT);
     if( p )goto OEM;
 #endif
-Ok: CloseClipboard();
+    CloseClipboard();
     for( i=0; i<len; i++ ){
         if( nEvents==PREVIEW_EVENTS ){
 #if defined(WINPORT_DIRECT)

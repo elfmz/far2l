@@ -14,9 +14,19 @@
 #include "EditLng.hpp"
 #include "EditCase.hpp"
 // Registry operations
-#include "../../etc/WrapReg.icpp"
 #include <functional>
 #include <algorithm>
+#include <assert.h>
+
+#include <utils.h>
+#include <KeyFileHelper.h>
+
+#define INI_LOCATION	InMyConfig("plugins/editcase/config.ini")
+#define INI_SECTION		"Settings"
+
+
+// This chars aren't letters
+static std::wstring WordDiv = L" \n\r\t";
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()
 {
@@ -28,14 +38,15 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info=*Info;
   ::FSF=*Info->FSF;
   ::Info.FSF=&::FSF;
-  FSF.snprintf(PluginRootKey, ARRAYSIZE(PluginRootKey), _T("%s/EditCase"),Info->RootKey);
-  WordDivLen=(int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, WordDiv);
-  TCHAR AddWordDiv[sizeof(WordDiv)];
-  GetRegKey(HKEY_CURRENT_USER,_T(""),_T("AddWordDiv"),AddWordDiv,_T("#"),sizeof(AddWordDiv));
-  WordDivLen += lstrlen(AddWordDiv);
-  lstrcat(WordDiv, AddWordDiv);
-  WordDivLen += sizeof(_T(" \n\r\t"));
-  lstrcat(WordDiv, _T(" \n\r\t"));
+
+  TCHAR SysWordDiv[0x100];
+  int SysWordDivLen = (int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, SysWordDiv);
+  if (SysWordDivLen > 0)
+  {
+    assert(SysWordDivLen <= (int)ARRAYSIZE(SysWordDiv));
+    WordDiv.append(SysWordDiv, SysWordDivLen);
+  }
+  WordDiv+= KeyFileReadSection(INI_LOCATION, INI_SECTION).GetString("AddWordDiv", L"#");
 }
 
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
@@ -240,9 +251,9 @@ const TCHAR *GetMsg(int MsgId)
 }
 
 // What we consider as letter
-BOOL MyIsAlpha(int c)
+bool MyIsAlpha(TCHAR c)
 {
-    return ( _tmemchr(WordDiv, c, WordDivLen)==NULL ? TRUE : FALSE );
+    return (WordDiv.find(c) == std::wstring::npos);
 }
 
 // Finding word bounds (what'll be converted) (Str is in OEM)

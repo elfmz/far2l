@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rdrwdsk.hpp"
 #include "savescr.hpp"
 #include "CFileMask.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "interf.hpp"
 #include "config.hpp"
@@ -56,10 +55,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fnparce.hpp"
 #include "strmix.hpp"
 #include "dirmix.hpp"
+#include "ConfigRW.hpp"
 
 struct FileTypeStrings
 {
-	const wchar_t *Help,*HelpModify,*State,
+	const char *Help,*HelpModify,*State,
 	*Associations,*TypeFmt, *Type0,
 	*Execute, *Desc, *Mask, *View, *Edit,
 	*AltExec, *AltView, *AltEdit;
@@ -68,26 +68,23 @@ struct FileTypeStrings
 
 const FileTypeStrings FTS=
 {
-	L"FileAssoc",L"FileAssocModify",L"State",
-	L"Associations",L"Associations/Type%d",L"Associations/Type",
-	L"Execute",L"Description",L"Mask",L"View",L"Edit",
-	L"AltExec",L"AltView",L"AltEdit"
+	"FileAssoc", "FileAssocModify", "State",
+	"Associations", "Associations/Type%d", "Associations/Type",
+	"Execute", "Description", "Mask", "View", "Edit",
+	"AltExec", "AltView", "AltEdit"
 };
 
 
 
-int GetDescriptionWidth(const wchar_t *Name=nullptr)
+static int GetDescriptionWidth(ConfigReader &cfg_reader, const wchar_t *Name=nullptr)
 {
-	int Width=0;
-	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
-
+	int Width = 0;
+//	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	for (int NumLine=0;; NumLine++)
 	{
-		FARString strRegKey;
-		strRegKey.Format(FTS.TypeFmt, NumLine);
+		cfg_reader.SelectSectionFmt(FTS.TypeFmt, NumLine);
 		FARString strMask;
-
-		if (!GetRegKey(strRegKey,FTS.Mask, strMask, L""))
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
 
 		CFileMask FMask;
@@ -95,12 +92,13 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr)
 		if (!FMask.Set(strMask, FMF_SILENT))
 			continue;
 
-		FARString strDescription;
-		GetRegKey(strRegKey,FTS.Desc,strDescription,L"");
+		FARString strDescription = cfg_reader.GetString(FTS.Desc, L"");
 		int CurWidth;
 
 		if (!Name)
+		{
 			CurWidth = HiStrlen(strDescription);
+		}
 		else
 		{
 			if (!FMask.Compare(Name))
@@ -138,32 +136,31 @@ int GetDescriptionWidth(const wchar_t *Name=nullptr)
 */
 bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 {
-	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
+	ConfigReader cfg_reader;
+	//RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	MenuItemEx TypesMenuItem;
 	VMenu TypesMenu(MSG(MSelectAssocTitle),nullptr,0,ScrY-4);
-	TypesMenu.SetHelp(FTS.Help);
+	TypesMenu.SetHelp(FARString(FTS.Help));
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
-	int DizWidth=GetDescriptionWidth(Name);
+	int DizWidth = GetDescriptionWidth(cfg_reader, Name);
 	int ActualCmdCount=0; // отображаемых ассоциаций в меню
 	CFileMask FMask; // для работы с масками файлов
-	FARString strCommand, strDescription;
+	FARString strCommand, strDescription, strMask;
 	int CommandCount=0;
 
 	for (int I=0;; I++)
 	{
 		strCommand.Clear();
-		FARString strRegKey, strMask;
-		strRegKey.Format(FTS.TypeFmt,I);
-
-		if (!GetRegKey(strRegKey,FTS.Mask,strMask,L""))
+		cfg_reader.SelectSectionFmt(FTS.TypeFmt, I);
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
 
-		if (FMask.Set(strMask,FMF_SILENT))
+		if (FMask.Set(strMask, FMF_SILENT))
 		{
 			if (FMask.Compare(Name))
 			{
-				LPCWSTR Type=nullptr;
+				LPCSTR Type = nullptr;
 
 				switch (Mode)
 				{
@@ -187,17 +184,16 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 						break;
 				}
 
-				DWORD State=GetRegKey(strRegKey,FTS.State,0xffffffff);
+				DWORD State = cfg_reader.GetUInt(FTS.State, 0xffffffff);
 
 				if (State&(1<<Mode))
 				{
-					FARString strNewCommand;
-					GetRegKey(strRegKey,Type,strNewCommand,L"");
+					FARString strNewCommand = cfg_reader.GetString(Type, L"");
 
 					if (!strNewCommand.IsEmpty())
 					{
 						strCommand = strNewCommand;
-						GetRegKey(strRegKey,FTS.Desc,strDescription,L"");
+						strDescription = cfg_reader.GetString(FTS.Desc, L"");
 						CommandCount++;
 					}
 				}
@@ -262,7 +258,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 	TypesMenu.GetUserData(Command,Size,ExitCode);
 	strCommand.ReleaseBuffer(Size);
 	FARString strListName, strAnotherListName;
-	int PreserveLFN=SubstFileName(strCommand,Name,&strListName,&strAnotherListName);
+	/*int PreserveLFN=*/SubstFileName(strCommand,Name,&strListName,&strAnotherListName);
 	bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 	{
@@ -347,7 +343,7 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHis
 	FARString strExecStr = Command;
 	FARString strFullExecStr = Command;
 	{
-		int PreserveLFN=SubstFileName(strExecStr,Name,&strListName,&strAnotherListName);
+		/*int PreserveLFN=*/SubstFileName(strExecStr,Name,&strListName,&strAnotherListName);
 		bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 		//PreserveLongName PreserveName(PreserveLFN);
@@ -382,30 +378,27 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHis
 
 static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 {
-	int DizWidth=GetDescriptionWidth();
+	ConfigReader cfg_reader;
+	int DizWidth=GetDescriptionWidth(cfg_reader);
 	MenuItemEx TypesMenuItem;
 	TypesMenu->DeleteItems();
 	int NumLine=0;
 
 	for (;; NumLine++)
 	{
-		FARString strRegKey;
-		strRegKey.Format(FTS.TypeFmt,NumLine);
-		TypesMenuItem.Clear();
+		cfg_reader.SelectSectionFmt(FTS.TypeFmt, NumLine);
 		FARString strMask;
-
-		if (!GetRegKey(strRegKey,FTS.Mask,strMask,L""))
-		{
+		if (!cfg_reader.GetString(strMask, FTS.Mask, L""))
 			break;
-		}
+
+		TypesMenuItem.Clear();
 
 		FARString strMenuText;
 
 		if (DizWidth)
 		{
-			FARString strDescription;
-			GetRegKey(strRegKey,FTS.Desc,strDescription,L"");
-			FARString strTitle=strDescription;
+			FARString strDescription = cfg_reader.GetString(FTS.Desc, L"");
+			FARString strTitle = strDescription;
 			size_t Pos=0;
 			bool Ampersand=strTitle.Pos(Pos,L'&');
 
@@ -428,18 +421,14 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 	return NumLine;
 }
 
-void MoveMenuItem(int Pos,int NewPos)
+void MoveMenuItem(int Pos, int NewPos)
 {
-	FARString strSrc,strDst,strTmp;
-	strSrc.Format(FTS.TypeFmt,Pos);
-	strDst.Format(FTS.TypeFmt,NewPos);
-	strTmp.Format(L"Associations/Tmp%u",WINPORT(GetTickCount)());
-	CopyLocalKeyTree(strDst,strTmp);
-	DeleteKeyTree(strDst);
-	CopyLocalKeyTree(strSrc,strDst);
-	DeleteKeyTree(strSrc);
-	CopyLocalKeyTree(strTmp,strSrc);
-	DeleteKeyTree(strTmp);
+	if (Pos != NewPos) {
+		ConfigWriter cfg_writer;
+		cfg_writer.SelectSection(StrPrintf(FTS.TypeFmt, Pos).c_str());
+		cfg_writer.RenameSection(StrPrintf(FTS.TypeFmt, NewPos).c_str());
+		cfg_writer.DefragIndexedSections(FTS.Type0);
+	}
 }
 
 enum EDITTYPERECORD
@@ -508,10 +497,10 @@ LONG_PTR WINAPI EditTypeRecordDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Pa
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
-bool EditTypeRecord(int EditPos,int TotalRecords,bool NewRec)
+static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 {
-	bool Result=false;
-	const int DlgX=76,DlgY=23;
+	bool Result = false;
+	const int DlgX = 76, DlgY = 23;
 	DialogDataEx EditDlgData[]=
 	{
 		{DI_DOUBLEBOX,3, 1,DlgX-4,DlgY-2,{},0,MSG(MFileAssocTitle)},
@@ -537,80 +526,89 @@ bool EditTypeRecord(int EditPos,int TotalRecords,bool NewRec)
 		{DI_BUTTON,   0,DlgY-3, 0,DlgY-3,{},DIF_CENTERGROUP,MSG(MCancel)}
 	};
 	MakeDialogItemsEx(EditDlgData,EditDlg);
-	FARString strRegKey;
-	strRegKey.Format(FTS.TypeFmt,EditPos);
 
 	if (!NewRec)
 	{
-		GetRegKey(strRegKey,FTS.Mask,EditDlg[ETR_EDIT_MASKS].strData,L"");
-		GetRegKey(strRegKey,FTS.Desc,EditDlg[ETR_EDIT_DESCR].strData,L"");
-		GetRegKey(strRegKey,FTS.Execute,EditDlg[ETR_EDIT_EXEC].strData,L"");
-		GetRegKey(strRegKey,FTS.AltExec,EditDlg[ETR_EDIT_ALTEXEC].strData,L"");
-		GetRegKey(strRegKey,FTS.View,EditDlg[ETR_EDIT_VIEW].strData,L"");
-		GetRegKey(strRegKey,FTS.AltView,EditDlg[ETR_EDIT_ALTVIEW].strData,L"");
-		GetRegKey(strRegKey,FTS.Edit,EditDlg[ETR_EDIT_EDIT].strData,L"");
-		GetRegKey(strRegKey,FTS.AltEdit,EditDlg[ETR_EDIT_ALTEDIT].strData,L"");
-		DWORD State=GetRegKey(strRegKey,FTS.State,0xffffffff);
+		ConfigReader cfg_reader;
+		cfg_reader.SelectSectionFmt(FTS.TypeFmt, EditPos);
+		EditDlg[ETR_EDIT_MASKS].strData = cfg_reader.GetString(FTS.Mask, L"");
+		EditDlg[ETR_EDIT_DESCR].strData = cfg_reader.GetString(FTS.Desc, L"");
+		EditDlg[ETR_EDIT_EXEC].strData = cfg_reader.GetString(FTS.Execute, L"");
+		EditDlg[ETR_EDIT_ALTEXEC].strData = cfg_reader.GetString(FTS.AltExec, L"");
+		EditDlg[ETR_EDIT_VIEW].strData = cfg_reader.GetString(FTS.View, L"");
+		EditDlg[ETR_EDIT_ALTVIEW].strData = cfg_reader.GetString(FTS.AltView, L"");
+		EditDlg[ETR_EDIT_EDIT].strData = cfg_reader.GetString(FTS.Edit, L"");
+		EditDlg[ETR_EDIT_ALTEDIT].strData = cfg_reader.GetString(FTS.AltEdit, L"");
+		DWORD State = cfg_reader.GetUInt(FTS.State, 0xffffffff);
 
-		for (int i=FILETYPE_EXEC,Item=ETR_COMBO_EXEC; i<=FILETYPE_ALTEDIT; i++,Item+=2)
+		for (int i = FILETYPE_EXEC, Item = ETR_COMBO_EXEC; i <= FILETYPE_ALTEDIT; i++, Item+= 2)
 		{
 			if (!(State&(1<<i)))
 			{
-				EditDlg[Item].Selected=BSTATE_UNCHECKED;
-				EditDlg[Item+1].Flags|=DIF_DISABLE;
+				EditDlg[Item].Selected = BSTATE_UNCHECKED;
+				EditDlg[Item+1].Flags|= DIF_DISABLE;
 			}
 		}
 	}
 
-	Dialog Dlg(EditDlg,ARRAYSIZE(EditDlg),EditTypeRecordDlgProc);
-	Dlg.SetHelp(FTS.HelpModify);
-	Dlg.SetPosition(-1,-1,DlgX,DlgY);
+	Dialog Dlg(EditDlg, ARRAYSIZE(EditDlg), EditTypeRecordDlgProc);
+	Dlg.SetHelp(FARString(FTS.HelpModify));
+	Dlg.SetPosition(-1, -1, DlgX, DlgY);
 	Dlg.Process();
 
-	if (Dlg.GetExitCode()==ETR_BUTTON_OK)
+	if (Dlg.GetExitCode() == ETR_BUTTON_OK)
 	{
+		ConfigWriter cfg_writer;
+		cfg_writer.SelectSectionFmt(FTS.TypeFmt, EditPos);
+
 		if (NewRec)
 		{
-			InsertKeyRecord(FTS.TypeFmt,EditPos,TotalRecords);
+			cfg_writer.ReserveIndexedSection(FTS.Type0, (unsigned int)EditPos);
 		}
 
-		SetRegKey(strRegKey,FTS.Mask,EditDlg[ETR_EDIT_MASKS].strData);
-		SetRegKey(strRegKey,FTS.Desc,EditDlg[ETR_EDIT_DESCR].strData);
-		SetRegKey(strRegKey,FTS.Execute,EditDlg[ETR_EDIT_EXEC].strData);
-		SetRegKey(strRegKey,FTS.AltExec,EditDlg[ETR_EDIT_ALTEXEC].strData);
-		SetRegKey(strRegKey,FTS.View,EditDlg[ETR_EDIT_VIEW].strData);
-		SetRegKey(strRegKey,FTS.AltView,EditDlg[ETR_EDIT_ALTVIEW].strData);
-		SetRegKey(strRegKey,FTS.Edit,EditDlg[ETR_EDIT_EDIT].strData);
-		SetRegKey(strRegKey,FTS.AltEdit,EditDlg[ETR_EDIT_ALTEDIT].strData);
-		DWORD State=0;
+		cfg_writer.SetString(FTS.Mask, EditDlg[ETR_EDIT_MASKS].strData);
+		cfg_writer.SetString(FTS.Desc, EditDlg[ETR_EDIT_DESCR].strData);
+		cfg_writer.SetString(FTS.Execute, EditDlg[ETR_EDIT_EXEC].strData);
+		cfg_writer.SetString(FTS.AltExec, EditDlg[ETR_EDIT_ALTEXEC].strData);
+		cfg_writer.SetString(FTS.View, EditDlg[ETR_EDIT_VIEW].strData);
+		cfg_writer.SetString(FTS.AltView, EditDlg[ETR_EDIT_ALTVIEW].strData);
+		cfg_writer.SetString(FTS.Edit, EditDlg[ETR_EDIT_EDIT].strData);
+		cfg_writer.SetString(FTS.AltEdit, EditDlg[ETR_EDIT_ALTEDIT].strData);
+		DWORD State = 0;
 
-		for (int i=FILETYPE_EXEC,Item=ETR_COMBO_EXEC; i<=FILETYPE_ALTEDIT; i++,Item+=2)
+		for (int i = FILETYPE_EXEC,Item=ETR_COMBO_EXEC; i <= FILETYPE_ALTEDIT; i++, Item+= 2)
 		{
-			if (EditDlg[Item].Selected==BSTATE_CHECKED)
+			if (EditDlg[Item].Selected == BSTATE_CHECKED)
 			{
-				State|=(1<<i);
+				State|= (1<<i);
 			}
 		}
 
-		SetRegKey(strRegKey,FTS.State,State);
-		Result=true;
+		cfg_writer.SetUInt(FTS.State, State);
+		Result = true;
 	}
 
 	return Result;
 }
 
-bool DeleteTypeRecord(int DeletePos)
+static bool DeleteTypeRecord(int DeletePos)
 {
 	bool Result=false;
-	FARString strRecText, strRegKey;
-	strRegKey.Format(FTS.TypeFmt,DeletePos);
-	GetRegKey(strRegKey,FTS.Mask,strRecText,L"");
-	FARString strItemName=strRecText;
-	InsertQuote(strItemName);
+	FARString strItemName;
+
+	{
+		ConfigReader cfg_reader;
+		cfg_reader.SelectSectionFmt(FTS.TypeFmt, DeletePos);
+		strItemName = cfg_reader.GetString(FTS.Mask, L"");
+		InsertQuote(strItemName);
+	}
 
 	if (!Message(MSG_WARNING,2,MSG(MAssocTitle),MSG(MAskDelAssoc),strItemName,MSG(MDelete),MSG(MCancel)))
 	{
-		DeleteKeyRecord(FTS.TypeFmt,DeletePos);
+		ConfigWriter cfg_writer;
+		cfg_writer.SelectSectionFmt(FTS.TypeFmt, DeletePos);
+		cfg_writer.RemoveSection();
+		cfg_writer.DefragIndexedSections(FTS.Type0);
 		Result=true;
 	}
 
@@ -621,9 +619,9 @@ void EditFileTypes()
 {
 	int NumLine=0;
 	int MenuPos=0;
-	RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
+	//RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	VMenu TypesMenu(MSG(MAssocTitle),nullptr,0,ScrY-4);
-	TypesMenu.SetHelp(FTS.Help);
+	TypesMenu.SetHelp(FARString(FTS.Help));
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
 	TypesMenu.SetBottomTitle(MSG(MAssocBottom));

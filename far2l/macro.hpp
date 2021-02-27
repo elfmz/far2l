@@ -99,8 +99,6 @@ enum MACROFLAGS_MFLAGS
 	MFLAGS_NOFILES             =0x04000000, // активная:  запускать, если текущий объект "папка"
 	MFLAGS_PNOFILES            =0x08000000, // пассивная: запускать, если текущий объект "папка"
 
-	MFLAGS_REG_MULTI_SZ        =0x10000000, // текст макроса многострочный (REG_MULTI_SZ)
-
 	MFLAGS_NEEDSAVEMACRO       =0x40000000, // необходимо этот макрос запомнить
 	MFLAGS_DISABLEMACRO        =0x80000000, // этот макрос отключен
 };

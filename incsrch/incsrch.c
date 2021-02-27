@@ -23,13 +23,6 @@ static const TCHAR sDirIncSearch     []=
 #else
                                         _T("\\Incremental Search");
 #endif
-static const TCHAR sKeyCaseSensitive []=_T("Case sensitive");
-static const TCHAR sKeyKeepSelection []=_T("Keep selection");
-static const TCHAR sKeyBeepOnMismatch[]=_T("Beep on mismatch");
-static const TCHAR sKeyRestartEOF    []=_T("Restart EOF");
-static const TCHAR sKeyUseSelection  []=_T("Use selection");
-static const TCHAR sKeyAutoNext      []=_T("Auto next");
-static const TCHAR sKeyBSunroll      []=_T("Backspace unroll");
 
 static const TCHAR sHlfConfig[]=_T("Cfg");
 static const TCHAR sHlfMenu  []=_T("Menu");
@@ -89,54 +82,8 @@ struct EditorConvertText ect;
 struct EditorSetPosition esp;
 struct EditorGetString egs;
 
-static void SetRegKeyBOOL(HKEY hKey,LPCTSTR ValueName,DWORD ValueData)
-{
-  RegSetValueEx(hKey,ValueName,0,REG_DWORD,(CONST BYTE*)&ValueData,sizeof(ValueData));
-}
-
-static void GetRegKeyBOOL(HKEY hKey, LPCTSTR ValueName, BOOL* bValueData)
-{
-  DWORD Type=REG_DWORD;
-  DWORD ValueData;
-  DWORD DataSize=sizeof(ValueData);
-
-  if( RegQueryValueEx(hKey,ValueName,0,&Type,(LPBYTE)&ValueData,&DataSize)==ERROR_SUCCESS )
-    *bValueData=(BOOL)ValueData;
-}
-
-static void RestoreConfig(void)
-{
-  HKEY hKey;
-
-  if( RegOpenKeyEx(HKEY_CURRENT_USER,PluginRootKey,0,KEY_QUERY_VALUE,&hKey)==ERROR_SUCCESS ){
-    GetRegKeyBOOL(hKey,sKeyCaseSensitive,&bCaseSensitive);
-    GetRegKeyBOOL(hKey,sKeyKeepSelection,&bKeepSelection);
-    GetRegKeyBOOL(hKey,sKeyBeepOnMismatch,&bBeepOnMismatch);
-    GetRegKeyBOOL(hKey,sKeyRestartEOF,&bRestartEOF);
-    GetRegKeyBOOL(hKey,sKeyUseSelection,&bUseSelection);
-    GetRegKeyBOOL(hKey,sKeyAutoNext,&bAutoNext);
-    GetRegKeyBOOL(hKey,sKeyBSunroll,&bBSunroll);
-    RegCloseKey(hKey);
-  }
-}
-
-static void SaveConfig(void)
-{
-  HKEY hKey;
-  DWORD Disposition;
-
-  if( RegCreateKeyEx(HKEY_CURRENT_USER,PluginRootKey,0,NULL,0,KEY_WRITE,NULL,
-                 &hKey,&Disposition)==ERROR_SUCCESS ){
-    SetRegKeyBOOL(hKey,sKeyCaseSensitive,bCaseSensitive);
-    SetRegKeyBOOL(hKey,sKeyKeepSelection,bKeepSelection);
-    SetRegKeyBOOL(hKey,sKeyBeepOnMismatch,bBeepOnMismatch);
-    SetRegKeyBOOL(hKey,sKeyRestartEOF,bRestartEOF);
-    SetRegKeyBOOL(hKey,sKeyUseSelection,bUseSelection);
-    SetRegKeyBOOL(hKey,sKeyAutoNext,bAutoNext);
-    SetRegKeyBOOL(hKey,sKeyBSunroll,bBSunroll);
-    RegCloseKey(hKey);
-  }
-}
+void RestoreConfig(void);
+void SaveConfig(void);
 
 #if !defined(WINPORT_DIRECT)
 #ifndef SHAREDSYMBOL
@@ -147,7 +94,7 @@ static void SaveConfig(void)
 #endif
 #endif
 
-void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *pInfo)
+void __plugin WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *pInfo)
 {
     ModuleNumber=pInfo->ModuleNumber;
     apiMenu=pInfo->Menu;
@@ -173,7 +120,7 @@ void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *pInfo)
     RestoreConfig();
 }
 
-int WINAPI EXP_NAME(Configure)(int ItemNumber)
+int __plugin WINAPI EXP_NAME(Configure)(int ItemNumber)
 {
     struct FarDialogItem DialogItems[11];
     static DialogTemplateItem DialogTemplate[10]={
@@ -215,7 +162,7 @@ int WINAPI EXP_NAME(Configure)(int ItemNumber)
     return TRUE;
 }
 
-void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
+void __plugin WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
     static const TCHAR *sPtr;
 
@@ -233,7 +180,7 @@ void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
     Info->PluginConfigStringsNumber=1;
 }
 
-HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
+HANDLE __plugin WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 {
     struct FarMenuItem aMenuItems[7];
     int nItems;

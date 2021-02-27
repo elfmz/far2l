@@ -6,6 +6,8 @@ Temporary panel configuration
 */
 
 #include "TmpPanel.hpp"
+#include <KeyFileHelper.h>
+#include <utils.h>
 
 #ifndef UNICODE
 #define GetCheck(i) DialogItems[i].Selected
@@ -14,6 +16,9 @@ Temporary panel configuration
 #define GetCheck(i) (int)Info.SendDlgMessage(hDlg,DM_GETCHECK,i,0)
 #define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,i,0))
 #endif
+
+#define INI_LOCATION	InMyConfig("plugins/tmppanel/config.ini")
+#define INI_SECTION		"Settings"
 
 enum
 {
@@ -40,17 +45,17 @@ enum
 
 options_t Opt;
 
-static const TCHAR REGStr[][8]=
+static const char REGStr[][8]=
 {
- _T("InDisks"), _T("InPlug"),
- _T("Common"),  _T("Safe"),   _T("Any"),    _T("Contens"),
- _T("Mode"),    _T("Menu"),   _T("NewP"),
- _T("Full"),
- _T("ColT"),    _T("ColW"),   _T("StatT"),  _T("StatW"),
+ ("InDisks"), ("InPlug"),
+ ("Common"),  ("Safe"),   ("Any"),    ("Contens"),
+ ("Mode"),    ("Menu"),   ("NewP"),
+ ("Full"),
+ ("ColT"),    ("ColW"),   ("StatT"),  ("StatW"),
 #ifndef UNICODE
- _T("DigitV"),
+ ("DigitV"),
 #endif
- _T("Mask"),   _T("Prefix")
+ ("Mask"),   ("Prefix")
 };
 
 struct COptionsList
@@ -58,63 +63,56 @@ struct COptionsList
   void *Option;
   const TCHAR *pStr;
   unsigned int DialogItem;
+  size_t OptionSize;
 };
 
 static const struct COptionsList OptionsList[]={
-  {&Opt.AddToDisksMenu    , _T("")          ,  1},
-  {&Opt.AddToPluginsMenu  , _T("")          ,  4},
+  {&Opt.AddToDisksMenu    , _T("")          ,  1, sizeof(Opt.AddToDisksMenu)},
+  {&Opt.AddToPluginsMenu  , _T("")          ,  4, sizeof(Opt.AddToPluginsMenu)},
 
-  {&Opt.CommonPanel       , _T("")          ,  6},
-  {&Opt.SafeModePanel     , NULL            ,  7},
-  {&Opt.AnyInPanel        , NULL            ,  8},
-  {&Opt.CopyContents      , NULL            ,  9},
-  {&Opt.Mode              , _T("")          , 10},
-  {&Opt.MenuForFilelist   , NULL            , 11},
-  {&Opt.NewPanelForSearchResults, NULL      , 12},
+  {&Opt.CommonPanel       , _T("")          ,  6, sizeof(Opt.CommonPanel)},
+  {&Opt.SafeModePanel     , NULL            ,  7, sizeof(Opt.SafeModePanel)},
+  {&Opt.AnyInPanel        , NULL            ,  8, sizeof(Opt.AnyInPanel)},
+  {&Opt.CopyContents      , NULL            ,  9, sizeof(Opt.CopyContents)},
+  {&Opt.Mode              , _T("")          , 10, sizeof(Opt.Mode)},
+  {&Opt.MenuForFilelist   , NULL            , 11, sizeof(Opt.MenuForFilelist)},
+  {&Opt.NewPanelForSearchResults, NULL      , 12, sizeof(Opt.NewPanelForSearchResults)},
 
-  {&Opt.FullScreenPanel   , NULL            , 22},
+  {&Opt.FullScreenPanel   , NULL            , 22, sizeof(Opt.FullScreenPanel)},
 
-  {Opt.ColumnTypes        , _T("N,S")       , 15},
-  {Opt.ColumnWidths       , _T("0,8")       , 17},
-  {Opt.StatusColumnTypes  , _T("NR,SC,D,T") , 19},
-  {Opt.StatusColumnWidths , _T("0,8,0,5")   , 21},
+  {Opt.ColumnTypes        , _T("N,S")       , 15, sizeof(Opt.ColumnTypes)},
+  {Opt.ColumnWidths       , _T("0,8")       , 17, sizeof(Opt.ColumnWidths)},
+  {Opt.StatusColumnTypes  , _T("NR,SC,D,T") , 19, sizeof(Opt.StatusColumnTypes)},
+  {Opt.StatusColumnWidths , _T("0,8,0,5")   , 21, sizeof(Opt.StatusColumnWidths)},
 
 #ifndef UNICODE
-  {Opt.DisksMenuDigit     , _T("1")         ,  2},
+  {Opt.DisksMenuDigit     , _T("1")         ,  2, sizeof(Opt.DisksMenuDigit)},
 #endif
-  {Opt.Mask               , _T("*.temp")    , 25},
-  {Opt.Prefix             , _T("tmp")       , 27},
+  {Opt.Mask               , _T("*.temp")    , 25, sizeof(Opt.Mask)},
+  {Opt.Prefix             , _T("tmp")       , 27, sizeof(Opt.Mask)},
 };
 
 int StartupOptFullScreenPanel,StartupOptCommonPanel,StartupOpenFrom;
 
 void GetOptions(void)
 {
+  KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
+  std::wstring str;
   for(int i=AddToDisksMenu;i<=Prefix;i++)
   {
-    DWORD Type,Size,IntValueData;
-    TCHAR StrValueData[256];
-    HKEY hKey = NULL;
-    if (RegOpenKeyEx(HKEY_CURRENT_USER,PluginRootKey,0,KEY_QUERY_VALUE,&hKey)!=ERROR_SUCCESS)
-	hKey = NULL;
-
     if (i<ColumnTypes)
     {
-      Size=sizeof(IntValueData);
-      Type=REG_DWORD;
-      (*(int*)(OptionsList[i]).Option)= (hKey && RegQueryValueEx(hKey,
-        REGStr[i],0,&Type,(BYTE *)&IntValueData,&Size)==ERROR_SUCCESS)?
-        IntValueData:(OptionsList[i].pStr?1:0);
+      (*(int*)(OptionsList[i]).Option) = kfh.GetInt(REGStr[i], (OptionsList[i].pStr?1:0));
     }
     else
     {
-      Type=REG_SZ;
-      Size=sizeof(CHAR)*ARRAYSIZE(StrValueData);
-      lstrcpy((TCHAR*)OptionsList[i].Option,
-        (hKey && RegQueryValueEx(hKey,REGStr[i],0,&Type,(BYTE*)StrValueData,&Size)==ERROR_SUCCESS) ?
-        (TCHAR*)StrValueData:OptionsList[i].pStr);
+      str = kfh.GetString(REGStr[i], OptionsList[i].pStr);
+      if (str.size() * sizeof(TCHAR) > OptionsList[i].OptionSize)
+      {
+        str.resize(OptionsList[i].OptionSize / sizeof(TCHAR));
+      }
+      lstrcpy((TCHAR*)OptionsList[i].Option, str.c_str());
     }
-    RegCloseKey(hKey);
   }
 }
 
@@ -204,28 +202,24 @@ int Config()
   int Ret=Info.DialogRun(hDlg);
 #endif
 
+  KeyFileHelper kfh(INI_LOCATION);
   if((unsigned)Ret >= ARRAYSIZE(InitItems)-1) goto done;
 
   for(i=AddToDisksMenu;i<=Prefix;i++)
   {
-    HKEY hKey;
-    DWORD Disposition;
-    RegCreateKeyEx(HKEY_CURRENT_USER,PluginRootKey,0,NULL,0,KEY_WRITE,NULL,
-                   &hKey,&Disposition);
     if (i<ColumnTypes)
     {
       *((int*)OptionsList[i].Option)=GetCheck(OptionsList[i].DialogItem);
-      RegSetValueEx(hKey,REGStr[i],0,REG_DWORD,(BYTE*)OptionsList[i].Option,
-        sizeof(int));
+      kfh.SetInt(INI_SECTION, REGStr[i], *(int *)OptionsList[i].Option);
     }
     else
     {
       FSF.Trim(lstrcpy((TCHAR*)OptionsList[i].Option,GetDataPtr(OptionsList[i].DialogItem)));
-      RegSetValueEx(hKey,REGStr[i],0,REG_SZ,(BYTE*)OptionsList[i].Option,
-        sizeof(TCHAR)*(lstrlen((TCHAR*)OptionsList[i].Option)+1));
+      kfh.SetString(INI_SECTION, REGStr[i], (wchar_t *)OptionsList[i].Option);
     }
-    RegCloseKey(hKey);
   }
+  kfh.Save();
+
   if(StartupOptFullScreenPanel!=Opt.FullScreenPanel ||
      StartupOptCommonPanel!=Opt.CommonPanel)
   {

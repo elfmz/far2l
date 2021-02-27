@@ -24,8 +24,8 @@ public:
 
 	~GlobalConfigWriter();
 
-	void PutInt(const char *name, int value);
-	void PutBool(const char *name, bool value);
+	void SetInt(const char *name, int value);
+	void SetBool(const char *name, bool value);
 };
 
 extern struct Globals

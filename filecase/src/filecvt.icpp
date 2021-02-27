@@ -154,12 +154,13 @@ void CaseConvertion()
 
       if (!GetCheck(18))
       {
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("WordDiv"),Opt.WordDiv);
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("ConvertMode"),Opt.ConvertMode);
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("ConvertModeExt"),Opt.ConvertModeExt);
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("SkipMixedCase"),Opt.SkipMixedCase);
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("ProcessSubDir"),Opt.ProcessSubDir);
-        SetRegKey(HKEY_CURRENT_USER,_T(""),_T("ProcessDir"),Opt.ProcessDir);
+	    KeyFileHelper kfh(INI_LOCATION);
+        kfh.SetString(INI_SECTION,("WordDiv"),Opt.WordDiv);
+        kfh.SetInt(INI_SECTION,("ConvertMode"),Opt.ConvertMode);
+        kfh.SetInt(INI_SECTION,("ConvertModeExt"),Opt.ConvertModeExt);
+        kfh.SetInt(INI_SECTION,("SkipMixedCase"),Opt.SkipMixedCase);
+        kfh.SetInt(INI_SECTION,("ProcessSubDir"),Opt.ProcessSubDir);
+        kfh.SetInt(INI_SECTION,("ProcessDir"),Opt.ProcessDir);
       }
       else
         memcpy(&Opt,&Backup,sizeof(Opt));

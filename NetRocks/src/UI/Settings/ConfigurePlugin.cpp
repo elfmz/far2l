@@ -147,13 +147,13 @@ public:
 
 		if (Show(L"PluginOptions", 6, 2) == _i_ok) {
 			auto gcw = G.GetGlobalConfigWriter();
-			gcw.PutBool("EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) );
-			gcw.PutBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
-			gcw.PutBool("SmartSymlinksCopy", IsCheckedDialogControl(_i_smart_symlinks_copy) );
-			gcw.PutBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
-			gcw.PutBool("RememberDirectory", IsCheckedDialogControl(_i_remember_directory) );
-			gcw.PutInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
-			gcw.PutBool("UseProxy", IsCheckedDialogControl(_i_use_proxy) );
+			gcw.SetBool("EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) );
+			gcw.SetBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
+			gcw.SetBool("SmartSymlinksCopy", IsCheckedDialogControl(_i_smart_symlinks_copy) );
+			gcw.SetBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
+			gcw.SetBool("RememberDirectory", IsCheckedDialogControl(_i_remember_directory) );
+			gcw.SetInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
+			gcw.SetBool("UseProxy", IsCheckedDialogControl(_i_use_proxy) );
 		}
 	}
 };

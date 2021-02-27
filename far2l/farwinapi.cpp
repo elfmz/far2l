@@ -723,21 +723,6 @@ bool apiGetFileSizeEx(HANDLE hFile, UINT64 &Size)
 	return Result;
 }
 
-int apiRegEnumKeyEx(HKEY hKey,DWORD dwIndex,FARString &strName,PFILETIME lpftLastWriteTime)
-{
-	int ExitCode=ERROR_MORE_DATA;
-
-	for (DWORD Size=512; ExitCode==ERROR_MORE_DATA; Size<<=1)
-	{
-		wchar_t *Name=strName.GetBuffer(Size);
-		DWORD Size0=Size;
-		ExitCode=WINPORT(RegEnumKeyEx)(hKey,dwIndex,Name,&Size0,nullptr,nullptr,nullptr,lpftLastWriteTime);
-		strName.ReleaseBuffer();
-	}
-
-	return ExitCode;
-}
-
 BOOL apiIsDiskInDrive(const wchar_t *Root)
 {
 	FARString strVolName;

@@ -6,7 +6,8 @@
 #include <colorer/parsers/ParserFactory.h>
 #include <colorer/unicode/SString.h>
 
-#include"pcolorer.h"
+#include "pcolorer.h"
+#include <string>
 
 #define MAX_KEY_LENGTH 255
 #define MAX_VALUE_NAME 50 // in msdn 16383 , but we have enough 50
@@ -26,7 +27,7 @@ class FarHrcSettings
 {
   friend class FileTypeImpl;
 public:
-  FarHrcSettings(ParserFactory *_parserFactory){parserFactory=_parserFactory;}
+  FarHrcSettings(ParserFactory *_parserFactory);
   void readXML(String *file, bool userValue);
   void readProfile();
   void readUserProfile();
@@ -34,10 +35,9 @@ public:
 
 private:
   void UpdatePrototype(xercesc::DOMElement* elem, bool userValue);
-  void readProfileFromRegistry(HKEY dwKey);
-  void writeProfileToRegistry();
 
   ParserFactory *parserFactory;
+  std::string profileIni;
 
 };
 

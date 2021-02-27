@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "fileedit.hpp"
 #include "RefreshFrameManager.hpp"
-#include "registry.hpp"
 #include "plugapi.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
@@ -159,7 +158,7 @@ enum PluginType
 
 const char *PluginsIni()
 {
-	static std::string s_out(InMyConfig("plugins.ini"));
+	static std::string s_out(InMyConfig("plugins/state.ini"));
 	return s_out.c_str();
 }
 
@@ -339,7 +338,7 @@ bool PluginManager::CacheForget(const wchar_t *lpwszModuleName)
 {
 	KeyFileHelper kfh(PluginsIni());
 	const std::string &SettingsName = PluginSettingsName(lpwszModuleName);
-	if (!kfh.RemoveSection(SettingsName.c_str()))
+	if (!kfh.RemoveSection(SettingsName))
 	{
 		fprintf(stderr, "%s: nothing to forget for '%ls'\n", __FUNCTION__, lpwszModuleName);
 		return false;
@@ -550,7 +549,7 @@ void PluginManager::LoadPluginsFromCache()
 	{
 		if (s != SettingsSection)
 		{
-			const std::string &module = kfh.GetString(s.c_str(), "Module");
+			const std::string &module = kfh.GetString(s, "Module");
 			if (!module.empty()) {
 				strModuleName = module;
 				LoadPlugin(strModuleName, false);
@@ -1242,6 +1241,43 @@ struct PluginMenuItemData
    ! При настройке "параметров внешних модулей" закрывать окно с их
      списком только при нажатии на ESC
 */
+
+bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType)
+{
+	for (int I=0; I<PluginsCount; I++)
+	{
+		Plugin *pPlugin = PluginsData[I];
+		PluginInfo Info{};
+		bool bCached = pPlugin->CheckWorkFlags(PIWF_CACHED) ? true : false;
+		if (!bCached && !pPlugin->GetPluginInfo(&Info))
+		{
+			continue;
+		}
+
+		for (int J = 0; ; ++J)
+		{
+			if (bCached)
+			{
+				KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
+				if (!kfh.HasKey(StrPrintf(FmtPluginConfigStringD, J)))
+					break;
+			}
+			else if (J >= Info.PluginConfigStringsNumber)
+			{
+				break;
+			}
+
+			FARString strHotKey;
+			GetPluginHotKey(pPlugin, J, HotKeyType, strHotKey);
+			if (!strHotKey.IsEmpty())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void PluginManager::Configure(int StartPos)
 {
 	// Полиция 4 - Параметры внешних модулей
@@ -1257,8 +1293,7 @@ void PluginManager::Configure(int StartPos)
 		{
 			BOOL NeedUpdateItems=TRUE;
 			int MenuItemNumber=0;
-			FARString strFirstHotKey;
-			int HotKeysPresent=EnumRegKey(L"PluginHotkeys",0,strFirstHotKey);
+			bool HotKeysPresent = CheckIfHotkeyPresent("ConfHotkey");
 
 			if (NeedUpdateItems)
 			{
@@ -1286,10 +1321,10 @@ void PluginManager::Configure(int StartPos)
 						{
 							KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 							const std::string &key = StrPrintf(FmtPluginConfigStringD, J);
-							if (!kfh.HasKey(key.c_str()))
+							if (!kfh.HasKey(key))
 								break;
 
-							strName = kfh.GetString(key.c_str(), "");
+							strName = kfh.GetString(key, "");
 						}
 						else
 						{
@@ -1420,8 +1455,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 		while (!Done)
 		{
-			FARString strFirstHotKey;
-			int HotKeysPresent=EnumRegKey(L"PluginHotkeys",0,strFirstHotKey);
+			bool HotKeysPresent = CheckIfHotkeyPresent("Hotkey");
 
 			if (NeedUpdateItems)
 			{
@@ -1462,9 +1496,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						if (bCached)
 						{
 							const std::string &key = StrPrintf(FmtPluginMenuStringD, J);
-							if (!kfh.HasKey(pPlugin->GetSettingsName(), key.c_str()))
+							if (!kfh.HasKey(pPlugin->GetSettingsName(), key))
 								break;
-							strName = kfh.GetString(pPlugin->GetSettingsName(), key.c_str(), "");
+							strName = kfh.GetString(pPlugin->GetSettingsName(), key, "");
 						}
 						else
 						{
@@ -1648,12 +1682,12 @@ std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber,
 void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
 {
 	strHotKey = KeyFileReadSection(PluginsIni(), SettingsSection).GetString(
-		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType).c_str());
+		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType));
 }
 
 bool PluginManager::SetHotKeyDialog(
     const wchar_t *DlgPluginTitle,		// имя плагина
-    const std::string &SettingName		// ключ, откуда берем значение в plugins.ini/Settings
+    const std::string &SettingName		// ключ, откуда берем значение в state.ini/Settings
 )
 {
 	/*
@@ -1673,7 +1707,7 @@ bool PluginManager::SetHotKeyDialog(
 
 	KeyFileHelper kfh(PluginsIni());
 	PluginDlg[2].strData = kfh.GetString(
-		SettingsSection, SettingName.c_str());
+		SettingsSection, SettingName);
 
 	int ExitCode;
 	{
@@ -1690,11 +1724,11 @@ bool PluginManager::SetHotKeyDialog(
 
 		if (PluginDlg[2].strData.IsEmpty())
 		{
-			kfh.RemoveKey(SettingsSection, SettingName.c_str());
+			kfh.RemoveKey(SettingsSection, SettingName);
 		}
 		else
 		{
-			kfh.PutString(SettingsSection, SettingName.c_str(), PluginDlg[2].strData.CPtr());
+			kfh.SetString(SettingsSection, SettingName, PluginDlg[2].strData.CPtr());
 		}
 
 		return true;
@@ -1721,7 +1755,7 @@ bool PluginManager::GetDiskMenuItem(
 	{
 		KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 		strPluginText = kfh.GetString(
-			StrPrintf(FmtDiskMenuStringD, PluginItem).c_str(), "");
+			StrPrintf(FmtDiskMenuStringD, PluginItem), "");
 		ItemPresent = !strPluginText.IsEmpty();
 		return true;
 	}
@@ -1795,7 +1829,7 @@ void PluginManager::DiscardCache()
 	for (const auto &s : sections)
 	{
 		if (s != SettingsSection)
-			kfh.RemoveSection(s.c_str());
+			kfh.RemoveSection(s);
 	}
 }
 

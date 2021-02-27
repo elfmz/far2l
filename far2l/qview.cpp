@@ -44,7 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "viewer.hpp"
 #include "cmdline.hpp"
 #include "ctrlobj.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "execute.hpp"
 #include "dirinfo.hpp"
@@ -384,7 +383,7 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 
 	if (hDirPlugin || (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
-		// Не показывать тип файла для каталогов в "Быстром просмотре"
+		// 
 		strCurFileType.Clear();
 
 		if (SameFile && !hDirPlugin)
@@ -591,7 +590,7 @@ void QuickView::DynamicUpdateKeyBar()
 		KB->Change(L"", 8-1);
 		KB->Change(KBL_SHIFT, L"", 2-1);
 		KB->Change(KBL_SHIFT, L"", 8-1);
-		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // стандартный для панели - "хистори"
+		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // 
 	}
 	else
 	{

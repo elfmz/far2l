@@ -11,7 +11,7 @@ namespace Storage
 		uint64_t crc = crc64(0, (const unsigned char *)key_string.c_str(), key_string.size());
 		crc = crc64(crc, (const unsigned char *)key_file.c_str(), key_file.size());
 		char buf[128] = {};
-		snprintf(buf, sizeof(buf) - 1, "inside/stg/%llx", (unsigned long long)crc);
+		snprintf(buf, sizeof(buf) - 1, "plugins/inside/stg/%llx", (unsigned long long)crc);
 		return InMyConfig(buf);
 	}
 

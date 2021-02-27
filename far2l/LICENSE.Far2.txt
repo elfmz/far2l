@@ -41,7 +41,7 @@ plognmn.hpp plugapi.cpp plugapi.hpp plugin.hpp PluginA.cpp PluginA.hpp pluginold
 plugins.cpp plugins.hpp PluginW.cpp PluginW.hpp poscache.cpp poscache.hpp print.cpp 
 print.hpp privilege.cpp privilege.hpp processname.cpp processname.hpp qview.cpp 
 qview.hpp rdrwdsk.cpp rdrwdsk.hpp RefreshFrameManager.cpp RefreshFrameManager.hpp 
-RegExp.cpp RegExp.hpp registry.cpp registry.hpp res.hpp savefpos.cpp savefpos.hpp 
+RegExp.cpp RegExp.hpp res.hpp savefpos.cpp savefpos.hpp 
 savescr.cpp savescr.hpp scantree.cpp scantree.hpp scrbuf.cpp scrbuf.hpp scrobj.cpp 
 scrobj.hpp scrsaver.cpp scrsaver.hpp setattr.cpp setattr.hpp setcolor.cpp setcolor.hpp 
 stddlg.cpp stddlg.hpp strmix.cpp strmix.hpp svn_tag_build.m4 synchro.cpp synchro.hpp 

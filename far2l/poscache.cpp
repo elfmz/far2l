@@ -36,12 +36,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "poscache.hpp"
 #include "udlist.hpp"
-#include "registry.hpp"
 #include "config.hpp"
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
 	: _kind(kind),
-	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "viewer.pos" : "editor.pos"))
+	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "history/viewer.pos" : "history/editor.pos"))
 {
 }
 
@@ -52,24 +51,20 @@ FilePositionCache::~FilePositionCache()
 
 void FilePositionCache::ApplyElementsLimit()
 {
+	AssertConfigLoaded();
 	int MaxPositionCache = Opt.MaxPositionCache;
-
-	if (!MaxPositionCache)
-	{
-		GetRegKey(L"System", L"MaxPositionCache", MaxPositionCache, POSCACHE_MAX_ELEMENTS);
-	}
 
 	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16)
 	{
 		std::vector<std::string> sections = _kfh->EnumSections();
 		std::sort(sections.begin(), sections.end(),
 			[&](const std::string &a, const std::string &b) -> bool {
-			return _kfh->GetULL(a.c_str(), "TS", 0) <  _kfh->GetULL(b.c_str(), "TS", 0);
+			return _kfh->GetULL(a, "TS", 0) <  _kfh->GetULL(b, "TS", 0);
 		});
 
 		int cnt = (int)sections.size() - MaxPositionCache;
 		for (int i = 0; i < cnt; ++i) {
-			_kfh->RemoveSection(sections[i].c_str());
+			_kfh->RemoveSection(sections[i]);
 		}
 	}
 }
@@ -133,7 +128,7 @@ static size_t PositionCountToSave(const DWORD64 *position)
 void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 {
 	if (!_kfh) {
-		_kfh.reset(new KeyFileHelper(_kf_path.c_str()));
+		_kfh.reset(new KeyFileHelper(_kf_path));
 	}
 
 	ApplyElementsLimit();
@@ -144,8 +139,8 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 
 	size_t save_count = ParamCountToSave(poscache.Param);
 	if (save_count) {
-		_kfh->PutBytes(section.c_str(), "Par",
-			(unsigned char *)&poscache.Param[0], save_count * sizeof(poscache.Param[0]));
+		_kfh->SetBytes(section, "Par",
+			save_count * sizeof(poscache.Param[0]), (unsigned char *)&poscache.Param[0]);
 
 	} else {
 		have_some_to_save = false;
@@ -156,7 +151,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			}
 		}
 		if (have_some_to_save) {
-			_kfh->RemoveKey(section.c_str(), "Par");
+			_kfh->RemoveKey(section, "Par");
 		}
 	}
 
@@ -166,17 +161,17 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			sprintf(key, "Pos%u", i);
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
-				_kfh->PutBytes(section.c_str(), key,
-					(unsigned char *)poscache.Position[i], save_count * sizeof(poscache.Position[i][0]));
+				_kfh->SetBytes(section, key,
+					save_count * sizeof(poscache.Position[i][0]), (unsigned char *)poscache.Position[i]);
 			} else {
-				_kfh->RemoveKey(section.c_str(), key);
+				_kfh->RemoveKey(section, key);
 			}
 		}
 
-		_kfh->PutULLAsHex(section.c_str(), "TS", time(NULL));
+		_kfh->SetULL(section, "TS", time(NULL));
 
 	} else {
-		_kfh->RemoveSection(section.c_str());
+		_kfh->RemoveSection(section);
 	}
 
 	CheckForSave();
@@ -190,13 +185,13 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 	std::unique_ptr<KeyFileReadSection> tmp_kfrs;
 	const KeyFileValues *values;
 	if (_kfh) {
-		values = _kfh->GetSectionValues(section.c_str());
+		values = _kfh->GetSectionValues(section);
 		if (!values) {
 			return false;
 		}
 
 	} else {
-		tmp_kfrs.reset(new KeyFileReadSection(_kf_path.c_str(), section.c_str()));
+		tmp_kfrs.reset(new KeyFileReadSection(_kf_path, section));
 		if (!tmp_kfrs->SectionLoaded()) {
 			return false;
 		}
@@ -204,16 +199,15 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 	}
 
 	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
-	values->GetBytes("Par",
-		(unsigned char *)&poscache.Param[0], sizeof(poscache.Param));
+	values->GetBytes((unsigned char *)&poscache.Param[0], sizeof(poscache.Param), "Par");
 
 	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
 		memset(poscache.Position[i], 0xff,
 			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
 		char key[64];
 		sprintf(key, "Pos%u", i);
-		values->GetBytes(key, (unsigned char *)poscache.Position[i],
-			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+		values->GetBytes((unsigned char *)poscache.Position[i],
+			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT, key);
 	}
 
 	return true;

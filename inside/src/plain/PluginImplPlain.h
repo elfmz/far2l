@@ -3,7 +3,6 @@
 #include <map>
 #include <memory>
 #include <all_far.h>
-#include <fstdlib.h>
 #include "PluginImpl.h"
 
 class PluginImplPlain : public PluginImpl

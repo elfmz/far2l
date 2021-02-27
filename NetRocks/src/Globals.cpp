@@ -27,15 +27,15 @@ GlobalConfigWriter::~GlobalConfigWriter()
 		_config->Save();
 }
 
-void GlobalConfigWriter::PutInt(const char *name, int value)
+void GlobalConfigWriter::SetInt(const char *name, int value)
 {
 	if (_config)
-		_config->PutInt("Options", name, value);
+		_config->SetInt("Options", name, value);
 }
 
-void GlobalConfigWriter::PutBool(const char *name, bool value)
+void GlobalConfigWriter::SetBool(const char *name, bool value)
 {
-	PutInt(name, value ? 1 : 0);
+	SetInt(name, value ? 1 : 0);
 }
 
 
@@ -49,12 +49,12 @@ void Globals::Startup(const struct PluginStartupInfo *Info)
 		info = *Info;
 		fsf = *(Info->FSF);
 		info.FSF = &fsf;
-		_global_config.reset(new KeyFileHelper(InMyConfig("NetRocks/options.cfg").c_str()));
-		tsocks_config = InMyConfig("NetRocks/tsocks.cfg");
+		_global_config.reset(new KeyFileHelper(InMyConfig("plugins/NetRocks/options.cfg")));
+		tsocks_config = InMyConfig("plugins/NetRocks/tsocks.cfg");
 		if (!GetGlobalConfigBool("ImportFarFtpSitesDone", false)) {
 			if (ImportFarFtpSites()) {
 				GlobalConfigWriter w = GetGlobalConfigWriter();
-				w.PutBool("ImportFarFtpSitesDone", true);
+				w.SetBool("ImportFarFtpSitesDone", true);
 			}
 		}
 		_started = true;

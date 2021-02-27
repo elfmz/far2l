@@ -1,5 +1,5 @@
 #define FARMANAGERVERSION_MAJOR 2
-#define FARMANAGERVERSION_MINOR 2
+#define FARMANAGERVERSION_MINOR 3
 
 //#define MAKEFARVERSION(major,minor) ( ((major)<<16) | (minor))
 

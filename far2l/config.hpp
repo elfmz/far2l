@@ -666,8 +666,11 @@ void ViewerConfig(ViewerOptions &ViOpt,bool Local=false);
 void EditorConfig(EditorOptions &EdOpt,bool Local=false);
 void NotificationsConfig(NotificationsOptions &NotifOpt);
 void ReadConfig();
+void ApplyConfig();
+void AssertConfigLoaded();
 void SaveConfig(int Ask);
 void SetFolderInfoFiles();
 void InfoPanelSettings();
 void AutoCompleteSettings();
 void LanguageSettings();
+

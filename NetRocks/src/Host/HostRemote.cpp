@@ -344,7 +344,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 	_options = protocol_options.Serialize();
 
 	if (_site_specification.IsValid()) {
-		SitesConfig(_site_specification.sites_cfg_location).PutProtocolOptions(_site_specification.site, _identity.protocol, _options);
+		SitesConfig(_site_specification.sites_cfg_location).SetProtocolOptions(_site_specification.site, _identity.protocol, _options);
 	}
 
 	return true;

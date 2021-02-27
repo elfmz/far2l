@@ -100,7 +100,6 @@ qview.cpp
 rdrwdsk.cpp
 RefreshFrameManager.cpp
 RegExp.cpp
-registry.cpp
 savefpos.cpp
 savescr.cpp
 scantree.cpp
@@ -136,6 +135,7 @@ DetectCodepage.cpp
 SafeMMap.cpp
 AnsiEsc.cpp
 ViewerPrinter.cpp
+ConfigRW.cpp
 )
 
 # Set target names for the executables

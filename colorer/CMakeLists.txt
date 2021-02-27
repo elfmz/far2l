@@ -15,7 +15,6 @@ set(SOURCES
     src/pcolorer2/FarEditorSet.h
     src/pcolorer2/FarHrcSettings.h
     src/pcolorer2/pcolorer.h
-    src/pcolorer2/registry_wide.h
     src/pcolorer2/resource.h
     src/pcolorer2/StringBuffer.h
     src/pcolorer2/tools.h
@@ -24,7 +23,6 @@ set(SOURCES
     src/pcolorer2/FarEditorSet.cpp
     src/pcolorer2/FarHrcSettings.cpp
     src/pcolorer2/pcolorer.cpp
-    src/pcolorer2/registry_wide.cpp
     src/pcolorer2/StringBuffer.cpp
     src/pcolorer2/tools.cpp
 )

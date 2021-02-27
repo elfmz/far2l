@@ -40,10 +40,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "vmenu.hpp"
 #include "dialog.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "strmix.hpp"
 #include "panelmix.hpp"
+
+#define PANELMODES_INI	"panel_modes.ini"
 
 PanelViewSettings ViewSettingsArray[]=
 {
@@ -204,22 +205,20 @@ void FileList::SetFilePanelModes()
 }
 
 
-void FileList::ReadPanelModes()
+void FileList::ReadPanelModes(ConfigReader &cfg_reader)
 {
 	for (int I=0; I<10; I++)
 	{
-		FARString strColumnTitles, strColumnWidths;
-		FARString strStatusColumnTitles, strStatusColumnWidths, strRegKey;
-		strRegKey.Format(L"Panel/ViewModes/Mode%d",I);
-		GetRegKey(strRegKey,L"Columns",strColumnTitles,L"");
-		GetRegKey(strRegKey,L"ColumnWidths",strColumnWidths,L"");
-		GetRegKey(strRegKey,L"StatusColumns",strStatusColumnTitles,L"");
-		GetRegKey(strRegKey,L"StatusColumnWidths",strStatusColumnWidths,L"");
+		cfg_reader.SelectSectionFmt("Panel/ViewModes/Mode%d", I);
+		FARString strColumnTitles = cfg_reader.GetString("Columns", L"");
+		FARString strColumnWidths = cfg_reader.GetString("ColumnWidths", L"");
+		FARString strStatusColumnTitles = cfg_reader.GetString("StatusColumns", L"");
+		FARString strStatusColumnWidths = cfg_reader.GetString("StatusColumnWidths", L"");
 
 		if (strColumnTitles.IsEmpty() || strColumnWidths.IsEmpty())
 			continue;
 
-		PanelViewSettings NewSettings=ViewSettingsArray[VIEW_0+I];
+		PanelViewSettings NewSettings = ViewSettingsArray[VIEW_0+I];
 
 		if (!strColumnTitles.IsEmpty())
 			TextToViewSettings(strColumnTitles,strColumnWidths,NewSettings.ColumnType,
@@ -229,38 +228,40 @@ void FileList::ReadPanelModes()
 			TextToViewSettings(strStatusColumnTitles,strStatusColumnWidths,NewSettings.StatusColumnType,
 			                   NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,NewSettings.StatusColumnCount);
 
-		GetRegKey(strRegKey,L"FullScreen",NewSettings.FullScreen,0);
-		GetRegKey(strRegKey,L"AlignExtensions",NewSettings.AlignExtensions,1);
-		GetRegKey(strRegKey,L"FolderAlignExtensions",NewSettings.FolderAlignExtensions,0);
-		GetRegKey(strRegKey,L"FolderUpperCase",NewSettings.FolderUpperCase,0);
-		GetRegKey(strRegKey,L"FileLowerCase",NewSettings.FileLowerCase,0);
-		GetRegKey(strRegKey,L"FileUpperToLowerCase",NewSettings.FileUpperToLowerCase,0);
-		ViewSettingsArray[VIEW_0+I]=NewSettings;
+		NewSettings.FullScreen = cfg_reader.GetInt("FullScreen", 0);
+		NewSettings.AlignExtensions = cfg_reader.GetInt("AlignExtensions", 1);
+		NewSettings.FolderAlignExtensions = cfg_reader.GetInt("FolderAlignExtensions", 0);
+		NewSettings.FolderUpperCase = cfg_reader.GetInt("FolderUpperCase", 0);
+		NewSettings.FileLowerCase = cfg_reader.GetInt("FileLowerCase", 0);
+		NewSettings.FileUpperToLowerCase = cfg_reader.GetInt("FileUpperToLowerCase", 0);
+		ViewSettingsArray[VIEW_0 + I] = NewSettings;
 	}
 }
 
 
-void FileList::SavePanelModes()
+void FileList::SavePanelModes(ConfigWriter &cfg_writer)
 {
 	for (int I=0; I<10; I++)
 	{
-		FARString strColumnTitles, strColumnWidths;
-		FARString strStatusColumnTitles, strStatusColumnWidths, strRegKey;
-		strRegKey.Format(L"Panel/ViewModes/Mode%d",I);
-		PanelViewSettings NewSettings=ViewSettingsArray[VIEW_0+I];
+		cfg_writer.SelectSectionFmt("Panel/ViewModes/Mode%d", I);
+
+		FARString strColumnTitles, strColumnWidths, strStatusColumnTitles, strStatusColumnWidths;
+
+		PanelViewSettings NewSettings = ViewSettingsArray[VIEW_0+I];
 		ViewSettingsToText(NewSettings.ColumnType,NewSettings.ColumnWidth,NewSettings.ColumnWidthType,
 		                   NewSettings.ColumnCount,strColumnTitles,strColumnWidths);
 		ViewSettingsToText(NewSettings.StatusColumnType,NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,
 		                   NewSettings.StatusColumnCount,strStatusColumnTitles,strStatusColumnWidths);
-		SetRegKey(strRegKey,L"Columns",strColumnTitles);
-		SetRegKey(strRegKey,L"ColumnWidths",strColumnWidths);
-		SetRegKey(strRegKey,L"StatusColumns",strStatusColumnTitles);
-		SetRegKey(strRegKey,L"StatusColumnWidths",strStatusColumnWidths);
-		SetRegKey(strRegKey,L"FullScreen",NewSettings.FullScreen);
-		SetRegKey(strRegKey,L"AlignExtensions",NewSettings.AlignExtensions);
-		SetRegKey(strRegKey,L"FolderAlignExtensions",NewSettings.FolderAlignExtensions);
-		SetRegKey(strRegKey,L"FolderUpperCase",NewSettings.FolderUpperCase);
-		SetRegKey(strRegKey,L"FileLowerCase",NewSettings.FileLowerCase);
-		SetRegKey(strRegKey,L"FileUpperToLowerCase",NewSettings.FileUpperToLowerCase);
+
+		cfg_writer.SetString("Columns", strColumnTitles.CPtr());
+		cfg_writer.SetString("ColumnWidths", strColumnWidths.CPtr());
+		cfg_writer.SetString("StatusColumns", strStatusColumnTitles.CPtr());
+		cfg_writer.SetString("StatusColumnWidths", strStatusColumnWidths.CPtr());
+		cfg_writer.SetInt("FullScreen", NewSettings.FullScreen);
+		cfg_writer.SetInt("AlignExtensions", NewSettings.AlignExtensions);
+		cfg_writer.SetInt("FolderAlignExtensions", NewSettings.FolderAlignExtensions);
+		cfg_writer.SetInt("FolderUpperCase", NewSettings.FolderUpperCase);
+		cfg_writer.SetInt("FileLowerCase", NewSettings.FileLowerCase);
+		cfg_writer.SetInt("FileUpperToLowerCase", NewSettings.FileUpperToLowerCase);
 	}
 }

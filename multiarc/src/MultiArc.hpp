@@ -8,9 +8,13 @@
 #include <sudo.h>
 #include <string>
 #include <utils.h>
+#include <KeyFileHelper.h>
 #include <pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
+
+#define INI_LOCATION (InMyConfig("plugins/multiarc/config.ini"))
+#define INI_SECTION ("Settings")
 
 //#define _NEW_ARC_SORT_
 #define OLD_DIALOG_STYLE 1
@@ -346,16 +350,6 @@ int GetScrX(void);
 void NormalizePath(const char *SrcName,char *DestName);
 std::string &ExpandEnv(std::string &str);
 std::string &NormalizePath(std::string &path);
-
-void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,char *ValueData);
-void SetRegKey(HKEY hRoot,const char *Key,const char *ValueName,DWORD ValueData);
-int GetRegKey(const char *Key,const char *ValueName,char *ValueData,const char *Default,DWORD DataSize);
-int GetRegKey(HKEY hRoot,const char *Key,const char *ValueName,char *ValueData,const char *Default,DWORD DataSize);
-int GetRegKey(HKEY hRoot,const char *Key,const char *ValueName,int &ValueData,DWORD Default);
-int GetRegKey(HKEY hRoot,const char *Key,const char *ValueName,DWORD Default);
-void DeleteRegKey(HKEY hRoot,const char *Key);
-void DeleteRegValue(HKEY hRoot,const char *Key,const char *ValueName);
-
 
 int WINAPI GetPassword(char *Password,const char *FileName);
 void WINAPI UnixTimeToFileTime(DWORD UnixTime,FILETIME *FileTime);

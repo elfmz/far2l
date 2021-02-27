@@ -3,8 +3,13 @@
 
 #include "AlignLng.hpp"
 #include "Align.hpp"
-#include "../../etc/WrapReg.icpp"
 #include "AlignMix.icpp"
+
+#include <utils.h>
+#include <KeyFileHelper.h>
+
+#define INI_LOCATION	InMyConfig("plugins/align/config.ini")
+#define INI_SECTION		"Settings"
 
 #ifndef UNICODE
 #define GetCheck(i) DialogItems[i].Selected
@@ -30,10 +35,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info=*Info;
   ::FSF=*Info->FSF;
   ::Info.FSF=&::FSF;
-  lstrcpy(PluginRootKey,Info->RootKey);
-  lstrcat(PluginRootKey,_T("/Align"));
 }
-
 
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
 {
@@ -51,10 +53,11 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
 
   struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
   InitDialogItems(InitItems,DialogItems,ARRAYSIZE(InitItems));
-  int RightMargin=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("RightMargin"),75);
-  int Reformat=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("Reformat"),TRUE);
-  int SmartMode=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("SmartMode"),FALSE);
-  int Justify=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("Justify"),FALSE);
+  KeyFileHelper kfh(INI_LOCATION);
+  int RightMargin=kfh.GetInt(INI_SECTION,("RightMargin"),75);
+  int Reformat=kfh.GetInt(INI_SECTION,("Reformat"),TRUE);
+  int SmartMode=kfh.GetInt(INI_SECTION,("SmartMode"),FALSE);
+  int Justify=kfh.GetInt(INI_SECTION,("Justify"),FALSE);
 #ifdef UNICODE
   wchar_t marstr[32];
   DialogItems[1].PtrData = marstr;
@@ -82,10 +85,10 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
   Reformat=GetCheck(3);
   SmartMode=GetCheck(4);
   Justify=GetCheck(5);
-  SetRegKey(HKEY_CURRENT_USER,_T(""),_T("Reformat"),Reformat);
-  SetRegKey(HKEY_CURRENT_USER,_T(""),_T("RightMargin"),RightMargin);
-  SetRegKey(HKEY_CURRENT_USER,_T(""),_T("SmartMode"),SmartMode);
-  SetRegKey(HKEY_CURRENT_USER,_T(""),_T("Justify"),Justify);
+  kfh.SetInt(INI_SECTION,("Reformat"),Reformat);
+  kfh.SetInt(INI_SECTION,("RightMargin"),RightMargin);
+  kfh.SetInt(INI_SECTION,("SmartMode"),SmartMode);
+  kfh.SetInt(INI_SECTION,("Justify"),Justify);
   Info.EditorControl(ECTL_TURNOFFMARKINGBLOCK,NULL);
   if (Reformat)
     ReformatBlock(RightMargin,SmartMode,Justify);

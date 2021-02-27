@@ -253,7 +253,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
   if (Command[0] != '%' || Command[1] != '%' || Chr < 'A' || Chr > 'Z')
     return 0;
 
-  int VarLength = 3;
+  size_t VarLength = 3;
 
   while (VarLength < Command.size())
   {
@@ -455,7 +455,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
           }
           if (PathOnly)
             CutToPathOrSpace(Name);
-          if (Names.empty() || (Names.size() + Name.size() < MaxNamesLength && Command[2] != 'f'))
+          if (Names.empty() || (int(Names.size() + Name.size()) < MaxNamesLength && Command[2] != 'f'))
           {
             NameNumber+= IncreaseNumber;
             if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -538,7 +538,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
   }
 
   std::string CurArcDir, FileName, OutName;
-  char Buf[3*NM];
+//  char Buf[3*NM];
 
   if (!NameOnly)
     CurArcDir = ArcDir;

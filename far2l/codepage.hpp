@@ -42,7 +42,7 @@ enum CPSelectType
 	CPST_FIND = 2
 };
 
-extern const wchar_t *FavoriteCodePagesKey;
+extern const char *FavoriteCodePagesKey;
 
 inline bool IsUTF7(UINT CP) {return (CP==CP_UTF7); };
 inline bool IsUTF8(UINT CP) {return (CP==CP_UTF8); };
@@ -96,8 +96,6 @@ bool IsCodePageSupported(UINT CodePage);
 UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7 = false, bool bShowAuto = false);
 
 UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool allowAuto, bool allowAll);
-
-wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t Length);
 
 //#define CP_DBG
 

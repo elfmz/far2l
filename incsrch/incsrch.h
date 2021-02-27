@@ -79,10 +79,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #ifdef __cplusplus
 extern "C" {
 #endif
-  extern void   __plugin WINAPI EXP_NAME(SetStartupInfo)(struct PluginStartupInfo const *Info);
-  extern int    __plugin WINAPI EXP_NAME(Configure)(int ItemNumber);
-  extern HANDLE __plugin WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item);
-  extern void   __plugin WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info);
 
   extern INT_PTR             ModuleNumber;
   extern FARAPIMENU          apiMenu;
@@ -185,7 +181,7 @@ extern "C" {
 }
 #endif
 
-#include "locale.h"
+#include "loc.h"
 #include "misc.h"
 
 #ifdef _MSC_VER

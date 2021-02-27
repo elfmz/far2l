@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "macroopcode.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 #include "interf.hpp"
 #include "message.hpp"
 #include "config.hpp"

@@ -926,7 +926,7 @@ void PluginImpl::DismissRemoteHost()
 	  && G.GetGlobalConfigBool("RememberDirectory", false) ) {
 		SiteSpecification site_specification(StrWide2MB(_standalone_config), _location.server);
 		SitesConfig sc(site_specification.sites_cfg_location);
-		sc.PutDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());
+		sc.SetDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());
 	}
 	_remote.reset();
 }

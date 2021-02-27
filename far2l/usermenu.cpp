@@ -47,7 +47,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "manager.hpp"
 #include "constitle.hpp"
-#include "registry.hpp"
 #include "message.hpp"
 #include "usermenu.hpp"
 #include "filetype.hpp"
@@ -71,6 +70,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #endif
 
+static std::unique_ptr<ConfigReader> s_cfg_reader;
+
 // Коды выхода из меню (Exit codes)
 enum
 {
@@ -81,7 +82,7 @@ enum
 	EC_COMMAND_SELECTED = -5, // Выбрана команда - закрыть меню и обновить папку
 };
 
-int PrepareHotKey(FARString &strHotKey)
+static int PrepareHotKey(FARString &strHotKey)
 {
 	int FuncNum=0;
 
@@ -106,21 +107,19 @@ int PrepareHotKey(FARString &strHotKey)
 	return FuncNum;
 }
 
-void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool SingleItemMenu=false)
+static void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool SingleItemMenu=false)
 {
 	for (int i=0;;i++)
 	{
-		FARString strItemKey;
-		strItemKey.Format(L"%ls/Item%d",MenuKey,i);
+		const std::string &strItemKey = StrPrintf("%ls/Item%d", MenuKey, i);
+		s_cfg_reader->SelectSection(strItemKey);
 		FARString strLabel;
-
-		if (!GetRegKey(strItemKey,L"Label",strLabel,L""))
+		if (!s_cfg_reader->GetString(strLabel, "Label", L"")) {
 			break;
+		}
 
-		FARString strHotKey;
-		GetRegKey(strItemKey,L"HotKey",strHotKey,L"");
-		BOOL SubMenu;
-		GetRegKey(strItemKey,L"Submenu",SubMenu,0);
+		FARString strHotKey = s_cfg_reader->GetString("HotKey", L"");
+		bool SubMenu = s_cfg_reader->GetInt("Submenu", 0) != 0;
 		CW.Write(strHotKey.CPtr(), static_cast<DWORD>(strHotKey.GetLength()*sizeof(WCHAR)));
 		CW.Write(L":  ", 3*sizeof(WCHAR));
 		CW.Write(strLabel.CPtr(), static_cast<DWORD>(strLabel.GetLength()*sizeof(WCHAR)));
@@ -129,19 +128,18 @@ void MenuRegToFile(const wchar_t *MenuKey, File& MenuFile, CachedWrite& CW, bool
 		if (SubMenu)
 		{
 			CW.Write(L"{\r\n", 3*sizeof(WCHAR));
-			MenuRegToFile(strItemKey, MenuFile, CW, false);
+			MenuRegToFile(FARString(strItemKey), MenuFile, CW, false);
 			CW.Write(L"}\r\n", 3*sizeof(WCHAR));
 		}
 		else
 		{
 			for (int i=0;; i++)
 			{
-				FARString strLineName;
-				strLineName.Format(L"Command%d",i);
 				FARString strCommand;
-
-				if (!GetRegKey(strItemKey,strLineName,strCommand,L""))
+				if (!s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", i), L"")) {
 					break;
+				}
+
 				CW.Write(L"    ", 4*sizeof(WCHAR));
 				CW.Write(strCommand.CPtr(), static_cast<DWORD>(strCommand.GetLength()*sizeof(WCHAR)));
 				CW.Write(L"\r\n", 2*sizeof(WCHAR));
@@ -209,7 +207,6 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 			FARString strLabel=ChPtr+1;
 			RemoveLeadingSpaces(strLabel);
 			bool SubMenu=(GetStr.PeekString(&MenuStr, MenuCP, MenuStrLength) && *MenuStr==L'{');
-			UseSameRegKey();
 
 			// Support for old 1.x separator format
 			if(MenuCP==CP_OEMCP && strHotKey==L"-" && strLabel.IsEmpty())
@@ -217,20 +214,25 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 				strHotKey+=L"-";
 			}
 
-			SetRegKey(strItemKey,L"HotKey",strHotKey);
-			SetRegKey(strItemKey,L"Label",strLabel);
-			SetRegKey(strItemKey,L"Submenu",SubMenu);
-			CloseSameRegKey();
+			{
+				ConfigWriter cfg_writer(strItemKey.GetMB());
+				cfg_writer.SetString("HotKey", strHotKey);
+				cfg_writer.SetString("Label", strLabel);
+				cfg_writer.SetInt("Submenu", SubMenu);
+			}
+			ConfigReaderScope::Update(s_cfg_reader);
+			//CloseSameRegKey();
 			CommandNumber=0;
 		}
 		else
 		{
 			if (KeyNumber>=0)
 			{
-				FARString strLineName;
-				strLineName.Format(L"Command%d",CommandNumber++);
 				RemoveLeadingSpaces(MenuStr);
-				SetRegKey(strItemKey,strLineName,MenuStr);
+				const std::string &strLineName = StrPrintf("Command%d", CommandNumber);
+				++CommandNumber;
+				{ ConfigWriter(strItemKey.GetMB()).SetString(strLineName, MenuStr); }
+				ConfigReaderScope::Update(s_cfg_reader);
 			}
 		}
 
@@ -239,6 +241,7 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 }
 
 UserMenu::UserMenu(bool ChoiceMenuType)
+	: grs(s_cfg_reader)
 {
 	ProcessUserMenu(ChoiceMenuType);
 }
@@ -256,7 +259,9 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
 	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
-	DeleteKeyTree(strLocalMenuKey);
+	{
+		ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
+	}
 	MenuModified=MenuNeedRefresh=false;
 
 	if (ChoiceMenuType)
@@ -389,7 +394,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 			}
 
 			// ...почистим реестр.
-			DeleteKeyTree(strLocalMenuKey);
+			ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection();
 		}
 
 		// что было после вызова меню?
@@ -454,27 +459,21 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 }
 
 // заполнение меню
-int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
+static int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos,const wchar_t *Name)
 {
 	UserMenu.DeleteItems();
 	int NumLines=0;
 
 	for (NumLines=0;; NumLines++)
 	{
-		FARString strItemKey;
-		strItemKey.Format(L"%ls/Item%d",MenuKey,NumLines);
-
-		if (!CheckRegKey(strItemKey))
-		{
+		s_cfg_reader->SelectSectionFmt("%ls/Item%d", MenuKey, NumLines);
+		if (!s_cfg_reader->HasSection())
 			break;
-		}
 
 		MenuItemEx UserMenuItem;
 		UserMenuItem.Clear();
-		FARString strHotKey;
-		GetRegKey(strItemKey,L"HotKey",strHotKey,L"");
-		FARString strLabel;
-		GetRegKey(strItemKey,L"Label",strLabel,L"");
+		FARString strHotKey = s_cfg_reader->GetString("HotKey", L"");
+		FARString strLabel = s_cfg_reader->GetString("Label", L"");
 		int FuncNum=0;
 
 		// сепаратором является случай, когда хоткей == "--"
@@ -500,7 +499,7 @@ int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *FuncPos
 			UserMenuItem.strName=FString.strValue();
 			UserMenuItem.strName+=strLabel;
 
-			if (GetRegKey(strItemKey,L"Submenu",0))
+			if (s_cfg_reader->GetInt("Submenu", 0) != 0)
 			{
 				UserMenuItem.Flags|=MIF_SUBMENU;
 			}
@@ -621,12 +620,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					case KEY_NUMPAD6:
 					case KEY_MSWHEEL_RIGHT:
 					{
-						FARString strCurrentKey;
-						int SubMenu;
-						strCurrentKey.Format(L"%ls/Item%d",MenuKey,MenuPos);
-						GetRegKey(strCurrentKey,L"Submenu",SubMenu,0);
-
-						if (SubMenu)
+						s_cfg_reader->SelectSectionFmt("%ls/Item%d", MenuKey, MenuPos);
+						if (s_cfg_reader->GetInt("Submenu", 0) != 0)
 							UserMenu.SetExitCode(MenuPos);
 
 						break;
@@ -715,7 +710,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								return 0;
 							}
 						}
-						DeleteKeyTree(strCurrentKey);
+						{ ConfigWriter(strCurrentKey.GetMB()).RemoveSection(); }
 						GetFileString GetStr(MenuFile);
 						MenuFileToReg(strCurrentKey, MenuFile, GetStr, Key==KEY_ALTSHIFTF4);
 						MenuFile.Close();
@@ -759,17 +754,17 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			return(EC_CLOSE_LEVEL); //  вверх на один уровень
 
 		FARString strCurrentKey;
-		int SubMenu;
 		strCurrentKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
-		GetRegKey(strCurrentKey,L"Submenu",SubMenu,0);
+		s_cfg_reader->SelectSection(strCurrentKey);
+		int SubMenu = s_cfg_reader->GetInt("Submenu", 0);
 
 		if (SubMenu)
 		{
 			/* $ 20.08.2001 VVM + При вложенных меню показывает заголовки предыдущих */
-			FARString strSubMenuKey, strSubMenuLabel, strSubMenuTitle;
+			FARString strSubMenuKey, strSubMenuTitle, strSubMenuLabel;
 			strSubMenuKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
-
-			if (GetRegKey(strSubMenuKey,L"Label",strSubMenuLabel,L""))
+			s_cfg_reader->SelectSection(strSubMenuKey);
+			if (s_cfg_reader->GetString(strSubMenuLabel, "Label", L""))
 			{
 				SubstFileName(strSubMenuLabel,strName,nullptr,nullptr,TRUE);
 				apiExpandEnvironmentStrings(strSubMenuLabel, strSubMenuLabel);
@@ -815,13 +810,12 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		for (;;)
 		{
 			FormatString strLineName;
-			FARString strCommand;
+			FARString strCommand, strListName, strAnotherListName;
 			strLineName<<L"Command"<<CurLine;
 
-			if (!GetRegKey(strCurrentKey,strLineName,strCommand,L""))
+			s_cfg_reader->SelectSection(strCurrentKey);
+			if (!s_cfg_reader->GetString(strCommand, FARString(strLineName).GetMB(), L""))
 				break;
-
-			FARString strListName, strAnotherListName;
 
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
@@ -850,7 +844,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					}
 					*/
 					//;
-					int PreserveLFN=SubstFileName(strCommand,strName,&strListName,&strAnotherListName, FALSE, strCmdLineDir);
+					/*int PreserveLFN=*/SubstFileName(strCommand,strName,&strListName,&strAnotherListName, FALSE, strCmdLineDir);
 					bool ListFileUsed=!strListName.IsEmpty()||!strAnotherListName.IsEmpty();
 
 					{
@@ -1025,6 +1019,8 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 	MenuNeedRefresh=true;
 	bool SubMenu=false,Continue=true;
 
+	s_cfg_reader->SelectSection(strItemKey);
+
 	if (Create)
 	{
 		switch (Message(0,2,MSG(MUserMenuTitle),MSG(MAskInsertMenuOrCommand),MSG(MMenuInsertCommand),MSG(MMenuInsertMenu)))
@@ -1038,9 +1034,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 	}
 	else
 	{
-		int _SubMenu;
-		GetRegKey(strItemKey,L"Submenu",_SubMenu,0);
-		SubMenu=_SubMenu?true:false;
+		SubMenu = s_cfg_reader->GetInt("Submenu", 0) != 0;
 	}
 
 	if (Continue)
@@ -1083,25 +1077,19 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 		if (!Create)
 		{
-			GetRegKey(strItemKey,L"HotKey",EditDlg[EM_HOTKEY_EDIT].strData,L"");
-			GetRegKey(strItemKey,L"Label",EditDlg[EM_LABEL_EDIT].strData,L"");
+			EditDlg[EM_HOTKEY_EDIT].strData = s_cfg_reader->GetString("HotKey", L"");
+			EditDlg[EM_LABEL_EDIT].strData = s_cfg_reader->GetString("Label", L"");
 #if defined(PROJECT_DI_MEMOEDIT)
 			/*
 				...
 				здесь добавка строк из "Command%d" в EMR_MEMOEDIT
 				...
 			*/
-			FARString strBuffer;
+			FARString strBuffer, strCommand;
 			int CommandNumber=0;
 
-			while (true)
+			while (s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
 			{
-				FARString strCommandName, strCommand;
-				strCommandName.Format(L"Command%d",CommandNumber);
-
-				if (!GetRegKey(strItemKey,strCommandName,strCommand,L""))
-					break;
-
 				strBuffer+=strCommand;
 				strBuffer+=L"\n";    //??? "\n\r"
 				CommandNumber++;
@@ -1113,10 +1101,8 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 			while (CommandNumber < DI_EDIT_COUNT)
 			{
-				FARString strCommandName, strCommand;
-				strCommandName.Format(L"Command%d",CommandNumber);
-
-				if (!GetRegKey(strItemKey,strCommandName,strCommand,L""))
+				FARString strCommand;
+				if (!s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
 					break;
 
 				EditDlg[EM_EDITLINE_0+CommandNumber].strData = strCommand;
@@ -1134,51 +1120,48 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 		if (Dlg.GetExitCode()==EM_BUTTON_OK)
 		{
 			MenuModified=true;
-
-			if (Create)
 			{
-				FARString strKeyMask;
-				strKeyMask.Format(L"%ls/Item%%d",MenuKey);
-				InsertKeyRecord(strKeyMask,EditPos,TotalRecords);
-			}
+				ConfigWriter cfg_writer(FARString(strItemKey).GetMB());
 
-			SetRegKey(strItemKey,L"HotKey",EditDlg[EM_HOTKEY_EDIT].strData);
-			SetRegKey(strItemKey,L"Label",EditDlg[EM_LABEL_EDIT].strData);
-			SetRegKey(strItemKey,L"Submenu",0u);
-
-			if (SubMenu)
-			{
-				SetRegKey(strItemKey,L"Submenu",1u);
-			}
-			else
-			{
-#if defined(PROJECT_DI_MEMOEDIT)
-				/*
-				...
-				здесь преобразование содержимого итема EMR_MEMOEDIT в "Command%d"
-				...
-				*/
-#else
-				int CommandNumber=0;
-
-				for (int i=0 ; i < DI_EDIT_COUNT ; i++)
-					if (!EditDlg[i+EM_EDITLINE_0].strData.IsEmpty())
-						CommandNumber=i+1;
-
-				for (int i=0 ; i < DI_EDIT_COUNT ; i++)
+				if (Create)
 				{
-					FARString strCommandName;
-					strCommandName.Format(L"Command%d",i);
-
-					if (i>=CommandNumber)
-						DeleteRegValue(strItemKey,strCommandName);
-					else
-						SetRegKey(strItemKey,strCommandName,EditDlg[i+EM_EDITLINE_0].strData);
+					cfg_writer.ReserveIndexedSection(
+						StrPrintf("%ls/Item", MenuKey).c_str(), (unsigned int)EditPos);
 				}
 
+				cfg_writer.SetString("HotKey", EditDlg[EM_HOTKEY_EDIT].strData.CPtr());
+				cfg_writer.SetString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
+				cfg_writer.SetInt("Submenu", SubMenu ? 1 : 0);
+
+				if (!SubMenu)
+				{
+#if defined(PROJECT_DI_MEMOEDIT)
+					/*
+					...
+					здесь преобразование содержимого итема EMR_MEMOEDIT в "Command%d"
+					...
+					*/
+#else
+					int CommandNumber=0;
+
+					for (int i=0 ; i < DI_EDIT_COUNT ; i++)
+						if (!EditDlg[i+EM_EDITLINE_0].strData.IsEmpty())
+						CommandNumber=i+1;
+
+					for (int i=0 ; i < DI_EDIT_COUNT ; i++)
+					{
+						const std::string &strCommandName = StrPrintf("Command%d", i);
+
+						if (i>=CommandNumber)
+							cfg_writer.RemoveKey(strCommandName);
+						else
+							cfg_writer.SetString(strCommandName, EditDlg[i+EM_EDITLINE_0].strData.CPtr());
+					}
 #endif
+				}
 			}
 
+			ConfigReaderScope::Update(s_cfg_reader);
 			Result=true;
 		}
 	}
@@ -1188,12 +1171,11 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 {
-	FARString strRecText;
 	FormatString strRegKey;
 	strRegKey<<MenuKey<<L"/Item"<<DeletePos;
-	GetRegKey(strRegKey,L"Label",strRecText,L"");
-	int SubMenu;
-	GetRegKey(strRegKey,L"Submenu",SubMenu,0);
+	s_cfg_reader->SelectSection(strRegKey);
+	FARString strRecText = s_cfg_reader->GetString("Label", L"");
+	int SubMenu = s_cfg_reader->GetInt("Submenu", 0);
 	FARString strItemName=strRecText;
 	InsertQuote(strItemName);
 
@@ -1202,23 +1184,24 @@ int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 
 	MenuModified=MenuNeedRefresh=true;
 	strRegKey.Clear();
-	strRegKey<<MenuKey<<L"/Item%d";
-	DeleteKeyRecord(strRegKey,DeletePos);
+	strRegKey << MenuKey << L"/Item";
+	FARString DefragPrefix(strRegKey);
+	strRegKey << DeletePos;
+	ConfigWriter cfg_writer(FARString(strRegKey).GetMB());
+	cfg_writer.RemoveSection();
+	cfg_writer.DefragIndexedSections(DefragPrefix.GetMB().c_str());
 	return TRUE;
 }
 
 bool UserMenu::MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos)
 {
-	FormatString strSrc,strDst,strTmp;
-	strSrc<<MenuKey<<L"/Item"<<Pos;
-	strDst<<MenuKey<<L"/Item"<<NewPos;
-	strTmp<<MenuKey<<L"/Item"<<WINPORT(GetTickCount)();
-	CopyLocalKeyTree(strDst,strTmp);
-	DeleteKeyTree(strDst);
-	CopyLocalKeyTree(strSrc,strDst);
-	DeleteKeyTree(strSrc);
-	CopyLocalKeyTree(strTmp,strSrc);
-	DeleteKeyTree(strTmp);
-	MenuModified=MenuNeedRefresh=true;
+	if (Pos != NewPos)
+	{
+		FormatString strSrc, strDst;
+		strSrc << MenuKey << L"/Item" << Pos;
+		strDst << MenuKey << L"/Item" << NewPos;
+		ConfigWriter(FARString(strSrc).GetMB()).RenameSection(FARString(strDst).GetMB());
+		MenuModified = MenuNeedRefresh=true;
+	}
 	return true;
 }

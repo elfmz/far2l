@@ -21,18 +21,18 @@
 #include "ChooseTypeMenu.h"
 
 //registry keys
-extern const wchar_t cRegEnabled[];
-extern const wchar_t cRegHrdName[];
-extern const wchar_t cRegHrdNameTm[];
-extern const wchar_t cRegCatalog[];
-extern const wchar_t cRegCrossDraw[];
-extern const wchar_t cRegPairsDraw[];
-extern const wchar_t cRegSyntaxDraw[];
-extern const wchar_t cRegOldOutLine[];
-extern const wchar_t cRegTrueMod[];
-extern const wchar_t cRegChangeBgEditor[];
-extern const wchar_t cRegUserHrdPath[];
-extern const wchar_t cRegUserHrcPath[];
+extern const char cRegEnabled[];
+extern const char cRegHrdName[];
+extern const char cRegHrdNameTm[];
+extern const char cRegCatalog[];
+extern const char cRegCrossDraw[];
+extern const char cRegPairsDraw[];
+extern const char cRegSyntaxDraw[];
+extern const char cRegOldOutLine[];
+extern const char cRegTrueMod[];
+extern const char cRegChangeBgEditor[];
+extern const char cRegUserHrdPath[];
+extern const char cRegUserHrcPath[];
 
 //values of registry keys by default
 extern const bool cEnabledDefault;
@@ -199,7 +199,6 @@ private:
   RegionMapper *regionMapper;
   HRCParser *hrcParser;
 
-  HKEY hPluginRegistry;
   /**current value*/
   SString hrdClass;
   SString hrdName;
@@ -224,6 +223,7 @@ private:
   SString *sUserHrcPathExp;
 
   int viewFirst; // 0 - init;  1 - first run view; 2 - first run editor
+  std::string settingsIni;
 };
 
 #endif

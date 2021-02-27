@@ -250,13 +250,6 @@ BOOL apiMoveFileEx(
     DWORD dwFlags   // flag to determine how to move file
 );
 
-int apiRegEnumKeyEx(
-    HKEY hKey,
-    DWORD dwIndex,
-    FARString &strName,
-    PFILETIME lpftLastWriteTime=nullptr
-);
-
 BOOL apiIsDiskInDrive(
     const wchar_t *Root
 );

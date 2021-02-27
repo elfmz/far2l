@@ -3539,7 +3539,7 @@ BOOL Editor::Search(int Next)
 	Edit *CurPtr,*TmpPtr;
 	FARString strSearchStr, strReplaceStr;
 	static FARString strLastReplaceStr;
-	static int LastSuccessfulReplaceMode=0;
+	//static int LastSuccessfulReplaceMode=0;
 	FARString strMsgStr;
 	const wchar_t *TextHistoryName=L"SearchText",*ReplaceHistoryName=L"ReplaceText";
 	int CurPos,Case,WholeWords,ReverseSearch,SelectFound,Regexp,Match,NewNumLine,UserBreak;
@@ -3587,7 +3587,7 @@ BOOL Editor::Search(int Next)
 	if (strSearchStr.IsEmpty())
 		return TRUE;
 
-	LastSuccessfulReplaceMode=ReplaceMode;
+	//LastSuccessfulReplaceMode=ReplaceMode;
 
 	if (!EdOpt.PersistentBlocks || (SelectFound && !ReplaceMode))
 		UnmarkBlock();

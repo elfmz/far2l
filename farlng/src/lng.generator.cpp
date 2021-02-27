@@ -562,7 +562,7 @@ int main_generator (int argc, char** argv)
 						}
 						else
 						{
-							key_file->PutInt(lpFullName, "CRC32", pLangEntries[i].dwCRC32);
+							key_file->SetInt(lpFullName, "CRC32", pLangEntries[i].dwCRC32);
 						}
 					}
 
@@ -597,7 +597,7 @@ int main_generator (int argc, char** argv)
 					}
 					else
 					{
-						key_file->PutInt(lpFullName, "CRC32", dwHeaderCRC32);
+						key_file->SetInt(lpFullName, "CRC32", dwHeaderCRC32);
 					}
 				}
 

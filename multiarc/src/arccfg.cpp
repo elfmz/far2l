@@ -64,18 +64,19 @@ int ConfigGeneral()
   Opt.ReadDescriptions=DialogItems[13].Selected;
   Opt.UpdateDescriptions=DialogItems[14].Selected;
 
-  SetRegKey(HKEY_CURRENT_USER,"","HideOutput",Opt.HideOutput);
-  SetRegKey(HKEY_CURRENT_USER,"","UseLastHistory",Opt.UseLastHistory);
-  SetRegKey(HKEY_CURRENT_USER,"","ProcessShiftF1",Opt.ProcessShiftF1);
-  SetRegKey(HKEY_CURRENT_USER,"","DescriptionNames",Opt.DescriptionNames);
-  SetRegKey(HKEY_CURRENT_USER,"","ReadDescriptions",Opt.ReadDescriptions);
-  SetRegKey(HKEY_CURRENT_USER,"","UpdateDescriptions",Opt.UpdateDescriptions);
-  SetRegKey(HKEY_CURRENT_USER,"","AllowChangeDir",Opt.AllowChangeDir);
+  KeyFileHelper kfh(INI_LOCATION);
+  kfh.SetInt(INI_SECTION,"HideOutput",Opt.HideOutput);
+  kfh.SetInt(INI_SECTION,"UseLastHistory",Opt.UseLastHistory);
+  kfh.SetInt(INI_SECTION,"ProcessShiftF1",Opt.ProcessShiftF1);
+  kfh.SetString(INI_SECTION,"DescriptionNames",Opt.DescriptionNames);
+  kfh.SetInt(INI_SECTION,"ReadDescriptions",Opt.ReadDescriptions);
+  kfh.SetInt(INI_SECTION,"UpdateDescriptions",Opt.UpdateDescriptions);
+  kfh.SetInt(INI_SECTION,"AllowChangeDir",Opt.AllowChangeDir);
 
-  //SetRegKey(HKEY_CURRENT_USER,"","DeleteExtFile",Opt.DeleteExtFile);
-  //SetRegKey(HKEY_CURRENT_USER,"","AddExtArchive",Opt.AddExtArchive);
-  //SetRegKey(HKEY_CURRENT_USER,"","AutoResetExactArcName",Opt.AutoResetExactArcName);
-  SetRegKey(HKEY_CURRENT_USER,"","AdvFlags",Opt.AdvFlags);
+  //kfh.SetInt(INI_SECTION,"DeleteExtFile",Opt.DeleteExtFile);
+  //kfh.SetInt(INI_SECTION,"AddExtArchive",Opt.AddExtArchive);
+  //kfh.SetInt(INI_SECTION,"AutoResetExactArcName",Opt.AutoResetExactArcName);
+  kfh.SetInt(INI_SECTION,"AdvFlags",(int)Opt.AdvFlags);
 
   return TRUE;
 }
@@ -117,7 +118,9 @@ LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
             ArcPlugin->GetDefaultCommands(PluginNumber,PluginType,J,Command);
         }
         if(!Param1) // if not Reset
-          GetRegKey(FormatInfo->ArcFormat,CmdNames[J],Command,Command,sizeof(Command));
+        {
+          KeyFileReadSection(INI_LOCATION,FormatInfo->ArcFormat).GetChars(Command,sizeof(Command),CmdNames[J],Command);
+        }
         Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,I,(LONG_PTR)Command);
       }
       return TRUE;
@@ -204,8 +207,9 @@ int ConfigCommands(char *ArcFormat,int IDFocus,BOOL FastAccess,int PluginNumber,
   if(ExitCode==35 || ExitCode < 0)
     return FALSE;
 
+  KeyFileHelper kfh(INI_LOCATION);
   for (I=2,J=0;I<=32;I+=2,J++)
-    SetRegKey(HKEY_CURRENT_USER,ArcFormat,CmdNames[J],DialogItems[I].Data);
+    kfh.SetString(ArcFormat,CmdNames[J],DialogItems[I].Data);
 
   return TRUE;
 }

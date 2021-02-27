@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileview.hpp"
 #include "TPreRedrawFunc.hpp"
 #include "syslog.hpp"
-#include "registry.hpp"
 #include "cddrv.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
@@ -83,7 +82,7 @@ static long OldCalcTime;
 
 #define PROGRESS_REFRESH_THRESHOLD    1000 // msec
 
-enum {COPY_BUFFER_SIZE  = 0x10000};
+enum {COPY_BUFFER_SIZE  = 0x40000};
 
 enum
 {
@@ -637,11 +636,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// $ 26.05.2001 OT Запретить перерисовку панелей во время копирования
 	_tran(SysLog(L"call (*FrameManager)[0]->LockRefresh()"));
 	(*FrameManager)[0]->Lock();
-	// Размер буфера берется из реестра
-	GetRegKey(L"System", L"CopyBufferSize", CopyBufferSize, 0);
-	CopyBufferSize=AlignPageUp(Max(CopyBufferSize,(int)COPY_BUFFER_SIZE));
+	CopyBufferSize=AlignPageUp((int)COPY_BUFFER_SIZE);
 	// Progress bar update threshold
-	GetRegKey(L"System", L"ProgressUpdateThreshold", ProgressUpdateThreshold, PROGRESS_REFRESH_THRESHOLD);
+	ProgressUpdateThreshold=PROGRESS_REFRESH_THRESHOLD;
 	CDP.thisClass=this;
 	CDP.AltF10=0;
 	CDP.FolderPresent=false;

@@ -1,12 +1,16 @@
 #include "../../etc/plugs.h"
 
-
 #include "WrapLng.hpp"
 #include "AutoWrap.hpp"
 #include "DlgBuilder.hpp"
 
-#include "../../etc/WrapReg.icpp"
 #include "WrapMix.icpp"
+
+#include <utils.h>
+#include <KeyFileHelper.h>
+
+#define INI_LOCATION	InMyConfig("plugins/autowrap/config.ini")
+#define INI_SECTION		"Settings"
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()
 {
@@ -18,12 +22,11 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   ::Info=*Info;
   FSF=*Info->FSF;
   ::Info.FSF=&FSF;
-  lstrcpy(PluginRootKey,Info->RootKey);
-  lstrcat(PluginRootKey,_T("/AutoWrap"));
-  Opt.Wrap=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("Wrap"),0);
-  Opt.RightMargin=GetRegKey(HKEY_CURRENT_USER,_T(""),_T("RightMargin"),75);
-  GetRegKey(HKEY_CURRENT_USER,_T(""),_T("FileMasks"),Opt.FileMasks,_T("*.*"),sizeof(Opt.FileMasks));
-  GetRegKey(HKEY_CURRENT_USER,_T(""),_T("ExcludeFileMasks"),Opt.ExcludeFileMasks,_T(""),sizeof(Opt.ExcludeFileMasks));
+  KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
+  Opt.Wrap=kfh.GetInt(("Wrap"),0);
+  Opt.RightMargin=kfh.GetInt(("RightMargin"),75);
+  kfh.GetChars(Opt.FileMasks, ARRAYSIZE(Opt.FileMasks), "FileMasks",L"*.*");
+  kfh.GetChars(Opt.ExcludeFileMasks, ARRAYSIZE(Opt.ExcludeFileMasks), "ExcludeFileMasks",L"");
 }
 
 
@@ -41,10 +44,11 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom,INT_PTR Item)
   Builder.AddOKCancel(MOk, MCancel);
   if (Builder.ShowDialog())
   {
-    SetRegKey(HKEY_CURRENT_USER,_T(""),_T("Wrap"),Opt.Wrap);
-    SetRegKey(HKEY_CURRENT_USER,_T(""),_T("RightMargin"),Opt.RightMargin);
-    SetRegKey(HKEY_CURRENT_USER,_T(""),_T("FileMasks"),Opt.FileMasks);
-    SetRegKey(HKEY_CURRENT_USER,_T(""),_T("ExcludeFileMasks"),Opt.ExcludeFileMasks);
+    KeyFileHelper kfh(INI_LOCATION);
+    kfh.SetInt(INI_SECTION,("Wrap"),Opt.Wrap);
+    kfh.SetInt(INI_SECTION,("RightMargin"),Opt.RightMargin);
+    kfh.SetString(INI_SECTION,("FileMasks"),Opt.FileMasks);
+    kfh.SetString(INI_SECTION,("ExcludeFileMasks"),Opt.ExcludeFileMasks);
   }
   return INVALID_HANDLE_VALUE;
 }

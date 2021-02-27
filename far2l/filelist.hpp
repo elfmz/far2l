@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DList.hpp"
 #include "panelctype.hpp"
 #include "plugins.hpp"
+#include "ConfigRW.hpp"
 
 class FileFilter;
 
@@ -408,8 +409,8 @@ class FileList:public Panel
 		virtual HANDLE GetPluginHandle();
 		virtual int GetRealSelCount();
 		static void SetFilePanelModes();
-		static void SavePanelModes();
-		static void ReadPanelModes();
+		static void SavePanelModes(ConfigWriter &cfg_writer);
+		static void ReadPanelModes(ConfigReader &cfg_reader);
 		static int FileNameToPluginItem(const wchar_t *Name,PluginPanelItem *pi);
 		static void FileListToPluginItem(FileListItem *fi,PluginPanelItem *pi);
 		static void FreePluginPanelItem(PluginPanelItem *pi);

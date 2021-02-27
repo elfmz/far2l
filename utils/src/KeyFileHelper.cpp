@@ -485,11 +485,18 @@ std::wstring KeyFileReadHelper::GetString(const std::string &section, const std:
 	return def ? def : L"";
 }
 
-void KeyFileReadHelper::GetChars(char *buffer, size_t buf_size, const std::string &section, const std::string &name, const char *def) const
+void KeyFileReadHelper::GetChars(char *buffer, size_t maxchars, const std::string &section, const std::string &name, const char *def) const
 {
 	const std::string &out = GetString(section, name, def);
-	strncpy(buffer, out.c_str(), buf_size);
-	buffer[buf_size - 1] = 0;
+	strncpy(buffer, out.c_str(), maxchars);
+	buffer[maxchars - 1] = 0;
+}
+
+void KeyFileReadHelper::GetChars(wchar_t *buffer, size_t maxchars, const std::string &section, const std::string &name, const wchar_t *def) const
+{
+	const std::wstring &out = GetString(section, name, def);
+	wcsncpy(buffer, out.c_str(), maxchars);
+	buffer[maxchars - 1] = 0;
 }
 
 int KeyFileReadHelper::GetInt(const std::string &section, const std::string &name, int def) const

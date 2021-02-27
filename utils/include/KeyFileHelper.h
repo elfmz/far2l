@@ -51,7 +51,8 @@ public:
 	bool HasKey(const std::string &section, const std::string &name) const;
 	std::string GetString(const std::string &section, const std::string &name, const char *def = "") const;
 	std::wstring GetString(const std::string &section, const std::string &name, const wchar_t *def) const;
-	void GetChars(char *buffer, size_t buf_size, const std::string &section, const std::string &name, const char *def = "") const;
+	void GetChars(char *buffer, size_t maxchars, const std::string &section, const std::string &name, const char *def = "") const;
+	void GetChars(wchar_t *buffer, size_t maxchars, const std::string &section, const std::string &name, const wchar_t *def = L"") const;
 	int GetInt(const std::string &section, const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &section, const std::string &name, unsigned int def = 0) const;
 	unsigned long long GetULL(const std::string &section, const std::string &name, unsigned long long def = 0) const;

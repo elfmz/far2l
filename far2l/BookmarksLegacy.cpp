@@ -44,7 +44,7 @@ static void LegacyShortcut_GetRecord(const wchar_t *RecTypeName, int RecNumber, 
 	pValue->Clear();
 
 	HKEY key = NULL;
-	if (WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, L"Software/Far2", 0, GENERIC_READ, &key) == ERROR_SUCCESS) {
+	if (WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, L"Software/Far2/FolderShortcuts", 0, GENERIC_READ, &key) == ERROR_SUCCESS) {
 		FARString strValueName;
 		strValueName.Format(RecTypeName, RecNumber);
 		std::vector<WCHAR> data(0x10000);

@@ -17,7 +17,7 @@ bool FSClipboardBackend::OnClipboardOpen()
 	if (!_shared_resource.LockWrite(5))
 		return false;
 
-	_kfh = std::make_shared<KeyFileHelper>(InMyConfig("fsclipboard.ini"), true);
+	_kfh = std::make_shared<KeyFileHelper>(InMyCache("fsclipboard.ini"), true);
 	return true;
 }
 

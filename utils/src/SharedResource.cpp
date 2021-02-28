@@ -17,7 +17,7 @@ SharedResource::SharedResource(const char *group, uint64_t id) :
 	char buf[128];
 	snprintf(buf, sizeof(buf) - 1, "sr/%s/%llx", group, (unsigned long long)id);
 
-	_fd = open(InMyConfig(buf).c_str(), O_CREAT | O_RDWR, 0640);
+	_fd = open(InMyCache(buf).c_str(), O_CREAT | O_RDWR, 0640);
 	if (_fd == -1) {
 		perror("SharedResource::SharedResource: open");
 

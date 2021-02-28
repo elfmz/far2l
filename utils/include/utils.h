@@ -58,6 +58,7 @@ void QuoteCmdArgIfNeed(std::wstring &str);
 
 std::string GetMyHome();
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
+std::string InMyCache(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);
 
 bool IsPathIn(const wchar_t *path, const wchar_t *root);

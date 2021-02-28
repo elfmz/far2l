@@ -456,8 +456,6 @@ void PluginManager::LoadPlugins()
 {
 	Flags.Clear(PSIF_PLUGINSLOADDED);
 
-	clock_t cl_start = clock();
-
 	if (Opt.LoadPlug.PluginsCacheOnly)  // $ 01.09.2000 tran  '/co' switch
 	{
 		LoadPluginsFromCache();
@@ -530,10 +528,6 @@ void PluginManager::LoadPlugins()
 	}
 
 	Flags.Set(PSIF_PLUGINSLOADDED);
-
-	clock_t cl_end = clock();
-
-	fprintf(stderr, "STARTUP=%ld\n", long(cl_end - cl_start) );
 
 	far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 }

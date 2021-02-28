@@ -360,8 +360,22 @@ void ConfigWriter::RemoveKey(const std::string &name)
 #ifdef WINPORT_REGISTRY
 static bool ShouldImportRegSettings(const std::string &virtual_path)
 {
-	// skip stuff that goes to plugins/state.ini
-	return (virtual_path != "Plugins" && virtual_path != "PluginHotkeys");
+	
+	return (
+		// dont care about legacy Plugins settings
+		virtual_path != "Plugins"
+
+		// skip stuff that goes to plugins/state.ini
+		&& virtual_path != "PluginHotkeys"
+		&& virtual_path != "PluginsCache"
+
+		// skip abandoned poscache entires
+		&& virtual_path != "Viewer/LastPositions"
+		&& virtual_path != "Editor/LastPositions"
+
+		// separately handled by BookmarksLegacy.cpp
+		&& virtual_path != "FolderShortcuts"
+		);
 }
 
 static void ConfigUgrade_RegKey(FILE *lf, ConfigWriter &cfg_writer, HKEY root, const wchar_t *subpath, const std::string &virtual_path)
@@ -397,7 +411,7 @@ static void ConfigUgrade_RegKey(FILE *lf, ConfigWriter &cfg_writer, HKEY root, c
 			DWORD namelen = namebuf.size() - 1;
 			DWORD datalen = databuf.size();
 			DWORD tip = 0;
-            r = WINPORT(RegEnumValue)(key, i,
+			r = WINPORT(RegEnumValue)(key, i,
 				&namebuf[0], &namelen, NULL, &tip, &databuf[0], &datalen);
 			if (r != ERROR_SUCCESS) {
 				if (r != ERROR_MORE_DATA) {

@@ -23,6 +23,7 @@ const char *LibArch_EntryPathname(struct archive_entry *e);
 
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
 void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
+bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::string> &root);
 
 struct LibArchOpenRead
 {

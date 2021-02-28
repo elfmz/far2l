@@ -34,7 +34,8 @@ static bool PartsMatchesAnyOfWanteds(const std::vector<std::vector<std::string> 
 	return false;
 }
 
-static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, const std::vector<std::vector<std::string> > &wanteds)
+static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
+	const size_t root_count, const std::vector<std::vector<std::string> > &wanteds)
 {
 	std::string src_path, extract_path;
 	std::vector<std::string> parts;
@@ -67,11 +68,16 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc, co
 		switch (*cmd) {
 			case 'X': {
 				extract_path = '.';
+				size_t root_dismiss_counter = root_count;
 				for (const auto &p : parts) {
-					mkdir(extract_path.c_str(),
-						S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH);
-					extract_path+= '/';
-					extract_path+= p;
+					if (root_dismiss_counter == 0) {
+						mkdir(extract_path.c_str(),
+							S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH);
+						extract_path+= '/';
+						extract_path+= p;
+					} else {
+						--root_dismiss_counter;
+					}
 				}
 			} break;
 
@@ -107,14 +113,23 @@ bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const LibarchCom
 	std::vector<std::vector<std::string> > wanteds;
 	wanteds.reserve(files_cnt);
 
+	std::vector<std::string> root;
+	if (!arc_opts.root_path.empty()) {
+		LibArch_ParsePathToParts(root, arc_opts.root_path);
+	}
+
 	for (int i = 0; i < files_cnt; ++i) {
 		wanteds.emplace_back();
-		if (!arc_opts.root_path.empty()) {
-			LibArch_ParsePathToParts(wanteds.back(), arc_opts.root_path);
+		if (files[i]) {
+			if (*files[i]) {
+				LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
+			}
+			if (!root.empty() && !LibArch_PartsStartsBy(wanteds.back(), root)) {
+				fprintf(stderr, "Fixup root for path: '%s'\n", files[i]);
+				wanteds.back().insert(wanteds.back().begin(), root.begin(), root.end());
+			}
 		}
-		if (files[i] && *files[i]) {
-			LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
-		}
+
 		if (wanteds.back().empty()) {
 			fprintf(stderr, "Skipping empty path: '%s'\n", files[i]);
 			wanteds.pop_back();
@@ -126,5 +141,5 @@ bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const LibarchCom
 	}
 
 	LibArchOpenRead arc(arc_path, cmd, arc_opts.charset.c_str());
-	return LIBARCH_CommandReadWanteds(cmd, arc, wanteds);
+	return LIBARCH_CommandReadWanteds(cmd, arc, root.size(), wanteds);
 }

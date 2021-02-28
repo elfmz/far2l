@@ -382,18 +382,20 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   } else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0) {
     CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
     Info->Codepage = WINPORT(GetOEMCP)();
-
   }
 
   Info->UnpVer=(ZipHeader.UnpVer/10)*256+(ZipHeader.UnpVer%10);
   Info->DictSize=32;
   
   if ((ZipHeader.PackOS==3 || ZipHeader.PackOS==7) && (ZipHeader.Attr&0xffff0000)!=0) {
-	Item->FindData.dwUnixMode = ZipHeader.Attr>>16;
-	Item->FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(Item->FindData.dwUnixMode, Item->FindData.cFileName);
+    Item->FindData.dwUnixMode = ZipHeader.Attr>>16;
+    if ((Item->FindData.dwUnixMode & S_IFMT) == 0) {
+      Item->FindData.dwUnixMode|= S_IFREG;
+    }
+    Item->FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(Item->FindData.dwUnixMode, Item->FindData.cFileName);
   } else {
-	Item->FindData.dwUnixMode = 0;
-	Item->FindData.dwFileAttributes = ZipHeader.Attr & 0x3f;	  
+    Item->FindData.dwUnixMode = 0;
+    Item->FindData.dwFileAttributes = ZipHeader.Attr & 0x3f;
   }
 
   memset(Info->Description, 0, sizeof(Info->Description));
@@ -580,7 +582,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 #if ZIP_LIBARCHIVE
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
-	/*Extract               */"^libarch X %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+	/*Extract               */"^libarch X %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
 	/*Extract without paths */"^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
 	/*Test                  */"^libarch t %%A {-cs=%%T}",
 	/*Delete                */"^libarch d %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",

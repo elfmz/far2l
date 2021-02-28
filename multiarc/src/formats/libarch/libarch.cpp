@@ -309,7 +309,7 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest)
 {
 	static const char *Commands[] = {
-	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract               */"^libarch X %%A -@%%R -- %%FMq4096",
 	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
 	/*Delete                */"^libarch d %%A -- %%FMq4096",
@@ -327,7 +327,7 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 	};
 
 	static const char *CommandsCab[] = {
-	/*Extract               */"^libarch X %%A -- %%FMq4096",
+	/*Extract               */"^libarch X %%A -@%%R -- %%FMq4096",
 	/*Extract without paths */"^libarch x %%A -- %%FMq4096",
 	/*Test                  */"^libarch t %%A",
 	/*Delete                */"^libarch d %%A -- %%FMq4096",
@@ -376,7 +376,7 @@ extern "C" int libarch_main(int numargs, char *args[])
 	setlocale(LC_CTYPE, "UTF-8");
 
 	if (numargs < 3) {
-		printf("Usage: ^arch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
+		printf("Usage: ^libarch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"
 			"  t: Test integrity of archive\n"
 			"  x: Extract files from archive (without using directory names)\n"

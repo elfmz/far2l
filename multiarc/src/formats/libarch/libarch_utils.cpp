@@ -84,6 +84,21 @@ void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string
 	}
 }
 
+bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::string> &root)
+{
+	if (parts.size() < root.size()) {
+		return false;
+	}
+
+	for (size_t i = 0; i != root.size(); ++i) {
+		if (parts[i] != root[i]) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *charset)
 {
 	Open(name);

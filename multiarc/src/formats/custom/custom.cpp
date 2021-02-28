@@ -66,7 +66,6 @@ static int GetString(char *Str, int MaxSize);
 
 static bool CheckIniFiles();
 static const KeyFileValues *GetSection(int Num, std::string &Name);
-static DWORD KeyFileValuePSZ(const KeyFileValues *Values,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize);
 
 static void FillFormat(const KeyFileValues *Values);
 static void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft);
@@ -694,14 +693,13 @@ BOOL WINAPI _export CUSTOM_CloseArchive(struct ArcInfo * Info)
 BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *DefaultExt)
 {
     std::string TypeName;
-	const KeyFileValues *Values = GetSection(Type, TypeName);
+    const KeyFileValues *Values = GetSection(Type, TypeName);
 
     if(!Values)
         return (FALSE);
 
-    KeyFileValuePSZ(Values, Str_TypeName, TypeName.c_str(), FormatName, 64);
-    KeyFileValuePSZ(Values, "Extension", "", DefaultExt, NM);
-
+    Values->GetChars(FormatName, 64, Str_TypeName, TypeName.c_str());
+    Values->GetChars(DefaultExt, NM, "Extension", "");
     return (*FormatName != 0);
 }
 
@@ -727,7 +725,7 @@ BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
 
     if(Command < (int)(ARRAYSIZE(CmdNames)))
     {
-        KeyFileValuePSZ(Values, CmdNames[Command], "", Dest, 512);
+        Values->GetChars(Dest, 512, CmdNames[Command], "");
         return (TRUE);
     }
 
@@ -779,14 +777,6 @@ static bool CheckIniFiles()
 	return out;
 }
 
-static DWORD KeyFileValuePSZ(const KeyFileValues *Values,LPCSTR lpKeyName,LPCSTR lpDefault,LPSTR lpReturnedString,DWORD nSize)
-{
-	const std::string &s = Values->GetString(lpKeyName, lpDefault);
-	strncpy(lpReturnedString, s.c_str(), nSize);
-	lpReturnedString[nSize - 1] = 0;
-	return strlen(lpReturnedString);
-}
-
 static void FillFormat(const KeyFileValues *Values)
 {
     StartText = Values->GetString("Start", "");
@@ -801,7 +791,7 @@ static void FillFormat(const KeyFileValues *Values)
         char FormatName[100];
 
         sprintf(FormatName, "Format%d", FormatNumber++);
-        KeyFileValuePSZ(Values, FormatName, "", CurFormat->Str(), PROF_STR_LEN);
+        Values->GetChars(CurFormat->Str(), PROF_STR_LEN, FormatName, "");
         if(*CurFormat->Str() == 0)
             break;
     }
@@ -815,7 +805,7 @@ static void FillFormat(const KeyFileValues *Values)
         char Name[100];
 
         sprintf(Name, "IgnoreString%d", Number++);
-        KeyFileValuePSZ(Values, Name, "", CurIgnoreString->Str(), PROF_STR_LEN);
+        Values->GetChars(CurIgnoreString->Str(), PROF_STR_LEN, Name, "");
         if(*CurIgnoreString->Str() == 0)
             break;
     }

@@ -167,6 +167,7 @@ static int MainProcess(
 )
 {
 	{
+		clock_t cl_start = clock();
 		ChangePriority ChPriority(ChangePriority::NORMAL);
 		ControlObject CtrlObj;
 		WORD InitAttributes=0;
@@ -209,6 +210,7 @@ static int MainProcess(
 				_tran(SysLog(L"make shellviewer, %p",ShellViewer));
 			}
 
+			fprintf(stderr, "STARTUP(E/V): %llu\n", (unsigned long long)(clock() - cl_start) );
 			FrameManager->EnterMainLoop();
 
 			if (Opt.OnlyEditorViewerUsed == Options::ONLY_VIEWER_ON_CMDOUT
@@ -334,6 +336,7 @@ static int MainProcess(
 				ActivePanel->Redraw();
 			}
 
+			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start) );
 			FrameManager->EnterMainLoop();
 		}
 

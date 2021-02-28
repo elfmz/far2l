@@ -18,14 +18,14 @@ static std::string AskpassIpcFile(const char *ipc_id, const char *purpose)
 {
 	char sz[128] = {};
 	snprintf(sz, sizeof(sz) - 1, "askpass_ipc/%s.%s", ipc_id, purpose);
-	return InMyConfig(sz);
+	return InMyCache(sz);
 }
 
 static std::string AskpassIpcFile(const unsigned long ipc_id, const char *purpose)
 {
 	char sz[128] = {};
 	snprintf(sz, sizeof(sz) - 1, "askpass_ipc/%lx.%s", ipc_id, purpose);
-	return InMyConfig(sz);
+	return InMyCache(sz);
 }
 
 static void set_nonblock(int sc)

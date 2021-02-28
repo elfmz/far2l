@@ -505,7 +505,7 @@ void CheckForConfigUpgrade()
 	const std::string &cfg_ini = InMyConfig(CONFIG_INI);
 	struct stat s{};
 	if (stat(cfg_ini.c_str(), &s) == -1) {
-		FILE *lf = fopen(InMyConfig("upgrade.log").c_str(), "a");
+		FILE *lf = fopen(InMyCache("upgrade.log").c_str(), "a");
 		try {
 			time_t now = time(NULL);
 			fprintf(lf, "---- Upgrade started on %s\n", ctime(&now));

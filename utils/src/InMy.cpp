@@ -31,32 +31,40 @@ std::string GetMyHome()
 	return out;
 }
 
-std::string InMyConfig(const char *subpath, bool create_path)
+static std::string InHomeSubdir(const char *what, const char *subpath, bool create_path)
 {
-	std::string path;
-#ifdef _WIN32
-	path = "D:\\far2l";
-#else	
-	path = GetMyHome();
-	path+= "/.config";
-	if (create_path)
-		mkdir(path.c_str(), 0700);
-	path+= "/far2l";
-#endif
-	if (create_path)
-		mkdir(path.c_str(), 0700);
+	std::string path = GetMyHome();
+
+	path+= what;
+
 	if (subpath) {
-		if (*subpath != GOOD_SLASH) 
+		if (*subpath != GOOD_SLASH) {
 			path+= GOOD_SLASH;
-		for (const char *p = subpath; *p; ++p) {
-			if (*p == GOOD_SLASH && create_path)
-				mkdir(path.c_str(), 0700);
-			path+= *p;
+		}
+		path+= subpath;
+	}
+
+	if (create_path) {
+		size_t p = path.rfind(GOOD_SLASH);
+		struct stat s;
+		if (stat(path.substr(0, p).c_str(), &s) == -1) {
+			for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
+				mkdir(path.substr(0, i).c_str(), 0700);
+			}
 		}
 	}
 	
 	return path;
-	
+}
+
+std::string InMyConfig(const char *subpath, bool create_path)
+{
+	return InHomeSubdir("/.config/far2l", subpath, create_path);
+}
+
+std::string InMyCache(const char *subpath, bool create_path)
+{
+	return InHomeSubdir("/.cache/far2l", subpath, create_path);
 }
 
 

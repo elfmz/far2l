@@ -80,7 +80,7 @@ public:
 	void SetInt(const std::string &section, const std::string &name, int value);
 	void SetUInt(const std::string &section, const std::string &name, unsigned int value);
 	void SetULL(const std::string &section, const std::string &name, unsigned long long value);
-	void SetBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval = 0);
+	void SetBytes(const std::string &section, const std::string &name, const unsigned char *buf, size_t len, size_t space_interval = 0);
 	bool RemoveSection(const std::string &section);
 	size_t RemoveSectionsAt(const std::string &parent_section);
 	void RemoveKey(const std::string &section, const std::string &name);

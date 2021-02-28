@@ -751,7 +751,8 @@ void KeyFileHelper::SetULL(const std::string &section, const std::string &name, 
 	SetString(section, name, tmp);
 }
 
-void KeyFileHelper::SetBytes(const std::string &section, const std::string &name, size_t len, const unsigned char *buf, size_t space_interval)
+void KeyFileHelper::SetBytes(const std::string &section,
+	const std::string &name, const unsigned char *buf, size_t len, size_t space_interval)
 {
 	std::string str;
 	str.reserve(len * 2 + (space_interval ? (len / space_interval) + 1 : 0) );

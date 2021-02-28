@@ -231,7 +231,7 @@ bool History::SaveHistory()
 			cfg_writer.SetString("Types", strTypes.c_str());
 		}
 		cfg_writer.SetString("Locks", strLocks.c_str());
-		cfg_writer.SetBytes("Times", vTimes.size() * sizeof(FILETIME), (const unsigned char *)&vTimes[0]);
+		cfg_writer.SetBytes("Times", (const unsigned char *)&vTimes[0], vTimes.size() * sizeof(FILETIME));
 		cfg_writer.SetInt("Position", Position);
 
 		ret = cfg_writer.Save();

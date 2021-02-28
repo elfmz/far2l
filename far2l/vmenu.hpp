@@ -148,6 +148,11 @@ struct MenuItemEx
 		ShowPos = 0;
 	}
 
+	MenuItemEx()
+	{
+		Clear();
+	}
+
 	//UserData не копируется.
 	const MenuItemEx& operator=(const MenuItemEx &srcMenu)
 	{

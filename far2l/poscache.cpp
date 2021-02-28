@@ -140,7 +140,8 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 	size_t save_count = ParamCountToSave(poscache.Param);
 	if (save_count) {
 		_kfh->SetBytes(section, "Par",
-			save_count * sizeof(poscache.Param[0]), (unsigned char *)&poscache.Param[0]);
+			(unsigned char *)&poscache.Param[0],
+				save_count * sizeof(poscache.Param[0]));
 
 	} else {
 		have_some_to_save = false;
@@ -162,7 +163,8 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
 				_kfh->SetBytes(section, key,
-					save_count * sizeof(poscache.Position[i][0]), (unsigned char *)poscache.Position[i]);
+					(unsigned char *)poscache.Position[i],
+						save_count * sizeof(poscache.Position[i][0]));
 			} else {
 				_kfh->RemoveKey(section, key);
 			}

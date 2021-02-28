@@ -256,7 +256,7 @@ bool KeyFileValues::GetBytes(std::vector<unsigned char> &out, const std::string 
 
 	out.resize(it->second.size() / 2 + 1);
 	size_t actual_size = DecodeBytes(&out[0], out.size(), it->second);
-    out.resize(actual_size);
+	out.resize(actual_size);
 	return true;
 }
 

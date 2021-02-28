@@ -528,6 +528,8 @@ void CheckForConfigUpgrade()
 			}
 
 			now = time(NULL);
+			cfg_writer.SelectSection("Upgrade");
+			cfg_writer.SetULL("UpgradedOn", (unsigned long long)now);
 			fprintf(lf, "---- Upgrade finished on %s\n", ctime(&now));
 
 		} catch (std::exception &e) {

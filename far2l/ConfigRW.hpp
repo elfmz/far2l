@@ -43,9 +43,8 @@ public:
 	unsigned long long GetULL(const std::string &name, unsigned long long def = 0) const;
 	size_t GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def = nullptr) const;
 	bool GetBytes(std::vector<unsigned char> &out, const std::string &name) const;
-	template <class POD> void GetPOD(const std::string &name, const POD &pod)
+	template <class POD> void GetPOD(const std::string &name, POD &pod)
 		{ GetBytes((unsigned char *)&pod, sizeof(pod), name); }
-
 };
 
 class ConfigWriter : public ConfigSection
@@ -75,9 +74,9 @@ public:
 	void SetInt(const std::string &name, int value);
 	void SetUInt(const std::string &name, unsigned int value);
 	void SetULL(const std::string &name, unsigned long long value);
-	void SetBytes(const std::string &name, size_t len, const unsigned char *buf);
+	void SetBytes(const std::string &name, const unsigned char *buf, size_t len);
 	template <class POD> void SetPOD(const std::string &name, const POD &pod)
-		{ SetBytes(name, sizeof(pod), (const unsigned char *)&pod); }
+		{ SetBytes(name, (const unsigned char *)&pod, sizeof(pod)); }
 	void RemoveKey(const std::string &name);
 };
 

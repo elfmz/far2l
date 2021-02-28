@@ -1195,7 +1195,7 @@ void SaveConfig(int Ask)
 					cfg_writer.SetString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
 					break;
 				case REG_BINARY:
-					cfg_writer.SetBytes(CFG[I].ValName, CFG[I].DefDWord, (const BYTE*)CFG[I].ValPtr);
+					cfg_writer.SetBytes(CFG[I].ValName, (const BYTE*)CFG[I].ValPtr, CFG[I].DefDWord);
 					break;
 			}
 		}

@@ -346,9 +346,9 @@ void ConfigWriter::SetULL(const std::string &name, unsigned long long value)
 	_selected_kfh->SetULL(_section, name, value);
 }
 
-void ConfigWriter::SetBytes(const std::string &name, size_t len, const unsigned char *buf)
+void ConfigWriter::SetBytes(const std::string &name, const unsigned char *buf, size_t len)
 {
-	_selected_kfh->SetBytes(_section, name, len, buf, _bytes_space_interval);
+	_selected_kfh->SetBytes(_section, name, buf, len, _bytes_space_interval);
 }
 
 void ConfigWriter::RemoveKey(const std::string &name)
@@ -479,7 +479,7 @@ static void ConfigUgrade_RegKey(FILE *lf, ConfigWriter &cfg_writer, HKEY root, c
 					} break;
 
 					default:
-						cfg_writer.SetBytes(name, datalen, &databuf[0]);
+						cfg_writer.SetBytes(name, &databuf[0], datalen);
 				}
 				++i;
 			}

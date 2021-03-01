@@ -6,6 +6,16 @@
 #include <wx/clipbrd.h>
 #include <utils.h>
 
+// #698: Mac: Copying to clipboard stopped working in wx 3.1 (not 100% sure about exact version).
+// The fix is submitted, supposedly, into 3.2: https://github.com/wxWidgets/wxWidgets/pull/1623/files
+// Guess the problem is only present in 3.1.
+#if defined(__APPLE__) && (wxMAJOR_VERSION == 3) && (wxMINOR_VERSION == 1)
+#define CLIPBOARD_HACK 1
+#include "Mac/pasteboard.h"
+#else
+#define CLIPBOARD_HACK 0
+#endif
+
 #include "wxClipboardBackend.h"
 #include "CallInMain.h"
 
@@ -151,8 +161,15 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	if (format==CF_UNICODETEXT) {
 		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const wchar_t *)data)));
 
+#if (CLIPBOARD_HACK)
+		CopyToPasteboard((const wchar_t *)data);
+#endif
+
 	} else if (format==CF_TEXT) {
 		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const char *)data)));
+#if (CLIPBOARD_HACK)
+		CopyToPasteboard((const char *)data);
+#endif
 
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);

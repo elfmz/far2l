@@ -506,7 +506,13 @@ void CheckForConfigUpgrade()
 	struct stat s{};
 	if (stat(cfg_ini.c_str(), &s) == -1) {
 		FILE *lf = fopen(InMyCache("upgrade.log").c_str(), "a");
+		if (!lf) {
+			lf = stderr;
+		}
 		try {
+			const std::string sh_log = InMyCache("upgrade.sh.log");
+			system(StrPrintf("date >>\"%s\"", sh_log.c_str()).c_str());
+
 			time_t now = time(NULL);
 			fprintf(lf, "---- Upgrade started on %s\n", ctime(&now));
 			ConfigWriter cfg_writer;
@@ -516,9 +522,15 @@ void CheckForConfigUpgrade()
 			Upgrade_MoveFile(lf, "viewer.pos", "history/viewer.pos");
 			Upgrade_MoveFile(lf, "editor.pos", "history/editor.pos");
 
-			const std::string &cmd = StrPrintf("mv -f \"%s\" \"%s\"",
-						InMyConfig("NetRocks").c_str(),
-						InMyConfig("plugins/").c_str());
+			const std::string &cmd = StrPrintf(
+				"mv -f \"%s\" \"%s\" >>\"%s\" 2>>&1 || cp -f -r \"%s\" \"%s\" >>\"%s\" 2>>&1",
+				InMyConfig("NetRocks").c_str(),
+				InMyConfig("plugins/").c_str(),
+				sh_log.c_str(),
+				InMyConfig("NetRocks").c_str(),
+				InMyConfig("plugins/").c_str(),
+				sh_log.c_str() );
+
 			int r = system(cmd.c_str());
 			if (r != 0) {
 				fprintf(stderr, "%s: ERROR=%d CMD='%s'\n", __FUNCTION__, r, cmd.c_str());
@@ -536,7 +548,9 @@ void CheckForConfigUpgrade()
 			fprintf(stderr, "%s: EXCEPTION: %s\n", __FUNCTION__, e.what());
 			fprintf(lf, "%s: EXCEPTION: %s\n", __FUNCTION__, e.what());
 		}
-		fclose(lf);
+		if (lf != stderr) {
+			fclose(lf);
+		}
 	}
 }
 

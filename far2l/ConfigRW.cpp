@@ -511,7 +511,10 @@ void CheckForConfigUpgrade()
 		}
 		try {
 			const std::string sh_log = InMyCache("upgrade.sh.log");
-			system(StrPrintf("date >>\"%s\"", sh_log.c_str()).c_str());
+			int r = system(StrPrintf("date >>\"%s\" 2>&1", sh_log.c_str()).c_str());
+			if (r != 0) {
+				perror("system(date)");
+			}
 
 			time_t now = time(NULL);
 			fprintf(lf, "---- Upgrade started on %s\n", ctime(&now));
@@ -523,7 +526,7 @@ void CheckForConfigUpgrade()
 			Upgrade_MoveFile(lf, "editor.pos", "history/editor.pos");
 
 			const std::string &cmd = StrPrintf(
-				"mv -f \"%s\" \"%s\" >>\"%s\" 2>>&1 || cp -f -r \"%s\" \"%s\" >>\"%s\" 2>>&1",
+				"mv -f \"%s\" \"%s\" >>\"%s\" 2>&1 || cp -f -r \"%s\" \"%s\" >>\"%s\" 2>&1",
 				InMyConfig("NetRocks").c_str(),
 				InMyConfig("plugins/").c_str(),
 				sh_log.c_str(),
@@ -531,7 +534,7 @@ void CheckForConfigUpgrade()
 				InMyConfig("plugins/").c_str(),
 				sh_log.c_str() );
 
-			int r = system(cmd.c_str());
+			r = system(cmd.c_str());
 			if (r != 0) {
 				fprintf(stderr, "%s: ERROR=%d CMD='%s'\n", __FUNCTION__, r, cmd.c_str());
 				fprintf(lf, "%s: ERROR=%d CMD='%s'\n", __FUNCTION__, r, cmd.c_str());

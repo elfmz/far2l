@@ -410,7 +410,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		bool IsUpdate=false;
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
-		HistoryMenu.SetBottomTitle(MSG(MEditControlHistoryFooter));
+		HistoryMenu.SetBottomTitle(MSG(MHistoryFooter));
 
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Last():HistoryList.First(); HistoryItem ; HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Prev(HistoryItem):HistoryList.Next(HistoryItem))
@@ -749,8 +749,9 @@ bool History::DeleteMatching(FARString &strStr)
 	for (HistoryRecord *HistoryItem = HistoryList.Prev(CurrentItem);
 		HistoryItem != CurrentItem; HistoryItem = HistoryList.Prev(HistoryItem))
 	{
-		if (!HistoryItem)
+		if (!HistoryItem || HistoryItem->Lock)
 			continue;
+
 		if (HistoryItem->strName == strStr)
 		{
 			HistoryList.Delete(HistoryItem);

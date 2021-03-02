@@ -3228,10 +3228,17 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 						case KEY_MSWHEEL_DOWN:
 						case KEY_MSWHEEL_LEFT:
 						case KEY_MSWHEEL_RIGHT:
-							{
-								ComplMenu.ProcessInput();
-								break;
-							}
+						{
+							ComplMenu.ProcessInput();
+							break;
+						}
+
+						case KEY_SHIFTNUMDEL:
+						case KEY_SHIFTDEL:
+						{
+							RemoveSelectedCompletionMenuItem(ComplMenu);
+							break;
+						}
 
 						case KEY_ENTER:
 						case KEY_NUMENTER:
@@ -3243,11 +3250,6 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 							}
 						}
 
-						case KEY_SHIFTNUMDEL:
-						case KEY_SHIFTDEL:
-						{
-							RemoveSelectedCompletionMenuItem(ComplMenu);
-						} break;
 						// всё остальное закрывает список и идёт владельцу
 						default:
 							{

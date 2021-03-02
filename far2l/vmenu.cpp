@@ -559,7 +559,7 @@ int VMenu::DeleteItem(int ID, int Count)
 	if (SelectPos >= ID && SelectPos < ID+Count)
 	{
 		SelectPos = -1;
-		SetSelectPos(ID,1);
+		SetSelectPos((ID < ItemCount) ? ID : ItemCount - 1, 1);
 	}
 	else if (SelectPos >= ID+Count)
 	{

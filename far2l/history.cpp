@@ -741,6 +741,25 @@ void History::GetNext(FARString &strStr)
 		strStr.Clear();
 }
 
+bool History::DeleteMatching(FARString &strStr)
+{
+	SyncChanges();
+
+	for (HistoryRecord *HistoryItem = HistoryList.Prev(CurrentItem);
+		HistoryItem != CurrentItem; HistoryItem = HistoryList.Prev(HistoryItem))
+	{
+		if (!HistoryItem)
+			continue;
+		if (HistoryItem->strName == strStr)
+		{
+			HistoryList.Delete(HistoryItem);
+			SaveHistory();
+			return true;
+		}
+	}
+
+	return false;
+}
 
 bool History::GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend)
 {

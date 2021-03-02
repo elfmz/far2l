@@ -112,6 +112,7 @@ class History
 		void GetNext(FARString &strStr);
 		bool GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend=false);
 		bool GetAllSimilar(VMenu &HistoryMenu,const wchar_t *Str);
+		bool DeleteMatching(FARString &strStr);
 		void SetAddMode(bool EnableAdd, int RemoveDups, bool KeepSelectedPos);
 		void ResetPosition() { CurrentItem = nullptr; }
 };

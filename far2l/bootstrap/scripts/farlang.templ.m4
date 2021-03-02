@@ -12102,6 +12102,24 @@ MChangeDriveMenuFooter
 "Ins,Del,Shift-Del,F4,F9"
 "Ins,Del,Shift-Del,F4,F9"
 
+MEditControlHistoryFooter
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+
+MEditControlHistoryFooterNoDel
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+"Up/Down,Enter,Esc"
+
 MSearchFileTitle
 l:
 " Поиск "

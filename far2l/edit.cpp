@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "edit.hpp"
 #include "keyboard.hpp"
 #include "macroopcode.hpp"
+#include "lang.hpp"
 #include "keys.hpp"
 #include "editor.hpp"
 #include "ctrlobj.hpp"
@@ -3042,16 +3043,13 @@ void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strF
 void EditControl::RemoveSelectedCompletionMenuItem(VMenu &ComplMenu)
 {
 	int CurPos = ComplMenu.GetSelectPos();
-	if (CurPos >= 0)
+	if (CurPos >= 0 && !pCustomCompletionList && pHistory)
 	{
-		if (pHistory)
+		FARString strName = ComplMenu.GetItemPtr(CurPos)->strName;
+		if (pHistory->DeleteMatching(strName))
 		{
-			FARString strName = ComplMenu.GetItemPtr(CurPos)->strName;
-			if (pHistory->DeleteMatching(strName))
-			{
-				ComplMenu.DeleteItem(CurPos, 1);
-				ComplMenu.FastShow();
-			}
+			ComplMenu.DeleteItem(CurPos, 1);
+			ComplMenu.FastShow();
 		}
 	}
 }
@@ -3061,6 +3059,8 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 	VMenu ComplMenu(nullptr,nullptr,0,0);
 	FARString strTemp = Str;
 	PopulateCompletionMenu(ComplMenu, strTemp);
+	ComplMenu.SetBottomTitle(MSG((!pCustomCompletionList && pHistory)
+			? MEditControlHistoryFooter : MEditControlHistoryFooterNoDel));
 
 	if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
 	{

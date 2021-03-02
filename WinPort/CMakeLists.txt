@@ -62,6 +62,7 @@ if (${USEWX})
 			${SOURCES}
 			src/Backend/WX/Mac/touchbar.mm
 			src/Backend/WX/Mac/dockicon.cpp
+			src/Backend/WX/Mac/pasteboard.mm
 		)
 	endif()
 endif()

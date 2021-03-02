@@ -9,6 +9,8 @@ protected:
 	virtual void OnSectionSelected() {}
 
 public:
+	virtual ~ConfigSection() {}
+
 	void SelectSection(const std::string &section);
 	void SelectSection(const wchar_t *section);
 	void SelectSectionFmt(const char *format, ...);

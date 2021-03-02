@@ -1086,22 +1086,27 @@ int FileList::ProcessKey(int Key)
 			Redraw();
 			return TRUE;
 		case KEY_CTRLINS:      case KEY_CTRLNUMPAD0:
-
-			if (CmdLength>0)
+		case KEY_CTRLSHIFTINS: case KEY_CTRLSHIFTNUMPAD0: case KEY_CTRLC:     // копировать имена
+		case KEY_CTRLALTINS:   case KEY_CTRLALTNUMPAD0:                       // копировать UNC-имена
+		case KEY_ALTSHIFTINS:  case KEY_ALTSHIFTNUMPAD0:  case KEY_ALTSHIFTC: // копировать полные имена
+			if ((Key == KEY_CTRLC || Key == KEY_CTRLNUMPAD0 || Key == KEY_CTRLINS) && (CmdLength > 0)) {
 				return FALSE;
-
-		case KEY_CTRLSHIFTINS: case KEY_CTRLSHIFTNUMPAD0:  // копировать имена
-		case KEY_CTRLALTINS:   case KEY_CTRLALTNUMPAD0:    // копировать UNC-имена
-		case KEY_ALTSHIFTINS:  case KEY_ALTSHIFTNUMPAD0:   // копировать полные имена
+			}
 			//if (FileCount>0 && SetCurPath()) // ?????
 			SetCurPath();
-			CopyNames(Key == KEY_CTRLALTINS || Key == KEY_ALTSHIFTINS || Key == KEY_CTRLALTNUMPAD0 || Key == KEY_ALTSHIFTNUMPAD0,
-			          (Key&(KEY_CTRL|KEY_ALT))==(KEY_CTRL|KEY_ALT));
+			{
+				bool FullPath = Key == KEY_CTRLALTINS || Key == KEY_ALTSHIFTINS || Key == KEY_CTRLALTNUMPAD0 ||
+								Key == KEY_ALTSHIFTNUMPAD0 || Key == KEY_ALTSHIFTC;
+				bool unc = (Key & (KEY_CTRL | KEY_ALT)) == (KEY_CTRL | KEY_ALT);
+				CopyNames(FullPath, unc);
+			}
 			return TRUE;
 
-		case KEY_CTRLC: // hdrop
-			CopyFiles();
-			return TRUE;
+//			We no longer copy files (as in explorer). But maybe this feature will be resurrected one day.
+//			Maybe we want it on KEY_CTRLALTINS or KEY_ALTSHIFTINS.
+//		case KEY_CTRLC:
+//			CopyFiles();
+//			return TRUE;
 
 			/* $ 14.02.2001 VVM
 			  + Ctrl: вставляет имя файла с пассивной панели.
@@ -3840,7 +3845,7 @@ void FileList::CopyFiles()
 	}
 }
 
-void FileList::CopyNames(bool FillPathName, bool UNC)
+void FileList::CopyNames(bool FullPathName, bool UNC)
 {
 	OpenPluginInfo Info{};
 	wchar_t *CopyData=nullptr;
@@ -3865,7 +3870,7 @@ void FileList::CopyNames(bool FillPathName, bool UNC)
 
 		strQuotedName = strSelName;
 
-		if (FillPathName)
+		if (FullPathName)
 		{
 			if (PanelMode!=PLUGIN_PANEL)
 			{

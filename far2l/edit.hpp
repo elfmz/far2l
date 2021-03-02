@@ -319,8 +319,10 @@ class EditControl:public Edit
 	bool ACState;
 
 	void SetMenuPos(VMenu& menu);
+	void AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int& BackKey);
 	int AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey);
 	void PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter);
+	void RemoveSelectedCompletionMenuItem(VMenu &ComplMenu);
 
 
 public:

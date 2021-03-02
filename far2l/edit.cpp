@@ -3039,6 +3039,242 @@ void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strF
 	}	
 }
 
+void EditControl::RemoveSelectedCompletionMenuItem(VMenu &ComplMenu)
+{
+	int CurPos = ComplMenu.GetSelectPos();
+	if (CurPos >= 0)
+	{
+		if (pHistory)
+		{
+			FARString strName = ComplMenu.GetItemPtr(CurPos)->strName;
+			if (pHistory->DeleteMatching(strName))
+			{
+				ComplMenu.DeleteItem(CurPos, 1);
+				ComplMenu.FastShow();
+			}
+		}
+	}
+}
+
+void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int& BackKey)
+{
+	VMenu ComplMenu(nullptr,nullptr,0,0);
+	FARString strTemp = Str;
+	PopulateCompletionMenu(ComplMenu, strTemp);
+
+	if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
+	{
+		ComplMenu.SetFlags(VMENU_WRAPMODE|VMENU_NOTCENTER|VMENU_SHOWAMPERSAND);
+
+		if(!DelBlock && Opt.AutoComplete.AppendCompletion && (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList))
+		{
+			int SelStart=GetLength();
+
+			// magic
+			if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
+			{
+				Str[SelStart-2] = Str[SelStart-1];
+				StrSize--;
+				SelStart--;
+				CurPos--;
+			}
+
+			InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
+			Select(SelStart, GetLength());
+			Show();
+		}
+		if(Opt.AutoComplete.ShowList)
+		{
+			ChangeMacroMode MacroMode(MACRO_AUTOCOMPLETION);
+			MenuItemEx EmptyItem;
+			ComplMenu.AddItem(&EmptyItem,0);
+			SetMenuPos(ComplMenu);
+			ComplMenu.SetSelectPos(0,0);
+			ComplMenu.SetBoxType(SHORT_SINGLE_BOX);
+			ComplMenu.ClearDone();
+			ComplMenu.Show();
+			Show();
+			int PrevPos=0;
+
+			while (!ComplMenu.Done())
+			{
+				INPUT_RECORD ir;
+				ComplMenu.ReadInput(&ir);
+				if(!Opt.AutoComplete.ModalList)
+				{
+					int CurPos=ComplMenu.GetSelectPos();
+					if(CurPos>=0 && PrevPos!=CurPos)
+					{
+						PrevPos=CurPos;
+						SetString(CurPos?ComplMenu.GetItemPtr(CurPos)->strName:strTemp);
+						Show();
+					}
+				}
+				if(ir.EventType==WINDOW_BUFFER_SIZE_EVENT)
+				{
+					SetMenuPos(ComplMenu);
+					ComplMenu.Show();
+				}
+				else if(ir.EventType==KEY_EVENT || ir.EventType==FARMACRO_KEY_EVENT)
+				{
+					int MenuKey=InputRecordToKey(&ir);
+
+					// ввод
+					if((MenuKey>=L' ' && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
+					{
+						FARString strPrev;
+						GetString(strPrev);
+						DeleteBlock();
+						ProcessKey(MenuKey);
+						GetString(strTemp);
+						if(StrCmp(strPrev,strTemp))
+						{
+							ComplMenu.DeleteItems();
+							PrevPos=0;
+							if(!strTemp.IsEmpty())
+							{
+								PopulateCompletionMenu(ComplMenu, strTemp);
+							}
+							if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
+							{
+								if(MenuKey!=KEY_BS && MenuKey!=KEY_DEL && MenuKey!=KEY_NUMDEL && Opt.AutoComplete.AppendCompletion)
+								{
+									int SelStart=GetLength();
+
+									// magic
+									if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
+									{
+										Str[SelStart-2] = Str[SelStart-1];
+										StrSize--;
+										SelStart--;
+										CurPos--;
+									}
+
+									DisableCallback DC(m_Callback.Active);
+									InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
+									if(X2-X1>GetLength())
+										SetLeftPos(0);
+									Select(SelStart, GetLength());
+								}
+								ComplMenu.AddItem(&EmptyItem,0);
+								SetMenuPos(ComplMenu);
+								ComplMenu.SetSelectPos(0,0);
+								ComplMenu.Redraw();
+							}
+							else
+							{
+								ComplMenu.SetExitCode(-1);
+							}
+							Show();
+						}
+					}
+					else
+					{
+						switch(MenuKey)
+						{
+						// "классический" перебор
+						case KEY_CTRLEND:
+							{
+								ComplMenu.ProcessKey(KEY_DOWN);
+								break;
+							}
+
+						// навигация по строке ввода
+						case KEY_LEFT:
+						case KEY_NUMPAD4:
+						case KEY_CTRLS:
+						case KEY_RIGHT:
+						case KEY_NUMPAD6:
+						case KEY_CTRLD:
+						case KEY_CTRLLEFT:
+						case KEY_CTRLRIGHT:
+						case KEY_CTRLHOME:
+							{
+								if(MenuKey == KEY_LEFT || MenuKey == KEY_NUMPAD4)
+								{
+									MenuKey = KEY_CTRLS;
+								}
+								else if(MenuKey == KEY_RIGHT || MenuKey == KEY_NUMPAD6)
+								{
+									MenuKey = KEY_CTRLD;
+								}
+								pOwner->ProcessKey(MenuKey);
+								break;
+							}
+
+						// навигация по списку
+						case KEY_HOME:
+						case KEY_NUMPAD7:
+						case KEY_END:
+						case KEY_NUMPAD1:
+						case KEY_IDLE:
+						case KEY_NONE:
+						case KEY_ESC:
+						case KEY_F10:
+						case KEY_ALTF9:
+						case KEY_UP:
+						case KEY_NUMPAD8:
+						case KEY_DOWN:
+						case KEY_NUMPAD2:
+						case KEY_PGUP:
+						case KEY_NUMPAD9:
+						case KEY_PGDN:
+						case KEY_NUMPAD3:
+						case KEY_ALTLEFT:
+						case KEY_ALTRIGHT:
+						case KEY_ALTHOME:
+						case KEY_ALTEND:
+						case KEY_MSWHEEL_UP:
+						case KEY_MSWHEEL_DOWN:
+						case KEY_MSWHEEL_LEFT:
+						case KEY_MSWHEEL_RIGHT:
+							{
+								ComplMenu.ProcessInput();
+								break;
+							}
+
+						case KEY_ENTER:
+						case KEY_NUMENTER:
+						{
+							if(Opt.AutoComplete.ModalList)
+							{
+								ComplMenu.ProcessInput();
+								break;
+							}
+						}
+
+						case KEY_SHIFTNUMDEL:
+						case KEY_SHIFTDEL:
+						{
+							RemoveSelectedCompletionMenuItem(ComplMenu);
+						} break;
+						// всё остальное закрывает список и идёт владельцу
+						default:
+							{
+								ComplMenu.Hide();
+								ComplMenu.SetExitCode(-1);
+								BackKey=MenuKey;
+								Result=1;
+							}
+						}
+					}
+				}
+				else
+				{
+					ComplMenu.ProcessInput();
+				}
+			}
+			if(Opt.AutoComplete.ModalList)
+			{
+				int ExitCode=ComplMenu.GetExitCode();
+				if(ExitCode>0)
+				{
+					SetString(ComplMenu.GetItemPtr(ExitCode)->strName);
+				}
+			}
+		}
+	}
+}
 
 int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 {
@@ -3048,219 +3284,7 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 	if(ECFlags.Check(EC_ENABLEAUTOCOMPLETE) && *Str && !Reenter && (CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO || Manual))
 	{
 		Reenter++;
-
-		VMenu ComplMenu(nullptr,nullptr,0,0);
-		FARString strTemp = Str;
-		PopulateCompletionMenu(ComplMenu, strTemp);
-
-		if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
-		{
-			ComplMenu.SetFlags(VMENU_WRAPMODE|VMENU_NOTCENTER|VMENU_SHOWAMPERSAND);
-
-			if(!DelBlock && Opt.AutoComplete.AppendCompletion && (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList))
-			{
-				int SelStart=GetLength();
-
-				// magic
-				if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-				{
-					Str[SelStart-2] = Str[SelStart-1];
-					StrSize--;
-					SelStart--;
-					CurPos--;
-				}
-
-				InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
-				Select(SelStart, GetLength());
-				Show();
-			}
-			if(Opt.AutoComplete.ShowList)
-			{
-				ChangeMacroMode MacroMode(MACRO_AUTOCOMPLETION);
-				MenuItemEx EmptyItem;
-				ComplMenu.AddItem(&EmptyItem,0);
-				SetMenuPos(ComplMenu);
-				ComplMenu.SetSelectPos(0,0);
-				ComplMenu.SetBoxType(SHORT_SINGLE_BOX);
-				ComplMenu.ClearDone();
-				ComplMenu.Show();
-				Show();
-				int PrevPos=0;
-
-				while (!ComplMenu.Done())
-				{
-					INPUT_RECORD ir;
-					ComplMenu.ReadInput(&ir);
-					if(!Opt.AutoComplete.ModalList)
-					{
-						int CurPos=ComplMenu.GetSelectPos();
-						if(CurPos>=0 && PrevPos!=CurPos)
-						{
-							PrevPos=CurPos;
-							SetString(CurPos?ComplMenu.GetItemPtr(CurPos)->strName:strTemp);
-							Show();
-						}
-					}
-					if(ir.EventType==WINDOW_BUFFER_SIZE_EVENT)
-					{
-						SetMenuPos(ComplMenu);
-						ComplMenu.Show();
-					}
-					else if(ir.EventType==KEY_EVENT || ir.EventType==FARMACRO_KEY_EVENT)
-					{
-						int MenuKey=InputRecordToKey(&ir);
-
-						// ввод
-						if((MenuKey>=L' ' && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
-						{
-							FARString strPrev;
-							GetString(strPrev);
-							DeleteBlock();
-							ProcessKey(MenuKey);
-							GetString(strTemp);
-							if(StrCmp(strPrev,strTemp))
-							{
-								ComplMenu.DeleteItems();
-								PrevPos=0;
-								if(!strTemp.IsEmpty())
-								{
-									PopulateCompletionMenu(ComplMenu, strTemp);
-								}
-								if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
-								{
-									if(MenuKey!=KEY_BS && MenuKey!=KEY_DEL && MenuKey!=KEY_NUMDEL && Opt.AutoComplete.AppendCompletion)
-									{
-										int SelStart=GetLength();
-
-										// magic
-										if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-										{
-											Str[SelStart-2] = Str[SelStart-1];
-											StrSize--;
-											SelStart--;
-											CurPos--;
-										}
-
-										DisableCallback DC(m_Callback.Active);
-										InsertString(ComplMenu.GetItemPtr(0)->strName.SubStr(SelStart));
-										if(X2-X1>GetLength())
-											SetLeftPos(0);
-										Select(SelStart, GetLength());
-									}
-									ComplMenu.AddItem(&EmptyItem,0);
-									SetMenuPos(ComplMenu);
-									ComplMenu.SetSelectPos(0,0);
-									ComplMenu.Redraw();
-								}
-								else
-								{
-									ComplMenu.SetExitCode(-1);
-								}
-								Show();
-							}
-						}
-						else
-						{
-							switch(MenuKey)
-							{
-							// "классический" перебор
-							case KEY_CTRLEND:
-								{
-									ComplMenu.ProcessKey(KEY_DOWN);
-									break;
-								}
-
-							// навигация по строке ввода
-							case KEY_LEFT:
-							case KEY_NUMPAD4:
-							case KEY_CTRLS:
-							case KEY_RIGHT:
-							case KEY_NUMPAD6:
-							case KEY_CTRLD:
-							case KEY_CTRLLEFT:
-							case KEY_CTRLRIGHT:
-							case KEY_CTRLHOME:
-								{
-									if(MenuKey == KEY_LEFT || MenuKey == KEY_NUMPAD4)
-									{
-										MenuKey = KEY_CTRLS;
-									}
-									else if(MenuKey == KEY_RIGHT || MenuKey == KEY_NUMPAD6)
-									{
-										MenuKey = KEY_CTRLD;
-									}
-									pOwner->ProcessKey(MenuKey);
-									break;
-								}
-
-							// навигация по списку
-							case KEY_HOME:
-							case KEY_NUMPAD7:
-							case KEY_END:
-							case KEY_NUMPAD1:
-							case KEY_IDLE:
-							case KEY_NONE:
-							case KEY_ESC:
-							case KEY_F10:
-							case KEY_ALTF9:
-							case KEY_UP:
-							case KEY_NUMPAD8:
-							case KEY_DOWN:
-							case KEY_NUMPAD2:
-							case KEY_PGUP:
-							case KEY_NUMPAD9:
-							case KEY_PGDN:
-							case KEY_NUMPAD3:
-							case KEY_ALTLEFT:
-							case KEY_ALTRIGHT:
-							case KEY_ALTHOME:
-							case KEY_ALTEND:
-							case KEY_MSWHEEL_UP:
-							case KEY_MSWHEEL_DOWN:
-							case KEY_MSWHEEL_LEFT:
-							case KEY_MSWHEEL_RIGHT:
-								{
-									ComplMenu.ProcessInput();
-									break;
-								}
-
-							case KEY_ENTER:
-							case KEY_NUMENTER:
-							{
-								if(Opt.AutoComplete.ModalList)
-								{
-									ComplMenu.ProcessInput();
-									break;
-								}
-							}
-
-							// всё остальное закрывает список и идёт владельцу
-							default:
-								{
-									ComplMenu.Hide();
-									ComplMenu.SetExitCode(-1);
-									BackKey=MenuKey;
-									Result=1;
-								}
-							}
-						}
-					}
-					else
-					{
-						ComplMenu.ProcessInput();
-					}
-				}
-				if(Opt.AutoComplete.ModalList)
-				{
-					int ExitCode=ComplMenu.GetExitCode();
-					if(ExitCode>0)
-					{
-						SetString(ComplMenu.GetItemPtr(ExitCode)->strName);
-					}
-				}
-			}
-		}
-
+		AutoCompleteProcMenu(Result,Manual,DelBlock,BackKey);
 		Reenter--;
 	}
 	return Result;

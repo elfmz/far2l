@@ -345,6 +345,18 @@ private:
 	}
 };
 
+static bool s_group_signal_propogated = false;
+
+static void GroupSignalPropogator(int sig)
+{
+	if (!s_group_signal_propogated) {
+		s_group_signal_propogated = true;
+		killpg(0, sig);
+	}
+	_exit(sig);
+}
+
+
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	VTAnsi _vta;
@@ -353,7 +365,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::mutex _inout_control_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
-	pid_t _shell_pid, _forked_proc_pid;
+	pid_t _shell_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
@@ -362,12 +374,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
-	
-	
-	int ForkAndAttachToSlave(bool shell)
+
+	int ForkAndRunShell()
 	{
 		// avoid locking current directory
 		std::string home = GetMyHome();
+
+		pid_t parent_grp = getpgid(getpid());
 
 		int r = fork();
 		if (r != 0)
@@ -378,20 +391,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				perror("chdir /");
 			}
 		}
+		if (setsid() == -1)
+			perror("VT: setsid");
 
-		signal(SIGHUP, SIG_DFL);
-		signal(SIGINT, SIG_DFL);
-		signal(SIGQUIT, SIG_DFL);
-		signal(SIGTERM, SIG_DFL);
+		pid_t child_grp = getpgid(getpid());
+		fprintf(stderr, "VT: parent_grp=%lx child_grp=%lx\n", parent_grp, child_grp);
+
+		signal(SIGHUP, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
+		signal(SIGINT, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
+		signal(SIGQUIT, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
+		signal(SIGTERM, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGCHLD, SIG_DFL);
 		signal(SIGSTOP, SIG_DFL);
 
-		if (shell) {
-			if (setsid()==-1)
-				perror("VT: setsid");
-		}
-			
 		if (!_slavename.empty()) {
 			r = open(_slavename.c_str(), O_RDWR); 
 			if (r==-1) {
@@ -407,6 +420,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			dup2(r, STDOUT_FILENO);
 			dup2(r, STDERR_FILENO);
 			CheckedCloseFD(r);
+
 		} else {
 			dup2(_pipes_fallback_in, STDIN_FILENO);
 			dup2(_pipes_fallback_out, STDOUT_FILENO);
@@ -417,7 +431,26 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			
 		//setenv("TERM", "xterm-256color", 1);
 		setenv("TERM", "xterm", 1);
-		signal( SIGINT, SIG_DFL );
+
+		pid_t pid = fork();
+		if (pid == 0) {
+			RunShell();
+			r = errno;
+			fprintf(stderr, "VT: RunShell returned, errno %u\n", r);
+			_exit(r ? r : -1);
+
+		} else if (pid != -1) {
+			int s = 0;
+			while (waitpid(pid, &s, 0) != pid) {
+				usleep(10000);
+			}
+
+		} else {
+			fprintf(stderr, "VT: fork2 errno %u\n", errno);
+		}
+
+		_exit(0);
+		exit(0);
 		return 0;
 	}
 	
@@ -484,7 +517,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (tcgetattr(fd_term, &ts) == 0) {
 				ts.c_lflag |= ISIG | ICANON | ECHO;
 				//ts.c_lflag&= ~ECHO;
-				ts.c_cc[VINTR] = 3;
+				ts.c_cc[VINTR] = 003;
+				// ts.c_cc[VQUIT] = 034;
 				tcsetattr( fd_term, TCSAFLUSH, &ts );
 			}
 			_fd_in = fd_term;
@@ -559,18 +593,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (!InitTerminal())
 			return false;
 		
-		int r = ForkAndAttachToSlave(true);
-		if (r == 0) {
-			RunShell();
-			fprintf(stderr, "VT: RunShell returned, errno %u\n", errno);
-			_exit(errno);
-			exit(errno);
-		}
-	
-		if (r==-1) { 
+		int r = ForkAndRunShell();
+		if (r == -1) {
 			perror("VT: fork");
 			return false;
 		}
+
 		_shell_pid = r;
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		return true;
@@ -580,7 +608,24 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
 		DbgPrintEscaped("OUTPUT", buf, len);
-		_vta.Write(buf, len);
+		if (_slavename.empty()) {
+			// pipes fallback mode
+			for (int i = 0, ii = 0; i <= len; ++i) {
+				if (i == len || buf[i] == '\n') {
+					if (i > ii) {
+						_vta.Write(&buf[ii], i - ii);
+					}
+					if (i == len) {
+						break;
+					}
+					char cr = '\r';
+					_vta.Write(&cr, 1);
+					ii = i;
+				}
+			}
+		} else {
+			_vta.Write(buf, len);
+		}
 		return !_exit_marker.empty();
 	}
 	
@@ -675,14 +720,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
 			SendSignalToShell(SIGKILL);
-			if (_forked_proc_pid!=-1)
-				kill(_forked_proc_pid, SIGKILL);
 			
 		} else {
 			if (_slavename.empty()) //pipes fallback
 				SendSignalToShell(SIGINT);
-			if (_forked_proc_pid!=-1)
-				kill(_forked_proc_pid, SIGINT);
 		}
 	}
 
@@ -878,13 +919,21 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	
 	void SendSignalToShell(int sig)
 	{
-		pid_t grp = getpgid(_shell_pid);
+		if (_shell_pid == -1) {
+			fprintf(stderr, "%s: no shell\n", __FUNCTION__);
+			return;
+		}
 
+		pid_t grp = getpgid(_shell_pid);
 		if (grp != -1 && grp != getpgid(getpid())) {
+			fprintf(stderr, "%s: killpg(%d, %d)\n", __FUNCTION__, grp, sig);
 			killpg(grp, sig);
 			// kill(_shell_pid, sig);
-		} else
+
+		} else {
+			fprintf(stderr, "%s: kill(%d, %d)\n", __FUNCTION__, _shell_pid, sig);
 			kill(_shell_pid, sig);
+		}
 	}
 	
 	virtual void OnRequestShutdown()
@@ -905,11 +954,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_output_reader.KickAss();
 	}
 
-
-
 	void Shutdown()
 	{
 		OnRequestShutdown();
+		SendSignalToShell(SIGINT);
 
 		if (_shell_pid!=-1) {
 			//kill(_shell_pid, SIGKILL);
@@ -1017,7 +1065,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
         _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-        _shell_pid(-1), _forked_proc_pid(-1), _keypad(0)
+        _shell_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())

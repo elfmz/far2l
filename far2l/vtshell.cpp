@@ -963,70 +963,131 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	}
 	
 	
-	std::string GenerateExecuteCommandScript(const char *cd, const char *cmd, bool need_sudo)
+	struct ExecuteCommandScript
 	{
-		char name[128]; 
-		sprintf(name, "vtcmd/%x_%p", getpid(), this);
-		std::string cmd_script = InMyTemp(name);
-		std::string pwd_file = cmd_script + ".pwd";
-		FILE *f = fopen(cmd_script.c_str(), "wb");
-		if (!f)
-			return std::string();
+		std::string cmd_script;
 
+		ExecuteCommandScript(const char *cd, const char *cmd, bool need_sudo, const std::string &cmd_start_marker)
+		{
 static bool shown_tip_init = false;
 static bool shown_tip_exit = false;
 				
-		if (!need_sudo) {
-			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
-		}
-		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
-		fprintf(f, "PS1=''\n");//reduce risk of glitches
-		fprintf(f, "%s\n", Far2lMarkerCommand(_start_marker).c_str());
-		//fprintf(f, "stty echo\n");
-		if (strcmp(cmd, "exit")==0) {
-			fprintf(f, "echo \"%ls%ls%ls\"\n",  MSG(MVTStop),
-				shown_tip_exit ? L"" : L" ",
-				shown_tip_exit ? L"" : MSG(MVTStopTip));
-			shown_tip_exit = true;
+			if (!need_sudo) {
+				need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
+			}
 
-		} else if (!shown_tip_init) {
-			if (!Opt.OnlyEditorViewerUsed) {
-				fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
-				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipNoCmdTitle));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdShiftTAB));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdFn));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdMouse));
-				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipPendCmdTitle));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdFn));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltC));
+			char name[128]; 
+			sprintf(name, "vtcmd/%x_%p", getpid(), this);
+			cmd_script = InMyTemp(name);
+			_pwd_file = cmd_script + ".pwd";
+
+			std::string content;
+			content+= "trap \"echo ''\" SIGINT\n"; // need marker to be printed even after Ctrl+C pressed
+			content+= "PS1=''\n"; // reduce risk of glitches
+			content+= cmd_start_marker;
+			content+= '\n';
+			if (strcmp(cmd, "exit")==0) {
+				content+= StrPrintf(
+					"echo \"%ls%ls%ls\"\n",  MSG(MVTStop),
+					shown_tip_exit ? L"" : L" ",
+					shown_tip_exit ? L"" : MSG(MVTStopTip)
+				);
+				shown_tip_exit = true;
+
+			} else if (!shown_tip_init && !Opt.OnlyEditorViewerUsed) {
+				content+= StrPrintf("echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
+				content+= StrPrintf("echo \"%ls\"\n", MSG(MVTStartTipNoCmdTitle));
+				content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdShiftTAB));
+				content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdFn));
+				content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdMouse));
+				content+= StrPrintf("echo \"%ls\"\n", MSG(MVTStartTipPendCmdTitle));
+				content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdFn));
+				content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltC));
 				if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-					fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltZ));
+					content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltZ));
 				}
-				fprintf(f, " echo \" %ls\"\n", MSG(MVTStartTipPendCmdMouse));
-				fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
+				content+= StrPrintf(" echo \" %ls\"\n", MSG(MVTStartTipPendCmdMouse));
+				content+= "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n";
 				shown_tip_init = true;
+
+			}
+			if (need_sudo) {
+				content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
+					EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), _pwd_file.c_str());
+			} else {
+				content+= StrPrintf("cd \"%s\" && %s && pwd >'%s'\n",
+					EscapeCmdStr(cd).c_str(), cmd, _pwd_file.c_str());
+			}
+
+			content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+			content+= "cd ~\n"; // avoid locking arbitrary directory
+			content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
+			content+= "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n";
+			content+= "else\n";
+			content+= "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n";
+			content+= "fi\n";
+
+			unlink(_pwd_file.c_str());
+
+			_fd = open(cmd_script.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
+			if (_fd.Valid()) {
+				if (WriteAll(_fd, content.c_str(), content.size()) == content.size()) {
+					_valid = true;
+				}
 			}
 		}
-		if (need_sudo) {
-			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_file.c_str());
-		} else {
-			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeCmdStr(cd).c_str(), cmd, pwd_file.c_str());
+
+		~ExecuteCommandScript()
+		{
+			_fd.CheckedClose();
+			if (!cmd_script.empty()) {
+				if (unlink(cmd_script.c_str()) == -1) {
+				}
+			}
+
+			if (!_pwd_file.empty()) {
+				unlink(_pwd_file.c_str());
+			}
 		}
 
-		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
-		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
-		fprintf(f, "if [ $FARVTRESULT -eq 0 ]; then\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n");
-		fprintf(f, "else\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n");
-		fprintf(f, "fi\n");
-		fclose(f);
-		return cmd_script;
-	}
+		bool Finalize()
+		{
+			if (!_valid)
+				return false;
+
+			FDScope fd(open(_pwd_file.c_str(), O_RDONLY));
+			if (fd.Valid()) {
+				char buf[PATH_MAX + 1] = {};
+				ReadAll(fd, buf, sizeof(buf) - 1);
+				size_t len = strlen(buf);
+				if (len > 0 && buf[len - 1] == '\n') {
+					buf[--len] = 0;
+				}
+				if (len > 0) {
+					sdc_chdir(buf);
+				}
+			} else {
+				fprintf(stderr, "%s: error %u opening '%s'\n",
+					__FUNCTION__, errno, _pwd_file.c_str());
+			}
+
+			struct stat s;
+			return stat(cmd_script.c_str(), &s) == 0;
+		}
+
+		bool Valid() const
+		{
+			return _valid;
+		}
+
+	private:
+		FDScope _fd;
+		std::string _pwd_file;
+		bool _valid = false;
+	};
 
 
-	std::string ComposeExecuteCommandInitialTitle(const char *cd, const char *cmd, bool using_sudo)
+	std::string ComposeInitialTitle(const char *cd, const char *cmd, bool using_sudo)
 	{
 		std::string title = cmd;
 		StrTrim(title);
@@ -1080,44 +1141,33 @@ static bool shown_tip_exit = false;
 	}
 
 	
-	int ExecuteCommand(const char *cmd, bool force_sudo)
+	bool ExecuteCommandInner(const char *cd, const char *cmd, bool force_sudo)
 	{
-		if (_shell_pid==-1)
-			return -1;
-
-		char cd[MAX_PATH + 1] = {'.', 0};
-		if (!sdc_getcwd(cd, MAX_PATH)) {
-			perror("getcwd");
+		ExecuteCommandScript ecs(cd, cmd, force_sudo, Far2lMarkerCommand(_start_marker));
+		if (!ecs.Valid()) {
+			const std::string &error_str =
+				StrPrintf("Error %u creating: '%s'\n",
+					errno, ecs.cmd_script.c_str());
+			_vta.Write(error_str.c_str(), error_str.size());
+			return false;
 		}
-
-		_start_marker = GenerateRandomString();
-		_exit_marker = GenerateRandomString();
-		_exit_marker+= ':';
-		_exit_code = -1;
-
-		const std::string &cmd_script = GenerateExecuteCommandScript(cd, cmd, force_sudo);
-		if (cmd_script.empty())
-			return -1;
-
-		std::string pwd_file = cmd_script + ".pwd";
-		unlink(pwd_file.c_str());
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		
-		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
-		cmd_str+= EscapeCmdStr(cmd_script);
+		std::string cmd_str = " . "; // space in beginning of command prevents adding it to history
+		cmd_str+= EscapeCmdStr(ecs.cmd_script);
 		cmd_str+= ';';
 		cmd_str+= Far2lMarkerCommand(_exit_marker + "$FARVTRESULT").c_str();
 		cmd_str+= '\n';
 
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
-			fprintf(stderr, "VT: write error %d\n", errno);
-			return -1;
+			const std::string &error_str =
+				StrPrintf("VT: terminal write error %u\n", errno);
+			_vta.Write(error_str.c_str(), error_str.size());
+			return false;
 		}
 
-		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
-		_vta.OnStart(title.c_str());
 		_vta.DisableOutput(); // will enable on start marker arrival
 
 		{
@@ -1128,35 +1178,47 @@ static bool shown_tip_exit = false;
 		
 		_output_reader.WaitDeactivation();
 
-		int fd = open(pwd_file.c_str(), O_RDONLY);
-		if (fd != -1) {
-			char buf[PATH_MAX + 1] = {};
-			ReadAll(fd, buf, sizeof(buf) - 1);
-			CheckedCloseFD(fd);
-			size_t len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n') {
-				buf[--len] = 0;
-			}
-			if (len > 0) {
-				sdc_chdir(buf);
-			}
-			unlink(pwd_file.c_str());
+		if (!ecs.Finalize()) {
+			const std::string &error_str =
+				StrPrintf("Error %u finalizing: '%s'\n",
+					errno, ecs.cmd_script.c_str());
+			_vta.Write(error_str.c_str(), error_str.size());
+		}
+
+		std::lock_guard<std::mutex> lock(_inout_control_mutex);
+		_input_reader.Stop();
+		_output_reader.Stop();
+		return true;
+	}
+
+	int ExecuteCommand(const char *cmd, bool force_sudo)
+	{
+		if (_shell_pid == -1)
+			return -1;
+
+		char cd[MAX_PATH + 1] = {'.', 0};
+		if (!sdc_getcwd(cd, MAX_PATH)) {
+			perror("getcwd");
+		}
+
+		_start_marker = GenerateRandomString();
+		_exit_marker = GenerateRandomString();
+		_exit_marker+= ':';
+
+		const std::string &title = ComposeInitialTitle(cd, cmd, force_sudo);
+		_vta.OnStart(title.c_str());
+
+		if (!ExecuteCommandInner(cd, cmd, force_sudo)) {
+			_vta.OnStop();
+			return -1;
 		}
 
 		if (_shell_pid!=-1) {
 			int status;
-			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
+			if (waitpid(_shell_pid, &status, WNOHANG) == _shell_pid) {
 				_shell_pid = -1;
 			}
 		}
-
-		{
-			std::lock_guard<std::mutex> lock(_inout_control_mutex);
-			_input_reader.Stop();
-			_output_reader.Stop();
-		}
-
-		remove(cmd_script.c_str());
 
 		OnKeypadChange(0);
 		_vta.OnStop();

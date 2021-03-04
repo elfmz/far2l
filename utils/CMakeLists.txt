@@ -21,7 +21,6 @@ set(SOURCES
   src/ScopeHelpers.cpp
   src/ConvertUTF.c
   src/crc64.c
-  src/ini.c
   src/TTYRawMode.cpp
   src/LocalSocket.cpp
   src/FilePathHashSuffix.cpp

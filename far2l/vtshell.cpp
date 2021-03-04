@@ -357,7 +357,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
-	VTFar2lExtensios *_far2l_exts = nullptr;
+	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::mutex _far2l_exts_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
@@ -749,15 +749,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case '1': {
 					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
 					if (!_far2l_exts)
-						_far2l_exts = new VTFar2lExtensios(this);
+						_far2l_exts.reset(new VTFar2lExtensios(this));
 
 					reply = "\x1b_far2lok\x07";
 				} break;
 
 				case '0': {
 					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
-					delete _far2l_exts;
-					_far2l_exts = nullptr;
+					_far2l_exts.reset();
 				} break;
 
 				case ':': {
@@ -1052,8 +1051,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_vta.OnStart(title.c_str());
 
 		if (!ExecuteCommandInner(cd, cmd, force_sudo)) {
-			_vta.OnStop();
-			return -1;
+			_exit_code = -1;
 		}
 
 		ValidateShellPid();
@@ -1063,9 +1061,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		DeliverPendingWindowInfo();
 
 		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
-		delete _far2l_exts;
-		_far2l_exts = nullptr;
-
+		_far2l_exts.reset();
 		return _exit_code;
 	}	
 

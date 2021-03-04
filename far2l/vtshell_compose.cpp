@@ -5,6 +5,7 @@
 #include "config.hpp"
 #include "vtshell_compose.h"
 #include <utils.h>
+#include <errno.h>
 #include <atomic>
 #include <unistd.h>
 #include <fcntl.h>

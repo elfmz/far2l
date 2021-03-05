@@ -311,6 +311,7 @@ private:
 	
 	ConsolePaintContext _paint_context;
 	wxKeyEvent _last_keydown;
+	DWORD _last_keydown_ticks = 0;
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
@@ -970,23 +971,32 @@ static bool IsForcedCharTranslation(int code)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
-	fprintf(stderr, "OnKeyDown: %x %x %x %u %ld\n", event.GetRawKeyCode(),
-		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+	DWORD now = WINPORT(GetTickCount)();
+	fprintf(stderr, "OnKeyDown: %x %x %x %u %ld [now=%u]", event.GetRawKeyCode(),
+		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(), now);
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
-#ifndef __APPLE__
-	bool x11_keystroke_doubled =
+	bool keystroke_doubled =
 		!g_wayland
 		&& event.GetTimestamp()
 		&& _last_keydown.GetKeyCode() == event.GetKeyCode()
-		&& _last_keydown.GetTimestamp() == event.GetTimestamp();
-#else
-	bool x11_keystroke_doubled = false;
+		&& _last_keydown.GetTimestamp() == event.GetTimestamp()
+#ifdef __APPLE__
+		// in macos under certain stars superposition all events get same timestamps (#325)
+		// however vise-verse problem also can be observed, where some keystrokes get duplicated
+		// last time: catalina in hackintosh, Ctrl+O works buggy
+		&& now - _last_keydown_ticks < 50 // so enforce extra check actual real time interval
 #endif
-	if (event.GetSkipped() || x11_keystroke_doubled) {
+		;
+
+	if (event.GetSkipped() || keystroke_doubled) {
+		fprintf(stderr, " SKIP\n");
 		event.Skip();
 		return;
 	}
+	fprintf(stderr, "\n");
+
+	_last_keydown_ticks = now;
 	_last_keydown = event;
 	_last_keydown_enqueued = false;
 	

@@ -12103,13 +12103,13 @@ MChangeDriveMenuFooter
 "Ins,Del,Shift-Del,F4,F9"
 
 MEditControlHistoryFooter
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
-"Up/Down,Enter,Esc,Shift+Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
+"Up/Down,Enter,Esc,Shift-Del"
 
 MEditControlHistoryFooterNoDel
 "Up/Down,Enter,Esc"
@@ -12121,13 +12121,13 @@ MEditControlHistoryFooterNoDel
 "Up/Down,Enter,Esc"
 
 MHistoryFooter
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
-"Up/Down,Enter,Esc,Ins,Del,Ctrl+C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C"
 
 MSearchFileTitle
 l:

@@ -26,8 +26,8 @@
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
-#include "lang.hpp"
 #include "InterThreadCall.hpp"
+#include "vtshell_compose.h"
 #define __USE_BSD 
 #include <termios.h> 
 
@@ -345,39 +345,8 @@ private:
 	}
 };
 
-static std::string GenerateRandomString()
-{
-	std::string out;
+int VTShell_Leader(const char *shell, const char *pty);
 
-	for (size_t l = 8 + (rand() % 9); l; --l) {
-		char c;
-		switch (rand() % 3) {
-			case 0:
-				c = 'A' + (rand() % ('Z' + 1 - 'A'));
-				break;
-			case 1:
-				c = 'a' + (rand() % ('z' + 1 - 'a'));
-				break;
-			case 2:
-				c = '0' + (rand() % ('9' + 1 - '0'));
-				break;
-		}
-		out+= c;
-	}
-
-	return out;
-}
-
-
-static std::string Far2lMarkerCommand(const std::string &marker)
-{
-	// marker contains $FARVTRESULT and thus must be in double quotes
-	std::string out = "echo -ne $'\\x1b'\"_far2l_";
-	out+= marker;
-	out+= "\"$'\\x07'";
-	return out;
-}
-	
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	VTAnsi _vta;
@@ -386,72 +355,69 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::mutex _inout_control_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
-	pid_t _shell_pid, _forked_proc_pid;
+	pid_t _leader_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
-	VTFar2lExtensios *_far2l_exts = nullptr;
+	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::mutex _far2l_exts_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
-	
-	
-	int ForkAndAttachToSlave(bool shell)
+
+	int ExecLeaderProcess()
 	{
-		// avoid locking current directory
 		std::string home = GetMyHome();
 
-		int r = fork();
-		if (r != 0)
-			return r;
+		std::string far2l_exename = g_strFarModuleName.GetMB();
 
+		std::string force_shell = Wide2MB(Opt.CmdLine.strShell);
+		const char *shell = Opt.CmdLine.UseShell ? force_shell.c_str() : nullptr;
+
+		if (!shell || !*shell) {
+			shell = getenv("SHELL");
+			if (!shell) {
+				shell = "/bin/sh";
+			}
+			// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
+			const char *slash = strrchr(shell, '/');
+			if (strcmp(slash ? slash + 1 : shell, "fish") == 0) {
+				shell = "/bin/bash";
+			}
+		}
+
+		//shell = "/usr/bin/zsh";
+		//shell = "/bin/bash";
+		//shell = "/bin/sh";
+
+		int r = fork();
+		if (r != 0) {
+			return r;
+		}
+
+		// avoid locking current directory
 		if (chdir(home.c_str()) != 0) {
 			if (chdir("/") != 0) {
 				perror("chdir /");
 			}
 		}
 
-		signal(SIGHUP, SIG_DFL);
-		signal(SIGINT, SIG_DFL);
-		signal(SIGQUIT, SIG_DFL);
-		signal(SIGTERM, SIG_DFL);
-		signal(SIGPIPE, SIG_DFL);
-		signal(SIGCHLD, SIG_DFL);
-		signal(SIGSTOP, SIG_DFL);
-
-		if (shell) {
-			if (setsid()==-1)
-				perror("VT: setsid");
-		}
-			
-		if (!_slavename.empty()) {
-			r = open(_slavename.c_str(), O_RDWR); 
-			if (r==-1) {
-				perror("VT: open slave");
-				_exit(errno);
-				exit(errno);
-			}
-				
-			if ( ioctl( r, TIOCSCTTY, 0 )==-1 )
-				perror( "VT: ioctl(TIOCSCTTY)" );
-					
-			dup2(r, STDIN_FILENO);
-			dup2(r, STDOUT_FILENO);
-			dup2(r, STDERR_FILENO);
-			CheckedCloseFD(r);
-		} else {
+		if (_slavename.empty()) {
 			dup2(_pipes_fallback_in, STDIN_FILENO);
 			dup2(_pipes_fallback_out, STDOUT_FILENO);
 			dup2(_pipes_fallback_out, STDERR_FILENO);
 			CheckedCloseFD(_pipes_fallback_in);
 			CheckedCloseFD(_pipes_fallback_out);
 		}
-			
-		//setenv("TERM", "xterm-256color", 1);
-		setenv("TERM", "xterm", 1);
-		signal( SIGINT, SIG_DFL );
-		return 0;
+
+		r = VTShell_Leader(shell, _slavename.c_str());
+		fprintf(stderr, "%s: VTShell_Leader('%s', '%s') returned %d errno %u\n",
+			__FUNCTION__, shell, _slavename.c_str(), r, errno);
+
+		int err = errno;
+		_exit(err);
+		exit(err);
+		return -1;
 	}
 	
 	void UpdateTerminalSize(int fd_term)
@@ -517,7 +483,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (tcgetattr(fd_term, &ts) == 0) {
 				ts.c_lflag |= ISIG | ICANON | ECHO;
 				//ts.c_lflag&= ~ECHO;
-				ts.c_cc[VINTR] = 3;
+				ts.c_cc[VINTR] = 003;
+				// ts.c_cc[VQUIT] = 034;
 				tcsetattr( fd_term, TCSAFLUSH, &ts );
 			}
 			_fd_in = fd_term;
@@ -528,83 +495,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
-	void RunShell()
-	{
-		//CheckedCloseFD(fd_term);
-		const char *shell = getenv("SHELL");
-		if (!shell)
-			shell = "/bin/sh";
-
-		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
-		const char *slash = strrchr(shell, '/');
-		if (strcmp(slash ? slash + 1 : shell, "fish")==0)
-			shell = "/bin/bash";
-
-		//shell = "/usr/bin/zsh";
-		//shell = "/bin/bash";
-		//shell = "/bin/sh";
-
-		std::string forceShell = Wide2MB(Opt.CmdLine.strShell);
-		if (Opt.CmdLine.UseShell)
-			shell = forceShell.c_str();
-
-		std::vector<const char *> args;
-		args.push_back(shell);
-#if 0		
-		const char *home = getenv("HOME");
-		if (!home) home = "/root";
-		
-		//following hussle is to set PS='' from the very beginning of shell
-		//to avoid undesirable prompt to be printed
-		std::string rc_src, rc_dst, rc_arg;
-		if (strstr(shell, "/bash")) {
-			rc_src = std::string(home) + "/.bashrc";
-			rc_dst = InMyTemp("vtcmd/init.bash");
-			rc_arg = "--rcfile";
-		}/* else if (strstr(shell, "/zsh")) {
-			rc_src = std::string(home) + "/.zshrc";
-			rc_dst = InMyTemp("vtcmd/init.zsh");
-			rc_arg = "--rcs";
-		}*/
-		
-		if (!rc_arg.empty()) {
-			std::ofstream dst_stream(rc_dst, std::ios::binary);
-			if (dst_stream.is_open()) {
-				std::ifstream src_stream(rc_src, std::ios::binary);
-				if (src_stream.is_open()) {
-					dst_stream << src_stream.rdbuf();
-				}
-				dst_stream << "\nPS1=''\n";
-				args.push_back(rc_arg.c_str());
-				args.push_back(rc_dst.c_str());
-			}
-		}
-#endif
-		args.push_back("-i");
-		args.push_back(nullptr);
-		
-		//FIXME: not fair - removing const 
-		execv(shell, (char **)&args[0]);
-	}
-	
 	bool Startup()
 	{
 		if (!InitTerminal())
 			return false;
 		
-		int r = ForkAndAttachToSlave(true);
-		if (r == 0) {
-			RunShell();
-			fprintf(stderr, "VT: RunShell returned, errno %u\n", errno);
-			_exit(errno);
-			exit(errno);
-		}
-	
-		if (r==-1) { 
-			perror("VT: fork");
+		int r = ExecLeaderProcess();
+		if (r == -1) {
+			perror("VT: exec leader");
 			return false;
 		}
-		_shell_pid = r;
+
+		_leader_pid = r;
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		return true;
 	}
@@ -613,7 +515,24 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
 		DbgPrintEscaped("OUTPUT", buf, len);
-		_vta.Write(buf, len);
+		if (_slavename.empty()) {
+			// pipes fallback mode
+			for (int i = 0, ii = 0; i <= len; ++i) {
+				if (i == len || buf[i] == '\n') {
+					if (i > ii) {
+						_vta.Write(&buf[ii], i - ii);
+					}
+					if (i == len) {
+						break;
+					}
+					char cr = '\r';
+					_vta.Write(&cr, 1);
+					ii = i;
+				}
+			}
+		} else {
+			_vta.Write(buf, len);
+		}
 		return !_exit_marker.empty();
 	}
 	
@@ -655,14 +574,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return true;
 
 		std::lock_guard<std::mutex> lock(_write_term_mutex);
-		while (len) {
-			ssize_t written = os_call_ssize(write, _fd_in, (const void *)str, len);
-			if (written <= 0) {
-				perror("WriteTerm - write");
-				return false;
-			}
-			len-= written;
-			str+= written;
+		if (WriteAll(_fd_in, (const void *)str, len) != len) {
+			perror("WriteTerm - write");
+			return false;
 		}
 
 		return true;
@@ -707,15 +621,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
-			SendSignalToShell(SIGKILL);
-			if (_forked_proc_pid!=-1)
-				kill(_forked_proc_pid, SIGKILL);
+			SendSignalToVT(SIGKILL);
 			
-		} else {
-			if (_slavename.empty()) //pipes fallback
-				SendSignalToShell(SIGINT);
-			if (_forked_proc_pid!=-1)
-				kill(_forked_proc_pid, SIGINT);
+		} else if (_slavename.empty()) {//pipes fallback
+			SendSignalToVT(SIGINT);
 		}
 	}
 
@@ -782,15 +691,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case '1': {
 					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
 					if (!_far2l_exts)
-						_far2l_exts = new VTFar2lExtensios(this);
+						_far2l_exts.reset(new VTFar2lExtensios(this));
 
 					reply = "\x1b_far2lok\x07";
 				} break;
 
 				case '0': {
 					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
-					delete _far2l_exts;
-					_far2l_exts = nullptr;
+					_far2l_exts.reset();
 				} break;
 
 				case ':': {
@@ -910,15 +818,23 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return Wide2MB(&wz[0]);
 	}
 	
-	void SendSignalToShell(int sig)
+	void SendSignalToVT(int sig)
 	{
-		pid_t grp = getpgid(_shell_pid);
+		if (_leader_pid == -1) {
+			fprintf(stderr, "%s: no shell\n", __FUNCTION__);
+			return;
+		}
 
+		pid_t grp = getpgid(_leader_pid);
 		if (grp != -1 && grp != getpgid(getpid())) {
+			fprintf(stderr, "%s: killpg(%d, %d)\n", __FUNCTION__, grp, sig);
 			killpg(grp, sig);
-			// kill(_shell_pid, sig);
-		} else
-			kill(_shell_pid, sig);
+			// kill(_leader_pid, sig);
+
+		} else {
+			fprintf(stderr, "%s: kill(%d, %d)\n", __FUNCTION__, _leader_pid, sig);
+			kill(_leader_pid, sig);
+		}
 	}
 	
 	virtual void OnRequestShutdown()
@@ -939,17 +855,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_output_reader.KickAss();
 	}
 
-
-
 	void Shutdown()
 	{
 		OnRequestShutdown();
+		SendSignalToVT(SIGTERM);
 
-		if (_shell_pid!=-1) {
-			//kill(_shell_pid, SIGKILL);
+		if (_leader_pid != -1) {
+			//kill(_leader_pid, SIGKILL);
 			int status;
-			waitpid(_shell_pid, &status, 0);
-			_shell_pid = -1;
+			waitpid(_leader_pid, &status, 0);
+			_leader_pid = -1;
 		}
 	}
 
@@ -961,110 +876,97 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_last_window_info_ir.EventType = 0;
 		}
 	}
-	
-	
-	std::string GenerateExecuteCommandScript(const char *cd, const char *cmd, bool need_sudo)
+
+	void TerminalIOLoop()
 	{
-		char name[128]; 
-		sprintf(name, "vtcmd/%x_%p", getpid(), this);
-		std::string cmd_script = InMyTemp(name);
-		std::string pwd_file = cmd_script + ".pwd";
-		FILE *f = fopen(cmd_script.c_str(), "wb");
-		if (!f)
-			return std::string();
-
-static bool shown_tip_init = false;
-static bool shown_tip_exit = false;
-				
-		if (!need_sudo) {
-			need_sudo = (chdir(cd)==-1 && (errno==EACCES || errno==EPERM));
-		}
-		fprintf(f, "trap \"echo ''\" SIGINT\n");//we need marker to be printed even after Ctrl+C pressed
-		fprintf(f, "PS1=''\n");//reduce risk of glitches
-		fprintf(f, "%s\n", Far2lMarkerCommand(_start_marker).c_str());
-		//fprintf(f, "stty echo\n");
-		if (strcmp(cmd, "exit")==0) {
-			fprintf(f, "echo \"%ls%ls%ls\"\n",  MSG(MVTStop),
-				shown_tip_exit ? L"" : L" ",
-				shown_tip_exit ? L"" : MSG(MVTStopTip));
-			shown_tip_exit = true;
-
-		} else if (!shown_tip_init) {
-			if (!Opt.OnlyEditorViewerUsed) {
-				fprintf(f, "echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
-				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipNoCmdTitle));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdShiftTAB));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdFn));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipNoCmdMouse));
-				fprintf(f, "echo \"%ls\"\n", MSG(MVTStartTipPendCmdTitle));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdFn));
-				fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltC));
-				if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-					fprintf(f, "echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltZ));
-				}
-				fprintf(f, " echo \" %ls\"\n", MSG(MVTStartTipPendCmdMouse));
-				fprintf(f, "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n");
-				shown_tip_init = true;
-			}
-		}
-		if (need_sudo) {
-			fprintf(f, "sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-				EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_file.c_str());
-		} else {
-			fprintf(f, "cd \"%s\" && %s && pwd >'%s'\n", EscapeCmdStr(cd).c_str(), cmd, pwd_file.c_str());
+		{
+			std::lock_guard<std::mutex> lock(_inout_control_mutex);
+			_output_reader.Start(_fd_out);
+			_input_reader.Start();
 		}
 
-		fprintf(f, "FARVTRESULT=$?\n");//it will be echoed to caller from outside
-		fprintf(f, "cd ~\n");//avoid locking arbitrary directory
-		fprintf(f, "if [ $FARVTRESULT -eq 0 ]; then\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n");
-		fprintf(f, "else\n");
-		fprintf(f, "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n");
-		fprintf(f, "fi\n");
-		fclose(f);
-		return cmd_script;
+		_output_reader.WaitDeactivation();
+
+		std::lock_guard<std::mutex> lock(_inout_control_mutex);
+		_input_reader.Stop();
+		_output_reader.Stop();
 	}
 
-
-	std::string ComposeExecuteCommandInitialTitle(const char *cd, const char *cmd, bool using_sudo)
+	bool ExecuteCommandInner(const char *cd, const char *cmd, bool force_sudo)
 	{
-		std::string title = cmd;
-		StrTrim(title);
-		if (StrStartsFrom(title, "sudo ")) {
-			using_sudo = true;
-			title.erase(0, 5);
-			StrTrim(title);
+		VT_ComposeCommandExec cce(cd, cmd, force_sudo, _start_marker);
+		if (!cce.Created()) {
+			const std::string &error_str =
+				StrPrintf("Far2l::VT: error %u creating: '%s'\n",
+					errno, cce.ScriptFile().c_str());
+			_vta.Write(error_str.c_str(), error_str.size());
+			return false;
 		}
 
-		if (title.size() > 2 && (title[0] == '\'' || title[0] == '\"')) {
-			size_t p = title.find(title[0], 1);
-			if (p != std::string::npos) {
-				title = title.substr(1, p - 1);
-			}
+		if (!_slavename.empty())
+			UpdateTerminalSize(_fd_out);
+
+		std::string cmd_str;
+		if (!_slavename.empty()) {
+			// Ctrl+U combination to erase any stray characters appeared in input field
+			// due to being typed while previous command being executed in interactive shell
+			cmd_str+= "\x15";
+		}
+		// then send sourcing directive (dot) with space trailing to avoid adding it to history
+		cmd_str+= " . ";
+		cmd_str+= EscapeCmdStr(cce.ScriptFile());
+		cmd_str+= ';';
+		cmd_str+= VT_ComposeMarkerCommand(_exit_marker + "$FARVTRESULT");
+		cmd_str+= '\n';
+
+		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
+			const std::string &error_str =
+				StrPrintf("\nFar2l::VT: terminal write error %u\n", errno);
+			_vta.Write(error_str.c_str(), error_str.size());
+			return false;
+		}
+
+		_vta.DisableOutput(); // will enable on start marker arrival
+
+		TerminalIOLoop();
+
+		_vta.EnableOutput(); // just in case start marker didnt arrive
+
+
+		struct stat s;
+		if (stat(cce.ScriptFile().c_str(), &s) == -1) {
+			const std::string &error_str =
+				StrPrintf("\nFar2l::VT: Script disappeared: '%s'\n",
+					cce.ScriptFile().c_str());
+			_vta.Write(error_str.c_str(), error_str.size());
 
 		} else {
-			size_t p = title.find(' ');
-			if (p != std::string::npos) {
-				title.resize(p);
+			const std::string &pwd = cce.ResultedWorkingDirectory();
+			if (!pwd.empty()) {
+				if (sdc_chdir(pwd.c_str()) == -1) {
+					StrPrintf("\nFar2l::VT: error %u changing dir to: '%s'\n",
+						errno, pwd.c_str());
+				}
 			}
 		}
 
-		size_t p = title.rfind('/');
-		if (p!=std::string::npos) {
-			title.erase(0, p + 1);
+		return true;
+	}
+
+	void ValidateLeaderPid()
+	{
+		if (_leader_pid != -1) {
+			int status;
+			if (waitpid(_leader_pid, &status, WNOHANG) == _leader_pid) {
+				_leader_pid = -1;
+			}
 		}
-		title+= '@';
-		title+= cd;
-		if (using_sudo) {
-			title.insert(0, "sudo ");
-		}
-		return title;
 	}
 
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
         _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-        _shell_pid(-1), _forked_proc_pid(-1), _keypad(0)
+        _leader_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -1079,10 +981,10 @@ static bool shown_tip_exit = false;
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 
-	
 	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
-		if (_shell_pid==-1)
+		ValidateLeaderPid();
+		if (_leader_pid == -1)
 			return -1;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
@@ -1090,90 +992,32 @@ static bool shown_tip_exit = false;
 			perror("getcwd");
 		}
 
-		_start_marker = GenerateRandomString();
-		_exit_marker = GenerateRandomString();
+		VT_ComposeMarker(_start_marker);
+		VT_ComposeMarker(_exit_marker);
 		_exit_marker+= ':';
-		_exit_code = -1;
 
-		const std::string &cmd_script = GenerateExecuteCommandScript(cd, cmd, force_sudo);
-		if (cmd_script.empty())
-			return -1;
-
-		std::string pwd_file = cmd_script + ".pwd";
-		unlink(pwd_file.c_str());
-
-		if (!_slavename.empty())
-			UpdateTerminalSize(_fd_out);
-		
-		std::string cmd_str = " . "; //space in beginning of command prevents adding it to history
-		cmd_str+= EscapeCmdStr(cmd_script);
-		cmd_str+= ';';
-		cmd_str+= Far2lMarkerCommand(_exit_marker + "$FARVTRESULT").c_str();
-		cmd_str+= '\n';
-
-		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
-			fprintf(stderr, "VT: write error %d\n", errno);
-			return -1;
-		}
-
-		const std::string &title = ComposeExecuteCommandInitialTitle(cd, cmd, force_sudo);
+		const std::string &title = VT_ComposeInitialTitle(cd, cmd, force_sudo);
 		_vta.OnStart(title.c_str());
-		_vta.DisableOutput(); // will enable on start marker arrival
 
-		{
-			std::lock_guard<std::mutex> lock(_inout_control_mutex);
-			_output_reader.Start(_fd_out);
-			_input_reader.Start();
-		}
-		
-		_output_reader.WaitDeactivation();
-
-		int fd = open(pwd_file.c_str(), O_RDONLY);
-		if (fd != -1) {
-			char buf[PATH_MAX + 1] = {};
-			ReadAll(fd, buf, sizeof(buf) - 1);
-			CheckedCloseFD(fd);
-			size_t len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n') {
-				buf[--len] = 0;
-			}
-			if (len > 0) {
-				sdc_chdir(buf);
-			}
-			unlink(pwd_file.c_str());
+		if (!ExecuteCommandInner(cd, cmd, force_sudo)) {
+			_exit_code = -1;
 		}
 
-		if (_shell_pid!=-1) {
-			int status;
-			if (waitpid(_shell_pid, &status, WNOHANG)==_shell_pid) {
-				_shell_pid = -1;
-			}
-		}
-
-		{
-			std::lock_guard<std::mutex> lock(_inout_control_mutex);
-			_input_reader.Stop();
-			_output_reader.Stop();
-		}
-
-		remove(cmd_script.c_str());
+		ValidateLeaderPid();
 
 		OnKeypadChange(0);
 		_vta.OnStop();
 		DeliverPendingWindowInfo();
 
 		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
-		delete _far2l_exts;
-		_far2l_exts = nullptr;
-
+		_far2l_exts.reset();
 		return _exit_code;
 	}	
 
-	bool IsOK()
+	bool IsLeaderAlive()
 	{
-		return _shell_pid!=-1;
+		return _leader_pid != -1;
 	}
-
 };
 
 static std::unique_ptr<VTShell> g_vts;
@@ -1187,8 +1031,8 @@ int VTShell_Execute(const char *cmd, bool need_sudo)
 
 	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
-	if (!g_vts->IsOK()) {
-		fprintf(stderr, "Shell exited\n");
+	if (!g_vts->IsLeaderAlive()) {
+		fprintf(stderr, "Leader exited\n");
 		g_vts.reset();
 	}
 

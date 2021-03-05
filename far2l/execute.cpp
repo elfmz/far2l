@@ -425,10 +425,11 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 			perror("sdc_getcwd");
 		}
 
+
 		if (!SeparateWindow && !Silent && CtrlObject
 		  && (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0))) {
 			auto *cp = CtrlObject->Cp();
-			if (cp && cp->LeftPanel && cp->RightPanel
+			if (!CloseFAR && cp && cp->LeftPanel && cp->RightPanel
 			  && (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
 				int Key = WaitKey();
 				// allow user to open console log etc directly from pause-on-error state

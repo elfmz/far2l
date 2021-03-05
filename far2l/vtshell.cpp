@@ -345,17 +345,7 @@ private:
 	}
 };
 
-static bool s_group_signal_propogated = false;
-
-static void GroupSignalPropogator(int sig)
-{
-	if (!s_group_signal_propogated) {
-		s_group_signal_propogated = true;
-		killpg(0, sig);
-	}
-	_exit(sig);
-}
-
+int VTShell_Leader(const char *shell, const char *pty);
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
@@ -375,83 +365,59 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
 
-	int ForkAndRunShell()
+	int ExecShellHost()
 	{
-		// avoid locking current directory
 		std::string home = GetMyHome();
 
-		pid_t parent_grp = getpgid(getpid());
+		std::string far2l_exename = g_strFarModuleName.GetMB();
+
+		std::string force_shell = Wide2MB(Opt.CmdLine.strShell);
+		const char *shell = Opt.CmdLine.UseShell ? force_shell.c_str() : nullptr;
+
+		if (!shell || !*shell) {
+			shell = getenv("SHELL");
+			if (!shell) {
+				shell = "/bin/sh";
+			}
+			// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
+			const char *slash = strrchr(shell, '/');
+			if (strcmp(slash ? slash + 1 : shell, "fish") == 0) {
+				shell = "/bin/bash";
+			}
+		}
+
+		//shell = "/usr/bin/zsh";
+		//shell = "/bin/bash";
+		//shell = "/bin/sh";
 
 		int r = fork();
-		if (r != 0)
+		if (r != 0) {
 			return r;
+		}
 
+		// avoid locking current directory
 		if (chdir(home.c_str()) != 0) {
 			if (chdir("/") != 0) {
 				perror("chdir /");
 			}
 		}
-		if (setsid() == -1)
-			perror("VT: setsid");
 
-		pid_t child_grp = getpgid(getpid());
-		fprintf(stderr, "VT: parent_grp=%lx child_grp=%lx\n", parent_grp, child_grp);
-
-		signal(SIGHUP, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
-		signal(SIGINT, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
-		signal(SIGQUIT, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
-		signal(SIGTERM, (child_grp != parent_grp) ? GroupSignalPropogator : SIG_DFL);
-		signal(SIGPIPE, SIG_DFL);
-		signal(SIGCHLD, SIG_DFL);
-		signal(SIGSTOP, SIG_DFL);
-
-		if (!_slavename.empty()) {
-			r = open(_slavename.c_str(), O_RDWR); 
-			if (r==-1) {
-				perror("VT: open slave");
-				_exit(errno);
-				exit(errno);
-			}
-				
-			if ( ioctl( r, TIOCSCTTY, 0 )==-1 )
-				perror( "VT: ioctl(TIOCSCTTY)" );
-					
-			dup2(r, STDIN_FILENO);
-			dup2(r, STDOUT_FILENO);
-			dup2(r, STDERR_FILENO);
-			CheckedCloseFD(r);
-
-		} else {
+		if (_slavename.empty()) {
 			dup2(_pipes_fallback_in, STDIN_FILENO);
 			dup2(_pipes_fallback_out, STDOUT_FILENO);
 			dup2(_pipes_fallback_out, STDERR_FILENO);
 			CheckedCloseFD(_pipes_fallback_in);
 			CheckedCloseFD(_pipes_fallback_out);
 		}
-			
-		//setenv("TERM", "xterm-256color", 1);
-		setenv("TERM", "xterm", 1);
 
-		pid_t pid = fork();
-		if (pid == 0) {
-			RunShell();
-			r = errno;
-			fprintf(stderr, "VT: RunShell returned, errno %u\n", r);
-			_exit(r ? r : -1);
+		r = VTShell_Leader(shell, _slavename.c_str());
+		fprintf(stderr, "%s: VTShell_Leader('%s', '%s') returned %d errno %u\n",
+			__FUNCTION__, shell, _slavename.c_str(), r, errno);
 
-		} else if (pid != -1) {
-			int s = 0;
-			while (waitpid(pid, &s, 0) != pid) {
-				usleep(10000);
-			}
-
-		} else {
-			fprintf(stderr, "VT: fork2 errno %u\n", errno);
-		}
-
-		_exit(0);
-		exit(0);
-		return 0;
+		int err = errno;
+		_exit(err);
+		exit(err);
+		return -1;
 	}
 	
 	void UpdateTerminalSize(int fd_term)
@@ -529,73 +495,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
-	void RunShell()
-	{
-		//CheckedCloseFD(fd_term);
-		const char *shell = getenv("SHELL");
-		if (!shell)
-			shell = "/bin/sh";
-
-		// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
-		const char *slash = strrchr(shell, '/');
-		if (strcmp(slash ? slash + 1 : shell, "fish")==0)
-			shell = "/bin/bash";
-
-		//shell = "/usr/bin/zsh";
-		//shell = "/bin/bash";
-		//shell = "/bin/sh";
-
-		std::string forceShell = Wide2MB(Opt.CmdLine.strShell);
-		if (Opt.CmdLine.UseShell)
-			shell = forceShell.c_str();
-
-		std::vector<const char *> args;
-		args.push_back(shell);
-#if 0		
-		const char *home = getenv("HOME");
-		if (!home) home = "/root";
-		
-		//following hussle is to set PS='' from the very beginning of shell
-		//to avoid undesirable prompt to be printed
-		std::string rc_src, rc_dst, rc_arg;
-		if (strstr(shell, "/bash")) {
-			rc_src = std::string(home) + "/.bashrc";
-			rc_dst = InMyTemp("vtcmd/init.bash");
-			rc_arg = "--rcfile";
-		}/* else if (strstr(shell, "/zsh")) {
-			rc_src = std::string(home) + "/.zshrc";
-			rc_dst = InMyTemp("vtcmd/init.zsh");
-			rc_arg = "--rcs";
-		}*/
-		
-		if (!rc_arg.empty()) {
-			std::ofstream dst_stream(rc_dst, std::ios::binary);
-			if (dst_stream.is_open()) {
-				std::ifstream src_stream(rc_src, std::ios::binary);
-				if (src_stream.is_open()) {
-					dst_stream << src_stream.rdbuf();
-				}
-				dst_stream << "\nPS1=''\n";
-				args.push_back(rc_arg.c_str());
-				args.push_back(rc_dst.c_str());
-			}
-		}
-#endif
-		args.push_back("-i");
-		args.push_back(nullptr);
-		
-		//FIXME: not fair - removing const 
-		execv(shell, (char **)&args[0]);
-	}
-	
 	bool Startup()
 	{
 		if (!InitTerminal())
 			return false;
 		
-		int r = ForkAndRunShell();
+		int r = ExecShellHost();
 		if (r == -1) {
-			perror("VT: fork");
+			perror("VT: shell host");
 			return false;
 		}
 
@@ -719,11 +626,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
-			SendSignalToShell(SIGKILL);
+			SendSignalToVT(SIGKILL);
 			
-		} else {
-			if (_slavename.empty()) //pipes fallback
-				SendSignalToShell(SIGINT);
+		} else if (_slavename.empty()) {//pipes fallback
+			SendSignalToVT(SIGINT);
 		}
 	}
 
@@ -917,7 +823,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return Wide2MB(&wz[0]);
 	}
 	
-	void SendSignalToShell(int sig)
+	void SendSignalToVT(int sig)
 	{
 		if (_shell_pid == -1) {
 			fprintf(stderr, "%s: no shell\n", __FUNCTION__);
@@ -957,9 +863,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void Shutdown()
 	{
 		OnRequestShutdown();
-		SendSignalToShell(SIGINT);
+		SendSignalToVT(SIGTERM);
 
-		if (_shell_pid!=-1) {
+		if (_shell_pid != -1) {
 			//kill(_shell_pid, SIGKILL);
 			int status;
 			waitpid(_shell_pid, &status, 0);
@@ -993,11 +899,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	bool ExecuteCommandInner(const char *cd, const char *cmd, bool force_sudo)
 	{
-		VT_ComposeCommandScript ccs(cd, cmd, force_sudo, _start_marker);
-		if (!ccs.Created()) {
+		VT_ComposeCommandExec cce(cd, cmd, force_sudo, _start_marker);
+		if (!cce.Created()) {
 			const std::string &error_str =
 				StrPrintf("Far2l::VT: error %u creating: '%s'\n",
-					errno, ccs.ScriptFile().c_str());
+					errno, cce.ScriptFile().c_str());
 			_vta.Write(error_str.c_str(), error_str.size());
 			return false;
 		}
@@ -1013,7 +919,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		// then send sourcing directive (dot) with space trailing to avoid adding it to history
 		cmd_str+= " . ";
-		cmd_str+= EscapeCmdStr(ccs.ScriptFile());
+		cmd_str+= EscapeCmdStr(cce.ScriptFile());
 		cmd_str+= ';';
 		cmd_str+= VT_ComposeMarkerCommand(_exit_marker + "$FARVTRESULT");
 		cmd_str+= '\n';
@@ -1033,14 +939,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 
 		struct stat s;
-		if (stat(ccs.ScriptFile().c_str(), &s) == -1) {
+		if (stat(cce.ScriptFile().c_str(), &s) == -1) {
 			const std::string &error_str =
 				StrPrintf("\nFar2l::VT: Script disappeared: '%s'\n",
-					ccs.ScriptFile().c_str());
+					cce.ScriptFile().c_str());
 			_vta.Write(error_str.c_str(), error_str.size());
 
 		} else {
-			const std::string &pwd = ccs.GetResultOfPWD();
+			const std::string &pwd = cce.ResultedWorkingDirectory();
 			if (!pwd.empty()) {
 				if (sdc_chdir(pwd.c_str()) == -1) {
 					StrPrintf("\nFar2l::VT: error %u changing dir to: '%s'\n",

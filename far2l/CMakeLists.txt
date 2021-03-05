@@ -125,6 +125,7 @@ xlat.cpp
 vtshell.cpp
 vtshell_translation.cpp
 vtshell_compose.cpp
+vtshell_leader.cpp
 vtansi.cpp
 PluginA.cpp
 execute_oscmd.cpp

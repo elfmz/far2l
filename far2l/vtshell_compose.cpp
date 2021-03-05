@@ -83,7 +83,7 @@ static std::atomic<bool> s_shown_tip_init;
 static std::atomic<bool> s_shown_tip_exit;
 static std::atomic<unsigned int> s_vt_script_id;
 
-VT_ComposeCommandScript::VT_ComposeCommandScript(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
@@ -103,12 +103,12 @@ VT_ComposeCommandScript::VT_ComposeCommandScript(const char *cd, const char *cmd
 	}
 }
 
-VT_ComposeCommandScript::~VT_ComposeCommandScript()
+VT_ComposeCommandExec::~VT_ComposeCommandExec()
 {
 	Cleanup();
 }
 
-std::string VT_ComposeCommandScript::GetResultOfPWD() const
+std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 {
 	if (!_created)
 		return std::string();
@@ -130,7 +130,7 @@ std::string VT_ComposeCommandScript::GetResultOfPWD() const
 	return buf;
 }
 
-void VT_ComposeCommandScript::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	std::string content;
 	content+= "trap \"echo ''\" SIGINT\n"; // need marker to be printed even after Ctrl+C pressed
@@ -186,7 +186,7 @@ void VT_ComposeCommandScript::Create(const char *cd, const char *cmd, bool need_
 	}
 }
 
-void VT_ComposeCommandScript::Cleanup()
+void VT_ComposeCommandExec::Cleanup()
 {
 	_fd.CheckedClose();
 	if (!_cmd_script.empty()) {

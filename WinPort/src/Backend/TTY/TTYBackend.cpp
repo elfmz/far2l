@@ -34,12 +34,13 @@ extern ConsoleInput g_winport_con_in;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe) :
+TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_stdin(std_in),
 	_stdout(std_out),
 	_far2l_tty(far2l_tty),
 	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
+	_result(result),
 	_largest_window_size_ready(false)
 
 {
@@ -71,7 +72,22 @@ TTYBackend::~TTYBackend()
 	}
 
 	CheckedCloseFDPair(_kickass);
-	CheckedCloseFD(_notify_pipe);
+	DetachNotifyPipe();
+}
+
+void TTYBackend::DetachNotifyPipe()
+{
+	if (_notify_pipe != -1) {
+	    fcntl(_notify_pipe, F_SETFL,
+			fcntl(_notify_pipe, F_GETFL, 0) | O_NONBLOCK);
+
+		if (_result && write(_notify_pipe, _result,
+				sizeof(*_result)) != sizeof(*_result)) {
+			perror("DetachNotifyPipe - write");
+		}
+
+		CheckedCloseFD(_notify_pipe);
+	}
 }
 
 bool TTYBackend::Startup()
@@ -134,7 +150,7 @@ void TTYBackend::ReaderThread()
 
 		pthread_join(writer_trd, nullptr);
 
-		CheckedCloseFD(_notify_pipe);
+		DetachNotifyPipe();
 
 		while (!_exiting) {
 			const std::string &info = StrWide2MB(g_winport_con_out.GetTitle());
@@ -831,7 +847,7 @@ static void OnSigHup(int signo)
 
 bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(std_in, std_out, far2l_tty, esc_expiration, notify_pipe);
+	TTYBackend vtb(std_in, std_out, far2l_tty, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;
@@ -846,6 +862,7 @@ bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_ex
 	auto orig_cont = signal(SIGCONT, OnSigCont);
 	auto orig_hup = signal(SIGHUP, (notify_pipe != -1) ? OnSigHup : SIG_DFL); // notify_pipe == -1 means --mortal specified
 
+	*result = 0; // set OK status for case if app will go background
 	*result = AppMain(argc, argv);
 
 	signal(SIGHUP, orig_hup);
@@ -855,4 +872,3 @@ bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_ex
 
 	return true;
 }
-

@@ -419,8 +419,6 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 					}
 					WinPortHandle_FinalizeApp();
 					_exit(result);
-				} else {
-					result = 0;
 				}
 				close(new_notify_pipe[1]);
 				notify_pipe = new_notify_pipe[0];
@@ -428,8 +426,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 			strncpy(argv[0], "shim.far2l", strlen(argv[0]));
 			auto prev_sigwinch = signal(SIGWINCH, ShimSigWinch);
-			char c;
-			os_call_ssize(read, notify_pipe, (void *)&c, sizeof(c));
+			ReadAll(notify_pipe, (void *)&result, sizeof(result));
 			signal(SIGWINCH, prev_sigwinch);
 			g_sigwinch_pid = 0;
 			CheckedCloseFD(notify_pipe);

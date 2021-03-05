@@ -25,6 +25,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	unsigned int _esc_expiration = 0;
 	int _notify_pipe = -1;
+	int *_result = nullptr;
 	int _kickass[2] = {-1, -1};
 	int _far2l_cursor_height = -1;
 	unsigned int _cur_width = 0, _cur_height = 0;
@@ -86,6 +87,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void OnFar2lKey(bool down, StackSerializer &stk_ser);
 	void OnFar2lMouse(StackSerializer &stk_ser);
 
+	void DetachNotifyPipe();
+
 protected:
 	// IFar2lInterractor
 	virtual bool Far2lInterract(StackSerializer &stk_ser, bool wait);
@@ -114,7 +117,7 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe);
+	TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

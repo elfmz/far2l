@@ -355,7 +355,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::mutex _inout_control_mutex;
 	int _fd_out, _fd_in;
 	int _pipes_fallback_in, _pipes_fallback_out;
-	pid_t _shell_pid;
+	pid_t _leader_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad;
 	INPUT_RECORD _last_window_info_ir;
@@ -365,7 +365,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
 
-	int ExecShellHost()
+	int ExecLeaderProcess()
 	{
 		std::string home = GetMyHome();
 
@@ -500,13 +500,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (!InitTerminal())
 			return false;
 		
-		int r = ExecShellHost();
+		int r = ExecLeaderProcess();
 		if (r == -1) {
-			perror("VT: shell host");
+			perror("VT: exec leader");
 			return false;
 		}
 
-		_shell_pid = r;
+		_leader_pid = r;
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		return true;
 	}
@@ -574,14 +574,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return true;
 
 		std::lock_guard<std::mutex> lock(_write_term_mutex);
-		while (len) {
-			ssize_t written = os_call_ssize(write, _fd_in, (const void *)str, len);
-			if (written <= 0) {
-				perror("WriteTerm - write");
-				return false;
-			}
-			len-= written;
-			str+= written;
+		if (WriteAll(_fd_in, (const void *)str, len) != len) {
+			perror("WriteTerm - write");
+			return false;
 		}
 
 		return true;
@@ -825,20 +820,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	
 	void SendSignalToVT(int sig)
 	{
-		if (_shell_pid == -1) {
+		if (_leader_pid == -1) {
 			fprintf(stderr, "%s: no shell\n", __FUNCTION__);
 			return;
 		}
 
-		pid_t grp = getpgid(_shell_pid);
+		pid_t grp = getpgid(_leader_pid);
 		if (grp != -1 && grp != getpgid(getpid())) {
 			fprintf(stderr, "%s: killpg(%d, %d)\n", __FUNCTION__, grp, sig);
 			killpg(grp, sig);
-			// kill(_shell_pid, sig);
+			// kill(_leader_pid, sig);
 
 		} else {
-			fprintf(stderr, "%s: kill(%d, %d)\n", __FUNCTION__, _shell_pid, sig);
-			kill(_shell_pid, sig);
+			fprintf(stderr, "%s: kill(%d, %d)\n", __FUNCTION__, _leader_pid, sig);
+			kill(_leader_pid, sig);
 		}
 	}
 	
@@ -865,11 +860,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		OnRequestShutdown();
 		SendSignalToVT(SIGTERM);
 
-		if (_shell_pid != -1) {
-			//kill(_shell_pid, SIGKILL);
+		if (_leader_pid != -1) {
+			//kill(_leader_pid, SIGKILL);
 			int status;
-			waitpid(_shell_pid, &status, 0);
-			_shell_pid = -1;
+			waitpid(_leader_pid, &status, 0);
+			_leader_pid = -1;
 		}
 	}
 
@@ -958,12 +953,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
-	void ValidateShellPid()
+	void ValidateLeaderPid()
 	{
-		if (_shell_pid != -1) {
+		if (_leader_pid != -1) {
 			int status;
-			if (waitpid(_shell_pid, &status, WNOHANG) == _shell_pid) {
-				_shell_pid = -1;
+			if (waitpid(_leader_pid, &status, WNOHANG) == _leader_pid) {
+				_leader_pid = -1;
 			}
 		}
 	}
@@ -971,7 +966,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
         _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-        _shell_pid(-1), _keypad(0)
+        _leader_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -988,8 +983,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
-		ValidateShellPid();
-		if (_shell_pid == -1)
+		ValidateLeaderPid();
+		if (_leader_pid == -1)
 			return -1;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
@@ -1008,7 +1003,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_exit_code = -1;
 		}
 
-		ValidateShellPid();
+		ValidateLeaderPid();
 
 		OnKeypadChange(0);
 		_vta.OnStop();
@@ -1019,9 +1014,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _exit_code;
 	}	
 
-	bool IsShellAlive()
+	bool IsLeaderAlive()
 	{
-		return _shell_pid != -1;
+		return _leader_pid != -1;
 	}
 };
 
@@ -1036,8 +1031,8 @@ int VTShell_Execute(const char *cmd, bool need_sudo)
 
 	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
-	if (!g_vts->IsShellAlive()) {
-		fprintf(stderr, "Shell exited\n");
+	if (!g_vts->IsLeaderAlive()) {
+		fprintf(stderr, "Leader exited\n");
 		g_vts.reset();
 	}
 

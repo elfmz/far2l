@@ -2,6 +2,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <algorithm>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -14,258 +15,64 @@
 #include "libarch_utils.h"
 #include "libarch_cmd.h"
 
-struct AddFileCtx {
-	AddFileCtx(LibArchOpenWrite &arc_) : arc(arc_) {}
-
-	LibArchOpenWrite &arc;
-	bool with_path = true;
-	bool out = false;
-	std::unique_ptr<std::set<std::string>> rm_set;
-	std::string arc_root_path;
-};
-
-static std::unique_ptr<AddFileCtx> s_addfile_ctx;
-static std::mutex s_addfile_mtx;
-
-static bool LIBARCH_CommandAddFile(const char *fpath)
+class LIBARCH_Modify
 {
-	char buf[0x10000];
-	struct stat s = {};
-	if (lstat(fpath, &s) == -1) {
-		fprintf(stderr, "error %d on stat '%s'\n", errno, fpath);
-		return false;
+protected:
+	const LibarchCommandOptions &_arc_opts;
+	const char *_arc_path;
+	std::string _tmp_path;
+	bool _done = true;
+
+	virtual void OnStart(LibArchOpenWrite &arc_dst)
+	{
 	}
 
-	struct archive_entry *entry = archive_entry_new();
-	if (!entry) {
-		return false;
+	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	{
+		return true;
 	}
 
-	bool out = true;
-	std::string entry_fpath = s_addfile_ctx->arc_root_path;
-	if (!entry_fpath.empty() && entry_fpath.back() != '/') {
-		entry_fpath+= '/';
-	}
-	if (!s_addfile_ctx->with_path) {
-		const char *slash = strrchr(fpath, '/');
-		entry_fpath+= slash ? slash + 1 : fpath;
-	} else {
-		entry_fpath+= fpath;
+public:
+	LIBARCH_Modify(const char *arc_path, const LibarchCommandOptions &arc_opts)
+		:
+		_arc_opts(arc_opts),
+		_arc_path(arc_path)
+	{
+		_tmp_path+= StrPrintf(".%u.tmp", getpid());
 	}
 
-	archive_entry_set_pathname(entry, entry_fpath.c_str());
-	archive_entry_set_size(entry, s.st_size);
-	archive_entry_set_perm(entry, s.st_mode & 07777);
-
-#ifdef __APPLE__
-	archive_entry_set_ctime(entry, s.st_ctimespec.tv_sec, s.st_ctimespec.tv_nsec);
-	archive_entry_set_atime(entry, s.st_atimespec.tv_sec, s.st_atimespec.tv_nsec);
-	archive_entry_set_mtime(entry, s.st_mtimespec.tv_sec, s.st_mtimespec.tv_nsec);
-#else
-	archive_entry_set_ctime(entry, s.st_ctim.tv_sec, s.st_ctim.tv_nsec);
-	archive_entry_set_atime(entry, s.st_atim.tv_sec, s.st_atim.tv_nsec);
-	archive_entry_set_mtime(entry, s.st_mtim.tv_sec, s.st_mtim.tv_nsec);
-#endif
-	off_t data_len = 0;
-
-	if (S_ISLNK(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFLNK);
-		ssize_t r = readlink(fpath, buf, sizeof(buf) - 1);
-		if (r >= 0) {
-			buf[r] = 0;
-			archive_entry_set_symlink(entry, buf);
-		} else {
-			fprintf(stderr, "readlink error %d: %s", errno, fpath);
-			archive_entry_set_symlink(entry, "???");
-			out = false;
-		}
-
-	} else if (S_ISDIR(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFDIR);
-	} else if (S_ISCHR(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFCHR);
-	} else if (S_ISBLK(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFBLK);
-	} else if (S_ISFIFO(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFIFO);
-	} else if (S_ISSOCK(s.st_mode)) {
-		archive_entry_set_filetype(entry, AE_IFSOCK);
-	} else {
-		data_len = s.st_size;
-		archive_entry_set_filetype(entry, AE_IFREG);
-		archive_entry_set_size(entry, data_len);
-	}
-
-	int r = LibArchCall(archive_write_header, s_addfile_ctx->arc.Get(), entry);
-	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-		fprintf(stderr, "Error %d (%s) writing header: %s",
-			r, archive_error_string(s_addfile_ctx->arc.Get()), fpath);
-		archive_entry_free(entry);
-		return false;
-	}
-
-	if (data_len) {
-		off_t written = 0;
-		FDScope fd(open(fpath, O_RDONLY));
-		if (fd.Valid()) {
-			while (written < data_len) {
-				ssize_t rd = os_call_ssize(read, (int)fd, (void *)buf, sizeof(buf));
-				if (rd <= 0) {
-					break;
-				}
-				written+= rd;
-				if (written > data_len) {
-					fprintf(stderr, "Too much data (%lld): %s",
-						(long long)data_len, fpath);
-					rd-= (size_t)(written - data_len);
-					written = data_len;
-					out = false;
-				}
-				if (!s_addfile_ctx->arc.WriteData(buf, (size_t)rd)) {
-					throw std::runtime_error("write data failed");
-				}
-			}
-		}
-		if (written < data_len) {
-			fprintf(stderr, "Too little data (%lld of %lld): %s",
-				(long long)written, (long long)data_len, fpath);
-			memset(buf, 0, sizeof(buf));
-			do {
-				size_t piece = (size_t) ((data_len - written < (off_t)sizeof(buf))
-					? (size_t)(data_len - written) : sizeof(buf));
-				if (!s_addfile_ctx->arc.WriteData(buf, piece)) {
-					throw std::runtime_error("write zeroes failed");
-				}
-				written+= piece;
-			} while (written < data_len);
-			out = false;
+	virtual ~LIBARCH_Modify()
+	{
+		if (!_done) {
+			unlink(_tmp_path.c_str());
 		}
 	}
 
-	archive_entry_free(entry);
+	void Do()
+	{
+		unlink(_tmp_path.c_str());
+		_done = false;
+		LibArchOpenRead arc_src(_arc_path, "", _arc_opts.charset.c_str());
+		LibArchOpenWrite arc_dst(_tmp_path.c_str(), arc_src.Get(), "");//_arc_opts.charset.c_str());
 
-	if (out && s_addfile_ctx->rm_set) {
-		s_addfile_ctx->rm_set->emplace(fpath);
-	}
+		OnStart(arc_dst);
 
-	return out;
-}
+		std::vector<std::string> parts;
+		std::string str;
 
-static int LIBARCH_CommandHandlerFTW(const char *fpath, const struct stat *sb, int typeflag)
-{
-	try {
-//		fprintf(stderr, "LIBARCH_CommandHandlerFTW('%s')...\n", fpath);
-		if (!LIBARCH_CommandAddFile(fpath)) {
-			s_addfile_ctx->out = false;
-		}
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "LIBARCH_CommandHandlerFTW('%s'): %s\n", fpath, e.what());
-		s_addfile_ctx->out = false;
-	}
-
-	return 0;
-}
-
-static bool LIBARCH_CommandInsertFileFixedPath(const char *cmd, LibArchOpenWrite &arc, const LibarchCommandOptions &arc_opts, const char *wanted_path)
-{
-	std::lock_guard<std::mutex> locker(s_addfile_mtx);
-	s_addfile_ctx.reset(new AddFileCtx(arc) ) ;
-
-	std::unique_ptr<std::set<std::string> > rm_set;
-	if (*cmd == 'm' || *cmd == 'M') {
-		s_addfile_ctx->rm_set.reset(new std::set<std::string>);
-	}
-
-	s_addfile_ctx->with_path = (*cmd == 'A' || *cmd == 'M');
-	s_addfile_ctx->arc_root_path = arc_opts.root_path.c_str();
-
-	s_addfile_ctx->out = LIBARCH_CommandAddFile(wanted_path);
-
-	struct stat s = {};
-	if (stat(wanted_path, &s) == 0 && S_ISDIR(s.st_mode)) {
-		ftw(wanted_path, LIBARCH_CommandHandlerFTW, 10);
-	}
-
-	if (s_addfile_ctx->rm_set) {
-		for (auto it = s_addfile_ctx->rm_set->rbegin(); it != s_addfile_ctx->rm_set->rend(); ++it) {
-			if (remove(it->c_str()) == -1) {
-				fprintf(stderr, "RM error %u for '%s'\n", errno, it->c_str());
-			}
-		}
-	}
-
-	return s_addfile_ctx->out;
-}
-
-static bool LIBARCH_CommandInsertFile(const char *cmd, LibArchOpenWrite &arc, const LibarchCommandOptions &arc_opts, const char *wanted_path)
-{
-	if (!wanted_path || !*wanted_path) {
-		throw std::runtime_error("no files to add specified");
-	}
-
-	std::string wanted_path_fixed = wanted_path;
-	// remove ending /* that means all files in dir, that is dir itself
-	while (wanted_path_fixed.size() >= 2 && wanted_path_fixed.rfind("/*") == wanted_path_fixed.size() - 2) {
-		wanted_path_fixed.resize(wanted_path_fixed.size() - 2);
-	}
-
-	// remove ending directoty path with slash, otherwise macos ftw report pathes with double slashes that
-	// consequently causes resulted zip archive entries not enumed correctly
-	while (wanted_path_fixed.size() > 1 && wanted_path_fixed.back() == '/') {
-		wanted_path_fixed.resize(wanted_path_fixed.size() - 1);
-	}
-
-	return LIBARCH_CommandInsertFileFixedPath(cmd, arc, arc_opts, wanted_path_fixed.c_str());
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////
-
-static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
-{
-	std::string tmp_path = arc_path;
-	tmp_path+= ".tmp";
-
-	std::string str;
-	std::vector<std::vector<std::string> > files_parts;
-	for (int i = 0; i < files_cnt; ++i) if (files[i]) {
-		files_parts.emplace_back();
-		if (!arc_opts.root_path.empty()) {
-			LibArch_ParsePathToParts(files_parts.back(), arc_opts.root_path);
-		}
-		str = files[i];
-		LibArch_ParsePathToParts(files_parts.back(), str);
-	}
-
-	std::vector<std::string> parts;
-
-	try {
-		LibArchOpenRead arc_src(arc_path, "", arc_opts.charset.c_str());
-		LibArchOpenWrite arc_dst(tmp_path.c_str(), arc_src.Get(), "");//arc_opts.charset.c_str());
 		for (;;) {
 			struct archive_entry *entry = arc_src.NextHeader();
 			if (!entry) {
 				break;
 			}
+
 			const char *pathname = LibArch_EntryPathname(entry);
 			if (pathname) {
 				parts.clear();
 				str = pathname;
 				LibArch_ParsePathToParts(parts, str);
-				bool matches = false;
-				for (const auto &fp : files_parts) {
-					size_t i = 0;
-					while (i != fp.size() && i != parts.size() && (fp[i] == parts[i] || fp[i] == "*")) {
-						++i;
-					}
-					if (i == fp.size()) {
-						matches = true;
-						break;
-					}
-				}
-				if (matches) {
+				if (!OnCopyEntry(parts)) {
 					arc_src.SkipData();
-					printf("Deleted: %s\n", pathname);
 					continue;
 				}
 				archive_entry_set_pathname(entry, str.c_str());
@@ -308,46 +115,344 @@ static bool LIBARCH_CommandRemoveOrReplace(const char *cmd, const char *arc_path
 			}
 		}
 
-		if (*cmd != 'd' && *cmd != 'D') for (int i = 0; i < files_cnt; ++i) if (files[i]) {
-			if (!LIBARCH_CommandInsertFile(cmd, arc_dst, arc_opts, files[i])) {
-				throw std::runtime_error(StrPrintf("Failed to add: %s", files[i]));
+		if (rename(_tmp_path.c_str(), _arc_path) == -1) {
+			throw std::runtime_error(StrPrintf("Error %d renaming '%s' to '%s'",
+				errno, _tmp_path.c_str(), _arc_path));
+		}
+
+		_done = true;
+	}
+};
+
+////////////////////////////////////////////////////////////
+
+class LIBARCH_Delete : public LIBARCH_Modify
+{
+	std::vector<std::vector<std::string> > _files_parts;
+
+	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	{
+		for (const auto &fp : _files_parts) if (parts.size() >= fp.size()) {
+			size_t i = 0;
+			while (i != fp.size() && (fp[i] == parts[i] || fp[i] == "*")) {
+				++i;
+			}
+			if (i == fp.size()) {
+				printf("Deleted: %s\n", LibArch_PathFromParts(parts).c_str());
+				return false;
 			}
 		}
 
-	} catch (std::exception &e) {
-		remove(tmp_path.c_str());
-		fprintf(stderr, "Exception: %s\n", e.what());
-		return false;
+		return LIBARCH_Modify::OnCopyEntry(parts);
 	}
 
-	if (rename(tmp_path.c_str(), arc_path) == -1) {
-		fprintf(stderr, "Rename error %u: %s -> %s\n", errno, tmp_path.c_str(), arc_path);
-		remove(tmp_path.c_str());
-		return false;
+public:
+	LIBARCH_Delete(const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
+		: LIBARCH_Modify(arc_path, arc_opts)
+	{
+		std::string str;
+		for (int i = 0; i < files_cnt; ++i) if (files[i]) {
+			_files_parts.emplace_back();
+			if (!arc_opts.root_path.empty()) {
+				LibArch_ParsePathToParts(_files_parts.back(), arc_opts.root_path);
+			}
+			str = files[i];
+			LibArch_ParsePathToParts(_files_parts.back(), str);
+		}
+	}
+};
+
+////////////////////////////////////////////////////////////
+
+class LIBARCH_Add
+{
+	static std::mutex s_ftw_mtx;
+	static LIBARCH_Add *s_ftw_caller;
+
+	const LibarchCommandOptions &_arc_opts;
+	std::vector<std::string> _add_pathes;
+	std::vector<std::string> _well_added_pathes;
+
+	LibArchOpenWrite *_arc_dst = nullptr;
+
+
+	void AddPath(const char *path)
+	{
+		char buf[0x10000];
+
+		struct stat s = {};
+		if (lstat(path, &s) == -1) {
+			throw std::runtime_error("lstat failed");
+		}
+
+		std::string entry_path = _arc_opts.root_path;
+		if (!entry_path.empty() && entry_path.back() != '/') {
+			entry_path+= '/';
+		}
+		if (*_cmd == 'm' || *_cmd == 'a') {
+			const char *slash = strrchr(path, '/');
+			entry_path+= slash ? slash + 1 : path;
+		} else {
+			entry_path+= path;
+		}
+
+		LibArchTempEntry entry;
+
+		archive_entry_set_pathname(entry, entry_path.c_str());
+		archive_entry_set_size(entry, s.st_size);
+		archive_entry_set_perm(entry, s.st_mode & 07777);
+
+#ifdef __APPLE__
+		archive_entry_set_ctime(entry, s.st_ctimespec.tv_sec, s.st_ctimespec.tv_nsec);
+		archive_entry_set_atime(entry, s.st_atimespec.tv_sec, s.st_atimespec.tv_nsec);
+		archive_entry_set_mtime(entry, s.st_mtimespec.tv_sec, s.st_mtimespec.tv_nsec);
+#else
+		archive_entry_set_ctime(entry, s.st_ctim.tv_sec, s.st_ctim.tv_nsec);
+		archive_entry_set_atime(entry, s.st_atim.tv_sec, s.st_atim.tv_nsec);
+		archive_entry_set_mtime(entry, s.st_mtim.tv_sec, s.st_mtim.tv_nsec);
+#endif
+		off_t data_len = 0;
+
+		if (S_ISLNK(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFLNK);
+			ssize_t r = readlink(path, buf, sizeof(buf) - 1);
+			if (r < 0) {
+				throw std::runtime_error("readlink failed");
+			}
+			buf[r] = 0;
+			archive_entry_set_symlink(entry, buf);
+		} else if (S_ISDIR(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFDIR);
+		} else if (S_ISCHR(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFCHR);
+		} else if (S_ISBLK(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFBLK);
+		} else if (S_ISFIFO(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFIFO);
+		} else if (S_ISSOCK(s.st_mode)) {
+			archive_entry_set_filetype(entry, AE_IFSOCK);
+		} else {
+			data_len = s.st_size;
+			archive_entry_set_filetype(entry, AE_IFREG);
+			archive_entry_set_size(entry, data_len);
+		}
+
+		int r = LibArchCall(archive_write_header, _arc_dst->Get(), entry.Get());
+		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+			throw std::runtime_error(StrPrintf(
+				"write header error %d (%s)",
+				r, archive_error_string(_arc_dst->Get())));
+		}
+
+		_added_parts.emplace_back();
+		LibArch_ParsePathToParts(_added_parts.back(), _arc_opts.root_path);
+		LibArch_ParsePathToParts(_added_parts.back(), path);
+
+		if (data_len) {
+			// once file entry header has been added it cannot be dismissed,
+			// so throw different exception types to tell that to caller
+			// and keep list of illformed parts into _illformed_parts
+
+			// add it now and (if) when reach finish - will remove it
+			_illformed_parts.emplace_back(_added_parts.back());
+
+			off_t written = 0;
+			FDScope fd(open(path, O_RDONLY));
+			if (!fd.Valid()) {
+				throw std::underflow_error("open file failed");
+			}
+			while (written < data_len) {
+				ssize_t rd = os_call_ssize(read, (int)fd, (void *)buf, sizeof(buf));
+				if (rd == 0) {
+					throw std::underflow_error("file unexpectedly shrinked");
+				}
+				if (rd < 0) {
+					throw std::underflow_error("read data failed");
+				}
+				written+= rd;
+				if (written > data_len) {
+					rd-= (size_t)(written - data_len);
+				}
+				if (!_arc_dst->WriteData(buf, (size_t)rd)) {
+					throw std::underflow_error("write data failed");
+				}
+				if (written > data_len) {
+					throw std::overflow_error("file unexpectedly enlarged");
+				}
+			}
+
+			_illformed_parts.pop_back();
+		}
+
+		_well_added_pathes.emplace_back(path);
 	}
 
-	return true;
-}
+	void AddPathHandlingErrors(const char *path)
+	{
+		try {
+			printf("Adding: %s\n", path);
+			AddPath(path);
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "Exception '%s' errno %u for: %s\n",
+				e.what(), errno, path);
+			_good = false;
+		}
+	}
+
+	static int sFTWCallback(const char *path, const struct stat *sb, int typeflag)
+	{
+		s_ftw_caller->AddPathHandlingErrors(path);
+		return 0;
+	}
+
+	void AddPathWithRecursion(const char *path)
+	{
+		struct stat s = {};
+		if (lstat(path, &s) == 0 && S_ISDIR(s.st_mode)) {
+			// thunk to static function cuz ftw
+			std::lock_guard<std::mutex> locker(s_ftw_mtx);
+			s_ftw_caller = this;
+			ftw(path, sFTWCallback, 10);
+			s_ftw_caller = nullptr;
+
+		} else {
+			AddPathHandlingErrors(path);
+		}
+	}
+
+
+protected:
+	const char *_cmd;
+	std::vector< std::vector<std::string> > _added_parts, _illformed_parts;
+	bool _good;
+
+public:
+	LIBARCH_Add(const char *cmd, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
+		:
+		_arc_opts(arc_opts),
+		_cmd(cmd),
+		_good(true)
+	{
+		_add_pathes.reserve(files_cnt);
+		for (int i = 0; i < files_cnt; ++i) if (files[i]) {
+			_add_pathes.emplace_back(files[i]);
+		}
+	}
+
+	bool IsGood() const
+	{
+		return _good;
+	}
+
+	void AddInto(LibArchOpenWrite &arc_dst)
+	{
+		_arc_dst = &arc_dst;
+		for (auto add_path : _add_pathes) try {
+			// remove ending /* that means all files in dir, that is dir itself
+			while (add_path.size() >= 2 && add_path.rfind("/*") == add_path.size() - 2) {
+				add_path.resize(add_path.size() - 2);
+			}
+
+			// remove ending directoty path with slash, otherwise macos ftw report pathes with double slashes that
+			// consequently causes resulted zip archive entries not enumed correctly
+			while (add_path.size() > 1 && add_path.back() == '/') {
+				add_path.resize(add_path.size() - 1);
+			}
+
+			AddPathWithRecursion(add_path.c_str());
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "Exception: '%s' adding '%s'", e.what(), add_path.c_str());
+		}
+
+		_arc_dst = nullptr;
+		std::sort(_illformed_parts.begin(), _illformed_parts.end());
+		std::sort(_added_parts.begin(), _added_parts.end());
+	}
+
+	void DoRemoval()
+	{
+		if (*_cmd == 'm' || *_cmd == 'M') {
+			std::sort(_well_added_pathes.begin(), _well_added_pathes.end());
+			for (auto it = _well_added_pathes.rbegin(); it != _well_added_pathes.rend(); ++it) {
+				if (remove(it->c_str()) == 0) {
+					printf("Removed: %s\n", it->c_str());
+				} else {
+					fprintf(stderr, "Error %u removing: %s\n", errno, it->c_str());
+				}
+			}
+		}
+	}
+};
+
+std::mutex LIBARCH_Add::s_ftw_mtx;
+LIBARCH_Add *LIBARCH_Add::s_ftw_caller = nullptr;
+////
+
+class LIBARCH_ReplacingAdd : public LIBARCH_Modify, public LIBARCH_Add
+{
+	virtual void OnStart(LibArchOpenWrite &arc_dst)
+	{
+		AddInto(arc_dst);
+	}
+
+	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	{
+		if (std::binary_search(_added_parts.begin(), _added_parts.end(), parts)) {
+			if (std::binary_search(_illformed_parts.begin(), _illformed_parts.end(), parts)) {
+				throw std::runtime_error("tried to replace existing file by illformed one");
+			}
+			printf("Replaced: %s\n", LibArch_PathFromParts(parts).c_str());
+			return false;
+		}
+
+		return LIBARCH_Modify::OnCopyEntry(parts);
+	}
+
+public:
+	LIBARCH_ReplacingAdd(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
+		:
+		LIBARCH_Modify(arc_path, arc_opts),
+		LIBARCH_Add(cmd, arc_opts, files_cnt, files)
+	{
+	}
+};
 
 bool LIBARCH_CommandDelete(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 {
-	return LIBARCH_CommandRemoveOrReplace(cmd, arc_path, arc_opts, files_cnt, files);
+	try {
+		LIBARCH_Delete d(arc_path, arc_opts, files_cnt, files);
+		d.Do();
+		return true;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "Exception: %s\n", e.what());
+	}
+
+	return false;
 }
 
 bool LIBARCH_CommandAdd(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 {
-	struct stat s{};
-	if (lstat(arc_path, &s) == 0) {
-		return LIBARCH_CommandRemoveOrReplace(cmd, arc_path, arc_opts, files_cnt, files);
-	}
-
-	LibArchOpenWrite arc(arc_path, cmd, "");//arc_opts.charset.c_str());
-	bool out = true;
-	for (int i = 0; i < files_cnt; ++i) {
-		if (!LIBARCH_CommandInsertFile(cmd, arc, arc_opts, files[i])) {
-			out = false;
+	try {
+		struct stat s{};
+		if (lstat(arc_path, &s) == 0) {
+			LIBARCH_ReplacingAdd ra(cmd, arc_path, arc_opts, files_cnt, files);
+			ra.Do();
+			ra.DoRemoval();
+			return ra.IsGood();
 		}
+
+		LIBARCH_Add a(cmd, arc_opts, files_cnt, files);
+		LibArchOpenWrite arc(arc_path, cmd, "");//arc_opts.charset.c_str());
+		a.AddInto(arc);
+		a.DoRemoval();
+		return a.IsGood();
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "Exception: %s\n", e.what());
 	}
 
-	return out;
+	return false;
 }

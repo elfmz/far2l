@@ -17,6 +17,17 @@ template <typename ... ARGS>
 	}
 };
 
+class LibArchTempEntry
+{
+	struct archive_entry *_entry;
+public:
+	LibArchTempEntry();
+	~LibArchTempEntry();
+	struct archive_entry *Get() { return _entry; }
+	operator struct archive_entry *() { return _entry; }
+	//struct archive_entry *entry = archive_entry_new();
+};
+
 void LibArch_SetPassprhase(const char *passprhase);
 
 const char *LibArch_EntryPathname(struct archive_entry *e);
@@ -24,6 +35,7 @@ const char *LibArch_EntryPathname(struct archive_entry *e);
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
 void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
 bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::string> &root);
+std::string LibArch_PathFromParts(const std::vector<std::string> &parts);
 
 struct LibArchOpenRead
 {

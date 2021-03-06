@@ -44,6 +44,23 @@ const char *LibArch_EntryPathname(struct archive_entry *e)
 	return archive_entry_pathname(e);
 }
 
+///
+
+LibArchTempEntry::LibArchTempEntry()
+	:_entry(archive_entry_new())
+{
+	if (!_entry) {
+		throw std::runtime_error("failed to create new archive entry");
+	}
+}
+
+LibArchTempEntry::~LibArchTempEntry()
+{
+	archive_entry_free(_entry);
+}
+
+///
+
 bool LibArch_DetectedFormatHasCompression(struct archive *a)
 {
 	unsigned int fmt = archive_format(a);
@@ -97,6 +114,18 @@ bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::str
 	}
 
 	return true;
+}
+
+std::string LibArch_PathFromParts(const std::vector<std::string> &parts)
+{
+	std::string out;
+	for (const auto &p : parts) {
+		if (!out.empty()) {
+			out+= '/';
+		}
+		out+= p;
+	}
+	return out;
 }
 
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *charset)

@@ -1,0 +1,47 @@
+STARTUP: 81616
+Unable to create basic Accelerated OpenGL renderer.
+Unable to create basic Accelerated OpenGL renderer.
+Core Image is now using the software OpenGL renderer. This will be slow.
+OnKeyDown: 3a 0 133 0 19075174 [now=19075179]
+02:19:13: Debug: Unrecognised keycode 364
+02:19:13: Debug: Unrecognised keycode 365
+KEYDOWN QUEUE _pressed_keys.simulate_alt()=1
+ConsoleInput::Enqueue: # 0 12 2 DOWN
+OnKeyDown: 23 50 50 0 19076013 [now=19076034]
+02:19:14: Debug: Unrecognised keycode 364
+02:19:14: Debug: Unrecognised keycode 365
+KEYDOWN QUEUE _pressed_keys.simulate_alt()=1
+ConsoleInput::Enqueue: P 50 50 2 DOWN
+OnChar: 'π' 3c0 3c0 0 19076013 _lk_ts=19076013 _lk_enqueued=1
+OnKeyUp: 23 50 50 0 19076230
+02:19:14: Debug: Unrecognised keycode 364
+02:19:14: Debug: Unrecognised keycode 365
+ConsoleInput::Enqueue: P 50 50 2 UP
+OnKeyUp: 22 49 49 0 19077614
+OnKeyDown: 22 49 49 0 19077614 [now=19077618]
+02:19:15: Debug: Unrecognised keycode 364
+02:19:15: Debug: Unrecognised keycode 365
+KEYDOWN QUEUE _pressed_keys.simulate_alt()=1
+ConsoleInput::Enqueue: I 49 49 2 DOWN
+02:19:15: Debug: Unrecognised keycode 364
+02:19:15: Debug: Unrecognised keycode 365
+ConsoleInput::Enqueue: I 49 49 2 UP
+OnKeyUp: 3a 0 133 0 19078619
+02:19:16: Debug: Unrecognised keycode 364
+02:19:16: Debug: Unrecognised keycode 365
+ConsoleInput::Enqueue: # 0 12 0 UP
+OnChar: 'ˆ' 2c6 0 0 0 _lk_ts=19077614 _lk_enqueued=1
+ConsoleInput::Enqueue: ˆ 2c6 be 0 DOWN
+ConsoleInput::Enqueue: ˆ 2c6 be 0 UP
+OnChar: 'c' 63 63 0 0 _lk_ts=19077614 _lk_enqueued=1
+ConsoleInput::Enqueue: c 63 be 0 DOWN
+ConsoleInput::Enqueue: c 63 be 0 UP
+OnKeyUp: 8 43 43 0 19080501
+OnKeyDown: 8 43 43 0 19080501 [now=19080505]
+02:19:18: Debug: Unrecognised keycode 364
+02:19:18: Debug: Unrecognised keycode 365
+KEYDOWN SKIP _pressed_keys.simulate_alt()=0
+02:19:18: Debug: Unrecognised keycode 364
+02:19:18: Debug: Unrecognised keycode 365
+ConsoleInput::Enqueue: C 43 43 0 UP
+

@@ -1033,21 +1033,19 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
+	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu", event.GetRawKeyCode(), 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
 	_exclusive_hotkeys.OnKeyUp(event);
 
-	if (event.GetSkipped())
+	if (event.GetSkipped()) {
+		fprintf(stderr, " SKIPPED\n");
 		return;
+	}
 
 	const bool was_pressed = _key_tracker.OnKeyUp(event);
+	fprintf(stderr, was_pressed ? "\n" : " UNPAIRED\n");
 
-#ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns, except RETURN to avoi
-	if (!was_pressed) {
-		OnKeyDown(event);
-		_keys_state.OnKeyUp(event);;
-	}
-#else
+#ifndef __WXOSX__ //on OSX some keyups come without corresponding keydowns
 	if (was_pressed)
 #endif
 	{
@@ -1065,6 +1063,13 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 #endif
 
+#ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
+		if (!was_pressed) {
+			ir.Event.KeyEvent.bKeyDown = FALSE;
+			g_winport_con_in.Enqueue(&ir, 1);
+			ir.Event.KeyEvent.bKeyDown = TRUE;
+		}
+#endif
 		g_winport_con_in.Enqueue(&ir, 1);
 	}
 	if (_key_tracker.CheckForSuddenModifiersUp()) {

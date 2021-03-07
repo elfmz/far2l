@@ -962,8 +962,11 @@ static bool IsForcedCharTranslation(int code)
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
 	DWORD now = WINPORT(GetTickCount)();
-	fprintf(stderr, "OnKeyDown: %x %x %x %u %ld [now=%u]", event.GetRawKeyCode(),
-		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(), now);
+	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
+		event.GetRawKeyCode(), event.GetKeyCode(),
+		event.GetUnicodeKey(), event.GetUnicodeKey(),
+		event.GetTimestamp(), now);
+
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
 	bool keystroke_doubled = !g_wayland
@@ -1033,8 +1036,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu", event.GetRawKeyCode(), 
-		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp());
+	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
+		event.GetRawKeyCode(), event.GetKeyCode(),
+		event.GetUnicodeKey(), event.GetUnicodeKey(),
+		event.GetTimestamp());
+
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (event.GetSkipped()) {
@@ -1080,14 +1086,16 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x %d %lu _lk_enqueued=%u", 
-		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(),
-		_last_keydown_enqueued);
+	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
+		event.GetRawKeyCode(), event.GetKeyCode(),
+		event.GetUnicodeKey(), event.GetUnicodeKey(),
+		event.GetTimestamp(), _last_keydown_enqueued);
+	_exclusive_hotkeys.OnKeyUp(event);
+
 	if (event.GetSkipped()) {
 		fprintf(stderr, " SKIPPED\n");
 		return;
 	}
-
 	fprintf(stderr, "\n");
 
 	if (event.GetUnicodeKey() != WXK_NONE && 

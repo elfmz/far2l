@@ -11,8 +11,9 @@
 class KeyTracker
 {
 	std::set<int> _pressed_keys;
+#ifndef __WXMAC__
 	bool _right_control = false;
-
+#endif
 	wxKeyEvent _last_keydown;
 	DWORD _last_keydown_ticks = 0;
 

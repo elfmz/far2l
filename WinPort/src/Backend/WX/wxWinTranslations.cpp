@@ -303,7 +303,34 @@ static int IsEnhancedKey(int code)
 		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP );
 }
 
-
+#ifndef __WXMAC__
+/*
+historically under macos WXK_CONTROL is Control and WXK_RAW_CONTROL is RightControl,
+but in case this will be revisited, here're relevant raw key codes for macos
+  kVK_Command                   = 0x37,
+  kVK_Shift                     = 0x38,
+  kVK_CapsLock                  = 0x39,
+  kVK_Option                    = 0x3A,
+  kVK_Control                   = 0x3B,
+  kVK_RightShift                = 0x3C,
+  kVK_RightOption               = 0x3D,
+  kVK_RightControl              = 0x3E,
+  kVK_Function                  = 0x3F,
+*/
+static bool IsRightControlEvent(const wxKeyEvent &event)
+{
+#if defined(wxHAS_RAW_KEY_CODES)
+/*
+#define GDK_KEY_Control_L 0xffe3
+#define GDK_KEY_Control_R 0xffe4
+*/
+	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+		return true;
+	}
+# endif
+	return false;
+}
+#endif
 
 void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 {
@@ -313,15 +340,8 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	const auto keycode = event.GetKeyCode();
 	_pressed_keys.insert(keycode);
 
-#ifdef __WXMAC__
-	if (keycode == WXK_RAW_CONTROL) {
-		_right_control = true;
-	}
-
-#elif defined(wxHAS_RAW_KEY_CODES)
-//#define GDK_KEY_Control_L 0xffe3
-//#define GDK_KEY_Control_R 0xffe4	
-	if (keycode == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+#ifndef __WXMAC__
+	if (IsRightControlEvent(event)) {
 		_right_control = true;
 	}
 #endif
@@ -329,21 +349,13 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 {
+#ifndef __WXMAC__
+	if (IsRightControlEvent(event)) {
+		_right_control = false;
+	}
+#endif
+
 	const auto keycode = event.GetKeyCode();
-
-#ifdef __WXMAC__
-	if (keycode == WXK_RAW_CONTROL) {
-		_right_control = false;
-	}
-
-#elif defined(wxHAS_RAW_KEY_CODES)
-//#define GDK_KEY_Control_L 0xffe3
-//#define GDK_KEY_Control_R 0xffe4	
-	if (keycode == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
-		_right_control = false;
-	}
-#endif	
-
 	return (_pressed_keys.erase(keycode) != 0);
 }
 
@@ -366,8 +378,13 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 	ir.Event.KeyEvent.wVirtualScanCode = 0;
 	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	ir.Event.KeyEvent.dwControlKeyState = 0;
+#ifndef __WXMAC__
 	if (keycode == WXK_CONTROL && _right_control) {
 		_right_control = false;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+	}
+#endif
+	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
@@ -397,14 +414,22 @@ void KeyTracker::ForceAllUp()
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
 		ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(kc);
+		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
+			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+		}
 		g_winport_con_in.Enqueue(&ir, 1);
+#ifndef __WXMAC__
 		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && _right_control) {
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 			g_winport_con_in.Enqueue(&ir, 1);
 		}
+#endif
 	}
 	_pressed_keys.clear();
+#ifndef __WXMAC__
 	_right_control = false;
+#endif
 }
 
 const wxKeyEvent& KeyTracker::LastKeydown() const
@@ -429,12 +454,22 @@ bool KeyTracker::Shift() const
 
 bool KeyTracker::LeftControl() const
 {
-	return !_right_control && _pressed_keys.find(WXK_CONTROL) != _pressed_keys.end();
+#ifndef __WXMAC__
+	if (_right_control) {
+		return false;
+	}
+#endif
+
+	return _pressed_keys.find(WXK_CONTROL) != _pressed_keys.end();
 }
 
 bool KeyTracker::RightControl() const
 {
+#ifdef __WXMAC__
+	return _pressed_keys.find(WXK_RAW_CONTROL) != _pressed_keys.end();
+#else
 	return _right_control;
+#endif
 }
 
 //////////////////////
@@ -448,15 +483,12 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.wVirtualScanCode = 0;
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
-	
-#ifdef __WXMAC__
-#elif defined(wxHAS_RAW_KEY_CODES )
-//#define GDK_KEY_Control_L 0xffe3
-//#define GDK_KEY_Control_R 0xffe4	
-	if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+
+#ifndef __WXMAC__
+	if (IsRightControlEvent(event)) {
 		Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
 	}
-#endif	
+#endif
 
 	if (IsEnhancedKey(event.GetKeyCode())) {
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;

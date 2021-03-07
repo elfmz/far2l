@@ -2,6 +2,7 @@
 #include "KeyFileHelper.h"
 #include "utils.h"
 #include "WinCompat.h"
+#include "ConsoleInput.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -10,6 +11,7 @@ extern bool g_broadway;
 extern bool g_wayland;
 extern bool g_remote;
 
+extern ConsoleInput g_winport_con_in;
 /*
     Foreground/Background color palettes are 16 (r,g,b) values.
     More words here from Miotio...
@@ -156,7 +158,7 @@ WinPortRGB ConsoleBackground2RGB(USHORT attributes)
 
 ////////////////////
 
-int wxKeyCode2WinKeyCode(int code)
+static int wxKeyCode2WinKeyCode(int code)
 {
 	switch (code) {
 	case WXK_BACK: return  VK_BACK;
@@ -301,7 +303,143 @@ static int IsEnhancedKey(int code)
 		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP );
 }
 
-wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
+
+
+void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
+{
+	_last_keydown = event;
+	_last_keydown_ticks = ticks;
+
+	const auto keycode = event.GetKeyCode();
+	_pressed_keys.insert(keycode);
+
+#ifdef __WXMAC__
+	if (keycode == WXK_RAW_CONTROL) {
+		_right_control = true;
+	}
+
+#elif defined(wxHAS_RAW_KEY_CODES)
+//#define GDK_KEY_Control_L 0xffe3
+//#define GDK_KEY_Control_R 0xffe4	
+	if (keycode == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+		_right_control = true;
+	}
+#endif
+}
+
+bool KeyTracker::OnKeyUp(wxKeyEvent& event)
+{
+	const auto keycode = event.GetKeyCode();
+
+#ifdef __WXMAC__
+	if (keycode == WXK_RAW_CONTROL) {
+		_right_control = false;
+	}
+
+#elif defined(wxHAS_RAW_KEY_CODES)
+//#define GDK_KEY_Control_L 0xffe3
+//#define GDK_KEY_Control_R 0xffe4	
+	if (keycode == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+		_right_control = false;
+	}
+#endif	
+
+	return (_pressed_keys.erase(keycode) != 0);
+}
+
+bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
+{
+	auto it = _pressed_keys.find(keycode);
+	if (it == _pressed_keys.end())
+		return false;
+
+	if (wxGetKeyState(keycode))
+		return false;
+
+	_pressed_keys.erase(it);
+
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
+	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
+	ir.Event.KeyEvent.dwControlKeyState = 0;
+	if (keycode == WXK_CONTROL && _right_control) {
+		_right_control = false;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
+		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	}
+	g_winport_con_in.Enqueue(&ir, 1);
+	return true;
+}
+
+bool KeyTracker::CheckForSuddenModifiersUp()
+{
+	bool out = false;
+	if (CheckForSuddenModifierUp(WXK_CONTROL)) {
+		out = true;
+	}
+	if (CheckForSuddenModifierUp(WXK_ALT)) {
+		out = true;
+	}
+	if (CheckForSuddenModifierUp(WXK_SHIFT)) {
+		out = true;
+	}
+	return out;
+}
+
+void KeyTracker::ForceAllUp()
+{
+	for (auto kc : _pressed_keys) {
+		INPUT_RECORD ir = {0};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wRepeatCount = 1;
+		ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(kc);
+		g_winport_con_in.Enqueue(&ir, 1);
+		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && _right_control) {
+			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+			g_winport_con_in.Enqueue(&ir, 1);
+		}
+	}
+	_pressed_keys.clear();
+	_right_control = false;
+}
+
+const wxKeyEvent& KeyTracker::LastKeydown() const
+{
+	return _last_keydown;
+}
+
+DWORD KeyTracker::LastKeydownTicks() const
+{
+	return _last_keydown_ticks;
+}
+
+bool KeyTracker::Alt() const
+{
+	return _pressed_keys.find(WXK_ALT) != _pressed_keys.end();
+}
+
+bool KeyTracker::Shift() const
+{
+	return _pressed_keys.find(WXK_SHIFT) != _pressed_keys.end();
+}
+
+bool KeyTracker::LeftControl() const
+{
+	return !_right_control && _pressed_keys.find(WXK_CONTROL) != _pressed_keys.end();
+}
+
+bool KeyTracker::RightControl() const
+{
+	return _right_control;
+}
+
+//////////////////////
+
+wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker)
 {
 	EventType = KEY_EVENT;
 	Event.KeyEvent.bKeyDown = KeyDown;
@@ -311,23 +449,24 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 	
-#ifdef wxHAS_RAW_KEY_CODES 
-#ifdef __APPLE__
-//todo
-#elif __FreeBSD__
-//todo
-#elif __linux__
+#ifdef __WXMAC__
+#elif defined(wxHAS_RAW_KEY_CODES )
 //#define GDK_KEY_Control_L 0xffe3
 //#define GDK_KEY_Control_R 0xffe4	
-		if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
-			Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
-		}
-#endif		
-		
+	if (Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
+		Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+	}
 #endif	
-	
-	if (IsEnhancedKey(event.GetKeyCode()))
+
+	if (IsEnhancedKey(event.GetKeyCode())) {
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	}
+
+	if (Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
+		//same on windows, otherwise far resets command line selection
+		Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
+		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
+	}
 	
 	// Getting LED modifiers not supported on broadway and wayland, also it requires
 	// 3 server roundtrips that is too time-expensive for remotely forwarded connections.
@@ -341,15 +480,34 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown)
 		if (wxGetKeyState(WXK_CAPITAL))
 			Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
 	}
-		
-	if (event.ShiftDown())
-		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
 
-	if (event.AltDown())// simulated outside cuz not reliable: || event.MetaDown()
+	if (g_broadway) {
+		// Rely on event flags only for broadway, cuz there
+		// ctrl/alt/shift keys events may be missing.
+		// For other backends relay on tracked control keys state.
+		// Its because AltGr+Key delivered as Ctrl+Alt+Key.
+		if (event.ShiftDown())
+			Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
+
+		if (event.AltDown())// simulated outside cuz not reliable:
+			Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+
+		if (event.ControlDown())
+			Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	}
+
+
+	if (key_tracker.Alt())
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 
-	if (event.ControlDown())
+	if (key_tracker.Shift())
+		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
+
+	if (key_tracker.LeftControl())
 		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-		
-		
+
+	if (key_tracker.RightControl())
+		Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
 }
+
+/////////////////

@@ -287,7 +287,6 @@ private:
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
-	void CheckForSuddenKeyUp( wxKeyCode keycode );
 	void OnPaint( wxPaintEvent& event );
 	void OnEraseBackground( wxEraseEvent& event );
 	void OnSize(wxSizeEvent &event);
@@ -301,17 +300,9 @@ private:
 	int GetDisplayIndex();
 
 	wxDECLARE_EVENT_TABLE();
-	struct PressedKeys : std::set<int> 
-	{
-		bool simulate_alt() const
-		{
-			return find(WXK_ALT)!=end();
-		}
-	} _pressed_keys;
+	KeyTracker _key_tracker;
 	
 	ConsolePaintContext _paint_context;
-	wxKeyEvent _last_keydown;
-	DWORD _last_keydown_ticks = 0;
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
@@ -321,7 +312,6 @@ private:
 
 	WinPortFrame *_frame;
 	wxTimer* _periodic_timer;
-	bool _right_control;
 	bool _last_keydown_enqueued;
 	bool _initialized;
 	bool _adhoc_quickedit;
@@ -560,7 +550,7 @@ bool WinPortApp::OnInit()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
         : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
-		_right_control(false), _last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
+		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
 		_refresh_rects_throttle(0), _pending_refreshes(0)
 {
@@ -976,16 +966,15 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(), now);
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
-	bool keystroke_doubled =
-		!g_wayland
+	bool keystroke_doubled = !g_wayland
 		&& event.GetTimestamp()
-		&& _last_keydown.GetKeyCode() == event.GetKeyCode()
-		&& _last_keydown.GetTimestamp() == event.GetTimestamp()
+		&& _key_tracker.LastKeydown().GetKeyCode() == event.GetKeyCode()
+		&& _key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()
 #ifdef __APPLE__
 		// in macos under certain stars superposition all events get same timestamps (#325)
 		// however vise-verse problem also can be observed, where some keystrokes get duplicated
 		// last time: catalina in hackintosh, Ctrl+O works buggy
-		&& now - _last_keydown_ticks < 50 // so enforce extra check actual real time interval
+		&& now - _key_tracker.LastKeydownTicks() < 50 // so enforce extra check actual real time interval
 #endif
 		;
 
@@ -996,14 +985,15 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 	fprintf(stderr, "\n");
 
-	_last_keydown_ticks = now;
-	_last_keydown = event;
+	_key_tracker.OnKeyDown(event, now);
+
 	_last_keydown_enqueued = false;
-	
-	if (event.GetKeyCode()==WXK_RETURN 
-		&& (event.AltDown() || _pressed_keys.simulate_alt()) 
-		&& !event.ShiftDown() && !event.ControlDown() ) {
-		_pressed_keys.insert(event.GetKeyCode());
+
+	wx2INPUT_RECORD ir(TRUE, event, _key_tracker);
+	const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
+		& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
+
+	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED) {
 		_resize_pending = RP_INSTANT;
 		//fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());
@@ -1013,14 +1003,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
-	wx2INPUT_RECORD ir(event, TRUE);
-	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL) {
-		_right_control = true;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
-	}
-
 #if wxCHECK_VERSION(3, 1, 3)
-	const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+	const bool alt_nonlatin_workaround = (
+		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
 		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
@@ -1029,18 +1014,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
-	if ( (event.HasModifiers() && event.GetUnicodeKey() < 32) || _right_control || 
-		_pressed_keys.simulate_alt() || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN ||
-		(event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
-
-		_pressed_keys.insert(event.GetKeyCode());
-		if (_pressed_keys.simulate_alt())
-			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-		
-		if (_right_control) {
-			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
-			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
-		}
+	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
+	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
+	  || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
+	  || (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
 		g_winport_con_in.Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
@@ -1054,35 +1031,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	event.Skip();
 }
 
-void WinPortPanel::CheckForSuddenKeyUp( wxKeyCode keycode)
-{ // workaround for layout switch hotkey conflict with enabled exclusive mode, see #281
-	auto it = _pressed_keys.find(keycode);
-	if (it == _pressed_keys.end())
-		return;
-
-	if (wxGetKeyState(keycode))
-		return;
-
-	_pressed_keys.erase(it);
-
-	INPUT_RECORD ir = {};
-	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.bKeyDown = FALSE;
-	ir.Event.KeyEvent.wRepeatCount = 1;
-	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
-	ir.Event.KeyEvent.wVirtualScanCode = 0;
-	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
-	ir.Event.KeyEvent.dwControlKeyState = 0;
-	if (keycode == WXK_CONTROL && _right_control) {
-		_right_control = false;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
-		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-	}
-	g_winport_con_in.Enqueue(&ir, 1);
-	_exclusive_hotkeys.Reset();
-}
-
-
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	fprintf(stderr, "OnKeyUp: %x %x %x %d %lu\n", event.GetRawKeyCode(), 
@@ -1092,19 +1040,23 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	if (event.GetSkipped())
 		return;
 
+	const bool was_pressed = _key_tracker.OnKeyUp(event);
+
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns, except RETURN to avoi
-	if (!_pressed_keys.erase(event.GetKeyCode())) {
+	if (!was_pressed) {
 		OnKeyDown(event);
-		_pressed_keys.erase(event.GetKeyCode());
+		_keys_state.OnKeyUp(event);;
 	}
 #else
-	if (_pressed_keys.erase(event.GetKeyCode()))
+	if (was_pressed)
 #endif
 	{
-		wx2INPUT_RECORD ir(event, FALSE);
-
+		wx2INPUT_RECORD ir(FALSE, event, _key_tracker);
 #if wxCHECK_VERSION(3, 1, 3)
-		const bool alt_nonlatin_workaround = (event.AltDown() && !event.ControlDown()
+		const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
+			& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
+		const bool alt_nonlatin_workaround = (
+			(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
 			&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
@@ -1113,52 +1065,40 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 #endif
 
-		if (_pressed_keys.simulate_alt())
-			ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;	
-			
-		if (_right_control && (
-				ir.Event.KeyEvent.wVirtualKeyCode == VK_RCONTROL 
-				|| ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL) ) {
-			_right_control = false;
-			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;//same on windows, otherwise far resets command line selection
-		}
-
 		g_winport_con_in.Enqueue(&ir, 1);
 	}
-	CheckForSuddenKeyUp(WXK_CONTROL);
-	CheckForSuddenKeyUp(WXK_ALT);
-	CheckForSuddenKeyUp(WXK_SHIFT);
+	if (_key_tracker.CheckForSuddenModifiersUp()) {
+		_exclusive_hotkeys.Reset();
+	}
 	//event.Skip();
 }
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
-	fprintf(stderr, "OnChar: %x %x %d %lu _lk_ts=%lu _lk_enqueued=%u\n", 
+	fprintf(stderr, "OnChar: %x %x %d %lu _lk_enqueued=%u", 
 		event.GetUnicodeKey(), event.GetKeyCode(), event.GetSkipped(), event.GetTimestamp(),
-		_last_keydown.GetTimestamp(), _last_keydown_enqueued);
-	if (event.GetSkipped())
+		_last_keydown_enqueued);
+	if (event.GetSkipped()) {
+		fprintf(stderr, " SKIPPED\n");
 		return;
+	}
 
-	if (event.GetUnicodeKey()!=WXK_NONE && 
-		(!_last_keydown_enqueued || _last_keydown.GetTimestamp()!=event.GetTimestamp())) {
+	fprintf(stderr, "\n");
+
+	if (event.GetUnicodeKey() != WXK_NONE && 
+		(!_last_keydown_enqueued || _key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp())) {
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 		if (event.GetUnicodeKey() <= 0x7f) { 
-			if (_last_keydown.GetTimestamp()==event.GetTimestamp()) {
-				wx2INPUT_RECORD irx(_last_keydown, TRUE);
+			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
+				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 				ir.Event.KeyEvent.wVirtualKeyCode = irx.Event.KeyEvent.wVirtualKeyCode;
 				ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
 			}
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
-
-		if (_right_control) {
-			ir.Event.KeyEvent.dwControlKeyState&= ~LEFT_CTRL_PRESSED;
-			ir.Event.KeyEvent.dwControlKeyState|= (RIGHT_CTRL_PRESSED | ENHANCED_KEY);
-		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		g_winport_con_in.Enqueue(&ir, 1);
@@ -1546,16 +1486,7 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
 	_has_focus = false;
-
-	for (auto k : _pressed_keys) {
-		INPUT_RECORD ir = {0};
-		ir.EventType = KEY_EVENT;
-		ir.Event.KeyEvent.wRepeatCount = 1;
-		ir.Event.KeyEvent.wVirtualKeyCode = k;
-		g_winport_con_in.Enqueue(&ir, 1);
-	}
-	_pressed_keys.clear();
-	_right_control = false;
+	_key_tracker.ForceAllUp();
 	
 	if (_mouse_qedit_start_ticks) {
 		_mouse_qedit_start_ticks = 0;

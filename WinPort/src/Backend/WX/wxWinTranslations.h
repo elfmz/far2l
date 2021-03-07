@@ -2,14 +2,43 @@
 
 #include "WinCompat.h"
 
+#include <set>
+
 #include <wx/wx.h>
 #include <wx/display.h>
 
-int wxKeyCode2WinKeyCode(int code);
+
+class KeyTracker
+{
+	std::set<int> _pressed_keys;
+	bool _right_control = false;
+
+	wxKeyEvent _last_keydown;
+	DWORD _last_keydown_ticks = 0;
+
+	bool CheckForSuddenModifierUp(wxKeyCode keycode);
+
+public:
+	void OnKeyDown(wxKeyEvent& event, DWORD ticks);
+	bool OnKeyUp(wxKeyEvent& event);
+
+	bool CheckForSuddenModifiersUp();
+	void ForceAllUp();
+
+	bool Alt() const;
+	bool Shift() const;
+	bool LeftControl() const;
+	bool RightControl() const;
+
+	const wxKeyEvent& LastKeydown() const;
+	DWORD LastKeydownTicks() const;
+};
+
+///////////////
 
 struct wx2INPUT_RECORD : INPUT_RECORD
 {
-	wx2INPUT_RECORD(wxKeyEvent& event, BOOL KeyDown);
+	wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker);
 };
 
 struct WinPortRGB

@@ -11,6 +11,7 @@
 class KeyTracker
 {
 	std::set<int> _pressed_keys;
+	bool _composing = false;
 #ifndef __WXMAC__
 	bool _right_control = false;
 #endif
@@ -30,6 +31,8 @@ public:
 	bool Shift() const;
 	bool LeftControl() const;
 	bool RightControl() const;
+
+	bool Composing() const { return _composing; }
 
 	const wxKeyEvent& LastKeydown() const;
 	DWORD LastKeydownTicks() const;

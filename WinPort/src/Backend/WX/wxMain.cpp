@@ -968,6 +968,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetTimestamp(), now);
 
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
+	if (_key_tracker.Composing()) {
+		fprintf(stderr, " COMPOSING\n");
+		event.Skip();
+		return;
+	}
 
 	bool keystroke_doubled = !g_wayland
 		&& event.GetTimestamp()
@@ -1048,7 +1053,14 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		return;
 	}
 
+	bool composing = _key_tracker.Composing();
 	const bool was_pressed = _key_tracker.OnKeyUp(event);
+	if (composing) {
+		fprintf(stderr, " COMPOSING\n");
+		event.Skip();
+		return;
+	}
+
 	fprintf(stderr, was_pressed ? "\n" : " UNPAIRED\n");
 
 #ifndef __WXOSX__ //on OSX some keyups come without corresponding keydowns

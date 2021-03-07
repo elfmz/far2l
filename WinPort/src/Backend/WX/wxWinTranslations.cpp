@@ -339,8 +339,13 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 	const auto keycode = event.GetKeyCode();
 	_pressed_keys.insert(keycode);
-
-#ifndef __WXMAC__
+#ifdef __WXMAC__
+# if defined(wxHAS_RAW_KEY_CODES)
+	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == 0x3D) { // right option
+		_composing = true;
+	}
+# endif
+#else
 	if (IsRightControlEvent(event)) {
 		_right_control = true;
 	}
@@ -349,7 +354,13 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 {
-#ifndef __WXMAC__
+#ifdef __WXMAC__
+# if defined(wxHAS_RAW_KEY_CODES)
+	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == 0x3D) {
+		_composing = false;
+	}
+# endif
+#else
 	if (IsRightControlEvent(event)) {
 		_right_control = false;
 	}
@@ -430,6 +441,7 @@ void KeyTracker::ForceAllUp()
 #ifndef __WXMAC__
 	_right_control = false;
 #endif
+	_composing = false;
 }
 
 const wxKeyEvent& KeyTracker::LastKeydown() const

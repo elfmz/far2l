@@ -962,10 +962,10 @@ static bool IsForcedCharTranslation(int code)
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
 	DWORD now = WINPORT(GetTickCount)();
+	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		event.GetUnicodeKey(), event.GetUnicodeKey(),
-		event.GetTimestamp(), now);
+		uni, uni ? uni : L' ', event.GetTimestamp(), now);
 
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 	if (_key_tracker.Composing()) {
@@ -1041,10 +1041,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
+	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		event.GetUnicodeKey(), event.GetUnicodeKey(),
-		event.GetTimestamp());
+		uni, uni ? uni : L' ', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
 
@@ -1098,10 +1098,10 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
+	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		event.GetUnicodeKey(), event.GetUnicodeKey(),
-		event.GetTimestamp(), _last_keydown_enqueued);
+		uni, uni ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (event.GetSkipped()) {

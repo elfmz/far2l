@@ -965,14 +965,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, uni ? uni : L' ', event.GetTimestamp(), now);
+		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), now);
 
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
-	if (_key_tracker.Composing()) {
-		fprintf(stderr, " COMPOSING\n");
-		event.Skip();
-		return;
-	}
 
 	bool keystroke_doubled = !g_wayland
 		&& event.GetTimestamp()
@@ -991,9 +986,15 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.Skip();
 		return;
 	}
-	fprintf(stderr, "\n");
 
 	_key_tracker.OnKeyDown(event, now);
+	if (_key_tracker.Composing()) {
+		fprintf(stderr, " COMPOSING\n");
+		event.Skip();
+		return;
+	}
+
+	fprintf(stderr, "\n");
 
 	_last_keydown_enqueued = false;
 
@@ -1044,7 +1045,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, uni ? uni : L' ', event.GetTimestamp());
+		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
 
@@ -1101,7 +1102,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, uni ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);
+		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (event.GetSkipped()) {

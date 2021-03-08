@@ -7,6 +7,31 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
+#if defined(wxHAS_RAW_KEY_CODES)
+# ifdef __WXMAC__
+/*
+  kVK_Command                   = 0x37,
+  kVK_Shift                     = 0x38,
+  kVK_CapsLock                  = 0x39,
+  kVK_Option                    = 0x3A,
+  kVK_Control                   = 0x3B,
+  kVK_RightShift                = 0x3C,
+  kVK_RightOption               = 0x3D,
+  kVK_RightControl              = 0x3E,
+  kVK_Function                  = 0x3F,
+*/
+#  define RAW_ALTGR    0x3D
+// RAW_RCTRL is unneeded for macos cuz under macos VK_CONTROL
+// represented by Command keys while VK_RCONTROL - by Control keys
+# else
+//#define GDK_KEY_Control_L 0xffe3
+//#define GDK_KEY_Control_R 0xffe4
+#  define RAW_ALTGR    0xffea
+#  define RAW_RCTRL    0xffe4
+# endif
+#endif
+
+
 extern bool g_broadway;
 extern bool g_wayland;
 extern bool g_remote;
@@ -303,35 +328,6 @@ static int IsEnhancedKey(int code)
 		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP );
 }
 
-#ifndef __WXMAC__
-/*
-historically under macos WXK_CONTROL is Control and WXK_RAW_CONTROL is RightControl,
-but in case this will be revisited, here're relevant raw key codes for macos
-  kVK_Command                   = 0x37,
-  kVK_Shift                     = 0x38,
-  kVK_CapsLock                  = 0x39,
-  kVK_Option                    = 0x3A,
-  kVK_Control                   = 0x3B,
-  kVK_RightShift                = 0x3C,
-  kVK_RightOption               = 0x3D,
-  kVK_RightControl              = 0x3E,
-  kVK_Function                  = 0x3F,
-*/
-static bool IsRightControlEvent(const wxKeyEvent &event)
-{
-#if defined(wxHAS_RAW_KEY_CODES)
-/*
-#define GDK_KEY_Control_L 0xffe3
-#define GDK_KEY_Control_R 0xffe4
-*/
-	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == 0xffe4) {
-		return true;
-	}
-# endif
-	return false;
-}
-#endif
-
 void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 {
 	_last_keydown = event;
@@ -339,14 +335,15 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 	const auto keycode = event.GetKeyCode();
 	_pressed_keys.insert(keycode);
-#ifdef __WXMAC__
-# if defined(wxHAS_RAW_KEY_CODES)
-	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == 0x3D) { // right option
+
+#if defined(wxHAS_RAW_KEY_CODES) && defined(__WXMAC__)
+	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == RAW_ALTGR) {
 		_composing = true;
 	}
-# endif
-#else
-	if (IsRightControlEvent(event)) {
+#endif
+
+#if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
+	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		_right_control = true;
 	}
 #endif
@@ -354,14 +351,14 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 {
-#ifdef __WXMAC__
-# if defined(wxHAS_RAW_KEY_CODES)
-	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == 0x3D) {
+#if defined(wxHAS_RAW_KEY_CODES) && defined(__WXMAC__)
+	if (event.GetKeyCode() == WXK_ALT) {
 		_composing = false;
 	}
-# endif
-#else
-	if (IsRightControlEvent(event)) {
+#endif
+
+#if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
+	if (event.GetKeyCode() == WXK_CONTROL) {
 		_right_control = false;
 	}
 #endif
@@ -496,8 +493,8 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 
-#ifndef __WXMAC__
-	if (IsRightControlEvent(event)) {
+#if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
+	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
 	}
 #endif
@@ -525,33 +522,28 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 			Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
 	}
 
-	if (g_broadway) {
-		// Rely on event flags only for broadway, cuz there
-		// ctrl/alt/shift keys events may be missing.
-		// For other backends relay on tracked control keys state.
-		// Its because AltGr+Key delivered as Ctrl+Alt+Key.
-		if (event.ShiftDown())
-			Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
-
-		if (event.AltDown())// simulated outside cuz not reliable:
-			Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-
-		if (event.ControlDown())
-			Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	// Keep in mind that key composing combinations with AltGr+.. arrive as keydown of Ctrl+Alt+..
+	// so if event.ControlDown() and event.AltDown() are together then don't believe them and
+	// use only state maintaned key_tracker. Unless under broadway, that may miss separate control
+	// keys events.
+	if (key_tracker.Alt() || (event.AltDown() && (!event.ControlDown() || g_broadway))) {
+		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 	}
 
-
-	if (key_tracker.Alt())
-		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-
-	if (key_tracker.Shift())
+	if (key_tracker.Shift() || event.ShiftDown()) {
 		Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
+	}
 
-	if (key_tracker.LeftControl())
+	if (key_tracker.LeftControl()) {
 		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	}
 
-	if (key_tracker.RightControl())
+	if (key_tracker.RightControl()) {
 		Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+
+	} else if (event.ControlDown() && (!event.AltDown() || g_broadway)) {
+		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	}
 }
 
 /////////////////

@@ -26,7 +26,7 @@ FreeBSD (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg
 
 * gawk
 * m4
-* libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)
+* libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)  (needed for GUI backend, not needed with -DUSEWX=no)
 * libxerces-c-dev
 * libspdlog-dev
 * libuchardet-dev
@@ -43,10 +43,10 @@ FreeBSD (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-dev libpcre2-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 
 ```
-(if in Ubuntu 19.04+ or other that has missing libwxgtk3.0-dev - try libwxgtk3.0-gtk3-dev)
+In recent distributives: use libpcre3-dev and libwxgtk3.0-gtk3-dev instead of libpcre2-dev and libwxgtk3.0-dev
 
 #### Clone and Build
 
@@ -120,7 +120,8 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -
 ninja -j$(sysctl -n hw.logicalcpu)
 ```
 
-To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no
+To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no also in this case dont need to install libwxgtk\*-dev package
+
 To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes

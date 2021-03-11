@@ -188,30 +188,40 @@ void HostRemote::ReInitialize() throw (std::runtime_error)
 
 	std::string broker_path = StrWide2MB(G.plugin_path);
 	CutToSlash(broker_path, true);
-	broker_path+= pi->broker;
-	broker_path+= ".broker";
+	std::string broker_pathname = broker_path;
+	broker_pathname+= pi->broker;
+	broker_pathname+= ".broker";
 	char arg1[32], arg2[32];
 	itoa(master2broker[0], arg1, 10);
 	itoa(broker2master[1], arg2, 10);
 
-	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n", broker_path.c_str(), arg1, arg2);
+	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n", broker_pathname.c_str(), arg1, arg2);
 	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
 	pid_t pid = fork();
 	if (pid == 0) {
+		// avoid holding arbitrary dir for broker's whole runtime
+		if (chdir(broker_path.c_str()) == -1) {
+			fprintf(stderr, "chdir '%s' error %u\n", broker_path.c_str(), errno);
+			if (chdir("/tmp") == -1) {
+				fprintf(stderr, "chdir '/tmp' error %u\n", errno);
+			}
+		}
 		if (use_tsocks) {
 			setenv("LD_PRELOAD", "libtsocks.so", 1);
 			setenv("TSOCKS_CONFFILE", G.tsocks_config.c_str(), 1);
 		}
 		if (fork() == 0) {
-			execl(broker_path.c_str(), broker_path.c_str(), arg1, arg2, NULL);
+			execl(broker_pathname.c_str(), broker_pathname.c_str(), arg1, arg2, NULL);
 			_exit(-1);
 			exit(-2);
 		}
 		_exit(0);
 		exit(0);
 
-	} else if (pid > 0) {
+	} else if (pid != -1) {
 		waitpid(pid, 0, 0);
+	} else {
+		perror("fork");
 	}
 //	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
 

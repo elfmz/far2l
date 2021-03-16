@@ -996,6 +996,13 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	fprintf(stderr, "\n");
 
+	if ( (_key_tracker.Shift() && !event.ShiftDown()) || (_key_tracker.Alt() && !event.AltDown())
+		|| (_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown()) {
+		if (_key_tracker.CheckForSuddenModifiersUp()) {
+			_exclusive_hotkeys.Reset();
+		}
+	}
+
 	_last_keydown_enqueued = false;
 
 	wx2INPUT_RECORD ir(TRUE, event, _key_tracker);

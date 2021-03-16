@@ -404,12 +404,15 @@ bool KeyTracker::CheckForSuddenModifiersUp()
 {
 	bool out = false;
 	if (CheckForSuddenModifierUp(WXK_CONTROL)) {
+		fprintf(stderr, "%s: CONTROL\n", __FUNCTION__);
 		out = true;
 	}
 	if (CheckForSuddenModifierUp(WXK_ALT)) {
+		fprintf(stderr, "%s: ALT\n", __FUNCTION__);
 		out = true;
 	}
 	if (CheckForSuddenModifierUp(WXK_SHIFT)) {
+		fprintf(stderr, "%s: SHIFT\n", __FUNCTION__);
 		out = true;
 	}
 	return out;

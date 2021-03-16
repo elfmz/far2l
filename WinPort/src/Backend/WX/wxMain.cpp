@@ -996,8 +996,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	fprintf(stderr, "\n");
 
-	if ( (_key_tracker.Shift() && !event.ShiftDown()) || (_key_tracker.Alt() && !event.AltDown())
-		|| (_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown()) {
+	// dont check for alt key sudden keyup cuz it breaks Win key Alt behaviour
+	// also it didnt cause problems yet
+	if ( (_key_tracker.Shift() && !event.ShiftDown())
+		|| ((_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown())) {
 		if (_key_tracker.CheckForSuddenModifiersUp()) {
 			_exclusive_hotkeys.Reset();
 		}

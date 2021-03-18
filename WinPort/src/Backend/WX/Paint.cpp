@@ -472,11 +472,13 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 				_line_combinings_inspected[cy] = true;
 				ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
 				const CHAR_INFO *line = dla.Line();
-				for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
-					if (UNI_IS_COMBINING(line[cx].Char.UnicodeChar)) {
-						rc.SetLeft(0);
-						rc.SetRight(dla.Width() * _font_width);
-						break;
+				if (line) {
+					for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
+						if (UNI_IS_COMBINING(line[cx].Char.UnicodeChar)) {
+							rc.SetLeft(0);
+							rc.SetRight(dla.Width() * _font_width);
+							break;
+						}
 					}
 				}
 			}

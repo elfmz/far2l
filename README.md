@@ -76,15 +76,17 @@ ninja -j$(nproc --all)
 
  * If you don't have Homebrew stop by <https://brew.sh/> for installation instructions.
 
-##### One line OSX/MacOS install
+##### One line OSX/MacOS install latest far2l git master via unofficial brew tap
 
- * Install latest far2l git master via unofficial brew tap:
+ * With GUI/TTY backends:
+```sh
+brew install --HEAD yurikoles/yurikoles/far2l --with-wxmac
+```
+ * With TTY backend only:
 ```sh
 brew install --HEAD yurikoles/yurikoles/far2l
 ```
- * Available options:
-   * `--with-python@3.9`: build with python support
-   * `--with-wxmac`:  build with wxmac support
+ * Additionally you can enable python support by adding `--with-python@3.9`
 
 ##### Hard way OSX/MacOS install - with building from sources:
 

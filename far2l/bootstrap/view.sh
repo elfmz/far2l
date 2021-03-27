@@ -182,6 +182,16 @@ if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
 	exit 0
 fi
 
+if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": UTF-8 Unicode text, with very long lines"* ]]; then
+	head -c 256 "$1" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo ............  >>"$2" 2>&1
+	tail -c 256 "$1" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	exit 0
+fi
+
 if [[ "$FILE" == *": ASCII text"* ]] \
 		|| [[ "$FILE" == *": UTF-8 Unicode"* ]]; then
 	head "$1" >>"$2" 2>&1

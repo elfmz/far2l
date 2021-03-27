@@ -91,6 +91,15 @@ if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	exit 0
 fi
 
+if [[ "$FILE" == *": EPUB document"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f epub -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
 if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc "$1" >>"$2" 2>&1

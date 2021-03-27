@@ -15,6 +15,16 @@ fi
 echo "$FILE" > "$2"
 echo >> "$2"
 
+if [[ "$FILE" == *" archive data, "* ]] \
+		|| [[ "$FILE" == *" compressed data"* ]]; then
+	if command -v 7z >/dev/null 2>&1; then
+		7z l "$1" >>"$2" 2>&1
+	else
+		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
 if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 	if command -v readelf >/dev/null 2>&1; then
 		readelf -n --version-info --dyn-syms "$1" >>"$2" 2>&1

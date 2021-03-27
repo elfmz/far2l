@@ -15,6 +15,16 @@ fi
 echo "$FILE" > "$2"
 echo >> "$2"
 
+if [[ "$FILE" == *" archive data, "* ]] \
+		|| [[ "$FILE" == *" compressed data"* ]]; then
+	if command -v 7z >/dev/null 2>&1; then
+		7z l "$1" >>"$2" 2>&1
+	else
+		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
 if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 	if command -v readelf >/dev/null 2>&1; then
 		readelf -n --version-info --dyn-syms "$1" >>"$2" 2>&1
@@ -25,6 +35,12 @@ if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 fi
 
 if [[ "$FILE" == *"JPEG image"* ]]; then
+	if command -v chafa >/dev/null 2>&1; then
+		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		exit 0
+	else
+		echo "Install <chafa> to see picture" >>"$2" 2>&1
+	fi
 	if command -v jp2a >/dev/null 2>&1; then
 		jp2a --colors "$1" >>"$2" 2>&1
 		exit 0
@@ -34,6 +50,12 @@ if [[ "$FILE" == *"JPEG image"* ]]; then
 fi
 
 if [[ "$FILE" == *" image data, "* ]]; then
+	if command -v chafa >/dev/null 2>&1; then
+		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		exit 0
+	else
+		echo "Install <chafa> to see picture" >>"$2" 2>&1
+	fi
 	if command -v asciiart >/dev/null 2>&1; then
 		asciiart -c "$1" >>"$2" 2>&1
 	else
@@ -47,6 +69,61 @@ if [[ "$FILE" == *": Audio file"* ]]; then
 		exiftool "$1" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see picture" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": RIFF"*" data"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": BitTorrent file"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": HTML document"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f html -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": OpenDocument Text"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f odt -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": EPUB document"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f epub -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
+# if [[ "$FILE" == *" FictionBook2 ebook"* ]]; then
+if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f fb2 -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
 	exit 0
 fi
@@ -102,6 +179,16 @@ if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
 	else
 		echo "Install <ctags> to see source overview" >>"$2" 2>&1
 	fi
+	exit 0
+fi
+
+if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": UTF-8 Unicode text, with very long lines"* ]]; then
+	head -c 256 "$1" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo ............  >>"$2" 2>&1
+	tail -c 256 "$1" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	exit 0
 fi
 

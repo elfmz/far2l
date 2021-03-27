@@ -25,6 +25,12 @@ if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 fi
 
 if [[ "$FILE" == *"JPEG image"* ]]; then
+	if command -v chafa >/dev/null 2>&1; then
+		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		exit 0
+	else
+		echo "Install <chafa> to see picture" >>"$2" 2>&1
+	fi
 	if command -v jp2a >/dev/null 2>&1; then
 		jp2a --colors "$1" >>"$2" 2>&1
 		exit 0
@@ -34,6 +40,12 @@ if [[ "$FILE" == *"JPEG image"* ]]; then
 fi
 
 if [[ "$FILE" == *" image data, "* ]]; then
+	if command -v chafa >/dev/null 2>&1; then
+		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		exit 0
+	else
+		echo "Install <chafa> to see picture" >>"$2" 2>&1
+	fi
 	if command -v asciiart >/dev/null 2>&1; then
 		asciiart -c "$1" >>"$2" 2>&1
 	else

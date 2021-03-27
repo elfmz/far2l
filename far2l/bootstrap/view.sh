@@ -82,6 +82,15 @@ if [[ "$FILE" == *": RIFF"*" data"* ]]; then
 	exit 0
 fi
 
+if [[ "$FILE" == *": BitTorrent file"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
 if [[ "$FILE" == *": HTML document"* ]]; then
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc -f html -t markdown "$1" >>"$2" 2>&1

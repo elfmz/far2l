@@ -100,6 +100,16 @@ if [[ "$FILE" == *": EPUB document"* ]]; then
 	exit 0
 fi
 
+# if [[ "$FILE" == *" FictionBook2 ebook"* ]]; then
+if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"* ]]; then
+	if command -v pandoc >/dev/null 2>&1; then
+		pandoc -f fb2 -t markdown "$1" >>"$2" 2>&1
+	else
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
+	fi
+	exit 0
+fi
+
 if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc "$1" >>"$2" 2>&1

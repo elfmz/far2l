@@ -94,33 +94,50 @@ if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
 	exit 0
 fi
 
-if [[ "$FILE" == *"JPEG image"* ]]; then
+if [[ "$FILE" == *" image data, "* ]] \
+	|| [[ "$FILE" == *"JPEG image"* ]]; then
+	# ??? workaround for bash to get values of variables
+	bash -c "echo ${FOO}" >/dev/null 2>&1
+	TCOLUMNS=$( bash -c "echo ${COLUMNS}" )
+	TLINES=$( bash -c "echo ${LINES}" )
+	TCOLUMNS=$(( ${TCOLUMNS:-80} - 0 ))
+	TLINES=$(( ${TLINES:-25} - 2 ))
+	VCHAFA="no"
 	if command -v chafa >/dev/null 2>&1; then
+		VCHAFA="yes"
+		# chafa -c 16 --color-space=din99d --dither=ordered -w 9 --symbols all --fill all !.! && read -n1 -r -p "$1" >>"$2" 2>&1
+		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
+		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
 		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
-		exit 0
+		clear
 	else
 		echo "Install <chafa> to see picture" >>"$2" 2>&1
 	fi
-	if command -v jp2a >/dev/null 2>&1; then
-		jp2a --colors "$1" >>"$2" 2>&1
-		exit 0
-	else
-		echo "Install <jp2a> to see colored picture" >>"$2" 2>&1
+	VJP2A="no"
+	if [[ "$FILE" == *"JPEG image"* ]] \
+		&& [[ "$VCHAFA" == "no" ]]; then
+		if command -v jp2a >/dev/null 2>&1; then
+			VJP2A="yes"
+			# jp2a --colors "$1" >>"$2" 2>&1
+			# jp2a --size=${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
+			# jp2a --height=${TLINES} "$1" >>"$2" 2>&1
+			TCOLUMNS=$(( ${TCOLUMNS:-80} - 1 ))
+			jp2a --width=${TCOLUMNS} "$1" >>"$2" 2>&1
+			echo "Image is viewed by jp2a in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
+			jp2a --colors --term-fit "$1" && read -n1 -r -p "" >>"$2" 2>&1
+			clear
+		else
+			echo "Install <jp2a> to see colored picture" >>"$2" 2>&1
+		fi
 	fi
-fi
-
-if [[ "$FILE" == *" image data, "* ]]; then
-	if command -v chafa >/dev/null 2>&1; then
-		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
-		exit 0
+	echo "------------" >>"$2" 2>&1
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
 	else
-		echo "Install <chafa> to see picture" >>"$2" 2>&1
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
-	if command -v asciiart >/dev/null 2>&1; then
-		asciiart -c "$1" >>"$2" 2>&1
-	else
-		echo "Install <asciiart> to see picture" >>"$2" 2>&1
-	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 

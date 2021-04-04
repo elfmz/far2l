@@ -159,8 +159,9 @@ if [[ "$FILE" == *": Audio file"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" >>"$2" 2>&1
 	else
-		echo "Install <exiftool> to see picture" >>"$2" 2>&1
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -170,6 +171,7 @@ if [[ "$FILE" == *": RIFF"*" data"* ]]; then
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -179,6 +181,7 @@ if [[ "$FILE" == *": BitTorrent file"* ]]; then
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -188,6 +191,7 @@ if [[ "$FILE" == *": HTML document"* ]]; then
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -197,6 +201,7 @@ if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -206,6 +211,7 @@ if [[ "$FILE" == *": EPUB document"* ]]; then
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -216,6 +222,7 @@ if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -223,8 +230,9 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc "$1" >>"$2" 2>&1
 	else
-		echo "Install <pandoc> to see picture" >>"$2" 2>&1
+		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -232,8 +240,9 @@ if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]]; then
 	if command -v catdoc >/dev/null 2>&1; then
 		catdoc "$1" >>"$2" 2>&1
 	else
-		echo "Install <catdoc> to see picture" >>"$2" 2>&1
+		echo "Install <catdoc> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -241,8 +250,9 @@ if [[ "$FILE" == *": Composite Document File"*"Microsoft PowerPoint"* ]]; then
 	if command -v catppt >/dev/null 2>&1; then
 		catppt "$1" >>"$2" 2>&1
 	else
-		echo "Install <catppt> to see picture" >>"$2" 2>&1
+		echo "Install <catppt> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -250,8 +260,9 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 	if command -v pdftotext >/dev/null 2>&1; then
 		pdftotext -enc UTF-8 "$1" "$2" 2>>"$2"
 	else
-		echo "Install <pdftotext> to see picture" >>"$2" 2>&1
+		echo "Install <pdftotext> to see document" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -261,6 +272,7 @@ if [[ "$FILE" == *": unified diff output"* ]]; then
 	else
 		echo "Install <colordiff> to see colored diff" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 
@@ -270,6 +282,7 @@ if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
 	else
 		echo "Install <ctags> to see source overview" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 

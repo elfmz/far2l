@@ -16,12 +16,64 @@ echo "$FILE" > "$2"
 echo >> "$2"
 
 if [[ "$FILE" == *" archive data, "* ]] \
-		|| [[ "$FILE" == *" compressed data"* ]]; then
+		|| [[ "$FILE" == *" compressed data"* ]] \
+		|| [[ "$FILE" == *": Debian "*" package"* ]] \
+		|| [[ "$FILE" == *": RPM"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
 	if command -v 7z >/dev/null 2>&1; then
 		7z l "$1" >>"$2" 2>&1
 	else
 		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
 	fi
+	if [[ "$FILE" == *" compressed data"* ]]; then
+		echo "------------" >>"$2" 2>&1
+		echo "Processing file as archive with tar contents listing" >>"$2" 2>&1
+		TAROPTS=""
+		if [[ "$FILE" == *": gzip compressed data"* ]]; then
+			TAROPTS=-z
+		fi
+		if [[ "$FILE" == *": bzip2 compressed data"* ]]; then
+			TAROPTS=-j
+		fi
+		if [[ "$FILE" == *": XZ compressed data"* ]]; then
+			TAROPTS=-J
+		fi
+		if [[ "$FILE" == *": lzma compressed data"* ]]; then
+			TAROPTS=--lzma
+		fi
+		if [[ "$FILE" == *": lzop compressed data"* ]]; then
+			TAROPTS=--lzop
+		fi
+		if [[ "$FILE" == *": zstd compressed data"* ]]; then
+			TAROPTS=--zstd
+		fi
+		if [[ "$(tar --help | grep -e '--full-time' | wc -l)" == "1" ]]; then
+			TAROPTS=$TAROPTS" --full-time"
+		fi
+		echo "TAROPTS=[ "$TAROPTS" ]" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1		
+		ELEMENTCOUNT=$( tar -tv $TAROPTS -f "$1" 2>/dev/null | wc -l )
+		echo "tar archive elements count = "$ELEMENTCOUNT >>"$2" 2>&1
+		if [[ $ELEMENTCOUNT -gt 0 ]]; then
+			echo "------------" >>"$2" 2>&1
+			tar -tv $TAROPTS -f "$1" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			tar -tv $TAROPTS -f "$1" | \
+				tee >/dev/null \
+				>( CTOTAL=$( wc -l ) ; ( echo $CTOTAL' total' ; echo "----done----" ; ) >>"$2" 2>&1 ) \
+				>( CFOLDERS=$( grep -e '^d' | wc -l ) ; ( echo $CFOLDERS' folders' ) >>"$2" 2>&1 ) \
+				>( CFILES=$( grep -v -e '^d' | wc -l ) ; ( echo $CFILES' files' ) >>"$2" 2>&1 )
+		fi
+	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 

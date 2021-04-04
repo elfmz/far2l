@@ -78,11 +78,19 @@ if [[ "$FILE" == *" archive data, "* ]] \
 fi
 
 if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
 	if command -v readelf >/dev/null 2>&1; then
 		readelf -n --version-info --dyn-syms "$1" >>"$2" 2>&1
 	else
 		echo "Install <readelf> utility to see more information" >>"$2" 2>&1
 	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 

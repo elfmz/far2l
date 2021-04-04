@@ -622,6 +622,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (alt) {
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
 			SendSignalToVT(SIGKILL);
+			DetachTerminal();
 			
 		} else if (_slavename.empty()) {//pipes fallback
 			SendSignalToVT(SIGINT);
@@ -827,17 +828,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		pid_t grp = getpgid(_leader_pid);
 		if (grp != -1 && grp != getpgid(getpid())) {
-			fprintf(stderr, "%s: killpg(%d, %d)\n", __FUNCTION__, grp, sig);
-			killpg(grp, sig);
+			int r = killpg(grp, sig);
+			fprintf(stderr, "%s: killpg(%d, %d) -> %d errno=%d\n", __FUNCTION__, grp, sig, r, errno);
 			// kill(_leader_pid, sig);
 
 		} else {
-			fprintf(stderr, "%s: kill(%d, %d)\n", __FUNCTION__, _leader_pid, sig);
-			kill(_leader_pid, sig);
+			int r = kill(_leader_pid, sig);
+			fprintf(stderr, "%s: kill(%d, %d) -> %d errno=%d\n", __FUNCTION__, _leader_pid, sig, r, errno);
 		}
 	}
 	
-	virtual void OnRequestShutdown()
+	void DetachTerminal()
 	{
 		FDScope dev_null(open("/dev/null", O_RDWR));
 		if (dev_null.Valid()) {
@@ -853,6 +854,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		_output_reader.KickAss();
+	}
+
+	virtual void OnRequestShutdown()
+	{
+		DetachTerminal();
 	}
 
 	void Shutdown()

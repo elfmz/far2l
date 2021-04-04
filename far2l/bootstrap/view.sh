@@ -360,20 +360,65 @@ if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
 fi
 
 if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
-		|| [[ "$FILE" == *": UTF-8 Unicode text, with very long lines"* ]]; then
-	head -c 256 "$1" >>"$2" 2>&1
-	echo "" >>"$2" 2>&1
-	echo ............  >>"$2" 2>&1
-	tail -c 256 "$1" >>"$2" 2>&1
-	echo "" >>"$2" 2>&1
-	exit 0
-fi
-
-if [[ "$FILE" == *": ASCII text"* ]] \
-		|| [[ "$FILE" == *": UTF-8 Unicode"* ]]; then
-	head "$1" >>"$2" 2>&1
-	echo ............  >>"$2" 2>&1
-	tail "$1" >>"$2" 2>&1
+		|| [[ "$FILE" == *": UTF-8 Unicode text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": ISO"*" text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": ASCII text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": UTF-8 Unicode text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": ISO"*" text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": Non-ISO extended-ASCII text, with "* ]] \
+		|| [[ "$FILE" == *": ASCII text" ]] \
+		|| [[ "$FILE" == *": UTF-8 Unicode text" ]] \
+		|| [[ "$FILE" == *": ISO"*" text" ]] \
+		|| [[ "$FILE" == *": Non-ISO extended-ASCII text" ]] \
+		|| [[ "$FILE" == *": XML 1.0 document, "*" text"* ]] \
+		|| [[ "$FILE" == *": JSON data"* ]] \
+		|| [[ "$FILE" == *": data"* ]] \
+		|| [[ "$FILE" == *" shell script"* ]] \
+		|| [[ "$FILE" == *" script"*" text"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	# ??? workaround for bash to get values of variables
+	bash -c "echo ${FOO}" >/dev/null 2>&1
+	FILESIZE=$( wc -c "$1" | awk '{print $1}' )
+	FILESIZE=${FILESIZE:-0}
+	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
+	VIEWLIMIT=1024
+	DOTCOUNT=12
+	## example ( 1024 + 12 ) = 1036
+	SIZELIMIT=$(( VIEWLIMIT + DOTCOUNT ))
+	SIZELIMIT=${SIZELIMIT:-64}
+	## example ( 1024 / 2 ) = 512
+	HALFLIMIT=$(( VIEWLIMIT / 2 ))
+	HALFLIMIT=${HALFLIMIT:-32}
+	echo "Half of view size limit is ( "$VIEWLIMIT" / 2 ) = "$HALFLIMIT" bytes" >>"$2" 2>&1
+	if [[ $FILESIZE -gt $SIZELIMIT ]]; then
+		## example with file size ( 1024 + 12 + 1 ) = 1037 bytes
+		## ( 1037 - 2 * 512 - 12 ) = 1
+		RESTLIMIT=$(( FILESIZE - 2 * HALFLIMIT - DOTCOUNT ))
+	fi
+	RESTLIMIT=${RESTLIMIT:-0}
+	echo "Size of file data that will not be shown is ( "$FILESIZE" - 2 * "$HALFLIMIT" - "$DOTCOUNT" ) = "$RESTLIMIT" bytes" >>"$2" 2>&1
+	echo "Processing file as is with cat, head and tail ( raw )" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if [[ $FILESIZE -le $SIZELIMIT ]]; then
+		cat "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		head -c $HALFLIMIT "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		if [[ $RESTLIMIT -gt 0 ]]; then
+			# count of dots is DOTCOUNT
+			echo "............" >>"$2" 2>&1
+			tail -c $HALFLIMIT "$1" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+		fi
+	fi
+	echo "----eof----" >>"$2" 2>&1
 	exit 0
 fi
 

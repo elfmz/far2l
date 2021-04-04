@@ -130,6 +130,20 @@ if [[ "$FILE" == *" image data, "* ]] \
 			echo "Install <jp2a> to see colored picture" >>"$2" 2>&1
 		fi
 	fi
+	VASCIIART="no"
+	if [[ "$VCHAFA" == "no" ]] \
+		&& [[ "$VJP2A" == "no" ]]; then
+		if command -v asciiart >/dev/null 2>&1; then
+			VASCIIART="yes"
+			# asciiart -c "$1" >>"$2" 2>&1
+			asciiart "$1" >>"$2" 2>&1
+			echo "Image is viewed by asciiart in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
+			asciiart --color "$1" && read -n1 -r -p "" >>"$2" 2>&1
+			clear
+		else
+			echo "Install <asciiart> to see picture" >>"$2" 2>&1
+		fi
+	fi
 	echo "------------" >>"$2" 2>&1
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1

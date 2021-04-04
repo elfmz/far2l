@@ -355,8 +355,8 @@ if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
 	else
 		echo "Install <ctags> to see source overview" >>"$2" 2>&1
 	fi
-	echo "----eof----" >>"$2" 2>&1
-	exit 0
+	echo "------------" >>"$2" 2>&1
+	# exit 0
 fi
 
 if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
@@ -371,6 +371,7 @@ if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
 		|| [[ "$FILE" == *": ISO"*" text" ]] \
 		|| [[ "$FILE" == *": Non-ISO extended-ASCII text" ]] \
 		|| [[ "$FILE" == *": XML 1.0 document, "*" text"* ]] \
+		|| [[ "$FILE" == *": "*" source, "*" text"* ]] \
 		|| [[ "$FILE" == *": JSON data"* ]] \
 		|| [[ "$FILE" == *": data"* ]] \
 		|| [[ "$FILE" == *" shell script"* ]] \

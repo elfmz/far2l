@@ -263,8 +263,18 @@ if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"
 fi
 
 if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as docx with pandoc ( formatted as markdown )" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc "$1" >>"$2" 2>&1
+		# pandoc "$1" >>"$2" 2>&1
+		pandoc -f docx -t markdown "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi

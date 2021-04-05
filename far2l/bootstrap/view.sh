@@ -5,7 +5,7 @@
 # Input: $1
 # Output: $2
 
-FILE="$(file "$1")"
+FILE="$(file -- "$1")"
 
 # Optional per-user script
 if [ -x ~/.config/far2l/view.sh ]; then
@@ -29,7 +29,7 @@ if [[ "$FILE" == *" archive data, "* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v 7z >/dev/null 2>&1; then
-		7z l "$1" >>"$2" 2>&1
+		7z l -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
 	fi

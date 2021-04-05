@@ -331,7 +331,7 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 	echo "Processing file as pdf with pdftotext ( text )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pdftotext >/dev/null 2>&1; then
-		pdftotext -enc UTF-8 "$1" "$2" 2>>"$2"
+		pdftotext -enc UTF-8 "$1" - >>"$2" 2>>"$2"
 	else
 		echo "Install <pdftotext> to see document" >>"$2" 2>&1
 	fi

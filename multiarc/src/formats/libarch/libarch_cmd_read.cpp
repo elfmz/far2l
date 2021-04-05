@@ -92,7 +92,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
 		}
 
 		archive_entry_set_pathname(entry, extract_path.c_str() );
-		int r = archive_read_extract(arc.Get(), entry, 0);
+		int r = archive_read_extract(arc.Get(), entry, ARCHIVE_EXTRACT_TIME); // ARCHIVE_EXTRACT_PERM???
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			fprintf(stderr, "Error %d (%s): '%s' -> '%s'\n",
 				r, archive_error_string(arc.Get()),

@@ -196,7 +196,7 @@ if [[ "$FILE" == *": HTML document"* ]]; then
 	echo "Processing file as html with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f html -t markdown "$1" >>"$2" 2>&1
+		pandoc -f html -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -215,7 +215,7 @@ if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	echo "Processing file as odt with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f odt -t markdown "$1" >>"$2" 2>&1
+		pandoc -f odt -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -234,7 +234,7 @@ if [[ "$FILE" == *": EPUB document"* ]]; then
 	echo "Processing file as epub with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f epub -t markdown "$1" >>"$2" 2>&1
+		pandoc -f epub -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -254,7 +254,7 @@ if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"
 	echo "Processing file as fb2 with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f fb2 -t markdown "$1" >>"$2" 2>&1
+		pandoc -f fb2 -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -274,7 +274,7 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		# pandoc "$1" >>"$2" 2>&1
-		pandoc -f docx -t markdown "$1" >>"$2" 2>&1
+		pandoc -f docx -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi

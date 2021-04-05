@@ -5,7 +5,7 @@
 # Input: $1
 # Output: $2
 
-FILE="$(file "$1")"
+FILE="$(file -- "$1")"
 
 # Optional per-user script
 if [ -x ~/.config/far2l/view.sh ]; then
@@ -29,7 +29,7 @@ if [[ "$FILE" == *" archive data, "* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v 7z >/dev/null 2>&1; then
-		7z l "$1" >>"$2" 2>&1
+		7z l -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
 	fi
@@ -196,7 +196,7 @@ if [[ "$FILE" == *": HTML document"* ]]; then
 	echo "Processing file as html with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f html -t markdown "$1" >>"$2" 2>&1
+		pandoc -f html -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -215,7 +215,7 @@ if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	echo "Processing file as odt with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f odt -t markdown "$1" >>"$2" 2>&1
+		pandoc -f odt -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -234,7 +234,7 @@ if [[ "$FILE" == *": EPUB document"* ]]; then
 	echo "Processing file as epub with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f epub -t markdown "$1" >>"$2" 2>&1
+		pandoc -f epub -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -254,7 +254,7 @@ if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"
 	echo "Processing file as fb2 with pandoc ( formatted as markdown )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f fb2 -t markdown "$1" >>"$2" 2>&1
+		pandoc -f fb2 -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -274,7 +274,7 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		# pandoc "$1" >>"$2" 2>&1
-		pandoc -f docx -t markdown "$1" >>"$2" 2>&1
+		pandoc -f docx -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
@@ -282,7 +282,8 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	exit 0
 fi
 
-if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]]; then
+if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]] \
+	|| [[ "$FILE" == *": Composite Document File V2 Document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
@@ -331,7 +332,7 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 	echo "Processing file as pdf with pdftotext ( text )" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pdftotext >/dev/null 2>&1; then
-		pdftotext -enc UTF-8 "$1" "$2" 2>>"$2"
+		pdftotext -enc UTF-8 "$1" - >>"$2" 2>>"$2"
 	else
 		echo "Install <pdftotext> to see document" >>"$2" 2>&1
 	fi

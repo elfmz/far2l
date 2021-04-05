@@ -282,7 +282,8 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	exit 0
 fi
 
-if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]]; then
+if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]] \
+	|| [[ "$FILE" == *": Composite Document File V2 Document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1

@@ -338,7 +338,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t
 {
 	int saved_errno = errno;
 	int r = fchmod(fd, mode);
-	if (r == -1 && IsAccessDeniedErrno()) {
+	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
 		// this fails even if fd opened for write, but process has no access to its path
 		try {
 			ClientTransaction ct(SUDO_CMD_FCHMOD);

@@ -183,7 +183,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_open(const char* path
 	if (flags & O_CREAT) {
 		va_list va;
 		va_start(va, flags);
-		mode = va_arg(va, mode_t);
+		mode = (mode_t)va_arg(va, unsigned int);
 		va_end(va);
 	}
 	

@@ -89,8 +89,7 @@ brew install --HEAD yurikoles/yurikoles/far2l
  * Additionally you can enable python support by adding `--with-python@3.9`
 
 ##### Full OSX/MacOS build from sources (harder):
-Libarchive in MacPorts may conflict with system version, when far2l is built with MacPorts' 
-headers but links with system dylib. You may want to avoid installing it.
+Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependecies.
 
  * Clone:
 ```sh
@@ -126,8 +125,6 @@ To build without WX backend (console version only): change -DUSEWX=yes to -DUSEW
 To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes
-
-Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependecies
 
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:

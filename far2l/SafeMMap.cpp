@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE // macos wants it for ucontext
+
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>
@@ -8,6 +10,7 @@
 #include "../WinPort/sudo.h"
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <ucontext.h>
 
 #include <exception>
 #include <stdexcept>
@@ -27,6 +30,7 @@
 static struct rusage s_usg{};
 #endif
 
+extern const char *FAR_BUILD;
 
 static std::set<SafeMMap *> s_safe_mmaps;
 static std::atomic<int> s_safe_mmaps_sl;
@@ -64,12 +68,71 @@ static void SignalSafeLToA(long l, char *str, size_t last_char_ofs)
 
 static std::string s_crash_log;
 
+static void FDWriteStr(int fd, const char *str)
+{
+	if (write(fd, str, strlen(str)) == -1) {
+		perror("FDWrite - write");
+	}
+}
+
+static void FDWriteSignalInfo(int fd, int num, siginfo_t *info, void *ctx)
+{
+	FDWriteStr(fd, "\n🔥🔥🔥 ");
+	FDWriteStr(fd, FAR_BUILD);
+	char errmsg[] = "\nSignal 00 [0000000000000000] on 0000000000000000\n";
+	//                0123456789abcdef0123456789abcdef0123456789abcdef0
+	//             0x0^            0x1^            0x2^            0x3^
+	SignalSafeLToA(num, errmsg, 0x09);
+	SignalSafeLToA((long)info->si_addr, errmsg, 0x1b);
+	SignalSafeLToA((long)time(NULL), errmsg, 0x30);
+	FDWriteStr(fd, errmsg);
+
+	const ucontext_t *uctx = (const ucontext_t *)ctx;
+	const long *mctx = (const long *)&uctx->uc_mcontext;
+	size_t mctx_count = sizeof(uctx->uc_mcontext) / sizeof(*mctx);
+	if (mctx_count * sizeof(*mctx) > sizeof(uctx->uc_mcontext)) {
+		--mctx_count;
+	}
+
+	for (size_t i = 0; i < mctx_count; ++i) {
+		if (i == 0) {
+			;
+		} else if ((i & 3) == 0) {
+			FDWriteStr(fd, "\n");
+		} else {
+			FDWriteStr(fd, " ");
+		}
+
+		char val[] = "0000000000000000";
+		//            0123456789abcdef
+		SignalSafeLToA(mctx[i], val, 0x0f);
+		FDWriteStr(fd, val);
+	}
+	FDWriteStr(fd, "\n");
+}
+
+static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
+{
+	FDScope fd(open(s_crash_log.c_str(), O_APPEND | O_CREAT | O_WRONLY, 0600));
+	if (fd.Valid()) {
+		FDWriteSignalInfo(fd, num, info, ctx);
+#ifndef __FreeBSD__ // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+		// using backtrace/backtrace_symbols_fd is in general now allowed by signal safety rules
+		// but in general it works and its enough cuz other important info already written in
+		// signal-safe manner by FDWriteSignalInfo
+		void *bt[16];
+		size_t bt_count = sizeof(bt) / sizeof(bt[0]);
+		bt_count = backtrace(bt, bt_count);
+		backtrace_symbols_fd(bt, bt_count, fd);
+#endif
+		fsync(fd);
+	}
+
+	FDWriteSignalInfo(STDERR_FILENO, num, info, ctx);
+}
+
 static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct sigaction &prev_sa)
 {
-
-	char errmsg[] = "\nSignal 00h [0000000000000000h]\n";
-	//                0123456789abcdef0123456789abcdef
-
 	if (prev_sa.sa_flags & SA_SIGINFO) {
 		if ((void *)prev_sa.sa_sigaction != (void *)SIG_IGN
 				&& (void *)prev_sa.sa_sigaction != (void *)SIG_DFL
@@ -82,32 +145,6 @@ static void InvokePrevSigaction(int num, siginfo_t *info, void *ctx, struct siga
 			&& (void *)prev_sa.sa_handler != (void *)SIG_ERR) {
 		prev_sa.sa_handler(num);
 	}
-
-	SignalSafeLToA(num, errmsg, 0x09);
-	SignalSafeLToA((long)info->si_addr, errmsg, 0x1c);
-
-	int fd = open(s_crash_log.c_str(), O_APPEND | O_CREAT | O_WRONLY, 0600);
-	if (fd != -1) {
-		if (write(STDERR_FILENO, errmsg, strlen(errmsg)) == -1) {
-			close(fd);
-			fd = STDERR_FILENO;
-		}
-	} else {
-		fd = STDERR_FILENO;
-	}
-	if (write(fd, errmsg, strlen(errmsg)) == -1) {
-		perror("write(errmsg)");
-	}
-#ifndef __FreeBSD__ // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
-	void *bt[16];
-	size_t bt_count = sizeof(bt) / sizeof(bt[0]);
-	bt_count = backtrace(bt, bt_count);
-	backtrace_symbols_fd(bt, bt_count, fd);
-	if (fd != STDERR_FILENO) {
-		close(fd);
-	}
-#endif
-	abort();
 }
 
 static struct sigaction s_prev_sa_bus {}, s_prev_sa_segv {};
@@ -134,10 +171,10 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 
 	} else if (num == SIGBUS) {
 		InvokePrevSigaction(num, info, ctx, s_prev_sa_bus);
-
-	} else {
-		abort();
 	}
+
+	WriteCrashSigLog(num, info, ctx);
+	abort();
 }
 
 void SafeMMap::sRegisterSignalHandler()

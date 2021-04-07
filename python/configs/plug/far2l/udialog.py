@@ -1,12 +1,21 @@
-from .plugin import PluginBase
+import logging
+from far2l.plugin import PluginBase
+
+
+log = logging.getLogger(__name__)
+
 
 class Plugin(PluginBase):
     label = "Python Command"
     area  = "Plugins"
 
-    def HandleCommandLine(self, line):
+    @staticmethod
+    def HandleCommandLine(line):
+        return True
+
+    def CommandLine(self, line):
         if line == 'dialog':
-            print('dialog')
+            log.debug('dialog')
             @self.ffi.callback("FARWINDOWPROC")
             def KeyDialogProc(hDlg, Msg, Param1, Param2):
                 #if Msg == self.ffic.DN_KEY:
@@ -25,12 +34,11 @@ class Plugin(PluginBase):
             if res != -1:
                 sptr = self.info.SendDlgMessage(hDlg, self.ffic.DM_GETCONSTTEXTPTR, 2, 0)
                 path = self.f2s(sptr)
-                print('path:', path)
+                log.debug('path: {0}'.format(path))
             self.info.DialogFree(hDlg)
-            print('end dialog')
+            log.debug('end dialog')
         else:
             exec(line, globals(), locals())
-        return -1
 
     def OpenPlugin(self, OpenFrom):
         _MsgItems = [

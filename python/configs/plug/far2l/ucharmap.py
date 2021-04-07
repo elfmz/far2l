@@ -1,4 +1,9 @@
-from .plugin import PluginBase
+import logging
+from far2l.plugin import PluginBase
+
+
+log = logging.getLogger(__name__)
+
 
 class Plugin(PluginBase):
     label = "Python Character Map"
@@ -56,7 +61,7 @@ class Plugin(PluginBase):
             elif Msg == self.ffic.DN_BTNCLICK:
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_KEY and Param1 == self.first_text_item-1:
-                #print('key DialogProc(', hDlg, ', DN_KEY,', Param1, ',', Param2, ')')
+                log.debug('key DialogProc({0}, {1}, {2}, {3})'.format(hDlg, 'DN_KEY', Param1, Param2))
                 if Param2 == self.ffic.KEY_LEFT:
                     self.cur_col -= 1
                 elif Param2 == self.ffic.KEY_UP:
@@ -68,7 +73,7 @@ class Plugin(PluginBase):
                 elif Param2 == self.ffic.KEY_ENTER:
                     offset = self.cur_row*self.max_col+self.cur_col
                     self.text = self.symbols[offset]
-                    #print('enter:', offset, 'row:', self.cur_row, 'col:', self.cur_col, 'ch:', self.text)
+                    log.debug('enter:{0} row:{1} col:{2}, ch:{3}'.format(offset, self.cur_row, self.cur_col, self.text))
                     return 0
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
@@ -85,11 +90,11 @@ class Plugin(PluginBase):
                 self.Rebuild(hDlg)
                 return 1
             elif Msg == self.ffic.DN_MOUSECLICK:
-                #print('mou DialogProc(', hDlg, ', DN_MOUSECLICK,', Param1, ',', Param2, ')')
+                log.debug('mou DialogProc({0}, {1}, {2}, {3})'.format(hDlg, 'DN_MOUSECLICK', Param1, Param2))
                 ch = Param1 - self.first_text_item
                 if ch >= 0:
                     focus = self.info.SendDlgMessage(hDlg, self.ffic.DM_GETFOCUS, 0, 0)
-                    #print('ch=', ch, 'focus:', focus)
+                    log.debug('ch:{0} focus:{1}'.format(ch, focus))
                     if focus != self.first_text_item-1:
                         self.info.SendDlgMessage(hDlg, self.ffic.DM_SETFOCUS, self.first_text_item-1, 0)
                     self.cur_row = ch // self.max_col

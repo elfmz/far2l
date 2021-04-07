@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE // macos wants it for ucontext
+
 #include <errno.h>
 #include <signal.h>
 #include <unistd.h>

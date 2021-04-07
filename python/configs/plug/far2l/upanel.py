@@ -1,5 +1,9 @@
 import os
-from .plugin import PluginVFS
+import logging
+from far2l.plugin import PluginVFS
+
+
+log = logging.getLogger(__name__)
 
 
 class Screen:

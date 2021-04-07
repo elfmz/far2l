@@ -144,8 +144,11 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 		if (PushDirStackSize > 0) {
 			--PushDirStackSize;
 		}
-
-	}else if (ecl[0]=="exit") {
+#if 0
+	} else if (ecl[0]=="crash" && ecl.size() == 2 && ecl[1]=="far") {
+		*(volatile int *)100 = 200;
+#endif
+	} else if (ecl[0]=="exit") {
 		if (ecl.size() == 2 && ecl[1]=="far") {
 			FrameManager->ExitMainLoop(FALSE);
 			return true;			

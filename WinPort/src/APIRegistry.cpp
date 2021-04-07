@@ -28,13 +28,11 @@ struct WinPortHandleReg : WinPortHandle
 	std::string dir;
 };
 
-#ifdef _WIN32
-# define WINPORT_REG_DIV_KEY		"\\k-"
-# define WINPORT_REG_DIV_VALUE	"\\v-"
-#else
-# define WINPORT_REG_DIV_KEY		"/k-"
-# define WINPORT_REG_DIV_VALUE	"/v-"
-#endif
+#define WINPORT_REG_PREFIX_KEY		"k-"
+#define WINPORT_REG_PREFIX_VALUE	"v-"
+
+#define WINPORT_REG_DIV_KEY		("/" WINPORT_REG_PREFIX_KEY)
+#define WINPORT_REG_DIV_VALUE	("/" WINPORT_REG_PREFIX_VALUE)
 
 static std::string GetRegistrySubroot(const char *sub)
 {
@@ -688,7 +686,7 @@ extern "C" {
 			return ERROR_INVALID_HANDLE;
 		}
 		
-		std::string prefixed_name = WINPORT_REG_DIV_VALUE + 1;
+		std::string prefixed_name = WINPORT_REG_PREFIX_VALUE;
 		prefixed_name+= Wide2MB(lpValueName);
 		return CommonQueryValue(root, prefixed_name,
 			nullptr, nullptr, lpType, lpData, lpcbData);

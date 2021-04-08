@@ -17,6 +17,11 @@
 #   $3 - optional 'force' flag
 ##########################################################
 
+# Optional per-user script
+if [ -x ~/.config/far2l/mounts.sh ]; then
+. ~/.config/far2l/mounts.sh
+fi
+
 ##########################################################
 # This optional file may contain per-user extra values added to df output,
 # its content must be looking like:

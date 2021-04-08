@@ -1,6 +1,0 @@
-{
-    "python.pythonPath": "${workspaceRoot}/../python/plug/python/bin/python",
-    "python.analysis.extraPaths": [
-        "~.config/far2l/plugins/python",
-    ]
-}

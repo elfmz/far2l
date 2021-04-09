@@ -49,7 +49,8 @@ namespace Mounts
 					}
 					if (e.path == L"/") {
 						has_rootfs = true;
-						e.info+= " &/";
+						size_t l;
+						if(!e.info.Pos(l, L'&')) e.info+= " &/";
 					} else {
 						e.unmountable = true;
 					}

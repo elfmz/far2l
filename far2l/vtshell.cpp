@@ -865,13 +865,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		OnRequestShutdown();
 		SendSignalToVT(SIGTERM);
-
-		if (_leader_pid != -1) {
-			//kill(_leader_pid, SIGKILL);
-			int status;
-			waitpid(_leader_pid, &status, 0);
-			_leader_pid = -1;
-		}
+		CheckLeaderAlive(true);
 	}
 
 	void DeliverPendingWindowInfo()
@@ -959,16 +953,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
-	void ValidateLeaderPid()
-	{
-		if (_leader_pid != -1) {
-			int status;
-			if (waitpid(_leader_pid, &status, WNOHANG) == _leader_pid) {
-				_leader_pid = -1;
-			}
-		}
-	}
-
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
         _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
@@ -989,9 +973,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
-		ValidateLeaderPid();
-		if (_leader_pid == -1)
+		CheckLeaderAlive();
+		if (_leader_pid == -1) {
+			fprintf(stderr, "%s: no leader\n", __FUNCTION__);
 			return -1;
+		}
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd, MAX_PATH)) {
@@ -1009,7 +995,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_exit_code = -1;
 		}
 
-		ValidateLeaderPid();
+		CheckLeaderAlive();
 
 		OnKeypadChange(0);
 		_vta.OnStop();
@@ -1020,8 +1006,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _exit_code;
 	}	
 
-	bool IsLeaderAlive()
+	bool CheckLeaderAlive(bool wait_exit = false)
 	{
+		if (_leader_pid != -1) {
+			//kill(_leader_pid, SIGKILL);
+			int status = 0;
+			if (waitpid(_leader_pid, &status, wait_exit ? 0 : WNOHANG) == _leader_pid) {
+				_leader_pid = -1;
+				fprintf(stderr, "%s: exit status %d\n", __FUNCTION__, status);
+			}
+		}
+
 		return _leader_pid != -1;
 	}
 };
@@ -1032,13 +1027,16 @@ static std::mutex g_vts_mutex;
 int VTShell_Execute(const char *cmd, bool need_sudo) 
 {	
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
-	if (!g_vts)
+	if (g_vts && !g_vts->CheckLeaderAlive()) {
+		g_vts.reset();
+	}
+	if (!g_vts) {
 		g_vts.reset(new VTShell);
+	}
 
 	int r = g_vts->ExecuteCommand(cmd, need_sudo);
 
-	if (!g_vts->IsLeaderAlive()) {
-		fprintf(stderr, "Leader exited\n");
+	if (!g_vts->CheckLeaderAlive()) {
 		g_vts.reset();
 	}
 

@@ -18,7 +18,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 string(ASCII 27 Esc)
-set(ColourReset "${Esc}[m")
+set(ColorNormal "${Esc}[m")
+set(ColorRed "${Esc}[1;31m")
+
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
@@ -36,6 +38,8 @@ if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    endif()
 endif()
 
+##############################
+
 if (NOT DEFINED USEWX)
 	set(USEWX "YES")
 endif()
@@ -44,16 +48,17 @@ if (NOT DEFINED EACP)
 	set(EACP "YES")
 endif()
 
-if (NOT DEFINED PYTHON)
-	set(PYTHON "NO")
-endif()
-
-if (NOT DEFINED FARFTP)
-	set(FARFTP "NO")
+if (NOT DEFINED LEGACY)
+	# TODO: default it to NO  somewhere in 2022, after all obsolete settings
+	# registry-upgrade-to-ini stuff will be safe to remove
+	set(LEGACY "YES")
+elseif(FARFTP)
+	set(LEGACY "YES")
+	message(STATUS "Force-enable LEGACY due to enabled FARFTP")
 endif()
 
 if (NOT ${EACP})
-	message(STATUS "${Esc}[1;31mBuilding without East Asian codepages support due to EACP=${EACP}${Esc}[39;22m")
+	message(STATUS "${ColorRed}Building without East Asian codepages support due to EACP=${EACP}${ColorNormal}")
 endif()
 
 if (NOT ${USEWX})
@@ -112,79 +117,15 @@ else()
     find_program(M4_PROG NAMES m4)
 endif()
 if(NOT M4_PROG)
-    message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
+    message(FATAL_ERROR "${ColorRed}gawk not found - please install it${ColorNormal}")
 endif ()
 set(M4 ${M4_PROG} -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}" "-DMAJOR=${VERSION_MAJOR}" "-DMINOR=${VERSION_MINOR}" "-DPATCH=${VERSION_PATCH}")
 
 # set(RM rm) actually not needed: use $(CMAKE_COMMAND) -E remove
 find_program (GAWK NAMES gawk)
 if(NOT GAWK)
-  message(FATAL_ERROR "${Esc}[1;31mgawk not found - please install it${Esc}[39;22m")
+  message(FATAL_ERROR "${ColorRed}gawk not found - please install it${ColorNormal}")
 endif ()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-# workaround for brew/macports vs system openssl conflicts
-	if(IS_DIRECTORY "/usr/local/opt/openssl@1.1/include" AND IS_DIRECTORY "/usr/local/opt/openssl@1.1/lib")
-		set(OPENSSL_LIBRARIES "/usr/local/opt/openssl@1.1/lib/libcrypto.dylib;/usr/local/opt/openssl@1.1/lib/libssl.dylib")
-		set(OPENSSL_INCLUDE_DIRS "/usr/local/opt/openssl@1.1/include")
-	elseif(EXISTS "/opt/local/lib/libssl.dylib" AND IS_DIRECTORY "/opt/local/include/openssl")
-		set(OPENSSL_LIBRARIES "/opt/local//lib/libcrypto.dylib;/opt/local/lib/libssl.dylib")
-		set(OPENSSL_INCLUDE_DIRS "/opt/local/include")
-	endif()
-endif()
-
-find_package(OpenSSL)
-if (OPENSSL_FOUND)
-	message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")
-else()
-	message(WARNING "${Esc}[1;31mOpenSSL not found, NetRocks will not have FTPS protocol support. Install libssl-dev if you want FTPS protocol available in NetRocks.${Esc}[39;22m")
-endif (OPENSSL_FOUND)
-
-find_package(LibSSH 0.5.0)
-if(LIBSSH_FOUND)
-	message(STATUS "libssh found -> enjoy SFTP support in NetRocks")
-else()
-	message(WARNING "${Esc}[1;31mlibssh not found, NetRocks will not have SFTP protocol support. Install libssh-dev if you want SFTP protocol available in NetRocks.${Esc}[39;22m")
-endif(LIBSSH_FOUND)
-
-find_package(Libsmbclient)
-if (LIBSMBCLIENT_FOUND)
-	message(STATUS "libsmbclient found -> enjoy SMB support in NetRocks")
-else()
-	message(WARNING "${Esc}[1;31mlibsmbclient not found, NetRocks will not have SMB protocol support. Install libsmbclient-dev if you want SMB protocol available in NetRocks.${Esc}[39;22m")
-endif (LIBSMBCLIENT_FOUND)
-
-find_package(LibNfs)
-if (LIBNFS_FOUND)
-	message(STATUS "libnfs found -> enjoy NFS support in NetRocks")
-else()
-	message(WARNING "${Esc}[1;31mlibnfs not found, NetRocks will not have NFS protocol support. Install libnfs-dev if you want NFS protocol available in NetRocks.${Esc}[39;22m")
-endif (LIBNFS_FOUND)
-
-find_package(LibNEON)
-if (LIBNEON_FOUND)
-	message(STATUS "libneon found -> enjoy WebDav support in NetRocks")
-else()
-	message(WARNING "${Esc}[1;31mlibneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${Esc}[39;22m")
-endif (LIBNEON_FOUND)
-
-find_package(PCRE)
-if(NOT PCRE_FOUND)
-	message(WARNING "${Esc}[1;31mlibpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${Esc}[39;22m")
-endif()
-
-# workaround for brew's/macports' libarchive
-if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
-	set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
-	set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
-elseif(EXISTS "/opt/local/lib/libarchive.dylib")
-	set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
-endif()
-
-find_package(LibArchive)
-if(NOT LibArchive_FOUND)
-	message(WARNING "${Esc}[1;31mlibarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${Esc}[39;22m")
-endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -Wno-c++11-narrowing -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
@@ -212,19 +153,6 @@ endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 
-if (NOT DEFINED LEGACY)
-	# TODO: default it to NO  somewhere in 2022, after all obsolete settings
-	# registry-upgrade-to-ini stuff will be safe to remove
-	set(LEGACY "YES")
-endif()
-
-if(FARFTP)
-	if(NOT LEGACY)
-		set(LEGACY "YES")
-		message(STATUS "Force-enable LEGACY due to enabled FARFTP")
-	endif()
-endif ()
-
 if (LEGACY)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINPORT_REGISTRY")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPORT_REGISTRY")
@@ -251,46 +179,259 @@ set_target_properties(farlng
     RUNTIME_OUTPUT_DIRECTORY "${TOOLS_DIR}"
 )
 
-if(FARFTP)
+##############################
+# plugins directives
+
+if (NOT DEFINED ALIGN OR ALIGN)
+	message(STATUS "ALIGN plugin enabled")
+	add_subdirectory (align)
+else()
+	message(STATUS "${ColorRed}ALIGN plugin disabled due to ALIGN=${ALIGN}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/align/plug/align.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED AUTOWRAP OR AUTOWRAP)
+	message(STATUS "AUTOWRAP plugin enabled")
+	add_subdirectory (autowrap)
+else()
+	message(STATUS "${ColorRed}AUTOWRAP plugin disabled due to AUTOWRAP=${AUTOWRAP}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/autowrap/plug/autowrap.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED CALC OR CALC)
+	message(STATUS "CALC plugin enabled")
+	add_subdirectory (calc)
+else()
+	message(STATUS "${ColorRed}CALC plugin disabled due to CALC=${CALC}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/calc/plug/calc.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED COLORER OR COLORER)
+	message(STATUS "COLORER plugin enabled")
+	add_subdirectory (colorer)
+else()
+	message(STATUS "${ColorRed}COLORER plugin disabled due to COLORER=${COLORER}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/colorer/plug/colorer.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED COMPARE OR COMPARE)
+	message(STATUS "COMPARE plugin enabled")
+	add_subdirectory (compare)
+else()
+	message(STATUS "${ColorRed}COMPARE plugin disabled due to COMPARE=${COMPARE}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/compare/plug/compare.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED DRAWLINE OR DRAWLINE)
+	message(STATUS "DRAWLINE plugin enabled")
+	add_subdirectory (drawline)
+else()
+	message(STATUS "${ColorRed}DRAWLINE plugin disabled due to DRAWLINE=${DRAWLINE}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/drawline/plug/drawline.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED EDITCASE OR EDITCASE)
+	message(STATUS "EDITCASE plugin enabled")
+	add_subdirectory (editcase)
+else()
+	message(STATUS "${ColorRed}EDITCASE plugin disabled due to EDITCASE=${EDITCASE}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/editcase/plug/editcase.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED EDITORCOMP OR EDITORCOMP)
+	message(STATUS "EDITORCOMP plugin enabled")
+	add_subdirectory (editorcomp)
+else()
+	message(STATUS "${ColorRed}EDITORCOMP plugin disabled due to EDITORCOMP=${EDITORCOMP}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/editorcomp/plug/editorcomp.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (DEFINED FARFTP AND FARFTP)
+	message(STATUS "FARFTP plugin enabled (obsolete)")
 	add_subdirectory (FARStdlib)
 	add_subdirectory (farftp)
-endif ()
+else()
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/farftp/plug/farftp.far-plug-mb)
+		" COMPONENT system)
+endif()
 
-add_subdirectory (colorer)
-add_subdirectory (multiarc)
-add_subdirectory (tmppanel)
-add_subdirectory (SimpleIndent)
-add_subdirectory (editcase)
-add_subdirectory (compare)
-add_subdirectory (filecase)
-add_subdirectory (align)
-add_subdirectory (autowrap)
-add_subdirectory (drawline)
-add_subdirectory (editorcomp)
-add_subdirectory (inside)
-add_subdirectory (incsrch)
-add_subdirectory (NetRocks)
-add_subdirectory (calc)
-add_subdirectory (packaging)
+if (NOT DEFINED FILECASE OR FILECASE)
+	message(STATUS "FILECASE plugin enabled")
+	add_subdirectory (filecase)
+else()
+	message(STATUS "${ColorRed}FILECASE plugin disabled due to FILECASE=${FILECASE}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/filecase/plug/filecase.far-plug-wide)
+		" COMPONENT system)
+endif()
 
-if(PYTHON)
+if (NOT DEFINED INCSRCH OR INCSRCH)
+	message(STATUS "INCSRCH plugin enabled")
+	add_subdirectory (incsrch)
+else()
+	message(STATUS "${ColorRed}Building without <INCSRCH> plugin due to INCSRCH=${INCSRCH}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/incsrch/plug/incsrch.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED INSIDE OR INSIDE)
+	message(STATUS "INSIDE plugin enabled")
+	add_subdirectory (inside)
+else()
+	message(STATUS "${ColorRed}INSIDE plugin disabled due to INSIDE=${INSIDE}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/inside/plug/inside.far-plug-mb)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED MULTIARC OR MULTIARC)
+	message(STATUS "MULTIARC plugin enabled")
+	# workaround for brew's/macports' libarchive
+	if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
+		set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
+		set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
+	elseif(EXISTS "/opt/local/lib/libarchive.dylib")
+		set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
+	endif()
+
+	find_package(LibArchive)
+	if(NOT LibArchive_FOUND)
+		message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
+	endif()
+
+	find_package(PCRE)
+	if(NOT PCRE_FOUND)
+		message(WARNING "${ColorRed}libpcre not found, multiarc will have no custom archives support. Install libpcre and reconfigure far2l if you need that functionality.${ColorNormal}")
+	endif()
+
+	add_subdirectory (multiarc)
+else()
+	message(STATUS "${ColorRed}MULTIARC plugin disabled due to MULTIARC=${MULTIARC}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/multiarc/plug/multiarc.far-plug-mb)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED NETROCKS OR NETROCKS)
+	message(STATUS "NETROCKS plugin enabled")
+	if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		# workaround for brew/macports vs system openssl conflicts
+		if(IS_DIRECTORY "/usr/local/opt/openssl@1.1/include" AND IS_DIRECTORY "/usr/local/opt/openssl@1.1/lib")
+			set(OPENSSL_LIBRARIES "/usr/local/opt/openssl@1.1/lib/libcrypto.dylib;/usr/local/opt/openssl@1.1/lib/libssl.dylib")
+			set(OPENSSL_INCLUDE_DIRS "/usr/local/opt/openssl@1.1/include")
+		elseif(EXISTS "/opt/local/lib/libssl.dylib" AND IS_DIRECTORY "/opt/local/include/openssl")
+			set(OPENSSL_LIBRARIES "/opt/local//lib/libcrypto.dylib;/opt/local/lib/libssl.dylib")
+			set(OPENSSL_INCLUDE_DIRS "/opt/local/include")
+		endif()
+	endif()
+
+	find_package(OpenSSL)
+	if(OPENSSL_FOUND)
+		message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")
+	else()
+		message(WARNING "${ColorRed}OpenSSL not found, NetRocks will not have FTPS protocol support. Install libssl-dev if you want FTPS protocol available in NetRocks.${ColorNormal}")
+	endif(OPENSSL_FOUND)
+
+	find_package(LibSSH 0.5.0)
+	if(LIBSSH_FOUND)
+		message(STATUS "libssh found -> enjoy SFTP support in NetRocks")
+	else()
+		message(WARNING "${ColorRed}libssh not found, NetRocks will not have SFTP protocol support. Install libssh-dev if you want SFTP protocol available in NetRocks.${ColorNormal}")
+	endif(LIBSSH_FOUND)
+
+	find_package(Libsmbclient)
+	if(LIBSMBCLIENT_FOUND)
+		message(STATUS "libsmbclient found -> enjoy SMB support in NetRocks")
+	else()
+		message(WARNING "${ColorRed}libsmbclient not found, NetRocks will not have SMB protocol support. Install libsmbclient-dev if you want SMB protocol available in NetRocks.${ColorNormal}")
+	endif(LIBSMBCLIENT_FOUND)
+
+	find_package(LibNfs)
+	if(LIBNFS_FOUND)
+		message(STATUS "libnfs found -> enjoy NFS support in NetRocks")
+	else()
+		message(WARNING "${ColorRed}libnfs not found, NetRocks will not have NFS protocol support. Install libnfs-dev if you want NFS protocol available in NetRocks.${ColorNormal}")
+	endif(LIBNFS_FOUND)
+
+	find_package(LibNEON)
+	if(LIBNEON_FOUND)
+		message(STATUS "libneon found -> enjoy WebDav support in NetRocks")
+	else()
+		message(WARNING "${ColorRed}libneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${ColorNormal}")
+	endif(LIBNEON_FOUND)
+
+	add_subdirectory (NetRocks)
+else()
+	message(STATUS "${ColorRed}NETROCKS plugin disabled due to NETROCKS=${NETROCKS}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/NetRocks/plug/NetRocks.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (DEFINED PYTHON AND PYTHON)
 	find_package(PythonLibs 3.0)
 
 	if(PYTHONLIBS_FOUND)
 		find_program (VIRTUALENV NAMES virtualenv)
 		find_program (PYTHON3 NAMES python3)
 		if(VIRTUALENV AND PYTHON3)
-			message(STATUS "Python plugin enabled")
+			message(STATUS "PYTHON plugin enabled")
 			add_subdirectory (python)
 		else()
-			message(WARNING "${Esc}[1;31mvirtualenv or python3 not found, python plugin will not be built${Esc}[39;22m")
+			message(WARNING "${ColorRed}PYTHON plugin disabled due to virtualenv or python3 not found${ColorNormal}")
 		endif ()
 	else()
-		message(WARNING "${Esc}[1;31mPython libraries not found, python plugin will not be built${Esc}[39;22m")
-	endif ()
+		message(WARNING "${ColorRed}PYTHON plugin disabled due to Python libraries not found${ColorNormal}")
+	endif()
 else()
-	message(WARNING "${Esc}[1;31mPython plugin not enabled by default, use -DPYTHON=yes if you really want it${Esc}[39;22m")
-endif ()
+	message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED SIMPLEINDENT OR SIMPLEINDENT)
+	message(STATUS "SIMPLEINDENT plugin enabled")
+	add_subdirectory (SimpleIndent)
+else()
+	message(STATUS "${ColorRed}SIMPLEINDENT plugin disabled due to SIMPLEINDENT=${SIMPLEINDENT}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/SimpleIndent/plug/SimpleIndent.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+if (NOT DEFINED TMPPANEL OR TMPPANEL)
+	message(STATUS "TMPPANEL plugin enabled")
+	add_subdirectory (tmppanel)
+else()
+	message(STATUS "${ColorRed}TMPPANEL plugin disabled due to TMPPANEL=${TMPPANEL}${ColorNormal}")
+	install(CODE "
+		execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/tmppanel/plug/tmppanel.far-plug-wide)
+		" COMPONENT system)
+endif()
+
+##############################
+# common install directives
+
+add_subdirectory (packaging)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(FIXUP_SCRIPT packaging/osx/FixupBundle.cmake)
@@ -319,16 +460,3 @@ install(CODE "
 	execute_process(COMMAND ln -sf ../../bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
 	execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
 	" COMPONENT system)
-
-if (NOT FARFTP)
-install(CODE "
-	execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/farftp/plug/farftp.far-plug-mb && echo Removed existing farftp plugin)
-	" COMPONENT system)
-endif()
-
-
-if (NOT PYTHON)
-install(CODE "
-	execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide && echo Removed existing python plugin)
-	" COMPONENT system)
-endif()

@@ -126,6 +126,8 @@ To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes
 
+There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
+
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
 ```

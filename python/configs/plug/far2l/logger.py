@@ -1,23 +1,30 @@
 import os
 import sys
+import configparser
+import logging
+import logging.config
 
-class Logger:
-    def __init__(self):
-        self.stdout = sys.stdout
-        self.stderr = sys.stderr
-        self.fp = open('/tmp/far2.py.log-py','at')
-    def write(self, msg):
-        self.fp.write(msg)
-        self.fp.flush()
-    def flush(self):
-        self.fp.flush()
-    def close(self):
-        self.fp.close()
-        sys.stdout = self.stdout
-        sys.stderr = self.stderr
+logging.basicConfig(level=logging.INFO)
 
-sys.stderr = sys.stdout = Logger()
+def setup():
+    fname = __file__.replace('.py','.ini')
+    with open(fname, "rt") as fp:
+        ini = configparser.ConfigParser()
+        ini.read_file(fp)
+        logging.config.fileConfig(ini)
 
-print('%s start' % ('*'*20))
-print('sys.path=', sys.path)
-print('cwd=', os.getcwd())
+setup()
+
+log = logging.getLogger(__name__)
+log.debug('%s start' % ('*'*20))
+log.debug('sys.path={0}'.format(sys.path))
+log.debug('cwd={0}'.format(os.getcwd()))
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+sys.excepthook = handle_exception

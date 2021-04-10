@@ -1,0 +1,20 @@
+Jak skorzystać z VS Code ?
+
+Wtyczka udebug.py pozwala na włączenie debuggera wspomagającego śledzenie programów w języku Python dostępnego w VS Code.
+Zainstaluj VS Code i jego rozszerzenie "Python" (Microsoft).
+
+W FAR2L załaduj wtyczkę udebug komendą "py:load udebug", następnie możesz skonfigurować połączenie do VS Code.
+W dialogu konfiguracji wtyczki "Python udebug" (klawisze F11 lub F9+o+u) podaj:
+- katalog (default: /tmp) w którym debugpy ma logować swoje informacje
+- adres lub nazwę komputera na którym pracujesz (default: localhost)
+- port na którym debugpy będzie słuchał (default: 5678)
+
+Uruchom VS Code, i te same informacje wypełnij w launch.json (host, port). W pliku settings.json możesz podać dodatkowe informacje.
+
+Pora na aktywowanie połączenia pomiędzy pythonem a VS Code, czyli:
+- uruchom debugpy komendą py:debug - FAR2L się "zawiesi" i będzie czekał na połączenie z VS Code.
+- w VS Code uruchom konfigurację "Attach"
+
+Teraz w dowolnym momencie możesz włączyć debuggera, komendami:
+- py:breakpoint w FAR2L lub
+- import debugpy; debugpy.breakpoint() # z dwowolnej wtyczki pythona

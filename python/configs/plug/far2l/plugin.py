@@ -3,8 +3,10 @@ import logging
 log = logging.getLogger(__name__)
 
 class PluginBase:
-    conf = False
-    area = None
+    label = None
+    #openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
+    openFrom = []
+    Configure = None
 
     def __init__(self, parent, info, ffi, ffic):
         self.parent = parent

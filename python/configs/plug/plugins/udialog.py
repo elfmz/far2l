@@ -6,12 +6,12 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(PluginBase):
-    label = "Python Command"
-    area  = "Plugins"
+    label = "Python udialog"
+    openFrom = ["PLUGINSMENU"]
 
     @staticmethod
     def HandleCommandLine(line):
-        return True
+        return line.split(' ', 1)[0] in ('dialog', 'exec')
 
     def CommandLine(self, line):
         if line == 'dialog':
@@ -38,6 +38,7 @@ class Plugin(PluginBase):
             self.info.DialogFree(hDlg)
             log.debug('end dialog')
         else:
+            line = line.split(' ', 1)[1]
             exec(line, globals(), locals())
 
     def OpenPlugin(self, OpenFrom):

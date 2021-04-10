@@ -4,18 +4,13 @@ import sys
 import types
 import logging
 import cffi
-import debugpy
 from .plugin import PluginBase
 
 sys.path.insert(1, os.path.expanduser('~/.config/far2l/plugins/python'))
 log = logging.getLogger(__name__)
-debugpy.log_to("/tmp")
-# in vs code debuger select attach, port = 5678
-# commands in shell:
-#     py:debug
+# commands in shell window:
 #     py:load <python modulename>
 #     py:unload <registered python module name>
-debugpy.listen(("localhost", 5678))
 
 
 def installffi(ffi):
@@ -39,30 +34,9 @@ class PluginManager:
         self.openplugins = {}
         self.plugins = []
 
-    def debugger(self):
-        debugpy.wait_for_client()
-
     def SetStartupInfo(self, Info):
         log.debug("SetStartupInfo({0:08X})".format(Info))
         self.Info = ffi.cast("struct PluginStartupInfo *", Info)
-
-    def area2where(self, area):
-        cvt = {
-            "disk": ffic.OPEN_DISKMENU,
-            "plugins": ffic.OPEN_PLUGINSMENU,
-            "find": ffic.OPEN_FINDLIST,
-            "shortcut": ffic.OPEN_SHORTCUT,
-            "shell": ffic.OPEN_COMMANDLINE,
-            "editor": ffic.OPEN_EDITOR,
-            "viewer": ffic.OPEN_VIEWER,
-            "panel": ffic.OPEN_FILEPANEL,
-            "dialog": ffic.OPEN_DIALOG,
-            "analyse": ffic.OPEN_ANALYSE,
-        }
-        where = 0
-        for area in area.split():
-            where |= 1 << cvt[area.lower()]
-        return where
 
     def pluginRemove(self, name):
         log.debug("remove plugin: {0}".format(name))
@@ -70,6 +44,8 @@ class PluginManager:
             if self.plugins[i].Plugin.name == name:
                 del self.plugins[i]
                 del sys.modules[name]
+                for i in range(len(self.plugins)):
+                    self.plugins[i].Plugin.number = i
                 return
         log.error("install plugin: {0} - not installed".format(name))
 
@@ -86,6 +62,8 @@ class PluginManager:
             # inject plugin name
             cls.name = name
             self.plugins.append(plugin)
+            for i in range(len(self.plugins)):
+                self.plugins[i].Plugin.number = i
         else:
             log.error("install plugin: {0} - not a far2l python plugin".format(name))
             del sys.modules[name]
@@ -107,6 +85,28 @@ class PluginManager:
             log.error("unhandled pluginGet{0}".format(hPlugin))
         return v
 
+    def pluginGetFrom(self, OpenFrom, Item):
+        id2name = {
+            ffic.OPEN_DISKMENU: "DISKMENU",
+            ffic.OPEN_PLUGINSMENU: "PLUGINSMENU",
+            ffic.OPEN_FINDLIST: "FINDLIST",
+            ffic.OPEN_SHORTCUT: "SHORTCUT",
+            ffic.OPEN_COMMANDLINE: "COMMANDLINE",
+            ffic.OPEN_EDITOR: "EDITOR",
+            ffic.OPEN_VIEWER: "VIEWER",
+            ffic.OPEN_FILEPANEL: "FILEPANEL",
+        }
+        name = id2name[OpenFrom]
+        log.debug("pluginGetFrom({0}, {1})".format(OpenFrom, Item))
+        for plugin in self.plugins:
+            openFrom = plugin.Plugin.openFrom
+            log.debug("pluginGetFrom({0}, {1} : {2})".format(name in openFrom, Item, plugin.Plugin.name))
+            if name in openFrom:
+                if not Item:
+                    return plugin
+                Item -= 1
+        return None
+
     def GetPluginInfo(self, Info):
         # log.debug("GetPluginInfo({0:08X})".format(Info))
         Info = ffi.cast("struct PluginInfo *", Info)
@@ -114,28 +114,14 @@ class PluginManager:
         self._MenuItems = []
         self._ConfigItems = []
         log.debug("GetPluginInfo")
-        for plugin in sorted(self.plugins, key=lambda plugin: plugin.Plugin.label):
-            where = self.area2where(plugin.Plugin.area)
-            log.debug("{0} - {1:08X}".format(plugin.Plugin.label, where))
-            if where & 1 << ffic.OPEN_DISKMENU:
+        for plugin in self.plugins:
+            openFrom = plugin.Plugin.openFrom
+            if "DISKMENU" in openFrom:
                 self._DiskItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            if plugin.Plugin.conf:
+            if "PLUGINSMENU" in openFrom:
+                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
+            if plugin.Plugin.Configure is not None:
                 self._ConfigItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            # find
-            # shortcut
-            if where & 1 << ffic.OPEN_PLUGINSMENU:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            elif where & 1 << ffic.OPEN_COMMANDLINE:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            elif where & 1 << ffic.OPEN_EDITOR:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            elif where & 1 << ffic.OPEN_VIEWER:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            elif where & 1 << ffic.OPEN_FILEPANEL:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            elif where & 1 << ffic.OPEN_DIALOG:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-            # analyse
         self.DiskItems = ffi.new("wchar_t *[]", self._DiskItems)
         self.MenuItems = ffi.new("wchar_t *[]", self._MenuItems)
         self.ConfigItems = ffi.new("wchar_t *[]", self._ConfigItems)
@@ -162,6 +148,13 @@ class PluginManager:
 
     def Configure(self, ItemNumber):
         log.debug("Configure({0})".format(ItemNumber))
+        for plugin in self.plugins:
+            if plugin.Plugin.Configure is not None:
+                if ItemNumber == 0:
+                    plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+                    plugin.Configure()
+                    return
+                ItemNumber -= 1
 
     def DeleteFiles(self, hPlugin, PanelItem, ItemsNumber, OpMode):
         log.debug("DeleteFiles({0}, {1}, {2})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
@@ -218,9 +211,7 @@ class PluginManager:
             line = ffi.string(ffi.cast("wchar_t *", Item))
             log.debug("cmd:{0}".format(line))
             linesplit = line.split(' ')
-            if linesplit[0] == "debug":
-                self.debugger()
-            elif linesplit[0] == "unload":
+            if linesplit[0] == "unload":
                 if len(linesplit) > 1:
                     self.pluginRemove(linesplit[1])
                 else:
@@ -232,57 +223,21 @@ class PluginManager:
                     log.debug("missing plugin name in py:load <plugin name>")
             else:
                 for plugin in self.plugins:
-                    log.debug("{0} | {1}".format(plugin.Plugin.label, plugin.Plugin.area))
+                    log.debug("{0} | {1}".format(plugin.Plugin.name, plugin.Plugin.label))
                     if plugin.Plugin.HandleCommandLine(line) is True:
                         plugin = plugin.Plugin(self, self.Info, ffi, ffic)
                         plugin.CommandLine(line)
                         break
             return
-        this = None
-        no = 0
-        for plugin in sorted(self.plugins, key=lambda plugin: plugin.Plugin.label):
-            where = self.area2where(plugin.Plugin.area)
-            log.debug(
-                "where(1, {0} | {1} | {2:04X} where={3:04X} mask={4:04X} no={5} Item={6}".format(
-                plugin.Plugin.label,
-                plugin.Plugin.area,
-                (1 << OpenFrom),
-                where,
-                (1 << OpenFrom) & where,
-                no,
-                Item,
-            ))
-            if (1 << OpenFrom) & where:
-                if no == Item:
-                    this = plugin
-                    break
-                no += 1
-        if this is None:
-            for plugin in sorted(self.plugins, key=lambda plugin: plugin.Plugin.label):
-                where = self.area2where(plugin.Plugin.area)
-                log.debug(
-                    "where(2, {0} | {1} | {2:04X} where={3:04X} mask={4:04X} no={5} Item={6}".format(
-                    plugin.Plugin.label,
-                    plugin.Plugin.area,
-                    (1 << OpenFrom),
-                    where,
-                    (1 << OpenFrom) & where,
-                    no,
-                    Item,
-                ))
-                if where & 1 << ffic.OPEN_PLUGINSMENU:
-                    if no == Item:
-                        this = plugin
-                        break
-                    no += 1
-        if not this:
-            log.debug("unknown")
-            return
-        plugin = this.Plugin(self, self.Info, ffi, ffic)
-        rc = plugin.OpenPlugin(OpenFrom)
-        if rc not in (-1, None):
-            rc = id(plugin)
-            self.openplugins[rc] = plugin
+        plugin = self.pluginGetFrom(OpenFrom, Item)
+        if plugin is not None:
+            plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+            rc = plugin.OpenPlugin(OpenFrom)
+            if rc not in (-1, None):
+                rc = id(plugin)
+                self.openplugins[rc] = plugin
+        else:
+            rc = None
         return rc
 
     def ProcessDialogEvent(self, Event, Param):

@@ -1,0 +1,21 @@
+How to use VS Code?
+
+The udebug.py plugin allows you to enable VS Code's Python debugger.
+Install VS Code and its "Python" extension (Microsoft).
+
+In FAR2L, load the udebug plugin with the command "py:load udebug", then you can configure the connection to VS Code.
+
+In the "Python udebug" plugin configuration dialog (F11 or F9+o+u) enter:
+- the directory (default: /tmp) where debugpy should log its informations
+- address or name of the computer you work on (default: localhost)
+- the port on which debugpy will listen (default: 5678)
+
+Run VS Code, and fill in the same information in launch.json (host, port). You can provide additional information in the settings.json file.
+
+It's time to activate the connection between python and VS Code, that is:
+- run debugpy with "py:debug" command - FAR2L will "hang" and wait for VS Code connection.
+- in VS Code run "Attach" configuration
+
+Now you can start the debugger at any time with the following commands:
+- "py:breakpoint" in FAR2L or
+- import debugpy; debugpy.breakpoint () # from any python plugin

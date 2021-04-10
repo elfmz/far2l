@@ -1,0 +1,24 @@
+A. Wtyczka python
+Wtyczka python posiada tylko jeden cel - ułatwienie pisania skryptów rozszerzających możliwości programu FAR2L.
+
+B. Logowanie i konfiguracja loggera
+W katalogu Plugins/python/plug/far2l jest plik logger.ini, możesz w nim poustawiać własne preferencje logowanych informacji.
+Domyślnie log jest zapisywany do pliku /tmp/far2l-py.
+
+C. Podstawy
+Pliki *.py z tego katalogu powinny być wkopiowane do katalogu:
+~/.config/far2l/plugins/python - domyślnego katalogu z wtyczkami pythona, z którego można je łatwo aktywować.
+
+a) zaladowanie wtyczki odbywa się komendą "py:load nazwa-pliku" na przykład py:load ucharmap
+b) odładowanie wtyczki odbywa się komendą "py:unload nazwa-pliku" na przykład py:unload ucharmap
+
+D. Przykłady
+a) ucharmap.py - przykładowa wtyczka pokazująca część zestawu znakow UTF-8
+    F11 + "Python Character Map" wyświetli dialog
+    wybranie OK lub naciśnięcie Enter skopiuje podświetlony znak do schowka
+b) udialog.py - wtyczka z dwoma przykładami, dialog i rozszerzenie wiersza poleceń o komendy "py:dialog" oraz "py:exec polecenia.pythona.do.wykonania"
+    F11 + "Python udialog" - wyświetli pierwszy dialog
+    py:dialog  - wyświetli druki dialog
+    py:exec ...- wykona pythonową komendę poprzez exec
+c) upanel.py - jak stworzyć prostą wtyczkę VFS (virtual file system) dostepną z Disk Menu (Python upanel) programu FAR2L
+d) udebug.py - jak debuggować wtyczki ? - zobacz read-udebug-en.txt lub read-udebug-pl.txt

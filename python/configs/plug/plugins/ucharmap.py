@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class Plugin(PluginBase):
     label = "Python Character Map"
-    area  = "Shell Editor Viewer Plugins"
+    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
     def Rebuild(self, hDlg):
         self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)

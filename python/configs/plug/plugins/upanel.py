@@ -18,8 +18,8 @@ class Screen:
         self.parent.info.RestoreScreen(self.hScreen)
 
 class Plugin(PluginVFS):
-    label = "Python panel"
-    area  = "Disk"
+    label = "Python upanel"
+    openFrom = ["DISKMENU"]
 
     def OpenPlugin(self, OpenFrom):
         self.Root = "PythonPanel"

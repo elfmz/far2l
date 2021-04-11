@@ -210,7 +210,8 @@ class PluginManager:
         if OpenFrom == ffic.OPEN_COMMANDLINE:
             line = ffi.string(ffi.cast("wchar_t *", Item))
             log.debug("cmd:{0}".format(line))
-            linesplit = line.split(' ')
+            line = line.lstrip()
+            linesplit = line.split(' ', 1)
             if linesplit[0] == "unload":
                 if len(linesplit) > 1:
                     self.pluginRemove(linesplit[1])
@@ -224,7 +225,7 @@ class PluginManager:
             else:
                 for plugin in self.plugins:
                     log.debug("{0} | {1}".format(plugin.Plugin.name, plugin.Plugin.label))
-                    if plugin.Plugin.HandleCommandLine(line) is True:
+                    if plugin.Plugin.HandleCommandLine(linesplit[0]) is True:
                         plugin = plugin.Plugin(self, self.Info, ffi, ffic)
                         plugin.CommandLine(line)
                         break

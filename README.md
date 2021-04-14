@@ -80,11 +80,11 @@ ninja -j$(nproc --all)
 
  * With GUI/TTY backends:
 ```sh
-brew install --HEAD yurikoles/yurikoles/far2l --with-wxmac
+brew install --HEAD yurikoles/yurikoles/far2l
 ```
  * With TTY backend only:
 ```sh
-brew install --HEAD yurikoles/yurikoles/far2l
+brew install --HEAD yurikoles/yurikoles/far2l --without-wxmac
 ```
  * Additionally you can enable python support by adding `--with-python@3.9`
 

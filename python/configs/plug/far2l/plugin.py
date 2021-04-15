@@ -3,10 +3,14 @@ import logging
 log = logging.getLogger(__name__)
 
 class PluginBase:
-    label = None
+    # private
+    name = ""
+    number = 0
+    # public
+    label = ""
     #openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
     openFrom = []
-    Configure = None
+    Configure = None # override with method when configuration dialog is needed
 
     def __init__(self, parent, info, ffi, ffic):
         self.parent = parent

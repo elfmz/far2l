@@ -11,7 +11,7 @@ class Plugin(PluginBase):
 
     @staticmethod
     def HandleCommandLine(line):
-        return line.split(' ', 1)[0] in ('dialog', 'exec')
+        return line in ('dialog', 'exec')
 
     def CommandLine(self, line):
         if line == 'dialog':

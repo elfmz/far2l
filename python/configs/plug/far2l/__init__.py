@@ -1,4 +1,3 @@
-from . import logger
 from .pluginmanager import PluginManager
 
 

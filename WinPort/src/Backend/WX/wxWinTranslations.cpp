@@ -9,6 +9,8 @@
 
 #if defined(wxHAS_RAW_KEY_CODES)
 # ifdef __WXMAC__
+#  include "Mac/touchbar.h"
+
 /*
   kVK_Command                   = 0x37,
   kVK_Shift                     = 0x38,
@@ -20,6 +22,7 @@
   kVK_RightControl              = 0x3E,
   kVK_Function                  = 0x3F,
 */
+#  define RAW_FUNCTION 0x3F
 #  define RAW_ALTGR    0x3D
 // RAW_RCTRL is unneeded for macos cuz under macos VK_CONTROL
 // represented by Command keys while VK_RCONTROL - by Control keys
@@ -285,7 +288,7 @@ static int wxKeyCode2WinKeyCode(int code)
 	case WXK_NUMPAD_BEGIN: return VK_CLEAR;
 	case WXK_NUMPAD_INSERT: return VK_INSERT;
 	case WXK_NUMPAD_DELETE: return VK_DELETE;
-	case WXK_NUMPAD_EQUAL: return VK_ADD;
+	case WXK_NUMPAD_EQUAL: return VK_OEM_NEC_EQUAL;
 	case WXK_NUMPAD_MULTIPLY: return VK_MULTIPLY;
 	case WXK_NUMPAD_ADD: return VK_ADD;
 	case WXK_NUMPAD_SEPARATOR: return VK_SEPARATOR;
@@ -340,6 +343,15 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 	if (event.GetKeyCode() == WXK_ALT && event.GetRawKeyCode() == RAW_ALTGR) {
 		_composing = true;
 	}
+
+	if (event.GetRawKeyCode() == RAW_FUNCTION) {
+		Touchbar_SetAlternate(true);
+
+	} else if (event.GetKeyCode() != WXK_ALT
+			&& event.GetKeyCode() != WXK_CONTROL
+			&& event.GetKeyCode() != WXK_SHIFT) {
+		Touchbar_SetAlternate(false);
+	}
 #endif
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
@@ -352,6 +364,13 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 {
 #if defined(wxHAS_RAW_KEY_CODES) && defined(__WXMAC__)
+	if (event.GetRawKeyCode() == RAW_FUNCTION
+		|| ( event.GetKeyCode() != WXK_ALT
+			&& event.GetKeyCode() != WXK_CONTROL
+			&& event.GetKeyCode() != WXK_SHIFT)) {
+		Touchbar_SetAlternate(false);
+	}
+
 	if (event.GetKeyCode() == WXK_ALT) {
 		_composing = false;
 	}

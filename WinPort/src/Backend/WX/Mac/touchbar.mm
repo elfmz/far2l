@@ -1,11 +1,13 @@
 #import <Cocoa/Cocoa.h>
 #include "touchbar.h"
+#include <string>
 
 #ifndef CONSOLE_FKEYS_COUNT
 # define CONSOLE_FKEYS_COUNT 12
 #endif
 
 static ITouchbarListener *s_tb_listener = nullptr;
+static bool s_tb_alternate = false;
 
 static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touchbar.Customization";
 
@@ -98,10 +100,10 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 - (IBAction) actionKey : (id) sender  {
 	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([sender isEqual:buttons[i]])
 	{
-		fprintf(stderr, "actionKey %d\n", i);
+		fprintf(stderr, "actionKey %s%d\n", s_tb_alternate ? "alternate_" : "", i);
 		if (s_tb_listener)
 		{
-			s_tb_listener->OnTouchbarKey(i);
+			s_tb_listener->OnTouchbarKey(s_tb_alternate, i);
 		}
 		return;
 	}
@@ -145,6 +147,42 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 @end
 
 static Far2lTouchbarDelegate *g_tb_delegate = nullptr;
+static std::string s_titles_normal[CONSOLE_FKEYS_COUNT];
+static const char *s_titles_alternate[CONSOLE_FKEYS_COUNT] {
+	"", "Ins", "Del", "",  "+", "-", "*", "/",  "Home", "End", "PageUp", "PageDown"
+};
+
+static void Touchbar_ApplyTitlesNormal()
+{
+	for (size_t i = 0; i < CONSOLE_FKEYS_COUNT; ++i) {
+		const char *title = s_titles_normal[i].c_str();
+		if (*title) {
+			++title;
+
+		} else {
+			title = nullptr;
+		}
+		[g_tb_delegate setButton:i Title:title];
+	}
+}
+
+static void Touchbar_ApplyTitlesAlternate()
+{
+	for (size_t i = 0; i < CONSOLE_FKEYS_COUNT; ++i) {
+		[g_tb_delegate setButton:i Title:s_titles_alternate[i]];
+	}
+}
+
+static void Touchbar_ApplyTitles()
+{
+	if (s_tb_alternate) {
+		Touchbar_ApplyTitlesAlternate();
+	} else {
+		Touchbar_ApplyTitlesNormal();
+	}
+}
+
+////
 
 void Touchbar_Register(ITouchbarListener *listener)
 {
@@ -164,9 +202,8 @@ void Touchbar_Register(ITouchbarListener *listener)
 			{
 				g_tb_delegate.nextResponder = app.nextResponder;
 				app.nextResponder = g_tb_delegate;
-
 				// set initial buttons titles
-				Touchbar_SetTitles(nullptr);
+				Touchbar_ApplyTitles();
 			}
 		}
 	}
@@ -179,14 +216,33 @@ void Touchbar_Deregister()
 
 bool Touchbar_SetTitles(const char **titles)
 {
-	if (!g_tb_delegate)
-		return false;
+	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if (titles && titles[i]) {
+		s_titles_normal[i] = ' ';
+		s_titles_normal[i]+= titles[i];
 
-	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i)
-	{
-		[g_tb_delegate setButton:i Title:(titles ? titles[i] : nullptr)];
+	} else {
+		s_titles_normal[i].clear();
+	}
+
+	if (!g_tb_delegate) {
+		return false;
+	}
+
+	if (!s_tb_alternate) {
+		Touchbar_ApplyTitlesNormal();
 	}
 
 	return true;
 }
 
+void Touchbar_SetAlternate(bool on)
+{
+	if (s_tb_alternate == on) {
+		return;
+	}
+
+	s_tb_alternate = on;
+	if (g_tb_delegate) {
+		Touchbar_ApplyTitles();
+	}
+}

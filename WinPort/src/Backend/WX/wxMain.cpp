@@ -253,7 +253,7 @@ public:
 	virtual ~WinPortPanel();
 	void CompleteInitialization();
 	void OnChar( wxKeyEvent& event );
-	virtual void OnTouchbarKey(int index);
+	virtual void OnTouchbarKey(bool alternate, int index);
 
 protected: 
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
@@ -619,13 +619,32 @@ bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
 	}
 }
 
-void WinPortPanel::OnTouchbarKey(int index)
+void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 
-	ir.Event.KeyEvent.wVirtualKeyCode = VK_F1 + index;
+	if (!alternate) {
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_F1 + index;
+
+	} else switch (index) { // "", "Ins", "Del", "",  "+", "-", "*", "/",  "Home", "End", "PageUp", "PageDown"
+		case 0: return;
+		case 1: ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
+		case 2: ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;
+		case 3: return;
+
+		case 4: ir.Event.KeyEvent.wVirtualKeyCode = VK_ADD; break;
+		case 5: ir.Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
+		case 6: ir.Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY; break;
+		case 7: ir.Event.KeyEvent.wVirtualKeyCode = VK_DIVIDE; break;
+
+		case 8: ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME; break;
+		case 9: ir.Event.KeyEvent.wVirtualKeyCode = VK_END; break;
+		case 10: ir.Event.KeyEvent.wVirtualKeyCode = VK_PRIOR; break;
+		case 11: ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT; break;
+	}
+
 	if (wxGetKeyState(WXK_NUMLOCK)) ir.Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
 	if (wxGetKeyState(WXK_SCROLL)) ir.Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
 	if (wxGetKeyState(WXK_CAPITAL)) ir.Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;

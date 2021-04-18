@@ -145,7 +145,6 @@ XPORT(void, SetStartupInfo)(const struct PluginStartupInfo *Info)
     std::string pp( gPluginPath.begin(), gPluginPath.end() );;
     std::string syspath = "import sys";
     syspath += "\nsys.path.insert(1, '" + pp + "')";
-    syspath += "\nsys.path.insert(1, '~/.config/far2l/python')";
     flog(_T("PyRun_SimpleString=%s\n"), syspath.c_str());
     PyRun_SimpleString(syspath.c_str());
 

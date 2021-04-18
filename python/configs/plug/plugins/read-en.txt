@@ -1,0 +1,24 @@
+A. Python plugin
+The python plugin has only one purpose - to facilitate the writing of scripts that extend the capabilities of FAR2L.
+
+B. Logging and logger configuration
+There is a logger.ini file in the Plugins/python/plug/far2l directory, you can set your own log information preferences there.
+By default, the log is saved to the file /tmp/far2l-py.
+
+C. Fundamentals
+*.py files from this directory should be copied to the directory:
+~/.config/far2l/plugins/python - The default directory for python plugins from which they can be easily activated.
+
+a) the plugins are loaded with the command "py:load filename" for example py:load ucharmap
+b) unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
+
+D. Examples
+a) ucharmap.py - an example plugin showing part of the UTF-8 character set
+    F11 + "Python Character Map" - display its dialog
+    after pressing Enter/OK selected character is coppied into clipboard
+b) udialog.py - plugin with two examples, dialog and command line extensions "py:dialog" and "py:exec python.script.goes.here"
+    F11 + "Python udialog" - will display the first dialog
+    py:dialog - will display a second dialog with one input element
+    py:exec ...- will execute the python exec command
+c) upanel.py - how to create a simple VFS (virtual file system) - plugin accessible from the Disk Menu (Python upanel) of FAR2L
+d) udebug.py - how to debug plugins? - see read-udebug-en.txt or read-udebug-pl.txt

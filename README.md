@@ -80,11 +80,11 @@ ninja -j$(nproc --all)
 
  * With GUI/TTY backends:
 ```sh
-brew install --HEAD yurikoles/yurikoles/far2l --with-wxmac
+brew install --HEAD yurikoles/yurikoles/far2l
 ```
  * With TTY backend only:
 ```sh
-brew install --HEAD yurikoles/yurikoles/far2l
+brew install --HEAD yurikoles/yurikoles/far2l --without-wxmac
 ```
  * Additionally you can enable python support by adding `--with-python@3.9`
 
@@ -125,6 +125,8 @@ To build without WX backend (console version only): change -DUSEWX=yes to -DUSEW
 To save space by exluding support of East Asian codepages set: add -DEACP=no
 
 To build with Python plugin: add argument -DPYTHON=yes
+
+There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
 
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:

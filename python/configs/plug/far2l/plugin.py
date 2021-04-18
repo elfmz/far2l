@@ -1,7 +1,16 @@
-class PluginBase:
+import logging
 
-    conf = False
-    area = None
+log = logging.getLogger(__name__)
+
+class PluginBase:
+    # private
+    name = ""
+    number = 0
+    # public
+    label = ""
+    #openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
+    openFrom = []
+    Configure = None # override with method when configuration dialog is needed
 
     def __init__(self, parent, info, ffi, ffic):
         self.parent = parent
@@ -16,95 +25,87 @@ class PluginBase:
     def f2s(self, s):
         return self.ffi.string(self.ffi.cast("wchar_t *", s))
 
-    def HandleCommandLine(self, line):
-        print("Plugin.HandleCommandLine(", line, ")")
+    @staticmethod
+    def HandleCommandLine(line):
+        log.debug("Plugin.HandleCommandLine({0})".format(line))
+        return False
 
     def OpenPlugin(self, OpenFrom):
-        print("Plugin.OpenPlugin(", OpenFrom, ")")
+        log.debug("Plugin.OpenPlugin({0})".format(OpenFrom))
 
     def Close(self):
-        print("Plugin.Close()")
+        log.debug("Plugin.Close()")
 
 
 class PluginVFS(PluginBase):
 
     def GetOpenPluginInfo(self, OpenInfo):
-        print("VFS.GetOpenPluginInfo(", OpenInfo, ")")
+        log.debug("VFS.GetOpenPluginInfo({0})".format(OpenInfo))
 
     def FreeFindData(self, PanelItem, ItemsNumber):
-        print("VFS.FreeFindData(", PanelItem, ",", ItemsNumber, ")")
+        log.debug("VFS.FreeFindData({0}, {1})".format(PanelItem, ItemsNumber))
 
     def FreeVirtualFindData(self, PanelItem, ItemsNumber):
-        print("VFS.FreeVirtualFindData(", PanelItem, ",", ItemsNumber, ")")
+        log.debug("VFS.FreeVirtualFindData({0}, {1})".format(PanelItem, ItemsNumber))
 
     def Compare(self, PanelItem1, PanelItem2, Mode):
-        print("VFS.Compare(", PanelItem1, ",", PanelItem2, ",", Mode, ")")
+        log.debug("VFS.Compare({0}, {1}, {2})".format(PanelItem1, PanelItem2, Mode))
         return -2
 
     def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
-        print("VFS.DeleteFiles(", PanelItem, ",", ItemsNumber, ",", OpMode, ")")
+        log.debug("VFS.DeleteFiles({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
         return 0
 
     def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
-        print(
-            "VFS.GetFiles(",
+        log.debug("VFS.GetFiles({0}, {1}, {2}, {3}, {4}".format(
             PanelItem,
-            ",",
             ItemsNumber,
-            ",",
             Move,
-            ",",
             DestPath,
-            ",",
             OpMode,
-            ")",
+            )
         )
         return 0
 
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
-        print("VFS.GetFindData(", PanelItem, ",", ItemsNumber, ",", OpMode, ")")
+        log.debug("VFS.GetFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
         return 0
 
     def GetVirtualFindData(self, PanelItem, ItemsNumber, Path):
-        print("VFS.GetVirtualFindData(", PanelItem, ",", ItemsNumber, ",", Path, ")")
+        log.debug("VFS.GetVirtualFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, Path))
         return 0
 
-    def MakeDirectory(self, PanelItem, Name, OpMode):
-        print("VFS.GetMakeDirectoryFindData(", PanelItem, ",", Name, ",", OpMode, ")")
+    def MakeDirectory(self, Name, OpMode):
+        log.debug("VFS.GetMakeDirectoryFindData({0}, {1})".format(Name, OpMode))
         return 0
 
     def ProcessEvent(self, Event, Param):
-        print("VFS.ProcessEvent(", Event, ",", Param, ")")
+        log.debug("VFS.ProcessEvent({0}, {1})".format(Event, Param))
         return 0
 
     def ProcessHostFile(self, PanelItem, ItemsNumber, OpMode):
-        print("VFS.ProcessHostFile(", PanelItem, ",", ItemsNumber, ",", OpMode, ")")
+        log.debug("VFS.ProcessHostFile({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
         return 0
 
     def ProcessKey(self, Key, ControlState):
-        print("VFS.ProcessKey(", Key, ",", ControlState, ")")
+        log.debug("VFS.ProcessKey({0}, {1})".format(Key, ControlState))
         return 0
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
-        print(
-            "VFS.PutFiles(",
+        log.debug("VFS.PutFiles({0}, {1}, {2}, {3}, {4}".format(
             PanelItem,
-            ",",
             ItemsNumber,
-            ",",
             Move,
-            ",",
             SrcPath,
-            ",",
             OpMode,
-            ")",
+            )
         )
         return 0
 
     def SetDirectory(self, Dir, OpMode):
-        print("VFS.SetDirectory(", Dir, ",", OpMode, ")")
+        log.debug("VFS.SetDirectory({0}, {1})".format(Dir, OpMode))
         return 0
 
     def SetFindList(self, PanelItem, ItemsNumber):
-        print("VFS.SetFindList(", PanelItem, ",", ItemsNumber, ")")
+        log.debug("VFS.SetFindList({0}, {1})".format(PanelItem, ItemsNumber))
         return 0

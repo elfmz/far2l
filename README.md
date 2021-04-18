@@ -98,7 +98,7 @@ cd far2l
 ```
  * Install needed dependencies with MacPorts:
 ``` sh
-sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt spdlog
+sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt spdlog uchardet
 ```
  * OR if you prefer to use brew packages, then:
 ```sh

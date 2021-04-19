@@ -349,6 +349,7 @@ void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
 
 	} else if (event.GetKeyCode() != WXK_ALT
 			&& event.GetKeyCode() != WXK_CONTROL
+			&& event.GetKeyCode() != WXK_RAW_CONTROL
 			&& event.GetKeyCode() != WXK_SHIFT) {
 		Touchbar_SetAlternate(false);
 	}
@@ -367,6 +368,7 @@ bool KeyTracker::OnKeyUp(wxKeyEvent& event)
 	if (event.GetRawKeyCode() == RAW_FUNCTION
 		|| ( event.GetKeyCode() != WXK_ALT
 			&& event.GetKeyCode() != WXK_CONTROL
+			&& event.GetKeyCode() != WXK_RAW_CONTROL
 			&& event.GetKeyCode() != WXK_SHIFT)) {
 		Touchbar_SetAlternate(false);
 	}

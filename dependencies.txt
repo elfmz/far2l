@@ -1,3 +1,4 @@
 libwxgtk3.0-gtk3-dev
 libuchardet-dev
 libspdlog-dev
+libxerces-c-dev

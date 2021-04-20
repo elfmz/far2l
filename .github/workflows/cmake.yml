@@ -41,6 +41,11 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
 
+    - name: File Tree
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: tree
+
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash

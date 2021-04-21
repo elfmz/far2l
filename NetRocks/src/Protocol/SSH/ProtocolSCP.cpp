@@ -436,7 +436,6 @@ static std::string ExtractStringTail(std::string &line)
 class SCPDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<SSHConnection> _conn;
-	struct timespec _now;
 
 	bool _finished = false;
 	SCPRemoteCommand _cmd;
@@ -495,8 +494,8 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 	}
 
 public:
-	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path, const struct timespec &now)
-		: _conn(conn), _now(now)
+	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path)
+		: _conn(conn)
 	{
 		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
 		command_line+= QuotedArg(path);
@@ -550,7 +549,7 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &
 {
 	_conn->executed_command.reset();
 
-	return std::make_shared<SCPDirectoryEnumer>(_conn, path, _now);
+	return std::make_shared<SCPDirectoryEnumer>(_conn, path);
 }
 
 class SCPFileReader : public IFileReader

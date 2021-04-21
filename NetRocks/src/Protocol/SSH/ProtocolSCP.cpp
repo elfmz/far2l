@@ -69,7 +69,7 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 {
 	StringConfig protocol_options(options);
 	_conn = std::make_shared<SSHConnection>(host, port, username, password, protocol_options);
-	clock_gettime(CLOCK_REALTIME, &_now);
+	_now.tv_sec = time(nullptr);
 }
 
 ProtocolSCP::~ProtocolSCP()

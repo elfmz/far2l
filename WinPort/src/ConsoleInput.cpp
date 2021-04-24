@@ -24,16 +24,16 @@ DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_
 	DWORD i;
 	std::unique_lock<std::mutex> lock(_mutex);
 	if (requestor_priority < CurrentPriority()) {
-fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
+		//fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
 		return 0;
-}
+	}
 
 	for (i = 0; (i < size && i < _pending.size()); ++i)
 		data[i] = _pending[i];
 
-	if (i) {
-		fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
-	}
+	//if (i) {
+	//	fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
+	//}
 
 	return i;
 }
@@ -43,7 +43,7 @@ DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int request
 	DWORD i;
 	std::unique_lock<std::mutex> lock(_mutex);
 	if (requestor_priority < CurrentPriority()) {
-fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
+		// fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
 		return 0;
 	}
 
@@ -52,8 +52,7 @@ fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_prior
 		_pending.pop_front();
 	}
 
-	fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
-
+	// fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
 	return i;
 }
 
@@ -127,12 +126,14 @@ unsigned int ConsoleInput::RaiseRequestorPriority()
 void ConsoleInput::LowerRequestorPriority(unsigned int released_priority)
 {
 	std::unique_lock<std::mutex> lock(_mutex);
-	assert(_requestor_priorities.erase(released_priority) > 0);
+	const size_t nerased = _requestor_priorities.erase(released_priority);
+	assert(nerased != 0);
 	if (!_pending.empty())
 		_non_empty.notify_all();
 
-	fprintf(stderr,"%s: released_priority=%u CurrentPriority()=%u\n",
-		__FUNCTION__, released_priority, CurrentPriority());
+	fprintf(stderr,"%s: released_priority=%u CurrentPriority()=%u nerased=%lu nremain=%lu\n",
+		__FUNCTION__, released_priority, CurrentPriority(),
+		(unsigned long)nerased, (unsigned long)_requestor_priorities.size());
 }
 
 unsigned int ConsoleInput::CurrentPriority() const

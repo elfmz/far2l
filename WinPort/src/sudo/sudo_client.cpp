@@ -182,7 +182,7 @@ namespace Sudo
 			return false;
 		}
 
-		return true;
+		return ClientInitSequence();
 	}
 
 
@@ -374,12 +374,10 @@ namespace Sudo
 				return false;
 
 			CloseClientConnection();
-			if (!OpenClientConnection())
-				return false;
 
-			if (!ClientInitSequence()) {//likely bad password or Cancel
+			if (!OpenClientConnection()) {//likely bad password or Cancel
 				thread_client_region_counter.cancelled = true;
-				return false; 
+				return false;
 			}
 
 			//assume user confirmed also modify operation with this password

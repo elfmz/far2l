@@ -2659,16 +2659,43 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		strSetDir = ExtractPathRoot(strCurDir);
 	}
 
-	if (!FarChDir(strSetDir))
+	while (!FarChDir(strSetDir))
 	{
 		if (FrameManager && FrameManager->ManagerStarted())
 		{
 			/* $ 03.11.2001 IS Укажем имя неудачного каталога */
-			Message(MSG_WARNING | MSG_ERRORTYPE, 1, MSG(MError), (dot2Present?L"..":strSetDir), MSG(MOk));
-			UpdateFlags = UPDATE_KEEP_SELECTION;
-		}
+			// if user tries to go upper dir and failed - provide way
+			// to get out to valid dir at any upper level
+			int r;
+			if (PanelMode != PLUGIN_PANEL && strSetDir == L".." && !strCurDir.IsEmpty() && strCurDir != L"/")
+			{
+				r = Message(MSG_WARNING | MSG_ERRORTYPE, 3,
+						MSG(MError), (dot2Present?L"..":strSetDir),
+							MSG(MIgnore), MSG(MHRetry), MSG(MGetOut));
+				if (r == 2)
+				{
+					strSetDir = strCurDir;
+					do
+					{
+						CutToSlash(strSetDir, true);
+					} while (!strSetDir.IsEmpty() && !FarChDir(strSetDir));
+					if (!strSetDir.IsEmpty())
+						break;
+				}
+			}
+			else
+			{
+				r = Message(MSG_WARNING | MSG_ERRORTYPE, 2,
+						MSG(MError), (dot2Present?L"..":strSetDir),
+							MSG(MIgnore), MSG(MHRetry));
+			}
 
-		SetDirectorySuccess=FALSE;
+			if (r == 1)
+				continue;
+		}
+		UpdateFlags = UPDATE_KEEP_SELECTION;
+		SetDirectorySuccess = FALSE;
+		break;
 	}
 
 	apiGetCurrentDirectory(strCurDir);

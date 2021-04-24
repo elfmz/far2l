@@ -312,6 +312,15 @@ MBackground
 "&Background"
 "&Background"
 
+MGetOut
+"&Выбраться"
+"&Get out"
+"&Get out"
+"&Get out"
+"&Get out"
+"&Get out"
+"&Get out"
+
 MF1
 l:
 l://functional keys - 6 characters max

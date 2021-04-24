@@ -543,59 +543,30 @@ extern "C"
 
 	struct UnixFindFile
 	{
-		UnixFindFile()
-		{
-#ifdef _WIN32
-			_h = INVALID_HANDLE_VALUE;
-#else
-			_d = nullptr;
-#endif
-		}
 		UnixFindFile(const std::string &root, const std::string &mask, DWORD flags) : _flags(flags)
 		{
 			_root = root;
 			_mask = mask;
-#ifdef _WIN32
-			_h = INVALID_HANDLE_VALUE;
-#else
 			if (_root.size() > 1 && _root[_root.size()-1]==GOOD_SLASH)
 				_root.resize(_root.size()-1);
 			_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
 			if (!_d) {
 				fprintf(stderr, "opendir failed on %s\n", _root.c_str());
 			}
-#endif
 		}
 
 		~UnixFindFile()
 		{
-#ifdef _WIN32
-			if (_h!=INVALID_HANDLE_VALUE) ::FindClose(_h);
-#else
 			if (_d) os_call_int(sdc_closedir, _d);
-#endif
+		}
+
+		bool IsOpened() const
+		{
+			return (_d != NULL);
 		}
 
 		bool Iterate(LPWIN32_FIND_DATAW lpFindFileData)
 		{
-#ifdef _WIN32
-			WIN32_FIND_DATAA wfd;
-			for (;;) {
-				if (_h==INVALID_HANDLE_VALUE) {
-					_h = ::FindFirstFileA((_root + "*").c_str(), &wfd);
-					if (_h==INVALID_HANDLE_VALUE) 
-						return false;
-
-				} else if (!::FindNextFileA(_h, &wfd))
-					return false;
-
-				if ( MatchName(wfd.cFileName) ) {
-					if (MatchAttributesAndFillWFD(0, wfd.cFileName, lpFindFileData)) {
-						break;
-					}
-				}
-			}
-#else
 			struct dirent *de;
 			for (;;) {
 				if (!_d)
@@ -622,7 +593,6 @@ extern "C"
 						return true;
 				}
 			}
-#endif
 		}
 
 	private:
@@ -689,10 +659,7 @@ extern "C"
 			return MatchWildcard(name, _mask.c_str());
 		}
 		
-#ifdef _WIN32
-		HANDLE _h;
-#else
-		DIR *_d;
+		DIR *_d = nullptr;
 		
 		bool PreMatchDType(unsigned char d_type)
 		{
@@ -706,14 +673,14 @@ extern "C"
 				
 			}
 		}
-#endif
+
 		struct {
 			std::string path;
 			std::wstring wide_name;			
 		} _tmp;
 		std::string _root;
 		std::string _mask;
-		DWORD _flags;
+		DWORD _flags = 0;
 	};
 
 	struct UnixFindFiles : std::set<UnixFindFile *>, std::mutex
@@ -753,6 +720,12 @@ extern "C"
 
 
 		UnixFindFile *uff = new UnixFindFile(root, mask, dwFlags);
+		if (!uff->IsOpened()) {
+			WINPORT(TranslateErrno)();
+			delete uff;
+			return INVALID_HANDLE_VALUE;
+		}
+
 		if (!uff->Iterate(lpFindFileData)) {
 			//WINPORT(TranslateErrno)();
 			delete uff;

@@ -72,7 +72,10 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 				PrepareDiskPath(strCurDir,false); // TRUE ???
 				rc = apiSetCurrentDirectory(strCurDir);				
 			}
-		//fprintf(stderr, "FarChDir: %ls - %u\n", NewDir, rc);
+			if (!rc)
+			{
+				fprintf(stderr, "FarChDir: FAILED - '%ls'\n", NewDir);
+			}
 		}
 	}
 

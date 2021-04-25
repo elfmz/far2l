@@ -6,7 +6,7 @@ include(BundleUtilities)
 
 # STEP 1: manually find and fixup plugins files
 set(BU_CHMOD_BUNDLE_ITEMS TRUE)
-set(APP_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/far2l.app")
+set(APP_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/@APP_NAME@.app")
 file(GLOB_RECURSE PLUGINS "${APP_INSTALL_DIR}/**/*.far-plug*")
 fixup_bundle("${APP_INSTALL_DIR}" "${PLUGINS}" "" IGNORE_ITEM "python;python3;python3.8;Python;.Python")
 

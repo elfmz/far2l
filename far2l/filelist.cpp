@@ -2695,7 +2695,9 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			if (r == 1)
 				continue;
 		}
-		FarChDir(strOrigCurDir);
+		if (PanelMode != PLUGIN_PANEL)
+			FarChDir(strOrigCurDir);
+
 		UpdateFlags = UPDATE_KEEP_SELECTION;
 		SetDirectorySuccess = FALSE;
 		break;

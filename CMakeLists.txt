@@ -9,7 +9,18 @@ set(APP_IDENTIFIER "com.far2l")
 set(CPACK_PACKAGE_NAME "far2l")
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 3)
-set(VERSION_PATCH 0)
+
+execute_process(COMMAND sh -c
+	"cd ${CMAKE_SOURCE_DIR} && git log -1 --date=format:'%y%m%d' --format=%cd_%h"
+	OUTPUT_VARIABLE VERSION_PATCH)
+
+string(REGEX REPLACE "[\r\n\t ]$" "" VERSION_PATCH "${VERSION_PATCH}")
+
+if("${VERSION_PATCH}" STREQUAL "")
+	set(VERSION_PATCH "alpha")
+else()
+	set(VERSION_PATCH "${VERSION_PATCH}_alpha")
+endif()
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
@@ -26,7 +37,7 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE} Version: ${VERSION}")
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

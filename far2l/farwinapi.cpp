@@ -547,8 +547,13 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	// try to synchronize far cur dir with process cur dir
 	//WTF??? if(CtrlObject && CtrlObject->Plugins.GetOemPluginsCount())
 	{
-		if (!WINPORT(SetCurrentDirectory)(strCurrentDirectory())) {
+		if (!WINPORT(SetCurrentDirectory)(strCurrentDirectory()))
+		{
 			fprintf(stderr, "apiSetCurrentDirectory: set curdir error %u for %ls\n", WINPORT(GetLastError()), lpPathName);
+			if (Validate)
+			{
+				return FALSE;
+			}
 		}
 	}
 

@@ -1,5 +1,10 @@
 #import <Cocoa/Cocoa.h>
+#include <AvailabilityMacros.h>
+
 #include "touchbar.h"
+
+#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+
 #include <string>
 
 #ifndef CONSOLE_FKEYS_COUNT
@@ -246,3 +251,12 @@ void Touchbar_SetAlternate(bool on)
 		Touchbar_ApplyTitles();
 	}
 }
+
+#else
+
+void Touchbar_Register(ITouchbarListener *listener) {}
+void Touchbar_Deregister() {}
+bool Touchbar_SetTitles(const char **titles) { return false; }
+void Touchbar_SetAlternate(bool on) {}
+
+#endif

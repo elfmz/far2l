@@ -98,9 +98,9 @@ else()
 	endif()
 
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		find_package(wxWidgets REQUIRED net core base adv)
+		find_package(wxWidgets REQUIRED core base adv)
 	else()
-		find_package(wxWidgets REQUIRED net core base)
+		find_package(wxWidgets REQUIRED core base)
 	endif()
 
 	include(${wxWidgets_USE_FILE})

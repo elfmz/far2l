@@ -2659,6 +2659,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		strSetDir = ExtractPathRoot(strCurDir);
 	}
 
+	FARString strOrigCurDir;
+	apiGetCurrentDirectory(strOrigCurDir);
 	while (!FarChDir(strSetDir))
 	{
 		if (FrameManager && FrameManager->ManagerStarted())
@@ -2693,6 +2695,9 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			if (r == 1)
 				continue;
 		}
+		if (PanelMode != PLUGIN_PANEL)
+			FarChDir(strOrigCurDir);
+
 		UpdateFlags = UPDATE_KEEP_SELECTION;
 		SetDirectorySuccess = FALSE;
 		break;

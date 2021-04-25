@@ -18,3 +18,4 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 *.cbp
 cmake-build-*
+.DS_Store

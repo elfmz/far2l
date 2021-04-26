@@ -69,12 +69,14 @@ ninja -j$(nproc --all)
 
 #### OSX/MacOS install
 
+ * You can install prebuilt package for x64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
+ * But if you need custom/recent build, you can proceed to build steps below: using brew or MacPorts.
  * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
  ```sh
  clang++ -v
  ```
-
- * If you don't have Homebrew stop by <https://brew.sh/> for installation instructions.
+ * If you want to build using Homebrew - first visit <https://brew.sh/> for installation instructions. Note that there're reported problems with Homebrew-based build under MacOS Big Sur.
+ * If you want to build using MacPorts - first visit <https://www.macports.org/install.php> for installation instructions.
 
 ##### One line OSX/MacOS install latest far2l git master via unofficial brew tap
 

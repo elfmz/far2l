@@ -46,6 +46,12 @@ jobs:
       shell: bash
       run: tree
 
+    - name: Packing Minimal Release
+      uses: actions/upload-artifact@v2
+      with:
+        name: far2l-release-minimal
+        path: install
+
     - name: Test
       working-directory: ${{github.workspace}}/build
       shell: bash

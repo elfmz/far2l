@@ -50,7 +50,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: far2l-release-minimal
-        path: install
+        path: ${{github.workspace}}/build/install
 
     - name: Test
       working-directory: ${{github.workspace}}/build

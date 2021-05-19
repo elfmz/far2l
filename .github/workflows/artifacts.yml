@@ -7,18 +7,19 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-minimal:
+  build:
     # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    # well on Windows or Mac.
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dependencies: ["", "-minimal"]
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Dependencies
-      run: sudo apt-get -y install $(cat dependencies-minimal.txt)
+      run: sudo apt-get -y install $(cat dependencies${{ matrix.dependendencies }}.txt)
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -46,10 +47,10 @@ jobs:
       shell: bash
       run: tree
 
-    - name: Packing Minimal Release
+    - name: Packing Artifact
       uses: actions/upload-artifact@v2
       with:
-        name: far2l-release-minimal
+        name: far2l-release${{ matrix.dependencies }}
         path: ${{github.workspace}}/build/install
 
     - name: Test

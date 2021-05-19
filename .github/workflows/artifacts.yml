@@ -7,7 +7,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
+  build-minimal:
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
@@ -18,7 +18,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Dependencies
-      run: sudo apt-get -y install $(cat dependencies.txt)
+      run: sudo apt-get -y install $(cat dependencies-minimal.txt)
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory

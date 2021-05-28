@@ -139,10 +139,6 @@ If you want to build far2l with wxGTK support also install it:
 ```
 emerge -avn x11-libs/wxGTK
 ```
-And if you also want Python plugin, consider installing virtualenv:
-```
-emerge -avn dev-python/virtualenv
-```
 Additionally, for NetRocks you will need:
 ```
 emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba

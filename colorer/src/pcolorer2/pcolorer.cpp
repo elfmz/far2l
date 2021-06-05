@@ -112,20 +112,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
   g3::only_change_at_initialization::setLogLevel(INFO, false);
 #endif
 #endif // #if 0
-  try
-  {
-    XMLPlatformUtils::Initialize();
-  }
-  catch(const XMLException &toCatch)
-  {
-    StrX str(toCatch.getMessage());
-#if 0
-    LOG(ERROR) << "Error during Xerces-c Initialization.\n"
-               << "  Exception message:" << str();
-#endif // #if 0
-    std::cerr << "Error during Xerces-c Initialization.\n"
-              << "  Exception message:" << str();
-  }
+  XMLPlatformUtils::Initialize();
 };
 
 /**

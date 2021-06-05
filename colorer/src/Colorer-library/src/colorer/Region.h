@@ -42,9 +42,12 @@ public:
       For example, <code>def:Comment</code> has <code>def:Syntax</code> parent,
       so, some syntax checking can be made with it's content.
   */
+  __attribute__((noinline)) const Region* This() const {
+    return this;
+  }
   bool hasParent(const Region* region) const
   {
-    const Region* elem = this;
+    const Region* elem = This();
     while (elem != nullptr) {
       if (region == elem) {
         return true;
@@ -82,5 +85,3 @@ protected:
 };
 
 #endif
-
-

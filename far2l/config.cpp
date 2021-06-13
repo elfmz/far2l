@@ -971,7 +971,7 @@ void ReadConfig()
 				if ((int *)CFG[I].ValPtr == &Opt.Confirm.Exit) {
 					// when background mode available then exit dialog allows also switch to background
 					// so saved settings must differ for that two modes
-					CFG[I].KeyName = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
+					CFG[I].ValName = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
 				}
 				*(unsigned int *)CFG[I].ValPtr = cfg_reader.GetUInt(CFG[I].ValName, (unsigned int)CFG[I].DefDWord);
 				break;

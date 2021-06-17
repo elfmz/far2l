@@ -1,6 +1,7 @@
 .Language=English,English
 
 "Editor Autocomplete"
+"Use Shift+Tab to toggle a suggestion"
 "Use Tab to confirm a suggestion"
 "Auto&enable for following file masks:"
 "Ok"

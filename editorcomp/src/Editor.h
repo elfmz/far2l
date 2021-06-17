@@ -5,6 +5,7 @@
 #include <utility>
 #include <string>
 #include <set>
+#include <vector>
 
 enum State {
     OFF, DO_PUT, DO_COLOR, DO_ACTION
@@ -12,25 +13,33 @@ enum State {
 
 class Editor {
 private:
+    // TODO: make this contants configurable
     const static int MAX_LINE_DELTA_TO_UPDATE_WORDS = 100;
     const static int MAX_LINE_LENGTH_TO_UPDATE_WORDS = 512;
     const static int MAX_WORD_LENGTH_TO_UPDATE_WORDS = 256;
+    const static int MIN_WORD_LENGTH_TO_SUGGEST = 2;
 
     int id;
     PluginStartupInfo& info;
     FarStandardFunctions& fsf;
 
-    std::set<std::wstring> words_wo_current_line;
-    std::set<std::wstring> words_current_line;
+    struct {
+        std::wstring prefix;
+        std::set<std::wstring> current_line, other_lines;
+        std::vector<const std::wstring *> prefixed; // contains pointers into sets above
+    } words;
+
     std::wstring suggestion;
+    size_t toggles = 0;
     int suggestionRow = 0;
     int suggestionCol = 0;
     State state = DO_PUT;
     bool isEnabled = false;
 
     EditorInfo previousEditorInfo = {0};
-    std::wstring previousEditorInfoLine;
     int previousEditorInfoLineIndex = -1;
+
+    void updateWords();
     void putSuggestion();
 
 public:
@@ -48,13 +57,13 @@ public:
 
     void debug(const std::string& msg);
 
-    void updateWords();
     void doHighlight(int row, int col, int size);
     void undoHighlight(int row, int col, int size);
     void processSuggestion();
     bool isSeparator(wchar_t c);
 
     void on();
+    void toggleSuggestion();
     void confirmSuggestion();
     void declineSuggestion();
 

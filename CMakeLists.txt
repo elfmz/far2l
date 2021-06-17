@@ -10,9 +10,8 @@ set(CPACK_PACKAGE_NAME "far2l")
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 3)
 
-#git log -1 --date=format:'%y%m%d' --format=%cd_%h
 execute_process(COMMAND sh -c
-	"cd ${CMAKE_SOURCE_DIR} && git rev-list --count HEAD"
+	"cd ${CMAKE_SOURCE_DIR} && log -1 --date=format:'%y%m%d' --format=%cd-%h"
 	OUTPUT_VARIABLE VERSION_PATCH)
 
 string(REGEX REPLACE "[\r\n\t ]$" "" VERSION_PATCH "${VERSION_PATCH}")
@@ -20,7 +19,7 @@ string(REGEX REPLACE "[\r\n\t ]$" "" VERSION_PATCH "${VERSION_PATCH}")
 if("${VERSION_PATCH}" STREQUAL "")
 	set(VERSION_PATCH "alpha")
 else()
-	set(VERSION_PATCH "${VERSION_PATCH}_alpha")
+	set(VERSION_PATCH "${VERSION_PATCH}-alpha")
 endif()
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")

@@ -33,7 +33,7 @@ private:
     size_t toggles = 0;
     int suggestionRow = 0;
     int suggestionCol = 0;
-    State state = DO_PUT;
+    State state = OFF;
     bool isEnabled = false;
 
     EditorInfo previousEditorInfo = {0};

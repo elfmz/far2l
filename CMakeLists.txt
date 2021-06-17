@@ -11,7 +11,7 @@ set(VERSION_MAJOR 2)
 set(VERSION_MINOR 3)
 
 execute_process(COMMAND sh -c
-	"cd ${CMAKE_SOURCE_DIR} && log -1 --date=format:'%y%m%d' --format=%cd-%h"
+	"cd ${CMAKE_SOURCE_DIR} && git log -1 --date=format:'%y%m%d' --format=%cd-%h"
 	OUTPUT_VARIABLE VERSION_PATCH)
 
 string(REGEX REPLACE "[\r\n\t ]$" "" VERSION_PATCH "${VERSION_PATCH}")

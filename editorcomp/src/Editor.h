@@ -6,6 +6,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include "Settings.h"
 
 enum State {
     OFF, DO_PUT, DO_COLOR, DO_ACTION
@@ -13,26 +14,21 @@ enum State {
 
 class Editor {
 private:
-    // TODO: make this contants configurable
-    const static int MAX_LINE_DELTA_TO_UPDATE_WORDS = 100;
-    const static int MAX_LINE_LENGTH_TO_UPDATE_WORDS = 512;
-    const static int MAX_WORD_LENGTH_TO_UPDATE_WORDS = 256;
-    const static int MIN_WORD_LENGTH_TO_SUGGEST = 2;
 
     int id;
     PluginStartupInfo& info;
     FarStandardFunctions& fsf;
+    Settings *settings;
 
     struct {
         std::wstring prefix;
         std::set<std::wstring> current_line, other_lines;
-        std::vector<const std::wstring *> prefixed; // contains pointers into sets above
+        std::vector<const wchar_t *> suggestions; // contains pointers into sets above
     } words;
 
-    std::wstring suggestion;
-    size_t toggles = 0;
     int suggestionRow = 0;
     int suggestionCol = 0;
+    int suggestionLen = 0;
     State state = OFF;
     bool isEnabled = false;
 
@@ -43,7 +39,7 @@ private:
     void putSuggestion();
 
 public:
-    explicit Editor(int id, PluginStartupInfo& info, FarStandardFunctions& fsf, const std::wstring &autoEnableMasks);
+    explicit Editor(int id, PluginStartupInfo& info, FarStandardFunctions& fsf, Settings *settings);
 
     int getId();
     State getState();

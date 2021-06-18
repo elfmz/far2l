@@ -1,9 +1,16 @@
 .Language=English,English
 
 "Editor Autocomplete"
+
+"Ok"
+"Cancel"
+
 "Use Shift+Tab to toggle a suggestion"
 "Use Tab to confirm a suggestion"
 "Auto&enable for following file masks:"
-"Ok"
-"Cancel"
 "&Enabled for this editing session"
+
+"Maximum lines count to scan &around:"
+"Maximum scanned line &length:"
+"Maximum suggested &word length:"
+"Suggest if &typed at least, chars:"

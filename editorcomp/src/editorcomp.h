@@ -4,5 +4,6 @@
 #include <plugin.hpp>
 #include <farcolor.hpp>
 #include <farkeys.hpp>
+#include "lng.h"
 
 #endif

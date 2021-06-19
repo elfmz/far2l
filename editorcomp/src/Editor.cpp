@@ -3,9 +3,10 @@
 #include <utils.h>
 #include "Editor.h"
 
-Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf, const std::wstring &autoEnableMasks)
-        : id(id), info(info), fsf(fsf) {
+Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf, Settings *settings)
+        : id(id), info(info), fsf(fsf), settings(settings) {
 
+	const auto &autoEnableMasks = settings->fileMasks();
     if (!autoEnableMasks.empty()) {
         std::wstring fileName;
         size_t fileNameSize = info.EditorControl(ECTL_GETFILENAME, NULL);
@@ -96,43 +97,44 @@ void Editor::updateWords() {
         && ei.TotalLines == previousEditorInfo.TotalLines);
 
     // Rebuild words.
-    words.prefixed.clear();
+    words.suggestions.clear();
     words.current_line.clear();
     if (!only_current_line) {
         words.other_lines.clear();
     }
-    std::wstring cur;
+	std::wstring cur;
+	const auto max_line_delta = settings->maxLineDelta();
+	const auto max_line_length = settings->maxLineLength();
+	const auto max_word_length = settings->maxWordLength();
+	const auto min_prefix_length = settings->minPrefixLength();
     for (int i = 0; i < ei.TotalLines; i++) {
-        if (i == ei.CurLine || (!only_current_line && std::abs(i - ei.CurLine) <= MAX_LINE_DELTA_TO_UPDATE_WORDS)) {
+        if (i == ei.CurLine || (!only_current_line && std::abs(i - ei.CurLine) <= max_line_delta)) {
             const EditorGetString &string = getString(i);
-            const int length = string.StringLength;
-            if (length <= MAX_LINE_LENGTH_TO_UPDATE_WORDS) {
-                const wchar_t *line = string.StringText;
-                for (int j = 0, k = 0; j <= length; j++) {
-                    if (j == length || isSeparator(line[j])) {
-                        if ((size_t)(j - k) > MIN_WORD_LENGTH_TO_SUGGEST && j - k <= MAX_WORD_LENGTH_TO_UPDATE_WORDS) {
-                            cur.assign(&line[k], j - k);
-                            if (i == ei.CurLine)
-                                words.current_line.insert(cur);
-                            else
-                                words.other_lines.insert(cur);
-                        }
-                        k = j + 1;
+            const int length = std::min(string.StringLength, max_line_length);
+            const wchar_t *line = string.StringText;
+            for (int j = 0, k = 0; j <= length; j++) {
+                if (j == string.StringLength || isSeparator(line[j])) {
+                    if (j - k > min_prefix_length && j - k <= max_word_length) {
+                        cur.assign(&line[k], j - k);
+                        if (i == ei.CurLine)
+                            words.current_line.insert(cur);
+                        else
+                            words.other_lines.insert(cur);
                     }
+                    k = j + 1;
                 }
             }
         }
     }
 
-
-    words.prefixed.reserve(words.current_line.size() + words.other_lines.size());
+    words.suggestions.reserve(words.current_line.size() + words.other_lines.size());
 
     for (const auto &w : words.current_line) if (IsPrefixed(w, words.prefix)) {
-        words.prefixed.emplace_back(&w);
+        words.suggestions.emplace_back(w.c_str() + words.prefix.size());
     }
     for (const auto &w : words.other_lines) if (IsPrefixed(w, words.prefix)) {
         if (words.current_line.find(w) == words.current_line.end()) {
-            words.prefixed.emplace_back(&w);
+            words.suggestions.emplace_back(w.c_str() + words.prefix.size());
         }
     }
 
@@ -172,23 +174,21 @@ void Editor::putSuggestion() {
             from--;
         from++;
 
-        if (ei.CurPos - from >= MIN_WORD_LENGTH_TO_SUGGEST) {
+        if (ei.CurPos - from >= settings->minPrefixLength()) {
             std::wstring prefix(egs.StringText + from, egs.StringText + ei.CurPos);
-            if (toggles == 0 || toggles >= words.prefixed.size() || prefix != words.prefix) {
-                toggles = 0;
+            if (words.suggestions.empty() || words.prefix != prefix) {
                 words.prefix = prefix;
                 updateWords();
             }
-            if (toggles < words.prefixed.size()) {
-                const auto &fi = *words.prefixed[toggles];
-                assert(fi.length() > prefix.length());
-                this->suggestion = fi.substr(prefix.length(), fi.size() - prefix.length());
-                this->suggestionRow = ei.CurLine;
-                this->suggestionCol = ei.CurPos;
-                info.EditorControl(ECTL_INSERTTEXT, (void *) suggestion.c_str());
+            if (!words.suggestions.empty()) {
+				const wchar_t *suggestion = words.suggestions.front();
+                suggestionLen = (int)wcslen(suggestion);
+                suggestionRow = ei.CurLine;
+                suggestionCol = ei.CurPos;
+                info.EditorControl(ECTL_INSERTTEXT, (void *)suggestion);
 
 #if defined(DEBUG_EDITORCOMP)
-                debug("Added suggestion of length " + std::to_string(suggestion.length()) +
+                debug("Added suggestion of length " + std::to_string(suggestionLen) +
                       " at the position ("
                       + std::to_string(ei.CurLine) + ", " + std::to_string(ei.CurPos) + ")");
 #endif
@@ -203,17 +203,17 @@ void Editor::processSuggestion() {
     if (state == DO_PUT) {
         putSuggestion();
     } else if (state == DO_COLOR) {
-        doHighlight(suggestionRow, suggestionCol, static_cast<int>(suggestion.length()));
+        doHighlight(suggestionRow, suggestionCol, suggestionLen);
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Highlighted suggestion of length " + std::to_string(suggestion.length()) +
+        debug("Highlighted suggestion of length " + std::to_string(suggestionLen) +
               " at the position ("
               + std::to_string(suggestionRow) + ", " + std::to_string(suggestionCol) + ")");
 #endif
         state = DO_ACTION;
         info.EditorControl(ECTL_REDRAW, nullptr);
     } else if (state == DO_ACTION) {
-        doHighlight(suggestionRow, suggestionCol, static_cast<int>(suggestion.length()));
+        doHighlight(suggestionRow, suggestionCol, suggestionLen);
     }
 }
 
@@ -223,16 +223,19 @@ State Editor::getState() {
 
 void Editor::toggleSuggestion()
 {
-    auto saved_toggles = toggles;
+	auto saved_suggestions = words.suggestions;
+	if (!saved_suggestions.empty()) {
+		saved_suggestions.erase(saved_suggestions.begin());
+	}
     declineSuggestion();
     state = DO_PUT;
-    toggles = saved_toggles + 1;
+	words.suggestions.swap(saved_suggestions);
     info.EditorControl(ECTL_REDRAW, nullptr);
 }
 
 void Editor::confirmSuggestion() {
     if (state == DO_ACTION) {
-        undoHighlight(suggestionRow, suggestionCol, static_cast<int>(suggestion.length()));
+        undoHighlight(suggestionRow, suggestionCol, suggestionLen);
 
         EditorSetPosition esp = {0};
         esp.CurTabPos = -1;
@@ -240,14 +243,14 @@ void Editor::confirmSuggestion() {
         esp.LeftPos = -1;
         esp.Overtype = -1;
         esp.CurLine = suggestionRow;
-        esp.CurPos = suggestionCol + int(suggestion.length());
+        esp.CurPos = suggestionCol + suggestionLen;
         info.EditorControl(ECTL_SETPOSITION, &esp);
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Confirmed suggestion of length " + std::to_string(suggestion.length()) + "");
+        debug("Confirmed suggestion of length " + std::to_string(suggestionLen) + "");
 #endif
-        toggles = 0;
-        suggestion.clear();
+        words.suggestions.clear();
+        suggestionLen = 0;
         suggestionRow = 0;
         suggestionCol = 0;
 
@@ -258,7 +261,7 @@ void Editor::confirmSuggestion() {
 
 void Editor::declineSuggestion() {
     if (state == DO_ACTION) {
-        undoHighlight(suggestionRow, suggestionCol, static_cast<int>(suggestion.length()));
+        undoHighlight(suggestionRow, suggestionCol, suggestionLen);
 
         const EditorGetString &string = getString(suggestionRow);
         if (string.SelStart >= 0) {
@@ -269,7 +272,7 @@ void Editor::declineSuggestion() {
 
         const EditorInfo &editorInfo = getInfo();
         if (editorInfo.CurLine == suggestionRow && editorInfo.CurPos == suggestionCol) {
-            for (int i = 0; i < int(suggestion.length()); i++)
+            for (int i = 0; i < suggestionLen; i++)
                 info.EditorControl(ECTL_DELETECHAR, nullptr);
         } else {
             int beforeRow = editorInfo.CurLine;
@@ -277,7 +280,7 @@ void Editor::declineSuggestion() {
 
             int delta = 0;
             if (beforeRow == suggestionRow && beforeCol >= suggestionCol) {
-                delta = std::min(beforeCol - suggestionCol, int(suggestion.length()));
+                delta = std::min(beforeCol - suggestionCol, suggestionLen);
             }
 
             EditorSetPosition esp = {0};
@@ -289,7 +292,7 @@ void Editor::declineSuggestion() {
             esp.CurPos = suggestionCol;
             info.EditorControl(ECTL_SETPOSITION, &esp);
 
-            for (int i = 0; i < int(suggestion.length()); i++)
+            for (int i = 0; i < suggestionLen; i++)
                 info.EditorControl(ECTL_DELETECHAR, nullptr);
 
             esp.CurLine = beforeRow;
@@ -298,16 +301,19 @@ void Editor::declineSuggestion() {
         }
 
 #if defined(DEBUG_EDITORCOMP)
-        debug("Declined suggestion of length " + std::to_string(suggestion.length()) + "");
+        debug("Declined suggestion of length " + std::to_string(suggestionLen) + "");
 #endif
-        toggles = 0;
-        suggestion.clear();
+        words.suggestions.clear();
+        suggestionLen = 0;
         suggestionRow = 0;
         suggestionCol = 0;
 
         state = OFF;
         info.EditorControl(ECTL_REDRAW, nullptr);
-    }
+
+    } else if (state == DO_PUT) {
+        state = OFF;
+	}
 }
 
 void Editor::on() {
@@ -315,7 +321,7 @@ void Editor::on() {
 #if defined(DEBUG_EDITORCOMP)
         debug("Editor::on");
 #endif
-        toggles = 0;
+        words.suggestions.clear();
         state = DO_PUT;
         info.EditorControl(ECTL_REDRAW, nullptr);
     }
@@ -326,5 +332,5 @@ bool Editor::isSeparator(wchar_t c) {
 }
 
 int Editor::getSuggestionLength() {
-    return int(suggestion.length());
+    return suggestionLen;
 }

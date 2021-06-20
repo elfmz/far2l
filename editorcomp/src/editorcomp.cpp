@@ -134,6 +134,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
             && ir->Event.KeyEvent.wVirtualKeyCode != VK_ESCAPE && ir->Event.KeyEvent.wVirtualKeyCode != VK_DELETE
             && ir->Event.KeyEvent.wVirtualKeyCode != VK_UP && ir->Event.KeyEvent.wVirtualKeyCode != VK_DOWN
             && ir->Event.KeyEvent.wVirtualKeyCode != VK_LEFT && ir->Event.KeyEvent.wVirtualKeyCode != VK_RIGHT
+            && ir->Event.KeyEvent.wVirtualKeyCode != VK_RETURN
             && ir->Event.KeyEvent.uChar.UnicodeChar != 0) {
 
             editors->getEditor()->on();

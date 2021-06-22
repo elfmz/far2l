@@ -66,9 +66,9 @@ public:
 	bool Save();
 
 	void RemoveSection();
-	void RenameSection(const std::string &new_section);
 
 	void DefragIndexedSections(const char *indexed_prefix);
+	void MoveIndexedSection(const char *indexed_prefix, unsigned int old_index, unsigned int new_index);
 	void ReserveIndexedSection(const char *indexed_prefix, unsigned int index);
 
 	void SetString(const std::string &name, const wchar_t *value);

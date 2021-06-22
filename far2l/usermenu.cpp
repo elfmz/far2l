@@ -1199,10 +1199,8 @@ bool UserMenu::MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos)
 {
 	if (Pos != NewPos)
 	{
-		FormatString strSrc, strDst;
-		strSrc << MenuKey << L"/Item" << Pos;
-		strDst << MenuKey << L"/Item" << NewPos;
-		ConfigWriter(FARString(strSrc).GetMB()).RenameSection(FARString(strDst).GetMB());
+		ConfigWriter().MoveIndexedSection(
+			StrPrintf("%ls/Item", MenuKey).c_str(), Pos, NewPos);
 		MenuModified = MenuNeedRefresh=true;
 	}
 	ConfigReaderScope::Update(s_cfg_reader);

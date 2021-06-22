@@ -251,24 +251,10 @@ void ConfigWriter::RemoveSection()
 	_selected_kfh->RemoveSection(_section);
 }
 
-void ConfigWriter::RenameSection(const std::string &new_section)
-{
-	if (_section != new_section) {
-		const char *old_ini = Section2Ini(_section);
-		const char *new_ini = Section2Ini(new_section);
-		if (strcmp(old_ini, new_ini)) {
-			fprintf(stderr,
-				"%s: different ini files '%s' [%s] -> '%s' [%s]\n",
-				__FUNCTION__,
-				_section.c_str(), old_ini, new_section.c_str(), new_ini);
-			abort();
-		}
-		_selected_kfh->RenameSection(_section, new_section, true);
-	}
-}
-
 std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_prefix)
 {
+	SelectSectionFmt("%s%lu", indexed_prefix, 0);
+
 	const size_t indexed_prefix_len = strlen(indexed_prefix);
 	std::vector<std::string> sections = _selected_kfh->EnumSections();
 	// exclude sections not prefixed by indexed_prefix
@@ -293,6 +279,8 @@ std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_p
 
 void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 {
+	SelectSectionFmt("%s%lu", indexed_prefix, 0);
+
 	std::vector<std::string> sections = EnumIndexedSections(indexed_prefix);
 
 	for (size_t i = 0; i < sections.size(); ++i) {
@@ -318,6 +306,48 @@ void ConfigWriter::ReserveIndexedSection(const char *indexed_prefix, unsigned in
 		const std::string &old_name = StrPrintf("%s%lu", indexed_prefix, (unsigned long)i);
 		_selected_kfh->RenameSection(old_name, new_name, true);
 	}
+}
+
+void ConfigWriter::MoveIndexedSection(const char *indexed_prefix, unsigned int old_index, unsigned int new_index)
+{
+	if (old_index == new_index) {
+		return;
+	}
+
+	const std::string &old_section_tmp = StrPrintf("%s%u.tmp-%llx",
+		indexed_prefix, old_index, (unsigned long long)time(NULL));
+
+	SelectSection(old_section_tmp);
+
+	_selected_kfh->RenameSection(
+		StrPrintf("%s%u", indexed_prefix, old_index),
+		old_section_tmp,
+		true);
+
+	if (old_index < new_index) {
+		// rename [old_index + 1, new_index] -> [old_index, new_index - 1]
+		for (unsigned int i = old_index + 1; i <= new_index; ++i) {
+			_selected_kfh->RenameSection(
+				StrPrintf("%s%u", indexed_prefix, i),
+				StrPrintf("%s%u", indexed_prefix, i - 1),
+				true);
+		}
+	} else {
+		// rename [new_index, old_index - 1] -> [new_index + 1, old_index]
+		for (unsigned int i = old_index; i > new_index; --i) {
+			_selected_kfh->RenameSection(
+				StrPrintf("%s%u", indexed_prefix, i - 1),
+				StrPrintf("%s%u", indexed_prefix, i),
+				true);
+		}
+	}
+
+	_selected_kfh->RenameSection(
+		old_section_tmp,
+		StrPrintf("%s%u", indexed_prefix, new_index),
+		true);
+
+	DefragIndexedSections(indexed_prefix);
 }
 
 

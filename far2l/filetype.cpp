@@ -424,10 +424,7 @@ static int FillFileTypesMenu(VMenu *TypesMenu,int MenuPos)
 void MoveMenuItem(int Pos, int NewPos)
 {
 	if (Pos != NewPos) {
-		ConfigWriter cfg_writer;
-		cfg_writer.SelectSection(StrPrintf(FTS.TypeFmt, Pos).c_str());
-		cfg_writer.RenameSection(StrPrintf(FTS.TypeFmt, NewPos).c_str());
-		cfg_writer.DefragIndexedSections(FTS.Type0);
+		ConfigWriter().MoveIndexedSection(FTS.Type0, Pos, NewPos);
 	}
 }
 

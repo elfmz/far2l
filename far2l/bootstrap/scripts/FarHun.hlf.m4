@@ -1760,7 +1760,7 @@ visszafelé haladhatunk a főmenü felé.
     A felhasználói menü parancsai vagy almenüi közé választóvonalat is
 tehetünk: az #Ins# billentyűvel szúrjunk be egy új parancsot vagy menüt,
 adjunk #-# értéket a gyorsbillentyűnek és a többi mezőt hagyjuk üresen. A
-létrehozott választóvonalakat törölhetjük, ha az #Alt-F4#-gyel fájl módba
+létrehozott választóvonalakat törölhetjük, ha az #Ctrl-F4#-gyel fájl módba
 kapcsolunk és a szerkesztőben eltávolítjuk a felesleges #-:# sorokat.
 
     A felhasználói menü parancsait úgy hajthatjuk végre, ha kiválasztjuk a
@@ -1769,7 +1769,7 @@ gyorsbillentyű segítségével.
 
     Az #Ins# billentyűvel új menüelemeket, almenüket hozhatunk létre, az #F4#
 bilentyűvel szerkeszthetjük a jellemzőiket, a #Del#-lel pedig törölhetjük a
-menü elemeit. #Alt-F4#-gyel a menüket szövegfájl formátumban szerkeszthetjük.
+menü elemeit. #Ctrl-F4#-gyel a menüket szövegfájl formátumban szerkeszthetjük.
 
     A felhasználói menü elemeinek gyorsbillentyűjeként megadhatunk számokat,
 betűket vagy funkcióbillentyűket (#F1#..#F12#), utóbbiakat csak beírás útján

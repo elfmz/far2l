@@ -14257,12 +14257,12 @@ MLocalMenuTitle
 "Menú local"
 
 MMainMenuBottomTitle
-"Редактирование: Del,Ins,F4,Alt-F4"
-"Edit: Del,Ins,F4,Alt-F4"
-"Edit: Del,Ins,F4,Alt-F4"
-"Bearb.: Entf,Einf,F4,Alt-F4"
-"Szerk.: Del,Ins,F4,Alt-F4"
-"Edycja: Del,Ins,F4,Alt-F4"
+"Редактирование: Del,Ins,F4,Ctrl-F4"
+"Edit: Del,Ins,F4,Ctrl-F4"
+"Edit: Del,Ins,F4,Ctrl-F4"
+"Bearb.: Entf,Einf,F4,Ctrl-F4"
+"Szerk.: Del,Ins,F4,Ctrl-F4"
+"Edycja: Del,Ins,F4,Ctrl-F4"
 "Editar: Del,Ins,F4"
 
 MAskDeleteMenuItem

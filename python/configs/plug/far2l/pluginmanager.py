@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 def setup():
     fname = os.path.join(USERHOME, 'logger.ini')
-    if os.path.exists(fname):
+    if os.path.isfile(fname):
         with open(fname, "rt") as fp:
             ini = configparser.ConfigParser()
             ini.read_file(fp)
@@ -38,7 +38,6 @@ sys.excepthook = handle_exception
 
 from .plugin import PluginBase
 
-log = logging.getLogger(__name__)
 # commands in shell window:
 #     py:load <python modulename>
 #     py:unload <registered python module name>

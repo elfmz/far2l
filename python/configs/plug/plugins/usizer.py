@@ -78,6 +78,7 @@ class Plugin(PluginBase):
                     Spacer(),
                     MASKED("vseconds", "9999"),
                 ),
+                #MEMOEDIT("vmemo", 40, 5, 512),
                 HLine(),
                 HSizer(
                     RADIOBUTTON('vp1', "p1", True, flags=self.ffic.DIF_GROUP),
@@ -89,7 +90,13 @@ class Plugin(PluginBase):
                     RADIOBUTTON('vr2', "r2"),
                     RADIOBUTTON('vr3', "r3"),
                 ),
-                # HSizer(MEMOEDIT("vmemo", 10, 5, 500)),
+                HSizer(
+                    LISTBOX("vlist", 1, "element A", "element B", "element C", "element D"),
+                    Spacer(),
+                    COMBOBOX("vcombo", 2, "element A", "element B", "element C", "element D"),
+                    Spacer(),
+                    COMBOBOX("vcombo1", 3, "element A", "element B", "element C", "element D"),
+                ),
                 HLine(),
                 HSizer(
                     BUTTON('vok', "OK", True, flags=self.ffic.DIF_CENTERGROUP),

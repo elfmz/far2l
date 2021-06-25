@@ -73,6 +73,13 @@ class EDIT(Element):
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
+
+        param = {'Selected':0}
+        flags = 0
+        if self.mask is not None:
+            param = {'Mask': dlg.s2f(self.mask)}
+            flags = dlg.ffic.DIF_MASKEDIT
+
         dlg.dialogItems.append((
             getattr(dlg.ffic, self.dit),
             self.pos[0],
@@ -80,8 +87,8 @@ class EDIT(Element):
             self.pos[0] + self.width,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
-            0,
+            param,
+            flags,
             0,
             dlg.ffi.NULL,
             self.maxlength or 0,
@@ -101,7 +108,7 @@ class MASKED(EDIT):
 
 
 class MEMOEDIT(EDIT):
-    dit = "DI_MEMOEDIT"
+    #dit = "DI_MEMOEDIT"
 
     def __init__(self, varname, width, height, maxlength=None):
         super().__init__(varname, width, maxlength)
@@ -198,27 +205,49 @@ class RADIOBUTTON(Element):
 class COMBOBOX(Element):
     dit = "DI_COMBOBOX"
 
-    def __init__(self, varname, text, checked=False):
+    def __init__(self, varname, selected, *items):
         super().__init__(varname)
-        self.text = text
-        self.checked = checked
+        self.selected = selected
+        self.items = items
+        self.maxlen = 1+max([len(s) for s in self.items])
+        self.flist = None
+        self.fitems = None
+        self.s2f = None
 
     def get_best_size(self):
-        return (4 + len(self.text), 1)
+        return (self.maxlen, 1)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
+
+        s2f = []
+        fitems = dlg.ffi.new("struct FarListItem []", len(self.items))
+        for i in range(len(self.items)):
+            fitems[i].Flags = dlg.ffic.LIF_SELECTED if i == self.selected else 0
+            s = dlg.s2f(self.items[i])
+            s2f.append(s)
+            fitems[i].Text = s
+
+        flist = dlg.ffi.new("struct FarList *")
+        flist.ItemsNumber = len(self.items)
+        flist.Items = fitems
+
+        self.flist = flist
+        self.fitems = fitems
+        self.s2f = s2f
+
+        param = {'ListItems':flist}
         dlg.dialogItems.append((
             getattr(dlg.ffic, self.dit),
             self.pos[0],
             self.pos[1],
-            self.pos[0] + w,
+            self.pos[0] + w - 1,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
+            param,
             0,
             0,
-            dlg.s2f(self.text),
+            dlg.ffi.NULL,
             0,
         ))
 
@@ -226,26 +255,49 @@ class COMBOBOX(Element):
 class LISTBOX(Element):
     dit = "DI_LISTBOX"
 
-    def __init__(self, varname, text):
+    def __init__(self, varname, selected, *items):
         super().__init__(varname)
-        self.text = text
+        self.selected = selected
+        self.items = items
+        self.maxlen = 4+max([len(s) for s in self.items])
+        self.flist = None
+        self.fitems = None
+        self.s2f = None
 
     def get_best_size(self):
-        return (4 + len(self.text), 1)
+        return (self.maxlen, len(self.items))
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
+
+        s2f = []
+        fitems = dlg.ffi.new("struct FarListItem []", len(self.items))
+        for i in range(len(self.items)):
+            fitems[i].Flags = dlg.ffic.LIF_SELECTED if i == self.selected else 0
+            s = dlg.s2f(self.items[i])
+            s2f.append(s)
+            fitems[i].Text = s
+
+        flist = dlg.ffi.new("struct FarList *")
+        flist.ItemsNumber = len(self.items)
+        flist.Items = fitems
+
+        self.flist = flist
+        self.fitems = fitems
+        self.s2f = s2f
+
+        param = {'ListItems':flist}
         dlg.dialogItems.append((
             getattr(dlg.ffic, self.dit),
             self.pos[0],
             self.pos[1],
-            self.pos[0] + w,
+            self.pos[0] + w - 1,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
+            param,
+            dlg.ffic.DIF_LISTNOBOX,
             0,
-            0,
-            dlg.s2f(self.text),
+            dlg.ffi.NULL,
             0,
         ))
 

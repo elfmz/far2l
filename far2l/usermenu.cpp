@@ -1120,7 +1120,8 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 		{
 			MenuModified=true;
 			{
-				ConfigWriter cfg_writer(FARString(strItemKey).GetMB());
+				ConfigWriter cfg_writer;
+				cfg_writer.SelectSectionFmt("%ls/Item%u", MenuKey, (unsigned int)EditPos);
 
 				if (Create)
 				{

@@ -253,6 +253,7 @@ void ConfigWriter::RemoveSection()
 
 std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_prefix)
 {
+	std::string saved_section = _section;
 	SelectSectionFmt("%s%lu", indexed_prefix, 0);
 
 	const size_t indexed_prefix_len = strlen(indexed_prefix);
@@ -274,11 +275,15 @@ std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_p
 		return atoi(a.c_str() + indexed_prefix_len) < atoi(b.c_str() + indexed_prefix_len);
 	});
 
+	if (!saved_section.empty()) {
+		SelectSection(saved_section);
+	}
 	return sections;
 }
 
 void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 {
+	std::string saved_section = _section;
 	SelectSectionFmt("%s%lu", indexed_prefix, 0);
 
 	std::vector<std::string> sections = EnumIndexedSections(indexed_prefix);
@@ -291,6 +296,10 @@ void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 				_section = expected_section;
 			}
 		}
+	}
+
+	if (!saved_section.empty()) {
+		SelectSection(saved_section);
 	}
 }
 

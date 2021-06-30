@@ -97,8 +97,8 @@ static void print_help(const char *self)
 		" -ma  Do not execute auto run macros.\n"
 		" -p[<path>]\n"
 		"      Search for \"common\" plugins in the directory, specified by <path>.\n"
-		" -u <username>\n"
-		"      Allows to have separate settings for different users.\n"
+		" -u <identity> OR </path/name>\n"
+		"      Allows to specify separate settings identity or FS location.\n"
 		" -v <filename>\n"
 		"      View the specified file.\n"
 		" -v - command line\n"
@@ -719,6 +719,36 @@ int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 	return r;
 }
 
+static void SetCustomSettings(const char *arg)
+{
+	std::string refined;
+	if (arg[0] == '/') {
+		refined = arg;
+
+	} else if (arg[0] == '.' && arg[1] == '/') {
+		char cwdbuf[MAX_PATH + 1] = {'.', 0};
+		const char *cwd = getcwd(cwdbuf, MAX_PATH);
+		if (cwd) {
+			refined = cwd;
+		}
+		refined+= &arg[1];
+
+	} else {
+		refined = arg;
+	}
+
+	while (!refined.empty() && refined.back() == '/') {
+		refined.resize(refined.size() - 1);
+	}
+
+	fprintf(stderr, "%s: '%s'\n", __FUNCTION__, refined.c_str());
+
+	if (!refined.empty()) {
+		// could use FARPROFILE/FARLOCALPROFILE for that but it would be abusing
+		setenv("FARSETTINGS", refined.c_str(), 1);
+	}
+}
+
 int _cdecl main(int argc, char *argv[])
 {
 	char *name = strrchr(argv[0], GOOD_SLASH);
@@ -740,6 +770,12 @@ int _cdecl main(int argc, char *argv[])
 
 			print_help(name);
 			return 0;
+		}
+	}
+
+	for (int i = 1; i + 1 < argc; ++i) {
+		if (strcasecmp(argv[i], "-u") == 0 && argv[i + 1][0] ) {
+			SetCustomSettings(argv[i + 1]);
 		}
 	}
 

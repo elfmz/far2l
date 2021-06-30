@@ -13,7 +13,7 @@
 #include <errno.h>
 
 
-std::string GetMyHome()
+static std::string GetMyHomeUncached()
 {
 	std::string out;
 
@@ -31,11 +31,51 @@ std::string GetMyHome()
 	return out;
 }
 
-static std::string InHomeSubdir(const char *what, const char *subpath, bool create_path)
-{
-	std::string path = GetMyHome();
 
-	path+= what;
+static std::string GetFarSettingsUncached()
+{
+	std::string out;
+	const char *env = getenv("FARSETTINGS");
+	if (env) {
+		out = env;
+	}
+	return out;
+}
+
+const std::string &GetMyHome()
+{
+	static std::string s_out = GetMyHomeUncached();
+	return s_out;
+}
+
+const std::string &GetFarSettings()
+{
+	static std::string s_out = GetFarSettingsUncached();
+	return s_out;
+}
+
+
+static std::string InProfileSubdir(const char *what, const char *subpath, bool create_path)
+{
+	const std::string &settings = GetFarSettings();
+
+	std::string path;
+
+	if (!settings.empty() && settings[0] == '/') {
+		path = settings;
+		path+= '/';
+		path+= what;
+
+	} else {
+		path = GetMyHome();
+		path+= '/';
+		path+= what;
+		path+= "/far2l";
+		if (!settings.empty()) {
+			path+= "/custom/";
+			path+= settings;
+		}
+	}
 
 	if (subpath) {
 		if (*subpath != GOOD_SLASH) {
@@ -53,18 +93,18 @@ static std::string InHomeSubdir(const char *what, const char *subpath, bool crea
 			}
 		}
 	}
-	
+
 	return path;
 }
 
 std::string InMyConfig(const char *subpath, bool create_path)
 {
-	return InHomeSubdir("/.config/far2l", subpath, create_path);
+	return InProfileSubdir(".config", subpath, create_path);
 }
 
 std::string InMyCache(const char *subpath, bool create_path)
 {
-	return InHomeSubdir("/.cache/far2l", subpath, create_path);
+	return InProfileSubdir(".cache", subpath, create_path);
 }
 
 

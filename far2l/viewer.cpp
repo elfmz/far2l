@@ -371,7 +371,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 	CodePageChangedByUser=FALSE;
 
 	ConvertNameToFull(strFileName,strFullFileName);
-	apiGetFindDataEx(strFileName, ViewFindData);
+	apiGetFindDataForExactPathName(strFileName, ViewFindData);
 	UINT CachedCodePage=0;
 
 	if (Opt.ViOpt.SavePos)
@@ -1331,7 +1331,7 @@ int Viewer::ProcessKey(int Key)
 				{
 					FAR_FIND_DATA_EX NewViewFindData;
 
-					if (!apiGetFindDataEx(strFullFileName, NewViewFindData))
+					if (!apiGetFindDataForExactPathName(strFullFileName, NewViewFindData))
 						return TRUE;
 
 					ViewFile.ActualizeFileSize();

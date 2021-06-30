@@ -151,6 +151,7 @@ public:
 	bool GetTime(LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
 	bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
 	bool GetSize(UINT64& Size);
+	void AllocationHint(UINT64 Size);
 	bool FlushBuffers();
 	bool Chmod(DWORD dwUnixMode);
 	FemaleBool QueryFileExtendedAttributes(FileExtendedAttributes &xattr);
@@ -208,6 +209,9 @@ void apiFreeFindData(
     FAR_FIND_DATA *pData
 );
 
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName,
+	FAR_FIND_DATA_EX& FindData,
+	bool ScanSymLink = true);
 BOOL apiGetFindDataEx(
     const wchar_t *lpwszFileName,
     FAR_FIND_DATA_EX& FindData,

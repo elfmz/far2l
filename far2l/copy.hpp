@@ -84,7 +84,7 @@ class ShellCopy
 		DizList DestDiz;
 		FARString strDestDizPath;
 		char *CopyBuffer, *CopyBufferBase;
-		int CopyBufferSize;
+		int CopyBufferSize, CopyPieceSize;
 		clock_t ProgressUpdateTime;              // Last progress bar update time
 		int ProgressUpdateThreshold;    // minimum progress bar update interval, msec
 		FARString strCopiedName;

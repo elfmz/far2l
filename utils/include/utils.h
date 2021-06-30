@@ -56,7 +56,8 @@ void QuoteCmdArg(std::wstring &str);
 void QuoteCmdArgIfNeed(std::string &str);
 void QuoteCmdArgIfNeed(std::wstring &str);
 
-std::string GetMyHome();
+const std::string &GetMyHome();
+
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyCache(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);

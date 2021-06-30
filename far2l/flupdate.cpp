@@ -433,7 +433,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			}
 
 			FILETIME TwoDotsTimes[4]={};
-			if(apiGetFindDataEx(strCurDir,fdata))
+			if(apiGetFindDataForExactPathName(strCurDir,fdata))
 			{
 				TwoDotsTimes[0]=fdata.ftCreationTime;
 				TwoDotsTimes[1]=fdata.ftLastAccessTime;
@@ -816,7 +816,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 		{
 			FAR_FIND_DATA_EX FindData;
 
-			if (apiGetFindDataEx(Info.HostFile, FindData))
+			if (apiGetFindDataForExactPathName(Info.HostFile, FindData))
 			{
 				CurPtr->WriteTime=FindData.ftLastWriteTime;
 				CurPtr->CreationTime=FindData.ftCreationTime;

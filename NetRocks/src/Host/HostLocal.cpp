@@ -315,6 +315,18 @@ public:
 	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
 	{
 		ssize_t rv = API(read)(_fd, buf, len);
+		if (rv < 0 && errno == EIO) {
+			// workaround for SMB's read error when requested fragment overlaps end of file
+			off_t pos = API(lseek)(_fd, 0, SEEK_CUR);
+			struct stat st{};
+			if (pos != -1 && API(fstat)(_fd, &st) == 0
+					&& pos < (off_t)st.st_size && (off_t)(pos + len) > (off_t)st.st_size) {
+				rv = API(read)(_fd, buf, (size_t)(st.st_size - pos));
+
+			} else {
+				errno = EIO;
+			}
+		}
 		if (rv < 0) {
 			throw ProtocolError("read failed", errno);
 		}

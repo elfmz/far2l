@@ -80,7 +80,7 @@ static long OldCalcTime;
 
 #define SDDATA_SIZE   64*1024
 
-#define PROGRESS_REFRESH_THRESHOLD    1000 // msec
+#define PROGRESS_REFRESH_THRESHOLD    500 // msec
 
 enum {COPY_BUFFER_SIZE  = 0x800000, COPY_PIECE_MINIMAL = 0x10000};
 
@@ -220,7 +220,7 @@ static void GetTimeText(DWORD Time,FARString &strTimeText)
 bool CopyProgress::Timer()
 {
 	bool Result=false;
-	DWORD Time=WINPORT(GetTickCount)();
+	DWORD Time=GetProcessUptimeMSec();
 
 	if (!LastWriteTime||(Time-LastWriteTime>=RedrawTimeout))
 	{
@@ -2991,7 +2991,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 				//while (!SrcFile.Read(CopyBuffer,(CopySparse?(DWORD)Min((LONGLONG)CopyBufferSize,Size):CopyBufferSize),&BytesRead,nullptr))
 
-				DWORD TicksIOStarted = (SrcData.nFileSize > (uint64_t)CopyPieceSize) ? WINPORT(GetTickCount)() : 0;
+				DWORD TicksIOStarted = (SrcData.nFileSize > (uint64_t)CopyPieceSize) ? GetProcessUptimeMSec() : 0;
 				while (!SrcFile.Read(CopyBuffer, CopyPieceSize, &BytesRead,nullptr))
 				{
 					TicksIOStarted = 0; // UI messes timings
@@ -3213,7 +3213,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 				CurCopiedSize+=BytesWritten;
 				if ((int)BytesWritten == CopyPieceSize && CopyPieceSize < CopyBufferSize && TicksIOStarted != 0) {
-					DWORD TicksIOUsed = WINPORT(GetTickCount)() - TicksIOStarted;
+					DWORD TicksIOUsed = GetProcessUptimeMSec() - TicksIOStarted;
 					if (TicksIOUsed < 100) {
 						CopyPieceSize = std::min(CopyPieceSize * 2, CopyBufferSize);
 						fprintf(stderr, "CopyPieceSize increased to %d\n", CopyPieceSize);

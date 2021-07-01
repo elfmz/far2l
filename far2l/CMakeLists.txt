@@ -45,6 +45,7 @@ filefilterparams.cpp
 filelist.cpp
 FileMasksProcessor.cpp
 FileMasksWithExclude.cpp
+FilesSuggestor.cpp
 fileowner.cpp
 filepanels.cpp
 filestr.cpp

@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <algorithm>
 
 #include "vmenu.hpp"
 #include "keyboard.hpp"
@@ -2935,30 +2935,29 @@ void EnumFiles(VMenu& Menu, const wchar_t *Str, FilesSuggestor &Suggestor)
 		{
 			FARString strExp;
 			apiExpandEnvironmentStrings(strStr,strExp);
-			std::vector<std::string> suggestions;
-			Suggestor.Suggest(strExp.GetMB(), suggestions);
-			bool Separator=false;
-			const wchar_t* FileName=PointToName(strStr);
-			for (const auto &suggestion : suggestions)
+			std::vector<std::string> Suggestions;
+			Suggestor.Suggest(strExp.GetMB(), Suggestions);
+			if(!Suggestions.empty())
 			{
-				strStr.SetLength(FileName-strStr);
-				FARString strTmp(strStart+strStr);
-				strTmp+=suggestion;
-				if(!Separator)
+				std::sort(Suggestions.begin(), Suggestions.end());
+				if(Menu.GetItemCount())
 				{
-					if(Menu.GetItemCount())
+					MenuItemEx Item{};
+					Item.Flags=LIF_SEPARATOR;
+					Menu.AddItem(&Item);
+				}
+				const wchar_t* FileName=PointToName(strStr);
+				for (const auto &Suggestion : Suggestions)
+				{
+					strStr.SetLength(FileName-strStr);
+					FARString strTmp(strStart+strStr);
+					strTmp+=Suggestion;
+					if(StartQuote)
 					{
-						MenuItemEx Item{};
-						Item.Flags=LIF_SEPARATOR;
-						Menu.AddItem(&Item);
+						strTmp+=L'"';
 					}
-					Separator=true;
+					Menu.AddItem(strTmp);
 				}
-				if(StartQuote)
-				{
-					strTmp+=L'"';
-				}
-				Menu.AddItem(strTmp);
 			}
 		}
 	}

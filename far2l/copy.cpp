@@ -80,9 +80,9 @@ static long OldCalcTime;
 
 #define SDDATA_SIZE   64*1024
 
-#define PROGRESS_REFRESH_THRESHOLD    1000 // msec
+#define PROGRESS_REFRESH_THRESHOLD    500 // msec
 
-enum {COPY_BUFFER_SIZE  = 0x40000};
+enum {COPY_BUFFER_SIZE  = 0x800000, COPY_PIECE_MINIMAL = 0x10000};
 
 enum
 {
@@ -220,7 +220,7 @@ static void GetTimeText(DWORD Time,FARString &strTimeText)
 bool CopyProgress::Timer()
 {
 	bool Result=false;
-	DWORD Time=WINPORT(GetTickCount)();
+	DWORD Time=GetProcessUptimeMSec();
 
 	if (!LastWriteTime||(Time-LastWriteTime>=RedrawTimeout))
 	{
@@ -637,6 +637,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	_tran(SysLog(L"call (*FrameManager)[0]->LockRefresh()"));
 	(*FrameManager)[0]->Lock();
 	CopyBufferSize=AlignPageUp((int)COPY_BUFFER_SIZE);
+	CopyPieceSize=std::min((int)COPY_PIECE_MINIMAL, CopyBufferSize);
 	// Progress bar update threshold
 	ProgressUpdateThreshold=PROGRESS_REFRESH_THRESHOLD;
 	CDP.thisClass=this;
@@ -1822,7 +1823,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			else
 			{
 				// проверка на вшивость ;-)
-				if (!apiGetFindDataEx(strSelName,SrcData))
+				if (!apiGetFindDataForExactPathName(strSelName,SrcData))
 				{
 					strDestPath = strSelName;
 					CP->SetNames(strSelName,strDestPath);
@@ -2277,7 +2278,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 	FAR_FIND_DATA_EX DestData;
 	if (DestAttr==INVALID_FILE_ATTRIBUTES)
 	{
-		if (apiGetFindDataEx(strDestPath,DestData))
+		if (apiGetFindDataForExactPathName(strDestPath,DestData))
 			DestAttr=DestData.dwFileAttributes;
 	}
 	
@@ -2327,7 +2328,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 
 			strDestPath += PathPtr;
 
-			if (!apiGetFindDataEx(strDestPath,DestData))
+			if (!apiGetFindDataForExactPathName(strDestPath,DestData))
 				DestAttr=INVALID_FILE_ATTRIBUTES;
 			else
 				DestAttr=DestData.dwFileAttributes;
@@ -2874,7 +2875,11 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				return COPY_FAILURE;
 			}
 		}
-
+		else if (SrcData.nFileSize > (uint64_t)CopyPieceSize)
+		{
+			DestFile.AllocationHint(SrcData.nFileSize);
+		}
+		/*
 		// если места в приёмнике хватает - займём сразу.
 		UINT64 FreeBytes=0;
 		if (apiGetDiskSize(strDriveRoot,nullptr,nullptr,&FreeBytes))
@@ -2889,6 +2894,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 					DestFile.SetPointer(CurPtr,nullptr,FILE_BEGIN);
 			}
 		}
+		*/
 	}
 
 	int   AbortOp = FALSE;
@@ -2984,8 +2990,11 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				}
 
 				//while (!SrcFile.Read(CopyBuffer,(CopySparse?(DWORD)Min((LONGLONG)CopyBufferSize,Size):CopyBufferSize),&BytesRead,nullptr))
-				while (!SrcFile.Read(CopyBuffer, CopyBufferSize, &BytesRead,nullptr))
+
+				DWORD TicksIOStarted = (SrcData.nFileSize > (uint64_t)CopyPieceSize) ? GetProcessUptimeMSec() : 0;
+				while (!SrcFile.Read(CopyBuffer, CopyPieceSize, &BytesRead,nullptr))
 				{
+					TicksIOStarted = 0; // UI messes timings
 					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),
 					                      MSG(MCopyReadError),SrcName,
 					                      MSG(MRetry),MSG(MCancel));
@@ -3034,6 +3043,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 					BytesWritten = 0;
 					while (!DestFile.Write(CopyBuffer, WriteSize, &BytesWritten, nullptr))
 					{
+						TicksIOStarted = 0; // UI messes timings
 						DWORD LastError=WINPORT(GetLastError)();
 						int Split=FALSE,SplitCancelled=FALSE,SplitSkipped=FALSE;
 /*TODO
@@ -3202,6 +3212,17 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				}
 
 				CurCopiedSize+=BytesWritten;
+				if ((int)BytesWritten == CopyPieceSize && CopyPieceSize < CopyBufferSize && TicksIOStarted != 0) {
+					DWORD TicksIOUsed = GetProcessUptimeMSec() - TicksIOStarted;
+					if (TicksIOUsed < 100) {
+						CopyPieceSize = std::min(CopyPieceSize * 2, CopyBufferSize);
+						fprintf(stderr, "CopyPieceSize increased to %d\n", CopyPieceSize);
+
+					} else if (TicksIOUsed > 1500) {
+						CopyPieceSize = std::max(CopyPieceSize / 2, (int)COPY_PIECE_MINIMAL);
+						fprintf(stderr, "CopyPieceSize decreased to %d\n", CopyPieceSize);
+					}
+				}
 
 				if (ShowTotalCopySize)
 					TotalCopiedSize+=BytesWritten;
@@ -3463,7 +3484,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 		else
 		{
 			DestData.Clear();
-			apiGetFindDataEx(DestName,DestData);
+			apiGetFindDataForExactPathName(DestName,DestData);
 			DestDataFilled=TRUE;
 
 			if ((Flags&FCOPY_ONLYNEWERFILES))
@@ -3485,7 +3506,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				{
 					FARString RealName = SrcName;
 					FAR_FIND_DATA_EX FindData;
-					apiGetFindDataEx(RealName,FindData);
+					apiGetFindDataForExactPathName(RealName,FindData);
 					SrcSize=FindData.nFileSize;
 					SrcLastWriteTime = FindData.ftLastWriteTime;
 
@@ -3585,7 +3606,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 					if (!DestDataFilled)
 					{
 						DestData.Clear();
-						apiGetFindDataEx(DestName,DestData);
+						apiGetFindDataForExactPathName(DestName,DestData);
 					}
 
 					FARString strDateText,strTimeText;

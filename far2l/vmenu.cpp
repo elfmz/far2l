@@ -2879,7 +2879,7 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 	SetFlags(VMENU_UPDATEREQUIRED);
 }
 
-void EnumFiles(VMenu& Menu, const wchar_t* Str)
+void EnumFiles(VMenu& Menu, const wchar_t *Str, FilesSuggestor &Suggestor)
 {
 	if(Str && *Str)
 	{
@@ -2933,36 +2933,32 @@ void EnumFiles(VMenu& Menu, const wchar_t* Str)
 		Unquote(strStr);
 		if(!strStr.IsEmpty())
 		{
-			FAR_FIND_DATA_EX d;
 			FARString strExp;
 			apiExpandEnvironmentStrings(strStr,strExp);
-			FindFile Find(strExp+L"*");
+			std::vector<std::string> suggestions;
+			Suggestor.Suggest(strExp.GetMB(), suggestions);
 			bool Separator=false;
-			while(Find.Get(d))
+			const wchar_t* FileName=PointToName(strStr);
+			for (const auto &suggestion : suggestions)
 			{
-				const wchar_t* FileName=PointToName(strStr);
-				bool NameMatch=!StrCmpNI(FileName,d.strFileName,StrLength(FileName));
-				if(NameMatch)
+				strStr.SetLength(FileName-strStr);
+				FARString strTmp(strStart+strStr);
+				strTmp+=suggestion;
+				if(!Separator)
 				{
-					strStr.SetLength(FileName-strStr);
-					FARString strTmp(strStart+strStr);
-					strTmp+=d.strFileName;
-					if(!Separator)
+					if(Menu.GetItemCount())
 					{
-						if(Menu.GetItemCount())
-						{
-							MenuItemEx Item{};
-							Item.Flags=LIF_SEPARATOR;
-							Menu.AddItem(&Item);
-						}
-						Separator=true;
+						MenuItemEx Item{};
+						Item.Flags=LIF_SEPARATOR;
+						Menu.AddItem(&Item);
 					}
-					if(StartQuote)
-					{
-						strTmp+=L'"';
-					}
-					Menu.AddItem(strTmp);
+					Separator=true;
 				}
+				if(StartQuote)
+				{
+					strTmp+=L'"';
+				}
+				Menu.AddItem(strTmp);
 			}
 		}
 	}

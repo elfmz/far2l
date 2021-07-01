@@ -43,13 +43,19 @@ class CachedFileLookupT
 public:
 	const FARString &Lookup(ID id)
 	{
-		FARString &s = _cache[id];
-		if (s.IsEmpty()) {
-			const char *sz = UNCACHED_LOOKUP(id);
-			if (sz)
-				s = sz;
+		auto cache_it = _cache.lower_bound(id);
+		if (cache_it != _cache.end() && cache_it->first == id) {
+			return cache_it->second;
 		}
-		return s;
+
+		const char *uncached_value = UNCACHED_LOOKUP(id);
+		if (!uncached_value) {
+			uncached_value = "";
+		}
+
+		auto ir = _cache.insert(cache_it, std::make_pair(id, FARString(uncached_value)));
+
+		return ir->second;
 	}
 };
 

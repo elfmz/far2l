@@ -266,6 +266,11 @@ bool File::SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMet
 	return r != FALSE;
 }
 
+void File::AllocationHint(UINT64 Size)
+{
+	WINPORT(FileAllocationHint)(Handle, Size);
+}
+
 bool File::SetEnd()
 {
 	return WINPORT(SetEndOfFile)(Handle) != FALSE;
@@ -680,6 +685,30 @@ void apiFreeFindData(FAR_FIND_DATA *pData)
 	xf_free(pData->lpwszFileName);
 }
 
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink)
+{
+	struct stat s{};
+	int r = ScanSymLink ? sdc_stat(Wide2MB(lpwszFileName).c_str(), &s) : sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
+	if (r == -1) {
+		return FALSE;
+	}
+	FindData.Clear();
+	FindData.strFileName = PointToName(lpwszFileName);
+	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
+	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName);
+	FindData.nFileSize = s.st_size;
+	FindData.dwUnixMode = s.st_mode;
+	FindData.nHardLinks = (DWORD)s.st_nlink;
+	FindData.UnixDevice = s.st_dev;
+	FindData.UnixNode = s.st_ino;
+	FindData.UnixOwner = s.st_uid;
+	FindData.UnixGroup = s.st_gid;
+	FindData.dwReserved0 = FindData.dwReserved1 = 0;
+	return TRUE;
+}
+
 BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink, DWORD WinPortFindFlags)
 {
 	FindFile Find(lpwszFileName, ScanSymLink, WinPortFindFlags);
@@ -687,24 +716,11 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 	{
 		return TRUE;
 	}
-	else if (!wcspbrk(lpwszFileName,L"*?"))
+
+	if (!wcspbrk(lpwszFileName,L"*?"))
 	{
-		struct stat s{};
-		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s)==0) {
-			FindData.Clear();
-			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
-			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
-			WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
-			FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, lpwszFileName);
-			FindData.nFileSize = s.st_size;
-			FindData.dwUnixMode = s.st_mode;
-			FindData.nHardLinks = (DWORD)s.st_nlink;
-			FindData.UnixDevice = s.st_dev;
-			FindData.UnixNode = s.st_ino;
-			FindData.UnixOwner = s.st_uid;
-			FindData.UnixGroup = s.st_gid;
-			FindData.dwReserved0 = FindData.dwReserved1 = 0;
-			FindData.strFileName = PointToName(lpwszFileName);
+		if (apiGetFindDataForExactPathName(lpwszFileName, FindData,ScanSymLink))
+		{
 			return TRUE;
 		}
 	}

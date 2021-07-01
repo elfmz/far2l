@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrobj.hpp"
 #include "colors.hpp"
 #include "bitflags.hpp"
+#include "FilesSuggestor.hpp"
+#include <memory>
 
 // Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITLINE
@@ -169,6 +171,8 @@ class Edit:public ScreenObject
 		UINT m_codepage; //BUGBUG
 
 		Callback m_Callback;
+
+		std::unique_ptr<FilesSuggestor> m_pSuggestor;
 
 	private:
 		virtual void   DisplayObject();

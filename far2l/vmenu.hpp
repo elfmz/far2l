@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "bitflags.hpp"
 #include "CriticalSections.hpp"
+#include "FilesSuggestor.hpp"
 
 
 // Цветовые атрибуты - индексы в массиве цветов
@@ -370,4 +371,4 @@ class VMenu: public Modal
 		static LONG_PTR WINAPI SendMenuMessage(HANDLE hVMenu,int Msg,int Param1,LONG_PTR Param2);
 };
 
-void EnumFiles(VMenu& Menu, const wchar_t* Str);
+void EnumFiles(VMenu& Menu, const wchar_t *Str, FilesSuggestor &Suggestor);

@@ -128,8 +128,17 @@ extern "C"
 		//	lpSecurityAttributes, dwCreationDisposition, 
 		//	dwFlagsAndAttributes, hTemplateFile);
 		int flags = 0;
-		if (dwDesiredAccess & (GENERIC_WRITE|GENERIC_ALL|FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES)) flags = O_RDWR;
-		else if (dwDesiredAccess & (GENERIC_READ|GENERIC_ALL|FILE_READ_DATA|FILE_READ_ATTRIBUTES)) flags = O_RDONLY;
+		const bool want_read = (dwDesiredAccess & (GENERIC_READ|GENERIC_ALL|FILE_READ_DATA|FILE_READ_ATTRIBUTES)) != 0;
+		const bool want_write = (dwDesiredAccess & (GENERIC_WRITE|GENERIC_ALL|FILE_WRITE_DATA|FILE_WRITE_ATTRIBUTES)) != 0;
+		if (want_write) {
+			if (want_read) {
+				flags = O_RDWR;
+			} else {
+				flags = O_WRONLY;
+			}
+		} else if (want_read) {
+			flags = O_RDONLY;
+		}
 #ifdef _WIN32
 		flags|= O_BINARY;
 #else		
@@ -172,6 +181,10 @@ extern "C"
 #endif // __FreeBSD__
 		}
 #endif // __linux__
+		if ((dwFlagsAndAttributes & (FILE_FLAG_NO_BUFFERING | FILE_FLAG_SEQUENTIAL_SCAN)) == FILE_FLAG_SEQUENTIAL_SCAN && !want_write) {
+			posix_fadvise(r, 0, 0, POSIX_FADV_SEQUENTIAL);
+		}
+		
 
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
 			struct stat s = { };
@@ -275,8 +288,20 @@ extern "C"
 		for (;;) {
 			if (!remain) break;
 			ssize_t r = os_call_v<ssize_t, -1>(sdc_read, wph->fd, lpBuffer, (size_t)remain);
+			if (r < 0 && errno == EIO) {
+				// workaround for SMB's read error when requested fragment overlaps end of file
+				off_t pos = lseek(wph->fd, 0, SEEK_CUR);
+				struct stat st{};
+				if (pos != -1 && sdc_fstat(wph->fd, &st) == 0
+						&& pos < st.st_size && pos + remain > st.st_size) {
+					r = os_call_v<ssize_t, -1>(sdc_read, wph->fd, lpBuffer, (size_t)(st.st_size - pos));
+
+				} else {
+					errno = EIO;
+				}
+			}
 			if (r < 0) {
-				if (done==0) {
+				if (done == 0) {
 					WINPORT(TranslateErrno)();
 					return FALSE;
 				}
@@ -340,6 +365,27 @@ extern "C"
 			return FALSE;
 		if (lpNewFilePointer) lpNewFilePointer->QuadPart = r;
 		return TRUE;
+	}
+
+	VOID WINPORT(FileAllocationHint) (HANDLE hFile, DWORD64 HintFileSize)
+	{
+		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
+		if (!wph) {
+			return;
+		}
+
+#ifdef __linux__
+		fallocate(wph->fd, FALLOC_FL_KEEP_SIZE, 0, (off_t)HintFileSize);
+
+#elif defined(F_PREALLOCATE)
+		fstore_t fst {};
+		fst.fst_flags = F_ALLOCATECONTIG;
+		fst.fst_posmode = F_PEOFPOSMODE;
+		fst.fst_offset = 0;
+		fst.fst_length = (off_t)HintFileSize;
+		fst.fst_bytesalloc = 0;
+		fcntl(wph->fd, F_PREALLOCATE, &fst);
+#endif
 	}
 
 	DWORD WINPORT(SetFilePointer)( HANDLE hFile, LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod)

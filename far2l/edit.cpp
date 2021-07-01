@@ -3036,7 +3036,12 @@ void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strF
 				FilteredAddToMenu(ComplMenu, strFilter, pList->Items[i].Text);
 		}
 		if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
-			EnumFiles(ComplMenu, strFilter);
+		{
+			if (!m_pSuggestor)
+				m_pSuggestor.reset(new FilesSuggestor);
+
+			EnumFiles(ComplMenu, strFilter, *m_pSuggestor);
+		}
 	}	
 }
 

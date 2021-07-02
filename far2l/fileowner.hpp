@@ -44,18 +44,15 @@ public:
 	const FARString &Lookup(ID id)
 	{
 		auto cache_it = _cache.lower_bound(id);
-		if (cache_it != _cache.end() && cache_it->first == id) {
-			return cache_it->second;
+		if (cache_it == _cache.end() || cache_it->first != id) {
+			const char *uncached_value = UNCACHED_LOOKUP(id);
+			if (!uncached_value) {
+				uncached_value = "";
+			}
+			cache_it = _cache.insert(cache_it, std::make_pair(id, FARString(uncached_value)));
 		}
 
-		const char *uncached_value = UNCACHED_LOOKUP(id);
-		if (!uncached_value) {
-			uncached_value = "";
-		}
-
-		auto ir = _cache.insert(cache_it, std::make_pair(id, FARString(uncached_value)));
-
-		return ir->second;
+		return cache_it->second;
 	}
 };
 

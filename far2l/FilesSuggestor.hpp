@@ -11,14 +11,9 @@ class FilesSuggestor : protected Threaded
 	struct stat _dir_st{};
 	std::vector<std::string> _files;
 	std::mutex _mtx;
-	enum {
-		S_IDLE,
-		S_ACTIVATED,
-		S_STOPPING
-	} _state = S_IDLE;
+	bool _stopping = false;
 
-	void EnsureThreadStopped();
-	bool Start(const std::string &dir_path, const struct stat &dir_st);
+	bool StartEnum(const std::string &dir_path, const struct stat &dir_st);
 
 protected:
 	virtual void *ThreadProc();

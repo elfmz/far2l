@@ -2991,10 +2991,10 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 				//while (!SrcFile.Read(CopyBuffer,(CopySparse?(DWORD)Min((LONGLONG)CopyBufferSize,Size):CopyBufferSize),&BytesRead,nullptr))
 
-				DWORD TicksIOStarted = (SrcData.nFileSize > (uint64_t)CopyPieceSize) ? GetProcessUptimeMSec() : 0;
+				DWORD MSecIOStarted = (SrcData.nFileSize > (uint64_t)CopyPieceSize) ? GetProcessUptimeMSec() : 0;
 				while (!SrcFile.Read(CopyBuffer, CopyPieceSize, &BytesRead,nullptr))
 				{
-					TicksIOStarted = 0; // UI messes timings
+					MSecIOStarted = 0; // UI messes timings
 					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),
 					                      MSG(MCopyReadError),SrcName,
 					                      MSG(MRetry),MSG(MCancel));
@@ -3043,7 +3043,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 					BytesWritten = 0;
 					while (!DestFile.Write(CopyBuffer, WriteSize, &BytesWritten, nullptr))
 					{
-						TicksIOStarted = 0; // UI messes timings
+						MSecIOStarted = 0; // UI messes timings
 						DWORD LastError=WINPORT(GetLastError)();
 						int Split=FALSE,SplitCancelled=FALSE,SplitSkipped=FALSE;
 /*TODO
@@ -3212,13 +3212,15 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				}
 
 				CurCopiedSize+=BytesWritten;
-				if ((int)BytesWritten == CopyPieceSize && CopyPieceSize < CopyBufferSize && TicksIOStarted != 0) {
-					DWORD TicksIOUsed = GetProcessUptimeMSec() - TicksIOStarted;
-					if (TicksIOUsed < 100) {
-						CopyPieceSize = std::min(CopyPieceSize * 2, CopyBufferSize);
-						fprintf(stderr, "CopyPieceSize increased to %d\n", CopyPieceSize);
+				if ((int)BytesWritten == CopyPieceSize && CopyPieceSize < CopyBufferSize && MSecIOStarted != 0) {
+					DWORD MSecIOUsed = GetProcessUptimeMSec() - MSecIOStarted;
+					if (MSecIOUsed < 100) {
+						if (CopyPieceSize < CopyBufferSize) {
+							CopyPieceSize = std::min(CopyPieceSize * 2, CopyBufferSize);
+							fprintf(stderr, "CopyPieceSize increased to %d\n", CopyPieceSize);
+						}
 
-					} else if (TicksIOUsed > 1500) {
+					} else if (MSecIOUsed > 1500 && CopyPieceSize > (int)COPY_PIECE_MINIMAL) {
 						CopyPieceSize = std::max(CopyPieceSize / 2, (int)COPY_PIECE_MINIMAL);
 						fprintf(stderr, "CopyPieceSize decreased to %d\n", CopyPieceSize);
 					}

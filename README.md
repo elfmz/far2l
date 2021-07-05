@@ -8,7 +8,7 @@ Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)
 
 Linux/MacOS (Travis CI): [![Travis](https://img.shields.io/travis/elfmz/far2l.svg)](https://travis-ci.com/elfmz/far2l)
 
-FreeBSD (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
+FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
 
 #### License: GNU/GPLv2

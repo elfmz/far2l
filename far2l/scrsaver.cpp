@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define randomize() srand(time(NULL))
 #define random(x) (rand() % (x) )
 
-enum {STAR_NONE,STAR_NORMAL,STAR_PLANET};
+enum {STAR_NONE,STAR_NORMAL,STAR_PLANET,STAR_PENGUIN};
 
 static struct
 {
@@ -59,13 +59,25 @@ static struct
 	int Speed;
 } Star[16];
 
-static wchar_t StarSymbol[5][2]=
+static wchar_t StarSymbol[3][2]=
 {
-	{0x25A0,0x0000},
-	{0x2219,0x0000},
-	{0x2219,0x0000},
-	{0x00B0,0x0000},
-	{0x00B7,0x0000},
+	{0x25cf,0x0000}, // ●
+	{0x2022,0x0000}, // •
+	{0x00B7,0x0000}  // ·
+};
+
+static wchar_t PlanetSymbol[3][2]=
+{
+	{0x25c9,0x0000}, // ◉
+	{0x25ce,0x0000}, // ◎
+	{0x00B0,0x0000}, // °
+};
+
+static wchar_t PenguinSymbol[3][2]=
+{
+	{0x1F423,0x0000}, // 🐧
+	{0x1F423,0x0000}, // 🐧 // 0x1F425🐥
+	{0x1F423,0x0000}, // 🐧 // 0x1F427🐣
 };
 
 static void ShowSaver(int Step)
@@ -90,45 +102,45 @@ static void ShowSaver(int Step)
 
 				if (abs(dx)>3*ScrX/8 || abs(dy)>3*ScrY/8)
 				{
-					if (Star[I].Type==STAR_PLANET)
+					if (Star[I].Type==STAR_NORMAL)
 					{
-						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
+						SetColor(F_WHITE|B_BLACK);
 						Text(StarSymbol[0]);
 					}
 					else
 					{
-						SetColor(F_WHITE|B_BLACK);
-						Text(StarSymbol[1]);
+						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[0] : PenguinSymbol[0]);
 					}
 				}
 				else if (abs(dx)>ScrX/7 || abs(dy)>ScrY/7)
 				{
-					if (Star[I].Type==STAR_PLANET)
-					{
-						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
-						Text(StarSymbol[1]);
-					}
-					else
+					if (Star[I].Type==STAR_NORMAL)
 					{
 						if (abs(dx)>ScrX/4 || abs(dy)>ScrY/4)
 							SetColor(F_LIGHTCYAN|B_BLACK);
 						else
 							SetColor(F_CYAN|B_BLACK);
 
-						Text(StarSymbol[2]);
+						Text(StarSymbol[1]);
+					}
+					else
+					{
+						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[1] : PenguinSymbol[1]);
 					}
 				}
 				else
 				{
-					if (Star[I].Type==STAR_PLANET)
+					if (Star[I].Type==STAR_NORMAL)
 					{
-						SetColor(Star[I].Color|B_BLACK);
-						Text(StarSymbol[3]);
+						SetColor(F_CYAN|B_BLACK);
+						Text(StarSymbol[2]);
 					}
 					else
 					{
-						SetColor(F_CYAN|B_BLACK);
-						Text(StarSymbol[4]);
+						SetColor(Star[I].Color|B_BLACK);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[2] : PenguinSymbol[2]);
 					}
 				}
 			}
@@ -138,7 +150,13 @@ static void ShowSaver(int Step)
 		if (Star[I].Type==STAR_NONE)
 		{
 			static const int Colors[]={F_MAGENTA,F_RED,F_BLUE};
-			Star[I].Type=random(77)<3 ? STAR_PLANET:STAR_NORMAL;
+			int rnd_type = random(7700);
+			if (rnd_type == 0)
+				Star[I].Type=STAR_PENGUIN;
+			else if (rnd_type < 300)
+				Star[I].Type=STAR_PLANET;
+			else
+				Star[I].Type=STAR_NORMAL;
 			Star[I].X=(ScrX/2-ScrX/4+random(ScrX/2))*100;
 			Star[I].Y=(ScrY/2-ScrY/4+random(ScrY/2))*100;
 			Star[I].Color=Colors[random(ARRAYSIZE(Colors))];

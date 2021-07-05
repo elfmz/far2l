@@ -181,10 +181,12 @@ extern "C"
 #endif // __FreeBSD__
 		}
 #endif // __linux__
+
+#if defined(__linux__) || defined(__FreeBSD__)
 		if ((dwFlagsAndAttributes & (FILE_FLAG_NO_BUFFERING | FILE_FLAG_SEQUENTIAL_SCAN)) == FILE_FLAG_SEQUENTIAL_SCAN && !want_write) {
 			posix_fadvise(r, 0, 0, POSIX_FADV_SEQUENTIAL);
 		}
-		
+#endif
 
 		/*nobody cares.. if ((dwFlagsAndAttributes&FILE_FLAG_BACKUP_SEMANTICS)==0) {
 			struct stat s = { };

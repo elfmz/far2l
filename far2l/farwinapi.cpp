@@ -175,12 +175,10 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :
 	//while elevation required to perform actual FindFile operation.
 	//It seems this is not necesary for Linux,
 	//if confirmed: ScanSymLink should be removed from here and apiGetFindDataEx
-	FARString strName(NTPath(Object).Get());
-
 	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;
 
 	WIN32_FIND_DATA wfd{};
-	Handle = WINPORT(FindFirstFileWithFlags)(strName, &wfd, WinPortFindFlags);
+	Handle = WINPORT(FindFirstFileWithFlags)(Object, &wfd, WinPortFindFlags);
 	if (Handle!=INVALID_HANDLE_VALUE) {
 		TranslateFindFile(wfd, Data);
 	} else
@@ -233,9 +231,9 @@ File::~File()
 	Close();
 }
 
-bool File::Open(LPCWSTR Object, DWORD DesiredAccess, DWORD ShareMode, LPSECURITY_ATTRIBUTES SecurityAttributes, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
+bool File::Open(LPCWSTR Object, DWORD DesiredAccess, DWORD ShareMode, const DWORD *UnixMode, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
 {
-	Handle = apiCreateFile(Object, DesiredAccess, ShareMode, SecurityAttributes, CreationDistribution, FlagsAndAttributes, TemplateFile, ForceElevation);
+	Handle = apiCreateFile(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile, ForceElevation);
 	return Handle != INVALID_HANDLE_VALUE;
 }
 
@@ -409,34 +407,19 @@ bool File::Eof()
 
 BOOL apiDeleteFile(const wchar_t *lpwszFileName)
 {
-	FARString strNtName(NTPath(lpwszFileName).Get());
-	BOOL Result = WINPORT(DeleteFile)(strNtName);
+	BOOL Result = WINPORT(DeleteFile)(lpwszFileName);
 	return Result;
 }
 
 BOOL apiRemoveDirectory(const wchar_t *DirName)
 {
-	FARString strNtName(NTPath(DirName).Get());
-	BOOL Result = WINPORT(RemoveDirectory)(strNtName);
+	BOOL Result = WINPORT(RemoveDirectory)(DirName);
 	return Result;
 }
 
-HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode, LPSECURITY_ATTRIBUTES SecurityAttributes, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
+HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode, const DWORD *UnixMode, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
 {
-	FARString strObject(NTPath(Object).Get());
-	FlagsAndAttributes|=FILE_FLAG_BACKUP_SEMANTICS|(CreationDistribution==OPEN_EXISTING?FILE_FLAG_POSIX_SEMANTICS:0);
-
-	HANDLE Handle=WINPORT(CreateFile)(strObject, DesiredAccess, ShareMode, SecurityAttributes, CreationDistribution, FlagsAndAttributes, TemplateFile);
-	if(Handle == INVALID_HANDLE_VALUE)
-	{
-		DWORD Error=WINPORT(GetLastError)();
-		if(Error==ERROR_FILE_NOT_FOUND||Error==ERROR_PATH_NOT_FOUND)
-		{
-			FlagsAndAttributes&=~FILE_FLAG_POSIX_SEMANTICS;
-			Handle = WINPORT(CreateFile)(strObject, DesiredAccess, ShareMode, SecurityAttributes, CreationDistribution, FlagsAndAttributes, TemplateFile);
-		}
-	}
-
+	HANDLE Handle=WINPORT(CreateFile)(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
 	return Handle;
 }
 
@@ -445,8 +428,7 @@ BOOL apiMoveFile(
     const wchar_t *lpwszNewFileName   // address of new name for the file
 )
 {
-	FARString strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
-	BOOL Result = WINPORT(MoveFile)(strFrom, strTo);
+	BOOL Result = WINPORT(MoveFile)(lpwszExistingFileName, lpwszNewFileName);
 	return Result;
 }
 
@@ -456,8 +438,7 @@ BOOL apiMoveFileEx(
     DWORD dwFlags   // flag to determine how to move file
 )
 {
-	FARString strFrom(NTPath(lpwszExistingFileName).Get()), strTo(NTPath(lpwszNewFileName).Get());
-	BOOL Result = WINPORT(MoveFileEx)(strFrom, strTo, dwFlags);
+	BOOL Result = WINPORT(MoveFileEx)(lpwszExistingFileName, lpwszNewFileName, dwFlags);
 	return Result;
 }
 
@@ -759,7 +740,7 @@ BOOL apiIsDiskInDrive(const wchar_t *Root)
 
 int apiGetFileTypeByName(const wchar_t *Name)
 {
-	HANDLE hFile=apiCreateFile(Name,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0);
+	HANDLE hFile=apiCreateFile(Name,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,0,OPEN_EXISTING,0);
 
 	if (hFile==INVALID_HANDLE_VALUE)
 		return FILE_TYPE_UNKNOWN;
@@ -796,15 +777,13 @@ BOOL apiCreateDirectoryEx(LPCWSTR TemplateDirectory, LPCWSTR NewDirectory, LPSEC
 
 DWORD apiGetFileAttributes(LPCWSTR lpFileName)
 {
-	FARString strNtName(NTPath(lpFileName).Get());
-	DWORD Result = WINPORT(GetFileAttributes)(strNtName);
+	DWORD Result = WINPORT(GetFileAttributes)(lpFileName);
 	return Result;
 }
 
 BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 {
-	FARString strNtName(NTPath(lpFileName).Get());
-	BOOL Result = WINPORT(SetFileAttributes)(strNtName, dwFileAttributes);
+	BOOL Result = WINPORT(SetFileAttributes)(lpFileName, dwFileAttributes);
 	return Result;
 
 }

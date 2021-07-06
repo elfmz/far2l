@@ -89,7 +89,7 @@ struct AskDeleteReadOnly
 			_ump->Unmake();
 	}
 	
-	inline operator int() const
+	inline int Choice() const
 	{
 		return _r;
 	}
@@ -483,20 +483,11 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 						}
 						else
 						{
-							AskDeleteReadOnly AskCode(strFullName,Wipe);
-
-							if (AskCode==DELETE_CANCEL)
+							if (ShellRemoveFile(strFullName,Wipe)==DELETE_CANCEL)
 							{
 								Cancel=true;
 								break;
 							}
-
-							if (AskCode==DELETE_YES)
-								if (ShellRemoveFile(strFullName,Wipe)==DELETE_CANCEL)
-								{
-									Cancel=true;
-									break;
-								}
 						}
 					}
 				}
@@ -543,23 +534,15 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 			}
 			else
 			{
-				AskDeleteReadOnly AskCode(strSelName,Wipe);
+				int DeleteCode=ShellRemoveFile(strSelName,Wipe);
 
-				if (AskCode==DELETE_CANCEL)
-					break;
-
-				if (AskCode==DELETE_YES)
+				if (DeleteCode==DELETE_SUCCESS && UpdateDiz)
 				{
-					int DeleteCode=ShellRemoveFile(strSelName,Wipe);
-
-					if (DeleteCode==DELETE_SUCCESS && UpdateDiz)
-					{
-						SrcPanel->DeleteDiz(strSelName);
-					}
-
-					if (DeleteCode==DELETE_CANCEL)
-						break;
+					SrcPanel->DeleteDiz(strSelName);
 				}
+
+				if (DeleteCode==DELETE_CANCEL)
+					break;
 			}
 		}
 	}
@@ -625,9 +608,7 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 	: _r(DELETE_YES)
 {
 	int MsgCode;
-	FARString strFullName;
-	ConvertNameToFull(Name, strFullName);
-	_ump = apiMakeWritable(strFullName);
+	_ump = apiMakeWritable(Name);
 
 	if (!_ump)//(Attr & FILE_ATTRIBUTE_READONLY))
 		return;//(DELETE_YES);
@@ -639,6 +620,8 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 		MsgCode=ReadOnlyDeleteMode;
 	else
 	{
+		FARString strFullName;
+		ConvertNameToFull(Name, strFullName);
 		MsgCode=Message(MSG_WARNING,5,MSG(MWarning),MSG(MDeleteRO),Name,
 		                MSG(Wipe?MAskWipeRO:MAskDeleteRO),MSG(Wipe?MDeleteFileWipe:MDeleteFileDelete),MSG(MDeleteFileAll),
 		                MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),
@@ -673,9 +656,16 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 int ShellRemoveFile(const wchar_t *Name,int Wipe)
 {
 	ProcessedItems++;
-	FARString strFullName;
-	ConvertNameToFull(Name, strFullName);
 	int MsgCode=0;
+	std::unique_ptr<AskDeleteReadOnly> AskDeleteRO;
+	if (Wipe || Opt.DeleteToRecycleBin)
+	{  /* in case its a not a simple deletion - check/sanitize RO files prior any actions,
+		* cuz code that doing such things is not aware about such complications
+		*/
+		AskDeleteRO.reset(new AskDeleteReadOnly(Name, Wipe));
+		if (AskDeleteRO->Choice() != DELETE_YES)
+			return AskDeleteRO->Choice();
+	}
 
 	for (;;)
 	{
@@ -694,6 +684,8 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 				  Уничтожение файла приведет к обнулению всех ссылающихся на него файлов.
 				                        Уничтожать файл?
 				*/
+				FARString strFullName;
+				ConvertNameToFull(Name, strFullName);
 				MsgCode=Message(MSG_WARNING,5,MSG(MError),strFullName,
 				                MSG(MDeleteHardLink1),MSG(MDeleteHardLink2),MSG(MDeleteHardLink3),
 				                MSG(MDeleteFileWipe),MSG(MDeleteFileAll),MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
@@ -719,14 +711,21 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 		}
 		else if (!Opt.DeleteToRecycleBin)
 		{
-			/*
-			        HANDLE hDelete=FAR_CreateFile(Name,GENERIC_WRITE,0,nullptr,OPEN_EXISTING,
-			               FILE_FLAG_DELETE_ON_CLOSE|FILE_FLAG_POSIX_SEMANTICS,nullptr);
-			        if (hDelete!=INVALID_HANDLE_VALUE && CloseHandle(hDelete))
-			          break;
-			*/
-			if (apiDeleteFile(Name))
+			// first try simple removal, only if it will fail
+			// then fallback to AskDeleteRO and sdc_remove
+			if (!AskDeleteRO)
+			{
+				if (remove(Wide2MB(Name).c_str()) == 0 || errno == ENOENT) {
+					break;
+				}
+				AskDeleteRO.reset(new AskDeleteReadOnly(Name, Wipe));
+				if (AskDeleteRO->Choice() != DELETE_YES)
+					return AskDeleteRO->Choice();
+			}
+			if (sdc_remove(Wide2MB(Name).c_str()) == 0 || errno == ENOENT) {
 				break;
+			}
+			WINPORT(TranslateErrno)();
 		}
 		else if (RemoveToRecycleBin(Name))
 			break;
@@ -760,8 +759,6 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 int ERemoveDirectory(const wchar_t *Name,int Wipe)
 {
 	ProcessedItems++;
-	FARString strFullName;
-	ConvertNameToFull(Name,strFullName);
 
 	for (;;)
 	{
@@ -786,6 +783,9 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 			MsgCode=SkipFoldersMode;
 		else
 		{
+			FARString strFullName;
+			ConvertNameToFull(Name,strFullName);
+
 			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
 			                MSG(MCannotDeleteFolder),Name,MSG(MDeleteRetry),
 			                MSG(MDeleteSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));

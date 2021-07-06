@@ -2818,12 +2818,21 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				DstFlags|= FILE_FLAG_NO_BUFFERING;
 #endif
 		}
+
 		
-		bool DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
+		DWORD ModeToCreateWith = 0;
+		if ((Flags & FCOPY_COPYACCESSMODE) != 0)
+		{ // force S_IWUSR for a while file being copied, it will be removed afterwards if not needed
+			ModeToCreateWith = SrcData.dwUnixMode | S_IWUSR;
+		}
+
+		bool DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ,
+			((Flags & FCOPY_COPYACCESSMODE) != 0) ? &ModeToCreateWith : nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
 		if ((DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
 			if (!DstOpened) {
 				DstFlags&= ~(FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING);
-				DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
+				DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ,
+					((Flags & FCOPY_COPYACCESSMODE) != 0) ? &ModeToCreateWith : nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
 				if (DstOpened) {
 					Flags&= ~FCOPY_WRITETHROUGH; 
 					fprintf(stderr, "COPY: unbuffered FAILED: 0x%x\n", DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING));
@@ -2842,7 +2851,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		if (XAttrCopyPtr)
 			XAttrCopyPtr->ApplyToCopied(DestFile);
 
-		if (((Flags & FCOPY_COPYACCESSMODE) != 0))
+		if (((Flags & FCOPY_COPYACCESSMODE) != 0) && ModeToCreateWith != SrcData.dwUnixMode)
 			DestFile.Chmod(SrcData.dwUnixMode);
 
 		FARString strDriveRoot;

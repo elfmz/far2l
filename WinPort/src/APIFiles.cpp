@@ -121,8 +121,7 @@ extern "C"
 	}
 
 	HANDLE WINPORT(CreateFile)( LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-		LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
-		DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+		const DWORD *UnixMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 	{
 		//return CreateFile( lpFileName, dwDesiredAccess, dwShareMode,
 		//	lpSecurityAttributes, dwCreationDisposition, 
@@ -161,13 +160,18 @@ extern "C"
 		case TRUNCATE_EXISTING: flags|= O_TRUNC; break;
 		}
 		const std::string &path = ConsumeWinPath(lpFileName);
-		mode_t mode = (dwFlagsAndAttributes&FILE_ATTRIBUTE_EXECUTABLE) ? 0755 : 0644;
+		mode_t mode = UnixMode ? *UnixMode : 0644;
+		if (dwFlagsAndAttributes & FILE_ATTRIBUTE_EXECUTABLE) {
+			mode|= UnixMode ? 0700 : 0711;
+		}
+		mode&= 0777; // may be allow also SUID/SGID?
+
 		int r = os_call_int(open_all_args, path.c_str(), flags, mode);		
 		if (r==-1) {
 			WINPORT(TranslateErrno)();
 
-			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x path=%s errno=%d\n", 
-				lpFileName, dwDesiredAccess, flags, path.c_str(), errno);
+			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
+				lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
 				
 			return INVALID_HANDLE_VALUE;
 		}

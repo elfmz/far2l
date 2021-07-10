@@ -2814,7 +2814,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			DstFlags|= FILE_FLAG_WRITE_THROUGH;
 
 #ifdef __linux__ //anyway OSX doesn't have O_DIRECT
-			if (SrcData.nFileSize > 128 * USE_PAGE_SIZE)// just empiric
+			if (SrcData.nFileSize > 32 * USE_PAGE_SIZE)// just empiric
 				DstFlags|= FILE_FLAG_NO_BUFFERING;
 #endif
 		}

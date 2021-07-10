@@ -620,8 +620,6 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 		MsgCode=ReadOnlyDeleteMode;
 	else
 	{
-		FARString strFullName;
-		ConvertNameToFull(Name, strFullName);
 		MsgCode=Message(MSG_WARNING,5,MSG(MWarning),MSG(MDeleteRO),Name,
 		                MSG(Wipe?MAskWipeRO:MAskDeleteRO),MSG(Wipe?MDeleteFileWipe:MDeleteFileDelete),MSG(MDeleteFileAll),
 		                MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),

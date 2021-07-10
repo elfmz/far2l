@@ -790,6 +790,9 @@ BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 
 IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 {
+	FARString strFullName;
+	ConvertNameToFull(lpFileName, strFullName);
+
 	struct UnmakeWritable : IUnmakeWritable
 	{
 		std::string target, dir;
@@ -822,7 +825,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 	} *um = new UnmakeWritable;
 
 	//dont want to trigger sudo due to missing +w so use sdc_* for chmod
-	um->target = Wide2MB(lpFileName);
+	um->target = strFullName.GetMB();
 	struct stat s = {};
 
 	if (um->target.size() > 1) {

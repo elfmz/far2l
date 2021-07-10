@@ -136,8 +136,7 @@ extern "C" {
 	WINPORT_DECL(RemoveDirectory, BOOL, ( LPCWSTR lpDirName));
 	WINPORT_DECL(DeleteFile, BOOL, ( LPCWSTR lpFileName));
 	WINPORT_DECL(CreateFile, HANDLE, ( LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-		LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, 
-		DWORD dwFlagsAndAttributes, HANDLE hTemplateFile));
+		const DWORD *UnixMode, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile));
 	WINPORT_DECL(GetFileDescriptor, int, (HANDLE hFile));
 	WINPORT_DECL(CloseHandle, BOOL, (HANDLE hObject));
 	WINPORT_DECL(MoveFile, BOOL, (LPCWSTR ExistingFileName, LPCWSTR NewFileName ));

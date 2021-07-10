@@ -75,9 +75,9 @@ static wchar_t PlanetSymbol[3][2]=
 
 static wchar_t PenguinSymbol[3][2]=
 {
-	{0x1F423,0x0000}, // 🐧
-	{0x1F423,0x0000}, // 🐧 // 0x1F425🐥
-	{0x1F423,0x0000}, // 🐧 // 0x1F427🐣
+	{0x1F427,0x0000}, // 🐧
+	{0x1F427,0x0000}, // 🐧 // 0x1F425🐥
+	{0x1F427,0x0000}, // 🐧 // 0x1F423🐣
 };
 
 static void ShowSaver(int Step)

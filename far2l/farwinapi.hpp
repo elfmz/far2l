@@ -142,7 +142,7 @@ class File: private NonCopyable
 public:
 	File();
 	~File();
-	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
+	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, const DWORD *UnixMode, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
 	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
 	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr);
 	bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
@@ -236,7 +236,7 @@ HANDLE apiCreateFile(
     const wchar_t* Object,
     DWORD DesiredAccess,
     DWORD ShareMode,
-    LPSECURITY_ATTRIBUTES SecurityAttributes,
+    const DWORD *UnixMode,
     DWORD CreationDistribution,
     DWORD FlagsAndAttributes=0,
     HANDLE TemplateFile=nullptr,

@@ -439,10 +439,16 @@ void GetPathRoot(const wchar_t *Path, FARString &strRoot)
 
 void ConvertNameToFull(const wchar_t *lpwszSrc, FARString &strDest)
 {
-	FARString strCurDir;
-	apiGetCurrentDirectory(strCurDir);
-	FARString strSrc = lpwszSrc;
-	MixToFullPath(strSrc,strDest,strCurDir);
+	if (*lpwszSrc != GOOD_SLASH) {
+		FARString strCurDir;
+		apiGetCurrentDirectory(strCurDir);
+		FARString strSrc = lpwszSrc;
+		MixToFullPath(strSrc,strDest,strCurDir);
+
+	} else {
+		strDest = lpwszSrc;
+		MixToFullPath(strDest);
+	}
 }
 
 

@@ -62,35 +62,69 @@ bool ExpandEnvironmentStrings(std::string &s, bool empty_if_missing)
 
 	bool out = true;
 	std::string saved_s = s;
-	enum State {
-		S_NONE,
-		S_PLAIN,
-		S_CURLED
-	} state = S_NONE;
+	enum {
+		ENV_NONE,
+		ENV_SIMPLE,
+		ENV_CURLED,
+	} env_state = ENV_NONE;
+
+	enum {
+		QUOTE_NONE,
+		QUOTE_SINGLE,
+		QUOTE_DOUBLE,
+	} quote_state = QUOTE_NONE;
+
+	bool escaping_state = false;
 
 	for (size_t i = 0, start = 0; i < s.size(); ++i) {
-		if (state == S_PLAIN) {
+		if (env_state == ENV_SIMPLE) {
 			if (!isalnum(s[i]) && s[i] != '_') {
 				if (!ReplaceEnvironmentSubString(s, start, i, s.substr(start + 1, i - start - 1), empty_if_missing)) {
 					out = false;
 				}
-				state = S_NONE;
+				env_state = ENV_NONE;
 			}
 
-		} else if (state == S_CURLED) {
+		} else if (env_state == ENV_CURLED) {
 			if (s[i] == '}') {
 				++i;
 				if (!ReplaceEnvironmentSubString(s, start, i, s.substr(start + 2, i - start - 3), empty_if_missing)) {
 					out = false;
 				}
 				--i;
-				state = S_NONE;
+				env_state = ENV_NONE;
 			}
 		}
 
-		if (state == S_NONE && s[i] == '$') {
-			state = (i + 2 < s.size() && s[i + 1] == '{') ? S_CURLED : S_PLAIN;
-			start = i;
+		if (quote_state == QUOTE_SINGLE) {
+			if (s[i] == '\'') {
+				quote_state = QUOTE_NONE;
+			}
+
+		} else if (escaping_state) {
+			escaping_state = false;
+
+		} else switch (s[i]) {
+			case '\'': if (quote_state != QUOTE_DOUBLE) {
+				quote_state = QUOTE_SINGLE;
+			} break;
+
+			case '\"': {
+				quote_state = (quote_state == QUOTE_DOUBLE) ? QUOTE_NONE : QUOTE_DOUBLE;
+			} break;
+
+			case '\\': {
+				escaping_state = true;
+			} break;
+
+			case '$': if (env_state == ENV_NONE && i + 1 < s.size()) {
+				if (i + 2 < s.size() && s[i + 1] == '{') {
+					env_state = ENV_CURLED;
+				} else if (isalpha(s[i + 1])) {
+					env_state = ENV_SIMPLE;
+				}
+				start = i;
+			} break;
 		}
 	}
 

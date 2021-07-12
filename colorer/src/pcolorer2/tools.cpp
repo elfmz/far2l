@@ -1,4 +1,7 @@
 #include "tools.h"
+#include <string>
+#include <utils.h>
+#include <assert.h>
 
 wchar_t *rtrim(wchar_t* str)
 {
@@ -28,63 +31,43 @@ wchar_t *trim(wchar_t* str)
 */
 wchar_t *PathToFull(const wchar_t *path, bool unc)
 {
-  size_t len=wcslen(path);
-  if (!len){
+  std::wstring new_path(path);
+  if (new_path.empty()) {
     return nullptr;
   }
-
-  wchar_t *new_path = nullptr;
   // we remove quotes, if they are present, focusing on the first character
   // if he quote it away and the first and last character.
   // If the first character quote, but the latter does not - well, it's not our 
   // problem, and so and so error
-  if (*path==L'"'){
-    len--;
-    new_path=new wchar_t[len];
-    wcsncpy(new_path, &path[1],len-1);
-    new_path[len-1]='\0';
-  }
-  else{
-    len++;
-    new_path=new wchar_t[len];
-    wcscpy(new_path, path);
+  if (new_path.size() > 1 && new_path.front() == L'"' && new_path.back() == '"') {
+	new_path = new_path.substr(1, new_path.size() - 2);
   }
 
   // replace the environment variables to their values
-  size_t i=WINPORT(ExpandEnvironmentStrings)(new_path, nullptr, 0);
-  if (i>len){
-    len = i;
-  }
-  wchar_t *temp = new wchar_t[len];
-  WINPORT(ExpandEnvironmentStrings)(new_path,temp,static_cast<DWORD>(i));
-  delete[] new_path;
-  new_path = temp;
+  std::string new_path_mb;
+  StrWide2MB(new_path, new_path_mb);
+  ExpandEnvironmentStrings(new_path_mb);
+  StrMB2Wide(new_path_mb, new_path);
 
   // take the full path to the file, converting all kinds of ../ ./ etc
-  size_t p=FSF.ConvertPath(CPM_FULL, new_path, nullptr, 0);
-  if (p>len){
-    len = p;
-    wchar_t *temp = new wchar_t[len];
-    wcscpy(temp,new_path);
-    delete[] new_path;
-    new_path = temp;
+  size_t unconverted_len = new_path.size();
+  size_t p = FSF.ConvertPath(CPM_FULL, &new_path[0], nullptr, 0);
+  if (p > unconverted_len) {
+	new_path.resize(p);
+	std::fill(new_path.begin() + unconverted_len, new_path.end(), 0);
   }
-  FSF.ConvertPath(CPM_FULL, new_path, new_path, static_cast<int>(len));
+  p = FSF.ConvertPath(CPM_FULL, &new_path[0], &new_path[0], static_cast<int>(new_path.size()));
+  assert(p <= new_path.size());
+  //new_path.resize(p);
 
-  if (unc){
-    fprintf(stderr, "Wanna UNC for '%ls'\n",new_path);
-  }
+  wchar_t *out = new wchar_t[p];
+  wmemcpy(out, &new_path[0], p);
 
-  // reduce the length of the buffer
-  i = wcslen(new_path)+1;
-  if (i!=len){
-    wchar_t *temp = new wchar_t[i];
-    wcscpy(temp,new_path);
-    delete[] new_path;
-    return temp;
+  if (unc) {
+    fprintf(stderr, "Wanna UNC for '%ls'\n", out);
   }
 
-  return new_path;
+  return out;
 }
 
 SString *PathToFullS(const wchar_t *path, bool unc)

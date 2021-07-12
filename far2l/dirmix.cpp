@@ -320,11 +320,12 @@ void PrepareTemporaryOpenPath(FARString &Path)
 FARString DefaultPanelInitialDirectory()
 {
 	FARString out;
-	const char *home = getenv("HOME");
-	if (home && *home) {
+	const std::string &home = GetMyHome();
+	if (!home.empty()) {
 		out = home;
-	} else
+	} else {
 		out = g_strFarPath;
+	}
 	
 	DeleteEndSlash(out);
 	return out;

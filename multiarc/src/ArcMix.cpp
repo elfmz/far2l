@@ -663,16 +663,7 @@ std::string &NormalizePath(std::string &path)
 
 std::string &ExpandEnv(std::string &str)
 {
-  if (str.empty())
-    return str;
-
-  std::vector<WCHAR> ExpandedCmd(str.size() + 0x1000);
-  for (;;ExpandedCmd.resize(ExpandedCmd.size() + 0x1000))
-  {
-    if (WINPORT(ExpandEnvironmentStrings)(StrMB2Wide(str).c_str(), &ExpandedCmd[0], ExpandedCmd.size()) < ExpandedCmd.size())
-	  break;
-  }
-  Wide2MB(&ExpandedCmd[0], str);
+  ExpandEnvironmentStrings(str, false);
   return str;
 }
 

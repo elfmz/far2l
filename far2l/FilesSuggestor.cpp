@@ -1,7 +1,13 @@
+#include "headers.hpp"
+#include "strmix.hpp"
+#include "pathmix.hpp"
 #include "FilesSuggestor.hpp"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
+#include <algorithm>
+
 #include "../WinPort/sudo.h"
 
 FilesSuggestor::~FilesSuggestor()
@@ -81,7 +87,9 @@ void FilesSuggestor::Suggest(const std::string &filter, std::vector<std::string>
 		}
 
 		// dont keep user waiting longer than 1.5 second
-		WaitThread(1500);
+		if (!WaitThread(1500)) {
+			fprintf(stderr, "FilesSuggestor: timed out on '%s'\n", _dir_path.c_str());
+		}
 	}
 
 	std::lock_guard<std::mutex> lock(_mtx);
@@ -124,3 +132,76 @@ void *FilesSuggestor::ThreadProc()
 
 	return nullptr;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu)
+{
+	if (!filter || !*filter) {
+		return;
+	}
+
+	FARString str_filter(filter);
+
+	bool odd_quote = false;
+	for (size_t i = 0; i < str_filter.GetLength(); i++) {
+		if (str_filter.At(i) == L'"') {
+			odd_quote = !odd_quote;
+		}
+	}
+
+	size_t pos = 0;
+	if (odd_quote) {
+		str_filter.RPos(pos, L'"');
+
+	} else for (pos = str_filter.GetLength() - 1; pos != static_cast<size_t>(-1); pos--) {
+		if (str_filter.At(pos) == L'"') {
+			pos--;
+			while (str_filter.At(pos) != L'"' && pos != static_cast<size_t>(-1)) {
+				pos--;
+			}
+		} else if (str_filter.At(pos) == L' ') {
+			pos++;
+			break;
+		}
+	}
+
+	if (pos == static_cast<size_t>(-1)) {
+		pos = 0;
+	}
+
+	bool start_quote = false;
+	if (str_filter.At(pos) == L'"') {
+		pos++;
+		start_quote = true;
+	}
+
+	FARString str_start(str_filter, pos);
+	str_filter.LShift(pos);
+	Unquote(str_filter);
+	if (!str_filter.IsEmpty()) {
+		FARString str_filter_expanded;
+		apiExpandEnvironmentStrings(str_filter, str_filter_expanded);
+		_suggestions.clear();
+		FilesSuggestor::Suggest(str_filter_expanded.GetMB(), _suggestions);
+		if (!_suggestions.empty()) {
+			std::sort(_suggestions.begin(), _suggestions.end());
+			if (menu.GetItemCount()) {
+				MenuItemEx item{};
+				item.Flags = LIF_SEPARATOR;
+				menu.AddItem(&item);
+			}
+			size_t path_part_len = PointToName(str_filter) - str_filter;
+			for (const auto &suggestion : _suggestions) {
+				str_filter.SetLength(path_part_len);
+				FARString str_tmp(str_start + str_filter);
+				str_tmp+= suggestion;
+				if (start_quote) {
+					str_tmp+= L'"';
+				}
+				menu.AddItem(str_tmp);
+			}
+		}
+	}
+}
+

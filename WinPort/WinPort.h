@@ -125,9 +125,6 @@ extern "C" {
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ());
 	WINPORT_DECL(GetComputerName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));
 	WINPORT_DECL(GetUserName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));
-	WINPORT_DECL(GetEnvironmentVariable, DWORD, (LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize));
-	WINPORT_DECL(SetEnvironmentVariable, BOOL, (LPCWSTR lpName, LPCWSTR lpValue));
-	WINPORT_DECL(ExpandEnvironmentStrings, DWORD, (LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize));
 	
 
 //files

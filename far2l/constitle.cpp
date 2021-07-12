@@ -84,12 +84,11 @@ static const FARString& GetFarTitleAddons()
 	-1,true);
 	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1,true);
 
-	char hn[0x100] = {};
-	if (gethostname(hn, sizeof(hn) - 1) >= 0) {
-		ReplaceStrings(strTitleAddons,L"%Host", StrMB2Wide(hn).c_str(),-1,true);
-	}
-	const char *user = getenv("USER");
-	ReplaceStrings(strTitleAddons,L"%User", StrMB2Wide(user ? user : "").c_str(),-1,true);
+	FARString hn, un;
+	apiGetEnvironmentVariable("HOSTNAME", hn);
+	apiGetEnvironmentVariable("USER", un);
+	ReplaceStrings(strTitleAddons,L"%Host",hn,-1,true);
+	ReplaceStrings(strTitleAddons,L"%User",un,-1,true);
 
 	RemoveTrailingSpaces(strTitleAddons);
 

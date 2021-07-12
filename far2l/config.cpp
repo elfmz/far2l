@@ -675,7 +675,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyInterface, "CopyShowTotal",&Opt.CMOpt.CopyShowTotal,1, 0},
 	{1, REG_DWORD,  NKeyInterface, "DelShowTotal",&Opt.DelOpt.DelShowTotal,0, 0},
 	{1, REG_SZ,     NKeyInterface, "TitleAddons",&Opt.strTitleAddons, 0, L"%Ver %Build %Platform %User@%Host"},
-	{1, REG_SZ,     NKeyInterfaceCompletion, "Exceptions",&Opt.AutoComplete.Exceptions, 0, L"git*reset*--hard; ftp://*:*@*"},
+	{1, REG_SZ,     NKeyInterfaceCompletion, "Exceptions",&Opt.AutoComplete.Exceptions, 0, L"git*reset*--hard;*://*:*@*"},
 	{1, REG_DWORD,  NKeyInterfaceCompletion, "ShowList",&Opt.AutoComplete.ShowList, 1, 0},
 	{1, REG_DWORD,  NKeyInterfaceCompletion, "ModalList",&Opt.AutoComplete.ModalList, 0, 0},
 	{1, REG_DWORD,  NKeyInterfaceCompletion, "Append",&Opt.AutoComplete.AppendCompletion, 0, 0},
@@ -1229,7 +1229,7 @@ void LanguageSettings()
 		delete HelpMenu;
 		LangMenu->Hide();
 		CtrlObject->Plugins.ReloadLanguage();
-		WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
+		setenv("FARLANG", Opt.strLanguage.GetMB().c_str(), 1);
 		PrepareStrFTime();
 		PrepareUnitStr();
 		FrameManager->InitKeyBar();

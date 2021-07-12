@@ -623,4 +623,3 @@ const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len)
 
 	return nullptr;
 }
-

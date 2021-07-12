@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <Threaded.h>
+#include "vmenu.hpp"
 
 class FilesSuggestor : protected Threaded
 {
@@ -21,4 +22,13 @@ protected:
 public:
 	virtual ~FilesSuggestor();
 	void Suggest(const std::string &filter, std::vector<std::string> &result);
+};
+
+
+class MenuFilesSuggestor : protected FilesSuggestor
+{
+	std::vector<std::string> _suggestions;
+
+public:
+	void Suggest(const wchar_t *filter, VMenu& menu);
 };

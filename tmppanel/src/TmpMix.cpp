@@ -7,6 +7,7 @@ Temporary panel miscellaneous utility functions
 
 #include "TmpPanel.hpp"
 #include <string>
+#include <utils.h>
 
 const TCHAR *GetMsg(int MsgId)
 {
@@ -201,18 +202,14 @@ wchar_t* FormNtPath(const wchar_t* path, StrBuf& buf) {
 
 TCHAR* ExpandEnvStrs(const TCHAR* input, StrBuf& output) {
 #ifdef UNICODE
-  output.Grow(NT_MAX_PATH);
-  int size = ExpandEnvironmentStrings(input, output, output.Size());
-  if (size > output.Size())
-  {
-    output.Grow(size);
-    size = ExpandEnvironmentStrings(input, output, output.Size());
-  }
-  if ((size == 0) || (size > output.Size()))
-  {
-    output.Grow(lstrlen(input) + 1);
-    lstrcpy(output, input);
-  }
+  std::string s;
+  Wide2MB(input, s);
+  ExpandEnvironmentStrings(s, false);
+  std::wstring w;
+  StrMB2Wide(s, w);
+  output.Grow(w.size() + 1);
+  lstrcpy(output, w.c_str());
+
 #else
   output.Grow(MAX_PATH);
   FSF.ExpandEnvironmentStr(input, output, output.Size());
@@ -277,7 +274,7 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
       goto success;
     }
   }
-  ExpandEnvStrs(_T("%FARHOME%:%PATH%"),Path);
+  ExpandEnvStrs(_T("$FARHOME:$PATH"),Path);
   for (TCHAR *str=Path, *p=_tcschr(Path,_T(':')); *str; p=_tcschr(str,_T(':')))
   {
     if (p)

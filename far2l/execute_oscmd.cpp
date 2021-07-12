@@ -172,16 +172,6 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	Unquote(strExpandedDir);
 	apiExpandEnvironmentStrings(strExpandedDir,strExpandedDir);
 
-	if (SetPanel->GetMode()!=PLUGIN_PANEL && strExpandedDir.At(0) == L'~' && 
-		((!strExpandedDir.At(1) && apiGetFileAttributes(strExpandedDir) == INVALID_FILE_ATTRIBUTES) || IsSlash(strExpandedDir.At(1))))
-	{
-		const char *home = getenv("HOME");
-		if (home) {
-			strExpandedDir.Replace(0, 1, MB2Wide(home).c_str());
-		} else
-			strExpandedDir.Replace(0, 1, L"/root");
-	}
-
 	if (wcspbrk(&strExpandedDir[HasPathPrefix(strExpandedDir)?4:0],L"?*")) // это маска?
 	{
 		FAR_FIND_DATA_EX wfd;

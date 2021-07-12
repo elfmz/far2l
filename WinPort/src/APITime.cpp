@@ -92,15 +92,12 @@ WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTi
 WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct timespec *ts))
 {
 	if (!lpFileTime || !ts) return;
-	FILETIME ftm2 = {0};
-	if (!WINPORT(FileTimeToLocalFileTime)(lpFileTime, &ftm2))
-		return;
 
 	SYSTEMTIME sys_time = {};
-	WINPORT(FileTimeToSystemTime)(&ftm2, &sys_time);
+	WINPORT(FileTimeToSystemTime)(lpFileTime, &sys_time);
 	struct tm tm = {};	
 	Systemtime2TM(&sys_time, &tm);
-	ts->tv_sec = mktime(&tm);
+	ts->tv_sec = timegm(&tm);
 	ts->tv_nsec = sys_time.wMilliseconds;
 	ts->tv_nsec*= 1000000;
 }
@@ -179,27 +176,60 @@ WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILE
     return TRUE;*/
 }
 
+static int LocalMinusUTC()
+{
+	time_t now = time(NULL);
+	struct tm gt{}, lt{};
+	gmtime_r(&now, &gt);
+	localtime_r(&now, &lt);
+
+	unsigned long long gt_secs = ((gt.tm_yday * 24 + gt.tm_hour) * 60 + gt.tm_min) * 60 + gt.tm_sec;
+	unsigned long long lt_secs = ((lt.tm_yday * 24 + lt.tm_hour) * 60 + lt.tm_min) * 60 + lt.tm_sec;
+	if (gt.tm_year > lt.tm_year) {
+		gt_secs+= 366 * 24 * 60 * 60;
+
+	} else if (gt.tm_year < lt.tm_year) {
+		lt_secs+= 366 * 24 * 60 * 60;
+	}
+
+	int bias = (int)(long long)(lt_secs - gt_secs);
+
+	if (gt.tm_year != lt.tm_year) {
+		// there was workaround with adding leap year seconds count
+		// so round bias by one minute to eliminate artifacts caused by it
+		int abs_bias = abs(bias);
+		int leap_fixup = abs_bias % 60;
+		if (leap_fixup != 0) {
+			if (leap_fixup <= 30) {
+				abs_bias-= leap_fixup;
+			} else {
+				abs_bias+= 60 - leap_fixup;
+			}
+			bias = (bias < 0) ? -abs_bias : abs_bias;
+		}
+	}
+
+	return bias;
+}
 
 static void BiasFileTimeToFileTime(const FILETIME *lpSrc, LPFILETIME lpDst, bool from_local)
 {
-	time_t now = time(NULL);
-	struct tm lt = { };
-	localtime_r(&now, &lt);
-	//local = utc + lt.tm_gmtoff
-		
 	ULARGE_INTEGER li;
 	li.LowPart = lpSrc->dwLowDateTime;
 	li.HighPart = lpSrc->dwHighDateTime;
 
-	if (lt.tm_gmtoff > 0) {
-		ULONGLONG diff = lt.tm_gmtoff;
+	int loc_minus_utc = LocalMinusUTC();
+
+	if (loc_minus_utc > 0) {
+		ULONGLONG diff = (unsigned int)loc_minus_utc;
 		diff*= 10000000LL;
 		if (from_local)
 			li.QuadPart-= diff;
 		else
 			li.QuadPart+= diff;
-	} else if (lt.tm_gmtoff < 0) {
-		ULONGLONG diff = -lt.tm_gmtoff;
+
+	} else if (loc_minus_utc < 0) {
+		ULONGLONG diff = (unsigned int)-loc_minus_utc;
 		diff*= 10000000LL;
 		if (from_local)
 			li.QuadPart+= diff;
@@ -350,10 +380,6 @@ void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time )
 WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft))
 {
     struct tm newtm;
-#ifndef HAVE_TIMEGM
-    struct tm *gtm;
-    time_t time1, time2;
-#endif
     newtm.tm_sec = (fattime & 0x1f) * 2;
     newtm.tm_min = (fattime >> 5) & 0x3f;
     newtm.tm_hour = (fattime >> 11);
@@ -361,14 +387,7 @@ WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETI
     newtm.tm_mon = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
     newtm.tm_isdst = -1;
-#ifdef HAVE_TIMEGM
     RtlSecondsSince1970ToTime( timegm(&newtm), (LARGE_INTEGER *)ft );
-#else
-    time1 = mktime(&newtm);
-    gtm = gmtime(&time1);
-    time2 = mktime(gtm);
-    RtlSecondsSince1970ToTime( 2*time1-time2, (LARGE_INTEGER *)ft );
-#endif
     return TRUE;
 }
 

@@ -16,11 +16,11 @@ WordExpansion::WordExpansion(const std::string &expression)
 void WordExpansion::Expand(const char *expression)
 {
 	wordexp_t p = {};
-	int r = wordexp( expression, &p, 0 );
+	int r = wordexp(expression, &p, 0 );
 	if (r == 0 || r == WRDE_NOSPACE) {
 		for (size_t i = 0; i < p.we_wordc; ++i ) {
 			if (p.we_wordv[i]) {
-				insert(p.we_wordv[i]);
+				emplace_back(p.we_wordv[i]);
 			}
 		}
 		wordfree( &p );

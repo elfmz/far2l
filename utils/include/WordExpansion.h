@@ -1,8 +1,8 @@
 #pragma once
-#include <set>
+#include <vector>
 #include <string>
 
-struct WordExpansion : std::set<std::string>
+struct WordExpansion : std::vector<std::string>
 {
 	WordExpansion(const char *expression = nullptr);
 	WordExpansion(const std::string &expression);

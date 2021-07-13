@@ -168,36 +168,17 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	if (SetPanel->GetType()!=FILE_PANEL && CtrlObject->Cp()->GetAnotherPanel(SetPanel)->GetType()==FILE_PANEL)
 		SetPanel=CtrlObject->Cp()->GetAnotherPanel(SetPanel);
 
-	FARString strExpandedDir(CmdLine);
-	Unquote(strExpandedDir);
-	apiExpandEnvironmentStrings(strExpandedDir,strExpandedDir);
-
-	if (wcspbrk(&strExpandedDir[HasPathPrefix(strExpandedDir)?4:0],L"?*")) // это маска?
-	{
-		FAR_FIND_DATA_EX wfd;
-
-		if (apiGetFindDataEx(strExpandedDir, wfd))
-		{
-			size_t pos;
-
-			if (FindLastSlash(pos,strExpandedDir))
-				strExpandedDir.SetLength(pos+1);
-			else
-				strExpandedDir.Clear();
-
-			strExpandedDir += wfd.strFileName;
-		}
-	}
+	FARString strDir(CmdLine);
 
 	/* $ 15.11.2001 OT
 		Сначала проверяем есть ли такая "обычная" директория.
 		если уж нет, то тогда начинаем думать, что это директория плагинная
 	*/
-	DWORD DirAtt=apiGetFileAttributes(strExpandedDir);
+	DWORD DirAtt=apiGetFileAttributes(strDir);
 
-	if (DirAtt!=INVALID_FILE_ATTRIBUTES && (DirAtt & FILE_ATTRIBUTE_DIRECTORY) && IsAbsolutePath(strExpandedDir))
+	if (DirAtt!=INVALID_FILE_ATTRIBUTES && (DirAtt & FILE_ATTRIBUTE_DIRECTORY) && IsAbsolutePath(strDir))
 	{
-		SetPanel->SetCurDir(strExpandedDir,TRUE);
+		SetPanel->SetCurDir(strDir,TRUE);
 		return TRUE;
 	}
 
@@ -218,15 +199,15 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	  return TRUE;
 	}
 	*/
-	strExpandedDir.ReleaseBuffer();
+	strDir.ReleaseBuffer();
 
 	if (SetPanel->GetType()==FILE_PANEL && SetPanel->GetMode()==PLUGIN_PANEL)
 	{
-		SetPanel->SetCurDir(strExpandedDir,ClosePlugin);
+		SetPanel->SetCurDir(strDir,ClosePlugin);
 		return TRUE;
 	}
 
-	if (FarChDir(strExpandedDir))
+	if (FarChDir(strDir))
 	{
 		SetPanel->ChangeDirToCurrent();
 
@@ -236,7 +217,7 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	else
 	{
 		if (!Selent)
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strExpandedDir,MSG(MOk));
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strDir,MSG(MOk));
 
 		return FALSE;
 	}

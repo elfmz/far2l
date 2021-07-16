@@ -141,67 +141,49 @@ void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu)
 		return;
 	}
 
-	FARString str_filter(filter);
+	std::string filter_mb;
+	Wide2MB(filter, filter_mb);
+	std::string orig_filter_mb = filter_mb;
 
-	bool odd_quote = false;
-	for (size_t i = 0; i < str_filter.GetLength(); i++) {
-		if (str_filter.At(i) == L'"') {
-			odd_quote = !odd_quote;
+	Environment::Tokens tokens;
+	Environment::ExpandAndTokenizeString(filter_mb, tokens);
+	if (tokens.empty() || tokens.back().len == 0) {
+		return;
+	}
+
+	const std::string &last_token = filter_mb.substr(tokens.back().begin, tokens.back().len);
+
+	_suggestions.clear();
+	FilesSuggestor::Suggest(last_token, _suggestions);
+	if (_suggestions.empty()) {
+		return;
+	}
+
+	std::sort(_suggestions.begin(), _suggestions.end());
+
+	if (menu.GetItemCount()) {
+		MenuItemEx item{};
+		item.Flags = LIF_SEPARATOR;
+		menu.AddItem(&item);
+	}
+
+	std::string orig_prefix = orig_filter_mb.substr(tokens.back().orig_begin, tokens.back().orig_len);
+
+	size_t path_part_len = orig_prefix.rfind(GOOD_SLASH);
+	orig_prefix.resize((path_part_len == std::string::npos) ? 0 : path_part_len + 1);
+
+	if (tokens.back().orig_begin) {
+		orig_prefix.insert(0, orig_filter_mb.substr(0, tokens.back().orig_begin));
+	}
+
+	for (const auto &suggestion : _suggestions) {
+		FARString str_tmp(orig_prefix);
+		str_tmp+= suggestion;
+		if (orig_filter_mb[tokens.back().orig_begin] == '\''
+				|| orig_filter_mb[tokens.back().orig_begin] == '"') {
+			str_tmp+= (wchar_t)orig_filter_mb[tokens.back().orig_begin];
 		}
-	}
-
-	size_t pos = 0;
-	if (odd_quote) {
-		str_filter.RPos(pos, L'"');
-
-	} else for (pos = str_filter.GetLength() - 1; pos != static_cast<size_t>(-1); pos--) {
-		if (str_filter.At(pos) == L'"') {
-			pos--;
-			while (str_filter.At(pos) != L'"' && pos != static_cast<size_t>(-1)) {
-				pos--;
-			}
-		} else if (str_filter.At(pos) == L' ') {
-			pos++;
-			break;
-		}
-	}
-
-	if (pos == static_cast<size_t>(-1)) {
-		pos = 0;
-	}
-
-	bool start_quote = false;
-	if (str_filter.At(pos) == L'"') {
-		pos++;
-		start_quote = true;
-	}
-
-	FARString str_start(str_filter, pos);
-	str_filter.LShift(pos);
-	Unquote(str_filter);
-	if (!str_filter.IsEmpty()) {
-		FARString str_filter_expanded;
-		apiExpandEnvironmentStrings(str_filter, str_filter_expanded);
-		_suggestions.clear();
-		FilesSuggestor::Suggest(str_filter_expanded.GetMB(), _suggestions);
-		if (!_suggestions.empty()) {
-			std::sort(_suggestions.begin(), _suggestions.end());
-			if (menu.GetItemCount()) {
-				MenuItemEx item{};
-				item.Flags = LIF_SEPARATOR;
-				menu.AddItem(&item);
-			}
-			size_t path_part_len = PointToName(str_filter) - str_filter;
-			for (const auto &suggestion : _suggestions) {
-				str_filter.SetLength(path_part_len);
-				FARString str_tmp(str_start + str_filter);
-				str_tmp+= suggestion;
-				if (start_quote) {
-					str_tmp+= L'"';
-				}
-				menu.AddItem(str_tmp);
-			}
-		}
+		menu.AddItem(str_tmp);
 	}
 }
 

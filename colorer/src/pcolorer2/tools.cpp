@@ -46,7 +46,7 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   // replace the environment variables to their values
   std::string new_path_mb;
   StrWide2MB(new_path, new_path_mb);
-  ExpandEnvironmentStrings(new_path_mb);
+  Environment::ExpandString(new_path_mb);
   StrMB2Wide(new_path_mb, new_path);
 
   // take the full path to the file, converting all kinds of ../ ./ etc

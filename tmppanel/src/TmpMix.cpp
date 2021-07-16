@@ -204,7 +204,7 @@ TCHAR* ExpandEnvStrs(const TCHAR* input, StrBuf& output) {
 #ifdef UNICODE
   std::string s;
   Wide2MB(input, s);
-  ExpandEnvironmentStrings(s, false);
+  Environment::ExpandString(s, false);
   std::wstring w;
   StrMB2Wide(s, w);
   output.Grow(w.size() + 1);

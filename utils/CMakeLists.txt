@@ -12,7 +12,6 @@ set(SOURCES
   src/StrPrintf.cpp
   src/TimeUtils.cpp
   src/StringConfig.cpp
-  src/WordExpansion.cpp
   src/InMy.cpp
   src/ZombieControl.cpp
   src/base64.cpp

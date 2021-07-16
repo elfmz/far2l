@@ -1,8 +1,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "utils.h"
+#include "Environment.h"
 
+#if 1
+# include "utils.h"
+#else
+static std::string GetMyHome()
+{
+	return "/home/user";
+}
+#endif
+
+namespace Environment
+{
 
 static char *GetHostNameCached()
 {
@@ -14,7 +25,7 @@ static char *GetHostNameCached()
 	return &s_out[1];
 }
 
-const char *GetEnvironmentString(const char *name)
+const char *GetVariable(const char *name)
 {
 	const char *out = getenv(name);
 	if (out) {
@@ -28,11 +39,11 @@ const char *GetEnvironmentString(const char *name)
 	return nullptr;
 }
 
-static bool ReplaceEnvironmentSubString(std::string &s,
+static bool ReplaceVariableAt(std::string &s,
 	size_t start, size_t &edge, const std::string &env, bool empty_if_missing)
 {
 	bool out = true;
-	const char *value = GetEnvironmentString(env.c_str());
+	const char *value = GetVariable(env.c_str());
 	if (!value) {
 		if (!empty_if_missing) {
 			return false;
@@ -53,7 +64,7 @@ static bool ReplaceEnvironmentSubString(std::string &s,
 	return out;
 }
 
-bool ExpandEnvironmentStrings(std::string &s, bool empty_if_missing)
+static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool empty_if_missing)
 {
 	// Input example: ~/${EXPANDEDFOO}/$EXPANDEDBAR/unexpanded/part
 	if (s.empty()) {
@@ -61,7 +72,7 @@ bool ExpandEnvironmentStrings(std::string &s, bool empty_if_missing)
 	}
 
 	bool out = true;
-	std::string saved_s = s;
+	// std::string saved_s = s;
 	enum {
 		ENV_NONE,
 		ENV_SIMPLE,
@@ -75,42 +86,75 @@ bool ExpandEnvironmentStrings(std::string &s, bool empty_if_missing)
 	} quote_state = QUOTE_NONE;
 
 	bool escaping_state = false;
+	bool token_splitter = true;
+	size_t i, orig_i, env_start;
 
-	for (size_t i = 0, start = 0; i < s.size(); ++i) {
+	for (i = orig_i = env_start = 0; i < s.size(); ++i, ++orig_i) {
+		if (token_splitter && s[i] != ' ') {
+			token_splitter = false;
+			if (tokens) {
+				tokens->emplace_back(Token{i, 0, orig_i, 0});
+			}
+			if (s[i] == '~' && (i + 1 == s.size() || s[i + 1] == '/')) {
+				const std::string &home = GetMyHome();
+				if (!home.empty() || empty_if_missing) {
+					s.replace(i, 1, home);
+					i+= home.size();
+					i--;
+				}
+			}
+		}
+
 		if (env_state == ENV_SIMPLE) {
 			if (!isalnum(s[i]) && s[i] != '_') {
-				if (!ReplaceEnvironmentSubString(s, start, i, s.substr(start + 1, i - start - 1), empty_if_missing)) {
+				if (!ReplaceVariableAt(s, env_start, i, s.substr(env_start + 1, i - env_start - 1), empty_if_missing)) {
 					out = false;
 				}
 				env_state = ENV_NONE;
 			}
 
-		} else if (env_state == ENV_CURLED) {
-			if (s[i] == '}') {
-				++i;
-				if (!ReplaceEnvironmentSubString(s, start, i, s.substr(start + 2, i - start - 3), empty_if_missing)) {
-					out = false;
-				}
-				--i;
-				env_state = ENV_NONE;
+		} else if (env_state == ENV_CURLED && s[i] == '}') {
+			++i;
+			if (!ReplaceVariableAt(s, env_start, i, s.substr(env_start + 2, i - env_start - 3), empty_if_missing)) {
+				out = false;
 			}
+			--i;
+			env_state = ENV_NONE;
 		}
 
 		if (quote_state == QUOTE_SINGLE) {
 			if (s[i] == '\'') {
 				quote_state = QUOTE_NONE;
+				s.erase(i, 1);
+				--i;
 			}
 
 		} else if (escaping_state) {
+			if (quote_state == QUOTE_NONE || s[i] == '\"' || s[i] == '$') {
+				s.erase(i - 1, 1);
+				--i;
+			}
 			escaping_state = false;
 
 		} else switch (s[i]) {
+			case ' ': if (quote_state == QUOTE_NONE && !token_splitter) {
+				token_splitter = true;
+				if (tokens && !tokens->empty()) {
+					tokens->back().len = i - tokens->back().begin;
+					tokens->back().orig_len = orig_i - tokens->back().orig_begin;
+				}
+			} break;
+
 			case '\'': if (quote_state != QUOTE_DOUBLE) {
 				quote_state = QUOTE_SINGLE;
+				s.erase(i, 1);
+				--i;
 			} break;
 
 			case '\"': {
 				quote_state = (quote_state == QUOTE_DOUBLE) ? QUOTE_NONE : QUOTE_DOUBLE;
+				s.erase(i, 1);
+				--i;
 			} break;
 
 			case '\\': {
@@ -123,15 +167,52 @@ bool ExpandEnvironmentStrings(std::string &s, bool empty_if_missing)
 				} else if (isalpha(s[i + 1])) {
 					env_state = ENV_SIMPLE;
 				}
-				start = i;
+				env_start = i;
 			} break;
 		}
 	}
 
-	if (s[0] == '~' && (s.size() == 1 || s[1] == '/')) {
-		s.replace(0, 1, GetMyHome());
+	if (!token_splitter && tokens && !tokens->empty()) {
+		tokens->back().len = i - tokens->back().begin;
+		tokens->back().orig_len = orig_i - tokens->back().orig_begin;
 	}
 
-	// fprintf(stderr, "ExpandEnvironmentStrings('%s', %d): '%s' [%d]\n", saved_s.c_str(), empty_if_missing, s.c_str(), out);
+	// fprintf(stderr, "ExpandString('%s', %d): '%s' [%d]\n", saved_s.c_str(), empty_if_missing, s.c_str(), out);
 	return out;
+}
+
+
+bool ExpandString(std::string &s, bool empty_if_missing)
+{
+	return ExpandAndTokenizeStringInternal(s, nullptr, empty_if_missing);
+}
+
+bool ExpandAndTokenizeString(std::string &s, Tokens &tokens, bool empty_if_missing)
+{
+	return ExpandAndTokenizeStringInternal(s, &tokens, empty_if_missing);
+}
+
+///
+
+ExpandAndExplodeString::ExpandAndExplodeString(const char *expression)
+{
+	if (expression) {
+		Expand(expression);
+	}
+}
+
+ExpandAndExplodeString::ExpandAndExplodeString(const std::string &expression)
+{
+	Expand(expression);
+}
+
+void ExpandAndExplodeString::Expand(std::string expression)
+{
+	Tokens tokens;
+	ExpandAndTokenizeStringInternal(expression, &tokens, false);
+	for (const auto &token : tokens) {
+		emplace_back(expression.substr(token.begin, token.len));
+	}
+}
+
 }

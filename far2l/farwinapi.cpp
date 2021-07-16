@@ -444,7 +444,7 @@ BOOL apiMoveFileEx(
 
 bool apiGetEnvironmentVariable(const char *lpszName, FARString &strBuffer)
 {
-	const char *env = GetEnvironmentString(lpszName);
+	const char *env = Environment::GetVariable(lpszName);
 	if (!env)
 		return false;
 
@@ -552,8 +552,29 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 {
 	std::string s;
 	Wide2MB(src, s);
-	bool out = ExpandEnvironmentStrings(s, false);
-	strDest = s;
+
+	// temporary enquote string, to avoid full-featured escape expansion
+	bool enquote = (s.size() > 1
+		&& (s.front() != '"' || s.back() != '"') && (s.front() != '\'' || s.back() != '\''));
+
+	if (enquote) {
+		s.insert(0, 1, '\"');
+		s.append(1, '\"');
+	}
+
+	bool out = Environment::ExpandString(s, false);
+
+	if (!enquote) {
+		strDest = s;
+
+	} else if (s.size() > 1 && s.front() == '"' && s.back() == '"') {
+		strDest = s.substr(1, s.size() - 2);
+
+	} else {
+		strDest = s;
+		fprintf(stderr, "apiExpandEnvironmentStrings: result unquoted for '%ls'\n", src);
+	}
+
 	return out;
 }
 

@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <utils.h>
-#include <WordExpansion.h>
+#include <Environment.h>
 #include <StringConfig.h>
 #include "../DialogUtils.h"
 #include "../../Globals.h"
@@ -55,10 +55,10 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 				str = "~/.ssh/id_rsa";
 				TextToDialogControl(_i_privkey_path, str);
 			}
-			WordExpansion we(str);
-			for (const auto &str : we) {
+			Environment::ExpandAndExplodeString eaes(str);
+			for (const auto &part : eaes) {
 				struct stat s{};
-				if (!str.empty() && stat(str.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
+				if (!part.empty() && stat(part.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
 					ok_enabled = true;
 					break;
 				}

@@ -663,7 +663,7 @@ std::string &NormalizePath(std::string &path)
 
 std::string &ExpandEnv(std::string &str)
 {
-  ExpandEnvironmentStrings(str, false);
+  Environment::ExpandString(str, false);
   return str;
 }
 

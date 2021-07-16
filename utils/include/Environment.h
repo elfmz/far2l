@@ -6,26 +6,36 @@ namespace Environment
 	// similar to getenv but provides extra resolution of 'special' variables that may miss in normal envs
 	const char *GetVariable(const char *name);
 
-	// performs shell-like unescaping and environment variables expansion
-	bool ExpandString(std::string &s, bool empty_if_missing = false);
+	// performs only environment variables expansion and unescaping of only '$' character
+	bool ExpandString(std::string &s, bool empty_if_missing);
 
-	// same as ExpandString but also provides vector of command-line arguments begins and ends
-	struct Token
-	{
-		size_t begin;		// starting position of token in expanded string
-		size_t len;			// length of token in expanded string
-		size_t orig_begin;	// starting position of token in not expanded (original) string
-		size_t orig_len;	// length of token in not expanded (original) string
+	enum Quoting {
+		QUOT_NONE,
+		QUOT_SINGLE,
+		QUOT_DOUBLE,
+		QUOT_DOLLAR_SINGLE
 	};
 
-	typedef std::vector<Token> Tokens;
-	bool ExpandAndTokenizeString(std::string &s, Tokens &tokens, bool empty_if_missing = false);
-
-	struct ExpandAndExplodeString : std::vector<std::string>
+	struct Argument
 	{
-		ExpandAndExplodeString(const char *expression = nullptr);
-		ExpandAndExplodeString(const std::string &expression);
+		size_t begin;		// starting position of argument in expanded string
+		size_t len;			// length of argument in expanded string
+		size_t orig_begin;	// starting position of argument in not expanded (original) string
+		size_t orig_len;	// length of argument in not expanded (original) string
+		Quoting quot;		// kind of quoting still pending within this argument
+	};
 
-		void Expand(std::string expression);
+	typedef std::vector<Argument> Arguments;
+
+	// performs environment variables expansion, full-featured unescaping and command line
+	// tokenization returning vector of command-line arguments begins and ends
+	bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing);
+
+	struct ExplodeCommandLine : std::vector<std::string>
+	{
+		ExplodeCommandLine(const char *expression = nullptr);
+		ExplodeCommandLine(const std::string &expression);
+
+		void Parse(std::string expression);
 	};
 }

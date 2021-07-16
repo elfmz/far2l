@@ -8,9 +8,17 @@
 
 class FilesSuggestor : protected Threaded
 {
+public:
+	struct Suggestion {
+		std::string name;
+		bool dir;
+		bool operator < (const Suggestion &another) const;
+	};
+
+private:
 	std::string _dir_path;
 	struct stat _dir_st{};
-	std::vector<std::string> _files;
+	std::vector<Suggestion> _suggestions;
 	std::mutex _mtx;
 	bool _stopping = false;
 
@@ -21,13 +29,13 @@ protected:
 
 public:
 	virtual ~FilesSuggestor();
-	void Suggest(const std::string &filter, std::vector<std::string> &result);
+	void Suggest(const std::string &filter, std::vector<Suggestion> &result);
 };
 
 
 class MenuFilesSuggestor : protected FilesSuggestor
 {
-	std::vector<std::string> _suggestions;
+	std::vector<Suggestion> _suggestions;
 
 public:
 	void Suggest(const wchar_t *filter, VMenu& menu);

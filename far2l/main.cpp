@@ -571,8 +571,7 @@ int FarAppMain(int argc, char **argv)
 				}
 				else
 				{
-					apiExpandEnvironmentStrings((const wchar_t *)arg_w.c_str(), DestNames[CntDestName]);
-					Unquote(DestNames[CntDestName]);
+					DestNames[CntDestName] = arg_w;
 					ConvertNameToFull(DestNames[CntDestName],DestNames[CntDestName]);
 
 					if (apiGetFileAttributes(DestNames[CntDestName]) != INVALID_FILE_ATTRIBUTES)

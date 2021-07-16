@@ -55,8 +55,8 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 				str = "~/.ssh/id_rsa";
 				TextToDialogControl(_i_privkey_path, str);
 			}
-			Environment::ExpandAndExplodeString eaes(str);
-			for (const auto &part : eaes) {
+			Environment::ExplodeCommandLine ecl(str);
+			for (const auto &part : ecl) {
 				struct stat s{};
 				if (!part.empty() && stat(part.c_str(), &s) == 0 && S_ISREG(s.st_mode)) {
 					ok_enabled = true;

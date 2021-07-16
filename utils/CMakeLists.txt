@@ -24,6 +24,8 @@ set(SOURCES
   src/LocalSocket.cpp
   src/FilePathHashSuffix.cpp
   src/Environment.cpp
+  src/Escaping.cpp
+  src/WideMB.cpp
 )
 
 add_library (utils ${SOURCES})

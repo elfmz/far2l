@@ -1,16 +1,7 @@
+#include "utils.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "Environment.h"
-
-#if 1
-# include "utils.h"
-#else
-static std::string GetMyHome()
-{
-	return "/home/user";
-}
-#endif
 
 namespace Environment
 {
@@ -39,6 +30,35 @@ const char *GetVariable(const char *name)
 	return nullptr;
 }
 
+static void ReplaceSubstringAt(std::string &s, size_t start, size_t &edge, const char *value)
+{
+	size_t value_len = strlen(value);
+
+	s.replace(start, edge - start, value, value_len);
+	if (value_len < (edge - start)) {
+		edge-= ((edge - start) - value_len);
+
+	} else {
+		edge+= (value_len - (edge - start));
+	}
+}
+
+static void ReplaceSubstringAt(std::string &s, size_t start, size_t &edge, const std::string &value)
+{
+	ReplaceSubstringAt(s, start, edge, value.c_str());
+}
+
+static void ReplaceSubstringAt(std::string &s, size_t start, size_t &edge, char value)
+{
+	s.replace(start, edge - start, 1, value);
+	if (1 < (edge - start)) {
+		edge-= ((edge - start) - 1);
+
+	} else {
+		edge+= (1 - (edge - start));
+	}
+}
+
 static bool ReplaceVariableAt(std::string &s,
 	size_t start, size_t &edge, const std::string &env, bool empty_if_missing)
 {
@@ -51,20 +71,66 @@ static bool ReplaceVariableAt(std::string &s,
 		out = false;
 		value = "";
 	}
-	size_t value_len = strlen(value);
-
-	s.replace(start, edge - start, value, value_len);
-	if (value_len < (edge - start)) {
-		edge-= ((edge - start) - value_len);
-
-	} else {
-		edge+= (value_len - (edge - start));
-	}
-
+	ReplaceSubstringAt(s, start, edge, value);
 	return out;
 }
 
-static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool empty_if_missing)
+static void UnescapeCLikeSequence(std::string &s, size_t &i)
+{
+	// check {s[i - 1]=\, s[i]=..} for sequence encoded by EscapeLikeInC and reverse that encoding
+
+	++i; // adjust i cuz ReplaceSubstringAt needs past-substring index
+
+	if (i < s.size()) switch (s[i - 1]) {
+		/// first check for trivial single-character sequences
+		case 'a': ReplaceSubstringAt(s, i - 2, i, '\a'); break;
+		case 'b': ReplaceSubstringAt(s, i - 2, i, '\b'); break;
+		case 'e': ReplaceSubstringAt(s, i - 2, i, '\e'); break;
+		case 'f': ReplaceSubstringAt(s, i - 2, i, '\f'); break;
+		case 'n': ReplaceSubstringAt(s, i - 2, i, '\n'); break;
+		case 'r': ReplaceSubstringAt(s, i - 2, i, '\r'); break;
+		case 't': ReplaceSubstringAt(s, i - 2, i, '\t'); break;
+		case 'v': ReplaceSubstringAt(s, i - 2, i, '\v'); break;
+		case '\\': ReplaceSubstringAt(s, i - 2, i, '\\'); break;
+		case '\'': ReplaceSubstringAt(s, i - 2, i, '\''); break;
+		case '\"': ReplaceSubstringAt(s, i - 2, i, '\"'); break;
+		case '?': ReplaceSubstringAt(s, i - 2, i, '?'); break;
+
+		/// now check for multi-character codes
+		// \x## where ## is a hexadecimal char code
+		case 'x': if (i + 1 < s.size()) {
+				unsigned long code = strtol(s.substr(i, 2).c_str(), nullptr, 16);
+				i++;
+				ReplaceSubstringAt(s, i - 4, i, StrPrintf("%c", (char)(unsigned char)code));
+			} break;
+
+		// \u#### where #### is a hexadecimal UTF16 code
+		case 'u': if (i + 3 < s.size()) {
+				unsigned long code = strtol(s.substr(i, 4).c_str(), nullptr, 16);
+				i+= 3;
+				ReplaceSubstringAt(s, i - 6, i, StrPrintf("%lc", code));
+			} break;
+
+		// \u######## where ######## is a hexadecimal UTF32 code
+		case 'U': if (i + 7 < s.size()) {
+				unsigned long code = strtol(s.substr(i, 8).c_str(), nullptr, 16);
+				i+= 7;
+				ReplaceSubstringAt(s, i - 10, i, StrPrintf("%lc", code));
+			} break;
+
+		// \### where ### is a octal char code
+		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+			if (i + 1 < s.size()) {
+				unsigned long code = strtol(s.substr(i - 1, 3).c_str(), nullptr, 8);
+				i++;
+				ReplaceSubstringAt(s, i - 4, i, StrPrintf("%c", (char)(unsigned char)code));
+			} break;
+	}
+	--i; // adjust i back
+}
+
+// nasty and allmighty function that actually implements ExpandString and ParseCommandLine
+static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool empty_if_missing)
 {
 	// Input example: ~/${EXPANDEDFOO}/$EXPANDEDBAR/unexpanded/part
 	if (s.empty()) {
@@ -79,11 +145,7 @@ static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool
 		ENV_CURLED,
 	} env_state = ENV_NONE;
 
-	enum {
-		QUOTE_NONE,
-		QUOTE_SINGLE,
-		QUOTE_DOUBLE,
-	} quote_state = QUOTE_NONE;
+	Quoting quot = QUOT_NONE;
 
 	bool escaping_state = false;
 	bool token_splitter = true;
@@ -92,8 +154,8 @@ static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool
 	for (i = orig_i = env_start = 0; i < s.size(); ++i, ++orig_i) {
 		if (token_splitter && s[i] != ' ') {
 			token_splitter = false;
-			if (tokens) {
-				tokens->emplace_back(Token{i, 0, orig_i, 0});
+			if (args) {
+				args->emplace_back(Argument{i, 0, orig_i, 0});
 			}
 			if (s[i] == '~' && (i + 1 == s.size() || s[i + 1] == '/')) {
 				const std::string &home = GetMyHome();
@@ -122,59 +184,79 @@ static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool
 			env_state = ENV_NONE;
 		}
 
-		if (quote_state == QUOTE_SINGLE) {
+		if (quot == QUOT_SINGLE) {
 			if (s[i] == '\'') {
-				quote_state = QUOTE_NONE;
+				quot = QUOT_NONE;
 				s.erase(i, 1);
 				--i;
 			}
 
 		} else if (escaping_state) {
-			if (quote_state == QUOTE_NONE || s[i] == '\"' || s[i] == '$') {
+			if (quot == QUOT_DOLLAR_SINGLE) {
+				UnescapeCLikeSequence(s, i);
+
+			} else if (quot == QUOT_NONE || s[i] == '"' || s[i] == '$') {
 				s.erase(i - 1, 1);
 				--i;
 			}
 			escaping_state = false;
 
 		} else switch (s[i]) {
-			case ' ': if (quote_state == QUOTE_NONE && !token_splitter) {
+			case ' ': if (quot == QUOT_NONE && !token_splitter) {
 				token_splitter = true;
-				if (tokens && !tokens->empty()) {
-					tokens->back().len = i - tokens->back().begin;
-					tokens->back().orig_len = orig_i - tokens->back().orig_begin;
+				if (args && !args->empty()) {
+					args->back().len = i - args->back().begin;
+					args->back().orig_len = orig_i - args->back().orig_begin;
 				}
 			} break;
 
-			case '\'': if (quote_state != QUOTE_DOUBLE) {
-				quote_state = QUOTE_SINGLE;
+			case '\'': if (quot == QUOT_DOLLAR_SINGLE) {
+				quot = QUOT_NONE;
+				s.erase(i, 1);
+				--i;
+
+			} else if (quot != QUOT_DOUBLE && args) {
+				quot = QUOT_SINGLE;
 				s.erase(i, 1);
 				--i;
 			} break;
 
-			case '\"': {
-				quote_state = (quote_state == QUOTE_DOUBLE) ? QUOTE_NONE : QUOTE_DOUBLE;
+			case '\"': if (args) {
+				quot = (quot == QUOT_DOUBLE) ? QUOT_NONE : QUOT_DOUBLE;
 				s.erase(i, 1);
 				--i;
 			} break;
 
-			case '\\': {
+			case '\\': if (args || (i + 1 < s.size() && s[i + 1] == '$')) {
 				escaping_state = true;
 			} break;
 
 			case '$': if (env_state == ENV_NONE && i + 1 < s.size()) {
 				if (i + 2 < s.size() && s[i + 1] == '{') {
 					env_state = ENV_CURLED;
+					env_start = i;
+
 				} else if (isalpha(s[i + 1])) {
 					env_state = ENV_SIMPLE;
+					env_start = i;
+
+				} else if (s[i + 1] == '\'' && args) {
+					s.erase(i, 2);
+					i-= 2;
+					quot = QUOT_DOLLAR_SINGLE;
 				}
-				env_start = i;
+
 			} break;
+		}
+
+		if (args && !args->empty()) { // quot != QUOT_NONE &&
+			args->back().quot = quot;
 		}
 	}
 
-	if (!token_splitter && tokens && !tokens->empty()) {
-		tokens->back().len = i - tokens->back().begin;
-		tokens->back().orig_len = orig_i - tokens->back().orig_begin;
+	if (!token_splitter && args && !args->empty()) {
+		args->back().len = i - args->back().begin;
+		args->back().orig_len = orig_i - args->back().orig_begin;
 	}
 
 	// fprintf(stderr, "ExpandString('%s', %d): '%s' [%d]\n", saved_s.c_str(), empty_if_missing, s.c_str(), out);
@@ -184,33 +266,33 @@ static bool ExpandAndTokenizeStringInternal(std::string &s, Tokens *tokens, bool
 
 bool ExpandString(std::string &s, bool empty_if_missing)
 {
-	return ExpandAndTokenizeStringInternal(s, nullptr, empty_if_missing);
+	return ExpandStringOrParseCommandLine(s, nullptr, empty_if_missing);
 }
 
-bool ExpandAndTokenizeString(std::string &s, Tokens &tokens, bool empty_if_missing)
+bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing)
 {
-	return ExpandAndTokenizeStringInternal(s, &tokens, empty_if_missing);
+	return ExpandStringOrParseCommandLine(s, &args, empty_if_missing);
 }
 
 ///
 
-ExpandAndExplodeString::ExpandAndExplodeString(const char *expression)
+ExplodeCommandLine::ExplodeCommandLine(const char *expression)
 {
 	if (expression) {
-		Expand(expression);
+		Parse(expression);
 	}
 }
 
-ExpandAndExplodeString::ExpandAndExplodeString(const std::string &expression)
+ExplodeCommandLine::ExplodeCommandLine(const std::string &expression)
 {
-	Expand(expression);
+	Parse(expression);
 }
 
-void ExpandAndExplodeString::Expand(std::string expression)
+void ExplodeCommandLine::Parse(std::string expression)
 {
-	Tokens tokens;
-	ExpandAndTokenizeStringInternal(expression, &tokens, false);
-	for (const auto &token : tokens) {
+	Arguments args;
+	ExpandStringOrParseCommandLine(expression, &args, false);
+	for (const auto &token : args) {
 		emplace_back(expression.substr(token.begin, token.len));
 	}
 }

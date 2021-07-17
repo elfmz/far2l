@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
-#include <WordExpansion.h>
+#include <Environment.h>
 #include <Threaded.h>
 #include "../Protocol.h"
 #include "SSHConnection.h"
@@ -118,12 +118,12 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	std::string key_path_spec;
 	if (protocol_options.GetInt("PrivKeyEnable", 0) != 0) {
 		key_path_spec = protocol_options.GetString("PrivKeyPath");
-		WordExpansion we(key_path_spec);
-		if (we.empty()) {
+		Environment::ExplodeCommandLine ecl(key_path_spec);
+		if (ecl.empty()) {
 			throw std::runtime_error(StrPrintf("No key file specified: \'%s\'", key_path_spec.c_str()));
 		}
 		int key_import_result = -1;
-		for (const auto &key_path : we) {
+		for (const auto &key_path : ecl) {
 			key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), password.c_str(), nullptr, nullptr, &priv_key);
 			if (key_import_result == SSH_ERROR && password.empty()) {
 				key_import_result = ssh_pki_import_privkey_file(key_path.c_str(), nullptr, nullptr, nullptr, &priv_key);

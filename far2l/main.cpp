@@ -424,14 +424,18 @@ int FarAppMain(int argc, char **argv)
 		g_strFarPath.Append("/" APP_BASENAME);
 	}
 		
-	WINPORT(SetEnvironmentVariable)(L"FARHOME", g_strFarPath);
+	setenv("FARHOME", g_strFarPath.GetMB().c_str(), 1);
 
 	AddEndSlash(g_strFarPath);
 
 	// don't inherit from parent process in any case
-	WINPORT(SetEnvironmentVariable)(L"FARUSER", nullptr);
+	unsetenv("FARUSER");
 
-	WINPORT(SetEnvironmentVariable)(L"FARADMINMODE", Opt.IsUserAdmin?L"1":nullptr);
+	if (Opt.IsUserAdmin) {
+		setenv("FARADMINMODE", "1", 1);
+	} else {
+		unsetenv("FARADMINMODE");
+	}
 
 	// макросы не дисаблим
 	Opt.Macro.DisableMacro=0;
@@ -567,8 +571,7 @@ int FarAppMain(int argc, char **argv)
 				}
 				else
 				{
-					apiExpandEnvironmentStrings((const wchar_t *)arg_w.c_str(), DestNames[CntDestName]);
-					Unquote(DestNames[CntDestName]);
+					DestNames[CntDestName] = arg_w;
 					ConvertNameToFull(DestNames[CntDestName],DestNames[CntDestName]);
 
 					if (apiGetFileAttributes(DestNames[CntDestName]) != INVALID_FILE_ATTRIBUTES)
@@ -621,7 +624,7 @@ int FarAppMain(int argc, char **argv)
 		return 1;
 	}
 
-	WINPORT(SetEnvironmentVariable)(L"FARLANG",Opt.strLanguage);
+	setenv("FARLANG", Opt.strLanguage.GetMB().c_str(), 1);
 	initMacroVarTable(1);
 
 	CheckForImportLegacyShortcuts();

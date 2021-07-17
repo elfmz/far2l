@@ -129,7 +129,7 @@ bool ReadTextFile(
     {
       wchar ExpName[NM];
       *ExpName=0;
-      DWORD Result=ExpandEnvironmentStrings(CurStr,ExpName,ASIZE(ExpName));
+      DWORD Result=Environment::ExpandString(CurStr,ExpName,ASIZE(ExpName));
       Expanded=Result!=0 && Result<ASIZE(ExpName);
       if (Expanded && *ExpName!=0)
         List->AddString(ExpName);

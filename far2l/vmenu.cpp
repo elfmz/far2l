@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-#include <algorithm>
 
 #include "vmenu.hpp"
 #include "keyboard.hpp"
@@ -2879,86 +2878,3 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 	SetFlags(VMENU_UPDATEREQUIRED);
 }
 
-void EnumFiles(VMenu& Menu, const wchar_t *Str, FilesSuggestor &Suggestor)
-{
-	if(Str && *Str)
-	{
-		FARString strStr(Str);
-
-		bool OddQuote = false;
-		for(size_t i=0; i<strStr.GetLength(); i++)
-		{
-			if(strStr.At(i) == L'"')
-			{
-				OddQuote = !OddQuote;
-			}
-		}
-
-		size_t Pos = 0;
-		if(OddQuote)
-		{
-			strStr.RPos(Pos, L'"');
-		}
-		else
-		{
-			for(Pos=strStr.GetLength()-1; Pos!=static_cast<size_t>(-1); Pos--)
-			{
-				if(strStr.At(Pos)==L'"')
-				{
-					Pos--;
-					while(strStr.At(Pos)!=L'"' && Pos!=static_cast<size_t>(-1))
-					{
-						Pos--;
-					}
-				}
-				else if(strStr.At(Pos)==L' ')
-				{
-					Pos++;
-					break;
-				}
-			}
-		}
-		if(Pos==static_cast<size_t>(-1))
-		{
-			Pos=0;
-		}
-		bool StartQuote=false;
-		if(strStr.At(Pos)==L'"')
-		{
-			Pos++;
-			StartQuote=true;
-		}
-		FARString strStart(strStr,Pos);
-		strStr.LShift(Pos);
-		Unquote(strStr);
-		if(!strStr.IsEmpty())
-		{
-			FARString strExp;
-			apiExpandEnvironmentStrings(strStr,strExp);
-			std::vector<std::string> Suggestions;
-			Suggestor.Suggest(strExp.GetMB(), Suggestions);
-			if(!Suggestions.empty())
-			{
-				std::sort(Suggestions.begin(), Suggestions.end());
-				if(Menu.GetItemCount())
-				{
-					MenuItemEx Item{};
-					Item.Flags=LIF_SEPARATOR;
-					Menu.AddItem(&Item);
-				}
-				const wchar_t* FileName=PointToName(strStr);
-				for (const auto &Suggestion : Suggestions)
-				{
-					strStr.SetLength(FileName-strStr);
-					FARString strTmp(strStart+strStr);
-					strTmp+=Suggestion;
-					if(StartQuote)
-					{
-						strTmp+=L'"';
-					}
-					Menu.AddItem(strTmp);
-				}
-			}
-		}
-	}
-}

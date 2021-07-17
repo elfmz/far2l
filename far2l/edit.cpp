@@ -3038,9 +3038,9 @@ void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strF
 		if(ECFlags.Check(EC_ENABLEFNCOMPLETE))
 		{
 			if (!m_pSuggestor)
-				m_pSuggestor.reset(new FilesSuggestor);
+				m_pSuggestor.reset(new MenuFilesSuggestor);
 
-			EnumFiles(ComplMenu, strFilter, *m_pSuggestor);
+			m_pSuggestor->Suggest(strFilter, ComplMenu);
 		}
 	}	
 }

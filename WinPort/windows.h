@@ -96,9 +96,6 @@
 #define    GetDoubleClickTime			WINPORT(GetDoubleClickTime)
 #define    GetComputerName			WINPORT(GetComputerName)
 #define    GetUserName			WINPORT(GetUserName)
-#define    GetEnvironmentVariable			WINPORT(GetEnvironmentVariable)
-#define    SetEnvironmentVariable			WINPORT(SetEnvironmentVariable)
-#define    ExpandEnvironmentStrings			WINPORT(ExpandEnvironmentStrings)
 	
 
 //files

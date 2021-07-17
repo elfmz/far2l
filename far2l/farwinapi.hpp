@@ -164,7 +164,11 @@ private:
 	HANDLE Handle;
 };
 
-DWORD apiGetEnvironmentVariable(
+bool apiGetEnvironmentVariable(
+    const char *lpszName,
+    FARString &strBuffer
+);
+bool apiGetEnvironmentVariable(
     const wchar_t *lpwszName,
     FARString &strBuffer
 );

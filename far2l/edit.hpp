@@ -172,7 +172,7 @@ class Edit:public ScreenObject
 
 		Callback m_Callback;
 
-		std::unique_ptr<FilesSuggestor> m_pSuggestor;
+		std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
 
 	private:
 		virtual void   DisplayObject();

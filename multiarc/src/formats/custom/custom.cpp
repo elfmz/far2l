@@ -488,7 +488,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 
     //char ExpandedCmd[512];
 
-    //WINPORT(ExpandEnvironmentStrings)(Command, ExpandedCmd, sizeof(ExpandedCmd));
+    //WINPORT(Environment::ExpandString)(Command, ExpandedCmd, sizeof(ExpandedCmd));
     std::string cmd = Command;
     cmd+= "  >"; //2>/dev/null
     cmd+= TempName;

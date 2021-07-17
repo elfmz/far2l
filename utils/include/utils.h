@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include "luck.h"
 #include "MatchWildcard.hpp"
+#include "WideMB.h"
+#include "Escaping.h"
+#include "Environment.h"
 
 template <class C> static size_t tzlen(const C *ptz)
 {
@@ -16,19 +19,6 @@ template <class C> static size_t tzlen(const C *ptz)
 
 unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
 unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
-
-void Wide2MB(const wchar_t *src, std::string &dst);
-void MB2Wide(const char *src, size_t src_len, std::wstring &dst);
-void MB2Wide(const char *src, std::wstring &dst);
-size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &dst);
-std::string Wide2MB(const wchar_t *src);
-std::wstring MB2Wide(const char *src);
-
-void StrWide2MB(const std::wstring &src, std::string &dst);
-std::string StrWide2MB(const std::wstring &src);
-
-void StrMB2Wide(const std::string &src, std::wstring &dst);
-std::wstring StrMB2Wide(const std::string &src);
 
 // converts given value between 0x0 and 0xf to hex digit
 // in case of error returns 0
@@ -44,17 +34,6 @@ unsigned char ParseHexByte(const char *hex);
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
 size_t StrEndsBy(const std::string &haystack, const char *needle);
-
-std::string EscapeEscapes(std::string str);
-std::string EscapeQuotas(const std::string &str);
-std::wstring EscapeQuotas(const std::wstring &str);
-std::string EscapeCmdStr(const std::string &str);
-std::wstring EscapeCmdStr(const std::wstring &str);
-
-void QuoteCmdArg(std::string &str);
-void QuoteCmdArg(std::wstring &str);
-void QuoteCmdArgIfNeed(std::string &str);
-void QuoteCmdArgIfNeed(std::wstring &str);
 
 const std::string &GetMyHome();
 
@@ -196,5 +175,6 @@ template <class CharT>
 
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
+
 
 #define APP_BASENAME "far2l"

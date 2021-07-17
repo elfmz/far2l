@@ -3221,7 +3221,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 				}
 
 				CurCopiedSize+=BytesWritten;
-				if ((int)BytesWritten == CopyPieceSize && CopyPieceSize < CopyBufferSize && MSecIOStarted != 0) {
+				if ((int)BytesWritten == CopyPieceSize && MSecIOStarted != 0) {
 					DWORD MSecIOUsed = GetProcessUptimeMSec() - MSecIOStarted;
 					if (MSecIOUsed < 100) {
 						if (CopyPieceSize < CopyBufferSize) {
@@ -3229,7 +3229,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 							fprintf(stderr, "CopyPieceSize increased to %d\n", CopyPieceSize);
 						}
 
-					} else if (MSecIOUsed > 1500 && CopyPieceSize > (int)COPY_PIECE_MINIMAL) {
+					} else if (MSecIOUsed >= 1000 && CopyPieceSize > (int)COPY_PIECE_MINIMAL) {
 						CopyPieceSize = std::max(CopyPieceSize / 2, (int)COPY_PIECE_MINIMAL);
 						fprintf(stderr, "CopyPieceSize decreased to %d\n", CopyPieceSize);
 					}

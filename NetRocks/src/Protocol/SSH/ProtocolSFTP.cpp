@@ -18,7 +18,6 @@
 #include <libssh/sftp.h>
 #include <StringConfig.h>
 #include <ScopeHelpers.h>
-#include <WordExpansion.h>
 #include <Threaded.h>
 #include "ProtocolSFTP.h"
 #include "SSHConnection.h"

@@ -442,26 +442,19 @@ BOOL apiMoveFileEx(
 	return Result;
 }
 
-DWORD apiGetEnvironmentVariable(const wchar_t *lpwszName, FARString &strBuffer)
+bool apiGetEnvironmentVariable(const char *lpszName, FARString &strBuffer)
 {
-	WCHAR Buffer[MAX_PATH];
-	DWORD Size = WINPORT(GetEnvironmentVariable)(lpwszName, Buffer, ARRAYSIZE(Buffer));
+	const char *env = Environment::GetVariable(lpszName);
+	if (!env)
+		return false;
 
-	if (Size)
-	{
-		if(Size>ARRAYSIZE(Buffer))
-		{
-			wchar_t *lpwszBuffer = strBuffer.GetBuffer(Size);
-			Size = WINPORT(GetEnvironmentVariable)(lpwszName, lpwszBuffer, Size);
-			strBuffer.ReleaseBuffer();
-		}
-		else
-		{
-			strBuffer.Copy(Buffer, Size);
-		}
-	}
+	strBuffer = env;
+	return true;
+}
 
-	return Size;
+bool apiGetEnvironmentVariable(const wchar_t *lpwszName, FARString &strBuffer)
+{
+	return apiGetEnvironmentVariable(Wide2MB(lpwszName).c_str(), strBuffer);
 }
 
 FARString& strCurrentDirectory()
@@ -557,25 +550,11 @@ DWORD apiGetTempPath(FARString &strBuffer)
 
 bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 {
-	bool Result = false;
-	WCHAR Buffer[MAX_PATH];
-	DWORD Size = WINPORT(ExpandEnvironmentStrings)(src, Buffer, ARRAYSIZE(Buffer));
-	if (Size)
-	{
-		if (Size > ARRAYSIZE(Buffer))
-		{
-			FARString strSrc(src); //src can point to strDest data
-			wchar_t *lpwszDest = strDest.GetBuffer(Size);
-			strDest.ReleaseBuffer(WINPORT(ExpandEnvironmentStrings)(strSrc, lpwszDest, Size)-1);
-		}
-		else
-		{
-			strDest.Copy(Buffer, Size-1);
-		}
-		Result = true;
-	}
-
-	return Result;
+	std::string s;
+	Wide2MB(src, s);
+	bool out = Environment::ExpandString(s, false);
+	strDest = s;
+	return out;
 }
 
 DWORD apiWNetGetConnection(const wchar_t *lpwszLocalName, FARString &strRemoteName)

@@ -596,7 +596,11 @@ static std::string LookupExecutableInEnvPath(const char *file)
 {
 	std::string out;
 
-	for (const char *s = getenv("PATH"); s && *s; ){
+	FARString str_path;
+	apiGetEnvironmentVariable("PATH", str_path);
+	const std::string &mb_path = str_path.GetMB();
+
+	for (const char *s = mb_path.c_str(); *s; ){
 		const char *p = strchr(s, ':');
 
 		if (p != NULL) {

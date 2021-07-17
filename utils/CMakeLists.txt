@@ -12,7 +12,6 @@ set(SOURCES
   src/StrPrintf.cpp
   src/TimeUtils.cpp
   src/StringConfig.cpp
-  src/WordExpansion.cpp
   src/InMy.cpp
   src/ZombieControl.cpp
   src/base64.cpp
@@ -24,6 +23,9 @@ set(SOURCES
   src/TTYRawMode.cpp
   src/LocalSocket.cpp
   src/FilePathHashSuffix.cpp
+  src/Environment.cpp
+  src/Escaping.cpp
+  src/WideMB.cpp
 )
 
 add_library (utils ${SOURCES})

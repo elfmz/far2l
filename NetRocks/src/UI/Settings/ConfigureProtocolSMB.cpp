@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <utils.h>
-#include <WordExpansion.h>
 #include <StringConfig.h>
 #include "../DialogUtils.h"
 #include "../../Globals.h"

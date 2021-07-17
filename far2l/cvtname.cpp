@@ -461,9 +461,10 @@ void ConvertNameToFull(FARString &strSrcDest)
 void ConvertHomePrefixInPath(FARString &strFileName)
 {
 	if (strFileName.GetLength() > 1 && strFileName[0] == L'~' && strFileName[1] == GOOD_SLASH) {
-		const char * home = getenv("HOME");
-		if (!home)
+		std::string home = GetMyHome();
+		if (home.empty()) {
 			home = "/tmp";
+		}
 		strFileName.Replace(0, 1, FARString(home));
 	}
 }

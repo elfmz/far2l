@@ -42,10 +42,8 @@ int Execute(const wchar_t *CmdStr, bool SeparateWindow = false, bool DirectRun =
 
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
-bool IsExecutableFilePath(const char *path);
+bool IsDirectExecutableFilePath(const char *path);
 
 bool ProcessOSAliases(FARString &strStr);
-
-std::vector<std::string> ExplodeCmdLine(std::string cmd_line);
 
 bool POpen(std::vector<std::wstring> &result, const char *command);

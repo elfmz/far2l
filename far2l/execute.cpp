@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "vtshell.h"
 #include "InterThreadCall.hpp"
+#include "ScopeHelpers.h"
 #include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
@@ -75,8 +76,7 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _dir, _file, _executable, _backround;
-	std::string _cmd;
+	bool _dir, _file, _executable, _backround, _rooted;
 	
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -88,64 +88,77 @@ class ExecClassifier
 	}
 	
 public:
-	ExecClassifier(const char *cmd) 
-		: _dir(false), _file(false), _executable(false), _backround(false)
+	ExecClassifier(const char *cmd, bool direct)
+		: _dir(false), _file(false), _executable(false), _backround(false), _rooted(false)
 	{
-		const char *bg_suffix = strrchr(cmd, '&');
-		if (bg_suffix && bg_suffix!=cmd && *(bg_suffix-1)!='\\') {
-			for (++bg_suffix; *bg_suffix==' '; ++bg_suffix);
-			if (!*bg_suffix) _backround = true;
+		Environment::ExplodeCommandLine ecl(cmd);
+		if (!ecl.empty() && ecl.back() == "&") {
+			_backround = true;
+			ecl.pop_back();
 		}
-
-		const std::vector<std::string> &argv = ExplodeCmdLine(cmd);
-		if (argv.empty() || argv[0].empty()) {
-			fprintf(stderr, "ExecClassifier('%s') - empty command\n", cmd);
+		if (ecl.empty() || ecl[0].empty()) {
+			fprintf(stderr, "ExecClassifier('%s', %d) - empty command\n", cmd, direct);
 			return;
 		}
-		_cmd = argv[0];
+
+		const std::string &arg0 = ecl[0];
+
+		_rooted = StrStartsFrom(arg0, "/") || StrStartsFrom(arg0, "./") || arg0 == ".";
+
+		if (!direct && !_rooted) {
+			fprintf(stderr, "ExecClassifier('%s', %d) - nor direct nor rooted\n", cmd, direct);
+			return;
+		}
 
 		struct stat s = {0};
-		if (stat(_cmd.c_str(),  &s) == -1) {
-			fprintf(stderr, "ExecClassifier('%s') - stat error %u\n", cmd, errno);
+		if (stat(arg0.c_str(),  &s) == -1) {
+			fprintf(stderr, "ExecClassifier('%s', %d) - stat error %u\n", cmd, direct, errno);
 			return;
 		}
+
 		if (S_ISDIR(s.st_mode)) {
 			_dir = true;
 			return;
 		}
+
 		if (!S_ISREG(s.st_mode)) {
-			fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not regular mode=0x%x\n", cmd, s.st_mode);
+			fprintf(stderr, "ExecClassifier('%s', %d) - not regular mode=0x%x\n", cmd, direct, s.st_mode);
 			return;
 		}
 
-		int f = open(_cmd.c_str(), O_RDONLY);
-		if (f==-1) {
+		FDScope f(open(arg0.c_str(), O_RDONLY));
+		if (!f.Valid()) {
 			fprintf(stderr, "ExecClassifier('%s') - open error %u\n", cmd, errno);
 			return;
 		}
-		
+
 		_file = true;
-		if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))!=0) {
+		if ((s.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
 			char buf[8] = { 0 };
 			int r = read(f, buf, sizeof(buf));
 			if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
-				fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
+				fprintf(stderr, "ExecClassifier('%s') - ELF executable%s\n",
+					cmd, _backround ? " backround" : "");
 				_executable = true;
+
 			} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
-				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
+				fprintf(stderr, "ExecClassifier('%s') - script%s\n",
+					cmd, _backround ? " backround" : "");
 				_executable = true;
+
 			} else {
-				_executable = IsExecutableByExtension(_cmd.c_str());
-				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
-					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3], _executable ? "" : "not ");
+				_executable = IsExecutableByExtension(arg0.c_str());
+				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable%s\n", 
+					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3],
+						_executable ? "" : "not ", _backround ? " backround" : "");
 			}
-		} else
-				fprintf(stderr, "IsPossibleXDGOpeSubject('%s') - not executable mode=0x%x\n", cmd, s.st_mode);	
-	
-		close(f);
+
+		} else {
+			fprintf(stderr, "ExecClassifier('%s') - not executable mode=0x%x\n", cmd, s.st_mode);
+		}
 	}
 	
-	const std::string& cmd() const {return _cmd; }
+	bool IsRooted() const {return _rooted; }
 	bool IsFile() const {return _file; }
 	bool IsDir() const {return _dir; }
 	bool IsExecutable() const {return _executable; }
@@ -153,9 +166,9 @@ public:
 };
 
 
-bool IsExecutableFilePath(const char *path)
+bool IsDirectExecutableFilePath(const char *path)
 {
-	ExecClassifier ec(path);
+	ExecClassifier ec(path, true);
 	return ec.IsExecutable();
 }
 
@@ -324,8 +337,11 @@ static std::string GetOpenShVerb(const char *verb)
 
 static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
+	fprintf(stderr, "ExecuteA: SeparateWindow=%d DirectRun=%d FolderRun=%d WaitForIdle=%d Silent=%d RunAs=%d CmdStr='%s'\n",
+			SeparateWindow, DirectRun, FolderRun, WaitForIdle, Silent, RunAs, CmdStr);
+
 	int r = -1;
-	ExecClassifier ec(CmdStr);
+	ExecClassifier ec(CmdStr, DirectRun);
 	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : ( (Silent || SeparateWindow) ? 0 : EF_NOTIFY );
 	std::string tmp;
 	if (ec.IsDir() && SeparateWindow) {
@@ -346,7 +362,7 @@ static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, boo
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
 	}
-	if ( (ec.IsFile() || ec.IsDir()) && ec.cmd()[0] != '/' && !StrStartsFrom(ec.cmd(), "./")) {
+	if ( (ec.IsFile() || ec.IsDir()) && DirectRun && !ec.IsRooted()) {
 		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
 	}
 	tmp+= CmdStr;

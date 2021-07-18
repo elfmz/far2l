@@ -238,7 +238,7 @@ void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu)
 		if (last_arg.quot == Environment::QUOT_DOUBLE) {
 			str_tmp+= EscapeCmdStr(suggestion.name);
 		} else if (last_arg.quot == Environment::QUOT_NONE) {
-			str_tmp+= EscapeCmdStr(suggestion.name, "\\\"$*?' ");
+			str_tmp+= EscapeCmdStr(suggestion.name, "\\\"$*?'<>&|^() ");
 		} else if (last_arg.quot == Environment::QUOT_DOLLAR_SINGLE) {
 			str_tmp+= EscapeLikeInC(suggestion.name);
 		} else {

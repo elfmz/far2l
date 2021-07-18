@@ -152,10 +152,33 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 	size_t i, orig_i, env_start;
 
 	for (i = orig_i = env_start = 0; i < s.size(); ++i, ++orig_i) {
+		if (args && env_state == ENV_NONE && !escaping_state) {
+			// Check for operation and if so - grab it into dedicated token. Examples:
+			//  foo&bar -> 'foo' '&' 'bar'
+			//  foo & bar -> 'foo' '&' 'bar'
+			//  foo& -> 'foo' '&'
+			//  foo & -> 'foo' '&'
+			size_t binops_count = 0;
+			while (i + binops_count < s.size() && strchr("<>&|()", s[i + binops_count]) != nullptr) {
+				++binops_count;
+			}
+			if (binops_count != 0) {
+				if (!token_splitter) {
+					args->back().len = i - args->back().begin;
+					args->back().orig_len = orig_i - args->back().orig_begin;
+				}
+				args->emplace_back(Argument{i, binops_count, orig_i, binops_count, QUOT_NONE});
+				token_splitter = true;
+				i+= (binops_count - 1);
+				orig_i+= (binops_count - 1);
+				continue;
+			}
+		}
+
 		if (token_splitter && s[i] != ' ') {
 			token_splitter = false;
 			if (args) {
-				args->emplace_back(Argument{i, 0, orig_i, 0});
+				args->emplace_back(Argument{i, 0, orig_i, 0, QUOT_NONE});
 			}
 			if (s[i] == '~' && (i + 1 == s.size() || s[i + 1] == '/')) {
 				const std::string &home = GetMyHome();

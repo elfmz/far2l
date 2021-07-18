@@ -2356,7 +2356,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 
 		//ExtPtr=wcsrchr(strFileName,L'.');
 
-		if (EnableExec && IsExecutableFilePath(strFileName.GetMB().c_str()))
+		if (EnableExec && IsDirectExecutableFilePath(strFileName.GetMB().c_str()))
 		{
 			EscapeSpace(strFileName);
 

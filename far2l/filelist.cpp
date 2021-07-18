@@ -1209,6 +1209,10 @@ int FileList::ProcessKey(int Key)
 						EscapeSpace(strFileName);
 
 					strFileName += L" ";
+					if (PanelMode != PLUGIN_PANEL && !strFileName.Begins(L"/") && !strFileName.Begins(L"./"))
+					{
+						strFileName.Insert(0, L"./");
+					}
 				}
 
 				CtrlObject->CmdLine->InsertString(strFileName);
@@ -2356,7 +2360,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 
 		//ExtPtr=wcsrchr(strFileName,L'.');
 
-		if (EnableExec && IsExecutableFilePath(strFileName.GetMB().c_str()))
+		if (EnableExec && IsDirectExecutableFilePath(strFileName.GetMB().c_str()))
 		{
 			EscapeSpace(strFileName);
 

@@ -1209,6 +1209,10 @@ int FileList::ProcessKey(int Key)
 						EscapeSpace(strFileName);
 
 					strFileName += L" ";
+					if (PanelMode != PLUGIN_PANEL && !strFileName.Begins(L"/") && !strFileName.Begins(L"./"))
+					{
+						strFileName.Insert(0, L"./");
+					}
 				}
 
 				CtrlObject->CmdLine->InsertString(strFileName);

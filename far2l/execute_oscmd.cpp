@@ -94,41 +94,13 @@ static bool MatchCommand(const std::string &cmd_line, const char *cmd)
 // echo "a"'!'"b"       -> {'echo', 'a!b'}
 // echo "" '' 	          -> {'echo', '', ''}
 
-std::vector<std::string> ExplodeCmdLine(std::string cmd_line) {
-	std::vector<std::string> rc;
-	fprintf(stderr, "ExplodeCmdLine('%s'): ", cmd_line.c_str());
-	wordexp_t we = {};
-	for (;;) {
-		int r = wordexp(cmd_line.c_str(), &we, 0);
-		if (r==0) {
-			for (size_t i = 0; i < we.we_wordc; ++i) {
-				rc.push_back(we.we_wordv[i]);
-				fprintf(stderr, "'%s' ", we.we_wordv[i]);
-			}
-			fprintf(stderr, "\n");
-			wordfree(&we);
-			break;
-		} else if (r==WRDE_BADCHAR) {
-			size_t p = cmd_line.find_last_of("|&;<>(){}");
-			if (p!=std::string::npos) {
-				cmd_line.resize(p);
-				continue;
-			}
-		}
-		fprintf(stderr, "error %d\n", r);
-		break;
-	}
-	return rc;
-};
-
-
 bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand)
 {
-	std::vector<std::string> ecl = ExplodeCmdLine(Wide2MB(CmdLine));
+	Environment::ExplodeCommandLine ecl(Wide2MB(CmdLine));
 	if (ecl.empty())
 		return false;
 
-        if (ecl[0] == "reset") {
+	if (ecl[0] == "reset") {
 		if (ecl.size() == 1) {
 			ClearScreen(COL_COMMANDLINEUSERSCREEN);
 			SaveBackground();

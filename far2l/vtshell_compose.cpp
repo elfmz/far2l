@@ -88,17 +88,18 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bo
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
 	}
+	const char *pwd_file_ext = need_sudo ? ".spwd" : ".pwd";
 
 	unsigned int id = ++s_vt_script_id;
 	char name[128]; 
 	sprintf(name, "vtcmd/%x_%u", getpid(), id);
 	_cmd_script = InMyTemp(name);
-	_pwd_file = _cmd_script + ".pwd";
+	_pwd_file = _cmd_script + pwd_file_ext;
 	Create(cd, cmd, need_sudo, start_marker);
 	if (!_created) {
 		Cleanup();
 		_cmd_script = InMyCache(name);
-		_pwd_file = _cmd_script + ".pwd";
+		_pwd_file = _cmd_script + pwd_file_ext;
 		Create(cd, cmd, need_sudo, start_marker);
 	}
 }
@@ -162,12 +163,21 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 		s_shown_tip_init = true;
 
 	}
+	std::string pwd_suffix;
+	const char *last_ch = cmd + strlen(cmd);
+	while (last_ch != cmd && (*last_ch == ' ' || *last_ch == '\t' || *last_ch == 0)) {
+		--last_ch;
+	}
+	if (*last_ch != '&') { // don't update curdir in case of background command
+		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
+	}
+
 	if (need_sudo) {
-		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s && pwd >'%s'\"\n",
-			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), _pwd_file.c_str());
+		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s%s\"\n",
+			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
 	} else {
-		content+= StrPrintf("cd \"%s\" && %s && pwd >'%s'\n",
-			EscapeCmdStr(cd).c_str(), cmd, _pwd_file.c_str());
+		content+= StrPrintf("cd \"%s\" && %s%s\n",
+			EscapeCmdStr(cd).c_str(), cmd, pwd_suffix.c_str());
 	}
 
 	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside

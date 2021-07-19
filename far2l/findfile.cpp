@@ -2718,6 +2718,10 @@ void DoPrepareFileList(HANDLE hDlg)
 	{
 		FARString strPathEnv;
 		apiGetEnvironmentVariable(L"PATH",strPathEnv);
+		size_t pos;
+		while (strPathEnv.Pos(pos, L':')) {
+			strPathEnv.Replace(pos, 1, L';');
+		}
 		List.Set(strPathEnv);
 	}
 	else if (SearchMode==FINDAREA_ROOT)
@@ -2727,16 +2731,17 @@ void DoPrepareFileList(HANDLE hDlg)
 	}
 	else if (SearchMode==FINDAREA_ALL || SearchMode==FINDAREA_ALL_BUTNETWORK)
 	{
-		DList<FARString> Volumes; List.AddItem(L"/");
+		List.AddItem(L"/");
 	}
 	else
 	{
 		List.Set(strRoot);
 	}
 
-	while(!List.IsEmpty())
+	const wchar_t *pwRoot;
+	for (size_t LI = 0; (pwRoot = List.Get(LI)) != nullptr; ++LI)
 	{
-		strRoot = List.GetNext();
+		strRoot = pwRoot;
 		DoScanTree(hDlg, strRoot);
 	}
 

@@ -75,6 +75,7 @@ class TArray
 
 		Object *setItem(size_t index, const Object &newItem);
 		Object *getItem(size_t index);
+		const Object *getConstItem(size_t index) const;
 		int getIndex(const Object &item, int start=-1);
 
 		// сортировка массива. Offset - сколько первых пунктов пропустить
@@ -141,6 +142,12 @@ Object *TArray<Object>::setItem(size_t index, const Object &newItem)
 
 template <class Object>
 Object *TArray<Object>::getItem(size_t index)
+{
+	return (index<Count)?items[index]:nullptr;
+}
+
+template <class Object>
+const Object *TArray<Object>::getConstItem(size_t index) const
 {
 	return (index<Count)?items[index]:nullptr;
 }
@@ -400,6 +407,8 @@ class TPointerArray
 		void setDelta(size_t newDelta) { if (newDelta<1) newDelta=1; Delta=newDelta; }
 
 		Object *getItem(size_t index) { return (index<Count)?items[index]:nullptr; }
+
+		const Object *getConstItem(size_t index) const { return (index<Count)?items[index]:nullptr; }
 
 		Object *lastItem() { return Count?items[Count-1]:nullptr; }
 

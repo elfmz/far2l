@@ -187,27 +187,27 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 	if (!lpwszPath)
 		return nullptr;
 
-	const wchar_t *lpwszNamePtr = lpwszEndPtr;
-
-	if (!lpwszNamePtr)
+	if (lpwszEndPtr)
 	{
-		lpwszNamePtr=lpwszPath;
-
-		while (*lpwszNamePtr) lpwszNamePtr++;
+		for (const wchar_t *lpwszScanPtr = lpwszEndPtr; lpwszScanPtr != lpwszPath; --lpwszScanPtr)
+		{
+			if (IsSlash(*lpwszScanPtr))
+				return lpwszScanPtr + 1;
+		}
 	}
-
-	while (lpwszNamePtr != lpwszPath)
-	{
-		if (IsSlash(*lpwszNamePtr))
-			return lpwszNamePtr+1;
-
-		lpwszNamePtr--;
-	}
-
-	if (IsSlash(*lpwszPath))
-		return lpwszPath+1;
 	else
-		return lpwszPath;
+	{
+		const wchar_t *lpwszLastSlashPtr = nullptr;
+		for (const wchar_t *lpwszScanPtr = lpwszPath; *lpwszScanPtr; ++lpwszScanPtr)
+		{
+			if (IsSlash(*lpwszScanPtr))
+				lpwszLastSlashPtr = lpwszScanPtr;
+		}
+		if (lpwszLastSlashPtr)
+			return lpwszLastSlashPtr;
+	}
+
+	return lpwszPath;
 }
 
 //   Аналог PointToName, только для строк типа

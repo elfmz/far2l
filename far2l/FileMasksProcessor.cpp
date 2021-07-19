@@ -106,21 +106,20 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 	return Masks.Set(masks);
 }
 
-bool FileMasksProcessor::IsEmpty()
+bool FileMasksProcessor::IsEmpty() const
 {
 	if (bRE)
 	{
 		return !n;
 	}
 
-	Masks.Reset();
 	return Masks.IsEmpty();
 }
 
 /* сравнить имя файла со списком масок
    Возвращает TRUE в случае успеха.
    Путь к файлу в FileName НЕ игнорируется */
-bool FileMasksProcessor::Compare(const wchar_t *FileName)
+bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 {
 	if (bRE)
 	{
@@ -135,9 +134,8 @@ bool FileMasksProcessor::Compare(const wchar_t *FileName)
 		return ret;
 	}
 
-	Masks.Reset();
-
-	while (nullptr!=(MaskPtr=Masks.GetNext()))
+	const wchar_t *MaskPtr;   // указатель на текущую маску в списке
+	for (size_t MI = 0; nullptr!=(MaskPtr=Masks.Get(MI)); ++MI)
 	{
 		// SkipPath=FALSE, т.к. в CFileMask вызывается PointToName
 		if (CmpName(MaskPtr,FileName, false))

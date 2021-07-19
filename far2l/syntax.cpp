@@ -1515,8 +1515,9 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	wchar_t varName[256];
 	DWORD KeyCode, *CurMacro_Buffer = nullptr;
 
+	size_t MSLI = 0;
 	if(useUDL)
-		BufPtr=MacroSrcList.GetNext();
+		BufPtr=MacroSrcList.Get(MSLI++);
 
 	pSrcString=BufPtr;
 
@@ -1530,7 +1531,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 		{
 			if(!useUDL)
 				break;
-			NewBufPtr=MacroSrcList.GetNext();
+			NewBufPtr=MacroSrcList.Get(MSLI++);
 			if(!NewBufPtr)
 				break;
 			_macro_nLine++;

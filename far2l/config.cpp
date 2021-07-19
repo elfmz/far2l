@@ -1074,7 +1074,7 @@ void ReadConfig()
 			DestList.Set(strXLatLayouts);
 			I=0;
 
-			while (nullptr!=(ValPtr=DestList.GetNext()))
+			for (size_t DLI = 0; nullptr!=(ValPtr=DestList.Get(DLI)); ++DLI)
 			{
 				DWORD res=(DWORD)wcstoul(ValPtr, &endptr, 16);
 				Opt.XLat.Layouts[I]=(HKL)(LONG_PTR)(HIWORD(res)? res : MAKELONG(res,res));

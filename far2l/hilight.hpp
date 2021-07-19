@@ -57,8 +57,12 @@ struct HighlightDataColor
 	DWORD MarkChar;
 };
 
+class Highlighter;
+
 class HighlightFiles
 {
+	friend class HighlightFilesChunk;
+
 	private:
 		TPointerArray<FileFilterParams> HiData;
 		int FirstCount, UpperCount, LowerCount, LastCount;

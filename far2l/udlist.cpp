@@ -121,14 +121,12 @@ wchar_t *UserDefinedListItem::set(const wchar_t *Src, size_t size)
 
 UserDefinedList::UserDefinedList()
 {
-	Reset();
 	SetParameters(0,0,0);
 }
 
 UserDefinedList::UserDefinedList(WORD separator1, WORD separator2,
                                  DWORD Flags)
 {
-	Reset();
 	SetParameters(separator1, separator2, Flags);
 }
 
@@ -175,7 +173,6 @@ bool UserDefinedList::SetParameters(WORD separator1, WORD separator2,
 void UserDefinedList::Free()
 {
 	Array.Free();
-	Reset();
 }
 
 bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
@@ -321,8 +318,6 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 
 		for (; i<maxI; ++i)
 			Array.getItem(i)->index=i;
-
-		Reset();
 	}
 	else
 		Free();
@@ -425,20 +420,13 @@ const wchar_t *UserDefinedList::Skip(const wchar_t *Str, int &Length, int &RealL
 	return Str;
 }
 
-void UserDefinedList::Reset()
+bool UserDefinedList::IsEmpty() const
 {
-	CurrentItem=0;
+	return Array.getSize() == 0;
 }
 
-bool UserDefinedList::IsEmpty()
+const wchar_t *UserDefinedList::Get(size_t Index) const
 {
-	size_t Size=Array.getSize();
-	return !Size || CurrentItem>=Size;
-}
-
-const wchar_t *UserDefinedList::GetNext()
-{
-	UserDefinedListItem *item=Array.getItem(CurrentItem);
-	++CurrentItem;
-	return item?item->Str:nullptr;
+	const UserDefinedListItem *item=Array.getConstItem(Index);
+	return item ? item->Str : nullptr;
 }

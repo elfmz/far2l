@@ -123,17 +123,14 @@ class UserDefinedList : private NonCopyable
 			return Set(NewItem,true);
 		}
 
-		// Вызывать перед началом работы со списком
-		void Reset();
-
 		// Выдает указатель на очередной элемент списка или nullptr
-		const wchar_t *GetNext();
+		const wchar_t *Get(size_t Index) const;
 
 		// Освободить память
 		void Free();
 
 		// true, если больше элементов в списке нет
-		bool IsEmpty();
+		bool IsEmpty() const;
 
 		// Вернуть количество элементов в списке
 		size_t GetTotal() const { return Array.getSize(); }

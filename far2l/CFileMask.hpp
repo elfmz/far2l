@@ -55,8 +55,8 @@ class CFileMask : private NonCopyable
 
 	public:
 		bool Set(const wchar_t *Masks, DWORD Flags);
-		bool Compare(const wchar_t *Name);
-		bool IsEmpty();
+		bool Compare(const wchar_t *Name)const;
+		bool IsEmpty()const;
 		void Free();
 
 };

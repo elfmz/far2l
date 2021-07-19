@@ -74,6 +74,8 @@ enum enumFDateType
 	FDATE_COUNT, // всегда последний !!!
 };
 
+/// NB: const-qualified methods can be invoked in multithreaded-parallel manner,
+/// so they really must be const (i.e. dont modify any mutable fields inside etc)
 class FileFilterParams
 {
 	private:
@@ -153,9 +155,9 @@ class FileFilterParams
 		// попадает ли файл fd под условие установленного фильтра.
 		// Возвращает true  - попадает;
 		//            false - не попадает.
-		bool FileInFilter(const FileListItem& fli, uint64_t CurrentTime);
-		bool FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime);
-		bool FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime);
+		bool FileInFilter(const FileListItem& fli, uint64_t CurrentTime) const;
+		bool FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime) const;
+		bool FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime) const;
 };
 
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig=false);

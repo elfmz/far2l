@@ -489,10 +489,9 @@ void PluginManager::LoadPlugins()
 		}
 
 		const wchar_t *NamePtr;
-		PluginPathList.Reset();
 
 		// теперь пройдемся по всему ранее собранному списку
-		while (nullptr!=(NamePtr=PluginPathList.GetNext()))
+		for (size_t PPLI = 0; nullptr!=(NamePtr=PluginPathList.Get(PPLI)); ++PPLI)
 		{
 			// расширяем значение пути
 			apiExpandEnvironmentStrings(NamePtr,strFullName);

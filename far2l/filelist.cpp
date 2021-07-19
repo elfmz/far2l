@@ -732,7 +732,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							while((namePtr=itemsList->GetNext()) )
+							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{
@@ -768,7 +768,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							while((namePtr=itemsList->GetNext()) )
+							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{
@@ -804,7 +804,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							while((namePtr=itemsList->GetNext()) )
+							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{

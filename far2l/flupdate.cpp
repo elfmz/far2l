@@ -241,7 +241,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	//Title[TitleLength]=0;
 	MakeSeparator(TitleLength, Title, 9, nullptr);
 	BOOL IsShowTitle=FALSE;
-	BOOL NeedHighlight=Opt.Highlight && PanelMode != PLUGIN_PANEL;
+	//BOOL NeedHighlight=Opt.Highlight && PanelMode != PLUGIN_PANEL;
 
 	if (!Filter)
 		Filter=new FileFilter(this,FFT_PANEL);
@@ -344,8 +344,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			if (ReadCustomData)
 				CtrlObject->Plugins.GetCustomData(NewPtr);
 
-			if (NeedHighlight)
-				CtrlObject->HiFiles->GetHiColor(&NewPtr,1);
+			//if (NeedHighlight)
+			//	CtrlObject->HiFiles->GetHiColor(&NewPtr,1);
 
 			if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 				TotalFileCount++;
@@ -443,8 +443,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 			AddParentPoint(ListData[FileCount],FileCount,TwoDotsTimes,TwoDotsOwner,TwoDotsGroup);
 
-			if (NeedHighlight)
-				CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],1);
+			//if (NeedHighlight)
+			//	CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],1);
 
 			FileCount++;
 		}
@@ -486,13 +486,16 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				}
 
 				// цветовую боевую раскраску в самом конце, за один раз
-				CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],PanelCount);
+				//CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],PanelCount);
 				FileCount+=PanelCount;
 			}
 
 			CtrlObject->Plugins.FreeVirtualFindData(hAnotherPlugin,PanelData,PanelCount);
 		}
 	}
+
+	if (Opt.Highlight && FileCount)
+		CtrlObject->HiFiles->GetHiColor(&ListData[0],FileCount);
 
 	CreateChangeNotification(FALSE);
 	CorrectPosition();

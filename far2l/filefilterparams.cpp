@@ -105,9 +105,7 @@ FARString &Add_PATHEXT(FARString &strDest)
 			strDest += L",";
 
 		const wchar_t *Ptr;
-		MaskList.Reset();
-
-		while (nullptr!=(Ptr=MaskList.GetNext()))
+		for (size_t MLI = 0; nullptr!=(Ptr=MaskList.Get(MLI)); ++MLI)
 		{
 			strDest += L"*";
 			strDest += Ptr;
@@ -277,7 +275,7 @@ wchar_t FileFilterParams::GetMarkChar() const
 	return (wchar_t)(FHighlight.Colors.MarkChar & 0xffff); // higher half used for something else
 }
 
-bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTime)
+bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTime) const
 {
 	FAR_FIND_DATA_EX fde;
 	fde.dwFileAttributes=fli.FileAttr;
@@ -292,7 +290,7 @@ bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTim
 	return FileInFilter(fde, CurrentTime);
 }
 
-bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime)
+bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime) const
 {
 	// Режим проверки атрибутов файла включен?
 	if (FAttr.Used)
@@ -394,7 +392,7 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t Curren
 	return true;
 }
 
-bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime)
+bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime) const
 {
 	FAR_FIND_DATA_EX fde;
 	apiFindDataToDataEx(&fd,&fde);

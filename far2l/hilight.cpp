@@ -51,6 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "interf.hpp"
 #include "ConfigRW.hpp"
+#include <Threaded.h>
+#include <list>
 
 struct HighlightStrings
 {
@@ -369,38 +371,100 @@ void HighlightFiles::UpdateCurrentTime()
 	CurrentTime = current.QuadPart;
 }
 
+////
+
+class HighlightFilesChunk : protected Threaded
+{
+	uint64_t _CurrentTime;
+	const TPointerArray<FileFilterParams> &_HiData;
+	FileListItem **_FileItem;
+	int _FileCount;
+	bool _UseAttrHighlighting;
+
+	virtual void *ThreadProc()
+	{
+		DoNow();
+		return nullptr;
+	}
+
+public:
+
+	HighlightFilesChunk(uint64_t CurrentTime, const TPointerArray<FileFilterParams> &HiData, FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+		:
+		_CurrentTime(CurrentTime),
+		_HiData(HiData),
+		_FileItem(FileItem),
+		_FileCount(FileCount),
+		_UseAttrHighlighting(UseAttrHighlighting)
+	{
+	}
+
+	virtual ~HighlightFilesChunk()
+	{
+		WaitThread();
+	}
+
+	void DoNow()
+	{
+		for (int FCnt=0; FCnt < _FileCount; ++FCnt)
+		{
+			FileListItem& fli = *_FileItem[FCnt];
+			ApplyDefaultStartingColors(&fli.Colors);
+
+			for (size_t i=0; i < _HiData.getCount(); i++)
+			{
+				const FileFilterParams *CurHiData = _HiData.getConstItem(i);
+
+				if (_UseAttrHighlighting && CurHiData->GetMask(nullptr))
+					continue;
+
+				if (CurHiData->FileInFilter(fli, _CurrentTime))
+				{
+					HighlightDataColor TempColors;
+					CurHiData->GetColors(&TempColors);
+					ApplyColors(&fli.Colors,&TempColors);
+
+					if (!CurHiData->GetContinueProcessing())// || !HasTransparent(&fli->Colors))
+						break;
+				}
+			}
+
+			ApplyFinalColors(&fli.Colors);
+		}
+	}
+
+	void DoAsync()
+	{
+		if (!StartThread())
+		{
+			DoNow();
+		}
+	}
+};
+
 void HighlightFiles::GetHiColor(FileListItem **FileItem,int FileCount,bool UseAttrHighlighting)
 {
 	if (!FileItem || !FileCount)
 		return;
 
-	FileFilterParams *CurHiData;
+	std::list<HighlightFilesChunk> async_hfc;
 
-	for (int FCnt=0; FCnt < FileCount; ++FCnt)
-	{
-		FileListItem& fli = *FileItem[FCnt];
-		ApplyDefaultStartingColors(&fli.Colors);
+	const int sFileCountTrh = 0x1000; // empirically found, can be subject of (dynamic) adjustment
 
-		for (size_t i=0; i < HiData.getCount(); i++)
-		{
-			CurHiData = HiData.getItem(i);
-
-			if (UseAttrHighlighting && CurHiData->GetMask(nullptr))
-				continue;
-
-			if (CurHiData->FileInFilter(fli, CurrentTime))
-			{
-				HighlightDataColor TempColors;
-				CurHiData->GetColors(&TempColors);
-				ApplyColors(&fli.Colors,&TempColors);
-
-				if (!CurHiData->GetContinueProcessing())// || !HasTransparent(&fli->Colors))
-					break;
-			}
+	if (FileCount >= sFileCountTrh && GetCPUCount() > 1) {
+		int FilePerCPU = std::max(FileCount / GetCPUCount(), 0x400u);
+		while (FileCount > FilePerCPU && async_hfc.size() + 1 < GetCPUCount()) {
+			async_hfc.emplace_back(CurrentTime, HiData, FileItem, FilePerCPU, UseAttrHighlighting);
+			async_hfc.back().DoAsync();
+			FileItem+= FilePerCPU;
+			FileCount-= FilePerCPU;
 		}
-
-		ApplyFinalColors(&fli.Colors);
+//		fprintf(stderr, "%s: spawned %u async processors %d files per each, %d files processed synchronously\n",
+//			__FUNCTION__, (unsigned int)async_hfc.size(), FilePerCPU, FileCount);
 	}
+
+	HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
+	// async_hfc will join at d-tors
 }
 
 int HighlightFiles::GetGroup(const FileListItem *fli)

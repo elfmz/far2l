@@ -131,12 +131,12 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 /* сравнить имя файла со списком масок
    Возвращает TRUE в случае успеха.
    Путь к файлу в FileName НЕ игнорируется */
-bool FileMasksWithExclude::Compare(const wchar_t *FileName)
+bool FileMasksWithExclude::Compare(const wchar_t *FileName) const
 {
 	return (Include.Compare(FileName) && !Exclude.Compare(FileName));
 }
 
-bool FileMasksWithExclude::IsEmpty()
+bool FileMasksWithExclude::IsEmpty() const
 {
 	return (Include.IsEmpty() && Exclude.IsEmpty());
 }

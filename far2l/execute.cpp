@@ -76,7 +76,7 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _dir, _file, _executable, _backround, _rooted;
+	bool _dir, _file, _executable, _rooted;
 	
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -89,13 +89,13 @@ class ExecClassifier
 	
 public:
 	ExecClassifier(const char *cmd, bool direct)
-		: _dir(false), _file(false), _executable(false), _backround(false), _rooted(false)
+		: _dir(false), _file(false), _executable(false), _rooted(false)
 	{
 		Environment::ExplodeCommandLine ecl(cmd);
 		if (!ecl.empty() && ecl.back() == "&") {
-			_backround = true;
 			ecl.pop_back();
 		}
+
 		if (ecl.empty() || ecl[0].empty()) {
 			fprintf(stderr, "ExecClassifier('%s', %d) - empty command\n", cmd, direct);
 			return;
@@ -137,20 +137,18 @@ public:
 			char buf[8] = { 0 };
 			int r = read(f, buf, sizeof(buf));
 			if (r > 4 && buf[0]==0x7f && buf[1]=='E' && buf[2]=='L' && buf[3]=='F') {
-				fprintf(stderr, "ExecClassifier('%s') - ELF executable%s\n",
-					cmd, _backround ? " backround" : "");
+				fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
 				_executable = true;
 
 			} else if (r > 2 && buf[0]=='#' && buf[1]=='!') {
-				fprintf(stderr, "ExecClassifier('%s') - script%s\n",
-					cmd, _backround ? " backround" : "");
+				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);
 				_executable = true;
 
 			} else {
 				_executable = IsExecutableByExtension(arg0.c_str());
-				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable%s\n", 
+				fprintf(stderr, "ExecClassifier('%s') - unknown: %02x %02x %02x %02x assumed %sexecutable\n", 
 					cmd, (unsigned)buf[0], (unsigned)buf[1], (unsigned)buf[2], (unsigned)buf[3],
-						_executable ? "" : "not ", _backround ? " backround" : "");
+						_executable ? "" : "not ");
 			}
 
 		} else {
@@ -162,7 +160,6 @@ public:
 	bool IsFile() const {return _file; }
 	bool IsDir() const {return _dir; }
 	bool IsExecutable() const {return _executable; }
-	bool IsBackground() const {return _backround; }
 };
 
 
@@ -342,7 +339,7 @@ static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, boo
 
 	int r = -1;
 	ExecClassifier ec(CmdStr, DirectRun);
-	unsigned int flags = ec.IsBackground() ? EF_NOWAIT | EF_HIDEOUT : ( (Silent || SeparateWindow) ? 0 : EF_NOTIFY );
+	unsigned int flags = ( (Silent || SeparateWindow) ? 0 : EF_NOTIFY );
 	std::string tmp;
 	if (ec.IsDir() && SeparateWindow) {
 		tmp = GetOpenShVerb("dir");

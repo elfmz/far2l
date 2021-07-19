@@ -132,9 +132,8 @@ void ShellMakeDir(Panel *SrcPanel)
 	{
 		strDirName=MkDirDlg[MKDIR_EDIT].strData;
 		const wchar_t *OneDir;
-		DirList.Reset();
 
-		while (nullptr!=(OneDir=DirList.GetNext()))
+		for (size_t DI = 0; nullptr!=(OneDir=DirList.Get(DI)); ++DI)
 		{
 			strDirName = OneDir;
 			strOriginalDirName = strDirName;

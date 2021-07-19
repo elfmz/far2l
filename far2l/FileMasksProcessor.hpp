@@ -53,13 +53,12 @@ class FileMasksProcessor : public BaseFileMask
 
 	public:
 		virtual bool Set(const wchar_t *Masks, DWORD Flags);
-		virtual bool Compare(const wchar_t *Name);
-		virtual bool IsEmpty();
+		virtual bool Compare(const wchar_t *Name) const;
+		virtual bool IsEmpty() const;
 		void Free();
 
 	private:
 		UserDefinedList Masks; // список масок файлов
-		const wchar_t *MaskPtr;   // указатель на текущую маску в списке
 		RegExp *re;
 		SMatch *m;
 		int n;

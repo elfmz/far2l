@@ -46,9 +46,29 @@ inline int IsEol(wchar_t x) { return x==L'\r' || x==L'\n'; }
 
 inline int IsSpaceOrEos(wchar_t x) { return !x || x==L' ' || x==L'\t'; }
 
-inline wchar_t __cdecl Upper(wchar_t Ch) { WINPORT(CharUpperBuff)(&Ch, 1); return Ch; }
+inline wchar_t __cdecl Upper(wchar_t Ch)
+{
+	if ( (Ch & 0x7f) == Ch) {
+		if (Ch >= 'a' && Ch <= 'z') {
+			Ch-= 'a' - 'A';
+		}
+	} else {
+		WINPORT(CharUpperBuff)(&Ch, 1);
+	}
+	return Ch;
+}
 
-inline wchar_t __cdecl Lower(wchar_t Ch) { WINPORT(CharLowerBuff)(&Ch, 1); return Ch; }
+inline wchar_t __cdecl Lower(wchar_t Ch)
+{
+	if ( (Ch & 0x7f) == Ch) {
+		if (Ch >= 'A' && Ch <= 'Z') {
+			Ch+= 'a' - 'A';
+		}
+	} else {
+		WINPORT(CharLowerBuff)(&Ch, 1);
+	}
+	return Ch;
+}
 
 inline int __cdecl StrCmpNNI(const wchar_t *s1, int n1, const wchar_t *s2, int n2) { return WINPORT(CompareString)(0,NORM_IGNORECASE|NORM_STOP_ON_NULL|SORT_STRINGSORT,s1,n1,s2,n2)-2; }
 inline int __cdecl StrCmpNI(const wchar_t *s1, const wchar_t *s2, int n) { return StrCmpNNI(s1,n,s2,n); }

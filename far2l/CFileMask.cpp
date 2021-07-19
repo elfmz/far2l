@@ -97,7 +97,7 @@ bool CFileMask::Set(const wchar_t *Masks, DWORD Flags)
 }
 
 // Возвращает TRUE, если список масок пустой
-bool CFileMask::IsEmpty()
+bool CFileMask::IsEmpty()const
 {
 	return FileMask?FileMask->IsEmpty():true;
 }
@@ -106,7 +106,7 @@ bool CFileMask::IsEmpty()
    Возвращает TRUE в случае успеха.
    Путь в имени файла игнорируется.
 */
-bool CFileMask::Compare(const wchar_t *FileName)
+bool CFileMask::Compare(const wchar_t *FileName) const
 {
-	return FileMask?FileMask->Compare(PointToName((wchar_t*)FileName)):false;
+	return FileMask?FileMask->Compare(PointToName(FileName)):false;
 }

@@ -1,5 +1,6 @@
 #include "Threaded.h"
 #include <stdlib.h>
+#include <unistd.h>
 
 
 // OSX has no pthread_timedjoin_np, so here goes bicycle for timed thread waiting
@@ -87,3 +88,14 @@ void *Threaded::GetThreadResult()
 	return _trd_result;
 }
 
+static unsigned int GetCPUCountUncached()
+{
+	int out = sysconf(_SC_NPROCESSORS_ONLN);
+	return (out > 0) ? (unsigned int)out : 1;
+}
+
+unsigned int GetCPUCount()
+{
+	static unsigned int s_out = GetCPUCountUncached();
+	return s_out;
+}

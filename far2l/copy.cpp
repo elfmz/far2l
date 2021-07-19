@@ -1156,7 +1156,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			FARString strNameTmp;
 			// посчитаем количество целей.
 			CountTarget=DestList.GetTotal();
-			DestList.Reset();
 			TotalFiles=0;
 			TotalCopySize=TotalCopiedSize=TotalSkippedSize=0;
 			ProgressUpdateTime=0;
@@ -1171,7 +1170,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			if (CountTarget > 1)
 				Move=0;
 
-			while (nullptr!=(NamePtr=DestList.GetNext()))
+			for( size_t DLI = 0; nullptr!=(NamePtr=DestList.Get(DLI)); ++DLI)
 			{
 				CurCopiedSize=0;
 				strNameTmp = NamePtr;
@@ -1585,8 +1584,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 					if (DestList.Set(strOldFolder))
 					{
-						DestList.Reset();
-						const wchar_t *NamePtr=DestList.GetNext();
+						const wchar_t *NamePtr=DestList.Get(0);
 
 						if (NamePtr)
 							strNewFolder = NamePtr;

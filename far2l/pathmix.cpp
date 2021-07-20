@@ -189,8 +189,9 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 
 	if (lpwszEndPtr)
 	{
-		for (const wchar_t *lpwszScanPtr = lpwszEndPtr; lpwszScanPtr != lpwszPath; --lpwszScanPtr)
+		for (const wchar_t *lpwszScanPtr = lpwszEndPtr; lpwszScanPtr != lpwszPath;)
 		{
+			--lpwszScanPtr;
 			if (IsSlash(*lpwszScanPtr))
 				return lpwszScanPtr + 1;
 		}
@@ -204,7 +205,7 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 				lpwszLastSlashPtr = lpwszScanPtr;
 		}
 		if (lpwszLastSlashPtr)
-			return lpwszLastSlashPtr;
+			return lpwszLastSlashPtr + 1;
 	}
 
 	return lpwszPath;

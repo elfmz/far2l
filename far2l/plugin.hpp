@@ -1327,7 +1327,7 @@ enum FARMACROVARTYPE
 
 struct FarMacroValue
 {
-	FARMACROVARTYPE type;
+	enum FARMACROVARTYPE type;
 	union
 	{
 		int64_t  i;
@@ -2145,7 +2145,7 @@ struct PluginInfo
 #ifdef FAR_USE_INTERNALS
 #if defined(PROCPLUGINMACROFUNC)
 	int MacroFunctionNumber;
-	const FarMacroFunction *MacroFunctions;
+	const struct FarMacroFunction *MacroFunctions;
 #endif
 #endif // END FAR_USE_INTERNALS
 };
@@ -2399,7 +2399,7 @@ extern "C"
 	int    WINAPI _export ProcessKeyW(HANDLE hPlugin,int Key,unsigned int ControlState);
 #ifdef FAR_USE_INTERNALS
 	#if defined(PROCPLUGINMACROFUNC)
-	int    WINAPI _export ProcessMacroFuncW(const wchar_t *Name, const FarMacroValue *Params, int nParams, FarMacroValue **Results, int *nResults);
+	int    WINAPI _export ProcessMacroFuncW(const wchar_t *Name, const struct FarMacroValue *Params, int nParams, struct FarMacroValue **Results, int *nResults);
 	#endif
 #endif // END FAR_USE_INTERNALS
 	int    WINAPI _export ProcessSynchroEventW(int Event,void *Param);

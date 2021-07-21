@@ -3,11 +3,17 @@
 #include <string>
 #include <dlfcn.h>
 
+#include <Python.h>
+
+#include "plugin.hpp"
+#include "farcolor.hpp"
+#include "farkeys.hpp"
 #include "../../etc/plugs.h"
 
 #include "python.hpp"
 
-#include <Python.h>
+PyMODINIT_FUNC PyInit__pyfar(void);
+
 
 std::wstring gPluginPath;
 PyObject *pyPluginModule = NULL;
@@ -141,6 +147,8 @@ XPORT(void, SetStartupInfo)(const struct PluginStartupInfo *Info)
     Py_SetProgramName((wchar_t *)progname.c_str());
     Py_Initialize();
     PyEval_InitThreads();
+
+    PyInit__pyfar();
 
     std::string pp( gPluginPath.begin(), gPluginPath.end() );;
     std::string syspath = "import sys";

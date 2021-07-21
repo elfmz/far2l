@@ -10,8 +10,6 @@
 typedef struct _INPUT_RECORD INPUT_RECORD;
 typedef struct _CHAR_INFO    CHAR_INFO;
 
-#define CP_UNICODE 1200
-#define CP_REVERSEBOM 1201
 #define CP_AUTODETECT -1
 
 enum FARMESSAGEFLAGS
@@ -659,9 +657,9 @@ struct CmdLineSelect
 	int SelEnd;
 };
 
-#define PANEL_NONE	-1
-#define PANEL_ACTIVE	-1
-#define PANEL_PASSIVE	-2
+//#define PANEL_NONE	-1
+//#define PANEL_ACTIVE	-1
+//#define PANEL_PASSIVE	-2
 
 enum FILE_CONTROL_COMMANDS
 {
@@ -1021,7 +1019,6 @@ enum FARKEYSEQUENCEFLAGS
 {
 	KSFLAGS_DISABLEOUTPUT       = 0x00000001,
 	KSFLAGS_NOSENDKEYSTOPLUGINS = 0x00000002,
-	KSFLAGS_REG_MULTI_SZ        = 0x00100000,
 	KSFLAGS_SILENTCHECK         = 0x00000001,
 };
 
@@ -1276,7 +1273,8 @@ struct ViewerMode
 	int Wrap;
 	int WordWrap;
 	int Hex;
-	DWORD Reserved[4];
+	int Processed;
+	DWORD Reserved[3];
 };
 
 struct ViewerInfo
@@ -1332,9 +1330,9 @@ enum SYNCHRO_EVENTS
 	SE_COMMONSYNCHRO  =0,
 };
 
-#define EEREDRAW_ALL    0
-#define EEREDRAW_CHANGE 1
-#define EEREDRAW_LINE   2
+//#define EEREDRAW_ALL    0
+//#define EEREDRAW_CHANGE 1
+//#define EEREDRAW_LINE   2
 
 enum EDITOR_CONTROL_COMMANDS
 {
@@ -1739,7 +1737,8 @@ typedef struct FarStandardFunctions
 	FARSTDSNPRINTF             snprintf;
 	// </C&C++>
 
-	DWORD_PTR                  Reserved[8];
+	DWORD_PTR                  Reserved[7];
+	const WCHAR *              BoxSymbols; // indexed via BOX_DEF_SYMBOLS
 
 	FARSTDLOCALISLOWER         LIsLower;
 	FARSTDLOCALISUPPER         LIsUpper;
@@ -1779,7 +1778,7 @@ typedef struct FarStandardFunctions
 	FARSTDMKLINK               MkLink;
 	FARCONVERTPATH             ConvertPath;
 	FARGETREPARSEPOINTINFO     GetReparsePointInfo;
-	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
+//	FARGETCURRENTDIRECTORY     GetCurrentDirectory;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

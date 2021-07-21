@@ -26,16 +26,16 @@ set_target_properties(python PROPERTIES
     SUFFIX ".far-plug-wide"
 )
 
+execute_process(
+    COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
+)
+execute_process(
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python/bin/python -m pip install cffi debugpy
+)
 
 add_custom_command(TARGET python POST_BUILD
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/python"
-)
-
-add_custom_command(TARGET python PRE_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python/bin/python -m pip install cffi debugpy
 )
 
 add_custom_command(OUTPUT _pyfar.cpp

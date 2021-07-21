@@ -5,3 +5,5 @@ libxerces-c-dev
 
 libarchive-dev
 libssh-dev
+
+python3

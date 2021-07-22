@@ -1197,7 +1197,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 					Move=0;
 				}
 
-				if (DestList.IsEmpty()) // нужно учесть моменты связанные с операцией Move.
+				if (DestList.IsLastElement(DLI)) // нужно учесть моменты связанные с операцией Move.
 				{
 					Flags|=FCOPY_COPYLASTTIME|(Move?FCOPY_MOVE:0); // только для последней операции
 				}
@@ -1253,7 +1253,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				}
 
 				// если "есть порох в пороховницах" - восстановим выделение
-				if (!DestList.IsEmpty())
+				if (!DestList.IsLastElement(DLI))
 					SrcPanel->RestoreSelection();
 
 				// Позаботимся о дизах.
@@ -1264,7 +1264,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 					DWORD Attr=apiGetFileAttributes(strDestDizName);
 					int DestReadOnly=(Attr!=INVALID_FILE_ATTRIBUTES && (Attr & FILE_ATTRIBUTE_READONLY));
 
-					if (DestList.IsEmpty()) // Скидываем только во время последней Op.
+					if (DestList.IsLastElement(DLI)) // Скидываем только во время последней Op.
 						if (Move && !DestReadOnly)
 							SrcPanel->FlushDiz();
 

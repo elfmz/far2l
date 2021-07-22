@@ -179,7 +179,7 @@ void ShellMakeDir(Panel *SrcPanel)
 				{
 					int ret;
 
-					if (DirList.IsEmpty())
+					if (DirList.IsLastElement(DI))
 						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MCancel));
 					else
 						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MOk),MSG(MSkip));
@@ -195,7 +195,7 @@ void ShellMakeDir(Panel *SrcPanel)
 				{
 					int ret;
 
-					if (DirList.IsEmpty())
+					if (DirList.IsLastElement(DI))
 					{
 						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MRetry),MSG(MCancel));
 					}

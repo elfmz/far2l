@@ -129,9 +129,11 @@ class UserDefinedList : private NonCopyable
 		// Освободить память
 		void Free();
 
-		// true, если больше элементов в списке нет
+		// true, если элементов в списке нет
 		bool IsEmpty() const;
 
+		inline bool IsLastElement(size_t Index) const { return Index + 1 == Array.getSize(); }
+
 		// Вернуть количество элементов в списке
-		size_t GetTotal() const { return Array.getSize(); }
+		inline size_t GetTotal() const { return Array.getSize(); }
 };

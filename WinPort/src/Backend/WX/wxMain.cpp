@@ -718,7 +718,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
-	_paint_context.ToggleCursor();
+	_paint_context.BlinkCursor();
 }
 
 static int ProcessAllEvents()

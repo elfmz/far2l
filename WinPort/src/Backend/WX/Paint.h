@@ -6,14 +6,29 @@
 #include "wxWinTranslations.h"
 #include "CustomDrawChar.h"
 
+struct CursorProps
+{
+	bool Blink();
+	void Update();
+
+	COORD pos{}, prev_pos{};
+	SHORT combining_offset = 0;
+	UCHAR height = 1;
+	bool  visible = false;
+	bool  blink_state = true;
+};
+
+///
+
 class ConsolePaintContext
 {
 	std::vector<wxFont> _fonts;
 	std::vector<bool> _line_combinings_inspected;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_thickness;
-	bool _custom_draw_enabled, _buffered_paint, _cursor_state, _sharp;
+	bool _custom_draw_enabled, _buffered_paint, _sharp;
 	bool _noticed_combinings;
+	CursorProps _cursor_props;
 	struct {
 		std::vector<bool> checked;
 		std::vector<uint8_t> result;
@@ -36,7 +51,7 @@ public:
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );
-	void ToggleCursor();
+	void BlinkCursor();
 	void SetSharp(bool sharp);
 	bool IsSharpSupported();
 
@@ -52,15 +67,6 @@ public:
 };
 
 ///////////////////////////////
-
-struct CursorProps
-{
-	CursorProps(bool state);
-
-	unsigned int x, y;
-	bool  visible;
-	UCHAR height;
-};
 
 class ConsolePainter
 {

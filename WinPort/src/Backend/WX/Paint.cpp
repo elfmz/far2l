@@ -134,7 +134,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
-	_buffered_paint(false), _cursor_state(false), _sharp(false), _noticed_combinings(false)
+	_buffered_paint(false), _sharp(false), _noticed_combinings(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -370,9 +370,10 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	_line.resize(cw);
 	ApplyFont(dc);
 
-	CursorProps cursor_props(_cursor_state);
+	_cursor_props.Update();
+	_cursor_props.combining_offset = 0;
 
-	ConsolePainter painter(this, dc, _buffer, cursor_props);
+	ConsolePainter painter(this, dc, _buffer, _cursor_props);
 	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
 		wxRegionContain lc = rgn.Contains(0, cy * _font_height, cw * _font_width, _font_height);
 
@@ -425,8 +426,8 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			}
 
 			const unsigned int cx = char_index - affecting_combinings;
-			if (cy == cursor_props.y && char_index == cursor_props.x) {
-				cursor_props.x = cx;
+			if (cy == (unsigned int)_cursor_props.pos.Y && char_index == (unsigned int)_cursor_props.pos.X) {
+				_cursor_props.combining_offset = (SHORT)affecting_combinings;
 			}
 
 			if (cx > (unsigned)area.Right) {
@@ -490,12 +491,15 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 }
 
 
-void ConsolePaintContext::ToggleCursor() 
+void ConsolePaintContext::BlinkCursor()
 {
-	_cursor_state = !_cursor_state; 
-	const COORD &pos = g_winport_con_out.GetCursor();
-	SMALL_RECT area = {pos.X, pos.Y, pos.X, pos.Y};
-	RefreshArea( area );
+	if (_cursor_props.Blink()) {
+		SMALL_RECT area = {
+			SHORT(_cursor_props.pos.X - _cursor_props.combining_offset), _cursor_props.pos.Y,
+			SHORT(_cursor_props.pos.X - _cursor_props.combining_offset), _cursor_props.pos.Y
+		};
+		RefreshArea(area);
+	}
 }
 
 void ConsolePaintContext::SetSharp(bool sharp) 
@@ -527,12 +531,20 @@ wxBrush &ConsolePaintContext::GetBrush(const WinPortRGB &clr)
 
 /////////////////////////////
 
-CursorProps::CursorProps(bool state) : visible(false), height(1)
+bool CursorProps::Blink()
 {
-	if (state) {
-		const COORD pos = g_winport_con_out.GetCursor(height, visible);
-		x = (unsigned int) pos.X;
-		y = (unsigned int) pos.Y;
+	bool prev_blink_state = blink_state;
+	blink_state = !blink_state;
+	Update();
+	return (blink_state != prev_blink_state);
+}
+
+void CursorProps::Update()
+{
+	pos = g_winport_con_out.GetCursor(height, visible);
+	if (prev_pos.X != pos.X || prev_pos.Y != pos.Y) {
+		prev_pos = pos;
+		blink_state = true;
 	}
 }
 
@@ -559,7 +571,9 @@ void ConsolePainter::SetFillColor(const WinPortRGB &clr)
 	
 void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 {
-	const bool cursor_here = (_cursor_props.visible && cx==_cursor_props.x && _start_cy==_cursor_props.y) ;
+	const bool cursor_here = (_cursor_props.visible && _cursor_props.blink_state
+		&& cx == (unsigned int)_cursor_props.pos.X - _cursor_props.combining_offset
+		&& _start_cy == (unsigned int)_cursor_props.pos.Y);
 
 	if (!cursor_here && _start_back_cx != (unsigned int)-1 && _clr_back == clr)
 		return;

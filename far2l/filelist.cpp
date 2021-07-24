@@ -732,7 +732,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
+							for(size_t ILI = 0; (namePtr=itemsList->Get(ILI)) != nullptr; ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{
@@ -768,7 +768,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
+							for(size_t ILI = 0; (namePtr=itemsList->Get(ILI)) != nullptr; ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{
@@ -804,7 +804,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							int Pos;
 							Result=0;
 
-							for(size_t ILI = 0; namePtr=itemsList->Get(ILI); ++ILI)
+							for(size_t ILI = 0; (namePtr=itemsList->Get(ILI)) != nullptr; ++ILI)
 							{
 								if ((Pos=FindFile(PointToName(namePtr),TRUE)) != -1)
 								{
@@ -1209,9 +1209,9 @@ int FileList::ProcessKey(int Key)
 						EscapeSpace(strFileName);
 
 					strFileName += L" ";
-					if (PanelMode != PLUGIN_PANEL && !strFileName.Begins(L"/") && !strFileName.Begins(L"./"))
+					if (PanelMode != PLUGIN_PANEL)
 					{
-						strFileName.Insert(0, L"./");
+						EnsurePathHasParentPrefix(strFileName);
 					}
 				}
 
@@ -2363,6 +2363,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		if (EnableExec && IsDirectExecutableFilePath(strFileName.GetMB().c_str()))
 		{
 			EscapeSpace(strFileName);
+			EnsurePathHasParentPrefix(strFileName);
 
 			if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTPANEL) && !PluginMode) //AN
 				CtrlObject->CmdHistory->AddToHistory(strFileName);

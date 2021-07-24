@@ -50,8 +50,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _async_mutex;
 
 	COORD _largest_window_size;
-	std::atomic<bool> _largest_window_size_ready {};
-	std::atomic<bool> _flush_input_queue {};
+	std::atomic<bool> _largest_window_size_ready{false};
+	std::atomic<bool> _flush_input_queue{false};
 
 
 	struct Far2lInterractData

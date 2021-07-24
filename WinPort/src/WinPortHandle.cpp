@@ -4,7 +4,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 
-WinPortHandle::WinPortHandle() : _refcnt(0)
+WinPortHandle::WinPortHandle()
 {
 }
 
@@ -14,12 +14,12 @@ WinPortHandle::~WinPortHandle()
 
 void WinPortHandle::Reference()
 {
-	WINPORT(InterlockedIncrement)(&_refcnt);
+	++_refcnt;
 }
 
 void WinPortHandle::Dereference()
 {
-	if (WINPORT(InterlockedDecrement)(&_refcnt)==0)
+	if (0 == --_refcnt)
 		OnReleased();
 }
 

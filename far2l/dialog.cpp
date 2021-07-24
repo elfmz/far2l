@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "InterThreadCall.hpp"
 #include <cwctype>
+#include <atomic>
 
 #define VTEXT_ADN_SEPARATORS	1
 
@@ -4446,6 +4447,8 @@ long WaitUserTime;
 /* $ 11.08.2000 SVS
    + Для того, чтобы послать DM_CLOSE нужно переопределить Process
 */
+static std::atomic<int> s_in_dialog{0};
+
 void Dialog::Process()
 {
 //  if(DialogMode.Check(DMODE_SMALLDIALOG))
@@ -4455,12 +4458,11 @@ void Dialog::Process()
 
 	if (ExitCode == -1)
 	{
-		static LONG in_dialog = -1;
 		clock_t btm = 0;
 		long    save = 0;
 		DialogMode.Set(DMODE_BEGINLOOP);
 
-		if (!WINPORT(InterlockedIncrement)(&in_dialog))
+		if (1 == ++s_in_dialog)
 		{
 			btm = GetProcessUptimeMSec();
 			save = WaitUserTime;
@@ -4470,7 +4472,7 @@ void Dialog::Process()
 		FrameManager->ExecuteModal(this);
 		save += (GetProcessUptimeMSec() - btm);
 
-		if (WINPORT(InterlockedDecrement)(&in_dialog) == -1)
+		if (0 == --s_in_dialog)
 			WaitUserTime = save;
 	}
 

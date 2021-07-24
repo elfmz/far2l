@@ -66,7 +66,7 @@ public:
 class IPCRecver
 {
 	int _fd, _kickass[2];
-	std::atomic<bool> _aborted;
+	std::atomic<bool> _aborted{false};
 
 protected:
 	void SetFD(int fd);

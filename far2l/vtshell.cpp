@@ -482,6 +482,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			struct termios ts = {};
 			if (tcgetattr(fd_term, &ts) == 0) {
 				ts.c_lflag |= ISIG | ICANON | ECHO;
+#ifdef IUTF8
+				ts.c_iflag |= IUTF8;
+#endif
 				//ts.c_lflag&= ~ECHO;
 				ts.c_cc[VINTR] = 003;
 				// ts.c_cc[VQUIT] = 034;

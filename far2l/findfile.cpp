@@ -1432,6 +1432,8 @@ struct ScanFileWorkItem : IThreadedWorkItem
 	// invoked within worker thread
 	virtual void WorkProc()
 	{
+		SudoClientRegion scr;
+		SudoSilentQueryRegion ssqr;
 		_Result = ScanFile(_FileToScan.c_str());
 	}
 

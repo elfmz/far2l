@@ -88,14 +88,17 @@ void *Threaded::GetThreadResult()
 	return _trd_result;
 }
 
-static unsigned int GetCPUCountUncached()
+static unsigned int BestThreadsCountUncached()
 {
+	constexpr int ReasonableLimit = 32;
+
 	int out = sysconf(_SC_NPROCESSORS_ONLN);
-	return (out > 0) ? (unsigned int)out : 1;
+	fprintf(stderr, "_SC_NPROCESSORS_ONLN=%d\n", out);
+	return (out > 0) ? (unsigned int)std::min(out, ReasonableLimit) : 1;
 }
 
-unsigned int GetCPUCount()
+unsigned int BestThreadsCount()
 {
-	static unsigned int s_out = GetCPUCountUncached();
+	static unsigned int s_out = BestThreadsCountUncached();
 	return s_out;
 }

@@ -24,4 +24,4 @@ protected:
 	void *GetThreadResult();
 };
 
-unsigned int GetCPUCount();
+unsigned int BestThreadsCount();

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 
 #include "WinCompat.h"
@@ -22,11 +23,11 @@ static std::shared_ptr<IClipboardBackend> g_clipboard_backend;
 static std::mutex g_clipboard_backend_mutex;
 
 static struct ClipboardFreePendings : std::set<PVOID>,std::mutex {} g_clipboard_free_pendings;
-static volatile LONG s_clipboard_open_track = 0;
+static std::atomic<bool> s_clipboard_open_track{false};
 
 bool WinPortClipboard_IsBusy()
 {
-	return (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 0)!=0);
+	return s_clipboard_open_track != 0;
 }
 
 std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<IClipboardBackend> &clipboard_backend)
@@ -61,13 +62,14 @@ extern "C" {
 			return FALSE;
 		}
 
-		if (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 1, 0) != 0) {
+		bool track_state = false;
+		if (!s_clipboard_open_track.compare_exchange_strong(track_state, true)) {
 			fprintf(stderr, "OpenClipboard - BUSY\n");
 			return FALSE;
 		}
 		
 		if (!cb->OnClipboardOpen()) {
-			WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 1);
+			s_clipboard_open_track = false;
 			return FALSE;
 		}
 
@@ -76,7 +78,8 @@ extern "C" {
 
 	WINPORT_DECL(CloseClipboard, BOOL, ())
 	{
-		if (WINPORT(InterlockedCompareExchange)(&s_clipboard_open_track, 0, 1) !=1 ) {
+		bool track_state = true;
+		if (!s_clipboard_open_track.compare_exchange_strong(track_state, false)) {
 			fprintf(stderr, "Excessive CloseClipboard!\n");
 		}
 

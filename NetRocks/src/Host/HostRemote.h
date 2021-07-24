@@ -27,7 +27,7 @@ class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_
 
 	bool _busy = false;
 	bool _cloning = false;
-	std::atomic<pid_t> _peer = {};
+	std::atomic<pid_t> _peer{0};
 
 	void RecvReply(IPCCommand cmd);
 

@@ -76,7 +76,7 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _dir, _file, _executable, _rooted;
+	bool _dir, _file, _executable, _prefixed;
 	
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -89,7 +89,7 @@ class ExecClassifier
 	
 public:
 	ExecClassifier(const char *cmd, bool direct)
-		: _dir(false), _file(false), _executable(false), _rooted(false)
+		: _dir(false), _file(false), _executable(false), _prefixed(false)
 	{
 		Environment::ExplodeCommandLine ecl(cmd);
 		if (!ecl.empty() && ecl.back() == "&") {
@@ -103,9 +103,9 @@ public:
 
 		const std::string &arg0 = ecl[0];
 
-		_rooted = StrStartsFrom(arg0, "/") || StrStartsFrom(arg0, "./") || arg0 == ".";
+		_prefixed = PathHasParentPrefix(arg0);
 
-		if (!direct && !_rooted) {
+		if (!direct && !_prefixed) {
 			fprintf(stderr, "ExecClassifier('%s', %d) - nor direct nor rooted\n", cmd, direct);
 			return;
 		}
@@ -156,7 +156,7 @@ public:
 		}
 	}
 	
-	bool IsRooted() const {return _rooted; }
+	bool IsPrefixed() const {return _prefixed; }
 	bool IsFile() const {return _file; }
 	bool IsDir() const {return _dir; }
 	bool IsExecutable() const {return _executable; }
@@ -359,7 +359,7 @@ static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, boo
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT; //open.sh doesnt print anything
 	}
-	if ( (ec.IsFile() || ec.IsDir()) && DirectRun && !ec.IsRooted()) {
+	if ( (ec.IsFile() || ec.IsDir()) && DirectRun && !ec.IsPrefixed()) {
 		tmp+= "./"; // it is ok to prefix ./ even to a quoted string
 	}
 	tmp+= CmdStr;

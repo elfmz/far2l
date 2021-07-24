@@ -1,5 +1,6 @@
 #include <mutex>
 #include <thread>
+#include <atomic>
 
 #include "WinCompat.h"
 #include "WinPort.h"
@@ -7,12 +8,12 @@
 #include "WinPortSynch.h"
 
 
-static volatile LONG g_winport_thread_id = 0;
+static std::atomic<unsigned int> g_winport_thread_id{0};
 
 static DWORD WinPortThreadIDGenerate()
 {
 	for (;;) {
-		DWORD out = (DWORD)WINPORT(InterlockedIncrement)(&g_winport_thread_id);
+		DWORD out = ++g_winport_thread_id;
 		if (out != 0)
 			return out;
 
@@ -48,7 +49,7 @@ static DWORD WinPortThreadID_Get()
 class WinPortThread : public WinPortEvent
 {
 	std::mutex _resume_mutex;
-	volatile LONG _exit_code;
+	std::atomic<unsigned int> _exit_code{0};
 	volatile LONG _tid;
 	WINPORT_THREAD_START_ROUTINE _lpStartAddress;
 	LPVOID _lpParameter;
@@ -67,7 +68,7 @@ class WinPortThread : public WinPortEvent
 	{
 		WinPortThreadID_Set(_tid);
 		DWORD out = _lpStartAddress(_lpParameter);
-		WINPORT(InterlockedExchange)(&_exit_code, (LONG)out);
+		_exit_code = out;
 		return out;
 	}
 
@@ -105,7 +106,7 @@ public:
 
 	DWORD GetExitCode()
 	{
-		return (DWORD)WINPORT(InterlockedCompareExchange)(&_exit_code, 0, 0);
+		return _exit_code;
 	}
 	
 	bool Resume()

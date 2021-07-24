@@ -309,7 +309,7 @@ void PrepareTemporaryOpenPath(FARString &Path)
 	}
 	apiCreateDirectory(Path, nullptr);
 	
-	static std::atomic<unsigned short>	s_counter;
+	static std::atomic<unsigned short>	s_counter{0};
 	char tmp[64]; sprintf(tmp, "%c%u_%u", GOOD_SLASH, (unsigned int)getpid(), (unsigned int)++s_counter);
 	
 	Path+= tmp;

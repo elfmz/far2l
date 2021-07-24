@@ -111,3 +111,6 @@ template < bool (*PTranslateFN)(std::wstring &s) >
 }
 
 FARString LookupExecutable(const char *file);
+
+bool PathHasParentPrefix(const FARString &Path);
+void EnsurePathHasParentPrefix(FARString &Path);

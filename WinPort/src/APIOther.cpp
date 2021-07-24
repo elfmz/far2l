@@ -34,41 +34,6 @@ extern "C" {
 	{
 		g_winport_lasterror = code;
 	}
-	WINPORT_DECL(InterlockedIncrement, LONG, (LONG volatile *Value))
-	{
-#ifdef _WIN32
-		return _InterlockedIncrement(Value);
-#else
-		return __sync_add_and_fetch ( Value, 1);
-#endif
-	}
-
-	WINPORT_DECL(InterlockedDecrement, LONG, (LONG volatile *Value))
-	{
-#ifdef _WIN32
-		return _InterlockedDecrement(Value);
-#else
-		return __sync_sub_and_fetch ( Value, 1);
-#endif
-	}
-
-	WINPORT_DECL(InterlockedExchange, LONG, (LONG volatile *Value, LONG NewValue))
-	{
-#ifdef _WIN32
-		return _InterlockedExchange(Value, NewValue);
-#else
-		return __sync_lock_test_and_set(Value, NewValue);
-#endif
-	}
-
-	WINPORT_DECL(InterlockedCompareExchange, LONG, (LONG volatile *Value, LONG NewValue, LONG CompareValue))
-	{
-#ifdef _WIN32
-		return _InterlockedCompareExchange(Value, NewValue, CompareValue);
-#else
-		return __sync_val_compare_and_swap(Value, CompareValue, NewValue);
-#endif
-	}
 
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ())
 	{

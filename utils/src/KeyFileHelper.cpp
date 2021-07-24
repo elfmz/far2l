@@ -573,7 +573,7 @@ KeyFileHelper::~KeyFileHelper()
 	Save(true);
 }
 
-static std::atomic<unsigned int> s_tmp_uniq;
+static std::atomic<unsigned int> s_tmp_uniq{0};
 bool KeyFileHelper::Save(bool only_if_dirty)
 {
 	if (only_if_dirty && !_dirty)

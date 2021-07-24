@@ -645,3 +645,15 @@ FARString LookupExecutable(const char *file)
 	}
 	return out;
 }
+
+bool PathHasParentPrefix(const FARString &Path)
+{
+	return (Path.Begins(GOOD_SLASH) || Path.Begins(L"./") || Path == L".");
+}
+
+void EnsurePathHasParentPrefix(FARString &Path)
+{
+	if (!PathHasParentPrefix(Path)) {
+		Path.Insert(0, L"./");
+	}
+}

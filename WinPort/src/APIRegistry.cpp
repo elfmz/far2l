@@ -21,7 +21,7 @@
 #include <utils.h>
 #include <os_call.hpp>
 
-static std::atomic<int>	s_reg_wipe_count(0);
+static std::atomic<int>	s_reg_wipe_count{0};
 
 struct WinPortHandleReg : WinPortHandle
 {

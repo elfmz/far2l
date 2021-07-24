@@ -451,9 +451,9 @@ void HighlightFiles::GetHiColor(FileListItem **FileItem,int FileCount,bool UseAt
 
 	const int sFileCountTrh = 0x1000; // empirically found, can be subject of (dynamic) adjustment
 
-	if (FileCount >= sFileCountTrh && GetCPUCount() > 1) {
-		int FilePerCPU = std::max(FileCount / GetCPUCount(), 0x400u);
-		while (FileCount > FilePerCPU && async_hfc.size() + 1 < GetCPUCount()) {
+	if (FileCount >= sFileCountTrh && BestThreadsCount() > 1) {
+		int FilePerCPU = std::max(FileCount / BestThreadsCount(), 0x400u);
+		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsCount()) {
 			async_hfc.emplace_back(CurrentTime, HiData, FileItem, FilePerCPU, UseAttrHighlighting);
 			async_hfc.back().DoAsync();
 			FileItem+= FilePerCPU;

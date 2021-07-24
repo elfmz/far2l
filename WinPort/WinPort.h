@@ -114,10 +114,6 @@ extern "C" {
 	WINPORT_DECL(TranslateErrno, VOID, ());
 	WINPORT_DECL(GetLastError, DWORD, ());
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
-	WINPORT_DECL(InterlockedIncrement, LONG, (LONG volatile *Value));
-	WINPORT_DECL(InterlockedDecrement, LONG, (LONG volatile *Value));
-	WINPORT_DECL(InterlockedExchange, LONG, (LONG volatile *Value, LONG NewValue));
-	WINPORT_DECL(InterlockedCompareExchange, LONG, (LONG volatile *Value, LONG NewValue, LONG CompareValue));
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ());
 	WINPORT_DECL(LoadLibraryEx, PVOID, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags));	
 	WINPORT_DECL(FreeLibrary, BOOL, (HMODULE hModule));

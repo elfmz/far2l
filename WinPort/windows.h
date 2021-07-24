@@ -85,10 +85,6 @@
 //other
 #define    GetLastError			WINPORT(GetLastError)
 #define    SetLastError			WINPORT(SetLastError)
-#define    InterlockedIncrement			WINPORT(InterlockedIncrement)
-#define    InterlockedDecrement			WINPORT(InterlockedDecrement)
-#define    InterlockedExchange			WINPORT(InterlockedExchange)
-#define    InterlockedCompareExchange			WINPORT(InterlockedCompareExchange)
 #define    GetCurrentProcessId			WINPORT(GetCurrentProcessId)
 #define    LoadLibraryEx			WINPORT(LoadLibraryEx)
 #define    FreeLibrary			WINPORT(FreeLibrary)

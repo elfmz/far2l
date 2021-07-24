@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define randomize() srand(time(NULL))
 #define random(x) (rand() % (x) )
 
-enum {STAR_NONE,STAR_NORMAL,STAR_PLANET,STAR_PENGUIN};
+enum {STAR_NONE,STAR_NORMAL,STAR_PLANET,STAR_EGGSTRA};
 
 static struct
 {
@@ -73,11 +73,28 @@ static wchar_t PlanetSymbol[3][2]=
 	{0x00B0,0x0000}, // °
 };
 
-static wchar_t PenguinSymbol[3][2]=
+static wchar_t EggstraSymbol[3][2]=
 {
+#if defined(__linux__)
 	{0x1F427,0x0000}, // 🐧
 	{0x1F427,0x0000}, // 🐧 // 0x1F425🐥
 	{0x1F427,0x0000}, // 🐧 // 0x1F423🐣
+
+#elif defined(__APPLE__)
+	{0x1F34E,0x0000}, // 🍎
+	{0x1F34E,0x0000}, // 🍎
+	{0x1F34E,0x0000}, // 🍎
+
+#elif defined(__FreeBSD__)
+	{0x1F608,0x0000}, // 😈
+	{0x1F608,0x0000}, // 😈
+	{0x1F608,0x0000}, // 😈
+
+#else
+	{0x1F95A,0x0000}, // 🥚
+	{0x1F95A,0x0000}, // 🥚
+	{0x1F95A,0x0000}, // 🥚
+#endif
 };
 
 static void ShowSaver(int Step)
@@ -110,7 +127,7 @@ static void ShowSaver(int Step)
 					else
 					{
 						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
-						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[0] : PenguinSymbol[0]);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[0] : EggstraSymbol[0]);
 					}
 				}
 				else if (abs(dx)>ScrX/7 || abs(dy)>ScrY/7)
@@ -127,7 +144,7 @@ static void ShowSaver(int Step)
 					else
 					{
 						SetColor(Star[I].Color|FOREGROUND_INTENSITY|B_BLACK);
-						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[1] : PenguinSymbol[1]);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[1] : EggstraSymbol[1]);
 					}
 				}
 				else
@@ -140,7 +157,7 @@ static void ShowSaver(int Step)
 					else
 					{
 						SetColor(Star[I].Color|B_BLACK);
-						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[2] : PenguinSymbol[2]);
+						Text((Star[I].Type==STAR_PLANET) ? PlanetSymbol[2] : EggstraSymbol[2]);
 					}
 				}
 			}
@@ -152,7 +169,7 @@ static void ShowSaver(int Step)
 			static const int Colors[]={F_MAGENTA,F_RED,F_BLUE};
 			int rnd_type = random(7700);
 			if (rnd_type == 0)
-				Star[I].Type=STAR_PENGUIN;
+				Star[I].Type=STAR_EGGSTRA;
 			else if (rnd_type < 300)
 				Star[I].Type=STAR_PLANET;
 			else

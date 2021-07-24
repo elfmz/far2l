@@ -2,6 +2,7 @@
 #include "WinCompat.h"
 #include "WinPort.h"
 #include <vector>
+#include <atomic>
 
 class WinPortHandle;
 
@@ -15,6 +16,8 @@ void WinPortHandle_FinalizeApp();
 
 class WinPortHandle
 {
+	std::atomic<unsigned int> _refcnt{0};
+
 public:
 	WinPortHandle();
 	virtual ~WinPortHandle();
@@ -25,8 +28,6 @@ public:
 
 	void Reference();
 	void Dereference();
-private:
-	volatile LONG _refcnt;
 };
 
 template <class T> 

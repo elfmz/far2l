@@ -33,7 +33,7 @@ static struct rusage s_usg{};
 extern const char *FAR_BUILD;
 
 static std::set<SafeMMap *> s_safe_mmaps;
-static std::atomic<int> s_safe_mmaps_sl;
+static std::atomic<int> s_safe_mmaps_sl{0};
 
 // Cannot use mutexes etc from signal handler context
 // (see https://man7.org/linux/man-pages/man7/signal-safety.7.html)

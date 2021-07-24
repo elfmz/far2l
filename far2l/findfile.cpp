@@ -1408,7 +1408,7 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 
 struct ScanFileWorkItem : IThreadedWorkItem
 {
-	ScanFileWorkItem(HANDLE hDlg, const wchar_t *FileToScan, const wchar_t *FileToReport,
+	ScanFileWorkItem(HANDLE hDlg, FARString &FileToScan, FARString &FileToReport,
 			bool RemoveTemp, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex)
 		:
 		_hDlg(hDlg),
@@ -1423,23 +1423,24 @@ struct ScanFileWorkItem : IThreadedWorkItem
 	virtual ~ScanFileWorkItem()
 	{
 		if (_RemoveTemp)
-			DeleteFileWithFolder(_FileToScan.c_str());
+			DeleteFileWithFolder(_FileToScan);
 
 		if (_Result)
-			AddMenuRecord(_hDlg, _FileToReport.c_str(), _FindData, _ArcIndex);
+			AddMenuRecord(_hDlg, _FileToReport, _FindData, _ArcIndex);
 	}
 
-	// invoked within worker thread
+	// invoked within worker thread, so make sure no FARString copied within this function
+	// as it has not thread-safe (but fast!) reference counters implementation
 	virtual void WorkProc()
 	{
 		SudoClientRegion scr;
 		SudoSilentQueryRegion ssqr;
-		_Result = ScanFile(_FileToScan.c_str());
+		_Result = ScanFile(_FileToScan);
 	}
 
 private:
 	HANDLE _hDlg;
-	std::wstring _FileToScan, _FileToReport; // don't use FARString cuz its not thread-safe
+	FARString _FileToScan, _FileToReport;
 	bool _RemoveTemp;
 	FAR_FIND_DATA_EX _FindData;
 	size_t _ArcIndex;
@@ -1450,17 +1451,13 @@ private:
 static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem,
 		const wchar_t *FileName, const FAR_FIND_DATA_EX &FindData)
 {
-	if (!FileMaskForFindFile.Compare(FileName))
-	{
-		return;
-	}
-
 	// Если включен режим поиска содержимого, тогда в поиск включаем только обычные файлы
 	if ( (FindData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE)) != 0 && (SearchHex || !strFindStr.IsEmpty()))
-		return;// FALSE;
+		return;
 	if ( (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && !Opt.FindOpt.FindFolders)
-		return;// FALSE;
-
+		return;
+	if (!FileMaskForFindFile.Compare(FileName))
+		return;
 
 	size_t ArcIndex = itd.GetFindFileArcIndex();
 

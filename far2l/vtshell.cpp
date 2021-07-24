@@ -293,7 +293,7 @@ protected:
 	}
 
 private:
-	std::atomic<bool> _stop;
+	std::atomic<bool> _stop{false};
 	IProcessor *_processor;
 	std::list<std::string> _pending_injected_inputs;
 	std::mutex _pending_injected_inputs_mutex;
@@ -357,7 +357,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	int _pipes_fallback_in, _pipes_fallback_out;
 	pid_t _leader_pid;
 	std::string _slavename;
-	std::atomic<unsigned char> _keypad;
+	std::atomic<unsigned char> _keypad{0};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::mutex _far2l_exts_mutex, _write_term_mutex;

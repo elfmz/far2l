@@ -23,8 +23,8 @@ class WhatOnErrorState
 {
 	std::map<std::string, WhatOnErrorAction> _default_weas[WEKS_COUNT];
 	unsigned int _auto_retry_delay = 0;
-	std::atomic<int> _showing_ui = {};
-	std::atomic<bool> _has_any_autoaction = {};
+	std::atomic<int> _showing_ui{0};
+	std::atomic<bool> _has_any_autoaction{false};
 	std::mutex _mtx;
 
 	public:

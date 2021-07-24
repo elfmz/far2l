@@ -306,7 +306,7 @@ private:
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
-	std::atomic<bool> _has_focus;
+	std::atomic<bool> _has_focus{false};
 	MOUSE_EVENT_RECORD _prev_mouse_event;
 	DWORD _prev_mouse_event_ts;
 

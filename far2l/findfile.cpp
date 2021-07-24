@@ -312,7 +312,7 @@ public:
 bool PluginLocker::s_locked = false;
 
 
-static std::atomic<bool> PauseFlag, StopFlag;
+static std::atomic<bool> PauseFlag{false}, StopFlag{false};
 
 static bool UseFilter=false;
 static UINT CodePage=CP_AUTODETECT;

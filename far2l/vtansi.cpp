@@ -228,7 +228,7 @@ static VTAnsiState g_saved_state;
 static std::mutex g_vt_ansi_mutex;
 IVTShell *g_vt_shell = nullptr;
 static std::string g_title;
-static std::atomic<bool> g_output_disabled;
+static std::atomic<bool> g_output_disabled{false};
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 

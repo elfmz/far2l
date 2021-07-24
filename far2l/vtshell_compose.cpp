@@ -79,9 +79,9 @@ std::string VT_ComposeInitialTitle(const char *cd, const char *cmd, bool using_s
 	
 ///////////////////////////////////////////////////////////////////////////////////////
 
-static std::atomic<bool> s_shown_tip_init;
-static std::atomic<bool> s_shown_tip_exit;
-static std::atomic<unsigned int> s_vt_script_id;
+static std::atomic<bool> s_shown_tip_init{false};
+static std::atomic<bool> s_shown_tip_exit{false};
+static std::atomic<unsigned int> s_vt_script_id{0};
 
 VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {

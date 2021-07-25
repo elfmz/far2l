@@ -10,6 +10,12 @@
 MultiThreadDrives::MultiThreadDrives()
 {
 #ifdef __linux__
+	struct stat s;
+	if (stat(InMyConfig("mtfs").c_str(), &s) == 0) {
+		fprintf(stderr, "%s: forced\n", __FUNCTION__);
+		return;
+	}
+
 	std::ifstream is("/proc/mounts");
 	if (is.is_open()) {
 		std::string line, sys_path;
@@ -22,7 +28,6 @@ MultiThreadDrives::MultiThreadDrives()
 				if (StrStartsFrom(parts[0], "/dev/")) {
 					sys_path = "/sys/block/";
 					sys_path+= parts[0].substr(5);
-					struct stat s;
 					// strip device suffix, sda1 -> sda, mmcblk0p1 -> mmcblk0
 					while (sys_path.size() > 12 && stat(sys_path.c_str(), &s) == -1) {
 						sys_path.resize(sys_path.size() - 1);

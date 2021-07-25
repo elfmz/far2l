@@ -1170,9 +1170,7 @@ static bool ScanFile(const wchar_t *Name)
 	File file;
 	// Открываем файл
 	if(!file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
-	{
 		return false;
-	}
 
 	char readBufferA[0x10000] __attribute__((aligned(0x1000)));
 	wchar_t readBuffer[ARRAYSIZE(readBufferA)] __attribute__((aligned(0x1000)));
@@ -1223,10 +1221,10 @@ static bool ScanFile(const wchar_t *Name)
 			if (!readBlockSize || readBlockSize<hexFindStringSize)
 				RETURN(false)
 
-				// Ищем
-				if (FindStringBMH((const unsigned char *)readBufferA, readBlockSize)!=-1)
-					RETURN(true)
-				}
+			// Ищем
+			if (FindStringBMH((const unsigned char *)readBufferA, readBlockSize)!=-1)
+				RETURN(true)
+		}
 		else
 		{
 			for (int cpIndex = 0; cpIndex<codePagesCount; cpIndex++)
@@ -1238,12 +1236,12 @@ static bool ScanFile(const wchar_t *Name)
 				if (!cpi->MaxCharSize)
 					CONTINUE(false)
 
-					// Если начало файла очищаем информацию о поиске по словам
-					if (WholeWords && alreadyRead==readBlockSize)
-					{
-						cpi->WordFound = false;
-						cpi->LastSymbol = 0;
-					}
+				// Если начало файла очищаем информацию о поиске по словам
+				if (WholeWords && alreadyRead==readBlockSize)
+				{
+					cpi->WordFound = false;
+					cpi->LastSymbol = 0;
+				}
 
 				// Если ничего не прочитали
 				if (!readBlockSize)
@@ -1251,11 +1249,12 @@ static bool ScanFile(const wchar_t *Name)
 					// то считаем, что нашли то, что нужно
 					CONTINUE(WholeWords && cpi->WordFound)
 
-					// Выходим, если прочитали меньше размера строки поиска и нет поиска по словам
-					if (readBlockSize < findStringCount && !(WholeWords && cpi->WordFound))
-						CONTINUE(FALSE)
-						// Количество символов в выходном буфере
-						unsigned int bufferCount;
+				// Выходим, если прочитали меньше размера строки поиска и нет поиска по словам
+				if (readBlockSize < findStringCount && !(WholeWords && cpi->WordFound))
+					CONTINUE(FALSE)
+
+				// Количество символов в выходном буфере
+				unsigned int bufferCount;
 
 				// Буфер для поиска
 				wchar_t *buffer;
@@ -1296,25 +1295,25 @@ static bool ScanFile(const wchar_t *Name)
 					if (!bufferCount)
 						CONTINUE(false)
 
-						// Если прочитали меньше размера строки поиска и поиска по словам, то проверяем
-						// первый символ блока на разделитель и выходим
-						// Если у нас поиск по словам и в конце предыдущего блока было вхождение
-						if (WholeWords && cpi->WordFound)
-						{
-							// Если конец файла, то считаем, что есть разделитель в конце
-							if (findStringCount-1>=bufferCount)
-								RETURN(true)
-								// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
-								// при переходе между блоками
-								cpi->LastSymbol = readBuffer[findStringCount-1];
+					// Если прочитали меньше размера строки поиска и поиска по словам, то проверяем
+					// первый символ блока на разделитель и выходим
+					// Если у нас поиск по словам и в конце предыдущего блока было вхождение
+					if (WholeWords && cpi->WordFound)
+					{
+						// Если конец файла, то считаем, что есть разделитель в конце
+						if (findStringCount-1>=bufferCount)
+							RETURN(true)
+							// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
+							// при переходе между блоками
+							cpi->LastSymbol = readBuffer[findStringCount-1];
 
-							if (IsWordDiv(cpi->LastSymbol))
-								RETURN(true)
+						if (IsWordDiv(cpi->LastSymbol))
+							RETURN(true)
 
-								// Если размер буфера меньше размера слова, то выходим
-								if (readBlockSize < findStringCount)
-									CONTINUE(false)
-								}
+						// Если размер буфера меньше размера слова, то выходим
+						if (readBlockSize < findStringCount)
+							CONTINUE(false)
+					}
 
 					// Устанавливаем буфер сравнения
 					buffer = readBuffer;
@@ -1334,8 +1333,9 @@ static bool ScanFile(const wchar_t *Name)
 					// Если посдстрока найдена и отключен поиск по словам, то считаем что всё хорошо
 					if (!WholeWords)
 						RETURN(TRUE)
-						// Устанавливаем позицию в исходном буфере
-						index += foundIndex;
+
+					// Устанавливаем позицию в исходном буфере
+					index += foundIndex;
 
 					// Если идёт поиск по словам, то делаем соответвующие проверки
 					bool firstWordDiv = false;
@@ -1379,8 +1379,8 @@ static bool ScanFile(const wchar_t *Name)
 				// Выходим, если мы вышли за пределы количества байт разрешённых для поиска
 				if (SearchInFirst && SearchInFirst>=alreadyRead)
 					CONTINUE(false)
-					// Запоминаем последний символ блока
-					cpi->LastSymbol = buffer[bufferCount-1];
+				// Запоминаем последний символ блока
+				cpi->LastSymbol = buffer[bufferCount-1];
 			}
 
 			// Получаем смещение на которое мы отступили при переходе между блоками
@@ -1393,7 +1393,7 @@ static bool ScanFile(const wchar_t *Name)
 			// Отступаем назад на длину слова поиска минус 1
 			if (!file.SetPointer(-1*offset, nullptr, FILE_CURRENT))
 				RETURN(FALSE)
-				alreadyRead -= offset;
+			alreadyRead -= offset;
 		}
 	}
 

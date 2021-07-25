@@ -1174,8 +1174,8 @@ static bool ScanFile(const wchar_t *Name)
 		return false;
 	}
 
-	char readBufferA[0x10000];
-	wchar_t readBuffer[ARRAYSIZE(readBufferA)];
+	char readBufferA[0x10000] __attribute__((aligned(0x1000)));
+	wchar_t readBuffer[ARRAYSIZE(readBufferA)] __attribute__((aligned(0x1000)));
 
 	// Количество считанных из файла байт
 	DWORD readBlockSize = 0;

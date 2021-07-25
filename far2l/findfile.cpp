@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "InterThreadCall.hpp"
 #include "ThreadedWorkQueue.h"
+#include "MultiThreadDrives.h"
 #include <atomic>
 
 constexpr int CHAR_TABLE_SIZE=5;
@@ -279,6 +280,7 @@ static FARString strLastDirName;
 static FARString strPluginSearchPath;
 
 static std::unique_ptr<ThreadedWorkQueue> pWorkQueue;
+static std::unique_ptr<MultiThreadDrives> pMultiThreadDrives;
 //static CriticalSection PluginCS;
 
 class PluginLocker
@@ -1511,15 +1513,17 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem,
 	else
 		FileToScan = FileName;
 
-	ScanFileWorkItem *wi = new(std::nothrow) ScanFileWorkItem(hDlg, FileToScan, FileToReport, RemoveTemp, FindData, ArcIndex);
-	if (wi)
-	{ // do file contents scan and following logic asynchronously
-		pWorkQueue->Queue(wi);
+	if (pMultiThreadDrives->Check(FileToScan.GetMB())) {
+		ScanFileWorkItem *wi = new(std::nothrow) ScanFileWorkItem(hDlg, FileToScan, FileToReport, RemoveTemp, FindData, ArcIndex);
+		if (wi)
+		{ // do file contents scan and following logic asynchronously
+			pWorkQueue->Queue(wi);
+			return;
+		}
 	}
-	else
-	{ // no memory for fancy way? fallback to synchronous logic
-		ScanFileWorkItem(hDlg, FileToScan, FileToReport, RemoveTemp, FindData, ArcIndex).WorkProc();
-	}
+
+	// fallback to synchronous logic
+	ScanFileWorkItem(hDlg, FileToScan, FileToReport, RemoveTemp, FindData, ArcIndex).WorkProc();
 }
 
 static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem, const wchar_t *FileName, const FAR_FIND_DATA &FindData)
@@ -2820,6 +2824,7 @@ static DWORD ThreadRoutine(LPVOID Param)
 	{
 		SudoClientRegion scr;
 		DWORD msec = GetProcessUptimeMSec();
+		pMultiThreadDrives.reset(new MultiThreadDrives);
 		if (tParam->PluginMode)
 		{
 			DoPreparePluginList(tParam->hDlg);
@@ -2832,6 +2837,7 @@ static DWORD ThreadRoutine(LPVOID Param)
 		fprintf(stderr, "FindFiles complete in %u msec\n", msec);
 		itd.SetPercent(0);
 		StopFlag = true;
+		pMultiThreadDrives.reset();
 	}
 	ReleaseInFileSearch();
 

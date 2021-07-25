@@ -88,7 +88,7 @@ void TTYOutput::FinalizeSameChars()
 				dst + ARRAYSIZE(buf), lenientConversion) == conversionOK) {
 #endif
 			len = (int)(dst - (UTF8 *)&buf[0]);
-			assert(len <= ARRAYSIZE(buf));
+			assert(size_t(len) <= ARRAYSIZE(buf));
 		} else {
 			buf[0] = '?';
 		}
@@ -118,7 +118,7 @@ void TTYOutput::FinalizeSameChars()
 				ESC "[%uX" ESC "[%uC", _same_chars.count, _same_chars.count);
 		}
 		if (len >= 0) {
-			assert(len <= ARRAYSIZE(buf));
+			assert(size_t(len) <= ARRAYSIZE(buf));
 			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
 		}
 		_same_chars.count = 0;

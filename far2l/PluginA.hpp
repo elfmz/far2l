@@ -80,6 +80,7 @@ class PluginA: public Plugin
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
 
 		HMODULE m_hModule;
+		bool m_Loaded;
 		Language Lang;
 
 		/* $ 21.09.2000 SVS
@@ -193,6 +194,8 @@ class PluginA: public Plugin
 		bool InitLang(const wchar_t *Path) { return Lang.Init(Path,false); }
 		void CloseLang() { Lang.Close(); }
 		const char *GetMsgA(int nID) { return Lang.GetMsgA(nID); }
+
+		bool Open();
 
 	public:
 

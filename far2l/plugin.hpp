@@ -2117,12 +2117,13 @@ struct PluginStartupInfo
 
 enum PLUGIN_FLAGS
 {
-	PF_PRELOAD        = 0x0001,
+	PF_PRELOAD        = 0x0001, // early dlopen and initialize plugin
 	PF_DISABLEPANELS  = 0x0002,
 	PF_EDITOR         = 0x0004,
 	PF_VIEWER         = 0x0008,
 	PF_FULLCMDLINE    = 0x0010,
 	PF_DIALOG         = 0x0020,
+	PF_PREOPEN        = 0x8000 // early dlopen plugin but initialize it later, when it will be really needed
 };
 
 struct PluginInfo

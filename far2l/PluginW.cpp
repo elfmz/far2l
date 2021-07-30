@@ -70,6 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <KeyFileHelper.h>
 
 static const char *szCache_Preload = "Preload";
+static const char *szCache_Preopen = "Preopen";
 static const char *szCache_SysID = "SysID";
 
 static const char szCache_OpenPlugin[] = "OpenPluginW";
@@ -174,7 +175,8 @@ PluginW::PluginW(PluginManager *owner, const FARString &strModuleName,
 	m_strModuleName(strModuleName),
 	m_strSettingsName(settingsName),
 	m_strModuleID(moduleID),
-	m_hModule(nullptr)
+	m_hModule(nullptr),
+	m_Loaded(false)
 	//more initialization here!!!
 {
 	ClearExports();
@@ -216,6 +218,10 @@ bool PluginW::LoadFromCache()
 	pAnalyseW = (PLUGINANALYSEW)(INT_PTR)kfh.GetUInt(szCache_Analyse, 0);
 	pGetCustomDataW = (PLUGINGETCUSTOMDATAW)(INT_PTR)kfh.GetUInt(szCache_GetCustomData, 0);
 	WorkFlags.Set(PIWF_CACHED); //too much "cached" flags
+
+	if (kfh.GetInt(szCache_Preopen) != 0)
+		Open();
+
 	return true;
 }
 
@@ -257,6 +263,8 @@ bool PluginW::SaveToCache()
 	PluginInfo Info;
 	GetPluginInfo(&Info);
 	SysID = Info.SysID; //LAME!!!
+
+	kfh.SetInt(GetSettingsName(), szCache_Preopen, ((Info.Flags & PF_PREOPEN) != 0));
 
 	if ((Info.Flags & PF_PRELOAD) != 0)
 	{
@@ -311,25 +319,30 @@ bool PluginW::SaveToCache()
 	return true;
 }
 
+bool PluginW::Open()
+{
+	if (m_hModule)
+		return true;
+
+	FARString strCurPath;
+	apiGetCurrentDirectory(strCurPath);
+	PrepareModulePath(m_strModuleName);
+	m_hModule = WINPORT(LoadLibraryEx)(m_strModuleName,nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);
+	GuardLastError Err;
+	FarChDir(strCurPath);
+
+	return (m_hModule != NULL);
+}
+
 bool PluginW::Load()
 {
 	if (WorkFlags.Check(PIWF_DONTLOADAGAIN))
 		return false;
 
-	if (m_hModule)
+	if (m_Loaded)
 		return true;
 
-	if (!m_hModule)
-	{
-		FARString strCurPath;
-		apiGetCurrentDirectory(strCurPath);
-		PrepareModulePath(m_strModuleName);
-		m_hModule = WINPORT(LoadLibraryEx)(m_strModuleName,nullptr,LOAD_WITH_ALTERED_SEARCH_PATH);
-		GuardLastError Err;
-		FarChDir(strCurPath);
-	}
-
-	if (!m_hModule)
+	if (!Open())
 	{
 		if (!Opt.LoadPlug.SilentLoadPlugin) //убрать в PluginSet
 		{
@@ -342,6 +355,8 @@ bool PluginW::Load()
 
 		return false;
 	}
+
+	m_Loaded = true;
 
 	WorkFlags.Clear(PIWF_CACHED);
 	pSetStartupInfoW=(PLUGINSETSTARTUPINFOW)WINPORT(GetProcAddress)(m_hModule,NFMP_SetStartupInfo);
@@ -642,6 +657,7 @@ int PluginW::Unload(bool bExitFAR)
 	}
 
 	m_hModule = nullptr;
+	m_Loaded = false;
 	FuncFlags.Clear(PICFF_LOADED); //??
 	return nResult;
 }

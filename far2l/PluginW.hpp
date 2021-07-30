@@ -87,6 +87,7 @@ class PluginW: public Plugin
 		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
 
 		HMODULE m_hModule;
+		bool m_Loaded;
 		Language Lang;
 
 		/* $ 21.09.2000 SVS
@@ -134,6 +135,8 @@ class PluginW: public Plugin
 		PLUGINANALYSEW               pAnalyseW;
 		PLUGINGETCUSTOMDATAW         pGetCustomDataW;
 		PLUGINFREECUSTOMDATAW        pFreeCustomDataW;
+
+		bool Open();
 
 	public:
 

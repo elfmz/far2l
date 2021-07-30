@@ -154,6 +154,8 @@ public:
 
     PyObject *vcall(const char *func, int n, ...)
     {
+        WaitThread();
+
         PyObject *pFunc;
         PyObject *result = NULL;
 

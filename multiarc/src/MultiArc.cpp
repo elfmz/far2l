@@ -324,7 +324,7 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 
 std::string gMultiArcPluginPath;
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
 	gMultiArcPluginPath = path;
 }

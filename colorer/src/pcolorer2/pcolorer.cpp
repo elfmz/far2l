@@ -62,7 +62,7 @@ class StrX
     char* fLocalForm;
 };
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
       SString module(path, 0);
       int pos = module.lastIndexOf('/');

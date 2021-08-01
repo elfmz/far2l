@@ -10,11 +10,11 @@
 
 //LPCSTR      DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
 	MB2Wide(path, G.plugin_path);
 	//G.plugin_path = path;
-//	fprintf(stderr, "NetRocks::WINPORT_DllStartup\n");
+//	fprintf(stderr, "NetRocks::PluginModuleOpen\n");
 }
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersionW(void)

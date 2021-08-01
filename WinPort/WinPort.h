@@ -115,9 +115,6 @@ extern "C" {
 	WINPORT_DECL(GetLastError, DWORD, ());
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ());
-	WINPORT_DECL(LoadLibraryEx, PVOID, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags));	
-	WINPORT_DECL(FreeLibrary, BOOL, (HMODULE hModule));
-	WINPORT_DECL(GetProcAddress, PVOID, (HMODULE hModule, LPCSTR lpProcName));	
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ());
 	WINPORT_DECL(GetComputerName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));
 	WINPORT_DECL(GetUserName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));

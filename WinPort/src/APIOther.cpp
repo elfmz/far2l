@@ -44,48 +44,6 @@ extern "C" {
 #endif
 	}
 
-	WINPORT_DECL(LoadLibraryEx, PVOID, (LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags))
-	{
-#ifdef _WIN32
-		return LoadLibraryEx(lpLibFileName, hFile, dwFlags);
-#else
-		std::string path = Wide2MB(lpLibFileName);
-		PVOID rv = (PVOID)dlopen(path.c_str(), RTLD_LOCAL|RTLD_LAZY);
-		if (rv) {
-			typedef VOID (*tWINPORT_DllStartup)(const char *path);
-			tWINPORT_DllStartup pStart = (tWINPORT_DllStartup)dlsym(rv, "WINPORT_DllStartup");
-			if (pStart) pStart(path.c_str());
-			//return 0;
-			fprintf(stderr, "WINPORT: LoadLibraryEx(%ls):  %p\n", lpLibFileName, rv);
-		} else {
-			fprintf(stderr, "WINPORT: LoadLibraryEx(%ls): dlopen error %s\n", lpLibFileName, dlerror());
-		}
-		return rv;
-#endif
-	}
-
-	WINPORT_DECL(FreeLibrary, BOOL, (HMODULE hModule))
-	{
-#ifdef _WIN32
-		return FreeLibrary(hModule);
-#else
-		dlclose((void *)hModule);
-		return TRUE;
-#endif
-	}
-
-	WINPORT_DECL(GetProcAddress, PVOID, (HMODULE hModule, LPCSTR lpProcName))
-	{
-		PVOID rv;
-#ifdef _WIN32
-		rv = GetProcAddress(hModule, lpProcName);
-#else
-		rv = (PVOID)dlsym((void *)hModule, lpProcName);
-#endif
-		if (!rv) fprintf(stderr, "GetProcAddress(%p, %s) - no such symbol\n", hModule, lpProcName);
-		return rv;
-	}
-
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ())
 	{
 		return 500;//Win's default value

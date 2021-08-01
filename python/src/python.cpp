@@ -223,9 +223,9 @@ eof:
 } *g_python_holder = nullptr;
 
 extern "C"
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
-    g_python_holder = new PythonHolder(path);;
+    g_python_holder = new PythonHolder(path);
 }
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()

@@ -7,10 +7,10 @@
 #endif
 #include <sudo.h>
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
 	G.plugin_path = path;
-//	fprintf(stderr, "Inside::WINPORT_DllStartup\n");
+//	fprintf(stderr, "Inside::PluginModuleOpen\n");
 }
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)

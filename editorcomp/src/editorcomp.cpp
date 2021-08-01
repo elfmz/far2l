@@ -9,7 +9,8 @@ using namespace std;
 
 Editors *editors = nullptr;
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path) {
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
+{
     // No operations.
 }
 

@@ -129,6 +129,7 @@ vtshell_compose.cpp
 vtshell_leader.cpp
 vtansi.cpp
 PluginA.cpp
+plclass.cpp
 execute_oscmd.cpp
 VTFar2lExtensios.cpp
 vtlog.cpp

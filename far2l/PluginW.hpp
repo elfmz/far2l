@@ -28,10 +28,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-class PluginManager;
-
-#include "language.hpp"
-#include "bitflags.hpp"
 #include "plugin.hpp"
 #include "plclass.hpp"
 
@@ -76,30 +72,6 @@ typedef void (WINAPI *PLUGINFREECUSTOMDATAW)(wchar_t *CustomData);
 class PluginW: public Plugin
 {
 	private:
-
-		PluginManager *m_owner; //BUGBUG
-
-		FARString m_strModuleName;
-		std::string m_strSettingsName;
-		std::string m_strModuleID;
-
-		BitFlags WorkFlags;      // рабочие флаги текущего плагина
-		BitFlags FuncFlags;      // битовые маски вызова эксп.функций плагина
-
-		HMODULE m_hModule;
-		bool m_Loaded;
-		Language Lang;
-
-		/* $ 21.09.2000 SVS
-		   поле - системный идентификатор плагина
-		   Плагин должен сам задавать, например для
-		   Network      = 0x5774654E (NetW)
-		   PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
-		*/
-		DWORD SysID;
-
-		FARString strRootKey;
-
 		PLUGINSETSTARTUPINFOW        pSetStartupInfoW;
 		PLUGINOPENPLUGINW            pOpenPluginW;
 		PLUGINOPENFILEPLUGINW        pOpenFilePluginW;
@@ -135,8 +107,6 @@ class PluginW: public Plugin
 		PLUGINANALYSEW               pAnalyseW;
 		PLUGINGETCUSTOMDATAW         pGetCustomDataW;
 		PLUGINFREECUSTOMDATAW        pFreeCustomDataW;
-
-		bool Open();
 
 	public:
 

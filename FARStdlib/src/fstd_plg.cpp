@@ -39,7 +39,7 @@ void WINAPI FP_SetStartupInfo(const PluginStartupInfo *Info,const char *KeyName)
 	if(m) *m = 0;
 }
 
-SHAREDSYMBOL void WINPORT_DllStartup(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
 	FP_PluginStartPath = strdup(path);
 }

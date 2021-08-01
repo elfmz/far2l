@@ -29,6 +29,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "plugin.hpp"
+#include "language.hpp"
+#include "bitflags.hpp"
+#include "FARString.hpp"
+#include <string>
 
 struct AnalyseData
 {
@@ -40,11 +44,52 @@ struct AnalyseData
 };
 
 
+class PluginManager;
+
 class Plugin
 {
-	public:
+		void *m_hModule = nullptr;
+		void *GetModulePFN(const char *fn);
 
-		virtual ~Plugin() {}
+	protected:
+		PluginManager *m_owner; //BUGBUG
+
+		FARString m_strModuleName;
+		std::string m_strSettingsName;
+		std::string m_strModuleID;
+		FARString strRootKey;
+
+		BitFlags WorkFlags{};      // рабочие флаги текущего плагина
+		BitFlags FuncFlags{};      // битовые маски вызова эксп.функций плагина
+
+		bool m_Loaded = false;
+
+		/* $ 21.09.2000 SVS
+		   поле - системный идентификатор плагина
+		   Плагин должен сам задавать, например для
+		   Network      = 0x5774654E (NetW)
+		   PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
+		*/
+		DWORD SysID = 0;
+
+		Language Lang; // implicitly used by MSG(..) macro
+
+		bool OpenModule();
+		void CloseModule();
+
+		template <class TFN>
+			void GetModuleFN(TFN &fn, const char *api)
+		{
+			fn = (TFN)GetModulePFN(api);
+		}
+
+	public:
+		Plugin(PluginManager *owner,
+			const FARString &strModuleName,
+			const std::string &settingsName,
+			const std::string &moduleID);
+
+		virtual ~Plugin();
 
 		virtual bool IsOemPlugin() = 0;
 

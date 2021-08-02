@@ -1155,22 +1155,18 @@ typedef void *HKL;
 #define ERROR_INVALID_PARAMETER          EINVAL
 #define ERROR_NOT_SAME_DEVICE            EXDEV
 #define ERROR_CANCELLED                  ECANCELED
-//#define ERROR_BAD_PATHNAME               161L
 #define ERROR_ACCESS_DENIED              EPERM
 #define ERROR_BUFFER_OVERFLOW            EOVERFLOW
 #define ERROR_WRITE_FAULT                EIO
 #define ERROR_DISK_FULL                  ENOSPC
-#define ERROR_READ_FAULT                 ENXIO // ???
 #define ERROR_FILE_NOT_FOUND             ENOENT
 #define ERROR_PATH_NOT_FOUND             ENOTDIR
 #define ERROR_INVALID_HANDLE             EBADF
-//#define ERROR_GEN_FAILURE                31L
 #define ERROR_SHARING_VIOLATION          EBUSY
-//#define ERROR_HANDLE_DISK_FULL           
 #define ERROR_NOT_SUPPORTED              ENOTSUP
 #define ERROR_NO_MORE_FILES              ENOLINK
 #define NO_ERROR 0L                                                 // dderror
-#define ERROR_OPEN_FAILED                ENOANO // ???
+#define ERROR_OPEN_FAILED                ENXIO
 #define ERROR_INSUFFICIENT_BUFFER        ENOBUFS
 #define ERROR_NO_UNICODE_TRANSLATION     EILSEQ
 #define ERROR_DIRECTORY                  EISDIR

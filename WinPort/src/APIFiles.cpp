@@ -863,7 +863,6 @@ extern "C"
 		else
 		{
 			/* get a "random" unique number and try to create the file */
-			HANDLE handle;
 			UINT num = WINPORT(GetTickCount)() & 0xffff;
 			static UINT last;
 
@@ -871,19 +870,19 @@ extern "C"
 			if (last - num < 10) num = last + 1;
 			if (!num) num = 1;
 			unique = num;
-			do
-			{
+			std::string path_mb;
+			do {
 				swprintf( p, MAX_PATH - 1 - (p - buffer), formatW, unique );
-				handle = WINPORT(CreateFile)( buffer, GENERIC_WRITE, 0, nullptr,
-					CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-				if (handle != INVALID_HANDLE_VALUE)
-				{  /* We created it */
-					WINPORT(CloseHandle)( handle );
+				Wide2MB(buffer, path_mb);
+				int fd = sdc_open(path_mb.c_str(), O_RDWR | O_CREAT | O_EXCL, 0640);
+				if (fd != -1) {
+					 /* We created it */
+					sdc_close(fd);
 					last = unique;
 					break;
 				}
-				if (WINPORT(GetLastError)() != ERROR_FILE_EXISTS &&
-					WINPORT(GetLastError)() != ERROR_SHARING_VIOLATION)
+				int err = errno;
+				if (err != EEXIST && err != EBUSY && err != ETXTBSY)
 					break;  /* No need to go on */
 				if (!(++unique & 0xffff)) unique = 1;
 			} while (unique != num);

@@ -1,8 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string>
 #include <dlfcn.h>
-#include <alloca.h>
+
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
+# include <alloca.h>
+#endif
 
 #include <Python.h>
 

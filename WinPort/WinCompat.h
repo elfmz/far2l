@@ -1168,7 +1168,7 @@ typedef void *HKL;
 #define ERROR_SHARING_VIOLATION          EBUSY
 //#define ERROR_HANDLE_DISK_FULL           
 #define ERROR_NOT_SUPPORTED              ENOTSUP
-#define ERROR_NO_MORE_FILES              EXFULL
+#define ERROR_NO_MORE_FILES              ENOLINK
 #define NO_ERROR 0L                                                 // dderror
 #define ERROR_OPEN_FAILED                ENOANO // ???
 #define ERROR_INSUFFICIENT_BUFFER        ENOBUFS

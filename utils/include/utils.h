@@ -62,12 +62,18 @@ size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1)
 size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);
 
-
-struct ErrnoSaver
+class ErrnoSaver
 {
-	int v;
+	int _errno;
+
+public:
 	ErrnoSaver();
 	~ErrnoSaver();
+
+	bool SetToCurrent();
+
+	inline int Get() const { return _errno; };
+	bool IsAccessDenied() const;
 };
 
 

@@ -574,7 +574,6 @@ BOOL apiGetVolumeInformation(
 	struct statvfs svfs = {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
 	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
-		WINPORT(TranslateErrno)();
 		return FALSE;
 	}
 
@@ -733,7 +732,6 @@ BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree
 {
 	struct statvfs s = {};
 	if (statvfs(Wide2MB(Path).c_str(), &s) != 0) {
-		WINPORT(TranslateErrno)();
 		return FALSE;
 	}
 	*TotalSize = *TotalFree = *UserFree = s.f_frsize;

@@ -5,7 +5,6 @@
 #include "dirmix.hpp"
 #include "lang.hpp"
 #include "message.hpp"
-#include "lasterror.hpp"
 #include "plugins.hpp"
 
 #include <errno.h>
@@ -67,7 +66,6 @@ bool Plugin::OpenModule()
 	}
 	else
 	{
-		WINPORT(TranslateErrno)();
 		// avoid recurring and even recursive error message
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
 		if (!Opt.LoadPlug.SilentLoadPlugin) //убрать в PluginSet
@@ -77,7 +75,7 @@ bool Plugin::OpenModule()
 		}
 	}
 
-	GuardLastError Err;
+	ErrnoSaver Err;
 	FarChDir(strCurPath);
 
 	return (!!m_hModule);

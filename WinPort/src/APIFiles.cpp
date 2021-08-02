@@ -77,13 +77,7 @@ extern "C"
 		const std::string &path = ConsumeWinPath(lpPathName);
 		int r = os_call_int(sdc_mkdir, path.c_str(), (mode_t)0775);
 			
-		if (r == -1) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to create directory: '%s' errno %u\n", path.c_str(), errno);
-			return FALSE;
-		}
-		
-		return TRUE;
+		return (r == -1) ? FALSE : TRUE;
 	}
 
 
@@ -93,8 +87,7 @@ extern "C"
 		int r = os_call_int(sdc_rmdir, path.c_str());
 
 		if (r == -1){
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove directory: '%s' errno %u\n", path.c_str(),errno);
+			// fprintf(stderr, "Failed to remove directory: '%s' errno %u\n", path.c_str(),errno);
 			return FALSE;
 		}
 		
@@ -107,8 +100,7 @@ extern "C"
 		int r = os_call_int(sdc_remove, path.c_str());
 
 		if (r == -1) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove file: '%s' errno %u\n", path.c_str(), errno);
+			// fprintf(stderr, "Failed to remove file: '%s' errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
 		
@@ -168,10 +160,8 @@ extern "C"
 
 		int r = os_call_int(open_all_args, path.c_str(), flags, mode);		
 		if (r==-1) {
-			WINPORT(TranslateErrno)();
-
-			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
-				lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
+			//fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
+			//	lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
 				
 			return INVALID_HANDLE_VALUE;
 		}
@@ -242,8 +232,6 @@ extern "C"
 		int r = os_call_int(sdc_chdir, path.c_str());
 		if (r == 0)
 			return TRUE;
-
-		WINPORT(TranslateErrno)();
 		return FALSE;
 	}
 
@@ -308,7 +296,6 @@ extern "C"
 			}
 			if (r < 0) {
 				if (done == 0) {
-					WINPORT(TranslateErrno)();
 					return FALSE;
 				}
 				break;
@@ -341,7 +328,6 @@ extern "C"
 
 		ssize_t r = os_call_v<ssize_t, -1>(sdc_write, wph->fd, lpBuffer, (size_t)nNumberOfBytesToWrite);
 		if (r < 0) {
-			WINPORT(TranslateErrno)();
 			return FALSE;
 		}
 
@@ -494,8 +480,7 @@ extern "C"
 		
 		DWORD symattr = 0;
 		if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
+			// fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
 			return INVALID_FILE_ATTRIBUTES;			
 		}
 		
@@ -760,8 +745,7 @@ extern "C"
 			struct stat s = { };
 			DWORD symattr = 0;
 			if (stat_symcheck((root + mask).c_str(), s, symattr) < 0 ) {
-				WINPORT(TranslateErrno)();
-				fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
+				// fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
 				return INVALID_HANDLE_VALUE;			
 			}
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
@@ -773,7 +757,7 @@ extern "C"
 
 		UnixFindFile *uff = new UnixFindFile(root, mask, dwFlags);
 		if (!uff->IsOpened()) {
-			WINPORT(TranslateErrno)();
+			ErrnoSaver es;
 			delete uff;
 			return INVALID_HANDLE_VALUE;
 		}

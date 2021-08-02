@@ -3111,7 +3111,7 @@ static bool FindFilesProcess(Vars& v)
 					if (Length>1 && IsSlash(strFileName.At(Length-1)) && strFileName.At(Length-2)!=L':')
 						strFileName.SetLength(Length-1);
 
-					if ((apiGetFileAttributes(strFileName)==INVALID_FILE_ATTRIBUTES) && (WINPORT(GetLastError)() != ERROR_ACCESS_DENIED))
+					if ((apiGetFileAttributes(strFileName)==INVALID_FILE_ATTRIBUTES) && !ErrnoSaver().IsAccessDenied())
 						break;
 
 					const wchar_t *NamePtr = PointToName(strFileName);

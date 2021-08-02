@@ -53,7 +53,6 @@ extern "C" {
 	{
 		char buf[0x100] = {};
 		if (gethostname(&buf[0], ARRAYSIZE(buf) - 1) != 0) {
-			WINPORT(TranslateErrno)();
 			return FALSE;
 		}
 		const std::wstring &str = MB2Wide(buf);
@@ -72,7 +71,6 @@ extern "C" {
 	{
 		struct passwd *pw = getpwuid(getuid());
 		if (!pw || !pw->pw_name) {
-			WINPORT(TranslateErrno)();
 			return FALSE;
 		}
 
@@ -101,8 +99,5 @@ extern "C" {
 	{
 		return errno;
 	}
-	
-	WINPORT_DECL(TranslateErrno, VOID, ())
-	{
-	}
+
 }

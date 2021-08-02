@@ -111,7 +111,6 @@ extern "C" {
 #endif
 
 //other
-	WINPORT_DECL(TranslateErrno, VOID, ());
 	WINPORT_DECL(GetLastError, DWORD, ());
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ());

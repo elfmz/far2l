@@ -651,16 +651,22 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 
 
 
-int ShellRemoveFile(const wchar_t *Name,int Wipe)
+int ShellRemoveFile(const wchar_t *Name, int Wipe)
 {
 	ProcessedItems++;
 	int MsgCode=0;
 	std::unique_ptr<AskDeleteReadOnly> AskDeleteRO;
+	/* have to pretranslate to full path otherwise plain remove()
+	 * below will malfunction if current directory requires sudo
+	 */
+	FARString strFullName;
+	ConvertNameToFull(Name, strFullName);
+
 	if (Wipe || Opt.DeleteToRecycleBin)
 	{  /* in case its a not a simple deletion - check/sanitize RO files prior any actions,
 		* cuz code that doing such things is not aware about such complications
 		*/
-		AskDeleteRO.reset(new AskDeleteReadOnly(Name, Wipe));
+		AskDeleteRO.reset(new AskDeleteReadOnly(strFullName, Wipe));
 		if (AskDeleteRO->Choice() != DELETE_YES)
 			return AskDeleteRO->Choice();
 	}
@@ -682,8 +688,6 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 				  Уничтожение файла приведет к обнулению всех ссылающихся на него файлов.
 				                        Уничтожать файл?
 				*/
-				FARString strFullName;
-				ConvertNameToFull(Name, strFullName);
 				MsgCode=Message(MSG_WARNING,5,MSG(MError),strFullName,
 				                MSG(MDeleteHardLink1),MSG(MDeleteHardLink2),MSG(MDeleteHardLink3),
 				                MSG(MDeleteFileWipe),MSG(MDeleteFileAll),MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
@@ -703,7 +707,7 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 					SkipWipeMode=0;
 				case 0:
 
-					if (WipeFile(Name))
+					if (WipeFile(strFullName))
 						return DELETE_SUCCESS;
 			}
 		}
@@ -711,21 +715,22 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 		{
 			// first try simple removal, only if it will fail
 			// then fallback to AskDeleteRO and sdc_remove
+			const std::string &mbFullName = strFullName.GetMB();
 			if (!AskDeleteRO)
 			{
-				if (remove(Wide2MB(Name).c_str()) == 0 || errno == ENOENT) {
+				if (remove(mbFullName.c_str()) == 0 || errno == ENOENT) {
 					break;
 				}
-				AskDeleteRO.reset(new AskDeleteReadOnly(Name, Wipe));
+				AskDeleteRO.reset(new AskDeleteReadOnly(strFullName, Wipe));
 				if (AskDeleteRO->Choice() != DELETE_YES)
 					return AskDeleteRO->Choice();
 			}
-			if (sdc_remove(Wide2MB(Name).c_str()) == 0 || errno == ENOENT) {
+			if (sdc_remove(mbFullName.c_str()) == 0 || errno == ENOENT) {
 				break;
 			}
 			WINPORT(TranslateErrno)();
 		}
-		else if (RemoveToRecycleBin(Name))
+		else if (RemoveToRecycleBin(strFullName))
 			break;
 
 		if (SkipMode!=-1)
@@ -733,7 +738,7 @@ int ShellRemoveFile(const wchar_t *Name,int Wipe)
 		else
 		{
 			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-			                MSG(MCannotDeleteFile),Name,MSG(MDeleteRetry),
+			                MSG(MCannotDeleteFile),strFullName,MSG(MDeleteRetry),
 			                MSG(MDeleteSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
 		}
 
@@ -804,41 +809,6 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 	}
 
 	return DELETE_SUCCESS;
-}
-
-DWORD SHErrorToWinError(DWORD SHError)
-{
-	DWORD WinError=SHError;
-
-	switch (SHError)
-	{
-		case 0x71:    WinError=ERROR_ALREADY_EXISTS;    break; // DE_SAMEFILE         The source and destination files are the same file.
-		case 0x72:    WinError=ERROR_INVALID_PARAMETER; break; // DE_MANYSRC1DEST     Multiple file paths were specified in the source buffer, but only one destination file path.
-		case 0x73:    WinError=ERROR_NOT_SAME_DEVICE;   break; // DE_DIFFDIR          Rename operation was specified but the destination path is a different directory. Use the move operation instead.
-		case 0x74:    WinError=ERROR_INVALID_PARAMETER; break; // DE_ROOTDIR          The source is a root directory, which cannot be moved or renamed.
-		case 0x75:    WinError=ERROR_CANCELLED;         break; // DE_OPCANCELLED      The operation was cancelled by the user, or silently cancelled if the appropriate flags were supplied to SHFileOperation.
-		case 0x76:    WinError=ERROR_BAD_PATHNAME;      break; // DE_DESTSUBTREE      The destination is a subtree of the source.
-		case 0x78:    WinError=ERROR_ACCESS_DENIED;     break; // DE_ACCESSDENIEDSRC  Security settings denied access to the source.
-		case 0x79:    WinError=ERROR_BUFFER_OVERFLOW;   break; // DE_PATHTOODEEP      The source or destination path exceeded or would exceed MAX_PATH.
-		case 0x7A:    WinError=ERROR_INVALID_PARAMETER; break; // DE_MANYDEST         The operation involved multiple destination paths, which can fail in the case of a move operation.
-		case 0x7C:    WinError=ERROR_BAD_PATHNAME;      break; // DE_INVALIDFILES     The path in the source or destination or both was invalid.
-		case 0x7D:    WinError=ERROR_INVALID_PARAMETER; break; // DE_DESTSAMETREE     The source and destination have the same parent folder.
-		case 0x7E:    WinError=ERROR_ALREADY_EXISTS;    break; // DE_FLDDESTISFILE    The destination path is an existing file.
-		case 0x80:    WinError=ERROR_ALREADY_EXISTS;    break; // DE_FILEDESTISFLD    The destination path is an existing folder.
-		case 0x81:    WinError=ERROR_BUFFER_OVERFLOW;   break; // DE_FILENAMETOOLONG  The name of the file exceeds MAX_PATH.
-		case 0x82:    WinError=ERROR_WRITE_FAULT;       break; // DE_DEST_IS_CDROM    The destination is a read-only CD-ROM, possibly unformatted.
-		case 0x83:    WinError=ERROR_WRITE_FAULT;       break; // DE_DEST_IS_DVD      The destination is a read-only DVD, possibly unformatted.
-		case 0x84:    WinError=ERROR_WRITE_FAULT;       break; // DE_DEST_IS_CDRECORD The destination is a writable CD-ROM, possibly unformatted.
-		case 0x85:    WinError=ERROR_DISK_FULL;         break; // DE_FILE_TOO_LARGE   The file involved in the operation is too large for the destination media or file system.
-		case 0x86:    WinError=ERROR_READ_FAULT;        break; // DE_SRC_IS_CDROM     The source is a read-only CD-ROM, possibly unformatted.
-		case 0x87:    WinError=ERROR_READ_FAULT;        break; // DE_SRC_IS_DVD       The source is a read-only DVD, possibly unformatted.
-		case 0x88:    WinError=ERROR_READ_FAULT;        break; // DE_SRC_IS_CDRECORD  The source is a writable CD-ROM, possibly unformatted.
-		case 0xB7:    WinError=ERROR_BUFFER_OVERFLOW;   break; // DE_ERROR_MAX        MAX_PATH was exceeded during the operation.
-		case 0x402:   WinError=ERROR_PATH_NOT_FOUND;    break; //                     An unknown error occurred. This is typically due to an invalid path in the source or destination. This error does not occur on Windows Vista and later.
-		case 0x10000: WinError=ERROR_GEN_FAILURE;       break; // ERRORONDEST         An unspecified error occurred on the destination.
-	}
-
-	return WinError;
 }
 
 int RemoveToRecycleBin(const wchar_t *Name)

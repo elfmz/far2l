@@ -7,6 +7,7 @@
 #include "PathHelpers.h"
 #include <utils.h>
 #include <pwd.h>
+#include <errno.h>
 
 #ifndef _WIN32
 # include <dlfcn.h>
@@ -15,24 +16,23 @@
 extern "C" {
 
 	/* gcc doesn't know _Thread_local from C11 yet */
-	thread_local DWORD g_winport_lasterror;
-	
-	WINPORT(LastErrorGuard):: WINPORT(LastErrorGuard)() : value(g_winport_lasterror)
+
+	WINPORT(LastErrorGuard):: WINPORT(LastErrorGuard)() : value(errno)
 	{
 	}
 	
 	WINPORT(LastErrorGuard)::~ WINPORT(LastErrorGuard)()
 	{
-		g_winport_lasterror = value;
+		errno = value;
 	}
 	
 	WINPORT_DECL(GetLastError, DWORD, ())
 	{
-		return g_winport_lasterror;
+		return errno;
 	}
 	WINPORT_DECL(SetLastError, VOID, (DWORD code))
 	{
-		g_winport_lasterror = code;
+		errno = code;
 	}
 
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ())
@@ -104,21 +104,5 @@ extern "C" {
 	
 	WINPORT_DECL(TranslateErrno, VOID, ())
 	{
-		DWORD gle;
-		switch (errno) {
-			case 0: gle = 0; break;
-			case ENOSPC: gle = ERROR_DISK_FULL; break;
-			case EEXIST: gle = ERROR_ALREADY_EXISTS; break;
-			case ENOENT: gle = ERROR_FILE_NOT_FOUND; break;
-			case EACCES: case EPERM: gle = ERROR_ACCESS_DENIED; break;
-			case ETXTBSY: gle = ERROR_SHARING_VIOLATION; break;
-			case EINVAL: gle = ERROR_INVALID_PARAMETER; break;
-			//case EROFS: gle = ; break;
-			default:
-				gle = 20000 + errno;
-//				fprintf(stderr, "TODO: TranslateErrno - %d\n", errno );
-		}
-		
-		WINPORT(SetLastError)(gle);
 	}
 }

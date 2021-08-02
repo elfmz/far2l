@@ -164,7 +164,7 @@ WINPORT_DECL(WaitForSingleObject, DWORD, (HANDLE hHandle, DWORD dwMilliseconds))
 	if (r==(size_t)-1)
 		return WAIT_TIMEOUT;
 		
-	return WAIT_OBJECT_0 ;
+	return WAIT_OBJECT_0;
 }
 
 

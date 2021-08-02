@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <memory.h>
 #include <wctype.h>
 
@@ -1140,46 +1141,44 @@ typedef void *HKL;
 #define REG_MULTI_SZ_MB              ( 107 )   // Multiple UTF8 strings
 
 
-#define WAIT_TIMEOUT                     258L    // dderror
+#define WAIT_TIMEOUT                     258L
 
-#define ERROR_BAD_NET_RESP               58L
-#define ERROR_BAD_DRIVER_LEVEL           119L
-#define ERROR_TIMEOUT                    1460L
-#define ERROR_NO_MORE_ITEMS              259L
-#define ERROR_MORE_DATA                  234L
+
+#define ERROR_BAD_NET_RESP               EBADE
+#define ERROR_BAD_DRIVER_LEVEL           EBADRQC
+#define ERROR_TIMEOUT                    ETIME
+#define ERROR_NO_MORE_ITEMS              ENODATA
+#define ERROR_MORE_DATA                  EMSGSIZE
 #define ERROR_SUCCESS                    0L
-#define ERROR_CALL_NOT_IMPLEMENTED       120L
-#define ERROR_ALREADY_EXISTS             183L
-#define ERROR_INVALID_PARAMETER          87L    // dderror
-#define ERROR_NOT_SAME_DEVICE            17L
-#define ERROR_CANCELLED                  1223L
-#define ERROR_BAD_PATHNAME               161L
-#define ERROR_ACCESS_DENIED              5L
-#define ERROR_BUFFER_OVERFLOW            111L
-#define ERROR_WRITE_FAULT                29L
-#define ERROR_DISK_FULL                  112L
-#define ERROR_READ_FAULT                 30L
-#define ERROR_FILE_NOT_FOUND             2L
-#define ERROR_PATH_NOT_FOUND             3L
-#define ERROR_INVALID_HANDLE             6L
-#define ERROR_GEN_FAILURE                31L
-#define ERROR_SHARING_VIOLATION          32L
-#define ERROR_HANDLE_DISK_FULL           39L
-#define ERROR_NOT_SUPPORTED              50L
-#define ERROR_NO_MORE_FILES              18L
+#define ERROR_CALL_NOT_IMPLEMENTED       EOPNOTSUPP
+#define ERROR_ALREADY_EXISTS             EEXIST
+#define ERROR_INVALID_PARAMETER          EINVAL
+#define ERROR_NOT_SAME_DEVICE            EXDEV
+#define ERROR_CANCELLED                  ECANCELED
+//#define ERROR_BAD_PATHNAME               161L
+#define ERROR_ACCESS_DENIED              EPERM
+#define ERROR_BUFFER_OVERFLOW            EOVERFLOW
+#define ERROR_WRITE_FAULT                EIO
+#define ERROR_DISK_FULL                  ENOSPC
+#define ERROR_READ_FAULT                 ENXIO // ???
+#define ERROR_FILE_NOT_FOUND             ENOENT
+#define ERROR_PATH_NOT_FOUND             ENOTDIR
+#define ERROR_INVALID_HANDLE             EBADF
+//#define ERROR_GEN_FAILURE                31L
+#define ERROR_SHARING_VIOLATION          EBUSY
+//#define ERROR_HANDLE_DISK_FULL           
+#define ERROR_NOT_SUPPORTED              ENOTSUP
+#define ERROR_NO_MORE_FILES              EXFULL
 #define NO_ERROR 0L                                                 // dderror
-#define ERROR_OPEN_FAILED                110L
-#define ERROR_INSUFFICIENT_BUFFER        122L    // dderror
-#define ERROR_NO_UNICODE_TRANSLATION     1113L
-#define ERROR_DIRECTORY                  267L
-#define ERROR_INVALID_NAME               123L    // dderror
-#define ERROR_OPEN_FILES                 2401L
-#define ERROR_DEVICE_IN_USE              2404L
-#define ERROR_ENVVAR_NOT_FOUND           203L
-#define ERROR_FILE_EXISTS                80L
-#define ERROR_OUTOFMEMORY                14L
-#define ERROR_DIR_NOT_EMPTY              145L
-#define ERROR_INVALID_FLAGS              1004L
+#define ERROR_OPEN_FAILED                ENOANO // ???
+#define ERROR_INSUFFICIENT_BUFFER        ENOBUFS
+#define ERROR_NO_UNICODE_TRANSLATION     EILSEQ
+#define ERROR_DIRECTORY                  EISDIR
+#define ERROR_INVALID_NAME               ENAMETOOLONG
+#define ERROR_FILE_EXISTS                EEXIST
+#define ERROR_OUTOFMEMORY                ENOMEM
+#define ERROR_DIR_NOT_EMPTY              ENOTEMPTY
+#define ERROR_INVALID_FLAGS              EDOM
 
 #define HKEY_CLASSES_ROOT                   (( HKEY ) (ULONG_PTR)((LONG)0x80000000) )
 #define HKEY_CURRENT_USER                   (( HKEY ) (ULONG_PTR)((LONG)0x80000001) )

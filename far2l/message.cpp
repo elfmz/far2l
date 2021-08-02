@@ -567,89 +567,14 @@ bool GetWin32ErrorString(DWORD LastWin32Error, FARString& Str)
 
 bool GetErrorString(FARString &strErrStr)
 {
-	wchar_t sz[128];
-	DWORD gle = WINPORT(GetLastError)();
-	swprintf(sz, 128, L"Error %u", gle);
-	strErrStr = sz;
+	auto err = errno;
+	const char *str = strerror(err);
+	if (str) {
+		strErrStr.Format(L"%s (%u)", str, err);
+	} else {
+		strErrStr.Format(L"Error %u", err);
+	}
 	return true;
-
-	
-	/*bool Result=false;
-	static struct TypeErrMsgs
-	{
-		DWORD WinMsg;
-		int FarMsg;
-	}
-	ErrMsgs[]=
-	{
-		{ERROR_INVALID_FUNCTION,MErrorInvalidFunction},
-		{ERROR_BAD_COMMAND,MErrorBadCommand},
-		{ERROR_CALL_NOT_IMPLEMENTED,MErrorBadCommand},
-		{ERROR_FILE_NOT_FOUND,MErrorFileNotFound},
-		{ERROR_PATH_NOT_FOUND,MErrorPathNotFound},
-		{ERROR_TOO_MANY_OPEN_FILES,MErrorTooManyOpenFiles},
-		{ERROR_ACCESS_DENIED,MErrorAccessDenied},
-		{ERROR_NOT_ENOUGH_MEMORY,MErrorNotEnoughMemory},
-		{ERROR_OUTOFMEMORY,MErrorNotEnoughMemory},
-		{ERROR_WRITE_PROTECT,MErrorDiskRO},
-		{ERROR_NOT_READY,MErrorDeviceNotReady},
-		{ERROR_NOT_DOS_DISK,MErrorCannotAccessDisk},
-		{ERROR_SECTOR_NOT_FOUND,MErrorSectorNotFound},
-		{ERROR_OUT_OF_PAPER,MErrorOutOfPaper},
-		{ERROR_WRITE_FAULT,MErrorWrite},
-		{ERROR_READ_FAULT,MErrorRead},
-		{ERROR_GEN_FAILURE,MErrorDeviceGeneral},
-		{ERROR_SHARING_VIOLATION,MErrorFileSharing},
-		{ERROR_LOCK_VIOLATION,MErrorFileSharing},
-		{ERROR_BAD_NETPATH,MErrorNetworkPathNotFound},
-		{ERROR_NETWORK_BUSY,MErrorNetworkBusy},
-		{ERROR_NETWORK_ACCESS_DENIED,MErrorNetworkAccessDenied},
-		{ERROR_NET_WRITE_FAULT,MErrorNetworkWrite},
-		{ERROR_DRIVE_LOCKED,MErrorDiskLocked},
-		{ERROR_ALREADY_EXISTS,MErrorFileExists},
-		{ERROR_BAD_PATHNAME,MErrorInvalidName},
-		{ERROR_INVALID_NAME,MErrorInvalidName},
-		{ERROR_DIRECTORY,MErrorInvalidName},
-		{ERROR_DISK_FULL,MErrorInsufficientDiskSpace},
-		{ERROR_HANDLE_DISK_FULL,MErrorInsufficientDiskSpace},
-		{ERROR_DIR_NOT_EMPTY,MErrorFolderNotEmpty},
-		{ERROR_INTERNET_INCORRECT_USER_NAME,MErrorIncorrectUserName},
-		{ERROR_INTERNET_INCORRECT_PASSWORD,MErrorIncorrectPassword},
-		{ERROR_INTERNET_LOGIN_FAILURE,MErrorLoginFailure},
-		{ERROR_INTERNET_CONNECTION_ABORTED,MErrorConnectionAborted},
-		{ERROR_CANCELLED,MErrorCancelled},
-		{ERROR_NO_NETWORK,MErrorNetAbsent},
-		{ERROR_DEVICE_IN_USE,MErrorNetDeviceInUse},
-		{ERROR_OPEN_FILES,MErrorNetOpenFiles},
-		{ERROR_ALREADY_ASSIGNED,MErrorAlreadyAssigned},
-		{ERROR_DEVICE_ALREADY_REMEMBERED,MErrorAlreadyRemebered},
-		{ERROR_NOT_LOGGED_ON,MErrorNotLoggedOn},
-		{ERROR_INVALID_PASSWORD,MErrorInvalidPassword},
-		{ERROR_NO_RECOVERY_POLICY,MErrorNoRecoveryPolicy},
-		{ERROR_ENCRYPTION_FAILED,MErrorEncryptionFailed},
-		{ERROR_DECRYPTION_FAILED,MErrorDecryptionFailed},
-		{ERROR_FILE_NOT_ENCRYPTED,MErrorFileNotEncrypted},
-		{ERROR_NO_ASSOCIATION,MErrorNoAssociation},
-	};
-
-	DWORD LastError = WINPORT(GetLastError)();
-
-	for (size_t i=0; i < ARRAYSIZE(ErrMsgs); i++)
-	{
-		if (ErrMsgs[i].WinMsg == LastError)
-		{
-			strErrStr = MSG(ErrMsgs[i].FarMsg);
-			Result=true;
-			break;
-		}
-	}
-
-	if (!Result)
-	{
-		Result=GetWin32ErrorString(LastError, strErrStr);
-	}
-
-	return Result;*/
 }
 
 

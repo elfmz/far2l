@@ -861,7 +861,7 @@ extern "C"
 
 		size_t path_len = wcslen(path);
 		if (path_len>=MAX_PATH) {
-			WINPORT(SetLastError)( ERROR_BUFFER_OVERFLOW );
+			WINPORT(SetLastError)( ERROR_INVALID_NAME);
 			return 0;
 		}
 		wcscpy( buffer, path );

@@ -175,6 +175,10 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 #else
 		if (statfs(path.c_str(), &sfs) == 0) {
 #endif
+#ifdef __APPLE__
+		out = sfs.f_fstypename;
+		if (out.empty())
+#endif
 			for (size_t i = 0; i < ARRAYSIZE(s_fs_magics); ++i) {
 				if (sfs.f_type == s_fs_magics[i].magic) {
 					out = s_fs_magics[i].name;

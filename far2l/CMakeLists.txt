@@ -140,7 +140,7 @@ SafeMMap.cpp
 AnsiEsc.cpp
 ViewerPrinter.cpp
 ConfigRW.cpp
-MultiThreadDrives.cpp
+MountInfo.cpp
 )
 
 # Set target names for the executables

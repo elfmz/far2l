@@ -74,7 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "udlist.hpp"
 #include "InterThreadCall.hpp"
 #include "ThreadedWorkQueue.h"
-#include "MultiThreadDrives.h"
+#include "MountInfo.h"
 #include <atomic>
 
 constexpr int CHAR_TABLE_SIZE=5;
@@ -280,7 +280,7 @@ static FARString strLastDirName;
 static FARString strPluginSearchPath;
 
 static std::unique_ptr<ThreadedWorkQueue> pWorkQueue;
-static std::unique_ptr<MultiThreadDrives> pMultiThreadDrives;
+static std::unique_ptr<MountInfo> pMountInfo;
 //static CriticalSection PluginCS;
 
 class PluginLocker
@@ -1513,7 +1513,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem,
 	else
 		FileToScan = FileName;
 
-	if (pMultiThreadDrives->Check(FileToScan.GetMB())) {
+	if (pMountInfo->IsMultiThreadFriendly(FileToScan.GetMB())) {
 		ScanFileWorkItem *wi = new(std::nothrow) ScanFileWorkItem(hDlg, FileToScan, FileToReport, RemoveTemp, FindData, ArcIndex);
 		if (wi)
 		{ // do file contents scan and following logic asynchronously
@@ -2824,7 +2824,7 @@ static DWORD ThreadRoutine(LPVOID Param)
 	{
 		SudoClientRegion scr;
 		DWORD msec = GetProcessUptimeMSec();
-		pMultiThreadDrives.reset(new MultiThreadDrives);
+		pMountInfo.reset(new MountInfo);
 		if (tParam->PluginMode)
 		{
 			DoPreparePluginList(tParam->hDlg);
@@ -2837,7 +2837,7 @@ static DWORD ThreadRoutine(LPVOID Param)
 		fprintf(stderr, "FindFiles complete in %u msec\n", msec);
 		itd.SetPercent(0);
 		StopFlag = true;
-		pMultiThreadDrives.reset();
+		pMountInfo.reset();
 	}
 	ReleaseInFileSearch();
 

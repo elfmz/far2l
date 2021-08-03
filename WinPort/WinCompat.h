@@ -1144,18 +1144,20 @@ typedef void *HKL;
 #define WAIT_TIMEOUT                     258L
 
 
+#define NO_ERROR                         0L
+#define ERROR_SUCCESS                    0L
+
 #define ERROR_BAD_NET_RESP               EBADE
 #define ERROR_BAD_DRIVER_LEVEL           EBADRQC
 #define ERROR_TIMEOUT                    ETIME
 #define ERROR_NO_MORE_ITEMS              ENODATA
 #define ERROR_MORE_DATA                  EMSGSIZE
-#define ERROR_SUCCESS                    0L
 #define ERROR_CALL_NOT_IMPLEMENTED       EOPNOTSUPP
 #define ERROR_ALREADY_EXISTS             EEXIST
 #define ERROR_INVALID_PARAMETER          EINVAL
 #define ERROR_NOT_SAME_DEVICE            EXDEV
 #define ERROR_CANCELLED                  ECANCELED
-#define ERROR_ACCESS_DENIED              EPERM
+#define ERROR_ACCESS_DENIED              EACCES
 #define ERROR_BUFFER_OVERFLOW            EOVERFLOW
 #define ERROR_WRITE_FAULT                EIO
 #define ERROR_DISK_FULL                  ENOSPC
@@ -1165,8 +1167,6 @@ typedef void *HKL;
 #define ERROR_SHARING_VIOLATION          EBUSY
 #define ERROR_NOT_SUPPORTED              ENOTSUP
 #define ERROR_NO_MORE_FILES              ENOLINK
-#define NO_ERROR 0L                                                 // dderror
-#define ERROR_OPEN_FAILED                ENXIO
 #define ERROR_INSUFFICIENT_BUFFER        ENOBUFS
 #define ERROR_NO_UNICODE_TRANSLATION     EILSEQ
 #define ERROR_DIRECTORY                  EISDIR

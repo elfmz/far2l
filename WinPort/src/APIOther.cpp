@@ -15,17 +15,6 @@
 
 extern "C" {
 
-	/* gcc doesn't know _Thread_local from C11 yet */
-
-	WINPORT(LastErrorGuard):: WINPORT(LastErrorGuard)() : value(errno)
-	{
-	}
-	
-	WINPORT(LastErrorGuard)::~ WINPORT(LastErrorGuard)()
-	{
-		errno = value;
-	}
-	
 	WINPORT_DECL(GetLastError, DWORD, ())
 	{
 		return errno;

@@ -31,13 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst)
 {
-	WINPORT(LastErrorGuard) leg;
+	ErrnoSaver ErSr;
 	return WINPORT(WideCharToMultiByte)(CP_UTF8,0,(src),-1,(dst),(int)(lendst),nullptr,nullptr);
 }
 
 static int PZ_to_PWZ(const char *src, wchar_t *dst, int lendst)
 {
-	WINPORT(LastErrorGuard) leg;
+	ErrnoSaver ErSr;
 	return WINPORT(MultiByteToWideChar)(CP_UTF8,0, (src),-1,(dst),(int)(lendst));
 }
 
@@ -99,8 +99,8 @@ void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, i
 {
 	if (lpszAnsiString && lpwszUnicodeString && nLength)
 	{
+		ErrnoSaver ErSr;
 		wmemset(lpwszUnicodeString, 0, nLength);
-		WINPORT(LastErrorGuard) leg;
 		WINPORT(MultiByteToWideChar)(CodePage,0,lpszAnsiString,nLength,lpwszUnicodeString,nLength);
 	}
 }
@@ -129,7 +129,8 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 	*/
 	if (!lpwszUnicodeString || (nLength < 0))
 		return nullptr;
-	WINPORT(LastErrorGuard) leg;
+
+	ErrnoSaver ErSr;
 	int dst_length = WINPORT(WideCharToMultiByte)(
 		    CodePage,
 		    0,
@@ -221,7 +222,7 @@ DWORD OldKeyToKey(DWORD dOldKey)
 
 		if (CleanKey>0x80 && CleanKey<0x100)
 		{
-			WINPORT(LastErrorGuard) leg;
+			ErrnoSaver ErSr;
 			char OemChar=static_cast<char>(CleanKey);
 			wchar_t WideChar=0;
 			WINPORT(MultiByteToWideChar)(CP_UTF8,0,&OemChar,1,&WideChar,1);
@@ -248,7 +249,7 @@ DWORD KeyToOldKey(DWORD dKey)
 
 		if (CleanKey>0x80 && CleanKey<0x10000)
 		{
-			WINPORT(LastErrorGuard) leg;
+			ErrnoSaver ErSr;
 			wchar_t WideChar=static_cast<wchar_t>(CleanKey);
 			char OemChar=0;
 			WINPORT(WideCharToMultiByte)(CP_UTF8,0,&WideChar,1,&OemChar,1,0,nullptr);
@@ -3450,7 +3451,7 @@ void MultiByteRecode(UINT nCPin, UINT nCPout, char *szBuffer, int nLength)
 
 		if (wszTempTable)
 		{
-			WINPORT(LastErrorGuard) leg;
+			ErrnoSaver ErSr;
 			WINPORT(MultiByteToWideChar)(nCPin, 0, szBuffer, nLength, wszTempTable, nLength);
 			WINPORT(WideCharToMultiByte)(nCPout, 0, wszTempTable, nLength, szBuffer, nLength, nullptr, nullptr);
 			xf_free(wszTempTable);
@@ -3658,7 +3659,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 					case FARMACRO_KEY_EVENT:
 					{
 						wchar_t res;
-						WINPORT(LastErrorGuard) leg;
+						ErrnoSaver ErSr;
 						WINPORT(MultiByteToWideChar)(
 						    CP_OEMCP,
 						    0,
@@ -3692,7 +3693,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 					case FARMACRO_KEY_EVENT:
 					{
 						char res;
-						WINPORT(LastErrorGuard) leg;
+						ErrnoSaver ErSr;
 						WINPORT(WideCharToMultiByte)(
 						    CP_OEMCP,
 						    0,
@@ -4038,7 +4039,7 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 		if (cpi.MaxCharSize != 1)
 			return -1;
 
-		WINPORT(LastErrorGuard) leg;
+		ErrnoSaver ErSr;
 		const wchar_t *codePageName = L"";//FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
 		sTableName<<fmt::Width(5)<<nCP<<BoxSymbols[BS_V1]<<L" "<<codePageName;
 		sTableName.strValue().GetCharString(TableSet->TableName, sizeof(TableSet->TableName) - 1, CP_OEMCP);

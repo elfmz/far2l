@@ -275,14 +275,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 
-struct __attribute__ ((visibility("default"))) WINPORT(LastErrorGuard)
-{
-	DWORD value;
-	
-	WINPORT(LastErrorGuard)();
-	~ WINPORT(LastErrorGuard)();
-};
-
 #ifdef WINPORT_REGISTRY
 struct RegWipeScope
 {

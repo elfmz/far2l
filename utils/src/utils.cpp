@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <os_call.hpp>
 
 #include <algorithm>
@@ -151,35 +150,6 @@ ssize_t ReadWritePiece(int fd_src, int fd_dst)
 
 //////////////
 
-
-ErrnoSaver::ErrnoSaver()
-	:
-	_errno(errno)
-{
-}
-
-ErrnoSaver::~ErrnoSaver()
-{
-	errno = _errno;
-}
-
-bool ErrnoSaver::SetToCurrent()
-{
-	_errno = errno;
-}
-
-bool ErrnoSaver::IsAccessDenied() const
-{
-	return _errno == EPERM
-		|| _errno == EACCES
-#ifdef ENOTCAPABLE
-		|| _errno == ENOTCAPABLE
-#endif
-		;
-}
-
-
-//////////
 int pipe_cloexec(int pipedes[2])
 {
 #if defined(__APPLE__) || defined(__CYGWIN__)

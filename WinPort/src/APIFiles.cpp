@@ -320,6 +320,8 @@ extern "C"
 	{
 		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
 		if (!wph) {
+			if (lpNumberOfBytesWritten)
+				*lpNumberOfBytesWritten = 0;
 			return FALSE;
 		}
 		if (lpOverlapped) {
@@ -328,6 +330,8 @@ extern "C"
 
 		ssize_t r = os_call_v<ssize_t, -1>(sdc_write, wph->fd, lpBuffer, (size_t)nNumberOfBytesToWrite);
 		if (r < 0) {
+			if (lpNumberOfBytesWritten)
+				*lpNumberOfBytesWritten = 0;
 			return FALSE;
 		}
 
@@ -349,7 +353,8 @@ extern "C"
 		case FILE_CURRENT: whence = SEEK_CUR; break;
 		case FILE_END: whence = SEEK_END; break;
 		default:
-			return INVALID_SET_FILE_POINTER;
+			WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
+			return FALSE;
 		}
 
 		off_t r = os_call_v<off_t, -1>(sdc_lseek, wph->fd, (off_t)liDistanceToMove.QuadPart, whence);

@@ -2804,6 +2804,12 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 	File DestFile;
 	int64_t AppendPos=0;
 
+	DWORD ModeToCreateWith = 0;
+	if ((Flags & FCOPY_COPYACCESSMODE) != 0)
+	{ // force S_IWUSR for a while file being copied, it will be removed afterwards if not needed
+		ModeToCreateWith = SrcData.dwUnixMode | S_IWUSR;
+	}
+
 	//bool CopySparse=false;
 	DWORD DstFlags = FILE_FLAG_SEQUENTIAL_SCAN;
 	if (!(Flags&FCOPY_COPYTONUL))
@@ -2818,12 +2824,6 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		}
 
 		
-		DWORD ModeToCreateWith = 0;
-		if ((Flags & FCOPY_COPYACCESSMODE) != 0)
-		{ // force S_IWUSR for a while file being copied, it will be removed afterwards if not needed
-			ModeToCreateWith = SrcData.dwUnixMode | S_IWUSR;
-		}
-
 		bool DstOpened = DestFile.Open(strDestName, GENERIC_WRITE, FILE_SHARE_READ,
 			((Flags & FCOPY_COPYACCESSMODE) != 0) ? &ModeToCreateWith : nullptr, (Append ? OPEN_EXISTING:CREATE_ALWAYS), DstFlags);
 		if ((DstFlags & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
@@ -2846,11 +2846,6 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			_LOGCOPYR(SysLog(L"return COPY_FAILURE -> %d CreateFile=-1, LastError=%d (0x%08X)",__LINE__,_localLastError,_localLastError));
 			return COPY_FAILURE;
 		}
-		if (XAttrCopyPtr)
-			XAttrCopyPtr->ApplyToCopied(DestFile);
-
-		if (((Flags & FCOPY_COPYACCESSMODE) != 0) && ModeToCreateWith != SrcData.dwUnixMode)
-			DestFile.Chmod(SrcData.dwUnixMode);
 
 		FARString strDriveRoot;
 		GetPathRoot(strDestName,strDriveRoot);
@@ -3164,10 +3159,6 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 								DestFile.Close();
 								return COPY_FAILURE;
 							}
-							if (XAttrCopyPtr)
-								XAttrCopyPtr->ApplyToCopied(DestFile);
-							if (((Flags & FCOPY_COPYACCESSMODE) != 0))
-								DestFile.Chmod(SrcData.dwUnixMode);
 						}
 						else
 						{
@@ -3211,6 +3202,10 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 						DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT);
 						DestFile.SetEnd();
 						BytesWritten = BytesRead;
+					}
+					else if (BytesWritten < BytesRead) {
+						// if written less than read then need to rewind source file by difference
+						SrcFile.SetPointer((INT64)BytesWritten - (INT64)BytesRead, nullptr, FILE_CURRENT);
 					}
 				}
 				else
@@ -3271,10 +3266,16 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 	}
 	while (false);//!SparseQueryResult && CopySparse);
 
+	SrcFile.Close();
+
 	if (!(Flags&FCOPY_COPYTONUL))
 	{
+		if (XAttrCopyPtr)
+			XAttrCopyPtr->ApplyToCopied(DestFile);
+		if (((Flags & FCOPY_COPYACCESSMODE) != 0) && ModeToCreateWith != SrcData.dwUnixMode)
+			DestFile.Chmod(SrcData.dwUnixMode);
+
 		DestFile.SetTime(nullptr, nullptr, &SrcData.ftLastWriteTime, nullptr);
-		SrcFile.Close();
 
 		/*if (CopySparse)
 		{
@@ -3289,8 +3290,6 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 		DestFile.Close();
 	}
-	else
-		SrcFile.Close();
 
 	return COPY_SUCCESS;
 }

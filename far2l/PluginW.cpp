@@ -61,7 +61,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "mix.hpp"
 #include "interf.hpp"
-#include "lasterror.hpp"
 #include "execute.hpp"
 #include "flink.hpp"
 #include <string>

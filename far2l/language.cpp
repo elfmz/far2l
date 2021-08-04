@@ -45,7 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "filestr.hpp"
 #include "interf.hpp"
-#include "lasterror.hpp"
 
 const wchar_t LangFileMask[] = L"*.lng";
 
@@ -320,7 +319,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 	//fprintf(stderr, "Language::Init(" WS_FMT ", %u, %u)\n", Path, bUnicode, CountNeed);
 	if (MsgList || MsgListA)
 		return true;
-	GuardLastError gle;
+	ErrnoSaver gle;
 	LastError = LERROR_SUCCESS;
 	m_bUnicode = bUnicode;
 	UINT nCodePage = CP_UTF8;

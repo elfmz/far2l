@@ -77,13 +77,7 @@ extern "C"
 		const std::string &path = ConsumeWinPath(lpPathName);
 		int r = os_call_int(sdc_mkdir, path.c_str(), (mode_t)0775);
 			
-		if (r == -1) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to create directory: '%s' errno %u\n", path.c_str(), errno);
-			return FALSE;
-		}
-		
-		return TRUE;
+		return (r == -1) ? FALSE : TRUE;
 	}
 
 
@@ -93,8 +87,7 @@ extern "C"
 		int r = os_call_int(sdc_rmdir, path.c_str());
 
 		if (r == -1){
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove directory: '%s' errno %u\n", path.c_str(),errno);
+			// fprintf(stderr, "Failed to remove directory: '%s' errno %u\n", path.c_str(),errno);
 			return FALSE;
 		}
 		
@@ -107,8 +100,7 @@ extern "C"
 		int r = os_call_int(sdc_remove, path.c_str());
 
 		if (r == -1) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "Failed to remove file: '%s' errno %u\n", path.c_str(), errno);
+			// fprintf(stderr, "Failed to remove file: '%s' errno %u\n", path.c_str(), errno);
 			return FALSE;
 		}
 		
@@ -168,10 +160,8 @@ extern "C"
 
 		int r = os_call_int(open_all_args, path.c_str(), flags, mode);		
 		if (r==-1) {
-			WINPORT(TranslateErrno)();
-
-			fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
-				lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
+			//fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
+			//	lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
 				
 			return INVALID_HANDLE_VALUE;
 		}
@@ -242,8 +232,6 @@ extern "C"
 		int r = os_call_int(sdc_chdir, path.c_str());
 		if (r == 0)
 			return TRUE;
-
-		WINPORT(TranslateErrno)();
 		return FALSE;
 	}
 
@@ -308,7 +296,6 @@ extern "C"
 			}
 			if (r < 0) {
 				if (done == 0) {
-					WINPORT(TranslateErrno)();
 					return FALSE;
 				}
 				break;
@@ -333,6 +320,8 @@ extern "C"
 	{
 		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
 		if (!wph) {
+			if (lpNumberOfBytesWritten)
+				*lpNumberOfBytesWritten = 0;
 			return FALSE;
 		}
 		if (lpOverlapped) {
@@ -341,7 +330,8 @@ extern "C"
 
 		ssize_t r = os_call_v<ssize_t, -1>(sdc_write, wph->fd, lpBuffer, (size_t)nNumberOfBytesToWrite);
 		if (r < 0) {
-			WINPORT(TranslateErrno)();
+			if (lpNumberOfBytesWritten)
+				*lpNumberOfBytesWritten = 0;
 			return FALSE;
 		}
 
@@ -363,7 +353,8 @@ extern "C"
 		case FILE_CURRENT: whence = SEEK_CUR; break;
 		case FILE_END: whence = SEEK_END; break;
 		default:
-			return INVALID_SET_FILE_POINTER;
+			WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
+			return FALSE;
 		}
 
 		off_t r = os_call_v<off_t, -1>(sdc_lseek, wph->fd, (off_t)liDistanceToMove.QuadPart, whence);
@@ -494,8 +485,7 @@ extern "C"
 		
 		DWORD symattr = 0;
 		if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
-			WINPORT(TranslateErrno)();
-			fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
+			// fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
 			return INVALID_FILE_ATTRIBUTES;			
 		}
 		
@@ -760,8 +750,7 @@ extern "C"
 			struct stat s = { };
 			DWORD symattr = 0;
 			if (stat_symcheck((root + mask).c_str(), s, symattr) < 0 ) {
-				WINPORT(TranslateErrno)();
-				fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
+				// fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
 				return INVALID_HANDLE_VALUE;			
 			}
 			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
@@ -773,7 +762,7 @@ extern "C"
 
 		UnixFindFile *uff = new UnixFindFile(root, mask, dwFlags);
 		if (!uff->IsOpened()) {
-			WINPORT(TranslateErrno)();
+			ErrnoSaver es;
 			delete uff;
 			return INVALID_HANDLE_VALUE;
 		}
@@ -861,7 +850,7 @@ extern "C"
 
 		size_t path_len = wcslen(path);
 		if (path_len>=MAX_PATH) {
-			WINPORT(SetLastError)( ERROR_BUFFER_OVERFLOW );
+			WINPORT(SetLastError)( ERROR_INVALID_NAME);
 			return 0;
 		}
 		wcscpy( buffer, path );
@@ -879,7 +868,6 @@ extern "C"
 		else
 		{
 			/* get a "random" unique number and try to create the file */
-			HANDLE handle;
 			UINT num = WINPORT(GetTickCount)() & 0xffff;
 			static UINT last;
 
@@ -887,19 +875,19 @@ extern "C"
 			if (last - num < 10) num = last + 1;
 			if (!num) num = 1;
 			unique = num;
-			do
-			{
+			std::string path_mb;
+			do {
 				swprintf( p, MAX_PATH - 1 - (p - buffer), formatW, unique );
-				handle = WINPORT(CreateFile)( buffer, GENERIC_WRITE, 0, nullptr,
-					CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
-				if (handle != INVALID_HANDLE_VALUE)
-				{  /* We created it */
-					WINPORT(CloseHandle)( handle );
+				Wide2MB(buffer, path_mb);
+				int fd = sdc_open(path_mb.c_str(), O_RDWR | O_CREAT | O_EXCL, 0640);
+				if (fd != -1) {
+					 /* We created it */
+					sdc_close(fd);
 					last = unique;
 					break;
 				}
-				if (WINPORT(GetLastError)() != ERROR_FILE_EXISTS &&
-					WINPORT(GetLastError)() != ERROR_SHARING_VIOLATION)
+				int err = errno;
+				if (err != EEXIST && err != EBUSY && err != ETXTBSY)
 					break;  /* No need to go on */
 				if (!(++unique & 0xffff)) unique = 1;
 			} while (unique != num);

@@ -728,7 +728,6 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 			if (sdc_remove(mbFullName.c_str()) == 0 || errno == ENOENT) {
 				break;
 			}
-			WINPORT(TranslateErrno)();
 		}
 		else if (RemoveToRecycleBin(strFullName))
 			break;
@@ -830,7 +829,6 @@ int RemoveToRecycleBin(const wchar_t *Name)
 		return TRUE;
 
 	errno = r;
-	WINPORT(TranslateErrno)();
 	return FALSE;
 }
 

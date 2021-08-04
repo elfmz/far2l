@@ -64,7 +64,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "processname.hpp"
 #include "mix.hpp"
-#include "lasterror.hpp"
 #include "execute.hpp"
 #include "flink.hpp"
 #include "ConfigRW.hpp"

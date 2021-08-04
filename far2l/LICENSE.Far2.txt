@@ -30,7 +30,7 @@ help.hpp hilight.cpp hilight.hpp history.cpp history.hpp hmenu.cpp hmenu.hpp
 imports.cpp imports.hpp Include/farcolor.hpp 
 Include/farkeys.hpp Include/plugin.hpp infolist.cpp infolist.hpp interf.cpp 
 interf.hpp keybar.cpp keybar.hpp keyboard.cpp keyboard.hpp keys.hpp lang.hpp 
-language.cpp language.hpp lasterror.hpp local.cpp local.hpp localOEM.cpp 
+language.cpp language.hpp local.cpp local.hpp localOEM.cpp 
 localOEM.hpp lockscrn.cpp lockscrn.hpp macro.cpp macro.hpp macroopcode.hpp 
 main.cpp manager.cpp manager.hpp menubar.cpp menubar.hpp message.cpp message.hpp 
 mix.cpp mix.hpp mkdir.cpp mkdir.hpp modal.cpp modal.hpp namelist.cpp namelist.hpp 

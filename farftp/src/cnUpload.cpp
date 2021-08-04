@@ -46,14 +46,14 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 
 	struct stat s = {};
 	if (sdc_stat(local, &s)) {
-		ErrorCode = ERROR_OPEN_FAILED;
+		ErrorCode = errno;
 		SysError = TRUE;
 		return;		
 	}
 	
 	if((s.st_mode & S_IFMT)==S_IFDIR )
 	{
-		ErrorCode = ERROR_OPEN_FAILED;
+		ErrorCode = ERROR_DIRECTORY;
 		SysError = TRUE;
 		Log(("local is directory [%s]",local));
 
@@ -67,8 +67,8 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 
 	if(!fin.Handle)
 	{
+		ErrorCode = errno;
 		Log(("!open local"));
-		ErrorCode = ERROR_OPEN_FAILED;
 		SysError = TRUE;
 
 		if(!ConnectMessage(MErrorOpenFile,local,-MRetry))

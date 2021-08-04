@@ -1472,19 +1472,19 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 				if (Message(MSG_WARNING,2,MSG(MEditTitle), Name, strTempStr3, strTempStr4, MSG(MEditROOpen), MSG(MYes),MSG(MNo)))
 				{
 					EditFile.Close();
-					WINPORT(SetLastError)(ERROR_OPEN_FAILED); //????
 					UserBreak=1;
 					Flags.Set(FFILEEDIT_OPENFAILED);
+					errno = EFBIG;
 					return FALSE;
 				}
 			}
 		}
 		else
 		{
-			if (Message(MSG_WARNING,2,MSG(MEditTitle),Name,MSG(MEditFileGetSizeError),MSG(MEditROOpen),MSG(MYes),MSG(MNo)))
+			ErrnoSaver ErSr;
+			if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MEditTitle),Name,MSG(MEditFileGetSizeError),MSG(MEditROOpen),MSG(MYes),MSG(MNo)))
 			{
 				EditFile.Close();
-				WINPORT(SetLastError)(SysErrorCode=ERROR_OPEN_FAILED); //????
 				UserBreak=1;
 				Flags.Set(FFILEEDIT_OPENFAILED);
 				return FALSE;

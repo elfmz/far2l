@@ -56,8 +56,6 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 	for (;;) {
 		if (sdc_chmod(mb_name.c_str(), Mode)==0) break;
 		
-		WINPORT(TranslateErrno)();
-		
 		int Code;
 
 		if (SkipMode!=-1)
@@ -113,8 +111,6 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 		
 		if (sdc_utimes(mb_name.c_str(), times)==0) break;
 		
-		WINPORT(TranslateErrno)();
-		 
 		int Code;
 
 		if (SkipMode!=-1)

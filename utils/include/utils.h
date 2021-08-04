@@ -8,6 +8,7 @@
 #include "WideMB.h"
 #include "Escaping.h"
 #include "Environment.h"
+#include "ErrnoSaver.hpp"
 
 template <class C> static size_t tzlen(const C *ptz)
 {
@@ -61,14 +62,6 @@ void CheckedCloseFDPair(int *fd);
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
 size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);
-
-
-struct ErrnoSaver
-{
-	int v;
-	ErrnoSaver();
-	~ErrnoSaver();
-};
 
 
 int pipe_cloexec(int pipedes[2]);

@@ -51,7 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setattr.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
-#include "lasterror.hpp"
 #include "fileowner.hpp"
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"

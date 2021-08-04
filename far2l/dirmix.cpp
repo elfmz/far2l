@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "lang.hpp"
 #include "language.hpp"
-#include "lasterror.hpp"
 #include "ctrlobj.hpp"
 #include "filepanels.hpp"
 #include "treelist.hpp"
@@ -111,7 +110,7 @@ int TestFolder(const wchar_t *Path)
 	}
 	if (!bFind)
 	{
-		GuardLastError lstError;
+		ErrnoSaver lstError;
 
 		if (lstError.Get() == ERROR_FILE_NOT_FOUND)
 			return TSTFLD_EMPTY;
@@ -125,7 +124,7 @@ int TestFolder(const wchar_t *Path)
 			// проверка атрибутов гарантировано скажет - это бага BugZ#743 или пустой корень диска.
 			if (apiGetFileAttributes(strFindPath)!=INVALID_FILE_ATTRIBUTES)
 			{
-				if (lstError.Get() == ERROR_ACCESS_DENIED)
+				if (lstError.IsAccessDenied())
 					return TSTFLD_NOTACCESS;
 				return TSTFLD_EMPTY;
 			}

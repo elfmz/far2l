@@ -111,7 +111,6 @@ extern "C" {
 #endif
 
 //other
-	WINPORT_DECL(TranslateErrno, VOID, ());
 	WINPORT_DECL(GetLastError, DWORD, ());
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ());
@@ -275,14 +274,6 @@ extern "C" {
 	SHAREDSYMBOL const char *GetPathTranslationPrefixA();
 #ifdef __cplusplus
 }
-
-struct __attribute__ ((visibility("default"))) WINPORT(LastErrorGuard)
-{
-	DWORD value;
-	
-	WINPORT(LastErrorGuard)();
-	~ WINPORT(LastErrorGuard)();
-};
 
 #ifdef WINPORT_REGISTRY
 struct RegWipeScope

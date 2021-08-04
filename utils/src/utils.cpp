@@ -4,7 +4,6 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <os_call.hpp>
 
 #include <algorithm>
@@ -151,17 +150,6 @@ ssize_t ReadWritePiece(int fd_src, int fd_dst)
 
 //////////////
 
-ErrnoSaver::ErrnoSaver() : v(errno) 
-{
-}
-
-ErrnoSaver::~ErrnoSaver() 
-{ 
-	errno = v;
-}
-
-
-//////////
 int pipe_cloexec(int pipedes[2])
 {
 #if defined(__APPLE__) || defined(__CYGWIN__)

@@ -74,7 +74,6 @@ bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString 
 		}
 	}
 	
-	WINPORT(TranslateErrno)();
 	return false;
 }
 
@@ -89,7 +88,6 @@ bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString 
 		}
 	}
 
-	WINPORT(TranslateErrno)();
 	return false;
 }
 
@@ -102,7 +100,6 @@ bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
 	} else
 		perror("getpwnam");
 		
-	WINPORT(TranslateErrno)();
 	return false;
 }
 
@@ -115,7 +112,6 @@ bool SetGroup(LPCWSTR Object, LPCWSTR Group)
 	} else
 		perror("getgrnam");
 		
-	WINPORT(TranslateErrno)();
 	return false;
 }
 

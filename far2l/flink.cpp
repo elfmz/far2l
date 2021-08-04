@@ -87,7 +87,6 @@ int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName)
 {
 	int r = sdc_link( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
-		WINPORT(TranslateErrno)();
 		return 0;
 	}
 	
@@ -98,8 +97,6 @@ int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, Repars
 {
 	int r = sdc_symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
-		WINPORT(TranslateErrno)();
-		
 		if (!(Flags&FCOPY_NOSHOWMSGLINK)) {
 			Message(MSG_WARNING,1,MSG(MError),
 					MSG(MCopyCannotCreateJunctionToFile),

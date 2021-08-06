@@ -73,6 +73,60 @@ enum COPY_FLAGS
 	FCOPY_UPDATEPPANEL            	= 0x80000000, // необходимо обновить пассивную панель
 };
 
+class ShellCopyFileExtendedAttributes
+{
+	FileExtendedAttributes _xattr;
+	bool _apply;
+
+	public:
+	ShellCopyFileExtendedAttributes(File &f);
+	void ApplyToCopied(File &f);
+};
+
+struct ShellCopyBuffer
+{
+	ShellCopyBuffer();
+	~ShellCopyBuffer();
+
+	const DWORD Capacity;
+
+	DWORD Size;
+
+private:
+	char * const Buffer;
+
+public:
+	char *const Ptr;
+};
+
+class ShellFileTransfer
+{
+	const wchar_t *_SrcName;
+	const FARString &_strDestName;
+	ShellCopyBuffer &_CopyBuffer;
+	DWORD _Flags;
+	const FAR_FIND_DATA_EX &_SrcData;
+
+	clock_t _Stopwatch = 0;
+	int64_t _AppendPos = -1;
+	DWORD _DstFlags = 0;
+	DWORD _ModeToCreateWith;
+
+	File _SrcFile, _DestFile;
+	std::unique_ptr<ShellCopyFileExtendedAttributes> _XAttrCopyPtr;
+
+	void Undo();
+	void RetryCancel(const wchar_t *Text, const wchar_t *Object);
+	DWORD PieceReadWrite();
+	void ProgressUpdate(bool force);
+
+public:
+	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
+		const FARString &strDestName, bool Append, ShellCopyBuffer &CopyBuffer, DWORD Flags);
+
+	void Do();
+};
+
 class ShellCopy
 {
 		DWORD Flags;
@@ -83,10 +137,6 @@ class ShellCopy
 		char   *sddata; // Security
 		DizList DestDiz;
 		FARString strDestDizPath;
-		char *CopyBuffer, *CopyBufferBase;
-		int CopyBufferSize, CopyPieceSize;
-		clock_t ProgressUpdateTime;              // Last progress bar update time
-		int ProgressUpdateThreshold;    // minimum progress bar update interval, msec
 		FARString strCopiedName;
 		FARString strRenamedName;
 		FARString strRenamedFilesPath;
@@ -102,6 +152,7 @@ class ShellCopy
 		// при AltF6 будет то, что выбрал юзер в диалоге,
 		// в остальных случаях - RP_EXACTCOPY - как у источника
 		ReparsePointTypes RPT;
+		ShellCopyBuffer CopyBuffer;
 
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
 		COPY_CODES ShellCopyOneFile(const wchar_t *Src,
@@ -118,8 +169,10 @@ class ShellCopy
 		                            int KeepPathPos, int Rename);
 
 		COPY_CODES CheckStreams(const wchar_t *Src,const wchar_t *DestPath);
+
 		int  ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
-		                   FARString &strDestName,DWORD &DestAttr,int Append);
+		                   FARString &strDestName,int Append);
+
 		int  DeleteAfterMove(const wchar_t *Name,DWORD Attr);
 		void SetDestDizPath(const wchar_t *DestPath);
 		int  AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,

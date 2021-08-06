@@ -6,6 +6,7 @@ class ErrnoSaver
 	int _errno;
 
 public:
+	inline ErrnoSaver(int err) : _errno(err) {}
 	inline ErrnoSaver() : _errno(errno) {}
 	inline ~ErrnoSaver() { errno = _errno; }
 

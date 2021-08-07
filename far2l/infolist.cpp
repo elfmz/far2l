@@ -651,7 +651,7 @@ void InfoList::ShowDirDescription(int YPos)
 			strFullDizName += strArgName;
 			FAR_FIND_DATA_EX FindData;
 
-			if (!apiGetFindDataEx(strFullDizName, FindData, true, FIND_FILE_FLAG_CASE_INSENSITIVE)) {
+			if (!apiGetFindDataEx(strFullDizName, FindData, FIND_FILE_FLAG_CASE_INSENSITIVE)) {
 				continue;
 			}
 

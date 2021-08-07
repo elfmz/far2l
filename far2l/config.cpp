@@ -767,6 +767,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeySystem, "SudoConfirmModify",&Opt.SudoConfirmModify,1, 0},
 	{1, REG_DWORD,  NKeySystem, "SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60, 0},
 
+	{1, REG_DWORD,  NKeySystem, "HowCopySymlink",&Opt.CMOpt.HowCopySymlink, 1, 0},
 	{1, REG_DWORD,  NKeySystem, "WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
 	{1, REG_DWORD,  NKeySystem, "CopyXAttr",&Opt.CMOpt.CopyXAttr, 0, 0},
 	{0, REG_DWORD,  NKeySystem, "CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1, 0},

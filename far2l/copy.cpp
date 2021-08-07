@@ -145,9 +145,9 @@ enum enumShellCopy
 	ID_SC_COPYXATTR,
 	ID_SC_MULTITARGET,
 	ID_SC_WRITETHROUGH,
-	ID_SC_SEPARATOR2,	
-	ID_SC_COPYSYMLINK,
-	ID_SC_COPYSYMLINKOUTER,
+//	ID_SC_SEPARATOR2,
+	ID_SC_COPYSYMLINK_TEXT,
+	ID_SC_COPYSYMLINK_COMBO,
 	ID_SC_SEPARATOR3,
 	ID_SC_USEFILTER,
 	ID_SC_SEPARATOR4,
@@ -665,7 +665,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Prepare Dialog Controls
 	// ***********************************************************************
-	int DLG_HEIGHT=19, DLG_WIDTH=76;
+	int DLG_HEIGHT=17, DLG_WIDTH=76;
 
 	DialogDataEx CopyDlgData[]=
 	{
@@ -679,16 +679,18 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{DI_CHECKBOX,    5, 7, 0, 7,{},0,MSG(MCopyXAttr)},
 		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyMultiActions)},
 		{DI_CHECKBOX,    5, 9, 0, 9,{},0,MSG(MCopyWriteThrough)},
-		{DI_TEXT,        3,10, 0,10,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,    5, 11, 0, 11,{}, Move ? DIF_DISABLE : 0, MSG(MCopySymLinkContents)},
-		{DI_CHECKBOX,    5, 12, 0, 12,{},0,MSG(MCopySymLinkContentsOuter)},
+//		{DI_TEXT,        3,10, 0,10,{},DIF_SEPARATOR,L""},
+
+		{DI_TEXT,        5, 10, 0, 10,{},0,MSG(MCopySymLinkText)},
+		{DI_COMBOBOX,   29, 10,70, 10,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+
+		{DI_TEXT,        3,11, 0,11,{},DIF_SEPARATOR,L""},
+		{DI_CHECKBOX,    5,12, 0,12,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
 		{DI_TEXT,        3,13, 0,13,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,    5,14, 0,14,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
-		{DI_TEXT,        3,15, 0,15,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
+		{DI_BUTTON,      0,14, 0,14,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
+		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
+		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
+		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
 		{DI_TEXT,        5, 2, 0, 2,{},DIF_SHOWAMPERSAND,L""}
 	};
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
@@ -697,23 +699,36 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	CopyDlg[ID_SC_COPYACCESSMODE].Selected=Opt.CMOpt.CopyAccessMode;
 	CopyDlg[ID_SC_COPYXATTR].Selected=Opt.CMOpt.CopyXAttr;
 
+	FarList SymLinkHowComboList;
+	FarListItem SymLinkHowTypeItems[3] {};
+
 	if (Link)
 	{
-		CopyDlg[ID_SC_COMBOTEXT].strData=MSG(MLinkType);
-		CopyDlg[ID_SC_SEPARATOR2].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_COPYSYMLINK].Selected=0;
-		CopyDlg[ID_SC_COPYSYMLINK].Flags|=DIF_DISABLE|DIF_HIDDEN;
-		CopyDlg[ID_SC_COPYSYMLINKOUTER].Selected=0;
-		CopyDlg[ID_SC_COPYSYMLINKOUTER].Flags|=DIF_DISABLE|DIF_HIDDEN;
+		CopyDlg[ID_SC_COMBOTEXT].strData = MSG(MLinkType);
+//		CopyDlg[ID_SC_SEPARATOR2].Flags|= DIF_DISABLE|DIF_HIDDEN;
+		CopyDlg[ID_SC_COPYSYMLINK_TEXT].Flags|= DIF_DISABLE|DIF_HIDDEN;
+		CopyDlg[ID_SC_COPYSYMLINK_COMBO].Flags|= DIF_DISABLE|DIF_HIDDEN;
 	}
-	else if (Move) // секция про перенос
+	else
 	{
-		CopyDlg[ID_SC_MULTITARGET].Selected = 0;
-		CopyDlg[ID_SC_MULTITARGET].Flags |= DIF_DISABLE;
-	}
-	else // секция про копирование
-	{
-		CopyDlg[ID_SC_COPYSYMLINKOUTER].Selected=1;
+		SymLinkHowTypeItems[0].Text = MSG(MLinkCopyAsIs);
+		SymLinkHowTypeItems[1].Text = MSG(MLinkCopyContentsOuter);
+		SymLinkHowTypeItems[2].Text = MSG(MLinkCopyContentsAll);
+		SymLinkHowComboList.ItemsNumber = ARRAYSIZE(SymLinkHowTypeItems);
+		SymLinkHowComboList.Items = SymLinkHowTypeItems;
+		SymLinkHowTypeItems[std::min(Opt.CMOpt.HowCopySymlink, (int)ARRAYSIZE(SymLinkHowTypeItems) - 1)].Flags|= LIF_SELECTED;
+
+		CopyDlg[ID_SC_COPYSYMLINK_COMBO].ListItems = &SymLinkHowComboList;
+
+		if (Move) // секция про перенос
+		{
+			CopyDlg[ID_SC_MULTITARGET].Selected = 0;
+			CopyDlg[ID_SC_MULTITARGET].Flags |= DIF_DISABLE;
+		}
+//		else // секция про копирование
+//		{
+//			CopyDlg[ID_SC_COPYSYMLINKOUTER].Selected=1;
+//		}
 	}
 
 	FARString strCopyStr;
@@ -924,6 +939,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		FarList ComboList;
 		FarListItem LinkTypeItems[2]={},CopyModeItems[8]={};
 
+
 		if (Link)
 		{
 			ComboList.ItemsNumber=ARRAYSIZE(LinkTypeItems);
@@ -960,6 +976,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		}
 
 		CopyDlg[ID_SC_COMBO].ListItems=&ComboList;
+
 		Dialog Dlg(CopyDlg,ARRAYSIZE(CopyDlg),CopyDlgProc,(LONG_PTR)&CDP);
 		Dlg.SetHelp(Link?L"HardSymLink":L"CopyFiles");
 		Dlg.SetId(Link?HardSymLinkId:(Move?MoveFilesId:CopyFilesId));
@@ -1093,10 +1110,15 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				Flags|=FCOPY_ONLYNEWERFILES;
 				break;
 		}
-	}
 
-	Flags|=CopyDlg[ID_SC_COPYSYMLINK].Selected?FCOPY_COPYSYMLINKCONTENTS:0;
-	Flags|=CopyDlg[ID_SC_COPYSYMLINKOUTER].Selected?FCOPY_COPYSYMLINKCONTENTSOUTER:0;
+		Opt.CMOpt.HowCopySymlink = CopyDlg[ID_SC_COPYSYMLINK_COMBO].ListPos;
+		Flags&= ~(FCOPY_COPYSYMLINKCONTENTS | FCOPY_COPYSYMLINKCONTENTSOUTER);
+		switch (Opt.CMOpt.HowCopySymlink)
+		{
+			case 1: Flags|= FCOPY_COPYSYMLINKCONTENTSOUTER; break;
+			case 2: Flags|= FCOPY_COPYSYMLINKCONTENTS; break;
+		}
+	}
 
 	if (DestPlugin && !StrCmp(CopyDlg[ID_SC_TARGETEDIT].strData,strInitDestDir))
 	{
@@ -1402,14 +1424,6 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			else if (Param1 == ID_SC_BTNCOPY)
 			{
 				SendDlgMessage(hDlg,DM_CLOSE,ID_SC_BTNCOPY,0);
-			}
-			else if (Param1 == ID_SC_COPYSYMLINK)
-			{
-				SendDlgMessage(hDlg,DM_SETCHECK,ID_SC_COPYSYMLINKOUTER,BSTATE_UNCHECKED);
-			}
-			else if (Param1 == ID_SC_COPYSYMLINKOUTER)
-			{
-				SendDlgMessage(hDlg,DM_SETCHECK,ID_SC_COPYSYMLINK,BSTATE_UNCHECKED);				
 			}
 			/*
 			else if(Param1 == ID_SC_ONLYNEWER && ((DlgParam->thisClass->Flags)&FCOPY_LINK))
@@ -1834,6 +1848,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 					continue;
 				}
+
+///fprintf(stderr, "!!!!! RPT=%x for '%ls'\n", (SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT), strSelName.CPtr());
+
+
 			}
 
 
@@ -2120,28 +2138,28 @@ static bool IsOuterTarget(const wchar_t *Root, const wchar_t *SymLink)
 	return false;
 }
 
-COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData)
+COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData)
 {
-	int r = sdc_symlink( Wide2MB(Target).c_str() , Wide2MB(NewName).c_str() );
+	int r = sdc_symlink( Target, Wide2MB(NewName).c_str());
 	if (r == 0) 
 		return COPY_SUCCESS;
 
 	if (errno == EEXIST ) {
 		int RetCode = 0, Append = 0;
-		FARString strNewName = NewName;
-		if (AskOverwrite(SrcData, Target, NewName, 0, 0, 0, 0, Append, strNewName, RetCode)) {
+		FARString strNewName = NewName, strTarget = Target;
+		if (AskOverwrite(SrcData, strTarget, NewName, 0, 0, 0, 0, Append, strNewName, RetCode)) {
 			if (strNewName == NewName) {
 				fprintf(stderr, 
-					"DumbCopySymLink('%ls', '%ls') - overwriting and strNewName='%ls'\n", 
+					"CreateSymLink('%s', '%ls') - overwriting and strNewName='%ls'\n", 
 					Target, NewName, strNewName.CPtr());
 				sdc_remove(strNewName.GetMB().c_str() );
-				sdc_rmdir(strNewName.GetMB().c_str() );
+
 			} else {
 				fprintf(stderr, 
-					"DumbCopySymLink('%ls', '%ls') - renaming and strNewName='%ls'\n", 
+					"CreateSymLink('%s', '%ls') - renaming and strNewName='%ls'\n", 
 					Target, NewName, strNewName.CPtr());
 			}
-			return DumbCopySymLink(Target, strNewName.CPtr(), SrcData);
+			return CreateSymLink(Target, strNewName.CPtr(), SrcData);
 		}
 			
 		return (COPY_CODES)RetCode;
@@ -2160,7 +2178,8 @@ COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewN
 		case 1: 
 			return COPY_FAILURE;
 
-		case 2: default:
+		case 2:
+		default:
 			return COPY_CANCEL;
 	}
 }
@@ -2168,30 +2187,43 @@ COPY_CODES ShellCopy::DumbCopySymLink(const wchar_t *Target, const wchar_t *NewN
 COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
 						const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData)
 {
+	// existing symlink is absolute but points into something inside of copied tree
+	// in such case convert it into relative making resulted symlink to point to same object
+	FARString strExistingName;
+	ConvertNameToFull(ExistingName, strExistingName);
+
+	//fprintf(stderr, "CopySymLink('%ls', '%ls', '%ls') '%ls'\n", Root, ExistingName, NewName, strRealName.CPtr());
+	const std::string &mbExistingName = strExistingName.GetMB();
+	char LinkTarget[PATH_MAX + 1];
+	ssize_t r = sdc_readlink(mbExistingName.c_str(), LinkTarget, sizeof(LinkTarget) - 1);
+	if (r > 0 && r < (ssize_t)sizeof(LinkTarget) && LinkTarget[0]) {
+		LinkTarget[r] = 0;
+	} else {
+		LinkTarget[0] = 0;
+	}
+
+	// if existing symlink is relative or its final target is out of current copy tree
+	// then just create exactly same symlink as existing one
+	if ((Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) == 0
+			|| (LinkTarget[0] != '/' || IsOuterTarget(Root, ExistingName))) {
+		FARString strNewName;
+		ConvertNameToFull(NewName, strNewName);
+		return CreateSymLink(LinkTarget, strNewName.CPtr(), SrcData);
+	}
+
 	FARString strRealName;
 	ConvertNameToReal(ExistingName, strRealName);
 
-	//fprintf(stderr, "CopySymLink('%ls', '%ls', '%ls') '%ls'\n", Root, ExistingName, NewName, strRealName.CPtr());
-
-	if (IsOuterTarget(Root, ExistingName))  {
-		FARString strNewName;
-		ConvertNameToFull(NewName, strNewName);
-		return DumbCopySymLink(strRealName.CPtr(), strNewName.CPtr(), SrcData);
-	}
-
-	FARString strExistingName;
-	ConvertNameToFull(ExistingName, strExistingName);
-	
-	std::wstring relative_name;
+	std::string relative_name;
 	for (size_t i = 0;; ++i) {
 		if (i == strRealName.GetLength() || i == strExistingName.GetLength() || strRealName[i] != strExistingName[i]) {
 			assert( i > 0 );
 			for (--i; (i > 0 && strRealName[i] != GOOD_SLASH); --i);
 			assert( i > 0 );
-			relative_name = strRealName.CPtr() + i + 1;
+			Wide2MB(strRealName.CPtr() + i + 1, relative_name);
 			for (++i; i < strExistingName.GetLength(); ++i) {
 				if (strExistingName[i] == GOOD_SLASH) {
-					relative_name.insert(0, L"../");
+					relative_name.insert(0, "../");
 				}
 			}
 
@@ -2200,11 +2232,13 @@ COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingNa
 	}
 
 	if (relative_name.empty()) {
-		fprintf(stderr, "CopySymLink: empty relative name for strRealName='%ls' strExistingName='%ls'\n",strRealName.CPtr(), strExistingName.CPtr());
+		fprintf(stderr,
+			"CopySymLink: empty relative name for strRealName='%ls' strExistingName='%ls'\n",
+				strRealName.CPtr(), strExistingName.CPtr());
 	}
 	assert(!relative_name.empty());
 
-	return DumbCopySymLink(relative_name.c_str(), NewName, SrcData);
+	return CreateSymLink(relative_name.c_str(), NewName, SrcData);
 }
 
 
@@ -2342,10 +2376,10 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 	if (!(Flags&FCOPY_COPYTONUL))
 	{
 		const bool copy_sym_link = (RPT == RP_EXACTCOPY && 
-			SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && 
+			(SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && 
 			!(Flags&FCOPY_COPYSYMLINKCONTENTS) &&
 			(!(Flags&FCOPY_COPYSYMLINKCONTENTSOUTER) || !IsOuterTarget(Root, Src))  );
-		
+
 		if (SrcData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY || copy_sym_link)
 		{
 			if (!Rename)

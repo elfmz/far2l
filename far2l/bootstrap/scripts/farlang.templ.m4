@@ -2860,23 +2860,41 @@ MLinkTypeSymlinkDirectory
 "link symboliczny (do &folderu)"
 "enlace simbólico (&directorios)"
 
-MCopySymLinkContents
-"Копировать содерж&имое всех символических ссылок"
-"Cop&y contents of all symbolic links"
-upd:"Kopírovat obsah sym&bolických linků"
-upd:"Inhalte von s&ymbolischen Links kopieren"
-upd:"Sz&imbolikus linkek másolása"
-upd:"&Kopiuj zawartość linków symbolicznych"
-upd:"Copiar contenidos de enlaces simbólicos"
+MCopySymLinkText
+"Символические &ссылки:"
+"With &symlinks:"
+upd:"With &symlinks:"
+upd:"With &symlinks:"
+upd:"With &symlinks:"
+upd:"With &symlinks:"
+upd:"With &symlinks:"
 
-MCopySymLinkContentsOuter
-"Копировать содержимое &внешних символических ссылок"
-"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
+MLinkCopyAsIs
+"&Копировать ссылки"
+"Just &copy links"
+upd:"Just &copy links"
+upd:"Just &copy links"
+upd:"Just &copy links"
+upd:"Just &copy links"
+upd:"Just &copy links"
+
+MLinkCopyContentsOuter
+"Копировать содержимое &внешних файлов"
+"Copy contents of oute&r files"
+upd:"Copy contents of oute&r files"
+upd:"Copy contents of oute&r files"
+upd:"Copy contents of oute&r files"
+upd:"Copy contents of oute&r files"
+upd:"Copy contents of oute&r files"
+
+MLinkCopyContentsAll
+"Копировать содержимое &всех файлов"
+"Copy contents of &all files"
+upd:"Copy contents of &all files"
+upd:"Copy contents of &all files"
+upd:"Copy contents of &all files"
+upd:"Copy contents of &all files"
+upd:"Copy contents of &all files"
 
 MCopyMultiActions
 "Обр&абатывать несколько имён файлов"

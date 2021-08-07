@@ -213,13 +213,11 @@ void apiFreeFindData(
     FAR_FIND_DATA *pData
 );
 
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName,
-	FAR_FIND_DATA_EX& FindData,
-	bool ScanSymLink = true);
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData);
+
 BOOL apiGetFindDataEx(
     const wchar_t *lpwszFileName,
     FAR_FIND_DATA_EX& FindData,
-    bool ScanSymLink = true,
     DWORD WinPortFindFlags = 0);
 
 bool apiGetFileSizeEx(

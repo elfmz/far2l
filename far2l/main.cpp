@@ -80,7 +80,7 @@ int DirectRT=0;
 
 static void print_help(const char *self)
 {
-	printf( "FAR2L - oldschool file manager, with built-in terminal and other usefullness'es\n"
+	printf( "FAR2L - oldschool file manager, with built-in terminal and other usefulness'es\n"
 		"Usage: %s [switches] [-cd apath [-cd ppath]]\n\n"
 		"where\n"
 		"  apath - path to a folder (or a file or an archive or command with prefix)\n"

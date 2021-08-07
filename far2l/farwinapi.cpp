@@ -568,19 +568,31 @@ void apiFreeFindData(FAR_FIND_DATA *pData)
 	xf_free(pData->lpwszFileName);
 }
 
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink)
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData)
 {
 	struct stat s{};
-	int r = ScanSymLink ? sdc_stat(Wide2MB(lpwszFileName).c_str(), &s) : sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
+	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
 	if (r == -1) {
 		return FALSE;
 	}
+
+	DWORD symattr = 0;
+	if ((s.st_mode & S_IFMT) == S_IFLNK) {
+		struct stat s2{};
+		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s2) == 0) {
+			s = s2;
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT;
+		} else {
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+		}
+	}
+
 	FindData.Clear();
 	FindData.strFileName = PointToName(lpwszFileName);
 	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
-	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName);
+	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName) | symattr;
 	FindData.nFileSize = s.st_size;
 	FindData.dwUnixMode = s.st_mode;
 	FindData.nHardLinks = (DWORD)s.st_nlink;
@@ -592,9 +604,9 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 	return TRUE;
 }
 
-BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink, DWORD WinPortFindFlags)
+BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData, DWORD WinPortFindFlags)
 {
-	FindFile Find(lpwszFileName, ScanSymLink, WinPortFindFlags);
+	FindFile Find(lpwszFileName, true, WinPortFindFlags);
 	if(Find.Get(FindData))
 	{
 		return TRUE;
@@ -602,7 +614,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 
 	if (!wcspbrk(lpwszFileName,L"*?"))
 	{
-		if (apiGetFindDataForExactPathName(lpwszFileName, FindData,ScanSymLink))
+		if (apiGetFindDataForExactPathName(lpwszFileName, FindData))
 		{
 			return TRUE;
 		}

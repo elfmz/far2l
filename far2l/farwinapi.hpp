@@ -159,6 +159,7 @@ public:
 	bool Close();
 	bool Eof();
 	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}
+	int Descriptor();
 
 private:
 	HANDLE Handle;

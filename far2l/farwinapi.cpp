@@ -230,6 +230,11 @@ bool File::Chmod(DWORD dwUnixMode)
 	return true;
 }
 
+int File::Descriptor()
+{
+	return WINPORT(GetFileDescriptor)(Handle);
+}
+
 FemaleBool File::QueryFileExtendedAttributes(FileExtendedAttributes &xattr)
 {
 	xattr.clear();

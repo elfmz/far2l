@@ -592,11 +592,11 @@ the default code page is used.
     For folders: if the specified path (absolute or relative) points to an
 existing folder, the source folder is moved inside that folder. Otherwise the
 folder is renamed/moved to the new path.
-    E.g. when moving #c:\folder1\# to #d:\folder2\#:
-    - if #d:\folder2\# exists, contents of #c:\folder1\# is
-moved into #d:\folder2\folder1\#;
-    - otherwise contents of #c:\folder1\# is moved into the
-newly created #d:\folder2\#.
+    E.g. when moving #/folder1/# to #/folder2/#:
+    - if #/folder2/# exists, contents of #/folder1/# is
+moved into #/folder2/folder1/#;
+    - otherwise contents of #/folder1/# is moved into the
+newly created #/folder2/#.
 
   ~Delete file~@DeleteFile@ under cursor                                  #Shift-F8#
   Save configuration                                        #Shift-F9#
@@ -1354,8 +1354,8 @@ create multiple folders in a single operation. In this case, folder names
 should be separated with the character "#;#" or "#,#". If the option is enabled
 and the name of the folder contains a character "#;#" (or "#,#"), it must be
 enclosed in quotes. For example, if the user enters
-#C:\\Foo1;"E:\\foo,2;";D:\\foo3#, folders called "#C:\\Foo1#", "#E:\\foo,2;#"
-and "#D:\\foo3#" will be created.
+#/Foo1;"/foo,2;";/foo3#, folders called "#/Foo1#", "#/foo,2;#"
+and "#/foo3#" will be created.
 
 
 @FindFile
@@ -3611,18 +3611,45 @@ $ #Copying, moving, renaming and creating links#
     For folders: if the specified path (absolute or relative) points to an
 existing folder, the source folder is moved inside that folder. Otherwise the
 folder is renamed/moved to the new path.
-    E.g. when moving #c:\folder1\# to #d:\folder2\#:
-    - if #d:\folder2\# exists, contents of #c:\folder1\# is
-moved into #d:\folder2\folder1\#;
-    - otherwise contents of #c:\folder1\# is moved into the
-newly created #d:\folder2\#.
+    E.g. when moving #/folder1/# to #/folder2/#:
+    - if #/folder2/# exists, contents of #/folder1/# is
+moved into #/folder2/folder1/#;
+    - otherwise contents of #/folder1/# is moved into the
+newly created #/folder2/#.
 
   Create ~file links~@HardSymLink@                                         #Alt-F6#
 
-    If the option "#Process multiple destinations#" is enabled, you may specify
+    If #Copy files access mode# is enabled, then copied files will get same
+UNIX access mode bits as original files had unless some bits masked out by current umask.
+
+    If #Copy extended attributes# is enabled, then copied files will get same
+extended attributes as original files.
+
+    If #Process multiple destinations# is enabled, you may specify
 multiple copy or move targets in the input line. In this case, targets should
 be separated with a character "#;#" or "#,#". If the name of a target contains
 the character ";" or ",", it must be enclosed in quotes.
+
+    If #Disable write cache# is enabled, then copy routine will use O_DIRECT flag
+unless its not supported by OS or filesystem.
+
+    If #Produce sparse files# is enabled, then copy routine will detect zero-filled
+regions at least 4KB length and will create sparse files with holes instead of such regions.
+
+    If #Use copy-on-write# is enabled, then copy routine will use special kernel API
+that copies files in a way, so copied files refer orginal files data and will be really
+copied only when that data will be modified in any of files. Note that this functionality
+requires Linux kernel v4.5 or better and any FS that supports COW files, otherwise files
+will be silently copied using conventional way.
+
+    #With symlink# combobox allows to chose from any of three possible ways of handling
+symlinks during copying:
+    - Either all symlinks will be copied as is.
+    - Either far2l will check each symlink target to find out if it refers 'outer' file 
+or some file also being copied. In first case link will be copied as file, in second
+it will be copied as symlink with possible adjusted destination, so it will refer copied
+target file.
+    - Either all symlinks will be copied as files.
 
     If you wish to create the destination folder before copying, terminate the
 name with backslash. Also in the Copy dialog you may press #F10# to select a
@@ -3644,15 +3671,6 @@ possible to either cancel the operation or replace the disk and select the
 disks. This feature is available only when "Use system copy routine" option in
 the ~System settings~@SystemSettings@ dialog is switched off.
 
-    The "Access rights" option is valid only for the NTFS file system and
-allows the copying of file access information. The "Default" action which
-leaves the access rights processing to the underlying system is selected by
-default for copy and move operations. If the "Copy" action is selected then
-the original access rights will be applied to the copied/moved files and
-folders. If the "Inherit" action is selected then after copying/moving the
-inheritable access rights of the destination parent folder will be applied to
-the copied/moved files and folders.
-
     The "Already existing files" option controls FAR2L behavior if a target file
 of the same name already exists.
     Possible values:
@@ -3661,35 +3679,14 @@ of the same name already exists.
     #Skip# - target files will not be replaced;
     #Append# - target file will be appended with the file being copied;
     #Only newer file(s)# - only files with newer write date and time
-will be copied;
+will be copied; This option affects only the current copy session and not saved
+for later copy operations.
     #Also ask on R/O files# - controls whether an additional confirmation
 dialog should be displayed for read-only files.
-
-    Option "Use system copy routine" from ~System settings~@SystemSettings@
-dialog forces the Windows function CopyFileEx usage (or CopyFile if CopyFileEx
-is not available) instead of the internal copy implementation to copy files. It
-may be useful on NTFS, because CopyFileEx performs a more rational disk space
-allocation and copies file extended attributes.
-The system copy routine is not used when the file is encrypted and you are
-copying it outside of the current disk.
-
-    The "Copy contents of symbolic links" option allows to control the
-~logic~@CopyRule@ of FAR2L processing of ~symbolic links~@HardSymLink@ when
-copying/moving.
 
     When moving files, to determine whether the operation should be performed
 as a copy with subsequent deletion or as a direct move (within one physical
 drive), FAR2L takes into account ~symbolic links~@HardSymLink@.
-
-    FAR2L handles copying to #con# in the same way as copying to #nul# or
-#\\\\.\\nul# - that is, the file is read from the disk but not written
-anywhere.
-
-    When files are moved to #nul#, #\\\\.\\nul# or #con#, they are not deleted
-from the disk.
-
-    The options "Access rights" and "Only newer files" affect only the current
-copy session and are not saved for later copy operations.
 
     Check the #Use filter# checkbox to copy the files that meet the user
 defined conditions. Press the #Filter# button to open the ~filters menu~@FiltersMenu@.
@@ -3725,44 +3722,10 @@ $ #Copying: rules#
     When ~copying/moving~@CopyFiles@ folders and/or
 ~symbolic links~@HardSymLink@ the following rules apply:
 
-    #Copying of symbolic links#
-
-    If the "Copy contents of symbolic links" option is on or the source or the
-destination are remote disks, then a folder will be created at the destination
-and the contents of the source symbolic link will be copied to it (recursively
-for enclosed links).
-
-    If the "Copy contents of symbolic links" option is off and the source and
-the destination are local disks, then a symbolic link pointing to the source
-symbolic link will be created at the destination.
-
-    #Moving of symbolic links#
-
-    If the "Copy contents of symbolic links" option is on or the source or the
-destination are remote disks, then a folder will be created at the destination
-and the contents of the source symbolic links will be copied to it (recursively
-for enclosed links). The source symbolic link is then deleted.
-
-    If the "Copy contents of symbolic links" option is off and the source and
-the destination are local disks, then the source symbolic link will be moved to
-the destination. Recursive descent of the tree will not be made.
-
-    #Moving of a folder, than contains symbolic links#
-
-    If the source and the destination are local disk, then the folder will be
-moved as a normal folder.
-
-    If the source or the destination are remote disks, then with no regard to
-the "Copy contents of symbolic links" option a folder will be created in the
-destination and the contents of the source symbolic link will be copied to it
-(recursively for enclosed links). The source symbolic link is then deleted.
-
-
 @HardSymLink
 $ #Hard and Symbolic link#
-    On NTFS volumes you can create #hard links# for files, #junctions# for
-folders and #symbolic links# for files and folders using the #Alt-F6# command.
-
+    You can create #hard links# or #symbolic links# for files and only
+#symbolic links# for folders using the #Alt-F6# command.
 
     #Hard links#
 
@@ -3783,25 +3746,11 @@ bin, the number of links of a file does not change.
 in a separate column (by default, it's the last column in the 9th panel mode)
 and sort the files by hard link number.
 
-    Hard links can only be created on the same drive as the source file.
-
-    #Junctions#
-
-    This technology allowing to map any local directories to any other local
-directories. For example, if the directory D:\\SYMLINK has C:\\WINNT\\SYSTEM32
-as its target, a program accessing D:\\SYMLINK\\DRIVERS will actually access
-C:\\WINNT\\SYSTEM32\\DRIVERS. Unlike hard links, symbolic links are not required
-to have a target on the same drive.
-
-    Under Windows 2000 it is not allowed to create symbolic links directly to
-CD-ROM directories, but this restriction can be overcome by mounting a CD-ROM
-to a directory on an NTFS partition.
+    Hard links can only be created on the same device as the source file.
 
     #Symbolic links#
 
-    NTFS supports symbolic links starting from Windows Vista (NT 6.0). It's an
-improved version of directory junctions - symbolic links can also point to files
-and non-local folders, relative paths also supported.
+    Symbolic links point to files and non-local folders, relative paths also supported.
 
 
 @ErrCopyItSelf

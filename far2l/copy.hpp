@@ -52,7 +52,7 @@ enum COPY_CODES
 
 enum COPY_FLAGS
 {
-	FCOPY_COPYTONUL               	= 0x00000001, // Признак копирования в NUL
+	RESERVED                      	= 0x00000001, //
 	FCOPY_CURRENTONLY             	= 0x00000002, // Только текщий?
 	FCOPY_ONLYNEWERFILES          	= 0x00000004, // Copy only newer files
 	FCOPY_OVERWRITENEXT           	= 0x00000008, // Overwrite all
@@ -65,12 +65,73 @@ enum COPY_FLAGS
 	FCOPY_STREAMSKIP              	= 0x00000800, // потоки
 	FCOPY_STREAMALL               	= 0x00001000, // потоки
 	FCOPY_SKIPSETATTRFLD          	= 0x00002000, // больше не пытаться ставить атрибуты для каталогов - когда нажали Skip All
-	FCOPY_COPYSYMLINKCONTENTS     	= 0x00004000, // Copy symbolics links content instead of making new links
-	FCOPY_COPYSYMLINKCONTENTSOUTER	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	FCOPY_COPYSYMLINK_ASFILE      	= 0x00004000, // Copy symbolics links content instead of making new links
+	FCOPY_COPYSYMLINK_SMART       	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
 	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
 	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
+	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
+	FCOPY_USECOW                  	= 0x00200000, // enable COW funcionality if FS supports it
 	FCOPY_COPYLASTTIME            	= 0x10000000, // При копировании в несколько каталогов устанавливается для последнего.
 	FCOPY_UPDATEPPANEL            	= 0x80000000, // необходимо обновить пассивную панель
+};
+
+class ShellCopyFileExtendedAttributes
+{
+	FileExtendedAttributes _xattr;
+	bool _apply;
+
+	public:
+	ShellCopyFileExtendedAttributes(File &f);
+	void ApplyToCopied(File &f);
+};
+
+struct ShellCopyBuffer
+{
+	ShellCopyBuffer();
+	~ShellCopyBuffer();
+
+	const DWORD Capacity;
+
+	DWORD Size;
+
+private:
+	char * const Buffer;
+
+public:
+	char *const Ptr;
+};
+
+class ShellFileTransfer
+{
+	const wchar_t *_SrcName;
+	const FARString &_strDestName;
+	ShellCopyBuffer &_CopyBuffer;
+	DWORD _Flags;
+	const FAR_FIND_DATA_EX &_SrcData;
+
+	clock_t _Stopwatch = 0;
+	int64_t _AppendPos = -1;
+	DWORD _DstFlags = 0;
+	DWORD _ModeToCreateWith;
+
+	File _SrcFile, _DestFile;
+	bool _LastWriteWasHole = false;
+	bool _Done = false;
+	std::unique_ptr<ShellCopyFileExtendedAttributes> _XAttrCopyPtr;
+
+	void Undo();
+	void RetryCancel(const wchar_t *Text, const wchar_t *Object);
+	DWORD PieceWrite(const void *Data, DWORD Size);
+	DWORD PieceWriteHole(DWORD Size);
+	DWORD PieceCopy();
+	void ProgressUpdate(bool force);
+
+public:
+	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
+		const FARString &strDestName, bool Append, ShellCopyBuffer &CopyBuffer, DWORD Flags);
+	~ShellFileTransfer();
+
+	void Do();
 };
 
 class ShellCopy
@@ -79,14 +140,9 @@ class ShellCopy
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
-		FARString strDestFSName;
 		char   *sddata; // Security
 		DizList DestDiz;
 		FARString strDestDizPath;
-		char *CopyBuffer, *CopyBufferBase;
-		int CopyBufferSize, CopyPieceSize;
-		clock_t ProgressUpdateTime;              // Last progress bar update time
-		int ProgressUpdateThreshold;    // minimum progress bar update interval, msec
 		FARString strCopiedName;
 		FARString strRenamedName;
 		FARString strRenamedFilesPath;
@@ -102,6 +158,7 @@ class ShellCopy
 		// при AltF6 будет то, что выбрал юзер в диалоге,
 		// в остальных случаях - RP_EXACTCOPY - как у источника
 		ReparsePointTypes RPT;
+		ShellCopyBuffer CopyBuffer;
 
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
 		COPY_CODES ShellCopyOneFile(const wchar_t *Src,
@@ -118,8 +175,10 @@ class ShellCopy
 		                            int KeepPathPos, int Rename);
 
 		COPY_CODES CheckStreams(const wchar_t *Src,const wchar_t *DestPath);
+
 		int  ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
-		                   FARString &strDestName,DWORD &DestAttr,int Append);
+		                   FARString &strDestName,int Append);
+
 		int  DeleteAfterMove(const wchar_t *Name,DWORD Attr);
 		void SetDestDizPath(const wchar_t *DestPath);
 		int  AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
@@ -129,7 +188,7 @@ class ShellCopy
 		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
 		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL
 		
-		COPY_CODES DumbCopySymLink(const wchar_t *Target, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
+		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 		COPY_CODES CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
 					const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData);
 	public:

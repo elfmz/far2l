@@ -159,10 +159,13 @@ public:
 	bool Close();
 	bool Eof();
 	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}
+	int Descriptor();
 
 private:
 	HANDLE Handle;
 };
+
+bool apiIsDevNull(const wchar_t *Src);
 
 bool apiGetEnvironmentVariable(
     const char *lpszName,
@@ -213,13 +216,11 @@ void apiFreeFindData(
     FAR_FIND_DATA *pData
 );
 
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName,
-	FAR_FIND_DATA_EX& FindData,
-	bool ScanSymLink = true);
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData);
+
 BOOL apiGetFindDataEx(
     const wchar_t *lpwszFileName,
     FAR_FIND_DATA_EX& FindData,
-    bool ScanSymLink = true,
     DWORD WinPortFindFlags = 0);
 
 bool apiGetFileSizeEx(
@@ -276,12 +277,6 @@ BOOL apiGetDiskSize(
 BOOL apiCreateDirectory(
     LPCWSTR lpPathName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes
-);
-
-BOOL apiCreateDirectoryEx(
-    LPCWSTR TemplateDirectory,
-    LPCWSTR NewDirectory,
-    LPSECURITY_ATTRIBUTES SecurityAttributes
 );
 
 DWORD apiGetFileAttributes(

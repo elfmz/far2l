@@ -2879,13 +2879,13 @@ upd:"Always copy &link"
 upd:"Always copy &link"
 
 MLinkCopySmart
-"&Автовыбор: копировать файл или ссылку"
-"&Autodetect: copy target file or link"
-upd:"&Autodetect: copy target file or link"
-upd:"&Autodetect: copy target file or link"
-upd:"&Autodetect: copy target file or link"
-upd:"&Autodetect: copy target file or link"
-upd:"&Autodetect: copy target file or link"
+"&Умно копировать ссылку или файл"
+"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
 
 MLinkCopyContent
 "Копировать как &файл"

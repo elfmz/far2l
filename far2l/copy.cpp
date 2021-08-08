@@ -717,8 +717,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	else
 	{
 		SymLinkHowTypeItems[0].Text = MSG(MLinkCopyAsIs);
-		SymLinkHowTypeItems[1].Text = MSG(MLinkCopyContentsOuter);
-		SymLinkHowTypeItems[2].Text = MSG(MLinkCopyContentsAll);
+		SymLinkHowTypeItems[1].Text = MSG(MLinkCopySmart);
+		SymLinkHowTypeItems[2].Text = MSG(MLinkCopyContent);
 		SymLinkHowComboList.ItemsNumber = ARRAYSIZE(SymLinkHowTypeItems);
 		SymLinkHowComboList.Items = SymLinkHowTypeItems;
 		SymLinkHowTypeItems[std::min(Opt.CMOpt.HowCopySymlink, (int)ARRAYSIZE(SymLinkHowTypeItems) - 1)].Flags|= LIF_SELECTED;
@@ -1053,7 +1053,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// *** Стадия подготовки данных после диалога
 	// ***********************************************************************
 	Flags&=~ (FCOPY_WRITETHROUGH | FCOPY_COPYACCESSMODE | FCOPY_COPYXATTR | FCOPY_SPARSEFILES
-		| FCOPY_USECOW | FCOPY_COPYSYMLINKCONTENTS | FCOPY_COPYSYMLINKCONTENTSOUTER);
+		| FCOPY_USECOW | FCOPY_COPYSYMLINK_ASFILE | FCOPY_COPYSYMLINK_SMART);
 	ReadOnlyDelMode=ReadOnlyOvrMode=OvrMode=SkipEncMode=SkipMode=SkipDeleteMode=-1;
 
 	if (Link)
@@ -1107,8 +1107,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		Opt.CMOpt.HowCopySymlink = CopyDlg[ID_SC_COPYSYMLINK_COMBO].ListPos;
 		switch (Opt.CMOpt.HowCopySymlink)
 		{
-			case 1: Flags|= FCOPY_COPYSYMLINKCONTENTSOUTER; break;
-			case 2: Flags|= FCOPY_COPYSYMLINKCONTENTS; break;
+			case 1: Flags|= FCOPY_COPYSYMLINK_SMART; break;
+			case 2: Flags|= FCOPY_COPYSYMLINK_ASFILE; break;
 		}
 	}
 
@@ -1236,13 +1236,12 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				Flags&=~FCOPY_DIZREAD;
 				// сохраним выделение
 				SrcPanel->SaveSelection();
-				strDestFSName.Clear();
-				int OldCopySymlinkContents=Flags&(FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER);
+				int OldCopySymlinkContents=Flags&(FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART);
 				// собственно - один проход копирования
 				// Mantis#45: Необходимо привсти копирование ссылок на папки с NTFS на FAT к более логичному виду
 				{
 					//todo: If dst does not support symlinks
-					//Flags|=FCOPY_COPYSYMLINKCONTENTS;
+					//Flags|=FCOPY_COPYSYMLINK_ASFILE;
 				}
 				PreRedraw.Push(PR_ShellCopyMsg);
 				PreRedrawItem preRedrawItem=PreRedraw.Peek();
@@ -1251,7 +1250,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				int I=CopyFileTree(strNameTmp);
 				PreRedraw.Pop();
 
-				Flags&=~(FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER);
+				Flags&=~(FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART);
 				Flags|=OldCopySymlinkContents;					
 
 				if (I == COPY_CANCEL)
@@ -1757,7 +1756,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	// Выставим признак "Тот же диск"
 	bool AllowMoveByOS=false;
 
-	if ( (Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER|FCOPY_MOVE)) == FCOPY_MOVE)
+	if ( (Flags & (FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART|FCOPY_MOVE)) == FCOPY_MOVE)
 	{
 		FARString strTmpSrcDir;
 		SrcPanel->GetCurDir(strTmpSrcDir);
@@ -1791,8 +1790,8 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 /*			if (!AreSymlinksSupported(Wide2MB(Dest).c_str()) && AreSymlinksSupported(Wide2MB(Src).c_str())) {
 				// "замочим" к едрене фени симлинк - копируем полный контент, независимо от опции
 				// (но не для случая переименования линка)
-				Flags&= ~FCOPY_COPYSYMLINKCONTENTSOUTER;
-				Flags|=FCOPY_COPYSYMLINKCONTENTS;
+				Flags&= ~FCOPY_COPYSYMLINK_SMART;
+				Flags|=FCOPY_COPYSYMLINK_ASFILE;
 			}*/
 
 			KeepPathPos=(int)(PointToName(strSelName)-strSelName.CPtr());
@@ -1844,7 +1843,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			{
 				// Тыкс, а как на счет "тот же диск"?
 				if (KeepPathPos && PointToName(strDest)==strDest &&
-					(Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) == 0)
+					(Flags & (FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART)) == 0)
 				{
 					strDestPath = strSelName;
 					strDestPath.SetLength(KeepPathPos);
@@ -1855,7 +1854,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				if ((UseFilter || !AllowMoveByOS) || //can't move across different devices
 				//if any symlinks copy may occur - parse whole tree
 					( (SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY)) != 0 && 
-						(Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) != 0 ) ) 
+						(Flags & (FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART)) != 0 ) ) 
 				{
 					CopyCode=COPY_FAILURE;
 				}
@@ -1940,21 +1939,21 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			if (RPT!=RP_SYMLINKFILE && (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 			        (
 			            !(SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) ||
-			            ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && (Flags&FCOPY_COPYSYMLINKCONTENTS))
+			            ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && (Flags&FCOPY_COPYSYMLINK_ASFILE))
 			        )
 			   )
 			{
 				int SubCopyCode;
 				FARString strSubName;
 				FARString strFullName;
-				ScanTree ScTree(TRUE,TRUE,Flags&FCOPY_COPYSYMLINKCONTENTS);
+				ScanTree ScTree(TRUE,TRUE,Flags&FCOPY_COPYSYMLINK_ASFILE);
 				strSubName = strSelName;
 				strSubName += L"/";
 
 				if (DestAttr==INVALID_FILE_ATTRIBUTES)
 					KeepPathPos=(int)strSubName.GetLength();
 
-				int NeedRename=!((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && (Flags&FCOPY_COPYSYMLINKCONTENTS) && (Flags&FCOPY_MOVE));
+				int NeedRename=!((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) && (Flags&FCOPY_COPYSYMLINK_ASFILE) && (Flags&FCOPY_MOVE));
 				ScTree.SetFindPath(strSubName,L"*",FSCANTREE_FILESFIRST);
 
 				while (ScTree.GetNextName(&SrcData,strFullName))
@@ -2038,7 +2037,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 							if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 							{
 								if (ScTree.IsDirSearchDone() ||
-								        ((SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINKCONTENTS)))
+								        ((SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINK_ASFILE)))
 								{
 									TemporaryMakeWritable tmw(strFullName);
 									//if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -2156,8 +2155,8 @@ COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, 
 			NewName, MSG(MYes), MSG(MSkip), MSG(MCancel)   ))
 	{
 		case 0: 
-			Flags&= ~FCOPY_COPYSYMLINKCONTENTSOUTER;
-			Flags|= FCOPY_COPYSYMLINKCONTENTS;
+			Flags&= ~FCOPY_COPYSYMLINK_SMART;
+			Flags|= FCOPY_COPYSYMLINK_ASFILE;
 			return COPY_RETRY;
 
 		case 1: 
@@ -2189,7 +2188,7 @@ COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingNa
 
 	// if existing symlink is relative or its final target is out of current copy tree
 	// then just create exactly same symlink as existing one
-	if ((Flags & (FCOPY_COPYSYMLINKCONTENTS|FCOPY_COPYSYMLINKCONTENTSOUTER)) == 0
+	if ((Flags & (FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART)) == 0
 			|| (LinkTarget[0] != '/' || IsOuterTarget(Root, ExistingName))) {
 		FARString strNewName;
 		ConvertNameToFull(NewName, strNewName);
@@ -2305,7 +2304,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 	{
 		int CmpCode=CmpFullNames(Src,strDestPath);
 
-		if(CmpCode && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && RPT==RP_EXACTCOPY && !(Flags&FCOPY_COPYSYMLINKCONTENTS))
+		if(CmpCode && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && RPT==RP_EXACTCOPY && !(Flags&FCOPY_COPYSYMLINK_ASFILE))
 		{
 			CmpCode = 0;
 		}
@@ -2359,8 +2358,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 
 	const bool copy_sym_link = (RPT == RP_EXACTCOPY && 
 		(SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && 
-		!(Flags&FCOPY_COPYSYMLINKCONTENTS) &&
-		(!(Flags&FCOPY_COPYSYMLINKCONTENTSOUTER) || !IsOuterTarget(Root, Src))  );
+		!(Flags&FCOPY_COPYSYMLINK_ASFILE) &&
+		(!(Flags&FCOPY_COPYSYMLINK_SMART) || !IsOuterTarget(Root, Src))  );
 
 	if ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) != 0 || copy_sym_link)
 	{
@@ -2467,7 +2466,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 		{
 			int CmpCode=CmpFullNames(Src,strDestPath);
 
-			if(CmpCode && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && RPT==RP_EXACTCOPY && !(Flags&FCOPY_COPYSYMLINKCONTENTS))
+			if(CmpCode && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT && RPT==RP_EXACTCOPY && !(Flags&FCOPY_COPYSYMLINK_ASFILE))
 			{
 				CmpCode = 0;
 			}
@@ -2510,103 +2509,35 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 		}
 	}
 
-	int NWFS_Attr=(Opt.Nowell.MoveRO && !StrCmp(strDestFSName,L"NWFS"))?TRUE:FALSE;
+	for (;;)
 	{
-		for (;;)
+		int CopyCode=0;
+		uint64_t SaveTotalSize=TotalCopiedSize;
+
+		if (Rename)
 		{
-			int CopyCode=0;
-			uint64_t SaveTotalSize=TotalCopiedSize;
+			int MoveCode=FALSE,AskDelete;
 
-			if (Rename)
+			if (!Append)
 			{
-				int MoveCode=FALSE,AskDelete;
+				FARString strSrcFullName;
+				ConvertNameToFull(Src,strSrcFullName);
 
-				if ((!StrCmp(strDestFSName,L"NWFS")) && !Append &&
-				        DestAttr!=INVALID_FILE_ATTRIBUTES && !SameName)
+				MoveCode = apiMoveFileEx(strSrcFullName, strDestPath,
+					SameName ? MOVEFILE_COPY_ALLOWED : MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
+
+				if (!MoveCode && WINPORT(GetLastError)() == ERROR_NOT_SAME_DEVICE)
 				{
-					apiDeleteFile(strDestPath); //BUGBUG
+					return COPY_FAILURE;
 				}
 
-				if (!Append)
+				if (ShowTotalCopySize && MoveCode)
 				{
-					FARString strSrcFullName;
-					ConvertNameToFull(Src,strSrcFullName);
-
-					if (NWFS_Attr)
-						apiSetFileAttributes(strSrcFullName,SrcData.dwFileAttributes&(~FILE_ATTRIBUTE_READONLY));
-
-					if (!StrCmp(strDestFSName,L"NWFS"))
-						MoveCode=apiMoveFile(strSrcFullName,strDestPath);
-					else
-						MoveCode=apiMoveFileEx(strSrcFullName,strDestPath,SameName ? MOVEFILE_COPY_ALLOWED:MOVEFILE_COPY_ALLOWED|MOVEFILE_REPLACE_EXISTING);
-
-					if (!MoveCode)
-					{
-						int MoveLastError=WINPORT(GetLastError)();
-
-						if (NWFS_Attr)
-							apiSetFileAttributes(strSrcFullName,SrcData.dwFileAttributes);
-
-						if (MoveLastError==ERROR_NOT_SAME_DEVICE)
-							return COPY_FAILURE;
-
-						WINPORT(SetLastError)(MoveLastError);
-					}
-
-					if (NWFS_Attr)
-						apiSetFileAttributes(strDestPath,SrcData.dwFileAttributes);
-
-					if (ShowTotalCopySize && MoveCode)
-					{
-						TotalCopiedSize+=SrcData.nFileSize;
-						CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
-					}
-
-					AskDelete=0;
-				}
-				else
-				{
-					do
-					{
-						CopyCode=ShellCopyFile(Src,SrcData,strDestPath,Append);
-					}
-					while (CopyCode==COPY_RETRY);
-
-					switch (CopyCode)
-					{
-						case COPY_SUCCESS:
-							MoveCode=TRUE;
-							break;
-						case COPY_FAILUREREAD:
-						case COPY_FAILURE:
-							MoveCode=FALSE;
-							break;
-						case COPY_CANCEL:
-							return COPY_CANCEL;
-						case COPY_NEXT:
-							return COPY_NEXT;
-					}
-
-					AskDelete=1;
+					TotalCopiedSize+=SrcData.nFileSize;
+					CP->SetTotalProgressValue(TotalCopiedSize,TotalCopySize);
 				}
 
-				if (MoveCode)
-				{
-					if (DestAttr==INVALID_FILE_ATTRIBUTES || !(DestAttr & FILE_ATTRIBUTE_DIRECTORY))
-					{
-						if (PointToName(strDestPath)==strDestPath.CPtr())
-							strRenamedName = strDestPath;
-						else
-							strCopiedName = PointToName(strDestPath);
-					}
-
-					TotalFiles++;
-
-					if (AskDelete && DeleteAfterMove(Src,SrcData.dwFileAttributes)==COPY_CANCEL)
-						return COPY_CANCEL;
-
-					return(COPY_SUCCESS_MOVE);
-				}
+				AskDelete=0;
 			}
 			else
 			{
@@ -2616,91 +2547,134 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 				}
 				while (CopyCode==COPY_RETRY);
 
-				if (CopyCode==COPY_SUCCESS)
+				switch (CopyCode)
 				{
-					strCopiedName = PointToName(strDestPath);
-
-					if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmp(strCopiedName,DestData.strFileName) &&
-					        StrCmp(strCopiedName,DestData.strFileName))
-						apiMoveFile(strDestPath,strDestPath); //???
-
-					TotalFiles++;
-
-					if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
-						apiSetFileAttributes(strDestPath,DestAttr);
-
-					return COPY_SUCCESS;
+					case COPY_SUCCESS:
+						MoveCode=TRUE;
+						break;
+					case COPY_FAILUREREAD:
+					case COPY_FAILURE:
+						MoveCode=FALSE;
+						break;
+					case COPY_CANCEL:
+						return COPY_CANCEL;
+					case COPY_NEXT:
+						return COPY_NEXT;
 				}
-				else if (CopyCode==COPY_CANCEL || CopyCode==COPY_NEXT)
+
+				AskDelete=1;
+			}
+
+			if (MoveCode)
+			{
+				if (DestAttr==INVALID_FILE_ATTRIBUTES || !(DestAttr & FILE_ATTRIBUTE_DIRECTORY))
 				{
-					if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
-						apiSetFileAttributes(strDestPath,DestAttr);
-
-					return((COPY_CODES)CopyCode);
+					if (PointToName(strDestPath)==strDestPath.CPtr())
+						strRenamedName = strDestPath;
+					else
+						strCopiedName = PointToName(strDestPath);
 				}
+
+				TotalFiles++;
+
+				if (AskDelete && DeleteAfterMove(Src,SrcData.dwFileAttributes)==COPY_CANCEL)
+					return COPY_CANCEL;
+
+				return(COPY_SUCCESS_MOVE);
+			}
+		}
+		else
+		{
+			do
+			{
+				CopyCode=ShellCopyFile(Src,SrcData,strDestPath,Append);
+			}
+			while (CopyCode==COPY_RETRY);
+
+			if (CopyCode==COPY_SUCCESS)
+			{
+				strCopiedName = PointToName(strDestPath);
+
+				if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmp(strCopiedName,DestData.strFileName) &&
+				        StrCmp(strCopiedName,DestData.strFileName))
+					apiMoveFile(strDestPath,strDestPath); //???
+
+				TotalFiles++;
 
 				if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
 					apiSetFileAttributes(strDestPath,DestAttr);
+
+				return COPY_SUCCESS;
 			}
-
-			//????
-			if (CopyCode == COPY_FAILUREREAD)
-				return COPY_FAILURE;
-
-			//????
-			FARString strMsg1, strMsg2;
-			int MsgMCannot=(Flags&FCOPY_LINK) ? MCannotLink: (Flags&FCOPY_MOVE) ? MCannotMove: MCannotCopy;
-			strMsg1 = Src;
-			strMsg2 = strDestPath;
-			InsertQuote(strMsg1);
-			InsertQuote(strMsg2);
-
-			int MsgCode;
-
-			if (SkipMode!=-1)
-				MsgCode=SkipMode;
-			else
+			else if (CopyCode==COPY_CANCEL || CopyCode==COPY_NEXT)
 			{
-				MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-						        MSG(MsgMCannot),
-						        strMsg1,
-						        MSG(MCannotCopyTo),
-						        strMsg2,
-						        MSG(MCopyRetry),MSG(MCopySkip),
-						        MSG(MCopySkipAll),MSG(MCopyCancel));
+				if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
+					apiSetFileAttributes(strDestPath,DestAttr);
+
+				return((COPY_CODES)CopyCode);
 			}
 
-			switch (MsgCode)
+			if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
+				apiSetFileAttributes(strDestPath,DestAttr);
+		}
+
+		//????
+		if (CopyCode == COPY_FAILUREREAD)
+			return COPY_FAILURE;
+
+		//????
+		FARString strMsg1, strMsg2;
+		int MsgMCannot=(Flags&FCOPY_LINK) ? MCannotLink: (Flags&FCOPY_MOVE) ? MCannotMove: MCannotCopy;
+		strMsg1 = Src;
+		strMsg2 = strDestPath;
+		InsertQuote(strMsg1);
+		InsertQuote(strMsg2);
+
+		int MsgCode;
+
+		if (SkipMode!=-1)
+			MsgCode=SkipMode;
+		else
+		{
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
+					        MSG(MsgMCannot),
+					        strMsg1,
+					        MSG(MCannotCopyTo),
+					        strMsg2,
+					        MSG(MCopyRetry),MSG(MCopySkip),
+					        MSG(MCopySkipAll),MSG(MCopyCancel));
+		}
+
+		switch (MsgCode)
+		{
+			case -1:
+			case  1:
+				return COPY_NEXT;
+			case  2:
+				SkipMode=1;
+				return COPY_NEXT;
+			case -2:
+			case  3:
+				return COPY_CANCEL;
+		}
+
+		TotalCopiedSize=SaveTotalSize;
+		int RetCode;
+		FARString strNewName;
+
+		if (!AskOverwrite(SrcData,Src,strDestPath,DestAttr,SameName,Rename,((Flags&FCOPY_LINK)?0:1),Append,strNewName,RetCode))
+			return((COPY_CODES)RetCode);
+
+		if (RetCode==COPY_RETRY)
+		{
+			strDest=strNewName;
+
+			if (CutToSlash(strNewName) && apiGetFileAttributes(strNewName)==INVALID_FILE_ATTRIBUTES)
 			{
-				case -1:
-				case  1:
-					return COPY_NEXT;
-				case  2:
-					SkipMode=1;
-					return COPY_NEXT;
-				case -2:
-				case  3:
-					return COPY_CANCEL;
+				CreatePath(strNewName);
 			}
 
-			TotalCopiedSize=SaveTotalSize;
-			int RetCode;
-			FARString strNewName;
-
-			if (!AskOverwrite(SrcData,Src,strDestPath,DestAttr,SameName,Rename,((Flags&FCOPY_LINK)?0:1),Append,strNewName,RetCode))
-				return((COPY_CODES)RetCode);
-
-			if (RetCode==COPY_RETRY)
-			{
-				strDest=strNewName;
-
-				if (CutToSlash(strNewName) && apiGetFileAttributes(strNewName)==INVALID_FILE_ATTRIBUTES)
-				{
-					CreatePath(strNewName);
-				}
-
-				return COPY_RETRY;
-			}
+			return COPY_RETRY;
 		}
 	}
 }
@@ -3357,7 +3331,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				FormatString strSrcFileStr, strDestFileStr;
 				uint64_t SrcSize = SrcData.nFileSize;
 				FILETIME SrcLastWriteTime = SrcData.ftLastWriteTime;
-				if(Flags&FCOPY_COPYSYMLINKCONTENTS && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
+				if(Flags&FCOPY_COPYSYMLINK_ASFILE && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 				{
 					FARString RealName = SrcName;
 					FAR_FIND_DATA_EX FindData;
@@ -3596,7 +3570,7 @@ bool ShellCopy::CalcTotalSize()
 
 	while (SrcPanel->GetSelNameCompat(&strSelName,FileAttr,&fd))
 	{
-		if ((FileAttr&FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINKCONTENTS))
+		if ((FileAttr&FILE_ATTRIBUTE_REPARSE_POINT) && !(Flags&FCOPY_COPYSYMLINK_ASFILE))
 			continue;
 
 		if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -3608,7 +3582,7 @@ bool ShellCopy::CalcTotalSize()
 				int __Ret=GetDirInfo(L"",strSelName,DirCount,FileCount,FileSize,CompressedSize,
 				                     RealFileSize,ClusterSize,-1,
 				                     Filter,
-				                     (Flags&FCOPY_COPYSYMLINKCONTENTS?GETDIRINFO_SCANSYMLINK:0)|
+				                     (Flags&FCOPY_COPYSYMLINK_ASFILE?GETDIRINFO_SCANSYMLINK:0)|
 				                     (UseFilter?GETDIRINFO_USEFILTER:0));
 
 				if (__Ret <= 0)

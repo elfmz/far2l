@@ -65,8 +65,8 @@ enum COPY_FLAGS
 	FCOPY_STREAMSKIP              	= 0x00000800, // потоки
 	FCOPY_STREAMALL               	= 0x00001000, // потоки
 	FCOPY_SKIPSETATTRFLD          	= 0x00002000, // больше не пытаться ставить атрибуты для каталогов - когда нажали Skip All
-	FCOPY_COPYSYMLINKCONTENTS     	= 0x00004000, // Copy symbolics links content instead of making new links
-	FCOPY_COPYSYMLINKCONTENTSOUTER	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	FCOPY_COPYSYMLINK_ASFILE      	= 0x00004000, // Copy symbolics links content instead of making new links
+	FCOPY_COPYSYMLINK_SMART       	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
 	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
 	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
 	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
@@ -140,7 +140,6 @@ class ShellCopy
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
-		FARString strDestFSName;
 		char   *sddata; // Security
 		DizList DestDiz;
 		FARString strDestDizPath;

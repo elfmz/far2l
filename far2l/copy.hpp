@@ -52,7 +52,7 @@ enum COPY_CODES
 
 enum COPY_FLAGS
 {
-	FCOPY_COPYTONUL               	= 0x00000001, // Признак копирования в NUL
+	RESERVED                      	= 0x00000001, //
 	FCOPY_CURRENTONLY             	= 0x00000002, // Только текщий?
 	FCOPY_ONLYNEWERFILES          	= 0x00000004, // Copy only newer files
 	FCOPY_OVERWRITENEXT           	= 0x00000008, // Overwrite all

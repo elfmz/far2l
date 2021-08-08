@@ -2861,13 +2861,13 @@ MLinkTypeSymlinkDirectory
 "enlace simbólico (&directorios)"
 
 MCopySymLinkText
-"Символические &ссылки:"
-"With &symlinks:"
-upd:"With &symlinks:"
-upd:"With &symlinks:"
-upd:"With &symlinks:"
-upd:"With &symlinks:"
-upd:"With &symlinks:"
+"Символические сс&ылки:"
+"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
 
 MLinkCopyAsIs
 "&Копировать ссылки"
@@ -2895,6 +2895,15 @@ upd:"Copy contents of &all files"
 upd:"Copy contents of &all files"
 upd:"Copy contents of &all files"
 upd:"Copy contents of &all files"
+
+MCopySparseFiles
+"Создавать &разреженные файлы"
+"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
 
 MCopyMultiActions
 "Обр&абатывать несколько имён файлов"

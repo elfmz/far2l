@@ -230,6 +230,11 @@ bool File::Chmod(DWORD dwUnixMode)
 	return true;
 }
 
+int File::Descriptor()
+{
+	return WINPORT(GetFileDescriptor)(Handle);
+}
+
 FemaleBool File::QueryFileExtendedAttributes(FileExtendedAttributes &xattr)
 {
 	xattr.clear();
@@ -330,6 +335,11 @@ bool File::Eof()
 
 //////////////////////////////////////////////////////////////
 
+bool apiIsDevNull(const wchar_t *Src)
+{
+	return IsPathIn(Src, DEVNULLW);
+}
+
 BOOL apiDeleteFile(const wchar_t *lpwszFileName)
 {
 	BOOL Result = WINPORT(DeleteFile)(lpwszFileName);
@@ -344,7 +354,11 @@ BOOL apiRemoveDirectory(const wchar_t *DirName)
 
 HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode, const DWORD *UnixMode, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
 {
-	HANDLE Handle=WINPORT(CreateFile)(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	HANDLE Handle = WINPORT(CreateFile)(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	if (Handle == INVALID_HANDLE_VALUE && apiIsDevNull(Object))
+	{
+		Handle = WINPORT(CreateFile)(DEVNULLW, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	}
 	return Handle;
 }
 
@@ -568,19 +582,31 @@ void apiFreeFindData(FAR_FIND_DATA *pData)
 	xf_free(pData->lpwszFileName);
 }
 
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink)
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData)
 {
 	struct stat s{};
-	int r = ScanSymLink ? sdc_stat(Wide2MB(lpwszFileName).c_str(), &s) : sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
+	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
 	if (r == -1) {
 		return FALSE;
 	}
+
+	DWORD symattr = 0;
+	if ((s.st_mode & S_IFMT) == S_IFLNK) {
+		struct stat s2{};
+		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s2) == 0) {
+			s = s2;
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT;
+		} else {
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+		}
+	}
+
 	FindData.Clear();
 	FindData.strFileName = PointToName(lpwszFileName);
 	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
-	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName);
+	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName) | symattr;
 	FindData.nFileSize = s.st_size;
 	FindData.dwUnixMode = s.st_mode;
 	FindData.nHardLinks = (DWORD)s.st_nlink;
@@ -592,9 +618,9 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 	return TRUE;
 }
 
-BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,bool ScanSymLink, DWORD WinPortFindFlags)
+BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData, DWORD WinPortFindFlags)
 {
-	FindFile Find(lpwszFileName, ScanSymLink, WinPortFindFlags);
+	FindFile Find(lpwszFileName, true, WinPortFindFlags);
 	if(Find.Get(FindData))
 	{
 		return TRUE;
@@ -602,7 +628,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData,b
 
 	if (!wcspbrk(lpwszFileName,L"*?"))
 	{
-		if (apiGetFindDataForExactPathName(lpwszFileName, FindData,ScanSymLink))
+		if (apiGetFindDataForExactPathName(lpwszFileName, FindData))
 		{
 			return TRUE;
 		}
@@ -667,13 +693,13 @@ BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree
 
 BOOL apiCreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	return apiCreateDirectoryEx(nullptr, lpPathName, lpSecurityAttributes);
-}
+	if (WINPORT(CreateDirectory)(lpPathName, lpSecurityAttributes))
+		return TRUE;
 
-BOOL apiCreateDirectoryEx(LPCWSTR TemplateDirectory, LPCWSTR NewDirectory, LPSECURITY_ATTRIBUTES SecurityAttributes)
-{
-	BOOL Result = WINPORT(CreateDirectory)(NewDirectory, SecurityAttributes);
-	return Result;
+	if (apiIsDevNull(lpPathName))
+		return TRUE;
+
+	return FALSE;
 }
 
 DWORD apiGetFileAttributes(LPCWSTR lpFileName)
@@ -684,15 +710,21 @@ DWORD apiGetFileAttributes(LPCWSTR lpFileName)
 
 BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 {
-	BOOL Result = WINPORT(SetFileAttributes)(lpFileName, dwFileAttributes);
-	return Result;
+	if (WINPORT(SetFileAttributes)(lpFileName, dwFileAttributes))
+		return TRUE;
 
+	if (apiIsDevNull(lpFileName))
+		return TRUE;
+
+	return FALSE;
 }
 
 IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 {
 	FARString strFullName;
 	ConvertNameToFull(lpFileName, strFullName);
+	if (apiIsDevNull(strFullName))
+		return IUnmakeWritablePtr();
 
 	struct UnmakeWritable : IUnmakeWritable
 	{

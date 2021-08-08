@@ -2860,23 +2860,59 @@ MLinkTypeSymlinkDirectory
 "link symboliczny (do &folderu)"
 "enlace simbólico (&directorios)"
 
-MCopySymLinkContents
-"Копировать содерж&имое всех символических ссылок"
-"Cop&y contents of all symbolic links"
-upd:"Kopírovat obsah sym&bolických linků"
-upd:"Inhalte von s&ymbolischen Links kopieren"
-upd:"Sz&imbolikus linkek másolása"
-upd:"&Kopiuj zawartość linków symbolicznych"
-upd:"Copiar contenidos de enlaces simbólicos"
+MCopySymLinkText
+"Символические сс&ылки:"
+"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
+upd:"With s&ymlinks:"
 
-MCopySymLinkContentsOuter
-"Копировать содержимое &внешних символических ссылок"
-"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
-upd:"Copy contents of oute&r symbolic links"
+MLinkCopyAsIs
+"Всегда копировать &ссылку"
+"Always copy &link"
+upd:"Always copy &link"
+upd:"Always copy &link"
+upd:"Always copy &link"
+upd:"Always copy &link"
+upd:"Always copy &link"
+
+MLinkCopySmart
+"&Умно копировать ссылку или файл"
+"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+upd:"&Smartly copy link or target file"
+
+MLinkCopyContent
+"Копировать как &файл"
+"Always copy target &file"
+upd:"Always copy target &file"
+upd:"Always copy target &file"
+upd:"Always copy target &file"
+upd:"Always copy target &file"
+upd:"Always copy target &file"
+
+MCopySparseFiles
+"Создавать &разреженные файлы"
+"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+upd:"Produce &sparse files"
+
+MCopyUseCOW
+"Использовать копирование-&при-записи если возможно"
+"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
 
 MCopyMultiActions
 "Обр&абатывать несколько имён файлов"

@@ -72,6 +72,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DlgGuid.hpp"
 #include "console.hpp"
 #include "wakeful.hpp"
+#include <unistd.h>
 
 /* Общее время ожидания пользователя */
 extern long WaitUserTime;
@@ -146,6 +147,7 @@ enum enumShellCopy
 	ID_SC_MULTITARGET,
 	ID_SC_WRITETHROUGH,
 	ID_SC_SPARSEFILES,
+	ID_SC_USECOW,
 	ID_SC_COPYSYMLINK_TEXT,
 	ID_SC_COPYSYMLINK_COMBO,
 	ID_SC_SEPARATOR3,
@@ -665,7 +667,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Prepare Dialog Controls
 	// ***********************************************************************
-	int DLG_HEIGHT=18, DLG_WIDTH=76;
+	int DLG_HEIGHT=19, DLG_WIDTH=76;
 
 	DialogDataEx CopyDlgData[]=
 	{
@@ -680,21 +682,27 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyMultiActions)},
 		{DI_CHECKBOX,    5, 9, 0, 9,{},0,MSG(MCopyWriteThrough)},
 		{DI_CHECKBOX,    5, 10, 0, 10,{},0,MSG(MCopySparseFiles)},
-		{DI_TEXT,        5, 11, 0, 11,{},0,MSG(MCopySymLinkText)},
-		{DI_COMBOBOX,   29, 11,70, 11,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
-		{DI_TEXT,        3,12, 0,12,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,    5,13, 0,13,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
-		{DI_TEXT,        3,14, 0,14,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,      0,15, 0,15,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
-		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
-		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
-		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
+		{DI_CHECKBOX,    5, 11, 0, 11,{},0,MSG(MCopyUseCOW)},
+		{DI_TEXT,        5, 12, 0, 12,{},0,MSG(MCopySymLinkText)},
+		{DI_COMBOBOX,   29, 12,70, 12,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_TEXT,        3,13, 0,13,{},DIF_SEPARATOR,L""},
+		{DI_CHECKBOX,    5,14, 0,14,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
+		{DI_TEXT,        3,15, 0,15,{},DIF_SEPARATOR,L""},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
 		{DI_TEXT,        5, 2, 0, 2,{},DIF_SHOWAMPERSAND,L""}
 	};
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
 	CopyDlg[ID_SC_MULTITARGET].Selected=Opt.CMOpt.MultiCopy;
 	CopyDlg[ID_SC_WRITETHROUGH].Selected=Opt.CMOpt.WriteThrough;
 	CopyDlg[ID_SC_SPARSEFILES].Selected=Opt.CMOpt.SparseFiles;
+#if defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+	CopyDlg[ID_SC_USECOW].Selected=Opt.CMOpt.UseCOW && (Opt.CMOpt.SparseFiles == 0);
+#else
+	CopyDlg[ID_SC_USECOW].Flags|= DIF_DISABLE | DIF_HIDDEN;
+#endif
 	CopyDlg[ID_SC_COPYACCESSMODE].Selected=Opt.CMOpt.CopyAccessMode;
 	CopyDlg[ID_SC_COPYXATTR].Selected=Opt.CMOpt.CopyXAttr;
 
@@ -707,6 +715,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 //		CopyDlg[ID_SC_SEPARATOR2].Flags|= DIF_DISABLE|DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_TEXT].Flags|= DIF_DISABLE|DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_COMBO].Flags|= DIF_DISABLE|DIF_HIDDEN;
+		CopyDlg[ID_SC_SPARSEFILES].Flags|= DIF_DISABLE|DIF_HIDDEN;
+		CopyDlg[ID_SC_USECOW].Flags|= DIF_DISABLE|DIF_HIDDEN;
+
 	}
 	else
 	{
@@ -1008,6 +1019,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				Opt.CMOpt.CopyAccessMode=CopyDlg[ID_SC_COPYACCESSMODE].Selected;
 				Opt.CMOpt.CopyXAttr=CopyDlg[ID_SC_COPYXATTR].Selected;
 				Opt.CMOpt.SparseFiles=CopyDlg[ID_SC_SPARSEFILES].Selected;
+				Opt.CMOpt.UseCOW=CopyDlg[ID_SC_USECOW].Selected;
 
 				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !wcspbrk(strCopyDlgValue,L",;")) // отключено multi*
 				{
@@ -1045,7 +1057,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Стадия подготовки данных после диалога
 	// ***********************************************************************
-	Flags&=~ (FCOPY_WRITETHROUGH | FCOPY_COPYACCESSMODE | FCOPY_COPYXATTR | FCOPY_SPARSEFILES);
+	Flags&=~ (FCOPY_WRITETHROUGH | FCOPY_COPYACCESSMODE | FCOPY_COPYXATTR | FCOPY_SPARSEFILES | FCOPY_USECOW);
 
 	if (Opt.CMOpt.WriteThrough)
 		Flags|=FCOPY_WRITETHROUGH;
@@ -1055,6 +1067,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		Flags|=FCOPY_COPYXATTR;
 	if (Opt.CMOpt.SparseFiles)
 		Flags|=FCOPY_SPARSEFILES;
+	if (Opt.CMOpt.UseCOW && Opt.CMOpt.SparseFiles == 0)
+		Flags|=FCOPY_USECOW;
 
 	ReadOnlyDelMode=ReadOnlyOvrMode=OvrMode=SkipEncMode=SkipMode=SkipDeleteMode=-1;
 
@@ -1419,6 +1433,14 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			else if (Param1 == ID_SC_BTNCOPY)
 			{
 				SendDlgMessage(hDlg,DM_CLOSE,ID_SC_BTNCOPY,0);
+			}
+			else if (Param1 == ID_SC_SPARSEFILES)
+			{
+				SendDlgMessage(hDlg,DM_SETCHECK,ID_SC_USECOW,BSTATE_UNCHECKED);
+			}
+			else if (Param1 == ID_SC_USECOW)
+			{
+				SendDlgMessage(hDlg,DM_SETCHECK,ID_SC_SPARSEFILES,BSTATE_UNCHECKED);
 			}
 			/*
 			else if(Param1 == ID_SC_ONLYNEWER && ((DlgParam->thisClass->Flags)&FCOPY_LINK))
@@ -2880,6 +2902,44 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 	}
 }
 
+ShellFileTransfer::~ShellFileTransfer()
+{
+	if (!_Done) try
+	{
+		fprintf(stderr, "~ShellFileTransfer: discarding '%ls'\n", _strDestName.CPtr());
+		_SrcFile.Close();
+		CP->SetProgressValue(0,0);
+		CurCopiedSize = 0; // Сбросить текущий прогресс
+
+		if (!(_Flags&FCOPY_COPYTONUL))
+		{
+			if (_AppendPos != -1)
+			{
+				_DestFile.SetPointer(_AppendPos, nullptr, FILE_BEGIN);
+			}
+
+			_DestFile.SetEnd();
+			_DestFile.Close();
+
+			if (_AppendPos == -1)
+			{
+				TemporaryMakeWritable tmw(_strDestName);
+				apiDeleteFile(_strDestName);
+			}
+		}
+
+		ProgressUpdate(true);
+	}
+	catch (std::exception &ex)
+	{
+		fprintf(stderr, "~ShellFileTransfer: %s\n", ex.what());
+	}
+	catch (...)
+	{
+		fprintf(stderr, "~ShellFileTransfer: ...\n");
+	}
+}
+
 void ShellFileTransfer::ProgressUpdate(bool force)
 {
 	if (force || GetProcessUptimeMSec() - ProgressUpdateTime >= PROGRESS_REFRESH_THRESHOLD)
@@ -2918,14 +2978,11 @@ void ShellFileTransfer::Do()
 		}
 
 		if (CP->Cancelled())
-		{
-			Undo();
 			return;
-		}
 
 		_Stopwatch = (_SrcData.nFileSize - CurCopiedSize > (uint64_t)_CopyBuffer.Size) ? GetProcessUptimeMSec() : 0;
 
-		DWORD BytesWritten = PieceReadWrite();
+		DWORD BytesWritten = PieceCopy();
 		if (BytesWritten == 0)
 			break;
 
@@ -2974,33 +3031,10 @@ void ShellFileTransfer::Do()
 		_DestFile.SetTime(nullptr, nullptr, &_SrcData.ftLastWriteTime, nullptr);
 		_DestFile.Close();
 	}
+
+	_Done = true;
+
 	ProgressUpdate(false);
-}
-
-void ShellFileTransfer::Undo()
-{
-	_SrcFile.Close();
-	CP->SetProgressValue(0,0);
-	CurCopiedSize = 0; // Сбросить текущий прогресс
-
-	if (!(_Flags&FCOPY_COPYTONUL))
-	{
-		if (_AppendPos != -1)
-		{
-			_DestFile.SetPointer(_AppendPos, nullptr, FILE_BEGIN);
-		}
-
-		_DestFile.SetEnd();
-		_DestFile.Close();
-
-		if (_AppendPos == -1)
-		{
-			TemporaryMakeWritable tmw(_strDestName);
-			apiDeleteFile(_strDestName);
-		}
-	}
-
-	ProgressUpdate(true);
 }
 
 void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
@@ -3013,10 +3047,7 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	PR_ShellCopyMsg();
 
 	if (MsgCode != 0)
-	{
-		Undo();
 		throw ErSr;
-	}
 }
 
 static std::pair<DWORD, DWORD> LookupSparseRegion(const unsigned char *Data, DWORD Size)
@@ -3042,8 +3073,24 @@ static std::pair<DWORD, DWORD> LookupSparseRegion(const unsigned char *Data, DWO
 	}
 }
 
-DWORD ShellFileTransfer::PieceReadWrite()
+DWORD ShellFileTransfer::PieceCopy()
 {
+#if defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+	if ((_Flags & (FCOPY_SPARSEFILES | FCOPY_USECOW)) == FCOPY_USECOW) for(;;)
+	{
+		ssize_t sz = copy_file_range(_SrcFile.Descriptor(),
+			nullptr, _DestFile.Descriptor(), nullptr, _CopyBuffer.Size, 0);
+		if (sz >= 0)
+			return (DWORD)sz;
+		if (errno == EXDEV) {
+			fprintf(stderr, "copy_file_range returned EXDEV, fallback to usual copy");
+			break;
+		}
+
+		RetryCancel(MSG(MCopyWriteError), _strDestName);
+	}
+#endif
+
 	DWORD BytesRead, BytesWritten;
 
 	while (!_SrcFile.Read(_CopyBuffer.Ptr, _CopyBuffer.Size, &BytesRead))

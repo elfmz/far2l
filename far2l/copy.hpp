@@ -70,6 +70,7 @@ enum COPY_FLAGS
 	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
 	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
 	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
+	FCOPY_USECOW                  	= 0x00200000, // enable COW funcionality if FS supports it
 	FCOPY_COPYLASTTIME            	= 0x10000000, // При копировании в несколько каталогов устанавливается для последнего.
 	FCOPY_UPDATEPPANEL            	= 0x80000000, // необходимо обновить пассивную панель
 };
@@ -115,18 +116,20 @@ class ShellFileTransfer
 
 	File _SrcFile, _DestFile;
 	bool _LastWriteWasHole = false;
+	bool _Done = false;
 	std::unique_ptr<ShellCopyFileExtendedAttributes> _XAttrCopyPtr;
 
 	void Undo();
 	void RetryCancel(const wchar_t *Text, const wchar_t *Object);
 	DWORD PieceWrite(const void *Data, DWORD Size);
 	DWORD PieceWriteHole(DWORD Size);
-	DWORD PieceReadWrite();
+	DWORD PieceCopy();
 	void ProgressUpdate(bool force);
 
 public:
 	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
 		const FARString &strDestName, bool Append, ShellCopyBuffer &CopyBuffer, DWORD Flags);
+	~ShellFileTransfer();
 
 	void Do();
 };

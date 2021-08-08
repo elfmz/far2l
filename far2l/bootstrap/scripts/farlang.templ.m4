@@ -2905,6 +2905,15 @@ upd:"Produce &sparse files"
 upd:"Produce &sparse files"
 upd:"Produce &sparse files"
 
+MCopyUseCOW
+"Использовать копирование-&при-записи если возможно"
+"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+upd:"Use copy-o&n-write if possible"
+
 MCopyMultiActions
 "Обр&абатывать несколько имён файлов"
 "Process &multiple destinations"

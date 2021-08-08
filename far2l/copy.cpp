@@ -3042,7 +3042,7 @@ DWORD ShellFileTransfer::PieceCopy()
 			BytesWritten+= LeadingNonzeroesWritten;
 			if (SR.second && LeadingNonzeroesWritten == SR.first)
 			{
-				fprintf(stderr, "!!! HOLE of size %x\n", SR.second);
+				// fprintf(stderr, "!!! HOLE of size %x\n", SR.second);
 				BytesWritten+= PieceWriteHole(SR.second);
 			}
 		}

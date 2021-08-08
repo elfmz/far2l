@@ -408,6 +408,7 @@ struct CopyMoveOptions
 	int MultiCopy;             // "разрешить мультикопирование/перемещение/создание связей"
 	int CopyTimeRule;          // $ 30.01.2001 VVM  Показывает время копирования,оставшееся время и среднюю скорость
 	int HowCopySymlink;
+	int SparseFiles;
 };
 
 struct DeleteOptions

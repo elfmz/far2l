@@ -69,6 +69,7 @@ enum COPY_FLAGS
 	FCOPY_COPYSYMLINKCONTENTSOUTER	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
 	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
 	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
+	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
 	FCOPY_COPYLASTTIME            	= 0x10000000, // При копировании в несколько каталогов устанавливается для последнего.
 	FCOPY_UPDATEPPANEL            	= 0x80000000, // необходимо обновить пассивную панель
 };
@@ -113,10 +114,13 @@ class ShellFileTransfer
 	DWORD _ModeToCreateWith;
 
 	File _SrcFile, _DestFile;
+	bool _LastWriteWasHole = false;
 	std::unique_ptr<ShellCopyFileExtendedAttributes> _XAttrCopyPtr;
 
 	void Undo();
 	void RetryCancel(const wchar_t *Text, const wchar_t *Object);
+	DWORD PieceWrite(const void *Data, DWORD Size);
+	DWORD PieceWriteHole(DWORD Size);
 	DWORD PieceReadWrite();
 	void ProgressUpdate(bool force);
 

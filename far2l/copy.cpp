@@ -145,7 +145,7 @@ enum enumShellCopy
 	ID_SC_COPYXATTR,
 	ID_SC_MULTITARGET,
 	ID_SC_WRITETHROUGH,
-//	ID_SC_SEPARATOR2,
+	ID_SC_SPARSEFILES,
 	ID_SC_COPYSYMLINK_TEXT,
 	ID_SC_COPYSYMLINK_COMBO,
 	ID_SC_SEPARATOR3,
@@ -665,7 +665,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Prepare Dialog Controls
 	// ***********************************************************************
-	int DLG_HEIGHT=17, DLG_WIDTH=76;
+	int DLG_HEIGHT=18, DLG_WIDTH=76;
 
 	DialogDataEx CopyDlgData[]=
 	{
@@ -679,23 +679,22 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{DI_CHECKBOX,    5, 7, 0, 7,{},0,MSG(MCopyXAttr)},
 		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyMultiActions)},
 		{DI_CHECKBOX,    5, 9, 0, 9,{},0,MSG(MCopyWriteThrough)},
-//		{DI_TEXT,        3,10, 0,10,{},DIF_SEPARATOR,L""},
-
-		{DI_TEXT,        5, 10, 0, 10,{},0,MSG(MCopySymLinkText)},
-		{DI_COMBOBOX,   29, 10,70, 10,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
-
-		{DI_TEXT,        3,11, 0,11,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,    5,12, 0,12,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
-		{DI_TEXT,        3,13, 0,13,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,      0,14, 0,14,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
-		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
-		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
-		{DI_BUTTON,      0,14, 0,14,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
+		{DI_CHECKBOX,    5, 10, 0, 10,{},0,MSG(MCopySparseFiles)},
+		{DI_TEXT,        5, 11, 0, 11,{},0,MSG(MCopySymLinkText)},
+		{DI_COMBOBOX,   29, 11,70, 11,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_TEXT,        3,12, 0,12,{},DIF_SEPARATOR,L""},
+		{DI_CHECKBOX,    5,13, 0,13,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
+		{DI_TEXT,        3,14, 0,14,{},DIF_SEPARATOR,L""},
+		{DI_BUTTON,      0,15, 0,15,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
+		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
+		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
+		{DI_BUTTON,      0,15, 0,15,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
 		{DI_TEXT,        5, 2, 0, 2,{},DIF_SHOWAMPERSAND,L""}
 	};
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
 	CopyDlg[ID_SC_MULTITARGET].Selected=Opt.CMOpt.MultiCopy;
 	CopyDlg[ID_SC_WRITETHROUGH].Selected=Opt.CMOpt.WriteThrough;
+	CopyDlg[ID_SC_SPARSEFILES].Selected=Opt.CMOpt.SparseFiles;
 	CopyDlg[ID_SC_COPYACCESSMODE].Selected=Opt.CMOpt.CopyAccessMode;
 	CopyDlg[ID_SC_COPYXATTR].Selected=Opt.CMOpt.CopyXAttr;
 
@@ -1008,6 +1007,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				Opt.CMOpt.WriteThrough=CopyDlg[ID_SC_WRITETHROUGH].Selected;
 				Opt.CMOpt.CopyAccessMode=CopyDlg[ID_SC_COPYACCESSMODE].Selected;
 				Opt.CMOpt.CopyXAttr=CopyDlg[ID_SC_COPYXATTR].Selected;
+				Opt.CMOpt.SparseFiles=CopyDlg[ID_SC_SPARSEFILES].Selected;
 
 				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !wcspbrk(strCopyDlgValue,L",;")) // отключено multi*
 				{
@@ -1045,21 +1045,16 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	// *** Стадия подготовки данных после диалога
 	// ***********************************************************************
+	Flags&=~ (FCOPY_WRITETHROUGH | FCOPY_COPYACCESSMODE | FCOPY_COPYXATTR | FCOPY_SPARSEFILES);
+
 	if (Opt.CMOpt.WriteThrough)
 		Flags|=FCOPY_WRITETHROUGH;
-	else
-		Flags&=~FCOPY_WRITETHROUGH;
-
 	if (Opt.CMOpt.CopyAccessMode)
 		Flags|=FCOPY_COPYACCESSMODE;
-	else
-		Flags&=~FCOPY_COPYACCESSMODE;
-
 	if (Opt.CMOpt.CopyXAttr)
 		Flags|=FCOPY_COPYXATTR;
-	else
-		Flags&=~FCOPY_COPYXATTR;
-
+	if (Opt.CMOpt.SparseFiles)
+		Flags|=FCOPY_SPARSEFILES;
 
 	ReadOnlyDelMode=ReadOnlyOvrMode=OvrMode=SkipEncMode=SkipMode=SkipDeleteMode=-1;
 
@@ -2878,7 +2873,7 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 				throw ErSr;
 			}
 		}
-		else if (SrcData.nFileSize > (uint64_t)_CopyBuffer.Size)
+		else if (SrcData.nFileSize > (uint64_t)_CopyBuffer.Size && (_Flags & FCOPY_SPARSEFILES) == 0)
 		{
 			_DestFile.AllocationHint(SrcData.nFileSize);
 		}
@@ -2928,7 +2923,6 @@ void ShellFileTransfer::Do()
 			return;
 		}
 
-		//while (!SrcFile.Read(CopyBuffer,(CopySparse?(DWORD)Min((LONGLONG)CopyBufferSize,Size):CopyBufferSize),&BytesRead,nullptr))
 		_Stopwatch = (_SrcData.nFileSize - CurCopiedSize > (uint64_t)_CopyBuffer.Size) ? GetProcessUptimeMSec() : 0;
 
 		DWORD BytesWritten = PieceReadWrite();
@@ -2963,6 +2957,14 @@ void ShellFileTransfer::Do()
 
 	if ((_Flags&FCOPY_COPYTONUL) == 0)
 	{
+		if (_LastWriteWasHole)
+		{
+			while (!_DestFile.SetEnd())
+			{
+				RetryCancel(MSG(MCopyWriteError), _strDestName);
+			}
+		}
+
 		if (_XAttrCopyPtr)
 			_XAttrCopyPtr->ApplyToCopied(_DestFile);
 
@@ -3017,6 +3019,29 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	}
 }
 
+static std::pair<DWORD, DWORD> LookupSparseRegion(const unsigned char *Data, DWORD Size)
+{
+	const DWORD min_sparse_area = 0x1000;
+
+	for (DWORD i = 0, start = 0;; ++i)
+	{
+		if (i < Size && Data[i] == 0 && (i == 0 || Data[i - 1] != 0))
+		{
+			start = i;
+		}
+		else if ((i == Size || Data[i] != 0) && i != 0 && Data[i - 1] == 0)
+		{
+			if (i - start >= min_sparse_area)
+			{
+				return std::make_pair(start, i - start);
+			}
+		}
+
+		if (i == Size)
+			return std::make_pair(Size, (DWORD)0);
+	}
+}
+
 DWORD ShellFileTransfer::PieceReadWrite()
 {
 	DWORD BytesRead, BytesWritten;
@@ -3034,10 +3059,23 @@ DWORD ShellFileTransfer::PieceReadWrite()
 		WriteSize = AlignPageUp(WriteSize);
 
 	BytesWritten = 0;
-	while (!_DestFile.Write(_CopyBuffer.Ptr, WriteSize, &BytesWritten))
+	if (_Flags & FCOPY_SPARSEFILES)
 	{
-		RetryCancel(MSG(MCopyWriteError), _strDestName);
+		while (BytesWritten < WriteSize)
+		{
+			const unsigned char *Data = (const unsigned char *)_CopyBuffer.Ptr + BytesWritten;
+			std::pair<DWORD, DWORD> SR = LookupSparseRegion(Data, WriteSize - BytesWritten);
+			DWORD LeadingNonzeroesWritten = SR.first ? PieceWrite(Data, SR.first) : 0;
+			BytesWritten+= LeadingNonzeroesWritten;
+			if (SR.second && LeadingNonzeroesWritten == SR.first)
+			{
+				fprintf(stderr, "!!! HOLE of size %x\n", SR.second);
+				BytesWritten+= PieceWriteHole(SR.second);
+			}
+		}
 	}
+	else
+		BytesWritten = PieceWrite(_CopyBuffer.Ptr, WriteSize);
 
 	if (BytesWritten > BytesRead)
 	{	// likely we written bit more due to no_buffering requires aligned io
@@ -3052,6 +3090,27 @@ DWORD ShellFileTransfer::PieceReadWrite()
 		_SrcFile.SetPointer((INT64)BytesWritten - (INT64)BytesRead, nullptr, FILE_CURRENT);
 	}
 
+	return BytesWritten;
+}
+
+DWORD ShellFileTransfer::PieceWriteHole(DWORD Size)
+{
+	while (!_DestFile.SetPointer(Size, nullptr, FILE_CURRENT))
+	{
+		RetryCancel(MSG(MCopyWriteError), _strDestName);
+	}
+	_LastWriteWasHole = true;
+	return Size;
+}
+
+DWORD ShellFileTransfer::PieceWrite(const void *Data, DWORD Size)
+{
+	DWORD BytesWritten = 0;
+	while (!_DestFile.Write(Data, Size, &BytesWritten))
+	{
+		RetryCancel(MSG(MCopyWriteError), _strDestName);
+	}
+	_LastWriteWasHole = false;
 	return BytesWritten;
 }
 

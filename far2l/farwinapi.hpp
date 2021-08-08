@@ -165,6 +165,8 @@ private:
 	HANDLE Handle;
 };
 
+bool apiIsDevNull(const wchar_t *Src);
+
 bool apiGetEnvironmentVariable(
     const char *lpszName,
     FARString &strBuffer
@@ -275,12 +277,6 @@ BOOL apiGetDiskSize(
 BOOL apiCreateDirectory(
     LPCWSTR lpPathName,
     LPSECURITY_ATTRIBUTES lpSecurityAttributes
-);
-
-BOOL apiCreateDirectoryEx(
-    LPCWSTR TemplateDirectory,
-    LPCWSTR NewDirectory,
-    LPSECURITY_ATTRIBUTES SecurityAttributes
 );
 
 DWORD apiGetFileAttributes(

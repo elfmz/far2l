@@ -335,6 +335,11 @@ bool File::Eof()
 
 //////////////////////////////////////////////////////////////
 
+bool apiIsDevNull(const wchar_t *Src)
+{
+	return IsPathIn(Src, DEVNULLW);
+}
+
 BOOL apiDeleteFile(const wchar_t *lpwszFileName)
 {
 	BOOL Result = WINPORT(DeleteFile)(lpwszFileName);
@@ -349,7 +354,11 @@ BOOL apiRemoveDirectory(const wchar_t *DirName)
 
 HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode, const DWORD *UnixMode, DWORD CreationDistribution, DWORD FlagsAndAttributes, HANDLE TemplateFile, bool ForceElevation)
 {
-	HANDLE Handle=WINPORT(CreateFile)(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	HANDLE Handle = WINPORT(CreateFile)(Object, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	if (Handle == INVALID_HANDLE_VALUE && apiIsDevNull(Object))
+	{
+		Handle = WINPORT(CreateFile)(DEVNULLW, DesiredAccess, ShareMode, UnixMode, CreationDistribution, FlagsAndAttributes, TemplateFile);
+	}
 	return Handle;
 }
 
@@ -684,13 +693,13 @@ BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree
 
 BOOL apiCreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	return apiCreateDirectoryEx(nullptr, lpPathName, lpSecurityAttributes);
-}
+	if (WINPORT(CreateDirectory)(lpPathName, lpSecurityAttributes))
+		return TRUE;
 
-BOOL apiCreateDirectoryEx(LPCWSTR TemplateDirectory, LPCWSTR NewDirectory, LPSECURITY_ATTRIBUTES SecurityAttributes)
-{
-	BOOL Result = WINPORT(CreateDirectory)(NewDirectory, SecurityAttributes);
-	return Result;
+	if (apiIsDevNull(lpPathName))
+		return TRUE;
+
+	return FALSE;
 }
 
 DWORD apiGetFileAttributes(LPCWSTR lpFileName)
@@ -701,15 +710,21 @@ DWORD apiGetFileAttributes(LPCWSTR lpFileName)
 
 BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 {
-	BOOL Result = WINPORT(SetFileAttributes)(lpFileName, dwFileAttributes);
-	return Result;
+	if (WINPORT(SetFileAttributes)(lpFileName, dwFileAttributes))
+		return TRUE;
 
+	if (apiIsDevNull(lpFileName))
+		return TRUE;
+
+	return FALSE;
 }
 
 IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 {
 	FARString strFullName;
 	ConvertNameToFull(lpFileName, strFullName);
+	if (apiIsDevNull(strFullName))
+		return IUnmakeWritablePtr();
 
 	struct UnmakeWritable : IUnmakeWritable
 	{

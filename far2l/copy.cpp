@@ -74,10 +74,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include <unistd.h>
 
-#if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
-# include <sys/attr.h>
-# include <sys/clonefile.h>
-# define ENABLE_COW
+#if defined(__APPLE__)
+#include <AvailabilityMacros.h>
+# if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+#  include <sys/attr.h>
+#  include <sys/clonefile.h>
+#  define ENABLE_COW
+# endif
 
 #elif defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
 # define ENABLE_COW
@@ -3129,13 +3132,14 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 	}
 
 #if defined(ENABLE_COW) && defined(__APPLE__)
-	if ((_Flags & FCOPY_USECOW) != 0) 
+	if ((Flags & FCOPY_USECOW) != 0)
 	{
 		const std::string mbSrc = Wide2MB(SrcName);
 		const std::string &mbDest = strDestName.GetMB();
 		int r = clonefile(mbSrc.c_str(), mbDest.c_str(), 0);
 		if (r == 0)
 		{
+			// fprintf(stderr, "CoW succeeded for '%s' -> '%s'\n", mbSrc.c_str(), mbDest.c_str());
 			CurCopiedSize = SrcData.nFileSize;
 			if (ShowTotalCopySize)
 				TotalCopiedSize+= SrcData.nFileSize;
@@ -3149,7 +3153,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			if (ErSr.Get() != EXDEV && ErSr.Get() != ENOTSUP)
 				return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
 
-			fprintf(stderr, "CoW abandoned due to errno=%d\n", ErSr.Get());
+			fprintf(stderr, "CoW abandoned due to errno=%d for '%s' -> '%s'\n", ErSr.Get(), mbSrc.c_str(), mbDest.c_str());
 		}
 	}
 #endif

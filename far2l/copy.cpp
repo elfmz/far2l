@@ -155,9 +155,9 @@ enum enumShellCopy
 	ID_SC_SEPARATOR1,
 	ID_SC_COMBOTEXT,
 	ID_SC_COMBO,
+	ID_SC_MULTITARGET,
 	ID_SC_COPYACCESSMODE,
 	ID_SC_COPYXATTR,
-	ID_SC_MULTITARGET,
 	ID_SC_WRITETHROUGH,
 	ID_SC_SPARSEFILES,
 	ID_SC_USECOW,
@@ -685,9 +685,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{DI_TEXT,        3, 4, 0, 4,{},DIF_SEPARATOR,L""},
 		{DI_TEXT,        5, 5, 0, 5,{},0,MSG(MCopyIfFileExist)},
 		{DI_COMBOBOX,   29, 5,70, 5,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
-		{DI_CHECKBOX,    5, 6, 0, 6,{},0,MSG(MCopyAccessMode)},
-		{DI_CHECKBOX,    5, 7, 0, 7,{},0,MSG(MCopyXAttr)},
-		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyMultiActions)},
+		{DI_CHECKBOX,    5, 6, 0, 6,{},0,MSG(MCopyMultiActions)},
+		{DI_CHECKBOX,    5, 7, 0, 7,{},0,MSG(MCopyAccessMode)},
+		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyXAttr)},
 		{DI_CHECKBOX,    5, 9, 0, 9,{},0,MSG(MCopyWriteThrough)},
 		{DI_CHECKBOX,    5, 10, 0, 10,{},0,MSG(MCopySparseFiles)},
 		{DI_CHECKBOX,    5, 11, 0, 11,{},0,MSG(MCopyUseCOW)},
@@ -3131,44 +3131,43 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 		}
 	}
 
-#if defined(ENABLE_COW) && defined(__APPLE__)
-	if ((Flags & FCOPY_USECOW) != 0)
-	{
-		const std::string mbSrc = Wide2MB(SrcName);
-		const std::string &mbDest = strDestName.GetMB();
-		int r = clonefile(mbSrc.c_str(), mbDest.c_str(), 0);
-		if (r == 0)
-		{
-			// fprintf(stderr, "CoW succeeded for '%s' -> '%s'\n", mbSrc.c_str(), mbDest.c_str());
-			CurCopiedSize = SrcData.nFileSize;
-			if (ShowTotalCopySize)
-				TotalCopiedSize+= SrcData.nFileSize;
-
-			ProgressUpdate(false, SrcData, strDestName);
-			return COPY_SUCCESS;
-		}
-		else
-		{
-			ErrnoSaver ErSr;
-			if (ErSr.Get() != EXDEV && ErSr.Get() != ENOTSUP)
-				return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
-
-			fprintf(stderr, "CoW abandoned due to errno=%d for '%s' -> '%s'\n", ErSr.Get(), mbSrc.c_str(), mbDest.c_str());
-		}
-	}
-#endif
-
 	try
 	{
+#if defined(ENABLE_COW) && defined(__APPLE__)
+		if ((Flags & FCOPY_USECOW) != 0)
+		{
+			const std::string mbSrc = Wide2MB(SrcName);
+			const std::string &mbDest = strDestName.GetMB();
+			int r = clonefile(mbSrc.c_str(), mbDest.c_str(), 0);
+			if (r == 0)
+			{
+				// fprintf(stderr, "CoW succeeded for '%s' -> '%s'\n", mbSrc.c_str(), mbDest.c_str());
+				CurCopiedSize = SrcData.nFileSize;
+				if (ShowTotalCopySize)
+					TotalCopiedSize+= SrcData.nFileSize;
+
+				ProgressUpdate(false, SrcData, strDestName);
+				return COPY_SUCCESS;
+			}
+
+			ErrnoSaver ErSr;
+			if (ErSr.Get() != EXDEV && ErSr.Get() != ENOTSUP)
+				throw ErSr;
+
+			fprintf(stderr, "Skip CoW errno=%d for '%s' -> '%s'\n", ErSr.Get(), mbSrc.c_str(), mbDest.c_str());
+		}
+#endif
+
+
 		ShellFileTransfer(SrcName, SrcData, strDestName, Append != 0, CopyBuffer, Flags).Do();
+		return COPY_SUCCESS;
 	}
 	catch (ErrnoSaver &ErSr)
 	{
 		_localLastError = ErSr.Get();
-		return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
 	}
 
-	return COPY_SUCCESS;
+	return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
 }
 
 void ShellCopy::SetDestDizPath(const wchar_t *DestPath)

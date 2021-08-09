@@ -3619,16 +3619,16 @@ newly created #/folder2/#.
 
   Create ~file links~@HardSymLink@                                         #Alt-F6#
 
+    If #Process multiple destinations# is enabled, you may specify
+multiple copy or move targets in the input line. In this case, targets should
+be separated with a character "#;#" or "#,#". If the name of a target contains
+the character ";" or ",", it must be enclosed in quotes.
+
     If #Copy files access mode# is enabled, then copied files will get same
 UNIX access mode bits as original files had unless some bits masked out by current umask.
 
     If #Copy extended attributes# is enabled, then copied files will get same
 extended attributes as original files.
-
-    If #Process multiple destinations# is enabled, you may specify
-multiple copy or move targets in the input line. In this case, targets should
-be separated with a character "#;#" or "#,#". If the name of a target contains
-the character ";" or ",", it must be enclosed in quotes.
 
     If #Disable write cache# is enabled, then copy routine will use O_DIRECT flag
 unless its not supported by OS or filesystem.
@@ -3642,8 +3642,10 @@ with normal data in the future.
     If #Use copy-on-write# is enabled, then copy routine will use special kernel API
 that copies files in a way, so copied files refer orginal files data and will be really
 copied only when that data will be modified in any of files. Note that this functionality
-requires Linux kernel v4.5 or better and any FS that supports COW files, otherwise files
-will be silently copied using conventional way.
+requires Linux kernel v4.5+ or MacOS 10.12+ and any FS that supports COW files otherwise
+files will be silently copied using conventional way. If being in use this option greatly
+improves copy speed and reduces disk space usage. Potential downside include higher file
+fragmentation if it or original file will be overwritten in the future.
 
     #With symlink# combobox allows to chose from any of three possible ways of handling
 symlinks during copying:

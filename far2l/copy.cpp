@@ -2171,8 +2171,6 @@ COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, 
 COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
 						const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData)
 {
-	// existing symlink is absolute but points into something inside of copied tree
-	// in such case convert it into relative making resulted symlink to point to same object
 	FARString strExistingName;
 	ConvertNameToFull(ExistingName, strExistingName);
 
@@ -2180,49 +2178,56 @@ COPY_CODES ShellCopy::CopySymLink(const wchar_t *Root, const wchar_t *ExistingNa
 	const std::string &mbExistingName = strExistingName.GetMB();
 	char LinkTarget[PATH_MAX + 1];
 	ssize_t r = sdc_readlink(mbExistingName.c_str(), LinkTarget, sizeof(LinkTarget) - 1);
-	if (r > 0 && r < (ssize_t)sizeof(LinkTarget) && LinkTarget[0]) {
-		LinkTarget[r] = 0;
-	} else {
-		LinkTarget[0] = 0;
+	if (r <= 0 || r >= (ssize_t)sizeof(LinkTarget) || LinkTarget[0] == 0) {
+		fprintf(stderr, "CopySymLink: r=%ld errno=%u from sdc_readlink('%ls')\n", (long)r, errno, strExistingName.CPtr());
+		return COPY_FAILURE;
 	}
 
-	// if existing symlink is relative or its final target is out of current copy tree
-	// then just create exactly same symlink as existing one
-	if ((Flags & (FCOPY_COPYSYMLINK_ASFILE|FCOPY_COPYSYMLINK_SMART)) == 0
-			|| (LinkTarget[0] != '/' || IsOuterTarget(Root, ExistingName))) {
+	LinkTarget[r] = 0;
+
+	// create exactly same symlink as existing one in following cases:
+	//  - if settings specifies to not be smart
+	//  - if existing symlink is relative
+	//  note that in case of being smart and if symlink is relative then caller
+	//  guarantees that its target is within copied tree, so link will be valid
+	if ((Flags & FCOPY_COPYSYMLINK_SMART) == 0 || LinkTarget[0] != '/') {
 		FARString strNewName;
 		ConvertNameToFull(NewName, strNewName);
 		return CreateSymLink(LinkTarget, strNewName.CPtr(), SrcData);
 	}
 
+	// this is a case of smart linking - create symlink that relatively points to _new_ target
+	// by applying to new link relative path from existing symlink to its existing target
 	FARString strRealName;
 	ConvertNameToReal(ExistingName, strRealName);
+	std::vector<std::string> partsRealName, partsExistingName;
+	StrExplode(partsRealName, strRealName.GetMB(), "/");
+	StrExplode(partsExistingName, strExistingName.GetMB(), "/");
 
-	std::string relative_name;
-	for (size_t i = 0;; ++i) {
-		if (i == strRealName.GetLength() || i == strExistingName.GetLength() || strRealName[i] != strExistingName[i]) {
-			assert( i > 0 );
-			for (--i; (i > 0 && strRealName[i] != GOOD_SLASH); --i);
-			assert( i > 0 );
-			Wide2MB(strRealName.CPtr() + i + 1, relative_name);
-			for (++i; i < strExistingName.GetLength(); ++i) {
-				if (strExistingName[i] == GOOD_SLASH) {
-					relative_name.insert(0, "../");
-				}
-			}
+	size_t common_anchestors_count = 0;
+	while (common_anchestors_count < partsRealName.size()
+			&& common_anchestors_count < partsExistingName.size()
+			&& partsRealName[common_anchestors_count] == partsExistingName[common_anchestors_count]) {
+		++common_anchestors_count;
+	}
 
-			break;
+	std::string relative_target;
+	for (size_t i = common_anchestors_count; i + 1 < partsExistingName.size(); ++i) {
+		relative_target+= "../";
+	}
+	for (size_t i = common_anchestors_count; i < partsRealName.size(); ++i) {
+		relative_target+= partsRealName[i];
+		if (i + 1 < partsRealName.size()) {
+			relative_target+= '/';
 		}
 	}
-
-	if (relative_name.empty()) {
+	if (relative_target.empty()) {
 		fprintf(stderr,
-			"CopySymLink: empty relative name for strRealName='%ls' strExistingName='%ls'\n",
+			"CopySymLink: empty relative_target strRealName='%ls' strExistingName='%ls'\n",
 				strRealName.CPtr(), strExistingName.CPtr());
 	}
-	assert(!relative_name.empty());
 
-	return CreateSymLink(relative_name.c_str(), NewName, SrcData);
+	return CreateSymLink(relative_target.c_str(), NewName, SrcData);
 }
 
 
@@ -2358,8 +2363,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileWithRootNoRetry(
 
 	const bool copy_sym_link = (RPT == RP_EXACTCOPY && 
 		(SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && 
-		!(Flags&FCOPY_COPYSYMLINK_ASFILE) &&
-		(!(Flags&FCOPY_COPYSYMLINK_SMART) || !IsOuterTarget(Root, Src))  );
+		(Flags&FCOPY_COPYSYMLINK_ASFILE) == 0 &&
+		((Flags&FCOPY_COPYSYMLINK_SMART) == 0 || !IsOuterTarget(Root, Src))  );
 
 	if ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) != 0 || copy_sym_link)
 	{

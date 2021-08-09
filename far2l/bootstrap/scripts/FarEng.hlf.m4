@@ -3634,7 +3634,10 @@ the character ";" or ",", it must be enclosed in quotes.
 unless its not supported by OS or filesystem.
 
     If #Produce sparse files# is enabled, then copy routine will detect zero-filled
-regions at least 4KB length and will create sparse files with holes instead of such regions.
+regions at least 4KB length and will create sparse files with holes instead of them.
+This saves disk space and improves copy speed if files contain huge zero-filled regions.
+Potential downside includes higher file fragmentation if such regions will be overwritten
+with normal data in the future.
 
     If #Use copy-on-write# is enabled, then copy routine will use special kernel API
 that copies files in a way, so copied files refer orginal files data and will be really

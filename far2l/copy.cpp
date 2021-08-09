@@ -2978,27 +2978,31 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 		throw ErSr;
 }
 
-static std::pair<DWORD, DWORD> LookupSparseRegion(const unsigned char *Data, DWORD Size)
+// returns std:::pair<OffsetOfNextHole, SizeOfNextHole> (SizeOfNextHole==0 means no holes found)
+static std::pair<DWORD, DWORD> LookupNextHole(const unsigned char *Data, DWORD Size, uint64_t Offset)
 {
-	const DWORD min_sparse_area = 0x1000;
+	const DWORD Alignment = 0x1000; // must be power of 2
+	const DWORD OffsetMisalignment = DWORD(Offset) & (Alignment - 1);
 
-	for (DWORD i = 0, start = 0;; ++i)
-	{
-		if (i < Size && Data[i] == 0 && (i == 0 || Data[i - 1] != 0))
-		{
-			start = i;
-		}
-		else if ((i == Size || Data[i] != 0) && i != 0 && Data[i - 1] == 0)
-		{
-			if (i - start >= min_sparse_area)
-			{
-				return std::make_pair(start, i - start);
-			}
-		}
-
-		if (i == Size)
-			return std::make_pair(Size, (DWORD)0);
+	DWORD i = 0;
+	if (OffsetMisalignment) {
+		i+= Alignment - OffsetMisalignment;
 	}
+
+	for (; i < Size; i+= Alignment)
+	{
+		DWORD ZeroesCount = 0;
+		while (i + ZeroesCount < Size && Data[i + ZeroesCount] == 0)
+		{
+			++ZeroesCount;
+		}
+		if (ZeroesCount >= Alignment)
+		{
+			return std::make_pair(i, (ZeroesCount / Alignment) * Alignment);
+		}
+	}
+
+	return std::make_pair(Size, (DWORD)0);
 }
 
 DWORD ShellFileTransfer::PieceCopy()
@@ -3042,13 +3046,14 @@ DWORD ShellFileTransfer::PieceCopy()
 		while (BytesWritten < WriteSize)
 		{
 			const unsigned char *Data = (const unsigned char *)_CopyBuffer.Ptr + BytesWritten;
-			std::pair<DWORD, DWORD> SR = LookupSparseRegion(Data, WriteSize - BytesWritten);
-			DWORD LeadingNonzeroesWritten = SR.first ? PieceWrite(Data, SR.first) : 0;
+			const std::pair<DWORD, DWORD> &NH =
+				LookupNextHole(Data, WriteSize - BytesWritten, CurCopiedSize + BytesWritten);
+			DWORD LeadingNonzeroesWritten = NH.first ? PieceWrite(Data, NH.first) : 0;
 			BytesWritten+= LeadingNonzeroesWritten;
-			if (SR.second && LeadingNonzeroesWritten == SR.first)
+			if (NH.second && LeadingNonzeroesWritten == NH.first)
 			{
 				// fprintf(stderr, "!!! HOLE of size %x\n", SR.second);
-				BytesWritten+= PieceWriteHole(SR.second);
+				BytesWritten+= PieceWriteHole(NH.second);
 			}
 		}
 	}

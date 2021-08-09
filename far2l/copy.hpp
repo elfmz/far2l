@@ -124,7 +124,6 @@ class ShellFileTransfer
 	DWORD PieceWrite(const void *Data, DWORD Size);
 	DWORD PieceWriteHole(DWORD Size);
 	DWORD PieceCopy();
-	void ProgressUpdate(bool force);
 
 public:
 	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,

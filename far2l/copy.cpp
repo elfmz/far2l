@@ -74,6 +74,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include <unistd.h>
 
+#if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+# include <sys/attr.h>
+# include <sys/clonefile.h>
+# define ENABLE_COW
+
+#elif defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+# define ENABLE_COW
+
+#endif
+
 /* Общее время ожидания пользователя */
 extern long WaitUserTime;
 /* Длф того, что бы время при одижании пользователя тикало, а remaining/speed нет */
@@ -693,7 +703,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	CopyDlg[ID_SC_MULTITARGET].Selected=Opt.CMOpt.MultiCopy;
 	CopyDlg[ID_SC_WRITETHROUGH].Selected=Opt.CMOpt.WriteThrough;
 	CopyDlg[ID_SC_SPARSEFILES].Selected=Opt.CMOpt.SparseFiles;
-#if defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+#ifdef ENABLE_COW
 	CopyDlg[ID_SC_USECOW].Selected=Opt.CMOpt.UseCOW && (Opt.CMOpt.SparseFiles == 0);
 #else
 	CopyDlg[ID_SC_USECOW].Flags|= DIF_DISABLE | DIF_HIDDEN;
@@ -2749,6 +2759,24 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 	return(COPY_SUCCESS);
 }
 
+static void ProgressUpdate(bool force, const FAR_FIND_DATA_EX &SrcData, const wchar_t *DestName)
+{
+	if (force || GetProcessUptimeMSec() - ProgressUpdateTime >= PROGRESS_REFRESH_THRESHOLD)
+	{
+		CP->SetProgressValue(CurCopiedSize, SrcData.nFileSize);
+
+		if (ShowTotalCopySize)
+		{
+			CP->SetTotalProgressValue(TotalCopiedSize, TotalCopySize);
+		}
+
+		CP->SetNames(SrcData.strFileName, DestName);
+
+		ProgressUpdateTime = GetProcessUptimeMSec();
+	}
+}
+
+
 /////////////////////////////////////////////////////////// BEGIN OF ShellFileTransfer
 
 ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
@@ -2855,7 +2883,7 @@ ShellFileTransfer::~ShellFileTransfer()
 			apiDeleteFile(_strDestName);
 		}
 
-		ProgressUpdate(true);
+		ProgressUpdate(true, _SrcData, _strDestName);
 	}
 	catch (std::exception &ex)
 	{
@@ -2867,31 +2895,13 @@ ShellFileTransfer::~ShellFileTransfer()
 	}
 }
 
-void ShellFileTransfer::ProgressUpdate(bool force)
-{
-	if (force || GetProcessUptimeMSec() - ProgressUpdateTime >= PROGRESS_REFRESH_THRESHOLD)
-	{
-		CP->SetProgressValue(CurCopiedSize, _SrcData.nFileSize);
-
-		if (ShowTotalCopySize)
-		{
-			CP->SetTotalProgressValue(TotalCopiedSize, TotalCopySize);
-		}
-
-		CP->SetNames(_SrcData.strFileName, _strDestName);
-
-		ProgressUpdateTime = GetProcessUptimeMSec();
-	}
-}
-
-
 void ShellFileTransfer::Do()
 {
 	CP->SetProgressValue(0,0);
 
 	for (;;)
 	{
-		ProgressUpdate(false);
+		ProgressUpdate(false, _SrcData, _strDestName);
 
 		BOOL IsChangeConsole = OrigScrX != ScrX || OrigScrY != ScrY;
 
@@ -2962,7 +2972,7 @@ void ShellFileTransfer::Do()
 
 	_Done = true;
 
-	ProgressUpdate(false);
+	ProgressUpdate(false, _SrcData, _strDestName);
 }
 
 void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
@@ -3007,7 +3017,7 @@ static std::pair<DWORD, DWORD> LookupNextHole(const unsigned char *Data, DWORD S
 
 DWORD ShellFileTransfer::PieceCopy()
 {
-#if defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+#if defined(ENABLE_COW) && defined(__linux__)
 	if ((_Flags & FCOPY_USECOW) != 0) for(;;)
 	{
 		ssize_t sz = copy_file_range(_SrcFile.Descriptor(),
@@ -3117,6 +3127,32 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 			return (MkSymLink(SrcName,strDestName,RPT,0) ? COPY_SUCCESS:COPY_FAILURE);
 		}
 	}
+
+#if defined(ENABLE_COW) && defined(__APPLE__)
+	if ((_Flags & FCOPY_USECOW) != 0) 
+	{
+		const std::string mbSrc = Wide2MB(SrcName);
+		const std::string &mbDest = strDestName.GetMB();
+		int r = clonefile(mbSrc.c_str(), mbDest.c_str(), 0);
+		if (r == 0)
+		{
+			CurCopiedSize = SrcData.nFileSize;
+			if (ShowTotalCopySize)
+				TotalCopiedSize+= SrcData.nFileSize;
+
+			ProgressUpdate(false, SrcData, strDestName);
+			return COPY_SUCCESS;
+		}
+		else
+		{
+			ErrnoSaver ErSr;
+			if (ErSr.Get() != EXDEV && ErSr.Get() != ENOTSUP)
+				return CP->Cancelled() ? COPY_CANCEL : COPY_FAILURE;
+
+			fprintf(stderr, "CoW abandoned due to errno=%d\n", ErSr.Get());
+		}
+	}
+#endif
 
 	try
 	{

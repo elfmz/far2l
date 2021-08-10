@@ -3147,7 +3147,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 					TotalCopiedSize+= SrcData.nFileSize;
 
 				ProgressUpdate(false, SrcData, strDestName);
-				return COPY_SUCCESS;
+				return CP->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
 			}
 
 			ErrnoSaver ErSr;
@@ -3160,7 +3160,7 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcD
 
 
 		ShellFileTransfer(SrcName, SrcData, strDestName, Append != 0, CopyBuffer, Flags).Do();
-		return COPY_SUCCESS;
+		return CP->Cancelled() ? COPY_CANCEL : COPY_SUCCESS;
 	}
 	catch (ErrnoSaver &ErSr)
 	{

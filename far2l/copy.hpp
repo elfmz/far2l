@@ -65,8 +65,9 @@ enum COPY_FLAGS
 	FCOPY_STREAMSKIP              	= 0x00000800, // потоки
 	FCOPY_STREAMALL               	= 0x00001000, // потоки
 	FCOPY_SKIPSETATTRFLD          	= 0x00002000, // больше не пытаться ставить атрибуты для каталогов - когда нажали Skip All
-	FCOPY_COPYSYMLINK_ASFILE      	= 0x00004000, // Copy symbolics links content instead of making new links
-	FCOPY_COPYSYMLINK_SMART       	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	FCOPY_SYMLINK_ASFILE          	= 0x00004000, // Copy symbolics links content instead of making new links
+	FCOPY_SYMLINK_SMART           	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	FCOPY_SYMLINK_ASFILE_OR_SMART 	= FCOPY_SYMLINK_ASFILE | FCOPY_SYMLINK_SMART,
 	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
 	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
 	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
@@ -158,17 +159,15 @@ class ShellCopy
 		// в остальных случаях - RP_EXACTCOPY - как у источника
 		ReparsePointTypes RPT;
 		ShellCopyBuffer CopyBuffer;
+		std::vector<FARString> SelectedPanelItems;
+		bool IsSymlinkTargetAlsoCopied(const wchar_t *SymLink);
 
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
 		COPY_CODES ShellCopyOneFile(const wchar_t *Src,
 		                            const FAR_FIND_DATA_EX &SrcData,
 		                            FARString &strDest,
 		                            int KeepPathPos, int Rename);
-		COPY_CODES ShellCopyOneFileWithRoot(const wchar_t *Root, const wchar_t *Src,
-		                            const FAR_FIND_DATA_EX &SrcData,
-		                            FARString &strDest,
-		                            int KeepPathPos, int Rename);
-		COPY_CODES ShellCopyOneFileWithRootNoRetry(const wchar_t *Root, const wchar_t *Src,
+		COPY_CODES ShellCopyOneFileNoRetry(const wchar_t *Src,
 		                            const FAR_FIND_DATA_EX &SrcData,
 		                            FARString &strDest,
 		                            int KeepPathPos, int Rename);
@@ -188,8 +187,8 @@ class ShellCopy
 		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL
 		
 		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
-		COPY_CODES CopySymLink(const wchar_t *Root, const wchar_t *ExistingName, 
-					const wchar_t *NewName, ReparsePointTypes LinkType, const FAR_FIND_DATA_EX &SrcData);
+		COPY_CODES CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
+
 	public:
 		ShellCopy(Panel *SrcPanel,int Move,int Link,int CurrentOnly,int Ask,
 		          int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir=false);

@@ -1762,7 +1762,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	// Выставим признак "Тот же диск"
 	bool AllowMoveByOS=false;
 
-	if ( (Flags & FCOPY_MOVE) != 0) //FCOPY_SYMLINK_ASFILE|FCOPY_SYMLINK_SMART|
+	if ( (Flags & FCOPY_MOVE) != 0)
 	{
 		FARString strTmpSrcDir;
 		SrcPanel->GetCurDir(strTmpSrcDir);
@@ -1798,14 +1798,6 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			FAR_FIND_DATA_EX SrcData;
 			int CopyCode=COPY_SUCCESS,KeepPathPos;
 			Flags&=~FCOPY_OVERWRITENEXT;
-
-
-/*			if (!AreSymlinksSupported(Wide2MB(Dest).c_str()) && AreSymlinksSupported(Wide2MB(Src).c_str())) {
-				// "замочим" к едрене фени симлинк - копируем полный контент, независимо от опции
-				// (но не для случая переименования линка)
-				Flags&= ~FCOPY_SYMLINK_SMART;
-				Flags|=FCOPY_SYMLINK_ASFILE;
-			}*/
 
 			KeepPathPos=(int)(PointToName(strSelName)-strSelName.CPtr());
 
@@ -1853,7 +1845,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			if ((Flags&FCOPY_MOVE))
 			{
 				// Тыкс, а как на счет "тот же диск"?
-				if (KeepPathPos && PointToName(strDest)==strDest) // 					(Flags & (FCOPY_SYMLINK_ASFILE|FCOPY_SYMLINK_SMART)) == 0
+				if (KeepPathPos && PointToName(strDest)==strDest)
 				{
 					strDestPath = strSelName;
 					strDestPath.SetLength(KeepPathPos);
@@ -1950,7 +1942,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			if (RPT!=RP_SYMLINKFILE && (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 &&
 			        (
 			            (SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) == 0 ||
-			            ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && (Flags&FCOPY_SYMLINK_ASFILE) != 0)
+			            ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT && (Flags&FCOPY_SYMLINK_ASFILE) != 0)
 			        )
 			   )
 			{
@@ -1984,7 +1976,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 						if ((Flags&FCOPY_MOVE) != 0 && !UseFilter && AllowMoveByOS
 							&& (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0
-							&& ((SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0 || (Flags&FCOPY_SYMLINK_ASFILE_OR_SMART) == 0 ))
+							&& ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT || (Flags&FCOPY_SYMLINK_ASFILE_OR_SMART) == 0 ))
 						{
 							AttemptToMove=TRUE;
 							int Ret=COPY_SUCCESS;
@@ -3373,14 +3365,13 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				FormatString strSrcFileStr, strDestFileStr;
 				uint64_t SrcSize = SrcData.nFileSize;
 				FILETIME SrcLastWriteTime = SrcData.ftLastWriteTime;
-				if(Flags&FCOPY_SYMLINK_ASFILE && SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
+				if(Flags&FCOPY_SYMLINK_ASFILE && (SrcData.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT)
 				{
 					FARString RealName = SrcName;
 					FAR_FIND_DATA_EX FindData;
 					apiGetFindDataForExactPathName(RealName,FindData);
 					SrcSize=FindData.nFileSize;
 					SrcLastWriteTime = FindData.ftLastWriteTime;
-
 				}
 				FormatString strSrcSizeText;
 				strSrcSizeText<<SrcSize;

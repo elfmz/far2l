@@ -50,30 +50,34 @@ enum COPY_CODES
 	COPY_RETRY,
 };
 
-enum COPY_FLAGS
+enum COPY_SYMLINK
 {
-	RESERVED                      	= 0x00000001, //
-	FCOPY_CURRENTONLY             	= 0x00000002, // Только текщий?
-	FCOPY_ONLYNEWERFILES          	= 0x00000004, // Copy only newer files
-	FCOPY_OVERWRITENEXT           	= 0x00000008, // Overwrite all
-	FCOPY_LINK                    	= 0x00000010, // создание линков
-	FCOPY_MOVE                    	= 0x00000040, // перенос/переименование
-	FCOPY_DIZREAD                 	= 0x00000080, //
-	FCOPY_COPYACCESSMODE          	= 0x00000100, // [x] Copy files access mode
-	FCOPY_NOSHOWMSGLINK           	= 0x00000200, // не показывать месаги при ликовании
-	FCOPY_VOLMOUNT                	= 0x00000400, // операция монтированния тома
-	FCOPY_STREAMSKIP              	= 0x00000800, // потоки
-	FCOPY_STREAMALL               	= 0x00001000, // потоки
-	FCOPY_SKIPSETATTRFLD          	= 0x00002000, // больше не пытаться ставить атрибуты для каталогов - когда нажали Skip All
-	FCOPY_SYMLINK_ASFILE          	= 0x00004000, // Copy symbolics links content instead of making new links
-	FCOPY_SYMLINK_SMART           	= 0x00008000, // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
-	FCOPY_SYMLINK_ASFILE_OR_SMART 	= FCOPY_SYMLINK_ASFILE | FCOPY_SYMLINK_SMART,
-	FCOPY_WRITETHROUGH            	= 0x00040000, // disable write cache
-	FCOPY_COPYXATTR               	= 0x00080000, // copy extended attributes
-	FCOPY_SPARSEFILES             	= 0x00100000, // allow producing sparse files
-	FCOPY_USECOW                  	= 0x00200000, // enable COW funcionality if FS supports it
-	FCOPY_COPYLASTTIME            	= 0x10000000, // При копировании в несколько каталогов устанавливается для последнего.
-	FCOPY_UPDATEPPANEL            	= 0x80000000, // необходимо обновить пассивную панель
+	COPY_SYMLINK_ASIS = 0,
+	COPY_SYMLINK_SMART = 1,                 // Copy symbolics links content instead of making new links
+	COPY_SYMLINK_ASFILE = 2    // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+};
+
+struct COPY_FLAGS
+{
+	inline COPY_FLAGS()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+
+	bool CURRENTONLY : 1;        // Только текщий?
+	bool ONLYNEWERFILES : 1;     // Copy only newer files
+	bool OVERWRITENEXT : 1;      // Overwrite all
+	bool LINK : 1;               // создание линков
+	bool MOVE : 1;               // перенос/переименование
+	bool DIZREAD : 1;            //
+	bool COPYACCESSMODE : 1;     // [x] Copy files access mode
+	bool WRITETHROUGH : 1;       // disable write cache
+	bool COPYXATTR : 1;          // copy extended attributes
+	bool SPARSEFILES : 1;        // allow producing sparse files
+	bool USECOW : 1;             // enable COW funcionality if FS supports it
+	bool COPYLASTTIME : 1;       // При копировании в несколько каталогов устанавливается для последнего.
+	bool UPDATEPPANEL : 1;       // необходимо обновить пассивную панель
+	COPY_SYMLINK SYMLINK : 2;
 };
 
 class ShellCopyFileExtendedAttributes
@@ -107,7 +111,7 @@ class ShellFileTransfer
 	const wchar_t *_SrcName;
 	const FARString &_strDestName;
 	ShellCopyBuffer &_CopyBuffer;
-	DWORD _Flags;
+	COPY_FLAGS &_Flags;
 	const FAR_FIND_DATA_EX &_SrcData;
 
 	clock_t _Stopwatch = 0;
@@ -128,7 +132,7 @@ class ShellFileTransfer
 
 public:
 	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
-		const FARString &strDestName, bool Append, ShellCopyBuffer &CopyBuffer, DWORD Flags);
+		const FARString &strDestName, bool Append, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags);
 	~ShellFileTransfer();
 
 	void Do();
@@ -136,7 +140,7 @@ public:
 
 class ShellCopy
 {
-		DWORD Flags;
+		COPY_FLAGS Flags;
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
@@ -184,7 +188,7 @@ class ShellCopy
 		                  int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
 		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
-		void CheckUpdatePanel(); // выставляет флаг FCOPY_UPDATEPPANEL
+		void CheckUpdatePanel(); // выставляет флаг .UPDATEPPANEL
 		
 		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 		COPY_CODES CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);

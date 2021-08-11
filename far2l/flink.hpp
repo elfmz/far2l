@@ -46,5 +46,5 @@ enum ReparsePointTypes
 
 int WINAPI GetNumberOfLinks(const wchar_t *Name);
 int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName);
-int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, DWORD Flags);
+int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg);
 int WINAPI FarMkLink(const wchar_t *ExistingName, const wchar_t *NewName, DWORD Flags);

@@ -93,11 +93,11 @@ int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName)
 	return 1;
 }
 
-int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, DWORD Flags)
+int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg)
 {
 	int r = sdc_symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
-		if (!(Flags&FCOPY_NOSHOWMSGLINK)) {
+		if (CanShowMsg) {
 			Message(MSG_WARNING,1,MSG(MError),
 					MSG(MCopyCannotCreateJunctionToFile),
 					NewName, MSG(MOk));
@@ -128,7 +128,7 @@ int WINAPI FarMkLink(const wchar_t *ExistingName, const wchar_t *NewName, DWORD 
 			case FLINK_SYMLINKDIR:
 				ReparsePointTypes LinkType=RP_JUNCTION;
 
-				Result=MkSymLink(ExistingName, NewName,LinkType,(Flags&FLINK_SHOWERRMSG?0:FCOPY_NOSHOWMSGLINK));
+				Result=MkSymLink(ExistingName, NewName,LinkType,(Flags&FLINK_SHOWERRMSG) != 0);
 		}
 	}
 

@@ -390,6 +390,8 @@ static void SetupFarPath(int argc, char **argv)
 
 int FarAppMain(int argc, char **argv)
 {
+	InMyTemp(); // invoke to preinitialize env-cached value
+
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));

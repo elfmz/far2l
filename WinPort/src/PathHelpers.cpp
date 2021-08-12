@@ -112,12 +112,6 @@ void AppendAndRectifyPath(std::string &s, const char *div, LPCWSTR append)
 
 void WinPortInitWellKnownEnv()
 {
-	if (!getenv("TEMP")) {
-		const std::string &temp = InMyTemp();
-		mkdir(temp.c_str(), 0777);
-		setenv("TEMP", temp.c_str(), 1);
-	}
-
 #ifdef __APPLE__
 	std::list<std::string> pathfiles;
 	pathfiles.emplace_back("/etc/paths");

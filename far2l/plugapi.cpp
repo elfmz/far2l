@@ -2406,20 +2406,24 @@ int WINAPI farGetReparsePointInfo(const wchar_t *Src,wchar_t *Dest,int DestSize)
 
 int WINAPI farGetPathRoot(const wchar_t *Path, wchar_t *Root, int DestSize)
 {
+	fprintf(stderr, "DEPRECATED: %s('%ls')\n", __FUNCTION__, Path);
+
 	if (Path && *Path)
 	{
-		FARString strPath(Path), strRoot;
-		GetPathRoot(strPath,strRoot);
+		if (DestSize >= 2 && Root)
+		{
+			Root[0] = GOOD_SLASH;
+			Root[1] = 0;
+		}
 
-		if (DestSize && Root)
-			xwcsncpy(Root,strRoot,DestSize);
-
-		return (int)strRoot.GetLength()+1;
+		return 2;
 	}
 	else
 	{
-		if (DestSize && Root)
-			*Root = 0;
+		if (DestSize >= 1 && Root)
+		{
+			Root[0] = 0;
+		}
 
 		return 1;
 	}

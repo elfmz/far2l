@@ -362,6 +362,7 @@ int MainProcessWithInterThreadCallsDispatching(FARString& strEditViewArg,FARStri
 
 static void SetupFarPath(int argc, char **argv)
 {
+	InMyTemp(); // pre-cache in env temp pathes
 	InitCurrentDirectory();
 
 	char buf[PATH_MAX + 1] = {};
@@ -390,8 +391,6 @@ static void SetupFarPath(int argc, char **argv)
 
 int FarAppMain(int argc, char **argv)
 {
-	InMyTemp(); // invoke to preinitialize env-cached value
-
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));

@@ -661,7 +661,7 @@ void TreeList::GetRoot()
 	FARString strPanelDir;
 	Panel *RootPanel=GetRootPanel();
 	RootPanel->GetCurDir(strPanelDir);
-	strRoot = strPanelDir;//ExtractPathRoot(strPanelDir);
+	strRoot = strPanelDir;
 }
 
 
@@ -1634,7 +1634,6 @@ int TreeList::GetCurName(FARString &strName)
 	return TRUE;
 }
 
-
 void TreeList::AddTreeName(const wchar_t *Name)
 {
 	if (!*Name)
@@ -1642,14 +1641,12 @@ void TreeList::AddTreeName(const wchar_t *Name)
 
 	FARString strFullName;
 	ConvertNameToFull(Name, strFullName);
-	FARString strRoot = ExtractPathRoot(strFullName);
 	Name = strFullName;
-	Name += strRoot.GetLength() - 1;
 
 	if (!LastSlash(Name))
 		return;
 
-	ReadCache(strRoot);
+	ReadCache(strFullName);
 
 	for (long CachePos = 0; CachePos < TreeCache.TreeCount; CachePos++)
 	{
@@ -1674,10 +1671,8 @@ void TreeList::DelTreeName(const wchar_t *Name)
 
 	FARString strFullName;
 	ConvertNameToFull(Name, strFullName);
-	FARString strRoot = ExtractPathRoot(strFullName);
 	Name = strFullName;
-	Name += strRoot.GetLength() - 1;
-	ReadCache(strRoot);
+	ReadCache(strFullName);
 
 	for (long CachePos = 0; CachePos < TreeCache.TreeCount; CachePos++)
 	{
@@ -1704,18 +1699,7 @@ void TreeList::RenTreeName(const wchar_t *SrcName,const wchar_t *DestName)
 	FARString SrcNameFull, DestNameFull;
 	ConvertNameToFull(SrcName, SrcNameFull);
 	ConvertNameToFull(DestName, DestNameFull);
-	FARString strSrcRoot = ExtractPathRoot(SrcNameFull);
-	FARString strDestRoot = ExtractPathRoot(DestNameFull);
-
-	if (StrCmpI(strSrcRoot, strDestRoot) )
-	{
-		DelTreeName(SrcName);
-		ReadSubTree(SrcName);
-	}
-
-	SrcName += strSrcRoot.GetLength() - 1;
-	DestName += strDestRoot.GetLength() - 1;
-	ReadCache(strSrcRoot);
+	ReadCache(SrcNameFull);
 	int SrcLength = StrLength(SrcName);
 
 	for (int CachePos = 0; CachePos < TreeCache.TreeCount; CachePos++)

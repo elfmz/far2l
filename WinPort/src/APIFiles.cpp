@@ -822,11 +822,6 @@ extern "C"
 		return TRUE;
 	}
 
-	WINPORT_DECL(GetDriveType, UINT, (LPCWSTR lpRootPathName))
-	{
-		return DRIVE_FIXED;
-	}
-
 	WINPORT_DECL(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ))
 	{
 		static const WCHAR formatW[] = {'%','x','.','t','m','p',0};

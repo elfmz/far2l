@@ -169,91 +169,13 @@ void InfoList::DisplayObject()
 	if (strCurDir.IsEmpty())
 		apiGetCurrentDirectory(strCurDir);
 
-	/*
-		Корректно отображать инфу при заходе в Juction каталог
-		Рут-диск может быть другим
-	*/
-/*	if ((apiGetFileAttributes(strCurDir)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
-	{
-		FARString strJuncName;
-
-		if (GetReparsePointInfo(strCurDir, strJuncName))
-		{
-			NormalizeSymlinkName(strJuncName);
-			GetPathRoot(strJuncName,strDriveRoot); //"\??\D:\Junc\Src\"
-		}
-	}
-	else
-		GetPathRoot(strCurDir, strDriveRoot);*/
 	fprintf(stderr, "apiGetVolumeInformation: %ls\n", strCurDir.CPtr());
 	if (apiGetVolumeInformation(strCurDir,&strVolumeName,
 	                            &VolumeNumber,&MaxNameLength,&FileSystemFlags,
 	                            &strFileSystemName))
 	{
-#if 0
-		int IdxMsgID=-1;
-		int DriveType=FAR_GetDriveType(strCurDir,nullptr,TRUE);
-
-		switch (DriveType)
-		{
-			case DRIVE_REMOVABLE:
-				IdxMsgID=MInfoRemovable;
-				break;
-			case DRIVE_FIXED:
-				IdxMsgID=MInfoFixed;
-				break;
-			case DRIVE_REMOTE:
-				IdxMsgID=MInfoNetwork;
-				break;
-			case DRIVE_CDROM:
-				IdxMsgID=MInfoCDROM;
-				break;
-			case DRIVE_RAMDISK:
-				IdxMsgID=MInfoRAM;
-				break;
-			default:
-
-				if (IsDriveTypeCDROM(DriveType))
-					IdxMsgID=DriveType-DRIVE_CD_RW+MInfoCD_RW;
-
-				break;
-		}
-		//LPCWSTR DiskType=(IdxMsgID!=-1)?MSG(IdxMsgID):L"";
-//		wchar_t LocalName[]={ExtractPathRoot(strCurDir).At(0),L':',L'\0'}; // strDriveRoot?
-		FARString strAssocPath;
-
-		/*if (GetSubstName(DriveType,LocalName,strAssocPath))
-		{
-			DiskType = MSG(MInfoSUBST);
-			DriveType=DRIVE_SUBSTITUTE;
-		}
-		else */if(DriveType == DRIVE_FIXED/* && GetVHDName(LocalName,strAssocPath)*/)
-		{
-			//DiskType = MSG(MInfoVirtual);
-			DriveType=DRIVE_VIRTUAL;
-		}
-#endif
-
-
 //		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 		strTitle=FARString(L" ")+L" ("+strFileSystemName+L") ";
-
-/*		switch(DriveType)
-		{
-		case DRIVE_REMOTE:
-			{
-				apiWNetGetConnection(LocalName, strAssocPath);
-			}
-			break;
-
-		case DRIVE_SUBSTITUTE:
-		case DRIVE_VIRTUAL:
-			{
-				strTitle += strAssocPath;
-				strTitle += L" ";
-			}
-			break;
-		}*/
 
 		strDiskNumber.Format(L"%04X-%04X",VolumeNumber>>16,VolumeNumber & 0xffff);
 	}

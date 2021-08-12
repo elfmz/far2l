@@ -430,13 +430,6 @@ FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 	return strPath;
 }
 
-void GetPathRoot(const wchar_t *Path, FARString &strRoot)
-{
-	FARString RealPath;
-	ConvertNameToReal(Path, RealPath);
-	strRoot = ExtractPathRoot(RealPath);
-}
-
 void ConvertNameToFull(const wchar_t *lpwszSrc, FARString &strDest)
 {
 	if (*lpwszSrc != GOOD_SLASH) {

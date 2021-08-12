@@ -120,7 +120,6 @@
 #define    FindNextFile			WINPORT(FindNextFile)
 #define    FindClose			WINPORT(FindClose)
 
-#define    GetDriveType			WINPORT(GetDriveType)
 #define    GetTempFileName			WINPORT(GetTempFileName)
 #define    GetFullPathName			WINPORT(GetFullPathName)
 

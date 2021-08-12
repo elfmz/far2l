@@ -187,7 +187,6 @@ class ShellCopy
 		                  DWORD DestAttr,int SameName,int Rename,int AskAppend,
 		                  int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
-		bool ShellSetAttr(const wchar_t *Dest,DWORD Attr);
 		void CheckUpdatePanel(); // выставляет флаг .UPDATEPPANEL
 		
 		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);

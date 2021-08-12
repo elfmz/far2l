@@ -833,10 +833,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				AttrDlg[SA_EDIT_SYMLINK].Flags&=~DIF_HIDDEN;
 				AttrDlg[SA_EDIT_SYMLINK].strData=LenJunction?strLinkName.CPtr():MSG(MSetAttrUnknownJunction);
 				DlgParam.FileSystemFlags=0;
-				FARString strRoot;
-				GetPathRoot(strSelName,strRoot);
 
-				if (apiGetVolumeInformation(strRoot,nullptr,0,nullptr,&DlgParam.FileSystemFlags,nullptr))
+				if (apiGetVolumeInformation(strSelName,nullptr,0,nullptr,&DlgParam.FileSystemFlags,nullptr))
 				{
 					if (!(DlgParam.FileSystemFlags&FILE_FILE_COMPRESSION))
 					{

@@ -643,11 +643,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			else
 			{
 				if (!IsLocalRootPath(strCurDir))
-				{
-					FARString strDriveRoot;
-					GetPathRoot(strCurDir, strDriveRoot);
-					return (int64_t)(!StrCmp(strCurDir, strDriveRoot));
-				}
+					return 0;
 
 				return 1;
 			}
@@ -2449,12 +2445,11 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	SudoClientRegion sdc_rgn;
 
 	Panel *AnotherPanel;
-	FARString strFindDir, strSetDir;
 
 	if (PanelMode!=PLUGIN_PANEL && !IsAbsolutePath(NewDir) && !TestCurrentDirectory(strCurDir))
 		FarChDir(strCurDir);
 
-	strSetDir = NewDir;
+	FARString strFindDir, strSetDir = NewDir;
 	bool dot2Present = !StrCmp(strSetDir, L"..");
 	fprintf(stderr,"NewDir=%ls strCurDir=%ls dot2Present=%u\n", NewDir, strCurDir.CPtr(), dot2Present);
 
@@ -2615,12 +2610,11 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 
 		if (dot2Present)
 		{
-			FARString strRootDir, strTempDir;
+			FARString strTempDir;
 			strTempDir = strCurDir;
 			AddEndSlash(strTempDir);
-			GetPathRoot(strTempDir, strRootDir);
 
-			if ((strCurDir.At(0) == GOOD_SLASH && strCurDir.At(1) == GOOD_SLASH && !StrCmp(strTempDir,strRootDir)) || IsLocalRootPath(strCurDir))
+			if (IsLocalRootPath(strCurDir))
 			{
 				FARString strDirName;
 				strDirName = strCurDir;
@@ -2658,11 +2652,6 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	*/
 	int UpdateFlags = 0;
 	BOOL SetDirectorySuccess = TRUE;
-
-	if (PanelMode!=PLUGIN_PANEL && !StrCmp(strSetDir,L"."))
-	{
-		strSetDir = ExtractPathRoot(strCurDir);
-	}
 
 	FARString strOrigCurDir;
 	apiGetCurrentDirectory(strOrigCurDir);
@@ -3014,9 +3003,7 @@ void FileList::SetViewMode(int ViewMode)
 	int NewDiz=IsColumnDisplayed(DIZ_COLUMN);
 	int NewAccessTime=IsColumnDisplayed(ADATE_COLUMN);
 	int ResortRequired=FALSE;
-	FARString strDriveRoot;
 	//DWORD FileSystemFlags;
-	GetPathRoot(strCurDir,strDriveRoot);
 
 //	if (NewPacked && apiGetVolumeInformation(strDriveRoot,nullptr,nullptr,nullptr,&FileSystemFlags,nullptr))
 //		if (!(FileSystemFlags&FILE_FILE_COMPRESSION))
@@ -3722,19 +3709,6 @@ void FileList::CompareDir()
 			CompareFatTime=TRUE;
 
 		//OpifRealnames2=Info.Flags & OPIF_REALNAMES;
-	}
-
-	if (PanelMode==NORMAL_PANEL && Another->PanelMode==NORMAL_PANEL)
-	{
-		FARString strFileSystemName1, strFileSystemName2;
-		FARString strRoot1, strRoot2;
-		GetPathRoot(strCurDir, strRoot1);
-		GetPathRoot(Another->strCurDir, strRoot2);
-
-		if (apiGetVolumeInformation(strRoot1,nullptr,nullptr,nullptr,nullptr,&strFileSystemName1) &&
-		        apiGetVolumeInformation(strRoot2,nullptr,nullptr,nullptr,nullptr,&strFileSystemName2))
-			if (StrCmpI(strFileSystemName1,strFileSystemName2))
-				CompareFatTime=TRUE;
 	}
 
 	// теперь начнем цикл по снятию выделений

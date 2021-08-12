@@ -640,30 +640,6 @@ static void ReleaseInFileSearch()
 	}
 }
 
-static FARString &PrepareDriveNameStr(FARString &strSearchFromRoot)
-{
-	FARString strCurDir;
-	CtrlObject->CmdLine->GetCurDir(strCurDir);
-	GetPathRoot(strCurDir,strCurDir);
-	DeleteEndSlash(strCurDir);
-
-	if (
-	    strCurDir.IsEmpty()||
-	    (CtrlObject->Cp()->ActivePanel->GetMode()==PLUGIN_PANEL && CtrlObject->Cp()->ActivePanel->IsVisible())
-	)
-	{
-		strSearchFromRoot = MSG(MSearchFromRootFolder);
-	}
-	else
-	{
-		strSearchFromRoot= MSG(MSearchFromRootOfDrive);
-		strSearchFromRoot+=L" ";
-		strSearchFromRoot+=strCurDir;
-	}
-
-	return strSearchFromRoot;
-}
-
 // Проверяем символ на принадлежность разделителям слов
 static bool IsWordDiv(const wchar_t symbol)
 {
@@ -849,8 +825,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 					//FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 					FrameManager->ResizeAllFrame();
 					IsRedrawFramesInProcess--;
-					FARString strSearchFromRoot;
-					PrepareDriveNameStr(strSearchFromRoot);
+					FARString strSearchFromRoot = MSG(MSearchFromRootFolder);
 					FarListGetItem item={FADC_ROOT, {}};
 					SendDlgMessage(hDlg,DM_LISTGETITEM,FAD_COMBOBOX_WHERE,(LONG_PTR)&item);
 					item.Item.Text=strSearchFromRoot;
@@ -2757,7 +2732,7 @@ static void DoPrepareFileList(HANDLE hDlg)
 	}
 	else if (SearchMode==FINDAREA_ROOT)
 	{
-		GetPathRoot(strRoot,strRoot);
+		strRoot = L"/";
 		List.Set(strRoot);
 	}
 	else if (SearchMode==FINDAREA_ALL || SearchMode==FINDAREA_ALL_BUTNETWORK)
@@ -3188,7 +3163,7 @@ FindFiles::FindFiles()
 		itd.ClearAllLists();
 		Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 		v.PluginMode=ActivePanel->GetMode()==PLUGIN_PANEL && ActivePanel->IsVisible();
-		PrepareDriveNameStr(strSearchFromRoot);
+		strSearchFromRoot = MSG(MSearchFromRootFolder);
 		const wchar_t *MasksHistoryName=L"Masks",*TextHistoryName=L"SearchText";
 		const wchar_t *HexMask=L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH";
 		const wchar_t VSeparator[]={BoxSymbols[BS_T_H1V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_B_H1V1],0};

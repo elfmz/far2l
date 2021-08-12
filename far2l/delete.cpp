@@ -126,18 +126,11 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 	if (!(SelCount=SrcPanel->GetSelCount()))
 		goto done;
 
-	// Удаление в корзину только для  FIXED-дисков
+	// TODO: Удаление в корзину только для  FIXED-дисков
 	{
-		FARString strRoot;
 //    char FSysNameSrc[NM];
 		SrcPanel->GetSelNameCompat(nullptr,FileAttr);
 		SrcPanel->GetSelNameCompat(&strSelName,FileAttr);
-		ConvertNameToFull(strSelName, strRoot);
-		GetPathRoot(strRoot,strRoot);
-
-//_SVS(SysLog(L"Del: SelName='%ls' Root='%ls'",SelName,Root));
-		if (Opt.DeleteToRecycleBin && FAR_GetDriveType(strRoot) != DRIVE_FIXED)
-			Opt.DeleteToRecycleBin=0;
 	}
 
 	if (SelCount==1)

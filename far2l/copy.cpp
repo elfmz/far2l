@@ -1796,7 +1796,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			DestAttr=apiGetFileAttributes(strDest);
 
 			FARString strDestPath = strDest;
-			FAR_FIND_DATA_EX SrcData;
+			FAR_FIND_DATA_EX SrcData; SrcData.Clear();
 			int CopyCode=COPY_SUCCESS,KeepPathPos;
 			Flags.OVERWRITENEXT = false;
 
@@ -2276,23 +2276,11 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 	}
 
 	FARString strDestPath = strDest;
-	const wchar_t *NamePtr=PointToName(strDestPath);
-	DWORD DestAttr=INVALID_FILE_ATTRIBUTES;
+	const wchar_t *NamePtr = PointToName(strDestPath);
+	DWORD DestAttr = (strDestPath == L"/" || !*NamePtr || TestParentFolderName(NamePtr))
+		? FILE_ATTRIBUTE_DIRECTORY : INVALID_FILE_ATTRIBUTES;
 
-	if (strDestPath.At(0)==GOOD_SLASH && strDestPath.At(1)==GOOD_SLASH)
-	{
-		FARString strRoot;
-		GetPathRoot(strDestPath, strRoot);
-		DeleteEndSlash(strRoot);
-
-		if (!StrCmp(strDestPath,strRoot))
-			DestAttr=FILE_ATTRIBUTE_DIRECTORY;
-	}
-
-	if (!*NamePtr || TestParentFolderName(NamePtr))
-		DestAttr=FILE_ATTRIBUTE_DIRECTORY;
-
-	FAR_FIND_DATA_EX DestData;
+	FAR_FIND_DATA_EX DestData; DestData.Clear();
 	if (DestAttr==INVALID_FILE_ATTRIBUTES)
 	{
 		if (apiGetFindDataForExactPathName(strDestPath,DestData))
@@ -2372,11 +2360,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 		{
 			if ((DestAttr & FILE_ATTRIBUTE_DIRECTORY) && !SameName)
 			{
-				DWORD SetAttr=SrcData.dwFileAttributes;
-
-				if (SetAttr!=DestAttr)
-					ShellSetAttr(strDestPath,SetAttr);
-
+				// TODO: apply SrcData.dwUnixMode to strDestPath here or at CreateDirectory
 				FARString strSrcFullName;
 				ConvertNameToFull(Src,strSrcFullName);
 				return(!StrCmp(strDestPath,strSrcFullName) ? COPY_NEXT:COPY_SUCCESS);
@@ -2593,31 +2577,21 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			}
 			while (CopyCode==COPY_RETRY);
 
+			if (Append && DestData.dwUnixMode != 0 && (CopyCode != COPY_SUCCESS || DestData.dwUnixMode != SrcData.dwUnixMode))
+			{
+				const std::string &mbDestPath = strDestPath.GetMB();
+				sdc_chmod(mbDestPath.c_str(), DestData.dwUnixMode);
+			}
 			if (CopyCode==COPY_SUCCESS)
 			{
 				strCopiedName = PointToName(strDestPath);
-
-				if (DestAttr!=INVALID_FILE_ATTRIBUTES && !StrCmp(strCopiedName,DestData.strFileName) &&
-				        StrCmp(strCopiedName,DestData.strFileName))
-					apiMoveFile(strDestPath,strDestPath); //???
-
 				TotalFiles++;
-
-				if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
-					apiSetFileAttributes(strDestPath,DestAttr);
-
 				return COPY_SUCCESS;
 			}
 			else if (CopyCode==COPY_CANCEL || CopyCode==COPY_NEXT)
 			{
-				if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
-					apiSetFileAttributes(strDestPath,DestAttr);
-
 				return((COPY_CODES)CopyCode);
 			}
-
-			if (DestAttr!=INVALID_FILE_ATTRIBUTES && Append)
-				apiSetFileAttributes(strDestPath,DestAttr);
 		}
 
 		//????
@@ -2713,8 +2687,6 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 			case 4:
 				return(COPY_CANCEL);
 		}
-
-		//apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
 	}
 	
 	TemporaryMakeWritable tmw(Name);
@@ -3539,7 +3511,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 		}
 
 		if (!SameName && (DestAttr & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)))
-			apiMakeWritable(DestName); //apiSetFileAttributes(DestName,FILE_ATTRIBUTE_NORMAL);
+			apiMakeWritable(DestName);
 	}
 
 	return TRUE;
@@ -3655,37 +3627,6 @@ bool ShellCopy::CalcTotalSize()
 	TotalCopySize=TotalCopySize*CountTarget;
 	InsertCommas(TotalCopySize,strTotalCopySizeText);
 	PreRedraw.Pop();
-	return true;
-}
-
-/*
-  Оболочка вокруг SetFileAttributes() для
-  корректного выставления атрибутов
-*/
-bool ShellCopy::ShellSetAttr(const wchar_t *Dest,DWORD Attr)
-{
-	FARString strRoot;
-	ConvertNameToFull(Dest,strRoot);
-	GetPathRoot(strRoot,strRoot);
-
-	if (apiGetFileAttributes(strRoot)==INVALID_FILE_ATTRIBUTES) // Неудача, когда сетевой путь, да еще и симлинк
-	{
-		// ... в этом случае проверим AS IS
-		ConvertNameToFull(Dest,strRoot);
-		GetPathRoot(strRoot,strRoot);
-
-		if (apiGetFileAttributes(strRoot)==INVALID_FILE_ATTRIBUTES)
-		{
-			return false;
-		}
-	}
-
-
-	if (!apiSetFileAttributes(Dest,Attr))
-	{
-		return FALSE;
-	}
-
 	return true;
 }
 

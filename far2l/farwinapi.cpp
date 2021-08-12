@@ -480,9 +480,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 
 DWORD apiGetTempPath(FARString &strBuffer)
 {
-	::apiGetEnvironmentVariable(L"TEMP", strBuffer);
-	if (strBuffer.IsEmpty())
-		strBuffer = L"/var/tmp";
+	strBuffer = InMyTemp();
 	return strBuffer.GetSize();
 };
 

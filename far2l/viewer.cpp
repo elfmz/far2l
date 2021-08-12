@@ -1323,11 +1323,7 @@ int Viewer::ProcessKey(int Key)
 		{
 			if (ViewFile.Opened())
 			{
-				FARString strRoot;
-				GetPathRoot(strFullFileName, strRoot);
-				int DriveType=FAR_GetDriveType(strRoot);
-
-				if (DriveType!=DRIVE_REMOVABLE && !IsDriveTypeCDROM(DriveType))
+				// TODO: strFullFileName -> if (DriveType!=DRIVE_REMOVABLE && !IsDriveTypeCDROM(DriveType))
 				{
 					FAR_FIND_DATA_EX NewViewFindData;
 

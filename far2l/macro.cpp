@@ -1480,7 +1480,6 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					if (SelPanel  && SelPanel->GetMode() != PLUGIN_PANEL)
 					{
 						SelPanel->GetCurDir(strFileName);
-						GetPathRoot(strFileName, strFileName);
 						UINT DriveType=FAR_GetDriveType(strFileName,nullptr,0);
 
 /*						if (IsLocalPath(strFileName))

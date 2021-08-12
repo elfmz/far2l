@@ -268,20 +268,8 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 	// !:       Текущий диск
 	if (!StrCmpN(CurStr,L"!:",2))
 	{
-		FARString strCurDir;
-		FARString strRootDir;
-
-//		if (*PSubstData->Name && PSubstData->Name[1]==L':')
-			strCurDir = PSubstData->Name;
-//		else if (PSubstData->PassivePanel)
-//			PSubstData->AnotherPanel->GetCurDir(strCurDir);
-//		else
-//			strCurDir = PSubstData->strCmdDir;
-
-		GetPathRoot(strCurDir,strRootDir);
-		DeleteEndSlash(strRootDir);
-		strOut += strRootDir;
-		CurStr+=2;
+		fprintf(stderr, "%s: deprecated CurStr='%ls'\n", __FUNCTION__, CurStr);
+		CurStr+= 2;
 		return CurStr;
 	}
 

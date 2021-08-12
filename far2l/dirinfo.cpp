@@ -84,7 +84,7 @@ int GetDirInfo(const wchar_t *Title,
                FileFilter *Filter,
                DWORD Flags)
 {
-	FARString strFullDirName, strDriveRoot;
+	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
 	ConvertNameToFull(DirName, strFullDirName);
 	SaveScreen SaveScr;
@@ -95,7 +95,6 @@ int GetDirInfo(const wchar_t *Title,
 	FAR_FIND_DATA_EX FindData;
 	clock_t StartTime=GetProcessUptimeMSec();
 	SetCursorType(FALSE,0);
-	GetPathRoot(strFullDirName,strDriveRoot);
 	/* $ 20.03.2002 DJ
 	   для . - покажем имя родительского каталога
 	*/
@@ -113,7 +112,7 @@ int GetDirInfo(const wchar_t *Title,
 	RefreshFrameManager frref(ScrX,ScrY,MsgWaitTime,Flags&GETDIRINFO_DONTREDRAWFRAME);
 	//DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
 
-	//todo if (GetDiskFreeSpace(strDriveRoot,&SectorsPerCluster,&BytesPerSector,&FreeClusters,&Clusters))
+	//todo if (GetDiskFreeSpace(strFullDirName,&SectorsPerCluster,&BytesPerSector,&FreeClusters,&Clusters))
 	//	ClusterSize=SectorsPerCluster*BytesPerSector;
 
 	// Временные хранилища имён каталогов

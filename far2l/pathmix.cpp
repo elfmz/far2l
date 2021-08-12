@@ -502,52 +502,6 @@ bool FindLastSlash(size_t &Pos, const FARString &Str)
 	return false;
 }
 
-// find path root component (drive letter / volume name / server share) and calculate its length
-size_t GetPathRootLength(const FARString &Path)
-{
-	unsigned PrefixLen = 0;
-	bool IsUNC = false;
-
-	/* if (Path.Equal(0,8,L"//?/UNC/",8))
-	{
-		PrefixLen = 8;
-		IsUNC = true;
-	}
-	else if (Path.Equal(0,4,L"//?/",4) || Path.Equal(0,4,L"\/??\/",4) || Path.Equal(0,4,L"//./",4))
-	{
-		PrefixLen = 4;
-	}
-	else */ if (Path.Equal(0,2,L"//",2))
-	{
-		PrefixLen = 2;
-		IsUNC = true;
-	}
-
-	if (!PrefixLen && !Path.Equal(1, L':'))
-		return 0;
-
-	size_t p;
-
-	if (!FindSlash(p, Path, PrefixLen))
-		p = Path.GetLength();
-
-	if (IsUNC)
-		if (!FindSlash(p, Path, p + 1))
-			p = Path.GetLength();
-
-	return p;
-}
-
-FARString ExtractPathRoot(const FARString &Path)
-{
-	size_t PathRootLen = GetPathRootLength(Path);
-
-	if (PathRootLen)
-		return FARString(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
-	else
-		return FARString();
-}
-
 FARString ExtractFileName(const FARString &Path)
 {
 	size_t p;
@@ -556,11 +510,6 @@ FARString ExtractFileName(const FARString &Path)
 		p++;
 	else
 		p = 0;
-
-	size_t PathRootLen = GetPathRootLength(Path);
-
-	if (p <= PathRootLen && PathRootLen)
-		return FARString();
 
 	return FARString(Path.CPtr() + p, Path.GetLength() - p);
 }
@@ -572,25 +521,12 @@ FARString ExtractFilePath(const FARString &Path)
 	if (!FindLastSlash(p, Path))
 		p = 0;
 
-	size_t PathRootLen = GetPathRootLength(Path);
-
-	if (p <= PathRootLen && PathRootLen)
-		return FARString(Path.CPtr(), PathRootLen).Append(GOOD_SLASH);
-
 	return FARString(Path.CPtr(), p);
 }
 
 bool IsRootPath(const FARString &Path)
 {
-	size_t PathRootLen = GetPathRootLength(Path);
-
-	if (Path.GetLength() == PathRootLen)
-		return true;
-
-	if (Path.GetLength() == PathRootLen + 1 && IsSlash(Path[Path.GetLength() - 1]))
-		return true;
-
-	return false;
+	return Path == L"/";
 }
 
 static std::string LookupExecutableInEnvPath(const char *file)

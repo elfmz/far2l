@@ -90,60 +90,56 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
     TSTFLD_NOTACCESS (-1) - нет доступа
     TSTFLD_ERROR     (-2) - ошибка (кривые параметры или нехватило памяти для выделения промежуточных буферов)
 */
-int TestFolder(const wchar_t *Path)
+TESTFOLDERCONST TestFolder(const wchar_t *Path)
 {
 	if (!(Path && *Path)) // проверка на вшивость
 		return TSTFLD_ERROR;
 
-	FARString strFindPath = Path;
-	// сообразим маску для поиска.
-	AddEndSlash(strFindPath);
-	strFindPath += L"*";
+	std::string mbPath;
+	Wide2MB(Path, mbPath);
+	while (mbPath.size() > 1 && mbPath.back() == '/')
+		mbPath.resize(mbPath.size() - 1);
 
-	// первая проверка - че-нить считать можем?
-	FAR_FIND_DATA_EX fdata;
-	FindFile Find(strFindPath);
-	bool bFind = false;
-	if(Find.Get(fdata))
+	struct stat s{};
+	int r = sdc_stat(mbPath.c_str(), &s);
+	if (r == -1)
 	{
-		return TSTFLD_NOTEMPTY;
+		if (errno == EPERM || errno == EACCES)
+			return TSTFLD_NOTACCESS;
+
+		return TSTFLD_NOTFOUND;
 	}
-	if (!bFind)
-	{
-		ErrnoSaver lstError;
 
-		if (lstError.Get() == ERROR_FILE_NOT_FOUND)
+	if (!S_ISDIR(s.st_mode)) // not directories are always empty
+		return TSTFLD_EMPTY;
+
+	DIR *d = sdc_opendir(mbPath.c_str());
+	if (!d) switch (errno)
+	{
+		case EPERM: case EACCES:
+			return TSTFLD_NOTACCESS;
+
+		case ENOMEM: case EMFILE: case ENFILE: case EBADF:
+			return TSTFLD_ERROR;
+
+		default:
 			return TSTFLD_EMPTY;
-
-		// собственно... не факт, что диск не читаем, т.к. на чистом диске в корне нету даже "."
-		// поэтому посмотрим на Root
-		GetPathRoot(Path,strFindPath);
-
-		if (!StrCmp(Path,strFindPath))
-		{
-			// проверка атрибутов гарантировано скажет - это бага BugZ#743 или пустой корень диска.
-			if (apiGetFileAttributes(strFindPath)!=INVALID_FILE_ATTRIBUTES)
-			{
-				if (lstError.IsAccessDenied())
-					return TSTFLD_NOTACCESS;
-				return TSTFLD_EMPTY;
-			}
-		}
-
-		strFindPath = Path;
-
-		if (CheckShortcutFolder(&strFindPath,FALSE,TRUE))
-		{
-			if (StrCmp(Path,strFindPath))
-				return TSTFLD_NOTFOUND;
-		}
-
-		return TSTFLD_NOTACCESS;
 	}
 
+	TESTFOLDERCONST out = TSTFLD_EMPTY;
+	for (;;)
+	{
+		struct dirent *de = sdc_readdir(d);
+		if (!de) break;
+		if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
+		{
+			out = TSTFLD_NOTEMPTY;
+			break;
+		}
+	}
+	sdc_closedir(d);
 
-	// однозначно каталог пуст
-	return TSTFLD_EMPTY;
+	return out;
 }
 
 /*

@@ -1473,29 +1473,20 @@ int Panel::SetCurPath()
 
 	if (!FarChDir(strCurDir))
 	{
-		// здесь на выбор :-)
-#if 1
-
 		while (!FarChDir(strCurDir))
 		{
-			FARString strRoot;
-			GetPathRoot(strCurDir, strRoot);
+			int Result=TestFolder(strCurDir);
 
-			if (FAR_GetDriveType(strRoot) != DRIVE_REMOVABLE || apiIsDiskInDrive(strRoot))
+			if (Result == TSTFLD_NOTFOUND)
 			{
-				int Result=TestFolder(strCurDir);
-
-				if (Result == TSTFLD_NOTFOUND)
+				if (CheckShortcutFolder(&strCurDir,FALSE,TRUE) && FarChDir(strCurDir))
 				{
-					if (CheckShortcutFolder(&strCurDir,FALSE,TRUE) && FarChDir(strCurDir))
-					{
-						SetCurDir(strCurDir,TRUE);
-						return TRUE;
-					}
+					SetCurDir(strCurDir,TRUE);
+					return TRUE;
 				}
-				else
-					break;
 			}
+			else
+				break;
 
 			if (FrameManager && FrameManager->ManagerStarted()) // сначала проверим - а запущен ли менеджер
 			{
@@ -1523,30 +1514,6 @@ int Panel::SetCurPath()
 			}
 		}
 
-#else
-
-		do
-		{
-			BOOL IsChangeDisk=FALSE;
-			char Root[1024];
-			GetPathRoot(CurDir,Root);
-
-			if (FAR_GetDriveType(Root) == DRIVE_REMOVABLE && !apiIsDiskInDrive(Root))
-				IsChangeDisk=TRUE;
-			else if (TestFolder(CurDir) == TSTFLD_NOTACCESS)
-			{
-				if (FarChDir(Root))
-					SetCurDir(Root,TRUE);
-				else
-					IsChangeDisk=TRUE;
-			}
-
-			if (IsChangeDisk)
-				ChangeDisk();
-		}
-		while (!FarChDir(CurDir));
-
-#endif
 		return FALSE;
 	}
 

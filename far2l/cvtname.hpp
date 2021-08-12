@@ -40,6 +40,4 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest);
 void ConvertNameToFull(const wchar_t *Src, FARString &strDest);
 void ConvertNameToFull(FARString &strSrcDest);
 
-void GetPathRoot(const wchar_t *Path, FARString &strRoot);
-
 void ConvertHomePrefixInPath(FARString &strFileName);

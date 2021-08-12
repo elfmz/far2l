@@ -790,9 +790,9 @@ BOOL WINAPI AddEndSlashA(char *Path)
 
 void WINAPI GetPathRootA(const char *Path, char *Root)
 {
-	FARString strPath(Path), strRoot;
-	GetPathRoot(strPath,strRoot);
-	strRoot.GetCharString(Root,strRoot.GetLength()+1);
+	fprintf(stderr, "DEPRECATED: %s('%s')\n", __FUNCTION__, Path);
+	Root[0] = GOOD_SLASH;
+	Root[1] = 0;
 }
 
 int WINAPI CopyToClipboardA(const char *Data)

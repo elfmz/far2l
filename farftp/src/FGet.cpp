@@ -284,7 +284,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		DestTime.dwHighDateTime = 0;
 
 		//Skip deselected in list
-		if(CurPanelItem->FindData.dwReserved1 == MAX_DWORD)
+		if(CurPanelItem->CRC32 & 0x80000000)
 			continue;
 
 		//Rename on ftp

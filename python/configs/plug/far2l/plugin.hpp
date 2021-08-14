@@ -579,19 +579,20 @@ enum PLUGINPANELITEMFLAGS
 
 struct FAR_FIND_DATA
 {
-	DWORD    dwFileAttributes;
 	FILETIME ftCreationTime;
 	FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
+	uint64_t nPhysicalSize;
 	uint64_t nFileSize;
-	uint64_t nPackSize;
-	DWORD dwUnixMode;
+	DWORD    dwFileAttributes;
+	DWORD    dwUnixMode;
 	wchar_t *lpwszFileName;
 };
 
 struct PluginPanelItem
 {
 	struct FAR_FIND_DATA FindData;
+	DWORD_PTR     UserData;
 	DWORD         Flags;
 	DWORD         NumberOfLinks;
 	const wchar_t *Description;
@@ -599,7 +600,6 @@ struct PluginPanelItem
 	const wchar_t *Group;
 	const wchar_t * const *CustomColumnData;
 	int           CustomColumnNumber;
-	DWORD_PTR     UserData;
 	DWORD         CRC32;
 	DWORD_PTR     Reserved[2];
 };
@@ -1909,8 +1909,6 @@ enum OPENPLUGININFO_SORTMODES
 	SM_OWNER,
 	SM_COMPRESSEDSIZE,
 	SM_NUMLINKS,
-	SM_NUMSTREAMS,
-	SM_STREAMSSIZE,
 	SM_FULLNAME,
 	SM_CHTIME,
 };

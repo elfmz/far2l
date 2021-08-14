@@ -292,10 +292,9 @@ int WINAPI _export ARC_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 
   strncpy(Item->FindData.cFileName,Header.Name,sizeof(Item->FindData.cFileName));
 
-  Item->FindData.nFileSizeLow=Header.OrigSize;
-  Item->FindData.nFileSizeHigh=0;
+  Item->FindData.nFileSize=Header.OrigSize;
   Item->FindData.dwFileAttributes=FILE_ATTRIBUTE_ARCHIVE; //??
-  Item->PackSize=Header.CompSize;
+  Item->FindData.nPhysicalSize=Header.CompSize;
 
   Item->CRC32=(DWORD)Header.CRC16;
 

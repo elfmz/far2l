@@ -265,9 +265,8 @@ int WINAPI _export ACE_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
           memcpy(Item->FindData.cFileName,FileHeader->FileName,FileHeader->FileNameSize);
         }
         Item->FindData.cFileName[FileHeader->FileNameSize]=0;
-        Item->FindData.nFileSizeLow=FileHeader->UnpSize;
-        Item->FindData.nFileSizeHigh=0;
-        Item->PackSize=FileHeader->PackSize;
+        Item->FindData.nFileSize=FileHeader->UnpSize;
+        Item->FindData.nPhysicalSize=FileHeader->PackSize;
         FILETIME lft;
         WINPORT(DosDateTimeToFileTime)(FileHeader->FDate,FileHeader->FTime,&lft);
         WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);

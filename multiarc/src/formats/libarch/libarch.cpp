@@ -235,9 +235,8 @@ int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcIte
 		strncpy(Item->FindData.cFileName, pathname, sizeof(Item->FindData.cFileName) - 1);
 
 		uint64_t sz = archive_entry_size(entry);
-		Item->PackSize = Item->FindData.nFileSizeLow = sz&0xffffffff;
-		Item->PackSizeHigh = Item->FindData.nFileSizeHigh = (sz>>32)&0xffffffff;
-
+		Item->FindData.nFileSize = sz;
+		Item->FindData.nPhysicalSize = sz;
 		Item->FindData.dwUnixMode = archive_entry_mode(entry);
 		Item->FindData.dwFileAttributes =
 			WINPORT(EvaluateAttributesA)(Item->FindData.dwUnixMode, Item->FindData.cFileName);

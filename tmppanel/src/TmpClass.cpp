@@ -1045,12 +1045,11 @@ copy_name:
         HANDLE hFile=CreateFile(NtPath,FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_POSIX_SEMANTICS,NULL);
         if (hFile!=INVALID_HANDLE_VALUE)
         {
-          GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
-          wfd.nFileSizeLow = GetFileSize(hFile, &wfd.nFileSizeHigh);
+          wfd.nFileSize = GetFileSize64(hFile);
           CloseHandle(hFile);
         }
-        wfd.dwReserved0=0;
-        wfd.dwReserved1=0;
+        //wfd.dwReserved0=0;
+        //wfd.dwReserved1=0;
         WFD2FFD(wfd, *FindData);
         FileName = FullPath;
         goto copy_name;

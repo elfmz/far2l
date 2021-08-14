@@ -43,7 +43,7 @@ struct FTPHost: public FTPHostPlugin
 	static LPCSTR MkHost(LPCSTR Path,LPCSTR Name);
 	static FTPHost* Convert(const PluginPanelItem *p)
 	{
-		return (p && p->UserData && p->PackSizeHigh == FTP_HOSTID)?((FTPHost*)p->UserData):NULL;
+		return (p && p->UserData && p->FindData.nPhysicalSize == FTP_HOSTID) ? ((FTPHost*)p->UserData) : NULL;
 	}
 };
 

@@ -166,8 +166,8 @@ BOOL ConvertEntry(NET_FileEntryInfo* inf, FTPFileInfo* p)
 	fprintf(stderr, "+");
 
 //Size
-	p->FindData.nFileSizeHigh = (DWORD)((inf->size >> 32) & MAX_DWORD);
-	p->FindData.nFileSizeLow  = (DWORD)(inf->size & MAX_DWORD);
+	p->FindData.nFileSize = inf->size;
+	p->FindData.nPhysicalSize = 0;
 	return TRUE;
 }
 

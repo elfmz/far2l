@@ -20,7 +20,7 @@
 #include <os_call.hpp>
 
 template <class CHAR_T>
-static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
+	static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
 {
 	DWORD rv = 0;
 	switch (unix_mode & S_IFMT) {
@@ -34,16 +34,8 @@ static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
 		default: rv = FILE_ATTRIBUTE_DEVICE;
 	}
 
-	if (name) {
-		bool dotfile = (*name == '.');
-		for (; *name; ++name) {
-			if (name[0]==GOOD_SLASH) {
-				dotfile = (name[1] == '.');
-			}
-		}
-		if (dotfile)
-			rv|= FILE_ATTRIBUTE_HIDDEN;
-	}
+	if (*name == '.')
+		rv|= FILE_ATTRIBUTE_HIDDEN;
 
 	if ((unix_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
 		rv|= FILE_ATTRIBUTE_EXECUTABLE;
@@ -52,6 +44,19 @@ static DWORD EvaluateAttributesT(uint32_t unix_mode, const CHAR_T *name)
 		rv|= FILE_ATTRIBUTE_READONLY;
 
 	return rv;
+}
+
+template <class CHAR_T>
+	static const CHAR_T *PointToNamePart(const CHAR_T *pathname)
+{
+	const CHAR_T *out = pathname;
+	for (;*pathname; ++pathname) {
+		if (*pathname == GOOD_SLASH) {
+			out = pathname + 1;
+		}
+	}
+
+	return out;
 }
 	
 extern "C"
@@ -255,6 +260,16 @@ extern "C"
 		return TRUE;
 	}
 
+	DWORD64 WINPORT(GetFileSize64)( HANDLE  hFile)
+	{
+		LARGE_INTEGER sz64{};
+		if (!WINPORT(GetFileSizeEx)(hFile, &sz64)) {
+			return INVALID_FILE_SIZE64;
+		}
+
+		return sz64.QuadPart;
+	}
+
 	DWORD WINPORT(GetFileSize)( HANDLE  hFile, LPDWORD lpFileSizeHigh)
 	{
 		LARGE_INTEGER sz64{};
@@ -444,52 +459,87 @@ extern "C"
 	}
 	
 
-	DWORD WINPORT(EvaluateAttributes)(uint32_t unix_mode, const WCHAR *name)
+	DWORD WINPORT(EvaluateAttributes)(uint32_t unix_mode, const WCHAR *pathname)
 	{
-		return EvaluateAttributesT(unix_mode, name);
+		return EvaluateAttributesT(unix_mode, PointToNamePart(pathname));
 	}
 	
-	DWORD WINPORT(EvaluateAttributesA)(uint32_t unix_mode, const char *name)
+	DWORD WINPORT(EvaluateAttributesA)(uint32_t unix_mode, const char *pathname)
 	{
-		return EvaluateAttributesT(unix_mode, name);		
+		return EvaluateAttributesT(unix_mode, PointToNamePart(pathname));
 	}
-	
-	static int stat_symcheck(const char *path, struct stat &s, DWORD &symattr)
+
+	class Statocaster
 	{
-		if (os_call_int(sdc_lstat, path, &s) < 0) {
-			return -1;
+		struct stat _st_dst;
+		struct stat _st_lnk;
+		DWORD _attr;
+
+		inline const struct stat &DereferencedStat() const
+		{
+			return ((_attr & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT)
+				? _st_dst : _st_lnk;
 		}
-		
-		if ((s.st_mode & S_IFMT) == S_IFLNK) {
-			struct stat sdst{};
-			if (os_call_int(sdc_stat, path, &sdst) == 0) {
-				s = sdst;
-				symattr = FILE_ATTRIBUTE_REPARSE_POINT;
-			} else {
-				s.st_size = 0;
-				//fprintf(stderr, "stat_symcheck: stat failed for %s\n", path);
-				symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+
+	public:
+		Statocaster(const char *pathname, const char *name = nullptr)
+		{
+			if (os_call_int(sdc_lstat, pathname, &_st_lnk) < 0) {
+				_attr = INVALID_FILE_ATTRIBUTES;
+				return;
 			}
-		} else
-			symattr = 0;
-		
-		return 0;
-	}
-	
-	
+
+			if (!name) {
+				name = PointToNamePart(pathname);
+			}
+
+			if ((_st_lnk.st_mode & S_IFMT) != S_IFLNK) {
+				_attr = 0;
+
+			} else if (os_call_int(sdc_stat, pathname, &_st_dst) < 0) {
+				_attr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+				_st_lnk.st_size = 0;
+
+			} else {
+				_attr = FILE_ATTRIBUTE_REPARSE_POINT;
+			}
+
+			_attr|= EvaluateAttributesT(DereferencedStat().st_mode, name);
+		}
+
+		inline DWORD Attributes() const
+		{
+			return _attr;
+		}
+
+		bool FillWFD(WIN32_FIND_DATAW *wfd) const
+		{
+			if (_attr == INVALID_FILE_ATTRIBUTES) {
+				return false;
+			}
+
+			const auto &s = DereferencedStat();
+
+			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &wfd->ftCreationTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_atim, &wfd->ftLastAccessTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &wfd->ftLastWriteTime);
+			wfd->UnixOwner = s.st_uid;
+			wfd->UnixGroup = s.st_gid;
+			wfd->UnixDevice = s.st_dev;
+			wfd->UnixNode = s.st_ino;
+			wfd->nPhysicalSize = ((DWORD64)_st_lnk.st_blocks) * 512;
+			wfd->nFileSize = (DWORD64)s.st_size;
+			wfd->dwFileAttributes = _attr;
+			wfd->dwUnixMode = s.st_mode;
+			wfd->nHardLinks = (DWORD)s.st_nlink;
+			wfd->nBlockSize = (DWORD)s.st_blksize;
+			return true;
+		}
+	};
 
 	DWORD WINPORT(GetFileAttributes)(LPCWSTR lpFileName)
 	{
-		struct stat s{};
-		const std::string &path = ConsumeWinPath(lpFileName);
-		
-		DWORD symattr = 0;
-		if (stat_symcheck(path.c_str(), s, symattr) < 0 ) {
-			// fprintf(stderr, "GetFileAttributes: stat_symcheck failed for '%s'\n", path.c_str());
-			return INVALID_FILE_ATTRIBUTES;			
-		}
-		
-		return ( symattr | WINPORT(EvaluateAttributes)(s.st_mode, lpFileName) );
+		return Statocaster(ConsumeWinPath(lpFileName).c_str()).Attributes();
 	}
 
 	DWORD WINPORT(SetFileAttributes)(LPCWSTR lpFileName, DWORD dwAttributes)
@@ -561,28 +611,6 @@ extern "C"
 		return wph->fd;
 	}
 
-	//////////////////////////////////
-	static void FillWFD(const wchar_t *name, const struct stat &s, WIN32_FIND_DATAW *lpFindFileData, DWORD add_attr)
-	{
-		lpFindFileData->dwFileAttributes = (add_attr | WINPORT(EvaluateAttributes)(s.st_mode, name));
-		WINPORT(FileTime_UnixToWin32)(s.st_mtim, &lpFindFileData->ftLastWriteTime);
-		WINPORT(FileTime_UnixToWin32)(s.st_ctim, &lpFindFileData->ftCreationTime);
-		WINPORT(FileTime_UnixToWin32)(s.st_atim, &lpFindFileData->ftLastAccessTime);
-		lpFindFileData->nFileSizeHigh = (DWORD)(((uint64_t)s.st_size >> 32) & 0xffffffff);
-		lpFindFileData->nFileSizeLow = (DWORD)(s.st_size & 0xffffffff);
-		lpFindFileData->dwReserved0 = 
-			(lpFindFileData->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ) ? IO_REPARSE_TAG_SYMLINK : 0;
-		lpFindFileData->dwReserved1 = 0;
-		lpFindFileData->UnixDevice = s.st_dev;
-		lpFindFileData->UnixNode = s.st_ino;
-		lpFindFileData->UnixOwner = s.st_uid;
-		lpFindFileData->UnixGroup = s.st_gid;
-		lpFindFileData->dwUnixMode = s.st_mode;
-		lpFindFileData->nHardLinks = (DWORD)s.st_nlink;
-		wcsncpy(lpFindFileData->cFileName, name, MAX_NAME - 1);
-	}
-
-
 	struct UnixFindFile
 	{
 		UnixFindFile(const std::string &root, const std::string &mask, DWORD flags) : _flags(flags)
@@ -631,14 +659,14 @@ extern "C"
 						case DT_SOCK: hint_mode_type = S_IFSOCK; break;
 						default: hint_mode_type = 0; 
 					}
-					if (MatchAttributesAndFillWFD(hint_mode_type, de->d_name, lpFindFileData))
+					if (MatchAttributesAndFillWFD(de->d_name, lpFindFileData, hint_mode_type))
 						return true;
 				}
 			}
 		}
 
 	private:
-		bool MatchAttributesAndFillWFD(mode_t hint_mode_type, const char *name, LPWIN32_FIND_DATAW lpFindFileData)
+		bool MatchAttributesAndFillWFD(const char *name, LPWIN32_FIND_DATAW wfd, mode_t hint_mode_type = 0)
 		{
 			_tmp.path = _root;
 			if (_tmp.path.empty() || _tmp.path[_tmp.path.size()-1] != GOOD_SLASH) 
@@ -647,18 +675,31 @@ extern "C"
 			SudoSilentQueryRegion ssqr(hint_mode_type !=0 && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
 
 			_tmp.path+= name;
-			struct stat s = { };
-			DWORD symattr = 0;
-			if (stat_symcheck(_tmp.path.c_str(), s, symattr) < 0 ) {
-				fprintf(stderr, "UnixFindFile: stat_symcheck failed for '%s'\n", _tmp.path.c_str());
-				symattr|= FILE_ATTRIBUTE_BROKEN;
-				if (hint_mode_type)
-					s.st_mode = hint_mode_type;
-			}
 			MB2Wide(name, _tmp.wide_name);
-			FillWFD((const wchar_t *)_tmp.wide_name.c_str(), s, lpFindFileData, symattr);
-			
-			const DWORD attrs = lpFindFileData->dwFileAttributes;
+			wcsncpy(wfd->cFileName, _tmp.wide_name.c_str(), MAX_NAME - 1);
+
+			if (!Statocaster(_tmp.path.c_str(), name).FillWFD(wfd)) {
+				fprintf(stderr, "UnixFindFile: errno=%u hmt=0%o on '%s'\n",
+					errno, hint_mode_type, _tmp.path.c_str());
+
+				memset(&wfd->ftLastWriteTime, 0, sizeof(wfd->ftLastWriteTime));
+				memset(&wfd->ftCreationTime, 0, sizeof(wfd->ftCreationTime));
+				memset(&wfd->ftLastAccessTime, 0, sizeof(wfd->ftLastAccessTime));
+				wfd->nFileSize = 0;
+				wfd->nPhysicalSize = 0;
+				wfd->UnixDevice = 0;
+				wfd->UnixNode = 0;
+				wfd->UnixOwner = 0;
+				wfd->UnixGroup = 0;
+				wfd->dwUnixMode = 0;
+				wfd->nHardLinks = 0;
+				wfd->nBlockSize = 0;
+
+				wfd->dwFileAttributes = FILE_ATTRIBUTE_BROKEN
+					| WINPORT(EvaluateAttributes)(hint_mode_type, wfd->cFileName);
+			}
+
+			const DWORD attrs = wfd->dwFileAttributes;
 			if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
 				if ((_flags & FIND_FILE_FLAG_NO_DIRS) != 0 )
 					return false;
@@ -671,7 +712,7 @@ extern "C"
 				if ((_flags & FIND_FILE_FLAG_NO_DEVICES) != 0 )
 					return false;
 			}
-			if ((attrs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT))==0) {
+			if ((attrs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) == 0) {
 				if ((_flags & FIND_FILE_FLAG_NO_FILES) != 0 ) {
 					return false;
 				}
@@ -733,29 +774,34 @@ extern "C"
 
 	HANDLE WINPORT(FindFirstFileWithFlags)(LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags)
 	{
+		if (!lpFileName || !*lpFileName)
+			return INVALID_HANDLE_VALUE;
+
 		//return ::FindFirstFile(lpFileName, lpFindFileData);
 		std::string root(ConsumeWinPath(lpFileName)), mask;
 		size_t p = root.rfind(GOOD_SLASH);
-		if (p!=std::string::npos) {
+		if (p != std::string::npos) {
 			mask.assign(root.c_str() + p + 1);
 			root.resize(p + 1);
 		} else {
 			fprintf(stderr, "FindFirstFile: no slash in root='%s' for lpFileName='%ls'\n", root.c_str(), lpFileName);
+			mask.swap(root);
+			root = "./";
 		}
 
-		if (mask=="*" || mask=="*.*") mask.clear();
-		if (!mask.empty() && mask.find('*')==std::string::npos && mask.find('?')==std::string::npos &&
-			(dwFlags & FIND_FILE_FLAG_CASE_INSENSITIVE) == 0 ) {
+		if (mask == "*" || mask == "*.*") {
+			mask.clear();
+		}
 
-			struct stat s = { };
-			DWORD symattr = 0;
-			if (stat_symcheck((root + mask).c_str(), s, symattr) < 0 ) {
-				// fprintf(stderr, "FindFirstFileWithFlags: stat_symcheck failed for '%s' / '%s'\n", root.c_str(), mask.c_str());
-				return INVALID_HANDLE_VALUE;			
+		if (!mask.empty() && mask.find_first_of("*?") == std::string::npos
+		  && (dwFlags & FIND_FILE_FLAG_CASE_INSENSITIVE) == 0 ) {
+
+			if (!Statocaster((root + mask).c_str(), mask.c_str()).FillWFD(lpFindFileData)) {
+				return INVALID_HANDLE_VALUE;
 			}
-			LPCWSTR name = wcsrchr(lpFileName, GOOD_SLASH);
-			if (name) ++name; else name = lpFileName;
-			FillWFD(name, s, lpFindFileData, symattr);
+
+			LPCWSTR last_slash = wcsrchr(lpFileName, GOOD_SLASH);
+			wcsncpy(lpFindFileData->cFileName, last_slash ? last_slash + 1 : lpFileName, MAX_NAME - 1);
 			return (HANDLE)&g_unix_found_file_dummy;
 		}
 

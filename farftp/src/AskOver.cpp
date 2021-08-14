@@ -13,7 +13,7 @@ void MkFileInfo(char *buff,int bsz,LPCSTR title,FAR_FIND_DATA* p)
 	if(p)
 	{
 		//Size
-		FDigit(str,((int64_t)p->nFileSizeHigh) << 32 | p->nFileSizeLow,25);
+		FDigit(str,p->nFileSize,25);
 		StrCat(buff,str,bsz);
 		//Time
 		WINPORT(FileTimeToSystemTime)(&p->ftLastWriteTime,&tm);

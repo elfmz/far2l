@@ -962,14 +962,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			ComboList.Items=LinkTypeItems;
 			ComboList.Items[0].Text=MSG(MLinkTypeHardlink);
 			ComboList.Items[1].Text=MSG(MLinkTypeSymlink);
-//			ComboList.Items[2].Text=MSG(MLinkTypeJunction);
-//			ComboList.Items[3].Text=MSG(MLinkTypeSymlinkFile);
-//			ComboList.Items[4].Text=MSG(MLinkTypeSymlinkDirectory);
 
-			if (CDP.FilesPresent)
-				ComboList.Items[0].Flags|=LIF_SELECTED;
-			else
-				ComboList.Items[1].Flags|=LIF_SELECTED;
+			ComboList.Items[CDP.FilesPresent ? 0 : 1].Flags|=LIF_SELECTED;
 		}
 		else
 		{
@@ -1065,7 +1059,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	Flags.WRITETHROUGH = Flags.COPYACCESSMODE = Flags.COPYXATTR = Flags.SPARSEFILES = Flags.USECOW = false;
 	Flags.SYMLINK = COPY_SYMLINK_ASIS;
-	ReadOnlyDelMode = ReadOnlyOvrMode = OvrMode = SkipEncMode = SkipMode = SkipDeleteMode = -1;
+	ReadOnlyDelMode = ReadOnlyOvrMode = OvrMode = SkipMode = SkipDeleteMode = -1;
 
 	if (Link)
 	{
@@ -1169,8 +1163,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	// ***********************************************************************
 	int NeedDizUpdate=FALSE;
 	int NeedUpdateAPanel=FALSE;
-	// ПОКА! принудительно выставим обновление.
-	// В последствии этот флаг будет выставляться в ShellCopy::CheckUpdatePanel()
 	Flags.UPDATEPPANEL = true;
 	/*
 	   ЕСЛИ ПРИНЯТЬ В КАЧЕСТВЕ РАЗДЕЛИТЕЛЯ ПУТЕЙ, НАПРИМЕР ';',
@@ -1313,13 +1305,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		}
 	}
 
-#if 1
 	SrcPanel->Update(UPDATE_KEEP_SELECTION);
 
 	if (CDP.SelCount==1 && !strRenamedName.IsEmpty())
 		SrcPanel->GoToFile(strRenamedName);
-
-#if 1
 
 	if (NeedUpdateAPanel && CDP.FileAttr != INVALID_FILE_ATTRIBUTES && (CDP.FileAttr&FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL)
 	{
@@ -1327,22 +1316,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		SrcPanel->GetCurDir(strTmpSrcDir);
 		DestPanel->SetCurDir(strTmpSrcDir,FALSE);
 	}
-
-#else
-
-	if (CDP.FileAttr != INVALID_FILE_ATTRIBUTES && (CDP.FileAttr&FILE_ATTRIBUTE_DIRECTORY) && DestPanelMode != PLUGIN_PANEL)
-	{
-		// если SrcDir содержится в DestDir...
-		FARString strTmpDestDir;
-		FARString strTmpSrcDir;
-		DestPanel->GetCurDir(strTmpDestDir);
-		SrcPanel->GetCurDir(strTmpSrcDir);
-
-		if (CheckUpdateAnotherPanel(SrcPanel,strTmpSrcDir))
-			DestPanel->SetCurDir(strTmpDestDir,FALSE);
-	}
-
-#endif
 
 	// проверим "нужность" апдейта пассивной панели
 	if (Flags.UPDATEPPANEL)
@@ -1355,17 +1328,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		SrcPanel->SetPluginModified();
 
 	CtrlObject->Cp()->Redraw();
-#else
-	SrcPanel->Update(UPDATE_KEEP_SELECTION);
-
-	if (CDP.SelCount==1 && strRenamedName.IsEmpty())
-		SrcPanel->GoToFile(strRenamedName);
-
-	SrcPanel->Redraw();
-	DestPanel->SortFileList(TRUE);
-	DestPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-	DestPanel->Redraw();
-#endif
 
 	if (Opt.NotifOpt.OnFileOperation) {
 		DisplayNotification(MSG(MFileOperationComplete), strSelName); // looks like strSelName is best choice
@@ -1485,88 +1447,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			}
 
 			break;
-#if 0
-		case DN_EDITCHANGE:
 
-			if (Param1 == ID_SC_TARGETEDIT)
-			{
-				FarDialogItem *DItemACCopy,*DItemACInherit,*DItemACLeave,/**DItemOnlyNewer,*/*DItemBtnCopy;
-				FARString strTmpSrcDir;
-				DlgParam->thisClass->SrcPanel->GetCurDir(strTmpSrcDir);
-				DItemACCopy = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACCOPY,0));
-				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACCOPY,(LONG_PTR)DItemACCopy);
-				DItemACInherit = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACINHERIT,0));
-				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACINHERIT,(LONG_PTR)DItemACInherit);
-				DItemACLeave = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACLEAVE,0));
-				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ACLEAVE,(LONG_PTR)DItemACLeave);
-				//DItemOnlyNewer = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ONLYNEWER,0));
-				//SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_ONLYNEWER,(LONG_PTR)DItemOnlyNewer);
-				DItemBtnCopy = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_BTNCOPY,0));
-				SendDlgMessage(hDlg,DM_GETDLGITEM,ID_SC_BTNCOPY,(LONG_PTR)DItemBtnCopy);
-
-				// не создание линка, обычные Copy/Move
-				if (!DlgParam->thisClass->Flags.LINK)
-				{
-					FARString strBuf = ((FarDialogItem *)Param2)->PtrData;
-					strBuf.Upper();
-
-					if (!DlgParam->strPluginFormat.IsEmpty() && wcsstr(strBuf, DlgParam->strPluginFormat))
-					{
-						DItemACCopy->Flags|=DIF_DISABLE;
-						DItemACInherit->Flags|=DIF_DISABLE;
-						DItemACLeave->Flags|=DIF_DISABLE;
-						//DItemOnlyNewer->Flags|=DIF_DISABLE;
-						//DlgParam->OnlyNewerFiles=DItemOnlyNewer->Param.Selected;
-						DlgParam->CopySecurity=0;
-
-						if (DItemACCopy->Param.Selected)
-							DlgParam->CopySecurity=1;
-						else if (DItemACLeave->Param.Selected)
-							DlgParam->CopySecurity=2;
-
-						DItemACCopy->Param.Selected=0;
-						DItemACInherit->Param.Selected=0;
-						DItemACLeave->Param.Selected=1;
-						//DItemOnlyNewer->Param.Selected=0;
-					}
-					else
-					{
-						DItemACCopy->Flags&=~DIF_DISABLE;
-						DItemACInherit->Flags&=~DIF_DISABLE;
-						DItemACLeave->Flags&=~DIF_DISABLE;
-						//DItemOnlyNewer->Flags&=~DIF_DISABLE;
-						//DItemOnlyNewer->Param.Selected=DlgParam->OnlyNewerFiles;
-						DItemACCopy->Param.Selected=0;
-						DItemACInherit->Param.Selected=0;
-						DItemACLeave->Param.Selected=0;
-
-						if (DlgParam->CopySecurity == 1)
-						{
-							DItemACCopy->Param.Selected=1;
-						}
-						else if (DlgParam->CopySecurity == 2)
-						{
-							DItemACLeave->Param.Selected=1;
-						}
-						else
-							DItemACInherit->Param.Selected=1;
-					}
-				}
-
-				SendDlgMessage(hDlg,DM_SETDLGITEM,ID_SC_ACCOPY,(LONG_PTR)DItemACCopy);
-				SendDlgMessage(hDlg,DM_SETDLGITEM,ID_SC_ACINHERIT,(LONG_PTR)DItemACInherit);
-				SendDlgMessage(hDlg,DM_SETDLGITEM,ID_SC_ACLEAVE,(LONG_PTR)DItemACLeave);
-				//SendDlgMessage(hDlg,DM_SETDLGITEM,ID_SC_ONLYNEWER,(LONG_PTR)DItemOnlyNewer);
-				SendDlgMessage(hDlg,DM_SETDLGITEM,ID_SC_BTNCOPY,(LONG_PTR)DItemBtnCopy);
-				xf_free(DItemACCopy);
-				xf_free(DItemACInherit);
-				xf_free(DItemACLeave);
-				//xf_free(DItemOnlyNewer);
-				xf_free(DItemBtnCopy);
-			}
-
-			break;
-#endif
 		case DM_CALLTREE:
 		{
 			/* $ 13.10.2001 IS
@@ -3582,13 +3463,11 @@ bool ShellCopy::CalcTotalSize()
 		{
 			{
 				uint32_t DirCount,FileCount,ClusterSize;
-				uint64_t CompressedSize,RealFileSize;
+				uint64_t PhysicalSize;
 				CP->SetScanName(strSelName);
-				int __Ret=GetDirInfo(L"",strSelName,DirCount,FileCount,FileSize,CompressedSize,
-				                     RealFileSize,ClusterSize,-1,
-				                     Filter,
-				                     ((Flags.SYMLINK == COPY_SYMLINK_ASFILE)?GETDIRINFO_SCANSYMLINK:0)|
-				                     (UseFilter?GETDIRINFO_USEFILTER:0));
+				int __Ret=GetDirInfo(L"",strSelName,DirCount,FileCount,FileSize,PhysicalSize,ClusterSize,-1,Filter,
+								((Flags.SYMLINK == COPY_SYMLINK_ASFILE)?GETDIRINFO_SCANSYMLINK:0)|
+									(UseFilter?GETDIRINFO_USEFILTER:0));
 
 				if (__Ret <= 0)
 				{
@@ -3628,8 +3507,4 @@ bool ShellCopy::CalcTotalSize()
 	InsertCommas(TotalCopySize,strTotalCopySizeText);
 	PreRedraw.Pop();
 	return true;
-}
-
-void ShellCopy::CheckUpdatePanel() // выставляет флаг .UPDATEPPANEL
-{
 }

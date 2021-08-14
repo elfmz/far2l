@@ -143,9 +143,6 @@ BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int
 
 BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type,bool Silent)
 {
-  DWORD ReadSize;
-
-
   memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
   OpenArchiveData.ArcName=(char*)Name;
   OpenArchiveData.CmtBuf=NULL;
@@ -204,10 +201,12 @@ int WINAPI _export RAR_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 	  }
   }
   
-  Item->FindData.nFileSizeLow=HeaderData.UnpSize;
-  Item->FindData.nFileSizeHigh=HeaderData.UnpSizeHigh;
-  Item->PackSizeHigh=HeaderData.PackSizeHigh;
-  Item->PackSize=HeaderData.PackSize;
+  Item->FindData.nFileSize = HeaderData.UnpSizeHigh;
+  Item->FindData.nFileSize<<= 32;
+  Item->FindData.nFileSize|= HeaderData.UnpSize;
+  Item->FindData.nPhysicalSize = HeaderData.PackSizeHigh;
+  Item->FindData.nPhysicalSize<<= 32;
+  Item->FindData.nPhysicalSize|= HeaderData.PackSize;
   Item->CRC32=(DWORD)HeaderData.FileCRC;
 
   FILETIME lft;

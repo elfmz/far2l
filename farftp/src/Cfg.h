@@ -18,7 +18,7 @@
 #define FTP_CMDPREFIX         "ftp"
 #define FTP_CMDPREFIX_SIZE    3
 
-#define FTP_HOSTID            MK_ID( 'F','H','s','t' )
+#define FTP_HOSTID            (DWORD64(MK_ID( 'F','H','s','t' )) << 32)
 
 #define FTR_HOURSEC           3600
 #define FTR_MINSEC            60

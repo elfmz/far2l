@@ -105,6 +105,7 @@
 #define    SetCurrentDirectory			WINPORT(SetCurrentDirectory)
 #define    GetFileSizeEx			WINPORT(GetFileSizeEx)
 #define    GetFileSize			WINPORT(GetFileSize)
+#define    GetFileSize64			WINPORT(GetFileSize64)
 #define    ReadFile			WINPORT(ReadFile)
 #define    WriteFile			WINPORT(WriteFile)
 #define    SetFilePointerEx			WINPORT(SetFilePointerEx)

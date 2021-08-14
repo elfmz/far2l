@@ -116,9 +116,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		}
 		data_path+= PanelItem[i].FindData.cFileName;
 
-		uint64_t len = PanelItem[i].FindData.nFileSizeHigh;
-		len<<= 32;
-		len|= PanelItem[i].FindData.nFileSizeLow;
+		uint64_t len = PanelItem[i].FindData.nFileSize;
 
 		bool rv = OnGetFile(PanelItem[i].FindData.cFileName, data_path.c_str(), len);
 		fprintf(stderr, "Inside::GetFiles[%i]: %s '%s'\n",

@@ -529,23 +529,20 @@ namespace oldfar
 
 	struct FAR_FIND_DATA
 	{
-		DWORD    dwFileAttributes;
 		FILETIME ftCreationTime;
 		FILETIME ftLastAccessTime;
 		FILETIME ftLastWriteTime;
-		DWORD    nFileSizeHigh;
-		DWORD    nFileSizeLow;
-		DWORD    dwReserved0;
-		DWORD    dwReserved1;
+		DWORD64  nPhysicalSize;
+		DWORD64  nFileSize;
+		DWORD    dwFileAttributes;
 		DWORD    dwUnixMode;
 		CHAR     cFileName[MAX_NAME];
 	};
 
 	struct PluginPanelItem
 	{
-		FAR_FIND_DATA FindData;
-		DWORD                PackSizeHigh;
-		DWORD                PackSize;
+		FAR_FIND_DATA        FindData;
+		DWORD_PTR            UserData;
 		DWORD                Flags;
 		DWORD                NumberOfLinks;
 		char                *Description;
@@ -553,7 +550,6 @@ namespace oldfar
 		char                *Group;
 		char               **CustomColumnData;
 		int                  CustomColumnNumber;
-		DWORD_PTR            UserData;
 		DWORD                CRC32;
 		DWORD_PTR            Reserved[2];
 	};

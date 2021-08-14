@@ -336,8 +336,8 @@ int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 
   Item->CRC32=ArjHeader.CRC;
   Item->FindData.dwFileAttributes=ArjHeader.AccessMode & 0x3f;
-  Item->PackSize=ArjHeader.PackSize;
-  Item->FindData.nFileSizeLow=ArjHeader.UnpSize;
+  Item->FindData.nPhysicalSize=ArjHeader.PackSize;
+  Item->FindData.nFileSize=ArjHeader.UnpSize;
 
   FILETIME lft;
   WINPORT(DosDateTimeToFileTime)(HIWORD(ArjHeader.ftime),LOWORD(ArjHeader.ftime),&lft);

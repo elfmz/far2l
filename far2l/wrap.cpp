@@ -430,8 +430,8 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		(*PanelItemW)[i].FindData.ftCreationTime = PanelItemA[i].FindData.ftCreationTime;
 		(*PanelItemW)[i].FindData.ftLastAccessTime = PanelItemA[i].FindData.ftLastAccessTime;
 		(*PanelItemW)[i].FindData.ftLastWriteTime = PanelItemA[i].FindData.ftLastWriteTime;
-		(*PanelItemW)[i].FindData.nFileSize = (uint64_t)PanelItemA[i].FindData.nFileSizeLow + (((uint64_t)PanelItemA[i].FindData.nFileSizeHigh)<<32);
-		(*PanelItemW)[i].FindData.nPackSize = (uint64_t)PanelItemA[i].PackSize + (((uint64_t)PanelItemA[i].PackSizeHigh)<<32);
+		(*PanelItemW)[i].FindData.nFileSize = PanelItemA[i].FindData.nFileSize;
+		(*PanelItemW)[i].FindData.nPhysicalSize = PanelItemA[i].FindData.nPhysicalSize;
 		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName);
 	}
 }
@@ -473,10 +473,8 @@ void ConvertPanelItemToAnsi(const PluginPanelItem &PanelItem, oldfar::PluginPane
 	PanelItemA.FindData.ftCreationTime = PanelItem.FindData.ftCreationTime;
 	PanelItemA.FindData.ftLastAccessTime = PanelItem.FindData.ftLastAccessTime;
 	PanelItemA.FindData.ftLastWriteTime = PanelItem.FindData.ftLastWriteTime;
-	PanelItemA.FindData.nFileSizeLow = (DWORD)PanelItem.FindData.nFileSize;
-	PanelItemA.FindData.nFileSizeHigh = (DWORD)(PanelItem.FindData.nFileSize>>32);
-	PanelItemA.PackSize = (DWORD)PanelItem.FindData.nPackSize;
-	PanelItemA.PackSizeHigh = (DWORD)(PanelItem.FindData.nPackSize>>32);
+	PanelItemA.FindData.nFileSize = PanelItem.FindData.nFileSize;
+	PanelItemA.FindData.nPhysicalSize = PanelItem.FindData.nPhysicalSize;
 	PWZ_to_PZ(PanelItem.FindData.lpwszFileName,PanelItemA.FindData.cFileName,ARRAYSIZE(PanelItemA.FindData.cFileName));
 }
 
@@ -964,8 +962,7 @@ static int WINAPI FarRecursiveSearchA_Callback(const FAR_FIND_DATA *FData,const 
 	FindData.ftCreationTime = FData->ftCreationTime;
 	FindData.ftLastAccessTime = FData->ftLastAccessTime;
 	FindData.ftLastWriteTime = FData->ftLastWriteTime;
-	FindData.nFileSizeLow = (DWORD)FData->nFileSize;
-	FindData.nFileSizeHigh = (DWORD)(FData->nFileSize>>32);
+	FindData.nFileSize = (DWORD)FData->nFileSize;
 	PWZ_to_PZ(FData->lpwszFileName,FindData.cFileName,ARRAYSIZE(FindData.cFileName));
 	char FullNameA[oldfar::NM];
 	PWZ_to_PZ(FullName,FullNameA,sizeof(FullNameA));
@@ -2939,8 +2936,7 @@ int WINAPI FarGetDirListA(const char *Dir,oldfar::PluginPanelItem **pPanelItem,i
 				(*pPanelItem)[i].FindData.ftCreationTime = pItems[i].ftCreationTime;
 				(*pPanelItem)[i].FindData.ftLastAccessTime = pItems[i].ftLastAccessTime;
 				(*pPanelItem)[i].FindData.ftLastWriteTime = pItems[i].ftLastWriteTime;
-				(*pPanelItem)[i].FindData.nFileSizeLow = (DWORD)pItems[i].nFileSize;
-				(*pPanelItem)[i].FindData.nFileSizeHigh = (DWORD)(pItems[i].nFileSize>>32);
+				(*pPanelItem)[i].FindData.nFileSize = (DWORD)pItems[i].nFileSize;
 				PWZ_to_PZ(pItems[i].lpwszFileName+PathOffset, (*pPanelItem)[i].FindData.cFileName, ARRAYSIZE((*pPanelItem)[i].FindData.cFileName) );
 			}
 		}
@@ -3459,9 +3455,9 @@ void MultiByteRecode(UINT nCPin, UINT nCPout, char *szBuffer, int nLength)
 	}
 };
 
-UINT ConvertCharTableToCodePage(int Command)
+static UINT ConvertCharTableToCodePage(int Command)
 {
-	UINT nCP = 0;
+	UINT nCP = CP_AUTODETECT;
 
 	if (Command<0)
 	{
@@ -3476,7 +3472,7 @@ UINT ConvertCharTableToCodePage(int Command)
 			default:
 			{
 				int FavIndex=2;
-				ConfigReader cfg_reader;
+				ConfigReader cfg_reader(FavoriteCodePagesKey);
 				const auto &codepages = cfg_reader.EnumKeys();
 				for (const auto &cp : codepages)
 				{

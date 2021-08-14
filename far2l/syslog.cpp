@@ -1355,9 +1355,8 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &wfd,FILE *
 		ConvertDate(wfd.ftLastWriteTime,D,T,8,FALSE,FALSE,TRUE);
 		fwprintf(fp,L"%*s %ls  ftLastWriteTime       =0x%08X 0x%08X\n",12,L"",space,wfd.ftLastWriteTime.dwHighDateTime,wfd.ftLastWriteTime.dwLowDateTime);
 		LARGE_INTEGER Number;
-		Number.HighPart=wfd.nFileSizeHigh;
-		Number.LowPart=wfd.nFileSizeLow;
-		fwprintf(fp,L"%*s %ls  nFileSize             =0x%08X, 0x%08X (%llu)\n",12,L"",space,wfd.nFileSizeHigh,wfd.nFileSizeLow,Number.QuadPart);
+		Number.QuadPart=wfd.nFileSize;
+		fwprintf(fp,L"%*s %ls  nFileSize             =0x%08X, 0x%08X (%llu)\n",12,L"",space,Number.HighPart,Number.LowPart,Number.QuadPart);
 		fwprintf(fp,L"%*s %ls  dwReserved0           =0x%08X (%d)\n",12,L"",space,wfd.dwReserved0,wfd.dwReserved0);
 
 		/*if (wfd.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)

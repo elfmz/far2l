@@ -124,9 +124,8 @@ int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo
   Item->FindData.dwFileAttributes=(Header.Type & 0xf)==0xe ? FILE_ATTRIBUTE_DIRECTORY:0;
   Item->CRC32=Header.CRC;
   UnixTimeToFileTime(Header.FileTime,&Item->FindData.ftLastWriteTime);
-  Item->FindData.nFileSizeLow=Header.UnpSize;
-  Item->FindData.nFileSizeHigh=0;
-  Item->PackSize=Header.PackSize;
+  Item->FindData.nFileSize=Header.UnpSize;
+  Item->FindData.nPhysicalSize=Header.PackSize;
   return(GETARC_SUCCESS);
 }
 

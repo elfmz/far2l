@@ -221,26 +221,22 @@ BOOL FTP::FTP_GetFindData(PluginPanelItem **PanelItem,int *ItemsNumber,BOOL From
 
 	do
 	{
-		std::string CurName = Wide2MB(fd.cFileName);
+		if(wcscmp(fd.cFileName, L"..") == 0 || wcscmp(fd.cFileName, L".") == 0)
+			continue;
 
-		if(CurName==".." || CurName==".") continue;
+		const std::string &CurName = Wide2MB(fd.cFileName);
 
 		Log(("Found: [%s]%d", CurName.c_str(), fd.dwFileAttributes));
-		//Reset Reserved becouse it used by plugin but may cantain trash after API call
-		fd.dwReserved0 = 0;
-		fd.dwReserved1 = 0;
 		//Reset plugin structure
 		memset(&p,0,sizeof(PluginPanelItem));
 		//Copy win32 data
 		p.FindData.dwFileAttributes = fd.dwFileAttributes;
 		p.FindData.ftLastAccessTime = fd.ftLastAccessTime;
 		p.FindData.ftLastWriteTime = fd.ftLastWriteTime;
-		p.FindData.nFileSizeHigh = fd.nFileSizeHigh;
-		p.FindData.nFileSizeLow = fd.nFileSizeLow;
-		p.FindData.dwReserved0 = fd.dwReserved0;
-		p.FindData.dwReserved1 = fd.dwReserved1;
+		p.FindData.nFileSize = fd.nFileSize;
+		p.FindData.nPhysicalSize = 0; // ...because its used by plugin in a singular way
 		p.FindData.dwUnixMode = fd.dwUnixMode;
-		WINPORT(WideCharToMultiByte)(CP_UTF8, 0, fd.cFileName, -1, p.FindData.cFileName, ARRAYSIZE(p.FindData.cFileName), NULL, NULL);
+		strncpy(p.FindData.cFileName, CurName.c_str(), ARRAYSIZE(p.FindData.cFileName) - 1);
 
 		if(!il.Add(&p,1))
 			return FALSE;
@@ -315,13 +311,12 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 
 			if(il)
 			{
-				il->TotalFullSize += ((int64_t)pi[n].FindData.nFileSizeHigh) << 32 | pi[n].FindData.nFileSizeLow;
+				il->TotalFullSize += pi[n].FindData.nFileSize;
 				il->TotalFiles++;
 				//Add
 				PluginPanelItem *tmp = il->Add(&pi[n]);
-				//Reset spesial plugin fields
-				tmp->FindData.dwReserved0 = 0;
-				tmp->FindData.dwReserved1 = 0;
+				//Reset special plugin field
+				tmp->CRC32 = 0;
 			}
 
 			continue;
@@ -393,9 +388,10 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 			{
 				lSz = il->TotalFullSize - lSz;
 				lCn = il->TotalFiles    - lCn;
-				il->Item(num)->FindData.nFileSizeHigh = (DWORD)((lSz >> 32) & MAX_DWORD);
-				il->Item(num)->FindData.nFileSizeLow  = (DWORD)(lSz & MAX_DWORD);
-				il->Item(num)->FindData.dwReserved0   = (DWORD)lCn;
+				il->Item(num)->FindData.nFileSize = lSz;
+				il->Item(num)->FindData.nPhysicalSize = 0;
+				il->Item(num)->CRC32&= 0x80000000;
+				il->Item(num)->CRC32|= DWORD(lCn) & 0x7fffffff;
 			}
 
 			FTP_FreeFindData(DirPanelItem,DirItemsNumber,FromPlugin);

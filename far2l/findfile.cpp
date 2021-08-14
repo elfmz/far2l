@@ -468,8 +468,7 @@ static void InitInFileSearch()
 				// FARString codePageName;
 				bool hasSelected = false;
 				// Проверяем наличие выбранных страниц символов
-				ConfigReader cfg_reader;
-				cfg_reader.SelectSection(FavoriteCodePagesKey);
+				ConfigReader cfg_reader(FavoriteCodePagesKey);
 				const auto &codepages = cfg_reader.EnumKeys();
 				for (const auto &cp : codepages)
 				{
@@ -2260,24 +2259,17 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 				MenuText << FormatStr_Attribute(FindData.dwFileAttributes, FindData.dwUnixMode) << BoxSymbols[BS_V1];
 				break;
 			}
-			case NUMSTREAMS_COLUMN:
-			case STREAMSSIZE_COLUMN:
 			case SIZE_COLUMN:
-			case PACKED_COLUMN:
+			case PHYSICAL_COLUMN:
 			case NUMLINK_COLUMN:
 			{
-				UINT64 StreamsSize=0;
-				DWORD StreamsCount=0;
-
 				MenuText << FormatStr_Size(
 								FindData.nFileSize,
-								FindData.nPackSize,
-								(CurColumnType == NUMSTREAMS_COLUMN || CurColumnType == NUMLINK_COLUMN)?StreamsCount:StreamsSize,
+								FindData.nPhysicalSize,
 								DisplayName,
 								FindData.dwFileAttributes,
 								0,
-								FindData.dwReserved0,
-								(CurColumnType == NUMSTREAMS_COLUMN || CurColumnType == NUMLINK_COLUMN)?STREAMSSIZE_COLUMN:CurColumnType,
+								CurColumnType,
 								ColumnType[Count],
 								ColumnWidth[Count]);
 
@@ -2576,19 +2568,8 @@ static void DoScanTree(HANDLE hDlg, FARString& strRoot)
 					itd.SetFindMessage(strFullName);
 				}
 
-				if ( (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && !Opt.FindOpt.FindSymLinks)
+				if ( !(FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || Opt.FindOpt.FindSymLinks)
 				{
-				}
-				else
-				{
-					if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-					{
-/*						if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) || (FindData.dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE))
-						{
-							apiGetCompressedFileSize(strFullStreamName,FindData.nPackSize);
-						}
-						else */FindData.nPackSize=FindData.nFileSize;
-					}
 					AnalyzeFileItem(hDlg,nullptr, strFullStreamName, FindData);
 					//AddMenuRecord(hDlg,strFullStreamName, FindData);
 				}

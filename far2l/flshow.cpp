@@ -152,8 +152,8 @@ void FileList::ShowFileList(int Fast)
 				case SIZE_COLUMN:
 					IDMessage=MColumnSize;
 					break;
-				case PACKED_COLUMN:
-					IDMessage=MColumnPacked;
+				case PHYSICAL_COLUMN:
+					IDMessage=MColumnPhysical;
 					break;
 				case DATE_COLUMN:
 					IDMessage=MColumnDate;
@@ -187,12 +187,6 @@ void FileList::ShowFileList(int Fast)
 					break;
 				case NUMLINK_COLUMN:
 					IDMessage=MColumnMumLinks;
-					break;
-				case NUMSTREAMS_COLUMN:
-					IDMessage=MColumnNumStreams;
-					break;
-				case STREAMSSIZE_COLUMN:
-					IDMessage=MColumnStreamsSize;
 					break;
 			}
 
@@ -249,13 +243,12 @@ void FileList::ShowFileList(int Fast)
 		static int SortModes[]={UNSORTED,BY_NAME,BY_EXT,BY_MTIME,BY_CTIME,
 		                        BY_ATIME,BY_CHTIME,BY_SIZE,BY_DIZ,BY_OWNER,
 		                        BY_COMPRESSEDSIZE,BY_NUMLINKS,
-		                        BY_NUMSTREAMS,BY_STREAMSSIZE,
 		                        BY_FULLNAME,BY_CUSTOMDATA
 		                       };
 		static int SortStrings[]={MMenuUnsorted,MMenuSortByName,
 		                          MMenuSortByExt,MMenuSortByWrite,MMenuSortByCreation,
 		                          MMenuSortByAccess,MMenuSortByChange,MMenuSortBySize,MMenuSortByDiz,MMenuSortByOwner,
-		                          MMenuSortByCompressedSize,MMenuSortByNumLinks,MMenuSortByNumStreams,MMenuSortByStreamsSize,
+		                          MMenuSortByPhysicalSize,MMenuSortByNumLinks,
 		                          MMenuSortByFullName,MMenuSortByCustomData
 		                         };
 
@@ -1131,20 +1124,17 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 						}
 						break;
 						case SIZE_COLUMN:
-						case PACKED_COLUMN:
-						case STREAMSSIZE_COLUMN:
+						case PHYSICAL_COLUMN:
 						{
-									Text(FormatStr_Size(
-                            		ListData[ListPos]->UnpSize,
-                            		ListData[ListPos]->PackSize,
-                            		ListData[ListPos]->StreamsSize,
-                            		ListData[ListPos]->strName,
-                            		ListData[ListPos]->FileAttr,
-                            		ListData[ListPos]->ShowFolderSize,
-                            		ListData[ListPos]->ReparseTag,
-                            		ColumnType,
-                            		ColumnTypes[K],
-                            		ColumnWidth).CPtr());
+							Text(FormatStr_Size(
+								ListData[ListPos]->FileSize,
+								ListData[ListPos]->PhysicalSize,
+								ListData[ListPos]->strName,
+								ListData[ListPos]->FileAttr,
+								ListData[ListPos]->ShowFolderSize,
+								ColumnType,
+								ColumnTypes[K],
+								ColumnWidth).CPtr());
 							break;
 						}
 
@@ -1286,13 +1276,6 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 							FS<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<ListData[ListPos]->NumberOfLinks;
 							break;
 						}
-
-						case NUMSTREAMS_COLUMN:
-						{
-							FS<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<ListData[ListPos]->NumberOfStreams;
-							break;
-						}
-
 					}
 				}
 			}

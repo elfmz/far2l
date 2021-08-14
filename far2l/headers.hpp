@@ -104,8 +104,6 @@ typedef struct _ADAPTER_OBJECT ADAPTER_OBJECT,*PADAPTER_OBJECT;
 #include "../WinPort/sudo.h"
 
 
-#include "SDK/sdk.common.h"
-
 #ifdef __GNUC__
 #define _abs64 llabs
 #define _wcstoi64 wcstoll

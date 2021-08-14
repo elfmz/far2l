@@ -412,7 +412,6 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   BOOL OldExactState=Opt.AdvFlags.AutoResetExactArcName?FALSE:Opt.AdvFlags.ExactArcName;
   BOOL RestoreExactState=FALSE, NewArchive=TRUE;
   struct PutDlgData pdd={0};
-  char *NamePtr/*,*ExtPtr*/;
   BOOL Ret=TRUE;
 
   pdd.Self=this;

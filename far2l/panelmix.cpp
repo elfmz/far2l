@@ -259,7 +259,7 @@ void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 			if (strArgName.At(0)==L'S' || strArgName.At(0)==L'P' || strArgName.At(0)==L'G')
 			{
 				unsigned int &ColumnType=ViewColumnTypes[ColumnCount];
-				ColumnType=(strArgName.At(0)==L'S') ? SIZE_COLUMN:(strArgName.At(0)==L'P')?PACKED_COLUMN:STREAMSSIZE_COLUMN;
+				ColumnType=(strArgName.At(0)==L'S') ? SIZE_COLUMN:PHYSICAL_COLUMN;
 				const wchar_t *Ptr = strArgName.CPtr()+1;
 
 				while (*Ptr)
@@ -403,7 +403,7 @@ void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
 				strType += L"R";
 		}
 
-		if (ColumnType==SIZE_COLUMN || ColumnType==PACKED_COLUMN || ColumnType==STREAMSSIZE_COLUMN)
+		if (ColumnType==SIZE_COLUMN || ColumnType==PHYSICAL_COLUMN)
 		{
 			if (ViewColumnTypes[I] & COLUMN_COMMAS)
 				strType += L"C";
@@ -569,12 +569,11 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD
 	return strResult.strValue();
 }
 
-const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t StreamsSize, const FARString strName,DWORD FileAttributes,DWORD ShowFolderSize,DWORD ReparseTag,int ColumnType,DWORD Flags,int Width)
+const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FARString strName,DWORD FileAttributes,uint8_t ShowFolderSize,int ColumnType,DWORD Flags,int Width)
 {
 	FormatString strResult;
 
-	bool Packed=(ColumnType==PACKED_COLUMN);
-	bool Streams=(ColumnType==STREAMSSIZE_COLUMN);
+	bool Physical=(ColumnType==PHYSICAL_COLUMN);
 
 	if (ShowFolderSize==2)
 	{
@@ -582,7 +581,7 @@ const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t Stream
 		strResult<<L"~";
 	}
 
-	if (!Streams && !Packed && (FileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) && !ShowFolderSize)
+	if (!Physical && (FileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) && !ShowFolderSize)
 	{
 		const wchar_t *PtrName=MSG(MListFolder);
 
@@ -595,20 +594,6 @@ const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t Stream
 			if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 			{
 				PtrName=MSG(MListSymLink);
-				switch (ReparseTag)
-				{
-					case IO_REPARSE_TAG_SYMLINK:
-						break;
-
-					/*case IO_REPARSE_TAG_MOUNT_POINT:
-						PtrName=MSG(MListJunction);
-						break;*/
-
-					//case IO_REPARSE_TAG_DRIVER_EXTENDER:
-						//...
-						//break;
-					//case ...
-				}
 			}
 		}
 
@@ -623,7 +608,7 @@ const FARString FormatStr_Size(int64_t UnpSize, int64_t PackSize, int64_t Stream
 	else
 	{
 		FARString strOutStr;
-		strResult<<FileSizeToStr(strOutStr,Packed?PackSize:Streams?StreamsSize:UnpSize,Width,Flags).CPtr();
+		strResult<<FileSizeToStr(strOutStr,Physical?PhysicalSize:FileSize,Width,Flags).CPtr();
 	}
 	
 	return strResult.strValue();

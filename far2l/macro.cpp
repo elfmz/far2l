@@ -3491,11 +3491,11 @@ static bool panelitemFunc(const TMacroFunction*)
 				strDate += strTime;
 				Ret=TVar(strDate.CPtr());
 				break;
-			case 6:  // UnpSize
-				Ret=TVar((int64_t)filelistItem.UnpSize);
+			case 6:  // FileSize
+				Ret=TVar((int64_t)filelistItem.FileSize);
 				break;
-			case 7:  // PackSize
-				Ret=TVar((int64_t)filelistItem.PackSize);
+			case 7:  // PhysicalSize
+				Ret=TVar((int64_t)filelistItem.PhysicalSize);
 				break;
 			case 8:  // Selected
 				Ret=TVar((int64_t)((DWORD)filelistItem.Selected));
@@ -3530,11 +3530,11 @@ static bool panelitemFunc(const TMacroFunction*)
 			case 17:  // WriteTime (FILETIME)
 				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.WriteTime));
 				break;
-			case 18: // NumberOfStreams
-				Ret=TVar((int64_t)filelistItem.NumberOfStreams);
+			case 18: // NumberOfStreams (deprecated)
+				Ret=TVar((int64_t)((filelistItem.FileAttr & FILE_ATTRIBUTE_DIRECTORY) ? 0 : 1));
 				break;
-			case 19: // StreamsSize
-				Ret=TVar((int64_t)filelistItem.StreamsSize);
+			case 19: // StreamsSize (deprecated)
+				Ret=TVar((int64_t)0);
 				break;
 			case 20:  // ChangeTime
 				ConvertDate(filelistItem.ChangeTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);

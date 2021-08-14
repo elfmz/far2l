@@ -211,9 +211,8 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
     if (NewArcData==NULL)
       break;
 
-    TotalSize+=(((int64_t)CurArcData.FindData.nFileSizeHigh)<<32)|(int64_t)CurArcData.FindData.nFileSizeLow;
-    PackedSize+=(((int64_t)CurArcData.PackSizeHigh)<<32)|(int64_t)CurArcData.PackSize;
-
+    TotalSize+=CurArcData.FindData.nFileSize;
+    PackedSize+=CurArcData.FindData.nPhysicalSize;
 
     ArcData=NewArcData;
     ArcData[ArcDataCount]=CurArcData;
@@ -323,7 +322,8 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
       {
         *EndName=0;
         CurItem.FindData.dwFileAttributes=FILE_ATTRIBUTE_DIRECTORY;
-        CurItem.FindData.nFileSizeLow=CurItem.PackSize=0;
+        CurItem.FindData.nFileSize=0;
+		CurItem.FindData.nPhysicalSize=0;
       }
 
       strcpy(CurItem.FindData.cFileName,StartName);
@@ -396,7 +396,7 @@ int PluginClass::SetDirectory(const char *Dir,int OpMode)
     if (CurDirLength!=0)
       CurDirLength++;
 
-    int NewDirLength=strlen(Dir);
+    size_t NewDirLength=strlen(Dir);
 
     for (int I=0;I<ArcDataCount;I++)
     {

@@ -192,19 +192,19 @@ void QuickView::DisplayObject()
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+9);
-			PrintText(MSG(MQuickViewCompressed));
+			PrintText(MSG(MQuickViewPhysical));
 			SetColor(COL_PANELINFOTEXT);
-			InsertCommas(CompressedFileSize,strSize);
+			InsertCommas(PhysicalSize,strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+10);
 			PrintText(MSG(MQuickViewRatio));
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString<<ToPercent64(CompressedFileSize,FileSize)<<L"%";
+			FString<<ToPercent64(PhysicalSize,FileSize)<<L"%";
 			PrintText(FString);
 
-			if (Directory!=4 && RealFileSize>=CompressedFileSize)
+			if (Directory==1 && ClusterSize)
 			{
 				SetColor(COL_PANELTEXT);
 				GotoXY(X1+2,Y1+12);
@@ -213,29 +213,6 @@ void QuickView::DisplayObject()
 				FARString strSize;
 				InsertCommas(ClusterSize,strSize);
 				PrintText(strSize);
-				SetColor(COL_PANELTEXT);
-				GotoXY(X1+2,Y1+13);
-				PrintText(MSG(MQuickViewRealSize));
-				SetColor(COL_PANELINFOTEXT);
-				InsertCommas(RealFileSize,strSize);
-				PrintText(strSize);
-				SetColor(COL_PANELTEXT);
-				GotoXY(X1+2,Y1+14);
-				PrintText(MSG(MQuickViewSlack));
-				SetColor(COL_PANELINFOTEXT);
-				InsertCommas(RealFileSize-CompressedFileSize,strSize);
-				uint64_t Size1=RealFileSize-CompressedFileSize;
-				uint64_t Size2=RealFileSize;
-
-				while ((Size2 >> 32) )
-				{
-					Size1=Size1>>1;
-					Size2=Size2>>1;
-				}
-
-				FString.Clear();
-				FString<<strSize<<L" ("<<ToPercent((DWORD)Size1, (DWORD)Size2)<<L"%)";
-				PrintText(FString);
 			}
 		}
 	}
@@ -393,7 +370,7 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		else if (hDirPlugin)
 		{
 			int ExitCode=GetPluginDirInfo(hDirPlugin,strCurFileName,DirCount,
-			                              FileCount,FileSize,CompressedFileSize);
+			                              FileCount,FileSize,PhysicalSize);
 			if (ExitCode)
 				Directory=4;
 			else
@@ -402,8 +379,8 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		else
 		{
 			int ExitCode=GetDirInfo(MSG(MQuickViewTitle),strCurFileName,DirCount,
-			                        FileCount,FileSize,CompressedFileSize,RealFileSize,
-			                        ClusterSize,500,nullptr,GETDIRINFO_ENHBREAK|GETDIRINFO_SCANSYMLINKDEF|GETDIRINFO_DONTREDRAWFRAME);
+			                        FileCount,FileSize,PhysicalSize,ClusterSize,500,nullptr,
+									GETDIRINFO_ENHBREAK|GETDIRINFO_SCANSYMLINKDEF|GETDIRINFO_DONTREDRAWFRAME);
 
 			if (ExitCode==1)
 				Directory=1;

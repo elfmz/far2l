@@ -49,15 +49,15 @@ public:
 	IPCSender(int fd = -1);
 	~IPCSender();
 
-	void Send(const void *data, size_t len) throw(IPCError);
-	void SendString(const char *s) throw(IPCError);
-	void SendString(const std::string &s) throw(IPCError);
+	void Send(const void *data, size_t len);
+	void SendString(const char *s);
+	void SendString(const std::string &s);
 	template <class POD_T>
-		inline void SendPOD(const POD_T &pod) throw(IPCError)
+		inline void SendPOD(const POD_T &pod)
 	{
 		Send(&pod, sizeof(pod));
 	}
-	inline void SendCommand(IPCCommand cmd) throw(IPCError)
+	inline void SendCommand(IPCCommand cmd)
 	{
 		SendPOD(cmd);
 	}
@@ -77,16 +77,16 @@ public:
 
 	void AbortReceiving();
 
-	void Recv(void *data, size_t len) throw(IPCError);
-	void RecvString(std::string &s) throw(IPCError);
+	void Recv(void *data, size_t len);
+	void RecvString(std::string &s);
 
 	template <class POD_T>
-		inline void RecvPOD(POD_T &pod) throw(IPCError)
+		inline void RecvPOD(POD_T &pod)
 	{
 		Recv(&pod, sizeof(pod));
 	}
 
-	inline IPCCommand RecvCommand() throw(IPCError)
+	inline IPCCommand RecvCommand()
 	{
 		IPCCommand out;
 		RecvPOD(out);

@@ -18,7 +18,7 @@ void IPCSender::SetFD(int fd)
 	_fd = fd;
 }
 
-void IPCSender::Send(const void *data, size_t len) throw(IPCError)
+void IPCSender::Send(const void *data, size_t len)
 {
 	if (len) for (;;) {
 		ssize_t rv = os_call_ssize(write, _fd, data, len);
@@ -34,7 +34,7 @@ void IPCSender::Send(const void *data, size_t len) throw(IPCError)
 	}
 }
 
-void IPCSender::SendString(const char *s) throw(IPCError)
+void IPCSender::SendString(const char *s)
 {
 	size_t len = strlen(s);
 	SendPOD(len);
@@ -42,7 +42,7 @@ void IPCSender::SendString(const char *s) throw(IPCError)
 		Send(s, len);
 }
 
-void IPCSender::SendString(const std::string &s) throw(IPCError)
+void IPCSender::SendString(const std::string &s)
 {
 	size_t len = s.size();
 	SendPOD(len);
@@ -83,7 +83,7 @@ void IPCRecver::SetFD(int fd)
 	_fd = fd;
 }
 
-void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
+void IPCRecver::Recv(void *data, size_t len)
 {
 	fd_set fds, fde;
 	if (len) for (;;) {
@@ -136,7 +136,7 @@ void IPCRecver::Recv(void *data, size_t len) throw(IPCError)
 	}
 }
 
-void IPCRecver::RecvString(std::string &s) throw(IPCError)
+void IPCRecver::RecvString(std::string &s)
 {
 	size_t len = 0;
 	RecvPOD(len);

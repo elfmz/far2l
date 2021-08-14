@@ -71,7 +71,7 @@ public:
 		_it = _dce_sp->begin();
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (_it == _dce_sp->end()) {
 			return false;
@@ -132,7 +132,7 @@ public:
 		}
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (!_enumer->Enum(name, owner, group, file_info)) {
 			_enumed_til_the_end = true;

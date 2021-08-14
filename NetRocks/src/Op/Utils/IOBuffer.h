@@ -16,7 +16,7 @@ class IOBuffer
 	bool IncreaseTo(size_t new_size, bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
 
 public:
-	IOBuffer(size_t initial_size, size_t min_size, size_t max_size) throw (std::runtime_error);
+	IOBuffer(size_t initial_size, size_t min_size, size_t max_size);
 	~IOBuffer();
 
 	inline void *Data() { return _data; }

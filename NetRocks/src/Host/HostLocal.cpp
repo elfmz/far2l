@@ -60,7 +60,7 @@ std::shared_ptr<IHost> HostLocal::Clone()
 	return std::make_shared<HostLocal>();
 }
 
-void HostLocal::ReInitialize() throw (std::runtime_error)
+void HostLocal::ReInitialize()
 {
 }
 
@@ -68,7 +68,7 @@ void HostLocal::Abort()
 {
 }
 
-mode_t HostLocal::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t HostLocal::GetMode(const std::string &path, bool follow_symlink)
 {
 	struct stat s = {};
 	int r = follow_symlink ? API(stat)(path.c_str(), &s) : API(lstat)(path.c_str(), &s);
@@ -79,7 +79,7 @@ mode_t HostLocal::GetMode(const std::string &path, bool follow_symlink) throw (s
 	return s.st_mode;
 }
 
-unsigned long long HostLocal::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long HostLocal::GetSize(const std::string &path, bool follow_symlink)
 {
 	struct stat s = {};
 	int r = follow_symlink ? API(stat)(path.c_str(), &s) : API(lstat)(path.c_str(), &s);
@@ -90,7 +90,7 @@ unsigned long long HostLocal::GetSize(const std::string &path, bool follow_symli
 	return s.st_size;
 }
 
-void HostLocal::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void HostLocal::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	struct stat s = {};
 	int r = follow_symlink ? API(stat)(path.c_str(), &s) : API(lstat)(path.c_str(), &s);
@@ -110,7 +110,7 @@ void HostLocal::GetInformation(FileInformation &file_info, const std::string &pa
 	file_info.mode = s.st_mode;
 }
 
-void HostLocal::FileDelete(const std::string &path) throw (std::runtime_error)
+void HostLocal::FileDelete(const std::string &path)
 {
 	int r = API(unlink)(path.c_str());
 	if (r == -1) {
@@ -118,7 +118,7 @@ void HostLocal::FileDelete(const std::string &path) throw (std::runtime_error)
 	}
 }
 
-void HostLocal::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void HostLocal::DirectoryDelete(const std::string &path)
 {
 	int r = API(rmdir)(path.c_str());
 	if (r == -1) {
@@ -126,7 +126,7 @@ void HostLocal::DirectoryDelete(const std::string &path) throw (std::runtime_err
 	}
 }
 
-void HostLocal::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void HostLocal::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	int r = API(mkdir)(path.c_str(), mode);
 	if (r == -1) {
@@ -134,7 +134,7 @@ void HostLocal::DirectoryCreate(const std::string &path, mode_t mode) throw (std
 	}
 }
 
-void HostLocal::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void HostLocal::Rename(const std::string &path_old, const std::string &path_new)
 {
 	int r = API(rename)(path_old.c_str(), path_new.c_str());
 	if (r == -1) {
@@ -142,7 +142,7 @@ void HostLocal::Rename(const std::string &path_old, const std::string &path_new)
 	}
 }
 
-void HostLocal::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void HostLocal::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
@@ -155,7 +155,7 @@ void HostLocal::SetTimes(const std::string &path, const timespec &access_time, c
 	}
 }
 
-void HostLocal::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void HostLocal::SetMode(const std::string &path, mode_t mode)
 {
 	int r = API(chmod)(path.c_str(), mode);
 	if (r == -1) {
@@ -164,7 +164,7 @@ void HostLocal::SetMode(const std::string &path, mode_t mode) throw (std::runtim
 }
 
 
-void HostLocal::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void HostLocal::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	int r = API(symlink)(link_target.c_str(), link_path.c_str());
 	if (r == -1) {
@@ -172,7 +172,7 @@ void HostLocal::SymlinkCreate(const std::string &link_path, const std::string &l
 	}
 }
 
-void HostLocal::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void HostLocal::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	char buf[PATH_MAX];
 	ssize_t r = API(readlink)(link_path.c_str(), buf, sizeof(buf));
@@ -237,7 +237,7 @@ public:
 		}
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		for (;;) {
 			struct dirent *de = API(readdir)(_d);
@@ -282,7 +282,7 @@ public:
   	}
 };
 
-std::shared_ptr<IDirectoryEnumer> HostLocal::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> HostLocal::DirectoryEnum(const std::string &path)
 {
 	return std::make_shared<HostLocalDirectoryEnumer>(path);
 }
@@ -312,7 +312,7 @@ public:
 		CheckedCloseFD(_fd);
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 		ssize_t rv = API(read)(_fd, buf, len);
 		if (rv < 0 && errno == EIO) {
@@ -333,7 +333,7 @@ public:
 		return (size_t)rv;
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		while (len) {
 			ssize_t rv = API(write)(_fd, buf, len);
@@ -345,7 +345,7 @@ public:
 		}
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 /*
 #ifdef __APPLE__
@@ -360,12 +360,12 @@ public:
 };
 
 
-std::shared_ptr<IFileReader> HostLocal::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> HostLocal::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	return std::make_shared<HostLocalFileIO>(path, resume_pos, O_RDONLY, 0 );
 }
 
-std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> HostLocal::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	return std::make_shared<HostLocalFileIO>(path, resume_pos, (resume_pos == 0) ? O_CREAT | O_TRUNC | O_RDWR : O_RDWR, mode );
 }

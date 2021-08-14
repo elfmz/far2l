@@ -25,14 +25,14 @@ protected:
 	FDScope _sock;
 
 public:
-	size_t Send(const void *data, size_t len) throw(std::exception);
-	size_t Recv(void *data, size_t len) throw(std::exception);
+	size_t Send(const void *data, size_t len);
+	size_t Recv(void *data, size_t len);
 
-	size_t SendTo(const void *data, size_t len, const struct sockaddr_un &sa) throw(std::exception);
-	size_t RecvFrom(void *data, size_t len, struct sockaddr_un &sa) throw(std::exception);
+	size_t SendTo(const void *data, size_t len, const struct sockaddr_un &sa);
+	size_t RecvFrom(void *data, size_t len, struct sockaddr_un &sa);
 
-	void SendFD(int fd) throw(std::exception);
-	int RecvFD() throw(std::exception);
+	void SendFD(int fd);
+	int RecvFD();
 
 	enum Kind
 	{

@@ -112,7 +112,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
         char NameMsg[NM];
         FSF.sprintf(FilesMsg,GetMsg(MArcReadFiles),ArcDataCount);
         const char *MsgItems[]={GetMsg(MArcReadTitle),GetMsg(MArcReading),NameMsg,FilesMsg};
-        FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+        FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
         Info.Message(Info.ModuleNumber,WaitMessage ? FMSG_KEEPBACKGROUND:0,NULL,MsgItems,
                    ARRAYSIZE(MsgItems),0);
         WaitMessage=TRUE;
@@ -246,7 +246,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
 
     char NameMsg[NM];
     const char *MsgItems[]={GetMsg(MError),NameMsg,GetMsg(GetItemCode),GetMsg(MOk)};
-    FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+    FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
     Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     return FALSE; // Mantis#0001241
   }
@@ -455,7 +455,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     ArcPlugin->GetFormatName(ArcPluginNumber,ArcPluginType,FormatName,DefExt);
 
   char NameTitle[NM];
-  strncpy(NameTitle,FSF.PointToName(ArcName),sizeof(NameTitle));
+  strncpy(NameTitle,FSF.PointToName(ArcName),sizeof(NameTitle)-1);
 
   {
     struct PanelInfo PInfo;

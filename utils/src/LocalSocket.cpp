@@ -122,14 +122,14 @@ LocalSocketClient::LocalSocketClient(Kind sock_kind, const std::string &path_ser
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, path_client.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, path_client.c_str(), sizeof(sa.sun_path) - 1);
 	unlink(sa.sun_path);
 	if (bind(_sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		throw LocalSocketBindError();
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path) - 1);
 
 	if (connect(_sock, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		throw LocalSocketConnectError();
@@ -147,7 +147,7 @@ LocalSocketServer::LocalSocketServer(Kind sock_kind, const std::string &server, 
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, server.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, server.c_str(), sizeof(sa.sun_path) - 1);
 
 	unlink(sa.sun_path);
 

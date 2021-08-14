@@ -290,7 +290,7 @@ int WINAPI _export ARC_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     Info->Comment=1;
   }
 
-  strncpy(Item->FindData.cFileName,Header.Name,sizeof(Item->FindData.cFileName));
+  strncpy(Item->FindData.cFileName,Header.Name,sizeof(Item->FindData.cFileName)-1);
 
   Item->FindData.nFileSize=Header.OrigSize;
   Item->FindData.dwFileAttributes=FILE_ATTRIBUTE_ARCHIVE; //??

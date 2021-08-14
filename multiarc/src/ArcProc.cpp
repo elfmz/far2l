@@ -37,7 +37,7 @@ int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,i
     if (ItemsNumber==1)
     {
       char NameMsg[NM];
-      FSF.TruncPathStr(strncpy(NameMsg,PanelItem[0].FindData.cFileName,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+      FSF.TruncPathStr(strncpy(NameMsg,PanelItem[0].FindData.cFileName,sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
       FSF.sprintf(Msg,GetMsg(MDeleteFile),NameMsg);
       MsgItems[1]=Msg;
     }
@@ -147,7 +147,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
   {
     char VolMsg[300];
     char NameMsg[NM];
-    FSF.TruncPathStr(strncpy(NameMsg,FSF.PointToName(ArcName),sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+    FSF.TruncPathStr(strncpy(NameMsg,FSF.PointToName(ArcName),sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
     FSF.sprintf(VolMsg,GetMsg(MExtrVolume),NameMsg);
     const char *MsgItems[]={"",VolMsg,GetMsg(MExtrVolumeAsk1),
                       GetMsg(MExtrVolumeAsk2),GetMsg(MExtrVolumeSelFiles),
@@ -242,7 +242,7 @@ int PluginClass::SelectFormat(char *ArcFormat,int AddOnly)
         MenuItems=NewMenuItems;
         memset(MenuItems+MenuItemsNumber,0,sizeof(struct FarMenuItemEx));
         MenuItems[MenuItemsNumber].UserData = MAKEWPARAM((WORD)i,(WORD)j);
-        strncpy(MenuItems[MenuItemsNumber].Text.Text,Format,sizeof(MenuItems[MenuItemsNumber].Text.Text));
+        strncpy(MenuItems[MenuItemsNumber].Text.Text,Format,sizeof(MenuItems[MenuItemsNumber].Text.Text)-1);
         MenuItems[MenuItemsNumber].Flags=((MenuItemsNumber==0 &&
                                           *ArcFormat==0) ||
                                           !strcasecmp(ArcFormat,Format))?

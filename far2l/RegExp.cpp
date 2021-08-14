@@ -518,19 +518,15 @@ enum REOp
 
 struct REOpCode
 {
-	int op;
-	REOpCode *next,*prev;
+	int op{};
+	REOpCode *next{},*prev{};
 #ifdef RE_DEBUG
-	int    srcpos;
+	int    srcpos{};
 #endif
 #ifdef RE_NO_NEWARRAY
 	static void OnCreate(void *ptr);
 	static void OnDelete(void *ptr);
 #else
-	REOpCode()
-	{
-		memset(this,0,sizeof(*this));
-	}
 	~REOpCode();
 #endif
 
@@ -1163,7 +1159,7 @@ int RegExp::Compile(const RECHAR* src,int options)
 	     (CreateArray(sizeof(REOpCode), relength, REOpCode::OnCreate));
 #else
 	code=new REOpCode[relength];
-	memset(code,0,sizeof(REOpCode)*relength);
+	//memset(code,0,sizeof(REOpCode)*relength);
 #endif
 
 	for (int i=0; i<relength; i++)

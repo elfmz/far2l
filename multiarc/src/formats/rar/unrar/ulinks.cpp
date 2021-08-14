@@ -28,9 +28,9 @@ static bool UnixSymlink(const char *Target,const wchar *LinkName,RarTime *ftm,Ra
 #else
   struct timeval tv[2];
   tv[0].tv_sec=fta->GetUnix();
-  tv[0].tv_usec=long(fta->GetUnixNS()%1000000000/1000);
+  tv[0].tv_usec=suseconds_t(fta->GetUnixNS()%1000000000/1000);
   tv[1].tv_sec=ftm->GetUnix();
-  tv[1].tv_usec=long(ftm->GetUnixNS()%1000000000/1000);
+  tv[1].tv_usec=suseconds_t(ftm->GetUnixNS()%1000000000/1000);
   lutimes(LinkNameA,tv);
 #endif
 #endif

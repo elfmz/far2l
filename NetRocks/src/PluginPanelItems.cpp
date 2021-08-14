@@ -46,7 +46,7 @@ void PluginPanelItems::Shrink(int new_count)
 	count = new_count;
 }
 
-PluginPanelItem *PluginPanelItems::Add(const wchar_t *name) throw (std::runtime_error)
+PluginPanelItem *PluginPanelItems::Add(const wchar_t *name)
 {
 	if (count == capacity) {
 		if (capacity == std::numeric_limits<int>::max() - 16)
@@ -81,7 +81,7 @@ PluginPanelItem *PluginPanelItems::Add(const wchar_t *name) throw (std::runtime_
 	return out;
 }
 
-PluginPanelItem *PluginPanelItems::Add(const char *name) throw (std::runtime_error)
+PluginPanelItem *PluginPanelItems::Add(const char *name)
 {
 	MB2Wide(name, _tmp);
 	return Add(_tmp.c_str());

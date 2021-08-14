@@ -291,7 +291,7 @@ int GetArcItemGZIP(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
       return(GETARC_READERROR);
 
   if (*Item->FindData.cFileName == 0) {
-    strncpy(Item->FindData.cFileName, ZipName, sizeof(Item->FindData.cFileName) );
+    strncpy(Item->FindData.cFileName, ZipName, sizeof(Item->FindData.cFileName)-1 );
 
   } else { // workaround for tar.gz archives that has original name set but without .tar extension
            // since tar archives detection relies on extension, it should be there (#173)
@@ -372,7 +372,7 @@ int GetArcItemTAR(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
         np[sizeof(TAR_hdr.header.name)] = '\0';
         EndPos = AdjustTARFileName(namebuf);
       }
-      strncpy(Item->FindData.cFileName, EndPos, sizeof(Item->FindData.cFileName));
+      strncpy(Item->FindData.cFileName, EndPos, sizeof(Item->FindData.cFileName)-1);
       Item->FindData.nFileSize=0;
       dwUnixMode = (DWORD)GetOctal(TAR_hdr.header.mode);
       switch (TAR_hdr.header.typeflag) {

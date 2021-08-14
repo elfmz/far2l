@@ -274,9 +274,9 @@ void ProtocolNFS::SetTimes(const std::string &path, const timespec &access_time,
 {
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
-	times[0].tv_usec = access_time.tv_nsec / 1000;
+	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);
 	times[1].tv_sec = modification_time.tv_sec;
-	times[1].tv_usec = modification_time.tv_nsec / 1000;
+	times[1].tv_usec = suseconds_t(modification_time.tv_nsec / 1000);
 
 	int rc = nfs_utimes(_nfs->ctx, MountedRootedPath(path).c_str(), times);
 	if (rc != 0)

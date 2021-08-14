@@ -905,9 +905,9 @@ static void ParseListingItemRegExp(Match match,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
     if(const char *p = match["name"])
-        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName) );
+        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName)-1 );
     if(const char *p = match["description"])
-        strncpy(Info->Description, p, sizeof(Info->Description) );
+        strncpy(Info->Description, p, sizeof(Info->Description)-1 );
 
     Item->FindData.nFileSize     = StringToInt64(match["size"]);
     Item->FindData.nPhysicalSize   = StringToInt64(match["packedSize"]);

@@ -1225,7 +1225,7 @@ static void ResetTerminal()
 
 	nCharInBuffer = 0;
 	memset(ChBuffer, 0, sizeof(ChBuffer));
-	memset(&ansiState, 0, sizeof(ansiState));
+	ansiState = STATE();
 	ChPrev = 0;
 	fWrapped = 0;
 

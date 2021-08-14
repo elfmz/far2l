@@ -777,7 +777,7 @@ void Viewer::ShowHex()
 					WCHAR OutChar = Ch;
 
 					if (VM.CodePage == CP_UTF16BE) {
-						swab((char*)&OutChar, (char*)&OutChar, sizeof(OutChar));
+						OutChar = WideReverse(OutChar);
 					}
 
 
@@ -2968,7 +2968,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 
 		if (VM.CodePage == CP_WIDE_BE && !Raw) {
-			WideReverse((const wchar_t *)Buf, (wchar_t *)Buf, ResultedCount);
+			WideReverse((wchar_t *)Buf, ResultedCount);
 		}
 
 		return ResultedCount;

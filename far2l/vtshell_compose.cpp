@@ -79,7 +79,6 @@ std::string VT_ComposeInitialTitle(const char *cd, const char *cmd, bool using_s
 	
 ///////////////////////////////////////////////////////////////////////////////////////
 
-static std::atomic<bool> s_shown_tip_init{false};
 static std::atomic<bool> s_shown_tip_exit{false};
 static std::atomic<unsigned int> s_vt_script_id{0};
 
@@ -145,24 +144,8 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 			s_shown_tip_exit ? L"" : MSG(MVTStopTip)
 		);
 		s_shown_tip_exit = true;
-
-	} else if (!s_shown_tip_init && !Opt.OnlyEditorViewerUsed) {
-		content+= StrPrintf("echo -ne \"\x1b_push-attr\x07\x1b[36m\"\n");
-		content+= StrPrintf("echo \"%ls\"\n", MSG(MVTStartTipNoCmdTitle));
-		content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdShiftTAB));
-		content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdFn));
-		content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipNoCmdMouse));
-		content+= StrPrintf("echo \"%ls\"\n", MSG(MVTStartTipPendCmdTitle));
-		content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdFn));
-		content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltC));
-		if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-			content+= StrPrintf("echo \" %ls\"\n", MSG(MVTStartTipPendCmdCtrlAltZ));
-		}
-		content+= StrPrintf(" echo \" %ls\"\n", MSG(MVTStartTipPendCmdMouse));
-		content+= "echo ════════════════════════════════════════════════════════════════════\x1b_pop-attr\x07\n";
-		s_shown_tip_init = true;
-
 	}
+
 	std::string pwd_suffix;
 	const char *last_ch = cmd + strlen(cmd);
 	while (last_ch != cmd && (*last_ch == ' ' || *last_ch == '\t' || *last_ch == 0)) {

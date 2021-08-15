@@ -605,9 +605,8 @@ int FarAppMain(int argc, char **argv)
 
 	if (!Lang.Init(g_strFarPath,true,MNewFileName))
 	{
-		ControlObject::ShowCopyright(1);
 		LPCWSTR LngMsg;
-		switch(Lang.GetLastError())
+		switch (Lang.GetLastError())
 		{
 		case LERROR_BAD_FILE:
 			LngMsg = L"\nError: language data is incorrect or damaged. Press any key to exit...";
@@ -618,9 +617,7 @@ int FarAppMain(int argc, char **argv)
 		default:
 			LngMsg = L"\nError: cannot load language data. Press any key to exit...";
 		}
-		Console.SetCursorPosition(COORD{0, 1});
-		Console.Write(LngMsg,StrLength(LngMsg));
-		Console.FlushInputBuffer();
+		ControlObject::ShowStartupBanner(LngMsg);
 		WaitKey(); // А стоит ли ожидать клавишу??? Стоит
 		return 1;
 	}

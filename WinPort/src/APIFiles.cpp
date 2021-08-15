@@ -617,7 +617,7 @@ extern "C"
 		{
 			_root = root;
 			_mask = mask;
-			if (_root.size() > 1 && _root[_root.size()-1]==GOOD_SLASH)
+			if (_root.size() > 1 && _root.back() == GOOD_SLASH)
 				_root.resize(_root.size()-1);
 			_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
 			if (!_d) {
@@ -666,38 +666,41 @@ extern "C"
 		}
 
 	private:
+		void ZeroFillWFD(LPWIN32_FIND_DATAW wfd)
+		{
+			memset(&wfd->ftLastWriteTime, 0, sizeof(wfd->ftLastWriteTime));
+			memset(&wfd->ftCreationTime, 0, sizeof(wfd->ftCreationTime));
+			memset(&wfd->ftLastAccessTime, 0, sizeof(wfd->ftLastAccessTime));
+			wfd->UnixOwner = 0;
+			wfd->UnixGroup = 0;
+			wfd->UnixDevice = 0;
+			wfd->UnixNode = 0;
+			wfd->nPhysicalSize = 0;
+			wfd->nFileSize = 0;
+			wfd->dwFileAttributes = 0;
+			wfd->dwUnixMode = 0;
+			wfd->nHardLinks = 0;
+			wfd->nBlockSize = 0;
+			wfd->cFileName[0] = 0;
+		}
+
 		bool MatchAttributesAndFillWFD(const char *name, LPWIN32_FIND_DATAW wfd, mode_t hint_mode_type = 0)
 		{
 			_tmp.path = _root;
-			if (_tmp.path.empty() || _tmp.path[_tmp.path.size()-1] != GOOD_SLASH) 
+			if (_tmp.path.empty() || _tmp.path.back() != GOOD_SLASH)
 				_tmp.path+= GOOD_SLASH;
+			_tmp.path+= name;
 
 			SudoSilentQueryRegion ssqr(hint_mode_type !=0 && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
-
-			_tmp.path+= name;
-			MB2Wide(name, _tmp.wide_name);
-			wcsncpy(wfd->cFileName, _tmp.wide_name.c_str(), MAX_NAME - 1);
-
 			if (!Statocaster(_tmp.path.c_str(), name).FillWFD(wfd)) {
 				fprintf(stderr, "UnixFindFile: errno=%u hmt=0%o on '%s'\n",
 					errno, hint_mode_type, _tmp.path.c_str());
-
-				memset(&wfd->ftLastWriteTime, 0, sizeof(wfd->ftLastWriteTime));
-				memset(&wfd->ftCreationTime, 0, sizeof(wfd->ftCreationTime));
-				memset(&wfd->ftLastAccessTime, 0, sizeof(wfd->ftLastAccessTime));
-				wfd->nFileSize = 0;
-				wfd->nPhysicalSize = 0;
-				wfd->UnixDevice = 0;
-				wfd->UnixNode = 0;
-				wfd->UnixOwner = 0;
-				wfd->UnixGroup = 0;
-				wfd->dwUnixMode = 0;
-				wfd->nHardLinks = 0;
-				wfd->nBlockSize = 0;
-
-				wfd->dwFileAttributes = FILE_ATTRIBUTE_BROKEN
-					| WINPORT(EvaluateAttributes)(hint_mode_type, wfd->cFileName);
+                                ZeroFillWFD(wfd);
+				wfd->dwFileAttributes = FILE_ATTRIBUTE_BROKEN | EvaluateAttributesT(hint_mode_type, name);
 			}
+
+			MB2Wide(name, _tmp.wide_name);
+			wcsncpy(wfd->cFileName, _tmp.wide_name.c_str(), MAX_NAME - 1);
 
 			const DWORD attrs = wfd->dwFileAttributes;
 			if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {

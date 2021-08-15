@@ -405,8 +405,18 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 
 	for (int i=0; i<ItemsNumber; i++)
 	{
+		(*PanelItemW)[i].FindData.ftCreationTime = PanelItemA[i].FindData.ftCreationTime;
+		(*PanelItemW)[i].FindData.ftLastAccessTime = PanelItemA[i].FindData.ftLastAccessTime;
+		(*PanelItemW)[i].FindData.ftLastWriteTime = PanelItemA[i].FindData.ftLastWriteTime;
+		(*PanelItemW)[i].FindData.nPhysicalSize = PanelItemA[i].FindData.nPhysicalSize;
+		(*PanelItemW)[i].FindData.nFileSize = PanelItemA[i].FindData.nFileSize;
+		(*PanelItemW)[i].FindData.dwFileAttributes = PanelItemA[i].FindData.dwFileAttributes;
+		(*PanelItemW)[i].FindData.dwUnixMode = PanelItemA[i].FindData.dwUnixMode;
+		(*PanelItemW)[i].UserData = PanelItemA[i].UserData;
 		(*PanelItemW)[i].Flags = PanelItemA[i].Flags;
 		(*PanelItemW)[i].NumberOfLinks = PanelItemA[i].NumberOfLinks;
+		(*PanelItemW)[i].CRC32 = PanelItemA[i].CRC32;
+		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName);
 
 		if (PanelItemA[i].Description)
 			(*PanelItemW)[i].Description = AnsiToUnicode(PanelItemA[i].Description);
@@ -422,17 +432,6 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 			(*PanelItemW)[i].CustomColumnNumber = PanelItemA[i].CustomColumnNumber;
 			(*PanelItemW)[i].CustomColumnData = ArrayAnsiToUnicode(PanelItemA[i].CustomColumnData,PanelItemA[i].CustomColumnNumber);
 		}
-
-		(*PanelItemW)[i].UserData = PanelItemA[i].UserData;
-		(*PanelItemW)[i].CRC32 = PanelItemA[i].CRC32;
-		(*PanelItemW)[i].FindData.dwFileAttributes = PanelItemA[i].FindData.dwFileAttributes;
-		(*PanelItemW)[i].FindData.dwUnixMode = PanelItemA[i].FindData.dwUnixMode;
-		(*PanelItemW)[i].FindData.ftCreationTime = PanelItemA[i].FindData.ftCreationTime;
-		(*PanelItemW)[i].FindData.ftLastAccessTime = PanelItemA[i].FindData.ftLastAccessTime;
-		(*PanelItemW)[i].FindData.ftLastWriteTime = PanelItemA[i].FindData.ftLastWriteTime;
-		(*PanelItemW)[i].FindData.nFileSize = PanelItemA[i].FindData.nFileSize;
-		(*PanelItemW)[i].FindData.nPhysicalSize = PanelItemA[i].FindData.nPhysicalSize;
-		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName);
 	}
 }
 

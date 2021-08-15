@@ -242,7 +242,7 @@ void FileList::ShowFileList(int Fast)
 	{
 		static int SortModes[]={UNSORTED,BY_NAME,BY_EXT,BY_MTIME,BY_CTIME,
 		                        BY_ATIME,BY_CHTIME,BY_SIZE,BY_DIZ,BY_OWNER,
-		                        BY_COMPRESSEDSIZE,BY_NUMLINKS,
+		                        BY_PHYSICALSIZE,BY_NUMLINKS,
 		                        BY_FULLNAME,BY_CUSTOMDATA
 		                       };
 		static int SortStrings[]={MMenuUnsorted,MMenuSortByName,

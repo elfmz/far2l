@@ -71,7 +71,7 @@ class ControlObject
 		KeyMacro Macro;
 		PluginManager Plugins;
 
-		static void ShowCopyright(DWORD Flags=0);
+		static void ShowStartupBanner(LPCWSTR EmergencyMsg = nullptr);
 };
 
 extern ControlObject *CtrlObject;

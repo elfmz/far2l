@@ -78,7 +78,8 @@ void ControlObject::Init()
 	TreeList::ClearCache(0);
 	SetColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0,ScrY-3);
-	ShowCopyright();
+	ShowStartupBanner();
+	SetColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0,ScrY-2);
 	MoveCursor(0,ScrY-1);
 	FPanels=new FilePanels();
@@ -170,58 +171,91 @@ ControlObject::~ControlObject()
 }
 
 
-void ControlObject::ShowCopyright(DWORD Flags)
+void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 {
-	char *Str=xf_strdup(Copyright);
-	char *Line2=nullptr;
-	char Xor=17;
+	std::vector<FARString> Lines;
 
-	for (int I=0; Str[I]; I++)
-	{
-		Str[I]=(Str[I]&0x7f)^Xor;
-		Xor^=Str[I];
-
-		if (Str[I] == '\n')
-		{
-			Line2=&Str[I+1];
-			Str[I]='\0';
+	char Xor = 17;
+	std::string tmp_mb;
+	for (const char *p = Copyright; *p; ++p) {
+		const char c = (*p & 0x7f) ^ Xor;
+		Xor^= c;
+		if (c == '\n') {
+			Lines.emplace_back(tmp_mb);
+			tmp_mb.clear();
+		} else {
+			tmp_mb+= c;
 		}
 	}
-
-	FARString strStr(Str, CP_OEMCP); //BUGBUG
-	FARString strLine(Line2, CP_OEMCP);  //BUGBUG
-	xf_free(Str);
-
-	if (Flags&1)
-	{
-		Console.Write(strStr,static_cast<DWORD>(strStr.GetLength()));
-		Console.Write(L"\n",1);
-		Console.Write(strLine,static_cast<DWORD>(strLine.GetLength()));
-		Console.Write(L"\n",1);
+	if (!tmp_mb.empty()) {
+		Lines.emplace_back(tmp_mb);
 	}
-	else
-	{
-		COORD Size, CursorPosition;
-		Console.GetSize(Size);
-		Console.GetCursorPosition(CursorPosition);
-		int FreeSpace=Size.Y-CursorPosition.Y-1;
-		int LineCount=4+(strLine.IsEmpty()?0:1);
+
+	COORD Size{}, CursorPosition{};
+	WORD SavedAttr{};
+	Console.GetSize(Size);
+	Console.GetCursorPosition(CursorPosition);
+	Console.GetTextAttributes(SavedAttr);
+
+	if (EmergencyMsg) {
+		for (const auto &Line : Lines) {
+			Console.Write(Line, static_cast<DWORD>(Line.GetLength()));
+			CursorPosition.Y++;
+			Console.SetCursorPosition(CursorPosition);
+		}
+
+		Console.SetTextAttributes(F_YELLOW|B_BLACK);
+		Console.Write(EmergencyMsg, wcslen(EmergencyMsg));
+		CursorPosition.Y++;
+		Console.SetCursorPosition(CursorPosition);
+		Console.SetTextAttributes(SavedAttr);
+
+	} else {
+		Lines.emplace_back();
+		const size_t ConsoleHintsIndex = Lines.size();
+		Lines.emplace_back(MSG(MVTStartTipNoCmdTitle));
+		Lines.emplace_back(MSG(MVTStartTipNoCmdShiftTAB));
+		Lines.emplace_back(MSG(MVTStartTipNoCmdFn));
+		Lines.emplace_back(MSG(MVTStartTipNoCmdMouse));
+		Lines.emplace_back(MSG(MVTStartTipPendCmdTitle));
+		Lines.emplace_back(MSG(MVTStartTipPendCmdFn));
+		Lines.emplace_back(MSG(MVTStartTipPendCmdCtrlAltC));
+		if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
+			Lines.emplace_back(MSG(MVTStartTipPendCmdCtrlAltZ));
+		}
+		Lines.emplace_back(MSG(MVTStartTipPendCmdMouse));
+
+		size_t ConsoleHintsWidth = 0;
+		for (size_t i = ConsoleHintsIndex; i < Lines.size(); ++i) {
+			if (ConsoleHintsWidth < Lines[i].GetLength()) {
+				ConsoleHintsWidth = Lines[i].GetLength();
+			}
+		}
+		for (size_t i = ConsoleHintsIndex; i < Lines.size(); ++i) {
+			while (Lines[i].GetLength() < ConsoleHintsWidth) {
+				Lines[i]+= L' ';
+			}
+		}
+
+		const int FreeSpace = Size.Y - CursorPosition.Y - 1;
+		const int LineCount = 4 + Lines.size();
 
 		if (FreeSpace<LineCount)
 			ScrollScreen(LineCount-FreeSpace);
 
-		if (!strLine.IsEmpty())
-		{
-			GotoXY(0,ScrY-4);
-			Text(strStr);
-			GotoXY(0,ScrY-3);
-			Text(strLine);
+		const auto SavedColor = GetColor();
+		for (size_t i = 0; i < Lines.size(); ++i) {
+			if (i >= ConsoleHintsIndex) {
+				SetColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);//COL_HELPBOXTITLE
+			}
+			if (!Lines[i].IsEmpty()) {
+				GotoXY(0, ScrY - (Lines.size() - i + 2));
+				Text(Lines[i]);
+			}
 		}
-		else
-		{
-			Text(strStr);
-		}
+		SetRealColor(SavedColor);
 	}
+
 }
 
 FilePanels* ControlObject::Cp()

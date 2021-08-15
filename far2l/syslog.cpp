@@ -1300,6 +1300,7 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &wfd,FILE *
 
 	if (fp)
 	{
+		fwprintf(fp,L"%*s %ls  dwUnixMode            =0x%08X (0%4o)\n",12,L"",space,wfd.dwUnixMode,wfd.dwUnixMode);
 		fwprintf(fp,L"%*s %ls  dwFileAttributes      =0x%08X\n",12,L"",space,wfd.dwFileAttributes);
 
 		if (wfd.dwFileAttributes&FILE_ATTRIBUTE_READONLY)
@@ -1357,30 +1358,9 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &wfd,FILE *
 		LARGE_INTEGER Number;
 		Number.QuadPart=wfd.nFileSize;
 		fwprintf(fp,L"%*s %ls  nFileSize             =0x%08X, 0x%08X (%llu)\n",12,L"",space,Number.HighPart,Number.LowPart,Number.QuadPart);
-		fwprintf(fp,L"%*s %ls  dwReserved0           =0x%08X (%d)\n",12,L"",space,wfd.dwReserved0,wfd.dwReserved0);
-
-		/*if (wfd.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
-		{
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_MOUNT_POINT (0xA0000003L)\n",12,L"",space);
-
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_HSM)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_HSM         (0xC0000004L)\n",12,L"",space);
-
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_SIS)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_SIS         (0x80000007L)\n",12,L"",space);
-
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_DFS)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_DFS         (0x8000000AL)\n",12,L"",space);
-
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_SYMLINK)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_SYMLINK     (0xA000000CL)\n",12,L"",space);
-
-			if (wfd.dwReserved0 == IO_REPARSE_TAG_DFSR)
-				fwprintf(fp,L"%*s %ls     IO_REPARSE_TAG_DFSR        (0x80000012L)\n",12,L"",space);
-		}*/
-
-		fwprintf(fp,L"%*s %ls  dwReserved1           =0x%08X (%d)\n",12,L"",space,wfd.dwReserved1,wfd.dwReserved1);
+		Number.QuadPart=wfd.nPhysicalSize;
+		fwprintf(fp,L"%*s %ls  nPhysicalSize         =0x%08X, 0x%08X (%llu)\n",12,L"",space,Number.HighPart,Number.LowPart,Number.QuadPart);
+		fwprintf(fp,L"%*s %ls  nBlockSize            =0x%08X (%d)\n",12,L"",space,wfd.nBlockSize,wfd.nBlockSize);
 		fwprintf(fp,L"%*s %ls  cFileName             =\"%ls\"\n",12,L"",space,wfd.cFileName);
 		fwprintf(fp,L"%*s %ls  }\n",12,L"",space);
 		fflush(fp);

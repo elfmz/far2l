@@ -1041,15 +1041,15 @@ copy_name:
       }
       else
       {
+        memset(&wfd, 0, sizeof(wfd));
         wfd.dwFileAttributes=dwAttr;
         HANDLE hFile=CreateFile(NtPath,FILE_READ_ATTRIBUTES,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_POSIX_SEMANTICS,NULL);
         if (hFile!=INVALID_HANDLE_VALUE)
         {
-          wfd.nFileSize = GetFileSize64(hFile);
+          GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
+          wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
           CloseHandle(hFile);
         }
-        //wfd.dwReserved0=0;
-        //wfd.dwReserved1=0;
         WFD2FFD(wfd, *FindData);
         FileName = FullPath;
         goto copy_name;

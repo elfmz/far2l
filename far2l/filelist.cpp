@@ -471,7 +471,7 @@ int _cdecl SortList(const void *el1,const void *el2)
 					return RetCode;
 				break;
 
-			case BY_COMPRESSEDSIZE:
+			case BY_PHYSICALSIZE:
 				return (SPtr1->PhysicalSize > SPtr2->PhysicalSize) ? -ListSortOrder : ListSortOrder;
 
 			case BY_NUMLINKS:
@@ -2976,27 +2976,22 @@ void FileList::SetViewMode(int ViewMode)
 	int CurFullScreen=IsFullScreen();
 	int OldOwner=IsColumnDisplayed(OWNER_COLUMN);
 	int OldGroup=IsColumnDisplayed(GROUP_COLUMN);
-	int OldPacked=IsColumnDisplayed(PHYSICAL_COLUMN);
+	int OldPhysical=IsColumnDisplayed(PHYSICAL_COLUMN);
 	int OldNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
 	int OldDiz=IsColumnDisplayed(DIZ_COLUMN);
 	PrepareViewSettings(ViewMode,nullptr);
 	int NewOwner=IsColumnDisplayed(OWNER_COLUMN);
 	int NewGroup=IsColumnDisplayed(GROUP_COLUMN);
-	int NewPacked=IsColumnDisplayed(PHYSICAL_COLUMN);
+	int NewPhysical=IsColumnDisplayed(PHYSICAL_COLUMN);
 	int NewNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
 	int NewDiz=IsColumnDisplayed(DIZ_COLUMN);
 	int NewAccessTime=IsColumnDisplayed(ADATE_COLUMN);
 	int ResortRequired=FALSE;
-	//DWORD FileSystemFlags;
-
-//	if (NewPacked && apiGetVolumeInformation(strDriveRoot,nullptr,nullptr,nullptr,&FileSystemFlags,nullptr))
-//		if (!(FileSystemFlags&FILE_FILE_COMPRESSION))
-			NewPacked=FALSE;
 
 	if (FileCount>0 && PanelMode!=PLUGIN_PANEL &&
 	        ((!OldOwner && NewOwner) || 
 	         (!OldGroup && NewGroup) || 
-	         (!OldPacked && NewPacked) ||
+	         (!OldPhysical && NewPhysical) ||
 	         (!OldNumLink && NewNumLink) ||
 	         (AccessTimeUpdateRequired && NewAccessTime)))
 		Update(UPDATE_KEEP_SELECTION);
@@ -4142,7 +4137,7 @@ void FileList::SelectSortMode()
 		BY_CHTIME,
 		BY_DIZ,
 		BY_OWNER,
-		BY_COMPRESSEDSIZE,
+		BY_PHYSICALSIZE,
 		BY_NUMLINKS,
 		BY_FULLNAME,
 		BY_CUSTOMDATA

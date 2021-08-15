@@ -134,6 +134,7 @@ extern "C" {
 	WINPORT_DECL(SetCurrentDirectory, BOOL, (LPCWSTR lpPathName));
 	WINPORT_DECL(GetFileSizeEx, BOOL, ( HANDLE hFile, PLARGE_INTEGER lpFileSize));
 	WINPORT_DECL(GetFileSize, DWORD, ( HANDLE  hFile, LPDWORD lpFileSizeHigh));
+	WINPORT_DECL(GetFileSize64, DWORD64, ( HANDLE  hFile));
 	WINPORT_DECL(ReadFile, BOOL, ( HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, 
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped));
 	WINPORT_DECL(WriteFile, BOOL, ( HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, 

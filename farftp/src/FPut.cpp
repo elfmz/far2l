@@ -160,10 +160,8 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 		tmp     = FTP_FILENAME(&il.List[I]);
 		CurName = tmp.c_str();
 		CurTime = il.List[I].FindData.ftLastWriteTime;
-		Log(("PutFiles: list[%d], %d-th, att: %d, dw:%08X,%08X \"%s\"",
-		     il.Count(), I,
-		     SrcAttr, il.List[I].FindData.dwReserved0, il.List[I].FindData.dwReserved1,
-		     CurName));
+		Log(("PutFiles: list[%d], %d-th, att: %d, crc32:%08X \"%s\"",
+		     il.Count(), I, SrcAttr, il.List[I].CRC32, CurName));
 
 		/* File name may contain relative paths.
 		   Local files use '\' as dir separator, so convert
@@ -175,7 +173,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 		FixFTPSlash(tmp);
 
 		//Skip deselected files
-		if(il.List[I].FindData.dwReserved1 == MAX_DWORD)
+		if(il.List[I].CRC32 & 0x80000000)
 		{
 			Log(("PutFiles: skip delselected \"%s\"", CurName));
 			continue;
@@ -233,8 +231,8 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 			else if((sz=FtpFileSize(hConnect,DestName.c_str())) != -1)
 			{
 				FindData.FindData = il.List[I].FindData;
-				FindData.FindData.nFileSizeHigh = (DWORD)((sz >> 32) & MAX_DWORD);
-				FindData.FindData.nFileSizeLow  = (DWORD)(sz & MAX_DWORD);
+				FindData.FindData.nFileSize = sz;
+				FindData.FindData.nPhysicalSize = 0;
 				DestAttr = 0;
 				//Can't find file date using FTP commands - leave the default value
 				//DestTime = ;

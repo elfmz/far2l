@@ -170,20 +170,8 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
   ffd.ftCreationTime=wfd.ftCreationTime;
   ffd.ftLastAccessTime=wfd.ftLastAccessTime;
   ffd.ftLastWriteTime=wfd.ftLastWriteTime;
-#ifndef UNICODE
-  ffd.nFileSizeHigh=wfd.nFileSizeHigh;
-  ffd.nFileSizeLow=wfd.nFileSizeLow;
-#else
-  ffd.nFileSize = wfd.nFileSizeHigh;
-  ffd.nFileSize <<= 32;
-  ffd.nFileSize |= wfd.nFileSizeLow;
-#endif
-#ifndef UNICODE
-  ffd.dwReserved0=wfd.dwReserved0;
-  ffd.dwReserved1=wfd.dwReserved1;
-#else
-  ffd.nPackSize = 0;
-#endif
+  ffd.nFileSize=wfd.nFileSize;
+  ffd.nPhysicalSize=wfd.nPhysicalSize;
 #ifndef UNICODE
   strncpy(ffd.cFileName,wfd.cFileName, ARRAYSIZE(ffd.cFileName));
 #else

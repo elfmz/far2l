@@ -107,7 +107,7 @@ SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcF
         return;
       }
       Items=NewItems;
-      strncpy(Items[Count].Text, Format, sizeof(Items[Count].Text));
+      strncpy(Items[Count].Text, Format, sizeof(Items[Count].Text)-1);
       Items[Count].Flags=((Count==0 && *ArcFormat==0) ||
                           !strcasecmp(ArcFormat, Format))?MIF_SELECTED:0;
       Count++;
@@ -339,7 +339,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
     if(!Ret)
       pdd->DefExt[0]=0;
     else
-      strncpy(pdd->DefExt,Buffer,sizeof(pdd->DefExt));
+      strncpy(pdd->DefExt,Buffer,sizeof(pdd->DefExt)-1);
 
     if(IsDelOldDefExt)
       Info.SendDlgMessage(hDlg, MAM_ADDDEFEXT, 0, 0);
@@ -412,7 +412,6 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   BOOL OldExactState=Opt.AdvFlags.AutoResetExactArcName?FALSE:Opt.AdvFlags.ExactArcName;
   BOOL RestoreExactState=FALSE, NewArchive=TRUE;
   struct PutDlgData pdd={0};
-  char *NamePtr/*,*ExtPtr*/;
   BOOL Ret=TRUE;
 
   pdd.Self=this;
@@ -717,7 +716,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       continue;
 
 	std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
-    if (!fullname.empty()) strncpy(ArcName, fullname.c_str(), ARRAYSIZE(ArcName));
+    if (!fullname.empty()) strncpy(ArcName, fullname.c_str(), ARRAYSIZE(ArcName)-1);
     break;
   }
 

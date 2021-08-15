@@ -41,11 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "fileowner.hpp"
 
-static int SetFileEncryption(const wchar_t *Name,int State);
-static int SetFileCompression(const wchar_t *Name,int State);
-static bool SetFileSparse(const wchar_t *Name,bool State);
-
-
 int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 {
 //_SVS(SysLog(L"Attr=0x%08X",Attr));
@@ -77,17 +72,6 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 	}
 
 	return SETATTR_RET_OK;
-}
-
-
-int ESetFileCompression(const wchar_t *Name,int State,DWORD FileAttr,int SkipMode)
-{
-	return SETATTR_RET_ERROR;
-}
-
-int ESetFileEncryption(const wchar_t *Name,int State,DWORD FileAttr,int SkipMode,int Silent)
-{
-	return SETATTR_RET_ERROR;
 }
 
 
@@ -134,11 +118,6 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 	}
 
 	return SETATTR_RET_OK;
-}
-
-int ESetFileSparse(const wchar_t *Name,bool State,DWORD FileAttr,int SkipMode)
-{
-	return SETATTR_RET_ERROR;
 }
 
 int ESetFileOwner(LPCWSTR Name,LPCWSTR Owner,int SkipMode)

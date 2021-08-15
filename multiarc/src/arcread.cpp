@@ -112,7 +112,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
         char NameMsg[NM];
         FSF.sprintf(FilesMsg,GetMsg(MArcReadFiles),ArcDataCount);
         const char *MsgItems[]={GetMsg(MArcReadTitle),GetMsg(MArcReading),NameMsg,FilesMsg};
-        FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+        FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
         Info.Message(Info.ModuleNumber,WaitMessage ? FMSG_KEEPBACKGROUND:0,NULL,MsgItems,
                    ARRAYSIZE(MsgItems),0);
         WaitMessage=TRUE;
@@ -211,9 +211,8 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
     if (NewArcData==NULL)
       break;
 
-    TotalSize+=(((int64_t)CurArcData.FindData.nFileSizeHigh)<<32)|(int64_t)CurArcData.FindData.nFileSizeLow;
-    PackedSize+=(((int64_t)CurArcData.PackSizeHigh)<<32)|(int64_t)CurArcData.PackSize;
-
+    TotalSize+=CurArcData.FindData.nFileSize;
+    PackedSize+=CurArcData.FindData.nPhysicalSize;
 
     ArcData=NewArcData;
     ArcData[ArcDataCount]=CurArcData;
@@ -247,7 +246,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
 
     char NameMsg[NM];
     const char *MsgItems[]={GetMsg(MError),NameMsg,GetMsg(GetItemCode),GetMsg(MOk)};
-    FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+    FSF.TruncPathStr(strncpy(NameMsg,Name,sizeof(NameMsg)-1),MAX_WIDTH_MESSAGE);
     Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     return FALSE; // Mantis#0001241
   }
@@ -323,7 +322,8 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
       {
         *EndName=0;
         CurItem.FindData.dwFileAttributes=FILE_ATTRIBUTE_DIRECTORY;
-        CurItem.FindData.nFileSizeLow=CurItem.PackSize=0;
+        CurItem.FindData.nFileSize=0;
+		CurItem.FindData.nPhysicalSize=0;
       }
 
       strcpy(CurItem.FindData.cFileName,StartName);
@@ -396,7 +396,7 @@ int PluginClass::SetDirectory(const char *Dir,int OpMode)
     if (CurDirLength!=0)
       CurDirLength++;
 
-    int NewDirLength=strlen(Dir);
+    size_t NewDirLength=strlen(Dir);
 
     for (int I=0;I<ArcDataCount;I++)
     {
@@ -455,7 +455,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     ArcPlugin->GetFormatName(ArcPluginNumber,ArcPluginType,FormatName,DefExt);
 
   char NameTitle[NM];
-  strncpy(NameTitle,FSF.PointToName(ArcName),sizeof(NameTitle));
+  strncpy(NameTitle,FSF.PointToName(ArcName),sizeof(NameTitle)-1);
 
   {
     struct PanelInfo PInfo;

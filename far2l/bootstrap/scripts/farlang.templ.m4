@@ -6873,14 +6873,14 @@ MColumnSize
 "Rozmiar"
 "Tamaño"
 
-MColumnPacked
-"Упаков"
-"Packed"
-"Komprimovaný"
-"Kompr."
-"TMéret"
-"Spakowany"
-"Comprs"
+MColumnPhysical
+"ФизРзм"
+"PhysSz"
+upd:"PhysSz"
+upd:"PhysSz"
+upd:"PhysSz"
+upd:"PhysSz"
+upd:"PhysSz"
 
 MColumnDate
 "Дата"
@@ -6980,24 +6980,6 @@ MColumnMumLinks
 "Lnk"
 "NmL"
 "NmL"
-
-MColumnNumStreams
-"КлП"
-"NmS"
-upd:"NmS"
-upd:"NmS"
-"Stm"
-upd:"NmS"
-"NmS"
-
-MColumnStreamsSize
-"РазмПт"
-"StrmSz"
-upd:"StrmSz"
-upd:"StrmSz"
-"StmMér"
-upd:"StrmSz"
-"StrmSz"
 
 MListUp
 l:
@@ -11520,14 +11502,14 @@ MMenuSortByOwner
 "&właściciela                 Ctrl-F11"
 "Dueñ&o                Ctrl-F11"
 
-MMenuSortByCompressedSize
-"&Упакованный размер"
-"Com&pressed size"
-"&Komprimované velikosti"
-"Kom&primierte Größe"
-"Tömörített mér&et"
-"rozmiaru po &kompresji"
-"Tamaño de com&presin"
+MMenuSortByPhysicalSize
+"&Физический размер"
+"&Physical size"
+upd:"&Komprimované velikosti"
+upd:"Kom&primierte Größe"
+upd:"Tömörített mér&et"
+upd:"rozmiaru po &kompresji"
+upd:"Tamaño de com&presin"
 
 MMenuSortByNumLinks
 "Ко&личество ссылок"
@@ -11537,24 +11519,6 @@ MMenuSortByNumLinks
 "Hardlinkek s&záma"
 "&liczby dowiązań"
 "Número de enlaces &rígidos"
-
-MMenuSortByNumStreams
-"Количество &потоков"
-"Number of st&reams"
-upd:"Number of st&reams"
-upd:"Number of st&reams"
-"Stream-e&k száma"
-upd:"Number of st&reams"
-"Número de flujos"
-
-MMenuSortByStreamsSize
-"Размер по&токов"
-"Si&ze of streams"
-upd:"Si&ze of streams"
-upd:"Si&ze of streams"
-"Stream-ek m&érete"
-upd:"Si&ze of streams"
-"Tamaño de flujos"
 
 MMenuSortByFullName
 "&Полное имя"
@@ -12394,14 +12358,14 @@ MQuickViewBytes
 "Rozmiar plików      "
 "Tamaño archivos  "
 
-MQuickViewCompressed
-"Упакованный размер  "
-"Compressed size  "
-"Komprim. velikost  "
-"Komprimiert      "
-"Tömörített méret "
-"Po kompresji        "
-"Tamaño comprimido"
+MQuickViewPhysical
+"Физичеcкий размер  "
+"Physical size    "
+upd:"Komprim. velikost  "
+upd:"Komprimiert      "
+upd:"Tömörített méret "
+upd:"Po kompresji        "
+upd:"Tamaño comprimido"
 
 MQuickViewRatio
 "Степень сжатия      "

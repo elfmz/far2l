@@ -401,11 +401,11 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 
   //<????>
   if(LzhHeader.l0.Method == '0' || (LzhHeader.l0.Method == '4' && LzhHeader.l0.HeadID[2] == 'z'))
-    Item->PackSize=LzhHeader.l0.UnpSize;
+    Item->FindData.nPhysicalSize=LzhHeader.l0.UnpSize;
   else
-    Item->PackSize=(LzhHeader.l0.Method == 'd')?0:LzhHeader.l0.PackSize;
+    Item->FindData.nPhysicalSize=(LzhHeader.l0.Method == 'd')?0:LzhHeader.l0.PackSize;
   //</????>
-  Item->FindData.nFileSizeLow=LzhHeader.l0.UnpSize;
+  Item->FindData.nFileSize=LzhHeader.l0.UnpSize;
 
   FILETIME lft;
   if(LzhHeader.l0.FLevel == 2) // level-2, Original file time stamp(UNIX type, seconds since 1970)

@@ -163,7 +163,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
       if (((char *)Item)[strlen(Opt.CommandPrefix1)+1]==0)
         return INVALID_HANDLE_VALUE;
       char oldfilename[NM+2];
-      strncpy(oldfilename,&((char *)Item)[strlen(Opt.CommandPrefix1)+1],sizeof(oldfilename));
+      strncpy(oldfilename,&((char *)Item)[strlen(Opt.CommandPrefix1)+1],sizeof(oldfilename) - 1);
       FSF.Unquote(oldfilename);
       FSF.ExpandEnvironmentStr(oldfilename,oldfilename,NM);
       std::string filename = MakeFullName(oldfilename);

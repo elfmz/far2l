@@ -435,10 +435,10 @@ int _cdecl SortList(const void *el1,const void *el2)
 				return -ListSortOrder*(RetCode64<0?-1:1);
 
 			case BY_SIZE:
-				if (SPtr1->UnpSize==SPtr2->UnpSize)
+				if (SPtr1->FileSize==SPtr2->FileSize)
 					break;
 
-				return ((SPtr1->UnpSize > SPtr2->UnpSize) ? -ListSortOrder : ListSortOrder);
+				return ((SPtr1->FileSize > SPtr2->FileSize) ? -ListSortOrder : ListSortOrder);
 
 			case BY_DIZ:
 				if (!SPtr1->DizText)
@@ -471,26 +471,14 @@ int _cdecl SortList(const void *el1,const void *el2)
 					return RetCode;
 				break;
 
-			case BY_COMPRESSEDSIZE:
-				return (SPtr1->PackSize > SPtr2->PackSize) ? -ListSortOrder : ListSortOrder;
+			case BY_PHYSICALSIZE:
+				return (SPtr1->PhysicalSize > SPtr2->PhysicalSize) ? -ListSortOrder : ListSortOrder;
 
 			case BY_NUMLINKS:
 				if (SPtr1->NumberOfLinks==SPtr2->NumberOfLinks)
 					break;
 
 				return (SPtr1->NumberOfLinks > SPtr2->NumberOfLinks) ? -ListSortOrder : ListSortOrder;
-
-			case BY_NUMSTREAMS:
-				if (SPtr1->NumberOfStreams==SPtr2->NumberOfStreams)
-					break;
-
-				return (SPtr1->NumberOfStreams > SPtr2->NumberOfStreams) ? -ListSortOrder : ListSortOrder;
-
-			case BY_STREAMSSIZE:
-				if (SPtr1->StreamsSize==SPtr2->StreamsSize)
-					break;
-
-				return (SPtr1->StreamsSize > SPtr2->StreamsSize) ? -ListSortOrder : ListSortOrder;
 
 			case BY_FULLNAME:
 			{
@@ -1810,7 +1798,7 @@ int FileList::ProcessKey(int Key)
 			{
 				int OldFileCount=FileCount,OldCurFile=CurFile;
 				assert(CurFile<FileCount);
-				int OldSelection=ListData[CurFile]->Selected;
+				bool OldSelection=ListData[CurFile]->Selected;
 				int ToPlugin=0;
 				int RealName=PanelMode!=PLUGIN_PANEL;
 				ReturnCurrentFile=TRUE;
@@ -2235,7 +2223,7 @@ int FileList::ProcessKey(int Key)
 }
 
 
-void FileList::Select(FileListItem *SelPtr,int Selection)
+void FileList::Select(FileListItem *SelPtr,bool Selection)
 {
 	if (!TestParentFolderName(SelPtr->strName) && SelPtr->Selected!=Selection)
 	{
@@ -2245,12 +2233,12 @@ void FileList::Select(FileListItem *SelPtr,int Selection)
 		if ((SelPtr->Selected=Selection))
 		{
 			SelFileCount++;
-			SelFileSize += SelPtr->UnpSize;
+			SelFileSize += SelPtr->FileSize;
 		}
 		else
 		{
 			SelFileCount--;
-			SelFileSize -= SelPtr->UnpSize;
+			SelFileSize -= SelPtr->FileSize;
 		}
 	}
 }
@@ -2988,34 +2976,23 @@ void FileList::SetViewMode(int ViewMode)
 	int CurFullScreen=IsFullScreen();
 	int OldOwner=IsColumnDisplayed(OWNER_COLUMN);
 	int OldGroup=IsColumnDisplayed(GROUP_COLUMN);
-	int OldPacked=IsColumnDisplayed(PACKED_COLUMN);
+	int OldPhysical=IsColumnDisplayed(PHYSICAL_COLUMN);
 	int OldNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
-	int OldNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
-	int OldStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
 	int OldDiz=IsColumnDisplayed(DIZ_COLUMN);
 	PrepareViewSettings(ViewMode,nullptr);
 	int NewOwner=IsColumnDisplayed(OWNER_COLUMN);
 	int NewGroup=IsColumnDisplayed(GROUP_COLUMN);
-	int NewPacked=IsColumnDisplayed(PACKED_COLUMN);
+	int NewPhysical=IsColumnDisplayed(PHYSICAL_COLUMN);
 	int NewNumLink=IsColumnDisplayed(NUMLINK_COLUMN);
-	int NewNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
-	int NewStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
 	int NewDiz=IsColumnDisplayed(DIZ_COLUMN);
 	int NewAccessTime=IsColumnDisplayed(ADATE_COLUMN);
 	int ResortRequired=FALSE;
-	//DWORD FileSystemFlags;
-
-//	if (NewPacked && apiGetVolumeInformation(strDriveRoot,nullptr,nullptr,nullptr,&FileSystemFlags,nullptr))
-//		if (!(FileSystemFlags&FILE_FILE_COMPRESSION))
-			NewPacked=FALSE;
 
 	if (FileCount>0 && PanelMode!=PLUGIN_PANEL &&
 	        ((!OldOwner && NewOwner) || 
 	         (!OldGroup && NewGroup) || 
-	         (!OldPacked && NewPacked) ||
+	         (!OldPhysical && NewPhysical) ||
 	         (!OldNumLink && NewNumLink) ||
-	         (!OldNumStreams && NewNumStreams) ||
-	         (!OldStreamsSize && NewStreamsSize) ||
 	         (AccessTimeUpdateRequired && NewAccessTime)))
 		Update(UPDATE_KEEP_SELECTION);
 
@@ -3165,17 +3142,17 @@ long FileList::FindNext(int StartPos, const wchar_t *Name)
 }
 
 
-int FileList::IsSelected(const wchar_t *Name)
+bool FileList::IsSelected(const wchar_t *Name)
 {
 	long Pos=FindFile(Name);
 	return(Pos!=-1 && (ListData[Pos]->Selected || (!SelFileCount && Pos==CurFile)));
 }
 
-int FileList::IsSelected(long idxItem)
+bool FileList::IsSelected(long idxItem)
 {
 	if ((DWORD)idxItem < (DWORD)FileCount)
 		return(ListData[idxItem]->Selected); //  || (Sel!FileCount && idxItem==CurFile) ???
-	return FALSE;
+	return false;
 }
 
 bool FileList::FileInFilter(long idxItem)
@@ -3286,8 +3263,8 @@ int FileList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_
 				fde->ftLastAccessTime=ListData[CurFile]->AccessTime;
 				fde->ftLastWriteTime=ListData[CurFile]->WriteTime;
 				fde->ftChangeTime=ListData[CurFile]->ChangeTime;
-				fde->nFileSize=ListData[CurFile]->UnpSize;
-				fde->nPackSize=ListData[CurFile]->PackSize;
+				fde->nFileSize=ListData[CurFile]->FileSize;
+				fde->nPhysicalSize=ListData[CurFile]->PhysicalSize;
 				fde->strFileName = ListData[CurFile]->strName;
 			}
 
@@ -3314,8 +3291,8 @@ int FileList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_
 				fde->ftLastAccessTime=ListData[GetSelPosition-1]->AccessTime;
 				fde->ftLastWriteTime=ListData[GetSelPosition-1]->WriteTime;
 				fde->ftChangeTime=ListData[GetSelPosition-1]->ChangeTime;
-				fde->nFileSize=ListData[GetSelPosition-1]->UnpSize;
-				fde->nPackSize=ListData[GetSelPosition-1]->PackSize;
+				fde->nFileSize=ListData[GetSelPosition-1]->FileSize;
+				fde->nPhysicalSize=ListData[GetSelPosition-1]->PhysicalSize;
 				fde->strFileName = ListData[GetSelPosition-1]->strName;
 			}
 
@@ -3342,7 +3319,7 @@ void FileList::UngetSelName()
 uint64_t FileList::GetLastSelectedSize()
 {
 	if (LastSelPosition>=0 && LastSelPosition<FileCount)
-		return ListData[LastSelPosition]->UnpSize;
+		return ListData[LastSelPosition]->FileSize;
 
 	return (uint64_t)(-1);
 }
@@ -3774,7 +3751,7 @@ void FileList::CompareDir()
 					Cmp=!RetCompare?0:(RetCompare > 0?1:-1);
 				}
 
-				if (!Cmp && (ListData[I]->UnpSize != Another->ListData[J]->UnpSize))
+				if (!Cmp && (ListData[I]->FileSize != Another->ListData[J]->FileSize))
 					continue;
 
 				if (Cmp < 1 && ListData[I]->Selected)
@@ -4075,7 +4052,7 @@ void FileList::SaveSelection()
 {
 	for (int I=0; I < FileCount; I++)
 	{
-		ListData[I]->PrevSelected=ListData[I]->Selected;
+		ListData[I]->PrevSelected = ListData[I]->Selected;
 	}
 }
 
@@ -4084,9 +4061,9 @@ void FileList::RestoreSelection()
 {
 	for (int I=0; I < FileCount; I++)
 	{
-		int NewSelection=ListData[I]->PrevSelected;
-		ListData[I]->PrevSelected=ListData[I]->Selected;
-		Select(ListData[I],NewSelection);
+		bool NewSelection = ListData[I]->PrevSelected;
+		ListData[I]->PrevSelected = ListData[I]->Selected;
+		Select(ListData[I], NewSelection);
 	}
 
 	if (SelectedFirst)
@@ -4137,10 +4114,8 @@ void FileList::SelectSortMode()
 		{MSG(MMenuSortByChange),0,0},
 		{MSG(MMenuSortByDiz),0,KEY_CTRLF10},
 		{MSG(MMenuSortByOwner),0,KEY_CTRLF11},
-		{MSG(MMenuSortByCompressedSize),0,0},
+		{MSG(MMenuSortByPhysicalSize),0,0},
 		{MSG(MMenuSortByNumLinks),0,0},
-		{MSG(MMenuSortByNumStreams),0,0},
-		{MSG(MMenuSortByStreamsSize),0,0},
 		{MSG(MMenuSortByFullName),0,0},
 		{MSG(MMenuSortByCustomData),0,0},
 		{L"",LIF_SEPARATOR,0},
@@ -4162,10 +4137,8 @@ void FileList::SelectSortMode()
 		BY_CHTIME,
 		BY_DIZ,
 		BY_OWNER,
-		BY_COMPRESSEDSIZE,
+		BY_PHYSICALSIZE,
 		BY_NUMLINKS,
-		BY_NUMSTREAMS,
-		BY_STREAMSSIZE,
 		BY_FULLNAME,
 		BY_CUSTOMDATA
 	};
@@ -4504,7 +4477,7 @@ bool FileList::ApplyCommand()
 void FileList::CountDirSize(DWORD PluginFlags)
 {
 	uint32_t DirCount,DirFileCount,ClusterSize;;
-	uint64_t FileSize,CompressedFileSize,RealFileSize;
+	uint64_t FileSize,PhysicalSize;
 	DWORD SelDirCount=0;
 
 	/* $ 09.11.2000 OT
@@ -4535,23 +4508,23 @@ void FileList::CountDirSize(DWORD PluginFlags)
 		if (DoubleDotDir)
 		{
 			DoubleDotDir->ShowFolderSize=1;
-			DoubleDotDir->UnpSize     = 0;
-			DoubleDotDir->PackSize    = 0;
+			DoubleDotDir->FileSize     = 0;
+			DoubleDotDir->PhysicalSize    = 0;
 
 			for (int I=1; I < FileCount; I++)
 			{
 				if (ListData[I]->FileAttr & FILE_ATTRIBUTE_DIRECTORY)
 				{
-					if (GetPluginDirInfo(hPlugin,ListData[I]->strName,DirCount,DirFileCount,FileSize,CompressedFileSize))
+					if (GetPluginDirInfo(hPlugin,ListData[I]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
 					{
-						DoubleDotDir->UnpSize += FileSize;
-						DoubleDotDir->PackSize += CompressedFileSize;
+						DoubleDotDir->FileSize += FileSize;
+						DoubleDotDir->PhysicalSize += PhysicalSize;
 					}
 				}
 				else
 				{
-					DoubleDotDir->UnpSize     += ListData[I]->UnpSize;
-					DoubleDotDir->PackSize    += ListData[I]->PackSize;
+					DoubleDotDir->FileSize     += ListData[I]->FileSize;
+					DoubleDotDir->PhysicalSize    += ListData[I]->PhysicalSize;
 				}
 			}
 		}
@@ -4567,18 +4540,16 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			SelDirCount++;
 
 			if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-			        GetPluginDirInfo(hPlugin,ListData[I]->strName,DirCount,DirFileCount,FileSize,CompressedFileSize))
+			        GetPluginDirInfo(hPlugin,ListData[I]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
 			        ||
 			        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-			         GetDirInfo(MSG(MDirInfoViewTitle),
-			                    ListData[I]->strName,
-			                    DirCount,DirFileCount,FileSize,
-			                    CompressedFileSize,RealFileSize, ClusterSize,0,Filter,GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
+			         GetDirInfo(MSG(MDirInfoViewTitle), ListData[I]->strName, DirCount,DirFileCount,FileSize,
+			                    PhysicalSize,ClusterSize,0,Filter,GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 			{
-				SelFileSize -= ListData[I]->UnpSize;
+				SelFileSize -= ListData[I]->FileSize;
 				SelFileSize += FileSize;
-				ListData[I]->UnpSize = FileSize;
-				ListData[I]->PackSize = CompressedFileSize;
+				ListData[I]->FileSize = FileSize;
+				ListData[I]->PhysicalSize = PhysicalSize;
 				ListData[I]->ShowFolderSize=1;
 			}
 			else
@@ -4590,16 +4561,16 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	{
 		assert(CurFile<FileCount);
 		if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-		        GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,CompressedFileSize))
+		        GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
 		        ||
 		        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
 		         GetDirInfo(MSG(MDirInfoViewTitle),
 		                    TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
-		                    DirCount,
-		                    DirFileCount,FileSize,CompressedFileSize,RealFileSize,ClusterSize,0,Filter,GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
+		                    DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
+							GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 		{
-			ListData[CurFile]->UnpSize = FileSize;
-			ListData[CurFile]->PackSize = CompressedFileSize;
+			ListData[CurFile]->FileSize = FileSize;
+			ListData[CurFile]->PhysicalSize = PhysicalSize;
 			ListData[CurFile]->ShowFolderSize=1;
 		}
 	}

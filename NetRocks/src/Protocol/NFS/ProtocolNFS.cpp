@@ -9,7 +9,7 @@
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	return std::make_shared<ProtocolNFS>(host, port, username, password, options);
 }
@@ -17,7 +17,7 @@ std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std
 ////////////////////////////
 
 ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 	:
 	_nfs(std::make_shared<NFSConnection>()),
 	_host(host)
@@ -148,7 +148,7 @@ std::string ProtocolNFS::MountedRootedPath(const std::string &path)
 	return out;
 }
 
-mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink)
 {
 	std::string xpath = RootedPath(path);
 	if (RootedPathLevel(xpath) <= 1) {
@@ -174,7 +174,7 @@ mode_t ProtocolNFS::GetMode(const std::string &path, bool follow_symlink) throw 
 	return out;
 }
 
-unsigned long long ProtocolNFS::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolNFS::GetSize(const std::string &path, bool follow_symlink)
 {
 	std::string xpath = RootedPath(path);
 	if (RootedPathLevel(xpath) <= 1) {
@@ -200,7 +200,7 @@ unsigned long long ProtocolNFS::GetSize(const std::string &path, bool follow_sym
 	return out;
 }
 
-void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	std::string xpath = RootedPath(path);
 	if (RootedPathLevel(xpath) <= 1) {
@@ -241,28 +241,28 @@ void ProtocolNFS::GetInformation(FileInformation &file_info, const std::string &
 #endif
 }
 
-void ProtocolNFS::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolNFS::FileDelete(const std::string &path)
 {
 	int rc = nfs_unlink(_nfs->ctx, MountedRootedPath(path).c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete file error", rc);
 }
 
-void ProtocolNFS::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolNFS::DirectoryDelete(const std::string &path)
 {
 	int rc = nfs_rmdir(_nfs->ctx, MountedRootedPath(path).c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete directory error", rc);
 }
 
-void ProtocolNFS::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolNFS::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	int rc = nfs_mkdir(_nfs->ctx, MountedRootedPath(path).c_str());//, mode);
 	if (rc != 0)
 		throw ProtocolError("Create directory error", rc);
 }
 
-void ProtocolNFS::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolNFS::Rename(const std::string &path_old, const std::string &path_new)
 {
 	int rc = nfs_rename(_nfs->ctx, MountedRootedPath(path_old).c_str(), MountedRootedPath(path_new).c_str());
 	if (rc != 0)
@@ -270,34 +270,34 @@ void ProtocolNFS::Rename(const std::string &path_old, const std::string &path_ne
 }
 
 
-void ProtocolNFS::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolNFS::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
-	times[0].tv_usec = access_time.tv_nsec / 1000;
+	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);
 	times[1].tv_sec = modification_time.tv_sec;
-	times[1].tv_usec = modification_time.tv_nsec / 1000;
+	times[1].tv_usec = suseconds_t(modification_time.tv_nsec / 1000);
 
 	int rc = nfs_utimes(_nfs->ctx, MountedRootedPath(path).c_str(), times);
 	if (rc != 0)
 		throw ProtocolError("Set times error",  rc);
 }
 
-void ProtocolNFS::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolNFS::SetMode(const std::string &path, mode_t mode)
 {
 	int rc = nfs_chmod(_nfs->ctx, MountedRootedPath(path).c_str(), mode);
 	if (rc != 0)
 		throw ProtocolError("Set mode error",  rc);
 }
 
-void ProtocolNFS::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolNFS::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	int rc = nfs_symlink(_nfs->ctx, MountedRootedPath(link_target).c_str(), MountedRootedPath(link_path).c_str());
 	if (rc != 0)
 		throw ProtocolError("Symlink create error",  rc);
 }
 
-void ProtocolNFS::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolNFS::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	char buf[0x1001] = {};
 	int rc = nfs_readlink(_nfs->ctx, MountedRootedPath(link_path).c_str(), buf, sizeof(buf) - 1);
@@ -331,7 +331,7 @@ public:
 		}
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		for (;;) {
 			struct nfsdirent *de = nfs_readdir(_nfs->ctx, _dir);
@@ -378,7 +378,7 @@ struct NFSContainersEnumer : IDirectoryEnumer
 protected:
 	std::set<std::string> _names;
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (_names.empty()) {
 			return false;
@@ -456,7 +456,7 @@ struct NFSExportsEnumer : NFSContainersEnumer
 	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolNFS::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolNFS::DirectoryEnum(const std::string &path)
 {
 	std::string xpath = RootedPath(path);
 	fprintf(stderr, "ProtocolNFS::DirectoryEnum: rooted_path='%s'\n", xpath.c_str());
@@ -506,7 +506,7 @@ public:
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 		const auto rc = nfs_read(_nfs->ctx, _file, len, (char *)buf);
 		if (rc < 0)
@@ -516,7 +516,7 @@ public:
 		return (size_t)rc;
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		if (len > 0) for (;;) {
 			const auto rc = nfs_write(_nfs->ctx, _file, len, (char *)buf);
@@ -530,19 +530,19 @@ public:
 		}
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 		// what?
 	}
 };
 
 
-std::shared_ptr<IFileReader> ProtocolNFS::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolNFS::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	return std::make_shared<NFSFileIO>(_nfs, MountedRootedPath(path), O_RDONLY, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolNFS::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolNFS::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	return std::make_shared<NFSFileIO>(_nfs, MountedRootedPath(path), O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

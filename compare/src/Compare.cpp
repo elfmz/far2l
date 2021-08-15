@@ -109,15 +109,11 @@ static void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
   ffd.ftCreationTime   = wfd.ftCreationTime;
   ffd.ftLastAccessTime = wfd.ftLastAccessTime;
   ffd.ftLastWriteTime  = wfd.ftLastWriteTime;
+  ffd.nFileSize        = wfd.nFileSize;
+  ffd.nPhysicalSize    = wfd.nPhysicalSize;
 #ifndef UNICODE
-  ffd.nFileSizeHigh    = wfd.nFileSizeHigh;
-  ffd.nFileSizeLow     = wfd.nFileSizeLow;
-  ffd.dwReserved0      = wfd.dwReserved0;
-  ffd.dwReserved1      = wfd.dwReserved1;
   lstrcpy(ffd.cFileName, wfd.cFileName);
 #else
-  ffd.nFileSize               = ((int64_t)wfd.nFileSizeHigh << 32) | wfd.nFileSizeLow;
-  ffd.nPackSize               = 0;
   ffd.lpwszFileName           = wcsdup(wfd.cFileName);
 #endif
 }
@@ -736,13 +732,9 @@ static bool CompareFiles( const FAR_FIND_DATA *AData, const FAR_FIND_DATA *PData
   else
   {
     // 
-    if (Opt.CompareSize)
-#ifndef UNICODE
-      if (AData->nFileSizeLow != PData->nFileSizeLow || AData->nFileSizeHigh != PData->nFileSizeHigh)
-#else
-      if (AData->nFileSize != PData->nFileSize)
-#endif
-        return false;
+    if (Opt.CompareSize && AData->nFileSize != PData->nFileSize)
+      return false;
+
     if (Opt.CompareTime)
     {
       if (Opt.LowPrecisionTime || Opt.IgnorePossibleTimeZoneDifferences)

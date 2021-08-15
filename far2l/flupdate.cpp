@@ -211,10 +211,6 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	ListData=nullptr;
 	int ReadOwners=IsColumnDisplayed(OWNER_COLUMN);
 	int ReadGroups=IsColumnDisplayed(GROUP_COLUMN);
-	//int ReadPacked=IsColumnDisplayed(PACKED_COLUMN);
-	int ReadNumLinks=IsColumnDisplayed(NUMLINK_COLUMN);
-	//int ReadNumStreams=IsColumnDisplayed(NUMSTREAMS_COLUMN);
-	//int ReadStreamsSize=IsColumnDisplayed(STREAMSSIZE_COLUMN);
 	FARString strComputerName;
 
 
@@ -276,41 +272,17 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			NewPtr->AccessTime = fdata.ftLastAccessTime;
 			NewPtr->WriteTime = fdata.ftLastWriteTime;
 			NewPtr->ChangeTime = fdata.ftChangeTime;
-			NewPtr->UnpSize = fdata.nFileSize;
+			NewPtr->FileSize = fdata.nFileSize;
+			NewPtr->PhysicalSize = fdata.nPhysicalSize;
 			NewPtr->strName = fdata.strFileName;
 			NewPtr->Position=FileCount++;
 			NewPtr->NumberOfLinks=fdata.nHardLinks;
 
-			if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-			{
-				NewPtr->ReparseTag=fdata.dwReserved0; //MSDN
-			}
-
 			if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
 				if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0 || Opt.ScanJunction) {
-					TotalFileSize += NewPtr->UnpSize;
+					TotalFileSize += NewPtr->FileSize;
 				}
-
-				bool Compressed=false;
-
-/*				if (ReadPacked && ((fdata.dwFileAttributes & FILE_ATTRIBUTE_COMPRESSED) || (fdata.dwFileAttributes & FILE_ATTRIBUTE_SPARSE_FILE)))
-				{
-					if (apiGetCompressedFileSize(fdata.strFileName,NewPtr->PackSize))
-					{
-						Compressed=true;
-					}
-				}*/
-
-				if (!Compressed)
-					NewPtr->PackSize = fdata.nFileSize;
-
-				if (ReadNumLinks)
-					NewPtr->NumberOfLinks=fdata.nHardLinks;//todoGetNumberOfLinks(fdata.strFileName);
-			}
-			else
-			{
-				NewPtr->PackSize = 0;
 			}
 
 			NewPtr->SortGroup=DEFAULT_SORT_GROUP;
@@ -324,9 +296,6 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				if (ReadGroups)
 					NewPtr->strGroup = cached_groups.Lookup(fdata.UnixGroup);
 			}
-
-			NewPtr->NumberOfStreams=NewPtr->FileAttr&FILE_ATTRIBUTE_DIRECTORY?0:1;
-			NewPtr->StreamsSize=NewPtr->UnpSize;
 
 			if (ReadCustomData)
 				CtrlObject->Plugins.GetCustomData(NewPtr);
@@ -464,9 +433,9 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 					PluginToFileListItem(&PanelData[i],CurPtr);
 					CurPtr->Position=FileCount;
 					TotalFileSize += fdata.nFileSize;
-					CurPtr->PrevSelected=CurPtr->Selected=0;
-					CurPtr->ShowFolderSize=0;
-					CurPtr->SortGroup=CtrlObject->HiFiles->GetGroup(CurPtr);
+					CurPtr->PrevSelected = CurPtr->Selected = false;
+					CurPtr->ShowFolderSize = 0;
+					CurPtr->SortGroup = CtrlObject->HiFiles->GetGroup(CurPtr);
 
 					if (!TestParentFolderName(fdata.lpwszFileName) && !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 						TotalFileCount++;
@@ -625,12 +594,12 @@ void FileList::MoveSelection(FileListItem **ListData,long FileCount,
 			if (OldPtr[0]->ShowFolderSize)
 			{
 				ListData[0]->ShowFolderSize=2;
-				ListData[0]->UnpSize=OldPtr[0]->UnpSize;
-				ListData[0]->PackSize=OldPtr[0]->PackSize;
+				ListData[0]->FileSize=OldPtr[0]->FileSize;
+				ListData[0]->PhysicalSize=OldPtr[0]->PhysicalSize;
 			}
 
 			Select(ListData[0],OldPtr[0]->Selected);
-			ListData[0]->PrevSelected=OldPtr[0]->PrevSelected;
+			ListData[0]->PrevSelected = OldPtr[0]->PrevSelected;
 		}
 
 		ListData++;
@@ -769,7 +738,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 		if (!CurListData->DizText)
 		{
-			CurListData->DeleteDiz=FALSE;
+			CurListData->DeleteDiz=false;
 			//CurListData->DizText=nullptr;
 		}
 
@@ -783,7 +752,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 			TotalFileCount++;
 		}
 
-		TotalFileSize += CurListData->UnpSize;
+		TotalFileSize += CurListData->FileSize;
 		FileListCount++;
 	}
 
@@ -930,8 +899,8 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 	{
 		if (!ListData[I]->DizText)
 		{
-			ListData[I]->DeleteDiz=FALSE;
-			ListData[I]->DizText=(wchar_t*)Diz.GetDizTextAddr(ListData[I]->strName,ListData[I]->UnpSize);
+			ListData[I]->DeleteDiz=false;
+			ListData[I]->DizText=(wchar_t*)Diz.GetDizTextAddr(ListData[I]->strName,ListData[I]->FileSize);
 		}
 	}
 }

@@ -58,14 +58,14 @@ static void SCPRequestDeleter(ssh_scp  res)
 RESOURCE_CONTAINER(SCPRequest, ssh_scp, SCPRequestDeleter);
 
 std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 //	sleep(20);
 	return std::make_shared<ProtocolSCP>(host, port, username, password, options);
 }
 
 ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	StringConfig protocol_options(options);
 	_conn = std::make_shared<SSHConnection>(host, port, username, password, protocol_options);
@@ -211,7 +211,7 @@ public:
 	const std::string &Error() const { return _error; }
 };
 
-mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETMODE_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETMODE_FAILS_RATE)
@@ -254,7 +254,7 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink) throw 
 	throw ProtocolError("Query mode fault",  ssh_get_error(_conn->ssh), rc);
 }
 
-unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETSIZE_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETSIZE_FAILS_RATE)
@@ -292,7 +292,7 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 	throw ProtocolError("Query size fault",  ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETINFO_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
@@ -332,7 +332,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	throw ProtocolError("Query info fault",  ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSCP::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSCP::FileDelete(const std::string &path)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("unlink %s", QuotedArg(path).c_str());
@@ -341,7 +341,7 @@ void ProtocolSCP::FileDelete(const std::string &path) throw (std::runtime_error)
 	}
 }
 
-void ProtocolSCP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSCP::DirectoryDelete(const std::string &path)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("rmdir %s", QuotedArg(path).c_str());
@@ -350,7 +350,7 @@ void ProtocolSCP::DirectoryDelete(const std::string &path) throw (std::runtime_e
 	}
 }
 
-void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	fprintf(stderr, "ProtocolSCP::DirectoryCreate mode=%o path=%s\n", mode, path.c_str());
 	if (path == "." || path == "./") //wtf
@@ -373,7 +373,7 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode) throw (s
 	}
 }
 
-void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_new)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("mv %s %s", QuotedArg(path_old).c_str(), QuotedArg(path_new).c_str());
@@ -382,11 +382,11 @@ void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_ne
 	}
 }
 
-void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 }
 
-void ProtocolSCP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSCP::SetMode(const std::string &path, mode_t mode)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
@@ -396,7 +396,7 @@ void ProtocolSCP::SetMode(const std::string &path, mode_t mode) throw (std::runt
 }
 
 
-void ProtocolSCP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolSCP::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("ln -s %s %s", QuotedArg(link_target).c_str(), QuotedArg(link_path).c_str());
@@ -405,7 +405,7 @@ void ProtocolSCP::SymlinkCreate(const std::string &link_path, const std::string 
 	}
 }
 
-void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("readlink %s", QuotedArg(link_path).c_str());
@@ -440,7 +440,7 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 	bool _finished = false;
 	SCPRemoteCommand _cmd;
 
-	bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 // PATH/NAME MODE SIZE ACCESS MODIFY CHANGE USER GROUP
 // /bin/bash 81ed 1037528 1568672221 1494938995 1523911947 root root
@@ -515,7 +515,7 @@ public:
 		_conn->executed_command.reset();
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		name.clear();
 		owner.clear();
@@ -545,7 +545,7 @@ public:
   	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &path)
 {
 	_conn->executed_command.reset();
 
@@ -599,7 +599,7 @@ public:
 	}
 
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 #if SIMULATED_READ_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
@@ -657,7 +657,7 @@ public:
 	{
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 #if SIMULATED_WRITE_COMPLETE_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_COMPLETE_FAILS_RATE)
@@ -669,7 +669,7 @@ public:
 
 
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 #if SIMULATED_WRITE_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
@@ -690,7 +690,7 @@ public:
 	}
 };
 
-std::shared_ptr<IFileReader> ProtocolSCP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolSCP::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	if (resume_pos) {
 		throw ProtocolUnsupportedError("SCP doesn't support download resume");
@@ -700,7 +700,7 @@ std::shared_ptr<IFileReader> ProtocolSCP::FileGet(const std::string &path, unsig
 	return std::make_shared<SCPFileReader>(_conn, path);
 }
 
-std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	if (resume_pos) {
 		throw ProtocolUnsupportedError("SCP doesn't support upload resume");
@@ -711,7 +711,7 @@ std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_
 }
 
 
-void ProtocolSCP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
+void ProtocolSCP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	_conn->executed_command.reset();
 	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);

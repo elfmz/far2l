@@ -17,8 +17,8 @@ struct PluginPanelItems
 	void Shrink(int new_count);
 
 	void Detach();
-	PluginPanelItem *Add(const wchar_t *name) throw (std::runtime_error);
-	PluginPanelItem *Add(const char *name) throw (std::runtime_error);
+	PluginPanelItem *Add(const wchar_t *name);
+	PluginPanelItem *Add(const char *name);
 
 private:
 	int capacity = 0;

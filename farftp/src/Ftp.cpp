@@ -143,7 +143,7 @@ int FTP::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode
 			tmp.FindData.ftLastWriteTime  = h.LastWrite;
 			tmp.FindData.dwFileAttributes = h.Folder ? FILE_ATTRIBUTE_DIRECTORY : 0;
 			tmp.Flags                     = PPIF_USERDATA;
-			tmp.PackSizeHigh              = FTP_HOSTID;
+			tmp.FindData.nPhysicalSize    = FTP_HOSTID;
 			tmp.UserData                  = (DWORD_PTR)&h;
 
 			if(!IS_SILENT(OpMode))

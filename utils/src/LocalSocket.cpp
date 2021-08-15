@@ -18,14 +18,14 @@ static size_t CheckIOResult(ssize_t r)
 	return (size_t)r;
 }
 
-size_t LocalSocket::Send(const void *data, size_t len) throw(std::exception)
+size_t LocalSocket::Send(const void *data, size_t len)
 {
 	if (!len) return 0;
 
 	return CheckIOResult(os_call_ssize(send, (int)_sock, data, len, 0));
 }
 
-size_t LocalSocket::Recv(void *data, size_t len) throw(std::exception)
+size_t LocalSocket::Recv(void *data, size_t len)
 {
 	if (!len) return 0;
 
@@ -33,7 +33,7 @@ size_t LocalSocket::Recv(void *data, size_t len) throw(std::exception)
 }
 
 
-size_t LocalSocket::SendTo(const void *data, size_t len, const struct sockaddr_un &sa) throw(std::exception)
+size_t LocalSocket::SendTo(const void *data, size_t len, const struct sockaddr_un &sa)
 {
 	if (!len) return 0;
 
@@ -41,7 +41,7 @@ size_t LocalSocket::SendTo(const void *data, size_t len, const struct sockaddr_u
 		(int)_sock, data, len, 0, (const struct sockaddr *)&sa, (socklen_t)sizeof(sa)));
 }
 
-size_t LocalSocket::RecvFrom(void *data, size_t len, struct sockaddr_un &sa) throw(std::exception)
+size_t LocalSocket::RecvFrom(void *data, size_t len, struct sockaddr_un &sa)
 {
 	if (!len) return 0;
 
@@ -50,7 +50,7 @@ size_t LocalSocket::RecvFrom(void *data, size_t len, struct sockaddr_un &sa) thr
 		(int)_sock, data, len, 0, (struct sockaddr *)&sa, &sal));
 }
 
-void LocalSocket::SendFD(int fd) throw(std::exception)
+void LocalSocket::SendFD(int fd)
 {
 	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
 	std::fill(buf.begin(), buf.end(), 0x0b);
@@ -80,7 +80,7 @@ void LocalSocket::SendFD(int fd) throw(std::exception)
 		throw LocalSocketIOError();
 }
 
-int LocalSocket::RecvFD() throw(std::exception)
+int LocalSocket::RecvFD()
 {
 	std::vector<char> buf(CMSG_SPACE(sizeof(int)));
 	std::fill(buf.begin(), buf.end(), 0x0d);
@@ -122,14 +122,14 @@ LocalSocketClient::LocalSocketClient(Kind sock_kind, const std::string &path_ser
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, path_client.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, path_client.c_str(), sizeof(sa.sun_path) - 1);
 	unlink(sa.sun_path);
 	if (bind(_sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		throw LocalSocketBindError();
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path) - 1);
 
 	if (connect(_sock, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		throw LocalSocketConnectError();
@@ -147,7 +147,7 @@ LocalSocketServer::LocalSocketServer(Kind sock_kind, const std::string &server, 
 
 	struct sockaddr_un sa = {};
 	sa.sun_family = AF_UNIX;
-	strncpy(sa.sun_path, server.c_str(), sizeof(sa.sun_path));
+	strncpy(sa.sun_path, server.c_str(), sizeof(sa.sun_path) - 1);
 
 	unlink(sa.sun_path);
 

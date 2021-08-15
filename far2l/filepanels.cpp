@@ -98,8 +98,8 @@ void FilePanels::Init()
 	                  FileList::IsModeFullScreen(Opt.RightPanel.ViewMode));
 	LeftPanel->SetViewMode(Opt.LeftPanel.ViewMode);
 	RightPanel->SetViewMode(Opt.RightPanel.ViewMode);
-	LeftPanel->SetSortMode(Opt.LeftPanel.SortMode);
-	RightPanel->SetSortMode(Opt.RightPanel.SortMode);
+	LeftPanel->SetSortMode(std::min(std::max(Opt.LeftPanel.SortMode, 0), (int)MAX_PANEL_SORT_MODE));
+	RightPanel->SetSortMode(std::min(std::max(Opt.RightPanel.SortMode, 0), (int)MAX_PANEL_SORT_MODE));
 	LeftPanel->SetNumericSort(Opt.LeftPanel.NumericSort);
 	RightPanel->SetNumericSort(Opt.RightPanel.NumericSort);
 	LeftPanel->SetCaseSensitiveSort(Opt.LeftPanel.CaseSensitiveSort);

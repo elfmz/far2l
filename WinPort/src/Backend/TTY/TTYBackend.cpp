@@ -182,7 +182,7 @@ void TTYBackend::ReaderLoop()
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;
-			tv.tv_usec = (_esc_expiration - tv.tv_sec * 1000) * 1000;
+			tv.tv_usec = suseconds_t((_esc_expiration - tv.tv_sec * 1000) * 1000);
 
 			rs = os_call_int(select, maxfd + 1, &fds, (fd_set*)nullptr, &fde, &tv);
 		} else {

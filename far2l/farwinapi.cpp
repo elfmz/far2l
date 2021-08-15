@@ -65,19 +65,16 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 	FindData.ftLastAccessTime = wfd.ftLastAccessTime;
 	FindData.ftLastWriteTime = wfd.ftLastWriteTime;
 	FindData.ftChangeTime = wfd.ftLastWriteTime;
-	FindData.nFileSize = wfd.nFileSizeHigh;
-	FindData.nFileSize<<= 32;
-	FindData.nFileSize|= wfd.nFileSizeLow;
-	FindData.nPackSize = 0;//WTF?
-	FindData.dwReserved0 = wfd.dwReserved0;
-	FindData.dwReserved1 = wfd.dwReserved1;
-	FindData.dwUnixMode = wfd.dwUnixMode;
-	FindData.nHardLinks = wfd.nHardLinks;
-	FindData.UnixDevice = wfd.UnixDevice;
-	FindData.UnixNode = wfd.UnixNode;
 	FindData.UnixOwner = wfd.UnixOwner;
 	FindData.UnixGroup = wfd.UnixGroup;
+	FindData.UnixDevice = wfd.UnixDevice;
+	FindData.UnixNode = wfd.UnixNode;
+	FindData.nPhysicalSize = wfd.nPhysicalSize;
+	FindData.nFileSize = wfd.nFileSize;
 	FindData.dwFileAttributes = wfd.dwFileAttributes;
+	FindData.dwUnixMode = wfd.dwUnixMode;
+	FindData.nHardLinks = wfd.nHardLinks;
+	FindData.nBlockSize = wfd.nBlockSize;
 	FindData.strFileName = wfd.cFileName;
 }
 
@@ -546,31 +543,32 @@ BOOL apiGetVolumeInformation(
 
 void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 {
-	pDest->dwFileAttributes = pSrc->dwFileAttributes;
 	pDest->ftCreationTime = pSrc->ftCreationTime;
 	pDest->ftLastAccessTime = pSrc->ftLastAccessTime;
 	pDest->ftLastWriteTime = pSrc->ftLastWriteTime;
 	pDest->ftChangeTime.dwHighDateTime=0;
 	pDest->ftChangeTime.dwLowDateTime=0;
-	pDest->nFileSize = pSrc->nFileSize;
-	pDest->nPackSize = pSrc->nPackSize;
-	pDest->dwUnixMode = pSrc->dwUnixMode;
-	pDest->nHardLinks = 1;
-	pDest->UnixDevice = 0;
-	pDest->UnixNode = 0;
 	pDest->UnixOwner = 0;
 	pDest->UnixGroup = 0;
+	pDest->UnixDevice = 0;
+	pDest->UnixNode = 0;
+	pDest->nPhysicalSize = pSrc->nPhysicalSize;
+	pDest->nFileSize = pSrc->nFileSize;
+	pDest->dwFileAttributes = pSrc->dwFileAttributes;
+	pDest->dwUnixMode = pSrc->dwUnixMode;
+	pDest->nHardLinks = 1;
+	pDest->nBlockSize = 0;
 	pDest->strFileName = pSrc->lpwszFileName;
 }
 
 void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
 {
-	pDest->dwFileAttributes = pSrc->dwFileAttributes;
 	pDest->ftCreationTime = pSrc->ftCreationTime;
 	pDest->ftLastAccessTime = pSrc->ftLastAccessTime;
 	pDest->ftLastWriteTime = pSrc->ftLastWriteTime;
+	pDest->nPhysicalSize = pSrc->nPhysicalSize;
 	pDest->nFileSize = pSrc->nFileSize;
-	pDest->nPackSize = pSrc->nPackSize;
+	pDest->dwFileAttributes = pSrc->dwFileAttributes;
 	pDest->dwUnixMode = pSrc->dwUnixMode;
 	pDest->lpwszFileName = xf_wcsdup(pSrc->strFileName);
 }
@@ -588,6 +586,10 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 		return FALSE;
 	}
 
+	FindData.Clear();
+
+	FindData.nPhysicalSize = ((DWORD64)s.st_blocks) * 512;
+
 	DWORD symattr = 0;
 	if ((s.st_mode & S_IFMT) == S_IFLNK) {
 		struct stat s2{};
@@ -599,20 +601,21 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 		}
 	}
 
-	FindData.Clear();
-	FindData.strFileName = PointToName(lpwszFileName);
-	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
+	FindData.ftChangeTime = FindData.ftLastWriteTime;
+	FindData.UnixOwner = s.st_uid;
+	FindData.UnixGroup = s.st_gid;
+	FindData.UnixDevice = s.st_dev;
+	FindData.UnixNode = s.st_ino;
 	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName) | symattr;
 	FindData.nFileSize = s.st_size;
 	FindData.dwUnixMode = s.st_mode;
 	FindData.nHardLinks = (DWORD)s.st_nlink;
-	FindData.UnixDevice = s.st_dev;
-	FindData.UnixNode = s.st_ino;
-	FindData.UnixOwner = s.st_uid;
-	FindData.UnixGroup = s.st_gid;
-	FindData.dwReserved0 = FindData.dwReserved1 = 0;
+	FindData.nBlockSize = (DWORD)s.st_blksize;
+	FindData.strFileName = PointToName(lpwszFileName);
+
 	return TRUE;
 }
 

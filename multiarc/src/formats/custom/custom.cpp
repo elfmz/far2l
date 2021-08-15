@@ -905,17 +905,12 @@ static void ParseListingItemRegExp(Match match,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
     if(const char *p = match["name"])
-        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName) );
+        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName)-1 );
     if(const char *p = match["description"])
-        strncpy(Info->Description, p, sizeof(Info->Description) );
+        strncpy(Info->Description, p, sizeof(Info->Description)-1 );
 
-    FAR_INT64 SizeFile;
-    SizeFile.i64 = StringToInt64(match["size"]);
-    Item->FindData.nFileSizeLow  = SizeFile.Part.LowPart;
-    Item->FindData.nFileSizeHigh = SizeFile.Part.HighPart;
-    SizeFile.i64 = StringToInt64(match["packedSize"]);
-    Item->PackSize               = SizeFile.Part.LowPart;
-    Item->PackSizeHigh           = SizeFile.Part.HighPart;
+    Item->FindData.nFileSize     = StringToInt64(match["size"]);
+    Item->FindData.nPhysicalSize   = StringToInt64(match["packedSize"]);
 
     for(const char *p = match["attr"]; p && *p; ++p)
     {
@@ -997,8 +992,6 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
     OptionalPart = OP_OUTSIDE;
     int IsChapter = 0;
 
-    FAR_INT64 SizeFile;
-
     for(; *CurStr && *CurFormat; CurFormat++, CurStr++)
     {
 		if(OptionalPart == OP_SKIP)
@@ -1036,11 +1029,8 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
         case 'z':
             if(isdigit(*CurStr))
             {
-                SizeFile.Part.LowPart=Item->FindData.nFileSizeLow;
-                SizeFile.Part.HighPart=Item->FindData.nFileSizeHigh;
-                SizeFile.i64=SizeFile.i64 * 10 + (*CurStr - '0');
-                Item->FindData.nFileSizeLow=SizeFile.Part.LowPart;
-                Item->FindData.nFileSizeHigh=SizeFile.Part.HighPart;
+                Item->FindData.nFileSize*= 10;
+                Item->FindData.nFileSize+= (*CurStr - '0');
             }
             else if(OP_INSIDE == OptionalPart)
             {
@@ -1051,11 +1041,8 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
         case 'p':
             if(isdigit(*CurStr))
             {
-                SizeFile.Part.LowPart=Item->PackSize;
-                SizeFile.Part.HighPart=Item->PackSizeHigh;
-                SizeFile.i64=SizeFile.i64 * 10 + (*CurStr - '0');
-                Item->PackSize=SizeFile.Part.LowPart;
-                Item->PackSizeHigh=SizeFile.Part.HighPart;
+				Item->FindData.nPhysicalSize*= 10;
+				Item->FindData.nPhysicalSize+= (*CurStr - '0');
             }
             else if(OP_INSIDE == OptionalPart)
             {
@@ -1276,7 +1263,6 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
             if(isxdigit(toupper(*CurStr)))
             {
                 char dig_sub = (*CurStr >= 'a' ? 'a' : (*CurStr >= 'A' ? 'A' : '0'));
-
                 Item->CRC32 = Item->CRC32 * 16 + (*CurStr - dig_sub);
             }
             else if(OP_INSIDE == OptionalPart)

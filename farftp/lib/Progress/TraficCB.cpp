@@ -256,9 +256,9 @@ void TrafficInformation::Init(HANDLE h,int tMsg,int OpMode,FP_SizeItemList* il)
 	if(il)
 		for(int i = 0; i < il->Count(); i++)
 			if(!IS_FLAG(il->List[i].FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY) &&
-			        il->List[i].FindData.dwReserved1 != MAX_DWORD)
+			        (il->List[i].CRC32 & 0x80000000) == 0)
 			{
-				TotalFullSize += ((int64_t)il->List[i].FindData.nFileSizeHigh) << 32 | il->List[i].FindData.nFileSizeLow;
+				TotalFullSize+= (int64_t)il->List[i].FindData.nFileSize;
 				TotalFiles++;
 			}
 }

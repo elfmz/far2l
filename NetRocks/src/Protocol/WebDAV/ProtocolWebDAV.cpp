@@ -249,7 +249,7 @@ private:
 ////////////////////////////////////////////////////////
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+		const std::string &username, const std::string &password, const std::string &options)
 {
 	if (protocol == "davs") {
 		return std::make_shared<ProtocolWebDAV>("https", host, port, username, password, options);
@@ -301,7 +301,7 @@ int ProtocolWebDAV::sVerifySsl(void *userdata, int failures, const ne_ssl_certif
 }
 
 ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 	:
 	_conn(std::make_shared<DavConnection>()),
 	_username(username), _password(password)
@@ -369,7 +369,7 @@ void ProtocolWebDAV::sCreateRequestHook(ne_request *req, void *userdata, const c
 }
 
 
-mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE nullptr);
 	if (wdp.empty())
@@ -379,7 +379,7 @@ mode_t ProtocolWebDAV::GetMode(const std::string &path, bool follow_symlink) thr
 }
 
 
-unsigned long long ProtocolWebDAV::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolWebDAV::GetSize(const std::string &path, bool follow_symlink)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_SIZE nullptr);
 	if (wdp.empty())
@@ -389,7 +389,7 @@ unsigned long long ProtocolWebDAV::GetSize(const std::string &path, bool follow_
 }
 
 
-void ProtocolWebDAV::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolWebDAV::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	WebDavProps wdp(_conn->sess, RefinePath(path), false, PROPS_MODE PROPS_SIZE PROPS_TIMES nullptr);
 	file_info = FileInformation();
@@ -397,7 +397,7 @@ void ProtocolWebDAV::GetInformation(FileInformation &file_info, const std::strin
 		wdp.begin()->second.GetFileInfo(file_info);
 }
 
-void ProtocolWebDAV::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolWebDAV::FileDelete(const std::string &path)
 {
 	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
@@ -405,7 +405,7 @@ void ProtocolWebDAV::FileDelete(const std::string &path) throw (std::runtime_err
 	}
 }
 
-void ProtocolWebDAV::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolWebDAV::DirectoryDelete(const std::string &path)
 {
 	int rc = ne_delete(_conn->sess, RefinePath(path).c_str());
 	if (rc != NE_OK) {
@@ -413,7 +413,7 @@ void ProtocolWebDAV::DirectoryDelete(const std::string &path) throw (std::runtim
 	}
 }
 
-void ProtocolWebDAV::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolWebDAV::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	if (path.empty() || path == "/") {
 		throw ProtocolError("Cannot create root directory");
@@ -425,7 +425,7 @@ void ProtocolWebDAV::DirectoryCreate(const std::string &path, mode_t mode) throw
 	}
 }
 
-void ProtocolWebDAV::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolWebDAV::Rename(const std::string &path_old, const std::string &path_new)
 {
 	int rc = ne_move(_conn->sess, 1, RefinePath(path_old).c_str(), RefinePath(path_new).c_str());
 	if (rc != NE_OK) {
@@ -434,7 +434,7 @@ void ProtocolWebDAV::Rename(const std::string &path_old, const std::string &path
 }
 
 
-void ProtocolWebDAV::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolWebDAV::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 }
 
@@ -448,17 +448,17 @@ static void ProtocolWebDAV_ChangeExecutable(ne_session *sess, const std::string 
 	}
 }
 
-void ProtocolWebDAV::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolWebDAV::SetMode(const std::string &path, mode_t mode)
 {
 	ProtocolWebDAV_ChangeExecutable(_conn->sess, RefinePath(path), (mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0);
 }
 
-void ProtocolWebDAV::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolWebDAV::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
-void ProtocolWebDAV::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolWebDAV::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
@@ -485,7 +485,7 @@ public:
 	{
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (_wdp.empty()) {
 			return false;
@@ -519,7 +519,7 @@ public:
 	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolWebDAV::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolWebDAV::DirectoryEnum(const std::string &path)
 {
 	return std::make_shared<DavDirectoryEnumer>(_conn, path);
 }
@@ -685,7 +685,7 @@ public:
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t buflen) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t buflen)
 	{
 		if (buflen == 0) {
 			return 0;
@@ -708,7 +708,7 @@ public:
 		}
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		if (len == 0) {
 			return;
@@ -732,7 +732,7 @@ public:
 
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 		EnsureAllDone();
 		if (_ne_status != NE_OK) {
@@ -745,12 +745,12 @@ public:
 	}
 };
 
-std::shared_ptr<IFileReader> ProtocolWebDAV::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolWebDAV::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	return std::make_shared<DavFileIO>(_conn, path, false, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolWebDAV::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolWebDAV::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	return std::make_shared<DavFileIO>(_conn, path, true, mode, resume_pos);
 }

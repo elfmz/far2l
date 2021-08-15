@@ -416,7 +416,7 @@ void FTP::ListToQueque(FP_SizeItemList* il, FTPCopyInfo* ci)
 			continue;
 
 		//Skip deselected in list
-		if(p->dwReserved1 == MAX_DWORD)
+		if(il->Item(n)->CRC32 & 0x80000000)
 			continue;
 
 		AddToQueque(p, ci->DestPath.c_str(), ci->Download);
@@ -582,8 +582,8 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 				if(fsz != -1)
 				{
 					ffd = fd;
-					ffd.nFileSizeHigh = (DWORD)((fsz >> 32) & MAX_DWORD);
-					ffd.nFileSizeLow  = (DWORD)(fsz & MAX_DWORD);
+					ffd.nFileSize = fsz;
+					ffd.nPhysicalSize = 0;
 					ci.MsgCode  = AskOverwrite(MDownloadTitle, TRUE, &fd, &ffd, ci.MsgCode, FALSE);
 				}
 				else
@@ -640,8 +640,8 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 			if(fsz != -1)
 			{
 				ffd = fd;
-				ffd.nFileSizeHigh = (DWORD)((fsz >> 32) & MAX_DWORD);
-				ffd.nFileSizeLow  = (DWORD)(fsz & MAX_DWORD);
+				ffd.nFileSize = fsz;
+				ffd.nPhysicalSize = 0;
 				ci.MsgCode  = AskOverwrite(MUploadTitle, FALSE, &ffd, &fd, ci.MsgCode, FALSE);
 
 				switch(ci.MsgCode)

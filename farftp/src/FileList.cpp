@@ -107,7 +107,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 	{
 		p = il->Item(n);
 
-		if(p->FindData.dwReserved1 == MAX_DWORD)
+		if(p->CRC32 & 0x80000000)
 			continue;
 
 		//URLS --------------------------------------
@@ -152,7 +152,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 					if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 						fprintf(f,"<DIR>");
 					else
-						fprintf(f,"%10llu", (long long unsigned int)((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
+						fprintf(f,"%10llu", (long long unsigned int)p->FindData.nFileSize);
 				}
 
 				fprintf(f,"\n");
@@ -191,7 +191,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 						level = Max(1, Opt.sli.RightBound - 10 - (int)strlen(m) - 1);
 						fprintf(f,"%*c%10llu",
 						        level,' ',
-						        (long long unsigned int)((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow);
+						        (long long unsigned int)p->FindData.nFileSize);
 					}
 
 					fprintf(f,"\n");
@@ -208,8 +208,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 
 BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 {
-	int              cn,n,i,w,
-	  num;
+	int              cn, n, i, w, num;
 	int              Breaks[] = { VK_INSERT, VK_F2, 0 },
 	                            BNumber;
 	char             str[ 500 ];
@@ -230,7 +229,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 	{
 		p = il->Item(n);
 		p->NumberOfLinks        = StrSlashCount(FTP_FILENAME(p));
-		p->FindData.dwReserved1 = 0;
+		p->CRC32&= 0x7fffffff;
 		w = Max(w,static_cast<int>(strlen(PointToName(FTP_FILENAME(p)))) + (int)p->NumberOfLinks + 1);
 		cn++;
 		MNUM(mi[i++]) = n;
@@ -250,12 +249,12 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 	for(n = 0; n < cn; n++)
 	{
 		p = il->Item(MNUM(mi[n]));
-		FDigit(str, ((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow, -1);
+		FDigit(str, (int64_t)p->FindData.nFileSize, -1);
 		szSize = Max(static_cast<int>(strlen(str)),szSize);
 
 		if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 		{
-			FDigit(str,p->FindData.dwReserved0,-1);
+			FDigit(str,p->CRC32 & 0x7fffffff,-1);
 			szCount = Max(static_cast<int>(strlen(str)),szCount);
 		}
 	}
@@ -290,7 +289,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 			*(m++) = ' ';
 			*(m++) = FAR_VERT_CHAR;
 			*(m++) = ' ';
-			FDigit(str, ((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow, -1);
+			FDigit(str, p->FindData.nFileSize, -1);
 			m += sprintf(m,"%*s",szSize,str);
 		}
 
@@ -301,7 +300,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 			*(m++) = ' ';
 
 			if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
-				FDigit(str,p->FindData.dwReserved0,-1);
+				FDigit(str,p->CRC32 & 0x7fffffff,-1);
 			else
 				str[0] = 0;
 
@@ -317,7 +316,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 	{
 		//Set selected
 		for(n = 0; n < cn; n++)
-			mi[n].Checked = il->Items()[ MNUM(mi[n])].FindData.dwReserved1 != MAX_DWORD;
+			mi[n].Checked = (il->Items()[ MNUM(mi[n])].CRC32 & 0x80000000) == 0;
 
 		//Title
 		int64_t tsz = 0,tcn = 0;
@@ -326,10 +325,10 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 		{
 			p = il->Item(MNUM(mi[n]));
 
-			if(p->FindData.dwReserved1 != MAX_DWORD &&
+			if( (p->CRC32 & 0x80000000) == 0 &&
 			        !IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 			{
-				tsz += ((int64_t)p->FindData.nFileSizeHigh) << 32 | p->FindData.nFileSizeLow;
+				tsz += p->FindData.nFileSize;
 				tcn++;
 			}
 		}
@@ -392,8 +391,10 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 				//Next item
 				n = num+1;
 				//Switch selected
-				set = p->FindData.dwReserved1 != MAX_DWORD;
-				p->FindData.dwReserved1 = set ? MAX_DWORD : 0;
+				set = (p->CRC32 & 0x80000000) == 0;
+				p->CRC32&= 0x7fffffff;
+				if (set)
+					p->CRC32|= 0x80000000;
 
 				//Switch all nested
 				if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
@@ -407,7 +408,9 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 						if(StrSlashCount(FTP_FILENAME(p)) <= i)
 							break;
 
-						p->FindData.dwReserved1 = set ? MAX_DWORD : 0;
+						p->CRC32&= 0x7fffffff;
+						if (set)
+							p->CRC32|= 0x80000000;
 					}
 				}
 

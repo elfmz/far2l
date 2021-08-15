@@ -174,7 +174,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);
       const char *MsgItems[]={GetMsg(MError),NameMsg,ErrMsg,GetMsg(MOk)};
 
-      FSF.TruncPathStr(strncpy(NameMsg,ArcName.c_str(),sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+      FSF.TruncPathStr(strncpy(NameMsg,ArcName.c_str(),sizeof(NameMsg) - 1),MAX_WIDTH_MESSAGE);
       Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     }
     return false;
@@ -429,7 +429,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
               if(aud->SizeStruct == sizeof(struct ArcItemUserData))
               {
                 if(aud->Prefix)
-                  strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName));
+                  strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName) - 1);
                 if(aud->LinkName)
                   cFileName=aud->LinkName;
               }
@@ -527,7 +527,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
     {
       char NameMsg[NM];
       const char *MsgItems[]={GetMsg(MError),GetMsg(MCannotCreateListFile),NameMsg,GetMsg(MOk)};
-      FSF.TruncPathStr(strncpy(NameMsg,ListFileName,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
+      FSF.TruncPathStr(strncpy(NameMsg,ListFileName,sizeof(NameMsg) - 1),MAX_WIDTH_MESSAGE);
       Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     }
 /* $ 25.07.2001 AA
@@ -566,7 +566,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
       if(aud->SizeStruct == sizeof(struct ArcItemUserData))
       {
         if(aud->Prefix)
-          strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName));
+          strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName) - 1);
         if(aud->LinkName)
            FileName = aud->LinkName;
       }

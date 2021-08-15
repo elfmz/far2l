@@ -24,7 +24,7 @@ class ExecCommandFIFO
 	}
 
 public:
-	ExecCommandFIFO() throw (std::runtime_error)
+	ExecCommandFIFO()
 	{
 		char sz[64] = {};
 		snprintf(sz, sizeof(sz) - 1, "NetRocks/fifo/%lx", (unsigned long)getpid());

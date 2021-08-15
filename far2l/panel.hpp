@@ -64,7 +64,7 @@ enum
 	INFO_PANEL
 };
 
-enum
+enum PanelSortMode
 {
 	UNSORTED,
 	BY_NAME,
@@ -75,13 +75,12 @@ enum
 	BY_SIZE,
 	BY_DIZ,
 	BY_OWNER,
-	BY_COMPRESSEDSIZE,
+	BY_PHYSICALSIZE,
 	BY_NUMLINKS,
-	BY_NUMSTREAMS,
-	BY_STREAMSSIZE,
 	BY_FULLNAME,
 	BY_CHTIME,
 	BY_CUSTOMDATA,
+	MAX_PANEL_SORT_MODE = BY_CUSTOMDATA
 };
 
 enum {VIEW_0=0,VIEW_1,VIEW_2,VIEW_3,VIEW_4,VIEW_5,VIEW_6,VIEW_7,VIEW_8,VIEW_9};
@@ -208,8 +207,8 @@ class Panel:public ScreenObject
 		virtual int GoToFile(const wchar_t *Name,BOOL OnlyPartName=FALSE) {return TRUE;};
 		virtual long FindFile(const wchar_t *Name,BOOL OnlyPartName=FALSE) {return -1;};
 
-		virtual int IsSelected(const wchar_t *Name) {return FALSE;};
-		virtual int IsSelected(long indItem) {return FALSE;};
+		virtual bool IsSelected(const wchar_t *Name) {return false;};
+		virtual bool IsSelected(long indItem) {return false;};
 
 		virtual long FindFirst(const wchar_t *Name) {return -1;}
 		virtual long FindNext(int StartPos, const wchar_t *Name) {return -1;}

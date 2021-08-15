@@ -166,10 +166,8 @@ public:
 		strncpy(Item->FindData.cFileName, name.c_str(), ARRAYSIZE(Item->FindData.cFileName)-1);
 		Item->FindData.dwFileAttributes = attribs;
 		Item->FindData.dwUnixMode = is_dir ? 0755 : 0644;
-		Item->FindData.nFileSizeLow = file_size & 0xffffffff;
-		Item->FindData.nFileSizeHigh = (file_size >> 32) & 0xffffffff;
-		Item->PackSizeHigh = packed_size & 0xffffffff;
-		Item->PackSize = (packed_size >> 32) & 0xffffffff;
+		Item->FindData.nFileSize = file_size;
+		Item->FindData.nPhysicalSize = packed_size;
 		Item->CRC32 = crc32;
 		
 		Item->FindData.ftLastWriteTime = ftm;

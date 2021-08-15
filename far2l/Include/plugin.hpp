@@ -52,8 +52,8 @@ other possible license with no implications from the above license on them.
 
 #define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR)
 
-#include "../WinPort/WinCompat.h"
-#include "../WinPort/WinPort.h"
+#include "../../WinPort/WinCompat.h"
+#include "../../WinPort/WinPort.h"
 
 #ifdef FAR_USE_INTERNALS
 #else // ELSE FAR_USE_INTERNALS
@@ -741,13 +741,13 @@ enum PLUGINPANELITEMFLAGS
 
 struct FAR_FIND_DATA
 {
-	DWORD    dwFileAttributes;
 	FILETIME ftCreationTime;
 	FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
+	uint64_t nPhysicalSize;
 	uint64_t nFileSize;
-	uint64_t nPackSize;
-	DWORD dwUnixMode;
+	DWORD    dwFileAttributes;
+	DWORD    dwUnixMode;
 #ifdef FAR_USE_INTERNALS
 	wchar_t *lpwszFileName;
 #else // ELSE FAR_USE_INTERNALS
@@ -758,6 +758,7 @@ struct FAR_FIND_DATA
 struct PluginPanelItem
 {
 	struct FAR_FIND_DATA FindData;
+	DWORD_PTR     UserData;
 	DWORD         Flags;
 	DWORD         NumberOfLinks;
 	const wchar_t *Description;
@@ -765,7 +766,6 @@ struct PluginPanelItem
 	const wchar_t *Group;
 	const wchar_t * const *CustomColumnData;
 	int           CustomColumnNumber;
-	DWORD_PTR     UserData;
 	DWORD         CRC32;
 	DWORD_PTR     Reserved[2];
 };
@@ -1484,7 +1484,8 @@ struct ViewerMode
 	int Wrap;
 	int WordWrap;
 	int Hex;
-	DWORD Reserved[4];
+	int Processed;
+	DWORD Reserved[3];
 };
 
 struct ViewerInfo
@@ -2211,8 +2212,6 @@ enum OPENPLUGININFO_SORTMODES
 	SM_OWNER,
 	SM_COMPRESSEDSIZE,
 	SM_NUMLINKS,
-	SM_NUMSTREAMS,
-	SM_STREAMSSIZE,
 	SM_FULLNAME,
 	SM_CHTIME,
 };

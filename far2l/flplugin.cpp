@@ -181,8 +181,8 @@ int FileList::FileNameToPluginItem(const wchar_t *Name,PluginPanelItem *pi)
 void FileList::FileListToPluginItem(FileListItem *fi,PluginPanelItem *pi)
 {
 	pi->FindData.lpwszFileName = xf_wcsdup(fi->strName);
-	pi->FindData.nFileSize=fi->UnpSize;
-	pi->FindData.nPackSize=fi->PackSize;
+	pi->FindData.nFileSize=fi->FileSize;
+	pi->FindData.nPhysicalSize=fi->PhysicalSize;
 	pi->FindData.dwFileAttributes=fi->FileAttr;
 	pi->FindData.ftLastWriteTime=fi->WriteTime;
 	pi->FindData.ftCreationTime=fi->CreationTime;
@@ -246,8 +246,8 @@ size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
 
 		pi->FindData.lpwszFileName=wcscpy((wchar_t*)data,fi->strName);
 		data+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
-		pi->FindData.nFileSize=fi->UnpSize;
-		pi->FindData.nPackSize=fi->PackSize;
+		pi->FindData.nFileSize=fi->FileSize;
+		pi->FindData.nPhysicalSize=fi->PhysicalSize;
 		pi->FindData.dwFileAttributes=fi->FileAttr;
 		pi->FindData.dwUnixMode=fi->FileMode;
 		pi->FindData.ftLastWriteTime=fi->WriteTime;
@@ -334,13 +334,13 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
 	{
 		fi->DizText=new wchar_t[StrLength(pi->Description)+1];
 		wcscpy(fi->DizText, pi->Description);
-		fi->DeleteDiz=TRUE;
+		fi->DeleteDiz=true;
 	}
 	else
 		fi->DizText=nullptr;
 
-	fi->UnpSize=pi->FindData.nFileSize;
-	fi->PackSize=pi->FindData.nPackSize;
+	fi->FileSize=pi->FindData.nFileSize;
+	fi->PhysicalSize=pi->FindData.nPhysicalSize;
 	fi->FileAttr=pi->FindData.dwFileAttributes;
 	fi->FileMode=pi->FindData.dwUnixMode;
 	fi->WriteTime=pi->FindData.ftLastWriteTime;
@@ -349,7 +349,6 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
 	fi->ChangeTime.dwHighDateTime = 0;
 	fi->ChangeTime.dwLowDateTime = 0;
 	fi->NumberOfLinks=pi->NumberOfLinks;
-	fi->NumberOfStreams=1;
 	fi->UserFlags=pi->Flags;
 
 	if (pi->UserData && (pi->Flags & PPIF_USERDATA))

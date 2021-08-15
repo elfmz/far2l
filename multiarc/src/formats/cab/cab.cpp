@@ -213,8 +213,8 @@ int WINAPI _export CAB_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   #define _A_ENCRYPTED 8
   Item->FindData.dwFileAttributes = FileHeader.attribs & (FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_DIRECTORY);
   Info->Encrypted = FileHeader.attribs & _A_ENCRYPTED;
-  Item->PackSize=0;
-  Item->FindData.nFileSizeLow=FileHeader.cbFile;
+  Item->FindData.nPhysicalSize=0;
+  Item->FindData.nFileSize=FileHeader.cbFile;
   WINPORT(DosDateTimeToFileTime)(FileHeader.date,FileHeader.time,&lft);
   WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
   Info->UnpVer=UnpVer;

@@ -51,8 +51,8 @@ In recent distributives: use libpcre3-dev and libwxgtk3.0-gtk3-dev instead of li
 ``` sh
 git clone https://github.com/elfmz/far2l
 cd far2l
-mkdir build
-cd build
+mkdir _build
+cd _build
 ```
 _with make:_
 ``` sh
@@ -107,15 +107,15 @@ brew bundle
  * After dependencies installed - you can build far2l:
 _with make:_
 ```sh
-mkdir build
-cd build
+mkdir _build
+cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
 make -j$(sysctl -n hw.logicalcpu)
 ``` 
 _or with ninja_
 ```sh
-mkdir build
-cd build
+mkdir _build
+cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja -j$(sysctl -n hw.logicalcpu)
 ```

@@ -245,24 +245,14 @@ void FTPProgress::SetConnection(HANDLE Connection)
 
 void FTPProgress::InitFile(PluginPanelItem *pi, LPCSTR SrcName, LPCSTR DestName)
 {
-	int64_t sz;
-
-	if(pi)
-		sz = ((int64_t)pi->FindData.nFileSizeHigh) << 32 | pi->FindData.nFileSizeLow;
-	else
-		sz = 0;
+	int64_t sz = pi ? pi->FindData.nFileSize : 0;
 
 	InitFile(sz, SrcName, DestName);
 }
 
 void FTPProgress::InitFile(FAR_FIND_DATA* pi, LPCSTR SrcName, LPCSTR DestName)
 {
-	int64_t sz;
-
-	if(pi)
-		sz = ((int64_t)pi->nFileSizeHigh) << 32 | pi->nFileSizeLow;
-	else
-		sz = 0;
+	int64_t sz = pi ? pi->nFileSize : 0;
 
 	InitFile(sz, SrcName, DestName);
 }

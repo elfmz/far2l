@@ -156,7 +156,7 @@ void HostRemote::OnBroken()
 	_peer = 0;
 }
 
-void HostRemote::ReInitialize() throw (std::runtime_error)
+void HostRemote::ReInitialize()
 {
 	OnBroken();
 
@@ -388,7 +388,7 @@ void HostRemote::RecvReply(IPCCommand cmd)
 	}
 }
 
-mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink)
 {
 	CheckReady();
 
@@ -401,7 +401,7 @@ mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink) throw (
 	return out;
 }
 
-unsigned long long HostRemote::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long HostRemote::GetSize(const std::string &path, bool follow_symlink)
 {
 	CheckReady();
 
@@ -414,7 +414,7 @@ unsigned long long HostRemote::GetSize(const std::string &path, bool follow_syml
 	return out;
 }
 
-void HostRemote::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void HostRemote::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	CheckReady();
 
@@ -425,7 +425,7 @@ void HostRemote::GetInformation(FileInformation &file_info, const std::string &p
 	RecvPOD(file_info);
 }
 
-void HostRemote::FileDelete(const std::string &path) throw (std::runtime_error)
+void HostRemote::FileDelete(const std::string &path)
 {
 	CheckReady();
 
@@ -434,7 +434,7 @@ void HostRemote::FileDelete(const std::string &path) throw (std::runtime_error)
 	RecvReply(IPC_FILE_DELETE);
 }
 
-void HostRemote::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void HostRemote::DirectoryDelete(const std::string &path)
 {
 	CheckReady();
 
@@ -443,7 +443,7 @@ void HostRemote::DirectoryDelete(const std::string &path) throw (std::runtime_er
 	RecvReply(IPC_DIRECTORY_DELETE);
 }
 
-void HostRemote::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void HostRemote::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	CheckReady();
 
@@ -453,7 +453,7 @@ void HostRemote::DirectoryCreate(const std::string &path, mode_t mode) throw (st
 	RecvReply(IPC_DIRECTORY_CREATE);
 }
 
-void HostRemote::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void HostRemote::Rename(const std::string &path_old, const std::string &path_new)
 {
 	CheckReady();
 
@@ -464,7 +464,7 @@ void HostRemote::Rename(const std::string &path_old, const std::string &path_new
 }
 
 
-void HostRemote::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void HostRemote::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	CheckReady();
 
@@ -475,7 +475,7 @@ void HostRemote::SetTimes(const std::string &path, const timespec &access_time, 
 	RecvReply(IPC_SET_TIMES);
 }
 
-void HostRemote::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void HostRemote::SetMode(const std::string &path, mode_t mode)
 {
 	CheckReady();
 
@@ -485,7 +485,7 @@ void HostRemote::SetMode(const std::string &path, mode_t mode) throw (std::runti
 	RecvReply(IPC_SET_MODE);
 }
 
-void HostRemote::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void HostRemote::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	CheckReady();
 
@@ -495,7 +495,7 @@ void HostRemote::SymlinkCreate(const std::string &link_path, const std::string &
 	RecvReply(IPC_SYMLINK_CREATE);
 }
 
-void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	CheckReady();
 
@@ -530,7 +530,7 @@ public:
 		_conn->BusyReset();
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (_complete)
 			return false;
@@ -557,7 +557,7 @@ public:
   	}
 };
 
-std::shared_ptr<IDirectoryEnumer> HostRemote::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> HostRemote::DirectoryEnum(const std::string &path)
 {
 	CheckReady();
 
@@ -600,7 +600,7 @@ public:
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 		assert(!_writing);
 		if (_complete || len == 0) {
@@ -630,7 +630,7 @@ public:
 		}
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		assert(_writing);
 		if (len == 0) {
@@ -651,14 +651,14 @@ public:
 		}
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 		EnsureComplete();
 	}
 };
 
 
-std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	CheckReady();
 
@@ -670,7 +670,7 @@ std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsign
 	return std::make_shared<HostRemoteFileIO>(shared_from_this(), false);
 }
 
-std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	CheckReady();
 
@@ -685,7 +685,7 @@ std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t
 }
 
 
-void HostRemote::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
+void HostRemote::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	CheckReady();
 

@@ -12,7 +12,7 @@
 #include "NMBEnum.h"
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	return std::make_shared<ProtocolSMB>(host, port, username, password, options);
 }
@@ -54,7 +54,7 @@ static void ProtocolSMB_AuthFn(const char *server, const char *share, char *wrkg
 
 
 ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 	: _host(host), _protocol_options(options)
 {
 //	_conn->ctx = create_smbctx();
@@ -116,7 +116,7 @@ static bool IsRootedPathServerOnly(const std::string &path)
 	return (slashes_count <= 2);
 }
 
-mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink)
 {
 	const std::string &rooted_path = RootedPath(path);
 	if (IsRootedPathServerOnly(rooted_path)) {
@@ -130,7 +130,7 @@ mode_t ProtocolSMB::GetMode(const std::string &path, bool follow_symlink) throw 
 	return s.st_mode;
 }
 
-unsigned long long ProtocolSMB::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolSMB::GetSize(const std::string &path, bool follow_symlink)
 {
 	const std::string &rooted_path = RootedPath(path);
 	if (IsRootedPathServerOnly(rooted_path)) {
@@ -159,7 +159,7 @@ static int ProtocolSMB_GetInformationInternal(FileInformation &file_info, const 
 	return 0;
 }
 
-void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	const std::string &rooted_path = RootedPath(path);
 	if (IsRootedPathServerOnly(rooted_path)) {
@@ -172,28 +172,28 @@ void ProtocolSMB::GetInformation(FileInformation &file_info, const std::string &
 		throw ProtocolError("Get info error", errno);
 }
 
-void ProtocolSMB::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSMB::FileDelete(const std::string &path)
 {
 	int rc = smbc_unlink(RootedPath(path).c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete file error", errno);
 }
 
-void ProtocolSMB::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSMB::DirectoryDelete(const std::string &path)
 {
 	int rc = smbc_rmdir(RootedPath(path).c_str());
 	if (rc != 0)
 		throw ProtocolError("Delete directory error", errno);
 }
 
-void ProtocolSMB::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSMB::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	int rc = smbc_mkdir(RootedPath(path).c_str(), mode);
 	if (rc != 0)
 		throw ProtocolError("Create directory error",  errno);
 }
 
-void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_new)
 {
 	int rc = smbc_rename(RootedPath(path_old).c_str(), RootedPath(path_new).c_str());
 	if (rc != 0)
@@ -201,32 +201,32 @@ void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_ne
 }
 
 
-void ProtocolSMB::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolSMB::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
-	times[0].tv_usec = access_time.tv_nsec / 1000;
+	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);
 	times[1].tv_sec = modification_time.tv_sec;
-	times[1].tv_usec = modification_time.tv_nsec / 1000;
+	times[1].tv_usec = suseconds_t(modification_time.tv_nsec / 1000);
 
 	int rc = smbc_utimes(RootedPath(path).c_str(), times);
 	if (rc != 0)
 		throw ProtocolError("Set times error",  errno);
 }
 
-void ProtocolSMB::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSMB::SetMode(const std::string &path, mode_t mode)
 {
 	int rc = smbc_chmod(RootedPath(path).c_str(), mode);
 	if (rc != 0)
 		throw ProtocolError("Set mode error",  errno);
 }
 
-void ProtocolSMB::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolSMB::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
-void ProtocolSMB::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolSMB::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	throw ProtocolUnsupportedError("Symlink querying unsupported");
 }
@@ -263,7 +263,7 @@ public:
 		}
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		std::string subpath;
 		owner.clear();
@@ -360,7 +360,7 @@ public:
 	}
 
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (_net.empty())
 			return false;
@@ -375,7 +375,7 @@ public:
 	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolSMB::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolSMB::DirectoryEnum(const std::string &path)
 {
 	const std::string &rooted_path = RootedPath(path);
 
@@ -417,7 +417,7 @@ public:
 		}
 	}
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 		const ssize_t rc = smbc_read(_file, buf, len);
 		if (rc < 0)
@@ -427,7 +427,7 @@ public:
 		return (size_t)rc;
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		if (len > 0) for (;;) {
 			const ssize_t rc = smbc_write(_file, buf, len);
@@ -441,19 +441,19 @@ public:
 		}
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 		// what?
 	}
 };
 
 
-std::shared_ptr<IFileReader> ProtocolSMB::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolSMB::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_RDONLY, 0, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolSMB::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolSMB::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

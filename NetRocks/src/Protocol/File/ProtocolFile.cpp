@@ -13,13 +13,13 @@
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	return std::make_shared<ProtocolFile>(host, port, username, password, options);
 }
 
 ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (ProtocolError)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	StringConfig protocol_options(options);
 	const std::string &cmd = protocol_options.GetString("Command");

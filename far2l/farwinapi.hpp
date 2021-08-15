@@ -46,6 +46,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct FAR_FIND_DATA_EX
 {
 	union {
+		FILETIME ftCreationTime;
+		FILETIME ftUnixStatusChangeTime;
+	};
+	union {
 		FILETIME ftLastAccessTime;
 		FILETIME ftUnixAccessTime;
 	};
@@ -53,46 +57,37 @@ struct FAR_FIND_DATA_EX
 		FILETIME ftLastWriteTime;
 		FILETIME ftUnixModificationTime;
 	};
-	union {
-		FILETIME ftCreationTime;
-		FILETIME ftUnixStatusChangeTime;
-	};
 	FILETIME ftChangeTime;
-	uint64_t nFileSize;
-	uint64_t nPackSize;
-	uint64_t UnixDevice;
-	uint64_t UnixNode;
 	uid_t UnixOwner;
 	gid_t UnixGroup;
+	uint64_t UnixDevice;
+	uint64_t UnixNode;
+	uint64_t nPhysicalSize;
+	uint64_t nFileSize;
 
 	DWORD dwFileAttributes;
 	DWORD dwUnixMode;
 	DWORD nHardLinks;
-	struct
-	{
-		DWORD dwReserved0;
-		DWORD dwReserved1;
-	};
+	DWORD nBlockSize;
 
 	FARString   strFileName;
 
 	void Clear()
 	{
+		memset(&ftCreationTime,0,sizeof(ftCreationTime));
 		memset(&ftLastAccessTime,0,sizeof(ftLastAccessTime));
 		memset(&ftLastWriteTime,0,sizeof(ftLastWriteTime));
-		memset(&ftCreationTime,0,sizeof(ftCreationTime));
 		memset(&ftChangeTime,0,sizeof(ftChangeTime));
-		nFileSize = 0;
-		nPackSize = 0;
-		UnixDevice = 0;
-		UnixNode = 0;
 		UnixOwner = 0;
 		UnixGroup = 0;
+		UnixDevice = 0;
+		UnixNode = 0;
+		nPhysicalSize = 0;
+		nFileSize = 0;
 		dwFileAttributes = 0;
 		dwUnixMode = 0;
 		nHardLinks = 0;
-		dwReserved0 = 0;
-		dwReserved1 = 0;
+		nBlockSize = 0;
 		strFileName.Clear();
 	}
 
@@ -100,22 +95,20 @@ struct FAR_FIND_DATA_EX
 	{
 		if (this != &ffdexCopy)
 		{
-			ftLastAccessTime=ffdexCopy.ftLastAccessTime;
-			ftLastWriteTime=ffdexCopy.ftLastWriteTime;
-			ftCreationTime=ffdexCopy.ftCreationTime;
-			ftChangeTime=ffdexCopy.ftChangeTime;
-			nFileSize=ffdexCopy.nFileSize;
-			nPackSize=ffdexCopy.nPackSize;
-			UnixDevice=ffdexCopy.UnixDevice;
-			UnixNode=ffdexCopy.UnixNode;
-			UnixOwner=ffdexCopy.UnixOwner;
-			UnixGroup=ffdexCopy.UnixGroup;
-			dwFileAttributes=ffdexCopy.dwFileAttributes;
-			dwUnixMode=ffdexCopy.dwUnixMode;
+			ftCreationTime = ffdexCopy.ftCreationTime;
+			ftLastAccessTime = ffdexCopy.ftLastAccessTime;
+			ftLastWriteTime = ffdexCopy.ftLastWriteTime;
+			ftChangeTime = ffdexCopy.ftChangeTime;
+			UnixDevice = ffdexCopy.UnixDevice;
+			UnixOwner = ffdexCopy.UnixOwner;
+			UnixGroup = ffdexCopy.UnixGroup;
+			UnixNode = ffdexCopy.UnixNode;
+			nPhysicalSize = ffdexCopy.nPhysicalSize;
+			nFileSize = ffdexCopy.nFileSize;
+			dwFileAttributes = ffdexCopy.dwFileAttributes;
+			dwUnixMode = ffdexCopy.dwUnixMode;
 			nHardLinks = ffdexCopy.nHardLinks;;
-			dwReserved0=ffdexCopy.dwReserved0;
-			dwReserved1=ffdexCopy.dwReserved1;
-			strFileName=ffdexCopy.strFileName;
+			strFileName = ffdexCopy.strFileName;
 		}
 
 		return *this;

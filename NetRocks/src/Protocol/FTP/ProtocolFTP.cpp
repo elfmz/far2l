@@ -11,14 +11,14 @@
 #include "FTPParseLIST.h"
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	return std::make_shared<ProtocolFTP>(protocol, host, port, username, password, options);
 }
 
 
 ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 	:
 	_conn(std::make_shared<FTPConnection>( (strcasecmp(protocol.c_str(), "ftps") == 0), host, port, options)),
 	_dir_enum_cache(10)
@@ -291,7 +291,7 @@ void ProtocolFTP::MLst(const std::string &path, FileInformation &file_info, uid_
 	}
 }
 
-void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	const std::string &name_part = SplitPathAndNavigate(path, true);
 	if (name_part.empty()) {
@@ -333,14 +333,14 @@ void ProtocolFTP::GetInformation(FileInformation &file_info, const std::string &
 }
 
 
-mode_t ProtocolFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolFTP::GetMode(const std::string &path, bool follow_symlink)
 {
 	FileInformation file_info;
 	GetInformation(file_info, path, follow_symlink);
 	return file_info.mode;
 }
 
-unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolFTP::GetSize(const std::string &path, bool follow_symlink)
 {
 	FileInformation file_info;
 	GetInformation(file_info, path, follow_symlink);
@@ -364,23 +364,23 @@ void ProtocolFTP::SimpleDispositionCommand(const char *cmd, const std::string &p
 	}
 }
 
-void ProtocolFTP::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolFTP::FileDelete(const std::string &path)
 {
 	SimpleDispositionCommand(_cmd.dele, path);
 }
 
-void ProtocolFTP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolFTP::DirectoryDelete(const std::string &path)
 {
 	SimpleDispositionCommand(_cmd.rmd, path);
 }
 
-void ProtocolFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolFTP::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	SimpleDispositionCommand(_cmd.mkd, path);
 	SetMode(path, mode);
 }
 
-void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_new)
 {
 	const std::string &name_old = SplitPathAndNavigate(path_old);
 	const std::string &path_new_relative = PathAsRelative(path_new);
@@ -406,7 +406,7 @@ void ProtocolFTP::Rename(const std::string &path_old, const std::string &path_ne
 }
 
 
-void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	if (_cmd.mfmt == nullptr) {
 		return;
@@ -448,7 +448,7 @@ void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time,
 	}
 }
 
-void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolFTP::SetMode(const std::string &path, mode_t mode)
 {
 	if (_cmd.chmod == nullptr) {
 		return;
@@ -474,12 +474,12 @@ void ProtocolFTP::SetMode(const std::string &path, mode_t mode) throw (std::runt
 	}
 }
 
-void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	throw ProtocolUnsupportedError("Symlink creation unsupported");
 }
 
-void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolFTP::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	if (_cmd.mlst != nullptr) {
 		const std::string &name_part = SplitPathAndNavigate(link_path, true);
@@ -535,12 +535,12 @@ class FTPBaseDirectoryEnumer : protected FTPDataCommand, public IDirectoryEnumer
 	std::string _read_buffer;
 
 protected:
-	virtual bool OnParseLine(const char *buf, size_t len, std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error) = 0;
+	virtual bool OnParseLine(const char *buf, size_t len, std::string &name, std::string &owner, std::string &group, FileInformation &file_info) = 0;
 
 public:
 	using FTPDataCommand::FTPDataCommand;
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		if (!_data_transport) {
 			return false;
@@ -590,7 +590,7 @@ class FTPDirectoryEnumerMLSD : public FTPBaseDirectoryEnumer
 protected:
 
 	virtual bool OnParseLine(const char *buf, size_t len, std::string &name,
-		std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+		std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		uid_t uid = 0;
 		gid_t gid = 0;
@@ -619,7 +619,7 @@ class FTPDirectoryEnumerLIST : public FTPBaseDirectoryEnumer
 protected:
 
 	virtual bool OnParseLine(const char *buf, size_t len, std::string &name,
-		std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+		std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		struct ftpparse fp{};
 
@@ -654,7 +654,7 @@ public:
 	using FTPBaseDirectoryEnumer::FTPBaseDirectoryEnumer;
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolFTP::DirectoryEnum(const std::string &path)
 {
 	SplitPathAndNavigate(path + "/*");
 	return NavigatedDirectoryEnum();
@@ -694,23 +694,23 @@ class FTPFileIO : protected FTPDataCommand, public IFileReader, public IFileWrit
 public:
 	using FTPDataCommand::FTPDataCommand;
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 		return _data_transport->Recv(buf, len);
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 		return _data_transport->Send(buf, len);
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 		EnsureFinalized();
 	}
 };
 
-std::shared_ptr<IFileReader> ProtocolFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolFTP::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	const std::string &name_part = SplitPathAndNavigate(path);
 	_str.assign(_cmd.retr).append(" ").append(name_part);
@@ -718,7 +718,7 @@ std::shared_ptr<IFileReader> ProtocolFTP::FileGet(const std::string &path, unsig
 	return std::make_shared<FTPFileIO>(_conn, data_transport);
 }
 
-std::shared_ptr<IFileWriter> ProtocolFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	const std::string &name_part = SplitPathAndNavigate(path);
 

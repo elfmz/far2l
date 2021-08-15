@@ -77,8 +77,7 @@ int GetDirInfo(const wchar_t *Title,
                uint32_t &DirCount,
                uint32_t &FileCount,
                uint64_t &FileSize,
-               uint64_t &CompressedFileSize,
-               uint64_t &RealSize,
+               uint64_t &PhysicalSize,
                uint32_t &ClusterSize,
                clock_t MsgWaitTime,
                FileFilter *Filter,
@@ -112,24 +111,23 @@ int GetDirInfo(const wchar_t *Title,
 	RefreshFrameManager frref(ScrX,ScrY,MsgWaitTime,Flags&GETDIRINFO_DONTREDRAWFRAME);
 	//DWORD SectorsPerCluster=0,BytesPerSector=0,FreeClusters=0,Clusters=0;
 
-	//todo if (GetDiskFreeSpace(strFullDirName,&SectorsPerCluster,&BytesPerSector,&FreeClusters,&Clusters))
-	//	ClusterSize=SectorsPerCluster*BytesPerSector;
-
 	// Временные хранилища имён каталогов
 	strLastDirName.Clear();
 	strCurDirName.Clear();
 	DirCount=FileCount=0;
-	FileSize=CompressedFileSize=RealSize = 0;
+	FileSize=PhysicalSize=0;
+	ClusterSize=0;
 	ScTree.SetFindPath(DirName, L"*", 0);
 	ScannedINodes scanned_inodes;
 
 	struct stat s = {0};
 	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
 		if (!Opt.OnlyFilesSize)
-			FileSize = s.st_size;//include size of root dir's node
+		{//include size of root dir's node
+			FileSize = s.st_size;
+			PhysicalSize = ((DWORD64)s.st_blocks) * 512;
+		}
 		ClusterSize = s.st_blksize;//TODO: check if its best thing to be used here
-	} else {
-		ClusterSize = 512;//
 	}
 
 	while (ScTree.GetNextName(&FindData,strFullName))
@@ -167,6 +165,11 @@ int GetDirInfo(const wchar_t *Title,
 			}
 		}
 
+		if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !Opt.OnlyFilesSize)
+		{
+			PhysicalSize+= FindData.nPhysicalSize;
+		}
+
 		clock_t CurTime=GetProcessUptimeMSec();
 
 		if (MsgWaitTime!=-1 && CurTime-StartTime > MsgWaitTime)
@@ -178,7 +181,7 @@ int GetDirInfo(const wchar_t *Title,
 			DrawGetDirInfoMsg(Title,ShowDirName,FileSize);
 		}
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			//include own size of symlink's to total size
+			//include symlink's own size to total size
 			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0 && !Opt.OnlyFilesSize) {
 				FileSize+= s.st_size;
 			}
@@ -240,29 +243,7 @@ int GetDirInfo(const wchar_t *Title,
 			}
 
 			FileCount++;
-			uint64_t CurSize = FindData.nFileSize;
-			FileSize+=CurSize;
-
-/*			if (FindData.dwFileAttributes & (FILE_ATTRIBUTE_COMPRESSED|FILE_ATTRIBUTE_SPARSE_FILE))
-			{
-				UINT64 Size=0;
-
-				if (apiGetCompressedFileSize(strFullName,Size))
-				{
-					CurSize=Size;
-				}
-			}*/
-
-			CompressedFileSize+=CurSize;
-
-			if (ClusterSize>0)
-			{
-				RealSize+=CurSize;
-				int Slack=(int)(CurSize%ClusterSize);
-
-				if (Slack>0)
-					RealSize+=ClusterSize-Slack;
-			}
+			FileSize+= FindData.nFileSize;
 		}
 	}
 
@@ -271,13 +252,12 @@ int GetDirInfo(const wchar_t *Title,
 
 
 int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
-                     uint32_t &FileCount,uint64_t &FileSize,
-                     uint64_t &CompressedFileSize)
+                     uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize)
 {
 	PluginPanelItem *PanelItem=nullptr;
 	int ItemsNumber,ExitCode;
 	DirCount=FileCount=0;
-	FileSize=CompressedFileSize=0;
+	FileSize=PhysicalSize=0;
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 
 	if ((ExitCode=FarGetPluginDirList((INT_PTR)ph->pPlugin, ph->hPlugin, DirName, &PanelItem,&ItemsNumber))==TRUE) //INT_PTR - BUGBUG
@@ -292,7 +272,8 @@ int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
 			{
 				FileCount++;
 				FileSize+=PanelItem[I].FindData.nFileSize;
-				CompressedFileSize+=PanelItem[I].FindData.nPackSize?PanelItem[I].FindData.nPackSize:PanelItem[I].FindData.nFileSize;
+				PhysicalSize+= PanelItem[I].FindData.nPhysicalSize
+					? PanelItem[I].FindData.nPhysicalSize : PanelItem[I].FindData.nPhysicalSize;
 			}
 		}
 	}

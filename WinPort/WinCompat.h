@@ -406,35 +406,33 @@ typedef struct _WIN32_FIND_DATAA {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
-    DWORD64 UnixDevice;
-    DWORD64 UnixNode;
     uid_t UnixOwner;
     gid_t UnixGroup;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
+    DWORD64 nPhysicalSize;
+    DWORD64 nFileSize;
     DWORD dwFileAttributes;
-    DWORD nFileSizeHigh;
-    DWORD nFileSizeLow;
-    DWORD dwReserved0;
-    DWORD dwReserved1;
     DWORD dwUnixMode;
     DWORD nHardLinks;
-    CHAR   cFileName[ MAX_NAME ];
+    CHAR  cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAA, *PWIN32_FIND_DATAA, *LPWIN32_FIND_DATAA;
+
 typedef struct _WIN32_FIND_DATAW {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
-    DWORD64 UnixDevice;
-    DWORD64 UnixNode;
     uid_t UnixOwner;
     gid_t UnixGroup;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
+    DWORD64 nPhysicalSize;
+    DWORD64 nFileSize;
     DWORD dwFileAttributes;
-    DWORD nFileSizeHigh;
-    DWORD nFileSizeLow;
-    DWORD dwReserved0;
-    DWORD dwReserved1;
     DWORD dwUnixMode;
     DWORD nHardLinks;
-    WCHAR  cFileName[ MAX_NAME ];
+    DWORD nBlockSize;
+    WCHAR cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 
 
@@ -592,6 +590,7 @@ typedef struct _INPUT_RECORD {
 #define NORM_IGNORECASE           0x00000001  // ignore case
 #define NORM_IGNORENONSPACE       0x00000002  // ignore nonspacing chars
 #define NORM_IGNORESYMBOLS        0x00000004  // ignore symbols
+#define NORM_STOP_ON_NULL         0x10000000  // TODO!!!
 
 #define LINGUISTIC_IGNORECASE     0x00000010  // linguistically appropriate 'ignore case'
 #define LINGUISTIC_IGNOREDIACRITIC 0x00000020  // linguistically appropriate 'ignore nonspace'
@@ -1052,6 +1051,7 @@ typedef void *HMODULE;
 #define TRUNCATE_EXISTING   5
 
 #define INVALID_FILE_SIZE ((DWORD)0xFFFFFFFF)
+#define INVALID_FILE_SIZE64 ((DWORD64)0xFFFFFFFFFFFFFFFF)
 #define INVALID_SET_FILE_POINTER ((DWORD)0xFFFFFFFF)
 #define INVALID_FILE_ATTRIBUTES ((DWORD)0xFFFFFFFF)
 

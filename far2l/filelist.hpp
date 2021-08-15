@@ -45,74 +45,76 @@ class FileFilter;
 
 struct FileListItem
 {
-	char Selected;
-	char PrevSelected;
-	char ShowFolderSize;
-	HighlightDataColor Colors;
-
-	DWORD NumberOfLinks;
-	DWORD NumberOfStreams;
-	DWORD UserFlags;
-	DWORD_PTR UserData;
-
-	int Position;
-	int SortGroup;
-	wchar_t *DizText;
-	char DeleteDiz;
+	FARString strName;
 	FARString strOwner, strGroup;
-	wchar_t **CustomColumnData;
-	int CustomColumnNumber;
-	DWORD CRC32;
+	FARString strCustomData;
 
-	//BUGBUG!!
-	DWORD FileAttr;
-	DWORD FileMode;
+	uint64_t FileSize;
+	uint64_t PhysicalSize;
+
 	FILETIME CreationTime;
 	FILETIME AccessTime;
 	FILETIME WriteTime;
 	FILETIME ChangeTime;
 
-	uint64_t UnpSize;
-	uint64_t PackSize;
-	uint64_t StreamsSize;
+	wchar_t *DizText;
+	wchar_t **CustomColumnData;
 
-	FARString strName;
+	DWORD_PTR UserData;
 
-	DWORD ReparseTag;
+	HighlightDataColor Colors; // 5 DWORDs
 
-	FARString strCustomData;
+	DWORD NumberOfLinks;
+	DWORD UserFlags;
+	DWORD FileAttr;
+	DWORD FileMode;
+	DWORD CRC32;
+
+	int Position;
+	int SortGroup;
+	int CustomColumnNumber;
+
+	bool Selected;
+	bool PrevSelected;
+	bool DeleteDiz;
+	uint8_t ShowFolderSize;
 
 	void Clear()
 	{
-		Selected = 0;
-		PrevSelected = 0;
-		ShowFolderSize = 0;
-		memset(&Colors, 0, sizeof(HighlightDataColor));
-		NumberOfLinks = 0;
-		NumberOfStreams = 0;
-		UserFlags = 0;
-		UserData = 0;
-		Position = 0;
-		SortGroup = 0;
-		DizText = nullptr;
-		DeleteDiz = 0;
+		strName.Clear();
 		strOwner.Clear();
 		strGroup.Clear();
-		CustomColumnData = nullptr;
-		CustomColumnNumber = 0;
-		CRC32 = 0;
-		FileAttr = 0;
-		FileMode = 0;
+		strCustomData.Clear();;
+
+		FileSize = 0;
+		PhysicalSize = 0;
+
 		memset(&CreationTime, 0, sizeof(CreationTime));
 		memset(&AccessTime, 0, sizeof(AccessTime));
 		memset(&WriteTime, 0, sizeof(WriteTime));
 		memset(&ChangeTime, 0, sizeof(ChangeTime));
-		UnpSize = 0;
-		PackSize = 0;
-		StreamsSize = 0;
-		strName.Clear();
-		ReparseTag=0;
-		strCustomData.Clear();
+
+		DizText = nullptr;
+		CustomColumnData = nullptr;;
+
+		UserData = 0;
+
+		memset(&Colors, 0, sizeof(HighlightDataColor));
+
+		NumberOfLinks = 0;
+		UserFlags = 0;
+		FileAttr = 0;
+		FileMode = 0;
+		CRC32 = 0;
+
+		Position = 0;
+		SortGroup = 0;
+		CustomColumnNumber = 0;
+
+		Selected = false;
+		PrevSelected = false;
+		DeleteDiz = false;
+		ShowFolderSize = 0;
 	}
 
 	FileListItem& operator=(const FileListItem &fliCopy)
@@ -124,7 +126,6 @@ struct FileListItem
 			ShowFolderSize = fliCopy.ShowFolderSize;
 			Colors=fliCopy.Colors;
 			NumberOfLinks = fliCopy.NumberOfLinks;
-			NumberOfStreams = fliCopy.NumberOfStreams;
 			UserFlags = fliCopy.UserFlags;
 			UserData = fliCopy.UserData;
 			Position = fliCopy.Position;
@@ -142,11 +143,9 @@ struct FileListItem
 			AccessTime=fliCopy.AccessTime;
 			WriteTime=fliCopy.WriteTime;
 			ChangeTime=fliCopy.ChangeTime;
-			UnpSize = fliCopy.UnpSize;
-			PackSize = fliCopy.PackSize;
-			StreamsSize = fliCopy.StreamsSize;
+			FileSize = fliCopy.FileSize;
+			PhysicalSize = fliCopy.PhysicalSize;
 			strName = fliCopy.strName;
-			ReparseTag = fliCopy.ReparseTag;
 			strCustomData = fliCopy.strCustomData;
 		}
 
@@ -242,7 +241,7 @@ class FileList:public Panel
 		void ShowTotalSize(OpenPluginInfo &Info);
 		int ConvertName(const wchar_t *SrcName, FARString &strDest, int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr);
 
-		void Select(FileListItem *SelPtr,int Selection);
+		void Select(FileListItem *SelPtr,bool Selection);
 		long SelectFiles(int Mode,const wchar_t *Mask=nullptr);
 		void ProcessEnter(bool EnableExec,bool SeparateWindow, bool EnableAssoc=true, bool RunAs = false, OPENFILEPLUGINTYPE Type = OFP_NORMAL);
 		// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
@@ -353,8 +352,8 @@ class FileList:public Panel
 		virtual int GoToFile(const wchar_t *Name,BOOL OnlyPartName=FALSE);
 		virtual long FindFile(const wchar_t *Name,BOOL OnlyPartName=FALSE);
 
-		virtual int IsSelected(const wchar_t *Name);
-		virtual int IsSelected(long idxItem);
+		virtual bool IsSelected(const wchar_t *Name);
+		virtual bool IsSelected(long idxItem);
 
 		virtual long FindFirst(const wchar_t *Name);
 		virtual long FindNext(int StartPos, const wchar_t *Name);

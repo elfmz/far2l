@@ -14,8 +14,7 @@ static bool AddBinFile(FP_SizeItemList &il, const char *prefix, uint64_t ofs, ui
 	PluginPanelItem tmp = {};
 	snprintf(tmp.FindData.cFileName, sizeof(tmp.FindData.cFileName) - 1,
 		"%s@%llx.bin", prefix, (unsigned long long)ofs);
-	tmp.FindData.nFileSizeLow = (DWORD)len;
-	tmp.FindData.nFileSizeHigh = (DWORD) (len >> 32);
+	tmp.FindData.nFileSize = len;
 	tmp.Description = tmp.FindData.cFileName;
 	return il.Add(&tmp);
 }

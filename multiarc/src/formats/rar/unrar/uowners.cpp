@@ -56,6 +56,8 @@ void ExtractUnixOwner30(Archive &Arc,const wchar *FileName)
   int OwnerSize=strlen(OwnerName)+1;
   int GroupSize=Arc.SubHead.SubData.Size()-OwnerSize;
   char GroupName[NM];
+  if (GroupSize >= (int)sizeof(GroupName))
+    GroupSize = sizeof(GroupName) - 1;
   strncpy(GroupName,(char *)&Arc.SubHead.SubData[OwnerSize],GroupSize);
   GroupName[GroupSize]=0;
 

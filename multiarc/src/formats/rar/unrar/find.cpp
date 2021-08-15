@@ -200,7 +200,7 @@ HANDLE FindFile::Win32Find(HANDLE hFind,const wchar *Mask,FindData *fd)
   {
     wcsncpyz(fd->Name,Mask,ASIZE(fd->Name));
     SetName(fd->Name,FindData.cFileName,ASIZE(fd->Name));
-    fd->Size=INT32TO64(FindData.nFileSizeHigh,FindData.nFileSizeLow);
+    fd->Size=FindData.nFileSize;
     fd->FileAttr=FindData.dwFileAttributes;
     fd->ftCreationTime=FindData.ftCreationTime;
     fd->ftLastAccessTime=FindData.ftLastAccessTime;

@@ -24,10 +24,10 @@
 
 
 std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
+	const std::string &username, const std::string &password, const std::string &options);
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	if (strcasecmp(protocol.c_str(), "scp") == 0) {
 		return CreateProtocolSCP(host, port, username, password, options);
@@ -78,7 +78,7 @@ struct SFTPConnection : SSHConnection
 	size_t max_write_block = 32768; // default value
 
 	SFTPConnection(const std::string &host, unsigned int port, const std::string &username,
-		const std::string &password, const StringConfig &protocol_options) throw (std::runtime_error)
+		const std::string &password, const StringConfig &protocol_options)
 	:
 		SSHConnection(host, port, username, password, protocol_options)
 	{
@@ -156,7 +156,7 @@ struct SFTPFileNonblockinScope
 ////////////////////////////
 
 ProtocolSFTP::ProtocolSFTP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error)
+	const std::string &username, const std::string &password, const std::string &options)
 {
 	StringConfig protocol_options(options);
 	_conn = std::make_shared<SFTPConnection>(host, port, username, password, protocol_options);
@@ -167,7 +167,7 @@ ProtocolSFTP::~ProtocolSFTP()
 	_conn->executed_command.reset();
 }
 
-static sftp_attributes SFTPGetAttributes(sftp_session sftp, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+static sftp_attributes SFTPGetAttributes(sftp_session sftp, const std::string &path, bool follow_symlink)
 {
 	sftp_attributes out = follow_symlink ? sftp_stat(sftp, path.c_str()) : sftp_lstat(sftp, path.c_str());
 	if (!out)
@@ -205,7 +205,7 @@ static void SftpFileInfoFromAttributes(FileInformation &file_info, sftp_attribut
 
 
 
-mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETMODE_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETMODE_FAILS_RATE)
@@ -218,7 +218,7 @@ mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink) throw
 	return SFTPModeFromAttributes(attributes);
 }
 
-unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink) throw (std::runtime_error)
+unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETSIZE_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETSIZE_FAILS_RATE)
@@ -231,7 +231,7 @@ unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_sy
 	return attributes->size;
 }
 
-void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink) throw (std::runtime_error)
+void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 #if SIMULATED_GETINFO_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_GETINFO_FAILS_RATE)
@@ -244,7 +244,7 @@ void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string 
 	SftpFileInfoFromAttributes(file_info, attributes);
 }
 
-void ProtocolSFTP::FileDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSFTP::FileDelete(const std::string &path)
 {
 #if SIMULATED_UNLINK_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_UNLINK_FAILS_RATE)
@@ -258,7 +258,7 @@ void ProtocolSFTP::FileDelete(const std::string &path) throw (std::runtime_error
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (std::runtime_error)
+void ProtocolSFTP::DirectoryDelete(const std::string &path)
 {
 #if SIMULATED_RMDIR_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_RMDIR_FAILS_RATE)
@@ -272,7 +272,7 @@ void ProtocolSFTP::DirectoryDelete(const std::string &path) throw (std::runtime_
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode)
 {
 #if SIMULATED_MKDIR_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_MKDIR_FAILS_RATE)
@@ -286,7 +286,7 @@ void ProtocolSFTP::DirectoryCreate(const std::string &path, mode_t mode) throw (
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_new) throw (std::runtime_error)
+void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_new)
 {
 #if SIMULATED_RENAME_FAILS_RATE
 	if ( (rand() % 100) + 1 <= SIMULATED_RENAME_FAILS_RATE)
@@ -300,22 +300,22 @@ void ProtocolSFTP::Rename(const std::string &path_old, const std::string &path_n
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time) throw (std::runtime_error)
+void ProtocolSFTP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	_conn->executed_command.reset();
 
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
-	times[0].tv_usec = access_time.tv_nsec / 1000;
+	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);
 	times[1].tv_sec = modification_time.tv_sec;
-	times[1].tv_usec = modification_time.tv_nsec / 1000;
+	times[1].tv_usec = suseconds_t(modification_time.tv_nsec / 1000);
 
 	int rc = sftp_utimes(_conn->sftp, path.c_str(), times);
 	if (rc != 0)
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::SetMode(const std::string &path, mode_t mode) throw (std::runtime_error)
+void ProtocolSFTP::SetMode(const std::string &path, mode_t mode)
 {
 	_conn->executed_command.reset();
 
@@ -325,7 +325,7 @@ void ProtocolSFTP::SetMode(const std::string &path, mode_t mode) throw (std::run
 }
 
 
-void ProtocolSFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target) throw (std::runtime_error)
+void ProtocolSFTP::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	_conn->executed_command.reset();
 
@@ -334,7 +334,7 @@ void ProtocolSFTP::SymlinkCreate(const std::string &link_path, const std::string
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
-void ProtocolSFTP::SymlinkQuery(const std::string &link_path, std::string &link_target) throw (std::runtime_error)
+void ProtocolSFTP::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	_conn->executed_command.reset();
 
@@ -359,7 +359,7 @@ public:
 			throw ProtocolError(ssh_get_error(_conn->ssh));
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) throw (std::runtime_error)
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 		for (;;) {
 #if SIMULATED_ENUM_FAILS_RATE
@@ -389,7 +389,7 @@ public:
   	}
 };
 
-std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string &path) throw (std::runtime_error)
+std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string &path)
 {
 	_conn->executed_command.reset();
 
@@ -531,7 +531,7 @@ public:
 	}
 
 
-	virtual size_t Read(void *buf, size_t len) throw (std::runtime_error)
+	virtual size_t Read(void *buf, size_t len)
 	{
 #if SIMULATED_READ_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_READ_FAILS_RATE)
@@ -629,7 +629,7 @@ public:
 	{
 	}
 
-	virtual void Write(const void *buf, size_t len) throw (std::runtime_error)
+	virtual void Write(const void *buf, size_t len)
 	{
 #if SIMULATED_WRITE_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_FAILS_RATE)
@@ -651,7 +651,7 @@ public:
 		}
 	}
 
-	virtual void WriteComplete() throw (std::runtime_error)
+	virtual void WriteComplete()
 	{
 #if SIMULATED_WRITE_COMPLETE_FAILS_RATE
 		if ( (rand() % 100) + 1 <= SIMULATED_WRITE_COMPLETE_FAILS_RATE)
@@ -662,21 +662,21 @@ public:
 };
 
 
-std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileReader> ProtocolSFTP::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	_conn->executed_command.reset();
 
 	return std::make_shared<SFTPFileReader>(_conn, path, resume_pos);
 }
 
-std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos) throw (std::runtime_error)
+std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	_conn->executed_command.reset();
 
 	return std::make_shared<SFTPFileWriter>(_conn, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }
 
-void ProtocolSFTP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo) throw (std::runtime_error)
+void ProtocolSFTP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	_conn->executed_command.reset();
 	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);

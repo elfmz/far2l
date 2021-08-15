@@ -144,7 +144,6 @@ class ShellCopy
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
 		int SrcDriveType,DestDriveType;
-		char   *sddata; // Security
 		DizList DestDiz;
 		FARString strDestDizPath;
 		FARString strCopiedName;
@@ -154,7 +153,6 @@ class ShellCopy
 		int ReadOnlyOvrMode;
 		int ReadOnlyDelMode;
 		int SkipMode;          // ...для пропуска при копировании залоченных файлов.
-		int SkipEncMode;
 		int SkipDeleteMode;
 		int SelectedFolderNameLength;
 		UserDefinedList DestList;
@@ -187,7 +185,6 @@ class ShellCopy
 		                  DWORD DestAttr,int SameName,int Rename,int AskAppend,
 		                  int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
-		void CheckUpdatePanel(); // выставляет флаг .UPDATEPPANEL
 		
 		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 		COPY_CODES CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);

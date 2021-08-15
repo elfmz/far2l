@@ -923,7 +923,7 @@ files and folders, perform different file and archive operations. Read
 
  #Wide#          File names and sizes are displayed.
 
- #Detailed#      File names, sizes, packed sizes, last write,
+ #Detailed#      File names, sizes, physical sizes, last write,
                creation, access time and attributes are displayed.
                Fullscreen mode.
 
@@ -941,9 +941,10 @@ files and folders, perform different file and archive operations. Read
 
     You may ~customize file panel view modes~@PanelViewModes@.
 
-    Packed sizes are valid for NTFS compressed files or files inside an
-archive. File owners and number of hard links have meaning for NTFS only. Some
-file systems may not support file creation and access dates.
+    Physical size indicates storage space actually used by file. In most
+cases it will be equal to logical file size rounded up by cluster size, but
+for compressed or sparsed files this size can be smaller than logical size.
+
 
     If you wish to change the panel view mode, choose it from the
 ~panel menu~@LeftRightMenu@. After the mode change or drive change action,
@@ -1093,7 +1094,7 @@ respectively. These menus include the following items:
 
    #Wide#                 Display file name and size.
 
-   #Detailed#             Display file name, size, packed size,
+   #Detailed#             Display file name, size, physical size,
                         last write, creation and access time,
                         attributes. Fullscreen mode.
 

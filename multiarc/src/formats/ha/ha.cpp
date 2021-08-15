@@ -105,7 +105,7 @@ int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo
     return(GETARC_READERROR);
   Path[NM-1]=0;
   int PathLength=strlen(Path)+1;
-  strncpy(Name,Path+PathLength,sizeof(Name));
+  strncpy(Name,Path+PathLength,sizeof(Name)-1);
   int Length=PathLength+strlen(Name)+1;
   DWORD PrevPosition=NextPosition;
   NextPosition+=sizeof(Header)+Length+Path[Length]+1+Header.PackSize;
@@ -120,13 +120,12 @@ int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo
   for (int I=0;Path[I]!=0;I++)
     if ((unsigned char)Path[I]==0xff)
       Path[I]='/';
-  strncpy(Item->FindData.cFileName,Path,sizeof(Item->FindData.cFileName));
+  strncpy(Item->FindData.cFileName,Path,sizeof(Item->FindData.cFileName)-1);
   Item->FindData.dwFileAttributes=(Header.Type & 0xf)==0xe ? FILE_ATTRIBUTE_DIRECTORY:0;
   Item->CRC32=Header.CRC;
   UnixTimeToFileTime(Header.FileTime,&Item->FindData.ftLastWriteTime);
-  Item->FindData.nFileSizeLow=Header.UnpSize;
-  Item->FindData.nFileSizeHigh=0;
-  Item->PackSize=Header.PackSize;
+  Item->FindData.nFileSize=Header.UnpSize;
+  Item->FindData.nPhysicalSize=Header.PackSize;
   return(GETARC_SUCCESS);
 }
 

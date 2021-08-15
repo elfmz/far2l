@@ -1715,7 +1715,7 @@ static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,in
 
 			ItemsList[ItemsNumber].dwFileAttributes = FindData.dwFileAttributes;
 			ItemsList[ItemsNumber].nFileSize = FindData.nFileSize;
-			ItemsList[ItemsNumber].nPackSize = FindData.nPackSize;
+			ItemsList[ItemsNumber].nPhysicalSize = FindData.nPhysicalSize;
 			ItemsList[ItemsNumber].ftCreationTime = FindData.ftCreationTime;
 			ItemsList[ItemsNumber].ftLastAccessTime = FindData.ftLastAccessTime;
 			ItemsList[ItemsNumber].ftLastWriteTime = FindData.ftLastWriteTime;

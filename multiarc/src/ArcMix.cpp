@@ -500,7 +500,7 @@ BOOL AddExt(char *Name, char *Ext)
   {
     // transform Ext
     char NewExt[NM], *Ptr;
-    strncpy(NewExt,Ext,sizeof(NewExt));
+    strncpy(NewExt,Ext,sizeof(NewExt) - 1);
 
     int Up=0, Lw=0;
     Ptr=Name;

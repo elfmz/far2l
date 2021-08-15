@@ -8,7 +8,7 @@
 static const std::string s_empty_string;
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &options) throw (std::runtime_error);
+		const std::string &username, const std::string &password, const std::string &options);
 
 class HostRemoteBroker : protected IPCEndpoint
 {

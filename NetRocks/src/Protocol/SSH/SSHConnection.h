@@ -79,6 +79,6 @@ struct SSHConnection
 	SSHConnection(const SSHConnection&) = delete;
 
 	SSHConnection(const std::string &host, unsigned int port, const std::string &username,
-		const std::string &password, const StringConfig &protocol_options) throw (std::runtime_error);
+		const std::string &password, const StringConfig &protocol_options);
 	virtual ~SSHConnection();
 };

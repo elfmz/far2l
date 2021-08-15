@@ -79,7 +79,6 @@ void ControlObject::Init()
 	SetColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0,ScrY-3);
 	ShowStartupBanner();
-	SetColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0,ScrY-2);
 	MoveCursor(0,ScrY-1);
 	FPanels=new FilePanels();
@@ -224,18 +223,6 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 			Lines.emplace_back(MSG(MVTStartTipPendCmdCtrlAltZ));
 		}
 		Lines.emplace_back(MSG(MVTStartTipPendCmdMouse));
-
-		size_t ConsoleHintsWidth = 0;
-		for (size_t i = ConsoleHintsIndex; i < Lines.size(); ++i) {
-			if (ConsoleHintsWidth < Lines[i].GetLength()) {
-				ConsoleHintsWidth = Lines[i].GetLength();
-			}
-		}
-		for (size_t i = ConsoleHintsIndex; i < Lines.size(); ++i) {
-			while (Lines[i].GetLength() < ConsoleHintsWidth) {
-				Lines[i]+= L' ';
-			}
-		}
 
 		const int FreeSpace = Size.Y - CursorPosition.Y - 1;
 		const int LineCount = 4 + Lines.size();

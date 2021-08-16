@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "frame.hpp"
 #include "keybar.hpp"
+#include "chgmmode.hpp"
 
 class TreeList;
 class Edit;
@@ -43,6 +44,7 @@ class SaveScreen;
 class FolderTree:public Frame
 {
 	private:
+		ChangeMacroMode CMM;
 		TreeList *Tree;
 		Edit *FindEdit;
 
@@ -50,7 +52,6 @@ class FolderTree:public Frame
 		int ModalMode;
 		int IsFullScreen;
 		int IsStandalone;
-		int  PrevMacroMode;        // предыдущий режим макроса
 
 		FARString strNewFolder;
 		FARString strLastName;

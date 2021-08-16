@@ -46,13 +46,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "clipboard.hpp"
 #include "config.hpp"
 
-Grabber::Grabber()
+Grabber::Grabber() :
+	CMM(MACRO_OTHER)
 {
 	Frame *pFrame = FrameManager->GetCurrentFrame();
 	pFrame->Lock();
 	SaveScr=new SaveScreen;
-	PrevMacroMode=CtrlObject->Macro.GetMode();
-	CtrlObject->Macro.SetMode(MACRO_OTHER);
 	memset(&GArea,0,sizeof(GArea));
 	memset(&PrevArea,0,sizeof(PrevArea));
 	bool Visible=false;
@@ -82,7 +81,6 @@ Grabber::Grabber()
 
 Grabber::~Grabber()
 {
-	CtrlObject->Macro.SetMode(PrevMacroMode);
 }
 
 
@@ -265,10 +263,10 @@ void Grabber::DisplayObject()
 int Grabber::ProcessKey(int Key)
 {
 	/* $ 14.03.2001 SVS
-	  [-] Неправильно воспроизводился макрос в режиме грабления экрана.
-	      При воспроизведении клавиша Home перемещала курсор в координаты
-	      0,0 консоли.
-	  Не было учтено режима выполнения макроса.
+	  [-] РќРµРїСЂР°РІРёР»СЊРЅРѕ РІРѕСЃРїСЂРѕРёР·РІРѕРґРёР»СЃСЏ РјР°РєСЂРѕСЃ РІ СЂРµР¶РёРјРµ РіСЂР°Р±Р»РµРЅРёСЏ СЌРєСЂР°РЅР°.
+	      РџСЂРё РІРѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёРё РєР»Р°РІРёС€Р° Home РїРµСЂРµРјРµС‰Р°Р»Р° РєСѓСЂСЃРѕСЂ РІ РєРѕРѕСЂРґРёРЅР°С‚С‹
+	      0,0 РєРѕРЅСЃРѕР»Рё.
+	  РќРµ Р±С‹Р»Рѕ СѓС‡С‚РµРЅРѕ СЂРµР¶РёРјР° РІС‹РїРѕР»РЅРµРЅРёСЏ РјР°РєСЂРѕСЃР°.
 	*/
 	SetCursorType(TRUE,60);
 

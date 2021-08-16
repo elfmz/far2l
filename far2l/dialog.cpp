@@ -405,8 +405,9 @@ void DataToItemEx(const DialogDataEx *Data,DialogItemEx *Item,int Count)
 Dialog::Dialog(DialogItemEx *SrcItem,    // Набор элементов диалога
                unsigned SrcItemCount,              // Количество элементов
                FARWINDOWPROC DlgProc,      // Диалоговая процедура
-               LONG_PTR InitParam):             // Ассоцированные с диалогом данные
-	bInitOK(false)
+               LONG_PTR InitParam)             // Ассоцированные с диалогом данные
+:
+	CMM(MACRO_DIALOG)
 {
 	Dialog::Item = (DialogItemEx**)xf_malloc(sizeof(DialogItemEx*)*SrcItemCount);
 
@@ -426,8 +427,9 @@ Dialog::Dialog(FarDialogItem *SrcItem,    // Набор элементов ди�
                unsigned SrcItemCount,              // Количество элементов
                FARWINDOWPROC DlgProc,      // Диалоговая процедура
                LONG_PTR InitParam)             // Ассоцированные с диалогом данные
+:
+	CMM(MACRO_DIALOG)
 {
-	bInitOK = false;
 	Dialog::Item = (DialogItemEx**)xf_malloc(sizeof(DialogItemEx*)*SrcItemCount);
 
 	for (unsigned i = 0; i < SrcItemCount; i++)
@@ -467,20 +469,11 @@ void Dialog::Init(FARWINDOWPROC DlgProc,      // Диалоговая проце
 
 	Dialog::RealDlgProc=DlgProc;
 
-	if (CtrlObject)
-	{
-		// запомним пред. режим макро.
-		PrevMacroMode=CtrlObject->Macro.GetMode();
-		// макросить будет в диалогах :-)
-		CtrlObject->Macro.SetMode(MACRO_DIALOG);
-	}
-
 	//_SVS(SysLog(L"Dialog =%d",CtrlObject->Macro.GetMode()));
 	// запоминаем предыдущий заголовок консоли
 	OldTitle=new ConsoleTitle;
 	IdExist=false;
 	memset(&Id,0,sizeof(Id));
-	bInitOK = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -491,9 +484,6 @@ Dialog::~Dialog()
 {
 	_tran(SysLog(L"[%p] Dialog::~Dialog()",this));
 	DeleteDialogObjects();
-
-	if (CtrlObject)
-		CtrlObject->Macro.SetMode(PrevMacroMode);
 
 	Hide();
 	ScrBuf.Flush();

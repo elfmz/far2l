@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "keybar.hpp"
 #include "array.hpp"
+#include "chgmmode.hpp"
 
 class CallBackStack;
 
@@ -120,6 +121,7 @@ class HelpRecord
 class Help:public Frame
 {
 	private:
+		ChangeMacroMode CMM;
 		BOOL  ErrorHelp;            // TRUE - ошибка! Например - нет такого топика
 		SaveScreen *TopScreen;      // область сохранения под хелпом
 		KeyBar      HelpKeyBar;     // кейбар
@@ -140,8 +142,6 @@ class Help:public Frame
 		//   символа - для атрибутов
 		int   CurColor;             // CurColor - текущий цвет отрисовки
 		int   CtrlTabSize;          // CtrlTabSize - опция! размер табуляции
-
-		int   PrevMacroMode;        // предыдущий режим макроса
 
 		FARString strCurPluginContents; // помним PluginContents (для отображения в заголовке)
 

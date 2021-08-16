@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "plugin.hpp"
 #include "vmenu.hpp"
+#include "chgmmode.hpp"
 #include "bitflags.hpp"
 #include "CriticalSections.hpp"
 
@@ -262,7 +263,7 @@ class Dialog: public Frame
 		friend LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 
 	private:
-		bool bInitOK;               // диалог был успешно инициализирован
+		ChangeMacroMode CMM;
 		INT_PTR PluginNumber;       // Номер плагина, для формирования HelpTopic
 		unsigned FocusPos;               // всегда известно какой элемент в фокусе
 		unsigned PrevFocusPos;           // всегда известно какой элемент был в фокусе
@@ -277,7 +278,6 @@ class Dialog: public Frame
 		unsigned ItemCount;         // количество элементов диалога
 
 		ConsoleTitle *OldTitle;     // предыдущий заголовок
-		int PrevMacroMode;          // предыдущий режим макро
 
 		FARWINDOWPROC RealDlgProc;      // функция обработки диалога
 
@@ -361,7 +361,6 @@ class Dialog: public Frame
 		       FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
 		Dialog(FarDialogItem *SrcItem, unsigned SrcItemCount,
 		       FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
-		bool InitOK() {return bInitOK;}
 		virtual ~Dialog();
 
 	public:

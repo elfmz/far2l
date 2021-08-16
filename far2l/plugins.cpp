@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keys.hpp"
 #include "scantree.hpp"
 #include "chgprior.hpp"
+#include "chgmmode.hpp"
 #include "constitle.hpp"
 #include "cmdline.hpp"
 #include "filepanels.hpp"
@@ -1357,8 +1358,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	}
 
 	int MenuItemNumber=0;
-	int PrevMacroMode=CtrlObject->Macro.GetMode();
-	CtrlObject->Macro.SetMode(MACRO_MENU);
+	ChangeMacroMode CMM(MACRO_MENU);
 	int Editor = ModalType==MODALTYPE_EDITOR,
 	             Viewer = ModalType==MODALTYPE_VIEWER,
 	                      Dialog = ModalType==MODALTYPE_DIALOG;
@@ -1534,7 +1534,6 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 		if (ExitCode<0)
 		{
-			CtrlObject->Macro.SetMode(PrevMacroMode);
 			return FALSE;
 		}
 
@@ -1585,7 +1584,6 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 		CurEditor->SetPluginTitle(nullptr);
 	}
 
-	CtrlObject->Macro.SetMode(PrevMacroMode);
 	return TRUE;
 }
 

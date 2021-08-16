@@ -1119,12 +1119,6 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 		if (!FarDialog)
 			return hDlg;
 
-		if (!FarDialog->InitOK())
-		{
-			delete FarDialog;
-			return hDlg;
-		}
-
 		hDlg = (HANDLE)FarDialog;
 		FarDialog->SetPosition(X1,Y1,X2,Y2);
 

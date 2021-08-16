@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "modal.hpp"
+#include "chgmmode.hpp"
 
 struct GrabberArea
 {
@@ -44,11 +45,11 @@ struct GrabberArea
 class Grabber:Modal
 {
 	private:
+		ChangeMacroMode CMM;
 		SaveScreen *SaveScr;
 		GrabberArea PrevArea;
 		GrabberArea GArea;
 		int ResetArea;
-		int PrevMacroMode;
 		int VerticalBlock;
 
 	private:

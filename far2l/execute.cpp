@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "console.hpp"
 #include "constitle.hpp"
+#include "chgmmode.hpp"
 #include "vtshell.h"
 #include "InterThreadCall.hpp"
 #include "ScopeHelpers.h"
@@ -444,7 +445,11 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 			auto *cp = CtrlObject->Cp();
 			if (!CloseFAR && cp && cp->LeftPanel && cp->RightPanel
 			  && (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
-				int Key = WaitKey();
+				int Key;
+				{
+					ChangeMacroMode cmm(MACRO_OTHER); // prevent macros from intercepting key (#1003)
+					Key = WaitKey();
+				}
 				// allow user to open console log etc directly from pause-on-error state
 				if (Key ==  KEY_MSWHEEL_UP) {
 					Key|= KEY_CTRL | KEY_SHIFT;

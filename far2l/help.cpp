@@ -112,18 +112,17 @@ static const wchar_t *HelpContents=L"Contents";
 static int RunURL(const wchar_t *Protocol, wchar_t *URLPath);
 
 Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
+	CMM(MACRO_HELP),
 	ErrorHelp(TRUE),
 	IsNewTopic(TRUE),
 	MouseDown(FALSE),
 	CurColor(COL_HELPTEXT),
-	CtrlTabSize(8),
-	PrevMacroMode(CtrlObject->Macro.GetMode())
+	CtrlTabSize(8)
 {
 	CanLoseFocus=FALSE;
 	KeyBarVisible=TRUE;
 	/* $ OT По умолчанию все хелпы создаются статически*/
 	SetDynamicallyBorn(FALSE);
-	CtrlObject->Macro.SetMode(MACRO_HELP);
 	Stack=new CallBackStack;
 	StackData.Clear();
 	StackData.Flags=Flags;
@@ -180,7 +179,6 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 
 Help::~Help()
 {
-	CtrlObject->Macro.SetMode(PrevMacroMode);
 	SetRestoreScreenMode(FALSE);
 
 	if (Stack)        delete Stack;

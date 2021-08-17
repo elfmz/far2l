@@ -3,14 +3,61 @@
  *                     The LLVM Compiler Infrastructure
  *
  * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
+ * License:
+ *
+ *    University of Illinois/NCSA
+ *    Open Source License
+ *
+ *    Copyright (c) 2003-2014 University of Illinois at Urbana-Champaign.
+ *    All rights reserved.
+ *
+ *    Developed by:
+ *
+ *        LLVM Team
+ *
+ *        University of Illinois at Urbana-Champaign
+ *
+ *        http://llvm.org
+ *
+ *    Permission is hereby granted, free of charge, to any person
+ *    obtaining a copy of this software and associated documentation
+ *    files (the "Software"), to deal with the Software without
+ *    restriction, including without limitation the rights to use,
+ *    copy, modify, merge, publish, distribute, sublicense, and/or
+ *    sell copies of the Software, and to permit persons to whom the
+ *    Software is furnished to do so, subject to the following
+ *    conditions:
+ *
+ *        * Redistributions of source code must retain the above
+ *          copyright notice, this list of conditions and the
+ *          following disclaimers.
+ *
+ *        * Redistributions in binary form must reproduce the
+ *          above copyright notice, this list of conditions and
+ *          the following disclaimers in the documentation and/or
+ *          other materials provided with the distribution.
+ *
+ *        * Neither the names of the LLVM Team, University of
+ *          Illinois at Urbana-Champaign, nor the names of its
+ *          contributors may be used to endorse or promote
+ *          products derived from this Software without specific
+ *          prior written permission.
+ *
+ *    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *    OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *    NONINFRINGEMENT.  IN NO EVENT SHALL THE CONTRIBUTORS OR
+ *    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *    ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ *    USE OR OTHER DEALINGS WITH THE SOFTWARE.
  *
  *===------------------------------------------------------------------------=*/
 /*
  * Copyright 2001-2004 Unicode, Inc.
- * 
+ *
  * Disclaimer
- * 
+ *
  * This source code is provided as is by Unicode, Inc. No claims are
  * made as to fitness for any particular purpose. No warranties of any
  * kind are expressed or implied. The recipient agrees to determine
@@ -18,9 +65,9 @@
  * purchased on magnetic or optical media from Unicode, Inc., the
  * sole remedy for any claim will be exchange of defective media
  * within 90 days of receipt.
- * 
+ *
  * Limitations on Rights to Redistribute This Code
- * 
+ *
  * Unicode, Inc. hereby grants the right to freely use the information
  * supplied in this file in the creation of products supporting the
  * Unicode Standard, and to make copies of this file in any form
@@ -46,12 +93,12 @@
 
 ------------------------------------------------------------------------ */
 
-//#define CVTUTF_DEBUG
 
-#include "ConvertUTF.h"
+#include "../include/ConvertUTF.h"
 #ifdef CVTUTF_DEBUG
 #include <stdio.h>
 #endif
+#include <assert.h>
 
 static const int halfShift  = 10; /* used for shifting by 10 bits */
 
@@ -90,7 +137,7 @@ static const char trailingBytesForUTF8[256] = {
  * This table contains as many values as there might be trailing bytes
  * in a UTF-8 sequence.
  */
-static const UTF32 offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 
+static const UTF32 offsetsFromUTF8[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL,
                      0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
 /*
@@ -152,8 +199,11 @@ ConversionResult CalcSpaceUTF32toUTF16 (int *out,
     return result;
 }
 
+
+/* --------------------------------------------------------------------- */
+
 ConversionResult ConvertUTF32toUTF16 (
-        const UTF32** sourceStart, const UTF32* sourceEnd, 
+        const UTF32** sourceStart, const UTF32* sourceEnd,
         UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags) {
     ConversionResult result = conversionOK;
     const UTF32* source = *sourceStart;
@@ -245,8 +295,10 @@ ConversionResult CalcSpaceUTF16toUTF32 (int *out,
     return result;
 }
 
+/* --------------------------------------------------------------------- */
+
 ConversionResult ConvertUTF16toUTF32 (
-        const UTF16** sourceStart, const UTF16* sourceEnd, 
+        const UTF16** sourceStart, const UTF16* sourceEnd,
         UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags) {
     ConversionResult result = conversionOK;
     const UTF16* source = *sourceStart;
@@ -356,7 +408,7 @@ ConversionResult CalcSpaceUTF16toUTF8 (int *out,
 }
 
 ConversionResult ConvertUTF16toUTF8 (
-        const UTF16** sourceStart, const UTF16* sourceEnd, 
+        const UTF16** sourceStart, const UTF16* sourceEnd,
         UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags) {
     ConversionResult result = conversionOK;
     const UTF16* source = *sourceStart;
@@ -365,7 +417,7 @@ ConversionResult ConvertUTF16toUTF8 (
         UTF32 ch;
         unsigned short bytesToWrite = 0;
         const UTF32 byteMask = 0xBF;
-        const UTF32 byteMark = 0x80; 
+        const UTF32 byteMark = 0x80;
         const UTF16* oldSource = source; /* In case we have to back up because of target overflow. */
         ch = *source++;
         /* If we have a surrogate pair, convert to UTF32 first. */
@@ -462,8 +514,10 @@ ConversionResult CalcSpaceUTF32toUTF8 (int *out,
 	return result;
 }
 
+/* --------------------------------------------------------------------- */
+
 ConversionResult ConvertUTF32toUTF8 (
-        const UTF32** sourceStart, const UTF32* sourceEnd, 
+        const UTF32** sourceStart, const UTF32* sourceEnd,
         UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags) {
     ConversionResult result = conversionOK;
     const UTF32* source = *sourceStart;
@@ -472,7 +526,7 @@ ConversionResult ConvertUTF32toUTF8 (
         UTF32 ch;
         unsigned short bytesToWrite = 0;
         const UTF32 byteMask = 0xBF;
-        const UTF32 byteMark = 0x80; 
+        const UTF32 byteMark = 0x80;
         ch = *source++;
         if (flags == strictConversion ) {
             /* UTF-16 surrogate values are illegal in UTF-32 */
@@ -494,7 +548,7 @@ ConversionResult ConvertUTF32toUTF8 (
                                             ch = UNI_REPLACEMENT_CHAR;
                                             result = sourceIllegal;
         }
-        
+
         target += bytesToWrite;
         if (target > targetEnd) {
             --source; /* Back up source pointer! */
@@ -526,7 +580,7 @@ ConversionResult ConvertUTF32toUTF8 (
  * definition of UTF-8 goes up to 4-byte sequences.
  */
 
-static inline Boolean isLegalUTF8(const UTF8 *source, int length) {
+static Boolean isLegalUTF8(const UTF8 *source, int length) {
     UTF8 a;
     const UTF8 *srcptr = source+length;
     switch (length) {
@@ -567,11 +621,104 @@ Boolean isLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd) {
 
 /* --------------------------------------------------------------------- */
 
+static unsigned
+findMaximalSubpartOfIllFormedUTF8Sequence(const UTF8 *source,
+                                          const UTF8 *sourceEnd) {
+  UTF8 b1, b2, b3;
+
+  assert(!isLegalUTF8Sequence(source, sourceEnd));
+
+  /*
+   * Unicode 6.3.0, D93b:
+   *
+   *   Maximal subpart of an ill-formed subsequence: The longest code unit
+   *   subsequence starting at an unconvertible offset that is either:
+   *   a. the initial subsequence of a well-formed code unit sequence, or
+   *   b. a subsequence of length one.
+   */
+
+  if (source == sourceEnd)
+    return 0;
+
+  /*
+   * Perform case analysis.  See Unicode 6.3.0, Table 3-7. Well-Formed UTF-8
+   * Byte Sequences.
+   */
+
+  b1 = *source;
+  ++source;
+  if (b1 >= 0xC2 && b1 <= 0xDF) {
+    /*
+     * First byte is valid, but we know that this code unit sequence is
+     * invalid, so the maximal subpart has to end after the first byte.
+     */
+    return 1;
+  }
+
+  if (source == sourceEnd)
+    return 1;
+
+  b2 = *source;
+  ++source;
+
+  if (b1 == 0xE0) {
+    return (b2 >= 0xA0 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 >= 0xE1 && b1 <= 0xEC) {
+    return (b2 >= 0x80 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 == 0xED) {
+    return (b2 >= 0x80 && b2 <= 0x9F) ? 2 : 1;
+  }
+  if (b1 >= 0xEE && b1 <= 0xEF) {
+    return (b2 >= 0x80 && b2 <= 0xBF) ? 2 : 1;
+  }
+  if (b1 == 0xF0) {
+    if (b2 >= 0x90 && b2 <= 0xBF) {
+      if (source == sourceEnd)
+        return 2;
+
+      b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+  if (b1 >= 0xF1 && b1 <= 0xF3) {
+    if (b2 >= 0x80 && b2 <= 0xBF) {
+      if (source == sourceEnd)
+        return 2;
+
+      b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+  if (b1 == 0xF4) {
+    if (b2 >= 0x80 && b2 <= 0x8F) {
+      if (source == sourceEnd)
+        return 2;
+
+      b3 = *source;
+      return (b3 >= 0x80 && b3 <= 0xBF) ? 3 : 2;
+    }
+    return 1;
+  }
+
+  assert((b1 >= 0x80 && b1 <= 0xC1) || b1 >= 0xF5);
+  /*
+   * There are no valid sequences that start with these bytes.  Maximal subpart
+   * is defined to have length 1 in these cases.
+   */
+  return 1;
+}
+
+/* --------------------------------------------------------------------- */
+
 /*
  * Exported function to return the total number of bytes in a codepoint
  * represented in UTF-8, given the value of the first byte.
  */
-static inline unsigned getNumBytesForUTF8(UTF8 first) {
+unsigned getNumBytesForUTF8(UTF8 first) {
   return trailingBytesForUTF8[first] + 1;
 }
 
@@ -581,7 +728,7 @@ static inline unsigned getNumBytesForUTF8(UTF8 first) {
  * Exported function to return whether a UTF-8 string is legal or not.
  * This is not used here; it's just exported.
  */
-static inline Boolean isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd) {
+Boolean isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd) {
     while (*source != sourceEnd) {
         int length = trailingBytesForUTF8[**source] + 1;
         if (length > sourceEnd - *source || !isLegalUTF8(*source, length))
@@ -657,8 +804,10 @@ ConversionResult CalcSpaceUTF8toUTF16 (int *out,
     return result;
 }
 
+/* --------------------------------------------------------------------- */
+
 ConversionResult ConvertUTF8toUTF16 (
-        const UTF8** sourceStart, const UTF8* sourceEnd, 
+        const UTF8** sourceStart, const UTF8* sourceEnd,
         UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags) {
     ConversionResult result = conversionOK;
     const UTF8* source = *sourceStart;
@@ -669,16 +818,10 @@ ConversionResult ConvertUTF8toUTF16 (
         if (extraBytesToRead >= sourceEnd - source) {
             result = sourceExhausted; break;
         }
-        if (target >= targetEnd) {
-            result = targetExhausted; break;
-        }
         /* Do this check whether lenient or strict */
         if (!isLegalUTF8(source, extraBytesToRead+1)) {
             result = sourceIllegal;
-            if (flags!=lenientConversion) break;
-            ++source;
-            *target++ = UNI_REPLACEMENT_CHAR;
-           continue;
+            break;
         }
         /*
          * The cases all fall through. See "Note A" below.
@@ -693,6 +836,10 @@ ConversionResult ConvertUTF8toUTF16 (
         }
         ch -= offsetsFromUTF8[extraBytesToRead];
 
+        if (target >= targetEnd) {
+            source -= (extraBytesToRead+1); /* Back up source pointer! */
+            result = targetExhausted; break;
+        }
         if (ch <= UNI_MAX_BMP) { /* Target is a character <= 0xFFFF */
             /* UTF-16 surrogate values are illegal in UTF-32 */
             if (ch >= UNI_SUR_HIGH_START && ch <= UNI_SUR_LOW_END) {
@@ -790,10 +937,12 @@ ConversionResult CalcSpaceUTF8toUTF32 (int *out,
 	return result;
 }
 
-	
-ConversionResult ConvertUTF8toUTF32 (
-        const UTF8** sourceStart, const UTF8* sourceEnd, 
-        UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags) {
+/* --------------------------------------------------------------------- */
+
+static ConversionResult ConvertUTF8toUTF32Impl(
+        const UTF8** sourceStart, const UTF8* sourceEnd,
+        UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags,
+        Boolean InputIsPartial) {
     ConversionResult result = conversionOK;
     const UTF8* source = *sourceStart;
     UTF32* target = *targetStart;
@@ -801,19 +950,42 @@ ConversionResult ConvertUTF8toUTF32 (
         UTF32 ch = 0;
         unsigned short extraBytesToRead = trailingBytesForUTF8[*source];
         if (extraBytesToRead >= sourceEnd - source) {
-            result = sourceExhausted; break;
+            if (flags == strictConversion || InputIsPartial) {
+                result = sourceExhausted;
+                break;
+            } else {
+                result = sourceIllegal;
+
+                /*
+                 * Replace the maximal subpart of ill-formed sequence with
+                 * replacement character.
+                 */
+                source += findMaximalSubpartOfIllFormedUTF8Sequence(source,
+                                                                    sourceEnd);
+                *target++ = UNI_REPLACEMENT_CHAR;
+                continue;
+            }
         }
         if (target >= targetEnd) {
             result = targetExhausted; break;
         }
-		
+
         /* Do this check whether lenient or strict */
         if (!isLegalUTF8(source, extraBytesToRead+1)) {
             result = sourceIllegal;
-			if (flags!=lenientConversion) break;
-			++source;
-			*target++ = UNI_REPLACEMENT_CHAR;
-			continue;
+            if (flags == strictConversion) {
+                /* Abort conversion. */
+                break;
+            } else {
+                /*
+                 * Replace the maximal subpart of ill-formed sequence with
+                 * replacement character.
+                 */
+                source += findMaximalSubpartOfIllFormedUTF8Sequence(source,
+                                                                    sourceEnd);
+                *target++ = UNI_REPLACEMENT_CHAR;
+                continue;
+            }
         }
         /*
          * The cases all fall through. See "Note A" below.
@@ -852,6 +1024,22 @@ ConversionResult ConvertUTF8toUTF32 (
     *sourceStart = source;
     *targetStart = target;
     return result;
+}
+
+ConversionResult ConvertUTF8toUTF32Partial(const UTF8 **sourceStart,
+                                           const UTF8 *sourceEnd,
+                                           UTF32 **targetStart,
+                                           UTF32 *targetEnd,
+                                           ConversionFlags flags) {
+  return ConvertUTF8toUTF32Impl(sourceStart, sourceEnd, targetStart, targetEnd,
+                                flags, /*InputIsPartial=*/true);
+}
+
+ConversionResult ConvertUTF8toUTF32(const UTF8 **sourceStart,
+                                    const UTF8 *sourceEnd, UTF32 **targetStart,
+                                    UTF32 *targetEnd, ConversionFlags flags) {
+  return ConvertUTF8toUTF32Impl(sourceStart, sourceEnd, targetStart, targetEnd,
+                                flags, /*InputIsPartial=*/false);
 }
 
 /* ---------------------------------------------------------------------

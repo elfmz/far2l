@@ -21,7 +21,7 @@
 
 
 //			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
-//			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
+//			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
 template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 	int utf_translation(int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
 {
@@ -40,9 +40,10 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 		DummyPushBack<DST_T> pb;
 		try {
 			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
-			if (utr != 0) {
+			if (utr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
+
 		} catch (std::exception &e) {
 			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
 			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
@@ -53,8 +54,12 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 	ArrayPushBack<DST_T> pb(dst, dst + dstlen);
 	try {
 			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
-			if (utr != 0) {
+			if (utr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
+
+			} else if (utr & CONV_NEED_MORE_DST) {
+				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+				return 0;
 			}
 
 	} catch (ArrayPushBackOverflow &e) {

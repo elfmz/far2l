@@ -66,7 +66,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "AnsiEsc.hpp"
 #include "wakeful.hpp"
-#include "../utils/include/ConvertUTF.h"
+#include "WideMB.h"
+#include "UtfTransform.hpp"
 
 static void PR_ViewerSearchMsg();
 static void ViewerSearchMsg(const wchar_t *Name,int Percent);
@@ -88,11 +89,11 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE)) {
-		CalcSpaceUTF32toUTF16(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
-		distance*= 2;
+		distance = UtfCalcSpace<UtfW, Utf16, wchar_t, uint16_t>(begin, end - begin, false);
+		distance*= sizeof(uint16_t);
 
 	} else if (CodePage == CP_UTF8) {
-		CalcSpaceUTF32toUTF8(&distance, (const UTF32**)&begin, (const UTF32*)end, lenientConversion);
+		distance = UtfCalcSpace<UtfW, Utf8, wchar_t, uint8_t>(begin, end - begin, false);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -106,7 +107,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if (CodePage == CP_UTF8) {
-		CalcSpaceUTF16toUTF8(&distance, (const UTF16**)&begin, (const UTF16*)end, lenientConversion);
+		distance = UtfCalcSpace<UtfW, Utf8, wchar_t, uint8_t>(begin, end - begin, false);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -2980,41 +2981,31 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		int ResultedCount = 0;
 		for (DWORD WantViewSize = Count; ResultedCount < Count;) {
 			DWORD ViewSize = WantViewSize;
-			UTF8 *SrcView = (UTF8 *)ViewFile.ViewBytesAt(Ptr, ViewSize);
+			char *SrcView = (char *)ViewFile.ViewBytesAt(Ptr, ViewSize);
 			if (!ViewSize) {
 				break;
 			}
 
-			const UTF8 *src = SrcView;
-#if (__WCHAR_MAX__ > 0xffff)
-			UTF32 *dst = (UTF32 *)&Buf[ResultedCount];
-			ConversionResult cr = ConvertUTF8toUTF32(&src, src + ViewSize,
-				&dst, dst + (Count - ResultedCount), lenientConversion);
-			ResultedCount = dst - (UTF32 *)Buf;
-#else
-			UTF16 *dst = (UTF16 *)&Buf[ResultedCount];
-			ConversionResult cr = ConvertUTF8toUTF16(&src, src + ViewSize,
-				&dst, dst + (Count - ResultedCount), lenientConversion);
-			ResultedCount = dst - (UTF16 *)Buf;
-#endif
+			size_t SourcedCount = ViewSize;
+			size_t SinkedCount = (Count - ResultedCount);
+			const auto cr = MB2Wide_Unescaped(SrcView, SourcedCount, &Buf[ResultedCount], SinkedCount, false);
+			Ptr+= SourcedCount;
+			ResultedCount+= (int)SinkedCount;
 
-			Ptr+= (src - SrcView);
-
-			if (cr == sourceExhausted && src == SrcView) {
+			if ( (cr & CONV_NEED_MORE_SRC) != 0 && SourcedCount == 0) {
 				if (ViewSize < WantViewSize) {
-					if (ResultedCount < Count) {
-						Buf[ResultedCount] = UNI_REPLACEMENT_CHAR;
-						++ResultedCount;
-						++Ptr;
-					} else {
+					if (ResultedCount >= Count) {
 						break;
 					}
+					Buf[ResultedCount] = WCHAR_REPLACEMENT;
+					++ResultedCount;
+					++Ptr;
 
 				} else {
 					WantViewSize+= (4 + WantViewSize / 4);
 				}
 
-			} else if (cr == targetExhausted || cr == conversionOK) {
+			} else if ((cr & CONV_NEED_MORE_DST) != 0 || (cr & CONV_NEED_MORE_SRC) == 0) {
 				break;
 			}
 		}

@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <base64.h>
 #include <utils.h>
-#include <ConvertUTF.h>
+#include <UtfTransform.hpp>
 #include <fcntl.h>
 #include "../WinPort/src/SavedScreen.h"
 
@@ -269,14 +269,6 @@ void VTFar2lExtensios::OnInterract_ClipboardIsFormatAvailable(StackSerializer &s
 	stk_ser.PushPOD(out);
 }
 
-void ClipboardData_Local2Remote(UINT fmt, void *&data, uint32_t &len)
-{
-}
-
-void ClipboardData_Remote2Local(UINT fmt, void *&data, uint32_t &len)
-{
-}
-
 void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 {
 	char out = -1;
@@ -292,18 +284,12 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 			stk_ser.Pop(data, len);
 #if (__WCHAR_MAX__ <= 0xffff)
 			if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
-				int cnt = 0;
-				const UTF32 *src = (const UTF32 *)data;
-				CalcSpaceUTF32toUTF16(&cnt, &src, src + len / sizeof(UTF32), lenientConversion);
-				UTF16 *new_data = (UTF16 *)malloc((cnt + 1) * sizeof(UTF16));
-				if (new_data != nullptr) {
-					new_data[cnt] = 0;
-					src = (const UTF32 *)data;
-					UTF16 *dst = new_data;
-					ConvertUTF32toUTF16( &src, src + len / sizeof(UTF32), &dst, dst + cnt, lenientConversion);
+				UtfTransformer<Utf32, Utf16, uint32_t, uint16_t>
+					utv((const uint32_t *)data, len / sizeof(uint32_t));
+				void *new_data = utv.CopyMalloc(len);
+				if (new_data) {
 					free(data);
 					data = new_data;
-					len = cnt * sizeof(UTF16);
 				}
 			}
 #endif
@@ -329,22 +315,13 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 		uint32_t len = data ? GetMallocSize(data) : 0;
 		if (len) {
 #if (__WCHAR_MAX__ <= 0xffff)
-			UTF32 *new_data = nullptr;
+			void *new_data = nullptr;
 			if (fmt == CF_UNICODETEXT) { // UTF16 -> UTF32
-				int cnt = 0;
-				const UTF16 *src = (const UTF16 *)data;
-				CalcSpaceUTF16toUTF32(&cnt, &src, src + len / sizeof(UTF16), lenientConversion);
-				new_data = (UTF32 *)malloc((cnt + 1) * sizeof(UTF32));
-				if (new_data != nullptr) {
-					new_data[cnt] = 0;
-					src = (const UTF16 *)data;
-					UTF32 *dst = new_data;
-					ConvertUTF16toUTF32( &src, src + len / sizeof(UTF16), &dst, dst + cnt, lenientConversion);
-					data = new_data;
-					len = cnt * sizeof(UTF32);
-				}
+				UtfTransformer<Utf16, Utf32, uint16_t, uint32_t>
+					utv((const uint16_t *)data, len / sizeof(uint16_t));
+				new_data = utv.CopyMalloc(len);
 			}
-			stk_ser.Push(data, len);
+			stk_ser.Push(new_data ? new_data : data, len);
 			free(new_data);
 #else
 			stk_ser.Push(data, len);

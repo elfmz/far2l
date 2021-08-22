@@ -4,7 +4,7 @@
 #include <string>
 #include <os_call.hpp>
 #include "TTYOutput.h"
-#include "ConvertUTF.h"
+#include "WideMB.h"
 
 #define ESC "\x1b"
 
@@ -73,27 +73,11 @@ void TTYOutput::FinalizeSameChars()
 		return;
 	}
 
-	char buf[64];
-	int len = 1;
-
 	if (_same_chars.wch >= 0x80) {
-		UTF8 *dst = (UTF8 *)&buf[0];
-#if (__WCHAR_MAX__ > 0xffff)
-		const UTF32* src = (const UTF32*)&_same_chars.wch;
-		if (ConvertUTF32toUTF8 (&src, src + 1, &dst,
-				dst + ARRAYSIZE(buf), lenientConversion) == conversionOK) {
-#else
-		const UTF16* src = (const UTF16*)&_same_chars.wch;
-		if (ConvertUTF16toUTF8 (&src, src + 1, &dst,
-				dst + ARRAYSIZE(buf), lenientConversion) == conversionOK) {
-#endif
-			len = (int)(dst - (UTF8 *)&buf[0]);
-			assert(size_t(len) <= ARRAYSIZE(buf));
-		} else {
-			buf[0] = '?';
-		}
+		_same_chars.tmp.clear();
+		Wide2MB_UnescapedAppend(_same_chars.wch, _same_chars.tmp);
 	} else {
-		buf[0] = (char)(unsigned char)_same_chars.wch;
+		_same_chars.tmp = (char)(unsigned char)_same_chars.wch;
 	}
 
 	// When have queued enough count of same characters:
@@ -102,24 +86,27 @@ void TTYOutput::FinalizeSameChars()
 	// - Otherwise just output copies of repeated char sequence
 	if (_same_chars.count <= 5
 			|| (!_far2l_tty && (_same_chars.wch != L' ' || _same_chars.count <= 8))) {
+
 		// output plain <count> copies of repeated char sequence
-		_rawbuf.reserve(_rawbuf.size() + len * _same_chars.count);
+		_rawbuf.reserve(_rawbuf.size() + _same_chars.tmp.size() * _same_chars.count);
 		do {
-			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
+			_rawbuf.insert(_rawbuf.end(), _same_chars.tmp.begin(), _same_chars.tmp.end());
 		} while (--_same_chars.count);
 
 	} else {
+		char sz[32];
+		int sz_len;
 		if (_far2l_tty) {
-			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
-			len = sprintf(buf, // repeat last character <count-1> times
+			_rawbuf.insert(_rawbuf.end(), _same_chars.tmp.begin(), _same_chars.tmp.end());
+			sz_len = sprintf(sz, // repeat last character <count-1> times
 				ESC "[%ub", _same_chars.count - 1);
 		} else {
-			len = sprintf(buf, // erase <count> chars and move cursor forward by <count>
+			sz_len = sprintf(sz, // erase <count> chars and move cursor forward by <count>
 				ESC "[%uX" ESC "[%uC", _same_chars.count, _same_chars.count);
 		}
-		if (len >= 0) {
-			assert(size_t(len) <= ARRAYSIZE(buf));
-			_rawbuf.insert(_rawbuf.end(), &buf[0], &buf[len]);
+		if (sz_len >= 0) {
+			assert(size_t(sz_len) <= ARRAYSIZE(sz));
+			_rawbuf.insert(_rawbuf.end(), &sz[0], &sz[sz_len]);
 		}
 		_same_chars.count = 0;
 	}

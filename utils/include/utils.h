@@ -10,6 +10,9 @@
 #include "Environment.h"
 #include "ErrnoSaver.hpp"
 
+#define LIKELY_TRUE(value)	(__builtin_expect(value, true))
+#define LIKELY_FALSE(value)	(__builtin_expect(value, false))
+
 template <class C> static size_t tzlen(const C *ptz)
 {
 	const C *etz;
@@ -21,17 +24,38 @@ template <class C> static size_t tzlen(const C *ptz)
 unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
 unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
 
-// converts given value between 0x0 and 0xf to hex digit
-// in case of error returns 0
-char MakeHexDigit(const unsigned char c);
-
 // converts given hex digit to value between 0x0 and 0xf
 // in case of error returns 0xff
-unsigned char ParseHexDigit(const char hex);
+template <class CHAR_T>
+	unsigned char ParseHexDigit(const CHAR_T hex)
+{
+	if (hex >= (CHAR_T)'0' && hex <= (CHAR_T)'9')
+		return hex - (CHAR_T)'0';
+	if (hex >= (CHAR_T)'a' && hex <= (CHAR_T)'f')
+		return 10 + hex - (CHAR_T)'a';
+	if (hex >= (CHAR_T)'A' && hex <= (CHAR_T)'F')
+		return 10 + hex - (CHAR_T)'A';
+
+	return 0xff;
+}
 
 // converts given two hex digits to value between 0x0 and 0xff
 // in case of error returns 0
-unsigned char ParseHexByte(const char *hex);
+template <class CHAR_T>
+	unsigned char ParseHexByte(const CHAR_T *hex)
+{
+	const unsigned char rh = ParseHexDigit(hex[0]);
+	const unsigned char rl = ParseHexDigit(hex[1]);
+	if (rh == 0xff || rl == 0xff) {
+		return 0;
+	}
+	return ((rh << 4) | rl);
+}
+
+
+// converts given value between 0x0 and 0xf to lowercased hex digit
+// in case of error returns 0
+char MakeHexDigit(const unsigned char c);
 
 size_t StrStartsFrom(const std::string &haystack, const char *needle);
 size_t StrEndsBy(const std::string &haystack, const char *needle);

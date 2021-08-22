@@ -5,7 +5,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <dlfcn.h>
-#include "ConvertUTF.h"
 #include <errno.h>
 
 #if __FreeBSD__

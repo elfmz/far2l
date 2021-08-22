@@ -1,4 +1,5 @@
 #include "CustomDrawChar.h"
+#include "WideMB.h"
 
 namespace WXCustomDrawChar
 {
@@ -1011,6 +1012,20 @@ namespace WXCustomDrawChar
 		p.FillRectangle(m.left, m.top + (p.fh / 2), m.right, m.bottom);
 	}
 
+	static void Draw_WCHAR_ESCAPING(Painter &p, unsigned int start_y, unsigned int cx) /*  */
+	{
+		SingleLineBoxMetrics m(p, start_y, cx);
+		const unsigned int steps = 4;
+		const unsigned int stepy = (m.bottom - m.top) / (steps * 2);
+		const unsigned int stepx = (m.right - m.left) / steps;
+
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		for (unsigned int i = 1; i < steps; ++i) {
+			p.FillRectangle(m.left, m.middle_y - i * stepy, m.right - stepx * i, m.middle_y - i * stepy + p.thickness - 1);
+			p.FillRectangle(m.left, m.middle_y + i * stepy, m.right - stepx * i, m.middle_y + i * stepy + p.thickness - 1);
+		}
+	}
+
 	////////////////////////////////////////////////////////////////
 
 	DrawT Get(const wchar_t c)
@@ -1116,6 +1131,7 @@ namespace WXCustomDrawChar
 			case 0x259e: return Draw_259e; /* ▞ */
 			case 0x259f: return Draw_259f; /* ▟ */
 
+			case WCHAR_ESCAPING: return Draw_WCHAR_ESCAPING;
 		}
 
 		return nullptr;

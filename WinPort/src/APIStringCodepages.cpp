@@ -23,28 +23,29 @@
 //			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
 //			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
 template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
-	int utf_translation( 
-			int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
+	int utf_translation(int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
 {
 	const bool fail_on_illformed = ((flags & MB_ERR_INVALID_CHARS) != 0);
-	if (srclen == -1) {
-		do {
-			++srclen;
-		} while (src[srclen]);
+	size_t srclen_sz;
+	if (srclen < 0) {
+		for (srclen_sz = 0; src[srclen_sz]; ++srclen_sz) {}
+		// per MSDN - convertion should include terminating NUL char
+		++srclen_sz;
+
+	} else {
+		srclen_sz = (size_t)srclen;
 	}
 
-	size_t srclen_sz = (size_t)srclen;
-	
 	if (dstlen == 0) {
 		DummyPushBack<DST_T> pb;
 		try {
 			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
 			if (utr != 0) {
-				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
 		} catch (std::exception &e) {
 			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
-			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 		}
 		return (int)pb.size();
 	}
@@ -53,12 +54,16 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 	try {
 			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
 			if (utr != 0) {
-				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
 
 	} catch (ArrayPushBackOverflow &e) {
 		WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
 		return 0;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+		WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 	}
 
 	return (int)pb.size();

@@ -62,11 +62,11 @@ struct conv_strategy final
 
         while (tmp != eit) {
             if (oit.fully_filled())
-                   return false;
-               auto const cp = Utf::read(read_fn);
-                  if (read_ended || cp == (uint32_t)-1)
-                   return false;
-               Outf::write(cp, write_fn);
+                return false;
+            auto const cp = Utf::read(read_fn);
+            if (read_ended || cp == (uint32_t)-1)
+                return false;
+            Outf::write(cp, write_fn);
             it = tmp;
         }
 
@@ -108,13 +108,13 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::random_interator> final
                 return (tmp != eit) ? *tmp++ : -1;
             };
 
-           while (tmp != eit) {
+        while (tmp != eit) {
             if (oit.fully_filled())
-                      return false;
-               auto const cp = Utf::read(read_fn);
-                  if (read_ended || cp == (uint32_t)-1)
-                   return false;
-               Outf::write(cp, write_fn);
+                return false;
+            auto const cp = Utf::read(read_fn);
+            if (read_ended || cp == (uint32_t)-1)
+                return false;
+            Outf::write(cp, write_fn);
             it = tmp;
         }
         return true;
@@ -134,8 +134,8 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::binary_copy> final
 
         while (tmp != eit) {
             if (oit.fully_filled())
-                      return false;
-               oit.push_back(*tmp++);
+                return false;
+            oit.push_back(*tmp++);
             it = tmp;
         }
 

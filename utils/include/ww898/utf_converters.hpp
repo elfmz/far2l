@@ -47,26 +47,28 @@ struct conv_strategy final
 {
     bool operator()(It &it, It const eit, Oit &oit) const
     {
-		auto tmp = it;
-		bool read_ended = false;
+        auto tmp = it;
+        bool read_ended = false;
         auto const read_fn = [&tmp, &eit, &read_ended]
             {
                 if (tmp == eit) {
-					read_ended = true;
+                    read_ended = true;
                     return -1;
-				}
+                }
 
                 return *tmp++;
             };
-        auto const write_fn = [&oit] (typename Outf::char_type const ch) { *oit++ = ch; };
+        auto const write_fn = [&oit] (typename Outf::char_type const ch) { oit.push_back(ch); };
 
         while (tmp != eit) {
-   	        auto const cp = Utf::read(read_fn);
-   	   	    if (read_ended || cp == (uint32_t)-1)
-           	    return false;
-   	        Outf::write(cp, write_fn);
-			it = tmp;
-		}
+            if (oit.fully_filled())
+                   return false;
+               auto const cp = Utf::read(read_fn);
+                  if (read_ended || cp == (uint32_t)-1)
+                   return false;
+               Outf::write(cp, write_fn);
+            it = tmp;
+        }
 
         return true;
     }
@@ -81,36 +83,40 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::random_interator> final
 {
     bool operator()(It &it, It const eit, Oit &oit) const
     {
-		auto tmp = it;
-        auto const write_fn = [&oit] (typename Outf::char_type const ch) { *oit++ = ch; };
+        auto tmp = it;
+        auto const write_fn = [&oit] (typename Outf::char_type const ch) { oit.push_back(ch); };
         if (eit - tmp >= static_cast<typename std::iterator_traits<It>::difference_type>(Utf::max_supported_symbol_size))
         {
             auto const fast_read_fn = [&tmp] { return *tmp++; };
             auto const fast_eit = eit - Utf::max_supported_symbol_size;
-   	        while (tmp < fast_eit) {
-	   	        auto const cp = Utf::read(fast_read_fn);
-   	   		    if (cp == (uint32_t)-1)
-    	       	    return false;
-	   	        Outf::write(cp, write_fn);
-				it = tmp;
-			}
+               while (tmp < fast_eit) {
+                if (oit.fully_filled())
+                       return false;
+                   auto const cp = Utf::read(fast_read_fn);
+                      if (cp == (uint32_t)-1)
+                       return false;
+                   Outf::write(cp, write_fn);
+                it = tmp;
+            }
         }
-		bool read_ended = false;
+        bool read_ended = false;
         auto const read_fn = [&tmp, &eit, &read_ended]
             {
                 if (tmp == eit) {
                     read_ended = true;
-				}
+                }
                 return (tmp != eit) ? *tmp++ : -1;
             };
 
-   	    while (tmp != eit) {
-   	        auto const cp = Utf::read(read_fn);
-   	   	    if (read_ended || cp == (uint32_t)-1)
-           	    return false;
-   	        Outf::write(cp, write_fn);
-			it = tmp;
-		}
+           while (tmp != eit) {
+            if (oit.fully_filled())
+                      return false;
+               auto const cp = Utf::read(read_fn);
+                  if (read_ended || cp == (uint32_t)-1)
+                   return false;
+               Outf::write(cp, write_fn);
+            it = tmp;
+        }
         return true;
     }
 };
@@ -124,12 +130,14 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::binary_copy> final
 {
     bool operator()(It &it, It const eit, Oit &oit) const
     {
-		auto tmp = it;
+        auto tmp = it;
 
         while (tmp != eit) {
-   	        *oit++ = *tmp++;
-			it = tmp;
-		}
+            if (oit.fully_filled())
+                      return false;
+               oit.push_back(*tmp++);
+            it = tmp;
+        }
 
         return true;
     }

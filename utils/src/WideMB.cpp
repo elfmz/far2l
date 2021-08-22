@@ -67,6 +67,7 @@ static size_t MB2Wide_Internal(const char *src_begin, size_t &src_len, std::wstr
 				src_len = src_incomplete_tail - src_begin;
 				return dst_incomplete_tail_pos;
 			}
+			src_len = src - src_begin;
 			break;
 		}
 		++src;

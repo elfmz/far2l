@@ -628,7 +628,6 @@ void Viewer::ShowPage(int nMode)
 				auto visualSelLength = printer->Length(&Strings[I]->lpData[Strings[I]->nSelStart],
 														Strings[I]->nSelEnd - Strings[I]->nSelStart);
 
-fprintf(stderr, "visualSelStart=%ld visualSelLength=%ld\n", (long)visualSelStart, (long)visualSelLength);
 				if (!VM.Wrap && AdjustSelPosition &&
 					(visualSelStart < LeftPos || (visualSelStart > LeftPos
 												&& visualSelStart + visualSelLength > LeftPos + XX2 - X1)))
@@ -2988,7 +2987,9 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 
 			size_t SourcedCount = ViewSize;
 			size_t SinkedCount = (Count - ResultedCount);
+
 			const auto cr = MB2Wide_Unescaped(SrcView, SourcedCount, &Buf[ResultedCount], SinkedCount, false);
+
 			Ptr+= SourcedCount;
 			ResultedCount+= (int)SinkedCount;
 

@@ -104,8 +104,7 @@ template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSH
 	unsigned out = 0;
 	for (;;) {
 		try {
-			auto bi = std::back_inserter(dst_pb);
-			if (ww898::utf::conv<CONV_SRC, CONV_DST>(src, src_end, bi)) {
+			if (ww898::utf::conv<CONV_SRC, CONV_DST>(src, src_end, dst_pb)) {
 				break;
 			}
 		} catch (std::exception &e) {
@@ -113,6 +112,7 @@ template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSH
 		}
 
 		if (dst_pb.fully_filled()) {
+			src_len = src - src_begin;
 			out|= CONV_NEED_MORE_DST;
 			break;
 		}

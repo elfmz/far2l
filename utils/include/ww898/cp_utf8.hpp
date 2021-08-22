@@ -62,20 +62,28 @@ struct utf8 final
         if (ch0 < 0xF0) // 1110_xxxx 10xx_xxxx 10xx_xxxx
         {
             char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
-        	switch (ch0) {
-    	        case 0xE0: if (ch1 < 0xA0) goto _err;
-        	    case 0xED: if (ch1 > 0x9F) goto _err;
-			}
+            switch (ch0) {
+                case 0xE0:
+                    if (ch1 < 0xA0) goto _err;
+                break;
+                case 0xED:
+                    if (ch1 > 0x9F) goto _err;
+                break;
+            }
             char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
             return (ch0 << 12) + (ch1 << 6) + ch2 - 0xE2080;
         }
         if (ch0 < 0xF8) // 1111_0xxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
             char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
-			switch (ch0) {
-	            case 0xF0: if (ch1 < 0x90) goto _err;
-    	        case 0xF4: if (ch1 > 0x8F) goto _err;
-			}
+            switch (ch0) {
+                case 0xF0:
+                    if (ch1 < 0x90) goto _err;
+                break;
+                case 0xF4:
+                    if (ch1 > 0x8F) goto _err;
+                break;
+            }
             char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
             char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;
             return (ch0 << 18) + (ch1 << 12) + (ch2 << 6) + ch3 - 0x3C82080;

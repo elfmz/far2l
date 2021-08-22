@@ -33,7 +33,7 @@ namespace utf {
 using utfw = utf16;
 }}
 
-#elif defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 
 #include <ww898/cp_utf32.hpp>
 

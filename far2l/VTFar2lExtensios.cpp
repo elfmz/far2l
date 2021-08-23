@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <base64.h>
 #include <utils.h>
-#include <UtfTransform.hpp>
+#include <UtfConvert.hpp>
 #include <fcntl.h>
 #include "../WinPort/src/SavedScreen.h"
 
@@ -284,9 +284,8 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 			stk_ser.Pop(data, len);
 #if (__WCHAR_MAX__ <= 0xffff)
 			if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
-				UtfTransformer<Utf32, Utf16, uint32_t, uint16_t>
-					utv((const uint32_t *)data, len / sizeof(uint32_t));
-				void *new_data = utv.CopyMalloc(len);
+				void *new_data = UtfConverter<uint32_t, uint16_t>
+					((const uint32_t *)data, len / sizeof(uint32_t)).MallocedCopy(len);
 				if (new_data) {
 					free(data);
 					data = new_data;
@@ -317,9 +316,8 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 #if (__WCHAR_MAX__ <= 0xffff)
 			void *new_data = nullptr;
 			if (fmt == CF_UNICODETEXT) { // UTF16 -> UTF32
-				UtfTransformer<Utf16, Utf32, uint16_t, uint32_t>
-					utv((const uint16_t *)data, len / sizeof(uint16_t));
-				new_data = utv.CopyMalloc(len);
+				new_data = UtfConverter<uint16_t, uint32_t>
+					((const uint16_t *)data, len / sizeof(uint16_t)).MallocedCopy(len);
 			}
 			stk_ser.Push(new_data ? new_data : data, len);
 			free(new_data);

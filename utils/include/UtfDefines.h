@@ -38,7 +38,7 @@ Combining Diacritical Marks for Symbols (20D0 - 20FF), since version 1.0, with m
  MB2Wide prepends by this hex value of unprocessable bytes
  Wide2MB reverts such escaped sequences to original values
 */
-#define WCHAR_ESCAPING ((wchar_t)0xE5CA)
+#define WCHAR_ESCAPING ((wchar_t)0xE5CA) /* 0xE5CA belongs to UTF Private Area */
 
 
 //#define ESCAPING_CHAR 0x1a

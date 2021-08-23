@@ -4,14 +4,9 @@
 #include <vector>
 #include <assert.h>
 #include <string.h>
+#include "luck.h"
 #include "ww898/utf_converters.hpp"
 #include "UtfDefines.h"
-
-
-typedef ww898::utf::utf8 Utf8;
-typedef ww898::utf::utf16 Utf16;
-typedef ww898::utf::utf32 Utf32;
-typedef ww898::utf::utfw UtfW;
 
 struct ArrayPushBackOverflow : std::runtime_error
 {
@@ -30,7 +25,7 @@ public:
 
 	inline void push_back(const T &v)
 	{
-		if (_cur == _end) {
+		if (UNLIKELY(_cur == _end)) {
 			throw ArrayPushBackOverflow();
 		}
 		*_cur = v;
@@ -92,8 +87,8 @@ public:
 };
 
 
-template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSHBACK_DST>
-	static inline unsigned UtfTransform(const CHAR_SRC *src_begin, size_t &src_len, PUSHBACK_DST &dst_pb, bool fail_on_illformed)
+template <typename CHAR_SRC, typename PUSHBACK_DST>
+	static inline unsigned UtfConvert(const CHAR_SRC *src_begin, size_t &src_len, PUSHBACK_DST &dst_pb, bool fail_on_illformed)
 {
 	if (src_len == 0) {
 		return 0;
@@ -104,11 +99,15 @@ template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSH
 	unsigned out = 0;
 	for (;;) {
 		try {
-			if (ww898::utf::conv<CONV_SRC, CONV_DST>(src, src_end, dst_pb)) {
+			if (ww898::utf::conv<
+					ww898::utf::utf_selector_t<CHAR_SRC>,
+					ww898::utf::utf_selector_t<typename PUSHBACK_DST::value_type>
+						>(src, src_end, dst_pb)) {
 				break;
 			}
 		} catch (std::exception &e) {
-			fprintf(stderr, "!!!: %s\n", e.what());
+			fprintf(stderr, "UtfConvert<%u, %u>: %s\n",
+				(unsigned)sizeof(CHAR_SRC), (unsigned)sizeof(typename PUSHBACK_DST::value_type), e.what());
 		}
 
 		if (dst_pb.fully_filled()) {
@@ -126,6 +125,7 @@ template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSH
 
 		} catch (std::runtime_error &) {
 			assert(dst_pb.fully_filled());
+			src_len = src - src_begin;
 			out|= CONV_NEED_MORE_DST;
 			break;
 		}
@@ -137,24 +137,24 @@ template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename PUSH
 }
 
 
-template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename CHAR_DST>
+template <typename CHAR_SRC, typename CHAR_DST>
 	static inline size_t UtfCalcSpace(const CHAR_SRC *src_begin, size_t src_len, bool fail_on_illformed)
 {
 	DummyPushBack<CHAR_DST> dpb;
-	UtfTransform<CONV_SRC, CONV_DST>(src_begin, src_len, dpb, fail_on_illformed);
+	UtfConvert(src_begin, src_len, dpb, fail_on_illformed);
 	return dpb.size();
 }
 
-template <typename CONV_SRC, typename CONV_DST, typename CHAR_SRC, typename CHAR_DST>
-	struct UtfTransformer : std::vector<CHAR_DST>
+template <typename CHAR_SRC, typename CHAR_DST>
+	struct UtfConverter : std::vector<CHAR_DST>
 {
-	UtfTransformer(const CHAR_SRC *src, size_t src_len)
+	UtfConverter(const CHAR_SRC *src, size_t src_len)
 	{
 		StdPushBack<std::vector<CHAR_DST>> pb(*this);
-		UtfTransform<CONV_SRC, CONV_DST>(&src, src_len, pb, false);
+		UtfConvert(&src, src_len, pb, false);
 	}
 
-	void *CopyMalloc(uint32_t &len) const
+	void *MallocedCopy(uint32_t &len) const
 	{
 		const size_t sz = std::vector<CHAR_DST>::size();
 		void *out = malloc((sz + 1) * sizeof(CHAR_DST));

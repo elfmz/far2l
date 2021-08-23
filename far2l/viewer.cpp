@@ -67,7 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AnsiEsc.hpp"
 #include "wakeful.hpp"
 #include "WideMB.h"
-#include "UtfTransform.hpp"
+#include "UtfConvert.hpp"
 
 static void PR_ViewerSearchMsg();
 static void ViewerSearchMsg(const wchar_t *Name,int Percent);
@@ -89,11 +89,11 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if ((CodePage == CP_UTF16LE) || (CodePage == CP_UTF16BE)) {
-		distance = UtfCalcSpace<UtfW, Utf16, wchar_t, uint16_t>(begin, end - begin, false);
+		distance = UtfCalcSpace<wchar_t, uint16_t>(begin, end - begin, false);
 		distance*= sizeof(uint16_t);
 
 	} else if (CodePage == CP_UTF8) {
-		distance = UtfCalcSpace<UtfW, Utf8, wchar_t, uint8_t>(begin, end - begin, false);
+		distance = UtfCalcSpace<wchar_t, uint8_t>(begin, end - begin, false);
 
 	} else {// one-byte code page?
 		distance = end - begin;
@@ -107,7 +107,7 @@ static int CalcByteDistance(UINT CodePage, const wchar_t* begin, const wchar_t* 
 	int distance;
 
 	if (CodePage == CP_UTF8) {
-		distance = UtfCalcSpace<UtfW, Utf8, wchar_t, uint8_t>(begin, end - begin, false);
+		distance = UtfCalcSpace<wchar_t, uint8_t>(begin, end - begin, false);
 
 	} else {// one-byte code page?
 		distance = end - begin;

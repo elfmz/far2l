@@ -42,7 +42,3 @@ size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &ds
 unsigned MB2Wide_Unescaped(const char *src, size_t &src_len, wchar_t &dst, bool fail_on_illformed);
 unsigned MB2Wide_Unescaped(const char *src, size_t &src_len, wchar_t *dst, size_t &dst_len, bool fail_on_illformed);
 unsigned Wide2MB_Unescaped(const wchar_t *src, size_t &src_len, char *dst, size_t &dst_len, bool fail_on_illformed);
-
-unsigned MB2Wide_Unescaped_CalcSpace(const char *src, size_t &src_len, size_t &dst_len, bool fail_on_illformed);
-unsigned Wide2MB_Unescaped_CalcSpace(const wchar_t *src, size_t &src_len, size_t &dst_len, bool fail_on_illformed);
-

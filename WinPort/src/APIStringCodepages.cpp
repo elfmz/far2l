@@ -16,13 +16,13 @@
 #include "WinPort.h"
 #include "wineguts.h"
 #include "PathHelpers.h"
-#include "UtfTransform.hpp"
+#include "UtfConvert.hpp"
 
 
 
 //			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
 //			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
-template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
+template <class SRC_T, class DST_T>
 	int utf_translation(int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
 {
 	const bool fail_on_illformed = ((flags & MB_ERR_INVALID_CHARS) != 0);
@@ -39,8 +39,8 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 	if (dstlen == 0) {
 		DummyPushBack<DST_T> pb;
 		try {
-			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
-			if (utr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
+			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
 
@@ -53,11 +53,11 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 
 	ArrayPushBack<DST_T> pb(dst, dst + dstlen);
 	try {
-			const unsigned utr = UtfTransform<CONV_SRC, CONV_DST>(src, srclen_sz, pb, fail_on_illformed);
-			if (utr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
+			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 
-			} else if (utr & CONV_NEED_MORE_DST) {
+			} else if (ucr & CONV_NEED_MORE_DST) {
 				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
 				return 0;
 			}
@@ -76,14 +76,12 @@ template <typename CONV_SRC, typename CONV_DST, class SRC_T, class DST_T>
 
 static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
 {
-	return utf_translation<Utf32, Utf8>(
-		flags, (const uint32_t *)src, srclen, (uint8_t *)dst, dstlen);
+	return utf_translation(flags, (const uint32_t *)src, srclen, (uint8_t *)dst, dstlen);
 }
 	
 static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
 {
-	return utf_translation<Utf8, Utf32>(
-		flags, (const uint8_t *)src, srclen, (uint32_t *)dst, dstlen);
+	return utf_translation(flags, (const uint8_t *)src, srclen, (uint32_t *)dst, dstlen);
 }
 	
 static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
@@ -107,8 +105,7 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 	if (dstlen > 0) dstlen/= sizeof(uint16_t);
 	
 	if (sizeof(WCHAR) == 4) {
-		ret = utf_translation<Utf32, Utf16>(
-									flags, (const uint32_t *)src, srclen, (uint16_t *)dst, dstlen);
+		ret = utf_translation(flags, (const uint32_t *)src, srclen, (uint16_t *)dst, dstlen);
 	} else
 		ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
 	
@@ -182,8 +179,7 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 	}
 	
 	if (sizeof(WCHAR)==4) {
-		ret = utf_translation<Utf16, Utf32>(
-			flags, (const uint16_t *)src, srclen, (uint32_t *)dst, dstlen);
+		ret = utf_translation(flags, (const uint16_t *)src, srclen, (uint32_t *)dst, dstlen);
 	} else
 		ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
 		

@@ -10,9 +10,6 @@
 #include "Environment.h"
 #include "ErrnoSaver.hpp"
 
-#define LIKELY_TRUE(value)	(__builtin_expect(value, true))
-#define LIKELY_FALSE(value)	(__builtin_expect(value, false))
-
 template <class C> static size_t tzlen(const C *ptz)
 {
 	const C *etz;

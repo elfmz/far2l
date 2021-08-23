@@ -33,20 +33,17 @@ namespace ww898 {
 namespace utf {
 namespace detail {
 
-template<typename Ch>
+template<size_t ChLen>
 struct utf_selector final {};
 
-template<> struct utf_selector<         char> final { using type = utf8 ; };
-template<> struct utf_selector<unsigned char> final { using type = utf8 ; };
-template<> struct utf_selector<signed   char> final { using type = utf8 ; };
-template<> struct utf_selector<char16_t     > final { using type = utf16; };
-template<> struct utf_selector<char32_t     > final { using type = utf32; };
-template<> struct utf_selector<wchar_t      > final { using type = utfw ; };
+template<> struct utf_selector<1> final { using type = utf8 ; };
+template<> struct utf_selector<2> final { using type = utf16; };
+template<> struct utf_selector<4> final { using type = utf32; };
 
 }
 
 template<typename Ch>
-using utf_selector = detail::utf_selector<typename std::decay<Ch>::type>;
+using utf_selector = detail::utf_selector<sizeof(typename std::decay<Ch>::type)>;
 
 template<typename Ch>
 using utf_selector_t = typename utf_selector<Ch>::type;

@@ -8,7 +8,6 @@
 #include "Paint.h"
 #include "PathHelpers.h"
 #include <utils.h>
-#include <ConvertUTF.h>
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
@@ -408,7 +407,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		for (unsigned int char_index = 0; char_index != cw; ++char_index) {
 			const auto c = line[char_index].Char.UnicodeChar;
 
-			if (UNI_IS_COMBINING(c)) {
+			if (WCHAR_IS_COMBINING(c)) {
 				++affecting_combinings;
 				// Bit dirty optimization - activate combinings area update
 				// correction only if during rendering combinings characters
@@ -416,7 +415,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 				// glitch per whole process life time ..
 				_noticed_combinings = true;
 			}
-			else if (affecting_combinings && (c == '|' || UNI_IS_PSEUDOGRAPHIC(c))) {
+			else if (affecting_combinings && (c == '|' || WCHAR_IS_PSEUDOGRAPHIC(c))) {
 				// reached panel's edge - space-fill gap caused by combinings
 				for (int i = affecting_combinings; i >= 0; --i) {
 					painter.NextChar(char_index - i, attributes, ' ');
@@ -475,7 +474,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 				const CHAR_INFO *line = dla.Line();
 				if (line) {
 					for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
-						if (UNI_IS_COMBINING(line[cx].Char.UnicodeChar)) {
+						if (WCHAR_IS_COMBINING(line[cx].Char.UnicodeChar)) {
 							rc.SetLeft(0);
 							rc.SetRight(dla.Width() * _font_width);
 							break;
@@ -724,7 +723,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 {
 	WXCustomDrawChar::DrawT custom_draw = nullptr;
 
-	if (!c || c == L' ' || !UNI_IS_VALID(c) || (_context->IsCustomDrawEnabled()
+	if (!c || c == L' ' || !WCHAR_IS_VALID(c) || (_context->IsCustomDrawEnabled()
 	 && (custom_draw = WXCustomDrawChar::Get(c)) != nullptr)) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
@@ -737,7 +736,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	// NB: combining characters must be printed over previous ones,
 	// simulate this by shifting characters left until 1st space found (#826, #213)
 
-	if (!c || c == L' ' || !UNI_IS_VALID(c)) {
+	if (!c || c == L' ' || !WCHAR_IS_VALID(c)) {
 		return;
 	}
 
@@ -752,7 +751,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		_prev_fit_font_index = 0;
 
 	} else {
-		uint8_t fit_font_index = UNI_IS_COMBINING(c) ? // workaround for 
+		uint8_t fit_font_index = WCHAR_IS_COMBINING(c) ? // workaround for 
 			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
 		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()

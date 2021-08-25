@@ -19,7 +19,6 @@ set(SOURCES
   src/Event.cpp
   src/StackSerializer.cpp
   src/ScopeHelpers.cpp
-  src/ConvertUTF.c
   src/crc64.c
   src/TTYRawMode.cpp
   src/LocalSocket.cpp

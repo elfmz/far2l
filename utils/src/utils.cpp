@@ -31,28 +31,6 @@ char MakeHexDigit(const unsigned char c)
 	return 0;
 }
 
-unsigned char ParseHexDigit(const char hex)
-{
-	if (hex>='0' && hex<='9')
-		return hex - '0';
-	if (hex>='a' && hex<='f')
-		return 10 + hex - 'a';
-	if (hex>='A' && hex<='F')
-		return 10 + hex - 'A';
-
-	return 0xff;
-}
-
-unsigned char ParseHexByte(const char *hex)
-{
-	const unsigned char rh = ParseHexDigit(hex[0]);
-	const unsigned char rl = ParseHexDigit(hex[1]);
-	if (rh == 0xff || rl == 0xff) {
-		return 0;
-	}
-	return ((rh << 4) | rl);
-}
-
 size_t StrStartsFrom(const std::string &haystack, const char *needle)
 {
 	size_t l = strlen(needle);

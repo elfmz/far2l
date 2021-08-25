@@ -32,6 +32,7 @@ class TTYOutput
 	struct {
 		WCHAR wch = 0;
 		unsigned int count = 0;
+		std::string tmp;
 	} _same_chars;
 	bool _far2l_tty;
 

@@ -8,7 +8,6 @@
 #include <pwd.h>
 #include <assert.h>
 #include <fcntl.h>
-#include "ConvertUTF.h"
 #include <errno.h>
 
 enum PrivacyLevel

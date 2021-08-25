@@ -1,7 +1,7 @@
 #include <fcntl.h>
 #include <utils.h>
 #include <base64.h>
-#include <ConvertUTF.h>
+#include <UtfConvert.hpp>
 #include "TTYFar2lClipboardBackend.h"
 #include "FSClipboardBackend.h"
 
@@ -162,17 +162,8 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #if (__WCHAR_MAX__ <= 0xffff)
 		UTF32 *new_data = nullptr;
 		if (format == CF_UNICODETEXT && len != 0) { // UTF16 -> UTF32
-			int cnt = 0;
-			const UTF16 *src = (const UTF16 *)data;
-			CalcSpaceUTF16toUTF32(&cnt, &src, src + len / sizeof(UTF16), lenientConversion);
-			new_data = (UTF32 *)malloc((cnt + 1) * sizeof(UTF32));
-			if (new_data != nullptr) {
-				new_data[cnt] = 0;
-				src = (const UTF16 *)data;
-				UTF32 *dst = new_data;
-				ConvertUTF16toUTF32( &src, src + len / sizeof(UTF16), &dst, dst + cnt, lenientConversion);
-				len = cnt * sizeof(UTF32);
-			}
+			new_data = UtfConverter<uint16_t, uint32_t>
+				((const uint16_t*)data, len / sizeof(uint16_t)).MallocedCopy(len);
 		}
 		stk_ser.Push(new_data ? new_data : data, len);
 		stk_ser.PushPOD(len);
@@ -213,18 +204,10 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 				stk_ser.Pop(data, len);
 #if (__WCHAR_MAX__ <= 0xffff)
 				if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
-					int cnt = 0;
-					const UTF32 *src = (const UTF32 *)data;
-					CalcSpaceUTF32toUTF16(&cnt, &src, src + len / sizeof(UTF32), lenientConversion);
-					UTF16 *new_data = (UTF16 *)malloc((cnt + 1) * sizeof(UTF16));
+					void *new_data = UtfConverter<uint32_t, uint16_t>
+						((const uint32_t*)data, len / sizeof(uint32_t)).MallocedCopy(len);
 					if (new_data != nullptr) {
-						new_data[cnt] = 0;
-						src = (const UTF32 *)data;
-						UTF16 *dst = new_data;
-						ConvertUTF32toUTF16( &src, src + len / sizeof(UTF32), &dst, dst + cnt, lenientConversion);
-						free(data);
 						data = new_data;
-						len = cnt * sizeof(UTF16);
 					}
 				}
 #endif

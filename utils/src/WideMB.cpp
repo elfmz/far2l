@@ -1,188 +1,224 @@
-#include "utils.h"
-#include <WinCompat.h>
-#include <WinPort.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
-#include "ConvertUTF.h"
+#include <vector>
+#include "utils.h"
+#include "UtfConvert.hpp"
 
 //TODO: Implement convertion according to locale set, but not only UTF8
-//NB: Routines here should not change or preserve result of WINPORT(GetLastError)
+//NB: Routines here should not affect errno
 
-namespace FailTolerantUTF8
+//////////////////////////////////////////////////////
+
+static size_t MB2Wide_Internal(const char *src_begin, size_t &src_len, std::wstring &dst, bool append)
 {
-	//This functionality intendent to convert between UTF8 and wide chars in fail-toleran manner,
-	//that means that incorrectly encoded UTF8 will be translated to corresponding wide representation
-	//with escaping of incorrect sequences. That mean if source UTF8 contains escaping char - it also 
-	//will be escaped, even if source is completely valid UTF8.
-	//Corresponding reverse translation from wide to UTF8 will revert escaping.
-	//However fail tolerance works only in one direction - from UTF8 to UTF32. Broken UTF32 processed as 
-	//usually - with lost of corrupted sequences.
-	
-	#define ESCAPE_CHAR 0x1a
-	
-	template <class WIDE_UTF>
-		static void FromWide(const wchar_t *src, size_t src_len, std::string &dst,
-			ConversionResult (*pCalcSpace)(int *, const WIDE_UTF**, const WIDE_UTF*, ConversionFlags),
-			ConversionResult (*pConvert)(const WIDE_UTF**, const WIDE_UTF*, UTF8**, UTF8*, ConversionFlags)	)
-	{
-		static_assert(sizeof(WIDE_UTF) == sizeof(wchar_t), "FromWide: bad WIDE_UTF");
-		if (!src_len) {
-			dst.clear();
-			return;
-		}
-		
-		const WIDE_UTF *src_end = (const WIDE_UTF*)(src + src_len);
-		
-		int len = 0;
-		const WIDE_UTF *tmp = (const WIDE_UTF *)src;
-		pCalcSpace (&len, &tmp, src_end, lenientConversion);
-		dst.resize(len);
-		if (!len)
-			return;
-
-		tmp = (const WIDE_UTF *)src;
-		UTF8 *target = (UTF8 *)&dst[0];
-		UTF8 *target_end = target + len;
-		pConvert(&tmp, src_end, &target, target_end, lenientConversion);
-		assert(target==target_end);
-		
-		for (size_t p = dst.find(ESCAPE_CHAR); p!=std::string::npos; p = dst.find(ESCAPE_CHAR, p)) {
-			if ( p + 2 >= dst.size()) break;
-			char hex[] = {dst[p + 1], dst[p + 2], 0};
-			unsigned char c = ParseHexByte(hex);
-			dst.replace(p, 3, 1, (char)c);
-			p++;
-		}
+	if (!append) {
+		dst.clear();
+	}
+	if (!src_len) {
+		return std::string::npos;
 	}
 
-	template <class WIDE_UTF, bool HONOR_INCOMPLETE = false>
-		static size_t ToWide(const char *src, size_t src_len, std::wstring &dst,
-			ConversionResult (*pCalcSpace)(int *, const UTF8**, const UTF8*, ConversionFlags),
-			ConversionResult (*pConvert)(const UTF8**, const UTF8*, WIDE_UTF**, WIDE_UTF*, ConversionFlags) )
+	auto src = src_begin;
+	auto src_end = src_begin + src_len;
+	auto src_incomplete_tail = src_end;
+	size_t dst_incomplete_tail_pos = (size_t)-1;
+
+	struct EscapedStringPushBack : public StdPushBack<std::wstring>
 	{
-		static_assert(sizeof(WIDE_UTF) == sizeof(wchar_t), "ToWide: bad WIDE_UTF");
-		if (!src_len) {
-			dst.clear();
-			return 0;
-		}
-		
-		const UTF8 *src_begin = (const UTF8*)src;
-		const UTF8 *src_end = (const UTF8*)(src + src_len);
-		size_t dst_len = 0;
-		wchar_t wz[16];
-		do {
-			const UTF8* tmp = (const UTF8*)src;
-			int len = 0;
-			pCalcSpace (&len, &tmp, src_end, strictConversion);
-			if (tmp!=(const UTF8*)src) {
-				assert (len > 0);
-				dst.resize(dst_len + len);
-				WIDE_UTF *target = (WIDE_UTF *)&dst[dst_len];
-				WIDE_UTF *target_end = target + len;
-				ConversionResult cr = pConvert ((const UTF8**)&src, 
-									tmp, &target, target_end, strictConversion);
-				assert (cr == conversionOK);
-				assert (tmp == (const UTF8*)src);
-				assert (target == target_end);
-				for (size_t pos = dst.find(ESCAPE_CHAR, dst_len); 
-						pos != std::wstring::npos; pos = dst.find(ESCAPE_CHAR, pos)) {
-					swprintf(wz, ARRAYSIZE(wz), L"%02x", ESCAPE_CHAR);
-					dst.insert(pos + 1, wz);
-					pos+= 3;
-					len++;
-				}
-				dst_len+= len;
-			} else if (!HONOR_INCOMPLETE || ((const char*)src_end - src) >= 6) {
-				swprintf(wz, ARRAYSIZE(wz), L"%c%02x", ESCAPE_CHAR, *(unsigned char *)src);
-				dst.resize(dst_len);
-				dst+= wz;
-				dst_len = dst.size();
-				src++;
-			} else {
-				break;
+		EscapedStringPushBack(std::wstring &dst) : StdPushBack<std::wstring>(dst) {}
+
+		inline void push_back(const value_type &v)
+		{
+			StdPushBack<std::wstring>::push_back(v);
+			if (UNLIKELY(v == WCHAR_ESCAPING)) {
+				StdPushBack<std::wstring>::push_back(WCHAR_ESCAPING);
 			}
-		} while (src!=(const char *)src_end);
+		}
 
-		return src - (const char*)src_begin;
+	} pb(dst);
+
+	for (;;) {
+		size_t src_piece = src_end - src;
+		const unsigned ucr = UtfConvert(src, src_piece, pb, true);
+		src+= src_piece;
+		if (ucr == 0) {
+			break;
+		}
+
+		if (dst_incomplete_tail_pos == (size_t)-1 && src != src_end
+				&& src_end - src < MAX_MB_CHARS_PER_WCHAR) {
+			dst_incomplete_tail_pos = dst.size();
+			src_incomplete_tail = src;
+		}
+
+		const auto remain = src_end - src;
+		if (remain != 0) {
+			const unsigned char uc = (unsigned char)*src;
+			dst.push_back(WCHAR_ESCAPING);
+			dst.push_back((wchar_t)MakeHexDigit(uc >> 4));
+			dst.push_back((wchar_t)MakeHexDigit(uc & 0xf));
+
+//			fprintf(stderr, "CE: @%lu %x\n", src - src_begin, ucr);
+		}
+		if (remain <= 1) {
+			if (dst_incomplete_tail_pos != (size_t)-1) {
+				src_len = src_incomplete_tail - src_begin;
+				return dst_incomplete_tail_pos;
+			}
+			src_len = src - src_begin;
+			break;
+		}
+		++src;
 	}
+
+	return dst.size();
 }
 
-static void Wide2MB(const wchar_t *src, size_t src_len, std::string &dst)
+size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &dst, bool append)
 {
-#if (__WCHAR_MAX__ > 0xffff)
-	FailTolerantUTF8::FromWide<UTF32>(src, src_len, dst, CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8);
-#else
-	FailTolerantUTF8::FromWide<UTF16>(src, src_len, dst, CalcSpaceUTF16toUTF8, ConvertUTF16toUTF8);
-#endif	
+	size_t dst_incomplete_tail_pos = MB2Wide_Internal(src, src_len, dst, append);
+	if (dst_incomplete_tail_pos != std::string::npos) {
+		dst.resize(dst_incomplete_tail_pos);
+	}
+	return src_len;
 }
 
-void MB2Wide(const char *src, size_t src_len, std::wstring &dst)
+unsigned MB2Wide_Unescaped(const char *src_begin, size_t &src_len, wchar_t &dst, bool fail_on_illformed)
 {
-#if (__WCHAR_MAX__ > 0xffff)
-	FailTolerantUTF8::ToWide<UTF32>(src, src_len, dst, CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32);
-#else
-	FailTolerantUTF8::ToWide<UTF16>(src, src_len, dst, CalcSpaceUTF8toUTF16, ConvertUTF8toUTF16);
-#endif	
+	ArrayPushBack<wchar_t> pb(&dst, (&dst) + 1);
+	unsigned out = UtfConvert(src_begin, src_len, pb, fail_on_illformed);
+	out&= ~CONV_NEED_MORE_DST;
+	return out;
 }
 
-
-size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &dst)
+unsigned MB2Wide_Unescaped(const char *src, size_t &src_len, wchar_t *dst, size_t &dst_len, bool fail_on_illformed)
 {
-#if (__WCHAR_MAX__ > 0xffff)
-	return FailTolerantUTF8::ToWide<UTF32, true>(src, src_len, dst, CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32);
-#else
-	return FailTolerantUTF8::ToWide<UTF16, true>(src, src_len, dst, CalcSpaceUTF8toUTF16, ConvertUTF8toUTF16);
-#endif	
+	ArrayPushBack<wchar_t> pb(dst, dst + dst_len);
+	unsigned out = UtfConvert(src, src_len, pb, fail_on_illformed);
+	dst_len = pb.size();
+	return out;
+}
+
+unsigned int Wide2MB_Unescaped(const wchar_t *src, size_t &src_len, char *dst, size_t &dst_len, bool fail_on_illformed)
+{
+	ArrayPushBack<char> pb(dst, dst + dst_len);
+	unsigned out = UtfConvert(src, src_len, pb, fail_on_illformed);
+	dst_len = pb.size();
+	return out;
+}
+
+void MB2Wide(const char *src, size_t src_len, std::wstring &dst, bool append)
+{
+	MB2Wide_Internal(src, src_len, dst, append);
 }
 
 //////////////////
 
-void Wide2MB(const wchar_t *src, std::string &dst)
+void Wide2MB_UnescapedAppend(const wchar_t wc, std::string &dst)
 {
-	Wide2MB(src, wcslen(src), dst);
+	size_t len = 1;
+	StdPushBack<std::string> pb(dst);
+	UtfConvert(&wc, len, pb, false);
 }
 
-void MB2Wide(const char *src, std::wstring &dst)
+static void Wide2MB_UnescapedAppend(const wchar_t *src_begin, size_t src_len, std::string &dst)
 {
-	MB2Wide(src, strlen(src), dst);
+	StdPushBack<std::string> pb(dst);
+	UtfConvert(src_begin, src_len, pb, false);
 }
-/////////////////////
+
+static inline bool IsLowCaseHexDigit(const wchar_t c)
+{
+	return (c >= L'0' && c <= L'9') || (c >= L'a' && c <= L'f');
+}
+
+void Wide2MB(const wchar_t *src_begin, size_t src_len, std::string &dst, bool append)
+{
+	if (!append) {
+		dst.clear();
+	}
+	if (!src_len) {
+		return;
+	}
+
+	auto src = src_begin, src_end = src_begin + src_len;
+
+	while (src != src_end) {
+		if (LIKELY(src[0] != WCHAR_ESCAPING)) {
+			++src;
+
+		} else {
+			if (src_begin != src) {
+				Wide2MB_UnescapedAppend(src_begin, src - src_begin, dst);
+			}
+			if (LIKELY(src_end - src >= 3 && IsLowCaseHexDigit(src[1]) && IsLowCaseHexDigit(src[2]))) {
+				dst+= ParseHexByte(&src[1]);
+				src+= 3;
+				src_begin = src;
+
+			} else {
+				Wide2MB_UnescapedAppend(src, 1, dst);
+				++src;
+				if (src_end != src && *src == WCHAR_ESCAPING) {
+					++src;
+				}
+			}
+		}
+	}
+
+	if (src_begin != src) {
+		Wide2MB_UnescapedAppend(src_begin, src - src_begin, dst);
+	}
+}
+
+//////////////////
+
+void Wide2MB(const wchar_t *src, std::string &dst, bool append)
+{
+	Wide2MB(src, wcslen(src), dst, append);
+}
+
+void MB2Wide(const char *src, std::wstring &dst, bool append)
+{
+	MB2Wide(src, strlen(src), dst, append);
+}
 
 std::string Wide2MB(const wchar_t *src)
 {
 	std::string dst;
-	Wide2MB(src, dst);
+	Wide2MB(src, dst, true);
 	return dst;
 }
 
 std::wstring MB2Wide(const char *src)
 {
 	std::wstring dst;
-	MB2Wide(src, dst);
+	MB2Wide(src, dst, true);
 	return dst;
 }
 
-
-void StrWide2MB(const std::wstring &src, std::string &dst) 
+void StrWide2MB(const std::wstring &src, std::string &dst, bool append) 
 {
-	Wide2MB(src.c_str(), src.size(), dst);
+	Wide2MB(src.c_str(), src.size(), dst, append);
 }
+
 std::string StrWide2MB(const std::wstring &src) 
 {
 	std::string dst;
-	Wide2MB(src.c_str(), src.size(), dst);
+	Wide2MB(src.c_str(), src.size(), dst, true);
 	return dst;
 }
 
-void StrMB2Wide(const std::string &src, std::wstring &dst) 
+void StrMB2Wide(const std::string &src, std::wstring &dst, bool append) 
 {
-	MB2Wide(src.c_str(), src.size(), dst);
+	MB2Wide(src.c_str(), src.size(), dst, append);
 }
+
 std::wstring StrMB2Wide(const std::string &src) 
 {
 	std::wstring dst;
-	MB2Wide(src.c_str(), src.size(), dst);
+	MB2Wide(src.c_str(), src.size(), dst, true);
 	return dst;
 }

@@ -5,7 +5,7 @@
 #include <vector>
 #include <deque>
 #include <fcntl.h>
-#include <ConvertUTF.h>
+#include <WideMB.h>
 
 #include "vtlog.h"
 
@@ -48,7 +48,8 @@ namespace VTLog
 				return 0;
 
 			--Width;
-			if (Chars[Width].Char.UnicodeChar && Chars[Width].Char.UnicodeChar != L' ') {
+			const auto &CI = Chars[Width];
+			if ((CI.Char.UnicodeChar && CI.Char.UnicodeChar != L' ') || (CI.Attributes & BACKGROUND_RGB) != 0) {
 				return Width + 1;
 			}
 		}
@@ -81,20 +82,16 @@ namespace VTLog
 				out.back() = 'm';
 				attr_prev = attr_now;
 			}
-			size_t dst_ofs = out.size();
-			out.resize(out.size() + 8);
-			UTF8 *dst = (UTF8 *)&out[0] + dst_ofs;
-			UTF8 *dst_end = (UTF8 *)&out[0] + out.size();
-			WCHAR w[2] = {(UNI_IS_VALID(Chars[i].Char.UnicodeChar) && Chars[i].Char.UnicodeChar != 033)
-							? (WCHAR)Chars[i].Char.UnicodeChar : (WCHAR)UNI_REPLACEMENT_CHAR, 0};
-#if (__WCHAR_MAX__ > 0xffff)
-			const UTF32 *start = (const UTF32 *)&w[0], *end = (const UTF32 *)&w[1];
-			ConvertUTF32toUTF8(&start, end, &dst, dst_end, lenientConversion);
-#else
-			const UTF16 *start = (const UTF16 *)&w[0], *end = (const UTF16 *)&w[1];
-			ConvertUTF16toUTF8(&start, end, &dst, dst_end, lenientConversion);
-#endif
-			out.resize(dst - (UTF8 *)&out[0]);
+
+			if (Chars[i].Char.UnicodeChar > 0x80) {
+				Wide2MB_UnescapedAppend(Chars[i].Char.UnicodeChar, out);
+
+			} else if (Chars[i].Char.UnicodeChar != 0) {
+				out+= (char)(unsigned char)Chars[i].Char.UnicodeChar;
+
+			} else {
+				out+= L' ';
+			}
 		}
 		if (colored && attr_prev != 0xffff) {
 			out+= "\033[m";

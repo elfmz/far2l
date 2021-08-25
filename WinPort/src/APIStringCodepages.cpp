@@ -16,58 +16,72 @@
 #include "WinPort.h"
 #include "wineguts.h"
 #include "PathHelpers.h"
-#include "ConvertUTF.h"
+#include "UtfConvert.hpp"
 
 
 
+//			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
+//			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
 template <class SRC_T, class DST_T>
-	int utf_translation( 
-			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
-			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flags),
-			int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
+	int utf_translation(int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
 {
-	int ret;
-	const ConversionFlags cf = ((flags&MB_ERR_INVALID_CHARS)!=0) ? strictConversion : lenientConversion;
-	const SRC_T *source = (const SRC_T *)src, *source_end = (const SRC_T *)src;
-	if (srclen==-1) {
-		for(;*source_end;++source_end);
+	const bool fail_on_illformed = ((flags & MB_ERR_INVALID_CHARS) != 0);
+	size_t srclen_sz;
+	if (srclen < 0) {
+		for (srclen_sz = 0; src[srclen_sz]; ++srclen_sz) {}
+		// per MSDN - convertion should include terminating NUL char
+		++srclen_sz;
+
 	} else {
-		for(;srclen;++source_end, --srclen);
+		srclen_sz = (size_t)srclen;
 	}
 
-	if (dstlen==0) {
-		if (fnCalcSpace (&ret, &source, source_end, cf)!=conversionOK) {
-			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
-		}
-		
-	} else {
-		DST_T *target = (DST_T *)dst;
-		DST_T *target_end = target + dstlen;
-		
-		ConversionResult cr = fnConvert(&source, source_end, &target, target_end, cf);
-		if (cr==targetExhausted) {
-			ret = 0;
-			WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
-		} else {
-			ret = target - (DST_T *)dst;
-			if (cr!=conversionOK) {
-				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); 
+	if (dstlen == 0) {
+		DummyPushBack<DST_T> pb;
+		try {
+			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+			WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 		}
+		return (int)pb.size();
 	}
-	return ret;		
+
+	ArrayPushBack<DST_T> pb(dst, dst + dstlen);
+	try {
+			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
+				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
+
+			} else if (ucr & CONV_NEED_MORE_DST) {
+				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+				return 0;
+			}
+
+	} catch (ArrayPushBackOverflow &e) {
+		WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+		return 0;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+		WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
+	}
+
+	return (int)pb.size();
 }
 
 static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
 {
-	return utf_translation<UTF32, UTF8>( CalcSpaceUTF32toUTF8, ConvertUTF32toUTF8,
-		flags, (const UTF32 *)src, srclen, (UTF8 *)dst, dstlen);
+	return utf_translation(flags, (const uint32_t *)src, srclen, (uint8_t *)dst, dstlen);
 }
 	
 static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
 {
-	return utf_translation<UTF8, UTF32>( CalcSpaceUTF8toUTF32, ConvertUTF8toUTF32,
-		flags, (const UTF8 *)src, srclen, (UTF32 *)dst, dstlen);
+	return utf_translation(flags, (const uint8_t *)src, srclen, (uint32_t *)dst, dstlen);
 }
 	
 static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
@@ -88,11 +102,10 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 {
 	int ret;
 	
-	if (dstlen > 0) dstlen/= sizeof(UTF16);
+	if (dstlen > 0) dstlen/= sizeof(uint16_t);
 	
-	if (sizeof(WCHAR)==4) {
-		ret = utf_translation<UTF32, UTF16>( CalcSpaceUTF32toUTF16, ConvertUTF32toUTF16,
-									flags, (const UTF32 *)src, srclen, (UTF16 *)dst, dstlen);
+	if (sizeof(WCHAR) == 4) {
+		ret = utf_translation(flags, (const uint32_t *)src, srclen, (uint16_t *)dst, dstlen);
 	} else
 		ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
 	
@@ -102,7 +115,7 @@ static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char 
 				std::swap(dst[i * 2], dst[i * 2 + 1]);
 			}
 		}		
-		ret*= sizeof(UTF16);
+		ret*= sizeof(uint16_t);
 	}
 	
 	return ret;
@@ -145,14 +158,14 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 {
 	int ret;
 	
-	if (srclen > 0) srclen/= sizeof(UTF16);
+	if (srclen > 0) srclen/= sizeof(uint16_t);
 	
 	char *tmp = NULL;
 	if (reverse) {
 		if (srclen==-1) srclen = wcslen((const wchar_t *)src) + 1;
 		
 		const bool onstack = (srclen < 0x10000);
-		tmp = (char *) (onstack ? alloca(srclen * sizeof(UTF16)) : malloc(srclen * sizeof(UTF16)));
+		tmp = (char *) (onstack ? alloca(srclen * sizeof(uint16_t)) : malloc(srclen * sizeof(uint16_t)));
 			
 		if (!tmp) 
 			return -2;
@@ -166,9 +179,7 @@ static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *d
 	}
 	
 	if (sizeof(WCHAR)==4) {
-		
-		ret = utf_translation<UTF16, UTF32>( CalcSpaceUTF16toUTF32, ConvertUTF16toUTF32,
-			flags, (const UTF16 *)src, srclen, (UTF32 *)dst, dstlen);
+		ret = utf_translation(flags, (const uint16_t *)src, srclen, (uint32_t *)dst, dstlen);
 	} else
 		ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
 		

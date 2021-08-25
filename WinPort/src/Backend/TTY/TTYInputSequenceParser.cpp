@@ -5,7 +5,7 @@
 #include "ConsoleInput.h"
 #include "WinPort.h"
 
-#include "ConvertUTF.h"
+#include "WideMB.h"
 
 
 //See:
@@ -279,26 +279,21 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 
 			} else if ( (s[0] & 0b11000000) == 0b11000000) {
 				// looks like alt + multibyte UTF8 sequence
-				const UTF8 *src = (const UTF8 *)&s[0];
-#if (__WCHAR_MAX__ > 0xffff)
-				UTF32 wc_buf[2] = {}, *wc = &wc_buf[0];
-				ConvertUTF8toUTF32(&src, src + l, &wc, wc + 1, lenientConversion);
-#else
-				UTF16 wc_buf[2] = {}, *wc = &wc_buf[0];
-				ConvertUTF8toUTF16(&src, src + l, &wc, wc + 1, lenientConversion);
-#endif
-				if (wc != &wc_buf[0]) {
+				wchar_t wc;
+				size_t l_used = l;
+				MB2Wide_Unescaped(s, l_used, wc, true);
+				if (l_used) {
 					INPUT_RECORD ir = {};
 					ir.EventType = KEY_EVENT;
 					ir.Event.KeyEvent.wRepeatCount = 1;
-					ir.Event.KeyEvent.uChar.UnicodeChar = wc_buf[0];
+					ir.Event.KeyEvent.uChar.UnicodeChar = wc;
 					ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 					ir.Event.KeyEvent.bKeyDown = TRUE;
 					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
 					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
-					return src - (const UTF8*) &s[0];
+					return l_used;
 				}
 			}
 

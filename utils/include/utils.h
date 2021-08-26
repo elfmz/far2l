@@ -54,8 +54,40 @@ template <class CHAR_T>
 // in case of error returns 0
 char MakeHexDigit(const unsigned char c);
 
-size_t StrStartsFrom(const std::string &haystack, const char *needle);
-size_t StrEndsBy(const std::string &haystack, const char *needle);
+template <class StrT>
+	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type needle)
+{
+	return (!haystack.empty() && haystack.front() == needle) ? 1 : 0;
+}
+
+template <class CharT>
+	size_t StrStartsFrom(const CharT *haystack, const CharT *needle)
+{
+	const size_t lh = tzlen(haystack);
+	const size_t l = tzlen(needle);
+	return (l <= lh && memcmp(haystack, needle, l * sizeof(CharT)) == 0) ? l : 0;
+}
+
+template <class StrT>
+	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type *needle)
+{
+	const size_t l = tzlen(needle);
+	if (!l || haystack.size() < l)
+		return 0;
+
+	return memcmp(haystack.c_str(), needle, l * sizeof(typename StrT::value_type)) ? 0 : l;
+}
+
+template <class StrT>
+	size_t StrEndsBy(const StrT &haystack, const typename StrT::value_type *needle)
+{
+	const size_t l = tzlen(needle);
+	if (!l || haystack.size() < l)
+		return 0;
+
+	return memcmp(haystack.c_str() + haystack.size() - l, needle, l * sizeof(typename StrT::value_type)) ? 0 : l;
+}
+
 
 const std::string &GetMyHome();
 

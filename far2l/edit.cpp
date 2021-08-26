@@ -2152,21 +2152,18 @@ int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Cas
 			if (re.Compile(strSlash, OP_PERLSTYLE|OP_OPTIMIZE|(!Case?OP_IGNORECASE:0)))
 			{
 				int n = re.GetBracketsCount();
-				SMatch *m = (SMatch *)xf_malloc(n*sizeof(SMatch));
-
-				if (!m)
-					return FALSE;
-
-				if (re.SearchEx(this->Str,this->Str+Position,this->Str+StrSize,m,n))
+				if (n)
 				{
-					*SearchLength = m[0].end - m[0].start;
-					CurPos = m[0].start;
-					ReplaceStr=ReplaceBrackets(this->Str,ReplaceStr,m,n);
-					free(m);
-					return TRUE;
+					std::vector<RegExpMatch> m(n);
+					MatchHash hm;
+					if (re.SearchEx(ReStringView(this->Str, StrSize), Position, m.data(), n, &hm))
+					{
+						*SearchLength = m[0].end - m[0].start;
+						CurPos = m[0].start;
+						ReplaceStr=ReplaceBrackets(this->Str,ReplaceStr,m.data(),n);
+						return TRUE;
+					}
 				}
-
-				free(m);
 			}
 
 			return FALSE;

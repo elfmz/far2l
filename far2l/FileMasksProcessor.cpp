@@ -37,13 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FileMasksProcessor.hpp"
 #include "processname.hpp"
+#include "HeapStackArray.hpp"
 
 FileMasksProcessor::FileMasksProcessor():
 	BaseFileMask(),
 	re(nullptr),
-	m(nullptr),
-	n(0),
-	bRE(false)
+	n(0)
 {
 }
 
@@ -51,17 +50,8 @@ void FileMasksProcessor::Free()
 {
 	Masks.Free();
 
-	if (re)
-		delete re;
-
-	re = nullptr;
-
-	if (m)
-		xf_free(m);
-
-	m = nullptr;
+	re.reset();
 	n = 0;
-	bRE = false;
 }
 
 /*
@@ -79,26 +69,15 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 	if (Flags&FMPF_ADDASTERISK)
 		flags|=ULF_ADDASTERISK;
 
-	bRE = (masks && *masks == L'/');
-
-	if (bRE)
+	if (masks && *masks == L'/')
 	{
-		re = new(std::nothrow) RegExp;
-
+		re.reset(new(std::nothrow) RegExp);
 		if (re && re->Compile(masks, OP_PERLSTYLE|OP_OPTIMIZE))
 		{
 			n = re->GetBracketsCount();
-			m = (SMatch *)xf_malloc(n*sizeof(SMatch));
-
-			if (!m)
-			{
-				n = 0;
-				return false;
-			}
-
 			return true;
 		}
-
+		re.reset();
 		return false;
 	}
 
@@ -108,7 +87,7 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 
 bool FileMasksProcessor::IsEmpty() const
 {
-	if (bRE)
+	if (re)
 	{
 		return !n;
 	}
@@ -121,17 +100,11 @@ bool FileMasksProcessor::IsEmpty() const
    Путь к файлу в FileName НЕ игнорируется */
 bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 {
-	if (bRE)
+	if (re)
 	{
+		HEAP_STACK_ARRAY(RegExpMatch, m, n, 32);
 		int i = n;
-		int len = StrLength(FileName);
-		bool ret = re->Search(FileName,FileName+len,m,i) ? TRUE : FALSE;
-
-		//Освободим память если большая строка, чтоб не накапливалось.
-		if (len > 1024)
-			re->CleanStack();
-
-		return ret;
+		return re->Search(ReStringView(FileName), m, i);
 	}
 
 	const wchar_t *MaskPtr;   // указатель на текущую маску в списке

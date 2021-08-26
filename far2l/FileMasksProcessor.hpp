@@ -59,9 +59,6 @@ class FileMasksProcessor : public BaseFileMask
 
 	private:
 		UserDefinedList Masks; // список масок файлов
-		RegExp *re;
-		SMatch *m;
-		int n;
-		bool bRE;
-
+		std::unique_ptr<RegExp> re;
+		int n = 0;
 };

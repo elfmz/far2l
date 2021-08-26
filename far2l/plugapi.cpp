@@ -2573,7 +2573,7 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 		case RECTL_MATCHEX:
 		{
 			RegExpSearch* data=(RegExpSearch*)Param;
-			return re->MatchEx(data->Text,data->Text+data->Position,data->Text+data->Length,data->Match,data->Count
+			return re->MatchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
 			                   ,data->Reserved
 #endif
@@ -2582,7 +2582,7 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 		case RECTL_SEARCHEX:
 		{
 			RegExpSearch* data=(RegExpSearch*)Param;
-			return re->SearchEx(data->Text,data->Text+data->Position,data->Text+data->Length,data->Match,data->Count
+			return re->SearchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
 			                    ,data->Reserved
 #endif

@@ -31,24 +31,6 @@ char MakeHexDigit(const unsigned char c)
 	return 0;
 }
 
-size_t StrStartsFrom(const std::string &haystack, const char *needle)
-{
-	size_t l = strlen(needle);
-	if (!l || haystack.size() < l)
-		return 0;
-		
-	return memcmp(haystack.c_str(), needle, l) ? 0 : l;
-}
-
-size_t StrEndsBy(const std::string &haystack, const char *needle)
-{
-	size_t l = strlen(needle);
-	if (!l || haystack.size() < l)
-		return 0;
-		
-	return memcmp(haystack.c_str() + haystack.size() - l, needle, l) ? 0 : l;
-}
-
 ////////////////////////////////////////////////////////////////
 
 void CheckedCloseFD(int &fd)

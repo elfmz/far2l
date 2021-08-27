@@ -146,6 +146,7 @@ public:
         Py_SetProgramName((wchar_t *)progname.c_str());
         Py_Initialize();
         PyEval_InitThreads();
+        TranslateInstallPath_Lib2Share(pluginPath);
         if (!StartThread()) {
             PYTHON_LOG("StartThread failed, fallback to synchronous initialization\n");
             ThreadProc();

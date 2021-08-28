@@ -840,7 +840,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		//   При копировании только элемента под курсором берем его имя в кавычки, если оно содержит разделители.
 		CopyDlg[ID_SC_TARGETEDIT].strData = strSelName;
 
-		if (!Move && wcspbrk(CopyDlg[ID_SC_TARGETEDIT].strData,L",;"))
+		if (!Move && CopyDlg[ID_SC_TARGETEDIT].strData.ContainsAnyOf(",;"))
 		{
 			Unquote(CopyDlg[ID_SC_TARGETEDIT].strData);     // уберем все лишние кавычки
 			InsertQuote(CopyDlg[ID_SC_TARGETEDIT].strData); // возьмем в кавычки, т.к. могут быть разделители
@@ -864,7 +864,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				   Если цель содержит разделители, то возьмем ее в кавычки, дабы не получить
 				   ерунду при F5, Enter в панелях, когда пользователь включит MultiCopy
 				*/
-				if (!Move && wcspbrk(CopyDlg[ID_SC_TARGETEDIT].strData,L",;"))
+				if (!Move && CopyDlg[ID_SC_TARGETEDIT].strData.ContainsAnyOf(",;"))
 				{
 					Unquote(CopyDlg[ID_SC_TARGETEDIT].strData);     // уберем все лишние кавычки
 					InsertQuote(CopyDlg[ID_SC_TARGETEDIT].strData); // возьмем в кавычки, т.к. могут быть разделители
@@ -1021,7 +1021,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				Opt.CMOpt.SparseFiles=CopyDlg[ID_SC_SPARSEFILES].Selected;
 				Opt.CMOpt.UseCOW=CopyDlg[ID_SC_USECOW].Selected;
 
-				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !wcspbrk(strCopyDlgValue,L",;")) // отключено multi*
+				if (!CopyDlg[ID_SC_MULTITARGET].Selected || !strCopyDlgValue.ContainsAnyOf(",;")) // отключено multi*
 				{
 					// уберем лишние кавычки
 					Unquote(strCopyDlgValue);
@@ -1218,7 +1218,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				// Если выделенных элементов больше 1 и среди них есть каталог, то всегда
 				// делаем так, чтобы на конце был '/'
 				// деламем так не всегда, а только когда NameTmp не является маской.
-				if (AddSlash && !wcspbrk(strNameTmp,L"*?"))
+				if (AddSlash && !strNameTmp.ContainsAnyOf("*?"))
 					AddEndSlash(strNameTmp);
 
 				if (CDP.SelCount==1 && !CDP.FolderPresent)
@@ -1515,7 +1515,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					if (MultiCopy) // мультикопирование
 					{
 						// Добавим кавычки, если имя каталога содержит символы-разделители
-						if (wcspbrk(strNewFolder,L";,"))
+						if (strNewFolder.ContainsAnyOf(";,"))
 							InsertQuote(strNewFolder);
 
 						if (strOldFolder.GetLength())
@@ -1602,7 +1602,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	if (!IsSlash(strNewPath.At(strNewPath.GetLength()-1)) &&
 	        SrcPanel->GetSelCount()>1 &&
-	        !wcspbrk(strNewPath,L"*?") &&
+	        !strNewPath.ContainsAnyOf("*?") &&
 	        apiGetFileAttributes(strNewPath)==INVALID_FILE_ATTRIBUTES)
 	{
 		switch (Message(FMSG_WARNING,3,MSG(MWarning),strNewPath,MSG(MCopyDirectoryOrFile),MSG(MCopyDirectoryOrFileDirectory),MSG(MCopyDirectoryOrFileFile),MSG(MCancel)))
@@ -1671,7 +1671,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			else
 				SelectedFolderNameLength=0;
 
-			if (wcspbrk(Dest,L"*?"))
+			if (strDest.ContainsAnyOf("*?"))
 				ConvertWildcards(strSelName, strDest, SelectedFolderNameLength);
 
 			DestAttr=apiGetFileAttributes(strDest);

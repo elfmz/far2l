@@ -184,6 +184,7 @@ class FARString
 		FARString& Clear();
 
 		const wchar_t *CPtr() const { return m_pData->GetData(); }
+		const wchar_t *CEnd() const { return m_pData->GetData() + m_pData->GetLength(); }
 		operator const wchar_t *() const { return m_pData->GetData(); }
 
 		FARString SubStr(size_t Pos, size_t Len = -1);
@@ -232,6 +233,12 @@ class FARString
 
 		bool Begins(wchar_t Ch) const { return m_pData->GetLength() > 0 && *m_pData->GetData() == Ch; }
 		bool Begins(const wchar_t *lpwszFind) const { return m_pData->GetLength() > 0 && wcsncmp(m_pData->GetData(), lpwszFind, wcslen(lpwszFind)) == 0; }
+
+		template <typename CharT>
+			bool ContainsAnyOf(const CharT *needles)
+		{
+			return FindAnyOfChars(CPtr(), CPtr() + GetLength(), needles) != nullptr;
+		}
 };
 
 //typedef FARString FARString;

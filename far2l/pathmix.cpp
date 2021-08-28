@@ -59,30 +59,17 @@ bool IsAbsolutePath(const wchar_t *Path)
 
 bool IsNetworkPath(const wchar_t *Path)
 {
-	return Path && ((Path[0] == GOOD_SLASH && Path[1] == GOOD_SLASH && !HasPathPrefix(Path))||(HasPathPrefix(Path) && !StrCmpNI(Path+4,L"UNC/",4)));
+	return false;
 }
 
 bool IsNetworkServerPath(const wchar_t *Path)
 {
-/*
-	"//server/share/" is valid windows path.
-	"//server/" is not.
-*/
-	bool Result=false;
-	if(IsNetworkPath(Path))
-	{
-		LPCWSTR SharePtr=wcspbrk(HasPathPrefix(Path)?Path+8:Path+2,L"/");
-		if(!SharePtr || !SharePtr[1] || IsSlash(SharePtr[1]))
-		{
-			Result=true;
-		}
-	}
-	return Result;
+	return false;
 }
 
 bool IsLocalPath(const wchar_t *Path)
 {
-	return (Path && Path[0] == L'/' && Path[1] != L'/');
+	return (Path && Path[0] == L'/'); // && Path[1] != L'/'
 }
 
 bool IsLocalRootPath(const wchar_t *Path)
@@ -249,9 +236,7 @@ const wchar_t* PointToExt(const wchar_t *lpwszPath)
 
 const wchar_t* PointToExt(FARString& strPath)
 {
-	const wchar_t *lpwszPath=strPath.CPtr();
-	const wchar_t *lpwszEndPtr=lpwszPath+strPath.GetLength();
-	return PointToExt(lpwszPath,lpwszEndPtr);
+	return PointToExt(strPath.CPtr(), strPath.CEnd());
 }
 
 const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
@@ -265,10 +250,7 @@ const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 	{
 		if (*lpwszExtPtr==L'.')
 		{
-//			if (IsSlash(*(lpwszExtPtr-1)) || *(lpwszExtPtr-1)==L':')
-//				return lpwszEndPtr;
-///			else
-				return lpwszExtPtr;
+			return lpwszExtPtr;
 		}
 
 		if (IsSlash(*lpwszExtPtr))

@@ -204,67 +204,57 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 			{
 				if (Length > 0)
 				{
-					if (PackAsterisks && 3==Length && 0==memcmp(CurList, L"*.*", 3 * sizeof(wchar_t)))
-					{
-						item=L"*";
+					item.set(CurList, Length);
 
-						if (!item.Str || !Array.addItem(item))
+					if (item.Str)
+					{
+						if (PackAsterisks)
+						{
+							int i=0;
+							bool lastAsterisk=false;
+
+							while (i<Length)
+							{
+								if (item.Str[i]==L'*')
+								{
+									if (!lastAsterisk)
+										lastAsterisk=true;
+									else
+									{
+										wmemcpy(item.Str+i, item.Str+i+1, StrLength(item.Str+i+1)+1);
+										--i;
+									}
+								}
+								else
+									lastAsterisk=false;
+
+								++i;
+							}
+						}
+
+						if (AddAsterisk && !FindAnyOfChars(item.Str, "?*."))
+						{
+							Length=StrLength(item.Str);
+							/* $ 18.09.2002 DJ
+							   выделялось на 1 байт меньше, чем надо
+							*/
+							item.Str=static_cast<wchar_t*>(xf_realloc(item.Str, (Length+2)*sizeof(wchar_t)));
+
+							/* DJ $ */
+							if (item.Str)
+							{
+								item.Str[Length]=L'*';
+								item.Str[Length+1]=0;
+							}
+							else
+								Error=true;
+						}
+
+						if (!Error && !Array.addItem(item))
 							Error=true;
 					}
 					else
-					{
-						item.set(CurList, Length);
-
-						if (item.Str)
-						{
-							if (PackAsterisks)
-							{
-								int i=0;
-								bool lastAsterisk=false;
-
-								while (i<Length)
-								{
-									if (item.Str[i]==L'*')
-									{
-										if (!lastAsterisk)
-											lastAsterisk=true;
-										else
-										{
-											wmemcpy(item.Str+i, item.Str+i+1, StrLength(item.Str+i+1)+1);
-											--i;
-										}
-									}
-									else
-										lastAsterisk=false;
-
-									++i;
-								}
-							}
-
-							if (AddAsterisk && !wcspbrk(item.Str,L"?*."))
-							{
-								Length=StrLength(item.Str);
-								/* $ 18.09.2002 DJ
-								   выделялось на 1 байт меньше, чем надо
-								*/
-								item.Str=static_cast<wchar_t*>(xf_realloc(item.Str, (Length+2)*sizeof(wchar_t)));
-
-								/* DJ $ */
-								if (item.Str)
-								{
-									item.Str[Length]=L'*';
-									item.Str[Length+1]=0;
-								}
-								else
-									Error=true;
-							}
-
-							if (!Error && !Array.addItem(item))
-								Error=true;
-						}
-						else
-							Error=true;
-					}
+						Error=true;
 
 					CurList+=RealLength;
 				}

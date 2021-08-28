@@ -311,7 +311,14 @@ void FileList::SortFileList(int KeepPosition)
 
 		hSortPlugin=(PanelMode==PLUGIN_PANEL && hPlugin && reinterpret_cast<PluginHandle*>(hPlugin)->pPlugin->HasCompare()) ? hPlugin:nullptr;
 
-		far_qsort(ListData,FileCount,sizeof(*ListData),SortList);
+		for (int i = 0; i < FileCount; ++i)
+		{
+			auto Item = ListData[i];
+			const auto NamePtr = PointToName(Item->strName);
+			Item->FileNamePos = (unsigned short)std::min(size_t(NamePtr - Item->strName.CPtr()), (size_t)0xffff);
+			Item->FileExtPos = (unsigned short)std::min(size_t(PointToExt(NamePtr) - NamePtr), (size_t)0xffff);
+		}
+		qsort(ListData,FileCount,sizeof(*ListData),SortList);
 
 		if (KeepPosition)
 			GoToFile(strCurName);
@@ -322,10 +329,8 @@ int _cdecl SortList(const void *el1,const void *el2)
 {
 	int RetCode;
 	int64_t RetCode64;
-	const wchar_t *Ext1=nullptr,*Ext2=nullptr;
-	FileListItem *SPtr1,*SPtr2;
-	SPtr1=((FileListItem **)el1)[0];
-	SPtr2=((FileListItem **)el2)[0];
+	FileListItem *SPtr1 = ((FileListItem **)el1)[0];
+	FileListItem *SPtr2 = ((FileListItem **)el2)[0];
 
 	if (SPtr1->strName.GetLength() == 2 && SPtr1->strName.At(0)==L'.' && SPtr1->strName.At(1)==L'.')
 		return -1;
@@ -373,8 +378,18 @@ int _cdecl SortList(const void *el1,const void *el2)
 		FileList::FreePluginPanelItem(&pi2);
 
 		if (RetCode!=-2)
-			return ListSortOrder*RetCode;
+			return RetCode * ListSortOrder;
 	}
+
+	const wchar_t *Name1 = UNLIKELY(SPtr1->FileNamePos == 0xffff)
+			? PointToName(SPtr1->strName.CPtr() + 0xfffe, SPtr1->strName.CEnd()) : SPtr1->strName.CPtr() + SPtr1->FileNamePos;
+	const wchar_t *Name2 = UNLIKELY(SPtr2->FileNamePos == 0xffff)
+			? PointToName(SPtr2->strName.CPtr() + 0xfffe, SPtr2->strName.CEnd()) : SPtr2->strName.CPtr() + SPtr2->FileNamePos;
+
+	const wchar_t *Ext1 = UNLIKELY(SPtr1->FileExtPos == 0xffff)
+			? PointToExt(Name1 + 0xfffe) : Name1 + SPtr1->FileExtPos;
+	const wchar_t *Ext2 = UNLIKELY(SPtr2->FileExtPos == 0xffff)
+			? PointToExt(Name2 + 0xfffe) : Name2 + SPtr2->FileExtPos;
 
 	// НЕ СОРТИРУЕМ КАТАЛОГИ В РЕЖИМЕ "ПО РАСШИРЕНИЮ" (Опционально!)
 	if (!(ListSortMode == BY_EXT && !Opt.SortFolderExt && ((SPtr1->FileAttr & FILE_ATTRIBUTE_DIRECTORY) && (SPtr2->FileAttr & FILE_ATTRIBUTE_DIRECTORY))))
@@ -385,57 +400,54 @@ int _cdecl SortList(const void *el1,const void *el2)
 				break;
 
 			case BY_EXT:
-				Ext1=PointToExt(SPtr1->strName);
-				Ext2=PointToExt(SPtr2->strName);
-
 				if (!*Ext1 && !*Ext2)
 					break;
 
 				if (!*Ext1)
-					return(-ListSortOrder);
+					return -ListSortOrder;
 
 				if (!*Ext2)
-					return(ListSortOrder);
+					return ListSortOrder;
 
 				if (ListNumericSort)
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?NumStrCmp(Ext1+1,Ext2+1):NumStrCmpI(Ext1+1,Ext2+1));
+					RetCode=(ListCaseSensitiveSort?NumStrCmp(Ext1+1,Ext2+1):NumStrCmpI(Ext1+1,Ext2+1));
 				}
 				else
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?StrCmp(Ext1+1,Ext2+1):StrCmpI(Ext1+1,Ext2+1));
+					RetCode=(ListCaseSensitiveSort?StrCmp(Ext1+1,Ext2+1):StrCmpI(Ext1+1,Ext2+1));
 				}
 
 				if (RetCode)
-					return RetCode;
+					return RetCode * ListSortOrder;
 				break;
 
 			case BY_MTIME:
 				if (!(RetCode64=FileTimeDifference(&SPtr1->WriteTime,&SPtr2->WriteTime)))
 					break;
 
-				return -ListSortOrder*(RetCode64<0?-1:1);
+				return (RetCode64 < 0) ? ListSortOrder : -ListSortOrder;
 
 			case BY_CTIME:
 				if (!(RetCode64=FileTimeDifference(&SPtr1->CreationTime,&SPtr2->CreationTime)))
 					break;
 
-				return -ListSortOrder*(RetCode64<0?-1:1);
+				return (RetCode64 < 0) ? ListSortOrder : -ListSortOrder;
 
 			case BY_ATIME:
 				if (!(RetCode64=FileTimeDifference(&SPtr1->AccessTime,&SPtr2->AccessTime)))
 					break;
 
-				return -ListSortOrder*(RetCode64<0?-1:1);
+				return (RetCode64 < 0) ? ListSortOrder : -ListSortOrder;
 
 			case BY_CHTIME:
-				if (!(RetCode64=FileTimeDifference(&SPtr1->ChangeTime, &SPtr2->ChangeTime)))
+				if (!(RetCode64 = FileTimeDifference(&SPtr1->ChangeTime, &SPtr2->ChangeTime)))
 					break;
 
-				return -ListSortOrder*(RetCode64<0?-1:1);
+				return (RetCode64 < 0) ? ListSortOrder : -ListSortOrder;
 
 			case BY_SIZE:
-				if (SPtr1->FileSize==SPtr2->FileSize)
+				if (SPtr1->FileSize == SPtr2->FileSize)
 					break;
 
 				return ((SPtr1->FileSize > SPtr2->FileSize) ? -ListSortOrder : ListSortOrder);
@@ -454,28 +466,28 @@ int _cdecl SortList(const void *el1,const void *el2)
 
 				if (ListNumericSort)
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?NumStrCmp(SPtr1->DizText,SPtr2->DizText):NumStrCmpI(SPtr1->DizText,SPtr2->DizText));
+					RetCode=(ListCaseSensitiveSort?NumStrCmp(SPtr1->DizText,SPtr2->DizText):NumStrCmpI(SPtr1->DizText,SPtr2->DizText));
 				}
 				else
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?StrCmp(SPtr1->DizText,SPtr2->DizText):StrCmpI(SPtr1->DizText,SPtr2->DizText));
+					RetCode=(ListCaseSensitiveSort?StrCmp(SPtr1->DizText,SPtr2->DizText):StrCmpI(SPtr1->DizText,SPtr2->DizText));
 				}
 
 				if (RetCode)
-					return RetCode;
+					return RetCode * ListSortOrder;
 				break;
 
 			case BY_OWNER:
-				RetCode=ListSortOrder*StrCmpI(SPtr1->strOwner,SPtr2->strOwner);
+				RetCode = StrCmpI(SPtr1->strOwner, SPtr2->strOwner);
 				if (RetCode)
-					return RetCode;
+					return RetCode * ListSortOrder;
 				break;
 
 			case BY_PHYSICALSIZE:
 				return (SPtr1->PhysicalSize > SPtr2->PhysicalSize) ? -ListSortOrder : ListSortOrder;
 
 			case BY_NUMLINKS:
-				if (SPtr1->NumberOfLinks==SPtr2->NumberOfLinks)
+				if (SPtr1->NumberOfLinks == SPtr2->NumberOfLinks)
 					break;
 
 				return (SPtr1->NumberOfLinks > SPtr2->NumberOfLinks) ? -ListSortOrder : ListSortOrder;
@@ -487,8 +499,6 @@ int _cdecl SortList(const void *el1,const void *el2)
 				{
 					const wchar_t *Path1 = SPtr1->strName.CPtr();
 					const wchar_t *Path2 = SPtr2->strName.CPtr();
-					const wchar_t *Name1 = PointToName(SPtr1->strName);
-					const wchar_t *Name2 = PointToName(SPtr2->strName);
 					NameCmp = ListCaseSensitiveSort ? StrCmpNN(Path1, static_cast<int>(Name1-Path1), Path2, static_cast<int>(Name2-Path2)) : StrCmpNNI(Path1, static_cast<int>(Name1-Path1), Path2, static_cast<int>(Name2-Path2));
 					if (!NameCmp)
 						NameCmp = ListCaseSensitiveSort ? NumStrCmp(Name1, Name2) : NumStrCmpI(Name1, Name2);
@@ -499,10 +509,10 @@ int _cdecl SortList(const void *el1,const void *el2)
 				{
 					NameCmp = ListCaseSensitiveSort ? StrCmp(SPtr1->strName, SPtr2->strName) : StrCmpI(SPtr1->strName, SPtr2->strName);
 				}
-				NameCmp *= ListSortOrder;
+
 				if (!NameCmp)
-					NameCmp = SPtr1->Position > SPtr2->Position ? ListSortOrder : -ListSortOrder;
-				return NameCmp;
+					NameCmp = SPtr1->Position > SPtr2->Position ? 1 : -1;
+				return NameCmp * ListSortOrder;
 			}
 
 			case BY_CUSTOMDATA:
@@ -519,15 +529,15 @@ int _cdecl SortList(const void *el1,const void *el2)
 
 				if (ListNumericSort)
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?NumStrCmp(SPtr1->strCustomData, SPtr2->strCustomData):NumStrCmpI(SPtr1->strCustomData, SPtr2->strCustomData));
+					RetCode=(ListCaseSensitiveSort?NumStrCmp(SPtr1->strCustomData, SPtr2->strCustomData):NumStrCmpI(SPtr1->strCustomData, SPtr2->strCustomData));
 				}
 				else
 				{
-					RetCode=ListSortOrder*(ListCaseSensitiveSort?StrCmp(SPtr1->strCustomData, SPtr2->strCustomData):StrCmpI(SPtr1->strCustomData, SPtr2->strCustomData));
+					RetCode=(ListCaseSensitiveSort?StrCmp(SPtr1->strCustomData, SPtr2->strCustomData):StrCmpI(SPtr1->strCustomData, SPtr2->strCustomData));
 				}
 
 				if (RetCode)
-					return RetCode;
+					return ListSortOrder*RetCode;
 				break;
 		}
 	}
@@ -536,24 +546,13 @@ int _cdecl SortList(const void *el1,const void *el2)
 
 	if (!Opt.SortFolderExt && (SPtr1->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		Ext1=SPtr1->strName.CPtr()+SPtr1->strName.GetLength();
-	}
-	else
-	{
-		if (!Ext1) Ext1=PointToExt(SPtr1->strName);
+		Ext1 = SPtr1->strName.CPtr() + SPtr1->strName.GetLength();
 	}
 
 	if (!Opt.SortFolderExt && (SPtr2->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		Ext2=SPtr2->strName.CPtr()+SPtr2->strName.GetLength();
+		Ext2 = SPtr2->strName.CPtr() + SPtr2->strName.GetLength();
 	}
-	else
-	{
-		if (!Ext2) Ext2=PointToExt(SPtr2->strName);
-	}
-
-	const wchar_t *Name1=PointToName(SPtr1->strName);
-	const wchar_t *Name2=PointToName(SPtr2->strName);
 
 	if (ListNumericSort)
 		NameCmp=ListCaseSensitiveSort?NumStrCmpN(Name1,static_cast<int>(Ext1-Name1),Name2,static_cast<int>(Ext2-Name2)):NumStrCmpNI(Name1,static_cast<int>(Ext1-Name1),Name2,static_cast<int>(Ext2-Name2));
@@ -568,12 +567,10 @@ int _cdecl SortList(const void *el1,const void *el2)
 			NameCmp=ListCaseSensitiveSort?StrCmp(Ext1,Ext2):StrCmpI(Ext1,Ext2);
 	}
 
-	NameCmp*=ListSortOrder;
-
 	if (!NameCmp)
-		NameCmp=SPtr1->Position>SPtr2->Position ? ListSortOrder:-ListSortOrder;
+		NameCmp = (SPtr1->Position > SPtr2->Position) ? 1 : -1;
 
-	return NameCmp;
+	return NameCmp * ListSortOrder;
 }
 
 void FileList::SetFocus()
@@ -3187,7 +3184,7 @@ int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 
 	for (int I=CurFile+(Next?Direct:0); I >= 0 && I < FileCount; I+=Direct)
 	{
-		if (CmpName(strMask,ListData[I]->strName,true,I==CurFile))
+		if (CmpName(strMask,ListData[I]->strName,true))
 		{
 			if (!TestParentFolderName(ListData[I]->strName))
 			{
@@ -3388,14 +3385,14 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	FileFilter Filter(this,FFT_SELECT);
 	bool bUseFilter = false;
 	FileListItem *CurPtr;
-	static FARString strPrevMask=L"*.*";
+	static FARString strPrevMask=L"*";
 	/* $ 20.05.2002 IS
 	   При обработке маски, если работаем с именем файла на панели,
 	   берем каждую квадратную скобку в имени при образовании маски в скобки,
 	   чтобы подобные имена захватывались полученной маской - это специфика,
 	   диктуемая CmpName.
 	*/
-	FARString strMask=L"*.*", strRawMask;
+	FARString strMask=L"*", strRawMask;
 	int Selection=0,I;
 	bool WrapBrackets=false; // говорит о том, что нужно взять кв.скобки в скобки
 

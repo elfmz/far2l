@@ -155,7 +155,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 				CurWildPtr++;
 				*(DestNamePtr++)=L'.';
 
-				if (wcspbrk(CurWildPtr,L"*?"))
+				if (FindAnyOfChars(CurWildPtr, "*?"))
 					while (*SrcNamePtr)
 						if (*(SrcNamePtr++)==L'.')
 							break;
@@ -188,101 +188,84 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 	return TRUE;
 }
 
-
 // IS: это реальное тело функции сравнения с маской, но использовать
 // IS: "снаружи" нужно не эту функцию, а CmpName (ее тело расположено
 // IS: после CmpName_Body)
-static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameSearchMode)
+static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 {
-	wchar_t stringc,patternc,rangec;
-	int match;
-
-	for (;; ++str)
+	for (;;++str)
 	{
 		/* $ 01.05.2001 DJ
 		   используем инлайновые версии
 		*/
-		stringc=Upper(*str);
-		patternc=Upper(*pattern++);
+		wchar_t rangec;
+		int match;
+		wchar_t stringc = *str;
+		wchar_t patternc = *pattern++;
 
 		switch (patternc)
 		{
 			case 0:
 				return !stringc;
+
 			case L'?':
 
 				if (!stringc)
-					return FALSE;
+					return false;
 
 				break;
+
 			case L'*':
 
 				if (!*pattern)
-					return TRUE;
+					return true;
 
-				/* $ 01.05.2001 DJ
-				   оптимизированная ветка работает и для имен с несколькими
-				   точками
-				*/
-				if (*pattern==L'.')
+				if (!FindAnyOfChars(pattern, "*?["))
 				{
-					if (pattern[1]==L'*' && !pattern[2])
-						return TRUE;
-
-					if (!wcspbrk(pattern, L"*?["))
-					{
-						const wchar_t *dot = wcsrchr(str, L'.');
-
-						if (!pattern[1])
-							return (!dot || !dot[1]);
-
-						const wchar_t *patdot = wcschr(pattern+1, L'.');
-
-						if (patdot  && !dot)
-							return FALSE;
-
-						if (!patdot && dot )
-							return !StrCmpI(pattern+1,dot+1);
-					}
+					const size_t pattern_len = wcslen(pattern);
+					const size_t str_len = wcslen(str);
+					return (str_len >= pattern_len
+						&& wmemcmp(pattern, str + str_len - pattern_len, pattern_len) == 0);
 				}
 
 				do
 				{
-					if(CmpName(pattern,str,false,CmpNameSearchMode))
-						return TRUE;
+					if (CmpName_Body(pattern, str))
+						return true;
 				}
 				while (*str++);
 
-				return FALSE;
+				return false;
+
 			case L'[':
 
-				if (!wcschr(pattern,L']'))
+				if (!wcschr(pattern, L']'))
 				{
 					if (patternc != stringc)
-						return (FALSE);
+						return false;
 
 					break;
 				}
 
-				if (*pattern && *(pattern+1)==L']')
+				if (*pattern && *(pattern+1) == L']')
 				{
 					if (*pattern!=*str)
-						return FALSE;
+						return false;
 
 					pattern+=2;
 					break;
 				}
 
 				match = 0;
-
-				while ((rangec = Upper(*pattern++)))
+				stringc = Upper(stringc);
+				while ((rangec = *pattern++) != 0)
 				{
 					if (rangec == L']')
 					{
 						if (match)
 							break;
 						else
-							return FALSE;
+							return false;
 					}
 
 					if (match)
@@ -290,27 +273,21 @@ static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameS
 
 					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']')
 					{
-						match = (stringc <= Upper(*pattern) &&
-						         Upper(*(pattern - 2)) <= stringc);
+						match = (stringc <= Upper(*pattern) && Upper(*(pattern - 2)) <= stringc);
 						pattern++;
 					}
 					else
-						match = (stringc == rangec);
+						match = (stringc == Upper(rangec));
 				}
 
 				if (!rangec)
-					return FALSE;
+					return false;
 
 				break;
-			default:
 
-				if (patternc != stringc)
-				{
-					if (patternc==L'.' && !stringc && !CmpNameSearchMode)
-						return(*pattern!=L'.' && CmpName(pattern,str,true,CmpNameSearchMode));
-					else
-						return FALSE;
-				}
+			default:
+				if (Upper(patternc) != stringc && Lower(patternc) != stringc)
+					return false;
 
 				break;
 		}
@@ -318,13 +295,13 @@ static int CmpName_Body(const wchar_t *pattern,const wchar_t *str, bool CmpNameS
 }
 
 // IS: функция для внешнего мира, использовать ее
-int CmpName(const wchar_t *pattern,const wchar_t *str, bool skippath, bool CmpNameSearchMode)
+bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath)
 {
 	if (!pattern || !str)
-		return FALSE;
+		return false;
 
 	if (skippath)
-		str=PointToName(str);
+		str = PointToName(str);
 
-	return CmpName_Body(pattern,str,CmpNameSearchMode);
+	return CmpName_Body(pattern, str);
 }

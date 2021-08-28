@@ -3121,7 +3121,7 @@ static bool FindFilesProcess(Vars& v)
 FindFiles::FindFiles()
 {
 	_ALGO(CleverSysLog clv(L"FindFiles::FindFiles()"));
-	static FARString strLastFindMask=L"*.*", strLastFindStr;
+	static FARString strLastFindMask=L"*", strLastFindStr;
 	// Статической структуре и статические переменные
 	static FARString strSearchFromRoot;
 	static int LastCmpCase=0,LastWholeWords=0,LastSearchInArchives=0,LastSearchHex=0;

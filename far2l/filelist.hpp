@@ -79,6 +79,11 @@ struct FileListItem
 	bool DeleteDiz;
 	uint8_t ShowFolderSize;
 
+	/// temporary values used to optimize sorting, they fit into
+	/// 8-bytes alignment gap so there is no memory waisted
+	unsigned short FileNamePos;	// offset from beginning of StrName
+	unsigned short FileExtPos; // offset from FileExtPos
+
 	void Clear()
 	{
 		strName.Clear();

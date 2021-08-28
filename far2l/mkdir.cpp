@@ -75,7 +75,7 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				// это по поводу создания одиночного каталога, который
 				// начинается с пробела! Чтобы ручками не заключать
 				// такой каталог в кавычки
-				if (Opt.MultiMakeDir && !wcspbrk(strDirName,L";,\""))
+				if (Opt.MultiMakeDir && !strDirName.ContainsAnyOf(";,\""))
 				{
 					QuoteSpaceOnly(strDirName);
 				}

@@ -3552,17 +3552,17 @@ the character '#|#'.
 ^Usage examples of exclude masks:
  1. *.cpp
     All files with the extension #cpp#.
- 2. *.*|*.bak,*.tmp
+ 2. *|*.bak,*.tmp
     All files except for the files with extensions #bak# and #tmp#.
- 3. *.*|
+ 3. *|
     This mask has an error - the character | is entered, but the
     mask itself is not specified.
- 4. *.*|*.bak|*.tmp
+ 4. *|*.bak|*.tmp
     Also an error - the character | may not be contained in the mask
     more than once.
  5. |*.bak
     The same as *|*.bak
- 6. *.*|/^pict\d{1,3}\.gif$/i
+ 6. *|/^pict\d{1,3}\.gif$/i
     All files except for pict0.gif — pict999.gif, disregard the character case.
 
     The comma (or semicolon) is used for separating file masks from each other,

@@ -1567,7 +1567,7 @@ int TreeList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 
 	for (int i=CurFile+(Next?Direct:0); i >= 0 && i < TreeCount; i+=Direct)
 	{
-		if (CmpName(strMask,ListData[i]->strName,true,(i==CurFile)))
+		if (CmpName(strMask,ListData[i]->strName,true))
 		{
 			CurFile=i;
 			CurTopFile=CurFile-(Y2-Y1-1)/2;

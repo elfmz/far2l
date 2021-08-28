@@ -8,13 +8,11 @@
 template <class WHAT, size_t THRESHOLD = 16 + (0x80 / sizeof(WHAT))>
 	class StackHeapArray
 {
-	struct
-	{
-		char data[sizeof(WHAT)];
-	} _stk_placement[THRESHOLD];
+	typedef WHAT StackPlacementPrototype[THRESHOLD];
 
 	WHAT *_arr;
 	size_t _cnt;
+	char _stk_placement[sizeof(StackPlacementPrototype)] __attribute__((aligned(0x10)));
 
 	StackHeapArray() = delete;
 	StackHeapArray(const StackHeapArray &) = delete;

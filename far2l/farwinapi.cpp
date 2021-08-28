@@ -627,7 +627,7 @@ BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData, 
 		return TRUE;
 	}
 
-	if (!wcspbrk(lpwszFileName,L"*?"))
+	if (!FindAnyOfChars(lpwszFileName, "*?"))
 	{
 		if (apiGetFindDataForExactPathName(lpwszFileName, FindData))
 		{

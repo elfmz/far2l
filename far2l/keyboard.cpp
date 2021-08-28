@@ -1626,7 +1626,7 @@ uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 	if (Name[0] == L'%' && Name[1])
 		return KEY_INVALID;
 
-	if (Name[1] && wcspbrk(Name,L"()")) // если не один символ и встречаются '(' или ')', то это явно не клавиша!
+	if (Name[1] && FindAnyOfChars(Name, "()")) // если не один символ и встречаются '(' или ')', то это явно не клавиша!
 		return KEY_INVALID;
 
 //   if((Key=KeyNameMacroToKey(Name)) != (DWORD)-1)

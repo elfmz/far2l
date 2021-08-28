@@ -385,7 +385,7 @@ int InfoList::ProcessKey(int Key)
 
 				while ((p = GetCommaWord(p,strArgName)) )
 				{
-					if (!wcspbrk(strArgName, L"*?"))
+					if (!strArgName.ContainsAnyOf("*?"))
 					{
 						new FileEditor(strArgName,CP_AUTODETECT,FFILEEDIT_CANNEWFILE|FFILEEDIT_ENABLEF6);
 						break;

@@ -186,7 +186,7 @@ static FARString escapeSpace(const wchar_t* str) {
 
 FARString &EscapeSpace(FARString &strStr)
 {
-	if (strStr.IsEmpty() || wcspbrk(strStr, Opt.strQuotedSymbols)) {
+	if (strStr.IsEmpty() || strStr.ContainsAnyOf(Opt.strQuotedSymbols.CPtr())) {
 		strStr.Copy(escapeSpace(strStr.CPtr()));
 	}
 
@@ -951,7 +951,7 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 
 	FARString strSrc = SrcText; //copy FARString in case of SrcText == strDestText
 
-	if (!wcspbrk(strSrc,breakchar) && strSrc.GetLength() <= static_cast<size_t>(Width))
+	if (!strSrc.ContainsAnyOf(breakchar) && strSrc.GetLength() <= static_cast<size_t>(Width))
 	{
 		strDestText = strSrc;
 		return strDestText;

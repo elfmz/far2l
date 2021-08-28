@@ -1909,7 +1909,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 
 	if (nFlags & FLAG_NAME)
 	{
-		const wchar_t *ptr=wcspbrk(s,L":");
+		const wchar_t *ptr = wcschr(s, L':');
 
 		if (ptr)
 			s=ptr+1;
@@ -2456,10 +2456,10 @@ static bool _fattrFunc(int Type)
 
 		if (SelPanel)
 		{
-			if (wcspbrk(Str,L"*?") )
+			if (FindAnyOfChars(Str, "*?") )
 				Pos=SelPanel->FindFirst(Str);
 			else
-				Pos=SelPanel->FindFile(Str,wcspbrk(Str,L"/")?FALSE:TRUE);
+				Pos=SelPanel->FindFile(Str, FindAnyOfChars(Str, "/") ? FALSE : TRUE);
 
 			if (Pos >= 0)
 			{

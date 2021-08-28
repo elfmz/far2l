@@ -968,7 +968,7 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 	// Если маска содержит разделитель (',' или ';'), то возьмем ее в кавычки
 	if (!DotPtr)
 		strMask = L"*.";
-	else if (wcspbrk(DotPtr,L",;"))
+	else if (FindAnyOfChars(DotPtr, ",;"))
 		strMask.Format(L"\"*%ls\"",DotPtr);
 	else
 		strMask.Format(L"*%ls",DotPtr);

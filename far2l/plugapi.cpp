@@ -111,7 +111,7 @@ void WINAPI FarQsortEx(void *base, size_t nelem, size_t width,
                        int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
 {
 	if (base && fcmp)
-		far_qsortex((char*)base,nelem,width,fcmp,user);
+		far_qsortex(base,nelem,width,fcmp,user);
 }
 
 void *WINAPI FarBsearch(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *))
@@ -2214,7 +2214,7 @@ int WINAPI FarEditor( const wchar_t *FileName, const wchar_t *Title,
 
 int WINAPI FarCmpName(const wchar_t *pattern,const wchar_t *string,int skippath)
 {
-	return(CmpName(pattern,string,skippath!=0));
+	return(CmpName(pattern,string,skippath!=0) ? TRUE : FALSE);
 }
 
 

@@ -298,7 +298,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 		if (*CurStr==L'!')
 		{
-			if (wcspbrk(PSubstData->PassivePanel?PSubstData->strAnotherName.CPtr():PSubstData->Name,L"/:"))
+			if (FindAnyOfChars(PSubstData->PassivePanel?PSubstData->strAnotherName.CPtr():PSubstData->Name, "/:"))
 				strCurDir.Clear();
 		}
 		EscapeSpace(strCurDir);

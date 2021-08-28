@@ -1616,7 +1616,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 				// тогда SizeVarName=1 и varName=""
 				int __nParam,__oParam;
 				wchar_t *lpwszCurrKeyText = strCurrKeyText.GetBuffer();
-				wchar_t *Brack=(wchar_t *)wcspbrk(lpwszCurrKeyText,L"( "), Chr=0;
+				wchar_t *Brack=(wchar_t *)FindAnyOfChars(lpwszCurrKeyText, "( "), Chr=0;
 
 				if (Brack)
 				{

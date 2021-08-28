@@ -63,19 +63,23 @@ template <class StrT>
 template <class CharT>
 	size_t StrStartsFrom(const CharT *haystack, const CharT *needle)
 {
-	const size_t lh = tzlen(haystack);
-	const size_t l = tzlen(needle);
-	return (l <= lh && memcmp(haystack, needle, l * sizeof(CharT)) == 0) ? l : 0;
+	size_t i;
+	for (size_t i = 0; needle[i]; ++i) {
+		if (haystack[i] != needle[i])
+			return 0;
+	}
+	return i;
 }
 
 template <class StrT>
 	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type *needle)
 {
-	const size_t l = tzlen(needle);
-	if (!l || haystack.size() < l)
-		return 0;
-
-	return memcmp(haystack.c_str(), needle, l * sizeof(typename StrT::value_type)) ? 0 : l;
+	size_t i;
+	for (size_t i = 0; needle[i]; ++i) {
+		if (i >= haystack.size() || haystack[i] != needle[i])
+			return 0;
+	}
+	return i;
 }
 
 template <class StrT>
@@ -217,6 +221,35 @@ template <class CharT>
 {
 	StrTrimRight(str, spaces);
 	StrTrimLeft(str, spaces);
+}
+
+
+template <typename HaystackT, typename NeedlesT>
+	static const HaystackT *FindAnyOfChars(const HaystackT *haystack, const NeedlesT *needles)
+{
+	for(; *haystack; ++haystack)
+	{
+		for(size_t i = 0; needles[i]; ++i)
+		{
+			if (*haystack == (HaystackT)needles[i])
+				return haystack;
+		}
+	}
+	return nullptr;
+}
+
+template <typename HaystackIT, typename NeedlesT>
+	static HaystackIT FindAnyOfChars(HaystackIT haystack, const HaystackIT haystack_end, const NeedlesT *needles)
+{
+	for(; haystack != haystack_end; ++haystack)
+	{
+		for(size_t i = 0; needles[i]; ++i)
+		{
+			if (*haystack == (decltype(*haystack))needles[i])
+				return haystack;
+		}
+	}
+	return nullptr;
 }
 
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);

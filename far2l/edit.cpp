@@ -85,7 +85,7 @@ public:
 Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData):
 	m_next(nullptr),
 	m_prev(nullptr),
-	Str(bAllocateData ? reinterpret_cast<wchar_t*>(xf_malloc(sizeof(wchar_t))) : nullptr),
+	Str(bAllocateData ? reinterpret_cast<wchar_t*>(malloc(sizeof(wchar_t))) : nullptr),
 	StrSize(0),
 	MaxLength(-1),
 	Mask(nullptr),
@@ -129,13 +129,13 @@ Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData):
 Edit::~Edit()
 {
 	if (ColorList)
-		xf_free(ColorList);
+		free(ColorList);
 
 	if (Mask)
-		xf_free(Mask);
+		free(Mask);
 
 	if (Str)
-		xf_free(Str);
+		free(Str);
 }
 
 DWORD Edit::SetCodePage(UINT codepage)
@@ -168,7 +168,7 @@ DWORD Edit::SetCodePage(UINT codepage)
 			if (UsedDefaultChar)
 				Ret|=SETCP_WC2MBERROR;
 
-			char *decoded = (char*)xf_malloc(length);
+			char *decoded = (char*)malloc(length);
 
 			if (!decoded)
 			{
@@ -185,19 +185,19 @@ DWORD Edit::SetCodePage(UINT codepage)
 				length2 = WINPORT(MultiByteToWideChar)(codepage, 0, decoded, length, nullptr, 0);
 			}
 
-			wchar_t *encoded = (wchar_t*)xf_malloc((length2+1)*sizeof(wchar_t));
+			wchar_t *encoded = (wchar_t*)malloc((length2+1)*sizeof(wchar_t));
 
 			if (!encoded)
 			{
-				xf_free(decoded);
+				free(decoded);
 				Ret|=SETCP_OTHERERROR;
 				return Ret;
 			}
 
 			length2 = WINPORT(MultiByteToWideChar)(codepage, 0, decoded, length, encoded, length2);
 			encoded[length2] = L'\0';
-			xf_free(decoded);
-			xf_free(Str);
+			free(decoded);
+			free(Str);
 			Str = encoded;
 			StrSize = length2;
 		}
@@ -365,16 +365,16 @@ void Edit::FastShow()
 	if (Mask && *Mask)
 		RefreshStrByMask();
 
-	wchar_t *OutStrTmp=(wchar_t *)xf_malloc((EditLength+1)*sizeof(wchar_t));
+	wchar_t *OutStrTmp=(wchar_t *)malloc((EditLength+1)*sizeof(wchar_t));
 
 	if (!OutStrTmp)
 		return;
 
-	wchar_t *OutStr=(wchar_t *)xf_malloc((EditLength+1)*sizeof(wchar_t));
+	wchar_t *OutStr=(wchar_t *)malloc((EditLength+1)*sizeof(wchar_t));
 
 	if (!OutStr)
 	{
-		xf_free(OutStrTmp);
+		free(OutStrTmp);
 		return;
 	}
 
@@ -508,8 +508,8 @@ void Edit::FastShow()
 		}
 	}
 
-	xf_free(OutStr);
-	xf_free(OutStrTmp);
+	free(OutStr);
+	free(OutStrTmp);
 
 	/* $ 26.07.2000 tran
 	   при дроп-даун цвета нам не нужны */
@@ -926,7 +926,7 @@ int Edit::ProcessKey(int Key)
 				if (!ShortStr)
 					return FALSE;
 
-				xwcsncpy(ShortStr,Str,StrSize+1);
+				far_wcsncpy(ShortStr,Str,StrSize+1);
 				Len=StrLength(RemoveTrailingSpaces(ShortStr));
 				delete[] ShortStr;
 			}
@@ -1132,7 +1132,7 @@ int Edit::ProcessKey(int Key)
 			LeftPos=CurPos=0;
 			*Str=0;
 			StrSize=0;
-			Str=(wchar_t *)xf_realloc(Str,1*sizeof(wchar_t));
+			Str=(wchar_t *)realloc(Str,1*sizeof(wchar_t));
 			Select(-1,0);
 			Changed();
 			Show();
@@ -1160,7 +1160,7 @@ int Edit::ProcessKey(int Key)
 
 			Str[CurPos]=0;
 			StrSize=CurPos;
-			Str=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t));
+			Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
 			Changed();
 			Show();
 			return TRUE;
@@ -1186,7 +1186,7 @@ int Edit::ProcessKey(int Key)
 				if (!ShortStr)
 					return FALSE;
 
-				xwcsncpy(ShortStr,Str,StrSize+1);
+				far_wcsncpy(ShortStr,Str,StrSize+1);
 				CurPos=StrLength(RemoveTrailingSpaces(ShortStr));
 				delete[] ShortStr;
 			}
@@ -1220,7 +1220,7 @@ int Edit::ProcessKey(int Key)
 				if (!ShortStr)
 					return FALSE;
 
-				xwcsncpy(ShortStr,Str,StrSize+1);
+				far_wcsncpy(ShortStr,Str,StrSize+1);
 				int Len=StrLength(RemoveTrailingSpaces(ShortStr));
 				delete[] ShortStr;
 
@@ -1271,7 +1271,7 @@ int Edit::ProcessKey(int Key)
 			{
 				wmemmove(Str+CurPos,Str+CurPos+1,StrSize-CurPos);
 				StrSize--;
-				Str=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t));
+				Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
 			}
 
 			Changed(true);
@@ -1315,7 +1315,7 @@ int Edit::ProcessKey(int Key)
 				if (!ShortStr)
 					return FALSE;
 
-				xwcsncpy(ShortStr,Str,StrSize+1);
+				far_wcsncpy(ShortStr,Str,StrSize+1);
 				Len=StrLength(RemoveTrailingSpaces(ShortStr));
 				delete[] ShortStr;
 
@@ -1365,7 +1365,7 @@ int Edit::ProcessKey(int Key)
 						if (!ShortStr)
 							return FALSE;
 
-						xwcsncpy(ShortStr,Str,StrSize+1);
+						far_wcsncpy(ShortStr,Str,StrSize+1);
 						RemoveTrailingSpaces(ShortStr);
 						CopyToClipboard(ShortStr);
 						delete[] ShortStr;
@@ -1433,7 +1433,7 @@ int Edit::ProcessKey(int Key)
 			}
 
 			if (ClipText)
-				xf_free(ClipText);
+				free(ClipText);
 
 			Show();
 			return TRUE;
@@ -1596,7 +1596,7 @@ int Edit::InsertKey(int Key)
 		{
 			if (CurPos>=StrSize)
 			{
-				if (!(NewStr=(wchar_t *)xf_realloc(Str,(CurPos+2)*sizeof(wchar_t))))
+				if (!(NewStr=(wchar_t *)realloc(Str,(CurPos+2)*sizeof(wchar_t))))
 					return FALSE;
 
 				Str=NewStr;
@@ -1614,7 +1614,7 @@ int Edit::InsertKey(int Key)
 				return TRUE;
 			}
 
-			if (!(NewStr=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t))))
+			if (!(NewStr=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t))))
 				return TRUE;
 
 			Str=NewStr;
@@ -1667,7 +1667,7 @@ void Edit::SetObjectColor(int Color,int SelColor,int ColorUnChanged)
 
 void Edit::GetString(wchar_t *Str,int MaxSize)
 {
-	//xwcsncpy(Str, this->Str,MaxSize);
+	//far_wcsncpy(Str, this->Str,MaxSize);
 	wmemmove(Str,this->Str,Min(StrSize,MaxSize-1));
 	Str[Min(StrSize,MaxSize-1)]=0;
 	Str[MaxSize-1]=0;
@@ -1817,10 +1817,12 @@ void Edit::SetBinaryString(const wchar_t *Str,int Length)
 	}
 	else
 	{
-		wchar_t *NewStr=(wchar_t *)xf_realloc_nomove(this->Str,(Length+1)*sizeof(wchar_t));
+		wchar_t *NewStr=(wchar_t *)malloc((Length+1)*sizeof(wchar_t));
 
 		if (!NewStr)
 			return;
+
+		free(this->Str);
 
 		this->Str=NewStr;
 		StrSize=Length;
@@ -1863,7 +1865,7 @@ int Edit::GetSelString(wchar_t *Str, int MaxSize)
 	else
 		CopyLength=Min(MaxSize,SelEnd-SelStart+1);
 
-	xwcsncpy(Str,this->Str+SelStart,CopyLength);
+	far_wcsncpy(Str,this->Str+SelStart,CopyLength);
 	return TRUE;
 }
 
@@ -1879,7 +1881,7 @@ int Edit::GetSelString(FARString &strStr)
 	int CopyLength;
 	CopyLength=SelEnd-SelStart+1;
 	wchar_t *lpwszStr = strStr.GetBuffer(CopyLength+1);
-	xwcsncpy(lpwszStr,this->Str+SelStart,CopyLength);
+	far_wcsncpy(lpwszStr,this->Str+SelStart,CopyLength);
 	strStr.ReleaseBuffer();
 	return TRUE;
 }
@@ -1971,7 +1973,7 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 		{
 			if (CurPos>StrSize)
 			{
-				if (!(NewStr=(wchar_t *)xf_realloc(this->Str,(CurPos+1)*sizeof(wchar_t))))
+				if (!(NewStr=(wchar_t *)realloc(this->Str,(CurPos+1)*sizeof(wchar_t))))
 					return;
 
 				this->Str=NewStr;
@@ -1989,7 +1991,7 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 			wmemcpy(TmpStr,&this->Str[CurPos],TmpSize);
 			StrSize+=Length;
 
-			if (!(NewStr=(wchar_t *)xf_realloc(this->Str,(StrSize+1)*sizeof(wchar_t))))
+			if (!(NewStr=(wchar_t *)realloc(this->Str,(StrSize+1)*sizeof(wchar_t))))
 			{
 				delete[] TmpStr;
 				return;
@@ -2024,11 +2026,11 @@ int Edit::GetLength()
 void Edit::SetInputMask(const wchar_t *InputMask)
 {
 	if (Mask)
-		xf_free(Mask);
+		free(Mask);
 
 	if (InputMask && *InputMask)
 	{
-		if (!(Mask=xf_wcsdup(InputMask)))
+		if (!(Mask=wcsdup(InputMask)))
 			return;
 
 		RefreshStrByMask(TRUE);
@@ -2047,7 +2049,7 @@ void Edit::RefreshStrByMask(int InitMode)
 
 		if (StrSize!=MaskLen)
 		{
-			wchar_t *NewStr=(wchar_t *)xf_realloc(Str,(MaskLen+1)*sizeof(wchar_t));
+			wchar_t *NewStr=(wchar_t *)realloc(Str,(MaskLen+1)*sizeof(wchar_t));
 
 			if (!NewStr)
 				return;
@@ -2256,7 +2258,7 @@ void Edit::InsertTab()
 	int PrevStrSize=StrSize;
 	StrSize+=S;
 	CurPos+=S;
-	Str=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t));
+	Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
 	TabPtr=Str+Pos;
 	wmemmove(TabPtr+S,TabPtr,PrevStrSize-Pos);
 	wmemset(TabPtr,L' ',S);
@@ -2300,7 +2302,7 @@ void Edit::ReplaceTabs()
 		if (CurPos>Pos)
 			CurPos+=S-1;
 
-		Str=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t));
+		Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
 		TabPtr=Str+Pos;
 		wmemmove(TabPtr+S,TabPtr+1,PrevStrSize-Pos);
 		wmemset(TabPtr,L' ',S);
@@ -2328,7 +2330,7 @@ void Edit::SetTabCurPos(int NewPos)
 		if (!ShortStr)
 			return;
 
-		xwcsncpy(ShortStr,Str,StrSize+1);
+		far_wcsncpy(ShortStr,Str,StrSize+1);
 		Pos=StrLength(RemoveTrailingSpaces(ShortStr));
 		delete[] ShortStr;
 
@@ -2548,7 +2550,7 @@ void Edit::DeleteBlock()
 				CurPos-=To-From;
 		}
 
-		Str=(wchar_t *)xf_realloc(Str,(StrSize+1)*sizeof(wchar_t));
+		Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
 	}
 
 	SelStart=-1;
@@ -2569,7 +2571,7 @@ void Edit::DeleteBlock()
 void Edit::AddColor(ColorItem *col)
 {
 	if (!(ColorCount & 15))
-		ColorList=(ColorItem *)xf_realloc(ColorList,(ColorCount+16)*sizeof(*ColorList));
+		ColorList=(ColorItem *)realloc(ColorList,(ColorCount+16)*sizeof(*ColorList));
 
 	ColorList[ColorCount++]=*col;
 }
@@ -2598,7 +2600,7 @@ int Edit::DeleteColor(int ColorPos)
 
 	if (!ColorCount)
 	{
-		xf_free(ColorList);
+		free(ColorList);
 		ColorList=nullptr;
 	}
 
@@ -2945,7 +2947,7 @@ int __stdcall SystemCPEncoder::Transcode(
 )
 {
 	int length = pFrom->Decode(lpwszString, nLength, nullptr, 0);
-	char *lpDecoded = (char *)xf_malloc(length);
+	char *lpDecoded = (char *)malloc(length);
 
 	if (lpDecoded)
 	{
@@ -2955,7 +2957,7 @@ int __stdcall SystemCPEncoder::Transcode(
 		if (lpwszResult)
 			length = Encode(lpDecoded, length, lpwszResult, nResultLength);
 
-		xf_free(lpDecoded);
+		free(lpDecoded);
 		return length;
 	}
 

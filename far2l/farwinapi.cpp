@@ -570,12 +570,12 @@ void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
 	pDest->nFileSize = pSrc->nFileSize;
 	pDest->dwFileAttributes = pSrc->dwFileAttributes;
 	pDest->dwUnixMode = pSrc->dwUnixMode;
-	pDest->lpwszFileName = xf_wcsdup(pSrc->strFileName);
+	pDest->lpwszFileName = wcsdup(pSrc->strFileName);
 }
 
 void apiFreeFindData(FAR_FIND_DATA *pData)
 {
-	xf_free(pData->lpwszFileName);
+	free(pData->lpwszFileName);
 }
 
 BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData)

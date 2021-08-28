@@ -210,7 +210,7 @@ int Editor::GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat)
 		AllLength+=Length+StrLength(!TextFormat?EndSeq:GlobalEOL)+1;
 	}
 
-	wchar_t * MemEditStr=reinterpret_cast<wchar_t*>(xf_malloc((AllLength+8)*sizeof(wchar_t)));
+	wchar_t * MemEditStr=reinterpret_cast<wchar_t*>(malloc((AllLength+8)*sizeof(wchar_t)));
 
 	if (MemEditStr)
 	{
@@ -791,7 +791,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			if (Text)
 			{
 				strText = Text;
-				xf_free(Text);
+				free(Text);
 			}
 
 			*(FARString *)vParam=strText;
@@ -3285,7 +3285,7 @@ void Editor::InsertString()
 		            CurLine->GetCurPos(),CurLine->GetLength());
 		AddUndoData(UNDO_INSSTR,nullptr,EndList==CurLine?L"":GlobalEOL,NumLine+1,0); // EOL? - CurLine->GetEOL()  GlobalEOL   ""
 		AddUndoData(UNDO_END);
-		wchar_t *NewCurLineStr = (wchar_t *) xf_malloc((CurPos+1)*sizeof(wchar_t));
+		wchar_t *NewCurLineStr = (wchar_t *) malloc((CurPos+1)*sizeof(wchar_t));
 
 		if (!NewCurLineStr)
 			return;
@@ -3302,7 +3302,7 @@ void Editor::InsertString()
 
 		CurLine->SetBinaryString(NewCurLineStr,StrSize);
 		CurLine->SetEOL(EndSeq);
-		xf_free(NewCurLineStr);
+		free(NewCurLineStr);
 	}
 	else
 	{
@@ -4022,7 +4022,7 @@ void Editor::Paste(const wchar_t *Src)
 	}
 
 	if (IsDeleteClipText)
-		xf_free(ClipText);
+		free(ClipText);
 }
 
 
@@ -4047,7 +4047,7 @@ void Editor::Copy(int Append)
 	if ((CopyData=Block2Text(CopyData)) )
 	{
 		clip.Copy(CopyData);
-		xf_free(CopyData);
+		free(CopyData);
 	}
 
 	clip.Close();
@@ -4077,12 +4077,12 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 	}
 	TotalChars++; // '\0'
 
-	wchar_t *CopyData=(wchar_t *)xf_malloc(TotalChars*sizeof(wchar_t));
+	wchar_t *CopyData=(wchar_t *)malloc(TotalChars*sizeof(wchar_t));
 
 	if (!CopyData)
 	{
 		if (ptrInitData)
-			xf_free(ptrInitData);
+			free(ptrInitData);
 
 		return nullptr;
 	}
@@ -4090,7 +4090,7 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 	if (ptrInitData)
 	{
 		wcscpy(CopyData,ptrInitData);
-		xf_free(ptrInitData);
+		free(ptrInitData);
 	}
 	else
 	{
@@ -4190,7 +4190,7 @@ void Editor::DeleteBlock()
 		CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
 
 		// дальше будет realloc, поэтому тут malloc.
-		wchar_t *TmpStr=(wchar_t*)xf_malloc((Length+3)*sizeof(wchar_t));
+		wchar_t *TmpStr=(wchar_t*)malloc((Length+3)*sizeof(wchar_t));
 
 		wmemcpy(TmpStr,CurStr,Length);
 
@@ -4236,7 +4236,7 @@ void Editor::DeleteBlock()
 
 				if (NextLength>0)
 				{
-					TmpStr=(wchar_t *)xf_realloc(TmpStr,(Length+NextLength+3)*sizeof(wchar_t));
+					TmpStr=(wchar_t *)realloc(TmpStr,(Length+NextLength+3)*sizeof(wchar_t));
 					wmemcpy(TmpStr+Length,NextStr+NextEndSel,NextLength);
 					Length+=NextLength;
 				}
@@ -4263,7 +4263,7 @@ void Editor::DeleteBlock()
 		wmemcpy(TmpStr+Length,EndSeq,EndLength);
 		Length+=EndLength;
 		CurPtr->SetBinaryString(TmpStr,Length);
-		xf_free(TmpStr);
+		free(TmpStr);
 		CurPtr->SetCurPos(CurPos);
 
 		if (DeleteNext && EndSel==-1)
@@ -5019,7 +5019,7 @@ void Editor::VCopy(int Append)
 	{
 		clip.Copy(CopyData);
 		clip.CopyFormat(FAR_VerticalBlock_Unicode,CopyData);
-		xf_free(CopyData);
+		free(CopyData);
 	}
 
 	clip.Close();
@@ -5035,12 +5035,12 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	//RealPos всегда <= TabPos, поэтому берём максимальный размер буффера
 	size_t TotalChars = DataSize + (VBlockSizeX + wcslen(NATIVE_EOLW)) * VBlockSizeY + 1;
 
-	wchar_t *CopyData=(wchar_t *)xf_malloc(TotalChars*sizeof(wchar_t));
+	wchar_t *CopyData=(wchar_t *)malloc(TotalChars*sizeof(wchar_t));
 
 	if (!CopyData)
 	{
 		if (ptrInitData)
-			xf_free(ptrInitData);
+			free(ptrInitData);
 
 		return nullptr;
 	}
@@ -5048,7 +5048,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	if (ptrInitData)
 	{
 		wcscpy(CopyData,ptrInitData);
-		xf_free(ptrInitData);
+		free(ptrInitData);
 	}
 	else
 	{
@@ -5187,7 +5187,7 @@ void Editor::VPaste(wchar_t *ClipText)
 		AddUndoData(UNDO_END);
 	}
 
-	xf_free(ClipText);
+	free(ClipText);
 }
 
 
@@ -5415,11 +5415,11 @@ int Editor::EditorControl(int Command,void *Param)
 
 				int LengthEOL=StrLength(EOL);
 
-				wchar_t *NewStr=(wchar_t*)xf_malloc((Length+LengthEOL+1)*sizeof(wchar_t));
+				wchar_t *NewStr=(wchar_t*)malloc((Length+LengthEOL+1)*sizeof(wchar_t));
 
 				if (!NewStr)
 				{
-					_ECTLLOG(SysLog(L"xf_malloc(%d) return nullptr",Length+LengthEOL+1));
+					_ECTLLOG(SysLog(L"malloc(%d) return nullptr",Length+LengthEOL+1));
 					return FALSE;
 				}
 
@@ -5435,7 +5435,7 @@ int Editor::EditorControl(int Command,void *Param)
 				CurPtr->SetBinaryString(NewStr,Length+LengthEOL);
 				CurPtr->SetCurPos(CurPos);
 				TextChanged(1);    // 10.08.2000 skv - Modified->TextChanged
-				xf_free(NewStr);
+				free(NewStr);
 			}
 
 			return TRUE;
@@ -5852,7 +5852,7 @@ int Editor::EditorControl(int Command,void *Param)
 						_ECTLLOG(SysLog(L"  wszParam    =(%p)",espar->Param.wszParam));
 
 						if (espar->Param.wszParam && espar->Size)
-							xwcsncpy(espar->Param.wszParam,EdOpt.strWordDiv,espar->Size);
+							far_wcsncpy(espar->Param.wszParam,EdOpt.strWordDiv,espar->Size);
 
 						rc=(int)EdOpt.strWordDiv.GetLength()+1;
 						break;
@@ -6032,7 +6032,7 @@ int Editor::ClearStackBookmarks()
 		while (StackPos)
 		{
 			sb_next = StackPos->next;
-			xf_free(StackPos);
+			free(StackPos);
 			StackPos = sb_next;
 		}
 
@@ -6041,7 +6041,7 @@ int Editor::ClearStackBookmarks()
 		while (StackPos)
 		{
 			sb_prev = StackPos->prev;
-			xf_free(StackPos);
+			free(StackPos);
 			StackPos = sb_prev;
 		}
 	}
@@ -6064,7 +6064,7 @@ int Editor::DeleteStackBookmark(InternalEditorStackBookMark *sb_delete)
 		if (StackPos==sb_delete)
 			StackPos=(sb_delete->next)?sb_delete->next:sb_delete->prev;
 
-		xf_free(sb_delete);
+		free(sb_delete);
 		return TRUE;
 	}
 
@@ -6108,7 +6108,7 @@ int Editor::AddStackBookmark(BOOL blNewPos)
 		StackPos->next=0;
 	}
 
-	InternalEditorStackBookMark *sb_new=(InternalEditorStackBookMark*)xf_malloc(sizeof(InternalEditorStackBookMark));
+	InternalEditorStackBookMark *sb_new=(InternalEditorStackBookMark*)malloc(sizeof(InternalEditorStackBookMark));
 
 	if (sb_new)
 	{

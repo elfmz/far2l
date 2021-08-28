@@ -75,23 +75,23 @@ DizList::~DizList()
 	Reset();
 
 	if (AnsiBuf)
-		xf_free(AnsiBuf);
+		free(AnsiBuf);
 }
 
 void DizList::Reset()
 {
 	for (int I=0; I<DizCount; I++)
 		if (DizData[I].DizText)
-			xf_free(DizData[I].DizText);
+			free(DizData[I].DizText);
 
 	if (DizData)
-		xf_free(DizData);
+		free(DizData);
 
 	DizData=nullptr;
 	DizCount=0;
 
 	if (IndexData)
-		xf_free(IndexData);
+		free(IndexData);
 
 	IndexData=nullptr;
 	IndexCount=0;
@@ -183,14 +183,14 @@ bool DizList::AddRecord(const wchar_t *DizText)
 	DizRecord *NewDizData=DizData;
 
 	if (!(DizCount & 15))
-		NewDizData=(DizRecord *)xf_realloc(DizData,(DizCount+16+1)*sizeof(*DizData));
+		NewDizData=(DizRecord *)realloc(DizData,(DizCount+16+1)*sizeof(*DizData));
 
 	if (!NewDizData)
 		return false;
 
 	DizData=NewDizData;
 	DizData[DizCount].DizLength=StrLength(DizText);
-	DizData[DizCount].DizText=(wchar_t *)xf_malloc((DizData[DizCount].DizLength+1)*sizeof(wchar_t));
+	DizData[DizCount].DizText=(wchar_t *)malloc((DizData[DizCount].DizLength+1)*sizeof(wchar_t));
 
 	if (!DizData[DizCount].DizText)
 		return false;
@@ -281,11 +281,12 @@ int DizList::GetDizPosEx(const wchar_t *Name, int *TextPos)
 	if (DizPos==-1 && !IsUnicodeOrUtfCodePage(OrigCodePage) && OrigCodePage!=CP_AUTODETECT)
 	{
 		int len=StrLength(Name);
-		char *tmp = (char *)xf_realloc_nomove(AnsiBuf, len+1);
+		char *tmp = (char *)malloc(len+1);
 
 		if (!tmp)
 			return -1;
 
+		free(AnsiBuf);
 		AnsiBuf = tmp;
 		WINPORT(WideCharToMultiByte)(OrigCodePage, 0, Name, len, AnsiBuf, len, nullptr, nullptr);
 		AnsiBuf[len]=0;
@@ -335,9 +336,9 @@ void DizList::BuildIndex()
 	if (!IndexData || IndexCount!=DizCount)
 	{
 		if (IndexData)
-			xf_free(IndexData);
+			free(IndexData);
 
-		if (!(IndexData=(int *)xf_malloc(DizCount*sizeof(int))))
+		if (!(IndexData=(int *)malloc(DizCount*sizeof(int))))
 		{
 			Reset();
 			return;

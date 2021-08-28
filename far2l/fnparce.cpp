@@ -205,7 +205,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		{
 			if (Ptr[1] != L'?')
 			{
-				xwcsncpy(Modifers,CurStr+2,Min(ARRAYSIZE(Modifers),static_cast<size_t>(Ptr-(CurStr+2)+1)));
+				far_wcsncpy(Modifers,CurStr+2,Min(ARRAYSIZE(Modifers),static_cast<size_t>(Ptr-(CurStr+2)+1)));
 
 				if (pListName)
 				{
@@ -737,7 +737,7 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 
 					if (Size)
 					{
-						Buffer=static_cast<LPSTR>(xf_malloc(Size));
+						Buffer=static_cast<LPSTR>(malloc(Size));
 
 						if (Buffer)
 						{
@@ -750,7 +750,7 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 				BOOL Written=ListFile.Write(Ptr,NumberOfBytesToWrite,&NumberOfBytesWritten);
 
 				if (Buffer)
-					xf_free(Buffer);
+					free(Buffer);
 
 				if (Written && NumberOfBytesWritten==NumberOfBytesToWrite)
 				{

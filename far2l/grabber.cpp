@@ -97,7 +97,7 @@ void Grabber::CopyGrabbedArea(int Append, int VerticalBlock)
 	int GWidth=X2-X1+1,GHeight=Y2-Y1+1;
 	int BufSize=(GWidth+3)*GHeight;
 	CHAR_INFO *CharBuf=new CHAR_INFO[BufSize], *PtrCharBuf;
-	wchar_t *CopyBuf=(wchar_t *)xf_malloc(BufSize*sizeof(wchar_t)), *PtrCopyBuf;
+	wchar_t *CopyBuf=(wchar_t *)malloc(BufSize*sizeof(wchar_t)), *PtrCopyBuf;
 	WORD Chr;
 	GetText(X1,Y1,X2,Y2,CharBuf,BufSize*sizeof(CHAR_INFO));
 	*CopyBuf=0;
@@ -182,14 +182,14 @@ void Grabber::CopyGrabbedArea(int Append, int VerticalBlock)
 					add=2;
 				}
 
-				AppendBuf=(wchar_t *)xf_realloc(AppendBuf,(DataSize+BufSize+add)*sizeof(wchar_t));
+				AppendBuf=(wchar_t *)realloc(AppendBuf,(DataSize+BufSize+add)*sizeof(wchar_t));
 				wmemcpy(AppendBuf+DataSize+add,CopyBuf,BufSize);
 
 				if (add) {
 					wmemcpy(AppendBuf+DataSize, NATIVE_EOLW, wcslen(NATIVE_EOLW));
 				}
 
-				xf_free(CopyBuf);
+				free(CopyBuf);
 				CopyBuf=AppendBuf;
 			}
 		}
@@ -202,7 +202,7 @@ void Grabber::CopyGrabbedArea(int Append, int VerticalBlock)
 		clip.Close();
 	}
 	if (CopyBuf)
-		xf_free(CopyBuf);
+		free(CopyBuf);
 
 	delete[] CharBuf;
 }

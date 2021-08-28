@@ -673,7 +673,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				// если их безобразно много, то просмотрим все на предмет KEY_EVENT
 				if (ReadCount2 > 1)
 				{
-					INPUT_RECORD *TmpRec=(INPUT_RECORD*)xf_malloc(sizeof(INPUT_RECORD)*ReadCount2);
+					INPUT_RECORD *TmpRec=(INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*ReadCount2);
 
 					if (TmpRec)
 					{
@@ -702,7 +702,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 						}
 
 						// освободим память
-						xf_free(TmpRec);
+						free(TmpRec);
 						return KEY_NONE;
 					}
 				}

@@ -89,14 +89,14 @@ class HelpRecord
 		{
 			HelpStr = nullptr;
 			if (HStr )
-				HelpStr = xf_wcsdup(HStr);
+				HelpStr = wcsdup(HStr);
 		};
 
 		const HelpRecord& operator=(const HelpRecord &rhs)
 		{
 			if (this != &rhs)
 			{
-				HelpStr = xf_wcsdup(rhs.HelpStr);
+				HelpStr = wcsdup(rhs.HelpStr);
 			}
 
 			return *this;
@@ -114,7 +114,7 @@ class HelpRecord
 
 		~HelpRecord()
 		{
-			if (HelpStr) xf_free(HelpStr);
+			if (HelpStr) free(HelpStr);
 		}
 };
 

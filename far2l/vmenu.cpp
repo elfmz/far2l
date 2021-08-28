@@ -448,7 +448,7 @@ int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
 	if (!(ItemCount & 255))
 	{
 		MenuItemEx **NewPtr;
-		if (!(NewPtr=(MenuItemEx **)xf_realloc(Item, sizeof(*Item)*(ItemCount+256+1))))
+		if (!(NewPtr=(MenuItemEx **)realloc(Item, sizeof(*Item)*(ItemCount+256+1))))
 			return -1;
 
 		Item=NewPtr;
@@ -497,7 +497,7 @@ int VMenu::UpdateItem(const FarListUpdate *NewItem)
 
 		if (PItem->UserDataSize > (int)sizeof(PItem->UserData) && PItem->UserData && (NewItem->Item.Flags&LIF_DELETEUSERDATA))
 		{
-			xf_free(PItem->UserData);
+			free(PItem->UserData);
 			PItem->UserData = nullptr;
 			PItem->UserDataSize = 0;
 		}
@@ -543,7 +543,7 @@ int VMenu::DeleteItem(int ID, int Count)
 		MenuItemEx *PtrItem = Item[ID+I];
 
 		if (PtrItem->UserDataSize > (int)sizeof(PtrItem->UserData) && PtrItem->UserData)
-			xf_free(PtrItem->UserData);
+			free(PtrItem->UserData);
 
 		UpdateInternalCounters(PtrItem->Flags,0);
 	}
@@ -582,12 +582,12 @@ void VMenu::DeleteItems()
 		for (int I=0; I < ItemCount; ++I)
 		{
 			if (Item[I]->UserDataSize > (int)sizeof(Item[I]->UserData) && Item[I]->UserData)
-				xf_free(Item[I]->UserData);
+				free(Item[I]->UserData);
 
 			delete Item[I];
 		}
 
-		xf_free(Item);
+		free(Item);
 	}
 
 	Item=nullptr;
@@ -1152,7 +1152,7 @@ int VMenu::ProcessKey(int Key)
 					DisplayObject();
 				}
 
-				xf_free(ClipText);
+				free(ClipText);
 			}
 			return TRUE;
 		}
@@ -2670,7 +2670,7 @@ int VMenu::_SetUserData(MenuItemEx *PItem,
                         int Size)           // Размер, если =0 то предполагается, что в Data-строка
 {
 	if (PItem->UserDataSize > (int)sizeof(PItem->UserData) && PItem->UserData)
-		xf_free(PItem->UserData);
+		free(PItem->UserData);
 
 	PItem->UserDataSize=0;
 	PItem->UserData=nullptr;
@@ -2690,7 +2690,7 @@ int VMenu::_SetUserData(MenuItemEx *PItem,
 			if (SizeReal > (int)sizeof(PItem->UserData))
 			{
 				// ...значит выделяем нужную память.
-				if ((PItem->UserData=(char*)xf_malloc(SizeReal)) )
+				if ((PItem->UserData=(char*)malloc(SizeReal)) )
 				{
 					PItem->UserDataSize=SizeReal;
 					memcpy(PItem->UserData,Data,SizeReal);

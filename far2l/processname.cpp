@@ -71,7 +71,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 	{
 		FARString strResult = param2;
 		int nResult = ConvertWildcards(param1, strResult, (flags&0xFFFF)|(skippath?PN_SKIPPATH:0));
-		xwcsncpy(param2, strResult, size);
+		far_wcsncpy(param2, strResult, size);
 		return nResult;
 	}
 
@@ -113,9 +113,9 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 
 	int BeforeNameLength = DestNamePtr==DestName ? (int)(SrcNamePtr-Src) : 0;
 
-	wchar_t *PartBeforeName = (wchar_t*)xf_malloc((BeforeNameLength+1)*sizeof(wchar_t));
+	wchar_t *PartBeforeName = (wchar_t*)malloc((BeforeNameLength+1)*sizeof(wchar_t));
 
-	xwcsncpy(PartBeforeName, Src, BeforeNameLength+1);
+	far_wcsncpy(PartBeforeName, Src, BeforeNameLength+1);
 
 	const wchar_t *SrcNameDot = wcsrchr(SrcNamePtr, L'.');
 
@@ -184,7 +184,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 	if (SelectedFolderNameLength)
 		strDest += strPartAfterFolderName; //BUGBUG???, was src in 1.7x
 
-	xf_free(PartBeforeName);
+	free(PartBeforeName);
 	return TRUE;
 }
 

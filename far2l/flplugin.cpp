@@ -116,9 +116,9 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 			}
 			else
 			{
-				PanelItem.FindData.lpwszFileName = xf_wcsdup(PointToName(PStack->strHostFile));
+				PanelItem.FindData.lpwszFileName = wcsdup(PointToName(PStack->strHostFile));
 				CtrlObject->Plugins.DeleteFiles(hPlugin,&PanelItem,1,0);
-				xf_free(PanelItem.FindData.lpwszFileName);
+				free(PanelItem.FindData.lpwszFileName);
 			}
 
 			FarChDir(strSaveDir);
@@ -180,7 +180,7 @@ int FileList::FileNameToPluginItem(const wchar_t *Name,PluginPanelItem *pi)
 
 void FileList::FileListToPluginItem(FileListItem *fi,PluginPanelItem *pi)
 {
-	pi->FindData.lpwszFileName = xf_wcsdup(fi->strName);
+	pi->FindData.lpwszFileName = wcsdup(fi->strName);
 	pi->FindData.nFileSize=fi->FileSize;
 	pi->FindData.nPhysicalSize=fi->PhysicalSize;
 	pi->FindData.dwFileAttributes=fi->FileAttr;
@@ -200,7 +200,7 @@ void FileList::FileListToPluginItem(FileListItem *fi,PluginPanelItem *pi)
 	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA))
 	{
 		DWORD Size=*(DWORD *)fi->UserData;
-		pi->UserData=(DWORD_PTR)xf_malloc(Size);
+		pi->UserData=(DWORD_PTR)malloc(Size);
 		memcpy((void *)pi->UserData,(void *)fi->UserData,Size);
 	}
 	else
@@ -218,7 +218,7 @@ void FileList::FreePluginPanelItem(PluginPanelItem *pi)
 	apiFreeFindData(&pi->FindData);
 
 	if (pi->UserData && (pi->Flags & PPIF_USERDATA))
-		xf_free((void*)pi->UserData);
+		free((void*)pi->UserData);
 }
 
 size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
@@ -354,7 +354,7 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
 	if (pi->UserData && (pi->Flags & PPIF_USERDATA))
 	{
 		DWORD Size=*(DWORD *)pi->UserData;
-		fi->UserData=(DWORD_PTR)xf_malloc(Size);
+		fi->UserData=(DWORD_PTR)malloc(Size);
 		memcpy((void *)fi->UserData,(void *)pi->UserData,Size);
 	}
 	else
@@ -425,7 +425,7 @@ void FileList::CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber
 		if (AddTwoDot && !ItemNumber && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) // это про ".."
 		{
 			FileListToPluginItem(ListData[0],ItemList+ItemNumber);
-			//ItemList->FindData.lpwszFileName = xf_wcsdup (ListData[0]->strName);
+			//ItemList->FindData.lpwszFileName = wcsdup (ListData[0]->strName);
 			//ItemList->FindData.dwFileAttributes=ListData[0]->FileAttr;
 			ItemNumber++;
 		}
@@ -543,9 +543,9 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 				else if (Delete)
 				{
 					PluginPanelItem pi{};
-					pi.FindData.lpwszFileName = xf_wcsdup(DestPanel->strPluginDizName);
+					pi.FindData.lpwszFileName = wcsdup(DestPanel->strPluginDizName);
 					CtrlObject->Plugins.DeleteFiles(DestPanel->hPlugin,&pi,1,OPM_SILENT);
-					xf_free(pi.FindData.lpwszFileName);
+					free(pi.FindData.lpwszFileName);
 				}
 
 				FarChDir(strSaveDir);

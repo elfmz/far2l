@@ -245,7 +245,7 @@ DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 /////////////
 
 CachedWrite::CachedWrite(File& file):
-	Buffer(reinterpret_cast<LPBYTE>(xf_malloc(BufferSize))),
+	Buffer(reinterpret_cast<LPBYTE>(malloc(BufferSize))),
 	file(file),
 	FreeSize(BufferSize),
 	Flushed(false)
@@ -258,7 +258,7 @@ CachedWrite::~CachedWrite()
 
 	if (Buffer)
 	{
-		xf_free(Buffer);
+		free(Buffer);
 	}
 }
 

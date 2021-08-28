@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "filepanels.hpp"
 #include "fileview.hpp"
-#include "savefpos.hpp"
 #include "savescr.hpp"
 #include "ctrlobj.hpp"
 #include "scrbuf.hpp"
@@ -1294,13 +1293,13 @@ int Viewer::ProcessKey(int Key)
 				}
 				int64_t CurFilePos=vtell();
 
-				if ((SelData=(wchar_t*)xf_malloc(DataSize*sizeof(wchar_t))) )
+				if ((SelData=(wchar_t*)malloc(DataSize*sizeof(wchar_t))) )
 				{
 					wmemset(SelData, 0, DataSize);
 					vseek(SelectPos,SEEK_SET);
 					vread(SelData, (int)SelectSize);
 					CopyToClipboard(SelData);
-					xf_free(SelData);
+					free(SelData);
 					vseek(CurFilePos,SEEK_SET);
 				}
 			}

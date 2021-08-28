@@ -541,7 +541,7 @@ KeyMacro::~KeyMacro()
 	InitInternalVars();
 
 	if (Work.AllocVarTable && Work.locVarTable)
-		xf_free(Work.locVarTable);
+		free(Work.locVarTable);
 
 	UnregMacroFunction(-1);
 }
@@ -553,20 +553,20 @@ void KeyMacro::InitInternalLIBVars()
 		for (int I=0; I<MacroLIBCount; I++)
 		{
 			if (MacroLIB[I].BufferSize > 1 && MacroLIB[I].Buffer)
-				xf_free(MacroLIB[I].Buffer);
+				free(MacroLIB[I].Buffer);
 
 			if (MacroLIB[I].Src)
-				xf_free(MacroLIB[I].Src);
+				free(MacroLIB[I].Src);
 
 			if (MacroLIB[I].Description)
-				xf_free(MacroLIB[I].Description);
+				free(MacroLIB[I].Description);
 		}
 
-		xf_free(MacroLIB);
+		free(MacroLIB);
 	}
 
 	if (RecBuffer)
-		xf_free(RecBuffer);
+		free(RecBuffer);
 	RecBuffer=nullptr;
 	RecBufferSize=0;
 
@@ -613,21 +613,21 @@ void KeyMacro::ReleaseWORKBuffer(BOOL All)
 			for (int I=0; I<Work.MacroWORKCount; I++)
 			{
 				if (Work.MacroWORK[I].BufferSize > 1 && Work.MacroWORK[I].Buffer)
-					xf_free(Work.MacroWORK[I].Buffer);
+					free(Work.MacroWORK[I].Buffer);
 
 				if (Work.MacroWORK[I].Src)
-					xf_free(Work.MacroWORK[I].Src);
+					free(Work.MacroWORK[I].Src);
 
 				if (Work.MacroWORK[I].Description)
-					xf_free(Work.MacroWORK[I].Description);
+					free(Work.MacroWORK[I].Description);
 			}
 
-			xf_free(Work.MacroWORK);
+			free(Work.MacroWORK);
 
 			if (Work.AllocVarTable)
 			{
 				deleteVTable(*Work.locVarTable);
-				//xf_free(Work.locVarTable);
+				//free(Work.locVarTable);
 				//Work.locVarTable=nullptr;
 				//Work.AllocVarTable=false;
 			}
@@ -638,25 +638,25 @@ void KeyMacro::ReleaseWORKBuffer(BOOL All)
 		else
 		{
 			if (Work.MacroWORK->BufferSize > 1 && Work.MacroWORK->Buffer)
-				xf_free(Work.MacroWORK->Buffer);
+				free(Work.MacroWORK->Buffer);
 
 			if (Work.MacroWORK->Src)
-				xf_free(Work.MacroWORK->Src);
+				free(Work.MacroWORK->Src);
 
 			if (Work.MacroWORK->Description)
-				xf_free(Work.MacroWORK->Description);
+				free(Work.MacroWORK->Description);
 
 			if (Work.AllocVarTable)
 			{
 				deleteVTable(*Work.locVarTable);
-				//xf_free(Work.locVarTable);
+				//free(Work.locVarTable);
 				//Work.locVarTable=nullptr;
 				//Work.AllocVarTable=false;
 			}
 
 			Work.MacroWORKCount--;
 			memmove(Work.MacroWORK,((BYTE*)Work.MacroWORK)+sizeof(MacroRecord),sizeof(MacroRecord)*Work.MacroWORKCount);
-			Work.MacroWORK=(MacroRecord *)xf_realloc(Work.MacroWORK,sizeof(MacroRecord)*Work.MacroWORKCount);
+			Work.MacroWORK=(MacroRecord *)realloc(Work.MacroWORK,sizeof(MacroRecord)*Work.MacroWORKCount);
 		}
 	}
 }
@@ -749,7 +749,7 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 			{
 				if (RecBuffer)
 				{
-					xf_free(RecBuffer);
+					free(RecBuffer);
 					RecBuffer=nullptr;
 					RecBufferSize=0;
 				}
@@ -765,7 +765,7 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 
 					if (RecBufferSize > 0)
 					{
-						MacroRecord *NewMacroLIB=(MacroRecord *)xf_realloc(MacroLIB,sizeof(*MacroLIB)*(MacroLIBCount+1));
+						MacroRecord *NewMacroLIB=(MacroRecord *)realloc(MacroLIB,sizeof(*MacroLIB)*(MacroLIBCount+1));
 
 						if (!NewMacroLIB)
 						{
@@ -780,13 +780,13 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 				else
 				{
 					if (MacroLIB[Pos].BufferSize > 1 && MacroLIB[Pos].Buffer)
-						xf_free(MacroLIB[Pos].Buffer);
+						free(MacroLIB[Pos].Buffer);
 
 					if (MacroLIB[Pos].Src)
-						xf_free(MacroLIB[Pos].Src);
+						free(MacroLIB[Pos].Src);
 
 					if (MacroLIB[Pos].Description)
-						xf_free(MacroLIB[Pos].Description);
+						free(MacroLIB[Pos].Description);
 
 					MacroLIB[Pos].Buffer=nullptr;
 					MacroLIB[Pos].Src=nullptr;
@@ -838,7 +838,7 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 			if (Key>=KEY_NONE && Key<=KEY_END_SKEY) // специальные клавиши прокинем
 				return FALSE;
 
-			RecBuffer=(DWORD *)xf_realloc(RecBuffer,sizeof(*RecBuffer)*(RecBufferSize+3));
+			RecBuffer=(DWORD *)realloc(RecBuffer,sizeof(*RecBuffer)*(RecBufferSize+3));
 
 			if (!RecBuffer)
 			{
@@ -879,7 +879,7 @@ uint32_t KeyMacro::ProcessKey(uint32_t Key)
 		Recording=(Key==Opt.Macro.KeyMacroCtrlDot) ? MACROMODE_RECORDING_COMMON:MACROMODE_RECORDING;
 
 		if (RecBuffer)
-			xf_free(RecBuffer);
+			free(RecBuffer);
 		RecBuffer=nullptr;
 		RecBufferSize=0;
 
@@ -1957,7 +1957,7 @@ static bool metaFunc(const TMacroFunction*)
 	{
 		char SubstText[512];
 		char Name[NM],ShortName[NM];
-		xstrncpy(SubstText,s,sizeof(SubstText));
+		far_strncpy(SubstText,s,sizeof(SubstText));
 		SubstFileName(SubstText,sizeof(SubstText),Name,ShortName,nullptr,nullptr,TRUE);
 		return TVar(SubstText);
 	}
@@ -3032,7 +3032,7 @@ static bool clipFunc(const TMacroFunction*)
 			if (ClipText)
 			{
 				TVar varClip(ClipText);
-				xf_free(ClipText);
+				free(ClipText);
 				VMStack.Push(varClip);
 				return true;
 			}
@@ -3059,18 +3059,18 @@ static bool clipFunc(const TMacroFunction*)
 				if (CopyData)
 				{
 					size_t DataSize=StrLength(CopyData);
-					wchar_t *NewPtr=(wchar_t *)xf_realloc(CopyData,(DataSize+StrLength(Val.s())+2)*sizeof(wchar_t));
+					wchar_t *NewPtr=(wchar_t *)realloc(CopyData,(DataSize+StrLength(Val.s())+2)*sizeof(wchar_t));
 
 					if (NewPtr)
 					{
 						CopyData=NewPtr;
 						wcscpy(CopyData+DataSize,Val.s());
 						varClip=CopyData;
-						xf_free(CopyData);
+						free(CopyData);
 					}
 					else
 					{
-						xf_free(CopyData);
+						free(CopyData);
 					}
 				}
 
@@ -3092,7 +3092,7 @@ static bool clipFunc(const TMacroFunction*)
 			if (ClipText)
 			{
 				varClip=ClipText;
-				xf_free(ClipText);
+				free(ClipText);
 			}
 
 			Clipboard::SetUseInternalClipboardState(!Clipboard::GetUseInternalClipboardState());
@@ -3943,7 +3943,7 @@ struct FarMacroValue
 					(vParams+I)->v.i=V.i();
 					break;
 				case vtString:
-					(vParams+I)->v.s=xf_wcsdup(V.s());
+					(vParams+I)->v.s=wcsdup(V.s());
 					break;
 				case vtDouble:
 					(vParams+I)->v.d=V.d();
@@ -3981,7 +3981,7 @@ struct FarMacroValue
 
 		for (I=0; I < nParam; ++I)
 			if((vParams+I)->type == vtString && (vParams+I)->v.s)
-				xf_free((void*)(vParams+I)->v.s);
+				free((void*)(vParams+I)->v.s);
 
 		delete[] vParams;
 	}
@@ -5096,11 +5096,11 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 		    (((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) >= KEY_OP_BASE && (((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) <= KEY_OP_ENDBASE
 		)
 		{
-			return Src?xf_wcsdup(Src):nullptr;
+			return Src?wcsdup(Src):nullptr;
 		}
 
 		if (KeyToText((DWORD)(DWORD_PTR)Buffer,strMacroKeyText))
-			return xf_wcsdup(strMacroKeyText.CPtr());
+			return wcsdup(strMacroKeyText.CPtr());
 
 		return nullptr;
 	}
@@ -5123,7 +5123,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 			    !KeyToText(Key,strMacroKeyText)
 			)
 			{
-				return Src?xf_wcsdup(Src):nullptr;
+				return Src?wcsdup(Src):nullptr;
 			}
 
 			if (J > 1)
@@ -5133,7 +5133,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 		}
 
 	if (!strTextBuffer.IsEmpty())
-		return xf_wcsdup(strTextBuffer.CPtr());
+		return wcsdup(strTextBuffer.CPtr());
 
 	return nullptr;
 }
@@ -5169,7 +5169,7 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 
 		//_SVS(SysLog(L"%3d) %ls|Sequence='%ls'",I,RegKeyName,TextBuffer));
 		if (TextBuffer)
-			xf_free(TextBuffer);
+			free(TextBuffer);
 
 #endif
 		cfg_writer.SetString("Sequence", MacroLIB[I].Src);
@@ -5369,7 +5369,7 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 			KeyMacro::RegisterMacroFunction(&MFunc);
 
 			if (mr.Buffer)
-				xf_free(mr.Buffer);
+				free(mr.Buffer);
 
 		}
 
@@ -5416,7 +5416,7 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 	{
 		AllocatedFuncCount=AllocatedFuncCount+64;
 
-		if (!(pTemp=(TMacroFunction *)xf_realloc(AMacroFunction,AllocatedFuncCount*sizeof(TMacroFunction))))
+		if (!(pTemp=(TMacroFunction *)realloc(AMacroFunction,AllocatedFuncCount*sizeof(TMacroFunction))))
 			return nullptr;
 
 		AMacroFunction=pTemp;
@@ -5424,11 +5424,11 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 
 	pTemp=AMacroFunction+CMacroFunction;
 
-	pTemp->Name=xf_wcsdup(tmfunc->Name);
-	pTemp->fnGUID=tmfunc->fnGUID?xf_wcsdup(tmfunc->fnGUID):nullptr;
-	pTemp->Syntax=tmfunc->Syntax?xf_wcsdup(tmfunc->Syntax):nullptr;
-	//pTemp->Src=tmfunc->Src?xf_wcsdup(tmfunc->Src):nullptr;
-	//pTemp->Description=tmfunc->Description?xf_wcsdup(tmfunc->Description):nullptr;
+	pTemp->Name=wcsdup(tmfunc->Name);
+	pTemp->fnGUID=tmfunc->fnGUID?wcsdup(tmfunc->fnGUID):nullptr;
+	pTemp->Syntax=tmfunc->Syntax?wcsdup(tmfunc->Syntax):nullptr;
+	//pTemp->Src=tmfunc->Src?wcsdup(tmfunc->Src):nullptr;
+	//pTemp->Description=tmfunc->Description?wcsdup(tmfunc->Description):nullptr;
 	pTemp->nParam=tmfunc->nParam;
 	pTemp->oParam=tmfunc->oParam;
 	pTemp->Code=Code;
@@ -5436,7 +5436,7 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 
 	if (tmfunc->BufferSize > 0)
 	{
-		pTemp->Buffer=(DWORD *)xf_malloc(sizeof(DWORD)*tmfunc->BufferSize);
+		pTemp->Buffer=(DWORD *)malloc(sizeof(DWORD)*tmfunc->BufferSize);
 		if (pTemp->Buffer)
 			memmove(pTemp->Buffer,tmfunc->Buffer,sizeof(DWORD)*tmfunc->BufferSize);
 	}
@@ -5459,20 +5459,20 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 			for (size_t I=0; I < CMacroFunction; ++I)
 			{
 				pTemp=AMacroFunction+I;
-				if (pTemp->Name)        xf_free((void*)pTemp->Name);
+				if (pTemp->Name)        free((void*)pTemp->Name);
 				pTemp->Name=nullptr;
-				if (pTemp->fnGUID)      xf_free((void*)pTemp->fnGUID);
+				if (pTemp->fnGUID)      free((void*)pTemp->fnGUID);
 				pTemp->fnGUID=nullptr;
-				if (pTemp->Syntax)      xf_free((void*)pTemp->Syntax);
+				if (pTemp->Syntax)      free((void*)pTemp->Syntax);
 				pTemp->Syntax=nullptr;
-				if (pTemp->Buffer)      xf_free((void*)pTemp->Buffer);
+				if (pTemp->Buffer)      free((void*)pTemp->Buffer);
 				pTemp->Buffer=nullptr;
-				//if (pTemp->Src)         xf_free((void*)pTemp->Src);         pTemp->Src=nullptr;
-				//if (pTemp->Description) xf_free((void*)pTemp->Description); pTemp->Description=nullptr;
+				//if (pTemp->Src)         free((void*)pTemp->Src);         pTemp->Src=nullptr;
+				//if (pTemp->Description) free((void*)pTemp->Description); pTemp->Description=nullptr;
 			}
 			CMacroFunction=0;
 			AllocatedFuncCount=0;
-			xf_free(AMacroFunction);
+			free(AMacroFunction);
 			AMacroFunction=nullptr;
 		}
 	}
@@ -5585,7 +5585,7 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 			continue;
 		}
 
-		MacroRecord *NewMacros=(MacroRecord *)xf_realloc(MacroLIB,sizeof(*MacroLIB)*(MacroLIBCount+1));
+		MacroRecord *NewMacros=(MacroRecord *)realloc(MacroLIB,sizeof(*MacroLIB)*(MacroLIBCount+1));
 
 		if (!NewMacros)
 		{
@@ -5593,12 +5593,12 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 		}
 
 		MacroLIB=NewMacros;
-		CurMacro.Src=xf_wcsdup(strBuffer);
+		CurMacro.Src=wcsdup(strBuffer);
 
 		FARString strDescription;
 		if (cfg_reader.GetString(strDescription, "Description", L""))
 		{
-			CurMacro.Description=xf_wcsdup(strDescription);
+			CurMacro.Description=wcsdup(strDescription);
 		}
 
 		MacroLIB[MacroLIBCount]=CurMacro;
@@ -5777,7 +5777,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		int KeySize=GetRegKeySize("KeyMacros","DlgKeys");
 		char *KeyStr;
 		if(KeySize &&
-			(KeyStr=(char*)xf_malloc(KeySize+1))  &&
+			(KeyStr=(char*)malloc(KeySize+1))  &&
 			GetRegKey("KeyMacros","DlgKeys",KeyStr,"",KeySize)
 		)
 		{
@@ -5789,11 +5789,11 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 				*KeyText=0;
 				while(nullptr!=(OneKey=KeybList.GetNext()))
 				{
-					xstrncpy(KeyText, OneKey, sizeof(KeyText));
+					far_strncpy(KeyText, OneKey, sizeof(KeyText));
 					SendDlgMessage(hDlg,DM_LISTADDSTR,2,(long)KeyText);
 				}
 			}
-			xf_free(KeyStr);
+			free(KeyStr);
 		}
 		*/
 		SendDlgMessage(hDlg,DM_SETTEXTPTR,2,reinterpret_cast<LONG_PTR>(L""));
@@ -6035,10 +6035,10 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_
 				{
 					if (Macro->ParseMacroString(&mr,Sequence))
 					{
-						xf_free(Macro->RecBuffer);
+						free(Macro->RecBuffer);
 						Macro->RecBufferSize=mr.BufferSize;
 						Macro->RecBuffer=mr.Buffer;
-						Macro->RecSrc=xf_wcsdup(Sequence);
+						Macro->RecSrc=wcsdup(Sequence);
 						return TRUE;
 					}
 				}
@@ -6049,73 +6049,6 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_
 			break;
 	}
 
-#if 0
-	else if (Msg==DN_KEY && Param2==KEY_ALTF4)
-	{
-		KeyMacro *MacroDlg=KMParam->Handle;
-		(*FrameManager)[0]->UnlockRefresh();
-		FILE *MacroFile;
-		char MacroFileName[NM];
-
-		if (!FarMkTempEx(MacroFileName) || !(MacroFile=fopen(MacroFileName,FOPEN_WRITE)))
-			return TRUE;
-
-		char *TextBuffer;
-		DWORD Buf[1];
-		Buf[0]=MacroDlg->RecBuffer[0];
-
-		if ((TextBuffer=MacroDlg->MkTextSequence((MacroDlg->RecBufferSize==1?Buf:MacroDlg->RecBuffer),MacroDlg->RecBufferSize)) )
-		{
-			fwrite(TextBuffer,strlen(TextBuffer),1,MacroFile);
-			fclose(MacroFile);
-			xf_free(TextBuffer);
-			{
-				//ConsoleTitle *OldTitle=new ConsoleTitle;
-				FileEditor ShellEditor(MacroFileName,-1,FFILEEDIT_DISABLEHISTORY,-1,-1,nullptr);
-				//delete OldTitle;
-				ShellEditor.SetDynamicallyBorn(false);
-				FrameManager->EnterModalEV();
-				FrameManager->ExecuteModal();
-				FrameManager->ExitModalEV();
-
-				if (!ShellEditor.IsFileChanged() || !(MacroFile=fopen(MacroFileName,FOPEN_READ)))
-					;
-				else
-				{
-					MacroRecord NewMacroWORK2={0};
-					long FileSize=filelen(MacroFile);
-					TextBuffer=(char*)xf_malloc(FileSize);
-
-					if (TextBuffer)
-					{
-						fread(TextBuffer,FileSize,1,MacroFile);
-
-						if (!MacroDlg->ParseMacroString(&NewMacroWORK2,TextBuffer))
-						{
-							if (NewMacroWORK2.BufferSize > 1)
-								xf_free(NewMacroWORK2.Buffer);
-						}
-						else
-						{
-							MacroDlg->RecBuffer=NewMacroWORK2.Buffer;
-							MacroDlg->RecBufferSize=NewMacroWORK2.BufferSize;
-						}
-					}
-
-					fclose(MacroFile);
-				}
-			}
-			FrameManager->ResizeAllFrame();
-			FrameManager->PluginCommit();
-		}
-		else
-			fclose(MacroFile);
-
-		remove(MacroFileName);
-		return TRUE;
-	}
-
-#endif
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
@@ -6185,7 +6118,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 	MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected=Set3State(Flags,MFLAGS_EDITSELECTION,MFLAGS_EDITNOSELECTION);
 	LPWSTR Sequence=MkTextSequence(RecBuffer,RecBufferSize);
 	MacroSettingsDlg[MS_EDIT_SEQUENCE].strData=Sequence;
-	xf_free(Sequence);
+	free(Sequence);
 	DlgParam Param={this,0,0,0};
 	Dialog Dlg(MacroSettingsDlg,ARRAYSIZE(MacroSettingsDlg),ParamMacroDlgProc,(LONG_PTR)&Param);
 	Dlg.SetPosition(-1,-1,73,19);
@@ -6244,12 +6177,12 @@ int KeyMacro::PostNewMacro(const wchar_t *PlainText,DWORD Flags,DWORD AKey,BOOL 
 	BOOL parsResult=ParseMacroString(&NewMacroWORK2,Buffer,onlyCheck);
 
 	if (allocBuffer && Buffer)
-		xf_free(Buffer);
+		free(Buffer);
 
 	if (!parsResult)
 	{
 		if (NewMacroWORK2.BufferSize > 1)
-			xf_free(NewMacroWORK2.Buffer);
+			free(NewMacroWORK2.Buffer);
 
 		return FALSE;
 	}
@@ -6257,7 +6190,7 @@ int KeyMacro::PostNewMacro(const wchar_t *PlainText,DWORD Flags,DWORD AKey,BOOL 
 	if (onlyCheck)
 	{
 		if (NewMacroWORK2.BufferSize > 1)
-			xf_free(NewMacroWORK2.Buffer);
+			free(NewMacroWORK2.Buffer);
 
 		return TRUE;
 	}
@@ -6267,10 +6200,10 @@ int KeyMacro::PostNewMacro(const wchar_t *PlainText,DWORD Flags,DWORD AKey,BOOL 
 	// теперь попробуем выделить немного нужной памяти
 	MacroRecord *NewMacroWORK;
 
-	if (!(NewMacroWORK=(MacroRecord *)xf_realloc(Work.MacroWORK,sizeof(MacroRecord)*(Work.MacroWORKCount+1))))
+	if (!(NewMacroWORK=(MacroRecord *)realloc(Work.MacroWORK,sizeof(MacroRecord)*(Work.MacroWORKCount+1))))
 	{
 		if (NewMacroWORK2.BufferSize > 1)
-			xf_free(NewMacroWORK2.Buffer);
+			free(NewMacroWORK2.Buffer);
 
 		return FALSE;
 	}
@@ -6299,7 +6232,7 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec,BOOL NeedAddSendFlag,BOOL IsPluginS
 	NewMacroWORK2.Description=nullptr;
 	//if(MRec->BufferSize > 1)
 	{
-		if (!(NewMacroWORK2.Buffer=(DWORD*)xf_malloc((MRec->BufferSize+3)*sizeof(DWORD))))
+		if (!(NewMacroWORK2.Buffer=(DWORD*)malloc((MRec->BufferSize+3)*sizeof(DWORD))))
 		{
 			return FALSE;
 		}
@@ -6307,10 +6240,10 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec,BOOL NeedAddSendFlag,BOOL IsPluginS
 	// теперь попробуем выделить немного нужной памяти
 	MacroRecord *NewMacroWORK;
 
-	if (!(NewMacroWORK=(MacroRecord *)xf_realloc(Work.MacroWORK,sizeof(MacroRecord)*(Work.MacroWORKCount+1))))
+	if (!(NewMacroWORK=(MacroRecord *)realloc(Work.MacroWORK,sizeof(MacroRecord)*(Work.MacroWORKCount+1))))
 	{
 		//if(MRec->BufferSize > 1)
-		xf_free(NewMacroWORK2.Buffer);
+		free(NewMacroWORK2.Buffer);
 		return FALSE;
 	}
 
@@ -6401,7 +6334,7 @@ void MacroState::Init(TVarTable *tbl)
 	if (!tbl)
 	{
 		AllocVarTable=true;
-		locVarTable=(TVarTable*)xf_malloc(sizeof(TVarTable));
+		locVarTable=(TVarTable*)malloc(sizeof(TVarTable));
 		initVTable(*locVarTable);
 	}
 	else

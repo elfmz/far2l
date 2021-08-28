@@ -110,7 +110,7 @@ void TArray<Object>::Free()
 		for (unsigned i=0; i<Count; ++i)
 			delete items[i];
 
-		xf_free(items);
+		free(items);
 		items=nullptr;
 	}
 
@@ -230,14 +230,14 @@ bool TArray<Object>::setSize(size_t newSize)
 		size_t Remainder=newSize%Delta;
 		size_t newCount=Remainder?(newSize+Delta)-Remainder:
 		                      newSize?newSize:Delta;
-		Object **newItems=static_cast<Object**>(xf_malloc(newCount*sizeof(Object*)));
+		Object **newItems=static_cast<Object**>(malloc(newCount*sizeof(Object*)));
 
 		if (newItems)
 		{
 			if (items)
 			{
 				memcpy(newItems,items,Count*sizeof(Object*));
-				xf_free(items);
+				free(items);
 			}
 
 			items=newItems;
@@ -368,7 +368,7 @@ class TPointerArray
 			{
 				size_t Remainder=newSize%Delta;
 				size_t newCount=Remainder?(newSize+Delta)-Remainder:(newSize?newSize:Delta);
-				Object **newItems=static_cast<Object**>(xf_realloc(items,newCount*sizeof(Object*)));
+				Object **newItems=static_cast<Object**>(realloc(items,newCount*sizeof(Object*)));
 
 				if (newItems)
 				{
@@ -397,7 +397,7 @@ class TPointerArray
 				for (size_t i=0; i<Count; ++i)
 					delete items[i];
 
-				xf_free(items);
+				free(items);
 				items=nullptr;
 			}
 

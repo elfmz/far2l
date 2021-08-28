@@ -209,7 +209,7 @@ void FileList::DeleteListData(FileListItem **(&ListData),int &FileCount)
 			}
 
 			if (ListData[I]->UserFlags & PPIF_USERDATA)
-				xf_free((void *)ListData[I]->UserData);
+				free((void *)ListData[I]->UserData);
 
 			if (ListData[I]->DizText && ListData[I]->DeleteDiz)
 				delete[] ListData[I]->DizText;
@@ -217,7 +217,7 @@ void FileList::DeleteListData(FileListItem **(&ListData),int &FileCount)
 			delete ListData[I]; //!!!
 		}
 
-		xf_free(ListData);
+		free(ListData);
 		ListData=nullptr;
 		FileCount=0;
 	}
@@ -542,16 +542,16 @@ int _cdecl SortList(const void *el1,const void *el2)
 		}
 	}
 
-	int NameCmp=0;
+	int NameCmp = 0;
 
 	if (!Opt.SortFolderExt && (SPtr1->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		Ext1 = SPtr1->strName.CPtr() + SPtr1->strName.GetLength();
+		Ext1 = SPtr1->strName.CEnd();
 	}
 
 	if (!Opt.SortFolderExt && (SPtr2->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 	{
-		Ext2 = SPtr2->strName.CPtr() + SPtr2->strName.GetLength();
+		Ext2 = SPtr2->strName.CEnd();
 	}
 
 	if (ListNumericSort)
@@ -3800,18 +3800,18 @@ void FileList::CopyFiles()
 			{
 				if (CopyData)
 				{
-					xf_free(CopyData);
+					free(CopyData);
 					CopyData=nullptr;
 				}
 				break;
 			}
 			size_t Length=strSelName.GetLength()+1;
-			wchar_t *NewPtr=static_cast<wchar_t *>(xf_realloc(CopyData, (DataSize+Length+1)*sizeof(wchar_t)));
+			wchar_t *NewPtr=static_cast<wchar_t *>(realloc(CopyData, (DataSize+Length+1)*sizeof(wchar_t)));
 			if (!NewPtr)
 			{
 				if (CopyData)
 				{
-					xf_free(CopyData);
+					free(CopyData);
 					CopyData=nullptr;
 				}
 				break;
@@ -3825,7 +3825,7 @@ void FileList::CopyFiles()
 		if(CopyData)
 		{
 			DataSize++;
-			xf_free(CopyData);
+			free(CopyData);
 		}
 	}
 }
@@ -3871,7 +3871,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 				{
 					if (CopyData)
 					{
-						xf_free(CopyData);
+						free(CopyData);
 						CopyData=nullptr;
 					}
 
@@ -3924,13 +3924,13 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 			EscapeSpace(strQuotedName);
 
 		int Length=(int)strQuotedName.GetLength();
-		wchar_t *NewPtr=(wchar_t *)xf_realloc(CopyData, (DataSize+Length+3)*sizeof(wchar_t));
+		wchar_t *NewPtr=(wchar_t *)realloc(CopyData, (DataSize+Length+3)*sizeof(wchar_t));
 
 		if (!NewPtr)
 		{
 			if (CopyData)
 			{
-				xf_free(CopyData);
+				free(CopyData);
 				CopyData=nullptr;
 			}
 
@@ -3944,7 +3944,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 	}
 
 	CopyToClipboard(CopyData);
-	xf_free(CopyData);
+	free(CopyData);
 }
 
 FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, int UNC)

@@ -674,7 +674,7 @@ void PrepareUnitStr()
 {
 	for (int i=0; i<UNIT_COUNT; i++)
 	{
-		xwcsncpy(UnitStr[i][0],MSG(MListBytes+i),MAX_UNITSTR_SIZE);
+		far_wcsncpy(UnitStr[i][0],MSG(MListBytes+i),MAX_UNITSTR_SIZE);
 		wcscpy(UnitStr[i][1],UnitStr[i][0]);
 		WINPORT(CharLower)(UnitStr[i][0]);
 		WINPORT(CharUpper)(UnitStr[i][1]);
@@ -968,7 +968,7 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 
 	if (breakcharlen == 1 && !docut)
 	{
-		newtext = xf_wcsdup(text);
+		newtext = wcsdup(text);
 
 		if (!newtext)
 		{
@@ -1033,7 +1033,7 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 	else
 	{
 		/* Multiple character line break */
-		newtext = (wchar_t*)xf_malloc((strSrc.GetLength() * (breakcharlen+1)+1)*sizeof(wchar_t));
+		newtext = (wchar_t*)malloc((strSrc.GetLength() * (breakcharlen+1)+1)*sizeof(wchar_t));
 
 		if (!newtext)
 		{
@@ -1127,13 +1127,13 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 	}
 
 	strDestText = newtext;
-	xf_free(newtext);
+	free(newtext);
 	return strDestText;
 }
 
 /*
   Ptr=CalcWordFromString(Str,I,&Start,&End);
-  xstrncpy(Dest,Ptr,End-Start+1);
+  far_strncpy(Dest,Ptr,End-Start+1);
   Dest[End-Start+1]=0;
 
 // Параметры:

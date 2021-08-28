@@ -890,7 +890,7 @@ int Panel::OnFCtlSetLocation(const FarPanelLocation *location)
 
 void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName,FARString &strName)
 {
-	wchar_t *Ptr=(wchar_t *)xf_malloc((StrLength(Src)+StrLength(FindEdit->GetStringAddr())+32)*sizeof(wchar_t));
+	wchar_t *Ptr=(wchar_t *)malloc((StrLength(Src)+StrLength(FindEdit->GetStringAddr())+32)*sizeof(wchar_t));
 
 	if (Ptr)
 	{
@@ -923,7 +923,7 @@ void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &str
 			*--EndPtr=0;
 		}
 
-		xf_free(Ptr);
+		free(Ptr);
 	}
 }
 
@@ -1011,7 +1011,7 @@ void Panel::FastFind(int FirstKey)
 								FastFindShow(FindX,FindY);
 							}
 
-							xf_free(ClipText);
+							free(ClipText);
 						}
 
 						continue;
@@ -1885,7 +1885,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 			}
 
 			if (Param1&&Param2)
-				xwcsncpy((wchar_t*)Param2,strTemp,Param1);
+				far_wcsncpy((wchar_t*)Param2,strTemp,Param1);
 
 			Result=(int)strTemp.GetLength()+1;
 			break;
@@ -1902,14 +1902,14 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 				if (Command==FCTL_GETCOLUMNTYPES)
 				{
 					if (Param1&&Param2)
-						xwcsncpy((wchar_t*)Param2,strColumnTypes,Param1);
+						far_wcsncpy((wchar_t*)Param2,strColumnTypes,Param1);
 
 					Result=(int)strColumnTypes.GetLength()+1;
 				}
 				else
 				{
 					if (Param1&&Param2)
-						xwcsncpy((wchar_t*)Param2,strColumnWidths,Param1);
+						far_wcsncpy((wchar_t*)Param2,strColumnWidths,Param1);
 
 					Result=(int)strColumnWidths.GetLength()+1;
 				}
@@ -2214,16 +2214,6 @@ bool Panel::ExecShortcutFolder(int Pos)
 						break;
 					}
 				}
-
-				/*
-				if(I == CtrlObject->Plugins.PluginsCount)
-				{
-				  char Target[NM*2];
-				  xstrncpy(Target, PluginModule, sizeof(Target));
-				  TruncPathStr(Target, ScrX-16);
-				  Message (MSG_WARNING | MSG_ERRORTYPE, 1, MSG(MError), Target, MSG (MNeedNearPath), MSG(MOk))
-				}
-				*/
 			}
 
 			return true;

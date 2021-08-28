@@ -766,7 +766,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		wchar_t *wz = PasteFromClipboard();
 		if (wz) {
 			out = Wide2MB(&wz[0]);
-			xf_free(wz);
+			free(wz);
 		}
 
 		return out;

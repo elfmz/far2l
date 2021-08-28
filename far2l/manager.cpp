@@ -65,7 +65,7 @@ Manager::Manager():
 	ModalStackCount(0),
 	ModalStackSize(0),
 	FrameCount(0),
-	FrameList(reinterpret_cast<Frame **>(xf_malloc(sizeof(Frame*)*(FrameCount+1)))),
+	FrameList(reinterpret_cast<Frame **>(malloc(sizeof(Frame*)*(FrameCount+1)))),
 	FrameListSize(0),
 	FramePos(-1),
 	InsertedFrame(nullptr),
@@ -86,13 +86,13 @@ Manager::Manager():
 Manager::~Manager()
 {
 	if (FrameList)
-		xf_free(FrameList);
+		free(FrameList);
 
 	if (ModalStack)
-		xf_free(ModalStack);
+		free(ModalStack);
 
 	/*if (SemiModalBackFrames)
-	  xf_free(SemiModalBackFrames);*/
+	  free(SemiModalBackFrames);*/
 }
 
 
@@ -165,7 +165,7 @@ void Manager::CloseAll()
 		DeletedFrame=nullptr;
 	}
 
-	xf_free(FrameList);
+	free(FrameList);
 	FrameList=nullptr;
 	FrameCount=FramePos=0;
 }
@@ -1443,7 +1443,7 @@ void Manager::DeleteCommit()
 	  if(i==ModalStackCount)
 	  {
 	    if (ModalStackCount == ModalStackSize){
-	      ModalStack = (Frame **) xf_realloc (ModalStack, ++ModalStackSize * sizeof (Frame *));
+	      ModalStack = (Frame **) realloc (ModalStack, ++ModalStackSize * sizeof (Frame *));
 	    }
 	    ModalStack[ModalStackCount++]=ActivatedFrame;
 	  }
@@ -1488,7 +1488,7 @@ void Manager::InsertCommit()
 	{
 		if (FrameListSize <= FrameCount)
 		{
-			FrameList=(Frame **)xf_realloc(FrameList,sizeof(*FrameList)*(FrameCount+1));
+			FrameList=(Frame **)realloc(FrameList,sizeof(*FrameList)*(FrameCount+1));
 			FrameListSize++;
 		}
 
@@ -1548,7 +1548,7 @@ void Manager::ExecuteCommit()
 
 	if (ModalStackCount == ModalStackSize)
 	{
-		ModalStack = (Frame **) xf_realloc(ModalStack, ++ModalStackSize * sizeof(Frame *));
+		ModalStack = (Frame **) realloc(ModalStack, ++ModalStackSize * sizeof(Frame *));
 	}
 
 	ModalStack [ModalStackCount++] = ExecutedFrame;
@@ -1741,7 +1741,7 @@ void Manager::InitKeyBar()
   {
     SemiModalBackFramesSize+=4;
     SemiModalBackFrames=
-      (Frame**)xf_realloc(SemiModalBackFrames,sizeof(Frame*)*SemiModalBackFramesSize);
+      (Frame**)realloc(SemiModalBackFrames,sizeof(Frame*)*SemiModalBackFramesSize);
 
   }
   SemiModalBackFrames[SemiModalBackFramesCount]=frame;

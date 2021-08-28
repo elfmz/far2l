@@ -101,7 +101,6 @@ qview.cpp
 rdrwdsk.cpp
 RefreshFrameManager.cpp
 RegExp.cpp
-savefpos.cpp
 savescr.cpp
 scantree.cpp
 scrbuf.cpp

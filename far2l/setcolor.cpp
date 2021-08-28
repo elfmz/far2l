@@ -551,7 +551,7 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 			{
 				int NewColor;
 				int *CurColor = (int *) SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-				FarDialogItem *DlgItem = (FarDialogItem *)xf_malloc(SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, 0));
+				FarDialogItem *DlgItem = (FarDialogItem *)malloc(SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, 0));
 				SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, (LONG_PTR)DlgItem);
 				NewColor=*CurColor;
 
@@ -570,7 +570,7 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 				if (NewColor!=*CurColor)
 					*CurColor=NewColor;
 
-				xf_free(DlgItem);
+				free(DlgItem);
 				return TRUE;
 			}
 

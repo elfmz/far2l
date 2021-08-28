@@ -427,7 +427,7 @@ static void InitInFileSearch()
 			// Формируем строку поиска
 			if (!CmpCase)
 			{
-				findStringBuffer = (wchar_t *)xf_malloc(2*findStringCount*sizeof(wchar_t));
+				findStringBuffer = (wchar_t *)malloc(2*findStringCount*sizeof(wchar_t));
 				findString=findStringBuffer;
 
 				for (size_t index = 0; index<strFindStr.GetLength(); index++)
@@ -450,7 +450,7 @@ static void InitInFileSearch()
 				findString = strFindStr.GetBuffer();
 
 			// Инизиализируем данные для алгоритма поиска
-			skipCharsTable = (size_t *)xf_malloc((MAX_VKEY_CODE+1)*sizeof(size_t));
+			skipCharsTable = (size_t *)malloc((MAX_VKEY_CODE+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < MAX_VKEY_CODE+1; index++)
 				skipCharsTable[index] = findStringCount;
@@ -485,7 +485,7 @@ static void InitInFileSearch()
 				if (!hasSelected)
 				{
 					codePagesCount = StandardCPCount;
-					codePages = (CodePageInfo *)xf_malloc(codePagesCount*sizeof(CodePageInfo));
+					codePages = (CodePageInfo *)malloc(codePagesCount*sizeof(CodePageInfo));
 					codePages[0].CodePage = WINPORT(GetOEMCP)();
 					codePages[1].CodePage = WINPORT(GetACP)();
 					codePages[2].CodePage = CP_KOI8R;
@@ -528,7 +528,7 @@ static void InitInFileSearch()
 								continue;
 						}
 
-						codePages = (CodePageInfo *)xf_realloc((void *)codePages, ++codePagesCount*sizeof(CodePageInfo));
+						codePages = (CodePageInfo *)realloc((void *)codePages, ++codePagesCount*sizeof(CodePageInfo));
 						codePages[codePagesCount-1].CodePage = codePage;
 					}
 				}
@@ -536,7 +536,7 @@ static void InitInFileSearch()
 			else
 			{
 				codePagesCount = 1;
-				codePages = (CodePageInfo *)xf_malloc(codePagesCount*sizeof(CodePageInfo));
+				codePages = (CodePageInfo *)malloc(codePagesCount*sizeof(CodePageInfo));
 				codePages[0].CodePage = CodePage;
 			}
 
@@ -568,7 +568,7 @@ static void InitInFileSearch()
 			if (SearchHex)
 			{
 				bool flag = false;
-				hexFindString = (unsigned char *)xf_malloc((findStringCount-findStringCount/3+1)/2);
+				hexFindString = (unsigned char *)malloc((findStringCount-findStringCount/3+1)/2);
 
 				for (size_t index = 0; index < strFindStr.GetLength(); index++)
 				{
@@ -594,7 +594,7 @@ static void InitInFileSearch()
 			}
 
 			// Инизиализируем данные для аглоритма поиска
-			skipCharsTable = (size_t *)xf_malloc((255+1)*sizeof(size_t));
+			skipCharsTable = (size_t *)malloc((255+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < 255+1; index++)
 				skipCharsTable[index] = hexFindStringSize;
@@ -613,25 +613,25 @@ static void ReleaseInFileSearch()
 	{
 		if (skipCharsTable)
 		{
-			xf_free(skipCharsTable);
+			free(skipCharsTable);
 			skipCharsTable=nullptr;
 		}
 
 		if (codePages)
 		{
-			xf_free(codePages);
+			free(codePages);
 			codePages=nullptr;
 		}
 
 		if (findStringBuffer)
 		{
-			xf_free(findStringBuffer);
+			free(findStringBuffer);
 			findStringBuffer=nullptr;
 		}
 
 		if (hexFindString)
 		{
-			xf_free(hexFindString);
+			free(hexFindString);
 			hexFindString=nullptr;
 		}
 
@@ -1974,7 +1974,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 																	Opt.Confirm.AllowReedit)
 																{
 																	char MsgFullFileName[NM];
-																	xstrncpy(MsgFullFileName,SearchFileName,sizeof(MsgFullFileName));
+																	far_strncpy(MsgFullFileName,SearchFileName,sizeof(MsgFullFileName));
 																	int MsgCode=Message(0,2,MSG(MFindFileTitle),
 																				TruncPathStr(MsgFullFileName,ScrX-16),
 																				MSG(MAskReload),

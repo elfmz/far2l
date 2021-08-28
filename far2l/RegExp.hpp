@@ -1,10 +1,6 @@
 ﻿#ifndef REGEXP_HPP_18B41BD7_69F8_461A_8A81_069B447D5554
 #define REGEXP_HPP_18B41BD7_69F8_461A_8A81_069B447D5554
 #pragma once
-#include <unordered_map>
-#include <string>
-#include <string.h>
-#include "FARString.hpp"
 
 /*
 RegExp.hpp
@@ -40,14 +36,11 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-// Internal:
 #include "plugin.hpp"
-
-// Platform:
-
-// Common:
-
-// External:
+#include <unordered_map>
+#include <string>
+#include <string.h>
+#include "FARString.hpp"
 
 //----------------------------------------------------------------------------
 
@@ -67,7 +60,12 @@ struct ReStringView // TODO: replace with std::wstring_view once will adopt C++1
 	{
 	}
 
-	inline ReStringView(const wchar_t *pw = L"", size_t sz = std::string::npos)
+	inline ReStringView()
+		: _pw(nullptr), _sz(0)
+	{
+	}
+
+	inline ReStringView(const wchar_t *pw, size_t sz = std::string::npos)
 		: _pw(pw), _sz((sz == std::string::npos) ? wcslen(pw) : sz)
 	{
 	}
@@ -77,6 +75,15 @@ struct ReStringView // TODO: replace with std::wstring_view once will adopt C++1
 		return ReStringView(_pw + pos, std::min(_sz - pos, sz));
 	}
 
+	inline bool operator ==(const ReStringView &other)
+	{
+		return _sz == other._sz && wmemcmp(_pw, other._pw, _sz) == 0;
+	}
+
+	inline bool operator !=(const ReStringView &other)
+	{
+		return !operator ==(other);
+	}
 
 	inline wchar_t front() const { return _sz ? _pw[0] : 0; }
 	inline wchar_t back() const { return _sz ? _pw[_sz - 1] : 0; }
@@ -84,7 +91,7 @@ struct ReStringView // TODO: replace with std::wstring_view once will adopt C++1
 	inline size_t size() const { return _sz; }
 	inline bool empty() const { return _sz == 0; }
 
-	inline const wchar_t &operator[](size_t i) const  { return _pw[i]; }
+	inline const wchar_t operator[](size_t i) const { return _pw[i]; }
 
 	size_t rfind(wchar_t c) const
 	{
@@ -179,7 +186,7 @@ class RegExp
 {
 public:
 	struct REOpCode;
-	struct UniSet;
+	class UniSet;
 	struct StateStackItem;
 
 private:
@@ -202,11 +209,12 @@ private:
 		int srcstart{};
 
 		// options
-		int ignorecase{};
-
 		int bracketscount{};
 		int maxbackref{};
 		int havenamedbrackets{};
+
+		bool ignorecase{};
+
 #ifdef RE_DEBUG
 		std::wstring resrc;
 #endif
@@ -295,15 +303,6 @@ private:
 		    and named brackets.
 		*/
 		int GetBracketsCount() const {return bracketscount;}
-		using BracketHandler = bool(*)(void* data,int action,int brindex,int start,int end);
-		void SetBracketHandler(BracketHandler bh,void* data)
-		{
-			brhandler=bh;
-			brhdata=data;
-		}
-	protected:
-		BracketHandler brhandler{};
-		void* brhdata{};
 };
 
 #endif // REGEXP_HPP_18B41BD7_69F8_461A_8A81_069B447D5554

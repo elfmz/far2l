@@ -1615,7 +1615,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		        )
 		   )
 		{
-			xwcsncpy(m_editor->GlobalEOL,CurEOL,ARRAYSIZE(m_editor->GlobalEOL));
+			far_wcsncpy(m_editor->GlobalEOL,CurEOL,ARRAYSIZE(m_editor->GlobalEOL));
 			m_editor->GlobalEOL[ARRAYSIZE(m_editor->GlobalEOL)-1]=0;
 			LastLineCR=1;
 		}
@@ -1985,7 +1985,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				{
 					DWORD length = (codepage == CP_WIDE_BE) ? Length * sizeof(wchar_t) : 
 						WINPORT(WideCharToMultiByte)(codepage, 0, SaveStr, Length, nullptr, 0, nullptr, nullptr);
-					char *SaveStrCopy=(char *)xf_malloc(length);
+					char *SaveStrCopy=(char *)malloc(length);
 
 					if (SaveStrCopy)
 					{
@@ -2000,7 +2000,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 							SysErrorCode=WINPORT(GetLastError)();
 						}
 
-						xf_free(SaveStrCopy);
+						free(SaveStrCopy);
 					}
 					else
 						bError = true;
@@ -2012,7 +2012,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 					{
 						DWORD endlength = (codepage == CP_WIDE_BE ? EndLength*sizeof(wchar_t) 
 							: WINPORT(WideCharToMultiByte)(codepage, 0, EndSeq, EndLength, nullptr, 0, nullptr, nullptr));
-						char *EndSeqCopy=(char *)xf_malloc(endlength);
+						char *EndSeqCopy=(char *)malloc(endlength);
 
 						if (EndSeqCopy)
 						{
@@ -2027,7 +2027,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 								SysErrorCode=WINPORT(GetLastError)();
 							}
 
-							xf_free(EndSeqCopy);
+							free(EndSeqCopy);
 						}
 						else
 							bError = true;

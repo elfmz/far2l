@@ -272,7 +272,7 @@ bool ConvertItemEx(
 					FARString str;
 					size_t sz = ItemStringAndSize(Data,str);
 					{
-						wchar_t *p = (wchar_t*)xf_malloc((sz+1)*sizeof(wchar_t));
+						wchar_t *p = (wchar_t*)malloc((sz+1)*sizeof(wchar_t));
 						Item->PtrData = p;
 
 						if (!p) // TODO: may be needed message?
@@ -409,7 +409,7 @@ Dialog::Dialog(DialogItemEx *SrcItem,    // Набор элементов диа
 :
 	CMM(MACRO_DIALOG)
 {
-	Dialog::Item = (DialogItemEx**)xf_malloc(sizeof(DialogItemEx*)*SrcItemCount);
+	Dialog::Item = (DialogItemEx**)malloc(sizeof(DialogItemEx*)*SrcItemCount);
 
 	for (unsigned i = 0; i < SrcItemCount; i++)
 	{
@@ -430,7 +430,7 @@ Dialog::Dialog(FarDialogItem *SrcItem,    // Набор элементов ди�
 :
 	CMM(MACRO_DIALOG)
 {
-	Dialog::Item = (DialogItemEx**)xf_malloc(sizeof(DialogItemEx*)*SrcItemCount);
+	Dialog::Item = (DialogItemEx**)malloc(sizeof(DialogItemEx*)*SrcItemCount);
 
 	for (unsigned i = 0; i < SrcItemCount; i++)
 	{
@@ -494,7 +494,7 @@ Dialog::~Dialog()
 	for (unsigned i = 0; i < ItemCount; i++)
 		delete Item[i];
 
-	xf_free(Item);
+	free(Item);
 	INPUT_RECORD rec;
 	PeekInputRecord(&rec);
 	delete OldTitle;
@@ -1346,7 +1346,7 @@ void Dialog::DeleteDialogObjects()
 
 		if (CurItem->Flags&DIF_AUTOMATION)
 			if (CurItem->AutoPtr)
-				xf_free(CurItem->AutoPtr);
+				free(CurItem->AutoPtr);
 	}
 }
 
@@ -4055,7 +4055,7 @@ int Dialog::SelectFromComboBox(
 	int EditX1,EditY1,EditX2,EditY2;
 	int I,Dest, OriginalPos;
 	unsigned CurFocusPos=FocusPos;
-	//if((Str=(char*)xf_malloc(MaxLen)) )
+	//if((Str=(char*)malloc(MaxLen)) )
 	{
 		EditLine->GetPosition(EditX1,EditY1,EditX2,EditY2);
 
@@ -4162,7 +4162,7 @@ int Dialog::SelectFromComboBox(
 		if (Dest<0)
 		{
 			Redraw();
-			//xf_free(Str);
+			//free(Str);
 			return KEY_ESC;
 		}
 
@@ -4179,7 +4179,7 @@ int Dialog::SelectFromComboBox(
 
 		EditLine->SetLeftPos(0);
 		Redraw();
-		//xf_free(Str);
+		//free(Str);
 		return KEY_ENTER;
 	}
 	//return KEY_ESC;
@@ -5294,12 +5294,12 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 								if (!strTitle.IsEmpty()||!strBottomTitle.IsEmpty())
 								{
 									if (ListTitle->Title&&ListTitle->TitleLen)
-										xwcsncpy((wchar_t*)ListTitle->Title,strTitle,ListTitle->TitleLen);
+										far_wcsncpy((wchar_t*)ListTitle->Title,strTitle,ListTitle->TitleLen);
 									else
 										ListTitle->TitleLen=(int)strTitle.GetLength()+1;
 
 									if (ListTitle->Bottom&&ListTitle->BottomLen)
-										xwcsncpy((wchar_t*)ListTitle->Bottom,strBottomTitle,ListTitle->BottomLen);
+										far_wcsncpy((wchar_t*)ListTitle->Bottom,strBottomTitle,ListTitle->BottomLen);
 									else
 										ListTitle->BottomLen=(int)strBottomTitle.GetLength()+1;
 
@@ -5637,7 +5637,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 						CurItem->ListPtr->ChangeFlags(VMENU_DISABLED,CurItem->Flags&DIF_DISABLE);
 				}
 				if (original_PtrData)
-					xf_free((void*)original_PtrData);
+					free((void*)original_PtrData);
 				reinterpret_cast<DlgEdit*>(CurItem->ObjPtr)->SetCallbackState(true);
 			}
 
@@ -5760,7 +5760,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				CurItem->ListPtr->ChangeFlags(VMENU_DISABLED,CurItem->Flags&DIF_DISABLE);
 
 			if (Item.PtrData)
-				xf_free((wchar_t *)Item.PtrData);
+				free((wchar_t *)Item.PtrData);
 
 			return I;
 		}

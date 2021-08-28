@@ -418,10 +418,10 @@ const wchar_t *TVar::toString()
 	switch (vType)
 	{
 		case vtDouble:
-			xwcsncpy(s, ::toString(dnum),ARRAYSIZE(s));
+			far_wcsncpy(s, ::toString(dnum),ARRAYSIZE(s));
 			break;
 		case vtInteger:
-			xwcsncpy(s, ::toString(inum),ARRAYSIZE(s));
+			far_wcsncpy(s, ::toString(inum),ARRAYSIZE(s));
 			break;
 		default:
 			return str;

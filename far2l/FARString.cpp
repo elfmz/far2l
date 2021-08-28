@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
+#include <StackHeapArray.hpp>
 #include <stdarg.h>
 
 FARStringData *eus()
@@ -276,43 +277,32 @@ FARString& FARString::Clear()
 
 int __cdecl FARString::Format(const wchar_t * format, ...)
 {
-	wchar_t *buffer = nullptr;
-	size_t Size = 0x80;
 	int retValue;
 
 	va_list argptr;
 	va_start(argptr, format);
 
-	do
+	for (size_t Size = 0x100; Size; Size<<= 1)
 	{
-		Size <<= 1;
-		wchar_t *newbuffer = (wchar_t *)( Size ?
-			xf_realloc_nomove(buffer, Size * sizeof(wchar_t))
-			: nullptr );
-
-		if (!newbuffer)
+		StackHeapArray<wchar_t, 0x200> buf(Size);
+		if (!buf.Get())
 		{
 			retValue = -1;
 			break;
 		}
 
-		buffer = newbuffer;
-
 		va_list argptr_copy;
 		va_copy(argptr_copy, argptr);
-		retValue = vswprintf(buffer, Size, format, argptr_copy);
+		retValue = vswprintf(buf.Get(), Size, format, argptr_copy);
 		va_end(argptr_copy);
-	}
-	while (retValue < 0);
 
+		if (retValue >= 0 && size_t(retValue) < Size)
+		{
+			Copy(buf.Get(), retValue);
+			break;
+		}
+	}
 	va_end(argptr);
-
-	if (retValue >= 0)
-	{
-		Copy(buffer, retValue);
-	}
-
-	xf_free(buffer);
 
 	return retValue;
 }

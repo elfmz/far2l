@@ -1355,7 +1355,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	{
 		FARString strFullPath;
 		wchar_t *lpwszHelpTopic = strNewTopic.GetBuffer(pos);
-		xwcsncpy(lpwszHelpTopic, StackData.strSelTopic.CPtr()+1,pos);
+		far_wcsncpy(lpwszHelpTopic, StackData.strSelTopic.CPtr()+1,pos);
 		strNewTopic.ReleaseBuffer();
 		strFullPath = StackData.strHelpPath;
 		// уберем _все_ конечные слеши и добавим один

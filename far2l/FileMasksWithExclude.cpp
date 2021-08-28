@@ -93,7 +93,7 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 
 	size_t len=StrLength(masks)+1;
 	bool rc=false;
-	wchar_t *MasksStr=(wchar_t *) xf_malloc(len*sizeof(wchar_t));
+	wchar_t *MasksStr=(wchar_t *) malloc(len*sizeof(wchar_t));
 
 	if (MasksStr)
 	{
@@ -123,7 +123,7 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 		Free();
 
 	if (MasksStr)
-		xf_free(MasksStr);
+		free(MasksStr);
 
 	return rc;
 }

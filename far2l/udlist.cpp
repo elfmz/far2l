@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 UserDefinedListItem::~UserDefinedListItem()
 {
 	if (Str)
-		xf_free(Str);
+		free(Str);
 }
 
 bool UserDefinedListItem::operator==(const UserDefinedListItem &rhs) const
@@ -67,12 +67,12 @@ const UserDefinedListItem& UserDefinedListItem::operator=(const
 	{
 		if (Str)
 		{
-			xf_free(Str);
+			free(Str);
 			Str=nullptr;
 		}
 
 		if (rhs.Str)
-			Str=xf_wcsdup(rhs.Str);
+			Str=wcsdup(rhs.Str);
 
 		index=rhs.index;
 	}
@@ -86,12 +86,12 @@ const UserDefinedListItem& UserDefinedListItem::operator=(const wchar_t *rhs)
 	{
 		if (Str)
 		{
-			xf_free(Str);
+			free(Str);
 			Str=nullptr;
 		}
 
 		if (rhs)
-			Str=xf_wcsdup(rhs);
+			Str=wcsdup(rhs);
 	}
 
 	return *this;
@@ -103,11 +103,11 @@ wchar_t *UserDefinedListItem::set(const wchar_t *Src, size_t size)
 	{
 		if (Str)
 		{
-			xf_free(Str);
+			free(Str);
 			Str=nullptr;
 		}
 
-		Str=static_cast<wchar_t*>(xf_malloc((size+1)*sizeof(wchar_t)));
+		Str=static_cast<wchar_t*>(malloc((size+1)*sizeof(wchar_t)));
 
 		if (Str)
 		{
@@ -238,7 +238,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 							/* $ 18.09.2002 DJ
 							   выделялось на 1 байт меньше, чем надо
 							*/
-							item.Str=static_cast<wchar_t*>(xf_realloc(item.Str, (Length+2)*sizeof(wchar_t)));
+							item.Str=static_cast<wchar_t*>(realloc(item.Str, (Length+2)*sizeof(wchar_t)));
 
 							/* DJ $ */
 							if (item.Str)

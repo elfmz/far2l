@@ -211,7 +211,7 @@ struct DialogItemEx
 	{
 		DialogItemAutomation *Auto;
 
-		if ((Auto=(DialogItemAutomation*)xf_realloc(AutoPtr,sizeof(DialogItemAutomation)*(AutoCount+1))) )
+		if ((Auto=(DialogItemAutomation*)realloc(AutoPtr,sizeof(DialogItemAutomation)*(AutoCount+1))) )
 		{
 			AutoPtr=Auto;
 			Auto=AutoPtr+AutoCount;

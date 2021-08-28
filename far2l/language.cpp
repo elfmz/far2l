@@ -356,7 +356,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 
 		if (m_bUnicode)
 		{
-			if (!(MsgList = (wchar_t*)xf_realloc(MsgList, (MsgSize+DestLength)*sizeof(wchar_t))))
+			if (!(MsgList = (wchar_t*)realloc(MsgList, (MsgSize+DestLength)*sizeof(wchar_t))))
 			{
 				fclose(LangFile);
 				return false;
@@ -368,7 +368,7 @@ bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 		else
 		{
 			DestLength = pack(WINPORT(WideCharToMultiByte)(CP_UTF8, 0, strDestStr, -1, nullptr, 0, nullptr, nullptr));
-			if (!(MsgListA = (char*)xf_realloc(MsgListA, (MsgSize+DestLength)*sizeof(char))))
+			if (!(MsgListA = (char*)realloc(MsgListA, (MsgSize+DestLength)*sizeof(char))))
 			{
 				fclose(LangFile);
 				return false;
@@ -443,9 +443,9 @@ Language::~Language()
 
 void Language::Free()
 {
-	if (MsgList) xf_free(MsgList);
+	if (MsgList) free(MsgList);
 
-	if (MsgListA)xf_free(MsgListA);
+	if (MsgListA)free(MsgListA);
 
 	MsgList=nullptr;
 	MsgListA=nullptr;

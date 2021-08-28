@@ -59,7 +59,7 @@ Frame::~Frame()
 	_OT(SysLog(L"[%p] Frame::~Frame()", this));
 	SetRegularIdle(false);
 	DestroyAllModal();
-//  xf_free(ModalStack);
+//  free(ModalStack);
 }
 
 void Frame::SetRegularIdle(bool enabled)

@@ -583,7 +583,7 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 
 		EXECUTE_FUNCTION_EX(pOpenPlugin(OpenFrom,Item), es);
 
-		if (ItemA) xf_free(ItemA);
+		if (ItemA) free(ItemA);
 
 		hResult = es.hResult;
 		//CurPluginItem=nullptr; //BUGBUG
@@ -645,7 +645,7 @@ HANDLE PluginA::OpenFilePlugin(
 
 		EXECUTE_FUNCTION_EX(pOpenFilePlugin(NameA, Data, DataSize, OpMode), es);
 
-		if (NameA) xf_free(NameA);
+		if (NameA) free(NameA);
 
 		hResult = es.hResult;
 	}
@@ -967,7 +967,7 @@ int PluginA::ProcessEvent(
 		EXECUTE_FUNCTION_EX(pProcessEvent(hPlugin, Event, ParamA), es);
 
 		if (ParamA && (Event == FE_COMMAND || Event == FE_CHANGEVIEWMODE))
-			xf_free(ParamA);
+			free(ParamA);
 
 		bResult = es.bResult;
 	}
@@ -1104,7 +1104,7 @@ int PluginA::SetDirectory(
 		char *DirA = UnicodeToAnsi(Dir);
 		EXECUTE_FUNCTION_EX(pSetDirectory(hPlugin, DirA, OpMode), es);
 
-		if (DirA) xf_free(DirA);
+		if (DirA) free(DirA);
 
 		bResult = es.bResult;
 	}
@@ -1115,16 +1115,16 @@ int PluginA::SetDirectory(
 void PluginA::FreeOpenPluginInfo()
 {
 	if (OPI.CurDir)
-		xf_free((void *)OPI.CurDir);
+		free((void *)OPI.CurDir);
 
 	if (OPI.HostFile)
-		xf_free((void *)OPI.HostFile);
+		free((void *)OPI.HostFile);
 
 	if (OPI.Format)
-		xf_free((void *)OPI.Format);
+		free((void *)OPI.Format);
 
 	if (OPI.PanelTitle)
-		xf_free((void *)OPI.PanelTitle);
+		free((void *)OPI.PanelTitle);
 
 	if (OPI.InfoLines && OPI.InfoLinesNumber)
 	{
@@ -1144,11 +1144,11 @@ void PluginA::FreeOpenPluginInfo()
 	if (OPI.KeyBar)
 	{
 		FreeUnicodeKeyBarTitles((KeyBarTitles*)OPI.KeyBar);
-		xf_free((void *)OPI.KeyBar);
+		free((void *)OPI.KeyBar);
 	}
 
 	if (OPI.ShortcutData)
-		xf_free((void *)OPI.ShortcutData);
+		free((void *)OPI.ShortcutData);
 
 	memset(&OPI,0,sizeof(OPI));
 }
@@ -1194,7 +1194,7 @@ void PluginA::ConvertOpenPluginInfo(oldfar::OpenPluginInfo &Src, OpenPluginInfo 
 
 	if (Src.KeyBar)
 	{
-		OPI.KeyBar=(KeyBarTitles*) xf_malloc(sizeof(KeyBarTitles));
+		OPI.KeyBar=(KeyBarTitles*) malloc(sizeof(KeyBarTitles));
 		ConvertKeyBarTitlesA(Src.KeyBar, (KeyBarTitles*)OPI.KeyBar, Src.StructSize>=(int)sizeof(oldfar::OpenPluginInfo));
 	}
 
@@ -1247,29 +1247,29 @@ void PluginA::FreePluginInfo()
 	if (PI.DiskMenuStringsNumber)
 	{
 		for (int i=0; i<PI.DiskMenuStringsNumber; i++)
-			xf_free((void *)PI.DiskMenuStrings[i]);
+			free((void *)PI.DiskMenuStrings[i]);
 
-		xf_free((void *)PI.DiskMenuStrings);
+		free((void *)PI.DiskMenuStrings);
 	}
 
 	if (PI.PluginMenuStringsNumber)
 	{
 		for (int i=0; i<PI.PluginMenuStringsNumber; i++)
-			xf_free((void *)PI.PluginMenuStrings[i]);
+			free((void *)PI.PluginMenuStrings[i]);
 
-		xf_free((void *)PI.PluginMenuStrings);
+		free((void *)PI.PluginMenuStrings);
 	}
 
 	if (PI.PluginConfigStringsNumber)
 	{
 		for (int i=0; i<PI.PluginConfigStringsNumber; i++)
-			xf_free((void *)PI.PluginConfigStrings[i]);
+			free((void *)PI.PluginConfigStrings[i]);
 
-		xf_free((void *)PI.PluginConfigStrings);
+		free((void *)PI.PluginConfigStrings);
 	}
 
 	if (PI.CommandPrefix)
-		xf_free((void *)PI.CommandPrefix);
+		free((void *)PI.CommandPrefix);
 
 	memset(&PI,0,sizeof(PI));
 }
@@ -1282,7 +1282,7 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 
 	if (Src.DiskMenuStringsNumber)
 	{
-		wchar_t **p = (wchar_t **) xf_malloc(Src.DiskMenuStringsNumber*sizeof(wchar_t*));
+		wchar_t **p = (wchar_t **) malloc(Src.DiskMenuStringsNumber*sizeof(wchar_t*));
 
 		for (int i=0; i<Src.DiskMenuStringsNumber; i++)
 			p[i] = AnsiToUnicode(Src.DiskMenuStrings[i]);
@@ -1293,7 +1293,7 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 
 	if (Src.PluginMenuStringsNumber)
 	{
-		wchar_t **p = (wchar_t **) xf_malloc(Src.PluginMenuStringsNumber*sizeof(wchar_t*));
+		wchar_t **p = (wchar_t **) malloc(Src.PluginMenuStringsNumber*sizeof(wchar_t*));
 
 		for (int i=0; i<Src.PluginMenuStringsNumber; i++)
 			p[i] = AnsiToUnicode(Src.PluginMenuStrings[i]);
@@ -1304,7 +1304,7 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 
 	if (Src.PluginConfigStringsNumber)
 	{
-		wchar_t **p = (wchar_t **) xf_malloc(Src.PluginConfigStringsNumber*sizeof(wchar_t*));
+		wchar_t **p = (wchar_t **) malloc(Src.PluginConfigStringsNumber*sizeof(wchar_t*));
 
 		for (int i=0; i<Src.PluginConfigStringsNumber; i++)
 			p[i] = AnsiToUnicode(Src.PluginConfigStrings[i]);

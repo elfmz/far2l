@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
+#include <StackHeapArray.hpp>
 #include "console.hpp"
 #include "config.hpp"
 #include "palette.hpp"
@@ -148,23 +149,20 @@ bool console::GetWorkingRect(SMALL_RECT& WorkingRect)
 
 bool console::GetTitle(FARString &strTitle)
 {
-	DWORD dwSize = 0;
-	DWORD dwBufferSize = MAX_PATH;
-	wchar_t *lpwszTitle = nullptr;
-
-	do
+	for (DWORD Size = 0x100; Size; Size<<= 1)
 	{
-		dwBufferSize <<= 1;
-		lpwszTitle = (wchar_t*)xf_realloc_nomove(lpwszTitle, dwBufferSize*sizeof(wchar_t));
-		dwSize = WINPORT(GetConsoleTitle)(lpwszTitle, dwBufferSize);
+		StackHeapArray<wchar_t, 0x200> buf(Size);
+		if (!buf.Get())
+			break;
+
+		if (WINPORT(GetConsoleTitle)(buf.Get(), Size) < Size)
+		{
+			strTitle = buf.Get();
+			return true;
+		}
 	}
-	while (!dwSize && WINPORT(GetLastError)() == ERROR_SUCCESS);
 
-	if (dwSize)
-		strTitle = lpwszTitle;
-
-	xf_free(lpwszTitle);
-	return dwSize!=0;
+	return false;
 }
 
 bool console::SetTitle(LPCWSTR Title)

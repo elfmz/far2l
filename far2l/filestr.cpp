@@ -59,9 +59,9 @@ OldGetFileString::OldGetFileString(FILE *SrcFile):
 	ReadPos(0),
 	ReadSize(0),
 	m_nStrLength(DELTA),
-	Str(reinterpret_cast<char*>(xf_malloc(m_nStrLength))),
+	Str(reinterpret_cast<char*>(malloc(m_nStrLength))),
 	m_nwStrLength(DELTA),
-	wStr(reinterpret_cast<wchar_t*>(xf_malloc(m_nwStrLength * sizeof(wchar_t)))),
+	wStr(reinterpret_cast<wchar_t*>(malloc(m_nwStrLength * sizeof(wchar_t)))),
 	SomeDataLost(false),
 	bCrCr(false)
 {
@@ -70,10 +70,10 @@ OldGetFileString::OldGetFileString(FILE *SrcFile):
 OldGetFileString::~OldGetFileString()
 {
 	if (Str)
-		xf_free(Str);
+		free(Str);
 
 	if (wStr)
-		xf_free(wStr);
+		free(wStr);
 }
 
 
@@ -129,7 +129,8 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 			if (ERROR_INSUFFICIENT_BUFFER == ret)
 			{
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, nullptr, 0);
-				wStr = (wchar_t*)xf_realloc_nomove(wStr, (nResultLength + 1) * sizeof(wchar_t));
+				free(wStr);
+				wStr = (wchar_t*)malloc((nResultLength + 1) * sizeof(wchar_t));
 				*wStr = L'\0';
 				m_nwStrLength = nResultLength+1;
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, wStr, nResultLength);
@@ -222,7 +223,7 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 
 			if (CurLength >= m_nStrLength - 1)
 			{
-				char *NewStr = (char *)xf_realloc(Str, m_nStrLength + (DELTA << x));
+				char *NewStr = (char *)realloc(Str, m_nStrLength + (DELTA << x));
 
 				if (!NewStr)
 					return (-1);
@@ -322,7 +323,7 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 
 			if (CurLength >= m_nwStrLength - 1)
 			{
-				wchar_t *NewStr = (wchar_t *)xf_realloc(wStr, (m_nwStrLength + (DELTA << x)) * sizeof(wchar_t));
+				wchar_t *NewStr = (wchar_t *)realloc(wStr, (m_nwStrLength + (DELTA << x)) * sizeof(wchar_t));
 
 				if (!NewStr)
 					return (-1);
@@ -434,7 +435,7 @@ bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound, bool b
 	{
 		fseek(file, 0, SEEK_SET);
 		size_t sz=0x8000; // BUGBUG. TODO: configurable
-		LPVOID Buffer=xf_malloc(sz);
+		LPVOID Buffer=malloc(sz);
 		sz=fread(Buffer,1,sz,file);
 		fseek(file,0,SEEK_SET);
 
@@ -487,7 +488,7 @@ bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound, bool b
 			}
 		}
 
-		xf_free(Buffer);
+		free(Buffer);
 	}
 
 	if (pSignatureFound)
@@ -498,7 +499,7 @@ bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound, bool b
 
 wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePage)
 {
-	char *lpDest = (char*)xf_malloc((nDestLength+1)*3);  //UTF-8, up to 3 bytes per char support
+	char *lpDest = (char*)malloc((nDestLength+1)*3);  //UTF-8, up to 3 bytes per char support
 	memset(lpDest, 0, (nDestLength+1)*3);
 	memset(lpwszDest, 0, nDestLength*sizeof(wchar_t));
 
@@ -506,7 +507,7 @@ wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePa
 	{
 		if (!fgetws(lpwszDest, nDestLength, file))
 		{
-			xf_free(lpDest);
+			free(lpDest);
 			return nullptr;
 		}
 
@@ -537,7 +538,7 @@ wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePa
 			WINPORT(MultiByteToWideChar)(CP_UTF8, 0, lpDest, -1, lpwszDest, nDestLength);
 		else
 		{
-			xf_free(lpDest);
+			free(lpDest);
 			return nullptr;
 		}
 	}
@@ -547,12 +548,12 @@ wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePa
 			WINPORT(MultiByteToWideChar)(nCodePage, 0, lpDest, -1, lpwszDest, nDestLength);
 		else
 		{
-			xf_free(lpDest);
+			free(lpDest);
 			return nullptr;
 		}
 	}
 
-	xf_free(lpDest);
+	free(lpDest);
 	return lpwszDest;
 }
 
@@ -885,7 +886,7 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 	{
 		file.SetPointer(0, nullptr, FILE_BEGIN);
 		DWORD Size=0x8000; // BUGBUG. TODO: configurable
-		LPVOID Buffer=xf_malloc(Size);
+		LPVOID Buffer=malloc(Size);
 		DWORD ReadSize = 0;
 		bool ReadResult = file.Read(Buffer, Size, &ReadSize);
 		file.SetPointer(0, nullptr, FILE_BEGIN);
@@ -940,7 +941,7 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 			}
 		}
 
-		xf_free(Buffer);
+		free(Buffer);
 	}
 
 	if (pSignatureFound)

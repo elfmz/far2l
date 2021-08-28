@@ -324,7 +324,7 @@ wchar_t *Clipboard::Paste()
 		{
 			int BufferSize;
 			BufferSize=StrLength(ClipAddr)+1;
-			ClipText=(wchar_t *)xf_malloc(BufferSize*sizeof(wchar_t));
+			ClipText=(wchar_t *)malloc(BufferSize*sizeof(wchar_t));
 
 			if (ClipText)
 				wcscpy(ClipText, ClipAddr);
@@ -353,12 +353,12 @@ wchar_t *Clipboard::PasteEx(int max)
 			if (BufferSize>max)
 				BufferSize=max;
 
-			ClipText=(wchar_t *)xf_malloc((BufferSize+1)*sizeof(wchar_t));
+			ClipText=(wchar_t *)malloc((BufferSize+1)*sizeof(wchar_t));
 
 			if (ClipText)
 			{
 				wmemset(ClipText,0,BufferSize+1);
-				xwcsncpy(ClipText,ClipAddr,BufferSize+1);
+				far_wcsncpy(ClipText,ClipAddr,BufferSize+1);
 			}
 
 			WINPORT(GlobalUnlock)(hClipData);
@@ -401,7 +401,7 @@ wchar_t *Clipboard::PasteFormat(const wchar_t *Format)
 			else
 				BufferSize=wcslen(ClipAddr)+1;
 
-			ClipText=(wchar_t *)xf_malloc(BufferSize*sizeof(wchar_t));
+			ClipText=(wchar_t *)malloc(BufferSize*sizeof(wchar_t));
 
 			if (ClipText)
 			{

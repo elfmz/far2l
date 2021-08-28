@@ -189,7 +189,7 @@ bool FileFilter::FilterEdit()
 			FilterList.SetUserData(CurExtPtr,0,FilterList.AddItem(&ListItem));
 		}
 
-		xf_free(ExtPtr);
+		free(ExtPtr);
 	}
 
 	FilterList.Show();
@@ -982,12 +982,12 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 	// ... а потом уже выделение памяти!
 	wchar_t *NewPtr;
 
-	if (!(NewPtr=(wchar_t *)xf_realloc(*ExtPtr,MAX_PATH*(ExtCount+1)*sizeof(wchar_t))))
+	if (!(NewPtr=(wchar_t *)realloc(*ExtPtr,MAX_PATH*(ExtCount+1)*sizeof(wchar_t))))
 		return 0;
 
 	*ExtPtr=NewPtr;
 	NewPtr=*ExtPtr+ExtCount*MAX_PATH;
-	xwcsncpy(NewPtr,strMask,MAX_PATH-1);
+	far_wcsncpy(NewPtr,strMask,MAX_PATH-1);
 	NewPtr=NewPtr+StrLength(NewPtr)+1;
 	*NewPtr=Check;
 	ExtCount++;

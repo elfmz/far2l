@@ -1152,7 +1152,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 	{
 		if (ReadCount2 > 1)
 		{
-			INPUT_RECORD *TmpRec=(INPUT_RECORD*)xf_malloc(sizeof(INPUT_RECORD)*ReadCount2);
+			INPUT_RECORD *TmpRec=(INPUT_RECORD*)malloc(sizeof(INPUT_RECORD)*ReadCount2);
 
 			if (TmpRec)
 			{
@@ -1165,7 +1165,7 @@ void INPUT_RECORD_DumpBuffer(FILE *fp)
 				}
 
 				// освободим память
-				xf_free(TmpRec);
+				free(TmpRec);
 			}
 		}
 

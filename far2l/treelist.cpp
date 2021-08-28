@@ -101,7 +101,7 @@ static struct TreeListCache
 		if (TreeCount==TreeSize)
 		{
 			TreeSize+=TreeSize?TreeSize>>2:32;
-			wchar_t **NewPtr=(wchar_t**)xf_realloc(ListName,sizeof(wchar_t*)*TreeSize);
+			wchar_t **NewPtr=(wchar_t**)realloc(ListName,sizeof(wchar_t*)*TreeSize);
 
 			if (!NewPtr)
 				return;
@@ -113,20 +113,20 @@ static struct TreeListCache
 	void Add(const wchar_t* name)
 	{
 		Resize();
-		ListName[TreeCount++]=xf_wcsdup(name);
+		ListName[TreeCount++]=wcsdup(name);
 	}
 
 	void Insert(int idx,const wchar_t* name)
 	{
 		Resize();
 		memmove(ListName+idx+1,ListName+idx,sizeof(wchar_t*)*(TreeCount-idx));
-		ListName[idx]=xf_wcsdup(name);
+		ListName[idx]=wcsdup(name);
 		TreeCount++;
 	}
 
 	void Delete(int idx)
 	{
-		if (ListName[idx]) xf_free(ListName[idx]);
+		if (ListName[idx]) free(ListName[idx]);
 
 		memmove(ListName+idx,ListName+idx+1,sizeof(wchar_t*)*(TreeCount-idx-1));
 		TreeCount--;
@@ -138,10 +138,10 @@ static struct TreeListCache
 
 		for (int i=0; i<TreeCount; i++)
 		{
-			if (ListName[i]) xf_free(ListName[i]);
+			if (ListName[i]) free(ListName[i]);
 		}
 
-		if (ListName) xf_free(ListName);
+		if (ListName) free(ListName);
 
 		ListName=nullptr;
 		TreeCount=0;
@@ -187,7 +187,7 @@ TreeList::~TreeList()
 		for (long i=0; i<TreeCount; i++)
 			delete ListData[i];
 
-		xf_free(ListData);
+		free(ListData);
 	}
 
 	if (SaveListData) delete [] SaveListData;
@@ -270,7 +270,6 @@ void TreeList::DisplayTree(int Fast)
 	if (TreeCount>0)
 		strCurDir = ListData[CurFile]->strName; //BUGBUG
 
-//    xstrncpy(CurDir,ListData[CurFile].Name,sizeof(CurDir));
 	if (!Fast)
 	{
 		Box(X1,Y1,X2,Y2,COL_PANELBOX,DOUBLE_BOX);
@@ -448,12 +447,12 @@ int TreeList::ReadTree()
 		for (long i=0; i<TreeCount; i++)
 			delete ListData[i];
 
-		xf_free(ListData);
+		free(ListData);
 	}
 
 	TreeCount=0;
 
-	if (!(ListData=(TreeItem**)xf_malloc((TreeCount+256+1)*sizeof(TreeItem*))))
+	if (!(ListData=(TreeItem**)malloc((TreeCount+256+1)*sizeof(TreeItem*))))
 	{
 		RestoreState();
 		return FALSE;
@@ -491,7 +490,7 @@ int TreeList::ReadTree()
 
 		if (!(TreeCount & 255))
 		{
-			TreeItem **TmpListData=(TreeItem **)xf_realloc(ListData,(TreeCount+256+1)*sizeof(TreeItem*));
+			TreeItem **TmpListData=(TreeItem **)realloc(ListData,(TreeCount+256+1)*sizeof(TreeItem*));
 
 			if (!TmpListData)
 			{
@@ -518,7 +517,7 @@ int TreeList::ReadTree()
 			for (long i=0; i<TreeCount; i++)
 				delete ListData[i];
 
-			xf_free(ListData);
+			free(ListData);
 		}
 
 		ListData=nullptr;
@@ -975,7 +974,7 @@ int TreeList::ProcessKey(int Key)
 					if (PutCode==1 || PutCode==2)
 						AnotherPanel->SetPluginModified();
 
-					if (ItemList) xf_free(ItemList);
+					if (ItemList) free(ItemList);
 
 					if (Move)
 						ReadSubTree(ListData[CurFile]->strName);
@@ -1478,7 +1477,7 @@ int TreeList::ReadTreeFile()
 		for (long i=0; i<TreeCount; i++)
 			delete ListData[i];
 
-		xf_free(ListData);
+		free(ListData);
 	}
 
 	ListData=nullptr;
@@ -1511,7 +1510,7 @@ int TreeList::ReadTreeFile()
 
 			if (!(TreeCount & 255))
 			{
-				TreeItem **TmpListData=(TreeItem **)xf_realloc(ListData,(TreeCount+256+1)*sizeof(TreeItem*));
+				TreeItem **TmpListData=(TreeItem **)realloc(ListData,(TreeCount+256+1)*sizeof(TreeItem*));
 
 				if (!TmpListData)
 				{
@@ -1520,7 +1519,7 @@ int TreeList::ReadTreeFile()
 						for (long i=0; i<TreeCount; i++)
 							delete ListData[i];
 
-						xf_free(ListData);
+						free(ListData);
 					}
 
 					ListData=nullptr;
@@ -1712,9 +1711,9 @@ void TreeList::RenTreeName(const wchar_t *SrcName,const wchar_t *DestName)
 			strNewName += DirName + SrcLength;
 
 			if (TreeCache.ListName[CachePos])
-				xf_free(TreeCache.ListName[CachePos]);
+				free(TreeCache.ListName[CachePos]);
 
-			TreeCache.ListName[CachePos] = xf_wcsdup(strNewName);
+			TreeCache.ListName[CachePos] = wcsdup(strNewName);
 		}
 	}
 }
@@ -2210,13 +2209,13 @@ bool TreeList::RestoreState()
 		for (long i=0; i<TreeCount; i++)
 			delete ListData[i];
 
-		xf_free(ListData);
+		free(ListData);
 	}
 
 	TreeCount=WorkDir=0;
 	ListData=nullptr;
 
-	if (SaveTreeCount > 0 && (ListData=(TreeItem **)xf_realloc_nomove(ListData,SaveTreeCount*sizeof(TreeItem*))) )
+	if (SaveTreeCount > 0 && (ListData=(TreeItem **)malloc(SaveTreeCount*sizeof(TreeItem*))) )
 	{
 		for (int i=0; i<SaveTreeCount; i++)
 		{

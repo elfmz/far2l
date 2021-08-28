@@ -151,13 +151,13 @@ PluginManager::~PluginManager()
 	}
 	if(PluginsData)
 	{
-		xf_free(PluginsData);
+		free(PluginsData);
 	}
 }
 
 bool PluginManager::AddPlugin(Plugin *pPlugin)
 {
-	Plugin **NewPluginsData=(Plugin**)xf_realloc(PluginsData,sizeof(*PluginsData)*(PluginsCount+1));
+	Plugin **NewPluginsData=(Plugin**)realloc(PluginsData,sizeof(*PluginsData)*(PluginsCount+1));
 
 	if (!NewPluginsData)
 		return false;

@@ -124,7 +124,7 @@ void *WINAPI FarBsearch(const void *key, const void *base, size_t nelem, size_t 
 
 void WINAPI DeleteBuffer(void *Buffer)
 {
-	if (Buffer) xf_free(Buffer);
+	if (Buffer) free(Buffer);
 }
 
 static void ScanPluginDir();
@@ -149,7 +149,7 @@ static int FarInputBoxSynched(
 
 	FARString strDest;
 	int nResult = GetString(Title,Prompt,HistoryName,SrcText,strDest,HelpTopic,Flags&~FIB_CHECKBOX,nullptr,nullptr);
-	xwcsncpy(DestText, strDest, DestLength+1);
+	far_wcsncpy(DestText, strDest, DestLength+1);
 	return nResult;
 }
 
@@ -457,7 +457,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 						if (Ret)
 						{
 							if (CurMacro.BufferSize > 1)
-								xf_free(CurMacro.Buffer);
+								free(CurMacro.Buffer);
 							memset(&KeyMacro->Param.MacroResult,0,sizeof(struct MacroParseResult));
 						}
 						else
@@ -570,7 +570,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 					if (wi->TypeNameSize && wi->TypeName)
 					{
-						xwcsncpy(wi->TypeName,strType,wi->TypeNameSize);
+						far_wcsncpy(wi->TypeName,strType,wi->TypeNameSize);
 					}
 					else
 					{
@@ -579,7 +579,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 					if (wi->NameSize && wi->Name)
 					{
-						xwcsncpy(wi->Name,strName,wi->NameSize);
+						far_wcsncpy(wi->Name,strName,wi->NameSize);
 					}
 					else
 					{
@@ -1257,7 +1257,7 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	{
 		ItemsNumber=0;
 
-		if (!(SingleItems=(wchar_t *)xf_malloc((StrLength((const wchar_t *)Items)+2)*sizeof(wchar_t))))
+		if (!(SingleItems=(wchar_t *)malloc((StrLength((const wchar_t *)Items)+2)*sizeof(wchar_t))))
 			return -1;
 
 		Msg=wcscpy(SingleItems,(const wchar_t *)Items);
@@ -1274,11 +1274,11 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 		ItemsNumber++; //??
 	}
 
-	const wchar_t **MsgItems=(const wchar_t **)xf_malloc(sizeof(wchar_t*)*(ItemsNumber+ADDSPACEFORPSTRFORMESSAGE));
+	const wchar_t **MsgItems=(const wchar_t **)malloc(sizeof(wchar_t*)*(ItemsNumber+ADDSPACEFORPSTRFORMESSAGE));
 
 	if (!MsgItems)
 	{
-		xf_free(SingleItems);
+		free(SingleItems);
 		return -1;
 	}
 
@@ -1385,9 +1385,9 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	//CheckScreenLock();
 
 	if (SingleItems)
-		xf_free(SingleItems);
+		free(SingleItems);
 
-	xf_free(MsgItems);
+	free(MsgItems);
 	return(MsgCode);
 }
 
@@ -1539,7 +1539,7 @@ static int FarControlSynched(HANDLE hPlugin,int Command,int Param1,LONG_PTR Para
 				CmdLine->GetSelString(strParam);
 
 			if (Param1&&Param2)
-				xwcsncpy((wchar_t*)Param2,strParam,Param1);
+				far_wcsncpy((wchar_t*)Param2,strParam,Param1);
 
 			return (int)strParam.GetLength()+1;
 		}
@@ -1699,7 +1699,7 @@ static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,in
 					MsgOut=1;
 				}
 
-				ItemsList=(FAR_FIND_DATA*)xf_realloc(ItemsList,sizeof(*ItemsList)*(ItemsNumber+32+1));
+				ItemsList=(FAR_FIND_DATA*)realloc(ItemsList,sizeof(*ItemsList)*(ItemsNumber+32+1));
 
 				if (!ItemsList)
 				{
@@ -1713,7 +1713,7 @@ static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,in
 			ItemsList[ItemsNumber].ftCreationTime = FindData.ftCreationTime;
 			ItemsList[ItemsNumber].ftLastAccessTime = FindData.ftLastAccessTime;
 			ItemsList[ItemsNumber].ftLastWriteTime = FindData.ftLastWriteTime;
-			ItemsList[ItemsNumber].lpwszFileName = xf_wcsdup(strFullName.CPtr());
+			ItemsList[ItemsNumber].lpwszFileName = wcsdup(strFullName.CPtr());
 			ItemsNumber++;
 		}
 
@@ -1861,11 +1861,11 @@ static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
 	if (CurPanelItem->UserData && (CurPanelItem->Flags & PPIF_USERDATA))
 	{
 		DWORD Size=*(DWORD *)CurPanelItem->UserData;
-		DestItem->UserData=(DWORD_PTR)xf_malloc(Size);
+		DestItem->UserData=(DWORD_PTR)malloc(Size);
 		memcpy((void *)DestItem->UserData,(void *)CurPanelItem->UserData,Size);
 	}
 
-	DestItem->FindData.lpwszFileName = xf_wcsdup(strFullName);
+	DestItem->FindData.lpwszFileName = wcsdup(strFullName);
 	DirListItemsNumber++;
 }
 
@@ -1900,7 +1900,7 @@ static void ScanPluginDir()
 	if (StopSearch || !CtrlObject->Plugins.GetFindData(hDirListPlugin,&PanelData,&ItemCount,OPM_FIND))
 		return;
 
-	PluginPanelItem *NewList=(PluginPanelItem *)xf_realloc(PluginDirList,1+sizeof(*PluginDirList)*(DirListItemsNumber+ItemCount));
+	PluginPanelItem *NewList=(PluginPanelItem *)realloc(PluginDirList,1+sizeof(*PluginDirList)*(DirListItemsNumber+ItemCount));
 
 	if (!NewList)
 	{
@@ -1926,7 +1926,7 @@ static void ScanPluginDir()
 		        StrCmp(CurPanelItem->FindData.lpwszFileName,L".") &&
 		        !TestParentFolderName(CurPanelItem->FindData.lpwszFileName))
 		{
-			PluginPanelItem *NewList=(PluginPanelItem *)xf_realloc(PluginDirList,sizeof(*PluginDirList)*(DirListItemsNumber+1));
+			PluginPanelItem *NewList=(PluginPanelItem *)realloc(PluginDirList,sizeof(*PluginDirList)*(DirListItemsNumber+1));
 
 			if (!NewList)
 			{
@@ -1977,7 +1977,7 @@ void WINAPI FarFreeDirList(FAR_FIND_DATA *PanelItem, int nItemsNumber)
 		apiFreeFindData(CurPanelItem);
 	}
 
-	xf_free(PanelItem);
+	free(PanelItem);
 }
 
 
@@ -1992,13 +1992,13 @@ void WINAPI FarFreePluginDirList(PluginPanelItem *PanelItem, int ItemsNumber)
 
 		if (CurPanelItem->UserData && (CurPanelItem->Flags & PPIF_USERDATA))
 		{
-			xf_free((void *)CurPanelItem->UserData);
+			free((void *)CurPanelItem->UserData);
 		}
 
 		apiFreeFindData(&CurPanelItem->FindData);
 	}
 
-	xf_free(PanelItem);
+	free(PanelItem);
 }
 
 static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
@@ -2337,7 +2337,7 @@ int WINAPI farGetFileOwner(const wchar_t *Computer,const wchar_t *Name, wchar_t 
 	/*int Ret=*/GetFileOwner(Computer,Name,strOwner);
 
 	if (Owner && Size)
-		xwcsncpy(Owner,strOwner,Size);
+		far_wcsncpy(Owner,strOwner,Size);
 
 	return static_cast<int>(strOwner.GetLength()+1);
 }
@@ -2363,7 +2363,7 @@ int WINAPI farConvertPath(CONVERTPATHMODES Mode,const wchar_t *Src, wchar_t *Des
 		}
 
 		if (Dest && DestSize)
-			xwcsncpy(Dest, strDest.CPtr(), DestSize);
+			far_wcsncpy(Dest, strDest.CPtr(), DestSize);
 
 		return static_cast<int>(strDest.GetLength()) + 1;
 	}
@@ -2390,7 +2390,7 @@ int WINAPI farGetReparsePointInfo(const wchar_t *Src,wchar_t *Dest,int DestSize)
 		_LOGCOPYR(SysLog(L"return -> %d strSrc='%ls', strDest='%ls'",__LINE__,strSrc.CPtr(),strDest.CPtr()));
 
 		if (DestSize && Dest)
-			xwcsncpy(Dest,strDest,DestSize);
+			far_wcsncpy(Dest,strDest,DestSize);
 
 		return Size;
 	}*/
@@ -2602,7 +2602,7 @@ DWORD WINAPI farGetCurrentDirectory(DWORD Size,wchar_t* Buffer)
 
 	if (Buffer && Size)
 	{
-		xwcsncpy(Buffer,strCurDir,Size);
+		far_wcsncpy(Buffer,strCurDir,Size);
 	}
 
 	return static_cast<DWORD>(strCurDir.GetLength()+1);

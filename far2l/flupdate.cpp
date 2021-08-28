@@ -257,7 +257,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				AllocatedCount=AllocatedCount+256+AllocatedCount/4;
 				FileListItem **pTemp;
 
-				if (!(pTemp=(FileListItem **)xf_realloc(ListData,AllocatedCount*sizeof(*ListData))))
+				if (!(pTemp=(FileListItem **)realloc(ListData,AllocatedCount*sizeof(*ListData))))
 					break;
 
 				ListData=pTemp;
@@ -369,7 +369,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		{
 			FileListItem **pTemp;
 
-			if ((pTemp=(FileListItem **)xf_realloc(ListData,(FileCount+1)*sizeof(*ListData))))
+			if ((pTemp=(FileListItem **)realloc(ListData,(FileCount+1)*sizeof(*ListData))))
 				ListData=pTemp;
 		}
 
@@ -422,7 +422,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		{
 			FileListItem **pTemp;
 
-			if ((pTemp=(FileListItem **)xf_realloc(ListData,(FileCount+PanelCount)*sizeof(*ListData))))
+			if ((pTemp=(FileListItem **)realloc(ListData,(FileCount+PanelCount)*sizeof(*ListData))))
 			{
 				ListData=pTemp;
 
@@ -695,7 +695,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	}
 
 	FileCount=PluginFileCount;
-	ListData=(FileListItem**)xf_malloc(sizeof(FileListItem*)*(FileCount+1));
+	ListData=(FileListItem**)malloc(sizeof(FileListItem*)*(FileCount+1));
 
 	if (!ListData)
 	{

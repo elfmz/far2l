@@ -168,7 +168,7 @@ static int MessageSynched(
 		ErrorSets = GetErrorString(strErrStr);
 
 	// выделим память под рабочий массив указателей на строки (+запас 16)
-	Str=(const wchar_t **)xf_malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
+	Str=(const wchar_t **)malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
 
 	if (!Str)
 		return -1;
@@ -311,7 +311,7 @@ static int MessageSynched(
 
 		if (!MsgDlg)
 		{
-			xf_free(Str);
+			free(Str);
 			return -1;
 		}
 
@@ -393,7 +393,6 @@ static int MessageSynched(
 					continue;
 				}
 
-				//xstrncpy(PtrMsgDlg->Data,CPtrStr,Min((int)MAX_WIDTH_MESSAGE,(int)sizeof(PtrMsgDlg->Data))); //?? ScrX-15 ??
 				PtrMsgDlg->strData = CPtrStr; //BUGBUG, wrong len
 			}
 		}
@@ -433,7 +432,7 @@ static int MessageSynched(
 		}
 
 		delete [] MsgDlg;
-		xf_free(Str);
+		free(Str);
 		return(RetCode<0?RetCode:RetCode-StrCount-1-(Separator?1:0));
 	}
 
@@ -499,20 +498,20 @@ static int MessageSynched(
 
 		if (Flags & MSG_LEFTALIGN)
 		{
-			lpwszTemp = (wchar_t*)xf_malloc((Width-10+1)*sizeof(wchar_t));
+			lpwszTemp = (wchar_t*)malloc((Width-10+1)*sizeof(wchar_t));
 			swprintf(lpwszTemp,Width-10+1,L"%.*ls",Width-10,CPtrStr);
 			GotoXY(X1+5,Y1+I+2);
 		}
 		else
 		{
 			PosX=X1+(Width-Length)/2;
-			lpwszTemp = (wchar_t*)xf_malloc((PosX-X1-4+Length+X2-PosX-Length-3+1)*sizeof(wchar_t));
+			lpwszTemp = (wchar_t*)malloc((PosX-X1-4+Length+X2-PosX-Length-3+1)*sizeof(wchar_t));
 			swprintf(lpwszTemp,PosX-X1-4+Length+X2-PosX-Length-3+1,L"%*ls%.*ls%*ls",PosX-X1-4,L"",Length,CPtrStr,X2-PosX-Length-3,L"");
 			GotoXY(X1+4,Y1+I+2);
 		}
 
 		Text(lpwszTemp);
-		xf_free(lpwszTemp);
+		free(lpwszTemp);
 	}
 
 	/* $ 13.01.2003 IS
@@ -521,7 +520,7 @@ static int MessageSynched(
 	     чтобы заработал прогресс-бар от плагина, который был запущен при помощи
 	     макроса запретом отрисовки (bugz#533).
 	*/
-	xf_free(Str);
+	free(Str);
 
 	if (!Buttons)
 	{

@@ -411,6 +411,26 @@ if (DEFINED PYTHON AND PYTHON)
 	else()
 		message(WARNING "${ColorRed}PYTHON plugin disabled due to Python libraries not found${ColorNormal}")
 	endif()
+
+	install(CODE "
+		execute_process(COMMAND echo Python: prepaing virtual environment)
+		" COMPONENT system)
+	install(CODE "
+		execute_process(COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python)
+		" COMPONENT system)
+	install(CODE "
+		execute_process(COMMAND echo Python: installing packages)
+		" COMPONENT system)
+	install(CODE "
+		execute_process(COMMAND ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python/bin/python -m pip install cffi debugpy)
+		" COMPONENT system)
+
+	# Copy this explicitely cuz generic copier command excludes 'far2l'
+	install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/far2l"
+		DESTINATION "share/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
+		COMPONENT base FILES_MATCHING
+		PATTERN "*")
+
 else()
 	message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
 	install(CODE "
@@ -462,6 +482,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
 	PATTERN "far2l_*" EXCLUDE
 	PATTERN "*.far-plug-*" EXCLUDE
 	PATTERN "*.broker" EXCLUDE
+	PATTERN "python/plug/python" EXCLUDE
 	PATTERN "*")
 
 # setup some symlinks and remove deprecated stuff from previous installation

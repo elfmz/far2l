@@ -2857,7 +2857,7 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 
 	if (!SortForDataDWORD) // обычная сортировка
 	{
-		qsortex((char *)Item,
+		far_qsortex((char *)Item,
 		        ItemCount,
 		        sizeof(*Item),
 		        (qsortex_fn)SortItem,
@@ -2865,7 +2865,7 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 	}
 	else
 	{
-		qsortex((char *)Item,
+		far_qsortex((char *)Item,
 		        ItemCount,
 		        sizeof(*Item),
 		        (qsortex_fn)SortItemDataDWORD,

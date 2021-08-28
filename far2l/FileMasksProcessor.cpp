@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FileMasksProcessor.hpp"
 #include "processname.hpp"
-#include "HeapStackArray.hpp"
+#include "StackHeapArray.hpp"
 
 FileMasksProcessor::FileMasksProcessor():
 	BaseFileMask(),
@@ -102,9 +102,9 @@ bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 {
 	if (re)
 	{
-		HEAP_STACK_ARRAY(RegExpMatch, m, n, 32);
+		StackHeapArray<RegExpMatch> m(n);
 		int i = n;
-		return re->Search(ReStringView(FileName), m, i);
+		return re->Search(ReStringView(FileName), m.Get(), i);
 	}
 
 	const wchar_t *MaskPtr;   // указатель на текущую маску в списке

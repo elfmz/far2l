@@ -111,7 +111,7 @@ void WINAPI FarQsortEx(void *base, size_t nelem, size_t width,
                        int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
 {
 	if (base && fcmp)
-		qsortex((char*)base,nelem,width,fcmp,user);
+		far_qsortex((char*)base,nelem,width,fcmp,user);
 }
 
 void *WINAPI FarBsearch(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *))

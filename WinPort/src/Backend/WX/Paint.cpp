@@ -23,14 +23,6 @@
 
 extern ConsoleOutput g_winport_con_out;
 
-static unsigned int DivCeil(unsigned int v, unsigned int d)
-{
-	unsigned int r = v / d;
-	return (r * d == v) ? r : r + 1;
-}
-
-
-
 /////////////////////////////////////////////////////////////////////////////////
 static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
 											"Liberation", "Droid", "Monospace", "PT Mono", "Menlo",
@@ -356,8 +348,8 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 	wxRegion rgn = _window->GetUpdateRegion();
 	wxRect box = rgn.GetBox();
-	SMALL_RECT area = {(SHORT) (box.GetLeft() / _font_width), (SHORT) (box.GetTop() / _font_height),
-		(SHORT)DivCeil(box.GetRight(), _font_width), (SHORT)DivCeil(box.GetBottom(), _font_height)};
+	SMALL_RECT area = {SHORT(box.GetLeft() / _font_width), SHORT(box.GetTop() / _font_height),
+		SHORT(box.GetRight() / _font_width), SHORT(box.GetBottom() / _font_height)};
 
 	if (area.Left < 0 ) area.Left = 0;
 	if (area.Top < 0 ) area.Top = 0;
@@ -458,9 +450,9 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 {
 	wxRect rc;
 	rc.SetLeft(((int)area.Left) * _font_width);
-	rc.SetRight(((int)area.Right + 1) * _font_width);
+	rc.SetRight(((int)area.Right) * _font_width + _font_width - 1);
 	rc.SetTop(((int)area.Top) * _font_height);
-	rc.SetBottom(((int)area.Bottom + 1) * _font_height);
+	rc.SetBottom(((int)area.Bottom) * _font_height + _font_height - 1);
 
 	if (area.Left != 0 && _noticed_combinings) {
 		if (_line_combinings_inspected.size() <= (size_t)area.Bottom) {

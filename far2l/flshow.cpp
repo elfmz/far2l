@@ -387,9 +387,9 @@ void FileList::ShowFileList(int Fast)
 					if (pos)
 					{
 						if (strCurDir.At(pos-1)!=L':')
-							strCurDir.SetLength(pos);
+							strCurDir.Truncate(pos);
 						else
-							strCurDir.SetLength(pos+1);
+							strCurDir.Truncate(pos+1);
 					}
 				}
 			}
@@ -1200,7 +1200,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 							size_t pos;
 
 							if (strDizText.Pos(pos,L'\4'))
-								strDizText.SetLength(pos);
+								strDizText.Truncate(pos);
 
 							FS<<fmt::LeftAlign()<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<strDizText;
 							break;

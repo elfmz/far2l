@@ -315,7 +315,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 							if (FindLastSlash(pos,strMenuFilePath))
 							{
-								strMenuFilePath.SetLength(pos--);
+								strMenuFilePath.Truncate(pos--);
 
 								if (strMenuFilePath.At(pos) != L':')
 									continue;
@@ -406,7 +406,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 					if (FindLastSlash(pos,strMenuFilePath))
 					{
-						strMenuFilePath.SetLength(pos--);
+						strMenuFilePath.Truncate(pos--);
 
 						if (strMenuFilePath.At(pos)!=L':')
 							continue;

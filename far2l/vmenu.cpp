@@ -913,7 +913,7 @@ bool VMenu::AddToFilter(const wchar_t *str)
 			if( IsFilterEditKey(Key) )
 			{
 				if ( Key==KEY_BS && !strFilter.IsEmpty() )
-					strFilter.SetLength(strFilter.GetLength()-1);
+					strFilter.Truncate(strFilter.GetLength()-1);
 				else
 					strFilter += Key;
 			}
@@ -1175,7 +1175,7 @@ int VMenu::ProcessKey(int Key)
 				{
 					if (!strFilter.IsEmpty())
 					{
-						strFilter.SetLength(strFilter.GetLength()-1);
+						strFilter.Truncate(strFilter.GetLength()-1);
 
 						if (strFilter.IsEmpty())
 						{
@@ -1996,7 +1996,7 @@ void VMenu::ShowMenu(bool IsParent)
 
 				// fit menu FARString into available space
 				if (strMItemPtrLen > MaxLineWidth)
-					strMItemPtr.SetLength(HiFindRealPos(strMItemPtr, MaxLineWidth, CheckFlags(VMENU_SHOWAMPERSAND)));
+					strMItemPtr.Truncate(HiFindRealPos(strMItemPtr, MaxLineWidth, CheckFlags(VMENU_SHOWAMPERSAND)));
 
 				// set highlight
 				if (!VMFlags.Check(VMENU_SHOWAMPERSAND))
@@ -2006,7 +2006,7 @@ void VMenu::ShowMenu(bool IsParent)
 					if ((AmpPos >= 0) && (static_cast<size_t>(AmpPos) < strMItemPtr.GetLength()) && (strMItemPtr.At(AmpPos) != L'&'))
 					{
 						FARString strEnd = strMItemPtr.CPtr() + AmpPos;
-						strMItemPtr.SetLength(AmpPos);
+						strMItemPtr.Truncate(AmpPos);
 						strMItemPtr += L"&";
 						strMItemPtr += strEnd;
 					}

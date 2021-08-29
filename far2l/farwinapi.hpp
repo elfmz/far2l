@@ -173,7 +173,7 @@ DWORD apiGetCurrentDirectory(
     FARString &strCurDir
 );
 
-DWORD apiGetTempPath(
+void apiGetTempPath(
     FARString &strBuffer
 );
 

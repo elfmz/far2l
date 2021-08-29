@@ -454,7 +454,7 @@ static int MessageSynched(
 		FARString strTempTitle = Title;
 
 		if (strTempTitle.GetLength() > MaxLength)
-			strTempTitle.SetLength(MaxLength);
+			strTempTitle.Truncate(MaxLength);
 
 		GotoXY(X1+(X2-X1-1-(int)strTempTitle.GetLength())/2,Y1+1);
 		FS<<L" "<<strTempTitle<<L" ";

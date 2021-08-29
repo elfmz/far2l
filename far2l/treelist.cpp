@@ -1500,12 +1500,12 @@ int TreeList::ReadTreeFile()
 			size_t Pos=0;
 			if(strDirName.Pos(Pos, L'\n'))
 			{
-				strDirName.SetLength(Pos);
+				strDirName.Truncate(Pos);
 			}
 
 			if (RootLength>0 && strDirName.At(RootLength-1)!=L':' && IsSlash(strDirName.At(RootLength)) && !strDirName.At(RootLength+1))
 			{
-				strDirName.SetLength(RootLength);
+				strDirName.Truncate(RootLength);
 			}
 
 			if (!(TreeCount & 255))

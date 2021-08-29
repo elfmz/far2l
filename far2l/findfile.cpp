@@ -2326,7 +2326,7 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 		size_t pos;
 
 		if (FindLastSlash(pos,strPathName))
-			strPathName.SetLength(pos);
+			strPathName.Truncate(pos);
 		else
 			strPathName.Clear();
 	}
@@ -2665,10 +2665,10 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& Recurs
 
 					size_t pos=0;
 					if (strPluginSearchPath.RPos(pos, GOOD_SLASH))
-						strPluginSearchPath.SetLength(pos);
+						strPluginSearchPath.Truncate(pos);
 
 					if (strPluginSearchPath.RPos(pos, GOOD_SLASH))
-						strPluginSearchPath.SetLength(pos+1);
+						strPluginSearchPath.Truncate(pos+1);
 					else
 						strPluginSearchPath.Clear();
 
@@ -3065,7 +3065,7 @@ static bool FindFilesProcess(Vars& v)
 						break;
 
 					if (Length>1 && IsSlash(strFileName.At(Length-1)) && strFileName.At(Length-2)!=L':')
-						strFileName.SetLength(Length-1);
+						strFileName.Truncate(Length-1);
 
 					if ((apiGetFileAttributes(strFileName)==INVALID_FILE_ATTRIBUTES) && !ErrnoSaver().IsAccessDenied())
 						break;
@@ -3073,11 +3073,11 @@ static bool FindFilesProcess(Vars& v)
 					const wchar_t *NamePtr = PointToName(strFileName);
 					strSetName = NamePtr;
 
-					strFileName.SetLength(NamePtr-strFileName.CPtr());
+					strFileName.Truncate(NamePtr-strFileName.CPtr());
 					Length=strFileName.GetLength();
 
 					if (Length>1 && IsSlash(strFileName.At(Length-1)) && strFileName.At(Length-2)!=L':')
-						strFileName.SetLength(Length-1);
+						strFileName.Truncate(Length-1);
 
 					if (strFileName.IsEmpty())
 						break;
@@ -3101,7 +3101,7 @@ static bool FindFilesProcess(Vars& v)
 					Length=strDirTmp.GetLength();
 
 					if (Length>1 && IsSlash(strDirTmp.At(Length-1)) && strDirTmp.At(Length-2)!=L':')
-						strDirTmp.SetLength(Length-1);
+						strDirTmp.Truncate(Length-1);
 
 					if (StrCmp(strFileName, strDirTmp))
 						FindPanel->SetCurDir(strFileName,TRUE);

@@ -318,7 +318,7 @@ bool ConvertItemEx(
 					Data->nMaxLength = Item->MaxLen;
 
 					if (Data->nMaxLength > 0)
-						Data->strData.SetLength(Data->nMaxLength);
+						Data->strData.Truncate(Data->nMaxLength);
 				}
 
 				Data->ListItems = Item->Param.ListItems;
@@ -1889,7 +1889,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (CW < ObjWidth)
 						tmpCW=CW+1;
 
-					strStr.SetLength(tmpCW-1);
+					strStr.Truncate(tmpCW-1);
 				}
 
 				// нужно ЭТО
@@ -1907,7 +1907,7 @@ void Dialog::ShowDialog(unsigned ID)
 					FS<<fmt::Width(CntChr)<<L"";
 
 					if (CntChr < LenText)
-						strStr.SetLength(CntChr);
+						strStr.Truncate(CntChr);
 				}
 
 				if (CurItem->Flags & (DIF_SEPARATORUSER|DIF_SEPARATOR|DIF_SEPARATOR2))
@@ -1961,7 +1961,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (CH < ObjHeight)
 						tmpCH=CH+1;
 
-					strStr.SetLength(tmpCH-1);
+					strStr.Truncate(tmpCH-1);
 				}
 
 				// нужно ЭТО
@@ -2040,7 +2040,7 @@ void Dialog::ShowDialog(unsigned ID)
 				LenText=LenStrItem(I, strStr);
 
 				if (X1+CX1+LenText > X2)
-					strStr.SetLength(ObjWidth-1);
+					strStr.Truncate(ObjWidth-1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
 					Text(strStr);
@@ -2705,7 +2705,7 @@ int Dialog::ProcessKey(int Key)
 					((DlgEdit *)(Item[I]->ObjPtr))->SetString(CurPos>=Length ? L"":strStr.CPtr()+CurPos);
 
 					if (CurPos<Length)
-						strStr.SetLength(CurPos);
+						strStr.Truncate(CurPos);
 
 					((DlgEdit *)(Item[I]->ObjPtr))->SetCurPos(0);
 					((DlgEdit *)(Item[I-1]->ObjPtr))->SetString(strStr);
@@ -3031,7 +3031,7 @@ int Dialog::ProcessKey(int Key)
 								if (SelStart > -1)
 								{
 									FARString strEnd=strStr.CPtr()+SelEnd;
-									strStr.SetLength(SelStart);
+									strStr.Truncate(SelStart);
 									strStr+=strEnd;
 									edt->SetString(strStr);
 									edt->SetCurPos(SelStart);

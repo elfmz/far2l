@@ -1105,7 +1105,7 @@ void Panel::FastFind(int FirstKey)
 						        && strName.At(strName.GetLength()-1) == L'*'
 						        && strName.At(strName.GetLength()-2) == L'*')
 						{
-							strName.SetLength(strName.GetLength()-1);
+							strName.Truncate(strName.GetLength()-1);
 							FindEdit.SetString(strName);
 						}
 

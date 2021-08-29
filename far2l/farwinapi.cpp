@@ -475,10 +475,9 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 	return TRUE;
 }
 
-DWORD apiGetTempPath(FARString &strBuffer)
+void apiGetTempPath(FARString &strBuffer)
 {
 	strBuffer = InMyTemp();
-	return strBuffer.GetSize();
 };
 
 

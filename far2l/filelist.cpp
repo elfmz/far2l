@@ -1137,7 +1137,7 @@ int FileList::ProcessKey(int Key)
 						if (PanelMode==PLUGIN_PANEL)
 							strFileName.Clear();
 						else
-							strFileName.SetLength(1); // "."
+							strFileName.Truncate(1); // "."
 
 						if (Key!=KEY_CTRLALTF)
 							Key=KEY_CTRLF;
@@ -3170,7 +3170,7 @@ int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 	if (Length > 0 && IsSlash(Name[Length-1]))
 	{
 		DirFind = 1;
-		strMask.SetLength(strMask.GetLength()-1);
+		strMask.Truncate(strMask.GetLength()-1);
 	}
 
 	strMask += L"*";
@@ -3438,7 +3438,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 			size_t pos;
 
 			if (strRawMask.RPos(pos,L'.') && pos!=strRawMask.GetLength()-1)
-				strRawMask.SetLength(pos);
+				strRawMask.Truncate(pos);
 
 			strRawMask += L".*\"";
 			WrapBrackets=true;
@@ -3794,7 +3794,7 @@ void FileList::CopyFiles()
 		{
 			if (TestParentFolderName(strSelName))
 			{
-				strSelName.SetLength(1);
+				strSelName.Truncate(1);
 			}
 			if (!CreateFullPathName(strSelName,FileAttr,strSelName,FALSE))
 			{
@@ -3864,7 +3864,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 				*/
 				if (TestParentFolderName(strQuotedName) )
 				{
-					strQuotedName.SetLength(1);
+					strQuotedName.Truncate(1);
 				}
 
 				if (!CreateFullPathName(strQuotedName,FileAttr,strQuotedName,UNC))
@@ -4721,7 +4721,7 @@ void FileList::ProcessCopyKeys(int Key)
 									strDestPath = PointToName(Info.HostFile);
 
 									if (strDestPath.RPos(pos,L'.'))
-										strDestPath.SetLength(pos);
+										strDestPath.Truncate(pos);
 								}
 							}
 						}
@@ -4821,7 +4821,7 @@ void FileList::IfGoHome(wchar_t Drive)
 	FARString strFName=g_strFarModuleName;
 
 	{
-		strFName.SetLength(3); //BUGBUG!
+		strFName.Truncate(3); //BUGBUG!
 		// СНАЧАЛА ПАССИВНАЯ ПАНЕЛЬ!!!
 		/*
 			Почему? - Просто - если активная широкая (или пассивная

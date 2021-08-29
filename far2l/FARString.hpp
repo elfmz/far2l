@@ -35,87 +35,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "local.hpp"
 
-#define __US_DELTA 20
+size_t FARStringCapacity(size_t nLength);
 
 class FARStringData
 {
-	private:
-		size_t m_nLength;
-		size_t m_nSize;
-		size_t m_nDelta;
-		int m_nRefCount;
-		wchar_t *m_pData;
+	protected:
+		unsigned int m_nRefCount;	// zero means single owner
+		unsigned int m_nCapacity;	// not including final NULL char
+		unsigned int m_nLength;		// not including final NULL char
+		wchar_t m_Data[1];
 
-		wchar_t *AllocData(size_t nSize, size_t *nNewSize)
-		{
-			if (nSize <= m_nDelta)
-				*nNewSize = m_nDelta;
-			else if (nSize%m_nDelta > 0)
-				*nNewSize = (nSize/m_nDelta + 1) * m_nDelta;
-			else
-				*nNewSize = nSize;
-
-			return new wchar_t[*nNewSize];
-		}
-
-		void FreeData(wchar_t *pData) { delete [] pData; }
+		FARStringData() {}
+		~FARStringData() {}
+		FARStringData(const FARStringData&) = delete;
+		static void Destroy(FARStringData *data);
 
 	public:
-		FARStringData(size_t nSize=0, size_t nDelta=0)
-		{
-			m_nDelta = nDelta? nDelta : __US_DELTA;
-			m_nLength = 0;
-			m_nRefCount = 1;
-			m_pData = AllocData(nSize,&m_nSize);
-			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
-			//то уж лучше и здесь не проверять а сразу падать
-			*m_pData = 0;
-		}
+		static FARStringData *Create(size_t nCapacity);
+		static FARStringData *Create(size_t nCapacity, const wchar_t *SrcData, size_t SrcLen);
 
-		size_t SetLength(size_t nLength)
-		{
-			//if (nLength<m_nSize) //Эту проверку делает верхний класс, так что скажем что это оптимизация
-			{
-				m_nLength = nLength;
-				m_pData[m_nLength] = 0;
-			}
-			return m_nLength;
-		}
+		void SetLength(size_t nLength);
 
-		void Inflate(size_t nSize)
-		{
-			if (nSize <= m_nSize)
-				return;
+		inline wchar_t *GetData() { return m_Data; }
+		inline size_t GetCapacity() const { return m_nCapacity; }
+		inline size_t GetLength() const { return m_nLength; }
 
-			if (nSize >= m_nDelta << 3)
-				nSize = nSize << 1;
+		inline bool SingleRef() const { return m_nRefCount == 0; }
+
+		inline void AddRef() { ++m_nRefCount; }
+		inline void DecRef()
+		{
+			if (LIKELY(m_nRefCount != 0))
+				--m_nRefCount;
 			else
-				nSize = (nSize/m_nDelta + 1) * m_nDelta;
-
-			wchar_t *pOldData = m_pData;
-			m_pData = AllocData(nSize,&m_nSize);
-			//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
-			//то уж лучше и здесь не проверять а сразу падать
-			wmemcpy(m_pData,pOldData,m_nLength);
-			m_pData[m_nLength] = 0;
-			FreeData(pOldData);
+				Destroy(this);
 		}
-
-		wchar_t *GetData() { return m_pData; }
-		size_t GetLength() const { return m_nLength; }
-		size_t GetSize() const { return m_nSize; }
-
-		int GetRef() const { return m_nRefCount; }
-		void AddRef() { m_nRefCount++; }
-		void DecRef()
-		{
-			m_nRefCount--;
-
-			if (!m_nRefCount)
-				delete this;
-		}
-
-		~FARStringData() { FreeData(m_pData); }
 };
 
 class FARString
@@ -124,6 +78,9 @@ class FARString
 		FARStringData *m_pData;
 
 		void SetEUS();
+
+		void EnsureOwnData(size_t nCapacity);
+		void EnsureOwnData();
 
 	public:
 
@@ -134,18 +91,15 @@ class FARString
 		FARString(const char *lpszData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(lpszData, CodePage); }
 		FARString(const std::string &strData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(strData.c_str(), CodePage); }
 		FARString(const std::wstring &strData) { SetEUS(); Copy(strData.c_str()); }
-		FARString(size_t nSize, size_t nDelta=0) { m_pData = new FARStringData(nSize, nDelta); }
+		//FARString(size_t nSize, size_t nDelta=0) { m_pData = new FARStringData(nSize, nDelta); }
 
 		~FARString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
 
-		void Inflate(size_t nSize);
-		wchar_t *GetBuffer(size_t nSize = (size_t)-1);
+		wchar_t *GetBuffer(size_t nLength = (size_t)-1);
 		void ReleaseBuffer(size_t nLength = (size_t)-1);
 
 		size_t GetLength() const { return m_pData->GetLength(); }
-		size_t SetLength(size_t nLength);
-
-		size_t GetSize() const { return m_pData->GetSize(); }
+		size_t Truncate(size_t nLength);
 
 		wchar_t At(size_t nIndex) const { return m_pData->GetData()[nIndex]; }
 

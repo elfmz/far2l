@@ -1634,7 +1634,7 @@ bool PluginManager::SetHotKeyDialog(
 
 	if (ExitCode==2)
 	{
-		PluginDlg[2].strData.SetLength(1);
+		PluginDlg[2].strData.Truncate(1);
 		RemoveLeadingSpaces(PluginDlg[2].strData);
 
 		if (PluginDlg[2].strData.IsEmpty())

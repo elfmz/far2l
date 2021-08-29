@@ -45,7 +45,7 @@ namespace Mounts
 					size_t t;
 					if (e.path.Pos(t, L'\t')) {
 						e.info = e.path.SubStr(t + 1);
-						e.path.SetLength(t);
+						e.path.Truncate(t);
 					}
 					if (e.path == L"/") {
 						has_rootfs = true;

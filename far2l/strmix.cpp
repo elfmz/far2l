@@ -434,7 +434,7 @@ FARString& WINAPI RemoveTrailingSpaces(FARString &strStr)
 	for (; ChPtr >= Str && (IsSpace(*ChPtr) || IsEol(*ChPtr)); ChPtr--)
 		;
 
-	strStr.SetLength(ChPtr < Str ? 0 : ChPtr-Str+1);
+	strStr.Truncate(ChPtr < Str ? 0 : ChPtr-Str+1);
 	return strStr;
 }
 
@@ -508,7 +508,7 @@ FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 		/* Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
 		   и мы получали обрезанные строки */
 		strDest = strTempStr;
-		strDest.SetLength(Length);
+		strDest.Truncate(Length);
 	}
 	else
 	{
@@ -655,7 +655,7 @@ void UnquoteExternal(FARString &strStr)
 
 	if (len > 1 && strStr.At(0) == L'\"' && strStr.At(len-1) == L'\"')
 	{
-		strStr.SetLength(len-1);
+		strStr.Truncate(len-1);
 		strStr.LShift(1);
 	}
 }
@@ -841,50 +841,30 @@ wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize)
 // Return - количество замен
 int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count,BOOL IgnoreCase)
 {
-	const int LenFindStr=StrLength(FindStr);
-	if ( !LenFindStr || !Count )
+	if (!Count)
 		return 0;
-	const int LenReplStr=StrLength(ReplStr);
-	size_t L=strStr.GetLength();
+	const int LenFindStr = StrLength(FindStr);
+	if ( !LenFindStr)
+		return 0;
+	const int LenReplStr = StrLength(ReplStr);
 
-	const int Delta = LenReplStr-LenFindStr;
-	const int AllocDelta = Delta > 0 ? Delta*10 : 0;
-
-	size_t I=0;
-	int J=0;
-	while (I+LenFindStr <= L)
+	int ReplacedCount = 0;
+	FARString strResult;
+	size_t StartPos = 0, FoundPos;
+	while (strStr.Pos(FoundPos, FindStr, StartPos) && (Count == -1 || ReplacedCount < Count))
 	{
-		int Res=IgnoreCase?StrCmpNI(&strStr[I], FindStr, LenFindStr):StrCmpN(&strStr[I], FindStr, LenFindStr);
-
-		if (!Res)
-		{
-			wchar_t *Str;
-			if (L+Delta+1 > strStr.GetSize())
-				Str = strStr.GetBuffer(L+AllocDelta);
-			else
-				Str = strStr.GetBuffer();
-
-			if (Delta > 0)
-				wmemmove(Str+I+Delta,Str+I,L-I+1);
-			else if (Delta < 0)
-				wmemmove(Str+I,Str+I-Delta,L-I+Delta+1);
-
-			wmemcpy(Str+I,ReplStr,LenReplStr);
-			I += LenReplStr;
-
-			L+=Delta;
-			strStr.ReleaseBuffer(L);
-
-			if (++J == Count && Count > 0)
-				break;
-		}
-		else
-		{
-			I++;
-		}
+		strResult.Append(strStr.CPtr() + StartPos, FoundPos - StartPos);
+		strResult.Append(ReplStr, LenReplStr);
+		StartPos = FoundPos + LenFindStr;
+		++ReplacedCount;
 	}
-
-	return J;
+	if (ReplacedCount)
+	{
+		 if (StartPos < strStr.GetLength())
+			strResult.Append(strStr.CPtr() + StartPos, strStr.GetLength() - StartPos);
+		strStr = strResult;
+	}
+	return ReplacedCount;
 }
 
 /*

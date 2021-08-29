@@ -76,7 +76,7 @@ static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar
 		if (!Language)
 			break;
 
-		if (!(LangFile=fopen(Wide2MB(strFileName).c_str(), "rb")))
+		if (!(LangFile=fopen(strFileName.GetMB().c_str(), "rb")))
 		{
 			fprintf(stderr, "OpenLangFile opfailed: %ls\n", strFileName.CPtr());
 
@@ -168,7 +168,7 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 						RemoveTrailingSpaces(*strParam2);
 					}
 
-					strParam1->SetLength(pos);
+					strParam1->Truncate(pos);
 				}
 
 				RemoveTrailingSpaces(*strParam1);
@@ -284,7 +284,7 @@ int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UI
 				strValue = strFullParamName;
 				strValue.LShift(pos+1);
 				RemoveExternalSpaces(strValue);
-				strFullParamName.SetLength(pos);
+				strFullParamName.Truncate(pos);
 				RemoveExternalSpaces(strFullParamName);
 
 				if (!StrCmpI(strFullParamName,KeyName))

@@ -226,11 +226,11 @@ void ShellMakeDir(Panel *SrcPanel)
 			size_t pos;
 
 			if (FindSlash(pos,strDirName))
-				strDirName.SetLength(pos);
+				strDirName.Truncate(pos);
 
 			if (!SrcPanel->GoToFile(strDirName) && strDirName.At(strDirName.GetLength()-1)==L'.')
 			{
-				strDirName.SetLength(strDirName.GetLength()-1);
+				strDirName.Truncate(strDirName.GetLength()-1);
 				SrcPanel->GoToFile(strDirName);
 			}
 		}

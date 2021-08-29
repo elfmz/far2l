@@ -1949,10 +1949,10 @@ static void ScanPluginDir()
 				ScanPluginDir();
 				size_t pos = (size_t)-1;
 				strPluginSearchPath.RPos(pos,L'\x1');
-				strPluginSearchPath.SetLength(pos);
+				strPluginSearchPath.Truncate(pos);
 
 				if (strPluginSearchPath.RPos(pos,L'\x1'))
-					strPluginSearchPath.SetLength(pos+1);
+					strPluginSearchPath.Truncate(pos+1);
 				else
 					strPluginSearchPath.Clear();
 

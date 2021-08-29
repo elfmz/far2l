@@ -104,7 +104,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 	if (SelectedFolderNameLength)
 	{
 		strPartAfterFolderName = ((const wchar_t *)strSrc+SelectedFolderNameLength);
-		strSrc.SetLength(SelectedFolderNameLength);
+		strSrc.Truncate(SelectedFolderNameLength);
 	}
 
 	const wchar_t *Src = strSrc;

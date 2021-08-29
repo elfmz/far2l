@@ -144,7 +144,7 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 			size_t pos;
 
 			if (StackData.strHelpTopic.RPos(pos,HelpEndLink))
-				StackData.strHelpTopic.SetLength(pos+1);
+				StackData.strHelpTopic.Truncate(pos+1);
 
 			StackData.strHelpTopic += HelpContents;
 		}
@@ -212,7 +212,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 			return FALSE;
 
 		StackData.strHelpTopic = strPath.CPtr() + pos + 1;
-		strPath.SetLength(pos);
+		strPath.Truncate(pos);
 		DeleteEndSlash(strPath,true);
 		AddEndSlash(strPath);
 		StackData.strHelpPath = strPath;
@@ -397,7 +397,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 			ReadStr = strReadStr.GetBuffer();
 			int Length = (int)(wcsstr(ReadStr, strCtrlStartPosChar)-ReadStr);
 			strLine = ReadStr;
-			strLine.SetLength(Length);
+			strLine.Truncate(Length);
 			LastStartPos = StringLen(strLine);
 			wcscpy(ReadStr+Length, ReadStr+Length+strCtrlStartPosChar.GetLength());
 			strReadStr.ReleaseBuffer();
@@ -1486,7 +1486,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		{
 			if (StackData.strHelpTopic.RPos(pos,HelpEndLink))
 			{
-				StackData.strHelpTopic.SetLength(pos+1);
+				StackData.strHelpTopic.Truncate(pos+1);
 				StackData.strHelpTopic += HelpContents;
 			}
 		}

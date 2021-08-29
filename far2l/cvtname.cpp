@@ -127,11 +127,9 @@ void MixToFullPath(FARString& strPath)
 
 		m++;
 	}
-
 	strPath.ReleaseBuffer();
-
 	if (strPath.GetLength() > 1 && strPath[strPath.GetLength() - 1] == GOOD_SLASH)
-		strPath.SetLength(strPath.GetLength() - 1);// #249
+		strPath.Truncate(strPath.GetLength() - 1);// #249
 }
 
 bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
@@ -437,7 +435,6 @@ void ConvertNameToFull(const wchar_t *lpwszSrc, FARString &strDest)
 		apiGetCurrentDirectory(strCurDir);
 		FARString strSrc = lpwszSrc;
 		MixToFullPath(strSrc,strDest,strCurDir);
-
 	} else {
 		strDest = lpwszSrc;
 		MixToFullPath(strDest);
@@ -454,11 +451,7 @@ void ConvertNameToFull(FARString &strSrcDest)
 void ConvertHomePrefixInPath(FARString &strFileName)
 {
 	if (strFileName.GetLength() > 1 && strFileName[0] == L'~' && strFileName[1] == GOOD_SLASH) {
-		std::string home = GetMyHome();
-		if (home.empty()) {
-			home = "/tmp";
-		}
-		strFileName.Replace(0, 1, FARString(home));
+		strFileName.Replace(0, 1, FARString(GetMyHome()));
 	}
 }
 

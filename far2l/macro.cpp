@@ -1485,7 +1485,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 /*						if (IsLocalPath(strFileName))
 						{
 							FARString strRemoteName;
-							strFileName.SetLength(2);
+							strFileName.Truncate(2);
 
 							if (GetSubstName(DriveType,strFileName,strRemoteName))
 								DriveType=DRIVE_SUBSTITUTE;
@@ -1843,7 +1843,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 		if ((nFlags & FLAG_DISK) == FLAG_DISK)
 		{
 			strDest=s;
-			strDest.SetLength(p-s);
+			strDest.Truncate(p-s);
 		}
 	}
 	else
@@ -1856,7 +1856,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 			{
 				size_t Length=strDest.GetLength()+p-s;
 				strDest+=s;
-				strDest.SetLength(Length);
+				strDest.Truncate(Length);
 			}
 		}
 	}
@@ -1881,7 +1881,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 		{
 			size_t Length=strDest.GetLength()+e-s;
 			strDest+=s;
-			strDest.SetLength(Length);
+			strDest.Truncate(Length);
 		}
 
 		s = e+1;
@@ -1916,7 +1916,7 @@ static BOOL SplitFileName(const wchar_t *lpFullName,FARString &strDest,int nFlag
 
 		size_t Length=strDest.GetLength()+e-s;
 		strDest+=s;
-		strDest.SetLength(Length);
+		strDest.Truncate(Length);
 	}
 
 	if (nFlags & FLAG_EXT)

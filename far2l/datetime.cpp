@@ -799,7 +799,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 
 	if (Brief)
 	{
-		strDateText.SetLength(TextMonth ? 6 : 5);
+		strDateText.Truncate(TextMonth ? 6 : 5);
 
 		if (lt.wYear!=st.wYear)
 			strTimeText.Format(L"%5d",st.wYear);

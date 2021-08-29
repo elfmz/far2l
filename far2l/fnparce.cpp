@@ -381,7 +381,7 @@ int SubstFileName(FARString &strStr,            // результирующая 
 	PSubstData->strNameOnly = Name;
 
 	if (PSubstData->strNameOnly.RPos(pos,L'.'))
-		PSubstData->strNameOnly.SetLength(pos);
+		PSubstData->strNameOnly.Truncate(pos);
 
 	PSubstData->ActivePanel=CtrlObject->Cp()->ActivePanel;
 	PSubstData->AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(PSubstData->ActivePanel);
@@ -389,7 +389,7 @@ int SubstFileName(FARString &strStr,            // результирующая 
 	PSubstData->strAnotherNameOnly = PSubstData->strAnotherName;
 
 	if (PSubstData->strAnotherNameOnly.RPos(pos,L'.'))
-		PSubstData->strAnotherNameOnly.SetLength(pos);
+		PSubstData->strAnotherNameOnly.Truncate(pos);
 
 	PSubstData->PreserveLFN=FALSE;
 	PSubstData->PassivePanel=FALSE; // первоначально речь идет про активную панель!
@@ -519,7 +519,7 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 			//                  ^   ^
 			strTitle3.Append(strTitle.CPtr()+(beg_t-2)+1-hist_correct,end_t-beg_t-1);  // !?$zz$xxxx(ffffff)ddddd
 			//            ^    ^
-			strTitle.SetLength(beg_t-2-hist_correct);    // !?$zz$xxxx(fffff)ddddd
+			strTitle.Truncate(beg_t-2-hist_correct);    // !?$zz$xxxx(fffff)ddddd
 			//       ^  ^
 			FARString strTmp;
 			const wchar_t *CurStr = strTitle3;
@@ -561,7 +561,7 @@ int ReplaceVariables(FARString &strStr,TSubstData *PSubstData)
 			//                                  ^   ^
 			strTxt3.Copy(strTxt.CPtr()+(beg_s-scr),end_s-beg_s-1);  // !?$zz$xxxx(ffffff)ddddd?rrrr(pppp)qqqqq!
 			//                              ^  ^
-			strTxt.SetLength(beg_s-scr-1);   // !?$zz$xxxx(fffff)ddddd?rrrr(pppp)qqqqq!
+			strTxt.Truncate(beg_s-scr-1);   // !?$zz$xxxx(fffff)ddddd?rrrr(pppp)qqqqq!
 			//                        ^  ^
 			FARString strTmp;
 			const wchar_t *CurStr = strTxt3;

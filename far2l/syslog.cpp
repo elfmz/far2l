@@ -148,10 +148,10 @@ void OpenSysLog()
 	if (Attr == INVALID_FILE_ATTRIBUTES)
 	{
 		if (!apiCreateDirectory(strLogFileName,nullptr))
-			strLogFileName.SetLength(g_strFarPath.GetLength());
+			strLogFileName.Truncate(g_strFarPath.GetLength());
 	}
 	else if (!(Attr&FILE_ATTRIBUTE_DIRECTORY))
-		strLogFileName.SetLength(g_strFarPath.GetLength());
+		strLogFileName.Truncate(g_strFarPath.GetLength());
 
 	LogStream=OpenLogStream(strLogFileName);
 	//if ( !LogStream )

@@ -291,7 +291,7 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage,bool 
 	{
 		size_t pos=0;
 		if (EditDlg[ID_SF_FILENAME].strData.Pos(pos,MSG(MNewFileName)))
-			EditDlg[ID_SF_FILENAME].strData.SetLength(pos);
+			EditDlg[ID_SF_FILENAME].strData.Truncate(pos);
 	}
 	EditDlg[ID_SF_DONOTCHANGE+TextFormat].Selected = TRUE;
 	Dialog Dlg(EditDlg, ARRAYSIZE(EditDlg), (FARWINDOWPROC)hndSaveFileAs, (LONG_PTR)&codepage);
@@ -2384,7 +2384,7 @@ BOOL FileEditor::UpdateFileList()
 	const wchar_t *FileName = PointToName(strFullFileName);
 	FARString strFilePath, strPanelPath;
 	strFilePath = strFullFileName;
-	strFilePath.SetLength(FileName - strFullFileName.CPtr());
+	strFilePath.Truncate(FileName - strFullFileName.CPtr());
 	ActivePanel->GetCurDir(strPanelPath);
 	AddEndSlash(strPanelPath);
 	AddEndSlash(strFilePath);

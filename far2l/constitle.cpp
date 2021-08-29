@@ -119,7 +119,7 @@ ConsoleTitle::~ConsoleTitle()
 	if (AddonsLen <= OldLen)
 	{
 		if (!StrCmpI(strOldTitle.CPtr()+OldLen-AddonsLen, strTitleAddons))
-			strOldTitle.SetLength(OldLen-AddonsLen);
+			strOldTitle.Truncate(OldLen-AddonsLen);
 	}
 
 	ConsoleTitle::SetFarTitle(strOldTitle, true);
@@ -146,7 +146,7 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force)
 	{
 		Console.GetTitle(strOldFarTitle);
 		strFarTitle=Title;
-		strFarTitle.SetLength(0x100);
+		strFarTitle.Truncate(0x100);
 		strFarTitle+=GetFarTitleAddons();
 		TitleModified=true;
 

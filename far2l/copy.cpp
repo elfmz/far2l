@@ -541,7 +541,7 @@ static void GenerateName(FARString &strName,const wchar_t *Path=nullptr)
 	{
 		WCHAR Suffix[20]=L"_";
 		_itow(i,Suffix+1,10);
-		strName.SetLength(NameLength);
+		strName.Truncate(NameLength);
 		strName+=Suffix;
 		strName+=strExt;
 	}
@@ -758,7 +758,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 			if (FindLastSlash(pos,strNewDir))
 			{
-				strNewDir.SetLength(pos);
+				strNewDir.Truncate(pos);
 
 				if (!pos || strNewDir.At(pos-1)==L':')
 					strNewDir += L"/";
@@ -1621,7 +1621,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 	if (FindLastSlash(pos,strNewPath))
 	{
-		strNewPath.SetLength(pos+1);
+		strNewPath.Truncate(pos+1);
 
 		DWORD Attr=apiGetFileAttributes(strNewPath);
 
@@ -1730,7 +1730,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				if (KeepPathPos && PointToName(strDest)==strDest)
 				{
 					strDestPath = strSelName;
-					strDestPath.SetLength(KeepPathPos);
+					strDestPath.Truncate(KeepPathPos);
 					strDestPath += strDest;
 					AllowMoveByOS=true;
 				}

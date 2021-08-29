@@ -697,7 +697,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 						case L'H': // $H - Backspace (erases previous character)
 						{
 							if (!strDestStr.IsEmpty())
-								strDestStr.SetLength(strDestStr.GetLength()-1);
+								strDestStr.Truncate(strDestStr.GetLength()-1);
 
 							break;
 						}

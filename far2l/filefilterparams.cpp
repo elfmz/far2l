@@ -117,7 +117,7 @@ FARString &Add_PATHEXT(FARString &strDest)
 	curpos=strDest.GetLength()-1;
 
 	if (strDest.At(curpos) == L',' || strDest.At(curpos)==L';')
-		strDest.SetLength(curpos);
+		strDest.Truncate(curpos);
 
 	return strDest;
 }
@@ -152,7 +152,7 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 			{
 				FARString strTmp = strMask;
 				strTmp.LShift(posSeparator+1);
-				strMask.SetLength(posSeparator);
+				strMask.Truncate(posSeparator);
 				Add_PATHEXT(strMask);
 				strMask += strTmp;
 			}

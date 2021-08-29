@@ -708,7 +708,7 @@ void FileList::PluginHostGetFiles()
 		size_t pos;
 
 		if (strDestPath.RPos(pos,L'.'))
-			strDestPath.SetLength(pos);
+			strDestPath.Truncate(pos);
 	}
 
 	int OpMode=OPM_TOPLEVEL,ExitLoop=FALSE;

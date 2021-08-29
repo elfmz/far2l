@@ -1056,7 +1056,7 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 
 		if (I&1) // нечет?
 		{
-			strDest.SetLength(ChPtr-Str);
+			strDest.Truncate(ChPtr-Str);
 
 			if (ChPtr[1])
 			{

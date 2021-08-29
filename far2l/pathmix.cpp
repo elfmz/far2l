@@ -396,9 +396,9 @@ bool CutToSlash(FARString &strStr, bool bInclude)
 			return false;
 
 		if (bInclude)
-			strStr.SetLength(pos);
+			strStr.Truncate(pos);
 		else
-			strStr.SetLength(pos+1);
+			strStr.Truncate(pos+1);
 
 		return true;
 	}

@@ -109,13 +109,28 @@ void FARString::EnsureOwnData()
 
 size_t FARString::GetCharString(char *lpszStr, size_t nSize, UINT CodePage) const
 {
-	if (!lpszStr)
+	if (!lpszStr || !nSize)
 		return 0;
 
-	size_t nCopyLength = (nSize <= m_pData->GetLength() + 1) ? nSize - 1 : m_pData->GetLength();
-	WINPORT(WideCharToMultiByte)(CodePage,0,m_pData->GetData(),(int)nCopyLength,lpszStr,(int)nCopyLength+1,nullptr,nullptr);
-	lpszStr[nCopyLength] = 0;
-	return nCopyLength+1;
+	int SrcLen;
+	for (SrcLen = (int)m_pData->GetLength(); SrcLen; --SrcLen)
+	{
+		int DstLen = WINPORT(WideCharToMultiByte)(CodePage, 0,
+			m_pData->GetData(), SrcLen, nullptr, 0, nullptr, nullptr);
+		if (DstLen < (int)nSize)
+		{
+			DstLen = WINPORT(WideCharToMultiByte)(CodePage, 0,
+				m_pData->GetData(), SrcLen, lpszStr, (int)nSize, nullptr, nullptr);
+			if (DstLen >= 0 && DstLen < (int)nSize)
+			{
+				lpszStr[DstLen] = 0;
+				return DstLen + 1;
+			}
+		}
+	}
+
+	*lpszStr = 0;
+	return 1;
 }
 
 FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen)

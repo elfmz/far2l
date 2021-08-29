@@ -67,8 +67,8 @@ static const FARString& GetFarTitleAddons()
 		strBuild << MB2Wide(FAR_BUILD).c_str();
 	}
 
-	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1,true);
-	ReplaceStrings(strTitleAddons,L"%Build",strBuild,-1,true);
+	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1);
+	ReplaceStrings(strTitleAddons,L"%Build",strBuild,-1);
 	ReplaceStrings(strTitleAddons,L"%Platform",
 #if defined(__x86_64__)
 	L"x64",
@@ -81,14 +81,14 @@ static const FARString& GetFarTitleAddons()
 #else
 	L"x86",
 #endif
-	-1,true);
-	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1,true);
+	-1);
+	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
 
 	FARString hn, un;
 	apiGetEnvironmentVariable("HOSTNAME", hn);
 	apiGetEnvironmentVariable("USER", un);
-	ReplaceStrings(strTitleAddons,L"%Host",hn,-1,true);
-	ReplaceStrings(strTitleAddons,L"%User",un,-1,true);
+	ReplaceStrings(strTitleAddons,L"%Host",hn,-1);
+	ReplaceStrings(strTitleAddons,L"%User",un,-1);
 
 	RemoveTrailingSpaces(strTitleAddons);
 

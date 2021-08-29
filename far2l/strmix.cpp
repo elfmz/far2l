@@ -851,7 +851,7 @@ int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplS
 	int ReplacedCount = 0;
 	FARString strResult;
 	size_t StartPos = 0, FoundPos;
-	while (strStr.Pos(FoundPos, FindStr, StartPos) && (Count == -1 || ReplacedCount < Count))
+	while ( (IgnoreCase ? strStr.PosI(FoundPos, FindStr, StartPos) : strStr.Pos(FoundPos, FindStr, StartPos)) && (Count == -1 || ReplacedCount < Count))
 	{
 		strResult.Append(strStr.CPtr() + StartPos, FoundPos - StartPos);
 		strResult.Append(ReplStr, LenReplStr);

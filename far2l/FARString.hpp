@@ -84,7 +84,8 @@ class FARString
 
 	public:
 
-		FARString() { SetEUS(); }
+		inline FARString() { SetEUS(); }
+		inline FARString(FARString &&strOriginal) : m_pData(strOriginal.m_pData) { strOriginal.SetEUS(); }
 		FARString(const FARString &strCopy) { SetEUS(); Copy(strCopy); }
 		FARString(const wchar_t *lpwszData) { SetEUS(); Copy(lpwszData); }
 		FARString(const wchar_t *lpwszData, size_t nLength) { SetEUS(); Copy(lpwszData, nLength); }
@@ -93,17 +94,17 @@ class FARString
 		FARString(const std::wstring &strData) { SetEUS(); Copy(strData.c_str()); }
 		//FARString(size_t nSize, size_t nDelta=0) { m_pData = new FARStringData(nSize, nDelta); }
 
-		~FARString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
+		inline ~FARString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
 
 		wchar_t *GetBuffer(size_t nLength = (size_t)-1);
 		void ReleaseBuffer(size_t nLength = (size_t)-1);
 
-		size_t GetLength() const { return m_pData->GetLength(); }
+		inline size_t GetLength() const { return m_pData->GetLength(); }
 		size_t Truncate(size_t nLength);
 
-		wchar_t At(size_t nIndex) const { return m_pData->GetData()[nIndex]; }
+		inline wchar_t At(size_t nIndex) const { return m_pData->GetData()[nIndex]; }
 
-		bool IsEmpty() const { return !(m_pData->GetLength() && *m_pData->GetData()); }
+		inline bool IsEmpty() const { return !(m_pData->GetLength() && *m_pData->GetData()); }
 
 		size_t GetCharString(char *lpszStr, size_t nSize, UINT CodePage=CP_UTF8) const;
 		std::string GetMB() const;
@@ -137,23 +138,24 @@ class FARString
 
 		FARString& Clear();
 
-		const wchar_t *CPtr() const { return m_pData->GetData(); }
-		const wchar_t *CEnd() const { return m_pData->GetData() + m_pData->GetLength(); }
-		operator const wchar_t *() const { return m_pData->GetData(); }
+		inline const wchar_t *CPtr() const { return m_pData->GetData(); }
+		inline const wchar_t *CEnd() const { return m_pData->GetData() + m_pData->GetLength(); }
+		inline operator const wchar_t *() const { return m_pData->GetData(); }
 
 		FARString SubStr(size_t Pos, size_t Len = -1);
 
-		const FARString& operator=(const FARString &strCopy) { return Copy(strCopy); }
-		const FARString& operator=(const char *lpszData) { return Copy(lpszData); }
-		const FARString& operator=(const wchar_t *lpwszData) { return Copy(lpwszData); }
-		const FARString& operator=(wchar_t chData) { return Copy(chData); }
-		const FARString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
-		const FARString& operator=(const std::wstring &strSrc) { return Copy(strSrc.c_str()); }
+		inline FARString& operator=(FARString &&strOriginal) { m_pData = strOriginal.m_pData; strOriginal.SetEUS(); return *this; }
+		FARString& operator=(const FARString &strCopy) { return Copy(strCopy); }
+		FARString& operator=(const char *lpszData) { return Copy(lpszData); }
+		FARString& operator=(const wchar_t *lpwszData) { return Copy(lpwszData); }
+		FARString& operator=(wchar_t chData) { return Copy(chData); }
+		FARString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
+		FARString& operator=(const std::wstring &strSrc) { return Copy(strSrc.c_str()); }
 
-		const FARString& operator+=(const FARString &strAdd) { return Append(strAdd); }
-		const FARString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }
-		const FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
-		const FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
+		FARString& operator+=(const FARString &strAdd) { return Append(strAdd); }
+		FARString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }
+		FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
+		FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
 
 		friend const FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
 		friend const FARString operator+(const FARString &strSrc1, const char *lpszSrc2);

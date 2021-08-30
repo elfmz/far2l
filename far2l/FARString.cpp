@@ -88,7 +88,7 @@ void FARString::SetEUS()
 
 void FARString::EnsureOwnData(size_t nCapacity)
 {
-	if (!m_pData->SingleRef() || nCapacity > m_pData->GetCapacity())
+	if (!m_pData->SingleOwner() || nCapacity > m_pData->GetCapacity())
 	{
 		size_t NewCapacity = nCapacity;
 		if (m_pData->GetCapacity() > 0 && NewCapacity > m_pData->GetCapacity())
@@ -149,7 +149,7 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 		return *this;
 
 	const size_t NewLength = m_pData->GetLength() + DataLen - Len;
-	if (!DataStartsInside && m_pData->SingleRef() && NewLength <= m_pData->GetCapacity())
+	if (!DataStartsInside && m_pData->SingleOwner() && NewLength <= m_pData->GetCapacity())
 	{
 		wmemmove(m_pData->GetData() + Pos + DataLen,
 			m_pData->GetData() + Pos + Len, m_pData->GetLength() - Pos - Len);
@@ -247,17 +247,17 @@ bool FARString::operator<(const FARString& Str) const
 	return wmemcmp(CPtr(), Str.CPtr(), std::min(GetLength(), Str.GetLength()) + 1 ) < 0;
 }
 
-const FARString operator+(const FARString &strSrc1, const FARString &strSrc2)
+FARString operator+(const FARString &strSrc1, const FARString &strSrc2)
 {
 	return FARString(strSrc1).Append(strSrc2);
 }
 
-const FARString operator+(const FARString &strSrc1, const char *lpszSrc2)
+FARString operator+(const FARString &strSrc1, const char *lpszSrc2)
 {
 	return FARString(strSrc1).Append(lpszSrc2);
 }
 
-const FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2)
+FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2)
 {
 	return FARString(strSrc1).Append(lpwszSrc2);
 }
@@ -275,8 +275,8 @@ void FARString::ReleaseBuffer(size_t nLength)
 {
 	if (nLength == (size_t)-1)
 		nLength = wcsnlen(m_pData->GetData(), m_pData->GetCapacity());
-	else if (nLength >= m_pData->GetCapacity())
-		nLength = m_pData->GetLength();
+	else if (nLength > m_pData->GetCapacity())
+		nLength = m_pData->GetCapacity();
 
 	EnsureOwnData(nLength);
 	m_pData->SetLength(nLength);

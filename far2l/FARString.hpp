@@ -35,8 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "local.hpp"
 
-size_t FARStringCapacity(size_t nLength);
-
 class FARStringData
 {
 	protected:
@@ -60,7 +58,7 @@ class FARStringData
 		inline size_t GetCapacity() const { return m_nCapacity; }
 		inline size_t GetLength() const { return m_nLength; }
 
-		inline bool SingleRef() const { return m_nRefCount == 0; }
+		inline bool SingleOwner() const { return m_nRefCount == 0; }
 
 		inline void AddRef() { ++m_nRefCount; }
 		inline void DecRef()
@@ -92,7 +90,6 @@ class FARString
 		FARString(const char *lpszData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(lpszData, CodePage); }
 		FARString(const std::string &strData, UINT CodePage=CP_UTF8) { SetEUS(); Copy(strData.c_str(), CodePage); }
 		FARString(const std::wstring &strData) { SetEUS(); Copy(strData.c_str()); }
-		//FARString(size_t nSize, size_t nDelta=0) { m_pData = new FARStringData(nSize, nDelta); }
 
 		inline ~FARString() { /*if (m_pData) он не должен быть nullptr*/ m_pData->DecRef(); }
 
@@ -157,9 +154,9 @@ class FARString
 		FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
 		FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
 
-		friend const FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
-		friend const FARString operator+(const FARString &strSrc1, const char *lpszSrc2);
-		friend const FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2);
+		friend FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
+		friend FARString operator+(const FARString &strSrc1, const char *lpszSrc2);
+		friend FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2);
 
 		bool Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen) const;
 		bool Equal(size_t Pos, const wchar_t* Str, size_t StrLen) const { return Equal(Pos, StrLen, Str, StrLen); }
@@ -197,4 +194,6 @@ class FARString
 		}
 };
 
-//typedef FARString FARString;
+FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
+FARString operator+(const FARString &strSrc1, const char *lpszSrc2);
+FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2);

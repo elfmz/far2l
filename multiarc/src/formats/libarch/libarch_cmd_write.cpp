@@ -36,7 +36,8 @@ public:
 	LIBARCH_Modify(const char *arc_path, const LibarchCommandOptions &arc_opts)
 		:
 		_arc_opts(arc_opts),
-		_arc_path(arc_path)
+		_arc_path(arc_path),
+		_tmp_path(arc_path)
 	{
 		_tmp_path+= StrPrintf(".%u.tmp", getpid());
 	}

@@ -558,6 +558,7 @@ FARString LookupExecutable(const char *file)
 		out = LookupExecutableInEnvPath(file);
 		if (out.IsEmpty()) {
 			apiGetCurrentDirectory(out);
+			out+= GOOD_SLASH;
 			out+= file;
 		}
 	}

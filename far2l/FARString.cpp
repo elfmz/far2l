@@ -37,14 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <limits>
 
-static struct FAREmptyStringData : FARStringData
-{
-} sEmptyFARStringData {}; // all fields zero inited by loader
 
+FARString::Content FARString::Content::sEmptyData{}; // all fields zero inited by loader
 
-FARStringData *FARStringData::Create(size_t nCapacity)
+FARString::Content *FARString::Content::Create(size_t nCapacity)
 {
-	FARStringData *out = (FARStringData *)malloc(sizeof(FARStringData) + sizeof(wchar_t) * nCapacity);
+	Content *out = (Content *)malloc(sizeof(Content) + sizeof(wchar_t) * nCapacity);
 	//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
 	//то уж лучше и здесь не проверять, а сразу падать
 	out->m_nRefCount = 0; // zero means single owner
@@ -54,57 +52,59 @@ FARStringData *FARStringData::Create(size_t nCapacity)
 	return out;
 }
 
-FARStringData *FARStringData::Create(size_t nCapacity, const wchar_t *SrcData, size_t SrcLen)
+FARString::Content *FARString::Content::Create(size_t nCapacity, const wchar_t *SrcData, size_t SrcLen)
 {
-	FARStringData *out = FARStringData::Create(nCapacity);
+	Content *out = Content::Create(nCapacity);
 	out->m_nLength = (unsigned int)std::min(std::min(nCapacity, SrcLen), (size_t)std::numeric_limits<unsigned int>::max());
 	wmemcpy(out->m_Data, SrcData, out->m_nLength);
 	out->m_Data[out->m_nLength] = 0;
 	return out;
 }
 
-void FARStringData::Destroy(FARStringData *data)
+void FARString::Content::Destroy(Content *data)
 {
 	// empty string may be implicitely shared across different threads
 	// that will cause race condition on modifying its m_nRefCount
 	// THIS CONSIDERED NORMAL :) and just skip any destroy that could
 	// come for it - it should never ever been destroyed.
-	if (data != &sEmptyFARStringData)
+	if (LIKELY(data != EmptySingleton()))
+	{
 		free(data);
+	}
+	else
+		data->m_nRefCount = 0x1000; // prevent such occasions to happen frequently
 }
 
-void FARStringData::SetLength(size_t nLength)
+void FARString::Content::SetLength(size_t nLength)
 {
 	m_nLength = std::min(nLength, (size_t)m_nCapacity);
 	m_Data[m_nLength] = 0;
 }
 
-void FARString::SetEUS()
-{
-	//для оптимизации создания пустых FARString
-	m_pData = &sEmptyFARStringData;
-	m_pData->AddRef();
-}
+//////////////////////////
 
-void FARString::EnsureOwnData(size_t nCapacity)
+void FARString::PrepareForModify(size_t nCapacity)
 {
-	if (!m_pData->SingleOwner() || nCapacity > m_pData->GetCapacity())
+	if (!m_pContent->SingleOwner() || nCapacity > m_pContent->GetCapacity())
 	{
 		size_t NewCapacity = nCapacity;
-		if (m_pData->GetCapacity() > 0 && NewCapacity > m_pData->GetCapacity())
-			NewCapacity+= std::max(NewCapacity - m_pData->GetCapacity(), (size_t)16);
+		if (m_pContent->GetCapacity() > 0 && NewCapacity > m_pContent->GetCapacity())
+			NewCapacity+= std::max(NewCapacity - m_pContent->GetCapacity(), (size_t)16);
 
-		FARStringData *pNewData =
-			FARStringData::Create(NewCapacity, m_pData->GetData(), m_pData->GetLength());
-		pNewData->SetLength(m_pData->GetLength());
-		m_pData->DecRef();
-		m_pData = pNewData;
+		Content *pNewData =
+			Content::Create(NewCapacity, m_pContent->GetData(), m_pContent->GetLength());
+		pNewData->SetLength(m_pContent->GetLength());
+		m_pContent->DecRef();
+		m_pContent = pNewData;
 	}
 }
 
-void FARString::EnsureOwnData()
+void FARString::PrepareForModify()
 {
-	EnsureOwnData(m_pData->GetLength());
+	// invoke PrepareForModify with current length but not capacity intentially
+	// so in case of single owner this will not alter things but in case of
+	// not single owner then new copy will be alloced with capacity == length
+	PrepareForModify(m_pContent->GetLength());
 }
 
 size_t FARString::GetCharString(char *lpszStr, size_t nSize, UINT CodePage) const
@@ -113,14 +113,14 @@ size_t FARString::GetCharString(char *lpszStr, size_t nSize, UINT CodePage) cons
 		return 0;
 
 	int SrcLen;
-	for (SrcLen = (int)m_pData->GetLength(); SrcLen; --SrcLen)
+	for (SrcLen = (int)m_pContent->GetLength(); SrcLen; --SrcLen)
 	{
 		int DstLen = WINPORT(WideCharToMultiByte)(CodePage, 0,
-			m_pData->GetData(), SrcLen, nullptr, 0, nullptr, nullptr);
+			m_pContent->GetData(), SrcLen, nullptr, 0, nullptr, nullptr);
 		if (DstLen < (int)nSize)
 		{
 			DstLen = WINPORT(WideCharToMultiByte)(CodePage, 0,
-				m_pData->GetData(), SrcLen, lpszStr, (int)nSize, nullptr, nullptr);
+				m_pContent->GetData(), SrcLen, lpszStr, (int)nSize, nullptr, nullptr);
 			if (DstLen >= 0 && DstLen < (int)nSize)
 			{
 				lpszStr[DstLen] = 0;
@@ -136,9 +136,9 @@ size_t FARString::GetCharString(char *lpszStr, size_t nSize, UINT CodePage) cons
 FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen)
 {
 	// Pos & Len must be valid
-	assert(Pos <= m_pData->GetLength());
-	assert(Len <= m_pData->GetLength());
-	assert(Pos + Len <= m_pData->GetLength());
+	assert(Pos <= m_pContent->GetLength());
+	assert(Len <= m_pContent->GetLength());
+	assert(Pos + Len <= m_pContent->GetLength());
 
 	// Data and *this must not intersect (but Data can be located entirely within *this)
 	const bool DataStartsInside = (Data >= CPtr() && Data < CEnd());
@@ -148,24 +148,24 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 	if (!Len && !DataLen)
 		return *this;
 
-	const size_t NewLength = m_pData->GetLength() + DataLen - Len;
-	if (!DataStartsInside && m_pData->SingleOwner() && NewLength <= m_pData->GetCapacity())
+	const size_t NewLength = m_pContent->GetLength() + DataLen - Len;
+	if (!DataStartsInside && m_pContent->SingleOwner() && NewLength <= m_pContent->GetCapacity())
 	{
-		wmemmove(m_pData->GetData() + Pos + DataLen,
-			m_pData->GetData() + Pos + Len, m_pData->GetLength() - Pos - Len);
-		wmemcpy(m_pData->GetData() + Pos, Data, DataLen);
+		wmemmove(m_pContent->GetData() + Pos + DataLen,
+			m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
+		wmemcpy(m_pContent->GetData() + Pos, Data, DataLen);
 	}
 	else
 	{
-		FARStringData *NewData = FARStringData::Create(NewLength);
-		wmemcpy(NewData->GetData(), m_pData->GetData(), Pos);
+		Content *NewData = Content::Create(NewLength);
+		wmemcpy(NewData->GetData(), m_pContent->GetData(), Pos);
 		wmemcpy(NewData->GetData() + Pos, Data, DataLen);
-		wmemcpy(NewData->GetData() + Pos + DataLen, m_pData->GetData() + Pos + Len, m_pData->GetLength() - Pos - Len);
-		m_pData->DecRef();
-		m_pData = NewData;
+		wmemcpy(NewData->GetData() + Pos + DataLen, m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
+		m_pContent->DecRef();
+		m_pContent = NewData;
 	}
 
-	m_pData->SetLength(NewLength);
+	m_pContent->SetLength(NewLength);
 
 	return *this;
 }
@@ -176,10 +176,10 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 	{
 		int nAddSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAdd,-1,nullptr,0);
 		if (nAddSize > 0) {
-			size_t nNewLength = m_pData->GetLength() + nAddSize - 1; // minus NUL char that implicitely there
-			EnsureOwnData(nNewLength);
-			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszAdd, -1, m_pData->GetData() + m_pData->GetLength(), nAddSize);
-			m_pData->SetLength(nNewLength);
+			size_t nNewLength = m_pContent->GetLength() + nAddSize - 1; // minus NUL char that implicitely there
+			PrepareForModify(nNewLength);
+			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszAdd, -1, m_pContent->GetData() + m_pContent->GetLength(), nAddSize);
+			m_pContent->SetLength(nNewLength);
 		}
 	}
 
@@ -188,11 +188,11 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 
 FARString& FARString::Copy(const FARString &Str)
 {
-	if (Str.m_pData != m_pData)
+	if (Str.m_pContent != m_pContent)
 	{
-		m_pData->DecRef();
-		m_pData = Str.m_pData;
-		m_pData->AddRef();
+		m_pContent->DecRef();
+		m_pContent = Str.m_pContent;
+		m_pContent->AddRef();
 	}
 
 	return *this;
@@ -200,22 +200,22 @@ FARString& FARString::Copy(const FARString &Str)
 
 FARString& FARString::Copy(const char *lpszData, UINT CodePage)
 {
-	m_pData->DecRef();
+	m_pContent->DecRef();
 
 	if (!lpszData || !*lpszData)
 	{
-		SetEUS();
+		Init();
 	}
 	else
 	{
 		int nSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszData,-1,nullptr,0);
 		if (nSize > 0) {
-			m_pData = FARStringData::Create(nSize - 1);
-			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszData, -1, m_pData->GetData(), nSize);
-			m_pData->SetLength(nSize - 1);
+			m_pContent = Content::Create(nSize - 1);
+			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszData, -1, m_pContent->GetData(), nSize);
+			m_pContent->SetLength(nSize - 1);
 
 		} else 
-			SetEUS();
+			Init();
 	}
 
 	return *this;
@@ -226,20 +226,20 @@ FARString FARString::SubStr(size_t Pos, size_t Len) {
 		return FARString();
 	if (Len == static_cast<size_t>(-1) || Len > GetLength() || Pos + Len > GetLength())
 		Len = GetLength() - Pos;
-	return FARString(m_pData->GetData() + Pos, Len);
+	return FARString(m_pContent->GetData() + Pos, Len);
 }
 
 bool FARString::Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen) const
 {
-	if (Pos >= m_pData->GetLength())
+	if (Pos >= m_pContent->GetLength())
 		Len = 0;
-	else if (Len >= m_pData->GetLength() || Pos + Len >= m_pData->GetLength())
-		Len = m_pData->GetLength() - Pos;
+	else if (Len >= m_pContent->GetLength() || Pos + Len >= m_pContent->GetLength())
+		Len = m_pContent->GetLength() - Pos;
 
 	if (Len != DataLen)
 		return false;
 
-	return !wmemcmp(m_pData->GetData() + Pos, Data, Len);
+	return !wmemcmp(m_pContent->GetData() + Pos, Data, Len);
 }
 
 bool FARString::operator<(const FARString& Str) const
@@ -265,40 +265,40 @@ FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2)
 wchar_t *FARString::GetBuffer(size_t nLength)
 {
 	if (nLength == (size_t)-1)
-		nLength = m_pData->GetLength();
+		nLength = m_pContent->GetLength();
 
-	EnsureOwnData(nLength);
-	return m_pData->GetData();
+	PrepareForModify(nLength);
+	return m_pContent->GetData();
 }
 
 void FARString::ReleaseBuffer(size_t nLength)
 {
 	if (nLength == (size_t)-1)
-		nLength = wcsnlen(m_pData->GetData(), m_pData->GetCapacity());
-	else if (nLength > m_pData->GetCapacity())
-		nLength = m_pData->GetCapacity();
+		nLength = wcsnlen(m_pContent->GetData(), m_pContent->GetCapacity());
+	else if (nLength > m_pContent->GetCapacity())
+		nLength = m_pContent->GetCapacity();
 
-	EnsureOwnData(nLength);
-	m_pData->SetLength(nLength);
+	PrepareForModify(nLength);
+	m_pContent->SetLength(nLength);
 }
 
 size_t FARString::Truncate(size_t nLength)
 {
-	if (nLength < m_pData->GetLength())
+	if (nLength < m_pContent->GetLength())
 	{
 		if (!nLength)
 		{
-			m_pData->DecRef();
-			SetEUS();
+			m_pContent->DecRef();
+			Init();
 		}
 		else
 		{
-			EnsureOwnData(nLength);
-			m_pData->SetLength(nLength);
+			PrepareForModify(nLength);
+			m_pContent->SetLength(nLength);
 		}
 	}
 
-	return m_pData->GetLength();
+	return m_pContent->GetLength();
 }
 
 FARString& FARString::Clear()
@@ -342,23 +342,23 @@ int __cdecl FARString::Format(const wchar_t * format, ...)
 
 FARString& FARString::Lower(size_t nStartPos, size_t nLength)
 {
-	EnsureOwnData();
-	WINPORT(CharLowerBuff)(m_pData->GetData() + nStartPos,
-		DWORD((nLength == (size_t)-1) ? m_pData->GetLength() - nStartPos : nLength));
+	PrepareForModify();
+	WINPORT(CharLowerBuff)(m_pContent->GetData() + nStartPos,
+		DWORD((nLength == (size_t)-1) ? m_pContent->GetLength() - nStartPos : nLength));
 	return *this;
 }
 
 FARString&  FARString::Upper(size_t nStartPos, size_t nLength)
 {
-	EnsureOwnData();
-	WINPORT(CharUpperBuff)(m_pData->GetData() + nStartPos,
-		DWORD((nLength == (size_t)-1) ? m_pData->GetLength() - nStartPos : nLength));
+	PrepareForModify();
+	WINPORT(CharUpperBuff)(m_pContent->GetData() + nStartPos,
+		DWORD((nLength == (size_t)-1) ? m_pContent->GetLength() - nStartPos : nLength));
 	return *this;
 }
 
 bool FARString::Pos(size_t &nPos, wchar_t Ch, size_t nStartPos) const
 {
-	const wchar_t *lpwszData = m_pData->GetData();
+	const wchar_t *lpwszData = m_pContent->GetData();
 	const wchar_t *lpFound = wcschr(lpwszData + nStartPos, Ch);
 
 	if (lpFound)
@@ -372,7 +372,7 @@ bool FARString::Pos(size_t &nPos, wchar_t Ch, size_t nStartPos) const
 
 bool FARString::Pos(size_t &nPos, const wchar_t *lpwszFind, size_t nStartPos) const
 {
-	const wchar_t *lpwszData = m_pData->GetData();
+	const wchar_t *lpwszData = m_pContent->GetData();
 	const wchar_t *lpFound = wcsstr(lpwszData + nStartPos, lpwszFind);
 
 	if (lpFound)
@@ -386,7 +386,7 @@ bool FARString::Pos(size_t &nPos, const wchar_t *lpwszFind, size_t nStartPos) co
 
 bool FARString::PosI(size_t &nPos, const wchar_t *lpwszFind, size_t nStartPos) const
 {
-	const wchar_t *lpwszData = m_pData->GetData();
+	const wchar_t *lpwszData = m_pContent->GetData();
 	const wchar_t *lpFound = StrStrI(lpwszData + nStartPos, lpwszFind);
 
 	if (lpFound)
@@ -400,9 +400,9 @@ bool FARString::PosI(size_t &nPos, const wchar_t *lpwszFind, size_t nStartPos) c
 
 bool FARString::RPos(size_t &nPos, wchar_t Ch, size_t nStartPos) const
 {
-	const wchar_t *lpwszData = m_pData->GetData();
+	const wchar_t *lpwszData = m_pContent->GetData();
 	const wchar_t *lpwszStrStart = lpwszData + nStartPos;
-	const wchar_t *lpwszStrScan = lpwszData + m_pData->GetLength();
+	const wchar_t *lpwszStrScan = lpwszData + m_pContent->GetLength();
 
 	for (;;lpwszStrScan--)
 	{

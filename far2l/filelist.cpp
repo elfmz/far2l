@@ -1164,7 +1164,7 @@ int FileList::ProcessKey(int Key)
 								strFullName.Upper();
 
 							if (!strFullName.IsEmpty())
-								AddEndSlash(strFullName,0);
+								AddEndSlash(strFullName);
 
 							if (Opt.PanelCtrlFRule)
 							{

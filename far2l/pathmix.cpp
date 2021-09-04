@@ -262,87 +262,27 @@ const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 	return lpwszEndPtr;
 }
 
-BOOL AddEndSlash(wchar_t *Path, wchar_t TypeSlash)
+void AddEndSlash(FARString &strPath)
 {
-	BOOL Result=FALSE;
-
-	if (Path)
-	{
-		/* $ 06.12.2000 IS
-		  ! Теперь функция работает с обоими видами слешей, также происходит
-		    изменение уже существующего конечного слеша на такой, который
-		    встречается чаще.
-		*/
-		wchar_t *end;
-		int Slash=0, BackSlash=0;
-
-		if (!TypeSlash)
-		{
-			end=Path;
-
-			while (*end)
-			{
-				Slash+=(*end==GOOD_SLASH);
-				BackSlash+=(*end==L'/');
-				end++;
-			}
-		}
-		else
-		{
-			end=Path+StrLength(Path);
-
-			if (TypeSlash == GOOD_SLASH)
-				Slash=1;
-			else
-				BackSlash=1;
-		}
-
-		int Length=(int)(end-Path);
-		char c= '/';
-		Result=TRUE;
-
-		if (!Length)
-		{
-			*end=c;
-			end[1]=0;
-		}
-		else
-		{
-			end--;
-
-			if (!IsSlash(*end))
-			{
-				end[1]=c;
-				end[2]=0;
-			}
-			else
-			{
-				*end=c;
-			}
-		}
-	}
-
-	return Result;
+	if (strPath.IsEmpty() || strPath[strPath.GetLength() - 1] != GOOD_SLASH)
+		strPath+= GOOD_SLASH;
 }
 
+void AddEndSlash(std::wstring &strPath)
+{
+	if (strPath.empty() || strPath.back() != GOOD_SLASH)
+		strPath+= GOOD_SLASH;
+}
 
 BOOL WINAPI AddEndSlash(wchar_t *Path)
 {
-	return AddEndSlash(Path, 0);
-}
+	const size_t len = wcslen(Path);
+	if (len && Path[len - 1] == GOOD_SLASH)
+		return FALSE;
 
-
-BOOL AddEndSlash(FARString &strPath)
-{
-	return AddEndSlash(strPath, 0);
-}
-
-BOOL AddEndSlash(FARString &strPath, wchar_t TypeSlash)
-{
-	wchar_t *lpwszPath = strPath.GetBuffer(strPath.GetLength()+2);
-	BOOL Result = AddEndSlash(lpwszPath, TypeSlash);
-	strPath.ReleaseBuffer();
-	return Result;
+	Path[len] = GOOD_SLASH;
+	Path[len + 1] = 0;
+	return TRUE;
 }
 
 bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
@@ -362,28 +302,21 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 	return Ret;
 }
 
-BOOL WINAPI DeleteEndSlash(FARString &strPath, bool AllEndSlash)
+BOOL DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 {
-	BOOL Ret=FALSE;
+	size_t LenToSlash = strPath.GetLength();
 
-	if (!strPath.IsEmpty())
+	while (LenToSlash != 0 && IsSlash(strPath.At(LenToSlash - 1)))
 	{
-		size_t len=strPath.GetLength();
-		wchar_t *lpwszPath = strPath.GetBuffer();
-
-		while (len && IsSlash(lpwszPath[--len]))
-		{
-			Ret=TRUE;
-			lpwszPath[len] = L'\0';
-
-			if (!AllEndSlash)
-				break;
-		}
-
-		strPath.ReleaseBuffer();
+		--LenToSlash;
+		if (!AllEndSlash) break;
 	}
 
-	return Ret;
+	if (LenToSlash == strPath.GetLength())
+		return FALSE;
+
+	strPath.Truncate(LenToSlash);
+	return TRUE;
 }
 
 bool CutToSlash(FARString &strStr, bool bInclude)
@@ -392,9 +325,6 @@ bool CutToSlash(FARString &strStr, bool bInclude)
 
 	if (FindLastSlash(pos,strStr))
 	{
-		if (pos==3 && HasPathPrefix(strStr))
-			return false;
-
 		if (bInclude)
 			strStr.Truncate(pos);
 		else
@@ -404,6 +334,16 @@ bool CutToSlash(FARString &strStr, bool bInclude)
 	}
 
 	return false;
+}
+
+bool CutToSlash(std::wstring &strStr, bool bInclude)
+{
+	size_t pos = strStr.rfind(GOOD_SLASH);
+	if (pos == std::string::npos)
+		return false;
+
+	strStr.resize(bInclude ? pos + 1 : pos);
+	return true;
 }
 
 FARString &CutToFolderNameIfFolder(FARString &strPath)

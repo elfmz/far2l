@@ -78,6 +78,14 @@ static const FARString& GetFarTitleAddons()
 	L"arm64",
 #elif defined(__arm__)
 	L"arm",
+#elif defined(__e2k__)
+	L"e2k",
+#elif defined(__riscv)
+# if __riscv_xlen == 64
+	L"rv64",
+# else
+	L"rv32",
+# endif
 #else
 	L"x86",
 #endif

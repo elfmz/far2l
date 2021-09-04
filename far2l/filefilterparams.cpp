@@ -277,46 +277,61 @@ wchar_t FileFilterParams::GetMarkChar() const
 
 bool FileFilterParams::FileInFilter(const FileListItem& fli, uint64_t CurrentTime) const
 {
-	FAR_FIND_DATA_EX fde;
-	fde.dwFileAttributes=fli.FileAttr;
-	fde.dwUnixMode=fli.FileMode;
-	fde.ftCreationTime=fli.CreationTime;
-	fde.ftLastAccessTime=fli.AccessTime;
-	fde.ftLastWriteTime=fli.WriteTime;
-	fde.ftChangeTime=fli.ChangeTime;
-	fde.nFileSize=fli.FileSize;
-	fde.nPhysicalSize=fli.PhysicalSize;
-	fde.strFileName=fli.strName;
-	return FileInFilter(fde, CurrentTime);
+	return FileInFilterImpl( fli.strName,
+		fli.FileAttr, fli.FileSize,
+		fli.CreationTime, fli.AccessTime, fli.WriteTime, fli.ChangeTime,
+		CurrentTime);
 }
 
 bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime) const
+{
+	return FileInFilterImpl( fde.strFileName,
+		fde.dwFileAttributes, fde.nFileSize,
+		fde.ftCreationTime, fde.ftLastAccessTime, fde.ftLastWriteTime, fde.ftChangeTime,
+		CurrentTime);
+}
+
+bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime) const
+{
+	return FileInFilterImpl( FARString(fd.lpwszFileName),
+		fd.dwFileAttributes, fd.nFileSize,
+		fd.ftCreationTime, fd.ftLastAccessTime, fd.ftLastWriteTime, fd.ftLastWriteTime,
+		CurrentTime);
+}
+
+bool FileFilterParams::FileInFilterImpl(
+			const FARString &strFileName,
+			DWORD dwFileAttributes,
+			uint64_t nFileSize,
+			const FILETIME &CreationTime,
+			const FILETIME &AccessTime,
+			const FILETIME &WriteTime,
+			const FILETIME &ChangeTime,
+			uint64_t CurrentTime) const
 {
 	// Режим проверки атрибутов файла включен?
 	if (FAttr.Used)
 	{
 		// Проверка попадания файла по установленным атрибутам
-		if ((fde.dwFileAttributes & FAttr.AttrSet) != FAttr.AttrSet)
+		if ((dwFileAttributes & FAttr.AttrSet) != FAttr.AttrSet)
 			return false;
 
 		// Проверка попадания файла по отсутствующим атрибутам
-		if (fde.dwFileAttributes & FAttr.AttrClear)
+		if (dwFileAttributes & FAttr.AttrClear)
 			return false;
 	}
 
 	// Режим проверки размера файла включен?
 	if (FSize.Used)
 	{
-		if (*FSize.SizeAbove)
-		{
-			if (fde.nFileSize < FSize.SizeAboveReal) // Размер файла меньше минимального разрешённого по фильтру?
-				return false;                          // Не пропускаем этот файл
+		if (*FSize.SizeAbove && nFileSize < FSize.SizeAboveReal)
+		{ // Размер файла меньше минимального разрешённого по фильтру?
+			return false; // Не пропускаем этот файл
 		}
 
-		if (*FSize.SizeBelow)
-		{
-			if (fde.nFileSize > FSize.SizeBelowReal) // Размер файла больше максимального разрешённого по фильтру?
-				return false;                          // Не пропускаем этот файл
+		if (*FSize.SizeBelow && nFileSize > FSize.SizeBelowReal)
+		{ // Размер файла больше максимального разрешённого по фильтру?
+			return false; // Не пропускаем этот файл
 		}
 	}
 
@@ -334,16 +349,16 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t Curren
 			switch (FDate.DateType)
 			{
 				case FDATE_CREATED:
-					ft=&fde.ftCreationTime;
+					ft = &CreationTime;
 					break;
 				case FDATE_OPENED:
-					ft=&fde.ftLastAccessTime;
+					ft = &AccessTime;
 					break;
 				case FDATE_CHANGED:
-					ft=&fde.ftChangeTime;
+					ft = &ChangeTime;
 					break;
 				default: //case FDATE_MODIFIED:
-					ft=&fde.ftLastWriteTime;
+					ft = &WriteTime;
 			}
 
 			ULARGE_INTEGER ftime;
@@ -360,31 +375,23 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t Curren
 			}
 
 			// Есть введённая пользователем начальная дата?
-			if (after)
-			{
-				// Дата файла меньше начальной даты по фильтру?
-				if (ftime.QuadPart<after)
-					// Не пропускаем этот файл
-					return false;
+			if (after && ftime.QuadPart < after)
+			{ // Дата файла меньше начальной даты по фильтру?
+				return false; // Не пропускаем этот файл
 			}
 
 			// Есть введённая пользователем конечная дата?
-			if (before)
-			{
-				// Дата файла больше конечной даты по фильтру?
-				if (ftime.QuadPart>before)
-					return false;
+			if (before && ftime.QuadPart > before)
+			{ // Дата файла больше конечной даты по фильтру?
+				return false;
 			}
 		}
 	}
 
 	// Режим проверки маски файла включен?
-	if (FMask.Used)
-	{
-		// Файл не попадает под маску введённую в фильтре?
-		if (!FMask.FilterMask.Compare(fde.strFileName))
-			// Не пропускаем этот файл
-			return false;
+	if (FMask.Used && !FMask.FilterMask.Compare(strFileName))
+	{ // Файл не попадает под маску введённую в фильтре?
+		return false; // Не пропускаем этот файл
 	}
 
 	// Да! Файл выдержал все испытания и будет допущен к использованию
@@ -392,12 +399,6 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t Curren
 	return true;
 }
 
-bool FileFilterParams::FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime) const
-{
-	FAR_FIND_DATA_EX fde;
-	apiFindDataToDataEx(&fd,&fde);
-	return FileInFilter(fde, CurrentTime);
-}
 
 //Централизованная функция для создания строк меню различных фильтров.
 void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType, const wchar_t *FMask, const wchar_t *Title)

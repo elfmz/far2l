@@ -70,7 +70,10 @@ bool PathCanHoldRegularFile(const wchar_t *Path);
 bool IsPluginPrefixPath(const wchar_t *Path);
 
 bool CutToSlash(FARString &strStr, bool bInclude = false);
+bool CutToSlash(std::wstring &strStr, bool bInclude = false);
+
 FARString &CutToFolderNameIfFolder(FARString &strPath);
+
 const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath);
 const wchar_t* PointToName(FARString &strPath);
 const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
@@ -79,12 +82,12 @@ const wchar_t* PointToExt(const wchar_t *lpwszPath);
 const wchar_t* PointToExt(FARString& strPath);
 const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
 
-BOOL AddEndSlash(FARString &strPath, wchar_t TypeSlash);
-BOOL AddEndSlash(FARString &strPath);
-BOOL AddEndSlash(wchar_t *Path, wchar_t TypeSlash);
+void AddEndSlash(FARString &strPath);
+void AddEndSlash(std::wstring &strPath);
 BOOL WINAPI AddEndSlash(wchar_t *Path);
+
 bool DeleteEndSlash(wchar_t* Path, bool AllEndSlash = false);
-BOOL WINAPI DeleteEndSlash(FARString &strPath,bool AllEndSlash = false);
+BOOL DeleteEndSlash(FARString &strPath,bool AllEndSlash = false);
 
 const wchar_t *FirstSlash(const wchar_t *String);
 const wchar_t *LastSlash(const wchar_t *String);

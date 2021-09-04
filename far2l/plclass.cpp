@@ -46,13 +46,13 @@ bool Plugin::OpenModule()
 	if (WorkFlags.Check(PIWF_DONTLOADAGAIN))
 		return false;
 
-	FARString strCurPath;
-	apiGetCurrentDirectory(strCurPath);
+	char saved_cwd_buf[MAX_PATH + 1]{};
+	char *saved_cwd = sdc_getcwd(saved_cwd_buf, MAX_PATH);
 
-	FARString strModulePath = m_strModuleName;
+	FARString strModulePath = m_strModuleName.Clone();
 	CutToSlash(strModulePath);
-	if (!FarChDir(strModulePath))
-		fprintf(stderr, "Can't chdir for plugin '%ls'\n", m_strModuleName.CPtr());
+	if (sdc_chdir(strModulePath.GetMB().c_str()) == -1 )
+		fprintf(stderr, "Error %d chdir for plugin '%ls'\n", errno, m_strModuleName.CPtr());
 
 	const std::string &mbPath = m_strModuleName.GetMB();
 	m_hModule = dlopen(mbPath.c_str(), RTLD_LOCAL|RTLD_LAZY);
@@ -76,7 +76,8 @@ bool Plugin::OpenModule()
 	}
 
 	ErrnoSaver Err;
-	FarChDir(strCurPath);
+	if (saved_cwd)
+		sdc_chdir(saved_cwd);
 
 	return (!!m_hModule);
 }

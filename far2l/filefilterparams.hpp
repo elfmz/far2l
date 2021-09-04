@@ -123,6 +123,15 @@ class FileFilterParams
 
 		DWORD FFlags[FFFT_COUNT];
 
+		bool FileInFilterImpl(
+			const FARString &strFileName,
+			DWORD dwFileAttributes,
+			uint64_t nFileSize,
+			const FILETIME &CreationTime,
+			const FILETIME &AccessTime,
+			const FILETIME &WriteTime,
+			const FILETIME &ChangeTime,
+			uint64_t CurrentTime) const;
 	public:
 
 		FileFilterParams();

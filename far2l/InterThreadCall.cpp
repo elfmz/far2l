@@ -1,6 +1,8 @@
 #include <assert.h>
+#include <luck.h>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include "../WinPort/WinCompat.h"
 #include "../WinPort/WinPort.h"
 
@@ -18,9 +20,40 @@ static volatile DWORD s_interlocked_delegates_tid = 0;
 
 std::condition_variable g_interlocked_thread_call_cond;
 
+static std::atomic<unsigned int> g_thread_id_counter{0};
+
+thread_local unsigned int g_thread_id;
+
+static unsigned int __attribute__((noinline)) GenerateThreadID()
+{
+	unsigned int tid = ++g_thread_id_counter;
+	while (UNLIKELY(tid == 0)) {
+		// assuming all threads after ~0x10000-th are temporary ones..
+		g_thread_id_counter+= 0x10000 + (rand() % 0x100);
+		tid = ++g_thread_id_counter;
+		fprintf(stderr, "GenerateThreadID: wrapped around, reset to %u\n", tid);
+	}
+	return tid;
+}
+
+unsigned int GetInterThreadID()
+{
+	unsigned int tid = g_thread_id;
+	if (UNLIKELY(tid == 0)) {
+		tid = GenerateThreadID();
+		g_thread_id = tid;
+	}
+	return tid;
+}
+
+void OverrideInterThreadID(unsigned int tid)
+{
+	g_thread_id = tid;
+}
+
 void StartDispatchingInterThreadCalls()
 {
-	const DWORD self_tid = WINPORT(GetCurrentThreadId)();
+	const DWORD self_tid = GetInterThreadID();
 	std::lock_guard<std::mutex> lock(s_inter_thread_call_synch.mtx);
 	s_interlocked_delegates_tid = self_tid;
 }
@@ -41,7 +74,7 @@ void StopDispatchingInterThreadCalls()
 
 bool IsCurrentThreadDispatchesInterThreadCalls()
 {
-	return LIKELY(s_interlocked_delegates_tid == WINPORT(GetCurrentThreadId)());
+	return LIKELY(s_interlocked_delegates_tid == GetInterThreadID());
 }
 
 int DispatchInterThreadCalls()

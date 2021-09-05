@@ -2766,41 +2766,57 @@ static void DoPreparePluginList(HANDLE hDlg)
 	}
 }
 
-struct THREADPARAM
+class FindFileThread : public Threaded
 {
 	bool PluginMode;
 	HANDLE hDlg;
-	bool bDone;
-};
+	bool bDone = false;
 
-static DWORD ThreadRoutine(LPVOID Param)
-{
-	InitInFileSearch();
-	THREADPARAM* tParam=reinterpret_cast<THREADPARAM*>(Param);
+public:
+	using Threaded::StartThread;
+
+	bool CheckForDone()
 	{
-		SudoClientRegion scr;
-		DWORD msec = GetProcessUptimeMSec();
-		pMountInfo.reset(new MountInfo);
-		if (tParam->PluginMode)
-		{
-			DoPreparePluginList(tParam->hDlg);
-		}
-		else
-		{
-			DoPrepareFileList(tParam->hDlg);
-		}
-		msec = GetProcessUptimeMSec() - msec;
-		fprintf(stderr, "FindFiles complete in %u msec\n", msec);
-		itd.SetPercent(0);
-		StopFlag = true;
-		pMountInfo.reset();
-	}
-	ReleaseInFileSearch();
+		if (!bDone)
+			return false;
 
-	InterThreadLockAndWake itlw;
-	tParam->bDone = true;
-	return 0;
-}
+		WaitThread();
+		return true;
+	}
+
+	FindFileThread(bool PluginMode_, HANDLE hDlg_)
+		: PluginMode(PluginMode_), hDlg(hDlg_)
+	{
+	}
+
+	virtual void *ThreadProc()
+	{
+		InitInFileSearch();
+		{
+			SudoClientRegion scr;
+			DWORD msec = GetProcessUptimeMSec();
+				pMountInfo.reset(new MountInfo);
+			if (PluginMode)
+			{
+				DoPreparePluginList(hDlg);
+			}
+			else
+			{
+				DoPrepareFileList(hDlg);
+			}
+			msec = GetProcessUptimeMSec() - msec;
+			fprintf(stderr, "FindFiles complete in %u msec\n", msec);
+			itd.SetPercent(0);
+			StopFlag = true;
+			pMountInfo.reset();
+		}
+		ReleaseInFileSearch();
+
+		InterThreadLockAndWake itlw;
+		bDone = true;
+		return nullptr;
+	}
+};
 
 static bool FindFilesProcess(Vars& v)
 {
@@ -2916,14 +2932,12 @@ static bool FindFilesProcess(Vars& v)
 
 	strLastDirName.Clear();
 
-	THREADPARAM Param={v.PluginMode, reinterpret_cast<HANDLE>(&Dlg), false};
-	HANDLE Thread = WINPORT(CreateThread)(nullptr, 0, ThreadRoutine, &Param, 0, nullptr);
-	if (Thread)
+	FindFileThread fft(v.PluginMode, reinterpret_cast<HANDLE>(&Dlg));
+	if (fft.StartThread())
 	{
 		wakeful W;
 		Dlg.Process();
-		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(Param.bDone);
-		WINPORT(CloseHandle)(Thread);
+		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(fft.CheckForDone());
 
 		PauseFlag = false;
 		StopFlag = false;

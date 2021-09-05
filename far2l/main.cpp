@@ -389,8 +389,14 @@ static void SetupFarPath(int argc, char **argv)
 	PrepareDiskPath(g_strFarModuleName);
 }
 
+static unsigned int gMainThreadID;
+
 int FarAppMain(int argc, char **argv)
 {
+	// make current thread to be same as main one to avoid FARString reference-counter
+	// from cloning main strings from current one
+	OverrideInterThreadID(gMainThreadID);
+
 	Opt.IsUserAdmin = (geteuid()==0);
 
 	_OT(SysLog(L"[[[[[[[[New Session of FAR]]]]]]]]]"));
@@ -785,7 +791,9 @@ int _cdecl main(int argc, char *argv[])
 	SetupFarPath(argc, argv);
 
 	SafeMMap::SignalHandlerRegistrar smm_shr;
-	apiEnableLowFragmentationHeap();
+
+	gMainThreadID = GetInterThreadID();
+
 	return WinPortMain(argc, argv, FarAppMain);
 }
 

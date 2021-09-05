@@ -824,10 +824,6 @@ bool apiGetFinalPathNameByHandle(HANDLE hFile, FARString& FinalFilePath)
 }
 
 
-void apiEnableLowFragmentationHeap()
-{
-}
-
 bool GetFileTimeEx(HANDLE Object, LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime)
 {
 	memset(ChangeTime, 0, sizeof(*ChangeTime));

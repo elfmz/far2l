@@ -9,6 +9,13 @@ struct IInterThreadCallDelegate
 	virtual void Process(bool stopping) = 0;
 };
 
+// similar to Windows GetCurrentThreadId() but with ability to be overriden
+unsigned int GetInterThreadID();
+
+// to be used in cases where two specific threads are known-sure
+// to be possible run exclusively - either one, either another
+void OverrideInterThreadID(unsigned int tid);
+
 void StartDispatchingInterThreadCalls();
 void StopDispatchingInterThreadCalls();
 bool IsCurrentThreadDispatchesInterThreadCalls();

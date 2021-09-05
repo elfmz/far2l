@@ -163,7 +163,6 @@
 #define    EnumSystemCodePages		WINPORT(EnumSystemCodePages)
 
 	//synch
-#define    CreateThread			WINPORT(CreateThread)
 #define    WaitForSingleObject			WINPORT(WaitForSingleObject)
 #define    WaitForMultipleObjects			WINPORT(WaitForMultipleObjects)
 #define    CreateEvent			WINPORT(CreateEvent)
@@ -171,8 +170,6 @@
 #define    ResetEvent			WINPORT(ResetEvent)
 #define     CreateSemaphore			WINPORT(CreateSemaphore)
 #define     ReleaseSemaphore			WINPORT(ReleaseSemaphore)
-#define    GetCurrentThreadId			WINPORT(GetCurrentThreadId)
-#define    ResumeThread			WINPORT(ResumeThread)
 
 	//FS notify
 #define    FindFirstChangeNotification			WINPORT(FindFirstChangeNotification)

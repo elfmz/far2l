@@ -217,8 +217,6 @@ extern "C" {
 	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags));
 
 	//synch
-	WINPORT_DECL(CreateThread, HANDLE, (LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, 
-		WINPORT_THREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId));	
 	WINPORT_DECL(WaitForSingleObject, DWORD, (HANDLE hHandle, DWORD dwMilliseconds));	
 	WINPORT_DECL(WaitForMultipleObjects, DWORD, (DWORD nCount, HANDLE *pHandles, BOOL bWaitAll, DWORD dwMilliseconds));
 	WINPORT_DECL(CreateEvent, HANDLE, (LPSECURITY_ATTRIBUTES lpEventAttributes,
@@ -227,8 +225,6 @@ extern "C" {
 	WINPORT_DECL(ResetEvent, BOOL, (HANDLE hEvent));
 	WINPORT_DECL( CreateSemaphore, HANDLE, (LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCTSTR lpName));
 	WINPORT_DECL( ReleaseSemaphore, BOOL, (HANDLE hSemaphore, LONG lReleaseCount, PLONG lpPreviousCount));
-	WINPORT_DECL(GetCurrentThreadId, DWORD, ());
-	WINPORT_DECL(ResumeThread, DWORD, (HANDLE hThread));
 
 	//FS notify
 	WINPORT_DECL(FindFirstChangeNotification, HANDLE, (LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter));

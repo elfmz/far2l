@@ -1,10 +1,6 @@
 #include <set>
-#include <mutex>
 #include <vector>
-#include <chrono>
-#include <thread>
 #include <atomic>
-#include <condition_variable>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 # include <sys/types.h>
 # include <sys/event.h>
@@ -53,11 +49,11 @@ class FSNotify : public IFSNotify
 #if defined(__APPLE__) || defined(__FreeBSD__)
 		w = open(path, O_RDONLY | O_CLOEXEC);
 		if (w != -1) {
-			u_int fflags = EV_ADD | EV_ENABLE | EV_ONESHOT | NOTE_DELETE | NOTE_LINK | NOTE_RENAME;
+			u_int fflags = NOTE_DELETE | NOTE_LINK | NOTE_RENAME;
 			if (_what == FSNW_NAMES_AND_STATS)
 				fflags|= NOTE_EXTEND | NOTE_WRITE | NOTE_ATTRIB;
 			_events.emplace_back();
-			EV_SET(&_events.back(), w, EVFILT_VNODE, fflags, 0, 0);
+			EV_SET(&_events.back(), w, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_ONESHOT, fflags, 0, 0);
 		}
 #else
 		uint32_t mask = IN_DELETE | IN_DELETE_SELF | IN_MOVE_SELF | IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE;

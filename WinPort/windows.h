@@ -162,20 +162,6 @@
 #define    GetCPInfoEx			WINPORT(GetCPInfoEx)
 #define    EnumSystemCodePages		WINPORT(EnumSystemCodePages)
 
-	//synch
-#define    WaitForSingleObject			WINPORT(WaitForSingleObject)
-#define    WaitForMultipleObjects			WINPORT(WaitForMultipleObjects)
-#define    CreateEvent			WINPORT(CreateEvent)
-#define    SetEvent			WINPORT(SetEvent)
-#define    ResetEvent			WINPORT(ResetEvent)
-#define     CreateSemaphore			WINPORT(CreateSemaphore)
-#define     ReleaseSemaphore			WINPORT(ReleaseSemaphore)
-
-	//FS notify
-#define    FindFirstChangeNotification			WINPORT(FindFirstChangeNotification)
-#define    FindNextChangeNotification			WINPORT(FindNextChangeNotification)
-#define    FindCloseChangeNotification			WINPORT(FindCloseChangeNotification)
-
 #define    GlobalAlloc			WINPORT(GlobalAlloc)
 #define    GlobalFree			WINPORT(GlobalFree)
 #define    GlobalLock			WINPORT(GlobalLock)

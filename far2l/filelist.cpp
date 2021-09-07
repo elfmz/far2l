@@ -114,7 +114,6 @@ FileList::FileList():
 	ListData(nullptr),
 	FileCount(0),
 	hPlugin(INVALID_HANDLE_VALUE),
-	hListChange(INVALID_HANDLE_VALUE),
 	UpperFolderTopFile(0),
 	LastCurFile(-1),
 	ReturnCurrentFile(FALSE),

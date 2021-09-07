@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panelctype.hpp"
 #include "plugins.hpp"
 #include "ConfigRW.hpp"
+#include "FSNotify.h"
+#include <memory>
 
 class FileFilter;
 
@@ -201,7 +203,7 @@ class FileList:public Panel
 		HANDLE hPlugin;
 		DList<PrevDataItem*>PrevDataList;
 		DList<PluginsListItem*>PluginsList;
-		HANDLE hListChange;
+		std::unique_ptr<IFSNotify> ListChange;
 		long UpperFolderTopFile,LastCurFile;
 		long ReturnCurrentFile;
 		long SelFileCount;

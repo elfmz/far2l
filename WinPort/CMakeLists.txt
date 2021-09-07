@@ -11,7 +11,6 @@ set(SOURCES
 src/APIClipboard.cpp
 src/APIConsole.cpp
 src/APIFiles.cpp
-src/APIFSNotify.cpp
 src/APIKeyboard.cpp
 src/APIMemory.cpp
 src/APIOther.cpp
@@ -19,13 +18,11 @@ src/APIPrintFormat.cpp
 src/APIRegistry.cpp
 src/APIStringCodepages.cpp
 src/APIStringMap.cpp
-src/APISynch.cpp
 src/APITime.cpp
 src/ConsoleBuffer.cpp
 src/ConsoleInput.cpp
 src/ConsoleOutput.cpp
 src/WinPortHandle.cpp
-src/WinPortSynch.cpp
 src/PathHelpers.cpp
 src/SavedScreen.cpp
 src/sudo/sudo_common.cpp

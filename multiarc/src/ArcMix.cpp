@@ -132,7 +132,18 @@ SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 
 /* $ 13.09.2000 tran
    запуск треда для ожидания момента убийства лист файла */
-   /*
+#if 0
+static DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par)
+{
+    KillStruct *ks=(KillStruct*)par;
+
+    WINPORT(WaitForSingleObject)(ks->hProcess,INFINITE);
+    WINPORT(CloseHandle)(ks->hThread);
+    WINPORT(CloseHandle)(ks->hProcess);
+    sdc_unlink(ks->ListFileName);
+    free((LPVOID)ks);
+    return SUPER_PUPER_ZERO;
+}
 void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list)
 {
     if ( pi==0 || list==0 || *list==0)
@@ -150,19 +161,9 @@ void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list)
 
     WINPORT(CloseHandle)(WINPORT(CreateThread)(NULL,0xf000,ThreadWhatWaitingForKillListFile,ks,0 ,&dummy));
 }
-*/
-DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par)
-{
-    KillStruct *ks=(KillStruct*)par;
 
-    WINPORT(WaitForSingleObject)(ks->hProcess,INFINITE);
-    WINPORT(CloseHandle)(ks->hThread);
-    WINPORT(CloseHandle)(ks->hProcess);
-    sdc_unlink(ks->ListFileName);
-    free((LPVOID)ks);
-    return SUPER_PUPER_ZERO;
-}
 /* tran 13.09.2000 $ */
+#endif
 
 int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo, int ShowCommand, char *ListFileName)
 {

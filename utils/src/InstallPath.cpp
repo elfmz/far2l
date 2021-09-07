@@ -1,8 +1,7 @@
 #include "utils.h"
-#include <WinCompat.h>
-#include <WinPort.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <string.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <errno.h>

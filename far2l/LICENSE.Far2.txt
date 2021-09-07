@@ -13,7 +13,7 @@ delete.hpp dialog.cpp dialog.hpp dirinfo.cpp dirinfo.hpp dirmix.cpp dirmix.hpp
 dizlist.cpp dizlist.hpp DlgBuilder.cpp DlgBuilder.hpp dlgedit.cpp dlgedit.hpp 
 DlgGuid.cpp DlgGuid.hpp DList.cpp DList.hpp drivemix.cpp drivemix.hpp edit.cpp 
 edit.hpp editor.cpp editor.hpp eject.cpp eject.hpp elevation.cpp elevation.hpp 
-event.hpp execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
+execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
 FarDlgBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
 farlang.templ.m4 farqueue.cpp farqueue.hpp farrtl.cpp farrtl.hpp FarRus.hlf.m4 
 farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 

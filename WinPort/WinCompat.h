@@ -10,13 +10,6 @@
 #define ELFMZ_WINPORT
 
 #ifdef _WIN32
-# define GOOD_SLASH	'\\'
-# define OTHER_SLASH	'/'
-# define LGOOD_SLASH	L'\\'
-# define LOTHER_SLASH	L'/'
-# define WGOOD_SLASH	L"\\"
-# define WOTHER_SLASH	L"/"
-# define WS_FMT	"%ws"
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 
@@ -44,14 +37,6 @@ typedef unsigned __int64 uint64_t;
 # define _Inout_opt_
 # define _Reserved_
 # define _countof(x) (sizeof(x)/ sizeof(x[0]))
-
-# define GOOD_SLASH	'/'
-# define OTHER_SLASH	'/'
-# define LGOOD_SLASH	L'/'
-# define LOTHER_SLASH	L'/'
-# define WGOOD_SLASH	L"/"
-# define WOTHER_SLASH	L"/"
-# define WS_FMT	"%ls"
 
 #define _wcsdup wcsdup
 #define _strdup strdup
@@ -233,7 +218,7 @@ typedef uint64_t UINT64, *PUINT64;
 typedef int64_t LONG64, *PLONG64;
 typedef uint64_t ULONG64, *PULONG64;
 
-#if defined(__x86_64__) || defined(__arm64__) || defined(__aarch64__) || defined(__ppc64__)
+#if defined(__LP64__) || defined(_LP64)
 typedef INT64 INT_PTR;
 typedef UINT64 UINT_PTR;
 typedef DWORD64 DWORD_PTR;
@@ -1556,16 +1541,6 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 
 #endif
 
-#ifdef _WIN32
-# define NATIVE_EOL		"\r\n"
-# define NATIVE_EOLW		L"\r\n"
-# define NATIVE_EOL2		"\r\0\n\0"
-#else
-# define NATIVE_EOL		"\n"
-# define NATIVE_EOLW		L"\n"
-# define NATIVE_EOL2		"\n\0"
-#endif
-
 #ifdef __GNUC__
 # define thread_local __thread
 #elif __STDC_VERSION__ >= 201112L
@@ -1575,8 +1550,5 @@ typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTI
 #else
 # error Cannot define thread_local
 #endif
-
-#define DEVNULL		"/dev/null"
-#define DEVNULLW	L"/dev/null"
 
 #define CONSOLE_FKEYS_COUNT	12	// array count for SetConsoleFKeyTitles

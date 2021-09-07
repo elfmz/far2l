@@ -228,7 +228,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 
 static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
-//	fprintf(stderr, "TODO: Execute('" WS_FMT "')\n", CmdStr);
+//	fprintf(stderr, "TODO: Execute('%ls')\n", CmdStr);
 	int r;
 	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);

@@ -216,21 +216,6 @@ extern "C" {
 	WINPORT_DECL(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo));
 	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags));
 
-	//synch
-	WINPORT_DECL(WaitForSingleObject, DWORD, (HANDLE hHandle, DWORD dwMilliseconds));	
-	WINPORT_DECL(WaitForMultipleObjects, DWORD, (DWORD nCount, HANDLE *pHandles, BOOL bWaitAll, DWORD dwMilliseconds));
-	WINPORT_DECL(CreateEvent, HANDLE, (LPSECURITY_ATTRIBUTES lpEventAttributes,
-		BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName));
-	WINPORT_DECL(SetEvent, BOOL, (HANDLE hEvent));
-	WINPORT_DECL(ResetEvent, BOOL, (HANDLE hEvent));
-	WINPORT_DECL( CreateSemaphore, HANDLE, (LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCTSTR lpName));
-	WINPORT_DECL( ReleaseSemaphore, BOOL, (HANDLE hSemaphore, LONG lReleaseCount, PLONG lpPreviousCount));
-
-	//FS notify
-	WINPORT_DECL(FindFirstChangeNotification, HANDLE, (LPCWSTR lpPathName, BOOL bWatchSubtree, DWORD dwNotifyFilter));
-	WINPORT_DECL(FindNextChangeNotification, BOOL, (HANDLE hChangeHandle));
-	WINPORT_DECL(FindCloseChangeNotification, BOOL, (HANDLE hChangeHandle));
-
 	//memory
     WINPORT_DECL(GlobalAlloc, HGLOBAL, ( UINT   uFlags, SIZE_T dwBytes));
 	WINPORT_DECL(GlobalFree, HGLOBAL, ( HGLOBAL hMem));

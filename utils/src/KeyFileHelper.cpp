@@ -7,7 +7,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include <WinCompat.h>
 #include <string.h>
 #include <stdlib.h>
 

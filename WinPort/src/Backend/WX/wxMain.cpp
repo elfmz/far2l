@@ -433,7 +433,6 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 
 void WinPortFrame::OnClose(wxCloseEvent &event)
 {
-	//WinPortHandle_FinalizeApp();
 	if (WINPORT(GenerateConsoleCtrlEvent)(CTRL_CLOSE_EVENT, 0)) {
 		event.Veto();
 	}

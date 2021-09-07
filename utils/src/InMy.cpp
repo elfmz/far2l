@@ -1,6 +1,4 @@
 #include "utils.h"
-#include <WinCompat.h>
-#include <WinPort.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>

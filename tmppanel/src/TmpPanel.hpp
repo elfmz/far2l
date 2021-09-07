@@ -8,6 +8,7 @@ Temporary panel header file
 #ifndef __TMPPANEL_HPP__
 #define __TMPPANEL_HPP__
 #include <windows.h>
+#include "PlatformConstants.h"
 #include "plugin.hpp"
 #include "expname.h"
 #include "TmpLng.hpp"

@@ -9,6 +9,7 @@
 #include "Escaping.h"
 #include "Environment.h"
 #include "ErrnoSaver.hpp"
+#include "PlatformConstants.h"
 
 template <class C> static size_t tzlen(const C *ptz)
 {
@@ -256,4 +257,3 @@ bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
 
-#define APP_BASENAME "far2l"

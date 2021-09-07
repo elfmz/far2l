@@ -165,7 +165,7 @@ extern "C"
 
 		int r = os_call_int(open_all_args, path.c_str(), flags, mode);		
 		if (r==-1) {
-			//fprintf(stderr, "CreateFile: " WS_FMT " - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
+			//fprintf(stderr, "CreateFile: %ls - dwDesiredAccess=0x%x flags=0x%x mode=0%o path=%s errno=%d\n", 
 			//	lpFileName, dwDesiredAccess, flags, mode, path.c_str(), errno);
 				
 			return INVALID_HANDLE_VALUE;

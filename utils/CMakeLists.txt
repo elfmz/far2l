@@ -26,13 +26,13 @@ set(SOURCES
   src/Environment.cpp
   src/Escaping.cpp
   src/WideMB.cpp
+  src/FSNotify.cpp
 )
 
 add_library (utils ${SOURCES})
 
 
 target_include_directories(utils PRIVATE include)
-target_include_directories(utils PRIVATE ../WinPort)
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)

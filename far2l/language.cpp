@@ -316,7 +316,7 @@ Language::Language():
 
 bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
 {
-	//fprintf(stderr, "Language::Init(" WS_FMT ", %u, %u)\n", Path, bUnicode, CountNeed);
+	//fprintf(stderr, "Language::Init(%ls, %u, %u)\n", Path, bUnicode, CountNeed);
 	if (MsgList || MsgListA)
 		return true;
 	ErrnoSaver gle;

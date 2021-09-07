@@ -330,7 +330,6 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 char *SeekDefExtPoint(char *Name, char *DefExt=NULL, char **Ext=NULL); //$ AA 28.11.2001
 BOOL AddExt(char *Name, char *Ext);                               //$ AA 28.11.2001
 //void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list);
-DWORD WINAPI ThreadWhatWaitingForKillListFile(LPVOID par);
 char* QuoteText(char *Str);
 void InitDialogItems(const struct InitDialogItem *Init,struct FarDialogItem *Item,
                      int ItemsNumber);

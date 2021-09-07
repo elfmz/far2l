@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "mix.hpp"
 
+
 // Флаги для ReadDiz()
 enum ReadDizFlags
 {
@@ -504,9 +505,9 @@ int FileList::UpdateIfChanged(int UpdateMode)
 			/* $ 24.12.2002 VVM
 			  ! Поменяем логику обновления панелей. */
 			if (// Нормальная панель, на ней установлено уведомление и есть сигнал
-			    (PanelMode==NORMAL_PANEL && hListChange!=INVALID_HANDLE_VALUE && WINPORT(WaitForSingleObject)(hListChange,0)==WAIT_OBJECT_0) ||
+			    (PanelMode==NORMAL_PANEL && ListChange && ListChange->Check()) ||
 			    // Или Нормальная панель, но нет уведомления и мы попросили обновить через UPDATE_FORCE
-			    (PanelMode==NORMAL_PANEL && hListChange==INVALID_HANDLE_VALUE && UpdateMode==UIC_UPDATE_FORCE) ||
+			    (PanelMode==NORMAL_PANEL && !ListChange && UpdateMode==UIC_UPDATE_FORCE) ||
 			    // Или плагинная панель и обновляем через UPDATE_FORCE
 			    (PanelMode!=NORMAL_PANEL && UpdateMode==UIC_UPDATE_FORCE)
 			)
@@ -548,24 +549,15 @@ void FileList::CreateChangeNotification(int CheckTree)
 
 	if (Opt.AutoUpdateRemoteDrive || (!Opt.AutoUpdateRemoteDrive && DriveType != DRIVE_REMOTE))
 	{
-		hListChange=WINPORT(FindFirstChangeNotification)(strCurDir,CheckTree,
-		                                        FILE_NOTIFY_CHANGE_FILE_NAME|
-		                                        FILE_NOTIFY_CHANGE_DIR_NAME|
-		                                        FILE_NOTIFY_CHANGE_ATTRIBUTES|
-		                                        FILE_NOTIFY_CHANGE_SIZE|
-		                                        FILE_NOTIFY_CHANGE_LAST_WRITE);
+		ListChange.reset();
+		ListChange.reset(IFSNotify_Create(strCurDir.GetMB(), CheckTree != FALSE, FSNW_NAMES_AND_STATS));
 	}
 }
 
 
 void FileList::CloseChangeNotification()
 {
-	if (hListChange!=INVALID_HANDLE_VALUE)
-	{
-		WINPORT(FindCloseChangeNotification)(hListChange);
-
-		hListChange=INVALID_HANDLE_VALUE;
-	}
+	ListChange.reset();
 }
 
 static int _cdecl SortSearchList(const void *el1,const void *el2)

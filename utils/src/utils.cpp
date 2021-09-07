@@ -1,9 +1,8 @@
 #include "utils.h"
-#include <WinCompat.h>
-#include <WinPort.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <string.h>
 #include <os_call.hpp>
 
 #include <algorithm>

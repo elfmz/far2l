@@ -417,7 +417,6 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 							fprintf(stderr, "Cannot use TTY backend\n");
 						}
 					}
-					WinPortHandle_FinalizeApp();
 					_exit(result);
 				}
 				close(new_notify_pipe[1]);
@@ -436,8 +435,6 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 			TTYNegotiateFar2l(std_in, std_out, false);
 		}
 	}
-
-	WinPortHandle_FinalizeApp();
 
 	return result;
 }

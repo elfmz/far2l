@@ -567,7 +567,7 @@ extern "C" {
 	{
 		AutoWinPortHandle<WinPortHandleReg> wph(hKey);
 		if (!wph) {
-			fprintf(stderr, "RegDeleteValue: bad handle - %p, " WS_FMT "\n", hKey, lpValueName);
+			fprintf(stderr, "RegDeleteValue: bad handle - %p, %ls\n", hKey, lpValueName);
 			return ERROR_INVALID_HANDLE;
 		}
 		

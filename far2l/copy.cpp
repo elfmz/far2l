@@ -1857,7 +1857,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 
 						if (Flags.MOVE && !UseFilter && AllowMoveByOS
 							&& (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0
-							&& ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT || Flags.SYMLINK == COPY_SYMLINK_ASIS))
+							&& ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == 0 || Flags.SYMLINK == COPY_SYMLINK_ASIS))
 						{
 							AttemptToMove=TRUE;
 							int Ret=COPY_SUCCESS;

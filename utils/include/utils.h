@@ -65,7 +65,7 @@ template <class CharT>
 	size_t StrStartsFrom(const CharT *haystack, const CharT *needle)
 {
 	size_t i;
-	for (size_t i = 0; needle[i]; ++i) {
+	for (i = 0; needle[i]; ++i) {
 		if (haystack[i] != needle[i])
 			return 0;
 	}
@@ -76,7 +76,7 @@ template <class StrT>
 	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type *needle)
 {
 	size_t i;
-	for (size_t i = 0; needle[i]; ++i) {
+	for (i = 0; needle[i]; ++i) {
 		if (i >= haystack.size() || haystack[i] != needle[i])
 			return 0;
 	}

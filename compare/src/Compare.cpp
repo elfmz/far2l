@@ -1,8 +1,6 @@
 #define _FAR_NO_NAMELESS_UNIONS
 #define _UNICODE
-
 #include <plugin.hpp>
-#include "../../etc/plugs.h"
 #include <algorithm>
 #include <ctype.h>
 #include <utils.h>

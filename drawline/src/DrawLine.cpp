@@ -1,6 +1,4 @@
-#include "../../etc/plugs.h"
-
-
+#include <plugin.hpp>
 #include "plugin.hpp"
 #include "DrawLng.hpp"
 #include "DrawLine.hpp"

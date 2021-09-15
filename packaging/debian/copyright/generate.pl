@@ -4,16 +4,16 @@ my $scandir = `git rev-parse --show-toplevel`;
 chop($scandir);
 die "Cannot determine git repository top-level directory" if $scandir eq '';
 
-my (%aliases, %licenses);
+my (%nicknames, %licenses);
 
-open(ALIASES, '<', 'aliases') or die "aliases: $!";
-while (<ALIASES>) {
+open(NICKNAMES, '<', 'nicknames') or die "nicknames: $!";
+while (<NICKNAMES>) {
 	chop($_);
-	my ($alias, $real) = split /\:/, trim($_);
+	my ($nickname, $real) = split /\:/, trim($_);
 
-	$aliases{$alias} = $real if index($alias, '#') != 0 && $alias ne '' && $real ne '';
+	$nicknames{$nickname} = $real if index($nickname, '#') != 0 && $nickname ne '' && $real ne '';
 }
-close(ALIASES);
+close(NICKNAMES);
 
 
 open(SKELETON, '<', 'skeleton') or die "skeleton: $!";
@@ -94,7 +94,7 @@ sub collect_commiters
 		# $gitline == 'somebody	2021-09-01'
 		my ($commiter, $date) = split(/\t/, trim($gitline));
 		next if $commiter eq '' || $date eq '';
-		$commiter = $aliases{$commiter} if defined($aliases{$commiter});
+		$commiter = $nicknames{$commiter} if defined($nicknames{$commiter});
 		if (defined(${$commiters}{$commiter})) {
 			my $dates = ${$commiters}{$commiter};
 			@{$dates}[0] = $date if @{$dates}[0] gt $date;
@@ -121,7 +121,6 @@ sub append_commiters
 		my ($year2) = split(/-/, $date2);
 		push(@{$copyright}, "$year1-$year2 $commiter");
 	}
-
 }
 
 sub collect_bone_field
@@ -149,21 +148,4 @@ sub trim
 	my ($s) = (@_);
 	$s =~ s/^\s+|\s+$//g;
 	return $s;
-}
-
-sub file2lines
-{
-	my ($f) = (@_);
-	my @out;
-
-
-	# trim leading and trailing empty lines
-	while (scalar(@out) != 0 && trim($out[0]) eq '') {
-		splice(@out, 0, 1);
-	}
-	while (scalar(@out) != 0 && trim($out[$#out]) eq '') {
-		splice(@out, $#out, 1);
-	}
-
-	return \@out;
 }

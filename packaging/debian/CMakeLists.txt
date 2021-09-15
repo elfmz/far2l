@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.2.2)
 set(DEB_CONTROLS
     postinst
     prerm
+    ${CMAKE_BINARY_DIR}/copyright
 )
 
 set(BUILD_OPTS_FILE ${CMAKE_CURRENT_BINARY_DIR}/build.conf.m4)
@@ -27,4 +28,10 @@ add_custom_command(
     COMMAND ${M4} ${CMAKE_CURRENT_SOURCE_DIR}/prerm.m4 > prerm
     DEPENDS ${BUILD_OPTS_FILE} prerm.m4
     COMMENT prerm
+)
+
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/copyright
+    COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/copyright && ./generate.pl > ${CMAKE_BINARY_DIR}/copyright
+    COMMENT ${CMAKE_BINARY_DIR}/copyright
 )

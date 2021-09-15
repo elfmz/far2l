@@ -1,3 +1,4 @@
+#pragma once
 #include "WinCompat.h"
 #include "WinPort.h"
 
@@ -16,19 +17,6 @@
 #  undef swprintf_ws2ls
 # endif
 #define swprintf swprintf_ws2ls
-
-#ifdef UNICODE
-# define lstrcpy wcscpy
-# define lstrlen wcslen
-# define lstrcmp wcscmp
-# define _tcschr wcschr
-# define _tcsrchr wcsrchr
-# define _tcsdup wcsdup
-# define lstrcat wcscat
-# define lstrcpyn wcsncpy
-# define lstrcmpi wcscasecmp
-# define _istspace iswspace
-#endif
 
 #define    GetConsoleFontSize			WINPORT(GetConsoleFontSize)
 #define    GetCurrentConsoleFont		WINPORT(GetCurrentConsoleFont)
@@ -190,3 +178,21 @@
 #define    WSAGetLastError			WINPORT(WSAGetLastError)
 
 #endif //#ifdef WINPORT_DIRECT
+
+#ifdef UNICODE
+# define lstrcpy wcscpy
+# define lstrlen wcslen
+# define lstrcmp wcscmp
+# define _tcschr wcschr
+# define _tcsrchr wcsrchr
+# define _tcsdup wcsdup
+# define lstrcat wcscat
+# define lstrcpyn wcsncpy
+# define lstrcmpi wcscasecmp
+# define _istspace iswspace
+# define _tmemset(t,c,s) wmemset(t,c,s)
+# define _tmemcpy(t,s,c) wmemcpy(t,s,c)
+# define _tmemchr(b,c,n) wmemchr(b,c,n)
+# define _tmemmove(b,c,n) wmemmove(b,c,n)
+#endif
+

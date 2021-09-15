@@ -1,5 +1,4 @@
-#include "../../etc/plugs.h"
-
+#include <plugin.hpp>
 #include "WrapLng.hpp"
 #include "AutoWrap.hpp"
 #include "DlgBuilder.hpp"

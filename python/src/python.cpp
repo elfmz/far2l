@@ -13,7 +13,6 @@
 #include "plugin.hpp"
 #include "farcolor.hpp"
 #include "farkeys.hpp"
-#include "../../etc/plugs.h"
 
 #include "python.hpp"
 #include <Threaded.h>

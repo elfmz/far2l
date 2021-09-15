@@ -1,6 +1,4 @@
-#include "../../etc/plugs.h"
-
-
+#include <plugin.hpp>
 #include "AlignLng.hpp"
 #include "Align.hpp"
 #include "AlignMix.icpp"

@@ -1,7 +1,5 @@
-#include <windows.h>
 #define _FAR_NO_NAMELESS_UNIONS
 #include "plugin.hpp"
-#include "../../etc/plugs.h"
 #include "FileLng.hpp"
 #include "FileCase.hpp"
 

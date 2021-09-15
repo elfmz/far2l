@@ -52,8 +52,7 @@ other possible license with no implications from the above license on them.
 
 #define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR)
 
-#include "../../WinPort/WinCompat.h"
-#include "../../WinPort/WinPort.h"
+#include "../../WinPort/windows.h"
 
 #ifdef FAR_USE_INTERNALS
 #else // ELSE FAR_USE_INTERNALS
@@ -2424,6 +2423,8 @@ extern "C"
 #endif
 
 #endif /* RC_INVOKED */
+
+#define EXP_NAME(p) _export p ## W
 
 #endif /* __PLUGIN_HPP__ */
 

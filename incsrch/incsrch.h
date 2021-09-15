@@ -31,7 +31,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 #if defined(WINPORT_DIRECT)
-  #include "../../etc/plugs.h"
 
   static inline wchar_t __cdecl Upper(wchar_t Ch) { WINPORT(CharUpperBuff)(&Ch, 1); return Ch; }
 

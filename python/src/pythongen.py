@@ -27,7 +27,6 @@ xpre = """
 ffi.set_source("_pyfar",  # name of the output C extension
     #xpre + 
 """
-#include "../../etc/plugs.h"
 #include "plugin.hpp"
 #include "farcolor.hpp"
 #include "farkeys.hpp"

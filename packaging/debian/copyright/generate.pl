@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 my $scandir = `git rev-parse --show-toplevel`;
 chop($scandir);

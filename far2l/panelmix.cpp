@@ -498,7 +498,7 @@ const FARString FormatStr_Attribute( DWORD FileAttributes, DWORD UnixMode, int W
 
 	strResult<<OutStr;
 
-	return strResult.strValue();
+	return std::move(strResult.strValue());
 }
 
 const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width)
@@ -510,7 +510,7 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD
 		if (ColumnType == DATE_COLUMN)
 			Width=0;
 		else
-			return strResult.strValue();
+			return std::move(strResult.strValue());
 	}
 
 	int ColumnWidth=Width;
@@ -550,26 +550,24 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD
 
 	ConvertDate(*FileTime,strDateStr,strTimeStr,ColumnWidth,Brief,TextMonth,FullYear);
 
-	FARString strOutStr;
+	strResult<<fmt::Width(Width)<<fmt::Precision(Width);
 	switch(ColumnType)
 	{
 		case DATE_COLUMN:
-			strOutStr=strDateStr;
+			strResult<<strDateStr;
 			break;
 		case TIME_COLUMN:
-			strOutStr=strTimeStr;
+			strResult<<strTimeStr;
 			break;
 		default:
-			strOutStr=strDateStr+L" "+strTimeStr;
+			strResult<<strDateStr<<L" "<<strTimeStr;
 			break;
 	}
 
-	strResult<<fmt::Width(Width)<<fmt::Precision(Width)<<strOutStr;
-
-	return strResult.strValue();
+	return std::move(strResult.strValue());
 }
 
-const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FARString strName,DWORD FileAttributes,uint8_t ShowFolderSize,int ColumnType,DWORD Flags,int Width)
+const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FARString &strName,DWORD FileAttributes,uint8_t ShowFolderSize,int ColumnType,DWORD Flags,int Width)
 {
 	FormatString strResult;
 
@@ -589,21 +587,18 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 		{
 			PtrName=MSG(MListUp);
 		}
-		else
+		else if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 		{
-			if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
-			{
-				PtrName=MSG(MListSymLink);
-			}
+			PtrName=MSG(MListSymLink);
 		}
 
-		FARString strStr;
-		if (StrLength(PtrName) <= Width-2)
-			strStr.Format(L"<%ls>", PtrName);
-		else
-			strStr = PtrName;
+		strResult<<fmt::Width(Width)<<fmt::Precision(Width);
+		if (StrLength(PtrName) <= Width-2) {
+			strResult<<L"<"<<PtrName<<L">";
+		} else {
+			strResult<<PtrName;
+		}
 
-		strResult<<fmt::Width(Width)<<fmt::Precision(Width)<<strStr;
 	}
 	else
 	{
@@ -611,5 +606,5 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 		strResult<<FileSizeToStr(strOutStr,Physical?PhysicalSize:FileSize,Width,Flags).CPtr();
 	}
 	
-	return strResult.strValue();
+	return std::move(strResult.strValue());
 }

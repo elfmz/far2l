@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.2.2)
+cmake_minimum_required (VERSION 3.0.2)
 
 set(DEB_CONTROLS
     postinst

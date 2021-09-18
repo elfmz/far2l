@@ -202,16 +202,17 @@ bool History::SaveHistory()
 		size_t i = HistoryList.Count();
 		for (const HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem ; HistoryItem = HistoryList.Prev(HistoryItem))
 		{
-			FARString rectifiedName = HistoryItem->strName;
-
-			size_t p;
-			while (rectifiedName.Pos(p, L'\n'))
-				rectifiedName.Replace(p, 1, L'\r');
-
 			if (i != HistoryList.Count())
 				strLines+= L'\n';
 
-			strLines.append(rectifiedName.CPtr(), rectifiedName.GetLength());
+			size_t p = strLines.size();
+
+			strLines.append(HistoryItem->strName.CPtr(), HistoryItem->strName.GetLength());
+
+			for (; p < strLines.size(); ++p) {
+				if (strLines[p] == L'\n')
+					strLines[p] = L'\r';
+			}
 
 			if (SaveType)
 				strTypes+= L'0' + HistoryItem->Type;
@@ -290,15 +291,15 @@ bool History::ReadHistory(bool bOnlyLines)
 		if (!strLines.Pos(LineEnd, L'\n', LinesPos))
 			LineEnd = strLines.GetLength();
 
-		HistoryRecord AddRecord;
-		AddRecord.strName = strLines.SubStr(LinesPos, LineEnd - LinesPos);
+		HistoryRecord *AddRecord = HistoryList.Unshift();
+		AddRecord->strName = strLines.SubStr(LinesPos, LineEnd - LinesPos);
 		LinesPos = LineEnd + 1;
 
 		if (TypesPos < strTypes.GetLength())
 		{
 			if (iswdigit(strTypes[TypesPos]))
 			{
-				AddRecord.Type = strTypes[TypesPos] - L'0';
+				AddRecord->Type = strTypes[TypesPos] - L'0';
 			}
 			++TypesPos;
 		}
@@ -307,18 +308,18 @@ bool History::ReadHistory(bool bOnlyLines)
 		{
 			if (iswdigit(strLocks[LocksPos]))
 			{
-				AddRecord.Lock = (strLocks[LocksPos] != L'0');
+				AddRecord->Lock = (strLocks[LocksPos] != L'0');
 			}
 			++LocksPos;
 		}
 
 		if (TimePos + sizeof(FILETIME) <= vTimes.size())
 		{
-			AddRecord.Timestamp = *(const FILETIME *)&vTimes[TimePos];
+			AddRecord->Timestamp = *(const FILETIME *)&vTimes[TimePos];
 			++TimePos;
 		}
 
-		HistoryList.Unshift(&AddRecord);
+		//HistoryList.Unshift(&AddRecord);
 
 		if ((int)StrPos == Position)
 			CurrentItem = HistoryList.First();

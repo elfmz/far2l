@@ -62,17 +62,14 @@ static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar
 {
 	strFileName.Clear();
 	FILE *LangFile=nullptr;
-	FARString strFullName, strEngFileName;
-	FAR_FIND_DATA_EX FindData;
+	FARString strEngFileName;
 	FARString strLangName;
+	FAR_FIND_DATA_EX FindData;
 	ScanTree ScTree(FALSE,FALSE);
 	ScTree.SetFindPath(Path,Mask);
 
-	while (ScTree.GetNextName(&FindData, strFullName))
+	while (ScTree.GetNextName(&FindData, strFileName))
 	{
-		strFileName = strFullName;
-
-
 		if (!Language)
 			break;
 
@@ -100,21 +97,21 @@ static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar
 			}
 
 			if (!StrCmpI(strLangName,L"English"))
-				strEngFileName = strFileName;
+				strEngFileName = std::move(strFileName);
 		}
 	}
 
 	if (!LangFile)
 	{
 		if (!strEngFileName.IsEmpty())
-			strFileName = strEngFileName;
+			strFileName = std::move(strEngFileName);
 
 		if (!strFileName.IsEmpty())
 		{
 			LangFile=fopen(Wide2MB(strFileName).c_str(), FOPEN_READ);
 
 			if (pstrLangName)
-				*pstrLangName=strLangName;
+				*pstrLangName=std::move(strLangName);
 		}
 	}
 

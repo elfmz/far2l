@@ -275,7 +275,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			NewPtr->ChangeTime = fdata.ftChangeTime;
 			NewPtr->FileSize = fdata.nFileSize;
 			NewPtr->PhysicalSize = fdata.nPhysicalSize;
-			NewPtr->strName = fdata.strFileName;
+			NewPtr->strName = std::move(fdata.strFileName);
 			NewPtr->Position=FileCount++;
 			NewPtr->NumberOfLinks=fdata.nHardLinks;
 

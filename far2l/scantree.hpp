@@ -40,23 +40,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <map>
 #include <set>
+#include <list>
 
 
 enum
 {
-	// эту фигню может ставить плагин (младшие 8 бит)
-	FSCANTREE_RETUPDIR         = FRS_RETUPDIR,
 	// FSCANTREE_RETUPDIR causes GetNextName() to return every directory twice:
 	// 1. when scanning its parent directory 2. after directory scan is finished
-	FSCANTREE_RECUR            = FRS_RECUR,
-	FSCANTREE_SCANSYMLINK      = FRS_SCANSYMLINK,
+	FSCANTREE_RETUPDIR         = FRS_RETUPDIR,
+	FSCANTREE_RECUR            = FRS_RECUR, // enable recursive scan
+	FSCANTREE_SCANSYMLINK      = FRS_SCANSYMLINK, // enable scanning symlinks
 
 	// в младшем слове старшие 8 бита служебные!
-	FSCANTREE_SECONDPASS       = 0x00002000, // то, что раньше было было SecondPass[]
 	FSCANTREE_SECONDDIRNAME    = 0x00004000, // set when FSCANTREE_RETUPDIR is enabled and directory scan is finished
-	FSCANTREE_INSIDEJUNCTION   = 0x00008000, // - мы внутри симлинка?
 
 	// здесь те флаги, которые могут выставляться в 3-м параметре SetFindPath()
 	FSCANTREE_FILESFIRST       = 0x00010000, // Сканирование каталга за два прохода. Сначала файлы, затем каталоги
@@ -66,50 +63,48 @@ enum
 	FSCANTREE_CASE_INSENSITIVE = 0x00100000 // Currently affects only english characters
 };
 
-struct ScanTreeData
-{
-	BitFlags Flags;
-	FindFile* Find;
-	FARString RealPath;
-	ScanTreeData(): Find(nullptr) { }
-	~ScanTreeData()
-	{
-		if(Find)
-		{
-			delete Find;
-		}
-	}
-};
-
 class ScannedINodes
 {
-	struct Map : std::map<uint64_t, std::set<uint64_t> > {} _map;
+	std::set< std::pair<uint64_t, uint64_t> > _s;
+
 public:
-	bool Put(uint64_t d, uint64_t ino)
+	inline bool Put(uint64_t d, uint64_t ino)
 	{
-		return _map[d].insert(ino).second;
+		return _s.emplace(ino, d).second;
 	}
 };
 
 class ScanTree
 {
-	private:
 		BitFlags Flags;
-		TPointerArray<ScanTreeData> ScanItems;
-		FARString strFindPath;
-		FARString strFindMask;
+		std::wstring strFindPath;
+		std::wstring strFindMask;
+
+		struct ScanDir
+		{
+			std::unique_ptr<FindFile> Enumer;
+			std::list<FAR_FIND_DATA_EX> Postponed;
+			FARString RealPath;
+			bool InsideSymlink = false;
+
+			bool GetNext(FAR_FIND_DATA_EX *fdata, bool FilesFirst);
+		};
+		std::list<ScanDir> ScanDirStack;
+
+		void CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata);
+		void StartEnumSubdir();
+		void LeaveSubdir();
 
 	public:
-		ScanTree(int RetUpDir,int Recurse=1,int ScanJunction=-1);
+		ScanTree(int RetUpDir, int Recurse = 1, int ScanJunction = -1);
 
-	public:
 		// 3-й параметр - флаги из старшего слова
 		void SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST);
 		bool GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName);
 
 		void SkipDir();
-		int IsDirSearchDone() {return Flags.Check(FSCANTREE_SECONDDIRNAME);};
-		int InsideJunction()   {return Flags.Check(FSCANTREE_INSIDEJUNCTION);};
-		
-		bool IsSymlinksScanEnabled() {return Flags.Check(FSCANTREE_SCANSYMLINK); }
+
+		bool IsDirSearchDone() const { return Flags.Check(FSCANTREE_SECONDDIRNAME); };
+		bool IsInsideSymlink() const { return !ScanDirStack.empty() && ScanDirStack.back().InsideSymlink;};
+		bool IsSymlinksScanEnabled() const { return Flags.Check(FSCANTREE_SCANSYMLINK); }
 };

@@ -877,8 +877,6 @@ extern void GetColor(int PaletteIndex);
 
 void FileList::ShowList(int ShowStatus,int StartColumn)
 {
-	FARString strDateStr, strTimeStr;
-
 	int StatusShown=FALSE;
 	int MaxLeftPos=0,MinLeftPos=FALSE;
 	int ColumnCount=ShowStatus ? ViewSettings.StatusColumnCount:ViewSettings.ColumnCount;

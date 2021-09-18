@@ -137,7 +137,7 @@ bool IsKeyHighlighted(const wchar_t *Str,int Key,int Translate,int AmpPos)
 			AmpPos++;
 	}
 
-	int UpperStrKey=Upper(Str[AmpPos]);
+	wchar_t UpperStrKey=Upper(Str[AmpPos]);
 
 	if (Key < 0xFFFF)
 	{
@@ -227,16 +227,11 @@ void ConvertItemSmall(FarDialogItem *Item,DialogItemEx *Data)
 
 size_t ItemStringAndSize(DialogItemEx *Data, FARString& ItemString)
 {
-	//TODO: тут видимо надо сделать поумнее
-	ItemString=Data->strData;
-
-	if (IsEdit(Data->Type))
-	{
-		DlgEdit *EditPtr;
-
-		if ((EditPtr = (DlgEdit *)(Data->ObjPtr)) )
-			EditPtr->GetString(ItemString);
-	}
+	DlgEdit *EditPtr;
+	if (IsEdit(Data->Type) && (EditPtr = (DlgEdit *)(Data->ObjPtr)) != nullptr)
+		EditPtr->GetString(ItemString);
+	else
+		ItemString = Data->strData;
 
 	size_t sz = ItemString.GetLength();
 

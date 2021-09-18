@@ -3124,7 +3124,7 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 					int MenuKey=InputRecordToKey(&ir);
 
 					// ввод
-					if((MenuKey>=L' ' && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
+					if((MenuKey>=int(L' ') && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
 					{
 						FARString strPrev;
 						GetString(strPrev);

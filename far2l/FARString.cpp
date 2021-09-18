@@ -35,20 +35,99 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <StackHeapArray.hpp>
 #include <stdarg.h>
+#include <assert.h>
 #include <limits>
 
+/// change to 1 to enable stats & leaks detection (slow!)
+#if 0
+#include <mutex>
+#include <set>
+
+struct DbgStr
+{
+	std::mutex Mtx;
+	unsigned long long Addrefs = 0;
+	std::set<void *> Instances;
+};
+
+static DbgStr &DBGSTR()
+{
+	static DbgStr s_out;
+	return s_out;
+}
+
+void __attribute__((noinline)) dbgStrCreated(void *c, unsigned int Capacity)
+{
+	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
+	if (!DBGSTR().Instances.insert(c).second) abort();
+//	fprintf(stderr, "dbgStrCreated: Instances=%lu Addrefs=%llu [%u]\n",
+//		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
+}
+
+void __attribute__((noinline)) dbgStrDestroyed(void *c, unsigned int Capacity)
+{
+	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
+	if (!DBGSTR().Instances.erase(c)) abort();
+//	fprintf(stderr, "dbgStrDestroyed: Instances=%lu Addrefs=%llu [%u]\n",
+//		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
+}
+
+void __attribute__((noinline)) dbgStrAddref(const wchar_t *Data)
+{
+	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
+	++DBGSTR().Addrefs;
+//	fprintf(stderr, "dbgStrAddref: Instances=%lu Addrefs=%llu '%ls'\n",
+//		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Data);
+}
+
+static std::set<void *> s_PrevStrings;
+
+void FARString::ScanForLeaks()
+{
+	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
+	const auto &strs = DBGSTR().Instances;
+	fprintf(stderr, "========= %s: Count=%lu Addrefs=%llu\n",
+		__FUNCTION__, (unsigned long)strs.size(), DBGSTR().Addrefs);
+
+//	fprintf(stderr, "dbgStrAddref: Instances=%lu Addrefs=%llu '%ls'\n",
+//		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Data);
+
+	if (!s_PrevStrings.empty())
+	{
+		for (const auto &p : strs) if (s_PrevStrings.find(p) == s_PrevStrings.end())
+		{
+			FARString::Content *c = (FARString::Content *)p;
+			fprintf(stderr, " + refs=%u cap=%u len=%u data='%ls'\n",
+				c->GetRefs(), (unsigned int)c->GetCapacity(), (unsigned int)c->GetLength(), c->GetData());
+		}
+	}
+
+	s_PrevStrings = strs;
+}
+
+#else
+# define dbgStrCreated(c, Capacity)
+# define dbgStrDestroyed(c, Capacity)
+# define dbgStrAddref(Data)
+void FARString::ScanForLeaks() { }
+#endif
 
 FARString::Content FARString::Content::sEmptyData{}; // all fields zero inited by loader
 
 FARString::Content *FARString::Content::Create(size_t nCapacity)
 {
+	if (UNLIKELY(!nCapacity))
+		return EmptySingleton();
+
 	Content *out = (Content *)malloc(sizeof(Content) + sizeof(wchar_t) * nCapacity);
 	//Так как ни где выше в коде мы не готовы на случай что памяти не хватит
 	//то уж лучше и здесь не проверять, а сразу падать
-	out->m_nRefCount = 0; // zero means single owner
+	out->m_nRefCount = 1;
 	out->m_nCapacity = (unsigned int)std::min(nCapacity, (size_t)std::numeric_limits<unsigned int>::max());
 	out->m_nLength = 0;
 	out->m_Data[0] = 0;
+
+	dbgStrCreated(out, out->m_nCapacity);
 	return out;
 }
 
@@ -61,18 +140,42 @@ FARString::Content *FARString::Content::Create(size_t nCapacity, const wchar_t *
 	return out;
 }
 
-void FARString::Content::Destroy(Content *data)
+void __attribute__((noinline)) FARString::Content::Destroy(Content *c)
 {
-	// empty string may be implicitely shared across different threads
-	// that will cause race condition on modifying its m_nRefCount
-	// THIS CONSIDERED NORMAL :) and just skip any destroy that could
-	// come for it - it should never ever been destroyed.
-	if (LIKELY(data != EmptySingleton()))
-	{
-		free(data);
-	}
+	dbgStrDestroyed(c, c->m_nCapacity);
+
+	if (LIKELY(c != EmptySingleton()))
+		free(c);
 	else
-		data->m_nRefCount = 0x1000; // prevent such occasions to happen frequently
+		abort();
+}
+
+void FARString::Content::AddRef()
+{
+	if (LIKELY(m_nCapacity)) // only empty singletone has zero capacity
+	{
+		dbgStrAddref(m_Data);
+		__atomic_add_fetch(&m_nRefCount, 1, __ATOMIC_RELAXED);
+	}
+}
+
+void FARString::Content::DecRef()
+{
+	// __atomic_load_n(relaxed) usually doesn't use any HW interlocking
+	// thus its a fast path for empty or single-owner strings
+	unsigned int n = __atomic_load_n(&m_nRefCount, __ATOMIC_RELAXED);
+	if (LIKELY(n == 0))
+	{  // (only) empty singletone has always-zero m_nRefCount
+		return;
+	}
+
+	if (LIKELY(n != 1))
+	{
+		if (LIKELY(__atomic_sub_fetch(&m_nRefCount, 1, __ATOMIC_RELAXED) != 0))
+			return;
+	}
+
+	Destroy(this);
 }
 
 void FARString::Content::SetLength(size_t nLength)
@@ -85,7 +188,7 @@ void FARString::Content::SetLength(size_t nLength)
 
 void FARString::PrepareForModify(size_t nCapacity)
 {
-	if (!m_pContent->SingleOwner() || nCapacity > m_pContent->GetCapacity())
+	if (m_pContent->GetRefs() != 1 || nCapacity > m_pContent->GetCapacity())
 	{
 		size_t NewCapacity = nCapacity;
 		if (m_pContent->GetCapacity() > 0 && NewCapacity > m_pContent->GetCapacity())
@@ -149,7 +252,7 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 		return *this;
 
 	const size_t NewLength = m_pContent->GetLength() + DataLen - Len;
-	if (!DataStartsInside && m_pContent->SingleOwner() && NewLength <= m_pContent->GetCapacity())
+	if (!DataStartsInside && m_pContent->GetRefs() == 1 && NewLength <= m_pContent->GetCapacity())
 	{
 		wmemmove(m_pContent->GetData() + Pos + DataLen,
 			m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
@@ -188,12 +291,10 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 
 FARString& FARString::Copy(const FARString &Str)
 {
-	if (Str.m_pContent != m_pContent)
-	{
-		m_pContent->DecRef();
-		m_pContent = Str.m_pContent;
-		m_pContent->AddRef();
-	}
+	auto prev_pContent = m_pContent;
+	m_pContent = Str.m_pContent;
+	m_pContent->AddRef();
+	prev_pContent->DecRef();
 
 	return *this;
 }
@@ -221,7 +322,8 @@ FARString& FARString::Copy(const char *lpszData, UINT CodePage)
 	return *this;
 }
 
-FARString FARString::SubStr(size_t Pos, size_t Len) {
+FARString FARString::SubStr(size_t Pos, size_t Len)
+{
 	if (Pos >= GetLength())
 		return FARString();
 	if (Len == static_cast<size_t>(-1) || Len > GetLength() || Pos + Len > GetLength())
@@ -249,17 +351,23 @@ bool FARString::operator<(const FARString& Str) const
 
 FARString operator+(const FARString &strSrc1, const FARString &strSrc2)
 {
-	return FARString(strSrc1).Append(strSrc2);
+	FARString out = strSrc1.Clone();
+	out.Append(strSrc2);
+	return out;
 }
 
 FARString operator+(const FARString &strSrc1, const char *lpszSrc2)
 {
-	return FARString(strSrc1).Append(lpszSrc2);
+	FARString out = strSrc1.Clone();
+	out.Append(lpszSrc2);
+	return out;
 }
 
 FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2)
 {
-	return FARString(strSrc1).Append(lpwszSrc2);
+	FARString out = strSrc1.Clone();
+	out.Append(lpwszSrc2);
+	return out;
 }
 
 wchar_t *FARString::GetBuffer(size_t nLength)
@@ -308,36 +416,53 @@ FARString& FARString::Clear()
 	return *this;
 }
 
-int __cdecl FARString::Format(const wchar_t * format, ...)
+
+static void FARStringFmt(FARString &str, bool append, const wchar_t *format, va_list argptr)
 {
-	int retValue;
+	const size_t StartSize = 0x200;		// 512 bytes ought to be enough for mosts
+	const size_t MaxSize = 0x1000000;	// 16 megs ought to be enough for everyone
+	size_t Size;
 
-	va_list argptr;
-	va_start(argptr, format);
-
-	for (size_t Size = 0x100; Size; Size<<= 1)
+	for (Size = StartSize; Size <= MaxSize; Size<<= 1)
 	{
-		StackHeapArray<wchar_t, 0x200> buf(Size);
-		if (!buf.Get())
-		{
-			retValue = -1;
+		StackHeapArray<wchar_t, StartSize> buf(Size);
+		if (UNLIKELY(!buf.Get()))
 			break;
-		}
 
 		va_list argptr_copy;
 		va_copy(argptr_copy, argptr);
-		retValue = vswprintf(buf.Get(), Size, format, argptr_copy);
+		int retValue = vswprintf(buf.Get(), Size, format, argptr_copy);
 		va_end(argptr_copy);
 
 		if (retValue >= 0 && size_t(retValue) < Size)
 		{
-			Copy(buf.Get(), retValue);
-			break;
+			if (append)
+				str.Append(buf.Get(), retValue);
+			else
+				str.Copy(buf.Get(), retValue);
+			return;
 		}
 	}
-	va_end(argptr);
 
-	return retValue;
+	fprintf(stderr, "%s: failed; Size=%lu format='%ls'\n", __FUNCTION__, (unsigned long)Size, format);
+}
+
+FARString& FARString::Format(const wchar_t * format, ...)
+{
+	va_list argptr;
+	va_start(argptr, format);
+	FARStringFmt(*this, false, format, argptr);
+	va_end(argptr);
+	return *this;
+}
+
+FARString& FARString::AppendFormat(const wchar_t * format, ...)
+{
+	va_list argptr;
+	va_start(argptr, format);
+	FARStringFmt(*this, true, format, argptr);
+	va_end(argptr);
+	return *this;
 }
 
 FARString& FARString::Lower(size_t nStartPos, size_t nLength)
@@ -404,7 +529,7 @@ bool FARString::RPos(size_t &nPos, wchar_t Ch, size_t nStartPos) const
 	const wchar_t *lpwszStrStart = lpwszData + nStartPos;
 	const wchar_t *lpwszStrScan = lpwszData + m_pContent->GetLength();
 
-	for (;;lpwszStrScan--)
+	for (;;--lpwszStrScan)
 	{
 		if (*lpwszStrScan == Ch)
 		{

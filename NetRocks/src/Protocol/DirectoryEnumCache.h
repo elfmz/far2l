@@ -12,7 +12,7 @@ class DirectoryEnumCache
 	friend class CachedDirectoryEnumer;
 	friend class CachingWrapperDirectoryEnumer;
 
-	unsigned int _expiration;
+	time_t _expiration;
 
 	struct DirCachedListEntry
 	{

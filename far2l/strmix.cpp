@@ -62,7 +62,7 @@ FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 	if (dot) {
 		result.Append(dot, std::min(wcslen(dot), (size_t)NumDigits + 1) );
 	}
-	strDest = result;
+	strDest = std::move(result);
 	return strDest;
 
 	/*
@@ -500,22 +500,22 @@ FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup)
 
 FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 {
-	int SrcLength=StrLength(Src);
 	FARString strTempStr = Src; //если Src == strDest, то надо копировать Src!
+	int SrcLength = strTempStr.GetLength();
 
 	if (SrcLength >= Length)
 	{
 		/* Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
 		   и мы получали обрезанные строки */
-		strDest = strTempStr;
+		strDest = std::move(strTempStr);
 		strDest.Truncate(Length);
 	}
 	else
 	{
-		int Space=(Length-SrcLength)/2;
+		int Space = (Length - SrcLength) / 2;
 		FormatString FString;
-		FString<<fmt::Width(Space)<<L""<<strTempStr<<fmt::Width(Length-Space-SrcLength)<<L"";
-		strDest=FString.strValue();
+		FString << fmt::Width(Space) << L"" << strTempStr << fmt::Width(Length - Space - SrcLength) << L"";
+		strDest = std::move(FString.strValue());
 	}
 
 	return strDest;
@@ -862,7 +862,7 @@ int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplS
 	{
 		 if (StartPos < strStr.GetLength())
 			strResult.Append(strStr.CPtr() + StartPos, strStr.GetLength() - StartPos);
-		strStr = strResult;
+		strStr = std::move(strResult);
 	}
 	return ReplacedCount;
 }

@@ -76,7 +76,7 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 			case 1:
 				return true;
 
-			case -1:
+			case (char)-1:
 				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: fallback\n");
 				if (!_fallback_backend)
 					_fallback_backend = new FSClipboardBackend;

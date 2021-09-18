@@ -91,7 +91,7 @@ struct FAR_FIND_DATA_EX
 		strFileName.Clear();
 	}
 
-	FAR_FIND_DATA_EX& operator=(const FAR_FIND_DATA_EX &ffdexCopy)
+/*	FAR_FIND_DATA_EX& operator=(const FAR_FIND_DATA_EX &ffdexCopy)
 	{
 		if (this != &ffdexCopy)
 		{
@@ -112,7 +112,7 @@ struct FAR_FIND_DATA_EX
 		}
 
 		return *this;
-	}
+	}*/
 };
 
 class FindFile: private NonCopyable
@@ -124,8 +124,8 @@ public:
 
 private:
 	HANDLE Handle;
-	bool empty;
-	FAR_FIND_DATA_EX Data;
+	WIN32_FIND_DATA wfd;
+	int err;
 };
 
 typedef std::map<std::string, std::vector<char> > FileExtendedAttributes;
@@ -180,11 +180,6 @@ void apiGetTempPath(
 bool apiExpandEnvironmentStrings(
     const wchar_t *src,
     FARString &strDest
-);
-
-DWORD apiWNetGetConnection(
-    const wchar_t *lpwszLocalName,
-    FARString &strRemoteName
 );
 
 BOOL apiGetVolumeInformation(
@@ -250,10 +245,6 @@ BOOL apiMoveFileEx(
     const wchar_t *lpwszExistingFileName, // address of name of the existing file
     const wchar_t *lpwszNewFileName,   // address of new name for the file
     DWORD dwFlags   // flag to determine how to move file
-);
-
-BOOL apiIsDiskInDrive(
-    const wchar_t *Root
 );
 
 int apiGetFileTypeByName(

@@ -437,7 +437,7 @@ void PluginManager::LoadPlugins()
 				continue;
 
 			// ставим на поток очередной путь из списка...
-			ScTree.SetFindPath(strPluginsDir,L"*");
+			ScTree.SetFindPath(strPluginsDir,L"*.far-plug-*", 0);
 
 			// ...и пройдемся по нему
 			while (ScTree.GetNextName(&FindData,strFullName))

@@ -524,6 +524,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	if (AllowSynchro)
 		PluginSynchroManager.Process();
 
+	FARString::ScanForLeaks();
+
 	if (FrameManager && FrameManager->RegularIdleWantersCount())
 	{
 		clock_t now = GetProcessUptimeMSec();

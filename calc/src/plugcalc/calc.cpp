@@ -311,11 +311,6 @@ int CalcMenu(int c)
 		MenuEls[i].Text = _wcsdup(dd->Name);
 	
 	MenuEls[c].Selected = TRUE;
-fprintf(stderr, "!!!! i=%d size=%ld\n", i, MenuEls.size());
-	for (const auto &e : MenuEls) {
-fprintf(stderr, "!!!! '%ls'\n", e.Text);
-	}
-	
 	ret = (int)api->Menu(-1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
 					api->GetMsg(mDialogs), L"Contents", MenuEls);
 	

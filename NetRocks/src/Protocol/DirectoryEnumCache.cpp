@@ -1,7 +1,7 @@
 #include "DirectoryEnumCache.h"
 
 DirectoryEnumCache::DirectoryEnumCache(unsigned int expiration)
-	: _expiration(expiration)
+	: _expiration((time_t)expiration)
 {
 }
 

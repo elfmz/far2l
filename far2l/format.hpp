@@ -123,7 +123,8 @@ class FormatString:public BaseFormat
 		void Commit(const FARString& Data) {Value+=Data;}
 	public:
 		operator const wchar_t*()const {return Value;}
-		const FARString& strValue()const {return Value;}
+		FARString& strValue() {return Value;}
+		const FARString& strValue() const {return Value;}
 		void Clear() {Value.Clear();}
 };
 

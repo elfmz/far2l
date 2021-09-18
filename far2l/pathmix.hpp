@@ -87,6 +87,7 @@ void AddEndSlash(std::wstring &strPath);
 BOOL WINAPI AddEndSlash(wchar_t *Path);
 
 bool DeleteEndSlash(wchar_t* Path, bool AllEndSlash = false);
+BOOL DeleteEndSlash(std::wstring &strPath,bool AllEndSlash = false);
 BOOL DeleteEndSlash(FARString &strPath,bool AllEndSlash = false);
 
 const wchar_t *FirstSlash(const wchar_t *String);

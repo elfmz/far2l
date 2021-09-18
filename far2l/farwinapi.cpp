@@ -36,8 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
+#include <errno.h>
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
-# include <errno.h>
 # include <sys/mount.h>
 #else
 # include <sys/statfs.h>
@@ -50,14 +50,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "MountInfo.h"
 
-
-struct PSEUDO_HANDLE
-{
-	HANDLE ObjectHandle;
-	PVOID BufferBase;
-	ULONG NextOffset;
-	ULONG BufferSize;
-};
 
 static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
 {
@@ -78,19 +70,8 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 	FindData.strFileName = wfd.cFileName;
 }
 
-static bool FindNextFileInternal(HANDLE Find, FAR_FIND_DATA_EX& FindData)
-{
-	WIN32_FIND_DATA wfd{};
-	if (!WINPORT(FindNextFile)(Find, &wfd))
-		return FALSE;
-
-	TranslateFindFile(wfd, FindData);
-	return TRUE;
-}
-
 FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :
-	Handle(INVALID_HANDLE_VALUE),
-	empty(false)
+	Handle(INVALID_HANDLE_VALUE)
 {
 	//Strange things happen with ScanSymLink in original code:
 	//looks like tricky attempt to resolve symlinks in path without elevation
@@ -99,48 +80,45 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :
 	//if confirmed: ScanSymLink should be removed from here and apiGetFindDataEx
 	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;
 
-	WIN32_FIND_DATA wfd{};
 	Handle = WINPORT(FindFirstFileWithFlags)(Object, &wfd, WinPortFindFlags);
-	if (Handle!=INVALID_HANDLE_VALUE) {
-		TranslateFindFile(wfd, Data);
-	} else
-		empty = true;
+	if (Handle == INVALID_HANDLE_VALUE)
+	{
+		err = errno;
+	}
 }
 
 FindFile::~FindFile()
 {
-	if(Handle != INVALID_HANDLE_VALUE)
+	if (Handle != INVALID_HANDLE_VALUE)
 	{
-		if (!WINPORT(FindClose)(Handle))
-			fprintf(stderr, "FindFile::~FindFile: FindClose failed\n");
+		WINPORT(FindClose)(Handle);
 	}
 }
 
 bool FindFile::Get(FAR_FIND_DATA_EX& FindData)
 {
-	bool Result = false;
-	if (!empty)
+	if (Handle == INVALID_HANDLE_VALUE)
 	{
-		FindData = Data;
-		Result = true;
+		errno = err;
+		return false;
 	}
-	if(Result)
+	TranslateFindFile(wfd, FindData);
+
+	if (!WINPORT(FindNextFile)(Handle, &wfd))
 	{
-		empty = !FindNextFileInternal(Handle, Data);
+		err = errno;
+		WINPORT(FindClose)(Handle);
+		Handle = INVALID_HANDLE_VALUE;
 	}
 
-	// skip ".." & "."
-	if(Result && FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY && FindData.strFileName.At(0) == L'.' &&
-		// хитрый способ - у виртуальных папок не бывает SFN, в отличие от.
-		((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
-	{
-		abort(); //FIND_FILE_FLAG_NO_CUR_UP should handle this
-		//Result = Get(FindData);
+	if ((FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && FindData.strFileName.At(0) == L'.'
+		&& ((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
+	{ // FIND_FILE_FLAG_NO_CUR_UP should handle this
+		abort();
 	}
-	return Result;
+
+	return true;
 }
-
-
 
 
 File::File():
@@ -490,11 +468,6 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 	return out;
 }
 
-DWORD apiWNetGetConnection(const wchar_t *lpwszLocalName, FARString &strRemoteName)
-{
-	return ERROR_SUCCESS-1;
-}
-
 BOOL apiGetVolumeInformation(
     const wchar_t *lpwszRootPathName,
     FARString *pVolumeName,
@@ -651,19 +624,6 @@ bool apiGetFileSizeEx(HANDLE hFile, UINT64 &Size)
 		Result=true;
 	}
 	return Result;
-}
-
-BOOL apiIsDiskInDrive(const wchar_t *Root)
-{
-	FARString strVolName;
-	FARString strDrive;
-	DWORD  MaxComSize;
-	DWORD  Flags;
-	FARString strFS;
-	strDrive = Root;
-	AddEndSlash(strDrive);
-	BOOL Res = apiGetVolumeInformation(strDrive, &strVolName, nullptr, &MaxComSize, &Flags, &strFS);
-	return Res;
 }
 
 int apiGetFileTypeByName(const wchar_t *Name)

@@ -35,33 +35,38 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "local.hpp"
 
-/********************************************************************************************
+/***********************************************************************************************************
  * This is a FARString - homegrew reference-counted string widely used in this project.
- * Major benefit and drawback of FARString: reference counter is not thread safe!
- * This means if two threads use string copies that share same content then HUGE problems
- * may arise in case of that threads will modify, destroy or even just copy that strings.
- * One day will need to do something with this, either to use std::atomic for ref counter
- * either move to std::wstring trying to mitigate its copying behaviour by std::string_view
- * either do something smart and tricky. For now multithreading support of FARString looks
- * so:
- *   DONT USE FARString IF YOU NEED TO COPY ITS INSTANCES TO BE USED IN DIFFERENT THREADS!
- * But if you really strongly want this and know what you're doing - use FARString::Clone
- * to get really independent FARString copies where you (should) know this is needed.
- * And use FARSTRING_THREAD_SANITIZER macro below to validate such code.
+ * This puts some restrictions on how this string may be used:
+ *  - Don't write into const pointer returned by CPtr(), doing that may affect data used by irrelevant code.
+ *    Use GetBuffer/ReleaseBuffer or simple plain assignment instead.
+ *  - Don't modify single FARString instance from different threads without serialization.
+ *    Create per-thread copies of FARString and modifying them from that threads is perfectly fine however.
+ *  - Avoid excessive copying. While its doesn't copy string content, it performs still slow HW-interlocked
+ *    reference counter manipulations, so better use passing-by-reference and std::move where possible.
  */
 
 class FARString
 {
-	class Content // must be trivial
+	/* <Content> represents actual content of string that may be shared across different FARStrings
+	 * and it must be trivial cuz there is sEmptyData singletone shared across all empty strings and
+	 * thus it may be accessed during early static objects initialization; using Meyer's singletone
+	 * implementaion for it would cause compiler to include local static strapping code that has some
+	 * runtime overhead. Using trivial class makes possible just to create global static variable that
+	 * will be resided in BSS and thus will have all fields zero-initialized by linker and ready to use
+	 * just upon app loading without using initializing c-tor. This is also main reason why cannot use
+	 * virtual methods, std::atomic<> instead of __atomic_* etc */
+
+	class Content
 	{
 		static Content sEmptyData; //для оптимизации создания пустых FARString
 
+		volatile unsigned int m_nRefCount;
 		unsigned int m_nCapacity;	// not including final NULL char
-		unsigned int m_nRefCount;	// zero means single owner
 		unsigned int m_nLength;		// not including final NULL char
 		wchar_t m_Data[1];
 
-		static void Destroy(Content *data);
+		static void Destroy(Content *c);
 
 	public:
 		static inline Content *EmptySingleton() { return &sEmptyData; }
@@ -69,23 +74,15 @@ class FARString
 		static Content *Create(size_t nCapacity);
 		static Content *Create(size_t nCapacity, const wchar_t *SrcData, size_t SrcLen);
 
-		void SetLength(size_t nLength);
+		void AddRef();
+		void DecRef();
+		unsigned int GetRefs() const { return __atomic_load_n(&m_nRefCount, __ATOMIC_RELAXED); }
 
+		void SetLength(size_t nLength);
 		inline wchar_t *GetData() { return m_Data; }
 		inline size_t GetCapacity() const { return m_nCapacity; }
 		inline size_t GetLength() const { return m_nLength; }
 
-		inline bool SingleOwner() const { return m_nRefCount == 0; }
-
-		inline void AddRef()
-		{
-			++m_nRefCount;
-		}
-		inline void DecRef()
-		{
-			if (0 == m_nRefCount--)
-				Destroy(this);
-		}
 	} *m_pContent;
 
 	inline void Init()
@@ -112,6 +109,7 @@ class FARString
 	void PrepareForModify();
 
 public:
+	static void ScanForLeaks();
 
 	inline FARString() { Init(); }
 
@@ -127,7 +125,7 @@ public:
 	inline ~FARString() { /*if (m_pContent) он не должен быть nullptr*/ m_pContent->DecRef(); }
 
 	// Returns copy of *this string but that copy uses OWN, not shared with *this, content.
-	inline FARString Clone() const { return FARString(CPtr(), GetLength()); }
+	inline FARString Clone() const { return std::move(FARString(CPtr(), GetLength())); }
 
 	wchar_t *GetBuffer(size_t nLength = (size_t)-1);
 	void ReleaseBuffer(size_t nLength = (size_t)-1);
@@ -141,8 +139,10 @@ public:
 
 	size_t GetCharString(char *lpszStr, size_t nSize, UINT CodePage=CP_UTF8) const;
 	std::string GetMB() const;
+	inline std::wstring GetWide() const { return std::wstring(CPtr(), GetLength()); }
 
-	int __cdecl Format(const wchar_t * format, ...);
+	FARString& Format(const wchar_t * format, ...);
+	FARString& AppendFormat(const wchar_t * format, ...);
 
 	FARString& Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen);
 	FARString& Replace(size_t Pos, size_t Len, const FARString& Str) { return Replace(Pos, Len, Str.CPtr(), Str.GetLength()); }
@@ -177,31 +177,31 @@ public:
 
 	FARString SubStr(size_t Pos, size_t Len = -1);
 
-	inline FARString& operator=(FARString &&strOriginal) { m_pContent = strOriginal.m_pContent; strOriginal.Init(); return *this; }
-	FARString& operator=(const FARString &strCopy) { return Copy(strCopy); }
-	FARString& operator=(const char *lpszData) { return Copy(lpszData); }
-	FARString& operator=(const wchar_t *lpwszData) { return Copy(lpwszData); }
-	FARString& operator=(wchar_t chData) { return Copy(chData); }
-	FARString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
-	FARString& operator=(const std::wstring &strSrc) { return Copy(strSrc.c_str()); }
+	inline FARString& operator=(FARString &&strOriginal) { std::swap(m_pContent, strOriginal.m_pContent); return *this; }
+	inline FARString& operator=(const FARString &strCopy) { return Copy(strCopy); }
+	inline FARString& operator=(const char *lpszData) { return Copy(lpszData); }
+	inline FARString& operator=(const wchar_t *lpwszData) { return Copy(lpwszData); }
+	inline FARString& operator=(wchar_t chData) { return Copy(chData); }
+	inline FARString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
+	inline FARString& operator=(const std::wstring &strSrc) { return Copy(strSrc.c_str()); }
 
-	FARString& operator+=(const FARString &strAdd) { return Append(strAdd); }
-	FARString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }
-	FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
-	FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
+	inline FARString& operator+=(const FARString &strAdd) { return Append(strAdd); }
+	inline FARString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }
+	inline FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
+	inline FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
 
 	bool Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen) const;
-	bool Equal(size_t Pos, const wchar_t* Str, size_t StrLen) const { return Equal(Pos, StrLen, Str, StrLen); }
-	bool Equal(size_t Pos, const wchar_t* Str) const { return Equal(Pos, StrLength(Str), Str, StrLength(Str)); }
-	bool Equal(size_t Pos, const FARString& Str) const { return Equal(Pos, Str.GetLength(), Str.CPtr(), Str.GetLength()); }
-	bool Equal(size_t Pos, wchar_t Ch) const { return Equal(Pos, 1, &Ch, 1); }
-	bool operator==(const FARString& Str) const { return Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
-	bool operator==(const wchar_t* Str) const { return Equal(0, GetLength(), Str, StrLength(Str)); }
-	bool operator==(wchar_t Ch) const { return Equal(0, GetLength(), &Ch, 1); }
+	inline bool Equal(size_t Pos, const wchar_t* Str, size_t StrLen) const { return Equal(Pos, StrLen, Str, StrLen); }
+	inline bool Equal(size_t Pos, const wchar_t* Str) const { return Equal(Pos, StrLength(Str), Str, StrLength(Str)); }
+	inline bool Equal(size_t Pos, const FARString& Str) const { return Equal(Pos, Str.GetLength(), Str.CPtr(), Str.GetLength()); }
+	inline bool Equal(size_t Pos, wchar_t Ch) const { return Equal(Pos, 1, &Ch, 1); }
+	inline bool operator==(const FARString& Str) const { return Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
+	inline bool operator==(const wchar_t* Str) const { return Equal(0, GetLength(), Str, StrLength(Str)); }
+	inline bool operator==(wchar_t Ch) const { return Equal(0, GetLength(), &Ch, 1); }
 
-	bool operator!=(const FARString& Str) const { return !Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
-	bool operator!=(const wchar_t* Str) const { return !Equal(0, GetLength(), Str, StrLength(Str)); }
-	bool operator!=(wchar_t Ch) const { return !Equal(0, GetLength(), &Ch, 1); }
+	inline bool operator!=(const FARString& Str) const { return !Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
+	inline bool operator!=(const wchar_t* Str) const { return !Equal(0, GetLength(), Str, StrLength(Str)); }
+	inline bool operator!=(wchar_t Ch) const { return !Equal(0, GetLength(), &Ch, 1); }
 
 	bool operator<(const FARString& Str) const;
 
@@ -216,8 +216,14 @@ public:
 	bool Contains(wchar_t Ch, size_t nStartPos=0) const { return !wcschr(m_pContent->GetData()+nStartPos,Ch) ? false : true; }
 	bool Contains(const wchar_t *lpwszFind, size_t nStartPos=0) const { return !wcsstr(m_pContent->GetData()+nStartPos,lpwszFind) ? false : true; }
 
-	bool Begins(wchar_t Ch) const { return m_pContent->GetLength() > 0 && *m_pContent->GetData() == Ch; }
-	bool Begins(const wchar_t *lpwszFind) const { return m_pContent->GetLength() > 0 && wcsncmp(m_pContent->GetData(), lpwszFind, wcslen(lpwszFind)) == 0; }
+	inline bool Begins(wchar_t Ch) const
+		{ return m_pContent->GetLength() > 0 && *m_pContent->GetData() == Ch; }
+
+	inline bool Begins(const FARString &strFind) const
+		{ return m_pContent->GetLength() >= strFind.m_pContent->GetLength() && wmemcmp(m_pContent->GetData(), strFind.m_pContent->GetData(), strFind.m_pContent->GetLength()) == 0; }
+
+	inline bool Begins(const wchar_t *lpwszFind) const
+		{ return m_pContent->GetLength() > 0 && wcsncmp(m_pContent->GetData(), lpwszFind, wcslen(lpwszFind)) == 0; }
 
 	template <typename CharT>
 		bool ContainsAnyOf(const CharT *needles)

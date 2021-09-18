@@ -42,9 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define range(low,item,hi) Max(low,Min(item,hi))
 
-FARString AMonth[2][12], AWeekday[2][7],Month[2][12],Weekday[2][7];
+static FARString AMonth[2][12], AWeekday[2][7],Month[2][12],Weekday[2][7];
 
-int CurLang=-1, WeekFirst=0;
+static int CurLang=-1, WeekFirst=0;
 
 DWORD ConvertYearToFull(DWORD ShortYear)
 {
@@ -143,10 +143,10 @@ void PrepareStrFTime()
 	CurLang=0;
 }
 
-static int atime(FARString &strDest,const tm *tmPtr)
+static void atime(FARString &strDest, const tm *tmPtr)
 {
 	// Thu Oct 07 12:37:32 1999
-	return strDest.Format(L"%ls %ls %02d %02d:%02d:%02d %4d",
+	strDest.Format(L"%ls %ls %02d %02d:%02d:%02d %4d",
 	                      AWeekday[CurLang][!WeekFirst?((tmPtr->tm_wday+6)%7):(!(tmPtr->tm_wday)?6:tmPtr->tm_wday-1)].CPtr(),
 	                      AMonth[CurLang][tmPtr->tm_mon].CPtr(),
 	                      tmPtr->tm_mday,
@@ -156,46 +156,42 @@ static int atime(FARString &strDest,const tm *tmPtr)
 	                      tmPtr->tm_year+1900);
 }
 
-static int st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
+static void st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
 {
-	int res;
 	int DateSeparator=GetDateSeparator();
 
 	if (chr==L'v')
 	{
-		res=strDest.Format(L"%2d-%3.3ls-%4d",range(1,tmPtr->tm_mday,31),AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(),tmPtr->tm_year+1900);
+		strDest.Format(L"%2d-%3.3ls-%4d",range(1,tmPtr->tm_mday,31),AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(),tmPtr->tm_year+1900);
 		strDest.Upper(3,3);
 	}
-	else
-		switch (GetDateFormat())
-		{
-			case 0:
-				res=strDest.Format(L"%02d%lc%02d%lc%4d",
-				                   tmPtr->tm_mon+1,
-				                   DateSeparator,
-				                   tmPtr->tm_mday,
-				                   DateSeparator,
-				                   tmPtr->tm_year+1900);
-				break;
-			case 1:
-				res=strDest.Format(L"%02d%lc%02d%lc%4d",
-				                   tmPtr->tm_mday,
-				                   DateSeparator,
-				                   tmPtr->tm_mon+1,
-				                   DateSeparator,
-				                   tmPtr->tm_year+1900);
-				break;
-			default:
-				res=strDest.Format(L"%4d%lc%02d%lc%02d",
-				                   tmPtr->tm_year+1900,
-				                   DateSeparator,
-				                   tmPtr->tm_mon+1,
-				                   DateSeparator,
-				                   tmPtr->tm_mday);
-				break;
-		}
-
-	return res;
+	else switch (GetDateFormat())
+	{
+		case 0:
+			strDest.Format(L"%02d%lc%02d%lc%4d",
+			                   tmPtr->tm_mon+1,
+			                   DateSeparator,
+			                   tmPtr->tm_mday,
+			                   DateSeparator,
+			                   tmPtr->tm_year+1900);
+			break;
+		case 1:
+			strDest.Format(L"%02d%lc%02d%lc%4d",
+			                   tmPtr->tm_mday,
+			                   DateSeparator,
+			                   tmPtr->tm_mon+1,
+			                   DateSeparator,
+			                   tmPtr->tm_year+1900);
+			break;
+		default:
+			strDest.Format(L"%4d%lc%02d%lc%02d",
+			                   tmPtr->tm_year+1900,
+			                   DateSeparator,
+			                   tmPtr->tm_mon+1,
+			                   DateSeparator,
+			                   tmPtr->tm_mday);
+			break;
+	}
 }
 
 // weeknumber --- figure how many weeks into the year
@@ -793,7 +789,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 			}
 			FormatString Fmt;
 			Fmt<<fmt::FillChar(f1)<<fmt::Width(w1)<<p1<<DateSeparator<<fmt::FillChar(f2)<<fmt::Width(w2)<<p2<<DateSeparator<<fmt::FillChar(f3)<<fmt::Width(w3)<<p3;
-			strDateText=Fmt.strValue();
+			strDateText=std::move(Fmt.strValue());
 		}
 	}
 
@@ -818,9 +814,9 @@ void ConvertRelativeDate(const FILETIME &ft,FARString &strDaysText,FARString &st
 
 	FormatString DaysText;
 	DaysText<<d;
-	strDaysText=DaysText.strValue();
+	strDaysText=std::move(DaysText.strValue());
 
 	FormatString TimeText;
 	TimeText<<fmt::Width(2)<<fmt::FillChar(L'0')<<h<<GetTimeSeparator()<<fmt::Width(2)<<fmt::FillChar(L'0')<<m<<GetTimeSeparator()<<fmt::Width(2)<<fmt::FillChar(L'0')<<s<<GetDecimalSeparator()<<fmt::Width(3)<<fmt::FillChar(L'0')<<ms;
-	strTimeText=TimeText.strValue();
+	strTimeText=std::move(TimeText.strValue());
 }

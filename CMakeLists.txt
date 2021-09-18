@@ -138,6 +138,11 @@ if(NOT GAWK)
   message(FATAL_ERROR "${ColorRed}gawk not found - please install it${ColorNormal}")
 endif ()
 
+if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
+    message("Please consider to switch to newer CMake")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")

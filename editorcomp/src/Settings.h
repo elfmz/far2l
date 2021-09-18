@@ -28,7 +28,7 @@ private:
 	int _max_word_length { 200 };
 	int _min_prefix_length { 2 };
 	bool _auto_enabling = true;
-	std::wstring _file_masks { L"*.c;*.cpp;*.cxx;*.h;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh" };
+	std::wstring _file_masks { L"*.c;*.cpp;*.cxx;*.h;*.hpp;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh" };
 	std::wstring _empty;
 	std::string _ini_path;
 

@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  define COW_SUPPORTED
 # endif
 
-#elif defined(__linux__) && (__GLIBC__ >= 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
+#elif defined(__linux__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 27))
 # define COW_SUPPORTED
 
 #endif
@@ -367,10 +367,10 @@ void CopyProgress::SetNames(const wchar_t *Src,const wchar_t *Dst)
 
 	FormatString FString;
 	FString<<fmt::LeftAlign()<<fmt::Width(Rect.Right-Rect.Left-9)<<fmt::Precision(Rect.Right-Rect.Left-9)<<Src;
-	strSrc=FString.strValue();
+	strSrc=std::move(FString.strValue());
 	FString.Clear();
 	FString<<fmt::LeftAlign()<<fmt::Width(Rect.Right-Rect.Left-9)<<fmt::Precision(Rect.Right-Rect.Left-9)<<Dst;
-	strDst=FString.strValue();
+	strDst=std::move(FString.strValue());
 
 	if (Total)
 	{
@@ -1934,7 +1934,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 							}
 							// здесь нужны проверка на FSCANTREE_INSIDEJUNCTION, иначе
 							// при мовинге будет удаление файла, что крайне неправильно!
-							else if (!ScTree.InsideJunction())
+							else if (!ScTree.IsInsideSymlink())
 							{
 								if (DeleteAfterMove(strFullName,SrcData.dwFileAttributes)==COPY_CANCEL)
 									return COPY_CANCEL;

@@ -2540,11 +2540,9 @@ static void DoScanTree(HANDLE hDlg, FARString& strRoot)
 			while (PauseFlag) WINPORT(Sleep)(10);
 
 			bool bContinue=false;
-			FARString strFindDataFileName=FindData.strFileName;
 
 			while (!StopFlag)
 			{
-				FARString strFullStreamName=strFullName;
 				if (UseFilter)
 				{
 					enumFileInFilterType foundType;
@@ -2570,7 +2568,7 @@ static void DoScanTree(HANDLE hDlg, FARString& strRoot)
 
 				if ( !(FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || Opt.FindOpt.FindSymLinks)
 				{
-					AnalyzeFileItem(hDlg,nullptr, strFullStreamName, FindData);
+					AnalyzeFileItem(hDlg,nullptr, strFullName, FindData);
 					//AddMenuRecord(hDlg,strFullStreamName, FindData);
 				}
 

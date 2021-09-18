@@ -493,7 +493,7 @@ static int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *
 			int Offset=strHotKey.At(0)==L'&'?5:4;
 			FormatString FString;
 			FString<<((!strHotKey.IsEmpty() && !FuncNum)?L"&":L"")<<fmt::LeftAlign()<<fmt::Width(Offset)<<fmt::Precision(Offset)<<strHotKey;
-			UserMenuItem.strName=FString.strValue();
+			UserMenuItem.strName=std::move(FString.strValue());
 			UserMenuItem.strName+=strLabel;
 
 			if (s_cfg_reader->GetInt("Submenu", 0) != 0)

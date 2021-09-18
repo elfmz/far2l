@@ -604,18 +604,11 @@ void TreeList::SaveTreeFile()
 
 int TreeList::GetCacheTreeName(const wchar_t *Root, FARString &strName,int CreateDir)
 {
-	FARString strVolumeName, strFileSystemName;
-	DWORD dwVolumeSerialNumber;
+	struct statvfs svfs = {};
 
-	if (!apiGetVolumeInformation(
-	            Root,
-	            &strVolumeName,
-	            &dwVolumeSerialNumber,
-	            nullptr,
-	            nullptr,
-	            &strFileSystemName
-	        ))
+	if (sdc_statvfs(Wide2MB(Root).c_str(), &svfs) != 0) {
 		return FALSE;
+	}
 
 	FARString strFolderName;
 	FARString strFarPath;
@@ -627,30 +620,7 @@ int TreeList::GetCacheTreeName(const wchar_t *Root, FARString &strName,int Creat
 		apiSetFileAttributes(strFolderName,Opt.Tree.TreeFileAttr);
 	}
 
-	FARString strRemoteName;
-	wchar_t *lpwszRemoteName;
-
-//  char RemoteName[NM*3];
-//  *RemoteName=0;
-	if (*Root == GOOD_SLASH)
-		strRemoteName = Root;
-	else
-	{
-		wchar_t wszLocalName[]={*Root,L':',0};
-		apiWNetGetConnection(wszLocalName, strRemoteName);
-
-		if (!strRemoteName.IsEmpty())
-			AddEndSlash(strRemoteName);
-	}
-
-	lpwszRemoteName = strRemoteName.GetBuffer();
-
-	for (int I=0; lpwszRemoteName[I] ; I++)
-		if (lpwszRemoteName[I]==GOOD_SLASH)
-			lpwszRemoteName[I]=L'_';
-
-	strRemoteName.ReleaseBuffer();
-	strName.Format(L"%ls/%ls.%x.%ls.%ls", strFolderName.CPtr(), strVolumeName.CPtr(), dwVolumeSerialNumber, strFileSystemName.CPtr(), strRemoteName.CPtr());
+	strName.Format(L"%ls/%lx", strFolderName.CPtr(), (unsigned long)svfs.f_fsid);
 	return TRUE;
 }
 

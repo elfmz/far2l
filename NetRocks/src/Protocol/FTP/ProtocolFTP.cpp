@@ -155,7 +155,7 @@ std::string ProtocolFTP::SplitPathAndNavigate(const std::string &path_name, bool
 
 		if (g_netrocks_verbosity > 1) {
 			fprintf(stderr, "ProtocolFTP::SplitPathAndNavigate: i=%lu _cwd.parts.size()=%lu parts.size()=%lu\n",
-				i, _cwd.parts.size(), parts.size());
+				(unsigned long)i, (unsigned long)_cwd.parts.size(), (unsigned long)parts.size());
 		}
 
 		for (size_t j = i; j != _cwd.parts.size(); ++j) {

@@ -88,7 +88,7 @@ sub collect_commiters
 	my ($file, $commiters) = (@_);
 	my $path = "$scandir/$file";
 	$path = substr($path, 0, length($path) - 2) if substr($path, -2) eq '/*';
-	print STDERR "Collecting: $path\n";
+	print STDERR "Copyrighting: $path\n";
 	my @gitout = split /[\n\r]/, `git log --date=short --pretty=format:\"%an%x09%ad\" -- \'$path\'`;
 	for $gitline (@gitout) {
 		# $gitline == 'somebody	2021-09-01'

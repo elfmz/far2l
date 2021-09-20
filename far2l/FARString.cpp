@@ -171,7 +171,7 @@ void FARString::Content::DecRef()
 
 	if (LIKELY(n != 1))
 	{
-		if (LIKELY(__atomic_sub_fetch(&m_nRefCount, 1, __ATOMIC_RELAXED) != 0))
+		if (LIKELY(__atomic_sub_fetch(&m_nRefCount, 1, __ATOMIC_RELEASE) != 0))
 			return;
 	}
 

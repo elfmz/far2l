@@ -125,7 +125,7 @@ public:
 	inline ~FARString() { /*if (m_pContent) он не должен быть nullptr*/ m_pContent->DecRef(); }
 
 	// Returns copy of *this string but that copy uses OWN, not shared with *this, content.
-	inline FARString Clone() const { return std::move(FARString(CPtr(), GetLength())); }
+	inline FARString Clone() const { return FARString(CPtr(), GetLength()); }
 
 	wchar_t *GetBuffer(size_t nLength = (size_t)-1);
 	void ReleaseBuffer(size_t nLength = (size_t)-1);

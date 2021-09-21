@@ -1,6 +1,7 @@
 #include "Threaded.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include <algorithm>
 
 
 // OSX has no pthread_timedjoin_np, so here goes bicycle for timed thread waiting

@@ -825,6 +825,29 @@ int RemoveToRecycleBin(const wchar_t *Name)
 	return FALSE;
 }
 
+static FARString WipingRename(const wchar_t *Name)
+{
+	FARString strTempName = Name;
+	CutToSlash(strTempName, false);
+	for (size_t i = 0, ii = 3 + (rand() % 4);
+			(i < ii || apiGetFileAttributes(strTempName) != INVALID_FILE_ATTRIBUTES); ++i)
+	{
+		strTempName+= (wchar_t)'a' + (rand() % 26);
+	}
+
+	if (!apiMoveFile(Name, strTempName))
+	{
+		fprintf(stderr, "%s: error %u renaming '%ls' to '%ls'\n",
+			__FUNCTION__, errno, Name, strTempName.CPtr());
+		return Name;
+	}
+
+	fprintf(stderr, "%s: renamed '%ls' to '%ls'\n",
+		__FUNCTION__, Name, strTempName.CPtr());
+
+	return strTempName;
+}
+
 int WipeFile(const wchar_t *Name)
 {
 	uint64_t FileSize;
@@ -860,14 +883,9 @@ int WipeFile(const wchar_t *Name)
 	}
 
 	WipeFile.Close();
-	FARString strTempName;
-	FarMkTempEx(strTempName,nullptr,FALSE);
 
-	if (apiMoveFile(Name,strTempName))
-		return apiDeleteFile(strTempName);
-
-	WINPORT(SetLastError)((_localLastError = WINPORT(GetLastError)()));
-	return FALSE;
+	FARString strRemoveName = WipingRename(Name);
+	return apiDeleteFile(strRemoveName);
 }
 
 
@@ -882,15 +900,8 @@ int WipeDirectory(const wchar_t *Name)
 		CutToSlash(strPath);
 	}
 
-	FarMkTempEx(strTempName,nullptr, FALSE, strPath.IsEmpty()?nullptr:strPath.CPtr());
-
-	if (!apiMoveFile(Name, strTempName))
-	{
-		WINPORT(SetLastError)((_localLastError = WINPORT(GetLastError)()));
-		return FALSE;
-	}
-
-	return apiRemoveDirectory(strTempName);
+	FARString strRemoveName = WipingRename(Name);
+	return apiRemoveDirectory(strRemoveName);
 }
 
 int DeleteFileWithFolder(const wchar_t *FileName)

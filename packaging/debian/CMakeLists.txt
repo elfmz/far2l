@@ -3,8 +3,22 @@ cmake_minimum_required (VERSION 3.0.2)
 set(DEB_CONTROLS
     postinst
     prerm
-    ${CMAKE_BINARY_DIR}/copyright
 )
+
+execute_process(
+    COMMAND sh -c "cd ${CMAKE_CURRENT_SOURCE_DIR} && git status"
+    RESULT_VARIABLE GIT_RV
+)
+
+if(GIT_RV EQUAL "0")
+    set(DEB_CONTROLS
+        ${DEB_CONTROLS}
+        ${CMAKE_BINARY_DIR}/copyright
+    )
+    message( STATUS "Creating debian/copyright: ${CMAKE_BINARY_DIR}/copyright")
+else()
+    message( WARNING "${ColorRed}Skipping copyright generation cause git is unavailable${ColorNormal}")
+endif()
 
 set(BUILD_OPTS_FILE ${CMAKE_CURRENT_BINARY_DIR}/build.conf.m4)
 

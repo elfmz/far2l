@@ -143,6 +143,25 @@ static void ApplySudoConfiguration()
 		Wide2MB(MSG(MSudoTitle)).c_str(), Wide2MB(MSG(MSudoPrompt)).c_str(), Wide2MB(MSG(MSudoConfirm)).c_str());
 }
 
+static void AddHistorySettings(DialogBuilder &Builder, int MTitle, int *OptEnabled, int *OptCount)
+{
+	DialogItemEx *EnabledCheckBox = Builder.AddCheckbox(MTitle, OptEnabled);
+	DialogItemEx *CountEdit = Builder.AddIntEditField(OptCount, 6);
+	DialogItemEx *CountText = Builder.AddTextBefore(CountEdit, MConfigMaxHistoryCount);
+	CountEdit->Indent(4);
+	CountText->Indent(4);
+	Builder.LinkFlags(EnabledCheckBox, CountEdit, DIF_DISABLE);
+	Builder.LinkFlags(EnabledCheckBox, CountText, DIF_DISABLE);
+}
+
+static void SanitizeHistoryCounts()
+{
+	Opt.HistoryCount = std::max(Opt.HistoryCount, 16);
+	Opt.FoldersHistoryCount = std::max(Opt.FoldersHistoryCount, 16);
+	Opt.ViewHistoryCount = std::max(Opt.ViewHistoryCount, 16);
+	Opt.DialogsHistoryCount = std::max(Opt.DialogsHistoryCount, 16);
+}
+
 void SystemSettings()
 {
 	DialogBuilder Builder(MConfigSystemTitle, L"SystemSettings");
@@ -178,15 +197,17 @@ void SystemSettings()
 	Builder.AddTextAfter(InactivityExitTime, MConfigInactivityMinutes);
 	Builder.LinkFlags(InactivityExit, InactivityExitTime, DIF_DISABLE);
 
-	Builder.AddCheckbox(MConfigSaveHistory, &Opt.SaveHistory);
-	Builder.AddCheckbox(MConfigSaveFoldersHistory, &Opt.SaveFoldersHistory);
-	Builder.AddCheckbox(MConfigSaveViewHistory, &Opt.SaveViewHistory);
+	AddHistorySettings(Builder, MConfigSaveFoldersHistory, &Opt.SaveFoldersHistory, &Opt.FoldersHistoryCount);
+	AddHistorySettings(Builder, MConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
 
 	Builder.AddCheckbox(MConfigAutoSave, &Opt.AutoSaveSetup);
 	Builder.AddOKCancel();
 
-	Builder.ShowDialog();
-	ApplySudoConfiguration();
+	if (Builder.ShowDialog())
+	{
+		SanitizeHistoryCounts();
+		ApplySudoConfiguration();
+	}
 }
 
 
@@ -343,7 +364,7 @@ void DialogSettings()
 {
 	DialogBuilder Builder(MConfigDlgSetsTitle, L"DialogSettings");
 
-	Builder.AddCheckbox(MConfigDialogsEditHistory, &Opt.Dialogs.EditHistory);
+	AddHistorySettings(Builder, MConfigDialogsEditHistory, &Opt.Dialogs.EditHistory, &Opt.DialogsHistoryCount);
 	Builder.AddCheckbox(MConfigDialogsEditBlock, &Opt.Dialogs.EditBlock);
 	Builder.AddCheckbox(MConfigDialogsDelRemovesBlocks, &Opt.Dialogs.DelRemovesBlocks);
 	Builder.AddCheckbox(MConfigDialogsAutoComplete, &Opt.Dialogs.AutoComplete);
@@ -353,6 +374,7 @@ void DialogSettings()
 
 	if (Builder.ShowDialog())
 	{
+		SanitizeHistoryCounts();
 		if (Opt.Dialogs.MouseButton )
 			Opt.Dialogs.MouseButton = 0xFFFF;
 	}
@@ -389,7 +411,7 @@ void CmdlineSettings()
 	};
 
 	DialogBuilder Builder(MConfigCmdlineTitle, L"CmdlineSettings");
-
+	AddHistorySettings(Builder, MConfigSaveHistory, &Opt.SaveHistory, &Opt.DialogsHistoryCount);
 	Builder.AddCheckbox(MConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(MConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(MConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
@@ -414,6 +436,8 @@ void CmdlineSettings()
 
 	if (Builder.ShowDialog())
 	{
+		SanitizeHistoryCounts();
+
 		CtrlObject->CmdLine->SetPersistentBlocks(Opt.CmdLine.EditBlock);
 		CtrlObject->CmdLine->SetDelRemovesBlocks(Opt.CmdLine.DelRemovesBlocks);
 		CtrlObject->CmdLine->SetAutoComplete(Opt.CmdLine.AutoComplete);
@@ -497,6 +521,7 @@ void SetDizConfig()
 void ViewerConfig(ViewerOptions &ViOpt,bool Local)
 {
 	DialogBuilder Builder(MViewConfigTitle, L"ViewerSettings");
+
 	if (!Local)
 	{
 		Builder.AddCheckbox(MViewConfigExternalF3, &Opt.ViOpt.UseExternalViewer);
@@ -750,10 +775,10 @@ static struct FARConfig
 	{0, REG_SZ,     NKeyXLat, "Rules3",&Opt.XLat.Rules[2],0,L""},
 	{0, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
 
-	{0, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},
-	{0, REG_DWORD,  NKeySavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512, 0},
-	{0, REG_DWORD,  NKeySavedViewHistory, NParamHistoryCount,&Opt.ViewHistoryCount,512, 0},
-	{0, REG_DWORD,  NKeySavedDialogHistory, NParamHistoryCount,&Opt.DialogsHistoryCount,512, 0},
+	{1, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},
+	{1, REG_DWORD,  NKeySavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512, 0},
+	{1, REG_DWORD,  NKeySavedViewHistory, NParamHistoryCount,&Opt.ViewHistoryCount,512, 0},
+	{1, REG_DWORD,  NKeySavedDialogHistory, NParamHistoryCount,&Opt.DialogsHistoryCount,512, 0},
 
 	{1, REG_DWORD,  NKeySystem, "SaveHistory",&Opt.SaveHistory,1, 0},
 	{1, REG_DWORD,  NKeySystem, "SaveFoldersHistory",&Opt.SaveFoldersHistory,1, 0},
@@ -991,6 +1016,9 @@ void ReadConfig()
 	}
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
+
+	SanitizeHistoryCounts();
+
 	if (Opt.ShowMenuBar)
 		Opt.ShowMenuBar=1;
 

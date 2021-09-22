@@ -1862,6 +1862,15 @@ MConfigDialogsEditHistory
 "&Historia w polach edycyjnych"
 "&Historial en controles de diálogo de edición"
 
+MConfigMaxHistoryCount
+"&Макс количество записей:"
+"&Max history items:"
+upd:"&Max history items:"
+upd:"&Max history items:"
+upd:"&Max history items:"
+upd:"&Max history items:"
+upd:"&Max history items:"
+
 MConfigDialogsEditBlock
 "&Постоянные блоки в строках ввода"
 "&Persistent blocks in edit controls"

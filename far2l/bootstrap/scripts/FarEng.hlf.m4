@@ -2451,6 +2451,8 @@ $ #Viewer: control keys#
                        In Hex-mode - 1 position right
     #PgUp#               Page up
     #PgDn#               Page down
+    #Alt+PgUp#           Page up with increasing speed
+    #Alt+PgDn#           Page down with increasing speed
     #Ctrl-Shift-Left#    Start of lines on the screen
     #Ctrl-Shift-Right#   End of lines on the screen
     #Home, Ctrl-Home#    Start of file
@@ -2520,6 +2522,9 @@ $ #Viewer: control keys#
     5. For automatic scrolling of a dynamically updating file,
        position the "cursor" to the end of the file (End key).
 
+    6. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
+       Alt while keeping PgUp/PgDn will continue scrolling with selected speed boost.
+       Speed boost dismissed by releasing all keys for long time or pressing any other key.
 
 @ViewerGotoPos
 $ #Viewer: go to specified position#

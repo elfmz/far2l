@@ -1200,6 +1200,21 @@ int64_t Viewer::VMProcess(int OpCode,void *vParam,int64_t iParam)
 */
 int Viewer::ProcessKey(int Key)
 {
+	// Pressing Alt together with PageDown/PageUp allows to smoothly
+	// boost scrolling speed, releasing Alt while keeping PageDown/PageUp
+	// will continue scrolling with selected speed. Pressing any other key
+	// or releasing keys until KEY_IDLE event dismisses scroll speed boost.
+	if (Key == KEY_ALTPGUP || Key == KEY_ALTPGDN)
+	{
+		if (iBoostPg < 0x100000)
+			++iBoostPg;
+	}
+	else if (Key != KEY_PGUP && Key != KEY_PGDN && Key != KEY_NONE && iBoostPg != 0)
+	{
+		fprintf(stderr, "Dismiss iBoostPg=%u due to Key=0x%x\n", iBoostPg, Key);
+		iBoostPg = 0;
+	}
+
 	if (Key == KEY_SHIFTLEFT || Key == KEY_SHIFTRIGHT)
 	{
 		if (SelectSize > 0 && (SelectPos > 0 || Key == KEY_SHIFTRIGHT))
@@ -1657,12 +1672,24 @@ int Viewer::ProcessKey(int Key)
 //      LastSelPos=FilePos;
 			return TRUE;
 		}
-		case KEY_PGUP: case KEY_NUMPAD9: case KEY_SHIFTNUMPAD9: case KEY_CTRLUP:
+
+		case KEY_ALTPGUP: case KEY_PGUP: case KEY_NUMPAD9: case KEY_SHIFTNUMPAD9: case KEY_CTRLUP:
 		{
 			if (ViewFile.Opened())
 			{
-				for (int i=Y1; i<Y2; i++)
-					Up();
+				const auto InitialFilePos = FilePos;
+				for (unsigned boost = 0; boost <= iBoostPg; boost+= 4)
+				{
+					for (int i=Y1; i<Y2; i++)
+						Up();
+
+					if ((FilePos - InitialFilePos) * 256 >= FileSize)
+					{ // limit speed boost by FileSize/256 per keypress
+//						fprintf(stderr, "iBoostPg limited at %u\n", boost);
+						iBoostPg = boost;
+						break;
+					}
+				}
 
 				Show();
 //        LastSelPos=FilePos;
@@ -1670,54 +1697,66 @@ int Viewer::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
+
+		case KEY_ALTPGDN: case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
 		{
 			vString.lpData = new(std::nothrow) wchar_t[MAX_VIEWLINEB];
 
 			if (!vString.lpData)
 				return TRUE;
 
-			if (LastPage || !ViewFile.Opened())
+			const auto InitialFilePos = FilePos;
+			for (unsigned boost = 0; boost <= iBoostPg; boost+= 4)
 			{
-				delete[] vString.lpData;
-				return TRUE;
-			}
-
-			vseek(FilePos,SEEK_SET);
-
-			for (int i=Y1; i<Y2; i++)
-			{
-				ReadString(&vString,-1, MAX_VIEWLINEB);
-
-				if (LastPage)
+				if (LastPage || !ViewFile.Opened())
 				{
 					delete[] vString.lpData;
 					return TRUE;
 				}
+
+				vseek(FilePos,SEEK_SET);
+
+				for (int i=Y1; i<Y2; i++)
+				{
+					ReadString(&vString,-1, MAX_VIEWLINEB);
+
+					if (LastPage)
+					{
+						delete[] vString.lpData;
+						return TRUE;
+					}
+				}
+
+				FilePos=vtell();
+
+				for (int i=Y1; i<=Y2; i++)
+					ReadString(&vString,-1, MAX_VIEWLINEB);
+
+				/* $ 02.06.2003 VVM
+				  + Старое поведение оставим на Ctrl-Down */
+
+				/* $ 21.05.2003 VVM
+				  + По PgDn листаем всегда по одной странице,
+			    	даже если осталась всего одна строчка.
+				    Удобно тексты читать */
+				if (LastPage && Key == KEY_CTRLDOWN)
+				{
+					InternalKey++;
+					ProcessKey(KEY_CTRLPGDN);
+					InternalKey--;
+					delete[] vString.lpData;
+					return TRUE;
+				}
+
+				if ((FilePos - InitialFilePos) * 256 >= FileSize)
+				{ // limit speed boost by FileSize/256 per keypress
+//					fprintf(stderr, "iBoostPg limited at %u\n", boost);
+					iBoostPg = boost;
+					break;
+				}
 			}
-
-			FilePos=vtell();
-
-			for (int i=Y1; i<=Y2; i++)
-				ReadString(&vString,-1, MAX_VIEWLINEB);
-
-			/* $ 02.06.2003 VVM
-			  + Старое поведение оставим на Ctrl-Down */
-
-			/* $ 21.05.2003 VVM
-			  + По PgDn листаем всегда по одной странице,
-			    даже если осталась всего одна строчка.
-			    Удобно тексты читать */
-			if (LastPage && Key == KEY_CTRLDOWN)
-			{
-				InternalKey++;
-				ProcessKey(KEY_CTRLPGDN);
-				InternalKey--;
-				delete[] vString.lpData;
-				return TRUE;
-			}
-
 			Show();
+
 			delete [] vString.lpData;
 //      LastSelPos=FilePos;
 			return TRUE;

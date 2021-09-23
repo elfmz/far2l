@@ -100,6 +100,7 @@ class Viewer:public ScreenObject
 
 	private:
 
+		unsigned iBoostPg = 0;
 		BitFlags SearchFlags;
 
 		struct ViewerOptions ViOpt;

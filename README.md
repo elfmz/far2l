@@ -67,9 +67,13 @@ ninja -j$(nproc --all)
 
 #### OSX/MacOS install
 
- * You can install prebuilt package for x64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
+ * You can install prebuilt package for x86_64 platform via Homebrew Cask, by command:
+ ```sh
+ brew install --cask far2l
+ ```
+ * You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
  * But if you need custom/recent build, you can proceed to build steps below: using brew or MacPorts.
- * Supported compiler: ```AppleClang 8.0.0.x``` or newer. Check your version, and install/update XCode if necessary.
+ * Supported compiler: `AppleClang 8.0.0.x` or newer. Check your version, and install/update Xcode if necessary.
  ```sh
  clang++ -v
  ```
@@ -84,7 +88,7 @@ brew install --HEAD yurikoles/yurikoles/far2l
 ```
  * With TTY backend only:
 ```sh
-brew install --HEAD yurikoles/yurikoles/far2l --without-wxmac
+brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
 ```
  * Additionally you can enable python support by adding `--with-python@3.9`
 

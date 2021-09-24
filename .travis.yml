@@ -125,5 +125,5 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake -G Ninja .. && ninja -j4 -v
+  - cmake -G Ninja .. && cmake --build .
   - cd install && zip -r ../far2l-${TRAVIS_COMMIT}.zip * && cd -

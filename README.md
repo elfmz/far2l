@@ -57,12 +57,12 @@ cd _build
 _with make:_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc --all)
+cmake --build .
 ``` 
 _or with ninja (you need **ninja-build** package installed)_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j$(nproc --all)
+cmake --build .
 ```
 
 #### OSX/MacOS install
@@ -102,7 +102,7 @@ sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 lib
 ```
  * OR if you prefer to use brew packages, then:
 ```sh
-brew bundle
+brew bundle -v
 ```
  * After dependencies installed - you can build far2l:
 _with make:_
@@ -110,14 +110,23 @@ _with make:_
 mkdir _build
 cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(sysctl -n hw.logicalcpu)
+cmake --build .
 ``` 
-_or with ninja_
+_or with ninja:_
 ```sh
 mkdir _build
 cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja -j$(sysctl -n hw.logicalcpu)
+cmake --build .
+```
+ * If above commands finished without errors - you may also install far2l:
+_if /usr/local owned by your user (default for brew):_
+```sh
+cmake --install .
+```
+_or if it is owned by root:_
+```sh
+sudo cmake --install .
 ```
 
 To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no also in this case dont need to install libwxgtk\*-dev package
@@ -200,34 +209,36 @@ Inspect all printf format strings: unlike Windows, in Linux both wide and multib
 Update from 27aug: now it's possible by defining WINPORT_DIRECT to avoid renaming used Windows API and also to avoid changing format strings as swprintf will be intercepted by a compatibility wrapper.
 
 ## Plugin API
+
 Plugins API based on FAR Manager v2 plus following changes:
+
 ### Added following entries to FarStandardFunctions:
 
-* int Execute(const wchar_t *CmdStr, unsigned int ExecFlags);
+* `int Execute(const wchar_t *CmdStr, unsigned int ExecFlags);`
 ...where ExecFlags - combination of values of EXECUTEFLAGS.
 Executes given command line, if EF_HIDEOUT and EF_NOWAIT are not specified then command will be executed on far2l virtual terminal.
 
-* int ExecuteLibrary(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags)
+* `int ExecuteLibrary(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags)`
 Executes given shared library symbol in separate process (process creation behaviour is the same as for Execute).
-symbol function must be defined as: int 'Symbol'(int argc, char *argv[])
+symbol function must be defined as: `int 'Symbol'(int argc, char *argv[])`
 
-* void DisplayNotification(const wchar_t *action, const wchar_t *object);
+* `void DisplayNotification(const wchar_t *action, const wchar_t *object);`
 Shows (depending on settings - always or if far2l in background) system shell-wide notification with given title and text.
 
-* int DispatchInterThreadCalls();
+* `int DispatchInterThreadCalls();`
 far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterThreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
-* FCTL_GETPANELPLUGINHANDLE
+* `FCTL_GETPANELPLUGINHANDLE`
 Can be used to interract with plugin that renders other panel.
-hPlugin can be set to PANEL_ACTIVE or PANEL_PASSIVE.
-Param1 ignored.
-Param2 points to value of type HANDLE, call sets that value to handle of plugin that renders specified panel or INVALID_HANDLE_VALUE.
+`hPlugin` can be set to `PANEL_ACTIVE` or `PANEL_PASSIVE`.
+`Param1` ignored.
+`Param2` points to value of type `HANDLE`, call sets that value to handle of plugin that renders specified panel or `INVALID_HANDLE_VALUE`.
 
 ### Added following plugin-exported functions:
-* int MayExitFARW();
+* `int MayExitFARW();`
 far2l asks plugin if it can exit now. If plugin has some background tasks pending it may block exiting of far2l, however it highly recommended to give user choice using UI prompt.
 
 ### Added following dialog messages:
-* DM_GETCOLOR - retrieves get current color attributes of selected dialog item
-* DM_SETCOLOR - changes current color attributes of selected dialog item
+* `DM_GETCOLOR` - retrieves get current color attributes of selected dialog item
+* `DM_SETCOLOR` - changes current color attributes of selected dialog item

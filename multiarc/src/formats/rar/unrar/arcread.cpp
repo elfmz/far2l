@@ -1399,7 +1399,7 @@ void Archive::ConvertFileHeader(FileHeader *hd)
     // Still, RAR 4.x uses backslashes as path separator even in Unix.
     // Forward slash is not allowed in both systems. In RAR 5.0 we use
     // the forward slash as universal path separator.
-    if (*s=='/' || *s=='\\' && Format!=RARFMT50)
+    if ((*s=='/' || *s=='\\') && Format!=RARFMT50)
       *s=CPATHDIVIDER;
   }
 }

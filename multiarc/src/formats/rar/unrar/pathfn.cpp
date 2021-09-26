@@ -446,7 +446,7 @@ void MakeNameUsable(char *Name,bool Extended)
 #endif
   for (char *s=Name;*s!=0;s=charnext(s))
   {
-    if (strchr(Extended ? "?*<>|\"":"?*",*s)!=NULL || Extended && (byte)*s<32)
+    if (strchr(Extended ? "?*<>|\"":"?*",*s)!=NULL || (Extended && (byte)*s<32))
       *s='_';
 #ifdef _EMX
     if (*s=='=')
@@ -467,7 +467,7 @@ void MakeNameUsable(wchar *Name,bool Extended)
 {
   for (wchar *s=Name;*s!=0;s++)
   {
-    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || Extended && (uint)*s<32)
+    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || (Extended && (uint)*s<32))
       *s='_';
 #ifndef _UNIX
     if (s-Name>1 && *s==':')

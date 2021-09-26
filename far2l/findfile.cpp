@@ -449,7 +449,7 @@ static void InitInFileSearch()
 			else
 				findString = strFindStr.GetBuffer();
 
-			// Инизиализируем данные для алгоритма поиска
+			// Инициализируем данные для алгоритма поиска
 			skipCharsTable = (size_t *)malloc((MAX_VKEY_CODE+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < MAX_VKEY_CODE+1; index++)
@@ -593,7 +593,7 @@ static void InitInFileSearch()
 				}
 			}
 
-			// Инизиализируем данные для аглоритма поиска
+			// Инициализируем данные для алгоритма поиска
 			skipCharsTable = (size_t *)malloc((255+1)*sizeof(size_t));
 
 			for (size_t index = 0; index < 255+1; index++)
@@ -690,7 +690,7 @@ static void SetPluginDirectory(const wchar_t *DirName,HANDLE hPlugin,bool Update
 			CtrlObject->Cp()->ActivePanel->Show();
 		}
 
-		//strName.ReleaseBuffer(); Не надо. Строка все ровно удаляется, лишний вызов StrLength.
+		//strName.ReleaseBuffer(); Не надо. Строка все равно удаляется, лишний вызов StrLength.
 	}
 }
 
@@ -793,7 +793,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 			// Установка запомненных ранее параметров
 			CodePage = Opt.FindCodePage;
 			favoriteCodePages = FillCodePagesList(hDlg, FAD_COMBOBOX_CP, CodePage, false, true);
-			// Текущее значение в в списке выбора кодовых страниц в общем случае модет не совпадать с CodePage,
+			// Текущее значение в списке выбора кодовых страниц в общем случае может не совпадать с CodePage,
 			// так что получаем CodePage из списка выбора
 			FarListPos Position;
 			SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, (LONG_PTR)&Position);
@@ -919,7 +919,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 							// Получаем текущую позицию в выпадающем списке таблиц символов
 							FarListPos Position;
 							SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, (LONG_PTR)&Position);
-							// Получаем номер выбранной таблицы симолов
+							// Получаем номер выбранной таблицы символов
 							FarListGetItem Item = { Position.SelectPos, {} };
 							SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
 							UINT SelectedCodePage = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Position.SelectPos);
@@ -928,7 +928,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 
 							if (Position.SelectPos > 1 && Position.SelectPos < FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0))
 							{
-								// Преобразуем номер таблицы сиволов к строке
+								// Преобразуем номер таблицы символов к строке
 								const std::string &strCodePageName = StrPrintf("%u", SelectedCodePage);
 								//strCodePageName.Format(L"%u", SelectedCodePage);
 								// Получаем текущее состояние флага в реестре
@@ -937,7 +937,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								// Отмечаем/разотмечаем таблицу символов
 								if (Item.Item.Flags & LIF_CHECKED)
 								{
-									// Для стандартных таблиц символов просто удаляем значение из рееста, для
+									// Для стандартных таблиц символов просто удаляем значение из реестра, для
 									// любимых же оставляем в реестре флаг, что таблица символов любимая
 									ConfigWriter cfg_writer(FavoriteCodePagesKey);
 									if (SelectType & CPST_FAVORITE)
@@ -964,16 +964,16 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								}
 
 								// Обрабатываем случай, когда таблица символов может присутствовать, как в стандартных, так и в любимых,
-								// т.е. выбор/снятие флага автоматичекски происходуит у обоих элементов
+								// т.е. выбор/снятие флага автоматически происходит у обоих элементов
 								bool bStandardCodePage = Position.SelectPos < FavoritesIndex;
 
 								for (int Index = bStandardCodePage ? FavoritesIndex : 0; Index < (bStandardCodePage ? FavoritesIndex + favoriteCodePages : FavoritesIndex); Index++)
 								{
-									// Получаем элемент таблицы симолов
+									// Получаем элемент таблицы символов
 									FarListGetItem CheckItem = { Index, {} };
 									SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
 
-									// Обрабатываем только таблицы симовлов
+									// Обрабатываем только таблицы символов
 									if (!(CheckItem.Item.Flags&LIF_SEPARATOR))
 									{
 										if (SelectedCodePage == (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index))
@@ -1185,7 +1185,7 @@ static bool ScanFile(const wchar_t *Name)
 			LastPercents=Percents;
 		}
 
-		// Увеличиваем счётчик прочитыннх байт
+		// Увеличиваем счётчик прочитанных байт
 		alreadyRead += readBlockSize;
 
 		// Для hex и обыкновенного поиска разные ветки
@@ -1304,7 +1304,7 @@ static bool ScanFile(const wchar_t *Name)
 					if (foundIndex == -1)
 						break;
 
-					// Если посдстрока найдена и отключен поиск по словам, то считаем что всё хорошо
+					// Если подстрока найдена и отключен поиск по словам, то считаем что всё хорошо
 					if (!WholeWords)
 						RETURN(TRUE)
 
@@ -1314,31 +1314,31 @@ static bool ScanFile(const wchar_t *Name)
 					// Если идёт поиск по словам, то делаем соответвующие проверки
 					bool firstWordDiv = false;
 
-					// Если мы находимся вначале блока
+					// Если мы находимся в начале блока
 					if (!index)
 					{
-						// Если мы находимся вначале файла, то считаем, что разделитель есть
-						// Если мы находимся вначале блока, то проверяем является
+						// Если мы находимся в начале файла, то считаем, что разделитель есть
+						// Если мы находимся в начале блока, то проверяем является
 						// или нет последний символ предыдущего блока разделителем
 						if (alreadyRead==readBlockSize || IsWordDiv(cpi->LastSymbol))
 							firstWordDiv = true;
 					}
 					else
 					{
-						// Проверяем является или нет предыдущий найденому символ блока разделителем
+						// Проверяем является или нет предыдущий найденному символ блока разделителем
 						cpi->LastSymbol = buffer[index-1];
 
 						if (IsWordDiv(cpi->LastSymbol))
 							firstWordDiv = true;
 					}
 
-					// Проверяем разделитель в конце, только если найден разделитель вначале
+					// Проверяем разделитель в конце, только если найден разделитель в начале
 					if (firstWordDiv)
 					{
 						// Если блок выбран не до конца
 						if (index+findStringCount!=bufferCount)
 						{
-							// Проверяем является или нет последующий за найденым символ блока разделителем
+							// Проверяем является или нет последующий за найденным символ блока разделителем
 							cpi->LastSymbol = buffer[index+findStringCount];
 
 							if (IsWordDiv(cpi->LastSymbol))
@@ -1952,7 +1952,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								FrameManager->EnterModalEV();
 								FrameManager->ExecuteModal();
 								FrameManager->ExitModalEV();
-								// заставляем рефрешится экран
+								// заставляем рефрешиться экран
 								FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 							}
 							SendDlgMessage(hDlg,DM_ENABLEREDRAW,TRUE,0);
@@ -2008,7 +2008,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 																FrameManager->ExecuteModal ();
 																FrameManager->ExitModalEV();
 																// FrameManager->ExecuteNonModal();
-																// заставляем рефрешится экран
+																// заставляем рефрешиться экран
 																FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 															}
 															else
@@ -2034,7 +2034,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 									{
 										efu->UploadIfTimestampChanged();
 									}
-									// заставляем рефрешится экран
+									// заставляем рефрешиться экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 								}
 							}
@@ -2370,7 +2370,7 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 			FindItem.FindData.Clear();
 			// Используем LastDirName, т.к. PathName уже может быть искажена
 			FindItem.FindData.strFileName = strLastDirName;
-			// Used=0 - Имя не попададёт во временную панель.
+			// Used=0 - Имя не попадёт во временную панель.
 			FindItem.Used=0;
 			// Поставим атрибут у каталога, что-бы он не был файлом :)
 			FindItem.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
@@ -3134,7 +3134,7 @@ FindFiles::FindFiles()
 {
 	_ALGO(CleverSysLog clv(L"FindFiles::FindFiles()"));
 	static FARString strLastFindMask=L"*", strLastFindStr;
-	// Статической структуре и статические переменные
+	// Статическая структура и статические переменные
 	static FARString strSearchFromRoot;
 	static int LastCmpCase=0,LastWholeWords=0,LastSearchInArchives=0,LastSearchHex=0;
 	// Создадим объект фильтра

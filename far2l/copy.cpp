@@ -89,7 +89,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Общее время ожидания пользователя */
 extern long WaitUserTime;
-/* Длф того, что бы время при одижании пользователя тикало, а remaining/speed нет */
+/* Для того, что бы время при ожидании пользователя тикало, а remaining/speed нет */
 static long OldCalcTime;
 
 #define PROGRESS_REFRESH_THRESHOLD    500 // msec

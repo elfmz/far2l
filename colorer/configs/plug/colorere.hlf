@@ -82,7 +82,7 @@ $^#FarColorer's settings.#
      catalog.xml from the settings window.
 
   #[ Schemes settings ]#
-    Open dialog for shemes settings. The dialog does not work if the plugin is disabled.
+    Open dialog for schemes settings. The dialog does not work if the plugin is disabled.
 
   #[ Ok ]#
      Closes dialog and save settings.

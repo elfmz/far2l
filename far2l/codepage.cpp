@@ -51,7 +51,7 @@ static const char *NamesOfCodePagesKey = "CodePages/Names";
 
 const char *FavoriteCodePagesKey = "CodePages/Favorites";
 
-// Стандартные кодовое страницы
+// Стандартные кодовые страницы
 enum StandardCodePages
 {
 	SearchAll = 1,
@@ -74,7 +74,7 @@ enum StandardCodePages
 #endif	
 };
 
-// Источник вызова каллбака прохода по кодовым страницам
+// Источник вызова коллбака прохода по кодовым страницам
 enum CodePagesCallbackCallSource
 {
 	CodePageSelect,
@@ -82,7 +82,7 @@ enum CodePagesCallbackCallSource
 	CodePageCheck
 };
 
-// Номера контролов диалога редактирования имени коловой страницы
+// Номера контролов диалога редактирования имени кодовой страницы
 enum
 {
 	EDITCP_BORDER,
@@ -95,7 +95,7 @@ enum
 
 // Диалог
 static HANDLE dialog;
-// Идентифкатор диалога
+// Идентификатор диалога
 static UINT control;
 // Меню
 static VMenu *CodePages = nullptr;
@@ -105,7 +105,7 @@ static UINT currentCodePage;
 static int favoriteCodePages, normalCodePages;
 // Признак необходимости отображать таблицы символов для поиска
 static bool selectedCodePages;
-// Источник вызова каллбака для функции EnumSystemCodePages
+// Источник вызова коллбака для функции EnumSystemCodePages
 static CodePagesCallbackCallSource CallbackCallSource;
 // Признак того, что кодовая страница поддерживается
 //static bool CodePageSupported;
@@ -354,7 +354,7 @@ static bool GetCodePageInfo(UINT CodePage, CPINFOEX &CodePageInfoEx)
 	{
 		// GetCPInfoEx возвращает ошибку для кодовых страниц без имени (например 1125), которые
 		// сами по себе работают. Так что, прежде чем пропускать кодовую страницу из-за ошибки,
-		// пробуем получить для неё информауию через GetCPInfo
+		// пробуем получить для неё информацию через GetCPInfo
 		CPINFO CodePageInfo;
 
 		if (!WINPORT(GetCPInfo)(CodePage, &CodePageInfo))
@@ -394,10 +394,10 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 	s_cfg_reader->SelectSection(FavoriteCodePagesKey);
 	int selectType = s_cfg_reader->GetInt(Wide2MB(lpwszCodePage), 0);
 
-	// Добавляем таблицу символов либо в нормальные, либо в выбранные таблицы симовлов
+	// Добавляем таблицу символов либо в нормальные, либо в выбранные таблицы символов
 	if (selectType & CPST_FAVORITE)
 	{
-		// Если надо добавляем разделитель между выбранными и нормальными таблицами симовлов
+		// Если надо добавляем разделитель между выбранными и нормальными таблицами символов
 		if (!favoriteCodePages)
 			AddSeparator(MSG(MGetCodePageFavorites),GetItemsCount()-normalCodePages-(normalCodePages?1:0));
 
@@ -484,7 +484,7 @@ static void ProcessSelected(bool select)
 		s_cfg_reader->SelectSection(FavoriteCodePagesKey);
 		int selectType = s_cfg_reader->GetInt(strCPName, 0);
 
-		// Удаляем/добавляем в ресестре информацию о выбранной кодовой странице
+		// Удаляем/добавляем в реестре информацию о выбранной кодовой странице
 		{
 			ConfigWriter cfg_writer;
 			cfg_writer.SelectSection(FavoriteCodePagesKey);
@@ -523,10 +523,10 @@ static void ProcessSelected(bool select)
 			                      CodePages->GetItemCount()-normalCodePages-favoriteCodePages,
 			                      favoriteCodePages
 			                  );
-			// Добавляем кодовою страницу в выбранные
+			// Добавляем кодовую страницу в выбранные
 			CodePages->AddItem(&newItem, newPosition);
 
-			// Удаляем разделитель, если нет обыкновынных кодовых страниц
+			// Удаляем разделитель, если нет обыкновенных кодовых страниц
 			if (normalCodePages==1)
 				CodePages->DeleteItem(CodePages->GetItemCount()-1);
 
@@ -605,7 +605,7 @@ static void FillCodePagesVMenu(bool bShowUnicode, bool bShowUTF, bool bShowUTF7,
 		| (bShowUTF7 ? ::UTF7 : 0)
 		| (bShowUnicode ? AllUtfBiggerThan8 : 0)
 		| (bShowAuto ? ::Auto : 0) );
-	// Восстанавливаем оригинальню таблицу символов
+	// Восстанавливаем оригинальную таблицу символов
 	currentCodePage = codePage;
 	// Позиционируем меню
 	CodePages->SetPosition(-1, -1, 0, 0);
@@ -672,7 +672,7 @@ static wchar_t *FormatCodePageName(UINT CodePage, wchar_t *CodePageName, size_t 
 	return CodePageName;
 }
 
-// Каллбак для диалога редактирования имени кодовой страницы
+// Коллбак для диалога редактирования имени кодовой страницы
 static LONG_PTR WINAPI EditDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (Msg==DN_CLOSE)
@@ -811,7 +811,7 @@ UINT FillCodePagesList(HANDLE dialogHandle, UINT controlId, UINT codePage, bool 
 {
 	ConfigReaderScope grs(s_cfg_reader);
 	CallbackCallSource = CodePagesFill;
-	// Устанавливаем переменные для доступа из каллбака
+	// Устанавливаем переменные для доступа из коллбака
 	dialog = dialogHandle;
 	control = controlId;
 	currentCodePage = codePage;

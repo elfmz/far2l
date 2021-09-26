@@ -131,7 +131,7 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 	return false;
 }
 
-BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
+BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 {
 	Panel *SetPanel;
 	SetPanel=CtrlObject->Cp()->ActivePanel;
@@ -188,7 +188,7 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent)
 	}
 	else
 	{
-		if (!Selent)
+		if (!Silent)
 			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strDir,MSG(MOk));
 
 		return FALSE;

@@ -24,8 +24,8 @@
 "Could not connect"
 "Wrong path specification"
 
-"Authentification"
-"Authentification - retry"
+"Authentication"
+"Authentication - retry"
 "Authenting to:"
 "Reauthenting to:"
 
@@ -102,7 +102,7 @@
 "Re&name"
 "Cha&nge mode"
 
-"Destination file aready exists:"
+"Destination file already exists:"
 "Source file information:"
 "Destination information"
 "Options to proceed"
@@ -173,7 +173,7 @@
 "Local filesystem"
 "RETRIES: %llu SKIPS: %llu"
 
-"Protocol doesnt support remote commands"
+"Protocol doesn't support remote commands"
 "Only this commands allowed: cd, pushd, popd"
 "command execution"
 
@@ -197,7 +197,7 @@
 
 "SFTP protocol options"
 "SCP protocol options"
-"&Authentification:"
+"&Authentication:"
 "&Username and password"
 "&Private key file path:"
 "&SSH-agent (by ${SSH_AUTH_SOCK})"
@@ -215,7 +215,7 @@
 "Automatically retr&y connect, times:"
 "Connection t&imeout, seconds:"
 "Use OpenSS&H configuration files"
-"Enable &sandbox (if you dont trust server)"
+"Enable &sandbox (if you don't trust server)"
 
 "File Protocol options"
 "Command to execute on connect:"
@@ -240,7 +240,7 @@
 "Connect via pro&xy:"
 "Proxy &host:"
 "Proxy &port:"
-"Use proxy &authentificaion:"
+"Use proxy &authentication:"
 "Proxy &user:"
 "Proxy pa&ssword:"
 

@@ -2391,7 +2391,7 @@ int Edit::RealPosToTab(int PrevLength, int PrevPos, int Pos, int* CorrectPos)
 				// Расчитываем длину таба с учётом настроек и текущей позиции в строке
 				TabPos += TabSize-(TabPos%TabSize);
 			}
-		// Обрабатываем все отсальные симовлы
+		// Обрабатываем все отсальные символы
 			else
 				TabPos++;
 

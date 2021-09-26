@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "FARString.hpp"
+
 // обработать имя файла: сравнить с маской, масками, сгенерировать по маске
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags);
 int ConvertWildcards(const wchar_t *SrcName,FARString &strDest, int SelectedFolderNameLength);

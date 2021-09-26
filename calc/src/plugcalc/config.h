@@ -9,6 +9,8 @@
 #ifndef _CALC_CONFIG_H_
 #define _CALC_CONFIG_H_
 
+#include <WinCompat.h>
+
 // configuration
 
 BOOL InitConfig();

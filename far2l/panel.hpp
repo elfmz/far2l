@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "scrobj.hpp"
 #include "panelctype.hpp"
+#include "FARString.hpp"
 
 class DizList;
 

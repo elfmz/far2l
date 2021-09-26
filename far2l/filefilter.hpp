@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plugin.hpp"
 #include "filefilterparams.hpp"
 #include "ConfigRW.hpp"
+#include "../WinPort/WinCompat.h"
 
 class VMenu;
 class Panel;

@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EMPTY_TEXT ""
 #endif
 
+#include <plugin.hpp>
+
 // Элемент выпадающего списка в диалоге.
 struct DialogBuilderListItem
 {

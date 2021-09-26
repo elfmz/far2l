@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include "ViewerPrinter.hpp"
+#include "../WinPort/WinCompat.h"
 
 namespace AnsiEsc
 {

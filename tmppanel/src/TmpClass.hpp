@@ -10,6 +10,8 @@ Temporary panel plugin class header file
 
 #define REMOVE_FLAG 1
 
+#include <plugin.hpp>
+
 class TmpPanel
 {
   private:

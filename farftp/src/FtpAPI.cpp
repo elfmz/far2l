@@ -2,6 +2,7 @@
 
 
 #include "Int.h"
+#include "../lib/DirList.h"
 
 BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* lpFindFileData);
 

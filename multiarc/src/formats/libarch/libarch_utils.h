@@ -1,5 +1,6 @@
 #pragma once
 #include <unistd.h>
+#include <vector>
 #include <stdexcept>
 
 #include <archive.h>

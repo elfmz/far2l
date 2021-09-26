@@ -3,6 +3,7 @@
 
 #include <colorer/Exception.h>
 #include <colorer/handlers/RegionDefine.h>
+#include <colorer/unicode/CString.h>
 
 /**
  * Contains information about region mapping into real colors.

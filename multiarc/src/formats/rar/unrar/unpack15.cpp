@@ -1,3 +1,6 @@
+#include "rartypes.hpp"
+#include "unpack.hpp"
+
 #define STARTL1  2
 static unsigned int DecL1[]={0x8000,0xa000,0xc000,0xd000,0xe000,0xea00,
                              0xee00,0xf000,0xf200,0xf200,0xffff};

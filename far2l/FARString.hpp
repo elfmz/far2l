@@ -61,10 +61,10 @@ class FARString
 	{
 		static Content sEmptyData; //для оптимизации создания пустых FARString
 
-		volatile unsigned int m_nRefCount;
-		unsigned int m_nCapacity;	// not including final NULL char
-		unsigned int m_nLength;		// not including final NULL char
-		wchar_t m_Data[1];
+		volatile unsigned int m_nRefCount{0};
+		unsigned int m_nCapacity{0};	// not including final NULL char
+		unsigned int m_nLength{0};		// not including final NULL char
+		wchar_t m_Data[1]{};
 
 		static void Destroy(Content *c);
 

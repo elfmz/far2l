@@ -159,9 +159,9 @@ static int MessageSynched(
 	int Length, BtnLength, J;
 	DWORD I, MaxLength, StrCount;
 	BOOL ErrorSets=FALSE;
-	const wchar_t **Str;
+	const wchar_t **Str = nullptr;
 	wchar_t *PtrStr;
-	const wchar_t *CPtrStr;
+	const wchar_t *CPtrStr = nullptr;
 	FARString strErrStr;
 
 	if (Flags & MSG_ERRORTYPE)

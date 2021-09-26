@@ -135,7 +135,7 @@ CharacterClass* CharacterClass::createCharClass(const String& ccs, int pos, int*
     }
     // substract -[class]
     if (pos + 1 < ccs.length() && ccs[pos] == '-' && ccs[pos + 1] == '[') {
-      int retEnd;
+      int retEnd = 0;
       CharacterClass* scc = createCharClass(ccs, pos + 1, &retEnd, false);
       if (retEnd == ccs.length()) {
         delete cc;

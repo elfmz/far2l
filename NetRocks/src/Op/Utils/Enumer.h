@@ -16,7 +16,7 @@ class Enumer
 	bool _no_special_files;
 	ProgressState &_state;
 	std::shared_ptr<WhatOnErrorState> _wea_state;
-	unsigned int _scan_depth_limit;
+	unsigned int _scan_depth_limit = 0;
 
 	void GetSubitems(const std::string &path, Path2FileInformation &subitems);
 	void ScanItem(const std::string &path);

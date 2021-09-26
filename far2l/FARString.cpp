@@ -421,7 +421,7 @@ static void FARStringFmt(FARString &str, bool append, const wchar_t *format, va_
 {
 	const size_t StartSize = 0x200;		// 512 bytes ought to be enough for mosts
 	const size_t MaxSize = 0x1000000;	// 16 megs ought to be enough for anybody
-	size_t Size;
+	size_t Size = 0;
 
 	for (Size = StartSize; Size <= MaxSize; Size<<= 1)
 	{

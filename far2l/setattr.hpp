@@ -35,4 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../WinPort/WinCompat.h"
 
+class Panel;
+
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object=nullptr);

@@ -892,7 +892,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 		op->srcpos=i+1;
 #endif
 
-		if (inquote && src[i]!=backslashChar)
+		if (inquote && (src[i]!=backslashChar))
 		{
 			op->op=ignorecase?opSymbolIgnoreCase:opSymbol;
 			op->symbol=ignorecase?TOLOWER(src[i]):src[i];
@@ -906,7 +906,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 		{
 			i++;
 
-			if (inquote && src[i]!='E')
+			if (inquote && (src[i]!='E'))
 			{
 				op->op=opSymbol;
 				op->symbol=backslashChar;

@@ -464,7 +464,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 		}
 	}
 
-	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL)) {
+	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL) && CtrlObject) {
 		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
 		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 		

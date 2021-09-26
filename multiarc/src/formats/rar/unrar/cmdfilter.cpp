@@ -285,10 +285,10 @@ int CommandData::IsProcessFile(FileHeader &FileHead,bool *ExactMatch,int MatchTy
 #ifndef SFX_MODULE
   if (TimeCheck(FileHead.mtime,FileHead.ctime,FileHead.atime))
     return 0;
-  if ((FileHead.FileAttr & ExclFileAttr)!=0 || FileHead.Dir && ExclDir)
+  if ((FileHead.FileAttr & ExclFileAttr)!=0 || (FileHead.Dir && ExclDir))
     return 0;
-  if (InclAttrSet && (!FileHead.Dir && (FileHead.FileAttr & InclFileAttr)==0 ||
-      FileHead.Dir && !InclDir))
+  if (InclAttrSet && ((!FileHead.Dir && (FileHead.FileAttr & InclFileAttr)==0) ||
+      (FileHead.Dir && !InclDir)))
     return 0;
   if (!Dir && SizeCheck(FileHead.UnpSize))
     return 0;

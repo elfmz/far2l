@@ -306,7 +306,7 @@ void Unpack::LongLZ()
     Length++;
   if (Distance <= 256)
     Length+=8;
-  if (OldAvr3 > 0xb0 || AvrPlc >= 0x2a00 && OldAvr2 < 0x40)
+  if (OldAvr3 > 0xb0 || (AvrPlc >= 0x2a00 && OldAvr2 < 0x40))
     MaxDist3=0x7f00;
   else
     MaxDist3=0x2001;

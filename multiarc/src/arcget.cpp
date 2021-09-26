@@ -96,7 +96,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     strcpy(DestPath,DialogItems[2].Data);
     FSF.Unquote(DestPath);
     Opt.UserBackground=DialogItems[8].Selected;
-    Opt.OldUserBackground=Opt.UserBackground; // $ 02.07.2002 AY: запомним и не будем не где сбрасывать
+    Opt.OldUserBackground=Opt.UserBackground; // $ 02.07.2002 AY: запомним и не будем нигде сбрасывать
     //SetRegKey(HKEY_CURRENT_USER,"","Background",Opt.UserBackground); // $ 06.02.2002 AA
   }
 

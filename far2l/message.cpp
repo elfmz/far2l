@@ -200,7 +200,7 @@ static int MessageSynched(
 			MaxLength=I;
 	}
 
-	// певая коррекция максимального размера
+	// первая коррекция максимального размера
 	if (MaxLength > MAX_WIDTH_MESSAGE)
 		MaxLength=MAX_WIDTH_MESSAGE;
 
@@ -209,7 +209,7 @@ static int MessageSynched(
 
 	if ((Flags & MSG_ERRORTYPE) && ErrorSets)
 	{
-		// подсчет количества строк во врапенном сообщениеи
+		// подсчет количества строк во врапенном сообщении
 		++CountErrorLine;
 		//InsertQuote(ErrStr); // оквочим
 		// вычисление "красивого" размера
@@ -243,7 +243,7 @@ static int MessageSynched(
 		FarFormatText(strErrStr,LenErrStr,strErrStr,L"\n",0); //?? MaxLength ??
 		PtrStr = strErrStr.GetBuffer();
 
-		//BUGBUG: FARString не преднозначен для хранения строк разделённых \0
+		//BUGBUG: FARString не предназначен для хранения строк разделённых \0
 		while ((PtrStr=wcschr(PtrStr,L'\n')) )
 		{
 			*PtrStr++=0;
@@ -258,7 +258,7 @@ static int MessageSynched(
 			CountErrorLine=ADDSPACEFORPSTRFORMESSAGE; //??
 	}
 
-	//BUGBUG: FARString не преднозначен для хранения строк разделённых \0
+	//BUGBUG: FARString не предназначен для хранения строк разделённых \0
 	// заполняем массив...
 	CPtrStr=strErrStr;
 

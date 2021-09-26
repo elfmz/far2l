@@ -1,6 +1,8 @@
 #ifndef _COLORER_EDITORLISTENER_H_
 #define _COLORER_EDITORLISTENER_H_
 
+#include <stddef.h>
+
 /**
  * Listener of BaseEditor events
  */

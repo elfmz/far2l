@@ -2,6 +2,8 @@
 #include <KeyFileHelper.h>
 #include <memory>
 
+#include "FARString.hpp"
+
 class ConfigSection
 {
 protected:

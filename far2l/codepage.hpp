@@ -33,6 +33,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <type_traits> // for std::swap
+#include "../WinPort/WinCompat.h"
+#include "../WinPort/WinPort.h"
+
 // Тип выбранной таблицы символов
 enum CPSelectType
 {

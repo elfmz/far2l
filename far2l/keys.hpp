@@ -56,6 +56,7 @@ other possible license with no implications from the above license on them.
 
 #include <cstdint>
 #include <limits>
+#include "../WinPort/WinCompat.h"
 
 #define EXTENDED_KEY_BASE     0x00010000
 #define INTERNAL_KEY_BASE     0x00020000

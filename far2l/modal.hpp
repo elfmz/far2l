@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "frame.hpp"
+#include "FARString.hpp"
 
 class Modal: public Frame
 {

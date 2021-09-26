@@ -6,6 +6,8 @@ farrtl.cpp
 Переопределение различных CRT функций
 */
 
+#include "../WinPort/WinCompat.h"
+
 char * __cdecl far_strncpy(char * dest,const char * src,size_t DestSize);
 wchar_t * __cdecl far_wcsncpy(wchar_t * dest,const wchar_t * src,size_t DestSize);
 

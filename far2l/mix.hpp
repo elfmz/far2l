@@ -33,6 +33,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../WinPort/WinCompat.h"
+#include "FARString.hpp"
+
 int ToPercent(uint32_t N1,uint32_t N2);
 int ToPercent64(uint64_t N1,uint64_t N2);
 

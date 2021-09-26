@@ -1,6 +1,8 @@
 #ifndef _RAR_THREADPOOL_
 #define _RAR_THREADPOOL_
 
+#include "rartypes.hpp"
+
 #ifndef RAR_SMP
 const uint MaxPoolThreads=1; // For single threaded version.
 #else

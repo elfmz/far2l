@@ -2,6 +2,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <string>
 #include <all_far.h>
 
 struct ELFInfo;

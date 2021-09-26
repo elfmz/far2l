@@ -48,6 +48,7 @@
 	this file is included at the end of ttmathuint.h
 */
 
+#include <WinCompat.h>
 
 namespace ttmath
 {

@@ -1,3 +1,5 @@
+#include "threadpool.hpp"
+
 static inline bool CriticalSectionCreate(CRITSECT_HANDLE *CritSection)
 {
 #ifdef _WIN_ALL

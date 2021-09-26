@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "FARString.hpp"
+
 int SubstFileName(FARString &strStr, const wchar_t *Name, 
                   FARString *strListName=nullptr,
                   FARString *strAnotherListName = nullptr,

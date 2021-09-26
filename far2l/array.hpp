@@ -43,6 +43,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <new> // for std::nothrow
+#include "../WinPort/WinCompat.h"
+#include "../farrtl.hpp"
+
 #ifdef __GNUC__
 typedef int __cdecl(*TARRAYCMPFUNC)(const void *el1,const void *el2);
 #else

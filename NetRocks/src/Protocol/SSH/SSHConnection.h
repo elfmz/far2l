@@ -3,6 +3,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <Threaded.h>
 #include <StringConfig.h>
 #include <libssh/libssh.h>
 #include <libssh/ssh2.h>

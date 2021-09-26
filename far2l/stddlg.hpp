@@ -33,6 +33,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../WinPort/WinCompat.h"
+#include "FARString.hpp"
+
 /*
   Функция GetSearchReplaceString выводит диалог поиска или замены, принимает
   от пользователя данные и в случае успешного выполнения диалога возвращает

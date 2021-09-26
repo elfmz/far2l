@@ -1,6 +1,9 @@
 #ifndef _RAR_OPTIONS_
 #define _RAR_OPTIONS_
 
+#include <unistd.h>
+#include "rartypes.hpp"
+
 #define DEFAULT_RECOVERY     -3
 
 #define DEFAULT_RECVOLUMES  -10

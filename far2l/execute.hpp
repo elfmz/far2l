@@ -33,6 +33,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <string>
+#include <vector>
+#include "FARString.hpp"
+
 void WaitForClose(const wchar_t *Name);
 void QueueDeleteOnClose(const wchar_t *Name);
 

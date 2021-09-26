@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "flink.hpp"
 class Panel;
 
+#include "../WinPort/WinCompat.h"
+#include "FARString.hpp"
+
 enum COPY_CODES
 {
 	COPY_CANCEL,

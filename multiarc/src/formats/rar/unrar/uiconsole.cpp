@@ -1,3 +1,15 @@
+#include "rardefs.hpp"
+#include "rartypes.hpp"
+#include "os.hpp"
+#include "timefn.hpp"
+#include "filefn.hpp"
+#include "find.hpp"
+#include "ui.hpp"
+#include "loclang.hpp"
+#include "resource.hpp"
+#include "consio.hpp"
+#include "log.hpp"
+
 // Purely user interface function. Gets and returns user input.
 UIASKREP_RESULT uiAskReplace(wchar *Name,size_t MaxNameSize,int64 FileSize,RarTime *FileTime,uint Flags)
 {

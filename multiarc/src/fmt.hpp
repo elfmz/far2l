@@ -28,6 +28,8 @@
 #endif
 #endif
 
+#include "../../WinPort/WinCompat.h"
+
 enum GETARC_CODE
 {
   GETARC_EOF               =0,

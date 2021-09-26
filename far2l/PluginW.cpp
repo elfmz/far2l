@@ -541,7 +541,7 @@ bool PluginW::SetStartupInfo(bool &bUnloaded)
 		PluginStartupInfo _info;
 		FarStandardFunctions _fsf;
 		CreatePluginStartupInfo(this, &_info, &_fsf);
-		// скорректирем адреса и плагино-зависимые поля
+		// скорректируем адреса и плагино-зависимые поля
 		_info.RootKey = strRootKey.CPtr();
 		ExecuteStruct es;
 		es.id = EXCEPT_SETSTARTUPINFO;

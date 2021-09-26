@@ -130,7 +130,7 @@ struct Confirmation
 	    файла на редактирование если, данный файл уже редактируется. По умолчанию - 1
 	    0 - Если уже открытый файл не был изменен, то происходит переход к открытому редактору
 	        без дополнительных вопросов. Если файл был изменен, то задается вопрос, и в случае
-	        если выбрана вариант Reload, то загружается новая копия файла, при этом сделанные
+			если выбран вариант Reload, то загружается новая копия файла, при этом сделанные
 	        изменения теряются.
 	    1 - Так как было раньше. Задается вопрос и происходит переход либо уже к открытому файлу
 	        либо загружается новая версия редактора.
@@ -314,7 +314,7 @@ struct DialogsOptions
 	int   EULBsClear;           // = 1 - BS в диалогах для UnChanged строки удаляет такую строку также, как и Del
 	int   SelectFromHistory;    // = 0 then (ctrl-down в строке с историей курсор устанавливался на самую верхнюю строку)
 	DWORD EditLine;             // общая информация о строке ввода (сейчас это пока... позволяет управлять выделением)
-	int   MouseButton;          // Отключение восприятие правой/левой кнопки мышы как команд закрытия окна диалога
+	int   MouseButton;          // Отключение восприятия правой/левой кнопки мыши как команд закрытия окна диалога
 	int   DelRemovesBlocks;
 	int   CBoxMaxHeight;        // максимальный размер открываемого списка (по умолчанию=8)
 };
@@ -490,7 +490,7 @@ struct Options
 	FARString strQuotedSymbols;
 	DWORD QuotedName;
 	int AutoSaveSetup;
-	int SetupArgv; // количество каталогов в комюстроке ФАРа
+	int SetupArgv; // количество каталогов в ком.строке ФАРа
 	int ChangeDriveMode;
 	int ChangeDriveDisconnetMode;
 
@@ -567,7 +567,7 @@ struct Options
 	int SetAttrFolderRules; // Правило на счет установки атрибутов на каталоги
 	/*
 	 + Opt.ShiftsKeyRules - Правило на счет выбора механизма трансляции
-	   Alt-Буква для нелатинским буковок и символов "`-=[]\;',./" с
+	   Alt-Буква для нелатинских буковок и символов "`-=[]\;',./" с
 	   модификаторами Alt-, Ctrl-, Alt-Shift-, Ctrl-Shift-, Ctrl-Alt-
 	*/
 	int ShiftsKeyRules;
@@ -575,7 +575,7 @@ struct Options
 
 	CodeXLAT XLat;
 
-	int ConsoleDetachKey; // Комбинация клавиш для детача Far'овской консоли от длятельного неинтерактивного процесса в ней запущенного.
+	int ConsoleDetachKey; // Комбинация клавиш для детача Far'овской консоли от длительного неинтерактивного процесса в ней запущенного.
 
 	int UsePrintManager;
 
@@ -624,7 +624,7 @@ struct Options
 	int ScanJunction;
 	int OnlyFilesSize;
 
-	DWORD ShowTimeoutDelFiles; // тайаут в процессе удаления (в ms)
+	DWORD ShowTimeoutDelFiles; // таймаут в процессе удаления (в ms)
 	DWORD ShowTimeoutDACLFiles;
 	int DelThreadPriority; // приоритет процесса удаления, по умолчанию = THREAD_PRIORITY_NORMAL
 

@@ -66,7 +66,7 @@ class CommandLine:public ScreenObject
 		virtual void DisplayObject();
 		int CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
 		void GetPrompt(FARString &strDestStr);
-		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Selent=false);
+		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent=false);
 		bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
 		void ProcessCompletion(bool possibilities);
 

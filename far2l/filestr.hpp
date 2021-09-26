@@ -3,7 +3,7 @@
 /*
 filestr.hpp
 
-Êëàññ GetFileString
+Класс GetFileString
 */
 /*
 Copyright (c) 1996 Eugene Roshal

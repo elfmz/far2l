@@ -4,7 +4,7 @@ template <class CHAR_T, class CHAR_COMPARE>
 	bool MatchWildcardT(const CHAR_T *str, const CHAR_T *wild)
 {
 	// originally written by Jack Handy
-	const CHAR_T *cp = NULL, *mp = NULL;
+	const CHAR_T *cp = nullptr, *mp = nullptr;
 	while ((*str) && (*wild != (CHAR_T)'*')) {
 		if (!CHAR_COMPARE()(*wild, *str) && (*wild != (CHAR_T)'?'))
 			return false;

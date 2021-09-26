@@ -418,7 +418,7 @@ if (DEFINED PYTHON AND PYTHON)
 	endif()
 
 	install(CODE "
-		execute_process(COMMAND echo Python: prepaing virtual environment)
+		execute_process(COMMAND echo Python: preparing virtual environment)
 		" COMPONENT system)
 	install(CODE "
 		execute_process(COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python)
@@ -430,7 +430,7 @@ if (DEFINED PYTHON AND PYTHON)
 		execute_process(COMMAND ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python/bin/python -m pip install cffi debugpy)
 		" COMPONENT system)
 
-	# Copy this explicitely cuz generic copier command excludes 'far2l'
+	# Copy this explicitly cuz generic copier command excludes 'far2l'
 	install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/far2l"
 		DESTINATION "share/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
 		COMPONENT base FILES_MATCHING

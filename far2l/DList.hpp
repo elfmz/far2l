@@ -80,11 +80,11 @@ class DList : public CDList
 	public:
 		~DList() {Clear();};
 
-		//создать новый элемент и поместить его в конец сприска
+		//создать новый элемент и поместить его в конец списка
 		//возвращает указатель на созданный элемент
 		Type *Push(const Type *item=nullptr) {return (Type*)CInsertBefore(nullptr, (void*)item);}
 
-		//создать новый элемент и поместить его в начало сприска
+		//создать новый элемент и поместить его в начало списка
 		//возвращает указатель на созданный элемент
 		Type *Unshift(const Type *item=nullptr) {return (Type*)CInsertAfter(nullptr, (void*)item);}
 

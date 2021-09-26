@@ -458,7 +458,7 @@ bool PluginA::SetStartupInfo(bool &bUnloaded)
 		oldfar::FarStandardFunctions _fsf;
 
 		CreatePluginStartupInfoA(this, &_info, &_fsf);
-		// скорректирем адреса и плагино-зависимые поля
+		// скорректируем адреса и плагино-зависимые поля
 		if (mbRootKey.empty())
 			mbRootKey = strRootKey.GetMB();
 		_info.RootKey = mbRootKey.c_str();

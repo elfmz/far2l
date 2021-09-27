@@ -246,7 +246,7 @@ void TTYBackend::WriterThread()
 		TTYOutput tty_out(_stdout, _far2l_tty);
 
 		while (!_exiting && !_deadio) {
-			AsyncEvent ae{};
+			AsyncEvent ae;
 			ae.all = 0;
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);

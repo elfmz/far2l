@@ -30,7 +30,7 @@ class NMBEnum : protected Threaded
 	Name2IPV4 _results;
 	struct Addr2Info : std::map<uint32_t, Info>  {} _addr2info;
 	std::set<std::string> _groups;
-	time_t _stop_at;
+	time_t _stop_at = 0;
 	int _sc = -1;
 
 	void OnNodeStatusReply(uint32_t addr, const uint8_t *tail, size_t tail_len);

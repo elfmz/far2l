@@ -12,7 +12,7 @@ template <class FN>
 	std::mutex _mutex;
 	std::condition_variable _cond;
 	FN _fn;
-	bool _done;
+	bool _done = false;
 	
 protected:
 	virtual void Invoke(FN fn) = 0;

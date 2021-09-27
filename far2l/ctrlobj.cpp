@@ -55,7 +55,15 @@ ControlObject *CtrlObject;
 
 ControlObject::ControlObject():
 	FPanels(0),
-	CmdLine(0)
+	CmdLine(0),
+	CmdHistory(0),
+	FolderHistory(0),
+	ViewHistory(0),
+	MainKeyBar(0),
+	TopMenuBar(0),
+	HiFiles(0),
+	ViewerPosCache(0),
+	EditorPosCache(0)
 {
 	_OT(SysLog(L"[%p] ControlObject::ControlObject()", this));
 	CtrlObject=this;

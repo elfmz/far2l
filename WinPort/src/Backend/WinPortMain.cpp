@@ -290,7 +290,7 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 	ArgOptions arg_opts;
 
 #if defined(__linux__) || defined(__FreeBSD__)
-	unsigned int leds = 0;
+	unsigned long int leds = 0;
 	if (ioctl(0, KDGETLED, &leds) == 0) {
 		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
 		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),

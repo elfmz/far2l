@@ -944,7 +944,7 @@ int TreeList::ProcessKey(int Key)
 					if (PutCode==1 || PutCode==2)
 						AnotherPanel->SetPluginModified();
 
-					if (ItemList) free(ItemList);
+					if (ItemList) delete[] ItemList;
 
 					if (Move)
 						ReadSubTree(ListData[CurFile]->strName);

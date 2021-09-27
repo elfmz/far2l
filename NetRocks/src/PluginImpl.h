@@ -56,8 +56,10 @@ class PluginImpl
 	void DismissRemoteHost();
 	std::string CurrentConnectionPoolId();
 
+	bool ValidateLocationDirectory(int OpMode);
+
 public:
-	PluginImpl(const wchar_t *path = nullptr, bool path_is_standalone_config = false);
+	PluginImpl(const wchar_t *path = nullptr, bool path_is_standalone_config = false, int OpMode = 0);
 	virtual ~PluginImpl();
 
 	static void sOnExiting();

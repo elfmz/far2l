@@ -13,9 +13,9 @@
 #include "UI/Settings/SiteConnectionEditor.h"
 #include "UI/Activities/Confirm.h"
 #include "Op/OpConnect.h"
-#include "Op/OpGetMode.h"
 #include "Op/OpXfer.h"
 #include "Op/OpRemove.h"
+#include "Op/OpCheckDirectory.h"
 #include "Op/OpMakeDirectory.h"
 #include "Op/OpEnumDirectory.h"
 #include "Op/OpExecute.h"
@@ -72,7 +72,7 @@ public:
 
 } g_all_netrocks;
 
-PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config)
+PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config, int OpMode)
 {
 	_cur_dir[0] = _panel_title[0] = _format[0] = 0;
 
@@ -96,6 +96,7 @@ PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config)
 				if (!_remote) {
 					throw std::runtime_error(G.GetMsgMB(MCouldNotConnect));
 				}
+				ValidateLocationDirectory(OpMode);
 
 			} else if (!_sites_cfg_location.Change(Wide2MB(path))) {
 				throw std::runtime_error(G.GetMsgMB(MWrongPath));
@@ -346,7 +347,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		}
 
 		_wea_state = std::make_shared<WhatOnErrorState>();
-		return TRUE;
+		return ValidateLocationDirectory(OpMode) ? TRUE : FALSE;
 	}
 
 
@@ -376,25 +377,34 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		return TRUE;
 	}
 
-	const std::string &dir = _location.ToString(false);
-	fprintf(stderr, "NetRocks::SetDirectoryInternal - dir: '%s'\n", dir.c_str());
-	if (!dir.empty()) {
-		mode_t mode = 0;
-		if (!OpGetMode(OpMode, _remote, dir, _wea_state).Do(mode)) {
-			fprintf(stderr, "NetRocks::SetDirectoryInternal - can't get mode: '%s'\n", dir.c_str());
-			_location.path = saved_path;
-			return FALSE; 
-		}
-
-		if (!S_ISDIR(mode)) {
-			fprintf(stderr, "NetRocks::SetDirectoryInternal - not dir mode=0x%x: '%s'\n", mode, dir.c_str());
-			_location.path = saved_path;
-			return FALSE;
-		}
+	if (ValidateLocationDirectory(OpMode)) {
+		return TRUE;
 	}
 
-	fprintf(stderr, "NetRocks::SetDirectoryInternal('%ls', %d) OK: '%s'\n", Dir, OpMode, dir.c_str());
-	return TRUE;
+	_location.path = saved_path;
+	return FALSE;
+}
+
+bool PluginImpl::ValidateLocationDirectory(int OpMode)
+{
+	const std::string &dir = _location.ToString(false);
+	fprintf(stderr, "NetRocks::ValidateLocationDirectory - dir: '%s'\n", dir.c_str());
+	if (dir.empty()) {
+		return true;
+	}
+
+	std::string final_dir;
+	if (!OpCheckDirectory(OpMode, _remote, dir, _wea_state).Do(final_dir)) {
+		fprintf(stderr, "NetRocks::ValidateLocationDirectory - failed\n");
+		return false;
+	}
+
+	if (dir != final_dir) {
+		fprintf(stderr, "NetRocks::ValidateLocationDirectory - final_dir: '%s'\n", final_dir.c_str());
+		_location.PathFromString(final_dir);
+	}
+
+	return true;
 }
 
 void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)

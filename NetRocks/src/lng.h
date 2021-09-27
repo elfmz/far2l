@@ -10,6 +10,8 @@ enum LanguageID
   MSkip,
   MError,
 
+  MRecoveryDir,
+
   MPluginOptionsTitle,
   MEnableDesktopNotifications,
   MEnterExecRemotely,
@@ -158,6 +160,7 @@ enum LanguageID
   MErrorUploadTitle,
   MErrorCrossloadTitle,
   MErrorQueryInfoTitle,
+  MErrorCheckDirTitle,
   MErrorEnumDirTitle,
   MErrorMakeDirTitle,
   MErrorRenameTitle,

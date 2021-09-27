@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <utils.h>
 #include "OpEnumDirectory.h"
 #include "../UI/Activities/Confirm.h"
@@ -62,8 +63,9 @@ void OpEnumDirectory::Process()
 			}
 		}
 		,
-		[this] () mutable 
+		[this] (bool &recovery) mutable
 		{
+			recovery = false;
 			_result.Shrink(_initial_result_count);
 			std::unique_lock<std::mutex> locker(_state.mtx);
 			_state.stats.count_complete = _initial_count_complete;

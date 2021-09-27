@@ -41,7 +41,7 @@ src/Op/Utils/Enumer.cpp
 src/Op/Utils/IOBuffer.cpp
 src/Op/OpBase.cpp
 src/Op/OpConnect.cpp
-src/Op/OpGetMode.cpp
+src/Op/OpCheckDirectory.cpp
 src/Op/OpChangeMode.cpp
 src/Op/OpEnumDirectory.cpp
 src/Op/OpXfer.cpp

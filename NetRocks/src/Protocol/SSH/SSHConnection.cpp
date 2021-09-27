@@ -150,7 +150,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	}
 
 	int retries = std::max(protocol_options.GetInt("ConnectRetries", 2), 1);
-	long timeout = std::max(protocol_options.GetInt("ConnectTimeout", 10), 1);
+	long timeout = std::max(protocol_options.GetInt("ConnectTimeout", 20), 1);
 
 	ssh_options_set(ssh, SSH_OPTIONS_TIMEOUT, &timeout);
 

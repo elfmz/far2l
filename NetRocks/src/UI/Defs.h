@@ -36,6 +36,7 @@ enum WhatOnErrorKind
 	WEK_UPLOAD,
 	WEK_CROSSLOAD,
 	WEK_QUERYINFO,
+	WEK_CHECKDIR,
 	WEK_ENUMDIR,
 	WEK_MAKEDIR,
 	WEK_RENAME,
@@ -47,12 +48,16 @@ enum WhatOnErrorKind
 	WEKS_COUNT
 };
 
+
+
 enum WhatOnErrorAction
 {
 	WEA_CANCEL = 0, // meaningful as dialog result
 	WEA_ASK = 0,    // meaningful as default action
 	WEA_SKIP,
-	WEA_RETRY
+	WEA_RETRY,
+
+	WEA_RECOVERY,	// for directory validation - allows traversing to first valid parent directory
 };
 
 struct ProgressStateStats

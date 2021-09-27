@@ -497,7 +497,7 @@ public:
 	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path)
 		: _conn(conn)
 	{
-		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
+		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\"";
 		command_line+= QuotedArg(path);
 		command_line+= "/.* ";
 		command_line+= QuotedArg(path);

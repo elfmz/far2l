@@ -1,8 +1,6 @@
 #ifndef _RAR_GLOBAL_
 #define _RAR_GLOBAL_
 
-#include "errhnd.hpp"
-
 #ifdef INCLUDEGLOBAL
   #define EXTVAR
 #else

@@ -1,8 +1,6 @@
 #ifndef _RAR_RS_
 #define _RAR_RS_
 
-#include "rartypes.hpp"
-
 #define MAXPAR 255 // Maximum parity data size.
 #define MAXPOL 512 // Maximum polynomial degree.
 

@@ -657,7 +657,7 @@ bool CmdExtract::ExtractCurrentFile(Archive &Arc,size_t HeaderSize,bool &Repeat)
             LinkSuccess=false;
           }
           
-          if (!LinkSuccess || (Arc.Format==RARFMT15 && !FileCreateMode))
+          if (!LinkSuccess || Arc.Format==RARFMT15 && !FileCreateMode)
           {
             // RAR 5.x links have a valid data checksum even in case of
             // failure, because they do not store any data.
@@ -745,7 +745,7 @@ bool CmdExtract::ExtractCurrentFile(Archive &Arc,size_t HeaderSize,bool &Repeat)
       bool SetAttrOnly=LinkEntry && Arc.FileHead.RedirType==FSREDIR_HARDLINK && LinkSuccess;
 
       if (!TestMode && (Command=='X' || Command=='E') &&
-          (!LinkEntry || SetAttrOnly || (Arc.FileHead.RedirType==FSREDIR_FILECOPY && LinkSuccess)) &&
+          (!LinkEntry || SetAttrOnly || Arc.FileHead.RedirType==FSREDIR_FILECOPY && LinkSuccess) && 
           (!BrokenFile || Cmd->KeepBroken))
       {
         // Below we use DestFileName instead of CurFile.FileName,

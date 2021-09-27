@@ -1,5 +1,6 @@
 #pragma once
 #include <KeyFileHelper.h>
+#include "FARString.hpp"
 
 void CheckForImportLegacyShortcuts();
 

@@ -33,5 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../WinPort/WinCompat.h"
+
 void SetColors();
 int GetColorDialog(WORD& Color,bool bCentered=false,bool bAddTransparent=false);

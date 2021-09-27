@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 #include <elf.h>
+#include <fcntl.h> // for O_RDONLY
+
+#include "../../../WinPort/sudo.h" // for sdc_open
 
 struct ELFInfo
 {

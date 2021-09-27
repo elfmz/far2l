@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "noncopyable.hpp"
 
+#include "../WinPort/WinCompat.h"
+
 class BaseFileMask : private NonCopyable
 {
 	public:

@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "DList.hpp"
 #include "noncopyable.hpp"
+#include "FARString.hpp"
 
 class FileEditor;
 class KeyBar;

@@ -14,6 +14,7 @@
 #else
 #include <trex/trex.h>
 #endif
+#include "sarg.h"
 
 enum CALC_ADDON_FLAGS
 {

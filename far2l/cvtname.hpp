@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "FARString.hpp"
+
 FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath=true);
 
 bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir);

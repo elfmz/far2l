@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "noncopyable.hpp"
+#include "../WinPort/WinCompat.h"
 
 template <class Object>
 class TStack : private NonCopyable

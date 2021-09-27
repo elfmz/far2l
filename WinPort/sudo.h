@@ -1,4 +1,5 @@
 #pragma once
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #ifdef __APPLE__

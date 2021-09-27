@@ -33,7 +33,11 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <sys/types.h>
+#include <string.h>
+#include "../WinPort/WinCompat.h"
 #include "local.hpp"
+#include "headers.hpp" // for NullToEmpty
 
 /***********************************************************************************************************
  * This is a FARString - homegrew reference-counted string widely used in this project.

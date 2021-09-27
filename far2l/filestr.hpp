@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <vector>
+#include "../WinPort/WinCompat.h"
+#include "FARString.hpp"
 
 // BUGBUG, delete!
 class OldGetFileString

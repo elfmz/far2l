@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DList.hpp"
 #include "plugin.hpp"
+#include "FARString.hpp"
 
 class NamesList
 {

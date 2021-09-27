@@ -58,6 +58,8 @@ other possible license with no implications from the above license on them.
   Пункт COL_LASTPALETTECOLOR должен быть самым последним!!!!!!
 */
 
+#include "../WinPort/WinCompat.h"
+
 // Стандартные цвета FAR Manager
 enum
 {

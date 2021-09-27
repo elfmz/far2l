@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <assert.h>
-#include <mutex>
 #include <fcntl.h>
 #include <errno.h>
 

@@ -57,27 +57,6 @@ static void SCPRequestDeleter(ssh_scp  res)
 
 RESOURCE_CONTAINER(SCPRequest, ssh_scp, SCPRequestDeleter);
 
-std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options)
-{
-//	sleep(20);
-	return std::make_shared<ProtocolSCP>(host, port, username, password, options);
-}
-
-ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options)
-{
-	StringConfig protocol_options(options);
-	_conn = std::make_shared<SSHConnection>(host, port, username, password, protocol_options);
-	_now.tv_sec = time(nullptr);
-}
-
-ProtocolSCP::~ProtocolSCP()
-{
-	_conn->executed_command.reset();
-}
-
-
 struct SCPRemoteCommand
 {
 	ExecCommandFIFO fifo;
@@ -210,6 +189,33 @@ public:
 	const std::string &Output() const { return _output; }
 	const std::string &Error() const { return _error; }
 };
+
+std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options)
+{
+//	sleep(20);
+	return std::make_shared<ProtocolSCP>(host, port, username, password, options);
+}
+
+ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options)
+{
+	StringConfig protocol_options(options);
+	_conn = std::make_shared<SSHConnection>(host, port, username, password, protocol_options);
+	_now.tv_sec = time(nullptr);
+
+	int rc = SimpleCommand(_conn).Execute("stat .");
+	if (rc != 0) {
+		_fallback_ls = true;
+		fprintf(stderr, "ProtocolSCP::ProtocolSCP: <stat .> result %d -> fallback to ls\n", rc);
+	}
+}
+
+ProtocolSCP::~ProtocolSCP()
+{
+	_conn->executed_command.reset();
+}
+
 
 mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink)
 {
@@ -419,28 +425,74 @@ void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_t
 	}
 }
 
-static std::string ExtractStringTail(std::string &line)
-{
-	std::string out;
-	size_t p = line.rfind(' ');
-	if (p != std::string::npos) {
-		out = line.substr(p + 1);
-		line.resize(p);
-	} else {
-		out.swap(line);
-	}
-
-	return out;
-}
-
 class SCPDirectoryEnumer : public IDirectoryEnumer
 {
+protected:
 	std::shared_ptr<SSHConnection> _conn;
 
 	bool _finished = false;
 	SCPRemoteCommand _cmd;
 
-	bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) = 0;
+
+public:
+	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, const std::string &path)
+		: _conn(conn)
+	{
+	}
+
+	virtual ~SCPDirectoryEnumer()
+	{
+		_conn->executed_command.reset();
+	}
+
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	{
+		name.clear();
+		owner.clear();
+		group.clear();
+		file_info = FileInformation{};
+
+#if SIMULATED_ENUM_FAILS_RATE
+		if ( (rand() % 100) + 1 <= SIMULATED_ENUM_FAILS_RATE) {
+			throw ProtocolError("Simulated enum dir error");
+		}
+#endif
+
+		if (_finished) {
+			return false;
+		}
+
+		for (;;) {
+			if (TryParseLine(name, owner, group, file_info)) {
+				return true;
+			}
+
+			if (!_cmd.FetchOutput()) {
+				_finished = true;
+				return false;
+			}
+        }
+  	}
+};
+
+class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
+{
+	static std::string ExtractStringTail(std::string &line)
+	{
+		std::string out;
+		size_t p = line.rfind(' ');
+		if (p != std::string::npos) {
+			out = line.substr(p + 1);
+			line.resize(p);
+		} else {
+			out.swap(line);
+		}
+
+		return out;
+	}
+
+	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 // PATH/NAME MODE SIZE ACCESS MODIFY CHANGE USER GROUP
 // /bin/bash 81ed 1037528 1568672221 1494938995 1523911947 root root
@@ -494,10 +546,10 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 	}
 
 public:
-	SCPDirectoryEnumer(std::shared_ptr<SSHConnection> &conn, std::string path)
-		: _conn(conn)
+	SCPDirectoryEnumer_stat(std::shared_ptr<SSHConnection> &conn, const std::string &path)
+		: SCPDirectoryEnumer(conn, path)
 	{
-		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\"";
+		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
 		command_line+= QuotedArg(path);
 		command_line+= "/.* ";
 		command_line+= QuotedArg(path);
@@ -509,47 +561,222 @@ public:
 
 		_cmd.Execute();
 	}
+};
 
-	virtual ~SCPDirectoryEnumer()
+class SCPDirectoryEnumer_ls : public SCPDirectoryEnumer
+{
+	struct timespec _now;
+
+	static unsigned int Char2FileType(char c)
 	{
-		_conn->executed_command.reset();
+		switch (c) {
+			case 'l':
+				return S_IFLNK;
+
+			case 'd':
+				return S_IFDIR;
+
+			case 'c':
+				return S_IFCHR;
+
+			case 'b':
+				return S_IFBLK;
+
+			case 'p':
+				return S_IFIFO;
+
+			case 's':
+				return S_IFSOCK;
+
+			case 'f':
+			default:
+				return S_IFREG;
+		}
 	}
 
-	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	static unsigned int Triplet2FileMode(const char *c)
 	{
-		name.clear();
-		owner.clear();
-		group.clear();
-		file_info = FileInformation{};
+		unsigned int out = 0;
+		if (c[0] == 'r') out|= 4;
+		if (c[1] == 'w') out|= 2;
+		if (c[2] == 'x' || c[1] == 's' || c[1] == 't') out|= 1;
+		return out;
+	}
 
-#if SIMULATED_ENUM_FAILS_RATE
-		if ( (rand() % 100) + 1 <= SIMULATED_ENUM_FAILS_RATE) {
-			throw ProtocolError("Simulated enum dir error");
-		}
-#endif
-
-		if (_finished) {
-			return false;
-		}
-
-		for (;;) {
-			if (TryParseLine(name, owner, group, file_info)) {
-				return true;
+	static std::string ExtractStringHead(std::string &line)
+	{
+		std::string out;
+		size_t p = line.find_first_of(" \t");
+		if (p != std::string::npos) {
+			out = line.substr(0, p);
+			while (p < line.size() && (line[p] == ' ' || line[p] == '\t')) {
+				++p;
 			}
+			line.erase(0, p);
 
-			if (!_cmd.FetchOutput()) {
-				_finished = true;
+		} else {
+			out.swap(line);
+		}
+
+		return out;
+	}
+
+
+	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+	{
+/*
+# ls -l -A  /
+total 25
+drwxr-xr-x    2 root     root          2048 Sep 25  2021 bin
+drwxr-xr-x    2 root     root          1024 Sep 25  2021 boot
+drwxr-xr-x    8 root     root         12480 Jan  2 19:36 dev
+drwxr-xr-x    9 root     root          1024 Jan  1 00:00 etc
+drwxr-xr-x    3 root     root          1024 Sep 25  2021 lib
+lrwxrwxrwx    1 root     root             3 Sep 24  2021 lib32 -> lib
+lrwxrwxrwx    1 root     root            11 Sep 24  2021 linuxrc -> bin/busybox
+drwx------    2 root     root         12288 Sep 25  2021 lost+found
+*/
+		for (;;) {
+			size_t p = _cmd.output.find_first_of("\r\n");
+			if (p == std::string::npos) {
 				return false;
 			}
-        	}
-  	}
+
+			std::string line = _cmd.output.substr(0, p);
+			while (p < _cmd.output.size() && (_cmd.output[p] == '\r' || _cmd.output[p] == '\n')) {
+				++p;
+			}
+			_cmd.output.erase(0, p);
+
+			const std::string &str_mode = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			if (line[0] >= '0' && line[0] <= '9') {
+				ExtractStringHead(line); // skip nlinks
+				if (line.empty())
+					continue;
+			}
+			const std::string &str_owner = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			const std::string &str_group = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			const std::string &str_size = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			const std::string &str_month = ExtractStringHead(line);
+
+			if (line.empty())
+				continue;
+
+			const std::string &str_day = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			const std::string &str_yt = ExtractStringHead(line);
+			if (line.empty())
+				continue;
+
+			file_info.mode = 0;
+			if (str_mode.size() >= 1) {
+				file_info.mode = Char2FileType(str_mode[0]);
+				if (file_info.mode == S_IFLNK) {
+					size_t p = line.find(" -> ");
+					if (p != std::string::npos)
+						line.resize(p);
+				}
+			}
+
+			if (str_mode.size() >= 4) {
+				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 1) << 6;
+			}
+
+			if (str_mode.size() >= 7) {
+				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 4) << 3;
+			}
+
+			if (str_mode.size() >= 10) {
+				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 7);
+			}
+
+			const time_t now = _now.tv_sec;
+			struct tm t{};
+			struct tm *tnow = gmtime(&now);
+			if (tnow)
+				t = *tnow;
+
+			if (str_yt.find(':') == std::string::npos) {
+				t.tm_year = atoul(str_yt.c_str()) - 1900;
+			} else {
+				if (sscanf(str_yt.c_str(), "%d:%d", &t.tm_hour, &t.tm_min) <= -1) {
+					perror("scanf(str_yt)");
+				}
+			}
+			if (strcasecmp(str_month.c_str(), "jan") == 0) t.tm_mon = 0;
+			else if (strcasecmp(str_month.c_str(), "feb") == 0) t.tm_mon = 1;
+			else if (strcasecmp(str_month.c_str(), "mar") == 0) t.tm_mon = 2;
+			else if (strcasecmp(str_month.c_str(), "apr") == 0) t.tm_mon = 3;
+			else if (strcasecmp(str_month.c_str(), "may") == 0) t.tm_mon = 4;
+			else if (strcasecmp(str_month.c_str(), "jun") == 0) t.tm_mon = 5;
+			else if (strcasecmp(str_month.c_str(), "jul") == 0) t.tm_mon = 6;
+			else if (strcasecmp(str_month.c_str(), "aug") == 0) t.tm_mon = 7;
+			else if (strcasecmp(str_month.c_str(), "sep") == 0) t.tm_mon = 8;
+			else if (strcasecmp(str_month.c_str(), "oct") == 0) t.tm_mon = 9;
+			else if (strcasecmp(str_month.c_str(), "nov") == 0) t.tm_mon = 10;
+			else if (strcasecmp(str_month.c_str(), "dec") == 0) t.tm_mon = 11;
+
+			t.tm_mday = atoi(str_day.c_str());
+
+			file_info.status_change_time.tv_sec
+				= file_info.modification_time.tv_sec
+					= file_info.access_time.tv_sec = mktime(&t);
+
+			file_info.size = atol(str_size.c_str());
+
+			owner = str_owner;
+			group = str_group;
+			name.swap(line);
+
+			if (name.empty() || !FILENAME_ENUMERABLE(name)) {
+				name.clear();
+				continue;
+			}
+			return true;
+		}
+	}
+
+public:
+	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, const std::string &path, const struct timespec &now)
+		: SCPDirectoryEnumer(conn, path), _now(now)
+	{
+		std::string command_line = "LC_TIME=C LS_COLORS= ls -l -A ";
+		command_line+= QuotedArg(path);
+		command_line+= " 2>/dev/null";
+
+		_conn->executed_command.reset();
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());
+
+		_cmd.Execute();
+	}
 };
+
+
+
 
 std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &path)
 {
 	_conn->executed_command.reset();
 
-	return std::make_shared<SCPDirectoryEnumer>(_conn, path);
+	if (_fallback_ls) {
+		return std::make_shared<SCPDirectoryEnumer_ls>(_conn, path, _now);
+	}
+
+	return std::make_shared<SCPDirectoryEnumer_stat>(_conn, path);
 }
 
 class SCPFileReader : public IFileReader

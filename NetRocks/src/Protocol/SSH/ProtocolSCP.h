@@ -8,6 +8,7 @@ class ProtocolSCP : public IProtocol
 {
 	std::shared_ptr<SSHConnection> _conn;
 	struct timespec _now{};
+	bool _fallback_ls = false;
 
 public:
 	ProtocolSCP(const std::string &host, unsigned int port, const std::string &username,

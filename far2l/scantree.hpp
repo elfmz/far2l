@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <set>
 #include <list>
+#include "../WinPort/WinCompat.h"
+#include "FARString.hpp"
 
 
 enum

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <WinCompat.h>
+
 #define DEF_STR_ALLOC 50
 
 class String

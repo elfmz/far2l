@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../WinPort/WinCompat.h"
+
 const DWORD64 POS_NONE = _UI64_MAX;
 
 // Максимальное количество элементов в кэше

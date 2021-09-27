@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CFileMask.hpp"
 #include "bitflags.hpp"
 #include "hilight.hpp"
+#include "FARString.hpp"
 
 #define FILEFILTER_SIZE_SIZE 32
 

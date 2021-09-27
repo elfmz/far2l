@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FARString.hpp"
+
 namespace Mounts
 {
 	struct Entry

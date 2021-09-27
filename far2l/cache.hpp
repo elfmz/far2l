@@ -32,6 +32,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <string>
+#include "../WinPort/WinCompat.h"
+#include "farwinapi.hpp"
+
 class BufferedFileView
 {
 	BufferedFileView(const BufferedFileView&) = delete;

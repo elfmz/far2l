@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "plugin.hpp"
 #include "plclass.hpp"
+#include "FARString.hpp"
 
 
 typedef void (WINAPI *PLUGINCLOSEPLUGINW)(HANDLE hPlugin);

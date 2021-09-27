@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 const char *PooledString(const char *s);
 const char *PooledString(const wchar_t *s);
 const char *PooledString(const std::string &s);

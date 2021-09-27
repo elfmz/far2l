@@ -8,6 +8,8 @@
 "&Skip"
 "Error"
 
+"Go&Up"
+
 "NetRocks options"
 "Enable desktop &notifications"
 "<&ENTER> to execute files remotely when possible"
@@ -156,6 +158,7 @@
 "Upload error"
 "Crossload error"
 "Query information error"
+"Check directory error"
 "Enum directory error"
 "Make directory error"
 "Rename error"

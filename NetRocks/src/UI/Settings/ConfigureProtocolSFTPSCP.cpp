@@ -156,7 +156,7 @@ public:
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,50, 0, MSFTPConnectTimeout);
-		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "10", "999");
+		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "20", "999");
 
 		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
@@ -210,7 +210,7 @@ public:
 		SetCheckedDialogControl(_i_use_openssh_configs, sc.GetInt("UseOpenSSHConfigs", 0) != 0);
 
 		LongLongToDialogControl(_i_connect_retries, std::max((int)1, sc.GetInt("ConnectRetries", 2)));
-		LongLongToDialogControl(_i_connect_timeout, std::max((int)1, sc.GetInt("ConnectTimeout", 10)));
+		LongLongToDialogControl(_i_connect_timeout, std::max((int)1, sc.GetInt("ConnectTimeout", 20)));
 
 		if (_i_use_custom_subsystem != -1) {
 			SetCheckedDialogControl(_i_use_custom_subsystem, sc.GetInt("UseCustomSubsystem", 0) != 0);

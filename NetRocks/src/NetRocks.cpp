@@ -66,7 +66,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const un
 		}
 	}
 
-	return new PluginImpl(Name, true);
+	return new PluginImpl(Name, true, OpMode);
 }
 
 

@@ -15,7 +15,7 @@ sftp://server//etc/dir/file
 sftp://user@server:port/dir/in/home/file
 */
 
-bool Location::FromString(const std::string standalone_config, const std::string &str)
+bool Location::FromString(const std::string &standalone_config, const std::string &str)
 {
 	server.clear();
 
@@ -74,8 +74,7 @@ bool Location::FromString(const std::string standalone_config, const std::string
 		path.absolute = !str.empty() && str[str.size() - 1] == '/';
 
 	} else {
-		path.absolute = directory[0] == '/';
-		StrExplode(path.components, directory, "/");
+		PathFromString(directory);
 	}
 
 #if 0
@@ -85,6 +84,13 @@ bool Location::FromString(const std::string standalone_config, const std::string
 #endif
 
 	return true;
+}
+
+bool Location::PathFromString(const std::string &directory)
+{
+	path.absolute = directory[0] == '/';
+	path.components.clear();
+	StrExplode(path.components, directory, "/");
 }
 
 std::string Location::ToString(bool with_server) const

@@ -741,7 +741,7 @@ DWORD TTYBackend::OnQueryControlKeys()
 #endif
 
 #if defined(__FreeBSD__) || defined(__linux__)
-	unsigned int leds = 0;
+	unsigned long int leds = 0;
 	if (ioctl(_stdin, KDGETLED, &leds) == 0) {
 		if (leds & 1) {
 			out|= SCROLLLOCK_ON;

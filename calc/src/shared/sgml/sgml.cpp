@@ -40,7 +40,7 @@ CSgmlEl::CSgmlEl()
 
 CSgmlEl::~CSgmlEl()
 {
-	if (type == EBASEEL && enext) 
+	if ((type == EBASEEL) && enext)
 		enext->destroylevel();
 	if (echild) 
 		echild->destroylevel();

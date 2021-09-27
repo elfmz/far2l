@@ -79,6 +79,10 @@ ScreenBuf::ScreenBuf():
 	ElevationCharUsed(false),
 	BufX(0),
 	BufY(0),
+	CurX(0),
+	CurY(0),
+	CurVisible(false),
+	CurSize(0),
 	LockCount(0)
 {
 	SBFlags.Set(SBFLAGS_FLUSHED|SBFLAGS_FLUSHEDCURPOS|SBFLAGS_FLUSHEDCURTYPE);

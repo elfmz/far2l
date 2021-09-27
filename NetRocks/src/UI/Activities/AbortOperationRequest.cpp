@@ -61,7 +61,7 @@ class AbortOperationProgress : protected BaseDialog
 	const time_t _ts;
 	int _i_dblbox;
 	std::string _title;
-	bool _finished;
+	bool _finished = false;
 
 protected:
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)

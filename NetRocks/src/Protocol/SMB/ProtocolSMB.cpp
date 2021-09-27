@@ -236,7 +236,7 @@ class SMBDirectoryEnumer : public IDirectoryEnumer
 	std::shared_ptr<ProtocolSMB> _protocol;
 	std::string _rooted_path;
 	int _dir = -1;
-	char _buf[0x4000], *_entry = nullptr;
+	char _buf[0x4000]{}, *_entry = nullptr;
 	int _remain = 0;
 
 public:

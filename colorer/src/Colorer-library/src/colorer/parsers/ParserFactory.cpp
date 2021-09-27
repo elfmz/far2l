@@ -156,14 +156,14 @@ void ParserFactory::loadCatalog(const String* catalog_path)
 
   parseCatalog(base_catalog_path);
   logger->debug("begin load hrc files");
-  for (auto location : hrc_locations) {
+  for (const auto& location : hrc_locations) {
     try {
       logger->debug("try load '{0}'", location.getChars());
       auto clear_path = XmlInputSource::getClearPath(&base_catalog_path, &location);
       if (XmlInputSource::isDirectory(clear_path.get())) {
         std::vector<SString> paths;
         XmlInputSource::getFileFromDir(clear_path.get(), paths);
-        for (auto files : paths) {
+        for (const auto& files : paths) {
           loadHrc(&files, &base_catalog_path);
         }
       } else {

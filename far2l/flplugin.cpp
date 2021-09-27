@@ -900,7 +900,7 @@ void FileList::ProcessHostFile()
 
 		if (PanelMode==PLUGIN_PANEL && !(*PluginsList.Last())->strHostFile.IsEmpty())
 		{
-			PluginPanelItem *ItemList;
+			PluginPanelItem *ItemList = nullptr;
 			int ItemNumber;
 			_ALGO(SysLog(L"call CreatePluginItemList"));
 			CreatePluginItemList(ItemList,ItemNumber);

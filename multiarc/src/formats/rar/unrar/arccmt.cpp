@@ -1,5 +1,3 @@
-#include "rar.hpp"
-
 static bool IsAnsiEscComment(const wchar *Data,size_t Size);
 
 bool Archive::GetComment(Array<wchar> *CmtData)

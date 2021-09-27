@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 struct LibarchCommandOptions
 {
 	std::string root_path;

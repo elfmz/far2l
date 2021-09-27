@@ -1,7 +1,3 @@
-#include "rartypes.hpp"
-#include "unpack.hpp"
-#include "compress.hpp"
-
 void Unpack::Unpack5(bool Solid)
 {
   FileExtracted=true;

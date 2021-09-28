@@ -10,6 +10,7 @@
  ================= FTP Protocol options =====================
 | [ ] Enable explicit encryption                             |
 | Minimal encryption protocol:           [COMBOBOX         ] |
+| List command:                          [COMBOBOX         ] |
 | [ ] Use passive mode for transfers                         |
 | [ ] Use MLSD/MLST if possible                              |
 | [ ] Enable commands pipelining                             |
@@ -32,13 +33,14 @@ class ProtocolOptionsFTP : protected BaseDialog
 
 	int _i_explicit_encryption = -1;
 	int _i_encryption_protocol = -1;
+	int _i_list_command = -1;
 	int _i_restrict_data_peer = -1;
 	int _i_passive_mode = -1;
 	int _i_use_mlsd_mlst = -1;
 	int _i_commands_pipelining = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 
-	FarListWrapper _di_encryption_protocol;
+	FarListWrapper _di_encryption_protocol, _di_list_command;
 
 	void UpdateEnableds()
 	{
@@ -80,6 +82,9 @@ public:
 		_di_encryption_protocol.Add("TLS1.1");
 		_di_encryption_protocol.Add("TLS1.2");
 
+		_di_list_command.Add("LIST -la");
+		_di_list_command.Add("LIST");
+
 		_di.SetBoxTitleItem(implicit_encryption ? MFTPSOptionsTitle : MFTPOptionsTitle);
 
 		_di.SetLine(2);
@@ -92,6 +97,11 @@ public:
 		_di.AddAtLine(DI_TEXT, 5,44, 0, MSFTPEncryptionProtocol);
 		_i_encryption_protocol = _di.AddAtLine(DI_COMBOBOX, 45,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 		_di[_i_encryption_protocol].ListItems = _di_encryption_protocol.Get();
+		_di.NextLine();
+
+		_di.AddAtLine(DI_TEXT, 5,44, 0, MSFTPListCommand);
+		_i_list_command = _di.AddAtLine(DI_COMBOBOX, 45,62, 0, "LIST -la");
+		_di[_i_list_command].ListItems = _di_list_command.Get();
 		_di.NextLine();
 
 		_i_passive_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPPassiveMode);
@@ -132,11 +142,10 @@ public:
 		//GetDialogListPosition(_i_auth_mode)
 
 		_di_encryption_protocol.SelectIndex(sc.GetInt("EncryptionProtocol", 3)); // default: TLS1.1
-
 		if (_i_explicit_encryption != -1) {
 			SetCheckedDialogControl(_i_explicit_encryption, sc.GetInt("ExplicitEncryption", 0) != 0);
 		}
-
+		TextToDialogControl(_i_list_command, sc.GetString("ListCommand", "LIST -la"));
 		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
 		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 1) != 0);
 		SetCheckedDialogControl(_i_commands_pipelining, sc.GetInt("CommandsPipelining", 0) != 0);
@@ -150,6 +159,9 @@ public:
 			if (_i_explicit_encryption != -1) {
 				sc.SetInt("ExplicitEncryption", IsCheckedDialogControl(_i_explicit_encryption));
 			}
+			std::string str;
+			TextFromDialogControl(_i_list_command, str);
+			sc.SetString("ListCommand", str);
 			sc.SetInt("EncryptionProtocol", GetDialogListPosition(_i_encryption_protocol));
 			sc.SetInt("Passive", IsCheckedDialogControl(_i_passive_mode) ? 1 : 0);
 			sc.SetInt("MLSDMLST", IsCheckedDialogControl(_i_use_mlsd_mlst) ? 1 : 0);

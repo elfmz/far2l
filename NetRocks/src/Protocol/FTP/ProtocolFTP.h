@@ -25,7 +25,7 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 		const char *dele = "DELE";
 		const char *rnfr = "RNFR";
 		const char *rnto = "RNTO";
-		const char *list_ = "LIST";
+		std::string list_;// = "LIST";
 		const char *mlsd = nullptr; // set to non-NULL during connection init
 		const char *mlst = nullptr; // set to non-NULL during connection init
 		const char *retr = "RETR";

@@ -267,6 +267,7 @@ enum LanguageID
   MFTPSOptionsTitle,
   MFTPExplicitEncryption, 
   MSFTPEncryptionProtocol,
+  MSFTPListCommand,
   MSFTPServerCodepage,
   MFTPPassiveMode,
   MFTPUseMLSDMLST,

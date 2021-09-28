@@ -33,6 +33,8 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 
 	FTPThrowIfBadResponce<ProtocolAuthFailedError>(_str, reply_code, 200, 299);
 
+	_cmd.list_ = _conn->ProtocolOptions().GetString("ListCommand", "LIST -la");
+
 	if (_conn->ProtocolOptions().GetInt("MLSDMLST", 1) != 0) {
 		_str.assign("FEAT");
 		reply_code = _conn->SendRecvResponce(_str);
@@ -676,7 +678,7 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFTP::NavigatedDirectoryEnum()
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
 
 	} else {
-		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(std::string(_cmd.list_));
+		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(_cmd.list_);
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
 	}
 

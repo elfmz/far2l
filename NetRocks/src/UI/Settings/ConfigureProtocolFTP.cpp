@@ -11,8 +11,8 @@
 | [ ] Enable explicit encryption                             |
 | Minimal encryption protocol:           [COMBOBOX         ] |
 | List command:                          [COMBOBOX         ] |
-| [ ] Use passive mode for transfers                         |
 | [ ] Use MLSD/MLST if possible                              |
+| [ ] Use passive mode for transfers                         |
 | [ ] Enable commands pipelining                             |
 | [ ] Ensure data connection peer matches server             |
 | [ ] Enable TCP_NODELAY option                              |
@@ -104,10 +104,10 @@ public:
 		_di[_i_list_command].ListItems = _di_list_command.Get();
 		_di.NextLine();
 
-		_i_passive_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPPassiveMode);
+		_i_use_mlsd_mlst = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPUseMLSDMLST);
 		_di.NextLine();
 
-		_i_use_mlsd_mlst = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPUseMLSDMLST);
+		_i_passive_mode = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPPassiveMode);
 		_di.NextLine();
 
 		_i_commands_pipelining = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MFTPCommandsPipelining);

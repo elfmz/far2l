@@ -535,11 +535,13 @@ void ViewerConfig(ViewerOptions &ViOpt,bool Local)
 	DialogItemEx *SavePos = Builder.AddCheckbox(MViewConfigSavePos, &Opt.ViOpt.SavePos);
 	DialogItemEx *TabSize = Builder.AddIntEditField(&ViOpt.TabSize, 3);
 	Builder.AddTextAfter(TabSize, MViewConfigTabSize);
+	Builder.AddCheckbox(MViewShowKeyBar, &ViOpt.ShowKeyBar);
 	Builder.ColumnBreak();
 	Builder.AddCheckbox(MViewConfigArrows, &ViOpt.ShowArrows);
 	DialogItemEx *SaveShortPos = Builder.AddCheckbox(MViewConfigSaveShortPos, &Opt.ViOpt.SaveShortPos);
 	Builder.LinkFlags(SavePos, SaveShortPos, DIF_DISABLE);
 	Builder.AddCheckbox(MViewConfigScrollbar, &ViOpt.ShowScrollbar);
+	Builder.AddCheckbox(MViewShowTitleBar, &ViOpt.ShowTitleBar);
 	Builder.EndColumns();
 
 	if (!Local)
@@ -582,6 +584,7 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 	DialogItemEx *TabSize = Builder.AddIntEditField(&EdOpt.TabSize, 3);
 	Builder.AddTextAfter(TabSize, MEditConfigTabSize);
 	Builder.AddCheckbox(MEditShowWhiteSpace, &EdOpt.ShowWhiteSpace);
+	Builder.AddCheckbox(MEditShowKeyBar, &EdOpt.ShowKeyBar);
 	Builder.ColumnBreak();
 	Builder.AddCheckbox(MEditConfigDelRemovesBlocks, &EdOpt.DelRemovesBlocks);
 	DialogItemEx *SaveShortPos = Builder.AddCheckbox(MEditConfigSaveShortPos, &EdOpt.SaveShortPos);
@@ -589,6 +592,7 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 	Builder.AddCheckbox(MEditCursorBeyondEnd, &EdOpt.CursorBeyondEOL);
 	Builder.AddCheckbox(MEditConfigScrollbar, &EdOpt.ShowScrollBar);
 	Builder.AddCheckbox(MEditConfigPickUpWord, &EdOpt.SearchPickUpWord);
+	Builder.AddCheckbox(MEditShowTitleBar, &EdOpt.ShowTitleBar);
 	Builder.EndColumns();
 
 	if (!Local)
@@ -714,7 +718,7 @@ static struct FARConfig
 
 	{1, REG_DWORD,  NKeyViewer, "TabSize",&Opt.ViOpt.TabSize,8, 0},
 	{1, REG_DWORD,  NKeyViewer, "ShowKeyBar",&Opt.ViOpt.ShowKeyBar,1, 0},
-	{0, REG_DWORD,  NKeyViewer, "ShowTitleBar",&Opt.ViOpt.ShowTitleBar,1, 0},
+	{1, REG_DWORD,  NKeyViewer, "ShowTitleBar",&Opt.ViOpt.ShowTitleBar,1, 0},
 	{1, REG_DWORD,  NKeyViewer, "ShowArrows",&Opt.ViOpt.ShowArrows,1, 0},
 	{1, REG_DWORD,  NKeyViewer, "ShowScrollbar",&Opt.ViOpt.ShowScrollbar,0, 0},
 	{1, REG_DWORD,  NKeyViewer, "IsWrap",&Opt.ViOpt.ViewerIsWrap,1, 0},
@@ -755,7 +759,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyEditor, "Utf8CodePageForNewFile",&Opt.EdOpt.UTF8CodePageForNewFile,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "UTF8CodePageAsDefault",&Opt.EdOpt.UTF8CodePageAsDefault,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},
+	{1, REG_DWORD,  NKeyEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "ShowScrollBar",&Opt.EdOpt.ShowScrollBar,0, 0},
 	{1, REG_DWORD,  NKeyEditor, "EditOpenedForWrite",&Opt.EdOpt.EditOpenedForWrite,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "SearchSelFound",&Opt.EdOpt.SearchSelFound,0, 0},

@@ -2404,6 +2404,25 @@ MViewConfigArrows
 "Pokaż strzał&ki przewijania"
 "Mostrar flechas de despla&zamiento"
 
+
+MViewShowKeyBar
+"Показывать &линейку клавиш"
+"Show &key bar"
+"Zobrazovat &zkratkové klávesy"
+"Tast&enleiste anzeigen"
+"&Funkcióbillentyűk sora mutatva"
+"Wyświetl pasek &klawiszy"
+"Mostrar barra de &funciones"
+
+MViewShowTitleBar
+"Показывать &заголовок"
+"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+
 MViewConfigPersistentSelection
 "Постоянное &выделение"
 "&Persistent selection"
@@ -2613,6 +2632,24 @@ upd:"Show white space"
 upd:"Show white space"
 upd:"Show white space"
 "Mostrar espacios en blanco"
+
+MEditShowKeyBar
+"Показывать &линейку клавиш"
+"Show &key bar"
+"Zobrazovat &zkratkové klávesy"
+"Tast&enleiste anzeigen"
+"&Funkcióbillentyűk sora mutatva"
+"Wyświetl pasek &klawiszy"
+"Mostrar barra de &funciones"
+
+MEditShowTitleBar
+"Показывать &заголовок"
+"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
+upd:"S&how title bar"
 
 MEditConfigPickUpWord
 "Cлово под к&урсором"

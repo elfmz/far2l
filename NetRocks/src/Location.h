@@ -24,7 +24,7 @@ struct Location
 		void ResetToHome();
 	} path;
 
-	bool PathFromString(const std::string &directory);
+	void PathFromString(const std::string &directory);
 	bool FromString(const std::string &standalone_config, const std::string &str);
 	std::string ToString(bool with_server) const;
 };

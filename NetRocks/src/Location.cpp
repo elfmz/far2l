@@ -86,9 +86,9 @@ bool Location::FromString(const std::string &standalone_config, const std::strin
 	return true;
 }
 
-bool Location::PathFromString(const std::string &directory)
+void Location::PathFromString(const std::string &directory)
 {
-	path.absolute = directory[0] == '/';
+	path.absolute = !directory.empty() && directory[0] == '/';
 	path.components.clear();
 	StrExplode(path.components, directory, "/");
 }

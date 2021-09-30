@@ -52,9 +52,21 @@ void OpCheckDirectory::Process()
 			}
 
 			if (recovery) {
+				// Translate to 'upper' path, like:
+				//   "/foo/bar" -> "/foo"
+				//   "/foo" -> "/"
+				//   "/" -> ""
+				//   "foo/bar" -> "foo"
+				//   "foo" -> ""
 				size_t p = _final_path.rfind('/');
-				if (p != std::string::npos) {
+				if (p == 0) {
+					_final_path.resize((_final_path.size() == 1) ? 0 : 1);
+
+				} else if (p != std::string::npos) {
 					_final_path.resize(p);
+
+				} else {
+					_final_path.clear();
 				}
 			}
 		}

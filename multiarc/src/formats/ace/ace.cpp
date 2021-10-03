@@ -338,21 +338,21 @@ BOOL WINAPI _export ACE_GetDefaultCommands(int Type,int Command,char *Dest)
   if (Type==0)
   {
     static const char *Commands[]={
-    /*Extract               */"ace32 x {-p%%P} -y -c- -std {%%S} %%A @%%LN",
-    /*Extract without paths */"ace32 e -av- {-p%%P} -y -c- -std {%%S} %%A @%%LN",
-    /*Test                  */"ace32 t -y {-p%%P} -c- -std {%%S} %%A",
-    /*Delete                */"ace32 d -y -std {-t%%W} {%%S} %%A @%%LN",
-    /*Comment archive       */"ace32 cm -y -std {-t%%W} {%%S} %%A",
-    /*Comment files         */"ace32 cf -y -std {-t%%W} {%%S} %%A {@%%LN}",
-    /*Convert to SFX        */"ace32 s -y -std {%%S} %%A",
-    /*Lock archive          */"ace32 k -y -std {%%S} %%A",
-    /*Protect archive       */"ace32 rr -y -std {%%S} %%A",
-    /*Recover archive       */"ace32 r -y -std {%%S} %%A",
-    /*Add files             */"ace32 a -c2 -y -std {-p%%P} {-t%%W} {%%S} %%A @%%LN",
-    /*Move files            */"ace32 m -c2 -y -std {-p%%P} {-t%%W} {%%S} %%A @%%LN",
-    /*Add files and folders */"ace32 a -y -c2 -r -f -std {-p%%P} {-t%%W} {%%S} %%A @%%LN",
-    /*Move files and folders*/"ace32 m -y -c2 -r -f -std {-p%%P} {-t%%W} {%%S} %%A @%%LN",
-    /*"All files" mask      */"*.*"
+    /*Extract               */"unace x -y {-p%%P} %%A %%F",
+    /*Extract without paths */"unace e -y {-p%%P} %%A %%F",
+    /*Test                  */"unace t -y {-p%%P} %%A %%F",
+    /*Delete                */"",
+    /*Comment archive       */"",
+    /*Comment files         */"",
+    /*Convert to SFX        */"",
+    /*Lock archive          */"",
+    /*Protect archive       */"",
+    /*Recover archive       */"",
+    /*Add files             */"",
+    /*Move files            */"",
+    /*Add files and folders */"",
+    /*Move files and folders*/"",
+    /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {

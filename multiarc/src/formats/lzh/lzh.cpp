@@ -209,6 +209,14 @@ BOOL WINAPI _export LZH_OpenArchive(const char *Name,int *Type,bool Silent)
   return(TRUE);
 }
 
+static void ReadOverflowable(HANDLE Handle, DWORD ChunkSize, void *Buf, DWORD BufSize, LPDWORD BufFilled)
+{
+  *BufFilled = 0;
+  WINPORT(ReadFile)(Handle, Buf, std::min(ChunkSize, BufSize), BufFilled, NULL);
+  if (ChunkSize > BufSize && *BufFilled == BufSize)
+    WINPORT(SetFilePointer)(Handle, ChunkSize - BufSize, NULL, FILE_CURRENT);
+}
+
 int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
 {
   LZH_Header LzhHeader;
@@ -236,9 +244,9 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   // Offset = 21
 
   BYTE OsId=0;
-  char FileName[NM];
+  char FileName[NM]; FileName[ARRAYSIZE(FileName) - 1] = 0;
   FileName[0]=0;
-  char PathName[NM];
+  char PathName[NM]; PathName[ARRAYSIZE(PathName) - 1] = 0;
   PathName[0]=0;
   DWORD Attr=0;
 
@@ -249,8 +257,9 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     // Offset 22
 
     if(FNameLen > 0)
-      WINPORT(ReadFile)(ArcHandle,FileName,(DWORD)FNameLen,&ReadSize,NULL);
-    else if(LzhHeader.l0.FLevel == 0)
+    {
+      ReadOverflowable(ArcHandle, FNameLen, FileName, ARRAYSIZE(FileName)-1, &ReadSize);
+    } else if(LzhHeader.l0.FLevel == 0)
       return(GETARC_BROKEN); //???
 
     // Offset 22+(f)
@@ -313,7 +322,7 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
              ? bytes  File name
              2 bytes  Next header size
           */
-          WINPORT(ReadFile)(ArcHandle,FileName,NextHeaderSize-3,&ReadSize,NULL);
+          ReadOverflowable(ArcHandle,NextHeaderSize-3,FileName,ARRAYSIZE(FileName)-1,&ReadSize);
           FileName[NextHeaderSize-3]=0;
           break;
         }
@@ -325,19 +334,15 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
              ? bytes  Directory name
              2 bytes  Next header size
           */
-          WINPORT(ReadFile)(ArcHandle,PathName,NextHeaderSize-3,&ReadSize,NULL);
-          PathName[PathSize=NextHeaderSize-3]=0;
-
-          // Convert 0xFF to '\'
-          for (I=0;PathName[I];I++)
-            if (PathName[I]=='\xff')
-              PathName[I]='/';
+          ReadOverflowable(ArcHandle,NextHeaderSize-3,PathName,ARRAYSIZE(PathName)-1,&ReadSize);
+          PathName[PathSize=ReadSize]=0;
 
           if(PathName[strlen(PathName)-1] != '/')
             strcat(PathName,"/");
 
           if(!FileName[0])
             Attr=FILE_ATTRIBUTE_DIRECTORY;
+
           break;
         }
 
@@ -348,9 +353,7 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
              2 bytes  Attr
              2 bytes  Next header size
           */
-          WINPORT(ReadFile)(ArcHandle,&Attr,2,&ReadSize,NULL);
-          if(NextHeaderSize-3-2 >= 0)
-            WINPORT(SetFilePointer)(ArcHandle,NextHeaderSize-3-2,NULL,FILE_CURRENT); //???
+          ReadOverflowable(ArcHandle,NextHeaderSize-3,&Attr,2,&ReadSize);
           //Attr &= 0x3f;
           break;
         }
@@ -362,17 +365,8 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
              ? bytes  Comments
              2 bytes  Next header size
           */
-          DWORD NeedSeek=0;
-          DWORD NeedRead=NextHeaderSize-3;
-          if(NeedRead >= sizeof(Info->Description))
-          {
-            NeedRead=sizeof(Info->Description)-1;
-            NeedSeek=NeedRead-NextHeaderSize-3;
-          }
-          WINPORT(ReadFile)(ArcHandle,Info->Description,NeedRead,&ReadSize,NULL);
-          Info->Description[NeedRead]=0;
-          if(NeedSeek)
-            WINPORT(SetFilePointer)(ArcHandle,NeedSeek,NULL,FILE_CURRENT); //???
+          ReadOverflowable(ArcHandle,NextHeaderSize-3,Info->Description,ARRAYSIZE(Info->Description)-1,&ReadSize);
+          Info->Description[ReadSize]=0;
           break;
         }
 
@@ -381,6 +375,15 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
       }
     } while(NextHeaderSize != 0);
   }
+
+  // Convert 0xFF and '\\' to '/'
+  for (I=0;PathName[I];I++)
+    if (PathName[I]=='\xff' || PathName[I]=='\\')
+       PathName[I]='/';
+
+  for (I=0;FileName[I];I++)
+    if (FileName[I]=='\xff' || FileName[I]=='\\')
+       FileName[I]='/';
 
   Item->CRC32=(DWORD)CRC16;
 
@@ -483,17 +486,17 @@ BOOL WINAPI _export LZH_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Extract without paths */"lha e -a -c -m {-w%%W} %%a @%%lM",
     /*Test                  */"lha t -r2 -a -m {-w%%W} %%a",
 #endif
-    /*Delete                */"lha d -r2 -a -m {-w%%W} %%a @%%lM",
+    /*Delete                */"",
     /*Comment archive       */"",
     /*Comment files         */"",
-    /*Convert to SFX        */"lha s -x1 -a -m {-w%%W} %%a",
+    /*Convert to SFX        */"",
     /*Lock archive          */"",
     /*Protect archive       */"",
     /*Recover archive       */"",
-    /*Add files             */"lha a -a -m {-w%%W} %%a @%%lM",
-    /*Move files            */"lha m -a -m {-w%%W} %%a @%%lM",
-    /*Add files and folders */"lha a -a -r -x -p -m {-w%%W} {%%S} %%a @%%lM",
-    /*Move files and folders*/"lha a -a -r -x -p -m {-w%%W} {%%S} %%a @%%lM",
+    /*Add files             */"",
+    /*Move files            */"",
+    /*Add files and folders */"",
+    /*Move files and folders*/"",
 #ifdef HAVE_LIBARCHIVE
     /*"All files" mask      */""
 #else

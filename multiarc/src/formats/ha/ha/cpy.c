@@ -20,7 +20,7 @@
 ***********************************************************************/
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "ha.h"
 #include "cpy.h"
 #include "haio.h"

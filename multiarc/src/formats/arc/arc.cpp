@@ -358,20 +358,20 @@ BOOL WINAPI _export ARC_GetDefaultCommands(int Type,int Command,char *Dest)
   if (Type==ARC_FORMAT)
   {
     static const char *Commands[]={
-    /*Extract               */"unar %%A %%F",
-    /*Extract without paths */"unar -D %%A %%F",
-    /*Test                  */"",
-    /*Delete                */"",
+    /*Extract               */"arc xo{g%%P} %%A %%FMQ",
+    /*Extract without paths */"arc eo{g%%P} %%A %%FMQ",
+    /*Test                  */"arc t{g%%P} %%A %%FMQ",
+    /*Delete                */"arc d{g%%P} %%A %%FMQ",
     /*Comment archive       */"",
     /*Comment files         */"",
     /*Convert to SFX        */"",
     /*Lock archive          */"",
     /*Protect archive       */"",
     /*Recover archive       */"",
-    /*Add files             */"",
-    /*Move files            */"",
-    /*Add files and folders */"",
-    /*Move files and folders*/"",
+    /*Add files             */"arc a{%%S}{g%%P} %%a %%FMQ",
+    /*Move files            */"arc m{%%S}{g%%P} %%a %%FMQ",
+    /*Add files and folders */"arc a{%%S}{g%%P} %%a %%FMQ",
+    /*Move files and folders*/"arc m{%%S}{g%%P} %%a %%FMQ",
     /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))

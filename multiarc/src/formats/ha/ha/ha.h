@@ -46,7 +46,7 @@ extern int skipemptypath;
 /* Miscalneous routines */
 
 void testsizes(void);
-void *cu_add(unsigned char flags, ...);
+void *cu_add(unsigned long flags, ...);
 void *cu_getmark(void);
 void cu_relax(void *mark);
 void cu_do(void *mark);

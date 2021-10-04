@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <utils.h>
 #include <string.h>
+#include <sudo.h>
 #include <pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
@@ -203,13 +204,25 @@ BOOL WINAPI _export ARC_IsArchive(const char *Name,const unsigned char *Data,int
   if(DataSize > (int)(sizeof(struct RecHeader)+sizeof(struct ARCHeader)))
   {
     const struct ARCHeader *D=(const struct ARCHeader*)(Data+I);
+
     if (D->HeadId == ARCMARK &&
         D->Type <= 11 && //???
-        DataSize >= (int)(D->CompSize+sizeof(struct ARCHeader)))
+        ((D->FileDate >> 5) & 0b1111) >= 1 && ((D->FileDate >> 5) & 0b1111) <= 12 && // month 1 .. 12
+        (D->FileTime & 0b11111) <= 30 && // seconds divided by 2
+        ((D->FileTime >> 5) & 0b111111) <= 59 && // minutes
+        ((D->FileTime >> 11) & 0b11111) <= 23 && // minutes
+        D->CompSize <= 0xffffff00 &&
+        D->OrigSize <= 0xffffff00 &&
+        !!D->CompSize == !!D->OrigSize
+        )
     {
-      SFXSize=I;
-      ArcType=ARC_FORMAT;
-      return(TRUE);
+        struct stat s{};
+        if (sdc_stat(Name, &s) == 0 && off_t(D->CompSize + sizeof(ARCHeader)) <= s.st_size)
+        {
+            SFXSize=I;
+            ArcType=ARC_FORMAT;
+            return(TRUE);
+        }
     }
   }
   return(FALSE);
@@ -345,21 +358,21 @@ BOOL WINAPI _export ARC_GetDefaultCommands(int Type,int Command,char *Dest)
   if (Type==ARC_FORMAT)
   {
     static const char *Commands[]={
-    /*Extract               */"arc32 xo{%%S}{g%%P} %%a %%FMQ",
-    /*Extract without paths */"arc32 eo{%%S}{g%%P} %%a %%FMQ",
-    /*Test                  */"arc32 t{g%%P} %%a %%FMQ",
-    /*Delete                */"arc32 d{g%%P} %%a %%FMQ",
+    /*Extract               */"unar %%A %%F",
+    /*Extract without paths */"unar -D %%A %%F",
+    /*Test                  */"",
+    /*Delete                */"",
     /*Comment archive       */"",
     /*Comment files         */"",
     /*Convert to SFX        */"",
     /*Lock archive          */"",
     /*Protect archive       */"",
     /*Recover archive       */"",
-    /*Add files             */"arc32 a{%%S}{g%%P} %%a %%FMQ",
-    /*Move files            */"arc32 m{%%S}{g%%P} %%a %%FMQ",
-    /*Add files and folders */"arc32 a{%%S}{g%%P} %%a %%FMQ",
-    /*Move files and folders*/"arc32 m{%%S}{g%%P} %%a %%FMQ",
-    /*"All files" mask      */"*.*"
+    /*Add files             */"",
+    /*Move files            */"",
+    /*Add files and folders */"",
+    /*Move files and folders*/"",
+    /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {

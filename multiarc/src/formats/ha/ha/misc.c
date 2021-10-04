@@ -37,7 +37,7 @@ struct culist {
 	} fileinfo;
     } arg;
     struct culist *prev,*next;
-    unsigned char flags;
+    unsigned long flags;
 };
 
 int skipemptypath=0,sloppymatch=1;
@@ -62,7 +62,7 @@ void testsizes(void) {
 	Cleanup routines
 */
 
-void *cu_add(unsigned char flags, ...) {
+void *cu_add(unsigned long flags, ...) {
 
     struct culist *ptr,*mark;
     va_list vaptr;

@@ -152,21 +152,21 @@ BOOL WINAPI _export HA_GetDefaultCommands(int Type,int Command,char *Dest)
   if (Type==0)
   {
     static const char *Commands[]={
-    /*Extract               */"ha xay %%a %%FMQ",
-    /*Extract without paths */"ha eay %%a %%FMQ",
-    /*Test                  */"ha t %%a %%FMQ",
-    /*Delete                */"ha d %%a %%FMQ",
+    /*Extract               */"^ha xay %%a %%FMQ",
+    /*Extract without paths */"^ha eay %%a %%FMQ",
+    /*Test                  */"^ha t %%a %%FMQ",
+    /*Delete                */"^ha d %%a %%FMQ",
     /*Comment archive       */"",
     /*Comment files         */"",
     /*Convert to SFX        */"",
     /*Lock archive          */"",
     /*Protect archive       */"",
     /*Recover archive       */"",
-    /*Add files             */"ha as2{%%S} %%a %%FQ",
-    /*Move files            */"ha asm2{%%S} %%a %%FQ",
-    /*Add files and folders */"ha asr2{%%S} %%a %%FMQ",
-    /*Move files and folders*/"ha asmr2{%%S} %%a %%FMQ",
-    /*"All files" mask      */"*.*"
+    /*Add files             */"",
+    /*Move files            */"",
+    /*Add files and folders */"",
+    /*Move files and folders*/"",
+    /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {

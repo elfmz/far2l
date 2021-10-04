@@ -120,6 +120,19 @@ set(SOURCES
         src/formats/7z/C/7zArcIn.c
         src/formats/7z/C/Bra.c
         src/formats/7z/C/Blake2s.c
+
+        src/formats/ha/ha/acoder.c
+        src/formats/ha/ha/archive.c
+        src/formats/ha/ha/asc.c
+        src/formats/ha/ha/cpy.c
+        src/formats/ha/ha/error.c
+        src/formats/ha/ha/ha.c
+        src/formats/ha/ha/haio.c
+        src/formats/ha/ha/hsc.c
+        src/formats/ha/ha/info.c
+        src/formats/ha/ha/machine.c
+        src/formats/ha/ha/misc.c
+        src/formats/ha/ha/swdict.c
 )
 
 if(PCRE_FOUND)

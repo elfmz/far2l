@@ -482,9 +482,9 @@ BOOL WINAPI _export LZH_GetDefaultCommands(int Type,int Command,char *Dest)
     /*Extract without paths */"^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
     /*Test                  */"^libarch t %%A {-cs=%%T}",
 #else
-    /*Extract               */"lha x -a -c -d -m {-w%%W} %%a @%%lM",
-    /*Extract without paths */"lha e -a -c -m {-w%%W} %%a @%%lM",
-    /*Test                  */"lha t -r2 -a -m {-w%%W} %%a",
+    /*Extract               */"lhasa x -a -c -d -m {-w%%W} %%a @%%lM",
+    /*Extract without paths */"lhasa e -a -c -m {-w%%W} %%a @%%lM",
+    /*Test                  */"lhasa t -r2 -a -m {-w%%W} %%a",
 #endif
     /*Delete                */"",
     /*Comment archive       */"",

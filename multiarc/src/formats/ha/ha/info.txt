@@ -1,0 +1,93 @@
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+ About HA
+
+     HA is a small file archiver utility. It's main goal is to offer 
+     maximum compression without fancy addons. 
+
+ Commands of MSDOS version
+
+     General form of command line for HA is :
+
+       ha <command string> [archive [search pattern list]]
+
+     Command string starts with command character and includes optional
+     switch characters.
+
+     Available commands are:
+
+     a[sdqemr012]  Add files matching search pattern to archive.
+
+     e[aqty]       Extract files matching search pattern from archive.
+
+     x[aqty]       Extract files matching search pattern from archive
+                   using path information stored in archive.
+
+     l[f]          List files currently in archive.
+     
+     d[q]          Delete files matching search pattern from archive. 
+                   If archive does not contain any files after deletion 
+                   it is removed.
+
+     f[sdqemr012]  Freshen files in archive. All files matching search 
+                   pattern and newer than version already in archive 
+                   are updated to archive.
+
+     u[sdqemr012]  Update files to archive. All files matching search 
+                   pattern that are newer than version already in 
+                   archive or are not yet in archive are updated to archive.
+ 
+     t[q]          Test files in archive.
+
+     Available switches are:
+
+     0,1,2       Try compression method #. More than one can be specified.
+                 Methods are:
+                   0-CPY  Simple copying of files.    
+                   1-ASC  Default method using sliding window dictionary 
+                          followed by arithmetic coder. Offers quite good
+                          compression on wide variety of file types.
+                   2-HSC  Compression method based on finite context model 
+                          and arithmetic coder. Quite slow for binary data,
+                          but offers very good compression especially for 
+                          longer text files.
+
+     y           Assume answer yes on all questions.
+
+     t           Touch files when extracting. Sets file times to current 
+                 machine time.
+
+     r           Recurse through subdirectories while searching for files
+                 matching search pattern.
+
+     f           Full listing of stored file information.
+
+     m           Move files when archiving. Files are removed from disk
+                 after they are successfully written to archive.
+
+     a           Set system specific file attributes when extracting files.
+
+     s           Find special files when archiving.
+
+     e           Do not store pathname information.
+
+     q           Quiet operation.
+     
+     d           Make separate entries for directories. Saves information
+                 about empty directories, directory attributes etc. in
+		 archive.
+ 

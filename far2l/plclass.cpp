@@ -66,12 +66,21 @@ bool Plugin::OpenModule()
 	}
 	else
 	{
+		std::wstring strerr;
+		const char *dle = dlerror();
+		if (dle) {
+			fprintf(stderr, "dlerror: %s\n", dle);
+			const char *colon = strchr(dle, ':');
+			MB2Wide(colon ? colon + 1 : dle, strerr);
+		}
+
 		// avoid recurring and even recursive error message
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
 		if (!Opt.LoadPlug.SilentLoadPlugin) //убрать в PluginSet
 		{
 			SetMessageHelp(L"ErrLoadPlugin module");
-			Message(MSG_WARNING|MSG_ERRORTYPE, 1, MSG(MError), MSG(MPlgLoadPluginError), m_strModuleName, MSG(MOk));
+			//|MSG_ERRORTYPE
+			Message(MSG_WARNING, 1, MSG(MError), strerr.c_str(), MSG(MPlgLoadPluginError), m_strModuleName, MSG(MOk));
 		}
 	}
 

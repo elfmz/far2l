@@ -1,0 +1,50 @@
+HA is an archiver which I released in january 1993 as version 0.98.
+After that I had plans to improve speed, archive handling etc. which
+would have required total rewrite of the code. For that I unfortunately
+could not find time. Because there has been quite considerably interest
+for internals of HA (especially for the HSC compression method) I
+decided to make a source level release from my current test version
+(0.999 beta) and place it under GNU General Public License. The sources
+for this version are not very consistent or clean, but everything should
+work.
+
+There are several improvements which should be made before this could be
+called version 1.0. Some of the most obvious of these are: 
+- Compression methods should be coded in assembler for PC and using more
+  efficient data structures for 32 bit platforms. Current version does
+  some things only to overcome 64kB segments of 8086. 
+- UNIX port has still some problems and is missing some things (for example 
+  a grouping operator in wildcard matches). 
+- File handling is far from optimum.  
+- Archive handling is not too clever either. 
+- Testing should be done more thoroughly as there are many special cases 
+  in compression routines which get used very rarely. 
+- Documentation of code and algorithms is totally missing.
+
+This archive (ha0999.zip) contains this readme, MSDOS executable ha.exe
+and source files for HA 0.999beta. Ha.exe is NOT compiled directly from
+included sources. Some critical parts of it were compiled from hand
+optimized versions of compiler output. It is somewhat faster than "pure
+C" version. 
+
+MSDOS sources are for Borland C 4.0 but older versions of bcc should
+work. Makefile needs some editing as some paths are hardcoded in it.
+UNIX sources are not very generic. I have only tested this using Linux
+on PC and AIX on IBM6000. Only compiler and make utility that I have
+tested are GCC and GNU MAKE.
+
+Porting HA should be fairly easy as all machine specific code is in
+machine.h and machine.c under machine specific directories. Md_funcs.txt
+documents these functions. Examples can be found from pc and nix
+directories.
+
+Email address where I can be reached is "harri.hirvola@vaisala.infonet.com".
+My email addresses have not been very stable and I would not be very 
+surprised if this one too is only valid for some months...
+
+	Harri Hirvola
+
+
+2021	version 0.9999
+All encoding code stripped out, left only unpacking capabilities.
+	elfmz

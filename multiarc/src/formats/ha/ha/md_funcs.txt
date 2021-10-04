@@ -1,0 +1,97 @@
+HA MACHINE SPECIFIC FUNCTIONS (machine.c/machine.h)
+
+void md_init(void) 
+	Set up machine specific signal handling etc. 
+
+char *md_strcase(char *s)
+	Set case of string to internal format and return pointer to string.  
+
+char *md_arcname(char *name_req) 
+	Construct archive name from requested name name_req and 
+	return pointer to it.
+
+void md_gethdr(int len) 
+	Read len bytes of machine specific header information from arcfile.
+
+void md_puthdr(void) 
+	Write machine specific header information to arcfile. 
+
+int md_filetype(char *path,char *name)
+	Return file type (T_SKIP, T_DIR, T_REGULAR or T_SPECIAL) for 
+	specified file and make it current file. This function is 
+	responsible of skiping over archive file when packing. 
+
+int md_newfile(void) 
+	Setup machine specific header information for curren file 
+	and return length of header.
+
+int md_special(unsigned char **sdata)
+	Point sdata to any data to be saved for special file (if any), 
+	and return lenght of the data.
+
+U32B md_curfilesize(void) 
+	Return file size for current file.
+
+U32B md_curfiletime(void) 
+	Returns file time for current file
+
+int md_mkspecial(char *ofname,unsigned sdlen,unsigned char *sdata)
+	Make special file ofname using current machine specific header 
+	and sdlen bytes of information in sdata. 
+	Return zero on failure nozero on success.
+
+void md_setft(char *file,U32B time) 
+	Set filetime for file to time.
+
+void md_setfattrs(char *file) 
+	Set attributes (from machine specific heador) of file 
+	if useattr is nonzero. 
+
+U32B md_systime() 
+	get system time.
+
+void md_listhdr(void) 
+	print feader for file attributes to stdout.
+
+void md_listdat(void) 
+	print attribute information from machine specific header.
+
+char *md_timestring(unsigned long t) 
+	Return pointer to string representin "unix time" t.
+
+void md_truncfile(int fh, U32B len) 
+	Truncate file pointed by handle fh to length len.
+
+char *md_tohapath(char *mdpath) 
+	Construct internal representation for path mdpath.
+
+char *md_tomdpath(char *hapath) 
+	Construct machine representation for path hapath. 
+
+char *md_strippath(char *mdfullpath) 
+	Return path part of mdfullpath.
+
+char *md_stripname(char *mdfullpath) 
+	Return name part of mdfullpath. 
+
+char *md_pconcat(int delim, char *head, char *tail) 
+	Construct path from head, tail. This function is supposed to malloc
+	space for path. other parts of HA call free with returned pointer !
+
+int md_namecmp(char *pat, char *cmp) 
+	Return nonzero if pattern pat matches filename cmp using
+	wildcards in machine specific manner.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

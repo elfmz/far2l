@@ -72,6 +72,10 @@ Files: multiarc/src/formats/rar/unrar/*
 Copyright: 2009-2020 Alexander L. Roshal
 License: UnRAR
 
+Files: multiarc/src/formats/ha/ha/*
+Copyright: 1993-1993 Harri Hirvola
+License: GPL-2
+
 Files: multiarc/src/formats/7z/C/* multiarc/src/formats/7z/7zMain.c
 Copyright: 2013-2019 Igor Pavlov
 License: public-domain

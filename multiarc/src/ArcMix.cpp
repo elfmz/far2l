@@ -104,6 +104,7 @@ const char *GetMsg(int MsgId)
 
 int rar_main(int argc, char *argv[]);
 extern "C" int sevenz_main(int argc, char *argv[]);
+extern "C" int ha_main(int argc, char *argv[]);
 
 #ifdef HAVE_LIBARCHIVE
 extern "C" int libarch_main(int numargs, char *args[]);
@@ -119,6 +120,8 @@ SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 		r = rar_main(argc, &argv[0]);
 	} else if (strcmp(argv[0], "7z")==0) {
 		r = sevenz_main(argc, &argv[0]);
+	} else if (strcmp(argv[0], "ha")==0) {
+		r = ha_main(argc, &argv[0]);
 #ifdef HAVE_LIBARCHIVE
 	} else if (strcmp(argv[0], "libarch")==0) {
 		r = libarch_main(argc, &argv[0]);

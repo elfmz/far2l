@@ -335,7 +335,10 @@ int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   Info->DictSize=32;
 
   Item->CRC32=ArjHeader.CRC;
-  Item->FindData.dwFileAttributes=ArjHeader.AccessMode & 0x3f;
+  if (ArjHeader.HostOS == 2 || ArjHeader.HostOS == 4)
+    Item->FindData.dwUnixMode=ArjHeader.AccessMode & 0777;
+  else
+    Item->FindData.dwFileAttributes=ArjHeader.AccessMode & 0x3f;
   Item->FindData.nPhysicalSize=ArjHeader.PackSize;
   Item->FindData.nFileSize=ArjHeader.UnpSize;
 

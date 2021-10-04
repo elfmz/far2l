@@ -18,7 +18,7 @@
 ************************************************************************
 	HA PC/bcc specific include file
 ***********************************************************************/
-
+#pragma once
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>

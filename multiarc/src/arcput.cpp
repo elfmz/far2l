@@ -420,7 +420,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   if (ArcPluginNumber==-1)
   {
     char DefaultFormat[100];
-    KeyFileReadSection(INI_LOCATION,INI_SECTION).GetChars(DefaultFormat,sizeof(DefaultFormat),"DefaultFormat","");
+    KeyFileReadSection(INI_LOCATION,INI_SECTION).GetChars(DefaultFormat,sizeof(DefaultFormat),"DefaultFormat","TARGZ");
     if (!FormatToPlugin(DefaultFormat,ArcPluginNumber,ArcPluginType))
     {
       ArcPluginNumber=ArcPluginType=0;

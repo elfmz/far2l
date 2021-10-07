@@ -102,6 +102,12 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
 		} else {
 			fprintf(stderr, "Extracted: '%s' -> '%s'\n",
 				src_path.c_str(), extract_path.c_str());
+
+		    struct stat s;
+			if (wanteds.size() == 1 && wanteds[0] == parts
+			  && stat(extract_path.c_str(), &s) == 0 && !S_ISDIR(s.st_mode)) {
+				break; // nothing to search more here
+			}
 		}
 	}
 

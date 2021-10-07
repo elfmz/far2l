@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <sudo.h>
 #include <string>
+#include <vector>
 #include <utils.h>
 #include <KeyFileHelper.h>
 #include <pluginold.hpp>
@@ -129,8 +130,7 @@ class PluginClass
   private:
     char ArcName[NM];
     char CurDir[NM];
-    struct PluginPanelItem *ArcData;
-    int ArcDataCount;
+    std::vector<PluginPanelItem> ArcData;
     struct stat ArcStat {};
     int ArcPluginNumber;
     int ArcPluginType;

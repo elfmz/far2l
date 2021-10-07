@@ -3,9 +3,7 @@
 
 extern std::string gMultiArcPluginPath;
 
-typedef int (__cdecl *FCMP)(const void *, const void *);
-
-bool ArcPlugins::AddPluginItem(const char *name,
+void ArcPlugins::AddPluginItem(
 				PLUGINISARCHIVE pIsArchive,
 				PLUGINOPENARCHIVE pOpenArchive,
 				PLUGINGETARCITEM pGetArcItem,
@@ -16,8 +14,9 @@ bool ArcPlugins::AddPluginItem(const char *name,
 				PLUGINSETFARINFO pSetFarInfo,
 				PLUGINGETSFXPOS pGetSFXPos)
 {
-	PluginItem item{};
-	strcpy(item.ModuleName, name); 
+	PluginsData.emplace_back();
+	PluginItem &item = PluginsData.back();
+
 	item.pIsArchive = pIsArchive; 
 	item.pOpenArchive = pOpenArchive; 
 	item.pGetArcItem = pGetArcItem; 
@@ -39,84 +38,66 @@ bool ArcPlugins::AddPluginItem(const char *name,
 		item.Info.FSF=&item.FSF;
 		pSetFarInfo(&item.Info);
 	}
-
-	struct PluginItem *NewPluginsData=(struct PluginItem *)realloc(PluginsData,
-				sizeof(struct PluginItem)*(PluginsCount+1));
-	if (NewPluginsData==NULL) {
-		return false;
-	}
-	PluginsData=NewPluginsData;
-	memcpy(&PluginsData[PluginsCount], &item, sizeof(struct PluginItem));
-	PluginsCount++;
-	return true;
 }
 
 
 #include "formats/all.h" //use enum_all.sh to update it 
 
-ArcPlugins::ArcPlugins(const char *ModuleName) : PluginsData(NULL), PluginsCount(0)
+ArcPlugins::ArcPlugins(const char *ModuleName)
 {
-	//AddPluginItem("", _IsArchive, _OpenArchive, _GetArcItem, _LoadFormatModule, 
+	//AddPluginItem(_IsArchive, _OpenArchive, _GetArcItem, _LoadFormatModule, 
 	//	_CloseArchive, _GetFormatName, _GetDefaultCommands, _SetFarInfo, _GetSFXPos);
-	
-	AddPluginItem("RAR", RAR_IsArchive, RAR_OpenArchive, RAR_GetArcItem, NULL, 
-		RAR_CloseArchive, RAR_GetFormatName, RAR_GetDefaultCommands, RAR_SetFarInfo, RAR_GetSFXPos);
 
-	AddPluginItem("HA", HA_IsArchive, HA_OpenArchive, HA_GetArcItem, NULL, 
-		HA_CloseArchive, HA_GetFormatName, HA_GetDefaultCommands, HA_SetFarInfo, NULL);
-
-#ifdef HAVE_PCRE
-	AddPluginItem("CUSTOM", CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule, 
-		CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo, CUSTOM_GetSFXPos);
-#endif
-
-	AddPluginItem("ARJ", ARJ_IsArchive, ARJ_OpenArchive, ARJ_GetArcItem, NULL, 
-		ARJ_CloseArchive, ARJ_GetFormatName, ARJ_GetDefaultCommands, NULL, ARJ_GetSFXPos);
-
-	AddPluginItem("ACE", ACE_IsArchive, ACE_OpenArchive, ACE_GetArcItem, NULL, 
-		ACE_CloseArchive, ACE_GetFormatName, ACE_GetDefaultCommands, NULL, ACE_GetSFXPos);
-
-	AddPluginItem("ARC", ARC_IsArchive, ARC_OpenArchive, ARC_GetArcItem, NULL, 
-		ARC_CloseArchive, ARC_GetFormatName, ARC_GetDefaultCommands, NULL, ARC_GetSFXPos);
-
-	AddPluginItem("ZIP", ZIP_IsArchive, ZIP_OpenArchive, ZIP_GetArcItem, NULL, 
-		ZIP_CloseArchive, ZIP_GetFormatName, ZIP_GetDefaultCommands, NULL, ZIP_GetSFXPos);
-		
-	AddPluginItem("LZH", LZH_IsArchive, LZH_OpenArchive, LZH_GetArcItem, NULL, 
-		LZH_CloseArchive, LZH_GetFormatName, LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
+	// following initialization defines order in which IsArchive invoked, so most-likely formats should be first
 
 #ifndef HAVE_LIBARCHIVE
-	AddPluginItem("CAB", CAB_IsArchive, CAB_OpenArchive, CAB_GetArcItem, NULL, 
-		CAB_CloseArchive, CAB_GetFormatName, CAB_GetDefaultCommands, NULL, CAB_GetSFXPos);
-
-	AddPluginItem("TARGZ", TARGZ_IsArchive, TARGZ_OpenArchive, TARGZ_GetArcItem, NULL, 
+	AddPluginItem(TARGZ_IsArchive, TARGZ_OpenArchive, TARGZ_GetArcItem, NULL,
 		TARGZ_CloseArchive, TARGZ_GetFormatName, TARGZ_GetDefaultCommands, TARGZ_SetFarInfo, TARGZ_GetSFXPos);
 #endif
 
-	AddPluginItem("7z", SEVENZ_IsArchive, SEVENZ_OpenArchive, SEVENZ_GetArcItem, NULL, 
+	AddPluginItem(RAR_IsArchive, RAR_OpenArchive, RAR_GetArcItem, NULL,
+		RAR_CloseArchive, RAR_GetFormatName, RAR_GetDefaultCommands, RAR_SetFarInfo, RAR_GetSFXPos);
+
+	AddPluginItem(ZIP_IsArchive, ZIP_OpenArchive, ZIP_GetArcItem, NULL,
+		ZIP_CloseArchive, ZIP_GetFormatName, ZIP_GetDefaultCommands, NULL, ZIP_GetSFXPos);
+
+	AddPluginItem(SEVENZ_IsArchive, SEVENZ_OpenArchive, SEVENZ_GetArcItem, NULL,
 		SEVENZ_CloseArchive, SEVENZ_GetFormatName, SEVENZ_GetDefaultCommands, NULL, NULL);
-		
-	FSF.qsort(PluginsData,PluginsCount,sizeof(struct PluginItem),(FCMP)CompareFmtModules);
+
+	AddPluginItem(ACE_IsArchive, ACE_OpenArchive, ACE_GetArcItem, NULL,
+		ACE_CloseArchive, ACE_GetFormatName, ACE_GetDefaultCommands, NULL, ACE_GetSFXPos);
+
+	AddPluginItem(ARC_IsArchive, ARC_OpenArchive, ARC_GetArcItem, NULL,
+		ARC_CloseArchive, ARC_GetFormatName, ARC_GetDefaultCommands, NULL, ARC_GetSFXPos);
+
+	AddPluginItem(ARJ_IsArchive, ARJ_OpenArchive, ARJ_GetArcItem, NULL,
+		ARJ_CloseArchive, ARJ_GetFormatName, ARJ_GetDefaultCommands, NULL, ARJ_GetSFXPos);
+
+#ifndef HAVE_LIBARCHIVE
+	AddPluginItem(CAB_IsArchive, CAB_OpenArchive, CAB_GetArcItem, NULL,
+		CAB_CloseArchive, CAB_GetFormatName, CAB_GetDefaultCommands, NULL, CAB_GetSFXPos);
+#endif
+
+	AddPluginItem(HA_IsArchive, HA_OpenArchive, HA_GetArcItem, NULL,
+		HA_CloseArchive, HA_GetFormatName, HA_GetDefaultCommands, HA_SetFarInfo, NULL);
+
+	AddPluginItem(LZH_IsArchive, LZH_OpenArchive, LZH_GetArcItem, NULL,
+		LZH_CloseArchive, LZH_GetFormatName, LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
+
+#ifdef HAVE_PCRE
+	AddPluginItem(CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule,
+		CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo, CUSTOM_GetSFXPos);
+#endif
 
 #ifdef HAVE_LIBARCHIVE
 	// must be last cuz recognizes essentially most of above formats, but not handles them full-featurable
-	AddPluginItem("LIBARCH", LIBARCH_IsArchive, LIBARCH_OpenArchive, LIBARCH_GetArcItem, NULL, 
+	AddPluginItem(LIBARCH_IsArchive, LIBARCH_OpenArchive, LIBARCH_GetArcItem, NULL,
 		LIBARCH_CloseArchive, LIBARCH_GetFormatName, LIBARCH_GetDefaultCommands, NULL, NULL);
 #endif
 }
 
-int __cdecl ArcPlugins::CompareFmtModules(const void *elem1, const void *elem2)
-{
-  char *left = (((struct PluginItem *)elem1)->ModuleName);
-  char *right = (((struct PluginItem *)elem2)->ModuleName);
-
-  return strcmp(left,right);
-}
-
 ArcPlugins::~ArcPlugins()
 {
-  if(PluginsData)
-    free(PluginsData);
 }
 
 int ArcPlugins::IsArchive(const char *Name,const unsigned char *Data,int DataSize)
@@ -124,7 +105,7 @@ int ArcPlugins::IsArchive(const char *Name,const unsigned char *Data,int DataSiz
   DWORD MinSFXSize = 0xffffffff;
   int MinSFXSizeI = -1;
 
-  for (int I=0; I < PluginsCount; I++)
+  for (size_t I=0; I < PluginsData.size(); I++)
   {
     DWORD CurSFXSize = 0;
     if (IsArchive(I, Name, Data, DataSize, &CurSFXSize))
@@ -143,12 +124,12 @@ int ArcPlugins::IsArchive(const char *Name,const unsigned char *Data,int DataSiz
 
 BOOL ArcPlugins::IsArchive(int ArcPluginNumber, const char *Name,const unsigned char *Data,int DataSize, DWORD* SFXSize)
 {
-  struct PluginItem *CurPluginsData=PluginsData+ArcPluginNumber;
-  if (CurPluginsData->pIsArchive &&
-    CurPluginsData->pIsArchive(Name,Data,DataSize))
+  struct PluginItem &CurPluginsData=PluginsData[ArcPluginNumber];
+  if (CurPluginsData.pIsArchive &&
+    CurPluginsData.pIsArchive(Name,Data,DataSize))
   {
-      if(CurPluginsData->pGetSFXPos)
-        *SFXSize=CurPluginsData->pGetSFXPos();
+      if(CurPluginsData.pGetSFXPos)
+        *SFXSize=CurPluginsData.pGetSFXPos();
       else
         *SFXSize=0;
     return TRUE;
@@ -159,7 +140,7 @@ BOOL ArcPlugins::IsArchive(int ArcPluginNumber, const char *Name,const unsigned 
 BOOL ArcPlugins::OpenArchive(int PluginNumber, const char *Name,int *Type,bool Silent)
 {
   *Type=0; //$ AA 12.11.2001
-  if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pOpenArchive)
+  if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pOpenArchive)
     return PluginsData[PluginNumber].pOpenArchive(Name,Type,Silent);
   return FALSE;
 }
@@ -167,7 +148,7 @@ BOOL ArcPlugins::OpenArchive(int PluginNumber, const char *Name,int *Type,bool S
 int ArcPlugins::GetArcItem(int PluginNumber,struct PluginPanelItem *Item,
                            struct ArcItemInfo *Info)
 {
-  if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pGetArcItem)
+  if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetArcItem)
     return PluginsData[PluginNumber].pGetArcItem(Item,Info);
   return FALSE;
 }
@@ -175,7 +156,7 @@ int ArcPlugins::GetArcItem(int PluginNumber,struct PluginPanelItem *Item,
 
 void ArcPlugins::CloseArchive(int PluginNumber,struct ArcInfo *Info)
 {
-  if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pCloseArchive)
+  if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pCloseArchive)
     PluginsData[PluginNumber].pCloseArchive(Info);
 }
 
@@ -184,7 +165,7 @@ BOOL ArcPlugins::GetFormatName(int PluginNumber,int Type,char *FormatName,
                                char *DefaultExt)
 {
   *FormatName=0;
-  if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pGetFormatName)
+  if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetFormatName)
     return PluginsData[PluginNumber].pGetFormatName(Type,FormatName,DefaultExt);
   return FALSE;
 }
@@ -194,7 +175,7 @@ BOOL ArcPlugins::GetDefaultCommands(int PluginNumber,int Type,int Command,
                                     char *Dest)
 {
   *Dest=0;
-  if ((DWORD)PluginNumber < (DWORD)PluginsCount && PluginsData[PluginNumber].pGetDefaultCommands)
+  if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetDefaultCommands)
     return PluginsData[PluginNumber].pGetDefaultCommands(Type,Command,Dest);
   return FALSE;
 }

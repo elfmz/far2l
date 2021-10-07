@@ -123,12 +123,15 @@ else()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    find_program(M4_PROG NAMES gm4)
+    set(M4_NAME gm4)
 else()
-    find_program(M4_PROG NAMES m4)
+    set(M4_NAME m4)
 endif()
+
+find_program(M4_PROG NAMES ${M4_NAME})
+
 if(NOT M4_PROG)
-    message(FATAL_ERROR "${ColorRed}gawk not found - please install it${ColorNormal}")
+    message(FATAL_ERROR "${ColorRed}${M4_NAME} not found - please install it${ColorNormal}")
 endif ()
 set(M4 ${M4_PROG} -P "-DARCH=${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}" "-DMAJOR=${VERSION_MAJOR}" "-DMINOR=${VERSION_MINOR}" "-DPATCH=${VERSION_PATCH}")
 

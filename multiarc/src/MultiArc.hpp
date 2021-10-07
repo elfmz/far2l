@@ -74,7 +74,6 @@ typedef DWORD (WINAPI *PLUGINGETSFXPOS)(void);
 
 struct PluginItem
 {
-  char ModuleName[NM];
   DWORD Flags;
   struct PluginStartupInfo Info;
   struct FarStandardFunctions FSF;
@@ -94,10 +93,9 @@ struct PluginItem
 class ArcPlugins
 {
   private:
-    struct PluginItem *PluginsData;
-    int PluginsCount;
+    std::vector<PluginItem> PluginsData;
 
-	bool AddPluginItem(const char *name,
+	void AddPluginItem(
 				PLUGINISARCHIVE pIsArchive,
 				PLUGINOPENARCHIVE pOpenArchive,
 				PLUGINGETARCITEM pGetArcItem,
@@ -119,7 +117,7 @@ class ArcPlugins
     void CloseArchive(int PluginNumber,struct ArcInfo *Info);
     BOOL GetFormatName(int PluginNumber,int Type,char *FormatName,char *DefaultExt);
     BOOL GetDefaultCommands(int PluginNumber,int Type,int Command,char *Dest);
-    int  FmtCount() {return PluginsCount;}
+    int  FmtCount() {return (int)PluginsData.size();}
     static int WINAPI LoadFmtModules(const WIN32_FIND_DATA *FData,const char *FullName,ArcPlugins *plugins);
     static int __cdecl CompareFmtModules(const void *elem1, const void *elem2);
 

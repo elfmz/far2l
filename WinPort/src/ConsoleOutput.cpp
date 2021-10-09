@@ -176,13 +176,6 @@ void ConsoleOutput::SetTitle(const WCHAR *title)
 		_backend->OnConsoleOutputTitleChanged();
 }
 
-std::wstring ConsoleOutput::GetTitle()
-{
-	std::lock_guard<std::mutex> lock(_mutex);
-	return _title;
-}
-
-
 DWORD ConsoleOutput::GetMode()
 {
 	std::lock_guard<std::mutex> lock(_mutex);
@@ -595,14 +588,20 @@ bool ConsoleOutput::SetFKeyTitles(const CHAR **titles)
 	return (_backend && _backend->OnConsoleSetFKeyTitles(titles));
 }
 
-CHAR_INFO *ConsoleOutput::DirectLineAccess_Start(size_t line_index, unsigned int &width)
+const WCHAR *ConsoleOutput::LockedGetTitle()
+{
+	_mutex.lock();
+	return _title.c_str();
+}
+
+CHAR_INFO *ConsoleOutput::LockedDirectLineAccess(size_t line_index, unsigned int &width)
 {
 	_mutex.lock();
 	width = _buf.GetWidth();
 	return _buf.DirectLineAccess(line_index);
 }
 
-void ConsoleOutput::DirectLineAccess_Finish()
+void ConsoleOutput::Unlock()
 {
 	_mutex.unlock();
 }

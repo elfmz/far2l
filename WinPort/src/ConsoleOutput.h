@@ -51,8 +51,9 @@ class ConsoleOutput : public IConsoleOutput
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 
-	virtual CHAR_INFO *DirectLineAccess_Start(size_t line_index, unsigned int &width);
-	virtual void DirectLineAccess_Finish();
+	virtual const WCHAR *LockedGetTitle();
+	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width);
+	virtual void Unlock();
 
 public:
 	ConsoleOutput();
@@ -73,7 +74,6 @@ public:
 
 	virtual void SetWindowInfo(bool absolute, const SMALL_RECT &rect);
 	virtual void SetTitle(const WCHAR *title);
-	virtual std::wstring GetTitle();
 
 	virtual DWORD GetMode();
 	virtual void SetMode(DWORD mode);

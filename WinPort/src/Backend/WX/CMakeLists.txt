@@ -92,5 +92,3 @@ set_target_properties(far2l_gui
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}"
     PREFIX ""
     SUFFIX ".so")
-
-target_compile_definitions(far2l_gui PUBLIC -DABI_HASH=${ABI_HASH})

@@ -285,8 +285,10 @@ private:
 
 extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
-	g_winport_con_out = new ConsoleOutput;
-	g_winport_con_in = new ConsoleInput;
+	std::unique_ptr<ConsoleOutput> winport_con_out(new ConsoleOutput);
+	std::unique_ptr<ConsoleInput> winport_con_in(new ConsoleInput);
+	g_winport_con_out = winport_con_out.get();
+	g_winport_con_in = winport_con_in.get();
 	ArgOptions arg_opts;
 
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -383,19 +385,20 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 		void *gui_so = dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
 		if (gui_so) {
-			typedef bool (*WinPortMainGUI_t)(WinPortMainGUI_Arg *a);
-			WinPortMainGUI_t WinPortMainGUI_p = (WinPortMainGUI_t)dlsym(gui_so, "WinPortMainGUI");
-			if (WinPortMainGUI_p) {
+			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
+			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
+			if (WinPortMainBackend_p) {
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);
-				WinPortMainGUI_Arg a{MAKE_STR(ABI_HASH), argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in};
-				if (!WinPortMainGUI_p(&a) ) {
+				WinPortMainBackendArg a{FAR2L_BACKEND_ABI_VERSION,
+					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in};
+				if (!WinPortMainBackend_p(&a) ) {
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;
 				}
 			} else {
-				fprintf(stderr, "Cannot find WinPortMainGUI\n");
+				fprintf(stderr, "Cannot find backend entry point\n");
 				arg_opts.tty = true;
 			}
 		} else {
@@ -460,10 +463,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 	}
 
-	delete g_winport_con_out;
 	g_winport_con_out = nullptr;
-
-	delete g_winport_con_in;
 	g_winport_con_in = nullptr;
 
 	return result;

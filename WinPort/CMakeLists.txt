@@ -53,5 +53,3 @@ endif()
 if(CMAKE_THREAD_LIBS_INIT)
   target_link_libraries(WinPort "${CMAKE_THREAD_LIBS_INIT}")
 endif()
-
-target_compile_definitions(WinPort PUBLIC -DABI_HASH=${ABI_HASH})

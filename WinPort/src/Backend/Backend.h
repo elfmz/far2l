@@ -1,12 +1,21 @@
 #pragma once
 #include "WinCompat.h"
-#include <memory>
+#include <string>
+
+/// This file defines all interfacing between console API and rendering backends.
+
+/// Increment FAR2L_BACKEND_ABI_VERSION each time when:
+///   Something changed in code below.
+///   "WinCompat.h" changed in a way affecting code below.
+///   Behavior of backend's code changed in incompatible way.
+#define FAR2L_BACKEND_ABI_VERSION	0x01
 
 class IConsoleOutputBackend
 {
-public:
+protected:
 	virtual ~IConsoleOutputBackend() {};
 
+public:
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count) = 0;
 	virtual void OnConsoleOutputResized() = 0;
 	virtual void OnConsoleOutputTitleChanged() = 0;
@@ -25,9 +34,11 @@ public:
 
 class IClipboardBackend
 {
-public:
+protected:
+	friend class ClipboardBackendSetter;
 	virtual ~IClipboardBackend() {};
 
+public:
 	virtual bool OnClipboardOpen() = 0;
 	virtual void OnClipboardClose() = 0;
 	virtual void OnClipboardEmpty() = 0;
@@ -37,11 +48,11 @@ public:
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat) = 0;
 };
 
-std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<IClipboardBackend> &clipboard_backend);
+IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend);
 
 class ClipboardBackendSetter
 {
-	std::shared_ptr<IClipboardBackend> _prev_cb;
+	IClipboardBackend *_prev_cb = nullptr;
 	bool _is_set = false;
 
 public:
@@ -50,18 +61,24 @@ public:
 	template <class BACKEND_T, typename... ArgsT>
 		inline void Set(ArgsT... args)
 	{
-		std::shared_ptr<IClipboardBackend> cb = std::make_shared<BACKEND_T>(args...);
-		std::shared_ptr<IClipboardBackend> prev_cb = WinPortClipboard_SetBackend(cb);
+		IClipboardBackend *cb = new BACKEND_T(args...);
+		IClipboardBackend *prev_cb = WinPortClipboard_SetBackend(cb);
 		if (!_is_set) {
 			_prev_cb = prev_cb;
 			_is_set = true;
+
+		} else {
+			delete prev_cb;
 		}
 	}
 
 	inline ~ClipboardBackendSetter()
 	{
 		if (_is_set) {
-			WinPortClipboard_SetBackend(_prev_cb);
+			IClipboardBackend *cb = WinPortClipboard_SetBackend(_prev_cb);
+			if (cb != _prev_cb) {
+				delete cb;
+			}
 		}
 	}
 };
@@ -70,9 +87,10 @@ public:
 
 class IConsoleInput
 {
-public:
+protected:
 	virtual ~IConsoleInput() {};
 
+public:
 	virtual void Enqueue(const INPUT_RECORD *data, DWORD size) = 0;
 	virtual DWORD Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0) = 0;
 	virtual DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0) = 0;
@@ -109,13 +127,16 @@ class ConsoleInputPriority
 
 class IConsoleOutput
 {
+protected:
+	virtual ~IConsoleOutput() {};
+
 	friend class DirectLineAccess;
 
-	virtual CHAR_INFO *DirectLineAccess_Start(size_t line_index, unsigned int &width) = 0;
-	virtual void DirectLineAccess_Finish() = 0;
+	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width) = 0;
+	virtual const wchar_t *LockedGetTitle() = 0;
+	virtual void Unlock() = 0;
 
 public:
-	virtual ~IConsoleOutput() {};
 	virtual void SetBackend(IConsoleOutputBackend *listener) = 0;
 
 	virtual void SetAttributes(USHORT attributes) = 0;
@@ -133,7 +154,6 @@ public:
 
 	virtual void SetWindowInfo(bool absolute, const SMALL_RECT &rect) = 0;
 	virtual void SetTitle(const WCHAR *title) = 0;
-	virtual std::wstring GetTitle() = 0;
 
 	virtual DWORD GetMode() = 0;
 	virtual void SetMode(DWORD mode) = 0;
@@ -163,6 +183,13 @@ public:
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
 	virtual bool SetFKeyTitles(const CHAR **titles) = 0;
 
+	inline std::wstring GetTitle()
+	{
+		std::wstring out(LockedGetTitle());
+		Unlock();
+		return out;
+	}
+
 	class DirectLineAccess
 	{
 		IConsoleOutput *_co;
@@ -173,12 +200,12 @@ public:
 		inline DirectLineAccess(IConsoleOutput *co, size_t line_index)
 			: _co(co)
 		{
-			_line = _co->DirectLineAccess_Start(line_index, _width);
+			_line = _co->LockedDirectLineAccess(line_index, _width);
 		}
 
 		inline ~DirectLineAccess()
 		{
-			_co->DirectLineAccess_Finish();
+			_co->Unlock();
 		}
 
 		inline CHAR_INFO *Line() { return _line; }
@@ -193,9 +220,9 @@ extern IConsoleInput *g_winport_con_in;
 
 //////////////////////////////////////////////////////////////////////////////////
 
-struct WinPortMainGUI_Arg
+struct WinPortMainBackendArg
 {
-	const char *abi_hash;
+	unsigned int abi_version; // set to/check with FAR2L_BACKEND_ABI_VERSION
 	int argc;
 	char **argv;
 	int (*app_main)(int argc, char **argv);
@@ -203,3 +230,4 @@ struct WinPortMainGUI_Arg
 	IConsoleOutput *winport_con_out;
 	IConsoleInput *winport_con_in;
 };
+

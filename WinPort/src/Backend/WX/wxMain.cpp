@@ -118,9 +118,9 @@ static void DetectHostAbilities()
 
 
 
-extern "C" __attribute__ ((visibility("default"))) bool WinPortMainGUI(WinPortMainGUI_Arg *a)
+extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPortMainBackendArg *a)
 {
-	if (strcmp(a->abi_hash, MAKE_STR(ABI_HASH)) != 0) {
+	if (a->abi_version != FAR2L_BACKEND_ABI_VERSION) {
 		fprintf(stderr, "This far2l_gui cannot be used cause it was compiled with incompatible compiler settings and/or sources\n");
 		return false;
 	}

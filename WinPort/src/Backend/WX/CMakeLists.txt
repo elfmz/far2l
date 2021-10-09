@@ -46,6 +46,5 @@ set_target_properties(far2l_gui
     PREFIX ""
     SUFFIX ".so")
 
-#message(FATAL_ERROR "!!!ABI_HASH=${ABI_HASH}!!!")
 target_compile_definitions(far2l_gui PUBLIC -DABI_HASH=${ABI_HASH})
 

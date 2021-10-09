@@ -9,8 +9,14 @@ execute_process(COMMAND sh -c
 	OUTPUT_VARIABLE CXX_VER_HASH)
 
 execute_process(COMMAND sh -c
-	"echo '${SOURCES_HASH}' '${CXX_VER_HASH}' '${CMAKE_C_FLAGS_RELEASE}'|md5sum|awk '{ printf(\"%s\", $1) }'"
+	"echo '${SOURCES_HASH}' '${CXX_VER_HASH}' '${CMAKE_CXX_FLAGS_RELEASE}'|md5sum|awk '{ printf(\"%s\", $1) }'"
 	OUTPUT_VARIABLE ABI_HASH)
+
+if (ABI_HASH STREQUAL "")
+	message(FATAL_ERROR "Failed to calculate ABI_HASH. Make sure following tools are available: find, sort, xargs, md5sum, awk")
+endif()
+
+message(STATUS "ABI_HASH: '${ABI_HASH}'")
 
 if (NOT ${USEWX})
 	message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")

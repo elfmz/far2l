@@ -28,7 +28,6 @@ public:
 	bool Read(CHAR_INFO &data, COORD screen_pos);
 	WriteResult Write(const CHAR_INFO &data, COORD screen_pos);
 
-	// need to be inline cuz used acrosss libraries
 	inline CHAR_INFO *DirectLineAccess(size_t line_index)
 	{
 		size_t offset = line_index * _width;

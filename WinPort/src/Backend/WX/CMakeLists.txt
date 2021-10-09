@@ -1,5 +1,40 @@
 project(far2l_gui)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+	if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
+		message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
+
+	elseif(EXISTS "/usr/local/bin/wxgtk3u-3.1-config")
+		set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.1-config")
+		set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.1")
+		message(STATUS "Using known location of wx-config 3.1")
+
+	elseif (EXISTS "/usr/local/bin/wxgtk3u-3.0-config")
+		set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
+		set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
+		message(STATUS "Using known location of wx-config 3.0")
+
+	else()
+		message(STATUS "No wxgtk3u-3.*-config in expected locations")
+	endif()
+
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	if (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
+		# MacPorts
+		set(wxWidgets_CONFIG_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
+		set(wxWidgets_wxrc_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc")
+		message(STATUS "Using known location of wx-config 3.1")
+	else()
+		message(STATUS "No wx-config in expected locations")
+	endif()
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	find_package(wxWidgets REQUIRED core base adv)
+else()
+	find_package(wxWidgets REQUIRED core base)
+endif()
+
 include(${wxWidgets_USE_FILE})
 
 set(SOURCES
@@ -27,8 +62,16 @@ target_include_directories(far2l_gui PRIVATE ..)
 target_include_directories(far2l_gui PRIVATE ../..)
 target_include_directories(far2l_gui PRIVATE ../../..)
 target_include_directories(far2l_gui PRIVATE ../../../../utils/include)
-target_include_directories(far2l_gui PRIVATE ${USEWX_INCS})
-target_link_libraries(far2l_gui utils ${USEWX_LIBS})
+target_include_directories(far2l_gui PRIVATE ${wxWidgets_INCLUDE_DIRS})
+
+
+#${wxWidgets_CXX_FLAGS}
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	target_link_libraries(far2l_gui utils -framework IOKit -framework Carbon -framework Cocoa -framework AudioToolbox -framework System -framework OpenGL ${wxWidgets_LIBRARIES})
+else()
+	target_link_libraries(far2l_gui utils ${wxWidgets_LIBRARIES})
+endif()
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)

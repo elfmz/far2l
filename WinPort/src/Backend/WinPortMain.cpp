@@ -400,6 +400,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			}
 		} else {
 			fprintf(stderr, "Failed to load: %s error %s\n", gui_path.c_str(), dlerror());
+			arg_opts.tty = true;
 		}
 	}
 

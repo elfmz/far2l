@@ -18,8 +18,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		Mac/dockicon.cpp
 		Mac/pasteboard.mm
 	)
-
-	set_property (TARGET far2l_gui APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
 endif()
 
 
@@ -40,6 +38,10 @@ if(CMAKE_THREAD_LIBS_INIT)
   target_link_libraries(far2l_gui "${CMAKE_THREAD_LIBS_INIT}")
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set_property (TARGET far2l_gui APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
+endif()
+
 set_target_properties(far2l_gui
   PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}"
@@ -47,4 +49,3 @@ set_target_properties(far2l_gui
     SUFFIX ".so")
 
 target_compile_definitions(far2l_gui PUBLIC -DABI_HASH=${ABI_HASH})
-

@@ -1,30 +1,5 @@
 project(WinPort)
 
-execute_process(COMMAND sh -c
-	"find '${CMAKE_CURRENT_SOURCE_DIR}' -name '*.cpp' -or -name '*.c' -or -name '*.h' -or -name '*.hpp' |sort|xargs shasum|shasum"
-	OUTPUT_VARIABLE SOURCES_HASH)
-
-execute_process(COMMAND sh -c
-	"${CMAKE_CXX_COMPILER} --version|shasum"
-	OUTPUT_VARIABLE CXX_VER_HASH)
-
-execute_process(COMMAND sh -c
-	"echo '${SOURCES_HASH}' '${CXX_VER_HASH}' '${CMAKE_CXX_FLAGS_RELEASE}'|shasum|awk '{ printf(\"%s\", $1) }'"
-	OUTPUT_VARIABLE ABI_HASH)
-
-if (ABI_HASH STREQUAL "")
-	message(FATAL_ERROR "Failed to calculate ABI_HASH. Make sure following tools are available: find, sort, xargs, shasum, awk")
-endif()
-
-message(STATUS "ABI_HASH: '${ABI_HASH}'")
-
-if (NOT ${USEWX})
-	message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")
-else()
-	message(STATUS "Building with GUI/wxWidgets backend")
-	add_subdirectory(src/Backend/WX)
-endif()
-
 add_subdirectory(wineguts)
 
 set(SOURCES

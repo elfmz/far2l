@@ -25,12 +25,12 @@ static std::mutex g_clipboard_backend_mutex;
 static struct ClipboardFreePendings : std::set<PVOID>,std::mutex {} g_clipboard_free_pendings;
 static std::atomic<bool> s_clipboard_open_track{false};
 
-bool WinPortClipboard_IsBusy()
+__attribute__ ((visibility("default"))) bool WinPortClipboard_IsBusy()
 {
 	return s_clipboard_open_track != 0;
 }
 
-std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<IClipboardBackend> &clipboard_backend)
+__attribute__ ((visibility("default"))) std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<IClipboardBackend> &clipboard_backend)
 {
 	std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
 	auto out = g_clipboard_backend;

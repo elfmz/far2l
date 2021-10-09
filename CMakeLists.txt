@@ -482,6 +482,7 @@ install(PROGRAMS "${INSTALL_DIR}/${EXECUTABLE_NAME}" DESTINATION "bin" RENAME fa
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
 	PATTERN "colorer/base" EXCLUDE
+	PATTERN "far2l_gui.so"
 	PATTERN "plug/*.far-plug-*"
 	PATTERN "plug/*.broker")
 

@@ -794,7 +794,7 @@ int _cdecl main(int argc, char *argv[])
 
 	gMainThreadID = GetInterThreadID();
 
-	return WinPortMain(argc, argv, FarAppMain);
+	return WinPortMain(g_strFarModuleName.GetMB().c_str(), argc, argv, FarAppMain);
 }
 
 

@@ -1,12 +1,8 @@
 #include <vector>
-#include <ConsoleInput.h>
-#include <ConsoleOutput.h>
 #include <utils.h>
 #include <SavedScreen.h>
+#include "Backend.h"
 #include "SudoAskpassImpl.h"
-
-extern ConsoleOutput g_winport_con_out;
-extern ConsoleInput g_winport_con_in;
 
 class SudoAskpassScreen
 {
@@ -50,7 +46,7 @@ class SudoAskpassScreen
 	void DispatchInput()
 	{
 		INPUT_RECORD ir;
-		while (g_winport_con_in.Dequeue(&ir, 1, _cip)) {
+		while (g_winport_con_in->Dequeue(&ir, 1, _cip)) {
 			switch (ir.EventType) {
 				case WINDOW_BUFFER_SIZE_EVENT:
 					_ss.Restore();
@@ -75,12 +71,12 @@ class SudoAskpassScreen
 		StrMB2Wide(str, wstr);
 		SHORT l = (_width > wstr.size()) ? (_width - wstr.size()) / 2 : 0;
 		COORD pos = {l, t};
-		g_winport_con_out.WriteStringAt(wstr.c_str(), wstr.size(), pos);
+		g_winport_con_out->WriteStringAt(wstr.c_str(), wstr.size(), pos);
 	}
 
 	void Repaint()
 	{
-		g_winport_con_out.GetSize(_width, _height);
+		g_winport_con_out->GetSize(_width, _height);
 		SHORT w = std::max(_key_hint.size(), std::max(_title.size(), _text.size())) + 5, h = 5;
 
 		SHORT l = (SHORT(_width) - w) / 2, t = 0;//(_height - h) / 2;
@@ -93,24 +89,24 @@ class SudoAskpassScreen
 			for (SHORT x = l; x < l + w; ++x) {
 				pos = COORD {x, y};
 				if (x == l || y == t || x + 1 == l + w || y + 1 == t + h) {
-					g_winport_con_out.FillAttributeAt(FOREGROUND_RED | BACKGROUND_RED, 1, pos);
+					g_winport_con_out->FillAttributeAt(FOREGROUND_RED | BACKGROUND_RED, 1, pos);
 				} else {
-					g_winport_con_out.FillAttributeAt(
+					g_winport_con_out->FillAttributeAt(
 						FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE, 1, pos);
 				}
 				pos = COORD {x, y};
-				g_winport_con_out.FillCharacterAt(' ', 1, pos);
+				g_winport_con_out->FillCharacterAt(' ', 1, pos);
 			}
 		}
 
-		g_winport_con_out.SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 		WriteCentered(_title, t + 1);
 		WriteCentered(_key_hint, t + 3);
 
-		g_winport_con_out.SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+		g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 		WriteCentered(_text, t + 2);
 //		COORD pos = {};
-//		g_winport_con_out.FillAttributeAt(FOREGROUND_GREEN, _width * _height, pos);
+//		g_winport_con_out->FillAttributeAt(FOREGROUND_GREEN, _width * _height, pos);
 	}
 
 public:
@@ -127,13 +123,13 @@ public:
 	~SudoAskpassScreen()
 	{
 		if (_ir_resized.EventType != NOOP_EVENT)
-				g_winport_con_in.Enqueue(&_ir_resized, 1);
+				g_winport_con_in->Enqueue(&_ir_resized, 1);
 	}
 
 	bool Loop()
 	{
 		for (;;) {
-			if (g_winport_con_in.WaitForNonEmpty(1000, _cip)) {
+			if (g_winport_con_in->WaitForNonEmpty(1000, _cip)) {
 				DispatchInput();
 			}/* else {
 				// repaint periodically to ensure not overpainted by somebody else

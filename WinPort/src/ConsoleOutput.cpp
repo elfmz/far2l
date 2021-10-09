@@ -594,3 +594,16 @@ bool ConsoleOutput::SetFKeyTitles(const CHAR **titles)
 {
 	return (_backend && _backend->OnConsoleSetFKeyTitles(titles));
 }
+
+CHAR_INFO *ConsoleOutput::DirectLineAccess_Start(size_t line_index, unsigned int &width)
+{
+	_mutex.lock();
+	width = _buf.GetWidth();
+	return _buf.DirectLineAccess(line_index);
+}
+
+void ConsoleOutput::DirectLineAccess_Finish()
+{
+	_mutex.unlock();
+}
+

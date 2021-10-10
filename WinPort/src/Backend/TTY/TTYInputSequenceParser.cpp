@@ -2,7 +2,7 @@
 #include <string>
 #include <base64.h>
 #include "TTYInputSequenceParser.h"
-#include "ConsoleInput.h"
+#include "Backend.h"
 #include "WinPort.h"
 
 #include "WideMB.h"
@@ -11,8 +11,6 @@
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
-
-extern ConsoleInput g_winport_con_in;
 
 static bool IsEnhancedKey(WORD code)
 {
@@ -290,9 +288,9 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 					ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 					ir.Event.KeyEvent.bKeyDown = TRUE;
-					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
+					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
-					_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
+					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 					return l_used;
 				}
 			}
@@ -451,7 +449,7 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 	}
 
 	if (!_ir_pending.empty()) {
-		g_winport_con_in.Enqueue(&_ir_pending[0], _ir_pending.size());
+		g_winport_con_in->Enqueue(&_ir_pending[0], _ir_pending.size());
 		_ir_pending.clear();
 	}
 
@@ -478,9 +476,9 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
 
 	ir.Event.KeyEvent.bKeyDown = TRUE;
-	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
-	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 }
 
 void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
@@ -575,7 +573,7 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 	if (_mouse.right)
 			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_3RD_BUTTON_PRESSED;
 
-	_ir_pending.emplace_back(ir); // g_winport_con_in.Enqueue(&ir, 1);
+	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 
 }
 

@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <termios.h> 
+#include <dlfcn.h>
 
 #ifdef __linux__
 # include <termios.h>
@@ -30,12 +31,11 @@
 
 #include <memory>
 
-ConsoleOutput g_winport_con_out;
-ConsoleInput g_winport_con_in;
 
-#ifndef NOWX
-bool WinPortMainWX(int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
-#endif
+IConsoleOutput *g_winport_con_out = nullptr;
+IConsoleInput *g_winport_con_in = nullptr;
+
+#define GUI_SO_NAME "far2l_gui.so"
 
 bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
@@ -227,9 +227,7 @@ extern "C" void WinPortHelp()
 	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
 	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode wihout FAR2L extensions)\n");
-#ifndef NOWX
-	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection\n");
-#endif
+	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n");
 }
 
 struct ArgOptions
@@ -285,8 +283,12 @@ private:
 	ArgOptions(const ArgOptions&) = delete;
 };
 
-extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char **argv))
+extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
+	std::unique_ptr<ConsoleOutput> winport_con_out(new ConsoleOutput);
+	std::unique_ptr<ConsoleInput> winport_con_in(new ConsoleInput);
+	g_winport_con_out = winport_con_out.get();
+	g_winport_con_in = winport_con_in.get();
 	ArgOptions arg_opts;
 
 #if defined(__linux__) || defined(__FreeBSD__)
@@ -363,22 +365,47 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
-//  g_winport_con_out.WriteString(L"Hello", 5);
+//  g_winport_con_out->WriteString(L"Hello", 5);
 
 	int result = -1;
-#ifndef NOWX
 	if (!arg_opts.tty) {
-		tty_raw_mode.reset();
-		SudoAskpassImpl askass_impl;
-		SudoAskpassServer askpass_srv(&askass_impl);
-		if (!WinPortMainWX(argc, argv, AppMain, &result) ) {
-			fprintf(stderr, "Cannot use WX backend\n");
-			arg_opts.tty = !arg_opts.notty;
+		std::string gui_path = full_exe_path;
+		CutToSlash(gui_path, true);
+		std::string tmp = gui_path;
+		gui_path+= GUI_SO_NAME;
+		if (TranslateInstallPath_Bin2Share(tmp)) {
+			tmp+= APP_BASENAME "/";
+			if (TranslateInstallPath_Share2Lib(tmp)) {
+				tmp+= GUI_SO_NAME;
+				struct stat s;
+				if (stat(tmp.c_str(), &s) == 0) {
+					gui_path.swap(tmp);
+				}
+			}
+		}
+		void *gui_so = dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
+		if (gui_so) {
+			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
+			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
+			if (WinPortMainBackend_p) {
+				tty_raw_mode.reset();
+				SudoAskpassImpl askass_impl;
+				SudoAskpassServer askpass_srv(&askass_impl);
+				WinPortMainBackendArg a{FAR2L_BACKEND_ABI_VERSION,
+					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in};
+				if (!WinPortMainBackend_p(&a) ) {
+					fprintf(stderr, "Cannot use GUI backend\n");
+					arg_opts.tty = !arg_opts.notty;
+				}
+			} else {
+				fprintf(stderr, "Cannot find backend entry point\n");
+				arg_opts.tty = true;
+			}
+		} else {
+			fprintf(stderr, "Failed to load: %s error %s\n", gui_path.c_str(), dlerror());
+			arg_opts.tty = true;
 		}
 	}
-#else
-	arg_opts.tty = true;
-#endif
 
 	if (arg_opts.tty) {
 		if (!tty_raw_mode) {
@@ -435,6 +462,9 @@ extern "C" int WinPortMain(int argc, char **argv, int(*AppMain)(int argc, char *
 			TTYNegotiateFar2l(std_in, std_out, false);
 		}
 	}
+
+	g_winport_con_out = nullptr;
+	g_winport_con_in = nullptr;
 
 	return result;
 }

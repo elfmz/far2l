@@ -2,7 +2,7 @@
 #include "KeyFileHelper.h"
 #include "utils.h"
 #include "WinCompat.h"
-#include "ConsoleInput.h"
+#include "Backend.h"
 
 #include <wx/wx.h>
 #include <wx/display.h>
@@ -39,7 +39,6 @@ extern bool g_broadway;
 extern bool g_wayland;
 extern bool g_remote;
 
-extern ConsoleInput g_winport_con_in;
 /*
     Foreground/Background color palettes are 16 (r,g,b) values.
     More words here from Miotio...
@@ -417,7 +416,7 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
-	g_winport_con_in.Enqueue(&ir, 1);
+	g_winport_con_in->Enqueue(&ir, 1);
 	return true;
 }
 
@@ -450,11 +449,11 @@ void KeyTracker::ForceAllUp()
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		}
-		g_winport_con_in.Enqueue(&ir, 1);
+		g_winport_con_in->Enqueue(&ir, 1);
 #ifndef __WXMAC__
 		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && _right_control) {
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-			g_winport_con_in.Enqueue(&ir, 1);
+			g_winport_con_in->Enqueue(&ir, 1);
 		}
 #endif
 	}

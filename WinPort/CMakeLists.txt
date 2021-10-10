@@ -1,9 +1,4 @@
-
 project(WinPort)
-
-if (${USEWX})
-	include(${wxWidgets_USE_FILE})
-endif()
 
 add_subdirectory(wineguts)
 
@@ -43,47 +38,13 @@ src/Backend/TTY/TTYFar2lClipboardBackend.cpp
 src/Backend/TTY/TTYNegotiateFar2l.cpp
 )
 
-if (${USEWX})
-	set(SOURCES
-		${SOURCES}
-		src/Backend/WX/Paint.cpp
-		src/Backend/WX/CustomDrawChar.cpp
-		src/Backend/WX/wxMain.cpp
-		src/Backend/WX/wxClipboardBackend.cpp
-		src/Backend/WX/ExclusiveHotkeys.cpp
-		src/Backend/WX/wxWinTranslations.cpp
-	)
-
-	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set(SOURCES
-			${SOURCES}
-			src/Backend/WX/Mac/touchbar.mm
-			src/Backend/WX/Mac/dockicon.cpp
-			src/Backend/WX/Mac/pasteboard.mm
-		)
-	endif()
-endif()
-
-
 add_library (WinPort ${SOURCES})
-
-if (${USEWX} AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-set_property (TARGET WinPort APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
-endif()
-
-
-if (NOT ${USEWX})
-	target_compile_options(WinPort PUBLIC "-DNOWX")
-endif()
-
-
-target_include_directories(WinPort PRIVATE ${USEWX_INCS})
 
 target_include_directories(WinPort PRIVATE .)
 target_include_directories(WinPort PRIVATE src)
 target_include_directories(WinPort PRIVATE src/Backend)
 
-target_link_libraries(WinPort wineguts utils ${USEWX_LIBS})
+target_link_libraries(WinPort wineguts utils)
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)

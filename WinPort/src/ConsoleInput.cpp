@@ -145,14 +145,3 @@ unsigned int ConsoleInput::CurrentPriority() const
 }
 
 ///
-ConsoleInputPriority::ConsoleInputPriority(ConsoleInput &con_input)
-	: _con_input(con_input),
-	_my_priority(con_input.RaiseRequestorPriority())
-{
-}
-
-ConsoleInputPriority::~ConsoleInputPriority()
-{
-	_con_input.LowerRequestorPriority(_my_priority);
-}
-

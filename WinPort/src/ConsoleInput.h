@@ -4,8 +4,9 @@
 #include <set>
 #include <condition_variable>
 #include "WinCompat.h"
+#include "Backend.h"
 
-class ConsoleInput
+class ConsoleInput : public IConsoleInput
 {
 	std::deque<INPUT_RECORD> _pending;
 	std::mutex _mutex;
@@ -15,25 +16,15 @@ class ConsoleInput
 	unsigned int CurrentPriority() const;
 
 public:
-	void Enqueue(const INPUT_RECORD *data, DWORD size);
-	DWORD Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
-	DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
-	DWORD Count(unsigned int requestor_priority = 0);
-	DWORD Flush(unsigned int requestor_priority = 0);
-	bool WaitForNonEmpty(unsigned int timeout_msec = (unsigned int)-1, unsigned int requestor_priority = 0);
+	virtual ~ConsoleInput() {};
 
-	unsigned int RaiseRequestorPriority();
-	void LowerRequestorPriority(unsigned int released_priority);
-};
+	virtual void Enqueue(const INPUT_RECORD *data, DWORD size);
+	virtual DWORD Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
+	virtual DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
+	virtual DWORD Count(unsigned int requestor_priority = 0);
+	virtual DWORD Flush(unsigned int requestor_priority = 0);
+	virtual bool WaitForNonEmpty(unsigned int timeout_msec = (unsigned int)-1, unsigned int requestor_priority = 0);
 
-class ConsoleInputPriority
-{
-	ConsoleInput &_con_input;
-	unsigned int _my_priority;
-
-	public:
-	ConsoleInputPriority(ConsoleInput &con_input);
-	~ConsoleInputPriority();
-
-	operator int() const {return _my_priority; }
+	virtual unsigned int RaiseRequestorPriority();
+	virtual void LowerRequestorPriority(unsigned int released_priority);
 };

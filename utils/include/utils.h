@@ -11,6 +11,9 @@
 #include "ErrnoSaver.hpp"
 #include "PlatformConstants.h"
 
+#define MAKE_STR(x) _MAKE_STR(x)
+#define _MAKE_STR(x) #x
+
 template <class C> static size_t tzlen(const C *ptz)
 {
 	const C *etz;

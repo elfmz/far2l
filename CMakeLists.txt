@@ -72,56 +72,6 @@ if (NOT ${EACP})
 	message(STATUS "${ColorRed}Building without East Asian codepages support due to EACP=${EACP}${ColorNormal}")
 endif()
 
-if (NOT ${USEWX})
-	message(STATUS "Building without wxWidgets backend due to USEWX=${USEWX}")
-	set(USEWX_INCS "")
-	set(USEWX_LIBS "")
-	set(USEWX_CXX_FLAGS "")
-	set(USEWX_USEFILE "")
-else()
-	message(STATUS "Building with wxWidgets backend")
-	if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-		if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
-			message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
-
-		elseif(EXISTS "/usr/local/bin/wxgtk3u-3.1-config")
-			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.1-config")
-			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.1")
-			message(STATUS "Using known location of wx-config 3.1")
-
-		elseif (EXISTS "/usr/local/bin/wxgtk3u-3.0-config")
-			set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-			set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-			message(STATUS "Using known location of wx-config 3.0")
-
-		else()
-			message(STATUS "No wxgtk3u-3.*-config in expected locations")
-		endif()
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		if (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
-			# MacPorts
-			set(wxWidgets_CONFIG_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
-			set(wxWidgets_wxrc_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc")
-			message(STATUS "Using known location of wx-config 3.1")
-		else()
-			message(STATUS "No wx-config in expected locations")
-		endif()
-	endif()
-
-	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		find_package(wxWidgets REQUIRED core base adv)
-	else()
-		find_package(wxWidgets REQUIRED core base)
-	endif()
-
-	include(${wxWidgets_USE_FILE})
-
-	set(USEWX_USEFILE ${wxWidgets_USE_FILE})
-	set(USEWX_INCS ${wxWidgets_INCLUDE_DIRS})
-	set(USEWX_LIBS ${wxWidgets_LIBRARIES})
-	set(USEWX_CXX_FLAGS ${wxWidgets_CXX_FLAGS})
-endif()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(M4_NAME gm4)
 else()
@@ -197,6 +147,13 @@ set_target_properties(farlng
   PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${TOOLS_DIR}"
 )
+
+if (NOT ${USEWX})
+	message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")
+else()
+	message(STATUS "Building with GUI/wxWidgets backend")
+	add_subdirectory(WinPort/src/Backend/WX)
+endif()
 
 ##############################
 # plugins directives
@@ -482,6 +439,7 @@ install(PROGRAMS "${INSTALL_DIR}/${EXECUTABLE_NAME}" DESTINATION "bin" RENAME fa
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
 	PATTERN "colorer/base" EXCLUDE
+	PATTERN "far2l_gui.so"
 	PATTERN "plug/*.far-plug-*"
 	PATTERN "plug/*.broker")
 

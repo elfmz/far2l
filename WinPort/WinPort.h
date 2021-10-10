@@ -16,7 +16,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	int WinPortMain(int argc, char **argv, int (*AppMain)(int argc, char **argv));
+	int WinPortMain(const char *full_exe_path, int argc, char **argv, int (*AppMain)(int argc, char **argv));
 	void WinPortHelp();
 
 	///console API
@@ -62,7 +62,6 @@ extern "C" {
 	WINPORT_DECL(SetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT top, SHORT bottom));
 	WINPORT_DECL(GetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT *top, SHORT *bottom));
 
-	typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Width, CHAR_INFO *Charss);
 	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext));
 	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ());	
 	WINPORT_DECL(SetConsoleTweaks, DWORD, (DWORD tweaks));

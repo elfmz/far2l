@@ -20,16 +20,12 @@
 #include "utils.h"
 #include "CheckedCast.hpp"
 #include "WinPortHandle.h"
-#include "ConsoleOutput.h"
-#include "ConsoleInput.h"
+#include "Backend.h"
 #include "TTYBackend.h"
 #include "TTYRevive.h"
 #include "TTYFar2lClipboardBackend.h"
 #include "TTYNegotiateFar2l.h"
 #include "../FSClipboardBackend.h"
-
-extern ConsoleOutput g_winport_con_out;
-extern ConsoleInput g_winport_con_in;
 
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
@@ -95,8 +91,8 @@ bool TTYBackend::Startup()
 	assert(!_reader_trd);
 
 	_cur_width =_cur_height = 64;
-	g_winport_con_out.GetSize(_cur_width, _cur_height);
-	g_winport_con_out.SetBackend(this);
+	g_winport_con_out->GetSize(_cur_width, _cur_height);
+	g_winport_con_out->SetBackend(this);
 
 	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
 		return false;
@@ -153,7 +149,7 @@ void TTYBackend::ReaderThread()
 		DetachNotifyPipe();
 
 		while (!_exiting) {
-			const std::string &info = StrWide2MB(g_winport_con_out.GetTitle());
+			const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
 			_notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
 			if (_notify_pipe != -1) {
 				break;
@@ -268,7 +264,7 @@ void TTYBackend::WriterThread()
 				DispatchOutput(tty_out);
 
 			if (ae.flags.title_changed) {
-				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out.GetTitle()));
+				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out->GetTitle()));
 			}
 
 			if (ae.flags.far2l_interract)
@@ -298,13 +294,13 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 		if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
 			_cur_width = w.ws_col;
 			_cur_height = w.ws_row;
-			g_winport_con_out.SetSize(_cur_width, _cur_height);
-			g_winport_con_out.GetSize(_cur_width, _cur_height);
+			g_winport_con_out->SetSize(_cur_width, _cur_height);
+			g_winport_con_out->GetSize(_cur_width, _cur_height);
 			INPUT_RECORD ir = {};
 			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 			ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
 			ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
-			g_winport_con_in.Enqueue(&ir, 1);
+			g_winport_con_in->Enqueue(&ir, 1);
 		}
 		std::vector<CHAR_INFO> tmp;
 		std::lock_guard<std::mutex> lock(_output_mutex);
@@ -323,7 +319,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	COORD data_size = {CheckedCast<SHORT>(_cur_width), CheckedCast<SHORT>(_cur_height) };
 	COORD data_pos = {0, 0};
 	SMALL_RECT screen_rect = {0, 0, CheckedCast<SHORT>(_cur_width - 1), CheckedCast<SHORT>(_cur_height - 1)};
-	g_winport_con_out.Read(&_cur_output[0], data_size, data_pos, screen_rect);
+	g_winport_con_out->Read(&_cur_output[0], data_size, data_pos, screen_rect);
 
 #if 1
 	for (unsigned int y = 0; y < _cur_height; ++y) {
@@ -385,7 +381,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 	UCHAR cursor_height = 1;
 	bool cursor_visible = false;
-	COORD cursor_pos = g_winport_con_out.GetCursor(cursor_height, cursor_visible);
+	COORD cursor_pos = g_winport_con_out->GetCursor(cursor_height, cursor_visible);
 	tty_out.MoveCursorLazy(cursor_pos.Y + 1, cursor_pos.X + 1);
 	tty_out.ChangeCursor(cursor_visible);
 
@@ -617,7 +613,7 @@ void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
 		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualScanCode);
 		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
 		stk_ser.PopPOD(ir.Event.KeyEvent.wRepeatCount);
-		g_winport_con_in.Enqueue(&ir, 1);
+		g_winport_con_in->Enqueue(&ir, 1);
 
 	} catch (std::exception &) {
 		fprintf(stderr, "OnFar2lKey: broken args!\n");
@@ -636,7 +632,7 @@ void TTYBackend::OnFar2lMouse(StackSerializer &stk_ser)
 		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.Y);
 		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.X);
 
-		g_winport_con_in.Enqueue(&ir, 1);
+		g_winport_con_in->Enqueue(&ir, 1);
 
 	} catch (std::exception &) {
 		fprintf(stderr, "OnFar2lMouse: broken args!\n");

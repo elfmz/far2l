@@ -5,11 +5,12 @@
 #include "WinCompat.h"
 #include "Backend.h"
 #include "IFar2lInterractor.h"
+#include "FSClipboardBackend.h"
 
 
 class TTYFar2lClipboardBackend : public IClipboardBackend
 {
-	IClipboardBackend *_fallback_backend = nullptr;
+	std::unique_ptr<FSClipboardBackend> _fallback_backend;
 	IFar2lInterractor *_interractor;
 	std::string _client_id;
 

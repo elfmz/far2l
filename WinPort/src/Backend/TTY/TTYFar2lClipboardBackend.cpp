@@ -3,7 +3,6 @@
 #include <base64.h>
 #include <UtfConvert.hpp>
 #include "TTYFar2lClipboardBackend.h"
-#include "FSClipboardBackend.h"
 
 TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interractor) :
 	_interractor(interractor)
@@ -48,7 +47,6 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 
 TTYFar2lClipboardBackend::~TTYFar2lClipboardBackend()
 {
-	delete _fallback_backend;
 }
 
 void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
@@ -79,7 +77,7 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 			case (char)-1:
 				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: fallback\n");
 				if (!_fallback_backend)
-					_fallback_backend = new FSClipboardBackend;
+					_fallback_backend.reset(new FSClipboardBackend);
 
 				return _fallback_backend->OnClipboardOpen();
 

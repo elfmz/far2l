@@ -12,6 +12,7 @@ class ConsoleBuffer
 	CHAR_INFO *InspectCopyArea(const COORD &data_size, const COORD &data_pos, SMALL_RECT &screen_rect);
 public:
 	ConsoleBuffer(); 
+
 	enum WriteResult {
 		WR_BAD = 0,
 		WR_SAME = 1,
@@ -27,5 +28,13 @@ public:
 	bool Read(CHAR_INFO &data, COORD screen_pos);
 	WriteResult Write(const CHAR_INFO &data, COORD screen_pos);
 
-	CHAR_INFO *DirectLineAccess(size_t line_index);
+	inline CHAR_INFO *DirectLineAccess(size_t line_index)
+	{
+		size_t offset = line_index * _width;
+		if (offset >= _console_chars.size()) {
+			return nullptr;
+		}
+
+		return &_console_chars[offset];
+	}
 };

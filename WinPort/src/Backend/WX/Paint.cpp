@@ -1,5 +1,4 @@
-#include "ConsoleOutput.h"
-#include "ConsoleInput.h"
+#include "Backend.h"
 #include "wxWinTranslations.h"
 #include <wx/fontdlg.h>
 #include <wx/fontenum.h>
@@ -20,8 +19,6 @@
 #else
 # define DEFAULT_FONT_SIZE	16
 #endif
-
-extern ConsoleOutput g_winport_con_out;
 
 /////////////////////////////////////////////////////////////////////////////////
 static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
@@ -342,7 +339,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		}
 	}
 #endif
-	unsigned int cw, ch; g_winport_con_out.GetSize(cw, ch);
+	unsigned int cw, ch; g_winport_con_out->GetSize(cw, ch);
 	if (cw > MAXSHORT) cw = MAXSHORT;
 	if (ch > MAXSHORT) ch = MAXSHORT;
 
@@ -375,7 +372,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		const CHAR_INFO *line;
 		{
 			// dont keep console output locked for a long time to avoid output slowdown
-			ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
+			IConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
 			line = dla.Line();
 			unsigned int cur_cw = line ? dla.Width() : 0;
 			if (cur_cw < cw) {
@@ -462,7 +459,7 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 		for (SHORT cy = area.Top; cy <= area.Bottom; ++cy) {
 			if (!_line_combinings_inspected[cy]) {
 				_line_combinings_inspected[cy] = true;
-				ConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
+				IConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
 				const CHAR_INFO *line = dla.Line();
 				if (line) {
 					for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
@@ -532,7 +529,7 @@ bool CursorProps::Blink()
 
 void CursorProps::Update()
 {
-	pos = g_winport_con_out.GetCursor(height, visible);
+	pos = g_winport_con_out->GetCursor(height, visible);
 	if (prev_pos.X != pos.X || prev_pos.Y != pos.Y) {
 		prev_pos = pos;
 		blink_state = true;

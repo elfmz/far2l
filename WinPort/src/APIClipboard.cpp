@@ -19,18 +19,19 @@
 #include "Backend.h"
 
 
-static std::shared_ptr<IClipboardBackend> g_clipboard_backend;
+static IClipboardBackend *g_clipboard_backend = nullptr;
 static std::mutex g_clipboard_backend_mutex;
 
-static struct ClipboardFreePendings : std::set<PVOID>,std::mutex {} g_clipboard_free_pendings;
-static std::atomic<bool> s_clipboard_open_track{false};
+static struct ClipboardFreePendings : std::set<PVOID> {} g_clipboard_free_pendings;
+static bool s_clipboard_open_track = false;
 
-bool WinPortClipboard_IsBusy()
+__attribute__ ((visibility("default"))) bool WinPortClipboard_IsBusy()
 {
-	return s_clipboard_open_track != 0;
+	std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+	return s_clipboard_open_track;
 }
 
-std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<IClipboardBackend> &clipboard_backend)
+__attribute__ ((visibility("default"))) IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend)
 {
 	std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
 	auto out = g_clipboard_backend;
@@ -38,37 +39,29 @@ std::shared_ptr<IClipboardBackend> WinPortClipboard_SetBackend(std::shared_ptr<I
 	return out;
 }
 
-static std::shared_ptr<IClipboardBackend> WinPortClipboard_GetBackend()
-{
-	std::shared_ptr<IClipboardBackend> out;
-	std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
-	out = g_clipboard_backend;
-	return out;
-}
-
 extern "C" {
 	
 	WINPORT_DECL(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))
 	{		
-		auto cb = WinPortClipboard_GetBackend();
-		return cb ? cb->OnClipboardRegisterFormat(lpszFormat) : 0;
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		return g_clipboard_backend ? g_clipboard_backend->OnClipboardRegisterFormat(lpszFormat) : 0;
 	}
 
 	WINPORT_DECL(OpenClipboard, BOOL, (PVOID Reserved))
 	{
-		auto cb = WinPortClipboard_GetBackend();
-		if (!cb) {
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		if (!g_clipboard_backend) {
 			fprintf(stderr, "OpenClipboard - NO BACKEND\n");
 			return FALSE;
 		}
 
-		bool track_state = false;
-		if (!s_clipboard_open_track.compare_exchange_strong(track_state, true)) {
+		if (s_clipboard_open_track) {
 			fprintf(stderr, "OpenClipboard - BUSY\n");
 			return FALSE;
 		}
-		
-		if (!cb->OnClipboardOpen()) {
+		s_clipboard_open_track = true;
+
+		if (!g_clipboard_backend->OnClipboardOpen()) {
 			s_clipboard_open_track = false;
 			return FALSE;
 		}
@@ -78,16 +71,15 @@ extern "C" {
 
 	WINPORT_DECL(CloseClipboard, BOOL, ())
 	{
-		bool track_state = true;
-		if (!s_clipboard_open_track.compare_exchange_strong(track_state, false)) {
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		if (!s_clipboard_open_track) {
 			fprintf(stderr, "Excessive CloseClipboard!\n");
 		}
+		s_clipboard_open_track = false;
 
-		auto cb = WinPortClipboard_GetBackend();
-		if (cb)
-			cb->OnClipboardClose();
+		if (g_clipboard_backend)
+			g_clipboard_backend->OnClipboardClose();
 
-		std::lock_guard<std::mutex> lock(g_clipboard_free_pendings);
 		for (auto p : g_clipboard_free_pendings)
 			free(p);
 		g_clipboard_free_pendings.clear();
@@ -97,27 +89,26 @@ extern "C" {
 
 	WINPORT_DECL(EmptyClipboard, BOOL, ())
 	{
-		auto cb = WinPortClipboard_GetBackend();
-		if (!cb)
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		if (!g_clipboard_backend)
 			return FALSE;
 
-		cb->OnClipboardEmpty();
+		g_clipboard_backend->OnClipboardEmpty();
 		return TRUE;
 	}
 
 	WINPORT_DECL(IsClipboardFormatAvailable, BOOL, (UINT format))
 	{
-		auto cb = WinPortClipboard_GetBackend();
-		return cb ? cb->OnClipboardIsFormatAvailable(format) : FALSE;
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		return g_clipboard_backend ? g_clipboard_backend->OnClipboardIsFormatAvailable(format) : FALSE;
 	}
 	
 	WINPORT_DECL(GetClipboardData, HANDLE, (UINT format))
 	{
-		auto cb = WinPortClipboard_GetBackend();
-		void *out = cb ? cb->OnClipboardGetData(format) : NULL;
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		void *out = g_clipboard_backend ? g_clipboard_backend->OnClipboardGetData(format) : NULL;
 
 		if (out) {
-			std::lock_guard<std::mutex> lock(g_clipboard_free_pendings);
 			g_clipboard_free_pendings.insert(out);
 		}
 
@@ -127,11 +118,10 @@ extern "C" {
 
 	WINPORT_DECL(SetClipboardData, HANDLE, (UINT format, HANDLE mem))
 	{
-		auto cb = WinPortClipboard_GetBackend();
-		void *out = cb ? cb->OnClipboardSetData(format, mem) : NULL;
+		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
+		void *out = g_clipboard_backend ? g_clipboard_backend->OnClipboardSetData(format, mem) : NULL;
 
 		if (out) {
-			std::lock_guard<std::mutex> lock(g_clipboard_free_pendings);
 			g_clipboard_free_pendings.insert(out);
 		}
 

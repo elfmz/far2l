@@ -6,10 +6,8 @@
 #include "ConsoleBuffer.h"
 #include "Backend.h"
 
-class ConsoleOutput
+class ConsoleOutput : public IConsoleOutput
 {
-	friend class DirectLineAccess;
-
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
 	std::vector<CHAR_INFO> _temp_chars;
@@ -53,75 +51,55 @@ class ConsoleOutput
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 
-protected:
-	void DirectAccessStart();
-	void DirectAccessFinish();
+	virtual const WCHAR *LockedGetTitle();
+	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width);
+	virtual void Unlock();
 
 public:
 	ConsoleOutput();
-	void SetBackend(IConsoleOutputBackend *listener);
+	virtual void SetBackend(IConsoleOutputBackend *listener);
 
-	void SetAttributes(USHORT attributes);
-	USHORT GetAttributes();
-	void SetCursor(COORD pos);
-	void SetCursor(UCHAR height, bool visible);
-	COORD GetCursor();
-	COORD GetCursor(UCHAR &height, bool &visible);
+	virtual void SetAttributes(USHORT attributes);
+	virtual USHORT GetAttributes();
+	virtual void SetCursor(COORD pos);
+	virtual void SetCursor(UCHAR height, bool visible);
+	virtual COORD GetCursor();
+	virtual COORD GetCursor(UCHAR &height, bool &visible);
 
-	void SetSize(unsigned int width, unsigned int height);
-	void GetSize(unsigned int &width, unsigned int &height);
+	virtual void SetSize(unsigned int width, unsigned int height);
+	virtual void GetSize(unsigned int &width, unsigned int &height);
 
-	COORD GetLargestConsoleWindowSize();
-	void SetWindowMaximized(bool maximized);
+	virtual COORD GetLargestConsoleWindowSize();
+	virtual void SetWindowMaximized(bool maximized);
 
-	void SetWindowInfo(bool absolute, const SMALL_RECT &rect);
-	void SetTitle(const WCHAR *title);
-	std::wstring GetTitle();
+	virtual void SetWindowInfo(bool absolute, const SMALL_RECT &rect);
+	virtual void SetTitle(const WCHAR *title);
 
-	DWORD GetMode();
-	void SetMode(DWORD mode);
+	virtual DWORD GetMode();
+	virtual void SetMode(DWORD mode);
 
-	void Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
-	void Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
-	bool Read(CHAR_INFO &data, COORD screen_pos);
-	bool Write(const CHAR_INFO &data, COORD screen_pos);
+	virtual void Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
+	virtual void Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect);
+	virtual bool Read(CHAR_INFO &data, COORD screen_pos);
+	virtual bool Write(const CHAR_INFO &data, COORD screen_pos);
 
-	size_t WriteString(const WCHAR *data, size_t count);
-	size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos);
-	size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
-	size_t FillAttributeAt(WORD wAttribute, size_t count, COORD &pos);
+	virtual size_t WriteString(const WCHAR *data, size_t count);
+	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos);
+	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
+	virtual size_t FillAttributeAt(WORD wAttribute, size_t count, COORD &pos);
 	
-	bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
+	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 				
-	void SetScrollRegion(SHORT top, SHORT bottom);
-	void GetScrollRegion(SHORT &top, SHORT &bottom);
-	void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
+	virtual void SetScrollRegion(SHORT top, SHORT bottom);
+	virtual void GetScrollRegion(SHORT &top, SHORT &bottom);
+	virtual void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
 	
-	void AdhocQuickEdit();
-	DWORD SetConsoleTweaks(DWORD tweaks);
-	void ConsoleChangeFont();
-	bool IsActive();
-	void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
-	bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
-	bool SetFKeyTitles(const CHAR **titles);
-
-	class DirectLineAccess
-	{
-		std::lock_guard<std::mutex> _lock;
-		CHAR_INFO *_line;
-		unsigned int _width;
-
-	public:
-		inline DirectLineAccess(ConsoleOutput &co, size_t line_index)
-			: _lock(co._mutex)
-		{
-			_line = co._buf.DirectLineAccess(line_index);
-			_width = co._buf.GetWidth();
-		}
-
-		inline CHAR_INFO *Line() { return _line; }
-		inline unsigned int Width() const { return _width; }
-	};
+	virtual void AdhocQuickEdit();
+	virtual DWORD SetConsoleTweaks(DWORD tweaks);
+	virtual void ConsoleChangeFont();
+	virtual bool IsActive();
+	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
+	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
+	virtual bool SetFKeyTitles(const CHAR **titles);
 };
-

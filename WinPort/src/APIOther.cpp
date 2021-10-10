@@ -1,8 +1,6 @@
 #include <mutex>
 
 #include "WinPort.h"
-#include "ConsoleOutput.h"
-#include "ConsoleInput.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include <utils.h>

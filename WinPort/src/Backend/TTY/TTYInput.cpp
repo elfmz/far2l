@@ -1,11 +1,9 @@
 #include <assert.h>
 #include "TTYInput.h"
-#include "ConsoleInput.h"
+#include "Backend.h"
 #include "WideMB.h"
 #include "WinPort.h"
 #include <utils.h>
-
-extern ConsoleInput g_winport_con_in;
 
 TTYInput::TTYInput(ITTYInputSpecialSequenceHandler *handler) :
 	_parser(handler), _handler(handler)
@@ -23,9 +21,9 @@ void TTYInput::PostCharEvent(wchar_t ch)
 		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
 
 	ir.Event.KeyEvent.bKeyDown = TRUE;
-	g_winport_con_in.Enqueue(&ir, 1);
+	g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_winport_con_in.Enqueue(&ir, 1);
+	g_winport_con_in->Enqueue(&ir, 1);
 }
 
 size_t TTYInput::BufTryDecodeUTF8()

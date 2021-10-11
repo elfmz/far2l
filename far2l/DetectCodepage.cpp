@@ -1,10 +1,12 @@
 #include <strings.h>
-#include <uchardet.h>
 
 #include "../WinPort/WinCompat.h"
 #include "../WinPort/WinPort.h"
 
 #include "DetectCodepage.h"
+
+#ifdef USEUCD
+# include <uchardet.h>
 
 static bool IsDecimalNumber(const char *s)
 {
@@ -102,3 +104,10 @@ int DetectCodePage(const char *data, size_t len)
 	uchardet_delete(ud);
 	return out;
 }
+
+#else
+int DetectCodePage(const char *data, size_t len)
+{
+	return -1;
+}
+#endif

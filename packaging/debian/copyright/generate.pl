@@ -16,6 +16,9 @@ while (<NICKNAMES>) {
 close(NICKNAMES);
 
 
+die "Please specify resulting file" if "$ARGV[0]" eq '';
+open(OUT, '>', $ARGV[0]) or die "Creating '$ARGV[0]': $!";
+
 open(SKELETON, '<', 'skeleton') or die "skeleton: $!";
 my @bone = ();
 
@@ -53,15 +56,15 @@ while (<SKELETON>) {
 			$skipping = 1;
 			my $prefix = 'Copyright:';
 			for (@copyright) {
-				print "$prefix $_\n";
+				print OUT "$prefix $_\n";
 				$prefix = '          ';
 			}
 
 		} else {
-			print("$_\n");
+			print(OUT "$_\n");
 		}
 	}
-	print("\n");
+	print(OUT "\n");
 
 	@bone = ();
 
@@ -71,24 +74,26 @@ close(SKELETON);
 
 for $license (sort keys %licenses) {
 	next if $license eq 'public-domain';
-	print("License: $license\n");
+	print(OUT "License: $license\n");
 	open(LICENSE, '<', "licenses/$license") or die "licenses/$license: $!";
 	while(<LICENSE>) {
 		chop($_);
 		my $line = trim($_);
 		$line = '.' if $line eq '';
-		print " $line\n";
+		print OUT " $line\n";
 	}
 	close(LICENSE);
-	print("\n");
+	print(OUT "\n");
 }
+
+close(OUT);
 
 sub collect_commiters
 {
 	my ($file, $commiters) = (@_);
 	my $path = "$scandir/$file";
 	$path = substr($path, 0, length($path) - 2) if substr($path, -2) eq '/*';
-	print STDERR "Copyrighting: $path\n";
+	print "Copyrighting: $path\n";
 	my @gitout = split /[\n\r]/, `git log --date=short --pretty=format:\"%an%x09%ad\" -- \'$path\'`;
 	for $gitline (@gitout) {
 		# $gitline == 'somebody	2021-09-01'

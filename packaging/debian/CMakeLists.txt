@@ -46,6 +46,6 @@ add_custom_command(
 
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/copyright
-    COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/copyright && ./generate.pl > ${CMAKE_BINARY_DIR}/copyright
+    COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/copyright && ./generate.pl ${CMAKE_BINARY_DIR}/copyright
     COMMENT ${CMAKE_BINARY_DIR}/copyright
 )

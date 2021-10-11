@@ -1,6 +1,5 @@
 #include "MultiArc.hpp"
 
-char PluginRootKey[NM];
 struct FarStandardFunctions FSF;
 struct Options Opt;
 struct PluginStartupInfo Info;

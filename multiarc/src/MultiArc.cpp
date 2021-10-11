@@ -36,8 +36,6 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
   ::Info.FSF->Reserved[0]=(DWORD_PTR)malloc;
   ::Info.FSF->Reserved[1]=(DWORD_PTR)free;
 
-  FSF.sprintf(PluginRootKey,"%s/MultiArc",Info->RootKey);
-
   if (ArcPlugin==NULL)
     ArcPlugin=new ArcPlugins(Info->ModuleName);
 

@@ -138,6 +138,8 @@ To build without WX backend (console version only): change -DUSEWX=yes to -DUSEW
 
 To save space by exluding support of East Asian codepages set: add -DEACP=no
 
+To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
+
 To build with Python plugin: add argument -DPYTHON=yes
 
 There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL

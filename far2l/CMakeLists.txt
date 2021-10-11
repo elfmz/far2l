@@ -161,7 +161,17 @@ else()
         RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}")
 endif()
 
-find_package(Uchardet REQUIRED)
+if (NOT DEFINED USEUCD)
+	set(USEUCD "YES")
+endif()
+
+if (NOT ${USEUCD})
+	message(STATUS "Building without libuchardet due to USEUCD=${USEUCD}")
+else()
+	message(STATUS "Building with libuchardet")
+	find_package(Uchardet REQUIRED)
+	target_compile_definitions(far2l PRIVATE -DUSEUCD)
+endif()
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)
 

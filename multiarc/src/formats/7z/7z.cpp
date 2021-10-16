@@ -64,7 +64,7 @@ class Traverser
 	ISzAlloc _alloc_imp, _alloc_temp_imp;
 	UInt16 *_temp;
 	size_t _temp_size;
-	int _index;
+	unsigned int _index;
 	bool _opened, _valid;
 	
 public:
@@ -93,6 +93,7 @@ public:
 		LookToRead2_Init(&_look_stream);
 		
 		static volatile int i = (CrcGenerateTable(), 0);
+		i;
 		
 		SzArEx_Init(&_db);
 			
@@ -122,8 +123,6 @@ public:
 			
 		if (_index >= _db.NumFiles )
 			return GETARC_EOF;
-        size_t offset = 0;
-        size_t outSizeProcessed = 0;
         
         unsigned is_dir = SzArEx_IsDir(&_db, _index);
         size_t len = SzArEx_GetFileNameUtf16(&_db, _index, NULL);
@@ -192,7 +191,7 @@ static const unsigned char s_magic_of_7z[] = {'7', 'z', 0xBC, 0xAF, 0x27, 0x1C, 
 
 BOOL WINAPI _export SEVENZ_IsArchive(const char *Name,const unsigned char *Data,int DataSize)
 {
-	if (DataSize < sizeof(s_magic_of_7z) || memcmp(Data, s_magic_of_7z, sizeof(s_magic_of_7z))!=0) {
+	if (DataSize < (int)sizeof(s_magic_of_7z) || memcmp(Data, s_magic_of_7z, sizeof(s_magic_of_7z))!=0) {
 		return FALSE;
 	}
 

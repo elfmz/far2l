@@ -336,7 +336,7 @@ static const char *NameExt(const char *name)
 	return ext ? ext : (slash ? slash + 1 : name);
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char *charset)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char *charset, int compression_level)
 {
 	const char *ne = NameExt(name);
 
@@ -380,7 +380,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	if (filter) {
 		archive_write_add_filter(_arc, filter);
 	}
-	PrepareForOpen(charset, format);
+	PrepareForOpen(charset, format, compression_level);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
@@ -390,7 +390,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, const char *cmd, const char
 	}
 }
 
-LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset)
+LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset, int compression_level)
 {
 	_arc = archive_write_new();
 	if (!_arc) {
@@ -411,7 +411,7 @@ LibArchOpenWrite::LibArchOpenWrite(const char *name, struct archive *arc_templat
 		}
 	}
 
-	PrepareForOpen(charset, format);
+	PrepareForOpen(charset, format, compression_level);
 
 	int r = LibArchCall(archive_write_open_filename, _arc, name);
 	if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
@@ -427,7 +427,7 @@ LibArchOpenWrite::~LibArchOpenWrite()
 	archive_write_free(_arc);
 }
 
-void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format)
+void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format, int compression_level)
 {
 	if (charset && *charset) {
 		char opt_hdrcharset[0x100] = {0};
@@ -437,6 +437,12 @@ void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format)
 			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
 		}
+	}
+
+	if (compression_level != -1) {
+		char sz[64] {};
+		snprintf(sz, sizeof(sz) - 1, "compression-level=%d", compression_level);
+		archive_write_set_options(_arc, sz);
 	}
 
 #if (ARCHIVE_VERSION_NUMBER >= 3002000)

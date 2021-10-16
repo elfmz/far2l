@@ -407,7 +407,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
   if (ItemsNumber==0)
     return 0;
 
-  char Command[MA_MAX_SIZE_COMMAND_NAME],AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
+  std::string Command, AllFilesMask;
   int ArcExitCode=1;
   BOOL OldExactState=Opt.AdvFlags.AutoResetExactArcName?FALSE:Opt.AdvFlags.ExactArcName;
   BOOL RestoreExactState=FALSE, NewArchive=TRUE;
@@ -662,12 +662,13 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     Opt.Background=OpMode & OPM_SILENT ? 0 : Opt.UserBackground;
     {
       KeyFileReadSection kfh(INI_LOCATION, pdd.ArcFormat);
-      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CommandType,Command);
-      kfh.GetChars(Command,sizeof(Command),CmdNames[CommandType],Command);
-      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CMD_ALLFILESMASK,AllFilesMask);
-      kfh.GetChars(AllFilesMask,sizeof(AllFilesMask),"AllFilesMask",AllFilesMask);
+      char DefBuf[MA_MAX_SIZE_COMMAND_NAME];
+      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CommandType,DefBuf);
+      Command = kfh.GetString(CmdNames[CommandType],DefBuf);
+      ArcPlugin->GetDefaultCommands(ArcPluginNumber,ArcPluginType,CMD_ALLFILESMASK,DefBuf);
+      AllFilesMask = kfh.GetString("AllFilesMask",DefBuf);
     }
-    if (*CurDir && strstr(Command,"%%R")==NULL && strstr(Command,"%%r")==NULL)
+    if (*CurDir && Command.find("%%R")==std::string::npos && Command.find("%%r")==std::string::npos)
     {
       const char *MsgItems[]={GetMsg(MWarning),GetMsg(MCannotPutToFolder),
                         GetMsg(MPutToRoot),GetMsg(MOk),GetMsg(MCancel)};
@@ -679,28 +680,26 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       else
         *CurDir=0;
     }
-    char *SwPos=strstr(Command,"%%S");
-    if (SwPos!=NULL)
-    {
-      char CmdRest[512];
-      strcpy(CmdRest,SwPos[3]=='}' ? SwPos+4:SwPos+3);
-      if (SwPos!=Command && *(SwPos-1)=='{')
-        SwPos--;
-      strcpy(SwPos,DialogItems[PDI_SWITCHESEDT].Data);
-      strcat(Command,CmdRest);
-    }
-    else if (*DialogItems[PDI_SWITCHESEDT].Data)
-    {
-      strcat(Command," ");
-      strcat(Command,DialogItems[PDI_SWITCHESEDT].Data);
+
+    size_t SwPos = Command.find("%%S");
+    if (SwPos != std::string::npos) {
+      Command.replace(SwPos, 3, DialogItems[PDI_SWITCHESEDT].Data);
+
+    } else if (*DialogItems[PDI_SWITCHESEDT].Data) {
+      SwPos = Command.find(" -- ");
+      if (SwPos == std::string::npos)
+        SwPos = Command.size();
+
+      Command.insert(SwPos, DialogItems[PDI_SWITCHESEDT].Data);
+      Command.insert(SwPos, " ");
     }
 
     int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
     FSF.Unquote(DialogItems[PDI_ARCNAMEEDT].Data);
     NewArchive=!FileExists(DialogItems[PDI_ARCNAMEEDT].Data);
-    ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,
+    ArcCommand ArcCmd(PanelItem,ItemsNumber,Command.c_str(),
                       DialogItems[PDI_ARCNAMEEDT].Data,"",pdd.Password1,
-                      AllFilesMask,IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
+                      AllFilesMask.c_str(),IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
 
     //последующие операции (тестирование и тд) не должны быть фоновыми
     Opt.Background=0; // $ 06.02.2002 AA

@@ -54,7 +54,7 @@ public:
 		unlink(_tmp_path.c_str());
 		_done = false;
 		LibArchOpenRead arc_src(_arc_path, "", _arc_opts.charset.c_str());
-		LibArchOpenWrite arc_dst(_tmp_path.c_str(), arc_src.Get(), "");//_arc_opts.charset.c_str());
+		LibArchOpenWrite arc_dst(_tmp_path.c_str(), arc_src.Get(), "", _arc_opts.compression_level);//_arc_opts.charset.c_str());
 
 		OnStart(arc_dst);
 
@@ -446,7 +446,7 @@ bool LIBARCH_CommandAdd(const char *cmd, const char *arc_path, const LibarchComm
 		}
 
 		LIBARCH_Add a(cmd, arc_opts, files_cnt, files);
-		LibArchOpenWrite arc(arc_path, cmd, "");//arc_opts.charset.c_str());
+		LibArchOpenWrite arc(arc_path, cmd, "", arc_opts.compression_level);//arc_opts.charset.c_str());
 		a.AddInto(arc);
 		a.DoRemoval();
 		return a.IsGood();

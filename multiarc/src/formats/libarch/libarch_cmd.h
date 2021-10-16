@@ -4,6 +4,7 @@ struct LibarchCommandOptions
 {
 	std::string root_path;
 	std::string charset;
+	int compression_level = -1;
 };
 
 // cmd  - starts from 'x' 'X' 't'

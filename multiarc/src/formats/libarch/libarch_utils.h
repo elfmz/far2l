@@ -73,8 +73,8 @@ private:
 
 struct LibArchOpenWrite
 {
-	LibArchOpenWrite(const char *name, const char *cmd, const char *charset);
-	LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset);
+	LibArchOpenWrite(const char *name, const char *cmd, const char *charset, int compression_level = -1);
+	LibArchOpenWrite(const char *name, struct archive *arc_template, const char *charset, int compression_level = -1);
 
 	~LibArchOpenWrite();
 
@@ -86,5 +86,5 @@ protected:
 
 private:
 	LibArchOpenWrite(const LibArchOpenWrite&) = delete;
-	void PrepareForOpen(const char *charset, unsigned int format);
+	void PrepareForOpen(const char *charset, unsigned int format, int compression_level);
 };

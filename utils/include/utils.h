@@ -151,6 +151,16 @@ template <class CharT>
 }
 
 template <class CharT>
+	std::basic_string<CharT> EnsureNoSlashAtNestedEnd(std::basic_string<CharT> str, CharT slash = '/')
+{
+	for (size_t p = str.size(); p > 1 && str[p - 1] == slash; )  {
+		str.resize(--p);
+	}
+	return str;
+}
+
+
+template <class CharT>
 	std::basic_string<CharT> EnsureSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')
 {
 	const size_t p = str.size();

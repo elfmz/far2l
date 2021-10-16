@@ -413,7 +413,7 @@ void SSHExecutedCommand::IOLoop()
 void *SSHExecutedCommand::ThreadProc()
 {
 	try {
-		fprintf(stderr, "SSHExecutedCommand: ENTERING\n");
+		fprintf(stderr, "SSHExecutedCommand: ENTERING [%s]\n", _command_line.c_str());
 		IOLoop();
 		fprintf(stderr, "SSHExecutedCommand: LEAVING\n");
 	} catch (std::exception &ex) {

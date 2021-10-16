@@ -375,7 +375,7 @@ extern "C" int libarch_main(int numargs, char *args[])
 	setlocale(LC_CTYPE, "UTF-8");
 
 	if (numargs < 3) {
-		printf("Usage: ^libarch <command> <archive_name> [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
+		printf("Usage: ^libarch <command> <archive_name> [-9|-8|...|-0] [-pwd=OPTIONAL PASSWORD] [-cs=OPTIONAL CHARSET] [-@OPTIONAL ARCHIVE ROOT] [--] [OPTIONAL LIST OF FILES]\n\n"
 			"<Commands>\n"
 			"  t: Test integrity of archive\n"
 			"  x: Extract files from archive (without using directory names)\n"
@@ -397,6 +397,9 @@ extern "C" int libarch_main(int numargs, char *args[])
 		while (files_cnt > 0 && files[0][0] == '-') {
 			if (files[0][1] == '@') {
 				arc_opts.root_path = files[0] + 2;
+
+			} else if (isdigit(files[0][1]) && !files[0][2]) {
+				arc_opts.compression_level = files[0][1] - '0';
 
 			} else if (strncmp(files[0], "-cs=", 4) == 0) {
 				arc_opts.charset = files[0] + 4;

@@ -411,7 +411,7 @@ void CmdlineSettings()
 	};
 
 	DialogBuilder Builder(MConfigCmdlineTitle, L"CmdlineSettings");
-	AddHistorySettings(Builder, MConfigSaveHistory, &Opt.SaveHistory, &Opt.DialogsHistoryCount);
+	AddHistorySettings(Builder, MConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
 	Builder.AddCheckbox(MConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(MConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(MConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);

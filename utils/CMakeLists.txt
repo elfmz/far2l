@@ -27,6 +27,7 @@ set(SOURCES
   src/Escaping.cpp
   src/WideMB.cpp
   src/FSNotify.cpp
+  src/TestPath.cpp
 )
 
 add_library (utils ${SOURCES})

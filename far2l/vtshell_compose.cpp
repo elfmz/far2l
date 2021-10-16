@@ -5,6 +5,7 @@
 #include "config.hpp"
 #include "vtshell_compose.h"
 #include <utils.h>
+#include <TestPath.h>
 #include <errno.h>
 #include <atomic>
 #include <unistd.h>
@@ -151,10 +152,10 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	while (last_ch != cmd && (*last_ch == ' ' || *last_ch == '\t' || *last_ch == 0)) {
 		--last_ch;
 	}
+
 	if (*last_ch != '&') { // don't update curdir in case of background command
 		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
 	}
-
 	if (need_sudo) {
 		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s%s\"\n",
 			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
@@ -164,6 +165,14 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 
 	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+
+	static std::string vthook = InMyConfig("/vtcmd.sh");
+	if (TestPath(vthook.c_str(), TestPath::EXISTS)) {
+		content.append(vthook)
+			.append((need_sudo && !StrStartsFrom(cmd, "sudo ")) ? " sudo " : " ")
+				.append(cmd).append("\n");
+	}
+
 	content+= "cd ~\n"; // avoid locking arbitrary directory
 	content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
 	content+= "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n";

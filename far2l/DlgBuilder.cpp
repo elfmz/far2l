@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FarDlgBuilder.hpp"
 #include "dialog.hpp"
 #include "language.hpp"
+#include "codepage.hpp"
 
 const int DEFAULT_INDENT = 5;
 
@@ -182,6 +183,17 @@ DialogItemEx *DialogBuilder::AddComboBox(int *Value, int Width,
 	return Item;
 }
 
+DialogItemEx *DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll)
+{
+	CodePageBoxes.emplace_back(CodePageBox{DialogItemsCount, *Value, allowAuto, allowAll});
+	DialogItemEx *Item = AddDialogItem(DI_COMBOBOX, L"");
+	SetNextY(Item);
+	Item->X2 = Item->X1 + Width;
+	Item->Flags |= DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT;
+	SetLastItemBinding(new CodePageBoxBinding<DialogItemEx>(Value, &CodePageBoxes.back().Value));
+	return Item;
+}
+
 void DialogBuilder::LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels)
 {
 	Parent->Flags |= DIF_AUTOMATION;
@@ -210,9 +222,34 @@ void DialogBuilder::LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogI
 	}
 }
 
+LONG_PTR WINAPI DialogBuilder::DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+{
+	if (Msg == DN_INITDIALOG)
+	{
+		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
+		for (const auto &CB : Builder->CodePageBoxes)
+		{
+			FillCodePagesList(hDlg, CB.Index, CB.Value, CB.allowAuto, CB.allowAll);
+		}
+	}
+	else if (Msg == DN_EDITCHANGE)
+	{
+		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
+		for (auto &CB : Builder->CodePageBoxes) if (Param1 == CB.Index)
+		{
+			FarListPos pos{};
+			SendDlgMessage(hDlg, DM_LISTGETCURPOS, CB.Index, (LONG_PTR)&pos);
+			CB.Value = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, CB.Index, pos.SelectPos);
+		}
+	}
+
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
+}
+
+
 int DialogBuilder::DoShowDialog()
 {
-	Dialog Dlg(DialogItems, DialogItemsCount);
+	Dialog Dlg(DialogItems, DialogItemsCount, DlgProc, (LONG_PTR)this);
 	Dlg.SetHelp(HelpTopic);
 	Dlg.SetPosition(-1, -1, DialogItems [0].X2+4, DialogItems [0].Y2+2);
 	Dlg.Process();

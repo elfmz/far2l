@@ -548,7 +548,8 @@ void ViewerConfig(ViewerOptions &ViOpt,bool Local)
 	{
 		Builder.AddEmptyLine();
 		Builder.AddCheckbox(MViewAutoDetectCodePage, &ViOpt.AutoDetectCodePage);
-		Builder.AddCheckbox(MViewConfigUTF8CodePageAsDefault, &ViOpt.UTF8CodePageAsDefault);
+		Builder.AddText(MViewConfigDefaultCodePage);
+		Builder.AddCodePagesBox(&ViOpt.DefaultCodePage, 40, false, false);
 	}
 	Builder.AddOKCancel();
 	if (Builder.ShowDialog())
@@ -602,8 +603,8 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 		Builder.AddCheckbox(MEditLockROFileModification, &EdOpt.ReadOnlyLock, 1);
 		Builder.AddCheckbox(MEditWarningBeforeOpenROFile, &EdOpt.ReadOnlyLock, 2);
 		Builder.AddCheckbox(MEditAutoDetectCodePage, &EdOpt.AutoDetectCodePage);
-		Builder.AddCheckbox(MEditConfigUTF8CodePageAsDefault, &EdOpt.UTF8CodePageAsDefault);
-		Builder.AddCheckbox(MEditConfigUTF8CodePageForNewFile, &EdOpt.UTF8CodePageForNewFile);
+		Builder.AddText(MEditConfigDefaultCodePage);
+		Builder.AddCodePagesBox(&EdOpt.DefaultCodePage, 40, false, false);
 	}
 
 	Builder.AddOKCancel();
@@ -724,7 +725,7 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyViewer, "IsWrap",&Opt.ViOpt.ViewerIsWrap,1, 0},
 	{1, REG_DWORD,  NKeyViewer, "Wrap",&Opt.ViOpt.ViewerWrap,0, 0},
 	{1, REG_DWORD,  NKeyViewer, "PersistentBlocks",&Opt.ViOpt.PersistentBlocks,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "UTF8CodePageAsDefault",&Opt.ViOpt.UTF8CodePageAsDefault,1, 0},
+	{1, REG_DWORD,  NKeyViewer, "DefaultCodePage",&Opt.ViOpt.DefaultCodePage,CP_UTF8, 0},
 
 	{1, REG_DWORD,  NKeyDialog, "EditHistory",&Opt.Dialogs.EditHistory,1, 0},
 	{1, REG_DWORD,  NKeyDialog, "EditBlock",&Opt.Dialogs.EditBlock,0, 0},
@@ -756,8 +757,7 @@ static struct FARConfig
 	{0, REG_DWORD,  NKeyEditor, "FileSizeLimitHi",&Opt.EdOpt.FileSizeLimitHi,(DWORD)0, 0},
 	{0, REG_DWORD,  NKeyEditor, "CharCodeBase",&Opt.EdOpt.CharCodeBase,1, 0},
 	{0, REG_DWORD,  NKeyEditor, "AllowEmptySpaceAfterEof", &Opt.EdOpt.AllowEmptySpaceAfterEof,0,0},//skv
-	{1, REG_DWORD,  NKeyEditor, "Utf8CodePageForNewFile",&Opt.EdOpt.UTF8CodePageForNewFile,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "UTF8CodePageAsDefault",&Opt.EdOpt.UTF8CodePageAsDefault,1, 0},
+	{1, REG_DWORD,  NKeyEditor, "DefaultCodePage",&Opt.EdOpt.DefaultCodePage,CP_UTF8, 0},
 	{1, REG_DWORD,  NKeyEditor, "ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},
 	{1, REG_DWORD,  NKeyEditor, "ShowScrollBar",&Opt.EdOpt.ShowScrollBar,0, 0},

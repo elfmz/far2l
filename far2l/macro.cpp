@@ -2812,7 +2812,7 @@ static bool editorsetFunc(const TMacroFunction*)
 			case 5:  // AutoDetectCodePage;
 				Ret=EdOpt.AutoDetectCodePage; break;
 			case 6:  // DefaultCodePage;
-				Ret=(long)EdOpt.DefaultCodePage; break;
+				Ret=(int)EdOpt.DefaultCodePage; break;
 			case 7:  // CursorBeyondEOL;
 				Ret=EdOpt.CursorBeyondEOL; break;
 			case 8:  // BSLikeDel;

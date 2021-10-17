@@ -789,8 +789,8 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 	if (hPlugin == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr,
-			"SetLocation_Plugin(%d, %p, '%ls', '%ls', %ld) FAILED plugin open\n",
-				file_plugin, plugin, path, host_file, item);
+			"SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED plugin open\n",
+				file_plugin, plugin, path, host_file, (long long)item);
 		return false;
 	}
 
@@ -806,8 +806,8 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 		if (!CtrlObject->Plugins.SetDirectory(hPlugin, path, 0))
 		{
 			fprintf(stderr,
-				"SetLocation_Plugin(%d, %p, '%ls', '%ls', %ld) FAILED set directory\n",
-					file_plugin, plugin, path, host_file, item);
+				"SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED set directory\n",
+					file_plugin, plugin, path, host_file, (long long)item);
 		}
 	}
 

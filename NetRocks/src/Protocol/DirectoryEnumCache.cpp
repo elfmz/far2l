@@ -122,7 +122,7 @@ public:
 			if (!_enumed_til_the_end) {
 				std::string name, owner, group;
 				FileInformation file_info;
-				while (_enumer->Enum(name, owner, group, file_info));
+				while (Enum(name, owner, group, file_info));
 			}
 
 			_dce_sp->ts = time(NULL);

@@ -189,8 +189,7 @@ struct EditorOptions
 	int DelRemovesBlocks;
 	int AutoIndent;
 	int AutoDetectCodePage;
-	int UTF8CodePageForNewFile;
-	int UTF8CodePageAsDefault;
+	UINT DefaultCodePage;
 	int CursorBeyondEOL;
 	int BSLikeDel;
 	int CharCodeBase;
@@ -213,71 +212,6 @@ struct EditorOptions
 	int ShowWhiteSpace;
 
 	FARString strWordDiv;
-
-	void Clear()
-	{
-		TabSize = 0;
-		ExpandTabs = 0;
-		PersistentBlocks = 0;
-		DelRemovesBlocks = 0;
-		AutoIndent = 0;
-		AutoDetectCodePage = 0;
-		UTF8CodePageForNewFile = 0;
-		UTF8CodePageAsDefault = 0;
-		CursorBeyondEOL = 0;
-		BSLikeDel = 0;
-		CharCodeBase = 0;
-		SavePos = 0;
-		SaveShortPos = 0;
-		F7Rules = 0;
-		AllowEmptySpaceAfterEof = 0;
-		ReadOnlyLock = 0;
-		UndoSize = 0;
-		UseExternalEditor = 0;
-		ShowKeyBar = 0;
-		ShowTitleBar = 0;
-		ShowScrollBar=0;
-		EditOpenedForWrite=0;
-		SearchSelFound=0;
-		SearchRegexp=0;
-		SearchPickUpWord=0;
-		ShowWhiteSpace=0;
-		FileSizeLimitLo = 0;
-		FileSizeLimitHi = 0;
-		strWordDiv.Clear();
-	}
-
-	void CopyTo(EditorOptions &dest)
-	{
-		dest.TabSize = TabSize;
-		dest.ExpandTabs = ExpandTabs;
-		dest.PersistentBlocks = PersistentBlocks;
-		dest.DelRemovesBlocks = DelRemovesBlocks;
-		dest.AutoIndent = AutoIndent;
-		dest.AutoDetectCodePage = AutoDetectCodePage;
-		dest.UTF8CodePageForNewFile = UTF8CodePageForNewFile;
-		dest.UTF8CodePageAsDefault = UTF8CodePageAsDefault;
-		dest.CursorBeyondEOL = CursorBeyondEOL;
-		dest.BSLikeDel = BSLikeDel;
-		dest.CharCodeBase = CharCodeBase;
-		dest.SavePos = SavePos;
-		dest.SaveShortPos = SaveShortPos;
-		dest.F7Rules = F7Rules;
-		dest.AllowEmptySpaceAfterEof = AllowEmptySpaceAfterEof;
-		dest.ReadOnlyLock = ReadOnlyLock;
-		dest.UndoSize = UndoSize;
-		dest.UseExternalEditor = UseExternalEditor;
-		dest.ShowKeyBar = ShowKeyBar;
-		dest.ShowTitleBar = ShowTitleBar;
-		dest.strWordDiv = strWordDiv;
-		dest.ShowScrollBar=ShowScrollBar;
-		dest.SearchSelFound=SearchSelFound;
-		dest.SearchRegexp=SearchRegexp;
-		dest.ShowWhiteSpace=ShowWhiteSpace;
-		dest.SearchPickUpWord=SearchPickUpWord;
-		dest.FileSizeLimitLo = FileSizeLimitLo;
-		dest.FileSizeLimitHi = FileSizeLimitHi;
-	}
 };
 
 /* $ 29.03.2001 IS
@@ -296,7 +230,7 @@ struct ViewerOptions
 	int SaveShortPos;
 	int UseExternalViewer;
 	int ShowKeyBar; // $ 15.07.2000 tran + ShowKeyBar
-	int UTF8CodePageAsDefault;
+	UINT DefaultCodePage;
 	int ShowTitleBar;
 	int SearchRegexp;
 };

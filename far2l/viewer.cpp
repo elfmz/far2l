@@ -436,7 +436,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 			}
 
 			if (VM.CodePage==CP_AUTODETECT)
-				VM.CodePage = Opt.ViOpt.UTF8CodePageAsDefault ? CP_UTF8 : CP_KOI8R;
+				VM.CodePage = Opt.ViOpt.DefaultCodePage;
 		}
 		else
 		{

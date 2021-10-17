@@ -676,7 +676,7 @@ void FileEditor::Init(
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.UTF8CodePageForNewFile ? CP_UTF8 : CP_KOI8R;
+			m_codepage=Opt.EdOpt.DefaultCodePage;
 
 		m_editor->SetCodePage(m_codepage);
 	}
@@ -1543,7 +1543,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		}
 
 		if (m_codepage==CP_AUTODETECT)
-			m_codepage=Opt.EdOpt.UTF8CodePageAsDefault?CP_UTF8:CP_KOI8R;
+			m_codepage=Opt.EdOpt.DefaultCodePage;
 	}
 	else
 	{
@@ -2421,7 +2421,7 @@ void FileEditor::SetDeleteOnClose(int NewMode)
 
 void FileEditor::GetEditorOptions(EditorOptions& EdOpt)
 {
-	m_editor->EdOpt.CopyTo(EdOpt);
+	EdOpt = m_editor->EdOpt;
 }
 
 void FileEditor::SetEditorOptions(EditorOptions& EdOpt)

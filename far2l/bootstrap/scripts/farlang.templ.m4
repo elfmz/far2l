@@ -2432,14 +2432,14 @@ MViewConfigPersistentSelection
 "T&rwałe zaznaczenie"
 "Selección &persistente"
 
-MViewConfigUTF8CodePageAsDefault
-"&Использовать кодовую страницу UTF-8 по умолчанию"
-"Use UTF-&8 code page by default"
-upd:"Automaticky otevírat soubory ve UTF-&8 kódování"
-upd:"Dateien standardmäßig mit UTF-&8-Kod&ierung öffnen"
-"Fájlok eredeti megnyitása UTF-&8 kódlappal"
-"&Otwieraj pliki w kodowaniu UTF-&8"
-"Usar código UTF-&8 por defecto"
+MViewConfigDefaultCodePage
+"Выберите &кодовую страницу по умолчанию:"
+"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
 
 MEditConfigTitle
 l:
@@ -2660,23 +2660,14 @@ upd:"Pick &up the word"
 upd:"Pick &up the word"
 "Pick &up the word"
 
-MEditConfigUTF8CodePageAsDefault
-"&Использовать кодовую страницу UTF-8 по умолчанию"
-"Use UTF-&8 code page by default"
-upd:"Automaticky otevírat soubory ve UTF-&8 kódování"
-upd:"Dateien standardmäßig mit UTF-&8-Kod&ierung öffnen"
-"Fájlok eredeti megnyitása UTF-&8 kódlappal"
-"Próbuj otwierać pliki w kodowaniu UTF-&8"
-"Usar código UTF-&8 por defecto"
-
-MEditConfigUTF8CodePageForNewFile
-"Использо&вать кодовую страницу UTF-8 при создании файлов"
-"Use UTF-8 code page when c&reating new files"
-upd:"V&ytvářet nové soubory ve UTF-8 kódování"
-upd:"Neue Dateien mit UTF-8-Ko&dierung erstellen"
-"Új &fájl létrehozása UTF-8 kódlappal"
-"&Twórz nowe pliki w kodowaniu UTF-8"
-"Usar código UTF-8 al c&rear archivos nuevos"
+MEditConfigDefaultCodePage
+"Выберите &кодовую страницу по умолчанию:"
+"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
+upd:"Choose default code pa&ge:"
 
 MNotifConfigTitle
 l:

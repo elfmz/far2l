@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DlgBuilder.hpp"
 #include "farwinapi.hpp"
+#include <list>
 
 struct DialogItemEx;
 
@@ -50,6 +51,17 @@ struct DialogItemEx;
 class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 {
 	private:
+		static LONG_PTR WINAPI DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
+
+		struct CodePageBox
+		{
+			int Index;
+			UINT Value;
+			bool allowAuto;
+			bool allowAll;
+		};
+		std::list<CodePageBox> CodePageBoxes; // must be list to keep pointers valid
+
 		const wchar_t *HelpTopic;
 
 		void LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags);
@@ -75,6 +87,9 @@ class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 
 		// Добавляет выпадающий список с указанными значениями.
 		DialogItemEx *AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
+
+		// Добавляет выпадающий список с code pages.
+		DialogItemEx *AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
 
 		// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
 		// false, устанавливает флаги Flags у элемента Target; когда равно true -

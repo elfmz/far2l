@@ -97,6 +97,22 @@ struct CheckBoxBinding: public DialogItemBinding<T>
 };
 
 template<class T>
+struct CodePageBoxBinding: public DialogItemBinding<T>
+{
+	private:
+		UINT *_Result;
+		const UINT *_Chosen;
+
+	public:
+		CodePageBoxBinding(UINT *Result, const UINT *Chosen) : _Result(Result), _Chosen(Chosen) { }
+
+		virtual void SaveValue(T *Item, int RadioGroupIndex)
+		{
+			*_Result = *_Chosen;
+		}
+};
+
+template<class T>
 struct RadioButtonBinding: public DialogItemBinding<T>
 {
 	private:

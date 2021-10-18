@@ -74,29 +74,39 @@ void OpEnumDirectory::Process()
 
 	// Now for those of them which are symlinks check if they point to directory and
 	// set FILE_ATTRIBUTE_DIRECTORY to tell far2l that they're 'enterable' directories
-	// note that not using WhatOnErrorWrap for a reason to do not bother user with
+	// note that not care about possible faults for a reason to do not bother user with
 	// annoying errors if some directories target's will appear inaccessble.
-	std::string path_name;
-	for (int i = _initial_result_count; i < _result.count; ++i) {
-		auto &entry = _result.items[i];
-		if (S_ISLNK(entry.FindData.dwUnixMode)) try {
-			path_name = _base_dir;
-			if (!path_name.empty() && path_name[path_name.size() - 1] != '/') {
-				path_name+= '/';
+	std::vector<std::string> pathes;
+	std::vector<mode_t> modes;
+	std::vector<DWORD *> pattrs;
+	size_t pathes_len = 0;
+	for (int i = _initial_result_count; ; ++i) {
+		if (pathes_len >= 1024 || i >= _result.count) {
+			if (!pathes.empty()) {
+				_base_host->GetModes(true, pathes.size(), pathes.data(), modes.data());
+				for (size_t j = 0; j < pathes.size(); ++j) {
+					if (modes[j] != ~(mode_t)0 && S_ISDIR(modes[j])) {
+						(*pattrs[j])|= FILE_ATTRIBUTE_DIRECTORY;
+					}
+				}
+				pathes.clear();
+				modes.clear();
+				pattrs.clear();
+				pathes_len = 0;
 			}
-			path_name+= Wide2MB(entry.FindData.lpwszFileName);
-			mode_t mode = _base_host->GetMode(path_name);
-			if (S_ISDIR(mode)) {
-				entry.FindData.dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
-			}
-		} catch (std::exception &ex) {
-			fprintf(stderr,
-				"NetRocks::OpEnumDirectory: '%s' at target of '%s'\n",
-				ex.what(), path_name.c_str());
+			if (i >= _result.count) break;
 		}
-
+		auto &entry = _result.items[i];
+		if (S_ISLNK(entry.FindData.dwUnixMode)) {
+			pathes.emplace_back(_base_dir);
+			if (!_base_dir.empty() && _base_dir.back() != '/') {
+				pathes.back()+= '/';
+			}
+			pathes.back()+= Wide2MB(entry.FindData.lpwszFileName);
+			pathes_len+= pathes.back().size();
+			modes.emplace_back(~(mode_t)0);
+			pattrs.emplace_back(&entry.FindData.dwFileAttributes);
+		}
 		ProgressStateUpdate psu(_state); // check for pause/abort
 	}
-
-
 }

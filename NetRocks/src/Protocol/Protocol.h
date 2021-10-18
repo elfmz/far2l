@@ -55,6 +55,16 @@ struct IProtocol
 {
 	virtual ~IProtocol() {};
 
+	/* optimized and not-throwing version of GetMode for mass-query of modes */
+	virtual void GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
+	{
+		for (size_t i = 0; i < count; ++i) try {
+			modes[i] = GetMode(pathes[i], follow_symlink);
+		} catch (...) {
+			modes[i] = ~(mode_t)0;
+		}
+	}
+
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true) = 0;
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true) = 0;
 	virtual void GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink = true) = 0;

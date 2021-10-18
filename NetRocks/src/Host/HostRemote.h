@@ -56,7 +56,9 @@ public:
 	virtual void ReInitialize();
 	virtual void Abort();
 
+	virtual void GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept;
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true);
+
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true);
 	virtual void GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink = true);
 

@@ -401,6 +401,34 @@ mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink)
 	return out;
 }
 
+void HostRemote::GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
+{
+	size_t j = 0;
+	try {
+		CheckReady();
+
+		SendCommand(IPC_GET_MODES);
+		SendPOD(follow_symlink);
+		SendPOD(count);
+		for (size_t i = 0; i < count; ++i) {
+			SendString(pathes[i]);
+		}
+		RecvReply(IPC_GET_MODES);
+		for (; j < count; ++j) {
+			RecvPOD(modes[j]);
+		}
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+	} catch (...) {
+		fprintf(stderr, "%s: ...\n", __FUNCTION__);
+	}
+	for (; j < count; ++j) {
+		modes[j] = ~(mode_t)0;
+	}
+}
+
+
 unsigned long long HostRemote::GetSize(const std::string &path, bool follow_symlink)
 {
 	CheckReady();

@@ -166,6 +166,24 @@ class HostRemoteBroker : protected IPCEndpoint
 		}
 	}
 
+	void OnGetModes()
+	{
+		bool follow_symlink = true;
+		size_t count = 0;
+		RecvPOD(follow_symlink);
+		RecvPOD(count);
+		std::vector<std::string> pathes(count);
+		std::vector<mode_t> modes(count);
+		for (auto &path : pathes) {
+			RecvString(path);
+		}
+		_protocol->GetModes(follow_symlink, count, pathes.data(), modes.data());
+		SendCommand(IPC_GET_MODES);
+		for (const auto &mode : modes) {
+			SendPOD(mode);
+		}
+	}
+
 	template <IPCCommand C, class MethodT>
 		void OnGetModeOrSize(MethodT pGet)
 	{
@@ -256,6 +274,7 @@ class HostRemoteBroker : protected IPCEndpoint
 	void OnCommand(IPCCommand c)
 	{
 		switch (c) {
+			case IPC_GET_MODES: OnGetModes(); break;
 			case IPC_GET_MODE: OnGetModeOrSize<IPC_GET_MODE>(&IProtocol::GetMode); break;
 			case IPC_GET_SIZE: OnGetModeOrSize<IPC_GET_SIZE>(&IProtocol::GetSize); break;
 			case IPC_GET_INFORMATION: OnGetInformation(); break;

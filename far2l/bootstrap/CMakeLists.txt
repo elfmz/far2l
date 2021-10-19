@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 3.0.2)
 
+# Make TOOLS folder overridable in command line when configuring build.
+# This will allow specifying host far2l tools location when doing cross-platform builds.
+# Cross compile of far2l requires tools to be pre-compiled for host architecture.
 set(TOOLS "${CMAKE_BINARY_DIR}/tools" CACHE STRING "")
 set(FARLNGTOOL "${TOOLS}/farlng")
 

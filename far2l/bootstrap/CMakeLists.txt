@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.0.2)
 
-set(TOOLS "${CMAKE_BINARY_DIR}/tools")
+set(TOOLS "${CMAKE_BINARY_DIR}/tools" CACHE STRING "")
 set(FARLNGTOOL "${TOOLS}/farlng")
 
 add_custom_target(bootstrap 

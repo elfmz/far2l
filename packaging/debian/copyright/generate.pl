@@ -37,13 +37,7 @@ while (<SKELETON>) {
 	my @copyright = collect_bone_field('Copyright');
 	if (scalar(@files) > 0) {
 		my %commiters;
-		for (@files) {
-			my @subfiles = split(/ /, $_);
-			for (@subfiles) {
-				my $file = trim($_);
-				collect_commiters($file, \%commiters) if $file ne '';
-			}
-		}
+		collect_commiters(\@files, \%commiters);
 		append_commiters(\%commiters, \@copyright);
 	}
 	my $skipping = undef;
@@ -90,11 +84,20 @@ close(OUT);
 
 sub collect_commiters
 {
-	my ($file, $commiters) = (@_);
-	my $path = "$scandir/$file";
-	$path = substr($path, 0, length($path) - 2) if substr($path, -2) eq '/*';
-	print "Copyrighting: $path\n";
-	my @gitout = split /[\n\r]/, `git log --date=short --pretty=format:\"%an%x09%ad\" -- \'$path\'`;
+	my ($files, $commiters) = (@_);
+	my $pathes = '';
+	for (@{$files}) {
+		my @subfiles = split(/ /, $_);
+		for (@subfiles) {
+			my $path = "$scandir/$_";
+			$path = substr($path, 0, length($path) - 2) if substr($path, -2) eq '/*';
+			$pathes.= ' ' if $pathes ne '';
+			$pathes.= "'$path'";
+		}
+	}
+	return if $pathes eq '';
+	print "Copyrighting: $pathes\n";
+	my @gitout = split /[\n\r]/, `git log --date=short --pretty=format:\"%an%x09%ad\" -- $pathes`;
 	for $gitline (@gitout) {
 		# $gitline == 'somebody	2021-09-01'
 		my ($commiter, $date) = split(/\t/, trim($gitline));

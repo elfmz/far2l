@@ -85,10 +85,11 @@ close(OUT);
 sub collect_commiters
 {
 	my ($files, $commiters) = (@_);
-	my $pathes = '';
+	my ($pathes, $msg) = ('', 'Copyrighting:');
 	for (@{$files}) {
 		my @subfiles = split(/ /, $_);
 		for (@subfiles) {
+			$msg.= " $_";
 			my $path = "$scandir/$_";
 			$path = substr($path, 0, length($path) - 2) if substr($path, -2) eq '/*';
 			$pathes.= ' ' if $pathes ne '';
@@ -96,7 +97,7 @@ sub collect_commiters
 		}
 	}
 	return if $pathes eq '';
-	print "Copyrighting: $pathes\n";
+	print "$msg\n";
 	my @gitout = split /[\n\r]/, `git log --date=short --pretty=format:\"%an%x09%ad\" -- $pathes`;
 	for $gitline (@gitout) {
 		# $gitline == 'somebody	2021-09-01'

@@ -386,6 +386,19 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 		}
 
+		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
+		// to avoid shell history pollution by far2l's intermediate script execution commands
+		std::string hc_override;
+		const char *hc = getenv("HISTCONTROL");
+		if (!hc || (!strstr(hc, "ignorespace") && !strstr(hc, "ignoreboth"))) {
+			hc_override = "ignorespace";
+			if (hc && *hc) {
+				hc_override+= ':';
+				hc_override+= hc;
+			}
+			fprintf(stderr, "Override HISTCONTROL='%s'\n", hc_override.c_str());
+		}
+
 		//shell = "/usr/bin/zsh";
 		//shell = "/bin/bash";
 		//shell = "/bin/sh";
@@ -393,6 +406,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		int r = fork();
 		if (r != 0) {
 			return r;
+		}
+
+		if (!hc_override.empty()) {
+			setenv("HISTCONTROL", hc_override.c_str(), 1);
 		}
 
 		// avoid locking current directory

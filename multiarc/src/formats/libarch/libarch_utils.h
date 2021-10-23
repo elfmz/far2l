@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <unistd.h>
 #include <stdexcept>
 
@@ -41,6 +42,9 @@ struct LibArchOpenRead
 {
 	LibArchOpenRead(const char *name, const char *cmd, const char *charset);
 	~LibArchOpenRead();
+
+	off_t RawSize();
+	ssize_t RawRead(void *data, size_t len, off_t ofs);
 
 	inline unsigned int Format() const { return _fmt; }
 	inline struct archive *Get() { return _arc; }

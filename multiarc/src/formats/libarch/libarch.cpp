@@ -6,7 +6,10 @@
 #include <locale.h>
 
 #include <windows.h>
+#include <os_call.hpp>
+#include <ScopeHelpers.h>
 #include "libarch_utils.h"
+#include "libarch_crutches.h"
 
 #include <pluginold.hpp>
 using namespace oldfar;
@@ -171,32 +174,52 @@ static void ArcTM(FILETIME &dst, time_t sec, unsigned long nsec)
 }
 
 static std::unique_ptr<LibArchOpenRead> s_arc;
+static uint64_t (*s_UnpackedSizeWorkaround)(LibArchOpenRead *arc) = nullptr;
 
 BOOL WINAPI _export LIBARCH_OpenArchive(const char *Name, int *Type, bool Silent)
 {
 	try {
+		s_UnpackedSizeWorkaround = nullptr;
 		LibArchOpenRead *arc = new LibArchOpenRead(Name, "", "");
 		s_arc.reset(arc);
-		*Type = (arc->Format() == ARCHIVE_FORMAT_TAR) ? MF_TAR : MF_NOT_DISPLAYED;
-		if (arc->Format() == ARCHIVE_FORMAT_RAW) {
-			for (int i = 0, ii = archive_filter_count(arc->Get()); i < ii; ++i) {
-				int fc = archive_filter_code(arc->Get(), i);
-				if (fc == ARCHIVE_FILTER_GZIP) {
-					if (arc->Format() == ARCHIVE_FORMAT_CPIO) {
-						*Type = MF_CPIOGZ;
-					} else if (arc->Format() == ARCHIVE_FORMAT_TAR) {
-						*Type = MF_TARGZ;
-					}
-				} else if (fc != 0) {
-					*Type = MF_NOT_DISPLAYED;
-				}
-			}
+
+		if (arc->Format() == ARCHIVE_FORMAT_TAR || arc->Format() == ARCHIVE_FORMAT_TAR_GNUTAR) {
+			*Type = MF_TAR;
+
+//		} else if (arc->Format() == ARCHIVE_FORMAT_CPIO) {
+//			*Type = MF_CPIO;
 
 		} else if (arc->Format() == ARCHIVE_FORMAT_ISO9660) {
 			*Type = MF_ISO;
 
 		} else if (arc->Format() == ARCHIVE_FORMAT_CAB) {
 			*Type = MF_CAB;
+
+		} else {
+			*Type = MF_NOT_DISPLAYED;
+		}
+
+		for (int i = 0, ii = archive_filter_count(arc->Get()); i < ii; ++i) {
+			int fc = archive_filter_code(arc->Get(), i);
+			if (fc == ARCHIVE_FILTER_XZ) {
+				if (arc->Format() == ARCHIVE_FORMAT_RAW) {
+					s_UnpackedSizeWorkaround = LibArch_UnpackedSizeOfXZ;
+				}
+
+			} else if (fc == ARCHIVE_FILTER_GZIP) {
+				if (arc->Format() == ARCHIVE_FORMAT_RAW) {
+					s_UnpackedSizeWorkaround = LibArch_UnpackedSizeOfGZ;
+
+				} else if (arc->Format() == ARCHIVE_FORMAT_TAR || arc->Format() == ARCHIVE_FORMAT_TAR_GNUTAR) {
+					*Type = MF_TARGZ;
+
+				} else if (arc->Format() == ARCHIVE_FORMAT_CPIO) {
+					*Type = MF_CPIOGZ;
+				}
+
+			} else if (fc != 0) {
+				*Type = MF_NOT_DISPLAYED;
+			}
 		}
 
 	} catch(std::exception &e) {
@@ -211,6 +234,7 @@ DWORD WINAPI _export LIBARCH_GetSFXPos(void)
 {
 	return 0;
 }
+
 
 int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
 {
@@ -235,6 +259,10 @@ int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcIte
 		strncpy(Item->FindData.cFileName, pathname, sizeof(Item->FindData.cFileName) - 1);
 
 		uint64_t sz = archive_entry_size(entry);
+		if (sz == 0 && !archive_entry_size_is_set(entry) && s_UnpackedSizeWorkaround != nullptr) {
+			sz = s_UnpackedSizeWorkaround(s_arc.get());
+		}
+
 		Item->FindData.nFileSize = sz;
 		Item->FindData.nPhysicalSize = sz;
 		Item->FindData.dwUnixMode = archive_entry_mode(entry);

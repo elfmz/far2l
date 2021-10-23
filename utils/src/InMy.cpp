@@ -76,7 +76,7 @@ static std::string GetTempSubdirUncached(const char *what)
 	const char *env = getenv(env_cache.c_str());
 	if (env && *env) {
 		out = env;
-		fprintf(stderr, "%s: '%s' cached as '%s'\n", __FUNCTION__, env_cache.c_str(), out.c_str());
+//		fprintf(stderr, "%s: '%s' cached as '%s'\n", __FUNCTION__, env_cache.c_str(), out.c_str());
 		return out;
 	}
 
@@ -119,7 +119,7 @@ static std::string GetTempSubdirUncached(const char *what)
 	}
 
 	setenv(env_cache.c_str(), out.c_str(), 1);
-	fprintf(stderr, "%s: '%s' inited as '%s'\n", __FUNCTION__, env_cache.c_str(), out.c_str());
+//	fprintf(stderr, "%s: '%s' inited as '%s'\n", __FUNCTION__, env_cache.c_str(), out.c_str());
 	return out;
 }
 

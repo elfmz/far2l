@@ -33,17 +33,6 @@ void LibArch_SetPassprhase(const char *passprhase)
 
 #endif
 
-const char *LibArch_EntryPathname(struct archive_entry *e)
-{
-#if (ARCHIVE_VERSION_NUMBER >= 3002000)
-	const char *utf8 = archive_entry_pathname_utf8(e);
-	if (utf8) {
-		return utf8;
-	}
-#endif
-	return archive_entry_pathname(e);
-}
-
 ///
 
 LibArchTempEntry::LibArchTempEntry()
@@ -192,6 +181,22 @@ LibArchOpenRead::~LibArchOpenRead()
 {
 	EnsureClosed();
 }
+
+off_t LibArchOpenRead::RawSize()
+{
+	struct stat s{};
+	if (sdc_fstat(_fd, &s) == -1) {
+		return 0;
+	}
+
+	return s.st_size;
+}
+
+ssize_t LibArchOpenRead::RawRead(void *data, size_t len, off_t ofs)
+{
+	return sdc_pread(_fd, data, len, ofs);
+}
+
 
 void LibArchOpenRead::PrepareForOpen(const char *charset)
 {

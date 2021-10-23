@@ -146,6 +146,7 @@ if(LibArchive_FOUND)
     set(SOURCES
         ${SOURCES}
         src/formats/libarch/libarch_utils.cpp
+        src/formats/libarch/libarch_crutches.cpp
         src/formats/libarch/libarch_cmd_read.cpp
         src/formats/libarch/libarch_cmd_write.cpp
         src/formats/libarch/libarch.cpp

@@ -383,9 +383,6 @@ static void SetupFarPath(int argc, char **argv)
 		SetPathTranslationPrefix(dir);
 	}
 
-	fprintf(stderr, "argv[0]='%s' g_strFarModuleName='%ls' translation_prefix='%ls'\n", 
-		argv[0], g_strFarModuleName.CPtr(), GetPathTranslationPrefix());
-
 	PrepareDiskPath(g_strFarModuleName);
 }
 
@@ -393,6 +390,9 @@ static unsigned int gMainThreadID;
 
 int FarAppMain(int argc, char **argv)
 {
+	fprintf(stderr, "argv[0]='%s' g_strFarModuleName='%ls' translation_prefix='%ls' temp='%s' config='%s'\n", 
+		argv[0], g_strFarModuleName.CPtr(), GetPathTranslationPrefix(), InMyTemp().c_str(), InMyConfig().c_str());
+
 	// make current thread to be same as main one to avoid FARString reference-counter
 	// from cloning main strings from current one
 	OverrideInterThreadID(gMainThreadID);

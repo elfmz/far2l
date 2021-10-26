@@ -31,6 +31,19 @@ fi
 #path3<TAB>info3
 FAVORITES=~/.config/far2l/favorites
 
+# Return (print) the position of a first character in $1 that's not in $2.
+function get_unique_hotkey_pos() {
+	from=$1
+	used_keys=$2
+	for (( i=0; i<${#from}; i++ )); do
+		if [[ "${used_keys}" != *"${from:$i:1}"* ]]; then
+			echo "$i"
+			return
+		fi
+	done
+	echo ""
+}
+
 ##########################################################
 if [ "$1" == 'umount' ]; then
 	if [ "$3" == 'force' ]; then
@@ -41,9 +54,9 @@ if [ "$1" == 'umount' ]; then
 
 ##########################################################
 else
-	#FIXME: pathes that contain repeated continuos spaces
+	#FIXME: paths that contain repeated continuos spaces
 
-	sysname=`uname`
+	sysname="$(uname)"
 	if [ "$sysname" == "Linux" ] || [ "$sysname" == "FreeBSD" ]; then
 		dfcmd='df -T | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $2 }'\'
 	else
@@ -53,7 +66,22 @@ else
 	while IFS=$'\n' read -r line; do
 		if [[ "$line" == "/"* ]] \
 		  && [[ "$line" != /run/* ]] && [[ "$line" != /snap/* ]] \
-		  && [[ "$line" != /sys/* ]] && [[ "$line" != /dev/* ]] ; then
+		  && [[ "$line" != /sys/* ]] && [[ "$line" != /dev/* ]] && [[ "$line" != "/dev"$'\t'* ]] \
+		  && [[ "$line" != /System/* ]] && [[ "$line" != /private/* ]] ; then
+			# Absence of quotes is intentional.
+			DISK_LABEL="$(basename $line)"
+			DISK_LABEL_LC="$(echo "${DISK_LABEL}" | tr '[:upper:]' '[:lower:]')"
+			HOTKEY_POS=$(get_unique_hotkey_pos "${DISK_LABEL_LC}" "${ALL_HOTKEYS}")
+			if [[ -n "${HOTKEY_POS}" ]]; then
+				# https://superuser.com/a/1472573/32412 - "In a bash regex, quoted parts are literal".
+				# Alas, bash doesn't have a nongreedy match.
+				if [[ $line =~ (.*)"${DISK_LABEL}"(.*) ]]; then
+					ALL_HOTKEYS="${ALL_HOTKEYS}${DISK_LABEL_LC:${HOTKEY_POS}:1}"
+					HOTKEY_POS=$((HOTKEY_POS+1))
+					DISK_LABEL_HOTKEYED="$(echo "${DISK_LABEL}" | sed "s/./\&&/${HOTKEY_POS}")"
+					line="${BASH_REMATCH[1]}${DISK_LABEL_HOTKEYED}${BASH_REMATCH[2]}"
+				fi
+			fi
 			echo "$line"
 		fi
 	done < <(eval "$dfcmd")

@@ -451,6 +451,10 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
 		
 				ChDiskItem.strName = FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
+				// Hack around a hotkey symbol that breaks the vertical line.
+				if (ChDiskItem.strName.Contains(L'&')) {
+					ChDiskItem.strName.Insert(0, ' ');
+				}
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
 				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), true);
 

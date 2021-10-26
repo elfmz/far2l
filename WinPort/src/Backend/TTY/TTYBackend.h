@@ -11,10 +11,12 @@
 #include "TTYOutput.h"
 #include "TTYInput.h"
 #include "IFar2lInterractor.h"
+#include "TTYXGlue.h"
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
 {
 	std::mutex _output_mutex;
+	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
 	enum {
@@ -48,6 +50,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
+	ITTYXGluePtr _ttyx;
 
 	COORD _largest_window_size;
 	std::atomic<bool> _largest_window_size_ready{false};
@@ -117,7 +120,7 @@ protected:
 
 
 public:
-	TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

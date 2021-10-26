@@ -15,6 +15,12 @@
 #include <ScopeHelpers.h>
 #include <LocalSocket.h>
 
+#define TTY_FLAG_FAR2L           0x01
+#define TTY_FLAG_FEATS           0x02
+#define TTY_FLAGS_ALL            (TTY_FLAG_FAR2L | TTY_FLAG_FEATS)
+
+#define TTY_INFO_MAXTEXT         0x1000
+#define TTY_INFO_FEAT_XENV       0x00000001
 
 int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info)
 {
@@ -32,17 +38,30 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		{
 			FDScope info_fd(open(info_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600));
 			if (info_fd.Valid()) {
-				WriteAll(info_fd, info.c_str(), info.size());
+				if (info.size() >= TTY_INFO_MAXTEXT) {
+					WriteAll(info_fd, info.c_str(), TTY_INFO_MAXTEXT);
+					const char zero = 0;
+					WriteAll(info_fd, &zero, sizeof(zero));
+				} else {
+					WriteAll(info_fd, info.c_str(), info.size() + 1);
+				}
+				const uint64_t feats = TTY_INFO_FEAT_XENV;
+				WriteAll(info_fd, &feats, sizeof(feats));
 			}
 		}
 		LocalSocketServer sock(LocalSocket::DATAGRAM, ipc_path);
 		sock.WaitForClient(kickass);
 
-		char x_far2l_tty = -1;
-		sock.Recv(&x_far2l_tty, 1);
-
-		if (x_far2l_tty != 0 && x_far2l_tty != 1)
+		unsigned char flags = -1;
+		sock.Recv(&flags, 1);
+		if (flags & ~TTY_FLAGS_ALL) {
 			return -1;
+		}
+		uint64_t intersected_feats = 0;
+		if (flags & TTY_FLAG_FEATS) {
+			// we and peer know about extended feats, so peer send us intersection - lets get it
+			sock.Recv(&intersected_feats, sizeof(intersected_feats));
+		}
 
 		FDScope new_in(sock.RecvFD());
 		FDScope new_out(sock.RecvFD());
@@ -51,7 +70,36 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		dup2(new_in, std_in);
 		dup2(new_out, std_out);
 
-		far2l_tty = x_far2l_tty != 0;
+		far2l_tty = ((flags & TTY_FLAG_FAR2L) != 0);
+
+		if (intersected_feats & TTY_INFO_FEAT_XENV) {
+			std::vector<char> v;
+			char env[0x80]{};
+			for (;;) {
+				uint32_t l;
+				sock.Recv(&l, sizeof(l));
+				if (l == 0 || l >= sizeof(env)) {
+					break;
+				}
+				sock.Recv(env, l);
+				env[l] = 0;
+				sock.Recv(&l, sizeof(l));
+				if (l == (uint32_t)-1) {
+					unsetenv(env);
+
+				} else if (l < 0x400000) { // 4 megs ought to be enough for everyone
+					v.resize(l + 1);
+					if (l) {
+						sock.Recv(v.data(), l);
+					}
+					v[l] = 0;
+					setenv(env, v.data(), 1);
+				} else {
+					break;
+				}
+			}
+		}
+
 		return notify_pipe;
 
 	} catch (LocalSocketCancelled &e) {
@@ -70,6 +118,27 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 
 ///////////////////////////////////////////////////////////////
 
+class TTYInfoReader
+{
+	char _buf[TTY_INFO_MAXTEXT + sizeof(uint16_t) + 2] {};
+	uint64_t _feats = 0;
+
+public:
+	TTYInfoReader(const std::string &info_file)
+	{
+		FDScope info_fd(open(info_file.c_str(), O_RDONLY));
+		if (info_fd.Valid()) {
+			const size_t rd_len = ReadAll(info_fd, _buf, sizeof(_buf) - 1);
+			const size_t text_len = strlen(_buf);
+			if (rd_len >= text_len + 1 + sizeof(_feats)) {
+				memcpy(&_feats, &_buf[text_len + 1], sizeof(_feats));
+			}
+		}
+	}
+
+	inline const char *Text() const { return _buf; }
+	inline uint64_t Feats() const { return _feats; }
+};
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
@@ -93,14 +162,8 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 				std::string info_file = tty_dir;
 				info_file+= '/';
 				info_file+= de->d_name;
-
-				FDScope info_fd(open(info_file.c_str(), O_RDONLY));
-				char info[0x1000] = {};
-				if (info_fd.Valid()) {
-					ReadAll(info_fd, info, sizeof(info) - 1);
-				}
-
-				instances.emplace_back(TTYRevivableInstance{info, (pid_t)pid});
+				TTYInfoReader info_reader(info_file);
+				instances.emplace_back(TTYRevivableInstance{info_reader.Text(), (pid_t)pid});
 			}
 		}
 	}
@@ -111,6 +174,9 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 {
 	char sz[64] = {};
+	snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.info", (unsigned long)pid);
+	const std::string &info_file = InMyTemp(sz);
+
 	snprintf(sz, sizeof(sz) - 1, "TTY/srv-%lu.ipc", (unsigned long)pid);
 	const std::string &ipc_path = InMyTemp(sz);
 
@@ -126,14 +192,46 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 	}
 
 	try {
+		TTYInfoReader info_reader(info_file);
 		LocalSocketClient sock(LocalSocket::DATAGRAM, ipc_path, ipc_path_clnt);
 
-		char x_far2l_tty = far2l_tty ? 1 : 0;
-		sock.Send(&x_far2l_tty, 1);
+		// if peer and we have common extended feats - let him know we understood that
+		const uint64_t intersected_feats = (info_reader.Feats() & TTY_INFO_FEAT_XENV);
+		const unsigned char flags =
+			(far2l_tty ? TTY_FLAG_FAR2L : 0) |
+			( (intersected_feats != 0) ? TTY_FLAG_FEATS : 0);
+
+		sock.Send(&flags, 1);
+		if (intersected_feats != 0) {
+			sock.Send(&intersected_feats, sizeof(intersected_feats));
+		}
 		sock.SendFD(std_in);
 		sock.SendFD(std_out);
 		sock.SendFD(notify_pipe[1]);
 		CheckedCloseFD(notify_pipe[1]);
+		if (intersected_feats & TTY_INFO_FEAT_XENV) {
+			const char *envs[] = { "DISPLAY", "ICEAUTHORITY", "SESSION_MANAGER",
+				"XAPPLRESDIR", "XCMSDB", "XENVIRONMENT", "XFILESEARCHPATH", "XKEYSYMDB",
+				"XLOCALEDIR", "XMODIFIERS", "XUSERFILESEARCHPATH", "XWTRACE", "XWTRACELC"
+			}; 
+			uint32_t l;
+			for (const auto &env : envs) {
+				l = strlen(env);
+				sock.Send(&l, sizeof(l));
+				if (l) {
+					sock.Send(env, l);
+				}
+				const char *v = getenv(env);
+				l = v ? strlen(v) : (uint32_t)-1;
+				sock.Send(&l, sizeof(l));
+				if (v) {
+					sock.Send(v, l);
+				}
+			}
+			l = 0;
+			sock.Send(&l, sizeof(l));
+		}
+
 		return notify_pipe[0];
 
 	} catch (LocalSocketConnectError &e) {

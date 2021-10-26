@@ -30,7 +30,8 @@
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
-TTYBackend::TTYBackend(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
 	_far2l_tty(far2l_tty),
@@ -107,15 +108,24 @@ void TTYBackend::ReaderThread()
 	while (!_exiting) {
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
-		if (prev_far2l_tty != _far2l_tty || !_clipboard_backend_setter.IsSet()) {
-			if (_far2l_tty) {
+		if (_far2l_tty) {
+			if (!prev_far2l_tty) {
 				IFar2lInterractor *interractor = this;
 				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
+			}
+
+		} else {
+			if (_full_exe_path) {
+				_ttyx = StartTTYX(_full_exe_path);
+			}
+			if (_ttyx) {
+				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
+
 			} else {
 				_clipboard_backend_setter.Set<FSClipboardBackend>();
 			}
-			prev_far2l_tty = _far2l_tty;
 		}
+		prev_far2l_tty = _far2l_tty;
 
 		{
 			std::unique_lock<std::mutex> lock(_async_mutex);
@@ -145,8 +155,8 @@ void TTYBackend::ReaderThread()
 		}
 
 		pthread_join(writer_trd, nullptr);
-
 		DetachNotifyPipe();
+		_ttyx.reset();
 
 		while (!_exiting) {
 			const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
@@ -697,6 +707,12 @@ DWORD TTYBackend::OnQueryControlKeys()
 {
 	DWORD out = 0;
 
+	if (_ttyx) {
+		out = _ttyx->GetModifiers();
+		if (out != 0)
+			return out;
+	}
+
 #ifdef __linux__
 	unsigned char state = 6;
 /* #ifndef KG_SHIFT
@@ -841,9 +857,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(std_in, std_out, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYBackend vtb(full_exe_path, std_in, std_out, far2l_tty, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;

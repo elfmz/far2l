@@ -30,11 +30,6 @@ struct ServerIdentityMismatchError : std::runtime_error
 	ServerIdentityMismatchError(const std::string &identity);
 };
 
-struct IPCError : std::runtime_error
-{
-	IPCError(const char *msg, unsigned int code);
-};
-
 struct AbortError : std::runtime_error
 {
 	AbortError() : std::runtime_error("Operation aborted") {}

@@ -13,7 +13,6 @@ src/BackgroundTasks.cpp
 src/Location.cpp
 src/ConnectionsPool.cpp
 src/ImportFarFtpSites.cpp
-src/Host/IPC.cpp
 src/Host/HostLocal.cpp
 src/Host/HostRemote.cpp
 src/UI/DialogUtils.cpp
@@ -56,7 +55,6 @@ src/Protocol/Protocol.cpp
 set(PROTOCOL_SOURCES
 src/Erroring.cpp
 src/Host/HostRemoteBroker.cpp
-src/Host/IPC.cpp
 )
 
 

@@ -88,3 +88,7 @@ bool TranslateInstallPath_Share2Lib(std::string &path)
 	return TranslateInstallPath(path, "share", "lib");
 }
 
+bool TranslateInstallPath_Bin2Lib(std::string &path)
+{
+	return TranslateInstallPath(path, "bin", "lib/" APP_BASENAME);
+}

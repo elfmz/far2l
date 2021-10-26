@@ -292,7 +292,7 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_EXECUTE_COMMAND: OnExecuteCommand(); break;
 				
 			default:
-				throw IPCError("HostRemoteBroker: bad command", (unsigned int)c); 
+				throw PipeIPCError("HostRemoteBroker: bad command", (unsigned int)c); 
 		}
 	}
 
@@ -309,7 +309,7 @@ public:
 			SendPOD(IPC_PI_OK);
 			break;
 
-		} catch (IPCError &) {
+		} catch (PipeIPCError &) {
 			throw;
 
 		} catch (AbortError &) {

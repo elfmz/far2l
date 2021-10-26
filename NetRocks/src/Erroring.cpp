@@ -84,17 +84,3 @@ ServerIdentityMismatchError::ServerIdentityMismatchError(const std::string &iden
 }
 
 ////////////
-
-static std::string FormatIPCError(const char *msg, unsigned int code)
-{
-	std::string s = msg;
-	char sz[32];
-	snprintf(sz, sizeof(sz) - 1, " (0x%x)", code);
-	s+= sz;
-	return s;
-}
-
-IPCError::IPCError(const char *msg, unsigned int code)
-	: std::runtime_error(TeeStr(FormatIPCError(msg, code)))
-{
-}

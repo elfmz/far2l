@@ -6,8 +6,6 @@
 #include <locale.h>
 
 #include <windows.h>
-#include <os_call.hpp>
-#include <ScopeHelpers.h>
 #include "libarch_utils.h"
 #include "libarch_crutches.h"
 

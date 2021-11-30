@@ -30,6 +30,7 @@ class VTFar2lExtensios
 	void OnInterract_ClipboardIsFormatAvailable(StackSerializer &stk_ser);
 	void OnInterract_ClipboardSetData(StackSerializer &stk_ser);
 	void OnInterract_ClipboardGetData(StackSerializer &stk_ser);
+	void OnInterract_ClipboardGetDataID(StackSerializer &stk_ser);
 	void OnInterract_ClipboardRegisterFormat(StackSerializer &stk_ser);
 	void OnInterract_Clipboard(StackSerializer &stk_ser);
 	void OnInterract_GetLargestWindowSize(StackSerializer &stk_ser);

@@ -95,6 +95,7 @@ static void SetupStdHandles()
 	if (!err.empty() && err != "-") {
 		if (freopen(err.c_str(), "a", stderr)) {
 			reopened|= 2;
+			setvbuf(stderr, NULL, _IONBF, 0);
 		} else
 			perror("freopen stderr");
 	}

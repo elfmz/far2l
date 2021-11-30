@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "../Backend.h"
+#include "../FSClipboardBackend.h"
 
 struct ITTYXGlue
 {
@@ -21,6 +22,7 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path);
 class TTYXClipboard : public IClipboardBackend
 {
 	ITTYXGluePtr _ttyx;
+	FSClipboardBackend _fs_fallback;
 	bool _empty_pending = false;
 
 protected:

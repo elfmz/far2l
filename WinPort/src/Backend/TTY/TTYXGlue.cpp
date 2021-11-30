@@ -135,6 +135,9 @@ TTYXClipboard::~TTYXClipboard()
 
 bool TTYXClipboard::OnClipboardOpen()
 {
+	if (!_fs_fallback.OnClipboardOpen()) {
+		return false;
+	}
 	_empty_pending = false;
 	return true;
 }
@@ -144,16 +147,18 @@ void TTYXClipboard::OnClipboardClose()
 	if (_empty_pending) {
 		_ttyx->SetClipboard(std::string());
 	}
+	_fs_fallback.OnClipboardClose();
 }
 
 void TTYXClipboard::OnClipboardEmpty()
 {
 	_empty_pending = true;
+	_fs_fallback.OnClipboardEmpty();
 }
 
 bool TTYXClipboard::OnClipboardIsFormatAvailable(UINT format)
 {
-	return format == CF_UNICODETEXT;
+	return format == CF_UNICODETEXT || _fs_fallback.OnClipboardIsFormatAvailable(format);
 }
 
 void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
@@ -165,13 +170,15 @@ void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 		Wide2MB((const wchar_t *)data, dlen, str);
 		_ttyx->SetClipboard(str);
 	}
+
+	_fs_fallback.OnClipboardSetData(format, data);
 	return data;
 }
 
 void *TTYXClipboard::OnClipboardGetData(UINT format)
 {
 	if (format != CF_UNICODETEXT) {
-		return NULL;
+		return _fs_fallback.OnClipboardGetData(format);
 	}
 
 	std::string str;
@@ -183,5 +190,5 @@ void *TTYXClipboard::OnClipboardGetData(UINT format)
 
 UINT TTYXClipboard::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 {
-	return ~(UINT)0;
+	return _fs_fallback.OnClipboardRegisterFormat(lpszFormat);
 }

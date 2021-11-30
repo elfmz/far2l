@@ -59,6 +59,75 @@ void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wai
 	}
 }
 
+uint64_t TTYFar2lClipboardBackend::GetDataID(UINT format)
+{
+	if (_fallback_backend || !_data_id_supported) {
+		return 0;
+	}
+
+	uint64_t out = 0;
+	try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(format);
+		stk_ser.PushPOD('i');
+		Far2lInterract(stk_ser, true);
+		stk_ser.PopPOD(out);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::GetDataID: %s\n", e.what());
+		_data_id_supported = false;
+		out = 0;
+	}
+
+	return out;
+}
+
+void *TTYFar2lClipboardBackend::GetCachedData(UINT format)
+{
+	std::lock_guard<std::mutex> lock(_cache);
+
+	auto cache_it = _cache.find(format);
+	if (cache_it == _cache.end()) {
+		return nullptr;
+	}
+
+	const uint64_t id = GetDataID(format);
+	if (id && id == cache_it->second.id) {
+#if (__WCHAR_MAX__ <= 0xffff)
+		if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
+			uint32_t len = cache_it->second.id.len;
+			return UtfConverter<uint32_t, uint16_t>
+				((const uint32_t*)cache_it->second.data.data(), len / sizeof(uint32_t)).MallocedCopy(len);
+		}
+#endif
+		unsigned char *data = (unsigned char *)malloc(cache_it->second.data.size());
+		if (data) {
+			memcpy(data, cache_it->second.data.data(), cache_it->second.data.size());
+			return data;
+		}
+	}
+
+	_cache.erase(cache_it);
+	return nullptr;
+}
+
+void TTYFar2lClipboardBackend::SetCachedData(UINT format, const void *data, uint32_t len, uint64_t id)
+{
+	std::lock_guard<std::mutex> lock(_cache);
+	try {
+		CachedData &cd = _cache[format];
+		cd.id = id;
+		cd.data.resize(len);
+		memcpy(cd.data.data(), data, len);
+
+	} catch(std::exception &e) {
+		fprintf(stderr,
+			"TTYFar2lClipboardBackend::SetCachedData(0x%u, %p, %u, 0x%llx): %s\n",
+			format, data, len, (unsigned long long)id, e.what());
+		_cache.erase(format);
+	}
+}
+
 bool TTYFar2lClipboardBackend::OnClipboardOpen()
 {
 	if (_fallback_backend) {
@@ -121,6 +190,9 @@ void TTYFar2lClipboardBackend::OnClipboardEmpty()
 		stk_ser.PushPOD('e');
 		Far2lInterract(stk_ser, false);
 
+		std::lock_guard<std::mutex> lock(_cache);
+		_cache.clear();
+
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
 	}
@@ -140,6 +212,9 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		if (stk_ser.PopChar() == 1)
 			return true;
 
+		std::lock_guard<std::mutex> lock(_cache);
+		_cache.erase(format);
+
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable: %s\n", e.what());
 	}
@@ -149,6 +224,7 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
 	if (_fallback_backend) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData(0x%x): fallback\n", format);
 		return _fallback_backend->OnClipboardSetData(format, data);
 	}
 
@@ -174,8 +250,22 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		stk_ser.PushPOD(format);
 		stk_ser.PushPOD('s');
 		Far2lInterract(stk_ser, true);
-		if (stk_ser.PopChar() == 1)
+		if (stk_ser.PopChar() == 1) {
+			if (_data_id_supported) {
+				try {
+					uint64_t id = 0;
+					stk_ser.PopPOD(id);
+					if (id) {
+						SetCachedData(format, data, len, id);
+					}
+
+				} catch (std::exception &e) {
+					fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData: ID failed - %s\n", e.what());
+					_data_id_supported = false;
+				}
+			}
 			return data;
+		}
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData: %s\n", e.what());
@@ -186,10 +276,17 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 {
 	if (_fallback_backend) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): fallback\n", format);
 		return _fallback_backend->OnClipboardGetData(format);
 	}
 
-	void *data = nullptr;
+	void *data = GetCachedData(format);
+	if (data) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): cache hit\n", format);
+		return data;
+	}
+	fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): cache miss\n", format);
+
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushPOD(format);
@@ -200,16 +297,29 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 			data = malloc(len);
 			if (data) {
 				stk_ser.Pop(data, len);
+				if (_data_id_supported) {
+					try {
+						uint64_t id = 0;
+						stk_ser.PopPOD(id);
+						if (id) {
+							SetCachedData(format, data, len, id);
+						}
+
+					} catch (std::exception &e) {
+						fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData::ID: %s\n", e.what());
+						_data_id_supported = false;
+					}
+				}
 #if (__WCHAR_MAX__ <= 0xffff)
 				if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
 					void *new_data = UtfConverter<uint32_t, uint16_t>
 						((const uint32_t*)data, len / sizeof(uint32_t)).MallocedCopy(len);
 					if (new_data != nullptr) {
+						free(data);
 						data = new_data;
 					}
 				}
 #endif
-
 				return data;
 			}
 		}

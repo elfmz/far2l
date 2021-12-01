@@ -11,7 +11,7 @@
 
 #include "../SitesConfig.h"
 
-class HostRemote : protected IPCRecver, protected IPCSender, public std::enable_shared_from_this<HostRemote>, public IHost
+class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<HostRemote>, public IHost
 {
 	friend class HostRemoteDirectoryEnumer;
 	friend class HostRemoteFileIO;

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <base64.h>
+#include <crc64.h>
 #include <utils.h>
 #include <UtfConvert.hpp>
 #include <fcntl.h>
@@ -62,6 +63,21 @@ static void ListFileAppend(const std::string &filename, std::string line)
 		perror("ListFileAppend - open");
 	}
 
+}
+
+static uint64_t CalculateDataID(UINT fmt, const void *data, uint32_t len)
+{
+	if (fmt == CF_UNICODETEXT) {
+		len = wcsnlen((const wchar_t *)data, len / sizeof(wchar_t)) * sizeof(wchar_t);
+	}
+	uint64_t id = len;
+	if (len) {
+		id = crc64(id, (const unsigned char*)data, len);
+	}
+	if (id == 0) { // zero means failure, but its not failed
+		id = 1;
+	}
+	return id;
 }
 
 ///
@@ -272,6 +288,7 @@ void VTFar2lExtensios::OnInterract_ClipboardIsFormatAvailable(StackSerializer &s
 void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 {
 	char out = -1;
+	uint64_t id = 0;
 	if (_clipboard_opens > 0) {
 		UINT fmt;
 		uint32_t len;
@@ -296,10 +313,15 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 			data = nullptr;
 
 		out = WINPORT(SetClipboardData)(fmt, data) ? 1 : 0;
+		if (out == 1) {
+			id = CalculateDataID(fmt, data, GetMallocSize(data));
+		}
 	}
 	stk_ser.Clear();
+	if (out == 1) {
+		stk_ser.PushPOD(id);
+	}
 	stk_ser.PushPOD(out);
-
 }
 
 void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
@@ -309,9 +331,15 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 
 		UINT fmt;
 		stk_ser.PopPOD(fmt);
-		void *data = allowed ? WINPORT(GetClipboardData)(fmt) : nullptr;
 		stk_ser.Clear();
-		uint32_t len = data ? GetMallocSize(data) : 0;
+		void *data = allowed ? WINPORT(GetClipboardData)(fmt) : nullptr;
+		uint64_t id = 0;
+		uint32_t len = 0;
+		if (data) {
+			len = GetMallocSize(data);
+			id = CalculateDataID(fmt, data, len);
+		}
+		stk_ser.PushPOD(id);
 		if (len) {
 #if (__WCHAR_MAX__ <= 0xffff)
 			void *new_data = nullptr;
@@ -335,6 +363,22 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 	}
 }
 
+void VTFar2lExtensios::OnInterract_ClipboardGetDataID(StackSerializer &stk_ser)
+{
+	uint64_t id = 0;
+	if (_clipboard_opens > 0 && IsAllowedClipboardRead()) {
+		UINT fmt = 0;
+		stk_ser.PopPOD(fmt);
+		void *data = WINPORT(GetClipboardData)(fmt);
+		if (data) {
+			id = CalculateDataID(fmt, data, GetMallocSize(data));
+		}
+	}
+
+	stk_ser.Clear();
+	stk_ser.PushPOD(id);
+}
+
 void VTFar2lExtensios::OnInterract_ClipboardRegisterFormat(StackSerializer &stk_ser)
 {
 	const std::wstring &fmt_name = StrMB2Wide(stk_ser.PopStr());
@@ -356,6 +400,7 @@ void VTFar2lExtensios::OnInterract_Clipboard(StackSerializer &stk_ser)
 		case 'a': OnInterract_ClipboardIsFormatAvailable(stk_ser); break;
 		case 's': OnInterract_ClipboardSetData(stk_ser); break;
 		case 'g': OnInterract_ClipboardGetData(stk_ser); break;
+		case 'i': OnInterract_ClipboardGetDataID(stk_ser); break;
 		case 'r': OnInterract_ClipboardRegisterFormat(stk_ser); break;
 
 		default:

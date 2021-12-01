@@ -136,8 +136,9 @@ to avoid attempt to use GUI mode.
 
   #--nodetect#
   By default far2l tries to detect if it runs inside of terminal of another far2l and in such case
-it uses TTY backend with far2l extensions. This switch disables this functionality, preventing
-far2l terminal detection.
+it uses TTY backend with far2l extensions. In case of far2l extensions unavailable far2l checks for
+availability of X11 session and uses it to improve user experience if compiled with TTYX option.
+This switch disables all this functionality, forcing plain terminal mode for TTY backend.
 
   #--mortal#
   This argument applies only to far2l that runs with TTY backend. By default when terminal closed

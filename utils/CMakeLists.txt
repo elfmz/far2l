@@ -28,6 +28,7 @@ set(SOURCES
   src/WideMB.cpp
   src/FSNotify.cpp
   src/TestPath.cpp
+  src/PipeIPC.cpp
 )
 
 add_library (utils ${SOURCES})

@@ -390,6 +390,9 @@ static unsigned int gMainThreadID;
 
 int FarAppMain(int argc, char **argv)
 {
+	// avoid killing process due to broker terminated unexpectedly
+	signal(SIGPIPE, SIG_IGN);
+
 	fprintf(stderr, "argv[0]='%s' g_strFarModuleName='%ls' translation_prefix='%ls' temp='%s' config='%s'\n", 
 		argv[0], g_strFarModuleName.CPtr(), GetPathTranslationPrefix(), InMyTemp().c_str(), InMyConfig().c_str());
 

@@ -155,6 +155,22 @@ else()
 	add_subdirectory(WinPort/src/Backend/WX)
 endif()
 
+if (NOT DEFINED TTYX)
+	find_package(X11)
+	if(X11_FOUND)
+		message(STATUS "Building with TTY X11 extensions due to X11 found")
+		add_subdirectory(WinPort/src/Backend/TTY/TTYX)
+	else()
+		message(STATUS "Building without TTY X11 extensions due to X11 not found")
+	endif()
+elseif (TTYX)
+	message(STATUS "Building with TTY X11 extensions due to TTYX=${TTYX}")
+	add_subdirectory(WinPort/src/Backend/TTY/TTYX)
+else()
+	message(STATUS "Building without TTY X11 extensions due to TTYX=${TTYX}")
+endif()
+
+
 ##############################
 # plugins directives
 
@@ -440,6 +456,7 @@ install(PROGRAMS "${INSTALL_DIR}/${EXECUTABLE_NAME}" DESTINATION "bin" RENAME fa
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
 	PATTERN "colorer/base" EXCLUDE
 	PATTERN "far2l_gui.so"
+	PATTERN "far2l_ttyx.broker"
 	PATTERN "plug/*.far-plug-*"
 	PATTERN "plug/*.broker")
 

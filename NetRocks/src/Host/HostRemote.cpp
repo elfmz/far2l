@@ -151,8 +151,7 @@ void HostRemote::CheckReady()
 
 void HostRemote::OnBroken()
 {
-	IPCRecver::SetFD(-1);
-	IPCSender::SetFD(-1);
+	IPCEndpoint::SetFD(-1, -1);
 	_peer = 0;
 }
 
@@ -171,31 +170,16 @@ void HostRemote::ReInitialize()
 		throw std::runtime_error("No server specified");
 	}
 
-	int master2broker[2] = {-1, -1};
-	int broker2master[2] = {-1, -1};
-	int r = pipe(master2broker);
-	if (r == 0) {
-		r = pipe(broker2master);
-		if (r != 0)
-			CheckedCloseFDPair(master2broker);
-	}
-	if (r != 0)
-		throw IPCError("pipe() error", errno);
-
-	fcntl(master2broker[1], F_SETFD, FD_CLOEXEC);
-	fcntl(broker2master[0], F_SETFD, FD_CLOEXEC);
-
-
 	std::string broker_path = StrWide2MB(G.plugin_path);
 	CutToSlash(broker_path, true);
 	std::string broker_pathname = broker_path;
 	broker_pathname+= pi->broker;
 	broker_pathname+= ".broker";
-	char arg1[32], arg2[32];
-	itoa(master2broker[0], arg1, 10);
-	itoa(broker2master[1], arg2, 10);
 
-	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n", broker_pathname.c_str(), arg1, arg2);
+	PipeIPCFD ipc_fd;
+
+	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n",
+		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w);
 	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
 	pid_t pid = fork();
 	if (pid == 0) {
@@ -211,7 +195,8 @@ void HostRemote::ReInitialize()
 			setenv("TSOCKS_CONFFILE", G.tsocks_config.c_str(), 1);
 		}
 		if (fork() == 0) {
-			execl(broker_pathname.c_str(), broker_pathname.c_str(), arg1, arg2, NULL);
+			execl(broker_pathname.c_str(),
+				broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, NULL);
 			_exit(-1);
 			exit(-2);
 		}
@@ -225,11 +210,10 @@ void HostRemote::ReInitialize()
 	}
 //	G.info.FSF->Execute(cmdstr.c_str(), EF_HIDEOUT | EF_NOWAIT); //_interactive
 
-	CheckedCloseFD(master2broker[0]);
-	CheckedCloseFD(broker2master[1]);
+	IPCEndpoint::SetFD(ipc_fd.broker2master[0], ipc_fd.master2broker[1]);
 
-	IPCRecver::SetFD(broker2master[0]);
-	IPCSender::SetFD(master2broker[1]);
+	// so far so good - avoid automatic closing of pipes FDs in ipc_fd's d-tor
+	ipc_fd.Detach();
 
 	uint32_t ipc_ver_magic = 0;
 
@@ -241,12 +225,12 @@ void HostRemote::ReInitialize()
 
 	} catch (std::exception &) {
 		OnBroken();
-		throw std::runtime_error(StrPrintf("Failed to start '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
+		throw std::runtime_error(StrPrintf("Failed to start '%s' '%s' '%s'", broker_path.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w));
 	}
 
 	if (ipc_ver_magic != IPC_VERSION_MAGIC) {
 		OnBroken();
-		throw std::runtime_error(StrPrintf("Wrong version of '%s' '%s' '%s'", broker_path.c_str(), arg1, arg2));
+		throw std::runtime_error(StrPrintf("Wrong version of '%s' '%s' '%s'", broker_path.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w));
 	}
 
 	std::unique_lock<std::mutex> locker(_mutex);
@@ -325,7 +309,7 @@ void HostRemote::ReInitialize()
 
 			default:
 				OnBroken();
-				throw IPCError("Unexpected protocol init status", status);
+				throw PipeIPCError("Unexpected protocol init status", status);
 		}
 	}
 }
@@ -384,7 +368,7 @@ void HostRemote::RecvReply(IPCCommand cmd)
 			throw ProtocolUnsupportedError(str);
 		}
 
-		throw IPCError("Wrong command reply", (unsigned int)cmd);
+		throw PipeIPCError("Wrong command reply", (unsigned int)cmd);
 	}
 }
 

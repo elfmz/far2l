@@ -35,9 +35,7 @@
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
 
-#define GUI_SO_NAME "far2l_gui.so"
-
-bool WinPortMainTTY(int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
 
@@ -97,6 +95,7 @@ static void SetupStdHandles()
 	if (!err.empty() && err != "-") {
 		if (freopen(err.c_str(), "a", stderr)) {
 			reopened|= 2;
+			setvbuf(stderr, NULL, _IONBF, 0);
 		} else
 			perror("freopen stderr");
 	}
@@ -223,7 +222,7 @@ extern "C" void WinPortHelp()
 	printf("FAR2L backend-specific options:\n");
 	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
 	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
-	printf("\t--nodetect - don't detect if TTY backend supports FAR2L extensions\n");
+	printf("\t--nodetect - don't detect if TTY backend supports FAR2L or X11 extensions\n");
 	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
 	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode wihout FAR2L extensions)\n");
@@ -370,19 +369,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	int result = -1;
 	if (!arg_opts.tty) {
 		std::string gui_path = full_exe_path;
-		CutToSlash(gui_path, true);
-		std::string tmp = gui_path;
-		gui_path+= GUI_SO_NAME;
-		if (TranslateInstallPath_Bin2Share(tmp)) {
-			tmp+= APP_BASENAME "/";
-			if (TranslateInstallPath_Share2Lib(tmp)) {
-				tmp+= GUI_SO_NAME;
-				struct stat s;
-				if (stat(tmp.c_str(), &s) == 0) {
-					gui_path.swap(tmp);
-				}
-			}
-		}
+		ReplaceFileNamePart(gui_path, "far2l_gui.so");
+		TranslateInstallPath_Bin2Lib(gui_path);
 		void *gui_so = dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
 		if (gui_so) {
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
@@ -398,11 +386,11 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 					arg_opts.tty = !arg_opts.notty;
 				}
 			} else {
-				fprintf(stderr, "Cannot find backend entry point\n");
+				fprintf(stderr, "Cannot find backend entry point, error %s\n", dlerror());
 				arg_opts.tty = true;
 			}
 		} else {
-			fprintf(stderr, "Failed to load: %s error %s\n", gui_path.c_str(), dlerror());
+			fprintf(stderr, "Failed to load %s error %s\n", gui_path.c_str(), dlerror());
 			arg_opts.tty = true;
 		}
 	}
@@ -414,8 +402,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		if (arg_opts.mortal) {
 			SudoAskpassImpl askass_impl;
 			SudoAskpassServer askpass_srv(&askass_impl);
-			if (!WinPortMainTTY(std_in, std_out, arg_opts.far2l_tty,
-					arg_opts.esc_expiration, -1, argc, argv, AppMain, &result)) {
+			if (!WinPortMainTTY(arg_opts.nodetect ? nullptr : full_exe_path, std_in, std_out,
+					arg_opts.far2l_tty, arg_opts.esc_expiration, -1, argc, argv, AppMain, &result)) {
 				fprintf(stderr, "Cannot use TTY backend\n");
 			}
 
@@ -439,8 +427,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						setsid();
 						SudoAskpassImpl askass_impl;
 						SudoAskpassServer askpass_srv(&askass_impl);
-						if (!WinPortMainTTY(std_in, std_out, arg_opts.far2l_tty, arg_opts.esc_expiration,
-								new_notify_pipe[1], argc, argv, AppMain, &result)) {
+						if (!WinPortMainTTY(arg_opts.nodetect ? nullptr : full_exe_path, std_in, std_out,
+								arg_opts.far2l_tty, arg_opts.esc_expiration, new_notify_pipe[1], argc, argv, AppMain, &result)) {
 							fprintf(stderr, "Cannot use TTY backend\n");
 						}
 					}

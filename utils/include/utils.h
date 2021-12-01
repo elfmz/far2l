@@ -111,6 +111,8 @@ bool TranslateInstallPath_Lib2Share(std::wstring &path);
 bool TranslateInstallPath_Lib2Share(std::string &path);
 bool TranslateInstallPath_Share2Lib(std::wstring &path);
 bool TranslateInstallPath_Share2Lib(std::string &path);
+bool TranslateInstallPath_Bin2Lib(std::string &path);
+
 
 // converts /some/path/to/filename.extension into form "filename@HASH"
 // where HASH produced from path and extension and also filename has
@@ -197,6 +199,17 @@ template <class CharT>
 	str.resize(include ? p + 1 : p);
 	return true;
 }
+
+template <class CharT>
+	void ReplaceFileNamePart(std::basic_string<CharT> &str, const CharT *replacement)
+{
+	if (CutToSlash(str, true)) {
+		str+= replacement;
+	} else {
+		str = replacement;
+	}
+}
+
 
 template <class CharT>
 	void StrExplode(std::vector<std::basic_string<CharT> > &out, const std::basic_string<CharT> &str, const CharT *divs)

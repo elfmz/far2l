@@ -167,7 +167,7 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
 
 	static std::string vthook = InMyConfig("/vtcmd.sh");
-	if (TestPath(vthook.c_str(), TestPath::EXISTS)) {
+	if (TestPath(vthook).Exists()) {
 		content.append(vthook)
 			.append((need_sudo && !StrStartsFrom(cmd, "sudo ")) ? " sudo " : " ")
 				.append(cmd).append("\n");

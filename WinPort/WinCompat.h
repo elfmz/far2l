@@ -892,7 +892,7 @@ typedef struct tagRECT {
 
 #define VK_PACKET         0xE7
 
-
+#define VK_UNASSIGNED     0xE8
 
 /*
  * 0xE8 : unassigned

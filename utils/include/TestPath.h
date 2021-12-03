@@ -1,19 +1,18 @@
 #pragma once
+#include <string>
 
 class TestPath
 {
-	bool _out;
+	bool _exists, _directory, _regular, _executable;
+
+	void Init(const char *path);
 
 public:
-	enum Mode
-	{
-		EXISTS,
-		DIRECTORY,
-		REGULAR,
-		EXECUTABLE,
-	};
+	inline TestPath(const char *path) { Init(path); }
+	inline TestPath(const std::string &path) { Init(path.c_str()); }
 
-	TestPath(const char *path, Mode m = EXISTS);
-
-	inline operator bool() const { return _out; }
+	inline bool Exists() const { return _exists; }
+	inline bool Directory() const { return _directory; }
+	inline bool Regular() const { return _regular; }
+	inline bool Executable() const { return _executable; }
 };

@@ -158,6 +158,7 @@ public:
 	{
 		_set_clipboard.swap(s);
 		XSetSelectionOwner(_display, _clipboard_atom, _window, 0);
+		XSync(_display, 0);
 	}
 
 	void Idle(int ipc_fdr)

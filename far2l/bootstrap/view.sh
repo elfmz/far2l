@@ -477,6 +477,28 @@ if [[ "$FILE" == *": EPUB document"* ]]; then
 	exit 0
 fi
 
+if [[ "$FILE" == *": DjVu"*"document"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
+if [[ "$FILE" == *": Mobipocket E-book"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
 # if [[ "$FILE" == *" FictionBook2 ebook"* ]]; then
 if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then

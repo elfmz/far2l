@@ -242,6 +242,52 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	exit 0
 fi
 
+if [[ "$FILE" == *": "*"PE"*"executable"* ]] \
+	|| [[ "$FILE" == *": "*"PE"*"object"* ]] \
+	|| [[ "$FILE" == *": "*"DOS executable"* ]] \
+	|| [[ "$FILE" == *": "*"boot"*"executable"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if command -v 7z >/dev/null 2>&1; then
+		7z l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
+if [[ "$FILE" == *": "*"PGP"*"key public"* ]] \
+	|| [[ "$FILE" == *": "*"GPG"*"key public"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as archive with gpg" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if command -v gpg >/dev/null 2>&1; then
+		gpg --show-key -- "$1" >>"$2" 2>&1
+	else
+		echo "Install <gpg> to see information" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
 if [[ "$FILE" == *": "*"image data, "* ]] \
 	|| [[ "$FILE" == *": "*"SVG"*" image"* ]] \
 	|| [[ "$FILE" == *": "*"JPEG"*" image"* ]] \

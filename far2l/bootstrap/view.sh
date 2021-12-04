@@ -5,15 +5,44 @@
 # Input: $1
 # Output: $2
 
-FILE="$(file -- "$1")"
+if [ $# != 2 -o ."$1" = ."" -o ."$2" = ."" ]; then
+	echo "Two non-empty parameters are expected" >&2
+	echo "Usage: view.sh path-to-an-existing-file-for-analysis path-to-the-newly-created-results-file" >&2
+	echo >&2
+	exit 1
+elif [ ! -e "$1" -o -d "$1" ]; then
+	echo "File for analysis does not exist - [ "$1" ] " >&2
+	echo >&2
+	exit 1
+elif [ -e "$2" ]; then
+	echo "A file for storing results already exists - [ "$2" ]" >&2
+	echo >&2
+	exit 1
+elif [ -z $(type -p file) ]; then
+	echo "Install <file> to see information" >&2
+	exit 1
+fi
+
+FILE="$(echo -n ': ' ; file --brief -- "$1")"
+
+FILEMIME="$(echo -n ': ' ; file --brief --mime -- "$1")"
+
+FILECHARSET="$(echo "$FILEMIME" | sed -n -e 's/^.\{0,100\}: .\{1,100\};[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1/p')"
 
 # Optional per-user script
 if [ -x ~/.config/far2l/view.sh ]; then
 . ~/.config/far2l/view.sh
 fi
 
-echo "$FILE" > "$2"
-echo >> "$2"
+echo "$1" > "$2"
+echo "" >>"$2" 2>&1
+
+echo "$FILE" >> "$2"
+echo "$FILEMIME" >> "$2"
+echo ": $FILECHARSET" >> "$2"
+
+echo "" >>"$2" 2>&1
+echo "------------" >>"$2" 2>&1
 
 if [[ "$FILE" == *" archive data, "* ]] \
 		|| [[ "$FILE" == *" compressed data"* ]] \

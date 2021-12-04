@@ -499,23 +499,48 @@ if [[ "$FILE" == *": Mobipocket E-book"* ]]; then
 	exit 0
 fi
 
-# if [[ "$FILE" == *" FictionBook2 ebook"* ]]; then
-if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode text, with very long lines"* ]]; then
+# if [[ "$FILE" == *": "*"FictionBook2 ebook"* ]]; then
+if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode "*"text, with very long lines"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as fb2 with pandoc ( formatted as markdown )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	if [[ ."$FILECHARSET" == ."" ]] \
+		|| [[ ."$FILECHARSET" == ."utf-8" ]] \
+		|| [[ ."$FILECHARSET" == ."UTF-8" ]] \
+		|| [[ ."$FILECHARSET" == ."binary" ]] \
+		|| [[ ."$FILECHARSET" == ."unknown-8bit" ]]; then
+		FROMENC=""
+	else
+		FROMENC="-f "$FILECHARSET" "
+	fi
+	if [[ ! ."$FROMENC" == ."" ]]; then
+		if command -v iconv >/dev/null 2>&1; then
+			echo "Using iconv to convert from [ "$FILECHARSET" ] to [ utf-8 ] for pandoc input" >>"$2" 2>&1
+		else
+			echo "Install <iconv> to convert from [ "$FILECHARSET" ] to [ utf-8 ] for pandoc input" >>"$2" 2>&1
+		fi
+	else
+		echo "Will not convert from [ "$FILECHARSET" ] to [ utf-8 ] for pandoc input" >>"$2" 2>&1
+	fi
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		pandoc -f fb2 -t markdown -- "$1" >>"$2" 2>&1
+		if command -v iconv >/dev/null 2>&1; then
+			iconv $FROMENC -t utf-8 "$1" | pandoc -f fb2 -t markdown -- >>"$2" 2>&1
+		else
+			pandoc -f fb2 -t markdown -- "$1" >>"$2" 2>&1
+		fi
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
 	fi
 	echo "----eof----" >>"$2" 2>&1
+	FROMENC=
 	exit 0
 fi
 

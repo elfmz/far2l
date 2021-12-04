@@ -45,10 +45,33 @@ else
 
 	sysname="$(uname)"
 	if [ "$sysname" == "Linux" ] || [ "$sysname" == "FreeBSD" ]; then
-		dfcmd='df -T -m | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; printf "%s\t%5s/%5sM %8s", $n, $5, $3, $2; print "" }'\'
+		DF_ARGS='-T'
+		DF_AVAIL=5
+		DF_TOTAL=3
+		DF_PATH=2
+		DF_DIVBY=1
 	else
-		dfcmd='df -t | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $1 }'\'
+		DF_ARGS='-t'
+		DF_AVAIL=4
+		DF_TOTAL=2
+		DF_PATH=1
+		DF_DIVBY=2
 	fi
+
+	dfcmd='df '$DF_ARGS' | awk "-F " '\''{
+		n=NF;
+		while (n>5 && ! ($n ~ "/")) n--;
+		for (;n<NF;n++) printf "%s ", $n;
+		B=1
+		avail=($'$DF_AVAIL'+0.0) / '$DF_DIVBY';
+		total=($'$DF_TOTAL'+0.0) / '$DF_DIVBY';
+		units="K";
+		if (total > 1024*1024*1024) { units="T" ; total/= 1024*1024*1024; avail/= 1024*1024*1024;}
+		else if (total > 1024*1024) { units="G" ; total/= 1024*1024; avail/= 1024*1024;}
+		else if (total > 1024) { units="M" ; total/= 1024; avail/= 1024;}
+		printf "%s\t%.1f/%.1f%s %8s", $n, avail, total, units, $'$DF_PATH';
+		print ""
+	}'\'
 
 	while IFS=$'\n' read -r line; do
 		if [[ "$line" == "/"* ]] \

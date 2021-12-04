@@ -636,35 +636,27 @@ if [[ "$FILE" == *": unified diff output"* ]]; then
 	exit 0
 fi
 
-if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
-	if command -v ctags >/dev/null 2>&1; then
-		ctags --totals -x -u "$1" >>"$2" 2>&1
-	else
-		echo "Install <ctags> to see source overview" >>"$2" 2>&1
-	fi
-	echo "------------" >>"$2" 2>&1
-	# exit 0
-fi
-
-if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
-		|| [[ "$FILE" == *": UTF-8 Unicode text, with very long lines"* ]] \
-		|| [[ "$FILE" == *": ISO"*" text, with very long lines"* ]] \
-		|| [[ "$FILE" == *": ASCII text, with "*" line terminators"* ]] \
-		|| [[ "$FILE" == *": UTF-8 Unicode text, with "*" line terminators"* ]] \
-		|| [[ "$FILE" == *": ISO"*" text, with "*" line terminators"* ]] \
-		|| [[ "$FILE" == *": Non-ISO extended-ASCII text, with "* ]] \
-		|| [[ "$FILE" == *": ASCII text" ]] \
-		|| [[ "$FILE" == *": UTF-8 Unicode text" ]] \
-		|| [[ "$FILE" == *": ISO"*" text" ]] \
-		|| [[ "$FILE" == *": Non-ISO extended-ASCII text" ]] \
+if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": "*"UTF-8 Unicode "*"text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": "*"ISO"*" text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": "*"Non-ISO extended-ASCII text, with very long lines"* ]] \
+		|| [[ "$FILE" == *": "*"ASCII text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": "*"UTF-8 Unicode "*"text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": "*"ISO"*" text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": "*"Non-ISO extended-ASCII text, with "*" line terminators"* ]] \
+		|| [[ "$FILE" == *": "*"ASCII text"* ]] \
+		|| [[ "$FILE" == *": "*"UTF-8 Unicode "*"text"* ]] \
+		|| [[ "$FILE" == *": "*"ISO"*" text"* ]] \
+		|| [[ "$FILE" == *": "*"Non-ISO extended-ASCII text"* ]] \
 		|| [[ "$FILE" == *": XML 1.0 document, "*" text"* ]] \
-		|| [[ "$FILE" == *": "*" source, "*" text"* ]] \
 		|| [[ "$FILE" == *": JSON data"* ]] \
-		|| [[ "$FILE" == *": data"* ]] \
-		|| [[ "$FILE" == *" shell script"* ]] \
-		|| [[ "$FILE" == *" script"*" text"* ]]; then
+		|| [[ "$FILE" == *": PEM certificate"* ]] \
+		|| [[ "$FILE" == *": "*" program"*" text"* ]] \
+		|| [[ "$FILE" == *": "*" source"*" text"* ]] \
+		|| [[ "$FILE" == *": "*" shell"*" text"* ]] \
+		|| [[ "$FILE" == *": "*" script"*" text"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -692,6 +684,7 @@ if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
 	RESTLIMIT=${RESTLIMIT:-0}
 	echo "Size of file data that will not be shown is ( "$FILESIZE" - 2 * "$HALFLIMIT" - "$DOTCOUNT" ) = "$RESTLIMIT" bytes" >>"$2" 2>&1
 	echo "Processing file as is with cat, head and tail ( raw )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if [[ $FILESIZE -le $SIZELIMIT ]]; then
 		cat "$1" >>"$2" 2>&1
@@ -699,14 +692,32 @@ if [[ "$FILE" == *": ASCII text, with very long lines"* ]] \
 	else
 		head -c $HALFLIMIT "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
 		if [[ $RESTLIMIT -gt 0 ]]; then
 			# count of dots is DOTCOUNT
-			echo "............" >>"$2" 2>&1
+			echo ">8::::::::8<" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
 			tail -c $HALFLIMIT "$1" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 		fi
 	fi
 	echo "----eof----" >>"$2" 2>&1
+	if [[ "$FILE" == *": "*" source, "*" text"* ]]; then
+		echo "------------" >>"$2" 2>&1
+		echo "Processing file with ctags" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		if command -v ctags >/dev/null 2>&1; then
+			ctags --totals -x -u "$1" >>"$2" 2>&1
+			if [ $? -ne 0 ] ; then
+				echo "------------" >>"$2" 2>&1
+				ctags -x -u "$1" >>"$2" 2>&1
+			fi
+		else
+			echo "Install <ctags> to see source overview" >>"$2" 2>&1
+		fi
+		echo "------------" >>"$2" 2>&1
+	fi
 	exit 0
 fi
 

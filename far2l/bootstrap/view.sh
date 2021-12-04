@@ -439,13 +439,14 @@ fi
 
 if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as odt with pandoc ( formatted as markdown )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc -f odt -t markdown -- "$1" >>"$2" 2>&1
@@ -458,13 +459,14 @@ fi
 
 if [[ "$FILE" == *": EPUB document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as epub with pandoc ( formatted as markdown )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		pandoc -f epub -t markdown -- "$1" >>"$2" 2>&1

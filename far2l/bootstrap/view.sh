@@ -242,8 +242,10 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	exit 0
 fi
 
-if [[ "$FILE" == *" image data, "* ]] \
-	|| [[ "$FILE" == *"JPEG image"* ]]; then
+if [[ "$FILE" == *": "*"image data, "* ]] \
+	|| [[ "$FILE" == *": "*"SVG"*" image"* ]] \
+	|| [[ "$FILE" == *": "*"JPEG"*" image"* ]] \
+	|| [[ "$FILEMIME" == *": image/"* ]]; then
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
 	TCOLUMNS=$( bash -c "echo ${COLUMNS}" )
@@ -254,6 +256,7 @@ if [[ "$FILE" == *" image data, "* ]] \
 	if command -v chafa >/dev/null 2>&1; then
 		VCHAFA="yes"
 		# chafa -c 16 --color-space=din99d --dither=ordered -w 9 --symbols all --fill all !.! && read -n1 -r -p "$1" >>"$2" 2>&1
+		TCOLUMNS=$(( ${TCOLUMNS:-80} - 1 ))
 		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
 		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
 		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
@@ -262,7 +265,7 @@ if [[ "$FILE" == *" image data, "* ]] \
 		echo "Install <chafa> to see picture" >>"$2" 2>&1
 	fi
 	VJP2A="no"
-	if [[ "$FILE" == *"JPEG image"* ]] \
+	if [[ "$FILE" == *": "*"JPEG image"* ]] \
 		&& [[ "$VCHAFA" == "no" ]]; then
 		if command -v jp2a >/dev/null 2>&1; then
 			VJP2A="yes"
@@ -294,7 +297,7 @@ if [[ "$FILE" == *" image data, "* ]] \
 	fi
 	echo "------------" >>"$2" 2>&1
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1

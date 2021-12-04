@@ -546,13 +546,14 @@ fi
 
 if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as docx with pandoc ( formatted as markdown )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		# pandoc "$1" >>"$2" 2>&1
@@ -567,13 +568,14 @@ fi
 if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]] \
 	|| [[ "$FILE" == *": Composite Document File V2 Document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as doc with catdoc ( text )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v catdoc >/dev/null 2>&1; then
 		catdoc "$1" >>"$2" 2>&1
@@ -586,13 +588,14 @@ fi
 
 if [[ "$FILE" == *": Composite Document File"*"Microsoft PowerPoint"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as ppt with catppt ( text )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v catppt >/dev/null 2>&1; then
 		catppt "$1" >>"$2" 2>&1
@@ -605,13 +608,14 @@ fi
 
 if [[ "$FILE" == *": PDF document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as pdf with pdftotext ( text )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pdftotext >/dev/null 2>&1; then
 		pdftotext -enc UTF-8 "$1" - >>"$2" 2>>"$2"

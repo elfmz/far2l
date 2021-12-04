@@ -352,7 +352,10 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 	exit 0
 fi
 
-if [[ "$FILE" == *": Audio file"* ]]; then
+if [[ "$FILE" == *": Audio file"* ]] \
+	|| [[ "$FILE" == *": "*"MPEG"* ]] \
+	|| [[ "$FILE" == *": Ogg data"* ]] \
+	|| [[ "$FILEMIME" == *": audio/"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" >>"$2" 2>&1
 	else
@@ -362,7 +365,11 @@ if [[ "$FILE" == *": Audio file"* ]]; then
 	exit 0
 fi
 
-if [[ "$FILE" == *": RIFF"*" data"* ]]; then
+if [[ "$FILE" == *": RIFF"*" data"* ]] \
+	|| [[ "$FILE" == *": "*"ISO Media"* ]] \
+	|| [[ "$FILE" == *": "*"Matroska data"* ]] \
+	|| [[ "$FILE" == *": "*"MP4"* ]] \
+	|| [[ "$FILEMIME" == *": video/"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
 		exiftool "$1" >>"$2" 2>&1
 	else

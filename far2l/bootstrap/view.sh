@@ -721,5 +721,120 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 	exit 0
 fi
 
+if [[ "$FILE" == *": symbolic link"* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	if command -v ls >/dev/null 2>&1; then
+		ls -la "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <ls> to see listing" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
+if [[ "$FILE" == *": "* ]]; then
+	if command -v exiftool >/dev/null 2>&1; then
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <exiftool> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file with hexdump ( hexadecimal view )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "------------" >>"$2" 2>&1
+	# ??? workaround for bash to get values of variables
+	bash -c "echo ${FOO}" >/dev/null 2>&1
+	FILESIZE=$( wc -c "$1" | awk '{print $1}' )
+	FILESIZE=${FILESIZE:-0}
+	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
+	VIEWLIMIT=1024
+	DOTCOUNT=12
+	## example ( 1024 + 12 ) = 1036
+	SIZELIMIT=$(( VIEWLIMIT + DOTCOUNT ))
+	SIZELIMIT=${SIZELIMIT:-64}
+	## example ( 1024 / 2 ) = 512
+	HALFLIMIT=$(( VIEWLIMIT / 2 ))
+	HALFLIMIT=${HALFLIMIT:-32}
+	echo "Half of view size limit is ( "$VIEWLIMIT" / 2 ) = "$HALFLIMIT" bytes" >>"$2" 2>&1
+	if [[ $FILESIZE -gt $SIZELIMIT ]]; then
+		## example with file size ( 1024 + 12 + 1 ) = 1037 bytes
+		## ( 1037 - 2 * 512 - 12 ) = 1
+		RESTLIMIT=$(( FILESIZE - 2 * HALFLIMIT - DOTCOUNT ))
+	fi
+	RESTLIMIT=${RESTLIMIT:-0}
+	echo "Size of file data that will not be shown is ( "$FILESIZE" - 2 * "$HALFLIMIT" - "$DOTCOUNT" ) = "$RESTLIMIT" bytes" >>"$2" 2>&1
+	echo "Processing file as is with cat, head, tail and hexdump ( raw )" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if command -v hexdump >/dev/null 2>&1; then
+		if [[ $FILESIZE -le $SIZELIMIT ]]; then
+			cat "$1" | hexdump -C >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+		else
+			head -c $HALFLIMIT "$1" | hexdump -C >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+			if [[ $RESTLIMIT -gt 0 ]]; then
+				# count of dots is DOTCOUNT
+				echo ">8::::::::8<" >>"$2" 2>&1
+				echo "" >>"$2" 2>&1
+				tail -c $HALFLIMIT "$1" | hexdump -C >>"$2" 2>&1
+				echo "" >>"$2" 2>&1
+			fi
+		fi
+	else
+		echo "Install <hexdump> to partially see file contents" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	# exit 0
+fi
+
+if [[ "$FILE" == *": "*"boot sector"* ]] \
+	|| [[ "$FILE" == *": "*"block size"* ]] \
+	|| [[ "$FILE" == *": data"* ]]; then
+	echo "" >>"$2" 2>&1
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as boot sector with fdisk" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "------------" >>"$2" 2>&1
+	if command -v fdisk >/dev/null 2>&1; then
+		fdisk -l "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <fdisk> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as boot sector with gdisk" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "------------" >>"$2" 2>&1
+	if command -v fdisk >/dev/null 2>&1; then
+		echo "2" | gdisk -l "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <gdisk> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if command -v 7z >/dev/null 2>&1; then
+		7z l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+	fi
+	echo "----eof----" >>"$2" 2>&1
+	exit 0
+fi
+
+echo "" >>"$2" 2>&1
 echo "Hint: use <F5> to switch back to raw file viewer" >>"$2" 2>&1
 #exit 1

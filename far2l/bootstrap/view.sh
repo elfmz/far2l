@@ -39,7 +39,47 @@ echo "" >>"$2" 2>&1
 
 echo "$FILE" >> "$2"
 echo "$FILEMIME" >> "$2"
+
+FILEMIMEALT=""
+
+if command -v exiftool >/dev/null 2>&1; then
+	FILEMIMEALT="$(exiftool "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'Content Type' | sed -n -e 's/^.\{0,100\}: \(.\{1,100\}\);[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1; charset=\2/p')"
+fi
+
+echo ": $FILEMIMEALT" >> "$2"
+
 echo ": $FILECHARSET" >> "$2"
+
+FILECHARSETALT=""
+
+if command -v exiftool >/dev/null 2>&1; then
+	FILECHARSETALT="$(exiftool "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'charset=' | sed -n -e 's/^.\{0,100\}: .\{1,100\};[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1/p')"
+fi
+
+echo ": $FILECHARSETALT" >> "$2"
+
+if [[ ."$FILECHARSET" == ."" ]] \
+	|| [[ ."$FILECHARSET" == ."utf-8" ]] \
+	|| [[ ."$FILECHARSET" == ."UTF-8" ]] \
+	|| [[ ."$FILECHARSET" == ."binary" ]] \
+	|| [[ ."$FILECHARSET" == ."unknown-8bit" ]]; then
+	if [[ ! ."$FILECHARSETALT" == ."" ]] \
+		&& [[ ! ."$FILECHARSETALT" == ."utf-8" ]] \
+		&& [[ ! ."$FILECHARSETALT" == ."UTF-8" ]]; then
+		echo "" >>"$2" 2>&1
+		echo "Switching charset from [ "$FILECHARSET" ] to [ "$FILECHARSETALT" ]" >>"$2" 2>&1
+		FILECHARSET=""$FILECHARSETALT""
+	fi
+else
+	if [[ ! ."$FILECHARSETALT" == ."" ]] \
+		&& [[ ! ."$FILECHARSETALT" == ."utf-8" ]] \
+		&& [[ ! ."$FILECHARSETALT" == ."UTF-8" ]] \
+		&& ! [[ ."$FILECHARSET" == ."$FILECHARSETALT" ]]; then
+		echo "" >>"$2" 2>&1
+		echo "Switching charset from [ "$FILECHARSET" ] to [ "$FILECHARSETALT" ]" >>"$2" 2>&1
+		FILECHARSET=""$FILECHARSETALT""
+	fi
+fi
 
 echo "" >>"$2" 2>&1
 echo "------------" >>"$2" 2>&1

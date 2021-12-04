@@ -200,13 +200,38 @@ if [[ "$FILE" == *": "*"archive"* ]] \
 	exit 0
 fi
 
-if [[ "$FILE" == *ELF*executable* ]] || [[ "$FILE" == *ELF*object* ]]; then
+if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
+	|| [[ "$FILE" == *": "*"ELF"*"relocatable"* ]] \
+	|| [[ "$FILE" == *": "*"ELF"*"bit"* ]] \
+	|| [[ "$FILE" == *": "*"ELF"*"object"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "----bof----" >>"$2" 2>&1
+	if command -v 7z >/dev/null 2>&1; then
+		7z l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	else
+		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file with ldd" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
+	echo "------------" >>"$2" 2>&1
+	if command -v ldd >/dev/null 2>&1; then
+		ldd "$1" >>"$2" 2>&1
+	else
+		echo "Install <ldd> utility to see more information" >>"$2" 2>&1
+	fi
+	echo "------------" >>"$2" 2>&1
+	echo "Processing file with readelf" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "------------" >>"$2" 2>&1
 	if command -v readelf >/dev/null 2>&1; then
 		readelf -n --version-info --dyn-syms "$1" >>"$2" 2>&1

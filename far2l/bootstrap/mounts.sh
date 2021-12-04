@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 ##########################################################
 #This script used during FAR's Alt+F1/Alt+F2 menu building
@@ -32,8 +32,8 @@ fi
 FAVORITES=~/.config/far2l/favorites
 
 ##########################################################
-if [ "$1" == 'umount' ]; then
-	if [ "$3" == 'force' ]; then
+if [ "$1" = 'umount' ]; then
+	if [ "$3" = 'force' ]; then
 		sudo umount -f "$2"
 	else
 		umount "$2"
@@ -41,53 +41,49 @@ if [ "$1" == 'umount' ]; then
 
 ##########################################################
 else
-	#FIXME: paths that contain repeated continuos spaces
-
 	sysname="$(uname)"
-	if [ "$sysname" == "Linux" ] || [ "$sysname" == "FreeBSD" ]; then
+	if [ "$sysname" = "Linux" ] || [ "$sysname" = "FreeBSD" ]; then
 		DF_ARGS='-T'
 		DF_AVAIL=5
 		DF_TOTAL=3
-		DF_PATH=2
+		DF_NAME=2
 		DF_DIVBY=1
 	else
 		DF_ARGS='-t'
 		DF_AVAIL=4
 		DF_TOTAL=2
-		DF_PATH=1
+		DF_NAME=1
 		DF_DIVBY=2
 	fi
 
-	dfcmd='df '$DF_ARGS' | awk "-F " '\''{
-		n=NF;
-		while (n>5 && ! ($n ~ "/")) n--;
-		for (;n<NF;n++) printf "%s ", $n;
-		B=1
-		avail=($'$DF_AVAIL'+0.0) / '$DF_DIVBY';
-		total=($'$DF_TOTAL'+0.0) / '$DF_DIVBY';
-		units="K";
-		if (total >= 1024*1024*1024) { units="T" ; total/= 1024*1024*1024; avail/= 1024*1024*1024;}
-		else if (total >= 1024*1024) { units="G" ; total/= 1024*1024; avail/= 1024*1024;}
-		else if (total >= 1024) { units="M" ; total/= 1024; avail/= 1024;}
-		avail_fraction = avail < 10 ? 1 : 0;
-		total_fraction = total < 10 ? 1 : 0;
-		printf "%s\t%.*f/%.*f%s %8s", $n, avail_fraction, avail, total_fraction, total, units, $'$DF_PATH';
-		print ""
-	}'\'
+	#FIXME: paths that contain repeated continuos spaces
+	df $DF_ARGS 2>/dev/null | awk "-F " '{
+		path = $NF;
+		for (n = NF - 1; n > '$DF_AVAIL' && substr(path, 1, 1) != "/"; n--) {
+			path = $n" "path;
+		}
 
-	while IFS=$'\n' read -r line; do
-		if [[ "$line" == "/"* ]] \
-		  && [[ "$line" != /run/* ]] && [[ "$line" != /snap/* ]] \
-		  && [[ "$line" != /sys/* ]] && [[ "$line" != /dev/* ]] ; then
-			echo "$line"
-		fi
-	done < <(eval "$dfcmd")
+		if ( substr(path, 1, 1) == "/" && substr(path, 1, 5) != "/run/" && substr(path, 1, 5) != "/sys/" \
+			&& substr(path, 1, 5) != "/dev/" && substr(path, 1, 6) != "/snap/"  ) {
+
+			avail = ($'$DF_AVAIL'+0.0) / '$DF_DIVBY';
+			total = ($'$DF_TOTAL'+0.0) / '$DF_DIVBY';
+			units = "K";
+			if (total >= 1024*1024*1024) { units="T" ; total/= 1024*1024*1024; avail/= 1024*1024*1024;}
+			else if (total >= 1024*1024) { units="G" ; total/= 1024*1024; avail/= 1024*1024;}
+			else if (total >= 1024) { units="M" ; total/= 1024; avail/= 1024;}
+			avail_fraction = avail < 10 ? 1 : 0;
+			total_fraction = total < 10 ? 1 : 0;
+
+			printf "%s\t%.*f/%.*f%s %8s\n", path, avail_fraction, avail, total_fraction, total, units, $'$DF_NAME';
+		}
+	}'
 
 	if [ -s "$FAVORITES" ]; then
-		while IFS=$'\n' read -r line; do
-			if [[ $line != "#"* ]] && [[ $line != "" ]]; then
-				echo "$line"
-			fi
-		done < "$FAVORITES"
+		awk "-F " '{
+			if ($0 != "" && substr($0, 1, 1) != "#") {
+				print $0;
+			}
+		}' "$FAVORITES"
 	fi
 fi

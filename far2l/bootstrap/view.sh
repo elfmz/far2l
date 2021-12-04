@@ -84,27 +84,81 @@ fi
 echo "" >>"$2" 2>&1
 echo "------------" >>"$2" 2>&1
 
-if [[ "$FILE" == *" archive data, "* ]] \
-		|| [[ "$FILE" == *" compressed data"* ]] \
+if [[ "$FILE" == *": "*"archive"* ]] \
+		|| [[ "$FILE" == *": "*"compressed data"* ]] \
 		|| [[ "$FILE" == *": Debian "*" package"* ]] \
-		|| [[ "$FILE" == *": RPM"* ]]; then
+		|| [[ "$FILE" == *": RPM"* ]] \
+		|| [[ "$FILE" == *": "*"MSI Installer"* ]] \
+		|| [[ "$FILE" == *": "*"WIM"* ]] \
+		|| [[ "$FILE" == *": "*"ISO 9660"* ]] \
+		|| [[ "$FILE" == *": "*"filesystem"* ]] \
+		|| [[ "$FILE" == *": "*"extension"* ]] \
+		|| [[ "$FILE" == *": "*"gzip"* ]] \
+		|| [[ "$FILE" == *": "*"bzip2"* ]] \
+		|| [[ "$FILE" == *": "*"XZ"* ]] \
+		|| [[ "$FILE" == *": "*"lzma"* ]] \
+		|| [[ "$FILE" == *": "*"lzop"* ]] \
+		|| [[ "$FILE" == *": "*"zstd"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 40 | head -c 1024 >>"$2" 2>&1
+		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
+	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v 7z >/dev/null 2>&1; then
 		7z l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
 	else
 		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
 	fi
-	if [[ "$FILE" == *" compressed data"* ]]; then
+	if [[ "$FILE" == *": Debian "*" package"* ]]; then
+		echo "------------" >>"$2" 2>&1
+		echo "Processing file as DEB package" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		if command -v dpkg >/dev/null 2>&1; then
+			dpkg --info -- "$1" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			echo "Listing DEB package contents" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			dpkg --contents -- "$1" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+		else
+			echo "Install <dpkg> to see information" >>"$2" 2>&1
+		fi
+	fi
+	if [[ "$FILE" == *": RPM"* ]]; then
+		echo "------------" >>"$2" 2>&1
+		echo "Processing file as RPM package" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		if command -v rpm >/dev/null 2>&1; then
+			rpm -q --info -p "$1" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			echo "Listing RPM package contents" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			rpm -q -v --list -p "$1" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			echo "Show RPM package (pre|post)[un]?install scripts" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			rpm -q --scripts -p "$1" >>"$2" 2>&1
+			echo "" >>"$2" 2>&1
+		else
+			echo "Install <rpm> to see information" >>"$2" 2>&1
+		fi
+	fi
+	if [[ "$FILE" == *": "*"compressed data"* ]]; then
 		echo "------------" >>"$2" 2>&1
 		echo "Processing file as archive with tar contents listing" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
 		TAROPTS=""
 		if [[ "$FILE" == *": gzip compressed data"* ]]; then
 			TAROPTS=-z
@@ -128,7 +182,7 @@ if [[ "$FILE" == *" archive data, "* ]] \
 			TAROPTS=$TAROPTS" --full-time"
 		fi
 		echo "TAROPTS=[ "$TAROPTS" ]" >>"$2" 2>&1
-		echo "------------" >>"$2" 2>&1		
+		echo "------------" >>"$2" 2>&1
 		ELEMENTCOUNT=$( tar -tv $TAROPTS -f "$1" 2>/dev/null | wc -l )
 		echo "tar archive elements count = "$ELEMENTCOUNT >>"$2" 2>&1
 		if [[ $ELEMENTCOUNT -gt 0 ]]; then

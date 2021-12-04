@@ -66,10 +66,12 @@ else
 		avail=($'$DF_AVAIL'+0.0) / '$DF_DIVBY';
 		total=($'$DF_TOTAL'+0.0) / '$DF_DIVBY';
 		units="K";
-		if (total > 1024*1024*1024) { units="T" ; total/= 1024*1024*1024; avail/= 1024*1024*1024;}
-		else if (total > 1024*1024) { units="G" ; total/= 1024*1024; avail/= 1024*1024;}
-		else if (total > 1024) { units="M" ; total/= 1024; avail/= 1024;}
-		printf "%s\t%.1f/%.1f%s %8s", $n, avail, total, units, $'$DF_PATH';
+		if (total >= 1024*1024*1024) { units="T" ; total/= 1024*1024*1024; avail/= 1024*1024*1024;}
+		else if (total >= 1024*1024) { units="G" ; total/= 1024*1024; avail/= 1024*1024;}
+		else if (total >= 1024) { units="M" ; total/= 1024; avail/= 1024;}
+		avail_fraction = avail < 10 ? 1 : 0;
+		total_fraction = total < 10 ? 1 : 0;
+		printf "%s\t%.*f/%.*f%s %8s", $n, avail_fraction, avail, total_fraction, total, units, $'$DF_PATH';
 		print ""
 	}'\'
 

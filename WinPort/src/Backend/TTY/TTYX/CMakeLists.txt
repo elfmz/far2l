@@ -16,15 +16,9 @@ include_directories(${X11_INCLUDE_DIR})
 link_directories(${X11_LIBRARIES})
 target_link_libraries(far2l_ttyx utils ${X11_LIBRARIES})
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set_target_properties(far2l_ttyx PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${APP_DIR}
+set_target_properties(far2l_ttyx PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}"
 	PREFIX ""
 	SUFFIX ".broker")
-else()
-    set_target_properties(far2l_ttyx PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}"
-	PREFIX ""
-	SUFFIX ".broker")
-endif()
+
 

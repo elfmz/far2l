@@ -45,7 +45,7 @@ else
 
 	sysname=`uname`
 	if [ "$sysname" == "Linux" ] || [ "$sysname" == "FreeBSD" ]; then
-		dfcmd='df -T | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $2 }'\'
+		dfcmd='df -T -m | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; printf "%s\t%5s/%5sM %8s", $n, $5, $3, $2; print "" }'\'
 	else
 		dfcmd='df -t | awk "-F " '\''{n=NF; while (n>5 && ! ($n ~ "/")) n--; for (;n<NF;n++) printf "%s ", $n; print $n "\t" $1 }'\'
 	fi

@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <utils.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>

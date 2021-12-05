@@ -183,7 +183,10 @@ struct PanelMenuItem
 
 	INT_PTR nItem = -1; // plugin item or shortcut index
 
-	wchar_t path[0x1000]; // location path
+	struct {
+		wchar_t path[0x1000];
+		int id;
+	} location;
 };
 
 static void AddPluginItems(VMenu &ChDisk, int Pos)
@@ -403,7 +406,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	Events.DeviceRemoveEvent.Reset();
 	Events.MediaArivalEvent.Reset();
 	Events.MediaRemoveEvent.Reset();*/
-
 	class Guard_Macro_DskShowPosType  //фигня какая-то
 	{
 		public:
@@ -436,7 +438,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 		ChDisk.SetHelp(L"DriveDlg");
 		ChDisk.SetFlags(VMENU_WRAPMODE);
-		Pos = 0;
 		Mounts::Enum mounts(another_curdir);
 		for (const auto &m : mounts) {
 			ChDiskItem.Clear();
@@ -449,21 +450,25 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 			} else {
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
-		
 				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : 0, 0};
 				ChDiskItem.strName = HotKeyStr;
 				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
 				if (mounts.max_usage)
 				{
+					ChDiskItem.strName+= L' ';
 					ChDiskItem.strName+= BoxSymbols[BS_V1];
-					ChDiskItem.strName+= FixedSizeStr(m.usage, std::min(mounts.max_usage, (size_t)24), true);
+					ChDiskItem.strName+= L' ';
+					ChDiskItem.strName+= FixedSizeStr(m.usage, std::min(mounts.max_usage, (size_t)24), false);
 				}
+				ChDiskItem.strName+= L' ';
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
-				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), true);
+				ChDiskItem.strName+= L' ';
+				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), false);
 
 				PanelMenuItem item;
-				wcsncpy(item.path, m.path.CPtr(), ARRAYSIZE(item.path) - 1);
-				if (item.path[0] == L'{' && another_curdir == item.path
+				wcsncpy(item.location.path, m.path.CPtr(), ARRAYSIZE(item.location.path) - 1);
+				item.location.id = m.id;
+				if (item.location.path[0] == L'{' && another_curdir == item.location.path
 				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
 				{
 					item.kind = PanelMenuItem::PLUGIN;
@@ -476,7 +481,6 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}
 		}
 
-
 		if (Opt.ChangeDriveMode & DRIVE_SHOW_BOOKMARKS)
 		{
 			AddBookmarkItems(ChDisk, Pos);
@@ -486,6 +490,8 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		{
 			AddPluginItems(ChDisk, Pos);
 		}
+
+		Pos = 0;
 
 		int X=X1+5;
 
@@ -529,7 +535,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				{
 					if (item && !item->pPlugin)
 					{
-						Execute(item->path,TRUE,TRUE);
+						Execute(item->location.path,TRUE,TRUE);
 					}
 				}
 				break;
@@ -580,7 +586,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						}
 						else
 						{
-							Mounts::EditHotkey(item->path);
+							Mounts::EditHotkey(item->location.path, item->location.id);
 							return SelPos;
 						}
 					}
@@ -596,7 +602,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					if (item) switch (item->kind)
 					{
 						case PanelMenuItem::MOUNTPOINT: {
-							FARString path(item->path);
+							FARString path(item->location.path);
 							Mounts::Unmount(path,
 								Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL || Key == KEY_SHIFTDEL);
 							return SelPos;
@@ -774,7 +780,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	}
 	else if (mitem->kind == PanelMenuItem::MOUNTPOINT || mitem->kind == PanelMenuItem::DIRECTORY)
 	{
-		SetLocation_Directory(mitem->path);
+		SetLocation_Directory(mitem->location.path);
 	}
 
 	return -1;

@@ -450,7 +450,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 			} else {
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
-				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : 0, 0};
+				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : L' ', m.hotkey ? L' ' : 0, 0};
 				ChDiskItem.strName = HotKeyStr;
 				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
 				if (mounts.max_usage)

@@ -9,9 +9,10 @@ namespace Mounts
 		Entry() = default;
 		Entry(const Entry&) = default;
 
-		inline Entry(FARString path_, FARString info_, bool unmountable_ = false) : path(path_), info(info_)
+		inline Entry(FARString path_, FARString info_, bool unmountable_ = false, INT_PTR id_ = -1) : path(path_), info(info_)
 		{
 			unmountable = unmountable_;
+			id = id_;
 		}
 
 		FARString path;
@@ -19,6 +20,7 @@ namespace Mounts
 		FARString info;
 		bool unmountable = false;
 		WCHAR hotkey = 0;
+		int id = -1;
 	};
 
 	struct Enum : std::vector<Entry>
@@ -31,7 +33,7 @@ namespace Mounts
 	};
 
 	bool Unmount(const FARString &path, bool force);
-	void EditHotkey(const FARString &path);
+	void EditHotkey(const FARString &path, int id);
 }
 
 //BOOL RemoveUSBDrive(char Letter,DWORD Flags);

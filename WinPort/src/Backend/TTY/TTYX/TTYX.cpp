@@ -184,7 +184,7 @@ public:
 int main(int argc, char *argv[])
 {
 	if (argc != 3) {
-		fprintf(stderr, "This process not indended to be started by user\n");
+		fprintf(stderr, "This file is not intended to be started by user\n");
 		return -1;
 	}
 

@@ -14,11 +14,30 @@
 #include "dirmix.hpp"
 #include "execute.hpp"
 #include "manager.hpp"
+#include "ConfigRW.hpp"
+#include "HotkeyLetterDialog.hpp"
 
 namespace Mounts
 {
-	static FARString strRootPath(L"/"), strRootName(L"&/");
-	static FARString strHomeName(L"&~"), strSameName(L"&-");
+//	static FARString strRootPath(L"/"), strRootName(L"&/");
+//	static FARString strHomeName(L"&~"), strSameName(L"&-");
+//	static FARString strRootPath(L"/"), strRootName(L"&/");
+//	static FARString strHomeName(L"&~"), strSameName(L"&-");
+	#define HOTKEYS_SECTION "MountsHotkeys"
+
+	const wchar_t GetDefaultHotKey(const FARString &path, const wchar_t *another_curdir = nullptr)
+	{
+		if (path == L"/")
+			return L'/';
+
+		if (path == GetMyHome())
+			return L'~';
+
+		if (another_curdir && path == another_curdir)
+			return L'-';
+
+		return 0;
+	}
 
 	Enum::Enum(FARString &another_curdir)
 	{
@@ -46,11 +65,13 @@ namespace Mounts
 					if (e.path.Pos(t, L'\t')) {
 						e.info = e.path.SubStr(t + 1);
 						e.path.Truncate(t);
+						if (e.info.Pos(t, L'\t')) {
+							e.usage = e.info.SubStr(0, t);
+							e.info = e.info.SubStr(t + 1);
+						}
 					}
 					if (e.path == L"/") {
 						has_rootfs = true;
-						size_t l;
-						if(!e.info.Pos(l, L'&')) e.info+= " &/";
 					} else {
 						e.unmountable = true;
 					}
@@ -65,21 +86,27 @@ namespace Mounts
 		}
 
 		if (!has_rootfs) {
-			emplace(begin(), Entry{ strRootPath, strRootName});
+			emplace(begin(), Entry(L"/", MSG(MMountsRoot)));
 		}
 
-		emplace(begin(), Entry(GetMyHome(), strHomeName));
-		emplace(begin(), Entry(another_curdir, strSameName));
+		emplace(begin(), Entry( GetMyHome(), MSG(MMountsHome)));
+		emplace(begin(), Entry( another_curdir, MSG(MMountsOther)));
 
-		for (const auto &m : *this) {
+		ConfigReader cfg_reader(HOTKEYS_SECTION);
+		for (auto &m : *this) {
 			if (max_path < m.path.GetLength())
 				max_path = m.path.GetLength();
 			if (max_info < m.info.GetLength())
 				max_info = m.info.GetLength();
+			if (max_usage < m.usage.GetLength())
+				max_usage = m.usage.GetLength();
+			wchar_t def_hk[] = {GetDefaultHotKey(m.path, another_curdir), 0};
+			auto hk = cfg_reader.GetString(m.path.GetMB(), def_hk);
+			m.hotkey = hk.IsEmpty() ? 0 : *hk.CPtr();
 		}
 	}
 
-	bool Unmount(FARString &path, bool force)
+	bool Unmount(const FARString &path, bool force)
 	{
 		std::string cmd = GetMyScriptQuoted("mounts.sh");
 		cmd+= " umount \"";
@@ -96,5 +123,20 @@ namespace Mounts
 			}
 		}
 		return r == 0;
+	}
+
+	void EditHotkey(const FARString &path)
+	{
+		wchar_t def_hk[] = {GetDefaultHotKey(path), 0};
+		const auto &Setting = ConfigReader(HOTKEYS_SECTION).GetString(path.GetMB(), def_hk);
+		WCHAR Letter[2] = {Setting.IsEmpty() ? 0 : Setting[0], 0};
+		if (!HotkeyLetterDialog(MSG(MLocationHotKeyTitle), path.CPtr(), Letter[0]))
+			return;
+
+		ConfigWriter cw(HOTKEYS_SECTION);
+		if (Letter[0])
+			cw.SetString(path.GetMB(), Letter);
+		else
+			cw.RemoveKey(path.GetMB());
 	}
 }

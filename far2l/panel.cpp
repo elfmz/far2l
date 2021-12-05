@@ -450,7 +450,14 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			} else {
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
 		
-				ChDiskItem.strName = FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
+				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : 0, 0};
+				ChDiskItem.strName = HotKeyStr;
+				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
+				if (mounts.max_usage)
+				{
+					ChDiskItem.strName+= BoxSymbols[BS_V1];
+					ChDiskItem.strName+= FixedSizeStr(m.usage, std::min(mounts.max_usage, (size_t)24), true);
+				}
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
 				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), true);
 
@@ -573,8 +580,8 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						}
 						else
 						{
-							ShellSetFileAttributes(nullptr, item->path);
-							ChDisk.Redraw();
+							Mounts::EditHotkey(item->path);
+							return SelPos;
 						}
 					}
 					break;

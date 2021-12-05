@@ -81,7 +81,7 @@ else
 
 			avail_fraction = avail < 10 ? 1 : 0;
 			total_fraction = total < 10 ? 1 : 0;
-			printf "%s\t%.*f%s/%.*f%s %8s\n", path, avail_fraction, avail, avail_units, total_fraction, total, total_units, $'$DF_NAME';
+			printf "%s\t%.*f%s/%.*f%s\t%8s\n", path, avail_fraction, avail, avail_units, total_fraction, total, total_units, $'$DF_NAME';
 		}
 	}'
 

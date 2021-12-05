@@ -140,6 +140,7 @@ AnsiEsc.cpp
 ViewerPrinter.cpp
 ConfigRW.cpp
 MountInfo.cpp
+HotkeyLetterDialog.cpp
 )
 
 # Set target names for the executables

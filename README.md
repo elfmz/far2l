@@ -24,7 +24,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 * gawk
 * m4
-* libwxgtk3.0-dev (or in Ubuntu 19.04+ - libwxgtk3.0-gtk3-dev)  (needed for GUI backend, not needed with -DUSEWX=no)
+* libwxgtk3.0-gtk3-dev (or in older distributives - libwxgtk3.0-dev)  (needed for GUI backend, not needed with -DUSEWX=no)
 * libxerces-c-dev
 * libspdlog-dev
 * libuchardet-dev
@@ -34,17 +34,17 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * libnfs-dev (needed for NetRocks/NFS)
 * libneon27-dev (or later, needed for NetRocks/WebDAV)
 * libarchive-dev (needed for better archives support in multiarc)
-* libpcre2-dev (or in recent distributives - libpcre3-dev) (needed for custom archives support in multiarc)
+* libpcre3-dev (or in older distributives - libpcre2-dev) (needed for custom archives support in multiarc)
 * cmake ( >= 3.2.2 )
 * g++
 * git (needed for downloading source code)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-dev libpcre2-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-gtk3-dev libpcre3-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 
 ```
-In recent distributives: use libpcre3-dev and libwxgtk3.0-gtk3-dev instead of libpcre2-dev and libwxgtk3.0-dev
+In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
 

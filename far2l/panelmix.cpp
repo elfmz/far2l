@@ -594,7 +594,8 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 
 		strResult<<fmt::Width(Width)<<fmt::Precision(Width);
 		if (StrLength(PtrName) <= Width-2) {
-			strResult<<L"<"<<PtrName<<L">";
+			// precombine into tmp string to avoid miseffect of fmt::Width etc (#1137)
+			strResult<<FARString(L"<").Append(PtrName).Append(L">");
 		} else {
 			strResult<<PtrName;
 		}

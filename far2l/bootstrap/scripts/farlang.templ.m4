@@ -15691,17 +15691,7 @@ MMonthDec
 "Gru"
 "Dic"
 
-MPluginHotKeyTitle
-l:
-"Назначение горячей клавиши"
-"Assign plugin hot key"
-"Přidělit horkou klávesu pluginu"
-"Dem Plugin eine Kurztaste zuweisen"
-"Plugin gyorsbillentyű hozzárendelés"
-"Przypisz klawisz skrótu do pluginu"
-"Asignar tecla rápida a plugin"
-
-MPluginHotKey
+MHelpHotKey
 "Введите горячую клавишу (букву или цифру)"
 "Enter hot key (letter or digit)"
 "Zadejte horkou klávesu (písmeno nebo číslici)"
@@ -15718,6 +15708,35 @@ MPluginHotKeyBottom
 "F4 - gyorsbillentyű hozzárendelés"
 "F4 - ustaw klawisz skrótu"
 "F4 - asignar tecla rápida"
+
+MPluginHotKeyTitle
+l:
+"Назначение горячей клавиши"
+"Assign plugin hot key"
+"Přidělit horkou klávesu pluginu"
+"Dem Plugin eine Kurztaste zuweisen"
+"Plugin gyorsbillentyű hozzárendelés"
+"Przypisz klawisz skrótu do pluginu"
+"Asignar tecla rápida a plugin"
+
+MLocationHotKeyTitle
+l:
+"Назначение горячей клавиши"
+"Assign location hot key"
+upd:"Přidělit horkou klávesu ???"
+upd:"Dem ??? eine Kurztaste zuweisen"
+upd:"??? gyorsbillentyű hozzárendelés"
+upd:"Przypisz klawisz skrótu do ???"
+upd:"Asignar tecla rápida a ???"
+
+MLocationHotKey
+"Введите горячую клавишу (букву или цифру)"
+"Enter hot key (letter or digit)"
+"Zadejte horkou klávesu (písmeno nebo číslici)"
+"Buchstabe oder Ziffer:"
+"Nyomja le a billentyűt (betű vagy szám)"
+"Podaj klawisz skrótu (litera lub cyfra)"
+"Entrar tecla rápida (letra o dígito)"
 
 MRightCtrl
 l:
@@ -20346,6 +20365,33 @@ upd:"Share clipboard &always"
 upd:"Share clipboard &always"
 upd:"Share clipboard &always"
 upd:"Share clipboard &always"
+
+MMountsRoot
+"Корень"
+"Root"
+upd:"Root"
+upd:"Root"
+upd:"Root"
+upd:"Root"
+upd:"Root"
+
+MMountsHome
+"Дом"
+"Home"
+upd:"Home"
+upd:"Home"
+upd:"Home"
+upd:"Home"
+upd:"Home"
+
+MMountsOther
+"Др. панель"
+"Other panel"
+upd:"Other panel"
+upd:"Other panel"
+upd:"Other panel"
+upd:"Other panel"
+upd:"Other panel"
 
 #Must be the last
 MNewFileName

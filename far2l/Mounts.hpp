@@ -15,8 +15,10 @@ namespace Mounts
 		}
 
 		FARString path;
+		FARString usage;
 		FARString info;
 		bool unmountable = false;
+		WCHAR hotkey = 0;
 	};
 
 	struct Enum : std::vector<Entry>
@@ -24,10 +26,12 @@ namespace Mounts
 		Enum(FARString &another_curdir);
 
 		size_t max_path = 4;
+		size_t max_usage = 0;
 		size_t max_info = 4;
 	};
 
-	bool Unmount(FARString &path, bool force);
+	bool Unmount(const FARString &path, bool force);
+	void EditHotkey(const FARString &path);
 }
 
 //BOOL RemoveUSBDrive(char Letter,DWORD Flags);

@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filelist.hpp"
 #include "message.hpp"
 #include "SafeMMap.hpp"
+#include "HotkeyLetterDialog.hpp"
 #include <KeyFileHelper.h>
 #include <crc64.h>
 
@@ -1605,51 +1606,17 @@ bool PluginManager::SetHotKeyDialog(
     const std::string &SettingName		// ключ, откуда берем значение в state.ini/Settings
 )
 {
-	/*
-	г================ Assign plugin hot key =================¬
-	¦ Enter hot key (letter or digit)                        ¦
-	¦ _                                                      ¦
-	L========================================================-
-	*/
-	DialogDataEx PluginDlgData[]=
-	{
-		{DI_DOUBLEBOX,3,1,60,4,{},0,MSG(MPluginHotKeyTitle)},
-		{DI_TEXT,5,2,0,2,{},0,MSG(MPluginHotKey)},
-		{DI_FIXEDIT,5,3,5,3,{},DIF_FOCUS|DIF_DEFAULT,L""},
-		{DI_TEXT,8,3,58,3,{},0,DlgPluginTitle}
-	};
-	MakeDialogItemsEx(PluginDlgData,PluginDlg);
-
 	KeyFileHelper kfh(PluginsIni());
-	PluginDlg[2].strData = kfh.GetString(
-		SettingsSection, SettingName);
+	const auto &Setting = kfh.GetString(SettingsSection, SettingName);
+	WCHAR Letter[2] = {Setting.empty() ? 0 : Setting[0], 0};
+	if (!HotkeyLetterDialog(MSG(MPluginHotKeyTitle), DlgPluginTitle, Letter[0]))
+		return false;
 
-	int ExitCode;
-	{
-		Dialog Dlg(PluginDlg,ARRAYSIZE(PluginDlg));
-		Dlg.SetPosition(-1,-1,64,6);
-		Dlg.Process();
-		ExitCode=Dlg.GetExitCode();
-	}
-
-	if (ExitCode==2)
-	{
-		PluginDlg[2].strData.Truncate(1);
-		RemoveLeadingSpaces(PluginDlg[2].strData);
-
-		if (PluginDlg[2].strData.IsEmpty())
-		{
-			kfh.RemoveKey(SettingsSection, SettingName);
-		}
-		else
-		{
-			kfh.SetString(SettingsSection, SettingName, PluginDlg[2].strData.CPtr());
-		}
-
-		return true;
-	}
-
-	return false;
+	if (Letter[0])
+		kfh.SetString(SettingsSection, SettingName, Letter);
+	else
+		kfh.RemoveKey(SettingsSection, SettingName);
+	return true;
 }
 
 bool PluginManager::GetDiskMenuItem(

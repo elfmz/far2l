@@ -4,7 +4,6 @@
 
 void VT_ComposeMarker(std::string &marker);
 std::string VT_ComposeMarkerCommand(const std::string &marker);
-std::string VT_ComposeInitialTitle(const char *cd, const char *cmd, bool using_sudo);
 
 struct VT_ComposeCommandExec
 {

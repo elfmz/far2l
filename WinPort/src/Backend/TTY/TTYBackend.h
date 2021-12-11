@@ -19,6 +19,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	bool _far2l_tty = false;
+
 	enum {
 		FKS_UNKNOWN,
 		FKS_SUPPORTED,
@@ -77,18 +78,16 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 			bool output : 1;
 			bool title_changed : 1;
 			bool far2l_interract : 1;
+			bool go_background : 1;
 		} flags;
 		uint32_t all;
-	} _ae;
+	} _ae {};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
-
-	void OnFar2lKey(bool down, StackSerializer &stk_ser);
-	void OnFar2lMouse(StackSerializer &stk_ser);
 
 	void DetachNotifyPipe();
 

@@ -39,7 +39,7 @@ std::string VT_ComposeMarkerCommand(const std::string &marker)
 	return out;
 }
 
-std::string VT_ComposeInitialTitle(const char *cd, const char *cmd, bool using_sudo)
+static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd, bool using_sudo)
 {
 	std::string title = cmd;
 	StrTrim(title);
@@ -75,7 +75,22 @@ std::string VT_ComposeInitialTitle(const char *cd, const char *cmd, bool using_s
 		title.insert(0, "sudo ");
 	}
 
-	return title;
+	std::string out = "echo -ne $'\\x1b]2;";
+
+	for (auto &ch : title) {
+		if ((ch >= 0 && ch < 0x20)) {
+			out+= '\x01';
+
+		} else {
+			if (ch == '\'' || ch == '\\') {
+				out+= '\\';
+			}
+			out+= ch;
+		}
+	}
+	out+= "\\x07'\n";
+
+	return out;
 }
 	
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -156,6 +171,8 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	if (*last_ch != '&') { // don't update curdir in case of background command
 		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
 	}
+	content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
+
 	if (need_sudo) {
 		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s%s\"\n",
 			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());

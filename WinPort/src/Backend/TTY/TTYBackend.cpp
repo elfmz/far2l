@@ -25,10 +25,14 @@
 #include "TTYRevive.h"
 #include "TTYFar2lClipboardBackend.h"
 #include "TTYNegotiateFar2l.h"
+#include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
+
+static void OnSigHup(int signo);
+
 
 TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
@@ -106,6 +110,7 @@ void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
 	while (!_exiting) {
+		_far2l_cursor_height = -1; // force cursor height update on next output dispatch
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
 		if (_far2l_tty) {
@@ -248,6 +253,7 @@ void TTYBackend::ReaderLoop()
 
 void TTYBackend::WriterThread()
 {
+	bool gone_background = false;
 	try {
 		TTYOutput tty_out(_stdout, _far2l_tty);
 
@@ -282,12 +288,21 @@ void TTYBackend::WriterThread()
 
 			tty_out.Flush();
 			tcdrain(_stdout);
+
+			if (ae.flags.go_background) {
+				gone_background = true;
+				break;
+			}
 		}
 
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
 	_deadio = true;
+
+	if (gone_background) {
+		OnSigHup(SIGHUP);
+	}
 }
 
 
@@ -395,14 +410,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	tty_out.MoveCursorLazy(cursor_pos.Y + 1, cursor_pos.X + 1);
 	tty_out.ChangeCursor(cursor_visible);
 
-	if (_far2l_cursor_height != (int)(unsigned int)cursor_height && _far2l_tty) {
+	if (_far2l_cursor_height != (int)(unsigned int)cursor_height) {
 		_far2l_cursor_height = (int)(unsigned int)cursor_height;
-
-		StackSerializer stk_ser;
-		stk_ser.PushPOD(cursor_height);
-		stk_ser.PushPOD('h');
-		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
-		tty_out.SendFar2lInterract(stk_ser);
+		tty_out.ChangeCursorHeight(cursor_height);
 	}
 }
 
@@ -487,7 +497,7 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 
 		try {
 			StackSerializer stk_ser;
-			stk_ser.PushPOD('w');
+			stk_ser.PushPOD(FARTTY_INTERRACT_GET_WINDOW_MAXSIZE);
 			if (Far2lInterract(stk_ser, true)) {
 				stk_ser.PopPOD(out);
 				_largest_window_size = out;
@@ -515,7 +525,7 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 			}
 			stk_ser.PushPOD(state);
 		}
-		stk_ser.PushPOD('f');
+		stk_ser.PushPOD(FARTTY_INTERRACT_SET_FKEY_TITLES);
 
 		if (Far2lInterract(stk_ser, detect_support)) {
 			if (detect_support) {
@@ -541,7 +551,7 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD('e');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
@@ -559,7 +569,7 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD((maximized ? 'M' : 'm'));
+		stk_ser.PushPOD(maximized ? FARTTY_INTERRACT_WINDOW_MAXIMIZE : FARTTY_INTERRACT_WINDOW_RESTORE);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
@@ -609,16 +619,14 @@ bool TTYBackend::OnConsoleIsActive()
 	return false;//true;
 }
 
-void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
+static void OnFar2lKey(bool down, StackSerializer &stk_ser)
 {
 	try {
 		INPUT_RECORD ir {};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
 
-		uint32_t key;
-		stk_ser.PopPOD(key);
-		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)key;
+		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)stk_ser.PopU32();
 		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
 		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualScanCode);
 		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
@@ -630,15 +638,43 @@ void TTYBackend::OnFar2lKey(bool down, StackSerializer &stk_ser)
 	}
 }
 
-void TTYBackend::OnFar2lMouse(StackSerializer &stk_ser)
+template <class CHAR_T>
+	static void OnFar2lKeyCompact(bool down, StackSerializer &stk_ser)
+{
+	try {
+		INPUT_RECORD ir {};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
+		ir.Event.KeyEvent.wRepeatCount = 1;
+
+		CHAR_T key;
+		stk_ser.PopPOD(key);
+		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)(uint32_t)key;
+		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
+		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
+		g_winport_con_in->Enqueue(&ir, 1);
+	} catch (std::exception &) {
+		fprintf(stderr, "OnFar2lKeyCompact<%u>: broken args!\n", (unsigned int)sizeof(CHAR_T));
+	}
+}
+
+static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 {
 	try {
 		INPUT_RECORD ir {};
 		ir.EventType = MOUSE_EVENT;
 
-		stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);
-		stk_ser.PopPOD(ir.Event.MouseEvent.dwControlKeyState);
-		stk_ser.PopPOD(ir.Event.MouseEvent.dwButtonState);
+		if (compact) {
+			ir.Event.MouseEvent.dwEventFlags = stk_ser.PopU8();
+			ir.Event.MouseEvent.dwControlKeyState = stk_ser.PopU8();
+			ir.Event.MouseEvent.dwButtonState = stk_ser.PopU8();
+
+		} else {
+			stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);
+			stk_ser.PopPOD(ir.Event.MouseEvent.dwControlKeyState);
+			stk_ser.PopPOD(ir.Event.MouseEvent.dwButtonState);
+		}
+
 		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.Y);
 		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.X);
 
@@ -659,12 +695,20 @@ void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 	char code = stk_ser.PopChar();
 
 	switch (code) {
-		case 'M':
-			OnFar2lMouse(stk_ser);
+		case FARTTY_INPUT_MOUSE: case FARTTY_INPUT_MOUSE_COMPACT:
+			OnFar2lMouse(code == FARTTY_INPUT_MOUSE_COMPACT, stk_ser);
 			break;
 
-		case 'K': case 'k':
-			OnFar2lKey(code == 'K', stk_ser);
+		case FARTTY_INPUT_KEYDOWN: case FARTTY_INPUT_KEYUP:
+			OnFar2lKey(code == FARTTY_INPUT_KEYDOWN, stk_ser);
+			break;
+
+		case FARTTY_INPUT_KEYDOWN_COMPACT_WIDE: case FARTTY_INPUT_KEYUP_COMPACT_WIDE:
+			OnFar2lKeyCompact<uint32_t>(code == FARTTY_INPUT_KEYDOWN_COMPACT_WIDE, stk_ser);
+			break;
+
+		case FARTTY_INPUT_KEYDOWN_COMPACT_CHAR: case FARTTY_INPUT_KEYUP_COMPACT_CHAR:
+			OnFar2lKeyCompact<uint8_t>(code == FARTTY_INPUT_KEYDOWN_COMPACT_CHAR, stk_ser);
 			break;
 
 		default:
@@ -775,12 +819,10 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 		StackSerializer stk_ser;
 		stk_ser.PushStr(Wide2MB(text));
 		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushPOD('n');
+		stk_ser.PushPOD(FARTTY_INTERRACT_DESKTOP_NOTIFICATION);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
-
-static void OnSigHup(int signo);
 
 bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 {
@@ -789,8 +831,9 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	}
 
 	if (TryEnterBackgroundMode) {
-		OnSigHup(SIGHUP);
-//		raise(SIGHUP);
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.flags.go_background = true;
+		_async_cond.notify_all();
 	}
 
 	return true;

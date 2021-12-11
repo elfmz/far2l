@@ -25,7 +25,7 @@ class VTAnsi
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);
 
-	void OnStart(const char *title);
+	void OnStart();
 	void OnStop();
 };
 

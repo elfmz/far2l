@@ -98,6 +98,7 @@ VTFar2lExtensios::~VTFar2lExtensios()
 
 void VTFar2lExtensios::WriteInputEvent(const StackSerializer &stk_ser)
 {
+	//fprintf(stderr, "VTFar2lExtensios::WriteInputEvent: %s\n", stk_ser.ToBase64().c_str());
 	_tmp_input_event = "\x1b_f2l";
 	_tmp_input_event+= stk_ser.ToBase64();
 	_tmp_input_event+= '\x07';
@@ -139,10 +140,12 @@ bool VTFar2lExtensios::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	stk_ser.PushPOD(MouseEvent.dwMousePosition.X);
 	stk_ser.PushPOD(MouseEvent.dwMousePosition.Y);
 	if ( (_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
-	  && MouseEvent.dwButtonState < 0x100
+	  && (MouseEvent.dwButtonState & 0xff00ff00) == 0
 	  && MouseEvent.dwControlKeyState < 0x100
 	  && MouseEvent.dwEventFlags < 0x100) {
-		stk_ser.PushPOD(uint8_t(MouseEvent.dwButtonState));
+		const uint16_t btn_state_encoded = ((MouseEvent.dwButtonState & 0xff)
+			| ((MouseEvent.dwButtonState >> 8) & 0xff00));
+		stk_ser.PushPOD(btn_state_encoded);
 		stk_ser.PushPOD(uint8_t(MouseEvent.dwControlKeyState));
 		stk_ser.PushPOD(uint8_t(MouseEvent.dwEventFlags));
 		stk_ser.PushPOD(FARTTY_INPUT_MOUSE_COMPACT);
@@ -197,13 +200,12 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN : FARTTY_INPUT_KEYUP));
 		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: normal\n");
 
-	} else if ( ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x100
-			&& KeyEvent.wVirtualKeyCode < 0x100
-			&& KeyEvent.dwControlKeyState < 0x100) {
-
+	} else if ( ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
+			&& KeyEvent.dwControlKeyState < 0x10000
+			&& KeyEvent.wVirtualKeyCode < 0x100) {
 		stk_ser.PushPOD((uint8_t)KeyEvent.wVirtualKeyCode);
-		stk_ser.PushPOD((uint8_t)KeyEvent.dwControlKeyState);
-		stk_ser.PushPOD((uint8_t)(uint32_t)KeyEvent.uChar.UnicodeChar);
+		stk_ser.PushPOD((uint16_t)KeyEvent.dwControlKeyState);
+		stk_ser.PushPOD((uint16_t)(uint32_t)KeyEvent.uChar.UnicodeChar);
 		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT_CHAR : FARTTY_INPUT_KEYUP_COMPACT_CHAR));
 		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact char\n");
 

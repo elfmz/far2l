@@ -665,8 +665,8 @@ static void OnFar2lKeyCompactC(bool down, StackSerializer &stk_ser)
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)(uint32_t)stk_ser.PopU8();
-		ir.Event.KeyEvent.dwControlKeyState = stk_ser.PopU8();
+		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)(uint32_t)stk_ser.PopU16();
+		ir.Event.KeyEvent.dwControlKeyState = stk_ser.PopU16();
 		ir.Event.KeyEvent.wVirtualKeyCode = stk_ser.PopU8();
 		g_winport_con_in->Enqueue(&ir, 1);
 
@@ -684,7 +684,10 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 		if (compact) {
 			ir.Event.MouseEvent.dwEventFlags = stk_ser.PopU8();
 			ir.Event.MouseEvent.dwControlKeyState = stk_ser.PopU8();
-			ir.Event.MouseEvent.dwButtonState = stk_ser.PopU8();
+			ir.Event.MouseEvent.dwButtonState = stk_ser.PopU16();
+
+			ir.Event.MouseEvent.dwButtonState = (ir.Event.MouseEvent.dwButtonState & 0xff)
+				| ( (ir.Event.MouseEvent.dwButtonState & 0xff00) << 8);
 
 		} else {
 			stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);

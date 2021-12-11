@@ -199,7 +199,7 @@ all arguments are defined by FARTTY_INPUT_* notification ID - see below (stack t
 /** Server sends this to inform about mouse event if compact input is enabled and possible. See MOUSE_EVENT_RECORD for details.
   uint8_t (dwEventFlags)
   uint8_t (dwControlKeyState)
-  uint8_t (dwButtonState)
+  uint16_t (dwButtonState encoded as: (dwButtonState & 0xff) | ( (dwButtonState >> 8) & 0xff00))
   int16_t (pos.Y)
   int16_t (pos.X)
 */
@@ -217,8 +217,8 @@ all arguments are defined by FARTTY_INPUT_* notification ID - see below (stack t
 
 /** Server sends this to inform about keydown or keyup event if compact input is enabled and possible. See KEY_EVENT_RECORD for details.
   Note that event doesn't specify wVirtualScanCode and wRepeatCount thus client must assume wVirtualScanCode = 0 and wRepeatCount = 1
-  uint8_t (UTF32 code fit to single-byte)
-  uint8_t (dwControlKeyState fit to single-byte)
+  uint16_t (UTF32 code fit to uint16_t)
+  uint16_t (dwControlKeyState fit to uint16_t)
   uint8_t (wVirtualKeyCode fit to single-byte)
 */
 #define FARTTY_INPUT_KEYDOWN_COMPACT_CHAR     'C'

@@ -5,6 +5,7 @@
 #include <UtfConvert.hpp>
 #include <fcntl.h>
 #include "../WinPort/src/SavedScreen.h"
+#include "../WinPort/FarTTY.h"
 
 #include "VTFar2lExtensios.h"
 #include "headers.hpp"
@@ -137,10 +138,23 @@ bool VTFar2lExtensios::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	StackSerializer stk_ser;
 	stk_ser.PushPOD(MouseEvent.dwMousePosition.X);
 	stk_ser.PushPOD(MouseEvent.dwMousePosition.Y);
-	stk_ser.PushPOD(MouseEvent.dwButtonState);
-	stk_ser.PushPOD(MouseEvent.dwControlKeyState);
-	stk_ser.PushPOD(MouseEvent.dwEventFlags);
-	stk_ser.PushPOD('M');
+	if ( (_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
+	  && MouseEvent.dwButtonState < 0x100
+	  && MouseEvent.dwControlKeyState < 0x100
+	  && MouseEvent.dwEventFlags < 0x100) {
+		stk_ser.PushPOD(uint8_t(MouseEvent.dwButtonState));
+		stk_ser.PushPOD(uint8_t(MouseEvent.dwControlKeyState));
+		stk_ser.PushPOD(uint8_t(MouseEvent.dwEventFlags));
+		stk_ser.PushPOD(FARTTY_INPUT_MOUSE_COMPACT);
+		//fprintf(stderr, "VTFar2lExtensios::OnInputMouse: compact\n");
+
+	} else {
+		stk_ser.PushPOD(MouseEvent.dwButtonState);
+		stk_ser.PushPOD(MouseEvent.dwControlKeyState);
+		stk_ser.PushPOD(MouseEvent.dwEventFlags);
+		stk_ser.PushPOD(FARTTY_INPUT_MOUSE);
+		//fprintf(stderr, "VTFar2lExtensios::OnInputMouse: normal\n");
+	}
 	WriteInputEvent(stk_ser);
 	return true;
 }
@@ -171,14 +185,33 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 		}
 	}
 
-	StackSerializer stk_ser;
-	stk_ser.PushPOD(KeyEvent.wRepeatCount);
-	stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
-	stk_ser.PushPOD(KeyEvent.wVirtualScanCode);
-	stk_ser.PushPOD(KeyEvent.dwControlKeyState);
-	stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
-	stk_ser.PushPOD((KeyEvent.bKeyDown ? 'K' : 'k'));
-	WriteInputEvent(stk_ser);
+	if ((_xfeatures & FARTTY_FEAT_COMPACT_INPUT) == 0
+	  || KeyEvent.wRepeatCount > 1 || KeyEvent.wVirtualScanCode != 0) {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(KeyEvent.wRepeatCount);
+		stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
+		stk_ser.PushPOD(KeyEvent.wVirtualScanCode);
+		stk_ser.PushPOD(KeyEvent.dwControlKeyState);
+		stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
+		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN : FARTTY_INPUT_KEYUP));
+		WriteInputEvent(stk_ser);
+		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: normal\n");
+
+	} else {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
+		stk_ser.PushPOD(KeyEvent.dwControlKeyState);
+		if ( ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x100) {
+			stk_ser.PushPOD((uint8_t)(uint32_t)KeyEvent.uChar.UnicodeChar);
+			stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT_CHAR : FARTTY_INPUT_KEYUP_COMPACT_CHAR));
+			//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact char\n");
+		} else {
+			stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
+			stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT_WIDE : FARTTY_INPUT_KEYUP_COMPACT_WIDE));
+			//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact wide\n");
+		}
+		WriteInputEvent(stk_ser);
+	}
 	return true;
 }
 
@@ -233,13 +266,12 @@ char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 		default: // Mimic just failed to open clipboard
 			return 0;
 	}
-
 }
 
 void VTFar2lExtensios::OnInterract_ClipboardOpen(StackSerializer &stk_ser)
 {
-	std::string client_id;
-	stk_ser.PopStr(client_id);
+	_clipboard_chunks.clear();
+	const std::string &client_id = stk_ser.PopStr();
 	char out = ClipboardAuthorize(client_id);
 	if (out == 1) {
 		out = WINPORT(OpenClipboard)(NULL) ? 1 : 0;
@@ -248,11 +280,16 @@ void VTFar2lExtensios::OnInterract_ClipboardOpen(StackSerializer &stk_ser)
 	}
 
 	stk_ser.Clear();
+	// report supported features
+	stk_ser.PushPOD(uint64_t(FARTTY_FEATCLIP_DATA_ID | FARTTY_FEATCLIP_CHUNKED_SET));
 	stk_ser.PushPOD(out);
 }
 
 void VTFar2lExtensios::OnInterract_ClipboardClose(StackSerializer &stk_ser)
 {
+	_clipboard_chunks.clear();
+	_clipboard_chunks.shrink_to_fit();
+
 	char out = -1;
 	if (_clipboard_opens > 0) {
 		out = WINPORT(CloseClipboard)() ? 1 : 0;
@@ -285,6 +322,27 @@ void VTFar2lExtensios::OnInterract_ClipboardIsFormatAvailable(StackSerializer &s
 	stk_ser.PushPOD(out);
 }
 
+void VTFar2lExtensios::OnInterract_ClipboardSetDataChunk(StackSerializer &stk_ser)
+{
+	if (_clipboard_opens > 0) {
+		uint16_t encoded_chunk_size = 0;
+		stk_ser.PopPOD(encoded_chunk_size);
+		if (encoded_chunk_size) {
+			const size_t chunk_size = size_t(encoded_chunk_size) << 8;
+			const size_t prev_size = _clipboard_chunks.size();
+			_clipboard_chunks.resize(prev_size + chunk_size);
+			if (_clipboard_chunks.size() < prev_size) {
+				throw std::runtime_error("Chunked clipboard data overflow");
+			}
+			stk_ser.Pop(_clipboard_chunks.data() + prev_size, chunk_size);
+
+		} else { // zero chunk length means discard pending chunks
+			_clipboard_chunks.clear();
+		}
+	}
+	stk_ser.Clear();
+}
+
 void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 {
 	char out = -1;
@@ -292,13 +350,15 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 	if (_clipboard_opens > 0) {
 		UINT fmt;
 		uint32_t len;
-		void *data;
+		unsigned char *data;
 
 		stk_ser.PopPOD(fmt);
 		stk_ser.PopPOD(len);
-		if (len) {
-			data = malloc(len);
-			stk_ser.Pop(data, len);
+		if (len && len + uint32_t(_clipboard_chunks.size()) >= len) {
+			data = (unsigned char *)malloc(len + uint32_t(_clipboard_chunks.size()));
+			memcpy(data, _clipboard_chunks.data(), uint32_t(_clipboard_chunks.size()));
+			stk_ser.Pop(data + uint32_t(_clipboard_chunks.size()), len);
+			len+= uint32_t(_clipboard_chunks.size());
 #if (__WCHAR_MAX__ <= 0xffff)
 			if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
 				void *new_data = UtfConverter<uint32_t, uint16_t>
@@ -322,6 +382,7 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 		stk_ser.PushPOD(id);
 	}
 	stk_ser.PushPOD(out);
+	_clipboard_chunks.clear();
 }
 
 void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
@@ -394,14 +455,15 @@ void VTFar2lExtensios::OnInterract_Clipboard(StackSerializer &stk_ser)
 	const char code = stk_ser.PopChar();
 
 	switch (code) {
-		case 'o': OnInterract_ClipboardOpen(stk_ser); break;
-		case 'c': OnInterract_ClipboardClose(stk_ser); break;
-		case 'e': OnInterract_ClipboardEmpty(stk_ser); break;
-		case 'a': OnInterract_ClipboardIsFormatAvailable(stk_ser); break;
-		case 's': OnInterract_ClipboardSetData(stk_ser); break;
-		case 'g': OnInterract_ClipboardGetData(stk_ser); break;
-		case 'i': OnInterract_ClipboardGetDataID(stk_ser); break;
-		case 'r': OnInterract_ClipboardRegisterFormat(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_OPEN: OnInterract_ClipboardOpen(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_CLOSE: OnInterract_ClipboardClose(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_EMPTY: OnInterract_ClipboardEmpty(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_ISAVAIL: OnInterract_ClipboardIsFormatAvailable(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_SETDATACHUNK: OnInterract_ClipboardSetDataChunk(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_SETDATA: OnInterract_ClipboardSetData(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_GETDATA: OnInterract_ClipboardGetData(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_GETDATAID: OnInterract_ClipboardGetDataID(stk_ser); break;
+		case FARTTY_INTERRACT_CLIP_REGISTER_FORMAT: OnInterract_ClipboardRegisterFormat(stk_ser); break;
 
 		default:
 			fprintf(stderr, "OnInterract_Clipboard: wrong code %c\n", code);
@@ -459,38 +521,44 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 	const char code = stk_ser.PopChar();
 
 	switch (code) {
-		case 'e':
+		case FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES:
+			_xfeatures = 0;
+			stk_ser.PopPOD(_xfeatures);
+			stk_ser.Clear();
+		break;
+
+		case FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT:
 			WINPORT(BeginConsoleAdhocQuickEdit)();
 			stk_ser.Clear();
 		break;
 
-		case 'M':
+		case FARTTY_INTERRACT_WINDOW_MAXIMIZE:
 			WINPORT(SetConsoleWindowMaximized)(TRUE);
 			stk_ser.Clear();
 		break;
 
-		case 'm':
+		case FARTTY_INTERRACT_WINDOW_RESTORE:
 			WINPORT(SetConsoleWindowMaximized)(FALSE);
 			stk_ser.Clear();
 		break;
 
-		case 'c':
+		case FARTTY_INTERRACT_CLIPBOARD:
 			OnInterract_Clipboard(stk_ser);
 		break;
 
-		case 'h':
+		case FARTTY_INTERRACT_SET_CURSOR_HEIGHT:
 			OnInterract_ChangeCursorHeigth(stk_ser);
 		break;
 
-		case 'w':
+		case FARTTY_INTERRACT_GET_WINDOW_MAXSIZE:
 			OnInterract_GetLargestWindowSize(stk_ser);
 		break;
 
-		case 'n':
+		case FARTTY_INTERRACT_DESKTOP_NOTIFICATION:
 			OnInterract_DisplayNotification(stk_ser);
 		break;
 
-		case 'f':
+		case FARTTY_INTERRACT_SET_FKEY_TITLES:
 			OnInterract_SetFKeyTitles(stk_ser);
 		break;
 

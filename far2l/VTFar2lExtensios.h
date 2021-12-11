@@ -8,6 +8,7 @@
 
 class VTFar2lExtensios
 {
+	uint64_t _xfeatures = 0;
 	int _clipboard_opens = 0;
 	int _ctrl_alt_c_counter = 0;
 
@@ -18,16 +19,19 @@ class VTFar2lExtensios
 	IVTShell *_vt_shell;
 
 	std::set<std::string> _autheds;
+	std::vector<unsigned char> _clipboard_chunks;
 
 	char ClipboardAuthorize(const std::string &client_id);
 
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);
 
+	void OnInterract_RequestFeatures(StackSerializer &stk_ser);
 	void OnInterract_ClipboardOpen(StackSerializer &stk_ser);
 	void OnInterract_ClipboardClose(StackSerializer &stk_ser);
 	void OnInterract_ClipboardEmpty(StackSerializer &stk_ser);
 	void OnInterract_ClipboardIsFormatAvailable(StackSerializer &stk_ser);
+	void OnInterract_ClipboardSetDataChunk(StackSerializer &stk_ser);
 	void OnInterract_ClipboardSetData(StackSerializer &stk_ser);
 	void OnInterract_ClipboardGetData(StackSerializer &stk_ser);
 	void OnInterract_ClipboardGetDataID(StackSerializer &stk_ser);

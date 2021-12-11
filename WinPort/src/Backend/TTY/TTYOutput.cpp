@@ -4,6 +4,7 @@
 #include <string>
 #include <os_call.hpp>
 #include "TTYOutput.h"
+#include "FarTTY.h"
 #include "WideMB.h"
 
 #define ESC "\x1b"
@@ -39,6 +40,14 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
 	ChangeKeypad(true);
 	ChangeMouse(true);
+
+	if (far2l_tty) {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD((uint64_t)(FARTTY_FEAT_COMPACT_INPUT));
+		stk_ser.PushPOD(FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES);
+		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
+		SendFar2lInterract(stk_ser);
+	}
 	Flush();
 }
 
@@ -48,7 +57,7 @@ TTYOutput::~TTYOutput()
 		ChangeCursor(true, 13);
 		ChangeMouse(false);
 		ChangeKeypad(false);
-		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
+		Format(ESC "[0 q" ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
 		Flush();
 
 	} catch (std::exception &) {
@@ -181,6 +190,23 @@ void TTYOutput::Flush()
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+
+void TTYOutput::ChangeCursorHeight(unsigned int height)
+{
+	if (_far2l_tty) {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(UCHAR(height));
+		stk_ser.PushPOD(FARTTY_INTERRACT_SET_CURSOR_HEIGHT);
+		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
+		SendFar2lInterract(stk_ser);
+
+	} else if (height < 30) {
+		Format(ESC "[3 q"); // Blink Underline
+
+	} else {
+		Format(ESC "[0 q"); // Blink Block (Default)
+	}
+}
 
 void TTYOutput::ChangeCursor(bool visible, bool force)
 {

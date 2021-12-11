@@ -3,6 +3,38 @@
 #include <base64.h>
 #include <UtfConvert.hpp>
 #include "TTYFar2lClipboardBackend.h"
+#include "WinPort.h"
+#include "FarTTY.h"
+
+#define CHUNK_SIZE 0x4000  // must be aligned by 0x100 and be less than 0x1000000
+
+
+static void CheckForClipboardGetDataTranscode(UINT format, void *&data, uint32_t &len)
+{
+#if (__WCHAR_MAX__ <= 0xffff)
+	if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
+		void *new_data = UtfConverter<uint32_t, uint16_t>
+			((const uint32_t*)data, len / sizeof(uint32_t)).MallocedCopy(len);
+		if (new_data != nullptr) {
+			free(data);
+			data = new_data;
+		}
+	}
+#endif
+}
+
+static void *ClipboardMallocDataFromVector(UINT format, const std::vector<unsigned char> &v)
+{
+	uint32_t len = (uint32_t)v.size();
+	void *data = malloc(len);
+	if (data) {
+		memcpy(data, v.data(), len);
+		CheckForClipboardGetDataTranscode(format, data, len);
+	}
+	return data;
+}
+
+/////////////
 
 TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interractor) :
 	_interractor(interractor)
@@ -47,44 +79,40 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 
 TTYFar2lClipboardBackend::~TTYFar2lClipboardBackend()
 {
+	_set_data_thread.reset();
 }
 
 void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 {
 	try {
-		stk_ser.PushPOD('c');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIPBOARD);
 		_interractor->Far2lInterract(stk_ser, wait);
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::Far2lInterract: %s\n", e.what());
 	}
 }
 
+/////////////////////
+
 uint64_t TTYFar2lClipboardBackend::GetDataID(UINT format)
 {
-	if (_fallback_backend || !_data_id_supported) {
+	if (_fallback_backend || (_features&FARTTY_FEATCLIP_DATA_ID) == 0) {
 		return 0;
 	}
 
 	uint64_t out = 0;
-	try {
-		StackSerializer stk_ser;
-		stk_ser.PushPOD(format);
-		stk_ser.PushPOD('i');
-		Far2lInterract(stk_ser, true);
-		stk_ser.PopPOD(out);
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::GetDataID: %s\n", e.what());
-		_data_id_supported = false;
-		out = 0;
-	}
+	StackSerializer stk_ser;
+	stk_ser.PushPOD(format);
+	stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_GETDATAID);
+	Far2lInterract(stk_ser, true);
+	stk_ser.PopPOD(out);
 
 	return out;
 }
 
 void *TTYFar2lClipboardBackend::GetCachedData(UINT format)
 {
-	std::lock_guard<std::mutex> lock(_cache);
+	std::lock_guard<std::mutex> lock(_mtx);
 
 	auto cache_it = _cache.find(format);
 	if (cache_it == _cache.end()) {
@@ -93,27 +121,18 @@ void *TTYFar2lClipboardBackend::GetCachedData(UINT format)
 
 	const uint64_t id = GetDataID(format);
 	if (id && id == cache_it->second.id) {
-#if (__WCHAR_MAX__ <= 0xffff)
-		if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
-			uint32_t len = cache_it->second.id.len;
-			return UtfConverter<uint32_t, uint16_t>
-				((const uint32_t*)cache_it->second.data.data(), len / sizeof(uint32_t)).MallocedCopy(len);
-		}
-#endif
-		unsigned char *data = (unsigned char *)malloc(cache_it->second.data.size());
-		if (data) {
-			memcpy(data, cache_it->second.data.data(), cache_it->second.data.size());
-			return data;
-		}
+		return ClipboardMallocDataFromVector(format, cache_it->second.data);
 	}
 
 	_cache.erase(cache_it);
 	return nullptr;
 }
 
+/////////////////////
+
 void TTYFar2lClipboardBackend::SetCachedData(UINT format, const void *data, uint32_t len, uint64_t id)
 {
-	std::lock_guard<std::mutex> lock(_cache);
+	std::lock_guard<std::mutex> lock(_mtx);
 	try {
 		CachedData &cd = _cache[format];
 		cd.id = id;
@@ -134,16 +153,40 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 		return _fallback_backend->OnClipboardOpen();
 	}
 
+	auto no_fallback_open_counter = ++_no_fallback_open_counter;
+	if (no_fallback_open_counter > 1) {
+		if (no_fallback_open_counter > 2) {
+			fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: no_fallback_open_counter too large (%d)\n", no_fallback_open_counter);
+		}
+		return true;
+	}
+	if (no_fallback_open_counter <= 0) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: no_fallback_open_counter too small (%d)\n", no_fallback_open_counter);
+		_no_fallback_open_counter = 1;
+	}
+
+	_features = 0;
+
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushStr(_client_id);
-		stk_ser.PushPOD('o');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_OPEN);
 		Far2lInterract(stk_ser, true);
 		switch (stk_ser.PopChar()) {
-			case 1:
+			case 1: {
+				if (!stk_ser.IsEmpty()) {
+					try {
+						stk_ser.PopPOD(_features);
+					} catch (std::exception &e) {
+						fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen FEATURES: %s\n", e.what());
+					}
+				}
+				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: OK [0x%llx]\n", (unsigned long long)_features);
 				return true;
+			}
 
 			case (char)-1:
+				--_no_fallback_open_counter;
 				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: fallback\n");
 				if (!_fallback_backend)
 					_fallback_backend.reset(new FSClipboardBackend);
@@ -158,6 +201,7 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: %s\n", e.what());
 	}
 
+	--_no_fallback_open_counter;
 	return false;
 }
 
@@ -168,9 +212,13 @@ void TTYFar2lClipboardBackend::OnClipboardClose()
 		return;
 	}
 
+	if (--_no_fallback_open_counter > 0) {
+		return;
+	}
+
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD('c');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_CLOSE);
 		Far2lInterract(stk_ser, false);
 
 	} catch (std::exception &e) {
@@ -185,12 +233,17 @@ void TTYFar2lClipboardBackend::OnClipboardEmpty()
 		return;
 	}
 
+	if (_set_data_thread) {
+		std::lock_guard<std::mutex> lock(_mtx);
+		_set_data_thread.reset();
+	}
+
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD('e');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_EMPTY);
 		Far2lInterract(stk_ser, false);
 
-		std::lock_guard<std::mutex> lock(_cache);
+		std::lock_guard<std::mutex> lock(_mtx);
 		_cache.clear();
 
 	} catch (std::exception &e) {
@@ -204,21 +257,123 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		return _fallback_backend->OnClipboardIsFormatAvailable(format);
 	}
 
+	if (_set_data_thread) {
+		std::lock_guard<std::mutex> lock(_mtx);
+		if (_set_data_thread && _set_data_thread->Pending()) {
+			return (_set_data_thread->Format() == format);
+		}
+	}
+
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushPOD(format);
-		stk_ser.PushPOD('a');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_ISAVAIL);
 		Far2lInterract(stk_ser, true);
 		if (stk_ser.PopChar() == 1)
 			return true;
 
-		std::lock_guard<std::mutex> lock(_cache);
+		std::lock_guard<std::mutex> lock(_mtx);
 		_cache.erase(format);
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable: %s\n", e.what());
 	}
 	return false;
+}
+
+/** To improve UI responsivity setting clipboard data is done by separate thread,
+ this thread sends data as sequence of CHUNK_SIZE blocks with 8:1 throttling
+ to keep some part of bandwidth available for UI communication. Also this send can be
+ cancelled at any moment by subsequent clipboard set/empty request.
+ To allow getting clipboard data while transfer in progress OnClipboardGetData checks
+ if set-data thread still pending and uses its data as current clipboard content if so
+*/
+void *TTYFar2lClipboardBackend::SetDataThread::ThreadProc()
+{
+	try {
+		size_t ofs = 0;
+		StackSerializer stk_ser;
+		if ((_backend->_features & FARTTY_FEATCLIP_CHUNKED_SET) != 0 && _data.size() > CHUNK_SIZE) {
+			DWORD busy_period_start = WINPORT(GetTickCount)();
+			unsigned int i = 0;
+			do {
+				fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread: chunk @0x%lx of 0x%lx\n",
+					(unsigned long)ofs, (unsigned long)_data.size());
+				++i;
+				stk_ser.Push(&_data[ofs], CHUNK_SIZE);
+				stk_ser.PushPOD(uint16_t(CHUNK_SIZE >> 8));
+				stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_SETDATACHUNK);
+				// wait for reply only each 16th request to reduce round-trip delays
+				_backend->Far2lInterract(stk_ser, (i % 16) == 0);
+				ofs+= CHUNK_SIZE;
+				stk_ser.Clear();
+				if (_cancel) { // discard pending chunks by posting zero-length chunk
+					stk_ser.PushPOD(uint16_t(0));
+					stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_SETDATACHUNK);
+					_backend->Far2lInterract(stk_ser, false);
+					throw std::runtime_error("cancelled");
+				}
+				const DWORD busy_period = WINPORT(GetTickCount)() - busy_period_start;
+				if (busy_period >= 256) { // throttle bandwidth usage to avoid full stuck of UI
+					WINPORT(Sleep)(busy_period / 8);
+					busy_period_start = WINPORT(GetTickCount)();
+				}
+			} while (_data.size() - ofs > CHUNK_SIZE);
+			fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread: final @0x%lx of 0x%lx\n",
+				(unsigned long)ofs, (unsigned long)_data.size());
+
+		} else {
+			fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread: 0x%lx\n", (unsigned long)_data.size());
+		}
+
+		const uint32_t len = uint32_t(_data.size() - ofs);
+		stk_ser.Push(&_data[ofs], len);
+		stk_ser.PushPOD(len);
+		stk_ser.PushPOD(_format);
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_SETDATA);
+		_backend->Far2lInterract(stk_ser, true);
+		_backend->OnSetDataThreadComplete(this, stk_ser);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread: %s\n", e.what());
+	}
+
+	try {
+		_backend->OnClipboardClose();
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread - CLOSE: %s\n", e.what());
+	}
+
+	_pending = false;
+	return nullptr;
+}
+
+/////////
+
+TTYFar2lClipboardBackend::SetDataThread::SetDataThread(TTYFar2lClipboardBackend *backend, UINT format, const void *data, uint32_t len)
+	: _backend(backend), _format(format)
+{
+#if (__WCHAR_MAX__ <= 0xffff)
+	if (format == CF_UNICODETEXT && len != 0) { // UTF16 -> UTF32
+		UtfConverter<uint16_t, uint32_t>((const uint16_t*)data, len / sizeof(uint16_t)).CopyTo(_data);
+		return;
+	}
+#endif
+	_data.resize(len);
+	memcpy(_data.data(), data, len);
+	_backend->OnClipboardOpen();
+	_pending = true;
+	if (!StartThread()) {
+		fprintf(stderr, "TTYFar2lClipboardBackend::SetDataThread: can't start thread\n");
+		_pending = false;
+		_backend->OnClipboardClose();
+	}
+}
+
+TTYFar2lClipboardBackend::SetDataThread::~SetDataThread()
+{
+	_cancel = true;
+	WaitThread();
 }
 
 void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
@@ -228,56 +383,49 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return _fallback_backend->OnClipboardSetData(format, data);
 	}
 
-	uint32_t len = GetMallocSize(data);
+	const uint32_t len = GetMallocSize(data);
+	std::lock_guard<std::mutex> lock(_mtx);
+	_set_data_thread.reset();
+	_set_data_thread.reset(new SetDataThread(this, format, data, len));
+	return data;
+}
 
+void TTYFar2lClipboardBackend::OnSetDataThreadComplete(TTYFar2lClipboardBackend::SetDataThread *set_data_thread, StackSerializer &stk_ser)
+{
 	try {
-		StackSerializer stk_ser;
-
-#if (__WCHAR_MAX__ <= 0xffff)
-		UTF32 *new_data = nullptr;
-		if (format == CF_UNICODETEXT && len != 0) { // UTF16 -> UTF32
-			new_data = UtfConverter<uint16_t, uint32_t>
-				((const uint16_t*)data, len / sizeof(uint16_t)).MallocedCopy(len);
-		}
-		stk_ser.Push(new_data ? new_data : data, len);
-		stk_ser.PushPOD(len);
-		free(new_data);
-#else
-		stk_ser.Push(data, len);
-		stk_ser.PushPOD(len);
-#endif
-
-		stk_ser.PushPOD(format);
-		stk_ser.PushPOD('s');
-		Far2lInterract(stk_ser, true);
-		if (stk_ser.PopChar() == 1) {
-			if (_data_id_supported) {
-				try {
-					uint64_t id = 0;
-					stk_ser.PopPOD(id);
-					if (id) {
-						SetCachedData(format, data, len, id);
-					}
-
-				} catch (std::exception &e) {
-					fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData: ID failed - %s\n", e.what());
-					_data_id_supported = false;
-				}
+		const char reply = stk_ser.PopChar();
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnSetDataThreadComplete: reply=%d\n", (int)reply);
+		if (reply == 1 && (_features & FARTTY_FEATCLIP_DATA_ID) != 0) {
+			uint64_t id = 0;
+			stk_ser.PopPOD(id);
+			if (id) {
+				SetCachedData(set_data_thread->Format(),
+					set_data_thread->Data().data(), set_data_thread->Data().size(), id);
 			}
-			return data;
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardSetData: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::OnSetDataThreadComplete: %s\n", e.what());
 	}
-	return nullptr;
 }
+
+/////////
 
 void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 {
 	if (_fallback_backend) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): fallback\n", format);
 		return _fallback_backend->OnClipboardGetData(format);
+	}
+
+	if (_set_data_thread) {
+		std::lock_guard<std::mutex> lock(_mtx);
+		if (_set_data_thread && _set_data_thread->Pending()) {
+			if (_set_data_thread->Format() != format) {
+				return nullptr;
+			}
+			return ClipboardMallocDataFromVector(format, _set_data_thread->Data());
+		}
 	}
 
 	void *data = GetCachedData(format);
@@ -290,36 +438,21 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushPOD(format);
-		stk_ser.PushPOD('g');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_GETDATA);
 		Far2lInterract(stk_ser, true);
 		uint32_t len = stk_ser.PopU32();
 		if (len && len != (uint32_t)-1) {
 			data = malloc(len);
 			if (data) {
 				stk_ser.Pop(data, len);
-				if (_data_id_supported) {
-					try {
-						uint64_t id = 0;
-						stk_ser.PopPOD(id);
-						if (id) {
-							SetCachedData(format, data, len, id);
-						}
-
-					} catch (std::exception &e) {
-						fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData::ID: %s\n", e.what());
-						_data_id_supported = false;
+				if ((_features & FARTTY_FEATCLIP_DATA_ID) != 0) {
+					uint64_t id = 0;
+					stk_ser.PopPOD(id);
+					if (id) {
+						SetCachedData(format, data, len, id);
 					}
 				}
-#if (__WCHAR_MAX__ <= 0xffff)
-				if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
-					void *new_data = UtfConverter<uint32_t, uint16_t>
-						((const uint32_t*)data, len / sizeof(uint32_t)).MallocedCopy(len);
-					if (new_data != nullptr) {
-						free(data);
-						data = new_data;
-					}
-				}
-#endif
+				CheckForClipboardGetDataTranscode(format, data, len);
 				return data;
 			}
 		}
@@ -331,6 +464,8 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 	return nullptr;
 }
 
+/////////
+
 UINT TTYFar2lClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 {
 	if (_fallback_backend) {
@@ -340,7 +475,7 @@ UINT TTYFar2lClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszForm
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushStr(StrWide2MB(lpszFormat));
-		stk_ser.PushPOD('r');
+		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_REGISTER_FORMAT);
 		Far2lInterract(stk_ser, true);
 		return stk_ser.PopU32();
 

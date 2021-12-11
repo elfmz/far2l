@@ -1486,13 +1486,11 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 	delete state;
 }
 
-void VTAnsi::OnStart(const char *title)
+void VTAnsi::OnStart()
 {
 	TCHAR buf[MAX_PATH*2] = {0};
 	WINPORT(GetConsoleTitle)( buf, ARRAYSIZE(buf) - 1 );
 	_saved_title = buf;
-	g_title = title;
-	ApplyConsoleTitle();
 }
 
 void VTAnsi::OnStop()

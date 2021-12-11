@@ -1008,8 +1008,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		VT_ComposeMarker(_exit_marker);
 		_exit_marker+= ':';
 
-		const std::string &title = VT_ComposeInitialTitle(cd, cmd, force_sudo);
-		_vta.OnStart(title.c_str());
+		_vta.OnStart();
 
 		if (!ExecuteCommandInner(cd, cmd, force_sudo)) {
 			_exit_code = -1;

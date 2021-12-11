@@ -217,9 +217,9 @@ all arguments are defined by FARTTY_INPUT_* notification ID - see below (stack t
 
 /** Server sends this to inform about keydown or keyup event if compact input is enabled and possible. See KEY_EVENT_RECORD for details.
   Note that event doesn't specify wVirtualScanCode and wRepeatCount thus client must assume wVirtualScanCode = 0 and wRepeatCount = 1
-  uint8_t (UTF32 code represented as single-byte)
-  uint32_t (dwControlKeyState)
-  uint16_t (wVirtualKeyCode)
+  uint8_t (UTF32 code fit to single-byte)
+  uint8_t (dwControlKeyState fit to single-byte)
+  uint8_t (wVirtualKeyCode fit to single-byte)
 */
 #define FARTTY_INPUT_KEYDOWN_COMPACT_CHAR     'C'
 #define FARTTY_INPUT_KEYUP_COMPACT_CHAR       'c'

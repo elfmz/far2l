@@ -47,6 +47,7 @@ public:
 
 	void Flush();
 
+	void ChangeCursorHeight(unsigned int height);
 	void ChangeCursor(bool visible, bool force = false);
 	inline bool ShouldMoveCursor(unsigned int y, unsigned int x) const { return x != _cursor.x || y != _cursor.y; }
 	void MoveCursorStrict(unsigned int y, unsigned int x);

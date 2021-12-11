@@ -2,6 +2,7 @@
 #include <memory>
 #include <atomic>
 #include <mutex>
+#include <Threaded.h>
 #include <StackSerializer.h>
 #include "WinCompat.h"
 #include "Backend.h"
@@ -11,22 +12,50 @@
 
 class TTYFar2lClipboardBackend : public IClipboardBackend
 {
+	friend class SetDataThread;
+
+	class SetDataThread : Threaded
+	{
+		TTYFar2lClipboardBackend *_backend;
+		UINT _format;
+		std::vector<unsigned char> _data;
+		std::atomic<bool> _cancel{false}, _pending{false};
+
+		virtual void *ThreadProc();
+
+	public:
+		SetDataThread(TTYFar2lClipboardBackend *backend, UINT format, const void *data, uint32_t len);
+		virtual ~SetDataThread();
+
+		bool Cancelled() const { return _cancel; }
+		bool Pending() const { return _pending; }
+		UINT Format() const { return _format; }
+		const std::vector<unsigned char> &Data() const { return _data; }
+	};
+
 	struct CachedData
 	{
 		uint64_t id;
 		std::vector<unsigned char> data;
 	};
-	struct Cache : std::mutex, std::map<UINT, CachedData> { } _cache;
+	struct Cache : std::map<UINT, CachedData> { } _cache;
 
 	std::unique_ptr<FSClipboardBackend> _fallback_backend;
 	IFar2lInterractor *_interractor;
+	std::atomic<int> _no_fallback_open_counter{0};
+	std::unique_ptr<SetDataThread> _set_data_thread;
+
+	std::mutex _mtx; // guards _cache, _set_data_thread
+
+
 	std::string _client_id;
-	bool _data_id_supported = true;
+	uint64_t _features = 0;
 
 	void Far2lInterract(StackSerializer &stk_ser, bool wait);
 	uint64_t GetDataID(UINT format);
 	void *GetCachedData(UINT format);
 	void SetCachedData(UINT format, const void *data, uint32_t len, uint64_t id);
+	void OnSetDataThreadComplete(SetDataThread *set_data_thread, StackSerializer &stk_ser);
 
 public:
 	TTYFar2lClipboardBackend(IFar2lInterractor *interractor);

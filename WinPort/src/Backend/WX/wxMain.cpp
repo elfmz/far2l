@@ -312,6 +312,7 @@ private:
 	KeyTracker _key_tracker;
 	
 	ConsolePaintContext _paint_context;
+	COORD _last_mouse_click{};
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
@@ -1233,6 +1234,12 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
 		mode = 0;
 
+	if ( (event.LeftDown() && !_last_mouse_event.LeftDown())
+	  || (event.MiddleDown() && !_last_mouse_event.MiddleDown())
+	  || (event.RightDown() && !_last_mouse_event.RightDown()) ) {
+		_last_mouse_click = pos_char;
+	}
+
 	_last_mouse_event = event;
 
 	if ((mode&ENABLE_QUICK_EDIT_MODE) || _adhoc_quickedit)
@@ -1318,7 +1325,8 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 		if (_mouse_qedit_start_ticks != 0) {
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 		}
-		_mouse_qedit_start = _mouse_qedit_last = pos_char;
+		_mouse_qedit_start = _last_mouse_click;
+		_mouse_qedit_last = pos_char;
 		_mouse_qedit_start_ticks = WINPORT(GetTickCount)();
 		if (!_mouse_qedit_start_ticks) _mouse_qedit_start_ticks = 1;
 		_mouse_qedit_moved = false;

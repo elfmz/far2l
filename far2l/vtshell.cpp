@@ -33,7 +33,6 @@
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
     WCHAR uc = 0);
-void VT_OnFar2lInterract(StackSerializer &stk_ser);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
@@ -732,7 +731,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 							id = stk_ser.PopU8();
 							_far2l_exts->OnInterract(stk_ser);
 
-						} catch (std::exception &) {
+						} catch (std::exception &e) {
+							fprintf(stderr, "_far2l_exts->OnInterract: %s\n", e.what());
 							stk_ser.Clear();
 						}
 
@@ -1008,8 +1008,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		VT_ComposeMarker(_exit_marker);
 		_exit_marker+= ':';
 
-		const std::string &title = VT_ComposeInitialTitle(cd, cmd, force_sudo);
-		_vta.OnStart(title.c_str());
+		_vta.OnStart();
 
 		if (!ExecuteCommandInner(cd, cmd, force_sudo)) {
 			_exit_code = -1;

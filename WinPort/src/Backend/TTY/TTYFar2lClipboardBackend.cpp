@@ -8,32 +8,6 @@
 
 #define CHUNK_SIZE 0x4000  // must be aligned by 0x100 and be less than 0x1000000
 
-
-static void CheckForClipboardGetDataTranscode(UINT format, void *&data, uint32_t &len)
-{
-#if (__WCHAR_MAX__ <= 0xffff)
-	if (format == CF_UNICODETEXT) { // UTF32 -> UTF16
-		void *new_data = UtfConverter<uint32_t, uint16_t>
-			((const uint32_t*)data, len / sizeof(uint32_t)).MallocedCopy(len);
-		if (new_data != nullptr) {
-			free(data);
-			data = new_data;
-		}
-	}
-#endif
-}
-
-static void *ClipboardMallocDataFromVector(UINT format, const std::vector<unsigned char> &v)
-{
-	uint32_t len = (uint32_t)v.size();
-	void *data = malloc(len);
-	if (data) {
-		memcpy(data, v.data(), len);
-		CheckForClipboardGetDataTranscode(format, data, len);
-	}
-	return data;
-}
-
 /////////////
 
 TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interractor) :
@@ -110,7 +84,7 @@ uint64_t TTYFar2lClipboardBackend::GetDataID(UINT format)
 	return out;
 }
 
-void *TTYFar2lClipboardBackend::GetCachedData(UINT format)
+void *TTYFar2lClipboardBackend::GetCachedData(UINT format, uint32_t &len)
 {
 	std::lock_guard<std::mutex> lock(_mtx);
 
@@ -121,7 +95,7 @@ void *TTYFar2lClipboardBackend::GetCachedData(UINT format)
 
 	const uint64_t id = GetDataID(format);
 	if (id && id == cache_it->second.id) {
-		return ClipboardMallocDataFromVector(format, cache_it->second.data);
+		return MallocedVectorCopy(cache_it->second.data, len);
 	}
 
 	_cache.erase(cache_it);
@@ -257,6 +231,10 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		return _fallback_backend->OnClipboardIsFormatAvailable(format);
 	}
 
+	if (format == CF_UNICODETEXT) { // using UTF8 instead of UTF32 to reduce traffic
+		format = CF_TEXT;
+	}
+
 	if (_set_data_thread) {
 		std::lock_guard<std::mutex> lock(_mtx);
 		if (_set_data_thread && _set_data_thread->Pending()) {
@@ -353,14 +331,16 @@ void *TTYFar2lClipboardBackend::SetDataThread::ThreadProc()
 TTYFar2lClipboardBackend::SetDataThread::SetDataThread(TTYFar2lClipboardBackend *backend, UINT format, const void *data, uint32_t len)
 	: _backend(backend), _format(format)
 {
-#if (__WCHAR_MAX__ <= 0xffff)
-	if (format == CF_UNICODETEXT && len != 0) { // UTF16 -> UTF32
-		UtfConverter<uint16_t, uint32_t>((const uint16_t*)data, len / sizeof(uint16_t)).CopyTo(_data);
-		return;
+	if (_format == CF_UNICODETEXT) { // CF_UNICODETEXT -> CF_TEXT to reduce traffic
+		const size_t wchar_cnt = wcsnlen((const wchar_t *)data, len / sizeof(wchar_t));
+		UtfConverter<wchar_t, unsigned char>((const wchar_t *)data, wchar_cnt).CopyToVector(_data);
+		_format = CF_TEXT;
+
+	} else {
+		_data.resize(len);
+		memcpy(_data.data(), data, len);
 	}
-#endif
-	_data.resize(len);
-	memcpy(_data.data(), data, len);
+
 	_backend->OnClipboardOpen();
 	_pending = true;
 	if (!StartThread()) {
@@ -418,32 +398,51 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 		return _fallback_backend->OnClipboardGetData(format);
 	}
 
+	uint32_t len = 0;
+	if (format == CF_UNICODETEXT) { // use UTF8 instead of UTF32 to reduce traffic
+		void *data = InnerClipboardGetData(CF_TEXT, len);
+		if (data) {
+			const size_t chars_cnt = strnlen((const char *)data, len);
+			UtfConverter<char, wchar_t> cvt((const char *)data, chars_cnt);
+			free(data);
+			return cvt.MallocedCopy();
+		}
+	}
+
+	return InnerClipboardGetData(format, len);
+}
+
+void *TTYFar2lClipboardBackend::InnerClipboardGetData(UINT format, uint32_t &len)
+{
 	if (_set_data_thread) {
 		std::lock_guard<std::mutex> lock(_mtx);
 		if (_set_data_thread && _set_data_thread->Pending()) {
 			if (_set_data_thread->Format() != format) {
-				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): pending miss\n", format);
+				fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): pending miss\n", format);
 				return nullptr;
 			}
-			fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): pending hit\n", format);
-			return ClipboardMallocDataFromVector(format, _set_data_thread->Data());
+			fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): pending hit\n", format);
+			return MallocedVectorCopy(_set_data_thread->Data(), len);
 		}
 	}
 
-	void *data = GetCachedData(format);
+	void *data = GetCachedData(format, len);
 	if (data) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): cache hit\n", format);
+		fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): cache hit\n", format);
 		return data;
 	}
-	fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): cache miss\n", format);
+	fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): cache miss\n", format);
 
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushPOD(format);
 		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_GETDATA);
 		Far2lInterract(stk_ser, true);
-		uint32_t len = stk_ser.PopU32();
-		if (len && len != (uint32_t)-1) {
+		len = stk_ser.PopU32();
+		if (len == (uint32_t)-1) {
+			len = 0;
+
+		} else if (len) {
 			data = malloc(len);
 			if (data) {
 				stk_ser.Pop(data, len);
@@ -454,15 +453,15 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 						SetCachedData(format, data, len, id);
 					}
 				}
-				CheckForClipboardGetDataTranscode(format, data, len);
 				return data;
 			}
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData: %s\n", e.what());
 		free(data);
 	}
+
 	return nullptr;
 }
 

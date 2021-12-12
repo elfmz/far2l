@@ -81,6 +81,56 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 #define FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES     'x'
 
 ///////////////////////
+/** Clipboard operations.
+Synopsis:
+
+ Usecase - put text into clipboard in single transaction:
+  CLIP_OPEN(PASSCODE) -> (STATUS)
+  CLIP_SETDATA(CF_TEXT, UTF8 encoded text) -> (STATUS, ID of retrieved data)
+  CLIP_CLOSE -> STATUS
+
+ Put text into clipboard in multiple transaction:
+  CLIP_OPEN(PASSCODE) -> (STATUS)
+  CLIP_SETDATACHUNK(first part of UTF8 encoded text)
+  CLIP_SETDATACHUNK(second part of UTF8 encoded text)
+  ...
+  CLIP_SETDATA(CF_TEXT, last part of UTF8 encoded text) -> (STATUS, ID of stored data)
+  CLIP_CLOSE -> (STATUS)
+
+ Check if there text on clipboard:
+  CLIP_ISAVAIL(CF_TEXT) -> (TRUE or FALSE)
+
+ Get ID of text on clipboard:
+  CLIP_OPEN(PASSCODE) -> (STATUS)
+  CLIP_GETDATAID(CF_TEXT) -> (STATUS, ID of remote data)
+  CLIP_CLOSE -> (STATUS)
+
+ Get text from clipboard:
+  CLIP_OPEN(PASSCODE) -> (STATUS)
+  CLIP_GETDATA(CF_TEXT) -> (STATUS, UTF8 encoded text, ID of retrieved data)
+  CLIP_CLOSE -> (STATUS)
+
+
+Glossary:
+
+ Passcode - random string that client sends to server to identify itself. Server on its side may
+  ask user for allowing clipboard access and may use this passcode to remember user's choice.
+
+ Clipboard format ID - value that describes kind of data to be transferred. ID can be predefined
+  or dynamically registered. In first case it describes some well-known data format, in another -
+  data is treated by protocol as opaque BLOB.
+  Predefined ID values used by far2l based on Win32 IDs, but with some modifications, currently
+  only following predefined values are used by far2l in reality:
+   1  - CF_TEXT - text encoded as UTF8
+   13 - CF_UNICODETEXT - text encoded as UTF32 (depcrecated in recent releases in favor of CF_TEXT)
+   Also far2l dynamically registers some own data formats to copy-paste vertical text blocks etc.
+    At same moment of time clipboard may contain several different formats, thus allowing data to be
+    represented in different forms. Also CF_TEXT/CF_UNICODETEXT transparently transcoded if needed.
+
+ Clipboard data ID - 64-bit value that uniquely corresponds to data, currently its implemented as
+  crc64 of data. It can be used by client to check if clipboard contains same data as client has in
+  its own cache and thus allows to avoid duplicated network transfers.
+*/
 
 /** Authorizes clipboard accessor and opens clipboard for any subsequent operation.
  In:
@@ -107,7 +157,7 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 
 /** Checks if given format available for get'ing from clipboard.
  In: uint32_t - format ID
- Out: char (1 - there is data of such format, 0 - there is no data of such format)
+ Out: int8_t (1 - there is data of such format, 0 - there is no data of such format)
 */
 #define FARTTY_INTERRACT_CLIP_ISAVAIL               'a'
 

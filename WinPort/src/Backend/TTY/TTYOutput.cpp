@@ -54,7 +54,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 TTYOutput::~TTYOutput()
 {
 	try {
-		ChangeCursor(true, 13);
+		ChangeCursor(true, true);
 		ChangeMouse(false);
 		ChangeKeypad(false);
 		Format(ESC "[0 q" ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");

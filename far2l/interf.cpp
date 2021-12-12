@@ -56,7 +56,7 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType);
 static int CurX,CurY;
 static int CurColor;
 
-CONSOLE_CURSOR_INFO InitialCursorInfo;
+static CONSOLE_CURSOR_INFO InitialCursorInfo;
 
 static SMALL_RECT windowholder_rect;
 
@@ -79,6 +79,7 @@ const size_t StackBufferSize=0x2000;
 void InitConsole(int FirstInit)
 {
 	InitRecodeOutTable();
+	Console.GetCursorInfo(InitialCursorInfo);
 	Console.SetControlHandler(CtrlHandler,TRUE);
 	Console.GetMode(Console.GetInputHandle(),InitialConsoleMode);
 	Console.GetTitle(strInitTitle);

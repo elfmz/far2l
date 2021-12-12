@@ -41,7 +41,7 @@ ConsoleOutput::ConsoleOutput() :
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
 	_scroll_callback.pfn = NULL;
-	_cursor.height = 13;
+	_cursor.height = 15;
 	_cursor.visible = true;
 	_scroll_region.top = 0;
 	_scroll_region.bottom = MAXSHORT;

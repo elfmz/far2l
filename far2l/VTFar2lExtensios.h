@@ -26,7 +26,6 @@ class VTFar2lExtensios
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);
 
-	void OnInterract_RequestFeatures(StackSerializer &stk_ser);
 	void OnInterract_ClipboardOpen(StackSerializer &stk_ser);
 	void OnInterract_ClipboardClose(StackSerializer &stk_ser);
 	void OnInterract_ClipboardEmpty(StackSerializer &stk_ser);

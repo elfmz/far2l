@@ -151,7 +151,7 @@ template <typename CHAR_SRC, typename CHAR_DST, bool ENSURE_NULL_TERMINATOR = tr
 	UtfConverter(const CHAR_SRC *src, size_t src_len)
 	{
 		StdPushBack<std::vector<CHAR_DST>> pb(*this);
-		UtfConvert(&src, src_len, pb, false);
+		UtfConvert(src, src_len, pb, false);
 
 		if (ENSURE_NULL_TERMINATOR) {
 			if (std::vector<CHAR_DST>::empty() || std::vector<CHAR_DST>::back() != 0) {

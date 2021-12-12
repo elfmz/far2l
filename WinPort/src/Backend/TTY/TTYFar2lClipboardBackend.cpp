@@ -422,8 +422,10 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 		std::lock_guard<std::mutex> lock(_mtx);
 		if (_set_data_thread && _set_data_thread->Pending()) {
 			if (_set_data_thread->Format() != format) {
+				fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): pending miss\n", format);
 				return nullptr;
 			}
+			fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardGetData(0x%x): pending hit\n", format);
 			return ClipboardMallocDataFromVector(format, _set_data_thread->Data());
 		}
 	}

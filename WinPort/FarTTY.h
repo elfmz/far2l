@@ -57,19 +57,19 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 #define FARTTY_INTERRACT_GET_WINDOW_MAXSIZE        'w'
 
-/** Sets titles of F-keys board if host supports this (invented for Mac touchbar)
- In:
-  12 elements each is either [uint8_t (state) = 0] either [uint8_t (state) != 0; string (F-key title)]
- Out:
-  bool (true on success; false if operation impossible)
-*/
-#define FARTTY_INTERRACT_DESKTOP_NOTIFICATION      'n'
-
 /** Displays desktop notification with given title and text
  In:
   string (title)
   string (text)
  Out: N/A
+*/
+#define FARTTY_INTERRACT_DESKTOP_NOTIFICATION      'n'
+
+/** Sets titles of F-keys board if host supports this (invented for Mac touchbar)
+ In:
+  12 elements each is either [uint8_t (state) = 0] either [uint8_t (state) != 0; string (F-key title)]
+ Out:
+  bool (true on success; false if operation impossible)
 */
 #define FARTTY_INTERRACT_SET_FKEY_TITLES           'f'
 
@@ -84,7 +84,7 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 
 /** Authorizes clipboard accessor and opens clipboard for any subsequent operation.
  In:
-  string (32 <= length <=256 - random client ID used as passcode in following clipboard opens)
+  string (32 <= length <= 256 - random client ID used as passcode in subsequent clipboard opens)
  Out:
   int8_t (1 - success, 0 - failure, -1 - access denied)
   uint64_t OPTIONAL (combination of FARTTY_FEATCLIP_* supported by server)
@@ -111,11 +111,11 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 #define FARTTY_INTERRACT_CLIP_ISAVAIL               'a'
 
-/** Allows chunked clipboard data setting by sendings multiple chunks berfore final SETDATA.
+/** Allows chunked clipboard data setting by sendings multiple chunks before final SETDATA.
  Special case: chunk with zero size treated as dismissing all previously queued chunks.
  OPTIONAL: can be used only if server reported FARTTY_FEATCLIP_CHUNKED_SET as supported feature
  In:
-  uint16_t (chunk size, shifted right by 8 bits)
+  uint16_t (chunk's data size, shifted right by 8 bits)
   data of specified size
  Out: N/A
 */
@@ -168,12 +168,12 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 #define FARTTY_FEAT_COMPACT_INPUT             0x00000001
 
-/** Server reports this on respoce of FARTTY_INTERRACT_CLIP_OPEN if it supports clipboard data ID.
- Clipboard data ID allows client-side caching of clipboard data and avoid known data transfers.
+/** Server reports this on responce of FARTTY_INTERRACT_CLIP_OPEN if it supports clipboard data ID.
+ Clipboard data ID allows client-side caching of clipboard data to avoid known data transfers.
 */
 #define FARTTY_FEATCLIP_DATA_ID               0x00000001
 
-/** Server reports this on respoce of FARTTY_INTERRACT_CLIP_OPEN if it supports chunked clipboard data set.
+/** Server reports this on responce of FARTTY_INTERRACT_CLIP_OPEN if it supports chunked clipboard data set.
  This feature allows client to implement background and cancellable clipboard copy.
 */
 #define FARTTY_FEATCLIP_CHUNKED_SET           0x00000002

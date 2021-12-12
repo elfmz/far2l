@@ -145,6 +145,27 @@ template <typename CHAR_SRC, typename CHAR_DST>
 	return dpb.size();
 }
 
+template <class ELEMENT_T, class LEN_T>
+	void *MallocedVectorCopy(const std::vector<ELEMENT_T> &src, LEN_T &len)
+{
+	len = LEN_T(src.size() * sizeof(ELEMENT_T));
+	if (size_t(len) != (src.size() * sizeof(ELEMENT_T)))
+		return nullptr;
+
+	void *out = len ? malloc(len) : nullptr;
+	if (out) {
+		memcpy(out, src.data(), len);
+	}
+	return out;
+}
+
+template <class ELEMENT_T>
+	void *MallocedVectorCopy(const std::vector<ELEMENT_T> &src)
+{
+	size_t len;
+	return MallocedVectorCopy<ELEMENT_T, size_t>(src, len);
+}
+
 template <typename CHAR_SRC, typename CHAR_DST, bool ENSURE_NULL_TERMINATOR = true>
 	struct UtfConverter : std::vector<CHAR_DST>
 {
@@ -162,24 +183,20 @@ template <typename CHAR_SRC, typename CHAR_DST, bool ENSURE_NULL_TERMINATOR = tr
 
 	void *MallocedCopy(uint32_t &len) const
 	{
-		const uint32_t sz = uint32_t(std::vector<CHAR_DST>::size() * sizeof(CHAR_DST));
-		if (sz < std::vector<CHAR_DST>::size()) {
-			return nullptr;
-		}
-		void *out = malloc(sz);
-		if (out) {
-			memcpy(out, std::vector<CHAR_DST>::data(), sz);
-			len = sz;
-		}
-		return out;
+		return MallocedVectorCopy(*this, len);
 	}
 
-	template <class V>
-		void CopyTo(V &out) const
+	void *MallocedCopy() const
 	{
-		static_assert(sizeof(CHAR_DST) % sizeof(V::value_type) == 0, "Misaligned character types");
+		return MallocedVectorCopy(*this);
+	}
+
+	template <class OUT_ELEMENT_T>
+		void CopyToVector(std::vector<OUT_ELEMENT_T> &out) const
+	{
+		static_assert(sizeof(CHAR_DST) % sizeof(OUT_ELEMENT_T) == 0, "Misaligned character types");
 		const size_t sz = std::vector<CHAR_DST>::size() * sizeof(CHAR_DST);
-		out.resize(sz / sizeof(V::value_type));
+		out.resize(sz / sizeof(OUT_ELEMENT_T));
 		memcpy(out.data(), std::vector<CHAR_DST>::data(), sz);
 	}
 };

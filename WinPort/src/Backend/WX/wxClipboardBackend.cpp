@@ -166,7 +166,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #endif
 
 	} else if (format==CF_TEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const char *)data)));
+		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString::FromUTF8((const char *)data)));
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
 #endif
@@ -202,7 +202,7 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 
 		p = (format==CF_UNICODETEXT) ? 
 			(void *)_wcsdup(data.GetText().wchar_str()) : 
-			(void *)_strdup(data.GetText().char_str());
+			(void *)_strdup(data.GetText().utf8_str());
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {

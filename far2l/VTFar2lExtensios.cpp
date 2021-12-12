@@ -189,9 +189,18 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 	}
 
 	StackSerializer stk_ser;
+	if ((_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
+	  && KeyEvent.wRepeatCount <= 1 && KeyEvent.wVirtualScanCode == 0
+	  && ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
+	  && KeyEvent.dwControlKeyState < 0x10000
+	  && KeyEvent.wVirtualKeyCode < 0x100) {
+		stk_ser.PushPOD((uint8_t)KeyEvent.wVirtualKeyCode);
+		stk_ser.PushPOD((uint16_t)KeyEvent.dwControlKeyState);
+		stk_ser.PushPOD((uint16_t)(uint32_t)KeyEvent.uChar.UnicodeChar);
+		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT: FARTTY_INPUT_KEYUP_COMPACT));
+		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact\n");
 
-	if ((_xfeatures & FARTTY_FEAT_COMPACT_INPUT) == 0
-	  || KeyEvent.wRepeatCount > 1 || KeyEvent.wVirtualScanCode != 0) {
+	} else {
 		stk_ser.PushPOD(KeyEvent.wRepeatCount);
 		stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
 		stk_ser.PushPOD(KeyEvent.wVirtualScanCode);
@@ -199,23 +208,8 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 		stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
 		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN : FARTTY_INPUT_KEYUP));
 		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: normal\n");
-
-	} else if ( ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
-			&& KeyEvent.dwControlKeyState < 0x10000
-			&& KeyEvent.wVirtualKeyCode < 0x100) {
-		stk_ser.PushPOD((uint8_t)KeyEvent.wVirtualKeyCode);
-		stk_ser.PushPOD((uint16_t)KeyEvent.dwControlKeyState);
-		stk_ser.PushPOD((uint16_t)(uint32_t)KeyEvent.uChar.UnicodeChar);
-		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT_CHAR : FARTTY_INPUT_KEYUP_COMPACT_CHAR));
-		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact char\n");
-
-	} else {
-		stk_ser.PushPOD(KeyEvent.wVirtualKeyCode);
-		stk_ser.PushPOD(KeyEvent.dwControlKeyState);
-		stk_ser.PushPOD((uint32_t)KeyEvent.uChar.UnicodeChar);
-		stk_ser.PushPOD((KeyEvent.bKeyDown ? FARTTY_INPUT_KEYDOWN_COMPACT_WIDE : FARTTY_INPUT_KEYUP_COMPACT_WIDE));
-		//fprintf(stderr, "VTFar2lExtensios::OnInputKey: compact wide\n");
 	}
+
 	WriteInputEvent(stk_ser);
 
 	return true;

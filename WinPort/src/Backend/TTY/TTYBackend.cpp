@@ -638,27 +638,7 @@ static void OnFar2lKey(bool down, StackSerializer &stk_ser)
 	}
 }
 
-static void OnFar2lKeyCompactW(bool down, StackSerializer &stk_ser)
-{
-	try {
-		INPUT_RECORD ir {};
-		ir.EventType = KEY_EVENT;
-		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
-		ir.Event.KeyEvent.wRepeatCount = 1;
-
-		uint32_t key;
-		stk_ser.PopPOD(key);
-		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)(uint32_t)key;
-		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
-		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
-		g_winport_con_in->Enqueue(&ir, 1);
-
-	} catch (std::exception &e) {
-		fprintf(stderr, "OnFar2lKeyCompactW: %s\n", e.what());
-	}
-}
-
-static void OnFar2lKeyCompactC(bool down, StackSerializer &stk_ser)
+static void OnFar2lKeyCompact(bool down, StackSerializer &stk_ser)
 {
 	try {
 		INPUT_RECORD ir {};
@@ -671,7 +651,7 @@ static void OnFar2lKeyCompactC(bool down, StackSerializer &stk_ser)
 		g_winport_con_in->Enqueue(&ir, 1);
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "OnFar2lKeyCompactC: %s\n", e.what());
+		fprintf(stderr, "OnFar2lKeyCompact: %s\n", e.what());
 	}
 }
 
@@ -723,12 +703,8 @@ void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 			OnFar2lKey(code == FARTTY_INPUT_KEYDOWN, stk_ser);
 			break;
 
-		case FARTTY_INPUT_KEYDOWN_COMPACT_WIDE: case FARTTY_INPUT_KEYUP_COMPACT_WIDE:
-			OnFar2lKeyCompactW(code == FARTTY_INPUT_KEYDOWN_COMPACT_WIDE, stk_ser);
-			break;
-
-		case FARTTY_INPUT_KEYDOWN_COMPACT_CHAR: case FARTTY_INPUT_KEYUP_COMPACT_CHAR:
-			OnFar2lKeyCompactC(code == FARTTY_INPUT_KEYDOWN_COMPACT_CHAR, stk_ser);
+		case FARTTY_INPUT_KEYDOWN_COMPACT: case FARTTY_INPUT_KEYUP_COMPACT:
+			OnFar2lKeyCompact(code == FARTTY_INPUT_KEYDOWN_COMPACT, stk_ser);
 			break;
 
 		default:

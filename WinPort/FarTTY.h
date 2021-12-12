@@ -13,6 +13,7 @@ Each request's stack has on top 8-bit ID followed by any of FARTTY_INTERRACT_* a
 If request ID is zero then server doesnt reply on such request, if ID is not zero then upon its
 completion server sends back to client reply that has similar encoding and same ID on top of its
 arguments stack, however other reply's arguments represent result of requested operation.
+Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 
 /** Initiates ad-hoc copy-pasting starting at last mouse click position
@@ -85,7 +86,7 @@ arguments stack, however other reply's arguments represent result of requested o
  In:
   string (32 <= length <=256 - random client ID used as passcode in following clipboard opens)
  Out:
-  char (1 - success, 0 - failure, -1 - access denied)
+  int8_t (1 - success, 0 - failure, -1 - access denied)
   uint64_t OPTIONAL (combination of FARTTY_FEATCLIP_* supported by server)
 */
 #define FARTTY_INTERRACT_CLIP_OPEN                  'o'
@@ -93,14 +94,14 @@ arguments stack, however other reply's arguments represent result of requested o
 /** Closes clipboard, must be used to properly finalize required clipboard action.
  In: N/A
  Out:
-  char (1 - success, 0 - failure, -1 - clipboard wasn't open)
+  int8_t (1 - success, 0 - failure, -1 - clipboard wasn't open)
 */
 #define FARTTY_INTERRACT_CLIP_CLOSE                 'c'
 
 /** Empties clipboard.
  In: N/A
  Out:
-  char (1 - success, 0 - failure, -1 - clipboard wasn't open)
+  int8_t (1 - success, 0 - failure, -1 - clipboard wasn't open)
 */
 #define FARTTY_INTERRACT_CLIP_EMPTY                 'e'
 
@@ -123,10 +124,10 @@ arguments stack, however other reply's arguments represent result of requested o
 /** Puts into clipboard data of specified format. Prepends given data with pending chunks (if any).
  In:
   uint32_t (format ID)
-  uint32_t (size)
+  uint32_t (size of data)
   data of specified size
  Out:
-  char (1 - success, 0 - failure, -1 - clipboard wasn't open)
+  int8_t (1 - success, 0 - failure, -1 - clipboard wasn't open)
   uint64_t OPTIONAL (clipboard data ID, only if server reported FARTTY_FEATCLIP_DATA_ID)
 */
 #define FARTTY_INTERRACT_CLIP_SETDATA               's'
@@ -135,7 +136,7 @@ arguments stack, however other reply's arguments represent result of requested o
  In:
   uint32_t (format ID)
  Out:
-  char (1 - success, 0 - failure, -1 - clipboard wasn't open)
+  int8_t (1 - success, 0 - failure, -1 - clipboard wasn't open)
   uint32_t (size of data)
   data of specified size
   uint64_t OPTIONAL (clipboard data ID, only if server reported FARTTY_FEATCLIP_DATA_ID)

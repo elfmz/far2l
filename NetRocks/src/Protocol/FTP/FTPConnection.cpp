@@ -650,6 +650,9 @@ std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd
 			}
 		}
 		data_transport = tls_transport;
+
+	} else if (_openssl_ctx && _protocol_options.GetInt("RestrictDataPeer", 1) != 0) {
+		throw ProtocolError("Unencrypted data connection");
 	}
 #endif
 

@@ -35,14 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../WinPort/WinCompat.h"
 
-extern const wchar_t FAR_VerticalBlock[];
-extern const wchar_t FAR_VerticalBlock_Unicode[];
-
-wchar_t* PasteFormatFromClipboard(const wchar_t *Format);
-int CopyFormatToClipboard(const wchar_t *Format, const wchar_t *Data);
 int WINAPI CopyToClipboard(const wchar_t *Data);
+wchar_t* PasteFromClipboardEx(int MaxChars = -1);
 wchar_t* WINAPI PasteFromClipboard();
-wchar_t* PasteFromClipboardEx(int max);
 BOOL EmptyInternalClipboard();
 
 class Clipboard
@@ -64,17 +59,15 @@ public:
 	BOOL Open();
 	BOOL Close();
 	BOOL Empty();
-	bool Copy(const wchar_t *Data);
-	bool CopyFormat(const wchar_t *Format, const wchar_t *Data);
+	bool Copy(const wchar_t *Data, bool IsVertical = false);
+	wchar_t *Paste(bool &IsVertical, int MaxChars = -1);
 	wchar_t *Paste();
-	wchar_t *PasteEx(int max);
-	wchar_t *PasteFormat(const wchar_t *Format);
 
 private:
+	bool AddData(UINT FormatType, const void *Data, size_t Size);
 
 	UINT RegisterFormat(LPCWSTR lpszFormat);
-	BOOL IsFormatAvailable(UINT Format);
-	//UINT EnumFormats(UINT uFormat);
+	bool IsFormatAvailable(UINT Format);
 	HANDLE GetData(UINT uFormat);
 	HANDLE SetData(UINT uFormat, HANDLE hMem);
 };

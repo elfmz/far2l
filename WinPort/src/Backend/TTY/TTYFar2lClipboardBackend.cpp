@@ -68,38 +68,44 @@ void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wai
 
 /////////////////////
 
-uint64_t TTYFar2lClipboardBackend::GetDataID(UINT format)
+bool TTYFar2lClipboardBackend::GetCachedData(UINT format, void *&data, uint32_t &len)
 {
 	if (_fallback_backend || (_features&FARTTY_FEATCLIP_DATA_ID) == 0) {
-		return 0;
+		return false;
 	}
 
-	uint64_t out = 0;
+	{	// briefly check if there is such format in cache at all
+		std::lock_guard<std::mutex> lock(_mtx);
+		if (_data_cache.find(format) == _data_cache.end()) {
+			return false;
+		}
+	}
+
+	uint64_t id = 0;
 	StackSerializer stk_ser;
 	stk_ser.PushPOD(format);
 	stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_GETDATAID);
 	Far2lInterract(stk_ser, true);
-	stk_ser.PopPOD(out);
+	stk_ser.PopPOD(id);
+	if (id == 0) { // zero ID means there is no such data, so hint caller to immediately return NULL
+		data = nullptr;
+		len = 0;
+		return true;
+	}
 
-	return out;
-}
-
-void *TTYFar2lClipboardBackend::GetCachedData(UINT format, uint32_t &len)
-{
 	std::lock_guard<std::mutex> lock(_mtx);
-
 	auto cache_it = _data_cache.find(format);
 	if (cache_it == _data_cache.end()) {
-		return nullptr;
+		return false;
 	}
 
-	const uint64_t id = GetDataID(format);
-	if (id && id == cache_it->second.id) {
-		return MallocedVectorCopy(cache_it->second.data, len);
+	if (id != cache_it->second.id) {
+		_data_cache.erase(cache_it);
+		return false;
 	}
+	data = ClipboardAllocFromVector(cache_it->second.data, len);
 
-	_data_cache.erase(cache_it);
-	return nullptr;
+	return (data != nullptr);
 }
 
 /////////////////////
@@ -381,7 +387,7 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		set_data_thread.reset();
 	}
 
-	const uint32_t len = GetMallocSize(data);
+	const uint32_t len = WINPORT(ClipboardSize)(data);
 	std::lock_guard<std::mutex> lock(_mtx);
 	_set_data_thread = std::make_shared<SetDataThread>(this, format, data, len);
 	return data;
@@ -421,8 +427,8 @@ void *TTYFar2lClipboardBackend::OnClipboardGetData(UINT format)
 		if (data) {
 			const size_t chars_cnt = strnlen((const char *)data, len);
 			UtfConverter<char, wchar_t> cvt((const char *)data, chars_cnt);
-			free(data);
-			return cvt.MallocedCopy();
+			WINPORT(ClipboardFree)(data);
+			return ClipboardAllocFromVector(cvt);
 		}
 	}
 
@@ -439,12 +445,12 @@ void *TTYFar2lClipboardBackend::InnerClipboardGetData(UINT format, uint32_t &len
 				return nullptr;
 			}
 			fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): pending hit\n", format);
-			return MallocedVectorCopy(_set_data_thread->Data(), len);
+			return ClipboardAllocFromVector(_set_data_thread->Data(), len);
 		}
 	}
 
-	void *data = GetCachedData(format, len);
-	if (data) {
+	void *data = nullptr;
+	if (GetCachedData(format, data, len)) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData(0x%x): cache hit\n", format);
 		return data;
 	}
@@ -460,7 +466,7 @@ void *TTYFar2lClipboardBackend::InnerClipboardGetData(UINT format, uint32_t &len
 			len = 0;
 
 		} else if (len) {
-			data = malloc(len);
+			data = WINPORT(ClipboardAlloc)(len);
 			if (data) {
 				stk_ser.Pop(data, len);
 				if ((_features & FARTTY_FEATCLIP_DATA_ID) != 0) {
@@ -476,7 +482,7 @@ void *TTYFar2lClipboardBackend::InnerClipboardGetData(UINT format, uint32_t &len
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::InnerClipboardGetData: %s\n", e.what());
-		free(data);
+		WINPORT(ClipboardFree)(data);
 	}
 
 	return nullptr;

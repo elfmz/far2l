@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 #include "TTYXGlue.h"
 #include "TTYX/TTYX.h"
+#include "WinPort.h"
 
 class TTYXGlue : public ITTYXGlue
 {
@@ -165,9 +166,14 @@ void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 {
 	_empty_pending = false;
 	if (format == CF_UNICODETEXT) {
-		size_t dlen = wcsnlen((const wchar_t *)data, GetMallocSize(data) / sizeof(wchar_t));
+		size_t dlen = wcsnlen((const wchar_t *)data, WINPORT(ClipboardSize)(data) / sizeof(wchar_t));
 		std::string str;
 		Wide2MB((const wchar_t *)data, dlen, str);
+		_ttyx->SetClipboard(str);
+
+	} else if (format == CF_TEXT) {
+		size_t dlen = strnlen((const char *)data, WINPORT(ClipboardSize)(data));
+		std::string str((const char *)data, dlen);
 		_ttyx->SetClipboard(str);
 	}
 

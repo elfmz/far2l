@@ -358,16 +358,16 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 		stk_ser.PopPOD(fmt);
 		stk_ser.PopPOD(len);
 		if (len && len + uint32_t(_clipboard_chunks.size()) >= len) {
-			data = (unsigned char *)malloc(len + uint32_t(_clipboard_chunks.size()));
+			data = (unsigned char *)WINPORT(ClipboardAlloc)(len + uint32_t(_clipboard_chunks.size()));
 			memcpy(data, _clipboard_chunks.data(), uint32_t(_clipboard_chunks.size()));
 			stk_ser.Pop(data + uint32_t(_clipboard_chunks.size()), len);
 			len+= uint32_t(_clipboard_chunks.size());
 #if (__WCHAR_MAX__ <= 0xffff)
 			if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
-				void *new_data = UtfConverter<uint32_t, uint16_t>
-					((const uint32_t *)data, len / sizeof(uint32_t)).MallocedCopy(len);
+				UtfConverter<uint32_t, uint16_t> cvt((const uint32_t *)data, len / sizeof(uint32_t));
+				void *new_data = ClipboardAllocFromVector(cvt, len);
 				if (new_data) {
-					free(data);
+					WINPORT(ClipboardFree)(data);
 					data = new_data;
 				}
 			}
@@ -377,7 +377,7 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 
 		out = WINPORT(SetClipboardData)(fmt, data) ? 1 : 0;
 		if (out == 1) {
-			id = CalculateDataID(fmt, data, GetMallocSize(data));
+			id = CalculateDataID(fmt, data, WINPORT(ClipboardSize)(data));
 		}
 	}
 	stk_ser.Clear();
@@ -400,7 +400,7 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 		uint64_t id = 0;
 		uint32_t len = 0;
 		if (data) {
-			len = GetMallocSize(data);
+			len = WINPORT(ClipboardSize)(data);
 			id = CalculateDataID(fmt, data, len);
 		}
 		stk_ser.PushPOD(id);
@@ -408,11 +408,11 @@ void VTFar2lExtensios::OnInterract_ClipboardGetData(StackSerializer &stk_ser)
 #if (__WCHAR_MAX__ <= 0xffff)
 			void *new_data = nullptr;
 			if (fmt == CF_UNICODETEXT) { // UTF16 -> UTF32
-				new_data = UtfConverter<uint16_t, uint32_t>
-					((const uint16_t *)data, len / sizeof(uint16_t)).MallocedCopy(len);
+				UtfConverter<uint16_t, uint32_t> cvt((const uint16_t *)data, len / sizeof(uint16_t));
+				new_data = ClipboardAllocFromVector(cvt, len);
 			}
 			stk_ser.Push(new_data ? new_data : data, len);
-			free(new_data);
+			WINPORT(ClipboardFree)(new_data);
 #else
 			stk_ser.Push(data, len);
 #endif
@@ -435,7 +435,7 @@ void VTFar2lExtensios::OnInterract_ClipboardGetDataID(StackSerializer &stk_ser)
 		stk_ser.PopPOD(fmt);
 		void *data = WINPORT(GetClipboardData)(fmt);
 		if (data) {
-			id = CalculateDataID(fmt, data, GetMallocSize(data));
+			id = CalculateDataID(fmt, data, WINPORT(ClipboardSize)(data));
 		}
 	}
 

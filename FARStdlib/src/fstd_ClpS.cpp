@@ -5,8 +5,7 @@
 
 BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize)
 {
-	HGLOBAL  hData;
-	void    *GData;
+	void    *CData;
 	BOOL     rc = FALSE;
 
 	if(!Data || !DataSize ||
@@ -15,62 +14,39 @@ BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize)
 
 	WINPORT(EmptyClipboard)();
 
-	do
+	if((CData=WINPORT(ClipboardAlloc)(DataSize+1))!=NULL)
 	{
-		if((hData=WINPORT(GlobalAlloc)(GMEM_MOVEABLE|GMEM_DDESHARE,DataSize+1))!=NULL)
+		memcpy(CData,Data,DataSize+1);
+		if (WINPORT(SetClipboardData)(CF_TEXT, CData))
 		{
-			if((GData=WINPORT(GlobalLock)(hData))!=NULL)
-			{
-				memcpy(GData,Data,DataSize+1);
-				WINPORT(GlobalUnlock)(hData);
-				WINPORT(SetClipboardData)(CF_TEXT,(HANDLE)hData);
-				rc = TRUE;
-			}
-			else
-			{
-				WINPORT(GlobalFree)(hData);
-				break;
-			}
+			rc = TRUE;
+		}
+		else
+		{
+			WINPORT(ClipboardFree)(CData);
 		}
 	}
-	while(0);
 
 	WINPORT(CloseClipboard)();
+
 	return rc;
 }
 
 BOOL WINAPI FP_GetFromClipboard(LPVOID& Data, SIZE_T& DataSize)
 {
-	HANDLE   hData;
-	void    *GData;
+	void    *CData;
 	BOOL     rc = FALSE;
 	Data     = NULL;
-	//DataSize = 0;
 
 	if(!WINPORT(OpenClipboard)(NULL)) return FALSE;
 
-	do
+	CData = WINPORT(GetClipboardData)(CF_TEXT);
+
+	if (CData)
 	{
-		hData = WINPORT(GetClipboardData)(CF_TEXT);
-
-		if(!hData)
-			break;
-
-		//DataSize = WINPORT(GlobalSize)(hData);
-
-		//if(!DataSize)
-		//	break;
-
-		GData = WINPORT(GlobalLock)(hData);
-
-		if(!GData)
-			break;
-
-		Data = strdup((char *)GData);//malloc(DataSize+1);
-		//memcpy(Data,GData,DataSize);
+		Data = strdup((char *)CData);
 		rc = TRUE;
 	}
-	while(0);
 
 	WINPORT(CloseClipboard)();
 	return rc;

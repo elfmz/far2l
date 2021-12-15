@@ -73,7 +73,6 @@ static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 static const wchar_t *WordDivForXlat0=L" \t!#$%^&*()+|=\\/@?";
 
 FARString strKeyNameConsoleDetachKey;
-static const wchar_t szCtrlShiftX[]=L"CtrlShiftX";
 static const wchar_t szCtrlDot[]=L"Ctrl.";
 static const wchar_t szCtrlShiftDot[]=L"CtrlShift.";
 
@@ -100,12 +99,10 @@ static const char NKeyPanelLeft[]="Panel/Left";
 static const char NKeyPanelRight[]="Panel/Right";
 static const char NKeyPanelLayout[]="Panel/Layout";
 static const char NKeyPanelTree[]="Panel/Tree";
-static const char NKeyPanelInfo[]="Panel/Info";
 static const char NKeyLayout[]="Layout";
 static const char NKeyDescriptions[]="Descriptions";
 static const char NKeyKeyMacros[]="KeyMacros";
 static const char NKeyPolicies[]="Policies";
-static const char NKeyFileFilter[]="OperationsFilter";
 static const char NKeySavedHistory[]="SavedHistory";
 static const char NKeySavedViewHistory[]="SavedViewHistory";
 static const char NKeySavedFolderHistory[]="SavedFolderHistory";

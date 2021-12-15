@@ -381,7 +381,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			const char *slash = strrchr(shell, '/');
 			// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
 			if (strcmp(slash ? slash + 1 : shell, "fish") == 0
-			 || strcmp(slash ? slash + 1 : shell, "csh") == 0 ) {
+			 || strcmp(slash ? slash + 1 : shell, "csh") == 0
+			 || strcmp(slash ? slash + 1 : shell, "tcsh") == 0 ) {
 				shell = "bash";
 			}
 		}

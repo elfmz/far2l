@@ -107,10 +107,16 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(INSTALL_DIR ${APP_DIR}/${APP_NAME}.app/Contents/MacOS)
 	set(EXECUTABLE_NAME ${APP_NAME})
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
 	set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
 	set(EXECUTABLE_NAME far2l)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections") # -Wl,-dead_strip
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections") # -Wl,-dead_strip
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "CYGWIN")

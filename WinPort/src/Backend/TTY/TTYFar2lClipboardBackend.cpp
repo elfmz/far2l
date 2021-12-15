@@ -88,8 +88,8 @@ void *TTYFar2lClipboardBackend::GetCachedData(UINT format, uint32_t &len)
 {
 	std::lock_guard<std::mutex> lock(_mtx);
 
-	auto cache_it = _cache.find(format);
-	if (cache_it == _cache.end()) {
+	auto cache_it = _data_cache.find(format);
+	if (cache_it == _data_cache.end()) {
 		return nullptr;
 	}
 
@@ -98,7 +98,7 @@ void *TTYFar2lClipboardBackend::GetCachedData(UINT format, uint32_t &len)
 		return MallocedVectorCopy(cache_it->second.data, len);
 	}
 
-	_cache.erase(cache_it);
+	_data_cache.erase(cache_it);
 	return nullptr;
 }
 
@@ -108,7 +108,7 @@ void TTYFar2lClipboardBackend::SetCachedData(UINT format, const void *data, uint
 {
 	std::lock_guard<std::mutex> lock(_mtx);
 	try {
-		CachedData &cd = _cache[format];
+		CachedData &cd = _data_cache[format];
 		cd.id = id;
 		cd.data.resize(len);
 		memcpy(cd.data.data(), data, len);
@@ -117,7 +117,7 @@ void TTYFar2lClipboardBackend::SetCachedData(UINT format, const void *data, uint
 		fprintf(stderr,
 			"TTYFar2lClipboardBackend::SetCachedData(0x%u, %p, %u, 0x%llx): %s\n",
 			format, data, len, (unsigned long long)id, e.what());
-		_cache.erase(format);
+		_data_cache.erase(format);
 	}
 }
 
@@ -207,10 +207,13 @@ void TTYFar2lClipboardBackend::OnClipboardEmpty()
 		return;
 	}
 
-	if (_set_data_thread) {
+	// reset pending set-data thread but avoid calling its destructor under mutex
+	std::shared_ptr<SetDataThread> set_data_thread;
+	{
 		std::lock_guard<std::mutex> lock(_mtx);
-		_set_data_thread.reset();
+		set_data_thread.swap(_set_data_thread);
 	}
+	set_data_thread.reset();
 
 	try {
 		StackSerializer stk_ser;
@@ -218,7 +221,7 @@ void TTYFar2lClipboardBackend::OnClipboardEmpty()
 		Far2lInterract(stk_ser, false);
 
 		std::lock_guard<std::mutex> lock(_mtx);
-		_cache.clear();
+		_data_cache.clear();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardEmpty: %s\n", e.what());
@@ -251,7 +254,7 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 			return true;
 
 		std::lock_guard<std::mutex> lock(_mtx);
-		_cache.erase(format);
+		_data_cache.erase(format);
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable: %s\n", e.what());
@@ -363,10 +366,24 @@ void *TTYFar2lClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return _fallback_backend->OnClipboardSetData(format, data);
 	}
 
+	// override pending set-data thread avoiding calling its destructor under mutex
+	// in case of adding different format than pending then have to wait for other format completion
+	// otherwise - gonna override pending format and may quickly cancel thread
+	std::shared_ptr<SetDataThread> set_data_thread;
+	{
+		std::lock_guard<std::mutex> lock(_mtx);
+		set_data_thread.swap(_set_data_thread);
+	}
+	if (set_data_thread) {
+		if (format != set_data_thread->Format()) {
+			set_data_thread->WaitCompletion();
+		}
+		set_data_thread.reset();
+	}
+
 	const uint32_t len = GetMallocSize(data);
 	std::lock_guard<std::mutex> lock(_mtx);
-	_set_data_thread.reset();
-	_set_data_thread.reset(new SetDataThread(this, format, data, len));
+	_set_data_thread = std::make_shared<SetDataThread>(this, format, data, len);
 	return data;
 }
 
@@ -473,12 +490,26 @@ UINT TTYFar2lClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszForm
 		return _fallback_backend->OnClipboardRegisterFormat(lpszFormat);
 	}
 
+	const std::string &str_mb_format = StrWide2MB(lpszFormat);
+	{
+		std::lock_guard<std::mutex> lock(_mtx);
+		const auto &cache_it = _formats_cache.find(str_mb_format);
+		if (cache_it != _formats_cache.end()) {
+			return cache_it->second;
+		}
+	}
+
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushStr(StrWide2MB(lpszFormat));
+		stk_ser.PushStr(str_mb_format);
 		stk_ser.PushPOD(FARTTY_INTERRACT_CLIP_REGISTER_FORMAT);
 		Far2lInterract(stk_ser, true);
-		return stk_ser.PopU32();
+		UINT out = stk_ser.PopU32();
+		if (out != 0) {
+			std::lock_guard<std::mutex> lock(_mtx);
+			_formats_cache.emplace(str_mb_format, out);
+		}
+		return out;
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardRegisterFormat: %s\n", e.what());

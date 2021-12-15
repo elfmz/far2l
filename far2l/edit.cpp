@@ -1388,12 +1388,7 @@ int Edit::ProcessKey(int Key)
 		}
 		case KEY_SHIFTINS:    case KEY_SHIFTNUMPAD0:
 		{
-			wchar_t *ClipText=nullptr;
-
-			if (MaxLength==-1)
-				ClipText=PasteFromClipboard();
-			else
-				ClipText=PasteFromClipboardEx(MaxLength);
+			wchar_t *ClipText=PasteFromClipboardEx(MaxLength);
 
 			if (!ClipText)
 				return TRUE;

@@ -150,14 +150,10 @@
 #define    GetCPInfoEx			WINPORT(GetCPInfoEx)
 #define    EnumSystemCodePages		WINPORT(EnumSystemCodePages)
 
-#define    GlobalAlloc			WINPORT(GlobalAlloc)
-#define    GlobalFree			WINPORT(GlobalFree)
-#define    GlobalLock			WINPORT(GlobalLock)
-#define    GlobalUnlock			WINPORT(GlobalUnlock)
-
-	//clipboard
-#define    TextToClipboard			WINPORT(TextToClipboard)
-#define    TextFromClipboard			WINPORT(TextFromClipboard)
+//clipboard
+#define    ClipboardAlloc		WINPORT(ClipboardAlloc)
+#define    ClipboardFree		WINPORT(ClipboardFree)
+#define    ClipboardSize		WINPORT(ClipboardSize)
 
 #define    RegisterClipboardFormat		WINPORT(RegisterClipboardFormat)
 #define    OpenClipboard			WINPORT(OpenClipboard)

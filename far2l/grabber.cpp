@@ -70,7 +70,6 @@ Grabber::Grabber() :
 	SetCursorType(TRUE,60);
 	PrevArea=GArea;
 	ResetArea=TRUE;
-	VerticalBlock=FALSE;
 	DisplayObject();
 	Process();
 	delete SaveScr;
@@ -84,7 +83,7 @@ Grabber::~Grabber()
 }
 
 
-void Grabber::CopyGrabbedArea(int Append, int VerticalBlock)
+void Grabber::CopyGrabbedArea(int Append)
 {
 	if (GArea.X1 < 0)
 		return;
@@ -194,10 +193,7 @@ void Grabber::CopyGrabbedArea(int Append, int VerticalBlock)
 			}
 		}
 
-		if (VerticalBlock)
-			clip.CopyFormat(FAR_VerticalBlock_Unicode,CopyBuf);
-		else
-			clip.Copy(CopyBuf);
+		clip.Copy(CopyBuf);
 
 		clip.Close();
 	}
@@ -298,7 +294,7 @@ int Grabber::ProcessKey(int Key)
 		case KEY_ENTER:
 		case KEY_CTRLINS:   case KEY_CTRLNUMPAD0:
 		case KEY_CTRLADD:
-			CopyGrabbedArea(Key == KEY_CTRLADD,VerticalBlock);
+			CopyGrabbedArea(Key == KEY_CTRLADD);
 			SetExitCode(1);
 			break;
 		case KEY_LEFT:      case KEY_NUMPAD4:   case L'4':

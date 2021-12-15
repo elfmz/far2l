@@ -18,6 +18,7 @@
 
 #include "wxClipboardBackend.h"
 #include "CallInMain.h"
+#include "WinPort.h"
 
 static class CustomFormats : std::map<UINT, wxDataFormat>
 {
@@ -40,7 +41,7 @@ public:
 			_next_index++;
 			if (_next_index < 0xC000 || _next_index > 0xFFFF)
 				_next_index = 0xC000;
-			if (find(_next_index)==end()) {
+			if (find(_next_index) == end()) {
 				insert(value_type(_next_index, wxDataFormat(format)));
 				return _next_index;
 			}
@@ -153,7 +154,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return CallInMain<void *>(fn);
 	}
 		
-	size_t len = GetMallocSize(data);
+	size_t len = WINPORT(ClipboardSize)(data);
 	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
@@ -200,9 +201,10 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		if (!wxTheClipboard->GetData( data ))
 			return nullptr;
 
-		p = (format==CF_UNICODETEXT) ? 
-			(void *)_wcsdup(data.GetText().wchar_str()) : 
-			(void *)_strdup(data.GetText().utf8_str());
+		p = (format == CF_UNICODETEXT)
+			? ClipboardAllocFromZeroTerminatedString<wchar_t>(data.GetText().wchar_str())
+			: ClipboardAllocFromZeroTerminatedString<char>(data.GetText().utf8_str());
+
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {
@@ -224,7 +226,7 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		}
 				
 		const size_t data_size = data.GetDataSize();
-		p = calloc(data_size + 1, 1); 
+		p = WINPORT(ClipboardAlloc)(data_size + 1); 
 		if (!p) {
 			fprintf(stderr, "GetClipboardData(%s) - cant alloc %u + 1\n", 
 				(const char *)data_format->GetId().char_str(), (unsigned int)data_size);

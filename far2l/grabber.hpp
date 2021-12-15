@@ -50,13 +50,12 @@ class Grabber:Modal
 		GrabberArea PrevArea;
 		GrabberArea GArea;
 		int ResetArea;
-		int VerticalBlock;
 
 	private:
 		virtual void DisplayObject();
 		virtual int ProcessKey(int Key);
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		void CopyGrabbedArea(int Append, int VerticalBlock);
+		void CopyGrabbedArea(int Append);
 		void Reset();
 
 	public:

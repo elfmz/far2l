@@ -7,7 +7,6 @@ src/APIClipboard.cpp
 src/APIConsole.cpp
 src/APIFiles.cpp
 src/APIKeyboard.cpp
-src/APIMemory.cpp
 src/APIOther.cpp
 src/APIPrintFormat.cpp
 src/APIRegistry.cpp

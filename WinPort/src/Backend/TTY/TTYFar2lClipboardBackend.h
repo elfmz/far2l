@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include <atomic>
+#include <map>
+#include <string>
 #include <mutex>
 #include <Threaded.h>
 #include <StackSerializer.h>
@@ -27,6 +29,7 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 		SetDataThread(TTYFar2lClipboardBackend *backend, UINT format, const void *data, uint32_t len);
 		virtual ~SetDataThread();
 
+		void WaitCompletion() { WaitThread(); }
 		bool Cancelled() const { return _cancel; }
 		bool Pending() const { return _pending; }
 		UINT Format() const { return _format; }
@@ -38,12 +41,13 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 		uint64_t id;
 		std::vector<unsigned char> data;
 	};
-	struct Cache : std::map<UINT, CachedData> { } _cache;
+	struct Cache : std::map<UINT, CachedData> { } _data_cache;
+	struct std::map<std::string, UINT> _formats_cache;
 
 	std::unique_ptr<FSClipboardBackend> _fallback_backend;
 	IFar2lInterractor *_interractor;
 	std::atomic<int> _no_fallback_open_counter{0};
-	std::unique_ptr<SetDataThread> _set_data_thread;
+	std::shared_ptr<SetDataThread> _set_data_thread;
 
 	std::mutex _mtx; // guards _cache, _set_data_thread
 

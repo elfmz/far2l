@@ -2,9 +2,7 @@
 #include <string>
 #include <stdlib.h>
 #include <sudo.h>
-#ifdef __FreeBSD__
-# include <sys/syslimits.h>
-#endif
+#include <limits.h>
 #include <utils.h>
 #include "Protocol.h"
 

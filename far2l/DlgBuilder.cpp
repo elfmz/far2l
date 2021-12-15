@@ -39,8 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "language.hpp"
 #include "codepage.hpp"
 
-const int DEFAULT_INDENT = 5;
-
 struct EditFieldBinding: public DialogItemBinding<DialogItemEx>
 {
 	FARString *TextValue;

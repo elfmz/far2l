@@ -77,8 +77,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MountInfo.h"
 #include <atomic>
 
-constexpr int CHAR_TABLE_SIZE=5;
-constexpr int LIST_DELTA=64;
 constexpr DWORD LIST_INDEX_NONE = std::numeric_limits<DWORD>::max();
 
 static bool AnySetFindList=false;

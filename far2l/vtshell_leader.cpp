@@ -40,7 +40,9 @@ static int VTShell_ExecShell(const char *shell)
 {
 	//setenv("TERM", "xterm-256color", 1);
 	setenv("TERM", "xterm", 1);
-	int r = execl(shell, shell, "-i", NULL);
+	int r = (*shell == '/')
+		? execl(shell, shell, "-i", NULL)
+		: execlp(shell, shell, "-i", NULL);
 	fprintf(stderr, "%s: execl('%s') returned %d errno %u\n",
 		__FUNCTION__, shell, r, errno);
 	return -1;

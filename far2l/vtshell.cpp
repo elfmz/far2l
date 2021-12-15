@@ -378,12 +378,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (!shell) {
 				shell = "/bin/sh";
 			}
-			// avoid using fish for a while, it requites changes in Opt.strQuotedSymbols and some others
 			const char *slash = strrchr(shell, '/');
-			if (strcmp(slash ? slash + 1 : shell, "fish") == 0) {
-				shell = "/bin/bash";
+			// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
+			if (strcmp(slash ? slash + 1 : shell, "fish") == 0
+			 || strcmp(slash ? slash + 1 : shell, "csh") == 0 ) {
+				shell = "bash";
 			}
 		}
+
+
 
 		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
 		// to avoid shell history pollution by far2l's intermediate script execution commands

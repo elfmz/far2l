@@ -24,6 +24,7 @@ static std::mutex g_clipboard_backend_mutex;
 
 static struct ClipboardFreePendings : std::set<PVOID> {} g_clipboard_free_pendings;
 static bool s_clipboard_open_track = false;
+static std::atomic<size_t> s_pending_clipboard_allocations{0};
 
 __attribute__ ((visibility("default"))) bool WinPortClipboard_IsBusy()
 {
@@ -81,7 +82,8 @@ extern "C" {
 			g_clipboard_backend->OnClipboardClose();
 
 		for (auto p : g_clipboard_free_pendings)
-			free(p);
+			WINPORT(ClipboardFree)(p);
+
 		g_clipboard_free_pendings.clear();
 
 		return TRUE;
@@ -127,4 +129,67 @@ extern "C" {
 
 		return out;
 	}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	struct ClipboardAllocHeader
+	{
+		DWORD size;
+		DWORD padding;
+		DWORD64 magic;
+	};
+
+#define CAH_ALLOCED_MAGIC 0x0610ba10A110CED0
+#define CAH_FREED_MAGIC   0x0610ba10F4EED000
+
+	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T dwBytes))
+	{
+		if (dwBytes > 0x7ffffff0 || dwBytes == 0) {
+			fprintf(stderr, "%s: insane amount wanted (%lu)\n", __FUNCTION__, (unsigned long)dwBytes);
+			return NULL;
+		}
+		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)malloc(sizeof(ClipboardAllocHeader) + dwBytes);
+		if (!hdr) {
+			fprintf(stderr, "%s: malloc(%lu) failed\n", __FUNCTION__, (unsigned long)(sizeof(ClipboardAllocHeader) + dwBytes));
+			return NULL;
+		}
+		hdr->magic = CAH_ALLOCED_MAGIC;
+		hdr->size = (DWORD)dwBytes;
+		void *rv = hdr + 1;
+		memset(rv, 0, dwBytes);
+		auto pending_clipboard_allocations = ++s_pending_clipboard_allocations;
+		if (pending_clipboard_allocations > 10) {
+			fprintf(stderr, "%s: suspicious pending_clipboard_allocations=(%lu)\n",
+				__FUNCTION__, (unsigned long)pending_clipboard_allocations);
+		}
+		return rv;
+	}
+
+	static ClipboardAllocHeader *ClipboardAccess(PVOID hMem)
+	{
+		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)((char *)hMem - sizeof(ClipboardAllocHeader));
+		if (hdr->magic != CAH_ALLOCED_MAGIC) {
+			fprintf(stderr, "%s: %s magic (0x%llx)\n", __FUNCTION__, 
+				(hdr->magic == CAH_FREED_MAGIC) ? "freed" : "bad", (unsigned long long)hdr->magic);
+			abort();
+		}
+		return hdr;
+	}
+
+	WINPORT_DECL(ClipboardFree, VOID, (PVOID hMem))
+	{
+		if (hMem) {
+			ClipboardAllocHeader *hdr = ClipboardAccess(hMem);
+			hdr->magic = CAH_FREED_MAGIC;
+			bzero(hdr + 1, hdr->size); // avoid sensitive data leak
+			--s_pending_clipboard_allocations;
+			free(hdr);
+		}
+	}
+
+	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID hMem))
+	{
+		return hMem ? ClipboardAccess(hMem)->size : 0;
+	}
+
 }

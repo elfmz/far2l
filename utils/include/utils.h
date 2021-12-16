@@ -131,9 +131,6 @@ int pipe_cloexec(int pipedes[2]);
 
 void PutZombieUnderControl(pid_t pid);
 
-size_t GetMallocSize(void *p);
-
-
 void AbbreviateString(std::string &path, size_t needed_length);
 
 const wchar_t *FileSizeToFractionAndUnits(unsigned long long &value);

@@ -1,4 +1,5 @@
 #include "FSClipboardBackend.h"
+#include "WinPort.h"
 #include <utils.h>
 #include <base64.h>
 
@@ -53,7 +54,7 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	char str_format[64]; sprintf(str_format, "0x%x", format);
 
-	size_t len = GetMallocSize(data);
+	size_t len = WINPORT(ClipboardSize)(data);
 
 	std::string str = base64_encode( (const unsigned char*)data, len);
 
@@ -75,13 +76,9 @@ void *FSClipboardBackend::OnClipboardGetData(UINT format)
 
 	str.erase(0, 1);
 	const std::vector<unsigned char> &data = base64_decode(str);
-	void *out = malloc(data.empty() ? 1 : data.size());
-	if (out) {
-		if (!data.empty()) {
-			memcpy(out, &data[0], data.size());
-		} else {
-			memset(out, 0, 1);
-		}
+	void *out = WINPORT(ClipboardAlloc)(data.empty() ? 1 : data.size());
+	if (out && !data.empty()) {
+		memcpy(out, data.data(), data.size());
 	}
 	return out;
 }

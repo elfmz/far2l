@@ -3918,15 +3918,11 @@ void Editor::Paste(const wchar_t *Src)
 		if (!clip.Open())
 			return;
 
-		if ((ClipText=clip.PasteFormat(FAR_VerticalBlock_Unicode)))
+		bool IsVertical = false;
+		ClipText = clip.Paste(IsVertical);
+		if (ClipText && IsVertical)
 		{
 			VPaste(ClipText);
-			clip.Close();
-			return;
-		}
-
-		if (!(ClipText=clip.Paste()))
-		{
 			clip.Close();
 			return;
 		}
@@ -5008,17 +5004,11 @@ void Editor::VCopy(int Append)
 		return;
 
 	if (Append)
-	{
-		CopyData=clip.PasteFormat(FAR_VerticalBlock_Unicode);
-
-		if (!CopyData)
-			CopyData=clip.Paste();
-	}
+		CopyData=clip.Paste();
 
 	if ((CopyData=VBlock2Text(CopyData)) )
 	{
-		clip.Copy(CopyData);
-		clip.CopyFormat(FAR_VerticalBlock_Unicode,CopyData);
+		clip.Copy(CopyData, true);
 		free(CopyData);
 	}
 

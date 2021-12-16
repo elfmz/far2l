@@ -143,18 +143,6 @@ bool IsPathIn(const wchar_t *path, const wchar_t *root)
 	return true;
 }
 
-size_t GetMallocSize(void *p)
-{
-#ifdef _WIN32
-	return _msize(p);
-#elif defined(__APPLE__)
-	return malloc_size(p);
-#else
-	return malloc_usable_size(p);
-#endif
-}
-
-
 void AbbreviateString(std::string &path, size_t needed_length)
 {
 	size_t len = path.size();

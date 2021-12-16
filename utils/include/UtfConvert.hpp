@@ -145,27 +145,6 @@ template <typename CHAR_SRC, typename CHAR_DST>
 	return dpb.size();
 }
 
-template <class ELEMENT_T, class LEN_T>
-	void *MallocedVectorCopy(const std::vector<ELEMENT_T> &src, LEN_T &len)
-{
-	len = LEN_T(src.size() * sizeof(ELEMENT_T));
-	if (size_t(len) != (src.size() * sizeof(ELEMENT_T)))
-		return nullptr;
-
-	void *out = len ? malloc(len) : nullptr;
-	if (out) {
-		memcpy(out, src.data(), len);
-	}
-	return out;
-}
-
-template <class ELEMENT_T>
-	void *MallocedVectorCopy(const std::vector<ELEMENT_T> &src)
-{
-	size_t len;
-	return MallocedVectorCopy<ELEMENT_T, size_t>(src, len);
-}
-
 template <typename CHAR_SRC, typename CHAR_DST, bool ENSURE_NULL_TERMINATOR = true>
 	struct UtfConverter : std::vector<CHAR_DST>
 {
@@ -179,16 +158,6 @@ template <typename CHAR_SRC, typename CHAR_DST, bool ENSURE_NULL_TERMINATOR = tr
 				std::vector<CHAR_DST>::emplace_back(0);
 			}
 		}
-	}
-
-	void *MallocedCopy(uint32_t &len) const
-	{
-		return MallocedVectorCopy(*this, len);
-	}
-
-	void *MallocedCopy() const
-	{
-		return MallocedVectorCopy(*this);
 	}
 
 	template <class OUT_ELEMENT_T>

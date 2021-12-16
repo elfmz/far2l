@@ -215,23 +215,24 @@ extern "C" {
 	WINPORT_DECL(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo));
 	WINPORT_DECL(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags));
 
-	//memory
-    WINPORT_DECL(GlobalAlloc, HGLOBAL, ( UINT   uFlags, SIZE_T dwBytes));
-	WINPORT_DECL(GlobalFree, HGLOBAL, ( HGLOBAL hMem));
-    WINPORT_DECL(GlobalLock, PVOID, ( HGLOBAL hMem));
-	WINPORT_DECL(GlobalUnlock, BOOL, ( HGLOBAL hMem));
-
 	//clipboard
-	WINPORT_DECL(TextToClipboard, BOOL, (LPCWSTR Tex));
-	WINPORT_DECL(TextFromClipboard, LPWSTR, (int MaxLength));
-
 	WINPORT_DECL(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat));
 	WINPORT_DECL(OpenClipboard, BOOL, (PVOID Reserved));
 	WINPORT_DECL(CloseClipboard, BOOL, ());
 	WINPORT_DECL(EmptyClipboard, BOOL, ());
 	WINPORT_DECL(IsClipboardFormatAvailable, BOOL, (UINT format));
-	WINPORT_DECL(GetClipboardData, HANDLE, (UINT format));
-	WINPORT_DECL(SetClipboardData, HANDLE, (UINT format, HANDLE mem));
+
+	// use Clipboard-Alloc/-Free/-Size to operate data pointers
+	WINPORT_DECL(GetClipboardData, PVOID, (UINT format));
+	WINPORT_DECL(SetClipboardData, PVOID, (UINT format, HANDLE mem));
+
+	// these are simplified analogs for Win32's Global* APIs, that dedicated to reference clipboard data
+    WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T len));
+	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID mem));
+
+	// note that like in win32, clipboard data is mostly owned by clipboard so ClipboardFree actually useful
+	// only in case of SetClipboardData's failure.
+	WINPORT_DECL(ClipboardFree, VOID, (PVOID mem));
 
 
 	//keyboard
@@ -269,5 +270,41 @@ struct RegWipeScope
 	}
 };
 #endif
+
+#include <vector>
+
+template <class CHAR_T, class LEN_T>
+	void *ClipboardAllocFromVector(const std::vector<CHAR_T> &src, LEN_T &len)
+{
+	len = LEN_T(src.size() * sizeof(CHAR_T));
+	if (size_t(len) != (src.size() * sizeof(CHAR_T)))
+		return nullptr;
+
+	void *out = len ? WINPORT(ClipboardAlloc)(len) : nullptr;
+	if (out) {
+		memcpy(out, src.data(), len);
+	}
+	return out;
+}
+
+template <class CHAR_T>
+	void *ClipboardAllocFromVector(const std::vector<CHAR_T> &src)
+{
+	size_t len;
+	return ClipboardAllocFromVector<CHAR_T, size_t>(src, len);
+}
+
+template <class CHAR_T>
+	void *ClipboardAllocFromZeroTerminatedString(const CHAR_T *src)
+{
+	const size_t len = tzlen(src) + 1;
+	void *out = len ? WINPORT(ClipboardAlloc)(len * sizeof(CHAR_T)) : nullptr;
+	if (out) {
+		memcpy(out, src, len * sizeof(CHAR_T));
+	}
+	return out;
+}
+
+
 
 #endif

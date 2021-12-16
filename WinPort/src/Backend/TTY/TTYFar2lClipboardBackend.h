@@ -56,8 +56,7 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 	uint64_t _features = 0;
 
 	void Far2lInterract(StackSerializer &stk_ser, bool wait);
-	uint64_t GetDataID(UINT format);
-	void *GetCachedData(UINT format, uint32_t &len);
+	bool GetCachedData(UINT format, void *&data, uint32_t &len);
 	void SetCachedData(UINT format, const void *data, uint32_t len, uint64_t id);
 	void OnSetDataThreadComplete(SetDataThread *set_data_thread, StackSerializer &stk_ser);
 	void *InnerClipboardGetData(UINT format, uint32_t &len);

@@ -7,6 +7,11 @@
 #include <memory.h>
 #include <wctype.h>
 
+#ifdef __linux__
+// for PATH_MAX
+# include <linux/limits.h>
+#endif
+
 #define ELFMZ_WINPORT
 
 #ifdef _WIN32

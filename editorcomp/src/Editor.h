@@ -33,7 +33,6 @@ private:
     bool isEnabled = false;
 
     EditorInfo previousEditorInfo = {0};
-    int previousEditorInfoLineIndex = -1;
 
     void updateWords();
     void putSuggestion();

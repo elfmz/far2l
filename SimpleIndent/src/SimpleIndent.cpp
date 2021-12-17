@@ -23,9 +23,11 @@
 #include "plugin_123.hpp"
 #include "version.hpp"
 
+#ifdef FAR3
 // {52d8eecb-acae-42de-9b2f-f1e909948272}
 static const GUID MainGuid =
 { 0x52d8eecb, 0xacae, 0x42de, { 0x9b, 0x2f, 0xf1, 0xe9, 0x09, 0x94, 0x82, 0x72 } };
+#endif
 
 ADD_GETGLOBALINFO;
 

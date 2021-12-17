@@ -71,7 +71,6 @@ class UserDefinedList : private NonCopyable
 {
 	private:
 		TArray<UserDefinedListItem> Array;
-		size_t CurrentItem;
 		WORD Separator1, Separator2;
 		bool ProcessBrackets, AddAsterisk, PackAsterisks, Unique, Sort, IsTrim, IsUnQuotes;
 		bool AccountEmptyLine;

@@ -5113,12 +5113,14 @@ void Editor::VPaste(wchar_t *ClipText)
 		Edit *SavedTopScreen=TopScreen;
 
 		for (int I=0; ClipText[I]; I++)
-			if (memcmp(&ClipText[I], NATIVE_EOLW, wcslen(NATIVE_EOLW))!=0)
+			if (ClipText[I] != '\r' && ClipText[I] != '\n')
 			{
 				ProcessKey(ClipText[I]);
 			}
 			else
 			{
+				const size_t EolLength = (ClipText[I] == '\r' || ClipText[I + 1] == '\n') ? 2 : 1;
+
 				int CurWidth=CurLine->GetTabCurPos()-StartPos;
 
 				if (CurWidth>VBlockSizeX)
@@ -5128,7 +5130,7 @@ void Editor::VPaste(wchar_t *ClipText)
 
 				if (!CurLine->m_next)
 				{
-					if (ClipText[I + wcslen(NATIVE_EOLW)])
+					if (ClipText[I + EolLength])
 					{
 						ProcessKey(KEY_END);
 						ProcessKey(KEY_ENTER);
@@ -5150,7 +5152,7 @@ void Editor::VPaste(wchar_t *ClipText)
 					CurLine->SetOvertypeMode(FALSE);
 				}
 
-				I+= wcslen(NATIVE_EOLW) - 1;
+				I+= EolLength - 1;
 				continue;
 			}
 

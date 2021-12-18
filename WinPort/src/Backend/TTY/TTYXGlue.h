@@ -23,7 +23,7 @@ class TTYXClipboard : public IClipboardBackend
 {
 	ITTYXGluePtr _ttyx;
 	FSClipboardBackend _fs_fallback;
-	bool _empty_pending = false;
+	bool _pending_empty_text = false;
 
 protected:
 	virtual bool OnClipboardOpen();

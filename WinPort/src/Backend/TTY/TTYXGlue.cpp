@@ -139,39 +139,42 @@ bool TTYXClipboard::OnClipboardOpen()
 	if (!_fs_fallback.OnClipboardOpen()) {
 		return false;
 	}
-	_empty_pending = false;
+	_pending_empty_text = false;
 	return true;
 }
 
 void TTYXClipboard::OnClipboardClose()
 {
-	if (_empty_pending) {
+	if (_pending_empty_text) {
 		_ttyx->SetClipboard(std::string());
+		_pending_empty_text = false;
 	}
 	_fs_fallback.OnClipboardClose();
 }
 
 void TTYXClipboard::OnClipboardEmpty()
 {
-	_empty_pending = true;
+	_pending_empty_text = true;
 	_fs_fallback.OnClipboardEmpty();
 }
 
 bool TTYXClipboard::OnClipboardIsFormatAvailable(UINT format)
 {
-	return format == CF_UNICODETEXT || _fs_fallback.OnClipboardIsFormatAvailable(format);
+	return ((format == CF_UNICODETEXT || format == CF_TEXT) && !_pending_empty_text)
+		|| _fs_fallback.OnClipboardIsFormatAvailable(format);
 }
 
 void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 {
-	_empty_pending = false;
 	if (format == CF_UNICODETEXT) {
+		_pending_empty_text = false;
 		size_t dlen = wcsnlen((const wchar_t *)data, WINPORT(ClipboardSize)(data) / sizeof(wchar_t));
 		std::string str;
 		Wide2MB((const wchar_t *)data, dlen, str);
 		_ttyx->SetClipboard(str);
 
 	} else if (format == CF_TEXT) {
+		_pending_empty_text = false;
 		size_t dlen = strnlen((const char *)data, WINPORT(ClipboardSize)(data));
 		std::string str((const char *)data, dlen);
 		_ttyx->SetClipboard(str);
@@ -183,19 +186,39 @@ void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 
 void *TTYXClipboard::OnClipboardGetData(UINT format)
 {
-	if (format != CF_UNICODETEXT) {
-		return _fs_fallback.OnClipboardGetData(format);
+	void *out = nullptr;
+
+	if (format == CF_UNICODETEXT) {
+		if (_pending_empty_text)
+			return nullptr;
+
+		std::string str;
+		_ttyx->GetClipboard(str);
+
+		std::wstring ws;
+		StrMB2Wide(str, ws);
+
+		const size_t sz = (ws.size() + 1) * sizeof(wchar_t);
+		out = WINPORT(ClipboardAlloc)(sz);
+		if (out)
+			memcpy(out, ws.c_str(), sz);
+
+	} else if (format == CF_TEXT) {
+		if (_pending_empty_text)
+			return nullptr;
+
+		std::string str;
+		_ttyx->GetClipboard(str);
+
+		const size_t sz = (str.size() + 1);
+		out = WINPORT(ClipboardAlloc)(sz);
+		if (out)
+			memcpy(out, str.c_str(), sz);
 	}
 
-	std::string str;
-	_ttyx->GetClipboard(str);
-
-	std::wstring ws;
-	StrMB2Wide(str, ws);
-
-	const size_t sz = (ws.size() + 1) * sizeof(wchar_t);
-	void *out = WINPORT(ClipboardAlloc)(sz);
-	memcpy(out, ws.c_str(), sz);
+	if (!out) {
+		out = _fs_fallback.OnClipboardGetData(format);
+	}
 
 	return out;
 }

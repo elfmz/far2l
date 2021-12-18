@@ -2,6 +2,7 @@
 #include "WinPort.h"
 #include <utils.h>
 #include <base64.h>
+#include <UtfConvert.hpp>
 
 FSClipboardBackend::FSClipboardBackend() :
 	_shared_resource("fsclip", 0)
@@ -44,7 +45,7 @@ bool FSClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 	char str_format[64]; sprintf(str_format, "0x%x", format);
 
 	std::string str = _kfh->GetString("Data", str_format);
-	return (!str.empty() && str[0] == '!');
+	return (!str.empty() && str[0] == '#');
 }
 
 void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
@@ -52,13 +53,22 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	if (!_kfh)
 		return nullptr;
 
-	char str_format[64]; sprintf(str_format, "0x%x", format);
+	std::string str = "#";
 
-	size_t len = WINPORT(ClipboardSize)(data);
+	const size_t len = WINPORT(ClipboardSize)(data);
 
-	std::string str = base64_encode( (const unsigned char*)data, len);
+	if (format == CF_UNICODETEXT) {
+		UtfConverter<wchar_t, unsigned char> cvt((const wchar_t *)data, len / sizeof(wchar_t));
+		str+= base64_encode( (const unsigned char*)cvt.data(), cvt.size());
+		format = CF_TEXT;
 
-	str.insert(0, "#");
+	} else {
+		str+= base64_encode( (const unsigned char*)data, len);
+	}
+
+	char str_format[64];
+	sprintf(str_format, "0x%x", format);
+
 	_kfh->SetString("Data", str_format, str.c_str());
 	return data;
 }
@@ -68,18 +78,40 @@ void *FSClipboardBackend::OnClipboardGetData(UINT format)
 	if (!_kfh)
 		return nullptr;
 
-	char str_format[64]; sprintf(str_format, "0x%x", format);
+	char str_format[64];
+	sprintf(str_format, "0x%x", (format == CF_UNICODETEXT) ? CF_TEXT : format);
 
 	std::string str = _kfh->GetString("Data", str_format);
 	if (str.empty() || str[0] != '#')
 		return nullptr;
 
-	str.erase(0, 1);
-	const std::vector<unsigned char> &data = base64_decode(str);
-	void *out = WINPORT(ClipboardAlloc)(data.empty() ? 1 : data.size());
-	if (out && !data.empty()) {
-		memcpy(out, data.data(), data.size());
+	const std::vector<unsigned char> &data
+		= base64_decode(str.data() + 1, str.size() - 1);
+	if (data.empty())
+		return nullptr;
+
+	void *out;
+	if (format == CF_UNICODETEXT) {
+		size_t utf8_len = data.size();
+		while (utf8_len && !data[utf8_len - 1]) {
+			--utf8_len;
+		}
+
+		std::wstring ws;
+		MB2Wide((const char *)data.data(), utf8_len, ws);
+
+		out = WINPORT(ClipboardAlloc)( (ws.size() + 1) * sizeof(wchar_t));
+		if (out) {
+			memcpy(out, ws.c_str(), (ws.size() + 1) * sizeof(wchar_t));
+		}
+
+	} else {
+		out = WINPORT(ClipboardAlloc)(data.empty() ? 1 : data.size());
+		if (out && !data.empty()) {
+			memcpy(out, data.data(), data.size());
+		}
 	}
+
 	return out;
 }
 

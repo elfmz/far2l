@@ -189,9 +189,15 @@ void *TTYXClipboard::OnClipboardGetData(UINT format)
 
 	std::string str;
 	_ttyx->GetClipboard(str);
+
 	std::wstring ws;
 	StrMB2Wide(str, ws);
-	return wcsdup(ws.c_str());
+
+	const size_t sz = (ws.size() + 1) * sizeof(wchar_t);
+	void *out = WINPORT(ClipboardAlloc)(sz);
+	memcpy(out, ws.c_str(), sz);
+
+	return out;
 }
 
 UINT TTYXClipboard::OnClipboardRegisterFormat(const wchar_t *lpszFormat)

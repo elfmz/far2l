@@ -1,5 +1,8 @@
 #include <dlfcn.h>
 #include <string.h>
+#include <map>
+#include <string>
+#include <mutex>
 #include <utils.h>
 #include <TestPath.h>
 #include <sys/wait.h>
@@ -53,11 +56,18 @@ public:
 		return out;
 	}
 
-	virtual bool SetClipboard(const std::string &s) noexcept
+	bool SetClipboard(const ITTYXGlue::Type2Data &t2d) noexcept
 	{
 		try {
 			_ipc.SendCommand(IPC_CLIPBOARD_SET);
-			_ipc.SendString(s);
+			for (const auto &it : t2d) {
+				_ipc.SendPOD(size_t(it.second.size()));
+				_ipc.SendString(it.first);
+				if (!it.second.empty()) {
+					_ipc.Send(it.second.data(), it.second.size());
+				}
+			}
+			_ipc.SendPOD(size_t(-1));
 
 		} catch (std::exception &e) {
 			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
@@ -67,18 +77,41 @@ public:
 		return true;
 	}
 
-	virtual bool GetClipboard(std::string &s) noexcept
+	virtual bool GetClipboard(const std::string &type, std::vector<unsigned char> &data) noexcept
 	{
 		try {
+			data.clear();
 			_ipc.SendCommand(IPC_CLIPBOARD_GET);
-			_ipc.RecvString(s);
+			_ipc.SendString(type);
+			ssize_t size = -1;
+			_ipc.RecvPOD(size);
+			if (size > 0) {
+				data.resize(size);
+				_ipc.Recv(data.data(), data.size());
+			}
+			return (size >= 0);
 
 		} catch (std::exception &e) {
 			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
 			_ipc.SetFD(-1, -1);
 			return false;
 		}
-		return true;
+	}
+
+	virtual bool ContainsClipboard(const std::string &type) noexcept
+	{
+		try {
+			_ipc.SendCommand(IPC_CLIPBOARD_CONTAINS);
+			_ipc.SendString(type);
+			bool reply = false;
+			_ipc.RecvPOD(reply);
+			return reply;
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+			_ipc.SetFD(-1, -1);
+			return false;
+		}
 	}
 };
 
@@ -125,6 +158,50 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+static class TTYXCustomFormats : std::map<UINT, std::string>, std::mutex
+{
+	UINT _next_index = 0;
+	const std::string _empty;
+
+public:
+	UINT Register(LPCWSTR lpszFormat)
+	{
+		std::string format = Wide2MB(lpszFormat);
+
+		std::unique_lock<std::mutex> lock(*this);
+		for (const auto &i : *this) {
+			if (i.second == format)
+				return i.first;
+		}
+
+		for (;;) {
+			_next_index++;
+			if (_next_index < 0xC000 || _next_index > 0xFFFF)
+				_next_index = 0xC000;
+			if (find(_next_index) == end()) {
+				insert(value_type(_next_index, format));
+				return _next_index;
+			}
+		}
+	}
+
+	const std::string &Lookup(UINT format)
+	{
+		if (format == CF_UNICODETEXT || format == CF_TEXT) {
+			return _empty;
+		}
+
+		std::unique_lock<std::mutex> lock(*this);
+		const_iterator i = find(format);
+		if ( i == end() ) {
+			throw std::runtime_error("bad format");
+		}
+
+		return i->second;
+	}
+
+} g_ttyx_custom_formats;
+
 TTYXClipboard::TTYXClipboard(ITTYXGluePtr &ttyx)
 	: _ttyx(ttyx)
 {
@@ -136,88 +213,99 @@ TTYXClipboard::~TTYXClipboard()
 
 bool TTYXClipboard::OnClipboardOpen()
 {
-	if (!_fs_fallback.OnClipboardOpen()) {
-		return false;
-	}
-	_pending_empty_text = false;
+	_pending_set.reset();
 	return true;
 }
 
 void TTYXClipboard::OnClipboardClose()
 {
-	if (_pending_empty_text) {
-		_ttyx->SetClipboard(std::string());
-		_pending_empty_text = false;
+	if (_pending_set) {
+		_ttyx->SetClipboard(*_pending_set);
+		_pending_set.reset();
 	}
-	_fs_fallback.OnClipboardClose();
 }
 
 void TTYXClipboard::OnClipboardEmpty()
 {
-	_pending_empty_text = true;
-	_fs_fallback.OnClipboardEmpty();
+	_pending_set.reset(new ITTYXGlue::Type2Data);
 }
 
 bool TTYXClipboard::OnClipboardIsFormatAvailable(UINT format)
 {
-	return ((format == CF_UNICODETEXT || format == CF_TEXT) && !_pending_empty_text)
-		|| _fs_fallback.OnClipboardIsFormatAvailable(format);
+	try {
+		std::string format_name = g_ttyx_custom_formats.Lookup(format);
+		return _ttyx->ContainsClipboard(format_name);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYXClipboard::OnClipboardIsFormatAvailable(0x%x): %s\n", format, e.what());
+		return false;
+	}
 }
 
 void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 {
-	if (format == CF_UNICODETEXT) {
-		_pending_empty_text = false;
-		size_t dlen = wcsnlen((const wchar_t *)data, WINPORT(ClipboardSize)(data) / sizeof(wchar_t));
-		std::string str;
-		Wide2MB((const wchar_t *)data, dlen, str);
-		_ttyx->SetClipboard(str);
+	try {
+		std::string format_name = g_ttyx_custom_formats.Lookup(format);
+		if (!_pending_set) {
+			_pending_set.reset(new ITTYXGlue::Type2Data);
+		}
 
-	} else if (format == CF_TEXT) {
-		_pending_empty_text = false;
-		size_t dlen = strnlen((const char *)data, WINPORT(ClipboardSize)(data));
-		std::string str((const char *)data, dlen);
-		_ttyx->SetClipboard(str);
+		size_t len = WINPORT(ClipboardSize)(data);
+
+		auto &d = (*_pending_set)[format_name];
+		if (format == CF_UNICODETEXT) {
+			std::string str;
+			Wide2MB((const wchar_t *)data, wcsnlen((const wchar_t *)data, len / sizeof(wchar_t)), str);
+			d.resize(str.size());
+			memcpy(d.data(), str.c_str(), d.size());
+
+		} else {
+			if (format == CF_TEXT) {
+				len = strnlen((const char *)data, len);
+			}
+			d.resize(len);
+			memcpy(d.data(), data, d.size());
+		}
+
+		return data;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYXClipboard::OnClipboardSetData(0x%x): %s\n", format, e.what());
+		return nullptr;
 	}
-
-	_fs_fallback.OnClipboardSetData(format, data);
-	return data;
 }
 
 void *TTYXClipboard::OnClipboardGetData(UINT format)
 {
 	void *out = nullptr;
+	try {
+		std::string format_name = g_ttyx_custom_formats.Lookup(format);
+		std::vector<unsigned char> data;
+		if (_ttyx->GetClipboard(format_name, data)) {
+			if (format == CF_UNICODETEXT || format == CF_TEXT) {
+				const char *utf8 = (const char *)data.data();
+				size_t utf8_len = strnlen(utf8, data.size());
+				if (format == CF_UNICODETEXT) {
+					std::wstring ws;
+					MB2Wide(utf8, utf8_len, ws);
+					const size_t sz = (ws.size() + 1) * sizeof(wchar_t);
+					out = WINPORT(ClipboardAlloc)(sz);
+					if (out)
+						memcpy(out, ws.c_str(), sz);
+				} else {
+					out = WINPORT(ClipboardAlloc)(utf8_len + 1);
+					if (out)
+						memcpy(out, data.data(), utf8_len + 1);
+				}
 
-	if (format == CF_UNICODETEXT) {
-		if (_pending_empty_text)
-			return nullptr;
-
-		std::string str;
-		_ttyx->GetClipboard(str);
-
-		std::wstring ws;
-		StrMB2Wide(str, ws);
-
-		const size_t sz = (ws.size() + 1) * sizeof(wchar_t);
-		out = WINPORT(ClipboardAlloc)(sz);
-		if (out)
-			memcpy(out, ws.c_str(), sz);
-
-	} else if (format == CF_TEXT) {
-		if (_pending_empty_text)
-			return nullptr;
-
-		std::string str;
-		_ttyx->GetClipboard(str);
-
-		const size_t sz = (str.size() + 1);
-		out = WINPORT(ClipboardAlloc)(sz);
-		if (out)
-			memcpy(out, str.c_str(), sz);
-	}
-
-	if (!out) {
-		out = _fs_fallback.OnClipboardGetData(format);
+			} else {
+				out = WINPORT(ClipboardAlloc)(data.size());
+				if (out)
+					memcpy(out, data.data(), data.size());
+			}
+		}
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYXClipboard::OnClipboardGetData(0x%x): %s\n", format, e.what());
 	}
 
 	return out;
@@ -225,5 +313,11 @@ void *TTYXClipboard::OnClipboardGetData(UINT format)
 
 UINT TTYXClipboard::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 {
-	return _fs_fallback.OnClipboardRegisterFormat(lpszFormat);
+	try {
+		return g_ttyx_custom_formats.Register(lpszFormat);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "TTYXClipboard::OnClipboardRegisterFormat('%ls'): %s\n", lpszFormat, e.what());
+		return 0;
+	}
 }

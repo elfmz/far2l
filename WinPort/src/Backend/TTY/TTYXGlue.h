@@ -5,11 +5,14 @@
 
 struct ITTYXGlue
 {
+	typedef std::map<std::string, std::vector<unsigned char>> Type2Data;
+
 	virtual ~ITTYXGlue() {}
 
 	virtual DWORD GetModifiers() noexcept = 0;
-	virtual bool SetClipboard(const std::string &s) noexcept = 0;
-	virtual bool GetClipboard(std::string &s) noexcept = 0;
+	virtual bool SetClipboard(const Type2Data &t2d) noexcept = 0;
+	virtual bool GetClipboard(const std::string &type, std::vector<unsigned char> &data) noexcept = 0;
+	virtual bool ContainsClipboard(const std::string &type) noexcept = 0;
 };
 
 typedef std::shared_ptr<ITTYXGlue> ITTYXGluePtr;
@@ -22,8 +25,7 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path);
 class TTYXClipboard : public IClipboardBackend
 {
 	ITTYXGluePtr _ttyx;
-	FSClipboardBackend _fs_fallback;
-	bool _pending_empty_text = false;
+	std::unique_ptr<ITTYXGlue::Type2Data> _pending_set;
 
 protected:
 	virtual bool OnClipboardOpen();

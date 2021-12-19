@@ -227,8 +227,8 @@ extern "C" {
 	WINPORT_DECL(SetClipboardData, PVOID, (UINT format, HANDLE mem));
 
 	// these are simplified analogs for Win32's Global* APIs, that dedicated to reference clipboard data
-    WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T len));
-	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID mem));
+	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T len));  // allocates zero-initialized memory
+	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID mem));   // return _exact_ allocation size
 
 	// note that like in win32, clipboard data is mostly owned by clipboard so ClipboardFree actually useful
 	// only in case of SetClipboardData's failure.

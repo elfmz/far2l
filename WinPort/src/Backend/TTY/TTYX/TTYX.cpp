@@ -13,6 +13,11 @@
 #include <time.h>
 #include <assert.h>
 #include <string>
+#include <map>
+#include <vector>
+#include <memory>
+
+typedef std::map<std::string, std::vector<unsigned char> > Type2Data;
 
 class TTYX
 {
@@ -27,8 +32,40 @@ class TTYX
 	Atom _xsel_data_atom;
 	int _display_fd;
 
-	std::string *_get_clipboard = nullptr;
-	std::string _set_clipboard;
+	struct GetClipboardContext {
+		std::vector<unsigned char> *data;
+		Atom a;
+		enum {
+			MISSING,
+			REQUESTING,
+			PRESENT
+		} state = MISSING;
+	} _get_clipboard;
+
+	std::unique_ptr<Type2Data> _set_clipboard;
+
+	std::vector<std::pair<Atom, std::string> > _atoms;
+
+	Atom CustomFormatAtom(const std::string &type)
+	{
+		for (const auto &it : _atoms) {
+			if (it.second == type)
+				return it.first;
+		}
+		Atom out = XInternAtom(_display, type.c_str(), 0);
+		_atoms.emplace_back(out, type);
+		return out;
+	}
+
+	std::string CustomFormatFromAtom(Atom a)
+	{
+		for (const auto &it : _atoms) {
+			if (it.first == a)
+				return it.second;
+		}
+
+		return std::string();
+	}
 
 	void DispatchOneEvent()
 	{
@@ -36,22 +73,30 @@ class TTYX
 		XNextEvent(_display, &event);
 		switch (event.type) {
 		case SelectionNotify:
-			if (event.xselection.property && event.xselection.selection == _clipboard_atom) {
-				Atom target {};
-				int format;
-				unsigned long size, n;
-				char* data{};
-				XGetWindowProperty(event.xselection.display,
-					event.xselection.requestor, event.xselection.property,
-					0L,(~0L), 0, AnyPropertyType, &target, &format, &size, &n, (unsigned char**)&data);
-				if (target == _utf8_atom || target == XA_STRING) {
-					if (_get_clipboard) {
-						_get_clipboard->assign(data, size);
-						_get_clipboard = nullptr;
+			if (event.xselection.selection == _clipboard_atom) {
+				if (event.xselection.property != None) {
+					Atom target {};
+					int format;
+					unsigned long size, n;
+					unsigned char* data = NULL;
+					XGetWindowProperty(event.xselection.display,
+						event.xselection.requestor, event.xselection.property,
+						0L,(~0L), 0, AnyPropertyType, &target, &format, &size, &n, &data);
+					if (target == _get_clipboard.a) {
+						if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
+							_get_clipboard.state = GetClipboardContext::PRESENT;
+							if (_get_clipboard.data) {
+								_get_clipboard.data->resize(size);
+								memcpy(_get_clipboard.data->data(), data, size);
+							}
+						}
+						XFree(data);
 					}
-					XFree(data);
+					XDeleteProperty(event.xselection.display, event.xselection.requestor, event.xselection.property);
+
+				} else if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
+					_get_clipboard.state = GetClipboardContext::MISSING;
 				}
-				XDeleteProperty(event.xselection.display, event.xselection.requestor, event.xselection.property);
 			}
 			break;
 
@@ -68,15 +113,42 @@ class TTYX
 
 				int r;
 				if (ev.target == _targets_atom) {
-					Atom supported[] = {_targets_atom, XA_STRING, _utf8_atom};
+					std::vector<Atom> supported {_targets_atom};
+					if (_set_clipboard) for ( const auto &it : *_set_clipboard) {
+						if (it.first.empty()) {
+							supported.emplace_back(XA_STRING);
+							supported.emplace_back(_utf8_atom);
+						} else {
+							supported.emplace_back(CustomFormatAtom(it.first));
+						}
+
+					} else {
+						fprintf(stderr, "SelectionRequest: no targets to report\n");
+					}
 					r = XChangeProperty(ev.display, ev.requestor, ev.property, XA_ATOM, 32,
-						PropModeReplace, (unsigned char*)(&supported), sizeof(supported)/sizeof(supported[0]));
+						PropModeReplace, (unsigned char*)supported.data(), supported.size());
 
-				} else if (ev.target == XA_STRING || ev.target == _text_atom || ev.target == _utf8_atom) {
+				} else try {
+					if (!_set_clipboard) {
+						throw std::runtime_error("no data to set");
+					}
+					std::string format_name;
+					if (ev.target != XA_STRING && ev.target != _text_atom && ev.target != _utf8_atom) {
+						format_name = CustomFormatFromAtom(ev.target);
+						if (format_name.empty()) {
+							throw std::runtime_error("unregistered target");
+						}
+					}
+
+					const auto &it = _set_clipboard->find(format_name);
+					if (it == _set_clipboard->end()) {
+						throw std::runtime_error("mismatching target");
+					}
 					r = XChangeProperty(ev.display, ev.requestor, ev.property, ev.target, 8,
-					PropModeReplace, (unsigned char*)_set_clipboard.data(), _set_clipboard.size());
+						PropModeReplace, it->second.data(), it->second.size());
 
-				} else {
+				} catch (std::exception &e) {
+					fprintf(stderr, "SelectionRequest: %s\n", e.what());
 					ev.property = None;
 					r = 0;
 				}
@@ -88,7 +160,7 @@ class TTYX
 
 		case SelectionClear:
 			if (event.xselectionrequest.selection == _clipboard_atom) {
-				_set_clipboard.clear();
+				_set_clipboard.reset();
 			}
 			break;
 		}
@@ -143,20 +215,26 @@ public:
 		return out;
 	}
 
-	void GetClipboard(std::string &s)
+	bool GetClipboard(const std::string &type, std::vector<unsigned char> *data = nullptr)
 	{
-		_get_clipboard = &s;
+		_get_clipboard.a = type.empty()
+			? (_utf8_atom == None ? XA_STRING : _utf8_atom)
+			: CustomFormatAtom(type);
+		_get_clipboard.data = data;
+		_get_clipboard.state = GetClipboardContext::REQUESTING;
 		XConvertSelection(_display, _clipboard_atom,
-			(_utf8_atom == None ? XA_STRING : _utf8_atom), _xsel_data_atom, _window, CurrentTime);
+			_get_clipboard.a, _xsel_data_atom, _window, CurrentTime);
 		XSync(_display, 0);
 		do {
 			DispatchOneEvent();
-		} while (_get_clipboard != nullptr);
+		} while (_get_clipboard.state == GetClipboardContext::REQUESTING);
+
+		return _get_clipboard.state == GetClipboardContext::PRESENT;
 	}
 
-	void SetClipboard(std::string &s)
+	void SetClipboard(std::unique_ptr<Type2Data> &&td)
 	{
-		_set_clipboard.swap(s);
+		_set_clipboard = std::move(td);
 		XSetSelectionOwner(_display, _clipboard_atom, _window, 0);
 		XSync(_display, 0);
 	}
@@ -193,7 +271,7 @@ int main(int argc, char *argv[])
 		const int fdw = atoi(argv[2]);
 		IPCEndpoint ipc(fdr, fdw);
 		TTYX ttyx;
-		std::string str;
+		std::string type;
 		const auto cmd = ipc.RecvCommand();
 		if (cmd != IPC_INIT)
 			throw PipeIPCError("bad IPC init command", (unsigned int)cmd);
@@ -210,14 +288,38 @@ int main(int argc, char *argv[])
 					ipc.SendPOD(dw);
 				} break;
 
+				case IPC_CLIPBOARD_CONTAINS: {
+					ipc.RecvString(type);
+					bool b = ttyx.GetClipboard(type);
+					ipc.SendPOD(b);
+				} break;
+
 				case IPC_CLIPBOARD_GET: {
-					ttyx.GetClipboard(str);
-					ipc.SendString(str);
+					ipc.RecvString(type);
+					std::vector<unsigned char> data;
+					ssize_t sz = ttyx.GetClipboard(type, &data) ? data.size() : -1;
+					ipc.SendPOD(sz);
+					if (sz > 0) {
+						ipc.Send(data.data(), data.size());
+					}
 				} break;
 
 				case IPC_CLIPBOARD_SET: {
-					ipc.RecvString(str);
-					ttyx.SetClipboard(str);
+					std::unique_ptr<Type2Data> t2d(new Type2Data);
+					for (;;) {
+						size_t size{};
+						ipc.RecvPOD(size);
+						if (size == size_t(-1)) {
+							break;
+						}
+						ipc.RecvString(type);
+						auto &data = (*t2d)[type];
+						data.resize(size);
+						if (!data.empty()) {
+							ipc.Recv(data.data(), data.size());
+						}
+					}
+					ttyx.SetClipboard(std::move(t2d));
 				} break;
 
 				default:

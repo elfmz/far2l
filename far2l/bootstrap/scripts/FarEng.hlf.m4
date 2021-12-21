@@ -2259,8 +2259,7 @@ Note that this options works only in GUI backend mode.
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:
-  #%Ver# - version of FAR2L;
-  #%Build# - build number of FAR2L;
+  #%Ver# - FAR2L version;
   #%Platform# - FAR2L platform architecture;
   #%Host# - host name of the machine where FAR2L is running;
   #%User# - user name under wich FAR2L is running;

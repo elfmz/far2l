@@ -48,48 +48,19 @@ static const FARString& GetFarTitleAddons()
 {
 	// " - Far%Ver%Admin"
 	/*
-		%Ver      - 2.0
-		%Build    - 1259
+		%Ver      - 2.3.102-beta
 		%Platform - x86
 		%Admin    - MFarTitleAddonsAdmin
     */
-	static FormatString strVer, strBuild;
-	static bool bFirstRun = true;
+	static FARString strVer(FAR_BUILD);
+	static FARString strPlatform(FAR_PLATFORM);
 	static FARString strTitleAddons;
 
-	strTitleAddons.Copy(L" - Far ",7);
-	strTitleAddons += Opt.strTitleAddons;
-
-	if (bFirstRun)
-	{
-		bFirstRun = false;
-		strVer << HIWORD(FAR_VERSION) << L"." << LOWORD(FAR_VERSION);
-		strBuild << MB2Wide(FAR_BUILD).c_str();
-	}
+	strTitleAddons = L" - far2l ";
+	strTitleAddons+= Opt.strTitleAddons;
 
 	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1);
-	ReplaceStrings(strTitleAddons,L"%Build",strBuild,-1);
-	ReplaceStrings(strTitleAddons,L"%Platform",
-#if defined(__x86_64__)
-	L"x64",
-#elif defined(__ppc64__)
-	L"ppc64",
-#elif defined(__arm64__) || defined(__aarch64__)
-	L"arm64",
-#elif defined(__arm__)
-	L"arm",
-#elif defined(__e2k__)
-	L"e2k",
-#elif defined(__riscv)
-# if __riscv_xlen == 64
-	L"rv64",
-# else
-	L"rv32",
-# endif
-#else
-	L"x86",
-#endif
-	-1);
+	ReplaceStrings(strTitleAddons,L"%Platform", strPlatform, -1);
 	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
 
 	FARString hn, un;

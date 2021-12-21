@@ -144,7 +144,7 @@ extern "C" {
 
 	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T dwBytes))
 	{
-		if (dwBytes > 0x7ffffff0 || dwBytes == 0) {
+		if (dwBytes > 0x7fffff00 || dwBytes == 0) {
 			fprintf(stderr, "%s: insane amount wanted (%lu)\n", __FUNCTION__, (unsigned long)dwBytes);
 			return NULL;
 		}

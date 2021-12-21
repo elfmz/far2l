@@ -7,20 +7,38 @@ project (far2l)
 set(APP_NAME "far2l")
 set(APP_IDENTIFIER "com.far2l")
 set(CPACK_PACKAGE_NAME "far2l")
-set(VERSION_MAJOR 2)
-set(VERSION_MINOR 3)
+
+file(READ "${CMAKE_SOURCE_DIR}/packaging/version" VERSION)
+string(REGEX REPLACE "[\r\n\t ]$" "" VERSION "${VERSION}")
+string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" VERSION_MAJOR "${VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" VERSION_MINOR "${VERSION}")
+string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.(.*)" "\\1" VERSION_PATCH "${VERSION}")
+
+if(NOT VERSION_MAJOR OR NOT VERSION_MINOR OR NOT VERSION_PATCH)
+	message(FATAL_ERROR "${ColorRed}packaging/version is corrupted, please write X.Y.Z version into it.${ColorNormal}")
+endif()
 
 execute_process(COMMAND sh -c
-	"cd ${CMAKE_SOURCE_DIR} && git log -1 --date=format:'%y%m%d' --format=%cd-%h"
-	OUTPUT_VARIABLE VERSION_PATCH)
+        "cd ${CMAKE_SOURCE_DIR} && git describe --tag"
+        OUTPUT_VARIABLE GIT_TAG)
+string(REGEX REPLACE "[\r\n\t ]$" "" GIT_TAG "${GIT_TAG}")
 
-string(REGEX REPLACE "[\r\n\t ]$" "" VERSION_PATCH "${VERSION_PATCH}")
-
-if("${VERSION_PATCH}" STREQUAL "")
-	set(VERSION_PATCH "alpha")
+if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
+	execute_process(COMMAND sh -c
+		"cd ${CMAKE_SOURCE_DIR} && git log -1 --format=%h"
+		OUTPUT_VARIABLE GIT_HASH)
+	string(REGEX REPLACE "[\r\n\t ]$" "" GIT_HASH "${GIT_HASH}")
+	if(NOT "${GIT_HASH}" STREQUAL "")
+		set(VERSION_PATCH "${VERSION_PATCH}-${GIT_HASH}")
+	else()
+		set(VERSION_PATCH "${VERSION_PATCH}-alpha")
+	endif()
 else()
+	message(WARNING "git information unavailable, assuming its a build from v_${VERSION}")
 	set(VERSION_PATCH "${VERSION_PATCH}-alpha")
 endif()
+
+
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
@@ -107,16 +125,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(INSTALL_DIR ${APP_DIR}/${APP_NAME}.app/Contents/MacOS)
 	set(EXECUTABLE_NAME ${APP_NAME})
 else()
-	set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
-	set(EXECUTABLE_NAME far2l)
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections") # -Wl,-dead_strip
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections") # -Wl,-dead_strip
-else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffunction-sections -fdata-sections -Wl,--gc-sections")
+	set(INSTALL_DIR ${CMAKE_BINARY_DIR}/install)
+	set(EXECUTABLE_NAME far2l)
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "CYGWIN")

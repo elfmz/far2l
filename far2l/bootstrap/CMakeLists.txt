@@ -23,7 +23,6 @@ set(DEPENDENCIES
   "${SCRIPTS}/copyright.inc.m4"
   "${SCRIPTS}/farversion.m4"
   "${SCRIPTS}/tools.m4"
-  "${SCRIPTS}/vbuild.m4"
   "${SCRIPTS}/farlang.templ.m4"
 )
 

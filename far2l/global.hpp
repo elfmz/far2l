@@ -34,6 +34,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "farversion.h"
+
 extern clock_t StartIdleTime;
 
 extern int WaitInMainLoop;
@@ -54,9 +56,6 @@ extern int ScreenSaverActive;
 extern int CloseFAR, CloseFARMenu;
 
 extern int DisablePluginsOutput;
-
-extern const DWORD FAR_VERSION;
-extern const char *FAR_BUILD;
 
 extern BOOL IsProcessAssignMacroKey;
 extern BOOL IsRedrawFramesInProcess;

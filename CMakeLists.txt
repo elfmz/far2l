@@ -25,14 +25,14 @@ string(REGEX REPLACE "[\r\n\t ]$" "" GIT_TAG "${GIT_TAG}")
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
 	execute_process(COMMAND sh -c
-		"cd ${CMAKE_SOURCE_DIR} && git log -1 --format=%h"
+		"cd ${CMAKE_SOURCE_DIR} && git rev-parse --short HEAD"
 		OUTPUT_VARIABLE GIT_HASH)
 	string(REGEX REPLACE "[\r\n\t ]$" "" GIT_HASH "${GIT_HASH}")
 	if(NOT "${GIT_HASH}" STREQUAL "")
 		set(VERSION_PATCH "${VERSION_PATCH}-${GIT_HASH}")
+	else()
+		message(WARNING "git information unavailable, assuming its a build from v_${VERSION}")
 	endif()
-else()
-	message(WARNING "git information unavailable, assuming its a build from v_${VERSION}")
 endif()
 
 set(VERSION_PATCH "${VERSION_PATCH}-alpha")

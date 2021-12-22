@@ -4721,13 +4721,33 @@ upd:"TIP: To close far2l - type 'exit far'."
 
 MVTStartTipNoCmdTitle
 l:
-"При наборе команды с отключенными панелями:                               "
-"While typing command with panels off:                                     "
-upd:"While typing command with panels off:                                     "
-upd:"While typing command with panels off:                                     "
-upd:"While typing command with panels off:                                     "
-upd:"While typing command with panels off:                                     "
-upd:"While typing command with panels off:                                     "
+"При наборе команды:                                                       "
+"While typing command:                                                     "
+upd:"While typing command:                                                     "
+upd:"While typing command:                                                     "
+upd:"While typing command:                                                     "
+upd:"While typing command:                                                     "
+upd:"While typing command:                                                     "
+
+MVTStartTipNoCmdCtrlO
+l:
+" Ctrl+O - переключения панель/терминал.                                   "
+" Ctrl+O - switch between panel/terminal.                                  "
+upd:" Ctrl+O - switch between panel/terminal.                                  "
+upd:" Ctrl+O - switch between panel/terminal.                                  "
+upd:" Ctrl+O - switch between panel/terminal.                                  "
+upd:" Ctrl+O - switch between panel/terminal.                                  "
+upd:" Ctrl+O - switch between panel/terminal.                                  "
+
+MVTStartTipNoCmdCtrlArrow
+l:
+" Ctrl+Вверх/+Вниз/+Влево/+Вправо - изменение размера панелей.             "
+" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
+upd:" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
+upd:" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
+upd:" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
+upd:" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
+upd:" Ctrl+Up/+Down/+Left/+Right - adjust panels dimensions.                   "
 
 MVTStartTipNoCmdShiftTAB
 l:
@@ -4741,13 +4761,13 @@ upd:" Double Shift+TAB - bash-guided autocomplete.                             "
 
 MVTStartTipNoCmdFn
 l:
-" F3, F4, F8 - просмотр/редактирование/очистка лога терминала.             "
-" F3, F4, F8 - viewer/editor/clear terminal log.                           "
-upd:" F3, F4, F8 - viewer/editor/clear terminal log.                           "
-upd:" F3, F4, F8 - viewer/editor/clear terminal log.                           "
-upd:" F3, F4, F8 - viewer/editor/clear terminal log.                           "
-upd:" F3, F4, F8 - viewer/editor/clear terminal log.                           "
-upd:" F3, F4, F8 - viewer/editor/clear terminal log.                           "
+" F3, F4, F8 - просмотр/редактор/очистка лога терминала при выкл. панелях. "
+" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
+upd:" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
+upd:" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
+upd:" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
+upd:" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
+upd:" F3, F4, F8 - viewer/editor/clear terminal log (if panels are off).       "
 
 MVTStartTipNoCmdMouse
 l:

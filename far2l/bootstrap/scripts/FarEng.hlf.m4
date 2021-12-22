@@ -1275,7 +1275,7 @@ $ #Menus: options menu#
 @Terminal
 $ #Terminal
     #FAR2L# contains built-in terminal emulator, allowing to execute command line applications see their output and control functionality.
-In order to keep usual shell experience far2l first launches default supported user's shell in interactive mode and sends it commands typed
+In order to keep usual shell experience far2l first launches supported user's shell in interactive mode and sends it commands typed
 in its own command line.
     #Autocomplete# FAR2L has two independent command line autocompletion mechanisms. First is original FAR's driven-based autocomplete and works
 by default by giving options while you're typing command. Second is driven by bash autocompletion and can be activated by pressing
@@ -1290,7 +1290,8 @@ built-in viewer and editor capabilities. You can also open history viewer by scr
 it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
 or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use Ctrl+Alt+Z to put far2l instance to background, releasing terminal but leaving active command execution.
     #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
-opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen.
+opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen. You can switch between panels and terminal by pressing Ctrl+O
+or clicking top left corner.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual
 terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
 like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.

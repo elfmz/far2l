@@ -30,15 +30,12 @@ if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
 	string(REGEX REPLACE "[\r\n\t ]$" "" GIT_HASH "${GIT_HASH}")
 	if(NOT "${GIT_HASH}" STREQUAL "")
 		set(VERSION_PATCH "${VERSION_PATCH}-${GIT_HASH}")
-	else()
-		set(VERSION_PATCH "${VERSION_PATCH}-alpha")
 	endif()
 else()
 	message(WARNING "git information unavailable, assuming its a build from v_${VERSION}")
-	set(VERSION_PATCH "${VERSION_PATCH}-alpha")
 endif()
 
-
+set(VERSION_PATCH "${VERSION_PATCH}-alpha")
 
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 

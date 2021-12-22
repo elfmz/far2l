@@ -128,7 +128,7 @@ XferKind ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destina
 		default_xoa = XOA_ASK;
 	}
 
-	if (_xk == XK_MOVE && _xd == XD_DOWNLOAD
+	if (_xk == XK_MOVE && (_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD)
 	 && destination.find("/") == std::string::npos) {
 		return XK_RENAME;
 	}
@@ -166,7 +166,7 @@ LONG_PTR ConfirmXfer::DlgProc(int msg, int param1, LONG_PTR param2)
 				SetEnabledDialogControl(_i_proceed, true);
 			}
 
-			if (_xk == XK_MOVE && _xd == XD_DOWNLOAD) {
+			if (_xk == XK_MOVE && (_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD)) {
 				if (destination.find("/") == std::string::npos) {
 					if (_prev_destination.find("/") != std::string::npos
 					 || _prev_destination.empty()) {

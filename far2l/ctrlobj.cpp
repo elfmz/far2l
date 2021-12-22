@@ -220,8 +220,10 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 	} else {
 		Lines.emplace_back();
 		const size_t ConsoleHintsIndex = Lines.size();
-		Lines.reserve(ConsoleHintsIndex + 10);
+		Lines.reserve(ConsoleHintsIndex + 12);
 		Lines.emplace_back(MSG(MVTStartTipNoCmdTitle));
+		Lines.emplace_back(MSG(MVTStartTipNoCmdCtrlO));
+		Lines.emplace_back(MSG(MVTStartTipNoCmdCtrlArrow));
 		Lines.emplace_back(MSG(MVTStartTipNoCmdShiftTAB));
 		Lines.emplace_back(MSG(MVTStartTipNoCmdFn));
 		Lines.emplace_back(MSG(MVTStartTipNoCmdMouse));

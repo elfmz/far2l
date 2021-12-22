@@ -416,7 +416,11 @@ int FilePanels::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			if (!ActivePanel->ProcessKey(KEY_F1))
+			if (!LeftPanel->IsVisible() && !RightPanel->IsVisible())
+			{
+				Help Hlp(L"Terminal");
+			}
+			else if (!ActivePanel->ProcessKey(KEY_F1))
 			{
 				Help Hlp(L"Contents");
 			}

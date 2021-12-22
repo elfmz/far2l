@@ -54,7 +54,7 @@ FarSpa.lng Spanish "Spanish (Español)"
 
 
 MYes=0
-`l://Version: 'MAJOR`.'MINOR` build 'BUILD
+`l://Version: 'MAJOR`.'MINOR` build 'PATCH
 l:
 "Да"
 "Yes"

@@ -21,6 +21,7 @@
 #include <utils.h>
 #include <ScopeHelpers.h>
 #include "SafeMMap.hpp"
+#include "farversion.h"
 
 //#define PRINT_FAULTS
 
@@ -29,8 +30,6 @@
 #include <sys/resource.h>
 static struct rusage s_usg{};
 #endif
-
-extern const char *FAR_BUILD;
 
 static std::set<SafeMMap *> s_safe_mmaps;
 static std::atomic<int> s_safe_mmaps_sl{0};
@@ -78,7 +77,10 @@ static void FDWriteStr(int fd, const char *str)
 static void FDWriteSignalInfo(int fd, int num, siginfo_t *info, void *ctx)
 {
 	FDWriteStr(fd, "\n🔥🔥🔥 ");
+	FDWriteStr(fd, "far2l ");
 	FDWriteStr(fd, FAR_BUILD);
+	FDWriteStr(fd, " ");
+	FDWriteStr(fd, FAR_PLATFORM);
 	char errmsg[] = "\nSignal 00 [0000000000000000] on 0000000000000000\n";
 	//                0123456789abcdef0123456789abcdef0123456789abcdef0
 	//             0x0^            0x1^            0x2^            0x3^

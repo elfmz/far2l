@@ -1606,32 +1606,51 @@ void Panel::ShowScreensCount()
 {
 	if (Opt.ShowScreensNumber && !X1)
 	{
-		int Viewers=FrameManager->GetFrameCountByType(MODALTYPE_VIEWER);
-		int Editors=FrameManager->GetFrameCountByType(MODALTYPE_EDITOR);
-		int Dialogs=FrameManager->GetFrameCountByType(MODALTYPE_DIALOG);
+		int Viewers = FrameManager->GetFrameCountByType(MODALTYPE_VIEWER);
+		int Editors = FrameManager->GetFrameCountByType(MODALTYPE_EDITOR);
+		int Dialogs = FrameManager->GetFrameCountByType(MODALTYPE_DIALOG);
+		bool HasPluginsTasks = CtrlObject->Plugins.HasBackgroundTasks();
 
-		if (Viewers>0 || Editors>0 || Dialogs > 0)
+		if (Viewers > 0 || Editors > 0 || Dialogs > 0 || HasPluginsTasks)
 		{
 			FARString strScreensText;
-			FARString strAdd;
-			strScreensText.Format(L"[%d", Viewers);
+
+			char Prefix = '[';
+			if (Viewers > 0)
+			{
+				strScreensText.Format(L"%cV%d", Prefix, Viewers);
+				Prefix = ' ';
+			}
 
 			if (Editors > 0)
 			{
-				strAdd.Format(L"+%d", Editors);
-				strScreensText += strAdd;
+				strScreensText.AppendFormat(L"%cE%d", Prefix, Editors);
+				Prefix = ' ';
 			}
 
 			if (Dialogs > 0)
 			{
-				strAdd.Format(L",%d", Dialogs);
-				strScreensText += strAdd;
+				strScreensText.AppendFormat(L"%cD%d", Prefix, Dialogs);
+				Prefix = ' ';
 			}
 
-			strScreensText += L"]";
-			GotoXY(Opt.ShowColumnTitles ? X1:X1+2,Y1);
-			SetColor(COL_PANELSCREENSNUMBER);
-			Text(strScreensText);
+			if (HasPluginsTasks)
+			{
+				const auto &Tasks = CtrlObject->Plugins.BackgroundTasks();
+				for (const auto &It : Tasks)
+				{
+					strScreensText.AppendFormat(L"%c%ls%u", Prefix, It.first.c_str(), It.second);
+					Prefix = ' ';
+				}
+			}
+
+			if (Prefix != '[')
+			{
+				strScreensText += L"]";
+				GotoXY(Opt.ShowColumnTitles ? X1:X1+2,Y1);
+				SetColor(COL_PANELSCREENSNUMBER);
+				Text(strScreensText);
+			}
 		}
 	}
 }

@@ -30,6 +30,12 @@ public:
 
 extern struct Globals
 {
+	struct BackgroundTaskScope
+	{
+		BackgroundTaskScope();
+		~BackgroundTaskScope();
+	};
+
 	std::wstring plugin_path;
 	PluginStartupInfo info = {};
 	FarStandardFunctions fsf = {};
@@ -55,3 +61,4 @@ private:
 	std::map<int, std::string> _msg_mb;
 	std::mutex _msg_mb_mtx;
 } G;
+

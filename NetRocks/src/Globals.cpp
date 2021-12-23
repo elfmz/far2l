@@ -98,3 +98,16 @@ bool Globals::GetGlobalConfigBool(const char *name, bool def)
 {
 	return GetGlobalConfigInt(name, def ? 1 : 0) != 0;
 }
+
+///////////
+
+Globals::BackgroundTaskScope::BackgroundTaskScope()
+{
+	G.info.FSF->BackgroundTask(L"NR", TRUE);
+}
+
+Globals::BackgroundTaskScope::~BackgroundTaskScope()
+{
+	G.info.FSF->BackgroundTask(L"NR", FALSE);
+}
+

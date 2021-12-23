@@ -39,6 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "plclass.hpp"
 #include "PluginA.hpp"
 #include "PluginW.hpp"
+#include <string>
+#include <map>
+#include <mutex>
 
 extern const char *FmtDiskMenuStringD;
 extern const char *FmtPluginMenuStringD;
@@ -163,6 +166,7 @@ class PluginManager
 		Plugin **PluginsData;
 		int PluginsCount;
 		int OemPluginsCount;
+		struct BackgroundTasks : std::map<std::wstring, unsigned int>, std::mutex {} BgTasks;
 
 	public:
 
@@ -272,6 +276,11 @@ class PluginManager
 #endif
 		void GetCustomData(FileListItem *ListItem);
 		bool MayExitFar();
+
+		void BackroundTaskStarted(const wchar_t *Info);
+		void BackroundTaskFinished(const wchar_t *Info);
+		bool HasBackgroundTasks();
+		std::map<std::wstring, unsigned int> BackgroundTasks();
 
 		friend class Plugin;
 };

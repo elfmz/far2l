@@ -1953,6 +1953,7 @@ typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
 typedef int (WINAPI *FARDISPATCHNTRTHRDCALLS)();
+typedef void (WINAPI *FARBACKGROUNDTASK)(const wchar_t *Info, BOOL Started);
 
 enum BOX_DEF_SYMBOLS
 {
@@ -2071,6 +2072,7 @@ typedef struct FarStandardFunctions
 	FAREXECUTE_LIBRARY         ExecuteLibrary;
 	FARDISPLAYNOTIFICATION     DisplayNotification;
 	FARDISPATCHNTRTHRDCALLS    DispatchInterThreadCalls;
+	FARBACKGROUNDTASK          BackgroundTask;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

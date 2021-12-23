@@ -235,6 +235,10 @@ Shows (depending on settings - always or if far2l in background) system shell-wi
 * `int DispatchInterThreadCalls();`
 far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterThreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
 
+* `int BackgroundTask(const wchar_t *Info, BOOL Started);`
+If plugin implements tasks running in background it may invoke this function to indicate about pending task in left-top corner.
+Info is a short description of task or just its owner and must be same string when invoked with Started TRUE or FALSE.
+
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * `FCTL_GETPANELPLUGINHANDLE`
 Can be used to interract with plugin that renders other panel.

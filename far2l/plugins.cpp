@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "SafeMMap.hpp"
 #include "HotkeyLetterDialog.hpp"
+#include "InterThreadCall.hpp"
 #include <KeyFileHelper.h>
 #include <crc64.h>
 
@@ -2028,6 +2029,56 @@ bool PluginManager::MayExitFar()
 	}
 
 	return out;
+}
+
+static void OnBackgroundTasksChangedSynched()
+{
+	if (FrameManager)
+		FrameManager->RefreshFrame();
+}
+
+void PluginManager::BackroundTaskStarted(const wchar_t *Info)
+{
+	{
+		std::lock_guard<std::mutex> lock(BgTasks);
+		auto ir = BgTasks.emplace(Info, 0);
+		ir.first->second++;
+		fprintf(stderr, "PluginManager::BackroundTaskStarted('%ls') - count=%d\n", Info, ir.first->second);
+	}
+
+	InterThreadCallAsync(std::bind(OnBackgroundTasksChangedSynched));
+}
+
+void PluginManager::BackroundTaskFinished(const wchar_t *Info)
+{
+	{
+		std::lock_guard<std::mutex> lock(BgTasks);
+		auto it = BgTasks.find(Info);
+		if (it == BgTasks.end())
+		{
+			fprintf(stderr, "PluginManager::BackroundTaskFinished('%ls') - no such task!\n", Info);
+			return;
+		}
+
+		it->second--;
+		fprintf(stderr, "PluginManager::BackroundTaskFinished('%ls') - count=%d\n", Info, it->second);
+		if (it->second == 0)
+			BgTasks.erase(it);
+	}
+
+	InterThreadCallAsync(std::bind(OnBackgroundTasksChangedSynched));
+}
+
+bool PluginManager::HasBackgroundTasks()
+{
+	std::lock_guard<std::mutex> lock(BgTasks);
+	return !BgTasks.empty();
+}
+
+std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
+{
+	std::lock_guard<std::mutex> lock(BgTasks);
+	return BgTasks;
 }
 
 ////////////////////////

@@ -389,6 +389,14 @@ static int farDispatchInterThreadCallsW()
 	return DispatchInterThreadCalls();
 }
 
+static void WINAPI farBackgroundTaskW(const wchar_t *Info, BOOL Started)
+{
+	if (Started)
+		CtrlObject->Plugins.BackroundTaskStarted(Info);
+	else
+		CtrlObject->Plugins.BackroundTaskFinished(Info);
+}
+
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
 	static PluginStartupInfo StartupInfo{};
@@ -450,6 +458,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
 		StandardFunctions.DisplayNotification = farDisplayNotificationW;
 		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsW;
+		StandardFunctions.BackgroundTask = farBackgroundTaskW;
 	}
 
 	if (!StartupInfo.StructSize)

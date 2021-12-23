@@ -165,6 +165,8 @@ void OpXfer::Abort()
 
 void OpXfer::Process()
 {
+	Globals::BackgroundTaskScope bg_task_scope;
+
 	if (_kind == XK_RENAME) {
 		if (_enumer) {
 			Rename(_enumer->Items());

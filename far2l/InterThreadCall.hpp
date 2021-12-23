@@ -6,6 +6,7 @@
 
 struct IInterThreadCallDelegate
 {
+	virtual ~IInterThreadCallDelegate() {}
 	virtual void Process(bool stopping) = 0;
 };
 
@@ -68,6 +69,34 @@ public:
 	}
 };
 
+template <class FN>
+	class InterThreadAsyncCallDelegate : protected IInterThreadCallDelegate
+{
+	FN _fn;
+
+protected:
+	virtual void Process(bool stopping)
+	{
+		if (LIKELY(!stopping))
+			_fn();
+
+		delete this;
+	}
+
+public:
+	inline InterThreadAsyncCallDelegate(FN fn):_fn(fn) { }
+
+	bool Enqueue()
+	{
+		if (UNLIKELY(!EnqueueInterThreadCallDelegate(this))) {
+			delete this;
+			return false;
+		}
+
+		return true;
+	}
+};
+
 
 ////////
 
@@ -85,6 +114,14 @@ template <class RV, RV FAIL_RV = (RV)0, class FN>
 
 	return FAIL_RV;
 }
+
+template <class FN>
+	static void InterThreadCallAsync(FN fn)
+{
+	auto *c = new InterThreadAsyncCallDelegate<FN>(fn);
+	c->Enqueue();
+}
+
 
 
 struct InterThreadLock

@@ -5,5 +5,5 @@ NEW_VERSION=$(awk -F'.' \
 echo NEW_VERSION=$NEW_VERSION
 echo $NEW_VERSION > ./version
 git add ./version
-git commit -m 'Bump version to $NEW_VERSION'
+git commit -m "Bump version to $NEW_VERSION"
 git tag v_$NEW_VERSION

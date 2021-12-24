@@ -8,14 +8,23 @@ set(APP_NAME "far2l")
 set(APP_IDENTIFIER "com.far2l")
 set(CPACK_PACKAGE_NAME "far2l")
 
+string(ASCII 27 Esc)
+set(ColorNormal "${Esc}[m")
+set(ColorRed "${Esc}[1;31m")
+
+# just to force reconfigure if packaging/version changed
+configure_file(${CMAKE_SOURCE_DIR}/packaging/version ${CMAKE_BINARY_DIR}/packaging/version @ONLY)
+
 file(READ "${CMAKE_SOURCE_DIR}/packaging/version" VERSION)
 string(REGEX REPLACE "[\r\n\t ]$" "" VERSION "${VERSION}")
 string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" VERSION_MAJOR "${VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" VERSION_MINOR "${VERSION}")
 string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.(.*)" "\\1" VERSION_PATCH "${VERSION}")
 
-if(NOT VERSION_MAJOR OR NOT VERSION_MINOR OR NOT VERSION_PATCH)
-	message(FATAL_ERROR "${ColorRed}packaging/version is corrupted, please write X.Y.Z version into it.${ColorNormal}")
+if("${VERSION_MAJOR}" STREQUAL "" OR "${VERSION_MAJOR}" STREQUAL "${VERSION}"
+ OR "${VERSION_MINOR}" STREQUAL "" OR "${VERSION_MINOR}" STREQUAL "${VERSION}"
+ OR "${VERSION_PATCH}" STREQUAL "" OR "${VERSION_PATCH}" STREQUAL "${VERSION}")
+	message(FATAL_ERROR "${ColorRed}packaging/version is corrupted, please write actual X.Y.Z version into it.${ColorNormal}")
 endif()
 
 execute_process(COMMAND sh -c
@@ -42,11 +51,6 @@ set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-string(ASCII 27 Esc)
-set(ColorNormal "${Esc}[m")
-set(ColorRed "${Esc}[1;31m")
-
 
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")

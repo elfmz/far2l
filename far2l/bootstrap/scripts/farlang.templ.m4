@@ -9570,7 +9570,7 @@ MFindGoTo
 "&Ir a"
 
 MFindView
-"&Смотреть"
+"&Просм"
 "&View"
 "Zo&braz"
 "&Betrachten"
@@ -9579,7 +9579,7 @@ MFindView
 "&Ver "
 
 MFindEdit
-"&Редактировать"
+"&Редакт"
 "&Edit"
 upd:"&Edit"
 upd:"&Edit"

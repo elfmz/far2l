@@ -1723,6 +1723,10 @@ int FileList::ProcessKey(int Key)
 						{
 							SetPluginModified();
 						}
+						else
+						{
+							RefreshedPanel = FALSE;
+						}
 					}
 					if ((Edit || DeleteViewedFile) && (!efu || efu->PutCode != 0))
 					{

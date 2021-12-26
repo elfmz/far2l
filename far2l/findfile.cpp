@@ -410,6 +410,7 @@ enum FINDDLG
 	FD_BUTTON_NEW,
 	FD_BUTTON_GOTO,
 	FD_BUTTON_VIEW,
+	FD_BUTTON_EDIT,
 	FD_BUTTON_PANEL,
 	FD_BUTTON_STOP,
 };
@@ -2085,6 +2086,13 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 				}
 				break;
 
+			case FD_BUTTON_EDIT:
+				{
+					FindDlgProc(hDlg,DN_KEY,FD_LISTBOX,KEY_F4);
+					return TRUE;
+				}
+				break;
+
 			case FD_BUTTON_GOTO:
 			case FD_BUTTON_PANEL:
 				{
@@ -2212,6 +2220,7 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 	{
 		SendDlgMessage(hDlg, DM_ENABLE, FD_BUTTON_GOTO, TRUE);
 		SendDlgMessage(hDlg, DM_ENABLE, FD_BUTTON_VIEW, TRUE);
+		SendDlgMessage(hDlg, DM_ENABLE, FD_BUTTON_EDIT, TRUE);
 		if(AnySetFindList)
 		{
 			SendDlgMessage(hDlg, DM_ENABLE, FD_BUTTON_PANEL, TRUE);
@@ -2872,6 +2881,7 @@ static bool FindFilesProcess(Vars& v)
 		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_FOCUS|DIF_DEFAULT|DIF_CENTERGROUP,MSG(MFindNewSearch)},
 		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindGoTo)},
 		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindView)},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindEdit)},
 		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindPanel)},
 		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP,MSG(MFindStop)}
 	};

@@ -340,7 +340,7 @@ public:
 			event.dwControlKeyState|= GetModifiersByXQueryPointer();
 		}
 		if (!event.wVirtualKeyCode && event.uChar.UnicodeChar) {
-			struct KeyMap {
+			static const struct KeyMap {
 				KeySym ks;
 				WORD vk;
 				char ch;
@@ -352,8 +352,14 @@ public:
 				{XK_KP_Decimal, VK_DECIMAL, '.'},
 				{XK_Escape, VK_ESCAPE, '\x1b'}
 			};
-			for (const auto &krm : key_remap) {
-				if (event.uChar.UnicodeChar == krm.ch && _xi_keystate.find(krm.ks) != _xi_keystate.end()) {
+
+			bool latecomer_dispatched = false;
+			for (const auto &krm : key_remap) if (event.uChar.UnicodeChar == krm.ch) {
+				if (!latecomer_dispatched && _xi_keystate.find(krm.ks) == _xi_keystate.end()) {
+					latecomer_dispatched = true;
+					DispatchLatecomerXEvents();
+				}
+				if (_xi_keystate.find(krm.ks) != _xi_keystate.end()) {
 					event.wVirtualKeyCode = krm.vk;
 					break;
 				}
@@ -361,12 +367,31 @@ public:
 		}
 	}
 
+	void DispatchPendingXEvents()
+	{
+		while (XPending(_display)) {
+			DispatchOneEvent();
+		}
+	}
+
+	void DispatchLatecomerXEvents()
+	{
+		DispatchPendingXEvents();
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(_display_fd, &fds);
+
+		struct timeval tv = {0, 100000};
+		select(_display_fd + 1, &fds, NULL, NULL, &tv);
+		if (FD_ISSET(_display_fd, &fds)) {
+			DispatchPendingXEvents();
+		}
+	}
+
 	void Idle(int ipc_fdr)
 	{
 		for (;;) {
-			while (XPending(_display)) {
-				DispatchOneEvent();
-			}
+			DispatchPendingXEvents();
 
 			fd_set fds;
 			FD_ZERO(&fds);

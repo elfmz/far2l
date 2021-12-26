@@ -33,6 +33,48 @@ static TTYBackend * g_vtb = nullptr;
 
 static void OnSigHup(int signo);
 
+static bool IsEnhancedKey(WORD code)
+{
+	return (code==VK_LEFT || code==VK_RIGHT || code==VK_UP || code==VK_DOWN
+		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR );
+}
+
+static WORD WChar2WinVKeyCode(WCHAR wc)
+{
+	if ((wc >= L'0' && wc <= L'9') || (wc >= L'A' && wc <= L'Z')) {
+		return (WORD)wc;
+	}
+	if (wc >= L'a' && wc <= L'z') {
+		return (WORD)wc - (L'a' - L'A');
+	}
+	switch (wc) {
+		case L' ': return VK_SPACE;
+		case L'.': return VK_OEM_PERIOD;
+		case L',': return VK_OEM_COMMA;
+		case L'_': case L'-': return VK_OEM_MINUS;
+		case L'+': return VK_OEM_PLUS;
+		case L';': case L':': return VK_OEM_1;
+		case L'/': case L'?': return VK_OEM_2;
+		case L'~': case L'`': return VK_OEM_3;
+		case L'[': case L'{': return VK_OEM_4;
+		case L'\\': case L'|': return VK_OEM_5;
+		case L']': case '}': return VK_OEM_6;
+		case L'\'': case '\"': return VK_OEM_7;
+		case L'!': return '1';
+		case L'@': return '2';
+		case L'#': return '3';
+		case L'$': return '4';
+		case L'%': return '5';
+		case L'^': return '6';
+		case L'&': return '7';
+		case L'*': return '8';
+		case L'(': return '9';
+		case L')': return '0';
+	}
+	fprintf(stderr, "%s: not translated %u '%lc'\n", __FUNCTION__, (unsigned int)wc, wc);
+	return VK_UNASSIGNED;
+}
+
 
 TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
@@ -685,6 +727,26 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 	}
 }
 
+void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
+{
+	if (_ttyx) {
+		_ttyx->InspectKeyEvent(event);
+
+	} else {
+		event.dwControlKeyState|= QueryControlKeys();
+	}
+	if (!event.wVirtualKeyCode) {
+		if (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
+			event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);
+		} else {
+			event.wVirtualKeyCode = VK_UNASSIGNED;
+		}
+	}
+	if (!event.uChar.UnicodeChar && IsEnhancedKey(event.wVirtualKeyCode)) {
+		event.dwControlKeyState|= ENHANCED_KEY;
+	}
+}
+
 void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 {
 	if (!_far2l_tty) {
@@ -743,15 +805,9 @@ void TTYBackend::OnInputBroken()
 	_far2l_interracts_sent.clear();
 }
 
-DWORD TTYBackend::OnQueryControlKeys()
+DWORD TTYBackend::QueryControlKeys()
 {
 	DWORD out = 0;
-
-	if (_ttyx) {
-		out = _ttyx->GetModifiers();
-		if (out != 0)
-			return out;
-	}
 
 #ifdef __linux__
 	unsigned char state = 6;

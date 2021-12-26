@@ -64,10 +64,10 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 
 struct ITTYInputSpecialSequenceHandler
 {
+	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event) = 0;
 	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;
 	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
 	virtual void OnInputBroken() = 0;
-	virtual DWORD OnQueryControlKeys() = 0;
 };
 
 #define TTY_PARSED_WANTMORE         ((size_t)0)

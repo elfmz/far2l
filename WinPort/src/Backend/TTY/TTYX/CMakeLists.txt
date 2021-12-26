@@ -12,9 +12,33 @@ target_include_directories(far2l_ttyx PRIVATE ../../../..)
 target_include_directories(far2l_ttyx PRIVATE ../../../../../utils/include)
 
 find_package(X11 REQUIRED)
-include_directories(${X11_INCLUDE_DIR})
+
 link_directories(${X11_LIBRARIES})
-target_link_libraries(far2l_ttyx utils ${X11_LIBRARIES})
+
+if (NOT DEFINED TTYXI)
+	if(${X11_Xi_LIB} STREQUAL "")
+		message(STATUS "Building without TTY backend XI support due to Xi library not found")
+	else()
+		set(TTYXI "YES")
+		message(STATUS "Building with TTY backend XI support due to Xi library found at ${X11_Xi_LIB}")
+	endif()
+#	message(STATUS "Building without TTY backend XI support, configure with -DTTYXI=YES if you want it")
+
+elseif(NOT TTYXI)
+	message(STATUS "Building without TTY backend XI support due to TTYXI=${TTYXI}")
+elseif(${X11_Xi_LIB} STREQUAL "")
+	message(FATAL_ERROR "${ColorRed}TTYXI requested but Xi lib not found, please install it or configure with -DTTYXI=NO.${ColorNormal}")
+endif()
+
+if (TTYXI)
+	include_directories(${X11_INCLUDE_DIR} ${X11_Xi_INCLUDE_PATH})
+	target_link_libraries(far2l_ttyx utils ${X11_LIBRARIES} ${X11_Xi_LIB})
+	target_compile_options(far2l_ttyx PUBLIC -DTTYXI)
+
+else()
+	include_directories(${X11_INCLUDE_DIR})
+	target_link_libraries(far2l_ttyx utils ${X11_LIBRARIES})
+endif()
 
 set_target_properties(far2l_ttyx PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}"

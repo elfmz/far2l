@@ -9578,6 +9578,15 @@ MFindView
 "&Podgląd"
 "&Ver "
 
+MFindEdit
+"&Редактировать"
+"&Edit"
+upd:"&Edit"
+upd:"&Edit"
+upd:"&Edit"
+upd:"&Edit"
+upd:"&Edit"
+
 MFindPanel
 "Пане&ль"
 "&Panel"

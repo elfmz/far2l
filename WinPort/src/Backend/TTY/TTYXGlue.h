@@ -9,10 +9,10 @@ struct ITTYXGlue
 
 	virtual ~ITTYXGlue() {}
 
-	virtual DWORD GetModifiers() noexcept = 0;
 	virtual bool SetClipboard(const Type2Data &t2d) noexcept = 0;
 	virtual bool GetClipboard(const std::string &type, std::vector<unsigned char> &data) noexcept = 0;
 	virtual bool ContainsClipboard(const std::string &type) noexcept = 0;
+	virtual void InspectKeyEvent(KEY_EVENT_RECORD &event) noexcept = 0;
 };
 
 typedef std::shared_ptr<ITTYXGlue> ITTYXGluePtr;

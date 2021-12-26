@@ -12,14 +12,6 @@
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
-static bool IsEnhancedKey(WORD code)
-{
-	return (code==VK_LEFT || code==VK_RIGHT || code==VK_UP || code==VK_DOWN
-		|| code==VK_HOME || code==VK_END || code==VK_NEXT || code==VK_PRIOR );
-}
-
-
-
 #if 1 // change to 1 to enable self-contradiction check on startup
 
 template <typename Last> static void AssertNoConflictsBetween(const Last &last) { }
@@ -285,9 +277,11 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 					ir.EventType = KEY_EVENT;
 					ir.Event.KeyEvent.wRepeatCount = 1;
 					ir.Event.KeyEvent.uChar.UnicodeChar = wc;
-					ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
 					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 					ir.Event.KeyEvent.bKeyDown = TRUE;
+					if (_handler) {
+						_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+					}
 					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
 					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
@@ -461,21 +455,18 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = TRUE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 //	ir.Event.KeyEvent.uChar.UnicodeChar = i.second.unicode_char;
-	if (k.vk == VK_SPACE)
-	{
+	if (k.vk == VK_SPACE) {
 		ir.Event.KeyEvent.uChar.UnicodeChar = L' ';
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
-	if (IsEnhancedKey(k.vk))
-		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-	if (_handler)
-		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
-
-	ir.Event.KeyEvent.bKeyDown = TRUE;
+	if (_handler) {
+		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+	}
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);

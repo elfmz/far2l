@@ -5,42 +5,6 @@
 #include "WinPort.h"
 #include <utils.h>
 
-static WORD WChar2WinVKeyCode(WCHAR wc)
-{
-	if ((wc >= L'0' && wc <= L'9') || (wc >= L'A' && wc <= L'Z')) {
-		return (WORD)wc;
-	}
-	if (wc >= L'a' && wc <= L'z') {
-		return (WORD)wc - (L'a' - L'A');
-	}
-	switch (wc) {
-		case L' ': return VK_SPACE;
-		case L'.': return VK_OEM_PERIOD;
-		case L',': return VK_OEM_COMMA;
-		case L'_': case L'-': return VK_OEM_MINUS;
-		case L'+': return VK_OEM_PLUS;
-		case L';': case L':': return VK_OEM_1;
-		case L'/': case L'?': return VK_OEM_2;
-		case L'~': case L'`': return VK_OEM_3;
-		case L'[': case L'{': return VK_OEM_4;
-		case L'\\': case L'|': return VK_OEM_5;
-		case L']': case '}': return VK_OEM_6;
-		case L'\'': case '\"': return VK_OEM_7;
-		case L'!': return '1';
-		case L'@': return '2';
-		case L'#': return '3';
-		case L'$': return '4';
-		case L'%': return '5';
-		case L'^': return '6';
-		case L'&': return '7';
-		case L'*': return '8';
-		case L'(': return '9';
-		case L')': return '0';
-	}
-	fprintf(stderr, "%s: not translated %u '%lc'\n", __FUNCTION__, (unsigned int)wc, wc);
-	return VK_UNASSIGNED;
-}
-
 
 TTYInput::TTYInput(ITTYInputSpecialSequenceHandler *handler) :
 	_parser(handler), _handler(handler)
@@ -51,20 +15,14 @@ void TTYInput::PostCharEvent(wchar_t ch)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = TRUE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.uChar.UnicodeChar = ch;
 
 	if (_handler) {
-		ir.Event.KeyEvent.dwControlKeyState|= _handler->OnQueryControlKeys();
+		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
 	}
 
-	if (ir.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
-		ir.Event.KeyEvent.wVirtualKeyCode = WChar2WinVKeyCode(ch);
-	} else {
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
-	}
-
-	ir.Event.KeyEvent.bKeyDown = TRUE;
 	g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	g_winport_con_in->Enqueue(&ir, 1);

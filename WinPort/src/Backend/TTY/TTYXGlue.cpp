@@ -42,20 +42,6 @@ public:
 		waitpid(_broker_pid, 0, 0);
 	}
 
-	virtual DWORD GetModifiers() noexcept
-	{
-		DWORD out = 0;
-		try {
-			_ipc.SendCommand(IPC_MODIFIERS);
-			_ipc.RecvPOD(out);
-
-		} catch (std::exception &e) {
-			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
-			_ipc.SetFD(-1, -1);
-		}
-		return out;
-	}
-
 	bool SetClipboard(const ITTYXGlue::Type2Data &t2d) noexcept
 	{
 		try {
@@ -113,6 +99,21 @@ public:
 			return false;
 		}
 	}
+
+	virtual void InspectKeyEvent(KEY_EVENT_RECORD &event) noexcept
+	{
+		const KEY_EVENT_RECORD saved_event = event;
+		try {
+			_ipc.SendCommand(IPC_INSPECT_KEY_EVENT);
+			_ipc.SendPOD(event);
+			_ipc.RecvPOD(event);
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+			_ipc.SetFD(-1, -1);
+			event = saved_event;
+		}
+	}
 };
 
 ITTYXGluePtr StartTTYX(const char *full_exe_path)
@@ -155,6 +156,7 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path)
 
 	return ITTYXGluePtr();
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 

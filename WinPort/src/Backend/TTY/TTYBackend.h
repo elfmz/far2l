@@ -112,11 +112,12 @@ protected:
 	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 
 	// ITTYInputSpecialSequenceHandler
+	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();
-	virtual DWORD OnQueryControlKeys();
 
+	DWORD QueryControlKeys();
 
 public:
 	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);

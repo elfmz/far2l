@@ -349,7 +349,8 @@ public:
 				{XK_KP_Subtract, VK_SUBTRACT, '-'},
 				{XK_KP_Multiply, VK_MULTIPLY, '*'},
 				{XK_KP_Divide, VK_DIVIDE, '/'},
-				{XK_KP_Decimal, VK_DECIMAL, '.'}
+				{XK_KP_Decimal, VK_DECIMAL, '.'},
+				{XK_Escape, VK_ESCAPE, '\x1b'}
 			};
 			for (const auto &krm : key_remap) {
 				if (event.uChar.UnicodeChar == krm.ch && _xi_keystate.find(krm.ks) != _xi_keystate.end()) {

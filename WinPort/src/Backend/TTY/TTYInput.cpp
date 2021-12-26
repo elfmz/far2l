@@ -57,8 +57,25 @@ void TTYInput::OnBufUpdated(bool idle)
 			default:
 				;
 		}
-		if (decoded == TTY_PARSED_WANTMORE)
+		if (decoded == TTY_PARSED_WANTMORE) {
+			if (!_buf.empty() && _buf.front() == 0x1b && _handler) {
+				// check with TTYX if this is physical Escape key press
+				INPUT_RECORD ir = {};
+				ir.EventType = KEY_EVENT;
+				ir.Event.KeyEvent.wRepeatCount = 1;
+				ir.Event.KeyEvent.uChar.UnicodeChar = 0x1b;
+				ir.Event.KeyEvent.bKeyDown = TRUE;
+				_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+				if (ir.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) {
+					g_winport_con_in->Enqueue(&ir, 1);
+					ir.Event.KeyEvent.bKeyDown = FALSE;
+					g_winport_con_in->Enqueue(&ir, 1);
+				}
+				_buf.erase(_buf.begin(), _buf.begin() + 1);
+				continue;
+			}
 			break;
+		}
 
 		assert(decoded <= _buf.size());
 		_buf.erase(_buf.begin(), _buf.begin() + decoded);

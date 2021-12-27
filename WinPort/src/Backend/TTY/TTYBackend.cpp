@@ -156,7 +156,7 @@ void TTYBackend::ReaderThread()
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
 		if (_far2l_tty) {
-			g_winport_backend = L"tty~f";
+			g_winport_backend = L"TTY|F";
 			if (!prev_far2l_tty) {
 				IFar2lInterractor *interractor = this;
 				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
@@ -167,11 +167,11 @@ void TTYBackend::ReaderThread()
 				_ttyx = StartTTYX(_full_exe_path);
 			}
 			if (_ttyx) {
-				g_winport_backend = _ttyx->HasXI() ? L"tty~xi" : L"tty~x";
+				g_winport_backend = _ttyx->HasXi() ? L"TTY|Xi" : L"TTY|X";
 				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
 
 			} else {
-				g_winport_backend = L"tty";
+				g_winport_backend = L"TTY";
 				_clipboard_backend_setter.Set<FSClipboardBackend>();
 			}
 		}

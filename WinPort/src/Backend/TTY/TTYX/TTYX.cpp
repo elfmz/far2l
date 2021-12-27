@@ -388,7 +388,7 @@ public:
 		XCloseDisplay(_display);
 	}
 
-	bool HasXI() const
+	bool HasXi() const
 	{
 		return _xi;
 	}
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 			throw PipeIPCError("bad IPC init command", (unsigned int)cmd);
 
 		ipc.SendCommand(IPC_INIT);
-		ipc.SendPOD(ttyx.HasXI());
+		ipc.SendPOD(ttyx.HasXi());
 
 		for (;;) {
 			ttyx.Idle(fdr);

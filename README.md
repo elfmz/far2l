@@ -25,6 +25,8 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * gawk
 * m4
 * libwxgtk3.0-gtk3-dev (or in older distributives - libwxgtk3.0-dev)  (needed for GUI backend, not needed with -DUSEWX=no)
+* libx11-dev (optional - needed for X11 extension that provides better UX for TTY backend wherever X11 is available)
+* libxi-dev (optional - needed for X11/Xi extension that provides best UX for TTY backend wherever X11 Xi extension is available)
 * libxerces-c-dev
 * libspdlog-dev
 * libuchardet-dev
@@ -41,7 +43,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-gtk3-dev libpcre3-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 
 ```
 In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev

@@ -9,7 +9,7 @@ struct ITTYXGlue
 
 	virtual ~ITTYXGlue() {}
 
-	virtual bool HasXI() noexcept = 0;
+	virtual bool HasXi() noexcept = 0;
 	virtual bool SetClipboard(const Type2Data &t2d) noexcept = 0;
 	virtual bool GetClipboard(const std::string &type, std::vector<unsigned char> &data) noexcept = 0;
 	virtual bool ContainsClipboard(const std::string &type) noexcept = 0;

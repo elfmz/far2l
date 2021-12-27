@@ -46,21 +46,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static const FARString& GetFarTitleAddons()
 {
-	// " - Far%Ver%Admin"
+	// " - Far%Ver%Backend%Admin"
 	/*
 		%Ver      - 2.3.102-beta
 		%Platform - x86
+		%Backend  - gui
 		%Admin    - MFarTitleAddonsAdmin
     */
 	static FARString strVer(FAR_BUILD);
 	static FARString strPlatform(FAR_PLATFORM);
 	static FARString strTitleAddons;
 
-	strTitleAddons = L" - far2l ";
+	strTitleAddons = L" - FAR2L ";
 	strTitleAddons+= Opt.strTitleAddons;
 
 	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1);
 	ReplaceStrings(strTitleAddons,L"%Platform", strPlatform, -1);
+	ReplaceStrings(strTitleAddons,L"%Backend", WinPortBackend(), -1);
 	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
 
 	FARString hn, un;

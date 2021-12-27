@@ -46,7 +46,7 @@ public:
 		_ipc.RecvPOD(_xi);
 	}
 
-	virtual bool HasXI() noexcept
+	virtual bool HasXi() noexcept
 	{
 		return _xi;
 	}

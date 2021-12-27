@@ -15,10 +15,12 @@ $^#Copyright (C) 2000-2016 FAR Group
    ~About FAR2L~@About@
    ~License~@License@
 
+   ~UI backends~@UIBackends@
    ~Command line switches~@CmdLine@
    ~Keyboard reference~@KeyRef@
    ~Plugins support~@Plugins@
    ~Overview of plugin capabilities~@PluginsReviews@
+   ~Terminal~@Terminal@
 
    ~Panels:~@Panels@  ~File panel~@FilePanel@
             ~Tree panel~@TreePanel@
@@ -32,8 +34,6 @@ $^#Copyright (C) 2000-2016 FAR Group
             ~Files menu~@FilesMenu@
             ~Commands menu~@CmdMenu@
             ~Options menu~@OptMenu@
-
-   ~Terminal~@Terminal@
 
    ~Find file~@FindFile@
    ~History~@History@
@@ -98,8 +98,8 @@ previous size.
 
 @About
 $ # FAR2L: about#
-    #FAR2L# is a text mode file and archive manager. It supports #long file names#
-and provides a wide set of file and folder operations.
+    #FAR2L# is a text mode file and archive manager that provides a wide
+set of file and folder operations.
 
     #FAR2L# is #freeware# and #open source# software distributed under the
 GNU GPL v2 ~license~@License@.
@@ -127,17 +127,17 @@ $ # FAR2L: command line switches#
   You can specify following switches in the command line or FAR2L_ARGS environment variable:
 
   #--tty#
-  Runs far2l with TTY backend instead of autodetecting GUI/TTY mode. While GUI
+  Runs far2l with ~TTY backend~@UIBackends@ instead of autodetecting GUI/TTY mode. While GUI
 backed is preferred from user experience point of view, sometimes it may be neccessary
 to avoid attempt to use GUI mode.
 
   #--notty#
-  Don't fallback to TTY backend if GUI backend was failed to initialize.
+  Don't fallback to TTY backend if ~GUI backend~@UIBackends@ was failed to initialize.
 
   #--nodetect#
   By default far2l tries to detect if it runs inside of terminal of another far2l and in such case
 it uses TTY backend with far2l extensions. In case of far2l extensions unavailable far2l checks for
-availability of X11 session and uses it to improve user experience if compiled with TTYX option.
+availability of X11 session and uses it to improve user experience if compiled with TTYX/TTYXI option.
 This switch disables all this functionality, forcing plain terminal mode for TTY backend.
 
   #--mortal#
@@ -1292,11 +1292,32 @@ or lost of unsaved data in killed applications. If far2l works in TTY backend th
     #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
 opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen. You can switch between panels and terminal by pressing Ctrl+O
 or clicking top left corner.
-    #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in GUI or TTY backends modes. While TTY backend may function in usual
+    #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in ~GUI or TTY backends modes~@UIBackends@. While TTY backend may function in usual
 terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
 like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
+
+@UIBackends
+$ #UI Backends
+    Depending on build options and available platform features #FAR2L# can render
+its interface using different so-called backends:
+
+    - #GUI backend:# renders into own GUI window, providing most complete keyboard hotkeys support.
+    - #TTY backend:# renders into plain TTY terminal. Its a most compatible way but also providing
+most lame UX: some hotkeys may not work, clipboard is not shared with host etc.
+    - #TTY|X backend:# renders into TTY terminal and uses X11 to access clipboard and to get state of
+keyboard modifiers. It provides better UX than plain TTY, but still some key combinations may be inaccessible.
+    - #TTY|Xi backend:# renders into TTY terminal and uses X11 with Xi extension to access clipboard
+and to get state of all keyboard keys. It provides much better UX than plain TTY.
+    - #TTY|F backend:# renders into TTY terminal hosted by another far2l instance. It provides UX
+identical to GUI backend.
+
+    If you want to run far2l remotely with best UI its recommended either to run it within NetRocks
+connection that allows to use TTY|F backend. If this is not wanted for some reason - you also may
+consider running over ssh session with X forwading and compression (ssh -X -C ...) that allows using
+TTY|Xi or at least TTY|X backend.
+
 
 @ConfirmDlg
 $ #Confirmations#
@@ -2262,6 +2283,7 @@ Note that this options works only in GUI backend mode.
 Может содержать любой текст, включая следующие переменные:
   #%Ver# - FAR2L version;
   #%Platform# - FAR2L platform architecture;
+  #%Backend# - FAR2L UI backend;
   #%Host# - host name of the machine where FAR2L is running;
   #%User# - user name under wich FAR2L is running;
   #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.

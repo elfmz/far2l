@@ -377,7 +377,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
 			if (WinPortMainBackend_p) {
-				g_winport_backend = L"gui";
+				g_winport_backend = L"GUI";
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);

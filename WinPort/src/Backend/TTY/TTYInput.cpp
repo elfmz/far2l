@@ -70,9 +70,9 @@ void TTYInput::OnBufUpdated(bool idle)
 					g_winport_con_in->Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
 					g_winport_con_in->Enqueue(&ir, 1);
+					_buf.erase(_buf.begin(), _buf.begin() + 1);
+					continue;
 				}
-				_buf.erase(_buf.begin(), _buf.begin() + 1);
-				continue;
 			}
 			break;
 		}

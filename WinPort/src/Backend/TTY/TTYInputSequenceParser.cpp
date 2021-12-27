@@ -406,6 +406,13 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 			AddPendingKeyEvent(TTYInputKey{VK_OEM_6, 0});
 			return 1;
 
+		case 0x1e:
+			AddPendingKeyEvent(TTYInputKey{'6', 0});
+			return 1;
+
+		case 0x1f:
+			AddPendingKeyEvent(TTYInputKey{'7', 0});
+			return 1;
 
 		case 0x7f:
 			AddPendingKeyEvent(TTYInputKey{VK_BACK, 0});

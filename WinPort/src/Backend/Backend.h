@@ -217,6 +217,7 @@ public:
 
 extern IConsoleOutput *g_winport_con_out;
 extern IConsoleInput *g_winport_con_in;
+extern const wchar_t *g_winport_backend;
 
 //////////////////////////////////////////////////////////////////////////////////
 

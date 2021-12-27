@@ -86,17 +86,17 @@ class TTYX
 		if (!_xi) {
 			return false;
 		}
-        XGenericEventCookie *cookie = (XGenericEventCookie*)&event.xcookie;
-        if (XGetEventData(_display, cookie) && cookie->type == GenericEvent && cookie->extension == _xi_opcode) {
+		XGenericEventCookie *cookie = (XGenericEventCookie*)&event.xcookie;
+		if (XGetEventData(_display, cookie) && cookie->type == GenericEvent && cookie->extension == _xi_opcode) {
 			if ((cookie->evtype == XI_RawKeyPress || cookie->evtype == XI_RawKeyRelease) && cookie->data) {
 				XIRawEvent *ev = (XIRawEvent *)cookie->data;
-				fprintf(stderr, "!!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
+				//fprintf(stderr, "TTYXI: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
 				KeySym s = XkbKeycodeToKeysym(_display, ev->detail, 0 /*xkbState.group*/, 0 /*shift level*/);
 
 				if (cookie->evtype == XI_RawKeyPress) {
 					_xi_keystate.insert(s);
-				} else {
-					_xi_keystate.erase(s);
+				} else if (_xi_keystate.erase(s) == 0) {
+					fprintf(stderr, "TTYXI: keyrelease for nonpressed modifier 0x%lx\n", s);
 				}
 
 # define TTYXI_KEYMOD(MOD) { if (cookie->evtype == XI_RawKeyPress) _xi_mods|= MOD; else _xi_mods&= ~MOD; }
@@ -109,16 +109,160 @@ class TTYX
 					case XK_Alt_R: TTYXI_KEYMOD(RIGHT_ALT_PRESSED); break;
 					case XK_Super_L: TTYXI_KEYMOD(LEFT_ALT_PRESSED); break;
 					case XK_Super_R: TTYXI_KEYMOD(RIGHT_ALT_PRESSED); break;
-					case XK_Num_Lock: {
+					case XK_Num_Lock: // special case: need toggled status but not pressed
 						_xi_mods&= ~NUMLOCK_ON;
-						_xi_mods|= (GetModifiersByXQueryPointer() & NUMLOCK_ON);
-					} break;
+						if ((GetXKeyModifiers() & LockMask) != 0) {
+							_xi_mods|= NUMLOCK_ON;
+						}
+						break;
 				}
 			}
 			return true;
 		}
 #endif
 		return false;
+	}
+
+	unsigned int GetXKeyModifiers()
+	{
+		Window root, child;
+		int root_x, root_y;
+		int win_x, win_y;
+		unsigned int mods = 0;
+
+		XQueryPointer(_display, _root_window, &root, &child,
+				&root_x, &root_y, &win_x, &win_y, &mods);
+
+		return mods;
+	}
+
+	DWORD GetWPKeyModifiers()
+	{
+		DWORD out = 0;
+		if (_xi) {
+			if ( (_xi_mods & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0) {
+				// can't blindly use _xi_mods cause some control keys tend
+				// to latch if pressed as part of system hotkey, like Alt+TAB
+				const auto mods = GetXKeyModifiers();
+				if ((mods & ControlMask) == 0) {
+					_xi_mods&= ~LEFT_CTRL_PRESSED;
+					_xi_mods&= ~RIGHT_CTRL_PRESSED;
+				}
+				if ((mods & Mod1Mask) == 0) {
+					_xi_mods&= ~LEFT_ALT_PRESSED;
+				}
+				if ((mods & Mod2Mask) == 0) {
+					_xi_mods&= ~RIGHT_ALT_PRESSED;
+				}
+				if ((mods & ShiftMask) == 0) {
+					_xi_mods&= ~SHIFT_PRESSED;
+				}
+			}
+			out|= _xi_mods;
+
+		} else {
+			const auto mods = GetXKeyModifiers();
+			if ((mods & ControlMask) != 0) {
+				out|= LEFT_CTRL_PRESSED;
+			}
+			if ((mods & Mod1Mask) != 0) {
+				out|= LEFT_ALT_PRESSED;
+			}
+			if ((mods & Mod5Mask) != 0) {
+				out|= RIGHT_ALT_PRESSED;
+			}
+			if ((mods & ShiftMask) != 0) {
+				out|= SHIFT_PRESSED;
+			}
+			if ((mods & LockMask) != 0) {
+				out|= NUMLOCK_ON;
+			}
+		}
+		return out;
+	}
+
+	void DispatchSelectionNotify(XEvent &event)
+	{
+		if (event.xselection.property != None) {
+			Atom target {};
+			int format;
+			unsigned long size, n;
+			unsigned char* data = NULL;
+			XGetWindowProperty(event.xselection.display,
+				event.xselection.requestor, event.xselection.property,
+				0L, (~0L), 0, AnyPropertyType, &target, &format, &size, &n, &data);
+			if (target == _get_clipboard.a) {
+				if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
+					_get_clipboard.state = GetClipboardContext::PRESENT;
+					if (_get_clipboard.data) {
+						_get_clipboard.data->resize(size);
+						memcpy(_get_clipboard.data->data(), data, size);
+					}
+				}
+				XFree(data);
+			}
+			XDeleteProperty(event.xselection.display, event.xselection.requestor, event.xselection.property);
+
+		} else if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
+			_get_clipboard.state = GetClipboardContext::MISSING;
+		}
+	}
+
+	void DispatchSelectionRequest(XEvent &event)
+	{
+		XSelectionEvent ev = {0};
+		ev.type = SelectionNotify;
+		ev.display = event.xselectionrequest.display;
+		ev.requestor = event.xselectionrequest.requestor;
+		ev.selection = event.xselectionrequest.selection;
+		ev.time = event.xselectionrequest.time;
+		ev.target = event.xselectionrequest.target;
+		ev.property = event.xselectionrequest.property;
+
+		int r;
+		if (ev.target == _targets_atom) {
+			std::vector<Atom> supported {_targets_atom};
+			if (_set_clipboard) for ( const auto &it : *_set_clipboard) {
+				if (it.first.empty()) {
+					supported.emplace_back(XA_STRING);
+					supported.emplace_back(_utf8_atom);
+				} else {
+					supported.emplace_back(CustomFormatAtom(it.first));
+				}
+
+			} else {
+				fprintf(stderr, "SelectionRequest: no targets to report\n");
+			}
+			r = XChangeProperty(ev.display, ev.requestor, ev.property, XA_ATOM, 32,
+				PropModeReplace, (unsigned char*)supported.data(), supported.size());
+
+		} else try {
+			if (!_set_clipboard) {
+				throw std::runtime_error("no data to set");
+			}
+			std::string format_name;
+			if (ev.target != XA_STRING && ev.target != _text_atom && ev.target != _utf8_atom) {
+				format_name = CustomFormatFromAtom(ev.target);
+				if (format_name.empty()) {
+					throw std::runtime_error("unregistered target");
+				}
+			}
+
+			const auto &it = _set_clipboard->find(format_name);
+			if (it == _set_clipboard->end()) {
+				throw std::runtime_error("mismatching target");
+			}
+			r = XChangeProperty(ev.display, ev.requestor, ev.property, ev.target, 8,
+				PropModeReplace, it->second.data(), it->second.size());
+
+			} catch (std::exception &e) {
+			fprintf(stderr, "SelectionRequest: %s\n", e.what());
+			ev.property = None;
+			r = 0;
+		}
+		if ((r & 2) == 0) {
+			XSendEvent(_display, ev.requestor, 0, 0, (XEvent *)&ev);
+		}
 	}
 
 	void DispatchOneEvent()
@@ -132,122 +276,54 @@ class TTYX
 			return;
 
 		switch (event.type) {
-		case SelectionNotify:
-			if (event.xselection.selection == _clipboard_atom) {
-				if (event.xselection.property != None) {
-					Atom target {};
-					int format;
-					unsigned long size, n;
-					unsigned char* data = NULL;
-					XGetWindowProperty(event.xselection.display,
-						event.xselection.requestor, event.xselection.property,
-						0L,(~0L), 0, AnyPropertyType, &target, &format, &size, &n, &data);
-					if (target == _get_clipboard.a) {
-						if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
-							_get_clipboard.state = GetClipboardContext::PRESENT;
-							if (_get_clipboard.data) {
-								_get_clipboard.data->resize(size);
-								memcpy(_get_clipboard.data->data(), data, size);
-							}
-						}
-						XFree(data);
-					}
-					XDeleteProperty(event.xselection.display, event.xselection.requestor, event.xselection.property);
-
-				} else if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
-					_get_clipboard.state = GetClipboardContext::MISSING;
+			case SelectionNotify:
+				if (event.xselection.selection == _clipboard_atom) {
+					DispatchSelectionNotify(event);
 				}
-			}
-			break;
-
-		case SelectionRequest:
-			if (event.xselectionrequest.selection == _clipboard_atom) {
-				XSelectionEvent ev = {0};
-				ev.type = SelectionNotify;
-				ev.display = event.xselectionrequest.display;
-				ev.requestor = event.xselectionrequest.requestor;
-				ev.selection = event.xselectionrequest.selection;
-				ev.time = event.xselectionrequest.time;
-				ev.target = event.xselectionrequest.target;
-				ev.property = event.xselectionrequest.property;
-
-				int r;
-				if (ev.target == _targets_atom) {
-					std::vector<Atom> supported {_targets_atom};
-					if (_set_clipboard) for ( const auto &it : *_set_clipboard) {
-						if (it.first.empty()) {
-							supported.emplace_back(XA_STRING);
-							supported.emplace_back(_utf8_atom);
-						} else {
-							supported.emplace_back(CustomFormatAtom(it.first));
-						}
-
-					} else {
-						fprintf(stderr, "SelectionRequest: no targets to report\n");
-					}
-					r = XChangeProperty(ev.display, ev.requestor, ev.property, XA_ATOM, 32,
-						PropModeReplace, (unsigned char*)supported.data(), supported.size());
-
-				} else try {
-					if (!_set_clipboard) {
-						throw std::runtime_error("no data to set");
-					}
-					std::string format_name;
-					if (ev.target != XA_STRING && ev.target != _text_atom && ev.target != _utf8_atom) {
-						format_name = CustomFormatFromAtom(ev.target);
-						if (format_name.empty()) {
-							throw std::runtime_error("unregistered target");
-						}
-					}
-
-					const auto &it = _set_clipboard->find(format_name);
-					if (it == _set_clipboard->end()) {
-						throw std::runtime_error("mismatching target");
-					}
-					r = XChangeProperty(ev.display, ev.requestor, ev.property, ev.target, 8,
-						PropModeReplace, it->second.data(), it->second.size());
-
-				} catch (std::exception &e) {
-					fprintf(stderr, "SelectionRequest: %s\n", e.what());
-					ev.property = None;
-					r = 0;
+				break;
+			case SelectionRequest:
+				if (event.xselectionrequest.selection == _clipboard_atom) {
+					DispatchSelectionRequest(event);
 				}
-				if ((r & 2) == 0) {
-					XSendEvent(_display, ev.requestor, 0, 0, (XEvent *)&ev);
+				break;
+			case SelectionClear:
+				if (event.xselectionrequest.selection == _clipboard_atom) {
+					_set_clipboard.reset();
 				}
-			}
-			break;
-
-		case SelectionClear:
-			if (event.xselectionrequest.selection == _clipboard_atom) {
-				_set_clipboard.reset();
-			}
-			break;
+				break;
 		}
 	}
 
-	DWORD GetModifiersByXQueryPointer()
+	void DispatchPendingEvents()
 	{
-		Window root, child;
-		int root_x, root_y;
-		int win_x, win_y;
-		unsigned int mods = 0;
+		while (XPending(_display)) {
+			DispatchOneEvent();
+		}
+	}
 
-		XQueryPointer (_display, _root_window, &root, &child,
-				&root_x, &root_y, &win_x, &win_y, &mods);
+	void DispatchLatecomerXIKeydown() // wait for some non-modifier keydown state for max of 100 msec
+	{
+		for (int i = 0; i < 10; ++i) {
+			for (const auto &xk : _xi_keystate) {
+				if (xk != XK_Control_L && xk != XK_Control_R
+				  && xk != XK_Shift_L && xk != XK_Shift_R
+				  && xk != XK_Alt_L && xk != XK_Alt_R
+				  && xk != XK_Super_L && xk != XK_Super_L
+				  && xk != XK_Hyper_L && xk != XK_Hyper_L) {
+					return;
+				}
+			}
+			fd_set fds;
+			FD_ZERO(&fds);
+			FD_SET(_display_fd, &fds);
 
-		DWORD out = 0;
-		if ((mods & ShiftMask) != 0)
-			out|= SHIFT_PRESSED;
-		if ((mods & LockMask) != 0)
-			out|= NUMLOCK_ON;
-		if ((mods & ControlMask) != 0)
-			out|= LEFT_CTRL_PRESSED;
-		if ((mods & Mod1Mask) != 0)
-			out|= LEFT_ALT_PRESSED;
-		if ((mods & Mod5Mask) != 0)
-			out|= RIGHT_ALT_PRESSED;
-		return out;
+			struct timeval tv = {0, 10000};
+			select(_display_fd + 1, &fds, NULL, NULL, &tv);
+			if (FD_ISSET(_display_fd, &fds)) {
+				DispatchPendingEvents();
+			}
+		}
+		fprintf(stderr, "TTYXI: DispatchLatecomerXIKeydown - timed out\n");
 	}
 
 public:
@@ -273,18 +349,18 @@ public:
 		// Test for XInput 2 extension
 		int xi_query_event, xi_query_error;
 		if (! XQueryExtension(_display, "XInputExtension", &_xi_opcode, &xi_query_event, &xi_query_error)) {
-			fprintf(stderr, "TTYX: XI not available\n");
+			fprintf(stderr, "TTYXI: XI not available\n");
 			_xi = false;
 
 		} else { // Request XInput 2.0, to guard against changes in future versions
 			int major = 2, minor = 0;
 			int qr = XIQueryVersion(_display, &major, &minor);
 			if (qr == BadRequest) {
-				fprintf(stderr, "TTYX: Need XI 2.0 support (got %d.%d)\n", major, minor);
+				fprintf(stderr, "TTYXI: Need XI 2.0 support (got %d.%d)\n", major, minor);
 				_xi = false;
 
 			} else if (qr != Success) {
-				fprintf(stderr, "TTYX: XIQueryVersion error %d\n", qr);
+				fprintf(stderr, "TTYXI: XIQueryVersion error %d\n", qr);
 				_xi = false;
 
 			} else {
@@ -296,16 +372,25 @@ public:
 				XISetMask(m.mask, XI_RawKeyPress);
 				XISetMask(m.mask, XI_RawKeyRelease);
 				int ser = XISelectEvents(_display, _root_window, &m, 1);  /*number of masks*/
-				fprintf(stderr, "TTYX: XISelectEvents %s %d\n", ser ? "error" : "status", ser);
+				if (ser != Success) {
+					_xi = false;
+					fprintf(stderr, "TTYXI: XISelectEvents error %d\n", ser);
+				}
 			}
 		}
 #endif
+		fprintf(stderr, "%s: initialized\n", _xi ? "TTYXI" : "TTYX");
 	}
 
 	~TTYX()
 	{
 		XDestroyWindow(_display, _window);
 		XCloseDisplay(_display);
+	}
+
+	bool HasXI() const
+	{
+		return _xi;
 	}
 
 	bool GetClipboard(const std::string &type, std::vector<unsigned char> *data = nullptr)
@@ -334,64 +419,53 @@ public:
 
 	void InspectKeyEvent(KEY_EVENT_RECORD &event)
 	{
-		if (_xi) {
-			event.dwControlKeyState|= _xi_mods;
-		} else {
-			event.dwControlKeyState|= GetModifiersByXQueryPointer();
-		}
-		if (!event.wVirtualKeyCode && event.uChar.UnicodeChar) {
-			static const struct KeyMap {
-				KeySym ks;
-				WORD vk;
-				char ch;
-			} key_remap [] = { // todo: extend
-				{XK_KP_Add, VK_ADD, '+', },
-				{XK_KP_Subtract, VK_SUBTRACT, '-'},
-				{XK_KP_Multiply, VK_MULTIPLY, '*'},
-				{XK_KP_Divide, VK_DIVIDE, '/'},
-				{XK_KP_Decimal, VK_DECIMAL, '.'},
-				{XK_Escape, VK_ESCAPE, '\x1b'}
-			};
+		event.dwControlKeyState|= GetWPKeyModifiers();
+		if (!_xi)
+			return;
 
-			bool latecomer_dispatched = false;
-			for (const auto &krm : key_remap) if (event.uChar.UnicodeChar == krm.ch) {
-				if (!latecomer_dispatched && _xi_keystate.find(krm.ks) == _xi_keystate.end()) {
-					latecomer_dispatched = true;
-					DispatchLatecomerXEvents();
-				}
-				if (_xi_keystate.find(krm.ks) != _xi_keystate.end()) {
-					event.wVirtualKeyCode = krm.vk;
-					break;
-				}
+		DispatchLatecomerXIKeydown();
+
+		// fixup ambiguous key codes
+		static const struct KeyFixup {
+			KeySym expect_ks;
+			WORD expect_vk;
+			char expect_ch;
+			bool expect_ctrl;
+			WORD actual_vk;
+
+		} key_fixup [] = { // todo: extend
+			{XK_KP_Add, 0, '+', false, VK_ADD},
+			{XK_KP_Subtract, 0, '-', false, VK_SUBTRACT},
+			{XK_KP_Multiply, 0, '*', false, VK_MULTIPLY},
+			{XK_KP_Divide, 0, '/', false, VK_DIVIDE},
+			{XK_KP_Decimal, 0, '.', false, VK_DECIMAL},
+			{XK_Escape, 0, '\x1b', false, VK_ESCAPE},
+			{XK_BackSpace, 'H', 0, true, VK_BACK},
+			{'2', VK_SPACE, ' ', true, '2'},
+			{'3', 0, '\x1b', true, '3'},
+			{'4', VK_OEM_5, 0, true, '4'},
+			{'5', VK_OEM_6, 0, true, '5'},
+			{'8', VK_BACK, 0, true, '8'},
+			{'m', VK_RETURN, 0, true, 'M'},
+			// Ctrl+1/6/7/9/0 seems don't need fixup
+		};
+
+		for (const auto &kf : key_fixup) {
+			if (event.uChar.UnicodeChar == kf.expect_ch && event.wVirtualKeyCode == kf.expect_vk
+			  && (!kf.expect_ctrl || (event.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0)
+			  && _xi_keystate.find(kf.expect_ks) != _xi_keystate.end()) {
+				fprintf(stderr, "TTYXI: InspectKeyEvent ch=0x%x cks=0x%x vk: 0x%x -> 0x%x\n",
+					event.uChar.UnicodeChar, event.dwControlKeyState, event.wVirtualKeyCode, kf.actual_vk);
+				event.wVirtualKeyCode = kf.actual_vk;
+				break;
 			}
-		}
-	}
-
-	void DispatchPendingXEvents()
-	{
-		while (XPending(_display)) {
-			DispatchOneEvent();
-		}
-	}
-
-	void DispatchLatecomerXEvents()
-	{
-		DispatchPendingXEvents();
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(_display_fd, &fds);
-
-		struct timeval tv = {0, 100000};
-		select(_display_fd + 1, &fds, NULL, NULL, &tv);
-		if (FD_ISSET(_display_fd, &fds)) {
-			DispatchPendingXEvents();
 		}
 	}
 
 	void Idle(int ipc_fdr)
 	{
 		for (;;) {
-			DispatchPendingXEvents();
+			DispatchPendingEvents();
 
 			fd_set fds;
 			FD_ZERO(&fds);
@@ -416,12 +490,15 @@ int main(int argc, char *argv[])
 	try {
 		const int fdr = atoi(argv[1]);
 		const int fdw = atoi(argv[2]);
-		IPCEndpoint ipc(fdr, fdw);
+		TTYXIPCEndpoint ipc(fdr, fdw);
 		TTYX ttyx;
 		std::string type;
 		const auto cmd = ipc.RecvCommand();
 		if (cmd != IPC_INIT)
 			throw PipeIPCError("bad IPC init command", (unsigned int)cmd);
+
+		ipc.SendCommand(IPC_INIT);
+		ipc.SendPOD(ttyx.HasXI());
 
 		for (;;) {
 			ttyx.Idle(fdr);

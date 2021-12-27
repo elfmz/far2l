@@ -2,9 +2,9 @@
 #include <string>
 #include "PipeIPC.h"
 
-enum IPCCommand
+enum TTYXIPCCommand
 {
-	IPC_INIT = 0xFACE0002, // increment if protocol changed
+	IPC_INIT = 0xFACE0003, // increment if protocol changed
 	IPC_FINI,
 	IPC_INSPECT_KEY_EVENT,
 	IPC_CLIPBOARD_GET,
@@ -12,4 +12,4 @@ enum IPCCommand
 	IPC_CLIPBOARD_CONTAINS,
 };
 
-typedef PipeIPCEndpoint<IPCCommand> IPCEndpoint;
+typedef PipeIPCEndpoint<TTYXIPCCommand> TTYXIPCEndpoint;

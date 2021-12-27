@@ -18,6 +18,7 @@ extern "C" {
 #endif
 	int WinPortMain(const char *full_exe_path, int argc, char **argv, int (*AppMain)(int argc, char **argv));
 	void WinPortHelp();
+	const wchar_t *WinPortBackend();
 
 	///console API
 	WINPORT_DECL(GetConsoleFontSize,COORD,( HANDLE hConsoleOutput, DWORD  nFont));

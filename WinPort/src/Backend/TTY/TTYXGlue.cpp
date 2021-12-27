@@ -13,7 +13,8 @@
 class TTYXGlue : public ITTYXGlue
 {
 	pid_t _broker_pid;
-	IPCEndpoint _ipc;
+	TTYXIPCEndpoint _ipc;
+	bool _xi = false;
 
 public:
 	TTYXGlue(pid_t broker_pid, int fdr, int fdw)
@@ -21,13 +22,6 @@ public:
 		_broker_pid(broker_pid),
 		_ipc(fdr, fdw)
 	{
-		try {
-			_ipc.SendCommand(IPC_INIT);
-
-		} catch (std::exception &e) {
-			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
-			_ipc.SetFD(-1, -1);
-		}
 	}
 
 	virtual ~TTYXGlue()
@@ -42,7 +36,22 @@ public:
 		waitpid(_broker_pid, 0, 0);
 	}
 
-	bool SetClipboard(const ITTYXGlue::Type2Data &t2d) noexcept
+	void Initialize()
+	{
+		_ipc.SendCommand(IPC_INIT);
+		const auto reply = _ipc.RecvCommand();
+		if (reply != IPC_INIT)
+			throw PipeIPCError("bad init reply", reply);
+
+		_ipc.RecvPOD(_xi);
+	}
+
+	virtual bool HasXI() noexcept
+	{
+		return _xi;
+	}
+
+	virtual bool SetClipboard(const ITTYXGlue::Type2Data &t2d) noexcept
 	{
 		try {
 			_ipc.SendCommand(IPC_CLIPBOARD_SET);
@@ -145,9 +154,10 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path)
 			exit(-1);
 		}
 
-		ITTYXGluePtr out = std::make_shared<TTYXGlue>(p, ipc_fd.broker2master[0], ipc_fd.master2broker[1]);
+		auto out = std::make_shared<TTYXGlue>(p, ipc_fd.broker2master[0], ipc_fd.master2broker[1]);
 		// all FDs are in place, so avoid automatic closing of pipes FDs in ipc_fd's d-tor
 		ipc_fd.Detach();
+		out->Initialize();
 		return out;
 
 	} catch (std::exception &e) {

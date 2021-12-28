@@ -76,10 +76,11 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
+	_nodetect(nodetect),
 	_far2l_tty(far2l_tty),
 	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
@@ -163,8 +164,8 @@ void TTYBackend::ReaderThread()
 			}
 
 		} else {
-			if (_full_exe_path) {
-				_ttyx = StartTTYX(_full_exe_path);
+			if (!strchr(_nodetect, 'x') || strstr(_nodetect, "xi")) {
+				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi"));
 			}
 			if (_ttyx) {
 				g_winport_backend = _ttyx->HasXi() ? L"TTY|Xi" : L"TTY|X";
@@ -955,9 +956,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(full_exe_path, std_in, std_out, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYBackend vtb(full_exe_path, std_in, std_out, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;

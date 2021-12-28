@@ -36,9 +36,11 @@ public:
 		waitpid(_broker_pid, 0, 0);
 	}
 
-	void Initialize()
+	void Initialize(bool allow_xi)
 	{
 		_ipc.SendCommand(IPC_INIT);
+		_ipc.SendPOD(allow_xi);
+
 		const auto reply = _ipc.RecvCommand();
 		if (reply != IPC_INIT)
 			throw PipeIPCError("bad init reply", reply);
@@ -125,7 +127,7 @@ public:
 	}
 };
 
-ITTYXGluePtr StartTTYX(const char *full_exe_path)
+ITTYXGluePtr StartTTYX(const char *full_exe_path, bool allow_xi)
 {
 	const char *d = getenv("DISPLAY");
 	if (!d || !*d) {
@@ -157,7 +159,7 @@ ITTYXGluePtr StartTTYX(const char *full_exe_path)
 		auto out = std::make_shared<TTYXGlue>(p, ipc_fd.broker2master[0], ipc_fd.master2broker[1]);
 		// all FDs are in place, so avoid automatic closing of pipes FDs in ipc_fd's d-tor
 		ipc_fd.Detach();
-		out->Initialize();
+		out->Initialize(allow_xi);
 		return out;
 
 	} catch (std::exception &e) {

@@ -26,8 +26,6 @@
 
 typedef std::map<std::string, std::vector<unsigned char> > Type2Data;
 
-#define XI_BACKLOG_LIMIT 0x100
-
 class TTYX
 {
 	Display *_display = nullptr;
@@ -308,8 +306,8 @@ class TTYX
 				if (xk != XK_Control_L && xk != XK_Control_R
 				  && xk != XK_Shift_L && xk != XK_Shift_R
 				  && xk != XK_Alt_L && xk != XK_Alt_R
-				  && xk != XK_Super_L && xk != XK_Super_L
-				  && xk != XK_Hyper_L && xk != XK_Hyper_L) {
+				  && xk != XK_Super_L && xk != XK_Super_R
+				  && xk != XK_Hyper_L && xk != XK_Hyper_R) {
 					return;
 				}
 			}
@@ -327,7 +325,7 @@ class TTYX
 	}
 
 public:
-	TTYX()
+	TTYX(bool allow_xi)
 	{
 		_display = XOpenDisplay(0);
 		if (!_display)
@@ -348,7 +346,11 @@ public:
 		_xi = true;
 		// Test for XInput 2 extension
 		int xi_query_event, xi_query_error;
-		if (! XQueryExtension(_display, "XInputExtension", &_xi_opcode, &xi_query_event, &xi_query_error)) {
+		if (!allow_xi) {
+			fprintf(stderr, "TTYXI: XI disallowed\n");
+			_xi = false;
+
+		} else if (! XQueryExtension(_display, "XInputExtension", &_xi_opcode, &xi_query_event, &xi_query_error)) {
 			fprintf(stderr, "TTYXI: XI not available\n");
 			_xi = false;
 
@@ -491,12 +493,15 @@ int main(int argc, char *argv[])
 		const int fdr = atoi(argv[1]);
 		const int fdw = atoi(argv[2]);
 		TTYXIPCEndpoint ipc(fdr, fdw);
-		TTYX ttyx;
 		std::string type;
 		const auto cmd = ipc.RecvCommand();
 		if (cmd != IPC_INIT)
 			throw PipeIPCError("bad IPC init command", (unsigned int)cmd);
 
+		bool allow_xi = true;
+		ipc.RecvPOD(allow_xi);
+
+		TTYX ttyx(allow_xi);
 		ipc.SendCommand(IPC_INIT);
 		ipc.SendPOD(ttyx.HasXi());
 

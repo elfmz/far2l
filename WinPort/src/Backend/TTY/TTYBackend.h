@@ -18,6 +18,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _output_mutex;
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
+	const char *_nodetect = "";
 	bool _far2l_tty = false;
 
 	enum {
@@ -120,7 +121,7 @@ protected:
 	DWORD QueryControlKeys();
 
 public:
-	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

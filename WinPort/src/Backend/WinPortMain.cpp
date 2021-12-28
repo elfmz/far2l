@@ -36,7 +36,7 @@ IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
 const wchar_t *g_winport_backend = L"";
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
 
@@ -223,7 +223,7 @@ extern "C" void WinPortHelp()
 	printf("FAR2L backend-specific options:\n");
 	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
 	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
-	printf("\t--nodetect - don't detect if TTY backend supports FAR2L or X11 extensions\n");
+	printf("\t--nodetect or --nodetect=[f|][x|xi] - don't detect if TTY backend supports FAR2L or X11/Xi extensions\n");
 	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
 	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode wihout FAR2L extensions)\n");
@@ -232,7 +232,8 @@ extern "C" void WinPortHelp()
 
 struct ArgOptions
 {
-	bool tty = false, far2l_tty = false, nodetect = false, notty = false;
+	const char *nodetect = "";
+	bool tty = false, far2l_tty = false, notty = false;
 	bool mortal = false;
 	unsigned int esc_expiration = 0;
 	std::vector<char *> filtered_argv;
@@ -254,7 +255,10 @@ struct ArgOptions
 			tty = true;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
-			nodetect = true;
+			nodetect = "fx";
+
+		} else if (strstr(a, "--nodetect=") == a) {
+			nodetect = a + 11;
 
 		} else if (strstr(a, "--ee") == a) {
 			esc_expiration = (a[4] == '=') ? atoi(&a[5]) : 100;
@@ -345,7 +349,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 //	tcgetattr(std_out, &g_ts_tstp);
 
 	std::unique_ptr<TTYRawMode> tty_raw_mode(new TTYRawMode(std_in, std_out));
-	if (!arg_opts.nodetect) {
+	if (!strchr(arg_opts.nodetect, 'f')) {
 //		tty_raw_mode.reset(new TTYRawMode(std_out));
 		if (tty_raw_mode->Applied()) {
 			arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
@@ -405,7 +409,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		if (arg_opts.mortal) {
 			SudoAskpassImpl askass_impl;
 			SudoAskpassServer askpass_srv(&askass_impl);
-			if (!WinPortMainTTY(arg_opts.nodetect ? nullptr : full_exe_path, std_in, std_out,
+			if (!WinPortMainTTY(full_exe_path, std_in, std_out, arg_opts.nodetect,
 					arg_opts.far2l_tty, arg_opts.esc_expiration, -1, argc, argv, AppMain, &result)) {
 				fprintf(stderr, "Cannot use TTY backend\n");
 			}
@@ -430,7 +434,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						setsid();
 						SudoAskpassImpl askass_impl;
 						SudoAskpassServer askpass_srv(&askass_impl);
-						if (!WinPortMainTTY(arg_opts.nodetect ? nullptr : full_exe_path, std_in, std_out,
+						if (!WinPortMainTTY(full_exe_path, std_in, std_out, arg_opts.nodetect,
 								arg_opts.far2l_tty, arg_opts.esc_expiration, new_notify_pipe[1], argc, argv, AppMain, &result)) {
 							fprintf(stderr, "Cannot use TTY backend\n");
 						}

@@ -16,13 +16,20 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <errno.h>
-#include <time.h>
+#include <chrono>
 #include <assert.h>
 #include <string>
 #include <map>
 #include <vector>
-#include <set>
 #include <memory>
+
+// Max time to wait for Xi keydown event if its not yet arrived upon TTY keypress
+#define XI_KEYDOWN_MAXWAIT_MSEC         100
+
+// Threshold of time since key modifier was pressed after which latch check has to be performed for it
+#define XI_MODIFIER_CHECK_TRSH_MSEC     500
+
+#define INVALID_MODS                    0xffffffff
 
 typedef std::map<std::string, std::vector<unsigned char> > Type2Data;
 
@@ -38,10 +45,19 @@ class TTYX
 	Atom _clipboard_atom;
 	Atom _xsel_data_atom;
 	int _display_fd;
+
+#ifdef TTYXI
+	const std::chrono::time_point<std::chrono::steady_clock> _never;
+
 	int _xi_opcode;
 	bool _xi = false;
-	DWORD _xi_mods = 0;
-	std::set<KeySym> _xi_keystate;
+	DWORD _xi_leds = INVALID_MODS;
+	std::map<KeySym, std::chrono::time_point<std::chrono::steady_clock>>  _xi_keys;
+
+	// recently released non-modifier key used in workaround to handle
+	// lagged TTY keypress arrived after Xi release due to slow connection
+	KeySym _xi_recent_nonmod_keyup = 0;
+#endif
 
 	struct GetClipboardContext {
 		std::vector<unsigned char> *data;
@@ -78,104 +94,187 @@ class TTYX
 		return std::string();
 	}
 
-	bool DispatchXIEvent(XEvent &event)
-	{
 #ifdef TTYXI
+	static bool IsXiKeyModifier(KeySym ks)
+	{
+		switch (ks) {
+			case XK_Control_L: case XK_Control_R:
+			case XK_Shift_L: case XK_Shift_R:
+			case XK_Alt_L: case XK_Alt_R:
+			case XK_Super_L: case XK_Super_R:
+			case XK_Hyper_L: case XK_Hyper_R:
+			case XK_Meta_L: case XK_Meta_R:
+			case XK_Caps_Lock: case XK_Shift_Lock:
+			case XK_Num_Lock: case XK_Scroll_Lock:
+#if 0
+			case XK_Mode_switch: case XK_Multi_key: case XK_Codeinput:
+			case XK_SingleCandidate: case XK_MultipleCandidate: case XK_PreviousCandidate:
+
+			case XK_Kanji: case XK_Muhenkan: case XK_Henkan: case XK_Romaji:
+			case XK_Hiragana: case XK_Katakana: case XK_Hiragana_Katakana:
+			case XK_Zenkaku: case XK_Hankaku: case XK_Zenkaku_Hankaku:
+			case XK_Touroku: case XK_Massyo: case XK_Kana_Lock:
+			case XK_Kana_Shift: case XK_Eisu_Shift: case XK_Eisu_toggle:
+#endif
+				return true;
+
+			default:
+				return false;
+		}
+	}
+
+	// wait for having any non-modifier key pressed for max of XI_KEYDOWN_MAXWAIT_MSEC
+	void WaitForNonModifierXiKeydown()
+	{
+		for (int i = 0; i < XI_KEYDOWN_MAXWAIT_MSEC; i+= 10) {
+			for (const auto &xki : _xi_keys) if (!IsXiKeyModifier(xki.first)) {
+				return;
+			}
+			fd_set fds;
+			FD_ZERO(&fds);
+			FD_SET(_display_fd, &fds);
+
+			struct timeval tv = {0, 10000}; // 10msec wait on each iteration
+			select(_display_fd + 1, &fds, NULL, NULL, &tv);
+			if (FD_ISSET(_display_fd, &fds)) {
+				DispatchPendingEvents();
+			}
+		}
+		fprintf(stderr, "TTYXi: WaitForNonModifierXiKeydown - timed out\n");
+	}
+
+	bool DispatchXiEvent(XEvent &event)
+	{
 		if (!_xi) {
 			return false;
 		}
 		XGenericEventCookie *cookie = (XGenericEventCookie*)&event.xcookie;
 		if (XGetEventData(_display, cookie) && cookie->type == GenericEvent && cookie->extension == _xi_opcode) {
 			if ((cookie->evtype == XI_RawKeyPress || cookie->evtype == XI_RawKeyRelease) && cookie->data) {
-				XIRawEvent *ev = (XIRawEvent *)cookie->data;
-				//fprintf(stderr, "TTYXI: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
-				KeySym s = XkbKeycodeToKeysym(_display, ev->detail, 0 /*xkbState.group*/, 0 /*shift level*/);
+				const XIRawEvent *ev = (const XIRawEvent *)cookie->data;
+				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
+				const KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, 0 /*xkbState.group*/, 0 /*shift level*/);
 
 				if (cookie->evtype == XI_RawKeyPress) {
-					_xi_keystate.insert(s);
-				} else if (_xi_keystate.erase(s) == 0) {
-					fprintf(stderr, "TTYXI: keyrelease for nonpressed modifier 0x%lx\n", s);
+					_xi_keys[ks] = std::chrono::steady_clock::now();
+
+				} else {
+					if (_xi_keys.erase(ks) == 0) {
+						fprintf(stderr, "TTYXi: keyrelease for nonpressed 0x%lx\n", ks);
+					}
+					if (!IsXiKeyModifier(ks)) {
+						_xi_recent_nonmod_keyup = ks;
+					}
 				}
 
-# define TTYXI_KEYMOD(MOD) { if (cookie->evtype == XI_RawKeyPress) _xi_mods|= MOD; else _xi_mods&= ~MOD; }
-				switch (s) {
-					case XK_Control_L: TTYXI_KEYMOD(LEFT_CTRL_PRESSED); break;
-					case XK_Control_R: TTYXI_KEYMOD(RIGHT_CTRL_PRESSED); break;
-					case XK_Shift_L: TTYXI_KEYMOD(SHIFT_PRESSED); break;
-					case XK_Shift_R: TTYXI_KEYMOD(SHIFT_PRESSED); break;
-					case XK_Alt_L: TTYXI_KEYMOD(LEFT_ALT_PRESSED); break;
-					case XK_Alt_R: TTYXI_KEYMOD(RIGHT_ALT_PRESSED); break;
-					case XK_Super_L: TTYXI_KEYMOD(LEFT_ALT_PRESSED); break;
-					case XK_Super_R: TTYXI_KEYMOD(RIGHT_ALT_PRESSED); break;
-					case XK_Num_Lock: // special case: need toggled status but not pressed
-						_xi_mods&= ~NUMLOCK_ON;
-						if ((GetXKeyModifiers() & LockMask) != 0) {
-							_xi_mods|= NUMLOCK_ON;
-						}
-						break;
+				if (ks == XK_Num_Lock || ks == XK_Caps_Lock || ks == XK_Scroll_Lock) {
+					_xi_leds = INVALID_MODS; // invalidate now, will update when needed
 				}
 			}
 			return true;
 		}
-#endif
 		return false;
 	}
 
-	unsigned int GetXKeyModifiers()
+	DWORD GetXiLeds()
+	{
+		if (_xi_leds == INVALID_MODS) {
+			_xi_leds = 0;
+			XKeyboardState kbd_state{};
+			XGetKeyboardControl(_display, &kbd_state);
+			_xi_leds|= (kbd_state.led_mask & 1) ? SCROLLLOCK_ON : 0;
+			_xi_leds|= (kbd_state.led_mask & 2) ? NUMLOCK_ON : 0;
+			_xi_leds|= (kbd_state.led_mask & 4) ? CAPSLOCK_ON : 0;
+		}
+
+		return _xi_leds;
+	}
+#endif
+
+	DWORD GetKeyModifiersByXQueryPointer()
 	{
 		Window root, child;
 		int root_x, root_y;
 		int win_x, win_y;
-		unsigned int mods = 0;
+		unsigned int xmods = 0;
 
 		XQueryPointer(_display, _root_window, &root, &child,
-				&root_x, &root_y, &win_x, &win_y, &mods);
+				&root_x, &root_y, &win_x, &win_y, &xmods);
 
-		return mods;
+		DWORD out = 0;
+		if ((xmods & ControlMask) != 0) {
+			out|= LEFT_CTRL_PRESSED;
+		}
+		if ((xmods & (Mod1Mask | Mod4Mask)) != 0) { // Mod1Mask - left Alt, Mod4Mask - left Win
+			out|= LEFT_ALT_PRESSED;
+		}
+		if ((xmods & Mod5Mask) != 0) {
+			out|= RIGHT_ALT_PRESSED;
+		}
+		if ((xmods & ShiftMask) != 0) {
+			out|= SHIFT_PRESSED;
+		}
+		if ((xmods & LockMask) != 0) {
+			out|= CAPSLOCK_ON;
+		}
+		return out;
 	}
 
-	DWORD GetWPKeyModifiers()
+	DWORD GetKeyModifiers()
 	{
 		DWORD out = 0;
+#ifdef TTYXI
 		if (_xi) {
-			if ( (_xi_mods & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0) {
-				// can't blindly use _xi_mods cause some control keys tend
-				// to latch if pressed as part of system hotkey, like Alt+TAB
-				const auto mods = GetXKeyModifiers();
-				if ((mods & ControlMask) == 0) {
-					_xi_mods&= ~LEFT_CTRL_PRESSED;
-					_xi_mods&= ~RIGHT_CTRL_PRESSED;
+			auto now = _never;
+			DWORD mods = INVALID_MODS;
+			const auto CheckXiMod = [&](KeySym ks, DWORD mod, DWORD latch_check_mods)
+			{
+				auto it = _xi_keys.find(ks);
+				if (it == _xi_keys.end()) {
+					return;
 				}
-				if ((mods & Mod1Mask) == 0) {
-					_xi_mods&= ~LEFT_ALT_PRESSED;
-				}
-				if ((mods & Mod2Mask) == 0) {
-					_xi_mods&= ~RIGHT_ALT_PRESSED;
-				}
-				if ((mods & ShiftMask) == 0) {
-					_xi_mods&= ~SHIFT_PRESSED;
-				}
-			}
-			out|= _xi_mods;
 
-		} else {
-			const auto mods = GetXKeyModifiers();
-			if ((mods & ControlMask) != 0) {
-				out|= LEFT_CTRL_PRESSED;
-			}
-			if ((mods & Mod1Mask) != 0) {
-				out|= LEFT_ALT_PRESSED;
-			}
-			if ((mods & Mod5Mask) != 0) {
-				out|= RIGHT_ALT_PRESSED;
-			}
-			if ((mods & ShiftMask) != 0) {
-				out|= SHIFT_PRESSED;
-			}
-			if ((mods & LockMask) != 0) {
-				out|= NUMLOCK_ON;
-			}
+				// can't blindly use key state cause some control keys tend
+				// to latch if pressed as part of system hotkey, like Alt+TAB
+				// so check by XQueryPointer if modifier still down if it was
+				// pressed rather long time ago.
+				if (now == _never) {
+					now = std::chrono::steady_clock::now();
+				}
+
+				const auto &delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->second);
+				if (delta > std::chrono::milliseconds(XI_MODIFIER_CHECK_TRSH_MSEC)) {
+					if (mods == INVALID_MODS) {
+						mods = GetKeyModifiersByXQueryPointer();
+					}
+					// XQueryPointer may not distinct LEFT/RIGHT for CTRL and ALT,
+					// thats why checking against 'wider' latch_check_mods
+					if ((mods & latch_check_mods) == 0) {
+						fprintf(stderr, "TTYXi: latched keymod 0x%lx\n", ks);
+						_xi_keys.erase(it);
+						return;
+					}
+				}
+				out|= mod;
+			};
+
+			CheckXiMod(XK_Control_L, LEFT_CTRL_PRESSED, LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED);
+			CheckXiMod(XK_Control_R, RIGHT_CTRL_PRESSED, LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED);
+			CheckXiMod(XK_Alt_L, LEFT_ALT_PRESSED, LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED);
+			CheckXiMod(XK_Super_L, LEFT_ALT_PRESSED, LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED);
+			CheckXiMod(XK_Alt_R, RIGHT_ALT_PRESSED, LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED);
+			CheckXiMod(XK_Super_R, RIGHT_ALT_PRESSED, LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED);
+			CheckXiMod(XK_Shift_L, SHIFT_PRESSED, SHIFT_PRESSED);
+			CheckXiMod(XK_Shift_R, SHIFT_PRESSED, SHIFT_PRESSED);
+
+			out|= GetXiLeds();
+
+		} else
+#endif
+		{
+			out|= GetKeyModifiersByXQueryPointer();
 		}
+
 		return out;
 	}
 
@@ -269,9 +368,10 @@ class TTYX
 		XNextEvent(_display, &event);
 
 		//fprintf(stderr, "TTYX: DispatchOneEvent\n");
-
-		if (DispatchXIEvent(event))
+#ifdef TTYXI
+		if (DispatchXiEvent(event))
 			return;
+#endif
 
 		switch (event.type) {
 			case SelectionNotify:
@@ -299,31 +399,6 @@ class TTYX
 		}
 	}
 
-	void DispatchLatecomerXIKeydown() // wait for some non-modifier keydown state for max of 100 msec
-	{
-		for (int i = 0; i < 10; ++i) {
-			for (const auto &xk : _xi_keystate) {
-				if (xk != XK_Control_L && xk != XK_Control_R
-				  && xk != XK_Shift_L && xk != XK_Shift_R
-				  && xk != XK_Alt_L && xk != XK_Alt_R
-				  && xk != XK_Super_L && xk != XK_Super_R
-				  && xk != XK_Hyper_L && xk != XK_Hyper_R) {
-					return;
-				}
-			}
-			fd_set fds;
-			FD_ZERO(&fds);
-			FD_SET(_display_fd, &fds);
-
-			struct timeval tv = {0, 10000};
-			select(_display_fd + 1, &fds, NULL, NULL, &tv);
-			if (FD_ISSET(_display_fd, &fds)) {
-				DispatchPendingEvents();
-			}
-		}
-		fprintf(stderr, "TTYXI: DispatchLatecomerXIKeydown - timed out\n");
-	}
-
 public:
 	TTYX(bool allow_xi)
 	{
@@ -347,22 +422,22 @@ public:
 		// Test for XInput 2 extension
 		int xi_query_event, xi_query_error;
 		if (!allow_xi) {
-			fprintf(stderr, "TTYXI: XI disallowed\n");
+			fprintf(stderr, "TTYXi: XI disallowed\n");
 			_xi = false;
 
 		} else if (! XQueryExtension(_display, "XInputExtension", &_xi_opcode, &xi_query_event, &xi_query_error)) {
-			fprintf(stderr, "TTYXI: XI not available\n");
+			fprintf(stderr, "TTYXi: XI not available\n");
 			_xi = false;
 
 		} else { // Request XInput 2.0, to guard against changes in future versions
 			int major = 2, minor = 0;
 			int qr = XIQueryVersion(_display, &major, &minor);
 			if (qr == BadRequest) {
-				fprintf(stderr, "TTYXI: Need XI 2.0 support (got %d.%d)\n", major, minor);
+				fprintf(stderr, "TTYXi: Need XI 2.0 support (got %d.%d)\n", major, minor);
 				_xi = false;
 
 			} else if (qr != Success) {
-				fprintf(stderr, "TTYXI: XIQueryVersion error %d\n", qr);
+				fprintf(stderr, "TTYXi: XIQueryVersion error %d\n", qr);
 				_xi = false;
 
 			} else {
@@ -376,12 +451,12 @@ public:
 				int ser = XISelectEvents(_display, _root_window, &m, 1);  /*number of masks*/
 				if (ser != Success) {
 					_xi = false;
-					fprintf(stderr, "TTYXI: XISelectEvents error %d\n", ser);
+					fprintf(stderr, "TTYXi: XISelectEvents error %d\n", ser);
 				}
 			}
 		}
 #endif
-		fprintf(stderr, "%s: initialized\n", _xi ? "TTYXI" : "TTYX");
+		fprintf(stderr, "%s: initialized\n", HasXi() ? "TTYXi" : "TTYX");
 	}
 
 	~TTYX()
@@ -392,7 +467,11 @@ public:
 
 	bool HasXi() const
 	{
+#ifdef TTYXI
 		return _xi;
+#else
+		return false;
+#endif
 	}
 
 	bool GetClipboard(const std::string &type, std::vector<unsigned char> *data = nullptr)
@@ -421,18 +500,17 @@ public:
 
 	void InspectKeyEvent(KEY_EVENT_RECORD &event)
 	{
-		event.dwControlKeyState|= GetWPKeyModifiers();
+		event.dwControlKeyState|= GetKeyModifiers();
+#ifdef TTYXI
 		if (!_xi)
 			return;
-
-		DispatchLatecomerXIKeydown();
 
 		// fixup ambiguous key codes
 		static const struct KeyFixup {
 			KeySym expect_ks;
 			WORD expect_vk;
 			char expect_ch;
-			bool expect_ctrl;
+			bool need_ctrl;
 			WORD actual_vk;
 
 		} key_fixup [] = { // todo: extend
@@ -452,33 +530,37 @@ public:
 			// Ctrl+1/6/7/9/0 seems don't need fixup
 		};
 
+		WaitForNonModifierXiKeydown();
+
 		for (const auto &kf : key_fixup) {
 			if (event.uChar.UnicodeChar == kf.expect_ch && event.wVirtualKeyCode == kf.expect_vk
-			  && (!kf.expect_ctrl || (event.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0)
-			  && _xi_keystate.find(kf.expect_ks) != _xi_keystate.end()) {
-				fprintf(stderr, "TTYXI: InspectKeyEvent ch=0x%x cks=0x%x vk: 0x%x -> 0x%x\n",
+			  && (!kf.need_ctrl || (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0)
+			  && (_xi_keys.find(kf.expect_ks) != _xi_keys.end() || kf.expect_ks == _xi_recent_nonmod_keyup)) {
+				fprintf(stderr, "TTYXi: InspectKeyEvent ch=0x%x cks=0x%x vk: 0x%x -> 0x%x\n",
 					event.uChar.UnicodeChar, event.dwControlKeyState, event.wVirtualKeyCode, kf.actual_vk);
 				event.wVirtualKeyCode = kf.actual_vk;
 				break;
 			}
 		}
+
+		// lagged TTY workaround has one-shot nature, so clear it just in case
+		_xi_recent_nonmod_keyup = 0;
+#endif
 	}
 
 	void Idle(int ipc_fdr)
 	{
-		for (;;) {
+		fd_set fds;
+		do {
 			DispatchPendingEvents();
 
-			fd_set fds;
 			FD_ZERO(&fds);
 			FD_SET(_display_fd, &fds);
 			FD_SET(ipc_fdr, &fds);
 
 			select(std::max(_display_fd, ipc_fdr) + 1, &fds, NULL, NULL, NULL);
-			if (FD_ISSET(ipc_fdr, &fds)) {
-				break;
-			}
-		}
+
+		} while (!FD_ISSET(ipc_fdr, &fds));
 	}
 };
 

@@ -1313,10 +1313,15 @@ and to get state of all keyboard keys. It provides much better UX than plain TTY
     - #TTY|F backend:# renders into TTY terminal hosted by another far2l instance. It provides UX
 identical to GUI backend.
 
-    If you want to run far2l remotely with best UI its recommended either to run it within NetRocks
+    If you want to run far2l remotely with best UX its recommended to run it within NetRocks
 connection that allows to use TTY|F backend. If this is not wanted for some reason - you also may
 consider running over ssh session with X forwading and compression (ssh -X -C ...) that allows using
-TTY|Xi or at least TTY|X backend.
+TTY|Xi or at least TTY|X backend. However its highly recommended to
+#do not use X forwarding when connecting to untrusted servers#,
+because X forwarding opens uncontrollable ability for remote code
+to listen all your keystrokes, grab clipboard content, get windows snapshots etc. So, TTY|F backend
+is the only secure way to run far2l remotely on untrusted server while supporting all usual far2l
+hotkeys and other UX conveniences.
 
 
 @ConfirmDlg

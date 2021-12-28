@@ -3932,7 +3932,7 @@ void Editor::Paste(const wchar_t *Src)
 		IsDeleteClipText=TRUE;
 	}
 
-	if (*ClipText)
+	if (ClipText && *ClipText)
 	{
 		AddUndoData(UNDO_BEGIN);
 		Flags.Set(FEDITOR_NEWUNDO);

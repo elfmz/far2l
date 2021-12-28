@@ -1315,9 +1315,9 @@ identical to GUI backend.
 
     If you want to run far2l remotely with best UX its recommended to run it within NetRocks
 connection that allows to use TTY|F backend. If this is not wanted for some reason - you also may
-consider running over ssh session with X forwading and compression (ssh -X -C ...) that allows using
-TTY|Xi or at least TTY|X backend. However its highly recommended to
-#do not use X forwarding when connecting to untrusted servers#,
+consider running over ssh session with trusted X forwading and compression (ssh -Y -C ...) that
+allows using TTY|Xi or at least TTY|X backend. However its highly recommended to
+#do not use trusted X forwarding when connecting to untrusted servers#,
 because X forwarding opens uncontrollable ability for remote code
 to listen all your keystrokes, grab clipboard content, get windows snapshots etc. So, TTY|F backend
 is the only secure way to run far2l remotely on untrusted server while supporting all usual far2l

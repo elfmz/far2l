@@ -9,4 +9,3 @@
 void ShowMemInfo(void) { }
 #endif //BC
 
-#endif

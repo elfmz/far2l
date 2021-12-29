@@ -1311,7 +1311,7 @@ keyboard modifiers. It provides better UX than plain TTY, but still some key com
     - #TTY|Xi backend:# renders into TTY terminal and uses X11 with Xi extension to access clipboard
 and to get state of all keyboard keys. It provides much better UX than plain TTY.
     - #TTY|F backend:# renders into TTY terminal hosted by another far2l instance. It provides UX
-identical to GUI backend.
+identical to GUI backend (if terminal hosted by GUI far2l).
 
     If you want to run far2l remotely with best UX its recommended to run it within NetRocks
 connection that allows to use TTY|F backend. If this is not wanted for some reason - you also may

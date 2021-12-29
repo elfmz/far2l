@@ -636,7 +636,7 @@ int WINAPI Config(void)
 	strcpy(DialogItems[CFG_PASS].Data,Opt.DefaultPassword);
 	strcpy(DialogItems[CFG_FIRE].Data,Opt.Firewall);
 	sprintf(DialogItems[CFG_LOGLIMIT].Data,"%d",Opt.CmdLogLimit);
-	sprintf(DialogItems[CFG_LOGFILE].Data,"%s",Opt.CmdLogFile);
+	snprintf(DialogItems[CFG_LOGFILE].Data,ARRAYSIZE(DialogItems[CFG_LOGFILE].Data),"%s",Opt.CmdLogFile);
 	DialogItems[CFG_LOGDIR].Selected      = Opt.LogOutput;
 	DialogItems[CFG_PASV].Selected        = Opt.PassiveMode;
 

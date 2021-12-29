@@ -191,7 +191,7 @@ static struct
 #endif
 LPCSTR WINAPI GetSocketErrorSTR(void)
 {
-	return GetSocketErrorSTR(WINPORT(WSAGetLastError)());
+	return GetSocketErrorSTR(errno);
 }
 
 LPCSTR WINAPI GetSocketErrorSTR(int err)

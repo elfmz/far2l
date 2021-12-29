@@ -21,7 +21,6 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 void WINAPI scClose(SOCKET& sock,int how)
 {
 	DWORD err = WINPORT(GetLastError)();
-	//int   serr = WINPORT(WSAGetLastError)();
 
 	if(sock != INVALID_SOCKET)
 	{

@@ -219,15 +219,8 @@ int ScreenSaver(int EnableExit)
 
 		while (!PeekInputRecord(&rec))
 		{
-			clock_t CurTime=GetProcessUptimeMSec();
-
-			if (EnableExit && Opt.InactivityExit && Opt.InactivityExitTime>0 &&
-			        CurTime-StartIdleTime>Opt.InactivityExitTime*60000 &&
-			        FrameManager->GetFrameCount()==1)
-			{
-				FrameManager->ExitMainLoop(FALSE);
+			if (EnableExit && CheckForInactivityExit())
 				return 0;
-			}
 
 			WINPORT(Sleep)(50);
 			ShowSaver(Step++);

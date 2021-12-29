@@ -82,9 +82,4 @@ extern "C" {
 		return TRUE;
 	}
 
-	DWORD  WINPORT(WSAGetLastError) ()
-	{
-		return errno;
-	}
-
 }

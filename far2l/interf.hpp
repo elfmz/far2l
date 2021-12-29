@@ -130,3 +130,4 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str);
 #define RemoveHighlights(Str) RemoveChar(Str,L'&')
 
 bool IsFullscreen();
+bool CheckForInactivityExit();

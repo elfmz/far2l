@@ -243,9 +243,6 @@ extern "C" {
 	WINPORT_DECL(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl));
 	
-	WINPORT_DECL(WSAGetLastError, DWORD, ());
-
-
 	//%s -> %ls, %ws -> %ls
 	SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg );
 	SHAREDSYMBOL int swprintf_ws2ls (wchar_t* ws, size_t len, const wchar_t* format, ...);

@@ -60,25 +60,6 @@ int Connection::setpeer(int argc, char *argv[])
 		return FALSE;
 	}
 
-/*	if(!SocketStartup)
-	{
-
-		WORD    wVerReq = MAKEWORD(1,1);
-		WSADATA WSAData;
-
-		if(WSAStartup(wVerReq, &WSAData) == 0)
-		{
-			SocketStartup = TRUE;
-		}
-		else
-		{
-			SocketInitializeError = WINPORT(WSAGetLastError)();
-			SocketError   = SocketInitializeError;
-			WINPORT(SetLastError)(SocketInitializeError);
-			return FALSE;
-		}
-	}*/
-
 	//port
 	if(argc > 2)
 		port = htons(atoi(argv[2]));

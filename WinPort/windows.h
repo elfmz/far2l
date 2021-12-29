@@ -171,8 +171,6 @@
 #define    ToUnicodeEx				WINPORT(ToUnicodeEx)
 	
 	
-#define    WSAGetLastError			WINPORT(WSAGetLastError)
-
 #endif //#ifdef WINPORT_DIRECT
 
 #ifdef UNICODE

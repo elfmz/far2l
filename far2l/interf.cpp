@@ -1244,3 +1244,17 @@ bool IsFullscreen()
 	}*/
 	return Result;
 }
+
+bool CheckForInactivityExit()
+{
+	if (Opt.InactivityExit && Opt.InactivityExitTime > 0 &&
+	        GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
+	        FrameManager && FrameManager->GetFrameCount()==1 &&
+	        (!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
+	{
+		FrameManager->ExitMainLoop(FALSE);
+		return true;
+	}
+
+	return false;
+}

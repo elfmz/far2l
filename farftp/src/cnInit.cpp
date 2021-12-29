@@ -238,7 +238,7 @@ noport:
 		if(tmpno)
 			sendport = 1;
 
-		ErrorCode = WINPORT(WSAGetLastError)();
+		ErrorCode = errno;
 		return FALSE;
 	}
 
@@ -251,7 +251,7 @@ noport:
 		if(setsockopt(data_peer, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		{
 			Log(("!setsockopt (reuse address)"));
-			ErrorCode = WINPORT(WSAGetLastError)();
+			ErrorCode = errno;
 			goto bad;
 		}
 
@@ -260,7 +260,7 @@ noport:
 		if(bind(data_peer, (struct sockaddr *)&data_addr, sizeof(data_addr)) < 0)
 		{
 			Log(("!bind"));
-			ErrorCode = WINPORT(WSAGetLastError)();
+			ErrorCode = errno;
 			goto bad;
 		}
 /*
@@ -274,14 +274,14 @@ noport:
 		if(getsockname(data_peer, (struct sockaddr *)&data_addr, &len) < 0)
 		{
 			Log(("!getsockname"));
-			ErrorCode = WINPORT(WSAGetLastError)();
+			ErrorCode = errno;
 			goto bad;
 		}
 
 		if(listen(data_peer, 1) < 0)
 		{
 			Log(("!listen"));
-			ErrorCode = WINPORT(WSAGetLastError)();
+			ErrorCode = errno;
 			goto bad;
 		}
 	}

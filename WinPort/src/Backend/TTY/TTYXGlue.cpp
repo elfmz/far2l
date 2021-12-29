@@ -228,24 +228,39 @@ TTYXClipboard::~TTYXClipboard()
 bool TTYXClipboard::OnClipboardOpen()
 {
 	_pending_set.reset();
-	return true;
+	return _fallback_clipboard ? _fallback_clipboard->OnClipboardOpen() : true;
 }
 
 void TTYXClipboard::OnClipboardClose()
 {
+	if (_fallback_clipboard)
+		_fallback_clipboard->OnClipboardClose();
+
 	if (_pending_set) {
-		_ttyx->SetClipboard(*_pending_set);
+		if (!_ttyx->SetClipboard(*_pending_set)) {
+			// SetClipboard may fail only due to IPC failuer (e.g. if broken terminated)
+			if (!_fallback_clipboard) {
+				fprintf(stderr, "TTYXClipboard::OnClipboardClose: switching to fallback\n");
+				_fallback_clipboard.reset(new FSClipboardBackend);
+			}
+		}
 		_pending_set.reset();
 	}
 }
 
 void TTYXClipboard::OnClipboardEmpty()
 {
+	if (_fallback_clipboard)
+		_fallback_clipboard->OnClipboardEmpty();
+
 	_pending_set.reset(new ITTYXGlue::Type2Data);
 }
 
 bool TTYXClipboard::OnClipboardIsFormatAvailable(UINT format)
 {
+	if (_fallback_clipboard)
+		return _fallback_clipboard->OnClipboardIsFormatAvailable(format);
+
 	try {
 		std::string format_name = g_ttyx_custom_formats.Lookup(format);
 		return _ttyx->ContainsClipboard(format_name);
@@ -258,6 +273,9 @@ bool TTYXClipboard::OnClipboardIsFormatAvailable(UINT format)
 
 void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 {
+	if (_fallback_clipboard)
+		return _fallback_clipboard->OnClipboardSetData(format, data);
+
 	try {
 		std::string format_name = g_ttyx_custom_formats.Lookup(format);
 		if (!_pending_set) {
@@ -291,6 +309,9 @@ void *TTYXClipboard::OnClipboardSetData(UINT format, void *data)
 
 void *TTYXClipboard::OnClipboardGetData(UINT format)
 {
+	if (_fallback_clipboard)
+		return _fallback_clipboard->OnClipboardGetData(format);
+
 	void *out = nullptr;
 	try {
 		std::string format_name = g_ttyx_custom_formats.Lookup(format);
@@ -327,6 +348,9 @@ void *TTYXClipboard::OnClipboardGetData(UINT format)
 
 UINT TTYXClipboard::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 {
+	if (_fallback_clipboard)
+		return _fallback_clipboard->OnClipboardRegisterFormat(lpszFormat);
+
 	try {
 		return g_ttyx_custom_formats.Register(lpszFormat);
 

@@ -27,6 +27,7 @@ class TTYXClipboard : public IClipboardBackend
 {
 	ITTYXGluePtr _ttyx;
 	std::unique_ptr<ITTYXGlue::Type2Data> _pending_set;
+	std::unique_ptr<FSClipboardBackend> _fallback_clipboard;
 
 protected:
 	virtual bool OnClipboardOpen();

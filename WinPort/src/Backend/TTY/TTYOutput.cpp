@@ -259,8 +259,9 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
 	for (;cnt; ++ci,--cnt) {
-		const bool is_space = (ci->Char.UnicodeChar <= 0x1f
-			|| ci->Char.UnicodeChar == ' ' || ci->Char.UnicodeChar == 0x7f);
+		const bool is_space = (ci->Char.UnicodeChar <= 0x20
+			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
+			|| !WCHAR_IS_VALID(ci->Char.UnicodeChar));
 
 		Attributes attr(ci->Attributes);
 		if (_attr != attr && (!is_space || _attr.background != attr.background

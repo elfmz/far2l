@@ -401,6 +401,35 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		} else {
 			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
 			for (unsigned int x = 0; x < _cur_width; ++x) {
+				// workaround for characters that use zero or two cells
+				// when rendering into non-far2l terminals
+				if (!_far2l_tty && (WCHAR_NON_SINGLE_CELL(cur_line[x].Char.UnicodeChar)
+						|| WCHAR_NON_SINGLE_CELL(last_line[x].Char.UnicodeChar))) {
+					// first skip matching characters at beginning from full-width char
+					for (; x < _cur_width && cur_line[x].Char.UnicodeChar == last_line[x].Char.UnicodeChar;) {
+						++x;
+					}
+					if (x == _cur_width) {
+						break;
+					}
+					// print line's remainder fully without exceptions, but keep box-drawing characters in
+					// expected places overwriting tails of previously printed sequence of full-width chars.
+					tty_out.MoveCursorLazy(y + 1, x + 1);
+					for (;;) {
+						unsigned int edge;
+						for (edge = x + 1; edge < _cur_width && !WCHAR_IS_PSEUDOGRAPHIC(cur_line[edge].Char.UnicodeChar);) {
+							++edge;
+						}
+						tty_out.WriteLine(&cur_line[x], edge - x);
+						if (edge == _cur_width) {
+							break;
+						}
+						x = edge;
+						tty_out.MoveCursorStrict(y + 1, x + 1);
+					}
+					break;
+				}
+
 				// print current character:
 				//  if it doesnt match to its previos version
 				// OR

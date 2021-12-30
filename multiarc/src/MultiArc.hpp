@@ -10,7 +10,7 @@
 #include <vector>
 #include <utils.h>
 #include <KeyFileHelper.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 

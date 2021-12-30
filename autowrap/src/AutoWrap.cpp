@@ -1,7 +1,7 @@
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 #include "WrapLng.hpp"
 #include "AutoWrap.hpp"
-#include "DlgBuilder.hpp"
+#include "fpsdk/dlgbuilder.hpp"
 
 #include "WrapMix.icpp"
 

@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceRoot}",
                 "${workspaceRoot}/far2l",
-                "${workspaceRoot}/far2l/Include",
+                "${workspaceRoot}/far2l/fpsdk",
                 "${workspaceRoot}/WinPort",
                 "/usr/include"
             ],

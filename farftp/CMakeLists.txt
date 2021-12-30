@@ -73,7 +73,6 @@ target_include_directories(farftp PRIVATE src)
 target_include_directories(farftp PRIVATE ../FARStdlib/include)
 target_include_directories(farftp PRIVATE ../WinPort)
 target_include_directories(farftp PRIVATE ../far2l)
-target_include_directories(farftp PRIVATE ../far2l/Include)
 
 set_target_properties(farftp
   PROPERTIES

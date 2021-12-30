@@ -13,7 +13,6 @@ target_compile_definitions(editcase PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DON
 
 target_include_directories(editcase PRIVATE .)
 target_include_directories(editcase PRIVATE ../far2l)
-target_include_directories(editcase PRIVATE ../far2l/Include)
 target_include_directories(editcase PRIVATE ../WinPort)
 
 set_target_properties(editcase 

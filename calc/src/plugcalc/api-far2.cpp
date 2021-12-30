@@ -9,9 +9,9 @@
 
 #include <memory>
 
-#include <plugin.hpp>
-#include <farkeys.hpp>
-#include <farcolor.hpp>
+#include <fpsdk/plugin.hpp>
+#include <fpsdk/farkeys.hpp>
+#include <fpsdk/farcolor.hpp>
 
 #include <KeyFileHelper.h>
 #include <utils.h>

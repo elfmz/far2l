@@ -16,7 +16,6 @@ target_compile_definitions(tmppanel PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DON
 
 target_include_directories(tmppanel PRIVATE .)
 target_include_directories(tmppanel PRIVATE ../far2l)
-target_include_directories(tmppanel PRIVATE ../far2l/Include)
 target_include_directories(tmppanel PRIVATE ../WinPort)
 
 set_target_properties(tmppanel

@@ -8,7 +8,7 @@
 #include "./Utils/ProgressStateUpdate.h"
 #include "../UI/Defs.h"
 #include "../UI/Activities/WhatOnError.h"
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 
 class OpBase : protected Threaded, protected IAbortableOperationsHost
 {

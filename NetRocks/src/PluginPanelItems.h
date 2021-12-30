@@ -3,7 +3,7 @@
 #include <exception>
 #include <stdexcept>
 
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 
 void PluginPanelItems_Free(PluginPanelItem *items, int count);
 

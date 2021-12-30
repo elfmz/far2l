@@ -4,7 +4,7 @@
 #include <set>
 #include <chrono>
 #include <windows.h>
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 
 
 struct FarDialogItems : std::vector<struct FarDialogItem>

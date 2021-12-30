@@ -22,7 +22,7 @@
 #include <vector>
 #include <exception>
 #include <stdexcept>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 #include "./C/7z.h"

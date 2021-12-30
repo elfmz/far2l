@@ -14,7 +14,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 #include <KeyFileHelper.h>
 #include <utils.h>
 #include <string>

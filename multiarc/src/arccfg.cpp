@@ -1,6 +1,6 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
-#include <farkeys.hpp>
+#include <fpsdk/farkeys.hpp>
 
 int ConfigGeneral()
 {

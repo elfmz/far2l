@@ -1,6 +1,6 @@
 #define _FAR_NO_NAMELESS_UNIONS
 #define _UNICODE
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 #include <algorithm>
 #include <ctype.h>
 #include <utils.h>

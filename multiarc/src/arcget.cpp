@@ -1,6 +1,6 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
-#include <farkeys.hpp>
+#include <fpsdk/farkeys.hpp>
 #include <errno.h>
 
 class TRecur //$ 07.04.2002 AA

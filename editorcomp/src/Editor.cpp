@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 #include <utils.h>
 #include "Editor.h"
 

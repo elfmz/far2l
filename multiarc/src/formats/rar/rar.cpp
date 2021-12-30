@@ -11,7 +11,7 @@
 
 #include <windows.h>
 #include <string.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 #include "marclng.hpp"

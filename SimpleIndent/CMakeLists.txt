@@ -12,9 +12,8 @@ target_link_libraries(SimpleIndent utils far2l)
 target_compile_definitions(SimpleIndent PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 
 target_include_directories(SimpleIndent PRIVATE .)
-target_include_directories(SimpleIndent PRIVATE ../far2l)
-target_include_directories(SimpleIndent PRIVATE ../far2l/Include)
 target_include_directories(SimpleIndent PRIVATE ../WinPort)
+target_include_directories(SimpleIndent PRIVATE ../far2l)
 
 set_target_properties(SimpleIndent
   PROPERTIES

@@ -49,8 +49,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   #endif
 #endif
 
-#include "plugin.hpp"
-#include "farcolor.hpp"
+#include "fpsdk/plugin.hpp"
+#include "fpsdk/farcolor.hpp"
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

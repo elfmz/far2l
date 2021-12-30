@@ -1,4 +1,4 @@
-#include "plugin.hpp"
+#include "fpsdk/plugin.hpp"
 
 // Plugin initialization code
 

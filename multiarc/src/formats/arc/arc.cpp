@@ -10,7 +10,7 @@
 #include <utils.h>
 #include <string.h>
 #include <sudo.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 

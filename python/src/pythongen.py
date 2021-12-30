@@ -33,7 +33,7 @@ ffi.set_source("_pyfar",  # name of the output C extension
 """,
     include_dirs=[
         os.path.join(far2l),
-        os.path.join(far2l, 'far2l', 'Include'),
+        os.path.join(far2l, 'far2l', 'fpsdk'),
         os.path.join(far2l, 'WinPort'),
     ],
 )

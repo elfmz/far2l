@@ -13,7 +13,7 @@
 #include <windows.h>
 #include <utils.h>
 #include <string.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 

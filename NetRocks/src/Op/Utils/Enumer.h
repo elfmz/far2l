@@ -2,7 +2,7 @@
 #include <string>
 #include <set>
 #include <memory>
-#include <plugin.hpp>
+#include <fpsdk/plugin.hpp>
 #include "../../UI/Defs.h"
 #include "../../UI/Activities/WhatOnError.h"
 #include "../../FileInformation.h"

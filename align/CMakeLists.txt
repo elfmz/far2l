@@ -13,7 +13,6 @@ target_compile_definitions(align PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_U
 
 target_include_directories(align PRIVATE .)
 target_include_directories(align PRIVATE ../far2l)
-target_include_directories(align PRIVATE ../far2l/Include)
 target_include_directories(align PRIVATE ../WinPort)
 
 set_target_properties(align 

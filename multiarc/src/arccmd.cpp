@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "MultiArc.hpp"
 #include "marclng.hpp"
-#include <farkeys.hpp>
+#include <fpsdk/farkeys.hpp>
 #include <fcntl.h>
 
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,

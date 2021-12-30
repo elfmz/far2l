@@ -1,9 +1,9 @@
 #ifndef _AUTOCOMPLETE_H_
 #define _AUTOCOMPLETE_H_
 
-#include <plugin.hpp>
-#include <farcolor.hpp>
-#include <farkeys.hpp>
+#include <fpsdk/plugin.hpp>
+#include <fpsdk/farcolor.hpp>
+#include <fpsdk/farkeys.hpp>
 #include "lng.h"
 
 #endif

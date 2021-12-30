@@ -11,7 +11,7 @@
 #include <utils.h>
 #include <string.h>
 #include <vector>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
 #include "fmt.hpp"
 

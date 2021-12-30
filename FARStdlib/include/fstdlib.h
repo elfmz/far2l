@@ -43,10 +43,10 @@
 
 #define _FAR_USE_FARFINDDATA 1
 #include <utils.h>
-#include <pluginold.hpp>
+#include <fpsdk/pluginold.hpp>
 using namespace oldfar;
-#include <farcolor.hpp>
-#include <farkeys.hpp>
+#include <fpsdk/farcolor.hpp>
+#include <fpsdk/farkeys.hpp>
 
 #ifdef __GNUC__
 #pragma pack(1)

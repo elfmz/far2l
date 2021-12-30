@@ -13,7 +13,6 @@ target_compile_definitions(filecase PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DON
 
 target_include_directories(filecase PRIVATE .)
 target_include_directories(filecase PRIVATE ../far2l)
-target_include_directories(filecase PRIVATE ../far2l/Include)
 target_include_directories(filecase PRIVATE ../WinPort)
 
 set_target_properties(filecase 

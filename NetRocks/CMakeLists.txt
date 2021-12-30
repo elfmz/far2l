@@ -170,7 +170,6 @@ target_link_libraries(NetRocks utils far2l)
 target_include_directories(NetRocks PRIVATE src)
 target_include_directories(NetRocks PRIVATE ../WinPort)
 target_include_directories(NetRocks PRIVATE ../far2l)
-target_include_directories(NetRocks PRIVATE ../far2l/Include)
 
 target_compile_definitions(NetRocks PRIVATE)
 

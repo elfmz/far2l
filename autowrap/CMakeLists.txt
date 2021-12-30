@@ -13,7 +13,6 @@ target_compile_definitions(autowrap PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DON
 
 target_include_directories(autowrap PRIVATE .)
 target_include_directories(autowrap PRIVATE ../far2l)
-target_include_directories(autowrap PRIVATE ../far2l/Include)
 target_include_directories(autowrap PRIVATE ../WinPort)
 
 set_target_properties(autowrap

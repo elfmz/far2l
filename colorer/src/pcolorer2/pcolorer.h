@@ -11,9 +11,9 @@
 #endif
 #endif
 
-#include<plugin.hpp>
-#include<farcolor.hpp>
-#include<farkeys.hpp>
+#include<fpsdk/plugin.hpp>
+#include<fpsdk/farcolor.hpp>
+#include<fpsdk/farkeys.hpp>
 #include"ConsoleAnnotation.h"
 
 #include<wctype.h>

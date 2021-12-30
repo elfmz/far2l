@@ -2,6 +2,15 @@
 #include <assert.h>
 #include <base64.h>
 #include <string>
+#include <sys/ioctl.h>
+#ifdef __linux__
+# include <termios.h>
+# include <linux/kd.h>
+# include <linux/keyboard.h>
+#elif defined(__FreeBSD__)
+# include <sys/ioctl.h>
+# include <sys/kbio.h>
+#endif
 #include <os_call.hpp>
 #include "TTYOutput.h"
 #include "FarTTY.h"
@@ -35,8 +44,18 @@ bool TTYOutput::Attributes::operator ==(const Attributes &attr) const
 
 TTYOutput::TTYOutput(int out, bool far2l_tty)
 	:
-	_out(out), _far2l_tty(far2l_tty)
+	_out(out), _far2l_tty(far2l_tty), _kernel_tty(false)
 {
+#if defined(__linux__) || defined(__FreeBSD__)
+	unsigned long int leds = 0;
+	if (ioctl(out, KDGETLED, &leds) == 0) {
+		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
+		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
+		// so lets default to mortal mode in Linux/BSD TTY
+		_kernel_tty = true;
+	}
+#endif
+
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
 	ChangeKeypad(true);
 	ChangeMouse(true);
@@ -57,7 +76,10 @@ TTYOutput::~TTYOutput()
 		ChangeCursor(true, true);
 		ChangeMouse(false);
 		ChangeKeypad(false);
-		Format(ESC "[0 q" ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
+		if (!_kernel_tty) {
+			Format(ESC "[0 q");
+		}
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
 		Flush();
 
 	} catch (std::exception &) {
@@ -200,6 +222,9 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 		stk_ser.PushPOD((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInterract(stk_ser);
 
+	} else if (_kernel_tty) {
+		; // avoid printing 'q' on screen
+
 	} else if (height < 30) {
 		Format(ESC "[3 q"); // Blink Underline
 
@@ -268,7 +293,9 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 				|| _attr.background_intensive != attr.background_intensive) ) {
 
 			tmp = ESC "[";
-			if (_attr.foreground_intensive != attr.foreground_intensive)
+// wikipedia claims that colors 90-97 are nonstandard, so in case of some
+// terminal missing '90–97 Set bright foreground color' - use bold font
+			if (_kernel_tty && _attr.foreground_intensive != attr.foreground_intensive)
 				tmp+= attr.foreground_intensive ? "1;" : "22;";
 
 			if (_attr.foreground != attr.foreground

@@ -34,7 +34,7 @@ class TTYOutput
 		unsigned int count = 0;
 		std::string tmp;
 	} _same_chars;
-	bool _far2l_tty;
+	bool _far2l_tty, _kernel_tty;
 
 	void WriteReally(const char *str, int len);
 	void FinalizeSameChars();

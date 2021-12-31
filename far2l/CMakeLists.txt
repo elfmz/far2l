@@ -44,7 +44,6 @@ src/frame.cpp
 src/global.cpp
 src/help.cpp
 src/hilight.cpp
-src/history.cpp
 src/hmenu.cpp
 src/Mounts.cpp
 src/infolist.cpp
@@ -59,7 +58,6 @@ src/namelist.cpp
 src/options.cpp
 src/panel.cpp
 src/plist.cpp
-src/poscache.cpp
 src/qview.cpp
 src/rdrwdsk.cpp
 src/RefreshFrameManager.cpp
@@ -75,8 +73,6 @@ src/usermenu.cpp
 src/viewer.cpp
 src/vmenu.cpp
 src/execute_oscmd.cpp
-src/InterThreadCall.cpp
-src/SafeMMap.cpp
 src/ViewerPrinter.cpp
 
 src/console/AnsiEsc.cpp
@@ -97,9 +93,9 @@ src/macro/macro.cpp
 src/macro/syntax.cpp
 src/macro/tvar.cpp
 
-src/filemasks/CFileMask.cpp
-src/filemasks/FileMasksProcessor.cpp
-src/filemasks/FileMasksWithExclude.cpp
+src/filemask/CFileMask.cpp
+src/filemask/FileMasksProcessor.cpp
+src/filemask/FileMasksWithExclude.cpp
 
 src/locale/codepage.cpp
 src/locale/DetectCodepage.cpp
@@ -115,11 +111,14 @@ src/cfg/ConfigRW.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp
 
-src/plugs/plugapi.cpp
-src/plugs/plugins.cpp
-src/plugs/PluginW.cpp
-src/plugs/PluginA.cpp
-src/plugs/plclass.cpp
+src/hist/history.cpp
+src/hist/poscache.cpp
+
+src/plug/plugapi.cpp
+src/plug/plugins.cpp
+src/plug/PluginW.cpp
+src/plug/PluginA.cpp
+src/plug/plclass.cpp
 
 src/vt/vtansi.cpp
 src/vt/vtshell.cpp
@@ -130,6 +129,8 @@ src/vt/vtlog.cpp
 src/vt/vtcompletor.cpp
 src/vt/VTFar2lExtensios.cpp
 
+src/base/InterThreadCall.cpp
+src/base/SafeMMap.cpp
 src/base/farqueue.cpp
 src/base/FARString.cpp
 src/base/farrtl.cpp
@@ -192,10 +193,11 @@ target_include_directories(far2l PRIVATE
 	src/bookmarks
 	src/cfg
 	src/console
-	src/filemasks
+	src/filemask
+	src/hist
 	src/locale
 	src/macro
-	src/plugs
+	src/plug
 	src/vt
 	${CMAKE_CURRENT_BINARY_DIR}
 	${UCHARDET_INCLUDE_DIRS}

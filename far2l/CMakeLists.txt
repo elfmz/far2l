@@ -20,7 +20,6 @@ src/DlgGuid.cpp
 src/edit.cpp
 src/editor.cpp
 src/execute.cpp
-src/farqueue.cpp
 src/farwinapi.cpp
 src/fileattr.cpp
 src/fileedit.cpp
@@ -50,7 +49,6 @@ src/hmenu.cpp
 src/Mounts.cpp
 src/infolist.cpp
 src/keybar.cpp
-src/language.cpp
 src/main.cpp
 src/manager.cpp
 src/menubar.cpp
@@ -115,6 +113,7 @@ src/bookmarks/BookmarksLegacy.cpp
 src/cfg/config.cpp
 src/cfg/ConfigRW.cpp
 src/cfg/HotkeyLetterDialog.cpp
+src/cfg/language.cpp
 
 src/plugs/plugapi.cpp
 src/plugs/plugins.cpp
@@ -131,25 +130,25 @@ src/vt/vtlog.cpp
 src/vt/vtcompletor.cpp
 src/vt/VTFar2lExtensios.cpp
 
-src/aux/DList.cpp
-src/aux/format.cpp
-src/aux/udlist.cpp
-src/aux/cvtname.cpp
-src/aux/cddrv.cpp
-src/aux/chgprior.cpp
-src/aux/MountInfo.cpp
-src/aux/FARString.cpp
-src/aux/dirmix.cpp
-src/aux/drivemix.cpp
-src/aux/farrtl.cpp
-src/aux/mix.cpp
-src/aux/panelmix.cpp
-src/aux/pathmix.cpp
-src/aux/processname.cpp
-src/aux/RegExp.cpp
-src/aux/strmix.cpp
+src/base/farqueue.cpp
+src/base/FARString.cpp
+src/base/farrtl.cpp
+src/base/DList.cpp
 
-
+src/mix/format.cpp
+src/mix/udlist.cpp
+src/mix/cvtname.cpp
+src/mix/cddrv.cpp
+src/mix/chgprior.cpp
+src/mix/MountInfo.cpp
+src/mix/dirmix.cpp
+src/mix/drivemix.cpp
+src/mix/mix.cpp
+src/mix/panelmix.cpp
+src/mix/pathmix.cpp
+src/mix/processname.cpp
+src/mix/RegExp.cpp
+src/mix/strmix.cpp
 )
 
 # Set target names for the executables
@@ -188,7 +187,8 @@ target_compile_definitions(far2l PRIVATE -DUNICODE)
 target_include_directories(far2l PRIVATE
 	.
 	src
-	src/aux
+	src/base
+	src/mix
 	src/bookmarks
 	src/cfg
 	src/console

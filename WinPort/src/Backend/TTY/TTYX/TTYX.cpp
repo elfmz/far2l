@@ -23,12 +23,6 @@
 #include <vector>
 #include <memory>
 
-// Max time to wait for Xi keydown event if its not yet arrived upon TTY keypress
-#define XI_KEYDOWN_MAXWAIT_MSEC         100
-
-// Threshold of time since key modifier was pressed after which latch check has to be performed for it
-#define XI_MODIFIER_CHECK_TRSH_MSEC     500
-
 #define INVALID_MODS                    0xffffffff
 
 typedef std::map<std::string, std::vector<unsigned char> > Type2Data;
@@ -53,6 +47,14 @@ class TTYX
 	bool _xi = false;
 	DWORD _xi_leds = INVALID_MODS;
 	std::map<KeySym, std::chrono::time_point<std::chrono::steady_clock>>  _xi_keys;
+
+	// Max time to wait for Xi keydown event if its not yet arrived upon TTY keypress
+	unsigned int _xi_keydown_maxwait_msec = 100; // default value, can be increased on slow connections
+	const unsigned int  _xi_keydown_maxwait_msec_max = 3000; // max value on slow connections
+
+	// Threshold of time since key modifier was pressed after which latch check has to be performed for it
+	unsigned int _xi_modifier_check_trsh_msec = 500; // default value, can be increased on slow connections
+	const unsigned int  _xi_modifier_check_trsh_msec_max = 1000; // max value on slow connections
 
 	// recently released non-modifier key used in workaround to handle
 	// lagged TTY keypress arrived after Xi release due to slow connection
@@ -126,7 +128,7 @@ class TTYX
 	// wait for having any non-modifier key pressed for max of XI_KEYDOWN_MAXWAIT_MSEC
 	void WaitForNonModifierXiKeydown()
 	{
-		for (int i = 0; i < XI_KEYDOWN_MAXWAIT_MSEC; i+= 10) {
+		for (unsigned int i = 0; i < _xi_keydown_maxwait_msec; i+= 10) {
 			for (const auto &xki : _xi_keys) if (!IsXiKeyModifier(xki.first)) {
 				return;
 			}
@@ -243,7 +245,7 @@ class TTYX
 				}
 
 				const auto &delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->second);
-				if (delta > std::chrono::milliseconds(XI_MODIFIER_CHECK_TRSH_MSEC)) {
+				if (delta > std::chrono::milliseconds(_xi_modifier_check_trsh_msec)) {
 					if (mods == INVALID_MODS) {
 						mods = GetKeyModifiersByXQueryPointer();
 					}
@@ -402,6 +404,7 @@ class TTYX
 public:
 	TTYX(bool allow_xi)
 	{
+		const auto start_time = std::chrono::steady_clock::now();
 		_display = XOpenDisplay(0);
 		if (!_display)
 			throw std::runtime_error("Cannot open display");
@@ -456,7 +459,24 @@ public:
 			}
 		}
 #endif
-		fprintf(stderr, "%s: initialized\n", HasXi() ? "TTYXi" : "TTYX");
+		const unsigned int init_msec = std::chrono::duration_cast<std::chrono::milliseconds>
+			(std::chrono::steady_clock::now() - start_time).count();
+
+#ifdef TTYXI
+		if (_xi) { // few empiric magic coefficients here...
+			if (init_msec * 3 > _xi_keydown_maxwait_msec) {
+				_xi_keydown_maxwait_msec = std::min(init_msec * 3, _xi_keydown_maxwait_msec_max);
+			}
+			if (init_msec * 2 > _xi_modifier_check_trsh_msec) {
+				_xi_modifier_check_trsh_msec = std::min(init_msec * 2, _xi_modifier_check_trsh_msec_max);
+			}
+			fprintf(stderr, "TTYXi: initialized in %u msec, keydown_maxwait=%u modifier_check_trsh=%u\n",
+				init_msec, _xi_keydown_maxwait_msec, _xi_modifier_check_trsh_msec);
+		} else
+#endif
+		{
+			fprintf(stderr, "TTYX: initialized in %u msec\n", init_msec);
+		}
 	}
 
 	~TTYX()

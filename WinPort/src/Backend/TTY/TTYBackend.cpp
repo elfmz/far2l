@@ -28,6 +28,8 @@
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 
+bool IsUnstableWidthChar(wchar_t c);
+
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
@@ -374,106 +376,132 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 			g_winport_con_in->Enqueue(&ir, 1);
 		}
 		std::vector<CHAR_INFO> tmp;
-		std::lock_guard<std::mutex> lock(_output_mutex);
 		tty_out.MoveCursorStrict(1, 1);
 		_prev_height = _prev_width = 0;
 		_prev_output.swap(tmp);// ensure memory released
 	}
 }
 
+bool TTYBackend::IsUnstableWidthCharCached(wchar_t c)
+{
+	const size_t h = size_t(c) % ARRAYSIZE(_stable_width_chars_cache);
+	if (_stable_width_chars_cache[h] != c) {
+		if (IsUnstableWidthChar(c)) {
+			return true;
+		}
+		_stable_width_chars_cache[h] = c;
+	}
+	return false;
+}
+
+//#define LOG_OUTPUT_COUNT
 void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 {
-	std::lock_guard<std::mutex> lock(_output_mutex);
-
 	_cur_output.resize(_cur_width * _cur_height);
 
 	COORD data_size = {CheckedCast<SHORT>(_cur_width), CheckedCast<SHORT>(_cur_height) };
 	COORD data_pos = {0, 0};
 	SMALL_RECT screen_rect = {0, 0, CheckedCast<SHORT>(_cur_width - 1), CheckedCast<SHORT>(_cur_height - 1)};
 	g_winport_con_out->Read(&_cur_output[0], data_size, data_pos, screen_rect);
+#ifdef LOG_OUTPUT_COUNT
+	unsigned long printed_count = 0, printed_skipable = 0, forced_by_unstable = 0;
+#endif
+	if (_cur_output.empty()) {
+		;
 
-#if 1
-	for (unsigned int y = 0; y < _cur_height; ++y) {
-		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		if (y >= _prev_height) {
-			tty_out.MoveCursorStrict(y + 1, 1);
+	} else if (_cur_width != _prev_width || _cur_height != _prev_height) {
+		for (unsigned int y = 0; y < _cur_height; ++y) {
+			const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
+			tty_out.MoveCursorLazy(y + 1, 1);
 			tty_out.WriteLine(cur_line, _cur_width);
-		} else {
-			const CHAR_INFO *last_line = &_prev_output[y * _prev_width];
-			for (unsigned int x = 0; x < _cur_width; ++x) {
-				// workaround for characters that use zero or two cells
-				// when rendering into non-far2l terminals
-				if (!_far2l_tty && (WCHAR_NON_SINGLE_CELL(cur_line[x].Char.UnicodeChar)
-						|| WCHAR_NON_SINGLE_CELL(last_line[x].Char.UnicodeChar))) {
-					// first skip matching characters at beginning from full-width char
-					for (; x < _cur_width && cur_line[x].Char.UnicodeChar == last_line[x].Char.UnicodeChar;) {
-						++x;
+		}
+
+	} else for (unsigned int y = 0; y < _cur_height; ++y) {
+		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
+		const CHAR_INFO *prev_line = &_prev_output[y * _prev_width];
+
+		const auto UnstableWidth = [&](unsigned int x_)
+		{
+			return IsUnstableWidthCharCached(cur_line[x_].Char.UnicodeChar)
+				|| IsUnstableWidthCharCached(prev_line[x_].Char.UnicodeChar);
+		};
+
+		const auto ApproxWeight = [&](unsigned int x_)
+		{
+			return ((cur_line[x_].Char.UnicodeChar > 0x7f) ? 2 : 1);
+		};
+
+		const auto Modified = [&](unsigned int x_)
+		{
+			return (cur_line[x_].Char.UnicodeChar != prev_line[x_].Char.UnicodeChar
+				|| cur_line[x_].Attributes != prev_line[x_].Attributes);
+		};
+
+		for (unsigned int x = 0, skipped_start = 0, skipped_weight = 0; x < _cur_width; ++x) {
+			// If first or next character is/was 'special' - like fullwidth or diacric then need
+			// to write whole line til the end to avoid artifacts on non-far2l terminals
+			if (!_far2l_tty && ((x + 2 < _cur_width && UnstableWidth(x + 1)) || (x == 0 && UnstableWidth(x)))) {
+#ifdef LOG_OUTPUT_COUNT
+				fprintf(stderr, "!!! OUTPUT_UNSTABLE: 0x%x '%lc' or 0x%x '%lc'\n",
+					cur_line[x + 1].Char.UnicodeChar, cur_line[x + 1].Char.UnicodeChar,
+					prev_line[x + 1].Char.UnicodeChar, prev_line[x + 1].Char.UnicodeChar);
+				forced_by_unstable+= _cur_width - x;
+#endif
+				// print line's remainder fully without exceptions, but keep box-drawing characters at
+				// expected positions overwriting tails of previously printed sequence of full-width chars.
+				tty_out.MoveCursorLazy(y + 1, x + 1);
+				for (;;) {
+					unsigned int edge;
+					for (edge = x + 1; edge < _cur_width && !WCHAR_IS_PSEUDOGRAPHIC(cur_line[edge].Char.UnicodeChar);) {
+						++edge;
 					}
-					if (x == _cur_width) {
+					tty_out.WriteLine(&cur_line[x], edge - x);
+					if (edge == _cur_width) {
 						break;
 					}
-					// print line's remainder fully without exceptions, but keep box-drawing characters in
-					// expected places overwriting tails of previously printed sequence of full-width chars.
-					tty_out.MoveCursorLazy(y + 1, x + 1);
-					for (;;) {
-						unsigned int edge;
-						for (edge = x + 1; edge < _cur_width && !WCHAR_IS_PSEUDOGRAPHIC(cur_line[edge].Char.UnicodeChar);) {
-							++edge;
-						}
-						tty_out.WriteLine(&cur_line[x], edge - x);
-						if (edge == _cur_width) {
-							break;
-						}
-						x = edge;
-						tty_out.MoveCursorStrict(y + 1, x + 1);
-					}
-					break;
+					x = edge;
+					tty_out.MoveCursorStrict(y + 1, x + 1);
 				}
-
-				// print current character:
-				//  if it doesnt match to its previos version
-				// OR
-				//  if some of next 2 characters dont match to their previous versions and
-				//  printing current character doesnt require cursor pos update with
-				//  tty_out.MoveCursor, cuz tty_out.MoveCursor generates 5 bytes and thus its
-				//  more efficient to print 1..2 matching characters moving cursor by one than
-				//  skip them and update cursor position later by sending 5-bytes ESC sequence
-				if (x >= _prev_width
-					  || cur_line[x].Char.UnicodeChar != last_line[x].Char.UnicodeChar
-					  || cur_line[x].Attributes != last_line[x].Attributes) {
-					tty_out.MoveCursorLazy(y + 1, x + 1);
-					tty_out.WriteLine(&cur_line[x], 1);
-
-				} else if (tty_out.ShouldMoveCursor(y + 1, x + 1)) {
-					// matching character located at position that already requires update
-					;
-
-				} else if (x + 2 < _cur_width && ( x + 2 >= _prev_width
-					 || cur_line[x + 2].Char.UnicodeChar != last_line[x + 2].Char.UnicodeChar
-					 || cur_line[x + 2].Attributes != last_line[x + 2].Attributes) ) {
-					// character x + 2 requires print, so avoid cursor pos update by
-					// printing all 3 chars from current pos
-					tty_out.WriteLine(&cur_line[x], 3);
-					x+= 2;
-
-				} else if (x + 1 < _cur_width && ( x + 1 >= _prev_width
-					 || cur_line[x + 1].Char.UnicodeChar != last_line[x + 1].Char.UnicodeChar
-					 || cur_line[x + 1].Attributes != last_line[x + 1].Attributes) ) {
-					// character x + 1 requires print, so avoid cursor pos update by
-					// printing all 2 chars from current pos
-					tty_out.WriteLine(&cur_line[x], 2);
-					x+= 1;
-				}
+				break;
 			}
+
+			if (!Modified(x)) {
+				skipped_weight+= ApproxWeight(x);
+				continue;
+			}
+
+			// Current char doesn't match to what was on this position before
+			// so have to print it at right position.
+			// Note that cursor moving directive has its own output 'weight',
+			// so if skipped chars sequence is not bigger than cursor move then
+			// its better to print skipped chars instead of moving cursor.
+
+			bool print_skipped = false;
+			if (x != skipped_start && tty_out.WeightOfHorizontalMoveCursor(y + 1, skipped_start + 1) == 0) { // is cursor at expected pos?
+				const int move_cursor_weight = tty_out.WeightOfHorizontalMoveCursor(y + 1, x + 1);
+				print_skipped = (move_cursor_weight >= 0 && skipped_weight <= (unsigned int)move_cursor_weight);
+			}
+			if (print_skipped) {
+				tty_out.WriteLine(&cur_line[skipped_start], x + 1 - skipped_start);
+#ifdef LOG_OUTPUT_COUNT
+				printed_skipable+= x - skipped_start;
+#endif
+			} else {
+				tty_out.MoveCursorLazy(y + 1, x + 1);
+				tty_out.WriteLine(&cur_line[x], 1);
+			}
+#ifdef LOG_OUTPUT_COUNT
+			printed_count++;
+#endif
+			skipped_start = x + 1;
+			skipped_weight = 0;
 		}
 	}
-
-#else
-	for (unsigned int y = 0; y < _cur_height; ++y) {
-		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		tty_out.MoveCursorLazy(y + 1, 1);
-		tty_out.WriteLine(cur_line, _cur_width);
-	}
+#ifdef LOG_OUTPUT_COUNT
+	fprintf(stderr, "!!! OUTPUT_COUNT: (normal=%lu + skipable=%lu + unstable=%lu) = %lu of %lu\n",
+		printed_count, printed_skipable, forced_by_unstable,
+		printed_count + printed_skipable + forced_by_unstable,
+		(unsigned long)_cur_output.size());
 #endif
 	_prev_width = _cur_width;
 	_prev_height = _cur_height;

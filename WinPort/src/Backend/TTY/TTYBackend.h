@@ -15,11 +15,12 @@
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
 {
-	std::mutex _output_mutex;
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
+	wchar_t _stable_width_chars_cache[0x200]{};
+
 
 	enum {
 		FKS_UNKNOWN,
@@ -85,6 +86,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	} _ae {};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
+
+	bool IsUnstableWidthCharCached(wchar_t c);
 
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);

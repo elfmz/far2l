@@ -263,21 +263,45 @@ void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 		MoveCursorStrict(y, x);
 
 	} else if (x != _cursor.x) {
-		if (x != 1) {
-			Format(ESC "[%uG", x);
-		} else {
+		if (x == 1) {
 			Write(ESC "[G", 3);
+		} else {
+			Format(ESC "[%uG", x);
 		}
 		_cursor.x = x;
 
 	} else if (y != _cursor.y) {
-		if (y != 1) {
-			Format(ESC "[%ud", y);
-		} else {
+		if (y == 1) {
 			Write(ESC "[d", 3);
+		} else {
+			Format(ESC "[%ud", y);
 		}
 		_cursor.y = y;
 	}
+}
+
+int TTYOutput::WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const
+{
+	if (_cursor.y != y) {
+		return -1;
+	}
+
+	if (_cursor.x == x) {
+		return 0;
+	}
+
+	if (x == 1) {
+		return 3;// Write(ESC "[G", 3);
+	}
+
+	// Format(ESC "[%uG", x);
+	if (x < 10) {
+		return 4;
+	}
+	if (x < 100) {
+		return 5;
+	}
+	return 6;
 }
 
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)

@@ -150,6 +150,8 @@ class Help:public Frame
 
 		FARString strCtrlStartPosChar;
 
+		FARString strLastSearchStr;
+		int LastSearchCase = 0, LastSearchWholeWords = 0, LastSearchRegexp = 0;
 	private:
 		virtual void DisplayObject();
 		int  ReadHelp(const wchar_t *Mask=nullptr);
@@ -164,6 +166,7 @@ class Help:public Frame
 		int  IsReferencePresent();
 		void MoveToReference(int Forward,int CurScreen);
 		void ReadDocumentsHelp(int TypeIndex);
+		void Search(FILE *HelpFile,uintptr_t nCodePage);
 		int  JumpTopic(const wchar_t *JumpTopic=nullptr);
 		const HelpRecord* GetHelpItem(int Pos);
 

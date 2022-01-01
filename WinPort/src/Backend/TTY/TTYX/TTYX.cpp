@@ -411,14 +411,9 @@ public:
 
 		_display_fd = ConnectionNumber(_display);
 		_screen = DefaultScreen(_display);
-		_root_window = DefaultRootWindow (_display);
-		_window = XCreateSimpleWindow(_display, RootWindow(_display, _screen),
-			0, 0, 1, 1, 0, BlackPixel(_display, _screen), WhitePixel(_display, _screen));
-		_targets_atom = XInternAtom(_display, "TARGETS", 0);
-		_text_atom = XInternAtom(_display, "TEXT", 0);
-		_utf8_atom = XInternAtom(_display, "UTF8_STRING", 1);
-		_clipboard_atom = XInternAtom(_display, "CLIPBOARD", 0);
-		_xsel_data_atom = XInternAtom(_display, "XSEL_DATA", 0);
+		_root_window = RootWindow(_display, _screen);
+		auto color = BlackPixel(_display, _screen);
+		_window = XCreateSimpleWindow(_display, _root_window, 0, 0, 1, 1, 0, color, color);
 
 #ifdef TTYXI
 		_xi = true;
@@ -483,6 +478,15 @@ public:
 	{
 		XDestroyWindow(_display, _window);
 		XCloseDisplay(_display);
+	}
+
+	void LateInitialization()
+	{
+		_targets_atom = XInternAtom(_display, "TARGETS", 0);
+		_text_atom = XInternAtom(_display, "TEXT", 0);
+		_utf8_atom = XInternAtom(_display, "UTF8_STRING", 1);
+		_clipboard_atom = XInternAtom(_display, "CLIPBOARD", 0);
+		_xsel_data_atom = XInternAtom(_display, "XSEL_DATA", 0);
 	}
 
 	bool HasXi() const
@@ -606,6 +610,8 @@ int main(int argc, char *argv[])
 		TTYX ttyx(allow_xi);
 		ipc.SendCommand(IPC_INIT);
 		ipc.SendPOD(ttyx.HasXi());
+
+		ttyx.LateInitialization();
 
 		for (;;) {
 			ttyx.Idle(fdr);

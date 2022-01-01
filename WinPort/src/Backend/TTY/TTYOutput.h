@@ -49,7 +49,7 @@ public:
 
 	void ChangeCursorHeight(unsigned int height);
 	void ChangeCursor(bool visible, bool force = false);
-	inline bool ShouldMoveCursor(unsigned int y, unsigned int x) const { return x != _cursor.x || y != _cursor.y; }
+	int WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const;
 	void MoveCursorStrict(unsigned int y, unsigned int x);
 	void MoveCursorLazy(unsigned int y, unsigned int x);
 	void WriteLine(const CHAR_INFO *ci, unsigned int cnt);

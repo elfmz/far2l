@@ -166,6 +166,8 @@ static int MainProcess(
     int StartChar
 )
 {
+	InterThreadCallsDispatcherThread itc_dispatcher_thread;
+
 	{
 		clock_t cl_start = clock();
 		ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -349,15 +351,6 @@ static int MainProcess(
 	}
 	CloseConsole();
 	return 0;
-}
-
-int MainProcessWithInterThreadCallsDispatching(FARString& strEditViewArg,FARString& DestName1,FARString& DestName2,int StartLine,int StartChar)
-{
-	int Result=0;
-	StartDispatchingInterThreadCalls();
-	Result=MainProcess(strEditViewArg,DestName1,DestName2,StartLine,StartChar);
-	StopDispatchingInterThreadCalls();
-	return Result;
 }
 
 static void SetupFarPath(int argc, char **argv)
@@ -636,7 +629,7 @@ int FarAppMain(int argc, char **argv)
 
 	CheckForImportLegacyShortcuts();
 
-	int Result = MainProcessWithInterThreadCallsDispatching(strEditViewArg,DestNames[0],DestNames[1],StartLine,StartChar);
+	int Result = MainProcess(strEditViewArg,DestNames[0],DestNames[1],StartLine,StartChar);
 
 	EmptyInternalClipboard();
 	doneMacroVarTable(1);

@@ -51,14 +51,14 @@ void OverrideInterThreadID(unsigned int tid)
 	g_thread_id = tid;
 }
 
-void StartDispatchingInterThreadCalls()
+InterThreadCallsDispatcherThread::InterThreadCallsDispatcherThread()
 {
 	const DWORD self_tid = GetInterThreadID();
 	std::lock_guard<std::mutex> lock(s_inter_thread_call_synch.mtx);
 	s_interlocked_delegates_tid = self_tid;
 }
 
-void StopDispatchingInterThreadCalls()
+InterThreadCallsDispatcherThread::~InterThreadCallsDispatcherThread()
 {
 	assert((IsCurrentThreadDispatchesInterThreadCalls()));
 	InterThreadCallDelegates interlocked_delegates;

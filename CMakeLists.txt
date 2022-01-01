@@ -87,7 +87,7 @@ elseif(FARFTP)
 	message(STATUS "Force-enable LEGACY due to enabled FARFTP")
 endif()
 
-if (NOT ${EACP})
+if (NOT EACP)
 	message(STATUS "${ColorRed}Building without East Asian codepages support due to EACP=${EACP}${ColorNormal}")
 endif()
 

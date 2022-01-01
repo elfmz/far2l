@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "exitcode.hpp"
 #include "filestr.hpp"
+#include "stddlg.hpp"
 
 // Стек возврата
 class CallBackStack
@@ -105,6 +106,7 @@ class CallBackStack
 };
 
 
+static const wchar_t *FoundContents=L"__FoundContents__";
 static const wchar_t *PluginContents=L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic=L":Help";
 static const wchar_t *HelpContents=L"Contents";
@@ -276,6 +278,13 @@ int Help::ReadHelp(const wchar_t *Mask)
 		strCurPluginContents.Clear();
 
 	HelpList.Free();
+
+	if (!StrCmp(StackData.strHelpTopic,FoundContents))
+	{
+		Search(HelpFile,nCodePage);
+		fclose(HelpFile);
+		return TRUE;
+	}
 
 	StrCount=0;
 	FixCount=0;
@@ -1279,6 +1288,39 @@ int Help::ProcessKey(int Key)
 
 			return TRUE;
 		}
+		case KEY_F7:
+		{
+			// не поганим SelTopic, если и так в FoundContents
+			if (StrCmpI(StackData.strHelpTopic,FoundContents))
+			{
+				FARString strLastSearchStr0=strLastSearchStr;
+				int Case=LastSearchCase;
+				int WholeWords=LastSearchWholeWords;
+				int Regexp=LastSearchRegexp;
+
+				FARString strTempStr;
+				//int RetCode = GetString(MSG(MHelpSearchTitle),MSG(MHelpSearchingFor),L"HelpSearch",strLastSearchStr,strLastSearchStr0);
+				//MSG(MHelpSearchTitle), MSG(MHelpSearchingFor), 
+				int RetCode = GetSearchReplaceString(false, &strLastSearchStr0, &strTempStr, L"HelpSearch", L"", &Case, &WholeWords, nullptr, nullptr, &Regexp,nullptr);
+
+				if (RetCode <= 0)
+					return TRUE;
+
+				strLastSearchStr=strLastSearchStr0;
+				LastSearchCase=Case;
+				LastSearchWholeWords=WholeWords;
+				LastSearchRegexp=Regexp;
+
+				Stack->Push(&StackData);
+				IsNewTopic=TRUE;
+				JumpTopic(FoundContents);
+				ErrorHelp=FALSE;
+				IsNewTopic=FALSE;
+			}
+
+			return TRUE;
+
+		}
 		case KEY_SHIFTF2:
 		{
 			//   не поганим SelTopic, если и так в PluginContents
@@ -1460,7 +1502,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	//_SVS(SysLog(L"HelpMask=%ls NewTopic=%ls",StackData.HelpMask,NewTopic));
 	if (StackData.strSelTopic.At(0) != L':' &&
-	        StrCmpI(StackData.strSelTopic,PluginContents)
+	        (StrCmpI(StackData.strSelTopic,PluginContents) || StrCmpI(StackData.strSelTopic,FoundContents))
 	   )
 	{
 		if (!(StackData.Flags&FHELP_CUSTOMFILE) && wcsrchr(strNewTopic,HelpEndLink))
@@ -1511,7 +1553,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 	// ResizeConsole();
 	if (IsNewTopic
-	        || !StrCmpI(StackData.strSelTopic,PluginContents) // Это неприятный костыль :-((
+	        || !(StrCmpI(StackData.strSelTopic,PluginContents)||StrCmpI(StackData.strSelTopic,FoundContents)) // Это неприятный костыль :-((
 	   )
 		MoveToReference(1,1);
 
@@ -1760,6 +1802,80 @@ static int __cdecl CmpItems(const HelpRecord **el1, const HelpRecord **el2)
 		return -1;
 	else
 		return 1;
+}
+
+void Help::Search(FILE *HelpFile,uintptr_t nCodePage)
+{
+	StrCount=0;
+	FixCount=1;
+	FixSize=2;
+	StackData.TopStr=0;
+	TopicFound=TRUE;
+	StackData.CurX=StackData.CurY=0;
+	strCtrlColorChar.Clear();
+
+	FARString strTitleLine=strLastSearchStr;
+	AddTitle(strTitleLine);
+
+	bool TopicFound=false;
+	OldGetFileString GetStr(HelpFile);
+	int nStrLength;
+	wchar_t *ReadStr;
+	FARString strCurTopic, strEntryName, strReadStr, strLastSearchStrU=strLastSearchStr;
+
+	strLastSearchStrU.Upper();
+
+	for (;;)
+	{
+		if (GetStr.GetString(&ReadStr, nCodePage, nStrLength) <= 0)
+		{
+			break;
+		}
+
+		strReadStr=ReadStr;
+		RemoveTrailingSpaces(strReadStr);
+
+		if (strReadStr.At(0)==L'@' && !(strReadStr.At(1)==L'+' || strReadStr.At(1)==L'-') && !strReadStr.Contains(L'='))// && !TopicFound)
+		{
+			strEntryName=L"";
+			strCurTopic=L"";
+			RemoveExternalSpaces(strReadStr);
+			if (StrCmpI(strReadStr.CPtr()+1,HelpContents))
+			{
+				strCurTopic=strReadStr;
+				TopicFound=true;
+			}
+		}
+		else if (TopicFound && strReadStr.At(0)==L'$' && strReadStr.At(1) && !strCurTopic.IsEmpty())
+		{
+			strEntryName=strReadStr.CPtr()+1;
+			RemoveExternalSpaces(strEntryName);
+			RemoveChar(strEntryName,L'#',false);
+		}
+
+		if (TopicFound && !strEntryName.IsEmpty())
+		{
+			// !!!BUGBUG: необходимо "очистить" строку strReadStr от элементов разметки !!!
+
+			FARString ReplaceStr;
+			int CurPos=0;
+			int SearchLength;
+			bool Result=SearchString(strReadStr,(int)strReadStr.GetLength(),strLastSearchStr,ReplaceStr,CurPos,0,LastSearchCase,LastSearchWholeWords,false,LastSearchRegexp,&SearchLength);
+
+			if (Result)
+			{
+				FARString strHelpLine;
+				strHelpLine.Format(L"   ~%ls~%ls@",strEntryName.CPtr(), strCurTopic.CPtr());
+				AddLine(strHelpLine);
+				strCurTopic=L"";
+				strEntryName=L"";
+				TopicFound=false;
+			}
+		}
+	}
+
+	AddLine(L"");
+	MoveToReference(1,1);
 }
 
 void Help::ReadDocumentsHelp(int TypeIndex)

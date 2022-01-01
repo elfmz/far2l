@@ -1,4 +1,3 @@
-
 project(far2l)
 
 add_subdirectory (bootstrap)
@@ -175,7 +174,7 @@ if (NOT DEFINED USEUCD)
 	set(USEUCD "YES")
 endif()
 
-if (NOT ${USEUCD})
+if (NOT USEUCD)
 	message(STATUS "Building without libuchardet due to USEUCD=${USEUCD}")
 else()
 	message(STATUS "Building with libuchardet")

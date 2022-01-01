@@ -17,8 +17,12 @@ unsigned int GetInterThreadID();
 // to be possible run exclusively - either one, either another
 void OverrideInterThreadID(unsigned int tid);
 
-void StartDispatchingInterThreadCalls();
-void StopDispatchingInterThreadCalls();
+struct InterThreadCallsDispatcherThread
+{
+	InterThreadCallsDispatcherThread();
+	~InterThreadCallsDispatcherThread();
+};
+
 bool IsCurrentThreadDispatchesInterThreadCalls();
 int DispatchInterThreadCalls();
 
@@ -122,6 +126,7 @@ template <class FN>
 	c->Enqueue();
 }
 
+//////////////////////////////////////////////////
 
 
 struct InterThreadLock

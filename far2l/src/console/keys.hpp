@@ -16,7 +16,7 @@ keys.hpp
 */
 #else // ELSE FAR_USE_INTERNALS
 /*
-  farkeys.hpp
+  farkeys.h
 
   Inside KeyName for FAR Manager <%VERSION%>
 */

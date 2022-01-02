@@ -70,7 +70,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "dirmix.hpp"
 #include "constitle.hpp"
-#include "FarDlgBuilder.hpp"
+#include "DialogBuilder.hpp"
 #include "setattr.hpp"
 #include "palette.hpp"
 #include "panel.hpp"

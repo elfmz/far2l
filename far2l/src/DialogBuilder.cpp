@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "lang.hpp"
-#include "FarDlgBuilder.hpp"
+#include "DialogBuilder.hpp"
 #include "dialog.hpp"
 #include "language.hpp"
 #include "codepage.hpp"

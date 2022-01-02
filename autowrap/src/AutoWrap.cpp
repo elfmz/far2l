@@ -1,7 +1,7 @@
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
+#include <fardlgbuilder.hpp>
 #include "WrapLng.hpp"
 #include "AutoWrap.hpp"
-#include "fpsdk/dlgbuilder.hpp"
 
 #include "WrapMix.icpp"
 

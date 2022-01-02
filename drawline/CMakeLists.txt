@@ -13,7 +13,7 @@ target_compile_definitions(drawline PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DON
 
 target_include_directories(drawline PRIVATE .)
 target_include_directories(drawline PRIVATE ../WinPort)
-target_include_directories(drawline PRIVATE ../far2l)
+target_include_directories(drawline PRIVATE ../far2l/far2sdk)
 
 set_target_properties(drawline 
   PROPERTIES

@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "language.hpp"
 #include "bitflags.hpp"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "plclass.hpp"
 #include "PluginA.hpp"
 #include "PluginW.hpp"

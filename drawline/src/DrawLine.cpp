@@ -1,4 +1,4 @@
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 #include "DrawLng.hpp"
 #include "DrawLine.hpp"
 

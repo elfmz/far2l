@@ -44,4 +44,4 @@ add_library (FARStdlib ${SOURCES})
 
 target_include_directories(FARStdlib PRIVATE include)
 target_include_directories(FARStdlib PRIVATE ../WinPort)
-target_include_directories(FARStdlib PRIVATE ../far2l)
+target_include_directories(FARStdlib PRIVATE ../far2l/far2sdk)

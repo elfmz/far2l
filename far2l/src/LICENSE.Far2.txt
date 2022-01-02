@@ -14,7 +14,7 @@ dizlist.cpp dizlist.hpp DlgBuilder.cpp DlgBuilder.hpp dlgedit.cpp dlgedit.hpp
 DlgGuid.cpp DlgGuid.hpp DList.cpp DList.hpp drivemix.cpp drivemix.hpp edit.cpp 
 edit.hpp editor.cpp editor.hpp eject.cpp eject.hpp elevation.cpp elevation.hpp 
 execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
-FarDlgBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
+DialogBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
 farlang.templ.m4 farqueue.cpp farqueue.hpp farrtl.cpp farrtl.hpp FarRus.hlf.m4 
 farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 
 BookmarksMenu.cpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
@@ -26,9 +26,9 @@ fileview.cpp fileview.hpp findfile.cpp findfile.hpp flink.cpp flink.hpp
 flmodes.cpp flplugin.cpp flshow.cpp flupdate.cpp fnparce.cpp fnparce.hpp 
 foldtree.cpp foldtree.hpp format.cpp format.hpp frame.cpp frame.hpp global.cpp 
 global.hpp grabber.cpp grabber.hpp headers.hpp headers.m4 help.cpp 
-help.hpp hilight.cpp hilight.hpp history.cpp history.hpp hmenu.cpp hmenu.hpp 
-imports.cpp imports.hpp fpsdk/farcolor.hpp 
-fpsdk/farkeys.hpp fpsdk/plugin.hpp infolist.cpp infolist.hpp interf.cpp 
+help.hpp hilight.cpp hilight.hpp history.cpp history.hpp hmenu.cpp hmenu.hpp
+farcolor.h farkeys.h farplug-wide.h farplug-mb.h 
+imports.cpp imports.hpp infolist.cpp infolist.hpp interf.cpp 
 interf.hpp keybar.cpp keybar.hpp keyboard.cpp keyboard.hpp keys.hpp lang.hpp 
 language.cpp language.hpp locale.cpp locale.hpp localOEM.cpp 
 localOEM.hpp lockscrn.cpp lockscrn.hpp macro.cpp macro.hpp macroopcode.hpp 
@@ -37,7 +37,7 @@ mix.cpp mix.hpp mkdir.cpp mkdir.hpp modal.cpp modal.hpp namelist.cpp namelist.hp
 network.cpp network.hpp noncopyable.hpp nsUniversalDetectorEx.h options.cpp 
 options.hpp palette.cpp palette.hpp panel.cpp panel.hpp panelctype.hpp panelmix.cpp 
 panelmix.hpp pathmix.cpp pathmix.hpp plclass.hpp plist.cpp plist.hpp 
-plognmn.hpp plugapi.cpp plugapi.hpp plugin.hpp PluginA.cpp PluginA.hpp pluginold.hpp 
+plugapi.cpp plugapi.hpp farplug-wide.h PluginA.cpp PluginA.hpp farplug-mb.h
 plugins.cpp plugins.hpp PluginW.cpp PluginW.hpp poscache.cpp poscache.hpp print.cpp 
 print.hpp privilege.cpp privilege.hpp processname.cpp processname.hpp qview.cpp 
 qview.hpp rdrwdsk.cpp rdrwdsk.hpp RefreshFrameManager.cpp RefreshFrameManager.hpp 
@@ -82,6 +82,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 EXCEPTION:
 Far Manager plugins that use only the following header files from this
-distribution (none or any): farcolor.hpp, farkeys.hpp, plugin.hpp,
+distribution (none or any): farcolor.h, farkeys.h, farplug-wide.h, farplug-mb.h, fardlgbuilder.hpp,
 farcolorW.pas, farkeysW.pas and pluginW.pas; can be distributed under any other
 possible license with no implications from the above license on them.

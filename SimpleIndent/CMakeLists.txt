@@ -13,7 +13,7 @@ target_compile_definitions(SimpleIndent PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR
 
 target_include_directories(SimpleIndent PRIVATE .)
 target_include_directories(SimpleIndent PRIVATE ../WinPort)
-target_include_directories(SimpleIndent PRIVATE ../far2l)
+target_include_directories(SimpleIndent PRIVATE ../far2l/far2sdk)
 
 set_target_properties(SimpleIndent
   PROPERTIES

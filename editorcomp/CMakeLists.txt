@@ -15,7 +15,7 @@ target_link_libraries(editorcomp utils far2l)
 target_compile_definitions(editorcomp PRIVATE -D_UNICODE -DUNICODE -D__unix__)
 
 target_include_directories(editorcomp PRIVATE .)
-target_include_directories(editorcomp PRIVATE ../far2l)
+target_include_directories(editorcomp PRIVATE ../far2l/far2sdk)
 target_include_directories(editorcomp PRIVATE ../WinPort)
 
 set_target_properties(editorcomp

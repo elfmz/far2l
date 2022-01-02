@@ -43,7 +43,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC TTMATH_NOASM UNICODE _UNICODE)
 
 target_include_directories(${PROJECT_NAME} PRIVATE src/shared)
 target_include_directories(${PROJECT_NAME} PRIVATE ../WinPort)
-target_include_directories(${PROJECT_NAME} PRIVATE ../far2l)
+target_include_directories(${PROJECT_NAME} PRIVATE ../far2l/far2sdk)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 11

@@ -23,8 +23,8 @@ Folder shortcuts
 #include "strmix.hpp"
 #include "interf.hpp"
 #include "dialog.hpp"
-#include "FarDlgBuilder.hpp"
-#include "fpsdk/plugin.hpp"
+#include "DialogBuilder.hpp"
+#include <farplug-wide.h>
 #include "plugins.hpp"
 
 Bookmarks::Bookmarks()

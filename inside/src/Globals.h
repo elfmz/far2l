@@ -3,7 +3,7 @@
 #include <sudo.h>
 #include <string>
 #include <vector>
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
 #include "lng.h"
 

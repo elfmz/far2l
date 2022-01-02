@@ -228,7 +228,7 @@ void ConvertItemSmall(FarDialogItem *Item,DialogItemEx *Data)
 size_t ItemStringAndSize(DialogItemEx *Data, FARString& ItemString)
 {
 	DlgEdit *EditPtr;
-	if (IsEdit(Data->Type) && (EditPtr = (DlgEdit *)(Data->ObjPtr)) != nullptr)
+	if (FarIsEdit(Data->Type) && (EditPtr = (DlgEdit *)(Data->ObjPtr)) != nullptr)
 		EditPtr->GetString(ItemString);
 	else
 		ItemString = Data->strData;
@@ -877,7 +877,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			}
 		}
 		// "редакторы" - разговор особый...
-		else if (IsEdit(Type))
+		else if (FarIsEdit(Type))
 		{
 			// сбросим флаг DIF_EDITOR для строки ввода, отличной от DI_EDIT,
 			// DI_FIXEDIT и DI_PSWEDIT
@@ -1138,7 +1138,7 @@ BOOL Dialog::SetItemRect(unsigned ID,SMALL_RECT *Rect)
 	CurItem->X1=Rect->Left;
 	CurItem->Y1=(Rect->Top<0)?0:Rect->Top;
 
-	if (IsEdit(Type))
+	if (FarIsEdit(Type))
 	{
 		DlgEdit *DialogEdit=(DlgEdit *)CurItem->ObjPtr;
 		CurItem->X2=Rect->Right;
@@ -2406,7 +2406,7 @@ int64_t Dialog::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		case MCODE_C_SELECTED:
 		case MCODE_C_EMPTY:
 		{
-			if (IsEdit(Item[FocusPos]->Type))
+			if (FarIsEdit(Item[FocusPos]->Type))
 			{
 				if (Item[FocusPos]->Type == DI_COMBOBOX && GetDropDownOpened())
 					return Item[FocusPos]->ListPtr->VMProcess(OpCode,vParam,iParam);
@@ -2484,7 +2484,7 @@ int64_t Dialog::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		}
 		case MCODE_F_EDITOR_SEL:
 		{
-			if (IsEdit(Item[FocusPos]->Type) || (Item[FocusPos]->Type==DI_COMBOBOX && !(DropDownOpened || (Item[FocusPos]->Flags & DIF_DROPDOWNLIST))))
+			if (FarIsEdit(Item[FocusPos]->Type) || (Item[FocusPos]->Type==DI_COMBOBOX && !(DropDownOpened || (Item[FocusPos]->Flags & DIF_DROPDOWNLIST))))
 			{
 				return ((DlgEdit *)(Item[FocusPos]->ObjPtr))->VMProcess(OpCode,vParam,iParam);
 			}
@@ -2652,7 +2652,7 @@ int Dialog::ProcessKey(int Key)
 						return TRUE;
 					}
 
-					if (!IsEdit(Item[I]->Type))
+					if (!FarIsEdit(Item[I]->Type))
 						Item[I]->Selected=1;
 
 					ExitCode=I;
@@ -2672,13 +2672,13 @@ int Dialog::ProcessKey(int Key)
 		case KEY_ENTER:
 		{
 			if (Item[FocusPos]->Type != DI_COMBOBOX
-			        && IsEdit(Item[FocusPos]->Type)
+			        && FarIsEdit(Item[FocusPos]->Type)
 			        && (Item[FocusPos]->Flags & DIF_EDITOR) && !(Item[FocusPos]->Flags & DIF_READONLY))
 			{
 				unsigned EditorLastPos;
 
 				for (EditorLastPos=I=FocusPos; I<ItemCount; I++)
-					if (IsEdit(Item[I]->Type) && (Item[I]->Flags & DIF_EDITOR))
+					if (FarIsEdit(Item[I]->Type) && (Item[I]->Flags & DIF_EDITOR))
 						EditorLastPos=I;
 					else
 						break;
@@ -2744,7 +2744,7 @@ int Dialog::ProcessKey(int Key)
 							return TRUE;
 						}
 
-//            if (!(IsEdit(Item[I].Type) || Item[I].Type == DI_CHECKBOX || Item[I].Type == DI_RADIOBUTTON))
+//            if (!(FarIsEdit(Item[I].Type) || Item[I].Type == DI_CHECKBOX || Item[I].Type == DI_RADIOBUTTON))
 //              Item[I].Selected=1;
 						ExitCode=I;
 						break;
@@ -2790,7 +2790,7 @@ int Dialog::ProcessKey(int Key)
 			if (Item[FocusPos]->Type == DI_USERCONTROL) // для user-типа вываливаем
 				return TRUE;
 
-			if (IsEdit(Item[FocusPos]->Type))
+			if (FarIsEdit(Item[FocusPos]->Type))
 			{
 				((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(Key);
 				return TRUE;
@@ -2803,7 +2803,7 @@ int Dialog::ProcessKey(int Key)
 				{
 					if (I!=FocusPos &&
 						(!(Item[I]->Flags&(DIF_NOFOCUS|DIF_DISABLE|DIF_HIDDEN))) &&
-					        (IsEdit(Item[I]->Type) ||
+					        (FarIsEdit(Item[I]->Type) ||
 					         Item[I]->Type==DI_CHECKBOX ||
 					         Item[I]->Type==DI_RADIOBUTTON) &&
 					        Item[I]->Y1==Item[FocusPos]->Y1)
@@ -2855,7 +2855,7 @@ int Dialog::ProcessKey(int Key)
 			if (Item[FocusPos]->Type == DI_USERCONTROL) // для user-типа вываливаем
 				return TRUE;
 
-			if (IsEdit(Item[FocusPos]->Type))
+			if (FarIsEdit(Item[FocusPos]->Type))
 			{
 				((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(Key);
 				return TRUE;
@@ -2918,7 +2918,7 @@ int Dialog::ProcessKey(int Key)
 				return TRUE;
 			}
 
-			if (IsEdit(Item[FocusPos]->Type))
+			if (FarIsEdit(Item[FocusPos]->Type))
 			{
 				DlgEdit *edt=(DlgEdit *)Item[FocusPos]->ObjPtr;
 
@@ -3417,7 +3417,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				if (MsX >= Rect.Left && MsY >= Rect.Top && MsX <= Rect.Right && MsY <= Rect.Bottom)
 				{
 					/* ********************************************************** */
-					if (IsEdit(Type))
+					if (FarIsEdit(Type))
 					{
 						/* $ 15.08.2000 SVS
 						   + Сделаем так, чтобы ткнув мышкой в DropDownList
@@ -3637,7 +3637,7 @@ int Dialog::ProcessOpenComboBox(int Type,DialogItemEx *CurItem, unsigned CurFocu
 
 	CurEditLine=((DlgEdit *)(CurItem->ObjPtr));
 
-	if (IsEdit(Type) &&
+	if (FarIsEdit(Type) &&
 	        (CurItem->Flags & DIF_HISTORY) &&
 	        Opt.Dialogs.EditHistory &&
 	        !CurItem->strHistory.IsEmpty() &&
@@ -3718,7 +3718,7 @@ int Dialog::Do_ProcessFirstCtrl()
 {
 	CriticalSectionLock Lock(CS);
 
-	if (IsEdit(Item[FocusPos]->Type))
+	if (FarIsEdit(Item[FocusPos]->Type))
 	{
 		((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(KEY_HOME);
 		return TRUE;
@@ -3743,7 +3743,7 @@ int Dialog::Do_ProcessNextCtrl(int Up,BOOL IsRedraw)
 	unsigned OldPos=FocusPos;
 	unsigned PrevPos=0;
 
-	if (IsEdit(Item[FocusPos]->Type) && (Item[FocusPos]->Flags & DIF_EDITOR))
+	if (FarIsEdit(Item[FocusPos]->Type) && (Item[FocusPos]->Flags & DIF_EDITOR))
 		PrevPos=((DlgEdit *)(Item[FocusPos]->ObjPtr))->GetCurPos();
 
 	unsigned I=ChangeFocus(FocusPos,Up? -1:1,FALSE);
@@ -3751,7 +3751,7 @@ int Dialog::Do_ProcessNextCtrl(int Up,BOOL IsRedraw)
 	Item[I]->Focus=1;
 	ChangeFocus2(I);
 
-	if (IsEdit(Item[I]->Type) && (Item[I]->Flags & DIF_EDITOR))
+	if (FarIsEdit(Item[I]->Type) && (Item[I]->Flags & DIF_EDITOR))
 		((DlgEdit *)(Item[I]->ObjPtr))->SetCurPos(PrevPos);
 
 	if (Item[FocusPos]->Type == DI_RADIOBUTTON && (Item[I]->Flags & DIF_MOVESELECT))
@@ -3829,7 +3829,7 @@ int Dialog::Do_ProcessSpace()
 		ShowDialog();
 		return TRUE;
 	}
-	else if (IsEdit(Item[FocusPos]->Type) && !(Item[FocusPos]->Flags & DIF_READONLY))
+	else if (FarIsEdit(Item[FocusPos]->Type) && !(Item[FocusPos]->Flags & DIF_READONLY))
 	{
 		if (((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(KEY_SPACE))
 		{
@@ -3883,7 +3883,7 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 
 			if (!(Item[CurFocusPos]->Flags&(DIF_NOFOCUS|DIF_DISABLE|DIF_HIDDEN)))
 			{
-				if (Type==DI_LISTBOX || Type==DI_BUTTON || Type==DI_CHECKBOX || IsEdit(Type) || Type==DI_USERCONTROL)
+				if (Type==DI_LISTBOX || Type==DI_BUTTON || Type==DI_CHECKBOX || FarIsEdit(Type) || Type==DI_USERCONTROL)
 					break;
 
 				if (Type==DI_RADIOBUTTON && (!SkipGroup || Item[CurFocusPos]->Selected))
@@ -3932,7 +3932,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 		Item[FocusPos]->Focus=0;
 
 		// "снимать выделение при потере фокуса?"
-		if (IsEdit(Item[FocusPos]->Type) &&
+		if (FarIsEdit(Item[FocusPos]->Type) &&
 		        !(Item[FocusPos]->Type == DI_COMBOBOX && (Item[FocusPos]->Flags & DIF_DROPDOWNLIST)))
 		{
 			DlgEdit *EditPtr=(DlgEdit*)Item[FocusPos]->ObjPtr;
@@ -3947,7 +3947,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 		Item[SetFocusPos]->Focus=1;
 
 		// "не восстанавливать выделение при получении фокуса?"
-		if (IsEdit(Item[SetFocusPos]->Type) &&
+		if (FarIsEdit(Item[SetFocusPos]->Type) &&
 		        !(Item[SetFocusPos]->Type == DI_COMBOBOX && (Item[SetFocusPos]->Flags & DIF_DROPDOWNLIST)))
 		{
 			DlgEdit *EditPtr=(DlgEdit*)Item[SetFocusPos]->ObjPtr;
@@ -3997,7 +3997,7 @@ void Dialog::SelectOnEntry(unsigned Pos,BOOL Selected)
 {
 	//if(!DialogMode.Check(DMODE_SHOW))
 	//   return;
-	if (IsEdit(Item[Pos]->Type) &&
+	if (FarIsEdit(Item[Pos]->Type) &&
 	        (Item[Pos]->Flags&DIF_SELECTONENTRY)
 //     && PrevFocusPos != -1 && PrevFocusPos != Pos
 	   )
@@ -4260,7 +4260,7 @@ int Dialog::CheckHighlights(WORD CheckSymbol,int StartPos)
 		Type=Item[I]->Type;
 		Flags=Item[I]->Flags;
 
-		if ((!IsEdit(Type) || (Type == DI_COMBOBOX && (Flags&DIF_DROPDOWNLIST))) && !(Flags & (DIF_SHOWAMPERSAND|DIF_DISABLE|DIF_HIDDEN)))
+		if ((!FarIsEdit(Type) || (Type == DI_COMBOBOX && (Flags&DIF_DROPDOWNLIST))) && !(Flags & (DIF_SHOWAMPERSAND|DIF_DISABLE|DIF_HIDDEN)))
 		{
 			const wchar_t *ChPtr=wcschr(Item[I]->strData,L'&');
 
@@ -4294,7 +4294,7 @@ int Dialog::ProcessHighlighting(int Key,unsigned FocusPos,int Translate)
 		Type=Item[I]->Type;
 		Flags=Item[I]->Flags;
 
-		if ((!IsEdit(Type) || (Type == DI_COMBOBOX && (Flags&DIF_DROPDOWNLIST))) &&
+		if ((!FarIsEdit(Type) || (Type == DI_COMBOBOX && (Flags&DIF_DROPDOWNLIST))) &&
 		        !(Flags & (DIF_SHOWAMPERSAND|DIF_DISABLE|DIF_HIDDEN)))
 			if (IsKeyHighlighted(Item[I]->strData,Key,Translate))
 			{
@@ -4303,7 +4303,7 @@ int Dialog::ProcessHighlighting(int Key,unsigned FocusPos,int Translate)
 				// Если ЭТО: DlgEdit(пред контрол) и DI_TEXT в одну строку, то...
 				if (I>0 &&
 				        Type==DI_TEXT &&                              // DI_TEXT
-				        IsEdit(Item[I-1]->Type) &&                     // и редактор
+				        FarIsEdit(Item[I-1]->Type) &&                     // и редактор
 				        Item[I]->Y1==Item[I-1]->Y1 &&                   // и оба в одну строку
 				        (I+1 < ItemCount && Item[I]->Y1!=Item[I+1]->Y1)) // ...и следующий контрол в другой строке
 				{
@@ -4390,7 +4390,7 @@ void Dialog::AdjustEditPos(int dx, int dy)
 		CurItem=Item[I];
 		int Type=CurItem->Type;
 
-		if ((CurItem->ObjPtr  && IsEdit(Type)) ||
+		if ((CurItem->ObjPtr  && FarIsEdit(Type)) ||
 		        (CurItem->ListPtr && Type == DI_LISTBOX))
 		{
 			if (Type == DI_LISTBOX)
@@ -5104,7 +5104,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	Type=CurItem->Type;
 	const wchar_t *Ptr= CurItem->strData;
 
-	if (IsEdit(Type) && CurItem->ObjPtr)
+	if (FarIsEdit(Type) && CurItem->ObjPtr)
 		Ptr=const_cast <const wchar_t *>(((DlgEdit *)(CurItem->ObjPtr))->GetStringAddr());
 
 	switch (Msg)
@@ -5446,7 +5446,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			if (!Param2)
 				return FALSE;
 
-			if (IsEdit(Type) && CurItem->ObjPtr)
+			if (FarIsEdit(Type) && CurItem->ObjPtr)
 			{
 				((COORD*)Param2)->X=((DlgEdit *)(CurItem->ObjPtr))->GetCurPos();
 				((COORD*)Param2)->Y=0;
@@ -5464,7 +5464,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		/*****************************************************************/
 		case DM_SETCURSORPOS:
 		{
-			if (IsEdit(Type) && CurItem->ObjPtr && ((COORD*)Param2)->X >= 0)
+			if (FarIsEdit(Type) && CurItem->ObjPtr && ((COORD*)Param2)->X >= 0)
 			{
 				DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 				EditPtr->SetCurPos(((COORD*)Param2)->X);
@@ -5507,7 +5507,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		/*****************************************************************/
 		case DM_GETEDITPOSITION:
 		{
-			if (Param2 && IsEdit(Type))
+			if (Param2 && FarIsEdit(Type))
 			{
 				if (Type == DI_MEMOEDIT)
 				{
@@ -5533,7 +5533,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		/*****************************************************************/
 		case DM_SETEDITPOSITION:
 		{
-			if (Param2 && IsEdit(Type))
+			if (Param2 && FarIsEdit(Type))
 			{
 				if (Type == DI_MEMOEDIT)
 				{
@@ -5563,7 +5563,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		*/
 		case DM_GETCURSORSIZE:
 		{
-			if (IsEdit(Type) && CurItem->ObjPtr)
+			if (FarIsEdit(Type) && CurItem->ObjPtr)
 			{
 				bool Visible;
 				DWORD Size;
@@ -5585,7 +5585,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			bool Visible = false;
 			DWORD Size = 0;
 
-			if (IsEdit(Type) && CurItem->ObjPtr)
+			if (FarIsEdit(Type) && CurItem->ObjPtr)
 			{
 				((DlgEdit *)(CurItem->ObjPtr))->GetCursorType(Visible,Size);
 				((DlgEdit *)(CurItem->ObjPtr))->SetCursorType(LOWORD(Param2)!=0,HIWORD(Param2));
@@ -6284,7 +6284,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		/*****************************************************************/
 		case DM_EDITUNCHANGEDFLAG: // -1 Get, 0 - Skip, 1 - Set; Выделение блока снимается.
 		{
-			if (IsEdit(Type))
+			if (FarIsEdit(Type))
 			{
 				DlgEdit *EditLine=(DlgEdit *)(CurItem->ObjPtr);
 				int ClearFlag=EditLine->GetClearFlag();
@@ -6310,7 +6310,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		case DM_GETSELECTION: // Msg=DM_GETSELECTION, Param1=ID, Param2=*EditorSelect
 		case DM_SETSELECTION: // Msg=DM_SETSELECTION, Param1=ID, Param2=*EditorSelect
 		{
-			if (IsEdit(Type) && Param2)
+			if (FarIsEdit(Type) && Param2)
 			{
 				if (Msg == DM_GETSELECTION)
 				{

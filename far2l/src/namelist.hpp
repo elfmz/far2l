@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "DList.hpp"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "FARString.hpp"
 
 class NamesList

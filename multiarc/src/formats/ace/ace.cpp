@@ -15,7 +15,7 @@
 #endif
 #include <stddef.h>
 #include <memory.h>
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
 #include "fmt.hpp"
 

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef __FAR2SDK_FARPLUG_MB_H__
+#define __FAR2SDK_FARPLUG_MB_H__
 
 namespace oldfar
 {
@@ -1824,3 +1826,6 @@ namespace oldfar
 #endif
 #endif
 }
+
+#endif // __FAR2SDK_FARPLUG_MB_H__
+

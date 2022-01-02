@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "scrobj.hpp"
 #include "namelist.hpp"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "poscache.hpp"
 #include "config.hpp"
 #include "cache.hpp"

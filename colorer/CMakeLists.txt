@@ -93,7 +93,7 @@ target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
 target_include_directories(colorer PRIVATE src/pcolorer2)
 target_include_directories(colorer PRIVATE src)
 target_include_directories(colorer PRIVATE ../WinPort)
-target_include_directories(colorer PRIVATE ../far2l)
+target_include_directories(colorer PRIVATE ../far2l/far2sdk)
 
 set_target_properties(colorer
   PROPERTIES

@@ -1,5 +1,5 @@
 #define _FAR_NO_NAMELESS_UNIONS
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "FileLng.hpp"
 #include "FileCase.hpp"
 

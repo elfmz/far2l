@@ -9,7 +9,7 @@
 #include "libarch_utils.h"
 #include "libarch_crutches.h"
 
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
 
 #include "fmt.hpp"

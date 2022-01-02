@@ -1,4 +1,4 @@
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 #include "AlignLng.hpp"
 #include "Align.hpp"
 #include "AlignMix.icpp"

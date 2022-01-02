@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "ConfigRW.hpp"
 #include "plugapi.hpp"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "plugins.hpp"
 #include "cddrv.hpp"
 #include "interf.hpp"
@@ -2648,7 +2648,7 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 				{
 					Ret=Item->strData.CPtr();
 
-					if (IsEdit(ItemType))
+					if (FarIsEdit(ItemType))
 					{
 						DlgEdit *EditPtr;
 

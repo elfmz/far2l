@@ -9,7 +9,7 @@ Temporary panel header file
 #define __TMPPANEL_HPP__
 #include <windows.h>
 #include "PlatformConstants.h"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "expname.h"
 #include "TmpLng.hpp"
 #include "TmpClass.hpp"

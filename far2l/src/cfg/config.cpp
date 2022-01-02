@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "udlist.hpp"
 #include "datetime.hpp"
-#include "FarDlgBuilder.hpp"
+#include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
 

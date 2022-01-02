@@ -783,8 +783,12 @@ void Help::FastShow()
 
 			if (*OutStr==L'^')
 			{
-				GotoXY(X1+(X2-X1+1-StringLen(OutStr))/2,Y1+i+1);
-				OutStr++;
+				int LeftShift;
+				do {
+					LeftShift = (X2 - X1 + 1 - StringLen(OutStr)) /2;
+					OutStr++;
+				} while (LeftShift < 0 && *OutStr);
+				GotoXY(X1+LeftShift,Y1+i+1);
 			}
 			else
 			{

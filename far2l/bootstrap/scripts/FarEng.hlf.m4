@@ -6,9 +6,7 @@ m4_include(`farversion.m4')m4_dnl
 @Contents
 $^#File and archive manager#
 `$^#'FULLVERSIONNOBRACES`#'
-$^#Copyright (C) 1996-2000 Eugene Roshal#
-$^#Copyright (C) 2000-2016 FAR Group
-`$^#Copyright (C)' COPYRIGHTYEARS `FAR People'
+`$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
    ~Help file index~@Index@
    ~How to use help~@Help@
 

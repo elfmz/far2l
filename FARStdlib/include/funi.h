@@ -1,7 +1,7 @@
 #ifndef __FAR_PLUGIN_UNIPLACE_HEADER
 #define __FAR_PLUGIN_UNIPLACE_HEADER
 
-//-   FAR `pluginold.hpp` header missed\addons
+//-   FAR `farplug-mb.h` header missed\addons
 #define FAR_MAX_LANGID                       2000
 #define FAR_MAX_CMDLINE                      1024
 #define FAR_MAX_TITLE                        512

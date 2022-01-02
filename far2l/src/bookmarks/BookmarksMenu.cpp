@@ -50,8 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "interf.hpp"
 #include "dialog.hpp"
-#include "FarDlgBuilder.hpp"
-#include "fpsdk/plugin.hpp"
+#include "DialogBuilder.hpp"
+#include <farplug-wide.h>
 #include "plugins.hpp"
 
 static const wchar_t HelpBookmarks[] = L"Bookmarks";

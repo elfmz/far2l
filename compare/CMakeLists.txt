@@ -13,7 +13,7 @@ target_compile_definitions(compare PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT
 
 target_include_directories(compare PRIVATE .)
 target_include_directories(compare PRIVATE ../WinPort)
-target_include_directories(compare PRIVATE ../far2l)
+target_include_directories(compare PRIVATE ../far2l/far2sdk)
 
 set_target_properties(compare 
   PROPERTIES

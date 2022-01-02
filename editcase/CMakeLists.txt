@@ -12,7 +12,7 @@ target_link_libraries(editcase utils far2l)
 target_compile_definitions(editcase PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 
 target_include_directories(editcase PRIVATE .)
-target_include_directories(editcase PRIVATE ../far2l)
+target_include_directories(editcase PRIVATE ../far2l/far2sdk)
 target_include_directories(editcase PRIVATE ../WinPort)
 
 set_target_properties(editcase 

@@ -15,7 +15,7 @@
 #include <windows.h>
 #include <limits.h>
 #include <string.h>
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
 
 #ifndef __STDIO_H

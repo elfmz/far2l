@@ -11,9 +11,9 @@
 #include <vector>
 #include <string>
 #include <windows.h>
-#include <fpsdk/plugin.hpp>
-#include <fpsdk/farkeys.hpp>
-#include <fpsdk/farcolor.hpp>
+#include <farplug-wide.h>
+#include <farkeys.h>
+#include <farcolor.h>
 
 #define CALC_PREFIX L"calc:"
 

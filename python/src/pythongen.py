@@ -3,11 +3,9 @@ import sys
 import os
 import cffi
 
-source = sys.argv[1]
-target = os.path.join(sys.argv[2], "_pyfar.cpp")
+source = os.path.join(sys.argv[1], "staging")
+target = os.path.join(sys.argv[1], "staging", "_pyfar.cpp")
 
-far2l = os.path.join(source, '..')
-far2lp = os.path.join(source, 'configs', 'plug', 'far2l')
 ffi = cffi.FFI()
 
 xpre = """
@@ -27,18 +25,17 @@ xpre = """
 ffi.set_source("_pyfar",  # name of the output C extension
     #xpre + 
 """
-#include "plugin.hpp"
-#include "farcolor.hpp"
-#include "farkeys.hpp"
+#include "farwin.h"
+#include "farplug-wide.h"
+#include "farcolor.h"
+#include "farkeys.h"
 """,
     include_dirs=[
-        os.path.join(far2l),
-        os.path.join(far2l, 'far2l', 'fpsdk'),
-        os.path.join(far2l, 'WinPort'),
+        os.path.join(source)
     ],
 )
-for fname in ("farwin.h", "farcolor.hpp", "farkeys.hpp", "plugin.hpp"):
-    fqname = os.path.join(far2lp, fname)
+for fname in ("farwin.h", "farcolor.h", "farkeys.h", "farplug-wide.h"):
+    fqname = os.path.join(source, fname)
     data = open(fqname, "rt", encoding="utf-8").read()
     ffi.cdef(data, packed=True)
 

@@ -170,7 +170,7 @@ target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
 target_include_directories(multiarc PRIVATE src)
 target_include_directories(multiarc PRIVATE src/libpcre)
 target_include_directories(multiarc PRIVATE ../WinPort)
-target_include_directories(multiarc PRIVATE ../far2l)
+target_include_directories(multiarc PRIVATE ../far2l/far2sdk)
 
 if(PCRE_FOUND)
     target_compile_definitions(multiarc PRIVATE -DHAVE_PCRE)

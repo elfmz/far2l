@@ -11,7 +11,7 @@
 #include <utils.h>
 #include <limits.h>
 #include <string.h>
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
 #include "fmt.hpp"
 

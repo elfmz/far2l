@@ -10,7 +10,7 @@ Temporary panel plugin class header file
 
 #define REMOVE_FLAG 1
 
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 
 class TmpPanel
 {

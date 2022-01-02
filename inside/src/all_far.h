@@ -2,10 +2,10 @@
 #include <windows.h>
 #include <sudo.h>
 #include <fcntl.h>
-#include <fpsdk/pluginold.hpp>
+#include <farplug-mb.h>
 using namespace oldfar;
-#include <fpsdk/farcolor.hpp>
-#include <fpsdk/farkeys.hpp>
+#include <farcolor.h>
+#include <farkeys.h>
 #include "ItemList.h"
 
 #define IS_BIT( val,num )     IS_FLAG(((DWORD)(val)),1UL<<(num)))

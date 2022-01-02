@@ -3,7 +3,7 @@ project(python)
 
 set(SOURCES
 src/python.cpp
-_pyfar.cpp
+${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
 )
 
 find_package(PythonLibs 3.0)
@@ -16,8 +16,7 @@ target_compile_definitions(python PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_USE_I
 
 target_include_directories(python PRIVATE .)
 target_include_directories(python PRIVATE ../WinPort)
-target_include_directories(python PRIVATE ../far2l)
-target_include_directories(python PRIVATE ../far2l/fpsdk/)
+target_include_directories(python PRIVATE ../far2l/far2sdk)
 target_include_directories(python PRIVATE ${PYTHON_INCLUDE_DIRS} )
 
 set_target_properties(python PROPERTIES
@@ -26,18 +25,19 @@ set_target_properties(python PROPERTIES
     SUFFIX ".far-plug-wide"
 )
 
-execute_process(
-    COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python
-)
-execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python/bin/python -m pip install cffi debugpy
-)
+find_program (SED NAMES sed)
+if(NOT SED)
+  message(FATAL_ERROR "${ColorRed}sed not found - please install it${ColorNormal}")
+endif ()
 
 add_custom_command(TARGET python POST_BUILD
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/python"
+	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/python" "${INSTALL_DIR}/Plugins/python/plug/python"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/far2sdk" "${INSTALL_DIR}/Plugins/python/plug/far2l"
 )
 
-add_custom_command(OUTPUT _pyfar.cpp
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/python/bin/python ${CMAKE_CURRENT_SOURCE_DIR}/src/pythongen.py ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}" "${CMAKE_C_COMPILER}"
 )

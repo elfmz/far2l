@@ -33,7 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "filefilterparams.hpp"
 #include "ConfigRW.hpp"
 #include <WinCompat.h>

@@ -28,9 +28,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fpsdk/plugin.hpp"
+#include "farplug-wide.h"
 #include "plclass.hpp"
-#include "fpsdk/pluginold.hpp"
+#include "farplug-mb.h"
 
 typedef void (WINAPI *PLUGINCLOSEPLUGIN)(HANDLE hPlugin);
 typedef int (WINAPI *PLUGINCOMPARE)(HANDLE hPlugin,const oldfar::PluginPanelItem *Item1,const oldfar::PluginPanelItem *Item2,unsigned int Mode);

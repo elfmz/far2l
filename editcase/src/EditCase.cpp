@@ -10,7 +10,7 @@
 #include <values.h> //MAXINT
 #endif
 
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 #include "EditLng.hpp"
 #include "EditCase.hpp"
 // Registry operations

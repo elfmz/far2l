@@ -1,6 +1,6 @@
 #pragma once
-#ifndef __DLGBUILDER_HPP__
-#define __DLGBUILDER_HPP__
+#ifndef __FAR2SDK_FARDLGBUILDER_H__
+#define __FAR2SDK_FARDLGBUILDER_H__
 
 #ifdef UNICODE
 # define EMPTY_TEXT L""
@@ -8,7 +8,7 @@
 # define EMPTY_TEXT ""
 #endif
 
-#include "plugin.hpp"
+#include "farplug-wide.h"
 
 // Элемент выпадающего списка в диалоге.
 struct DialogBuilderListItem
@@ -853,4 +853,4 @@ public:
 			return Item;
 		}
 };
-#endif // __DLGBUILDER_HPP__
+#endif // __FAR2SDK_FARDLGBUILDER_H__

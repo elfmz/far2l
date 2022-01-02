@@ -57,7 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stddlg.hpp"
 #include "strmix.hpp"
 #include "palette.hpp"
-#include "FarDlgBuilder.hpp"
+#include "DialogBuilder.hpp"
 #include "wakeful.hpp"
 
 static int ReplaceMode,ReplaceAll;

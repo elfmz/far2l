@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "frame.hpp"
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
 #include "bitflags.hpp"

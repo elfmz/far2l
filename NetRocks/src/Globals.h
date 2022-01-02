@@ -7,7 +7,7 @@
 #include <vector>
 #include <memory>
 #include <KeyFileHelper.h>
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 #include "lng.h"
 
 

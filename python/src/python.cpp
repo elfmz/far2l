@@ -10,13 +10,16 @@
 
 #include <Python.h>
 
-#include "plugin.hpp"
-#include "farcolor.hpp"
-#include "farkeys.hpp"
-
-#include "python.hpp"
+#include <windows.h>
 #include <Threaded.h>
 #include <utils.h>
+
+#include <farplug-wide.h>
+#include <farcolor.h>
+#include <farkeys.h>
+
+static struct PluginStartupInfo Info;
+static FARSTANDARDFUNCTIONS FSF;
 
 PyMODINIT_FUNC PyInit__pyfar(void);
 

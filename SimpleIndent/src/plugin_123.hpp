@@ -1,4 +1,4 @@
-#include "fpsdk/plugin.hpp"
+#include <farplug-wide.h>
 
 // Plugin initialization code
 

@@ -13,7 +13,7 @@ src/delete.cpp
 src/dialog.cpp
 src/dirinfo.cpp
 src/dizlist.cpp
-src/FarDlgBuilder.cpp
+src/DialogBuilder.cpp
 src/dlgedit.cpp
 src/DlgGuid.cpp
 src/edit.cpp
@@ -186,6 +186,7 @@ target_compile_definitions(far2l PRIVATE -DUNICODE)
 
 target_include_directories(far2l PRIVATE
 	.
+	far2sdk
 	src
 	src/base
 	src/mix

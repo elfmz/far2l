@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <fpsdk/plugin.hpp>
 #include <utils.h>
+#include <farplug-wide.h>
 #include "Editor.h"
 
 Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf, Settings *settings)

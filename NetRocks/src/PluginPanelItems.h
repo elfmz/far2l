@@ -3,7 +3,7 @@
 #include <exception>
 #include <stdexcept>
 
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 
 void PluginPanelItems_Free(PluginPanelItem *items, int count);
 

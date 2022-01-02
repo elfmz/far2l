@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-FarDlgBuilder.hpp
+DialogBuilder.hpp
 
 Динамическое конструирование диалогов - версия для внутреннего употребления в FAR
 */
@@ -32,7 +32,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fpsdk/dlgbuilder.hpp"
+#include "fardlgbuilder.hpp"
 #include "farwinapi.hpp"
 #include <list>
 

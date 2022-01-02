@@ -31,7 +31,7 @@ target_include_directories(inside PRIVATE src)
 target_include_directories(inside PRIVATE src/elf)
 target_include_directories(inside PRIVATE src/plain)
 target_include_directories(inside PRIVATE ../WinPort)
-target_include_directories(inside PRIVATE ../far2l)
+target_include_directories(inside PRIVATE ../far2l/far2sdk)
 
 target_compile_definitions(inside PRIVATE)
 

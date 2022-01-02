@@ -12,7 +12,7 @@ target_link_libraries(align utils far2l)
 target_compile_definitions(align PRIVATE -DWINPORT_DIRECT -DUNICODE -DFAR_DONT_USE_INTERNALS)
 
 target_include_directories(align PRIVATE .)
-target_include_directories(align PRIVATE ../far2l)
+target_include_directories(align PRIVATE ../far2l/far2sdk)
 target_include_directories(align PRIVATE ../WinPort)
 
 set_target_properties(align 

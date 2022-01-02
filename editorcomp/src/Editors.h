@@ -1,7 +1,7 @@
 #ifndef FAR_EDITORS_H
 #define FAR_EDITORS_H
 
-#include <fpsdk/plugin.hpp>
+#include <farplug-wide.h>
 #include <map>
 #include "Editor.h"
 #include "Settings.h"

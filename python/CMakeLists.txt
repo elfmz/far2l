@@ -35,7 +35,7 @@ add_custom_command(TARGET python POST_BUILD
 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/python" "${INSTALL_DIR}/Plugins/python/plug/python"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/far2sdk" "${INSTALL_DIR}/Plugins/python/plug/far2l"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/incpy" "${INSTALL_DIR}/Plugins/python/plug/far2l"
 )
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp

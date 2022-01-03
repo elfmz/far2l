@@ -27,11 +27,19 @@ typedef uint64_t UINT64, *PUINT64;
 typedef int64_t LONG64, *PLONG64;
 typedef uint64_t ULONG64, *PULONG64;
 
+#if defined(__LP64__) || defined(_LP64)
 typedef INT64 INT_PTR;
 typedef UINT64 UINT_PTR;
 typedef DWORD64 DWORD_PTR;
 typedef LONG64 	LONG_PTR;
 typedef ULONG64 	ULONG_PTR;
+#else
+typedef INT32 INT_PTR;
+typedef UINT32 UINT_PTR;
+typedef DWORD32 DWORD_PTR;
+typedef LONG32 	LONG_PTR;
+typedef ULONG32 	ULONG_PTR;
+#endif
 
 typedef char *LPCSTR;
 typedef char *LPSTR;
@@ -291,3 +299,5 @@ typedef struct _INPUT_RECORD {
 
 typedef struct _INPUT_RECORD INPUT_RECORD;
 typedef struct _CHAR_INFO CHAR_INFO;
+
+#define CP_AUTODETECT -1

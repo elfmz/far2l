@@ -14,7 +14,7 @@ tools/
 far2l/bootstrap
 python/staging
 python/python
-python/far2sdk
+python/incpy
 build/
 .idea
 CPackConfig.cmake

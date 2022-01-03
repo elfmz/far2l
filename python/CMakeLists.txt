@@ -35,5 +35,11 @@ add_custom_command(TARGET python POST_BUILD
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/pythongen.py
+    DEPENDS ../far2l/far2sdk/farplug-wide.h
+    DEPENDS ../far2l/far2sdk/farcolor.h
+    DEPENDS ../far2l/far2sdk/farkeys.h
+    DEPENDS ../WinPort/windows.h
+    DEPENDS ../WinPort/WinCompat.h
+    DEPENDS ../WinPort/WinPort.h
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}"
 )

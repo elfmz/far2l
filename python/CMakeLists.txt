@@ -3,7 +3,7 @@ project(python)
 
 set(SOURCES
 src/python.cpp
-${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
+${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
 )
 
 find_package(PythonLibs 3.0)
@@ -25,19 +25,15 @@ set_target_properties(python PROPERTIES
     SUFFIX ".far-plug-wide"
 )
 
-find_program (SED NAMES sed)
-if(NOT SED)
-  message(FATAL_ERROR "${ColorRed}sed not found - please install it${ColorNormal}")
-endif ()
-
 add_custom_command(TARGET python POST_BUILD
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/python" "${INSTALL_DIR}/Plugins/python/plug/python"
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/incpy" "${INSTALL_DIR}/Plugins/python/plug/far2l"
 )
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/staging/_pyfar.cpp
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}" "${CMAKE_C_COMPILER}"
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/pythongen.py
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}"
 )

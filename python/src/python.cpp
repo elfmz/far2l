@@ -21,8 +21,6 @@
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
 
-PyMODINIT_FUNC PyInit__pyfar(void);
-
 // #define PYPLUGIN_DEBUGLOG "/tmp/far2.py.log"
 // #define PYPLUGIN_DEBUGLOG "" /* to stderr */
 
@@ -99,8 +97,6 @@ protected:
         std::string syspath = "import sys";
         syspath += "\nsys.path.insert(1, '" + pluginPath + "')";
         PYTHON_LOG("syspath=%s\n", syspath.c_str());
-
-        PyInit__pyfar();
 
         PyRun_SimpleString(syspath.c_str());
 

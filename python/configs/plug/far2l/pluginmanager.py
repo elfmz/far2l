@@ -5,7 +5,6 @@ import types
 import configparser
 import logging
 import logging.config
-import cffi
 
 USERHOME = os.path.expanduser('~/.config/far2l/plugins/python')
 
@@ -42,19 +41,7 @@ from .plugin import PluginBase
 #     py:load <python modulename>
 #     py:unload <registered python module name>
 
-
-def installffi(ffi):
-    dname = "/".join(__file__.split("/")[:-1])
-    for fname in ("farwin.h", "farcolor.hpp", "farkeys.hpp", "plugin.hpp"):
-        fqname = os.path.join(dname, fname)
-        log.debug("installffi({0})".format(fqname))
-        data = open(fqname, "rt", encoding="utf-8").read()
-        ffi.cdef(data, packed=True)
-
-
-ffi = cffi.FFI()
-installffi(ffi)
-# ffi.cdef(open(__file__+'.h', 'rt').read(), packed=True)
+from .far2lcffi import cffi, ffi
 ffic = ffi.dlopen("c" if sys.platform != "darwin" else "libSystem.dylib")
 
 class PluginManager:

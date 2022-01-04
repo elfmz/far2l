@@ -66,6 +66,7 @@ static FARAPIGETMSG   FarGetMsg=NULL;
 static INT_PTR MainModuleNumber=-1;
 static FARAPIMESSAGE FarMessage=NULL;
 static FARSTDSPRINTF FarSprintf=NULL;
+static bool KeepSilent = false;
 
 #define UnicodeToOEM(src,dst,lendst)    WINPORT(WideCharToMultiByte)(CP_UTF8,0,(src),-1,(dst),(lendst),NULL,FALSE)
 #define  Min(x,y) (((x)<(y)) ? (x):(y))
@@ -85,9 +86,12 @@ int CALLBACK CallbackProc(UINT msg,LPARAM UserData,LPARAM P1,LPARAM P2)
 {
   switch(msg)
   {
+    case UCM_CHANGEVOLUMEW:
+      return (P2 == RAR_VOL_ASK) ? -1 : 0;
+
     case UCM_NEEDPASSWORD:
     {
-      if(FarInputBox(FarGetMsg(MainModuleNumber,MGetPasswordTitle),
+      if(!KeepSilent && FarInputBox(FarGetMsg(MainModuleNumber,MGetPasswordTitle),
                      FarGetMsg(MainModuleNumber,MGetPassword),NULL,
                      Password,Password,sizeof(Password)-1,NULL,FIB_PASSWORD))
       {
@@ -95,7 +99,7 @@ int CALLBACK CallbackProc(UINT msg,LPARAM UserData,LPARAM P1,LPARAM P2)
         strncpy((char *)P1,Password,(int)P2);
         return(0);
       }
-      return 1;
+      return -1;
     }
   }
   return(0);
@@ -153,8 +157,8 @@ BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type,bool Silent)
      return FALSE;
 
   Flags=OpenArchiveData.Flags;
-  if (!Silent)
-    RARSetCallback(hArcData, CallbackProc, 0);
+  KeepSilent = Silent;
+  RARSetCallback(hArcData, CallbackProc, 0);
   HeaderData.CmtBuf=NULL;
   HeaderData.CmtBufSize=0;
   /*

@@ -1,4 +1,5 @@
 #pragma once
+#ifndef FAR_PYTHON_GEN
 //#ifdef _WIN32
 #if 0
 # include <Windows.h>
@@ -306,3 +307,4 @@ template <class CHAR_T>
 
 
 #endif
+#endif /* FAR_PYTHON_GEN */

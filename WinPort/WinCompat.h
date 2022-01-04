@@ -1,4 +1,5 @@
 #pragma once
+#ifndef FAR_PYTHON_GEN
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -11,6 +12,7 @@
 // for PATH_MAX
 # include <linux/limits.h>
 #endif
+#endif /* FAR_PYTHON_GEN */
 
 #define ELFMZ_WINPORT
 
@@ -22,6 +24,7 @@ typedef unsigned __int64 uint64_t;
 #define FOPEN_WRITE	"wb"
 
 #else
+#ifndef FAR_PYTHON_GEN
 # include <unistd.h>
 # include <wchar.h>
 # ifdef __cplusplus
@@ -29,6 +32,7 @@ typedef unsigned __int64 uint64_t;
 # else
 #  define SHAREDSYMBOL __attribute__ ((visibility("default")))
 # endif
+#endif /* FAR_PYTHON_GEN */
 
 # define FAR
 # define FARPROC
@@ -72,6 +76,8 @@ typedef unsigned __int64 uint64_t;
 # define st_ctim st_ctimespec
 # define st_atim st_atimespec
 #endif
+
+#ifndef FAR_PYTHON_GEN
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -185,6 +191,7 @@ static char iswalnum(wchar_t c) {return iswalpha(c) || (c>='0' && c<='9'); }
 static wchar_t towupper(wchar_t c) {return c; }
 static wchar_t towlower(wchar_t c) {return c; }*/
 
+#endif /* FAR_PYTHON_GEN */
 #endif
 
 

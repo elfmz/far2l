@@ -64,7 +64,9 @@ else
 		}
 
 		if ( substr(path, 1, 1) == "/" && substr(path, 1, 5) != "/run/" && substr(path, 1, 5) != "/sys/" \
-			&& substr(path, 1, 5) != "/dev/" && substr(path, 1, 6) != "/snap/"  ) {
+			&& substr(path, 1, 5) != "/dev/" && substr(path, 1, 6) != "/snap/" \
+			&& substr(path, 1, 8) != "/System/" && substr(path, 1, 9) != "/private/" \
+			&& path != "/dev" ) {
 
 			avail = ($'$DF_AVAIL'+0.0) / '$DF_DIVBY';
 			total = ($'$DF_TOTAL'+0.0) / '$DF_DIVBY';

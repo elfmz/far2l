@@ -41,5 +41,5 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
     DEPENDS ../WinPort/windows.h
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}"
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${PYTHON3}" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
 )

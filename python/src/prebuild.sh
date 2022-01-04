@@ -13,6 +13,7 @@ if [ ! -f "$DST/python/.prepared" ]; then
 	echo "Preparing python virtual env at $DST/python using $PYTHON"
 	mkdir -p "$DST/python"
 	$PYTHON -m venv --system-site-packages "$DST/python"
+	"$DST/python/bin/python" -m pip install --upgrade pip
 	"$DST/python/bin/python" -m pip install cffi debugpy pcpp
 	$PREPROCESSOR "$SRC/python/src/consts.gen" | sh > "${DST}/incpy/consts.h"
 

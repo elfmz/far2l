@@ -4,6 +4,7 @@ import os
 import pcpp
 import io
 import cffi
+import ctypes
 
 source = sys.argv[1]
 target = os.path.join(sys.argv[2], "far2lcffi.py")
@@ -17,7 +18,10 @@ cpp.define("WINPORT_REGISTRY")
 cpp.define("UNICODE")
 cpp.define("PROCPLUGINMACROFUNC")
 cpp.define("__GNUC__")
-if True:
+if ctypes.sizeof(ctypes.c_int) == ctypes.sizeof(ctypes.c_void_p):
+    # 32 bit platform
+    pass
+else:
     # 64 bit platform
     cpp.define("__LP64__")
 cpp.define("_FAR_NO_NAMELESS_UNIONS")

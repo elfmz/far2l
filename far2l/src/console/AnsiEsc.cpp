@@ -112,10 +112,10 @@ void FontState::ParseSuffixM(const int *args, int argc)
 		case 49: {
 			const BYTE def_attr = 7;//FOREGROUND_WHITE;
 			reverse = false;
-			if (def_attr != 49) {
+			if (a != 49) {
 				foreground = Attr2Ansi[def_attr & 15];
 			}
-			if (def_attr != 39) {
+			if (a != 39) {
 				background = Attr2Ansi[(def_attr >> 4) & 15];
 			}
 		} break;

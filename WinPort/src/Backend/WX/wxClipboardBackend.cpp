@@ -201,9 +201,16 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		if (!wxTheClipboard->GetData( data ))
 			return nullptr;
 
-		p = (format == CF_UNICODETEXT)
-			? ClipboardAllocFromZeroTerminatedString<wchar_t>(data.GetText().wchar_str())
-			: ClipboardAllocFromZeroTerminatedString<char>(data.GetText().utf8_str());
+		const wxString &wx_str = data.GetText();
+
+		if (format == CF_UNICODETEXT) {
+			const auto &wc = wx_str.wc_str();
+			p = ClipboardAllocFromZeroTerminatedString<wchar_t>(wc);
+
+		} else {
+			const auto &utf8 = wx_str.utf8_str();
+			p = ClipboardAllocFromZeroTerminatedString<char>(utf8);
+		}
 
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
@@ -232,7 +239,17 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 				(const char *)data_format->GetId().char_str(), (unsigned int)data_size);
 			return nullptr;
 		}
-		data.GetDataHere(p);
+
+		if (data_size) {
+			const void *data_buf = data.GetData();
+			if (!data_buf) {
+				fprintf(stderr, "GetClipboardData(%s) - cant get\n",
+					(const char *)data_format->GetId().char_str());
+				WINPORT(ClipboardFree)(p);
+				return nullptr;
+			}
+			memcpy(p, data_buf, data_size);
+		}
 	}
 
 	return p;

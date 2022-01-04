@@ -1,6 +1,7 @@
 #!/usr/bin/env vpython3
 import sys
 import os
+import re
 import pcpp
 import io
 import cffi
@@ -11,7 +12,7 @@ target = os.path.join(sys.argv[2], "far2lcffi.py")
 cpp = pcpp.Preprocessor()
 cpp.add_path(source)
 cpp.add_path(os.path.join(source, "far2l", "far2sdk"))
-cpp.add_path(os.path.join(sys.argv[2])) # to find consts.h
+cpp.add_path(sys.argv[2])  # to find consts.h
 cpp.define("FAR_USE_INTERNALS 1")
 # cpp.define('WINPORT_DIRECT')
 cpp.define("WINPORT_REGISTRY")
@@ -29,20 +30,15 @@ data = """\
 #include "farcolor.h"
 #include "farkeys.h"
 """
+
 cpp.parse(data)
 fp = io.StringIO()
 cpp.write(fp)
 
 data = fp.getvalue()
-data = data.replace("'['", "0x5B")
-data = data.replace("']'", "0x5D")
-data = data.replace("','", "0x2C")
-data = data.replace("'\"'", "0x22")
-data = data.replace("'.'", "0x2E")
-data = data.replace("'/'", "0x2F")
-data = data.replace("':'", "0x3A")
-data = data.replace("';'", "0x3B")
-data = data.replace("'\\\\'", "0x5C")
+for s in re.findall("'.+'", data):
+    t = str(ord(s[-2].encode("ascii")))
+    data = data.replace(s, t)
 data = data.replace("#line", "//#line")
 data = data.replace("#pragma", "//#pragma")
 
@@ -65,10 +61,14 @@ del far2l
 )
 open(target, "wt").write(pydata)
 
+try:
+    os.unlink(target+'-error')
+except:
+    pass
 # import generated file as real plugin does
 try:
     sys.path.insert(1, sys.argv[2])
     from far2lcffi import ffi, cffi
 except:
-    os.unlink(target)
+    os.rename(target, target+'-error')
     raise

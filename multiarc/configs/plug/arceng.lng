@@ -25,6 +25,9 @@
 "Enter password:"
 "Enter password for %s"
 
+"Need archive volume"
+"Volume:"
+
 "Delete from archive"
 "Delete \"%.40s\" from the archive"
 "Delete selected files from the archive"

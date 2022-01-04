@@ -28,6 +28,9 @@ enum LanguageID
   MGetPassword,
   MGetPasswordForFile,
 
+  MArchiveVolumeTitle,
+  MArchiveVolume,
+
   MDeleteTitle,
   MDeleteFile,
   MDeleteFiles,

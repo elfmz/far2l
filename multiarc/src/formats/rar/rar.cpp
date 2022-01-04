@@ -86,8 +86,18 @@ int CALLBACK CallbackProc(UINT msg,LPARAM UserData,LPARAM P1,LPARAM P2)
 {
   switch(msg)
   {
-    case UCM_CHANGEVOLUMEW:
-      return (P2 == RAR_VOL_ASK) ? -1 : 0;
+    case UCM_CHANGEVOLUME: {
+      if (P2 != RAR_VOL_ASK)
+        return 0;
+
+      if(!KeepSilent && FarInputBox(FarGetMsg(MainModuleNumber,MArchiveVolumeTitle),
+                     FarGetMsg(MainModuleNumber,MArchiveVolume),NULL,
+                     (char *)P1,(char *)P1,1024,NULL,0)) // unrar provides buffer of 2048 chars
+      {
+        return(0);
+      }
+      return -1;
+    }
 
     case UCM_NEEDPASSWORD:
     {

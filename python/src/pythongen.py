@@ -11,23 +11,20 @@ target = os.path.join(sys.argv[2], "far2lcffi.py")
 cpp = pcpp.Preprocessor()
 cpp.add_path(source)
 cpp.add_path(os.path.join(source, "far2l", "far2sdk"))
+cpp.add_path(os.path.join(sys.argv[2])) # to find consts.h
 cpp.define("FAR_USE_INTERNALS 1")
 # cpp.define('WINPORT_DIRECT')
 cpp.define("WINPORT_REGISTRY")
 cpp.define("UNICODE")
 cpp.define("PROCPLUGINMACROFUNC")
 cpp.define("__GNUC__")
-if True:
-    # 64 bit platform
-    cpp.define("__LP64__")
 cpp.define("_FAR_NO_NAMELESS_UNIONS")
 cpp.define("_FILE_OFFSET_BITS 64")
 cpp.define("FAR_PYTHON_GEN 1")
 data = """\
-#define PATH_MAX 1024
-#define NAME_MAX 255
 #define uid_t uint32_t
 #define gid_t uint32_t
+#include "consts.h"
 #include "farplug-wide.h"
 #include "farcolor.h"
 #include "farkeys.h"

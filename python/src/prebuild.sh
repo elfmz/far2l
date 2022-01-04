@@ -5,6 +5,7 @@ set -e
 SRC="$1"
 DST="$2"
 PYTHON="$3"
+PREPROCESSOR="$4 -E -P -xc"
 
 mkdir -p "$DST/incpy"
 
@@ -13,6 +14,8 @@ if [ ! -f "$DST/python/.prepared" ]; then
 	mkdir -p "$DST/python"
 	$PYTHON -m venv --system-site-packages "$DST/python"
 	"$DST/python/bin/python" -m pip install cffi debugpy pcpp
+	$PREPROCESSOR "$SRC/python/src/consts.gen" | sh > "${DST}/incpy/consts.h"
+
 	echo "1" > "$DST/python/.prepared"
 fi
 

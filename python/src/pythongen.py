@@ -1,6 +1,7 @@
 #!/usr/bin/env vpython3
 import sys
 import os
+import re
 import pcpp
 import io
 import cffi
@@ -8,6 +9,20 @@ import ctypes
 
 source = sys.argv[1]
 target = os.path.join(sys.argv[2], "far2lcffi.py")
+
+cpp = pcpp.Preprocessor()
+cpp.add_path('/usr/include')
+data = """\
+#include <limits.h>
+TARGET_PATH_MAX=PATH_MAX
+TARGET_NAME_MAX=NAME_MAX
+"""
+cpp.parse(data)
+fp = io.StringIO()
+cpp.write(fp)
+data = fp.getvalue()
+PATH_MAX=re.findall('TARGET_PATH_MAX\=(\d+)', data)[0]
+NAME_MAX=re.findall('TARGET_NAME_MAX\=(\d+)', data)[0]
 
 cpp = pcpp.Preprocessor()
 cpp.add_path(source)
@@ -28,14 +43,14 @@ cpp.define("_FAR_NO_NAMELESS_UNIONS")
 cpp.define("_FILE_OFFSET_BITS 64")
 cpp.define("FAR_PYTHON_GEN 1")
 data = """\
-#define PATH_MAX 1024
-#define NAME_MAX 255
+#define PATH_MAX %s
+#define NAME_MAX %s
 #define uid_t uint32_t
 #define gid_t uint32_t
 #include "farplug-wide.h"
 #include "farcolor.h"
 #include "farkeys.h"
-"""
+""" %(PATH_MAX, NAME_MAX)
 cpp.parse(data)
 fp = io.StringIO()
 cpp.write(fp)

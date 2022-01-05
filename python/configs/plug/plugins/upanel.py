@@ -67,10 +67,12 @@ class Plugin(PluginVFS):
 
     def PutFile(self, PanelItem, Move, SrcPath, OpMode):
         fqname = os.path.join(SrcPath, self.f2s(PanelItem.FindData.lpwszFileName))
+        # increase C array
         items = self.ffi.new("struct PluginPanelItem []", len(self.Items)+1)
         for i in range(len(self.Items)):
             items[i] = self.Items[i]
         self.Items = items
+        # append element
         self.names.append(self.s2f(fqname))
         i = len(self.Items)-1
         items[i].FindData = PanelItem.FindData
@@ -87,15 +89,32 @@ class Plugin(PluginVFS):
                 found.append(i)
         if len(found) == 0:
             return 0
+        # new array
         items = self.ffi.new("struct PluginPanelItem []", len(self.Items)-len(found))
         j = 0
         for i in range(len(self.Items)):
             if i not in found:
                 items[j] = self.Items[i]
                 j += 1
+        # delete
         for i in sorted(found, reverse=True):
             del self.names[i]
         self.Items = items
         self.info.Control(self.hplugin, self.ffic.FCTL_UPDATEPANEL, 0, 0)
         self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)
         return 0
+
+    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
+        if ItemsNumber == 0 or Move:
+            return 0
+        item = self.ffi.cast('struct PluginPanelItem *', PanelItem)
+        DestPath = self.ffi.cast("wchar_t **", DestPath)
+        dpath = self.ffi.string(DestPath[0])
+        for i in range(ItemsNumber):
+            sqname = self.f2s(item[i].FindData.lpwszFileName)
+            dqname = os.path.join(dpath, sqname.split('/')[-1])
+            #log.debug('GetFiles OpMode={} source={} destination={}'.format(OpMode, sqname, dqname))
+            # just copy file, local filesystem only
+            data = open(sqname, 'rb').read()
+            open(dqname, 'wb').write(data)
+        return 1

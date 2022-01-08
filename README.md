@@ -13,11 +13,12 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 ### Used code from projects
 
-* FAR for Windows
+* FAR for Windows and some of its plugins
 * WINE
 * ANSICON
 * Portable UnRAR
 * 7z ANSI-C Decoder
+* utf-cpp by ww898
 
 ## Contributing, Hacking
 #### Required dependencies
@@ -49,13 +50,15 @@ apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev l
 In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
-
+ * Clone current master `git: clone https://github.com/elfmz/far2l`
+ * Checkout some stable release tag (master considered unstable): `git checkout v_2.#.#`
+ * Prepare build directory:
 ``` sh
-git clone https://github.com/elfmz/far2l
-cd far2l
-mkdir _build
-cd _build
+mkdir -p far2l/_build
+cd far2l/_build
 ```
+
+ * Build:
 _with make:_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
@@ -66,6 +69,24 @@ _or with ninja (you need **ninja-build** package installed)_
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja
 ```
+
+ * If above commands finished without errors - you may also install far2l, _with make:_ `sudo make install` _or with ninja:_ `sudo ninja install`
+
+ * Also its possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cpack` command
+
+##### Additional build configuration options:
+
+To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no also in this case dont need to install libwxgtk\*-dev package
+
+To force-disable TTY|X and TTY|Xi backends: add argument -DTTYX=no; to disable only TTY|Xi - add argument -DTTYXI=no
+
+To save space by exluding support of East Asian codepages set: add -DEACP=no
+
+To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
+
+To build with Python plugin: add argument -DPYTHON=yes
+
+There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
 
 #### OSX/MacOS install
 
@@ -125,28 +146,10 @@ cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 ninja
 ```
- * If above commands finished without errors - you may also install far2l:
-_with make:_
-```sh
-make install
-```
-_or with ninja:_
-```sh
-ninja install
-```
- * If you see permission errors in install commands, just pretend `sudo` to them.
-
-To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no also in this case dont need to install libwxgtk\*-dev package
-
-To save space by exluding support of East Asian codepages set: add -DEACP=no
-
-To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
-
-To force-disable TTY|X and TTY|Xi backends: add argument -DTTYX=no; to disable only TTY|Xi - add argument -DTTYXI=no
-
-To build with Python plugin: add argument -DPYTHON=yes
-
-There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
+ * Then you may create .dmg package by running: `cpack` command.
+Note that this step sometimes fails and may succeed from not very first attempt.
+Its recommended not to do anything on machine while cpack is in progress.
+After .dmg successfully created, you may install it by running `open ...path/to/created/far2l-*.dmg`
 
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
@@ -162,20 +165,6 @@ Additionally, for NetRocks you will need:
 emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
-
-#### Building DMG, DEB and TGZ packages
-
-Please follow CMake related instructions from previous step to build the project, then run:
-``` sh
-cpack
-```
-
-to generate the following packages (depending on architecture):
-- far2l-2.X.X.dmg
-- far2l_2.X.X_ARCH.deb 
-- far2l-2.X.X.tar.gz
-
-All packages can be found in `build` folder.
 
 #### Installing and Building on [NixOS](https://nixos.org/)
 
@@ -205,6 +194,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 
  * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
  * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
+ * Similar fork of Kitty: https://github.com/mihmig/KiTTY
  * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2l-deb/blob/master/far2l_import.pl
 
 ## Notes on porting

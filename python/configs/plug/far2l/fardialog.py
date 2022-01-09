@@ -42,8 +42,13 @@ class Dialog:
     def IsEnable(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_ENABLE, ID, -1)
 
+    def GetText(self, ID):
+        sptr = self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCONSTTEXTPTR, ID, 0)
+        return self.f2s(sptr)
+
     def SetText(self, ID, Str):
-        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETTEXTPTR, ID, Str)
+        sptr = self.s2f(Str)
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETTEXTPTR, ID, self.ffi.cast('LONG_PTR', sptr))
 
     def GetCheck(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCHECK, ID, 0)

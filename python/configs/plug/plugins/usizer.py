@@ -23,16 +23,10 @@ class Plugin(PluginBase):
             if Msg == self.ffic.DN_INITDIALOG:
                 log.debug('INITDIALOG')
                 try:
-                    s = self.s2f("vapath initial")
-                    dlg.SetText(dlg.ID_vapath, self.ffi.cast('LONG_PTR', s))
-                    log.debug('1')
-                    s = self.s2f("vbpath initial")
-                    dlg.SetText(dlg.ID_vbpath, self.ffi.cast('LONG_PTR', s))
-                    log.debug('2')
+                    dlg.SetText(dlg.ID_vapath, "vapath initial")
+                    dlg.SetText(dlg.ID_vbpath, "vbpath initial")
                     dlg.Disable(dlg.ID_vbpath)
-                    log.debug('3')
                     dlg.SetCheck(dlg.ID_vallow, 1)
-                    log.debug('4')
                     dlg.SetFocus(dlg.ID_vseconds)
                 except:
                     log.exception('bang')

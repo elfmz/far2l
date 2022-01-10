@@ -74,9 +74,11 @@ if (NOT DEFINED USEWX)
 	set(USEWX "YES")
 endif()
 
-if (NOT DEFINED EACP)
-	set(EACP "YES")
-endif()
+# EACP disabled by default for now as FAR's GetCodePageInfo rejects all multibyte charsets due to BUGBUG.
+# Uncomment EACP-stuff here when that will be fixed. See https://github.com/elfmz/far2l/issues/1179
+#if (NOT DEFINED EACP)
+#	set(EACP "YES")
+#endif()
 
 if (NOT DEFINED LEGACY)
 	# TODO: default it to NO  somewhere in 2022, after all obsolete settings
@@ -87,9 +89,9 @@ elseif(FARFTP)
 	message(STATUS "Force-enable LEGACY due to enabled FARFTP")
 endif()
 
-if (NOT EACP)
-	message(STATUS "${ColorRed}Building without East Asian codepages support due to EACP=${EACP}${ColorNormal}")
-endif()
+#if (NOT EACP)
+#	message(STATUS "${ColorRed}Building without East Asian codepages support due to EACP=${EACP}${ColorNormal}")
+#endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     set(M4_NAME gm4)

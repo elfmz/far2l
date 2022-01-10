@@ -80,8 +80,6 @@ To build without WX backend (console version only): change -DUSEWX=yes to -DUSEW
 
 To force-disable TTY|X and TTY|Xi backends: add argument -DTTYX=no; to disable only TTY|Xi - add argument -DTTYXI=no
 
-To save space by exluding support of East Asian codepages set: add -DEACP=no
-
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
 
 To build with Python plugin: add argument -DPYTHON=yes

@@ -80,7 +80,7 @@ codepages/c_28605.c
 codepages/c_28606.c
 )
 
-if (${EACP})
+if (EACP)
 	set(SOURCES
 		${SOURCES}
 		codepages/c_932.c

@@ -2,7 +2,7 @@
 Linux fork of FAR Manager v2 (http://farmanager.com/)   
 Works also on OSX/MacOS and BSD (but later not tested on regular manner)   
 BETA VERSION.   
-**Use on your own risk!!!**
+**Use on your own risk!**
 
 Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, align, autowrap, drawline, editcase, SimpleIndent, Calculator, Python (optional scripting support)
 
@@ -248,4 +248,4 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 
 ### Known issues:
 * Only valid translations are Russian and English, all other languages require deep correction.
-* Characters that occupies more than single 'placeholder' or diacritic-like characters are rendered buggy, that means Chinees and Japaneese texts are hardly readable.
+* Characters that occupy more than single cell or diacritic-like characters are rendered buggy, that means Chinees and Japaneese texts are hardly readable in some cases.

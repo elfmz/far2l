@@ -16,7 +16,7 @@ arguments stack, however other reply's arguments represent result of requested o
 Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 
-/** Initiates ad-hoc copy-pasting starting at last mouse click position
+/** Initiates ad-hoc copy-to-clipboard starting at last mouse click position
  In: N/A
  Out: N/A
 */

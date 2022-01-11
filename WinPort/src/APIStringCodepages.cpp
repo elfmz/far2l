@@ -339,7 +339,9 @@ static Codepages DeduceCodepages()
 	if (IsLocaleMatches(lc, "zh_SG")) { return Codepages{936, 936}; }
 	if (IsLocaleMatches(lc, "zh_MO")) { return Codepages{950, 1252}; }
 
-	fprintf(stderr, "DeduceCodepages: unknown locale '%s'\n", lc);
+	if (!IsLocaleMatches(lc, "C")) {
+		fprintf(stderr, "DeduceCodepages: unknown locale '%s'\n", lc);
+	}
 
 	return Codepages{866, 1251};
 }

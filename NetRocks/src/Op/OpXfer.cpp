@@ -270,14 +270,12 @@ void OpXfer::EnsureDstDirExists()
 	for (size_t i = 1; i <= _dst_dir.size(); ++i) {
 		if (i == _dst_dir.size() || _dst_dir[i] == '/') {
 			const std::string &part_dir = _dst_dir.substr(0, i);
-			if (IsDstPathExists(part_dir)) {
-				continue;
-			}
-
 			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), part_dir,
 				[&] () mutable 
 				{
-					_dst_host->DirectoryCreate(part_dir, 0751);
+					if (!IsDstPathExists(part_dir)) {
+						_dst_host->DirectoryCreate(part_dir, 0751);
+					}
 				}
 			);
 		}

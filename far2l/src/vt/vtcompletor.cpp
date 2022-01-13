@@ -97,18 +97,27 @@ void VTCompletor::Stop()
 	}
 }
 
+static void AvoidMarkerCollision(std::string &marker, const std::string &cmd)
+{
+	if (cmd.find(marker) != std::string::npos) {
+		srand(time(NULL) ^ (((uintptr_t)&marker) & 0xff));
+		do {
+			marker+= 'a' + (rand() % ('z' + 1 - 'a'));
+		} while (cmd.find(marker) != std::string::npos);
+	}
+}
+
 bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, const char *tabs)
 {	
 	if (!EnsureStarted())
 		return false;
 
-	std::string done = "K2Ld8Gfg";//most unique string in Universe
-	if (cmd.find(done)!=std::string::npos) {
-		srand(time(NULL));
-		do { //if it still not enough unique
-			done+= 'a' + (rand() % ('z' + 1 - 'a'));		
-		} while (cmd.find(done)!=std::string::npos);
-	}
+	std::string begin = "true jkJHYvgT"; // most unique string in Universe
+	std::string done = "true K2Ld8Gfg"; // another most unique string in Universe
+	AvoidMarkerCollision(done, cmd);  // if it still not enough unique
+	AvoidMarkerCollision(begin, cmd);  // if it still not enough unique
+	begin+= '\n';
+	done+= '\n';
 
 	std::string sendline = "PS1=''\n";
 	if (!_vtc_inputrc.empty()) {
@@ -116,10 +125,11 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		sendline+= _vtc_inputrc;
 		sendline+= "\"\n";
 	}
+
+	sendline+= begin;
 	sendline+= cmd;
 	sendline+= tabs;
 	sendline+= done;
-	
 	
 	if (write(_pipe_stdin, sendline.c_str(), sendline.size()) != (ssize_t)sendline.size()) {
 		perror("VTCompletor: write");
@@ -145,7 +155,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 			break;
 		}
 		char buf[0x1000];
-    		ssize_t r = read(_pipe_stdout, buf, sizeof(buf)); /* there was data to read */
+		ssize_t r = read(_pipe_stdout, buf, sizeof(buf)); /* there was data to read */
 		if (r <= 0) {
 			perror("VTCompletor: read");
 			break;
@@ -158,13 +168,17 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		}
 	}
 	Stop();
-	
+
+	size_t p = reply.find(begin);
+	if (p != std::string::npos) {
+		reply.erase(0, p + begin.size());
+	}
 	for (;;) {
-		 size_t p = reply.find('\a');
-		 if (p==std::string::npos) break;
+		 p = reply.find('\a');
+		 if (p == std::string::npos) break;
 		 reply.erase(p, 1);
 	}
-	
+
 	return true;
 }
 
@@ -182,7 +196,7 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 	reply.erase(0, p);
 	if (reply.empty())
 		return false;
-		
+
 	cmd.swap(reply);
 	return true;
 }

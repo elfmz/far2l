@@ -35,4 +35,6 @@ public:
 	virtual std::shared_ptr<IFileWriter> FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos = 0);
 
 	virtual void ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo);
+
+	virtual void KeepAlive(const std::string &path_to_check);
 };

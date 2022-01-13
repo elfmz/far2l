@@ -66,6 +66,8 @@ class SSHExecutedCommand : protected Threaded
 public:
 	SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, const std::string &working_dir, const std::string &command_line, const std::string &fifo);
 	virtual ~SSHExecutedCommand();
+
+	void KeepAlive();
 };
 
 

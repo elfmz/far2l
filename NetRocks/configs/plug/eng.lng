@@ -41,6 +41,7 @@
 "Login &username     :"
 "Login &password     :"
 "&Working directory  :"
+"&Keepalive, seconds :"
 "&Display name       :"
 "Pro&tocol options"
 "&Save"

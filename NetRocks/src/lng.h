@@ -42,6 +42,7 @@ enum LanguageID
   MUserName,
   MPassword,
   MDirectory,
+  MKeepAlive,
   MDisplayName,
   MProtocolOptions,
   MSave,

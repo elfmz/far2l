@@ -524,10 +524,12 @@ public:
 
 	void InspectKeyEvent(KEY_EVENT_RECORD &event)
 	{
-		event.dwControlKeyState|= GetKeyModifiers();
+		auto x_keymods = GetKeyModifiers();
 #ifdef TTYXI
-		if (!_xi)
+		if (!_xi) {
+			event.dwControlKeyState|= x_keymods;
 			return;
+		}
 
 		// fixup ambiguous key codes
 		static const struct KeyFixup {
@@ -555,6 +557,17 @@ public:
 		};
 
 		WaitForNonModifierXiKeydown();
+
+		if (event.wVirtualKeyCode == VK_RETURN
+				&& _xi_keys.find(XK_KP_Enter) == _xi_keys.end()
+				&& _xi_keys.find(XK_Return) == _xi_keys.end()) {
+			/* Workaround for https://github.com/elfmz/far2l/issues/1193
+			 * In case pressing Shift+Ins terminal sends characters
+			 * however Shift+Enter treated in far2l's editor in a way
+			 * that breaks pasting behavior. */
+			x_keymods&= ~SHIFT_PRESSED;
+		}
+		event.dwControlKeyState|= x_keymods;
 
 		for (const auto &kf : key_fixup) {
 			if (event.uChar.UnicodeChar == kf.expect_ch && event.wVirtualKeyCode == kf.expect_vk

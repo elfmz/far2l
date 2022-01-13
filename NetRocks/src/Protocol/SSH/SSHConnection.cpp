@@ -360,8 +360,20 @@ void SSHExecutedCommand::IOLoop()
 			throw std::runtime_error("select failed");
 		}
 
-		if (FD_ISSET(_kickass[0], &fdr) || FD_ISSET(_kickass[0], &fde)) {
-			throw std::runtime_error("got kickass");
+		if (FD_ISSET(_kickass[0], &fde)) {
+			throw std::runtime_error("kickass exception");
+		}
+
+		if (FD_ISSET(_kickass[0], &fdr)) {
+			char c = 0;
+			if (os_call_ssize(read, _kickass[0], (void*)&c, sizeof(c)) != 1) {
+				throw std::runtime_error("kickass read failed");
+			}
+			if (c == 0) {
+				throw std::runtime_error("kickass-driven exit");
+			}
+
+			// TODO: somehow keepalive
 		}
 
 		if (FD_ISSET(fd_in, &fdr)) { // || FD_ISSET(fd_in, &fde)
@@ -459,9 +471,9 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 SSHExecutedCommand::~SSHExecutedCommand()
 {
 	if (!WaitThread(0)) {
-		char c = 1;
+		char c = 0;
 		if (os_call_ssize(write, _kickass[1], (const void*)&c, sizeof(c)) != 1) {
-			perror("write kickass");
+			perror("~SSHExecutedCommand: write kickass");
 		}
 		WaitThread();
 	}
@@ -494,3 +506,10 @@ SSHExecutedCommand::~SSHExecutedCommand()
 	}
 }
 
+void SSHExecutedCommand::KeepAlive()
+{
+	char c = 1;
+	if (os_call_ssize(write, _kickass[1], (const void*)&c, sizeof(c)) != 1) {
+		perror("SSHExecutedCommand::KeepAlive: write kickass");
+	}
+}

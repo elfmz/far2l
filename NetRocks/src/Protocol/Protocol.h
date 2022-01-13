@@ -55,6 +55,12 @@ struct IProtocol
 {
 	virtual ~IProtocol() {};
 
+	/* default implementation */
+	virtual void KeepAlive(const std::string &path_to_check)
+	{
+		GetMode(path_to_check);
+	}
+
 	/* optimized and not-throwing version of GetMode for mass-query of modes */
 	virtual void GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
 	{

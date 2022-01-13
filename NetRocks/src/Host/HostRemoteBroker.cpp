@@ -197,7 +197,7 @@ class HostRemoteBroker : protected IPCEndpoint
 				fprintf(stderr, "OnKeepAlive for '%s'\n", _keepalive_path.c_str());
 			}
 
-			_protocol->GetMode(_keepalive_path);
+			_protocol->KeepAlive(_keepalive_path);
 
 		} catch (std::exception &e) {
 			fprintf(stderr, "OnKeepAlive: <%s> for '%s'\n", e.what(), _keepalive_path.c_str());

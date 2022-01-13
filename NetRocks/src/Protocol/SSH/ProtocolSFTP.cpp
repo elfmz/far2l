@@ -681,3 +681,12 @@ void ProtocolSFTP::ExecuteCommand(const std::string &working_dir, const std::str
 	_conn->executed_command.reset();
 	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);
 }
+
+void ProtocolSFTP::KeepAlive(const std::string &path_to_check)
+{
+	if (_conn->executed_command) {
+		_conn->executed_command->KeepAlive();
+	} else {
+		GetMode(path_to_check);
+	}
+}

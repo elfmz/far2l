@@ -46,6 +46,8 @@ public:
 
 	void AbortReceiving();
 
+	bool WaitForRecv(int msec = -1);
+
 	void Recv(void *data, size_t len);
 	void RecvString(std::string &s);
 

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <utils.h>
+#include <StringConfig.h>
 #include "SiteConnectionEditor.h"
 #include "../../Globals.h"
 #include "../../Protocol/Protocol.h"
@@ -15,6 +16,7 @@
 | Password mode:         [COMBOBOX                         ] |
 | Password:              [PSWDEDIT                         ] |
 | Directory:             [TEXTEDIT                         ] |
+| Keep alive:            [INTE]                              |
 |------------------------------------------------------------|
 |      [             Protocol settings         ]             |
 |  [     Save     ]  [    Connect   ]     [  Cancel      ]   |
@@ -67,6 +69,8 @@ SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_
 		_port = DefaultPortForProtocol(_di_protocols.GetSelection());
 	}
 
+	char sz[32]; 
+
 	_di.SetBoxTitleItem(MEditHost);
 
 	_di.SetLine(2);
@@ -85,7 +89,7 @@ SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_
 
 	_di.NextLine();
 	_i_port_text = _di.AddAtLine(DI_TEXT, 5,27, 0, MPort);
-	char sz[32]; itoa(_port, sz, 10);
+	itoa(_port, sz, 10);
 	_i_port = _di.AddAtLine(DI_FIXEDIT, 28,33, DIF_MASKEDIT, sz, "99999");
 
 	_di.NextLine();
@@ -104,6 +108,11 @@ SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,27, 0, MDirectory);
 	_i_directory = _di.AddAtLine(DI_EDIT, 28,62, DIF_HISTORY, _directory.c_str(), "NetRocks_History_Dir");
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,27, 0, MKeepAlive);
+	itoa(_keepalive, sz, 10);
+	_i_keepalive = _di.AddAtLine(DI_FIXEDIT, 28,33, DIF_MASKEDIT, sz, "99999");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -131,6 +140,7 @@ void SiteConnectionEditor::Load()
 	_password = sc.GetPassword(_display_name);
 	_directory = sc.GetDirectory(_display_name);
 	_protocol_options = sc.GetProtocolOptions(_display_name, _protocol);
+	_keepalive = StringConfig(_protocol_options).GetInt("KeepAlive", 0);
 }
 
 bool SiteConnectionEditor::Save()
@@ -141,6 +151,9 @@ bool SiteConnectionEditor::Save()
 			return false;
 	}
 
+	StringConfig protocol_options_cfg(_protocol_options);
+	protocol_options_cfg.SetInt("KeepAlive", (_keepalive > 0) ? _keepalive : 0);
+
 	SitesConfig sc(_sites_cfg_location);
 	sc.SetProtocol(_display_name, _protocol);
 	sc.SetHost(_display_name, _host);
@@ -149,7 +162,7 @@ bool SiteConnectionEditor::Save()
 	sc.SetUsername(_display_name, _username);
 	sc.SetPassword(_display_name, _password);
 	sc.SetDirectory(_display_name, _directory);
-	sc.SetProtocolOptions(_display_name, _protocol, _protocol_options);
+	sc.SetProtocolOptions(_display_name, _protocol, protocol_options_cfg.Serialize());
 
 	if (_display_name != _initial_display_name && !_initial_display_name.empty()) {
 		sc.RemoveSite(_initial_display_name);
@@ -272,6 +285,7 @@ void SiteConnectionEditor::DataFromDialog()
 	TextFromDialogControl(_i_username, _username);
 	TextFromDialogControl(_i_password, _password);
 	TextFromDialogControl(_i_directory, _directory);
+	TextFromDialogControl(_i_keepalive, str); _keepalive = atoi(str.c_str());
 }
 
 void SiteConnectionEditor::OnLoginModeChanged()

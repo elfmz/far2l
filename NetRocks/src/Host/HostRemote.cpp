@@ -178,6 +178,9 @@ void HostRemote::ReInitialize()
 
 	PipeIPCFD ipc_fd;
 
+	char keep_alive_arg[32];
+	sprintf(keep_alive_arg, "%d", StringConfig(_options).GetInt("KeepAlive", 0));
+
 	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n",
 		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w);
 	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
@@ -196,7 +199,7 @@ void HostRemote::ReInitialize()
 		}
 		if (fork() == 0) {
 			execl(broker_pathname.c_str(),
-				broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, NULL);
+				broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, keep_alive_arg, NULL);
 			_exit(-1);
 			exit(-2);
 		}

@@ -104,10 +104,11 @@ void PipeIPCRecver::SetFD(int fd)
 	_fd = fd;
 }
 
-void PipeIPCRecver::Recv(void *data, size_t len)
+bool PipeIPCRecver::WaitForRecv(int msec)
 {
 	fd_set fds, fde;
-	if (len) for (;;) {
+	timeval tv;
+	for (;;) {
 		if (_aborted)
 			throw PipeIPCError("PipeIPCRecver: aborted", errno);
 
@@ -119,17 +120,19 @@ void PipeIPCRecver::Recv(void *data, size_t len)
 		FD_SET(_fd, &fds);
 		FD_SET(_fd, &fde);
 
-		int sv = select(maxfd + 1, &fds, nullptr, &fde, nullptr);
+		if (msec != -1) {
+			tv.tv_sec = msec / 1000;
+			tv.tv_usec = (msec % 1000) * 1000;
+		}
+		int sv = select(maxfd + 1, &fds, nullptr, &fde, (msec != -1) ? &tv : nullptr);
 		if (sv == -1) {
 			if (errno != EAGAIN && errno != EINTR) {
 				throw PipeIPCError("PipeIPCRecver: select", errno);
 			}
 			continue;
-
 		}
 		if (sv == 0) {
-			sleep(1);
-			continue;
+			return false;
 		}
 
 		if (FD_ISSET(_kickass[0], &fds)) {
@@ -142,18 +145,25 @@ void PipeIPCRecver::Recv(void *data, size_t len)
 			throw PipeIPCError("PipeIPCRecver: exception", errno);
 		}
 
-		if (FD_ISSET(_fd, &fds)) {
-			ssize_t rv = os_call_ssize(read, _fd, data, len);
-//			fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
-			if (rv <= 0)
-				throw PipeIPCError("PipeIPCRecver: read", errno);
+		return FD_ISSET(_fd, &fds);
+	}
+}
 
-			if ((size_t)rv == len)
-				break;
-
-			len-= (size_t)rv;
-			data = (char *)data + rv;
+void PipeIPCRecver::Recv(void *data, size_t len)
+{
+	while (len) {
+		if (!WaitForRecv()) {
+			usleep(100000);
+			continue;
 		}
+
+		ssize_t rv = os_call_ssize(read, _fd, data, len);
+//		fprintf(stderr, "[%d] RECV: %lx/%lx {0x%x... }\n", getpid(), rv, len, *(const unsigned char *)data);
+		if (rv <= 0)
+			throw PipeIPCError("PipeIPCRecver: read", errno);
+
+		len-= (size_t)rv;
+		data = (char *)data + rv;
 	}
 }
 

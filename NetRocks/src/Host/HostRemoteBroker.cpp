@@ -12,6 +12,8 @@ std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std
 
 class HostRemoteBroker : protected IPCEndpoint
 {
+	int _keepalive = -1;
+	std::string _keepalive_path = ".";
 	std::shared_ptr<IProtocol> _protocol;
 	struct {
 		std::string str1, str2, str3;
@@ -51,6 +53,7 @@ class HostRemoteBroker : protected IPCEndpoint
 	{
 		RecvString(_args.str1);
 		std::shared_ptr<IDirectoryEnumer> enumer = _protocol->DirectoryEnum(_args.str1);
+		_keepalive_path = _args.str1;
 		SendCommand(IPC_DIRECTORY_ENUM);
 		for (;;) {
 			bool cont;
@@ -177,10 +180,28 @@ class HostRemoteBroker : protected IPCEndpoint
 		for (auto &path : pathes) {
 			RecvString(path);
 		}
-		_protocol->GetModes(follow_symlink, count, pathes.data(), modes.data());
+		if (!pathes.empty()) {
+			_keepalive_path = pathes.back();
+			_protocol->GetModes(follow_symlink, count, pathes.data(), modes.data());
+		}
 		SendCommand(IPC_GET_MODES);
 		for (const auto &mode : modes) {
 			SendPOD(mode);
+		}
+	}
+
+	void OnKeepAlive()
+	{
+		try {
+			if (g_netrocks_verbosity >= 1) {
+				fprintf(stderr, "OnKeepAlive for '%s'\n", _keepalive_path.c_str());
+			}
+
+			_protocol->GetMode(_keepalive_path);
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "OnKeepAlive: <%s> for '%s'\n", e.what(), _keepalive_path.c_str());
+			_keepalive_path = ".";
 		}
 	}
 
@@ -297,9 +318,9 @@ class HostRemoteBroker : protected IPCEndpoint
 	}
 
 public:
-	HostRemoteBroker(int fd_recv, int fd_send) :
-		IPCEndpoint(fd_recv, fd_send)
-		
+	HostRemoteBroker(int fd_recv, int fd_send, int keepalive) :
+		IPCEndpoint(fd_recv, fd_send),
+		_keepalive(keepalive)
 	{
 		SendPOD((uint32_t)IPC_VERSION_MAGIC);
 		SendPOD((pid_t)getpid());
@@ -336,6 +357,12 @@ public:
 	void Loop()
 	{
 		for (;;) {
+			if (_keepalive > 0) {
+				if (!WaitForRecv(_keepalive * 1000)) {
+					OnKeepAlive();
+					continue;
+				}
+			}
 			IPCCommand c = RecvCommand();
 			try {
 				OnCommand(c);
@@ -357,7 +384,7 @@ public:
 
 extern "C" int main(int argc, char *argv[])
 {
-	if (argc != 3) {
+	if (argc != 4) {
 		fprintf(stderr, "Its a NetRocks protocol broker and must be started by NetRocks only\n");
 		return -1;
 	}
@@ -369,7 +396,7 @@ extern "C" int main(int argc, char *argv[])
 
 	fprintf(stderr, "%d: HostRemoteBrokerMain: BEGIN\n", getpid());
 	try {
-		HostRemoteBroker(atoi(argv[1]), atoi(argv[2])).Loop();
+		HostRemoteBroker(atoi(argv[1]), atoi(argv[2]), atoi(argv[3])).Loop();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "%d HostRemoteBrokerMain: %s\n", getpid(), e.what());

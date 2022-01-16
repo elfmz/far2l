@@ -501,7 +501,7 @@ void FileEditor::Init(
 
 	SetPluginData(PluginData);
 	m_editor->SetHostFileEditor(this);
-	SetCanLoseFocus(Flags.Check(FFILEEDIT_ENABLEF6));
+	SetCanLoseFocus(Flags.Check(FFILEEDIT_ENABLESWITCH));
 	apiGetCurrentDirectory(strStartDir);
 
 	if (!SetFileName(Name))
@@ -697,7 +697,7 @@ void FileEditor::Init(
 
 	F4KeyOnly=true;
 
-	if (Flags.Check(FFILEEDIT_ENABLEF6))
+	if (Flags.Check(FFILEEDIT_ENABLEF6|FFILEEDIT_ENABLESWITCH))
 		FrameManager->InsertFrame(this);
 	else
 		FrameManager->ExecuteFrame(this);
@@ -2058,8 +2058,8 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		}
 	}
 
-	if (SaveObserver && RetCode != SAVEFILE_ERROR) {
-		SaveObserver->OnEditedFileSaved(Name);
+	if (Observer && RetCode != SAVEFILE_ERROR) {
+		Observer->OnEditedFileSaved(Name);
 	}
 
 end:
@@ -2903,3 +2903,48 @@ void ModalEditConsoleHistory(bool scroll_to_end)
 			delete ShellEditor;
 	}
 }
+
+//////////////////////////////////
+
+void EditedTempFileObserver::GetCurrentTimestamp()
+{
+	struct stat s{};
+	if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0)
+	{
+		mtim = s.st_mtim;
+	}
+}
+
+void EditedTempFileObserver::OnEditedFileSaved(const wchar_t *FileName)
+{
+	if (strTempFileName != FileName)
+	{
+		fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", strTempFileName.CPtr(), FileName);
+		return;
+	}
+
+	UploadTempFile();
+	GetCurrentTimestamp();
+}
+
+EditedTempFileObserver::EditedTempFileObserver(const FARString &strTempFileName_)
+	: strTempFileName(strTempFileName_)
+{
+	GetCurrentTimestamp();
+}
+
+EditedTempFileObserver::~EditedTempFileObserver()
+{
+	DeleteFileWithFolder(strTempFileName);
+}
+
+void EditedTempFileObserver::UploadIfTimestampChanged()
+{
+	struct stat s{};
+	if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0
+	 && (mtim.tv_sec != s.st_mtim.tv_sec || mtim.tv_nsec != s.st_mtim.tv_nsec))
+	{
+		UploadTempFile();
+	}
+}
+

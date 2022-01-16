@@ -825,7 +825,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-class FileList_EditedFileUploader : public BaseEditedFileUploader
+class FileList_EditedTempFileObserver : public EditedTempFileObserver
 {
 	HANDLE hPlugin;
 
@@ -871,11 +871,17 @@ class FileList_EditedFileUploader : public BaseEditedFileUploader
 public:
 	int PutCode = -1;
 
-	FileList_EditedFileUploader(const FARString &strTempFileName_, HANDLE hPlugin_)
+	FileList_EditedTempFileObserver(const FARString &strTempFileName_, HANDLE hPlugin_)
 	:
-		BaseEditedFileUploader(strTempFileName_),
+		EditedTempFileObserver(strTempFileName_),
 		hPlugin(hPlugin_)
 	{
+		CtrlObject->Plugins.RetainPlugin(hPlugin);
+	}
+
+	virtual ~FileList_EditedTempFileObserver()
+	{
+		CtrlObject->Plugins.ClosePlugin(hPlugin);
 	}
 };
 
@@ -1412,7 +1418,7 @@ int FileList::ProcessKey(int Key)
 				FARString strHostFile=Info.HostFile;
 				FARString strInfoCurDir=Info.CurDir;
 				bool PluginMode=PanelMode==PLUGIN_PANEL && !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE);
-				std::unique_ptr<FileList_EditedFileUploader> efu;
+				std::shared_ptr<FileList_EditedTempFileObserver> TFO;
 
 				if (PluginMode)
 				{
@@ -1579,7 +1585,7 @@ int FileList::ProcessKey(int Key)
 
 						if (PluginMode)
 						{
-							efu.reset(new FileList_EditedFileUploader(strTempName, hPlugin));
+							TFO = std::make_shared<FileList_EditedTempFileObserver>(strTempName, hPlugin);
 						}
 
 						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
@@ -1595,30 +1601,15 @@ int FileList::ProcessKey(int Key)
 								ProcessExternal(Opt.strExternalEditor, strFileName, !PluginMode);
 								Processed=TRUE;
 							}
-							else if (PluginMode)
-							{
-								RefreshedPanel=FrameManager->GetCurrentFrame()->GetType()==MODALTYPE_EDITOR?FALSE:TRUE;
-								FileEditor ShellEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData);
-								ShellEditor.SetSaveObserver(efu.get());
-
-								editorExitCode=ShellEditor.GetExitCode();
-								ShellEditor.SetDynamicallyBorn(false);
-								FrameManager->EnterModalEV();
-								FrameManager->ExecuteModal();//OT
-								FrameManager->ExitModalEV();
-								/* $ 24.11.2001 IS
-								     Если мы создали новый файл, то не важно, изменялся он
-								     или нет, все равно добавим его на панель плагина.
-								*/
-//								UploadFile=ShellEditor.IsFileChanged() || NewFile;
-								Modaling=TRUE;///
-							}
 							else
 							{
-								FileEditor *ShellEditor=new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6);
+								FileEditor *ShellEditor = PluginMode
+									? new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLESWITCH|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData)
+									: new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLESWITCH|FFILEEDIT_ENABLEF6);
 
 								if (ShellEditor)
 								{
+									ShellEditor->SetObserver(TFO);
 									editorExitCode=ShellEditor->GetExitCode();
 
 									if (editorExitCode == XC_LOADING_INTERRUPTED || editorExitCode == XC_OPEN_ERROR)
@@ -1715,10 +1706,10 @@ int FileList::ProcessKey(int Key)
 
 				if (PluginMode)
 				{
-					if (efu)
+					if (TFO)
 					{
-						efu->UploadIfTimestampChanged();
-						if (efu->PutCode != -1)
+						TFO->UploadIfTimestampChanged();
+						if (TFO->PutCode != -1)
 						{
 							SetPluginModified();
 						}
@@ -1727,7 +1718,7 @@ int FileList::ProcessKey(int Key)
 							RefreshedPanel = FALSE;
 						}
 					}
-					if ((Edit || DeleteViewedFile) && (!efu || efu->PutCode != 0))
+					else if (Edit || DeleteViewedFile)
 					{
 						// удаляем файл только для случая окрытия его в редакторе или во
 						// внешнем вьюере, т.к. внутренний вьюер удаляет файл сам

@@ -376,7 +376,7 @@ int InfoList::ProcessKey(int Key)
 
 			if (!strDizFileName.IsEmpty())
 			{
-				new FileEditor(strDizFileName,CP_AUTODETECT,FFILEEDIT_ENABLEF6);
+				new FileEditor(strDizFileName,CP_AUTODETECT,FFILEEDIT_ENABLEF6|FFILEEDIT_ENABLESWITCH);
 			}
 			else if (!Opt.InfoPanel.strFolderInfoFiles.IsEmpty())
 			{
@@ -387,7 +387,7 @@ int InfoList::ProcessKey(int Key)
 				{
 					if (!strArgName.ContainsAnyOf("*?"))
 					{
-						new FileEditor(strArgName,CP_AUTODETECT,FFILEEDIT_CANNEWFILE|FFILEEDIT_ENABLEF6);
+						new FileEditor(strArgName,CP_AUTODETECT,FFILEEDIT_CANNEWFILE|FFILEEDIT_ENABLEF6|FFILEEDIT_ENABLESWITCH);
 						break;
 					}
 				}

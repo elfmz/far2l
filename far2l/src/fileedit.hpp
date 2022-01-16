@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "editor.hpp"
 #include "keybar.hpp"
+#include <memory>
 
 class NamesList;
 
@@ -72,6 +73,7 @@ enum FFILEEDIT_FLAGS
 	FFILEEDIT_OPENFAILED            = 0x01000000,  // файл открыть не удалось
 	FFILEEDIT_DELETEONCLOSE         = 0x02000000,  // удалить в деструкторе файл вместе с каталогом (если тот пуст)
 	FFILEEDIT_DELETEONLYFILEONCLOSE = 0x04000000,  // удалить в деструкторе только файл
+	FFILEEDIT_ENABLESWITCH          = 0x08000000,  // Is F12-driven window switch allowed?
 	FFILEEDIT_CANNEWFILE            = 0x10000000,  // допускается новый файл?
 	FFILEEDIT_SERVICEREGION         = 0x20000000,  // используется сервисная область
 	FFILEEDIT_CODEPAGECHANGEDBYUSER = 0x40000000,
@@ -105,12 +107,13 @@ class FileEditor : public Frame
 		virtual void Show();
 		void SetPluginTitle(const wchar_t *PluginTitle);
 
-		struct ISaveObserver
+		struct IFileEditorObserver
 		{
+			virtual ~IFileEditorObserver() {}
 			virtual void OnEditedFileSaved(const wchar_t *FileName) = 0;
 		};
 
-		void SetSaveObserver(ISaveObserver *observer = nullptr) { SaveObserver = observer;}
+		void SetObserver(std::shared_ptr<IFileEditorObserver> observer) { Observer = observer;}
 
 		static const FileEditor *CurrentEditor;
 
@@ -136,7 +139,7 @@ class FileEditor : public Frame
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
-		ISaveObserver *SaveObserver = nullptr;
+		std::shared_ptr<IFileEditorObserver>  Observer;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
@@ -184,30 +187,12 @@ class FileEditor : public Frame
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
 void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally
 
-struct BaseEditedFileUploader : public FileEditor::ISaveObserver
+struct EditedTempFileObserver : public FileEditor::IFileEditorObserver
 {
 	struct timespec mtim{};
 
-	void GetCurrentTimestamp()
-	{
-		struct stat s{};
-		if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0)
-		{
-			mtim = s.st_mtim;
-		}
-	}
-
-	virtual void OnEditedFileSaved(const wchar_t *FileName)
-	{
-		if (strTempFileName != FileName)
-		{
-			fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", strTempFileName.CPtr(), FileName);
-			return;
-		}
-
-		UploadTempFile();
-		GetCurrentTimestamp();
-	}
+	void GetCurrentTimestamp();
+	virtual void OnEditedFileSaved(const wchar_t *FileName);
 
 protected:
 	FARString strTempFileName;
@@ -215,24 +200,7 @@ protected:
 	virtual void UploadTempFile() = 0;
 
 public:
-	BaseEditedFileUploader(const FARString &strTempFileName_)
-	:
-		strTempFileName(strTempFileName_)
-	{
-		GetCurrentTimestamp();
-	}
-
-	virtual ~BaseEditedFileUploader()
-	{
-	}
-
-	void UploadIfTimestampChanged()
-	{
-		struct stat s{};
-		if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0
-		 && (mtim.tv_sec != s.st_mtim.tv_sec || mtim.tv_nsec != s.st_mtim.tv_nsec))
-		{
-			UploadTempFile();
-		}
-	}
+	EditedTempFileObserver(const FARString &strTempFileName_);
+	virtual ~EditedTempFileObserver();
+	void UploadIfTimestampChanged();
 };

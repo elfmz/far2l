@@ -1507,7 +1507,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem, const wchar_
 }
 
 
-class FindDlg_EditedFileUploader : public BaseEditedFileUploader
+class FindDlg_EditedTempFileObserver : public EditedTempFileObserver
 {
 	size_t ArcIndex;
 	FAR_FIND_DATA_EX FindData;
@@ -1582,9 +1582,9 @@ class FindDlg_EditedFileUploader : public BaseEditedFileUploader
 	}
 
 public:
-	FindDlg_EditedFileUploader(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
+	FindDlg_EditedTempFileObserver(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
 	:
-		BaseEditedFileUploader(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
+		EditedTempFileObserver(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
 	{
 	}
 
@@ -2013,7 +2013,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 															else
 								*/
 								{
-									std::unique_ptr<FindDlg_EditedFileUploader> efu;
+									std::shared_ptr<FindDlg_EditedTempFileObserver> TFO;
 									FileEditor ShellEditor(strSearchFileName,CP_AUTODETECT,0);
 									ShellEditor.SetDynamicallyBorn(FALSE);
 									ShellEditor.SetEnableF6(TRUE);
@@ -2022,16 +2022,16 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 									// Он может быть уже другой.
 									if (FindItem.ArcIndex != LIST_INDEX_NONE)
 									{
-										efu.reset(new FindDlg_EditedFileUploader(
-											strSearchFileName, FindItem.ArcIndex, FindItem.FindData));
-										ShellEditor.SetSaveObserver(efu.get());
+										TFO = std::make_shared<FindDlg_EditedTempFileObserver>
+											(strSearchFileName, FindItem.ArcIndex, FindItem.FindData);
+										ShellEditor.SetObserver(TFO);
 									}
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();
 									FrameManager->ExitModalEV();
-									if (efu)
+									if (TFO)
 									{
-										efu->UploadIfTimestampChanged();
+										TFO->UploadIfTimestampChanged();
 									}
 									// заставляем рефрешиться экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);

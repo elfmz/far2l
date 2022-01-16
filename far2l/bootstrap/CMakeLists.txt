@@ -30,11 +30,13 @@ set(HLFFILES
   "${BOOTSTRAP}/FarEng.hlf"
   "${BOOTSTRAP}/FarRus.hlf"
   "${BOOTSTRAP}/FarHun.hlf"
+  "${BOOTSTRAP}/FarUkr.hlf"
 )
 set(LNGFILES
   "${BOOTSTRAP}/FarEng.lng"
   "${BOOTSTRAP}/FarRus.lng"
   "${BOOTSTRAP}/FarHun.lng"
+  "${BOOTSTRAP}/FarUkr.lng"
 )
 
 add_custom_command(OUTPUT "${BOOTSTRAP}/copyright.inc"
@@ -75,6 +77,12 @@ add_custom_command(TARGET bootstrap
    WORKING_DIRECTORY "${SCRIPTS}"
    DEPENDS ${DEPENDENCIES}
    COMMENT generating lang hun
+)
+add_custom_command(TARGET bootstrap
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
+   WORKING_DIRECTORY "${SCRIPTS}"
+   DEPENDS ${DEPENDENCIES}
+   COMMENT generating lang ukr
 )
 
 add_custom_command(TARGET bootstrap

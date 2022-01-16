@@ -2127,7 +2127,7 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	if (Flags & EF_NONMODAL)
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
+		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|FFILEEDIT_ENABLESWITCH|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                                  StartLine,StartChar,Title,
 		                                  X1,Y1,X2,Y2,
 		                                  DeleteOnClose,OpMode);

@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include <KeyFileHelper.h>
 #include <crc64.h>
+#include <assert.h>
 
 const char *FmtDiskMenuStringD = "DiskMenuString%d";
 const char *FmtPluginMenuStringD = "PluginMenuString%d";
@@ -766,8 +767,21 @@ void PluginManager::ClosePlugin(HANDLE hPlugin)
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	PluginHandle *ph = (PluginHandle*)hPlugin;
-	ph->pPlugin->ClosePlugin(ph->hPlugin);
-	delete ph;
+	const auto RefCnt = ph->RefCnt;
+	assert(RefCnt > 0);
+	ph->RefCnt = RefCnt - 1;
+	if (RefCnt == 1) {
+		ph->pPlugin->ClosePlugin(ph->hPlugin);
+		delete ph;
+	}
+}
+
+void PluginManager::RetainPlugin(HANDLE hPlugin)
+{
+	PluginHandle *ph = (PluginHandle*)hPlugin;
+	const auto RefCnt = ph->RefCnt;
+	assert(RefCnt > 0);
+	ph->RefCnt = RefCnt + 1;
 }
 
 HANDLE PluginManager::GetRealPluginHandle(HANDLE hPlugin)
@@ -2082,3 +2096,16 @@ std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
 }
 
 ////////////////////////
+
+static void HPluginDeleter(HANDLE h)
+{
+	if (CtrlObject)
+	{
+		CtrlObject->Plugins.ClosePlugin(h);
+	}
+	else
+	{
+		fprintf(stderr, "HPluginDeleter: no CtrlObject\n");
+	}
+}
+

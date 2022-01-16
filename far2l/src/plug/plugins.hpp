@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <map>
 #include <mutex>
+#include <memory>
 
 extern const char *FmtDiskMenuStringD;
 extern const char *FmtPluginMenuStringD;
@@ -157,6 +158,7 @@ struct PluginHandle
 {
 	HANDLE hPlugin;
 	class Plugin *pPlugin;
+	unsigned int RefCnt = 1;
 };
 
 class PluginManager
@@ -251,7 +253,8 @@ class PluginManager
 		HANDLE OpenFindListPlugin(const PluginPanelItem *PanelItem,int ItemsNumber);
 		HANDLE GetRealPluginHandle(HANDLE hPlugin);
 		FARString GetPluginModuleName(HANDLE hPlugin);
-		void ClosePlugin(HANDLE hPlugin);
+		void ClosePlugin(HANDLE hPlugin); // decreases refcnt and actually closes plugin if refcnt reached zero
+		void RetainPlugin(HANDLE hPlugin); // increments refcnt
 		void GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info);
 		int GetFindData(HANDLE hPlugin,PluginPanelItem **pPanelItem,int *pItemsNumber,int Silent);
 		void FreeFindData(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber);

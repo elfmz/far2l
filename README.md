@@ -247,5 +247,5 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 * `DM_SETCOLOR` - changes current color attributes of selected dialog item
 
 ## Known issues:
-* Only valid translations are Russian and English, all other languages require deep correction.
+* Only valid translations are English, Russian and Ukrainian, all other languages require deep correction.
 * Characters that occupy more than single cell or diacritic-like characters are rendered buggy, that means Chinees and Japaneese texts are hardly readable in some cases.

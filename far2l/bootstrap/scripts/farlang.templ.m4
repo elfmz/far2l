@@ -8413,7 +8413,7 @@ MViewShiftF7
 "TovKer"
 "Następ"
 "Próxim"
-upd:"Дальше"
+upd:"Далі"
 
 MViewShiftF8
 "КодСтр"
@@ -8423,7 +8423,7 @@ upd:"Tabell"
 "Kódlap"
 "Tabela"
 "Tabla"
-upd:"КодСтр"
+"КодСтор"
 
 MViewShiftF9
 ""
@@ -11920,7 +11920,7 @@ MMenuMediumView
 "&Közepes            BalCtrl-2"
 "Ś&redni               LCtrl-2"
 "&Medio                 LCtrl-2"
-upd:"&Средний                  LCtrl-2"
+"&Середній                 LCtrl-2"
 
 MMenuFullView
 "&Полный                   LCtrl-3"
@@ -17798,7 +17798,7 @@ l:
 "A pluginhez újabb FAR verzió kell"
 "Do uruchomienia pluginu wymagana jest wyższa wersja FAR-a"
 "Este plugin requiere versión más actual de FAR"
-upd:"Этот модуль требует FAR более высокой версии"
+"Цей модуль потребує FAR більш високої версії"
 
 MPlgRequired
 "Требуется версия FAR - %d.%d.%d."

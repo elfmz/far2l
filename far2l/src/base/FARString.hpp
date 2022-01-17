@@ -35,9 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/types.h>
 #include <string.h>
+#include <string>
+#include <luck.h>
 #include <WinCompat.h>
 #include "locale.hpp"
-#include "headers.hpp" // for NullToEmpty
+
+#define NullToEmpty(s) (s?s:L"")
 
 /***********************************************************************************************************
  * This is a FARString - homegrew reference-counted string widely used in this project.

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "viewer.hpp"
 #include "keybar.hpp"
+#include "fileobserver.hpp"
 
 class FileViewer:public Frame
 {
@@ -60,6 +61,8 @@ class FileViewer:public Frame
 		  архива для клавиши F2 сделать вызов ShiftF2.
 		*/
 		int SaveToSaveAs;
+		std::shared_ptr<IFileObserver>  FileObserver;
+		FARString strPluginData;
 
 	public:
 		FileViewer(const wchar_t *Name,int EnableSwitch=FALSE,int DisableHistory=FALSE,
@@ -91,6 +94,9 @@ class FileViewer:public Frame
 		virtual int GetType() { return MODALTYPE_VIEWER; }
 
 		void SetEnableF6(int AEnable) { DisableEdit = !AEnable; InitKeyBar(); }
+		void SetFileObserver(std::shared_ptr<IFileObserver> Observer) { FileObserver = Observer;}
+		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
+
 		/* $ Введена для нужд CtrlAltShift OT */
 		virtual int FastHide();
 

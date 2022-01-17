@@ -122,8 +122,6 @@ enum FemaleBool{
 	FB_MAYBE = 42
 };
 
-#define NullToEmpty(s) (s?s:L"")
-
 template <class T>
 inline const T&Min(const T &a, const T &b) { return a<b?a:b; }
 

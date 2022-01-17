@@ -1507,7 +1507,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem, const wchar_
 }
 
 
-class FindDlg_EditedTempFileObserver : public EditedTempFileObserver
+class FindDlg_TempFileHolder : public TempFileHolder
 {
 	size_t ArcIndex;
 	FAR_FIND_DATA_EX FindData;
@@ -1582,9 +1582,9 @@ class FindDlg_EditedTempFileObserver : public EditedTempFileObserver
 	}
 
 public:
-	FindDlg_EditedTempFileObserver(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
+	FindDlg_TempFileHolder(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
 	:
-		EditedTempFileObserver(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
+		TempFileHolder(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
 	{
 	}
 
@@ -2013,7 +2013,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 															else
 								*/
 								{
-									std::shared_ptr<FindDlg_EditedTempFileObserver> TFO;
+									std::shared_ptr<FindDlg_TempFileHolder> TFH;
 									FileEditor ShellEditor(strSearchFileName,CP_AUTODETECT,0);
 									ShellEditor.SetDynamicallyBorn(FALSE);
 									ShellEditor.SetEnableF6(TRUE);
@@ -2022,16 +2022,16 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 									// Он может быть уже другой.
 									if (FindItem.ArcIndex != LIST_INDEX_NONE)
 									{
-										TFO = std::make_shared<FindDlg_EditedTempFileObserver>
+										TFH = std::make_shared<FindDlg_TempFileHolder>
 											(strSearchFileName, FindItem.ArcIndex, FindItem.FindData);
-										ShellEditor.SetObserver(TFO);
+										ShellEditor.SetFileObserver(TFH);
 									}
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();
 									FrameManager->ExitModalEV();
-									if (TFO)
+									if (TFH)
 									{
-										TFO->UploadIfTimestampChanged();
+										TFH->UploadIfTimestampChanged();
 									}
 									// заставляем рефрешиться экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);

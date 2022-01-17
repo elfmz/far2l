@@ -2095,17 +2095,3 @@ std::map<std::wstring, unsigned int> PluginManager::BackgroundTasks()
 	return BgTasks;
 }
 
-////////////////////////
-
-static void HPluginDeleter(HANDLE h)
-{
-	if (CtrlObject)
-	{
-		CtrlObject->Plugins.ClosePlugin(h);
-	}
-	else
-	{
-		fprintf(stderr, "HPluginDeleter: no CtrlObject\n");
-	}
-}
-

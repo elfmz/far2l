@@ -42,7 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <map>
 #include <mutex>
-#include <memory>
 
 extern const char *FmtDiskMenuStringD;
 extern const char *FmtPluginMenuStringD;

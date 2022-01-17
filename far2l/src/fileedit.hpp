@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "editor.hpp"
 #include "keybar.hpp"
-#include <memory>
 
 class NamesList;
 

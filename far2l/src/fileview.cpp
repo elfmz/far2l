@@ -321,8 +321,10 @@ int FileViewer::ProcessKey(int Key)
 				   Надо бы поправить FileEditor на этот счет.
 				*/
 				FileEditor *ShellEditor = new FileEditor(strViewFileName, cp,
-				        (GetCanLoseFocus()?FFILEEDIT_ENABLESWITCH|FFILEEDIT_ENABLEF6:0)|(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),-2, static_cast<int>(FilePos), nullptr);
+				        (GetCanLoseFocus()?FFILEEDIT_ENABLEF6:0)|(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),
+						-2, static_cast<int>(FilePos), strPluginData);
 				ShellEditor->SetEnableF6(TRUE);
+				ShellEditor->SetFileObserver(FileObserver);
 				/* $ 07.05.2001 DJ сохраняем NamesList */
 				ShellEditor->SetNamesList(View.GetNamesList());
 				FrameManager->DeleteFrame(this); // Insert уже есть внутри конструктора

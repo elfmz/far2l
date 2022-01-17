@@ -825,7 +825,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-class FileList_EditedTempFileObserver : public EditedTempFileObserver
+class FileList_TempFileHolder : public TempFileHolder
 {
 	HANDLE hPlugin;
 
@@ -871,15 +871,15 @@ class FileList_EditedTempFileObserver : public EditedTempFileObserver
 public:
 	int PutCode = -1;
 
-	FileList_EditedTempFileObserver(const FARString &strTempFileName_, HANDLE hPlugin_)
+	FileList_TempFileHolder(const FARString &strTempFileName_, HANDLE hPlugin_)
 	:
-		EditedTempFileObserver(strTempFileName_),
+		TempFileHolder(strTempFileName_),
 		hPlugin(hPlugin_)
 	{
 		CtrlObject->Plugins.RetainPlugin(hPlugin);
 	}
 
-	virtual ~FileList_EditedTempFileObserver()
+	virtual ~FileList_TempFileHolder()
 	{
 		CtrlObject->Plugins.ClosePlugin(hPlugin);
 	}
@@ -1418,7 +1418,7 @@ int FileList::ProcessKey(int Key)
 				FARString strHostFile=Info.HostFile;
 				FARString strInfoCurDir=Info.CurDir;
 				bool PluginMode=PanelMode==PLUGIN_PANEL && !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE);
-				std::shared_ptr<FileList_EditedTempFileObserver> TFO;
+				std::shared_ptr<FileList_TempFileHolder> TFH;
 
 				if (PluginMode)
 				{
@@ -1585,7 +1585,7 @@ int FileList::ProcessKey(int Key)
 
 						if (PluginMode)
 						{
-							TFO = std::make_shared<FileList_EditedTempFileObserver>(strTempName, hPlugin);
+							TFH = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
 						}
 
 						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
@@ -1604,12 +1604,12 @@ int FileList::ProcessKey(int Key)
 							else
 							{
 								FileEditor *ShellEditor = PluginMode
-									? new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLESWITCH|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData)
-									: new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLESWITCH|FFILEEDIT_ENABLEF6);
+									? new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|FFILEEDIT_DISABLEHISTORY,-1,-1,strPluginData)
+									: new(std::nothrow) FileEditor(strFileName,codepage,(Key==KEY_SHIFTF4?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6);
 
 								if (ShellEditor)
 								{
-									ShellEditor->SetObserver(TFO);
+									ShellEditor->SetFileObserver(TFH);
 									editorExitCode=ShellEditor->GetExitCode();
 
 									if (editorExitCode == XC_LOADING_INTERRUPTED || editorExitCode == XC_OPEN_ERROR)
@@ -1706,10 +1706,10 @@ int FileList::ProcessKey(int Key)
 
 				if (PluginMode)
 				{
-					if (TFO)
+					if (TFH)
 					{
-						TFO->UploadIfTimestampChanged();
-						if (TFO->PutCode != -1)
+						TFH->UploadIfTimestampChanged();
+						if (TFH->PutCode != -1)
 						{
 							SetPluginModified();
 						}

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "editor.hpp"
 #include "keybar.hpp"
+#include "fileobserver.hpp"
 
 class NamesList;
 
@@ -91,6 +92,8 @@ class FileEditor : public Frame
 		bool IsFullScreen() {return Flags.Check(FFILEEDIT_FULLSCREEN)!=FALSE;}
 		void SetNamesList(NamesList *Names);
 		void SetEnableF6(int AEnableF6) { Flags.Change(FFILEEDIT_ENABLEF6,AEnableF6); InitKeyBar(); }
+		void SetFileObserver(std::shared_ptr<IFileObserver> Observer) { FileObserver = Observer;}
+
 		// Добавлено для поиска по AltF7. При редактировании найденного файла из
 		// архива для клавиши F2 сделать вызов ShiftF2.
 		void SetSaveToSaveAs(int ToSaveAs) { Flags.Change(FFILEEDIT_SAVETOSAVEAS,ToSaveAs); InitKeyBar(); }
@@ -105,15 +108,6 @@ class FileEditor : public Frame
 		void CodepageChangedByUser() {Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);};
 		virtual void Show();
 		void SetPluginTitle(const wchar_t *PluginTitle);
-
-		struct IFileEditorObserver
-		{
-			virtual ~IFileEditorObserver() {}
-			virtual void OnEditedFileSaved(const wchar_t *FileName) = 0;
-		};
-
-		void SetObserver(std::shared_ptr<IFileEditorObserver> observer) { Observer = observer;}
-
 		static const FileEditor *CurrentEditor;
 
 	private:
@@ -138,7 +132,7 @@ class FileEditor : public Frame
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
-		std::shared_ptr<IFileEditorObserver>  Observer;
+		std::shared_ptr<IFileObserver>  FileObserver;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
@@ -177,7 +171,7 @@ class FileEditor : public Frame
 		int ProcessEditorInput(INPUT_RECORD *Rec);
 		void ChangeEditKeyBar();
 		DWORD EditorGetFileAttributes(const wchar_t *Name);
-		void SetPluginData(const wchar_t *PluginData);
+		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
 		const wchar_t *GetPluginData() {return strPluginData.CPtr();}
 		bool LoadFromCache(EditorCacheParams *pp);
 		void SaveToCache();
@@ -185,21 +179,3 @@ class FileEditor : public Frame
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
 void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally
-
-struct EditedTempFileObserver : public FileEditor::IFileEditorObserver
-{
-	struct timespec mtim{};
-
-	void GetCurrentTimestamp();
-	virtual void OnEditedFileSaved(const wchar_t *FileName);
-
-protected:
-	FARString strTempFileName;
-
-	virtual void UploadTempFile() = 0;
-
-public:
-	EditedTempFileObserver(const FARString &strTempFileName_);
-	virtual ~EditedTempFileObserver();
-	void UploadIfTimestampChanged();
-};

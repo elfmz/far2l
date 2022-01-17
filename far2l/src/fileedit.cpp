@@ -501,7 +501,7 @@ void FileEditor::Init(
 
 	SetPluginData(PluginData);
 	m_editor->SetHostFileEditor(this);
-	SetCanLoseFocus(Flags.Check(FFILEEDIT_ENABLESWITCH));
+	SetCanLoseFocus(Flags.Check(FFILEEDIT_ENABLEF6));
 	apiGetCurrentDirectory(strStartDir);
 
 	if (!SetFileName(Name))
@@ -697,7 +697,7 @@ void FileEditor::Init(
 
 	F4KeyOnly=true;
 
-	if (Flags.Check(FFILEEDIT_ENABLEF6|FFILEEDIT_ENABLESWITCH))
+	if (Flags.Check(FFILEEDIT_ENABLEF6))
 		FrameManager->InsertFrame(this);
 	else
 		FrameManager->ExecuteFrame(this);
@@ -913,8 +913,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						*/
 						SetDeleteOnClose(0);
 						//объект будет в конце удалён в FrameManager
-						new FileViewer(strFullFileName, GetCanLoseFocus(), Flags.Check(FFILEEDIT_DISABLEHISTORY), FALSE,
-						               FilePos, nullptr, EditNamesList, Flags.Check(FFILEEDIT_SAVETOSAVEAS), cp);
+						auto *Viewer = new FileViewer(strFullFileName, GetCanLoseFocus(), Flags.Check(FFILEEDIT_DISABLEHISTORY),
+								FALSE, FilePos, nullptr, EditNamesList, Flags.Check(FFILEEDIT_SAVETOSAVEAS), cp);
+						Viewer->SetFileObserver(FileObserver);
+						Viewer->SetPluginData(strPluginData);
 					}
 
 					ShowTime(2);
@@ -2058,8 +2060,8 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		}
 	}
 
-	if (Observer && RetCode != SAVEFILE_ERROR) {
-		Observer->OnEditedFileSaved(Name);
+	if (FileObserver && RetCode != SAVEFILE_ERROR) {
+		FileObserver->OnFileEdited(Name);
 	}
 
 end:
@@ -2396,11 +2398,6 @@ BOOL FileEditor::UpdateFileList()
 	}
 
 	return FALSE;
-}
-
-void FileEditor::SetPluginData(const wchar_t *PluginData)
-{
-	FileEditor::strPluginData = PluginData;
 }
 
 /* $ 14.06.2002 IS
@@ -2905,46 +2902,3 @@ void ModalEditConsoleHistory(bool scroll_to_end)
 }
 
 //////////////////////////////////
-
-void EditedTempFileObserver::GetCurrentTimestamp()
-{
-	struct stat s{};
-	if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0)
-	{
-		mtim = s.st_mtim;
-	}
-}
-
-void EditedTempFileObserver::OnEditedFileSaved(const wchar_t *FileName)
-{
-	if (strTempFileName != FileName)
-	{
-		fprintf(stderr, "OnEditedFileSaved: '%ls' != '%ls'\n", strTempFileName.CPtr(), FileName);
-		return;
-	}
-
-	UploadTempFile();
-	GetCurrentTimestamp();
-}
-
-EditedTempFileObserver::EditedTempFileObserver(const FARString &strTempFileName_)
-	: strTempFileName(strTempFileName_)
-{
-	GetCurrentTimestamp();
-}
-
-EditedTempFileObserver::~EditedTempFileObserver()
-{
-	DeleteFileWithFolder(strTempFileName);
-}
-
-void EditedTempFileObserver::UploadIfTimestampChanged()
-{
-	struct stat s{};
-	if (sdc_stat(strTempFileName.GetMB().c_str(), &s) == 0
-	 && (mtim.tv_sec != s.st_mtim.tv_sec || mtim.tv_nsec != s.st_mtim.tv_nsec))
-	{
-		UploadTempFile();
-	}
-}
-

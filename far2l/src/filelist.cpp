@@ -825,16 +825,16 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-class FileList_TempFileHolder : public TempFileHolder
+class FileList_TempFileHolder : public TempFileUploadHolder
 {
 	HANDLE hPlugin;
 
-	virtual void UploadTempFile()
+	virtual bool UploadTempFile()
 	{
 		FARString strSaveDir;
 		apiGetCurrentDirectory(strSaveDir);
 
-		FARString strPath = strTempFileName;
+		FARString strPath = TempFileName();
 
 		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES)
 		{
@@ -853,6 +853,8 @@ class FileList_TempFileHolder : public TempFileHolder
 			}
 		}
 
+		bool out = false;
+
 		PluginPanelItem PanelItem;
 		if (FileList::FileNameToPluginItem(strPath, &PanelItem))
 		{
@@ -862,10 +864,12 @@ class FileList_TempFileHolder : public TempFileHolder
 			{
 				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
 				        MSG(MTextSavedToTemp), strPath.CPtr(), MSG(MOk));
-			}
+			} else
+				out = true;
 		}
 
 		FarChDir(strSaveDir);
+		return out;
 	}
 
 public:
@@ -873,7 +877,7 @@ public:
 
 	FileList_TempFileHolder(const FARString &strTempFileName_, HANDLE hPlugin_)
 	:
-		TempFileHolder(strTempFileName_),
+		TempFileUploadHolder(strTempFileName_),
 		hPlugin(hPlugin_)
 	{
 		CtrlObject->Plugins.RetainPlugin(hPlugin);
@@ -1563,14 +1567,9 @@ int FileList::ProcessKey(int Key)
 						}
 					}
 
+					// TFH will upload edited file when user will press F2 and will delete it whenever it will not be needed
+					TFH = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
 				}
-
-				/* $ 08.04.2002 IS
-				   Флаг, говорящий о том, что нужно удалить файл, который открывали во
-				   вьюере. Если файл открыли во внутреннем вьюере, то DeleteViewedFile
-				   должно быть равно false, т.к. внутренний вьюер сам все удалит.
-				*/
-				bool DeleteViewedFile=PluginMode && !Edit;
 
 				if (!strFileName.IsEmpty())
 				{
@@ -1582,11 +1581,6 @@ int FileList::ProcessKey(int Key)
 						int EnableExternal=(((Key==KEY_F4 || Key==KEY_SHIFTF4) && Opt.EdOpt.UseExternalEditor) ||
 						                    (Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
-
-						if (PluginMode)
-						{
-							TFH = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
-						}
 
 						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
 							Processed=TRUE;
@@ -1609,7 +1603,7 @@ int FileList::ProcessKey(int Key)
 
 								if (ShellEditor)
 								{
-									ShellEditor->SetFileObserver(TFH);
+									ShellEditor->SetFileHolder(TFH);
 									editorExitCode=ShellEditor->GetExitCode();
 
 									if (editorExitCode == XC_LOADING_INTERRUPTED || editorExitCode == XC_OPEN_ERROR)
@@ -1671,7 +1665,7 @@ int FileList::ProcessKey(int Key)
 									ViewList.SetCurName(strFileName);
 								}
 
-								FileViewer *ShellViewer=new(std::nothrow) FileViewer(strFileName, TRUE,PluginMode,PluginMode,-1,strPluginData,&ViewList);
+								FileViewer *ShellViewer=new(std::nothrow) FileViewer(strFileName, TRUE,PluginMode,FALSE,-1,strPluginData,&ViewList);
 
 								if (ShellViewer)
 								{
@@ -1679,13 +1673,9 @@ int FileList::ProcessKey(int Key)
 									{
 										delete ShellViewer;
 									}
-									/* $ 08.04.2002 IS
-									Сбросим DeleteViewedFile, т.к. внутренний вьюер сам все удалит
-									*/
 									else if (PluginMode)
 									{
-										ShellViewer->SetTempViewName(strFileName);
-										DeleteViewedFile=false;
+										ShellViewer->SetFileHolder(TFH);
 									}
 								}
 
@@ -1699,30 +1689,16 @@ int FileList::ProcessKey(int Key)
 					}
 				}
 
-				/* $ 08.04.2002 IS
-				     для файла, который открывался во внутреннем вьюере, ничего не
-				     предпринимаем, т.к. вьюер об этом позаботится сам
-				*/
-
-				if (PluginMode)
+				if (Edit && TFH) // upload file manually in case external editor was used
 				{
-					if (TFH)
+					TFH->UploadIfTimestampChanged();
+					if (TFH->PutCode != -1)
 					{
-						TFH->UploadIfTimestampChanged();
-						if (TFH->PutCode != -1)
-						{
-							SetPluginModified();
-						}
-						else
-						{
-							RefreshedPanel = FALSE;
-						}
+						SetPluginModified();
 					}
-					else if (Edit || DeleteViewedFile)
+					else
 					{
-						// удаляем файл только для случая окрытия его в редакторе или во
-						// внешнем вьюере, т.к. внутренний вьюер удаляет файл сам
-						DeleteFileWithFolder(strFileName);
+						RefreshedPanel = FALSE;
 					}
 				}
 

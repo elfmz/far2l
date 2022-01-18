@@ -2001,6 +2001,21 @@ void WINAPI FarFreePluginDirList(PluginPanelItem *PanelItem, int ItemsNumber)
 	free(PanelItem);
 }
 
+static void ApplyViewerDeleteOnClose(FileViewer *Viewer, const wchar_t *FileName, DWORD Flags)
+{
+	/* $ 14.06.2002 IS
+	   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+	   приоритет по сравнению с VF_DELETEONCLOSE
+	*/
+	if ((Flags & (VF_DELETEONCLOSE | VF_DELETEONLYFILEONCLOSE)) != 0 && FileName && *FileName)
+	{
+		FARString strFullFileName;
+		ConvertNameToFull(FileName, strFullFileName);
+		Viewer->SetFileHolder(
+			std::make_shared<TempFileHolder>(strFullFileName, (Flags & VF_DELETEONCLOSE) != 0));
+	}
+}
+
 static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
                      int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
@@ -2024,13 +2039,7 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 		if (!Viewer)
 			return FALSE;
 
-		/* $ 14.06.2002 IS
-		   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
-		   приоритет по сравнению с VF_DELETEONCLOSE
-		*/
-		if (Flags & (VF_DELETEONCLOSE|VF_DELETEONLYFILEONCLOSE))
-			Viewer->SetTempViewName(FileName,(Flags&VF_DELETEONCLOSE)?TRUE:FALSE);
-
+		ApplyViewerDeleteOnClose(Viewer, FileName, Flags);
 		Viewer->SetEnableF6((Flags & VF_ENABLE_F6) );
 
 		/* $ 21.05.2002 SKV
@@ -2058,12 +2067,7 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 		FrameManager->ExecuteModal();
 		FrameManager->ExitModalEV();
 
-		/* $ 14.06.2002 IS
-		   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
-		   приоритет по сравнению с VF_DELETEONCLOSE
-		*/
-		if (Flags & (VF_DELETEONCLOSE|VF_DELETEONLYFILEONCLOSE))
-			Viewer.SetTempViewName(FileName,(Flags&VF_DELETEONCLOSE)?TRUE:FALSE);
+		ApplyViewerDeleteOnClose(&Viewer, FileName, Flags);
 
 		Viewer.SetEnableF6((Flags & VF_ENABLE_F6) );
 

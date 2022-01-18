@@ -73,7 +73,7 @@ src/viewer.cpp
 src/vmenu.cpp
 src/execute_oscmd.cpp
 src/ViewerPrinter.cpp
-src/fileobserver.cpp
+src/fileholder.cpp
 
 src/console/AnsiEsc.cpp
 src/console/keyboard.cpp

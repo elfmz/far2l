@@ -245,8 +245,8 @@ int FileViewer::ProcessKey(int Key)
 		   + выход по ctrl-f10 с установкой курсора на файл */
 		case KEY_CTRLF10:
 		{
-			if (View.isTemporary())
-			{
+			if (View.GetFileHolder())
+			{  // if viewing observed (typically temporary) file - dont allow this
 				return TRUE;
 			}
 
@@ -312,8 +312,6 @@ int FileViewer::ProcessKey(int Key)
 					return TRUE;
 				}
 				Edit.Close();
-				// Если переключаемся в редактор, то удалять файл уже не нужно
-				SetTempViewName(L"");
 				SetExitCode(0);
 				int64_t FilePos=View.GetFilePos();
 				/* $ 07.07.2006 IS
@@ -324,7 +322,7 @@ int FileViewer::ProcessKey(int Key)
 				        (GetCanLoseFocus()?FFILEEDIT_ENABLEF6:0)|(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),
 						-2, static_cast<int>(FilePos), strPluginData);
 				ShellEditor->SetEnableF6(TRUE);
-				ShellEditor->SetFileObserver(FileObserver);
+				ShellEditor->SetFileHolder(View.GetFileHolder());
 				/* $ 07.05.2001 DJ сохраняем NamesList */
 				ShellEditor->SetNamesList(View.GetNamesList());
 				FrameManager->DeleteFrame(this); // Insert уже есть внутри конструктора
@@ -427,12 +425,6 @@ void FileViewer::ShowConsoleTitle()
 {
 	View.ShowConsoleTitle();
 	RedrawTitle = FALSE;
-}
-
-
-void FileViewer::SetTempViewName(const wchar_t *Name, BOOL DeleteFolder)
-{
-	View.SetTempViewName(Name, DeleteFolder);
 }
 
 

@@ -120,6 +120,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	done+= '\n';
 
 	std::string sendline = "PS1=''\n";
+//	sendline+= " set +o history\n";
 	if (!_vtc_inputrc.empty()) {
 		sendline+= "bind -f \"";
 		sendline+= _vtc_inputrc;
@@ -168,6 +169,17 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		}
 	}
 	Stop();
+
+	const std::string &vtc_log = InMyTemp("vtc.log");
+
+	FILE *f = fopen(vtc_log.c_str(), "w");
+	if (f) {
+		fwrite(cmd.c_str(), cmd.size(), 1, f);
+		fwrite(tabs, strlen(tabs), 1, f);
+		fwrite("\n", 1, 1, f);
+		fwrite(reply.c_str(), reply.size(), 1, f);
+		fclose(f);
+	}
 
 	size_t p = reply.find(begin);
 	if (p != std::string::npos) {

@@ -56,6 +56,7 @@ bool VTCompletor::EnsureStarted()
 		CheckedCloseFDPair(pipe_in);
 		return false;
 	};
+
 	_pid = fork();
 	if (_pid==-1) {
 		CheckedCloseFDPair(pipe_in);
@@ -119,13 +120,14 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	begin+= '\n';
 	done+= '\n';
 
-	std::string sendline = "PS1=''\n";
+	std::string sendline = " PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''";
 //	sendline+= " set +o history\n";
 	if (!_vtc_inputrc.empty()) {
-		sendline+= "bind -f \"";
+		sendline+= "; bind -f \"";
 		sendline+= _vtc_inputrc;
-		sendline+= "\"\n";
+		sendline+= "\"";
 	}
+	sendline+= '\n';
 
 	sendline+= begin;
 	sendline+= cmd;

@@ -150,7 +150,7 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 {
 	std::string content;
 	content+= "trap \"echo ''\" SIGINT\n"; // need marker to be printed even after Ctrl+C pressed
-	content+= "PS1=''\n"; // reduce risk of glitches
+	content+= "PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
 	content+= VT_ComposeMarkerCommand(start_marker);
 	content+= '\n';
 	if (strcmp(cmd, "exit")==0) {

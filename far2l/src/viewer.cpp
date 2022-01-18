@@ -162,7 +162,6 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	LastSelPos=0;
 	SetStatusMode(TRUE);
 	HideCursor=TRUE;
-	DeleteFolder=TRUE;
 	CodePageChangedByUser=FALSE;
 	memset(&BMSavePos,0xff,sizeof(BMSavePos));
 	memset(UndoData,0xff,sizeof(UndoData));
@@ -242,21 +241,6 @@ Viewer::~Viewer()
 		{
 			rmdir(strProcessedViewName.GetMB().c_str());
 			strProcessedViewName.Clear();
-		}
-	}
-
-	if (!strTempViewName.IsEmpty() && !FrameManager->CountFramesWithName(strTempViewName))
-	{
-		/* $ 14.06.2002 IS
-		   Если DeleteFolder сброшен, то удаляем только файл. Иначе - удаляем еще
-		   и каталог.
-		*/
-		if (DeleteFolder)
-			DeleteFileWithFolder(strTempViewName);
-		else
-		{
-			apiSetFileAttributes(strTempViewName,FILE_ATTRIBUTE_NORMAL);
-			apiDeleteFile(strTempViewName); //BUGBUG
 		}
 	}
 
@@ -1401,7 +1385,7 @@ int Viewer::ProcessKey(int Key)
 		case KEY_ADD:
 		case KEY_SUBTRACT:
 		{
-			if (strTempViewName.IsEmpty())
+			if (!FileHolder) // if viewing observed (typically temporary) file - dont allow to switch to another file
 			{
 				FARString strName;
 				bool NextFileFound;
@@ -2952,21 +2936,6 @@ void Viewer::ShowConsoleTitle()
 	ConsoleTitle::SetFarTitle(strTitle);
 }
 
-
-void Viewer::SetTempViewName(const wchar_t *Name, BOOL DeleteFolder)
-{
-	if (Name && *Name)
-		ConvertNameToFull(Name,strTempViewName);
-	else
-	{
-		strTempViewName.Clear();
-		DeleteFolder=FALSE;
-	}
-
-	Viewer::DeleteFolder=DeleteFolder;
-}
-
-
 void Viewer::SetTitle(const wchar_t *Title)
 {
 	if (!Title)
@@ -2975,12 +2944,10 @@ void Viewer::SetTitle(const wchar_t *Title)
 		strTitle = Title;
 }
 
-
 void Viewer::SetFilePos(int64_t Pos)
 {
 	FilePos=Pos;
-};
-
+}
 
 void Viewer::SetPluginData(const wchar_t *PluginData)
 {
@@ -3690,11 +3657,6 @@ int Viewer::ViewerControl(int Command,void *Param)
 	}
 
 	return FALSE;
-}
-
-BOOL Viewer::isTemporary()
-{
-	return !strTempViewName.IsEmpty();
 }
 
 int Viewer::ProcessHexMode(int newMode, bool isRedraw)

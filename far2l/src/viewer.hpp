@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "config.hpp"
 #include "cache.hpp"
+#include "fileholder.hpp"
 
 /* $ 10.07.2000 tran
    ! modified MAXSCRY from 120 to 300
@@ -117,9 +118,7 @@ class Viewer:public ScreenObject
 
 		FAR_FIND_DATA_EX ViewFindData;
 
-		FARString strTempViewName, strProcessedViewName;
-
-		BOOL DeleteFolder;
+		FARString strProcessedViewName;
 
 		FARString strLastSearchStr;
 		int LastSearchCase,LastSearchWholeWords,LastSearchReverse,LastSearchHex,LastSearchRegexp;
@@ -159,6 +158,9 @@ class Viewer:public ScreenObject
 		bool m_bQuickView;
 
 		UINT DefCodePage;
+
+		std::shared_ptr<IFileHolder>  FileHolder;
+
 	private:
 		virtual void DisplayObject();
 
@@ -221,10 +223,11 @@ class Viewer:public ScreenObject
 		bool GetProcessed() const { return VM.Processed; }
 		virtual void ShowConsoleTitle();
 
-		void SetTempViewName(const wchar_t *Name, BOOL DeleteFolder);
-
 		void SetTitle(const wchar_t *Title);
 		FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
+
+		void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer;}
+		std::shared_ptr<IFileHolder> &GetFileHolder() { return FileHolder;}
 
 		void SetFilePos(int64_t Pos); // $ 18.07.2000 tran - change 'long' to 'unsigned long'
 		int64_t GetFilePos() const { return FilePos; };
@@ -262,11 +265,6 @@ class Viewer:public ScreenObject
 		UINT GetCodePage() const { return VM.CodePage; }
 
 		NamesList *GetNamesList() { return &ViewNamesList; }
-
-		/* $ 08.12.2001 OT
-		  возвращает признак того, является ли файл временным
-		  используется для принятия решения переходить в каталог по */
-		BOOL isTemporary();
 
 		int ProcessHexMode(int newMode, bool isRedraw=TRUE);
 		int ProcessWrapMode(int newMode, bool isRedraw=TRUE);

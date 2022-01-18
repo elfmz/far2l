@@ -3073,7 +3073,7 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				FileViewer Viewer(ViewName,FALSE,FALSE,TRUE,-1,nullptr,nullptr,FALSE);
 				Viewer.SetDynamicallyBorn(FALSE);
 				// а этот трюк не даст пользователю сменить текущий каталог по CtrlF10 и этим ввести в заблуждение копир:
-				Viewer.SetTempViewName(L"nul",FALSE);
+				Viewer.SetFileHolder(std::make_shared<DummyFileHolder>());
 				FrameManager->EnterModalEV();
 				FrameManager->ExecuteModal();
 				FrameManager->ExitModalEV();

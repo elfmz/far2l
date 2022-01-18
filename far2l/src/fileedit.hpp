@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "editor.hpp"
 #include "keybar.hpp"
-#include "fileobserver.hpp"
+#include "fileholder.hpp"
 
 class NamesList;
 
@@ -92,7 +92,7 @@ class FileEditor : public Frame
 		bool IsFullScreen() {return Flags.Check(FFILEEDIT_FULLSCREEN)!=FALSE;}
 		void SetNamesList(NamesList *Names);
 		void SetEnableF6(int AEnableF6) { Flags.Change(FFILEEDIT_ENABLEF6,AEnableF6); InitKeyBar(); }
-		void SetFileObserver(std::shared_ptr<IFileObserver> Observer) { FileObserver = Observer;}
+		void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer;}
 
 		// Добавлено для поиска по AltF7. При редактировании найденного файла из
 		// архива для клавиши F2 сделать вызов ShiftF2.
@@ -132,7 +132,7 @@ class FileEditor : public Frame
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
-		std::shared_ptr<IFileObserver>  FileObserver;
+		std::shared_ptr<IFileHolder>  FileHolder;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);

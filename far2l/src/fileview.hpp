@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "frame.hpp"
 #include "viewer.hpp"
 #include "keybar.hpp"
-#include "fileobserver.hpp"
 
 class FileViewer:public Frame
 {
@@ -61,7 +60,6 @@ class FileViewer:public Frame
 		  архива для клавиши F2 сделать вызов ShiftF2.
 		*/
 		int SaveToSaveAs;
-		std::shared_ptr<IFileObserver>  FileObserver;
 		FARString strPluginData;
 
 	public:
@@ -80,12 +78,6 @@ class FileViewer:public Frame
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 		virtual void ShowConsoleTitle();
-		/* $ 14.06.2002 IS
-		   Параметр DeleteFolder - удалить не только файл, но и каталог, его
-		   содержащий (если каталог пуст). По умолчанию - TRUE (получаем
-		   поведение SetTempViewName такое же, как и раньше)
-		*/
-		void SetTempViewName(const wchar_t *Name,BOOL DeleteFolder=TRUE);
 		virtual void OnDestroy();
 		virtual void OnChangeFocus(int focus);
 
@@ -94,7 +86,7 @@ class FileViewer:public Frame
 		virtual int GetType() { return MODALTYPE_VIEWER; }
 
 		void SetEnableF6(int AEnable) { DisableEdit = !AEnable; InitKeyBar(); }
-		void SetFileObserver(std::shared_ptr<IFileObserver> Observer) { FileObserver = Observer;}
+		void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { View.SetFileHolder(Observer); }
 		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
 
 		/* $ Введена для нужд CtrlAltShift OT */

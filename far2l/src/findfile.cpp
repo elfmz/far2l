@@ -1507,12 +1507,12 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem, const wchar_
 }
 
 
-class FindDlg_TempFileHolder : public TempFileHolder
+class FindDlg_TempFileHolder : public TempFileUploadHolder
 {
 	size_t ArcIndex;
 	FAR_FIND_DATA_EX FindData;
 
-	virtual void UploadTempFile()
+	virtual bool UploadTempFile()
 	{
 		PluginLocker Lock;
 		ARCLIST ArcItem;
@@ -1532,7 +1532,7 @@ class FindDlg_TempFileHolder : public TempFileHolder
 			{
 				ArcItem.hPlugin = INVALID_HANDLE_VALUE;
 				fprintf(stderr, "OnEditedFileSaved: can't open plugins '%ls'\n", strFindArcName.CPtr());
-				return;
+				return false;
 			}
 			ClosePlugin = true;
 		}
@@ -1557,14 +1557,15 @@ class FindDlg_TempFileHolder : public TempFileHolder
 
 //		FARString strTempName = FileName;
 
-		if (FileList::FileNameToPluginItem(strTempFileName, &PanelItem))
+		bool out = false;
+		if (FileList::FileNameToPluginItem(TempFileName(), &PanelItem))
 		{
-			int PutCode = CtrlObject->Plugins.PutFiles(ArcItem.hPlugin, &PanelItem, 1, FALSE, OPM_EDIT);
+			out = (CtrlObject->Plugins.PutFiles(ArcItem.hPlugin, &PanelItem, 1, FALSE, OPM_EDIT) != 0);
 
-			if (PutCode == 0)
+			if (!out)
 			{
 				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
-				        MSG(MTextSavedToTemp), strTempFileName, MSG(MOk));
+				        MSG(MTextSavedToTemp), TempFileName(), MSG(MOk));
 			}
 		}
 
@@ -1579,12 +1580,14 @@ class FindDlg_TempFileHolder : public TempFileHolder
 			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",OPM_SILENT);
 			SetPluginDirectory(strSaveDir,ArcItem.hPlugin);
 		}
+
+		return out;
 	}
 
 public:
 	FindDlg_TempFileHolder(FARString strTempName_, size_t ArcIndex_, const FAR_FIND_DATA_EX &FindData_)
 	:
-		TempFileHolder(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
+		TempFileUploadHolder(strTempName_), ArcIndex(ArcIndex_), FindData(FindData_)
 	{
 	}
 
@@ -2024,7 +2027,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 									{
 										TFH = std::make_shared<FindDlg_TempFileHolder>
 											(strSearchFileName, FindItem.ArcIndex, FindItem.FindData);
-										ShellEditor.SetFileObserver(TFH);
+										ShellEditor.SetFileHolder(TFH);
 									}
 									FrameManager->EnterModalEV();
 									FrameManager->ExecuteModal();

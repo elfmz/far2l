@@ -6,7 +6,9 @@
 #include <fstream>
 #include <mutex>
 
+#include <stdlib.h>
 #include <locale.h>
+#include <utils.h>
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
 # include <alloca.h>
@@ -200,6 +202,22 @@ struct Codepages
 static Codepages DeduceCodepages()
 {
 	// deduce oem/ansi cp from system locale
+	std::ifstream is;
+	is.open(InMyConfig("cp").c_str());
+	if (is.is_open()) {
+		Codepages out {866, 1251};
+		std::string str;
+		getline (is, str);
+		if (!str.empty()) {
+			out.oem = atoi(str.c_str());
+		}
+		getline (is, str);
+		if (!str.empty()) {
+			out.ansi = atoi(str.c_str());
+		}
+		return out;
+	}
+
 	const char *lc = setlocale(LC_CTYPE, NULL);
 	if (!lc) {
 		fprintf(stderr, "DeduceCodepages: setlocale returned NULL\n");
@@ -339,7 +357,7 @@ static Codepages DeduceCodepages()
 	if (IsLocaleMatches(lc, "zh_SG")) { return Codepages{936, 936}; }
 	if (IsLocaleMatches(lc, "zh_MO")) { return Codepages{950, 1252}; }
 
-	if (!IsLocaleMatches(lc, "C")) {
+	if (!IsLocaleMatches(lc, "C") && !IsLocaleMatches(lc, "UTF8")) {
 		fprintf(stderr, "DeduceCodepages: unknown locale '%s'\n", lc);
 	}
 

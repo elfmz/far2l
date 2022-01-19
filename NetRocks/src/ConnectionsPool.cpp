@@ -39,7 +39,6 @@ std::shared_ptr<IHost> ConnectionsPool::Get(const std::string &id)
 {
 	std::shared_ptr<IHost> out;
 
-	std::vector<std::shared_ptr<IHost> > purgeds; // destroy hosts out of lock
 	std::lock_guard<std::mutex> locker(_mutex);
 
 	auto it = _id_2_pooled_host.find(id);

@@ -18,9 +18,6 @@ using namespace oldfar;
   #pragma option -a1
 #elif defined(__GNUC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1100)) || defined(__LCC__)
   #pragma pack(1)
-  #if defined(__LCC__)
-    #define _export __declspec(dllexport)
-  #endif
 #else
   #pragma pack(push,1)
   #if _MSC_VER

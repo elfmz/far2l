@@ -106,9 +106,6 @@ other possible license with no implications from the above license on them.
 #ifndef _WIN64
 #pragma pack(2)
 #endif
-#if defined(__LCC__)
-#define _export __declspec(dllexport)
-#endif
 #else
 #ifndef _WIN64
 #pragma pack(push,2)

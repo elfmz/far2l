@@ -14,9 +14,6 @@
   #pragma option -a2
 #elif defined(__GNUC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1100)) || defined(__LCC__)
   #pragma pack(2)
-  #if defined(__LCC__)
-    #define _export __declspec(dllexport)
-  #endif
 #else
   #pragma pack(push,2)
   #if _MSC_VER

@@ -343,7 +343,7 @@ void md_listdat(void) {
 
 char *md_timestring(unsigned long t) {
     
-    static char ts[22];
+    static char ts[40];
     struct tm *tim;	
     
     tim=localtime((long *)&t);

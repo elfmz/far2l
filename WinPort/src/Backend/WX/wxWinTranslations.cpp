@@ -508,10 +508,28 @@ bool KeyTracker::RightControl() const
 
 wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker)
 {
+	auto key_code = event.GetKeyCode();
+#ifdef __linux__
+	// Recent KDEs put into keycode non-latin characters in case of
+	// non-latin input layout configured as first in the list of layouts.
+	// FAR expects latin key codes there and GetRawKeyCode() gives them.
+	// Why not using GetRawKeyCode() always? To avoid surprises, as
+	// GetKeyCode() served well for a long time til this started to happen.
+	// See https://github.com/elfmz/far2l/issues/1180
+	if (key_code > 0x100) {
+		auto raw_key_code = event.GetRawKeyCode();
+		if (raw_key_code > 0x1f && raw_key_code <= 0x7f) {
+			key_code = raw_key_code;
+		}
+	}
+	if (key_code >= 'a' && key_code <= 'z') {
+		key_code-= 'a' - 'A';
+	}
+#endif
 	EventType = KEY_EVENT;
 	Event.KeyEvent.bKeyDown = KeyDown;
 	Event.KeyEvent.wRepeatCount = 1;
-	Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(event.GetKeyCode());
+	Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(key_code);
 	Event.KeyEvent.wVirtualScanCode = 0;
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;

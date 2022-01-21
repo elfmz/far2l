@@ -353,6 +353,7 @@ class FileList:public Panel
 		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr);
 		virtual int GetCurrentPos();
 		virtual int FindPartName(const wchar_t *Name,int Next,int Direct=1,int ExcludeSets=0);
+    	virtual int FindPartName2(const wchar_t *Name,int Next,int Direct=1,int ExcludeSets=0);
 		long FindFile(const char *Name,BOOL OnlyPartName=FALSE);
 
 		virtual int GoToFile(long idxItem);

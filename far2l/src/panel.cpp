@@ -922,7 +922,7 @@ void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &str
 				break;
 			}
 
-			if (FindPartName(Ptr,FALSE,1,1))
+			if (FindPartName2(Ptr,FALSE,1,1))
 			{
 //				Key=*(EndPtr-1);
 				*EndPtr=0;
@@ -1085,13 +1085,13 @@ void Panel::FastFind(int FirstKey)
 				}
 				case KEY_CTRLNUMENTER:
 				case KEY_CTRLENTER:
-					FindPartName(strName,TRUE,1,1);
+					FindPartName2(strName,TRUE,1,1);
 					FindEdit.Show();
 					FastFindShow(FindX,FindY);
 					break;
 				case KEY_CTRLSHIFTNUMENTER:
 				case KEY_CTRLSHIFTENTER:
-					FindPartName(strName,TRUE,-1,1);
+					FindPartName2(strName,TRUE,-1,1);
 					FindEdit.Show();
 					FastFindShow(FindX,FindY);
 					break;
@@ -1132,7 +1132,7 @@ void Panel::FastFind(int FirstKey)
 							FindEdit.SetString(strName);
 						}
 
-						if (FindPartName(strName,FALSE,1,1))
+						if (FindPartName2(strName,FALSE,1,1))
 						{
 							strLastName = strName;
 						}

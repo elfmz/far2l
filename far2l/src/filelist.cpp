@@ -3128,6 +3128,54 @@ bool FileList::FileInFilter(long idxItem)
 	return false;
 }
 
+// Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
+int FileList::FindPartName2(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+{
+    bool res = FindPartName(Name, Next, Direct, ExcludeSets);
+    if (!res) {
+
+        // FastFind retry keyboard layout translation
+
+        wchar_t *out = (wchar_t*)malloc((wcslen(Name) + 1)*sizeof(wchar_t));
+        bzero(out, (wcslen(Name) + 1)*sizeof(wchar_t));
+
+        wchar_t *TrOutBuf = (wchar_t*)malloc(strlen(KbLayoutsTrOut.c_str())*sizeof(wchar_t));
+        int converted = WINPORT(MultiByteToWideChar)(CP_UTF8, 0,
+            KbLayoutsTrOut.c_str(), -1,
+            TrOutBuf, strlen(KbLayoutsTrOut.c_str())*sizeof(wchar_t));
+
+        if (converted > 0) {
+            for (int i = 0; i<wcslen(Name); i++) {
+
+                out[i] = Name[i];
+
+
+                for (int j = 0; j < strlen(KbLayoutsTrIn.c_str()); j+=2) {
+                    if (TrOutBuf[j] && KbLayoutsTrIn.at(j)) {
+                        // forward translation
+                        if (Name[i] == KbLayoutsTrIn.at(j)) {
+                            out[i] = TrOutBuf[j];
+                        }
+
+                        // reverse translation
+                        if (Name[i] == TrOutBuf[j]) {
+                            out[i] = KbLayoutsTrIn.at(j);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        res = FindPartName(out, Next, Direct, ExcludeSets);
+
+        free(TrOutBuf);
+        free(out);
+    }
+
+    return res;
+}
+
 // $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSerach переходим на директорию
 int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {

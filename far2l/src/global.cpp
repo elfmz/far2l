@@ -63,6 +63,9 @@ clock_t StartIdleTime=0;
 FARString g_strFarModuleName;
 FARString g_strFarPath;
 
+std::string KbLayoutsTrIn;
+std::string KbLayoutsTrOut;
+
 FARString strGlobalSearchString;
 int GlobalSearchCase=FALSE;
 int GlobalSearchWholeWords=FALSE; // значение "Whole words" для поиска

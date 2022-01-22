@@ -35,4 +35,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-wchar_t* WINAPI Xlat(wchar_t *Line,int StartPos,int EndPos,DWORD Flags);
+class Xlater
+{
+	size_t _min_len_table;
+	int _prev_lang {2}, _cur_lang {2}; // unknown
+	int _lang_count[2] {0, 0};
+
+public:
+	Xlater(DWORD flags);
+	wchar_t Transcode(wchar_t chr);
+};
+
+wchar_t* WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags);
+

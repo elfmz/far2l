@@ -51,4 +51,14 @@ public:
 	{
 		return _cnt;
 	}
+
+	WHAT & operator [](size_t i)
+	{
+		return _arr[i];
+	}
+
+	const WHAT & operator [](size_t i) const
+	{
+		return _arr[i];
+	}
 };

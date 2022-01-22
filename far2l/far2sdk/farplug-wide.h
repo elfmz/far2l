@@ -2358,7 +2358,7 @@ extern "C"
 {
 #endif
 // Exported Functions
-
+	void   WINAPI _export PluginModuleOpen(const char *path);
 	void   WINAPI _export ClosePluginW(HANDLE hPlugin);
 	int    WINAPI _export CompareW(HANDLE hPlugin,const struct PluginPanelItem *Item1,const struct PluginPanelItem *Item2,unsigned int Mode);
 	int    WINAPI _export ConfigureW(int ItemNumber);

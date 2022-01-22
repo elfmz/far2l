@@ -768,12 +768,12 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyNotifications, "OnConsole",&Opt.NotifOpt.OnConsole,1, 0},
 	{1, REG_DWORD,  NKeyNotifications, "OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1, 0},
 
-	{0, REG_DWORD,  NKeyXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE, 0},
-	{0, REG_SZ,     NKeyXLat, "Table1",&Opt.XLat.Table[0],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Table2",&Opt.XLat.Table[1],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules1",&Opt.XLat.Rules[0],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules2",&Opt.XLat.Rules[1],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules3",&Opt.XLat.Rules[2],0,L""},
+	{0, REG_DWORD,  NKeyXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_CONVERTALLCMDLINE, 0},
+	{0, REG_SZ,     NKeyXLat, "Table1",&Opt.XLat.Table[0],0,L"№АВГДЕЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЯавгдезийклмнопрстуфхцчшщъыьэяёЁБЮ"},
+	{0, REG_SZ,     NKeyXLat, "Table2",&Opt.XLat.Table[1],0,L"#FDULTPBQRKVYJGHCNEA{WXIO}SMZfdultpbqrkvyjghcnea[wxio]sm'z`~<>"},
+	{0, REG_SZ,     NKeyXLat, "Rules1",&Opt.XLat.Rules[0],0,L",??&./б,ю.:^Ж:ж;;$\"@Э\""},
+	{0, REG_SZ,     NKeyXLat, "Rules2",&Opt.XLat.Rules[1],0,L"?,&?/.,б.ю^::Ж;ж$;@\"\"Э"},
+	{0, REG_SZ,     NKeyXLat, "Rules3",&Opt.XLat.Rules[2],0,L"^::ЖЖ^$;;жж$@\"\"ЭЭ@&??,,бб&/..юю/"},
 	{0, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
 
 	{1, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},

@@ -75,6 +75,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "panel.hpp"
 #include "drivemix.hpp"
+#include "xlat.hpp"
+#include <StackHeapArray.hpp>
 
 static int DragX,DragY,DragMove;
 static Panel *SrcDragPanel;
@@ -922,7 +924,7 @@ void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &str
 				break;
 			}
 
-			if (FindPartName(Ptr,FALSE,1,1))
+			if (FindPartNameXLat(Ptr,FALSE,1,1))
 			{
 //				Key=*(EndPtr-1);
 				*EndPtr=0;
@@ -1085,13 +1087,13 @@ void Panel::FastFind(int FirstKey)
 				}
 				case KEY_CTRLNUMENTER:
 				case KEY_CTRLENTER:
-					FindPartName(strName,TRUE,1,1);
+					FindPartNameXLat(strName,TRUE,1,1);
 					FindEdit.Show();
 					FastFindShow(FindX,FindY);
 					break;
 				case KEY_CTRLSHIFTNUMENTER:
 				case KEY_CTRLSHIFTENTER:
-					FindPartName(strName,TRUE,-1,1);
+					FindPartNameXLat(strName,TRUE,-1,1);
 					FindEdit.Show();
 					FastFindShow(FindX,FindY);
 					break;
@@ -1132,7 +1134,7 @@ void Panel::FastFind(int FirstKey)
 							FindEdit.SetString(strName);
 						}
 
-						if (FindPartName(strName,FALSE,1,1))
+						if (FindPartNameXLat(strName,FALSE,1,1))
 						{
 							strLastName = strName;
 						}
@@ -2275,5 +2277,34 @@ bool Panel::ExecShortcutFolder(int Pos)
 		return true;
 	}
 	return false;
+}
+
+
+// Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
+bool Panel::FindPartNameXLat(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+{
+    if (FindPartName(Name, Next, Direct, ExcludeSets)) {
+		return true;
+	}
+
+	if (!Opt.XLat.EnableForFastFileFind) {
+		return false;
+	}
+
+	const size_t NameLen = wcslen(Name);
+	StackHeapArray<wchar_t, 0x200> NameXlat(NameLen + 1);
+
+	Xlator xlt(0);
+	for (size_t i = 0; i < NameLen; ++i) {
+		NameXlat[i] = xlt.Transcode(Name[i]);
+		NameXlat[i + 1] = 0;
+		if (!FindPartName(NameXlat.Get(), Next, Direct, ExcludeSets)) {
+			NameXlat[i] = Name[i];
+			if (!FindPartName(NameXlat.Get(), Next, Direct, ExcludeSets)) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 

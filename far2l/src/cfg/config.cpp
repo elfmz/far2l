@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
+#include <algorithm>
 #include "config.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
@@ -112,6 +112,20 @@ static const char NParamHistoryCount[]="HistoryCount";
 static const char NKeyVMenu[]="VMenu";
 
 static const wchar_t *constBatchExt=L".BAT;.CMD;";
+
+struct AllXlats : std::vector<std::string>
+{
+	AllXlats()
+		: std::vector<std::string>(KeyFileReadHelper(InMyConfig("xlats.ini")).EnumSections())
+	{
+		const auto &xlats_global = KeyFileReadHelper(GetHelperPathName("xlats.ini")).EnumSections();
+		for (const auto &xlat : xlats_global) { // local overrides global
+			if (std::find(begin(), end(), xlat) == end()) {
+				emplace_back(xlat);
+			}
+		}
+	}
+};
 
 static DWORD ApplyConsoleTweaks()
 {
@@ -251,6 +265,57 @@ void PanelSettings()
 }
 
 
+void InputSettings()
+{
+	const DWORD supported_tweaks = ApplyConsoleTweaks();
+
+	std::vector<DialogBuilderListItem> XLatItems;
+	AllXlats xlats;
+
+	int SelectedXLat = -1;
+	for (int i = 0; i < (int)xlats.size(); ++i) {
+		if (Opt.XLat.XLat == xlats[i]) {
+			SelectedXLat = i;
+		}
+		XLatItems.emplace_back(DialogBuilderListItem{INTERN_MSG(xlats[i].c_str()), i});
+	}
+
+	DialogBuilder Builder(MConfigInputTitle, L"InputSettings");
+	Builder.AddCheckbox(MConfigMouse, &Opt.Mouse);
+
+	Builder.AddText(MConfigXLats);
+	DialogItemEx *Item = Builder.AddComboBox(&SelectedXLat, 40,
+		XLatItems.data(), XLatItems.size(), DIF_DROPDOWNLIST|DIF_LISTAUTOHIGHLIGHT|DIF_LISTWRAPMODE);
+	Item->Indent(4);
+
+	Builder.AddCheckbox(MConfigXLatFastFileFind, &Opt.XLat.EnableForFastFileFind);
+	Builder.AddCheckbox(MConfigXLatDialogs, &Opt.XLat.EnableForDialogs);
+
+	if (supported_tweaks & TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS) {
+		Builder.AddText(MConfigExclusiveKeys);
+		Item = Builder.AddCheckbox(MConfigExclusiveCtrlLeft, &Opt.ExclusiveCtrlLeft);
+		Item->Indent(4);
+		Builder.AddCheckboxAfter(Item, MConfigExclusiveCtrlRight, &Opt.ExclusiveCtrlRight);
+
+		Item = Builder.AddCheckbox(MConfigExclusiveAltLeft, &Opt.ExclusiveAltLeft);
+		Item->Indent(4);
+		Builder.AddCheckboxAfter(Item, MConfigExclusiveAltRight, &Opt.ExclusiveAltRight);
+
+		Item = Builder.AddCheckbox(MConfigExclusiveWinLeft, &Opt.ExclusiveWinLeft);
+		Item->Indent(4);
+		Builder.AddCheckboxAfter(Item, MConfigExclusiveWinRight, &Opt.ExclusiveWinRight);
+	}
+
+	Builder.AddOKCancel();
+
+	if (Builder.ShowDialog()) {
+		if (size_t(SelectedXLat) < xlats.size()) {
+			Opt.XLat.XLat = xlats[SelectedXLat];
+		}
+		ApplyConsoleTweaks();
+	}
+}
+
 /* $ 17.12.2001 IS
    Настройка средней кнопки мыши для панелей. Воткнем пока сюда, потом надо
    переехать в специальный диалог по программированию мыши.
@@ -262,7 +327,6 @@ void InterfaceSettings()
 		
 		Builder.AddCheckbox(MConfigClock, &Opt.Clock);
 		Builder.AddCheckbox(MConfigViewerEditorClock, &Opt.ViewerEditorClock);
-		Builder.AddCheckbox(MConfigMouse, &Opt.Mouse);
 		Builder.AddCheckbox(MConfigKeyBar, &Opt.ShowKeyBar);
 		Builder.AddCheckbox(MConfigMenuBar, &Opt.ShowMenuBar);
 		DialogItemEx *SaverCheckbox = Builder.AddCheckbox(MConfigSaver, &Opt.ScreenSaver);
@@ -278,26 +342,12 @@ void InterfaceSettings()
 		Builder.AddCheckbox(MConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
 		
 		
-		DWORD supported_tweaks = ApplyConsoleTweaks();
+		const DWORD supported_tweaks = ApplyConsoleTweaks();
 		int ChangeFontID = -1;
 		DialogItemEx *Item = Builder.AddButton(MConfigConsoleChangeFont, ChangeFontID);
 		
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {
 			Builder.AddCheckboxAfter(Item, MConfigConsolePaintSharp, &Opt.ConsolePaintSharp);
-		}
-		if (supported_tweaks & TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS) {
-			Builder.AddText(MConfigExclusiveKeys);
-			Item = Builder.AddCheckbox(MConfigExclusiveCtrlLeft, &Opt.ExclusiveCtrlLeft);
-			Item->Indent(4);
-			Builder.AddCheckboxAfter(Item, MConfigExclusiveCtrlRight, &Opt.ExclusiveCtrlRight);
-		
-			Item = Builder.AddCheckbox(MConfigExclusiveAltLeft, &Opt.ExclusiveAltLeft);
-			Item->Indent(4);
-			Builder.AddCheckboxAfter(Item, MConfigExclusiveAltRight, &Opt.ExclusiveAltRight);
-		
-			Item = Builder.AddCheckbox(MConfigExclusiveWinLeft, &Opt.ExclusiveWinLeft);
-			Item->Indent(4);
-			Builder.AddCheckboxAfter(Item, MConfigExclusiveWinRight, &Opt.ExclusiveWinRight);
 		}
 		
 		Builder.AddText(MConfigTitleAddons);
@@ -769,12 +819,10 @@ static struct FARConfig
 	{1, REG_DWORD,  NKeyNotifications, "OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1, 0},
 
 	{0, REG_DWORD,  NKeyXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE, 0},
-	{0, REG_SZ,     NKeyXLat, "Table1",&Opt.XLat.Table[0],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Table2",&Opt.XLat.Table[1],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules1",&Opt.XLat.Rules[0],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules2",&Opt.XLat.Rules[1],0,L""},
-	{0, REG_SZ,     NKeyXLat, "Rules3",&Opt.XLat.Rules[2],0,L""},
-	{0, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
+	{1, REG_DWORD,  NKeyXLat, "EnableForFastFileFind",&Opt.XLat.EnableForFastFileFind,1, 0},
+	{1, REG_DWORD,  NKeyXLat, "EnableForDialogs",&Opt.XLat.EnableForDialogs,1, 0},
+	{1, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
+	{1, REG_SZ,     NKeyXLat, "XLat",&Opt.XLat.XLat,0,L"ru:qwerty-йцукен"},
 
 	{1, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},
 	{1, REG_DWORD,  NKeySavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512, 0},
@@ -1092,34 +1140,23 @@ void ReadConfig()
 		Opt.strExecuteBatchType=constBatchExt;
 
 	{
-		Opt.XLat.CurrentLayout=0;
-		memset(Opt.XLat.Layouts,0,sizeof(Opt.XLat.Layouts));
-		cfg_reader.SelectSection(NKeyXLat);
-		FARString strXLatLayouts = cfg_reader.GetString("Layouts", L"");
-
-		if (!strXLatLayouts.IsEmpty())
-		{
-			wchar_t *endptr;
-			const wchar_t *ValPtr;
-			UserDefinedList DestList;
-			DestList.SetParameters(L';',0,ULF_UNIQUE);
-			DestList.Set(strXLatLayouts);
-			I=0;
-
-			for (size_t DLI = 0; nullptr!=(ValPtr=DestList.Get(DLI)); ++DLI)
-			{
-				DWORD res=(DWORD)wcstoul(ValPtr, &endptr, 16);
-				Opt.XLat.Layouts[I]=(HKL)(LONG_PTR)(HIWORD(res)? res : MAKELONG(res,res));
-				++I;
-
-				if (I >= ARRAYSIZE(Opt.XLat.Layouts))
-					break;
+		//cfg_reader.SelectSection(NKeyXLat);
+		AllXlats xlats;
+		std::string SetXLat;
+		for (const auto &xlat : xlats) {
+			if (Opt.XLat.XLat == xlat) {
+				SetXLat.clear();
+				break;
 			}
-
-			if (I <= 1) // если указано меньше двух - "откключаем" эту
-				Opt.XLat.Layouts[0]=0;
+			if (SetXLat.empty()) {
+				SetXLat = xlat;
+			}
+		}
+		if (!SetXLat.empty()) {
+			Opt.XLat.XLat = SetXLat;
 		}
 	}
+
 
 	memset(Opt.FindOpt.OutColumnTypes,0,sizeof(Opt.FindOpt.OutColumnTypes));
 	memset(Opt.FindOpt.OutColumnWidths,0,sizeof(Opt.FindOpt.OutColumnWidths));

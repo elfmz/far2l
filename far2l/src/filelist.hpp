@@ -352,7 +352,7 @@ class FileList:public Panel
 		HANDLE OpenFilePlugin(const wchar_t *FileName,int PushPrev, OPENFILEPLUGINTYPE Type);
 		virtual int GetFileName(FARString &strName,int Pos,DWORD &FileAttr);
 		virtual int GetCurrentPos();
-		virtual int FindPartName(const wchar_t *Name,int Next,int Direct=1,int ExcludeSets=0);
+		virtual bool FindPartName(const wchar_t *Name,int Next,int Direct=1,int ExcludeSets=0);
 		long FindFile(const char *Name,BOOL OnlyPartName=FALSE);
 
 		virtual int GoToFile(long idxItem);

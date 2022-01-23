@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "console.hpp"
 #include "palette.hpp"
+#include "xlat.hpp"
 
 /* start Глобальные переменные */
 
@@ -387,10 +388,7 @@ bool KeyToKeyLayoutCompare(int Key, int CompareKey)
 //	Key = KeyToVKey[Key&0xFFFF]&0xFF;
 //	CompareKey = KeyToVKey[CompareKey&0xFFFF]&0xFF;
 
-	if (Key  && Key == CompareKey)
-		return true;
-
-	return false;
+	return (Key && (Key == CompareKey || Xlator(0).Transcode(Key) == CompareKey));
 }
 
 //Должно вернуть клавишный Eng эквивалент Key
@@ -398,7 +396,10 @@ int KeyToKeyLayout(int Key)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayout()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X",Key));
-return Key;
+	if (uint32_t(Key) > 0x7f) {
+		return Xlator(0).Transcode(Key);
+	}
+	return Key;
 /*
 	int VK = KeyToVKey[Key&0xFFFF];
 

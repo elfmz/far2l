@@ -1521,7 +1521,7 @@ int TreeList::ReadTreeFile()
 }
 
 
-int TreeList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+bool TreeList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
 	FARString strMask;
 	strMask = Name;
@@ -1541,7 +1541,7 @@ int TreeList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 			CurFile=i;
 			CurTopFile=CurFile-(Y2-Y1-1)/2;
 			DisplayTree(TRUE);
-			return TRUE;
+			return true;
 		}
 	}
 
@@ -1552,11 +1552,11 @@ int TreeList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 			CurFile=i;
 			CurTopFile=CurFile-(Y2-Y1-1)/2;
 			DisplayTree(TRUE);
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 

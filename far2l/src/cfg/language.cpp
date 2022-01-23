@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
+#include <limits>
 #include "language.hpp"
 #include "lang.hpp"
 #include "scantree.hpp"
@@ -457,6 +457,11 @@ void Language::Free()
 	MsgCount=0;
 	MsgSize=0;
 	m_bUnicode = true;
+
+	for (auto Str : InterningPool)
+		free(Str);
+
+	InterningPool.clear();
 }
 
 void Language::Close()
@@ -579,6 +584,9 @@ bool Language::CheckMsgId(int MsgId) const
 
 const wchar_t* Language::GetMsg(int nID) const
 {
+	if (nID < 0)
+		return (size_t(-nID) <= InterningPool.size()) ? InterningPool[(-nID) - 1] : L"";
+
 	if (!m_bUnicode || !CheckMsgId(nID))
 		return L"";
 
@@ -590,6 +598,11 @@ const wchar_t* Language::GetMsg(int nID) const
 
 const char* Language::GetMsgA(int nID) const
 {
+	if (nID < 0)
+	{
+		fprintf(stderr, "Language::GetMsgA(%d) - TODO\n", nID);
+		return "";
+	}
 	if (m_bUnicode || !CheckMsgId(nID))
 		return "";
 
@@ -599,3 +612,29 @@ const char* Language::GetMsgA(int nID) const
 	return MsgAddrA[nID];
 }
 
+int Language::InternMsg(const wchar_t *Str)
+{
+	// TODO: optimize by additional std::set if there will be really many strings
+	for (size_t i = 0; i < InterningPool.size(); ++i) {
+		if (wcscmp(Str, InterningPool[i]) == 0) {
+			return -int(i + 1);
+		}
+	}
+
+	if (InterningPool.size() >= size_t(std::numeric_limits<int>::max() - 1)) {
+		fprintf(stderr, "Language::InternMsg('%ls'): overflow\n", Str);
+		if (InterningPool.size() == size_t(std::numeric_limits<int>::max() - 1)) {
+			InterningPool.emplace_back(wcsdup(L"!!!OVERFLOW!!!"));
+		}
+
+	} else {
+		InterningPool.emplace_back(wcsdup(Str));
+	}
+
+	return -int(InterningPool.size());
+}
+
+int Language::InternMsg(const char *Str)
+{
+	return InternMsg(MB2Wide(Str).c_str());
+}

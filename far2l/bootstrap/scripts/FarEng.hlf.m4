@@ -51,6 +51,7 @@ $^#File and archive manager#
    ~System settings~@SystemSettings@
    ~Panel settings~@PanelSettings@
    ~Interface settings~@InterfSettings@
+   ~Input settings~@InputSettings@
    ~Dialog settings~@DialogSettings@
    ~Menu settings~@VMenuSettings@
    ~Command line settings~@CmdlineSettings@
@@ -1231,6 +1232,8 @@ $ #Menus: options menu#
 
    #Interface settings#    Shows ~interface settings~@InterfSettings@ dialog.
 
+   #Input settings#        Shows ~input settings~@InputSettings@ dialog.
+
    #Dialog settings#       Shows ~dialog settings~@DialogSettings@ dialog.
 
    #Menu settings#         Shows ~menu settings~@VMenuSettings@ dialog.
@@ -2236,9 +2239,6 @@ $ #Settings dialog: interface#
   #Clock in viewer and editor#
   Show clock in viewer and editor.
 
-  #Mouse#
-  Use the mouse.
-
   #Show key bar#
   Show the functional key bar at the bottom line.
 This option also may be switched by #Ctrl-B#.
@@ -2275,12 +2275,6 @@ to calculate the total files count.
   - for network drives - activates the Network plugin (if it is available)
 or the drive selection menu (if the Network plugin is not available).
 
-  #Exclusively handle hotkeys that include#
-  This options allows to choose control keys using which in hotkey combination
-will cause FAR2L to capture keyboard input exclusively, thus preventins other
-application from interfering with FAR2L hotkeys that contains such control key.
-Note that this options works only in GUI backend mode.
-
   #Far window title addons#
   Дополнительная информация, выводимая в заголовке окна консоли.
 Может содержать любой текст, включая следующие переменные:
@@ -2290,6 +2284,23 @@ Note that this options works only in GUI backend mode.
   #%Host# - host name of the machine where FAR2L is running;
   #%User# - user name under wich FAR2L is running;
   #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
+
+@InputSettings
+$ #Settings dialog: input#
+  #Mouse#
+  Use the mouse.
+
+  #Transliteration ruleset:#
+  Choose here transliteration ruleset that corresponds to your usual keyboard layout.
+Avalable rulesets loaded from file #xlats.ini# that defines how non-latin keys map
+to latin and vice-verse, that subsequentially used in #fast file find by Alt+FILENAME#,
+#dialog hotkeys navigation# and some internal functionality.
+
+  #Exclusively handle hotkeys that include#
+  This options allows to choose control keys using which in hotkey combination
+will cause FAR2L to capture keyboard input exclusively, thus preventins other
+application from interfering with FAR2L hotkeys that contains such control key.
+Note that this options works only in GUI backend mode.
 
 
 @DialogSettings

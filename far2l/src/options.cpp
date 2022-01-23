@@ -148,6 +148,7 @@ enum enumOptionsMenu
 	MENU_OPTIONS_PANELSETTINGS,
 	MENU_OPTIONS_INTERFACESETTINGS,
 	MENU_OPTIONS_LANGUAGES,
+	MENU_OPTIONS_INPUTSETTINGS,
 	MENU_OPTIONS_PLUGINSCONFIG,
 	MENU_OPTIONS_PLUGINSMANAGERSETTINGS,
 	MENU_OPTIONS_DIALOGSETTINGS,
@@ -280,6 +281,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		{MSG(MMenuPanelSettings),0,0},
 		{MSG(MMenuInterface),0,0},
 		{MSG(MMenuLanguages),0,0},
+		{MSG(MMenuInput),0,0},
 		{MSG(MMenuPluginsConfig),0,0},
 		{MSG(MMenuPluginsManagerSettings),0,0},
 		{MSG(MMenuDialogSettings),0,0},
@@ -583,6 +585,9 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_OPTIONS_LANGUAGES:   // Languages
 					LanguageSettings();
+					break;
+				case MENU_OPTIONS_INPUTSETTINGS:   // Input settings
+					InputSettings();
 					break;
 				case MENU_OPTIONS_PLUGINSCONFIG:   // Plugins configuration
 					CtrlObject->Plugins.Configure();

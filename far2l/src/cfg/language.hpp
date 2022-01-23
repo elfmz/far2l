@@ -33,6 +33,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <vector>
+
 enum LngErrors
 {
 	LERROR_SUCCESS,
@@ -55,7 +57,11 @@ public:
 	bool IsLanguageLoaded() const {return LanguageLoaded;}
 	LngErrors GetLastError() const {return LastError;}
 
+	int InternMsg(const wchar_t *Str);
+	int InternMsg(const char *Str);
+
 private:
+	std::vector<wchar_t *> InterningPool;
 	LngErrors LastError;
 	bool LanguageLoaded;
 	wchar_t **MsgAddr;
@@ -75,6 +81,7 @@ private:
 extern Language Lang;
 
 #define MSG(ID) ::Lang.GetMsg(ID)
+#define INTERN_MSG(STR) ::Lang.InternMsg(STR)
 
 class VMenu;
 

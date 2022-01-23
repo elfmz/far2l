@@ -34,5 +34,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <WinCompat.h>
+#include <KeyFileHelper.h>
+#include <string>
+#include <vector>
 
-wchar_t* WINAPI Xlat(wchar_t *Line,int StartPos,int EndPos,DWORD Flags);
+class Xlator
+{
+	std::wstring _latin, _local;
+	struct Rules : std::vector<std::pair<wchar_t, wchar_t>>
+	{
+		void InitFromValue(const std::wstring &v);
+
+	} _after_latin, _after_local, _after_other;
+
+	size_t _min_len_table{0};
+	enum {
+		UNKNOWN,
+		LATIN,
+		LOCAL,
+	} _cur_lang {UNKNOWN};
+
+	void InitFromValues(KeyFileValues &kfv);
+
+public:
+	Xlator(DWORD flags);
+	bool Valid() const { return _min_len_table != 0; }
+	wchar_t Transcode(wchar_t chr);
+};
+
+wchar_t* WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags);
+

@@ -50,87 +50,84 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "xlat.hpp"
 #include "console.hpp"
+#include "dirmix.hpp"
 
-Xlater::Xlater(DWORD flags)
+Xlator::Xlator(DWORD flags)
 {
-	_min_len_table = Min(Opt.XLat.Table[0].GetLength(), Opt.XLat.Table[1].GetLength());
+	KeyFileReadSection xlat_local(InMyConfig("xlats.ini"), Opt.XLat.XLat.GetMB());
+	if (xlat_local.SectionLoaded()) {
+		InitFromValues(xlat_local);
 
-	if (flags & XLAT_USEKEYBLAYOUTNAME)
-	{
-		fprintf(stderr, "Xlater: XLAT_USEKEYBLAYOUTNAME is not supported\n");
+	} else {
+		KeyFileReadSection xlat_global(GetHelperPathName("xlats.ini"), Opt.XLat.XLat.GetMB());
+		if (xlat_global.SectionLoaded()) {
+			InitFromValues(xlat_global);
+		}
+	}
+
+	if (flags & XLAT_USEKEYBLAYOUTNAME) {
+		fprintf(stderr, "Xlator: XLAT_USEKEYBLAYOUTNAME is not supported\n");
 	}
 }
 
-wchar_t Xlater::Transcode(wchar_t chr)
+void Xlator::Rules::InitFromValue(const std::wstring &v)
 {
-	const wchar_t chr_old = chr;
+	for (size_t i = 0; i + 1 < v.size();) {
+		emplace_back(std::make_pair(v[i], v[i + 1]));
+		for (i+= 2; i < v.size() && v[i] == ' '; ++i) {
+		}
+	}
+}
+
+void Xlator::InitFromValues(KeyFileValues &kfv)
+{
+	_latin = kfv.GetString("Latin", L"");
+	_local = kfv.GetString("Local", L"");
+
+	_after_latin.InitFromValue(kfv.GetString("AfterLatin", L""));
+	_after_local.InitFromValue(kfv.GetString("AfterLocal", L""));
+	_after_other.InitFromValue(kfv.GetString("AfterOther", L""));
+
+	_min_len_table = std::min(_local.size(), _latin.size());
+}
+
+wchar_t Xlator::Transcode(wchar_t chr)
+{
+	size_t i;
 	// chr_old - пред символ
-	bool changed = false;
 	// цикл по просмотру Chr в таблицах
 	// <= _min_len_table так как длина настоящая а начальный индекс 1
-	for (size_t i = 0; i <= _min_len_table; i++) {
+	for (i = 0; i < _min_len_table; i++) {
 		// символ из латиницы?
-		if (chr == Opt.XLat.Table[1].At(i)) {
-			chr = Opt.XLat.Table[0].At(i);
-			changed = true;
-			_cur_lang = 1; // pred - english
-			_lang_count[1]++;
-			break;
+		if (chr == _latin[i]) {
+			_cur_lang = LATIN; // pred - english
+			return _local[i];
 
-		} else if (chr == Opt.XLat.Table[0].At(i)) { // символ из русской?
-			chr = Opt.XLat.Table[1].At(i);
-			changed = true;
-			_cur_lang = 0; // pred - russian
-			_lang_count[0]++;
-			break;
+		} else if (chr == _local[i]) { // символ из русской?
+			_cur_lang = LOCAL; // pred - local
+			return _latin[i];
 		}
 	}
 
-	if (!changed) { // особые случаи...
-		_prev_lang = _cur_lang;
+	// особые случаи...
+	Rules *rules;
+	switch (_cur_lang) {
+		case LATIN:
+			rules = &_after_latin;
+			break;
 
-		if (_lang_count[0] > _lang_count[1])
-			_cur_lang = 0;
-		else if (_lang_count[0] < _lang_count[1])
-			_cur_lang = 1;
-		else
-			_cur_lang = 2;
+		case LOCAL:
+			rules = &_after_local;
+			break;
 
-		if (_prev_lang != _cur_lang)
-			_cur_lang = _prev_lang;
+		default:
+			rules = &_after_other;
+	}
 
-		for (size_t i = 0, ii = Opt.XLat.Rules[_cur_lang].GetLength(); i < ii; i+= 2) {
-			if (chr_old == Opt.XLat.Rules[_cur_lang].At(i)) {
-				chr = Opt.XLat.Rules[_cur_lang].At(i+1);
-				break;
-			}
+	for (const auto &rule : *rules) {
+		if (chr == rule.first) {
+			return rule.second;
 		}
-
-#if 0
-		// Если в таблице не найдено и таблица была Unknown...
-		if (I >= Opt.XLat.Rules[CurLang][0] && CurLang == 2)
-		{
-			// ...смотрим сначала в первой таблице...
-			for (I=1; I < Opt.XLat.Rules[0][0]; I+=2)
-				if (ChrOld == (BYTE)Opt.XLat.Rules[0][I])
-					break;
-
-			for (J=1; J < Opt.XLat.Rules[1][0]; J+=2)
-				if (ChrOld == (BYTE)Opt.XLat.Rules[1][J])
-					break;
-
-			if (I >= Opt.XLat.Rules[0][0])
-				CurLang=1;
-
-			if (J >= Opt.XLat.Rules[1][0])
-				CurLang=0;
-
-			if ()//???
-			{
-				Chr=(BYTE)Opt.XLat.Rules[CurLang][J+1];
-			}
-		}
-#endif
 	}
 
 	return chr;
@@ -148,13 +145,14 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 	EndPos = (EndPos == -1) ? Length : Min(EndPos, Length);
 	StartPos = Max(StartPos, 0);
 
-	if (StartPos > EndPos || StartPos >= Length)
+	if (StartPos > EndPos || StartPos >= Length) {
 		return Line;
+	}
 
-	if (!Opt.XLat.Table[0].GetLength() || !Opt.XLat.Table[1].GetLength())
+	Xlator xlt(Flags);
+	if (xlt.Valid()) {
 		return Line;
-
-	Xlater xlt(Flags);
+	}
 
 	for (int j=StartPos; j < EndPos; j++) {
 		Line[j] = xlt.Transcode(Line[j]);
@@ -163,7 +161,7 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 	// переключаем раскладку клавиатуры?
 	if (Flags & XLAT_SWITCHKEYBLAYOUT) {
 		//todo
-		fprintf(stderr, "Xlater: XLAT_USEKEYBLAYOUTNAME is not supported\n");
+		fprintf(stderr, "Xlator: XLAT_USEKEYBLAYOUTNAME is not supported\n");
 	}
 
 	return Line;

@@ -1834,6 +1834,17 @@ l:
 "Opciones de interfaz"
 "Налаштування інтерфейсу"
 
+MConfigInputTitle
+l:
+"Настройки ввода"
+"Input settings"
+upd:"Input settings"
+upd:"Input settings"
+upd:"Input settings"
+upd:"Input settings"
+upd:"Input settings"
+upd:"Настройки ввода"
+
 MConfigClock
 "&Часы в панелях"
 "&Clock in panels"
@@ -1863,6 +1874,36 @@ MConfigMouse
 "M&ysz"
 "Rat&ón"
 "Ми&ша"
+
+MConfigXLats
+"Правила &транслитерации"
+"&Transliteration ruleset"
+upd:"&Transliteration ruleset"
+upd:"&Transliteration ruleset"
+upd:"&Transliteration ruleset"
+upd:"&Transliteration ruleset"
+upd:"&Transliteration ruleset"
+upd:"Правила &транслитерации"
+
+MConfigXLatDialogs
+"Транслитерация &диалоговой навигации"
+"Enable &dialog navigation transliteration"
+upd:"Enable &dialog navigation transliteration"
+upd:"Enable &dialog navigation transliteration"
+upd:"Enable &dialog navigation transliteration"
+upd:"Enable &dialog navigation transliteration"
+upd:"Enable &dialog navigation transliteration"
+upd:"Транслитерация &диалоговой навигации"
+
+MConfigXLatFastFileFind
+"Транслитерация быстрого поиска &файла"
+"Enable fast &file find transliteration"
+upd:"Enable fast &file find transliteration"
+upd:"Enable fast &file find transliteration"
+upd:"Enable fast &file find transliteration"
+upd:"Enable fast &file find transliteration"
+upd:"Enable fast &file find transliteration"
+upd:"Транслитерация быстрого поиска &файла"
 
 MConfigKeyBar
 "Показывать &линейку клавиш"
@@ -1925,14 +1966,14 @@ upd:"Disable antialiasing"
 "Відключити згладжування"
 
 MConfigExclusiveKeys
-"Экслюзивная обработка нажатий, включающих:"
-"Exclusively handle hotkeys that include:"
-upd:"Exclusively handle hotkeys that include:"
-upd:"Exclusively handle hotkeys that include:"
-upd:"Exclusively handle hotkeys that include:"
-upd:"Exclusively handle hotkeys that include:"
-upd:"Exclusively handle hotkeys that include:"
-"Ексклюзивне оброблення натискань, що включають:"
+"&Экслюзивная обработка нажатий, включающих:"
+"&Exclusively handle hotkeys that include:"
+upd:"&Exclusively handle hotkeys that include:"
+upd:"&Exclusively handle hotkeys that include:"
+upd:"&Exclusively handle hotkeys that include:"
+upd:"&Exclusively handle hotkeys that include:"
+upd:"&Exclusively handle hotkeys that include:"
+"&Ексклюзивне оброблення натискань, що включають:"
 
 MConfigExclusiveCtrlLeft
 "Левый Ctrl"
@@ -12465,6 +12506,16 @@ MMenuLanguages
 "&Język"
 "&Idiomas"
 "&Мови"
+
+MMenuInput
+"Параметры &ввода"
+"Inpu&t settings"
+upd:"Inpu&t settings"
+upd:"Inpu&t settings"
+upd:"Inpu&t settings"
+upd:"Inpu&t settings"
+upd:"Inpu&t settings"
+upd:"Параметры &ввода"
 
 MMenuPluginsConfig
 "Параметры &внешних модулей"

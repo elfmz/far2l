@@ -2120,7 +2120,7 @@ int VMenu::CheckHighlights(wchar_t CheckSymbol, int StartPos)
 
 		if (Ch)
 		{
-			if (CheckSymbol == Upper(Ch) || CheckSymbol == Upper(KeyToKeyLayout(Ch)))
+			if (CheckSymbol == Upper(Ch) || (Opt.XLat.EnableForDialogs && CheckSymbol == Upper(KeyToKeyLayout(Ch))))
 				return I;
 		}
 		else if (!CheckSymbol)

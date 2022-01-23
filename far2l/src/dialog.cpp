@@ -3148,7 +3148,7 @@ int Dialog::ProcessKey(int Key)
 			if (ProcessHighlighting(Key,FocusPos,FALSE))
 				return TRUE;
 
-			return(ProcessHighlighting(Key,FocusPos,TRUE));
+			return (Opt.XLat.EnableForDialogs && ProcessHighlighting(Key,FocusPos,TRUE));
 		}
 	}
 	return FALSE;

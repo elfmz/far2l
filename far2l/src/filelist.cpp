@@ -3129,7 +3129,7 @@ bool FileList::FileInFilter(long idxItem)
 }
 
 // $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSerach переходим на директорию
-int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+bool FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
 	int DirFind = 0;
 	int Length = StrLength(Name);
@@ -3162,7 +3162,7 @@ int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 					CurFile=I;
 					CurTopFile=CurFile-(Y2-Y1)/2;
 					ShowFileList(TRUE);
-					return TRUE;
+					return true;
 				}
 			}
 		}
@@ -3179,13 +3179,13 @@ int FileList::FindPartName(const wchar_t *Name,int Next,int Direct,int ExcludeSe
 					CurFile=I;
 					CurTopFile=CurFile-(Y2-Y1)/2;
 					ShowFileList(TRUE);
-					return TRUE;
+					return true;
 				}
 			}
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 

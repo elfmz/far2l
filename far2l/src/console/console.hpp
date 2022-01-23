@@ -64,8 +64,6 @@ public:
 	bool GetTitle(FARString &strTitle);
 	bool SetTitle(LPCWSTR Title);
 
-	bool GetKeyboardLayoutName(FARString &strName);
-
 	UINT GetInputCodepage();
 	bool SetInputCodepage(UINT Codepage);
 

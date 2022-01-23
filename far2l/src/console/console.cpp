@@ -170,26 +170,6 @@ bool console::SetTitle(LPCWSTR Title)
 	return WINPORT(SetConsoleTitle)(Title)!=FALSE;
 }
 
-bool console::GetKeyboardLayoutName(FARString &strName)
-{
-	bool Result=false;
-	strName.Clear();
-/*	if (ifn.pfnGetConsoleKeyboardLayoutName)
-	{
-		wchar_t *p = strName.GetBuffer(KL_NAMELENGTH+1);
-		if (p && ifn.pfnGetConsoleKeyboardLayoutName(p))
-		{
-			Result=true;
-		}
-		strName.ReleaseBuffer();
-	}
-	else*/
-	{
-		WINPORT(SetLastError)(ERROR_CALL_NOT_IMPLEMENTED);
-	}
-	return Result;
-}
-
 UINT console::GetInputCodepage()
 {
 	return CP_ACP;//GetConsoleCP();

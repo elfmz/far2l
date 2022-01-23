@@ -50,179 +50,118 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "xlat.hpp"
 #include "console.hpp"
+#include "dirmix.hpp"
+
+Xlator::Xlator(DWORD flags)
+{
+	KeyFileReadSection xlat_local(InMyConfig("xlats.ini"), Opt.XLat.XLat.GetMB());
+	if (xlat_local.SectionLoaded()) {
+		InitFromValues(xlat_local);
+
+	} else {
+		KeyFileReadSection xlat_global(GetHelperPathName("xlats.ini"), Opt.XLat.XLat.GetMB());
+		if (xlat_global.SectionLoaded()) {
+			InitFromValues(xlat_global);
+		}
+	}
+
+	if (flags & XLAT_USEKEYBLAYOUTNAME) {
+		fprintf(stderr, "Xlator: XLAT_USEKEYBLAYOUTNAME is not supported\n");
+	}
+}
+
+void Xlator::Rules::InitFromValue(const std::wstring &v)
+{
+	for (size_t i = 0; i + 1 < v.size();) {
+		emplace_back(std::make_pair(v[i], v[i + 1]));
+		for (i+= 2; i < v.size() && v[i] == ' '; ++i) {
+		}
+	}
+}
+
+void Xlator::InitFromValues(KeyFileValues &kfv)
+{
+	_latin = kfv.GetString("Latin", L"");
+	_local = kfv.GetString("Local", L"");
+
+	_after_latin.InitFromValue(kfv.GetString("AfterLatin", L""));
+	_after_local.InitFromValue(kfv.GetString("AfterLocal", L""));
+	_after_other.InitFromValue(kfv.GetString("AfterOther", L""));
+
+	_min_len_table = std::min(_local.size(), _latin.size());
+}
+
+wchar_t Xlator::Transcode(wchar_t chr)
+{
+	size_t i;
+	// chr_old - пред символ
+	// цикл по просмотру Chr в таблицах
+	// <= _min_len_table так как длина настоящая а начальный индекс 1
+	for (i = 0; i < _min_len_table; i++) {
+		// символ из латиницы?
+		if (chr == _latin[i]) {
+			_cur_lang = LATIN; // pred - english
+			return _local[i];
+
+		} else if (chr == _local[i]) { // символ из русской?
+			_cur_lang = LOCAL; // pred - local
+			return _latin[i];
+		}
+	}
+
+	// особые случаи...
+	Rules *rules;
+	switch (_cur_lang) {
+		case LATIN:
+			rules = &_after_latin;
+			break;
+
+		case LOCAL:
+			rules = &_after_local;
+			break;
+
+		default:
+			rules = &_after_other;
+	}
+
+	for (const auto &rule : *rules) {
+		if (chr == rule.first) {
+			return rule.second;
+		}
+	}
+
+	return chr;
+}
 
 wchar_t* WINAPI Xlat(wchar_t *Line,
                      int StartPos,
                      int EndPos,
                      DWORD Flags)
 {
-	wchar_t Chr,ChrOld;
-	int PreLang=2,CurLang=2; // unknown
-	int LangCount[2]={0,0};
-	int IsChange=0;
-
 	if (!Line || !*Line)
 		return nullptr;
 
-	int Length=StrLength(Line);
-	EndPos=Min(EndPos,Length);
-	StartPos=Max(StartPos,0);
+	int Length = StrLength(Line);
+	EndPos = (EndPos == -1) ? Length : Min(EndPos, Length);
+	StartPos = Max(StartPos, 0);
 
-	if (StartPos > EndPos || StartPos >= Length)
+	if (StartPos > EndPos || StartPos >= Length) {
 		return Line;
-
-	if (!Opt.XLat.Table[0].GetLength() || !Opt.XLat.Table[1].GetLength())
-		return Line;
-
-	size_t MinLenTable=Min(Opt.XLat.Table[0].GetLength(),Opt.XLat.Table[1].GetLength());
-	FARString strLayoutName;
-	int ProcessLayoutName=FALSE;
-
-	if ((Flags & XLAT_USEKEYBLAYOUTNAME) && Console.GetKeyboardLayoutName(strLayoutName))
-	{
-		/*
-			Уточнение по поводу этого куска, чтобы потом не вспоминать ;-)
-			Было сделано в 1.7 build 1585
-
-		    Делаем именно то, что заказывали!
-
-		    Т.е. если сейчас раскладка стоит английская, а мы шпарим по русски, то
-		    если раньше 'б' и 'ю' (в результате малой статистики) конвертировались
-		    как бог на душу положит... то теперь так, как должно быть.
-
-		    Для проверки нужно у HKEY_CURRENT_USER\Software\Far2\XLat\Flags выставить
-		    второй бит (считаем от нуля; 0x4) и дописать две переменных:
-
-		    REGEDIT4
-
-		    [HKEY_CURRENT_USER\Software\Far\XLat]
-		    ;
-		    ; ONLY >= NT4
-		    ;
-		    ; набирали по русски в английской раскладке
-		    ; `ё~Ё[х{Х]ъ}Ъ;Ж:Ж'э"Э,б<Б.ю>Ю/.?,
-		    "00000409"="`ё~Ё[х{Х]ъ}Ъ;Ж:Ж'э\"Э,б<Б.ю>Ю/.?,"
-
-		    ; набирали по английски в русской раскладке
-		    ; ё`Ё~х[Х{ъ]Ъ}Ж;Ж:э'Э"б,Б<ю.Ю>./,?
-		    "00000419"="ё`Ё~х[Х{ъ]Ъ}Ж;Ж:э'Э\"б,Б<ю.Ю>./,?"
-
-		    Здесь есть бага (хотя, багой и не назовешь...) -
-		      конвертнули,
-		      переключилась раскладка,
-		      руками переключили раскладку,
-		      снова конвертим и...
-		*/
-		Opt.XLat.Rules[2] = ConfigReader("XLat").GetString(strLayoutName.GetMB(), L"");
-
-		if (!Opt.XLat.Rules[2].IsEmpty())
-			ProcessLayoutName=TRUE;
 	}
 
-	// цикл по всей строке
-	for (int j=StartPos; j < EndPos; j++)
-	{
-		ChrOld=Chr=Line[j];
-		// ChrOld - пред символ
-		IsChange=0;
+	Xlator xlt(Flags);
+	if (xlt.Valid()) {
+		return Line;
+	}
 
-		// цикл по просмотру Chr в таблицах
-		// <=MinLenTable так как длина настоящая а начальный индекс 1
-		for (size_t i=0; i <= MinLenTable; i++)
-		{
-			// символ из латиницы?
-			if (Chr == Opt.XLat.Table[1].At(i))
-			{
-				Chr=Opt.XLat.Table[0].At(i);
-				IsChange=1;
-				CurLang=1; // pred - english
-				LangCount[1]++;
-				break;
-			}
-			// символ из русской?
-			else if (Chr == Opt.XLat.Table[0].At(i))
-			{
-				Chr=Opt.XLat.Table[1].At(i);
-				CurLang=0; // pred - russian
-				LangCount[0]++;
-				IsChange=1;
-				break;
-			}
-		}
-
-		if (!IsChange) // особые случаи...
-		{
-			if (ProcessLayoutName)
-			{
-				for (size_t i=0; i < Opt.XLat.Rules[2].GetLength(); i+=2)
-				{
-					if (Chr == Opt.XLat.Rules[2].At(i))
-					{
-						Chr=Opt.XLat.Rules[2].At(i+1);
-						break;
-					}
-				}
-			}
-			else
-			{
-				PreLang=CurLang;
-
-				if (LangCount[0] > LangCount[1])
-					CurLang=0;
-				else if (LangCount[0] < LangCount[1])
-					CurLang=1;
-				else
-					CurLang=2;
-
-				if (PreLang != CurLang)
-					CurLang=PreLang;
-
-				for (size_t i=0; i < Opt.XLat.Rules[CurLang].GetLength(); i+=2)
-				{
-					if (ChrOld == Opt.XLat.Rules[CurLang].At(i))
-					{
-						Chr=Opt.XLat.Rules[CurLang].At(i+1);
-						break;
-					}
-				}
-
-#if 0
-
-				// Если в таблице не найдено и таблица была Unknown...
-				if (I >= Opt.XLat.Rules[CurLang][0] && CurLang == 2)
-				{
-					// ...смотрим сначала в первой таблице...
-					for (I=1; I < Opt.XLat.Rules[0][0]; I+=2)
-						if (ChrOld == (BYTE)Opt.XLat.Rules[0][I])
-							break;
-
-					for (J=1; J < Opt.XLat.Rules[1][0]; J+=2)
-						if (ChrOld == (BYTE)Opt.XLat.Rules[1][J])
-							break;
-
-					if (I >= Opt.XLat.Rules[0][0])
-						CurLang=1;
-
-					if (J >= Opt.XLat.Rules[1][0])
-						CurLang=0;
-
-					if ()//???
-					{
-						Chr=(BYTE)Opt.XLat.Rules[CurLang][J+1];
-					}
-				}
-
-#endif
-			}
-		}
-
-		Line[j]=Chr;
+	for (int j=StartPos; j < EndPos; j++) {
+		Line[j] = xlt.Transcode(Line[j]);
 	}
 
 	// переключаем раскладку клавиатуры?
-	if (Flags & XLAT_SWITCHKEYBLAYOUT)
-	{
+	if (Flags & XLAT_SWITCHKEYBLAYOUT) {
 		//todo
+		fprintf(stderr, "Xlator: XLAT_USEKEYBLAYOUTNAME is not supported\n");
 	}
 
 	return Line;

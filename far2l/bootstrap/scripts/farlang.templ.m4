@@ -1843,7 +1843,7 @@ upd:"Input settings"
 upd:"Input settings"
 upd:"Input settings"
 upd:"Input settings"
-upd:"Настройки ввода"
+"Налаштування введення"
 
 MConfigClock
 "&Часы в панелях"
@@ -1883,7 +1883,7 @@ upd:"&Transliteration ruleset:"
 upd:"&Transliteration ruleset:"
 upd:"&Transliteration ruleset:"
 upd:"&Transliteration ruleset:"
-upd:"Правила &транслитерации:"
+"Правила &транслітерації:"
 
 MConfigXLatDialogs
 "Транслитерация &диалоговой навигации"
@@ -1893,7 +1893,7 @@ upd:"Enable &dialog navigation transliteration"
 upd:"Enable &dialog navigation transliteration"
 upd:"Enable &dialog navigation transliteration"
 upd:"Enable &dialog navigation transliteration"
-upd:"Транслитерация &диалоговой навигации"
+upd:"Транслітерація &діалогової навігації"
 
 MConfigXLatFastFileFind
 "Транслитерация быстрого поиска &файла"
@@ -1903,7 +1903,7 @@ upd:"Enable fast &file find transliteration"
 upd:"Enable fast &file find transliteration"
 upd:"Enable fast &file find transliteration"
 upd:"Enable fast &file find transliteration"
-upd:"Транслитерация быстрого поиска &файла"
+upd:"Транслітерація швидкого пошуку &файлу"
 
 MConfigKeyBar
 "Показывать &линейку клавиш"

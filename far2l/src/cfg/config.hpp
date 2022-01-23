@@ -157,20 +157,15 @@ struct DizOptions
 
 struct CodeXLAT
 {
-	DWORD Flags;       // дополнительные флаги
+	int EnableForFastFileFind = 1;
+	int EnableForDialogs = 1;
+	DWORD Flags = XLAT_SWITCHKEYBLAYOUT;
 
 	/* $ 25.11.2000 IS
 	   Разграничитель слов из реестра для функции Xlat
 	*/
 	FARString strWordDivForXlat;
-	HKL Layouts[10];
-	int CurrentLayout;
-
-	FARString Table[2]; // [0] non-english буквы, [1] english буквы
-	FARString Rules[3]; // правила:
-	// [0] "если предыдущий символ латинский"
-	// [1] "если предыдущий символ нелатинский символ"
-	// [2] "если предыдущий символ не рус/lat"
+	FARString XLat;
 };
 
 struct NotificationsOptions
@@ -594,6 +589,7 @@ extern Options Opt;
 
 void SystemSettings();
 void PanelSettings();
+void InputSettings();
 void InterfaceSettings();
 void DialogSettings();
 void VMenuSettings();

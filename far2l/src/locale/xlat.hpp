@@ -34,15 +34,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <WinCompat.h>
+#include <KeyFileHelper.h>
+#include <string>
+#include <vector>
 
-class Xlater
+class Xlator
 {
-	size_t _min_len_table;
-	int _prev_lang {2}, _cur_lang {2}; // unknown
-	int _lang_count[2] {0, 0};
+	std::wstring _latin, _local;
+	struct Rules : std::vector<std::pair<wchar_t, wchar_t>>
+	{
+		void InitFromValue(const std::wstring &v);
+
+	} _after_latin, _after_local, _after_other;
+
+	size_t _min_len_table{0};
+	enum {
+		UNKNOWN,
+		LATIN,
+		LOCAL,
+	} _cur_lang {UNKNOWN};
+
+	void InitFromValues(KeyFileValues &kfv);
 
 public:
-	Xlater(DWORD flags);
+	Xlator(DWORD flags);
+	bool Valid() const { return _min_len_table != 0; }
 	wchar_t Transcode(wchar_t chr);
 };
 

@@ -1876,14 +1876,14 @@ MConfigMouse
 "Ми&ша"
 
 MConfigXLats
-"Правила &транслитерации"
-"&Transliteration ruleset"
-upd:"&Transliteration ruleset"
-upd:"&Transliteration ruleset"
-upd:"&Transliteration ruleset"
-upd:"&Transliteration ruleset"
-upd:"&Transliteration ruleset"
-upd:"Правила &транслитерации"
+"Правила &транслитерации:"
+"&Transliteration ruleset:"
+upd:"&Transliteration ruleset:"
+upd:"&Transliteration ruleset:"
+upd:"&Transliteration ruleset:"
+upd:"&Transliteration ruleset:"
+upd:"&Transliteration ruleset:"
+upd:"Правила &транслитерации:"
 
 MConfigXLatDialogs
 "Транслитерация &диалоговой навигации"

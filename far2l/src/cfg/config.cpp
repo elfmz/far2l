@@ -282,14 +282,14 @@ void InputSettings()
 
 	DialogBuilder Builder(MConfigInputTitle, L"InputSettings");
 	Builder.AddCheckbox(MConfigMouse, &Opt.Mouse);
+
 	Builder.AddText(MConfigXLats);
-
-	Builder.AddCheckbox(MConfigXLatFastFileFind, &Opt.XLat.EnableForFastFileFind);
-	Builder.AddCheckbox(MConfigXLatDialogs, &Opt.XLat.EnableForDialogs);
-
 	DialogItemEx *Item = Builder.AddComboBox(&SelectedXLat, 40,
 		XLatItems.data(), XLatItems.size(), DIF_DROPDOWNLIST|DIF_LISTAUTOHIGHLIGHT|DIF_LISTWRAPMODE);
 	Item->Indent(4);
+
+	Builder.AddCheckbox(MConfigXLatFastFileFind, &Opt.XLat.EnableForFastFileFind);
+	Builder.AddCheckbox(MConfigXLatDialogs, &Opt.XLat.EnableForDialogs);
 
 	if (supported_tweaks & TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS) {
 		Builder.AddText(MConfigExclusiveKeys);

@@ -526,6 +526,25 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		key_code-= 'a' - 'A';
 	}
 #endif
+
+    // wx 3.0 do not send keycodes for Alt+NonLatinLetters,
+    // but such keycodes can be guessed from raw keycodes.
+    // conditions:
+    if (
+        // Alt is hold,
+        event.AltDown() &&
+        // and keycode is zero,
+        (!event.GetKeyCode()) &&
+        // but we have unicode char for that key,
+        event.GetUnicodeKey() &&
+        // and raw key code match Alt+NonLatinLetter
+        // (such raw key codes are between C00 and CFF)
+        (event.GetRawKeyCode()>=1536) &&
+        (event.GetRawKeyCode()<=1791)
+    ) {
+        key_code = event.GetRawKeyCode()-1536;
+    }
+
 	EventType = KEY_EVENT;
 	Event.KeyEvent.bKeyDown = KeyDown;
 	Event.KeyEvent.wRepeatCount = 1;

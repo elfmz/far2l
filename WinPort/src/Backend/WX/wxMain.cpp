@@ -1135,9 +1135,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 		&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
 	);
-#else
-	const bool alt_nonlatin_workaround = false;
-#endif
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
 	if (alt_nonlatin_workaround) {
@@ -1147,6 +1144,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		alt_keyboard_events_propagate = true;
 		ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
 	}
+#endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
@@ -1156,9 +1154,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 	} 
 
+#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
 	if (alt_nonlatin_workaround) {
 		OnChar(event);
 	}
+#endif
 
 	event.Skip();
 }
@@ -1205,9 +1205,6 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 			&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
 		);
-#else
-		const bool alt_nonlatin_workaround = false;
-#endif
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
 		if (alt_nonlatin_workaround) {
@@ -1217,6 +1214,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			alt_keyboard_events_propagate = true;
 			ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
 		}
+#endif
 
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
 		if (!was_pressed) {

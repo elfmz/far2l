@@ -527,6 +527,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	}
 #endif
 
+#if wxCHECK_VERSION(3, 0, 4)
     // wx 3.0 do not send keycodes for Alt+NonLatinLetters,
     // but such keycodes can be guessed from raw keycodes.
     // conditions:
@@ -543,7 +544,10 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
         (event.GetRawKeyCode()<=1791)
     ) {
         key_code = event.GetRawKeyCode()-1536;
+
+        // alt_nonlatin_workaround likely not needed any more
     }
+#endif
 
 	EventType = KEY_EVENT;
 	Event.KeyEvent.bKeyDown = KeyDown;

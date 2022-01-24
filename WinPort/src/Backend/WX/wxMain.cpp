@@ -482,7 +482,10 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+#if !wxCHECK_VERSION(3, 0, 4)
+        // in wx 3.0.4 it generates unneeded duplicated input events
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
+#endif
 
 	} else {
 		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());

@@ -1137,7 +1137,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
 		&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 		&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
-		&& !g_wayland                    // not tested under Wayland
 	);
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
@@ -1208,7 +1207,6 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
 			&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 			&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
-			&& !g_wayland                    // not tested under Wayland
 		);
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress

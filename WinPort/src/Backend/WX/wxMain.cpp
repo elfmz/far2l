@@ -1126,7 +1126,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
     NB! Keys like "-" or "=" can also be alphabetical in layouts like Armenian.
 
 */
-#if defined(__WXGTK__) && !defined(__APPLE__) // not tested on MACs
+#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
 	const int vkc_from_gtk_hw_keycode =
         GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
 	const bool alt_nonlatin_workaround = (

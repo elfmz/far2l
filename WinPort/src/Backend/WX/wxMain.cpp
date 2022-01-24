@@ -1195,14 +1195,28 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 		const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 			& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
-		const bool alt_nonlatin_workaround = (
-			(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
-			&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
-		// for non-latin unicode keycode pressed with Alt key together
-		// simulate some dummy key code for far2l to "see" keypress
-		if (alt_nonlatin_workaround) {
-			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
-		}
+
+#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
+    	const int vkc_from_gtk_hw_keycode =
+            GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
+    	const bool alt_nonlatin_workaround = (
+    		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
+    		&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
+    		&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
+    		&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
+    	);
+#else
+    	const bool alt_nonlatin_workaround = false;
+#endif
+    	// for non-latin unicode keycode pressed with Alt key together
+    	// simulate some dummy key code for far2l to "see" keypress
+    	if (alt_nonlatin_workaround) {
+            // wow, we have Alt+NonLatinLetter keyboard events!
+            // no need for accelerators hack anymore
+
+            alt_keyboard_events_propagate = true;
+    		ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
+    	}
 
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
 		if (!was_pressed) {

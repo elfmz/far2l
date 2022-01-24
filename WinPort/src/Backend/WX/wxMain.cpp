@@ -991,6 +991,56 @@ static bool IsForcedCharTranslation(int code)
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
 }
 
+static int GTKHardwareKeyCodeToVirtualKeyCode(int code)
+{
+	switch (code) {
+		case 20: return VK_OEM_MINUS;	// -
+		case 21: return VK_OEM_PLUS;	// =
+		//   22 is Backspace
+		//   23 is Tab
+		case 24: return 81;				// q
+		case 25: return 87;				// w
+		case 26: return 69;				// e
+		case 27: return 82;				// r
+		case 28: return 84;				// t
+		case 29: return 89;				// y
+		case 30: return 85;				// u
+		case 31: return 73;				// i
+		case 32: return 79;				// o
+		case 33: return 80;				// p
+		case 34: return VK_OEM_4;		// [
+		case 35: return VK_OEM_6;		// ]
+		//   36 is Enter
+		//   37 is RCtrl
+		case 38: return 65;				// a
+		case 39: return 83;				// s
+		case 40: return 68;				// d
+		case 41: return 70;				// f
+		case 42: return 71;				// g
+		case 43: return 72;				// h
+		case 44: return 74;				// j
+		case 45: return 75;				// k
+		case 46: return 76;				// l
+		case 47: return VK_OEM_1;		// ;
+		case 48: return VK_OEM_7;		// '
+		case 49: return VK_OEM_3;		// `
+		//   50 is LShift
+		case 51: return VK_OEM_5;		/* \ */
+		case 52: return 90;				// z
+		case 53: return 88;				// x
+		case 54: return 67;				// c
+		case 55: return 86;				// v
+		case 56: return 66;				// b
+		case 57: return 78;				// n
+		case 58: return 77;				// m
+		case 59: return VK_OEM_COMMA;	// ,
+		case 60: return VK_OEM_PERIOD;	// .
+		case 61: return VK_OEM_2;		// /
+	}
+
+	return 0; // not applicable
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
 	DWORD now = WINPORT(GetTickCount)();
@@ -1053,9 +1103,34 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
+/*
+    Workaround for Alt+NonLatinLetters
+
+    In some configurations WX do not send KeyDown/KeyUp for Alt+NonLatinLetters,
+    so we need to workaround this using onAccelerator
+
+    In other configurations WX do send KeyDown/KeyUp for Alt+NonLatinLetters,
+    but with empty key code. To deal with it, we detect such situations,
+    and add a dummy key code for far2l's FastFind functionality to work.
+
+    GetRawKeyFlags() returns hardware keycode under GTK.
+    Hardware keycodes are keyboard layout independent.
+    We use them to determine if pressed key is really character key or not,
+    and to get real keycode for key, see GTKHardwareKeyCodeToVirtualKeyCode().
+    NB! Keys like "-" or "=" can also be alphabetical in layouts like Armenian.
+*/
+#if defined(__WXGTK__) && !defined(__APPLE__) // not tested on MACs
+	const int vkc_from_gtk_hw_keycode =
+        GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
 	const bool alt_nonlatin_workaround = (
 		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
-		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
+		&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
+		&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
+		&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
+	);
+#else
+	const bool alt_nonlatin_workaround = false;
+#endif
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
 	if (alt_nonlatin_workaround) {
@@ -1063,7 +1138,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
         // no need for accelerators hack anymore
 
         alt_keyboard_events_propagate = true;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+		ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
 	}
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)

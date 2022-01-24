@@ -47,6 +47,8 @@ enum
 
 bool WinPortClipboard_IsBusy();
 
+bool alt_keyboard_events_propagate = false;
+
 
 static void NormalizeArea(SMALL_RECT &area)
 {
@@ -481,11 +483,10 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
 		
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
-		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
-#if !wxCHECK_VERSION(3, 0, 4)
-        // in wx 3.0.4 it generates unneeded duplicated input events
-		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
-#endif
+		if (!alt_keyboard_events_propagate) {
+			ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+			ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
+		}
 
 	} else {
 		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());
@@ -1052,16 +1053,18 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
-#if wxCHECK_VERSION(3, 1, 3)
 	const bool alt_nonlatin_workaround = (
 		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
 		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
 	if (alt_nonlatin_workaround) {
+        // wow, we have Alt+NonLatinLetter keyboard events!
+        // no need for accelerators hack anymore
+
+        alt_keyboard_events_propagate = true;
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
 	}
-#endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
@@ -1071,11 +1074,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 	} 
 
-#if wxCHECK_VERSION(3, 1, 3)
 	if (alt_nonlatin_workaround) {
 		OnChar(event);
 	}
-#endif
 
 	event.Skip();
 }
@@ -1109,7 +1110,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 #endif
 	{
 		wx2INPUT_RECORD ir(FALSE, event, _key_tracker);
-#if wxCHECK_VERSION(3, 1, 3)
+
 		const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 			& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
 		const bool alt_nonlatin_workaround = (
@@ -1120,7 +1121,6 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		if (alt_nonlatin_workaround) {
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
 		}
-#endif
 
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
 		if (!was_pressed) {

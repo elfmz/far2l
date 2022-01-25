@@ -519,7 +519,7 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
 		
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
-		if (non_latin_modifier_events_supported) {
+		if (!non_latin_modifier_events_supported) {
 			ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
 			ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
 		}

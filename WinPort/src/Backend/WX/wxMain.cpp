@@ -1087,10 +1087,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
+	const bool alt_nonlatin_workaround = (
+		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
+		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 	if (non_latin_modifier_events_supported) {
-		const bool alt_nonlatin_workaround = (
-			(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
-			&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
 		if (alt_nonlatin_workaround) {

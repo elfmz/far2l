@@ -142,13 +142,7 @@ bool isNonLatinModifierEventSupported() {
 		int exit_code;
 		FILE *f;
 
-		// Mint 20.*
-		f = popen("lsb_release -d | grep \"Linux Mint 20\" > /dev/null", "r");
-		exit_code = pclose(f) / 256;
-		if (!exit_code) { return true; }
-
-		// Ubuntu 20.04.*
-		f = popen("lsb_release -d | grep \"Ubuntu 20.04\" > /dev/null", "r");
+		f = popen("cat /etc/lsb-release | grep \"Ubuntu 20.04\\|Mint 20\" > /dev/null", "r");
 		exit_code = pclose(f) / 256;
 		if (!exit_code) { return true; }
 	}

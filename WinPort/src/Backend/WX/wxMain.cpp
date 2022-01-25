@@ -121,9 +121,11 @@ static void DetectHostAbilities()
 // see wxWidgets/src/gtk/window.cpp changes log between versions
 bool isNonLatinModifierEventSupported() {
 
-	static int vmaj = wxGetLibraryVersionInfo().GetMajor();
-	static int vmin = wxGetLibraryVersionInfo().GetMinor();
-	static int vmic = wxGetLibraryVersionInfo().GetMicro();
+	wxVersionInfo wxvi = wxGetLibraryVersionInfo();
+
+	static int vmaj = wxvi.GetMajor();
+	static int vmin = wxvi.GetMinor();
+	static int vmic = wxvi.GetMicro();
 
 	// supported in 3.1.3+
 	if (vmaj > 3) { return true; }
@@ -141,12 +143,12 @@ bool isNonLatinModifierEventSupported() {
 		FILE *f;
 
 		// Mint 20.*
-		f = popen("lsb_release -a | grep \"Linux Mint 20\" > /dev/null", "r");
+		f = popen("lsb_release -d | grep \"Linux Mint 20\" > /dev/null", "r");
 		exit_code = pclose(f) / 256;
 		if (!exit_code) { return true; }
 
 		// Ubuntu 20.04.*
-		f = popen("lsb_release -a | grep \"Ubuntu 20.04\" > /dev/null", "r");
+		f = popen("lsb_release -d | grep \"Ubuntu 20.04\" > /dev/null", "r");
 		exit_code = pclose(f) / 256;
 		if (!exit_code) { return true; }
 	}

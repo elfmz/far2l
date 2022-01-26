@@ -417,14 +417,13 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
-#if !wxCHECK_VERSION(3, 1, 3)
 		menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Alt + %c\tAlt+%c", c, c);
 			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Alt + ?"));
-#endif
+
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition

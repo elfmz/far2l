@@ -449,14 +449,14 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
-#if !wxCHECK_VERSION(3, 1, 3)
-		menu = new wxMenu;
-		for (char c = 'A'; c <= 'Z'; ++c) {
-			sprintf(str, "Alt + %c\tAlt+%c", c, c);
-			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
+		if (!non_latin_modifier_events_supported) {
+			menu = new wxMenu;
+			for (char c = 'A'; c <= 'Z'; ++c) {
+				sprintf(str, "Alt + %c\tAlt+%c", c, c);
+				menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
+			}
+			_menu_bar->Append(menu, _T("Alt + ?"));
 		}
-		_menu_bar->Append(menu, _T("Alt + ?"));
-#endif
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
@@ -515,10 +515,8 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
 		
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
-		if (!non_latin_modifier_events_supported) {
-			ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
-			ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
-		}
+		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
 
 	} else {
 		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());

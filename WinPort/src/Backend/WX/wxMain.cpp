@@ -1147,6 +1147,13 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
+	if (nonlatin_workaround && event.HasModifiers()) {
+		// no OnChar for such cases, so enqueue here
+		g_winport_con_in->Enqueue(&ir, 1);
+		_last_keydown_enqueued = true;
+	} else
+#endif
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
 	  || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1154,16 +1161,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
-
-#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
-	if (nonlatin_workaround) {
-		ir.Event.KeyEvent.bKeyDown = TRUE;
-		g_winport_con_in->Enqueue(&ir, 1);
-		
-		ir.Event.KeyEvent.bKeyDown = FALSE;
-		g_winport_con_in->Enqueue(&ir, 1);
-	}
-#endif
 
 	event.Skip();
 }

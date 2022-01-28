@@ -36,6 +36,11 @@
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
+#if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
+    // wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
+    #define WX_ALT_NONLATIN
+#endif
+
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
 bool g_broadway = false, g_wayland = false, g_remote = false;
@@ -415,7 +420,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
-#if !wxCHECK_VERSION(3, 1, 3)
+#ifndef WX_ALT_NONLATIN
 		menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Alt + %c\tAlt+%c", c, c);
@@ -1049,7 +1054,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
-#if wxCHECK_VERSION(3, 1, 3)
+#ifdef WX_ALT_NONLATIN
 	const bool alt_nonlatin_workaround = (
 		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
 		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
@@ -1068,7 +1073,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 	} 
 
-#if wxCHECK_VERSION(3, 1, 3)
+#ifdef WX_ALT_NONLATIN
 	if (alt_nonlatin_workaround) {
 		OnChar(event);
 	}
@@ -1106,7 +1111,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 #endif
 	{
 		wx2INPUT_RECORD ir(FALSE, event, _key_tracker);
-#if wxCHECK_VERSION(3, 1, 3)
+#ifdef WX_ALT_NONLATIN
 		const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 			& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
 		const bool alt_nonlatin_workaround = (

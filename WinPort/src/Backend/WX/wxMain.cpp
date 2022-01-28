@@ -47,7 +47,7 @@ enum
 
 bool WinPortClipboard_IsBusy();
 
-bool alt_keyboard_events_propagate = false;
+bool non_latin_keyboard_events_propagate = false;
 
 
 static void NormalizeArea(SMALL_RECT &area)
@@ -469,6 +469,8 @@ WinPortFrame::~WinPortFrame()
 	
 void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 {
+	if (non_latin_keyboard_events_propagate) { return; }
+
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.bKeyDown = TRUE;
@@ -482,10 +484,8 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
 		
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
-		if (!alt_keyboard_events_propagate) {
-			ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
-			ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
-		}
+		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
+		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
 
 	} else {
 		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());
@@ -1112,18 +1112,18 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 
 /*
-    Workaround for Alt+NonLatinLetters
+    Workaround for NonLatinLetters
 
-    In some configurations WX do not send KeyDown/KeyUp for Alt+NonLatinLetters,
+    In some configurations WX do not send KeyDown/KeyUp for NonLatinLetters,
     so we need to workaround this using onAccelerator
 
-    In other configurations WX do send KeyDown/KeyUp for Alt+NonLatinLetters,
+    In other configurations WX do send KeyDown/KeyUp for NonLatinLetters,
     but with empty key code. To deal with it, we detect such situations,
     and guess virtual key code by hardware key code
     (GetRawKeyFlags() returns hardware keycode under GTK).
 
     Also hardware keycodes allow us to determine if it is character key or not
-    to apply workaround only for Alt+character key combinations.
+    to apply workaround only for character keys.
 
     NB! Keys like "-" or "=" can also be alphabetical in layouts like Armenian.
 
@@ -1131,19 +1131,18 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
 	const int vkc_from_gtk_hw_keycode =
 		GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
-	const bool alt_nonlatin_workaround = (
-		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
+	const bool nonlatin_workaround = (true
 		&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
 		&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 		&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
 	);
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
-	if (alt_nonlatin_workaround) {
+	if (nonlatin_workaround) {
 		// wow, we have Alt+NonLatinLetter keyboard events!
 		// no need for accelerators hack anymore
 
-		alt_keyboard_events_propagate = true;
+		non_latin_keyboard_events_propagate = true;
 		ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
 	}
 #endif
@@ -1157,8 +1156,12 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	} 
 
 #if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
-	if (alt_nonlatin_workaround) {
-		OnChar(event);
+	if (nonlatin_workaround) {
+		ir.Event.KeyEvent.bKeyDown = TRUE;
+		g_winport_con_in->Enqueue(&ir, 1);
+		
+		ir.Event.KeyEvent.bKeyDown = FALSE;
+		g_winport_con_in->Enqueue(&ir, 1);
 	}
 #endif
 
@@ -1195,25 +1198,21 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	{
 		wx2INPUT_RECORD ir(FALSE, event, _key_tracker);
 
-		const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
-			& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
-
 #if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
 		const int vkc_from_gtk_hw_keycode =
 			GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
-		const bool alt_nonlatin_workaround = (
-			(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
+		const bool nonlatin_workaround = (true
 			&& event.GetUnicodeKey() != 0    // key has unicode value => possibly character key
 			&& vkc_from_gtk_hw_keycode       // but let's also check by hw keycode to be sure
 			&& event.GetKeyCode() == 0       // and no keycode - so workaround is required
 		);
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
-		if (alt_nonlatin_workaround) {
+		if (nonlatin_workaround) {
 			// wow, we have Alt+NonLatinLetter keyboard events!
 			// no need for accelerators hack anymore
 
-			alt_keyboard_events_propagate = true;
+			non_latin_keyboard_events_propagate = true;
 			ir.Event.KeyEvent.wVirtualKeyCode = vkc_from_gtk_hw_keycode;
 		}
 #endif

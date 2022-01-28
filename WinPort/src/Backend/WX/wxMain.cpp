@@ -121,6 +121,11 @@ static void DetectHostAbilities()
 // see wxWidgets/src/gtk/window.cpp changes log between versions
 bool isNonLatinModifierEventSupported() {
 
+#if !defined(__WXGTK__)
+	// only GTK provides RawKeyFlags needed for correct non latin events processing
+	return false;
+#endif
+
 	wxVersionInfo wxvi = wxGetLibraryVersionInfo();
 
 	static int vmaj = wxvi.GetMajor();
@@ -1147,20 +1152,14 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 	if (nonlatin_workaround) {
 		ir.Event.KeyEvent.wVirtualKeyCode =
-#if defined(__WXGTK__)
 			GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
-#else
-			VK_OEM_MINUS;
-#endif
 	}
 
-#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
 	if (nonlatin_workaround && event.HasModifiers()) {
 		// no OnChar for such cases, so enqueue here
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} else
-#endif
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
 	  || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1205,11 +1204,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		const bool nonlatin_workaround = (non_latin_modifier_events_supported &&
 			event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
 		if (nonlatin_workaround) {
-#if defined(__WXGTK__)
 			GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
-#else
-			VK_OEM_MINUS;
-#endif
 		}
 
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns

@@ -449,14 +449,13 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		}
 		_menu_bar->Append(menu, _T("Ctrl + Shift + ?"));
 
-		if (!non_latin_modifier_events_supported) {
-			menu = new wxMenu;
-			for (char c = 'A'; c <= 'Z'; ++c) {
-				sprintf(str, "Alt + %c\tAlt+%c", c, c);
-				menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
-			}
-			_menu_bar->Append(menu, _T("Alt + ?"));
+		menu = new wxMenu;
+		for (char c = 'A'; c <= 'Z'; ++c) {
+			sprintf(str, "Alt + %c\tAlt+%c", c, c);
+			menu->Append(ID_ALT_BASE + (c - 'A'), wxString(str));
 		}
+		_menu_bar->Append(menu, _T("Alt + ?"));
+
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
@@ -502,6 +501,8 @@ WinPortFrame::~WinPortFrame()
 	
 void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 {
+	if (non_latin_modifier_events_supported) { return; }
+
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.bKeyDown = TRUE;
@@ -1021,6 +1022,65 @@ static bool IsForcedCharTranslation(int code)
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
 }
 
+static int GTKHardwareKeyCodeToVirtualKeyCode(int code)
+{
+    // Returns virtual key code
+    // (as defined in https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes)
+    // corresponding to passed GTK hardware keycode
+
+    // Returns zero for every key except non-numeric character keys
+
+	switch (code) {
+
+        // Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86
+
+		case 20: return VK_OEM_MINUS;	// -
+		case 21: return VK_OEM_PLUS;	// =
+		//   22 is Backspace
+		//   23 is Tab
+		case 24: return 'Q';			// q
+		case 25: return 'W';			// w
+		case 26: return 'E';			// e
+		case 27: return 'R';			// r
+		case 28: return 'T';			// t
+		case 29: return 'Y';			// y
+		case 30: return 'U';			// u
+		case 31: return 'I';			// i
+		case 32: return 'O';			// o
+		case 33: return 'P';			// p
+		case 34: return VK_OEM_4;		// [
+		case 35: return VK_OEM_6;		// ]
+		//   36 is Enter
+		//   37 is RCtrl
+		case 38: return 'A';			// a
+		case 39: return 'S';			// s
+		case 40: return 'D';			// d
+		case 41: return 'F';			// f
+		case 42: return 'G';			// g
+		case 43: return 'H';			// h
+		case 44: return 'J';			// j
+		case 45: return 'K';			// k
+		case 46: return 'L';			// l
+		case 47: return VK_OEM_1;		// ;
+		case 48: return VK_OEM_7;		// '
+		case 49: return VK_OEM_3;		// `
+		//   50 is LShift
+		case 51: return VK_OEM_5;		/* \ */
+		case 52: return 'Z';			// z
+		case 53: return 'X';			// x
+		case 54: return 'C';			// c
+		case 55: return 'V';			// v
+		case 56: return 'B';			// b
+		case 57: return 'N';			// n
+		case 58: return 'M';			// m
+		case 59: return VK_OEM_COMMA;	// ,
+		case 60: return VK_OEM_PERIOD;	// .
+		case 61: return VK_OEM_2;		// /
+	}
+
+	return 0; // not applicable
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {	
 	DWORD now = WINPORT(GetTickCount)();
@@ -1083,17 +1143,24 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
-	const bool alt_nonlatin_workaround = (
-		(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
-		&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
-	if (non_latin_modifier_events_supported) {
-		// for non-latin unicode keycode pressed with Alt key together
-		// simulate some dummy key code for far2l to "see" keypress
-		if (alt_nonlatin_workaround) {
-			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
-		}
+	const bool nonlatin_workaround = (non_latin_modifier_events_supported &&
+		event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
+	if (nonlatin_workaround) {
+		ir.Event.KeyEvent.wVirtualKeyCode =
+#if defined(__WXGTK__)
+			GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
+#else
+			VK_OEM_MINUS;
+#endif
 	}
 
+#if defined(__WXGTK__) && !defined(__APPLE__) && !defined(__FreeBSD__) // only tested on Linux
+	if (nonlatin_workaround && event.HasModifiers()) {
+		// no OnChar for such cases, so enqueue here
+		g_winport_con_in->Enqueue(&ir, 1);
+		_last_keydown_enqueued = true;
+	} else
+#endif
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
 	  || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1101,12 +1168,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
-
-	if (non_latin_modifier_events_supported) {
-		if (alt_nonlatin_workaround) {
-			OnChar(event);
-		}
-	}
 
 	event.Skip();
 }
@@ -1141,17 +1202,14 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	{
 		wx2INPUT_RECORD ir(FALSE, event, _key_tracker);
 
-		if (non_latin_modifier_events_supported) {
-			const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
-				& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
-			const bool alt_nonlatin_workaround = (
-				(dwMods & (LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED)) == LEFT_ALT_PRESSED
-				&& event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
-			// for non-latin unicode keycode pressed with Alt key together
-			// simulate some dummy key code for far2l to "see" keypress
-			if (alt_nonlatin_workaround) {
-				ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
-			}
+		const bool nonlatin_workaround = (non_latin_modifier_events_supported &&
+			event.GetUnicodeKey() != 0 && ir.Event.KeyEvent.wVirtualKeyCode == 0);
+		if (nonlatin_workaround) {
+#if defined(__WXGTK__)
+			GTKHardwareKeyCodeToVirtualKeyCode(event.GetRawKeyFlags());
+#else
+			VK_OEM_MINUS;
+#endif
 		}
 
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns

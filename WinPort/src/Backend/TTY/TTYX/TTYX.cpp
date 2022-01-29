@@ -549,6 +549,8 @@ public:
 			{XK_BackSpace, 'H', 0, true, VK_BACK},
 			{'2', VK_SPACE, ' ', true, '2'},
 			{'3', 0, '\x1b', true, '3'},
+			{XK_bracketleft, 0, '\x1b', true, VK_OEM_4},
+			{XK_slash, '7', 0, true, VK_DIVIDE},
 			{'4', VK_OEM_5, 0, true, '4'},
 			{'5', VK_OEM_6, 0, true, '5'},
 			{'8', VK_BACK, 0, true, '8'},

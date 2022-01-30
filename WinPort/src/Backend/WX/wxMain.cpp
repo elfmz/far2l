@@ -1061,7 +1061,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// for non-latin unicode keycode pressed with Alt key together
 	// simulate some dummy key code for far2l to "see" keypress
 	if (alt_nonlatin_workaround) {
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 	}
 #endif
 
@@ -1120,7 +1120,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		// for non-latin unicode keycode pressed with Alt key together
 		// simulate some dummy key code for far2l to "see" keypress
 		if (alt_nonlatin_workaround) {
-			ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 		}
 #endif
 

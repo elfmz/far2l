@@ -1,5 +1,16 @@
 project(far2l_gui)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	find_program(LSB_RELEASE_EXEC lsb_release)
+	execute_process(COMMAND ${LSB_RELEASE_EXEC} -ds
+	    OUTPUT_VARIABLE LSB_RELEASE
+	    OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if (LSB_RELEASE MATCHES "Ubuntu 20|Linux Mint 20")
+	  add_compile_definitions(WX304PATCH)
+	endif()
+endif()
+
 set(SOURCES
 	Paint.cpp
 	CustomDrawChar.cpp

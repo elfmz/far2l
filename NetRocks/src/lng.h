@@ -43,6 +43,7 @@ enum LanguageID
   MPassword,
   MDirectory,
   MKeepAlive,
+  MCodepage,
   MDisplayName,
   MProtocolOptions,
   MSave,

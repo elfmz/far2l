@@ -1063,6 +1063,25 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if (alt_nonlatin_workaround) {
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 	}
+
+	if (event.ControlDown() && !event.GetKeyCode()) {
+		switch (event.GetRawKeyFlags()) {
+			// Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86
+			case 20: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
+			case 21: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
+			case 34: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_4; break;
+			case 35: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_6; break;
+			case 47: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
+			case 48: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_7; break;
+			case 49: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_3; break;
+			case 51: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_5; break;
+			case 59: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break;
+			case 60: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD; break;
+			case 61: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_2; break;
+		}
+		g_winport_con_in->Enqueue(&ir, 1);
+		_last_keydown_enqueued = true;
+	}
 #endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
@@ -1072,12 +1091,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
-
-#ifdef WX_ALT_NONLATIN
-	if (alt_nonlatin_workaround) {
-		OnChar(event);
-	}
-#endif
 
 	event.Skip();
 }

@@ -1069,22 +1069,25 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// especially for keys not used as accelerators
 	// detect correct keycode by raw key code and enqueue keypress
 	if (event.ControlDown() && !event.GetKeyCode()) {
+		bool go = false;
 		switch (event.GetRawKeyFlags()) {
 			// Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86
-			case 20: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
-			case 21: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
-			case 34: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_4; break;
-			case 35: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_6; break;
-			case 47: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
-			case 48: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_7; break;
-			case 49: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_3; break;
-			case 51: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_5; break;
-			case 59: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break;
-			case 60: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD; break;
-			case 61: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_2; break;
+			case 20: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS;	go = true; break;
+			case 21: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS;	go = true; break;
+			case 34: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_4;		go = true; break;
+			case 35: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_6;		go = true; break;
+			case 47: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1;		go = true; break;
+			case 48: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_7;		go = true; break;
+			case 49: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_3;		go = true; break;
+			case 51: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_5; 		go = true; break;
+			case 59: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA;	go = true; break;
+			case 60: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;	go = true; break;
+			case 61: ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_2;		go = true; break;
 		}
-		g_winport_con_in->Enqueue(&ir, 1);
-		_last_keydown_enqueued = true;
+		if (go) {
+			g_winport_con_in->Enqueue(&ir, 1);
+			_last_keydown_enqueued = true;
+		}
 	}
 #endif
 #endif

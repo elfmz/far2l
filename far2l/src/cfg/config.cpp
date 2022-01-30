@@ -886,7 +886,6 @@ static struct FARConfig
 	{0, REG_SZ,     NKeySystem, "QuotedSymbols",&Opt.strQuotedSymbols, 0, L" $&()[]{};|*?!'`\"\\\xA0"}, //xA0 => 160 =>oem(0xFF)
 	{0, REG_DWORD,  NKeySystem, "QuotedName",&Opt.QuotedName,QUOTEDNAME_INSERT, 0},
 	//{0, REG_DWORD,  NKeySystem, "CPAJHefuayor",&Opt.strCPAJHefuayor,0, 0},
-	{0, REG_DWORD,  NKeySystem, "CloseConsoleRule",&Opt.CloseConsoleRule,1, 0},
 	{0, REG_DWORD,  NKeySystem, "PluginMaxReadData",&Opt.PluginMaxReadData,0x40000, 0},
 	{0, REG_DWORD,  NKeySystem, "UseNumPad",&Opt.UseNumPad,1, 0},
 	{0, REG_DWORD,  NKeySystem, "CASRule",&Opt.CASRule,0xFFFFFFFFU, 0},

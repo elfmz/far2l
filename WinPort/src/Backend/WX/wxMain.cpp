@@ -1064,6 +1064,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 	}
 
+#ifdef __WXGTK__
 	if (event.ControlDown() && !event.GetKeyCode()) {
 		switch (event.GetRawKeyFlags()) {
 			// Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86
@@ -1082,6 +1083,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	}
+#endif
 #endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)

@@ -450,6 +450,7 @@ struct Options
 	int FormatNumberSeparators;
 	int CleanAscii;
 	int NoGraphics;
+	int NoBoxes;
 	int ConsolePaintSharp, ExclusiveCtrlLeft, ExclusiveCtrlRight, ExclusiveAltLeft, ExclusiveAltRight, ExclusiveWinLeft, ExclusiveWinRight;
 
 	Confirmation Confirm;

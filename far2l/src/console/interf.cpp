@@ -541,6 +541,16 @@ void InitRecodeOutTable()
 			BoxSymbols[BS_H1]=L'-';
 			BoxSymbols[BS_H2]=L'=';
 		}
+
+		if (Opt.NoBoxes)
+		{
+			for (int i=BS_V1; i<=BS_LT_H1V1; i++)
+				BoxSymbols[i]=L' ';
+
+			BoxSymbols[BS_V1]=BoxSymbols[BS_V2]=L' ';
+			BoxSymbols[BS_H1]=L' ';
+			BoxSymbols[BS_H2]=L' ';
+		}
 	}
 
 	//_SVS(SysLogDump("Oem2Unicode",0,(LPBYTE)Oem2Unicode,sizeof(Oem2Unicode),nullptr));

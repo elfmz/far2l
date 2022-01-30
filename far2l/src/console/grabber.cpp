@@ -153,6 +153,18 @@ void Grabber::CopyGrabbedArea(int Append)
 				}
 			}
 
+			if (Opt.NoBoxes && Chr2 >=0xB3 && Chr2 <= 0xDA)
+			{
+				switch (Chr2)
+				{
+					case 0xB3:
+					case 0xBA: Chr=L' '; break;
+					case 0xC4: Chr=L' '; break;
+					case 0xCD: Chr=L' '; break;
+					default:   Chr=L' '; break;
+				}
+			}
+
 			*PtrCopyBuf++=Chr;
 			*PtrCopyBuf=0;
 		}

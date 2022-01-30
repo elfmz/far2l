@@ -55,6 +55,7 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType);
 
 static int CurX,CurY;
 static int CurColor;
+static volatile DWORD CtrlHandlerEvent = std::numeric_limits<uint32_t>::max();
 
 static CONSOLE_CURSOR_INFO InitialCursorInfo;
 
@@ -318,6 +319,24 @@ void GetVideoMode(COORD& Size)
 
 BOOL WINAPI CtrlHandler(DWORD CtrlType)
 {
+	// write some dummy console input to kick any pending ReadConsoleInput
+	CtrlHandlerEvent = CtrlType;
+	INPUT_RECORD ir = {};
+	ir.EventType = NOOP_EVENT;
+	DWORD dw = 0;
+	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+	return TRUE;
+}
+
+void CheckForPendingCtrlHandleEvent()
+{
+	const DWORD CtrlType = CtrlHandlerEvent;
+
+	if (CtrlType == std::numeric_limits<uint32_t>::max())
+		return;
+
+	CtrlHandlerEvent = std::numeric_limits<uint32_t>::max();
+
 	/*
 	    TODO: need handle
 	       CTRL_CLOSE_EVENT
@@ -338,38 +357,14 @@ BOOL WINAPI CtrlHandler(DWORD CtrlType)
 				CtrlObject->Plugins.ProcessEvent(CtrlObject->Cp()->RightPanel->GetPluginHandle(),FE_BREAK,(void *)(DWORD_PTR)CtrlType);
 		}
 
-		return TRUE;
+		return;
 	}
 
-	if (!CtrlObject->Plugins.MayExitFar()) {
-		return TRUE;
+	if (CtrlObject && !CtrlObject->Plugins.MayExitFar()) {
+		return;
 	}
 
-	CloseFAR=TRUE;
-
-
-	/* $ 30.08.2001 IS
-	   При закрытии окна "по кресту" всегда возвращаем TRUE, в противном случае
-	   Фар будет закрыт системой и не будут выполнены обычные при закрытии
-	   процедуры: оповещены плагины, вызваны деструкторы, сохранены настройки и
-	   т.п.
-	*/
-	if (!Opt.CloseConsoleRule)
-	{
-		if ((FileEditor::CurrentEditor && FileEditor::CurrentEditor->IsFileModified()) ||
-		        (FrameManager && FrameManager->IsAnyFrameModified(FALSE)))
-			return TRUE;
-
-		return FALSE;
-	}
-
-	// write some dummy console input to kick any pending ReadConsoleInput
-	INPUT_RECORD ir = {};
-	ir.EventType = NOOP_EVENT;
-	DWORD dw = 0;
-	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
-
-	return TRUE;
+	CloseFAR = TRUE;
 }
 
 

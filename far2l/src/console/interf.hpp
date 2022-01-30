@@ -131,3 +131,4 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str);
 
 bool IsFullscreen();
 bool CheckForInactivityExit();
+void CheckForPendingCtrlHandleEvent();

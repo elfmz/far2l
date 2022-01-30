@@ -527,6 +527,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	FARString::ScanForLeaks();
 
+	CheckForPendingCtrlHandleEvent();
+
 	if (FrameManager && FrameManager->RegularIdleWantersCount())
 	{
 		clock_t now = GetProcessUptimeMSec();
@@ -730,10 +732,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			   нажатии на F10 в панелях, только не запрашиваем подтверждение закрытия,
 			   если это возможно.
 			*/
-			if (!Opt.CloseConsoleRule)
-				FrameManager->IsAnyFrameModified(TRUE);
-			else
-				FrameManager->ExitMainLoop(FALSE);
+			FrameManager->ExitMainLoop(FALSE);
 
 			return KEY_NONE;
 		}

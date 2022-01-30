@@ -541,7 +541,6 @@ struct Options
 
 	int PgUpChangeDisk;
 	int ShowCheckingFile;
-	int CloseConsoleRule;
 
 	DWORD LCIDSort;
 	int RestoreCPAfterExecute;

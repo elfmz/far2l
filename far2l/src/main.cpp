@@ -440,6 +440,16 @@ int FarAppMain(int argc, char **argv)
 		unsetenv("FARADMINMODE");
 	}
 
+	// run by symlinc in editor mode
+	if (strstr(argv[0], "far2ledit") != NULL) {
+		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
+		if (argc > 1) {
+			strEditViewArg = argv[1];
+		} else {
+			strEditViewArg = "NewFile.txt";
+		}
+	}
+
 	// макросы не дисаблим
 	Opt.Macro.DisableMacro=0;
 	for (int I=1; I<argc; I++)

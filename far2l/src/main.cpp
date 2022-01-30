@@ -90,7 +90,8 @@ static void print_help(const char *self)
 		"The following switches may be used in the command line:\n\n"
 		" -h   This help.\n"
 		" -a   Disable display of characters with codes 0 - 31 and 255.\n"
-		" -ag  Disable display of pseudographics characters.\n"
+		" -ag  Disable display of pseudographics with codes > 127.\n"
+		" -an  Disable display of pseudographics characters completely.\n"
 		" -co  Forces FAR to load plugins from the cache only.\n"
 		" -cd <path> Change panel's directory to specified path.\n"
 		" -m   Do not load macros.\n"
@@ -465,6 +466,12 @@ int FarAppMain(int argc, char **argv)
 
 							if (!arg_w[3])
 								Opt.NoGraphics=TRUE;
+
+							break;
+						case L'N':
+
+							if (!arg_w[3])
+								Opt.NoBoxes=TRUE;
 
 							break;
 					}

@@ -42,11 +42,12 @@
 "Login &password     :"
 "&Working directory  :"
 "&Keepalive, seconds :"
+"&Codepage           :"
 "&Display name       :"
 "Pro&tocol options"
 "&Save"
 "C&onnect"
-"Save/C&onnect"
+"S&ave/Connect"
 
 "<Create site connection>"
 "Site connection settings"

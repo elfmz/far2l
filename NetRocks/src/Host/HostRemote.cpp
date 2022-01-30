@@ -10,6 +10,7 @@
 #include <vector>
 #include <ScopeHelpers.h>
 #include <Threaded.h>
+#include <UtfConvert.hpp>
 #include <StringConfig.h>
 #include <CheckedCast.hpp>
 
@@ -56,6 +57,52 @@ HostRemote::HostRemote(const std::string &protocol, const std::string &host,
 HostRemote::~HostRemote()
 {
 	AssertNotBusy();
+}
+
+const std::string &HostRemote::CodepageLocal2Remote(const std::string &str)
+{
+	if (_codepage == CP_UTF8 || str.empty()) {
+		return str;
+	}
+
+	_codepage_wstr.clear();
+	size_t uc_len = str.size();
+	const unsigned wide_cvt_rv = UtfConvertStd(str.data(), uc_len, _codepage_wstr, false);
+	if (wide_cvt_rv != 0) {
+		fprintf(stderr, "%s(%s): wide_cvt_rv=%u\n", __FUNCTION__, str.c_str(), wide_cvt_rv);
+		return str;
+	}
+
+	_codepage_str.resize(_codepage_wstr.size() * 8); // ought to should be enought for any encoding
+	const int cp_cvt_rv = WINPORT(WideCharToMultiByte)(_codepage, 0, _codepage_wstr.c_str(),
+			_codepage_wstr.size(), &_codepage_str[0], (int)_codepage_str.size(), nullptr, nullptr);
+	if (cp_cvt_rv <= 0) {
+		fprintf(stderr, "%s(%s): cp_cvt_rv=%u\n", __FUNCTION__, str.c_str(), cp_cvt_rv);
+		return str;
+	}
+
+	_codepage_str.resize(cp_cvt_rv);
+	return _codepage_str;
+}
+
+void HostRemote::CodepageRemote2Local(std::string &str)
+{
+	if (_codepage == CP_UTF8 || str.empty()) {
+		return;
+	}
+
+	_codepage_wstr.resize(str.size() * 2);
+	const int cp_cvt_rv = WINPORT(MultiByteToWideChar)(_codepage,
+		0, str.c_str(), str.size(), &_codepage_wstr[0], (int)_codepage_wstr.size());
+	if (cp_cvt_rv <= 0) {
+		fprintf(stderr, "%s(%s): cp_cvt_rv=%u\n", __FUNCTION__, str.c_str(), cp_cvt_rv);
+		return;
+	}
+	_codepage_wstr.resize(cp_cvt_rv);
+
+	str.clear();
+	size_t uc_len = _codepage_wstr.size();
+	UtfConvertStd(_codepage_wstr.c_str(), uc_len, str, false);
 }
 
 
@@ -178,8 +225,11 @@ void HostRemote::ReInitialize()
 
 	PipeIPCFD ipc_fd;
 
+	StringConfig sc_options(_options);
+	_codepage = sc_options.GetInt("CodePage", CP_UTF8);
+
 	char keep_alive_arg[32];
-	sprintf(keep_alive_arg, "%d", StringConfig(_options).GetInt("KeepAlive", 0));
+	sprintf(keep_alive_arg, "%d", sc_options.GetInt("KeepAlive", 0));
 
 	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n",
 		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w);
@@ -256,8 +306,8 @@ void HostRemote::ReInitialize()
 		SendString(_identity.host);
 		SendPOD(_identity.port);
 		SendPOD(_login_mode);
-		SendString(_identity.username);
-		SendString(_password);
+		SendString(CodepageLocal2Remote(_identity.username));
+		SendString(CodepageLocal2Remote(_password));
 		SendString(_options);
 
 		locker.unlock();
@@ -380,7 +430,7 @@ mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink)
 	CheckReady();
 
 	SendCommand(IPC_GET_MODE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(follow_symlink);
 	RecvReply(IPC_GET_MODE);
 	mode_t out;
@@ -398,7 +448,7 @@ void HostRemote::GetModes(bool follow_symlink, size_t count, const std::string *
 		SendPOD(follow_symlink);
 		SendPOD(count);
 		for (size_t i = 0; i < count; ++i) {
-			SendString(pathes[i]);
+			SendString(CodepageLocal2Remote(pathes[i]));
 		}
 		RecvReply(IPC_GET_MODES);
 		for (; j < count; ++j) {
@@ -421,7 +471,7 @@ unsigned long long HostRemote::GetSize(const std::string &path, bool follow_syml
 	CheckReady();
 
 	SendCommand(IPC_GET_SIZE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(follow_symlink);
 	RecvReply(IPC_GET_SIZE);
 	unsigned long long out;
@@ -434,7 +484,7 @@ void HostRemote::GetInformation(FileInformation &file_info, const std::string &p
 	CheckReady();
 
 	SendCommand(IPC_GET_INFORMATION);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(follow_symlink);
 	RecvReply(IPC_GET_INFORMATION);
 	RecvPOD(file_info);
@@ -445,7 +495,7 @@ void HostRemote::FileDelete(const std::string &path)
 	CheckReady();
 
 	SendCommand(IPC_FILE_DELETE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	RecvReply(IPC_FILE_DELETE);
 }
 
@@ -454,7 +504,7 @@ void HostRemote::DirectoryDelete(const std::string &path)
 	CheckReady();
 
 	SendCommand(IPC_DIRECTORY_DELETE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	RecvReply(IPC_DIRECTORY_DELETE);
 }
 
@@ -463,7 +513,7 @@ void HostRemote::DirectoryCreate(const std::string &path, mode_t mode)
 	CheckReady();
 
 	SendCommand(IPC_DIRECTORY_CREATE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(mode);
 	RecvReply(IPC_DIRECTORY_CREATE);
 }
@@ -473,8 +523,8 @@ void HostRemote::Rename(const std::string &path_old, const std::string &path_new
 	CheckReady();
 
 	SendCommand(IPC_RENAME);
-	SendString(path_old);
-	SendString(path_new);
+	SendString(CodepageLocal2Remote(path_old));
+	SendString(CodepageLocal2Remote(path_new));
 	RecvReply(IPC_RENAME);
 }
 
@@ -484,7 +534,7 @@ void HostRemote::SetTimes(const std::string &path, const timespec &access_time, 
 	CheckReady();
 
 	SendCommand(IPC_SET_TIMES);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(access_time);
 	SendPOD(modification_time);
 	RecvReply(IPC_SET_TIMES);
@@ -495,7 +545,7 @@ void HostRemote::SetMode(const std::string &path, mode_t mode)
 	CheckReady();
 
 	SendCommand(IPC_SET_MODE);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(mode);
 	RecvReply(IPC_SET_MODE);
 }
@@ -505,8 +555,8 @@ void HostRemote::SymlinkCreate(const std::string &link_path, const std::string &
 	CheckReady();
 
 	SendCommand(IPC_SYMLINK_CREATE);
-	SendString(link_path);
-	SendString(link_target);
+	SendString(CodepageLocal2Remote(link_path));
+	SendString(CodepageLocal2Remote(link_target));
 	RecvReply(IPC_SYMLINK_CREATE);
 }
 
@@ -515,9 +565,10 @@ void HostRemote::SymlinkQuery(const std::string &link_path, std::string &link_ta
 	CheckReady();
 
 	SendCommand(IPC_SYMLINK_QUERY);
-	SendString(link_path);
+	SendString(CodepageLocal2Remote(link_path));
 	RecvReply(IPC_SYMLINK_QUERY);
 	RecvString(link_target);
+	CodepageRemote2Local(link_target);
 }
 
 ////////////////////////////////////////
@@ -563,6 +614,9 @@ public:
 			_conn->RecvString(owner);
 			_conn->RecvString(group);
 			_conn->RecvPOD(file_info);
+			_conn->CodepageRemote2Local(name);
+			_conn->CodepageRemote2Local(owner);
+			_conn->CodepageRemote2Local(group);
 			return true;
 
 		} catch (...) {
@@ -577,7 +631,7 @@ std::shared_ptr<IDirectoryEnumer> HostRemote::DirectoryEnum(const std::string &p
 	CheckReady();
 
 	SendCommand(IPC_DIRECTORY_ENUM);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	RecvReply(IPC_DIRECTORY_ENUM);
 
 	return std::make_shared<HostRemoteDirectoryEnumer>(shared_from_this(), path);
@@ -678,7 +732,7 @@ std::shared_ptr<IFileReader> HostRemote::FileGet(const std::string &path, unsign
 	CheckReady();
 
 	SendCommand(IPC_FILE_GET);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(resume_pos);
 	RecvReply(IPC_FILE_GET);
 
@@ -690,7 +744,7 @@ std::shared_ptr<IFileWriter> HostRemote::FilePut(const std::string &path, mode_t
 	CheckReady();
 
 	SendCommand(IPC_FILE_PUT);
-	SendString(path);
+	SendString(CodepageLocal2Remote(path));
 	SendPOD(mode);
 	SendPOD(size_hint);
 	SendPOD(resume_pos);
@@ -705,8 +759,8 @@ void HostRemote::ExecuteCommand(const std::string &working_dir, const std::strin
 	CheckReady();
 
 	SendCommand(IPC_EXECUTE_COMMAND);
-	SendString(working_dir);
-	SendString(command_line);
+	SendString(CodepageLocal2Remote(working_dir));
+	SendString(CodepageLocal2Remote(command_line));
 	SendString(fifo);
 	RecvReply(IPC_EXECUTE_COMMAND);
 }

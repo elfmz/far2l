@@ -24,6 +24,9 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 	unsigned int _login_mode;
 	std::string _password;
 	std::string _options;
+	unsigned int _codepage{0};
+	std::string _codepage_str;
+	std::wstring _codepage_wstr;
 
 	bool _busy = false;
 	bool _cloning = false;
@@ -32,6 +35,9 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 	void RecvReply(IPCCommand cmd);
 
 	bool OnServerIdentityChanged(const std::string &new_identity);
+
+	const std::string &CodepageLocal2Remote(const std::string &str);
+	void CodepageRemote2Local(std::string &str);
 
 protected:
 	void BusySet();

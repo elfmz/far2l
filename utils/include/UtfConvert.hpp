@@ -136,6 +136,13 @@ template <typename CHAR_SRC, typename PUSHBACK_DST>
 	return out;
 }
 
+template <typename CHAR_SRC, typename DST>
+	static inline unsigned UtfConvertStd(const CHAR_SRC *src_begin, size_t &src_len, DST &dst, bool fail_on_illformed)
+{
+	StdPushBack<DST> dst_pb(dst);
+	return UtfConvert(src_begin, src_len, dst_pb, fail_on_illformed);
+}
+
 
 template <typename CHAR_SRC, typename CHAR_DST>
 	static inline size_t UtfCalcSpace(const CHAR_SRC *src_begin, size_t src_len, bool fail_on_illformed)

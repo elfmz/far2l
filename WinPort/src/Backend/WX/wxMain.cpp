@@ -1065,6 +1065,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 
 #ifdef __WXGTK__
+	// for non-latin unicode keycode pressed with Ctrl key together
+	// especially for keys not used as accelerators
+	// detect correct keycode by raw key code and enqueue keypress
 	if (event.ControlDown() && !event.GetKeyCode()) {
 		switch (event.GetRawKeyFlags()) {
 			// Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86

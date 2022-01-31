@@ -580,7 +580,7 @@ struct Options
 	DWORD CPMenuMode;
 
 	bool IsUserAdmin;
-	FARString strTitleAddons;
+	FARString strWindowTitle;
 
 	BOOL WindowMode;
 };

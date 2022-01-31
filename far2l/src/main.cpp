@@ -445,7 +445,7 @@ int FarAppMain(int argc, char **argv)
 	if (strstr(argv[0], "far2ledit") != NULL) {
 		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
 		if (argc > 1) {
-			strEditViewArg = argv[1];
+			strEditViewArg = argv[argc - 1]; // use last argument
 		} else {
 			strEditViewArg = "NewFile.txt";
 		}

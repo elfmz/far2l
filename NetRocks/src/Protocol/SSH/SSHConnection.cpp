@@ -207,7 +207,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		int rc = ssh_userauth_publickey(ssh, username.empty() ? nullptr : username.c_str(), priv_key);
 		if (rc != SSH_AUTH_SUCCESS) {
 			fprintf(stderr, "ssh_userauth_publickey: %d '%s'\n" , rc, ssh_get_error(ssh));
-			throw std::runtime_error("Key file authentification failed");
+			throw std::runtime_error("Key file authentication failed");
 		}
 
 	} else {
@@ -219,14 +219,14 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 				if (rc == SSH_AUTH_SUCCESS) {
 					return;
 				}
-				throw std::runtime_error("SSH-agent authentification failed");
-//				throw ProtocolAuthFailedError("SSH-agent");//"Authentification failed", ssh_get_error(ssh), rc);
+				throw std::runtime_error("SSH-agent authentication failed");
+//				throw ProtocolAuthFailedError("SSH-agent");//"Authentication failed", ssh_get_error(ssh), rc);
 			}
 		}
 
 		int rc = ssh_userauth_password(ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
   		if (rc != SSH_AUTH_SUCCESS)
-			throw ProtocolAuthFailedError();//"Authentification failed", ssh_get_error(ssh), rc);
+			throw ProtocolAuthFailedError();//"Authentication failed", ssh_get_error(ssh), rc);
 	}
 }
 

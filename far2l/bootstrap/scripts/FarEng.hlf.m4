@@ -2278,15 +2278,16 @@ to calculate the total files count.
   - for network drives - activates the Network plugin (if it is available)
 or the drive selection menu (if the Network plugin is not available).
 
-  #Far window title addons#
-  Дополнительная информация, выводимая в заголовке окна консоли.
-Может содержать любой текст, включая следующие переменные:
-  #%Ver# - FAR2L version;
-  #%Platform# - FAR2L platform architecture;
-  #%Backend# - FAR2L UI backend;
-  #%Host# - host name of the machine where FAR2L is running;
-  #%User# - user name under wich FAR2L is running;
-  #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
+  #FAR window title#
+  Information displayed in the console window title. Can contain any text
+including the following variables:
+  - #%State# - current FAR2L state (previously was a default window title);
+  - #%Ver# - FAR2L version;
+  - #%Platform# - FAR2L platform architecture;
+  - #%Backend# - FAR2L UI backend;
+  - #%Host# - host name of the machine where FAR2L is running;
+  - #%User# - user name under wich FAR2L is running;
+  - #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
 
 @InputSettings
 $ #Settings dialog: input#

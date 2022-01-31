@@ -2075,15 +2075,15 @@ MConfigPgUpChangeDisk
 "Usar Ctrl-Pg&Up para cambiar unidad"
 "Використовувати Ctrl-PgUp для в&ибору диска"
 
-MConfigTitleAddons
-upd:"Far window title addons:"
-"Far window title addons:"
-upd:"Far window title addons:"
-upd:"Far window title addons:"
-upd:"Far window title addons:"
-upd:"Far window title addons:"
+MConfigWindowTitle
+"Заголовок окна FAR:"
+"FAR window title:"
+upd:"FAR window title:"
+upd:"FAR window title:"
+upd:"FAR window title:"
+upd:"FAR window title:"
 "Título de ventana de FAR:"
-"доповнення заголовків вікна FAR:"
+"Заголовок вікна FAR:"
 
 MConfigDlgSetsTitle
 l:

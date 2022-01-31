@@ -155,7 +155,10 @@ that runs with WX backend.
 executing FAR2L under telnet.
 
   #/ag#
-  Disable display of pseudo-graphic characters.
+  Disable display of pseudographics with codes > 127.
+
+  #/an#
+  Disable display of pseudographics characters completely.
 
   #/e[<line>[:<pos>]] <filename>#
   Edit the specified file. After /e you may optionally specify editor start line

@@ -50,6 +50,6 @@ class ConsoleTitle
 		void Set(const wchar_t *fmt,...);
 
 	public:
-		static void SetFarTitle(const wchar_t *Title, bool Force=false);
+		static void SetFarTitle(const wchar_t *Title, bool Force=false, bool Restoring=false);
 		static bool WasTitleModified() { return TitleModified; }
 };

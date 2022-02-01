@@ -44,38 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include <stdarg.h>
 
-static const FARString& GetFarTitleAddons()
-{
-	// " - Far%Ver%Backend%Admin"
-	/*
-		%Ver      - 2.3.102-beta
-		%Platform - x86
-		%Backend  - gui
-		%Admin    - MFarTitleAddonsAdmin
-    */
-	static FARString strVer(FAR_BUILD);
-	static FARString strPlatform(FAR_PLATFORM);
-	static FARString strTitleAddons;
-
-	strTitleAddons = L" - FAR2L ";
-	strTitleAddons+= Opt.strTitleAddons;
-
-	ReplaceStrings(strTitleAddons,L"%Ver",strVer,-1);
-	ReplaceStrings(strTitleAddons,L"%Platform", strPlatform, -1);
-	ReplaceStrings(strTitleAddons,L"%Backend", WinPortBackend(), -1);
-	ReplaceStrings(strTitleAddons,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
-
-	FARString hn, un;
-	apiGetEnvironmentVariable("HOSTNAME", hn);
-	apiGetEnvironmentVariable("USER", un);
-	ReplaceStrings(strTitleAddons,L"%Host",hn,-1);
-	ReplaceStrings(strTitleAddons,L"%User",un,-1);
-
-	RemoveTrailingSpaces(strTitleAddons);
-
-	return strTitleAddons;
-}
-
 bool ConsoleTitle::TitleModified = false;
 DWORD ConsoleTitle::ShowTime = 0;
 
@@ -93,17 +61,7 @@ ConsoleTitle::ConsoleTitle(const wchar_t *title)
 ConsoleTitle::~ConsoleTitle()
 {
 	CriticalSectionLock Lock(TitleCS);
-	const FARString &strTitleAddons = GetFarTitleAddons();
-	size_t OldLen = strOldTitle.GetLength();
-	size_t AddonsLen = strTitleAddons.GetLength();
-
-	if (AddonsLen <= OldLen)
-	{
-		if (!StrCmpI(strOldTitle.CPtr()+OldLen-AddonsLen, strTitleAddons))
-			strOldTitle.Truncate(OldLen-AddonsLen);
-	}
-
-	ConsoleTitle::SetFarTitle(strOldTitle, true);
+	ConsoleTitle::SetFarTitle(strOldTitle, true, true);
 }
 
 void ConsoleTitle::Set(const wchar_t *fmt, ...)
@@ -117,18 +75,48 @@ void ConsoleTitle::Set(const wchar_t *fmt, ...)
 	SetFarTitle(msg);
 }
 
-void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force)
+void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force, bool Restoring)
 {
 	CriticalSectionLock Lock(TitleCS);
 	static FARString strFarTitle;
-	FARString strOldFarTitle;
+	static FARString strVer(FAR_BUILD);
+	static FARString strPlatform(FAR_PLATFORM);
+	FARString strOldFarTitle, strFarState;
 
 	if (Title)
 	{
 		Console.GetTitle(strOldFarTitle);
-		strFarTitle=Title;
-		strFarTitle.Truncate(0x100);
-		strFarTitle+=GetFarTitleAddons();
+
+		strFarState=Title;
+		strFarState.Truncate(0x100);
+		if (Restoring) {
+			strFarTitle = strFarState;
+		} else {
+			/*
+				%State    - default window title
+				%Ver      - 2.3.102-beta
+				%Platform - x86
+				%Backend  - gui
+				%Admin    - MFarTitleAddonsAdmin
+			*/
+			strFarTitle=Opt.strWindowTitle;
+			ReplaceStrings(strFarTitle,L"%Ver",strVer,-1);
+			ReplaceStrings(strFarTitle,L"%Platform", strPlatform, -1);
+			ReplaceStrings(strFarTitle,L"%Backend", WinPortBackend(), -1);
+			ReplaceStrings(strFarTitle,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
+
+			FARString hn, un;
+			apiGetEnvironmentVariable("HOSTNAME", hn);
+			apiGetEnvironmentVariable("USER", un);
+			ReplaceStrings(strFarTitle,L"%Host",hn,-1);
+			ReplaceStrings(strFarTitle,L"%User",un,-1);
+
+			// сделаем эту замену последней во избежание случайных совпадений
+			// подстрок из strFarState с другими переменными
+			ReplaceStrings(strFarTitle,L"%State",strFarState,-1);
+
+			RemoveExternalSpaces(strFarTitle);
+		}
 		TitleModified=true;
 
 		if (StrCmp(strOldFarTitle, strFarTitle) &&

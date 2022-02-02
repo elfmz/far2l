@@ -42,7 +42,7 @@ static std::string QuotedArg(const std::string &s)
 	}
 
 	std::string out = "\"";
-	out+= EscapeQuotas(s);
+	out+= EscapeQuotes(s);
 	out+= '\"';
 	return out;
 }

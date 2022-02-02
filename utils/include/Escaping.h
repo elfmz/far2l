@@ -5,8 +5,8 @@
 std::string EscapeLikeInC(std::string str);
 
 std::string EscapeEscapes(std::string str);
-std::string EscapeQuotas(const std::string &str);
-std::wstring EscapeQuotas(const std::wstring &str);
+std::string EscapeQuotes(const std::string &str);
+std::wstring EscapeQuotes(const std::wstring &str);
 
 /* by default escapes those chars as if whole string is a double-quoted command argument */
 std::string EscapeCmdStr(const std::string &str, const char *escaped_chars = "\\\"$");

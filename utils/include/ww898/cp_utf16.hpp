@@ -53,8 +53,8 @@ struct utf16 final
     static char_type const min_surrogate_low = 0xDC00;
     static char_type const max_surrogate_low = 0xDFFF;
 
-    template<typename ReadFn>
-    static uint32_t read(ReadFn && read_fn)
+    template<typename ReadFn, typename BackFn>
+    static uint32_t read(ReadFn && read_fn, BackFn && back_fn)
     {
         char_type const ch0 = read_fn();
         if (ch0 < 0xD800) // [0x0000‥0xD7FF]

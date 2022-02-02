@@ -39,8 +39,8 @@ struct utf32 final
 
     using char_type = uint32_t;
 
-    template<typename ReadFn>
-    static uint32_t read(ReadFn && read_fn)
+    template<typename ReadFn, typename BackFn>
+    static uint32_t read(ReadFn && read_fn, BackFn && back_fn)
     {
         char_type const ch = std::forward<ReadFn>(read_fn)();
         if (ch < 0x80000000)

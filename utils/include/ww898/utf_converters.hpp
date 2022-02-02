@@ -48,6 +48,7 @@ struct conv_strategy final
     bool operator()(It &it, It const eit, Oit &oit) const
     {
         auto tmp = it;
+        auto const back_fn = [&tmp] { tmp--; };
         bool read_ended = false;
         auto const read_fn = [&tmp, &eit, &read_ended]
             {
@@ -63,7 +64,7 @@ struct conv_strategy final
         while (tmp != eit) {
             if (oit.fully_filled())
                 return false;
-            auto const cp = Utf::read(read_fn);
+            auto const cp = Utf::read(read_fn, back_fn);
             if (read_ended || cp == (uint32_t)-1)
                 return false;
             Outf::write(cp, write_fn);
@@ -84,6 +85,7 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::random_interator> final
     bool operator()(It &it, It const eit, Oit &oit) const
     {
         auto tmp = it;
+        auto const back_fn = [&tmp] { tmp--; };
         auto const write_fn = [&oit] (typename Outf::char_type const ch) { oit.push_back(ch); };
         if (eit - tmp >= static_cast<typename std::iterator_traits<It>::difference_type>(Utf::max_supported_symbol_size))
         {
@@ -92,7 +94,7 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::random_interator> final
                while (tmp < fast_eit) {
                 if (oit.fully_filled())
                        return false;
-                   auto const cp = Utf::read(fast_read_fn);
+                   auto const cp = Utf::read(fast_read_fn, back_fn);
                       if (cp == (uint32_t)-1)
                        return false;
                    Outf::write(cp, write_fn);
@@ -111,7 +113,7 @@ struct conv_strategy<Utf, Outf, It, Oit, conv_impl::random_interator> final
         while (tmp != eit) {
             if (oit.fully_filled())
                 return false;
-            auto const cp = Utf::read(read_fn);
+            auto const cp = Utf::read(read_fn, back_fn);
             if (read_ended || cp == (uint32_t)-1)
                 return false;
             Outf::write(cp, write_fn);

@@ -46,72 +46,89 @@ struct utf8 final
 
     using char_type = uint8_t;
 
-    template<typename ReadFn>
-    static uint32_t read(ReadFn && read_fn)
+    template<typename ReadFn, typename BackFn>
+    static uint32_t read(ReadFn && read_fn, BackFn && back_fn)
     {
         char_type const ch0 = read_fn();
         if (ch0 < 0x80) // 0xxx_xxxx
             return ch0;
         if (ch0 < 0xC2) //0xC0
-            return -1; //throw std::runtime_error("The utf8 first char in sequence is incorrect");
+            goto _err1;
+            //return -1; //throw std::runtime_error("The utf8 first char in sequence is incorrect");
         if (ch0 < 0xE0) // 110x_xxxx 10xx_xxxx
         {
-            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
+            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err2;
             return (ch0 << 6) + ch1 - 0x3080;
         }
         if (ch0 < 0xF0) // 1110_xxxx 10xx_xxxx 10xx_xxxx
         {
-            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
+            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err2;
             switch (ch0) {
                 case 0xE0:
-                    if (ch1 < 0xA0) goto _err;
+                    if (ch1 < 0xA0) goto _err2;
                 break;
                 case 0xED:
-                    if (ch1 > 0x9F) goto _err;
+                    if (ch1 > 0x9F) goto _err2;
                 break;
             }
-            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
+            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err3;
             return (ch0 << 12) + (ch1 << 6) + ch2 - 0xE2080;
         }
         if (ch0 < 0xF8) // 1111_0xxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
-            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
+            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err2;
             switch (ch0) {
                 case 0xF0:
-                    if (ch1 < 0x90) goto _err;
+                    if (ch1 < 0x90) goto _err2;
                 break;
                 case 0xF4:
-                    if (ch1 > 0x8F) goto _err;
+                    if (ch1 > 0x8F) goto _err2;
                 break;
             }
-            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
-            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;
+            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err3;
+            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err3;
             return (ch0 << 18) + (ch1 << 12) + (ch2 << 6) + ch3 - 0x3C82080;
         }
         if (ch0 < 0xFC) // 1111_10xx 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
-            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
-            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
-            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;
-            char_type const ch4 = read_fn(); if (ch4 >> 6 != 2) goto _err;
+            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err2;
+            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err3;
+            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err4;
+            char_type const ch4 = read_fn(); if (ch4 >> 6 != 2) goto _err5;
             return (ch0 << 24) + (ch1 << 18) + (ch2 << 12) + (ch3 << 6) + ch4 - 0xFA082080;
         }
         if (ch0 < 0xFE) // 1111_110x 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
-            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
-            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
-            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;
-            char_type const ch4 = read_fn(); if (ch4 >> 6 != 2) goto _err;
-            char_type const ch5 = read_fn(); if (ch5 >> 6 != 2) goto _err;
+            char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err2;
+            char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err3;
+            char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err4;
+            char_type const ch4 = read_fn(); if (ch4 >> 6 != 2) goto _err5;
+            char_type const ch5 = read_fn(); if (ch5 >> 6 != 2) goto _err6;
             return (ch0 << 30) + (ch1 << 24) + (ch2 << 18) + (ch3 << 12) + (ch4 << 6) + ch5 - 0x82082080;
         }
-        return -1; //throw std::runtime_error("The utf8 first char in sequence is incorrect");
-        _err: return -1; //throw std::runtime_error("The utf8 slave char in sequence is incorrect");
+
+		goto _err1;
+
+		_err6: back_fn();
+		_err5: back_fn();
+		_err4: back_fn();
+		_err3: back_fn();
+		_err2: back_fn();
+		_err1:
+
+	    return 56448 - 128 + ch0;
+
+        //return -1; //throw std::runtime_error("The utf8 first char in sequence is incorrect");
+        //_err: return -1; //throw std::runtime_error("The utf8 slave char in sequence is incorrect");
     }
 
     template<typename WriteFn>
     static void write(uint32_t const cp, WriteFn && write_fn)
     {
+    	if ((cp >= 56448) && (cp <= 56575)) {
+            write_fn(static_cast<char_type>(cp - 56448 + 128));
+    	} else
+
         if (cp < 0x80)          // 0xxx_xxxx
             write_fn(static_cast<char_type>(cp));
         else if (cp < 0x800)    // 110x_xxxx 10xx_xxxx

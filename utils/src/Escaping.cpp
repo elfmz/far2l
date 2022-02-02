@@ -37,7 +37,7 @@ std::string EscapeLikeInC(std::string str)
 
 
 template <class STRING_T>
-	static STRING_T EscapeQuotasT(STRING_T str)
+	static STRING_T EscapeQuotesT(STRING_T str)
 {
 	for(size_t p = str.find('\"'); p!=std::string::npos; p = str.find('\"', p)) {
 		str.insert(p, 1, '\\');
@@ -46,8 +46,8 @@ template <class STRING_T>
 	return str;
 }
 
-std::string EscapeQuotas(const std::string &str) {return EscapeQuotasT(str); }
-std::wstring EscapeQuotas(const std::wstring &str) {return EscapeQuotasT(str); }
+std::string EscapeQuotes(const std::string &str) {return EscapeQuotesT(str); }
+std::wstring EscapeQuotes(const std::wstring &str) {return EscapeQuotesT(str); }
 
 template <class CHAR_T>
 	static std::basic_string<CHAR_T> EscapeCmdStrT(std::basic_string<CHAR_T> str, const CHAR_T *escaped_chars)

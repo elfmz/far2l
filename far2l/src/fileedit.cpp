@@ -1324,6 +1324,9 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 							int UserBreak = 0;
 							SaveToCache();
 							LoadFile(strLoadedFileName, UserBreak);
+							if (m_codepage != codepage) { // CP change fail -> fallback CP used
+								Message(0,1,MSG(MEditTitle),MSG(MEditorLoadCPWarn1),MSG(MEditorLoadCPWarn2),MSG(MEditorFallbackCP),MSG(MOk));
+							}
 						}
 						ChangeEditKeyBar();
 					} else
@@ -1423,6 +1426,10 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 // сюды плавно переносить код из Editor::ReadFile()
 int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 {
+	bool retry = false;
+	retry_point:
+	if (retry) { m_codepage = WINPORT(GetACP)(); }
+
 	SudoClientRegion sdc_rgn;
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
@@ -1632,7 +1639,13 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	BadConversion = !GetStr.IsConversionValid();
 	if (BadConversion)
 	{
-		Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorLoadCPWarn1),MSG(MEditorLoadCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
+		//Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorLoadCPWarn1),MSG(MEditorLoadCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
+
+		// opening file in this CP failed -> fallback CP used
+		Message(0,1,MSG(MEditTitle),MSG(MEditorLoadCPWarn1),MSG(MEditorLoadCPWarn2),MSG(MEditorFallbackCP),MSG(MOk));
+
+		retry = true;
+		goto retry_point;
 	}
 
 	if (LastLineCR||!m_editor->NumLastLine)
@@ -2853,8 +2866,10 @@ void FileEditor::SetCodePage(UINT codepage)
 		{
 			if (!m_editor->SetCodePage(m_codepage))
 			{
-				Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorSwitchCPWarn1),MSG(MEditorSwitchCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
-				BadConversion = true;
+				//Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorSwitchCPWarn1),MSG(MEditorSwitchCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
+				//BadConversion = true;
+				m_codepage = WINPORT(GetACP)();
+				m_editor->SetCodePage(m_codepage);
 			}
 
 			ChangeEditKeyBar(); //???

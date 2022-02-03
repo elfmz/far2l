@@ -7693,6 +7693,16 @@ MEditorSaveNotRecommended
 "No se recomienda guardar este archivo."
 "Не рекомендується зберігати файл."
 
+MEditorFallbackCP
+"Файл открыт в кодовой странице ANSI"
+"File is opened in ANSI code page"
+upd:"File is opened in ANSI code page"
+upd:"File is opened in ANSI code page"
+upd:"File is opened in ANSI code page"
+upd:"File is opened in ANSI code page"
+upd:"File is opened in ANSI code page"
+"Файл відкритий у кодовій сторінці ANSI "
+
 MEditorSaveCPWarnShow
 "Показать"
 "Show"

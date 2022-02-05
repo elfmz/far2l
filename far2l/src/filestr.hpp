@@ -121,7 +121,7 @@ public:
 		LPWSTR* LastString;
 		int LastResult;
 		
-		std::vector<wchar_t> Buffer;
+		std::wstring Buffer;
 };
 
 bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound = nullptr, bool bUseHeuristics = true);

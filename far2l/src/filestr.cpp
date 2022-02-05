@@ -694,7 +694,7 @@ GetFileString::GetFileString(File& SrcFile):
 	LastLength(0),
 	LastString(nullptr),
 	LastResult(0), 
-	Buffer(128)
+	Buffer(128, L'\0')
 {
 }
 
@@ -722,6 +722,8 @@ int GetFileString::PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	}
 	return LastResult;
 }
+
+static wchar_t s_wchnul = 0;
 
 int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 {
@@ -774,7 +776,15 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	}
 
 
-	if (nExitCode == 1)
+	if (nExitCode != 1)
+		return nExitCode;
+
+	if (nCodePage == CP_UTF8)
+	{
+		MB2Wide(Str, Length, Buffer);
+		Length = Buffer.size();
+	}
+	else
 	{
 		DWORD Result = ERROR_SUCCESS;
 		int nResultLength = 0;
@@ -825,9 +835,11 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 			Buffer[nResultLength] = L'\0';
 		}
 		Length = nResultLength;
-		*DestStr = &Buffer[0];
 	}
-	return nExitCode;
+
+	*DestStr = Length ? &Buffer[0] : &s_wchnul;
+
+	return 1;
 }
 
 

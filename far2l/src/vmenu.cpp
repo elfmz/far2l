@@ -1713,7 +1713,7 @@ void VMenu::DrawTitles()
 
 		if (bFilterEnabled)
 		{
-			if (bFilterLocked)
+			if (bFilterLocked || strFilter.IsEmpty())
 				strDisplayTitle += L" ";
 			else
 				strDisplayTitle.Clear();

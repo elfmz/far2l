@@ -1942,6 +1942,8 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		size_t LineNumber=0;
 		CachedWrite Cache(EditFile);
 
+		std::string tmpstr;
+
 		for (Edit *CurPtr=m_editor->TopList; CurPtr; CurPtr=CurPtr->m_next,LineNumber++)
 		{
 			DWORD CurTime=WINPORT(GetTickCount)();
@@ -1980,6 +1982,14 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 					SysErrorCode=WINPORT(GetLastError)();
 					bError = true;
 				}
+			}
+			else if (codepage == CP_UTF8)
+			{
+				Wide2MB(SaveStr, Length, tmpstr);
+				if (EndLength)
+					Wide2MB(EndSeq, EndLength, tmpstr, true);
+				if (!tmpstr.empty() && !Cache.Write(tmpstr.data(),tmpstr.size()))
+					bError = true;
 			}
 			else
 			{

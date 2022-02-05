@@ -6,7 +6,6 @@
 #include "utils.h"
 #include "UtfConvert.hpp"
 
-//TODO: Implement convertion according to locale set, but not only UTF8
 //NB: Routines here should not affect errno
 
 //////////////////////////////////////////////////////

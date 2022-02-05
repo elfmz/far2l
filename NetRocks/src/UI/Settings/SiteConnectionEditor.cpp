@@ -71,8 +71,7 @@ static struct Codepages : std::vector<CodePage>, std::mutex
 
 static BOOL __stdcall EnumCodePagesProc(LPWSTR lpwszCodePage)
 {
-	CodePage cp;
-	int id = _wtoi(lpwszCodePage);
+	const int id = _wtoi(lpwszCodePage);
 
 	CPINFOEX cpiex{};
 	if (id != CP_UTF8 && id != CP_UTF16LE && id != CP_UTF16BE && id != CP_UTF32LE && id != CP_UTF32BE) {

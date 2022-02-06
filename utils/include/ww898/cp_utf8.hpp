@@ -90,6 +90,7 @@ struct utf8 final
         }
         if (ch0 < 0xFC) // 1111_10xx 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
+            if ((ch0 & 3) == 0) goto _err;
             char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
             char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
             char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;
@@ -98,6 +99,7 @@ struct utf8 final
         }
         if (ch0 < 0xFE) // 1111_110x 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx 10xx_xxxx
         {
+            if ((ch0 & 1) == 0) goto _err;
             char_type const ch1 = read_fn(); if (ch1 >> 6 != 2) goto _err;
             char_type const ch2 = read_fn(); if (ch2 >> 6 != 2) goto _err;
             char_type const ch3 = read_fn(); if (ch3 >> 6 != 2) goto _err;

@@ -155,7 +155,6 @@ void Wide2MB(const wchar_t *src_begin, size_t src_len, std::string &dst, bool ap
 			if (LIKELY(src_end - src >= 3 && IsLowCaseHexDigit(src[1]) && IsLowCaseHexDigit(src[2]))) {
 				dst+= ParseHexByte(&src[1]);
 				src+= 3;
-				src_begin = src;
 
 			} else {
 				Wide2MB_UnescapedAppend(src, 1, dst);
@@ -164,6 +163,7 @@ void Wide2MB(const wchar_t *src_begin, size_t src_len, std::string &dst, bool ap
 					++src;
 				}
 			}
+			src_begin = src;
 		}
 	}
 

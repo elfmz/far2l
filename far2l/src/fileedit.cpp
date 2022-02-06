@@ -1649,7 +1649,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 }
 
 //TextFormat и Codepage используются ТОЛЬКО, если bSaveAs = true!
-void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature)
+void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase)
 {
 	DWORD dwSignature = 0;
 	DWORD SignLength = 0;
@@ -1697,7 +1697,10 @@ void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool b
 		if (CurTime-StartTime>RedrawTimeout)
 		{
 			StartTime=CurTime;
-			Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(LineNumber*100/m_editor->NumLastLine));
+			if (Phase == 0)
+				Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(LineNumber*50/m_editor->NumLastLine));
+			else
+				Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(50 + (LineNumber*50/m_editor->NumLastLine)));
 		}
 
 		const wchar_t *SaveStr, *EndSeq;
@@ -1764,7 +1767,7 @@ void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool b
 }
 
 
-struct ContentMeasurer : IContentWriter
+struct ContentMeasurer : FileEditor::IContentWriter
 {
 	INT64 MeasuredSize = 0;
 
@@ -1774,7 +1777,7 @@ struct ContentMeasurer : IContentWriter
 	}
 };
 
-class ContentSaver : public IContentWriter
+class ContentSaver : public FileEditor::IContentWriter
 {
 	CachedWrite CW;
 
@@ -2035,7 +2038,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 		try {
 			ContentMeasurer cm;
-			SaveContent(Name, &cm, bSaveAs, TextFormat, codepage, AddSignature);
+			SaveContent(Name, &cm, bSaveAs, TextFormat, codepage, AddSignature, 0);
 
 			try {
 				File EditFile;
@@ -2051,7 +2054,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				}
 
 				ContentSaver cs(EditFile);
-				SaveContent(Name, &cs, bSaveAs, TextFormat, codepage, AddSignature);
+				SaveContent(Name, &cs, bSaveAs, TextFormat, codepage, AddSignature, 1);
 				cs.Flush();
 
 				EditFile.SetEnd();

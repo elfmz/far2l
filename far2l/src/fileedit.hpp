@@ -80,6 +80,11 @@ enum FFILEEDIT_FLAGS
 };
 
 
+struct IContentWriter
+{
+	virtual void Write(const void *Data, size_t Length) = 0;
+};
+
 class FileEditor : public Frame
 {
 		public:
@@ -164,6 +169,8 @@ class FileEditor : public Frame
 		virtual void ResizeConsole();
 		int LoadFile(const wchar_t *Name, int &UserBreak);
 		//TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
+
+		void SaveContent(const wchar_t *Name, IContentWriter *Writer, bool bSaveAs, int TextFormat = 0, UINT codepage = CP_UTF8, bool AddSignature=false);
 		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8, bool AddSignature=false);
 		void SetTitle(const wchar_t *Title);
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);

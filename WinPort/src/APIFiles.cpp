@@ -400,6 +400,41 @@ extern "C"
 #endif
 	}
 
+	BOOL WINPORT(FileAllocationRequire) (HANDLE hFile, DWORD64 RequireFileSize)
+	{
+		AutoWinPortHandle<WinPortHandleFile> wph(hFile);
+		if (!wph) {
+			return FALSE;
+		}
+
+#if defined(__linux__) || defined(__FreeBSD__)
+		int ret = posix_fallocate(wph->fd, 0, (off_t)RequireFileSize);
+		if (ret == 0)
+			return TRUE;
+		errno = ret;
+
+#elif defined(F_PREALLOCATE)
+		fstore_t fst {};
+		fst.fst_flags = F_ALLOCATECONTIG;
+		fst.fst_posmode = F_PEOFPOSMODE;
+		fst.fst_offset = 0;
+		fst.fst_length = (off_t)HintFileSize;
+		fst.fst_bytesalloc = 0;
+		int ret = fcntl(wph->fd, F_PREALLOCATE, &fst);
+		if (ret == -1) {
+			fst.fst_flags = F_ALLOCATEALL;
+			ret = fcntl(wph->fd, F_PREALLOCATE, &fst);
+		}
+		if (ret != -1)
+			return TRUE;
+
+#else
+		return TRUE;
+#endif
+
+		return FALSE;
+	}
+
 	DWORD WINPORT(SetFilePointer)( HANDLE hFile, LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod)
 	{
 		LARGE_INTEGER liDistanceToMove, liNewFilePointer = {};

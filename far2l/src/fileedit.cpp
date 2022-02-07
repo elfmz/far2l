@@ -2045,10 +2045,19 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				if (!EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN))
 					throw WINPORT(GetLastError)();
 
-				if (!Flags.Check(FFILEEDIT_NEW))
-				{
+				if (!Flags.Check(FFILEEDIT_NEW)) {
+					UINT64 OriginalSize = 0;
+					EditFile.GetSize(OriginalSize);
+
 					if (!EditFile.SetPointer(cm.MeasuredSize, nullptr, FILE_BEGIN) || !EditFile.SetEnd())
 						throw WINPORT(GetLastError)();
+
+					if (!EditFile.AllocationRequire(cm.MeasuredSize)) {
+						auto ErrorCode = WINPORT(GetLastError)();
+						EditFile.SetPointer(OriginalSize, nullptr, FILE_BEGIN);
+						EditFile.SetEnd();
+						throw ErrorCode;
+					}
 
 					EditFile.SetPointer(0, nullptr, FILE_BEGIN);
 				}

@@ -143,6 +143,7 @@ extern "C" {
 	WINPORT_DECL(SetFilePointerEx, BOOL, ( HANDLE hFile, LARGE_INTEGER liDistanceToMove, 
 		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod));
 	WINPORT_DECL(FileAllocationHint, VOID, (HANDLE hFile, DWORD64 HintFileSize));
+	WINPORT_DECL(FileAllocationRequire, BOOL, (HANDLE hFile, DWORD64 RequireFileSize));
 	WINPORT_DECL(SetFilePointer, DWORD, ( HANDLE hFile, 
 		LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod));
 	WINPORT_DECL(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime, 

@@ -145,6 +145,7 @@ public:
 	bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
 	bool GetSize(UINT64& Size);
 	void AllocationHint(UINT64 Size);
+	bool AllocationRequire(UINT64 Size);
 	bool FlushBuffers();
 	bool Chmod(DWORD dwUnixMode);
 	FemaleBool QueryFileExtendedAttributes(FileExtendedAttributes &xattr);

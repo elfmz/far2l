@@ -52,6 +52,7 @@ enum
 
 bool WinPortClipboard_IsBusy();
 
+bool ctrl_hack_enabled = false;
 
 static void NormalizeArea(SMALL_RECT &area)
 {
@@ -397,10 +398,14 @@ wxEND_EVENT_TABLE()
 
 void WinPortFrame::OnShow(wxShowEvent &show)
 {
+    struct stat s;
+    if (stat(InMyConfig("ctrlhack").c_str(), &s)==0) {
+        ctrl_hack_enabled = true;
+    }
+
 // create accelerators to handle hotkeys (like Ctrl-O) when using non-latin layouts under Linux
 // under osx acceleratos seems not needed and only causes bugs
 #ifndef __APPLE__
-	struct stat s;
 	if (stat(InMyConfig("nomenu").c_str(), &s)!=0) {
 		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
@@ -1068,7 +1073,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// for non-latin unicode keycode pressed with Ctrl key together
 	// especially for keys not used as accelerators
 	// detect correct keycode by raw key code and enqueue keypress
-	if (event.ControlDown() && !event.GetKeyCode()) {
+	if (event.ControlDown() && !event.GetKeyCode() && ctrl_hack_enabled) {
 		bool go = false;
 		switch (event.GetRawKeyFlags()) {
 			// Hardware key codes are defined in /usr/share/X11/xkb/keycodes/xfree86

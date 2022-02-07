@@ -407,29 +407,56 @@ extern "C"
 			return FALSE;
 		}
 
+		struct stat s{};
+		if (fstat(wph->fd, &s) == -1)
+			return FALSE;
+
 #if defined(__linux__) || defined(__FreeBSD__)
 		int ret = posix_fallocate(wph->fd, 0, (off_t)RequireFileSize);
-		if (ret != 0) {
-			errno = ret;
-			return FALSE;
-		}
+		if (ret == 0)
+			return TRUE;
 
 #elif defined(F_PREALLOCATE)
+		if ((off_t)RequireFileSize <= s.st_size)
+			return TRUE;
+
 		fstore_t fst {};
 		fst.fst_flags = F_ALLOCATECONTIG;
 		fst.fst_posmode = F_PEOFPOSMODE;
 		fst.fst_offset = 0;
-		fst.fst_length = (off_t)RequireFileSize;
+		fst.fst_length = (off_t)((off_t)RequireFileSize - s.st_size);
 		fst.fst_bytesalloc = 0;
+
 		int ret = fcntl(wph->fd, F_PREALLOCATE, &fst);
 		if (ret == -1) {
 			fst.fst_flags = F_ALLOCATEALL;
+			fst.fst_bytesalloc = 0;
 			ret = fcntl(wph->fd, F_PREALLOCATE, &fst);
-			if (ret == -1) {
-				return FALSE;
-			}
+		}
+
+		if (ret != -1 && ftruncate(wph->fd, (off_t)RequireFileSize) == 0) {
+			return TRUE;
 		}
 #endif
+
+		// posix_fallocate/F_PREALLOCATE unsupported or failed, try to fallback
+		// to file expansion by writing zero bytes to ensure space allocation
+		char dummy[0x10000]{};
+		for (off_t ofs = s.st_size; ofs < (off_t)RequireFileSize; ) {
+			const size_t piece = (size_t)std::min((off_t)sizeof(dummy), (off_t)RequireFileSize - ofs);
+			const ssize_t r = pwrite(wph->fd, dummy, piece, ofs);
+			if (r == 0 || (r < 0 && errno != EAGAIN && errno != EINTR)) {
+				int err = errno;
+				if (ftruncate(wph->fd, s.st_size) == -1) { // revert original size
+					perror("FileAllocationRequire: ftruncate to original length");
+				}
+				errno = err;
+				return FALSE;
+			}
+			if (r > 0) {
+				ofs+= (size_t)r;
+			}
+		}
 
 		return TRUE;
 	}

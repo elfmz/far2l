@@ -83,11 +83,15 @@ enum FFILEEDIT_FLAGS
 class FileEditor : public Frame
 {
 		public:
-		struct IContentWriter
+		struct BaseContentWriter
 		{
+			void EncodeAndWrite(UINT codepage, const wchar_t *Str, size_t Length);
 			virtual void Write(const void *Data, size_t Length) = 0;
-		};
 
+		private:
+			std::string _tmpstr;
+			std::wstring _tmpwstr;
+		};
 
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine=-1,int StartChar=-1,const wchar_t *PluginData=nullptr,int OpenModeExstFile=FEOPMODE_QUERY);
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine,int StartChar,const wchar_t *Title,int X1,int Y1,int X2,int Y2,int DeleteOnClose=0,int OpenModeExstFile=FEOPMODE_QUERY);
@@ -171,7 +175,7 @@ class FileEditor : public Frame
 		int LoadFile(const wchar_t *Name, int &UserBreak);
 		//TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
 
-		void SaveContent(const wchar_t *Name, IContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase);
+		void SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase);
 		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8, bool AddSignature=false);
 		void SetTitle(const wchar_t *Title);
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);

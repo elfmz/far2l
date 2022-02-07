@@ -169,6 +169,11 @@ void File::AllocationHint(UINT64 Size)
 	WINPORT(FileAllocationHint)(Handle, Size);
 }
 
+bool File::AllocationRequire(UINT64 Size)
+{
+	return WINPORT(FileAllocationRequire)(Handle, Size) != FALSE;
+}
+
 bool File::SetEnd()
 {
 	return WINPORT(SetEndOfFile)(Handle) != FALSE;

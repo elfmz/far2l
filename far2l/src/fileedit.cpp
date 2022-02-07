@@ -1318,12 +1318,14 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 								|| IsUTF16(m_codepage) != IsUTF16(codepage)
 								|| IsUTF32(m_codepage) != IsUTF32(codepage);
 					if (!IsFileModified() || !need_reload) {
-						SetCodePage(codepage);
 						Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
 						if (need_reload) {
+							m_codepage = codepage;
 							int UserBreak = 0;
 							SaveToCache();
 							LoadFile(strLoadedFileName, UserBreak);
+						} else {
+							SetCodePage(codepage);
 						}
 						ChangeEditKeyBar();
 					} else
@@ -1649,6 +1651,145 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 }
 
 //TextFormat и Codepage используются ТОЛЬКО, если bSaveAs = true!
+void FileEditor::SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase)
+{
+	DWORD dwSignature = 0;
+	DWORD SignLength = 0;
+	switch (codepage)
+	{
+		case CP_UTF32LE:
+			dwSignature = SIGN_UTF32LE;
+			SignLength = 4;
+			if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+			break;
+		case CP_UTF32BE:
+			dwSignature = SIGN_UTF32BE;
+			SignLength = 4;
+			if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+			break;
+		case CP_UTF16LE:
+			dwSignature = SIGN_UTF16LE;
+			SignLength = 2;
+			if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+			break;
+		case CP_UTF16BE:
+			dwSignature = SIGN_UTF16BE;
+			SignLength = 2;
+			if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
+			break;
+		case CP_UTF8:
+			dwSignature = SIGN_UTF8;
+			SignLength = 3;
+			if (!bSaveAs) AddSignature = (m_AddSignature == FB_YES);
+			break;
+	}
+	if (AddSignature)
+		Writer->Write(&dwSignature,SignLength);
+
+	DWORD StartTime=WINPORT(GetTickCount)();
+	size_t LineNumber=0;
+
+	for (Edit *CurPtr=m_editor->TopList; CurPtr; CurPtr=CurPtr->m_next,LineNumber++)
+	{
+		DWORD CurTime=WINPORT(GetTickCount)();
+
+		if (CurTime-StartTime>RedrawTimeout)
+		{
+			StartTime=CurTime;
+			if (Phase == 0)
+				Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(LineNumber*50/m_editor->NumLastLine));
+			else
+				Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(50 + (LineNumber*50/m_editor->NumLastLine)));
+		}
+
+		const wchar_t *SaveStr, *EndSeq;
+
+		int Length;
+
+		CurPtr->GetBinaryString(&SaveStr,&EndSeq,Length);
+
+		if (!*EndSeq && CurPtr->m_next)
+			EndSeq=*m_editor->GlobalEOL ? m_editor->GlobalEOL:DOS_EOL_fmt;
+
+		if (TextFormat && *EndSeq)
+		{
+			EndSeq=m_editor->GlobalEOL;
+			CurPtr->SetEOL(EndSeq);
+		}
+
+		Writer->EncodeAndWrite(codepage, SaveStr, Length);
+		Writer->EncodeAndWrite(codepage, EndSeq, StrLength(EndSeq));
+	}
+}
+
+
+void FileEditor::BaseContentWriter::EncodeAndWrite(UINT codepage, const wchar_t *Str, size_t Length)
+{
+		if (!Length)
+			return;
+
+		if (codepage == CP_WIDE_LE)
+		{
+			Write(Str, Length * sizeof(wchar_t));
+		}
+		else if (codepage == CP_UTF8)
+		{
+			Wide2MB(Str, Length, _tmpstr);
+			Write(_tmpstr.data(), _tmpstr.size());
+		}
+		else if (codepage == CP_WIDE_BE)
+		{
+			if (_tmpwstr.size() < Length)
+				_tmpwstr.resize(Length + 0x20);
+
+			WideReverse(Str, (wchar_t *)_tmpwstr.data(), Length);
+			Write(_tmpwstr.data(), Length * sizeof(wchar_t));
+
+		} else {
+			int cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
+			if (cnt <= 0)
+				return;
+
+			if (_tmpstr.size() < (size_t)cnt)
+				_tmpstr.resize(cnt + 0x20);
+
+			cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, (char *)_tmpstr.data(), _tmpstr.size(), nullptr, nullptr);
+			if (cnt > 0)
+				Write(_tmpstr.data(), cnt);
+		}
+}
+
+struct ContentMeasurer : FileEditor::BaseContentWriter
+{
+	INT64 MeasuredSize = 0;
+
+	virtual void Write(const void *Data, size_t Length)
+	{
+		MeasuredSize+= Length;
+	}
+};
+
+class ContentSaver : public FileEditor::BaseContentWriter
+{
+	CachedWrite CW;
+
+public:
+	ContentSaver(File &EditFile) : CW(EditFile)
+	{
+	}
+
+	virtual void Write(const void *Data, size_t Length)
+	{
+		if (!CW.Write(Data, Length))
+			throw WINPORT(GetLastError)();
+	}
+
+	void Flush()
+	{
+		if (!CW.Flush())
+			throw WINPORT(GetLastError)();
+	}
+};
 
 int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature)
 {
@@ -1872,16 +2013,6 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		}
 
 		CtrlObject->Plugins.ProcessEditorEvent(EE_SAVE,nullptr);
-		File EditFile;
-		DWORD dwWritten=0;
-		// Don't use CreationDisposition=CREATE_ALWAYS here - it's kills alternate streams
-		if(!EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ, nullptr, Flags.Check(FFILEEDIT_NEW)?CREATE_NEW:TRUNCATE_EXISTING, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN))
-		{
-			//_SVS(SysLogLastError();SysLog(L"Name='%ls',FileAttributes=%d",Name,FileAttributes));
-			RetCode=SAVEFILE_ERROR;
-			SysErrorCode=WINPORT(GetLastError)();
-			goto end;
-		}
 
 		m_editor->UndoSavePos=m_editor->UndoPos;
 		m_editor->Flags.Clear(FEDITOR_UNDOSAVEPOSLOST);
@@ -1897,184 +2028,50 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		SetCursorType(FALSE,0);
 		TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
 
-		DWORD dwSignature = 0;
-		DWORD SignLength = 0;
-		switch (codepage)
+		try
 		{
-			case CP_UTF32LE:
-				dwSignature = SIGN_UTF32LE;
-				SignLength = 4;
-				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
-				break;
-			case CP_UTF32BE:
-				dwSignature = SIGN_UTF32BE;
-				SignLength = 4;
-				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
-				break;
-			case CP_UTF16LE:
-				dwSignature = SIGN_UTF16LE;
-				SignLength = 2;
-				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
-				break;
-			case CP_UTF16BE:
-				dwSignature = SIGN_UTF16BE;
-				SignLength = 2;
-				if (!bSaveAs) AddSignature = (m_AddSignature != FB_NO);
-				break;
-			case CP_UTF8:
-				dwSignature = SIGN_UTF8;
-				SignLength = 3;
-				if (!bSaveAs) AddSignature = (m_AddSignature == FB_YES);
-				break;
-		}
-		if (AddSignature)
-		{
-			if (!EditFile.Write(&dwSignature,SignLength,&dwWritten,nullptr)||dwWritten!=SignLength)
+			ContentMeasurer cm;
+			SaveContent(Name, &cm, bSaveAs, TextFormat, codepage, AddSignature, 0);
+
+			try
 			{
-				EditFile.Close();
-				apiDeleteFile(Name);
-				RetCode=SAVEFILE_ERROR;
-				goto end;
-			}
-		}
+				File EditFile;
+				if (!EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN))
+					throw WINPORT(GetLastError)();
 
-		DWORD StartTime=WINPORT(GetTickCount)();
-		size_t LineNumber=0;
-		CachedWrite Cache(EditFile);
-
-		std::string tmpstr;
-
-		for (Edit *CurPtr=m_editor->TopList; CurPtr; CurPtr=CurPtr->m_next,LineNumber++)
-		{
-			DWORD CurTime=WINPORT(GetTickCount)();
-
-			if (CurTime-StartTime>RedrawTimeout)
-			{
-				StartTime=CurTime;
-				Editor::EditorShowMsg(MSG(MEditTitle),MSG(MEditSaving),Name,(int)(LineNumber*100/m_editor->NumLastLine));
-			}
-
-			const wchar_t *SaveStr, *EndSeq;
-
-			int Length;
-
-			CurPtr->GetBinaryString(&SaveStr,&EndSeq,Length);
-
-			if (!*EndSeq && CurPtr->m_next)
-				EndSeq=*m_editor->GlobalEOL ? m_editor->GlobalEOL:DOS_EOL_fmt;
-
-			if (TextFormat && *EndSeq)
-			{
-				EndSeq=m_editor->GlobalEOL;
-				CurPtr->SetEOL(EndSeq);
-			}
-
-			int EndLength=StrLength(EndSeq);
-			bool bError = false;
-
-			if (codepage == CP_WIDE_LE)
-			{
-				if (
-				    (Length && !Cache.Write(SaveStr,Length*sizeof(wchar_t))) ||
-				    (EndLength && !Cache.Write(EndSeq,EndLength*sizeof(wchar_t)))
-						)
+				if (!Flags.Check(FFILEEDIT_NEW))
 				{
-					SysErrorCode=WINPORT(GetLastError)();
-					bError = true;
-				}
-			}
-			else if (codepage == CP_UTF8)
-			{
-				Wide2MB(SaveStr, Length, tmpstr);
-				if (EndLength)
-					Wide2MB(EndSeq, EndLength, tmpstr, true);
-				if (!tmpstr.empty() && !Cache.Write(tmpstr.data(),tmpstr.size()))
-					bError = true;
-			}
-			else
-			{
-				if (Length)
-				{
-					DWORD length = (codepage == CP_WIDE_BE) ? Length * sizeof(wchar_t) : 
-						WINPORT(WideCharToMultiByte)(codepage, 0, SaveStr, Length, nullptr, 0, nullptr, nullptr);
-					char *SaveStrCopy=(char *)malloc(length);
-
-					if (SaveStrCopy)
-					{
-						if (codepage == CP_WIDE_BE) {
-							WideReverse(SaveStr, (wchar_t *)SaveStrCopy, Length);
-						} else
-							WINPORT(WideCharToMultiByte)(codepage, 0, SaveStr, Length, SaveStrCopy, length, nullptr, nullptr);
-
-						if (!Cache.Write(SaveStrCopy,length))
-						{
-							bError = true;
-							SysErrorCode=WINPORT(GetLastError)();
-						}
-
-						free(SaveStrCopy);
-					}
-					else
-						bError = true;
+					if (!EditFile.AllocationRequire(cm.MeasuredSize))
+						throw WINPORT(GetLastError)();
 				}
 
-				if (!bError)
-				{
-					if (EndLength)
-					{
-						DWORD endlength = (codepage == CP_WIDE_BE ? EndLength*sizeof(wchar_t) 
-							: WINPORT(WideCharToMultiByte)(codepage, 0, EndSeq, EndLength, nullptr, 0, nullptr, nullptr));
-						char *EndSeqCopy=(char *)malloc(endlength);
+				ContentSaver cs(EditFile);
+				SaveContent(Name, &cs, bSaveAs, TextFormat, codepage, AddSignature, 1);
+				cs.Flush();
 
-						if (EndSeqCopy)
-						{
-							if (codepage == CP_WIDE_BE)
-								WideReverse(EndSeq, (wchar_t *)EndSeqCopy, EndLength);
-							else
-								WINPORT(WideCharToMultiByte)(codepage, 0, EndSeq, EndLength, EndSeqCopy, endlength, nullptr, nullptr);
+				EditFile.SetEnd();
 
-							if (!Cache.Write(EndSeqCopy,endlength))
-							{
-								bError = true;
-								SysErrorCode=WINPORT(GetLastError)();
-							}
+			} catch (...) {
+				if (Flags.Check(FFILEEDIT_NEW))
+					apiDeleteFile(Name);
 
-							free(EndSeqCopy);
-						}
-						else
-							bError = true;
-					}
-				}
-			}
-
-			if (bError)
-			{
-				EditFile.Close();
-				apiDeleteFile(Name);
-				RetCode=SAVEFILE_ERROR;
-				goto end;
+				throw;
 			}
 		}
-
-		if(Cache.Flush())
+		catch (DWORD ErrorCode)
 		{
-			EditFile.SetEnd();
-			EditFile.Close();
+			SysErrorCode = ErrorCode;
+			RetCode = SAVEFILE_ERROR;
 		}
-		else
+		catch (std::exception &e)
 		{
-			SysErrorCode=WINPORT(GetLastError)();
-			EditFile.Close();
-			apiDeleteFile(Name);
-			RetCode=SAVEFILE_ERROR;
+			SysErrorCode = ENOMEM;
+			RetCode = SAVEFILE_ERROR;
 		}
 	}
 
-	if (FileHolder && RetCode != SAVEFILE_ERROR) {
+	if (FileHolder && RetCode != SAVEFILE_ERROR)
 		FileHolder->OnFileEdited(Name);
-	}
-
-end:
 
 	if (FileUnmakeWritable)
 	{

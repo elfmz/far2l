@@ -413,7 +413,8 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 				affecting_combinings = 0;
 			}
 
-			const unsigned int cx = char_index - affecting_combinings;
+			const unsigned int cx = (char_index > affecting_combinings) ? char_index - affecting_combinings : 0;
+
 			if (cy == (unsigned int)_cursor_props.pos.Y && char_index == (unsigned int)_cursor_props.pos.X) {
 				_cursor_props.combining_offset = (SHORT)affecting_combinings;
 			}

@@ -282,18 +282,19 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Up       Alt       \x1b[1;3A
         Up       Ctrl      \x1b[5A
         Up       Ctrl      \x1b[1;5A */
-			if (keypad == 1) {
-				if (ctrl && shift) return "\x1b[1;6A";
-				if (shift) return "\x1b[1;2A";
-				if (alt) return "\x1b[1;3A";
-				if (ctrl) return "\x1b[1;5A";
+			if (ctrl && shift) return "\x1b[1;6A";
+			if (shift) return "\x1b[1;2A";
+			if (alt) return "\x1b[1;3A";
+			if (ctrl) return "\x1b[1;5A";
+    		if (keypad == 1) {
 				return "\x1bOA";
 			}
-			if (ctrl && shift) return "\x1b[6A";
-			if (shift) return "\x1b[2A";
-			if (alt) return "\x1b[3A";
-			if (ctrl) return "\x1b[5A";
-			return "\x1b[A";
+//          breaks free pascal ide
+//			if (ctrl && shift) return "\x1b[6A";
+//			if (shift) return "\x1b[2A";
+//			if (alt) return "\x1b[3A";
+//			if (ctrl) return "\x1b[5A";
+    		return "\x1b[A";
 		
 		case VK_DOWN: /*
         Down               \x1bOB
@@ -304,17 +305,18 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Down     Alt       \x1b[1;3B
         Down     Ctrl      \x1b[5B
         Down     Ctrl      \x1b[1;5B */
+			if (ctrl && shift) return "\x1b[1;6B";
+			if (shift) return "\x1b[1;2B";
+			if (alt) return "\x1b[1;3B";
+			if (ctrl) return "\x1b[1;5B";
 			if (keypad == 1) {
-				if (ctrl && shift) return "\x1b[1;6B";
-				if (shift) return "\x1b[1;2B";
-				if (alt) return "\x1b[1;3B";
-				if (ctrl) return "\x1b[1;5B";
 				return "\x1bOB";
 			}
-			if (ctrl && shift) return "\x1b[6B";
-			if (shift) return "\x1b[2B";
-			if (alt) return "\x1b[3B";
-			if (ctrl) return "\x1b[5B";
+//          breaks free pascal ide
+//			if (ctrl && shift) return "\x1b[6B";
+//			if (shift) return "\x1b[2B";
+//			if (alt) return "\x1b[3B";
+//			if (ctrl) return "\x1b[5B";
 			return "\x1b[B";
 
 		case VK_LEFT: /*
@@ -326,17 +328,18 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Left     Alt       \x1b[1;3D
         Left     Ctrl      \x1b[5D
         Left     Ctrl      \x1b[1;5D */
-			if (keypad == 1) {
-				if (ctrl && shift) return "\x1b[1;6D";
-				if (shift) return "\x1b[1;2D";
-				if (alt) return "\x1b[1;3D";
-				if (ctrl) return "\x1b[1;5D";
+			if (ctrl && shift) return "\x1b[1;6D";
+			if (shift) return "\x1b[1;2D";
+			if (alt) return "\x1b[1;3D";
+			if (ctrl) return "\x1b[1;5D";
+    		if (keypad == 1) {
 				return "\x1bOD";
 			}
-			if (ctrl && shift) return "\x1b[6D";
-			if (shift) return "\x1b[2D";
-			if (alt) return "\x1b[3D";
-			if (ctrl) return "\x1b[5D";
+//          breaks free pascal ide
+//			if (ctrl && shift) return "\x1b[6D";
+//			if (shift) return "\x1b[2D";
+//			if (alt) return "\x1b[3D";
+//			if (ctrl) return "\x1b[5D";
 			return "\x1b[D";
 
 		case VK_RIGHT: /*
@@ -348,17 +351,18 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
         Right    Alt       \x1b[1;3C
         Right    Ctrl      \x1b[5C
         Right    Ctrl      \x1b[1;5C */
-			if (keypad == 1) {
-				if (ctrl && shift) return "\x1b[1;6C";
-				if (shift) return "\x1b[1;2C";
-				if (alt) return "\x1b[1;3C";
-				if (ctrl) return "\x1b[1;5C";
+			if (ctrl && shift) return "\x1b[1;6C";
+			if (shift) return "\x1b[1;2C";
+			if (alt) return "\x1b[1;3C";
+			if (ctrl) return "\x1b[1;5C";
+    		if (keypad == 1) {
 				return "\x1bOC";
 			}
-			if (ctrl && shift) return "\x1b[6C";
-			if (shift) return "\x1b[2C";
-			if (alt) return "\x1b[3C";
-			if (ctrl) return "\x1b[5C";
+//          breaks free pascal ide
+//			if (ctrl && shift) return "\x1b[6C";
+//			if (shift) return "\x1b[2C";
+//			if (alt) return "\x1b[3C";
+//			if (ctrl) return "\x1b[5C";
 			return "\x1b[C";
 	}
 

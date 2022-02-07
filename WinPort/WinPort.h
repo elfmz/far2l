@@ -142,8 +142,12 @@ extern "C" {
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped));
 	WINPORT_DECL(SetFilePointerEx, BOOL, ( HANDLE hFile, LARGE_INTEGER liDistanceToMove, 
 		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod));
+
+	// hints that file will soon grow up to specified size, doesnt change actual size of file
 	WINPORT_DECL(FileAllocationHint, VOID, (HANDLE hFile, DWORD64 HintFileSize));
+	// grows file to specified size if it was smaller, ensuring that disk space is actually allocated
 	WINPORT_DECL(FileAllocationRequire, BOOL, (HANDLE hFile, DWORD64 RequireFileSize));
+
 	WINPORT_DECL(SetFilePointer, DWORD, ( HANDLE hFile, 
 		LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod));
 	WINPORT_DECL(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime, 

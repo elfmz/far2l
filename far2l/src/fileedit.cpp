@@ -1318,12 +1318,14 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 								|| IsUTF16(m_codepage) != IsUTF16(codepage)
 								|| IsUTF32(m_codepage) != IsUTF32(codepage);
 					if (!IsFileModified() || !need_reload) {
-						SetCodePage(codepage);
 						Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
 						if (need_reload) {
+							m_codepage = codepage;
 							int UserBreak = 0;
 							SaveToCache();
 							LoadFile(strLoadedFileName, UserBreak);
+						} else {
+							SetCodePage(codepage);
 						}
 						ChangeEditKeyBar();
 					} else
@@ -1649,7 +1651,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 }
 
 //TextFormat и Codepage используются ТОЛЬКО, если bSaveAs = true!
-void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase)
+void FileEditor::SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase)
 {
 	DWORD dwSignature = 0;
 	DWORD SignLength = 0;
@@ -1687,9 +1689,6 @@ void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool b
 	DWORD StartTime=WINPORT(GetTickCount)();
 	size_t LineNumber=0;
 
-	std::string tmpstr;
-	std::vector<unsigned char> tmpbuf;
-
 	for (Edit *CurPtr=m_editor->TopList; CurPtr; CurPtr=CurPtr->m_next,LineNumber++)
 	{
 		DWORD CurTime=WINPORT(GetTickCount)();
@@ -1718,56 +1717,49 @@ void FileEditor::SaveContent(const wchar_t *Name, IContentWriter *Writer, bool b
 			CurPtr->SetEOL(EndSeq);
 		}
 
-		int EndLength=StrLength(EndSeq);
-		if (codepage == CP_WIDE_LE)
-		{
-			if (Length)
-				Writer->Write(SaveStr,Length*sizeof(wchar_t));
-			if (EndLength)
-				Writer->Write(EndSeq,EndLength*sizeof(wchar_t));
-		}
-		else if (codepage == CP_UTF8)
-		{
-			Wide2MB(SaveStr, Length, tmpstr);
-			if (EndLength)
-				Wide2MB(EndSeq, EndLength, tmpstr, true);
-			if (!tmpstr.empty())
-				Writer->Write(tmpstr.data(),tmpstr.size());
-		}
-		else
-		{
-			if (Length)
-			{
-				const DWORD bufsize = (codepage == CP_WIDE_BE) ? Length * sizeof(wchar_t)
-					: WINPORT(WideCharToMultiByte)(codepage, 0, SaveStr, Length, nullptr, 0, nullptr, nullptr);
-				tmpbuf.resize(bufsize);
-
-				if (codepage == CP_WIDE_BE) {
-					WideReverse(SaveStr, (wchar_t *)tmpbuf.data(), Length);
-				} else
-					WINPORT(WideCharToMultiByte)(codepage, 0, SaveStr, Length, (char *)tmpbuf.data(), bufsize, nullptr, nullptr);
-
-				Writer->Write(tmpbuf.data(), bufsize);
-			}
-
-			if (EndLength)
-			{
-				const DWORD bufsize = (codepage == CP_WIDE_BE ? EndLength*sizeof(wchar_t)
-					: WINPORT(WideCharToMultiByte)(codepage, 0, EndSeq, EndLength, nullptr, 0, nullptr, nullptr));
-				tmpbuf.resize(bufsize);
-				if (codepage == CP_WIDE_BE)
-					WideReverse(EndSeq, (wchar_t *)tmpbuf.data(), EndLength);
-				else
-					WINPORT(WideCharToMultiByte)(codepage, 0, EndSeq, EndLength, (char *)tmpbuf.data(), bufsize, nullptr, nullptr);
-
-				Writer->Write(tmpbuf.data(), bufsize);
-			}
-		}
+		Writer->EncodeAndWrite(codepage, SaveStr, Length);
+		Writer->EncodeAndWrite(codepage, EndSeq, StrLength(EndSeq));
 	}
 }
 
 
-struct ContentMeasurer : FileEditor::IContentWriter
+void FileEditor::BaseContentWriter::EncodeAndWrite(UINT codepage, const wchar_t *Str, size_t Length)
+{
+		if (!Length)
+			return;
+
+		if (codepage == CP_WIDE_LE)
+		{
+			Write(Str, Length * sizeof(wchar_t));
+		}
+		else if (codepage == CP_UTF8)
+		{
+			Wide2MB(Str, Length, _tmpstr);
+			Write(_tmpstr.data(), _tmpstr.size());
+		}
+		else if (codepage == CP_WIDE_BE)
+		{
+			if (_tmpwstr.size() < Length)
+				_tmpwstr.resize(Length + 0x20);
+
+			WideReverse(Str, (wchar_t *)_tmpwstr.data(), Length);
+			Write(_tmpwstr.data(), Length * sizeof(wchar_t));
+
+		} else {
+			int cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
+			if (cnt <= 0)
+				return;
+
+			if (_tmpstr.size() < (size_t)cnt)
+				_tmpstr.resize(cnt + 0x20);
+
+			cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, (char *)_tmpstr.data(), _tmpstr.size(), nullptr, nullptr);
+			if (cnt > 0)
+				Write(_tmpstr.data(), cnt);
+		}
+}
+
+struct ContentMeasurer : FileEditor::BaseContentWriter
 {
 	INT64 MeasuredSize = 0;
 
@@ -1777,7 +1769,7 @@ struct ContentMeasurer : FileEditor::IContentWriter
 	}
 };
 
-class ContentSaver : public FileEditor::IContentWriter
+class ContentSaver : public FileEditor::BaseContentWriter
 {
 	CachedWrite CW;
 
@@ -2036,30 +2028,21 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		SetCursorType(FALSE,0);
 		TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
 
-		try {
+		try
+		{
 			ContentMeasurer cm;
 			SaveContent(Name, &cm, bSaveAs, TextFormat, codepage, AddSignature, 0);
 
-			try {
+			try
+			{
 				File EditFile;
 				if (!EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN))
 					throw WINPORT(GetLastError)();
 
-				if (!Flags.Check(FFILEEDIT_NEW)) {
-					UINT64 OriginalSize = 0;
-					EditFile.GetSize(OriginalSize);
-
-					if (!EditFile.SetPointer(cm.MeasuredSize, nullptr, FILE_BEGIN) || !EditFile.SetEnd())
+				if (!Flags.Check(FFILEEDIT_NEW))
+				{
+					if (!EditFile.AllocationRequire(cm.MeasuredSize))
 						throw WINPORT(GetLastError)();
-
-					if (!EditFile.AllocationRequire(cm.MeasuredSize)) {
-						auto ErrorCode = WINPORT(GetLastError)();
-						EditFile.SetPointer(OriginalSize, nullptr, FILE_BEGIN);
-						EditFile.SetEnd();
-						throw ErrorCode;
-					}
-
-					EditFile.SetPointer(0, nullptr, FILE_BEGIN);
 				}
 
 				ContentSaver cs(EditFile);
@@ -2087,9 +2070,8 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 		}
 	}
 
-	if (FileHolder && RetCode != SAVEFILE_ERROR) {
+	if (FileHolder && RetCode != SAVEFILE_ERROR)
 		FileHolder->OnFileEdited(Name);
-	}
 
 	if (FileUnmakeWritable)
 	{

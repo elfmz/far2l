@@ -2104,12 +2104,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	   Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
 	   приоритет по сравнению с EF_DELETEONCLOSE
 	*/
-	int DeleteOnClose = 0;
-
-	if (Flags & EF_DELETEONCLOSE)
-		DeleteOnClose = 1;
-	else if (Flags & EF_DELETEONLYFILEONCLOSE)
-		DeleteOnClose = 2;
+	std::shared_ptr<TempFileHolder> TFH;
+	if (Flags & (EF_DELETEONCLOSE|EF_DELETEONLYFILEONCLOSE))
+		TFH = std::make_shared<TempFileHolder>(FileName, (Flags & EF_DELETEONCLOSE) != 0);
 
 	int OpMode=FEOPMODE_QUERY;
 
@@ -2131,14 +2128,15 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	if (Flags & EF_NONMODAL)
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
+		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,
+		                                  (CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
 		                                  StartLine,StartChar,Title,
-		                                  X1,Y1,X2,Y2,
-		                                  DeleteOnClose,OpMode);
+		                                  X1,Y1,X2,Y2,OpMode);
 
 		if (Editor)
 		{
 			editorExitCode=Editor->GetExitCode();
+			Editor->SetFileHolder(TFH);
 
 			// добавочка - проверка кода возврата (почему возникает XC_OPEN_ERROR - см. код FileEditor::Init())
 			if (editorExitCode == XC_OPEN_ERROR || editorExitCode == XC_LOADING_INTERRUPTED)
@@ -2173,7 +2171,8 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 		FileEditor Editor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                  StartLine,StartChar,Title,
 		                  X1,Y1,X2,Y2,
-		                  DeleteOnClose,OpMode);
+		                  OpMode);
+		Editor.SetFileHolder(TFH);
 		editorExitCode=Editor.GetExitCode();
 
 		// выполним предпроверку (ошибки разные могут быть)

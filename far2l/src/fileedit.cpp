@@ -330,7 +330,7 @@ FileEditor::FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int 
 	ScreenObject::SetPosition(0,0,ScrX,ScrY);
 	Flags.Set(InitFlags);
 	Flags.Set(FFILEEDIT_FULLSCREEN);
-	Init(Name,codepage, nullptr,InitFlags,StartLine,StartChar, PluginData,FALSE,OpenModeExstFile);
+	Init(Name,codepage, nullptr,InitFlags,StartLine,StartChar,PluginData,OpenModeExstFile);
 }
 
 
@@ -345,7 +345,6 @@ FileEditor::FileEditor(
     int Y1,
     int X2,
     int Y2,
-    int DeleteOnClose,
     int OpenModeExstFile
 ) : SaveAsTextFormat(0)
 {
@@ -377,7 +376,7 @@ FileEditor::FileEditor(
 
 	ScreenObject::SetPosition(X1,Y1,X2,Y2);
 	Flags.Change(FFILEEDIT_FULLSCREEN,(!X1 && !Y1 && X2==ScrX && Y2==ScrY));
-	Init(Name,codepage, Title,InitFlags,StartLine,StartChar,L"",DeleteOnClose,OpenModeExstFile);
+	Init(Name,codepage, Title,InitFlags,StartLine,StartChar,L"",OpenModeExstFile);
 }
 
 /* $ 07.05.2001 DJ
@@ -409,29 +408,6 @@ FileEditor::~FileEditor()
 		CtrlObject->Plugins.CurEditor = save;
 	}
 
-	if (!Flags.Check(FFILEEDIT_OPENFAILED))
-	{
-		/* $ 11.10.2001 IS
-		   Удалим файл вместе с каталогом, если это просится и файла с таким же
-		   именем не открыто в других фреймах.
-		*/
-		/* $ 14.06.2001 IS
-		   Если установлен FEDITOR_DELETEONLYFILEONCLOSE и сброшен
-		   FEDITOR_DELETEONCLOSE, то удаляем только файл.
-		*/
-		if (Flags.Check(FFILEEDIT_DELETEONCLOSE|FFILEEDIT_DELETEONLYFILEONCLOSE) &&
-		        !FrameManager->CountFramesWithName(strFullFileName))
-		{
-			if (Flags.Check(FFILEEDIT_DELETEONCLOSE))
-				DeleteFileWithFolder(strFullFileName);
-			else
-			{
-				apiMakeWritable(strFullFileName);//apiSetFileAttributes(strFullFileName,FILE_ATTRIBUTE_NORMAL);
-				apiDeleteFile(strFullFileName); //BUGBUG
-			}
-		}
-	}
-
 	if (m_editor)
 		delete m_editor;
 
@@ -450,7 +426,6 @@ void FileEditor::Init(
     int StartLine,
     int StartChar,
     const wchar_t *PluginData,
-    int DeleteOnClose,
     int OpenModeExstFile
 )
 {
@@ -624,7 +599,6 @@ void FileEditor::Init(
 
 	m_editor->SetPosition(X1,Y1+(Opt.EdOpt.ShowTitleBar?1:0),X2,Y2-(Opt.EdOpt.ShowKeyBar?1:0));
 	m_editor->SetStartPos(StartLine,StartChar);
-	SetDeleteOnClose(DeleteOnClose);
 	int UserBreak;
 
 	/* $ 06.07.2001 IS
@@ -792,7 +766,6 @@ int64_t FileEditor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		DWORD MacroEditState=0;
 		MacroEditState|=Flags.Flags&FFILEEDIT_NEW?0x00000001:0;
 		MacroEditState|=Flags.Flags&FFILEEDIT_ENABLEF6?0x00000002:0;
-		MacroEditState|=Flags.Flags&FFILEEDIT_DELETEONCLOSE?0x00000004:0;
 		MacroEditState|=m_editor->Flags.Flags&FEDITOR_MODIFIED?0x00000008:0;
 		MacroEditState|=m_editor->BlockStart?0x00000010:0;
 		MacroEditState|=m_editor->VBlockStart?0x00000020:0;
@@ -907,11 +880,6 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					*/
 					if (ProcessQuitKey(FirstSave,NeedQuestion))
 					{
-						/* $ 11.10.200 IS
-						   не будем удалять файл, если было включено удаление, но при этом
-						   пользователь переключился во вьюер
-						*/
-						SetDeleteOnClose(0);
 						//объект будет в конце удалён в FrameManager
 						auto *Viewer = new FileViewer(strFullFileName, GetCanLoseFocus(), Flags.Check(FFILEEDIT_DISABLEHISTORY),
 								FALSE, FilePos, nullptr, EditNamesList, Flags.Check(FFILEEDIT_SAVETOSAVEAS), cp);
@@ -1946,10 +1914,6 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 	{
 		//SaveScreen SaveScr;
-		/* $ 11.10.2001 IS
-		   Если было произведено сохранение с любым результатом, то не удалять файл
-		*/
-		Flags.Clear(FFILEEDIT_DELETEONCLOSE|FFILEEDIT_DELETEONLYFILEONCLOSE);
 		CtrlObject->Plugins.CurEditor=this;
 //_D(SysLog(L"%08d EE_SAVE",__LINE__));
 
@@ -2405,22 +2369,6 @@ BOOL FileEditor::UpdateFileList()
 	}
 
 	return FALSE;
-}
-
-/* $ 14.06.2002 IS
-   DeleteOnClose стал int:
-     0 - не удалять ничего
-     1 - удалять файл и каталог
-     2 - удалять только файл
-*/
-void FileEditor::SetDeleteOnClose(int NewMode)
-{
-	Flags.Clear(FFILEEDIT_DELETEONCLOSE|FFILEEDIT_DELETEONLYFILEONCLOSE);
-
-	if (NewMode==1)
-		Flags.Set(FFILEEDIT_DELETEONCLOSE);
-	else if (NewMode==2)
-		Flags.Set(FFILEEDIT_DELETEONLYFILEONCLOSE);
 }
 
 void FileEditor::GetEditorOptions(EditorOptions& EdOpt)

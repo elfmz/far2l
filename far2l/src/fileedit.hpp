@@ -71,9 +71,6 @@ enum FFILEEDIT_FLAGS
 	FFILEEDIT_SAVEWQUESTIONS        = 0x00400000,  // сохранить без вопросов
 	FFILEEDIT_LOCKED                = 0x00800000,  // заблокировать?
 	FFILEEDIT_OPENFAILED            = 0x01000000,  // файл открыть не удалось
-	FFILEEDIT_DELETEONCLOSE         = 0x02000000,  // удалить в деструкторе файл вместе с каталогом (если тот пуст)
-	FFILEEDIT_DELETEONLYFILEONCLOSE = 0x04000000,  // удалить в деструкторе только файл
-	FFILEEDIT_ENABLESWITCH          = 0x08000000,  // Is F12-driven window switch allowed?
 	FFILEEDIT_CANNEWFILE            = 0x10000000,  // допускается новый файл?
 	FFILEEDIT_SERVICEREGION         = 0x20000000,  // используется сервисная область
 	FFILEEDIT_CODEPAGECHANGEDBYUSER = 0x40000000,
@@ -94,7 +91,7 @@ class FileEditor : public Frame
 		};
 
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine=-1,int StartChar=-1,const wchar_t *PluginData=nullptr,int OpenModeExstFile=FEOPMODE_QUERY);
-		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine,int StartChar,const wchar_t *Title,int X1,int Y1,int X2,int Y2,int DeleteOnClose=0,int OpenModeExstFile=FEOPMODE_QUERY);
+		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine,int StartChar,const wchar_t *Title,int X1,int Y1,int X2,int Y2,int OpenModeExstFile=FEOPMODE_QUERY);
 		virtual ~FileEditor();
 
 		void ShowStatus();
@@ -148,15 +145,9 @@ class FileEditor : public Frame
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
 		BOOL UpdateFileList();
 		bool DecideAboutSignature();
-		/* Ret:
-		      0 - не удалять ничего
-		      1 - удалять файл и каталог
-		      2 - удалять только файл
-		*/
-		void SetDeleteOnClose(int NewMode);
 		int ReProcessKey(int Key,int CalledFromControl=TRUE);
 		bool AskOverwrite(const FARString& FileName);
-		void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine, int StartChar, const wchar_t *PluginData, int DeleteOnClose, int OpenModeExstFile);
+		void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine, int StartChar, const wchar_t *PluginData, int OpenModeExstFile);
 		virtual void InitKeyBar();
 		virtual int ProcessKey(int Key);
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -190,4 +181,4 @@ class FileEditor : public Frame
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally
+void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally 

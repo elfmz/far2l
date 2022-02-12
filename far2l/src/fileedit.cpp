@@ -1041,8 +1041,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						if (!dlgSaveFileAs(strSaveAsName, SaveAsTextFormat, codepage, AddSignature))
 							return FALSE;
 
-						if (AddSignature)
-							m_AddSignature = FB_YES;
+						m_AddSignature = AddSignature ? FB_YES : FB_NO;
 
 						apiExpandEnvironmentStrings(strSaveAsName, strSaveAsName);
 						Unquote(strSaveAsName);

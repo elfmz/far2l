@@ -6,6 +6,7 @@
 #include <sys/select.h>
 #include <sys/wait.h>
 #include <wordexp.h>
+#include <algorithm>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,28 +220,71 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 
 bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::string> &possibilities)
 {
+	std::string eval_cmd = cmd;
+	Environment::Arguments args;
+	Environment::ParseCommandLine(eval_cmd, args, false);
+	if (args.empty()) {
+		return false;
+	}
+	eval_cmd = cmd;
+	for (auto rit = args.rbegin(); rit != args.rend(); ++rit) {
+		const auto &a = cmd.substr(rit->orig_begin, rit->orig_len);
+		if (a == "|") {
+			if (rit == args.rbegin()) {
+				return false;
+			}
+			--rit;
+			eval_cmd = cmd.substr(rit->orig_begin);
+			break;
+		}
+	}
+
+	if (eval_cmd.empty()) {
+		return false;
+	}
+
+//fprintf(stderr, "!!! eval_cmd='%s'\n", eval_cmd.c_str());
 	std::string reply;
-	if (!TalkWithShell(cmd, reply, "\t\t"))
+	if (!TalkWithShell(eval_cmd, reply, "\t\t")) {
 		return false;
+	}
 
-	size_t p = reply.find(cmd);
-	if (p == std::string::npos || p + cmd.size() >= reply.size() )
+	const auto &last_a = cmd.substr(args.back().orig_begin, args.back().orig_len);
+	const bool whole_next_arg = (eval_cmd.back() == ' ' && args.back().quot == Environment::QUOT_NONE);
+
+	size_t p = reply.find(eval_cmd);
+	if (p == std::string::npos || p + eval_cmd.size() >= reply.size() ) {
 		return false;
+	}
 
-	reply.erase(0, p + cmd.size());
-	
+	reply.erase(0, p + eval_cmd.size());
+
+	if (StrEndsBy(reply, eval_cmd.c_str())) {
+		reply.resize(reply.size()  - eval_cmd.size());
+	}
+
 	for (;;) {
-		p = reply.find('\n');
-		size_t pt = reply.find('\t');
-		size_t ps = reply.find(' ');
-		if (p==std::string::npos || (pt!=std::string::npos && pt < p)) p = pt;
-		if (p==std::string::npos || (ps!=std::string::npos && ps < p)) p = ps;
-		
+		p = reply.find_first_of("\n\t ");
 		if (p==std::string::npos ) break;
-		if (p > 0)
+		if (p > 0) {
 			possibilities.emplace_back(reply.substr(0, p));
+		}
 		reply.erase(0, p + 1);
 	}
-	
+
+	if (!possibilities.empty() && possibilities.back() == eval_cmd) {
+		possibilities.pop_back();
+	}
+
+	std::sort(possibilities.begin(), possibilities.end());
+
+	for (auto &possibility : possibilities) {
+		if (!whole_next_arg && StrStartsFrom(possibility, last_a.c_str())) {
+			possibility.insert(0, cmd.substr(0, args.back().orig_begin));
+		} else {
+			possibility.insert(0, cmd);
+		}
+	}
+
 	return true;
 }

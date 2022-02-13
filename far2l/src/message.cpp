@@ -167,13 +167,21 @@ static int MessageSynched(
 	if (Flags & MSG_ERRORTYPE)
 		ErrorSets = GetErrorString(strErrStr);
 
+	for (;;) { // #1248
+		StrCount = ItemsNumber - Buttons;
+		if (int(ScrY) - int(StrCount) > 2 || StrCount == 1) {
+			break;
+		}
+		ItemsNumber--;
+		++Items;
+	}
+
 	// выделим память под рабочий массив указателей на строки (+запас 16)
 	Str=(const wchar_t **)malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
 
 	if (!Str)
 		return -1;
 
-	StrCount=ItemsNumber-Buttons;
 
 	// предварительный обсчет максимального размера.
 	for (BtnLength=0,I=0; I<static_cast<DWORD>(Buttons); I++) //??
@@ -292,13 +300,13 @@ static int MessageSynched(
 	StrCount+=CountErrorLine;
 	MessageX1=X1=(ScrX-MaxLength)/2-4;
 	MessageX2=X2=X1+MaxLength+9;
-	Y1=(ScrY-StrCount)/2-2;
+	Y1=(int(ScrY)-int(StrCount))/2-2;
 
 	if (Y1 < 0)
 		Y1=0;
 
 	MessageY1=Y1;
-	MessageY2=Y2=Y1+StrCount+3;
+	MessageY2=Y2=Y1+int(StrCount)+3;
 	FARString strHelpTopic(strMsgHelpTopic);
 	strMsgHelpTopic.Clear();
 	// *** Вариант с Диалогом ***
@@ -545,23 +553,6 @@ void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)
 	Y1=MessageY1;
 	X2=MessageX2;
 	Y2=MessageY2;
-}
-
-bool FormatErrorString(bool Nt, DWORD Code, FARString& Str)
-{
-	bool Result=false;
-	//todo
-	/*LPWSTR lpBuffer=nullptr;
-	Result=FormatMessage((Nt?FORMAT_MESSAGE_FROM_HMODULE:FORMAT_MESSAGE_FROM_SYSTEM)|FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_IGNORE_INSERTS, (Nt?GetModuleHandle(L"ntdll.dll"):nullptr), Code, 0, reinterpret_cast<LPWSTR>(&lpBuffer), 0, nullptr)!=0;
-	Str=lpBuffer;
-	LocalFree(lpBuffer);
-	RemoveUnprintableCharacters(Str);*/
-	return Result;
-}
-
-bool GetWin32ErrorString(DWORD LastWin32Error, FARString& Str)
-{
-	return FormatErrorString(false, LastWin32Error, Str);
 }
 
 bool GetErrorString(FARString &strErrStr)

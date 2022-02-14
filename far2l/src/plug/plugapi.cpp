@@ -1315,12 +1315,6 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 		}
 	}
 
-	// ограничение на строки
-	if (ItemsNumber > ScrY-2)
-	{
-		ItemsNumber=ScrY-2-(Flags&0x000F0000?1:0);
-	}
-
 	/* $ 22.03.2001 tran
 	   ItemsNumber++ -> ++ItemsNumber
 	   тереялся последний элемент */
@@ -1374,7 +1368,7 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	if ((frame=FrameManager->GetBottomFrame()) )
 		frame->Lock(); // отменим прорисовку фрейма
 
-	int MsgCode=Message(Flags,ButtonsNumber,MsgItems[0],MsgItems+1,ItemsNumber-1,PluginNumber);
+	int MsgCode=MessageEx(Flags,ButtonsNumber,MsgItems[0],MsgItems+1,ItemsNumber-1,PluginNumber);
 
 	/* $ 15.05.2002 SKV
 	  Однако разлочивать надо ровно то, что залочили.

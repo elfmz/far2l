@@ -51,51 +51,6 @@ static FARString strMsgHelpTopic;
 static int FirstButtonIndex,LastButtonIndex;
 static BOOL IsWarningStyle;
 
-
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            INT_PTR PluginNumber)
-{
-	return(Message(Flags,Buttons,Title,Str1,Str2,Str3,Str4,nullptr,nullptr,nullptr,
-	               nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,PluginNumber));
-}
-
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            INT_PTR PluginNumber)
-{
-	return(Message(Flags,Buttons,Title,Str1,Str2,Str3,Str4,Str5,Str6,Str7,
-	               nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,PluginNumber));
-}
-
-
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9,const wchar_t *Str10,
-            INT_PTR PluginNumber)
-{
-	return(Message(Flags,Buttons,Title,Str1,Str2,Str3,Str4,Str5,Str6,Str7,Str8,
-	               Str9,Str10,nullptr,nullptr,nullptr,nullptr,PluginNumber));
-}
-
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9,const wchar_t *Str10,
-            const wchar_t *Str11,const wchar_t *Str12,const wchar_t *Str13,
-            const wchar_t *Str14,INT_PTR PluginNumber)
-{
-	const wchar_t *Str[]={Str1,Str2,Str3,Str4,Str5,Str6,Str7,Str8,Str9,Str10,Str11,Str12,Str13,Str14};
-	int StrCount=0;
-
-	while (StrCount<(int)ARRAYSIZE(Str) && Str[StrCount])
-		StrCount++;
-
-	return Message(Flags,Buttons,Title,Str,StrCount,PluginNumber);
-}
-
 LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
 	switch (Msg)
@@ -145,7 +100,7 @@ LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
-static int MessageSynched(
+static int MessageExSynched(
     DWORD Flags,
     int Buttons,
     const wchar_t *Title,
@@ -159,7 +114,6 @@ static int MessageSynched(
 	int Length, BtnLength, J;
 	DWORD I, MaxLength, StrCount;
 	BOOL ErrorSets=FALSE;
-	const wchar_t **Str = nullptr;
 	wchar_t *PtrStr;
 	const wchar_t *CPtrStr = nullptr;
 	FARString strErrStr;
@@ -167,17 +121,21 @@ static int MessageSynched(
 	if (Flags & MSG_ERRORTYPE)
 		ErrorSets = GetErrorString(strErrStr);
 
-	for (;;) { // #1248
+	if (ItemsNumber < 0 || Buttons < 0 || ItemsNumber < Buttons)
+		return -1;
+
+	for (;;)
+	{ // #1248
 		StrCount = ItemsNumber - Buttons;
-		if (int(ScrY) - int(StrCount) > 2 || StrCount == 1) {
+		if (int(ScrY) - int(StrCount) > 2 || ItemsNumber < Buttons + 1)
 			break;
-		}
-		ItemsNumber--;
+
+		--ItemsNumber;
 		++Items;
 	}
 
 	// выделим память под рабочий массив указателей на строки (+запас 16)
-	Str=(const wchar_t **)malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
+	const wchar_t **Str=(const wchar_t **)malloc((ItemsNumber+ADDSPACEFORPSTRFORMESSAGE) * sizeof(wchar_t*));
 
 	if (!Str)
 		return -1;
@@ -541,10 +499,15 @@ static int MessageSynched(
 	return 0;
 }
 
-int Message( DWORD Flags, int Buttons, const wchar_t *Title,
+int MessageEx( DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber)
 {
-	return InterThreadCall<int, 0>(std::bind(MessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+	return InterThreadCall<int, 0>(std::bind(MessageExSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+}
+
+void MessageItems::Add(int v)
+{
+	Add(MSG(v));
 }
 
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)

@@ -1605,7 +1605,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	        !strNewPath.ContainsAnyOf("*?") &&
 	        apiGetFileAttributes(strNewPath)==INVALID_FILE_ATTRIBUTES)
 	{
-		switch (Message(FMSG_WARNING,3,MSG(MWarning),strNewPath,MSG(MCopyDirectoryOrFile),MSG(MCopyDirectoryOrFileDirectory),MSG(MCopyDirectoryOrFileFile),MSG(MCancel)))
+		switch (Message(FMSG_WARNING,3,MWarning,strNewPath,MCopyDirectoryOrFile,MCopyDirectoryOrFileDirectory,MCopyDirectoryOrFileFile,MCancel))
 		{
 			case 0:
 				AddEndSlash(strNewPath);
@@ -1709,8 +1709,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					strDestPath = strSelName;
 					CP->SetNames(strSelName,strDestPath);
 
-					if (Message(MSG_WARNING,2,MSG(MError),MSG(MCopyCannotFind),
-					            strSelName,MSG(MSkip),MSG(MCancel))==1)
+					if (Message(MSG_WARNING,2,MError,MCopyCannotFind,strSelName,MSkip,MCancel)==1)
 					{
 						return COPY_FAILURE;
 					}
@@ -2040,9 +2039,9 @@ COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, 
 	} 
 	
 	
-	switch (Message(MSG_WARNING, 3 ,MSG(MError),
-			MSG(MCopyCannotCreateSymlinkAskCopyContents),
-			NewName, MSG(MYes), MSG(MSkip), MSG(MCancel)   ))
+	switch (Message(MSG_WARNING, 3 ,MError,
+			MCopyCannotCreateSymlinkAskCopyContents,
+			NewName, MYes, MSkip, MCancel   ))
 	{
 		case 0: 
 			Flags.SYMLINK = COPY_SYMLINK_ASFILE;
@@ -2276,9 +2275,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 				}
 				else
 				{
-					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,3,MSG(MError),
-					                      MSG(MCopyCannotRenameFolder),Src,MSG(MCopyRetry),
-					                      MSG(MCopyIgnore),MSG(MCopyCancel));
+					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,
+					                      MCopyCannotRenameFolder,Src,MCopyRetry,
+					                      MCopyIgnore,MCopyCancel);
 
 					switch (MsgCode)
 					{
@@ -2308,9 +2307,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 		{
 			while (!apiCreateDirectory(strDestPath, nullptr))
 			{
-				int MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,3,MSG(MError),
-				                MSG(MCopyCannotCreateFolder),strDestPath,MSG(MCopyRetry),
-				                MSG(MCopySkip),MSG(MCopyCancel));
+				int MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,
+				                MCopyCannotCreateFolder,strDestPath,MCopyRetry,
+				                MCopySkip,MCopyCancel);
 
 				if (MsgCode)
 					return((MsgCode==-2 || MsgCode==2) ? COPY_CANCEL:COPY_NEXT);
@@ -2481,7 +2480,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 
 		//????
 		FARString strMsg1, strMsg2;
-		int MsgMCannot=Flags.LINK ? MCannotLink: Flags.MOVE ? MCannotMove: MCannotCopy;
+		LangMsg MsgMCannot=Flags.LINK ? MCannotLink: Flags.MOVE ? MCannotMove: MCannotCopy;
 		strMsg1 = Src;
 		strMsg2 = strDestPath;
 		InsertQuote(strMsg1);
@@ -2493,13 +2492,13 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			MsgCode=SkipMode;
 		else
 		{
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-					        MSG(MsgMCannot),
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+					        MsgMCannot,
 					        strMsg1,
-					        MSG(MCannotCopyTo),
+					        MCannotCopyTo,
 					        strMsg2,
-					        MSG(MCopyRetry),MSG(MCopySkip),
-					        MSG(MCopySkipAll),MSG(MCopyCancel));
+					        MCopyRetry,MCopySkip,
+					        MCopySkipAll,MCopyCancel);
 		}
 
 		switch (MsgCode)
@@ -2548,10 +2547,10 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 		if (ReadOnlyDelMode!=-1)
 			MsgCode=ReadOnlyDelMode;
 		else
-			MsgCode=Message(MSG_WARNING,5,MSG(MWarning),
-			                MSG(MCopyFileRO),Name,MSG(MCopyAskDelete),
-			                MSG(MCopyDeleteRO),MSG(MCopyDeleteAllRO),
-			                MSG(MCopySkipRO),MSG(MCopySkipAllRO),MSG(MCopyCancelRO));
+			MsgCode=Message(MSG_WARNING,5,MWarning,
+			                MCopyFileRO,Name,MCopyAskDelete,
+			                MCopyDeleteRO,MCopyDeleteAllRO,
+			                MCopySkipRO,MCopySkipAllRO,MCopyCancelRO);
 
 		switch (MsgCode)
 		{
@@ -2579,8 +2578,8 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 		if (SkipDeleteMode!=-1)
 			MsgCode=SkipDeleteMode;
 		else
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),MSG(MCannotDeleteFile),Name,
-			                MSG(MDeleteRetry),MSG(MDeleteSkip),MSG(MDeleteSkipAll),MSG(MDeleteCancel));
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MCannotDeleteFile,Name,
+			                MDeleteRetry,MDeleteSkip,MDeleteSkipAll,MDeleteCancel);
 
 		switch (MsgCode)
 		{
@@ -2821,7 +2820,7 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	ErrnoSaver ErSr;
 	_Stopwatch = 0; // UI messes timings
 	const int MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 2,
-		MSG(MError), Text, Object, MSG(MRetry), MSG(MCancel));
+		MError, Text, Object, MRetry, MCancel);
 
 	PR_ShellCopyMsg();
 

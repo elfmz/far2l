@@ -724,13 +724,13 @@ static bool ConfirmExit()
 {
 	int r;
 	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-		r = Message(0,3,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo),MSG(MBackground));
+		r = Message(0,3,MQuit,MAskQuit,MYes,MNo,MBackground);
 		if (r == 2) {
 			WINPORT(ConsoleBackgroundMode)(TRUE);
 		}
 
 	} else {
-		r = Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo));
+		r = Message(0,2,MQuit,MAskQuit,MYes,MNo);
 	}
 
 	return r == 0;

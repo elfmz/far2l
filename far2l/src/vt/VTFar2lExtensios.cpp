@@ -242,12 +242,12 @@ char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 	{
 		SavedScreen saved_scr;
 		choice = Message(MSG_KEEPBACKGROUND, 4,
-			MSG(MTerminalClipboardAccessTitle),
-			MSG(MTerminalClipboardAccessText),
-			MSG(MTerminalClipboardAccessBlock),		// 0
-			MSG(MTerminalClipboardAccessTemporaryRemote),	// 1
-			MSG(MTerminalClipboardAccessTemporaryLocal),	// 2
-			MSG(MTerminalClipboardAccessAlwaysLocal));	// 3
+			MTerminalClipboardAccessTitle,
+			MTerminalClipboardAccessText,
+			MTerminalClipboardAccessBlock,		// 0
+			MTerminalClipboardAccessTemporaryRemote,	// 1
+			MTerminalClipboardAccessTemporaryLocal,	// 2
+			MTerminalClipboardAccessAlwaysLocal);	// 3
 	}
 
 	_vt_shell->OnTerminalResized(); // window could resize during dialog box processing

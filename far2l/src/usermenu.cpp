@@ -261,7 +261,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 	if (ChoiceMenuType)
 	{
-		int EditChoice=Message(0,3,MSG(MUserMenuTitle),MSG(MChooseMenuType),MSG(MChooseMenuMain),MSG(MChooseMenuLocal),MSG(MCancel));
+		int EditChoice=Message(0,3,MUserMenuTitle,MChooseMenuType,MChooseMenuMain,MChooseMenuLocal,MCancel);
 
 		if (EditChoice<0 || EditChoice==2)
 			return;
@@ -353,7 +353,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 					if (FileAttr & FILE_ATTRIBUTE_READONLY)
 					{
 						int AskOverwrite;
-						AskOverwrite=Message(MSG_WARNING,2,MSG(MUserMenuTitle),LocalMenuFileName,MSG(MEditRO),MSG(MEditOvr),MSG(MYes),MSG(MNo));
+						AskOverwrite=Message(MSG_WARNING,2,MUserMenuTitle,LocalMenuFileName,MEditRO,MEditOvr,MYes,MNo);
 
 						if (!AskOverwrite)
 							apiSetFileAttributes(strMenuFileFullPath,FileAttr & ~FILE_ATTRIBUTE_READONLY);
@@ -1020,7 +1020,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 	if (Create)
 	{
-		switch (Message(0,2,MSG(MUserMenuTitle),MSG(MAskInsertMenuOrCommand),MSG(MMenuInsertCommand),MSG(MMenuInsertMenu)))
+		switch (Message(0,2,MUserMenuTitle,MAskInsertMenuOrCommand,MMenuInsertCommand,MMenuInsertMenu))
 		{
 			case -1:
 			case -2:
@@ -1177,7 +1177,7 @@ int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 	FARString strItemName=strRecText;
 	InsertQuote(strItemName);
 
-	if (Message(MSG_WARNING,2,MSG(MUserMenuTitle),MSG(!SubMenu?MAskDeleteMenuItem:MAskDeleteSubMenuItem),strItemName,MSG(MDelete),MSG(MCancel)))
+	if (Message(MSG_WARNING,2,MUserMenuTitle,(!SubMenu?MAskDeleteMenuItem:MAskDeleteSubMenuItem),strItemName,MDelete,MCancel))
 		return FALSE;
 
 	MenuModified=MenuNeedRefresh=true;

@@ -602,9 +602,9 @@ void HighlightFiles::HiEdit(int MenuPos)
 					*/
 				case KEY_CTRLR:
 
-					if (Message(MSG_WARNING,2,MSG(MHighlightTitle),
-					            MSG(MHighlightWarning),MSG(MHighlightAskRestore),
-					            MSG(MYes),MSG(MCancel)))
+					if (Message(MSG_WARNING,2,MHighlightTitle,
+					            MHighlightWarning,MHighlightAskRestore,
+					            MYes,MCancel))
 						break;
 
 					{ ConfigWriter(RegColorsHighlight).RemoveSection(); }
@@ -624,9 +624,9 @@ void HighlightFiles::HiEdit(int MenuPos)
 						const wchar_t *Mask;
 						HiData.getItem(RealSelectPos)->GetMask(&Mask);
 
-						if (Message(MSG_WARNING,2,MSG(MHighlightTitle),
-						            MSG(MHighlightAskDel),Mask,
-						            MSG(MDelete),MSG(MCancel)))
+						if (Message(MSG_WARNING,2,MHighlightTitle,
+						            MHighlightAskDel,Mask,
+						            MDelete,MCancel))
 							break;
 
 						HiData.deleteItem(RealSelectPos);

@@ -56,8 +56,8 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-				MSG(MSetAttrCannotFor),Name,MSG(MHRetry),MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+				MSetAttrCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
 
 		switch (Code) {
 			case -2:
@@ -100,9 +100,9 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-			             MSG(MSetAttrTimeCannotFor),Name,MSG(MHRetry), //BUGBUG
-			             MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+			             MSetAttrTimeCannotFor,Name,MHRetry, //BUGBUG
+			             MHSkip,MHSkipAll,MHCancel);
 
 		switch (Code)
 		{
@@ -130,7 +130,7 @@ int ESetFileOwner(LPCWSTR Name,LPCWSTR Owner,int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),MSG(MSetAttrOwnerCannotFor),Name,MSG(MHRetry),MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MSetAttrOwnerCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
 
 		if (Code==1 || Code<0)
 		{
@@ -161,7 +161,7 @@ int ESetFileGroup(LPCWSTR Name,LPCWSTR Group,int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),MSG(MSetAttrGroupCannotFor),Name,MSG(MHRetry),MSG(MHSkip),MSG(MHSkipAll),MSG(MHCancel));
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MSetAttrGroupCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
 
 		if (Code==1 || Code<0)
 		{

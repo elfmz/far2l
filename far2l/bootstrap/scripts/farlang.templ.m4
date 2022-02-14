@@ -29,6 +29,8 @@ FarUkr.lng Ukrainian "Ukrainian (Український)"
 #htail:
 #and so on as much as needed
 
+enum:LangMsg
+
 #--------------------------------------------------------------------
 #now come the lng feeds
 #--------------------------------------------------------------------

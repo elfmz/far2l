@@ -503,10 +503,10 @@ void FileEditor::Init(
 				if (OpenModeExstFile == FEOPMODE_QUERY)
 				{
 					SetMessageHelp(L"EditorReload");
-					MsgCode=Message(0,3,MSG(MEditTitle),
+					MsgCode=Message(0,3,MEditTitle,
 					                strFullFileName,
-					                MSG(MAskReload),
-					                MSG(MCurrent),MSG(MNewOpen),MSG(MReload));
+					                MAskReload,
+					                MCurrent,MNewOpen,MReload);
 				}
 				else
 				{
@@ -589,8 +589,8 @@ void FileEditor::Init(
 	        )
 	   )
 	{
-		if (Message(MSG_WARNING,2,MSG(MEditTitle),Name,MSG(MEditRSH),
-		            MSG(MEditROOpen),MSG(MYes),MSG(MNo)))
+		if (Message(MSG_WARNING,2,MEditTitle,Name,MEditRSH,
+		            MEditROOpen,MYes,MNo))
 		{
 			ExitCode=XC_OPEN_ERROR;
 			return;
@@ -853,10 +853,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				if (m_editor->IsFileChanged() && // в текущем сеансе были изменения?
 				        apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES) // а файл еще существует?
 				{
-					switch (Message(MSG_WARNING,2,MSG(MEditTitle),
-					                MSG(MEditSavedChangedNonFile),
-					                MSG(MEditSavedChangedNonFile2),
-					                MSG(MHYes),MSG(MHNo)))
+					switch (Message(MSG_WARNING,2,MEditTitle,
+					                MEditSavedChangedNonFile,
+					                MEditSavedChangedNonFile2,
+					                MHYes,MHNo))
 					{
 						case 0:
 
@@ -1085,8 +1085,8 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					{
 						WINPORT(SetLastError)(SysErrorCode);
 
-						if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MEditTitle),MSG(MEditCannotSave),
-						            strFileName,MSG(MRetry),MSG(MCancel)))
+						if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MEditTitle,MEditCannotSave,
+						            strFileName,MRetry,MCancel))
 						{
 							Done=TRUE;
 							break;
@@ -1221,15 +1221,15 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						int Res;
 
 						if (m_editor->IsFileChanged() && FilePlaced)
-							Res=Message(MSG_WARNING,3,MSG(MEditTitle),
-							            MSG(MEditSavedChangedNonFile),
-							            MSG(MEditSavedChangedNonFile2),
-							            MSG(MHYes),MSG(MHNo),MSG(MHCancel));
+							Res=Message(MSG_WARNING,3,MEditTitle,
+							            MEditSavedChangedNonFile,
+							            MEditSavedChangedNonFile2,
+							            MHYes,MHNo,MHCancel);
 						else if (!m_editor->IsFileChanged() && FilePlaced)
-							Res=Message(MSG_WARNING,3,MSG(MEditTitle),
-							            MSG(MEditSavedChangedNonFile1),
-							            MSG(MEditSavedChangedNonFile2),
-						                MSG(MHYes),MSG(MHNo),MSG(MHCancel));
+							Res=Message(MSG_WARNING,3,MEditTitle,
+							            MEditSavedChangedNonFile1,
+							            MEditSavedChangedNonFile2,
+						                MHYes,MHNo,MHCancel);
 						else
 							Res=100;
 
@@ -1377,8 +1377,8 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 
 		WINPORT(SetLastError)(SysErrorCode);
 
-		if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MEditTitle),MSG(MEditCannotSave),
-		            strFileName,MSG(MRetry),MSG(MCancel)))
+		if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MEditTitle,MEditCannotSave,
+		            strFileName,MRetry,MCancel))
 			break;
 
 		FirstSave=0;
@@ -1440,7 +1440,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 				strTempStr3.Format(MSG(MEditFileLong), RemoveExternalSpaces(strTempStr1).CPtr());
 				strTempStr4.Format(MSG(MEditFileLong2), RemoveExternalSpaces(strTempStr2).CPtr());
 
-				if (Message(MSG_WARNING,2,MSG(MEditTitle), Name, strTempStr3, strTempStr4, MSG(MEditROOpen), MSG(MYes),MSG(MNo)))
+				if (Message(MSG_WARNING,2,MEditTitle, Name, strTempStr3, strTempStr4, MEditROOpen, MYes,MNo))
 				{
 					EditFile.Close();
 					UserBreak=1;
@@ -1453,7 +1453,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		else
 		{
 			ErrnoSaver ErSr;
-			if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MEditTitle),Name,MSG(MEditFileGetSizeError),MSG(MEditROOpen),MSG(MYes),MSG(MNo)))
+			if (Message(MSG_WARNING|MSG_ERRORTYPE,2,MEditTitle,Name,MEditFileGetSizeError,MEditROOpen,MYes,MNo))
 			{
 				EditFile.Close();
 				UserBreak=1;
@@ -1779,8 +1779,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 		if (Ask)
 		{
-			switch (Message(MSG_WARNING,3,MSG(MEditTitle),MSG(MEditAskSave),
-			                MSG(MHYes),MSG(MHNo),MSG(MHCancel)))
+			switch (Message(MSG_WARNING,3,MEditTitle,MEditAskSave,MHYes,MHNo,MHCancel))
 			{
 				case -1:
 				case -2:
@@ -1801,8 +1800,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	if (FileUnmakeWritable.get())
 	{
 			//BUGBUG
-		int AskOverwrite=Message(MSG_WARNING,2,MSG(MEditTitle),Name,MSG(MEditRO),
-		                         MSG(MEditOvr),MSG(MYes),MSG(MNo));
+		int AskOverwrite=Message(MSG_WARNING,2,MEditTitle,Name,MEditRO, MEditOvr,MYes,MNo);
 
 		if (AskOverwrite) {
 			FileUnmakeWritable->Unmake();
@@ -1827,8 +1825,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				{
 					SetMessageHelp(L"WarnEditorSavedEx");
 
-					switch (Message(MSG_WARNING,3,MSG(MEditTitle),MSG(MEditAskSaveExt),
-					                MSG(MHYes),MSG(MEditBtnSaveAs),MSG(MHCancel)))
+					switch (Message(MSG_WARNING,3,MEditTitle,MEditAskSaveExt,MHYes,MEditBtnSaveAs,MHCancel))
 					{
 						case -1:
 						case -2:
@@ -1877,7 +1874,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 	if (BadConversion)
 	{
-		if(Message(MSG_WARNING,2,MSG(MWarning),MSG(MEditDataLostWarn),MSG(MEditorSaveNotRecommended),MSG(MOk),MSG(MCancel)))
+		if(Message(MSG_WARNING,2,MWarning,MEditDataLostWarn,MEditorSaveNotRecommended,MOk,MCancel))
 		{
 			return SAVEFILE_CANCEL;
 		}
@@ -1939,7 +1936,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				if (!BadSaveConfirmed && (UsedDefaultCharStr||UsedDefaultCharEOL))
 				{
 					//SetMessageHelp(L"EditorDataLostWarning")
-					int Result=Message(MSG_WARNING,3,MSG(MWarning),MSG(MEditorSaveCPWarn1),MSG(MEditorSaveCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk),MSG(MEditorSaveCPWarnShow),MSG(MCancel));
+					int Result=Message(MSG_WARNING,3,MWarning,MEditorSaveCPWarn1,MEditorSaveCPWarn2,MEditorSaveNotRecommended,MOk,MEditorSaveCPWarnShow,MCancel);
 					if (!Result)
 					{
 						BadSaveConfirmed=true;
@@ -2823,7 +2820,7 @@ bool FileEditor::AskOverwrite(const FARString& FileName)
 
 	if (FNAttr!=INVALID_FILE_ATTRIBUTES)
 	{
-		if (Message(MSG_WARNING,2,MSG(MEditTitle),FileName,MSG(MEditExists),MSG(MEditOvr),MSG(MYes),MSG(MNo)))
+		if (Message(MSG_WARNING,2,MEditTitle,FileName,MEditExists,MEditOvr,MYes,MNo))
 		{
 			result=false;
 		}

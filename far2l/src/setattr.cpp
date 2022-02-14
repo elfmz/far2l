@@ -541,7 +541,7 @@ static void SystemProperties(const FARString &strSelName)
 		lines_wz.push_back(l.c_str());
 	lines_wz.push_back(MSG(MHOk));
 
-	Message(0, 1, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size());
+	MessageEx(0, 1, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size());
 }
 
 static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(const wchar_t *,const wchar_t *, FARString &),

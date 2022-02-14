@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <WinCompat.h>
+#include <vector>
 #include "FARString.hpp"
 
 #define MAX_WIDTH_MESSAGE static_cast<DWORD>(ScrX-13)
@@ -49,27 +50,35 @@ enum
 	MSG_KILLSAVESCREEN =0x00000020,
 };
 
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2=nullptr,const wchar_t *Str3=nullptr,const wchar_t *Str4=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6=nullptr,const wchar_t *Str7=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9=nullptr,const wchar_t *Str10=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9,const wchar_t *Str10,
-            const wchar_t *Str11,const wchar_t *Str12=nullptr,const wchar_t *Str13=nullptr,
-            const wchar_t *Str14=nullptr, INT_PTR PluginNumber=-1);
+int MessageEx(DWORD Flags, int Buttons, const wchar_t *Title,
+	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber = -1);
 
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t * const *Items,
-            int ItemsNumber,INT_PTR PluginNumber=-1);
+struct MessageItems : std::vector<const wchar_t *>
+{
+	void Add(int v);
+
+	void Add(const wchar_t *v)
+	{
+		emplace_back(v);
+	}
+
+	void Add() { }
+
+	template <class FirstItemT, class ... OtherItemsT>
+		void Add(FirstItemT FirstItem, OtherItemsT... OtherItems)
+	{
+		Add(FirstItem);
+		Add(OtherItems...);
+	}
+};
+
+template <class TitleT, class ... ItemsT>
+	int Message(DWORD Flags, int Buttons, TitleT Title, ItemsT... Items)
+{
+	MessageItems ItemsV;
+	ItemsV.Add(Title, Items...);
+	return MessageEx(Flags, Buttons, ItemsV[0], ItemsV.data() + 1, (int)(ItemsV.size() - 1), -1);
+}
 
 void SetMessageHelp(const wchar_t *Topic);
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2);

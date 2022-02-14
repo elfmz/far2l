@@ -62,6 +62,16 @@ struct MessageItems : std::vector<const wchar_t *>
 		emplace_back(v);
 	}
 
+	void Add(const FARString &v)
+	{
+		emplace_back(v.CPtr());
+	}
+
+	void Add(const std::wstring &v)
+	{
+		emplace_back(v.c_str());
+	}
+
 	void Add() { }
 
 	template <class FirstItemT, class ... OtherItemsT>

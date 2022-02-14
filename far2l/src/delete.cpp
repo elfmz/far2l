@@ -207,7 +207,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 		SetMessageHelp(L"DeleteFile");
 
-		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,MSG(Wipe?MDeleteWipe:Opt.DeleteToRecycleBin?MDeleteRecycle:MDelete),MSG(MCancel)))
+		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,(Wipe?MDeleteWipe:Opt.DeleteToRecycleBin?MDeleteRecycle:MDelete),MSG(MCancel)))
 		{
 			NeedUpdate=FALSE;
 			goto done;
@@ -220,8 +220,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 		SetCursorType(FALSE,0);
 		SetMessageHelp(L"DeleteFile");
 
-		if (Message(MSG_WARNING,2,MSG(Wipe?MWipeFilesTitle:MDeleteFilesTitle),MSG(Wipe?MAskWipe:MAskDelete),
-		            strDeleteFilesMsg,MSG(MDeleteFileAll),MSG(MDeleteFileCancel)))
+		if (Message(MSG_WARNING,2,MSG(Wipe?MWipeFilesTitle:MDeleteFilesTitle),(Wipe?MAskWipe:MAskDelete),
+		            strDeleteFilesMsg,MDeleteFileAll,MDeleteFileCancel))
 		{
 			NeedUpdate=FALSE;
 			goto done;
@@ -339,10 +339,10 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 						// для symlink`а не нужно подтверждение
 						if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
-							MsgCode=Message(MSG_WARNING,4,MSG(Wipe?MWipeFolderTitle:MDeleteFolderTitle),
-							                MSG(Wipe?MWipeFolderConfirm:MDeleteFolderConfirm),strFullName,
-							                MSG(Wipe?MDeleteFileWipe:MDeleteFileDelete),MSG(MDeleteFileAll),
-							                MSG(MDeleteFileSkip),MSG(MDeleteFileCancel));
+							MsgCode=Message(MSG_WARNING,4,(Wipe?MWipeFolderTitle:MDeleteFolderTitle),
+							                (Wipe?MWipeFolderConfirm:MDeleteFolderConfirm),strFullName,
+							                (Wipe?MDeleteFileWipe:MDeleteFileDelete),MDeleteFileAll,
+							                MDeleteFileSkip,MDeleteFileCancel);
 
 						if (MsgCode<0 || MsgCode==3)
 						{
@@ -432,10 +432,10 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 							if (!DeleteAllFolders && !ScTree.IsDirSearchDone() && TestFolder(strFullName) == TSTFLD_NOTEMPTY)
 							{
-								int MsgCode=Message(MSG_WARNING,4,MSG(Wipe?MWipeFolderTitle:MDeleteFolderTitle),
-								                    MSG(Wipe?MWipeFolderConfirm:MDeleteFolderConfirm),strFullName,
-								                    MSG(Wipe?MDeleteFileWipe:MDeleteFileDelete),MSG(MDeleteFileAll),
-								                    MSG(MDeleteFileSkip),MSG(MDeleteFileCancel));
+								int MsgCode=Message(MSG_WARNING,4,(Wipe?MWipeFolderTitle:MDeleteFolderTitle),
+								                    (Wipe?MWipeFolderConfirm:MDeleteFolderConfirm),strFullName,
+								                    (Wipe?MDeleteFileWipe:MDeleteFileDelete),MDeleteFileAll,
+								                    MDeleteFileSkip,MDeleteFileCancel);
 
 								if (MsgCode<0 || MsgCode==3)
 								{
@@ -613,10 +613,9 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 		MsgCode=ReadOnlyDeleteMode;
 	else
 	{
-		MsgCode=Message(MSG_WARNING,5,MSG(MWarning),MSG(MDeleteRO),Name,
-		                MSG(Wipe?MAskWipeRO:MAskDeleteRO),MSG(Wipe?MDeleteFileWipe:MDeleteFileDelete),MSG(MDeleteFileAll),
-		                MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),
-		                MSG(MDeleteFileCancel));
+		MsgCode=Message(MSG_WARNING,5,MWarning,MDeleteRO,Name,
+		                (Wipe?MAskWipeRO:MAskDeleteRO),(Wipe?MDeleteFileWipe:MDeleteFileDelete),
+						MDeleteFileAll,MDeleteFileSkip,MDeleteFileSkipAll,MDeleteFileCancel);
 	}
 
 	switch (MsgCode)
@@ -681,9 +680,9 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 				  Уничтожение файла приведет к обнулению всех ссылающихся на него файлов.
 				                        Уничтожать файл?
 				*/
-				MsgCode=Message(MSG_WARNING,5,MSG(MError),strFullName,
-				                MSG(MDeleteHardLink1),MSG(MDeleteHardLink2),MSG(MDeleteHardLink3),
-				                MSG(MDeleteFileWipe),MSG(MDeleteFileAll),MSG(MDeleteFileSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
+				MsgCode=Message(MSG_WARNING,5,MError,strFullName,
+				                MDeleteHardLink1,MDeleteHardLink2,MDeleteHardLink3,
+				                MDeleteFileWipe,MDeleteFileAll,MDeleteFileSkip,MDeleteFileSkipAll,MDeleteCancel);
 			}
 
 			switch (MsgCode)
@@ -729,9 +728,9 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 			MsgCode=SkipMode;
 		else
 		{
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-			                MSG(MCannotDeleteFile),strFullName,MSG(MDeleteRetry),
-			                MSG(MDeleteSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+			                MCannotDeleteFile,strFullName,MDeleteRetry,
+			                MDeleteSkip,MDeleteFileSkipAll,MDeleteCancel);
 		}
 
 		switch (MsgCode)
@@ -781,9 +780,9 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 			FARString strFullName;
 			ConvertNameToFull(Name,strFullName);
 
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MSG(MError),
-			                MSG(MCannotDeleteFolder),Name,MSG(MDeleteRetry),
-			                MSG(MDeleteSkip),MSG(MDeleteFileSkipAll),MSG(MDeleteCancel));
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+			                MCannotDeleteFolder,Name,MDeleteRetry,
+			                MDeleteSkip,MDeleteFileSkipAll,MDeleteCancel);
 		}
 
 		switch (MsgCode)

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 #include <vector>
 #include "FARString.hpp"
+#include "lang.hpp"
 
 #define MAX_WIDTH_MESSAGE static_cast<DWORD>(ScrX-13)
 
@@ -55,30 +56,30 @@ int MessageEx(DWORD Flags, int Buttons, const wchar_t *Title,
 
 struct MessageItems : std::vector<const wchar_t *>
 {
-	void Add(int v);
+	void Add(LangMsg v);
 
-	void Add(const wchar_t *v)
+	inline void Add(const wchar_t *v)
 	{
 		emplace_back(v);
 	}
 
-	void Add(const FARString &v)
+	inline void Add(const FARString &v)
 	{
 		emplace_back(v.CPtr());
 	}
 
-	void Add(const std::wstring &v)
+	inline void Add(const std::wstring &v)
 	{
 		emplace_back(v.c_str());
 	}
 
-	void Add() { }
+	inline void Add() { }
 
-	template <class FirstItemT, class ... OtherItemsT>
-		void Add(FirstItemT FirstItem, OtherItemsT... OtherItems)
+	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
+		void Add(FirstItemT FirstItem, SecondItemT SecondItem, OtherItemsT... OtherItems)
 	{
 		Add(FirstItem);
-		Add(OtherItems...);
+		Add(SecondItem, OtherItems...);
 	}
 };
 

@@ -180,9 +180,9 @@ void ShellMakeDir(Panel *SrcPanel)
 					int ret;
 
 					if (DirList.IsLastElement(DI))
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MCancel));
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateFolder,strOriginalDirName,MCancel);
 					else
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MOk),MSG(MSkip));
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MError,MCannotCreateFolder,strOriginalDirName,MOk,MSkip);
 
 					bSkip = ret==1;
 
@@ -197,11 +197,11 @@ void ShellMakeDir(Panel *SrcPanel)
 
 					if (DirList.IsLastElement(DI))
 					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MRetry),MSG(MCancel));
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MError,MCannotCreateFolder,strOriginalDirName,MRetry,MCancel);
 					}
 					else
 					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,3,MSG(MError),MSG(MCannotCreateFolder),strOriginalDirName,MSG(MRetry),MSG(MSkip),MSG(MCancel));
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,MCannotCreateFolder,strOriginalDirName,MRetry,MSkip,MCancel);
 						bSkip = ret==1;
 					}
 

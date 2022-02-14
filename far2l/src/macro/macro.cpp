@@ -5896,14 +5896,14 @@ M1:
 				            (Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
 				        )
 				   ))
-					Result=Message(MSG_WARNING,2,MSG(MWarning),
+					Result=Message(MSG_WARNING,2,MWarning,
 					          strBuf,
-					          MSG(MMacroSequence),
+					          MMacroSequence,
 					          strBufKey,
-					          MSG(!MacroDlg->RecBufferSize?MMacroDeleteKey2:
+					          (!MacroDlg->RecBufferSize?MMacroDeleteKey2:
 					              (DisFlags?MMacroDisDisabledKey:MMacroReDefinedKey2)),
-					          MSG(DisFlags && MacroDlg->RecBufferSize?MMacroDisOverwrite:MYes),
-					          MSG(DisFlags && MacroDlg->RecBufferSize?MMacroDisAnotherKey:MNo));
+					          (DisFlags && MacroDlg->RecBufferSize?MMacroDisOverwrite:MYes),
+					          (DisFlags && MacroDlg->RecBufferSize?MMacroDisAnotherKey:MNo));
 
 				if (!Result)
 				{

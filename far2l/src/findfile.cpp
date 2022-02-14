@@ -1977,10 +1977,10 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 																{
 																	char MsgFullFileName[NM];
 																	far_strncpy(MsgFullFileName,SearchFileName,sizeof(MsgFullFileName));
-																	int MsgCode=Message(0,2,MSG(MFindFileTitle),
+																	int MsgCode=Message(0,2,MFindFileTitle,
 																				TruncPathStr(MsgFullFileName,ScrX-16),
-																				MSG(MAskReload),
-																				MSG(MCurrent),MSG(MNewOpen));
+																				MAskReload,
+																				MCurrent,MNewOpen);
 																	if (!MsgCode)
 																	{
 																		SwitchTo=TRUE;

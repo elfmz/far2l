@@ -1482,11 +1482,11 @@ int FileList::ProcessKey(int Key)
 									{
 										SetMessageHelp(L"WarnEditorPath");
 
-										if (Message(MSG_WARNING,2,MSG(MWarning),
-													MSG(MEditNewPath1),
-													MSG(MEditNewPath2),
-													MSG(MEditNewPath3),
-													MSG(MHYes),MSG(MHNo)))
+										if (Message(MSG_WARNING,2,MWarning,
+													MEditNewPath1,
+													MEditNewPath2,
+													MEditNewPath3,
+													MHYes,MHNo))
 											return FALSE;
 									}
 
@@ -1499,9 +1499,9 @@ int FileList::ProcessKey(int Key)
 						{
 							SetMessageHelp(L"WarnEditorPluginName");
 
-							if (Message(MSG_WARNING,2,MSG(MWarning),
-							            MSG(MEditNewPlugin1),
-							            MSG(MEditNewPath3),MSG(MCancel)))
+							if (Message(MSG_WARNING,2,MWarning,
+							            MEditNewPlugin1,
+							            MEditNewPath3,MCancel))
 								return FALSE;
 						}
 						else
@@ -2620,8 +2620,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			if (PanelMode != PLUGIN_PANEL && strSetDir == L".." && !strCurDir.IsEmpty() && strCurDir != L"/")
 			{
 				r = Message(MSG_WARNING | MSG_ERRORTYPE, 3,
-						MSG(MError), (dot2Present?L"..":strSetDir),
-							MSG(MIgnore), MSG(MHRetry), MSG(MGetOut));
+						MError, (dot2Present?L"..":strSetDir),
+							MIgnore, MHRetry, MGetOut);
 				if (r == 2)
 				{
 					strSetDir = strCurDir;
@@ -2636,8 +2636,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			else
 			{
 				r = Message(MSG_WARNING | MSG_ERRORTYPE, 2,
-						MSG(MError), (dot2Present?L"..":strSetDir),
-							MSG(MIgnore), MSG(MHRetry));
+						MError, (dot2Present?L"..":strSetDir),
+							MIgnore, MHRetry);
 			}
 
 			if (r == 1)

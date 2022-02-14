@@ -3717,9 +3717,9 @@ BOOL Editor::Search(int Next)
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
 						PreRedrawItem pitem=PreRedraw.Pop();
-						MsgCode=Message(0,4,MSG(MEditReplaceTitle),MSG(MEditAskReplace),
-						                strQSearchStr,MSG(MEditAskReplaceWith),strQReplaceStr,
-						                MSG(MEditReplace),MSG(MEditReplaceAll),MSG(MEditSkip),MSG(MEditCancel));
+						MsgCode=Message(0,4,MEditReplaceTitle,MEditAskReplace,
+						                strQSearchStr,MEditAskReplaceWith,strQReplaceStr,
+						                MEditReplace,MEditReplaceAll,MEditSkip,MEditCancel);
 						PreRedraw.Push(pitem);
 
 						if (MsgCode==1)

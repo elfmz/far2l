@@ -87,6 +87,12 @@ template <class TitleT, class ... ItemsT>
 {
 	MessageItems ItemsV;
 	ItemsV.Add(Title, Items...);
+
+	// ignore trailing nullptr-s
+	while (!ItemsV.empty() && !ItemsV.back()) {
+		ItemsV.pop_back();
+	}
+
 	return MessageEx(Flags, Buttons, ItemsV[0], ItemsV.data() + 1, (int)(ItemsV.size() - 1), -1);
 }
 

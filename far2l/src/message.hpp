@@ -59,10 +59,9 @@ struct Messager : std::vector<const wchar_t *>
 	void Add(LangMsg v);
 	void Add(const wchar_t *v);
 	void Add(const FARString &v);
-	void Add(const std::wstring &v);
 
 	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
-		void Add(FirstItemT FirstItem, SecondItemT SecondItem, OtherItemsT... OtherItems)
+		void Add(const FirstItemT &FirstItem, const SecondItemT &SecondItem, OtherItemsT... OtherItems)
 	{
 		Add(FirstItem);
 		Add(SecondItem, OtherItems...);

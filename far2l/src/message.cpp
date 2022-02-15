@@ -520,11 +520,6 @@ void Messager::Add(const FARString &v)
 	emplace_back(v.CPtr());
 }
 
-void Messager::Add(const std::wstring &v)
-{
-	emplace_back(v.c_str());
-}
-
 int Messager::Show(DWORD Flags, int Buttons)
 {
 	// ignore trailing nullptr-s

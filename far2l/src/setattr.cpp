@@ -536,10 +536,9 @@ static void SystemProperties(const FARString &strSelName)
 	if (lines.empty())
 		return;
 		
-	Messager m;
-	m.Add(MSetAttrSystemDialog);
+	Messager m(MSetAttrSystemDialog);
 	for (const auto &l : lines)
-		m.Add(l);
+		m.Add(l.c_str());
 	m.Add(MHOk);
 	m.Show(0, 1);
 }

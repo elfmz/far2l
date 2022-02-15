@@ -51,36 +51,33 @@ enum
 	MSG_KILLSAVESCREEN =0x00000020,
 };
 
-int MessageEx(DWORD Flags, int Buttons, const wchar_t *Title,
-	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber = -1);
-
 struct Messager : protected std::vector<const wchar_t *>
 {
 	Messager(LangMsg title);
 	Messager(const wchar_t *title);
+	Messager(); // title supposed to be set by very first Add()
 
 	~Messager();
 
-	void Add(LangMsg v);
-	void Add(const wchar_t *v);
-	inline void Add() {}
+	Messager &Add(LangMsg v);
+	Messager &Add(const wchar_t *v);
+	inline Messager &Add() { return *this; }
 
 	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
-		void Add(const FirstItemT &FirstItem, const SecondItemT &SecondItem, OtherItemsT... OtherItems)
+		Messager &Add(const FirstItemT &FirstItem, const SecondItemT &SecondItem, OtherItemsT... OtherItems)
 	{
-		Add(FirstItem);
-		Add(SecondItem, OtherItems...);
+		return Add(FirstItem).Add(SecondItem, OtherItems...);
 	}
 
+	int Show(DWORD Flags, int Buttons, INT_PTR PluginNumber);
 	int Show(DWORD Flags, int Buttons);
+	int Show(int Buttons = 0);
 };
 
 template <class TitleT, class ... ItemsT>
-	int Message(DWORD Flags, int Buttons, TitleT Title, ItemsT... Items)
+	int Message(DWORD Flags, int Buttons, const TitleT &Title, ItemsT... Items)
 {
-	Messager m(Title);
-	m.Add(Items...);
-	return m.Show(Flags, Buttons);
+	return Messager(Title).Add(Items...).Show(Flags, Buttons);
 }
 
 void SetMessageHelp(const wchar_t *Topic);

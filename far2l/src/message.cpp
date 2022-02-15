@@ -100,7 +100,7 @@ LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
-static int MessageExSynched(
+static int ShowMessageSynched(
     DWORD Flags,
     int Buttons,
     const wchar_t *Title,
@@ -499,10 +499,10 @@ static int MessageExSynched(
 	return 0;
 }
 
-int __attribute__ ((noinline)) MessageEx( DWORD Flags, int Buttons, const wchar_t *Title,
+static int ShowMessage( DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber)
 {
-	return InterThreadCall<int, 0>(std::bind(MessageExSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+	return InterThreadCall<int, 0>(std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
 __attribute__ ((noinline)) Messager::Messager(LangMsg title)
@@ -515,29 +515,45 @@ __attribute__ ((noinline)) Messager::Messager(const wchar_t *title)
 	Add(title);
 }
 
+__attribute__ ((noinline)) Messager::Messager()
+{
+}
+
 __attribute__ ((noinline)) Messager::~Messager()
 {
 }
 
-void __attribute__ ((noinline)) Messager::Add(LangMsg v)
+Messager &__attribute__ ((noinline)) Messager::Add(LangMsg v)
 {
-	Add(MSG(v));
+	return Add(MSG(v));
 }
 
-void __attribute__ ((noinline)) Messager::Add(const wchar_t *v)
+Messager &__attribute__ ((noinline)) Messager::Add(const wchar_t *v)
 {
 	emplace_back(v);
+	return *this;
+}
+
+int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons, INT_PTR PluginNumber)
+{
+	// ignore trailing nullptr-s
+	while (!empty() && !back())
+		pop_back();
+
+	if (empty())
+		return -1;
+
+	return ShowMessage(Flags, Buttons, front(), data() + 1, (int)(size() - 1), PluginNumber);
 }
 
 int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons)
 {
-	// ignore trailing nullptr-s
-	while (!empty() && !back()) {
-		pop_back();
-	}
-	assert(!empty());
+	return Show(Flags, Buttons, -1);
+}
 
-	return MessageEx(Flags, Buttons, front(), data() + 1, (int)(size() - 1), -1);
+int __attribute__ ((noinline)) Messager::Show(int Buttons)
+{
+	return Show(0, Buttons, -1);
 }
 
 ///////////////////////////////////

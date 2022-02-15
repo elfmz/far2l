@@ -574,7 +574,7 @@ static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required
 	               (WORD)(HIWORD(required)),(WORD)(LOWORD(required)));
 	strMsg2.Format(MSG(MPlgRequired2),
 	               (WORD)(HIWORD(FAR_VERSION)),(WORD)(LOWORD(FAR_VERSION)));
-	Message(MSG_WARNING,1,MSG(MError),MSG(MPlgBadVers),plg,strMsg1,strMsg2,MSG(MOk));
+	Message(MSG_WARNING,1,MError,MPlgBadVers,plg,strMsg1,strMsg2,MOk);
 }
 
 

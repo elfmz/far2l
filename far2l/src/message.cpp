@@ -499,33 +499,43 @@ static int MessageExSynched(
 	return 0;
 }
 
-int MessageEx( DWORD Flags, int Buttons, const wchar_t *Title,
+int __attribute__ ((noinline)) MessageEx( DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber)
 {
 	return InterThreadCall<int, 0>(std::bind(MessageExSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
-void Messager::Add(LangMsg v)
+__attribute__ ((noinline)) Messager::Messager(LangMsg title)
+{
+	Add(title);
+}
+
+__attribute__ ((noinline)) Messager::Messager(const wchar_t *title)
+{
+	Add(title);
+}
+
+__attribute__ ((noinline)) Messager::~Messager()
+{
+}
+
+void __attribute__ ((noinline)) Messager::Add(LangMsg v)
 {
 	Add(MSG(v));
 }
 
-void Messager::Add(const wchar_t *v)
+void __attribute__ ((noinline)) Messager::Add(const wchar_t *v)
 {
 	emplace_back(v);
 }
 
-void Messager::Add(const FARString &v)
-{
-	emplace_back(v.CPtr());
-}
-
-int Messager::Show(DWORD Flags, int Buttons)
+int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons)
 {
 	// ignore trailing nullptr-s
 	while (!empty() && !back()) {
 		pop_back();
 	}
+	assert(!empty());
 
 	return MessageEx(Flags, Buttons, front(), data() + 1, (int)(size() - 1), -1);
 }

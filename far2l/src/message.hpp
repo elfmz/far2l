@@ -54,11 +54,16 @@ enum
 int MessageEx(DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber = -1);
 
-struct Messager : std::vector<const wchar_t *>
+struct Messager : protected std::vector<const wchar_t *>
 {
+	Messager(LangMsg title);
+	Messager(const wchar_t *title);
+
+	~Messager();
+
 	void Add(LangMsg v);
 	void Add(const wchar_t *v);
-	void Add(const FARString &v);
+	inline void Add() {}
 
 	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
 		void Add(const FirstItemT &FirstItem, const SecondItemT &SecondItem, OtherItemsT... OtherItems)
@@ -73,8 +78,8 @@ struct Messager : std::vector<const wchar_t *>
 template <class TitleT, class ... ItemsT>
 	int Message(DWORD Flags, int Buttons, TitleT Title, ItemsT... Items)
 {
-	Messager m;
-	m.Add(Title, Items...);
+	Messager m(Title);
+	m.Add(Items...);
 	return m.Show(Flags, Buttons);
 }
 

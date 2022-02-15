@@ -51,6 +51,29 @@ void OverrideInterThreadID(unsigned int tid)
 	g_thread_id = tid;
 }
 
+void InterThreadSyncCallDelegate::Finalize(bool discarded)
+{
+	std::lock_guard<std::mutex> lock(_mtx);
+	_discarded = discarded;
+	_done = true;
+	_cond.notify_all();
+}
+
+bool InterThreadSyncCallDelegate::Do()
+{
+	_done = _discarded = false;
+
+	if (UNLIKELY(!EnqueueInterThreadCallDelegate(this)))
+		return false;
+
+	std::unique_lock<std::mutex> lock(_mtx);
+	while (!_done) {
+		_cond.wait(lock);
+	}
+
+	return !_discarded;
+}
+
 InterThreadCallsDispatcherThread::InterThreadCallsDispatcherThread()
 {
 	const DWORD self_tid = GetInterThreadID();
@@ -68,7 +91,11 @@ InterThreadCallsDispatcherThread::~InterThreadCallsDispatcherThread()
 		interlocked_delegates.swap(s_interlocked_delegates);
 	}
 	for (const auto &d : interlocked_delegates) {
-		d->Process(true);
+		try {
+			d->Finalize(true);
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s - Finalize: %s\n", __FUNCTION__, e.what());
+		}
 	}
 }
 
@@ -92,7 +119,18 @@ int DispatchInterThreadCalls()
 			interlocked_delegates.swap(s_interlocked_delegates);
 		}
 		for (const auto &d : interlocked_delegates) {
-			d->Process(false);
+			bool failed = false;
+			try {
+				d->Process();
+			} catch (std::exception &e) {
+				fprintf(stderr, "%s - Process: %s\n", __FUNCTION__, e.what());
+				failed = true;
+			}
+			try {
+				d->Finalize(failed);
+			} catch (std::exception &e) {
+				fprintf(stderr, "%s - Finalize: %s\n", __FUNCTION__, e.what());
+			}
 		}
 		dispatched_count+= (int)interlocked_delegates.size();
 	}

@@ -221,3 +221,12 @@ class Manager
 };
 
 extern Manager *FrameManager;
+
+class LockBottomFrame
+{
+	Frame *_frame;
+
+public:
+	LockBottomFrame();
+	~LockBottomFrame();
+};

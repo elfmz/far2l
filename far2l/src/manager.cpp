@@ -1792,3 +1792,23 @@ Frame* Manager::GetTopModal()
 
 	return f;
 }
+
+/////////
+
+LockBottomFrame::LockBottomFrame()
+	: _frame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+{
+	if (_frame)
+	{
+		if (_frame->Locked())
+			_frame = nullptr;
+		else
+			_frame->Lock();
+	}
+}
+
+LockBottomFrame::~LockBottomFrame()
+{
+	if (_frame)
+		_frame->Unlock();
+}

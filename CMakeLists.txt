@@ -15,6 +15,11 @@ set(ColorRed "${Esc}[1;31m")
 # just to force reconfigure if packaging/version changed
 configure_file(${CMAKE_SOURCE_DIR}/packaging/version ${CMAKE_BINARY_DIR}/packaging/version @ONLY)
 
+# reconfigure in case .git directory changed to update version correctly
+IF(EXISTS ${CMAKE_SOURCE_DIR}/.git)
+	set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/.git)
+endif()
+
 file(READ "${CMAKE_SOURCE_DIR}/packaging/version" VERSION)
 string(REGEX REPLACE "[\r\n\t ]$" "" VERSION "${VERSION}")
 string(REGEX REPLACE "^([0-9]+)\\..*" "\\1" VERSION_MAJOR "${VERSION}")

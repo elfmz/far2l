@@ -862,8 +862,7 @@ class FileList_TempFileHolder : public TempFileUploadHolder
 
 			if (PutCode == 0)
 			{
-				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
-				        MSG(MTextSavedToTemp), strPath.CPtr(), MSG(MOk));
+				Message(MSG_WARNING, 1, MError, MCannotSaveFile, MTextSavedToTemp, strPath.CPtr(), MOk);
 			} else
 				out = true;
 		}
@@ -1813,7 +1812,7 @@ int FileList::ProcessKey(int Key)
 					strDirName=lpwszDirName;
 
 					if (!MakeCode)
-						Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotCreateFolder),strDirName,MSG(MOk));
+						Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateFolder,strDirName,MOk);
 
 					Update(UPDATE_KEEP_SELECTION);
 
@@ -3603,8 +3602,7 @@ void FileList::CompareDir()
 
 	if (Another->GetType()!=FILE_PANEL || !Another->IsVisible())
 	{
-		Message(MSG_WARNING,1,MSG(MCompareTitle),MSG(MCompareFilePanelsRequired1),
-		        MSG(MCompareFilePanelsRequired2),MSG(MOk));
+		Message(MSG_WARNING,1,MCompareTitle,MCompareFilePanelsRequired1,MCompareFilePanelsRequired2,MOk);
 		return;
 	}
 
@@ -3739,7 +3737,7 @@ void FileList::CompareDir()
 	Another->Redraw();
 
 	if (!SelFileCount && !Another->SelFileCount)
-		Message(0,1,MSG(MCompareTitle),MSG(MCompareSameFolders1),MSG(MCompareSameFolders2),MSG(MOk));
+		Message(0,1,MCompareTitle,MCompareSameFolders1,MCompareSameFolders2,MOk);
 }
 
 void FileList::CopyFiles()

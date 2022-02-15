@@ -571,7 +571,7 @@ void FileEditor::Init(
 	*/
 	if (FAttr!=INVALID_FILE_ATTRIBUTES && FAttr&FILE_ATTRIBUTE_DIRECTORY)
 	{
-		Message(MSG_WARNING,1,MSG(MEditTitle),MSG(MEditCanNotEditDirectory),MSG(MOk));
+		Message(MSG_WARNING,1,MEditTitle,MEditCanNotEditDirectory,MOk);
 		ExitCode=XC_OPEN_ERROR;
 		return;
 	}
@@ -630,7 +630,7 @@ void FileEditor::Init(
 			if (UserBreak!=1)
 			{
 				WINPORT(SetLastError)(SysErrorCode);
-				Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MEditTitle),MSG(MEditCannotOpen),strFileName,MSG(MOk));
+				Message(MSG_WARNING|MSG_ERRORTYPE,1,MEditTitle,MEditCannotOpen,strFileName,MOk);
 				ExitCode=XC_OPEN_ERROR;
 			}
 			else
@@ -1109,7 +1109,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 							if (!bInPlace)
 							{
-								Message(MSG_WARNING, 1, L"WARNING!", L"Editor will be reopened with new file!", MSG(MOk));
+								Message(MSG_WARNING, 1, L"WARNING!", L"Editor will be reopened with new file!", MOk);
 								int UserBreak;
 								LoadFile(strFullSaveAsName, UserBreak);
 								// TODO: возможно подобный ниже код здесь нужен (copy/paste из FileEditor::Init()). оформить его нужно по иному
@@ -1296,7 +1296,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						}
 						ChangeEditKeyBar();
 					} else
-						Message(0, 1, MSG(MEditTitle), L"Save file before changing this codepage", MSG(MHOk), nullptr);
+						Message(0, 1, MEditTitle, L"Save file before changing this codepage", MHOk, nullptr);
 				}
 				return TRUE;
 			}
@@ -1601,7 +1601,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	BadConversion = !GetStr.IsConversionValid();
 	if (BadConversion)
 	{
-		Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorLoadCPWarn1),MSG(MEditorLoadCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
+		Message(MSG_WARNING,1,MWarning,MEditorLoadCPWarn1,MEditorLoadCPWarn2,MEditorSaveNotRecommended,MOk);
 	}
 
 	if (LastLineCR||!m_editor->NumLastLine)
@@ -2804,7 +2804,7 @@ void FileEditor::SetCodePage(UINT codepage)
 		{
 			if (!m_editor->SetCodePage(m_codepage))
 			{
-				Message(MSG_WARNING,1,MSG(MWarning),MSG(MEditorSwitchCPWarn1),MSG(MEditorSwitchCPWarn2),MSG(MEditorSaveNotRecommended),MSG(MOk));
+				Message(MSG_WARNING,1,MWarning,MEditorSwitchCPWarn1,MEditorSwitchCPWarn2,MEditorSaveNotRecommended,MOk);
 				BadConversion = true;
 			}
 

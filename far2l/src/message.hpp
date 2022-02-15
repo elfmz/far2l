@@ -54,26 +54,12 @@ enum
 int MessageEx(DWORD Flags, int Buttons, const wchar_t *Title,
 	const wchar_t * const *Items, int ItemsNumber, INT_PTR PluginNumber = -1);
 
-struct MessageItems : std::vector<const wchar_t *>
+struct Messager : std::vector<const wchar_t *>
 {
 	void Add(LangMsg v);
-
-	inline void Add(const wchar_t *v)
-	{
-		emplace_back(v);
-	}
-
-	inline void Add(const FARString &v)
-	{
-		emplace_back(v.CPtr());
-	}
-
-	inline void Add(const std::wstring &v)
-	{
-		emplace_back(v.c_str());
-	}
-
-	inline void Add() { }
+	void Add(const wchar_t *v);
+	void Add(const FARString &v);
+	void Add(const std::wstring &v);
 
 	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
 		void Add(FirstItemT FirstItem, SecondItemT SecondItem, OtherItemsT... OtherItems)
@@ -81,20 +67,16 @@ struct MessageItems : std::vector<const wchar_t *>
 		Add(FirstItem);
 		Add(SecondItem, OtherItems...);
 	}
+
+	int Show(DWORD Flags, int Buttons);
 };
 
 template <class TitleT, class ... ItemsT>
 	int Message(DWORD Flags, int Buttons, TitleT Title, ItemsT... Items)
 {
-	MessageItems ItemsV;
-	ItemsV.Add(Title, Items...);
-
-	// ignore trailing nullptr-s
-	while (!ItemsV.empty() && !ItemsV.back()) {
-		ItemsV.pop_back();
-	}
-
-	return MessageEx(Flags, Buttons, ItemsV[0], ItemsV.data() + 1, (int)(ItemsV.size() - 1), -1);
+	Messager m;
+	m.Add(Title, Items...);
+	return m.Show(Flags, Buttons);
 }
 
 void SetMessageHelp(const wchar_t *Topic);

@@ -80,7 +80,7 @@ bool Plugin::OpenModule()
 		{
 			SetMessageHelp(L"ErrLoadPlugin module");
 			//|MSG_ERRORTYPE
-			Message(MSG_WARNING, 1, MSG(MError), strerr.c_str(), MSG(MPlgLoadPluginError), m_strModuleName, MSG(MOk));
+			Message(MSG_WARNING, 1, MError, strerr.c_str(), MPlgLoadPluginError, m_strModuleName, MOk);
 		}
 	}
 

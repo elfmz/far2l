@@ -595,7 +595,7 @@ void TreeList::SaveTreeFile()
 	if (!Success)
 	{
 		apiDeleteFile(strName);
-		Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotSaveTree),strName,MSG(MOk));
+		Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotSaveTree,strName,MOk);
 	}
 	else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 		apiSetFileAttributes(strName,FileAttributes);
@@ -705,8 +705,7 @@ int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 	{
 		wchar_t NumStr[32];
 		_itow(TreeCount,NumStr,10); //BUGBUG
-		Message((FirstCall ? 0:MSG_KEEPBACKGROUND),0,MSG(MTreeTitle),
-		        MSG(MReadingTree),NumStr);
+		Message((FirstCall ? 0:MSG_KEEPBACKGROUND),0,MTreeTitle,MReadingTree,NumStr);
 		PreRedrawItem preRedrawItem=PreRedraw.Peek();
 		preRedrawItem.Param.Flags=TreeCount;
 		PreRedraw.SetParam(preRedrawItem.Param);
@@ -1809,8 +1808,7 @@ void TreeList::FlushCache()
 			clearerr(TreeFile);
 			fclose(TreeFile);
 			apiDeleteFile(TreeCache.strTreeName);
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotSaveTree),
-			        TreeCache.strTreeName,MSG(MOk));
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotSaveTree,TreeCache.strTreeName,MOk);
 		}
 		else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 			apiSetFileAttributes(TreeCache.strTreeName,FileAttributes);

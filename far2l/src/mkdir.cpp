@@ -93,7 +93,7 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 				if (!pDirList->Set(strDirName))
 				{
-					Message(MSG_WARNING,1,MSG(MWarning),MSG(MIncorrectDirList),MSG(MOk));
+					Message(MSG_WARNING,1,MWarning,MIncorrectDirList,MOk);
 					return FALSE;
 				}
 			}

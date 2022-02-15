@@ -308,7 +308,7 @@ int FileViewer::ProcessKey(int Key)
 				File Edit;
 				if(!Edit.Open(strViewFileName, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 				{
-					Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MEditTitle),MSG(MEditCannotOpen),strViewFileName,MSG(MOk));
+					Message(MSG_WARNING|MSG_ERRORTYPE,1,MEditTitle,MEditCannotOpen,strViewFileName,MOk);
 					return TRUE;
 				}
 				Edit.Close();

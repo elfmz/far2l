@@ -505,10 +505,37 @@ int MessageEx( DWORD Flags, int Buttons, const wchar_t *Title,
 	return InterThreadCall<int, 0>(std::bind(MessageExSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
-void MessageItems::Add(LangMsg v)
+void Messager::Add(LangMsg v)
 {
 	Add(MSG(v));
 }
+
+void Messager::Add(const wchar_t *v)
+{
+	emplace_back(v);
+}
+
+void Messager::Add(const FARString &v)
+{
+	emplace_back(v.CPtr());
+}
+
+void Messager::Add(const std::wstring &v)
+{
+	emplace_back(v.c_str());
+}
+
+int Messager::Show(DWORD Flags, int Buttons)
+{
+	// ignore trailing nullptr-s
+	while (!empty() && !back()) {
+		pop_back();
+	}
+
+	return MessageEx(Flags, Buttons, front(), data() + 1, (int)(size() - 1), -1);
+}
+
+///////////////////////////////////
 
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)
 {

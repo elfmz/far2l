@@ -275,7 +275,7 @@ bool FileFilter::FilterEdit()
 				}
 				else if (SelPos>(int)FilterData.getCount())
 				{
-					Message(MSG_WARNING,1,MSG(MFilterTitle),MSG(MCanEditCustomFilterOnly),MSG(MOk));
+					Message(MSG_WARNING,1,MFilterTitle,MCanEditCustomFilterOnly,MOk);
 				}
 
 				break;
@@ -353,8 +353,7 @@ bool FileFilter::FilterEdit()
 					FARString strQuotedTitle=FilterData.getItem(SelPos)->GetTitle();
 					InsertQuote(strQuotedTitle);
 
-					if (!Message(0,2,MSG(MFilterTitle),MSG(MAskDeleteFilter),
-					            strQuotedTitle,MSG(MDelete),MSG(MCancel)))
+					if (!Message(0,2,MFilterTitle,MAskDeleteFilter,strQuotedTitle,MDelete,MCancel))
 					{
 						FilterData.deleteItem(SelPos);
 						FilterList.DeleteItem(SelPos);
@@ -366,7 +365,7 @@ bool FileFilter::FilterEdit()
 				}
 				else if (SelPos>(int)FilterData.getCount())
 				{
-					Message(MSG_WARNING,1,MSG(MFilterTitle),MSG(MCanDeleteCustomFilterOnly),MSG(MOk));
+					Message(MSG_WARNING,1,MFilterTitle,MCanDeleteCustomFilterOnly,MOk);
 				}
 
 				break;

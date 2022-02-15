@@ -58,7 +58,7 @@ static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UIN
 	FARString strSize;
 	FileSizeToStr(strSize,Size,8,COLUMN_FLOATSIZE|COLUMN_COMMAS);
 	RemoveLeadingSpaces(strSize);
-	Message(0,0,Title,MSG(MScanningFolder),Name,strSize);
+	Message(0,0,Title,MScanningFolder,Name,strSize);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=(void*)Title;
 	preRedrawItem.Param.Param2=(void*)Name;

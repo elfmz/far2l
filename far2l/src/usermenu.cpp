@@ -993,7 +993,7 @@ LONG_PTR WINAPI EditMenuDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 				if (FocusPos!=-1)
 				{
-					Message(MSG_WARNING,1,MSG(MUserMenuTitle),MSG((*Label?MUserMenuInvalidInputHotKey:MUserMenuInvalidInputLabel)),MSG(MOk));
+					Message(MSG_WARNING,1,MUserMenuTitle,((*Label?MUserMenuInvalidInputHotKey:MUserMenuInvalidInputLabel)),MOk);
 					SendDlgMessage(hDlg,DM_SETFOCUS,FocusPos,0);
 					Result=FALSE;
 				}

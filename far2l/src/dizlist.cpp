@@ -102,7 +102,7 @@ void DizList::Reset()
 
 void DizList::PR_ReadingMsg()
 {
-	Message(0,0,L"",MSG(MReadingDiz));
+	Message(0,0,L"",MReadingDiz);
 }
 
 void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
@@ -482,7 +482,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 		}
 		else
 		{
-			Message(MSG_WARNING,1,MSG(MError),MSG(MCannotUpdateDiz),MSG(MCannotUpdateRODiz),MSG(MOk));
+			Message(MSG_WARNING,1,MError,MCannotUpdateDiz,MCannotUpdateRODiz,MOk);
 			return false;
 		}
 	}
@@ -566,7 +566,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 		apiDeleteFile(strDizFileName);
 		if(AnyError)
 		{
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),MSG(MCannotUpdateDiz),MSG(MOk));
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotUpdateDiz,MOk);
 			return false;
 		}
 	}

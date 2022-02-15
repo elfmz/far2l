@@ -171,7 +171,7 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 		{
 			if (!ScreenObject::Flags.Check(FHELPOBJ_ERRCANNOTOPENHELP))
 			{
-				Message(MSG_WARNING,1,MSG(MHelpTitle),MSG(MHelpTopicNotFound),StackData.strHelpTopic,MSG(MOk));
+				Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
 			}
 
 			ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
@@ -244,7 +244,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
 			{
-				Message(MSG_WARNING,1,MSG(MHelpTitle),MSG(MCannotOpenHelp),Mask,MSG(MOk));
+				Message(MSG_WARNING,1,MHelpTitle,MCannotOpenHelp,Mask,MOk);
 			}
 		}
 
@@ -705,7 +705,7 @@ void Help::DisplayObject()
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
 			{
-				Message(MSG_WARNING,1,MSG(MHelpTitle),MSG(MHelpTopicNotFound),StackData.strHelpTopic,MSG(MOk));
+				Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
 			}
 
 			ProcessKey(KEY_ALTF1);
@@ -1549,7 +1549,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 		if (!(StackData.Flags&FHELP_NOSHOWERROR))
 		{
-			Message(MSG_WARNING,1,MSG(MHelpTitle),MSG(MHelpTopicNotFound),StackData.strHelpTopic,MSG(MOk));
+			Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
 		}
 
 		return FALSE;

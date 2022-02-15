@@ -345,8 +345,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		   + 'warning' flag processing, in QuickView it is FALSE
 		     so don't show red message box */
 		if (warning)
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MViewerTitle),
-			        MSG(MViewerCannotOpenFile),strFileName,MSG(MOk));
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,MViewerTitle,MViewerCannotOpenFile,strFileName,MOk);
 
 		OpenFailed=true;
 		return FALSE;
@@ -2454,7 +2453,7 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 
 	}
 
-	Message(0,0,MSG(MViewSearchTitle),(SearchHex?MSG(MViewSearchingHex):MSG(MViewSearchingFor)),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
+	Message(0,0,MViewSearchTitle,(SearchHex?MViewSearchingHex:MViewSearchingFor),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=(void*)MsgStr;
 	preRedrawItem.Param.Param2=(LPVOID)(INT_PTR)Percent;
@@ -2830,14 +2829,14 @@ void Viewer::Search(int Next,int FirstChar)
 		/* $ 27.01.2003 VVM
 		   + После окончания поиска спросим о переходе поиска в начало/конец */
 		if (SearchFlags.Check(SEARCH_MODE2))
-			Message(MSG_WARNING,1,MSG(MViewSearchTitle),
-			        (SearchHex?MSG(MViewSearchCannotFindHex):MSG(MViewSearchCannotFind)),strMsgStr,MSG(MOk));
+			Message(MSG_WARNING,1,MViewSearchTitle,
+			        (SearchHex?MViewSearchCannotFindHex:MViewSearchCannotFind),strMsgStr,MOk);
 		else
 		{
-			if (!Message(MSG_WARNING,2,MSG(MViewSearchTitle),
-			            (SearchHex?MSG(MViewSearchCannotFindHex):MSG(MViewSearchCannotFind)),strMsgStr,
-			            (ReverseSearch?MSG(MViewSearchFromEnd):MSG(MViewSearchFromBegin)),
-			            MSG(MHYes),MSG(MHNo)))
+			if (!Message(MSG_WARNING,2,MViewSearchTitle,
+			            (SearchHex?MViewSearchCannotFindHex:MViewSearchCannotFind),strMsgStr,
+			            (ReverseSearch?MViewSearchFromEnd:MViewSearchFromBegin),
+			            MHYes,MHNo))
 				Search(2,0);
 		}
 	}

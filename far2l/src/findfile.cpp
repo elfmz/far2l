@@ -705,7 +705,7 @@ static LONG_PTR WINAPI AdvancedDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 
 				if (Data && *Data && !CheckFileSizeStringFormat(Data))
 				{
-					Message(MSG_WARNING,1,MSG(MFindFileAdvancedTitle),MSG(MBadFileSizeFormat),MSG(MOk));
+					Message(MSG_WARNING,1,MFindFileAdvancedTitle,MBadFileSizeFormat,MOk);
 					return FALSE;
 				}
 			}
@@ -1564,8 +1564,7 @@ class FindDlg_TempFileHolder : public TempFileUploadHolder
 
 			if (!out)
 			{
-				Message(MSG_WARNING, 1, MSG(MError), MSG(MCannotSaveFile),
-				        MSG(MTextSavedToTemp), TempFileName(), MSG(MOk));
+				Message(MSG_WARNING, 1, MError, MCannotSaveFile,MTextSavedToTemp, TempFileName(), MOk);
 			}
 		}
 

@@ -189,7 +189,7 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 	else
 	{
 		if (!Silent)
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),strDir,MSG(MOk));
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,strDir,MOk);
 
 		return FALSE;
 	}

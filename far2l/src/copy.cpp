@@ -293,7 +293,7 @@ void CopyProgress::CreateScanBackground()
 	}
 
 	Bar[BarSize]=0;
-	Message(MSG_LEFTALIGN,0,MSG(Move?MMoveDlgTitle:MCopyDlgTitle),MSG(MCopyScanning),Bar);
+	Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),MCopyScanning,Bar);
 	int MX1,MY1,MX2,MY2;
 	GetMessagePosition(MX1,MY1,MX2,MY2);
 	Rect.Left=MX1;
@@ -316,11 +316,11 @@ void CopyProgress::CreateBackground()
 	{
 		if (!Time)
 		{
-			Message(MSG_LEFTALIGN,0,MSG(Move?MMoveDlgTitle:MCopyDlgTitle),MSG(Move?MCopyMoving:MCopyCopying),L"",MSG(MCopyTo),L"",Bar,L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,L"\x1",L"");
 		}
 		else
 		{
-			Message(MSG_LEFTALIGN,0,MSG(Move?MMoveDlgTitle:MCopyDlgTitle),MSG(Move?MCopyMoving:MCopyCopying),L"",MSG(MCopyTo),L"",Bar,L"\x1",L"",L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,L"\x1",L"",L"\x1",L"");
 		}
 	}
 	else
@@ -333,11 +333,11 @@ void CopyProgress::CreateBackground()
 
 		if (!Time)
 		{
-			Message(MSG_LEFTALIGN,0,MSG(Move?MMoveDlgTitle:MCopyDlgTitle),MSG(Move?MCopyMoving:MCopyCopying),L"",MSG(MCopyTo),L"",Bar,strTotalSeparator,Bar,L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"");
 		}
 		else
 		{
-			Message(MSG_LEFTALIGN,0,MSG(Move?MMoveDlgTitle:MCopyDlgTitle),MSG(Move?MCopyMoving:MCopyCopying),L"",MSG(MCopyTo),L"",Bar,strTotalSeparator,Bar,L"\x1",L"",L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"",L"\x1",L"");
 		}
 	}
 
@@ -1038,7 +1038,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				}
 				else
 				{
-					Message(MSG_WARNING,1,MSG(MWarning),MSG(MCopyIncorrectTargetList), MSG(MOk));
+					Message(MSG_WARNING,1,MWarning,MCopyIncorrectTargetList, MOk);
 				}
 			}
 			else
@@ -1202,7 +1202,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 				if (!StrCmp(strNameTmp,L"..") && IsLocalRootPath(strSrcDir))
 				{
-					if (!Message(MSG_WARNING,2,MSG(MError),MSG((!Move?MCannotCopyToTwoDot:MCannotMoveToTwoDot)),MSG(MCannotCopyMoveToTwoDot),MSG(MCopySkip),MSG(MCopyCancel)))
+					if (!Message(MSG_WARNING,2,MError,((!Move?MCannotCopyToTwoDot:MCannotMoveToTwoDot)),MCannotCopyMoveToTwoDot,MCopySkip,MCopyCancel))
 						continue;
 
 					break;
@@ -1634,7 +1634,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 		}
 		else if (!(Attr & FILE_ATTRIBUTE_DIRECTORY))
 		{
-			Message(MSG_WARNING,1,MSG(MError),MSG(MCopyCannotCreateFolder),strNewPath,MSG(MOk));
+			Message(MSG_WARNING,1,MError,MCopyCannotCreateFolder,strNewPath,MOk);
 			return COPY_FAILURE;
 		}
 	}
@@ -2190,8 +2190,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			if (CmpCode==1)
 			{
 				SetMessageHelp(L"ErrCopyItSelf");
-				Message(MSG_WARNING,1,MSG(MError),MSG(MCannotCopyFolderToItself1),
-				        Src,MSG(MCannotCopyFolderToItself2),MSG(MOk));
+				Message(MSG_WARNING,1,MError,MCannotCopyFolderToItself1,Src,MCannotCopyFolderToItself2,MOk);
 				return(COPY_CANCEL);
 			}
 		}
@@ -2348,8 +2347,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 
 				if (CmpCode==1 && !Rename)
 				{
-					Message(MSG_WARNING,1,MSG(MError),MSG(MCannotCopyFileToItself1),
-						    Src,MSG(MCannotCopyFileToItself2),MSG(MOk));
+					Message(MSG_WARNING,1,MError,MCannotCopyFileToItself1,Src,MCannotCopyFileToItself2,MOk);
 					return(COPY_CANCEL);
 				}
 			}
@@ -3423,7 +3421,7 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 		FARString strOutFileName = Name; //??? nullptr ???
 		TruncPathStr(strOutFileName,Width);
 		CenterStr(strOutFileName, strOutFileName,Width+4);
-		Message(0,0,MSG(MMoveDlgTitle),MSG(MCopyPrepareSecury),strOutFileName);
+		Message(0,0,MMoveDlgTitle,MCopyPrepareSecury,strOutFileName);
 
 		if (CP->Cancelled())
 		{

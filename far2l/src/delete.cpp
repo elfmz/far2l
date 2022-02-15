@@ -207,7 +207,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 		SetMessageHelp(L"DeleteFile");
 
-		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,(Wipe?MDeleteWipe:Opt.DeleteToRecycleBin?MDeleteRecycle:MDelete),MSG(MCancel)))
+		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,(Wipe?MDeleteWipe:Opt.DeleteToRecycleBin?MDeleteRecycle:MDelete),MCancel))
 		{
 			NeedUpdate=FALSE;
 			goto done;
@@ -220,7 +220,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 		SetCursorType(FALSE,0);
 		SetMessageHelp(L"DeleteFile");
 
-		if (Message(MSG_WARNING,2,MSG(Wipe?MWipeFilesTitle:MDeleteFilesTitle),(Wipe?MAskWipe:MAskDelete),
+		if (Message(MSG_WARNING,2,(Wipe?MWipeFilesTitle:MDeleteFilesTitle),(Wipe?MAskWipe:MAskDelete),
 		            strDeleteFilesMsg,MDeleteFileAll,MDeleteFileCancel))
 		{
 			NeedUpdate=FALSE;
@@ -513,8 +513,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 						DeleteCode=RemoveToRecycleBin(strSelName);
 
 						if (!DeleteCode)
-							Message(MSG_WARNING|MSG_ERRORTYPE,1,MSG(MError),
-							        MSG(MCannotDeleteFolder),strSelName,MSG(MOk));
+							Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotDeleteFolder,strSelName,MOk);
 						else
 						{
 							TreeList::DelTreeName(strSelName);
@@ -589,7 +588,7 @@ void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent)
 	FARString strOutFileName(Name);
 	TruncPathStr(strOutFileName,static_cast<int>(Width));
 	CenterStr(strOutFileName,strOutFileName,static_cast<int>(Width));
-	Message(0,0,MSG(Wipe?MDeleteWipeTitle:MDeleteTitle),(Percent>=0||!Opt.DelOpt.DelShowTotal)?MSG(Wipe?MDeletingWiping:MDeleting):MSG(MScanningFolder),strOutFileName,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
+	Message(0,0,(Wipe?MDeleteWipeTitle:MDeleteTitle),(Percent>=0||!Opt.DelOpt.DelShowTotal)?(Wipe?MDeletingWiping:MDeleting):(MScanningFolder),strOutFileName,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=static_cast<void*>(const_cast<wchar_t*>(Name));
 	preRedrawItem.Param.Param4=(void *)(INT_PTR)Wipe;

@@ -535,7 +535,7 @@ HANDLE PluginManager::OpenFilePlugin(
 				if(!OpMode)
 				{
 					Message(MSG_WARNING|MSG_ERRORTYPE, 1, MB2Wide(e.what()).c_str(),
-						MSG(MOpenPluginCannotOpenFile), Name, MSG(MOk));
+						MOpenPluginCannotOpenFile, Name, MOk);
 				}
 				break;
 			}

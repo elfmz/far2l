@@ -181,7 +181,7 @@ static int ShowBookmarksMenuIteration(int Pos)
 						if (apiGetFileAttributes(strTemp) == INVALID_FILE_ATTRIBUTES)
 						{
 							WINPORT(SetLastError)(ERROR_PATH_NOT_FOUND);
-							Saved=!Message(MSG_WARNING | MSG_ERRORTYPE, 2, MSG(MError), strNewDir, MSG(MSaveThisShortcut), MSG(MYes), MSG(MNo));
+							Saved=!Message(MSG_WARNING | MSG_ERRORTYPE, 2, MError, strNewDir, MSaveThisShortcut, MYes, MNo);
 						}
 
 						if (Saved)

@@ -444,7 +444,7 @@ void ShellSetFileAttributesMsg(const wchar_t *Name)
 	FARString strOutFileName=Name;
 	TruncPathStr(strOutFileName,Width);
 	CenterStr(strOutFileName,strOutFileName,Width+4);
-	Message(0,0,MSG(MSetAttrTitle),MSG(MSetAttrSetting),strOutFileName);
+	Message(0,0,MSetAttrTitle,MSetAttrSetting,strOutFileName);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=Name;
 	PreRedraw.SetParam(preRedrawItem.Param);
@@ -536,12 +536,12 @@ static void SystemProperties(const FARString &strSelName)
 	if (lines.empty())
 		return;
 		
-	std::vector<const wchar_t *> lines_wz;
-	for (const auto & l : lines) 
-		lines_wz.push_back(l.c_str());
-	lines_wz.push_back(MSG(MHOk));
-
-	MessageEx(0, 1, MSG(MSetAttrSystemDialog), &lines_wz[0], lines_wz.size());
+	Messager m;
+	m.Add(MSetAttrSystemDialog);
+	for (const auto &l : lines)
+		m.Add(l);
+	m.Add(MHOk);
+	m.Show(0, 1);
 }
 
 static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(const wchar_t *,const wchar_t *, FARString &),

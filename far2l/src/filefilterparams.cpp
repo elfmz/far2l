@@ -818,7 +818,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 				if (!bTemp)
 				{
 					LONG_PTR ColorConfig = SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-					Message(MSG_WARNING,1,ColorConfig?MSG(MFileHilightTitle):MSG(MFileFilterTitle),MSG(MBadFileSizeFormat),MSG(MOk));
+					Message(MSG_WARNING,1,ColorConfig?MFileHilightTitle:MFileFilterTitle,MBadFileSizeFormat,MOk);
 					return FALSE;
 				}
 			}

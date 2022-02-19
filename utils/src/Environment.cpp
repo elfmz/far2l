@@ -108,14 +108,14 @@ static void UnescapeCLikeSequence(std::string &s, size_t &i)
 		case 'u': if (i + 3 < s.size()) {
 				unsigned long code = strtol(s.substr(i, 4).c_str(), nullptr, 16);
 				i+= 3;
-				ReplaceSubstringAt(s, i - 6, i, StrPrintf("%lc", code));
+				ReplaceSubstringAt(s, i - 6, i, StrPrintf("%lc", (wchar_t)code));
 			} break;
 
 		// \u######## where ######## is a hexadecimal UTF32 code
 		case 'U': if (i + 7 < s.size()) {
 				unsigned long code = strtol(s.substr(i, 8).c_str(), nullptr, 16);
 				i+= 7;
-				ReplaceSubstringAt(s, i - 10, i, StrPrintf("%lc", code));
+				ReplaceSubstringAt(s, i - 10, i, StrPrintf("%lc", (wchar_t)code));
 			} break;
 
 		// \### where ### is a octal char code

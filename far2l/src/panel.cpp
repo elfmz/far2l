@@ -276,7 +276,7 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 		MenuItemEx ChDiskItem;
 
 		ChDiskItem.Clear();
-		ChDiskItem.strName = MSG(MPluginsTitle);
+		ChDiskItem.strName = Msg::PluginsTitle;
 		ChDiskItem.Flags|=LIF_SEPARATOR;
 		ChDiskItem.UserDataSize=0;
 		ChDisk.AddItem(&ChDiskItem);
@@ -296,23 +296,23 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 
 static void ConfigureChangeDriveMode()
 {
-	DialogBuilder Builder(MChangeDriveConfigure, L"");
-//	Builder.AddCheckbox(MChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
-//	Builder.AddCheckbox(MChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
-//	Builder.AddCheckbox(MChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
-//	Builder.AddCheckbox(MChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
+	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"");
+//	Builder.AddCheckbox(Msg::ChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
+//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
+//	Builder.AddCheckbox(Msg::ChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
+//	Builder.AddCheckbox(Msg::ChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
 
 //	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 
-//	DialogItemEx *ShowSize = Builder.AddCheckbox(MChangeDriveShowSize, &ShowSizeAny);
-//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(MChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
+//	DialogItemEx *ShowSize = Builder.AddCheckbox(Msg::ChangeDriveShowSize, &ShowSizeAny);
+//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
 //	ShowSizeFloat->Indent(3);
 //	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	Builder.AddCheckbox(MChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
-	Builder.AddCheckbox(MChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
-//	Builder.AddCheckbox(MChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
-//	Builder.AddCheckbox(MChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
+	Builder.AddCheckbox(Msg::ChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
+	Builder.AddCheckbox(Msg::ChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
+//	Builder.AddCheckbox(Msg::ChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
+//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
 
 	Builder.AddOKCancel();
 	if (Builder.ShowDialog())
@@ -361,7 +361,7 @@ static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 			if (!AddedCount++)
 			{
 				ChDiskItem.Clear();
-				ChDiskItem.strName = MSG(MBookmarksTitle);
+				ChDiskItem.strName = Msg::BookmarksTitle;
 				ChDiskItem.Flags|= LIF_SEPARATOR;
 				ChDiskItem.UserDataSize=0;
 				ChDisk.AddItem(&ChDiskItem);
@@ -431,8 +431,8 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 	PanelMenuItem Item, *mitem=0;
 	{ // эта скобка надо, см. M#605
-		VMenu ChDisk(MSG(MChangeDriveTitle),nullptr,0,ScrY-Y1-3);
-		ChDisk.SetBottomTitle(MSG(MChangeDriveMenuFooter));
+		VMenu ChDisk(Msg::ChangeDriveTitle,nullptr,0,ScrY-Y1-3);
+		ChDisk.SetBottomTitle(Msg::ChangeDriveMenuFooter);
 		ChDisk.SetFlags(VMENU_NOTCENTER);
 
 		if (this == CtrlObject->Cp()->LeftPanel)
@@ -1184,7 +1184,7 @@ void Panel::FastFindShow(int FindX,int FindY)
 	Box(FindX,FindY,FindX+21,FindY+2,COL_DIALOGBOX,DOUBLE_BOX);
 	GotoXY(FindX+7,FindY);
 	SetColor(COL_DIALOGBOXTITLE);
-	Text(MSearchFileTitle);
+	Text(Msg::SearchFileTitle);
 }
 
 
@@ -1359,12 +1359,12 @@ void Panel::DragMessage(int X,int Y,int Move)
 		strSelName = strCvtName;
 	}
 	else
-		strSelName.Format(MSG(MDragFiles), SelCount);
+		strSelName.Format(Msg::DragFiles, SelCount);
 
 	if (Move)
-		strDragMsg.Format(MSG(MDragMove), strSelName.CPtr());
+		strDragMsg.Format(Msg::DragMove, strSelName.CPtr());
 	else
-		strDragMsg.Format(MSG(MDragCopy), strSelName.CPtr());
+		strDragMsg.Format(Msg::DragCopy, strSelName.CPtr());
 
 	if ((Length=(int)strDragMsg.GetLength())+X>ScrX)
 	{

@@ -1214,7 +1214,7 @@ void WINAPI FarDialogFree(HANDLE hDlg)
 
 
 static CriticalSection s_get_msg_cs;
-const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
+const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,FarLangMsgID MsgId)
 {
 	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginW *pPlugin = (PluginW*)PluginHandle;
@@ -1270,34 +1270,34 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	{
 		case FMSG_MB_OK:
 			ButtonsNumber=1;
-			m.Add(MOk);
+			m.Add(Msg::Ok);
 			break;
 		case FMSG_MB_OKCANCEL:
 			ButtonsNumber=2;
-			m.Add(MOk);
-			m.Add(MCancel);
+			m.Add(Msg::Ok);
+			m.Add(Msg::Cancel);
 			break;
 		case FMSG_MB_ABORTRETRYIGNORE:
 			ButtonsNumber=3;
-			m.Add(MAbort);
-			m.Add(MRetry);
-			m.Add(MIgnore);
+			m.Add(Msg::Abort);
+			m.Add(Msg::Retry);
+			m.Add(Msg::Ignore);
 			break;
 		case FMSG_MB_YESNO:
 			ButtonsNumber=2;
-			m.Add(MYes);
-			m.Add(MNo);
+			m.Add(Msg::Yes);
+			m.Add(Msg::No);
 			break;
 		case FMSG_MB_YESNOCANCEL:
 			ButtonsNumber=3;
-			m.Add(MYes);
-			m.Add(MNo);
-			m.Add(MCancel);
+			m.Add(Msg::Yes);
+			m.Add(Msg::No);
+			m.Add(Msg::Cancel);
 			break;
 		case FMSG_MB_RETRYCANCEL:
 			ButtonsNumber=2;
-			m.Add(MRetry);
-			m.Add(MCancel);
+			m.Add(Msg::Retry);
+			m.Add(Msg::Cancel);
 			break;
 	}
 
@@ -1580,7 +1580,7 @@ void WINAPI FarRestoreScreen(HANDLE hScreen)
 
 static void PR_FarGetDirListMsg()
 {
-	Message(0,0,L"",MPreparingList);
+	Message(0,0,L"",Msg::PreparingList);
 }
 
 static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pItemsNumber)
@@ -1661,7 +1661,7 @@ static int PluginSearchMsgOut;
 
 static void FarGetPluginDirListMsg(const wchar_t *Name,DWORD Flags)
 {
-	Message(Flags,0,L"",MPreparingList,Name);
+	Message(Flags,0,L"",Msg::PreparingList,Name);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Flags=Flags;
 	preRedrawItem.Param.Param1=(void*)Name;

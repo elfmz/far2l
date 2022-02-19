@@ -444,7 +444,7 @@ void ShellSetFileAttributesMsg(const wchar_t *Name)
 	FARString strOutFileName=Name;
 	TruncPathStr(strOutFileName,Width);
 	CenterStr(strOutFileName,strOutFileName,Width+4);
-	Message(0,0,MSetAttrTitle,MSetAttrSetting,strOutFileName);
+	Message(0,0,Msg::SetAttrTitle,Msg::SetAttrSetting,strOutFileName);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=Name;
 	PreRedraw.SetParam(preRedrawItem.Param);
@@ -536,10 +536,10 @@ static void SystemProperties(const FARString &strSelName)
 	if (lines.empty())
 		return;
 		
-	Messager m(MSetAttrSystemDialog);
+	Messager m(Msg::SetAttrSystemDialog);
 	for (const auto &l : lines)
 		m.Add(l.c_str());
-	m.Add(MHOk);
+	m.Add(Msg::HOk);
 	m.Show(0, 1);
 }
 
@@ -552,7 +552,7 @@ static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(con
 	if (EditItem.strData.IsEmpty()) {
 		EditItem.strData = strCur;		
 	} else if (!EditItem.strData.Equal(0, strCur)) {
-		EditItem.strData = MSG(MSetAttrOwnerMultiple);
+		EditItem.strData = Msg::SetAttrOwnerMultiple;
 		out = false;
 	}
 	return out;
@@ -581,47 +581,47 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 	DialogDataEx AttrDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,short(DlgX-4),short(DlgY-2),{},0,MSG(MSetAttrTitle)},
-		{DI_TEXT,-1,2,0,2,{},0,MSG(MSetAttrFor)},
+		{DI_DOUBLEBOX,3,1,short(DlgX-4),short(DlgY-2),{},0,Msg::SetAttrTitle},
+		{DI_TEXT,-1,2,0,2,{},0,Msg::SetAttrFor},
 		{DI_TEXT,-1,3,0,3,{},DIF_SHOWAMPERSAND,L""},
 		{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,5,5,17,5,{},0,MSG(MSetAttrOwner)},
+		{DI_TEXT,5,5,17,5,{},0,Msg::SetAttrOwner},
 		{DI_EDIT,18,5,short(DlgX-6),5,{},0,L""},
-		{DI_TEXT,5,6,17,6,{},0,MSG(MSetAttrGroup)},//L"Group:",
+		{DI_TEXT,5,6,17,6,{},0,Msg::SetAttrGroup},//L"Group:",
 		{DI_EDIT,18,6,short(DlgX-6),6,{},0,L""},
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,5,8,0,8,{},0,MSG(MSetAttrAccessUser)},//L"User",
-		{DI_TEXT,short(DlgX/3),8,0,8,{},0,MSG(MSetAttrAccessGroup)},//L"Group",
-		{DI_TEXT,short(2*DlgX/3),8,0,8,{},0,MSG(MSetAttrAccessOther)},//L"Other",
-		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, MSG(MSetAttrAccessUserRead)},//L"Read",
-		{DI_CHECKBOX,5,10,0,10,{},DIF_3STATE, MSG(MSetAttrAccessUserWrite)},//L"Write",
-		{DI_CHECKBOX,5,11,0,11,{},DIF_3STATE, MSG(MSetAttrAccessUserExecute)},//L"Execute",
-		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_3STATE, MSG(MSetAttrAccessGroupRead)},//L"Read",
-		{DI_CHECKBOX,short(DlgX/3),10,0,10,{},DIF_3STATE, MSG(MSetAttrAccessGroupWrite)},//L"Write",
-		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, MSG(MSetAttrAccessGroupExecute)},//L"Execute",
-		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_3STATE, MSG(MSetAttrAccessOtherRead)},//L"Read",
-		{DI_CHECKBOX,short(2*DlgX/3),10,0,10,{},DIF_3STATE, MSG(MSetAttrAccessOtherWrite)},//L"Write",
-		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, MSG(MSetAttrAccessOtherExecute)},//L"Execute",
+		{DI_TEXT,5,8,0,8,{},0,Msg::SetAttrAccessUser},//L"User",
+		{DI_TEXT,short(DlgX/3),8,0,8,{},0,Msg::SetAttrAccessGroup},//L"Group",
+		{DI_TEXT,short(2*DlgX/3),8,0,8,{},0,Msg::SetAttrAccessOther},//L"Other",
+		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},//L"Read",
+		{DI_CHECKBOX,5,10,0,10,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},//L"Write",
+		{DI_CHECKBOX,5,11,0,11,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},//L"Execute",
+		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},//L"Read",
+		{DI_CHECKBOX,short(DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},//L"Write",
+		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},//L"Execute",
+		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},//L"Read",
+		{DI_CHECKBOX,short(2*DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},//L"Write",
+		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},//L"Execute",
 		{DI_TEXT,3,12,0,12,{},DIF_SEPARATOR,L""},
 		{DI_TEXT,short(DlgX-29),13,0,13,{},0,L""},
-		{DI_TEXT,    5,14,0,14,{},0, MSG(MSetAttrAccessTime)},//L"Last access time",
+		{DI_TEXT,    5,14,0,14,{},0, Msg::SetAttrAccessTime},//L"Last access time",
 		{DI_FIXEDIT,short(DlgX-29),14,short(DlgX-19),14,{},DIF_MASKEDIT,L""},
 		{DI_FIXEDIT,short(DlgX-17),14,short(DlgX-6),14,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,15,0,15,{},0, MSG(MSetAttrModificationTime)},//L"Last modification time",
+		{DI_TEXT,    5,15,0,15,{},0, Msg::SetAttrModificationTime},//L"Last modification time",
 		{DI_FIXEDIT,short(DlgX-29),15,short(DlgX-19),15,{},DIF_MASKEDIT,L""},
 		{DI_FIXEDIT,short(DlgX-17),15,short(DlgX-6),15,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,16,0,16,{},0, MSG(MSetAttrStatusChangeTime)},//L"Last status change time",
+		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrStatusChangeTime},//L"Last status change time",
 		{DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,{},DIF_MASKEDIT|DIF_READONLY,L""},
 		{DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrOriginal)},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrCurrent)},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MSetAttrBlank)},
+		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
+		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
+		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
 		{DI_TEXT,3,19,0,19,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
-		{DI_CHECKBOX,5,20,0,20,{},DIF_DISABLE|DIF_HIDDEN,MSG(MSetAttrSubfolders)},
+		{DI_CHECKBOX,5,20,0,20,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
 		{DI_TEXT,3,short(DlgY-4),0,short(DlgY-4),{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MSetAttrSet)},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MSetAttrSystemDialog)},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::SetAttrSet},
+		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::SetAttrSystemDialog},
+		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(AttrDlgData,AttrDlg);
 	SetAttrDlgParam DlgParam{};
@@ -699,15 +699,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		switch (GetDateFormat())
 		{
 			case 0:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(MSG(MSetAttrTimeTitle1),DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle1,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
 				strDMask.Format(FmtMask2,DateSeparator,DateSeparator);
 				break;
 			case 1:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(MSG(MSetAttrTimeTitle2),DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle2,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
 				strDMask.Format(FmtMask2,DateSeparator,DateSeparator);
 				break;
 			default:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(MSG(MSetAttrTimeTitle3),DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle3,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
 				strDMask.Format(FmtMask3,DateSeparator,DateSeparator);
 				break;
 		}
@@ -813,24 +813,24 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 				LinkPresent=true;
 				NormalizeSymlinkName(strLinkName);
-				int ID_Msg=MSetAttrSymlink;
+				int ID_Msg=Msg::SetAttrSymlink;
 
 				if (ReparseTag==IO_REPARSE_TAG_MOUNT_POINT)
 				{
 					if (IsLocalVolumeRootPath(strLinkName))
 					{
-						ID_Msg=MSetAttrVolMount;
+						ID_Msg=Msg::SetAttrVolMount;
 					}
 					else
 					{
-						ID_Msg=MSetAttrJunction;
+						ID_Msg=Msg::SetAttrJunction;
 					}
 				}
 
 				AttrDlg[SA_TEXT_SYMLINK].Flags&=~DIF_HIDDEN;
-				AttrDlg[SA_TEXT_SYMLINK].strData=MSG(ID_Msg);
+				AttrDlg[SA_TEXT_SYMLINK].strData=(ID_Msg);
 				AttrDlg[SA_EDIT_SYMLINK].Flags&=~DIF_HIDDEN;
-				AttrDlg[SA_EDIT_SYMLINK].strData=LenJunction?strLinkName.CPtr():MSG(MSetAttrUnknownJunction);
+				AttrDlg[SA_EDIT_SYMLINK].strData=LenJunction?strLinkName.CPtr():Msg::SetAttrUnknownJunction;
 				DlgParam.FileSystemFlags=0;
 
 				if (apiGetVolumeInformation(strSelName,nullptr,0,nullptr,&DlgParam.FileSystemFlags,nullptr))
@@ -866,7 +866,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				AttrDlg[SA_COMBO_HARDLINK].Flags|=DIF_DISABLE;
 
 				FormatString strTmp;
-				strTmp<<MSG(MSetAttrHardLinks)<<L" ("<<NameList.ItemsNumber<<L")";
+				strTmp<<Msg::SetAttrHardLinks<<L" ("<<NameList.ItemsNumber<<L")";
 				AttrDlg[SA_COMBO_HARDLINK].strData=strTmp;
 			}*/
 
@@ -917,7 +917,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData.Clear();
 			AttrDlg[SA_BUTTON_ORIGINAL].Flags|=DIF_DISABLE;
-			AttrDlg[SA_TEXT_NAME].strData = MSG(MSetAttrSelectedObjects);
+			AttrDlg[SA_TEXT_NAME].strData = Msg::SetAttrSelectedObjects;
 
 			for (size_t i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
 			{
@@ -1123,7 +1123,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				else
 				{
 					int RetCode=1;
-					ConsoleTitle SetAttrTitle(MSG(MSetAttrTitle));
+					ConsoleTitle SetAttrTitle(Msg::SetAttrTitle);
 					if(SrcPanel)
 					{
 						CtrlObject->Cp()->GetAnotherPanel(SrcPanel)->CloseFile();

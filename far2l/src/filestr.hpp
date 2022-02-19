@@ -69,9 +69,15 @@ class OldGetFileString
 		bool IsConversionValid() { return !SomeDataLost; };
 };
 
-// BUGBUG, delete!
-bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound = nullptr, bool bUseHeuristics = true);
-wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePage);
+bool DetectFileMagic(FILE *file, UINT &nCodePage);
+
+class StringReader
+{
+	std::vector<char> _tmp;
+
+public:
+	wchar_t *Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, int nCodePage);
+};
 
 //-----------------------------------------------------------------------------
 struct GetFileStringContext

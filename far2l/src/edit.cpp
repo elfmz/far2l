@@ -2959,8 +2959,8 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 	VMenu ComplMenu(nullptr,nullptr,0,0);
 	FARString strTemp = Str;
 	PopulateCompletionMenu(ComplMenu, strTemp);
-	ComplMenu.SetBottomTitle(MSG((!pCustomCompletionList && pHistory)
-			? MEditControlHistoryFooter : MEditControlHistoryFooterNoDel));
+	ComplMenu.SetBottomTitle(((!pCustomCompletionList && pHistory)
+			? Msg::EditControlHistoryFooter : Msg::EditControlHistoryFooterNoDel));
 
 	if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
 	{

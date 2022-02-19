@@ -494,7 +494,7 @@ HANDLE PluginManager::OpenFilePlugin(
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	ConsoleTitle ct(Opt.ShowCheckingFile?MSG(MCheckingFileInPlugin):nullptr);
+	ConsoleTitle ct(Opt.ShowCheckingFile ? Msg::CheckingFileInPlugin.CPtr() : nullptr);
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 	PluginHandle *pResult = nullptr;
 	TPointerArray<PluginHandle> items;
@@ -535,7 +535,7 @@ HANDLE PluginManager::OpenFilePlugin(
 				if(!OpMode)
 				{
 					Message(MSG_WARNING|MSG_ERRORTYPE, 1, MB2Wide(e.what()).c_str(),
-						MOpenPluginCannotOpenFile, Name, MOk);
+						Msg::OpenPluginCannotOpenFile, Name, Msg::Ok);
 				}
 				break;
 			}
@@ -544,7 +544,7 @@ HANDLE PluginManager::OpenFilePlugin(
 		if (pPlugin->HasOpenFilePlugin())
 		{
 			if (Opt.ShowCheckingFile)
-				ct.Set(L"%ls - [%ls]...",MSG(MCheckingFileInPlugin),PointToName(pPlugin->GetModuleName()));
+				ct.Set(L"%ls - [%ls]...", Msg::CheckingFileInPlugin.CPtr(), PointToName(pPlugin->GetModuleName()));
 
 			HANDLE hPlugin = pPlugin->OpenFilePlugin(Name,
 				smm ? (const unsigned char *)smm->View() : nullptr,
@@ -589,7 +589,7 @@ HANDLE PluginManager::OpenFilePlugin(
 
 		if(!OnlyOne && ShowMenu)
 		{
-			VMenu menu(MSG(MPluginConfirmationTitle), nullptr, 0, ScrY-4);
+			VMenu menu(Msg::PluginConfirmationTitle, nullptr, 0, ScrY-4);
 			menu.SetPosition(-1, -1, 0, 0);
 			menu.SetHelp(L"ChoosePluginMenu");
 			menu.SetFlags(VMENU_SHOWAMPERSAND|VMENU_WRAPMODE);
@@ -611,7 +611,7 @@ HANDLE PluginManager::OpenFilePlugin(
 				mitem.Flags |= MIF_SEPARATOR;
 				menu.AddItem(&mitem);
 				mitem.Clear();
-				mitem.strName = MSG(MMenuPluginStdAssociation);
+				mitem.strName = Msg::MenuPluginStdAssociation;
 				menu.AddItem(&mitem);
 			}
 
@@ -697,7 +697,7 @@ HANDLE PluginManager::OpenFindListPlugin(const PluginPanelItem *PanelItem, int I
 	{
 		if (items.getCount()>1)
 		{
-			VMenu menu(MSG(MPluginConfirmationTitle), nullptr, 0, ScrY-4);
+			VMenu menu(Msg::PluginConfirmationTitle, nullptr, 0, ScrY-4);
 			menu.SetPosition(-1, -1, 0, 0);
 			menu.SetHelp(L"ChoosePluginMenu");
 			menu.SetFlags(VMENU_SHOWAMPERSAND|VMENU_WRAPMODE);
@@ -1219,7 +1219,7 @@ void PluginManager::Configure(int StartPos)
 		return;
 
 	{
-		VMenu PluginList(MSG(MPluginConfigTitle),nullptr,0,ScrY-4);
+		VMenu PluginList(Msg::PluginConfigTitle,nullptr,0,ScrY-4);
 		PluginList.SetFlags(VMENU_WRAPMODE);
 		PluginList.SetHelp(L"PluginsConfig");
 
@@ -1292,7 +1292,7 @@ void PluginManager::Configure(int StartPos)
 				}
 
 				PluginList.AssignHighlights(FALSE);
-				PluginList.SetBottomTitle(MSG(MPluginHotKeyBottom));
+				PluginList.SetBottomTitle(Msg::PluginHotKeyBottom);
 				PluginList.ClearDone();
 				PluginList.SortItems(0,HotKeysPresent?3:0);
 				PluginList.SetSelectPos(StartPos,1);
@@ -1380,7 +1380,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	                      Dialog = ModalType==MODALTYPE_DIALOG;
 	PluginMenuItemData item;
 	{
-		VMenu PluginList(MSG(MPluginCommandsMenuTitle),nullptr,0,ScrY-4);
+		VMenu PluginList(Msg::PluginCommandsMenuTitle,nullptr,0,ScrY-4);
 		PluginList.SetFlags(VMENU_WRAPMODE);
 		PluginList.SetHelp(L"PluginCommands");
 		BOOL NeedUpdateItems=TRUE;
@@ -1465,7 +1465,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 				}
 
 				PluginList.AssignHighlights(FALSE);
-				PluginList.SetBottomTitle(MSG(MPluginHotKeyBottom));
+				PluginList.SetBottomTitle(Msg::PluginHotKeyBottom);
 				PluginList.SortItems(0,HotKeysPresent?3:0);
 				PluginList.SetSelectPos(StartPos,1);
 				NeedUpdateItems=FALSE;
@@ -1624,7 +1624,7 @@ bool PluginManager::SetHotKeyDialog(
 	KeyFileHelper kfh(PluginsIni());
 	const auto &Setting = kfh.GetString(SettingsSection, SettingName);
 	WCHAR Letter[2] = {Setting.empty() ? 0 : Setting[0], 0};
-	if (!HotkeyLetterDialog(MSG(MPluginHotKeyTitle), DlgPluginTitle, Letter[0]))
+	if (!HotkeyLetterDialog(Msg::PluginHotKeyTitle, DlgPluginTitle, Letter[0]))
 		return false;
 
 	if (Letter[0])
@@ -1846,7 +1846,7 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam,Panel *Target)
 
 	if (items.getCount()>1)
 	{
-		VMenu menu(MSG(MPluginConfirmationTitle), nullptr, 0, ScrY-4);
+		VMenu menu(Msg::PluginConfirmationTitle, nullptr, 0, ScrY-4);
 		menu.SetPosition(-1, -1, 0, 0);
 		menu.SetHelp(L"ChoosePluginMenu");
 		menu.SetFlags(VMENU_SHOWAMPERSAND|VMENU_WRAPMODE);

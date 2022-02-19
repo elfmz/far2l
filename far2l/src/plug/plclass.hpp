@@ -72,7 +72,7 @@ class Plugin
 		*/
 		DWORD SysID = 0;
 
-		Language Lang; // implicitly used by MSG(..) macro
+		Language Lang;
 
 		bool OpenModule();
 		void CloseModule();

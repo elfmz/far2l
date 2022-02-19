@@ -1072,7 +1072,7 @@ int WINAPI FarMessageFnA(INT_PTR PluginNumber,DWORD Flags,const char *HelpTopic,
 }
 
 static CriticalSection s_get_msga_cs;
-const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle,int MsgId)
+const char * WINAPI FarGetMsgFnA(INT_PTR PluginHandle, FarLangMsgID MsgId)
 {
 	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginA *pPlugin = (PluginA*)PluginHandle;

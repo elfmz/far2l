@@ -634,11 +634,13 @@ int FarAppMain(int argc, char **argv)
 
 	ReadConfig();
 	InitConsole();
+	static_assert(!IsPtr(Msg::NewFileName._id),
+		"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
 
-	if (!Lang.Init(g_strFarPath,true,MNewFileName))
+	if (!Lang.Init(g_strFarPath,true,Msg::NewFileName.ID()))
 	{
 		LPCWSTR LngMsg;
-		switch (Lang.GetLastError())
+		switch (Lang.LastError())
 		{
 		case LERROR_BAD_FILE:
 			LngMsg = L"\nError: language data is incorrect or damaged. Press any key to exit...";
@@ -653,7 +655,6 @@ int FarAppMain(int argc, char **argv)
 		WaitKey(); // А стоит ли ожидать клавишу??? Стоит
 		return 1;
 	}
-
 	setenv("FARLANG", Opt.strLanguage.GetMB().c_str(), 1);
 	initMacroVarTable(1);
 

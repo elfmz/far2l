@@ -345,7 +345,7 @@ int Viewer::OpenFile(const wchar_t *Name,int warning)
 		   + 'warning' flag processing, in QuickView it is FALSE
 		     so don't show red message box */
 		if (warning)
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MViewerTitle,MViewerCannotOpenFile,strFileName,MOk);
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::ViewerTitle,Msg::ViewerCannotOpenFile,strFileName,Msg::Ok);
 
 		OpenFailed=true;
 		return FALSE;
@@ -517,7 +517,7 @@ void Viewer::ShowPage(int nMode)
 			SetScreen(X1,Y1,X2,Y2,L' ',COL_VIEWERTEXT);
 			GotoXY(X1,Y1);
 			SetColor(COL_WARNDIALOGTEXT);
-			FS<<fmt::Precision(XX2-X1+1)<<MSG(MViewerCannotOpenFile);
+			FS<<fmt::Precision(XX2-X1+1)<<Msg::ViewerCannotOpenFile;
 			ShowStatus();
 		}
 
@@ -2320,25 +2320,24 @@ void Viewer::ChangeViewKeyBar()
 		   Wrap должен показываться следующий, а не текущий
 		*/
 		ViewKeyBar->Change(
-		    MSG(
-		        (!VM.Wrap)?((!VM.WordWrap)?MViewF2:MViewShiftF2)
-				        :MViewF2Unwrap),1);
-		ViewKeyBar->Change(KBL_SHIFT,MSG((VM.WordWrap)?MViewF2:MViewShiftF2),1);
+		        VM.Wrap ? Msg::ViewF2Unwrap : (VM.WordWrap ? Msg::ViewShiftF2 : Msg::ViewF2),
+				1);
+		ViewKeyBar->Change(KBL_SHIFT, VM.WordWrap ? Msg::ViewF2 : Msg::ViewShiftF2, 1);
 
 		if (VM.Hex)
-			ViewKeyBar->Change(MSG(MViewF4Text),3);
+			ViewKeyBar->Change(Msg::ViewF4Text,3);
 		else
-			ViewKeyBar->Change(MSG(MViewF4),3);
+			ViewKeyBar->Change(Msg::ViewF4,3);
 
 		if (VM.CodePage != WINPORT(GetOEMCP)())
-			ViewKeyBar->Change(MSG(MViewF8DOS),7);
+			ViewKeyBar->Change(Msg::ViewF8DOS,7);
 		else
-			ViewKeyBar->Change(MSG(MViewF8),7);
+			ViewKeyBar->Change(Msg::ViewF8,7);
 
 		if (VM.Processed)
-			ViewKeyBar->Change(MSG(MViewF5Raw),4);
+			ViewKeyBar->Change(Msg::ViewF5Raw,4);
 		else
-			ViewKeyBar->Change(MSG(MViewF5Processed),4);
+			ViewKeyBar->Change(Msg::ViewF5Processed,4);
 
 		ViewKeyBar->Redraw();
 	}
@@ -2453,7 +2452,7 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 
 	}
 
-	Message(0,0,MViewSearchTitle,(SearchHex?MViewSearchingHex:MViewSearchingFor),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
+	Message(0,0,Msg::ViewSearchTitle,(SearchHex?Msg::ViewSearchingHex:Msg::ViewSearchingFor),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=(void*)MsgStr;
 	preRedrawItem.Param.Param2=(LPVOID)(INT_PTR)Percent;
@@ -2494,20 +2493,20 @@ void Viewer::Search(int Next,int FirstChar)
 	const wchar_t *HexMask=L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH ";
 	DialogDataEx SearchDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,72,11,{0},0,MSG(MViewSearchTitle)},
-		{DI_TEXT,5,2,0,2,{0},0,MSG(MViewSearchFor)},
+		{DI_DOUBLEBOX,3,1,72,11,{0},0,Msg::ViewSearchTitle},
+		{DI_TEXT,5,2,0,2,{0},0,Msg::ViewSearchFor},
 		{DI_EDIT,5,3,70,3,{(DWORD_PTR)TextHistoryName},DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L""},
 		{DI_FIXEDIT,5,3,70,3,{(DWORD_PTR)HexMask},DIF_MASKEDIT,L""},
 		{DI_TEXT,3,4,0,4,{0},DIF_SEPARATOR,L""},
-		{DI_RADIOBUTTON,5,5,0,5,{1},DIF_GROUP,MSG(MViewSearchForText)},
-		{DI_RADIOBUTTON,5,6,0,6,{0},0,MSG(MViewSearchForHex)},
-		{DI_CHECKBOX,40,5,0,5,{0},0,MSG(MViewSearchCase)},
-		{DI_CHECKBOX,40,6,0,6,{0},0,MSG(MViewSearchWholeWords)},
-		{DI_CHECKBOX,40,7,0,7,{0},0,MSG(MViewSearchReverse)},
-		{DI_CHECKBOX,40,8,0,8,{0},DIF_DISABLE,MSG(MViewSearchRegexp)},
+		{DI_RADIOBUTTON,5,5,0,5,{1},DIF_GROUP,Msg::ViewSearchForText},
+		{DI_RADIOBUTTON,5,6,0,6,{0},0,Msg::ViewSearchForHex},
+		{DI_CHECKBOX,40,5,0,5,{0},0,Msg::ViewSearchCase},
+		{DI_CHECKBOX,40,6,0,6,{0},0,Msg::ViewSearchWholeWords},
+		{DI_CHECKBOX,40,7,0,7,{0},0,Msg::ViewSearchReverse},
+		{DI_CHECKBOX,40,8,0,8,{0},DIF_DISABLE,Msg::ViewSearchRegexp},
 		{DI_TEXT,3,9,0,9,{0},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,10,0,10,{0},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MViewSearchSearch)},
-		{DI_BUTTON,0,10,0,10,{0},DIF_CENTERGROUP,MSG(MViewSearchCancel)}
+		{DI_BUTTON,0,10,0,10,{0},DIF_DEFAULT|DIF_CENTERGROUP,Msg::ViewSearchSearch},
+		{DI_BUTTON,0,10,0,10,{0},DIF_CENTERGROUP,Msg::ViewSearchCancel}
 	};
 	MakeDialogItemsEx(SearchDlgData,SearchDlg);
 	FARString strSearchStr;
@@ -2829,14 +2828,14 @@ void Viewer::Search(int Next,int FirstChar)
 		/* $ 27.01.2003 VVM
 		   + После окончания поиска спросим о переходе поиска в начало/конец */
 		if (SearchFlags.Check(SEARCH_MODE2))
-			Message(MSG_WARNING,1,MViewSearchTitle,
-			        (SearchHex?MViewSearchCannotFindHex:MViewSearchCannotFind),strMsgStr,MOk);
+			Message(MSG_WARNING,1,Msg::ViewSearchTitle,
+			        (SearchHex?Msg::ViewSearchCannotFindHex:Msg::ViewSearchCannotFind),strMsgStr,Msg::Ok);
 		else
 		{
-			if (!Message(MSG_WARNING,2,MViewSearchTitle,
-			            (SearchHex?MViewSearchCannotFindHex:MViewSearchCannotFind),strMsgStr,
-			            (ReverseSearch?MViewSearchFromEnd:MViewSearchFromBegin),
-			            MHYes,MHNo))
+			if (!Message(MSG_WARNING,2,Msg::ViewSearchTitle,
+			            (SearchHex?Msg::ViewSearchCannotFindHex:Msg::ViewSearchCannotFind),strMsgStr,
+			            (ReverseSearch?Msg::ViewSearchFromEnd:Msg::ViewSearchFromBegin),
+			            Msg::HYes,Msg::HNo))
 				Search(2,0);
 		}
 	}
@@ -2931,7 +2930,7 @@ void Viewer::SetProcessed(bool Processed)
 void Viewer::ShowConsoleTitle()
 {
 	FARString strTitle;
-	strTitle.Format(MSG(MInViewer), PointToName(strFileName));
+	strTitle.Format(Msg::InViewer, PointToName(strFileName));
 	ConsoleTitle::SetFarTitle(strTitle);
 }
 
@@ -3117,12 +3116,12 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 	const wchar_t *LineHistoryName=L"ViewerOffset";
 	DialogDataEx GoToDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,31,7,{0},0,MSG(MViewerGoTo)},
+		{DI_DOUBLEBOX,3,1,31,7,{0},0,Msg::ViewerGoTo},
 		{DI_EDIT,5,2,29,2,{(DWORD_PTR)LineHistoryName},DIF_FOCUS|DIF_DEFAULT|DIF_HISTORY|DIF_USELASTHISTORY,L""},
 		{DI_TEXT,3,3,0,3,{0},DIF_SEPARATOR,L""},
-		{DI_RADIOBUTTON,5,4,0,4,{0},DIF_GROUP,MSG(MGoToPercent)},
-		{DI_RADIOBUTTON,5,5,0,5,{0},0,MSG(MGoToHex)},
-		{DI_RADIOBUTTON,5,6,0,6,{0},0,MSG(MGoToDecimal)}
+		{DI_RADIOBUTTON,5,4,0,4,{0},DIF_GROUP,Msg::GoToPercent},
+		{DI_RADIOBUTTON,5,5,0,5,{0},0,Msg::GoToHex},
+		{DI_RADIOBUTTON,5,6,0,6,{0},0,Msg::GoToDecimal}
 	};
 	MakeDialogItemsEx(GoToDlgData,GoToDlg);
 	static int PrevMode=0;

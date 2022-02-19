@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "scrobj.hpp"
+#include "lang.hpp"
 #include "FARString.hpp"
 
 
@@ -95,7 +96,7 @@ class KeyBar: public ScreenObject
 
 		void SetGroup(int Group,const wchar_t * const *Key,int KeyCount);
 		// Групповая установка идущих подряд строк LNG для указанной группы
-		void SetAllGroup(int Group, int StartIndex, int Count);
+		void SetAllGroup(int Group, FarLangMsg BaseMsg, int Count);
 
 		void ClearGroup(int Group);
 

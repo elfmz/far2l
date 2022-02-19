@@ -3,7 +3,7 @@
 #include <vector>
 #include <cstdarg>
 #include <sys/types.h>
-#include "luck.h"
+#include "cctweaks.h"
 #include "MatchWildcard.hpp"
 #include "WideMB.h"
 #include "Escaping.h"
@@ -138,7 +138,7 @@ std::wstring FileSizeString(unsigned long long value);
 std::wstring ThousandSeparatedString(unsigned long long value);
 
 std::string StrPrintfV(const char *format, va_list args);
-std::string StrPrintf(const char *format, ...);
+std::string FN_PRINTF_ARGS(1) StrPrintf(const char *format, ...);
 
 template <class CharT>
 	std::basic_string<CharT> EnsureNoSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')

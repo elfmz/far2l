@@ -384,176 +384,94 @@ bool IsTextUTF8(const LPBYTE Buffer,size_t Length)
 	return (Octets>0||Ascii)?false:true;
 }
 
-bool OldGetFileFormat(FILE *file, UINT &nCodePage, bool *pSignatureFound, bool bUseHeuristics)
+bool DetectFileMagic(FILE *file, UINT &nCodePage)
 {
-	DWORD dwTemp=0;
-	bool bSignatureFound = false;
-	bool bDetect=false;
-	size_t nTemp = fread(&dwTemp, 1, 4, file);
+	uint32_t dwHeading = 0;
+	size_t n = fread(&dwHeading, 1, 4, file);
 
-	if (nTemp > 0)
+	if (n == 4 && dwHeading == SIGN_UTF32LE)
 	{
-		if (nTemp >= 4 && dwTemp == SIGN_UTF32LE)
-		{
-			nCodePage = CP_UTF32LE;
-			fseek(file, 4, SEEK_SET);
-			bSignatureFound = true;
-		}
-		else if (nTemp >= 4 && dwTemp == SIGN_UTF32BE)
-		{
-			nCodePage = CP_UTF32BE;
-			fseek(file, 4, SEEK_SET);
-			bSignatureFound = true;
-		}
-		else if (nTemp >= 2 && LOWORD(dwTemp) == SIGN_UTF16LE)
-		{
-			nCodePage = CP_UTF16LE;
-			fseek(file, 2, SEEK_SET);
-			bSignatureFound = true;
-		}
-		else if (nTemp >= 2 && LOWORD(dwTemp) == SIGN_UTF16BE)
-		{
-			nCodePage = CP_UTF16BE;
-			fseek(file, 2, SEEK_SET);
-			bSignatureFound = true;
-		}
-		else if (nTemp >= 3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
-		{
-			nCodePage = CP_UTF8;
-			fseek(file, 3, SEEK_SET);
-			bSignatureFound = true;
-		}
-		else
-			fseek(file, 0, SEEK_SET);
+		nCodePage = CP_UTF32LE;
+		return true;
+	}
+	if (n == 4 && dwHeading == SIGN_UTF32BE)
+	{
+		nCodePage = CP_UTF32BE;
+		return true;
+	}
+	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16LE)
+	{
+		nCodePage = CP_UTF16LE;
+		fseek(file, -(off_t)(n - 2), SEEK_CUR);
+		return true;
+	}
+	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16BE)
+	{
+		nCodePage = CP_UTF16BE;
+		fseek(file, -(off_t)(n - 2), SEEK_CUR);
+		return true;
+	}
+	if (n >= 3 && (dwHeading & 0x00FFFFFF) == SIGN_UTF8)
+	{
+		nCodePage = CP_UTF8;
+		fseek(file, -(off_t)(n - 3), SEEK_CUR);
+		return true;
 	}
 
-	if (bSignatureFound)
-	{
-		bDetect = true;
-	}
-	else if (bUseHeuristics)
-	{
-		fseek(file, 0, SEEK_SET);
-		size_t sz=0x8000; // BUGBUG. TODO: configurable
-		LPVOID Buffer=malloc(sz);
-		sz=fread(Buffer,1,sz,file);
-		fseek(file,0,SEEK_SET);
+	if (n)
+		fseek(file, -(off_t)n, SEEK_CUR);
 
-		if (sz)
-		{
-			int test=
-			    IS_TEXT_UNICODE_STATISTICS|
-			    IS_TEXT_UNICODE_REVERSE_STATISTICS|
-			    IS_TEXT_UNICODE_CONTROLS|
-			    IS_TEXT_UNICODE_REVERSE_CONTROLS|
-			    IS_TEXT_UNICODE_ILLEGAL_CHARS|
-			    IS_TEXT_UNICODE_ODD_LENGTH|
-			    IS_TEXT_UNICODE_NULL_BYTES;
-
-			if (WINPORT(IsTextUnicode)(Buffer, (int)sz, &test))
-			{
-				if (!(test&IS_TEXT_UNICODE_ODD_LENGTH) && !(test&IS_TEXT_UNICODE_ILLEGAL_CHARS))
-				{
-					if ((test&IS_TEXT_UNICODE_NULL_BYTES) ||
-					        (test&IS_TEXT_UNICODE_CONTROLS) ||
-					        (test&IS_TEXT_UNICODE_REVERSE_CONTROLS))
-					{
-						if ((test&IS_TEXT_UNICODE_CONTROLS) || (test&IS_TEXT_UNICODE_STATISTICS))
-						{
-							nCodePage= CP_WIDE_LE;
-							bDetect=true;
-						}
-						else if ((test&IS_TEXT_UNICODE_REVERSE_CONTROLS) || (test&IS_TEXT_UNICODE_REVERSE_STATISTICS))
-						{
-							nCodePage= CP_WIDE_BE;
-							bDetect=true;
-						}
-					}
-				}
-			}
-			else if (IsTextUTF8((const LPBYTE)Buffer, sz))
-			{
-				nCodePage=CP_UTF8;
-				bDetect=true;
-			}
-			else
-			{
-				int cp = DetectCodePage((const char*)Buffer, sz);
-
-				if (cp != -1)
-				{
-					nCodePage = cp;
-					bDetect = true;
-				}
-			}
-		}
-
-		free(Buffer);
-	}
-
-	if (pSignatureFound)
-		*pSignatureFound = bSignatureFound;
-
-	return bDetect;
+	return false;
 }
 
-wchar_t *ReadString(FILE *file, wchar_t *lpwszDest, int nDestLength, int nCodePage)
+wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, int nCodePage)
 {
-	char *lpDest = (char*)malloc((nDestLength+1)*3);  //UTF-8, up to 3 bytes per char support
-	memset(lpDest, 0, (nDestLength+1)*3);
-	memset(lpwszDest, 0, nDestLength*sizeof(wchar_t));
+	if (!nDestLength)
+		return nullptr;
 
-	if ((nCodePage == CP_WIDE_LE) || (nCodePage == CP_WIDE_BE))
+	if (nCodePage == CP_WIDE_LE || nCodePage == CP_WIDE_BE)
 	{
-		if (!fgetws(lpwszDest, nDestLength, file))
-		{
-			free(lpDest);
-			return nullptr;
-		}
-
 		if (nCodePage == CP_WIDE_BE)
 		{
-			WideReverse(lpwszDest, nDestLength);
-			wchar_t *Ch = lpwszDest;
-			int nLength = Min(static_cast<int>(wcslen(lpwszDest)), nDestLength);
-
-			while (*Ch)
+			size_t nLength;
+			for (nLength = 0; nLength + 1 < nDestLength; ++nLength)
 			{
-				if (*Ch == L'\n')
+				if (feof(file))
 				{
-					*(Ch+1) = 0;
+					if (!nLength)
+						return nullptr;
+
 					break;
 				}
-
-				Ch++;
+				lpwszDest[nLength] = WideReverse((wchar_t)fgetwc(file));
+				if (lpwszDest[nLength] == '\n')
+					break;
 			}
+			lpwszDest[nLength] = 0;
 
-			int nNewLength = Min(static_cast<int>(wcslen(lpwszDest)), nDestLength);
-			fseek(file, (nNewLength-nLength)*sizeof(wchar_t), SEEK_CUR);
 		}
-	}
-	else if (nCodePage == CP_UTF8)
-	{
-		if (fgets(lpDest, nDestLength*3, file))
-			WINPORT(MultiByteToWideChar)(CP_UTF8, 0, lpDest, -1, lpwszDest, nDestLength);
-		else
+		else if (!fgetws(lpwszDest, nDestLength, file))
 		{
-			free(lpDest);
 			return nullptr;
 		}
-	}
-	else if (nCodePage != -1)
-	{
-		if (fgets(lpDest, nDestLength, file))
-			WINPORT(MultiByteToWideChar)(nCodePage, 0, lpDest, -1, lpwszDest, nDestLength);
-		else
-		{
-			free(lpDest);
-			return nullptr;
-		}
+
+		return lpwszDest;
 	}
 
-	free(lpDest);
+	if (_tmp.size() < (nDestLength+1) * 4) //UTF-8, up to 4 bytes per char support
+		_tmp.resize((nDestLength+1) * 4);
+
+	if (!fgets(_tmp.data(), _tmp.size(), file))
+		return nullptr;
+
+	int n = strnlen(_tmp.data(), _tmp.size());
+
+	n = WINPORT(MultiByteToWideChar)(CP_UTF8, 0, _tmp.data(), n, lpwszDest, nDestLength);
+	if (n < 0)
+		return nullptr;
+
+	lpwszDest[std::min(size_t(n), nDestLength)] = 0;
+
 	return lpwszDest;
 }
 

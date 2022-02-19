@@ -38,7 +38,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cvtname.hpp"
 #include "message.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "ctrlobj.hpp"
 #include "filepanels.hpp"
 #include "treelist.hpp"

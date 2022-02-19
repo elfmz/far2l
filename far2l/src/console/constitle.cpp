@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "constitle.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "interf.hpp"
 #include "config.hpp"
 #include "ctrlobj.hpp"

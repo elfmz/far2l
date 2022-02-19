@@ -43,7 +43,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panelmix.hpp"
 #include "message.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "dirmix.hpp"
 #include "treelist.hpp"
 

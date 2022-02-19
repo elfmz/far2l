@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 #include "language.hpp"
+#include "lang.hpp"
 #include "scantree.hpp"
 #include "vmenu.hpp"
 #include "manager.hpp"

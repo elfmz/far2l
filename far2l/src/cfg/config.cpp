@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include "config.hpp"
 #include "lang.hpp"
+#include "language.hpp"
 #include "keys.hpp"
 #include "colors.hpp"
 #include "cmdline.hpp"

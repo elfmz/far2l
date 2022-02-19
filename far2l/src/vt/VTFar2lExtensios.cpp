@@ -10,7 +10,6 @@
 #include "VTFar2lExtensios.h"
 #include "headers.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "dialog.hpp"
 #include "message.hpp"
 #include "mix.hpp"

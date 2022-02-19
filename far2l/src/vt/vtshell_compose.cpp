@@ -1,6 +1,5 @@
 #include "headers.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "interf.hpp"
 #include "config.hpp"
 #include "vtshell_compose.h"

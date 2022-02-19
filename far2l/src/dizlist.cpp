@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "dizlist.hpp"
-#include "language.hpp"
 #include "lang.hpp"
 #include "savescr.hpp"
 #include "TPreRedrawFunc.hpp"

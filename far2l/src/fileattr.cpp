@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fileattr.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "message.hpp"
 #include "pathmix.hpp"
 #include "fileowner.hpp"

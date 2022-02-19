@@ -1,7 +1,6 @@
 #include "headers.hpp"
 #include "dialog.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "strmix.hpp"
 
 #include "HotkeyLetterDialog.hpp"

@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syntax.hpp"
 #include "tvar.hpp"
 #include "syslog.hpp"
-#include "language.hpp"
 #include "keyboard.hpp"
 #include "macro.hpp"
 #include "udlist.hpp"

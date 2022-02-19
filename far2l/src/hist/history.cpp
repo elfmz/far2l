@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "history.hpp"
-#include "language.hpp"
 #include "keys.hpp"
 #include "vmenu.hpp"
 #include "lang.hpp"

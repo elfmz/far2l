@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ctrlobj.hpp"
 #include "lang.hpp"
+#include "language.hpp"
 #include "manager.hpp"
 #include "cmdline.hpp"
 #include "hilight.hpp"

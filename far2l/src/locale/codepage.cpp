@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 #include "vmenu.hpp"
 #include "keys.hpp"
-#include "language.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
 #include "config.hpp"

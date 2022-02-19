@@ -1,9 +1,9 @@
 #include "headers.hpp"
 #include "plclass.hpp"
+#include "lang.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "dirmix.hpp"
-#include "lang.hpp"
 #include "message.hpp"
 #include "plugins.hpp"
 

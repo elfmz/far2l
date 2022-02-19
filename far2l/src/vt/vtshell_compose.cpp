@@ -1,6 +1,5 @@
 #include "headers.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "interf.hpp"
 #include "config.hpp"
 #include "vtshell_compose.h"
@@ -155,9 +154,9 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	content+= '\n';
 	if (strcmp(cmd, "exit")==0) {
 		content+= StrPrintf(
-			"echo \"%ls%ls%ls\"\n",  MSG(MVTStop),
+			"echo \"%ls%ls%ls\"\n",  Msg::VTStop.CPtr(),
 			s_shown_tip_exit ? L"" : L" ",
-			s_shown_tip_exit ? L"" : MSG(MVTStopTip)
+			s_shown_tip_exit ? L"" : Msg::VTStopTip.CPtr()
 		);
 		s_shown_tip_exit = true;
 	}

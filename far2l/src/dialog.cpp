@@ -388,8 +388,8 @@ void DataToItemEx(const DialogDataEx *Data,DialogItemEx *Item,int Count)
 		Item[i].DefaultButton=Item[i].Type!=DI_TEXT && Item[i].Type!=DI_VTEXT && (Data[i].Flags&DIF_DEFAULT);
 		Item[i].SelStart=-1;
 
-		if (!IsPtr(Data[i].Data))
-			Item[i].strData = MSG((int)(DWORD_PTR)Data[i].Data);
+		if (!IsPtr(Data[i].Data)) // awful
+			Item[i].strData = FarLangMsg{(int)(DWORD_PTR)Data[i].Data};
 		else
 			Item[i].strData = Data[i].Data;
 	}
@@ -2006,7 +2006,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 				if (CurItem->Type==DI_CHECKBOX)
 				{
-					const wchar_t Check[]={L'[',(CurItem->Selected ?(((CurItem->Flags&DIF_3STATE) && CurItem->Selected == 2)?*MSG(MCheckBox2State):L'x'):L' '),L']',L'\0'};
+					const wchar_t Check[]={L'[',(CurItem->Selected ?(((CurItem->Flags&DIF_3STATE) && CurItem->Selected == 2)?*Msg::CheckBox2State:L'x'):L' '),L']',L'\0'};
 					strStr=Check;
 
 					if (CurItem->strData.GetLength())
@@ -4542,7 +4542,7 @@ void Dialog::SetExitCode(int Code)
 int Dialog::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	CriticalSectionLock Lock(CS);
-	strType = MSG(MDialogType);
+	strType = Msg::DialogType;
 	strName.Clear();
 	const wchar_t *lpwszTitle = GetDialogTitle();
 

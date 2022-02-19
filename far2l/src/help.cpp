@@ -171,7 +171,7 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 		{
 			if (!ScreenObject::Flags.Check(FHELPOBJ_ERRCANNOTOPENHELP))
 			{
-				Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
+				Message(MSG_WARNING,1,Msg::HelpTitle,Msg::HelpTopicNotFound,StackData.strHelpTopic,Msg::Ok);
 			}
 
 			ScreenObject::Flags.Clear(FHELPOBJ_ERRCANNOTOPENHELP);
@@ -244,7 +244,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
 			{
-				Message(MSG_WARNING,1,MHelpTitle,MCannotOpenHelp,Mask,MOk);
+				Message(MSG_WARNING,1,Msg::HelpTitle,Msg::CannotOpenHelp,Mask,Msg::Ok);
 			}
 		}
 
@@ -705,7 +705,7 @@ void Help::DisplayObject()
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
 			{
-				Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
+				Message(MSG_WARNING,1,Msg::HelpTitle,Msg::HelpTopicNotFound,StackData.strHelpTopic,Msg::Ok);
 			}
 
 			ProcessKey(KEY_ALTF1);
@@ -812,7 +812,7 @@ void Help::DrawWindowFrame()
 	Box(X1,Y1,X2,Y2,COL_HELPBOX,DOUBLE_BOX);
 	SetColor(COL_HELPBOXTITLE);
 	FARString strHelpTitleBuf;
-	strHelpTitleBuf = MSG(MHelpTitle);
+	strHelpTitleBuf = Msg::HelpTitle;
 	strHelpTitleBuf += L" - ";
 
 	if (!strCurPluginContents.IsEmpty())
@@ -1303,8 +1303,8 @@ int Help::ProcessKey(int Key)
 				int Regexp=LastSearchRegexp;
 
 				FARString strTempStr;
-				//int RetCode = GetString(MSG(MHelpSearchTitle),MSG(MHelpSearchingFor),L"HelpSearch",strLastSearchStr,strLastSearchStr0);
-				//MSG(MHelpSearchTitle), MSG(MHelpSearchingFor), 
+				//int RetCode = GetString(Msg::HelpSearchTitle,Msg::HelpSearchingFor,L"HelpSearch",strLastSearchStr,strLastSearchStr0);
+				//Msg::HelpSearchTitle, Msg::HelpSearchingFor, 
 				int RetCode = GetSearchReplaceString(false, &strLastSearchStr0, &strTempStr, L"HelpSearch", L"", &Case, &WholeWords, nullptr, nullptr, &Regexp,nullptr);
 
 				if (RetCode <= 0)
@@ -1549,7 +1549,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 		if (!(StackData.Flags&FHELP_NOSHOWERROR))
 		{
-			Message(MSG_WARNING,1,MHelpTitle,MHelpTopicNotFound,StackData.strHelpTopic,MOk);
+			Message(MSG_WARNING,1,Msg::HelpTitle,Msg::HelpTopicNotFound,StackData.strHelpTopic,Msg::Ok);
 		}
 
 		return FALSE;
@@ -1900,7 +1900,7 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 	switch (TypeIndex)
 	{
 		case HIDX_PLUGINS:
-			PtrTitle=MSG(MPluginsHelpTitle);
+			PtrTitle=Msg::PluginsHelpTitle;
 			ContentsName=L"PluginContents";
 			break;
 	}
@@ -2041,14 +2041,14 @@ void Help::SetScreenPosition()
 
 void Help::InitKeyBar()
 {
-	HelpKeyBar.SetAllGroup(KBL_MAIN, MHelpF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_SHIFT, MHelpShiftF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_ALT, MHelpAltF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_CTRL, MHelpCtrlF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_CTRLSHIFT, MHelpCtrlShiftF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_CTRLALT, MHelpCtrlAltF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_ALTSHIFT, MHelpAltShiftF1, 12);
-	HelpKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, MHelpCtrlAltShiftF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_MAIN, Msg::HelpF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_SHIFT, Msg::HelpShiftF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_ALT, Msg::HelpAltF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_CTRL, Msg::HelpCtrlF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_CTRLSHIFT, Msg::HelpCtrlShiftF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_CTRLALT, Msg::HelpCtrlAltF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_ALTSHIFT, Msg::HelpAltShiftF1, 12);
+	HelpKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, Msg::HelpCtrlAltShiftF1, 12);
 	// Уберем лишнее с глаз долой
 	HelpKeyBar.Change(KBL_SHIFT,L"",3-1);
 	HelpKeyBar.Change(KBL_MAIN,L"",7-1);
@@ -2122,7 +2122,7 @@ int Help::FastHide()
 
 int Help::GetTypeAndName(FARString &strType, FARString &strName)
 {
-	strType = MSG(MHelpType);
+	strType = Msg::HelpType;
 	strName = strFullHelpPathName;
 	return(MODALTYPE_HELP);
 }

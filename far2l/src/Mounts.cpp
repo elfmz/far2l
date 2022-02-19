@@ -4,7 +4,6 @@
 
 #include "Mounts.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "keys.hpp"
 #include "help.hpp"
 #include "vmenu.hpp"
@@ -112,11 +111,11 @@ namespace Mounts
 		}
 
 		if (!has_rootfs) {
-			emplace(begin(), Entry(L"/", MSG(MMountsRoot), false, ID_ROOT));
+			emplace(begin(), Entry(L"/", Msg::MountsRoot, false, ID_ROOT));
 		}
 
-		emplace(begin(), Entry( GetMyHome(), MSG(MMountsHome), false, ID_HOME));
-		emplace(begin(), Entry( another_curdir, MSG(MMountsOther), false, ID_ANOTHER));
+		emplace(begin(), Entry( GetMyHome(), Msg::MountsHome, false, ID_HOME));
+		emplace(begin(), Entry( another_curdir, Msg::MountsOther, false, ID_ANOTHER));
 
 		ConfigReader cfg_reader(HOTKEYS_SECTION);
 		for (auto &m : *this) {
@@ -157,7 +156,7 @@ namespace Mounts
 		const auto &Key = SettingsKey(id);
 		const auto &Setting = ConfigReader(HOTKEYS_SECTION).GetString(Key, def_hk);
 		WCHAR Letter[2] = {Setting.IsEmpty() ? 0 : Setting[0], 0};
-		if (HotkeyLetterDialog(MSG(MLocationHotKeyTitle), path.CPtr(), Letter[0])) {
+		if (HotkeyLetterDialog(Msg::LocationHotKeyTitle, path.CPtr(), Letter[0])) {
 			ConfigWriter cw(HOTKEYS_SECTION);
 			if (Letter[0])
 				cw.SetString(Key, Letter);

@@ -46,17 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filestr.hpp"
 #include "interf.hpp"
 
-const wchar_t LangFileMask[] = L"*.lng";
-
-#ifndef pack
-#define _PACK_BITS 2
-#define _PACK (1 << _PACK_BITS)
-#define pck(x,N)            ( ((x) + ((1<<(N))-1) )  & ~((1<<(N))-1) )
-#define pack(x)             pck(x,_PACK_BITS)
-#endif
+static const wchar_t LangFileMask[] = L"*.lng";
 
 Language Lang;
-Language OldLang;
 
 static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
 {
@@ -81,7 +73,7 @@ static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar
 		}
 		else
 		{
-			OldGetFileFormat(LangFile, nCodePage, nullptr, false);
+			DetectFileMagic(LangFile, nCodePage);
 
 			if (GetLangParam(LangFile,L"Language",&strLangName,nullptr, nCodePage) && !StrCmpI(strLangName,Language))
 				break;
@@ -141,7 +133,9 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 	BOOL Found = FALSE;
 	long OldPos = ftell(SrcFile);
 
-	while (ReadString(SrcFile, ReadStr, 1024, nCodePage))
+	StringReader SR;
+
+	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage))
 	{
 		if (!StrCmpNI(ReadStr,strFullParamName,Length))
 		{
@@ -188,13 +182,13 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 
 	if (HelpLanguage)
 	{
-		Title=MSG(MHelpLangTitle);
+		Title=Msg::HelpLangTitle;
 		Mask=HelpFileMask;
 		strDest=&Opt.strHelpLanguage;
 	}
 	else
 	{
-		Title=MSG(MLangTitle);
+		Title=Msg::LangTitle;
 		Mask=LangFileMask;
 		strDest=&Opt.strLanguage;
 	}
@@ -218,7 +212,7 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 			continue;
 
 		UINT nCodePage=CP_UTF8;
-		OldGetFileFormat(LangFile, nCodePage, nullptr, false);
+		DetectFileMagic(LangFile, nCodePage);
 		FARString strLangName, strLangDescr;
 
 		if (GetLangParam(LangFile,L"Language",&strLangName,&strLangDescr,nCodePage))
@@ -269,7 +263,8 @@ int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UI
 	int Length=StrLength(L".Options");
 	long CurFilePos=ftell(SrcFile);
 
-	while (ReadString(SrcFile, ReadStr, 1024, nCodePage) )
+	StringReader SR;
+	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage) )
 	{
 		if (!StrCmpNI(ReadStr,L".Options",Length))
 		{
@@ -297,344 +292,321 @@ int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UI
 	return FALSE;
 }
 
-Language::Language():
-	LastError(LERROR_SUCCESS),
-	LanguageLoaded(false),
-	MsgAddr(nullptr),
-	MsgList(nullptr),
-	MsgAddrA(nullptr),
-	MsgListA(nullptr),
-	MsgSize(0),
-	MsgCount(0),
-	m_bUnicode(true)
+
+///////////////////////////////////////
+
+class LanguageData
 {
+	std::vector<void *> _data;
+	bool _shrinked = false;
+
+	LanguageData(const LanguageData &) = delete;
+
+public:
+	LanguageData() = default;
+
+	~LanguageData()
+	{
+		for (const auto &p : _data) {
+			free(p);
+		}
+	}
+
+	int Add(const void *ptr, size_t len)
+	{
+		_shrinked = false;
+		_data.emplace_back();
+		_data.back() = malloc(len);
+		if (!_data.back()) {
+			_data.pop_back();
+			return -1;
+		}
+
+		memcpy(_data.back(), ptr, len);
+		return _data.size() - 1;
+	}
+
+	template <class CharT>
+		inline int AddChars(const CharT *chars, size_t cnt)
+	{
+		return Add(chars, cnt * sizeof(CharT));
+	}
+
+	template <class StrT>
+		inline int AddStr(const StrT &str)
+	{
+		return AddChars(str.c_str(), str.size() + 1);
+	}
+
+	const void *Get(size_t ID)
+	{
+		if (!_shrinked) {
+			_shrinked = true;
+			_data.shrink_to_fit();
+		}
+		return (ID < _data.size()) ? _data[ID] : nullptr;
+	}
+
+	inline int Count() const
+	{
+		return _data.size();
+	}
+};
+
+///
+
+static wchar_t *RefineLangString(wchar_t *str, size_t &len)
+{
+	while (IsSpace(*str)) {
+		++str;
+	}
+
+	if (*str != L'\"') {
+		return nullptr;
+	}
+
+	wchar_t *dst = ++str;
+
+	for (const wchar_t *src = str; *src; ++dst) {
+		switch (*src) {
+			case L'\\':
+				switch (src[1]) {
+					case L'\\':
+						*dst = L'\\';
+						src+= 2;
+						break;
+
+					case L'\"':
+						*dst = L'\"';
+						src+= 2;
+						break;
+
+					case L'n':
+						*dst = L'\n';
+						src+= 2;
+						break;
+
+					case L'r':
+						*dst = L'\r';
+						src+= 2;
+						break;
+
+					case L'b':
+						*dst = L'\b';
+						src+= 2;
+						break;
+
+					case L't':
+						*dst = L'\t';
+						src+= 2;
+						break;
+
+					default:
+						*dst = L'\\';
+						src++;
+						break;
+				}
+				break;
+
+			case L'"':
+				*dst = L'"';
+				src+= (src[1] == L'"') ? 2 : 1;
+				break;
+
+			default:
+				if (dst != src) {
+					*dst = *src;
+				}
+
+				src++;
+		}
+	}
+
+	for (;;) {
+		*dst = 0;
+		if (dst == str || !(IsSpace(*(dst - 1)) || IsEol(*(dst - 1)))) {
+			break;
+		}
+		--dst;
+	}
+
+	if (dst != str && *(dst - 1) == L'"') {
+		*(dst - 1) = 0;
+	}
+
+	len = dst - str;
+	return str;
 }
 
 
-bool Language::Init(const wchar_t *Path, bool bUnicode, int CountNeed)
+bool Language::Init(const wchar_t *path, bool wide, int expected_max_id)
 {
-	//fprintf(stderr, "Language::Init(%ls, %u, %u)\n", Path, bUnicode, CountNeed);
-	if (MsgList || MsgListA)
+	//fprintf(stderr, "Language::Init(%ls, %u, %d)\n", path, wide, expected_max_id);
+	if (_loaded && _data && _data->Count())
 		return true;
+
 	ErrnoSaver gle;
-	LastError = LERROR_SUCCESS;
-	m_bUnicode = bUnicode;
-	UINT nCodePage = CP_UTF8;
+	UINT codepage = CP_UTF8;
 	//fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
-	FARString strLangName=Opt.strLanguage;
-	FILE *LangFile=OpenLangFile(Path,LangFileMask,Opt.strLanguage,strMessageFile, nCodePage,FALSE, &strLangName);
+	FARString lang_name = Opt.strLanguage;
 
-	if (this == &Lang && StrCmpI(Opt.strLanguage,strLangName))
-		Opt.strLanguage=strLangName;
+	FILE *lang_file = OpenLangFile(path, LangFileMask, Opt.strLanguage, _message_file, codepage, FALSE, &lang_name);
 
-	if (!LangFile)
-	{
-		LastError = LERROR_FILE_NOT_FOUND;
+	if (!lang_file) {
+		_last_error = LERROR_FILE_NOT_FOUND;
 		return false;
 	}
 
-	wchar_t ReadStr[1024]={0};
+	_last_error = LERROR_BAD_FILE;
+	std::unique_ptr<LanguageData> new_data;
+	try {
+		new_data.reset(new LanguageData);
 
-	while (ReadString(LangFile, ReadStr, ARRAYSIZE(ReadStr), nCodePage) )
-	{
-		FARString strDestStr;
-		RemoveExternalSpaces(ReadStr);
+		wchar_t ReadStr[1024];
+		StringReader sr;
+		std::string tmp;
+		while (sr.Read(lang_file, ReadStr, ARRAYSIZE(ReadStr), codepage)) {
+			size_t refined_len;
+			const wchar_t *refined_str = RefineLangString(ReadStr, refined_len);
+			if (!refined_str)
+				continue;
 
-		if (*ReadStr != L'\"')
-			continue;
+			if (wide) {
+				new_data->AddChars(refined_str, refined_len + 1);
 
-		int SrcLength=StrLength(ReadStr);
-
-		if (ReadStr[SrcLength-1]==L'\"')
-			ReadStr[SrcLength-1]=0;
-
-		ConvertString(ReadStr+1,strDestStr);
-		int DestLength=(int)pack(strDestStr.GetLength()+1);
-
-		if (m_bUnicode)
-		{
-			if (!(MsgList = (wchar_t*)realloc(MsgList, (MsgSize+DestLength)*sizeof(wchar_t))))
-			{
-				fclose(LangFile);
-				return false;
+			} else {
+				Wide2MB(refined_str, refined_len, tmp);
+				new_data->AddStr(tmp);
 			}
-
-			*(int*)&MsgList[MsgSize+DestLength-_PACK] = 0;
-			wcscpy(MsgList+MsgSize, strDestStr);
-		}
-		else
-		{
-			DestLength = pack(WINPORT(WideCharToMultiByte)(CP_UTF8, 0, strDestStr, -1, nullptr, 0, nullptr, nullptr));
-			if (!(MsgListA = (char*)realloc(MsgListA, (MsgSize+DestLength)*sizeof(char))))
-			{
-				fclose(LangFile);
-				return false;
-			}
-
-			*(int*)&MsgListA[MsgSize+DestLength-_PACK] = 0;
-			WINPORT(WideCharToMultiByte)(CP_UTF8, 0, strDestStr, -1, MsgListA+MsgSize, DestLength, nullptr, nullptr);
 		}
 
-		MsgSize+=DestLength;
-		MsgCount++;
+		//   Проведем проверку на количество строк в LNG-файлах
+		if (expected_max_id == -1 || expected_max_id + 1 == new_data->Count()) {
+			_last_error = LERROR_SUCCESS;
+		} else {
+			fprintf(stderr, "%s: count expected=%d but actual=%d\n", __FUNCTION__, expected_max_id + 1, new_data->Count());
+		}
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
 	}
 
-	//   Проведем проверку на количество строк в LNG-файлах
-	if (CountNeed != -1 && CountNeed != MsgCount-1)
-	{
-		fclose(LangFile);
-		LastError = LERROR_BAD_FILE;
+	fclose(lang_file);
+
+	if (_last_error != LERROR_SUCCESS)
 		return false;
-	}
 
-	if (m_bUnicode)
-	{
-		wchar_t *CurAddr = MsgList;
-		MsgAddr = new(std::nothrow) wchar_t*[MsgCount];
+	if (this == &Lang && StrCmpI(Opt.strLanguage, lang_name))
+		Opt.strLanguage = lang_name;
 
-		if (!MsgAddr)
-		{
-			fclose(LangFile);
-			return false;
-		}
-
-		for (int I=0; I<MsgCount; I++)
-		{
-			MsgAddr[I]=CurAddr;
-			CurAddr+=pack(StrLength(CurAddr)+1);
-		}
-	}
-	else
-	{
-		char *CurAddrA = MsgListA;
-		MsgAddrA = new(std::nothrow) char*[MsgCount];
-
-		if (!MsgAddrA)
-		{
-			delete[] MsgAddr;
-			MsgAddr=nullptr;
-			fclose(LangFile);
-			return false;
-		}
-
-		for (int I=0; I<MsgCount; I++)
-		{
-			MsgAddrA[I]=CurAddrA;
-			CurAddrA+=pack(strlen(CurAddrA)+1);
-		}
-	}
-
-	fclose(LangFile);
-
-	if (this == &Lang)
-		OldLang.Free();
-
-	LanguageLoaded=true;
+	_data = std::move(new_data);
+	_wide = wide;
+	_loaded = true;
 	return true;
+}
+
+Language::Language()
+{
 }
 
 Language::~Language()
 {
-	Free();
-}
-
-void Language::Free()
-{
-	if (MsgList) free(MsgList);
-
-	if (MsgListA)free(MsgListA);
-
-	MsgList=nullptr;
-	MsgListA=nullptr;
-
-	if (MsgAddr) delete[] MsgAddr;
-
-	MsgAddr=nullptr;
-
-	if (MsgAddrA) delete[] MsgAddrA;
-
-	MsgAddrA=nullptr;
-	MsgCount=0;
-	MsgSize=0;
-	m_bUnicode = true;
-
-	for (auto Str : InterningPool)
-		free(Str);
-
-	InterningPool.clear();
 }
 
 void Language::Close()
 {
-	if (this == &Lang)
+	if (this != &Lang)
 	{
-		if (OldLang.MsgCount)
-			OldLang.Free();
-
-		OldLang.MsgList=MsgList;
-		OldLang.MsgAddr=MsgAddr;
-		OldLang.MsgListA=MsgListA;
-		OldLang.MsgAddrA=MsgAddrA;
-		OldLang.MsgCount=MsgCount;
-		OldLang.MsgSize=MsgSize;
-		OldLang.m_bUnicode=m_bUnicode;
+		_data.reset();
+		_wide = true;
 	}
 
-	MsgList=nullptr;
-	MsgAddr=nullptr;
-	MsgListA=nullptr;
-	MsgAddrA=nullptr;
-	MsgCount=0;
-	MsgSize=0;
-	m_bUnicode = true;
-	LanguageLoaded=false;
+	_loaded = false;
 }
 
-
-void Language::ConvertString(const wchar_t *Src,FARString &strDest)
+const void *Language::GetMsg(FarLangMsgID id) const
 {
-	wchar_t *Dest = strDest.GetBuffer(wcslen(Src)*2);
-
-	while (*Src)
-		switch (*Src)
-		{
-			case L'\\':
-
-				switch (Src[1])
-				{
-					case L'\\':
-						*(Dest++)=L'\\';
-						Src+=2;
-						break;
-					case L'\"':
-						*(Dest++)=L'\"';
-						Src+=2;
-						break;
-					case L'n':
-						*(Dest++)=L'\n';
-						Src+=2;
-						break;
-					case L'r':
-						*(Dest++)=L'\r';
-						Src+=2;
-						break;
-					case L'b':
-						*(Dest++)=L'\b';
-						Src+=2;
-						break;
-					case L't':
-						*(Dest++)=L'\t';
-						Src+=2;
-						break;
-					default:
-						*(Dest++)=L'\\';
-						Src++;
-						break;
-				}
-
-				break;
-			case L'"':
-				*(Dest++)=L'"';
-				Src+=(Src[1]==L'"') ? 2:1;
-				break;
-			default:
-				*(Dest++)=*(Src++);
-				break;
+	if (_data && (_loaded || this == &Lang)) {
+		const void *out = _data->Get(id);
+		if (out) {
+			return out;
 		}
+	}
 
-	*Dest=0;
-	strDest.ReleaseBuffer();
-}
+	fprintf(stderr, "Language::GetMsg(%d) Count=%d _wide=%d _loaded=%d\n",
+			id, _data ? _data->Count() : -1, _wide, _loaded);
 
-bool Language::CheckMsgId(int MsgId) const
-{
-	/* $ 19.03.2002 DJ
-	   при отрицательном индексе - также покажем сообщение об ошибке
-	   (все лучше, чем трапаться)
+	/* $ 26.03.2002 DJ
+	   если менеджер уже в дауне - сообщение не выводим
 	*/
-	if (MsgId>=MsgCount || MsgId < 0)
-	{
-		if (this == &Lang && !LanguageLoaded && this != &OldLang && OldLang.CheckMsgId(MsgId))
-			return true;
-
-		/* $ 26.03.2002 DJ
-		   если менеджер уже в дауне - сообщение не выводим
+	if (!FrameManager->ManagerIsDown()) {
+		/* $ 03.09.2000 IS
+		   ! Нормальное сообщение об отсутствии строки в языковом файле
+		     (раньше имя файла обрезалось справа и приходилось иногда гадать - в
+		     каком же файле ошибка)
 		*/
-		if (!FrameManager->ManagerIsDown())
-		{
-			/* $ 03.09.2000 IS
-			   ! Нормальное сообщение об отсутствии строки в языковом файле
-			     (раньше имя файла обрезалось справа и приходилось иногда гадать - в
-			     каком же файле ошибка)
-			*/
-			FARString strMsg1(L"Incorrect or damaged ");
-			strMsg1+=strMessageFile;
-			/* IS $ */
-			FormatString strMsgNotFound;
-			strMsgNotFound<<L"Message "<<MsgId<<L" not found";
-			if (Message(MSG_WARNING,2,L"Error",strMsg1,strMsgNotFound,L"Ok",L"Quit")==1)
-				exit(0);
-		}
-
-		return false;
+		/* IS $ */
+		FormatString line1, line2;
+		line1 << L"Incorrect or damaged " << _message_file;
+		line2 << L"Message " << id << L" not found";
+		if (Message(MSG_WARNING, 2, L"Error", line1, line2, L"Ok", L"Quit") == 1)
+			exit(0);
 	}
 
-	return true;
+	return nullptr;
 }
 
-const wchar_t* Language::GetMsg(int nID) const
+const wchar_t *Language::GetMsgWide(FarLangMsgID id) const
 {
-	if (nID < 0)
-		return (size_t(-nID) <= InterningPool.size()) ? InterningPool[(-nID) - 1] : L"";
-
-	if (!m_bUnicode || !CheckMsgId(nID))
+	if (!_wide) {
+		fprintf(stderr, "Language::GetMsgWide(%d): but language is MULTIBYTE\n", id);
 		return L"";
+	}
 
-	if (this == &Lang && this != &OldLang && !LanguageLoaded && OldLang.MsgCount > 0)
-		return OldLang.MsgAddr[nID];
-
-	return MsgAddr[nID];
+	return (const wchar_t *)GetMsg(id);
 }
 
-const char* Language::GetMsgA(int nID) const
+const char* Language::GetMsgMB(FarLangMsgID id) const
 {
-	if (nID < 0)
-	{
-		fprintf(stderr, "Language::GetMsgA(%d) - TODO\n", nID);
+	if (_wide) {
+		fprintf(stderr, "Language::GetMsgMB(%d): but language is WIDE\n", id);
 		return "";
 	}
-	if (m_bUnicode || !CheckMsgId(nID))
-		return "";
 
-	if (this == &Lang && this != &OldLang && !LanguageLoaded && OldLang.MsgCount > 0)
-		return OldLang.MsgAddrA[nID];
-
-	return MsgAddrA[nID];
+	return (const char *)GetMsg(id);
 }
 
-int Language::InternMsg(const wchar_t *Str)
+FarLangMsgID Language::InternMsg(const wchar_t *str)
 {
-	// TODO: optimize by additional std::set if there will be really many strings
-	for (size_t i = 0; i < InterningPool.size(); ++i) {
-		if (wcscmp(Str, InterningPool[i]) == 0) {
-			return -int(i + 1);
-		}
-	}
+	if (!_data)
+		return -1;
 
-	if (InterningPool.size() >= size_t(std::numeric_limits<int>::max() - 1)) {
-		fprintf(stderr, "Language::InternMsg('%ls'): overflow\n", Str);
-		if (InterningPool.size() == size_t(std::numeric_limits<int>::max() - 1)) {
-			InterningPool.emplace_back(wcsdup(L"!!!OVERFLOW!!!"));
-		}
+	const size_t len = wcslen(str);
+	if (_wide)
+		return _data->AddChars(str, len + 1);
 
-	} else {
-		InterningPool.emplace_back(wcsdup(Str));
-	}
-
-	return -int(InterningPool.size());
+	std::string tmp;
+	Wide2MB(str, len, tmp);
+	return _data->AddStr(tmp);
 }
 
-int Language::InternMsg(const char *Str)
+FarLangMsgID Language::InternMsg(const char *str)
 {
-	return InternMsg(MB2Wide(Str).c_str());
+	if (!_data)
+		return -1;
+
+	const size_t len = strlen(str);
+	if (!_wide)
+		return _data->AddChars(str, len + 1);
+
+	std::wstring tmp;
+	MB2Wide(str, len, tmp);
+	return _data->AddStr(tmp);
+}
+
+
+//////////
+const wchar_t *FarLangMsg::GetMsg(FarLangMsgID id)
+{
+	return ::Lang.GetMsgWide(id);
 }

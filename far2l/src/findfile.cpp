@@ -705,7 +705,7 @@ static LONG_PTR WINAPI AdvancedDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 
 				if (Data && *Data && !CheckFileSizeStringFormat(Data))
 				{
-					Message(MSG_WARNING,1,MFindFileAdvancedTitle,MBadFileSizeFormat,MOk);
+					Message(MSG_WARNING,1,Msg::FindFileAdvancedTitle,Msg::BadFileSizeFormat,Msg::Ok);
 					return FALSE;
 				}
 			}
@@ -720,18 +720,18 @@ static void AdvancedDialog()
 {
 	DialogDataEx AdvancedDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,52,12,{},0,MSG(MFindFileAdvancedTitle)},
-		{DI_TEXT,5,2,0,2,{},0,MSG(MFindFileSearchFirst)},
+		{DI_DOUBLEBOX,3,1,52,12,{},0,Msg::FindFileAdvancedTitle},
+		{DI_TEXT,5,2,0,2,{},0,Msg::FindFileSearchFirst},
 		{DI_EDIT,5,3,50,3,{},0,Opt.FindOpt.strSearchInFirstSize},
-		{DI_CHECKBOX,5,4,0,4,{Opt.FindOpt.FindAlternateStreams},0,MSG(MFindAlternateStreams)},
+		{DI_CHECKBOX,5,4,0,4,{Opt.FindOpt.FindAlternateStreams},0,Msg::FindAlternateStreams},
 		{DI_TEXT,3,5,0,5,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,5,6, 0, 6,{},0,MSG(MFindAlternateModeTypes)},
+		{DI_TEXT,5,6, 0, 6,{},0,Msg::FindAlternateModeTypes},
 		{DI_EDIT,5,7,35, 7,{},0,Opt.FindOpt.strSearchOutFormat},
-		{DI_TEXT,5,8, 0, 8,{},0,MSG(MFindAlternateModeWidths)},
+		{DI_TEXT,5,8, 0, 8,{},0,Msg::FindAlternateModeWidths},
 		{DI_EDIT,5,9,35, 9,{},0,Opt.FindOpt.strSearchOutFormatWidth},
 		{DI_TEXT,3,10,0,10,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,11,0,11,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,0,11,0,11,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,0,11,0,11,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,0,11,0,11,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(AdvancedDlgData,AdvancedDlg);
 	Dialog Dlg(AdvancedDlg,ARRAYSIZE(AdvancedDlg),AdvancedDlgProc);
@@ -784,10 +784,10 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 			SendDlgMessage(hDlg,DM_ENABLE,FAD_CHECKBOX_DIRS,!Hex);
 			SendDlgMessage(hDlg,DM_EDITUNCHANGEDFLAG,FAD_EDIT_TEXT,1);
 			SendDlgMessage(hDlg,DM_EDITUNCHANGEDFLAG,FAD_EDIT_HEX,1);
-			SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_TEXTHEX,(LONG_PTR)(Hex?MSG(MFindFileHex):MSG(MFindFileText)));
-			SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_CP,(LONG_PTR)MSG(MFindFileCodePage));
+			SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_TEXTHEX,(LONG_PTR)(Hex?Msg::FindFileHex:Msg::FindFileText).CPtr());
+			SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_CP,(LONG_PTR)Msg::FindFileCodePage.CPtr());
 			SendDlgMessage(hDlg,DM_SETCOMBOBOXEVENT,FAD_COMBOBOX_CP,CBET_KEY);
-			FarListTitles Titles={0,nullptr,0,MSG(MFindFileCodePageBottom)};
+			FarListTitles Titles={0,nullptr,0,Msg::FindFileCodePageBottom};
 			SendDlgMessage(hDlg,DM_LISTSETTITLES,FAD_COMBOBOX_CP,reinterpret_cast<LONG_PTR>(&Titles));
 			// Установка запомненных ранее параметров
 			CodePage = Opt.FindCodePage;
@@ -823,7 +823,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 					//FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 					FrameManager->ResizeAllFrame();
 					IsRedrawFramesInProcess--;
-					FARString strSearchFromRoot = MSG(MSearchFromRootFolder);
+					FARString strSearchFromRoot(Msg::SearchFromRootFolder);
 					FarListGetItem item={FADC_ROOT, {}};
 					SendDlgMessage(hDlg,DM_LISTGETITEM,FAD_COMBOBOX_WHERE,(LONG_PTR)&item);
 					item.Item.Text=strSearchFromRoot;
@@ -887,7 +887,7 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 					SendDlgMessage(hDlg,DM_ENABLE,FAD_CHECKBOX_CASE,!Param2);
 					SendDlgMessage(hDlg,DM_ENABLE,FAD_CHECKBOX_WHOLEWORDS,!Param2);
 					SendDlgMessage(hDlg,DM_ENABLE,FAD_CHECKBOX_DIRS,!Param2);
-					SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_TEXTHEX,(LONG_PTR)(Param2?MSG(MFindFileHex):MSG(MFindFileText)));
+					SendDlgMessage(hDlg,DM_SETTEXTPTR,FAD_TEXT_TEXTHEX,(LONG_PTR)(Param2?Msg::FindFileHex:Msg::FindFileText).CPtr());
 
 					if (strDataStr.GetLength()>0)
 					{
@@ -1564,7 +1564,7 @@ class FindDlg_TempFileHolder : public TempFileUploadHolder
 
 			if (!out)
 			{
-				Message(MSG_WARNING, 1, MError, MCannotSaveFile,MTextSavedToTemp, TempFileName(), MOk);
+				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile,Msg::TextSavedToTemp, TempFileName(), Msg::Ok);
 			}
 		}
 
@@ -1612,7 +1612,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 			if (!StopFlag)
 			{
 				FARString strDataStr;
-				strDataStr.Format(MSG(MFindFound), itd.GetFileCount(), itd.GetDirCount());
+				strDataStr.Format(Msg::FindFound, itd.GetFileCount(), itd.GetDirCount());
 				SendDlgMessage(hDlg,DM_SETTEXTPTR,2,(LONG_PTR)strDataStr.CPtr());
 
 				FARString strSearchStr;
@@ -1623,10 +1623,10 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 					TruncStrFromEnd(strFStr,10);
 					FARString strTemp(L" \"");
 					strTemp+=strFStr+="\"";
-					strSearchStr.Format(MSG(MFindSearchingIn), strTemp.CPtr());
+					strSearchStr.Format(Msg::FindSearchingIn, strTemp.CPtr());
 				}
 				else
-					strSearchStr.Format(MSG(MFindSearchingIn), L"");
+					strSearchStr.Format(Msg::FindSearchingIn, L"");
 
 				FARString strFM;
 				itd.GetFindMessage(strFM);
@@ -1655,16 +1655,16 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 	{
 		v->Finalized=true;
 		FARString strMessage;
-		strMessage.Format(MSG(MFindDone),itd.GetFileCount(), itd.GetDirCount());
+		strMessage.Format(Msg::FindDone,itd.GetFileCount(), itd.GetDirCount());
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_SEPARATOR1, reinterpret_cast<LONG_PTR>(L""));
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_TEXT_STATUS, reinterpret_cast<LONG_PTR>(strMessage.CPtr()));
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_TEXT_STATUS_PERCENTS, reinterpret_cast<LONG_PTR>(L""));
-		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_BUTTON_STOP, reinterpret_cast<LONG_PTR>(MSG(MFindCancel)));
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, FD_BUTTON_STOP, reinterpret_cast<LONG_PTR>(Msg::FindCancel.CPtr()));
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 		ConsoleTitle::SetFarTitle(strMessage);
 		if (Opt.NotifOpt.OnFileOperation) {
-			DisplayNotification(MSG(MFileOperationComplete), strMessage);
+			DisplayNotification(Msg::FileOperationComplete, strMessage);
 		}
 	}
 
@@ -1976,10 +1976,10 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 																{
 																	char MsgFullFileName[NM];
 																	far_strncpy(MsgFullFileName,SearchFileName,sizeof(MsgFullFileName));
-																	int MsgCode=Message(0,2,MFindFileTitle,
+																	int MsgCode=Message(0,2,Msg::FindFileTitle,
 																				TruncPathStr(MsgFullFileName,ScrX-16),
-																				MAskReload,
-																				MCurrent,MNewOpen);
+																				Msg::AskReload,
+																				Msg::Current,Msg::NewOpen);
 																	if (!MsgCode)
 																	{
 																		SwitchTo=TRUE;
@@ -2829,7 +2829,7 @@ static bool FindFilesProcess(Vars& v)
 {
 	_ALGO(CleverSysLog clv(L"FindFiles::FindFilesProcess()"));
 	// Если используется фильтр операций, то во время поиска сообщаем об этом
-	FARString strTitle=MSG(MFindFileTitle);
+	FARString strTitle(Msg::FindFileTitle);
 	FARString strSearchStr;
 
 	itd.Init();
@@ -2842,7 +2842,7 @@ static bool FindFilesProcess(Vars& v)
 		if (UseFilter)
 		{
 			strTitle+=L" (";
-			strTitle+=MSG(MFindUsingFilter);
+			strTitle+=Msg::FindUsingFilter;
 			strTitle+=L")";
 		}
 	}
@@ -2851,7 +2851,7 @@ static bool FindFilesProcess(Vars& v)
 		if (UseFilter)
 		{
 			strTitle+=L" (";
-			strTitle+=MSG(MFindUsingFilter);
+			strTitle+=Msg::FindUsingFilter;
 			strTitle+=L")";
 		}
 	}
@@ -2863,11 +2863,11 @@ static bool FindFilesProcess(Vars& v)
 		InsertQuote(strFStr);
 		FARString strTemp=L" ";
 		strTemp+=strFStr;
-		strSearchStr.Format(MSG(MFindSearchingIn),strTemp.CPtr());
+		strSearchStr.Format(Msg::FindSearchingIn,strTemp.CPtr());
 	}
 	else
 	{
-		strSearchStr.Format(MSG(MFindSearchingIn), L"");
+		strSearchStr.Format(Msg::FindSearchingIn, L"");
 	}
 
 	int DlgWidth = ScrX + 1 - 2;
@@ -2880,12 +2880,12 @@ static bool FindFilesProcess(Vars& v)
 		{DI_TEXT,5,(short)(DlgHeight-5),(short)(DlgWidth-(strFindStr.IsEmpty()?6:12)),(short)(DlgHeight-5),{},DIF_SHOWAMPERSAND,strSearchStr},
 		{DI_TEXT,(short)(DlgWidth-9),(short)(DlgHeight-5),(short)(DlgWidth-6),(short)(DlgHeight-5),{},(strFindStr.IsEmpty()?DIF_HIDDEN:0),L""},
 		{DI_TEXT,0,(short)(DlgHeight-4),0,(short)(DlgHeight-4),{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_FOCUS|DIF_DEFAULT|DIF_CENTERGROUP,MSG(MFindNewSearch)},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindGoTo)},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindView)},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindEdit)},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,MSG(MFindPanel)},
-		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP,MSG(MFindStop)}
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_FOCUS|DIF_DEFAULT|DIF_CENTERGROUP,Msg::FindNewSearch},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::FindGoTo},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::FindView},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::FindEdit},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::FindPanel},
+		{DI_BUTTON,0,(short)(DlgHeight-3),0,(short)(DlgHeight-3),{},DIF_CENTERGROUP,Msg::FindStop}
 	};
 	MakeDialogItemsEx(FindDlgData,FindDlg);
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -3157,7 +3157,7 @@ FindFiles::FindFiles()
 	UseFilter=Opt.FindOpt.UseFilter;
 	strFindMask = strLastFindMask;
 	strFindStr = strLastFindStr;
-	strSearchFromRoot = MSG(MSearchFromRootFolder);
+	strSearchFromRoot = Msg::SearchFromRootFolder;
 
 	Vars v;
 	do
@@ -3166,14 +3166,14 @@ FindFiles::FindFiles()
 		itd.ClearAllLists();
 		Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 		v.PluginMode=ActivePanel->GetMode()==PLUGIN_PANEL && ActivePanel->IsVisible();
-		strSearchFromRoot = MSG(MSearchFromRootFolder);
+		strSearchFromRoot = Msg::SearchFromRootFolder;
 		const wchar_t *MasksHistoryName=L"Masks",*TextHistoryName=L"SearchText";
 		const wchar_t *HexMask=L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH";
 		const wchar_t VSeparator[]={BoxSymbols[BS_T_H1V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_V1],BoxSymbols[BS_B_H1V1],0};
 		struct DialogDataEx FindAskDlgData[]=
 		{
-			{DI_DOUBLEBOX,3,1,74,18,{},0,MSG(MFindFileTitle)},
-			{DI_TEXT,5,2,0,2,{},0,MSG(MFindFileMasks)},
+			{DI_DOUBLEBOX,3,1,74,18,{},0,Msg::FindFileTitle},
+			{DI_TEXT,5,2,0,2,{},0,Msg::FindFileMasks},
 			{DI_EDIT,5,3,72,3,{(DWORD_PTR)MasksHistoryName},DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L""},
 			{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
 			{DI_TEXT,5,5,0,5,{},0,L""},
@@ -3182,23 +3182,23 @@ FindFiles::FindFiles()
 			{DI_TEXT,5,7,0,7,{},0,L""},
 			{DI_COMBOBOX,5,8,72,8,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND,L""},
 			{DI_TEXT,3,9,0,9,{},DIF_SEPARATOR,L""},
-			{DI_CHECKBOX,5,10,0,10,{},0,MSG(MFindFileCase)},
-			{DI_CHECKBOX,5,11,0,11,{},0,MSG(MFindFileWholeWords)},
-			{DI_CHECKBOX,5,12,0,12,{},0,MSG(MSearchForHex)},
-			{DI_CHECKBOX,40,10,0,10,{},0,MSG(MFindArchives)},
-			{DI_CHECKBOX,40,11,0,11,{},0,MSG(MFindFolders)},
-			{DI_CHECKBOX,40,12,0,12,{},0,MSG(MFindSymLinks)},
+			{DI_CHECKBOX,5,10,0,10,{},0,Msg::FindFileCase},
+			{DI_CHECKBOX,5,11,0,11,{},0,Msg::FindFileWholeWords},
+			{DI_CHECKBOX,5,12,0,12,{},0,Msg::SearchForHex},
+			{DI_CHECKBOX,40,10,0,10,{},0,Msg::FindArchives},
+			{DI_CHECKBOX,40,11,0,11,{},0,Msg::FindFolders},
+			{DI_CHECKBOX,40,12,0,12,{},0,Msg::FindSymLinks},
 			{DI_TEXT,3,13,0,13,{},DIF_SEPARATOR,L""},
 			{DI_VTEXT,38,9,0,9,{},DIF_BOXCOLOR,VSeparator},
-			{DI_TEXT,5,14,0,14,{},0,MSG(MSearchWhere)},
+			{DI_TEXT,5,14,0,14,{},0,Msg::SearchWhere},
 			{DI_COMBOBOX,5,15,36,15,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND,L""},
-			{DI_CHECKBOX,40,15,0,15,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,MSG(MFindUseFilter)},
+			{DI_CHECKBOX,40,15,0,15,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,Msg::FindUseFilter},
 			{DI_TEXT,3,16,0,16,{},DIF_SEPARATOR,L""},
-			{DI_BUTTON,0,17,0,17,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MFindFileFind)},
-			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,MSG(MFindFileDrive)},
-			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MFindFileSetFilter)},
-			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,MSG(MFindFileAdvanced)},
-			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,MSG(MCancel)}
+			{DI_BUTTON,0,17,0,17,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::FindFileFind},
+			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,Msg::FindFileDrive},
+			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),Msg::FindFileSetFilter},
+			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,Msg::FindFileAdvanced},
+			{DI_BUTTON,0,17,0,17,{},DIF_CENTERGROUP,Msg::Cancel}
 		};
 		MakeDialogItemsEx(FindAskDlgData,FindAskDlg);
 
@@ -3207,13 +3207,13 @@ FindFiles::FindFiles()
 
 		FarListItem li[]=
 		{
-			{0,MSG(MSearchAllDisks),{}},
-			{0,MSG(MSearchAllButNetwork),{}},
-			{0,MSG(MSearchInPATH),{}},
+			{0,Msg::SearchAllDisks,{}},
+			{0,Msg::SearchAllButNetwork,{}},
+			{0,Msg::SearchInPATH,{}},
 			{0,strSearchFromRoot,{}},
-			{0,MSG(MSearchFromCurrent),{}},
-			{0,MSG(MSearchInCurrent),{}},
-			{0,MSG(MSearchInSelected),{}},
+			{0,Msg::SearchFromCurrent,{}},
+			{0,Msg::SearchInCurrent,{}},
+			{0,Msg::SearchInSelected,{}},
 		};
 		li[FADC_ALLDISKS+SearchMode].Flags|=LIF_SELECTED;
 		FarList l={ARRAYSIZE(li),li};

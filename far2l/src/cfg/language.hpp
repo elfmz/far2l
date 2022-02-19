@@ -34,13 +34,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <vector>
+#include <string>
+#include <memory>
+#include <FARString.hpp>
 
-enum LngErrors
+enum LanguageErrors
 {
 	LERROR_SUCCESS,
 	LERROR_FILE_NOT_FOUND,
 	LERROR_BAD_FILE,
 };
+
+class LanguageData;
 
 class Language
 {
@@ -48,40 +53,29 @@ public:
 	Language();
 	~Language();
 
-	bool Init(const wchar_t *Path, bool bUnicode, int CountNeed=-1);
+	bool Init(const wchar_t *Path, bool bWide, int ExpectedLastId = -1);
 	void Close();
 
-	const wchar_t* GetMsg(int nID) const;
-	const char* GetMsgA(int nID) const;
+	const wchar_t *GetMsgWide(FarLangMsgID id) const;
+	const char *GetMsgMB(FarLangMsgID id) const;
 
-	bool IsLanguageLoaded() const {return LanguageLoaded;}
-	LngErrors GetLastError() const {return LastError;}
+	inline bool IsLanguageLoaded() const {return _loaded;}
+	inline LanguageErrors LastError() const {return _last_error;}
 
-	int InternMsg(const wchar_t *Str);
-	int InternMsg(const char *Str);
+	FarLangMsgID InternMsg(const wchar_t *Str);
+	FarLangMsgID InternMsg(const char *Str);
 
 private:
-	std::vector<wchar_t *> InterningPool;
-	LngErrors LastError;
-	bool LanguageLoaded;
-	wchar_t **MsgAddr;
-	wchar_t *MsgList;
-	char **MsgAddrA; //фантастика, да
-	char *MsgListA;
-	long MsgSize;
-	int MsgCount;
-	FARString strMessageFile;
-	bool m_bUnicode;
+	std::unique_ptr<LanguageData> _data;
+	FARString _message_file;
+	LanguageErrors _last_error = LERROR_SUCCESS;
+	bool _loaded = false;
+	bool _wide = true;
 
-	void ConvertString(const wchar_t *Src,FARString &strDest);
-	bool CheckMsgId(int MsgId) const;
-	void Free();
+	const void *GetMsg(FarLangMsgID id) const;
 };
 
 extern Language Lang;
-
-#define MSG(ID) ::Lang.GetMsg(ID)
-#define INTERN_MSG(STR) ::Lang.InternMsg(STR)
 
 class VMenu;
 

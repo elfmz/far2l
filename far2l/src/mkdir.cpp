@@ -93,7 +93,7 @@ LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 				if (!pDirList->Set(strDirName))
 				{
-					Message(MSG_WARNING,1,MWarning,MIncorrectDirList,MOk);
+					Message(MSG_WARNING,1,Msg::Warning,Msg::IncorrectDirList,Msg::Ok);
 					return FALSE;
 				}
 			}
@@ -112,14 +112,14 @@ void ShellMakeDir(Panel *SrcPanel)
 	UserDefinedList DirList(0,0,ULF_UNIQUE);
 	DialogDataEx MkDirDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,72,8,{},0,MSG(MMakeFolderTitle)},
-		{DI_TEXT,     5,2, 0,2,{},0,MSG(MCreateFolder)},
+		{DI_DOUBLEBOX,3,1,72,8,{},0,Msg::MakeFolderTitle},
+		{DI_TEXT,     5,2, 0,2,{},0,Msg::CreateFolder},
 		{DI_EDIT,     5,3,70,3,{(DWORD_PTR)L"NewFolder"},DIF_FOCUS|DIF_EDITEXPAND|DIF_HISTORY|DIF_USELASTHISTORY|DIF_EDITPATH,L""},
 		{DI_TEXT,     0,4, 0,4,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX, 5,5, 0,5,{(DWORD_PTR)Opt.MultiMakeDir},0,MSG(MMultiMakeDir)},
+		{DI_CHECKBOX, 5,5, 0,5,{(DWORD_PTR)Opt.MultiMakeDir},0,Msg::MultiMakeDir},
 		{DI_TEXT,     0,6, 0,6,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,   0,7, 0,7,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,   0,7, 0,7,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,   0,7, 0,7,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,   0,7, 0,7,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(MkDirDlgData,MkDirDlg);
 	Dialog Dlg(MkDirDlg,ARRAYSIZE(MkDirDlg),MkDirDlgProc,reinterpret_cast<LONG_PTR>(&DirList));
@@ -180,9 +180,9 @@ void ShellMakeDir(Panel *SrcPanel)
 					int ret;
 
 					if (DirList.IsLastElement(DI))
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateFolder,strOriginalDirName,MCancel);
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Cancel);
 					else
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MError,MCannotCreateFolder,strOriginalDirName,MOk,MSkip);
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Ok,Msg::Skip);
 
 					bSkip = ret==1;
 
@@ -197,11 +197,11 @@ void ShellMakeDir(Panel *SrcPanel)
 
 					if (DirList.IsLastElement(DI))
 					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,MError,MCannotCreateFolder,strOriginalDirName,MRetry,MCancel);
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Retry,Msg::Cancel);
 					}
 					else
 					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,MCannotCreateFolder,strOriginalDirName,MRetry,MSkip,MCancel);
+						ret=Message(MSG_WARNING|MSG_ERRORTYPE,3,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Retry,Msg::Skip,Msg::Cancel);
 						bSkip = ret==1;
 					}
 

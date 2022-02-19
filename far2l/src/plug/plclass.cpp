@@ -1,9 +1,9 @@
 #include "headers.hpp"
 #include "plclass.hpp"
+#include "lang.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "dirmix.hpp"
-#include "lang.hpp"
 #include "message.hpp"
 #include "plugins.hpp"
 
@@ -80,7 +80,7 @@ bool Plugin::OpenModule()
 		{
 			SetMessageHelp(L"ErrLoadPlugin module");
 			//|MSG_ERRORTYPE
-			Message(MSG_WARNING, 1, MError, strerr.c_str(), MPlgLoadPluginError, m_strModuleName, MOk);
+			Message(MSG_WARNING, 1, Msg::Error, strerr.c_str(), Msg::PlgLoadPluginError, m_strModuleName, Msg::Ok);
 		}
 	}
 

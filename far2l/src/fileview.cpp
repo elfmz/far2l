@@ -161,14 +161,14 @@ void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, /
 
 void FileViewer::InitKeyBar()
 {
-	ViewKeyBar.SetAllGroup(KBL_MAIN,         Opt.OnlyEditorViewerUsed?MSingleViewF1:MViewF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_SHIFT,        Opt.OnlyEditorViewerUsed?MSingleViewShiftF1:MViewShiftF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_ALT,          Opt.OnlyEditorViewerUsed?MSingleViewAltF1:MViewAltF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_CTRL,         Opt.OnlyEditorViewerUsed?MSingleViewCtrlF1:MViewCtrlF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_CTRLSHIFT,    Opt.OnlyEditorViewerUsed?MSingleViewCtrlShiftF1:MViewCtrlShiftF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_CTRLALT,      Opt.OnlyEditorViewerUsed?MSingleViewCtrlAltF1:MViewCtrlAltF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_ALTSHIFT,     Opt.OnlyEditorViewerUsed?MSingleViewAltShiftF1:MViewAltShiftF1, 12);
-	ViewKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, Opt.OnlyEditorViewerUsed?MSingleViewCtrlAltShiftF1:MViewCtrlAltShiftF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_MAIN,         Opt.OnlyEditorViewerUsed?Msg::SingleViewF1:Msg::ViewF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_SHIFT,        Opt.OnlyEditorViewerUsed?Msg::SingleViewShiftF1:Msg::ViewShiftF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_ALT,          Opt.OnlyEditorViewerUsed?Msg::SingleViewAltF1:Msg::ViewAltF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_CTRL,         Opt.OnlyEditorViewerUsed?Msg::SingleViewCtrlF1:Msg::ViewCtrlF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_CTRLSHIFT,    Opt.OnlyEditorViewerUsed?Msg::SingleViewCtrlShiftF1:Msg::ViewCtrlShiftF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_CTRLALT,      Opt.OnlyEditorViewerUsed?Msg::SingleViewCtrlAltF1:Msg::ViewCtrlAltF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_ALTSHIFT,     Opt.OnlyEditorViewerUsed?Msg::SingleViewAltShiftF1:Msg::ViewAltShiftF1, 12);
+	ViewKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, Opt.OnlyEditorViewerUsed?Msg::SingleViewCtrlAltShiftF1:Msg::ViewCtrlAltShiftF1, 12);
 
 	if (DisableEdit)
 		ViewKeyBar.Change(KBL_MAIN,L"",6-1);
@@ -308,7 +308,7 @@ int FileViewer::ProcessKey(int Key)
 				File Edit;
 				if(!Edit.Open(strViewFileName, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 				{
-					Message(MSG_WARNING|MSG_ERRORTYPE,1,MEditTitle,MEditCannotOpen,strViewFileName,MOk);
+					Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::EditTitle,Msg::EditCannotOpen,strViewFileName,Msg::Ok);
 					return TRUE;
 				}
 				Edit.Close();
@@ -415,7 +415,7 @@ int FileViewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 int FileViewer::GetTypeAndName(FARString &strType, FARString &strName)
 {
-	strType = MSG(MScreensView);
+	strType = Msg::ScreensView;
 	View.GetFileName(strName);
 	return(MODALTYPE_VIEWER);
 }
@@ -490,14 +490,13 @@ void FileViewer::ShowStatus()
 		NameLength=20;
 
 	TruncPathStr(strName, NameLength);
-	const wchar_t *lpwszStatusFormat = L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%";
 	strStatus.Format(
-	    lpwszStatusFormat,
+	    L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%",
 	    NameLength,
 	    strName.CPtr(),
 	    View.VM.CodePage,
 	    View.FileSize,
-	    MSG(MViewerStatusCol),
+	    Msg::ViewerStatusCol.CPtr(),
 	    View.LeftPos,
 	    Opt.ViewerEditorClock ? L"":L" ",
 	    (View.LastPage ? 100:ToPercent64(View.FilePos,View.FileSize))

@@ -33,6 +33,9 @@ static int TranslateUDCharset(const char *cs)
 		return atoi(cs + 2);
 	}
 
+	if (strncasecmp(cs, "IBM", 3) == 0 && IsDecimalNumber(cs + 3)) {
+		return atoi(cs + 3);
+	}
 
 	if (!strcasecmp(cs, "UTF16-LE") || !strcasecmp(cs, "UTF16"))
 		return CP_UTF16LE;
@@ -46,10 +49,10 @@ static int TranslateUDCharset(const char *cs)
 		return CP_UTF8;
 	if (!strcasecmp(cs, "UTF-7"))
 		return CP_UTF7;
-	if (!strcasecmp(cs, "IBM855"))
-		return 855;
-	if (!strcasecmp(cs, "IBM866"))
-		return 866;
+//	if (!strcasecmp(cs, "IBM855"))
+//		return 855;
+//	if (!strcasecmp(cs, "IBM866"))
+//		return 866;
 	if (!strcasecmp(cs, "KOI8-R"))
 		return 20866;
 	if (!strcasecmp(cs, "KOI8-U"))

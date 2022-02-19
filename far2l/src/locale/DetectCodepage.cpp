@@ -33,7 +33,7 @@ static int TranslateUDCharset(const char *cs)
 		return atoi(cs + 2);
 	}
 
-    if (strncasecmp(cs, "IBM", 3) == 0 && IsDecimalNumber(cs + 3)) {
+	if (strncasecmp(cs, "IBM", 3) == 0 && IsDecimalNumber(cs + 3)) {
 		return atoi(cs + 3);
 	}
 

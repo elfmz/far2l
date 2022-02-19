@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void MenuBar::DisplayObject()
 {
 	FARString strSpace=L"    ";
-	FARString strMsg=strSpace+MSG(MMenuLeftTitle)+strSpace+MSG(MMenuFilesTitle)+strSpace+MSG(MMenuCommandsTitle)+strSpace+MSG(MMenuOptionsTitle)+strSpace+MSG(MMenuRightTitle);
+	FARString strMsg=strSpace+Msg::MenuLeftTitle+strSpace+Msg::MenuFilesTitle+strSpace+Msg::MenuCommandsTitle+strSpace+Msg::MenuOptionsTitle+strSpace+Msg::MenuRightTitle;
 	RemoveHighlights(strMsg);
 	int Length=X2-X1+1;
 	FARString strFullMsg;

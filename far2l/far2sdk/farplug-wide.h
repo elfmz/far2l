@@ -139,6 +139,9 @@ typedef struct _INPUT_RECORD INPUT_RECORD;
 typedef struct _CHAR_INFO    CHAR_INFO;
 #endif
 
+typedef int FarLangMsgID;
+#define FARLANGMSGID_BAD ((FarLangMsgID)-1)
+
 #define CP_AUTODETECT ((UINT)-1)
 
 enum FARMESSAGEFLAGS
@@ -976,7 +979,7 @@ typedef int (WINAPI *FARAPICMPNAME)(
 
 typedef const wchar_t*(WINAPI *FARAPIGETMSG)(
     INT_PTR PluginNumber,
-    int MsgId
+    FarLangMsgID MsgId
 );
 
 

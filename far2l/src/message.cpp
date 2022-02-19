@@ -505,7 +505,7 @@ static int ShowMessage( DWORD Flags, int Buttons, const wchar_t *Title,
 	return InterThreadCall<int, 0>(std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
-__attribute__ ((noinline)) Messager::Messager(LangMsg title)
+__attribute__ ((noinline)) Messager::Messager(FarLangMsg title)
 {
 	Add(title);
 }
@@ -523,9 +523,9 @@ __attribute__ ((noinline)) Messager::~Messager()
 {
 }
 
-Messager &__attribute__ ((noinline)) Messager::Add(LangMsg v)
+Messager &__attribute__ ((noinline)) Messager::Add(FarLangMsg v)
 {
-	return Add(MSG(v));
+	return Add(v.CPtr());
 }
 
 Messager &__attribute__ ((noinline)) Messager::Add(const wchar_t *v)
@@ -593,9 +593,9 @@ void SetMessageHelp(const wchar_t *Topic)
 */
 int AbortMessage()
 {
-	int Res = Message(MSG_WARNING|MSG_KILLSAVESCREEN,2,MKeyESCWasPressed,
-	                  ((Opt.Confirm.EscTwiceToInterrupt)?MDoYouWantToStopWork2:MDoYouWantToStopWork),
-	                  MYes,MNo);
+	int Res = Message(MSG_WARNING|MSG_KILLSAVESCREEN,2,Msg::KeyESCWasPressed,
+	                  ((Opt.Confirm.EscTwiceToInterrupt)?Msg::DoYouWantToStopWork2:Msg::DoYouWantToStopWork),
+	                  Msg::Yes,Msg::No);
 
 	if (Res == -1) // Set "ESC" equal to "NO" button
 		Res = 1;

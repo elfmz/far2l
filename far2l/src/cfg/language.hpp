@@ -56,14 +56,14 @@ public:
 	bool Init(const wchar_t *Path, bool bWide, int ExpectedLastId = -1);
 	void Close();
 
-	const wchar_t *GetMsgWide(int id) const;
-	const char *GetMsgMB(int id) const;
+	const wchar_t *GetMsgWide(FarLangMsgID id) const;
+	const char *GetMsgMB(FarLangMsgID id) const;
 
 	inline bool IsLanguageLoaded() const {return _loaded;}
 	inline LanguageErrors LastError() const {return _last_error;}
 
-	int InternMsg(const wchar_t *Str);
-	int InternMsg(const char *Str);
+	FarLangMsgID InternMsg(const wchar_t *Str);
+	FarLangMsgID InternMsg(const char *Str);
 
 private:
 	std::unique_ptr<LanguageData> _data;
@@ -72,13 +72,10 @@ private:
 	bool _loaded = false;
 	bool _wide = true;
 
-	const void *GetMsg(int id) const;
+	const void *GetMsg(FarLangMsgID id) const;
 };
 
 extern Language Lang;
-#define MSG(ID) (::Lang.GetMsgWide(ID))
-
-#define INTERN_MSG(STR) ::Lang.InternMsg(STR)
 
 class VMenu;
 

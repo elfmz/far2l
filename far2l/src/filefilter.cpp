@@ -91,10 +91,10 @@ bool FileFilter::FilterEdit()
 	MenuItemEx ListItem;
 	int ExitCode;
 	bool bNeedUpdate=false;
-	VMenu FilterList(MSG(MFilterTitle),nullptr,0,ScrY-6);
+	VMenu FilterList(Msg::FilterTitle,nullptr,0,ScrY-6);
 	FilterList.SetHelp(L"FiltersMenu");
 	FilterList.SetPosition(-1,-1,0,0);
-	FilterList.SetBottomTitle(MSG(MFilterBottom));
+	FilterList.SetBottomTitle(Msg::FilterBottom);
 	FilterList.SetFlags(/*VMENU_SHOWAMPERSAND|*/VMENU_WRAPMODE);
 
 	for (size_t i=0; i<FilterData.getCount(); i++)
@@ -147,7 +147,7 @@ bool FileFilter::FilterEdit()
 		ListItem.Flags|=LIF_SEPARATOR;
 		FilterList.AddItem(&ListItem);
 		ListItem.Clear();
-		FoldersFilter.SetTitle(MSG(MFolderFileType));
+		FoldersFilter.SetTitle(Msg::FolderFileType);
 		MenuString(ListItem.strName,&FoldersFilter,false,L'0');
 		int Check = GetCheck(&FoldersFilter);
 
@@ -184,7 +184,7 @@ bool FileFilter::FilterEdit()
 		for (int i=0, h=L'1'; i<ExtCount; i++, (h==L'9'?h=L'A':(h==L'Z'||h?h++:h=0)))
 		{
 			wchar_t *CurExtPtr=ExtPtr+i*MAX_PATH;
-			MenuString(ListItem.strName,nullptr,false,h,true,CurExtPtr,MSG(MPanelFileType));
+			MenuString(ListItem.strName,nullptr,false,h,true,CurExtPtr,Msg::PanelFileType);
 			ListItem.SetCheck(CurExtPtr[StrLength(CurExtPtr)+1]);
 			FilterList.SetUserData(CurExtPtr,0,FilterList.AddItem(&ListItem));
 		}
@@ -275,7 +275,7 @@ bool FileFilter::FilterEdit()
 				}
 				else if (SelPos>(int)FilterData.getCount())
 				{
-					Message(MSG_WARNING,1,MFilterTitle,MCanEditCustomFilterOnly,MOk);
+					Message(MSG_WARNING,1,Msg::FilterTitle,Msg::CanEditCustomFilterOnly,Msg::Ok);
 				}
 
 				break;
@@ -353,7 +353,7 @@ bool FileFilter::FilterEdit()
 					FARString strQuotedTitle=FilterData.getItem(SelPos)->GetTitle();
 					InsertQuote(strQuotedTitle);
 
-					if (!Message(0,2,MFilterTitle,MAskDeleteFilter,strQuotedTitle,MDelete,MCancel))
+					if (!Message(0,2,Msg::FilterTitle,Msg::AskDeleteFilter,strQuotedTitle,Msg::Delete,Msg::Cancel))
 					{
 						FilterData.deleteItem(SelPos);
 						FilterList.DeleteItem(SelPos);
@@ -365,7 +365,7 @@ bool FileFilter::FilterEdit()
 				}
 				else if (SelPos>(int)FilterData.getCount())
 				{
-					Message(MSG_WARNING,1,MFilterTitle,MCanDeleteCustomFilterOnly,MOk);
+					Message(MSG_WARNING,1,Msg::FilterTitle,Msg::CanDeleteCustomFilterOnly,Msg::Ok);
 				}
 
 				break;
@@ -788,7 +788,7 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 	TempFilterData.Free();
 	while (1)
 	{
-		cfg_reader.SelectSectionFmt("Filters/Filter%d", FilterData.getCount());
+		cfg_reader.SelectSectionFmt("Filters/Filter%d", (int)FilterData.getCount());
 
 		FARString strTitle;
 		if (!cfg_reader.GetString(strTitle, "Title", L"")) {
@@ -832,7 +832,7 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 
 	while (1)
 	{
-		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", TempFilterData.getCount());
+		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", (int)TempFilterData.getCount());
 		FARString strMask;
 		if (!cfg_reader.GetString(strMask, "Mask", L"")) {
 			break;
@@ -881,7 +881,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 
 	for (size_t i=0; i<FilterData.getCount(); i++)
 	{
-		cfg_writer.SelectSectionFmt("Filters/Filter%d", i);
+		cfg_writer.SelectSectionFmt("Filters/Filter%d", (int)i);
 		FileFilterParams *CurFilterData = FilterData.getItem(i);
 		cfg_writer.SetString("Title", CurFilterData->GetTitle());
 		const wchar_t *Mask = nullptr;
@@ -913,7 +913,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 
 	for (size_t i=0; i<TempFilterData.getCount(); i++)
 	{
-		cfg_writer.SelectSectionFmt("Filters/PanelMask%d", i);
+		cfg_writer.SelectSectionFmt("Filters/PanelMask%d", (int)i);
 		FileFilterParams *CurFilterData = TempFilterData.getItem(i);
 		const wchar_t *Mask;
 		CurFilterData->GetMask(&Mask);

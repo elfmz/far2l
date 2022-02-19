@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <luck.h>
 #include <WinCompat.h>
 #include "locale.hpp"
+#include "lang.hpp"
 
 #define NullToEmpty(s) (s?s:L"")
 
@@ -125,6 +126,7 @@ public:
 	inline FARString(const wchar_t *lpwszData) { Init(lpwszData); }
 	inline FARString(const wchar_t *lpwszData, size_t nLength) { Init(lpwszData, nLength); }
 	inline FARString(const std::wstring &strData) { Init(strData.c_str(), strData.size()); }
+	FARString(const FarLangMsg LM);
 
 	inline FARString(const char *lpszData, UINT CodePage=CP_UTF8) { Init(); Copy(lpszData, CodePage); }
 	inline FARString(const std::string &strData, UINT CodePage=CP_UTF8) { Init(); Copy(strData.c_str(), CodePage); }
@@ -148,8 +150,8 @@ public:
 	std::string GetMB() const;
 	inline std::wstring GetWide() const { return std::wstring(CPtr(), GetLength()); }
 
-	FARString& Format(const wchar_t * format, ...);
-	FARString& AppendFormat(const wchar_t * format, ...);
+	FARString& Format(const wchar_t *format, ...);
+	FARString& AppendFormat(const wchar_t *format, ...);
 
 	FARString& Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen);
 	FARString& Replace(size_t Pos, size_t Len, const FARString& Str) { return Replace(Pos, Len, Str.CPtr(), Str.GetLength()); }
@@ -161,6 +163,7 @@ public:
 	FARString& Append(const wchar_t* Str) { return Append(Str, StrLength(NullToEmpty(Str))); }
 	FARString& Append(wchar_t Ch) { return Append(&Ch, 1); }
 	FARString& Append(const char *lpszAdd, UINT CodePage=CP_UTF8);
+	FARString& Append(const FarLangMsg LM);
 
 	FARString& Insert(size_t Pos, const wchar_t* Str, size_t StrLen) { return Replace(Pos, 0, Str, StrLen); }
 	FARString& Insert(size_t Pos, const FARString& Str) { return Insert(Pos, Str.CPtr(), Str.GetLength()); }
@@ -191,11 +194,13 @@ public:
 	inline FARString& operator=(wchar_t chData) { return Copy(chData); }
 	inline FARString& operator=(const std::string &strSrc) { return Copy(strSrc.c_str(), CP_UTF8); }
 	inline FARString& operator=(const std::wstring &strSrc) { return Copy(strSrc.c_str()); }
+	FARString& operator=(const FarLangMsg LM);
 
 	inline FARString& operator+=(const FARString &strAdd) { return Append(strAdd); }
 	inline FARString& operator+=(const char *lpszAdd) { return Append(lpszAdd); }
 	inline FARString& operator+=(const wchar_t *lpwszAdd) { return Append(lpwszAdd); }
 	inline FARString& operator+=(wchar_t chAdd) { return Append(chAdd); }
+	FARString& operator+=(const FarLangMsg LM);
 
 	bool Equal(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen) const;
 	inline bool Equal(size_t Pos, const wchar_t* Str, size_t StrLen) const { return Equal(Pos, StrLen, Str, StrLen); }
@@ -205,10 +210,12 @@ public:
 	inline bool operator==(const FARString& Str) const { return Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
 	inline bool operator==(const wchar_t* Str) const { return Equal(0, GetLength(), Str, StrLength(Str)); }
 	inline bool operator==(wchar_t Ch) const { return Equal(0, GetLength(), &Ch, 1); }
+	bool operator==(const FarLangMsg LM) const;
 
 	inline bool operator!=(const FARString& Str) const { return !Equal(0, GetLength(), Str.CPtr(), Str.GetLength()); }
 	inline bool operator!=(const wchar_t* Str) const { return !Equal(0, GetLength(), Str, StrLength(Str)); }
 	inline bool operator!=(wchar_t Ch) const { return !Equal(0, GetLength(), &Ch, 1); }
+	inline bool operator!=(const FarLangMsg LM) const { return !( (*this) == LM); }
 
 	bool operator<(const FARString& Str) const;
 
@@ -242,3 +249,5 @@ public:
 FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
 FARString operator+(const FARString &strSrc1, const char *lpszSrc2);
 FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2);
+FARString operator+(const FARString &strSrc1, const FarLangMsg LMSrc2);
+

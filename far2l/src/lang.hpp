@@ -30,4 +30,33 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "farplug-wide.h" // for FarLangMsgID
+
+struct FarLangMsg
+{
+	FarLangMsgID _id;
+
+	inline FarLangMsgID ID() const { return _id; }
+	inline const wchar_t *CPtr() const { return GetMsg(_id); }
+	inline operator const wchar_t *() const { return GetMsg(_id); }
+
+	inline FarLangMsg operator+ (int delta) { return FarLangMsg{_id + delta}; }
+	inline FarLangMsg operator- (int delta) { return FarLangMsg{_id - delta}; }
+
+	inline bool operator == (const FarLangMsg other) const { return _id == other._id; }
+	inline bool operator == (const FarLangMsgID other_id) const { return _id == other_id; }
+
+	inline bool operator != (const FarLangMsg other) const { return _id != other._id; }
+	inline bool operator != (const FarLangMsgID other_id) const { return _id != other_id; }
+
+private:
+	static const wchar_t *GetMsg(FarLangMsgID id); // impl in cfg/language.cpp
+};
+
+namespace Msg
+{
+#define DECLARE_FARLANGMSG(NAME, ID) static constexpr FarLangMsg NAME{ ID };
 #include "bootstrap/lang.inc"
+#undef DECLARE_FARLANGMSG
+};
+

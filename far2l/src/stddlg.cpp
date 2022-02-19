@@ -89,19 +89,19 @@ int WINAPI GetSearchReplaceString(
 		*/
 		DialogDataEx ReplaceDlgData[]=
 		{
-			{DI_DOUBLEBOX,3,1,72,12,{},0,MSG(MEditReplaceTitle)},
-			{DI_TEXT,5,2,0,2,{},0,MSG(MEditSearchFor)},
+			{DI_DOUBLEBOX,3,1,72,12,{},0,Msg::EditReplaceTitle},
+			{DI_TEXT,5,2,0,2,{},0,Msg::EditSearchFor},
 			{DI_EDIT,5,3,70,3,{},DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L""},
-			{DI_TEXT,5,4,0,4,{},0,MSG(MEditReplaceWith)},
+			{DI_TEXT,5,4,0,4,{},0,Msg::EditReplaceWith},
 			{DI_EDIT,5,5,70,5,{},DIF_HISTORY/*|DIF_USELASTHISTORY*/,L""},
 			{DI_TEXT,3,6,0,6,{},DIF_SEPARATOR,L""},
-			{DI_CHECKBOX,5,7,0,7,{},0,MSG(MEditSearchCase)},
-			{DI_CHECKBOX,5,8,0,8,{},0,MSG(MEditSearchWholeWords)},
-			{DI_CHECKBOX,5,9,0,9,{},0,MSG(MEditSearchReverse)},
-			{DI_CHECKBOX,40,7,0,7,{},0,MSG(MEditSearchRegexp)},
+			{DI_CHECKBOX,5,7,0,7,{},0,Msg::EditSearchCase},
+			{DI_CHECKBOX,5,8,0,8,{},0,Msg::EditSearchWholeWords},
+			{DI_CHECKBOX,5,9,0,9,{},0,Msg::EditSearchReverse},
+			{DI_CHECKBOX,40,7,0,7,{},0,Msg::EditSearchRegexp},
 			{DI_TEXT,3,10,0,10,{},DIF_SEPARATOR,L""},
-			{DI_BUTTON,0,11,0,11,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MEditReplaceReplace)},
-			{DI_BUTTON,0,11,0,11,{},DIF_CENTERGROUP,MSG(MEditSearchCancel)}
+			{DI_BUTTON,0,11,0,11,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::EditReplaceReplace},
+			{DI_BUTTON,0,11,0,11,{},DIF_CENTERGROUP,Msg::EditSearchCancel}
 		};
 		//индекс самого нижнего чекбокса каждой колонки в диалоге.
 		//предполагаем, что чекбокс на позиции Y+1 имеет индекс, на единицу больший
@@ -263,18 +263,18 @@ int WINAPI GetSearchReplaceString(
 		*/
 		DialogDataEx SearchDlgData[]=
 		{
-			{DI_DOUBLEBOX,3,1,72,10,{},0,MSG(MEditSearchTitle)},
-			{DI_TEXT,5,2,0,2,{},0,MSG(MEditSearchFor)},
+			{DI_DOUBLEBOX,3,1,72,10,{},0,Msg::EditSearchTitle},
+			{DI_TEXT,5,2,0,2,{},0,Msg::EditSearchFor},
 			{DI_EDIT,5,3,70,3,{},DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY,L""},
 			{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
-			{DI_CHECKBOX,5,5,0,5,{},0,MSG(MEditSearchCase)},
-			{DI_CHECKBOX,5,6,0,6,{},0,MSG(MEditSearchWholeWords)},
-			{DI_CHECKBOX,5,7,0,7,{},0,MSG(MEditSearchReverse)},
-			{DI_CHECKBOX,40,5,0,5,{},0,MSG(MEditSearchRegexp)},
-			{DI_CHECKBOX,40,6,0,6,{},0,MSG(MEditSearchSelFound)},
+			{DI_CHECKBOX,5,5,0,5,{},0,Msg::EditSearchCase},
+			{DI_CHECKBOX,5,6,0,6,{},0,Msg::EditSearchWholeWords},
+			{DI_CHECKBOX,5,7,0,7,{},0,Msg::EditSearchReverse},
+			{DI_CHECKBOX,40,5,0,5,{},0,Msg::EditSearchRegexp},
+			{DI_CHECKBOX,40,6,0,6,{},0,Msg::EditSearchSelFound},
 			{DI_TEXT,3,8,0,8,{},DIF_SEPARATOR,L""},
-			{DI_BUTTON,0,9,0,9,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MEditSearchSearch)},
-			{DI_BUTTON,0,9,0,9,{},DIF_CENTERGROUP,MSG(MEditSearchCancel)}
+			{DI_BUTTON,0,9,0,9,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::EditSearchSearch},
+			{DI_BUTTON,0,9,0,9,{},DIF_CENTERGROUP,Msg::EditSearchCancel}
 		};
 		//индекс самого нижнего чекбокса каждой колонки в диалоге.
 		//предполагаем, что чекбокс на позиции Y+1 имеет индекс, на единицу больший
@@ -501,8 +501,8 @@ int WINAPI GetString(
 		StrDlg[4+offset].Type=StrDlg[5+offset].Type=DI_BUTTON;
 		StrDlg[4+offset].Flags=StrDlg[5+offset].Flags=DIF_CENTERGROUP;
 		StrDlg[4+offset].DefaultButton=TRUE;
-		StrDlg[4+offset].strData = MSG(MOk);
-		StrDlg[5+offset].strData = MSG(MCancel);
+		StrDlg[4+offset].strData = Msg::Ok;
+		StrDlg[5+offset].strData = Msg::Cancel;
 	}
 
 	if (Flags&FIB_EXPANDENV)
@@ -598,13 +598,13 @@ int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARS
 	DialogDataEx PassDlgData[]=
 	{
 		{DI_DOUBLEBOX,  3, 1,72, 8,{},0,NullToEmpty(Title)},
-		{DI_TEXT,       5, 2, 0, 2,{},0,MSG(MNetUserName)},
+		{DI_TEXT,       5, 2, 0, 2,{},0,Msg::NetUserName},
 		{DI_EDIT,       5, 3,70, 3,{},DIF_FOCUS|DIF_USELASTHISTORY|DIF_HISTORY,(Flags&GNP_USELAST)?strLastName:strUserName},
-		{DI_TEXT,       5, 4, 0, 4,{},0,MSG(MNetUserPassword)},
+		{DI_TEXT,       5, 4, 0, 4,{},0,Msg::NetUserPassword},
 		{DI_PSWEDIT,    5, 5,70, 5,{},0,(Flags&GNP_USELAST)?strLastPassword:strPassword},
 		{DI_TEXT,       3, 6, 0, 6,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,     0, 7, 0, 7,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,     0, 7, 0, 7,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,     0, 7, 0, 7,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,     0, 7, 0, 7,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(PassDlgData,PassDlg);
 

@@ -634,7 +634,7 @@ int FarAppMain(int argc, char **argv)
 
 	ReadConfig();
 	InitConsole();
-	if (!Lang.Init(g_strFarPath,true,MNewFileName))
+	if (!Lang.Init(g_strFarPath,true,Msg::NewFileName.ID()))
 	{
 		LPCWSTR LngMsg;
 		switch (Lang.LastError())

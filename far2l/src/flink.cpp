@@ -98,7 +98,7 @@ int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, Repars
 	int r = sdc_symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
 	if (r!=0) {
 		if (CanShowMsg) {
-			Message(MSG_WARNING,1,MError,MCopyCannotCreateJunctionToFile,NewName, MOk);
+			Message(MSG_WARNING,1,Msg::Error,Msg::CopyCannotCreateJunctionToFile,NewName, Msg::Ok);
 		}
 		
 		return 0;

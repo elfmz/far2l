@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <assert.h>
 #include <limits>
+#include "lang.hpp"
 
 /// change to 1 to enable stats & leaks detection (slow!)
 #if 0
@@ -185,6 +186,40 @@ void FARString::Content::SetLength(size_t nLength)
 }
 
 //////////////////////////
+
+FARString::FARString(const FarLangMsg LM)
+{
+	Init(LM.CPtr());
+}
+
+FARString& FARString::operator=(const FarLangMsg LM)
+{
+	return operator=(LM.CPtr());
+}
+
+FARString& FARString::Append(const FarLangMsg LM)
+{
+	return Append(LM.CPtr());
+}
+
+FARString& FARString::operator+= (const FarLangMsg LM)
+{
+	return operator+=(LM.CPtr());
+}
+
+bool FARString::operator==(const FarLangMsg LM) const
+{
+	return operator==(LM.CPtr());
+}
+
+FARString operator+(const FARString &strSrc1, const FarLangMsg LMSrc2)
+{
+	FARString out = strSrc1.Clone();
+	out.Append(LMSrc2.CPtr());
+	return out;
+}
+
+////////////
 
 void FARString::PrepareForModify(size_t nCapacity)
 {

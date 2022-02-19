@@ -17,7 +17,7 @@ bool HotkeyLetterDialog(const wchar_t *Title, const wchar_t *Object, wchar_t &Le
 	DialogDataEx HkDlgData[]=
 	{
 		{DI_DOUBLEBOX,3,1,60,4,{},0,Title},
-		{DI_TEXT,5,2,0,2,{},0,MSG(MHelpHotKey)},
+		{DI_TEXT,5,2,0,2,{},0,Msg::HelpHotKey},
 		{DI_FIXEDIT,5,3,5,3,{},DIF_FOCUS|DIF_DEFAULT,L""},
 		{DI_TEXT,8,3,58,3,{},0,Object}
 	};

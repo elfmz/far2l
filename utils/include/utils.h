@@ -137,8 +137,10 @@ const wchar_t *FileSizeToFractionAndUnits(unsigned long long &value);
 std::wstring FileSizeString(unsigned long long value);
 std::wstring ThousandSeparatedString(unsigned long long value);
 
+#define PRINTF_ARGS(FMT_ARG_INDEX) __attribute__ ((format(printf, FMT_ARG_INDEX, FMT_ARG_INDEX + 1))) 
+
 std::string StrPrintfV(const char *format, va_list args);
-std::string StrPrintf(const char *format, ...);
+std::string PRINTF_ARGS(1) StrPrintf(const char *format, ...);
 
 template <class CharT>
 	std::basic_string<CharT> EnsureNoSlashAtEnd(std::basic_string<CharT> str, CharT slash = '/')

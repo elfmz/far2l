@@ -311,13 +311,13 @@ void KeyBar::Change(int Group,const wchar_t *NewStr,int Pos)
 
 
 // Групповая установка идущих подряд строк LNG для указанной группы 
-void KeyBar::SetAllGroup(int Group, int StartIndex, int Count)
+void KeyBar::SetAllGroup(int Group, FarLangMsg BaseMsg, int Count)
 {
 	if (Count > KEY_COUNT)
 		Count = KEY_COUNT;
 
-	for (int i=0, Index=StartIndex; i<Count; i++, Index++)
-		far_wcsncpy(KeyTitles[Group][i], MSG(Index), ARRAYSIZE(KeyTitles[Group][i]));
+	for (int i=0; i<Count; i++)
+		far_wcsncpy(KeyTitles[Group][i], (BaseMsg + i).CPtr(), ARRAYSIZE(KeyTitles[Group][i]));
 
 	KeyCounts [Group] = Count;
 }

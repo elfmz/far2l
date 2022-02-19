@@ -181,13 +181,13 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 
 	if (HelpLanguage)
 	{
-		Title=MSG(MHelpLangTitle);
+		Title=Msg::HelpLangTitle;
 		Mask=HelpFileMask;
 		strDest=&Opt.strHelpLanguage;
 	}
 	else
 	{
-		Title=MSG(MLangTitle);
+		Title=Msg::LangTitle;
 		Mask=LangFileMask;
 		strDest=&Opt.strLanguage;
 	}
@@ -523,7 +523,7 @@ void Language::Close()
 	_loaded = false;
 }
 
-const void *Language::GetMsg(int id) const
+const void *Language::GetMsg(FarLangMsgID id) const
 {
 	if (_data && (_loaded || this == &Lang)) {
 		const void *out = _data->Get(id);
@@ -555,7 +555,7 @@ const void *Language::GetMsg(int id) const
 	return nullptr;
 }
 
-const wchar_t *Language::GetMsgWide(int id) const
+const wchar_t *Language::GetMsgWide(FarLangMsgID id) const
 {
 	if (!_wide) {
 		fprintf(stderr, "Language::GetMsgWide(%d): but language is MULTIBYTE\n", id);
@@ -565,7 +565,7 @@ const wchar_t *Language::GetMsgWide(int id) const
 	return (const wchar_t *)GetMsg(id);
 }
 
-const char* Language::GetMsgMB(int id) const
+const char* Language::GetMsgMB(FarLangMsgID id) const
 {
 	if (_wide) {
 		fprintf(stderr, "Language::GetMsgMB(%d): but language is WIDE\n", id);
@@ -575,7 +575,7 @@ const char* Language::GetMsgMB(int id) const
 	return (const char *)GetMsg(id);
 }
 
-int Language::InternMsg(const wchar_t *str)
+FarLangMsgID Language::InternMsg(const wchar_t *str)
 {
 	if (!_data)
 		return -1;
@@ -589,7 +589,7 @@ int Language::InternMsg(const wchar_t *str)
 	return _data->AddStr(tmp);
 }
 
-int Language::InternMsg(const char *str)
+FarLangMsgID Language::InternMsg(const char *str)
 {
 	if (!_data)
 		return -1;
@@ -603,3 +603,9 @@ int Language::InternMsg(const char *str)
 	return _data->AddStr(tmp);
 }
 
+
+//////////
+const wchar_t *FarLangMsg::GetMsg(FarLangMsgID id)
+{
+	return ::Lang.GetMsgWide(id);
+}

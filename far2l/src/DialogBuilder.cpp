@@ -87,7 +87,7 @@ static bool IsEditField(DialogItemEx *Item)
 }
 */
 
-DialogBuilder::DialogBuilder(int TitleMessageId, const wchar_t *HelpTopic):
+DialogBuilder::DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic):
 	HelpTopic(HelpTopic)
 {
 	AddBorder(GetLangString(TitleMessageId));
@@ -109,9 +109,9 @@ int DialogBuilder::TextWidth(const DialogItemEx &Item)
 	return static_cast<int>(Item.strData.GetLength());
 }
 
-const TCHAR *DialogBuilder::GetLangString(int MessageID)
+const TCHAR *DialogBuilder::GetLangString(FarLangMsg MessageID)
 {
-	return MSG(MessageID);
+	return MessageID;
 }
 
 DialogItemBinding<DialogItemEx> *DialogBuilder::CreateCheckBoxBinding(BOOL *Value, int Mask)
@@ -168,7 +168,7 @@ DialogItemEx *DialogBuilder::AddComboBox(int *Value, int Width,
 	FarListItem *ListItems = new FarListItem[ItemCount];
 	for(int i=0; i<ItemCount; i++)
 	{
-		ListItems [i].Text = MSG(Items [i].MessageId);
+		ListItems [i].Text = Items [i].MessageId;
 		ListItems [i].Flags = (*Value == Items [i].ItemValue) ? LIF_SELECTED : 0;
 		ListItems [i].Reserved [0] = Items [i].ItemValue;
 	}

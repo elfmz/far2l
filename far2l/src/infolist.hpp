@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "panel.hpp"
 #include "viewer.hpp"
+#include "lang.hpp"
 //class Viewer;
 
 /* $ 12.10.2001 SKV
@@ -78,9 +79,9 @@ class InfoList:public Panel
 		void ShowPluginDescription();
 
 		void PrintText(const wchar_t *Str);
-		void PrintText(int MsgID);
+		void PrintText(FarLangMsg MsgID);
 		void PrintInfo(const wchar_t *Str);
-		void PrintInfo(int MsgID);
+		void PrintInfo(FarLangMsg MsgID);
 
 
 		int  OpenDizFile(const wchar_t *DizFile,int YPos);

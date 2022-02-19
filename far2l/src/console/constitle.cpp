@@ -97,13 +97,13 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force, bool Restoring)
 				%Ver      - 2.3.102-beta
 				%Platform - x86
 				%Backend  - gui
-				%Admin    - MFarTitleAddonsAdmin
+				%Admin    - Msg::FarTitleAddonsAdmin
 			*/
 			strFarTitle=Opt.strWindowTitle;
 			ReplaceStrings(strFarTitle,L"%Ver",strVer,-1);
 			ReplaceStrings(strFarTitle,L"%Platform", strPlatform, -1);
 			ReplaceStrings(strFarTitle,L"%Backend", WinPortBackend(), -1);
-			ReplaceStrings(strFarTitle,L"%Admin",Opt.IsUserAdmin?MSG(MFarTitleAddonsAdmin):L"",-1);
+			ReplaceStrings(strFarTitle,L"%Admin",Opt.IsUserAdmin?Msg::FarTitleAddonsAdmin:L"",-1);
 
 			FARString hn, un;
 			apiGetEnvironmentVariable("HOSTNAME", hn);

@@ -167,13 +167,13 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);
 
 			if (!Silent)
-				Message(MSG_WARNING | MSG_ERRORTYPE, 1, MError, strTarget, MOk);
+				Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, strTarget, Msg::Ok);
 		}
 		else // попытка найти!
 		{
 			WINPORT(SetLastError)(ERROR_PATH_NOT_FOUND);
 
-			if (Silent || !Message(MSG_WARNING | MSG_ERRORTYPE, 2, MError, strTarget, MNeedNearPath, MHYes,MHNo))
+			if (Silent || !Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, strTarget, Msg::NeedNearPath, Msg::HYes,Msg::HNo))
 			{
 				FARString strTestPathTemp = *pTestPath;
 

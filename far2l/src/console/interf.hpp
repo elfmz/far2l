@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "strmix.hpp"
+#include "lang.hpp"
 
 extern WCHAR Oem2Unicode[];
 extern WCHAR BoxSymbols[];
@@ -86,11 +87,11 @@ void ScrollScreen(int Count);
 
 void Text(int X, int Y, int Color, const WCHAR *Str);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
-void Text(int MsgId);
+void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
 void HiText(const WCHAR *Str,int HiColor,int isVertText=0);
-void mprintf(const WCHAR *fmt,...);
-void vmprintf(const WCHAR *fmt,...);
+void mprintf(const wchar_t *fmt, ...);
+void vmprintf(const wchar_t *fmt, ...);
 void PutText(int X1,int Y1,int X2,int Y2,const void *Src);
 void GetText(int X1,int Y1,int X2,int Y2,void *Dest,int DestSize);
 void BoxText(wchar_t Chr);

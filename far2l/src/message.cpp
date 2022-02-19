@@ -505,36 +505,36 @@ static int ShowMessage( DWORD Flags, int Buttons, const wchar_t *Title,
 	return InterThreadCall<int, 0>(std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 }
 
-__attribute__ ((noinline)) Messager::Messager(FarLangMsg title)
+FN_NOINLINE Messager::Messager(FarLangMsg title)
 {
 	Add(title);
 }
 
-__attribute__ ((noinline)) Messager::Messager(const wchar_t *title)
+FN_NOINLINE Messager::Messager(const wchar_t *title)
 {
 	Add(title);
 }
 
-__attribute__ ((noinline)) Messager::Messager()
+FN_NOINLINE Messager::Messager()
 {
 }
 
-__attribute__ ((noinline)) Messager::~Messager()
+FN_NOINLINE Messager::~Messager()
 {
 }
 
-Messager &__attribute__ ((noinline)) Messager::Add(FarLangMsg v)
+Messager & FN_NOINLINE Messager::Add(FarLangMsg v)
 {
 	return Add(v.CPtr());
 }
 
-Messager &__attribute__ ((noinline)) Messager::Add(const wchar_t *v)
+Messager & FN_NOINLINE Messager::Add(const wchar_t *v)
 {
 	emplace_back(v);
 	return *this;
 }
 
-int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons, INT_PTR PluginNumber)
+int FN_NOINLINE Messager::Show(DWORD Flags, int Buttons, INT_PTR PluginNumber)
 {
 	// ignore trailing nullptr-s
 	while (!empty() && !back())
@@ -546,12 +546,12 @@ int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons, INT_PTR 
 	return ShowMessage(Flags, Buttons, front(), data() + 1, (int)(size() - 1), PluginNumber);
 }
 
-int __attribute__ ((noinline)) Messager::Show(DWORD Flags, int Buttons)
+int FN_NOINLINE Messager::Show(DWORD Flags, int Buttons)
 {
 	return Show(Flags, Buttons, -1);
 }
 
-int __attribute__ ((noinline)) Messager::Show(int Buttons)
+int FN_NOINLINE Messager::Show(int Buttons)
 {
 	return Show(0, Buttons, -1);
 }

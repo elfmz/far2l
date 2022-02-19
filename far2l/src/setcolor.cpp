@@ -54,23 +54,6 @@ static void SetItemColors(MenuDataEx *Items,int *PaletteItems,int Size,int TypeS
 void GetColor(int PaletteIndex);
 static VMenu *MenuToRedraw1=nullptr,*MenuToRedraw2=nullptr,*MenuToRedraw3=nullptr;
 
-static MenuDataEx ListItems[]=
-{
-	{(const wchar_t *)Msg::SetColorDialogListText,LIF_SELECTED,0},
-	{(const wchar_t *)Msg::SetColorDialogListHighLight,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListSelectedText,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListSelectedHighLight,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListDisabled,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListBox,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListTitle,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListScrollBar,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListArrows,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListArrowsSelected,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListArrowsDisabled,0,0},
-	{(const wchar_t *)Msg::SetColorDialogListGrayed,0,0},
-	{(const wchar_t *)Msg::SetColorDialogSelectedListGrayed,0,0}
-};
-
 // 0,1 - dialog,warn List
 // 2,3 - dialog,warn Combobox
 static int ListPaletteItems[4][13]=
@@ -460,6 +443,23 @@ void SetColors()
 
 static void SetItemColors(MenuDataEx *Items,int *PaletteItems,int Size,int TypeSub)
 {
+	MenuDataEx ListItems[] =
+	{
+		{Msg::SetColorDialogListText, LIF_SELECTED, 0},
+		{Msg::SetColorDialogListHighLight, 0, 0},
+		{Msg::SetColorDialogListSelectedText, 0, 0},
+		{Msg::SetColorDialogListSelectedHighLight, 0, 0},
+		{Msg::SetColorDialogListDisabled, 0, 0},
+		{Msg::SetColorDialogListBox, 0, 0},
+		{Msg::SetColorDialogListTitle, 0, 0},
+		{Msg::SetColorDialogListScrollBar, 0, 0},
+		{Msg::SetColorDialogListArrows, 0, 0},
+		{Msg::SetColorDialogListArrowsSelected, 0, 0},
+		{Msg::SetColorDialogListArrowsDisabled, 0, 0},
+		{Msg::SetColorDialogListGrayed, 0, 0},
+		{Msg::SetColorDialogSelectedListGrayed, 0, 0}
+	};
+
 	int ItemsCode;
 	VMenu ItemsMenu(Msg::SetColorItemsTitle,Items,Size,0);
 

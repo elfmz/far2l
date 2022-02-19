@@ -277,7 +277,7 @@ void InputSettings()
 		if (Opt.XLat.XLat == xlats[i]) {
 			SelectedXLat = i;
 		}
-		XLatItems.emplace_back(DialogBuilderListItem{::Lang.InternMsg(xlats[i].c_str()), i});
+		XLatItems.emplace_back(DialogBuilderListItem{ FarLangMsg{::Lang.InternMsg(xlats[i].c_str())}, i});
 	}
 
 	DialogBuilder Builder(Msg::ConfigInputTitle, L"InputSettings");

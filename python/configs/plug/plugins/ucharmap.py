@@ -22,6 +22,9 @@ class Plugin(PluginBase):
         self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
 
     def OpenPlugin(self, OpenFrom):
+        if 0:
+            import debugpy
+            debugpy.breakpoint()
         symbols = []
         for i in range(256):
             symbols.append(chr(i))

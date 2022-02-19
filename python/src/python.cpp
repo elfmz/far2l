@@ -23,6 +23,8 @@ static FARSTANDARDFUNCTIONS FSF;
 
 // #define PYPLUGIN_DEBUGLOG "/tmp/far2.py.log"
 // #define PYPLUGIN_DEBUGLOG "" /* to stderr */
+// #define PYPLUGIN_THREADED
+// #define PYPLUGIN_MEASURE_STARTUP
 
 static void python_log(const char *function, unsigned int line, const char *format, ...)
 {
@@ -83,7 +85,11 @@ static void python_log(const char *function, unsigned int line, const char *form
 
 
 
+#ifdef PYPLUGIN_THREADED
 class PythonHolder : Threaded
+#else
+class PythonHolder
+#endif
 {
     std::string pluginPath;
     void *soPythonInterpreter = nullptr;
@@ -145,15 +151,21 @@ public:
         Py_Initialize();
         PyEval_InitThreads();
         TranslateInstallPath_Lib2Share(pluginPath);
+#ifdef PYPLUGIN_THREADED
         if (!StartThread()) {
             PYTHON_LOG("StartThread failed, fallback to synchronous initialization\n");
             ThreadProc();
         }
+#else
+        ThreadProc();
+#endif
     }
 
     virtual ~PythonHolder()
     {
+#ifdef PYPLUGIN_THREADED
         WaitThread();
+#endif
 
         if (pyPluginManager) {
             Py_XDECREF(pyPluginManager);
@@ -175,7 +187,9 @@ public:
 
     PyObject *vcall(const char *func, int n, ...)
     {
+#ifdef PYPLUGIN_THREADED
         WaitThread();
+#endif
 
         PyObject *pFunc;
         PyObject *result = NULL;
@@ -225,10 +239,19 @@ eof:
 
 } *g_python_holder = nullptr;
 
+#include <time.h>
 extern "C"
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
+#if defined(PYPLUGIN_MEASURE_STARTUP) && defined(PYPLUGIN_DEBUGLOG)
+    clock_t t = clock();
     g_python_holder = new PythonHolder(path);
+    t = clock() - t;
+    double cpu_time_used = ((double) t) / CLOCKS_PER_SEC;
+    PYTHON_LOG("startup time=%f\n", cpu_time_used);
+#else
+    g_python_holder = new PythonHolder(path);
+#endif
 }
 
 SHAREDSYMBOL int WINAPI EXP_NAME(GetMinFarVersion)()

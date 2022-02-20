@@ -41,8 +41,8 @@ from .plugin import PluginBase
 #     py:load <python modulename>
 #     py:unload <registered python module name>
 
-from .far2lcffi import cffi, ffi
-ffic = ffi.dlopen("c" if sys.platform != "darwin" else "libSystem.dylib")
+from .far2lcffi import ffi
+ffic = ffi.dlopen(None)
 
 class PluginManager:
     Info = None

@@ -1272,6 +1272,7 @@ void ParseAndPrintString( HANDLE hDev,
 	DWORD   i;
 	LPCWSTR s;
 
+    bool esca_wait = false;
 	for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {
 		if (state == 1) {
 			if (*s == ESC) {
@@ -1280,7 +1281,18 @@ void ParseAndPrintString( HANDLE hDev,
 				state = (ansiState.crm) ? 7 : 2;
 			} else if (*s == SO) charset_shifted = true;
 			else if (*s == SI) charset_shifted = false;
-			else PushBuffer( *s );
+			else {
+                if (*s == 0xE5CA) {
+                    if (!esca_wait) {
+                        PushBuffer( *s );
+                        esca_wait = true;
+                    } else {
+                        esca_wait = false;
+                    }
+                } else {
+                    PushBuffer( *s );
+                }
+            }
 		} else if (state == 2) {
 			if (*s == ESC) ;		// \e\e...\e == \e
 			else if (*s == '(' || *s == ')' || *s == '*' || *s == '+') {

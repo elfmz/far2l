@@ -170,6 +170,7 @@ jadoxa@yahoo.com.au
 #include <atomic>
 #include "vtansi.h"
 #include "AnsiEsc.hpp"
+#include "UtfConvert.hpp"
 
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
 
@@ -1500,30 +1501,36 @@ void VTAnsi::OnStop()
 	ResetTerminal();
 	ansiState.font_state.FromConsoleAttributes(g_saved_state.csbi.wAttributes);
 	WINPORT(SetConsoleScrollRegion)(NULL, 0, MAXSHORT);
-	_buf.clear();
+	_incomplete.tail.clear();
 	WINPORT(SetConsoleTitle)( _saved_title.c_str());
 }
 
 void VTAnsi::Write(const char *str, size_t len)
 {
-	if (!_buf.empty()) {
-		_buf.append(str, len);
-		size_t translated_len = MB2Wide_HonorIncomplete(_buf.c_str(), _buf.size(), _ws);
-		if (translated_len == 0)
-			return;
+	if (!_incomplete.tail.empty()) {
+		_incomplete.tmp = _incomplete.tail;
+		_incomplete.tail.clear();
+		_incomplete.tmp.append(str, len);
+		Write(_incomplete.tmp.c_str(), _incomplete.tmp.size());
+		return;
+	}
 
-		if (translated_len < _buf.size()) {
-			_buf.erase(0, translated_len);
-		} else
-			_buf.clear();
-
-	} else {
-		size_t translated_len = MB2Wide_HonorIncomplete(str, len, _ws);
-		if ( translated_len < len) {
-			_buf.append(&str[translated_len], len - translated_len);
-			if (translated_len == 0)
-				return;
+	_ws.clear();
+	StdPushBack<std::wstring> pb(_ws);
+	while (len) {
+		size_t len_cvt = len;
+		UtfConvert(str, len_cvt, pb, true);
+		str+= len_cvt;
+		len-= len_cvt;
+		if (len < MAX_MB_CHARS_PER_WCHAR) {
+			if (len) {
+				_incomplete.tail.assign(str, len);
+			}
+			break;
 		}
+		pb.push_back(0xEE00 + *(unsigned char *)str);
+		++str;
+		--len;
 	}
 
 	ParseAndPrintString(NULL, _ws.c_str(), _ws.size());

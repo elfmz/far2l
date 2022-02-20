@@ -99,7 +99,7 @@ void InfoList::Update(int Mode)
 
 FARString &InfoList::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
-	strTitle.Format(L" %ls ", MSG(MInfoTitle));
+	strTitle.Format(L" %ls ", Msg::InfoTitle.CPtr());
 	TruncStr(strTitle,X2-X1-3);
 	return strTitle;
 }
@@ -144,7 +144,7 @@ void InfoList::DisplayObject()
 		strComputerName.ReleaseBuffer();
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoCompName);
+		PrintText(Msg::InfoCompName);
 		PrintInfo(strComputerName);
 
 		dwSize = 256;
@@ -153,7 +153,7 @@ void InfoList::DisplayObject()
 		strUserName.ReleaseBuffer();
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoUserName);
+		PrintText(Msg::InfoUserName);
 		PrintInfo(strUserName);
 	}
 
@@ -174,7 +174,7 @@ void InfoList::DisplayObject()
 	                            &VolumeNumber,&MaxNameLength,&FileSystemFlags,
 	                            &strFileSystemName))
 	{
-//		strTitle=FARString(L" ")+DiskType+L" "+MSG(MInfoDisk)+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
+//		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 		strTitle=FARString(L" ")+L" ("+strFileSystemName+L") ";
 
 		strDiskNumber.Format(L"%04X-%04X",VolumeNumber>>16,VolumeNumber & 0xffff);
@@ -193,12 +193,12 @@ void InfoList::DisplayObject()
 	if (apiGetDiskSize(strCurDir,&TotalSize,&TotalFree,&UserFree))
 	{
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoDiskTotal);
+		PrintText(Msg::InfoDiskTotal);
 		InsertCommas(TotalSize,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoDiskFree);
+		PrintText(Msg::InfoDiskFree);
 		InsertCommas(UserFree,strOutStr);
 		PrintInfo(strOutStr);
 	}
@@ -207,12 +207,12 @@ void InfoList::DisplayObject()
 
 	if (!strVolumeName.IsEmpty()) {
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoDiskLabel);
+		PrintText(Msg::InfoDiskLabel);
 		PrintInfo(strVolumeName);
 	}
 
 	GotoXY(X1+2,CurY++);
-	PrintText(MInfoDiskNumber);
+	PrintText(Msg::InfoDiskNumber);
 	PrintInfo(strDiskNumber);
 
 	/* #4 - memory info */
@@ -220,7 +220,7 @@ void InfoList::DisplayObject()
 	SetColor(COL_PANELBOX);
 	DrawSeparator(CurY);
 	SetColor(COL_PANELTEXT);
-	strTitle = MSG(MInfoMemory);
+	strTitle = Msg::InfoMemory;
 	TruncStr(strTitle,X2-X1-3);
 	GotoXY(X1+(X2-X1+1-(int)strTitle.GetLength())/2,CurY++);
 	PrintText(strTitle);
@@ -253,17 +253,17 @@ void InfoList::DisplayObject()
 			ToPercent64(freeram, totalram);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryLoad);
+		PrintText(Msg::InfoMemoryLoad);
 		strOutStr.Format(L"%d%%", dwMemoryLoad);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryTotal);
+		PrintText(Msg::InfoMemoryTotal);
 		InsertCommas(totalram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryFree);
+		PrintText(Msg::InfoMemoryFree);
 		InsertCommas(freeram,strOutStr);
 		PrintInfo(strOutStr);
 	}
@@ -277,37 +277,37 @@ void InfoList::DisplayObject()
 			ToPercent64(si.freeram + si.freeswap, si.totalram + si.totalswap);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryLoad);
+		PrintText(Msg::InfoMemoryLoad);
 		strOutStr.Format(L"%d%%", dwMemoryLoad);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryTotal);
+		PrintText(Msg::InfoMemoryTotal);
 		InsertCommas(si.totalram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoMemoryFree);
+		PrintText(Msg::InfoMemoryFree);
 		InsertCommas(si.freeram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoSharedMemory);
+		PrintText(Msg::InfoSharedMemory);
 		InsertCommas(si.sharedram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoBufferMemory);
+		PrintText(Msg::InfoBufferMemory);
 		InsertCommas(si.bufferram,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoPageFileTotal);
+		PrintText(Msg::InfoPageFileTotal);
 		InsertCommas(si.totalswap,strOutStr);
 		PrintInfo(strOutStr);
 
 		GotoXY(X1+2,CurY++);
-		PrintText(MInfoPageFileFree);
+		PrintText(Msg::InfoPageFileFree);
 		InsertCommas(si.freeswap,strOutStr);
 		PrintInfo(strOutStr);
 	}
@@ -486,9 +486,9 @@ void InfoList::PrintText(const wchar_t *Str)
 }
 
 
-void InfoList::PrintText(int MsgID)
+void InfoList::PrintText(FarLangMsg MsgID)
 {
-	PrintText(MSG(MsgID));
+	PrintText(MsgID.CPtr());
 }
 
 
@@ -517,9 +517,9 @@ void InfoList::PrintInfo(const wchar_t *str)
 }
 
 
-void InfoList::PrintInfo(int MsgID)
+void InfoList::PrintInfo(FarLangMsg MsgID)
 {
-	PrintInfo(MSG(MsgID));
+	PrintInfo(MsgID.CPtr());
 }
 
 
@@ -588,7 +588,7 @@ void InfoList::ShowDirDescription(int YPos)
 	CloseFile();
 	SetColor(COL_PANELTEXT);
 	GotoXY(X1+2,YPos+1);
-	PrintText(MInfoDizAbsent);
+	PrintText(Msg::InfoDizAbsent);
 }
 
 
@@ -745,14 +745,14 @@ int InfoList::GetCurName(FARString &strName)
 BOOL InfoList::UpdateKeyBar()
 {
 	KeyBar *KB = CtrlObject->MainKeyBar;
-	KB->SetAllGroup(KBL_MAIN, MInfoF1, 12);
-	KB->SetAllGroup(KBL_SHIFT, MInfoShiftF1, 12);
-	KB->SetAllGroup(KBL_ALT, MInfoAltF1, 12);
-	KB->SetAllGroup(KBL_CTRL, MInfoCtrlF1, 12);
-	KB->SetAllGroup(KBL_CTRLSHIFT, MInfoCtrlShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALT, MInfoCtrlAltF1, 12);
-	KB->SetAllGroup(KBL_ALTSHIFT, MInfoAltShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALTSHIFT, MInfoCtrlAltShiftF1, 12);
+	KB->SetAllGroup(KBL_MAIN, Msg::InfoF1, 12);
+	KB->SetAllGroup(KBL_SHIFT, Msg::InfoShiftF1, 12);
+	KB->SetAllGroup(KBL_ALT, Msg::InfoAltF1, 12);
+	KB->SetAllGroup(KBL_CTRL, Msg::InfoCtrlF1, 12);
+	KB->SetAllGroup(KBL_CTRLSHIFT, Msg::InfoCtrlShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALT, Msg::InfoCtrlAltF1, 12);
+	KB->SetAllGroup(KBL_ALTSHIFT, Msg::InfoAltShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::InfoCtrlAltShiftF1, 12);
 	DynamicUpdateKeyBar();
 	return TRUE;
 }
@@ -763,36 +763,36 @@ void InfoList::DynamicUpdateKeyBar()
 
 	if (DizView)
 	{
-		KB->Change(MSG(MInfoF3), 3-1);
+		KB->Change(Msg::InfoF3, 3-1);
 
 		if (DizView->GetCodePage() != WINPORT(GetOEMCP)())
-			KB->Change(MSG(MViewF8DOS), 7);
+			KB->Change(Msg::ViewF8DOS, 7);
 		else
-			KB->Change(MSG(MInfoF8), 7);
+			KB->Change(Msg::InfoF8, 7);
 
 		if (!DizView->GetWrapMode())
 		{
 			if (DizView->GetWrapType())
-				KB->Change(MSG(MViewShiftF2), 2-1);
+				KB->Change(Msg::ViewShiftF2, 2-1);
 			else
-				KB->Change(MSG(MViewF2), 2-1);
+				KB->Change(Msg::ViewF2, 2-1);
 		}
 		else
-			KB->Change(MSG(MViewF2Unwrap), 2-1);
+			KB->Change(Msg::ViewF2Unwrap, 2-1);
 
 		if (DizView->GetWrapType())
-			KB->Change(KBL_SHIFT, MSG(MViewF2), 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewF2, 2-1);
 		else
-			KB->Change(KBL_SHIFT, MSG(MViewShiftF2), 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewShiftF2, 2-1);
 	}
 	else
 	{
-		KB->Change(MSG(MF2), 2-1);
+		KB->Change(Msg::F2, 2-1);
 		KB->Change(KBL_SHIFT, L"", 2-1);
 		KB->Change(L"", 3-1);
 		KB->Change(L"", 8-1);
 		KB->Change(KBL_SHIFT, L"", 8-1);
-		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // стандартный для панели - "хистори"
+		KB->Change(KBL_ALT, Msg::AltF8, 8-1);  // стандартный для панели - "хистори"
 	}
 
 	KB->ReadRegGroup(L"Info",Opt.strLanguage);

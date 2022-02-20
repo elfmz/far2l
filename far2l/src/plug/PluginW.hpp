@@ -172,7 +172,7 @@ class PluginW: public Plugin
 
 		bool InitLang(const wchar_t *Path) { return Lang.Init(Path,true); }
 		void CloseLang() { Lang.Close(); }
-		const wchar_t *GetMsg(int nID) { return Lang.GetMsg(nID); }
+		const wchar_t *GetMsg(int nID) { return Lang.GetMsgWide(nID); }
 
 	public:
 

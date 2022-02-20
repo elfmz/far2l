@@ -65,7 +65,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "vtcompletor.h"
 #include <limits>
-#include <algorithm>
 
 CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
@@ -164,27 +163,8 @@ void CommandLine::ProcessCompletion(bool possibilities)
 		VTCompletor vtc;		
 		if (possibilities) {
 			std::vector<std::string>  possibilities;
-			std::string last_cmd_word = cmd;
-			size_t last_space = last_cmd_word.rfind(' ');
-			if (last_space != std::string::npos)
-				last_cmd_word.erase(0, last_space + 1);
 			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
-				std::sort(possibilities.begin(), possibilities.end());
-				fprintf(stderr, "Possibilities: ");
-				for(auto &p : possibilities) {
-					fprintf(stderr, "%s ", p.c_str());
-					if (!last_cmd_word.empty() && p.find(last_cmd_word) == 0) {
-						p.insert(0, cmd.substr(0, cmd.size() - last_cmd_word.size()));
-
-					} else if (p.find(cmd) != 0) {
-						/*if (p.find(' ') != 0 && !cmd.empty() && cmd[cmd.size()-1]!=' ') {
-							p.insert(0, 1, ' ');
-						}*/
-						p.insert(0, cmd);
-					}
-				}
-				fprintf(stderr, "\n");
-				
+				//fprintf(stderr, "Possibilities: ");
 				CmdStr.ShowCustomCompletionList(possibilities);
 			}
 		} else {
@@ -354,7 +334,7 @@ int CommandLine::ProcessKey(int Key)
 		{
 			int Type;
 			// $ 19.09.2000 SVS - При выборе из History (по Alt-F8) плагин не получал управление!
-			int SelectType=CtrlObject->CmdHistory->Select(MSG(MHistoryTitle),L"History",strStr,Type);
+			int SelectType=CtrlObject->CmdHistory->Select(Msg::HistoryTitle,L"History",strStr,Type);
 			// BUGBUG, magic numbers
 			if ((SelectType > 0 && SelectType <= 3) || SelectType == 7)
 			{
@@ -420,7 +400,7 @@ int CommandLine::ProcessKey(int Key)
 		case KEY_ALTF12:
 		{
 			int Type;
-			int SelectType=CtrlObject->FolderHistory->Select(MSG(MFolderHistoryTitle),L"HistoryFolders",strStr,Type);
+			int SelectType=CtrlObject->FolderHistory->Select(Msg::FolderHistoryTitle,L"HistoryFolders",strStr,Type);
 
 			/*
 			   SelectType = 0 - Esc
@@ -708,7 +688,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 							if ( Opt.IsUserAdmin )
 							{
 								strDestStr += lb;
-								strDestStr += MSG(MConfigCmdlinePromptFormatAdmin);
+								strDestStr += Msg::ConfigCmdlinePromptFormatAdmin;
 								strDestStr += rb;
 							}
 							break;
@@ -754,7 +734,7 @@ void CommandLine::ShowViewEditHistory()
 {
 	FARString strStr;
 	int Type;
-	int SelectType=CtrlObject->ViewHistory->Select(MSG(MViewHistoryTitle),L"HistoryViews",strStr,Type);
+	int SelectType=CtrlObject->ViewHistory->Select(Msg::ViewHistoryTitle,L"HistoryViews",strStr,Type);
 	/*
 	   SelectType = 0 - Esc
 	                1 - Enter

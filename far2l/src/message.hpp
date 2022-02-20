@@ -34,7 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <WinCompat.h>
+#include <vector>
 #include "FARString.hpp"
+#include "lang.hpp"
 
 #define MAX_WIDTH_MESSAGE static_cast<DWORD>(ScrX-13)
 
@@ -49,27 +51,34 @@ enum
 	MSG_KILLSAVESCREEN =0x00000020,
 };
 
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2=nullptr,const wchar_t *Str3=nullptr,const wchar_t *Str4=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6=nullptr,const wchar_t *Str7=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9=nullptr,const wchar_t *Str10=nullptr,
-            INT_PTR PluginNumber=-1);
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t *Str1,
-            const wchar_t *Str2,const wchar_t *Str3,const wchar_t *Str4,
-            const wchar_t *Str5,const wchar_t *Str6,const wchar_t *Str7,
-            const wchar_t *Str8,const wchar_t *Str9,const wchar_t *Str10,
-            const wchar_t *Str11,const wchar_t *Str12=nullptr,const wchar_t *Str13=nullptr,
-            const wchar_t *Str14=nullptr, INT_PTR PluginNumber=-1);
+struct Messager : protected std::vector<const wchar_t *>
+{
+	Messager(FarLangMsg title);
+	Messager(const wchar_t *title);
+	Messager(); // title supposed to be set by very first Add()
 
-int Message(DWORD Flags,int Buttons,const wchar_t *Title,const wchar_t * const *Items,
-            int ItemsNumber,INT_PTR PluginNumber=-1);
+	~Messager();
+
+	Messager &Add(FarLangMsg v);
+	Messager &Add(const wchar_t *v);
+	inline Messager &Add() { return *this; }
+
+	template <class FirstItemT, class SecondItemT, class ... OtherItemsT>
+		Messager &Add(const FirstItemT &FirstItem, const SecondItemT &SecondItem, OtherItemsT... OtherItems)
+	{
+		return Add(FirstItem).Add(SecondItem, OtherItems...);
+	}
+
+	int Show(DWORD Flags, int Buttons, INT_PTR PluginNumber);
+	int Show(DWORD Flags, int Buttons);
+	int Show(int Buttons = 0);
+};
+
+template <class TitleT, class ... ItemsT>
+	int Message(DWORD Flags, int Buttons, const TitleT &Title, ItemsT... Items)
+{
+	return Messager(Title).Add(Items...).Show(Flags, Buttons);
+}
 
 void SetMessageHelp(const wchar_t *Topic);
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2);

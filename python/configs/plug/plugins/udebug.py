@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 class Config:
     configured = False
     logto = '/tmp'
-    host = 'localhost'
+    host = '127.0.0.1'
     port = 5678
 
 class Plugin(PluginBase):
@@ -20,13 +20,18 @@ class Plugin(PluginBase):
             log.debug('udebug can be configured only once')
             return
 
-        Config.configured = True
-        debugpy.log_to(Config.logto)
-        # in vs code debuger select attach, port = 5678
-        # commands in shell:
-        #     py:debug-start
-        debugpy.listen((Config.host, Config.port))
+        if not Config.configured:
+            Config.configured = True
+            debugpy.log_to(Config.logto)
+            # in vs code debuger select attach, port = 5678
+            # commands in shell:
+            #   py:debug
+            # elsewhere in python code:
+            #   import debugpy
+            #   debugpy.breakpoint()
+            debugpy.listen((Config.host, Config.port))
         debugpy.wait_for_client()
+        #debugpy.breakpoint()
 
     def breakpoint(self):
         debugpy.breakpoint()

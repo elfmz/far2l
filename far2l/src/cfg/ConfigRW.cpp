@@ -254,7 +254,7 @@ void ConfigWriter::RemoveSection()
 std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_prefix)
 {
 	std::string saved_section = _section;
-	SelectSectionFmt("%s%lu", indexed_prefix, 0);
+	SelectSectionFmt("%s0", indexed_prefix);
 
 	const size_t indexed_prefix_len = strlen(indexed_prefix);
 	std::vector<std::string> sections = _selected_kfh->EnumSections();
@@ -284,7 +284,7 @@ std::vector<std::string> ConfigWriter::EnumIndexedSections(const char *indexed_p
 void ConfigWriter::DefragIndexedSections(const char *indexed_prefix)
 {
 	std::string saved_section = _section;
-	SelectSectionFmt("%s%lu", indexed_prefix, 0);
+	SelectSectionFmt("%s0", indexed_prefix);
 
 	std::vector<std::string> sections = EnumIndexedSections(indexed_prefix);
 

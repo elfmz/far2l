@@ -981,7 +981,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 
 int  FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
 {
-	strType = MSG(MScreensPanels);
+	strType = Msg::ScreensPanels;
 	FARString strFullName;
 
 	switch (ActivePanel->GetType())

@@ -16,7 +16,17 @@ struct DummyFileHolder : IFileHolder
 class TempFileHolder : public DummyFileHolder
 {
 	FARString _temp_file_name;
-	bool _delete_parent_dir;
+	enum {
+		DONT_DELETE = 0,
+		DELETE_FILE,
+		DELETE_FILE_AND_PARENT_DIR
+	} _delete = DONT_DELETE;
+
+	TempFileHolder(const TempFileHolder &) = delete;
+	TempFileHolder &operator =(const TempFileHolder &) = delete;
+
+protected:
+	virtual void OnFileEdited(const wchar_t *FileName);
 
 public:
 	const FARString &TempFileName() const { return _temp_file_name; }

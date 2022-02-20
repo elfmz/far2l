@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <list>
 
 #include "plugapi.hpp"
 #include "keys.hpp"
@@ -1160,23 +1160,16 @@ static int FarDialogRunSynched(HANDLE hDlg)
 	if (FrameManager->ManagerIsDown())
 		return -1;
 
-	Frame *frame=FrameManager->GetBottomFrame();
 
-	if (frame )
-		frame->Lock(); // отменим прорисовку фрейма
+	int ExitCode;
 
-	int ExitCode=-1;
-	Dialog *FarDialog = (Dialog *)hDlg;
-
-	//CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
-	FarDialog->Process();
-	ExitCode=FarDialog->GetExitCode();
-
-	/* $ 15.05.2002 SKV
-		Однако разлочивать нужно ровно то, что залочили.
-	*/
-	if (frame )
-		frame->Unlock(); // теперь можно :-)
+	{
+		Dialog *FarDialog = (Dialog *)hDlg;
+		LockBottomFrame lbf; // временно отменим прорисовку фрейма
+		//CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
+		FarDialog->Process();
+		ExitCode = FarDialog->GetExitCode();
+	}
 
 	//CheckScreenLock();
 	FrameManager->RefreshFrame(); //?? - //AY - это нужно чтоб обновлять панели после выхода из диалога
@@ -1221,7 +1214,7 @@ void WINAPI FarDialogFree(HANDLE hDlg)
 
 
 static CriticalSection s_get_msg_cs;
-const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,int MsgId)
+const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,FarLangMsgID MsgId)
 {
 	//BUGBUG, надо проверять, что PluginHandle - плагин
 	PluginW *pPlugin = (PluginW*)PluginHandle;
@@ -1249,76 +1242,25 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	if ((!(Flags&(FMSG_ALLINONE|FMSG_ERRORTYPE)) && ItemsNumber<2) || !Items)
 		return -1;
 
-	wchar_t *SingleItems=nullptr;
-	wchar_t *Msg;
-
-	// анализ количества строк для FMSG_ALLINONE
+	std::list<std::wstring> AllInOneParts;
+	Messager m;
 	if (Flags&FMSG_ALLINONE)
 	{
-		ItemsNumber=0;
+		const wchar_t *Msg = (const wchar_t *)Items, *Edge;
 
-		if (!(SingleItems=(wchar_t *)malloc((StrLength((const wchar_t *)Items)+2)*sizeof(wchar_t))))
-			return -1;
-
-		Msg=wcscpy(SingleItems,(const wchar_t *)Items);
-
-		while ((Msg = wcschr(Msg, L'\n')) )
+		while ((Edge = wcschr(Msg, L'\n')) != nullptr)
 		{
-//      *Msg='\0';
-			if (*++Msg == L'\0')
-				break;
-
-			++ItemsNumber;
+			AllInOneParts.emplace_back(Msg, Edge - Msg);
+			m.Add(AllInOneParts.back().c_str());
+			Msg = Edge + 1;
 		}
-
-		ItemsNumber++; //??
-	}
-
-	const wchar_t **MsgItems=(const wchar_t **)malloc(sizeof(wchar_t*)*(ItemsNumber+ADDSPACEFORPSTRFORMESSAGE));
-
-	if (!MsgItems)
-	{
-		free(SingleItems);
-		return -1;
-	}
-
-	memset(MsgItems,0,sizeof(wchar_t*)*(ItemsNumber+ADDSPACEFORPSTRFORMESSAGE));
-
-	if (Flags&FMSG_ALLINONE)
-	{
-		int I=0;
-		Msg=SingleItems;
-		// анализ количества строк и разбивка на пункты
-		wchar_t *MsgTemp;
-
-		while ((MsgTemp = wcschr(Msg, L'\n')) )
-		{
-			*MsgTemp=L'\0';
-			MsgItems[I]=Msg;
-			Msg+=StrLength(Msg)+1;
-
-			if (*Msg == L'\0')
-				break;
-
-			++I;
-		}
-
 		if (*Msg)
-		{
-			MsgItems[I]=Msg;
-		}
+			m.Add(Msg);
 	}
 	else
 	{
-		for (int i=0; i < ItemsNumber; i++) {
-			MsgItems[i]=Items[i];
-		}
-	}
-
-	// ограничение на строки
-	if (ItemsNumber > ScrY-2)
-	{
-		ItemsNumber=ScrY-2-(Flags&0x000F0000?1:0);
+		for (int i=0; i < ItemsNumber; i++)
+			m.Add(Items[i]);
 	}
 
 	/* $ 22.03.2001 tran
@@ -1328,34 +1270,34 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	{
 		case FMSG_MB_OK:
 			ButtonsNumber=1;
-			MsgItems[ItemsNumber++]=MSG(MOk);
+			m.Add(Msg::Ok);
 			break;
 		case FMSG_MB_OKCANCEL:
 			ButtonsNumber=2;
-			MsgItems[ItemsNumber++]=MSG(MOk);
-			MsgItems[ItemsNumber++]=MSG(MCancel);
+			m.Add(Msg::Ok);
+			m.Add(Msg::Cancel);
 			break;
 		case FMSG_MB_ABORTRETRYIGNORE:
 			ButtonsNumber=3;
-			MsgItems[ItemsNumber++]=MSG(MAbort);
-			MsgItems[ItemsNumber++]=MSG(MRetry);
-			MsgItems[ItemsNumber++]=MSG(MIgnore);
+			m.Add(Msg::Abort);
+			m.Add(Msg::Retry);
+			m.Add(Msg::Ignore);
 			break;
 		case FMSG_MB_YESNO:
 			ButtonsNumber=2;
-			MsgItems[ItemsNumber++]=MSG(MYes);
-			MsgItems[ItemsNumber++]=MSG(MNo);
+			m.Add(Msg::Yes);
+			m.Add(Msg::No);
 			break;
 		case FMSG_MB_YESNOCANCEL:
 			ButtonsNumber=3;
-			MsgItems[ItemsNumber++]=MSG(MYes);
-			MsgItems[ItemsNumber++]=MSG(MNo);
-			MsgItems[ItemsNumber++]=MSG(MCancel);
+			m.Add(Msg::Yes);
+			m.Add(Msg::No);
+			m.Add(Msg::Cancel);
 			break;
 		case FMSG_MB_RETRYCANCEL:
 			ButtonsNumber=2;
-			MsgItems[ItemsNumber++]=MSG(MRetry);
-			MsgItems[ItemsNumber++]=MSG(MCancel);
+			m.Add(Msg::Retry);
+			m.Add(Msg::Cancel);
 			break;
 	}
 
@@ -1369,26 +1311,8 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 	}
 
 	// непосредственно... вывод
-	Frame *frame;
-
-	if ((frame=FrameManager->GetBottomFrame()) )
-		frame->Lock(); // отменим прорисовку фрейма
-
-	int MsgCode=Message(Flags,ButtonsNumber,MsgItems[0],MsgItems+1,ItemsNumber-1,PluginNumber);
-
-	/* $ 15.05.2002 SKV
-	  Однако разлочивать надо ровно то, что залочили.
-	*/
-	if (frame )
-		frame->Unlock(); // теперь можно :-)
-
-	//CheckScreenLock();
-
-	if (SingleItems)
-		free(SingleItems);
-
-	free(MsgItems);
-	return(MsgCode);
+	LockBottomFrame lbf; // временно отменим прорисовку фрейма
+	return m.Show(Flags, ButtonsNumber, PluginNumber);
 }
 
 int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,
@@ -1656,7 +1580,7 @@ void WINAPI FarRestoreScreen(HANDLE hScreen)
 
 static void PR_FarGetDirListMsg()
 {
-	Message(0,0,L"",MSG(MPreparingList));
+	Message(0,0,L"",Msg::PreparingList);
 }
 
 static int FarGetDirListSynched(const wchar_t *Dir,FAR_FIND_DATA **pPanelItem,int *pItemsNumber)
@@ -1737,7 +1661,7 @@ static int PluginSearchMsgOut;
 
 static void FarGetPluginDirListMsg(const wchar_t *Name,DWORD Flags)
 {
-	Message(Flags,0,L"",MSG(MPreparingList),Name);
+	Message(Flags,0,L"",Msg::PreparingList,Name);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Flags=Flags;
 	preRedrawItem.Param.Param1=(void*)Name;
@@ -2104,12 +2028,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	   Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
 	   приоритет по сравнению с EF_DELETEONCLOSE
 	*/
-	int DeleteOnClose = 0;
-
-	if (Flags & EF_DELETEONCLOSE)
-		DeleteOnClose = 1;
-	else if (Flags & EF_DELETEONLYFILEONCLOSE)
-		DeleteOnClose = 2;
+	std::shared_ptr<TempFileHolder> TFH;
+	if (Flags & (EF_DELETEONCLOSE|EF_DELETEONLYFILEONCLOSE))
+		TFH = std::make_shared<TempFileHolder>(FileName, (Flags & EF_DELETEONCLOSE) != 0);
 
 	int OpMode=FEOPMODE_QUERY;
 
@@ -2131,14 +2052,15 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	if (Flags & EF_NONMODAL)
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|FFILEEDIT_ENABLEF6|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
+		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,
+		                                  (CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
 		                                  StartLine,StartChar,Title,
-		                                  X1,Y1,X2,Y2,
-		                                  DeleteOnClose,OpMode);
+		                                  X1,Y1,X2,Y2,OpMode);
 
 		if (Editor)
 		{
 			editorExitCode=Editor->GetExitCode();
+			Editor->SetFileHolder(TFH);
 
 			// добавочка - проверка кода возврата (почему возникает XC_OPEN_ERROR - см. код FileEditor::Init())
 			if (editorExitCode == XC_OPEN_ERROR || editorExitCode == XC_LOADING_INTERRUPTED)
@@ -2173,7 +2095,8 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 		FileEditor Editor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
 		                  StartLine,StartChar,Title,
 		                  X1,Y1,X2,Y2,
-		                  DeleteOnClose,OpMode);
+		                  OpMode);
+		Editor.SetFileHolder(TFH);
 		editorExitCode=Editor.GetExitCode();
 
 		// выполним предпроверку (ошибки разные могут быть)

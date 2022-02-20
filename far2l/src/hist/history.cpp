@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "history.hpp"
-#include "language.hpp"
 #include "keys.hpp"
 #include "vmenu.hpp"
 #include "lang.hpp"
@@ -348,13 +347,13 @@ const wchar_t *History::GetTitle(int Type)
 	switch (Type)
 	{
 		case 0: // вьювер
-			return MSG(MHistoryView);
+			return Msg::HistoryView;
 		case 1: // обычное открытие в редакторе
 		case 4: // открытие с локом
-			return MSG(MHistoryEdit);
+			return Msg::HistoryEdit;
 		case 2: // external - без ожидания
 		case 3: // external - AlwaysWaitFinish
-			return MSG(MHistoryExt);
+			return Msg::HistoryExt;
 	}
 
 	return L"";
@@ -411,7 +410,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		bool IsUpdate=false;
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
-		HistoryMenu.SetBottomTitle(MSG(MHistoryFooter));
+		HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
 
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Last():HistoryList.First(); HistoryItem ; HistoryItem=TypeHistory==HISTORYTYPE_DIALOG?HistoryList.Prev(HistoryItem):HistoryList.Next(HistoryItem))
@@ -621,10 +620,10 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					        (!Opt.Confirm.HistoryClear ||
 					         (Opt.Confirm.HistoryClear &&
 					          !Message(MSG_WARNING,2,
-					                  MSG((TypeHistory==HISTORYTYPE_CMD || TypeHistory==HISTORYTYPE_DIALOG?MHistoryTitle:
-					                       (TypeHistory==HISTORYTYPE_FOLDER?MFolderHistoryTitle:MViewHistoryTitle))),
-					                  MSG(MHistoryClear),
-					                  MSG(MClear),MSG(MCancel)))))
+					                      ((TypeHistory==HISTORYTYPE_CMD || TypeHistory==HISTORYTYPE_DIALOG ? Msg::HistoryTitle
+					                       : (TypeHistory==HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle))),
+					                  Msg::HistoryClear,
+					                  Msg::Clear,Msg::Cancel))))
 					{
 						for (HistoryRecord *HistoryItem=HistoryList.First(); HistoryItem ; HistoryItem=HistoryList.Next(HistoryItem))
 						{
@@ -671,12 +670,12 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 
 				if (SelectedRecord->Type == 1 && TypeHistory == HISTORYTYPE_VIEW) // Edit? тогда спросим и если надо создадим
 				{
-					if (!Message(MSG_WARNING|MSG_ERRORTYPE,2,Title,SelectedRecord->strName,MSG(MViewHistoryIsCreate),MSG(MHYes),MSG(MHNo)))
+					if (!Message(MSG_WARNING|MSG_ERRORTYPE,2,Title,SelectedRecord->strName,Msg::ViewHistoryIsCreate,Msg::HYes,Msg::HNo))
 						break;
 				}
 				else
 				{
-					Message(MSG_WARNING|MSG_ERRORTYPE,1,Title,SelectedRecord->strName,MSG(MOk));
+					Message(MSG_WARNING|MSG_ERRORTYPE,1,Title,SelectedRecord->strName,Msg::Ok);
 				}
 
 				Done=false;

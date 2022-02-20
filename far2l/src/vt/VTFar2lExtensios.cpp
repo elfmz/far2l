@@ -10,7 +10,6 @@
 #include "VTFar2lExtensios.h"
 #include "headers.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "dialog.hpp"
 #include "message.hpp"
 #include "mix.hpp"
@@ -240,16 +239,14 @@ char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 	int choice;
 
 	{
-		const wchar_t *lines_wz[] = {
-			MSG(MTerminalClipboardAccessText),
-			MSG(MTerminalClipboardAccessBlock),		// 0
-			MSG(MTerminalClipboardAccessTemporaryRemote),	// 1
-			MSG(MTerminalClipboardAccessTemporaryLocal),	// 2
-			MSG(MTerminalClipboardAccessAlwaysLocal)};	// 3
 		SavedScreen saved_scr;
 		choice = Message(MSG_KEEPBACKGROUND, 4,
-			MSG(MTerminalClipboardAccessTitle),
-			&lines_wz[0], sizeof(lines_wz) / sizeof(lines_wz[0]));
+			Msg::TerminalClipboardAccessTitle,
+			Msg::TerminalClipboardAccessText,
+			Msg::TerminalClipboardAccessBlock,		// 0
+			Msg::TerminalClipboardAccessTemporaryRemote,	// 1
+			Msg::TerminalClipboardAccessTemporaryLocal,	// 2
+			Msg::TerminalClipboardAccessAlwaysLocal);	// 3
 	}
 
 	_vt_shell->OnTerminalResized(); // window could resize during dialog box processing

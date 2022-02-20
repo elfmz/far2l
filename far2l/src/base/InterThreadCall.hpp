@@ -2,12 +2,13 @@
 #include <functional>
 #include <mutex>
 #include <condition_variable>
-#include <luck.h>
+#include <cctweaks.h>
 
 struct IInterThreadCallDelegate
 {
 	virtual ~IInterThreadCallDelegate() {}
-	virtual void Process(bool stopping) = 0;
+	virtual void Process() = 0;
+	virtual void Finalize(bool discarded) = 0;
 };
 
 // similar to Windows GetCurrentThreadId() but with ability to be overriden
@@ -28,46 +29,34 @@ int DispatchInterThreadCalls();
 
 bool EnqueueInterThreadCallDelegate(IInterThreadCallDelegate *d);
 
-template <class RV, class FN>
-	class InterThreadCallDelegate : protected IInterThreadCallDelegate
+class InterThreadSyncCallDelegate : public IInterThreadCallDelegate
 {
+protected:
 	std::mutex _mtx;
 	std::condition_variable _cond;
 	bool _done, _discarded;
+
+public:
+	virtual void Finalize(bool discarded);
+	bool Do();
+};
+
+template <class RV, class FN>
+	class InterThreadSyncCallDelegateImpl : public InterThreadSyncCallDelegate
+{
 	FN _fn;
 	RV _rv;
 
 protected:
-	virtual void Process(bool stopping)
+	virtual void Process()
 	{
-		if (LIKELY(!stopping))
-			_rv = _fn();
-
-		std::lock_guard<std::mutex> lock(_mtx);
-		_discarded = stopping;
-		_done = true;
-		_cond.notify_all();
+		_rv = _fn();
 	}
 
 public:
-	inline InterThreadCallDelegate(FN fn):_fn(fn) { }
+	inline InterThreadSyncCallDelegateImpl(const FN &fn) : _fn(fn) { }
 
-	bool Do()
-	{
-		_done = _discarded = false;
-
-		if (UNLIKELY(!EnqueueInterThreadCallDelegate(this)))
-			return false;
-
-		std::unique_lock<std::mutex> lock(_mtx);
-		while (!_done) {
-			_cond.wait(lock);
-		}
-
-		return !_discarded;
-	}
-
-	inline RV Result() const
+	inline const RV &Result() const
 	{
 		return _rv;
 	}
@@ -79,16 +68,18 @@ template <class FN>
 	FN _fn;
 
 protected:
-	virtual void Process(bool stopping)
+	virtual void Process()
 	{
-		if (LIKELY(!stopping))
-			_fn();
+		_fn();
+	}
 
+	virtual void Finalize(bool discarded)
+	{
 		delete this;
 	}
 
 public:
-	inline InterThreadAsyncCallDelegate(FN fn):_fn(fn) { }
+	inline InterThreadAsyncCallDelegate(const FN &fn) : _fn(fn) { }
 
 	bool Enqueue()
 	{
@@ -111,7 +102,7 @@ template <class RV, RV FAIL_RV = (RV)0, class FN>
 		return fn();
 	}
 
-	InterThreadCallDelegate<RV, FN> c(fn);
+	InterThreadSyncCallDelegateImpl<RV, FN> c(fn);
 	if (LIKELY(c.Do())) {
 		return c.Result();
 	}

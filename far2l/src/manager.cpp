@@ -387,7 +387,7 @@ Frame *Manager::FrameMenu()
 	int ExitCode, CheckCanLoseFocus=CurrentFrame->GetCanLoseFocus();
 	{
 		MenuItemEx ModalMenuItem;
-		VMenu ModalMenu(MSG(MScreensTitle),nullptr,0,ScrY-4);
+		VMenu ModalMenu(Msg::ScreensTitle,nullptr,0,ScrY-4);
 		ModalMenu.SetHelp(L"ScrSwitch");
 		ModalMenu.SetFlags(VMENU_WRAPMODE);
 		ModalMenu.SetPosition(-1,-1,0,0);
@@ -724,13 +724,13 @@ static bool ConfirmExit()
 {
 	int r;
 	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-		r = Message(0,3,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo),MSG(MBackground));
+		r = Message(0,3,Msg::Quit,Msg::AskQuit,Msg::Yes,Msg::No,Msg::Background);
 		if (r == 2) {
 			WINPORT(ConsoleBackgroundMode)(TRUE);
 		}
 
 	} else {
-		r = Message(0,2,MSG(MQuit),MSG(MAskQuit),MSG(MYes),MSG(MNo));
+		r = Message(0,2,Msg::Quit,Msg::AskQuit,Msg::Yes,Msg::No);
 	}
 
 	return r == 0;
@@ -1791,4 +1791,24 @@ Frame* Manager::GetTopModal()
 		f=fo;
 
 	return f;
+}
+
+/////////
+
+LockBottomFrame::LockBottomFrame()
+	: _frame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+{
+	if (_frame)
+	{
+		if (_frame->Locked())
+			_frame = nullptr;
+		else
+			_frame->Lock();
+	}
+}
+
+LockBottomFrame::~LockBottomFrame()
+{
+	if (_frame)
+		_frame->Unlock();
 }

@@ -51,8 +51,8 @@ struct FarLangMsg
 	inline const wchar_t *CPtr() const { return GetMsg(_id); }
 	inline operator const wchar_t *() const { return GetMsg(_id); }
 
-	inline FarLangMsg operator+ (int delta) { return FarLangMsg{_id + delta}; }
-	inline FarLangMsg operator- (int delta) { return FarLangMsg{_id - delta}; }
+	inline FarLangMsg operator+ (int delta) const { return FarLangMsg{_id + delta}; }
+	inline FarLangMsg operator- (int delta) const { return FarLangMsg{_id - delta}; }
 
 	inline bool operator == (const FarLangMsg other) const { return _id == other._id; }
 	inline bool operator == (const FarLangMsgID other_id) const { return _id == other_id; }

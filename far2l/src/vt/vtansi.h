@@ -11,7 +11,10 @@ struct IVTShell
 
 class VTAnsi
 {
-	std::string _buf;
+	struct {
+		std::string tail, tmp;
+	} _incomplete;
+
 	std::wstring _ws, _saved_title;
 	public:
 	VTAnsi(IVTShell *vt_shell);

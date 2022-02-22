@@ -304,6 +304,8 @@ int TTYOutput::WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) cons
 	return 6;
 }
 
+wchar_t prev = '.';
+
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
@@ -345,8 +347,13 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		WriteWChar(is_space ? L' ' : ci->Char.UnicodeChar);
+		if (!((wcwidth(prev) > 1) && (ci->Char.UnicodeChar == L'\xE5CB'))) {
+			WriteWChar(is_space ? L' ' : ci->Char.UnicodeChar);
+		}
+
 		++_cursor.x;
+
+		prev = ci->Char.UnicodeChar;
 	}
 }
 

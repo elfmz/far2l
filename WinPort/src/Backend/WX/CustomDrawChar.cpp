@@ -1026,6 +1026,10 @@ namespace WXCustomDrawChar
 		}
 	}
 
+	static void Draw_none(Painter &p, unsigned int start_y, unsigned int cx)
+	{
+	}
+
 	////////////////////////////////////////////////////////////////
 
 	DrawT Get(const wchar_t c)
@@ -1130,6 +1134,8 @@ namespace WXCustomDrawChar
 			case 0x259d: return Draw_259d; /* ▝ */
 			case 0x259e: return Draw_259e; /* ▞ */
 			case 0x259f: return Draw_259f; /* ▟ */
+
+			case 0xE5CB: return Draw_none;
 
 			case WCHAR_ESCAPING: return Draw_WCHAR_ESCAPING;
 		}

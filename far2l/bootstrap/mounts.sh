@@ -48,12 +48,14 @@ else
 		DF_TOTAL=3
 		DF_NAME=2
 		DF_DIVBY=1
+		DF_USE=6
 	else
 		DF_ARGS='-t'
 		DF_AVAIL=4
 		DF_TOTAL=2
 		DF_NAME=1
 		DF_DIVBY=2
+		DF_USE=5
 	fi
 
 	#FIXME: paths that contain repeated continuos spaces
@@ -81,9 +83,26 @@ else
 			else if (avail >= 1024*1024) { avail_units="G" ; avail/= 1024*1024;}
 			else if (avail >= 1024) { avail_units="M" ; avail/= 1024;}
 
-			avail_fraction = avail < 10 ? 1 : 0;
-			total_fraction = total < 10 ? 1 : 0;
-			printf "%s\t%.*f%s/%.*f%s\t%8s\n", path, avail_fraction, avail, avail_units, total_fraction, total, total_units, $'$DF_NAME';
+			wide = 0;
+
+			if (wide == 1) {
+
+				avail_ident = "";
+				total_ident = "";
+
+				avail_fraction = avail < 100 ? ( avail < 10 ? 3 : 2 ) : 1;
+				total_fraction = total < 100 ? ( total < 10 ? 3 : 2 ) : 1;
+
+			} else {
+
+				avail_ident = avail < 100 ? ( avail < 10 ? "" : "_" ) : "";
+				total_ident = total < 100 ? ( total < 10 ? "" : " " ) : "";
+
+				avail_fraction = avail < 10 ? 1 : 0;
+				total_fraction = total < 10 ? 1 : 0;
+			}
+
+			printf "%s\t%s%.*f%s %s%.*f%s %3s\t%8s\n", path, avail_ident, avail_fraction, avail, avail_units, total_ident, total_fraction, total, total_units, $'$DF_USE', $'$DF_NAME';
 		}
 	}'
 

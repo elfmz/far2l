@@ -122,6 +122,14 @@ else
 					misc_ident = "";
 					"mount | grep " $'$FV_PATH' " | tail -n 1 | cut -d'"'"' '"'"' -f1" | getline misc_info;
 
+					if (misc_info == "") {
+						if ("'$sysname'" == "Linux") {
+							"( timeout --signal=TERM 1 du -sh " $'$FV_PATH' " 2> /dev/null ) | head -n 1 | column -t | cut -d'"'"' '"'"' -f1" | getline misc_info;
+							misc_width = 5;
+							misc_ident = "=";
+						}
+					}
+
 					printf "%s\t"misc_ident"%"misc_width"s\t%s\n", $'$FV_PATH', misc_info, $'$FV_INFO';
 				}
 			}

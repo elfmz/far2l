@@ -106,10 +106,24 @@ else
 		}
 	}'
 
+	FV_PATH=1
+	FV_INFO=2
 	if [ -s "$FAVORITES" ]; then
 		awk "-F " '{
 			if ($0 != "" && substr($0, 1, 1) != "#") {
-				print $0;
+				if ($'$FV_PATH' == "-") {
+
+					print $0;
+
+				} else {
+
+					misc_info = "";
+					misc_width = 9;
+					misc_ident = "";
+					"mount | grep " $'$FV_PATH' " | tail -n 1 | cut -d'"'"' '"'"' -f1" | getline misc_info;
+
+					printf "%s\t"misc_ident"%"misc_width"s\t%s\n", $'$FV_PATH', misc_info, $'$FV_INFO';
+				}
 			}
 		}' "$FAVORITES"
 	fi

@@ -135,7 +135,7 @@ static void SetDefaultHighlighting()
 
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
 	{
-		cfg_writer.SelectSectionFmt("%s/Group%d", RegColorsHighlight, I);
+		cfg_writer.SelectSectionFmt("%s/Group%d", RegColorsHighlight, (int)I);
 		cfg_writer.SetString(HLS.Mask, StdHighlightData[I].Mask);
 		cfg_writer.SetInt(HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
 		cfg_writer.SetUInt(HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
@@ -515,11 +515,11 @@ void HighlightFiles::FillMenu(VMenu *HiMenu,int MenuPos)
 		if (j<3)
 		{
 			if (!j)
-				HiMenuItem.strName = MSG(MHighlightUpperSortGroup);
+				HiMenuItem.strName = Msg::HighlightUpperSortGroup;
 			else if (j==1)
-				HiMenuItem.strName = MSG(MHighlightLowerSortGroup);
+				HiMenuItem.strName = Msg::HighlightLowerSortGroup;
 			else
-				HiMenuItem.strName = MSG(MHighlightLastGroup);
+				HiMenuItem.strName = Msg::HighlightLastGroup;
 
 			HiMenuItem.Flags|=LIF_SEPARATOR;
 			HiMenu->AddItem(&HiMenuItem);
@@ -576,11 +576,11 @@ int HighlightFiles::MenuPosToRealPos(int MenuPos, int **Count, bool Insert)
 
 void HighlightFiles::HiEdit(int MenuPos)
 {
-	VMenu HiMenu(MSG(MHighlightTitle),nullptr,0,ScrY-4);
+	VMenu HiMenu(Msg::HighlightTitle,nullptr,0,ScrY-4);
 	HiMenu.SetHelp(FARString(HLS.HighlightList));
 	HiMenu.SetFlags(VMENU_WRAPMODE|VMENU_SHOWAMPERSAND);
 	HiMenu.SetPosition(-1,-1,0,0);
-	HiMenu.SetBottomTitle(MSG(MHighlightBottom));
+	HiMenu.SetBottomTitle(Msg::HighlightBottom);
 	FillMenu(&HiMenu,MenuPos);
 	int NeedUpdate;
 	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
@@ -602,9 +602,9 @@ void HighlightFiles::HiEdit(int MenuPos)
 					*/
 				case KEY_CTRLR:
 
-					if (Message(MSG_WARNING,2,MHighlightTitle,
-					            MHighlightWarning,MHighlightAskRestore,
-					            MYes,MCancel))
+					if (Message(MSG_WARNING,2,Msg::HighlightTitle,
+					            Msg::HighlightWarning,Msg::HighlightAskRestore,
+					            Msg::Yes,Msg::Cancel))
 						break;
 
 					{ ConfigWriter(RegColorsHighlight).RemoveSection(); }
@@ -624,9 +624,9 @@ void HighlightFiles::HiEdit(int MenuPos)
 						const wchar_t *Mask;
 						HiData.getItem(RealSelectPos)->GetMask(&Mask);
 
-						if (Message(MSG_WARNING,2,MHighlightTitle,
-						            MHighlightAskDel,Mask,
-						            MDelete,MCancel))
+						if (Message(MSG_WARNING,2,Msg::HighlightTitle,
+						            Msg::HighlightAskDel,Mask,
+						            Msg::Delete,Msg::Cancel))
 							break;
 
 						HiData.deleteItem(RealSelectPos);

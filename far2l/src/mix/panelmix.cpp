@@ -581,15 +581,15 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 
 	if (!Physical && (FileAttributes & (FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_REPARSE_POINT)) && !ShowFolderSize)
 	{
-		const wchar_t *PtrName=MSG(MListFolder);
+		const wchar_t *PtrName=Msg::ListFolder;
 
 		if (TestParentFolderName(strName))
 		{
-			PtrName=MSG(MListUp);
+			PtrName=Msg::ListUp;
 		}
 		else if (FileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
 		{
-			PtrName=MSG(MListSymLink);
+			PtrName=Msg::ListSymLink;
 		}
 
 		strResult<<fmt::Width(Width)<<fmt::Precision(Width);

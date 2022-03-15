@@ -14,6 +14,8 @@ namespace oldfar
 
 	const int NM=MAX_PATH;
 
+	typedef int FarLangMsgID;
+
 	enum FARMESSAGEFLAGS
 	{
 		FMSG_WARNING             = 0x00000001,
@@ -769,7 +771,7 @@ namespace oldfar
 
 	typedef const char*(WINAPI *FARAPIGETMSG)(
 	    INT_PTR PluginNumber,
-	    int     MsgId
+	    FarLangMsgID MsgId
 	);
 
 

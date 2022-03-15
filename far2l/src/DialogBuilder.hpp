@@ -32,7 +32,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fardlgbuilder.hpp"
+#include "fardlgbuilderbase.hpp"
 #include "farwinapi.hpp"
 #include <list>
 
@@ -69,14 +69,14 @@ class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 	protected:
 		virtual void InitDialogItem(DialogItemEx *Item, const TCHAR *Text);
 		virtual int TextWidth(const DialogItemEx &Item);
-		virtual const TCHAR *GetLangString(int MessageID);
+		virtual const TCHAR *GetLangString(FarLangMsg MessageID);
 		virtual int DoShowDialog();
 
 		virtual DialogItemBinding<DialogItemEx> *CreateCheckBoxBinding(BOOL *Value, int Mask);
 		virtual DialogItemBinding<DialogItemEx> *CreateRadioButtonBinding(int *Value);
 
 	public:
-		DialogBuilder(int TitleMessageId, const wchar_t *HelpTopic);
+		DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic);
 		~DialogBuilder();
 
 		// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
@@ -100,6 +100,6 @@ class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 
 		void AddOKCancel()
 		{
-			DialogBuilderBase<DialogItemEx>::AddOKCancel(MOk, MCancel);
+			DialogBuilderBase<DialogItemEx>::AddOKCancel(Msg::Ok, Msg::Cancel);
 		}
 };

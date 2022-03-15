@@ -39,7 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "help.hpp"
 #include "lang.hpp"
 #include "vmenu.hpp"
-#include "language.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "interf.hpp"
@@ -62,7 +61,7 @@ void ShowProcessList()
 	}
 */
 #if 0
-	VMenu ProcList(MSG(MProcessListTitle),nullptr,0,ScrY-4);
+	VMenu ProcList(Msg::ProcessListTitle,nullptr,0,ScrY-4);
 	ProcList.SetFlags(VMENU_WRAPMODE);
 	ProcList.SetPosition(-1,-1,0,0);
 
@@ -70,7 +69,7 @@ void ShowProcessList()
 //		return;
 
 	ProcList.AssignHighlights(FALSE);
-	ProcList.SetBottomTitle(MSG(MProcessListBottom));
+	ProcList.SetBottomTitle(Msg::ProcessListBottom);
 	ProcList.Show();
 
 	while (!ProcList.Done())

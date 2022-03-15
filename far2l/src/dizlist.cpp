@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "dizlist.hpp"
-#include "language.hpp"
 #include "lang.hpp"
 #include "savescr.hpp"
 #include "TPreRedrawFunc.hpp"
@@ -102,7 +101,7 @@ void DizList::Reset()
 
 void DizList::PR_ReadingMsg()
 {
-	Message(0,0,L"",MReadingDiz);
+	Message(0,0,L"",Msg::ReadingDiz);
 }
 
 void DizList::Read(const wchar_t *Path, const wchar_t *DizName)
@@ -482,7 +481,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 		}
 		else
 		{
-			Message(MSG_WARNING,1,MError,MCannotUpdateDiz,MCannotUpdateRODiz,MOk);
+			Message(MSG_WARNING,1,Msg::Error,Msg::CannotUpdateDiz,Msg::CannotUpdateRODiz,Msg::Ok);
 			return false;
 		}
 	}
@@ -566,7 +565,7 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 		apiDeleteFile(strDizFileName);
 		if(AnyError)
 		{
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotUpdateDiz,MOk);
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotUpdateDiz,Msg::Ok);
 			return false;
 		}
 	}

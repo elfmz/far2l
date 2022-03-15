@@ -138,7 +138,7 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 	ConfigReader cfg_reader;
 	//RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
 	MenuItemEx TypesMenuItem;
-	VMenu TypesMenu(MSG(MSelectAssocTitle),nullptr,0,ScrY-4);
+	VMenu TypesMenu(Msg::SelectAssocTitle,nullptr,0,ScrY-4);
 	TypesMenu.SetHelp(FARString(FTS.Help));
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
@@ -499,27 +499,27 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 	const int DlgX = 76, DlgY = 23;
 	DialogDataEx EditDlgData[]=
 	{
-		{DI_DOUBLEBOX,3, 1,DlgX-4,DlgY-2,{},0,MSG(MFileAssocTitle)},
-		{DI_TEXT,     5, 2, 0, 2,{},0,MSG(MFileAssocMasks)},
+		{DI_DOUBLEBOX,3, 1,DlgX-4,DlgY-2,{},0,Msg::FileAssocTitle},
+		{DI_TEXT,     5, 2, 0, 2,{},0,Msg::FileAssocMasks},
 		{DI_EDIT,     5, 3,DlgX-6, 3,{(DWORD_PTR)L"Masks"},DIF_FOCUS|DIF_HISTORY,L""},
-		{DI_TEXT,     5, 4, 0, 4,{},0,MSG(MFileAssocDescr)},
+		{DI_TEXT,     5, 4, 0, 4,{},0,Msg::FileAssocDescr},
 		{DI_EDIT,     5, 5,DlgX-6, 5,{},0,L""},
 		{DI_TEXT,     3, 6, 0, 6,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX, 5, 7, 0, 7,{1},0,MSG(MFileAssocExec)},
+		{DI_CHECKBOX, 5, 7, 0, 7,{1},0,Msg::FileAssocExec},
 		{DI_EDIT,     9, 8,DlgX-6, 8,{},DIF_EDITPATH,L""},
-		{DI_CHECKBOX, 5, 9, 0, 9,{1},0,MSG(MFileAssocAltExec)},
+		{DI_CHECKBOX, 5, 9, 0, 9,{1},0,Msg::FileAssocAltExec},
 		{DI_EDIT,     9,10,DlgX-6,10,{},DIF_EDITPATH,L""},
-		{DI_CHECKBOX, 5,11, 0,11,{1},0,MSG(MFileAssocView)},
+		{DI_CHECKBOX, 5,11, 0,11,{1},0,Msg::FileAssocView},
 		{DI_EDIT,     9,12,DlgX-6,12,{},DIF_EDITPATH,L""},
-		{DI_CHECKBOX, 5,13, 0,13,{1},0,MSG(MFileAssocAltView)},
+		{DI_CHECKBOX, 5,13, 0,13,{1},0,Msg::FileAssocAltView},
 		{DI_EDIT,     9,14,DlgX-6,14,{},DIF_EDITPATH,L""},
-		{DI_CHECKBOX, 5,15, 0,15,{1},0,MSG(MFileAssocEdit)},
+		{DI_CHECKBOX, 5,15, 0,15,{1},0,Msg::FileAssocEdit},
 		{DI_EDIT,     9,16,DlgX-6,16,{},DIF_EDITPATH,L""},
-		{DI_CHECKBOX, 5,17, 0,17,{1},0,MSG(MFileAssocAltEdit)},
+		{DI_CHECKBOX, 5,17, 0,17,{1},0,Msg::FileAssocAltEdit},
 		{DI_EDIT,     9,18,DlgX-6,18,{},DIF_EDITPATH,L""},
 		{DI_TEXT,     3,DlgY-4, 0,DlgY-4,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,   0,DlgY-3, 0,DlgY-3,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,   0,DlgY-3, 0,DlgY-3,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,   0,DlgY-3, 0,DlgY-3,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,   0,DlgY-3, 0,DlgY-3,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(EditDlgData,EditDlg);
 
@@ -599,7 +599,7 @@ static bool DeleteTypeRecord(int DeletePos)
 		InsertQuote(strItemName);
 	}
 
-	if (!Message(MSG_WARNING,2,MSG(MAssocTitle),MSG(MAskDelAssoc),strItemName,MSG(MDelete),MSG(MCancel)))
+	if (!Message(MSG_WARNING,2,Msg::AssocTitle,Msg::AskDelAssoc,strItemName,Msg::Delete,Msg::Cancel))
 	{
 		ConfigWriter cfg_writer;
 		cfg_writer.SelectSectionFmt(FTS.TypeFmt, DeletePos);
@@ -616,11 +616,11 @@ void EditFileTypes()
 	int NumLine=0;
 	int MenuPos=0;
 	//RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
-	VMenu TypesMenu(MSG(MAssocTitle),nullptr,0,ScrY-4);
+	VMenu TypesMenu(Msg::AssocTitle,nullptr,0,ScrY-4);
 	TypesMenu.SetHelp(FARString(FTS.Help));
 	TypesMenu.SetFlags(VMENU_WRAPMODE);
 	TypesMenu.SetPosition(-1,-1,0,0);
-	TypesMenu.SetBottomTitle(MSG(MAssocBottom));
+	TypesMenu.SetBottomTitle(Msg::AssocBottom);
 	while (1)
 	{
 		bool MenuModified=true;

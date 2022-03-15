@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 #include <assert.h>
 #include <limits>
+#include "lang.hpp"
 
 /// change to 1 to enable stats & leaks detection (slow!)
 #if 0
@@ -56,7 +57,7 @@ static DbgStr &DBGSTR()
 	return s_out;
 }
 
-void __attribute__((noinline)) dbgStrCreated(void *c, unsigned int Capacity)
+void FN_NOINLINE dbgStrCreated(void *c, unsigned int Capacity)
 {
 	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
 	if (!DBGSTR().Instances.insert(c).second) abort();
@@ -64,7 +65,7 @@ void __attribute__((noinline)) dbgStrCreated(void *c, unsigned int Capacity)
 //		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
 }
 
-void __attribute__((noinline)) dbgStrDestroyed(void *c, unsigned int Capacity)
+void FN_NOINLINE dbgStrDestroyed(void *c, unsigned int Capacity)
 {
 	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
 	if (!DBGSTR().Instances.erase(c)) abort();
@@ -72,7 +73,7 @@ void __attribute__((noinline)) dbgStrDestroyed(void *c, unsigned int Capacity)
 //		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
 }
 
-void __attribute__((noinline)) dbgStrAddref(const wchar_t *Data)
+void FN_NOINLINE dbgStrAddref(const wchar_t *Data)
 {
 	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
 	++DBGSTR().Addrefs;
@@ -140,7 +141,7 @@ FARString::Content *FARString::Content::Create(size_t nCapacity, const wchar_t *
 	return out;
 }
 
-void __attribute__((noinline)) FARString::Content::Destroy(Content *c)
+void FN_NOINLINE FARString::Content::Destroy(Content *c)
 {
 	dbgStrDestroyed(c, c->m_nCapacity);
 

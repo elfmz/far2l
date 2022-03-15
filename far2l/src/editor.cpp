@@ -3652,7 +3652,7 @@ BOOL Editor::Search(int Next)
 				SetCursorType(FALSE,-1);
 				int Total=ReverseSearch?StartLine:NumLastLine-StartLine;
 				int Current=abs(NewNumLine-StartLine);
-				EditorShowMsg(MSG(MEditSearchTitle),MSG(MEditSearchingFor),strMsgStr,Current*100/Total);
+				EditorShowMsg(Msg::EditSearchTitle,Msg::EditSearchingFor,strMsgStr,Current*100/Total);
 			}
 
 			int SearchLength=0;
@@ -3717,9 +3717,9 @@ BOOL Editor::Search(int Next)
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
 						PreRedrawItem pitem=PreRedraw.Pop();
-						MsgCode=Message(0,4,MEditReplaceTitle,MEditAskReplace,
-						                strQSearchStr,MEditAskReplaceWith,strQReplaceStr,
-						                MEditReplace,MEditReplaceAll,MEditSkip,MEditCancel);
+						MsgCode=Message(0,4,Msg::EditReplaceTitle,Msg::EditAskReplace,
+						                strQSearchStr,Msg::EditAskReplaceWith,strQReplaceStr,
+						                Msg::EditReplace,Msg::EditReplaceAll,Msg::EditSkip,Msg::EditCancel);
 						PreRedraw.Push(pitem);
 
 						if (MsgCode==1)
@@ -3897,7 +3897,7 @@ BOOL Editor::Search(int Next)
 	Show();
 
 	if (!Match && !UserBreak)
-		Message(MSG_WARNING,1,MEditSearchTitle,MEditNotFound,strMsgStr,MOk);
+		Message(MSG_WARNING,1,Msg::EditSearchTitle,Msg::EditNotFound,strMsgStr,Msg::Ok);
 
 	return TRUE;
 }
@@ -4426,7 +4426,7 @@ void Editor::GoToLine(int Line)
 
 void Editor::GoToPosition()
 {
-	DialogBuilder Builder(MEditGoToLine, L"EditorGotoPos");
+	DialogBuilder Builder(Msg::EditGoToLine, L"EditorGotoPos");
 	FARString strData;
 	Builder.AddEditField(&strData,28,L"LineNumber",DIF_FOCUS|DIF_HISTORY|DIF_USELASTHISTORY|DIF_NOAUTOCOMPLETE);
 	Builder.AddOKCancel();

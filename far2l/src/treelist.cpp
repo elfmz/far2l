@@ -244,7 +244,7 @@ void TreeList::DisplayObject()
 
 FARString &TreeList::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
-	strTitle.Format(L" %ls ",ModalMode ? MSG(MFindFolderTitle):MSG(MTreeTitle));
+	strTitle.Format(L" %ls ", (ModalMode ? Msg::FindFolderTitle:Msg::TreeTitle).CPtr());
 	TruncStr(strTitle,X2-X1-3);
 	return strTitle;
 }
@@ -595,7 +595,7 @@ void TreeList::SaveTreeFile()
 	if (!Success)
 	{
 		apiDeleteFile(strName);
-		Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotSaveTree,strName,MOk);
+		Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotSaveTree,strName,Msg::Ok);
 	}
 	else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 		apiSetFileAttributes(strName,FileAttributes);
@@ -705,7 +705,7 @@ int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 	{
 		wchar_t NumStr[32];
 		_itow(TreeCount,NumStr,10); //BUGBUG
-		Message((FirstCall ? 0:MSG_KEEPBACKGROUND),0,MTreeTitle,MReadingTree,NumStr);
+		Message((FirstCall ? 0:MSG_KEEPBACKGROUND),0,Msg::TreeTitle,Msg::ReadingTree,NumStr);
 		PreRedrawItem preRedrawItem=PreRedraw.Peek();
 		preRedrawItem.Param.Flags=TreeCount;
 		PreRedraw.SetParam(preRedrawItem.Param);
@@ -1808,7 +1808,7 @@ void TreeList::FlushCache()
 			clearerr(TreeFile);
 			fclose(TreeFile);
 			apiDeleteFile(TreeCache.strTreeName);
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotSaveTree,TreeCache.strTreeName,MOk);
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotSaveTree,TreeCache.strTreeName,Msg::Ok);
 		}
 		else if (FileAttributes != INVALID_FILE_ATTRIBUTES) // вернем атрибуты (если получится :-)
 			apiSetFileAttributes(TreeCache.strTreeName,FileAttributes);
@@ -2015,14 +2015,14 @@ void TreeList::SetMacroMode(int Restore)
 BOOL TreeList::UpdateKeyBar()
 {
 	KeyBar *KB = CtrlObject->MainKeyBar;
-	KB->SetAllGroup(KBL_MAIN, MKBTreeF1, 12);
-	KB->SetAllGroup(KBL_SHIFT, MKBTreeShiftF1, 12);
-	KB->SetAllGroup(KBL_ALT, MKBTreeAltF1, 12);
-	KB->SetAllGroup(KBL_CTRL, MKBTreeCtrlF1, 12);
-	KB->SetAllGroup(KBL_CTRLSHIFT, MKBTreeCtrlShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALT, MKBTreeCtrlAltF1, 12);
-	KB->SetAllGroup(KBL_ALTSHIFT, MKBTreeAltShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALTSHIFT, MKBTreeCtrlAltShiftF1, 12);
+	KB->SetAllGroup(KBL_MAIN, Msg::KBTreeF1, 12);
+	KB->SetAllGroup(KBL_SHIFT, Msg::KBTreeShiftF1, 12);
+	KB->SetAllGroup(KBL_ALT, Msg::KBTreeAltF1, 12);
+	KB->SetAllGroup(KBL_CTRL, Msg::KBTreeCtrlF1, 12);
+	KB->SetAllGroup(KBL_CTRLSHIFT, Msg::KBTreeCtrlShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALT, Msg::KBTreeCtrlAltF1, 12);
+	KB->SetAllGroup(KBL_ALTSHIFT, Msg::KBTreeAltShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::KBTreeCtrlAltShiftF1, 12);
 	DynamicUpdateKeyBar();
 	return TRUE;
 }

@@ -97,8 +97,8 @@ VMenu::VMenu(const wchar_t *Title,       // заголовок меню
 	{
 		NewItem.Clear();
 
-		if (!IsPtr(Data[I].Name))
-			NewItem.strName = MSG((int)(DWORD_PTR)Data[I].Name);
+		if (!IsPtr(Data[I].Name)) // awful
+			NewItem.strName = FarLangMsg{(int)(DWORD_PTR)Data[I].Name};
 		else
 			NewItem.strName = Data[I].Name;
 
@@ -2770,7 +2770,7 @@ int VMenu::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	CriticalSectionLock Lock(CS);
 
-	strType = MSG(MVMenuType);
+	strType = Msg::VMenuType;
 	strName = strTitle;
 	return CheckFlags(VMENU_COMBOBOX) ? MODALTYPE_COMBOBOX : MODALTYPE_VMENU;
 }

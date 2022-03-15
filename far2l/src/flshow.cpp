@@ -55,23 +55,19 @@ extern int ColumnTypeWidth[];
 
 static wchar_t OutCharacter[8]={0,0,0,0,0,0,0,0};
 
-static int __FormatEndSelectedPhrase(int Count)
+static FarLangMsg __FormatEndSelectedPhrase(int Count)
 {
-	int M_Fmt=MListFileSize;
+	if (Count == 1)
+		return Msg::ListFileSize;
 
-	if (Count != 1)
-	{
-		char StrItems[32];
-		_itoa(Count,StrItems,10);
-		int LenItems=(int)strlen(StrItems);
+	char StrItems[32];
+	_itoa(Count, StrItems, 10);
+	int LenItems = (int)strlen(StrItems);
 
-		if (StrItems[LenItems-1] == '1' && Count != 11)
-			M_Fmt=MListFilesSize1;
-		else
-			M_Fmt=MListFilesSize2;
-	}
+	if (StrItems[LenItems-1] == '1' && Count != 11)
+		return Msg::ListFilesSize1;
 
-	return M_Fmt;
+	return Msg::ListFilesSize2;
 }
 
 
@@ -142,56 +138,56 @@ void FileList::ShowFileList(int Fast)
 		if (Opt.ShowColumnTitles)
 		{
 			FARString strTitle;
-			int IDMessage=-1;
+			FarLangMsg IDMessage{FARLANGMSGID_BAD};
 
 			switch (ViewSettings.ColumnType[I] & 0xff)
 			{
 				case NAME_COLUMN:
-					IDMessage=MColumnName;
+					IDMessage=Msg::ColumnName;
 					break;
 				case SIZE_COLUMN:
-					IDMessage=MColumnSize;
+					IDMessage=Msg::ColumnSize;
 					break;
 				case PHYSICAL_COLUMN:
-					IDMessage=MColumnPhysical;
+					IDMessage=Msg::ColumnPhysical;
 					break;
 				case DATE_COLUMN:
-					IDMessage=MColumnDate;
+					IDMessage=Msg::ColumnDate;
 					break;
 				case TIME_COLUMN:
-					IDMessage=MColumnTime;
+					IDMessage=Msg::ColumnTime;
 					break;
 				case WDATE_COLUMN:
-						IDMessage=MColumnWrited;
+						IDMessage=Msg::ColumnWrited;
 					break;
 				case CDATE_COLUMN:
-					IDMessage=MColumnCreated;
+					IDMessage=Msg::ColumnCreated;
 					break;
 				case ADATE_COLUMN:
-					IDMessage=MColumnAccessed;
+					IDMessage=Msg::ColumnAccessed;
 					break;
 				case CHDATE_COLUMN:
-					IDMessage=MColumnChanged;
+					IDMessage=Msg::ColumnChanged;
 					break;
 				case ATTR_COLUMN:
-					IDMessage=MColumnAttr;
+					IDMessage=Msg::ColumnAttr;
 					break;
 				case DIZ_COLUMN:
-					IDMessage=MColumnDescription;
+					IDMessage=Msg::ColumnDescription;
 					break;
 				case OWNER_COLUMN:
-					IDMessage=MColumnOwner;
+					IDMessage=Msg::ColumnOwner;
 					break;
 				case GROUP_COLUMN:
-					IDMessage=MColumnGroup;
+					IDMessage=Msg::ColumnGroup;
 					break;
 				case NUMLINK_COLUMN:
-					IDMessage=MColumnMumLinks;
+					IDMessage=Msg::ColumnMumLinks;
 					break;
 			}
 
-			if (IDMessage != -1)
-				strTitle=MSG(IDMessage);
+			if (IDMessage != FARLANGMSGID_BAD)
+				strTitle = IDMessage;
 
 			if (PanelMode==PLUGIN_PANEL && Info.PanelModesArray &&
 			        ViewMode<Info.PanelModesNumber &&
@@ -245,18 +241,18 @@ void FileList::ShowFileList(int Fast)
 		                        BY_PHYSICALSIZE,BY_NUMLINKS,
 		                        BY_FULLNAME,BY_CUSTOMDATA
 		                       };
-		static int SortStrings[]={MMenuUnsorted,MMenuSortByName,
-		                          MMenuSortByExt,MMenuSortByWrite,MMenuSortByCreation,
-		                          MMenuSortByAccess,MMenuSortByChange,MMenuSortBySize,MMenuSortByDiz,MMenuSortByOwner,
-		                          MMenuSortByPhysicalSize,MMenuSortByNumLinks,
-		                          MMenuSortByFullName,MMenuSortByCustomData
+		static FarLangMsg SortStrings[]={Msg::MenuUnsorted,Msg::MenuSortByName,
+		                          Msg::MenuSortByExt,Msg::MenuSortByWrite,Msg::MenuSortByCreation,
+		                          Msg::MenuSortByAccess,Msg::MenuSortByChange,Msg::MenuSortBySize,Msg::MenuSortByDiz,Msg::MenuSortByOwner,
+		                          Msg::MenuSortByPhysicalSize,Msg::MenuSortByNumLinks,
+		                          Msg::MenuSortByFullName,Msg::MenuSortByCustomData
 		                         };
 
 		for (size_t I=0; I<ARRAYSIZE(SortModes); I++)
 		{
 			if (SortModes[I]==SortMode)
 			{
-				const wchar_t *SortStr=MSG(SortStrings[I]);
+				const wchar_t *SortStr=SortStrings[I];
 				const wchar_t *Ch=wcschr(SortStr,L'&');
 
 				if (Ch)
@@ -502,7 +498,7 @@ void FileList::ShowSelectedSize()
 	if (SelFileCount)
 	{
 		InsertCommas(SelFileSize,strFormStr);
-		strSelStr.Format(MSG(__FormatEndSelectedPhrase(SelFileCount)),strFormStr.CPtr(),SelFileCount);
+		strSelStr.Format(__FormatEndSelectedPhrase(SelFileCount), strFormStr.CPtr(), SelFileCount);
 		TruncStr(strSelStr,X2-X1-1);
 		Length=(int)strSelStr.GetLength();
 		SetColor(COL_PANELSELECTEDINFO);
@@ -527,7 +523,7 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 	if (Opt.ShowPanelTotals)
 	{
 		if (!Opt.ShowPanelFree || strFreeSize.IsEmpty())
-			strTotalStr.Format(MSG(__FormatEndSelectedPhrase(TotalFileCount)),strFormSize.CPtr(),TotalFileCount);
+			strTotalStr.Format(__FormatEndSelectedPhrase(TotalFileCount), strFormSize.CPtr(), TotalFileCount);
 		else
 		{
 			wchar_t DHLine[4]={BoxSymbols[BS_H2],BoxSymbols[BS_H2],BoxSymbols[BS_H2],0};
@@ -537,12 +533,13 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 			{
 				InsertCommas(FreeDiskSize>>20,strFreeSize);
 				InsertCommas(TotalFileSize>>20,strFormSize);
-				strTotalStr.Format(L" %ls %ls (%d) %ls %ls %ls ",strFormSize.CPtr(),MSG(MListMb),TotalFileCount,DHLine,strFreeSize.CPtr(),MSG(MListMb));
+				strTotalStr.Format(L" %ls %ls (%d) %ls %ls %ls ",
+					strFormSize.CPtr(), Msg::ListMb.CPtr(), TotalFileCount, DHLine, strFreeSize.CPtr(), Msg::ListMb.CPtr());
 			}
 		}
 	}
 	else
-		strTotalStr.Format(MSG(MListFreeSize), !strFreeSize.IsEmpty() ? strFreeSize.CPtr():L"???");
+		strTotalStr.Format(Msg::ListFreeSize, !strFreeSize.IsEmpty() ? strFreeSize.CPtr():L"???");
 
 	SetColor(COL_PANELTOTALINFO);
 	/* $ 01.08.2001 VVM

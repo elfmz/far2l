@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FileMasksProcessor.hpp"
 #include "FileMasksWithExclude.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "message.hpp"
 #include "pathmix.hpp"
 
@@ -91,7 +90,7 @@ bool CFileMask::Set(const wchar_t *Masks, DWORD Flags)
 	}
 
 	if (!Silent && !Result)
-		Message(MSG_WARNING,1,MWarning,MIncorrectMask, MOk);
+		Message(MSG_WARNING,1,Msg::Warning,Msg::IncorrectMask, Msg::Ok);
 
 	return Result;
 }

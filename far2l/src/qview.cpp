@@ -79,7 +79,7 @@ QuickView::~QuickView()
 FARString &QuickView::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
 {
 	strTitle=L" ";
-	strTitle+=MSG(MQuickViewTitle);
+	strTitle+=Msg::QuickViewTitle;
 	strTitle+=L" ";
 	TruncStr(strTitle,X2-X1-3);
 	return strTitle;
@@ -129,7 +129,7 @@ void QuickView::DisplayObject()
 	if (Directory)
 	{
 		FormatString FString;
-		FString<<MSG(MQuickViewFolder)<<L" \""<<strCurFileName<<L"\"";
+		FString<<Msg::QuickViewFolder<<L" \""<<strCurFileName<<L"\"";
 		SetColor(COL_PANELTEXT);
 		GotoXY(X1+2,Y1+2);
 		PrintText(FString);
@@ -141,25 +141,25 @@ void QuickView::DisplayObject()
 
 			if (GetReparsePointInfo(strCurFileName, strJuncName,&ReparseTag))
 			{
-				int ID_Msg=MQuickViewJunction;
+				int ID_Msg=Msg::QuickViewJunction;
 
 				if (ReparseTag==IO_REPARSE_TAG_MOUNT_POINT)
 				{
 					if (IsLocalVolumeRootPath(strJuncName))
 					{
-						ID_Msg=MQuickViewVolMount;
+						ID_Msg=Msg::QuickViewVolMount;
 					}
 				}
 				else if (ReparseTag==IO_REPARSE_TAG_SYMLINK)
 				{
-					ID_Msg=MQuickViewSymlink;
+					ID_Msg=Msg::QuickViewSymlink;
 				}
 
 				//"\??\D:\Junc\Src\"
 				NormalizeSymlinkName(strJuncName);
-				TruncPathStr(strJuncName,X2-X1-1-StrLength(MSG(ID_Msg)));
+				TruncPathStr(strJuncName,X2-X1-1-StrLength((ID_Msg)));
 				FString.Clear();
-				FString<<MSG(ID_Msg)<<L" \""<<strJuncName<<L"\"";
+				FString<<(ID_Msg)<<L" \""<<strJuncName<<L"\"";
 				SetColor(COL_PANELTEXT);
 				GotoXY(X1+2,Y1+3);
 				PrintText(FString);
@@ -169,36 +169,36 @@ void QuickView::DisplayObject()
 		if (Directory==1 || Directory==4)
 		{
 			GotoXY(X1+2,Y1+4);
-			PrintText(MSG(MQuickViewContains));
+			PrintText(Msg::QuickViewContains);
 			GotoXY(X1+2,Y1+6);
-			PrintText(MSG(MQuickViewFolders));
+			PrintText(Msg::QuickViewFolders);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString<<DirCount;
 			PrintText(FString);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+7);
-			PrintText(MSG(MQuickViewFiles));
+			PrintText(Msg::QuickViewFiles);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString<<FileCount;
 			PrintText(FString);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+8);
-			PrintText(MSG(MQuickViewBytes));
+			PrintText(Msg::QuickViewBytes);
 			SetColor(COL_PANELINFOTEXT);
 			FARString strSize;
 			InsertCommas(FileSize,strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+9);
-			PrintText(MSG(MQuickViewPhysical));
+			PrintText(Msg::QuickViewPhysical);
 			SetColor(COL_PANELINFOTEXT);
 			InsertCommas(PhysicalSize,strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
 			GotoXY(X1+2,Y1+10);
-			PrintText(MSG(MQuickViewRatio));
+			PrintText(Msg::QuickViewRatio);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString<<ToPercent64(PhysicalSize,FileSize)<<L"%";
@@ -208,7 +208,7 @@ void QuickView::DisplayObject()
 			{
 				SetColor(COL_PANELTEXT);
 				GotoXY(X1+2,Y1+12);
-				PrintText(MSG(MQuickViewCluster));
+				PrintText(Msg::QuickViewCluster);
 				SetColor(COL_PANELINFOTEXT);
 				FARString strSize;
 				InsertCommas(ClusterSize,strSize);
@@ -378,7 +378,7 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		}
 		else
 		{
-			int ExitCode=GetDirInfo(MSG(MQuickViewTitle),strCurFileName,DirCount,
+			int ExitCode=GetDirInfo(Msg::QuickViewTitle,strCurFileName,DirCount,
 			                        FileCount,FileSize,PhysicalSize,ClusterSize,500,nullptr,
 									GETDIRINFO_ENHBREAK|GETDIRINFO_SCANSYMLINKDEF|GETDIRINFO_DONTREDRAWFRAME);
 
@@ -544,14 +544,14 @@ int QuickView::GetCurName(FARString &strName)
 BOOL QuickView::UpdateKeyBar()
 {
 	KeyBar *KB = CtrlObject->MainKeyBar;
-	KB->SetAllGroup(KBL_MAIN, MQViewF1, 12);
-	KB->SetAllGroup(KBL_SHIFT, MQViewShiftF1, 12);
-	KB->SetAllGroup(KBL_ALT, MQViewAltF1, 12);
-	KB->SetAllGroup(KBL_CTRL, MQViewCtrlF1, 12);
-	KB->SetAllGroup(KBL_CTRLSHIFT, MQViewCtrlShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALT, MQViewCtrlAltF1, 12);
-	KB->SetAllGroup(KBL_ALTSHIFT, MQViewAltShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALTSHIFT, MQViewCtrlAltShiftF1, 12);
+	KB->SetAllGroup(KBL_MAIN, Msg::QViewF1, 12);
+	KB->SetAllGroup(KBL_SHIFT, Msg::QViewShiftF1, 12);
+	KB->SetAllGroup(KBL_ALT, Msg::QViewAltF1, 12);
+	KB->SetAllGroup(KBL_CTRL, Msg::QViewCtrlF1, 12);
+	KB->SetAllGroup(KBL_CTRLSHIFT, Msg::QViewCtrlShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALT, Msg::QViewCtrlAltF1, 12);
+	KB->SetAllGroup(KBL_ALTSHIFT, Msg::QViewAltShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::QViewCtrlAltShiftF1, 12);
 	DynamicUpdateKeyBar();
 	return TRUE;
 }
@@ -562,39 +562,39 @@ void QuickView::DynamicUpdateKeyBar()
 
 	if (Directory || !QView)
 	{
-		KB->Change(MSG(MF2), 2-1);
+		KB->Change(Msg::F2, 2-1);
 		KB->Change(L"", 4-1);
 		KB->Change(L"", 8-1);
 		KB->Change(KBL_SHIFT, L"", 2-1);
 		KB->Change(KBL_SHIFT, L"", 8-1);
-		KB->Change(KBL_ALT, MSG(MAltF8), 8-1);  // 
+		KB->Change(KBL_ALT, Msg::AltF8, 8-1);  // 
 	}
 	else
 	{
 		if (QView->GetHexMode())
-			KB->Change(MSG(MViewF4Text), 4-1);
+			KB->Change(Msg::ViewF4Text, 4-1);
 		else
-			KB->Change(MSG(MQViewF4), 4-1);
+			KB->Change(Msg::QViewF4, 4-1);
 
 		if (QView->GetCodePage() != WINPORT(GetOEMCP)())
-			KB->Change(MSG(MViewF8DOS), 8-1);
+			KB->Change(Msg::ViewF8DOS, 8-1);
 		else
-			KB->Change(MSG(MQViewF8), 8-1);
+			KB->Change(Msg::QViewF8, 8-1);
 
 		if (!QView->GetWrapMode())
 		{
 			if (QView->GetWrapType())
-				KB->Change(MSG(MViewShiftF2), 2-1);
+				KB->Change(Msg::ViewShiftF2, 2-1);
 			else
-				KB->Change(MSG(MViewF2), 2-1);
+				KB->Change(Msg::ViewF2, 2-1);
 		}
 		else
-			KB->Change(MSG(MViewF2Unwrap), 2-1);
+			KB->Change(Msg::ViewF2Unwrap, 2-1);
 
 		if (QView->GetWrapType())
-			KB->Change(KBL_SHIFT, MSG(MViewF2), 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewF2, 2-1);
 		else
-			KB->Change(KBL_SHIFT, MSG(MViewShiftF2), 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewShiftF2, 2-1);
 	}
 
 	KB->ReadRegGroup(L"QView",Opt.strLanguage);

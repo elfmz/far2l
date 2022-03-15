@@ -416,13 +416,15 @@ int main_generator (int argc, char** argv)
 				ReadComments (lpStart, &lpHTail, "htail:", "");
 
 				ReadComments (lpStart, &lpEnum, "enum:", "");
-				sprintf (lpString, "enum %s{\r\n", lpEnum? lpEnum : "");
+				//sprintf (lpString, "enum %s{\r\n", lpEnum? lpEnum : "");
+				sprintf (lpString, "/* FarLang  - start */\r\n");
 				free(lpEnum);
 				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
 				// read strings
 
 				bool bRead = true;
+				int nMsgIndex = 0;
 
 				while ( bRead )
 				{
@@ -446,8 +448,10 @@ int main_generator (int argc, char** argv)
 						char *lpELngComments  = NULL;
 						char *lpSpecificLngComments  = NULL;
 
-						sprintf (lpString, "\t%s,\r\n", lpMsgID);
+						//sprintf (lpString, "\t%s,\r\n", lpMsgID);
+						sprintf (lpString, "DECLARE_FARLANGMSG(%s, %d)\r\n", lpMsgID, nMsgIndex);
 						SmartWrite (hHFile, lpString, &dwHeaderCRC32);
+						++nMsgIndex;
 
 						ReadComments(lpStart, &lpLngComments, "l:", "");
 						ReadComments(lpStart, &lpELngComments, "le:", "");
@@ -533,7 +537,8 @@ int main_generator (int argc, char** argv)
 
 				lseek(hHFile, -2, SEEK_CUR);
 
-				sprintf (lpString, "\r\n};\r\n");
+//				sprintf (lpString, "\r\n};\r\n");
+				sprintf (lpString, "\r\n/* FarLang  - end */\r\n");
 				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
 				if ( lpHTail )

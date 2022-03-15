@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ctrlobj.hpp"
 #include "lang.hpp"
+#include "language.hpp"
 #include "manager.hpp"
 #include "cmdline.hpp"
 #include "hilight.hpp"
@@ -221,19 +222,19 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		Lines.emplace_back();
 		const size_t ConsoleHintsIndex = Lines.size();
 		Lines.reserve(ConsoleHintsIndex + 12);
-		Lines.emplace_back(MSG(MVTStartTipNoCmdTitle));
-		Lines.emplace_back(MSG(MVTStartTipNoCmdCtrlO));
-		Lines.emplace_back(MSG(MVTStartTipNoCmdCtrlArrow));
-		Lines.emplace_back(MSG(MVTStartTipNoCmdShiftTAB));
-		Lines.emplace_back(MSG(MVTStartTipNoCmdFn));
-		Lines.emplace_back(MSG(MVTStartTipNoCmdMouse));
-		Lines.emplace_back(MSG(MVTStartTipPendCmdTitle));
-		Lines.emplace_back(MSG(MVTStartTipPendCmdFn));
-		Lines.emplace_back(MSG(MVTStartTipPendCmdCtrlAltC));
+		Lines.emplace_back(Msg::VTStartTipNoCmdTitle);
+		Lines.emplace_back(Msg::VTStartTipNoCmdCtrlO);
+		Lines.emplace_back(Msg::VTStartTipNoCmdCtrlArrow);
+		Lines.emplace_back(Msg::VTStartTipNoCmdShiftTAB);
+		Lines.emplace_back(Msg::VTStartTipNoCmdFn);
+		Lines.emplace_back(Msg::VTStartTipNoCmdMouse);
+		Lines.emplace_back(Msg::VTStartTipPendCmdTitle);
+		Lines.emplace_back(Msg::VTStartTipPendCmdFn);
+		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltC);
 		if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-			Lines.emplace_back(MSG(MVTStartTipPendCmdCtrlAltZ));
+			Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltZ);
 		}
-		Lines.emplace_back(MSG(MVTStartTipPendCmdMouse));
+		Lines.emplace_back(Msg::VTStartTipPendCmdMouse);
 
 		const int FreeSpace = Size.Y - CursorPosition.Y - 1;
 		const int LineCount = 4 + Lines.size();

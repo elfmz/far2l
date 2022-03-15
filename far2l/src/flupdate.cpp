@@ -106,7 +106,7 @@ void FileList::UpdateIfRequired()
 
 void ReadFileNamesMsg(const wchar_t *Msg)
 {
-	Message(0,0,MReadingTitleFiles,Msg);
+	Message(0,0,Msg::ReadingTitleFiles,Msg);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=(void*)Msg;
 	PreRedraw.SetParam(preRedrawItem.Param);
@@ -328,7 +328,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 						}
 					}
 
-					strReadMsg.Format(MSG(MReadingFiles),FileCount);
+					strReadMsg.Format(Msg::ReadingFiles,FileCount);
 
 					if (DrawMessage)
 					{
@@ -352,7 +352,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	}
 
 	if (!(FindErrorCode==ERROR_SUCCESS || FindErrorCode==ERROR_NO_MORE_FILES || FindErrorCode==ERROR_FILE_NOT_FOUND))
-		Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MReadFolderError,MOk);
+		Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::ReadFolderError,Msg::Ok);
 	/*
 	int NetRoot=FALSE;
 	if (strCurDir.At(0)==GOOD_SLASH && strCurDir.At(1)==GOOD_SLASH)

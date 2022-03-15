@@ -593,9 +593,9 @@ void Text(const WCHAR *Str, size_t Length)
 }
 
 
-void Text(int MsgId)
+void Text(FarLangMsg MsgId)
 {
-	Text(MSG(MsgId));
+	Text(MsgId.CPtr());
 }
 
 void VText(const WCHAR *Str)
@@ -736,21 +736,21 @@ void ChangeBlockColor(int X1,int Y1,int X2,int Y2,int Color)
 	ScrBuf.ApplyColor(X1,Y1,X2,Y2,FarColorToReal(Color));
 }
 
-void mprintf(const WCHAR *fmt,...)
+void mprintf(const wchar_t *fmt,...)
 {
 	va_list argptr;
 	va_start(argptr,fmt);
-	WCHAR OutStr[2048];
+	wchar_t OutStr[2048];
 	vswprintf(OutStr,ARRAYSIZE(OutStr)-1,fmt,argptr);
 	Text(OutStr);
 	va_end(argptr);
 }
 
-void vmprintf(const WCHAR *fmt,...)
+void vmprintf(const wchar_t *fmt,...)
 {
 	va_list argptr;
 	va_start(argptr,fmt);
-	WCHAR OutStr[2048];
+	wchar_t OutStr[2048];
 	vswprintf(OutStr,ARRAYSIZE(OutStr)-1,fmt,argptr);
 	VText(OutStr);
 	va_end(argptr);

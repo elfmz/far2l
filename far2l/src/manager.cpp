@@ -387,7 +387,7 @@ Frame *Manager::FrameMenu()
 	int ExitCode, CheckCanLoseFocus=CurrentFrame->GetCanLoseFocus();
 	{
 		MenuItemEx ModalMenuItem;
-		VMenu ModalMenu(MSG(MScreensTitle),nullptr,0,ScrY-4);
+		VMenu ModalMenu(Msg::ScreensTitle,nullptr,0,ScrY-4);
 		ModalMenu.SetHelp(L"ScrSwitch");
 		ModalMenu.SetFlags(VMENU_WRAPMODE);
 		ModalMenu.SetPosition(-1,-1,0,0);
@@ -724,13 +724,13 @@ static bool ConfirmExit()
 {
 	int r;
 	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-		r = Message(0,3,MQuit,MAskQuit,MYes,MNo,MBackground);
+		r = Message(0,3,Msg::Quit,Msg::AskQuit,Msg::Yes,Msg::No,Msg::Background);
 		if (r == 2) {
 			WINPORT(ConsoleBackgroundMode)(TRUE);
 		}
 
 	} else {
-		r = Message(0,2,MQuit,MAskQuit,MYes,MNo);
+		r = Message(0,2,Msg::Quit,Msg::AskQuit,Msg::Yes,Msg::No);
 	}
 
 	return r == 0;

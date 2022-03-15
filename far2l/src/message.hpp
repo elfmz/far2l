@@ -53,13 +53,13 @@ enum
 
 struct Messager : protected std::vector<const wchar_t *>
 {
-	Messager(LangMsg title);
+	Messager(FarLangMsg title);
 	Messager(const wchar_t *title);
 	Messager(); // title supposed to be set by very first Add()
 
 	~Messager();
 
-	Messager &Add(LangMsg v);
+	Messager &Add(FarLangMsg v);
 	Messager &Add(const wchar_t *v);
 	inline Messager &Add() { return *this; }
 

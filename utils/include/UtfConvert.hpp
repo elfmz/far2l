@@ -4,7 +4,7 @@
 #include <vector>
 #include <assert.h>
 #include <string.h>
-#include "luck.h"
+#include "cctweaks.h"
 #include "ww898/utf_converters.hpp"
 #include "UtfDefines.h"
 

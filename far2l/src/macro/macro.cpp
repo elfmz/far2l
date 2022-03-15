@@ -5881,13 +5881,13 @@ M1:
 				DWORD DisFlags=Mac->Flags&MFLAGS_DISABLEMACRO;
 				FARString strBuf;
 				if ((Mac->Flags&0xFF)==MACRO_COMMON)
-					strBuf.Format(MSG(!MacroDlg->RecBufferSize?
-					                  (DisFlags?MMacroCommonDeleteAssign:MMacroCommonDeleteKey):
-							                  MMacroCommonReDefinedKey), strKeyText.CPtr());
+					strBuf.Format((!MacroDlg->RecBufferSize
+					                  ? (DisFlags ? Msg::MacroCommonDeleteAssign : Msg::MacroCommonDeleteKey)
+					                  : Msg::MacroCommonReDefinedKey), strKeyText.CPtr());
 				else
-					strBuf.Format(MSG(!MacroDlg->RecBufferSize?
-					                  (DisFlags?MMacroDeleteAssign:MMacroDeleteKey):
-							                  MMacroReDefinedKey), strKeyText.CPtr());
+					strBuf.Format((!MacroDlg->RecBufferSize
+					                  ? (DisFlags ? Msg::MacroDeleteAssign : Msg::MacroDeleteKey)
+					                  : Msg::MacroReDefinedKey), strKeyText.CPtr());
 
 				// проверим "а не совпадает ли всё?"
 				int Result=0;
@@ -5899,14 +5899,14 @@ M1:
 				            (Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
 				        )
 				   ))
-					Result=Message(MSG_WARNING,2,MWarning,
+					Result=Message(MSG_WARNING,2,Msg::Warning,
 					          strBuf,
-					          MMacroSequence,
+					          Msg::MacroSequence,
 					          strBufKey,
-					          (!MacroDlg->RecBufferSize?MMacroDeleteKey2:
-					              (DisFlags?MMacroDisDisabledKey:MMacroReDefinedKey2)),
-					          (DisFlags && MacroDlg->RecBufferSize?MMacroDisOverwrite:MYes),
-					          (DisFlags && MacroDlg->RecBufferSize?MMacroDisAnotherKey:MNo));
+					          (!MacroDlg->RecBufferSize?Msg::MacroDeleteKey2:
+					              (DisFlags?Msg::MacroDisDisabledKey:Msg::MacroReDefinedKey2)),
+					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisOverwrite:Msg::Yes),
+					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisAnotherKey:Msg::No));
 
 				if (!Result)
 				{
@@ -5955,8 +5955,8 @@ DWORD KeyMacro::AssignMacroKey()
 	*/
 	DialogDataEx MacroAssignDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,30,4,{},0,MSG(MDefineMacroTitle)},
-		{DI_TEXT,-1,2,0,2,{},0,MSG(MDefineMacro)},
+		{DI_DOUBLEBOX,3,1,30,4,{},0,Msg::DefineMacroTitle},
+		{DI_TEXT,-1,2,0,2,{},0,Msg::DefineMacro},
 		{DI_COMBOBOX,5,3,28,3,{},DIF_FOCUS|DIF_DEFAULT,L""}
 	};
 	MakeDialogItemsEx(MacroAssignDlgData,MacroAssignDlg);
@@ -6082,31 +6082,31 @@ int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 	DialogDataEx MacroSettingsDlgData[]=
 	{
 		{DI_DOUBLEBOX,3,1,69,17,{},0,L""},
-		{DI_TEXT,5,2,0,2,{},0,MSG(MMacroSequence)},
+		{DI_TEXT,5,2,0,2,{},0,Msg::MacroSequence},
 		{DI_EDIT,5,3,67,3,{},DIF_FOCUS,L""},
 		{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,5,5,0,5,{},0,MSG(MMacroSettingsEnableOutput)},
-		{DI_CHECKBOX,5,6,0,6,{},0,MSG(MMacroSettingsRunAfterStart)},
+		{DI_CHECKBOX,5,5,0,5,{},0,Msg::MacroSettingsEnableOutput},
+		{DI_CHECKBOX,5,6,0,6,{},0,Msg::MacroSettingsRunAfterStart},
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,5,8,0,8,{},0,MSG(MMacroSettingsActivePanel)},
-		{DI_CHECKBOX,7,9,0,9,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsPluginPanel)},
-		{DI_CHECKBOX,7,10,0,10,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsFolders)},
-		{DI_CHECKBOX,7,11,0,11,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsSelectionPresent)},
-		{DI_CHECKBOX,37,8,0,8,{},0,MSG(MMacroSettingsPassivePanel)},
-		{DI_CHECKBOX,39,9,0,9,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsPluginPanel)},
-		{DI_CHECKBOX,39,10,0,10,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsFolders)},
-		{DI_CHECKBOX,39,11,0,11,{2},DIF_3STATE|DIF_DISABLE,MSG(MMacroSettingsSelectionPresent)},
+		{DI_CHECKBOX,5,8,0,8,{},0,Msg::MacroSettingsActivePanel},
+		{DI_CHECKBOX,7,9,0,9,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsPluginPanel},
+		{DI_CHECKBOX,7,10,0,10,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsFolders},
+		{DI_CHECKBOX,7,11,0,11,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsSelectionPresent},
+		{DI_CHECKBOX,37,8,0,8,{},0,Msg::MacroSettingsPassivePanel},
+		{DI_CHECKBOX,39,9,0,9,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsPluginPanel},
+		{DI_CHECKBOX,39,10,0,10,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsFolders},
+		{DI_CHECKBOX,39,11,0,11,{2},DIF_3STATE|DIF_DISABLE,Msg::MacroSettingsSelectionPresent},
 		{DI_TEXT,3,12,0,12,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,5,13,0,13,{2},DIF_3STATE,MSG(MMacroSettingsCommandLine)},
-		{DI_CHECKBOX,5,14,0,14,{2},DIF_3STATE,MSG(MMacroSettingsSelectionBlockPresent)},
+		{DI_CHECKBOX,5,13,0,13,{2},DIF_3STATE,Msg::MacroSettingsCommandLine},
+		{DI_CHECKBOX,5,14,0,14,{2},DIF_3STATE,Msg::MacroSettingsSelectionBlockPresent},
 		{DI_TEXT,3,15,0,15,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,16,0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,0,16,0,16,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,0,16,0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,0,16,0,16,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(MacroSettingsDlgData,MacroSettingsDlg);
 	FARString strKeyText;
 	KeyToText(Key,strKeyText);
-	MacroSettingsDlg[MS_DOUBLEBOX].strData.Format(MSG(MMacroSettingsTitle), strKeyText.CPtr());
+	MacroSettingsDlg[MS_DOUBLEBOX].strData.Format(Msg::MacroSettingsTitle, strKeyText.CPtr());
 	//if(!(Key&0x7F000000))
 	//MacroSettingsDlg[3].Flags|=DIF_DISABLE;
 	MacroSettingsDlg[MS_CHECKBOX_OUPUT].Selected=Flags&MFLAGS_DISABLEOUTPUT?0:1;
@@ -6303,7 +6303,7 @@ int KeyMacro::ParseMacroString(MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL 
 			InternalInput++; // InternalInput - ограничитель того, чтобы макрос не продолжал свое исполнение
 			GetMacroParseError(&ErrMsg[0],&ErrMsg[1],&ErrMsg[2],&ErrMsg[3]);
 			//if(...)
-			FARString strTitle=MSG(MMacroPErrorTitle);
+			FARString strTitle(Msg::MacroPErrorTitle);
 			if(CurMacro->Key)
 			{
 				strTitle+=L" ";
@@ -6311,7 +6311,7 @@ int KeyMacro::ParseMacroString(MacroRecord *CurMacro,const wchar_t *BufPtr,BOOL 
 				KeyToText(CurMacro->Key,strKey);
 				strTitle.Append(GetSubKey(LOBYTE(LOWORD(CurMacro->Flags)))).Append(L"/").Append(strKey);
 			}
-			Message(MSG_WARNING|MSG_LEFTALIGN,1,strTitle,ErrMsg[3]+L":",ErrMsg[0],L"\x1",ErrMsg[1],ErrMsg[2],L"\x1",MSG(MOk));
+			Message(MSG_WARNING|MSG_LEFTALIGN,1,strTitle,ErrMsg[3]+L":",ErrMsg[0],L"\x1",ErrMsg[1],ErrMsg[2],L"\x1",Msg::Ok);
 			//else
 			// вывести диагностику в файл
 			InternalInput--;
@@ -6507,11 +6507,11 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 				if (Val.Begins(L"INT:"))
 				{
 					long long llVal = wcstoll(Val.CPtr() + 4, nullptr, 10);
-					strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), llVal, llVal);
+					strDescription.Format(Msg::MacroOutputFormatForHelpQWord, llVal, llVal);
 				}
 				else if (Val.Begins(L"STR:") || Val.Begins(L"DBL:"))
 				{
-					strDescription.Format(MSG(MMacroOutputFormatForHelpSz), Val.CPtr() + 4);
+					strDescription.Format(Msg::MacroOutputFormatForHelpSz, Val.CPtr() + 4);
 				}
 				else
 				{ // guess who
@@ -6519,11 +6519,11 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 					long long llVal = wcstoll(Val.CPtr(), &llEnd, 10);
 					if (!Val.IsEmpty() && llEnd && !*llEnd)
 					{
-						strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), llVal, llVal);
+						strDescription.Format(Msg::MacroOutputFormatForHelpQWord, llVal, llVal);
 					}
 					else
 					{
-						strDescription.Format(MSG(MMacroOutputFormatForHelpSz), Val.CPtr() + 4);
+						strDescription.Format(Msg::MacroOutputFormatForHelpSz, Val.CPtr() + 4);
 					}
 				}
 				return Pos + 1;
@@ -6563,17 +6563,17 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 					case vtInteger:
 					{
 						int64_t IData64=var->value.i();
-						strDescription.Format(MSG(MMacroOutputFormatForHelpQWord), IData64, IData64);
+						strDescription.Format(Msg::MacroOutputFormatForHelpQWord, IData64, IData64);
 						break;
 					}
 					case vtDouble:
 					{
 						double FData=var->value.d();
-						strDescription.Format(MSG(MMacroOutputFormatForHelpDouble), FData);
+						strDescription.Format(Msg::MacroOutputFormatForHelpDouble, FData);
 						break;
 					}
 					case vtString:
-						strDescription.Format(MSG(MMacroOutputFormatForHelpSz), var->value.s());
+						strDescription.Format(Msg::MacroOutputFormatForHelpSz, var->value.s());
 						break;
 						
 					case vtUnknown: break;

@@ -137,7 +137,7 @@ FileList::FileList():
 {
 	_OT(SysLog(L"[%p] FileList::FileList()", this));
 	{
-		const wchar_t *data=MSG(MPanelBracketsForLongName);
+		const wchar_t *data=Msg::PanelBracketsForLongName;
 
 		if (StrLength(data)>1)
 		{
@@ -862,7 +862,7 @@ class FileList_TempFileHolder : public TempFileUploadHolder
 
 			if (PutCode == 0)
 			{
-				Message(MSG_WARNING, 1, MError, MCannotSaveFile, MTextSavedToTemp, strPath.CPtr(), MOk);
+				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, strPath.CPtr(), Msg::Ok);
 			} else
 				out = true;
 		}
@@ -1445,8 +1445,8 @@ int FileList::ProcessKey(int Key)
 						if (!dlgOpenEditor(strLastFileName, codepage))
 							return FALSE;
 
-						/*if (!GetString(MSG(MEditTitle),
-						               MSG(MFileToEdit),
+						/*if (!GetString(Msg::EditTitle,
+						               Msg::FileToEdit,
 						               L"NewEdit",
 						               strLastFileName,
 						               strLastFileName,
@@ -1481,11 +1481,11 @@ int FileList::ProcessKey(int Key)
 									{
 										SetMessageHelp(L"WarnEditorPath");
 
-										if (Message(MSG_WARNING,2,MWarning,
-													MEditNewPath1,
-													MEditNewPath2,
-													MEditNewPath3,
-													MHYes,MHNo))
+										if (Message(MSG_WARNING,2,Msg::Warning,
+													Msg::EditNewPath1,
+													Msg::EditNewPath2,
+													Msg::EditNewPath3,
+													Msg::HYes,Msg::HNo))
 											return FALSE;
 									}
 
@@ -1498,14 +1498,14 @@ int FileList::ProcessKey(int Key)
 						{
 							SetMessageHelp(L"WarnEditorPluginName");
 
-							if (Message(MSG_WARNING,2,MWarning,
-							            MEditNewPlugin1,
-							            MEditNewPath3,MCancel))
+							if (Message(MSG_WARNING,2,Msg::Warning,
+							            Msg::EditNewPlugin1,
+							            Msg::EditNewPath3,Msg::Cancel))
 								return FALSE;
 						}
 						else
 						{
-							strFileName = MSG(MNewFileName);
+							strFileName = Msg::NewFileName;
 						}
 					}
 					while (strFileName.IsEmpty());
@@ -1812,7 +1812,7 @@ int FileList::ProcessKey(int Key)
 					strDirName=lpwszDirName;
 
 					if (!MakeCode)
-						Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateFolder,strDirName,MOk);
+						Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateFolder,strDirName,Msg::Ok);
 
 					Update(UPDATE_KEEP_SELECTION);
 
@@ -2619,8 +2619,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			if (PanelMode != PLUGIN_PANEL && strSetDir == L".." && !strCurDir.IsEmpty() && strCurDir != L"/")
 			{
 				r = Message(MSG_WARNING | MSG_ERRORTYPE, 3,
-						MError, (dot2Present?L"..":strSetDir),
-							MIgnore, MHRetry, MGetOut);
+						Msg::Error, (dot2Present?L"..":strSetDir),
+							Msg::Ignore, Msg::HRetry, Msg::GetOut);
 				if (r == 2)
 				{
 					strSetDir = strCurDir;
@@ -2635,8 +2635,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			else
 			{
 				r = Message(MSG_WARNING | MSG_ERRORTYPE, 2,
-						MError, (dot2Present?L"..":strSetDir),
-							MIgnore, MHRetry);
+						Msg::Error, (dot2Present?L"..":strSetDir),
+							Msg::Ignore, Msg::HRetry);
 			}
 
 			if (r == 1)
@@ -3345,9 +3345,9 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 		{DI_DOUBLEBOX,3,1,51,5,{},0,L""},
 		{DI_EDIT,5,2,49,2,{(DWORD_PTR)HistoryName},DIF_FOCUS|DIF_HISTORY,L""},
 		{DI_TEXT,0,3,0,3,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,4,0,4,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,MSG(MSelectFilter)},
-		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,MSG(MCancel)}
+		{DI_BUTTON,0,4,0,4,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,Msg::SelectFilter},
+		{DI_BUTTON,0,4,0,4,{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(SelectDlgData,SelectDlg);
 	FileFilter Filter(this,FFT_SELECT);
@@ -3419,9 +3419,9 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 				SelectDlg[1].strData = strPrevMask;
 
 				if (Mode==SELECT_ADD)
-					SelectDlg[0].strData = MSG(MSelectTitle);
+					SelectDlg[0].strData = Msg::SelectTitle;
 				else
-					SelectDlg[0].strData = MSG(MUnselectTitle);
+					SelectDlg[0].strData = Msg::UnselectTitle;
 
 				{
 					Dialog Dlg(SelectDlg,ARRAYSIZE(SelectDlg));
@@ -3602,7 +3602,7 @@ void FileList::CompareDir()
 
 	if (Another->GetType()!=FILE_PANEL || !Another->IsVisible())
 	{
-		Message(MSG_WARNING,1,MCompareTitle,MCompareFilePanelsRequired1,MCompareFilePanelsRequired2,MOk);
+		Message(MSG_WARNING,1,Msg::CompareTitle,Msg::CompareFilePanelsRequired1,Msg::CompareFilePanelsRequired2,Msg::Ok);
 		return;
 	}
 
@@ -3737,7 +3737,7 @@ void FileList::CompareDir()
 	Another->Redraw();
 
 	if (!SelFileCount && !Another->SelFileCount)
-		Message(0,1,MCompareTitle,MCompareSameFolders1,MCompareSameFolders2,MOk);
+		Message(0,1,Msg::CompareTitle,Msg::CompareSameFolders1,Msg::CompareSameFolders2,Msg::Ok);
 }
 
 void FileList::CopyFiles()
@@ -4068,26 +4068,26 @@ void FileList::SelectSortMode()
 {
 	MenuDataEx SortMenu[]=
 	{
-		{MSG(MMenuSortByName),LIF_SELECTED,KEY_CTRLF3},
-		{MSG(MMenuSortByExt),0,KEY_CTRLF4},
-		{MSG(MMenuSortByWrite),0,KEY_CTRLF5},
-		{MSG(MMenuSortBySize),0,KEY_CTRLF6},
-		{MSG(MMenuUnsorted),0,KEY_CTRLF7},
-		{MSG(MMenuSortByCreation),0,KEY_CTRLF8},
-		{MSG(MMenuSortByAccess),0,KEY_CTRLF9},
-		{MSG(MMenuSortByChange),0,0},
-		{MSG(MMenuSortByDiz),0,KEY_CTRLF10},
-		{MSG(MMenuSortByOwner),0,KEY_CTRLF11},
-		{MSG(MMenuSortByPhysicalSize),0,0},
-		{MSG(MMenuSortByNumLinks),0,0},
-		{MSG(MMenuSortByFullName),0,0},
-		{MSG(MMenuSortByCustomData),0,0},
+		{Msg::MenuSortByName,LIF_SELECTED,KEY_CTRLF3},
+		{Msg::MenuSortByExt,0,KEY_CTRLF4},
+		{Msg::MenuSortByWrite,0,KEY_CTRLF5},
+		{Msg::MenuSortBySize,0,KEY_CTRLF6},
+		{Msg::MenuUnsorted,0,KEY_CTRLF7},
+		{Msg::MenuSortByCreation,0,KEY_CTRLF8},
+		{Msg::MenuSortByAccess,0,KEY_CTRLF9},
+		{Msg::MenuSortByChange,0,0},
+		{Msg::MenuSortByDiz,0,KEY_CTRLF10},
+		{Msg::MenuSortByOwner,0,KEY_CTRLF11},
+		{Msg::MenuSortByPhysicalSize,0,0},
+		{Msg::MenuSortByNumLinks,0,0},
+		{Msg::MenuSortByFullName,0,0},
+		{Msg::MenuSortByCustomData,0,0},
 		{L"",LIF_SEPARATOR,0},
-		{MSG(MMenuSortUseNumeric),0,0},
-		{MSG(MMenuSortUseCaseSensitive),0,0},
-		{MSG(MMenuSortUseGroups),0,KEY_SHIFTF11},
-		{MSG(MMenuSortSelectedFirst),0,KEY_SHIFTF12},
-		{MSG(MMenuSortDirectoriesFirst),0,0}
+		{Msg::MenuSortUseNumeric,0,0},
+		{Msg::MenuSortUseCaseSensitive,0,0},
+		{Msg::MenuSortUseGroups,0,KEY_SHIFTF11},
+		{Msg::MenuSortSelectedFirst,0,KEY_SHIFTF12},
+		{Msg::MenuSortDirectoriesFirst,0,0}
 	};
 	static int SortModes[]=
 	{
@@ -4124,7 +4124,7 @@ void FileList::SelectSortMode()
 	bool setSortMode0=false;
 
 	{
-		VMenu SortModeMenu(MSG(MMenuSortTitle),SortMenu,ARRAYSIZE(SortMenu),0);
+		VMenu SortModeMenu(Msg::MenuSortTitle,SortMenu,ARRAYSIZE(SortMenu),0);
 		SortModeMenu.SetHelp(L"PanelCmdSort");
 		SortModeMenu.SetPosition(X1+4,-1,0,0);
 		SortModeMenu.SetFlags(VMENU_WRAPMODE);
@@ -4311,12 +4311,12 @@ void FileList::DescribeFiles()
 		PrevText=Diz.GetDizTextAddr(strSelName,GetLastSelectedSize());
 		strQuotedName = strSelName;
 		QuoteSpaceOnly(strQuotedName);
-		strMsg.Append(MSG(MEnterDescription)).Append(L" ").Append(strQuotedName).Append(L":");
+		strMsg.Append(Msg::EnterDescription).Append(L" ").Append(strQuotedName).Append(L":");
 
 		/* $ 09.08.2000 SVS
 		   Для Ctrl-Z ненужно брать предыдущее значение!
 		*/
-		if (!GetString(MSG(MDescribeFiles),strMsg,L"DizText",
+		if (!GetString(Msg::DescribeFiles,strMsg,L"DizText",
 		               PrevText ? PrevText:L"",strDizText,
 		               L"FileDiz",FIB_ENABLEEMPTY|(!DizCount?FIB_NOUSELASTHISTORY:0)|FIB_BUTTONS))
 			break;
@@ -4368,7 +4368,7 @@ bool FileList::ApplyCommand()
 	FARString strCommand;
 	bool isSilent=false;
 
-	if (!GetString(MSG(MAskApplyCommandTitle),MSG(MAskApplyCommand),L"ApplyCmd",strPrevCommand,strCommand,L"ApplyCmd",FIB_BUTTONS|FIB_EDITPATH) || !SetCurPath())
+	if (!GetString(Msg::AskApplyCommandTitle,Msg::AskApplyCommand,L"ApplyCmd",strPrevCommand,strCommand,L"ApplyCmd",FIB_BUTTONS|FIB_EDITPATH) || !SetCurPath())
 		return false;
 
 	strPrevCommand = strCommand;
@@ -4507,7 +4507,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			        GetPluginDirInfo(hPlugin,ListData[I]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
 			        ||
 			        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-			         GetDirInfo(MSG(MDirInfoViewTitle), ListData[I]->strName, DirCount,DirFileCount,FileSize,
+			         GetDirInfo(Msg::DirInfoViewTitle, ListData[I]->strName, DirCount,DirFileCount,FileSize,
 			                    PhysicalSize,ClusterSize,0,Filter,GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 			{
 				SelFileSize -= ListData[I]->FileSize;
@@ -4528,7 +4528,7 @@ void FileList::CountDirSize(DWORD PluginFlags)
 		        GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
 		        ||
 		        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-		         GetDirInfo(MSG(MDirInfoViewTitle),
+		         GetDirInfo(Msg::DirInfoViewTitle,
 		                    TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
 		                    DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
 							GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
@@ -4730,14 +4730,14 @@ void FileList::ChangeSortOrder(int NewOrder)
 BOOL FileList::UpdateKeyBar()
 {
 	KeyBar *KB=CtrlObject->MainKeyBar;
-	KB->SetAllGroup(KBL_MAIN, MF1, 12);
-	KB->SetAllGroup(KBL_SHIFT, MShiftF1, 12);
-	KB->SetAllGroup(KBL_ALT, MAltF1, 12);
-	KB->SetAllGroup(KBL_CTRL, MCtrlF1, 12);
-	KB->SetAllGroup(KBL_CTRLSHIFT, MCtrlShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALT, MCtrlAltF1, 12);
-	KB->SetAllGroup(KBL_ALTSHIFT, MAltShiftF1, 12);
-	KB->SetAllGroup(KBL_CTRLALTSHIFT, MCtrlAltShiftF1, 12);
+	KB->SetAllGroup(KBL_MAIN, Msg::F1, 12);
+	KB->SetAllGroup(KBL_SHIFT, Msg::ShiftF1, 12);
+	KB->SetAllGroup(KBL_ALT, Msg::AltF1, 12);
+	KB->SetAllGroup(KBL_CTRL, Msg::CtrlF1, 12);
+	KB->SetAllGroup(KBL_CTRLSHIFT, Msg::CtrlShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALT, Msg::CtrlAltF1, 12);
+	KB->SetAllGroup(KBL_ALTSHIFT, Msg::AltShiftF1, 12);
+	KB->SetAllGroup(KBL_CTRLALTSHIFT, Msg::CtrlAltShiftF1, 12);
 	KB->ReadRegGroup(L"Shell",Opt.strLanguage);
 	KB->SetAllRegGroup();
 

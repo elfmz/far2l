@@ -748,7 +748,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 
 		if (TextMonth)
 		{
-			const wchar_t *Month=MSG(MMonthJan+st.wMonth-1);
+			const wchar_t *Month=(Msg::MonthJan+st.wMonth-1);
 
 			switch (CurDateFormat)
 			{

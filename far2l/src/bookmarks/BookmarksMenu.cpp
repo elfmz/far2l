@@ -63,11 +63,11 @@ static int ShowBookmarksMenuIteration(int Pos)
 	{
 		int I;
 		MenuItemEx ListItem;
-		VMenu FolderList(MSG(MBookmarksTitle),nullptr,0,ScrY-4);
+		VMenu FolderList(Msg::BookmarksTitle,nullptr,0,ScrY-4);
 		FolderList.SetFlags(VMENU_WRAPMODE); // VMENU_SHOWAMPERSAND|
 		FolderList.SetHelp(HelpBookmarks);
 		FolderList.SetPosition(-1,-1,0,0);
-		FolderList.SetBottomTitle(MSG(MBookmarkBottom));
+		FolderList.SetBottomTitle(Msg::BookmarkBottom);
 
 		for (I=0; ; I++)
 		{
@@ -80,14 +80,14 @@ static int ShowBookmarksMenuIteration(int Pos)
 			if (strFolderName.IsEmpty())
 			{
 				strFolderName = strPlugin.IsEmpty()
-					? MSG(MShortcutNone) : MSG(MShortcutPlugin);
+					? Msg::ShortcutNone : Msg::ShortcutPlugin;
 			}
 
 //wxWidgets doesn't distinguish right/left modifiers
-//			ListItem.strName.Format(L"%ls+&%d   %ls", MSG(MRightCtrl),I,strFolderName.CPtr());
+//			ListItem.strName.Format(L"%ls+&%d   %ls", Msg::RightCtrl.CPtr(), I ,strFolderName.CPtr());
 			if (I < 10)
 			{
-				ListItem.strName.Format(L"[%ls | Ctrl+Alt] + &%d   %ls", MSG(MRightCtrl), I,strFolderName.CPtr());
+				ListItem.strName.Format(L"[%ls | Ctrl+Alt] + &%d   %ls", Msg::RightCtrl.CPtr(), I, strFolderName.CPtr());
 			}
 			else
 			{
@@ -96,7 +96,7 @@ static int ShowBookmarksMenuIteration(int Pos)
 			ListItem.SetSelect(I == Pos);
 			FolderList.AddItem(&ListItem);
 
-			if (I >= 10 && strFolderName == MSG(MShortcutNone))
+			if (I >= 10 && strFolderName == Msg::ShortcutNone)
 			{
 				break;
 			}
@@ -162,8 +162,8 @@ static int ShowBookmarksMenuIteration(int Pos)
 					b.Get(SelPos, &strNewDir);
 					FARString strTemp = strNewDir;
 
-					DialogBuilder Builder(MBookmarksTitle, HelpBookmarks);
-					Builder.AddText(MFSShortcut);
+					DialogBuilder Builder(Msg::BookmarksTitle, HelpBookmarks);
+					Builder.AddText(Msg::FSShortcut);
 					Builder.AddEditField(&strNewDir, 50, L"FS_Path", DIF_EDITPATH);
 					//...
 					Builder.AddOKCancel();
@@ -181,7 +181,7 @@ static int ShowBookmarksMenuIteration(int Pos)
 						if (apiGetFileAttributes(strTemp) == INVALID_FILE_ATTRIBUTES)
 						{
 							WINPORT(SetLastError)(ERROR_PATH_NOT_FOUND);
-							Saved=!Message(MSG_WARNING | MSG_ERRORTYPE, 2, MError, strNewDir, MSaveThisShortcut, MYes, MNo);
+							Saved=!Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, strNewDir, Msg::SaveThisShortcut, Msg::Yes, Msg::No);
 						}
 
 						if (Saved)

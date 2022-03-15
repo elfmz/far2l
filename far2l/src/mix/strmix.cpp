@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "strmix.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "RegExp.hpp"
@@ -676,7 +675,7 @@ void PrepareUnitStr()
 {
 	for (int i=0; i<UNIT_COUNT; i++)
 	{
-		far_wcsncpy(UnitStr[i][0],MSG(MListBytes+i),MAX_UNITSTR_SIZE);
+		far_wcsncpy(UnitStr[i][0], (Msg::ListBytes+i), MAX_UNITSTR_SIZE);
 		wcscpy(UnitStr[i][1],UnitStr[i][0]);
 		WINPORT(CharLower)(UnitStr[i][0]);
 		WINPORT(CharUpper)(UnitStr[i][1]);

@@ -761,7 +761,7 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 				}
 				else
 				{
-					Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateListFile,MCannotCreateListWrite,MOk);
+					Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateListFile,Msg::CannotCreateListWrite,Msg::Ok);
 					apiDeleteFile(strListFileName);
 					break;
 				}
@@ -771,12 +771,12 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 		}
 		else
 		{
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateListFile,MCannotCreateListTemp,MOk);
+			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateListFile,Msg::CannotCreateListTemp,Msg::Ok);
 		}
 	}
 	else
 	{
-		Message(MSG_WARNING|MSG_ERRORTYPE,1,MError,MCannotCreateListFile,MCannotCreateListTemp,MOk);
+		Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateListFile,Msg::CannotCreateListTemp,Msg::Ok);
 	}
 
 	return Ret;

@@ -254,7 +254,9 @@ void CopyProgress::Flush()
 
 		if (Total || (TotalFilesToProcess==1))
 		{
-			CopyTitle.Set(L"{%d%%} %ls",Total?ToPercent64(TotalCopiedSize>>8,TotalCopySize>>8):Percents,Move?MSG(MCopyMovingTitle):MSG(MCopyCopyingTitle));
+			CopyTitle.Set(L"{%d%%} %ls",
+				Total ? ToPercent64(TotalCopiedSize>>8,TotalCopySize>>8) : Percents,
+				(Move ? Msg::CopyMovingTitle : Msg::CopyCopyingTitle).CPtr());
 		}
 	}
 }
@@ -293,7 +295,7 @@ void CopyProgress::CreateScanBackground()
 	}
 
 	Bar[BarSize]=0;
-	Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),MCopyScanning,Bar);
+	Message(MSG_LEFTALIGN,0,(Move?Msg::MoveDlgTitle:Msg::CopyDlgTitle),Msg::CopyScanning,Bar);
 	int MX1,MY1,MX2,MY2;
 	GetMessagePosition(MX1,MY1,MX2,MY2);
 	Rect.Left=MX1;
@@ -316,28 +318,28 @@ void CopyProgress::CreateBackground()
 	{
 		if (!Time)
 		{
-			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?Msg::MoveDlgTitle:Msg::CopyDlgTitle),(Move?Msg::CopyMoving:Msg::CopyCopying),L"",Msg::CopyTo,L"",Bar,L"\x1",L"");
 		}
 		else
 		{
-			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,L"\x1",L"",L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?Msg::MoveDlgTitle:Msg::CopyDlgTitle),(Move?Msg::CopyMoving:Msg::CopyCopying),L"",Msg::CopyTo,L"",Bar,L"\x1",L"",L"\x1",L"");
 		}
 	}
 	else
 	{
 		FARString strTotalSeparator(L"\x1 ");
-		strTotalSeparator+=MSG(MCopyDlgTotal);
+		strTotalSeparator+=Msg::CopyDlgTotal;
 		strTotalSeparator+=L": ";
 		strTotalSeparator+=strTotalCopySizeText;
 		strTotalSeparator+=L" ";
 
 		if (!Time)
 		{
-			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?Msg::MoveDlgTitle:Msg::CopyDlgTitle),(Move?Msg::CopyMoving:Msg::CopyCopying),L"",Msg::CopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"");
 		}
 		else
 		{
-			Message(MSG_LEFTALIGN,0,(Move?MMoveDlgTitle:MCopyDlgTitle),(Move?MCopyMoving:MCopyCopying),L"",MCopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"",L"\x1",L"");
+			Message(MSG_LEFTALIGN,0,(Move?Msg::MoveDlgTitle:Msg::CopyDlgTitle),(Move?Msg::CopyMoving:Msg::CopyCopying),L"",Msg::CopyTo,L"",Bar,strTotalSeparator,Bar,L"\x1",L"",L"\x1",L"");
 		}
 	}
 
@@ -374,11 +376,11 @@ void CopyProgress::SetNames(const wchar_t *Src,const wchar_t *Dst)
 
 	if (Total)
 	{
-		strFiles.Format(MSG(MCopyProcessedTotal),TotalFiles,TotalFilesToProcess);
+		strFiles.Format(Msg::CopyProcessedTotal,TotalFiles,TotalFilesToProcess);
 	}
 	else
 	{
-		strFiles.Format(MSG(MCopyProcessed),TotalFiles);
+		strFiles.Format(Msg::CopyProcessed,TotalFiles);
 	}
 
 	DrawNames();
@@ -441,7 +443,7 @@ void CopyProgress::SetProgress(bool TotalProgress,UINT64 CompletedSize,UINT64 To
 
 		if (!WorkTime)
 		{
-			strTime.Format(MSG(MCopyTimeInfo),L" ",L" ",L" ");
+			strTime.Format(Msg::CopyTimeInfo,L" ",L" ",L" ");
 		}
 		else
 		{
@@ -462,7 +464,7 @@ void CopyProgress::SetProgress(bool TotalProgress,UINT64 CompletedSize,UINT64 To
 				strSpeed.LShift(1);
 				strSpeed+=L" ";
 			}
-			strTime.Format(MSG(MCopyTimeInfo),strWorkTimeStr.CPtr(),strTimeLeftStr.CPtr(),strSpeed.CPtr());
+			strTime.Format(Msg::CopyTimeInfo,strWorkTimeStr.CPtr(),strTimeLeftStr.CPtr(),strSpeed.CPtr());
 		}
 
 		Text(Rect.Left+5,Rect.Top+(Total?12:10),Color,strTime);
@@ -677,27 +679,27 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 	DialogDataEx CopyDlgData[]=
 	{
-		{DI_DOUBLEBOX,   3, 1,(SHORT)(DLG_WIDTH-4),(SHORT)(DLG_HEIGHT-2),{},0,MSG(MCopyDlgTitle)},
-		{DI_TEXT,        5, 2, 0, 2,{},0,MSG(Link?MCMLTargetIN:MCMLTargetTO)},
+		{DI_DOUBLEBOX,   3, 1,(SHORT)(DLG_WIDTH-4),(SHORT)(DLG_HEIGHT-2),{},0,Msg::CopyDlgTitle},
+		{DI_TEXT,        5, 2, 0, 2,{},0,(Link?Msg::CMLTargetIN:Msg::CMLTargetTO)},
 		{DI_EDIT,        5, 3,70, 3,{reinterpret_cast<DWORD_PTR>(L"Copy")},DIF_FOCUS|DIF_HISTORY|DIF_EDITEXPAND|DIF_USELASTHISTORY|DIF_EDITPATH,L""},
 		{DI_TEXT,        3, 4, 0, 4,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,        5, 5, 0, 5,{},0,MSG(MCopyIfFileExist)},
+		{DI_TEXT,        5, 5, 0, 5,{},0,Msg::CopyIfFileExist},
 		{DI_COMBOBOX,   29, 5,70, 5,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
-		{DI_CHECKBOX,    5, 6, 0, 6,{},0,MSG(MCopyMultiActions)},
-		{DI_CHECKBOX,    5, 7, 0, 7,{},0,MSG(MCopyAccessMode)},
-		{DI_CHECKBOX,    5, 8, 0, 8,{},0,MSG(MCopyXAttr)},
-		{DI_CHECKBOX,    5, 9, 0, 9,{},0,MSG(MCopyWriteThrough)},
-		{DI_CHECKBOX,    5, 10, 0, 10,{},0,MSG(MCopySparseFiles)},
-		{DI_CHECKBOX,    5, 11, 0, 11,{},0,MSG(MCopyUseCOW)},
-		{DI_TEXT,        5, 12, 0, 12,{},0,MSG(MCopySymLinkText)},
+		{DI_CHECKBOX,    5, 6, 0, 6,{},0,Msg::CopyMultiActions},
+		{DI_CHECKBOX,    5, 7, 0, 7,{},0,Msg::CopyAccessMode},
+		{DI_CHECKBOX,    5, 8, 0, 8,{},0,Msg::CopyXAttr},
+		{DI_CHECKBOX,    5, 9, 0, 9,{},0,Msg::CopyWriteThrough},
+		{DI_CHECKBOX,    5, 10, 0, 10,{},0,Msg::CopySparseFiles},
+		{DI_CHECKBOX,    5, 11, 0, 11,{},0,Msg::CopyUseCOW},
+		{DI_TEXT,        5, 12, 0, 12,{},0,Msg::CopySymLinkText},
 		{DI_COMBOBOX,   29, 12,70, 12,{},DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 		{DI_TEXT,        3,13, 0,13,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,    5,14, 0,14,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,(wchar_t *)MCopyUseFilter},
+		{DI_CHECKBOX,    5,14, 0,14,{UseFilter?BSTATE_CHECKED:BSTATE_UNCHECKED},DIF_AUTOMATION,Msg::CopyUseFilter},
 		{DI_TEXT,        3,15, 0,15,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyDlgCopy)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,MSG(MCopyDlgTree)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),MSG(MCopySetFilter)},
-		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP,MSG(MCopyDlgCancel)},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::CopyDlgCopy},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::CopyDlgTree},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_AUTOMATION|(UseFilter?0:DIF_DISABLE),Msg::CopySetFilter},
+		{DI_BUTTON,      0,16, 0,16,{},DIF_CENTERGROUP,Msg::CopyDlgCancel},
 		{DI_TEXT,        5, 2, 0, 2,{},DIF_SHOWAMPERSAND,L""}
 	};
 	MakeDialogItemsEx(CopyDlgData,CopyDlg);
@@ -717,7 +719,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 	if (Link)
 	{
-		CopyDlg[ID_SC_COMBOTEXT].strData = MSG(MLinkType);
+		CopyDlg[ID_SC_COMBOTEXT].strData = Msg::LinkType;
 //		CopyDlg[ID_SC_SEPARATOR2].Flags|= DIF_DISABLE|DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_TEXT].Flags|= DIF_DISABLE|DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_COMBO].Flags|= DIF_DISABLE|DIF_HIDDEN;
@@ -727,9 +729,9 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	}
 	else
 	{
-		SymLinkHowTypeItems[0].Text = MSG(MLinkCopyAsIs);
-		SymLinkHowTypeItems[1].Text = MSG(MLinkCopySmart);
-		SymLinkHowTypeItems[2].Text = MSG(MLinkCopyContent);
+		SymLinkHowTypeItems[0].Text = Msg::LinkCopyAsIs;
+		SymLinkHowTypeItems[1].Text = Msg::LinkCopySmart;
+		SymLinkHowTypeItems[2].Text = Msg::LinkCopyContent;
 		SymLinkHowComboList.ItemsNumber = ARRAYSIZE(SymLinkHowTypeItems);
 		SymLinkHowComboList.Items = SymLinkHowTypeItems;
 		SymLinkHowTypeItems[std::min(Opt.CMOpt.HowCopySymlink, (int)ARRAYSIZE(SymLinkHowTypeItems) - 1)].Flags|= LIF_SELECTED;
@@ -768,7 +770,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		}
 
 		FARString strSelNameShort = strSelName;
-		strCopyStr=MSG(Move?MMoveFile:(Link?MLinkFile:MCopyFile));
+		strCopyStr=(Move?Msg::MoveFile:(Link?Msg::LinkFile:Msg::CopyFile));
 		TruncPathStr(strSelNameShort,static_cast<int>(CopyDlg[ID_SC_TITLE].X2-CopyDlg[ID_SC_TITLE].X1-strCopyStr.GetLength()-7));
 		strCopyStr+=L" "+strSelNameShort;
 
@@ -781,33 +783,33 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	}
 	else // Объектов несколько!
 	{
-		int NOper=MCopyFiles;
+		auto NOper=Msg::CopyFiles;
 
-		if (Move) NOper=MMoveFiles;
-		else if (Link) NOper=MLinkFiles;
+		if (Move) NOper=Msg::MoveFiles;
+		else if (Link) NOper=Msg::LinkFiles;
 
 		// коррекция языка - про окончания
 		FormatString StrItems;
 		StrItems<<CDP.SelCount;
 		size_t LenItems=StrItems.strValue().GetLength();
-		int NItems=MCMLItemsA;
+		auto NItems=Msg::CMLItemsA;
 
 		if (LenItems > 0)
 		{
 			if ((LenItems >= 2 && StrItems[LenItems-2] == '1') ||
 			        StrItems[LenItems-1] >= '5' ||
 			        StrItems[LenItems-1] == '0')
-				NItems=MCMLItemsS;
+				NItems=Msg::CMLItemsS;
 			else if (StrItems[LenItems-1] == '1')
-				NItems=MCMLItems0;
+				NItems=Msg::CMLItems0;
 		}
 
-		strCopyStr.Format(MSG(NOper),CDP.SelCount,MSG(NItems));
+		strCopyStr.Format(NOper, CDP.SelCount, NItems.CPtr());
 	}
 
 	CopyDlg[ID_SC_SOURCEFILENAME].strData=strCopyStr;
-	CopyDlg[ID_SC_TITLE].strData = MSG(Move?MMoveDlgTitle :(Link?MLinkDlgTitle:MCopyDlgTitle));
-	CopyDlg[ID_SC_BTNCOPY].strData = MSG(Move?MCopyDlgRename:(Link?MCopyDlgLink:MCopyDlgCopy));
+	CopyDlg[ID_SC_TITLE].strData = (Move?Msg::MoveDlgTitle :(Link?Msg::LinkDlgTitle:Msg::CopyDlgTitle));
+	CopyDlg[ID_SC_BTNCOPY].strData = (Move?Msg::CopyDlgRename:(Link?Msg::CopyDlgLink:Msg::CopyDlgCopy));
 
 	if (DestPanelMode == PLUGIN_PANEL)
 	{
@@ -960,8 +962,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{
 			ComboList.ItemsNumber=ARRAYSIZE(LinkTypeItems);
 			ComboList.Items=LinkTypeItems;
-			ComboList.Items[0].Text=MSG(MLinkTypeHardlink);
-			ComboList.Items[1].Text=MSG(MLinkTypeSymlink);
+			ComboList.Items[0].Text=Msg::LinkTypeHardlink;
+			ComboList.Items[1].Text=Msg::LinkTypeSymlink;
 
 			ComboList.Items[CDP.FilesPresent ? 0 : 1].Flags|=LIF_SELECTED;
 		}
@@ -969,13 +971,13 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 		{
 			ComboList.ItemsNumber=ARRAYSIZE(CopyModeItems);
 			ComboList.Items=CopyModeItems;
-			ComboList.Items[CM_ASK].Text=MSG(MCopyAsk);
-			ComboList.Items[CM_OVERWRITE].Text=MSG(MCopyOverwrite);
-			ComboList.Items[CM_SKIP].Text=MSG(MCopySkipOvr);
-			ComboList.Items[CM_RENAME].Text=MSG(MCopyRename);
-			ComboList.Items[CM_APPEND].Text=MSG(MCopyAppend);
-			ComboList.Items[CM_ONLYNEWER].Text=MSG(MCopyOnlyNewerFiles);
-			ComboList.Items[CM_ASKRO].Text=MSG(MCopyAskRO);
+			ComboList.Items[CM_ASK].Text=Msg::CopyAsk;
+			ComboList.Items[CM_OVERWRITE].Text=Msg::CopyOverwrite;
+			ComboList.Items[CM_SKIP].Text=Msg::CopySkipOvr;
+			ComboList.Items[CM_RENAME].Text=Msg::CopyRename;
+			ComboList.Items[CM_APPEND].Text=Msg::CopyAppend;
+			ComboList.Items[CM_ONLYNEWER].Text=Msg::CopyOnlyNewerFiles;
+			ComboList.Items[CM_ASKRO].Text=Msg::CopyAskRO;
 			ComboList.Items[CM_ASK].Flags=LIF_SELECTED;
 			ComboList.Items[CM_SEPARATOR].Flags=LIF_SEPARATOR;
 
@@ -1038,7 +1040,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				}
 				else
 				{
-					Message(MSG_WARNING,1,MWarning,MCopyIncorrectTargetList, MOk);
+					Message(MSG_WARNING,1,Msg::Warning,Msg::CopyIncorrectTargetList, Msg::Ok);
 				}
 			}
 			else
@@ -1202,7 +1204,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 
 				if (!StrCmp(strNameTmp,L"..") && IsLocalRootPath(strSrcDir))
 				{
-					if (!Message(MSG_WARNING,2,MError,((!Move?MCannotCopyToTwoDot:MCannotMoveToTwoDot)),MCannotCopyMoveToTwoDot,MCopySkip,MCopyCancel))
+					if (!Message(MSG_WARNING,2,Msg::Error,((!Move?Msg::CannotCopyToTwoDot:Msg::CannotMoveToTwoDot)),Msg::CannotCopyMoveToTwoDot,Msg::CopySkip,Msg::CopyCancel))
 						continue;
 
 					break;
@@ -1330,7 +1332,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 	CtrlObject->Cp()->Redraw();
 
 	if (Opt.NotifOpt.OnFileOperation) {
-		DisplayNotification(MSG(MFileOperationComplete), strSelName); // looks like strSelName is best choice
+		DisplayNotification(Msg::FileOperationComplete, strSelName); // looks like strSelName is best choice
 	}
 
 }
@@ -1605,7 +1607,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 	        !strNewPath.ContainsAnyOf("*?") &&
 	        apiGetFileAttributes(strNewPath)==INVALID_FILE_ATTRIBUTES)
 	{
-		switch (Message(FMSG_WARNING,3,MWarning,strNewPath,MCopyDirectoryOrFile,MCopyDirectoryOrFileDirectory,MCopyDirectoryOrFileFile,MCancel))
+		switch (Message(FMSG_WARNING,3,Msg::Warning,strNewPath,Msg::CopyDirectoryOrFile,Msg::CopyDirectoryOrFileDirectory,Msg::CopyDirectoryOrFileFile,Msg::Cancel))
 		{
 			case 0:
 				AddEndSlash(strNewPath);
@@ -1634,7 +1636,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 		}
 		else if (!(Attr & FILE_ATTRIBUTE_DIRECTORY))
 		{
-			Message(MSG_WARNING,1,MError,MCopyCannotCreateFolder,strNewPath,MOk);
+			Message(MSG_WARNING,1,Msg::Error,Msg::CopyCannotCreateFolder,strNewPath,Msg::Ok);
 			return COPY_FAILURE;
 		}
 	}
@@ -1709,7 +1711,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 					strDestPath = strSelName;
 					CP->SetNames(strSelName,strDestPath);
 
-					if (Message(MSG_WARNING,2,MError,MCopyCannotFind,strSelName,MSkip,MCancel)==1)
+					if (Message(MSG_WARNING,2,Msg::Error,Msg::CopyCannotFind,strSelName,Msg::Skip,Msg::Cancel)==1)
 					{
 						return COPY_FAILURE;
 					}
@@ -2039,9 +2041,9 @@ COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, 
 	} 
 	
 	
-	switch (Message(MSG_WARNING, 3 ,MError,
-			MCopyCannotCreateSymlinkAskCopyContents,
-			NewName, MYes, MSkip, MCancel   ))
+	switch (Message(MSG_WARNING, 3 ,Msg::Error,
+			Msg::CopyCannotCreateSymlinkAskCopyContents,
+			NewName, Msg::Yes, Msg::Skip, Msg::Cancel   ))
 	{
 		case 0: 
 			Flags.SYMLINK = COPY_SYMLINK_ASFILE;
@@ -2190,7 +2192,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			if (CmpCode==1)
 			{
 				SetMessageHelp(L"ErrCopyItSelf");
-				Message(MSG_WARNING,1,MError,MCannotCopyFolderToItself1,Src,MCannotCopyFolderToItself2,MOk);
+				Message(MSG_WARNING,1,Msg::Error,Msg::CannotCopyFolderToItself1,Src,Msg::CannotCopyFolderToItself2,Msg::Ok);
 				return(COPY_CANCEL);
 			}
 		}
@@ -2274,9 +2276,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 				}
 				else
 				{
-					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,
-					                      MCopyCannotRenameFolder,Src,MCopyRetry,
-					                      MCopyIgnore,MCopyCancel);
+					int MsgCode = Message(MSG_WARNING|MSG_ERRORTYPE,3,Msg::Error,
+					                      Msg::CopyCannotRenameFolder,Src,Msg::CopyRetry,
+					                      Msg::CopyIgnore,Msg::CopyCancel);
 
 					switch (MsgCode)
 					{
@@ -2306,9 +2308,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 		{
 			while (!apiCreateDirectory(strDestPath, nullptr))
 			{
-				int MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,3,MError,
-				                MCopyCannotCreateFolder,strDestPath,MCopyRetry,
-				                MCopySkip,MCopyCancel);
+				int MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,3,Msg::Error,
+				                Msg::CopyCannotCreateFolder,strDestPath,Msg::CopyRetry,
+				                Msg::CopySkip,Msg::CopyCancel);
 
 				if (MsgCode)
 					return((MsgCode==-2 || MsgCode==2) ? COPY_CANCEL:COPY_NEXT);
@@ -2347,7 +2349,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 
 				if (CmpCode==1 && !Rename)
 				{
-					Message(MSG_WARNING,1,MError,MCannotCopyFileToItself1,Src,MCannotCopyFileToItself2,MOk);
+					Message(MSG_WARNING,1,Msg::Error,Msg::CannotCopyFileToItself1,Src,Msg::CannotCopyFileToItself2,Msg::Ok);
 					return(COPY_CANCEL);
 				}
 			}
@@ -2478,7 +2480,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 
 		//????
 		FARString strMsg1, strMsg2;
-		LangMsg MsgMCannot=Flags.LINK ? MCannotLink: Flags.MOVE ? MCannotMove: MCannotCopy;
+		FarLangMsg MsgMCannot=Flags.LINK ? Msg::CannotLink: Flags.MOVE ? Msg::CannotMove: Msg::CannotCopy;
 		strMsg1 = Src;
 		strMsg2 = strDestPath;
 		InsertQuote(strMsg1);
@@ -2490,13 +2492,13 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			MsgCode=SkipMode;
 		else
 		{
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
 					        MsgMCannot,
 					        strMsg1,
-					        MCannotCopyTo,
+					        Msg::CannotCopyTo,
 					        strMsg2,
-					        MCopyRetry,MCopySkip,
-					        MCopySkipAll,MCopyCancel);
+					        Msg::CopyRetry,Msg::CopySkip,
+					        Msg::CopySkipAll,Msg::CopyCancel);
 		}
 
 		switch (MsgCode)
@@ -2545,10 +2547,10 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 		if (ReadOnlyDelMode!=-1)
 			MsgCode=ReadOnlyDelMode;
 		else
-			MsgCode=Message(MSG_WARNING,5,MWarning,
-			                MCopyFileRO,Name,MCopyAskDelete,
-			                MCopyDeleteRO,MCopyDeleteAllRO,
-			                MCopySkipRO,MCopySkipAllRO,MCopyCancelRO);
+			MsgCode=Message(MSG_WARNING,5,Msg::Warning,
+			                Msg::CopyFileRO,Name,Msg::CopyAskDelete,
+			                Msg::CopyDeleteRO,Msg::CopyDeleteAllRO,
+			                Msg::CopySkipRO,Msg::CopySkipAllRO,Msg::CopyCancelRO);
 
 		switch (MsgCode)
 		{
@@ -2576,8 +2578,8 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name,DWORD Attr)
 		if (SkipDeleteMode!=-1)
 			MsgCode=SkipDeleteMode;
 		else
-			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MCannotDeleteFile,Name,
-			                MDeleteRetry,MDeleteSkip,MDeleteSkipAll,MDeleteCancel);
+			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,Msg::CannotDeleteFile,Name,
+			                Msg::DeleteRetry,Msg::DeleteSkip,Msg::DeleteSkipAll,Msg::DeleteCancel);
 
 		switch (MsgCode)
 		{
@@ -2793,7 +2795,7 @@ void ShellFileTransfer::Do()
 		{
 			while (!_DestFile.SetEnd())
 			{
-				RetryCancel(MSG(MCopyWriteError), _strDestName);
+				RetryCancel(Msg::CopyWriteError, _strDestName);
 			}
 		}
 
@@ -2818,7 +2820,7 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	ErrnoSaver ErSr;
 	_Stopwatch = 0; // UI messes timings
 	const int MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 2,
-		MError, Text, Object, MRetry, MCancel);
+		Msg::Error, Text, Object, Msg::Retry, Msg::Cancel);
 
 	PR_ShellCopyMsg();
 
@@ -2870,7 +2872,7 @@ DWORD ShellFileTransfer::PieceCopy()
 			break;
 		}
 
-		RetryCancel(MSG(MCopyWriteError), _strDestName);
+		RetryCancel(Msg::CopyWriteError, _strDestName);
 	}
 #endif
 
@@ -2878,7 +2880,7 @@ DWORD ShellFileTransfer::PieceCopy()
 
 	while (!_SrcFile.Read(_CopyBuffer.Ptr, _CopyBuffer.Size, &BytesRead))
 	{
-		RetryCancel(MSG(MCopyReadError), _SrcName);
+		RetryCancel(Msg::CopyReadError, _SrcName);
 	}
 
 	if (BytesRead == 0)
@@ -2928,7 +2930,7 @@ DWORD ShellFileTransfer::PieceWriteHole(DWORD Size)
 {
 	while (!_DestFile.SetPointer(Size, nullptr, FILE_CURRENT))
 	{
-		RetryCancel(MSG(MCopyWriteError), _strDestName);
+		RetryCancel(Msg::CopyWriteError, _strDestName);
 	}
 	_LastWriteWasHole = true;
 	return Size;
@@ -2939,7 +2941,7 @@ DWORD ShellFileTransfer::PieceWrite(const void *Data, DWORD Size)
 	DWORD BytesWritten = 0;
 	while (!_DestFile.Write(Data, Size, &BytesWritten))
 	{
-		RetryCancel(MSG(MCopyWriteError), _strDestName);
+		RetryCancel(Msg::CopyWriteError, _strDestName);
 	}
 	_LastWriteWasHole = false;
 	return BytesWritten;
@@ -3105,7 +3107,7 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					{
 						int All=BSTATE_UNCHECKED;
 
-						if (GetString(MSG(MCopyRenameTitle),MSG(MCopyRenameText),nullptr,strDestName,*WFN[1],L"CopyAskOverwrite",FIB_BUTTONS|FIB_NOAMPERSAND|FIB_EXPANDENV|FIB_CHECKBOX,&All,MSG(MCopyRememberChoice)))
+						if (GetString(Msg::CopyRenameTitle,Msg::CopyRenameText,nullptr,strDestName,*WFN[1],L"CopyAskOverwrite",FIB_BUTTONS|FIB_NOAMPERSAND|FIB_EXPANDENV|FIB_CHECKBOX,&All,Msg::CopyRememberChoice))
 						{
 							if (All!=BSTATE_UNCHECKED)
 							{
@@ -3155,21 +3157,21 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 	};
 	DialogDataEx WarnCopyDlgData[]=
 	{
-		{DI_DOUBLEBOX,3,1,WARN_DLG_WIDTH-4,WARN_DLG_HEIGHT-2,{},0,MSG(MWarning)},
-		{DI_TEXT,5,2,WARN_DLG_WIDTH-6,2,{},DIF_CENTERTEXT,MSG(MCopyFileExist)},
+		{DI_DOUBLEBOX,3,1,WARN_DLG_WIDTH-4,WARN_DLG_HEIGHT-2,{},0,Msg::Warning},
+		{DI_TEXT,5,2,WARN_DLG_WIDTH-6,2,{},DIF_CENTERTEXT,Msg::CopyFileExist},
 		{DI_EDIT,5,3,WARN_DLG_WIDTH-6,3,{},DIF_READONLY,(wchar_t*)DestName},
 		{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
 		{DI_BUTTON,5,5,WARN_DLG_WIDTH-6,5,{},DIF_BTNNOCLOSE|DIF_NOBRACKETS,L""},
 		{DI_BUTTON,5,6,WARN_DLG_WIDTH-6,6,{},DIF_BTNNOCLOSE|DIF_NOBRACKETS,L""},
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS,MSG(MCopyRememberChoice)},
+		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS,Msg::CopyRememberChoice},
 		{DI_TEXT,3,9,0,9,{},DIF_SEPARATOR,L""},
 
-		{DI_BUTTON,0,10,0,10,{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MCopyOverwrite)},
-		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,MSG(MCopySkipOvr)},
-		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,MSG(MCopyRename)},
-		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP|(AskAppend?0:(DIF_DISABLE|DIF_HIDDEN)),MSG(MCopyAppend)},
-		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,MSG(MCopyCancelOvr)}
+		{DI_BUTTON,0,10,0,10,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::CopyOverwrite},
+		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,Msg::CopySkipOvr},
+		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,Msg::CopyRename},
+		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP|(AskAppend?0:(DIF_DISABLE|DIF_HIDDEN)),Msg::CopyAppend},
+		{DI_BUTTON,0,10,0,10,{},DIF_CENTERGROUP,Msg::CopyCancelOvr}
 	};
 	FAR_FIND_DATA_EX DestData;
 	DestData.Clear();
@@ -3230,9 +3232,9 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				strDestSizeText<<DestSize;
 				FARString strDateText, strTimeText;
 				ConvertDate(SrcLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-				strSrcFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<MSG(MCopySource)<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+				strSrcFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<Msg::CopySource<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
 				ConvertDate(DestData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-				strDestFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<MSG(MCopyDest)<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+				strDestFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<Msg::CopyDest<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
 
 				WarnCopyDlgData[WDLG_SRCFILEBTN].Data=strSrcFileStr;
 				WarnCopyDlgData[WDLG_DSTFILEBTN].Data=strDestFileStr;
@@ -3330,13 +3332,13 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 					FormatString strDestSizeText;
 					strDestSizeText<<DestSize;
 					ConvertDate(SrcData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-					strSrcFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<MSG(MCopySource)<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+					strSrcFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<Msg::CopySource<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
 					ConvertDate(DestData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-					strDestFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<MSG(MCopyDest)<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+					strDestFileStr<<fmt::LeftAlign()<<fmt::Width(17)<<Msg::CopyDest<<L" "<<fmt::Width(25)<<fmt::Precision(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
 					WarnCopyDlgData[WDLG_SRCFILEBTN].Data=strSrcFileStr;
 					WarnCopyDlgData[WDLG_DSTFILEBTN].Data=strDestFileStr;
-					WarnCopyDlgData[WDLG_TEXT].Data=MSG(MCopyFileRO);
-					WarnCopyDlgData[WDLG_OVERWRITE].Data=MSG(Append?MCopyAppend:MCopyOverwrite);
+					WarnCopyDlgData[WDLG_TEXT].Data=Msg::CopyFileRO;
+					WarnCopyDlgData[WDLG_OVERWRITE].Data=(Append?Msg::CopyAppend:Msg::CopyOverwrite);
 					WarnCopyDlgData[WDLG_RENAME].Type=DI_TEXT;
 					WarnCopyDlgData[WDLG_RENAME].Data=L"";
 					WarnCopyDlgData[WDLG_APPEND].Type=DI_TEXT;
@@ -3421,7 +3423,7 @@ BOOL ShellCopySecuryMsg(const wchar_t *Name)
 		FARString strOutFileName = Name; //??? nullptr ???
 		TruncPathStr(strOutFileName,Width);
 		CenterStr(strOutFileName, strOutFileName,Width+4);
-		Message(0,0,MMoveDlgTitle,MCopyPrepareSecury,strOutFileName);
+		Message(0,0,Msg::MoveDlgTitle,Msg::CopyPrepareSecury,strOutFileName);
 
 		if (CP->Cancelled())
 		{

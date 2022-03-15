@@ -15,7 +15,7 @@ public:
 
 	void SelectSection(const std::string &section);
 	void SelectSection(const wchar_t *section);
-	void SelectSectionFmt(const char *format, ...);
+	void FN_PRINTF_ARGS(2) SelectSectionFmt(const char *format, ...);
 };
 
 class ConfigReader : public ConfigSection

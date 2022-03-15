@@ -36,9 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <string.h>
 #include <string>
-#include <luck.h>
+#include <cctweaks.h>
 #include <WinCompat.h>
 #include "locale.hpp"
+#include "lang.hpp"
 
 #define NullToEmpty(s) (s?s:L"")
 
@@ -148,8 +149,8 @@ public:
 	std::string GetMB() const;
 	inline std::wstring GetWide() const { return std::wstring(CPtr(), GetLength()); }
 
-	FARString& Format(const wchar_t * format, ...);
-	FARString& AppendFormat(const wchar_t * format, ...);
+	FARString& Format(const wchar_t *format, ...);
+	FARString& AppendFormat(const wchar_t *format, ...);
 
 	FARString& Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen);
 	FARString& Replace(size_t Pos, size_t Len, const FARString& Str) { return Replace(Pos, Len, Str.CPtr(), Str.GetLength()); }

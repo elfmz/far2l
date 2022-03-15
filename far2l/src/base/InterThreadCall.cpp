@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <luck.h>
+#include <cctweaks.h>
 #include <vector>
 #include <mutex>
 #include <atomic>
@@ -24,7 +24,7 @@ static std::atomic<unsigned int> g_thread_id_counter{0};
 
 thread_local unsigned int g_thread_id;
 
-static unsigned int __attribute__((noinline)) GenerateThreadID()
+static unsigned int FN_NOINLINE GenerateThreadID()
 {
 	unsigned int tid = ++g_thread_id_counter;
 	while (UNLIKELY(tid == 0)) {

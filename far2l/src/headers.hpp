@@ -131,7 +131,7 @@ inline const T&Max(const T &a, const T &b) { return a>b?a:b; }
 template <class T>
 inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 
-#define IsPtr(x) ((DWORD_PTR)x>(DWORD_PTR)0xffff)// && (DWORD_PTR)x<(((DWORD_PTR)-1)>>1))
+#define IsPtr(x) ((DWORD_PTR)x>(DWORD_PTR)0xfff)// && (DWORD_PTR)x<(((DWORD_PTR)-1)>>1))
 
 #define SIGN_UTF16LE    0xFEFF
 #define SIGN_UTF16BE	0xFFFE

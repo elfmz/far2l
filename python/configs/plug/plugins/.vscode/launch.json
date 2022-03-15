@@ -5,10 +5,18 @@
             "name": "Python Attach",
             "type": "python",
             "request": "attach",
-            "localRoot": "${workspaceRoot}",
-            "remoteRoot": "${workspaceRoot}",
-            "port": 5678,
-            "host": "localhost"
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceFolder}"
+                }
+            ],
+            "connect": {
+                "port": 5678,
+                "host": "localhost"
+            },
+            //"console": "integratedTerminal",
+            "console": "externalTerminal",
         },
         {
             "name": "FAR2L",
@@ -16,18 +24,16 @@
             "request": "launch",
             "program": "/devel/bin/farg/far2l",
             "stopAtEntry": true,
-            "args": [
-            ],
+            "args": [],
             "cwd": "/tmp",
-            "environment": [
-            ],
+            "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
                 {
-                        "description": "Enable pretty-printing for gdb",
-                        "text": "-enable-pretty-printing",
-                        "ignoreFailures": true
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
                 }
             ]
         }

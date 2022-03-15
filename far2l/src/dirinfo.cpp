@@ -58,7 +58,7 @@ static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UIN
 	FARString strSize;
 	FileSizeToStr(strSize,Size,8,COLUMN_FLOATSIZE|COLUMN_COMMAS);
 	RemoveLeadingSpaces(strSize);
-	Message(0,0,Title,MScanningFolder,Name,strSize);
+	Message(0,0,Title,Msg::ScanningFolder,Name,strSize);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=(void*)Title;
 	preRedrawItem.Param.Param2=(void*)Name;
@@ -176,7 +176,7 @@ int GetDirInfo(const wchar_t *Title,
 		{
 			StartTime=CurTime;
 			MsgWaitTime=500;
-			OldTitle.Set(L"%ls %ls",MSG(MScanningFolder), ShowDirName); // покажем заголовок консоли
+			OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName); // покажем заголовок консоли
 			SetCursorType(FALSE,0);
 			DrawGetDirInfoMsg(Title,ShowDirName,FileSize);
 		}

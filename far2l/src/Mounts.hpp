@@ -9,7 +9,7 @@ namespace Mounts
 		Entry() = default;
 		Entry(const Entry&) = default;
 
-		inline Entry(FARString path_, FARString info_, bool unmountable_ = false, INT_PTR id_ = -1) : path(path_), info(info_)
+		inline Entry(FARString path_, const wchar_t *info_, bool unmountable_ = false, INT_PTR id_ = -1) : path(path_), info(info_)
 		{
 			unmountable = unmountable_;
 			id = id_;

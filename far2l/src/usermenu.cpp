@@ -261,7 +261,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 
 	if (ChoiceMenuType)
 	{
-		int EditChoice=Message(0,3,MUserMenuTitle,MChooseMenuType,MChooseMenuMain,MChooseMenuLocal,MCancel);
+		int EditChoice=Message(0,3,Msg::UserMenuTitle,Msg::ChooseMenuType,Msg::ChooseMenuMain,Msg::ChooseMenuLocal,Msg::Cancel);
 
 		if (EditChoice<0 || EditChoice==2)
 			return;
@@ -353,7 +353,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 					if (FileAttr & FILE_ATTRIBUTE_READONLY)
 					{
 						int AskOverwrite;
-						AskOverwrite=Message(MSG_WARNING,2,MUserMenuTitle,LocalMenuFileName,MEditRO,MEditOvr,MYes,MNo);
+						AskOverwrite=Message(MSG_WARNING,2,Msg::UserMenuTitle,LocalMenuFileName,Msg::EditRO,Msg::EditOvr,Msg::Yes,Msg::No);
 
 						if (!AskOverwrite)
 							apiSetFileAttributes(strMenuFileFullPath,FileAttr & ~FILE_ATTRIBUTE_READONLY);
@@ -545,20 +545,20 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			switch (MenuMode)
 			{
 				case MM_LOCAL:
-					strMenuTitle = MSG(MLocalMenuTitle);
+					strMenuTitle = Msg::LocalMenuTitle;
 					break;
 				case MM_FAR:
 				{
-					strMenuTitle=MSG(MMainMenuTitle);
+					strMenuTitle=Msg::MainMenuTitle;
 					strMenuTitle+=L" (";
-					strMenuTitle+=MSG(MMainMenuFAR);
+					strMenuTitle+=Msg::MainMenuFAR;
 					strMenuTitle+=L")";
 				}
 				break;
 				default:
 				{
-					strMenuTitle=MSG(MMainMenuTitle);
-					const wchar_t *Ptr=MSG(MMainMenuREG);
+					strMenuTitle=Msg::MainMenuTitle;
+					const wchar_t *Ptr=Msg::MainMenuREG;
 
 					if (*Ptr)
 					{
@@ -575,7 +575,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			UserMenu.SetFlags(VMENU_WRAPMODE);
 			UserMenu.SetHelp(L"UserMenu");
 			UserMenu.SetPosition(-1,-1,0,0);
-			UserMenu.SetBottomTitle(MSG(MMainMenuBottomTitle));
+			UserMenu.SetBottomTitle(Msg::MainMenuBottomTitle);
 			//NumLine=FillUserMenu(UserMenu,MenuKey,MenuPos,FuncPos,Name);
 			MenuNeedRefresh=true;
 
@@ -993,7 +993,7 @@ LONG_PTR WINAPI EditMenuDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 				if (FocusPos!=-1)
 				{
-					Message(MSG_WARNING,1,MUserMenuTitle,((*Label?MUserMenuInvalidInputHotKey:MUserMenuInvalidInputLabel)),MOk);
+					Message(MSG_WARNING,1,Msg::UserMenuTitle,((*Label?Msg::UserMenuInvalidInputHotKey:Msg::UserMenuInvalidInputLabel)),Msg::Ok);
 					SendDlgMessage(hDlg,DM_SETFOCUS,FocusPos,0);
 					Result=FALSE;
 				}
@@ -1020,7 +1020,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 
 	if (Create)
 	{
-		switch (Message(0,2,MUserMenuTitle,MAskInsertMenuOrCommand,MMenuInsertCommand,MMenuInsertMenu))
+		switch (Message(0,2,Msg::UserMenuTitle,Msg::AskInsertMenuOrCommand,Msg::MenuInsertCommand,Msg::MenuInsertMenu))
 		{
 			case -1:
 			case -2:
@@ -1040,14 +1040,14 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 		DWORD State=SubMenu?DIF_HIDDEN|DIF_DISABLE:0;
 		DialogDataEx EditDlgData[]=
 		{
-			{DI_DOUBLEBOX,3,1,DLG_X-4,(short)(DLG_Y-2),{},0,MSG(SubMenu?MEditSubmenuTitle:MEditMenuTitle)},
-			{DI_TEXT,5,2,0,2,{},0,MSG(MEditMenuHotKey)},
+			{DI_DOUBLEBOX,3,1,DLG_X-4,(short)(DLG_Y-2),{},0,(SubMenu?Msg::EditSubmenuTitle:Msg::EditMenuTitle)},
+			{DI_TEXT,5,2,0,2,{},0,Msg::EditMenuHotKey},
 			{DI_FIXEDIT,5,3,7,3,{},DIF_FOCUS,L""},
-			{DI_TEXT,5,4,0,4,{},0,MSG(MEditMenuLabel)},
+			{DI_TEXT,5,4,0,4,{},0,Msg::EditMenuLabel},
 			{DI_EDIT,5,5,DLG_X-6,5,{},0,L""},
 
 			{DI_TEXT,3,6,0,6,{},DIF_SEPARATOR|State,L""},
-			{DI_TEXT,5,7,0,7,{},State,MSG(MEditMenuCommands)},
+			{DI_TEXT,5,7,0,7,{},State,Msg::EditMenuCommands},
 #ifdef PROJECT_DI_MEMOEDIT
 			{DI_MEMOEDIT,5, 8,DLG_X-6,17,{},DIF_EDITPATH,L""},
 #else
@@ -1064,8 +1064,8 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 #endif
 
 			{DI_TEXT,3,(short)(DLG_Y-4),0,(short)(DLG_Y-4),{},DIF_SEPARATOR,L""},
-			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_DEFAULT|DIF_CENTERGROUP,MSG(MOk)},
-			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_CENTERGROUP,MSG(MCancel)}
+			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
+			{DI_BUTTON,0,(short)(DLG_Y-3),0,(short)(DLG_Y-3),{},DIF_CENTERGROUP,Msg::Cancel}
 		};
 		MakeDialogItemsEx(EditDlgData,EditDlg);
 #ifndef PROJECT_DI_MEMOEDIT
@@ -1177,7 +1177,7 @@ int UserMenu::DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos)
 	FARString strItemName=strRecText;
 	InsertQuote(strItemName);
 
-	if (Message(MSG_WARNING,2,MUserMenuTitle,(!SubMenu?MAskDeleteMenuItem:MAskDeleteSubMenuItem),strItemName,MDelete,MCancel))
+	if (Message(MSG_WARNING,2,Msg::UserMenuTitle,(!SubMenu?Msg::AskDeleteMenuItem:Msg::AskDeleteSubMenuItem),strItemName,Msg::Delete,Msg::Cancel))
 		return FALSE;
 
 	MenuModified=MenuNeedRefresh=true;

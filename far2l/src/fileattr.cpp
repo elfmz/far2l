@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fileattr.hpp"
 #include "lang.hpp"
-#include "language.hpp"
 #include "message.hpp"
 #include "pathmix.hpp"
 #include "fileowner.hpp"
@@ -56,8 +55,8 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
-				MSetAttrCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
+				Msg::SetAttrCannotFor,Name,Msg::HRetry,Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
 
 		switch (Code) {
 			case -2:
@@ -100,9 +99,9 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,
-			             MSetAttrTimeCannotFor,Name,MHRetry, //BUGBUG
-			             MHSkip,MHSkipAll,MHCancel);
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
+			             Msg::SetAttrTimeCannotFor,Name,Msg::HRetry, //BUGBUG
+			             Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
 
 		switch (Code)
 		{
@@ -130,7 +129,7 @@ int ESetFileOwner(LPCWSTR Name,LPCWSTR Owner,int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MSetAttrOwnerCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,Msg::SetAttrOwnerCannotFor,Name,Msg::HRetry,Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
 
 		if (Code==1 || Code<0)
 		{
@@ -161,7 +160,7 @@ int ESetFileGroup(LPCWSTR Name,LPCWSTR Group,int SkipMode)
 		if (SkipMode!=-1)
 			Code=SkipMode;
 		else
-			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,MError,MSetAttrGroupCannotFor,Name,MHRetry,MHSkip,MHSkipAll,MHCancel);
+			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,Msg::SetAttrGroupCannotFor,Name,Msg::HRetry,Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
 
 		if (Code==1 || Code<0)
 		{

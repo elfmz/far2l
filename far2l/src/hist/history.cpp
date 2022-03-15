@@ -84,7 +84,7 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 	if (!fmp.IsEmpty() && fmp.Compare(Str)) {
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -97,7 +97,7 @@ void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, 
 {
 	if (!EnableAdd)
 		return;
-		
+
 	if (!IsAllowedForHistory(Str)) {
 		fprintf(stderr, "AddToHistory - disallowed: '%ls'\n", Str);
 		return;
@@ -315,8 +315,8 @@ bool History::ReadHistory(bool bOnlyLines)
 
 		if (TimePos + sizeof(FILETIME) <= vTimes.size())
 		{
-			AddRecord->Timestamp = *(const FILETIME *)&vTimes[TimePos];
-			++TimePos;
+			AddRecord->Timestamp = *(const FILETIME *)(vTimes.data() + TimePos);
+			TimePos += sizeof(FILETIME);
 		}
 
 		//HistoryList.Unshift(&AddRecord);

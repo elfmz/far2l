@@ -126,7 +126,7 @@ static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)
 		if (wcscmp(ext, L".far-plug-mb")==0)
 			return MULTIBYTE_PLUGIN;
 	}
-	
+
 	return NOT_PLUGIN;
 }
 
@@ -600,7 +600,7 @@ HANDLE PluginManager::OpenFilePlugin(
 				PluginHandle *handle = items.getItem(i);
 				mitem.Clear();
 				mitem.strName = PointToName(handle->pPlugin->GetModuleName());
-				//NB: here is really should be used sizeof(handle), not sizeof(*handle) 
+				//NB: here is really should be used sizeof(handle), not sizeof(*handle)
 				//cuz sizeof(void *) has special meaning in SetUserData!
 				menu.SetUserData(handle, sizeof(handle), menu.AddItem(&mitem));
 			}
@@ -1374,12 +1374,12 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	}
 
 	int MenuItemNumber=0;
-	ChangeMacroMode CMM(MACRO_MENU);
 	int Editor = ModalType==MODALTYPE_EDITOR,
 	             Viewer = ModalType==MODALTYPE_VIEWER,
 	                      Dialog = ModalType==MODALTYPE_DIALOG;
 	PluginMenuItemData item;
 	{
+		ChangeMacroMode CMM(MACRO_MENU);
 		VMenu PluginList(Msg::PluginCommandsMenuTitle,nullptr,0,ScrY-4);
 		PluginList.SetFlags(VMENU_WRAPMODE);
 		PluginList.SetHelp(L"PluginCommands");

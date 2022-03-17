@@ -108,6 +108,7 @@ else
 
 	FV_PATH=1
 	FV_INFO=2
+	FV_MISC=3
 	if [ -s "$FAVORITES" ]; then
 		awk "-F " '{
 			if ($0 != "" && substr($0, 1, 1) != "#") {
@@ -120,9 +121,12 @@ else
 					misc_info = "";
 					misc_width = 9;
 					misc_ident = "";
-					"mount | grep " $'$FV_PATH' " | tail -n 1 | cut -d'"'"' '"'"' -f1" | getline misc_info;
 
-					if (misc_info == "") {
+					if ($'$FV_MISC' == "mnt") {
+						"mount | grep " $'$FV_PATH' " | tail -n 1 | cut -d'"'"' '"'"' -f1" | getline misc_info;
+					}
+
+					if ($'$FV_MISC' == "du") {
 						if ("'$sysname'" == "Linux") {
 							"( timeout --signal=TERM 1 du -sh " $'$FV_PATH' " 2> /dev/null ) | head -n 1 | column -t | cut -d'"'"' '"'"' -f1" | getline misc_info;
 							misc_width = 5;

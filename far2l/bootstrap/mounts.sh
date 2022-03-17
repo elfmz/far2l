@@ -24,9 +24,10 @@ fi
 
 ##########################################################
 # This optional file may contain per-user extra values added to df output,
+# optional 3rd parameter can have predefined values 'du' / 'mnt'
 # its content must be looking like:
-#path1<TAB>info1
-#path2<TAB>info2
+#path1<TAB>info1<TAB>du
+#path2<TAB>info2<TAB>mnt
 #-<TAB>separator_label
 #path3<TAB>info3
 FAVORITES=~/.config/far2l/favorites

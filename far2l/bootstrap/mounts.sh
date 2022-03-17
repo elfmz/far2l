@@ -129,7 +129,7 @@ else
 
 					if ($'$FV_MISC' == "du") {
 						if ("'$sysname'" == "Linux") {
-							"( timeout --signal=TERM 1 du -sh " $'$FV_PATH' " 2> /dev/null ) | head -n 1 | column -t | cut -d'"'"' '"'"' -f1" | getline misc_info;
+							"( timeout --signal=TERM 1 du -sh " $'$FV_PATH' "/ 2> /dev/null ) | head -n 1 | column -t | cut -d'"'"' '"'"' -f1" | getline misc_info;
 							misc_width = 5;
 							misc_ident = "=";
 						}

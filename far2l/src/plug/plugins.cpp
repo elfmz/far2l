@@ -1278,7 +1278,7 @@ void PluginManager::Configure(int StartPos)
 						if (!HotKeysPresent)
 							ListItem.strName = strName;
 						else if (!strHotKey.IsEmpty())
-							ListItem.strName.Format(L"&%c%ls  %ls",strHotKey.At(0),(strHotKey.At(0)==L'&'?L"&":L""), strName.CPtr());
+							ListItem.strName.Format(L"&%lc%ls  %ls",strHotKey.At(0),(strHotKey.At(0)==L'&'?L"&":L""), strName.CPtr());
 						else
 							ListItem.strName.Format(L"   %ls", strName.CPtr());
 
@@ -1451,7 +1451,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						if (!HotKeysPresent)
 							ListItem.strName = strName;
 						else if (!strHotKey.IsEmpty())
-							ListItem.strName.Format(L"&%c%ls  %ls",strHotKey.At(0),(strHotKey.At(0)==L'&'?L"&":L""), strName.CPtr());
+							ListItem.strName.Format(L"&%lc%ls  %ls",strHotKey.At(0),(strHotKey.At(0)==L'&'?L"&":L""), strName.CPtr());
 						else
 							ListItem.strName.Format(L"   %ls", strName.CPtr());
 
@@ -1622,7 +1622,7 @@ bool PluginManager::SetHotKeyDialog(
 )
 {
 	KeyFileHelper kfh(PluginsIni());
-	const auto &Setting = kfh.GetString(SettingsSection, SettingName);
+	const auto &Setting = kfh.GetString(SettingsSection, SettingName, L"");
 	WCHAR Letter[2] = {Setting.empty() ? 0 : Setting[0], 0};
 	if (!HotkeyLetterDialog(Msg::PluginHotKeyTitle, DlgPluginTitle, Letter[0]))
 		return false;

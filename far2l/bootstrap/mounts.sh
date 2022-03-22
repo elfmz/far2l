@@ -24,12 +24,15 @@ fi
 
 ##########################################################
 # This optional file may contain per-user extra values added to df output,
-# optional 3rd parameter can have predefined values 'du' / 'mnt'
+# optional new parameter at 2nd position can have predefined values
+# ':du' / ':mnt' / 'user_info_to_show'
 # its content must be looking like:
-#path1<TAB>info1<TAB>du
-#path2<TAB>info2<TAB>mnt
+#path1<TAB>:du<TAB>info1
+#path2<TAB>:mnt<TAB>info2
 #-<TAB>separator_label
 #path3<TAB>info3
+#path4<TAB><TAB>info4
+#path5<TAB>some_info5<TAB>info5
 FAVORITES=~/.config/far2l/favorites
 
 ##########################################################
@@ -43,6 +46,14 @@ if [ "$1" = 'umount' ]; then
 ##########################################################
 else
 	sysname="$(uname)"
+	timeout_coreutils="false"
+	column_bsdmainutils="false"
+	awk_busybox="false"
+	if [ "$sysname" = "Linux" ]; then
+		timeout_coreutils="$(sh -c 'timeout --version > /dev/null 2>&1 && printf true || printf false')"
+		column_bsdmainutils="$(sh -c 'column -h > /dev/null 2>&1 && printf true || printf false')"
+		awk_busybox="$([ .$(awk 2>&1 | head -n 1 | cut -d' ' -f1) = .BusyBox ] > /dev/null 2>&1 && printf true || printf false)"
+	fi
 	if [ "$sysname" = "Linux" ] || [ "$sysname" = "FreeBSD" ]; then
 		DF_ARGS='-T'
 		DF_AVAIL=5
@@ -111,6 +122,11 @@ else
 	FV_INFO=2
 	FV_MISC=3
 	if [ -s "$FAVORITES" ]; then
+		TIMEOUT=1
+		FMT_COLUMN='cat'
+		if [ "$sysname" = "Linux" ] && [ "$column_bsdmainutils" = "true" ]; then
+			FMT_COLUMN='column -t'
+		fi
 		awk "-F " '{
 			if ($0 != "" && substr($0, 1, 1) != "#") {
 				if ($'$FV_PATH' == "-") {
@@ -119,23 +135,101 @@ else
 
 				} else {
 
+					misc_path = "";
 					misc_info = "";
+					misc_desc = "";
+					misc_check = "false";
+					misc_processed = 0;
 					misc_width = 9;
 					misc_ident = "";
 
-					if ($'$FV_MISC' == "mnt") {
-						"mount | grep " $'$FV_PATH' " | tail -n 1 | cut -d'"'"' '"'"' -f1" | getline misc_info;
+					"printf " $'$FV_PATH' " " | getline misc_path;
+					if (misc_path == "") {
+						misc_path = $'$FV_PATH';
 					}
 
-					if ($'$FV_MISC' == "du") {
-						if ("'$sysname'" == "Linux") {
-							"( timeout --signal=TERM 1 du -sh " $'$FV_PATH' "/ 2> /dev/null ) | head -n 1 | column -t | cut -d'"'"' '"'"' -f1" | getline misc_info;
-							misc_width = 5;
-							misc_ident = "=";
+					if (($'$FV_MISC' != "") && (misc_path != "")) {
+						if ($'$FV_INFO' == ":mnt") {
+							"[ -d " misc_path " ] && echo true || echo false" | getline misc_check;
+							if (misc_check == "") {
+								misc_check = "false";
+							}
+							if (misc_check == "true") {
+								if ("'$sysname'" == "FreeBSD") {
+									misc_exec = "mount | grep -e '"'"' on " misc_path " '"'"' | tail -n 1 ";
+									misc_exec = misc_exec "| sed -e s:^\\\\\\([^\\\\\\ ]\\\\\\{1,\\\\\\}\\\\\\)\\\\\\(.\\\\\\{1,\\\\\\}\\\\\\):\\\\\\1:g ;";
+									"" misc_exec "" | getline misc_info;
+
+								} else {
+
+									misc_exec = "mount | grep -e '"'"' on " misc_path " '"'"' | tail -n 1 ";
+									misc_exec = misc_exec "| sed -e s:^\\\\\\([^\\\\\\ ]\\\\\\+\\\\\\)\\\\\\(.\\\\\\+\\\\\\):\\\\\\1:g ;";
+									"" misc_exec "" | getline misc_info;
+								}
+								# printf "%s\n", misc_exec;
+								if (misc_info == "") {
+									misc_info = "+";
+									misc_width = 2;
+								}
+
+							} else {
+
+								misc_info = "-";
+								misc_width = 2;
+								misc_ident = "";
+							}
+							misc_processed = 1;
 						}
+
+						if ($'$FV_INFO' == ":du") {
+							"[ -d " misc_path " ] && [ -r " misc_path " ] && echo true || echo false" | getline misc_check;
+							if (misc_check == "") {
+								misc_check = "false";
+							}
+							if (misc_check == "true") {
+								misc_width = 5;
+								misc_ident = "=";
+								if (("'$sysname'" == "Linux") && ("'$timeout_coreutils'" == "true")) {
+									misc_exec = "( timeout --signal=TERM " '$TIMEOUT' " du -sh " misc_path "/ 2> /dev/null ; ) ";
+									misc_exec = misc_exec "| head -n 1 | '"$FMT_COLUMN"' ";
+									misc_exec = misc_exec "| sed -e s:^\\\\\\([0-9a-zA-Z\\\\\\.,\\\\\\ ]\\\\\\+\\\\\\)\\\\\\(.\\\\\\+\\\\\\):\\\\\\1:g ;";
+									"" misc_exec "" | getline misc_info;
+
+								} else {
+
+									misc_exec = "( sh -c '"'"'( sleep " '$TIMEOUT' " ; kill $$ 2> /dev/null ) & exec du -sh " misc_path "/ 2> /dev/null ;'"'"' ) ";
+									misc_exec = misc_exec "| head -n 1 | '"$FMT_COLUMN"' ";
+									misc_exec = misc_exec "| sed -e s:^\\\\\\([0-9a-zA-Z\\\\\\.,\\\\\\ ]\\\\\\{1,\\\\\\}\\\\\\)\\\\\\(.\\\\\\{1,\\\\\\}\\\\\\):\\\\\\1:g ;";
+									"" misc_exec "" | getline misc_info;
+								}
+								# printf "%s\n", misc_exec;
+								if (misc_info == "") {
+									misc_info = "?";
+									misc_width = 2;
+								}
+
+							} else {
+
+								misc_info = "-";
+								misc_width = 2;
+								misc_ident = "=";
+							}
+							misc_processed = 1;
+						}
+
+						if (misc_processed == 0) {
+							misc_info = $'$FV_INFO';
+						}
+
+						misc_desc = $'$FV_MISC';
+
+					} else {
+
+						misc_desc = $'$FV_INFO';
 					}
 
-					printf "%s\t"misc_ident"%"misc_width"s\t%s\n", $'$FV_PATH', misc_info, $'$FV_INFO';
+					print_format = "%s\t" misc_ident " %" misc_width "s\t%s\n";
+					printf print_format, misc_path, misc_info, misc_desc;
 				}
 			}
 		}' "$FAVORITES"

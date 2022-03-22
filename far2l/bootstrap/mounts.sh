@@ -114,7 +114,26 @@ else
 				total_fraction = total < 10 ? 1 : 0;
 			}
 
-			printf "%s\t%s%.*f%s %s%.*f%s %3s\t%8s\n", path, avail_ident, avail_fraction, avail, avail_units, total_ident, total_fraction, total, total_units, $'$DF_USE', $'$DF_NAME';
+			if ("'$awk_busybox'" == "true") {
+				if (wide == 1) {
+
+					avail2 = substr((avail_ident avail), 1, 5);
+					total2 = substr((total_ident total), 1, 5);
+
+				} else {
+
+					avail2 = substr((avail_ident avail ".0"), 1, 3);
+					total2 = substr((total_ident total ".0"), 1, 3);
+				}
+
+				print_format = "%s\t%s%s %s%s %s\t%s\n";
+				printf print_format, path, avail2, avail_units, total2, total_units, $'$DF_USE', $'$DF_NAME';
+
+			} else {
+
+				print_format = "%s\t%s%.*f%s %s%.*f%s %3s\t%8s\n";
+				printf print_format, path, avail_ident, avail_fraction, avail, avail_units, total_ident, total_fraction, total, total_units, $'$DF_USE', $'$DF_NAME';
+			}
 		}
 	}'
 

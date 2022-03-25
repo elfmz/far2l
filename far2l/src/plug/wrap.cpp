@@ -931,7 +931,7 @@ int WINAPI ConvertNameToRealA(const char *Src,char *Dest,int DestSize)
 
 int WINAPI FarGetReparsePointInfoA(const char *Src,char *Dest,int DestSize)
 {
-	
+
 	/*if (Src && *Src)
 	{
 		FARString strSrc(Src);
@@ -1878,6 +1878,12 @@ LONG_PTR WINAPI DlgProcA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 LONG_PTR WINAPI FarDefDlgProcA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
+	if (Msg == DN_DRAWDLGITEM || Msg == DN_EDITCHANGE)
+	{
+		FarDialogItem* di = CurrentDialogItem(hDlg, Param1);
+		if (di)
+			Param2 = (LONG_PTR)di;
+	}
 	return FarDefDlgProc(hDlg, Msg, Param1, Param2);
 }
 

@@ -1932,7 +1932,9 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				if (TextFormat&&*EndSeq)
 					EndSeq=m_editor->GlobalEOL;
 
-				WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,EndSeq,StrLength(EndSeq),nullptr,0,nullptr,&UsedDefaultCharEOL);
+				int EndSeqLen = StrLength(EndSeq);
+				if (EndSeqLen && !WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,EndSeq,EndSeqLen,nullptr,0,nullptr,&UsedDefaultCharEOL))
+					return SAVEFILE_ERROR;
 
 				if (!BadSaveConfirmed && (UsedDefaultCharStr||UsedDefaultCharEOL))
 				{

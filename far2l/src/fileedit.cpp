@@ -1036,7 +1036,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					if (SaveAs)
 					{
 						FARString strSaveAsName = Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName;
-						
+
 						bool AddSignature = DecideAboutSignature();
 						if (!dlgSaveFileAs(strSaveAsName, SaveAsTextFormat, codepage, AddSignature))
 							return FALSE;
@@ -1923,7 +1923,8 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				int Length;
 				CurPtr->GetBinaryString(&SaveStr,&EndSeq,Length);
 				BOOL UsedDefaultCharStr=FALSE,UsedDefaultCharEOL=FALSE;
-				WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,SaveStr,Length,nullptr,0,nullptr,&UsedDefaultCharStr);
+				if (Length && !WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,SaveStr,Length,nullptr,0,nullptr,&UsedDefaultCharStr))
+					return SAVEFILE_ERROR;
 
 				if (!*EndSeq && CurPtr->m_next)
 					EndSeq=*m_editor->GlobalEOL?m_editor->GlobalEOL:DOS_EOL_fmt;
@@ -1931,7 +1932,9 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				if (TextFormat&&*EndSeq)
 					EndSeq=m_editor->GlobalEOL;
 
-				WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,EndSeq,StrLength(EndSeq),nullptr,0,nullptr,&UsedDefaultCharEOL);
+				int EndSeqLen = StrLength(EndSeq);
+				if (EndSeqLen && !WINPORT(WideCharToMultiByte)(codepage,WC_NO_BEST_FIT_CHARS,EndSeq,EndSeqLen,nullptr,0,nullptr,&UsedDefaultCharEOL))
+					return SAVEFILE_ERROR;
 
 				if (!BadSaveConfirmed && (UsedDefaultCharStr||UsedDefaultCharEOL))
 				{

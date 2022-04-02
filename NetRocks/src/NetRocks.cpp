@@ -210,8 +210,8 @@ static std::wstring CombineAllProtocolPrefixes()
 SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 {
 //	fprintf(stderr, "NetRocks: GetPluginInfoW\n");
-	static const wchar_t *s_cfg_strings[] = {G.GetMsgWide(MPluginOptionsTitle), G.GetMsgWide(MBackgroundTasksTitle)};
-	static const wchar_t *s_menu_strings[] = {G.GetMsgWide(MTitle), G.GetMsgWide(MBackgroundTasksTitle)};
+	const wchar_t *s_cfg_strings[] = {G.GetMsgWide(MPluginOptionsTitle), G.GetMsgWide(MBackgroundTasksTitle)};
+	const wchar_t *s_menu_strings[] = {G.GetMsgWide(MTitle), G.GetMsgWide(MBackgroundTasksTitle)};
 	static const wchar_t *s_disk_menu_strings[] = {L"NetRocks\0"};
 	static std::wstring s_command_prefixes = CombineAllProtocolPrefixes();
 

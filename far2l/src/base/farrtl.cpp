@@ -31,7 +31,29 @@ wchar_t * __cdecl far_wcsncpy(wchar_t * dest,const wchar_t * src,size_t DestSize
 	return tmpsrc;
 }
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__MUSL__)
+struct QSortExAdapterArg
+{
+	int (*__cdecl comp)(const void *, const void *, void *);
+	void *ctx;
+};
+
+thread_local QSortExAdapterArg *g_qse_aa;
+
+static int QSortExAdapter(const void *left, const void *right)
+{
+	return g_qse_aa->comp(left, right, g_qse_aa->ctx);
+}
+
+void __cdecl far_qsortex(void *base, size_t num, size_t width,
+	int (*__cdecl comp)(const void *, const void *, void *), void *ctx)
+{
+	struct QSortExAdapterArg aa = { comp, ctx };
+	g_qse_aa = &aa;
+	qsort(base, num, width, QSortExAdapter);
+}
+
+#elif defined(__APPLE__) || defined(__FreeBSD__)
 struct QSortExAdapterArg
 {
 	int (*__cdecl comp)(const void *, const void *, void *);

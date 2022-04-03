@@ -4,7 +4,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
-#include <execinfo.h>
+
+#if !defined(__FreeBSD__) && !defined(__MUSL__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+# include <execinfo.h>
+# define HAS_BACKTRACE
+#endif
+
 #include <fcntl.h>
 #include <stdio.h>
 #include "../WinPort/sudo.h"
@@ -118,7 +123,7 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 	FDScope fd(open(s_crash_log.c_str(), O_APPEND | O_CREAT | O_WRONLY, 0600));
 	if (fd.Valid()) {
 		FDWriteSignalInfo(fd, num, info, ctx);
-#ifndef __FreeBSD__ // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+#ifdef HAS_BACKTRACE
 		// using backtrace/backtrace_symbols_fd is in general now allowed by signal safety rules
 		// but in general it works and its enough cuz other important info already written in
 		// signal-safe manner by FDWriteSignalInfo

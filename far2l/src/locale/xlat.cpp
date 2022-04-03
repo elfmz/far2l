@@ -150,7 +150,7 @@ wchar_t* WINAPI Xlat(wchar_t *Line,
 	}
 
 	Xlator xlt(Flags);
-	if (xlt.Valid()) {
+	if (!xlt.Valid()) {
 		return Line;
 	}
 

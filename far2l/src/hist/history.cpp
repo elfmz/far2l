@@ -557,7 +557,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_F4:
 				case KEY_NUMPAD5:  case KEY_SHIFTNUMPAD5:
 				{
-					if (TypeHistory == HISTORYTYPE_DIALOG)
+					if (TypeHistory == HISTORYTYPE_DIALOG || TypeHistory == HISTORYTYPE_CMD || TypeHistory == HISTORYTYPE_FOLDER)
 						break;
 
 					HistoryMenu.Modal::SetExitCode(Pos.SelectPos);

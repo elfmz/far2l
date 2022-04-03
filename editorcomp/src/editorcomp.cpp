@@ -18,7 +18,7 @@ const wchar_t *title[1];
 
 SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
     editors = new Editors(*Info, *Info->FSF);
-    title[0] = editors->getSettings()->getMsg(M_TITLE);
+    title[0] = wcsdup(editors->getSettings()->getMsg(M_TITLE));
 }
 
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
@@ -93,7 +93,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
             editor->declineSuggestion();
         }
 
-    } else if (ir->EventType == KEY_EVENT) { // Is regular key event? 
+    } else if (ir->EventType == KEY_EVENT) { // Is regular key event?
         DWORD relevant_modifiers = (ir->Event.KeyEvent.dwControlKeyState & RELEVANT_MODIFIERS);
 
         if (ir->Event.KeyEvent.bKeyDown && ir->Event.KeyEvent.wVirtualScanCode == 0) {
@@ -151,4 +151,5 @@ SHAREDSYMBOL void WINAPI ExitFARW() {
         delete editors;
         editors = nullptr;
     }
+    free((void*)title[0]);
 }

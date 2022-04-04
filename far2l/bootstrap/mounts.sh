@@ -137,24 +137,17 @@ else
 			else if (avail >= 1024*1024) { avail_units="G" ; avail/= 1024*1024;}
 			else if (avail >= 1024) { avail_units="M" ; avail/= 1024;}
 
-			avail_ident = avail < 100 ? ( avail < 10 ? "" : "_" ) : "";
-			total_ident = total < 100 ? ( total < 10 ? "" : " " ) : "";
+			avail_ident = avail < 99.9 ? ( avail < 9.9 ? "" : "_" ) : "";
+			total_ident = total < 99.9 ? ( total < 9.9 ? "" : " " ) : "";
 
 			avail_fraction = avail < 10 ? 1 : 0;
 			total_fraction = total < 10 ? 1 : 0;
 
 			if ("'$awk_busybox'" == "true") {
-				if (wide == 1) {
 
-					avail2 = substr((avail_ident avail), 1, 5);
-					total2 = substr((total_ident total), 1, 5);
-
-				} else {
-
-					avail2 = substr((avail_ident avail ".0"), 1, 3);
-					total2 = substr((total_ident total ".0"), 1, 3);
-				}
-
+				avail2 = substr((avail_ident avail ".0"), 1, 3);
+				total2 = substr((total_ident total ".0"), 1, 3);
+					
 				print_format = "%s\t%s%s %s%s %s\t%s\n";
 				printf print_format, path, avail2, avail_units, total2, total_units, $'$DF_USE', $'$DF_NAME';
 

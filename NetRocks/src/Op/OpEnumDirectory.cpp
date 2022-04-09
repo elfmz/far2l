@@ -85,7 +85,7 @@ void OpEnumDirectory::Process()
 			if (!pathes.empty()) {
 				_base_host->GetModes(true, pathes.size(), pathes.data(), modes.data());
 				for (size_t j = 0; j < pathes.size(); ++j) {
-					if (modes[j] != ~(mode_t)0 && S_ISDIR(modes[j])) {
+					if (modes[j] != (mode_t)-1 && S_ISDIR(modes[j])) {
 						(*pattrs[j])|= FILE_ATTRIBUTE_DIRECTORY;
 					}
 				}

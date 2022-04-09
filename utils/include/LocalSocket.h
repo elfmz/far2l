@@ -16,7 +16,9 @@ struct LocalSocketCancelled : LocalSocketError<__LINE__> {};
 struct LocalSocketSocketError : LocalSocketError<__LINE__> {};
 struct LocalSocketBindError : LocalSocketError<__LINE__> {};
 struct LocalSocketConnectError : LocalSocketError<__LINE__> {};
-struct LocalSocketIOError : LocalSocketError<__LINE__> {};
+struct LocalSocketSelectError : LocalSocketError<__LINE__> {};
+struct LocalSocketRecvError : LocalSocketError<__LINE__> {};
+struct LocalSocketSendError : LocalSocketError<__LINE__> {};
 struct LocalSocketDisconnected : LocalSocketError<__LINE__> {};
 
 class LocalSocket

@@ -46,7 +46,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	void UpdateEnableds(bool due_authmode_changed)
 	{
 		bool ok_enabled = true, keypath_enabled = false, subsystem_enabled = false;
-		if (GetDialogListPosition(_i_auth_mode) == 1) { // keyfile
+		if (GetDialogListPosition(_i_auth_mode) == 2) { // keyfile
 			ok_enabled = false;
 			keypath_enabled = true;
 			std::string str;
@@ -113,6 +113,7 @@ public:
 	ProtocolOptionsSFTPSCP(bool scp)
 	{
 		_di_authmode.Add(MSFTPAuthModeUserPassword);
+		_di_authmode.Add(MSFTPAuthModeUserPasswordInteractive);
 		_di_authmode.Add(MSFTPAuthModeKeyFile);
 		_di_authmode.Add(MSFTPAuthModeSSHAgent);
 
@@ -184,9 +185,12 @@ public:
 		StringConfig sc(options);
 		//GetDialogListPosition(_i_auth_mode)
 		if (sc.GetInt("SSHAgentEnable", 0) != 0) {
-			SetDialogListPosition(_i_auth_mode, 2);
+			SetDialogListPosition(_i_auth_mode, 3);
 
 		} else if (sc.GetInt("PrivKeyEnable", 0) != 0) {
+			SetDialogListPosition(_i_auth_mode, 2);
+
+		} else if (sc.GetInt("InteractiveLogin", 0) != 0) {
 			SetDialogListPosition(_i_auth_mode, 1);
 
 		} else {
@@ -222,9 +226,11 @@ public:
 		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
 			sc.Delete("SSHAgentEnable");
 			sc.Delete("PrivKeyEnable");
+			sc.Delete("InteractiveLogin");
 			switch (GetDialogListPosition(_i_auth_mode)) {
-				case 1: sc.SetInt("PrivKeyEnable", 1); break;
-				case 2: sc.SetInt("SSHAgentEnable", 1); break;
+				case 1: sc.SetInt("InteractiveLogin", 1); break;
+				case 2: sc.SetInt("PrivKeyEnable", 1); break;
+				case 3: sc.SetInt("SSHAgentEnable", 1); break;
 			}
 
 			sc.SetInt("Compression", GetDialogListPosition(_i_compression));

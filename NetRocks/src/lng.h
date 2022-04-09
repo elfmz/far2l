@@ -207,6 +207,7 @@ enum LanguageID
   MSCPOptionsTitle,
   MSFTPAuthMode,
   MSFTPAuthModeUserPassword,
+  MSFTPAuthModeUserPasswordInteractive,
   MSFTPAuthModeKeyFile,
   MSFTPAuthModeSSHAgent,
   MSFTPPrivateKeyPath,

@@ -31,9 +31,6 @@ fi
 #path3<TAB>info3
 FAVORITES=~/.config/far2l/favorites
 
-# Timeout for running df command before falling back to local-only filesystems
-TIMEOUT=2
-
 ##########################################################
 if [ "$1" = 'umount' ]; then
 	if [ "$3" = 'force' ]; then
@@ -60,7 +57,7 @@ else
 	fi
 
 	#FIXME: paths that contain repeated continuos spaces
-	AWK='{
+	df $DF_ARGS 2>/dev/null | awk "-F " '{
 		path = $NF;
 		for (n = NF - 1; n > '$DF_AVAIL' && substr(path, 1, 1) != "/"; n--) {
 			path = $n" "path;
@@ -89,16 +86,6 @@ else
 			printf "%s\t%.*f%s/%.*f%s\t%8s\n", path, avail_fraction, avail, avail_units, total_fraction, total, total_units, $'$DF_NAME';
 		}
 	}'
-
-	# First query all filesystems with timeout if that fails - try to query local-only filesystems
-	RESULT=
-	if command -v timeout >/dev/null; then
-		RESULT="$(timeout $TIMEOUT df $DF_ARGS 2>/dev/null | awk '-F ' "$AWK")"
-	fi
-	if [ "$RESULT" = "" ]; then
-		RESULT="$(df -l $DF_ARGS 2>/dev/null | awk '-F ' "$AWK")"
-	fi
-	echo "$RESULT"
 
 	if [ -s "$FAVORITES" ]; then
 		awk "-F " '{

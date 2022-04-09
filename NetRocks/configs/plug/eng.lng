@@ -204,6 +204,7 @@
 "SCP protocol options"
 "&Authentication:"
 "&Username and password"
+"&Interactive login"
 "&Private key file path:"
 "&SSH-agent (by ${SSH_AUTH_SOCK})"
 "Private &key file path:"

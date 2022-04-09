@@ -210,6 +210,29 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 			throw std::runtime_error("Key file authentication failed");
 		}
 
+	} else if (protocol_options.GetInt("InteractiveLogin", 0) != 0) {
+		int rc;
+		for (int loop = 0; loop < 3; ++loop) {
+			rc = ssh_userauth_kbdint(ssh, username.empty() ? nullptr : username.c_str(), NULL);
+			if (g_netrocks_verbosity > 0) {
+				fprintf(stderr, "kbdint: %d\n", rc);
+			}
+			if (rc != SSH_AUTH_INFO) {
+				break;
+			}
+			for (unsigned int i = 0, n = ssh_userauth_kbdint_getnprompts(ssh); i < n; ++i) {
+				char echo[2] = {0, 0};
+				const char *prompt = ssh_userauth_kbdint_getprompt(ssh, i, echo);
+				int ans_rc = (i + 1 == n) ? ssh_userauth_kbdint_setanswer(ssh, i, password.c_str()) : -1;
+				if (g_netrocks_verbosity > 0) {
+					fprintf(stderr, "kbdint_setanswer[%d]: %d for '%s'\n", i, ans_rc, prompt);
+				}
+			}
+		}
+		if (rc != SSH_AUTH_SUCCESS) {
+			throw ProtocolAuthFailedError();//"Authentication failed", ssh_get_error(ssh), rc);
+		}
+
 	} else {
 		if (protocol_options.GetInt("SSHAgentEnable", 0) != 0) {
 			const char *ssh_agent_sock = getenv("SSH_AUTH_SOCK");

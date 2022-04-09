@@ -32,9 +32,9 @@ void VT_ComposeMarker(std::string &marker)
 std::string VT_ComposeMarkerCommand(const std::string &marker)
 {
 	// marker contains $FARVTRESULT and thus must be in double quotes
-	std::string out = "echo -ne $'\\x1b'\"_far2l_";
+	std::string out = "printf '\\033_far2l_%s\\007' \"";
 	out+= marker;
-	out+= "\"$'\\x07'";
+	out+= "\"";
 	return out;
 }
 
@@ -74,7 +74,7 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 		title.insert(0, "sudo ");
 	}
 
-	std::string out = "echo -ne $'\\x1b]2;";
+	std::string out = "printf '\\033]2;";
 
 	for (auto &ch : title) {
 		if ((ch >= 0 && ch < 0x20)) {
@@ -87,7 +87,7 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 			out+= ch;
 		}
 	}
-	out+= "\\x07'\n";
+	out+= "\\007'\n";
 
 	return out;
 }
@@ -148,8 +148,11 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	std::string content;
-	content+= "trap \"echo ''\" SIGINT\n"; // need marker to be printed even after Ctrl+C pressed
+	content+= "trap \"printf ''\" INT\n"; // need marker to be printed even after Ctrl+C pressed
 	content+= "PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
+	if (strcmp(cmd, "exit")!=0) {
+		content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
+	}
 	content+= VT_ComposeMarkerCommand(start_marker);
 	content+= '\n';
 	if (strcmp(cmd, "exit")==0) {
@@ -170,7 +173,6 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	if (*last_ch != '&') { // don't update curdir in case of background command
 		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
 	}
-	content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
 
 	if (need_sudo) {
 		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s%s\"\n",
@@ -191,9 +193,9 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 
 	content+= "cd ~\n"; // avoid locking arbitrary directory
 	content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
-	content+= "echo \"\x1b_push-attr\x07\x1b_set-blank=-\x07\x1b[32m\x1b[K\x1b_pop-attr\x07\"\n";
+	content+= "printf \"\\033_push-attr\\007\\033_set-blank=-\\007\\033[32m\\033[K\\033_pop-attr\\007\"\n";
 	content+= "else\n";
-	content+= "echo \"\x1b_push-attr\x07\x1b_set-blank=~\x07\x1b[33m\x1b[K\x1b_pop-attr\x07\"\n";
+	content+= "printf \"\\033_push-attr\\007\\033_set-blank=~\\007\\033[33m\\033[K\\033_pop-attr\\007\"\n";
 	content+= "fi\n";
 	unlink(_pwd_file.c_str());
 	_fd = open(_cmd_script.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);

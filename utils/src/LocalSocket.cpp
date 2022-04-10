@@ -68,7 +68,7 @@ class ScmRightsMsg
 	struct msghdr _msg;
 	struct cmsghdr *_c;
 	struct iovec _iov;
-	int _dummy_data = 0xdeadbeef;
+	char _dummy_data = '*';
 
 public:
 	ScmRightsMsg(size_t payload_len)

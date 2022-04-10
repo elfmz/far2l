@@ -2001,7 +2001,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 				File EditFile;
 				bool EditFileOpened = EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ,
 					nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN);
-				if (!EditFileOpened && WINPORT(GetLastError)() == ERROR_NOT_SUPPORTED) {
+				if (!EditFileOpened && (WINPORT(GetLastError)() == ERROR_NOT_SUPPORTED || WINPORT(GetLastError)() == ERROR_CALL_NOT_IMPLEMENTED)) {
 					EditFileOpened = EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ,
 						nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN);
 					if (EditFileOpened) {

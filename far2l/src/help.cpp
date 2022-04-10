@@ -402,14 +402,11 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 		if (!strCtrlStartPosChar.IsEmpty() && wcsstr(strReadStr, strCtrlStartPosChar))
 		{
-			FARString strLine;
-			ReadStr = strReadStr.GetBuffer();
-			int Length = (int)(wcsstr(ReadStr, strCtrlStartPosChar)-ReadStr);
-			strLine = ReadStr;
+			int Length = (int)(wcsstr(strReadStr, strCtrlStartPosChar)-strReadStr);
+			FARString strLine = strReadStr;
 			strLine.Truncate(Length);
 			LastStartPos = StringLen(strLine);
-			wcscpy(ReadStr+Length, ReadStr+Length+strCtrlStartPosChar.GetLength());
-			strReadStr.ReleaseBuffer();
+			strReadStr = strReadStr.SubStr(0,Length) + strReadStr.SubStr(Length+strCtrlStartPosChar.GetLength());
 		}
 
 		if (TopicFound)

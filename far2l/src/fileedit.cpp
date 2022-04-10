@@ -1999,8 +1999,18 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 			try
 			{
 				File EditFile;
-				if (!EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN))
+				bool EditFileOpened = EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ,
+					nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN);
+				if (!EditFileOpened && WINPORT(GetLastError)() == ERROR_NOT_SUPPORTED) {
+					EditFileOpened = EditFile.Open(Name, GENERIC_WRITE, FILE_SHARE_READ,
+						nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_ARCHIVE|FILE_FLAG_SEQUENTIAL_SCAN);
+					if (EditFileOpened) {
+						fprintf(stderr, "FileEditor::SaveFile: CREATE_ALWAYS for '%ls'\n", Name);
+					}
+				}
+				if (!EditFileOpened) {
 					throw WINPORT(GetLastError)();
+				}
 
 				if (!Flags.Check(FFILEEDIT_NEW))
 				{

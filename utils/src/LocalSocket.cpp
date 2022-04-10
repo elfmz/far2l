@@ -6,136 +6,121 @@
 #include "os_call.hpp"
 #include "LocalSocket.h"
 
-template <class IO_ERROR>
-	static size_t CheckIOResult(ssize_t r)
-{
-	if (r < 0) {
-		throw IO_ERROR();
-	}
-	if (r == 0) {
-		throw LocalSocketDisconnected();
-	}
+// Note on ENOBUFS
+// Under FreeBSD 11.4 TTY revival failed occasionally due to send randomly failed with ENOBUFS error.
+// This happened due to peer didn't retrieve data in time and BSD failed to send with such error.
+// Workaround is trivial: retry send with some reasonable timeout in case failing with ENOBUFS.
+// Although never saw such problem under Linux, but lets this behaviour be universal, just in case.
 
-	return (size_t)r;
+#define ENOBUFS_TIMEOUT_SECONDS 2
+
+template <class IO_ERROR, class FN>
+	static size_t SocketIO(FN fn)
+{
+	for (int attempt = 0;; ++attempt) {
+		ssize_t r = fn();
+		if (r > 0) {
+			return (size_t)r;
+		}
+		if (r == 0) {
+			throw LocalSocketDisconnected();
+		}
+		if (errno != EAGAIN && errno != EINTR && (errno != ENOBUFS || attempt >= ENOBUFS_TIMEOUT_SECONDS * 100)) {
+			throw IO_ERROR();
+		}
+		usleep(10000); // 1/100 of second
+	}
 }
 
 size_t LocalSocket::Send(const void *data, size_t len)
 {
-	if (!len) {
-		return 0;
-	}
-
-	for (int attempt = 0;; ++attempt) {
-		ssize_t r = os_call_ssize(send, (int)_sock, data, len, 0);
-		if (r >= 0 || errno != ENOBUFS || attempt >= 100) {
-			return CheckIOResult<LocalSocketSendError>(r);
-		}
-		usleep(10000);
-	}
+	return len
+		? SocketIO<LocalSocketSendError>( [&]{ return send(_sock, data, len, 0); } )
+		: 0;
 }
 
 size_t LocalSocket::Recv(void *data, size_t len)
 {
-	if (!len) {
-		return 0;
-	}
-
-	return CheckIOResult<LocalSocketRecvError>(os_call_ssize(recv, (int)_sock, data, len, 0));
+	return len
+		? SocketIO<LocalSocketRecvError>( [&]{ return recv(_sock, data, len, 0); } )
+		: 0;
 }
-
 
 size_t LocalSocket::SendTo(const void *data, size_t len, const struct sockaddr_un &sa)
 {
-	if (!len) return 0;
-
-	return CheckIOResult<LocalSocketSendError>(os_call_ssize(sendto,
-		(int)_sock, data, len, 0, (const struct sockaddr *)&sa, (socklen_t)sizeof(sa)));
+	return len
+		? SocketIO<LocalSocketSendError>( [&]{ return sendto(_sock, data, len, 0, (const sockaddr *)&sa, sizeof(sa)); } )
+		: 0;
 }
 
 size_t LocalSocket::RecvFrom(void *data, size_t len, struct sockaddr_un &sa)
 {
-	if (!len) return 0;
-
-	socklen_t sal = sizeof(sa);
-	return CheckIOResult<LocalSocketRecvError>(os_call_ssize(recvfrom,
-		(int)_sock, data, len, 0, (struct sockaddr *)&sa, &sal));
+	return len
+		? SocketIO<LocalSocketRecvError>( [&]{
+				socklen_t sal = sizeof(sa);
+				return recvfrom(_sock, data, len, 0, (sockaddr *)&sa, &sal);
+			} )
+		: 0;
 }
 
-struct CMsgWrap
+class ScmRightsMsg
 {
-	struct msghdr msg;
-	struct cmsghdr *c;
-	struct iovec iov;
-	int data = 0xdeadbeef;
+	struct msghdr _msg;
+	struct cmsghdr *_c;
+	struct iovec _iov;
+	int _dummy_data = 0xdeadbeef;
 
-	CMsgWrap(size_t len, int f1ll)
+public:
+	ScmRightsMsg(size_t payload_len)
 	{
-		memset(&msg, 0, sizeof(msg));
-		memset(&iov, 0, sizeof(iov));
-		iov.iov_base = &data;
-		iov.iov_len = sizeof(data);
-		msg.msg_iov = &iov;
-		msg.msg_iovlen = 1;
+		memset(&_msg, 0, sizeof(_msg));
+		memset(&_iov, 0, sizeof(_iov));
+		_iov.iov_base = &_dummy_data;
+		_iov.iov_len = sizeof(_dummy_data);
+		_msg.msg_iov = &_iov;
+		_msg.msg_iovlen = 1;
 
-		const size_t cmspc = CMSG_SPACE(len);
-		c = (struct cmsghdr *)malloc(cmspc);
-		if (c) {
-			memset(c, f1ll, cmspc);
-			c->cmsg_len = CMSG_LEN(len);
-			c->cmsg_level = SOL_SOCKET;
-			c->cmsg_type = SCM_RIGHTS;
-			msg.msg_control = c;
-			msg.msg_controllen = cmspc;
+		const size_t cmsg_spc = CMSG_SPACE(payload_len);
+		_c = (struct cmsghdr *)calloc(1, cmsg_spc); // use calloc to ensure proper alignment
+		if (!_c) {
+			throw std::bad_alloc();
 		}
+		_c->cmsg_len = CMSG_LEN(payload_len);
+		_c->cmsg_level = SOL_SOCKET;
+		_c->cmsg_type = SCM_RIGHTS;
+		_msg.msg_control = _c;
+		_msg.msg_controllen = cmsg_spc;
 	}
 
-	~CMsgWrap()
+	~ScmRightsMsg()
 	{
-		free(c);
+		free(_c);
 	}
+
+	inline void *Payload() { return CMSG_DATA(_c); }
+	inline struct msghdr *Msg() { return &_msg; }
 };
 
 void LocalSocket::SendFD(int fd)
 {
-	CMsgWrap cmw(sizeof(int), 0x0b);
- 
-	memcpy(CMSG_DATA(cmw.c), &fd, sizeof(int));
- 
-	for (int attempt = 0;; ++attempt) {
-		ssize_t r = os_call_ssize(sendmsg, (int)_sock, (const struct msghdr *)&cmw.msg, 0);
-		if (r != -1) {
-			break;
-		}
-		if (errno != ENOBUFS || attempt >= 100) {
-			throw LocalSocketSendError();
-		}
-		usleep(10000);
-	}
+	ScmRightsMsg srm(sizeof(int));
+	memcpy(srm.Payload(), &fd, sizeof(int));
+	SocketIO<LocalSocketSendError>([&] { return sendmsg(_sock, srm.Msg(), 0); });
 }
 
 int LocalSocket::RecvFD()
 {
-	CMsgWrap cmw(sizeof(int), 0x0d);
-
-	if (os_call_ssize(recvmsg, (int)_sock, &cmw.msg, 0) == -1)
-		throw LocalSocketRecvError();
-
+	ScmRightsMsg srm(sizeof(int));
+	SocketIO<LocalSocketRecvError>([&] { return recvmsg(_sock, srm.Msg(), 0); });
 	int out;
-	memcpy(&out, CMSG_DATA(cmw.c), sizeof(int));
+	memcpy(&out, srm.Payload(), sizeof(int));
 	return out;
 }
 
 ////////////////
 static int CreateUnixSocket(LocalSocket::Kind sock_kind)
 {
-	int sock = socket(PF_UNIX, (sock_kind == LocalSocket::DATAGRAM) ? SOCK_DGRAM : SOCK_STREAM, 0);
-	if (sock != -1) {
-		int bufsz = 8192;
-		setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &bufsz, sizeof(bufsz));
-		bufsz = 8192;
-		setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &bufsz, sizeof(bufsz));
-	}
-	return sock;
+	return socket(PF_UNIX, (sock_kind == LocalSocket::DATAGRAM) ? SOCK_DGRAM : SOCK_STREAM, 0);
 }
 
 LocalSocketClient::LocalSocketClient(Kind sock_kind, const std::string &path_server, const std::string &path_client)

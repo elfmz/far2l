@@ -327,6 +327,13 @@ void SSHExecutedCommand::IOLoop()
 	// get PTY size that is sent immediately
 	OnReadFDCtl(fd_ctl);
 
+	for (const auto &i : _conn->env_set) {
+		int rc_env = ssh_channel_request_env(_channel, i.first.c_str(), i.second.c_str());
+		if (rc_env != SSH_OK) {
+			fprintf(stderr, "SSHExecutedCommand: error %d setting env '%s'\n", rc_env, i.first.c_str());
+		}
+	}
+
 	std::string cmd;
 	if (!_working_dir.empty() && _working_dir != "." && _working_dir != "./") {
 		cmd = _working_dir;
@@ -334,22 +341,6 @@ void SSHExecutedCommand::IOLoop()
 		cmd.insert(0, "cd ");
 		cmd+= " && ";
 	}
-
-	for (const auto &i : _conn->env_set) {
-		cmd+= "export ";
-		cmd+= i.first;
-		cmd+= "=";
-		std::string val = i.second;
-		QuoteCmdArg(val);
-		cmd+= val;
-		cmd+= " && ";
-	}
-	for (const auto &i : _conn->env_unset) {
-		cmd+= "unset ";
-		cmd+= i;
-		cmd+= " && ";
-	}
-
 
 	cmd+= _command_line;
 
@@ -517,12 +508,10 @@ SSHExecutedCommand::~SSHExecutedCommand()
 					} else {
 						_conn->env_set[var_parts[0]].clear();
 					}
-					_conn->env_unset.erase(var_parts[0]);
 				}
 
 			} else if (parts[0] == "unset") {
 				StrTrim(parts[1]);
-				_conn->env_unset.insert(parts[1]);
 				_conn->env_set.erase(parts[1]);
 			}
 		}

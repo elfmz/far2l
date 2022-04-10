@@ -75,7 +75,6 @@ struct SSHConnection
 {
 	std::shared_ptr<SSHExecutedCommand> executed_command;
 	std::map<std::string, std::string> env_set {{"TERM", "xterm"}};
-	std::set<std::string> env_unset;
 
 	SSHSession ssh;
 

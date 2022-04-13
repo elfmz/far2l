@@ -565,6 +565,15 @@ KeyFileHelper::KeyFileHelper(const std::string &filename, bool load)
 	_filename(filename),
 	_dirty(!load)
 {
+	// for symlinks need to save later into final destination path to avoid symlink disruption
+	// also relative path should be translated to absolute to avoid wrong file saving if current directory changed in a way
+	char *real_filename = realpath(_filename.c_str(), NULL);
+	if (real_filename) {
+		if (*real_filename == '/') {
+			_filename = real_filename;
+		}
+		free(real_filename);
+	}
 }
 
 KeyFileHelper::~KeyFileHelper()

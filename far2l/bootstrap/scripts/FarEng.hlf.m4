@@ -4421,7 +4421,7 @@ by manually editing the registry or by using special tools/plugins.
     Description of the macro language can be found in the accompanying
 documentation.
 
-@KeyMacroList@
+@KeyMacroList
 $ #Макросы: Список установленных макросов#
     Ниже приведен список разделов, в которых можно узнать какие ~макросы~@KeyMacro@ 
 действуют в текущей сессии Far Manager.

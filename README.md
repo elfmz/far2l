@@ -52,7 +52,7 @@ apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev l
 In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
- * Clone current master `git: clone https://github.com/elfmz/far2l`
+ * Clone current master `git clone https://github.com/elfmz/far2l`
  * Checkout some stable release tag (master considered unstable): `git checkout v_2.#.#`
  * Prepare build directory:
 ``` sh

@@ -4,11 +4,19 @@
 
 struct SSHConnection;
 
+struct SCPQuirks
+{
+	bool use_ls;
+	bool ls_supports_dash_f;
+};
+
 class ProtocolSCP : public IProtocol
 {
+	friend class SCPDirectoryEnumer_ls;
+
 	std::shared_ptr<SSHConnection> _conn;
 	struct timespec _now{};
-	bool _fallback_ls = false;
+	SCPQuirks _quirks;
 
 public:
 	ProtocolSCP(const std::string &host, unsigned int port, const std::string &username,

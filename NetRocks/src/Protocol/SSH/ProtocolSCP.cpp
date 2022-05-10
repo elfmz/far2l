@@ -167,12 +167,13 @@ public:
 
 		cmd.Execute();
 		while (cmd.FetchOutput()) {
+			_output+= cmd.output;
+			_error+= cmd.error;
 			cmd.output.clear();
 			cmd.error.clear();
 		}
-
-		_output.swap(cmd.output);
-		_error.swap(cmd.error);
+		_output+= cmd.output;
+		_error+= cmd.error;
 
 		return cmd.ReadStatus();
 	}
@@ -545,10 +546,15 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 	}
 
 public:
-	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, DirectoryEnumerMode dem, size_t count, const std::string *pathes, const struct timespec &now)
+	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, const SCPQuirks &quirks, DirectoryEnumerMode dem, size_t count, const std::string *pathes, const struct timespec &now)
 		: SCPDirectoryEnumer(conn), _now(now)
 	{
-		std::string command_line = "LC_TIME=C LS_COLORS= ls -f -l -A ";
+		std::string command_line = "LC_TIME=C LS_COLORS= ls ";
+		if (quirks.ls_supports_dash_f) {
+			command_line+= "-f ";
+		}
+		command_line+= "-l -A ";
+
 		if (dem != DEM_LIST)
 			command_line+= "-d ";
 
@@ -579,15 +585,29 @@ std::shared_ptr<IProtocol> CreateProtocolSCP(const std::string &host, unsigned i
 ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 {
+	_quirks.use_ls = false;
+	_quirks.ls_supports_dash_f = true;
+
 	StringConfig protocol_options(options);
 	_conn = std::make_shared<SSHConnection>(host, port, username, password, protocol_options);
 	_now.tv_sec = time(nullptr);
 
 	int rc = SimpleCommand(_conn).Execute("%s", "stat --format=\"%n %f %s %X %Y %Z %U %G\" -L .");
 	if (rc != 0) {
-		_fallback_ls = true;
+		_quirks.use_ls = true;
 		fprintf(stderr, "ProtocolSCP::ProtocolSCP: <stat .> result %d -> fallback to ls\n", rc);
 	}
+
+	if (_quirks.use_ls) {
+		SimpleCommand ls_cmd(_conn);
+		ls_cmd.Execute("%s", "ls --help");
+		if (ls_cmd.Output().find("BusyBox") != std::string::npos
+		  || ls_cmd.Error().find("BusyBox") != std::string::npos) {
+			fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox detected -> disable -f argument for ls\n");
+			_quirks.ls_supports_dash_f = false;
+		}
+	}
+
 }
 
 ProtocolSCP::~ProtocolSCP()
@@ -604,8 +624,8 @@ void ProtocolSCP::GetModes(bool follow_symlink, size_t count, const std::string 
 		_conn->executed_command.reset();
 
 		std::shared_ptr<SCPDirectoryEnumer> de;
-		if (_fallback_ls) {
-			de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, pathes, _now);
+		if (_quirks.use_ls) {
+			de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, pathes, _now);
 		} else {
 			de = std::make_shared<SCPDirectoryEnumer_stat>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, pathes);
 		}
@@ -743,8 +763,8 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	_conn->executed_command.reset();
 
 	std::shared_ptr<SCPDirectoryEnumer> de;
-	if (_fallback_ls) {
-		de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, 1, &path, _now);
+	if (_quirks.use_ls) {
+		de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, 1, &path, _now);
 	} else {
 		de = std::make_shared<SCPDirectoryEnumer_stat>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, 1, &path);
 	}
@@ -905,8 +925,8 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &
 {
 	_conn->executed_command.reset();
 
-	if (_fallback_ls) {
-		return std::make_shared<SCPDirectoryEnumer_ls>(_conn, DEM_LIST, 1, &path, _now);
+	if (_quirks.use_ls) {
+		return std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, DEM_LIST, 1, &path, _now);
 	}
 
 	return std::make_shared<SCPDirectoryEnumer_stat>(_conn, DEM_LIST, 1, &path);

@@ -327,10 +327,12 @@ void SSHExecutedCommand::IOLoop()
 	// get PTY size that is sent immediately
 	OnReadFDCtl(fd_ctl);
 
-	for (const auto &i : _conn->env_set) {
-		int rc_env = ssh_channel_request_env(_channel, i.first.c_str(), i.second.c_str());
-		if (rc_env != SSH_OK) {
-			fprintf(stderr, "SSHExecutedCommand: error %d setting env '%s'\n", rc_env, i.first.c_str());
+	if (_pty) {
+		for (const auto &i : _conn->env_set) {
+			int rc_env = ssh_channel_request_env(_channel, i.first.c_str(), i.second.c_str());
+			if (rc_env != SSH_OK) {
+				fprintf(stderr, "SSHExecutedCommand: error %d setting env '%s'\n", rc_env, i.first.c_str());
+			}
 		}
 	}
 
@@ -449,7 +451,7 @@ void *SSHExecutedCommand::ThreadProc()
 	return nullptr;
 }
 
-SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, const std::string &working_dir, const std::string &command_line, const std::string &fifo)
+SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, const std::string &working_dir, const std::string &command_line, const std::string &fifo, bool pty)
 	:
 	_conn(conn),
 	_working_dir(working_dir),
@@ -465,9 +467,11 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 		throw ProtocolError("ssh channel session",  ssh_get_error(_conn->ssh));
 	}
 
-	rc = ssh_channel_request_pty(_channel);
-	if (rc == SSH_OK) {
-		_pty = true;
+	if (pty) {
+		rc = ssh_channel_request_pty(_channel);
+		if (rc == SSH_OK) {
+			_pty = true;
+		}
 	}
 
 	if (pipe_cloexec(_kickass) == -1) {

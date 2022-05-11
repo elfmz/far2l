@@ -55,54 +55,80 @@ static void SCPRequestDeleter(ssh_scp  res)
 	}
 }
 
+static std::string FilterError(const std::string &error)
+{
+	std::string out;
+	// take very first unempty line from stderr
+	std::vector<std::string> lines;
+	StrExplode(lines, error, "\r\n");
+	for (const auto &line : lines) if (!line.empty()) {
+		out = line;
+		break;
+	}
+
+	// leave only relevant text after colon here:
+	// ls: invalid option -- 'f'
+	size_t p = out.rfind(':');
+	if (p != std::string::npos && p + 1 < out.size()) {
+		out = out.substr(p + 1);
+	}
+	StrTrim(out);
+	return out;
+}
+
 
 RESOURCE_CONTAINER(SCPRequest, ssh_scp, SCPRequestDeleter);
 
 struct SCPRemoteCommand
 {
 	ExecCommandFIFO fifo;
-	FDScope fd_err;
-	FDScope fd_out;
-	FDScope fd_in;
-	FDScope fd_ctl;
-
 	std::string output, error;
 
 	void Execute()
 	{
-		fd_err = open((fifo.FileName() + ".err").c_str(), O_RDONLY);
-		fd_out = open((fifo.FileName() + ".out").c_str(), O_RDONLY);
-		fd_in = open((fifo.FileName() + ".in").c_str(), O_WRONLY);
-		fd_ctl = open((fifo.FileName() + ".ctl").c_str(), O_WRONLY);
+		_fd_err = open((fifo.FileName() + ".err").c_str(), O_RDONLY);
+		_fd_out = open((fifo.FileName() + ".out").c_str(), O_RDONLY);
+		_fd_in = open((fifo.FileName() + ".in").c_str(), O_WRONLY);
+		_fd_ctl = open((fifo.FileName() + ".ctl").c_str(), O_WRONLY);
 
-		if (!fd_ctl.Valid() || !fd_in.Valid() || !fd_out.Valid() || !fd_err.Valid()) {
+		if (!_fd_ctl.Valid() || !_fd_in.Valid() || !_fd_out.Valid() || !_fd_err.Valid()) {
 			throw std::runtime_error("Can't open FIFO");
 		}
+		_alive_out = _alive_err = true;
 
 		ExecFIFO_CtlMsg m = {};
 		m.cmd = ExecFIFO_CtlMsg::CMD_PTY_SIZE;
 		m.u.pty_size.cols = 80;
 		m.u.pty_size.rows = 25;
 
-		if (WriteAll(fd_ctl, &m, sizeof(m)) != sizeof(m)) {
+		if (WriteAll(_fd_ctl, &m, sizeof(m)) != sizeof(m)) {
 			throw std::runtime_error("Can't send PTY_SIZE");
 		}
 	}
 
 	bool FetchOutput()
 	{
-		fd_set fdr, fde;
-		char buf[0x10000];
+		if (!_alive_out && !_alive_err) {
+			return false;
+		}
 
-		FD_ZERO(&fdr);
-		FD_ZERO(&fde);
-		FD_SET(fd_out, &fdr);
-		FD_SET(fd_err, &fdr);
+		FD_ZERO(&_fdr);
+		FD_ZERO(&_fde);
 
-		FD_SET(fd_out, &fde);
-		FD_SET(fd_err, &fde);
+		int maxfd = -1;
+		if (_alive_out) {
+			FD_SET(_fd_out, &_fdr);
+			FD_SET(_fd_out, &_fde);
+			maxfd = std::max(maxfd, (int)_fd_out);
+		}
 
-		int r = select(std::max((int)fd_out, (int)fd_err) + 1, &fdr, nullptr, &fde, NULL);
+		if (_alive_err) {
+			FD_SET(_fd_err, &_fdr);
+			FD_SET(_fd_err, &_fde);
+			maxfd = std::max(maxfd, (int)_fd_err);
+		}
+
+		int r = select(maxfd + 1, &_fdr, nullptr, &_fde, NULL);
 		if ( r < 0) {
 			if (errno == EAGAIN || errno == EINTR)
 				return true;
@@ -110,34 +136,40 @@ struct SCPRemoteCommand
 			return false;
 		}
 
-		if (FD_ISSET(fd_out, &fdr) || FD_ISSET(fd_out, &fde)) {
-			ssize_t r = read(fd_out, buf, sizeof(buf));
+		if (_alive_out && !FetchFD(output, _fd_out)) {
+			_alive_out = false;
+		}
+
+		if (_alive_err && !FetchFD(error, _fd_err)) {
+			_alive_err = false;
+		}
+
+		return (_alive_out || _alive_err);
+	}
+
+private:
+	FDScope _fd_err;
+	FDScope _fd_out;
+	FDScope _fd_in;
+	FDScope _fd_ctl;
+	bool _alive_out, _alive_err;
+
+	fd_set _fdr, _fde;
+	char _buf[0x10000];
+
+	bool FetchFD(std::string &result, int fd)
+	{
+		if (FD_ISSET(fd, &_fdr) || FD_ISSET(fd, &_fde)) {
+			ssize_t r = read(fd, _buf, sizeof(_buf));
 			if (r == 0 || (r < 0 && errno != EAGAIN && errno != EINTR)) {
 				return false;
 			}
 
 			if (r > 0) {
-				output.append(buf, r);
+				result.append(_buf, r);
 			}
 		}
-
-		if (FD_ISSET(fd_err, &fdr) || FD_ISSET(fd_err, &fde)) {
-			ssize_t r = read(fd_err, buf, sizeof(buf));
-			if (r < 0 && errno != EAGAIN && errno != EINTR) {
-				return false;
-			}
-
-			if (r > 0) {
-				error.append(buf, r);
-			}
-		}
-
 		return true;
-	}
-
-	int ReadStatus()
-	{
-		return fifo.ReadStatus();
 	}
 };
 
@@ -163,19 +195,15 @@ public:
 		SCPRemoteCommand cmd;
 
 		_conn->executed_command.reset();
-		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, cmd.fifo.FileName());
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, cmd.fifo.FileName(), false);
 
 		cmd.Execute();
 		while (cmd.FetchOutput()) {
-			_output+= cmd.output;
-			_error+= cmd.error;
-			cmd.output.clear();
-			cmd.error.clear();
 		}
-		_output+= cmd.output;
-		_error+= cmd.error;
+		_output.swap(cmd.output);
+		_error.swap(cmd.error);
 
-		return cmd.ReadStatus();
+		return cmd.fifo.ReadStatus();
 	}
 
 	int Execute(const char *cmdline_fmt, ...)
@@ -190,6 +218,11 @@ public:
 
 	const std::string &Output() const { return _output; }
 	const std::string &Error() const { return _error; }
+
+	std::string FilteredError() const
+	{
+		return FilterError(_error);
+	}
 };
 
 
@@ -197,7 +230,6 @@ class SCPDirectoryEnumer : public IDirectoryEnumer
 {
 protected:
 	std::shared_ptr<SSHConnection> _conn;
-
 	bool _finished = false;
 	SCPRemoteCommand _cmd;
 
@@ -243,9 +275,9 @@ public:
         }
   	}
 
-	const std::string &Error() const
+	std::string FilteredError() const
 	{
-		return _cmd.error;
+		return FilterError(_cmd.error);
 	}
 };
 
@@ -343,10 +375,10 @@ public:
 			}
 			command_line+= ' ';
 		}
-		command_line+= "2>/dev/null";
+//		command_line+= "2>/dev/null";
 
 		_conn->executed_command.reset();
-		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName(), false);
 
 		_cmd.Execute();
 	}
@@ -436,7 +468,6 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 				++p;
 			}
 			_cmd.output.erase(0, p);
-
 			const std::string &str_mode = ExtractStringHead(line);
 			if (line.empty())
 				continue;
@@ -550,9 +581,9 @@ public:
 		: SCPDirectoryEnumer(conn), _now(now)
 	{
 		std::string command_line = "LC_TIME=C LS_COLORS= ls ";
-		if (quirks.ls_supports_dash_f) {
+		if (quirks.ls_supports_dash_f)
 			command_line+= "-f ";
-		}
+
 		command_line+= "-l -A ";
 
 		if (dem != DEM_LIST)
@@ -565,10 +596,10 @@ public:
 			command_line+= QuotedArg(EnsureNoSlashAtNestedEnd(pathes[i]));
 			command_line+= ' ';
 		}
-		command_line+= "2>/dev/null";
+//		command_line+= "2>/dev/null";
 
 		_conn->executed_command.reset();
-		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName());
+		_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, "", command_line, _cmd.fifo.FileName(), false);
 
 		_cmd.Execute();
 	}
@@ -771,9 +802,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 
 	std::string name, owner, group;
 	if (!de->Enum(name, owner, group, file_info)) {
-		std::string err = de->Error();
-		size_t p = err.find_first_of("\r\n");
-		throw ProtocolError("Query info fault", err.substr(0, p).c_str());
+		throw ProtocolError("Query info fault", de->FilteredError().c_str());
 	}
 
 #else
@@ -818,7 +847,7 @@ void ProtocolSCP::FileDelete(const std::string &path)
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("unlink %s", QuotedArg(path).c_str());
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -827,7 +856,7 @@ void ProtocolSCP::DirectoryDelete(const std::string &path)
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("rmdir %s", QuotedArg(path).c_str());
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -859,7 +888,7 @@ void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_ne
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("mv %s %s", QuotedArg(path_old).c_str(), QuotedArg(path_new).c_str());
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -884,7 +913,7 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 
 	if (rc != 0) {
 		fprintf(stderr, "%s(%s) error %d\n", __FUNCTION__, path.c_str(), rc);
-		//throw ProtocolError(sc.Error().c_str(), rc);
+		//throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -893,7 +922,7 @@ void ProtocolSCP::SetMode(const std::string &path, mode_t mode)
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -903,7 +932,7 @@ void ProtocolSCP::SymlinkCreate(const std::string &link_path, const std::string 
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("ln -s %s %s", QuotedArg(link_target).c_str(), QuotedArg(link_path).c_str());
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }
 
@@ -913,7 +942,7 @@ void ProtocolSCP::SymlinkQuery(const std::string &link_path, std::string &link_t
 	int rc = sc.Execute("readlink %s", QuotedArg(link_path).c_str());
 // fprintf(stderr, "ProtocolSCP::SymlinkQuery('%s') -> '%s' %d\n", link_path.c_str(), link_target.c_str(), rc);
 	if (rc != 0) {
-		throw ProtocolError(sc.Error().c_str(), rc);
+		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 	link_target = sc.Output();
 	while (!link_target.empty() && (link_target[link_target.size() - 1] == '\r' || link_target[link_target.size() - 1] == '\n')) {
@@ -1094,7 +1123,7 @@ std::shared_ptr<IFileWriter> ProtocolSCP::FilePut(const std::string &path, mode_
 void ProtocolSCP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	_conn->executed_command.reset();
-	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);
+	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo, true);
 }
 
 void ProtocolSCP::KeepAlive(const std::string &path_to_check)

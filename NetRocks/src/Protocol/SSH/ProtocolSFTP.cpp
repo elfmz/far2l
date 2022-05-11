@@ -679,7 +679,7 @@ std::shared_ptr<IFileWriter> ProtocolSFTP::FilePut(const std::string &path, mode
 void ProtocolSFTP::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	_conn->executed_command.reset();
-	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo);
+	_conn->executed_command = std::make_shared<SSHExecutedCommand>(_conn, working_dir, command_line, fifo, true);
 }
 
 void ProtocolSFTP::KeepAlive(const std::string &path_to_check)

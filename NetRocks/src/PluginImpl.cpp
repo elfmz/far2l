@@ -793,17 +793,14 @@ bool PluginImpl::ByKey_TryEnterSelectedSite()
 
 	}
 
-	if (!SetDirectoryInternal(gfi->FindData.lpwszFileName, 0)) {
-		return false;
-	}
-
+	bool out = SetDirectoryInternal(gfi->FindData.lpwszFileName, 0);
 	UpdatePathInfo();
 	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 	G.info.Control(PANEL_ACTIVE, FCTL_CLEARSELECTION, 0, 0);
 	PanelRedrawInfo ri = {};
 	G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&ri);
 
-	return true;
+	return out;
 }
 
 void PluginImpl::ByKey_EditAttributesSelected()

@@ -2791,56 +2791,56 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 		_SVS(if (KeyCode!=VK_CONTROL) SysLog(L"Ctrl -> |%ls|%ls|",_VK_KEY_ToName(KeyCode),_INPUT_RECORD_Dump(rec)));
 
 		if (KeyCode>='0' && KeyCode<='9')
-			return(KEY_CTRL0+KeyCode-'0');
-
+			return((RightCtrlPressed ? KEY_RCTRL0 : KEY_CTRL0)+KeyCode-'0');
+		auto const ctrl = RightCtrlPressed ? KEY_RCTRL : KEY_CTRL;
 		if (KeyCode>='A' && KeyCode<='Z')
-			return(KEY_CTRL+KeyCode);
+			return(ctrl+KeyCode);
 
 		switch (KeyCode)
 		{
 			case VK_OEM_COMMA:
-				return(KEY_CTRLCOMMA);
+				return(ctrl+KEY_COMMA);
 			case VK_OEM_PERIOD:
-				return(KEY_CTRLDOT);
+				return(ctrl+KEY_DOT);
 			case VK_OEM_2:
-				return(KEY_CTRLSLASH);
+				return(ctrl+KEY_SLASH);
 			case VK_OEM_4:
-				return(KEY_CTRLBRACKET);
+				return(ctrl+KEY_BRACKET);
 			case VK_OEM_5:
-				return(KEY_CTRLBACKSLASH);
+				return(ctrl+KEY_BACKSLASH);
 			case VK_OEM_6:
-				return(KEY_CTRLBACKBRACKET);
+				return(ctrl+KEY_BACKBRACKET);
 			case VK_OEM_7:
-				return(KEY_CTRL+'\''); // KEY_QUOTE
+				return(ctrl+'\''); // KEY_QUOTE
 			case VK_MULTIPLY:
-				return(KEY_CTRL|KEY_MULTIPLY);
+				return(ctrl|KEY_MULTIPLY);
 			case VK_DIVIDE:
-				return(KEY_CTRL|KEY_DIVIDE);
+				return(ctrl|KEY_DIVIDE);
 			case VK_PAUSE:
 
 				if (CtrlState&ENHANCED_KEY)
-					return KEY_CTRL|KEY_NUMLOCK;
+					return ctrl|KEY_NUMLOCK;
 
 				return(KEY_BREAK);
 			case VK_SLEEP:
-				return KEY_CTRL|KEY_STANDBY;
+				return ctrl|KEY_STANDBY;
 			case VK_SNAPSHOT:
-				return KEY_CTRL|KEY_PRNTSCRN;
+				return ctrl|KEY_PRNTSCRN;
 			case VK_OEM_102: // <> \|
- 				return KEY_CTRL|KEY_BACKSLASH;
+ 				return ctrl|KEY_BACKSLASH;
 		}
 
 		if (Opt.ShiftsKeyRules) //???
 			switch (KeyCode)
 			{
 				case VK_OEM_3:
-					return(KEY_CTRL+'`');
+					return(ctrl+'`');
 				case VK_OEM_MINUS:
-					return(KEY_CTRL+'-');
+					return(ctrl+'-');
 				case VK_OEM_PLUS:
-					return(KEY_CTRL+'=');
+					return(ctrl+'=');
 				case VK_OEM_1:
-					return(KEY_CTRL+KEY_SEMICOLON);
+					return(ctrl+KEY_SEMICOLON);
 			}
 
 		if (KeyCode)
@@ -2848,7 +2848,7 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 			if (!RealKey && KeyCode==VK_CONTROL)
 				return(KEY_NONE);
 
-			return(KEY_CTRL+KeyCode);
+			return(ctrl+KeyCode);
 		}
 	}
 

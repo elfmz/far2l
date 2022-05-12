@@ -12,6 +12,8 @@
 #  include "Mac/touchbar.h"
 
 /*
+  kVK_Escape                    = 0x35,
+  kVK_RightCommand              = 0x36,
   kVK_Command                   = 0x37,
   kVK_Shift                     = 0x38,
   kVK_CapsLock                  = 0x39,

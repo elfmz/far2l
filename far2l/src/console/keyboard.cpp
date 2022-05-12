@@ -2790,9 +2790,10 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 
 		_SVS(if (KeyCode!=VK_CONTROL) SysLog(L"Ctrl -> |%ls|%ls|",_VK_KEY_ToName(KeyCode),_INPUT_RECORD_Dump(rec)));
 
+		const bool RCtrl = Opt.SeparateRCtrl && RightCtrlPressed;
+		auto const ctrl = RCtrl ? KEY_RCTRL : KEY_CTRL;
 		if (KeyCode>='0' && KeyCode<='9')
-			return((RightCtrlPressed ? KEY_RCTRL0 : KEY_CTRL0)+KeyCode-'0');
-		auto const ctrl = Opt.SeparateRCtrl && RightCtrlPressed ? KEY_RCTRL : KEY_CTRL;
+			return((RCtrl ? KEY_RCTRL0 : KEY_CTRL0)+KeyCode-'0');
 		if (KeyCode>='A' && KeyCode<='Z')
 			return(ctrl+KeyCode);
 

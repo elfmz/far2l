@@ -2792,7 +2792,7 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 
 		if (KeyCode>='0' && KeyCode<='9')
 			return((RightCtrlPressed ? KEY_RCTRL0 : KEY_CTRL0)+KeyCode-'0');
-		auto const ctrl = RightCtrlPressed ? KEY_RCTRL : KEY_CTRL;
+		auto const ctrl = Opt.SeparateRCtrl && RightCtrlPressed ? KEY_RCTRL : KEY_CTRL;
 		if (KeyCode>='A' && KeyCode<='Z')
 			return(ctrl+KeyCode);
 

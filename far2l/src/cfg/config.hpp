@@ -540,6 +540,7 @@ struct Options
 	int SubstNameRule;
 
 	int PgUpChangeDisk;
+	int SeparateRCtrl;
 	int ShowCheckingFile;
 
 	DWORD LCIDSort;

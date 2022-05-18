@@ -44,7 +44,6 @@ set(SOURCES
     src/formats/rar/unrar/blake2s.cpp
     src/formats/rar/unrar/options.cpp
     src/formats/rar/unrar/volume.cpp
-    src/formats/rar/unrar/isnt.cpp
     src/formats/rar/unrar/system.cpp
     src/formats/rar/unrar/crypt.cpp
     src/formats/rar/unrar/rar.cpp

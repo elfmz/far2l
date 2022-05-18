@@ -116,43 +116,56 @@ static char * _i64toa(int64_t i, char *a, int radix)
 
 static wchar_t * _i64tow(int64_t i, wchar_t *w, int radix)
 {
-        if (i==0) {
-                w[0] = '0';
-                w[1] = 0;
-                return w;
-        }
+	int neg;
+	if (i==0) {
+		w[0] = '0';
+		w[1] = 0;
+		return w;
+	}
 
-        for (int64_t j = i; j; j/= radix) ++w;
-        *w = 0;
-        for (--w; i; i/= radix) {
-                unsigned int d = i % radix;
-                if (d<=9) *w = d + '0';
-                else *w = d + 'a';
-                --w;
-        }
+	neg = i < 0;
+	if (neg) {
+		*w++ = '-';
+		i = -i;
+	}
 
-        return w;
+	for (int64_t j = i; j; j/= radix) ++w;
+	*w = 0;
+	for (; i; i/= radix) {
+		unsigned int d = i % radix;
+		--w;
+		if (d<=9) *w = d + '0';
+		else *w = d - 10 + 'a';
+	}
+
+	return neg ? w-1 : w;
 }
 
 
 static wchar_t * _itow(int i, wchar_t *w, int radix)
 {
-        if (i==0) {
-                w[0] = '0';
-                w[1] = 0;
-                return w;
-        }
+	int neg;
+	if (i==0) {
+		w[0] = '0';
+		w[1] = 0;
+		return w;
+	}
+	neg = i<0;
+	if (neg) {
+		*w++ = '-';
+		i = -i;
+	}
 
-        for (int j = i; j; j/= radix) ++w;
-        *w = 0;
-        for (--w; i; i/= radix) {
-                unsigned int d = i % radix;
-                if (d<=9) *w = d + '0';
-                else *w = d + 'a';
-                --w;
-        }
+	for (int j = i; j; j/= radix) ++w;
+	*w = 0;
+	for (; i; i/= radix) {
+		unsigned int d = i % radix;
+		--w;
+		if (d<=9) *w = d + '0';
+		else *w = d - 10 + 'a';
+	}
 
-        return w;
+	return neg ? w-1 : w;
 }
 
 static const void *_lfind(

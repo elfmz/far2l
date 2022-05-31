@@ -1405,11 +1405,14 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		!EditFile.Open(Name, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 	{
 		SysErrorCode=WINPORT(GetLastError)();
-
 		if ((SysErrorCode != ERROR_FILE_NOT_FOUND) && (SysErrorCode != ERROR_PATH_NOT_FOUND))
 		{
 			UserBreak = -1;
 			Flags.Set(FFILEEDIT_OPENFAILED);
+		}
+		else if (m_codepage != CP_AUTODETECT && Flags.Check(FFILEEDIT_NEW))
+		{
+			Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
 		}
 
 		return FALSE;
@@ -1482,7 +1485,6 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	int StrLength,GetCode;
 	UINT dwCP=0;
 	bool Detect=false;
-
 	if (m_codepage == CP_AUTODETECT || IsUnicodeOrUtfCodePage(m_codepage))
 	{
 		bool bSignatureDetected = false;

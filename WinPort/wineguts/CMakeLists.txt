@@ -63,6 +63,7 @@ codepages/c_10081.c
 codepages/c_10082.c
 codepages/c_20127.c
 codepages/c_20866.c
+codepages/c_20880.c
 codepages/c_21866.c
 codepages/c_28591.c
 codepages/c_28592.c

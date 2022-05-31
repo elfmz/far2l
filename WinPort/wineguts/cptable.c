@@ -93,6 +93,7 @@ extern union cptable cptable_10081;
 extern union cptable cptable_10082;
 extern union cptable cptable_20127;
 extern union cptable cptable_20866;
+extern union cptable cptable_20880;
 #ifndef NO_EACP
 extern union cptable cptable_20932;
 #endif
@@ -179,6 +180,7 @@ static const union cptable * const cptables[] =
     &cptable_10082,
     &cptable_20127,
     &cptable_20866,
+    &cptable_20880,
 #ifndef NO_EACP
     &cptable_20932,
 #endif

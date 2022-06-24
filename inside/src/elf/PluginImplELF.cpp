@@ -112,7 +112,7 @@ bool PluginImplELF::OnGetFindData(FP_SizeItemList &il, int OpMode)
 bool PluginImplELF::OnGetFile(const char *item_file, const char *data_path, uint64_t len)
 {
 	if (IsBinFile(item_file)) {
-		unsigned long long ofs = 0, len = 0;
+		unsigned long long ofs = 0;
 		sscanf(strrchr(item_file, '@'), "@%llx.bin", &ofs);
 		Binary::Query(ofs, len, _name, data_path);
 		return true;

@@ -564,6 +564,12 @@ extern "C"
 			} else {
 				_attr = FILE_ATTRIBUTE_REPARSE_POINT;
 			}
+#ifdef __APPLE__
+			// chflags hidden FILENAME
+			if (DereferencedStat().st_flags & UF_HIDDEN) {
+				_attr = FILE_ATTRIBUTE_HIDDEN;
+			}
+#endif
 
 			_attr|= EvaluateAttributesT(DereferencedStat().st_mode, name);
 		}

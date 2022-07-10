@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"
 #include "execute.hpp"
-
+#include "FSFileFlags.h"
 
 enum SETATTRDLG
 {
@@ -67,12 +67,20 @@ enum SETATTRDLG
 	SA_EDIT_OWNER,
 	SA_TEXT_GROUP,
 	SA_EDIT_GROUP,
+
 	SA_SEPARATOR2,
+	SA_CHECKBOX_IMMUTABLE,
+	SA_CHECKBOX_APPEND,
+#if defined(__APPLE__) || defined(__FreeBSD__)
+	SA_CHECKBOX_HIDDEN,
+#endif
+	SA_CHECKBOX_SUID,
+	SA_CHECKBOX_SGID,
+	SA_CHECKBOX_STICKY,
 	SA_TEXT_MODE_USER,
 	SA_TEXT_MODE_GROUP,
 	SA_TEXT_MODE_OTHER,
-	SA_ATTR_FIRST,
-	SA_CHECKBOX_USER_READ = SA_ATTR_FIRST,
+	SA_CHECKBOX_USER_READ,
 	SA_CHECKBOX_USER_WRITE,
 	SA_CHECKBOX_USER_EXECUTE,
 	SA_CHECKBOX_GROUP_READ,
@@ -80,8 +88,7 @@ enum SETATTRDLG
 	SA_CHECKBOX_GROUP_EXECUTE,
 	SA_CHECKBOX_OTHER_READ,
 	SA_CHECKBOX_OTHER_WRITE,
-	SA_ATTR_LAST,
-	SA_CHECKBOX_OTHER_EXECUTE = SA_ATTR_LAST,
+	SA_CHECKBOX_OTHER_EXECUTE,
 	SA_SEPARATOR3,
 	SA_TEXT_TITLEDATE,
 	SA_TEXT_LAST_ACCESS,
@@ -100,9 +107,55 @@ enum SETATTRDLG
 	SA_CHECKBOX_SUBFOLDERS,
 	SA_SEPARATOR5,
 	SA_BUTTON_SET,
-	SA_BUTTON_SYSTEMDLG,
+	SA_BUTTON_BRIEFINFO,
 	SA_BUTTON_CANCEL
 };
+
+static const struct MODEPAIR
+{
+	SETATTRDLG Item;
+	mode_t Mode;
+}
+AP[]=
+{
+	{SA_CHECKBOX_USER_READ, S_IRUSR },
+	{SA_CHECKBOX_USER_WRITE, S_IWUSR },
+	{SA_CHECKBOX_USER_EXECUTE, S_IXUSR },
+	{SA_CHECKBOX_GROUP_READ, S_IRGRP },
+	{SA_CHECKBOX_GROUP_WRITE, S_IWGRP },
+	{SA_CHECKBOX_GROUP_EXECUTE, S_IXGRP },
+	{SA_CHECKBOX_OTHER_READ, S_IROTH },
+	{SA_CHECKBOX_OTHER_WRITE, S_IWOTH },
+	{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH },
+	{SA_CHECKBOX_SUID, S_ISUID },
+	{SA_CHECKBOX_SGID, S_ISGID },
+	{SA_CHECKBOX_STICKY, S_ISVTX }
+};
+
+#define EDITABLE_MODES  (S_IXOTH | S_IWOTH | S_IROTH \
+						| S_IXGRP | S_IWGRP | S_IRGRP \
+						| S_IXUSR | S_IWUSR | S_IRUSR \
+						| S_ISUID | S_ISGID | S_ISVTX)
+
+static const int PreserveOriginalIDs[] = {
+	SA_CHECKBOX_IMMUTABLE,
+	SA_CHECKBOX_APPEND,
+#if defined(__APPLE__) || defined(__FreeBSD__)
+	SA_CHECKBOX_HIDDEN,
+#endif
+	SA_CHECKBOX_SUID,
+	SA_CHECKBOX_SGID,
+	SA_CHECKBOX_STICKY,
+	SA_CHECKBOX_USER_READ,
+	SA_CHECKBOX_USER_WRITE,
+	SA_CHECKBOX_USER_EXECUTE,
+	SA_CHECKBOX_GROUP_READ,
+	SA_CHECKBOX_GROUP_WRITE,
+	SA_CHECKBOX_GROUP_EXECUTE,
+	SA_CHECKBOX_OTHER_READ,
+	SA_CHECKBOX_OTHER_WRITE
+};
+
 
 enum DIALOGMODE
 {
@@ -121,15 +174,24 @@ struct SetAttrDlgParam
 	FARString strGroup;
 	bool OwnerChanged, GroupChanged;
 	// значения CheckBox`ов на момент старта диалога
-	int OriginalCBAttr[SA_ATTR_LAST-SA_ATTR_FIRST+1];
-	int OriginalCBAttr2[SA_ATTR_LAST-SA_ATTR_FIRST+1];
-	DWORD OriginalCBFlag[SA_ATTR_LAST-SA_ATTR_FIRST+1];
+	int OriginalCBAttr[ARRAYSIZE(PreserveOriginalIDs)];
+	int OriginalCBAttr2[ARRAYSIZE(PreserveOriginalIDs)];
+	DWORD OriginalCBFlag[ARRAYSIZE(PreserveOriginalIDs)];
 	FARCHECKEDSTATE OSubfoldersState;
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
 };
 
 #define DM_SETATTR (DM_USER+1)
 
+static int DialogID2PreservedOriginalIndex(int id)
+{
+	for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
+	{
+		if (PreserveOriginalIDs[i] == id)
+			return i;
+	}
+	return -1;
+}
 
 static void BlankEditIfChanged(HANDLE hDlg,int EditControl, FARString &Remembered, bool &Changed)
 {
@@ -146,17 +208,18 @@ static void BlankEditIfChanged(HANDLE hDlg,int EditControl, FARString &Remembere
 LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
 	SetAttrDlgParam *DlgParam=reinterpret_cast<SetAttrDlgParam*>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
+	int OrigIdx;
 
 	switch (Msg)
 	{
 		case DN_BTNCLICK:
-
-			if ((Param1>=SA_ATTR_FIRST&&Param1<=SA_ATTR_LAST)||Param1==SA_CHECKBOX_SUBFOLDERS)
+			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
+			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS)
 			{
-				if(Param1!=SA_CHECKBOX_SUBFOLDERS)
+				if (OrigIdx != -1)
 				{
-					DlgParam->OriginalCBAttr[Param1-SA_ATTR_FIRST]=static_cast<int>(Param2);
-					DlgParam->OriginalCBAttr2[Param1-SA_ATTR_FIRST]=0;
+					DlgParam->OriginalCBAttr[OrigIdx] = static_cast<int>(Param2);
+					DlgParam->OriginalCBAttr2[OrigIdx] = 0;
 				}
 				int FocusPos=static_cast<int>(SendDlgMessage(hDlg,DM_GETFOCUS,0,0));
 				FARCHECKEDSTATE SubfoldersState=static_cast<FARCHECKEDSTATE>(SendDlgMessage(hDlg,DM_GETCHECK,SA_CHECKBOX_SUBFOLDERS,0));
@@ -175,12 +238,12 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 								// установили?
 								if (SubfoldersState != BSTATE_UNCHECKED)
 								{
-									for (int i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
 									{
-										SendDlgMessage(hDlg,DM_SET3STATE,i,TRUE);
-										if (DlgParam->OriginalCBAttr2[i-SA_ATTR_FIRST]==-1)
+										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
+										if (DlgParam->OriginalCBAttr2[i] == -1)
 										{
-											SendDlgMessage(hDlg,DM_SETCHECK,i,BSTATE_3STATE);
+											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], BSTATE_3STATE);
 										}
 									}
 									
@@ -190,10 +253,10 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 								// сняли?
 								else
 								{
-									for (int i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
 									{
-										SendDlgMessage(hDlg,DM_SET3STATE,i,FALSE);
-										SendDlgMessage(hDlg,DM_SETCHECK,i,DlgParam->OriginalCBAttr[i-SA_ATTR_FIRST]);
+										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], FALSE);
+										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER, 
 										reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
@@ -234,12 +297,12 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 								// установили?
 								if (SubfoldersState != BSTATE_UNCHECKED)
 								{
-									for (int i=SA_ATTR_FIRST; i<= SA_ATTR_LAST; i++)
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
 									{
-										if (DlgParam->OriginalCBAttr2[i-SA_ATTR_FIRST]==-1)
+										if (DlgParam->OriginalCBAttr2[i] == -1)
 										{
-											SendDlgMessage(hDlg,DM_SET3STATE,i,TRUE);
-											SendDlgMessage(hDlg,DM_SETCHECK,i,BSTATE_3STATE);
+											SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
+											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], BSTATE_3STATE);
 										}
 									}
 									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(L""));
@@ -248,10 +311,12 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 								// сняли?
 								else
 								{
-									for (int i=SA_ATTR_FIRST; i<= SA_ATTR_LAST; i++)
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
 									{
-										SendDlgMessage(hDlg,DM_SET3STATE,i,((DlgParam->OriginalCBFlag[i-SA_ATTR_FIRST]&DIF_3STATE)?TRUE:FALSE));
-										SendDlgMessage(hDlg,DM_SETCHECK,i,DlgParam->OriginalCBAttr[i-SA_ATTR_FIRST]);
+										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i],
+											((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
+										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+											DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
 									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_GROUP,reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
@@ -520,9 +585,7 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t*>(preRedrawItem.Param.Param1));
 }
 
-
-
-static void SystemProperties(const FARString &strSelName)
+static void BriefInfo(const FARString &strSelName)
 {
 	std::vector<std::wstring> lines;
 
@@ -536,7 +599,7 @@ static void SystemProperties(const FARString &strSelName)
 	if (lines.empty())
 		return;
 		
-	Messager m(Msg::SetAttrSystemDialog);
+	Messager m(Msg::SetAttrBriefInfo);
 	for (const auto &l : lines)
 		m.Add(l.c_str());
 	m.Add(Msg::HOk);
@@ -572,12 +635,34 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(L
 	return true;
 }
 
+static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
+{
+	FSFileFlags FFFlags(strSelName.GetMB());
+	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
+	}
+	if (AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
+	}
+#if defined(__APPLE__) || defined(__FreeBSD__)
+	if (AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
+	}
+#endif
+	FFFlags.Apply(strSelName.GetMB());
+}
+
 bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 {
+	std::vector<FARString> SelectedNames;
+
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX=70,DlgY=23;
+	short DlgX=70,DlgY=24;
 
 	DialogDataEx AttrDlgData[]=
 	{
@@ -589,38 +674,50 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		{DI_EDIT,18,5,short(DlgX-6),5,{},0,L""},
 		{DI_TEXT,5,6,17,6,{},0,Msg::SetAttrGroup},//L"Group:",
 		{DI_EDIT,18,6,short(DlgX-6),6,{},0,L""},
+
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,5,8,0,8,{},0,Msg::SetAttrAccessUser},//L"User",
-		{DI_TEXT,short(DlgX/3),8,0,8,{},0,Msg::SetAttrAccessGroup},//L"Group",
-		{DI_TEXT,short(2*DlgX/3),8,0,8,{},0,Msg::SetAttrAccessOther},//L"Other",
-		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},//L"Read",
-		{DI_CHECKBOX,5,10,0,10,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},//L"Write",
-		{DI_CHECKBOX,5,11,0,11,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},//L"Execute",
-		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},//L"Read",
-		{DI_CHECKBOX,short(DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},//L"Write",
-		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},//L"Execute",
-		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},//L"Read",
-		{DI_CHECKBOX,short(2*DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},//L"Write",
-		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},//L"Execute",
-		{DI_TEXT,3,12,0,12,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,short(DlgX-29),13,0,13,{},0,L""},
-		{DI_TEXT,    5,14,0,14,{},0, Msg::SetAttrAccessTime},//L"Last access time",
-		{DI_FIXEDIT,short(DlgX-29),14,short(DlgX-19),14,{},DIF_MASKEDIT,L""},
-		{DI_FIXEDIT,short(DlgX-17),14,short(DlgX-6),14,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,15,0,15,{},0, Msg::SetAttrModificationTime},//L"Last modification time",
-		{DI_FIXEDIT,short(DlgX-29),15,short(DlgX-19),15,{},DIF_MASKEDIT,L""},
-		{DI_FIXEDIT,short(DlgX-17),15,short(DlgX-6),15,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrStatusChangeTime},//L"Last status change time",
-		{DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
-		{DI_TEXT,3,19,0,19,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
-		{DI_CHECKBOX,5,20,0,20,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
+		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,short(DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAppend},
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		{DI_CHECKBOX,short(2*DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrHidden},
+#endif
+
+		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSticky},
+
+		{DI_TEXT,5,10,0,10,{},0,Msg::SetAttrAccessUser},//L"User",
+		{DI_TEXT,short(DlgX/3),10,0,10,{},0,Msg::SetAttrAccessGroup},//L"Group",
+		{DI_TEXT,short(2*DlgX/3),10,0,10,{},0,Msg::SetAttrAccessOther},//L"Other",
+		{DI_CHECKBOX,5,11,0,11,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},//L"Read",
+		{DI_CHECKBOX,5,12,0,12,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},//L"Write",
+		{DI_CHECKBOX,5,13,0,13,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},//L"Execute",
+		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},//L"Read",
+		{DI_CHECKBOX,short(DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},//L"Write",
+		{DI_CHECKBOX,short(DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},//L"Execute",
+		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},//L"Read",
+		{DI_CHECKBOX,short(2*DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},//L"Write",
+		{DI_CHECKBOX,short(2*DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},//L"Execute",
+
+		{DI_TEXT,3,14,0,14,{},DIF_SEPARATOR,L""},
+		{DI_TEXT,short(DlgX-29),15,0,15,{},0,L""},
+		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrAccessTime},//L"Last access time",
+		{DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,{},DIF_MASKEDIT,L""},
+		{DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,{},DIF_MASKEDIT,L""},
+		{DI_TEXT,    5,17,0,17,{},0, Msg::SetAttrModificationTime},//L"Last modification time",
+		{DI_FIXEDIT,short(DlgX-29),17,short(DlgX-19),17,{},DIF_MASKEDIT,L""},
+		{DI_FIXEDIT,short(DlgX-17),17,short(DlgX-6),17,{},DIF_MASKEDIT,L""},
+		{DI_TEXT,    5,18,0,18,{},0, Msg::SetAttrStatusChangeTime},//L"Last status change time",
+		{DI_FIXEDIT,short(DlgX-29),18,short(DlgX-19),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
+		{DI_FIXEDIT,short(DlgX-17),18,short(DlgX-6),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
+		{DI_TEXT,3,20,0,20,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
+		{DI_CHECKBOX,5,21,0,21,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
 		{DI_TEXT,3,short(DlgY-4),0,short(DlgY-4),{},DIF_SEPARATOR,L""},
 		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::SetAttrSet},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::SetAttrSystemDialog},
+		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::SetAttrBriefInfo},
 		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP,Msg::Cancel}
 	};
 	MakeDialogItemsEx(AttrDlgData,AttrDlg);
@@ -634,7 +731,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 	if(SelCount==1)
 	{
-		AttrDlg[SA_BUTTON_SYSTEMDLG].Flags&=~DIF_DISABLE;
+		AttrDlg[SA_BUTTON_BRIEFINFO].Flags&=~DIF_DISABLE;
 	}
 
 	if (SrcPanel && SrcPanel->GetMode()==PLUGIN_PANEL)
@@ -652,13 +749,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		if (!(Info.Flags & OPIF_REALNAMES))
 		{
 			AttrDlg[SA_BUTTON_SET].Flags|=DIF_DISABLE;
-			AttrDlg[SA_BUTTON_SYSTEMDLG].Flags|=DIF_DISABLE;
+			AttrDlg[SA_BUTTON_BRIEFINFO].Flags|=DIF_DISABLE;
 			DlgParam.Plugin=true;
 		}
 	}
-
-	FarList NameList{};
-	FARString *strLinks=nullptr;
 
 	{
 		DWORD FileAttr = INVALID_FILE_ATTRIBUTES, FileMode = 0;
@@ -684,6 +778,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			FileAttr=FindData.dwFileAttributes;
 			FileMode=FindData.dwUnixMode;
 		}
+
 		fprintf(stderr, "FileMode=%u\n", FileMode);
 
 		if (SelCount==1 && TestParentFolderName(strSelName))
@@ -719,26 +814,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strMask = AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strMask = strTMask;
 		bool FolderPresent=false,LinkPresent=false;
 		FARString strLinkName;
-		static struct MODEPAIR
-		{
-			SETATTRDLG Item;
-			DWORD Mode;
-		}
-		AP[]=
-		{
-			{SA_CHECKBOX_USER_READ, S_IRUSR },
-			{SA_CHECKBOX_USER_WRITE, S_IWUSR },
-			{SA_CHECKBOX_USER_EXECUTE, S_IXUSR },
-			{SA_CHECKBOX_GROUP_READ, S_IRGRP },
-			{SA_CHECKBOX_GROUP_WRITE, S_IWGRP },
-			{SA_CHECKBOX_GROUP_EXECUTE, S_IXGRP },
-			{SA_CHECKBOX_OTHER_READ, S_IROTH },
-			{SA_CHECKBOX_OTHER_WRITE, S_IWOTH },
-			{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH },
-		};
 
 		if (SelCount==1)
 		{
+			FSFileFlags FFFlags(strSelName.GetMB());
+
 			if (FileAttr&FILE_ATTRIBUTE_DIRECTORY)
 			{
 				if (!DlgParam.Plugin)
@@ -769,117 +849,31 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						ConvertDate(FindData.ftUnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,
 							AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData,12,FALSE,FALSE,2,TRUE);
 					}
-
-					if (FileAttr!=INVALID_FILE_ATTRIBUTES)
-					{
-						for (size_t i=0; i<ARRAYSIZE(AP); i++)
-						{
-							AttrDlg[AP[i].Item].Selected = (FileMode&AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-						}
-					}
-
-					for (size_t i=SA_ATTR_FIRST; i<= SA_ATTR_LAST; i++)
-					{
-						AttrDlg[i].Flags&=~DIF_3STATE;
-					}
 				}
 
 				FolderPresent=TRUE;
 			}
-			else
-			{
-				for (size_t i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
-				{
-					AttrDlg[i].Flags&=~DIF_3STATE;
-				}
-			}
 
-			/* обработка случая, если ЭТО SymLink
-			if (FileAttr!=INVALID_FILE_ATTRIBUTES && FileAttr&FILE_ATTRIBUTE_REPARSE_POINT)
-			{
-				DWORD ReparseTag=0;
-				DWORD LenJunction=DlgParam.Plugin?0:GetReparsePointInfo(strSelName, strLinkName,&ReparseTag);
-				AttrDlg[SA_DOUBLEBOX].Y2++;
-
-				for (size_t i=SA_TEXT_SYMLINK; i<ARRAYSIZE(AttrDlgData); i++)
-				{
-					AttrDlg[i].Y1++;
-
-					if (AttrDlg[i].Y2)
-					{
-						AttrDlg[i].Y2++;
-					}
-				}
-
-				LinkPresent=true;
-				NormalizeSymlinkName(strLinkName);
-				int ID_Msg=Msg::SetAttrSymlink;
-
-				if (ReparseTag==IO_REPARSE_TAG_MOUNT_POINT)
-				{
-					if (IsLocalVolumeRootPath(strLinkName))
-					{
-						ID_Msg=Msg::SetAttrVolMount;
-					}
-					else
-					{
-						ID_Msg=Msg::SetAttrJunction;
-					}
-				}
-
-				AttrDlg[SA_TEXT_SYMLINK].Flags&=~DIF_HIDDEN;
-				AttrDlg[SA_TEXT_SYMLINK].strData=(ID_Msg);
-				AttrDlg[SA_EDIT_SYMLINK].Flags&=~DIF_HIDDEN;
-				AttrDlg[SA_EDIT_SYMLINK].strData=LenJunction?strLinkName.CPtr():Msg::SetAttrUnknownJunction;
-				DlgParam.FileSystemFlags=0;
-
-				if (apiGetVolumeInformation(strSelName,nullptr,0,nullptr,&DlgParam.FileSystemFlags,nullptr))
-				{
-					if (!(DlgParam.FileSystemFlags&FILE_FILE_COMPRESSION))
-					{
-						AttrDlg[SA_CHECKBOX_COMPRESSED].Flags|=DIF_DISABLE;
-					}
-
-					if (!(DlgParam.FileSystemFlags&FILE_SUPPORTS_ENCRYPTION))
-					{
-						AttrDlg[SA_CHECKBOX_ENCRYPTED].Flags|=DIF_DISABLE;
-					}
-
-					if (!(DlgParam.FileSystemFlags&FILE_SUPPORTS_SPARSE_FILES))
-					{
-						AttrDlg[SA_CHECKBOX_SPARSE].Flags|=DIF_DISABLE;
-					}
-				}
-			}*/
-
-			NameList.ItemsNumber=1;
-			// обработка случая "несколько хардлинков"
-			/*NameList.ItemsNumber=(FileAttr&FILE_ATTRIBUTE_DIRECTORY)?1:GetNumberOfLinks(strSelName);
-
-			if (NameList.ItemsNumber>1)
-			{
-				AttrDlg[SA_TEXT_NAME].Flags|=DIF_HIDDEN;
-				AttrDlg[SA_COMBO_HARDLINK].Flags&=~DIF_HIDDEN;
-				NameList.Items=new FarListItem[NameList.ItemsNumber]();
-				strLinks=new FARString [NameList.ItemsNumber];
-				int Current=0;
-				AttrDlg[SA_COMBO_HARDLINK].Flags|=DIF_DISABLE;
-
-				FormatString strTmp;
-				strTmp<<Msg::SetAttrHardLinks<<L" ("<<NameList.ItemsNumber<<L")";
-				AttrDlg[SA_COMBO_HARDLINK].strData=strTmp;
-			}*/
-
-			AttrDlg[SA_TEXT_NAME].strData = strSelName;
-			TruncStr(AttrDlg[SA_TEXT_NAME].strData,DlgX-10);
-
-			if (FileAttr!=INVALID_FILE_ATTRIBUTES)
+			if ((FileAttr != INVALID_FILE_ATTRIBUTES) && ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) == 0 || Opt.SetAttrFolderRules))
 			{
 				for (size_t i=0; i<ARRAYSIZE(AP); i++)
 				{
-					AttrDlg[AP[i].Item].Selected = FileMode&AP[i].Mode ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+					AttrDlg[AP[i].Item].Selected = (FileMode&AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
+				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+#if defined(__APPLE__) || defined(__FreeBSD__)
+				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+#endif
 			}
+
+			for (auto i : PreserveOriginalIDs)
+			{
+				AttrDlg[i].Flags&=~DIF_3STATE;
+			}
+
+			AttrDlg[SA_TEXT_NAME].strData = strSelName;
+			TruncStr(AttrDlg[SA_TEXT_NAME].strData,DlgX-10);
 
 			const SETATTRDLG Dates[]={SA_FIXEDIT_LAST_ACCESS_DATE, SA_FIXEDIT_LAST_MODIFICATION_DATE, SA_FIXEDIT_LAST_CHANGE_DATE};
 			const SETATTRDLG Times[]={SA_FIXEDIT_LAST_ACCESS_TIME, SA_FIXEDIT_LAST_MODIFICATION_TIME, SA_FIXEDIT_LAST_CHANGE_TIME};
@@ -902,7 +896,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 			GetFileOwner(strComputerName,strSelName,AttrDlg[SA_EDIT_OWNER].strData);
 			GetFileGroup(strComputerName,strSelName,AttrDlg[SA_EDIT_GROUP].strData);
-		}
+		}// end of if (SelCount==1)
 		else
 		{
 			for (size_t i=0; i<ARRAYSIZE(AP); i++)
@@ -919,7 +913,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_BUTTON_ORIGINAL].Flags|=DIF_DISABLE;
 			AttrDlg[SA_TEXT_NAME].strData = Msg::SetAttrSelectedObjects;
 
-			for (size_t i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
+			for (auto i : PreserveOriginalIDs)
 			{
 				AttrDlg[i].Selected=BSTATE_UNCHECKED;
 			}
@@ -964,6 +958,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					}
 					if(CheckOwner) CheckFileOwnerGroup(AttrDlg[SA_EDIT_OWNER], GetFileOwner, strComputerName, strSelName);
 					if(CheckGroup) CheckFileOwnerGroup(AttrDlg[SA_EDIT_GROUP], GetFileGroup, strComputerName, strSelName);
+					FSFileFlags FFFlags(strSelName.GetMB());
+					if (FFFlags.Immutable())
+						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
+					if (FFFlags.Append())
+						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
+#if defined(__APPLE__) || defined(__FreeBSD__)
+					if (FFFlags.Hidden())
+						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
+#endif
 				}
 			}
 			else
@@ -997,7 +1000,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			}
 
 			// выставим "неопределенку" или то, что нужно
-			for (size_t i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
+			for (auto i : PreserveOriginalIDs)
 			{
 				// снимаем 3-state, если "есть все или нет ничего"
 				// за исключением случая, если есть Фолдер среди объектов
@@ -1006,7 +1009,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					AttrDlg[i].Flags&=~DIF_3STATE;
 				}
 
-				AttrDlg[i].Selected=(AttrDlg[i].Selected >= SelCount)?BST_CHECKED:(!AttrDlg[i].Selected?BSTATE_UNCHECKED:BSTATE_3STATE);
+				AttrDlg[i].Selected = (AttrDlg[i].Selected >= SelCount)
+					? BST_CHECKED
+					: (!AttrDlg[i].Selected ? BSTATE_UNCHECKED : BSTATE_3STATE);
 			}
 		}
 
@@ -1021,7 +1026,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData.Clear();
 
-			for (size_t i=SA_ATTR_FIRST; i<= SA_ATTR_LAST; i++)
+			for (auto i : PreserveOriginalIDs)
 			{
 				AttrDlg[i].Selected=BSTATE_3STATE;
 				AttrDlg[i].Flags|=DIF_3STATE;
@@ -1029,11 +1034,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		}
 
 		// запомним состояние переключателей.
-		for (size_t i=SA_ATTR_FIRST; i<=SA_ATTR_LAST; i++)
+		for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
 		{
-			DlgParam.OriginalCBAttr[i-SA_ATTR_FIRST]=AttrDlg[i].Selected;
-			DlgParam.OriginalCBAttr2[i-SA_ATTR_FIRST]=-1;
-			DlgParam.OriginalCBFlag[i-SA_ATTR_FIRST]=AttrDlg[i].Flags;
+			DlgParam.OriginalCBAttr[i] = AttrDlg[i].Selected;
+			DlgParam.OriginalCBAttr2[i] = -1;
+			DlgParam.OriginalCBFlag[i] = AttrDlg[i].Flags;
 		}
 
 		DlgParam.strOwner = AttrDlg[SA_EDIT_OWNER].strData;
@@ -1055,12 +1060,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 		Dlg.SetPosition(-1,-1,DlgX,DlgY);
 		Dlg.Process();
-
-		if (NameList.Items)
-			delete[] NameList.Items;
-
-		if (strLinks)
-			delete[] strLinks;
 
 		switch(Dlg.GetExitCode())
 		{
@@ -1111,13 +1110,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						}
 					}
 
-					if (FileMode != NewMode)
+					if ((FileMode & EDITABLE_MODES) != (NewMode & EDITABLE_MODES))
 					{
 						if (ESetFileMode(strSelName, NewMode, SkipMode)==SETATTR_RET_SKIPALL)
 						{
 							SkipMode=SETATTR_RET_SKIP;
 						}
 					}
+
+					ApplyFSFileFlags(AttrDlg, strSelName);
 				}
 				/* Multi *********************************************************** */
 				else
@@ -1284,13 +1285,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 								}
 							}
 						}
+						ApplyFSFileFlags(AttrDlg, strSelName);
+
 					} // END: while (SrcPanel->GetSelNameCompat(...))
 				}
 			}
 			break;
-		case SA_BUTTON_SYSTEMDLG:
+		case SA_BUTTON_BRIEFINFO:
 			{
-				SystemProperties(strSelName);
+				BriefInfo(strSelName);
 			}
 			break;
 		default:

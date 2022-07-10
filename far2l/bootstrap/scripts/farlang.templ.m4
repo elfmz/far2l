@@ -13972,9 +13972,69 @@ SetAttrSubfolders
 "Procesar sub&directorios"
 "Обробляти &вкладені теки"
 
+SetAttrImmutable
+"Не&изменяемый"
+"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+
+SetAttrAppend
+"Дополнение"
+"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+
+SetAttrHidden
+"С&крытый"
+"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+
+SetAttrSUID
+"S&UID"
+"S&UID"
+"S&UID"
+"S&UID"
+"S&UID"
+"S&UID"
+"S&UID"
+"S&UID"
+
+SetAttrSGID
+"SG&ID"
+"SG&ID"
+"SG&ID"
+"SG&ID"
+"SG&ID"
+"SG&ID"
+"SG&ID"
+"SG&ID"
+
+SetAttrSticky
+"Stick&y"
+"Stick&y"
+"Stick&y"
+"Stick&y"
+"Stick&y"
+"Stick&y"
+"Stick&y"
+"Stick&y"
+
 SetAttrOwner
 "Владелец:"
-"Owner:"
+"&Owner:"
 "Vlastník:"
 "Besitzer:"
 "Tulajdonos:"
@@ -14103,15 +14163,15 @@ upd:"RRRRR%cMM%cDD gg%cmm%css%cms"
 "AAAAA%cMM%cDD hh%cmm%css"
 "ГГГГГ%cММ%cДД гг%cхх%cсс%cмс"
 
-SetAttrSystemDialog
-"Системные &свойства"
-"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-"&Propiedades del sistema"
-"Системні &властивості"
+SetAttrBriefInfo
+"&Краткое описание"
+"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Системні &властивості"
 
 SetAttrSetting
 l:
@@ -14196,7 +14256,7 @@ upd:"Cannot set group for"
 
 SetAttrGroup
 "Группа:"
-"Group:"
+"&Group:"
 upd:"Group:"
 upd:"Group:"
 upd:"Group:"
@@ -14335,14 +14395,14 @@ upd:"Last access time"
 "Час останнього доступу"
 
 SetAttrModificationTime
-"Время последней модификации"
-"Last modification time"
-upd:"Last modification time"
-upd:"Last modification time"
-upd:"Last modification time"
-upd:"Last modification time"
-upd:"Last modification time"
-"Час останньої модифікації"
+"Время последней &модификации"
+"Last modification &time"
+upd:"Last modification &time"
+upd:"Last modification &time"
+upd:"Last modification &time"
+upd:"Last modification &time"
+upd:"Last modification &time"
+"Час останньої &модифікації"
 
 SetAttrStatusChangeTime
 "Время изменения статуса"

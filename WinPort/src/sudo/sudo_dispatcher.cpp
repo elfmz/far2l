@@ -285,12 +285,12 @@ namespace Sudo
 		int r = -1;
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
-			int flags = 0;
+			unsigned long flags = 0;
 			r = bugaware_ioctl_pint(fd, FS_IOC_GETFLAGS, &flags);
 			close(fd);
 			if (r == 0) {
 				bt.SendInt(0);
-				bt.SendInt(flags);
+				bt.SendPOD(flags);
 				return;
 			}
 		}
@@ -301,24 +301,31 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsSet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__)
 		std::string path;
+		unsigned long flags;
 		bt.RecvStr(path);
-		int flags = bt.RecvInt();
+		bt.RecvPOD(flags);
 		
-		int r = -1;
+#if defined(__APPLE__) || defined(__FreeBSD__)
+		if (chflags(path.c_str(), flags) == 0) {
+			bt.SendInt(0);
+			return;
+		}
+
+#elif !defined(__CYGWIN__)
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
-			r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
+			int r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
+			fprintf(stderr, "!!!%d %d %d %s\n", __LINE__, r, errno, path.c_str());
 			close(fd);
 			if (r == 0) {
 				bt.SendInt(0);
 				return;
 			}
 		}
+#endif
 		bt.SendInt(-1);
 		bt.SendErrno();
-#endif
 	}
 
 	static void OnSudoDispatch_FChMod(BaseTransaction &bt)

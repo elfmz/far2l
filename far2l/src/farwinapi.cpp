@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "config.hpp"
 #include "MountInfo.h"
+#include "FSFileFlags.h"
 
 
 static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& FindData)
@@ -695,7 +696,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 	{
 		std::string target, dir;
 		mode_t target_mode, dir_mode;
-		int target_flags, dir_flags;
+		unsigned long target_flags, dir_flags;
 		bool target_flags_modified, dir_flags_modified;
 		UnmakeWritable() : 
 			target_mode(0), dir_mode(0), target_flags_modified(false), dir_flags_modified(false)
@@ -745,20 +746,20 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__CYGWIN__)
 //TODO: handle chattr +i
 #else
 	if (!um->dir.empty() && sdc_fs_flags_get(um->dir.c_str(), &um->dir_flags) != -1 
-	&& (um->dir_flags & FS_IMMUTABLE_FL) != 0) {
-		if (sdc_fs_flags_set(um->dir.c_str(), um->dir_flags & ~FS_IMMUTABLE_FL) != -1) {
+	&& FS_FLAGS_CONTAIN_IMMUTABLE(um->dir_flags)) {
+		if (sdc_fs_flags_set(um->dir.c_str(), FS_FLAGS_WITHOUT_IMMUTABLE(um->dir_flags)) != -1) {
 			um->dir_flags_modified = true;
 		}
 	}
 
 	if ( (s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
 	&& sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1
-	&& (um->target_flags & FS_IMMUTABLE_FL) != 0) {
-		if (sdc_fs_flags_set(um->target.c_str(), um->target_flags & ~FS_IMMUTABLE_FL) != -1) {
+	&& FS_FLAGS_CONTAIN_IMMUTABLE(um->target_flags)) {
+		if (sdc_fs_flags_set(um->target.c_str(), FS_FLAGS_WITHOUT_IMMUTABLE(um->target_flags)) != -1) {
 			um->target_flags_modified = true;
 		}
 	}

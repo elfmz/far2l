@@ -638,10 +638,19 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(L
 static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 {
 	FSFileFlags FFFlags(strSelName.GetMB());
-	FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != 0);
-	FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != 0);
+	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
+	}
+	if (AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
+	}
 #if defined(__APPLE__) || defined(__FreeBSD__)
-	FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != 0);
+	if (AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_CHECKED
+	  || AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
+	}
 #endif
 	FFFlags.Apply(strSelName.GetMB());
 }

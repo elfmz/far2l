@@ -13982,15 +13982,15 @@ upd:"Im&mutable"
 upd:"Im&mutable"
 upd:"Im&mutable"
 
-SetAttrUndeletable
-"Не&удаляемый"
-"&Undeletable"
-upd:"&Undeletable"
-upd:"&Undeletable"
-upd:"&Undeletable"
-upd:"&Undeletable"
-upd:"&Undeletable"
-upd:"&Undeletable"
+SetAttrAppend
+"Дополнение"
+"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
+upd:"&Append"
 
 SetAttrHidden
 "С&крытый"
@@ -14002,6 +14002,35 @@ upd:"&Hidden"
 upd:"&Hidden"
 upd:"&Hidden"
 
+SetAttrSUID
+"SUID"
+"SUID"
+"SUID"
+"SUID"
+"SUID"
+"SUID"
+"SUID"
+"SUID"
+
+SetAttrSGID
+"SGID"
+"SGID"
+"SGID"
+"SGID"
+"SGID"
+"SGID"
+"SGID"
+"SGID"
+
+SetAttrSticky
+"Sticky"
+"Sticky"
+"Sticky"
+"Sticky"
+"Sticky"
+"Sticky"
+"Sticky"
+"Sticky"
 
 SetAttrOwner
 "Владелец:"

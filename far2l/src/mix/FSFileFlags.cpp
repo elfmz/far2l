@@ -52,22 +52,22 @@ void FSFileFlags::SetImmutable(bool v)
 	}
 }
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
-
-bool FSFileFlags::Undeletable() const
+bool FSFileFlags::Append() const
 {
-	return FS_FLAGS_CONTAIN_UNDELETABLE(_flags);
+	return FS_FLAGS_CONTAIN_APPEND(_flags);
 }
 
-void FSFileFlags::SetUndeletable(bool v)
+void FSFileFlags::SetAppend(bool v)
 {
-	if (v && !FS_FLAGS_CONTAIN_UNDELETABLE(_flags)) {
-		_flags = FS_FLAGS_WITH_UNDELETABLE(_flags);
+	if (v && !FS_FLAGS_CONTAIN_APPEND(_flags)) {
+		_flags = FS_FLAGS_WITH_APPEND(_flags);
 
-	} else if (!v && FS_FLAGS_CONTAIN_UNDELETABLE(_flags)) {
-		_flags = FS_FLAGS_WITHOUT_UNDELETABLE(_flags);
+	} else if (!v && FS_FLAGS_CONTAIN_APPEND(_flags)) {
+		_flags = FS_FLAGS_WITHOUT_APPEND(_flags);
 	}
 }
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
 
 bool FSFileFlags::Hidden() const
 {

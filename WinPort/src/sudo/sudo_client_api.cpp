@@ -428,7 +428,6 @@ extern "C" __attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DI
 	return nullptr;
 }
 
-
 static int common_path_and_mode(SudoCommand cmd, int (*pfn)(const char *, mode_t), const char *path, mode_t mode, bool want_modify)
 {
 	int saved_errno = errno;
@@ -445,7 +444,7 @@ static int common_path_and_mode(SudoCommand cmd, int (*pfn)(const char *, mode_t
 			else
 				errno = saved_errno;
 		} catch(std::exception &e) {
-			fprintf(stderr, "sudo_client: common_path_and_mode(%u, '%s', 0x%x) - error %s\n", cmd, path, mode, e.what());
+			fprintf(stderr, "sudo_client: common_path_and_mode(%u, '%s', 0%04lo) - error %s\n", cmd, path, (unsigned long)mode, e.what());
 			r = -1;
 		}
 	}
@@ -754,12 +753,23 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 }
 
 
- extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, int *flags)
+ extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, unsigned long *flags)
  {
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+	ClientReconstructCurDir crcd(path);
+
+#if defined(__CYGWIN__)
 	//TODO
 	*flags = 0;
 	return 0;
+
+#elif defined(__APPLE__) || defined(__FreeBSD__)
+	struct stat s{};
+	int r = sdc_stat(path, &s);
+	if (r == 0) {
+		*flags = s.st_flags;
+	}
+	return r;
+
 #else
 	int r = -1;
 	int fd = open(path, O_RDONLY);
@@ -776,7 +786,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 
 		r = ct.RecvInt();
 		if (r == 0)
-			*flags = ct.RecvInt();
+			ct.RecvPOD(*flags);
 		else
 			ct.RecvErrno();
 
@@ -788,33 +798,39 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 #endif
  }
  
- extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, int flags)
+ extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags)
  {
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__CYGWIN__)
 	//TODO
 	return 0;
+
 #else
-	int r = -1;
-	int fd = open(path, O_RDONLY);
+	ClientReconstructCurDir crcd(path);
+	int r;
+# if defined(__APPLE__) || defined(__FreeBSD__)
+	r = chflags(path, flags);
+# else
+	int fd = r = open(path, O_RDONLY);
 	if (fd != -1) {
 		r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
 		close(fd);
 	}
-	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true))
+# endif
+	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true)) {
 		return r;
-	 
+	}
+
 	try {
 		ClientTransaction ct(SUDO_CMD_FSFLAGSSET);
 		ct.SendStr(path);
-		ct.SendInt(flags);
+		ct.SendPOD(flags);
 
 		r = ct.RecvInt();
 		if (r != 0)
 			ct.RecvErrno();
 			
-
 	} catch(std::exception &e) {
-		fprintf(stderr, "sudo_client: sdc_fs_flags_set('%s', 0x%x) - error %s\n", path, flags, e.what());
+		fprintf(stderr, "sudo_client: sdc_fs_flags_set('%s', 0x%lx) - error %s\n", path, flags, e.what());
 		r = -1;
 	}
 	 

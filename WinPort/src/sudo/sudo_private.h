@@ -94,7 +94,7 @@ namespace Sudo
 	};
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
-	int bugaware_ioctl_pint(int fd, unsigned long req, int *v);
+	int bugaware_ioctl_pint(int fd, unsigned long req, unsigned long *v);
 #endif
 
 }

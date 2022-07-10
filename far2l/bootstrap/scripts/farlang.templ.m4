@@ -13972,6 +13972,37 @@ SetAttrSubfolders
 "Procesar sub&directorios"
 "Обробляти &вкладені теки"
 
+SetAttrImmutable
+"Не&изменяемый"
+"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+upd:"Im&mutable"
+
+SetAttrUndeletable
+"Не&удаляемый"
+"&Undeletable"
+upd:"&Undeletable"
+upd:"&Undeletable"
+upd:"&Undeletable"
+upd:"&Undeletable"
+upd:"&Undeletable"
+upd:"&Undeletable"
+
+SetAttrHidden
+"С&крытый"
+"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+upd:"&Hidden"
+
+
 SetAttrOwner
 "Владелец:"
 "Owner:"
@@ -14103,15 +14134,15 @@ upd:"RRRRR%cMM%cDD gg%cmm%css%cms"
 "AAAAA%cMM%cDD hh%cmm%css"
 "ГГГГГ%cММ%cДД гг%cхх%cсс%cмс"
 
-SetAttrSystemDialog
-"Системные &свойства"
-"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-upd:"System &properties"
-"&Propiedades del sistema"
-"Системні &властивості"
+SetAttrBriefInfo
+"&Краткое описание"
+"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Brief &info"
+upd:"Системні &властивості"
 
 SetAttrSetting
 l:

@@ -70,10 +70,13 @@ enum SETATTRDLG
 
 	SA_SEPARATOR2,
 	SA_CHECKBOX_IMMUTABLE,
+	SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__)
-	SA_CHECKBOX_UNDELETABLE,
 	SA_CHECKBOX_HIDDEN,
 #endif
+	SA_CHECKBOX_SUID,
+	SA_CHECKBOX_SGID,
+	SA_CHECKBOX_STICKY,
 	SA_TEXT_MODE_USER,
 	SA_TEXT_MODE_GROUP,
 	SA_TEXT_MODE_OTHER,
@@ -124,16 +127,25 @@ AP[]=
 	{SA_CHECKBOX_OTHER_READ, S_IROTH },
 	{SA_CHECKBOX_OTHER_WRITE, S_IWOTH },
 	{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH },
+	{SA_CHECKBOX_SUID, S_ISUID },
+	{SA_CHECKBOX_SGID, S_ISGID },
+	{SA_CHECKBOX_STICKY, S_ISVTX }
 };
 
-#define EDITABLE_MODES  (S_IXOTH | S_IWOTH | S_IROTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR)
+#define EDITABLE_MODES  (S_IXOTH | S_IWOTH | S_IROTH \
+						| S_IXGRP | S_IWGRP | S_IRGRP \
+						| S_IXUSR | S_IWUSR | S_IRUSR \
+						| S_ISUID | S_ISGID | S_ISVTX)
 
 static const int PreserveOriginalIDs[] = {
 	SA_CHECKBOX_IMMUTABLE,
+	SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__)
-	SA_CHECKBOX_UNDELETABLE,
 	SA_CHECKBOX_HIDDEN,
 #endif
+	SA_CHECKBOX_SUID,
+	SA_CHECKBOX_SGID,
+	SA_CHECKBOX_STICKY,
 	SA_CHECKBOX_USER_READ,
 	SA_CHECKBOX_USER_WRITE,
 	SA_CHECKBOX_USER_EXECUTE,
@@ -627,8 +639,8 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 {
 	FSFileFlags FFFlags(strSelName.GetMB());
 	FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != 0);
+	FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != 0);
 #if defined(__APPLE__) || defined(__FreeBSD__)
-	FFFlags.SetUndeletable(AttrDlg[SA_CHECKBOX_UNDELETABLE].Selected != 0);
 	FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != 0);
 #endif
 	FFFlags.Apply(strSelName.GetMB());
@@ -641,7 +653,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX=70,DlgY=23;
+	short DlgX=70,DlgY=24;
 
 	DialogDataEx AttrDlgData[]=
 	{
@@ -656,40 +668,44 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
 		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,short(DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__)
-		{DI_CHECKBOX,short(DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrUndeletable},
 		{DI_CHECKBOX,short(2*DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_TEXT,5,9,0,9,{},0,Msg::SetAttrAccessUser},//L"User",
-		{DI_TEXT,short(DlgX/3),9,0,9,{},0,Msg::SetAttrAccessGroup},//L"Group",
-		{DI_TEXT,short(2*DlgX/3),9,0,9,{},0,Msg::SetAttrAccessOther},//L"Other",
-		{DI_CHECKBOX,5,10,0,10,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},//L"Read",
-		{DI_CHECKBOX,5,11,0,11,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},//L"Write",
-		{DI_CHECKBOX,5,12,0,12,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},//L"Execute",
-		{DI_CHECKBOX,short(DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},//L"Read",
-		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},//L"Write",
-		{DI_CHECKBOX,short(DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},//L"Execute",
-		{DI_CHECKBOX,short(2*DlgX/3),10,0,10,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},//L"Read",
-		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},//L"Write",
-		{DI_CHECKBOX,short(2*DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},//L"Execute",
+		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,3,13,0,13,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,short(DlgX-29),14,0,14,{},0,L""},
-		{DI_TEXT,    5,15,0,15,{},0, Msg::SetAttrAccessTime},//L"Last access time",
-		{DI_FIXEDIT,short(DlgX-29),15,short(DlgX-19),15,{},DIF_MASKEDIT,L""},
-		{DI_FIXEDIT,short(DlgX-17),15,short(DlgX-6),15,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrModificationTime},//L"Last modification time",
+		{DI_TEXT,5,10,0,10,{},0,Msg::SetAttrAccessUser},//L"User",
+		{DI_TEXT,short(DlgX/3),10,0,10,{},0,Msg::SetAttrAccessGroup},//L"Group",
+		{DI_TEXT,short(2*DlgX/3),10,0,10,{},0,Msg::SetAttrAccessOther},//L"Other",
+		{DI_CHECKBOX,5,11,0,11,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},//L"Read",
+		{DI_CHECKBOX,5,12,0,12,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},//L"Write",
+		{DI_CHECKBOX,5,13,0,13,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},//L"Execute",
+		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},//L"Read",
+		{DI_CHECKBOX,short(DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},//L"Write",
+		{DI_CHECKBOX,short(DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},//L"Execute",
+		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},//L"Read",
+		{DI_CHECKBOX,short(2*DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},//L"Write",
+		{DI_CHECKBOX,short(2*DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},//L"Execute",
+
+		{DI_TEXT,3,14,0,14,{},DIF_SEPARATOR,L""},
+		{DI_TEXT,short(DlgX-29),15,0,15,{},0,L""},
+		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrAccessTime},//L"Last access time",
 		{DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,{},DIF_MASKEDIT,L""},
 		{DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,17,0,17,{},0, Msg::SetAttrStatusChangeTime},//L"Last status change time",
-		{DI_FIXEDIT,short(DlgX-29),17,short(DlgX-19),17,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_FIXEDIT,short(DlgX-17),17,short(DlgX-6),17,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
-		{DI_BUTTON,0,18,0,18,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
-		{DI_TEXT,3,19,0,19,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
-		{DI_CHECKBOX,5,20,0,20,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
+		{DI_TEXT,    5,17,0,17,{},0, Msg::SetAttrModificationTime},//L"Last modification time",
+		{DI_FIXEDIT,short(DlgX-29),17,short(DlgX-19),17,{},DIF_MASKEDIT,L""},
+		{DI_FIXEDIT,short(DlgX-17),17,short(DlgX-6),17,{},DIF_MASKEDIT,L""},
+		{DI_TEXT,    5,18,0,18,{},0, Msg::SetAttrStatusChangeTime},//L"Last status change time",
+		{DI_FIXEDIT,short(DlgX-29),18,short(DlgX-19),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
+		{DI_FIXEDIT,short(DlgX-17),18,short(DlgX-6),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
+		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
+		{DI_TEXT,3,20,0,20,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
+		{DI_CHECKBOX,5,21,0,21,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
 		{DI_TEXT,3,short(DlgY-4),0,short(DlgY-4),{},DIF_SEPARATOR,L""},
 		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::SetAttrSet},
 		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::SetAttrBriefInfo},
@@ -836,8 +852,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					AttrDlg[AP[i].Item].Selected = (FileMode&AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
 				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #if defined(__APPLE__) || defined(__FreeBSD__)
-				AttrDlg[SA_CHECKBOX_UNDELETABLE].Selected = FFFlags.Undeletable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
@@ -936,9 +952,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					FSFileFlags FFFlags(strSelName.GetMB());
 					if (FFFlags.Immutable())
 						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
+					if (FFFlags.Append())
+						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
 #if defined(__APPLE__) || defined(__FreeBSD__)
-					if (FFFlags.Undeletable())
-						AttrDlg[SA_CHECKBOX_UNDELETABLE].Selected++;
 					if (FFFlags.Hidden())
 						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif

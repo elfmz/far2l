@@ -14013,14 +14013,14 @@ SetAttrSUID
 "S&UID"
 
 SetAttrSGID
-"SG&ID"
-"SG&ID"
-"SG&ID"
-"SG&ID"
-"SG&ID"
-"SG&ID"
-"SG&ID"
-"SG&ID"
+"SGI&D"
+"SGI&D"
+"SGI&D"
+"SGI&D"
+"SGI&D"
+"SGI&D"
+"SGI&D"
+"SGI&D"
 
 SetAttrSticky
 "Stick&y"

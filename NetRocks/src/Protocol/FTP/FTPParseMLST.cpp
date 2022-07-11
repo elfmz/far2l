@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "FTPParseMLST.h"
 #include "../../Erroring.h"

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <time.h>
 #include <utils.h>
 #include "vtcompletor.h"
 

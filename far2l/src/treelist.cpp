@@ -1800,13 +1800,20 @@ void TreeList::FlushCache()
 
 		far_qsort(TreeCache.ListName,TreeCache.TreeCount,sizeof(wchar_t*),SortCacheList);
 
+		bool SaveFailed = false;
 		for (int i=0; i<TreeCache.TreeCount; i++)
-			fwprintf(TreeFile,L"%ls\n",TreeCache.ListName[i]);
-
-		if (fclose(TreeFile)==EOF)
 		{
-			clearerr(TreeFile);
-			fclose(TreeFile);
+			if (fwprintf(TreeFile,L"%ls\n",TreeCache.ListName[i]) < 0)
+				SaveFailed = true;
+		}
+
+		if (fflush(TreeFile) == EOF)
+				SaveFailed = true;
+
+		fclose(TreeFile);
+
+		if (SaveFailed)
+		{
 			apiDeleteFile(TreeCache.strTreeName);
 			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotSaveTree,TreeCache.strTreeName,Msg::Ok);
 		}

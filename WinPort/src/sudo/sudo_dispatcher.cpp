@@ -316,7 +316,6 @@ namespace Sudo
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
 			int r = bugaware_ioctl_pint(fd, FS_IOC_SETFLAGS, &flags);
-			fprintf(stderr, "!!!%d %d %d %s\n", __LINE__, r, errno, path.c_str());
 			close(fd);
 			if (r == 0) {
 				bt.SendInt(0);

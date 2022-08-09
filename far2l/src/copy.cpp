@@ -2058,6 +2058,16 @@ COPY_CODES ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, 
 	}
 }
 
+static bool InSameDirectory(const wchar_t *ExistingName, const wchar_t *NewName) // #1334
+{
+	FARString strExistingDir, strNewDir;
+	ConvertNameToFull(ExistingName, strExistingDir);
+	ConvertNameToFull(NewName, strNewDir);
+	CutToSlash(strExistingDir);
+	CutToSlash(strNewDir);
+	return strExistingDir == strNewDir;
+}
+
 COPY_CODES ShellCopy::CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData)
 {
 	FARString strExistingName;
@@ -2080,7 +2090,8 @@ COPY_CODES ShellCopy::CopySymLink(const wchar_t *ExistingName, const wchar_t *Ne
 	//  - if existing symlink points to unexisting destination that is also out or set of files being copied
 	//  note that in case of being smart and if symlink is relative then caller
 	//  guarantees that its target is within copied tree, so link will be valid
-	if (Flags.SYMLINK != COPY_SYMLINK_SMART || LinkTarget[0] != '/'
+	if (Flags.SYMLINK != COPY_SYMLINK_SMART
+			|| (LinkTarget[0] != '/' && !InSameDirectory(ExistingName, NewName))
 			|| ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_BROKEN) != 0 && !IsSymlinkTargetAlsoCopied(ExistingName))) {
 		FARString strNewName;
 		ConvertNameToFull(NewName, strNewName);
@@ -2230,7 +2241,9 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 		(SrcData.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && 
 		( (SrcData.dwFileAttributes&FILE_ATTRIBUTE_BROKEN) != 0
 		  || (Flags.SYMLINK != COPY_SYMLINK_ASFILE &&
-		     (Flags.SYMLINK != COPY_SYMLINK_SMART || IsSymlinkTargetAlsoCopied(Src))  )) );
+		     (Flags.SYMLINK != COPY_SYMLINK_SMART
+				|| IsSymlinkTargetAlsoCopied(Src)
+				|| InSameDirectory(Src, strDestPath)) )));
 
 	if ((SrcData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) != 0 || copy_sym_link)
 	{

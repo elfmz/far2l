@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "wakeful.hpp"
 #include <unistd.h>
+#include <algorithm>
 
 #if defined(__APPLE__)
 # include <AvailabilityMacros.h>
@@ -1976,10 +1977,48 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 			}
 		}
 	}
+
+	SetEnqueuedDirectoriesAttributes();
+
 	return COPY_SUCCESS; //COPY_SUCCESS_MOVE???
 }
 
+void ShellCopy::EnqueueDirectoryAttributes(const FAR_FIND_DATA_EX &SrcData, FARString &strDest)
+{
+	DirectoriesAttributes.emplace_back();
+	auto &cdb = DirectoriesAttributes.back();
+	cdb.Path = strDest.GetMB();
+	cdb.ftUnixAccessTime = SrcData.ftUnixAccessTime;
+	cdb.ftUnixModificationTime = SrcData.ftUnixModificationTime;
+	cdb.dwUnixMode = SrcData.dwUnixMode;
+}
 
+void ShellCopy::SetEnqueuedDirectoriesAttributes()
+{
+	std::sort(DirectoriesAttributes.begin(), DirectoriesAttributes.end(),
+		[&](const CopiedDirectory &a, const CopiedDirectory &b) -> bool {
+		return b.Path < a.Path;
+	});
+	for (const auto &cd : DirectoriesAttributes) {
+//		fprintf(stderr, "!!! '%s'\n", cd.Path.c_str());
+		struct timespec ts[2] = {};
+		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixAccessTime, &ts[0]);
+		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixModificationTime, &ts[1]);
+		const struct timeval tv[2] = {
+			{ts[0].tv_sec, suseconds_t(ts[0].tv_nsec / 1000)},
+			{ts[1].tv_sec, suseconds_t(ts[1].tv_nsec / 1000)}
+		};
+		if (sdc_utimes(cd.Path.c_str(), tv) == -1) {
+			fprintf(stderr, "sdc_utimes error %d for '%s'\n", errno, cd.Path.c_str());
+		}
+		if (Flags.COPYACCESSMODE) {
+			if (sdc_chmod(cd.Path.c_str(), cd.dwUnixMode) == -1) {
+				fprintf(stderr, "sdc_chmod mode=0%o error %d for '%s'\n", cd.dwUnixMode, errno, cd.Path.c_str());
+			}
+		}
+	}
+	DirectoriesAttributes.clear();
+}
 
 bool ShellCopy::IsSymlinkTargetAlsoCopied(const wchar_t *SymLink)
 {
@@ -2254,7 +2293,6 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 		{
 			if ((DestAttr & FILE_ATTRIBUTE_DIRECTORY) && !SameName)
 			{
-				// TODO: apply SrcData.dwUnixMode to strDestPath here or at CreateDirectory
 				FARString strSrcFullName;
 				ConvertNameToFull(Src,strSrcFullName);
 				return(!StrCmp(strDestPath,strSrcFullName) ? COPY_NEXT:COPY_SUCCESS);
@@ -2264,6 +2302,12 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 
 			if (Type==FILE_TYPE_CHAR || Type==FILE_TYPE_PIPE)
 				return(Rename ? COPY_NEXT:COPY_SUCCESS);
+		}
+
+		if ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) == FILE_ATTRIBUTE_DIRECTORY)
+		{ // Enqueue attributes before creating directory, so even if will fail (like directory exists)
+		  // but ignored then still will still try apply them on whole copy process finish successfully
+			EnqueueDirectoryAttributes(SrcData, strDestPath);
 		}
 
 		if (Rename)
@@ -2298,7 +2342,6 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 						case 0:  continue;
 						case 1:
 						{
-
 							if (apiCreateDirectory(strDestPath, nullptr))
 							{
 								if (PointToName(strDestPath)==strDestPath.CPtr())
@@ -2336,7 +2379,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			if (CopyRetCode != COPY_SUCCESS && CopyRetCode != COPY_SUCCESS_MOVE)
 				return CopyRetCode;
 		}
-		TreeList::AddTreeName(strDestPath);
+		if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			TreeList::AddTreeName(strDestPath);
 		return COPY_SUCCESS;
 	}
 

@@ -147,6 +147,25 @@ bool wxClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 	}
 }
 
+
+class wxTextDataObjectTweaked : public wxTextDataObject
+{
+public:
+	wxTextDataObjectTweaked(const wxString& text = wxEmptyString) : wxTextDataObject(text) { }
+
+	virtual void GetAllFormats(wxDataFormat *formats, wxDataObjectBase::Direction dir = Get) const
+	{
+		// workaround for issue #1350
+		// LibreOffice 7.3.5.2 seems to have bug that prevents text to be pasted if first in list format is
+		// wxDF_UNICODETEXT but not wxDF_TEXT, changing order seems to resolve this weird issue
+		wxTextDataObject::GetAllFormats(formats, dir);
+		if (GetFormatCount() == 2 && formats[0] == wxDF_UNICODETEXT && formats[1] == wxDF_TEXT) {
+			formats[0] = wxDF_TEXT;
+			formats[1] = wxDF_UNICODETEXT;
+		}
+	}
+};
+
 void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
 	if (!wxIsMainThread()) {
@@ -160,14 +179,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
 	if (format==CF_UNICODETEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString((const wchar_t *)data)));
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString((const wchar_t *)data)));
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
 	} else if (format==CF_TEXT) {
-		g_wx_data_to_clipboard->Add(new wxTextDataObject(wxString::FromUTF8((const char *)data)));
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
 #endif

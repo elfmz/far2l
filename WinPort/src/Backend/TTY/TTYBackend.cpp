@@ -406,6 +406,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 #ifdef LOG_OUTPUT_COUNT
 	unsigned long printed_count = 0, printed_skipable = 0, forced_by_unstable = 0;
 #endif
+	bool prev_line_unstable_and_modified = false;
 	if (_cur_output.empty()) {
 		;
 
@@ -437,34 +438,42 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 				|| cur_line[x_].Attributes != prev_line[x_].Attributes);
 		};
 
-		for (unsigned int x = 0, skipped_start = 0, skipped_weight = 0; x < _cur_width; ++x) {
-			// If first or next character is/was 'special' - like fullwidth or diacric then need
-			// to write whole line til the end to avoid artifacts on non-far2l terminals
-			if (!_far2l_tty && ((x + 2 < _cur_width && UnstableWidth(x + 1)) || (x == 0 && UnstableWidth(x)))) {
-#ifdef LOG_OUTPUT_COUNT
-				fprintf(stderr, "!!! OUTPUT_UNSTABLE: 0x%x '%lc' or 0x%x '%lc'\n",
-					cur_line[x + 1].Char.UnicodeChar, cur_line[x + 1].Char.UnicodeChar,
-					prev_line[x + 1].Char.UnicodeChar, prev_line[x + 1].Char.UnicodeChar);
-				forced_by_unstable+= _cur_width - x;
-#endif
-				// print line's remainder fully without exceptions, but keep box-drawing characters at
-				// expected positions overwriting tails of previously printed sequence of full-width chars.
-				tty_out.MoveCursorLazy(y + 1, x + 1);
-				for (;;) {
-					unsigned int edge;
-					for (edge = x + 1; edge < _cur_width && !WCHAR_IS_PSEUDOGRAPHIC(cur_line[edge].Char.UnicodeChar);) {
-						++edge;
-					}
-					tty_out.WriteLine(&cur_line[x], edge - x);
-					if (edge == _cur_width) {
-						break;
-					}
-					x = edge;
-					tty_out.MoveCursorStrict(y + 1, x + 1);
-				}
-				break;
-			}
 
+		if (!_far2l_tty) {
+			// If some characters at line 'special' - like fullwidth or diacric then need
+			// to write whole line til the end to avoid artifacts on non-far2l terminals.
+			// Also need to do same if previous line had such special characters as they
+			// could wrap around to next (i.e. current) line.
+			bool unstable = false, modified = false;
+			for (unsigned int x = 0; x < _cur_width; ++x) {
+				if (UnstableWidth(x)) {
+					unstable = true;
+				}
+				if (Modified(x)) {
+					modified = true;
+				}
+			}
+			if ((unstable && modified) || prev_line_unstable_and_modified) {
+				bool prev_simple = false;
+				for (unsigned int chunk_x = 0, x = 0; x <= _cur_width; ++x) {
+					const bool cur_simple = (x < _cur_width)
+						&& (WCHAR_IS_PSEUDOGRAPHIC(cur_line[x].Char.UnicodeChar) || cur_line[x].Char.UnicodeChar < 0x7f)
+						&& (WCHAR_IS_PSEUDOGRAPHIC(prev_line[x].Char.UnicodeChar) || prev_line[x].Char.UnicodeChar < 0x7f);
+					if (cur_simple != prev_simple || x == _cur_width) {
+						tty_out.MoveCursorStrict(y + 1, chunk_x + 1);
+						tty_out.WriteLine(&cur_line[chunk_x], x - chunk_x);
+						prev_simple = cur_simple;
+						chunk_x = x;
+					}
+				}
+				prev_line_unstable_and_modified = (unstable && modified);
+				continue;
+			}
+			if (!modified)
+				continue;
+		}
+
+		for (unsigned int x = 0, skipped_start = 0, skipped_weight = 0; x < _cur_width; ++x) {
 			if (!Modified(x)) {
 				skipped_weight+= ApproxWeight(x);
 				continue;

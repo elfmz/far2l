@@ -450,8 +450,6 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		if (!_far2l_tty) {
 			// If some characters at line 'special' - like fullwidth or diacric then need
 			// to write whole line til the end to avoid artifacts on non-far2l terminals.
-			// Also need to do same if previous line had such special characters as they
-			// could wrap around to next (i.e. current) line.
 			bool unstable_cur = false, unstable_prev = false, modified = false;
 			for (unsigned int x = 0; x < _cur_width; ++x) {
 				if (x + 1 < _cur_width) {
@@ -477,8 +475,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 						&& (WCHAR_IS_PSEUDOGRAPHIC(prev_line[x].Char.UnicodeChar) || prev_line[x].Char.UnicodeChar < 0x7f);
 					if (cur_simple != prev_simple || x == _cur_width) {
 						tty_out.MoveCursorStrict(y + 1, chunk_x + 1);
-						WriteLineDebugColored(&cur_line[chunk_x], (x - chunk_x),
-							FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
+						WriteLineDebugColored(&cur_line[chunk_x], (x - chunk_x), prev_simple
+							? FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY
+							: FOREGROUND_RED | FOREGROUND_INTENSITY);
 						prev_simple = cur_simple;
 						chunk_x = x;
 					}

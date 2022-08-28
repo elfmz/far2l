@@ -406,7 +406,6 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 #ifdef LOG_OUTPUT_COUNT
 	unsigned long printed_count = 0, printed_skipable = 0, forced_by_unstable = 0;
 #endif
-	bool prev_line_unstable_and_modified = false;
 	if (_cur_output.empty()) {
 		;
 
@@ -446,14 +445,14 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 			// could wrap around to next (i.e. current) line.
 			bool unstable = false, modified = false;
 			for (unsigned int x = 0; x < _cur_width; ++x) {
-				if (UnstableWidth(x)) {
+				if (x + 1 < _cur_width && UnstableWidth(x)) {
 					unstable = true;
 				}
 				if (Modified(x)) {
 					modified = true;
 				}
 			}
-			if ((unstable && modified) || prev_line_unstable_and_modified) {
+			if (unstable && modified) {
 				bool prev_simple = false;
 				for (unsigned int chunk_x = 0, x = 0; x <= _cur_width; ++x) {
 					const bool cur_simple = (x < _cur_width)
@@ -461,12 +460,20 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 						&& (WCHAR_IS_PSEUDOGRAPHIC(prev_line[x].Char.UnicodeChar) || prev_line[x].Char.UnicodeChar < 0x7f);
 					if (cur_simple != prev_simple || x == _cur_width) {
 						tty_out.MoveCursorStrict(y + 1, chunk_x + 1);
+#if 0 // change to 1 to see affected lines as green on black
+						std::vector<CHAR_INFO> tmp_line(x - chunk_x);
+						memcpy(tmp_line.data(), &cur_line[chunk_x], (x - chunk_x) * sizeof(CHAR_INFO));
+						for (auto &ci : tmp_line) {
+							ci.Attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+						}
+						tty_out.WriteLine(tmp_line.data(), x - chunk_x);
+#else
 						tty_out.WriteLine(&cur_line[chunk_x], x - chunk_x);
+#endif
 						prev_simple = cur_simple;
 						chunk_x = x;
 					}
 				}
-				prev_line_unstable_and_modified = (unstable && modified);
 				continue;
 			}
 			if (!modified)

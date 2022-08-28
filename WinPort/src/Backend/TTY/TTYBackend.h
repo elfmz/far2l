@@ -88,6 +88,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	ClipboardBackendSetter _clipboard_backend_setter;
 
 	bool IsUnstableWidthCharCached(wchar_t c);
+	void WriteLineDebugColored(TTYOutput &tty_out, const CHAR_INFO *line, unsigned int cnt, WORD attrs);
 
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);

@@ -28,6 +28,8 @@ class PluginImpl
 	{
 		std::shared_ptr<IHost> remote;
 		Location location;
+		SitesConfigLocation  sites_cfg_location;
+		std::wstring standalone_config;
 	};
 
 	std::deque<StackedDir> _dir_stack;

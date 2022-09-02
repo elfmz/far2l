@@ -240,6 +240,9 @@ static bool PreprocessPathTokens(std::vector<std::string> &components)
 int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
 	fprintf(stderr, "PluginImpl::SetDirectory('%ls', %d)\n", Dir, OpMode);
+	StackedDir sd;
+	StackedDirCapture(sd);
+
 	if (!_remote) {
 		if (_sites_cfg_location.Change(Wide2MB(Dir))) {
 			UpdatePathInfo();
@@ -253,9 +256,6 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 	if (_location.server_kind == Location::SK_SITE) {
 		site_specification = SiteSpecification(StrWide2MB(_standalone_config), _location.server);
 	}
-
-	StackedDir sd;
-	StackedDirCapture(sd);
 
 	if (*Dir == L'/') {
 		DismissRemoteHost();
@@ -789,18 +789,24 @@ bool PluginImpl::ByKey_TryEnterSelectedSite()
 	if ( (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
          //&& wcscmp(gfi->FindData.lpwszFileName, G.GetMsgWide(MCreateSiteConnection)) == 0) {
 		ByKey_EditSiteConnection(true);
-		return false;
-
+		return true;
 	}
 
+	StackedDir sd;
+	StackedDirCapture(sd);
 	bool out = SetDirectoryInternal(gfi->FindData.lpwszFileName, 0);
+	if (!out) {
+		StackedDirApply(sd);
+	}
 	UpdatePathInfo();
-	G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
-	G.info.Control(PANEL_ACTIVE, FCTL_CLEARSELECTION, 0, 0);
-	PanelRedrawInfo ri = {};
-	G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&ri);
+	if (out) {
+		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+		G.info.Control(PANEL_ACTIVE, FCTL_CLEARSELECTION, 0, 0);
+		PanelRedrawInfo ri = {};
+		G.info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&ri);
+	}
 
-	return out;
+	return true;
 }
 
 void PluginImpl::ByKey_EditAttributesSelected()
@@ -843,6 +849,8 @@ void PluginImpl::StackedDirCapture(StackedDir &sd)
 {
 	sd.remote = _remote;
 	sd.location = _location;
+	sd.sites_cfg_location = _sites_cfg_location;
+	sd.standalone_config = _standalone_config;
 }
 
 void PluginImpl::StackedDirApply(StackedDir &sd)
@@ -856,6 +864,8 @@ void PluginImpl::StackedDirApply(StackedDir &sd)
 		}
 	}
 	_location = sd.location;
+	_sites_cfg_location = sd.sites_cfg_location;
+	_standalone_config = sd.standalone_config;
 	UpdatePathInfo();
 }
 
@@ -873,7 +883,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		StackedDirCapture(sd);
 
 		const std::wstring &dir = GetCommandArgument(cmd);
-		if (SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {
+		if ((!_remote && (dir.empty() || dir == L".")) || SetDirectoryInternal(dir.empty() ? L"~" : dir.c_str(), 0)) {
 			_dir_stack.emplace_back(sd);
 			FakeExec();
 		}

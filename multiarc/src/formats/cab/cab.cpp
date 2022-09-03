@@ -59,7 +59,7 @@ struct CFFILE
   u2 date;
   u2 time;
   u2 attribs;
-  u1 szName[256];
+  char szName[256];
 };
 
 static int ArcHandle = -1;
@@ -155,7 +155,7 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
 	  
     if (FileHeader.iFolder == 0xFFFD || FileHeader.iFolder == 0xFFFF)
     {
-      EndPos = (char*)FileHeader.szName;
+      EndPos = FileHeader.szName;
       while (EndPos - (char*)&FileHeader < (int)sizeof(FileHeader) && *EndPos)
         EndPos++;
       if (EndPos - (char*)&FileHeader >= (int)sizeof(FileHeader))
@@ -190,7 +190,7 @@ int WINAPI _export CAB_GetArcItem(struct ArcItemInfo *Info)
   if (ReadSize < 18)
     return GETARC_READERROR;
 
-  EndPos = (char *)FileHeader.szName;
+  EndPos = FileHeader.szName;
   while (EndPos - (char*)&FileHeader < (int)sizeof(FileHeader) && *EndPos)
     EndPos++;
   if (EndPos - (char*)&FileHeader >= (int)sizeof(FileHeader))
@@ -198,7 +198,7 @@ int WINAPI _export CAB_GetArcItem(struct ArcItemInfo *Info)
 
   lseek( ArcHandle, (LONG)((EndPos-(char*)&FileHeader+1) - ReadSize), SEEK_CUR);
 
-  EndPos = (char *)FileHeader.szName;
+  EndPos = FileHeader.szName;
   if (EndPos[ 0 ] == '\\' && EndPos[ 1 ] != '\\')
     EndPos++;
 

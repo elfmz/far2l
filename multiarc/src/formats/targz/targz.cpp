@@ -142,7 +142,7 @@ HANDLE ArcHandle;
 FAR_INT64 NextPosition,FileSize;
 int ArcType;
 enum archive_format TarArchiveFormat;
-char ZipName[NM];
+static std::string ZipName;
 
 typedef int  (WINAPI *FARSTDMKLINK)(const char *Src,const char *Dest,DWORD Flags);
 
@@ -184,16 +184,14 @@ BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,i
 
   const char *NamePtr=(const char *)strrchr((char*)Name,'/');
   NamePtr=(NamePtr==NULL) ? Name:NamePtr+1;
-  strcpy(ZipName,NamePtr);
+  ZipName = NamePtr;
   const char *Dot=(const char *)strrchr((char*)NamePtr,'.');
 
   if (Dot!=NULL)
   {
-    Dot++;
-    if (strcasecmp(Dot,"tgz")==0 || strcasecmp(Dot,"taz")==0)
-      strcpy(&ZipName[Dot-NamePtr],"tar");
-    else
-      ZipName[Dot-NamePtr-1]=0;
+    ZipName.resize(Dot-NamePtr-1);
+    if (strcasecmp(Dot + 1,"tgz")==0 || strcasecmp(Dot + 1,"taz")==0)
+      ZipName+= ".tar";
   }
 
   return(TRUE);
@@ -223,7 +221,7 @@ int WINAPI _export TARGZ_GetArcItem(struct ArcItemInfo *Info)
 {
   if (ArcType!=TAR_FORMAT)
   {
-    if (*ZipName)
+    if (!ZipName.empty())
     {
       switch (ArcType)
       {
@@ -231,17 +229,17 @@ int WINAPI _export TARGZ_GetArcItem(struct ArcItemInfo *Info)
 			Info->nFileSize=FileSize.i64;
 			Info->nPhysicalSize=FileSize.i64;
 			Info->PathName=ZipName;
-			*ZipName=0;
+			ZipName.clear();
 			return(GETARC_SUCCESS);
 
 		  default:
-		    return GetArcItemGZIP(Item,Info);
+		    return GetArcItemGZIP(Info);
       }
     }
     else
       return(GETARC_EOF);
   }
-  return GetArcItemTAR(Item,Info);
+  return GetArcItemTAR(Info);
 }
 
 int GetArcItemGZIP(struct ArcItemInfo *Info)
@@ -267,7 +265,7 @@ int GetArcItemGZIP(struct ArcItemInfo *Info)
   if (ArcType==Z_FORMAT)
   {
     Info->PathName = ZipName;
-    *ZipName=0;
+    ZipName.clear();
     Info->nFileSize=FileSize.i64;
     return(GETARC_SUCCESS);
   }
@@ -294,7 +292,7 @@ int GetArcItemGZIP(struct ArcItemInfo *Info)
   } else { // workaround for tar.gz archives that has original name set but without .tar extension
            // since tar archives detection relies on extension, it should be there (#173)
     Info->PathName = cFileName;
-    const char *ZipExt = strrchr(ZipName, '.');
+    const char *ZipExt = strrchr(ZipName.c_str(), '.');
     if (ZipExt && strcasecmp(ZipExt, ".tar") == 0) {
         const char *OrigExt = strrchr(cFileName, '.');
         if (!OrigExt || strcasecmp(OrigExt, ZipExt) != 0) {
@@ -303,7 +301,7 @@ int GetArcItemGZIP(struct ArcItemInfo *Info)
     }
   }
 
-  *ZipName=0;
+  ZipName.clear();
 
   UnixTimeToFileTime(Header.FileTime,&Info->ftLastWriteTime);
 
@@ -405,12 +403,13 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
 
       if ((dwUnixMode & S_IFMT) == S_IFLNK) //TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE
       {
-        if((Info->UserData=(DWORD_PTR)MA_malloc(strlen(TAR_hdr.header.linkname)+2)) != 0)
+        const size_t UserDataSize = strlen(TAR_hdr.header.linkname)+2;
+        if((Info->UserData=(DWORD_PTR)MA_malloc(UserDataSize)) != 0)
         {
           EndPos = AdjustTARFileName (TAR_hdr.header.linkname);
-          if(TAR_hdr.header.typeflag == LNKTYPE)
-            *(char*)Info->UserData='/';
-          strncpy((char*)Info->UserData+(TAR_hdr.header.typeflag == LNKTYPE?1:0),EndPos,strlen(TAR_hdr.header.linkname)+1);
+          snprintf((char*)Info->UserData, UserDataSize, "%s%s",
+            (TAR_hdr.header.typeflag == LNKTYPE) ? "/" : "", EndPos);
+          ((char*)Info->UserData)[UserDataSize - 1] = 0;
         }
       }
 
@@ -425,7 +424,7 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
     Info->nFileSize=TarItemSize;
     Info->nPhysicalSize=TarItemSize;
 
-    strcpy(Info->HostOS,TarArchiveFormat==POSIX_FORMAT?"POSIX":(TarArchiveFormat==V7_FORMAT?"V7":""));
+    Info->HostOS = (TarArchiveFormat==POSIX_FORMAT) ? "POSIX" : (TarArchiveFormat==V7_FORMAT?"V7":"");
     Info->UnpVer=256+11+(TarArchiveFormat >= POSIX_FORMAT?1:0); //!!!
 
     FAR_INT64 PrevPosition=NextPosition;

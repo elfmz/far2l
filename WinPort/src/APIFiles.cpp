@@ -766,7 +766,7 @@ extern "C"
 			}
 
 			MB2Wide(name, _tmp.wide_name);
-			wcsncpy(wfd->cFileName, _tmp.wide_name.c_str(), MAX_NAME - 1);
+			wcsncpy(wfd->cFileName, _tmp.wide_name.c_str(), MAX_NAME);
 
 			const DWORD attrs = wfd->dwFileAttributes;
 			if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
@@ -870,7 +870,7 @@ extern "C"
 			}
 
 			LPCWSTR last_slash = wcsrchr(lpFileName, GOOD_SLASH);
-			wcsncpy(lpFindFileData->cFileName, last_slash ? last_slash + 1 : lpFileName, MAX_NAME - 1);
+			wcsncpy(lpFindFileData->cFileName, last_slash ? last_slash + 1 : lpFileName, MAX_NAME);
 			return (HANDLE)&g_unix_found_file_dummy;
 		}
 

@@ -234,7 +234,7 @@ DWORD WINAPI _export LIBARCH_GetSFXPos(void)
 }
 
 
-int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export LIBARCH_GetArcItem(struct ArcItemInfo *Info)
 {
 	try {
 		if (!s_arc)
@@ -254,37 +254,38 @@ int WINAPI _export LIBARCH_GetArcItem(struct PluginPanelItem *Item,struct ArcIte
 				break;
 			}
 		}
-		strncpy(Item->FindData.cFileName, pathname, sizeof(Item->FindData.cFileName) - 1);
+
+		Info->PathName = pathname;
 
 		uint64_t sz = archive_entry_size(entry);
 		if (sz == 0 && !archive_entry_size_is_set(entry) && s_UnpackedSizeWorkaround != nullptr) {
 			sz = s_UnpackedSizeWorkaround(s_arc.get());
 		}
 
-		Item->FindData.nFileSize = sz;
-		Item->FindData.nPhysicalSize = sz;
-		Item->FindData.dwUnixMode = archive_entry_mode(entry);
-		Item->FindData.dwFileAttributes =
-			WINPORT(EvaluateAttributesA)(Item->FindData.dwUnixMode, Item->FindData.cFileName);
+		Info->nFileSize = sz;
+		Info->nPhysicalSize = sz;
+		Info->dwUnixMode = archive_entry_mode(entry);
+		Info->dwFileAttributes =
+			WINPORT(EvaluateAttributesA)(Info->dwUnixMode, Info->PathName.c_str());
 
 		if (archive_entry_ctime_is_set(entry)) {
-			ArcTM(Item->FindData.ftCreationTime, archive_entry_ctime(entry), archive_entry_ctime_nsec(entry));
+			ArcTM(Info->ftCreationTime, archive_entry_ctime(entry), archive_entry_ctime_nsec(entry));
 		} else if (archive_entry_birthtime_is_set(entry)) {
-			ArcTM(Item->FindData.ftCreationTime, archive_entry_birthtime(entry), archive_entry_birthtime_nsec(entry));
+			ArcTM(Info->ftCreationTime, archive_entry_birthtime(entry), archive_entry_birthtime_nsec(entry));
 		} else if (archive_entry_mtime_is_set(entry)) {
-			ArcTM(Item->FindData.ftCreationTime, archive_entry_mtime(entry), archive_entry_mtime_nsec(entry));
+			ArcTM(Info->ftCreationTime, archive_entry_mtime(entry), archive_entry_mtime_nsec(entry));
 		}
 
 		if (archive_entry_mtime_is_set(entry)) {
-			ArcTM(Item->FindData.ftLastWriteTime, archive_entry_mtime(entry), archive_entry_mtime_nsec(entry));
+			ArcTM(Info->ftLastWriteTime, archive_entry_mtime(entry), archive_entry_mtime_nsec(entry));
 		} else {
-			Item->FindData.ftLastWriteTime = Item->FindData.ftCreationTime;
+			Info->ftLastWriteTime = Info->ftCreationTime;
 		}
 
 		if (archive_entry_atime_is_set(entry)) {
-			ArcTM(Item->FindData.ftLastAccessTime, archive_entry_atime(entry), archive_entry_atime_nsec(entry));
+			ArcTM(Info->ftLastAccessTime, archive_entry_atime(entry), archive_entry_atime_nsec(entry));
 		} else {
-			Item->FindData.ftLastAccessTime = Item->FindData.ftLastWriteTime;
+			Info->ftLastAccessTime = Info->ftLastWriteTime;
 		}
 
 	} catch(std::exception &e) {

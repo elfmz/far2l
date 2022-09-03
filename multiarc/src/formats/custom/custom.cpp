@@ -69,10 +69,10 @@ static void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft);
 static int StringToInt(const char *str);
 static int64_t StringToInt64(const char *str);
 static void ParseListingItemRegExp(Match match,
-    struct PluginPanelItem *Item, struct ArcItemInfo *Info,
+     struct ArcItemInfo *Info,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess);
 static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
-    struct PluginPanelItem *Item, struct ArcItemInfo *Info,
+     struct ArcItemInfo *Info,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -563,7 +563,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 }
 
 
-int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcItemInfo *Info)
+int WINAPI _export CUSTOM_GetArcItem( struct ArcItemInfo *Info)
 {
     char Str[512];
     CustomStringList *CurFormatNode = Format;
@@ -636,24 +636,24 @@ int WINAPI _export CUSTOM_GetArcItem(struct PluginPanelItem *Item, struct ArcIte
         if(re.compile(CurFormatNode->Str()))
         {
             if(Match match = re.match(Str))
-                ParseListingItemRegExp(match, Item, Info, stModification, stCreation, stAccess);
+                ParseListingItemRegExp(match, Info, stModification, stCreation, stAccess);
         }
         else
-            ParseListingItemPlain(CurFormatNode->Str(), Str, Item, Info, stModification, stCreation, stAccess);
+            ParseListingItemPlain(CurFormatNode->Str(), Str, Info, stModification, stCreation, stAccess);
 
         CurFormatNode = CurFormatNode->Next();
         if(!CurFormatNode || !CurFormatNode->Next())
         {
-            MakeFiletime(stModification, syst, &Item->FindData.ftLastWriteTime);
-            MakeFiletime(stCreation, syst, &Item->FindData.ftCreationTime);
-            MakeFiletime(stAccess, syst, &Item->FindData.ftLastAccessTime);
+            MakeFiletime(stModification, syst, &Info->ftLastWriteTime);
+            MakeFiletime(stCreation, syst, &Info->ftCreationTime);
+            MakeFiletime(stAccess, syst, &Info->ftLastAccessTime);
 
-            for(int I = strlen(Item->FindData.cFileName) - 1; I >= 0; I--)
+            for(int I = int(Info->PathName.size()) - 1; I >= 0; I--)
             {
-                int Ch = Item->FindData.cFileName[I];
+                char Ch = Info->PathName[I];
 
                 if(Ch == ' ' || Ch == '\t')
-                    Item->FindData.cFileName[I] = 0;
+                    Info->PathName.resize(I);
                 else
                     break;
             }
@@ -898,28 +898,28 @@ static int StringToIntHex(const char *str)
 }
 
 static void ParseListingItemRegExp(Match match,
-    struct PluginPanelItem *Item, struct ArcItemInfo *Info,
+     struct ArcItemInfo *Info,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
     if(const char *p = match["name"])
-        strncpy(Item->FindData.cFileName, p, sizeof(Item->FindData.cFileName)-1 );
+        Info->PathName = p;
     if(const char *p = match["description"])
-        strncpy(Info->Description, p, sizeof(Info->Description)-1 );
+        Info->Description = p;
 
-    Item->FindData.nFileSize     = StringToInt64(match["size"]);
-    Item->FindData.nPhysicalSize   = StringToInt64(match["packedSize"]);
+    Info->nFileSize     = StringToInt64(match["size"]);
+    Info->nPhysicalSize   = StringToInt64(match["packedSize"]);
 
     for(const char *p = match["attr"]; p && *p; ++p)
     {
         switch(*p)
         {
-            case 'd': case 'D': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;  break;
-            case 'h': case 'H': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;     break;
-            case 'a': case 'A': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_ARCHIVE;    break;
-            case 'r': case 'R': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;   break;
-            case 's': case 'S': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_SYSTEM;     break;
-            case 'c': case 'C': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_COMPRESSED; break;
-            case 'x': case 'X': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_EXECUTABLE; break;
+            case 'd': case 'D': Info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;  break;
+            case 'h': case 'H': Info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;     break;
+            case 'a': case 'A': Info->dwFileAttributes |= FILE_ATTRIBUTE_ARCHIVE;    break;
+            case 'r': case 'R': Info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;   break;
+            case 's': case 'S': Info->dwFileAttributes |= FILE_ATTRIBUTE_SYSTEM;     break;
+            case 'c': case 'C': Info->dwFileAttributes |= FILE_ATTRIBUTE_COMPRESSED; break;
+            case 'x': case 'X': Info->dwFileAttributes |= FILE_ATTRIBUTE_EXECUTABLE; break;
         }
     }
 
@@ -975,13 +975,13 @@ static void ParseListingItemRegExp(Match match,
     stCreation.wMinute      = StringToInt(match["cMin"]);
     stCreation.wSecond      = StringToInt(match["cSec"]);
 
-    Item->CRC32             = StringToIntHex(match["CRC"]);
+    Info->CRC32             = StringToIntHex(match["CRC"]);
 
 }
 
 
 static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
-    struct PluginPanelItem *Item, struct ArcItemInfo *Info,
+    struct ArcItemInfo *Info,
     SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
     enum
@@ -1009,25 +1009,25 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
                     CurStr++;
             break;
         case 'n':
-            strncat(Item->FindData.cFileName, CurStr, 1);
+            if (*CurStr) Info->PathName+= *CurStr;
             break;
         case 'c':
-            strncat(Info->Description, CurStr, 1);
+            if (*CurStr) Info->Description+= *CurStr;
             break;
         case '.':
             {
-                for(int I = strlen(Item->FindData.cFileName); I >= 0; I--)
-                    if(isspace(Item->FindData.cFileName[I]))
-                        Item->FindData.cFileName[I] = 0;
-                if(*Item->FindData.cFileName)
-                    strncat(Item->FindData.cFileName, ".", sizeof(Item->FindData.cFileName) );
+                for(int I = int(Info->PathName.size()) - 1; I >= 0; I--)
+                    if(isspace(Info->PathName[I]))
+                        Info->PathName.resize(I);
+                if(!Info->PathName.empty())
+                    Info->PathName+= '.';
             }
             break;
         case 'z':
             if(isdigit(*CurStr))
             {
-                Item->FindData.nFileSize*= 10;
-                Item->FindData.nFileSize+= (*CurStr - '0');
+                Info->nFileSize*= 10;
+                Info->nFileSize+= (*CurStr - '0');
             }
             else if(OP_INSIDE == OptionalPart)
             {
@@ -1038,8 +1038,8 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
         case 'p':
             if(isdigit(*CurStr))
             {
-				Item->FindData.nPhysicalSize*= 10;
-				Item->FindData.nPhysicalSize+= (*CurStr - '0');
+				Info->nPhysicalSize*= 10;
+				Info->nPhysicalSize+= (*CurStr - '0');
             }
             else if(OP_INSIDE == OptionalPart)
             {
@@ -1050,13 +1050,13 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
         case 'a':
             switch (*CurStr)
             {
-                case 'd': case 'D': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;  break;
-                case 'h': case 'H': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;     break;
-                case 'a': case 'A': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_ARCHIVE;    break;
-                case 'r': case 'R': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_READONLY;   break;
-                case 's': case 'S': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_SYSTEM;     break;
-                case 'c': case 'C': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_COMPRESSED; break;
-                case 'x': case 'X': Item->FindData.dwFileAttributes |= FILE_ATTRIBUTE_EXECUTABLE; break;
+                case 'd': case 'D': Info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;  break;
+                case 'h': case 'H': Info->dwFileAttributes |= FILE_ATTRIBUTE_HIDDEN;     break;
+                case 'a': case 'A': Info->dwFileAttributes |= FILE_ATTRIBUTE_ARCHIVE;    break;
+                case 'r': case 'R': Info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;   break;
+                case 's': case 'S': Info->dwFileAttributes |= FILE_ATTRIBUTE_SYSTEM;     break;
+                case 'c': case 'C': Info->dwFileAttributes |= FILE_ATTRIBUTE_COMPRESSED; break;
+                case 'x': case 'X': Info->dwFileAttributes |= FILE_ATTRIBUTE_EXECUTABLE; break;
             }
             break;
 // MODIFICATION DATETIME
@@ -1260,7 +1260,7 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
             if(isxdigit(toupper(*CurStr)))
             {
                 char dig_sub = (*CurStr >= 'a' ? 'a' : (*CurStr >= 'A' ? 'A' : '0'));
-                Item->CRC32 = Item->CRC32 * 16 + (*CurStr - dig_sub);
+                Info->CRC32 = Info->CRC32 * 16 + (*CurStr - dig_sub);
             }
             else if(OP_INSIDE == OptionalPart)
             {

@@ -179,7 +179,7 @@ BOOL WINAPI _export ACE_OpenArchive(const char *Name,int *Type,bool Silent)
 
 
 
-int WINAPI _export ACE_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export ACE_GetArcItem(struct ArcItemInfo *Info)
 {
   struct ACEHEADERBLOCK
   {
@@ -254,19 +254,15 @@ int WINAPI _export ACE_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
       FileHeader=(struct ACEHEADERFILE*)TempBuf;
       if(FileHeader->HeaderFlags&1)
       {
-        Item->FindData.dwFileAttributes=FileHeader->FileAttr;
-        if(FileHeader->FileNameSize)
-        {
-          if(FileHeader->FileNameSize >= (WORD)sizeof(Item->FindData.cFileName))
-            return(GETARC_BROKEN);
-          memcpy(Item->FindData.cFileName,FileHeader->FileName,FileHeader->FileNameSize);
-        }
-        Item->FindData.cFileName[FileHeader->FileNameSize]=0;
-        Item->FindData.nFileSize=FileHeader->UnpSize;
-        Item->FindData.nPhysicalSize=FileHeader->PackSize;
+        Info->dwFileAttributes=FileHeader->FileAttr;
+        if(FileHeader->FileNameSize > Block.HeaderSize - (sizeof(ACEHEADERFILE) - 1))
+          return(GETARC_BROKEN);
+        Info->PathName.assign(FileHeader->FileName,FileHeader->FileNameSize);
+        Info->nFileSize=FileHeader->UnpSize;
+        Info->nPhysicalSize=FileHeader->PackSize;
         FILETIME lft;
         WINPORT(DosDateTimeToFileTime)(FileHeader->FDate,FileHeader->FTime,&lft);
-        WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
+        WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastWriteTime);
 
         Info->Solid=FileHeader->HeaderFlags&(1<<15)?1:0;
         Info->Encrypted=FileHeader->HeaderFlags&(1<<14)?1:0;
@@ -275,8 +271,8 @@ int WINAPI _export ACE_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
         //?????
         Info->DictSize=1<<FileHeader->DictSize;
         //?????
-        strcpy(Info->HostOS,OSID[HostOS].Name);
-        Item->CRC32=FileHeader->CRC32;
+        Info->HostOS = OSID[HostOS].Name;
+        Info->CRC32=FileHeader->CRC32;
 
         NextPosition+=FileHeader->PackSize;
         break;

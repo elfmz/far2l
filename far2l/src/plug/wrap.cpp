@@ -42,7 +42,7 @@ static int PZ_to_PWZ(const char *src, wchar_t *dst, int lendst)
 }
 
 
-const char *FirstSlashA(const char *String)
+static const char *FirstSlashA(const char *String)
 {
 	do
 	{
@@ -68,7 +68,7 @@ bool FirstSlashA(const char *String,size_t &pos)
 	return Ret;
 }
 
-const char *LastSlashA(const char *String)
+static const char *LastSlashA(const char *String)
 {
 	const char *Start = String;
 
@@ -81,7 +81,7 @@ const char *LastSlashA(const char *String)
 	return IsSlashA(*String)?String:nullptr;
 }
 
-bool LastSlashA(const char *String,size_t &pos)
+static bool LastSlashA(const char *String,size_t &pos)
 {
 	bool Ret=false;
 	const char *Ptr=LastSlashA(String);
@@ -95,7 +95,7 @@ bool LastSlashA(const char *String,size_t &pos)
 	return Ret;
 }
 
-void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
+static void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
 	if (lpszAnsiString && lpwszUnicodeString && nLength)
 	{
@@ -105,22 +105,26 @@ void AnsiToUnicodeBin(const char *lpszAnsiString, wchar_t *lpwszUnicodeString, i
 	}
 }
 
-wchar_t *AnsiToUnicodeBin(const char *lpszAnsiString, int nLength, UINT CodePage=CP_UTF8)
+static wchar_t *AnsiToUnicodeBin(const char *lpszAnsiString, int nLength, UINT CodePage=CP_UTF8)
 {
 	wchar_t *lpResult = (wchar_t*)malloc(nLength*sizeof(wchar_t));
 	AnsiToUnicodeBin(lpszAnsiString,lpResult,nLength,CodePage);
 	return lpResult;
 }
 
-wchar_t *AnsiToUnicode(const char *lpszAnsiString, UINT CodePage=CP_UTF8)
+static wchar_t *AnsiToUnicode(const char *lpszAnsiString, int nMaxLength = -1, UINT CodePage = CP_UTF8)
 {
 	if (!lpszAnsiString)
 		return nullptr;
 
-	return AnsiToUnicodeBin(lpszAnsiString,(int)strlen(lpszAnsiString)+1,CodePage);
+	int nLength = (nMaxLength == -1) ? strlen(lpszAnsiString) : (int)strnlen(lpszAnsiString, nMaxLength);
+
+	wchar_t *out = AnsiToUnicodeBin(lpszAnsiString, nLength+1, CodePage);
+	out[nLength] = 0;
+	return out;
 }
 
-char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
+static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
 	/* $ 06.01.2008 TS
 		! Увеличил размер выделяемой под строку памяти на 1 байт для нормальной
@@ -163,7 +167,7 @@ char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT Code
 	return lpResult;
 }
 
-char *UnicodeToAnsi(const wchar_t *lpwszUnicodeString, UINT CodePage=CP_UTF8)
+static char *UnicodeToAnsi(const wchar_t *lpwszUnicodeString, UINT CodePage=CP_UTF8)
 {
 	if (!lpwszUnicodeString)
 		return nullptr;
@@ -171,7 +175,7 @@ char *UnicodeToAnsi(const wchar_t *lpwszUnicodeString, UINT CodePage=CP_UTF8)
 	return UnicodeToAnsiBin(lpwszUnicodeString,StrLength(lpwszUnicodeString)+1,CodePage);
 }
 
-wchar_t **ArrayAnsiToUnicode(char ** lpaszAnsiString, int iCount)
+static wchar_t **ArrayAnsiToUnicode(char ** lpaszAnsiString, int iCount)
 {
 	wchar_t** lpaResult = nullptr;
 
@@ -193,7 +197,7 @@ wchar_t **ArrayAnsiToUnicode(char ** lpaszAnsiString, int iCount)
 	return lpaResult;
 }
 
-void FreeArrayUnicode(wchar_t ** lpawszUnicodeString)
+static void FreeArrayUnicode(wchar_t ** lpawszUnicodeString)
 {
 	if (lpawszUnicodeString)
 	{
@@ -206,7 +210,7 @@ void FreeArrayUnicode(wchar_t ** lpawszUnicodeString)
 	}
 }
 
-DWORD OldKeyToKey(DWORD dOldKey)
+static DWORD OldKeyToKey(DWORD dOldKey)
 {
 	if (dOldKey&0x100)
 	{
@@ -416,7 +420,7 @@ void ConvertPanelItemA(const oldfar::PluginPanelItem *PanelItemA, PluginPanelIte
 		(*PanelItemW)[i].Flags = PanelItemA[i].Flags;
 		(*PanelItemW)[i].NumberOfLinks = PanelItemA[i].NumberOfLinks;
 		(*PanelItemW)[i].CRC32 = PanelItemA[i].CRC32;
-		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName);
+		(*PanelItemW)[i].FindData.lpwszFileName = AnsiToUnicode(PanelItemA[i].FindData.cFileName, ARRAYSIZE(PanelItemA[i].FindData.cFileName));
 
 		if (PanelItemA[i].Description)
 			(*PanelItemW)[i].Description = AnsiToUnicode(PanelItemA[i].Description);

@@ -21,6 +21,13 @@ template <class C> static size_t tzlen(const C *ptz)
 	return (etz - ptz);
 }
 
+template <class C> static size_t tnzlen(const C *ptz, size_t n)
+{
+	size_t i;
+	for (i = 0; i < n && ptz[i]; ++i);
+	return i;
+}
+
 
 unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
 unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
@@ -280,5 +287,31 @@ bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2);
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
+
+template <class POD_T>
+	void ZeroFill(POD_T &pod)
+{
+	memset(&pod, 0, sizeof(pod));
+}
+
+template <class STRING_T, typename ARRAY_T>
+	void StrAssignArray(STRING_T &s, const ARRAY_T &a)
+{
+	s.assign(a, tnzlen(a, ARRAYSIZE(a)));
+}
+
+template <class STRING_T, typename ARRAY_T>
+	void StrAppendArray(STRING_T &s, const ARRAY_T &a)
+{
+	s.append(a, tnzlen(a, ARRAYSIZE(a)));
+}
+
+
+template <class STRING_T, typename ARRAY_T>
+	bool StrMatchArray(STRING_T &s, const ARRAY_T &a)
+{
+	const size_t l = tnzlen(a, ARRAYSIZE(a));
+	return s.size() == l && s.compare(0, std::string::npos, a, l) == 0;
+}
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)

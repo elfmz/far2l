@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <assert.h>
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 
@@ -7,11 +8,10 @@ PluginClass::PluginClass(int ArcPluginNumber)
   *ArcName=0;
   *CurDir=0;
   PluginClass::ArcPluginNumber=ArcPluginNumber;
-  memset(&CurArcInfo,0,sizeof(struct ArcInfo));
-  memset(&ItemsInfo,0,sizeof(ItemsInfo));
   DizPresent=FALSE;
   bGOPIFirstCall=true;
   *farlang=0;
+  ZeroFill(CurArcInfo);
 }
 
 
@@ -24,9 +24,6 @@ void PluginClass::FreeArcData()
 {
   for (auto &I : ArcData)
   {
-    if (I.Description!=NULL)
-      delete[] I.Description;
-
     if(I.UserData && (I.Flags & PPIF_USERDATA))
     {
       struct ArcItemUserData *aud=(struct ArcItemUserData*)I.UserData;
@@ -54,6 +51,14 @@ int PluginClass::PreReadArchive(const char *Name)
   return TRUE;
 }
 
+
+static void SanitizeString(std::string &s)
+{
+	while (!s.empty() && !s.back()) {
+		s.pop_back();
+	}
+}
+
 int PluginClass::ReadArchive(const char *Name,int OpMode)
 {
   bGOPIFirstCall=true;
@@ -66,8 +71,8 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
   if (!ArcPlugin->OpenArchive(ArcPluginNumber,Name,&ArcPluginType,(OpMode & OPM_SILENT)!=0))
     return FALSE;
 
-  memset(&ItemsInfo,0,sizeof(ItemsInfo));
-  memset(&CurArcInfo,0,sizeof(CurArcInfo));
+  ItemsInfo = ArcItemInfo{};
+  ZeroFill(CurArcInfo);
   TotalSize=PackedSize=0;
 
   HANDLE hScreen=Info.SaveScreen(0,0,-1,-1);
@@ -85,11 +90,12 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
       break;
     }
 
-    struct PluginPanelItem &CurArcData = ArcData.back();
-    struct ArcItemInfo CurItemInfo;
-    memset(&CurArcData,0,sizeof(CurArcData));
-    memset(&CurItemInfo,0,sizeof(CurItemInfo));
-    GetItemCode=ArcPlugin->GetArcItem(ArcPluginNumber,&CurArcData,&CurItemInfo);
+    auto &CurItemInfo = ArcData.back();
+    GetItemCode=ArcPlugin->GetArcItem(ArcPluginNumber,&CurItemInfo);
+    SanitizeString(CurItemInfo.PathName);
+    SanitizeString(CurItemInfo.HostOS);
+    SanitizeString(CurItemInfo.Description);
+
 
     if (GetItemCode!=GETARC_SUCCESS)
     {
@@ -124,16 +130,16 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
       }
     }
 
-    if (*CurItemInfo.Description)
+    if (!CurItemInfo.Description.empty())
     {
-      CurArcData.Description=new char[strlen(CurItemInfo.Description)+1];
-      if (CurArcData.Description)
-        strcpy(CurArcData.Description,CurItemInfo.Description);
+//      CurArcData.Description=new char[strlen(CurItemInfo.Description)+1];
+//      if (CurArcData.Description)
+//        strcpy(CurArcData.Description,CurItemInfo.Description);
       DizPresent=TRUE;
     }
 
-    if (strcmp(ItemsInfo.HostOS,CurItemInfo.HostOS)!=0)
-      strcpy(ItemsInfo.HostOS,(*ItemsInfo.HostOS?GetMsg(MSeveralOS):CurItemInfo.HostOS));
+    if (ItemsInfo.HostOS != CurItemInfo.HostOS)
+      ItemsInfo.HostOS = (ItemsInfo.HostOS.empty() ? CurItemInfo.HostOS : GetMsg(MSeveralOS));
 
     if (ItemsInfo.Codepage <= 0)
       ItemsInfo.Codepage=CurItemInfo.Codepage;
@@ -143,7 +149,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
     ItemsInfo.Encrypted|=CurItemInfo.Encrypted;
 
     if (CurItemInfo.Encrypted)
-      CurArcData.Flags|=F_ENCRYPTED;
+      CurItemInfo.Flags|=F_ENCRYPTED;
 
     if (CurItemInfo.DictSize>ItemsInfo.DictSize)
       ItemsInfo.DictSize=CurItemInfo.DictSize;
@@ -151,16 +157,16 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
     if (CurItemInfo.UnpVer>ItemsInfo.UnpVer)
       ItemsInfo.UnpVer=CurItemInfo.UnpVer;
 
-    CurArcData.NumberOfLinks=1;
+    CurItemInfo.NumberOfLinks=1;
 
-    NormalizePath(CurArcData.FindData.cFileName,CurArcData.FindData.cFileName);
-    //fprintf(stderr, "PATH: %s\n", CurArcData.FindData.cFileName);
+    NormalizePath(CurItemInfo.PathName);
+    //fprintf(stderr, "PATH: %s\n", CurItemInfo.PathName.c_str());
 
     struct ArcItemUserData *aud=NULL;
     char *Pref=NULL;
 
-    char *NamePtr=CurArcData.FindData.cFileName;
-    char *EndPos=NamePtr;
+    const char *NamePtr=CurItemInfo.PathName.c_str();
+    const char *EndPos=NamePtr;
     while(*EndPos == '.') EndPos++;
     if(*EndPos == '/')
       while(*EndPos == '/') EndPos++;
@@ -176,37 +182,38 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
       }
     }
 
-    if(CurArcData.UserData || Pref || CurItemInfo.Codepage > 0)
+    if(CurItemInfo.UserData || Pref || CurItemInfo.Codepage > 0)
     {
        if((aud=(struct ArcItemUserData*)malloc(sizeof(struct ArcItemUserData))) != NULL)
        {
-         CurArcData.Flags |= PPIF_USERDATA;
+         CurItemInfo.Flags |= PPIF_USERDATA;
          aud->SizeStruct=sizeof(struct ArcItemUserData);
          aud->Prefix=Pref;
-         aud->LinkName=CurArcData.UserData?(char *)CurArcData.UserData:NULL;
+         aud->LinkName=CurItemInfo.UserData?(char *)CurItemInfo.UserData:NULL;
          aud->Codepage=CurItemInfo.Codepage;
-         CurArcData.UserData=(DWORD_PTR)aud;
+         CurItemInfo.UserData=(DWORD_PTR)aud;
        }
        else
-         CurArcData.UserData=0;
+         CurItemInfo.UserData=0;
     }
-    if(!CurArcData.UserData && Pref)
+    if(!CurItemInfo.UserData && Pref)
       free(Pref);
 
 
-    if (EndPos!=CurArcData.FindData.cFileName)
-      memmove(CurArcData.FindData.cFileName,EndPos,strlen(EndPos)+1);
-
-    int Length=strlen(CurArcData.FindData.cFileName);
-
-    if (Length>0 && (CurArcData.FindData.cFileName[Length-1]=='/'))
+    if (EndPos!=NamePtr)
     {
-      CurArcData.FindData.cFileName[Length-1]=0;
-      CurArcData.FindData.dwFileAttributes|=FILE_ATTRIBUTE_DIRECTORY;
+      assert(size_t(EndPos - NamePtr) <= CurItemInfo.PathName.size());
+      CurItemInfo.PathName.erase(0, EndPos - NamePtr);
     }
 
-    TotalSize+=CurArcData.FindData.nFileSize;
-    PackedSize+=CurArcData.FindData.nPhysicalSize;
+    if (!CurItemInfo.PathName.empty() && CurItemInfo.PathName.back() == '/')
+    {
+      CurItemInfo.PathName.pop_back();
+      CurItemInfo.dwFileAttributes|=FILE_ATTRIBUTE_DIRECTORY;
+    }
+
+    TotalSize+=CurItemInfo.nFileSize;
+    PackedSize+=CurItemInfo.nPhysicalSize;
   }
 
   Info.RestoreScreen(NULL);
@@ -278,6 +285,24 @@ bool PluginClass::EnsureFindDataUpToDate(int OpMode)
   return ReadArcOK;
 }
 
+static void ArcItemInfo2PluginPanelItem(const ArcItemInfo &aai, PluginPanelItem &ppi)
+{
+	ZeroFill(ppi);
+	ppi.FindData.ftCreationTime = aai.ftCreationTime;
+	ppi.FindData.ftLastAccessTime = aai.ftLastAccessTime;
+	ppi.FindData.ftLastWriteTime = aai.ftLastWriteTime;
+	ppi.FindData.nPhysicalSize = aai.nPhysicalSize;
+	ppi.FindData.nFileSize = aai.nFileSize;
+	ppi.FindData.dwFileAttributes = aai.dwFileAttributes;
+	ppi.FindData.dwUnixMode = aai.dwUnixMode;
+	strncpy(ppi.FindData.cFileName, aai.PathName.c_str(), ARRAYSIZE(ppi.FindData.cFileName));
+	ppi.UserData = aai.UserData;
+	ppi.Flags = aai.Flags;
+	ppi.NumberOfLinks = aai.NumberOfLinks;
+	ppi.CRC32 = aai.CRC32;
+    ppi.Description = aai.Description.empty() ? nullptr : (char *)aai.Description.c_str();
+}
+
 int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
 {
   if (!EnsureFindDataUpToDate(OpMode))
@@ -289,8 +314,8 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
   int AlocatedItemsNumber=0;
   for (const auto &I : ArcData)
   {
-    auto CurItem = I;
-    const char *Name = I.FindData.cFileName;
+    ArcItemInfo CurItem = I;
+    const char *Name = I.PathName.c_str();
     BOOL Append=FALSE;
 
     if (Name[0]==GOOD_SLASH)
@@ -308,26 +333,28 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
       if (Slash != NULL)
       {
         NameLen = Slash - StartName;
-        CurItem.FindData.dwFileAttributes=FILE_ATTRIBUTE_DIRECTORY;
-        CurItem.FindData.nFileSize=0;
-        CurItem.FindData.nPhysicalSize=0;
+        CurItem.dwFileAttributes=FILE_ATTRIBUTE_DIRECTORY;
+        CurItem.nFileSize=0;
+        CurItem.nPhysicalSize=0;
       } else
 		NameLen = strlen(StartName);
 
-      if (NameLen >= sizeof(CurItem.FindData.cFileName))
-        NameLen = sizeof(CurItem.FindData.cFileName) - 1;
-      memcpy(CurItem.FindData.cFileName,StartName,NameLen);
-      CurItem.FindData.cFileName[NameLen] = 0;
+	  if (StartName	!= Name)
+      {
+        assert(size_t(StartName - Name) <= I.PathName.size());
+        CurItem.PathName.erase(0, StartName - Name);
+      }
+      CurItem.PathName.resize(NameLen);
       Append=TRUE;
 
-      if (CurItem.FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+      if (CurItem.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
       {
         for (int J=0; J < *pItemsNumber; J++)
           if ((*pPanelItem)[J].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            if (strcmp(CurItem.FindData.cFileName,(*pPanelItem)[J].FindData.cFileName)==0)
+            if (StrMatchArray(CurItem.PathName, (*pPanelItem)[J].FindData.cFileName))
             {
               Append=FALSE;
-              (*pPanelItem)[J].FindData.dwFileAttributes |= CurItem.FindData.dwFileAttributes;
+              (*pPanelItem)[J].FindData.dwFileAttributes |= CurItem.dwFileAttributes;
             }
       }
     }
@@ -345,7 +372,8 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
 
         *pPanelItem=NewPanelItem;
       }
-      NewPanelItem[*pItemsNumber]=CurItem;
+      ArcItemInfo2PluginPanelItem(CurItem, NewPanelItem[*pItemsNumber]);
+      //NewPanelItem[*pItemsNumber]=CurItem;
       (*pItemsNumber)++;
     }
 
@@ -392,7 +420,7 @@ int PluginClass::SetDirectory(const char *Dir,int OpMode)
 
     for (const auto &I : ArcData)
     {
-      const char *CurName=I.FindData.cFileName;
+      const char *CurName=I.PathName.c_str();
 
       if (strlen(CurName)>=CurDirLength+NewDirLength && strncmp(CurName+CurDirLength,Dir,NewDirLength)==0)
       {
@@ -475,8 +503,8 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
       FSF.sprintf(InfoLines[1].Data+strlen(InfoLines[1].Data)," %d.%d",
               ItemsInfo.UnpVer/256,ItemsInfo.UnpVer%256);
 
-    if (*ItemsInfo.HostOS)
-      FSF.sprintf(InfoLines[1].Data+strlen(InfoLines[1].Data),"/%s",ItemsInfo.HostOS);
+    if (!ItemsInfo.HostOS.empty())
+      FSF.sprintf(InfoLines[1].Data+strlen(InfoLines[1].Data),"/%s",ItemsInfo.HostOS.c_str());
 
     strcpy(InfoLines[2].Text,GetMsg(MInfoArcType));
 

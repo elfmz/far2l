@@ -145,11 +145,10 @@ BOOL ArcPlugins::OpenArchive(int PluginNumber, const char *Name,int *Type,bool S
   return FALSE;
 }
 
-int ArcPlugins::GetArcItem(int PluginNumber,struct PluginPanelItem *Item,
-                           struct ArcItemInfo *Info)
+int ArcPlugins::GetArcItem(int PluginNumber, struct ArcItemInfo *Info)
 {
   if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetArcItem)
-    return PluginsData[PluginNumber].pGetArcItem(Item,Info);
+    return PluginsData[PluginNumber].pGetArcItem(Info);
   return FALSE;
 }
 

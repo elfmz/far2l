@@ -1,11 +1,13 @@
 #include "Globals.h"
 #include "PluginImpl.h"
+#include <utils.h>
 
 
 bool PluginImpl::AddUnsized(FP_SizeItemList &il, const char *name, DWORD attrs)
 {
-	PluginPanelItem tmp = {};
-	strncpy(tmp.FindData.cFileName, name, sizeof(tmp.FindData.cFileName) - 1 );
+	PluginPanelItem tmp;
+	ZeroFill(tmp); // ensure zeroed padding after tmp.FindData.cFileName
+	strncpy(tmp.FindData.cFileName, name, ARRAYSIZE(tmp.FindData.cFileName));
 	tmp.FindData.dwFileAttributes = attrs;
 	tmp.Description = tmp.FindData.cFileName;
 	return il.Add(&tmp);
@@ -28,7 +30,8 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 
 	if(!IS_SILENT(OpMode))
 	{
-		PluginPanelItem tmp = {};
+		PluginPanelItem tmp;
+		ZeroFill(tmp); // ensure zeroed padding after tmp.FindData.cFileName
 		strcpy(tmp.FindData.cFileName, "..");
 		tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
@@ -114,13 +117,14 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		if (!data_path.empty() && data_path[data_path.size() - 1] != '/') {
 			data_path+= '/';
 		}
-		data_path+= PanelItem[i].FindData.cFileName;
-
+		
+		const size_t name_ofs = data_path.size();
+		StrAppendArray(data_path, PanelItem[i].FindData.cFileName);
 		uint64_t len = PanelItem[i].FindData.nFileSize;
 
-		bool rv = OnGetFile(PanelItem[i].FindData.cFileName, data_path.c_str(), len);
+		bool rv = OnGetFile(data_path.c_str() + name_ofs, data_path.c_str(), len);
 		fprintf(stderr, "Inside::GetFiles[%i]: %s '%s'\n",
-			i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
+			i, rv ? "OK" : "ERROR", data_path.c_str() + name_ofs);
 	}
 
 	return out;
@@ -137,16 +141,18 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 	sdc_getcwd(cd, sizeof(cd) - 1);
 	std::string data_path;
 	for (int i = 0; i < ItemsNumber; ++i) {
+		size_t name_ofs = 0;
 		if (PanelItem[i].FindData.cFileName[0] != '/') {
 			data_path = cd;
 			data_path+= '/';
-			data_path+= PanelItem[i].FindData.cFileName;
+			name_ofs = data_path.size();
+			StrAppendArray(data_path, PanelItem[i].FindData.cFileName);
 		} else
-			data_path = PanelItem[i].FindData.cFileName;
+			StrAssignArray(data_path, PanelItem[i].FindData.cFileName);
 
-		bool rv = OnPutFile(PanelItem[i].FindData.cFileName, data_path.c_str());
+		bool rv = OnPutFile(data_path.c_str() + name_ofs, data_path.c_str());
 		fprintf(stderr, "Inside::PutFiles[%i]: %s '%s'\n",
-			i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
+			i, rv ? "OK" : "ERROR", data_path.c_str() + name_ofs);
 
 		if (!rv)
 			out = FALSE;
@@ -160,10 +166,12 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 	if (ItemsNumber == 0 )
 		return FALSE;
 
+	std::string safe_name;
 	for (int i = 0; i < ItemsNumber; ++i) {
-		bool rv = OnDeleteFile(PanelItem[i].FindData.cFileName);
+		StrAssignArray(safe_name, PanelItem[i].FindData.cFileName);
+		bool rv = OnDeleteFile(safe_name.c_str());
 		fprintf(stderr, "Inside::DeleteFiles[%i]: %s '%s'\n",
-			i, rv ? "OK" : "ERROR", PanelItem[i].FindData.cFileName);
+			i, rv ? "OK" : "ERROR", safe_name.c_str());
 	}
 
 	return TRUE;

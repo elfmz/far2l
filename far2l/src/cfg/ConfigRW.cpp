@@ -21,43 +21,37 @@ static bool IsSectionOrSubsection(const std::string &haystack, const char *needl
 	return true;
 }
 
-static const char *Section2Ini(const std::string &section)
+static const struct SectionProps
 {
-	if (IsSectionOrSubsection(section, "KeyMacros"))
-		return "settings/key_macros.ini";
+	const char *name;
+	const char *ini;
+	bool case_insensitive;
+} s_default_section_props = { "", CONFIG_INI, false };
 
-	if (IsSectionOrSubsection(section, "Associations"))
-		return "settings/associations.ini";
+static const SectionProps s_section_props [] = {
+	{"KeyMacros", "settings/key_macros.ini", true},
+	{"Associations", "settings/associations.ini", false},
+	{"Panel", "settings/panel.ini", false},
+	{"CodePages", "settings/codepages.ini", false},
+	{"XLat", "settings/xlat.ini", false},
+	{"Colors", "settings/colors.ini", false},
+	{"SortGroups", "settings/colors.ini", false},
+	{"UserMenu", "settings/user_menu.ini", false},
+	{"SavedDialogHistory", "history/dialogs.hst", false},
+	{"SavedHistory", "history/commands.hst", false},
+	{"SavedFolderHistory", "history/folders.hst", false},
+	{"SavedViewHistory", "history/view.hst", false}
+};
 
-	if (IsSectionOrSubsection(section, "Panel"))
-		return "settings/panel.ini";
+static const SectionProps &GetSectionProps(const std::string &section)
+{
+	for (const auto &sp : s_section_props) {
+		if (IsSectionOrSubsection(section, sp.name)) {
+			return sp;
+		}
+	}
 
-	if (IsSectionOrSubsection(section, "CodePages"))
-		return "settings/codepages.ini";
-
-	if (IsSectionOrSubsection(section, "XLat"))
-		return "settings/xlat.ini";
-
-	if (IsSectionOrSubsection(section, "Colors")
-		|| IsSectionOrSubsection(section, "SortGroups") )
-		return "settings/colors.ini";
-
-	if (IsSectionOrSubsection(section, "UserMenu"))
-		return "settings/user_menu.ini";
-
-	if (IsSectionOrSubsection(section, "SavedDialogHistory"))
-		return "history/dialogs.hst";
-
-	if (IsSectionOrSubsection(section, "SavedHistory"))
-		return "history/commands.hst";
-
-	if (IsSectionOrSubsection(section, "SavedFolderHistory"))
-		return "history/folders.hst";
-
-	if (IsSectionOrSubsection(section, "SavedViewHistory"))
-		return "history/view.hst";
-
-	return CONFIG_INI;
+	return s_default_section_props;
 }
 
 void ConfigSection::SelectSection(const std::string &section)
@@ -96,7 +90,7 @@ ConfigReader::ConfigReader(const std::string &preselect_section)
 struct stat ConfigReader::SavedSectionStat(const std::string &section)
 {
 	struct stat out;
-	if (stat(InMyConfig(Section2Ini(section)).c_str(), &out) == -1) {
+	if (stat(InMyConfig(GetSectionProps(section).ini).c_str(), &out) == -1) {
 		memset(&out, 0, sizeof(out));
 	}
 	return out;
@@ -104,10 +98,10 @@ struct stat ConfigReader::SavedSectionStat(const std::string &section)
 
 void ConfigReader::OnSectionSelected()
 {
-	const char *ini = Section2Ini(_section);
-	auto &selected_kfh = _ini2kfh[ini];
+	const auto &sp = GetSectionProps(_section);
+	auto &selected_kfh = _ini2kfh[sp.ini];
 	if (!selected_kfh) {
-		selected_kfh.reset(new KeyFileReadHelper(InMyConfig(ini)));
+		selected_kfh.reset(new KeyFileReadHelper(InMyConfig(sp.ini), nullptr, sp.case_insensitive));
 	}
 	_selected_kfh = selected_kfh.get();
 	_selected_section_values = _selected_kfh->GetSectionValues(_section);
@@ -223,10 +217,10 @@ bool ConfigWriter::Save()
 
 void ConfigWriter::OnSectionSelected()
 {
-	const char *ini = Section2Ini(_section);
-	auto &selected_kfh = _ini2kfh[ini];
+	const auto &sp = GetSectionProps(_section);
+	auto &selected_kfh = _ini2kfh[sp.ini];
 	if (!selected_kfh) {
-		selected_kfh.reset(new KeyFileHelper(InMyConfig(ini)));
+		selected_kfh.reset(new KeyFileHelper(InMyConfig(sp.ini), true, sp.case_insensitive));
 	}
 	_selected_kfh =	selected_kfh.get();
 

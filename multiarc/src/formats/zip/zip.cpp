@@ -26,20 +26,15 @@ using namespace oldfar;
 # define ZIP_LIBARCHIVE 0
 #endif
 
-static BOOL CPToUTF8( UINT cp, LPCSTR s, LPSTR d, int dlen )
+static void CPToUTF8( UINT cp, std::string &s )
 {
-	if (!s || !d || dlen<=1 )
-		return FALSE;
-
-	std::vector<wchar_t> buf((1 + strlen( s )) * 2);
-
-	int r = WINPORT(MultiByteToWideChar)( cp, 0, s, -1, &buf[0], buf.size() );
-	if (r >= 0) {
-		r = WINPORT(WideCharToMultiByte)( CP_UTF8, 0, &buf[0], r, d, dlen - 1, NULL, NULL );
-		d[ (r >= 0) ? r : 0 ] = 0;
-	} else
-		d[0] = 0;
-	return TRUE;
+	if (!s.empty()) {
+		std::vector<wchar_t> buf((1 + s.size()) * 2 + 1);
+		int r = WINPORT(MultiByteToWideChar)( cp, 0, s.c_str(), -1, &buf[0], buf.size() - 1 );
+		if (r >= 0) {
+			Wide2MB(&buf[0], s);
+		}
+	}
 }
 
 #if defined(__BORLANDC__)
@@ -219,7 +214,7 @@ BOOL WINAPI _export ZIP_OpenArchive(const char *Name,int *Type,bool Silent)
 }
 
 
-int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 {
   struct ZipHd1
   {
@@ -306,7 +301,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
         {
           bTruncated=true;
           NextPosition.QuadPart=SFXSize.QuadPart;
-          return(ZIP_GetArcItem(Item,Info));
+          return(ZIP_GetArcItem(Info));
         }
       }
       else
@@ -334,25 +329,22 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (ZipHeader.Mark==0x07064b50) //EOCD64Locator
   {
     NextPosition.QuadPart+= 20;
-    return ZIP_GetArcItem(Item,Info);
+    return ZIP_GetArcItem(Info);
   }
   
-  DWORD SizeToRead=(ZipHeader.NameLen<ARRAYSIZE(Item->FindData.cFileName)-1) ? ZipHeader.NameLen : ARRAYSIZE(Item->FindData.cFileName)-1;
-  if (!WINPORT(ReadFile)(ArcHandle,Item->FindData.cFileName,SizeToRead,&ReadSize,NULL) ||
+  char cFileName[NM + 1] = {0};
+  DWORD SizeToRead=std::min(DWORD(ZipHeader.NameLen), DWORD(ARRAYSIZE(cFileName)-1));
+  if (!WINPORT(ReadFile)(ArcHandle,cFileName,SizeToRead,&ReadSize,NULL) ||
       ReadSize!=SizeToRead)
     return(GETARC_READERROR);
     
-  Item->FindData.cFileName[ARRAYSIZE(Item->FindData.cFileName)-1]=0;
-
-  char *EndPos = Item->FindData.cFileName;
-  while( *EndPos ) EndPos++;
-
-  Item->FindData.nFileSize=ZipHeader.UnpSize;
-  Item->FindData.nPhysicalSize=ZipHeader.PackSize;
-  Item->CRC32=ZipHeader.CRC;
+  Info->PathName.assign(cFileName, strnlen(cFileName, ReadSize));
+  Info->nFileSize=ZipHeader.UnpSize;
+  Info->nPhysicalSize=ZipHeader.PackSize;
+  Info->CRC32=ZipHeader.CRC;
   FILETIME lft;
   WINPORT(DosDateTimeToFileTime)(HIWORD(ZipHeader.ftime),LOWORD(ZipHeader.ftime),&lft);
-  WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
+  WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastWriteTime);
   if (ZipHeader.Flags & 1)
     Info->Encrypted=TRUE;
   if (ZipHeader.CommLen > 0)
@@ -362,7 +354,7 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
                         "Win32","SMS/QDOS","Acorn RISC OS","Win32 VFAT","MVS",
                         "BeOS","Tandem"};
   if (ZipHeader.PackOS<ARRAYSIZE(ZipOS))
-    strncpy(Info->HostOS,ZipOS[ZipHeader.PackOS],ARRAYSIZE(Info->HostOS)-1);
+    Info->HostOS = ZipOS[ZipHeader.PackOS];
 
   Info->Codepage = 0;
 
@@ -371,11 +363,11 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     ;
 
   } else if (ZipHeader.PackOS==11 && ZipHeader.PackVer>=20) { // && ZipHeader.PackVer<25
-    CPToUTF8(CP_ACP, Item->FindData.cFileName,Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+    CPToUTF8(CP_ACP, Info->PathName);
     Info->Codepage = WINPORT(GetACP)();
 
   } else if (ZipHeader.PackOS==11 || ZipHeader.PackOS==0) {
-    CPToUTF8(CP_OEMCP, Item->FindData.cFileName, Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName));
+    CPToUTF8(CP_OEMCP, Info->PathName);
     Info->Codepage = WINPORT(GetOEMCP)();
   }
 
@@ -383,17 +375,17 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   Info->DictSize=32;
   
   if ((ZipHeader.PackOS==3 || ZipHeader.PackOS==7) && (ZipHeader.Attr&0xffff0000)!=0) {
-    Item->FindData.dwUnixMode = ZipHeader.Attr>>16;
-    if ((Item->FindData.dwUnixMode & S_IFMT) == 0) {
-      Item->FindData.dwUnixMode|= S_IFREG;
+    Info->dwUnixMode = ZipHeader.Attr>>16;
+    if ((Info->dwUnixMode & S_IFMT) == 0) {
+      Info->dwUnixMode|= S_IFREG;
     }
-    Item->FindData.dwFileAttributes = WINPORT(EvaluateAttributesA)(Item->FindData.dwUnixMode, Item->FindData.cFileName);
+    Info->dwFileAttributes = WINPORT(EvaluateAttributesA)(Info->dwUnixMode, Info->PathName.c_str());
   } else {
-    Item->FindData.dwUnixMode = 0;
-    Item->FindData.dwFileAttributes = ZipHeader.Attr & 0x3f;
+    Info->dwUnixMode = 0;
+    Info->dwFileAttributes = ZipHeader.Attr & 0x3f;
   }
 
-  memset(Info->Description, 0, sizeof(Info->Description));
+  Info->Description.clear();
 
   // Search for extra block
   ULARGE_INTEGER ExtraFieldEnd;
@@ -451,9 +443,9 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
                   || ReadSize!=sizeof(Times) )
             return(GETARC_READERROR);
 
-          Item->FindData.ftLastWriteTime = Times.Modification;
-          Item->FindData.ftLastAccessTime = Times.Access;
-          Item->FindData.ftCreationTime = Times.Creation;
+          Info->ftLastWriteTime = Times.Modification;
+          Info->ftLastAccessTime = Times.Access;
+          Info->ftCreationTime = Times.Creation;
         }
       }
     }
@@ -474,11 +466,11 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 
      if (BlockHead.Length>=4)
      {
-       Item->FindData.nFileSize=ZIP64.OriginalSize.QuadPart;
+       Info->nFileSize=ZIP64.OriginalSize.QuadPart;
      }
      if (BlockHead.Length>=8)
      {
-       Item->FindData.nPhysicalSize=ZIP64.CompressedSize.QuadPart;
+       Info->nPhysicalSize=ZIP64.CompressedSize.QuadPart;
      }
     }
     else if ((0x7075==BlockHead.Type || 0x6375==BlockHead.Type) // Unicode Path Extra Field || Unicode Comment Extra Field
@@ -491,18 +483,18 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
 			return(GETARC_READERROR);
 		if (!WINPORT(ReadFile)(ArcHandle, &strcrc, sizeof(strcrc), &ReadSize, NULL) || ReadSize != sizeof(strcrc) )
 			return(GETARC_READERROR);
-		if (!WINPORT(ReadFile)(ArcHandle, &strbuf[0], strbuf.size()-1, &ReadSize, NULL) || ReadSize != strbuf.size()-1 )
+		if (!WINPORT(ReadFile)(ArcHandle, strbuf.data(), strbuf.size()-1, &ReadSize, NULL) || ReadSize != strbuf.size()-1 )
 			return(GETARC_READERROR);
 		if (version!=1)
 			fprintf(stderr, "ZIP: Unicode Extra Field 0x%x unknown version %u\n", BlockHead.Type, version);
 		
 		if (0x7075==BlockHead.Type) {
-			strncpy(Item->FindData.cFileName, &strbuf[0], ARRAYSIZE(Item->FindData.cFileName) - 1);
+			Info->PathName = strbuf.data();
 #if ZIP_LIBARCHIVE	// if libarchive not used need to pass non-UTF8 codepage to zip/unzip workarounds
 			Info->Codepage = 0;
 #endif
 		} else {
-			strncpy(Info->Description, &strbuf[0], ARRAYSIZE(Info->Description) - 1);
+			Info->Description = strbuf.data();
 		}
 	}
 	else // Move to extra block end
@@ -516,19 +508,20 @@ int WINAPI _export ZIP_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (ZipHeader.CommLen>0)
   {
 	  ReadSize = 0;
-	  if (!Info->Description[0]) //we could already get UTF-8 description
+	  if (!Info->Description.empty()) //we could already get UTF-8 description
 	  {
-		DWORD SizeToRead = (ZipHeader.CommLen>255) ? 255 : ZipHeader.CommLen;
-
-		if (!WINPORT(ReadFile)(ArcHandle, Info->Description, SizeToRead, &ReadSize, NULL)
+		char Description[255];
+		DWORD SizeToRead = std::min(DWORD(ZipHeader.CommLen), DWORD(ARRAYSIZE(Description)));
+		if (!WINPORT(ReadFile)(ArcHandle, Description, SizeToRead, &ReadSize, NULL)
             || ReadSize != SizeToRead ) return(GETARC_READERROR);
+        Info->Description.assign(Description, ReadSize);
 	  }
 	// Skip comment tail
     WINPORT(SetFilePointer)(ArcHandle, ZipHeader.CommLen - ReadSize, NULL, FILE_CURRENT);
   }
 
   ULARGE_INTEGER SeekLen;
-  SeekLen.QuadPart = bTruncated ? Item->FindData.nPhysicalSize : 0;
+  SeekLen.QuadPart = bTruncated ? Info->nPhysicalSize : 0;
   WINPORT(SetFilePointer)(ArcHandle,SeekLen.u.LowPart,(PLONG)&SeekLen.u.HighPart,FILE_CURRENT);
   NextPosition.QuadPart=GetFilePosition(ArcHandle);
   return(GETARC_SUCCESS);

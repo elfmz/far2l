@@ -2,6 +2,7 @@
 #include "PluginImplELF.h"
 #include "Dumper.h"
 #include "ELFInfo.h"
+#include <utils.h>
 
 
 #define STR_DISASM		"Disassembly"
@@ -11,7 +12,8 @@
 
 static bool AddBinFile(FP_SizeItemList &il, const char *prefix, uint64_t ofs, uint64_t len)
 {
-	PluginPanelItem tmp = {};
+	PluginPanelItem tmp;
+	ZeroFill(tmp); // ensure zeroed padding after tmp.FindData.cFileName
 	snprintf(tmp.FindData.cFileName, sizeof(tmp.FindData.cFileName) - 1,
 		"%s@%llx.bin", prefix, (unsigned long long)ofs);
 	tmp.FindData.nFileSize = len;

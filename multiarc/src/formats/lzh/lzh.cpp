@@ -214,7 +214,7 @@ static void ReadOverflowable(HANDLE Handle, DWORD ChunkSize, void *Buf, DWORD Bu
     WINPORT(SetFilePointer)(Handle, ChunkSize - BufSize, NULL, FILE_CURRENT);
 }
 
-int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export LZH_GetArcItem(struct ArcItemInfo *Info)
 {
   LZH_Header LzhHeader;
 
@@ -362,8 +362,9 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
              ? bytes  Comments
              2 bytes  Next header size
           */
-          ReadOverflowable(ArcHandle,NextHeaderSize-3,Info->Description,ARRAYSIZE(Info->Description)-1,&ReadSize);
-          Info->Description[ReadSize]=0;
+          char Description[256] = {0};
+          ReadOverflowable(ArcHandle,NextHeaderSize-3,Description,ARRAYSIZE(Description),&ReadSize);
+          Info->Description.assign(Description, ReadSize);
           break;
         }
 
@@ -382,7 +383,7 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     if (FileName[I]=='\xff' || FileName[I]=='\\')
        FileName[I]='/';
 
-  Item->CRC32=(DWORD)CRC16;
+  Info->CRC32=(DWORD)CRC16;
 
   // correct NextPosition
   DWORD PrevPosition=NextPosition;
@@ -395,27 +396,28 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   if (PrevPosition>=NextPosition || PathSize>NM)
     return(GETARC_BROKEN);
 
-  snprintf(Item->FindData.cFileName, ARRAYSIZE(Item->FindData.cFileName) - 1, "%s%s", PathName, FileName);
+  StrAssignArray(Info->PathName, PathName);
+  StrAppendArray(Info->PathName, FileName);
 
-  Item->FindData.dwFileAttributes=Attr;
+  Info->dwFileAttributes=Attr;
 
   //<????>
   if(LzhHeader.l0.Method == '0' || (LzhHeader.l0.Method == '4' && LzhHeader.l0.HeadID[2] == 'z'))
-    Item->FindData.nPhysicalSize=LzhHeader.l0.UnpSize;
+    Info->nPhysicalSize=LzhHeader.l0.UnpSize;
   else
-    Item->FindData.nPhysicalSize=(LzhHeader.l0.Method == 'd')?0:LzhHeader.l0.PackSize;
+    Info->nPhysicalSize=(LzhHeader.l0.Method == 'd')?0:LzhHeader.l0.PackSize;
   //</????>
-  Item->FindData.nFileSize=LzhHeader.l0.UnpSize;
+  Info->nFileSize=LzhHeader.l0.UnpSize;
 
   FILETIME lft;
   if(LzhHeader.l0.FLevel == 2) // level-2, Original file time stamp(UNIX type, seconds since 1970)
   {
-    UnixTimeToFileTime(MAKELONG(LzhHeader.l0.FTime,LzhHeader.l0.FDate),&Item->FindData.ftLastWriteTime);
+    UnixTimeToFileTime(MAKELONG(LzhHeader.l0.FTime,LzhHeader.l0.FDate),&Info->ftLastWriteTime);
   }
   else  // Original file date/time (Generic time stamp)
   {
     WINPORT(DosDateTimeToFileTime)(LzhHeader.l0.FDate,LzhHeader.l0.FTime,&lft);
-    WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
+    WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastWriteTime);
   }
 
   // OS ID - Host OS
@@ -423,7 +425,7 @@ int WINAPI _export LZH_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   {
     if(OSID[I].Type == OsId)
     {
-      strcpy(Info->HostOS,OSID[I].Name);
+      Info->HostOS = OSID[I].Name;
       break;
     }
   }

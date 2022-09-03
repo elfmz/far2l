@@ -227,7 +227,7 @@ BOOL WINAPI _export ARJ_OpenArchive(const char *Name,int *Type,bool Silent)
 }
 
 
-int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export ARJ_GetArcItem(struct ArcItemInfo *Info)
 {
   struct ARJHd2
   {
@@ -312,7 +312,7 @@ int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
   Name[sizeof(Name)-1]=0;
   if (Name[strlen(Name)+1]!=0)
     Info->Comment=TRUE;
-  strncpy(Item->FindData.cFileName,Name,ARRAYSIZE(Item->FindData.cFileName)-1);
+  Info->PathName = Name;
 
   DWORD PrevPosition=NextPosition;
   NextPosition+=8+ArjHeader.HeadSize;
@@ -331,32 +331,32 @@ int WINAPI _export ARJ_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
     Info->Encrypted=TRUE;
   Info->DictSize=32;
 
-  Item->CRC32=ArjHeader.CRC;
+  Info->CRC32=ArjHeader.CRC;
   if (ArjHeader.HostOS == 2 || ArjHeader.HostOS == 4)
-    Item->FindData.dwUnixMode=ArjHeader.AccessMode & 0777;
+    Info->dwUnixMode=ArjHeader.AccessMode & 0777;
   else
-    Item->FindData.dwFileAttributes=ArjHeader.AccessMode & 0x3f;
-  Item->FindData.nPhysicalSize=ArjHeader.PackSize;
-  Item->FindData.nFileSize=ArjHeader.UnpSize;
+    Info->dwFileAttributes=ArjHeader.AccessMode & 0x3f;
+  Info->nPhysicalSize=ArjHeader.PackSize;
+  Info->nFileSize=ArjHeader.UnpSize;
 
   FILETIME lft;
   WINPORT(DosDateTimeToFileTime)(HIWORD(ArjHeader.ftime),LOWORD(ArjHeader.ftime),&lft);
-  WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
+  WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastWriteTime);
 
   if(ArjHeader.ARJVer >= 0x09 &&                                 // ??? 2.62 ???
      (sizeof(ArjHeader)-sizeof(DWORD)*5) < ArjHeader.FirstHeadSize) // 5 = (Mark+HeadSize)+Extra1+atime+ctime+FSizeVol
   {
     WINPORT(DosDateTimeToFileTime)(HIWORD(ArjHeader.atime),LOWORD(ArjHeader.atime),&lft);
-    WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastAccessTime);
+    WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastAccessTime);
     WINPORT(DosDateTimeToFileTime)(HIWORD(ArjHeader.ctime),LOWORD(ArjHeader.ctime),&lft);
-    WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftCreationTime);
+    WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftCreationTime);
   }
 
   Info->Chapter=ArjHeader.LastChapter; //???? FirstChapter ????
 
   Info->UnpVer=(ArjHeader.ARJExtrVer/10)*256+(ArjHeader.ARJExtrVer%10);
   if (ArjHeader.HostOS<ARRAYSIZE(ArjOS))
-    strcpy(Info->HostOS,ArjOS[ArjHeader.HostOS]);
+    Info->HostOS = ArjOS[ArjHeader.HostOS];
 
   return(GETARC_SUCCESS);
 }

@@ -26,6 +26,8 @@
 #endif
 
 #include "../../WinPort/WinCompat.h"
+#include <string>
+#include <utils.h>
 
 enum GETARC_CODE
 {
@@ -38,15 +40,29 @@ enum GETARC_CODE
 
 struct ArcItemInfo
 {
-  char HostOS[32];
-  char Description[256];
-  int Solid;
-  int Comment;
-  int Encrypted;
-  int DictSize;
-  int UnpVer;
-  int Chapter;
-  int Codepage;
+  int Solid{};
+  int Comment{};
+  int Encrypted{};
+  int DictSize{};
+  int UnpVer{};
+  int Chapter{};
+  int Codepage{};
+
+  FILETIME ftCreationTime{};
+  FILETIME ftLastAccessTime{};
+  FILETIME ftLastWriteTime{};
+  DWORD64  nPhysicalSize{};
+  DWORD64  nFileSize{};
+  DWORD    dwFileAttributes{};
+  DWORD    dwUnixMode{};
+  DWORD_PTR            UserData{};
+  DWORD                Flags{};
+  DWORD                NumberOfLinks{};
+  DWORD                CRC32{};
+
+  std::string     PathName;
+  std::string     HostOS;
+  std::string     Description;
 };
 
 enum ARCINFO_FLAGS
@@ -80,7 +96,7 @@ void  WINAPI _export SetFarInfo(const struct PluginStartupInfo *Info);
 BOOL  WINAPI _export IsArchive(const char *Name,const unsigned char *Data,int DataSize);
 DWORD WINAPI _export GetSFXPos(void);
 BOOL  WINAPI _export OpenArchive(const char *Name,int *TypeArc);
-int   WINAPI _export GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info);
+int   WINAPI _export GetArcItem(struct ArcItemInfo *Info);
 BOOL  WINAPI _export CloseArchive(struct ArcInfo *Info);
 BOOL  WINAPI _export GetFormatName(int TypeArc,char *FormatName,char *DefaultExt);
 BOOL  WINAPI _export GetDefaultCommands(int TypeArc,int Command,char *Dest);

@@ -113,7 +113,7 @@ public:
 		return _valid;
 	}
 	
-	int Next(struct PluginPanelItem *Item, struct ArcItemInfo *Info)
+	int Next(struct ArcItemInfo *Info)
 	{
 		if (!_valid)
 			return GETARC_READERROR;
@@ -159,15 +159,15 @@ public:
 		++_index;
 		
 		attribs&=~ (FILE_ATTRIBUTE_BROKEN | FILE_ATTRIBUTE_EXECUTABLE);
-		strncpy(Item->FindData.cFileName, name.c_str(), ARRAYSIZE(Item->FindData.cFileName)-1);
-		Item->FindData.dwFileAttributes = attribs;
-		Item->FindData.dwUnixMode = is_dir ? 0755 : 0644;
-		Item->FindData.nFileSize = file_size;
-		Item->FindData.nPhysicalSize = packed_size;
-		Item->CRC32 = crc32;
+		Info->PathName = name;
+		Info->dwFileAttributes = attribs;
+		Info->dwUnixMode = is_dir ? 0755 : 0644;
+		Info->nFileSize = file_size;
+		Info->nPhysicalSize = packed_size;
+		Info->CRC32 = crc32;
 		
-		Item->FindData.ftLastWriteTime = ftm;
-		Item->FindData.ftCreationTime = ftc;
+		Info->ftLastWriteTime = ftm;
+		Info->ftCreationTime = ftc;
 		
 
 		Info->Solid = 0;
@@ -211,12 +211,12 @@ BOOL WINAPI _export SEVENZ_OpenArchive(const char *Name,int *Type,bool Silent)
 
 
 
-int WINAPI _export SEVENZ_GetArcItem(struct PluginPanelItem *Item, struct ArcItemInfo *Info)
+int WINAPI _export SEVENZ_GetArcItem(struct ArcItemInfo *Info)
 {
 	if (!s_selected_traverser)
 		return GETARC_READERROR;
 		
-	return s_selected_traverser->Next(Item, Info);
+	return s_selected_traverser->Next(Info);
 }
 
 

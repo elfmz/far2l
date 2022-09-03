@@ -68,7 +68,6 @@ static FARAPIMESSAGE FarMessage=NULL;
 static FARSTDSPRINTF FarSprintf=NULL;
 static bool KeepSilent = false;
 
-#define UnicodeToOEM(src,dst,lendst)    WINPORT(WideCharToMultiByte)(CP_UTF8,0,(src),-1,(dst),(lendst),NULL,FALSE)
 #define  Min(x,y) (((x)<(y)) ? (x):(y))
 
 
@@ -183,7 +182,7 @@ BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type,bool Silent)
 }
 
 
-int WINAPI _export RAR_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
 {
   RHCode = RARReadHeaderEx(hArcData,&HeaderData);
   if(RHCode!=0) {
@@ -191,44 +190,43 @@ int WINAPI _export RAR_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInf
          return GETARC_READERROR;//GETARC_BROKEN;
       return GETARC_EOF;	  
   }
-  UnicodeToOEM(HeaderData.FileNameW,Item->FindData.cFileName,ARRAYSIZE(Item->FindData.cFileName)-1);
-  //strcpyn(Item->FindData.cFileName,HeaderData.FileName,sizeof(Item->FindData.cFileName)-1);
-  
-  Item->FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(HeaderData.FileAttr, HeaderData.FileNameW);
-  Item->FindData.dwUnixMode = HeaderData.FileAttr;
+
+  Wide2MB(HeaderData.FileNameW, Info->PathName);
+  Info->dwFileAttributes = WINPORT(EvaluateAttributes)(HeaderData.FileAttr, HeaderData.FileNameW);
+  Info->dwUnixMode = HeaderData.FileAttr;
   
   //HeaderData.FileAttr is unreliable - sometimes its a UNIX mode, sometimes Windows attributes
   //so sync with directory attribute in HeaderData.Flags
   if (HeaderData.Flags & RHDF_DIRECTORY) {
-	  Item->FindData.dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
-	  switch (Item->FindData.dwUnixMode & S_IFMT) {
+	  Info->dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
+	  switch (Info->dwUnixMode & S_IFMT) {
 		  case S_IFREG: case 0:
-			Item->FindData.dwUnixMode&= ~S_IFMT;
-			Item->FindData.dwUnixMode|= S_IFDIR;
+			Info->dwUnixMode&= ~S_IFMT;
+			Info->dwUnixMode|= S_IFDIR;
 	  }
   } else {
-	  Item->FindData.dwFileAttributes&= ~FILE_ATTRIBUTE_DIRECTORY;
-	  switch (Item->FindData.dwUnixMode & S_IFMT) {
+	  Info->dwFileAttributes&= ~FILE_ATTRIBUTE_DIRECTORY;
+	  switch (Info->dwUnixMode & S_IFMT) {
 		  case S_IFDIR: case 0:
-			Item->FindData.dwUnixMode&= ~S_IFMT;
-			Item->FindData.dwUnixMode|= S_IFREG;
+			Info->dwUnixMode&= ~S_IFMT;
+			Info->dwUnixMode|= S_IFREG;
 	  }
   }
   
-  Item->FindData.nFileSize = HeaderData.UnpSizeHigh;
-  Item->FindData.nFileSize<<= 32;
-  Item->FindData.nFileSize|= HeaderData.UnpSize;
-  Item->FindData.nPhysicalSize = HeaderData.PackSizeHigh;
-  Item->FindData.nPhysicalSize<<= 32;
-  Item->FindData.nPhysicalSize|= HeaderData.PackSize;
-  Item->CRC32=(DWORD)HeaderData.FileCRC;
+  Info->nFileSize = HeaderData.UnpSizeHigh;
+  Info->nFileSize<<= 32;
+  Info->nFileSize|= HeaderData.UnpSize;
+  Info->nPhysicalSize = HeaderData.PackSizeHigh;
+  Info->nPhysicalSize<<= 32;
+  Info->nPhysicalSize|= HeaderData.PackSize;
+  Info->CRC32=(DWORD)HeaderData.FileCRC;
 
   FILETIME lft;
   WINPORT(DosDateTimeToFileTime)(HIWORD(HeaderData.FileTime),LOWORD(HeaderData.FileTime),&lft);
-  WINPORT(LocalFileTimeToFileTime)(&lft,&Item->FindData.ftLastWriteTime);
+  WINPORT(LocalFileTimeToFileTime)(&lft,&Info->ftLastWriteTime);
 
   if (HeaderData.HostOS<ARRAYSIZE(RarOS))
-    strcpy(Info->HostOS,RarOS[HeaderData.HostOS]);
+    Info->HostOS = RarOS[HeaderData.HostOS];
   Info->Solid=Flags & 8;
   Info->Comment=HeaderData.Flags & 8;
   Info->Encrypted=HeaderData.Flags & 4;

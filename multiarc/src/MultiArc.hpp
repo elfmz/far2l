@@ -66,7 +66,7 @@ struct ArcItemUserData{
 typedef DWORD (WINAPI *PLUGINLOADFORMATMODULE)(const char *ModuleName);
 typedef BOOL (WINAPI *PLUGINISARCHIVE)(const char *Name,const unsigned char *Data,int DataSize);
 typedef BOOL (WINAPI *PLUGINOPENARCHIVE)(const char *Name,int *Type,bool Silent);
-typedef int (WINAPI *PLUGINGETARCITEM)(struct PluginPanelItem *Item,struct ArcItemInfo *Info);
+typedef int (WINAPI *PLUGINGETARCITEM)(struct ArcItemInfo *Info);
 typedef BOOL (WINAPI *PLUGINCLOSEARCHIVE)(struct ArcInfo *Info);
 typedef BOOL (WINAPI *PLUGINGETFORMATNAME)(int Type,char *FormatName,char *DefaultExt);
 typedef BOOL (WINAPI *PLUGINGETDEFAULTCOMMANDS)(int Type,int Command,char *Dest);
@@ -114,7 +114,7 @@ class ArcPlugins
     int  IsArchive(const char *Name,const unsigned char *Data,int DataSize);
     BOOL IsArchive(int ArcPluginNumber, const char *Name,const unsigned char *Data,int DataSize, DWORD* SFXSize);
     BOOL OpenArchive(int PluginNumber,const char *Name,int *Type,bool Silent);
-    int  GetArcItem(int PluginNumber,struct PluginPanelItem *Item,struct ArcItemInfo *Info);
+    int  GetArcItem(int PluginNumber,struct ArcItemInfo *Info);
     void CloseArchive(int PluginNumber,struct ArcInfo *Info);
     BOOL GetFormatName(int PluginNumber,int Type,char *FormatName,char *DefaultExt);
     BOOL GetDefaultCommands(int PluginNumber,int Type,int Command,char *Dest);
@@ -130,7 +130,7 @@ class PluginClass
   private:
     char ArcName[NM];
     char CurDir[NM];
-    std::vector<PluginPanelItem> ArcData;
+    std::vector<ArcItemInfo> ArcData;
     struct stat ArcStat {};
     int ArcPluginNumber;
     int ArcPluginType;

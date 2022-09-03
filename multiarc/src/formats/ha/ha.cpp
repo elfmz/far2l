@@ -77,7 +77,7 @@ BOOL WINAPI _export HA_OpenArchive(const char *Name,int *Type,bool Silent)
 }
 
 
-int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo *Info)
+int WINAPI _export HA_GetArcItem(struct ArcItemInfo *Info)
 {
   struct HaHeader
   {
@@ -97,8 +97,8 @@ int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo
     return(GETARC_READERROR);
   if (ReadSize==0)
     return(GETARC_EOF);
-  char Path[3*NM],Name[NM];
-  if (!WINPORT(ReadFile)(ArcHandle,Path,sizeof(Path),&ReadSize,NULL) || ReadSize==0)
+  char Path[3*NM] = {0},Name[NM] = {0};
+  if (!WINPORT(ReadFile)(ArcHandle,Path,NM,&ReadSize,NULL) || ReadSize==0)
     return(GETARC_READERROR);
   Path[NM-1]=0;
   int PathLength=strlen(Path)+1;
@@ -117,12 +117,12 @@ int WINAPI _export HA_GetArcItem(struct PluginPanelItem *Item,struct ArcItemInfo
   for (int I=0;Path[I]!=0;I++)
     if ((unsigned char)Path[I]==0xff)
       Path[I]='/';
-  strncpy(Item->FindData.cFileName,Path,sizeof(Item->FindData.cFileName)-1);
-  Item->FindData.dwFileAttributes=(Header.Type & 0xf)==0xe ? FILE_ATTRIBUTE_DIRECTORY:0;
-  Item->CRC32=Header.CRC;
-  UnixTimeToFileTime(Header.FileTime,&Item->FindData.ftLastWriteTime);
-  Item->FindData.nFileSize=Header.UnpSize;
-  Item->FindData.nPhysicalSize=Header.PackSize;
+  Info->PathName = Path;
+  Info->dwFileAttributes=(Header.Type & 0xf)==0xe ? FILE_ATTRIBUTE_DIRECTORY:0;
+  Info->CRC32=Header.CRC;
+  UnixTimeToFileTime(Header.FileTime,&Info->ftLastWriteTime);
+  Info->nFileSize=Header.UnpSize;
+  Info->nPhysicalSize=Header.PackSize;
   return(GETARC_SUCCESS);
 }
 

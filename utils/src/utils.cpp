@@ -287,6 +287,11 @@ static inline bool CaseIgnoreEngChrMatch(const char c1, const char c2)
 	return true;
 }
 
+bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2)
+{
+	return str1.size() == str2.size() && CaseIgnoreEngStrMatch(str1.c_str(), str2.c_str(), str1.size());
+}
+
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len)
 {
 	for (size_t i = 0; i != len; ++i) {

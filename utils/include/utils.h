@@ -276,6 +276,7 @@ template <typename HaystackIT, typename NeedlesT>
 	return nullptr;
 }
 
+bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2);
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 

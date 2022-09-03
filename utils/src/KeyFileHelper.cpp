@@ -17,6 +17,41 @@
 // KeyFileHelper to tell KeyFileReadHelper don't load anything
 static char sDontLoadLiteral[] = "][";
 
+// This predicate causes std::map elements to be sorted either in semi-case-insensitive mode,
+// i.e. elements that differ by character case only will be together.
+// Either in fully case-insensitive mode.
+
+bool FN_NOINLINE KeyFileCmp::operator()(const std::string& a, const std::string& b) const
+{
+	int case_sensitive_diff = 0;
+	const char *pa = a.c_str();
+	const char *pb = b.c_str();
+	for (size_t i = 0;; ++i) {
+		auto ca = pa[i];
+		auto cb = pb[i];
+		if (ca != cb) {
+			if (case_sensitive_diff == 0) {
+				case_sensitive_diff = (ca < cb) ? -1 : 1;
+			}
+			if (ca >= 'a' && ca <= 'z') {
+				ca-= 'a' - 'A';
+			}
+			if (cb >= 'a' && cb <= 'z') {
+				cb-= 'a' - 'A';
+			}
+			if (ca != cb) {
+				return ca < cb;
+			}
+		}
+		if (UNLIKELY(i == a.size() || i == b.size())) {
+			if ((_case_insensitive || case_sensitive_diff == 0) && a.size() != b.size()) {
+				return a.size() < b.size();
+			}
+			return _case_insensitive ? false : (case_sensitive_diff < 0);
+		}
+	}
+}
+
 class KFEscaping
 {
 	std::string _result;
@@ -125,6 +160,10 @@ public:
 ////////////////////////////////////////////////////////////////
 
 
+KeyFileValues::KeyFileValues(bool case_insensitive)
+	: std::map<std::string, std::string, KeyFileCmp>(KeyFileCmp(case_insensitive))
+{
+}
 
 bool KeyFileValues::HasKey(const std::string &name) const
 {
@@ -363,7 +402,7 @@ static bool LoadKeyFile(const std::string &filename, struct stat &filestat, Valu
 
 ///////////////////////////////////////////
 
-KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::string &section)
+KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::string &section, bool case_insensitive)
 	:
 	_section_loaded(false)
 {
@@ -371,7 +410,7 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 	LoadKeyFile(filename, filestat,
 		[&] (const std::string &section_name)->KeyFileValues *
 		{
-			if (section_name == section) {
+			if (section_name == section || (case_insensitive && CaseIgnoreEngStrMatch(section_name, section))) {
 				_section_loaded = true;
 				return this;
 			}
@@ -383,7 +422,8 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 
 ///////////////////////////////////
 
-KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *load_only_section)
+KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *load_only_section, bool case_insensitive)
+	: _kf(case_insensitive), _case_insensitive(case_insensitive)
 {
 	// intentially comparing pointer values
 	if (load_only_section == &sDontLoadLiteral[0]) {
@@ -393,7 +433,8 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 	_loaded = LoadKeyFile(filename, _filestat,
 		[&] (const std::string &section_name)->KeyFileValues *
 		{
-			if (load_only_section == nullptr || section_name == load_only_section) {
+			if (load_only_section == nullptr || section_name == load_only_section
+					|| (case_insensitive && CaseIgnoreEngStrMatch(section_name, load_only_section))) {
 				return &_kf[section_name];
 			}
 
@@ -436,7 +477,8 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 	std::vector<std::string> out;
 	for (const auto &s : _kf) {
 		if (s.first.size() > prefix.size()
-				&& memcmp(s.first.c_str(), prefix.c_str(), prefix.size()) == 0
+				&& ( (!_case_insensitive && memcmp(s.first.c_str(), prefix.c_str(), prefix.size()) == 0) ||
+					(_case_insensitive && CaseIgnoreEngStrMatch(s.first.c_str(), prefix.c_str(), prefix.size())) )
 				&& (recursed || strchr(s.first.c_str() + prefix.size(), '/') == nullptr))  {
 
 			out.push_back(s.first);
@@ -559,9 +601,9 @@ bool KeyFileReadHelper::GetBytes(std::vector<unsigned char> &out, const std::str
 
 
 /////////////////////////////////////////////////////////////
-KeyFileHelper::KeyFileHelper(const std::string &filename, bool load)
+KeyFileHelper::KeyFileHelper(const std::string &filename, bool load, bool case_insensitive)
 	:
-	KeyFileReadHelper(filename, load ? nullptr : &sDontLoadLiteral[0]),
+	KeyFileReadHelper(filename, load ? nullptr : &sDontLoadLiteral[0], case_insensitive),
 	_filename(filename),
 	_dirty(!load)
 {
@@ -649,9 +691,9 @@ bool KeyFileHelper::RemoveSection(const std::string &section)
 {
 	if (_kf.erase(section) != 0) {
 		_dirty = true;
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 size_t KeyFileHelper::RemoveSectionsAt(const std::string &parent_section)

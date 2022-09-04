@@ -106,6 +106,8 @@ typedef union block {
 /* Identifies the *next* file on the tape as having a long name.  */
 #define GNUTYPE_LONGNAME 'L'
 
+#define GNUTYPE_PAXHDR   'x'
+
 /* Values used in typeflag field.  */
 #define REGTYPE   '0'    /* regular file */
 #define AREGTYPE '\0'    /* regular file */
@@ -135,7 +137,6 @@ int IsTarHeader(const unsigned char *Data,int DataSize);
 int64_t GetOctal(const char *Str);
 int GetArcItemGZIP(struct ArcItemInfo *Info);
 int GetArcItemTAR(struct ArcItemInfo *Info);
-char *AdjustTARFileName(char *FileName);
 static int64_t Oct2Size (const char *where0, size_t digs0);
 
 HANDLE ArcHandle;
@@ -189,7 +190,7 @@ BOOL WINAPI _export TARGZ_IsArchive(const char *Name,const unsigned char *Data,i
 
   if (Dot!=NULL)
   {
-    ZipName.resize(Dot-NamePtr-1);
+    ZipName.resize(Dot - NamePtr);
     if (strcasecmp(Dot + 1,"tgz")==0 || strcasecmp(Dot + 1,"taz")==0)
       ZipName+= ".tar";
   }
@@ -323,8 +324,7 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
   TARHeader TAR_hdr;
   DWORD ReadSize;
   BOOL SkipItem=FALSE;
-  char *LongName = NULL;
-  char namebuf[sizeof(TAR_hdr.header.prefix) + 1 + sizeof(TAR_hdr.header.name) + 1];
+  std::vector<char> LongName;
   do
   {
     NextPosition.Part.LowPart=WINPORT(SetFilePointer)(ArcHandle,NextPosition.Part.LowPart,&NextPosition.Part.HighPart,FILE_BEGIN);
@@ -341,8 +341,8 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
     if (ReadSize==0 || *TAR_hdr.header.name==0)
       return(GETARC_EOF);
 
-//    fprintf(stderr, "TAR_hdr.header.typeflag='%c' %x size=%s\n", TAR_hdr.header.typeflag, TAR_hdr.header.typeflag, TAR_hdr.header.size);
-    if (TAR_hdr.header.typeflag == GNUTYPE_LONGLINK || TAR_hdr.header.typeflag == GNUTYPE_LONGNAME)
+    // fprintf(stderr, "TAR_hdr.header.typeflag='%c' %x size=%s\n", TAR_hdr.header.typeflag, TAR_hdr.header.typeflag, TAR_hdr.header.size);
+    if (TAR_hdr.header.typeflag == GNUTYPE_LONGLINK || TAR_hdr.header.typeflag == GNUTYPE_LONGNAME || TAR_hdr.header.typeflag == GNUTYPE_PAXHDR)
     {
       SkipItem=TRUE;
     }
@@ -351,26 +351,21 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
       // TODO: GNUTYPE_LONGLINK
       DWORD dwUnixMode = 0;
       SkipItem=FALSE;
-      char *EndPos;
-      if (LongName != NULL)
+      if (!LongName.empty())
       {
-        EndPos = AdjustTARFileName (LongName);
+        Info->PathName = LongName.data();
       }
       else
       {
-        char *np = namebuf;
+        Info->PathName.clear();
         if(TAR_hdr.header.prefix[0])
         {
-          memcpy (np, TAR_hdr.header.prefix, sizeof(TAR_hdr.header.prefix));
-          np[sizeof (TAR_hdr.header.prefix)] = '\0';
-          np += strlen(np);
-          *np++ = '/';
+          StrAssignArray(Info->PathName, TAR_hdr.header.prefix);
+          Info->PathName+= '/';
         }
-        memcpy (np, TAR_hdr.header.name, sizeof(TAR_hdr.header.name));
-        np[sizeof(TAR_hdr.header.name)] = '\0';
-        EndPos = AdjustTARFileName(namebuf);
+        StrAppendArray(Info->PathName, TAR_hdr.header.name);
       }
-      Info->PathName = EndPos;
+
       Info->nFileSize=0;
       dwUnixMode = (DWORD)GetOctal(TAR_hdr.header.mode);
       switch (TAR_hdr.header.typeflag) {
@@ -406,9 +401,8 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
         const size_t UserDataSize = strlen(TAR_hdr.header.linkname)+2;
         if((Info->UserData=(DWORD_PTR)MA_malloc(UserDataSize)) != 0)
         {
-          EndPos = AdjustTARFileName (TAR_hdr.header.linkname);
           snprintf((char*)Info->UserData, UserDataSize, "%s%s",
-            (TAR_hdr.header.typeflag == LNKTYPE) ? "/" : "", EndPos);
+            (TAR_hdr.header.typeflag == LNKTYPE) ? "/" : "", TAR_hdr.header.linkname);
           ((char*)Info->UserData)[UserDataSize - 1] = 0;
         }
       }
@@ -437,27 +431,51 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
     if (PrevPosition.i64 >= NextPosition.i64)
       return(GETARC_BROKEN);
 
-    // TODO: GNUTYPE_LONGLINK
-    if (TAR_hdr.header.typeflag == GNUTYPE_LONGNAME || TAR_hdr.header.typeflag == GNUTYPE_LONGLINK)
+    if (TAR_hdr.header.typeflag == GNUTYPE_LONGNAME || TAR_hdr.header.typeflag == GNUTYPE_LONGLINK || TAR_hdr.header.typeflag == GNUTYPE_PAXHDR)
     {
       PrevPosition.i64+=(int64_t)sizeof(TAR_hdr);
       WINPORT(SetFilePointer) (ArcHandle,PrevPosition.Part.LowPart,&PrevPosition.Part.HighPart,FILE_BEGIN);
       // we can't have two LONGNAME records in a row without a file between them
-      if (LongName != NULL)
+      if (!LongName.empty())
         return GETARC_BROKEN;
-      LongName = (char *)malloc(Info->nPhysicalSize);
+      LongName.resize(Info->nPhysicalSize + 1);
       DWORD BytesRead;
-      WINPORT(ReadFile)(ArcHandle,LongName,Info->nPhysicalSize,&BytesRead,NULL);
+      WINPORT(ReadFile)(ArcHandle,LongName.data(),Info->nPhysicalSize,&BytesRead,NULL);
       if (BytesRead != Info->nPhysicalSize)
-      {
-        free(LongName);
         return GETARC_BROKEN;
+
+      if (TAR_hdr.header.typeflag == GNUTYPE_PAXHDR)
+      { // pax extended header: consists of sequence of "len key=value\n" strings
+        // currently using only "path" key - its a modern way to specify long file path
+        std::vector<char> PathRecord;
+        for (DWORD i = 0; i < BytesRead; ) {
+          int len = atoi(&LongName[i]);
+          if (len <= 0 || (DWORD)len > BytesRead - i)
+          {
+            fprintf(stderr, "%s: ext record bad len=%d at %x\n", __FUNCTION__, len, i);
+            break;
+          }
+
+          char *spc = strchr(&LongName[i], ' ');
+          char *eq = strchr(&LongName[i], '=');
+          if (!spc || !eq || eq < spc || LongName[i + len - 1] != '\n')
+          {
+            fprintf(stderr, "%s: ext record bad at %x\n", __FUNCTION__, i);
+            break;
+          }
+          if (strncmp(spc, " path=", 6) == 0)
+          {
+            PathRecord.assign(eq + 1, &LongName[i + len - 1]);
+            PathRecord.emplace_back(0);
+          }
+          i+= len;
+        }
+        LongName.swap(PathRecord);
       }
     }
+
   } while (SkipItem);
 
-  if (LongName)
-    free(LongName);
   return(GETARC_SUCCESS);
 }
 
@@ -646,14 +664,6 @@ int IsTarHeader(const BYTE *Data,int DataSize)
   }
   return(TRUE);
 */
-}
-
-
-char *AdjustTARFileName(char *FileName)
-{
-  char *EndPos = FileName;
-  while( *EndPos ) EndPos++;
-  return FileName;
 }
 
 

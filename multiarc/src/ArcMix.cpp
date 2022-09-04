@@ -351,27 +351,14 @@ void InitDialogItems(const struct InitDialogItem *Init,struct FarDialogItem *Ite
 }
 
 
-static void __InsertCommas(char *Dest)
+std::string NumberWithCommas(unsigned long long Number)
 {
-  int I;
-  for (I=strlen(Dest)-4;I>=0;I-=3)
-    if (Dest[I])
-    {
-      memmove(Dest+I+2,Dest+I+1,strlen(Dest+I));
-      Dest[I+1]=',';
-    }
-}
+  std::string out = std::to_string(Number);
+  for (int I = int(out.size()) - 4; I >= 0; I-= 3)
+    out.insert(I + 1, 1, ',');
 
-void InsertCommas(unsigned long Number,char *Dest)
-{
-  __InsertCommas(FSF.itoa(Number,Dest,10));
+  return out;
 }
-
-void InsertCommas(int64_t Number,char *Dest)
-{
-  __InsertCommas(FSF.itoa64(Number,Dest,10));
-}
-
 
 int MA_ToPercent(int32_t N1, int32_t N2)
 {

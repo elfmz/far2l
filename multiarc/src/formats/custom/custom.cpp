@@ -647,16 +647,9 @@ int WINAPI _export CUSTOM_GetArcItem( struct ArcItemInfo *Info)
             MakeFiletime(stModification, syst, &Info->ftLastWriteTime);
             MakeFiletime(stCreation, syst, &Info->ftCreationTime);
             MakeFiletime(stAccess, syst, &Info->ftLastAccessTime);
+            while (!Info->PathName.empty() && isspace(Info->PathName.back()))
+				Info->PathName.pop_back();
 
-            for(int I = int(Info->PathName.size()) - 1; I >= 0; I--)
-            {
-                char Ch = Info->PathName[I];
-
-                if(Ch == ' ' || Ch == '\t')
-                    Info->PathName.resize(I);
-                else
-                    break;
-            }
             return (GETARC_SUCCESS);
         }
     }
@@ -1016,9 +1009,9 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
             break;
         case '.':
             {
-                for(int I = int(Info->PathName.size()) - 1; I >= 0; I--)
-                    if(isspace(Info->PathName[I]))
-                        Info->PathName.resize(I);
+                while(!Info->PathName.empty() && isspace(Info->PathName.back()))
+                    Info->PathName.pop_back();
+
                 if(!Info->PathName.empty())
                     Info->PathName+= '.';
             }

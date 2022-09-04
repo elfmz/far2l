@@ -128,7 +128,7 @@ class ArcPlugins
 class PluginClass
 {
   private:
-    char ArcName[NM];
+    char ArcName[NM + 2];
     char CurDir[NM];
     std::vector<ArcItemInfo> ArcData;
     struct stat ArcStat {};
@@ -154,6 +154,10 @@ class PluginClass
     char DescrFilesString[256];
 
   private:
+    void SetInfoLineSZ(size_t Index, int TextID, const char *Data);
+    void SetInfoLine(size_t Index, int TextID, const std::string &Data);
+    void SetInfoLine(size_t Index, int TextID, int DataID);
+
     void GetGroupName(PluginPanelItem *Items, int Count, char *ArcName);//$ AA 29.11.2001
     BOOL GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, PanelInfo *pi);//$ AA 29.11.2001
     BOOL GetFormatName(char *FormatName, char *DefExt=NULL); //$ AA 25.11.2001
@@ -330,8 +334,7 @@ BOOL AddExt(char *Name, char *Ext);                               //$ AA 28.11.2
 char* QuoteText(char *Str);
 void InitDialogItems(const struct InitDialogItem *Init,struct FarDialogItem *Item,
                      int ItemsNumber);
-void InsertCommas(unsigned long Number,char *Dest);
-void InsertCommas(int64_t Number,char *Dest);
+std::string NumberWithCommas(unsigned long long Number);
 int MA_ToPercent(long N1,long N2);
 int MA_ToPercent(int64_t N1,int64_t N2);
 int IsCaseMixed(const char *Str);

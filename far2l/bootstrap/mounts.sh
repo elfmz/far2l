@@ -70,7 +70,7 @@ else
 		FMT_COLUMN='cat'
 		if [ "$sysname" = "Linux" ]; then
 			MNT_TYPE=5
-			MNT_FILTER='grep -v -e " /proc\(/[\/a-z_]\+\)* " -e " /sys\(/[a-z_,]\+\)* " -e " /dev/\(pts\|hugepages\|mqueue\) " -e " /run/user/\([0-1]\+\)/doc " -e "/home/\([a-z0-9\._]\+\)/.cache/doc"'
+			MNT_FILTER='grep -v -e " /proc\(/[\/a-z_]\+\)* " -e " /sys\(/[a-z_,]\+\)* " -e " /dev/\(pts\|hugepages\|mqueue\) " -e " /run/user/\([0-1]\+\)/doc " -e "/home/\([a-z0-9\._]\+\)/.cache/doc" -e " /tmp/\.\([a-z0-9\._]\+\)_\([a-zA-Z0-9\._]\+\) "'
 			FT_HEADER='Filesystem Type 1K-blocks Used Available Use%% Mounted_on'
 			if [ "$timeout_coreutils" = "true" ]; then
 				FMT_COLUMN='column -t'

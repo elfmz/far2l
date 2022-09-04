@@ -43,10 +43,12 @@ int PluginClass::PreReadArchive(const char *Name)
     return FALSE;
   }
 
-  strcpy(ArcName,Name);
+  strncpy(ArcName, Name, ARRAYSIZE(ArcName) - 2);
 
-  if (strchr(FSF.PointToName(ArcName),'.')==NULL)
-    strcat(ArcName,".");
+  if (strchr(FSF.PointToName(ArcName), '.') == NULL)
+    strcat(ArcName, ".");
+
+  ArcName[ARRAYSIZE(ArcName) - 1] = 0;
 
   return TRUE;
 }
@@ -131,12 +133,7 @@ int PluginClass::ReadArchive(const char *Name,int OpMode)
     }
 
     if (!CurItemInfo.Description.empty())
-    {
-//      CurArcData.Description=new char[strlen(CurItemInfo.Description)+1];
-//      if (CurArcData.Description)
-//        strcpy(CurArcData.Description,CurItemInfo.Description);
-      DizPresent=TRUE;
-    }
+      DizPresent = TRUE;
 
     if (ItemsInfo.HostOS != CurItemInfo.HostOS)
       ItemsInfo.HostOS = (ItemsInfo.HostOS.empty() ? CurItemInfo.HostOS : GetMsg(MSeveralOS));
@@ -287,20 +284,20 @@ bool PluginClass::EnsureFindDataUpToDate(int OpMode)
 
 static void ArcItemInfo2PluginPanelItem(const ArcItemInfo &aai, PluginPanelItem &ppi)
 {
-	ZeroFill(ppi);
-	ppi.FindData.ftCreationTime = aai.ftCreationTime;
-	ppi.FindData.ftLastAccessTime = aai.ftLastAccessTime;
-	ppi.FindData.ftLastWriteTime = aai.ftLastWriteTime;
-	ppi.FindData.nPhysicalSize = aai.nPhysicalSize;
-	ppi.FindData.nFileSize = aai.nFileSize;
-	ppi.FindData.dwFileAttributes = aai.dwFileAttributes;
-	ppi.FindData.dwUnixMode = aai.dwUnixMode;
-	strncpy(ppi.FindData.cFileName, aai.PathName.c_str(), ARRAYSIZE(ppi.FindData.cFileName));
-	ppi.UserData = aai.UserData;
-	ppi.Flags = aai.Flags;
-	ppi.NumberOfLinks = aai.NumberOfLinks;
-	ppi.CRC32 = aai.CRC32;
-    ppi.Description = aai.Description.empty() ? nullptr : (char *)aai.Description.c_str();
+  ZeroFill(ppi);
+  ppi.FindData.ftCreationTime = aai.ftCreationTime;
+  ppi.FindData.ftLastAccessTime = aai.ftLastAccessTime;
+  ppi.FindData.ftLastWriteTime = aai.ftLastWriteTime;
+  ppi.FindData.nPhysicalSize = aai.nPhysicalSize;
+  ppi.FindData.nFileSize = aai.nFileSize;
+  ppi.FindData.dwFileAttributes = aai.dwFileAttributes;
+  ppi.FindData.dwUnixMode = aai.dwUnixMode;
+  strncpy(ppi.FindData.cFileName, aai.PathName.c_str(), ARRAYSIZE(ppi.FindData.cFileName));
+  ppi.UserData = aai.UserData;
+  ppi.Flags = aai.Flags;
+  ppi.NumberOfLinks = aai.NumberOfLinks;
+  ppi.CRC32 = aai.CRC32;
+  ppi.Description = aai.Description.empty() ? nullptr : (char *)aai.Description.c_str();
 }
 
 int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
@@ -314,7 +311,7 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
   int AlocatedItemsNumber=0;
   for (const auto &I : ArcData)
   {
-    ArcItemInfo CurItem = I;
+    auto CurItem = I;
     const char *Name = I.PathName.c_str();
     BOOL Append=FALSE;
 
@@ -339,7 +336,7 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
       } else
 		NameLen = strlen(StartName);
 
-	  if (StartName	!= Name)
+      if (StartName	!= Name)
       {
         assert(size_t(StartName - Name) <= I.PathName.size());
         CurItem.PathName.erase(0, StartName - Name);
@@ -373,7 +370,6 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
         *pPanelItem=NewPanelItem;
       }
       ArcItemInfo2PluginPanelItem(CurItem, NewPanelItem[*pItemsNumber]);
-      //NewPanelItem[*pItemsNumber]=CurItem;
       (*pItemsNumber)++;
     }
 
@@ -463,6 +459,29 @@ bool PluginClass::FarLangChanged()
   return true;
 }
 
+
+static void AppendInfoData(std::string &Str, const char *Data)
+{
+  if (!Str.empty()) Str+= ' ';
+  Str+= Data;
+}
+
+void PluginClass::SetInfoLineSZ(size_t Index, int TextID, const char *Data)
+{
+  strncpy(InfoLines[Index].Text, GetMsg(TextID), ARRAYSIZE(InfoLines[Index].Text));
+  strncpy(InfoLines[Index].Data, Data, ARRAYSIZE(InfoLines[Index].Data));
+}
+
+void PluginClass::SetInfoLine(size_t Index, int TextID, const std::string &Data)
+{
+  SetInfoLineSZ(Index, TextID, Data.c_str());
+}
+
+void PluginClass::SetInfoLine(size_t Index, int TextID, int DataID)
+{
+  SetInfoLineSZ(Index, TextID, GetMsg(DataID));
+}
+
 void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
   Info->StructSize=sizeof(*Info);
@@ -485,7 +504,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     }
   }
 
-  FSF.sprintf(Title," %s:%s%s%s ",FormatName,NameTitle, *CurDir ? "/" : "", *CurDir ? CurDir : "");
+  FSF.snprintf(Title,ARRAYSIZE(Title)-1," %s:%s%s%s ",FormatName,NameTitle, *CurDir ? "/" : "", *CurDir ? CurDir : "");
 
   Info->PanelTitle=Title;
 
@@ -494,81 +513,49 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
     FSF.sprintf(Format,GetMsg(MArcFormat),FormatName);
 
     memset(InfoLines,0,sizeof(InfoLines));
-    FSF.sprintf(InfoLines[0].Text,GetMsg(MInfoTitle),FSF.PointToName(ArcName));
+    FSF.snprintf(InfoLines[0].Text,ARRAYSIZE(InfoLines[0].Text),GetMsg(MInfoTitle),FSF.PointToName(ArcName));
     InfoLines[0].Separator=TRUE;
-    FSF.sprintf(InfoLines[1].Text,GetMsg(MInfoArchive));
-    strcpy(InfoLines[1].Data,FormatName);
 
+    std::string TmpInfoData = FormatName;
     if (ItemsInfo.UnpVer!=0)
-      FSF.sprintf(InfoLines[1].Data+strlen(InfoLines[1].Data)," %d.%d",
-              ItemsInfo.UnpVer/256,ItemsInfo.UnpVer%256);
-
+      TmpInfoData+= StrPrintf(" %d.%d", ItemsInfo.UnpVer/256,ItemsInfo.UnpVer%256);
     if (!ItemsInfo.HostOS.empty())
-      FSF.sprintf(InfoLines[1].Data+strlen(InfoLines[1].Data),"/%s",ItemsInfo.HostOS.c_str());
+      TmpInfoData+= StrPrintf("/%s", ItemsInfo.HostOS.c_str());
+    strncpy(InfoLines[1].Data,TmpInfoData.c_str(),ARRAYSIZE(InfoLines[1].Data));
+    SetInfoLine(1, MInfoArchive, TmpInfoData);
 
-    strcpy(InfoLines[2].Text,GetMsg(MInfoArcType));
-
-    if (ItemsInfo.Solid)
-      strcpy(InfoLines[2].Data,GetMsg(MInfoSolid));
-
+    TmpInfoData = ItemsInfo.Solid ? GetMsg(MInfoSolid) : "";
     if (CurArcInfo.SFXSize)
-    {
-      if (*InfoLines[2].Data)
-        strcat(InfoLines[2].Data," ");
-      strcat(InfoLines[2].Data,GetMsg(MInfoSFX));
-    }
-
+      AppendInfoData(TmpInfoData, GetMsg(MInfoSFX));
     if (CurArcInfo.Flags & AF_HDRENCRYPTED)
-    {
-      if (*InfoLines[2].Data)
-        strcat(InfoLines[2].Data," ");
-      strcat(InfoLines[2].Data,GetMsg(MInfoHdrEncrypted));
-    }
-
+      AppendInfoData(TmpInfoData, GetMsg(MInfoHdrEncrypted));
     if (CurArcInfo.Volume)
-    {
-      if (*InfoLines[2].Data)
-        strcat(InfoLines[2].Data," ");
-      strcat(InfoLines[2].Data,GetMsg(MInfoVolume));
-    }
+      AppendInfoData(TmpInfoData, GetMsg(MInfoVolume));
+    if (TmpInfoData.empty())
+      TmpInfoData = GetMsg(MInfoNormal);
+    SetInfoLine(2, MInfoArcType, TmpInfoData);
 
-    if (*InfoLines[2].Data==0)
-      strcpy(InfoLines[2].Data,GetMsg(MInfoNormal));
+    SetInfoLine(3, MInfoArcComment, CurArcInfo.Comment ? MInfoPresent : MInfoAbsent);
+    SetInfoLine(4, MInfoFileComments, ItemsInfo.Comment ? MInfoPresent : MInfoAbsent);
+    SetInfoLine(5, MInfoPasswords, ItemsInfo.Encrypted ? MInfoPresent : MInfoAbsent);
+    SetInfoLine(6, MInfoRecovery, CurArcInfo.Recovery ? MInfoPresent : MInfoAbsent);
+    SetInfoLine(7, MInfoLock, CurArcInfo.Lock ? MInfoPresent : MInfoAbsent);
+    SetInfoLine(8, MInfoAuthVer, (CurArcInfo.Flags & AF_AVPRESENT) ? MInfoPresent : MInfoAbsent);
 
-    strcpy(InfoLines[3].Text,GetMsg(MInfoArcComment));
-    strcpy(InfoLines[3].Data,CurArcInfo.Comment ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[4].Text,GetMsg(MInfoFileComments));
-    strcpy(InfoLines[4].Data,ItemsInfo.Comment ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[5].Text,GetMsg(MInfoPasswords));
-    strcpy(InfoLines[5].Data,ItemsInfo.Encrypted ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[6].Text,GetMsg(MInfoRecovery));
-    strcpy(InfoLines[6].Data,CurArcInfo.Recovery ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[7].Text,GetMsg(MInfoLock));
-    strcpy(InfoLines[7].Data,CurArcInfo.Lock ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[8].Text,GetMsg(MInfoAuthVer));
-    strcpy(InfoLines[8].Data,(CurArcInfo.Flags & AF_AVPRESENT) ? GetMsg(MInfoPresent):GetMsg(MInfoAbsent));
-    strcpy(InfoLines[9].Text,GetMsg(MInfoDict));
-
-    if (ItemsInfo.DictSize==0)
-      strcpy(InfoLines[9].Data,"???");
+    if (ItemsInfo.DictSize)
+      SetInfoLine(9, MInfoDict, StrPrintf("%d %s",ItemsInfo.DictSize, GetMsg(MInfoDictKb)));
     else
-      FSF.sprintf(InfoLines[9].Data,"%d %s",ItemsInfo.DictSize,GetMsg(MInfoDictKb));
+      SetInfoLine(9, MInfoDict, MInfoAbsent);
 
-    strcpy(InfoLines[10].Text,GetMsg(MInfoChapters));
-    if(CurArcInfo.Chapters)
-      //FSF.sprintf(InfoLines[10].Data,"%d/%d",ItemsInfo.Chapter,CurArcInfo.Chapters);
-      FSF.sprintf(InfoLines[10].Data,"%d",CurArcInfo.Chapters);
+    if (CurArcInfo.Chapters)
+      SetInfoLine(10, MInfoChapters, std::to_string(CurArcInfo.Chapters));
     else
-      strcpy(InfoLines[10].Data,GetMsg(MInfoAbsent));
+      SetInfoLine(10, MInfoChapters, MInfoAbsent);
 
-    strcpy(InfoLines[11].Text,GetMsg(MInfoTotalFiles));
-    FSF.sprintf(InfoLines[11].Data,"%ld",(unsigned long)ArcData.size());
-    strcpy(InfoLines[12].Text,GetMsg(MInfoTotalSize));
-    InsertCommas(TotalSize,InfoLines[12].Data);
-    strcpy(InfoLines[13].Text,GetMsg(MInfoPackedSize));
-    InsertCommas(PackedSize,InfoLines[13].Data);
-    strcpy(InfoLines[14].Text,GetMsg(MInfoRatio));
-    FSF.sprintf(InfoLines[14].Data,"%d%%",MA_ToPercent(PackedSize,TotalSize));
+    SetInfoLine(11, MInfoTotalFiles, std::to_string(ArcData.size()));
+    SetInfoLine(12, MInfoTotalSize, NumberWithCommas(TotalSize));
+    SetInfoLine(13, MInfoPackedSize, NumberWithCommas(PackedSize));
+    SetInfoLine(14, MInfoRatio, StrPrintf("%d%%", MA_ToPercent(PackedSize, TotalSize)));
 
     memset(&KeyBar,0,sizeof(KeyBar));
     KeyBar.ShiftTitles[1-1]=(char*)"";

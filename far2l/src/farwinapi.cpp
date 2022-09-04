@@ -69,7 +69,7 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX& Find
 	FindData.nHardLinks = wfd.nHardLinks;
 	FindData.nBlockSize = wfd.nBlockSize;
 
-	FindData.strFileName.Copy(wfd.cFileName, wcsnlen(wfd.cFileName, ARRAYSIZE(wfd.cFileName)));
+	FindData.strFileName.CopyArray(wfd.cFileName);
 }
 
 FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags) :

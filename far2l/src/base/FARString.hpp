@@ -174,6 +174,14 @@ public:
 	FARString& Copy(const FARString &Str);
 	FARString& Copy(const char *lpszData, UINT CodePage=CP_UTF8);
 
+	template <typename ARRAY_T>
+		FARString& CopyArray(const ARRAY_T &a)
+	{
+		static_assert ( ARRAYSIZE(a) != sizeof(void *), "CopyArray should be used with arrays but not pointers");
+		return Copy(a, tnzlen(a, ARRAYSIZE(a)));
+	}
+
+
 	FARString& Remove(size_t Pos, size_t Len = 1) { return Replace(Pos, Len, nullptr, 0); }
 	FARString& LShift(size_t nShiftCount, size_t nStartPos=0) { return Remove(nStartPos, nShiftCount); }
 

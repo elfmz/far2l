@@ -185,7 +185,7 @@ BOOL WINAPI FRealFile(LPCSTR nm,FAR_FIND_DATA* fd)
 
 	if(rc && fd)
 	{
-		strcpy(fd->cFileName, nm);
+		strncpy(fd->cFileName, nm, ARRAYSIZE(fd->cFileName));
 		fd->dwFileAttributes = WINPORT(GetFileAttributes)(MB2Wide(nm).c_str());
 		fd->nFileSize     = WINPORT(GetFileSize64)(f);
 		fd->nPhysicalSize = 0;

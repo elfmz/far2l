@@ -27,6 +27,7 @@
 
 #include "../../WinPort/WinCompat.h"
 #include <string>
+#include <memory>
 #include <utils.h>
 
 enum GETARC_CODE
@@ -48,21 +49,27 @@ struct ArcItemInfo
   int Chapter{};
   int Codepage{};
 
+  DWORD    dwFileAttributes{};
+  DWORD    dwUnixMode{};
+  DWORD    Flags{};
+  DWORD    NumberOfLinks{};
+  DWORD    CRC32{};
+
   FILETIME ftCreationTime{};
   FILETIME ftLastAccessTime{};
   FILETIME ftLastWriteTime{};
   DWORD64  nPhysicalSize{};
   DWORD64  nFileSize{};
-  DWORD    dwFileAttributes{};
-  DWORD    dwUnixMode{};
-  DWORD_PTR            UserData{};
-  DWORD                Flags{};
-  DWORD                NumberOfLinks{};
-  DWORD                CRC32{};
 
   std::string     PathName;
-  std::string     HostOS;
-  std::string     Description;
+
+  // NULL or ptr to statically alloc'ed literal - no need to free
+  const char      *HostOS{};
+
+  // keep rarely used strings in std::unique_ptr to save memory
+  std::unique_ptr<std::string>     Description;
+  std::unique_ptr<std::string>     LinkName;
+  std::unique_ptr<std::string>     Prefix;
 };
 
 enum ARCINFO_FLAGS

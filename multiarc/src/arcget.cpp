@@ -186,7 +186,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     Opt.HideOutput=2;
   int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
 
-  ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,ArcName,CurDir,
+  ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command,ArcName,CurDir,
              DialogItems[5].Data,AllFilesMask,IgnoreErrors,
              (OpMode & OPM_VIEW)!=0,(OpMode & OPM_FIND),CurDir,ItemsInfo.Codepage);
 

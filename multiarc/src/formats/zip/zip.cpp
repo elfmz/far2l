@@ -385,7 +385,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
     Info->dwFileAttributes = ZipHeader.Attr & 0x3f;
   }
 
-  Info->Description.clear();
+  Info->Description.reset();
 
   // Search for extra block
   ULARGE_INTEGER ExtraFieldEnd;
@@ -494,7 +494,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 			Info->Codepage = 0;
 #endif
 		} else {
-			Info->Description = strbuf.data();
+			Info->Description.reset(new std::string(strbuf.data()));
 		}
 	}
 	else // Move to extra block end
@@ -507,15 +507,15 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 // Read the in-archive file comment if any
   if (ZipHeader.CommLen>0)
   {
-	  ReadSize = 0;
-	  if (!Info->Description.empty()) //we could already get UTF-8 description
-	  {
-		char Description[255];
-		DWORD SizeToRead = std::min(DWORD(ZipHeader.CommLen), DWORD(ARRAYSIZE(Description)));
-		if (!WINPORT(ReadFile)(ArcHandle, Description, SizeToRead, &ReadSize, NULL)
-            || ReadSize != SizeToRead ) return(GETARC_READERROR);
-        Info->Description.assign(Description, ReadSize);
-	  }
+    ReadSize = 0;
+    if (!Info->Description) //we could already get UTF-8 description
+    {
+      char Description[255];
+      DWORD SizeToRead = std::min(DWORD(ZipHeader.CommLen), DWORD(ARRAYSIZE(Description)));
+      if (!WINPORT(ReadFile)(ArcHandle, Description, SizeToRead, &ReadSize, NULL) || ReadSize != SizeToRead)
+        return(GETARC_READERROR);
+      Info->Description->assign(Description, ReadSize);
+    }
 	// Skip comment tail
     WINPORT(SetFilePointer)(ArcHandle, ZipHeader.CommLen - ReadSize, NULL, FILE_CURRENT);
   }

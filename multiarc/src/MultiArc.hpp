@@ -35,6 +35,8 @@ using namespace oldfar;
 
 #define SUPER_PUPER_ZERO (0)
 
+#define USER_DATA_MAGIC 0xfeedf00d
+
 enum {
   CMD_EXTRACT=0,
   CMD_EXTRACTWITHOUTPATH,
@@ -196,6 +198,7 @@ class ArcCommand
     bool NeedSudo;
     struct PluginPanelItem *PanelItem;
     int ItemsNumber;
+    const std::vector<ArcItemInfo> &ArcData;
     std::string ArcName;
     std::string ArcDir;
     std::string RealArcDir;
@@ -225,6 +228,7 @@ class ArcCommand
 
   public:
     ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
+               const std::vector<ArcItemInfo> &ArcData_,
                const char *FormatString,const char *ArcName,const char *ArcDir,const char *Password,
                const char *AllFilesMask,int IgnoreErrors,int CommandType,
                int Silent,const char *RealArcDir,int DefaultCodepage);

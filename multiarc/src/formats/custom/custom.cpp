@@ -897,7 +897,7 @@ static void ParseListingItemRegExp(Match match,
     if(const char *p = match["name"])
         Info->PathName = p;
     if(const char *p = match["description"])
-        Info->Description = p;
+        Info->Description.reset(new std::string(p));
 
     Info->nFileSize     = StringToInt64(match["size"]);
     Info->nPhysicalSize   = StringToInt64(match["packedSize"]);
@@ -1005,7 +1005,11 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr,
             if (*CurStr) Info->PathName+= *CurStr;
             break;
         case 'c':
-            if (*CurStr) Info->Description+= *CurStr;
+            if (*CurStr) {
+              if (!Info->Description)
+                Info->Description.reset(new std::string);
+              Info->Description->append(1, *CurStr);
+            }
             break;
         case '.':
             {

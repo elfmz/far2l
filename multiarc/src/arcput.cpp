@@ -697,7 +697,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
     FSF.Unquote(DialogItems[PDI_ARCNAMEEDT].Data);
     NewArchive=!FileExists(DialogItems[PDI_ARCNAMEEDT].Data);
-    ArcCommand ArcCmd(PanelItem,ItemsNumber,Command.c_str(),
+    ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command.c_str(),
                       DialogItems[PDI_ARCNAMEEDT].Data,"",pdd.Password1,
                       AllFilesMask.c_str(),IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
 

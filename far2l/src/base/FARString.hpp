@@ -177,7 +177,7 @@ public:
 	template <typename ARRAY_T>
 		FARString& CopyArray(const ARRAY_T &a)
 	{
-		static_assert ( ARRAYSIZE(a) != sizeof(void *), "CopyArray should be used with arrays but not pointers");
+		static_assert ( sizeof(a) != sizeof(void *), "CopyArray should be used with arrays but not pointers");
 		return Copy(a, tnzlen(a, ARRAYSIZE(a)));
 	}
 

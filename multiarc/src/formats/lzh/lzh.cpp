@@ -364,7 +364,7 @@ int WINAPI _export LZH_GetArcItem(struct ArcItemInfo *Info)
           */
           char Description[256] = {0};
           ReadOverflowable(ArcHandle,NextHeaderSize-3,Description,ARRAYSIZE(Description),&ReadSize);
-          Info->Description.assign(Description, ReadSize);
+          Info->Description.reset(new std::string(Description, ReadSize));
           break;
         }
 

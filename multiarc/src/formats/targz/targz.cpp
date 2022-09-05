@@ -398,13 +398,9 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
 
       if ((dwUnixMode & S_IFMT) == S_IFLNK) //TAR_hdr.header.typeflag == SYMTYPE || TAR_hdr.header.typeflag == LNKTYPE
       {
-        const size_t UserDataSize = strlen(TAR_hdr.header.linkname)+2;
-        if((Info->UserData=(DWORD_PTR)MA_malloc(UserDataSize)) != 0)
-        {
-          snprintf((char*)Info->UserData, UserDataSize, "%s%s",
-            (TAR_hdr.header.typeflag == LNKTYPE) ? "/" : "", TAR_hdr.header.linkname);
-          ((char*)Info->UserData)[UserDataSize - 1] = 0;
-        }
+        Info->LinkName.reset(new std::string(TAR_hdr.header.linkname));
+        if (TAR_hdr.header.typeflag == LNKTYPE)
+          Info->LinkName->insert(0, "/");
       }
 
       Info->dwFileAttributes=WINPORT(EvaluateAttributesA)(dwUnixMode, Info->PathName.c_str());
@@ -418,7 +414,7 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
     Info->nFileSize=TarItemSize;
     Info->nPhysicalSize=TarItemSize;
 
-    Info->HostOS = (TarArchiveFormat==POSIX_FORMAT) ? "POSIX" : (TarArchiveFormat==V7_FORMAT?"V7":"");
+    Info->HostOS = (TarArchiveFormat==POSIX_FORMAT) ? "POSIX" : (TarArchiveFormat==V7_FORMAT ? "V7" : nullptr);
     Info->UnpVer=256+11+(TarArchiveFormat >= POSIX_FORMAT?1:0); //!!!
 
     FAR_INT64 PrevPosition=NextPosition;

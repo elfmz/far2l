@@ -297,14 +297,14 @@ template <class POD_T>
 template <class STRING_T, typename ARRAY_T>
 	void StrAssignArray(STRING_T &s, const ARRAY_T &a)
 {
-	static_assert ( ARRAYSIZE(a) != sizeof(void *), "StrAssignArray should be used with arrays but not pointers");
+	static_assert ( sizeof(a) != sizeof(void *), "StrAssignArray should be used with arrays but not pointers");
 	s.assign(a, tnzlen(a, ARRAYSIZE(a)));
 }
 
 template <class STRING_T, typename ARRAY_T>
 	void StrAppendArray(STRING_T &s, const ARRAY_T &a)
 {
-	static_assert ( ARRAYSIZE(a) != sizeof(void *), "StrAppendArray should be used with arrays but not pointers");
+	static_assert ( sizeof(a) != sizeof(void *), "StrAppendArray should be used with arrays but not pointers");
 	s.append(a, tnzlen(a, ARRAYSIZE(a)));
 }
 
@@ -312,7 +312,7 @@ template <class STRING_T, typename ARRAY_T>
 template <class STRING_T, typename ARRAY_T>
 	bool StrMatchArray(STRING_T &s, const ARRAY_T &a)
 {
-	static_assert ( ARRAYSIZE(a) != sizeof(void *), "StrMatchArray should be used with arrays but not pointers");
+	static_assert ( sizeof(a) != sizeof(void *), "StrMatchArray should be used with arrays but not pointers");
 	const size_t l = tnzlen(a, ARRAYSIZE(a));
 	return s.size() == l && s.compare(0, std::string::npos, a, l) == 0;
 }

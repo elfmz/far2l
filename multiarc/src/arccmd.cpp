@@ -5,9 +5,11 @@
 #include <fcntl.h>
 
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
+                       const std::vector<ArcItemInfo> &ArcData_,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
                        int CommandType,int ASilent,const char *RealArcDir,int DefaultCodepage)
+  : ArcData(ArcData_)
 {
   NeedSudo = false;
   Silent=ASilent;
@@ -304,18 +306,18 @@ int ArcCommand::ReplaceVar(std::string &Command)
       Command.clear();
       for (int N = 0; N < ItemsNumber; ++N)
       {
-        if(PanelItem[N].UserData && (PanelItem[N].Flags & PPIF_USERDATA))
+        if ((PanelItem[N].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
         {
-          struct ArcItemUserData *aud=(struct ArcItemUserData*)PanelItem[N].UserData;
-          if(aud->SizeStruct == sizeof(struct ArcItemUserData) && aud->Codepage > 0)
+          const auto Codepage = ArcData[PanelItem[N].UserData ^ USER_DATA_MAGIC].Codepage;
+          if (Codepage > 0)
           {
-            Command = StrPrintf("CP%u", aud->Codepage);
+            Command = StrPrintf("CP%u", Codepage);
             break;
           }
         }
       }
       if (Command.empty() && DefaultCodepage > 0)
-            Command = StrPrintf("CP%u", DefaultCodepage);
+        Command = StrPrintf("CP%u", DefaultCodepage);
 
       break;
 
@@ -421,18 +423,15 @@ int ArcCommand::ReplaceVar(std::string &Command)
               break;
 
             *PrefixFileName=0;
-            char *cFileName = PanelItem[N].FindData.cFileName;
+            const char *cFileName = PanelItem[N].FindData.cFileName;
 
-            if(PanelItem[N].UserData && (PanelItem[N].Flags & PPIF_USERDATA))
+            if ((PanelItem[N].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
             {
-              struct ArcItemUserData *aud=(struct ArcItemUserData*)PanelItem[N].UserData;
-              if(aud->SizeStruct == sizeof(struct ArcItemUserData))
-              {
-                if(aud->Prefix)
-                  strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName) - 1);
-                if(aud->LinkName)
-                  cFileName=aud->LinkName;
-              }
+              const auto &ArcItem = ArcData[PanelItem[N].UserData ^ USER_DATA_MAGIC];
+              if (ArcItem.Prefix)
+                  strncpy(PrefixFileName, ArcItem.Prefix->c_str(), sizeof(PrefixFileName) - 1);
+              if (ArcItem.LinkName)
+                  cFileName = ArcItem.LinkName->c_str();
             }
             // CHECK for BUGS!!
             Name = PrefixFileName;
@@ -560,16 +559,13 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
     int FileAttr=PanelItem[I].FindData.dwFileAttributes;
 
     *PrefixFileName=0;
-    if(PanelItem[I].UserData && (PanelItem[I].Flags & PPIF_USERDATA))
+    if ((PanelItem[I].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
     {
-      struct ArcItemUserData *aud=(struct ArcItemUserData*)PanelItem[I].UserData;
-      if(aud->SizeStruct == sizeof(struct ArcItemUserData))
-      {
-        if(aud->Prefix)
-          strncpy(PrefixFileName,aud->Prefix,sizeof(PrefixFileName) - 1);
-        if(aud->LinkName)
-           FileName = aud->LinkName;
-      }
+      const auto &ArcItem = ArcData[PanelItem[I].UserData ^ USER_DATA_MAGIC];
+      if (ArcItem.Prefix)
+        strncpy(PrefixFileName, ArcItem.Prefix->c_str(), sizeof(PrefixFileName) - 1);
+      if (ArcItem.LinkName)
+        FileName = *ArcItem.LinkName;
     }
 
     int Error=FALSE;

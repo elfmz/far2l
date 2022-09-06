@@ -187,7 +187,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
     }
     else if(Param1 == PDI_SELARCCOMB)
     {
-      strcpy(pdd->ArcFormat, ((FarDialogItem *)Param2)->Data);
+      ArrayCpyZ(pdd->ArcFormat, ((FarDialogItem *)Param2)->Data);
       Info.SendDlgMessage(hDlg, MAM_SELARC, 0, 0);
     }
     else if(Param1 == PDI_SWITCHESEDT)
@@ -428,7 +428,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     }
     else
     {
-      strcpy(pdd.ArcFormat,DefaultFormat);
+      ArrayCpyZ(pdd.ArcFormat,DefaultFormat);
       pdd.DefaultPluginNotFound=FALSE;
     }
   }
@@ -697,7 +697,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
     FSF.Unquote(DialogItems[PDI_ARCNAMEEDT].Data);
     NewArchive=!FileExists(DialogItems[PDI_ARCNAMEEDT].Data);
-    ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command.c_str(),
+    ArcCommand ArcCmd(PanelItem,ItemsNumber,Command.c_str(),
                       DialogItems[PDI_ARCNAMEEDT].Data,"",pdd.Password1,
                       AllFilesMask.c_str(),IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
 
@@ -715,7 +715,8 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       continue;
 
 	std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
-    if (!fullname.empty()) strncpy(ArcName, fullname.c_str(), ARRAYSIZE(ArcName)-1);
+    if (!fullname.empty())
+		ArrayCpyZ(ArcName, fullname.c_str());
     break;
   }
 

@@ -5,11 +5,9 @@
 #include <fcntl.h>
 
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
-                       const std::vector<ArcItemInfo> &ArcData_,
                        const char *FormatString,const char *ArcName,const char *ArcDir,
                        const char *Password,const char *AllFilesMask,int IgnoreErrors,
                        int CommandType,int ASilent,const char *RealArcDir,int DefaultCodepage)
-  : ArcData(ArcData_)
 {
   NeedSudo = false;
   Silent=ASilent;
@@ -175,8 +173,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
       char NameMsg[NM];
       FSF.sprintf(ErrMsg,(char *)GetMsg(MArcNonZero),ExecCode);
       const char *MsgItems[]={GetMsg(MError),NameMsg,ErrMsg,GetMsg(MOk)};
-
-      FSF.TruncPathStr(strncpy(NameMsg,ArcName.c_str(),sizeof(NameMsg) - 1),MAX_WIDTH_MESSAGE);
+      ArrayCpyZ(NameMsg, ArcName.c_str());
+      FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
       Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     }
     return false;
@@ -306,14 +304,11 @@ int ArcCommand::ReplaceVar(std::string &Command)
       Command.clear();
       for (int N = 0; N < ItemsNumber; ++N)
       {
-        if ((PanelItem[N].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
+        const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
+        if (Attrs && Attrs->Codepage > 0)
         {
-          const auto Codepage = ArcData[PanelItem[N].UserData ^ USER_DATA_MAGIC].Codepage;
-          if (Codepage > 0)
-          {
-            Command = StrPrintf("CP%u", Codepage);
-            break;
-          }
+          Command = StrPrintf("CP%u", Attrs->Codepage);
+          break;
         }
       }
       if (Command.empty() && DefaultCodepage > 0)
@@ -424,14 +419,13 @@ int ArcCommand::ReplaceVar(std::string &Command)
 
             *PrefixFileName=0;
             const char *cFileName = PanelItem[N].FindData.cFileName;
-
-            if ((PanelItem[N].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
+            const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
+            if (Attrs)
             {
-              const auto &ArcItem = ArcData[PanelItem[N].UserData ^ USER_DATA_MAGIC];
-              if (ArcItem.Prefix)
-                  strncpy(PrefixFileName, ArcItem.Prefix->c_str(), sizeof(PrefixFileName) - 1);
-              if (ArcItem.LinkName)
-                  cFileName = ArcItem.LinkName->c_str();
+              if (Attrs->Prefix)
+                  ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+              if (Attrs->LinkName)
+                  cFileName = Attrs->LinkName->c_str();
             }
             // CHECK for BUGS!!
             Name = PrefixFileName;
@@ -526,7 +520,8 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
     {
       char NameMsg[NM];
       const char *MsgItems[]={GetMsg(MError),GetMsg(MCannotCreateListFile),NameMsg,GetMsg(MOk)};
-      FSF.TruncPathStr(strncpy(NameMsg,ListFileName,sizeof(NameMsg) - 1),MAX_WIDTH_MESSAGE);
+      ArrayCpyZ(NameMsg, ListFileName);
+      FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
       Info.Message(Info.ModuleNumber,FMSG_WARNING,NULL,MsgItems,ARRAYSIZE(MsgItems),1);
     }
 /* $ 25.07.2001 AA
@@ -559,13 +554,13 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName,
     int FileAttr=PanelItem[I].FindData.dwFileAttributes;
 
     *PrefixFileName=0;
-    if ((PanelItem[I].UserData ^ USER_DATA_MAGIC) < DWORD64(ArcData.size()))
+    const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[I].UserData;
+    if (Attrs)
     {
-      const auto &ArcItem = ArcData[PanelItem[I].UserData ^ USER_DATA_MAGIC];
-      if (ArcItem.Prefix)
-        strncpy(PrefixFileName, ArcItem.Prefix->c_str(), sizeof(PrefixFileName) - 1);
-      if (ArcItem.LinkName)
-        FileName = *ArcItem.LinkName;
+      if (Attrs->Prefix)
+        ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+      if (Attrs->LinkName)
+        FileName = *Attrs->LinkName;
     }
 
     int Error=FALSE;

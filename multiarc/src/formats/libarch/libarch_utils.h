@@ -5,6 +5,7 @@
 
 #include <archive.h>
 #include <archive_entry.h>
+#include <PathParts.h>
 
 template <typename ... ARGS>
 	static int LibArchCall(int (*pfn)(ARGS ... args), ARGS ... args)
@@ -34,9 +35,6 @@ void LibArch_SetPassprhase(const char *passprhase);
 const char *LibArch_EntryPathname(struct archive_entry *e);
 
 bool LibArch_DetectedFormatHasCompression(struct archive *a);
-void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path);
-bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::string> &root);
-std::string LibArch_PathFromParts(const std::vector<std::string> &parts);
 
 struct LibArchOpenRead
 {

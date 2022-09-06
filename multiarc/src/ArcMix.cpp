@@ -38,7 +38,7 @@ BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
   char Name[NM], Dir[NM*5];
   int pathlen;
 
-  strcpy(Name,FSF.PointToName(const_cast<char*>(Target)));
+  ArrayCpyZ(Name,FSF.PointToName(const_cast<char*>(Target)));
   pathlen=(int)(FSF.PointToName(const_cast<char*>(Target))-Target);
   if(pathlen)
     memcpy(Dir,Target,pathlen);

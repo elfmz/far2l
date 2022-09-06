@@ -275,7 +275,7 @@ int PluginClass::GetFindData(PluginPanelItem **pPanelItem,int *pItemsNumber,int 
     CurrentItem->FindData.nFileSize = it.second.nFileSize;
     CurrentItem->FindData.dwFileAttributes = it.second.dwFileAttributes;
     CurrentItem->FindData.dwUnixMode = it.second.dwUnixMode;
-    ArrayCpyZ(CurrentItem->FindData.cFileName, it.first.c_str());
+    strncpy(CurrentItem->FindData.cFileName, it.first.c_str(), ARRAYSIZE(CurrentItem->FindData.cFileName));
     CurrentItem->Flags = it.second.Flags;
     CurrentItem->NumberOfLinks = it.second.NumberOfLinks;
     CurrentItem->CRC32 = it.second.CRC32;

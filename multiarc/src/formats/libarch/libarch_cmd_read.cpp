@@ -13,7 +13,7 @@
 #include "libarch_utils.h"
 #include "libarch_cmd.h"
 
-static bool PartsMatchesWanted(const std::vector<std::string> &wanted, const std::vector<std::string> &parts)
+static bool PartsMatchesWanted(const PathParts &wanted, const PathParts &parts)
 {
 	size_t i = 0;
 	while (i != wanted.size() && i != parts.size() && (wanted[i] == parts[i] || wanted[i] == "*")) {
@@ -23,7 +23,7 @@ static bool PartsMatchesWanted(const std::vector<std::string> &wanted, const std
 	return (i == wanted.size());
 }
 
-static bool PartsMatchesAnyOfWanteds(const std::vector<std::vector<std::string> > &wanteds, const std::vector<std::string> &parts)
+static bool PartsMatchesAnyOfWanteds(const std::vector<PathParts > &wanteds, const PathParts &parts)
 {
 	for (const auto &w : wanteds) {
 		if (PartsMatchesWanted(w, parts)) {
@@ -35,10 +35,10 @@ static bool PartsMatchesAnyOfWanteds(const std::vector<std::vector<std::string> 
 }
 
 static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
-	const size_t root_count, const std::vector<std::vector<std::string> > &wanteds)
+	const size_t root_count, const std::vector<PathParts > &wanteds)
 {
 	std::string src_path, extract_path;
-	std::vector<std::string> parts;
+	PathParts parts;
 
 	bool out = true;
 	for (;;) {
@@ -50,7 +50,7 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
 		const char *pathname = LibArch_EntryPathname(entry);
 		src_path = pathname ? pathname : "";
 		parts.clear();
-		LibArch_ParsePathToParts(parts, src_path);
+		parts.Traverse(src_path);
 
 		if (parts.empty()) {
 			fprintf(stderr, "Empty path: '%s' '%ls'\n",
@@ -116,21 +116,21 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
 
 bool LIBARCH_CommandRead(const char *cmd, const char *arc_path, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 {
-	std::vector<std::vector<std::string> > wanteds;
+	std::vector<PathParts > wanteds;
 	wanteds.reserve(files_cnt);
 
-	std::vector<std::string> root;
+	PathParts root;
 	if (!arc_opts.root_path.empty()) {
-		LibArch_ParsePathToParts(root, arc_opts.root_path);
+		root.Traverse(arc_opts.root_path);
 	}
 
 	for (int i = 0; i < files_cnt; ++i) {
 		wanteds.emplace_back();
 		if (files[i]) {
 			if (*files[i]) {
-				LibArch_ParsePathToParts(wanteds.back(), std::string(files[i]));
+				wanteds.back().Traverse(std::string(files[i]));
 			}
-			if (!root.empty() && !LibArch_PartsStartsBy(wanteds.back(), root)) {
+			if (!root.empty() && !wanteds.back().Starts(root)) {
 				fprintf(stderr, "Fixup root for path: '%s'\n", files[i]);
 				wanteds.back().insert(wanteds.back().begin(), root.begin(), root.end());
 			}

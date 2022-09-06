@@ -55,7 +55,7 @@ int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,i
   GetCommandFormat(CMD_DELETE,Command,sizeof(Command));
   GetCommandFormat(CMD_ALLFILESMASK,AllFilesMask,sizeof(AllFilesMask));
   int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
-  ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command,ArcName,CurDir,"",AllFilesMask,IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
+  ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,ArcName,CurDir,"",AllFilesMask,IgnoreErrors,0,0,CurDir,ItemsInfo.Codepage);
   if (!IgnoreErrors && ArcCmd.GetExecCode()!=0)
     return FALSE;
   if (Opt.UpdateDescriptions)
@@ -176,7 +176,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
         break;
       }
 
-  ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command,ArcName,CurDir,Password,AllFilesMask,
+  ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,ArcName,CurDir,Password,AllFilesMask,
                     IgnoreErrors,CommandType==CMD_COMMENT || CommandType==CMD_COMMENTFILES ? 2:0,0,
                     CurDir,ItemsInfo.Codepage);
   return IgnoreErrors || ArcCmd.GetExecCode()==0;
@@ -326,7 +326,7 @@ int PluginClass::ProcessKey(int Key,unsigned int ControlState)
     if(strstr(ArcName,/*"FarTmp"*/"FTMP")==NULL)//$AA какая-то бяка баловалась
     {
       char CurDir[NM];
-      strcpy(CurDir,ArcName);
+      ArrayCpyZ(CurDir,ArcName);
       char *Slash=strrchr(CurDir, GOOD_SLASH);
       if (Slash!=NULL)
       {

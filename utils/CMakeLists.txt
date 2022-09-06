@@ -29,6 +29,7 @@ set(SOURCES
   src/FSNotify.cpp
   src/TestPath.cpp
   src/PipeIPC.cpp
+  src/PathParts.cpp
 )
 
 add_library (utils ${SOURCES})

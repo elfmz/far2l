@@ -317,4 +317,15 @@ template <class STRING_T, typename ARRAY_T>
 	return s.size() == l && s.compare(0, std::string::npos, a, l) == 0;
 }
 
+template <typename ARRAY_T, class CHAR_T>
+	void ArrayCpyZ(ARRAY_T &dst, const CHAR_T *src)
+{
+	static_assert ( sizeof(dst) != sizeof(void *), "ArrayCpyZ should be used with arrays but not pointers");
+	size_t i;
+	for (i = 0; src[i] && i + 1 < ARRAYSIZE(dst); ++i) {
+		dst[i] = src[i];
+	}
+	dst[i] = 0;
+}
+
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)

@@ -68,55 +68,6 @@ bool LibArch_DetectedFormatHasCompression(struct archive *a)
 	return false;
 }
 
-
-void LibArch_ParsePathToParts(std::vector<std::string> &parts, const std::string &path)
-{
-	size_t i = parts.size();
-	StrExplode(parts, path, "/");
-	while (i < parts.size()) {
-		if (parts[i] == ".") {
-			parts.erase(parts.begin() + i);
-		} else if (parts[i] == "..") {
-			parts.erase(parts.begin() + i);
-			if (i != 0) {
-				parts.erase(parts.begin() + i - 1);
-				--i;
-			} else {
-				fprintf(stderr, "LibArch_ParsePathToParts: impossible <..> in '%s'\n", path.c_str());
-			}
-		} else {
-			++i;
-		}
-	}
-}
-
-bool LibArch_PartsStartsBy(std::vector<std::string> &parts, std::vector<std::string> &root)
-{
-	if (parts.size() < root.size()) {
-		return false;
-	}
-
-	for (size_t i = 0; i != root.size(); ++i) {
-		if (parts[i] != root[i]) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-std::string LibArch_PathFromParts(const std::vector<std::string> &parts)
-{
-	std::string out;
-	for (const auto &p : parts) {
-		if (!out.empty()) {
-			out+= '/';
-		}
-		out+= p;
-	}
-	return out;
-}
-
 LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *charset)
 {
 	Open(name);

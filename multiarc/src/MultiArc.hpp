@@ -10,6 +10,7 @@
 #include <vector>
 #include <utils.h>
 #include <KeyFileHelper.h>
+#include <PathParts.h>
 #include <farplug-mb.h>
 using namespace oldfar;
 #include "fmt.hpp"
@@ -92,6 +93,7 @@ struct PluginItem
   PLUGINGETSFXPOS pGetSFXPos;
 };
 
+typedef PathNode<ArcItemAttributes> ArcItemNode;
 
 class ArcPlugins
 {
@@ -132,7 +134,8 @@ class PluginClass
   private:
     char ArcName[NM + 2];
     char CurDir[NM];
-    std::vector<ArcItemInfo> ArcData;
+    ArcItemNode ArcData;
+    size_t ArcDataCount = 0;
     struct stat ArcStat {};
     int ArcPluginNumber;
     int ArcPluginType;
@@ -198,7 +201,6 @@ class ArcCommand
     bool NeedSudo;
     struct PluginPanelItem *PanelItem;
     int ItemsNumber;
-    const std::vector<ArcItemInfo> &ArcData;
     std::string ArcName;
     std::string ArcDir;
     std::string RealArcDir;
@@ -228,7 +230,6 @@ class ArcCommand
 
   public:
     ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
-               const std::vector<ArcItemInfo> &ArcData_,
                const char *FormatString,const char *ArcName,const char *ArcDir,const char *Password,
                const char *AllFilesMask,int IgnoreErrors,int CommandType,
                int Silent,const char *RealArcDir,int DefaultCodepage);

@@ -39,7 +39,7 @@ enum GETARC_CODE
   GETARC_READERROR         =4,
 };
 
-struct ArcItemInfo
+struct ArcItemAttributes
 {
   int Solid{};
   int Comment{};
@@ -61,8 +61,6 @@ struct ArcItemInfo
   DWORD64  nPhysicalSize{};
   DWORD64  nFileSize{};
 
-  std::string     PathName;
-
   // NULL or ptr to statically alloc'ed literal - no need to free
   const char      *HostOS{};
 
@@ -70,6 +68,11 @@ struct ArcItemInfo
   std::unique_ptr<std::string>     Description;
   std::unique_ptr<std::string>     LinkName;
   std::unique_ptr<std::string>     Prefix;
+};
+
+struct ArcItemInfo : ArcItemAttributes
+{
+  std::string     PathName;
 };
 
 enum ARCINFO_FLAGS

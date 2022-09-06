@@ -158,8 +158,8 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
       return -1;
     if (MsgCode==1)
     {
-      memset(&MaskPanelItem,0,sizeof(MaskPanelItem));
-      strncpy(MaskPanelItem.FindData.cFileName, AllFilesMask, ARRAYSIZE(MaskPanelItem.FindData.cFileName)-1);
+      ZeroFill(MaskPanelItem);
+      ArrayCpyZ(MaskPanelItem.FindData.cFileName, AllFilesMask);
       if (ItemsInfo.Encrypted)
         MaskPanelItem.Flags=F_ENCRYPTED;
       PanelItem=&MaskPanelItem;
@@ -186,7 +186,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,
     Opt.HideOutput=2;
   int IgnoreErrors=(CurArcInfo.Flags & AF_IGNOREERRORS);
 
-  ArcCommand ArcCmd(PanelItem,ItemsNumber,ArcData,Command,ArcName,CurDir,
+  ArcCommand ArcCmd(PanelItem,ItemsNumber,Command,ArcName,CurDir,
              DialogItems[5].Data,AllFilesMask,IgnoreErrors,
              (OpMode & OPM_VIEW)!=0,(OpMode & OPM_FIND),CurDir,ItemsInfo.Codepage);
 

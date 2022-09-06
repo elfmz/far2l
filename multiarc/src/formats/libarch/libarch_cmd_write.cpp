@@ -27,7 +27,7 @@ protected:
 	{
 	}
 
-	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	virtual bool OnCopyEntry(const PathParts &parts)
 	{
 		return true;
 	}
@@ -58,7 +58,7 @@ public:
 
 		OnStart(arc_dst);
 
-		std::vector<std::string> parts;
+		PathParts parts;
 		std::string str;
 
 		for (;;) {
@@ -71,7 +71,7 @@ public:
 			if (pathname) {
 				parts.clear();
 				str = pathname;
-				LibArch_ParsePathToParts(parts, str);
+				parts.Traverse(str);
 				if (!OnCopyEntry(parts)) {
 					arc_src.SkipData();
 					continue;
@@ -129,9 +129,9 @@ public:
 
 class LIBARCH_Delete : public LIBARCH_Modify
 {
-	std::vector<std::vector<std::string> > _files_parts;
+	std::vector<PathParts > _files_parts;
 
-	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	virtual bool OnCopyEntry(const PathParts &parts)
 	{
 		for (const auto &fp : _files_parts) if (parts.size() >= fp.size()) {
 			size_t i = 0;
@@ -139,7 +139,7 @@ class LIBARCH_Delete : public LIBARCH_Modify
 				++i;
 			}
 			if (i == fp.size()) {
-				printf("Deleted: %s\n", LibArch_PathFromParts(parts).c_str());
+				printf("Deleted: %s\n", parts.Join().c_str());
 				return false;
 			}
 		}
@@ -155,10 +155,10 @@ public:
 		for (int i = 0; i < files_cnt; ++i) if (files[i]) {
 			_files_parts.emplace_back();
 			if (!arc_opts.root_path.empty()) {
-				LibArch_ParsePathToParts(_files_parts.back(), arc_opts.root_path);
+				_files_parts.back().Traverse(arc_opts.root_path);
 			}
 			str = files[i];
-			LibArch_ParsePathToParts(_files_parts.back(), str);
+			_files_parts.back().Traverse(str);
 		}
 	}
 };
@@ -171,8 +171,8 @@ class LIBARCH_Add
 	static LIBARCH_Add *s_ftw_caller;
 
 	const LibarchCommandOptions &_arc_opts;
-	std::vector<std::string> _add_pathes;
-	std::vector<std::string> _well_added_pathes;
+	PathParts _add_pathes;
+	PathParts _well_added_pathes;
 
 	LibArchOpenWrite *_arc_dst = nullptr;
 
@@ -246,8 +246,8 @@ class LIBARCH_Add
 		}
 
 		_added_parts.emplace_back();
-		LibArch_ParsePathToParts(_added_parts.back(), _arc_opts.root_path);
-		LibArch_ParsePathToParts(_added_parts.back(), path);
+		_added_parts.back().Traverse(_arc_opts.root_path);
+		_added_parts.back().Traverse(path);
 
 		if (data_len) {
 			// once file entry header has been added it cannot be dismissed,
@@ -325,7 +325,7 @@ class LIBARCH_Add
 
 protected:
 	const char *_cmd;
-	std::vector< std::vector<std::string> > _added_parts, _illformed_parts;
+	std::vector< PathParts > _added_parts, _illformed_parts;
 	bool _good;
 
 public:
@@ -398,13 +398,13 @@ class LIBARCH_ReplacingAdd : public LIBARCH_Modify, public LIBARCH_Add
 		AddInto(arc_dst);
 	}
 
-	virtual bool OnCopyEntry(const std::vector<std::string> &parts)
+	virtual bool OnCopyEntry(const PathParts &parts)
 	{
 		if (std::binary_search(_added_parts.begin(), _added_parts.end(), parts)) {
 			if (std::binary_search(_illformed_parts.begin(), _illformed_parts.end(), parts)) {
 				throw std::runtime_error("tried to replace existing file by illformed one");
 			}
-			printf("Replaced: %s\n", LibArch_PathFromParts(parts).c_str());
+			printf("Replaced: %s\n", parts.Join().c_str());
 			return false;
 		}
 

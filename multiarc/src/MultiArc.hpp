@@ -57,15 +57,6 @@ enum {
   CMD_DEFEXT
 };
 
-
-// TODO: add to Archive API (?)
-struct ArcItemUserData{
-   DWORD SizeStruct;
-   int Codepage;
-   char *Prefix;
-   char *LinkName;
-};
-
 typedef DWORD (WINAPI *PLUGINLOADFORMATMODULE)(const char *ModuleName);
 typedef BOOL (WINAPI *PLUGINISARCHIVE)(const char *Name,const unsigned char *Data,int DataSize);
 typedef BOOL (WINAPI *PLUGINOPENARCHIVE)(const char *Name,int *Type,bool Silent);

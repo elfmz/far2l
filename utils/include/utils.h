@@ -289,9 +289,10 @@ const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
 
 template <class POD_T>
-	void ZeroFill(POD_T &pod)
+	void ZeroFill(POD_T &dst)
 {
-	memset(&pod, 0, sizeof(pod));
+	static_assert ( std::is_pod<POD_T>::value, "ZeroFill should be used with POD types only");
+	memset(&dst, 0, sizeof(dst));
 }
 
 template <class STRING_T, typename ARRAY_T>

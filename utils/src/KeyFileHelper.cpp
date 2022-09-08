@@ -450,7 +450,7 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 	);
 
 	if (!_loaded) {
-		memset(&_filestat, 0, sizeof(_filestat));
+		ZeroFill(_filestat);
 	}
 }
 

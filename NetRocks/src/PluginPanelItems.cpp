@@ -71,7 +71,7 @@ PluginPanelItem *PluginPanelItems::Add(const wchar_t *name)
 	if (count > capacity) abort();
 
 	PluginPanelItem *out = &items[count];
-	memset(out, 0, sizeof(*out));
+	ZeroFill(*out);
 	out->FindData.lpwszFileName = wcsdup(name);
 	if (out->FindData.lpwszFileName == nullptr) {
 		throw std::runtime_error("PluginPanelItems: can't allocate filename");

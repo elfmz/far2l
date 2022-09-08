@@ -569,9 +569,9 @@ int WINAPI _export CUSTOM_GetArcItem( struct ArcItemInfo *Info)
     CustomStringList *CurFormatNode = Format;
     SYSTEMTIME stModification, stCreation, stAccess, syst;
 
-    memset(&stModification, 0, sizeof(stModification));
-    memset(&stCreation, 0, sizeof(stCreation));
-    memset(&stAccess, 0, sizeof(stAccess));
+    ZeroFill(stModification);
+    ZeroFill(stCreation);
+    ZeroFill(stAccess);
     WINPORT(GetSystemTime)(&syst);
 
     while(GetString(Str, sizeof(Str)))
@@ -803,7 +803,6 @@ static void FillFormat(const KeyFileValues *Values)
 
 static int GetString(char *Str, int MaxSize)
 {
-	//memset(Str, 0, MaxSize);
     if(OutDataPos >= OutDataSize)
         return (FALSE);
 

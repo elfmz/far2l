@@ -87,7 +87,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
   {
     struct FarMenuItemEx MenuItems[ARRAYSIZE(MenuData)];
 
-    memset(MenuItems,0,sizeof(MenuItems));
+    ZeroFill(MenuItems);
     MenuItems[ExitCode].Flags=MIF_SELECTED;
 
     int Count=0;
@@ -157,7 +157,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem,int ItemsNumb
       return -1;
     if (MsgCode==1)
     {
-      memset(&MaskPanelItem,0,sizeof(MaskPanelItem));
+      ZeroFill(MaskPanelItem);
       strncpy(MaskPanelItem.FindData.cFileName,AllFilesMask,ARRAYSIZE(MaskPanelItem.FindData.cFileName)-1);
       if (ItemsInfo.Encrypted)
         MaskPanelItem.Flags=F_ENCRYPTED;
@@ -240,7 +240,7 @@ int PluginClass::SelectFormat(char *ArcFormat,int AddOnly)
           return FALSE;
         }
         MenuItems=NewMenuItems;
-        memset(MenuItems+MenuItemsNumber,0,sizeof(struct FarMenuItemEx));
+        ZeroFill(MenuItems[MenuItemsNumber]);
         MenuItems[MenuItemsNumber].UserData = MAKEWPARAM((WORD)i,(WORD)j);
         strncpy(MenuItems[MenuItemsNumber].Text.Text,Format,sizeof(MenuItems[MenuItemsNumber].Text.Text)-1);
         MenuItems[MenuItemsNumber].Flags=((MenuItemsNumber==0 &&

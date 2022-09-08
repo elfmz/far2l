@@ -269,7 +269,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
   {
     if (!WINPORT(ReadFile)(ArcHandle,&ZipHd1,sizeof(ZipHd1),&ReadSize,NULL))
       return(GETARC_READERROR);
-    memset(&ZipHeader,0,sizeof(ZipHeader));
+    ZeroFill(ZipHeader);
     ZipHeader.Mark=ZipHd1.Mark;
     ZipHeader.UnpVer=ZipHd1.UnpVer;
     ZipHeader.UnpOS=ZipHd1.UnpOS;

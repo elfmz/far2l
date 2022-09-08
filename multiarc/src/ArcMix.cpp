@@ -179,32 +179,15 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
     return Execute(hPlugin, CmdStrTrimmed, HideOutput, Silent, NeedSudo, ShowCommand, ListFileName);
   }
   
- // STARTUPINFO si;
-  //PROCESS_INFORMATION pi;
   int ExitCode,LastError;
 
-  //memset(&si,0,sizeof(si));
-  //si.cb=sizeof(si);
-
-  //HANDLE hChildStdoutRd,hChildStdoutWr;
-  HANDLE StdInput=NULL;//GetStdHandle(STD_INPUT_HANDLE);
-  HANDLE StdOutput=NULL;//GetStdHandle(STD_OUTPUT_HANDLE);
-//  HANDLE StdError=NULL;//GetStdHandle(STD_ERROR_HANDLE);
+  HANDLE StdInput=NULL;
+  HANDLE StdOutput=NULL;
   HANDLE hScreen=NULL;
   CONSOLE_SCREEN_BUFFER_INFO csbi;
 
   if (HideOutput)
   {
-    /*SECURITY_ATTRIBUTES saAttr;
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = NULL;
-
-    if (CreatePipe(&hChildStdoutRd, &hChildStdoutWr, &saAttr, 32768))
-    {
-      SetStdHandle(STD_OUTPUT_HANDLE,hChildStdoutWr);
-      SetStdHandle(STD_ERROR_HANDLE,hChildStdoutWr);*/
-
       if (!Silent)
       {
         hScreen=Info.SaveScreen(0,0,-1,-1);
@@ -212,9 +195,6 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
         Info.Message(Info.ModuleNumber,0,NULL,MsgItems,
                       ARRAYSIZE(MsgItems),0);
       }
-    /*}
-    else
-      HideOutput=FALSE;*/
   }
   else
   {
@@ -264,51 +244,9 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
     LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
   }
 	
-  /*if (HideOutput)
-  {
-    SetStdHandle(STD_OUTPUT_HANDLE,StdOutput);
-    SetStdHandle(STD_ERROR_HANDLE,StdError);
-    WINPORT(CloseHandle)(hChildStdoutWr);
-  }*/
-
   WINPORT(SetLastError)(LastError);
-  /*if(!ExitCode2 ) //$ 06.03.2002 AA
-  {
-    char Msg[100];
-    char ExecuteName[NM];
-    strncpy(ExecuteName,ExpandedCmd+(*ExpandedCmd=='"'), NM);
-    char *Ptr;
-    Ptr=strchr(ExecuteName,(*ExpandedCmd=='"')?'"':' ');
-    if(Ptr)
-      *Ptr=0;
-    FindExecuteFile(ExecuteName,NULL,0);
-
-    char NameMsg[NM];
-    FSF.TruncPathStr(strcpyn(NameMsg,ExecuteName,sizeof(NameMsg)),MAX_WIDTH_MESSAGE);
-    FSF.sprintf(Msg,GetMsg(MCannotFindArchivator),NameMsg);
-    const char *MsgItems[]={GetMsg(MError),Msg, GetMsg(MOk)};
-    Info.Message(Info.ModuleNumber,FMSG_WARNING|FMSG_ERRORTYPE,
-                 NULL,MsgItems,ARRAYSIZE(MsgItems),1);
-    ExitCode=RETEXEC_ARCNOTFOUND;
-  }*/
-
   WINPORT(SetConsoleTitle)(SaveTitle);
   WINPORT(SetConsoleMode)(StdInput,ConsoleMode);
-/*  if (!HideOutput)
-  {
-    SMALL_RECT src;
-    COORD dest;
-    CHAR_INFO fill;
-    src.Left=0;
-    src.Top=2;
-    src.Right=csbi.dwSize.X;
-    src.Bottom=csbi.dwSize.Y;
-    dest.X=dest.Y=0;
-    fill.Char.AsciiChar=' ';
-    fill.Attributes=7;
-    WINPORT(ScrollConsoleScreenBuffer)(StdOutput,&src,NULL,dest,&fill);
-    Info.Control(hPlugin,FCTL_SETUSERSCREEN,NULL);
-  }*/
   if (hScreen)
   {
     Info.RestoreScreen(NULL);

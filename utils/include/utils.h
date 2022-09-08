@@ -292,6 +292,7 @@ template <class POD_T>
 	void ZeroFill(POD_T &dst)
 {
 	static_assert ( std::is_pod<POD_T>::value, "ZeroFill should be used with POD types only");
+	static_assert ( sizeof(dst) != sizeof(void *), "ZeroFill should not be used with pointers");
 	memset(&dst, 0, sizeof(dst));
 }
 

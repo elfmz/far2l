@@ -156,7 +156,7 @@ BOOL WINAPI _export RAR_IsArchive(const char *Name,const unsigned char *Data,int
 
 BOOL WINAPI _export RAR_OpenArchive(const char *Name,int *Type,bool Silent)
 {
-  memset(&OpenArchiveData,0,sizeof(OpenArchiveData));
+  ZeroFill(OpenArchiveData);
   OpenArchiveData.ArcName=(char*)Name;
   OpenArchiveData.CmtBuf=NULL;
   OpenArchiveData.CmtBufSize=0;

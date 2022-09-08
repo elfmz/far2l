@@ -73,8 +73,8 @@ class ScmRightsMsg
 public:
 	ScmRightsMsg(size_t payload_len)
 	{
-		memset(&_msg, 0, sizeof(_msg));
-		memset(&_iov, 0, sizeof(_iov));
+		ZeroFill(_msg);
+		ZeroFill(_iov);
 		_iov.iov_base = &_dummy_data;
 		_iov.iov_len = sizeof(_dummy_data);
 		_msg.msg_iov = &_iov;
@@ -136,7 +136,7 @@ LocalSocketClient::LocalSocketClient(Kind sock_kind, const std::string &path_ser
 	if (bind(_sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		throw LocalSocketBindError();
 
-	memset(&sa, 0, sizeof(sa));
+	ZeroFill(sa);
 	sa.sun_family = AF_UNIX;
 	strncpy(sa.sun_path, path_server.c_str(), sizeof(sa.sun_path) - 1);
 

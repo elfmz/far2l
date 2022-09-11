@@ -43,7 +43,7 @@
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
-bool g_broadway = false, g_wayland = false, g_remote = false;
+bool g_broadway = false, g_wayland = false, g_remote = false, g_xrdp = false;
 static int g_exit_code = 0;
 enum
 {
@@ -118,6 +118,12 @@ static void DetectHostAbilities()
 		&& strstr(ssh_conn, "localhost") == NULL) {
 
 		g_remote = true;
+	}
+
+	const char *xrdp = getenv("XRDP_SESSION");
+	if (xrdp) {
+		g_xrdp = true;
+		//g_remote = true;
 	}
 }
 
@@ -343,6 +349,8 @@ private:
 	DWORD _refresh_rects_throttle;
 	unsigned int _pending_refreshes;
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
+
+	bool _repaint_on_next_timer;
 };
 
 ///////////////////////////////////////////
@@ -377,7 +385,10 @@ private:
 	}
 	
 	void OnAccelerator(wxCommandEvent& event);
-	void OnPaint( wxPaintEvent& event ) {}
+	void OnPaint( wxPaintEvent& event )
+	{
+		wxPaintDC dc(this);
+	}
 	void OnEraseBackground( wxEraseEvent& event ) {}
 	
     wxDECLARE_EVENT_TABLE();
@@ -566,7 +577,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0), _pending_refreshes(0)
+		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false)
 {
 	g_winport_con_out->SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -733,6 +744,11 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
 	_paint_context.BlinkCursor();
+	if (_repaint_on_next_timer) {
+		_repaint_on_next_timer = false;
+		Refresh(false);
+		Update();
+	}
 }
 
 static int ProcessAllEvents()
@@ -979,6 +995,9 @@ void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
 	_frame->SetTitle(title.c_str());
+	if (g_xrdp) { // under xrdp - force full repaint after some time to workaround #1303
+		_repaint_on_next_timer = true;
+	}
 }
 
 

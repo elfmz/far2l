@@ -43,7 +43,7 @@
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
-bool g_broadway = false, g_wayland = false, g_remote = false, g_xrdp = false;
+bool g_broadway = false, g_wayland = false, g_remote = false;
 static int g_exit_code = 0;
 enum
 {
@@ -122,8 +122,7 @@ static void DetectHostAbilities()
 
 	const char *xrdp = getenv("XRDP_SESSION");
 	if (xrdp) {
-		g_xrdp = true;
-		//g_remote = true;
+		g_remote = true;
 	}
 }
 
@@ -995,7 +994,7 @@ void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
 	_frame->SetTitle(title.c_str());
-	if (g_xrdp) { // under xrdp - force full repaint after some time to workaround #1303
+	if (g_remote) { // under xrdp/forwarded x11 (repro?) - force full repaint after some time to workaround #1303
 		_repaint_on_next_timer = true;
 	}
 }

@@ -780,6 +780,7 @@ static void SetCustomSettings(const char *arg)
 	if (!refined.empty()) {
 		// could use FARPROFILE/FARLOCALPROFILE for that but it would be abusing
 		setenv("FARSETTINGS", refined.c_str(), 1);
+		InMyPathChanged();
 	}
 }
 

@@ -106,6 +106,7 @@ template <class StrT>
 
 const std::string &GetMyHome();
 
+void InMyPathChanged(); // NOT thread safe, can be called only before any concurrent use of InMy...
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyCache(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);

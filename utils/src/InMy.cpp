@@ -139,80 +139,138 @@ static std::string GetMyHomeUncached()
 	return GetTempSubdirUncached("far2l_home");
 }
 
-
-static std::string GetFarSettingsUncached()
-{
-	std::string out;
-	const char *env = getenv("FARSETTINGS");
-	if (env) {
-		out = env;
-	}
-	return out;
-}
-
 const std::string &GetMyHome()
 {
 	static std::string s_out = GetMyHomeUncached();
 	return s_out;
 }
 
-const std::string &GetFarSettings()
+/*** ProfileDir is a helper for InMy... functions, it constructs
+base settings/caches path from env with following order of precedence:
+	if $FARSETTINGS is set to full path:
+		return $FARSETTINGS/<usual_name>
+	elsif $<xdg_env> is set and $FARSETTINGS is set:
+		return $<xdg_env>/custom/$FARSETTINGS
+	elsif $<xdg_env> is set:
+		return $<xdg_env>
+	elsif $FARSETTINGS is set:
+		return $HOME/<usual_name>/custom/$FARSETTINGS
+	else
+		return $HOME/<usual_name>
+*/
+class ProfileDir
 {
-	static std::string s_out = GetFarSettingsUncached();
-	return s_out;
-}
+	const char *_usual_name;
+	const char *_xdg_env;
+	std::string _value;
 
-
-static std::string InProfileSubdir(const char *what, const char *subpath, bool create_path)
-{
-	const std::string &settings = GetFarSettings();
-
-	std::string path;
-
-	if (!settings.empty() && settings[0] == '/') {
-		path = settings;
-		path+= '/';
-		path+= what;
-
-	} else {
-		path = GetMyHome();
-		path+= '/';
-		path+= what;
-		path+= "/far2l";
-		if (!settings.empty()) {
-			path+= "/custom/";
-			path+= settings;
-		}
+	ProfileDir(const char *usual_name, const char *xdg_env)
+		: _usual_name(usual_name), _xdg_env(xdg_env)
+	{
+		Update();
 	}
 
-	if (subpath) {
-		if (*subpath != GOOD_SLASH) {
-			path+= GOOD_SLASH;
+public:
+	void Update()
+	{
+		std::string settings;
+		const char *settings_env = getenv("FARSETTINGS");
+		if (settings_env && *settings_env) {
+			settings = settings_env;
+			// cosmetic sanity
+			while (settings.size() > 1 && settings.back() == GOOD_SLASH) {
+				settings.pop_back();
+			}
 		}
-		path+= subpath;
-	}
 
-	if (create_path) {
-		size_t p = path.rfind(GOOD_SLASH);
-		struct stat s;
-		if (stat(path.substr(0, p).c_str(), &s) == -1) {
-			for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
-				EnsureDir(path.substr(0, i).c_str(), PL_PRIVATE);
+		if (!settings.empty() && settings[0] == GOOD_SLASH) {
+			_value = settings;
+			_value+= GOOD_SLASH;
+			_value+= _usual_name;
+
+		} else {
+			const char *xdg_val = getenv(_xdg_env);
+			if (xdg_val && *xdg_val == GOOD_SLASH) {
+				_value = xdg_val;
+
+			} else {
+				if (UNLIKELY(xdg_val)) {
+					fprintf(stderr, "ProfileDir: %s ignored cuz its not a full path: '%s'\n", _xdg_env, xdg_val);
+				}
+				_value = GetMyHome();
+				_value+= GOOD_SLASH;
+				_value+= _usual_name;
+			}
+
+			if (_value.empty() || _value.back() != GOOD_SLASH) {
+				_value+= GOOD_SLASH;
+			}
+
+			_value+= "far2l";
+
+			if (!settings.empty()) {
+				_value+= "/custom/";
+				_value+= settings;
 			}
 		}
 	}
 
-	return path;
+	std::string Subdir(const char *subpath, bool create_path)
+	{
+		std::string path = _value;
+
+		if (subpath) {
+			if (*subpath != GOOD_SLASH) {
+				path+= GOOD_SLASH;
+			}
+			path+= subpath;
+		}
+
+		if (create_path) {
+			size_t p = path.rfind(GOOD_SLASH);
+			struct stat s;
+			if (stat(path.substr(0, p).c_str(), &s) == -1) {
+				for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
+					EnsureDir(path.substr(0, i).c_str(), PL_PRIVATE);
+				}
+			}
+		}
+
+		return path;
+	}
+
+	const std::string &Get() const
+	{
+		return _value;
+	}
+
+	static ProfileDir &Config()
+	{
+		static ProfileDir s_out(".config", "XDG_CONFIG_HOME");
+		return s_out;
+	}
+
+	static ProfileDir &Cache()
+	{
+		static ProfileDir s_out(".cache", "XDG_CACHE_HOME");
+		return s_out;
+	}
+};
+
+void InMyPathChanged()
+{
+	ProfileDir::Config().Update();
+	ProfileDir::Cache().Update();
 }
 
 std::string InMyConfig(const char *subpath, bool create_path)
 {
-	return InProfileSubdir(".config", subpath, create_path);
+	return ProfileDir::Config().Subdir(subpath, create_path);
 }
 
 std::string InMyCache(const char *subpath, bool create_path)
 {
-	return InProfileSubdir(".cache", subpath, create_path);
+	return ProfileDir::Cache().Subdir(subpath, create_path);
 }
 
 std::string InMyTemp(const char *subpath)

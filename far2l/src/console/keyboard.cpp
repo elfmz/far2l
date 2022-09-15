@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "palette.hpp"
 #include "xlat.hpp"
+#include "InterThreadCall.hpp"
 
 /* start Глобальные переменные */
 
@@ -473,8 +474,7 @@ DWORD IsMouseButtonPressed()
 	{
 		GetInputRecord(&rec);
 	}
-
-	WINPORT(Sleep)(10);
+	WINPORT(WaitConsoleInput)(10);
 	return MouseButtonState;
 }
 
@@ -516,7 +516,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 {
 	_KEYMACRO(CleverSysLog Clev(L"GetInputRecord()"));
 	static int LastEventIdle=FALSE;
-	DWORD LoopCount=0,CalcKey;
+	DWORD CalcKey;
 	DWORD ReadKey=0;
 	int NotMacros=FALSE;
 	static int LastMsClickMacroKey=0;
@@ -638,7 +638,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	bool FullscreenState=IsFullscreen();
 
-	for (;;)
+	for (DWORD LoopCount=0;;)
 	{
 		// "Реакция" на максимизацию/восстановление окна консоли
 		if (ZoomedState!=Console.IsZoomed() && IconicState==Console.IsIconic())
@@ -718,7 +718,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		}
 
 		ScrBuf.Flush();
-		WINPORT(Sleep)(10);
+		WINPORT(WaitConsoleInput)(160);
 
 		// Позволяет избежать ситуации блокирования мыши
 		if (Opt.Mouse) // А нужно ли это условие???
@@ -737,72 +737,72 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			return KEY_NONE;
 		}
 
-		if (!(LoopCount & 15))
+		//if (!(LoopCount & 15))
+		clock_t CurTime=GetProcessUptimeMSec();
+
+		if (EnableShowTime)
+			ShowTime(0);
+
+		if (WaitInMainLoop)
 		{
-			clock_t CurTime=GetProcessUptimeMSec();
+			if (CheckForInactivityExit())
+				return(KEY_NONE);
 
-			if (EnableShowTime)
-				ShowTime(0);
-
-			if (WaitInMainLoop)
+			if (!(LoopCount & 3))
 			{
-				if (CheckForInactivityExit())
-					return(KEY_NONE);
+				static int Reenter=0;
 
-				if (!(LoopCount & 63))
+				if (!Reenter)
 				{
-					static int Reenter=0;
+					Reenter++;
+					SHORT X,Y;
+					GetRealCursorPos(X,Y);
 
-					if (!Reenter)
+					if (!X && Y==ScrY && CtrlObject->CmdLine->IsVisible())
 					{
-						Reenter++;
-						SHORT X,Y;
-						GetRealCursorPos(X,Y);
-
-						if (!X && Y==ScrY && CtrlObject->CmdLine->IsVisible())
+						for (;;)
 						{
-							for (;;)
-							{
-								INPUT_RECORD tmprec;
-								int Key=GetInputRecord(&tmprec);
+							INPUT_RECORD tmprec;
+							int Key=GetInputRecord(&tmprec);
 
-								if ((DWORD)Key==KEY_NONE || ((DWORD)Key!=KEY_SHIFT && tmprec.Event.KeyEvent.bKeyDown))
-									break;
-							}
-
-							CtrlObject->Cp()->SetScreenPosition();
-							ScrBuf.ResetShadow();
-							ScrBuf.Flush();
+							if ((DWORD)Key==KEY_NONE || ((DWORD)Key!=KEY_SHIFT && tmprec.Event.KeyEvent.bKeyDown))
+								break;
 						}
 
-						Reenter--;
+						CtrlObject->Cp()->SetScreenPosition();
+						ScrBuf.ResetShadow();
+						ScrBuf.Flush();
 					}
 
-					static int UpdateReenter=0;
+					Reenter--;
+				}
 
-					if (!UpdateReenter && CurTime-KeyPressedLastTime>700)
-					{
-						UpdateReenter=TRUE;
-						CtrlObject->Cp()->LeftPanel->UpdateIfChanged(UIC_UPDATE_NORMAL);
-						CtrlObject->Cp()->RightPanel->UpdateIfChanged(UIC_UPDATE_NORMAL);
-						UpdateReenter=FALSE;
-					}
+				static int UpdateReenter=0;
+
+				if (!UpdateReenter && CurTime-KeyPressedLastTime>700)
+				{
+					UpdateReenter=TRUE;
+					CtrlObject->Cp()->LeftPanel->UpdateIfChanged(UIC_UPDATE_NORMAL);
+					CtrlObject->Cp()->RightPanel->UpdateIfChanged(UIC_UPDATE_NORMAL);
+					UpdateReenter=FALSE;
 				}
 			}
+		}
 
-			if (Opt.ScreenSaver && Opt.ScreenSaverTime>0 &&
-			        CurTime-StartIdleTime>Opt.ScreenSaverTime*60000)
-				if (!ScreenSaver(WaitInMainLoop))
-					return(KEY_NONE);
+		if (Opt.ScreenSaver && Opt.ScreenSaverTime > 0
+			&& CurTime-StartIdleTime>Opt.ScreenSaverTime*60000)
+		{
+			if (!ScreenSaver(WaitInMainLoop))
+				return(KEY_NONE);
+		}
 
-			if (!WaitInMainLoop && LoopCount==64)
-			{
-				LastEventIdle=TRUE;
-				memset(rec,0,sizeof(*rec));
-				rec->EventType=KEY_EVENT;
-				sLastIdleDelivered=GetProcessUptimeMSec();
-				return(KEY_IDLE);
-			}
+		if (!WaitInMainLoop && LoopCount == 4)
+		{
+			LastEventIdle = TRUE;
+			ZeroFill(*rec);
+			rec->EventType=KEY_EVENT;
+			sLastIdleDelivered=GetProcessUptimeMSec();
+			return(KEY_IDLE);
 		}
 
 		if (PluginSynchroManager.Process())
@@ -1405,7 +1405,7 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 		SetCursorType(0,10);
 	}
 
-	clock_t CheckTime=GetProcessUptimeMSec()+delayMS;
+	const clock_t CheckTime = GetProcessUptimeMSec() + delayMS;
 	DWORD Key;
 
 	for (;;)
@@ -1431,13 +1431,20 @@ DWORD WaitKey(DWORD KeyWait,DWORD delayMS,bool ExcludeMacro)
 		else if (Key == KeyWait)
 			break;
 
-		if (delayMS && GetProcessUptimeMSec() >= CheckTime)
+		DWORD WaitExpiration = 1000;
+		if (delayMS)
 		{
-			Key=KEY_NONE;
-			break;
+			const clock_t CurTime = GetProcessUptimeMSec();
+			if (CurTime >= CheckTime)
+			{
+				Key = KEY_NONE;
+				break;
+			}
+			if (WaitExpiration > CheckTime - CurTime)
+				WaitExpiration = CheckTime - CurTime;
 		}
 
-		WINPORT(Sleep)(10);
+		WINPORT(WaitConsoleInput)(WaitExpiration);
 	}
 
 	if (KeyWait == KEY_CTRLALTSHIFTRELEASE || KeyWait == KEY_RCTRLALTSHIFTRELEASE)

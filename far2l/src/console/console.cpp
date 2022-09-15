@@ -253,8 +253,10 @@ bool console::PeekInput(INPUT_RECORD& Buffer)
 		if (!InspectStickyKeyEvent(Buffer))
 			break;
 
-		if (!WINPORT(ReadConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsRead) || !NumberOfEventsRead)
+		if (!WINPORT(ReadConsoleInput)(GetInputHandle(), &Buffer, 1, &NumberOfEventsRead) || !NumberOfEventsRead) {
+			fprintf(stderr, "console::PeekInput: failed to skip sticky input event\n");
 			WINPORT(Sleep)(100);
+		}
 	}
 
 	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)

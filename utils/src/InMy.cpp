@@ -162,7 +162,7 @@ class ProfileDir
 {
 	const char *_usual_name;
 	const char *_xdg_env;
-	std::string _value;
+	std::string _base_path;
 
 	ProfileDir(const char *usual_name, const char *xdg_env)
 		: _usual_name(usual_name), _xdg_env(xdg_env)
@@ -184,50 +184,52 @@ public:
 		}
 
 		if (!settings.empty() && settings[0] == GOOD_SLASH) {
-			_value = settings;
-			_value+= GOOD_SLASH;
-			_value+= _usual_name;
+			_base_path = settings;
+			if (_base_path.back() != GOOD_SLASH) {
+				_base_path+= GOOD_SLASH;
+			}
+			_base_path+= _usual_name;
 
 		} else {
 			const char *xdg_val = getenv(_xdg_env);
 			if (xdg_val && *xdg_val == GOOD_SLASH) {
-				_value = xdg_val;
+				_base_path = xdg_val;
 
 			} else {
 				if (UNLIKELY(xdg_val)) {
 					fprintf(stderr, "ProfileDir: %s ignored cuz its not a full path: '%s'\n", _xdg_env, xdg_val);
 				}
-				_value = GetMyHome();
-				_value+= GOOD_SLASH;
-				_value+= _usual_name;
+				_base_path = GetMyHome();
+				_base_path+= GOOD_SLASH;
+				_base_path+= _usual_name;
 			}
 
-			if (_value.empty() || _value.back() != GOOD_SLASH) {
-				_value+= GOOD_SLASH;
+			if (_base_path.empty() || _base_path.back() != GOOD_SLASH) {
+				_base_path+= GOOD_SLASH;
 			}
 
-			_value+= "far2l";
+			_base_path+= "far2l";
 
 			if (!settings.empty()) {
-				_value+= "/custom/";
-				_value+= settings;
+				_base_path+= "/custom/";
+				_base_path+= settings;
 			}
 		}
 	}
 
-	std::string Subdir(const char *subpath, bool create_path)
+	std::string In(const char *sub_path, bool create_path) const
 	{
-		std::string path = _value;
+		std::string path = _base_path;
 
-		if (subpath) {
-			if (*subpath != GOOD_SLASH) {
+		if (sub_path) {
+			if (*sub_path != GOOD_SLASH) {
 				path+= GOOD_SLASH;
 			}
-			path+= subpath;
+			path+= sub_path;
 		}
 
 		if (create_path) {
-			size_t p = path.rfind(GOOD_SLASH);
+			const size_t p = path.rfind(GOOD_SLASH);
 			struct stat s;
 			if (stat(path.substr(0, p).c_str(), &s) == -1) {
 				for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
@@ -239,11 +241,7 @@ public:
 		return path;
 	}
 
-	const std::string &Get() const
-	{
-		return _value;
-	}
-
+///
 	static ProfileDir &Config()
 	{
 		static ProfileDir s_out(".config", "XDG_CONFIG_HOME");
@@ -265,12 +263,12 @@ void InMyPathChanged()
 
 std::string InMyConfig(const char *subpath, bool create_path)
 {
-	return ProfileDir::Config().Subdir(subpath, create_path);
+	return ProfileDir::Config().In(subpath, create_path);
 }
 
 std::string InMyCache(const char *subpath, bool create_path)
 {
-	return ProfileDir::Cache().Subdir(subpath, create_path);
+	return ProfileDir::Cache().In(subpath, create_path);
 }
 
 std::string InMyTemp(const char *subpath)

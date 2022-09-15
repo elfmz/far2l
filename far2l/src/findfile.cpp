@@ -2777,7 +2777,7 @@ class FindFileThread : public Threaded
 {
 	bool PluginMode;
 	HANDLE hDlg;
-	bool bDone = false;
+	volatile bool bDone = false;
 
 public:
 	using Threaded::StartThread;

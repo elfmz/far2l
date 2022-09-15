@@ -218,6 +218,11 @@ extern "C" {
 		return TRUE;
 	}
 
+	WINPORT_DECL(WaitConsoleInput,BOOL,(DWORD dwTimeout))
+	{
+		return g_winport_con_in->WaitForNonEmpty((dwTimeout == INFINITE) ? -1 : dwTimeout) ? TRUE : FALSE;
+	}
+
 	WINPORT_DECL(ReadConsole,BOOL,(HANDLE hConsoleInput, WCHAR *lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl))
 	{
 		INPUT_RECORD ir;

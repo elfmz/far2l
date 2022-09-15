@@ -3,20 +3,24 @@
 
 void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 {
-	if (data->EventType == KEY_EVENT) {
-		fprintf(stderr, "ConsoleInput::Enqueue: %lc %x %x %x %s\n", 
-			data->Event.KeyEvent.uChar.UnicodeChar ? data->Event.KeyEvent.uChar.UnicodeChar : '#',
-			data->Event.KeyEvent.uChar.UnicodeChar,
-			data->Event.KeyEvent.wVirtualKeyCode,
-			data->Event.KeyEvent.dwControlKeyState,
-			data->Event.KeyEvent.bKeyDown ? "DOWN" : "UP");
-	}
+	if (size) {
+		for (DWORD i = 0; i < size; ++i) {
+			if (data[i].EventType == KEY_EVENT) {
+				fprintf(stderr, "ConsoleInput::Enqueue: %lc %x %x %x %s\n",
+					data[i].Event.KeyEvent.uChar.UnicodeChar ? data[i].Event.KeyEvent.uChar.UnicodeChar : '#',
+					data[i].Event.KeyEvent.uChar.UnicodeChar,
+					data[i].Event.KeyEvent.wVirtualKeyCode,
+					data[i].Event.KeyEvent.dwControlKeyState,
+					data[i].Event.KeyEvent.bKeyDown ? "DOWN" : "UP");
+			}
+		}
 
-	std::unique_lock<std::mutex> lock(_mutex);
-	for (DWORD i = 0; i < size; ++i)
-		_pending.push_back(data[i]);
-	if (size)
+		std::unique_lock<std::mutex> lock(_mutex);
+		for (DWORD i = 0; i < size; ++i)
+			_pending.push_back(data[i]);
+
 		_non_empty.notify_all();
+	}
 }
 
 DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority)

@@ -60,7 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "palette.hpp"
 #include "xlat.hpp"
-#include "InterThreadCall.hpp"
 
 /* start Глобальные переменные */
 
@@ -474,6 +473,8 @@ DWORD IsMouseButtonPressed()
 	{
 		GetInputRecord(&rec);
 	}
+	// IsMouseButtonPressed used within loops, so lets sleep to avoid CPU hogging in that loops
+	// it would be nicer to sleep inside of that loops instead, but keep to original code for now
 	WINPORT(WaitConsoleInput)(10);
 	return MouseButtonState;
 }

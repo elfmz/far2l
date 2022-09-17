@@ -1883,12 +1883,13 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								}
 							}
 							RemoveTemp=true;
-						}
+
+						} else
+							strSearchFileName = FindItem.FindData.strFileName;
+
 					}
 					else
-					{
 						strSearchFileName = FindItem.FindData.strFileName;
-					}
 
 					DWORD FileAttr=apiGetFileAttributes(strSearchFileName);
 

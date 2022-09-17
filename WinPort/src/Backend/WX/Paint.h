@@ -64,6 +64,8 @@ public:
 	inline unsigned int FontWidth() const { return _font_width; }
 	inline unsigned int FontHeight() const { return _font_height; }
 	inline unsigned int FontThickness() const { return _font_thickness; }
+
+	inline bool CursorBlinkState() const { return _cursor_props.blink_state; }
 };
 
 ///////////////////////////////

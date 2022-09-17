@@ -33,6 +33,13 @@
 
 #define AREAS_REDUCTION
 
+// interval of timer that used to blink cursor and do some other things
+#define TIMER_PERIOD 500        // 0.5 second
+
+// how many timer ticks may pass since last input activity
+// before timer will be stopped until restarted by some activity
+#define TIMER_IDLING_CYCLES 60  // 0.5 second * 60 = 30 seconds
+
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
@@ -317,6 +324,7 @@ private:
 	COORD TranslateMousePosition( wxMouseEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
 	int GetDisplayIndex();
+	void ResetTimerIdling();
 
 	wxDECLARE_EVENT_TABLE();
 	KeyTracker _key_tracker;
@@ -350,6 +358,7 @@ private:
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
 	bool _repaint_on_next_timer;
+	unsigned int _timer_idling_counter;
 };
 
 ///////////////////////////////////////////
@@ -576,11 +585,11 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false)
+		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false), _timer_idling_counter(0)
 {
 	g_winport_con_out->SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
-	_periodic_timer->Start(500);
+	_periodic_timer->Start(TIMER_PERIOD);
 	OnConsoleOutputTitleChanged();
 }
 
@@ -748,6 +757,19 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 		Refresh(false);
 		Update();
 	}
+	++_timer_idling_counter;
+	// stop timer if counter reached limit and cursor is visible and no other timer-dependent things remained
+	if (_timer_idling_counter >= TIMER_IDLING_CYCLES && _paint_context.CursorBlinkState() && _text2clip.empty()) {
+		_periodic_timer->Stop();
+	}
+}
+
+void WinPortPanel::ResetTimerIdling()
+{
+	if (_timer_idling_counter >= TIMER_IDLING_CYCLES && !_periodic_timer->IsRunning()) {
+		_periodic_timer->Start(TIMER_PERIOD);
+	}
+	_timer_idling_counter = 0;
 }
 
 static int ProcessAllEvents()
@@ -996,6 +1018,7 @@ void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 	_frame->SetTitle(title.c_str());
 	if (g_remote) { // under xrdp/forwarded x11 (repro?) - force full repaint after some time to workaround #1303
 		_repaint_on_next_timer = true;
+		ResetTimerIdling();
 	}
 }
 
@@ -1011,7 +1034,8 @@ static bool IsForcedCharTranslation(int code)
 }
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
-{	
+{
+	ResetTimerIdling();
 	DWORD now = WINPORT(GetTickCount)();
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
@@ -1102,6 +1126,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
+	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
 		event.GetRawKeyCode(), event.GetKeyCode(),
@@ -1159,6 +1184,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 void WinPortPanel::OnChar( wxKeyEvent& event )
 {
+	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
 	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
 		event.GetRawKeyCode(), event.GetKeyCode(),
@@ -1226,6 +1252,7 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 		CheckForResizePending();
 	} else {
 		_resize_pending = RP_DEFER;	
+		ResetTimerIdling();
 		//fprintf(stderr, "RP_DEFER\n");
 	}
 }
@@ -1251,6 +1278,8 @@ COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 
 void WinPortPanel::OnMouse( wxMouseEvent &event )
 {
+	ResetTimerIdling();
+
 	COORD pos_char = TranslateMousePosition( event );
 	
 	DWORD mode = 0;
@@ -1573,6 +1602,7 @@ void WinPortPanel::CheckPutText2CLip()
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 {
 	_has_focus = true;
+	ResetTimerIdling();
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )

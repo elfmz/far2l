@@ -16,7 +16,7 @@
 
 #if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
     // wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
-    #define WX_ALT_NONLATIN
+# define WX_ALT_NONLATIN
 #endif
 
 IConsoleOutput *g_winport_con_out = nullptr;
@@ -908,8 +908,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
-	fprintf(stderr, "\n");
-
 	// dont check for alt key sudden keyup cuz it breaks Win key Alt behaviour
 	// also it didnt cause problems yet
 	if ( (_key_tracker.Shift() && !event.ShiftDown())
@@ -917,6 +915,12 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		if (_key_tracker.CheckForSuddenModifiersUp()) {
 			_exclusive_hotkeys.Reset();
 		}
+	}
+
+	if (uni != WXK_NONE) {
+		fprintf(stderr, " CHAR\n");
+		event.Skip();
+		return;
 	}
 
 	_last_keydown_enqueued = false;
@@ -955,9 +959,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	} 
 
 #ifdef WX_ALT_NONLATIN
-	if (alt_nonlatin_workaround) {
-		OnChar(event);
-	}
+//	if (alt_nonlatin_workaround) {
+//		OnChar(event);
+//	}
 #endif
 
 	event.Skip();
@@ -988,6 +992,12 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 
 	if (_stolen_key && _stolen_key == uni) {
 		fprintf(stderr, " STOLEN\n");
+		event.Skip();
+		return;
+	}
+
+	if (uni != WXK_NONE) {
+		fprintf(stderr, " CHAR\n");
 		event.Skip();
 		return;
 	}
@@ -1047,8 +1057,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 	}
 	fprintf(stderr, "\n");
 
-	if (event.GetUnicodeKey() != WXK_NONE && 
-		(!_last_keydown_enqueued || _key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp())) {
+	if (uni != WXK_NONE) {
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;

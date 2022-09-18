@@ -26,6 +26,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		Mac/touchbar.mm
 		Mac/dockicon.cpp
 		Mac/pasteboard.mm
+		Mac/hide.mm
 	)
 endif()
 

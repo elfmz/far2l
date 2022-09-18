@@ -28,6 +28,7 @@
 #ifdef __APPLE__
 # include "Mac/dockicon.h"
 # include "Mac/touchbar.h"
+# include "Mac/hide.h"
 #endif
 
 
@@ -321,6 +322,7 @@ private:
 	void OnMouseQEdit( wxMouseEvent &event, COORD pos_char);
 	void OnSetFocus( wxFocusEvent &event );
 	void OnKillFocus( wxFocusEvent &event );
+	void ResetInputState();
 	COORD TranslateMousePosition( wxMouseEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
 	int GetDisplayIndex();
@@ -359,6 +361,7 @@ private:
 
 	bool _repaint_on_next_timer;
 	unsigned int _timer_idling_counter;
+	wchar_t _stolen_key;
 };
 
 ///////////////////////////////////////////
@@ -585,7 +588,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false), _timer_idling_counter(0)
+		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false), _timer_idling_counter(0), _stolen_key(0)
 {
 	g_winport_con_out->SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID_PERIODIC);
@@ -1062,6 +1065,24 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		return;
 	}
 
+#ifdef __APPLE__
+	if (!event.RawControlDown() && !event.ShiftDown() && !event.MetaDown() && !event.AltDown() && event.CmdDown()
+		&& (uni == 'H' || uni == 'Q')) {
+		fprintf(stderr, " Cmd+%lc\n", uni);
+		ResetInputState();
+		event.Skip();
+		_stolen_key = uni;
+		if (uni == 'Q') {
+			_frame->Close();
+		} else {
+			MacHide();
+			//_frame->Hide();
+		}
+		return;
+	}
+#endif
+	_stolen_key = 0;
+
 	_key_tracker.OnKeyDown(event, now);
 	if (_key_tracker.Composing()) {
 		fprintf(stderr, " COMPOSING\n");
@@ -1147,6 +1168,12 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		return;
 	}
 
+	if (_stolen_key && _stolen_key == uni) {
+		fprintf(stderr, " STOLEN\n");
+		event.Skip();
+		return;
+	}
+
 	fprintf(stderr, was_pressed ? "\n" : " UNPAIRED\n");
 
 #ifndef __WXOSX__ //on OSX some keyups come without corresponding keydowns
@@ -1193,6 +1220,11 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 	if (event.GetSkipped()) {
 		fprintf(stderr, " SKIPPED\n");
+		return;
+	}
+	if (_stolen_key && _stolen_key == uni) {
+		fprintf(stderr, " STOLEN\n");
+		event.Skip();
 		return;
 	}
 	fprintf(stderr, "\n");
@@ -1609,6 +1641,11 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
 	_has_focus = false;
+	ResetInputState();
+}
+
+void WinPortPanel::ResetInputState()
+{
 	_key_tracker.ForceAllUp();
 	
 	if (_mouse_qedit_start_ticks) {

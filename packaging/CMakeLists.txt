@@ -73,12 +73,6 @@ else ()
     LIST(FIND CPACK_GENERATOR DEB DEB_GENERATOR_PRESENCE)
     IF(DEB_GENERATOR_PRESENCE GREATER -1) # linux (deb)
         set(CPACK_DEB_COMPONENT_INSTALL ON)
-        # export build options
-        set(BUILD_OPTS_FILE ${PROJECT_BINARY_DIR}/packaging/debian/build.conf.m4)
-        # egg or chicken trouble
-        FILE(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/packaging/debian")
-        FILE(WRITE "${BUILD_OPTS_FILE}" "m4_define(INSTALLBINDIR, ${CMAKE_INSTALL_PREFIX}/bin)m4_dnl\n")
-        FILE(APPEND "${BUILD_OPTS_FILE}" "m4_define(INSTALLLIBDIR, ${CMAKE_INSTALL_PREFIX}/lib/far2l)m4_dnl\n")
         # add DEB-package controls to build process
         ADD_SUBDIRECTORY(debian)
         set(CPACK_DEBIAN_BASE_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
@@ -86,9 +80,6 @@ else ()
         SET(CPACK_DEBIAN_PACKAGE_MAINTAINER ${CPACK_PACKAGE_VENDOR})
         SET(CPACK_DEBIAN_PACKAGE_SECTION contrib/utils)
         SET(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
-        # useful to add custom package scripts
-        SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-            "${PROJECT_BINARY_DIR}/packaging/debian/postinst;${PROJECT_BINARY_DIR}/packaging/debian/prerm")
         SET(CPACK_DEBIAN_PACKAGE_DEPENDS ${PACKAGE_DEPENDENCIES})
     ENDIF(DEB_GENERATOR_PRESENCE GREATER -1)
 

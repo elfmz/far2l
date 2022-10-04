@@ -11,7 +11,7 @@ if(GIT_RV EQUAL "0")
     message( STATUS "Creating debian/copyright: ${CMAKE_BINARY_DIR}/copyright")
 else()
     message( WARNING "${ColorRed}Skipping copyright generation cause git is unavailable${ColorNormal}")
-    exit(0)
+    return()
 endif()
 
 add_custom_target(debian-package-controls ALL DEPENDS ${DEB_CONTROLS})

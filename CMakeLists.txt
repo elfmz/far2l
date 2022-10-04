@@ -32,16 +32,17 @@ if("${VERSION_MAJOR}" STREQUAL "" OR "${VERSION_MAJOR}" STREQUAL "${VERSION}"
 	message(FATAL_ERROR "${ColorRed}packaging/version is corrupted, please write actual X.Y.Z version into it.${ColorNormal}")
 endif()
 
-execute_process(COMMAND sh -c
-        "cd ${CMAKE_SOURCE_DIR} && git describe --tag"
-        OUTPUT_VARIABLE GIT_TAG)
-string(REGEX REPLACE "[\r\n\t ]$" "" GIT_TAG "${GIT_TAG}")
+find_package(Git REQUIRED)
+execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tag
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        OUTPUT_VARIABLE GIT_TAG
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
-	execute_process(COMMAND sh -c
-		"cd ${CMAKE_SOURCE_DIR} && git rev-parse --short HEAD"
-		OUTPUT_VARIABLE GIT_HASH)
-	string(REGEX REPLACE "[\r\n\t ]$" "" GIT_HASH "${GIT_HASH}")
+	execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+			WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+			OUTPUT_VARIABLE GIT_HASH
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT "${GIT_HASH}" STREQUAL "")
 		set(VERSION_PATCH "${VERSION_PATCH}-${GIT_HASH}")
 	else()
@@ -501,8 +502,10 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
 	PATTERN "*")
 
 # setup some symlinks and remove deprecated stuff from previous installation
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2l_askpass)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2l_sudoapp)
+install(FILES "${PROJECT_BINARY_DIR}/far2l_askpass" DESTINATION "lib/far2l" COMPONENT system)
+install(FILES "${PROJECT_BINARY_DIR}/far2l_sudoapp" DESTINATION "lib/far2l" COMPONENT system)
 install(CODE "
-	execute_process(COMMAND ln -sf ../../bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_askpass)
-	execute_process(COMMAND ln -sf ../../bin/far2l ${CMAKE_INSTALL_PREFIX}/lib/far2l/far2l_sudoapp)
-	execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb)
+	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f \"\${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb\")
 	" COMPONENT system)

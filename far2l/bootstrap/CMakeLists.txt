@@ -12,10 +12,13 @@ add_custom_target(bootstrap
 
 message(STATUS "generating headers and languages")
 
-# todo: detect architecture 64 or 32
-# LBITS := $(shell getconf LONG_BIT)
-
-set(DIRBIT 64)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	set(LBITS 64)
+	set(DIRBIT 64)
+else ()
+	set(LBITS 32)
+	set(DIRBIT 32)
+endif ()
 
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")

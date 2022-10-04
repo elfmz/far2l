@@ -22,3 +22,6 @@ add_custom_command(
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/copyright"
     COMMENT ${CMAKE_BINARY_DIR}/copyright
 )
+
+include(GNUInstallDirs)
+install(FILES "${CMAKE_BINARY_DIR}/copyright" DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT base)

@@ -64,17 +64,17 @@ cd far2l/_build
 _with make:_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(nproc --all)
+cmake --build . -j$(nproc --all)
 ``` 
 _or with ninja (you need **ninja-build** package installed)_
 ``` sh
 cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja
+cmake --build .
 ```
 
- * If above commands finished without errors - you may also install far2l, _with make:_ `sudo make install` _or with ninja:_ `sudo ninja install`
+ * If above commands finished without errors - you may also install far2l, `sudo cmake --install .`
 
- * Also its possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cpack` command
+ * Also its possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
 
 ##### Additional build configuration options:
 
@@ -137,14 +137,14 @@ _with make:_
 mkdir _build
 cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
-make -j$(sysctl -n hw.logicalcpu)
+cmake --build . -j$(sysctl -n hw.logicalcpu)
 ``` 
 _or with ninja:_
 ```sh
 mkdir _build
 cd _build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja
+cmake --build .
 ```
  * Then you may create .dmg package by running: `cpack` command.
 Note that this step sometimes fails and may succeed from not very first attempt.
@@ -188,6 +188,7 @@ To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set a
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
+ * **CLion**: the same as **QtCreator**.
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
 ### Useful 3rd-party extras
@@ -227,7 +228,7 @@ symbol function must be defined as: `int 'Symbol'(int argc, char *argv[])`
 Shows (depending on settings - always or if far2l in background) system shell-wide notification with given title and text.
 
 * `int DispatchInterThreadCalls();`
-far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterThreadCalls() allows plugin to explicitely dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
+far2l supports calling APIs from different threads by marshalling API calls from non-main threads into main one and dispatching them on main thread at certain known-safe points inside of dialog processing loops. DispatchInterThreadCalls() allows plugin to explicitly dispatch such calls and plugin must use it periodically in case it blocks main thread with some non-UI activity that may wait for other threads.
 
 * `void BackgroundTask(const wchar_t *Info, BOOL Started);`
 If plugin implements tasks running in background it may invoke this function to indicate about pending task in left-top corner.
@@ -250,4 +251,4 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 
 ## Known issues:
 * Only valid translations are English, Russian and Ukrainian, all other languages require deep correction.
-* Characters that occupy more than single cell or diacritic-like characters are rendered buggy, that means Chinees and Japaneese texts are hardly readable in some cases.
+* Characters that occupy more than single cell or diacritic-like characters are rendered buggy, that means Chinese and Japanese texts are hardly readable in some cases.

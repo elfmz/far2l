@@ -28,8 +28,6 @@
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 
-bool IsUnstableWidthChar(wchar_t c);
-
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
@@ -386,7 +384,7 @@ bool TTYBackend::IsUnstableWidthCharCached(wchar_t c)
 {
 	const size_t h = size_t(c) % ARRAYSIZE(_stable_width_chars_cache);
 	if (_stable_width_chars_cache[h] != c) {
-		if (IsUnstableWidthChar(c)) {
+		if (IsCharUnstableWidth(c)) {
 			return true;
 		}
 		_stable_width_chars_cache[h] = c;

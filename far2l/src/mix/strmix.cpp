@@ -225,20 +225,13 @@ wchar_t* WINAPI TruncStrFromEnd(wchar_t *Str,int MaxLength)
 {
 	assert(MaxLength >= 0);
 
-	MaxLength=Max(0, MaxLength);
+	MaxLength = Max(0, MaxLength);
 
-	if (Str)
-	{
-		int Length = StrLength(Str);
-
-		if (Length > MaxLength)
-		{
-			if (MaxLength>3)
-				wmemcpy(Str+MaxLength-3, L"...", 3);
-
-			Str[MaxLength]=0;
-		}
-	}
+	const size_t Len = StrLength(Str);
+	size_t n = Len;
+	StrVisualTruncateRight(Str, n, MaxLength);
+	assert(n <= Len);
+	Str[n] = 0;
 
 	return Str;
 }
@@ -248,27 +241,13 @@ wchar_t* WINAPI TruncStr(wchar_t *Str,int MaxLength)
 {
 	assert(MaxLength >= 0);
 
-	MaxLength=Max(0, MaxLength);
+	MaxLength = Max(0, MaxLength);
 
-	if (Str)
-	{
-		int Length=StrLength(Str);
-
-		if (MaxLength<0)
-			MaxLength=0;
-
-		if (Length > MaxLength)
-		{
-			if (MaxLength>3)
-			{
-				wchar_t *MovePos = Str+Length-MaxLength+3;
-				wmemmove(Str+3, MovePos, StrLength(MovePos)+1);
-				wmemcpy(Str,L"...",3);
-			}
-
-			Str[MaxLength]=0;
-		}
-	}
+	const size_t Len = StrLength(Str);
+	size_t n = Len;
+	StrVisualTruncateLeft(Str, n, MaxLength);
+	assert(n <= Len);
+	Str[n] = 0;
 
 	return Str;
 }
@@ -286,31 +265,13 @@ wchar_t* TruncStrFromCenter(wchar_t *Str, int MaxLength)
 {
 	assert(MaxLength >= 0);
 
-	MaxLength=Max(0, MaxLength);
+	MaxLength = Max(0, MaxLength);
 
-	if (Str)
-	{
-		int Length = StrLength(Str);
-
-		if (MaxLength < 0)
-			MaxLength=0;
-
-		if (Length > MaxLength)
-		{
-			const int DotsLen = 3;
-
-			if (MaxLength > DotsLen)
-			{
-				int Len1 = (MaxLength - DotsLen) / 2;
-				int Len2 = MaxLength - DotsLen - Len1;
-				wmemcpy(Str + Len1, L"...", DotsLen);
-				wmemmove(Str + Len1 + DotsLen, Str + Length - Len2, Len2);
-			}
-
-			Str[MaxLength] = 0;
-		}
-	}
-
+	const size_t Len = StrLength(Str);
+	size_t n = Len;
+	StrVisualTruncateCenter(Str, n, MaxLength);
+	assert(n <= Len);
+	Str[n] = 0;
 	return Str;
 }
 
@@ -324,44 +285,8 @@ FARString& TruncStrFromCenter(FARString &strStr, int MaxLength)
 
 wchar_t* WINAPI TruncPathStr(wchar_t *Str, int MaxLength)
 {
-	assert(MaxLength >= 0);
-
-	MaxLength=Max(0, MaxLength);
-
-	if (Str)
-	{
-		int nLength = (int)wcslen(Str);
-
-		if ((MaxLength > 0) && (nLength > MaxLength) && (nLength >= 2))
-		{
-			wchar_t *lpStart = nullptr;
-
-/*			if (*Str && (Str[1] == L':') && IsSlash(Str[2]))
-				lpStart = Str+3;
-			else*/
-			{
-				if ((Str[0] == GOOD_SLASH) && (Str[1] == GOOD_SLASH))
-				{
-					if ((lpStart = const_cast<wchar_t*>(FirstSlash(Str+2))) )
-					{
-						wchar_t *lpStart2=lpStart;
-
-						if ((lpStart-Str < nLength) && ((lpStart=const_cast<wchar_t*>(FirstSlash(lpStart2+1)))))
-							lpStart++;
-					}
-				}
-			}
-
-			if (!lpStart || (lpStart-Str > MaxLength-5))
-				return TruncStr(Str, MaxLength);
-
-			wchar_t *lpInPos = lpStart+3+(nLength-MaxLength);
-			wmemmove(lpStart+3, lpInPos, (wcslen(lpInPos)+1));
-			wmemcpy(lpStart, L"...", 3);
-		}
-	}
-
-	return Str;
+	//  TODO
+	return TruncStr(Str, MaxLength);
 }
 
 

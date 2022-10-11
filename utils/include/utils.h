@@ -332,3 +332,15 @@ template <typename ARRAY_T, class CHAR_T>
 }
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+
+bool IsCharFullWidth(wchar_t c);
+bool IsCharPrefix(wchar_t c);
+bool IsCharSuffix(wchar_t c);
+bool IsCharXxxfix(wchar_t c);
+
+bool IsCharUnstableWidth(wchar_t c);
+
+size_t StrVisualLength(const wchar_t *pwz, size_t n);
+void StrVisualTruncateLeft(wchar_t *pwz, size_t &n, size_t vl_max);
+void StrVisualTruncateRight(wchar_t *pwz, size_t &n, size_t vl_max);
+void StrVisualTruncateCenter(wchar_t *pwz, size_t &n, size_t vl_max);

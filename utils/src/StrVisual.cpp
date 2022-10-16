@@ -13,6 +13,25 @@ size_t StrVisualLength(const wchar_t *pwz, size_t n)
 	return out;
 }
 
+size_t StrVisualLookupGrapheme(const wchar_t *pwz, size_t n)
+{
+	size_t i = 0;
+	for (; i < n; ++i) {
+		if (!IsCharPrefix(pwz[i])) {
+			break;
+		}
+	}
+	if (i < n) {
+		++i;
+	}
+	for (; i < n; ++i) {
+		if (!IsCharSuffix(pwz[i])) {
+			break;
+		}
+	}
+	return i;
+}
+
 void StrVisualTruncateLeft(wchar_t *pwz, size_t &n, size_t vl_max)
 {
 	size_t vl = StrVisualLength(pwz, n);

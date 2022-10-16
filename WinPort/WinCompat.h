@@ -478,11 +478,14 @@ typedef struct _CONSOLE_CURSOR_INFO {
 
 typedef struct _CHAR_INFO {
     union {
+        DWORD64 CompositeChar;
         WCHAR UnicodeChar;
         CHAR   AsciiChar;
     } Char;
     WORD Attributes;
 } CHAR_INFO, *PCHAR_INFO;
+
+#define USING_COMPOSITE_CHAR(CI) ((CI).Char.CompositeChar != DWORD64((CI).Char.UnicodeChar))
 
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {

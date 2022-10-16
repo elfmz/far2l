@@ -15,6 +15,7 @@
 #include "TTYOutput.h"
 #include "FarTTY.h"
 #include "WideMB.h"
+#include "WinPort.h"
 
 #define ESC "\x1b"
 
@@ -308,7 +309,8 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
 	for (;cnt; ++ci,--cnt) {
-		const bool is_space = (ci->Char.UnicodeChar <= 0x20
+		const bool is_space = !USING_COMPOSITE_CHAR(*ci) && (
+				ci->Char.UnicodeChar <= 0x20
 			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
 			|| !WCHAR_IS_VALID(ci->Char.UnicodeChar));
 
@@ -345,7 +347,13 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		WriteWChar(is_space ? L' ' : ci->Char.UnicodeChar);
+		if (USING_COMPOSITE_CHAR(*ci)) {
+			for (const WCHAR *pw = WINPORT(CompositeCharLookup)(ci->Char.CompositeChar); *pw; ++pw) {
+				WriteWChar(*pw);
+			}
+		} else {
+			WriteWChar(is_space ? L' ' : ci->Char.UnicodeChar);
+		}
 		++_cursor.x;
 	}
 }

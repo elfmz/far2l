@@ -6,6 +6,7 @@
 #include <wx/graphics.h>
 #include "Paint.h"
 #include "PathHelpers.h"
+#include "WinPort.h"
 #include <utils.h>
 
 #define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
@@ -122,7 +123,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
-	_buffered_paint(false), _sharp(false), _noticed_combinings(false)
+	_buffered_paint(false), _sharp(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -324,8 +325,6 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
-	_line_combinings_inspected.clear();
-
 	wxPaintDC dc(_window);
 #if wxUSE_GRAPHICS_CONTEXT
 	wxGraphicsContext* gctx = dc.GetGraphicsContext();
@@ -359,7 +358,6 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	ApplyFont(dc);
 
 	_cursor_props.Update();
-	_cursor_props.combining_offset = 0;
 
 	ConsolePainter painter(this, dc, _buffer, _cursor_props);
 	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
@@ -386,59 +384,27 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 		painter.LineBegin(cy);
 
-		// HACK: combinings characters are kind of characters that combined with prceeding character
-		// FAR internally doesn't know about them, treating them as separate characters
-		// so here is workaround: when renedring line check each character to be combinings and if so
-		// left-adjust positions of all subsequent characters until pseudographic, that typically end of
-		// panel
-		unsigned int affecting_combinings = 0;
 		unsigned short attributes = line->Attributes;
-		for (unsigned int char_index = 0; char_index != cw; ++char_index) {
-			const auto c = line[char_index].Char.UnicodeChar;
-
-			if (WCHAR_IS_COMBINING(c)) {
-				++affecting_combinings;
-				// Bit dirty optimization - activate combinings area update
-				// correction only if during rendering combinings characters
-				// were encountered. So by design there can be single one
-				// glitch per whole process life time ..
-				_noticed_combinings = true;
-			}
-			else if (affecting_combinings && (c == '|' || WCHAR_IS_PSEUDOGRAPHIC(c))) {
-				// reached panel's edge - space-fill gap caused by combinings
-				for (int i = affecting_combinings; i >= 0; --i) {
-					painter.NextChar(char_index - i, attributes, ' ');
-				}
-				painter.LineFlush(char_index);
-				affecting_combinings = 0;
-			}
-
-			const unsigned int cx = (char_index > affecting_combinings) ? char_index - affecting_combinings : 0;
-
-			if (cy == (unsigned int)_cursor_props.pos.Y && char_index == (unsigned int)_cursor_props.pos.X) {
-				_cursor_props.combining_offset = (SHORT)affecting_combinings;
-			}
-
+		for (unsigned int cx = 0; cx != cw; ++cx) {
 			if (cx > (unsigned)area.Right) {
 				break;
 			}
 
 			if (cx >= (unsigned)area.Left) {
-				attributes = line[char_index].Attributes;
+				attributes = line[cx].Attributes;
 				if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
 					&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
 					attributes^= ALL_ATTRIBUTES;
 				}
 
-				painter.NextChar(cx, attributes, c);
+				if (LIKELY(!USING_COMPOSITE_CHAR(line[cx]))) {
+					painter.NextChar(cx, attributes, line[cx].Char.UnicodeChar);
 
+				} else for (const auto *pc = WINPORT(CompositeCharLookup)(line[cx].Char.CompositeChar); *pc; ++pc) {
+					painter.NextChar(cx, attributes, *pc);
+				}
 			}
 		}
-		// space-fill gap caused by combinings if any at the end of line
-//		for (int i = affecting_combinings; i >= 0; --i) {
-//			painter.NextChar(area.Right + 1 - i, attributes, ' ');
-//		}
-
 		painter.LineFlush(area.Right + 1);
 	}		
 }
@@ -451,31 +417,6 @@ void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 	rc.SetRight(((int)area.Right) * _font_width + _font_width - 1);
 	rc.SetTop(((int)area.Top) * _font_height);
 	rc.SetBottom(((int)area.Bottom) * _font_height + _font_height - 1);
-
-	if (area.Left != 0 && _noticed_combinings) {
-		if (_line_combinings_inspected.size() <= (size_t)area.Bottom) {
-			_line_combinings_inspected.resize(((size_t)area.Bottom) + 1);
-		}
-
-		for (SHORT cy = area.Top; cy <= area.Bottom; ++cy) {
-			if (!_line_combinings_inspected[cy]) {
-				_line_combinings_inspected[cy] = true;
-				IConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
-				const CHAR_INFO *line = dla.Line();
-				if (line) {
-					for (unsigned int cx = 0; cx < dla.Width(); ++cx) {
-						if (WCHAR_IS_COMBINING(line[cx].Char.UnicodeChar)) {
-							rc.SetLeft(0);
-							rc.SetRight(dla.Width() * _font_width);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-	}
-
 	_window->Refresh(false, &rc);
 }
 
@@ -484,8 +425,8 @@ void ConsolePaintContext::BlinkCursor()
 {
 	if (_cursor_props.Blink()) {
 		SMALL_RECT area = {
-			SHORT(_cursor_props.pos.X - _cursor_props.combining_offset), _cursor_props.pos.Y,
-			SHORT(_cursor_props.pos.X - _cursor_props.combining_offset), _cursor_props.pos.Y
+			_cursor_props.pos.X, _cursor_props.pos.Y,
+			_cursor_props.pos.X, _cursor_props.pos.Y
 		};
 		RefreshArea(area);
 	}
@@ -561,7 +502,7 @@ void ConsolePainter::SetFillColor(const WinPortRGB &clr)
 void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 {
 	const bool cursor_here = (_cursor_props.visible && _cursor_props.blink_state
-		&& cx == (unsigned int)_cursor_props.pos.X - _cursor_props.combining_offset
+		&& cx == (unsigned int)_cursor_props.pos.X
 		&& _start_cy == (unsigned int)_cursor_props.pos.Y);
 
 	if (!cursor_here && _start_back_cx != (unsigned int)-1 && _clr_back == clr)
@@ -723,9 +664,6 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back);
 
-	// NB: combining characters must be printed over previous ones,
-	// simulate this by shifting characters left until 1st space found (#826, #213)
-
 	if (!c || c == L' ' || !WCHAR_IS_VALID(c)) {
 		return;
 	}
@@ -741,7 +679,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		_prev_fit_font_index = 0;
 
 	} else {
-		uint8_t fit_font_index = WCHAR_IS_COMBINING(c) ? // workaround for 
+		uint8_t fit_font_index = WCHAR_IS_COMBINING(c) ? // TODO: get font index by whole CompositeChar's sequence
 			_prev_fit_font_index : _context->CharFitTest(_dc, c);
 	
 		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()

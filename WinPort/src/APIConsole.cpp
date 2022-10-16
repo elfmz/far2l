@@ -1,4 +1,6 @@
 #include <mutex>
+#include <map>
+#include <vector>
 
 #include "WinPort.h"
 #include "Backend.h"
@@ -344,5 +346,66 @@ extern "C" {
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles))
 	{
 		return g_winport_con_out->SetFKeyTitles(titles) ? TRUE : FALSE;
+	}
+
+
+	static struct {
+		struct Cmp
+		{
+			bool operator()(const WCHAR *a, const WCHAR *b) const { return wcscmp(a, b) < 0; }
+		};
+		std::mutex mtx;
+		std::vector<WCHAR *> id2str;
+		std::map<const WCHAR *, DWORD64, Cmp> str2id;
+	} s_composite_chars;
+
+	WINPORT_DECL(CompositeCharRegister,DWORD64,(const WCHAR *lpSequence))
+	{
+		if (!lpSequence[0]) {
+			return 0;
+		}
+		if (!lpSequence[1]) {
+			return lpSequence[0];
+		}
+
+		std::lock_guard<std::mutex> lock(s_composite_chars.mtx);
+		auto it = s_composite_chars.str2id.find(lpSequence);
+		if (it != s_composite_chars.str2id.end()) {
+			return it->second;
+		}
+		wchar_t *wd = wcsdup(lpSequence);
+		try {
+			if (!wd)
+				throw std::logic_error("wcsdup failed");
+
+			DWORD64 id = (DWORD64(1) << 63) | DWORD64(s_composite_chars.id2str.size());
+			s_composite_chars.id2str.emplace_back(wd);
+			s_composite_chars.str2id.emplace(wd, id);
+			return id;
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s for '%ls'\n", __FUNCTION__, e.what(), lpSequence);
+			free(wd);
+		}
+		return 0;
+	}
+
+	WINPORT_DECL(CompositeCharLookup,const WCHAR *,(DWORD64 CompositeChar))
+	{
+		if ((CompositeChar & (DWORD64(1) << 63)) == 0) {
+			fprintf(stderr, "%s: invoked for not composite-char 0x%llx\n",
+				__FUNCTION__,  (unsigned long long)CompositeChar);
+			return L"";
+		}
+
+		const DWORD64 id = CompositeChar & (~(DWORD64(1) << 63));
+
+		std::lock_guard<std::mutex> lock(s_composite_chars.mtx);
+		if (id >= (DWORD64)s_composite_chars.id2str.size()) {
+			fprintf(stderr, "%s: out of range composite-char 0x%llx\n",
+				__FUNCTION__,  (unsigned long long)CompositeChar);
+			return L"";
+		}
+		return s_composite_chars.id2str[id];
 	}
 }

@@ -119,7 +119,7 @@ void InitRecodeOutTable();
 
 int WINAPI TextToCharInfo(const char *Text,WORD Attr, CHAR_INFO *CharInfo, int Length, DWORD Reserved);
 
-inline void SetVidChar(CHAR_INFO& CI,wchar_t Chr)
+inline void SetVidChar(CHAR_INFO& CI, COMP_CHAR Chr)
 {
 	CI.Char.UnicodeChar = (Chr >= 0 && (Chr < L'\x20' || Chr == L'\x7f')) ? Oem2Unicode[Chr] : Chr;
 }

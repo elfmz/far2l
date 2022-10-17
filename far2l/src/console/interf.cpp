@@ -572,19 +572,33 @@ void Text(const WCHAR *Str, size_t Length)
 	PCHAR_INFO HeapBuffer=nullptr;
 	PCHAR_INFO BufPtr=StackBuffer;
 
-	if (Length >= StackBufferSize)
+	if (Length * 2 >= StackBufferSize)
 	{
-		HeapBuffer=new CHAR_INFO[Length+1];
+		HeapBuffer=new CHAR_INFO[Length * 2 + 1];
 		BufPtr=HeapBuffer;
 	}
 
-	for (size_t i=0; i < Length; i++)
+	int nCells = 0;
+	std::wstring wstr;
+	for (size_t i = 0; i < Length; ++nCells)
 	{
-		BufPtr[i].Char.UnicodeChar=Str[i];
-		BufPtr[i].Attributes=CurColor;
+		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
+		if (nG > 1) {
+			wstr.assign(&Str[i], nG);
+			BufPtr[nCells].Char.UnicodeChar = WINPORT(CompositeCharRegister)(wstr.c_str());
+		} else {
+			BufPtr[nCells].Char.UnicodeChar = Str[i];
+		}
+		BufPtr[nCells].Attributes = CurColor;
+		if (IsCharFullWidth(Str[i])) {
+			++nCells;
+			BufPtr[nCells].Char.UnicodeChar = 0;
+			BufPtr[nCells].Attributes = CurColor;
+		}
+		i+= nG;
 	}
 
-	ScrBuf.Write(CurX, CurY, BufPtr, static_cast<int>(Length));
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
 	if(HeapBuffer)
 	{
 		delete[] HeapBuffer;

@@ -15,6 +15,7 @@ class ConsoleOutput : public IConsoleOutput
 	IConsoleOutputBackend *_backend;
 	DWORD _mode;	
 	USHORT _attributes;
+	COORD _prev_pos{-1, -1};
 	
 	struct {
 		COORD pos;
@@ -47,7 +48,7 @@ class ConsoleOutput : public IConsoleOutput
 		};
 	};
 	
-	bool ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
+	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 

@@ -340,8 +340,11 @@ bool IsCharXxxfix(wchar_t c);
 
 bool IsCharUnstableWidth(wchar_t c);
 
-size_t StrVisualLength(const wchar_t *pwz, size_t n);
-size_t StrVisualLookupGrapheme(const wchar_t *pwz, size_t n);
-void StrVisualTruncateLeft(wchar_t *pwz, size_t &n, size_t vl_max);
-void StrVisualTruncateRight(wchar_t *pwz, size_t &n, size_t vl_max);
-void StrVisualTruncateCenter(wchar_t *pwz, size_t &n, size_t vl_max);
+size_t StrCellsCount(const wchar_t *pwz, size_t nw);
+size_t StrCellsCount(const wchar_t *pwz);
+size_t StrSizeOfCells(const wchar_t *pwz, size_t nw, size_t &ng, bool round_up);
+size_t StrSizeOfCell(const wchar_t *pwz, size_t nw);
+
+void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng);
+void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng);
+void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng);

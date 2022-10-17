@@ -270,51 +270,44 @@ void ConsolePaintContext::ShowFontDialog()
 		
 	SetFont(font);
 }
-	
-uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t c)
+
+uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz)
 {
-	const bool cacheable = ((size_t)c <= _char_fit_cache.checked.size());
-	if (cacheable && _char_fit_cache.checked[ (size_t)c  - 1 ]) {
-		return _char_fit_cache.result[ (size_t)c  - 1 ];
+#ifdef DYNAMIC_FONTS
+	const bool cacheable = (size_t(wcz[0]) <= _char_fit_cache.checked.size() && wcz[1]);
+	if (cacheable && _char_fit_cache.checked[ size_t(wcz[0])  - 1 ]) {
+		return _char_fit_cache.result[ size_t(wcz[0])  - 1 ];
 	}
 
-	uint8_t font_index;
-	_cft_tmp = wxUniChar(c);
+	uint8_t font_index = 0;
+	_cft_tmp = wcz;
 	wxSize char_size = dc.GetTextExtent(_cft_tmp);
-	if ((unsigned)char_size.GetWidth() == _font_width 
-		&& (unsigned)char_size.GetHeight() == _font_height) {
-		font_index = 0;
-	} else {
-		font_index = 0xff;
-#ifdef DYNAMIC_FONTS
-		for (uint8_t try_index = 1;;++try_index) {
-			if (try_index==0xff || (
-				(unsigned)char_size.GetWidth() <= _font_width && 
-				(unsigned)char_size.GetHeight() <= _font_height)) 
-				{
-					if (font_index!=0xff) ApplyFont(dc);
-					break;
-				}
-
-			while (_fonts.size() <= try_index) {
-				wxFont smallest = _fonts.back();
-				smallest.MakeSmaller();
-				smallest.MakeBold();
-				_fonts.emplace_back(smallest);
-			}
-			dc.SetFont(_fonts[try_index]);
-			char_size = dc.GetTextExtent(_cft_tmp);
-			font_index = try_index;
+	for (uint8_t try_index = 1; try_index != 0xff && (unsigned)char_size.GetHeight() > _font_height; ++try_index) {
+		while (_fonts.size() <= try_index) {
+			wxFont smallest = _fonts.back();
+			smallest.MakeSmaller();
+			smallest.MakeBold();
+			_fonts.emplace_back(smallest);
 		}
-#endif		
+		dc.SetFont(_fonts[try_index]);
+		char_size = dc.GetTextExtent(_cft_tmp);
+		font_index = try_index;
+	}
+	if (font_index != 0) {
+		ApplyFont(dc);
 	}
 	
 	if (cacheable) {
-		_char_fit_cache.result[ (size_t)c  - 1 ] = font_index;
-		_char_fit_cache.checked[ (size_t)c  - 1 ] = true;
+		_char_fit_cache.result[ size_t(wcz[0])  - 1 ] = font_index;
+		_char_fit_cache.checked[ size_t(wcz[0])  - 1 ] = true;
 	}
 	
 	return font_index;
+
+#else
+	return 0;
+
+#endif
 }
 
 void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
@@ -383,12 +376,20 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		}
 
 		painter.LineBegin(cy);
-
+		wchar_t tmp_wcz[2] = {0, 0};
 		unsigned short attributes = line->Attributes;
-		for (unsigned int cx = 0; cx != cw; ++cx) {
+		for (unsigned int cx = 0; cx != cw;) {
 			if (cx > (unsigned)area.Right) {
 				break;
 			}
+			const wchar_t *pwcz;
+			if (UNLIKELY(USING_COMPOSITE_CHAR(line[cx]))) {
+				pwcz = WINPORT(CompositeCharLookup)(line[cx].Char.UnicodeChar);
+			} else {
+				tmp_wcz[0] = line[cx].Char.UnicodeChar ? wchar_t(line[cx].Char.UnicodeChar) : L' ';
+				pwcz = tmp_wcz;
+			}
+            const unsigned int nx = IsCharFullWidth(pwcz[0]) ? 2 : 1;
 
 			if (cx >= (unsigned)area.Left) {
 				attributes = line[cx].Attributes;
@@ -396,14 +397,10 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 					&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
 					attributes^= ALL_ATTRIBUTES;
 				}
-
-				if (LIKELY(!USING_COMPOSITE_CHAR(line[cx]))) {
-					painter.NextChar(cx, attributes, line[cx].Char.UnicodeChar);
-
-				} else for (const auto *pc = WINPORT(CompositeCharLookup)(line[cx].Char.CompositeChar); *pc; ++pc) {
-					painter.NextChar(cx, attributes, *pc);
-				}
+				painter.NextChar(cx, attributes, pwcz, nx);
 			}
+
+            cx+= nx;
 		}
 		painter.LineFlush(area.Right + 1);
 	}		
@@ -650,12 +647,12 @@ void WXCustomDrawChar::Painter::FillPixel(wxCoord left, wxCoord top)
 }
 
 
-void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_t c)
+void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, const wchar_t *wcz, unsigned int nx)
 {
 	WXCustomDrawChar::DrawT custom_draw = nullptr;
 
-	if (!c || c == L' ' || !WCHAR_IS_VALID(c) || (_context->IsCustomDrawEnabled()
-	 && (custom_draw = WXCustomDrawChar::Get(c)) != nullptr)) {
+	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0]) || (_context->IsCustomDrawEnabled()
+	 && (custom_draw = WXCustomDrawChar::Get(wcz[0])) != nullptr)))) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx);
 		FlushText();
@@ -664,7 +661,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back);
 
-	if (!c || c == L' ' || !WCHAR_IS_VALID(c)) {
+	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0])))) {
 		return;
 	}
 
@@ -677,29 +674,28 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, wchar_
 		custom_draw(cdp, _start_y, cx);
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
+        return;
+	}
 
-	} else {
-		uint8_t fit_font_index = WCHAR_IS_COMBINING(c) ? // TODO: get font index by whole CompositeChar's sequence
-			_prev_fit_font_index : _context->CharFitTest(_dc, c);
+	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz);
 	
-		if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
-		  && _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
-			_buffer+= c;
-			return;
-		}
+	if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
+	  && _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+		_buffer+= wcz;
+		return;
+	}
 
-		_prev_fit_font_index = fit_font_index;
+	_prev_fit_font_index = fit_font_index;
 
-		FlushBackground(cx + 1);
+	FlushBackground(cx + nx);
+	FlushText();
+	_start_cx = cx;
+	_buffer = wcz;
+	_clr_text = clr_text;
+
+	if (fit_font_index != 0 && fit_font_index != 0xff) {
+		_context->ApplyFont(_dc, fit_font_index);
 		FlushText();
-		_start_cx = cx;
-		_buffer = c;
-		_clr_text = clr_text;
-
-		if (fit_font_index != 0 && fit_font_index != 0xff) {
-			_context->ApplyFont(_dc, fit_font_index);
-			FlushText();
-			_context->ApplyFont(_dc);
-		}
+		_context->ApplyFont(_dc);
 	}
 }

@@ -45,7 +45,7 @@ public:
 	ConsolePaintContext(wxWindow *window);
 	void ShowFontDialog();
 	
-	uint8_t CharFitTest(wxPaintDC &dc, wchar_t c);
+	uint8_t CharFitTest(wxPaintDC &dc, const wchar_t *wcz);
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );
@@ -111,7 +111,7 @@ public:
 	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
 	
 
-	void NextChar(unsigned int cx, unsigned short attributes, wchar_t c);
+	void NextChar(unsigned int cx, unsigned short attributes, const wchar_t *wcz, unsigned int nx);
 	
 	inline void LineBegin(unsigned int cy)
 	{

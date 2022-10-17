@@ -69,8 +69,9 @@ int main()
 	printf("#include <wchar.h>\n\n");
 
 	WriteFunc("IsCharFullWidth", [](wchar_t c)->bool {
+		const auto ea_width = u_getIntPropertyValue(c, UCHAR_EAST_ASIAN_WIDTH);
 		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
-		return u_getIntPropertyValue(c, UCHAR_EAST_ASIAN_WIDTH) != 0
+		return ea_width == U_EA_FULLWIDTH || ea_width == U_EA_WIDE
 				|| block == UBLOCK_ARROWS
 				|| block == UBLOCK_MATHEMATICAL_OPERATORS
 				|| block == UBLOCK_MISCELLANEOUS_TECHNICAL

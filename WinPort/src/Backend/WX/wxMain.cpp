@@ -1258,7 +1258,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 						CHAR_INFO ch;
 						if (g_winport_con_out->Read(ch, pos)) {
 							if (USING_COMPOSITE_CHAR(ch)) {
-								_text2clip+= WINPORT(CompositeCharLookup)(ch.Char.CompositeChar);
+								_text2clip+= WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
 							} else if (ch.Char.UnicodeChar) {
 								_text2clip+= ch.Char.UnicodeChar;
 							}

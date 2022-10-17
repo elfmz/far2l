@@ -308,7 +308,7 @@ int TTYOutput::WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) cons
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
-	for (;cnt; ++ci,--cnt) {
+	for (;cnt; ++ci,--cnt) if (ci->Char.UnicodeChar) {
 		const bool is_space = !USING_COMPOSITE_CHAR(*ci) && (
 				ci->Char.UnicodeChar <= 0x20
 			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
@@ -348,7 +348,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 		}
 
 		if (USING_COMPOSITE_CHAR(*ci)) {
-			for (const WCHAR *pw = WINPORT(CompositeCharLookup)(ci->Char.CompositeChar); *pw; ++pw) {
+			for (const WCHAR *pw = WINPORT(CompositeCharLookup)(ci->Char.UnicodeChar); *pw; ++pw) {
 				WriteWChar(*pw);
 			}
 		} else {

@@ -1,4 +1,6 @@
 #include "ConsoleOutput.h"
+#include "WinPort.h"
+#include <utils.h>
 
 #define TAB_WIDTH	8
 #define NO_AREA {MAXSHORT, MAXSHORT, 0, 0}
@@ -296,34 +298,76 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	AffectArea(area, scr_rect);
 }
 
-bool ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos)
+SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area)
 {
 	CHAR_INFO ch;
+	SHORT out = 1;
 
 	switch (sm.kind) {
 		case SequenceModifier::SM_WRITE_STR:
-			ch.Char.UnicodeChar = *sm.str;
+			if (IsCharPrefix(*sm.str)) {
+				out = 0;
+				ch.Char.UnicodeChar = *sm.str;
+				// surrogate pairs not used for UTF32, so dont need to do special tricks to keep it,
+				// so let following normal character to overwrite abnormal surrogate pair prefixx
+
+			} else if (IsCharSuffix(*sm.str) && _prev_pos.X >= 0) {
+				out = 0;
+				if (!_buf.Read(ch, _prev_pos)) {
+					return false;
+				}
+				pos = _prev_pos;
+				std::wstring tmp;
+				if (USING_COMPOSITE_CHAR(ch)) {
+					tmp = WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
+				} else {
+					tmp = ch.Char.UnicodeChar;
+				}
+				tmp+= *sm.str;
+				ch.Char.UnicodeChar = WINPORT(CompositeCharRegister)(tmp.c_str());
+
+			} else {
+				ch.Char.UnicodeChar = *sm.str;
+				if ((_mode&ENABLE_PROCESSED_OUTPUT)!=0 && ch.Char.UnicodeChar==L'\t') {
+					 ch.Char.UnicodeChar = L' ';
+				}
+				if (IsCharFullWidth(ch.Char.UnicodeChar)) {
+//					fprintf(stderr, "IsCharFullWidth: %lc [0x%llx]\n",
+//						(WCHAR)ch.Char.UnicodeChar, (unsigned long long)ch.Char.UnicodeChar);
+					out = 2;
+				}
+			}
 			ch.Attributes = _attributes;
-			if ((_mode&ENABLE_PROCESSED_OUTPUT)!=0 && ch.Char.UnicodeChar==L'\t')
-				 ch.Char.UnicodeChar = L' ';
+			_prev_pos = pos;
 			break;
 
 		case SequenceModifier::SM_FILL_CHAR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return out;
 
 			ch.Char.UnicodeChar = sm.chr;
 			break;
 
 		case SequenceModifier::SM_FILL_ATTR:
 			if (!_buf.Read(ch, pos))
-				return false;
+				return out;
 
 			ch.Attributes = sm.attr;
 			break;
 	}
 	
-	return (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED);
+	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
+		AffectArea(area, pos.X, pos.Y);
+		if (out == 2) {
+			ch.Char.UnicodeChar = 0;
+			pos.X++;
+			if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
+				AffectArea(area, pos.X, pos.Y);
+			}
+		}
+	}
+
+	return out;
 }
 
 size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
@@ -378,9 +422,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					ScrollOutputOnOverflow(areas[2]);
 				}
 			} else {
-				if (ModifySequenceEntityAt(sm, pos))
-					AffectArea(areas[2], pos.X, pos.Y);
-				pos.X++;
+				pos.X+= ModifySequenceEntityAt(sm, pos, areas[2]);
 			}
 			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
 				if (*sm.str!=L'\t' || (pos.X%TAB_WIDTH)==0 || (_mode&ENABLE_PROCESSED_OUTPUT)==0) {

@@ -428,7 +428,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 		const auto Modified = [&](unsigned int x_)
 		{
-			return (cur_line[x_].Char.CompositeChar != prev_line[x_].Char.CompositeChar
+			return (cur_line[x_].Char.UnicodeChar != prev_line[x_].Char.UnicodeChar
 				|| cur_line[x_].Attributes != prev_line[x_].Attributes);
 		};
 

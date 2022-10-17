@@ -139,6 +139,7 @@ public:
 	void ReleaseBuffer(size_t nLength = (size_t)-1);
 
 	inline size_t GetLength() const { return m_pContent->GetLength(); }
+	inline size_t CellsCount() const { return StrCellsCount(CPtr(), GetLength()); }
 	size_t Truncate(size_t nLength);
 
 	inline wchar_t At(size_t nIndex) const { return m_pContent->GetData()[nIndex]; }

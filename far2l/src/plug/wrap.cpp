@@ -1271,7 +1271,9 @@ void AnsiVBufToUnicode(PCHAR_INFO VBufA, PCHAR_INFO VBuf, size_t Size,bool NoCvt
 			}
 			else
 			{
-				AnsiToUnicodeBin(&VBufA[i].Char.AsciiChar,&VBuf[i].Char.UnicodeChar,1);
+				WCHAR wc{};
+				AnsiToUnicodeBin(&VBufA[i].Char.AsciiChar,&wc,1);
+				VBuf[i].Char.UnicodeChar = (DWORD64)wc;
 			}
 
 			VBuf[i].Attributes = VBufA[i].Attributes;

@@ -591,11 +591,14 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 
 	wchar_t *lpwszDest = strDest.GetBuffer(MaxLength+1);
 	wmemset(lpwszDest,L' ',MaxLength);
-	int SrcLength=StrLength(SrcName);
+	int SrcLength = StrLength(SrcName);
+	int SrcVisualLength = StrCellsCount(SrcName, SrcLength);
 
-	if (RightAlign && SrcLength>MaxLength)
+	if (RightAlign && SrcVisualLength > MaxLength)
 	{
-		wmemcpy(lpwszDest,SrcName+SrcLength-MaxLength,MaxLength);
+		size_t SkipCells = SrcVisualLength - MaxLength;
+		size_t SkipOfs = StrSizeOfCells(SrcName, SrcLength, SkipCells, true);
+		wmemcpy(lpwszDest, SrcName + SkipOfs, SrcLength - SkipOfs);
 		strDest.ReleaseBuffer(MaxLength);
 		return TRUE;
 	}
@@ -604,7 +607,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 
 	if (!ShowStatus &&
 	        ((!(FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.AlignExtensions) || ((FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.FolderAlignExtensions))
-	        && SrcLength<=MaxLength &&
+	        && SrcVisualLength<=MaxLength &&
 	        (DotPtr=wcsrchr(SrcName,L'.')) && DotPtr!=SrcName &&
 	        (SrcName[0]!=L'.' || SrcName[2]) && !wcschr(DotPtr+1,L' '))
 	{
@@ -623,12 +626,14 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	}
 	else
 	{
-		wmemcpy(lpwszDest,SrcName,Min(SrcLength, MaxLength));
+		size_t CellsCount = MaxLength;
+		size_t CopyLen = StrSizeOfCells(SrcName, SrcLength, CellsCount, false);
+		wmemcpy(lpwszDest, SrcName,CopyLen);
 	}
 
 	strDest.ReleaseBuffer(MaxLength);
 	
-	return(SrcLength>MaxLength);
+	return (SrcVisualLength > MaxLength);
 }
 
 
@@ -1080,7 +1085,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								if (RightAlign)
 									LeftBracket=TRUE;
 
-								if (!RightAlign && StrLength(NamePtr)>Width)
+								if (!RightAlign && StrCellsCount(NamePtr) > size_t(Width))
 									RightBracket=TRUE;
 							}
 

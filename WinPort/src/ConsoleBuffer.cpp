@@ -84,7 +84,7 @@ void ConsoleBuffer::Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL
 
 static inline bool AreSameChars(const CHAR_INFO &one, const CHAR_INFO &another)
 {
-	return one.Char.CompositeChar == another.Char.CompositeChar && one.Attributes == another.Attributes;
+	return one.Char.UnicodeChar == another.Char.UnicodeChar && one.Attributes == another.Attributes;
 }
 
 void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect)

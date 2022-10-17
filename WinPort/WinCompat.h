@@ -476,16 +476,18 @@ typedef struct _CONSOLE_CURSOR_INFO {
     BOOL   bVisible;
 } CONSOLE_CURSOR_INFO, *PCONSOLE_CURSOR_INFO;
 
+typedef DWORD64 COMP_CHAR;
+
 typedef struct _CHAR_INFO {
     union {
-        DWORD64 CompositeChar;
-        WCHAR UnicodeChar;
+        COMP_CHAR UnicodeChar; // WCHAR or result of CompositeCharRegister()
         CHAR   AsciiChar;
     } Char;
     WORD Attributes;
 } CHAR_INFO, *PCHAR_INFO;
 
-#define USING_COMPOSITE_CHAR(CI) ((CI).Char.CompositeChar != DWORD64((CI).Char.UnicodeChar))
+#define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
+#define USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
 
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {

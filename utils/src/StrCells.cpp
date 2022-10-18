@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "StrCells.h"
 
 size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 {
@@ -70,7 +71,7 @@ void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 		}
 	}
 	wcsncpy(pwz, L"...", ng);
-	n = ng;
+	n = std::min(ng, (size_t)3);
 }
 
 void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
@@ -140,6 +141,3 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 	n-= (cut_end - cut_start);
 	n+= 3;
 }
-
-
-

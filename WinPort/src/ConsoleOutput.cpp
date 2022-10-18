@@ -68,6 +68,20 @@ USHORT ConsoleOutput::GetAttributes()
 	return _attributes;
 }
 
+void ConsoleOutput::SetUpdateCellArea(SMALL_RECT &area, COORD pos)
+{
+	area.Left = area.Right = pos.X;
+	area.Top = area.Bottom = pos.Y;
+	CHAR_INFO ci{};
+	if (_buf.Read(ci, pos)) {
+		if (!ci.Char.UnicodeChar && area.Left > 0) {
+			--area.Left;
+		} else if (FULL_WIDTH_CHAR(ci)) {
+			++area.Right;
+		}
+	}
+}
+
 void ConsoleOutput::SetCursor(COORD pos)
 {
 	SMALL_RECT area[2];
@@ -76,11 +90,9 @@ void ConsoleOutput::SetCursor(COORD pos)
 		if (_cursor.pos.X == pos.X && _cursor.pos.Y == pos.Y)
 			return;
 
-		area[0].Left = area[0].Right = _cursor.pos.X;
-		area[0].Top = area[0].Bottom = _cursor.pos.Y;
+		SetUpdateCellArea(area[0], _cursor.pos);
 		_cursor.pos = pos;
-		area[1].Left = area[1].Right = _cursor.pos.X;
-		area[1].Top = area[1].Bottom = _cursor.pos.Y;
+		SetUpdateCellArea(area[1], _cursor.pos);
 	}
 	if (_backend) {
 		_backend->OnConsoleOutputUpdated(&area[0], 2);
@@ -94,8 +106,7 @@ void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 		std::lock_guard<std::mutex> lock(_mutex);
 		_cursor.height = height;
 		_cursor.visible = visible;
-		area.Left = area.Right = _cursor.pos.X;
-		area.Top = area.Bottom = _cursor.pos.Y;
+		SetUpdateCellArea(area, _cursor.pos);
 	}
 	if (_backend)
 		_backend->OnConsoleOutputUpdated(&area, 1);
@@ -224,7 +235,8 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 	}
 
 	if (_backend) {
-		SMALL_RECT area = {screen_pos.X, screen_pos.Y, screen_pos.X, screen_pos.Y};
+		SMALL_RECT area;
+		SetUpdateCellArea(area, screen_pos);
 		_backend->OnConsoleOutputUpdated(&area, 1);
 	}
 	return true;

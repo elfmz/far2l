@@ -488,6 +488,8 @@ typedef struct _CHAR_INFO {
 
 #define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
 #define USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
+#define FULL_WIDTH_CHAR(CI) ( (!USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
+	|| (USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
 
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {

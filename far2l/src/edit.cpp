@@ -245,7 +245,7 @@ void Edit::DisplayObject()
 			::SetCursorType(1,CursorSize==-1?NewCursorSize:CursorSize);
 		}
 		else
-{
+		{
 			int NewCursorSize=IsFullscreen()?
 			                  (Opt.CursorSize[1]?Opt.CursorSize[1]:10):
 					                  (Opt.CursorSize[0]?Opt.CursorSize[0]:10);
@@ -253,7 +253,8 @@ void Edit::DisplayObject()
 		}
 	}
 
-	MoveCursor(X1+CursorPos-LeftPos,Y1);
+	MoveCursor(X1 + StrCellsCount(Str + LeftPos, CursorPos - LeftPos), Y1);
+	//MoveCursor(X1+CursorPos-LeftPos,Y1);
 }
 
 

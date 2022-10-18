@@ -378,9 +378,9 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		painter.LineBegin(cy);
 		wchar_t tmp_wcz[2] = {0, 0};
 		unsigned short attributes = line->Attributes;
-		for (unsigned int cx = 0; cx != cw;) {
-			if (cx > (unsigned)area.Right) {
-				break;
+		for (unsigned int cx = area.Left; cx < cw && cx <= (unsigned)area.Right; ++cx) {
+			if (!line[cx].Char.UnicodeChar) {
+				continue;
 			}
 			const wchar_t *pwcz;
 			if (UNLIKELY(USING_COMPOSITE_CHAR(line[cx]))) {
@@ -389,18 +389,14 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 				tmp_wcz[0] = line[cx].Char.UnicodeChar ? wchar_t(line[cx].Char.UnicodeChar) : L' ';
 				pwcz = tmp_wcz;
 			}
-            const unsigned int nx = IsCharFullWidth(pwcz[0]) ? 2 : 1;
 
-			if (cx >= (unsigned)area.Left) {
-				attributes = line[cx].Attributes;
-				if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
-					&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
-					attributes^= ALL_ATTRIBUTES;
-				}
-				painter.NextChar(cx, attributes, pwcz, nx);
+			attributes = line[cx].Attributes;
+			if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
+				&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
+				attributes^= ALL_ATTRIBUTES;
 			}
-
-            cx+= nx;
+			const int nx = (cx + 1 < cw && !line[cx + 1].Char.UnicodeChar) ? 2 : 1;
+			painter.NextChar(cx, attributes, pwcz, nx);
 		}
 		painter.LineFlush(area.Right + 1);
 	}		

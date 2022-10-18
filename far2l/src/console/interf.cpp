@@ -603,7 +603,7 @@ void Text(const WCHAR *Str, size_t Length)
 	{
 		delete[] HeapBuffer;
 	}
-	CurX+=static_cast<int>(Length);
+	CurX+= nCells;
 }
 
 

@@ -10,6 +10,7 @@
 #include "Environment.h"
 #include "ErrnoSaver.hpp"
 #include "PlatformConstants.h"
+#include "StrCells.h"
 
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
@@ -339,12 +340,3 @@ bool IsCharSuffix(wchar_t c);
 bool IsCharXxxfix(wchar_t c);
 
 bool IsCharUnstableWidth(wchar_t c);
-
-size_t StrCellsCount(const wchar_t *pwz, size_t nw);
-size_t StrCellsCount(const wchar_t *pwz);
-size_t StrSizeOfCells(const wchar_t *pwz, size_t nw, size_t &ng, bool round_up);
-size_t StrSizeOfCell(const wchar_t *pwz, size_t nw);
-
-void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng);
-void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng);
-void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng);

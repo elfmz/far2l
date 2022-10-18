@@ -97,7 +97,7 @@ void FileList::ShowFileList(int Fast)
 
 	FARString strTitle;
 	FARString strInfoCurDir;
-	int Length;
+	int Cells;
 	OpenPluginInfo Info;
 
 	if (PanelMode==PLUGIN_PANEL)
@@ -343,7 +343,7 @@ void FileList::ShowFileList(int Fast)
 		TruncSize-=2;
 
 	GetTitle(strTitle,TruncSize,2);//,(PanelMode==PLUGIN_PANEL?0:2));
-	Length=(int)strTitle.GetLength();
+	Cells=(int)strTitle.CellsCount();
 	int ClockCorrection=FALSE;
 
 	if ((Opt.Clock && !Opt.ShowMenuBar) && TitleX2==ScrX-4)
@@ -352,11 +352,11 @@ void FileList::ShowFileList(int Fast)
 		TitleX2+=4;
 	}
 
-	int TitleX=X1+(TitleX2-X1+1-Length)/2;
+	int TitleX=X1+(TitleX2-X1+1-Cells)/2;
 
 	if (ClockCorrection)
 	{
-		int Overlap=TitleX+Length-TitleX2+5;
+		int Overlap=TitleX+Cells-TitleX2+5;
 
 		if (Overlap > 0)
 			TitleX-=Overlap;

@@ -55,6 +55,7 @@ class ConsoleOutput : public IConsoleOutput
 	virtual const WCHAR *LockedGetTitle();
 	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width);
 	virtual void Unlock();
+	void SetUpdateCellArea(SMALL_RECT &area, COORD pos);
 
 public:
 	ConsoleOutput();

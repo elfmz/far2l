@@ -380,6 +380,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		unsigned short attributes = line->Attributes;
 		for (unsigned int cx = area.Left; cx < cw && cx <= (unsigned)area.Right; ++cx) {
 			if (!line[cx].Char.UnicodeChar) {
+				painter.LineFlush(cx + 1);
 				continue;
 			}
 			const wchar_t *pwcz;
@@ -421,6 +422,14 @@ void ConsolePaintContext::BlinkCursor()
 			_cursor_props.pos.X, _cursor_props.pos.Y,
 			_cursor_props.pos.X, _cursor_props.pos.Y
 		};
+		CHAR_INFO ci{};
+		if (g_winport_con_out->Read(ci, _cursor_props.pos)) {
+			if (!ci.Char.UnicodeChar && area.Left > 0) {
+				--area.Left;
+			} else if (FULL_WIDTH_CHAR(ci)) {
+				++area.Right;
+			}
+		}
 		RefreshArea(area);
 	}
 }
@@ -492,7 +501,7 @@ void ConsolePainter::SetFillColor(const WinPortRGB &clr)
 	}		
 }
 	
-void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
+void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr, unsigned int nx)
 {
 	const bool cursor_here = (_cursor_props.visible && _cursor_props.blink_state
 		&& cx == (unsigned int)_cursor_props.pos.X
@@ -501,7 +510,7 @@ void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 	if (!cursor_here && _start_back_cx != (unsigned int)-1 && _clr_back == clr)
 		return;
 
-	FlushBackground(cx);
+	FlushBackground(cx + nx - 1);
 
 	if (!cursor_here) {
 		_clr_back = clr;
@@ -518,11 +527,11 @@ void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr)
 	if (fill_height > _context->FontHeight()) fill_height = _context->FontHeight();
 	WinPortRGB clr_xored(clr.r ^ 0xff, clr.g ^ 0xff, clr.b ^ 0xff);
 	SetFillColor(clr_xored);
-	_dc.DrawRectangle(x, _start_y + fill_height, _context->FontWidth(), h);				
+	_dc.DrawRectangle(x, _start_y + fill_height, _context->FontWidth() * nx, h);
 
 	if (fill_height) {
 		SetFillColor(clr);
-		_dc.DrawRectangle(x, _start_y, _context->FontWidth(), fill_height);							
+		_dc.DrawRectangle(x, _start_y, _context->FontWidth() * nx, fill_height);
 	}
 }
 
@@ -650,12 +659,12 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, const 
 	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0]) || (_context->IsCustomDrawEnabled()
 	 && (custom_draw = WXCustomDrawChar::Get(wcz[0])) != nullptr)))) {
 		if (!_buffer.empty()) 
-			FlushBackground(cx);
+			FlushBackground(cx + nx - 1);
 		FlushText();
 	}
 
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
-	PrepareBackground(cx, clr_back);
+	PrepareBackground(cx, clr_back, nx);
 
 	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0])))) {
 		return;
@@ -664,7 +673,7 @@ void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, const 
 	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
 
 	if (custom_draw) {
-		FlushBackground(cx + 1);
+		FlushBackground(cx + nx);
 
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
 		custom_draw(cdp, _start_y, cx);

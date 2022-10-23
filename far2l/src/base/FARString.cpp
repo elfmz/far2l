@@ -290,6 +290,16 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 	return *this;
 }
 
+FARString& FARString::Append(wchar_t Ch, size_t Count)
+{
+	size_t nNewLength = m_pContent->GetLength() + Count;
+	PrepareForModify(nNewLength);
+	wmemset(m_pContent->GetData() + m_pContent->GetLength(), Ch, Count);
+	m_pContent->SetLength(nNewLength);
+
+	return *this;
+}
+
 FARString& FARString::Copy(const FARString &Str)
 {
 	auto prev_pContent = m_pContent;

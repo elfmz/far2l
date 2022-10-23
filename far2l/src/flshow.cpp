@@ -589,8 +589,6 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 		}
 	}
 
-	wchar_t *lpwszDest = strDest.GetBuffer(MaxLength+1);
-	wmemset(lpwszDest,L' ',MaxLength);
 	int SrcLength = StrLength(SrcName);
 	int SrcVisualLength = StrCellsCount(SrcName, SrcLength);
 
@@ -598,8 +596,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	{
 		size_t SkipCells = SrcVisualLength - MaxLength;
 		size_t SkipOfs = StrSizeOfCells(SrcName, SrcLength, SkipCells, true);
-		wmemcpy(lpwszDest, SrcName + SkipOfs, SrcLength - SkipOfs);
-		strDest.ReleaseBuffer(MaxLength);
+		strDest.Copy(SrcName + SkipOfs, SrcLength - SkipOfs);
 		return TRUE;
 	}
 
@@ -618,21 +615,22 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 		if (DotPos<=NameLength)
 			DotPos=NameLength+1;
 
-		if (DotPos>0 && NameLength>0 && SrcName[NameLength-1]==L' ')
-			lpwszDest[NameLength]=L'.';
-
-		wmemcpy(lpwszDest,SrcName,NameLength);
-		wmemcpy(lpwszDest+DotPos,DotPtr+1,DotLength);
+		strDest.Copy(SrcName, NameLength);
+		strDest.Append(L'.');
+		strDest.Append(DotPtr+1,DotLength);
 	}
 	else
 	{
 		size_t CellsCount = MaxLength;
 		size_t CopyLen = StrSizeOfCells(SrcName, SrcLength, CellsCount, false);
-		wmemcpy(lpwszDest, SrcName,CopyLen);
+		strDest.Copy(SrcName, CopyLen);
 	}
 
-	strDest.ReleaseBuffer(MaxLength);
-	
+	const size_t CopiedCellsCount = strDest.CellsCount();
+	if (CopiedCellsCount < size_t(MaxLength)) {
+		strDest.Append(L' ', size_t(MaxLength - CopiedCellsCount));
+	}
+
 	return (SrcVisualLength > MaxLength);
 }
 

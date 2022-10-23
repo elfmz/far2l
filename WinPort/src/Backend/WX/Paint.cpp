@@ -378,7 +378,9 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		painter.LineBegin(cy);
 		wchar_t tmp_wcz[2] = {0, 0};
 		unsigned short attributes = line->Attributes;
-		for (unsigned int cx = area.Left; cx < cw && cx <= (unsigned)area.Right; ++cx) {
+		const unsigned int cx_begin = (area.Left > 0 && !line[area.Left].Char.UnicodeChar) ? area.Left - 1 : area.Left;
+		const unsigned int cx_end = std::min(cw, (unsigned)area.Right + 1);
+		for (unsigned int cx = cx_begin; cx < cx_end; ++cx) {
 			if (!line[cx].Char.UnicodeChar) {
 				painter.LineFlush(cx + 1);
 				continue;

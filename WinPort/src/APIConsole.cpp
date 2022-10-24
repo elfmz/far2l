@@ -371,7 +371,7 @@ extern "C" {
 		std::lock_guard<std::mutex> lock(s_composite_chars.mtx);
 		auto it = s_composite_chars.str2id.find(lpSequence);
 		if (it != s_composite_chars.str2id.end()) {
-			return it->second;
+			return it->second | COMPOSITE_CHAR_MARK;
 		}
 		wchar_t *wd = wcsdup(lpSequence);
 		try {
@@ -380,8 +380,8 @@ extern "C" {
 
 			const COMP_CHAR id = COMP_CHAR(s_composite_chars.id2str.size());
 			s_composite_chars.id2str.emplace_back(wd);
-			s_composite_chars.str2id.emplace(wd, id | COMPOSITE_CHAR_MARK);
-			return id;
+			s_composite_chars.str2id.emplace(wd, id);
+			return id | COMPOSITE_CHAR_MARK;
 
 		} catch (std::exception &e) {
 			fprintf(stderr, "%s: %s for '%ls'\n", __FUNCTION__, e.what(), lpSequence);

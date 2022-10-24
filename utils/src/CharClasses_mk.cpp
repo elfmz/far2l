@@ -6,15 +6,9 @@
 /// Usage:
 /// g++ -O2 ./CharClasses_mk.cpp -o /tmp/CharClasses_mk -licuuc && /tmp/CharClasses_mk > CharClasses.cpp
 
-static bool IsUnstableWidthBlock(int block)
+static bool IsDiactricalBlock(int block)
 {
-	return block == UBLOCK_ARROWS
-	 || block == UBLOCK_MATHEMATICAL_OPERATORS
-	 || block == UBLOCK_MISCELLANEOUS_TECHNICAL
-	 || block == UBLOCK_CONTROL_PICTURES
-	 || block == UBLOCK_GEOMETRIC_SHAPES
-	 || block == UBLOCK_MISCELLANEOUS_SYMBOLS
-	 || block == UBLOCK_COMBINING_DIACRITICAL_MARKS
+	return block == UBLOCK_COMBINING_DIACRITICAL_MARKS
 	 || block == UBLOCK_COMBINING_MARKS_FOR_SYMBOLS
 	 || block == UBLOCK_COMBINING_HALF_MARKS
 	 || block == UBLOCK_COMBINING_DIACRITICAL_MARKS_SUPPLEMENT
@@ -70,14 +64,15 @@ int main()
 
 	WriteFunc("IsCharFullWidth", [](wchar_t c)->bool {
 		const auto ea_width = u_getIntPropertyValue(c, UCHAR_EAST_ASIAN_WIDTH);
-		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
+//		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
 		return ea_width == U_EA_FULLWIDTH || ea_width == U_EA_WIDE
-				|| block == UBLOCK_ARROWS
-				|| block == UBLOCK_MATHEMATICAL_OPERATORS
-				|| block == UBLOCK_MISCELLANEOUS_TECHNICAL
-				|| block == UBLOCK_CONTROL_PICTURES
-				|| block == UBLOCK_GEOMETRIC_SHAPES
-				|| block == UBLOCK_MISCELLANEOUS_SYMBOLS;
+//				|| block == UBLOCK_ARROWS
+//				|| block == UBLOCK_MATHEMATICAL_OPERATORS
+//				|| block == UBLOCK_MISCELLANEOUS_TECHNICAL
+//				|| block == UBLOCK_CONTROL_PICTURES
+//				|| block == UBLOCK_GEOMETRIC_SHAPES
+//				|| block == UBLOCK_MISCELLANEOUS_SYMBOLS
+				;
 	});
 
 	WriteFunc("IsCharPrefix", [](wchar_t c)->bool {
@@ -91,7 +86,7 @@ int main()
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
 		return ( (jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT)
 			|| cat == U_NON_SPACING_MARK || cat == U_COMBINING_SPACING_MARK
-			|| IsUnstableWidthBlock(u_getIntPropertyValue(c, UCHAR_BLOCK))
+			|| IsDiactricalBlock(u_getIntPropertyValue(c, UCHAR_BLOCK))
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS
 			|| block == UBLOCK_COMBINING_MARKS_FOR_SYMBOLS
 			|| block == UBLOCK_COMBINING_HALF_MARKS

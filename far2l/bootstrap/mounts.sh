@@ -30,7 +30,9 @@ if [ -x ~/.config/far2l/mounts.sh ]; then
 fi
 
 ##########################################################
-# This optional file may contain per-user extra values added to df output,
+# This optional file may contain per-user extra values added to "df" or "mount" output,
+# absolute path or ~/dir1 or ${env_var1}/dir2 or $(program args)/dir3 can be used in path field
+# anything that can be handled by shell in printf "example_path"
 # its content must be looking like:
 #
 #path1<TAB>info1
@@ -70,15 +72,40 @@ if [ ."$1" = '.umount' -a -z "$2" ]; then
 
 ##########################################################
 else
-	sysname="$(uname)"
+	VAR_SCRIPT_AWK_DEBUG=''
+
+	if [ ".${script_debug_enabled}" = ".true" ]; then
+		VAR_SCRIPT_AWK_DEBUG='-v debug=1'
+	fi
+
+	RGX_SLASH='\'
+	RGX_SLASH_DOUBLE='\\'
+	RGX_TAB='\t'
+	RGX_SPC=' '
+	RGX_TAB_OR_SPC='['${RGX_TAB}''${RGX_SPC}']'
+	RGX_NEWLINE='\n'
+
+	sysname="$(uname||printf 'unknown')"
 	timeout_coreutils="false"
 	column_bsdmainutils="false"
 	awk_busybox="false"
-	if [ "$sysname" = "Linux" ]; then
+
+	if [ ".${sysname}" = ".Linux" ]; then
 		timeout_coreutils="$(sh -c 'timeout --version > /dev/null 2>&1 && printf true || printf false')"
-		column_bsdmainutils="$(sh -c 'column -h > /dev/null 2>&1 && printf true || printf false')"
 		awk_busybox="$([ .$(awk 2>&1 | head -n 1 | cut -d' ' -f1) = .BusyBox ] > /dev/null 2>&1 && printf true || printf false)"
 	fi
+
+	DF='( df -P )'
+	USE_MOUNT_CMD='false'
+
+	MNT_CMN_FILTER='cat'
+	MNT_USR_FILTER='cat'
+	DF_CMN_FILTER='cat'
+	DF_USR_FILTER='cat'
+
+	AWK_ARG_SRCF=''
+
+##########################################################
 	if [ "$sysname" = "Linux" ] || [ "$sysname" = "FreeBSD" ]; then
 		DF_ARGS='-T'
 		DF_AVAIL=5
@@ -190,12 +217,130 @@ else
 		}
 	}'
 
-	if [ -s "$FAVORITES" ]; then
-		awk "-F " '{
-			if ($0 != "" && substr($0, 1, 1) != "#") {
-				print $0;
+##########################################################
+	FV_PATH=1
+	FV_INFO=2
+
+	if [ -s "${FAVORITES}" ]; then
+
+		# start script preparation ( parse "favorites" file contents )
+
+		SCRIPT_AWK_FAVORITES='
+BEGIN {
+	if ("" debug "" == "1" || "" debug "" == "true") {
+		debug_enabled = "true";
+	}
+	else {
+		debug_enabled = "false";
+	}
+
+	if (debug_enabled == "true") {
+		debug_log = "/tmp/script_1_favorites_debug.log";
+		printf "" > debug_log;
+		close(debug_log);
+
+		output_log = "/tmp/script_1_favorites_output.log";
+		printf "" > output_log;
+		close(output_log);
+	}
+
+	# absolute path or ~/dir1 or ${env_var1}/dir2 or $(program args)/dir3 can be used in path field
+	# anything that can be handled by shell in printf "example_path"
+	# option_fav_nonabs_path should have value 1 to handle this
+	# and value 0 to work with absolute path only
+	option_fav_nonabs_path = 0;
+
+	FS = "\\t";
+
+	tab = "'${RGX_TAB}'";
+	space = "'${RGX_SPC}'";
+	tab_or_space = "'${RGX_TAB_OR_SPC}'";
+	newline = "'${RGX_NEWLINE}'";
+	single_quote = "\047";
+}
+debug_enabled == "true" {
+	printf "====================" >> debug_log;
+	print "" >> debug_log;
+	printf "NR=%d, FNR=%d, NF=%d, $0=_%s_", NR, FNR, NF, $0 >> debug_log;
+	print "" >> debug_log;
+
+	for (n = 1; n <= NF; n++) {
+		printf "%s","_ || $" n " = _" $n >> debug_log;
+	}
+	print "_ ||" >> debug_log;
+
+}
+/.*/ {
+	if ($0 != "" && substr($0, 1, 1) != "#") {
+
+		fav_path = $'${FV_PATH}';
+		misc_desc = $'${FV_INFO}';
+
+		if (fav_path == "-") {
+
+			print $0;
+
+		}
+		else
+		{
+			misc_path = "";
+			misc_info = "";
+			misc_width = 9;
+			misc_ident = "";
+
+			if (option_fav_nonabs_path == 1) {
+
+				snqt_fav_path = fav_path;
+				gsub(/'"'"'/, "'"\'"'" "\"" "'"\'"'" "\"" "'"\'"'", snqt_fav_path);
+				snqt_fav_path = sprintf(single_quote "%s" single_quote, snqt_fav_path);
+
+				# example usage of quoted path with single quotes inside
+				## misc_exec = "( printf " snqt_fav_path " 2> /dev/null ) | head -n 1 ";
+
+				misc_exec = "( printf " fav_path " 2> /dev/null ) | head -n 1 ";
+				"" misc_exec "" | getline misc_path;
+				close(misc_exec);
+
+				if (debug_enabled == "true") {
+					print "[info]  misc_exec = _" misc_exec "_" >> debug_log;
+				}
 			}
-		}' "$FAVORITES"
+
+			if (misc_path == "") {
+				misc_path = fav_path;
+			}
+
+			if (misc_desc == "") {
+				misc_desc = fav_path;
+			}
+
+			print_format = "%s\t" misc_ident " %" misc_width "s\t%s\n";
+
+			printf print_format, misc_path, misc_info, misc_desc;
+
+			if (debug_enabled == "true") {
+				printf print_format, misc_path, misc_info, misc_desc >> output_log;
+			}
+		}
+	}
+}
+END {
+	if (debug_enabled == "true") {
+		close(debug_log);
+		close(output_log);
+	}
+}'
+
+		# finish script preparation ( parse "favorites" file contents )
+
+		if [ ".${script_debug_enabled}" = ".true" ]; then
+			printf "%s\\n" "${SCRIPT_AWK_FAVORITES}" > "/tmp/script_1_favorites.awk"
+			## echo "${SCRIPT_AWK_FAVORITES}" > "/tmp/script_2_favorites.awk"
+		fi
+
+		cat "${FAVORITES}" \
+			| awk -F '\t' ${VAR_SCRIPT_AWK_DEBUG} ${AWK_ARG_SRCF} ' '"${SCRIPT_AWK_FAVORITES}"' ' \
+			| cat
 	fi
 fi
 

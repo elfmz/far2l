@@ -55,10 +55,13 @@ void ScanTree::SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD 
 	strFindMask = wcscmp(Mask, L"*") ? Mask : L"";
 	ScanDirStack.clear();
 
-	DeleteEndSlash(strFindPath);
+	if (strFindPath != L"/") {
+		DeleteEndSlash(strFindPath);
+	}
 
 	ScanDirStack.emplace_back();
 	ConvertNameToReal(strFindPath.c_str(), ScanDirStack.back().RealPath);
+
 	StartEnumSubdir();
 }
 
@@ -131,8 +134,9 @@ void ScanTree::LeaveSubdir()
 	{
 		ScanDirStack.pop_back();
 		size_t p = strFindPath.rfind('/', strFindPath.size() - 2);
-		if (p != std::string::npos && p > 0)
+		if (p != std::string::npos) {
 			strFindPath.resize(p + 1);
+		}
 
 	} else
 		fprintf(stderr, "ScanTree::LeaveSubdir() invoked on empty stack!\n");

@@ -579,6 +579,12 @@ int FarAppMain(int argc, char **argv)
 						Opt.WindowMode=TRUE;
 					}
 					break;
+
+				case L'U':
+					{ // skip 2 args as this case is processed in SetCustomSettings()
+						I++;
+					}
+					break;
 			}
 		}
 		if (!switchHandled) // простые параметры. Их может быть max две штукА.

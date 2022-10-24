@@ -19,16 +19,25 @@
 
 # Optional per-user script
 if [ -x ~/.config/far2l/mounts.sh ]; then
-. ~/.config/far2l/mounts.sh
+	# safely source this script from user config dir if it copied there without changes
+	export far2l_mounts_per_user_script_sourced=$((${far2l_mounts_per_user_script_sourced:-0}+0))
+	if [ ${far2l_mounts_per_user_script_sourced} -lt 1 ]; then
+		export far2l_mounts_per_user_script_sourced=$((${far2l_mounts_per_user_script_sourced}+1))
+		if [ ${far2l_mounts_per_user_script_sourced} -eq 1 ]; then
+			. ~/.config/far2l/mounts.sh
+		fi
+	fi
 fi
 
 ##########################################################
 # This optional file may contain per-user extra values added to df output,
 # its content must be looking like:
+#
 #path1<TAB>info1
 #path2<TAB>info2
 #-<TAB>separator_label
 #path3<TAB>info3
+#
 FAVORITES=~/.config/far2l/favorites
 
 ##########################################################
@@ -169,3 +178,7 @@ else
 		}' "$FAVORITES"
 	fi
 fi
+
+##########################################################
+# safely source this script from user config dir if it copied there without changes
+exit 0

@@ -41,8 +41,28 @@ fi
 FAVORITES=~/.config/far2l/favorites
 
 ##########################################################
-if [ "$1" = 'umount' ]; then
-	if [ "$3" = 'force' ]; then
+script_debug_enabled="false"
+script_debug_log="/dev/null"
+
+if ! [ -z "${FAR2L_DEBUG_MOUNTS_LOG}" ]; then
+	script_debug_enabled="true"
+
+	# log file must exist already and be readable and writable
+	if [ -r "${FAR2L_DEBUG_MOUNTS_LOG}" -a -w "${FAR2L_DEBUG_MOUNTS_LOG}" -a ! -x "${FAR2L_DEBUG_MOUNTS_LOG}" ]; then
+		script_debug_log="${FAR2L_DEBUG_MOUNTS_LOG}"
+	else
+		script_debug_log="/tmp/far2l_mount_sh_debug.log"
+	fi
+fi
+
+if [ ".${script_debug_enabled}" = ".true" ]; then
+	# start with empty log file
+	printf "%s" "" > "${script_debug_log}"
+fi
+
+##########################################################
+if [ ."$1" = '.umount' -a -z "$2" ]; then
+	if [ ."$3" = '.force' ]; then
 		sudo umount -f "$2"
 	else
 		umount "$2"

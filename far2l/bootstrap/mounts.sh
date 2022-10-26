@@ -307,10 +307,6 @@ BEGIN {
 		timeout_coreutils_available = "false";
 	}
 
-	if (debug_enabled == "true") {
-		print "[DEBUG] timeout_coreutils_available = [" timeout_coreutils_available "]" >> debug_log;
-	}
-
 	FS = " ";
 
 	tab = "'${RGX_TAB}'";
@@ -369,39 +365,13 @@ debug_enabled == "true" {
 
 		mnt_type = $0;
 
-		if (debug_enabled == "true") {
-			print "[1st]  mnt_type = _" mnt_type "_" >> debug_log;
-		}
-
 		rc_mnt_type_pre = sub(/'${RC_RGX_MNT_TYPE_GNU_PRE}'/, "", mnt_type);
-
-		if (debug_enabled == "true") {
-			regex_mnt_type_pre = "'${RC_RGX_MNT_TYPE_GNU_PRE}'";
-			print "[pre]  rc_mnt_type_pre = _" rc_mnt_type_pre "_ ; regex_mnt_type_pre = _" regex_mnt_type_pre "_" >> debug_log;
-		}
 
 		if (rc_mnt_type_pre == 0) {
 
 			rc_mnt_type_pre = sub(/'${RC_RGX_MNT_TYPE_BSD_BR_PRE}'/, "", mnt_type);
 
-			if (debug_enabled == "true") {
-				regex_mnt_type_pre = "'${RC_RGX_MNT_TYPE_BSD_BR_PRE}'";
-				print "[pre]  rc_mnt_type_pre = _" rc_mnt_type_pre "_ ; regex_mnt_type_pre = _" regex_mnt_type_pre "_" >> debug_log;
-			}
-
-			if (debug_enabled == "true") {
-				print "[2nd]  mnt_type = _" mnt_type "_" >> debug_log;
-			}
-
 			mnt_type = " (" mnt_type;
-
-			if (debug_enabled == "true") {
-				print "[3rd]  mnt_type = _" mnt_type "_" >> debug_log;
-			}
-		}
-
-		if (debug_enabled == "true") {
-			print "[4th]  mnt_type = _" mnt_type "_" >> debug_log;
 		}
 
 		rc_mnt_type_post = sub(/'${RC_RGX_MNT_TYPE_POST}'/, "", mnt_type);
@@ -416,21 +386,9 @@ debug_enabled == "true" {
 
 		mnt_options = $0;
 
-		if (debug_enabled == "true") {
-			print "[1st]  mnt_options = _" mnt_options "_" >> debug_log;
-		}
-
 		rc_mnt_options_pre = sub(/'${RC_RGX_MNT_OPTIONS_BR_PRE}'/, "", mnt_options);
 
-		if (debug_enabled == "true") {
-			print "[2nd]  mnt_options = _" mnt_options "_" >> debug_log;
-		}
-
 		mnt_options = "(" mnt_options;
-
-		if (debug_enabled == "true") {
-			print "[3rd]  mnt_options = _" mnt_options "_" >> debug_log;
-		}
 
 		rc_mnt_options_post = sub(/'${RC_RGX_MNT_OPTIONS_POST}'/, "", mnt_options);
 
@@ -546,15 +504,7 @@ debug_enabled == "true" {
 
 					df_fs = var;
 
-					if (debug_enabled == "true") {
-						print "[1st]  df_fs = _" df_fs "_" >> debug_log;
-					}
-
 					rc_df_fs_pre = sub(/'${RC_RGX_DF_FS_PRE}'/, "", df_fs);
-
-					if (debug_enabled == "true") {
-						print "[2nd]  df_fs = _" df_fs "_" >> debug_log;
-					}
 
 					rc_df_fs_post = sub(/'${RC_RGX_DF_FS_POST}'/, "", df_fs);
 
@@ -565,34 +515,11 @@ debug_enabled == "true" {
 					df_type = var;
 					rc_df_type_pre = sub(/'${RC_RGX_DF_TYPE_PRE}'/, "", df_type);
 
-					if (debug_enabled == "true") {
-						regex_df_type_pre = "'${RC_RGX_DF_TYPE_PRE}'";
-						print "[pre]  rc_df_type_pre = _" rc_df_type_pre "_ ; regex_df_type_pre = _" regex_df_type_pre "_" >> debug_log;
-					}
-
-					if (debug_enabled == "true") {
-						print "[1st]  df_type = _" df_type "_" >> debug_log;
-					}
-
 					rc_df_type_post = sub(/'${RC_RGX_DF_TYPE_GNU_POST}'/, "", df_type);
-
-					if (debug_enabled == "true") {
-						regex_df_type_post = "'${RC_RGX_DF_TYPE_GNU_POST}'";
-						print "[post]  rc_df_type_post = _" rc_df_type_post "_ ; regex_df_type_post = _" regex_df_type_post "_" >> debug_log;
-					}
 
 					if (rc_df_type_post == 0) {
 
-						if (debug_enabled == "true") {
-							print "[2nd]  df_type = _" df_type "_" >> debug_log;
-						}
-
 						rc_df_type_post = sub(/'${RC_RGX_DF_TYPE_POSIX_POST}'/, "", df_type);
-
-						if (debug_enabled == "true") {
-							regex_df_type_post = "'${RC_RGX_DF_TYPE_POSIX_POST}'";
-							print "[post]  rc_df_type_post = _" rc_df_type_post "_ ; regex_df_type_post = _" regex_df_type_post "_" >> debug_log;
-						}
 					}
 
 					if (debug_enabled == "true") {
@@ -767,20 +694,6 @@ debug_enabled == "true" {
 
 						sep_avail = substr((avail_ident avail "." avail_fraction), 1, 3);
 						sep_total = substr((total_ident total "." total_fraction), 1, 3);
-					}
-
-					if (debug_enabled == "true") {
-						printf "[round]  num_df_avail = [%s] ; avail = [%s] ; avail_str = [%s] ; avail_len = [%s] ; avail_units = [%s] ; avail_fraction_len = [%s] ; avail_fraction_pos = [%s] ; avail_fraction = [%s] ; avail_ident = [%s] ; sep_avail = [%s] ;", \
-							num_df_avail, avail, avail_str, avail_len, avail_units, avail_fraction_len, avail_fraction_pos, avail_fraction, avail_ident, sep_avail \
-							>> debug_log;
-
-						printf newline >> debug_log;
-
-						printf "[round]  num_df_total = [%s] ; total = [%s] ; total_str = [%s] ; total_len = [%s] ; total_units = [%s] ; total_fraction_len = [%s] ; total_fraction_pos = [%s] ; total_fraction = [%s] ; total_ident = [%s] ; sep_total = [%s] ;", \
-							num_df_total, total, total_str, total_len, total_units, total_fraction_len, total_fraction_pos, total_fraction, total_ident, sep_total \
-							>> debug_log;
-
-						printf newline >> debug_log;
 					}
 
 					rw_mode_label = "";
@@ -1001,15 +914,7 @@ debug_enabled == "true" {
 
 		df_fs = var;
 
-		if (debug_enabled == "true") {
-			print "[1st]  df_fs = _" df_fs "_" >> debug_log;
-		}
-
 		rc_df_fs_pre = sub(/'${RC_RGX_DF_FS_PRE}'/, "", df_fs);
-
-		if (debug_enabled == "true") {
-			print "[2nd]  df_fs = _" df_fs "_" >> debug_log;
-		}
 
 		rc_df_fs_post = sub(/'${RC_RGX_DF_FS_POST}'/, "", df_fs);
 
@@ -1020,34 +925,11 @@ debug_enabled == "true" {
 		df_type = var;
 		rc_df_type_pre = sub(/'${RC_RGX_DF_TYPE_PRE}'/, "", df_type);
 
-		if (debug_enabled == "true") {
-			regex_df_type_pre = "'${RC_RGX_DF_TYPE_PRE}'";
-			print "[pre]  rc_df_type_pre = _" rc_df_type_pre "_ ; regex_df_type_pre = _" regex_df_type_pre "_" >> debug_log;
-		}
-
-		if (debug_enabled == "true") {
-			print "[1st]  df_type = _" df_type "_" >> debug_log;
-		}
-
 		rc_df_type_post = sub(/'${RC_RGX_DF_TYPE_GNU_POST}'/, "", df_type);
-
-		if (debug_enabled == "true") {
-			regex_df_type_post = "'${RC_RGX_DF_TYPE_GNU_POST}'";
-			print "[post]  rc_df_type_post = _" rc_df_type_post "_ ; regex_df_type_post = _" regex_df_type_post "_" >> debug_log;
-		}
 
 		if (rc_df_type_post == 0 ) {
 
-			if (debug_enabled == "true") {
-				print "[2nd]  df_type = _" df_type "_" >> debug_log;
-			}
-
 			rc_df_type_post = sub(/'${RC_RGX_DF_TYPE_POSIX_POST}'/, "", df_type);
-
-			if (debug_enabled == "true") {
-				regex_df_type_post = "'${RC_RGX_DF_TYPE_POSIX_POST}'";
-				print "[post]  rc_df_type_post = _" rc_df_type_post "_ ; regex_df_type_post = _" regex_df_type_post "_" >> debug_log;
-			}
 		}
 
 		if (debug_enabled == "true") {
@@ -1221,20 +1103,6 @@ debug_enabled == "true" {
 
 			sep_avail = substr((avail_ident avail "." avail_fraction), 1, 3);
 			sep_total = substr((total_ident total "." total_fraction), 1, 3);
-		}
-
-		if (debug_enabled == "true") {
-			printf "[round]  num_df_avail = [%s] ; avail = [%s] ; avail_str = [%s] ; avail_len = [%s] ; avail_units = [%s] ; avail_fraction_len = [%s] ; avail_fraction_pos = [%s] ; avail_fraction = [%s] ; avail_ident = [%s] ; sep_avail = [%s] ;", \
-				num_df_avail, avail, avail_str, avail_len, avail_units, avail_fraction_len, avail_fraction_pos, avail_fraction, avail_ident, sep_avail \
-				>> debug_log;
-
-			printf newline >> debug_log;
-
-			printf "[round]  num_df_total = [%s] ; total = [%s] ; total_str = [%s] ; total_len = [%s] ; total_units = [%s] ; total_fraction_len = [%s] ; total_fraction_pos = [%s] ; total_fraction = [%s] ; total_ident = [%s] ; sep_total = [%s] ;", \
-				num_df_total, total, total_str, total_len, total_units, total_fraction_len, total_fraction_pos, total_fraction, total_ident, sep_total \
-				>> debug_log;
-
-			printf newline >> debug_log;
 		}
 
 		separator_symbol = "/";

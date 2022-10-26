@@ -7,6 +7,7 @@ class Threaded
 {
 	std::condition_variable _trd_cond;
 	std::mutex _trd_mtx;
+	bool _self_destruct = false;
 
 	pthread_t _trd = 0;
 	void *_trd_result = nullptr;
@@ -19,7 +20,8 @@ protected:
 
 	virtual void *ThreadProc() = 0;
 
-	bool StartThread();
+	void Detach();
+	bool StartThread(bool self_destruct = false);
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 	void *GetThreadResult();
 };

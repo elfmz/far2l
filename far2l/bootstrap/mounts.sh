@@ -1329,8 +1329,8 @@ END {
 	if [ ".${USE_MOUNT_CMD}" = ".true" ]; then
 
 		sh -c '( mount )' \
-			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_CMN_FILTER}" \
-			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_USR_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_CMN_FILTER}" 2>> "${script_debug_log}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_USR_FILTER}" 2>> "${script_debug_log}" \
 			| awk ${VAR_SCRIPT_AWK_DEBUG} ${AWK_ARG_SRCF} ' '"${SCRIPT_AWK_MNT_PREPARE}"' ' \
 			| cat
 
@@ -1338,8 +1338,8 @@ END {
 	else
 
 		sh -c "${DF}" 2>/dev/null \
-			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_CMN_FILTER}" \
-			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_USR_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_CMN_FILTER}" 2>> "${script_debug_log}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_USR_FILTER}" 2>> "${script_debug_log}" \
 			| awk ${VAR_SCRIPT_AWK_DEBUG} ${AWK_ARG_SRCF} ' '"${SCRIPT_AWK_DF_PARSE}"' ' \
 			| cat
 	fi

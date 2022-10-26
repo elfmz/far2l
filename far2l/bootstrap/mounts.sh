@@ -73,9 +73,11 @@ if [ ."$1" = '.umount' -a -z "$2" ]; then
 ##########################################################
 else
 	VAR_SCRIPT_AWK_DEBUG=''
+	VAR_SCRIPT_GREP_DEBUG=''
 
 	if [ ".${script_debug_enabled}" = ".true" ]; then
 		VAR_SCRIPT_AWK_DEBUG='-v debug=1'
+		VAR_SCRIPT_GREP_DEBUG='-x'
 	fi
 
 	RGX_SLASH='\'
@@ -770,6 +772,7 @@ debug_enabled == "true" {
 					if (debug_enabled == "true") {
 						printf "[round]  num_df_avail = [%s] ; avail = [%s] ; avail_str = [%s] ; avail_len = [%s] ; avail_units = [%s] ; avail_fraction_len = [%s] ; avail_fraction_pos = [%s] ; avail_fraction = [%s] ; avail_ident = [%s] ; sep_avail = [%s] ;", \
 							num_df_avail, avail, avail_str, avail_len, avail_units, avail_fraction_len, avail_fraction_pos, avail_fraction, avail_ident, sep_avail \
+							>> debug_log;
 
 						printf newline >> debug_log;
 
@@ -1326,8 +1329,8 @@ END {
 	if [ ".${USE_MOUNT_CMD}" = ".true" ]; then
 
 		sh -c '( mount )' \
-			| sh -x -c "${MNT_CMN_FILTER}" \
-			| sh -x -c "${MNT_USR_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_CMN_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${MNT_USR_FILTER}" \
 			| awk ${VAR_SCRIPT_AWK_DEBUG} ${AWK_ARG_SRCF} ' '"${SCRIPT_AWK_MNT_PREPARE}"' ' \
 			| cat
 
@@ -1335,8 +1338,8 @@ END {
 	else
 
 		sh -c "${DF}" 2>/dev/null \
-			| sh -x -c "${DF_CMN_FILTER}" \
-			| sh -x -c "${DF_USR_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_CMN_FILTER}" \
+			| sh ${VAR_SCRIPT_GREP_DEBUG} -c "${DF_USR_FILTER}" \
 			| awk ${VAR_SCRIPT_AWK_DEBUG} ${AWK_ARG_SRCF} ' '"${SCRIPT_AWK_DF_PARSE}"' ' \
 			| cat
 	fi

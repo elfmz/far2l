@@ -514,7 +514,7 @@ BOOL apiGetVolumeInformation(
 	}
 
 	if (pFileSystemName) {
-		*pFileSystemName = MountInfo().GetFileSystem(path);
+		*pFileSystemName = MountInfo(false).GetFileSystem(path);
 	}
 
 	return TRUE;

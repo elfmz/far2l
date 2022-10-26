@@ -7,15 +7,23 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
-# include <errno.h>
+# if defined(__APPLE__) || defined(__FreeBSD__)
+#  include <sys/param.h>
+#  include <sys/ucred.h>
+# endif
 # include <sys/mount.h>
 #else
 # include <sys/statfs.h>
 # include <linux/fs.h>
 #endif
+#include <errno.h>
 #include <fstream>
+#include <chrono>
+#include <mutex>
+#include <condition_variable>
 #include "MountInfo.h"
 #include <ScopeHelpers.h>
+#include <Threaded.h>
 #include <os_call.hpp>
 
 static struct FSMagic {
@@ -97,9 +105,67 @@ static struct FSMagic {
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-MountInfo::MountInfo()
+struct Mountpoint
 {
-#ifdef __linux__
+	std::string path;
+	std::string filesystem;
+	bool multi_thread_friendly;
+	unsigned long long total, used;
+};
+
+struct Mountpoints : std::vector<Mountpoint>
+{
+	struct Pending
+	{
+		std::mutex mtx;
+		std::condition_variable cond;
+		int cnt{0};
+	} pending;
+};
+
+class ThreadedStatFS : Threaded
+{
+	std::shared_ptr<Mountpoints> _mps;
+	size_t _mpi;
+
+	void *ThreadProc()
+	{
+		struct statfs fs{};
+		int r = statfs((*_mps)[_mpi].path.c_str(), &fs);
+		if (r == 0) {
+			(*_mps)[_mpi].total = fs.f_bsize * fs.f_blocks;
+			(*_mps)[_mpi].used = (fs.f_bsize - fs.f_bfree) * fs.f_blocks;
+		}
+		return nullptr;
+	}
+
+public:
+	ThreadedStatFS(std::shared_ptr<Mountpoints> &mps, size_t mpi)
+		: _mps(mps), _mpi(mpi)
+	{
+	}
+
+	virtual ~ThreadedStatFS()
+	{
+		std::unique_lock<std::mutex> lock(_mps->pending.mtx);
+		_mps->pending.cnt--;
+		if (_mps->pending.cnt == 0) {
+			_mps->pending.cond.notify_all();
+		}
+
+	}
+
+	void Start()
+	{
+		if (!StartThread(true)) {
+			fprintf(stderr, "ThreadedStatFS: can't start thread\n");
+			delete this;
+		}
+	}
+};
+
+MountInfo::MountInfo(bool query_space)
+{
 	// force-enable multi-threaded disk access: echo e > ~/.config/far2l/mtfs
 	// force-disable multi-threaded disk access: echo d > ~/.config/far2l/mtfs
 	FDScope fd(open(InMyConfig("mtfs").c_str(), O_RDONLY));
@@ -109,7 +175,9 @@ MountInfo::MountInfo()
 		}
 		fprintf(stderr, "%s: _mtfs='%c'\n", __FUNCTION__, _mtfs);
 	}
+	_mountpoints = std::make_shared<Mountpoints>();
 
+#ifdef __linux__
 	std::ifstream is("/proc/mounts");
 	if (is.is_open()) {
 		std::string line, sys_path;
@@ -142,18 +210,70 @@ MountInfo::MountInfo()
 				if (parts.size() == 1) {
 					parts.emplace_back();
 				}
-				_mountpoints.emplace_back(Mountpoint{parts[1], parts[2], multi_thread_friendly});
-				fprintf(stderr, "%s: mtf=%d fs='%s' for '%s' at '%s'\n", __FUNCTION__,
-					multi_thread_friendly, parts[2].c_str(), parts[0].c_str(), parts[1].c_str());
+				_mountpoints->emplace_back(Mountpoint{
+					parts[1],
+					parts[2],
+					multi_thread_friendly,
+					0,
+					0
+				});
 			}
 		}
 	}
-	if (_mountpoints.empty()) {
-		fprintf(stderr, "%s: failed to parse /proc/mounts\n", __FUNCTION__);
+
+#elif defined(__APPLE__) || defined(__FreeBSD__)
+
+	int r = getfsstat(nullptr, 0, MNT_NOWAIT);
+	if (r > 0) {
+		std::vector<struct statfs> buf(r * 2 + 2);
+		r = getfsstat(buf.data(), buf.size(), MNT_NOWAIT);
+		if (r > 0) {
+			buf.resize(r);
+			for (const auto &fs : buf) {
+				_mountpoints->emplace_back(Mountpoint{
+					fs.f_mntonname,
+					fs.f_fstypename,
+					true,
+					fs.f_bsize * fs.f_blocks,
+					(fs.f_bsize - fs.f_bfree) * fs.f_blocks
+				});
+			}
+		}
 	}
 #endif
 
-	// TODO: BSD, MacOS
+	if (_mountpoints->empty()) {
+		fprintf(stderr, "%s: no mountpoints found\n", __FUNCTION__);
+
+	} else if (query_space) {
+		for (size_t i = 0; i < _mountpoints->size(); ++i) {
+			try {
+				(new ThreadedStatFS(_mountpoints, i))->Start();
+				std::unique_lock<std::mutex> lock(_mountpoints->pending.mtx);
+				_mountpoints->pending.cnt++;
+			} catch (std::exception &e) {
+				fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+			}
+		}
+		for (DWORD ms = 0; ms < 1000;) {
+			std::chrono::milliseconds ms_before = std::chrono::duration_cast< std::chrono::milliseconds >
+				(std::chrono::steady_clock::now().time_since_epoch());
+			{
+				std::unique_lock<std::mutex> lock(_mountpoints->pending.mtx);
+				_mountpoints->pending.cond.wait_for(lock, std::chrono::milliseconds(1000 - ms));
+				if (_mountpoints->pending.cnt == 0) {
+					break;
+				}
+			}
+			ms+=  (std::chrono::duration_cast< std::chrono::milliseconds >
+				(std::chrono::steady_clock::now().time_since_epoch()) - ms_before).count();
+		}
+	}
+
+	for (const auto &it : *_mountpoints) {
+		fprintf(stderr, "%s: mtf=%d spc=[%llu/%llu] fs='%s' at '%s'\n", __FUNCTION__,
+			it.multi_thread_friendly, it.used, it.total, it.filesystem.c_str(), it.path.c_str());
+	}
 }
 
 
@@ -161,7 +281,7 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 {
 	std::string out;
 	size_t longest_match = 0;
-	for (const auto &it : _mountpoints) {
+	for (const auto &it : *_mountpoints) {
 		if (it.path.size() > longest_match && StrStartsFrom(path, it.path.c_str())) {
 			longest_match = it.path.size();
 			out = it.filesystem;
@@ -199,7 +319,7 @@ bool MountInfo::IsMultiThreadFriendly(const std::string &path) const
 
 	bool out = true;
 	size_t longest_match = 0;
-	for (const auto &it : _mountpoints) {
+	for (const auto &it : *_mountpoints) {
 		if (it.path.size() > longest_match && StrStartsFrom(path, it.path.c_str())) {
 			longest_match = it.path.size();
 			out = it.multi_thread_friendly;

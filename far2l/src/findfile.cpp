@@ -2803,7 +2803,7 @@ public:
 		{
 			SudoClientRegion scr;
 			DWORD msec = GetProcessUptimeMSec();
-				pMountInfo.reset(new MountInfo);
+				pMountInfo.reset(new MountInfo(false));
 			if (PluginMode)
 			{
 				DoPreparePluginList(hDlg);

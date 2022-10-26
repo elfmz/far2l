@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <memory>
+
+struct Mountpoints;
 
 /* This class detects if path points to device that is best to be
  * accessed in multi-thread parallel manner, like SSD drives.
@@ -8,16 +11,11 @@
  */
 class MountInfo
 {
-	struct Mountpoint {
-		std::string path;
-		std::string filesystem;
-		bool multi_thread_friendly;
-	};
-	struct Mountpoints : std::vector<Mountpoint> {} _mountpoints;
+	std::shared_ptr<Mountpoints> _mountpoints;
 	char _mtfs = 0;
 
 public:
-	MountInfo();
+	MountInfo(bool query_space);
 
 	std::string GetFileSystem(const std::string &path) const;
 

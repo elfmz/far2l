@@ -63,11 +63,13 @@ if [ ".${script_debug_enabled}" = ".true" ]; then
 fi
 
 ##########################################################
-if [ ."$1" = '.umount' -a -z "$2" ]; then
-	if [ ."$3" = '.force' ]; then
-		sudo umount -f "$2"
-	else
-		umount "$2"
+if [ ."$1" = '.umount' ]; then
+	if [ ! -z "$2" ]; then
+		if [ ."$3" = '.force' ]; then
+			sudo umount -f "$2"
+		else
+			umount "$2"
+		fi
 	fi
 
 ##########################################################

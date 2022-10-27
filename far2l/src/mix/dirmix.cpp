@@ -248,7 +248,9 @@ void CreatePath(FARString &strPath)
 std::string GetHelperPathName(const char *name)
 {
  	std::string out = g_strFarPath.GetMB();
-	out+= GOOD_SLASH;
+	if (!out.empty() && out.back() != GOOD_SLASH) {
+		out+= GOOD_SLASH;
+	}
 	out+= name;
 
 	struct stat s;

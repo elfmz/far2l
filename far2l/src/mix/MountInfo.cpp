@@ -27,6 +27,8 @@
 #include <Threaded.h>
 #include <os_call.hpp>
 
+#define DISK_SPACE_QUERY_TIMEOUT_MSEC 1000
+
 static struct FSMagic {
 	const char *name;
 	unsigned int magic;
@@ -298,11 +300,12 @@ MountInfo::MountInfo(bool for_location_menu)
 				if (_mountpoints->pending.cnt == 0) {
 					break;
 				}
-				_mountpoints->pending.cond.wait_for(lock, std::chrono::milliseconds(1000 - ms));
+				_mountpoints->pending.cond.wait_for(lock,
+					std::chrono::milliseconds(DISK_SPACE_QUERY_TIMEOUT_MSEC - ms));
 			}
 			ms+= (std::chrono::duration_cast< std::chrono::milliseconds >
 				(std::chrono::steady_clock::now().time_since_epoch()) - ms_before).count();
-			if (ms >= 1000) {
+			if (ms >= DISK_SPACE_QUERY_TIMEOUT_MSEC) {
 				fprintf(stderr, "%s: timed out\n", __FUNCTION__);
 				break;
 			}

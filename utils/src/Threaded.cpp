@@ -10,7 +10,7 @@
 Threaded::~Threaded()
 {
 	std::lock_guard<std::mutex> lock(_trd_mtx);
-	if (!_trd_exited || !_trd_joined) {
+	if (!_self_destruct && (!_trd_exited || !_trd_joined)) {
 		fprintf(stderr, "~Threaded: still busy\n");
 		abort();
 	}
@@ -21,14 +21,13 @@ void *Threaded::sThreadProc(void *p)
 	Threaded *it = (Threaded *)p;
 	void *result = it->ThreadProc();
 
-	{
+	if (it->_self_destruct) {
+		delete it;
+
+	} else {
 		std::lock_guard<std::mutex> lock(it->_trd_mtx);
 		it->_trd_exited = true;
 		it->_trd_cond.notify_all();
-	}
-
-	if (it->_self_destruct) {
-		delete it;
 	}
 
 	return result;
@@ -48,10 +47,19 @@ bool Threaded::StartThread(bool self_destruct)
 
 	_trd_joined = _trd_exited = false;
 	_self_destruct = self_destruct;
-	if (pthread_create(&_trd, NULL, &sThreadProc, this) != 0) {
+	pthread_t trd;
+	if (pthread_create(&trd, NULL, &sThreadProc, this) != 0) {
 		_trd_joined = _trd_exited = true;
+		_self_destruct = false;
 		_trd = 0;
 		return false;
+	}
+
+	if (self_destruct) {
+		pthread_detach(trd);
+
+	} else {
+		_trd = trd;
 	}
 
 	return true;

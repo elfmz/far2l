@@ -743,8 +743,8 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 				Sz++;
 			}
 
-			strStr.Format(L"%d.%02d", (DWORD)Sz,Decimal);
-			FormatNumber(strStr,strStr,2);
+			strStr.Format(L"%d.%02d", (DWORD)Sz, Decimal);
+			FormatNumber(strStr, strStr, (Economic && Sz > 9) ? 1 : 2);
 		}
 
 		if (IndexB>0 || ShowBytesIndex)
@@ -752,7 +752,7 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 			Width-=(Economic?1:2);
 
 			if (Width<0)
-				Width=0;
+				Width=strStr.GetLength();
 
 			if (Economic)
 				strDestStr.Format(L"%*.*ls%1.1ls",Width,Width,strStr.CPtr(),UnitStr[IndexB][IndexDiv]);
@@ -763,6 +763,7 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 			strDestStr.Format(L"%*.*ls",Width,Width,strStr.CPtr());
 
 		return strDestStr;
+
 	}
 
 	if (Commas)
@@ -777,7 +778,7 @@ FARString & WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width
 			Width-=(Economic?1:2);
 
 			if (Width<0)
-				Width=0;
+				Width=strStr.GetLength();
 
 			if (Economic)
 				strDestStr.Format(L"%*.*ls%1.1ls",Width,Width,strStr.CPtr(),UnitStr[0][IndexDiv]);

@@ -1,7 +1,7 @@
 #include "headers.hpp"
 
 #include <crc64.h>
-
+#include <fstream>
 #include "Mounts.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
@@ -16,6 +16,7 @@
 #include "manager.hpp"
 #include "ConfigRW.hpp"
 #include "HotkeyLetterDialog.hpp"
+#include "MountInfo.h"
 
 namespace Mounts
 {
@@ -63,51 +64,68 @@ namespace Mounts
 
 	Enum::Enum(FARString &another_curdir)
 	{
-		std::string cmd = GetMyScriptQuoted("mounts.sh");
-		cmd+= " enum";
+		MountInfo mi(true);
 
 		bool has_rootfs = false;
+		for (const auto &mp : mi.Enum()) {
+			emplace_back();
+			auto &e = back();
+			e.path = mp.path;
+			e.info = mp.filesystem;
+			if (mp.bad) {
+				e.usage = Opt.NoGraphics ? L"X_X" : L"❌_❌";
 
-		FILE *f = popen(cmd.c_str(), "r");
-		if (f) {
-			char buf[0x2100] = { };
-			std::wstring s, tmp;
-			while (fgets(buf, sizeof(buf) - 1, f)!=NULL) {
-				for (;;) {
-					size_t l = strlen(buf);
-					if (!l) break;
-					if (buf[l-1]!='\r' && buf[l-1]!='\n') break;
-					buf[l-1] = 0;
+			} else {
+				FileSizeToStr(e.usage, mp.avail, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX); //COLUMN_AUTOSIZE | COLUMN_SHOWBYTESINDEX
+				while (e.usage.GetLength() < 4) {
+					e.usage.Insert(0, L' ');
 				}
-				if (buf[0]) {
+				FARString tmp;
+				FileSizeToStr(tmp, mp.total, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX); //COLUMN_AUTOSIZE | COLUMN_SHOWBYTESINDEX
+				while (e.usage.GetLength() < 4) {
+					tmp.Insert(0, L' ');
+				}
+				e.usage+= L"/";
+				e.usage+= tmp;
+			}
+
+			if (e.path == L"/") {
+				has_rootfs = true;
+			} else {
+				e.unmountable = true;
+			}
+			e.id = GenerateIdFromPath(e.path);
+		}
+
+		std::ifstream favis(InMyConfig("favorites"));
+		if (favis.is_open()) {
+			std::string line;
+			while (std::getline(favis, line)) {
+				StrTrim(line, " \t\r\n");
+				if (line.empty() || line.front() == '#') {
+					continue;
+				}
+				std::vector<std::string> parts;
+				StrExplode(parts, line, "\t");
+				if (!parts.empty()) {
 					emplace_back();
 					auto &e = back();
-					e.path.Copy(&buf[0]);
-					size_t t;
-					if (e.path.Pos(t, L'\t')) {
-						e.info = e.path.SubStr(t + 1);
-						e.path.Truncate(t);
-						if (e.info.Pos(t, L'\t')) {
-							e.usage = e.info.SubStr(0, t);
-							e.info = e.info.SubStr(t + 1);
+					e.path = parts.front();
+					if (parts.size() > 1) {
+						e.info = parts.back();
+						if (parts.size() > 2) {
+							e.usage = parts[1];
 						}
 					}
+					e.id = GenerateIdFromPath(e.path);
 					if (e.path == L"/") {
 						has_rootfs = true;
-					} else {
+
+					} else if (*e.path.CPtr() == L'/') {
 						e.unmountable = true;
 					}
-					RemoveExternalSpaces(e.usage);
-					RemoveExternalSpaces(e.info);
-					e.id = GenerateIdFromPath(e.path);
 				}
 			}
-			int r = pclose(f);
-			if (r != 0) {
-				fprintf(stderr, "Exit code %u executing '%s'\n", r, cmd.c_str());
-			}
-		} else {
-			fprintf(stderr, "Error %u executing '%s'\n", errno, cmd.c_str());
 		}
 
 		if (!has_rootfs) {
@@ -133,8 +151,8 @@ namespace Mounts
 
 	bool Unmount(const FARString &path, bool force)
 	{
-		std::string cmd = GetMyScriptQuoted("mounts.sh");
-		cmd+= " umount \"";
+		std::string cmd = GetMyScriptQuoted("unmount.sh");
+		cmd+= " \"";
 		cmd+= EscapeCmdStr(Wide2MB(path));
 		cmd+= "\"";
 		if (force) {

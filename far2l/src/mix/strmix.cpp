@@ -449,18 +449,11 @@ FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 
 FARString FixedSizeStr(FARString str, size_t Length, bool RAlign)
 {
-	if (str.GetLength() > Length)
+	if (str.CellsCount() > Length)
 	{
-		if (str.GetLength() > 2)
-		{
-			size_t RmLen = (str.GetLength() - Length) + 1;
-			size_t RmPos = (str.GetLength() - RmLen) / 2;
-			str.Replace(RmPos, RmLen, L"…", 1);
-		}
-		else
-			str = L"…";
+		TruncStr(str, Length);
 	}
-	else while (str.GetLength() < Length)
+	else while (str.CellsCount() < Length)
 	{
 		if (RAlign)
 			str.Insert(0, L" ", 1);

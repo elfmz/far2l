@@ -1207,7 +1207,7 @@ BOOL Dialog::GetItemRect(unsigned I,SMALL_RECT& Rect)
 		case DI_MEMOEDIT:
 			break;
 		default:
-			Len=((ItemFlags & DIF_SHOWAMPERSAND)?(int)CurItem->strData.GetLength():HiStrlen(CurItem->strData));
+			Len=((ItemFlags & DIF_SHOWAMPERSAND)?(int)CurItem->strData.CellsCount():HiStrlen(CurItem->strData));
 			break;
 	}
 
@@ -2228,7 +2228,7 @@ int Dialog::LenStrItem(int ID, const wchar_t *lpwszStr)
 	if (!lpwszStr)
 		lpwszStr = Item[ID]->strData;
 
-	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?StrLength(lpwszStr):HiStrlen(lpwszStr);
+	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?StrCellsCount(lpwszStr):HiStrlen(lpwszStr);
 }
 
 

@@ -54,34 +54,48 @@ size_t StrSizeOfCell(const wchar_t *pwz, size_t n)
 	return StrSizeOfCells(pwz, n, ng, true);
 }
 
+static struct TruncReplacement
+{
+	const wchar_t *wz;
+	size_t len;
+} s_trunc_replacement[2] = { {L"...", 3}, {L"…", 1} };
+static size_t s_trunc_replacement_index = 0;
+
+static const struct TruncReplacement &ChooseTruncReplacement()
+{
+	return s_trunc_replacement[s_trunc_replacement_index];
+}
+
 void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 {
 	size_t vl = StrCellsCount(pwz, n);
-	if (vl <= ng || n < 3) {
+	const auto &rpl = ChooseTruncReplacement();
+	if (vl <= ng || n < rpl.len) {
 		return;
 	}
 
-	for (size_t ofs = 3; ofs < n; ++ofs) {
-		if (!IsCharXxxfix(pwz[ofs]) && StrCellsCount(pwz + ofs, n - ofs) + 3 <= ng) {
+	for (size_t ofs = rpl.len; ofs < n; ++ofs) {
+		if (!IsCharXxxfix(pwz[ofs]) && StrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
 			n-= ofs;
-			wmemmove(pwz + 3, pwz + ofs, n);
-			n+= 3;
-			wmemcpy(pwz, L"...", 3);
+			wmemmove(pwz + rpl.len, pwz + ofs, n);
+			n+= rpl.len;
+			wmemcpy(pwz, rpl.wz, rpl.len); //…
 			return;
 		}
 	}
-	wcsncpy(pwz, L"...", ng);
-	n = std::min(ng, (size_t)3);
+	wcsncpy(pwz, rpl.wz, ng);
+	n = std::min(ng, rpl.len);
 }
 
 void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
 {
 	size_t vl = StrCellsCount(pwz, n);
-	if (vl <= ng || n < 3) {
+	const auto &rpl = ChooseTruncReplacement();
+	if (vl <= ng || n < rpl.len) {
 		return;
 	}
 
-	n-= 3; // pre-reserve space for ...
+	n-= rpl.len; // pre-reserve space for ...
 	do {
 		while (n > 0 && IsCharXxxfix(pwz[n - 1])) {
 			--n;
@@ -90,16 +104,17 @@ void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
 			break;
 		}
 		--n;
-	} while (StrCellsCount(pwz, n) + 3 > ng);
+	} while (StrCellsCount(pwz, n) + rpl.len > ng);
 
-	wmemcpy(&pwz[n], L"...", 3);
-	n+= 3;
+	wmemcpy(&pwz[n], rpl.wz, rpl.len);
+	n+= rpl.len;
 }
 
 void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 {
 	size_t vl = StrCellsCount(pwz, n);
-	if (vl <= ng || n < 3) {
+	const auto &rpl = ChooseTruncReplacement();
+	if (vl <= ng || n < rpl.len) {
 		return;
 	}
 
@@ -113,18 +128,18 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 	while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
 		--cut_start;
 	}
-	auto cut_end = cut_start + 3;
+	auto cut_end = cut_start + rpl.len;
 	while (cut_end < n && IsCharXxxfix(pwz[cut_end])) {
 		++cut_end;
 	}
 
-	while (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + 3 > ng) {
+	while (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
 		if (cut_start > 0) {
 			--cut_start;
 			while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
 				--cut_start;
 			}
-			if (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + 3 <= ng) {
+			if (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
 				break;
 			}
 		}
@@ -136,8 +151,8 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 		}
 	}
 
-	wmemmove(&pwz[cut_start + 3], &pwz[cut_end], n - cut_end);
-	wmemcpy(&pwz[cut_start], L"...", 3);
+	wmemmove(&pwz[cut_start + rpl.len], &pwz[cut_end], n - cut_end);
+	wmemcpy(&pwz[cut_start], rpl.wz, rpl.len);
 	n-= (cut_end - cut_start);
-	n+= 3;
+	n+= rpl.len;
 }

@@ -137,12 +137,12 @@ namespace Mounts
 
 		ConfigReader cfg_reader(HOTKEYS_SECTION);
 		for (auto &m : *this) {
-			if (max_path < m.path.GetLength())
-				max_path = m.path.GetLength();
-			if (max_info < m.info.GetLength())
-				max_info = m.info.GetLength();
-			if (max_usage < m.usage.GetLength())
-				max_usage = m.usage.GetLength();
+			if (max_path < m.path.CellsCount())
+				max_path = m.path.CellsCount();
+			if (max_info < m.info.CellsCount())
+				max_info = m.info.CellsCount();
+			if (max_usage < m.usage.CellsCount())
+				max_usage = m.usage.CellsCount();
 			wchar_t def_hk[] = {DefaultHotKey(m.id, m.path), 0};
 			auto hk = cfg_reader.GetString(SettingsKey(m.id), def_hk);
 			m.hotkey = hk.IsEmpty() ? 0 : *hk.CPtr();

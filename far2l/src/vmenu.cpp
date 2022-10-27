@@ -477,7 +477,7 @@ int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
 	Item[PosAdd]->ShowPos = 0;
 
 	if (CheckFlags(VMENU_SHOWAMPERSAND))
-		UpdateMaxLength((int)Item[PosAdd]->strName.GetLength());
+		UpdateMaxLength((int)Item[PosAdd]->strName.CellsCount());
 	else
 		UpdateMaxLength(HiStrlen(Item[PosAdd]->strName));
 
@@ -1070,7 +1070,7 @@ int VMenu::ProcessKey(int Key)
 				for (int I=0; I < ItemCount; ++I)
 				{
 					if (CheckFlags(VMENU_SHOWAMPERSAND))
-						_len=static_cast<int>(Item[I]->strName.GetLength());
+						_len=static_cast<int>(Item[I]->strName.CellsCount());
 					else
 						_len=HiStrlen(Item[I]->strName);
 
@@ -1495,7 +1495,7 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 	int ItemShowPos = Item[Pos]->ShowPos;
 
 	if (VMFlags.Check(VMENU_SHOWAMPERSAND))
-		_len = (int)Item[Pos]->strName.GetLength();
+		_len = (int)Item[Pos]->strName.CellsCount();
 	else
 		_len = HiStrlen(Item[Pos]->strName);
 
@@ -1763,7 +1763,7 @@ void VMenu::ShowMenu(bool IsParent)
 		int ItemLen;
 
 		if (CheckFlags(VMENU_SHOWAMPERSAND))
-			ItemLen = static_cast<int>(Item[i]->strName.GetLength());
+			ItemLen = static_cast<int>(Item[i]->strName.CellsCount());
 		else
 			ItemLen = HiStrlen(Item[i]->strName);
 
@@ -1990,7 +1990,7 @@ void VMenu::ShowMenu(bool IsParent)
 				int strMItemPtrLen;
 
 				if (CheckFlags(VMENU_SHOWAMPERSAND))
-					strMItemPtrLen = static_cast<int>(strMItemPtr.GetLength());
+					strMItemPtrLen = static_cast<int>(strMItemPtr.CellsCount());
 				else
 					strMItemPtrLen = HiStrlen(strMItemPtr);
 
@@ -2288,7 +2288,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 void VMenu::UpdateMaxLengthFromTitles()
 {
 	//тайтл + 2 пробела вокруг
-	UpdateMaxLength((int)Max(strTitle.GetLength(),strBottomTitle.GetLength())+2);
+	UpdateMaxLength((int)Max(strTitle.CellsCount(),strBottomTitle.CellsCount())+2);
 }
 
 void VMenu::UpdateMaxLength(int Length)
@@ -2337,7 +2337,7 @@ void VMenu::SetBottomTitle(const wchar_t *BottomTitle)
 	else
 		strBottomTitle.Clear();
 
-	UpdateMaxLength((int)strBottomTitle.GetLength() + 2);
+	UpdateMaxLength((int)strBottomTitle.CellsCount() + 2);
 }
 
 void VMenu::SetTitle(const wchar_t *Title)
@@ -2351,7 +2351,7 @@ void VMenu::SetTitle(const wchar_t *Title)
 	else
 		strTitle.Clear();
 
-	UpdateMaxLength((int)strTitle.GetLength() + 2);
+	UpdateMaxLength((int)strTitle.CellsCount() + 2);
 
 	if (CheckFlags(VMENU_CHANGECONSOLETITLE))
 	{

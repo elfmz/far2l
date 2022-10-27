@@ -1137,8 +1137,11 @@ int HiStrlen(const wchar_t *Str)
 			}
 			else
 			{
+				if (IsCharFullWidth(*Str))
+					Length+= 2;
+				else if (!IsCharXxxfix(*Str))
+					Length+= 1;
 				Str++;
-				Length++;
 			}
 		}
 	}
@@ -1183,8 +1186,11 @@ int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp)
 				}
 			}
 
+			if (IsCharFullWidth(*Str))
+				VisPos+= 2;
+			else if (!IsCharXxxfix(*Str))
+				VisPos+= 1;
 			Str++;
-			VisPos++;
 			RealPos++;
 		}
 	}
@@ -1221,6 +1227,9 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 					return Pos-2;
 				}
 
+				if (IsCharFullWidth(Str[Pos - 1]) && Pos > 1)
+					return Pos-2;
+
 				return Pos-1;
 			}
 			else
@@ -1245,7 +1254,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 			}
 			else
 			{
-				return Pos+1;
+				return IsCharFullWidth(*Str) ? Pos + 2 : Pos + 1;
 			}
 		}
 	}

@@ -559,3 +559,8 @@ std::string FARString::GetMB() const
 	Wide2MB(CPtr(), GetLength(), out);
 	return out;
 }
+
+size_t FARString::CellsCount() const
+{
+	return FarStrCellsCountN(CPtr(), GetLength());
+}

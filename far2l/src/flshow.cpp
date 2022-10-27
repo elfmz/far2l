@@ -590,12 +590,12 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	}
 
 	int SrcLength = StrLength(SrcName);
-	int SrcVisualLength = StrCellsCount(SrcName, SrcLength);
+	int SrcVisualLength = FarStrCellsCountN(SrcName, SrcLength);
 
 	if (RightAlign && SrcVisualLength > MaxLength)
 	{
 		size_t SkipCells = SrcVisualLength - MaxLength;
-		size_t SkipOfs = StrSizeOfCells(SrcName, SrcLength, SkipCells, true);
+		size_t SkipOfs = FarStrSizeOfCells(SrcName, SrcLength, SkipCells, true);
 		strDest.Copy(SrcName + SkipOfs, SrcLength - SkipOfs);
 		return TRUE;
 	}
@@ -622,7 +622,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	else
 	{
 		size_t CellsCount = MaxLength;
-		size_t CopyLen = StrSizeOfCells(SrcName, SrcLength, CellsCount, false);
+		size_t CopyLen = FarStrSizeOfCells(SrcName, SrcLength, CellsCount, false);
 		strDest.Copy(SrcName, CopyLen);
 	}
 
@@ -1083,7 +1083,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								if (RightAlign)
 									LeftBracket=TRUE;
 
-								if (!RightAlign && StrCellsCount(NamePtr) > size_t(Width))
+								if (!RightAlign && FarStrCellsCount(NamePtr) > size_t(Width))
 									RightBracket=TRUE;
 							}
 

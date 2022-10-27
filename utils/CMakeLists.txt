@@ -31,7 +31,6 @@ set(SOURCES
   src/PipeIPC.cpp
   src/PathParts.cpp
   src/CharClasses.cpp
-  src/StrCells.cpp
 )
 
 add_library (utils ${SOURCES})

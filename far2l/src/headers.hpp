@@ -157,6 +157,7 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 #include "global.hpp"
 #include "locale.hpp"
 #include <farplug-wide.h>
+#include <farstrcells.h>
 #include "farwinapi.hpp"
 #include "cvtname.hpp"
 

@@ -10,7 +10,6 @@
 #include "Environment.h"
 #include "ErrnoSaver.hpp"
 #include "PlatformConstants.h"
-#include "StrCells.h"
 
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x

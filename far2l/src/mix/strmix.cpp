@@ -229,7 +229,7 @@ wchar_t* WINAPI TruncStrFromEnd(wchar_t *Str,int MaxLength)
 
 	const size_t Len = StrLength(Str);
 	size_t n = Len;
-	StrCellsTruncateRight(Str, n, MaxLength);
+	FarStrCellsTruncateRight(Str, n, MaxLength);
 	assert(n <= Len);
 	Str[n] = 0;
 
@@ -245,7 +245,7 @@ wchar_t* WINAPI TruncStr(wchar_t *Str,int MaxLength)
 
 	const size_t Len = StrLength(Str);
 	size_t n = Len;
-	StrCellsTruncateLeft(Str, n, MaxLength);
+	FarStrCellsTruncateLeft(Str, n, MaxLength);
 	assert(n <= Len);
 	Str[n] = 0;
 
@@ -269,7 +269,7 @@ wchar_t* TruncStrFromCenter(wchar_t *Str, int MaxLength)
 
 	const size_t Len = StrLength(Str);
 	size_t n = Len;
-	StrCellsTruncateCenter(Str, n, MaxLength);
+	FarStrCellsTruncateCenter(Str, n, MaxLength);
 	assert(n <= Len);
 	Str[n] = 0;
 	return Str;

@@ -162,7 +162,6 @@ public:
 	}
 };
 
-
 static bool SkipForLocationMenu(const char *path)
 {
 	if (StrStartsFrom(path, "/System/")
@@ -195,7 +194,7 @@ MountInfo::MountInfo(bool for_location_menu)
 #ifdef __linux__
 	// manual parsing mounts file instead of using setmntent cuz later doesnt return
 	// mounted device path that is needed to determine if its 'rotational'
-	std::ifstream is("/proc/mounts");
+	std::ifstream is("/etc/mtab");
 	if (is.is_open()) {
 		std::string line, sys_path;
 		std::vector<std::string> parts;
@@ -205,7 +204,11 @@ MountInfo::MountInfo(bool for_location_menu)
 			if (parts.size() > 1 && StrStartsFrom(parts[1], "/")
 			  && (!for_location_menu || !SkipForLocationMenu(parts[1].c_str()))) {
 				bool multi_thread_friendly;
-				if (StrStartsFrom(parts[0], "/dev/")) {
+				if (for_location_menu) {
+					// Location menu doesn't care about this, so dont waist time
+					multi_thread_friendly = false;
+
+				} else if (StrStartsFrom(parts[0], "/dev/")) {
 					sys_path = "/sys/block/";
 					sys_path+= parts[0].substr(5);
 					// strip device suffix, sda1 -> sda, mmcblk0p1 -> mmcblk0
@@ -222,6 +225,7 @@ MountInfo::MountInfo(bool for_location_menu)
 						fprintf(stderr, "%s: can't read '%s'\n", __FUNCTION__, sys_path.c_str());
 					}
 					multi_thread_friendly = (c == '0');
+
 				} else {
 					multi_thread_friendly = (parts[0] == "tmpfs" || parts[0] == "proc");
 				}

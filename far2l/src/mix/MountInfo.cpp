@@ -180,15 +180,18 @@ static bool SkipForLocationMenu(const char *path)
 
 MountInfo::MountInfo(bool for_location_menu)
 {
-	// force-enable multi-threaded disk access: echo e > ~/.config/far2l/mtfs
-	// force-disable multi-threaded disk access: echo d > ~/.config/far2l/mtfs
-	FDScope fd(open(InMyConfig("mtfs").c_str(), O_RDONLY));
-	if (fd.Valid()) {
-		if (os_call_ssize(read, (int)fd, (void *)&_mtfs, sizeof(_mtfs)) == 0) {
-			_mtfs = 'e';
+	if (!for_location_menu) {
+		// force-enable multi-threaded disk access: echo e > ~/.config/far2l/mtfs
+		// force-disable multi-threaded disk access: echo d > ~/.config/far2l/mtfs
+		FDScope fd(open(InMyConfig("mtfs").c_str(), O_RDONLY));
+		if (fd.Valid()) {
+			if (os_call_ssize(read, (int)fd, (void *)&_mtfs, sizeof(_mtfs)) == 0) {
+				_mtfs = 'e';
+			}
+			fprintf(stderr, "%s: _mtfs='%c'\n", __FUNCTION__, _mtfs);
 		}
-		fprintf(stderr, "%s: _mtfs='%c'\n", __FUNCTION__, _mtfs);
 	}
+
 	_mountpoints = std::make_shared<Mountpoints>();
 
 #ifdef __linux__
@@ -292,10 +295,10 @@ MountInfo::MountInfo(bool for_location_menu)
 				(std::chrono::steady_clock::now().time_since_epoch());
 			{
 				std::unique_lock<std::mutex> lock(_mountpoints->pending.mtx);
-				_mountpoints->pending.cond.wait_for(lock, std::chrono::milliseconds(1000 - ms));
 				if (_mountpoints->pending.cnt == 0) {
 					break;
 				}
+				_mountpoints->pending.cond.wait_for(lock, std::chrono::milliseconds(1000 - ms));
 			}
 			ms+= (std::chrono::duration_cast< std::chrono::milliseconds >
 				(std::chrono::steady_clock::now().time_since_epoch()) - ms_before).count();

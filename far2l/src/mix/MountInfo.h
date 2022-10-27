@@ -17,8 +17,9 @@ struct Mountpoint
 
 struct Mountpoints;
 
-/* This class enumerates mountpoints and also provides extra information
- * like disk sizes (if for_location_menu enabled) and also it detects
+/* This class enumerates mountpoints and provides extra info
+ * like disk sizes (if for_location_menu enabled) and also
+ * (if for_location_menu disabled) - it provides ability to check
  * if specified path points to device that is best to be
  * accessed in multi-thread parallel manner, like SSD drives.
  * Later currently works only under Linux, others defaulted to <true>.

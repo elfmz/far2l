@@ -1096,7 +1096,7 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 	return strDest;
 }
 
-int HiStrlen(const wchar_t *Str)
+int HiStrCellsCount(const wchar_t *Str)
 {
 	/*
 			&&      = '&'

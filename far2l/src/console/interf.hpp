@@ -124,7 +124,7 @@ inline void SetVidChar(CHAR_INFO& CI, COMP_CHAR Chr)
 	CI.Char.UnicodeChar = (Chr >= 0 && (Chr < L'\x20' || Chr == L'\x7f')) ? Oem2Unicode[Chr] : Chr;
 }
 
-int HiStrlen(const wchar_t *Str);
+int HiStrCellsCount(const wchar_t *Str);
 int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp);
 int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct);
 FARString& HiText2Str(FARString& strDest, const wchar_t *Str);

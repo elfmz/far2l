@@ -96,7 +96,7 @@ static int GetDescriptionWidth(ConfigReader &cfg_reader, const wchar_t *Name=nul
 
 		if (!Name)
 		{
-			CurWidth = HiStrlen(strDescription);
+			CurWidth = HiStrCellsCount(strDescription);
 		}
 		else
 		{
@@ -105,7 +105,7 @@ static int GetDescriptionWidth(ConfigReader &cfg_reader, const wchar_t *Name=nul
 
 			FARString strExpandedDesc = strDescription;
 			SubstFileName(strExpandedDesc,Name,nullptr,nullptr,TRUE);
-			CurWidth = HiStrlen(strExpandedDesc);
+			CurWidth = HiStrCellsCount(strExpandedDesc);
 		}
 
 		if (CurWidth>Width)

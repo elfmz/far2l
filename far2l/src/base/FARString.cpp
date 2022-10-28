@@ -564,3 +564,14 @@ size_t FARString::CellsCount() const
 {
 	return FarStrCellsCountN(CPtr(), GetLength());
 }
+
+size_t FARString::TruncateByCells(size_t nCount)
+{
+	size_t ng = CellsCount();
+	if (ng > nCount) {
+		size_t ng = nCount;
+		auto sz = FarStrSizeOfCells(CPtr(), GetLength(), ng, false);
+		Truncate(sz);
+	}
+	return ng;
+}

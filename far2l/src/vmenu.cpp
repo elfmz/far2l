@@ -479,7 +479,7 @@ int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
 	if (CheckFlags(VMENU_SHOWAMPERSAND))
 		UpdateMaxLength((int)Item[PosAdd]->strName.CellsCount());
 	else
-		UpdateMaxLength(HiStrlen(Item[PosAdd]->strName));
+		UpdateMaxLength(HiStrCellsCount(Item[PosAdd]->strName));
 
 	UpdateItemFlags(PosAdd, NewItem->Flags);
 
@@ -1072,7 +1072,7 @@ int VMenu::ProcessKey(int Key)
 					if (CheckFlags(VMENU_SHOWAMPERSAND))
 						_len=static_cast<int>(Item[I]->strName.CellsCount());
 					else
-						_len=HiStrlen(Item[I]->strName);
+						_len=HiStrCellsCount(Item[I]->strName);
 
 					if (_len >= MaxLineWidth)
 						Item[I]->ShowPos = _len - MaxLineWidth;
@@ -1497,7 +1497,7 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 	if (VMFlags.Check(VMENU_SHOWAMPERSAND))
 		_len = (int)Item[Pos]->strName.CellsCount();
 	else
-		_len = HiStrlen(Item[Pos]->strName);
+		_len = HiStrCellsCount(Item[Pos]->strName);
 
 	if (_len < MaxLineWidth || (Direct < 0 && !ItemShowPos) || (Direct > 0 && ItemShowPos > _len))
 		return false;
@@ -1765,7 +1765,7 @@ void VMenu::ShowMenu(bool IsParent)
 		if (CheckFlags(VMENU_SHOWAMPERSAND))
 			ItemLen = static_cast<int>(Item[i]->strName.CellsCount());
 		else
-			ItemLen = HiStrlen(Item[i]->strName);
+			ItemLen = HiStrCellsCount(Item[i]->strName);
 
 		if (ItemLen > MaxItemLength)
 			MaxItemLength = ItemLen;
@@ -1992,7 +1992,7 @@ void VMenu::ShowMenu(bool IsParent)
 				if (CheckFlags(VMENU_SHOWAMPERSAND))
 					strMItemPtrLen = static_cast<int>(strMItemPtr.CellsCount());
 				else
-					strMItemPtrLen = HiStrlen(strMItemPtr);
+					strMItemPtrLen = HiStrCellsCount(strMItemPtr);
 
 				// fit menu FARString into available space
 				if (strMItemPtrLen > MaxLineWidth)

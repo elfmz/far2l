@@ -590,7 +590,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	}
 
 	int SrcLength = StrLength(SrcName);
-	int SrcVisualLength = FarStrCellsCountN(SrcName, SrcLength);
+	int SrcVisualLength = FarStrCellsCount(SrcName, SrcLength);
 
 	if (RightAlign && SrcVisualLength > MaxLength)
 	{
@@ -1083,7 +1083,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								if (RightAlign)
 									LeftBracket=TRUE;
 
-								if (!RightAlign && FarStrCellsCount(NamePtr) > size_t(Width))
+								if (!RightAlign && FarStrZCellsCount(NamePtr) > size_t(Width))
 									RightBracket=TRUE;
 							}
 

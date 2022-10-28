@@ -7,7 +7,7 @@
 extern "C"
 {
 
-__attribute__ ((visibility("default"))) size_t FarStrCellsCountN(const wchar_t *pwz, size_t nw)
+__attribute__ ((visibility("default"))) size_t FarStrCellsCount(const wchar_t *pwz, size_t nw)
 {
 	size_t out = 0;
 	for (size_t i = 0; i < nw; ++i) {
@@ -20,9 +20,9 @@ __attribute__ ((visibility("default"))) size_t FarStrCellsCountN(const wchar_t *
 	return out;
 }
 
-__attribute__ ((visibility("default"))) size_t FarStrCellsCount(const wchar_t *pwz)
+__attribute__ ((visibility("default"))) size_t FarStrZCellsCount(const wchar_t *pwz)
 {
-	return FarStrCellsCountN(pwz, wcslen(pwz));
+	return FarStrCellsCount(pwz, wcslen(pwz));
 }
 
 __attribute__ ((visibility("default"))) size_t FarStrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
@@ -72,14 +72,14 @@ static const struct TruncReplacement &ChooseTruncReplacement()
 
 __attribute__ ((visibility("default"))) void FarStrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCountN(pwz, n);
+	size_t vl = FarStrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
 	}
 
 	for (size_t ofs = rpl.len; ofs < n; ++ofs) {
-		if (!IsCharXxxfix(pwz[ofs]) && FarStrCellsCountN(pwz + ofs, n - ofs) + rpl.len <= ng) {
+		if (!IsCharXxxfix(pwz[ofs]) && FarStrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
 			n-= ofs;
 			wmemmove(pwz + rpl.len, pwz + ofs, n);
 			n+= rpl.len;
@@ -93,7 +93,7 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateLeft(wchar_t *pw
 
 __attribute__ ((visibility("default"))) void FarStrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCountN(pwz, n);
+	size_t vl = FarStrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
@@ -108,7 +108,7 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateRight(wchar_t *p
 			break;
 		}
 		--n;
-	} while (FarStrCellsCountN(pwz, n) + rpl.len > ng);
+	} while (FarStrCellsCount(pwz, n) + rpl.len > ng);
 
 	wmemcpy(&pwz[n], rpl.wz, rpl.len);
 	n+= rpl.len;
@@ -116,7 +116,7 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateRight(wchar_t *p
 
 __attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCountN(pwz, n);
+	size_t vl = FarStrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
@@ -137,13 +137,13 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *
 		++cut_end;
 	}
 
-	while (FarStrCellsCountN(pwz, cut_start) + FarStrCellsCountN(pwz + cut_end, n - cut_end) + rpl.len > ng) {
+	while (FarStrCellsCount(pwz, cut_start) + FarStrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
 		if (cut_start > 0) {
 			--cut_start;
 			while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
 				--cut_start;
 			}
-			if (FarStrCellsCountN(pwz, cut_start) + FarStrCellsCountN(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
+			if (FarStrCellsCount(pwz, cut_start) + FarStrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
 				break;
 			}
 		}

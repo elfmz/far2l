@@ -253,7 +253,7 @@ void Edit::DisplayObject()
 		}
 	}
 
-	MoveCursor(X1 + FarStrCellsCountN(Str + LeftPos, CursorPos - LeftPos), Y1);
+	MoveCursor(X1 + FarStrCellsCount(Str + LeftPos, CursorPos - LeftPos), Y1);
 	//MoveCursor(X1+CursorPos-LeftPos,Y1);
 }
 

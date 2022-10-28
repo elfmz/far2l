@@ -38,34 +38,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void BaseFormat::Reset()
 {
-	_Width=0;
-	_Precision=static_cast<size_t>(-1);
-	_FillChar=L' ';
-	_Align=fmt::A_RIGHT;
+	_Cells = false;
+	_Expand = 0;
+	_Truncate = static_cast<size_t>(-1);
+	_FillChar = L' ';
+	_Align = fmt::A_RIGHT;
 }
 
-void BaseFormat::Put(LPCWSTR Data,size_t Length)
+void BaseFormat::Put(LPCWSTR Data, size_t Length)
 {
-	if (_Precision==static_cast<size_t>(-1))
+	if (_Truncate != static_cast<size_t>(-1))
 	{
-		_Precision=Length;
-	}
-
-	FARString OutStr(Data,Min(_Precision,Length));
-
-	if (_Align==fmt::A_RIGHT)
-	{
-		while (OutStr.GetLength()<_Width)
+		if (_Cells)
 		{
-			OutStr.Insert(0,_FillChar);
+			size_t ng = _Truncate;
+			Length = FarStrSizeOfCells(Data, Length, ng, false);
+		}
+		else if (Length > _Truncate)
+		{
+			Length = _Truncate;
 		}
 	}
-	else
+
+	FARString OutStr(Data, Length);
+
+	size_t Count = _Cells ? OutStr.CellsCount() : OutStr.GetLength();
+
+	if (_Align == fmt::A_RIGHT)
 	{
-		while (OutStr.GetLength()<_Width)
+		for(;Count < _Expand; ++Count)
 		{
-			OutStr.Append(_FillChar);
+			OutStr.Insert(0, _FillChar);
 		}
+	}
+	else if (_Expand > Count)
+	{
+		OutStr.Append(_FillChar, _Expand - Count);
 	}
 
 	Commit(OutStr);
@@ -109,18 +117,36 @@ BaseFormat& BaseFormat::operator<<(FARString& String)
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Width& Manipulator)
+BaseFormat& BaseFormat::operator<<(const fmt::Chars&)
 {
-	SetWidth(Manipulator.GetValue());
+	SetCells(false);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Precision& Manipulator)
+BaseFormat& BaseFormat::operator<<(const fmt::Cells&)
 {
-	SetPrecision(Manipulator.GetValue());
+	SetCells(true);
 	return *this;
 }
 
+BaseFormat& BaseFormat::operator<<(const fmt::Expand& Manipulator)
+{
+	SetExpand(Manipulator.GetValue());
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Truncate& Manipulator)
+{
+	SetTruncate(Manipulator.GetValue());
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Size& Manipulator)
+{
+	SetTruncate(Manipulator.GetValue());
+	SetExpand(Manipulator.GetValue());
+	return *this;
+}
 
 BaseFormat& BaseFormat::operator<<(const fmt::FillChar& Manipulator)
 {

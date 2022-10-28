@@ -356,7 +356,7 @@ void FolderTree::DrawEdit()
 	if (WhereX()<X2)
 	{
 		SetColor(COL_PANELTEXT);
-		FS<<fmt::Width(X2-WhereX())<<L"";
+		FS << fmt::Cells() << fmt::Expand(X2 - WhereX()) << L"";
 	}
 }
 

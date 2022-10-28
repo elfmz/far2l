@@ -136,6 +136,7 @@ class Edit:public ScreenObject
 		Edit  *m_prev;
 
 	private:
+		std::vector<wchar_t> OutStr;
 		wchar_t *Str;
 
 		int    StrSize;
@@ -191,7 +192,7 @@ class Edit:public ScreenObject
 		int CheckCharMask(wchar_t Chr);
 		int ProcessInsPath(int Key,int PrevSelStart=-1,int PrevSelEnd=0);
 
-		int RealPosToTab(int PrevLength, int PrevPos, int Pos, int* CorrectPos);
+		int RealPosToCell(int PrevLength, int PrevPos, int Pos, int* CorrectPos);
 
 		inline const wchar_t* WordDiv(void) {return strWordDiv->CPtr();};
 	public:
@@ -254,8 +255,8 @@ class Edit:public ScreenObject
 		int   GetClearFlag() {return Flags.Check(FEDITLINE_CLEARFLAG);}
 		void  SetCurPos(int NewPos) {CurPos=NewPos; PrevCurPos=NewPos;}
 		int   GetCurPos() {return(CurPos);}
-		int   GetTabCurPos();
-		void  SetTabCurPos(int NewPos);
+		int   GetCellCurPos();
+		void  SetCellCurPos(int NewPos);
 		int   GetLeftPos() {return(LeftPos);}
 		void  SetLeftPos(int NewPos) {LeftPos=NewPos;}
 		void  SetPasswordMode(int Mode) {Flags.Change(FEDITLINE_PASSWORDMODE,Mode);};
@@ -273,8 +274,8 @@ class Edit:public ScreenObject
 		void  SetConvertTabs(int Mode) { TabExpandMode = Mode;};
 		int   GetConvertTabs() {return TabExpandMode;};
 
-		int   RealPosToTab(int Pos);
-		int   TabPosToReal(int Pos);
+		int   RealPosToCell(int Pos);
+		int   CellPosToReal(int Pos);
 		void  Select(int Start,int End);
 		void  AddSelect(int Start,int End);
 		void  GetSelection(int &Start,int &End);
@@ -282,7 +283,7 @@ class Edit:public ScreenObject
 		void  GetRealSelection(int &Start,int &End);
 		void  SetEditBeyondEnd(int Mode) {Flags.Change(FEDITLINE_EDITBEYONDEND,Mode);};
 		void  SetEditorMode(int Mode) {Flags.Change(FEDITLINE_EDITORMODE,Mode);};
-		void  ReplaceTabs();
+		void  ExpandTabs();
 
 		void  InsertTab();
 

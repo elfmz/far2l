@@ -127,7 +127,7 @@ void FileList::ShowFileList(int Fast)
 //    SetScreen(X1+1,Y1+1,X2-1,Y1+1,' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
 		//GotoXY(X1+1,Y1+1);
-		//FS<<fmt::Width(X2-X1-1)<<L"";
+		//FS<<fmt::Expand(X2-X1-1)<<L"";
 	}
 
 	for (int I=0,ColumnPos=X1+1; I<ViewSettings.ColumnCount; I++)
@@ -203,7 +203,7 @@ void FileList::ShowFileList(int Fast)
 			CenterStr(strTitle,strTitleMsg,ViewSettings.ColumnWidth[I]);
 			SetColor(COL_PANELCOLUMNTITLE);
 			GotoXY(ColumnPos,Y1+1);
-			FS<<fmt::Precision(ViewSettings.ColumnWidth[I])<<strTitleMsg;
+			FS << fmt::Cells() << fmt::Truncate(ViewSettings.ColumnWidth[I]) << strTitleMsg;
 		}
 
 		if (I>=ViewSettings.ColumnCount-1)
@@ -374,7 +374,7 @@ void FileList::ShowFileList(int Fast)
 		SetScreen(X1+1,Y2-1,X2-1,Y2-1,L' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
 		//GotoXY(X1+1,Y2-1);
-		//FS<<fmt::Width(X2-X1-1)<<L"";
+		//FS<<fmt::Expand(X2-X1-1)<<L"";
 	}
 
 	if (PanelMode==PLUGIN_PANEL && FileCount>0 && (Info.Flags & OPIF_REALNAMES))
@@ -559,9 +559,9 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 		Text(strTotalStr);
 	else
 	{
-		FS<<fmt::Precision(BoxPos)<<strTotalStr;
+		FS << fmt::Cells() << fmt::Truncate(BoxPos) << strTotalStr;
 		SetColor(COL_PANELBOX);
-		FS<<fmt::Precision(BoxLength)<<strTotalStr.CPtr()+BoxPos;
+		FS << fmt::Cells() << fmt::Truncate(BoxLength) << strTotalStr.CPtr() + BoxPos;
 		SetColor(COL_PANELTOTALINFO);
 		Text(strTotalStr.CPtr()+BoxPos+BoxLength);
 	}
@@ -887,6 +887,24 @@ int FileList::PrepareColumnWidths(unsigned int *ColumnTypes,int *ColumnWidths,
 
 extern void GetColor(int PaletteIndex);
 
+static int MakeCurLeftPos(int ColumnWidth, const wchar_t *Str, int LeftPos, int &MaxLeftPos)
+{
+	int Cells = Str ? FarStrZCellsCount(Str) : 0;
+	if (Cells < ColumnWidth || !Cells)
+		return 0;
+
+	if (LeftPos > Cells - ColumnWidth)
+		LeftPos = Cells - ColumnWidth;
+
+	size_t ng = LeftPos;
+	int out = FarStrSizeOfCells(Str, wcslen(Str), ng, false);
+
+	if (MaxLeftPos < (int)ng)
+		MaxLeftPos = (int)ng;
+
+	return out;
+}
+
 void FileList::ShowList(int ShowStatus,int StartColumn)
 {
 	int StatusShown=FALSE;
@@ -974,21 +992,10 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 					if (!ShowStatus && LeftPos>0)
 					{
-						int Length=StrLength(ColumnData);
-
-						if (Length>ColumnWidth)
-						{
-							CurLeftPos=LeftPos;
-
-							if (CurLeftPos>Length-ColumnWidth)
-								CurLeftPos=Length-ColumnWidth;
-
-							if (CurLeftPos>MaxLeftPos)
-								MaxLeftPos=CurLeftPos;
-						}
+						CurLeftPos = MakeCurLeftPos(ColumnWidth, ColumnData, LeftPos, MaxLeftPos);
 					}
 
-					FS<<fmt::LeftAlign()<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<ColumnData+CurLeftPos;
+					FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ColumnWidth) << ColumnData + CurLeftPos;
 				}
 				else
 				{
@@ -1036,39 +1043,28 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos)
 							{
-								int Length = (int)wcslen(NamePtr);
-
-								if (Length>Width)
+								if (LeftPos > 0 && !RightAlign)
 								{
-									if (LeftPos>0)
+									CurLeftPos = MakeCurLeftPos(Width, NamePtr, LeftPos, MaxLeftPos);
+									NamePtr += CurLeftPos;
+								}
+								else if (RightAlign)
+								{
+									int Cells = (int)FarStrZCellsCount(NamePtr);
+									if (Cells > Width)
 									{
-										if (!RightAlign)
-										{
-											CurLeftPos=LeftPos;
-
-											if (Length-CurLeftPos<Width)
-												CurLeftPos=Length-Width;
-
-											NamePtr += CurLeftPos;
-
-											if (CurLeftPos>MaxLeftPos)
-												MaxLeftPos=CurLeftPos;
-										}
-									}
-									else if (RightAlign)
-									{
-										int CurRightPos=LeftPos;
-
-										if (Length+CurRightPos<Width)
-											CurRightPos=Width-Length;
+										int CurRightPos = LeftPos;
+										if (Cells + CurRightPos < Width)
+											CurRightPos = Width - Cells;
 										else
-											RightBracket=TRUE;
+											RightBracket = TRUE;
 
-										NamePtr += Length+CurRightPos-Width;
-										RightAlign=FALSE;
+										size_t ng = Cells + CurRightPos - Width;
+										NamePtr += FarStrSizeOfCells(NamePtr, wcslen(NamePtr), ng, false);
+										RightAlign = FALSE;
 
-										if (CurRightPos<MinLeftPos)
-											MinLeftPos=CurRightPos;
+										if (MinLeftPos > CurRightPos)
+											MinLeftPos = CurRightPos;
 									}
 								}
 							}
@@ -1176,13 +1172,13 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 									break;
 							}
 
-							FS<<FormatStr_DateTime(FileTime,ColumnType,ColumnTypes[K],ColumnWidth);
+							FS << FormatStr_DateTime(FileTime,ColumnType,ColumnTypes[K],ColumnWidth);
 							break;
 						}
 
 						case ATTR_COLUMN:
 						{
-							FS<<FormatStr_Attribute(ListData[ListPos]->FileAttr,ListData[ListPos]->FileMode,ColumnWidth);
+							FS << FormatStr_Attribute(ListData[ListPos]->FileAttr,ListData[ListPos]->FileMode,ColumnWidth);
 							break;
 						}
 
@@ -1192,18 +1188,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos>0)
 							{
-								int Length=ListData[ListPos]->DizText ? StrLength(ListData[ListPos]->DizText):0;
-
-								if (Length>ColumnWidth)
-								{
-									CurLeftPos=LeftPos;
-
-									if (CurLeftPos>Length-ColumnWidth)
-										CurLeftPos=Length-ColumnWidth;
-
-									if (CurLeftPos>MaxLeftPos)
-										MaxLeftPos=CurLeftPos;
-								}
+								CurLeftPos = MakeCurLeftPos(ColumnWidth, ListData[ListPos]->DizText, LeftPos, MaxLeftPos);
 							}
 
 							FARString strDizText=ListData[ListPos]->DizText ? ListData[ListPos]->DizText+CurLeftPos:L"";
@@ -1212,7 +1197,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 							if (strDizText.Pos(pos,L'\4'))
 								strDizText.Truncate(pos);
 
-							FS<<fmt::LeftAlign()<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<strDizText;
+							FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ColumnWidth) << strDizText;
 							break;
 						}
 
@@ -1236,21 +1221,21 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos>0)
 							{
-								int Length=StrLength(Owner);
+								int Cells=FarStrZCellsCount(Owner);
 
-								if (Length>ColumnWidth)
+								if (Cells>ColumnWidth)
 								{
 									CurLeftPos=LeftPos;
 
-									if (CurLeftPos>Length-ColumnWidth)
-										CurLeftPos=Length-ColumnWidth;
+									if (CurLeftPos>Cells-ColumnWidth)
+										CurLeftPos=Cells-ColumnWidth;
 
 									if (CurLeftPos>MaxLeftPos)
 										MaxLeftPos=CurLeftPos;
 								}
 							}
 
-							FS<<fmt::LeftAlign()<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<Owner+CurLeftPos;
+							FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ColumnWidth) << Owner+CurLeftPos;
 							break;
 						}
 
@@ -1262,28 +1247,28 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos>0)
 							{
-								int Length=StrLength(Group);
+								int Cells=FarStrZCellsCount(Group);
 
-								if (Length>ColumnWidth)
+								if (Cells>ColumnWidth)
 								{
 									CurLeftPos=LeftPos;
 
-									if (CurLeftPos>Length-ColumnWidth)
-										CurLeftPos=Length-ColumnWidth;
+									if (CurLeftPos>Cells-ColumnWidth)
+										CurLeftPos=Cells-ColumnWidth;
 
 									if (CurLeftPos>MaxLeftPos)
 										MaxLeftPos=CurLeftPos;
 								}
 							}
 
-							FS<<fmt::LeftAlign()<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<Group+CurLeftPos;
+							FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ColumnWidth) << Group + CurLeftPos;
 							break;
 						}
 
 
 						case NUMLINK_COLUMN:
 						{
-							FS<<fmt::Width(ColumnWidth)<<fmt::Precision(ColumnWidth)<<ListData[ListPos]->NumberOfLinks;
+							FS << fmt::Cells() << fmt::Size(ColumnWidth) << ListData[ListPos]->NumberOfLinks;
 							break;
 						}
 					}
@@ -1291,7 +1276,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 			}
 			else
 			{
-				FS<<fmt::Width(ColumnWidth)<<L"";
+				FS << fmt::Cells() << fmt::Expand(ColumnWidth) << L"";
 			}
 
 			if (ShowDivider==FALSE)
@@ -1335,7 +1320,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 		if ((!ShowStatus || StatusLine) && WhereX()<X2)
 		{
 			SetColor(COL_PANELTEXT);
-			FS<<fmt::Width(X2-WhereX())<<L"";
+			FS << fmt::Cells() << fmt::Expand(X2 - WhereX()) << L"";
 		}
 	}
 
@@ -1344,7 +1329,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 		SetScreen(X1+1,Y2-1,X2-1,Y2-1,L' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
 		//GotoXY(X1+1,Y2-1);
-		//FS<<fmt::Width(X2-X1-1)<<L"";
+		//FS<<fmt::Expand(X2-X1-1)<<L"";
 	}
 
 	if (!ShowStatus)

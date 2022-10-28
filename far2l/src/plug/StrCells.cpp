@@ -1,7 +1,7 @@
 #include "headers.hpp"
 
 #include <utils.h>
-#include "StrCells.h"
+#include "farstrcells.h"
 #include "config.hpp"
 
 extern "C"
@@ -126,7 +126,7 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *
 	if (cut_start > 0) {
 		--cut_start;
 	}
-	if (cut_start > 0) {
+	if (cut_start > 0 && rpl.len > 1) {
 		--cut_start;
 	}
 	while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {

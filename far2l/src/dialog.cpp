@@ -1899,7 +1899,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (X1+X+CntChr-1 > X2)
 						CntChr=X2-(X1+X)+1;
 
-					FS<<fmt::Width(CntChr)<<L"";
+					FS << fmt::Cells() << fmt::Expand(CntChr) << L"";
 
 					if (CntChr < LenText)
 						strStr.TruncateByCells(CntChr);
@@ -5520,7 +5520,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 					esp->CurLine=0;
 					esp->CurPos=EditPtr->GetCurPos();
-					esp->CurTabPos=EditPtr->GetTabCurPos();
+					esp->CurTabPos=EditPtr->GetCellCurPos();
 					esp->TopScreenLine=0;
 					esp->LeftPos=EditPtr->GetLeftPos();
 					esp->Overtype=EditPtr->GetOvertypeMode();
@@ -5545,7 +5545,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					EditorSetPosition *esp=(EditorSetPosition *)Param2;
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 					EditPtr->SetCurPos(esp->CurPos);
-					EditPtr->SetTabCurPos(esp->CurTabPos);
+					EditPtr->SetCellCurPos(esp->CurTabPos);
 					EditPtr->SetLeftPos(esp->LeftPos);
 					EditPtr->SetOvertypeMode(esp->Overtype);
 					Dlg->ShowDialog(Param1);

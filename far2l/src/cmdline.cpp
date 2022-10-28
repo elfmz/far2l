@@ -666,9 +666,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 						{
 							if (PushDirStackSize)
 							{
-								wchar_t * p = strDestStr.GetBuffer(strDestStr.GetLength()+PushDirStackSize+1);
-								wmemset(p + strDestStr.GetLength(),L'+',PushDirStackSize);
-								strDestStr.ReleaseBuffer(strDestStr.GetLength()+PushDirStackSize);
+								strDestStr.Append(L'+', PushDirStackSize);
 							}
 
 							break;

@@ -440,7 +440,7 @@ FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 	{
 		int Space = (Length - SrcLength) / 2;
 		FormatString FString;
-		FString << fmt::Width(Space) << L"" << strTempStr << fmt::Width(Length - Space - SrcLength) << L"";
+		FString << fmt::Expand(Space) << L"" << strTempStr << fmt::Expand(Length - Space - SrcLength) << L"";
 		strDest = std::move(FString.strValue());
 	}
 

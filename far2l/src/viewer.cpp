@@ -517,7 +517,7 @@ void Viewer::ShowPage(int nMode)
 			SetScreen(X1,Y1,X2,Y2,L' ',COL_VIEWERTEXT);
 			GotoXY(X1,Y1);
 			SetColor(COL_WARNDIALOGTEXT);
-			FS<<fmt::Precision(XX2-X1+1)<<Msg::ViewerCannotOpenFile;
+			FS << fmt::Cells() << fmt::Truncate(XX2 - X1 + 1) << Msg::ViewerCannotOpenFile;
 			ShowStatus();
 		}
 
@@ -684,7 +684,7 @@ void Viewer::ShowHex()
 
 		if (EndFile)
 		{
-			FS<<fmt::Width(ObjWidth)<<L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
 			continue;
 		}
 
@@ -861,18 +861,18 @@ void Viewer::ShowHex()
 
 		if (StrLength(OutStr)>HexLeftPos)
 		{
-			FS<<fmt::LeftAlign()<<fmt::Width(ObjWidth)<<fmt::Precision(ObjWidth)<<OutStr+static_cast<size_t>(HexLeftPos);
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth) << OutStr + static_cast<size_t>(HexLeftPos);
 		}
 		else
 		{
-			FS<<fmt::Width(ObjWidth)<<L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
 		}
 
 		if (bSelStartFound && bSelEndFound)
 		{
 			SetColor(COL_VIEWERSELECTEDTEXT);
 			GotoXY((int)((int64_t)X1+SelStart-HexLeftPos),Y);
-			FS<<fmt::Precision(SelEnd-SelStart+1)<<OutStr+static_cast<size_t>(SelStart);
+			FS << fmt::Cells() << fmt::Truncate(SelEnd - SelStart + 1) << OutStr + static_cast<size_t>(SelStart);
 //			SelSize = 0;
 		}
 	}
@@ -2446,7 +2446,7 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
 			strProgress.ReleaseBuffer(Length);
 			FormatString strTmp;
-			strTmp<<L" "<<fmt::Width(PercentLength)<<strPercent<<L"%";
+			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
 			strProgress+=strTmp;
 		}
 

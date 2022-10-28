@@ -480,16 +480,29 @@ typedef DWORD64 COMP_CHAR;
 
 typedef struct _CHAR_INFO {
     union {
-        COMP_CHAR UnicodeChar; // WCHAR or result of CompositeCharRegister()
+		// WCHAR or result of CompositeCharRegister()
+		// can be differentiated using USING_COMPOSITE_CHAR() that checks presence of highest bit
+        COMP_CHAR UnicodeChar;
         CHAR   AsciiChar;
     } Char;
-    WORD Attributes;
+
+	// low 16 bits - legacy attributes, followed by two 24-bit RGB colors
+	// that used if any of them is not zero, in such case legacy color attributes are ignored
+    DWORD64 Attributes;
 } CHAR_INFO, *PCHAR_INFO;
 
 #define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
 #define USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
 #define FULL_WIDTH_CHAR(CI) ( (!USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
 	|| (USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
+
+#define USING_RGB_COLORS(CI) (((CI).Attributes >> 16) != 0)
+
+#define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
+#define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))
+#define SET_RGB_FORE(ATTR, RGB)  ((ATTR) = ((ATTR) & 0xffffff000000ffff) | ((((DWORD64)RGB) & 0xffffff) << 16))
+#define SET_RGB_BACK(ATTR, RGB)  ((ATTR) = ((ATTR) & 0x000000ffffffffff) | ((((DWORD64)RGB) & 0xffffff) << 40))
+#define SET_RGB_BOTH(ATTR, RGB_FORE, RGB_BACK)  ((ATTR) = ((ATTR) & 0xffff) | ((((DWORD64)RGB_FORE) & 0xffffff) << 16) | ((((DWORD64)RGB_BACK) & 0xffffff) << 40) )
 
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {

@@ -1,7 +1,6 @@
 #include "headers.hpp"
 
 #include <crc64.h>
-#include <wordexp.h>
 #include <fstream>
 #include "Mounts.hpp"
 #include "lang.hpp"
@@ -83,10 +82,10 @@ namespace Mounts
 		for (auto &m : *this) {
 			if (max_path < m.path.GetLength())
 				max_path = m.path.GetLength();
-			if (max_info < m.info.GetLength())
-				max_info = m.info.GetLength();
-			if (max_usage < m.usage.GetLength())
-				max_usage = m.usage.GetLength();
+			if (max_col3 < m.col3.GetLength())
+				max_col3 = m.col3.GetLength();
+			if (max_col2 < m.col2.GetLength())
+				max_col2 = m.col2.GetLength();
 			wchar_t def_hk[] = {DefaultHotKey(m.id, m.path), 0};
 			auto hk = cfg_reader.GetString(SettingsKey(m.id), def_hk);
 			m.hotkey = hk.IsEmpty() ? 0 : *hk.CPtr();
@@ -147,10 +146,10 @@ namespace Mounts
 			emplace_back();
 			auto &e = back();
 			e.path = mp.path;
-			e.usage = Opt.ChangeDriveColumn2;
-			e.info = Opt.ChangeDriveColumn3;
-			ExpandMountpointInfo(mp, e.usage);
-			ExpandMountpointInfo(mp, e.info);
+			e.col2 = Opt.ChangeDriveColumn2;
+			e.col3 = Opt.ChangeDriveColumn3;
+			ExpandMountpointInfo(mp, e.col2);
+			ExpandMountpointInfo(mp, e.col3);
 			
 			if (e.path == L"/") {
 				has_rootfs = true;
@@ -182,9 +181,9 @@ namespace Mounts
 						auto &e = back();
 						e.path = parts.front();
 						if (parts.size() > 1) {
-							e.info = parts.back();
+							e.col3 = parts.back();
 							if (parts.size() > 2) {
-								e.usage = parts[1];
+								e.col2 = parts[1];
 							}
 						}
 						e.id = GenerateIdFromPath(e.path);

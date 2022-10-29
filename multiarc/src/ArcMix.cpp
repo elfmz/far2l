@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <wordexp.h>
 #include <sys/stat.h>
 #include <windows.h>
 #include <string>

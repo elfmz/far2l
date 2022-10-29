@@ -23,8 +23,12 @@ namespace Mounts
 		int id = -1;
 	};
 
-	struct Enum : std::vector<Entry>
+	class Enum : public std::vector<Entry>
 	{
+		void AddMounts(bool &has_rootfs);
+		void AddFavorites(bool &has_rootfs);
+
+	public:
 		Enum(FARString &another_curdir);
 
 		size_t max_path = 4;

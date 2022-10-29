@@ -1,6 +1,7 @@
 #include "headers.hpp"
 
 #include <crc64.h>
+#include <wordexp.h>
 #include <fstream>
 #include "Mounts.hpp"
 #include "lang.hpp"
@@ -64,69 +65,12 @@ namespace Mounts
 
 	Enum::Enum(FARString &another_curdir)
 	{
-		MountInfo mi(true);
-
 		bool has_rootfs = false;
-		for (const auto &mp : mi.Enum()) {
-			emplace_back();
-			auto &e = back();
-			e.path = mp.path;
-			e.info = mp.filesystem;
-			if (mp.bad) {
-				e.usage = Opt.NoGraphics ? L"X_X" : L"❌_❌";
-
-			} else {
-				FileSizeToStr(e.usage, mp.avail, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX); //COLUMN_AUTOSIZE | COLUMN_SHOWBYTESINDEX
-				while (e.usage.GetLength() < 4) {
-					e.usage.Insert(0, L' ');
-				}
-				FARString tmp;
-				FileSizeToStr(tmp, mp.total, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX); //COLUMN_AUTOSIZE | COLUMN_SHOWBYTESINDEX
-				while (e.usage.GetLength() < 4) {
-					tmp.Insert(0, L' ');
-				}
-				e.usage+= L"/";
-				e.usage+= tmp;
-			}
-
-			if (e.path == L"/") {
-				has_rootfs = true;
-			} else {
-				e.unmountable = true;
-			}
-			e.id = GenerateIdFromPath(e.path);
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_MOUNTS)
+		{
+			AddMounts(has_rootfs);
 		}
-
-		std::ifstream favis(InMyConfig("favorites"));
-		if (favis.is_open()) {
-			std::string line;
-			while (std::getline(favis, line)) {
-				StrTrim(line, " \t\r\n");
-				if (line.empty() || line.front() == '#') {
-					continue;
-				}
-				std::vector<std::string> parts;
-				StrExplode(parts, line, "\t");
-				if (!parts.empty()) {
-					emplace_back();
-					auto &e = back();
-					e.path = parts.front();
-					if (parts.size() > 1) {
-						e.info = parts.back();
-						if (parts.size() > 2) {
-							e.usage = parts[1];
-						}
-					}
-					e.id = GenerateIdFromPath(e.path);
-					if (e.path == L"/") {
-						has_rootfs = true;
-
-					} else if (*e.path.CPtr() == L'/') {
-						e.unmountable = true;
-					}
-				}
-			}
-		}
+		AddFavorites(has_rootfs);
 
 		if (!has_rootfs) {
 			emplace(begin(), Entry(L"/", Msg::MountsRoot, false, ID_ROOT));
@@ -148,6 +92,114 @@ namespace Mounts
 			m.hotkey = hk.IsEmpty() ? 0 : *hk.CPtr();
 		}
 	}
+
+	static void ExpandMountpointInfo(const Mountpoint &mp, FARString &str)
+	{
+		FARString val = L" ";
+		if (mp.bad) {
+			val = L"?";
+		} else if (mp.read_only) {
+			val = L"!";
+		}
+		ReplaceStrings(str, L"$S", val);
+
+		FileSizeToStr(val, mp.total, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		ReplaceStrings(str, L"$T", val);
+
+		FileSizeToStr(val, mp.avail, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		ReplaceStrings(str, L"$A", val);
+
+		FileSizeToStr(val, mp.freee, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		ReplaceStrings(str, L"$F", val);
+
+		FileSizeToStr(val, mp.total - mp.freee, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		ReplaceStrings(str, L"$U", val);
+
+		if (mp.total)
+			val.Format(L"%d", (mp.avail * 100) / mp.total);
+		else
+			val = L"NA";
+		ReplaceStrings(str, L"$a", val);
+
+		if (mp.total)
+			val.Format(L"%d", (mp.freee * 100) / mp.total);
+		else
+			val = L"NA";
+		ReplaceStrings(str, L"$f", val);
+
+		if (mp.total)
+			val.Format(L"%d", ((mp.total - mp.freee) * 100) / mp.total);
+		else
+			val = L"NA";
+		ReplaceStrings(str, L"$u", val);
+
+		val = mp.filesystem;
+		ReplaceStrings(str, L"$N", val);
+
+		val = mp.device;
+		ReplaceStrings(str, L"$D", val);
+	}
+
+	void Enum::AddMounts(bool &has_rootfs)
+	{
+		MountInfo mi(true);
+		for (const auto &mp : mi.Enum()) {
+			emplace_back();
+			auto &e = back();
+			e.path = mp.path;
+			e.usage = Opt.ChangeDriveColumn2;
+			e.info = Opt.ChangeDriveColumn3;
+			ExpandMountpointInfo(mp, e.usage);
+			ExpandMountpointInfo(mp, e.info);
+			
+			if (e.path == L"/") {
+				has_rootfs = true;
+			} else {
+				e.unmountable = true;
+			}
+			e.id = GenerateIdFromPath(e.path);
+		}
+	}
+
+	void Enum::AddFavorites(bool &has_rootfs)
+	{
+		std::ifstream favis(InMyConfig("favorites"));
+		if (favis.is_open()) {
+			std::string line;
+			while (std::getline(favis, line)) {
+				StrTrim(line, " \t\r\n");
+				if (line.empty() || line.front() == '#') {
+					continue;
+				}
+				Environment::ExpandString(line, true, true);
+				std::vector<std::string> sublines;
+				StrExplode(sublines, line, "\n");
+				for (const auto &subline : sublines) {
+					std::vector<std::string> parts;
+					StrExplode(parts, subline, "\t");
+					if (!parts.empty()) {
+						emplace_back();
+						auto &e = back();
+						e.path = parts.front();
+						if (parts.size() > 1) {
+							e.info = parts.back();
+							if (parts.size() > 2) {
+								e.usage = parts[1];
+							}
+						}
+						e.id = GenerateIdFromPath(e.path);
+						if (e.path == L"/") {
+							has_rootfs = true;
+
+						} else if (*e.path.CPtr() == L'/') {
+							e.unmountable = true;
+						}
+					}
+				}
+			}
+		}
+	}
+	//////
 
 	bool Unmount(const FARString &path, bool force)
 	{

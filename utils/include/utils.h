@@ -331,4 +331,7 @@ template <typename ARRAY_T, class CHAR_T>
 	dst[i] = 0;
 }
 
+bool POpen(std::string &result, const char *command);
+bool POpen(std::vector<std::wstring> &result, const char *command);
+
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)

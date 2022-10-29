@@ -1,7 +1,7 @@
-#include "utils.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "utils.h"
 
 namespace Environment
 {
@@ -75,6 +75,26 @@ static bool ReplaceVariableAt(std::string &s,
 	return out;
 }
 
+static bool RunCommand(std::string &s,
+	size_t start, size_t &edge, std::string cmd, bool empty_if_missing)
+{
+	if (!ExpandString(cmd, empty_if_missing, false))
+		return false;
+
+	std::string result;
+	bool out = POpen(result, cmd.c_str());
+	if (!out)
+		return empty_if_missing;
+
+	StrTrim(result, "\r\n");
+	// expand resulting stuff without commands execution for security
+	if (!ExpandString(result, empty_if_missing, false))
+		return false;
+
+	ReplaceSubstringAt(s, start, edge, result);
+	return true;
+}
+
 static void UnescapeCLikeSequence(std::string &s, size_t &i)
 {
 	// check {s[i - 1]=\, s[i]=..} for sequence encoded by EscapeLikeInC and reverse that encoding
@@ -130,7 +150,7 @@ static void UnescapeCLikeSequence(std::string &s, size_t &i)
 }
 
 // nasty and allmighty function that actually implements ExpandString and ParseCommandLine
-static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool empty_if_missing)
+static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool empty_if_missing, bool allow_exec_cmd)
 {
 	// Input example: ~/${EXPANDEDFOO}/$EXPANDEDBAR/unexpanded/part
 	if (s.empty()) {
@@ -143,6 +163,7 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 		ENV_NONE,
 		ENV_SIMPLE,
 		ENV_CURLED,
+		ENV_COMMAND
 	} env_state = ENV_NONE;
 
 	Quoting quot = QUOT_NONE;
@@ -151,8 +172,8 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 	bool token_splitter = true;
 	size_t i, orig_i, env_start;
 
-	for (i = orig_i = env_start = 0; i < s.size(); ++i, ++orig_i) {
-		if (args && env_state == ENV_NONE && !escaping_state) {
+	for (i = orig_i = env_start = 0; i <= s.size(); ++i, ++orig_i) {
+		if (i != s.size() && args && env_state == ENV_NONE && !escaping_state) {
 			// Check for operation and if so - grab it into dedicated token. Examples:
 			//  foo&bar -> 'foo' '&' 'bar'
 			//  foo & bar -> 'foo' '&' 'bar'
@@ -175,7 +196,7 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 			}
 		}
 
-		if (token_splitter && s[i] != ' ') {
+		if (i != s.size() && token_splitter && s[i] != ' ') {
 			token_splitter = false;
 			if (args) {
 				args->emplace_back(Argument{i, 0, orig_i, 0, QUOT_NONE});
@@ -191,16 +212,33 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 		}
 
 		if (env_state == ENV_SIMPLE) {
-			if (!isalnum(s[i]) && s[i] != '_') {
+			if (i == s.size() || (!isalnum(s[i]) && s[i] != '_')) {
 				if (!ReplaceVariableAt(s, env_start, i, s.substr(env_start + 1, i - env_start - 1), empty_if_missing)) {
 					out = false;
 				}
 				env_state = ENV_NONE;
 			}
+		}
 
-		} else if (env_state == ENV_CURLED && s[i] == '}') {
+		if (i == s.size()) {
+			break;
+		}
+
+		if (env_state == ENV_CURLED && s[i] == '}') {
 			++i;
 			if (!ReplaceVariableAt(s, env_start, i, s.substr(env_start + 2, i - env_start - 3), empty_if_missing)) {
+				out = false;
+			}
+			--i;
+			env_state = ENV_NONE;
+
+		} else if (env_state == ENV_COMMAND && s[i] == ')') {
+			++i;
+			if (!allow_exec_cmd) {
+				if (!empty_if_missing) {
+					out = false;
+				}
+			} else if (!RunCommand(s, env_start, i, s.substr(env_start + 2, i - env_start - 3), empty_if_missing)) {
 				out = false;
 			}
 			--i;
@@ -255,7 +293,11 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 			} break;
 
 			case '$': if (env_state == ENV_NONE && i + 1 < s.size()) {
-				if (i + 2 < s.size() && s[i + 1] == '{') {
+				if (i + 2 < s.size() && s[i + 1] == '(') {
+					env_state = ENV_COMMAND;
+					env_start = i;
+
+				} else if (i + 2 < s.size() && s[i + 1] == '{') {
 					env_state = ENV_CURLED;
 					env_start = i;
 
@@ -287,14 +329,14 @@ static bool ExpandStringOrParseCommandLine(std::string &s, Arguments *args, bool
 }
 
 
-bool ExpandString(std::string &s, bool empty_if_missing)
+bool ExpandString(std::string &s, bool empty_if_missing, bool allow_exec_cmd)
 {
-	return ExpandStringOrParseCommandLine(s, nullptr, empty_if_missing);
+	return ExpandStringOrParseCommandLine(s, nullptr, empty_if_missing, allow_exec_cmd);
 }
 
-bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing)
+bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing, bool allow_exec_cmd)
 {
-	return ExpandStringOrParseCommandLine(s, &args, empty_if_missing);
+	return ExpandStringOrParseCommandLine(s, &args, empty_if_missing, allow_exec_cmd);
 }
 
 ///
@@ -314,7 +356,7 @@ ExplodeCommandLine::ExplodeCommandLine(const std::string &expression)
 void ExplodeCommandLine::Parse(std::string expression)
 {
 	Arguments args;
-	ExpandStringOrParseCommandLine(expression, &args, false);
+	ExpandStringOrParseCommandLine(expression, &args, false, false);
 	for (const auto &token : args) {
 		emplace_back(expression.substr(token.begin, token.len));
 	}

@@ -4397,6 +4397,28 @@ $ #Макроси: кнопки призначення#
 комбінацій клавіш, виберіть її зі списку.
 
 
+@ChangeLocationConfig
+$ #Change location configuration#
+    Here you can choose specific kind of items to be included in change location
+menu: #mountpoints#, #bookmarks# and #plugins#.
+    Also you can customize mountpoints items by specifing wildcards exceptions
+and changing templates of what should be included into additional columns.
+    Following abbreviations can be used there:
+    #$T# - total disk space
+    #$U# - used disk space
+    #$F# - free disk space
+    #$A# - disk space available for non-priviledged user
+    #$u# - percents space used of total
+    #$f# - percents space free of total
+    #$a# - percents space available of total
+    #$N# - filesystem name
+    #$D# - device from which filesystem is mounted 
+    #$S# - filesystem status, single character that can be
+       ! - for readonly FS
+       ? - for erroring/unresponsive FS
+       <space> - for normally mounted and accessible FS
+
+
 @KeyMacroRecPlay
 $ #Макроси: запис та відтворення#
 FAR2L може виконувати ~макроси~@KeyMacro@ у двох основних режимах:

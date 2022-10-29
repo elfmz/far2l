@@ -30,6 +30,7 @@ set(SOURCES
   src/TestPath.cpp
   src/PipeIPC.cpp
   src/PathParts.cpp
+  src/POpen.cpp
 )
 
 add_library (utils ${SOURCES})

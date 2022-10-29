@@ -7,7 +7,7 @@ namespace Environment
 	const char *GetVariable(const char *name);
 
 	// performs only environment variables expansion and unescaping of only '$' character
-	bool ExpandString(std::string &s, bool empty_if_missing);
+	bool ExpandString(std::string &s, bool empty_if_missing, bool allow_exec_cmd = false);
 
 	enum Quoting {
 		QUOT_NONE,
@@ -29,7 +29,7 @@ namespace Environment
 
 	// performs environment variables expansion, full-featured unescaping and command line
 	// tokenization returning vector of command-line arguments begins and ends
-	bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing);
+	bool ParseCommandLine(std::string &s, Arguments &args, bool empty_if_missing, bool allow_exec_cmd = false);
 
 	struct ExplodeCommandLine : std::vector<std::string>
 	{

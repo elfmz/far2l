@@ -853,8 +853,13 @@ static struct FARConfig
 
 	{1, REG_DWORD,  NKeySystem, "InactivityExit",&Opt.InactivityExit,0, 0},
 	{1, REG_DWORD,  NKeySystem, "InactivityExitTime",&Opt.InactivityExitTime,15, 0},
-	{1, REG_DWORD,  NKeySystem, "DriveMenuMode",&Opt.ChangeDriveMode,DRIVE_SHOW_TYPE|DRIVE_SHOW_PLUGINS|DRIVE_SHOW_SIZE_FLOAT|DRIVE_SHOW_BOOKMARKS, 0},
+	{1, REG_DWORD,  NKeySystem, "DriveMenuMode2",&Opt.ChangeDriveMode,(DWORD)-1, 0},
 	{1, REG_DWORD,  NKeySystem, "DriveDisconnetMode",&Opt.ChangeDriveDisconnetMode,1, 0},
+
+	{1, REG_SZ,     NKeySystem, "DriveExceptions",&Opt.ChangeDriveExceptions, 0, L"/System/*;/proc;/proc/*;/sys;/sys/*;/dev;/dev/*;/run;/run/*;/tmp;/snap;/snap/*;/private;/private/*"},
+	{1, REG_SZ,     NKeySystem, "DriveColumn2",&Opt.ChangeDriveColumn2, 0, L"$U/$T"},
+	{1, REG_SZ,     NKeySystem, "DriveColumn3",&Opt.ChangeDriveColumn3, 0, L"$S$D"},
+
 	{1, REG_DWORD,  NKeySystem, "AutoUpdateRemoteDrive",&Opt.AutoUpdateRemoteDrive,1, 0},
 	{1, REG_DWORD,  NKeySystem, "FileSearchMode",&Opt.FindOpt.FileSearchMode,FINDAREA_FROM_CURRENT, 0},
 	{0, REG_DWORD,  NKeySystem, "CollectFiles",&Opt.FindOpt.CollectFiles, 1, 0},

@@ -66,7 +66,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "InterThreadCall.hpp"
 #include "ScopeHelpers.h"
-#include <wordexp.h>
 #include <set>
 #include <sys/wait.h>
 #ifdef __FreeBSD__
@@ -481,34 +480,5 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 bool ProcessOSAliases(FARString &strStr)
 {
 	return false;
-}
-
-bool POpen(std::vector<std::wstring> &result, const char *command)
-{
-	FILE *f = popen(command, "r");
-	if (!f) {
-		perror("POpen: popen");
-		return false;
-	}
-
-	char buf[0x400] = { };
-	while (fgets(buf, sizeof(buf)-1, f)) {
-		size_t l = strlen(buf);
-		while (l && (buf[l-1]=='\r' || buf[l-1]=='\n')) --l;
-		if (l) {
-			buf[l] = 0;
-			std::wstring line = MB2Wide(buf);
-			while (line.size() > 40) {
-				size_t p = line.find(L',' , 30);
-				if (p==std::string::npos) break;
-				result.emplace_back( line.substr(0, p) );
-				line.erase(0, p + 1);
-			}
-
-			if (!line.empty()) result.push_back( line );
-		}
-	}
-	pclose(f);
-	return true;
 }
 

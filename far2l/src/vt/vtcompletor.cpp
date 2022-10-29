@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <sys/wait.h>
-#include <wordexp.h>
 #include <algorithm>
 
 #include <stdio.h>

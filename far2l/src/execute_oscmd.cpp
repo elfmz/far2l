@@ -63,7 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include <vector>
 #include <string>
-#include <wordexp.h>
 #include <utils.h>
 
 //

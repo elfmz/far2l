@@ -25,6 +25,7 @@
 #include "MountInfo.h"
 #include <ScopeHelpers.h>
 #include <Threaded.h>
+#include <config.hpp>
 #include <os_call.hpp>
 
 #define DISK_SPACE_QUERY_TIMEOUT_MSEC 1000
@@ -132,6 +133,8 @@ class ThreadedStatVFS : Threaded
 		if (r == 0) {
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_frsize;
 			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_frsize;
+			(*_mps)[_mpi].freee = ((unsigned long long)s.f_bfree) * s.f_frsize;
+			(*_mps)[_mpi].read_only = (s.f_flag & ST_RDONLY) != 0;
 			(*_mps)[_mpi].bad = false;
 		}
 		return nullptr;
@@ -164,21 +167,29 @@ public:
 	}
 };
 
-static bool SkipForLocationMenu(const char *path)
+class LocationsMenuExceptions
 {
-	if (StrStartsFrom(path, "/System/")
-		|| strcmp(path, "/proc") == 0 || StrStartsFrom(path, "/proc/")
-		|| strcmp(path, "/sys") == 0 || StrStartsFrom(path, "/sys/")
-		|| strcmp(path, "/dev") == 0 || StrStartsFrom(path, "/dev/")
-		|| strcmp(path, "/run") == 0 || StrStartsFrom(path, "/run/")
-		|| strcmp(path, "/tmp") == 0 || StrStartsFrom(path, "/tmp/")
-		|| strcmp(path, "/snap") == 0 || StrStartsFrom(path, "/snap/")
-		|| strcmp(path, "/private") == 0 || StrStartsFrom(path, "/private/")
-		) {
-		return true;
+	std::vector<std::string> _exceptions;
+
+public:
+	LocationsMenuExceptions()
+	{
+		StrExplode(_exceptions, Opt.ChangeDriveExceptions.GetMB(), ";");
+		for (auto &exc : _exceptions) {
+			StrTrim(exc);
+		}
 	}
-	return false;
-}
+
+	bool Match(const char *path)
+	{
+		for (const auto &exc : _exceptions) {
+			if (MatchWildcardICE(path, exc.c_str())) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
 
 MountInfo::MountInfo(bool for_location_menu)
 {
@@ -195,6 +206,7 @@ MountInfo::MountInfo(bool for_location_menu)
 	}
 
 	_mountpoints = std::make_shared<Mountpoints>();
+	LocationsMenuExceptions lme;
 
 #ifdef __linux__
 	// manual parsing mounts file instead of using setmntent cuz later doesnt return
@@ -207,7 +219,7 @@ MountInfo::MountInfo(bool for_location_menu)
 			parts.clear();
 			StrExplode(parts, line, " \t");
 			if (parts.size() > 1 && StrStartsFrom(parts[1], "/")
-			  && (!for_location_menu || !SkipForLocationMenu(parts[1].c_str()))) {
+			  && (!for_location_menu || !lme.Match(parts[1].c_str()))) {
 				bool multi_thread_friendly;
 				if (for_location_menu) {
 					// Location menu doesn't care about this, so dont waist time
@@ -240,10 +252,11 @@ MountInfo::MountInfo(bool for_location_menu)
 				_mountpoints->emplace_back(Mountpoint{
 					parts[1],
 					parts[2],
+					parts[0],
 					multi_thread_friendly,
 					false,
-					0,
-					0
+					false,
+					0, 0, 0
 				});
 			}
 		}
@@ -258,14 +271,17 @@ MountInfo::MountInfo(bool for_location_menu)
 		if (r > 0) {
 			buf.resize(r);
 			for (const auto &fs : buf) {
-				if (!for_location_menu || !SkipForLocationMenu(fs.f_mntonname)) {
+				if (!for_location_menu || !lme.Match(fs.f_mntonname)) {
 					_mountpoints->emplace_back(Mountpoint{
 						fs.f_mntonname,
 						fs.f_fstypename,
+						fs.f_mntfromname,
 						true,
 						false,
+						false,
 						((unsigned long long)fs.f_blocks) * fs.f_bsize, // unreliable due to MNT_NOWAIT
-						((unsigned long long)fs.f_bavail) * fs.f_bsize  // ThreadedStatVFS will set true nums
+						((unsigned long long)fs.f_bavail) * fs.f_bsize, // ThreadedStatVFS will set true nums
+						((unsigned long long)fs.f_bfree) * fs.f_bsize  // ...
 					});
 				}
 			}

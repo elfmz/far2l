@@ -13428,12 +13428,12 @@ ChangeCouldNotEjectMedia
 "Неможливо вилучити диск із приводу %c:"
 
 ChangeDriveConfigure
-"Настройка меню выбора диска"
-"Change Drive Menu Options"
-upd:"Change Drive Menu Options"
-upd:"Change Drive Menu Options"
-upd:"Change Drive Menu Options"
-upd:"Change Drive Menu Options"
+"Настройки меню перехода"
+"Location Menu Options"
+upd:"Location Menu Options"
+upd:"Location Menu Options"
+upd:"Location Menu Options"
+upd:"Location Menu Options"
 "Cambiar opciones de menú de unidades"
 "Налаштування меню вибору диска"
 
@@ -13527,15 +13527,15 @@ upd:"Show &bookmarks"
 upd:"Mostrar &bookmarks"
 "Показувати &закладки"
 
-ChangeDriveShowCD
-"Показывать параметры &компакт-дисков"
-"Show &CD drive parameters"
-upd:"Show &CD drive parameters"
-upd:"Show &CD drive parameters"
-upd:"Show &CD drive parameters"
-upd:"Show &CD drive parameters"
-"Mostrar parámetros unidad de &CD"
-"Показувати параметри &компакт-дисків"
+ChangeDriveShowMounts
+"Показывать точки &монтирования"
+"Show &mountpoints"
+upd:"Show &mountpoints"
+upd:"Show &mountpoints"
+upd:"Show &mountpoints"
+upd:"Show &mountpoints"
+upd:"Show &mountpoints"
+upd:"Show &mountpoints"
 
 ChangeDriveShowNetworkDrive
 "Показывать параметры се&тевых дисков"
@@ -13556,6 +13556,36 @@ ChangeDriveMenuFooter
 "Ins,Del,Shift-Del,F4,F9"
 "Ins,Del,Shift-Del,F4,F9"
 "Ins,Del,Shift-Del,F4,F9"
+
+ChangeDriveExceptions
+"Исключения:    "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+upd:"Exceptions:   "
+
+ChangeDriveColumn2
+"Вторая колонка:"
+upd:"Second column:"
+upd:"Second column:"
+upd:"Second column:"
+upd:"Second column:"
+upd:"Second column:"
+upd:"Second column:"
+upd:"Second column:"
+
+ChangeDriveColumn3
+"Третья колонка:"
+upd:"Third column: "
+upd:"Third column: "
+upd:"Third column: "
+upd:"Third column: "
+upd:"Third column: "
+upd:"Third column: "
+upd:"Third column: "
 
 EditControlHistoryFooter
 "Up/Down,Enter,Esc,Shift-Del"

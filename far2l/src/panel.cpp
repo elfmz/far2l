@@ -296,7 +296,7 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 
 static void ConfigureChangeDriveMode()
 {
-	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"");
+	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"ChangeLocationConfig");
 //	Builder.AddCheckbox(Msg::ChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
 //	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
 //	Builder.AddCheckbox(Msg::ChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
@@ -308,6 +308,20 @@ static void ConfigureChangeDriveMode()
 //	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
 //	ShowSizeFloat->Indent(3);
 //	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
+
+	auto *ShowMountsItem = Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
+
+	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveExceptions);
+
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn2,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn2);
+
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn3,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn3);
 
 	Builder.AddCheckbox(Msg::ChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
 	Builder.AddCheckbox(Msg::ChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
@@ -655,7 +669,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				}
 				case KEY_CTRL6:
 				case KEY_RCTRL6:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_REMOVABLE;
+					Opt.ChangeDriveMode ^= DRIVE_SHOW_MOUNTS;
 					return SelPos;
 				case KEY_CTRL7:
 				case KEY_RCTRL7:

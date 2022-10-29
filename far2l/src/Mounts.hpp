@@ -9,27 +9,31 @@ namespace Mounts
 		Entry() = default;
 		Entry(const Entry&) = default;
 
-		inline Entry(FARString path_, const wchar_t *info_, bool unmountable_ = false, INT_PTR id_ = -1) : path(path_), info(info_)
+		inline Entry(FARString path_, const wchar_t *col3_, bool unmountable_ = false, INT_PTR id_ = -1) : path(path_), col3(col3_)
 		{
 			unmountable = unmountable_;
 			id = id_;
 		}
 
 		FARString path;
-		FARString usage;
-		FARString info;
+		FARString col2;
+		FARString col3;
 		bool unmountable = false;
 		WCHAR hotkey = 0;
 		int id = -1;
 	};
 
-	struct Enum : std::vector<Entry>
+	class Enum : public std::vector<Entry>
 	{
+		void AddMounts(bool &has_rootfs);
+		void AddFavorites(bool &has_rootfs);
+
+	public:
 		Enum(FARString &another_curdir);
 
 		size_t max_path = 4;
-		size_t max_usage = 0;
-		size_t max_info = 4;
+		size_t max_col2 = 0;
+		size_t max_col3 = 4;
 	};
 
 	bool Unmount(const FARString &path, bool force);

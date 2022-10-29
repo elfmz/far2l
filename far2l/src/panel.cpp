@@ -296,7 +296,7 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 
 static void ConfigureChangeDriveMode()
 {
-	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"");
+	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"ChangeLocationConfig");
 //	Builder.AddCheckbox(Msg::ChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
 //	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
 //	Builder.AddCheckbox(Msg::ChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
@@ -308,6 +308,20 @@ static void ConfigureChangeDriveMode()
 //	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
 //	ShowSizeFloat->Indent(3);
 //	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
+
+	auto *ShowMountsItem = Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
+
+	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveExceptions);
+
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn2,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn2);
+
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn3,28);
+	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
+	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn3);
 
 	Builder.AddCheckbox(Msg::ChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
 	Builder.AddCheckbox(Msg::ChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
@@ -445,7 +459,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			ChDiskItem.Clear();
 
 			if (m.path == L"-" ) {
-				ChDiskItem.strName = m.info;
+				ChDiskItem.strName = m.col3;
 				ChDiskItem.Flags|= LIF_SEPARATOR;
 				ChDisk.AddItem(&ChDiskItem);
 				ChDiskItem.Flags&= ~LIF_SEPARATOR;
@@ -455,17 +469,17 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : L' ', m.hotkey ? L' ' : 0, 0};
 				ChDiskItem.strName = HotKeyStr;
 				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
-				if (mounts.max_usage)
+				if (mounts.max_col2)
 				{
 					ChDiskItem.strName+= L' ';
 					ChDiskItem.strName+= BoxSymbols[BS_V1];
 					ChDiskItem.strName+= L' ';
-					ChDiskItem.strName+= FixedSizeStr(m.usage, std::min(mounts.max_usage, (size_t)24), false);
+					ChDiskItem.strName+= FixedSizeStr(m.col2, std::min(mounts.max_col2, (size_t)24), false);
 				}
 				ChDiskItem.strName+= L' ';
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
 				ChDiskItem.strName+= L' ';
-				ChDiskItem.strName+= FixedSizeStr(m.info, std::min(mounts.max_info, (size_t)24), false);
+				ChDiskItem.strName+= FixedSizeStr(m.col3, std::min(mounts.max_col3, (size_t)24), false);
 
 				PanelMenuItem item;
 				wcsncpy(item.location.path, m.path.CPtr(), ARRAYSIZE(item.location.path) - 1);
@@ -655,7 +669,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				}
 				case KEY_CTRL6:
 				case KEY_RCTRL6:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_REMOVABLE;
+					Opt.ChangeDriveMode ^= DRIVE_SHOW_MOUNTS;
 					return SelPos;
 				case KEY_CTRL7:
 				case KEY_RCTRL7:

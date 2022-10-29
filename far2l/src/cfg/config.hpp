@@ -35,6 +35,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FARString.hpp"
 
+enum
+{
+	DRIVE_SHOW_TYPE       = 0x00000001,
+	DRIVE_SHOW_NETNAME    = 0x00000002,
+	DRIVE_SHOW_LABEL      = 0x00000004,
+	DRIVE_SHOW_FILESYSTEM = 0x00000008,
+	DRIVE_SHOW_SIZE       = 0x00000010,
+	DRIVE_SHOW_MOUNTS  = 0x00000020,
+	DRIVE_SHOW_PLUGINS    = 0x00000040,
+	DRIVE_SHOW_BOOKMARKS  = 0x00000080,
+	DRIVE_SHOW_SIZE_FLOAT = 0x00000100,
+	DRIVE_SHOW_REMOTE     = 0x00000200,
+};
+
+
 //  +CASR_* Поведение Ctrl-Alt-Shift для AllCtrlAltShiftRule
 enum
 {
@@ -424,6 +439,8 @@ struct Options
 	int SetupArgv; // количество каталогов в ком.строке ФАРа
 	int ChangeDriveMode;
 	int ChangeDriveDisconnetMode;
+	FARString ChangeDriveExceptions;
+	FARString ChangeDriveColumn2, ChangeDriveColumn3;
 
 	int SaveHistory;
 	int HistoryCount;

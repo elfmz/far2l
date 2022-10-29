@@ -7,12 +7,15 @@ struct Mountpoint
 {
 	std::string path;
 	std::string filesystem;
+	std::string device;
 	bool multi_thread_friendly;
 
 	// following fields valid only if for_location_menu set to true
 	volatile bool bad;
+	volatile bool read_only;
 	volatile unsigned long long total;
 	volatile unsigned long long avail;
+	volatile unsigned long long freee;
 };
 
 struct Mountpoints;

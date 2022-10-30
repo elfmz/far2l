@@ -3,6 +3,8 @@
 #include <vector>
 namespace Environment
 {
+	void UnescapeCLikeSequences(std::string &s);
+
 	// similar to getenv but provides extra resolution of 'special' variables that may miss in normal envs
 	const char *GetVariable(const char *name);
 

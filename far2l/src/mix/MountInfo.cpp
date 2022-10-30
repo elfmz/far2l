@@ -218,6 +218,9 @@ MountInfo::MountInfo(bool for_location_menu)
 		while (std::getline(is, line)) {
 			parts.clear();
 			StrExplode(parts, line, " \t");
+			for (auto &part : parts) {
+				Environment::UnescapeCLikeSequences(part);
+			}
 			if (parts.size() > 1 && StrStartsFrom(parts[1], "/")
 			  && (!for_location_menu || !lme.Match(parts[1].c_str()))) {
 				bool multi_thread_friendly;

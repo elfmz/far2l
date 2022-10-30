@@ -120,21 +120,21 @@ static void UnescapeCLikeSequence(std::string &s, size_t &i)
 		// \x## where ## is a hexadecimal char code
 		case 'x': if (i + 1 < s.size()) {
 				unsigned long code = strtol(s.substr(i, 2).c_str(), nullptr, 16);
-				i++;
+				i+= 2;
 				ReplaceSubstringAt(s, i - 4, i, StrPrintf("%c", (char)(unsigned char)code));
 			} break;
 
 		// \u#### where #### is a hexadecimal UTF16 code
 		case 'u': if (i + 3 < s.size()) {
 				unsigned long code = strtol(s.substr(i, 4).c_str(), nullptr, 16);
-				i+= 3;
+				i+= 4;
 				ReplaceSubstringAt(s, i - 6, i, StrPrintf("%lc", (wchar_t)code));
 			} break;
 
-		// \u######## where ######## is a hexadecimal UTF32 code
+		// \U######## where ######## is a hexadecimal UTF32 code
 		case 'U': if (i + 7 < s.size()) {
 				unsigned long code = strtol(s.substr(i, 8).c_str(), nullptr, 16);
-				i+= 7;
+				i+= 8;
 				ReplaceSubstringAt(s, i - 10, i, StrPrintf("%lc", (wchar_t)code));
 			} break;
 
@@ -142,11 +142,23 @@ static void UnescapeCLikeSequence(std::string &s, size_t &i)
 		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			if (i + 1 < s.size()) {
 				unsigned long code = strtol(s.substr(i - 1, 3).c_str(), nullptr, 8);
-				i++;
+				i+= 2;
 				ReplaceSubstringAt(s, i - 4, i, StrPrintf("%c", (char)(unsigned char)code));
 			} break;
 	}
 	--i; // adjust i back
+}
+
+void UnescapeCLikeSequences(std::string &s)
+{
+	if (s.size() > 1) {
+		for (size_t i = s.size() - 1; i > 0; --i) {
+			if (s[i - 1] == '\\') {
+				size_t j = i;
+				UnescapeCLikeSequence(s, j);
+			}
+		}
+	}
 }
 
 // nasty and allmighty function that actually implements ExpandString and ParseCommandLine

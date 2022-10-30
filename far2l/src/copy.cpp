@@ -369,10 +369,10 @@ void CopyProgress::SetNames(const wchar_t *Src,const wchar_t *Dst)
 	}
 
 	FormatString FString;
-	FString<<fmt::LeftAlign()<<fmt::Expand(Rect.Right-Rect.Left-9)<<fmt::Truncate(Rect.Right-Rect.Left-9)<<Src;
+	FString << fmt::Cells() << fmt::LeftAlign() << fmt::Size(Rect.Right - Rect.Left - 9) << Src;
 	strSrc=std::move(FString.strValue());
 	FString.Clear();
-	FString<<fmt::LeftAlign()<<fmt::Expand(Rect.Right-Rect.Left-9)<<fmt::Truncate(Rect.Right-Rect.Left-9)<<Dst;
+	FString << fmt::Cells() << fmt::LeftAlign() << fmt::Size(Rect.Right - Rect.Left - 9) << Dst;
 	strDst=std::move(FString.strValue());
 
 	if (Total)
@@ -3289,9 +3289,11 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 				strDestSizeText<<DestSize;
 				FARString strDateText, strTimeText;
 				ConvertDate(SrcLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-				strSrcFileStr<<fmt::LeftAlign()<<fmt::Expand(17)<<Msg::CopySource<<L" "<<fmt::Expand(25)<<fmt::Truncate(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+				strSrcFileStr << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(17) << Msg::CopySource
+					<< L" " << fmt::Size(25) << strSrcSizeText << L" " << strDateText << L" " << strTimeText;
 				ConvertDate(DestData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-				strDestFileStr<<fmt::LeftAlign()<<fmt::Expand(17)<<Msg::CopyDest<<L" "<<fmt::Expand(25)<<fmt::Truncate(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+				strDestFileStr << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(17) << Msg::CopyDest
+					<< L" " << fmt::Size(25) << strDestSizeText << L" " << strDateText << L" " << strTimeText;
 
 				WarnCopyDlgData[WDLG_SRCFILEBTN].Data=strSrcFileStr;
 				WarnCopyDlgData[WDLG_DSTFILEBTN].Data=strDestFileStr;
@@ -3389,9 +3391,9 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData,
 					FormatString strDestSizeText;
 					strDestSizeText<<DestSize;
 					ConvertDate(SrcData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-					strSrcFileStr<<fmt::LeftAlign()<<fmt::Expand(17)<<Msg::CopySource<<L" "<<fmt::Expand(25)<<fmt::Truncate(25)<<strSrcSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+					strSrcFileStr << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(17) << Msg::CopySource << L" " << fmt::Size(25) << strSrcSizeText << L" " << strDateText << L" " << strTimeText;
 					ConvertDate(DestData.ftLastWriteTime,strDateText,strTimeText,8,FALSE,FALSE,TRUE,TRUE);
-					strDestFileStr<<fmt::LeftAlign()<<fmt::Expand(17)<<Msg::CopyDest<<L" "<<fmt::Expand(25)<<fmt::Truncate(25)<<strDestSizeText<<L" "<<strDateText<<L" "<<strTimeText;
+					strDestFileStr << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(17) << Msg::CopyDest << L" " << fmt::Size(25) << strDestSizeText << L" " << strDateText << L" " << strTimeText;
 					WarnCopyDlgData[WDLG_SRCFILEBTN].Data=strSrcFileStr;
 					WarnCopyDlgData[WDLG_DSTFILEBTN].Data=strDestFileStr;
 					WarnCopyDlgData[WDLG_TEXT].Data=Msg::CopyFileRO;

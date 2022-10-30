@@ -839,7 +839,6 @@ int Edit::ProcessKey(int Key)
 					Select(-1,0);
 					Flags.Set(FEDITLINE_MARKINGBLOCK);
 				}
-				fprintf(stderr, "!!! SHIFT+LEFT SelStart=%d SelEnd=%d CurPos=%d\n", SelStart, SelEnd, CurPos);
 
 				if (SelStart!=-1 && SelStart<=CurPos)
 					Select(SelStart,CurPos);
@@ -869,8 +868,6 @@ int Edit::ProcessKey(int Key)
 				Select(-1,0);
 				Flags.Set(FEDITLINE_MARKINGBLOCK);
 			}
-
-			fprintf(stderr, "!!! SHIFT+RIGHT SelStart=%d SelEnd=%d CurPos=%d\n", SelStart, SelEnd, CurPos);
 
 			if ((SelStart!=-1 && SelEnd==-1) || SelEnd>CurPos)
 			{

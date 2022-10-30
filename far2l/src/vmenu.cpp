@@ -1731,7 +1731,7 @@ void VMenu::DrawTitles()
 		GotoXY(X1+(X2-X1-1-WidthTitle)/2,Y1);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Expand(WidthTitle) << fmt::Truncate(WidthTitle) << strDisplayTitle << L" ";
+		FS << L" " << fmt::Size(WidthTitle) << strDisplayTitle << L" ";
 	}
 
 	if (!strBottomTitle.IsEmpty())
@@ -1744,7 +1744,7 @@ void VMenu::DrawTitles()
 		GotoXY(X1+(X2-X1-1-WidthTitle)/2,Y2);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Expand(WidthTitle) << fmt::Truncate(WidthTitle) << strBottomTitle << L" ";
+		FS << L" " << fmt::Size(WidthTitle) << strBottomTitle << L" ";
 	}
 }
 
@@ -1947,7 +1947,7 @@ void VMenu::ShowMenu(bool IsParent)
 						ItemWidth = X2-X1-3;
 
 					GotoXY(X1+(X2-X1-1-ItemWidth)/2,Y);
-					FS << L" " << fmt::LeftAlign() << fmt::Expand(ItemWidth) << fmt::Truncate(ItemWidth) << Item[I]->strName << L" ";
+					FS << L" " << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
 				}
 
 				strTmpStr.ReleaseBuffer();

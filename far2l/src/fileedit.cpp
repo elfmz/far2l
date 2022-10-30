@@ -2301,7 +2301,7 @@ void FileEditor::ShowStatus()
 	if (StatusWidth<0)
 		StatusWidth=0;
 
-	FS<<fmt::LeftAlign()<<fmt::Expand(StatusWidth)<<fmt::Truncate(StatusWidth)<<FString.strValue();
+	FS<<fmt::LeftAlign()<<fmt::Size(StatusWidth)<<FString.strValue();
 	{
 		const wchar_t *Str;
 		int Length;

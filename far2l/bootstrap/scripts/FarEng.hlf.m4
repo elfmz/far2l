@@ -55,6 +55,7 @@ $^#File and archive manager#
    ~Dialog settings~@DialogSettings@
    ~Menu settings~@VMenuSettings@
    ~Command line settings~@CmdlineSettings@
+   ~Locations menu settings~@ChangeLocationConfig@
 
    ~Files highlighting and sort groups~@Highlight@
    ~File descriptions~@FileDiz@
@@ -2910,13 +2911,11 @@ $ #Location#
     This menu allows to change the current location of a panel, unmount mountpoint 
 or open a new ~plugin~@Plugins@ panel.
 
-    Select the item with the corresponding drive letter to change the drive or
-the item with the plugin name to create a new plugin panel. If the panel type
-is not a ~file panel~@FilePanel@, it will be changed to the file panel.
+    Select the item and press Enter to change the location to specified filesystem path
+or plugin. If the panel type is not a ~file panel~@FilePanel@, it will be changed to the
+file panel if you chosen filesystem location, or selected Plugin panel will be opened.
 
-    #Ctrl-A#, #F4# hotkeys invoke the ~file attributes~@FileAttrDlg@.
-
-    #F4# key can be used to assign a hotkey to plugin item.
+    #F4# key can be used to assign a hotkey to item.
 
     #Del# key can be used:
 
@@ -2928,40 +2927,19 @@ is not a ~file panel~@FilePanel@, it will be changed to the file panel.
 
     #Ctrl-1# - #Ctrl-9# switch the display of different information:
 
-    Ctrl-1 - disk type;
-    Ctrl-2 - network name/path associated with a SUBST disk/path to virtual disk container;
-    Ctrl-3 - disk label;
-    Ctrl-4 - file system;
-    Ctrl-5 - total and free disk size
-             (this option has two display modes, press twice to see);
-    Ctrl-6 - display of removable disk parameters;
-    Ctrl-7 - display of plugin items;
-    Ctrl-8 - display of CD parameters;
-    Ctrl-9 - display of network parameters.
+    #F9# shows a ~dialog for configuring Location menu~@ChangeLocationConfig@.
 
     #Location# menu settings are saved in the FAR2L configuration.
-
-    #F9# shows a dialog for configuring the display of that
-information.
 
     If the option "~Use Ctrl-PgUp to change drive~@InterfSettings@" is enabled,
 pressing #Ctrl-PgUp# works the same as pressing #Esc# - cancels drive selection
 and closes the menu.
 
-    Pressing #Shift-Enter# invokes the Windows Explorer showing the root
+    Pressing #Shift-Enter# invokes the GUI file manager showing the root
 directory of the selected drives (works only for disk drives and not for
 plugins).
 
     #Ctrl-R# allows to refresh the disk selection menu.
-
-    If "#CD drive type#" mode is enabled (#Ctrl-8#), FAR2L will attempt to
-determine the type of each of the CD drives available in the system. Known
-types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW and DVD-RAM.
-This function is available only for users either with administrative privileges
-or all local users, when it's stated explicitly in the Local Policy Editor
-(to do this, run a #secpol.msc# from the command prompt, and set the '#Local#
-#Policies/Security Options/Devices: Restrict CD-ROM access to locally logged-on#
-#user only#' setting to '#Enabled#').
 
     #Alt-Shift-F9# allows you to ~configure plugins~@PluginsConfig@ (it works only if
 display of plugin items is enabled).
@@ -2972,9 +2950,18 @@ currently selected plugin.
     #Shift-F1# in the plugins list displays the context-sensitive help of the
 currently selected plugin, if the plugin has a help file.
 
-    The #A# symbol in leftmost menu column means that the corresponding plugin is
-written for Far 1.7x and it does not support all possibilities available in
-Far 2 (these are, in particular, Unicode characters in filenames and in editor).
+    You can specify manual/scripted source of additional items in Location menu that
+will be appended to mountpoints entries. For that you need to create text file under
+path #~~/.config/far2l/favorites# and that file must contain lines, each line can have
+one or two or three parts separated by <TAB> character. First part represent path,
+second and third parts are optional and represent information rendered in additional
+columns. Its possible to insert separator with optional title by specifing line
+with first part having only '-' character and another part (if present) defining
+title text.
+Note that favorites file can contain shell environment variables denoted with $
+character like $HOME, and shell commands substitution, i.e. $(/path/to/some/script.sh)
+will invoke that script.sh and its output will be embedded into content of this file
+during processing. This allows to implement custom dynamic locations list composing.
 
    See also the list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
 
@@ -4248,7 +4235,8 @@ list.
 
 @ChangeLocationConfig
 $ #Change location configuration#
-    Here you can choose specific kind of items to be included in change location
+    This dialog can be opened by pressing F9 key in Location menu opened by Alt+F1/F2.
+    Here you can choose specific kind of items to be included in change Location
 menu: #mountpoints#, #bookmarks# and #plugins#.
     Also you can customize mountpoints items by specifing wildcards exceptions
 and changing templates of what should be included into additional columns.

@@ -964,8 +964,8 @@ int Edit::ProcessKey(int Key)
 			if (CurPos<=0)
 				return FALSE;
 
-			PrevCurPos=CurPos;
-			CurPos--;
+			PrevCurPos = CurPos;
+			CurPos = CalcPosPrev();
 
 			if (CurPos<=LeftPos)
 			{
@@ -1249,9 +1249,15 @@ int Edit::ProcessKey(int Key)
 			}
 			else
 			{
-				wmemmove(Str+CurPos,Str+CurPos+1,StrSize-CurPos);
-				StrSize--;
-				Str=(wchar_t *)realloc(Str,(StrSize+1)*sizeof(wchar_t));
+				auto NextPos = CalcPosNext();
+				if (NextPos > CurPos) {
+					wmemmove(Str + CurPos, Str + NextPos, (StrSize - NextPos) + 1);
+					StrSize-= (NextPos - CurPos);
+					wchar_t *NewStr = (wchar_t *)realloc(Str, (StrSize + 1) * sizeof(wchar_t));
+					if (NewStr) {
+						Str = NewStr;
+					}
+				}
 			}
 
 			Changed(true);

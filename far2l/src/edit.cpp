@@ -1209,7 +1209,7 @@ int Edit::ProcessKey(int Key)
 		case KEY_CTRLD:
 		{
 			PrevCurPos = CurPos;
-			CurPos = CalcPosNext();
+			CurPos = CalcPosNext((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
 			Show();
 			return TRUE;
 		}

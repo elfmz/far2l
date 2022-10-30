@@ -193,8 +193,18 @@ class Edit:public ScreenObject
 		int ProcessInsPath(int Key,int PrevSelStart=-1,int PrevSelEnd=0);
 
 		int RealPosToCell(int PrevLength, int PrevPos, int Pos, int* CorrectPos);
-
+		void SanitizeSelectionRange();
 		inline const wchar_t* WordDiv(void) {return strWordDiv->CPtr();};
+
+	protected:
+		int CalcRTrimmedStrSize() const;
+
+		int CalcPosNextTo(int Pos, int LimitPos = -1) const;
+		int CalcPosPrevTo(int Pos) const;
+
+		inline int CalcPosNext(int LimitPos = -1) const { return CalcPosNextTo(CurPos, LimitPos); }
+		inline int CalcPosPrev() const { return CalcPosPrevTo(CurPos); }
+
 	public:
 		Edit(ScreenObject *pOwner = nullptr, Callback* aCallback = nullptr, bool bAllocateData = true);
 		virtual ~Edit();

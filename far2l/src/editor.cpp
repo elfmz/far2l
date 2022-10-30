@@ -1160,11 +1160,11 @@ int Editor::ProcessKey(int Key)
 			{
 				if (SelAtBeginning || SelFirst)
 				{
-					CurLine->Select(SelStart-1,SelEnd);
+					CurLine->Select(CurLine->CalcPosPrevTo(SelStart), SelEnd);
 				}
 				else
 				{
-					CurLine->Select(SelStart,SelEnd-1);
+					CurLine->Select(SelStart, CurLine->CalcPosPrevTo(SelEnd));
 				}
 			}
 
@@ -1194,11 +1194,11 @@ int Editor::ProcessKey(int Key)
 
 			if (SelAtBeginning)
 			{
-				CurLine->Select(SelStart+1,SelEnd);
+				CurLine->Select(CurLine->CalcPosNextTo(SelStart), SelEnd);
 			}
 			else
 			{
-				CurLine->Select(SelStart,SelEnd+1);
+				CurLine->Select(SelStart, CurLine->CalcPosNextTo(SelEnd));
 			}
 
 			Edit *OldCur=CurLine;

@@ -40,6 +40,14 @@ namespace fmt
 	struct Cells { }; // makes modifiers operate in screen cells but not characters
 	struct Chars { }; // makes modifiers operate in characters but not screen cells
 
+	class Skip
+	{
+			size_t Value;
+		public:
+			Skip(size_t Value=static_cast<size_t>(-1)) {this->Value=Value;}
+			size_t GetValue()const {return Value;}
+	};
+
 	class Expand
 	{
 			size_t Value;
@@ -87,6 +95,7 @@ namespace fmt
 class BaseFormat
 {
 		bool _Cells;
+		size_t _Skip;
 		size_t _Expand;
 		size_t _Truncate;
 		WCHAR _FillChar;
@@ -104,6 +113,7 @@ class BaseFormat
 
 		// attributes
 		inline void SetCells(bool Cells = false) { _Cells = Cells; }
+		inline void SetSkip(size_t Skip = 0) { _Skip = Skip; }
 		inline void SetTruncate(size_t Truncate = static_cast<size_t>(-1)) { _Truncate=Truncate; }
 		inline void SetExpand(size_t Expand = 0) { _Expand = Expand; }
 		inline void SetAlign(fmt::AlignType Align = fmt::A_RIGHT) { _Align = Align; }
@@ -129,6 +139,7 @@ class BaseFormat
 		// manipulators
 		BaseFormat& operator<<(const fmt::Cells&);
 		BaseFormat& operator<<(const fmt::Chars&);
+		BaseFormat& operator<<(const fmt::Skip& Manipulator);
 		BaseFormat& operator<<(const fmt::Expand& Manipulator);
 		BaseFormat& operator<<(const fmt::Truncate& Manipulator);
 		BaseFormat& operator<<(const fmt::Size& Manipulator);

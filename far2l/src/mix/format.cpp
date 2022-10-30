@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void BaseFormat::Reset()
 {
 	_Cells = false;
+	_Skip = 0;
 	_Expand = 0;
 	_Truncate = static_cast<size_t>(-1);
 	_FillChar = L' ';
@@ -47,6 +48,23 @@ void BaseFormat::Reset()
 
 void BaseFormat::Put(LPCWSTR Data, size_t Length)
 {
+	if (_Skip != 0) {
+		size_t SkipChars;
+		if (_Cells) {
+			size_t ng = _Skip;
+			SkipChars = FarStrSizeOfCells(Data, Length, ng, true);
+		} else {
+			SkipChars = _Skip;
+		}
+		if (SkipChars < Length) {
+			Data+= SkipChars;
+			Length-= SkipChars;
+		} else {
+			Data+= Length;
+			Length = 0;
+		}
+	}
+
 	if (_Truncate != static_cast<size_t>(-1))
 	{
 		if (_Cells)
@@ -126,6 +144,12 @@ BaseFormat& BaseFormat::operator<<(const fmt::Chars&)
 BaseFormat& BaseFormat::operator<<(const fmt::Cells&)
 {
 	SetCells(true);
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Skip& Manipulator)
+{
+	SetSkip(Manipulator.GetValue());
 	return *this;
 }
 

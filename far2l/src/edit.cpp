@@ -365,22 +365,14 @@ void Edit::FastShow()
 	if (Mask && *Mask)
 		RefreshStrByMask();
 
-	CursorPos=CellCurPos;
-	int RealLeftPos=CellPosToReal(LeftPos);
-	size_t OutStrCells = EditLength;
-	const size_t OutStrChars = (StrSize > RealLeftPos)
-		? FarStrSizeOfCells(Str + RealLeftPos, StrSize - RealLeftPos, OutStrCells, false)
-		: (OutStrCells = 0);
-	OutStr.clear();
+	CursorPos = CellCurPos;
+	int RealLeftPos = CellPosToReal(LeftPos);
 
-	if (Flags.Check(FEDITLINE_PASSWORDMODE))
+	OutStr.clear();
+	size_t OutStrCells = 0;
+	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i)
 	{
-		OutStr.resize(OutStrCells);
-		std::fill(OutStr.begin(), OutStr.end(), L'*');
-	}
-	else for (size_t i = OutStrCells = 0; i < OutStrChars; ++i)
-	{
-		auto wc = Str[RealLeftPos + i];
+		auto wc = Str[i];
 		if (wc == L' ' && Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE))
 		{
 			wc = L'\xB7';
@@ -389,7 +381,7 @@ void Edit::FastShow()
 		if (wc == L'\t')
 		{
 			for (int j = 0, S = TabSize - ((LeftPos + OutStrCells) % TabSize);
-				j < S && int(OutStrCells) <= EditLength;
+				j < S && int(OutStrCells) < EditLength;
 				++j, ++OutStrCells)
 			{
 				OutStr.emplace_back(
@@ -399,12 +391,23 @@ void Edit::FastShow()
 		}
 		else
 		{
-			OutStr.emplace_back(wc ? wc : L' ');
 			if (IsCharFullWidth(wc))
+			{
+				if (int(OutStrCells + 2) > EditLength)
+					break;
 				OutStrCells+= 2;
-			else if (!IsCharXxxfix(wc))
+			}
+			else
 				OutStrCells++;
+
+			OutStr.emplace_back(wc ? wc : L' ');
 		}
+	}
+
+	if (Flags.Check(FEDITLINE_PASSWORDMODE))
+	{
+		OutStr.resize(OutStrCells);
+		std::fill(OutStr.begin(), OutStr.end(), L'*');
 	}
 
 	OutStr.emplace_back(0);
@@ -477,13 +480,13 @@ void Edit::FastShow()
 
 			if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 			{
-				FS << fmt::Cells() << fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data() + (SelStart - RealLeftPos);
+				FS << fmt::Cells() << fmt::Skip(CellSelStart) << fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data();
 
-				if (CellSelEnd<EditLength)
+				if (CellSelEnd < EditLength)
 				{
 					//SetColor(Flags.Check(FEDITLINE_CLEARFLAG) ? SelColor:Color);
 					SetColor(Color);
-					Text(OutStr.data() + (SelEnd - RealLeftPos));
+					FS << fmt::Cells() << fmt::Skip(CellSelEnd) << OutStr.data();
 				}
 			}
 			else
@@ -656,6 +659,46 @@ int64_t Edit::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
+int Edit::CalcRTrimmedStrSize() const
+{
+	int TrimmedStrSize = StrSize;
+	while (TrimmedStrSize > 0 && (IsSpace(Str[TrimmedStrSize - 1]) || IsEol(Str[TrimmedStrSize - 1])))
+	{
+		--TrimmedStrSize;
+	}
+	return TrimmedStrSize;
+}
+
+int Edit::CalcPosNextTo(int Pos, int LimitPos) const
+{
+	if (LimitPos != -1)
+	{
+		if (Pos < LimitPos) do
+		{
+			Pos++;
+		} while (Pos < LimitPos && Pos < StrSize && IsCharXxxfix(Str[Pos]));
+	}
+	else do
+	{
+		Pos++;
+	} while (Pos < StrSize && IsCharXxxfix(Str[Pos]));
+
+	return Pos;
+}
+
+int Edit::CalcPosPrevTo(int Pos) const
+{
+	if (Pos <= 0)
+		return 0;
+
+	do
+	{
+		--Pos;
+	} while (Pos > 0 && IsCharXxxfix(Str[Pos]));
+
+	return Pos;
+}
+
 int Edit::ProcessKey(int Key)
 {
 	switch (Key)
@@ -796,12 +839,13 @@ int Edit::ProcessKey(int Key)
 					Select(-1,0);
 					Flags.Set(FEDITLINE_MARKINGBLOCK);
 				}
+				fprintf(stderr, "!!! SHIFT+LEFT SelStart=%d SelEnd=%d CurPos=%d\n", SelStart, SelEnd, CurPos);
 
 				if (SelStart!=-1 && SelStart<=CurPos)
 					Select(SelStart,CurPos);
 				else
 				{
-					int EndPos=CurPos+1;
+					int EndPos = CalcPosNext((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
 					int NewStartPos=CurPos;
 
 					if (EndPos>StrSize)
@@ -826,15 +870,17 @@ int Edit::ProcessKey(int Key)
 				Flags.Set(FEDITLINE_MARKINGBLOCK);
 			}
 
+			fprintf(stderr, "!!! SHIFT+RIGHT SelStart=%d SelEnd=%d CurPos=%d\n", SelStart, SelEnd, CurPos);
+
 			if ((SelStart!=-1 && SelEnd==-1) || SelEnd>CurPos)
 			{
-				if (CurPos+1==SelEnd)
+				if (CalcPosNext() == SelEnd)
 					Select(-1,0);
 				else
-					Select(CurPos+1,SelEnd);
+					Select(CalcPosNext(), SelEnd);
 			}
 			else
-				AddSelect(CurPos,CurPos+1);
+				AddSelect(CurPos, CalcPosNext());
 
 			RecurseProcessKey(KEY_RIGHT);
 			return TRUE;
@@ -899,21 +945,7 @@ int Edit::ProcessKey(int Key)
 		case KEY_SHIFTEND:  case KEY_SHIFTNUMPAD1:
 		{
 			Lock();
-			int Len;
-
-			if (Mask && *Mask)
-			{
-				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
-
-				if (!ShortStr)
-					return FALSE;
-
-				far_wcsncpy(ShortStr,Str,StrSize+1);
-				Len=StrLength(RemoveTrailingSpaces(ShortStr));
-				delete[] ShortStr;
-			}
-			else
-				Len=StrSize;
+			int Len = (Mask && *Mask) ? CalcRTrimmedStrSize() : StrSize;
 
 			int LastCurPos=CurPos;
 
@@ -1159,22 +1191,8 @@ int Edit::ProcessKey(int Key)
 		case KEY_CTRLEND:     case KEY_CTRLNUMPAD1:
 		case KEY_CTRLSHIFTEND:     case KEY_CTRLSHIFTNUMPAD1:
 		{
-			PrevCurPos=CurPos;
-
-			if (Mask && *Mask)
-			{
-				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
-
-				if (!ShortStr)
-					return FALSE;
-
-				far_wcsncpy(ShortStr,Str,StrSize+1);
-				CurPos=StrLength(RemoveTrailingSpaces(ShortStr));
-				delete[] ShortStr;
-			}
-			else
-				CurPos=StrSize;
-
+			PrevCurPos = CurPos;
+			CurPos = (Mask && *Mask) ? CalcRTrimmedStrSize() : StrSize;
 			Show();
 			return TRUE;
 		}
@@ -1183,10 +1201,8 @@ int Edit::ProcessKey(int Key)
 		{
 			if (CurPos>0)
 			{
-				PrevCurPos=CurPos;
-				do {
-					CurPos--;
-				} while (CurPos > 0 && IsCharXxxfix(Str[CurPos]));
+				PrevCurPos = CurPos;
+				CurPos = CalcPosPrev();
 				Show();
 			}
 
@@ -1196,18 +1212,7 @@ int Edit::ProcessKey(int Key)
 		case KEY_CTRLD:
 		{
 			PrevCurPos = CurPos;
-
-			if (Mask && *Mask)
-			{
-				std::wstring ShortStr(Str, StrSize);
-				StrTrimRight(ShortStr, " \t\r\n");
-				if (CurPos < int(ShortStr.size())) do {
-					CurPos++;
-				} while (CurPos < int(ShortStr.size()) && IsCharXxxfix(Str[CurPos]));
-			}
-			else do {
-				CurPos++;
-			} while (CurPos < StrSize && IsCharXxxfix(Str[CurPos]));
+			CurPos = CalcPosNext();
 			Show();
 			return TRUE;
 		}
@@ -1263,8 +1268,7 @@ int Edit::ProcessKey(int Key)
 			if (CurPos>StrSize)
 				CurPos=StrSize;
 
-			if (CurPos>0)
-				CurPos--;
+			CurPos = CalcPosPrev();
 
 			while (CurPos>0 && !(!IsWordDiv(WordDiv(), Str[CurPos]) &&
 			                     IsWordDiv(WordDiv(), Str[CurPos-1]) && !IsSpace(Str[CurPos])))
@@ -1288,22 +1292,13 @@ int Edit::ProcessKey(int Key)
 
 			if (Mask && *Mask)
 			{
-				wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
-
-				if (!ShortStr)
-					return FALSE;
-
-				far_wcsncpy(ShortStr,Str,StrSize+1);
-				Len=StrLength(RemoveTrailingSpaces(ShortStr));
-				delete[] ShortStr;
-
-				if (Len>CurPos)
-					CurPos++;
+				Len = CalcRTrimmedStrSize();
+				CurPos = CalcPosNext(Len);
 			}
 			else
 			{
-				Len=StrSize;
-				CurPos++;
+				Len = StrSize;
+				CurPos = CalcPosNext();
 			}
 
 			while (CurPos<Len/*StrSize*/ && !(IsWordDiv(WordDiv(),Str[CurPos]) &&
@@ -1338,15 +1333,8 @@ int Edit::ProcessKey(int Key)
 				{
 					if (Mask && *Mask)
 					{
-						wchar_t *ShortStr=new(std::nothrow) wchar_t[StrSize+1];
-
-						if (!ShortStr)
-							return FALSE;
-
-						far_wcsncpy(ShortStr,Str,StrSize+1);
-						RemoveTrailingSpaces(ShortStr);
-						CopyToClipboard(ShortStr);
-						delete[] ShortStr;
+						std::wstring TrimmedStr(Str, CalcRTrimmedStrSize());
+						CopyToClipboard(TrimmedStr.c_str());
 					}
 					else
 					{
@@ -2197,10 +2185,9 @@ void Edit::SetCellCurPos(int NewPos)
 {
 	if (Mask && *Mask)
 	{
-		std::wstring ShortStr(Str, StrSize);
-		StrTrimRight(ShortStr, " \t\r\n");
-		if (NewPos > (int)ShortStr.size())
-			NewPos = (int)ShortStr.size();
+		int NewPosLimit = CalcRTrimmedStrSize();
+		if (NewPos > NewPosLimit)
+			NewPos = NewPosLimit;
 	}
 
 	CurPos = CellPosToReal(NewPos);	
@@ -2304,48 +2291,54 @@ int Edit::CellPosToReal(int Pos)
 	return Index;
 }
 
-
-void Edit::Select(int Start,int End)
+void Edit::SanitizeSelectionRange()
 {
-	SelStart=Start;
-	SelEnd=End;
+	if (SelEnd >= SelStart && SelStart >= 0)
+	{
+		while (SelStart > 0 && IsCharXxxfix(Str[SelStart]))
+			--SelStart;
+
+		while (SelEnd < StrSize && IsCharXxxfix(Str[SelEnd]))
+			++SelEnd;
+	}
 
 	/* $ 24.06.2002 SKV
 	   Если начало выделения за концом строки, надо выделение снять.
 	   17.09.2002 возвращаю обратно. Глюкодром.
 	*/
-	if (SelEnd<SelStart && SelEnd!=-1)
+	if (SelEnd < SelStart && SelEnd != -1)
 	{
-		SelStart=-1;
-		SelEnd=0;
+		SelStart = -1;
+		SelEnd = 0;
 	}
 
-	if (SelStart==-1 && SelEnd==-1)
+	if (SelStart == -1 && SelEnd == -1)
 	{
-		SelStart=-1;
-		SelEnd=0;
+		SelStart = -1;
+		SelEnd = 0;
 	}
+}
 
-//  if (SelEnd>StrSize)
-//    SelEnd=StrSize;
+void Edit::Select(int Start,int End)
+{
+	SelStart = Start;
+	SelEnd = End;
+
+	SanitizeSelectionRange();
 }
 
 void Edit::AddSelect(int Start,int End)
 {
-	if (Start<SelStart || SelStart==-1)
-		SelStart=Start;
+	if (Start < SelStart || SelStart == -1)
+		SelStart = Start;
 
-	if (End==-1 || (End>SelEnd && SelEnd!=-1))
-		SelEnd=End;
+	if (End == -1 || (End > SelEnd && SelEnd != -1))
+		SelEnd = End;
 
-	if (SelEnd>StrSize)
-		SelEnd=StrSize;
+	if (SelEnd > StrSize)
+		SelEnd = StrSize;
 
-	if (SelEnd<SelStart && SelEnd!=-1)
-	{
-		SelStart=-1;
-		SelEnd=0;
-	}
+	SanitizeSelectionRange();
 }
 
 

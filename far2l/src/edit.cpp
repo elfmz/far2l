@@ -397,7 +397,7 @@ void Edit::FastShow()
 					break;
 				OutStrCells+= 2;
 			}
-			else
+			else if (!IsCharXxxfix(wc) || i == RealLeftPos)
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');

@@ -19,7 +19,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	int _stdin = 0, _stdout = 1;
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
-	wchar_t _stable_width_chars_cache[0x200]{};
 
 
 	enum {
@@ -87,7 +86,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 
-	bool IsUnstableWidthCharCached(wchar_t c);
 	void WriteLineDebugColored(TTYOutput &tty_out, const CHAR_INFO *line, unsigned int cnt, WORD attrs);
 
 	void DispatchTermResized(TTYOutput &tty_out);

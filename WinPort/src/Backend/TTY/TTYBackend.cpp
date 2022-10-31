@@ -380,18 +380,6 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 	}
 }
 
-bool TTYBackend::IsUnstableWidthCharCached(wchar_t c)
-{
-	const size_t h = size_t(c) % ARRAYSIZE(_stable_width_chars_cache);
-	if (_stable_width_chars_cache[h] != c) {
-		if (IsCharUnstableWidth(c)) {
-			return true;
-		}
-		_stable_width_chars_cache[h] = c;
-	}
-	return false;
-}
-
 //#define LOG_OUTPUT_COUNT
 void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 {
@@ -402,7 +390,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 	SMALL_RECT screen_rect = {0, 0, CheckedCast<SHORT>(_cur_width - 1), CheckedCast<SHORT>(_cur_height - 1)};
 	g_winport_con_out->Read(&_cur_output[0], data_size, data_pos, screen_rect);
 #ifdef LOG_OUTPUT_COUNT
-	unsigned long printed_count = 0, printed_skipable = 0, forced_by_unstable = 0;
+	unsigned long printed_count = 0, printed_skipable = 0;
 #endif
 	if (_cur_output.empty()) {
 		;
@@ -466,9 +454,9 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 		}
 	}
 #ifdef LOG_OUTPUT_COUNT
-	fprintf(stderr, "!!! OUTPUT_COUNT: (normal=%lu + skipable=%lu + unstable=%lu) = %lu of %lu\n",
-		printed_count, printed_skipable, forced_by_unstable,
-		printed_count + printed_skipable + forced_by_unstable,
+	fprintf(stderr, "!!! OUTPUT_COUNT: (normal=%lu + skipable=%lu) = %lu of %lu\n",
+		printed_count, printed_skipable,
+		printed_count + printed_skipable,
 		(unsigned long)_cur_output.size());
 #endif
 	_prev_width = _cur_width;

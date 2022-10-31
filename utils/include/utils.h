@@ -340,5 +340,3 @@ bool IsCharFullWidth(wchar_t c);
 bool IsCharPrefix(wchar_t c);
 bool IsCharSuffix(wchar_t c);
 bool IsCharXxxfix(wchar_t c);
-
-bool IsCharUnstableWidth(wchar_t c);

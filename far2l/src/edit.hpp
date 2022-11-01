@@ -199,11 +199,11 @@ class Edit:public ScreenObject
 	protected:
 		int CalcRTrimmedStrSize() const;
 
-		int CalcPosNextTo(int Pos, int LimitPos = -1) const;
-		int CalcPosPrevTo(int Pos) const;
+		int CalcPosFwdTo(int Pos, int LimitPos = -1) const;
+		int CalcPosBwdTo(int Pos) const;
 
-		inline int CalcPosNext(int LimitPos = -1) const { return CalcPosNextTo(CurPos, LimitPos); }
-		inline int CalcPosPrev() const { return CalcPosPrevTo(CurPos); }
+		inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
+		inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
 
 	public:
 		Edit(ScreenObject *pOwner = nullptr, Callback* aCallback = nullptr, bool bAllocateData = true);

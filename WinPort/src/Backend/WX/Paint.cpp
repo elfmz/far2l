@@ -122,7 +122,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 }
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
-	_window(window), _font_width(12), _font_height(16), _font_thickness(2),
+	_window(window), _font_width(12), _font_height(16), _font_descent(0), _font_thickness(2),
 	_buffered_paint(false), _sharp(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
@@ -142,18 +142,20 @@ class FontSizeInspector
 	wxMemoryDC _dc;
 	
 	int _max_width, _prev_width;
-	int _max_height, _prev_height;	
+	int _max_height, _prev_height;
+	int _max_descent;
 	bool _unstable_size, _fractional_size;
 	
 	void InspectChar(const wchar_t c)
 	{
 		wchar_t wz[2] = { c, 0};
-		wxSize char_size = _dc.GetTextExtent(wz);
-		const int width = char_size.GetWidth();
-		const int height = char_size.GetHeight();
+		wxCoord width = 0, height = 0, descent = 0;
+		_dc.GetTextExtent(wz, &width, &height, &descent);
 		
 		if (_max_width < width) _max_width = width;
 		if (_max_height < height) _max_height = height;
+		if (_max_descent < descent) _max_descent = descent;
+
 		if ( _prev_width != width ) {
 			if (_prev_width!=-1) 
 				_unstable_size = true;
@@ -200,6 +202,7 @@ class FontSizeInspector
 	bool IsFractionalSize() const { return _fractional_size; }
 	int GetMaxWidth() const { return _max_width; }
 	int GetMaxHeight() const { return _max_height; }
+	int GetMaxDescent() const { return _max_descent; }
 };
 
 
@@ -214,6 +217,7 @@ void ConsolePaintContext::SetFont(wxFont font)
 	bool is_fractional = fsi.IsFractionalSize();
 	_font_width = fsi.GetMaxWidth();
 	_font_height = fsi.GetMaxHeight();
+	_font_descent = fsi.GetMaxDescent();
 	//font_height+= _font_height/4;
 
 	_font_thickness = (_font_width > 8) ? _font_width / 8 : 1;
@@ -274,26 +278,36 @@ void ConsolePaintContext::ShowFontDialog()
 uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz)
 {
 #ifdef DYNAMIC_FONTS
-	const bool cacheable = (size_t(wcz[0]) <= _char_fit_cache.checked.size() && wcz[1]);
+	const bool cacheable = (size_t(wcz[0]) <= _char_fit_cache.checked.size() && wcz[1] == 0);
 	if (cacheable && _char_fit_cache.checked[ size_t(wcz[0])  - 1 ]) {
 		return _char_fit_cache.result[ size_t(wcz[0])  - 1 ];
 	}
 
 	uint8_t font_index = 0;
 	_cft_tmp = wcz;
-	wxSize char_size = dc.GetTextExtent(_cft_tmp);
-	for (uint8_t try_index = 1; try_index != 0xff && (unsigned)char_size.GetHeight() > _font_height; ++try_index) {
-		while (_fonts.size() <= try_index) {
+	wxCoord w, h = _font_height, d = _font_descent;
+	dc.GetTextExtent(_cft_tmp, &w, &h, &d);
+
+	for (uint8_t try_index = 1; try_index != 0xff && (unsigned)h > _font_height + std::max(0, int(d) - int(_font_descent)); ++try_index) {
+		if (try_index >= _fonts.size()) {
 			wxFont smallest = _fonts.back();
-			smallest.MakeSmaller();
-			smallest.MakeBold();
+			wxSize px_size = smallest.GetPixelSize();
+			if (px_size.GetHeight() <= 4) {
+				break;
+			}
+			px_size.SetHeight(px_size.GetHeight() - 1);
+			px_size.SetWidth(0);
+			smallest.SetPixelSize(px_size);
 			_fonts.emplace_back(smallest);
 		}
+		assert(try_index < _fonts.size());
 		dc.SetFont(_fonts[try_index]);
-		char_size = dc.GetTextExtent(_cft_tmp);
+		dc.GetTextExtent(_cft_tmp, &w, &h, &d);
 		font_index = try_index;
 	}
 	if (font_index != 0) {
+//		fprintf(stderr, "Changed[%d] point size = %u -> %u for '%ls'\n",
+//			font_index, _fonts[0].GetPointSize(), _fonts[font_index].GetPointSize(), wcz);
 		ApplyFont(dc);
 	}
 	

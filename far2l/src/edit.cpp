@@ -669,7 +669,7 @@ int Edit::CalcRTrimmedStrSize() const
 	return TrimmedStrSize;
 }
 
-int Edit::CalcPosNextTo(int Pos, int LimitPos) const
+int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 {
 	if (LimitPos != -1)
 	{
@@ -686,7 +686,7 @@ int Edit::CalcPosNextTo(int Pos, int LimitPos) const
 	return Pos;
 }
 
-int Edit::CalcPosPrevTo(int Pos) const
+int Edit::CalcPosBwdTo(int Pos) const
 {
 	if (Pos <= 0)
 		return 0;
@@ -844,7 +844,7 @@ int Edit::ProcessKey(int Key)
 					Select(SelStart,CurPos);
 				else
 				{
-					int EndPos = CalcPosNext((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
+					int EndPos = CalcPosFwd((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
 					int NewStartPos=CurPos;
 
 					if (EndPos>StrSize)
@@ -871,13 +871,13 @@ int Edit::ProcessKey(int Key)
 
 			if ((SelStart!=-1 && SelEnd==-1) || SelEnd>CurPos)
 			{
-				if (CalcPosNext() == SelEnd)
+				if (CalcPosFwd() == SelEnd)
 					Select(-1,0);
 				else
-					Select(CalcPosNext(), SelEnd);
+					Select(CalcPosFwd(), SelEnd);
 			}
 			else
-				AddSelect(CurPos, CalcPosNext());
+				AddSelect(CurPos, CalcPosFwd());
 
 			RecurseProcessKey(KEY_RIGHT);
 			return TRUE;
@@ -965,7 +965,7 @@ int Edit::ProcessKey(int Key)
 				return FALSE;
 
 			PrevCurPos = CurPos;
-			CurPos = CalcPosPrev();
+			CurPos = CalcPosBwd();
 
 			if (CurPos<=LeftPos)
 			{
@@ -1199,7 +1199,7 @@ int Edit::ProcessKey(int Key)
 			if (CurPos>0)
 			{
 				PrevCurPos = CurPos;
-				CurPos = CalcPosPrev();
+				CurPos = CalcPosBwd();
 				Show();
 			}
 
@@ -1209,7 +1209,7 @@ int Edit::ProcessKey(int Key)
 		case KEY_CTRLD:
 		{
 			PrevCurPos = CurPos;
-			CurPos = CalcPosNext((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
+			CurPos = CalcPosFwd((Mask && *Mask) ? CalcRTrimmedStrSize() : -1);
 			Show();
 			return TRUE;
 		}
@@ -1249,7 +1249,7 @@ int Edit::ProcessKey(int Key)
 			}
 			else
 			{
-				auto NextPos = CalcPosNext();
+				auto NextPos = CalcPosFwd();
 				if (NextPos > CurPos) {
 					wmemmove(Str + CurPos, Str + NextPos, (StrSize - NextPos) + 1);
 					StrSize-= (NextPos - CurPos);
@@ -1271,7 +1271,7 @@ int Edit::ProcessKey(int Key)
 			if (CurPos>StrSize)
 				CurPos=StrSize;
 
-			CurPos = CalcPosPrev();
+			CurPos = CalcPosBwd();
 
 			while (CurPos>0 && !(!IsWordDiv(WordDiv(), Str[CurPos]) &&
 			                     IsWordDiv(WordDiv(), Str[CurPos-1]) && !IsSpace(Str[CurPos])))
@@ -1296,12 +1296,12 @@ int Edit::ProcessKey(int Key)
 			if (Mask && *Mask)
 			{
 				Len = CalcRTrimmedStrSize();
-				CurPos = CalcPosNext(Len);
+				CurPos = CalcPosFwd(Len);
 			}
 			else
 			{
 				Len = StrSize;
-				CurPos = CalcPosNext();
+				CurPos = CalcPosFwd();
 			}
 
 			while (CurPos<Len/*StrSize*/ && !(IsWordDiv(WordDiv(),Str[CurPos]) &&

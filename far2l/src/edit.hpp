@@ -194,7 +194,7 @@ class Edit:public ScreenObject
 
 		int RealPosToCell(int PrevLength, int PrevPos, int Pos, int* CorrectPos);
 		void SanitizeSelectionRange();
-		inline const wchar_t* WordDiv(void) {return strWordDiv->CPtr();};
+		inline const wchar_t* WordDiv() {return strWordDiv->CPtr();};
 
 	protected:
 		int CalcRTrimmedStrSize() const;

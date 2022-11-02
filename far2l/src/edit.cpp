@@ -344,14 +344,20 @@ void Edit::FastShow()
 	  ! Для комбобокса сделаем отображение строки
 	    с первой позиции.
 	*/
+	int RealLeftPos = -1;
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 	{
-		if (CellCurPos-LeftPos>EditLength-1)
-			LeftPos=CellCurPos-EditLength+1;
+		if (CellCurPos - LeftPos > EditLength - 1)
+		{
+			RealLeftPos = CellPosToReal(CellCurPos - EditLength + 1);
+			LeftPos = RealPosToCell(RealLeftPos);
+		}
 
-		if (CellCurPos<LeftPos)
-			LeftPos=CellCurPos;
+		if (CellCurPos < LeftPos)
+			LeftPos = CellCurPos;
 	}
+	if (RealLeftPos == -1)
+		RealLeftPos = CellPosToReal(LeftPos);
 
 	GotoXY(X1,Y1);
 	int CellSelStart=(SelStart==-1) ? -1:RealPosToCell(SelStart);
@@ -366,7 +372,6 @@ void Edit::FastShow()
 		RefreshStrByMask();
 
 	CursorPos = CellCurPos;
-	int RealLeftPos = CellPosToReal(LeftPos);
 
 	OutStr.clear();
 	size_t OutStrCells = 0;
@@ -394,7 +399,11 @@ void Edit::FastShow()
 			if (IsCharFullWidth(wc))
 			{
 				if (int(OutStrCells + 2) > EditLength)
+				{
+					OutStr.emplace_back(L' ');
+					OutStrCells++;
 					break;
+				}
 				OutStrCells+= 2;
 			}
 			else if (!IsCharXxxfix(wc) || i == RealLeftPos)
@@ -967,12 +976,13 @@ int Edit::ProcessKey(int Key)
 			PrevCurPos = CurPos;
 			CurPos = CalcPosBwd();
 
-			if (CurPos<=LeftPos)
+			while (LeftPos > 0 && RealPosToCell(CurPos) <= LeftPos)
 			{
-				LeftPos-=15;
-
-				if (LeftPos<0)
-					LeftPos=0;
+				LeftPos-= 15;
+				if (LeftPos > 0)
+					LeftPos = RealPosToCell(CellPosToReal(LeftPos));
+				else
+					LeftPos = 0;
 			}
 
 			if (!RecurseProcessKey(KEY_DEL))

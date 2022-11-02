@@ -37,11 +37,12 @@ size_t utf8_char_len(const char *s, size_t bytes)
 
 
 ConsoleOutput::ConsoleOutput() :
-	_title(L"WinPort"), _backend(NULL), 
+	_backend(NULL),
 	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT),
 	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
+	MB2Wide(APP_BASENAME, _title);
 	_scroll_callback.pfn = NULL;
 	_cursor.height = 15;
 	_cursor.visible = true;
@@ -389,9 +390,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 	bool refresh_pos_areas = false;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		areas[0].Left = areas[0].Right = pos.X;
-		areas[0].Top = areas[0].Bottom = pos.Y;
-		
+		SetUpdateCellArea(areas[0], pos);
 		unsigned int width, height;
 		_buf.GetSize(width, height);
 		unsigned int scroll_edge = std::min(height, ((unsigned int)_scroll_region.bottom) + 1);

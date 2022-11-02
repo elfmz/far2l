@@ -209,6 +209,12 @@ While FAR internally is UTF16 (because WinPort contains UTF16-related stuff), na
 Inspect all printf format strings: unlike Windows, in Linux both wide and multibyte printf-like functions have the same multibyte and wide specifiers. This means that %s is always multibyte while %ls is always wide. So, any %s used in wide-printf-s or %ws used in any printf should be replaced with %ls.
 
 Update from 27aug: now it's possible by defining WINPORT_DIRECT to avoid renaming used Windows API and also to avoid changing format strings as swprintf will be intercepted by a compatibility wrapper.
+Update from 03/11/22: far2l's console emulator capable to correctly render full-width and combining characters as well as 24 bit colors. This caused following deviation of console-simulation functions behavior comparing to original Win32 API counterparts:
+ * CHAR_INFO's Char::UnicodeChar field extended to 64 bit length to be able to associate sequence of multiple WCHARs with single cell.
+ * Writing to console full-width character causes two cells to be used: first will get given character code in UnicodeChar field but next one will have UnicodeChar set to zero.
+ * Writing combined characters - normal character followed by set of diactrical marks - will make UnicodeChar field to contain so-called 'composite' character code that represents sequence of character codes registered with WINPORT(CompositeCharRegister). Actual sequence of WCHARs can be obtained by WINPORT(CompositeCharLookup). There is macro USING_COMPOSITE_CHAR that allows to detect if given CHAR_INFO contains composite character code or normal WCHAR.
+ * Both above transformations happen automatically _only_ if using WriteConsole API. If one uses WriteConsoleOutput - then its up to caller to perform that transformations. Failing to do so will cause incorrect rendering of full-width or diactrical characters.
+ * CHAR_INFO's Attributes field extended to 64 bit to be able to hold 24 bit RGB colors in higher bytes. Use macroses GET_RGB_FORE/GET_RGB_BACK/SET_RGB_FORE/SET_RGB_BACK/SET_RGB_BOTH to access that colors. Note that such colors will be used only if any of them will be not zero, otherwise old attributes will define colors from usual 16-elements palette.
 
 ## Plugin API
 
@@ -233,6 +239,20 @@ far2l supports calling APIs from different threads by marshalling API calls from
 * `void BackgroundTask(const wchar_t *Info, BOOL Started);`
 If plugin implements tasks running in background it may invoke this function to indicate about pending task in left-top corner.
 Info is a short description of task or just its owner and must be same string when invoked with Started TRUE or FALSE.
+
+* `size_t StrCellsCount(const wchar_t *Str, size_t CharsCount);`
+Returns count of console cells which will be used to display given string of CharsCount characters.
+
+* `size_t StrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp);`
+Returns count of characters which will be used to fill up to CellsCount cells from given string of CharsCount characters.
+RoundUp argument tells what to do with full-width characters that crossed by CellsCount.
+On return CellsCount contains cells count that will be filled by returned characters count, that:
+ Can be smaller than initial value if string has too few characters to fill all CellsCount cells or if RoundUp was set to FALSE and last character would then overflow wanted amount.
+ Can be larger by one than initial value if RoundUp was set to TRUE and last full-width character crossed initial value specified in *CellsCount.
+
+* `TruncStr and TruncPathStr`
+ This two functions not added but changed to use console cells count as string limiting factor.
+
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * `FCTL_GETPANELPLUGINHANDLE`

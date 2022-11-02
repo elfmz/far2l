@@ -119,8 +119,6 @@ src/plug/plugins.cpp
 src/plug/PluginW.cpp
 src/plug/PluginA.cpp
 src/plug/plclass.cpp
-src/plug/StrCells.cpp
-
 
 src/vt/vtansi.cpp
 src/vt/vtshell.cpp
@@ -153,6 +151,7 @@ src/mix/processname.cpp
 src/mix/RegExp.cpp
 src/mix/strmix.cpp
 src/mix/FSFileFlags.cpp
+src/mix/StrCells.cpp
 )
 
 # Set target names for the executables

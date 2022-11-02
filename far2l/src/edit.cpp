@@ -432,7 +432,7 @@ void Edit::FastShow()
 			{
 				RemoveTrailingSpaces(OutStr.data());
 				OutStr.resize(wcslen(OutStr.data()));
-				OutStrCells = FarStrCellsCount(OutStr.data(), OutStr.size());
+				OutStrCells = StrCellsCount(OutStr.data(), OutStr.size());
 				OutStr.emplace_back(0);
 			}
 

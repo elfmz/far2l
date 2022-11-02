@@ -52,7 +52,7 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 		size_t SkipChars;
 		if (_Cells) {
 			size_t ng = _Skip;
-			SkipChars = FarStrSizeOfCells(Data, Length, ng, true);
+			SkipChars = StrSizeOfCells(Data, Length, ng, true);
 		} else {
 			SkipChars = _Skip;
 		}
@@ -70,7 +70,7 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 		if (_Cells)
 		{
 			size_t ng = _Truncate;
-			Length = FarStrSizeOfCells(Data, Length, ng, false);
+			Length = StrSizeOfCells(Data, Length, ng, false);
 		}
 		else if (Length > _Truncate)
 		{

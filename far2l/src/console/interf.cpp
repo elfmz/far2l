@@ -582,7 +582,7 @@ void Text(const WCHAR *Str, size_t Length)
 	std::wstring wstr;
 	for (size_t i = 0; i < Length; ++nCells)
 	{
-		const size_t nG = FarStrSizeOfCell(&Str[i], Length - i);
+		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
 		if (nG > 1) {
 			wstr.assign(&Str[i], nG);
 			BufPtr[nCells].Char.UnicodeChar = WINPORT(CompositeCharRegister)(wstr.c_str());

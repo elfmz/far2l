@@ -1,13 +1,10 @@
 #include "headers.hpp"
 
 #include <utils.h>
-#include "farstrcells.h"
+#include "StrCells.h"
 #include "config.hpp"
 
-extern "C"
-{
-
-__attribute__ ((visibility("default"))) size_t FarStrCellsCount(const wchar_t *pwz, size_t nw)
+size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 {
 	size_t out = 0;
 	for (size_t i = 0; i < nw; ++i) {
@@ -20,12 +17,12 @@ __attribute__ ((visibility("default"))) size_t FarStrCellsCount(const wchar_t *p
 	return out;
 }
 
-__attribute__ ((visibility("default"))) size_t FarStrZCellsCount(const wchar_t *pwz)
+size_t StrZCellsCount(const wchar_t *pwz)
 {
-	return FarStrCellsCount(pwz, wcslen(pwz));
+	return StrCellsCount(pwz, wcslen(pwz));
 }
 
-__attribute__ ((visibility("default"))) size_t FarStrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
+size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 {
 	size_t i = 0, g = 0;
 	for (; g < ng && i < n; ++g) {
@@ -53,10 +50,10 @@ __attribute__ ((visibility("default"))) size_t FarStrSizeOfCells(const wchar_t *
 	return i;
 }
 
-__attribute__ ((visibility("default"))) size_t FarStrSizeOfCell(const wchar_t *pwz, size_t n)
+size_t StrSizeOfCell(const wchar_t *pwz, size_t n)
 {
 	size_t ng = 1;
-	return FarStrSizeOfCells(pwz, n, ng, true);
+	return StrSizeOfCells(pwz, n, ng, true);
 }
 
 static struct TruncReplacement
@@ -70,16 +67,16 @@ static const struct TruncReplacement &ChooseTruncReplacement()
 	return s_trunc_replacement[Opt.NoGraphics ? 0 : 1];
 }
 
-__attribute__ ((visibility("default"))) void FarStrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
+void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCount(pwz, n);
+	size_t vl = StrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
 	}
 
 	for (size_t ofs = rpl.len; ofs < n; ++ofs) {
-		if (!IsCharXxxfix(pwz[ofs]) && FarStrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
+		if (!IsCharXxxfix(pwz[ofs]) && StrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
 			n-= ofs;
 			wmemmove(pwz + rpl.len, pwz + ofs, n);
 			n+= rpl.len;
@@ -91,9 +88,9 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateLeft(wchar_t *pw
 	n = std::min(ng, rpl.len);
 }
 
-__attribute__ ((visibility("default"))) void FarStrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
+void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCount(pwz, n);
+	size_t vl = StrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
@@ -108,15 +105,15 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateRight(wchar_t *p
 			break;
 		}
 		--n;
-	} while (FarStrCellsCount(pwz, n) + rpl.len > ng);
+	} while (StrCellsCount(pwz, n) + rpl.len > ng);
 
 	wmemcpy(&pwz[n], rpl.wz, rpl.len);
 	n+= rpl.len;
 }
 
-__attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
+void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 {
-	size_t vl = FarStrCellsCount(pwz, n);
+	size_t vl = StrCellsCount(pwz, n);
 	const auto &rpl = ChooseTruncReplacement();
 	if (vl <= ng || n < rpl.len) {
 		return;
@@ -137,13 +134,13 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *
 		++cut_end;
 	}
 
-	while (FarStrCellsCount(pwz, cut_start) + FarStrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
+	while (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
 		if (cut_start > 0) {
 			--cut_start;
 			while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
 				--cut_start;
 			}
-			if (FarStrCellsCount(pwz, cut_start) + FarStrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
+			if (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
 				break;
 			}
 		}
@@ -159,6 +156,4 @@ __attribute__ ((visibility("default"))) void FarStrCellsTruncateCenter(wchar_t *
 	wmemcpy(&pwz[cut_start], rpl.wz, rpl.len);
 	n-= (cut_end - cut_start);
 	n+= rpl.len;
-}
-
 }

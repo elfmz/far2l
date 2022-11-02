@@ -562,7 +562,7 @@ std::string FARString::GetMB() const
 
 size_t FARString::CellsCount() const
 {
-	return FarStrCellsCount(CPtr(), GetLength());
+	return StrCellsCount(CPtr(), GetLength());
 }
 
 size_t FARString::TruncateByCells(size_t nCount)
@@ -570,7 +570,7 @@ size_t FARString::TruncateByCells(size_t nCount)
 	size_t ng = CellsCount();
 	if (ng > nCount) {
 		size_t ng = nCount;
-		auto sz = FarStrSizeOfCells(CPtr(), GetLength(), ng, false);
+		auto sz = StrSizeOfCells(CPtr(), GetLength(), ng, false);
 		Truncate(sz);
 	}
 	return ng;

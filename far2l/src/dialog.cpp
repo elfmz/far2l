@@ -2228,7 +2228,7 @@ int Dialog::LenStrItem(int ID, const wchar_t *lpwszStr)
 	if (!lpwszStr)
 		lpwszStr = Item[ID]->strData;
 
-	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?FarStrZCellsCount(lpwszStr):HiStrCellsCount(lpwszStr);
+	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?StrZCellsCount(lpwszStr):HiStrCellsCount(lpwszStr);
 }
 
 

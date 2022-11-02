@@ -590,12 +590,12 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	}
 
 	int SrcLength = StrLength(SrcName);
-	int SrcVisualLength = FarStrCellsCount(SrcName, SrcLength);
+	int SrcVisualLength = StrCellsCount(SrcName, SrcLength);
 
 	if (RightAlign && SrcVisualLength > MaxLength)
 	{
 		size_t SkipCells = SrcVisualLength - MaxLength;
-		size_t SkipOfs = FarStrSizeOfCells(SrcName, SrcLength, SkipCells, true);
+		size_t SkipOfs = StrSizeOfCells(SrcName, SrcLength, SkipCells, true);
 		strDest.Copy(SrcName + SkipOfs, SrcLength - SkipOfs);
 		return TRUE;
 	}
@@ -622,7 +622,7 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	else
 	{
 		size_t CellsCount = MaxLength;
-		size_t CopyLen = FarStrSizeOfCells(SrcName, SrcLength, CellsCount, false);
+		size_t CopyLen = StrSizeOfCells(SrcName, SrcLength, CellsCount, false);
 		strDest.Copy(SrcName, CopyLen);
 	}
 
@@ -889,7 +889,7 @@ extern void GetColor(int PaletteIndex);
 
 static int MakeCurLeftPos(int ColumnWidth, const wchar_t *Str, int LeftPos, int &MaxLeftPos)
 {
-	int Cells = Str ? FarStrZCellsCount(Str) : 0;
+	int Cells = Str ? StrZCellsCount(Str) : 0;
 	if (Cells < ColumnWidth || !Cells)
 		return 0;
 
@@ -897,7 +897,7 @@ static int MakeCurLeftPos(int ColumnWidth, const wchar_t *Str, int LeftPos, int 
 		LeftPos = Cells - ColumnWidth;
 
 	size_t ng = LeftPos;
-	int out = FarStrSizeOfCells(Str, wcslen(Str), ng, false);
+	int out = StrSizeOfCells(Str, wcslen(Str), ng, false);
 
 	if (MaxLeftPos < (int)ng)
 		MaxLeftPos = (int)ng;
@@ -1050,7 +1050,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								}
 								else if (RightAlign)
 								{
-									int Cells = (int)FarStrZCellsCount(NamePtr);
+									int Cells = (int)StrZCellsCount(NamePtr);
 									if (Cells > Width)
 									{
 										int CurRightPos = LeftPos;
@@ -1060,7 +1060,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 											RightBracket = TRUE;
 
 										size_t ng = Cells + CurRightPos - Width;
-										NamePtr += FarStrSizeOfCells(NamePtr, wcslen(NamePtr), ng, false);
+										NamePtr += StrSizeOfCells(NamePtr, wcslen(NamePtr), ng, false);
 										RightAlign = FALSE;
 
 										if (MinLeftPos > CurRightPos)
@@ -1079,7 +1079,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 								if (RightAlign)
 									LeftBracket=TRUE;
 
-								if (!RightAlign && FarStrZCellsCount(NamePtr) > size_t(Width))
+								if (!RightAlign && StrZCellsCount(NamePtr) > size_t(Width))
 									RightBracket=TRUE;
 							}
 
@@ -1221,7 +1221,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos>0)
 							{
-								int Cells=FarStrZCellsCount(Owner);
+								int Cells=StrZCellsCount(Owner);
 
 								if (Cells>ColumnWidth)
 								{
@@ -1247,7 +1247,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 
 							if (!ShowStatus && LeftPos>0)
 							{
-								int Cells=FarStrZCellsCount(Group);
+								int Cells=StrZCellsCount(Group);
 
 								if (Cells>ColumnWidth)
 								{

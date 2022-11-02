@@ -408,7 +408,7 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 		const auto ApproxWeight = [&](unsigned int x_)
 		{
-			if (USING_COMPOSITE_CHAR(cur_line[x_])) {
+			if (CI_USING_COMPOSITE_CHAR(cur_line[x_])) {
 				return 4;
 			}
 			return ((cur_line[x_].Char.UnicodeChar > 0x7f) ? 2 : 1);

@@ -83,7 +83,7 @@ namespace VTLog
 				attr_prev = attr_now;
 			}
 
-			if (USING_COMPOSITE_CHAR(Chars[i])) {
+			if (CI_USING_COMPOSITE_CHAR(Chars[i])) {
 				const wchar_t *pwc = WINPORT(CompositeCharLookup)(Chars[i].Char.UnicodeChar);
 				for (; pwc && *pwc; ++pwc) {
 					Wide2MB_UnescapedAppend(*pwc, out);

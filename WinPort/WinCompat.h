@@ -481,7 +481,7 @@ typedef DWORD64 COMP_CHAR;
 typedef struct _CHAR_INFO {
     union {
 		// WCHAR or result of CompositeCharRegister()
-		// can be differentiated using USING_COMPOSITE_CHAR() that checks presence of highest bit
+		// can be differentiated using CI_USING_COMPOSITE_CHAR() that checks presence of highest bit
         COMP_CHAR UnicodeChar;
         CHAR   AsciiChar;
     } Char;
@@ -492,11 +492,13 @@ typedef struct _CHAR_INFO {
 } CHAR_INFO, *PCHAR_INFO;
 
 #define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
-#define USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
-#define FULL_WIDTH_CHAR(CI) ( (!USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
-	|| (USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
+#define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
+#define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
+	|| (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
 
-#define USING_RGB_COLORS(CI) (((CI).Attributes >> 16) != 0)
+#define USING_RGB_COLORS(ATTR) (((ATTR) & ATTRIBUTE_TRUECOLOR) != 0)
+
+#define CI_USING_RGB_COLORS(CI) (USING_RGB_COLORS((CI).Attributes))
 
 #define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
 #define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))
@@ -607,6 +609,9 @@ typedef struct _INPUT_RECORD {
 #define COMMON_LVB_UNDERSCORE      0x8000 // DBCS: Underscore.
 
 #define COMMON_LVB_SBCSDBCS        0x0300 // SBCS or DBCS flag.
+
+#define ATTRIBUTE_TRUECOLOR        0x2000 // Use 24 bit RGB colors set by SET_RGB_FORE/SET_RGB_BACK
+
 
 
 //

@@ -309,7 +309,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	std::string tmp;
 	for (;cnt; ++ci,--cnt, ++_cursor.x) if (ci->Char.UnicodeChar) {
-		const bool is_space = !USING_COMPOSITE_CHAR(*ci) && (
+		const bool is_space = !CI_USING_COMPOSITE_CHAR(*ci) && (
 				ci->Char.UnicodeChar <= 0x20
 			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
 			|| !WCHAR_IS_VALID(ci->Char.UnicodeChar));
@@ -347,7 +347,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			_attr = attr;
 		}
 
-		if (USING_COMPOSITE_CHAR(*ci)) {
+		if (CI_USING_COMPOSITE_CHAR(*ci)) {
 			for (const WCHAR *pw = WINPORT(CompositeCharLookup)(ci->Char.UnicodeChar); *pw; ++pw) {
 				WriteWChar(*pw);
 			}

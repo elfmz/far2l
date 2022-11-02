@@ -77,7 +77,7 @@ void ConsoleOutput::SetUpdateCellArea(SMALL_RECT &area, COORD pos)
 	if (_buf.Read(ci, pos)) {
 		if (!ci.Char.UnicodeChar && area.Left > 0) {
 			--area.Left;
-		} else if (FULL_WIDTH_CHAR(ci)) {
+		} else if (CI_FULL_WIDTH_CHAR(ci)) {
 			++area.Right;
 		}
 	}
@@ -331,7 +331,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 				}
 				pos = _prev_pos;
 				std::wstring tmp;
-				if (USING_COMPOSITE_CHAR(ch)) {
+				if (CI_USING_COMPOSITE_CHAR(ch)) {
 					tmp = WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
 				} else {
 					tmp = ch.Char.UnicodeChar;

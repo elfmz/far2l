@@ -111,7 +111,7 @@ public:
 	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
 	
 
-	void NextChar(unsigned int cx, unsigned short attributes, const wchar_t *wcz, unsigned int nx);
+	void NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx);
 	
 	inline void LineBegin(unsigned int cy)
 	{

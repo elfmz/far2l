@@ -9,7 +9,7 @@
 #include "WinPort.h"
 #include <utils.h>
 
-#define ALL_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
+#define COLOR_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
 					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
 					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
 
@@ -391,7 +391,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 		painter.LineBegin(cy);
 		wchar_t tmp_wcz[2] = {0, 0};
-		unsigned short attributes = line->Attributes;
+		DWORD64 attributes = line->Attributes;
 		const unsigned int cx_begin = (area.Left > 0 && !line[area.Left].Char.UnicodeChar) ? area.Left - 1 : area.Left;
 		const unsigned int cx_end = std::min(cw, (unsigned)area.Right + 1);
 		for (unsigned int cx = cx_begin; cx < cx_end; ++cx) {
@@ -400,7 +400,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 				continue;
 			}
 			const wchar_t *pwcz;
-			if (UNLIKELY(USING_COMPOSITE_CHAR(line[cx]))) {
+			if (UNLIKELY(CI_USING_COMPOSITE_CHAR(line[cx]))) {
 				pwcz = WINPORT(CompositeCharLookup)(line[cx].Char.UnicodeChar);
 			} else {
 				tmp_wcz[0] = line[cx].Char.UnicodeChar ? wchar_t(line[cx].Char.UnicodeChar) : L' ';
@@ -410,7 +410,11 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			attributes = line[cx].Attributes;
 			if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
 				&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
-				attributes^= ALL_ATTRIBUTES;
+				if (USING_RGB_COLORS(attributes)) {
+					attributes^= COLOR_ATTRIBUTES | 0xffffffffffff0000;
+				} else {
+					attributes^= COLOR_ATTRIBUTES;
+				}
 			}
 			const int nx = (cx + 1 < cw && !line[cx + 1].Char.UnicodeChar) ? 2 : 1;
 			painter.NextChar(cx, attributes, pwcz, nx);
@@ -442,7 +446,7 @@ void ConsolePaintContext::BlinkCursor()
 		if (g_winport_con_out->Read(ci, _cursor_props.pos)) {
 			if (!ci.Char.UnicodeChar && area.Left > 0) {
 				--area.Left;
-			} else if (FULL_WIDTH_CHAR(ci)) {
+			} else if (CI_FULL_WIDTH_CHAR(ci)) {
 				++area.Right;
 			}
 		}
@@ -668,7 +672,7 @@ void WXCustomDrawChar::Painter::FillPixel(wxCoord left, wxCoord top)
 }
 
 
-void ConsolePainter::NextChar(unsigned int cx, unsigned short attributes, const wchar_t *wcz, unsigned int nx)
+void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx)
 {
 	WXCustomDrawChar::DrawT custom_draw = nullptr;
 

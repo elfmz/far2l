@@ -84,6 +84,8 @@ private:
 	DWORD BufferSize = 0;
 	UINT64 CurPtr = 0, LastPtr = 0;
 	UINT64 FileSize = 0;
+	// something from /proc/ that has zero stat size but still can read some content from it
+	bool PseudoFile = false;
 
 
 	template <class T>

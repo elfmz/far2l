@@ -349,13 +349,25 @@ void Edit::FastShow()
 	{
 		if (CellCurPos - LeftPos > EditLength - 1)
 		{
-			RealLeftPos = CellPosToReal(CellCurPos - EditLength + 1);
-			LeftPos = RealPosToCell(RealLeftPos);
+			// tricky left pos shifting to
+			// - avoid LeftPos pointing into middle of full-width char cells pair
+			// - ensure RealLeftPos really shifted in case string starts by some long character
+			for (int ShiftBy = 1; ShiftBy <= std::max(TabSize, 2); ++ShiftBy)
+			{
+				RealLeftPos = CellPosToReal(CellCurPos - EditLength + ShiftBy);
+				int NewLeftPos = RealPosToCell(RealLeftPos);
+				if (LeftPos != NewLeftPos)
+				{
+					LeftPos = NewLeftPos;
+					break;
+				}
+			}
 		}
 
 		if (CellCurPos < LeftPos)
 			LeftPos = CellCurPos;
 	}
+
 	if (RealLeftPos == -1)
 		RealLeftPos = CellPosToReal(LeftPos);
 
@@ -2252,7 +2264,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int* CorrectPos)
 				// Расчитываем длину таба с учётом настроек и текущей позиции в строке
 				TabPos += TabSize-(TabPos%TabSize);
 			}
-		// Обрабатываем все отсальные символы
+			// Обрабатываем все остальные символы
 			else if (IsCharFullWidth(Str[Index]))
 			{
 				TabPos+= 2;

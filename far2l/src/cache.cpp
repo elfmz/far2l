@@ -160,6 +160,11 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 	}
 
 	if (PseudoFile) {
+		if (Ptr >= BufferBounds.Ptr && Ptr < BufferBounds.End) {
+			Size = DWORD(BufferBounds.End - Ptr);
+			return &Buffer[CheckedCast<size_t>(Ptr - BufferBounds.Ptr)];
+		}
+
 		Size = 0;
 		return nullptr;
 	}

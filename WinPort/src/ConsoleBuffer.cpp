@@ -5,7 +5,7 @@ ConsoleBuffer::ConsoleBuffer() : _width(0)
 {
 }
 
-void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, unsigned short attributes)
+void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t attributes)
 {
 	if (width==_width && (width*height)==_console_chars.size() )
 		return;
@@ -17,7 +17,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, unsigned sh
 	_width = width;
 	for (auto &i : _console_chars) {
 		i.Attributes = attributes;
-		i.Char.UnicodeChar = 0;
+		i.Char.UnicodeChar = L' ';
 	}
 
 	if (!other_chars.empty() && !_console_chars.empty()) {

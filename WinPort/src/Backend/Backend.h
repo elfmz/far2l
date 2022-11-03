@@ -139,8 +139,8 @@ protected:
 public:
 	virtual void SetBackend(IConsoleOutputBackend *listener) = 0;
 
-	virtual void SetAttributes(USHORT attributes) = 0;
-	virtual USHORT GetAttributes() = 0;
+	virtual void SetAttributes(DWORD64 attributes) = 0;
+	virtual DWORD64 GetAttributes() = 0;
 	virtual void SetCursor(COORD pos) = 0;
 	virtual void SetCursor(UCHAR height, bool visible) = 0;
 	virtual COORD GetCursor() = 0;
@@ -166,7 +166,7 @@ public:
 	virtual size_t WriteString(const WCHAR *data, size_t count) = 0;
 	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos) = 0;
 	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos) = 0;
-	virtual size_t FillAttributeAt(WORD wAttribute, size_t count, COORD &pos) = 0;
+	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos) = 0;
 	
 	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill) = 0;

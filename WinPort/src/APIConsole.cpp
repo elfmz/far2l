@@ -139,9 +139,9 @@ extern "C" {
 	}
 
 
-	WINPORT_DECL(SetConsoleTextAttribute,BOOL,(HANDLE hConsoleOutput, WORD wAttributes))
+	WINPORT_DECL(SetConsoleTextAttribute,BOOL,(HANDLE hConsoleOutput, DWORD64 qAttributes))
 	{
-		g_winport_con_out->SetAttributes(wAttributes);
+		g_winport_con_out->SetAttributes(qAttributes);
 		return TRUE;
 	}
 
@@ -169,9 +169,9 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(FillConsoleOutputAttribute, BOOL, (HANDLE hConsoleOutput, WORD wAttribute, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten))
+	WINPORT_DECL(FillConsoleOutputAttribute, BOOL, (HANDLE hConsoleOutput, DWORD64 qAttributes, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten))
 	{
-		*lpNumberOfAttrsWritten = g_winport_con_out->FillAttributeAt(wAttribute, nLength, dwWriteCoord);
+		*lpNumberOfAttrsWritten = g_winport_con_out->FillAttributeAt(qAttributes, nLength, dwWriteCoord);
 		return TRUE;
 	}
 

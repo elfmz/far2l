@@ -57,13 +57,13 @@ void ConsoleOutput::SetBackend(IConsoleOutputBackend *backend)
 }
 
 
-void ConsoleOutput::SetAttributes(USHORT attributes)
+void ConsoleOutput::SetAttributes(DWORD64 attributes)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	_attributes = attributes;
 }
 
-USHORT ConsoleOutput::GetAttributes()
+DWORD64 ConsoleOutput::GetAttributes()
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	return _attributes;
@@ -490,10 +490,10 @@ size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos
 }
 
 
-size_t ConsoleOutput::FillAttributeAt(WORD wAttribute, size_t count, COORD &pos)
+size_t ConsoleOutput::FillAttributeAt(DWORD64 qAttributes, size_t count, COORD &pos)
 {
 	SequenceModifier sm = {SequenceModifier::SM_FILL_ATTR, count };
-	sm.attr = wAttribute;
+	sm.attr = qAttributes;
 	return ModifySequenceAt(sm, pos);
 }
 

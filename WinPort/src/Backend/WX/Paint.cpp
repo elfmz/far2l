@@ -287,8 +287,8 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz)
 	_cft_tmp = wcz;
 	wxCoord w, h = _font_height, d = _font_descent;
 	dc.GetTextExtent(_cft_tmp, &w, &h, &d);
-
 	for (uint8_t try_index = 1; try_index != 0xff && (unsigned)h > _font_height + std::max(0, int(d) - int(_font_descent)); ++try_index) {
+
 		if (try_index >= _fonts.size()) {
 			wxFont smallest = _fonts.back();
 			wxSize px_size = smallest.GetPixelSize();
@@ -410,10 +410,12 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			attributes = line[cx].Attributes;
 			if (qedit && cx >= (unsigned)qedit->Left && cx <= (unsigned)qedit->Right
 				&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
-				if (USING_RGB_COLORS(attributes)) {
-					attributes^= COLOR_ATTRIBUTES | 0xffffffffffff0000;
-				} else {
-					attributes^= COLOR_ATTRIBUTES;
+				attributes^= COLOR_ATTRIBUTES;
+				if (attributes & FOREGROUND_TRUECOLOR) {
+					attributes^= COLOR_ATTRIBUTES | 0x000000ffffff0000;
+				}
+				if (attributes & BACKGROUND_TRUECOLOR) {
+					attributes^= COLOR_ATTRIBUTES | 0xffffff0000000000;
 				}
 			}
 			const int nx = (cx + 1 < cw && !line[cx + 1].Char.UnicodeChar) ? 2 : 1;
@@ -504,7 +506,7 @@ void CursorProps::Update()
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer, CursorProps &cursor_props) :
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(cursor_props),
-	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0)
+	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0), _prev_underlined(false)
 {
 	_dc.SetPen(context->GetTransparentPen());
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
@@ -556,25 +558,37 @@ void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr, u
 }
 
 
-void ConsolePainter::FlushBackground(unsigned int cx)
+void ConsolePainter::FlushBackground(unsigned int cx_end)
 {
-	if (_start_back_cx!= ((unsigned int)-1)) {
+	if (_start_back_cx != ((unsigned int)-1)) {
 		SetFillColor(_clr_back);
 		_dc.DrawRectangle(_start_back_cx * _context->FontWidth(), _start_y, 
-			(cx - _start_back_cx) * _context->FontWidth(), _context->FontHeight());			
+			(cx_end - _start_back_cx) * _context->FontWidth(), _context->FontHeight());
 		_start_back_cx = ((unsigned int)-1);
 	}		
 }
 
-void ConsolePainter::FlushText()
+void ConsolePainter::FlushText(unsigned int cx_end)
 {
 	if (!_buffer.empty()) {
 		_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
 		_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
 		_buffer.Empty();
 	}
+	FlushUnderline(cx_end);
 	_start_cx = (unsigned int)-1;
 	_prev_fit_font_index = 0;
+}
+
+void ConsolePainter::FlushUnderline(unsigned int cx_end)
+{
+	if (_prev_underlined) {
+		_dc.SetPen(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
+		_dc.DrawLine(_start_cx * _context->FontWidth(), _start_y + _context->FontHeight() - 1,
+			cx_end * _context->FontWidth(), _start_y + _context->FontHeight() - 1);
+		_dc.SetPen(_context->GetTransparentPen());
+		_prev_underlined = false;
+	}
 }
 
 static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
@@ -680,7 +694,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	 && (custom_draw = WXCustomDrawChar::Get(wcz[0])) != nullptr)))) {
 		if (!_buffer.empty()) 
 			FlushBackground(cx + nx - 1);
-		FlushText();
+		FlushText(cx + nx - 1);
 	}
 
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
@@ -694,33 +708,36 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 
 	if (custom_draw) {
 		FlushBackground(cx + nx);
-
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
 		custom_draw(cdp, _start_y, cx);
+		FlushUnderline(cx);
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
         return;
 	}
 
 	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz);
+	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
 	
-	if (fit_font_index == _prev_fit_font_index && _context->IsPaintBuffered()
-	  && _start_cx != (unsigned int) -1 && _clr_text == clr_text) {
+	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined
+	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {
 		_buffer+= wcz;
 		return;
 	}
 
-	_prev_fit_font_index = fit_font_index;
-
 	FlushBackground(cx + nx);
-	FlushText();
+	FlushText(cx);
+
+	_prev_fit_font_index = fit_font_index;
+	_prev_underlined = underlined;
+
 	_start_cx = cx;
 	_buffer = wcz;
 	_clr_text = clr_text;
 
 	if (fit_font_index != 0 && fit_font_index != 0xff) {
 		_context->ApplyFont(_dc, fit_font_index);
-		FlushText();
+		FlushText(cx + nx);
 		_context->ApplyFont(_dc);
 	}
 }

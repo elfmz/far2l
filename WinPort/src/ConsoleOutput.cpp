@@ -508,8 +508,12 @@ static void ClipRect(SMALL_RECT &rect, const SMALL_RECT &clip, COORD *offset = N
 		if (offset) offset->Y+= clip.Top - rect.Top;
 		rect.Top = clip.Top;
 	}
-	if (rect.Right > clip.Right) rect.Right = clip.Right;
-	if (rect.Bottom > clip.Bottom) rect.Bottom = clip.Bottom;
+	if (rect.Right > clip.Right) {
+		rect.Right = clip.Right;
+	}
+	if (rect.Bottom > clip.Bottom) {
+		rect.Bottom = clip.Bottom;
+	}
 }
 
 bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle, 

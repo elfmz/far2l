@@ -239,7 +239,7 @@ static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 #define SI	'\x0F'          // Shift In
 #define ST	'\x9c'
 
-#define MAX_ARG 16		// max number of args in an escape sequence
+#define MAX_ARG 32		// max number of args in an escape sequence
 static int   state;			// automata state
 static char  prefix;			// escape sequence prefix ( '[', ']' or '(' );
 static char  prefix2;			// secondary prefix ( '?' or '>' );
@@ -651,7 +651,7 @@ static void LimitByScrollRegion(SMALL_RECT &rect)
 void InterpretEscSeq( void )
 {
 	int  i;
-	WORD attribut;
+	DWORD64 attribut;
 	CONSOLE_SCREEN_BUFFER_INFO Info;
 	CONSOLE_CURSOR_INFO CursInfo;
 	DWORD len, NumberOfCharsWritten;

@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fcntl.h>
 
+#define PSEUDOFILE_FULLREAD_LIMIT 0x1000000
+#define PSEUDOFILE_FULLREAD_BLOCK 0x1000
 
 BufferedFileView::BufferedFileView()
 {
@@ -62,6 +64,34 @@ bool BufferedFileView::Open(const std::string &PathName)
 
 	FileSize = 0;
 	ActualizeFileSize();
+
+	if (FileSize == 0) {
+		std::vector<unsigned char> Tmp(PSEUDOFILE_FULLREAD_BLOCK);
+		for (size_t ofs = 0;;) {
+			ssize_t rv = sdc_read(FD, Tmp.data() + ofs, Tmp.size() - ofs);
+			if (rv <= 0) {
+				Tmp.resize(ofs);
+				break;
+			}
+			ofs+= (size_t)rv;
+			if (ofs >= PSEUDOFILE_FULLREAD_LIMIT) {
+				Tmp.resize(ofs);
+				break;
+			}
+			if (Tmp.size() <= ofs) {
+				Tmp.resize(Tmp.size() + PSEUDOFILE_FULLREAD_BLOCK);
+			}
+		}
+		if (!Tmp.empty()) {
+			Buffer = AllocBuffer(Tmp.size());
+			memcpy(Buffer, Tmp.data(), Tmp.size());
+			FileSize = Tmp.size();
+			BufferBounds.Ptr = 0;
+			BufferBounds.End = Tmp.size();
+			PseudoFile = true;
+		}
+	}
+
 	return true;
 }
 
@@ -96,7 +126,7 @@ void BufferedFileView::Close()
 void BufferedFileView::ActualizeFileSize()
 {
 	struct stat s = {};
-	if (FD != -1 && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
+	if (FD != -1 && !PseudoFile && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
 		Clear();
 		FileSize = s.st_size;
 	}
@@ -127,6 +157,11 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 {
 	if (Ptr >= BufferBounds.Ptr && Ptr + Size <= BufferBounds.End) {
 		return &Buffer[CheckedCast<size_t>(Ptr - BufferBounds.Ptr)];
+	}
+
+	if (PseudoFile) {
+		Size = 0;
+		return nullptr;
 	}
 
 	Bounds NewBufferBounds;
@@ -207,7 +242,7 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 
 LPBYTE BufferedFileView::AllocBuffer(size_t Size)
 {
-	void *ptr;
+	void *ptr = nullptr;
 	if (posix_memalign(&ptr, AlignSize, Size) != 0) {
 		ptr = (LPBYTE)malloc(Size);
 	}

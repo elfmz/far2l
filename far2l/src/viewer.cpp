@@ -137,7 +137,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	for (int i=0; i<=MAXSCRY; i++)
 	{
 		Strings[i] = new ViewerString();
-		Strings[i]->lpData = new wchar_t[MAX_VIEWLINEB];
+		Strings[i]->lpData[MAX_VIEWLINEB] = 0;
 	}
 
 	strLastSearchStr = strGlobalSearchString;
@@ -246,7 +246,6 @@ Viewer::~Viewer()
 
 	for (int i=0; i<=MAXSCRY; i++)
 	{
-		delete [] Strings[i]->lpData;
 		delete Strings[i];
 	}
 
@@ -1211,7 +1210,6 @@ int Viewer::ProcessKey(int Key)
 		}
 		return TRUE;
 	}
-	ViewerString vString;
 
 	/* $ 22.01.2001 IS
 	     Происходят какие-то манипуляции -> снимем выделение
@@ -1683,17 +1681,13 @@ int Viewer::ProcessKey(int Key)
 
 		case KEY_ALTPGDN: case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
 		{
-			vString.lpData = new(std::nothrow) wchar_t[MAX_VIEWLINEB];
-
-			if (!vString.lpData)
-				return TRUE;
-
+			ViewerString vString;
+			vString.lpData[MAX_VIEWLINEB] = 0;
 			const auto InitialFilePos = FilePos;
 			for (unsigned boost = 0; boost <= iBoostPg; boost+= 4)
 			{
 				if (LastPage || !ViewFile.Opened())
 				{
-					delete[] vString.lpData;
 					return TRUE;
 				}
 
@@ -1705,7 +1699,6 @@ int Viewer::ProcessKey(int Key)
 
 					if (LastPage)
 					{
-						delete[] vString.lpData;
 						return TRUE;
 					}
 				}
@@ -1727,7 +1720,6 @@ int Viewer::ProcessKey(int Key)
 					InternalKey++;
 					ProcessKey(KEY_CTRLPGDN);
 					InternalKey--;
-					delete[] vString.lpData;
 					return TRUE;
 				}
 
@@ -1740,7 +1732,6 @@ int Viewer::ProcessKey(int Key)
 			}
 			Show();
 
-			delete [] vString.lpData;
 //      LastSelPos=FilePos;
 			return TRUE;
 		}

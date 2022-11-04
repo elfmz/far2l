@@ -11,10 +11,9 @@ template <class FN>
 {
 	UChar32 c, last = 0x10ffff;
 	UChar32 start = 0;
-	bool first = true;
 	printf("bool %s(wchar_t c)\n", name);
 	printf("{\n");
-	printf("\treturn ");
+	printf("\tswitch (c) {\n");
 	for (c = 1; c <= last + 1; ++c) {
 		const bool matched = (c <= last) && fn(c);
 		if (matched) {
@@ -23,22 +22,20 @@ template <class FN>
 			}
 
 		} else if (start) {
-			if (first) {
-				first = false;
-			} else {
-				printf("\t || ");
-			}
 			if (start + 2 == c) {
-				printf("(c == 0x%x || c == 0x%x)\n", (unsigned int)start, (unsigned int)c - 1);
+				printf("\t\tcase 0x%x: case 0x%x:\n", (unsigned int)start, (unsigned int)c - 1);
 			} else if (start + 1 < c) {
-				printf("(c >= 0x%x && c <= 0x%x)\n", (unsigned int)start, (unsigned int)c - 1);
+				printf("\t\tcase 0x%x ... 0x%x:\n", (unsigned int)start, (unsigned int)c - 1);
 			} else {
-				printf("(c == 0x%x)\n", (unsigned int)start);
+				//printf("(c == 0x%x)\n", (unsigned int)start);
+				printf("\t\tcase 0x%x:\n", (unsigned int)start);
 			}
 			start = 0;
 		}
 	}
-	printf("\t;\n");
+	printf("\t\t\treturn true;\n");
+	printf("\t\tdefault: return false;\n");
+	printf("\t}\n");
 	printf("}\n\n");
 }
 

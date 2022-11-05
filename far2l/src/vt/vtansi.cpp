@@ -731,7 +731,6 @@ void InterpretEscSeq( void )
 				return;
 
 			case 2:		// ESC[2J Clear screen and home cursor
-				fprintf(stderr, "ESC[2J\n");
 				if (Info.srWindow.Top != screen_top || Info.srWindow.Bottom == Info.dwSize.Y - 1) {
 					// Rather than clearing the existing window, make the current
 					// line the new top of the window (assuming this is the first

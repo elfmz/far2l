@@ -273,7 +273,7 @@ const wchar_t *Parser::Parse(const wchar_t *str)
 				}
 				a = 0;
 
-			} else if (i < 32 && str[i] >= '0' && str[i] <= '9') {
+			} else if (str[i] >= '0' && str[i] <= '9') {
 				a*= 10;
 				a+= str[i] - '0';
 

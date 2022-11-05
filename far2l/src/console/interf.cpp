@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 BOOL WINAPI CtrlHandler(DWORD CtrlType);
 
 static int CurX,CurY;
-static int CurColor;
+static DWORD64 CurColor;
 static volatile DWORD CtrlHandlerEvent = std::numeric_limits<uint32_t>::max();
 
 static CONSOLE_CURSOR_INFO InitialCursorInfo;
@@ -778,7 +778,7 @@ void SetColor(int Color, bool ApplyToConsole)
 	}
 }
 
-void SetRealColor(WORD wAttributes, bool ApplyToConsole)
+void SetRealColor(DWORD64 wAttributes, bool ApplyToConsole)
 {
 	CurColor = wAttributes;
 	if (ApplyToConsole) {
@@ -786,7 +786,7 @@ void SetRealColor(WORD wAttributes, bool ApplyToConsole)
 	}
 }
 
-WORD GetRealColor()
+DWORD64 GetRealColor()
 {
 	return CurColor;
 }

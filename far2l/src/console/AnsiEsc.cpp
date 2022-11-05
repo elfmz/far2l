@@ -55,7 +55,7 @@ static const BYTE BackgroundColor[16] = {
 };
 
 
-static const BYTE Attr2Ansi[8] = {	// map console attribute to ANSI number
+const BYTE Attr2Ansi[8] = {	// map console attribute to ANSI number
 	0,					// black
 	4,					// blue
 	2,					// green
@@ -65,6 +65,12 @@ static const BYTE Attr2Ansi[8] = {	// map console attribute to ANSI number
 	3,					// yellow
 	7					// white
 };
+
+BYTE ConsoleColorToAnsi(BYTE clr)
+{
+	return Attr2Ansi[clr & 7] | (clr & 8);
+}
+
 
 /////////////////
 void FontState::ParseSuffixM(const int *args, int argc)

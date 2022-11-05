@@ -20,7 +20,7 @@
 
 #define ESC "\x1b"
 
-#define BACKGROUND_ATTRIBUTES \
+#define ATTRIBUTES_AFFECTING_BACKGROUND \
 	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY \
 	| BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE)
 
@@ -54,13 +54,13 @@ template <DWORD64 R, DWORD64 G, DWORD64 B>
 	out+= ';';
 }
 
-void TTYOutput::WriteAttributes(DWORD64 attr, bool is_space)
+void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 {
 	const DWORD64 xa = _prev_attr_valid ? attr ^ _prev_attr : (DWORD64)-1;
 	if (xa == 0) {
 		return;
 	}
-	if (is_space && (xa & BACKGROUND_ATTRIBUTES) == 0) {
+	if (is_space && (xa & ATTRIBUTES_AFFECTING_BACKGROUND) == 0) {
 		if ((attr & BACKGROUND_TRUECOLOR) == 0 || GET_RGB_BACK(xa) == 0) {
 			return;
 		}
@@ -107,7 +107,7 @@ void TTYOutput::WriteAttributes(DWORD64 attr, bool is_space)
 		_tmp_attrs+= (attr & COMMON_LVB_REVERSE_VIDEO) ? "7;" : "27;";
 	}
 
-	assert(_tmp_attrs.back() == ';');
+	assert(!_tmp_attrs.empty() && _tmp_attrs.back() == ';');
 	_tmp_attrs.back() = 'm';
 	_prev_attr = attr;
 	_prev_attr_valid = true;
@@ -387,7 +387,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
 			|| !WCHAR_IS_VALID(ci->Char.UnicodeChar));
 
-		WriteAttributes(ci->Attributes, is_space);
+		WriteUpdatedAttributes(ci->Attributes, is_space);
 
 		if (is_space) {
 			WriteWChar(L' ');

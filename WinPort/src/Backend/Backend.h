@@ -30,6 +30,7 @@ public:
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text) = 0;
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
 	virtual bool OnConsoleSetFKeyTitles(const char **titles) = 0;
+	virtual BYTE OnConsoleGetColorPalette() = 0;
 };
 
 class IClipboardBackend
@@ -182,6 +183,7 @@ public:
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text) = 0;
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
 	virtual bool SetFKeyTitles(const CHAR **titles) = 0;
+	virtual BYTE GetColorPalette() = 0;
 
 	inline std::wstring GetTitle()
 	{

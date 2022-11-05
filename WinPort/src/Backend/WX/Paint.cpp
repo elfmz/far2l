@@ -412,10 +412,10 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 				&& cy >= (unsigned)qedit->Top && cy <= (unsigned)qedit->Bottom) {
 				attributes^= COLOR_ATTRIBUTES;
 				if (attributes & FOREGROUND_TRUECOLOR) {
-					attributes^= COLOR_ATTRIBUTES | 0x000000ffffff0000;
+					attributes^= 0x000000ffffff0000;
 				}
 				if (attributes & BACKGROUND_TRUECOLOR) {
-					attributes^= COLOR_ATTRIBUTES | 0xffffff0000000000;
+					attributes^= 0xffffff0000000000;
 				}
 			}
 			const int nx = (cx + 1 < cw && !line[cx + 1].Char.UnicodeChar) ? 2 : 1;

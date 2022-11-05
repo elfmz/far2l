@@ -348,6 +348,10 @@ extern "C" {
 		return g_winport_con_out->SetFKeyTitles(titles) ? TRUE : FALSE;
 	}
 
+	WINPORT_DECL(GetConsoleColorPalette,BYTE,())
+	{
+		return g_winport_con_out->GetColorPalette();
+	}
 
 	static struct {
 		struct Cmp
@@ -395,7 +399,7 @@ extern "C" {
 		if ((CompositeChar & COMPOSITE_CHAR_MARK) == 0) {
 			fprintf(stderr, "%s: invoked for not composite-char 0x%llx\n",
 				__FUNCTION__,  (unsigned long long)CompositeChar);
-			return L"";
+			return L"\u2022";
 		}
 
 		const COMP_CHAR id = CompositeChar & (~COMPOSITE_CHAR_MARK);
@@ -404,7 +408,7 @@ extern "C" {
 		if (id >= (COMP_CHAR)s_composite_chars.id2str.size()) {
 			fprintf(stderr, "%s: out of range composite-char 0x%llx\n",
 				__FUNCTION__,  (unsigned long long)CompositeChar);
-			return L"";
+			return L"\u2022";
 		}
 		return s_composite_chars.id2str[id];
 	}

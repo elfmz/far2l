@@ -113,6 +113,7 @@ protected:
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool OnConsoleSetFKeyTitles(const char **titles);
+	virtual BYTE OnConsoleGetColorPalette();
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);

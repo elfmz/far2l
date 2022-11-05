@@ -492,6 +492,13 @@ typedef struct _CHAR_INFO {
 } CHAR_INFO, *PCHAR_INFO;
 
 #define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
+
+#define CI_SET_ATTR(CI, ATTR)       { (CI).Attributes = (DWORD64)ATTR; }
+#define CI_SET_WCHAR(CI, WC)        { (CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); }
+#define CI_SET_COMPOSITE(CI, PWC)   { (CI).Char.UnicodeChar = WINPORT(CompositeCharRegister)(PWC); }
+
+#define CI_SET_WCATTR(CI, WC, ATTR) {(CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); (CI).Attributes = (DWORD64)ATTR;}
+
 #define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
 #define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
 	|| (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))

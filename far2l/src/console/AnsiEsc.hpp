@@ -6,6 +6,8 @@
 
 namespace AnsiEsc
 {
+	BYTE ConsoleColorToAnsi(BYTE clr);
+
 	struct FontState
 	{
 		BYTE	foreground = 0;	    // ANSI base color (0 to 7; add 30)

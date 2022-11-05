@@ -30,6 +30,9 @@
 #include "vtshell_compose.h"
 #define __USE_BSD 
 #include <termios.h> 
+#include "palette.hpp"
+#include "AnsiEsc.hpp"
+
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
     WCHAR uc = 0);
@@ -387,8 +390,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 		}
 
-
-
 		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
 		// to avoid shell history pollution by far2l's intermediate script execution commands
 		std::string hc_override;
@@ -402,14 +403,36 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "Override HISTCONTROL='%s'\n", hc_override.c_str());
 		}
 
-		//shell = "/usr/bin/zsh";
-		//shell = "/bin/bash";
-		//shell = "/bin/sh";
+		const BYTE col = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
+		char colorfgbg[32];
+		sprintf(colorfgbg, "%u;%u",
+			AnsiEsc::ConsoleColorToAnsi(col & 0xf),
+			AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
+
+		const auto color_bpp = WINPORT(GetConsoleColorPalette)();
 
 		int r = fork();
 		if (r != 0) {
 			return r;
 		}
+
+		switch (color_bpp) {
+			case 24:
+				setenv("TERM", "xterm-256color", 1);
+				setenv("COLORTERM", "truecolor", 1);
+				break;
+
+			case 8:
+				setenv("TERM", "xterm-256color", 1);
+				setenv("COLORTERM", "256color", 1);
+				break;
+
+			default:
+				setenv("TERM", "xterm", 1);
+				unsetenv("COLORTERM");
+		}
+
+		setenv("COLORFGBG", colorfgbg, 1);
 
 		if (!hc_override.empty()) {
 			setenv("HISTCONTROL", hc_override.c_str(), 1);

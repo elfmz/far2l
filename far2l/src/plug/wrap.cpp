@@ -1273,10 +1273,10 @@ void AnsiVBufToUnicode(PCHAR_INFO VBufA, PCHAR_INFO VBuf, size_t Size,bool NoCvt
 			{
 				WCHAR wc{};
 				AnsiToUnicodeBin(&VBufA[i].Char.AsciiChar,&wc,1);
-				VBuf[i].Char.UnicodeChar = (DWORD64)wc;
+				CI_SET_WCHAR(VBuf[i], wc);
 			}
 
-			VBuf[i].Attributes = VBufA[i].Attributes;
+			CI_SET_ATTR(VBuf[i], VBufA[i].Attributes);
 		}
 	}
 }

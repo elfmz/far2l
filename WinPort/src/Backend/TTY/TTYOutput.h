@@ -38,7 +38,7 @@ class TTYOutput
 	void Format(const char *fmt, ...);
 
 	void AppendTrueColorSuffix(std::string &out, DWORD rgb);
-	void WriteAttributes(DWORD64 new_attr, bool is_space);
+	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
 
 public:
 	TTYOutput(int out, bool far2l_tty);

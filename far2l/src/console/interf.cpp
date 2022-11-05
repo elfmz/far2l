@@ -585,15 +585,14 @@ void Text(const WCHAR *Str, size_t Length)
 		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
 		if (nG > 1) {
 			wstr.assign(&Str[i], nG);
-			BufPtr[nCells].Char.UnicodeChar = WINPORT(CompositeCharRegister)(wstr.c_str());
+			CI_SET_COMPOSITE(BufPtr[nCells], wstr.c_str());
 		} else {
-			BufPtr[nCells].Char.UnicodeChar = Str[i];
+			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
-		BufPtr[nCells].Attributes = CurColor;
+		CI_SET_ATTR(BufPtr[nCells], CurColor);
 		if (IsCharFullWidth(Str[i])) {
 			++nCells;
-			BufPtr[nCells].Char.UnicodeChar = 0;
-			BufPtr[nCells].Attributes = CurColor;
+			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		}
 		i+= nG;
 	}

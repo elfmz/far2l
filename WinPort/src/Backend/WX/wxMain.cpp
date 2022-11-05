@@ -473,6 +473,11 @@ bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
 #endif
 }
 
+BYTE WinPortPanel::OnConsoleGetColorPalette()
+{
+	return 24;
+}
+
 void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 {
 	INPUT_RECORD ir = {};

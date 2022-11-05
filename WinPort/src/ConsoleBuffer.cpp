@@ -16,8 +16,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 	_console_chars.swap(other_chars);
 	_width = width;
 	for (auto &i : _console_chars) {
-		i.Attributes = attributes;
-		i.Char.UnicodeChar = L' ';
+		CI_SET_WCATTR(i, L' ', attributes);
 	}
 
 	if (!other_chars.empty() && !_console_chars.empty()) {
@@ -44,8 +43,12 @@ template <class T> T *OffsetMatrixPtr(T *p, size_t width, size_t x, size_t y)
 
 CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &data_pos, SMALL_RECT &screen_rect)
 {
-	if (data_pos.X >= data_size.X || data_pos.Y >= data_size.Y)
-	{fprintf(stderr, "bad1\n"); return NULL;}
+	if (data_pos.X < 0 || data_pos.Y < 0 || data_size.X < 0 || data_size.Y < 0
+	  || data_pos.X >= data_size.X || data_pos.Y >= data_size.Y) {
+		fprintf(stderr, "InspectCopyArea: bad coordinates, data_size:{%d, %d} data_pos:{%d, %d}\n",
+			data_size.X, data_size.Y, data_pos.X, data_pos.Y);
+		return nullptr;
+	}
 
 	unsigned int height = _console_chars.size() / _width;
 	if ((int)_width <= screen_rect.Right)
@@ -60,10 +63,16 @@ CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &d
 	if (data_avail_height <= (screen_rect.Bottom - screen_rect.Top))
 		screen_rect.Bottom = screen_rect.Top + data_avail_height - 1;
 
-	if ((int)_width <= screen_rect.Left || screen_rect.Right < screen_rect.Left)
-	{fprintf(stderr, "bad2\n"); return NULL;}
-	if ((int)height <= screen_rect.Top || screen_rect.Bottom < screen_rect.Top)
-	{fprintf(stderr, "bad3\n"); return NULL;}
+	if ((int)_width <= screen_rect.Left || screen_rect.Right < screen_rect.Left || screen_rect.Left < 0) {
+		fprintf(stderr, "InspectCopyArea: bad X-metrics, _width:%d screen_rect:{%d..%d}\n",
+			_width, screen_rect.Left, screen_rect.Right);
+		return nullptr;
+	}
+	if ((int)height <= screen_rect.Top || screen_rect.Bottom < screen_rect.Top || screen_rect.Top < 0) {
+		fprintf(stderr, "InspectCopyArea: bad Y-metrics, height:%d screen_rect:{%d..%d}\n",
+			height, screen_rect.Top, screen_rect.Bottom);
+		return nullptr;
+	}
 
 	return OffsetMatrixPtr(&_console_chars[0], _width, screen_rect.Left, screen_rect.Top);
 }

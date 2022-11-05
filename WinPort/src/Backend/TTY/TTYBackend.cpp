@@ -606,6 +606,36 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 	return (_fkeys_support == FKS_SUPPORTED);
 }
 
+BYTE TTYBackend::OnConsoleGetColorPalette()
+{
+	if (_far2l_tty) try {
+		StackSerializer stk_ser;
+		stk_ser.PushPOD(FARTTY_INTERRACT_GET_COLOR_PALETTE);
+		Far2lInterract(stk_ser, true);
+		uint8_t bits, reserved;
+		stk_ser.PopPOD(bits);
+		stk_ser.PopPOD(reserved);
+		return bits;
+
+	} catch (std::exception &) {
+		return 4;
+	}
+
+	static BYTE s_out = []() {
+		const char *env = getenv("COLORTERM");
+		if (env) {
+			return (strcmp(env, "truecolor") == 0 || strcmp(env, "24bit") == 0) ? 24 : 8;
+		}
+		env = getenv("TERM");
+		if (env && strstr(env, "256") != nullptr) {
+			return 8;
+		}
+		return 4;
+	} ();
+
+	return s_out;
+}
+
 void TTYBackend::OnConsoleAdhocQuickEdit()
 {
 	try {

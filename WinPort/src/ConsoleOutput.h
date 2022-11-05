@@ -104,4 +104,5 @@ public:
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool SetFKeyTitles(const CHAR **titles);
+	virtual BYTE GetColorPalette();
 };

@@ -320,7 +320,7 @@ void TreeList::DisplayTree(int Fast)
 
 		if (WhereX()<X2)
 		{
-			FS<<fmt::Width(X2-WhereX())<<L"";
+			FS << fmt::Cells() << fmt::Expand(X2-WhereX()) << L"";
 		}
 	}
 
@@ -336,7 +336,7 @@ void TreeList::DisplayTree(int Fast)
 	if (TreeCount>0)
 	{
 		GotoXY(X1+1,Y2-1);
-		FS<<fmt::LeftAlign()<<fmt::Width(X2-X1-1)<<fmt::Precision(X2-X1-1)<<ListData[CurFile]->strName;
+		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Size(X2-X1-1) << ListData[CurFile]->strName;
 	}
 
 	UpdateViewPanel();
@@ -359,18 +359,18 @@ void TreeList::DisplayTreeName(const wchar_t *Name,int Pos)
 		if (Focus || ModalMode)
 		{
 			SetColor((Pos==WorkDir) ? COL_PANELSELECTEDCURSOR:COL_PANELCURSOR);
-			FS<<L" "<<fmt::Precision(X2-WhereX()-3)<<Name<<L" ";
+			FS << L" " << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 3) << Name << L" ";
 		}
 		else
 		{
 			SetColor((Pos==WorkDir) ? COL_PANELSELECTEDTEXT:COL_PANELTEXT);
-			FS<<L"["<<fmt::Precision(X2-WhereX()-3)<<Name<<L"]";
+			FS << L"[" << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 3) << Name << L"]";
 		}
 	}
 	else
 	{
 		SetColor((Pos==WorkDir) ? COL_PANELSELECTEDTEXT:COL_PANELTEXT);
-		FS<<fmt::Precision(X2-WhereX()-1)<<Name;
+		FS << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 1) << Name;
 	}
 }
 

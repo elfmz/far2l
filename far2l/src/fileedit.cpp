@@ -780,7 +780,7 @@ int64_t FileEditor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	}
 
 	if (OpCode == MCODE_V_EDITORCURPOS)
-		return (int64_t)(m_editor->CurLine->GetTabCurPos()+1);
+		return (int64_t)(m_editor->CurLine->GetCellCurPos()+1);
 
 	if (OpCode == MCODE_V_EDITORCURLINE)
 		return (int64_t)(m_editor->NumLine+1);
@@ -2286,22 +2286,22 @@ void FileEditor::ShowStatus()
 	strLineStr.Format(L"%d/%d", m_editor->NumLine+1, m_editor->NumLastLine);
 	FARString strAttr(AttrStr);
 	FormatString FString;
-	FString<<fmt::LeftAlign()<<fmt::Width(NameLength)<<strLocalTitle<<L' '<<
+	FString<<fmt::LeftAlign()<<fmt::Expand(NameLength)<<strLocalTitle<<L' '<<
 	(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"':L' ')<<
-	fmt::Width(5)<<EOLName(m_editor->GlobalEOL)<<L' '<<
-	fmt::Width(5)<<m_codepage<<L' '<<fmt::Width(7)<<Msg::EditStatusLine<<L' '<<
-	fmt::Width(SizeLineStr)<<fmt::Precision(SizeLineStr)<<strLineStr<<L' '<<
-	fmt::Width(5)<<Msg::EditStatusCol<<L' '<<
-	fmt::LeftAlign()<<fmt::Width(4)<<m_editor->CurLine->GetTabCurPos()+1<<L' '<<
-	fmt::Width(3)<<strAttr;
+	fmt::Expand(5)<<EOLName(m_editor->GlobalEOL)<<L' '<<
+	fmt::Expand(5)<<m_codepage<<L' '<<fmt::Expand(7)<<Msg::EditStatusLine<<L' '<<
+	fmt::Expand(SizeLineStr)<<fmt::Truncate(SizeLineStr)<<strLineStr<<L' '<<
+	fmt::Expand(5)<<Msg::EditStatusCol<<L' '<<
+	fmt::LeftAlign()<<fmt::Expand(4)<<m_editor->CurLine->GetCellCurPos()+1<<L' '<<
+	fmt::Expand(3)<<strAttr;
 	int StatusWidth=ObjWidth - (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)?5:0);
 
 	if (StatusWidth<0)
 		StatusWidth=0;
 
-	FS<<fmt::LeftAlign()<<fmt::Width(StatusWidth)<<fmt::Precision(StatusWidth)<<FString.strValue();
+	FS<<fmt::LeftAlign()<<fmt::Size(StatusWidth)<<FString.strValue();
 	{
 		const wchar_t *Str;
 		int Length;

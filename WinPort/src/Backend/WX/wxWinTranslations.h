@@ -51,7 +51,8 @@ struct WinPortRGB
 	unsigned char g;
 	unsigned char b;
 
-	inline WinPortRGB(unsigned char r_ = 0, unsigned char g_ = 0, unsigned char b_ = 0) : r(r_), g(g_), b(b_) {}
+	inline WinPortRGB(DWORD rgb = 0) : r(rgb & 0xff), g((rgb >> 8) & 0xff), b((rgb >> 16) & 0xff) {}
+	inline WinPortRGB(unsigned char r_, unsigned char g_, unsigned char b_) : r(r_), g(g_), b(b_) {}
 
 	inline bool operator == (const WinPortRGB &rgb) const
 	{
@@ -75,7 +76,7 @@ struct WinPortRGB
 	}
 };
 
-WinPortRGB ConsoleForeground2RGB(USHORT attributes);
-WinPortRGB ConsoleBackground2RGB(USHORT attributes);
+WinPortRGB ConsoleForeground2RGB(DWORD64 attributes);
+WinPortRGB ConsoleBackground2RGB(DWORD64 attributes);
 
 bool InitPalettes();

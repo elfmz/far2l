@@ -1207,7 +1207,7 @@ BOOL Dialog::GetItemRect(unsigned I,SMALL_RECT& Rect)
 		case DI_MEMOEDIT:
 			break;
 		default:
-			Len=((ItemFlags & DIF_SHOWAMPERSAND)?(int)CurItem->strData.GetLength():HiStrlen(CurItem->strData));
+			Len=((ItemFlags & DIF_SHOWAMPERSAND)?(int)CurItem->strData.CellsCount():HiStrCellsCount(CurItem->strData));
 			break;
 	}
 
@@ -1884,7 +1884,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (CW < ObjWidth)
 						tmpCW=CW+1;
 
-					strStr.Truncate(tmpCW-1);
+					strStr.TruncateByCells(tmpCW-1);
 				}
 
 				// нужно ЭТО
@@ -1899,10 +1899,10 @@ void Dialog::ShowDialog(unsigned ID)
 					if (X1+X+CntChr-1 > X2)
 						CntChr=X2-(X1+X)+1;
 
-					FS<<fmt::Width(CntChr)<<L"";
+					FS << fmt::Cells() << fmt::Expand(CntChr) << L"";
 
 					if (CntChr < LenText)
-						strStr.Truncate(CntChr);
+						strStr.TruncateByCells(CntChr);
 				}
 
 				if (CurItem->Flags & (DIF_SEPARATORUSER|DIF_SEPARATOR|DIF_SEPARATOR2))
@@ -1956,7 +1956,7 @@ void Dialog::ShowDialog(unsigned ID)
 					if (CH < ObjHeight)
 						tmpCH=CH+1;
 
-					strStr.Truncate(tmpCH-1);
+					strStr.TruncateByCells(tmpCH-1);
 				}
 
 				// нужно ЭТО
@@ -2035,7 +2035,7 @@ void Dialog::ShowDialog(unsigned ID)
 				LenText=LenStrItem(I, strStr);
 
 				if (X1+CX1+LenText > X2)
-					strStr.Truncate(ObjWidth-1);
+					strStr.TruncateByCells(ObjWidth-1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
 					Text(strStr);
@@ -2228,7 +2228,7 @@ int Dialog::LenStrItem(int ID, const wchar_t *lpwszStr)
 	if (!lpwszStr)
 		lpwszStr = Item[ID]->strData;
 
-	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?StrLength(lpwszStr):HiStrlen(lpwszStr);
+	return (Item[ID]->Flags & DIF_SHOWAMPERSAND)?StrZCellsCount(lpwszStr):HiStrCellsCount(lpwszStr);
 }
 
 
@@ -3479,7 +3479,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					/* ********************************************************** */
 					if (Type==DI_BUTTON &&
 					        MsY==Y1+Item[I]->Y1 &&
-					        MsX < X1+Item[I]->X1+HiStrlen(Item[I]->strData))
+					        MsX < X1+Item[I]->X1+HiStrCellsCount(Item[I]->strData))
 					{
 						ChangeFocus2(I);
 						ShowDialog();
@@ -3487,7 +3487,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 						while (IsMouseButtonPressed());
 
 						if (MouseX <  X1 ||
-						        MouseX >  X1+Item[I]->X1+HiStrlen(Item[I]->strData)+4 ||
+						        MouseX >  X1+Item[I]->X1+HiStrCellsCount(Item[I]->strData)+4 ||
 						        MouseY != Y1+Item[I]->Y1)
 						{
 							ChangeFocus2(I);
@@ -3504,7 +3504,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					if ((Type == DI_CHECKBOX ||
 					        Type == DI_RADIOBUTTON) &&
 					        MsY==Y1+Item[I]->Y1 &&
-					        MsX < (X1+Item[I]->X1+HiStrlen(Item[I]->strData)+4-((Item[I]->Flags & DIF_MOVESELECT)!=0)))
+					        MsX < (X1+Item[I]->X1+HiStrCellsCount(Item[I]->strData)+4-((Item[I]->Flags & DIF_MOVESELECT)!=0)))
 					{
 						ChangeFocus2(I);
 						ProcessKey(KEY_SPACE, I);
@@ -5520,7 +5520,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 					esp->CurLine=0;
 					esp->CurPos=EditPtr->GetCurPos();
-					esp->CurTabPos=EditPtr->GetTabCurPos();
+					esp->CurTabPos=EditPtr->GetCellCurPos();
 					esp->TopScreenLine=0;
 					esp->LeftPos=EditPtr->GetLeftPos();
 					esp->Overtype=EditPtr->GetOvertypeMode();
@@ -5545,7 +5545,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					EditorSetPosition *esp=(EditorSetPosition *)Param2;
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 					EditPtr->SetCurPos(esp->CurPos);
-					EditPtr->SetTabCurPos(esp->CurTabPos);
+					EditPtr->SetCellCurPos(esp->CurTabPos);
 					EditPtr->SetLeftPos(esp->LeftPos);
 					EditPtr->SetOvertypeMode(esp->Overtype);
 					Dlg->ShowDialog(Param1);

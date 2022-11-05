@@ -239,7 +239,7 @@ static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 #define SI	'\x0F'          // Shift In
 #define ST	'\x9c'
 
-#define MAX_ARG 16		// max number of args in an escape sequence
+#define MAX_ARG 32		// max number of args in an escape sequence
 static int   state;			// automata state
 static char  prefix;			// escape sequence prefix ( '[', ']' or '(' );
 static char  prefix2;			// secondary prefix ( '?' or '>' );
@@ -460,8 +460,7 @@ void PushBuffer( WCHAR c )
 					r.Right = s.X - 1;
 					r.Top = r.Bottom = csbi.dwCursorPosition.Y;
 					WINPORT(ReadConsoleOutput)( hConOut, row, s, c, &r );
-					blank.Char.UnicodeChar = blank_character;
-					blank.Attributes = csbi.wAttributes;
+					CI_SET_WCATTR(blank, blank_character, csbi.wAttributes);
 					while (*(PDWORD)&row[c.X] == *(PDWORD)&blank)
 						if (++c.X == s.X) {
 							nl = (csbi.dwCursorPosition.X == 0) ? NULL : L"\r";
@@ -651,7 +650,7 @@ static void LimitByScrollRegion(SMALL_RECT &rect)
 void InterpretEscSeq( void )
 {
 	int  i;
-	WORD attribut;
+	DWORD64 attribut;
 	CONSOLE_SCREEN_BUFFER_INFO Info;
 	CONSOLE_CURSOR_INFO CursInfo;
 	DWORD len, NumberOfCharsWritten;
@@ -748,8 +747,7 @@ void InterpretEscSeq( void )
 						Rect.Top = Info.dwCursorPosition.Y - Info.srWindow.Top;
 						Rect.Bottom = Info.dwCursorPosition.Y - 1;
 						Pos.X = Pos.Y = 0;
-						CharInfo.Char.UnicodeChar = blank_character;
-						CharInfo.Attributes = Info.wAttributes;
+						CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 						WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 					}
 					WINPORT(SetConsoleWindowInfo)( hConOut, TRUE, &Info.srWindow );
@@ -802,7 +800,7 @@ void InterpretEscSeq( void )
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[L == ESC[1L
 			if (es_argc != 1) return;
 			{
-				LimitByScrollRegion(Info.srWindow);//fprintf(stderr, "!!!scroll 1\n");
+				LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 1\n");
 
 				Rect.Left   = Info.srWindow.Left	= 0;
 				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
@@ -811,8 +809,7 @@ void InterpretEscSeq( void )
 
 				Pos.X = 0;
 				Pos.Y = Info.dwCursorPosition.Y + es_argv[0];
-				CharInfo.Char.UnicodeChar = blank_character;
-				CharInfo.Attributes = Info.wAttributes;
+				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 				// Technically should home the cursor, but perhaps not expeclted.
 			}
@@ -825,15 +822,14 @@ void InterpretEscSeq( void )
 				Pos.X = 0;
 				Pos.Y = Info.srWindow.Top;
 
-				LimitByScrollRegion(Info.srWindow);//fprintf(stderr, "!!!scroll 2\n");
+				LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 2\n");
 
 				Rect.Left   = Info.srWindow.Left = 0;
 				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
 				Rect.Top    = Pos.Y + es_argv[0];
 				Rect.Bottom = Info.srWindow.Bottom;
 
-				CharInfo.Char.UnicodeChar = blank_character;
-				CharInfo.Attributes = Info.wAttributes;
+				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			}
 			return;
@@ -842,7 +838,7 @@ void InterpretEscSeq( void )
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[T == ESC[1T
 			if (es_argc != 1) return;
 			/*while (es_argv[0]--)*/ {
-				LimitByScrollRegion(Info.srWindow);//fprintf(stderr, "!!!scroll 3\n");
+				LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 3\n");
 
 				Rect.Left   = Info.srWindow.Left = 0;
 				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
@@ -852,8 +848,7 @@ void InterpretEscSeq( void )
 				Pos.X = 0;
 				Pos.Y = Rect.Top + es_argv[0];
 
-				CharInfo.Char.UnicodeChar = blank_character;
-				CharInfo.Attributes = Info.wAttributes;
+				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			}
 			return;
@@ -863,19 +858,18 @@ void InterpretEscSeq( void )
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[M == ESC[1M
 			if (es_argc != 1) return;
 			{
-				LimitByScrollRegion(Info.srWindow);//fprintf(stderr, "!!!scroll 4\n");
+				LimitByScrollRegion(Info.srWindow);
+				//fprintf(stderr, "!!!scroll 4 srWindow[%d %d %d %d] by %d\n", Info.srWindow.Left, Info.srWindow.Top, Info.srWindow.Right, Info.srWindow.Bottom, es_argv[0]);
 
 				Rect.Left   = Info.srWindow.Left	= 0;
 				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
 				Rect.Bottom = Info.srWindow.Bottom;
-				Rect.Top    = Info.dwCursorPosition.Y + es_argv[0];
+				Rect.Top    = Info.dwCursorPosition.Y;
 				Pos.X = 0;
-				Pos.Y = Info.srWindow.Top = Info.dwCursorPosition.Y;
-				CharInfo.Char.UnicodeChar = blank_character;
-				CharInfo.Attributes = Info.wAttributes;
+				Pos.Y = Rect.Top - es_argv[0];
+				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 
-				Info.srWindow.Bottom-= es_argv[0];
-				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
+				WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Rect, Pos, &CharInfo );
 			}
 			// Technically should home the cursor, but perhaps not expected.
 			return;
@@ -889,8 +883,7 @@ void InterpretEscSeq( void )
 			Pos.Y	    =
 			    Rect.Top    =
 			        Rect.Bottom = Info.dwCursorPosition.Y;
-			CharInfo.Char.UnicodeChar = blank_character;
-			CharInfo.Attributes = Info.wAttributes;
+			CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			return;
 
@@ -903,8 +896,7 @@ void InterpretEscSeq( void )
 			Pos.Y	    =
 			    Rect.Top    =
 			        Rect.Bottom = Info.dwCursorPosition.Y;
-			CharInfo.Char.UnicodeChar = blank_character;
-			CharInfo.Attributes = Info.wAttributes;
+			CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			return;
 
@@ -1214,8 +1206,7 @@ static void ReverseIndex()
 	SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
 	COORD Pos = {0, (SHORT) (scroll_top + 1) };
 	CHAR_INFO  CharInfo;
-	CharInfo.Char.UnicodeChar = blank_character;
-	CharInfo.Attributes = info.wAttributes;
+	CI_SET_WCATTR(CharInfo, blank_character, info.wAttributes);
 	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 }
 

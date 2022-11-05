@@ -481,7 +481,7 @@ void InfoList::PrintText(const wchar_t *Str)
 {
 	if (WhereY()<=Y2-1)
 	{
-		FS<<fmt::Precision(X2-WhereX())<<Str;
+		FS << fmt::Cells() << fmt::Truncate(X2 - WhereX()) << Str;
 	}
 }
 
@@ -617,7 +617,7 @@ void InfoList::ShowPluginDescription()
 		SetColor(COL_PANELBOX);
 		Text(VertcalLine);
 		SetColor(COL_PANELTEXT);
-		FS<<fmt::Width(X2-X1-1)<<L"";
+		FS << fmt::Cells() << fmt::Expand(X2 - X1 - 1) << L"";
 		SetColor(COL_PANELBOX);
 		Text(VertcalLine);
 		GotoXY(X1+2,Y);

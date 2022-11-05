@@ -147,6 +147,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool OnConsoleSetFKeyTitles(const char **titles);
+	virtual BYTE OnConsoleGetColorPalette();
 
 public:
     WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

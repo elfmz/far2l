@@ -516,6 +516,15 @@ void VTFar2lExtensios::OnInterract_SetFKeyTitles(StackSerializer &stk_ser)
 	stk_ser.PushPOD(out);
 }
 
+void VTFar2lExtensios::OnInterract_GetColorPalette(StackSerializer &stk_ser)
+{
+	stk_ser.Clear();
+	const uint8_t bits = WINPORT(GetConsoleColorPalette)();
+	const uint8_t reserved = 0;
+	stk_ser.PushPOD(reserved);
+	stk_ser.PushPOD(bits);
+}
+
 void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 {
 	const char code = stk_ser.PopChar();
@@ -560,6 +569,10 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 
 		case FARTTY_INTERRACT_SET_FKEY_TITLES:
 			OnInterract_SetFKeyTitles(stk_ser);
+		break;
+
+		case FARTTY_INTERRACT_GET_COLOR_PALETTE:
+			OnInterract_GetColorPalette(stk_ser);
 		break;
 
 		default:

@@ -180,9 +180,9 @@ void KeyBar::RefreshObject(bool Render)
 		if (Render && WhereX()+LabelWidth<X2)
 		{
 			SetColor(COL_KEYBARNUM);
-			FS<<i+1;
+			FS << i + 1;
 			SetColor(COL_KEYBARTEXT);
-			FS<<fmt::LeftAlign()<<fmt::Width(LabelWidth)<<fmt::Precision(LabelWidth)<<Label;
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(LabelWidth) << Label;
 
 			if (i<KEY_COUNT-1)
 			{
@@ -199,7 +199,7 @@ void KeyBar::RefreshObject(bool Render)
 		if (Width>0)
 		{
 			SetColor(COL_KEYBARTEXT);
-			FS<<fmt::Width(Width)<<L"";
+			FS << fmt::Cells() << fmt::Expand(Width) << L"";
 		}
 	}
 

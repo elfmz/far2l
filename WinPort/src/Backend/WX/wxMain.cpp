@@ -473,6 +473,11 @@ bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
 #endif
 }
 
+BYTE WinPortPanel::OnConsoleGetColorPalette()
+{
+	return 24;
+}
+
 void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 {
 	INPUT_RECORD ir = {};
@@ -1256,8 +1261,13 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 					}
 					for (pos.X = x1; pos.X<=x2; ++pos.X) {
 						CHAR_INFO ch;
-						if (g_winport_con_out->Read(ch, pos))
-							_text2clip+= ch.Char.UnicodeChar ? ch.Char.UnicodeChar : L' ';
+						if (g_winport_con_out->Read(ch, pos)) {
+							if (CI_USING_COMPOSITE_CHAR(ch)) {
+								_text2clip+= WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
+							} else if (ch.Char.UnicodeChar) {
+								_text2clip+= ch.Char.UnicodeChar;
+							}
+						}
 					}
 					if (y2 > y1) {
 						while (!_text2clip.empty() && _text2clip[_text2clip.size() - 1] == ' ') {

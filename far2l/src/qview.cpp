@@ -113,7 +113,7 @@ void QuickView::DisplayObject()
 	DrawSeparator(Y2-2);
 	SetColor(COL_PANELTEXT);
 	GotoXY(X1+1,Y2-1);
-	FS<<fmt::LeftAlign()<<fmt::Width(X2-X1-1)<<fmt::Precision(X2-X1-1)<<PointToName(strCurFileName);
+	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
 
 	if (!strCurFileType.IsEmpty())
 	{
@@ -466,7 +466,7 @@ void QuickView::PrintText(const wchar_t *Str)
 	if (WhereY()>Y2-3 || WhereX()>X2-2)
 		return;
 
-	FS<<fmt::Precision(X2-2-WhereX()+1)<<Str;
+	FS << fmt::Cells() << fmt::Truncate(X2 - 2 - WhereX() + 1) << Str;
 }
 
 

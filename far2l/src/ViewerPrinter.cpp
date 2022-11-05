@@ -50,7 +50,10 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 	int out;
 	for (out = 0; *str && limit != 0; ++str, --limit) {
 		if (!ShouldSkip(*str)) {
-			++out;
+			if (IsCharFullWidth(*str))
+				out+= 2;
+			else if (!IsCharXxxfix(*str))
+				++out;
 		}
 	}
 	return out;
@@ -59,30 +62,37 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 {
 	SetColor(_selection ? COL_VIEWERSELECTEDTEXT : _color);
-	while (*str && skip_len) {
-		--skip_len;
-		++str;
+
+	for(; skip_len > 0 && *str; ++str) {
+		if (ShouldSkip(*str))
+			;
+		else if (IsCharFullWidth(*str))
+			skip_len-= 2;
+		else if (!IsCharXxxfix(*str))
+			skip_len--;
 	}
 
-	int str_print_len;
-	for (int i = str_print_len = 0;; ) {
-		if (!str[i] || str_print_len + i >= print_len || ShouldSkip(str[i])) {
-			if (i) {
-				Text(str, i);
-				str_print_len+= i;
-			}
-			if (!str[i] || str_print_len + i >= print_len) {
-				break;
-			}
-			str+= i + 1;
-			i = 0;
-
-		} else {
-			++i;
+	for (;;) {
+		size_t piece = 0;
+		while (str[piece] && !ShouldSkip(str[piece])) {
+			++piece;
 		}
+		if (piece) {
+			size_t cells = print_len;
+			piece = StrSizeOfCells(str, piece, cells, false);
+			if (piece) {
+				Text(str, piece);
+				print_len-= (int)cells;
+				str+= piece;
+			}
+		}
+		if (!str[piece]) {
+			break;
+		}
+		str+= piece + 1;
 	}
 
-	if (print_len > str_print_len) {
-		PrintSpaces(print_len - str_print_len);
+	if (print_len > 0) {
+		PrintSpaces(print_len);
 	}
 }

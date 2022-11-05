@@ -37,19 +37,38 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace fmt
 {
-	class Width
+	struct Cells { }; // makes modifiers operate in screen cells but not characters
+	struct Chars { }; // makes modifiers operate in characters but not screen cells
+
+	class Skip
 	{
 			size_t Value;
 		public:
-			Width(size_t Value=0) {this->Value=Value;}
+			Skip(size_t Value=static_cast<size_t>(-1)) {this->Value=Value;}
 			size_t GetValue()const {return Value;}
 	};
 
-	class Precision
+	class Expand
 	{
 			size_t Value;
 		public:
-			Precision(size_t Value=static_cast<size_t>(-1)) {this->Value=Value;}
+			Expand(size_t Value=0) {this->Value=Value;}
+			size_t GetValue()const {return Value;}
+	};
+
+	class Truncate
+	{
+			size_t Value;
+		public:
+			Truncate(size_t Value=static_cast<size_t>(-1)) {this->Value=Value;}
+			size_t GetValue()const {return Value;}
+	};
+
+	class Size // same as Expand + Truncate with same parameter
+	{
+			size_t Value;
+		public:
+			Size(size_t Value=static_cast<size_t>(-1)) {this->Value=Value;}
 			size_t GetValue()const {return Value;}
 	};
 
@@ -75,8 +94,10 @@ namespace fmt
 
 class BaseFormat
 {
-		size_t _Width;
-		size_t _Precision;
+		bool _Cells;
+		size_t _Skip;
+		size_t _Expand;
+		size_t _Truncate;
 		WCHAR _FillChar;
 		fmt::AlignType _Align;
 
@@ -91,10 +112,12 @@ class BaseFormat
 		virtual ~BaseFormat() {}
 
 		// attributes
-		void SetPrecision(size_t Precision=static_cast<size_t>(-1)) {_Precision=Precision;}
-		void SetWidth(size_t Width=0) {_Width=Width;}
-		void SetAlign(fmt::AlignType Align=fmt::A_RIGHT) {_Align=Align;}
-		void SetFillChar(WCHAR Char=L' ') {_FillChar=Char;}
+		inline void SetCells(bool Cells = false) { _Cells = Cells; }
+		inline void SetSkip(size_t Skip = 0) { _Skip = Skip; }
+		inline void SetTruncate(size_t Truncate = static_cast<size_t>(-1)) { _Truncate=Truncate; }
+		inline void SetExpand(size_t Expand = 0) { _Expand = Expand; }
+		inline void SetAlign(fmt::AlignType Align = fmt::A_RIGHT) { _Align = Align; }
+		inline void SetFillChar(WCHAR Char = L' ') { _FillChar = Char; }
 
 		// data
 		BaseFormat& operator<<(INT64 Value);
@@ -114,8 +137,12 @@ class BaseFormat
 		BaseFormat& operator<<(FARString& String);
 
 		// manipulators
-		BaseFormat& operator<<(const fmt::Width& Manipulator);
-		BaseFormat& operator<<(const fmt::Precision& Manipulator);
+		BaseFormat& operator<<(const fmt::Cells&);
+		BaseFormat& operator<<(const fmt::Chars&);
+		BaseFormat& operator<<(const fmt::Skip& Manipulator);
+		BaseFormat& operator<<(const fmt::Expand& Manipulator);
+		BaseFormat& operator<<(const fmt::Truncate& Manipulator);
+		BaseFormat& operator<<(const fmt::Size& Manipulator);
 		BaseFormat& operator<<(const fmt::LeftAlign& Manipulator);
 		BaseFormat& operator<<(const fmt::RightAlign& Manipulator);
 		BaseFormat& operator<<(const fmt::FillChar& Manipulator);

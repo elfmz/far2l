@@ -290,6 +290,16 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 	return *this;
 }
 
+FARString& FARString::Append(wchar_t Ch, size_t Count)
+{
+	size_t nNewLength = m_pContent->GetLength() + Count;
+	PrepareForModify(nNewLength);
+	wmemset(m_pContent->GetData() + m_pContent->GetLength(), Ch, Count);
+	m_pContent->SetLength(nNewLength);
+
+	return *this;
+}
+
 FARString& FARString::Copy(const FARString &Str)
 {
 	auto prev_pContent = m_pContent;
@@ -548,4 +558,20 @@ std::string FARString::GetMB() const
 	std::string out;
 	Wide2MB(CPtr(), GetLength(), out);
 	return out;
+}
+
+size_t FARString::CellsCount() const
+{
+	return StrCellsCount(CPtr(), GetLength());
+}
+
+size_t FARString::TruncateByCells(size_t nCount)
+{
+	size_t ng = CellsCount();
+	if (ng > nCount) {
+		size_t ng = nCount;
+		auto sz = StrSizeOfCells(CPtr(), GetLength(), ng, false);
+		Truncate(sz);
+	}
+	return ng;
 }

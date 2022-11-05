@@ -73,6 +73,16 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 */
 #define FARTTY_INTERRACT_SET_FKEY_TITLES           'f'
 
+/** Request color palette info
+ In:
+  N/A
+ Out:
+   uint8_t maximum count of color resolution bits supported (4, 8, 24)
+   uint8_t reserved and set to zero, client should ignore it
+*/
+#define FARTTY_INTERRACT_GET_COLOR_PALETTE         'p'
+
+
 /** Declares that client supports specified extra features, so server _may_ change its hehaviour accordingly if it also supports some of them
  In:
   uint64_t (set of FARTTY_FEAT_* bit flags)

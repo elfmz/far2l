@@ -388,7 +388,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 		{
 			//CmdStr.SetString(L"");
 			GotoXY(X1,Y1);
-			FS<<fmt::Width(X2-X1+1)<<L"";
+			FS << fmt::Cells() << fmt::Expand(X2 - X1 + 1) << L"";
 			Show();
 			ScrBuf.Flush();
 		}

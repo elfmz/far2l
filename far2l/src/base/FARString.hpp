@@ -141,6 +141,9 @@ public:
 	inline size_t GetLength() const { return m_pContent->GetLength(); }
 	size_t Truncate(size_t nLength);
 
+	size_t CellsCount() const;
+	size_t TruncateByCells(size_t nCount);
+
 	inline wchar_t At(size_t nIndex) const { return m_pContent->GetData()[nIndex]; }
 
 	inline bool IsEmpty() const { return !(m_pContent->GetLength() && *m_pContent->GetData()); }
@@ -160,7 +163,8 @@ public:
 	FARString& Append(const wchar_t* Str, size_t StrLen) { return Replace(GetLength(), 0, Str, StrLen); }
 	FARString& Append(const FARString& Str) { return Append(Str.CPtr(), Str.GetLength()); }
 	FARString& Append(const wchar_t* Str) { return Append(Str, StrLength(NullToEmpty(Str))); }
-	FARString& Append(wchar_t Ch) { return Append(&Ch, 1); }
+	FARString& Append(wchar_t Ch, size_t Count);
+	FARString& Append(wchar_t Ch) { return Append(Ch, 1); }
 	FARString& Append(const char *lpszAdd, UINT CodePage=CP_UTF8);
 
 	FARString& Insert(size_t Pos, const wchar_t* Str, size_t StrLen) { return Replace(Pos, 0, Str, StrLen); }

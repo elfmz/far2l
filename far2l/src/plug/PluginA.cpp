@@ -333,6 +333,21 @@ static void WINAPI farBackgroundTaskA(const char *Info, BOOL Started)
 		CtrlObject->Plugins.BackroundTaskFinished(MB2Wide(Info).c_str());
 }
 
+static size_t WINAPI farStrCellsCountA(const char *Str, size_t CharsCount)
+{
+	std::wstring ws;
+	MB2Wide(Str, CharsCount, ws);
+	return StrCellsCount(ws.c_str(), ws.size());
+}
+
+static size_t WINAPI farStrSizeOfCellsA(const char *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
+{
+	std::wstring ws;
+	MB2Wide(Str, CharsCount, ws);
+	size_t cnt = StrSizeOfCells(ws.c_str(), ws.size(), *CellsCount, RoundUp != FALSE);
+	ws.resize(cnt);
+	return StrWide2MB(ws).size();
+}
 
 static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfar::FarStandardFunctions *FSF)
 {
@@ -384,6 +399,8 @@ static void CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo
 		StandardFunctions.DisplayNotification = farDisplayNotificationA;
 		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsA;
 		StandardFunctions.BackgroundTask = farBackgroundTaskA;
+		StandardFunctions.StrCellsCount = farStrCellsCountA;
+		StandardFunctions.StrSizeOfCells = farStrSizeOfCellsA;
 	}
 
 	if (!StartupInfo.StructSize)

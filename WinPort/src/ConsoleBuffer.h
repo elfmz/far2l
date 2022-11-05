@@ -19,7 +19,7 @@ public:
 		WR_MODIFIED = 2
 	};
 
-	void SetSize(unsigned int width, unsigned int height, unsigned short attributes);
+	void SetSize(unsigned int width, unsigned int height, uint64_t attributes);
 	void GetSize(unsigned int &width, unsigned int &height);
 	inline unsigned int GetWidth() const { return _width; }
 

@@ -1836,8 +1836,9 @@ typedef wchar_t   *(WINAPI *FARSTDITOA)(int value, wchar_t *string, int radix);
 typedef wchar_t   *(WINAPI *FARSTDLTRIM)(wchar_t *Str);
 typedef wchar_t   *(WINAPI *FARSTDRTRIM)(wchar_t *Str);
 typedef wchar_t   *(WINAPI *FARSTDTRIM)(wchar_t *Str);
-typedef wchar_t   *(WINAPI *FARSTDTRUNCSTR)(wchar_t *Str,int MaxLength);
-typedef wchar_t   *(WINAPI *FARSTDTRUNCPATHSTR)(wchar_t *Str,int MaxLength);
+// truncation functions below uses console cells count as limiting unit
+typedef wchar_t   *(WINAPI *FARSTDTRUNCSTR)(wchar_t *Str,int MaxCells);
+typedef wchar_t   *(WINAPI *FARSTDTRUNCPATHSTR)(wchar_t *Str,int MaxCells);
 typedef wchar_t   *(WINAPI *FARSTDQUOTESPACEONLY)(wchar_t *Str);
 typedef const wchar_t*(WINAPI *FARSTDPOINTTONAME)(const wchar_t *Path);
 typedef int (WINAPI *FARSTDGETPATHROOT)(const wchar_t *Path,wchar_t *Root, int DestSize);
@@ -1941,7 +1942,21 @@ typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef int (WINAPI *FAREXECUTE_LIBRARY)(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int ExecFlags);
 typedef void (WINAPI *FARDISPLAYNOTIFICATION)(const wchar_t *action, const wchar_t *object);
 typedef int (WINAPI *FARDISPATCHNTRTHRDCALLS)();
+// If plugin implements tasks running in background it may invoke this function to indicate about
+// pending task in left-top corner. Info is a short description of task or just its owner and must
+// be same string when invoked with Started TRUE or FALSE.
 typedef void (WINAPI *FARBACKGROUNDTASK)(const wchar_t *Info, BOOL Started);
+// Returns count of console cells which will be used to display given string of CharsCount characters.
+typedef size_t (WINAPI *FARSTRCELLSCOUNT)(const wchar_t *Str, size_t CharsCount);
+// Returns count of characters which will be used for fill up to *CellsCount cells from given string
+// of CharsCount characters.
+// RoundUp argument tells what to do with full-width characters that crossed by *CellsCount.
+// On return *CellsCount contains cells count that will be filled by returned characters count, that:
+//  Can be smaller than initial value if string has too few characters to fill all *CellsCount cells
+//  or if RoundUp was set to FALSE and last character would then overflow wanted amount.
+//  Can be larger by one than initial value if RoundUp was set to TRUE and last full-width character
+//  crossed initial value specified in *CellsCount.
+typedef size_t (WINAPI *FARSTRSIZEOFCELLS)(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp);
 
 enum BOX_DEF_SYMBOLS
 {
@@ -2061,6 +2076,8 @@ typedef struct FarStandardFunctions
 	FARDISPLAYNOTIFICATION     DisplayNotification;
 	FARDISPATCHNTRTHRDCALLS    DispatchInterThreadCalls;
 	FARBACKGROUNDTASK          BackgroundTask;
+	FARSTRCELLSCOUNT           StrCellsCount;
+	FARSTRSIZEOFCELLS          StrSizeOfCells;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

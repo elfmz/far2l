@@ -390,7 +390,7 @@ int DlgEdit::GetCurRow()
 		return 0;
 }
 
-int DlgEdit::GetTabCurPos()
+int DlgEdit::GetCellCurPos()
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -398,10 +398,10 @@ int DlgEdit::GetTabCurPos()
 		return multiEdit->GetCurPos(); // GetCurCol???
 	else
 #endif
-		return lineEdit->GetTabCurPos();
+		return lineEdit->GetCellCurPos();
 }
 
-void DlgEdit::SetTabCurPos(int NewPos)
+void DlgEdit::SetCellCurPos(int NewPos)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -409,7 +409,7 @@ void DlgEdit::SetTabCurPos(int NewPos)
 		multiEdit->SetCurPos(NewPos,multiEdit->GetCurRow()); //???
 	else
 #endif
-		lineEdit->SetTabCurPos(NewPos);
+		lineEdit->SetCellCurPos(NewPos);
 }
 
 

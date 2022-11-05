@@ -168,18 +168,34 @@ static const WinPortRGB &InternalConsoleBackground2RGB(USHORT attributes)
 	return g_palette_background[(attributes & 0xf0) >> 4];
 }
 
-WinPortRGB ConsoleForeground2RGB(USHORT attributes)
+WinPortRGB ConsoleForeground2RGB(DWORD64 attributes)
 {
-	return (attributes & COMMON_LVB_REVERSE_VIDEO) ?
-		InternalConsoleBackground2RGB(attributes) :
-		InternalConsoleForeground2RGB(attributes);
+	if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == FOREGROUND_TRUECOLOR) {
+		return GET_RGB_FORE(attributes);
+	}
+
+	if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
+		return GET_RGB_BACK(attributes);
+	}
+
+	return (attributes & COMMON_LVB_REVERSE_VIDEO)
+		? InternalConsoleBackground2RGB((USHORT)attributes)
+		: InternalConsoleForeground2RGB((USHORT)attributes);
 }
 
-WinPortRGB ConsoleBackground2RGB(USHORT attributes)
+WinPortRGB ConsoleBackground2RGB(DWORD64 attributes)
 {
-	return (attributes & COMMON_LVB_REVERSE_VIDEO) ?
-		InternalConsoleForeground2RGB(attributes) :
-		InternalConsoleBackground2RGB(attributes);
+	if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == BACKGROUND_TRUECOLOR) {
+		return GET_RGB_BACK(attributes);
+	}
+
+	if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
+		return GET_RGB_FORE(attributes);
+	}
+
+	return (attributes & COMMON_LVB_REVERSE_VIDEO)
+		? InternalConsoleForeground2RGB((USHORT)attributes)
+		: InternalConsoleBackground2RGB((USHORT)attributes);
 }
 
 

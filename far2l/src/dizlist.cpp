@@ -581,7 +581,7 @@ bool DizList::AddDizText(const wchar_t *Name,const wchar_t *DizText)
 	FARString strQuotedName = Name;
 	QuoteSpaceOnly(strQuotedName);
 	FormatString FString;
-	FString<<fmt::LeftAlign()<<fmt::Width(Opt.Diz.StartPos>1?Opt.Diz.StartPos-2:0)<<strQuotedName<<L" "<<DizText;
+	FString<<fmt::LeftAlign()<<fmt::Expand(Opt.Diz.StartPos>1?Opt.Diz.StartPos-2:0)<<strQuotedName<<L" "<<DizText;
 	return AddRecord(FString);
 }
 

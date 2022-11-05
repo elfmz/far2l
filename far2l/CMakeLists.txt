@@ -151,6 +151,7 @@ src/mix/processname.cpp
 src/mix/RegExp.cpp
 src/mix/strmix.cpp
 src/mix/FSFileFlags.cpp
+src/mix/StrCells.cpp
 )
 
 # Set target names for the executables

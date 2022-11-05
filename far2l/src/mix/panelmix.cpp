@@ -494,7 +494,7 @@ const FARString FormatStr_Attribute( DWORD FileAttributes, DWORD UnixMode, int W
 	}
 
 	if (Width > 0)
-		strResult<<fmt::Width(Width)<<fmt::Precision(Width);
+		strResult<<fmt::Expand(Width)<<fmt::Truncate(Width);
 
 	strResult<<OutStr;
 
@@ -550,7 +550,7 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD
 
 	ConvertDate(*FileTime,strDateStr,strTimeStr,ColumnWidth,Brief,TextMonth,FullYear);
 
-	strResult<<fmt::Width(Width)<<fmt::Precision(Width);
+	strResult<<fmt::Expand(Width)<<fmt::Truncate(Width);
 	switch(ColumnType)
 	{
 		case DATE_COLUMN:
@@ -592,9 +592,9 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 			PtrName=Msg::ListSymLink;
 		}
 
-		strResult<<fmt::Width(Width)<<fmt::Precision(Width);
+		strResult<<fmt::Expand(Width)<<fmt::Truncate(Width);
 		if (StrLength(PtrName) <= Width-2) {
-			// precombine into tmp string to avoid miseffect of fmt::Width etc (#1137)
+			// precombine into tmp string to avoid miseffect of fmt::Expand etc (#1137)
 			strResult<<FARString(L"<").Append(PtrName).Append(L">");
 		} else {
 			strResult<<PtrName;

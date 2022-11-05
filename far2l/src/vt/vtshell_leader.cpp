@@ -38,8 +38,6 @@ static void SetupSignalHandlers(bool propogation)
 
 static int VTShell_ExecShell(const char *shell)
 {
-	//setenv("TERM", "xterm-256color", 1);
-	setenv("TERM", "xterm", 1);
 	int r = (*shell == '/')
 		? execl(shell, shell, "-i", NULL)
 		: execlp(shell, shell, "-i", NULL);

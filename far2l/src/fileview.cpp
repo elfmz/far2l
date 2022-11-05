@@ -503,7 +503,7 @@ void FileViewer::ShowStatus()
 	);
 	SetColor(COL_VIEWERSTATUS);
 	GotoXY(X1,Y1);
-	FS<<fmt::LeftAlign()<<fmt::Width(View.Width+(View.ViOpt.ShowScrollbar?1:0))<<fmt::Precision(View.Width+(View.ViOpt.ShowScrollbar?1:0))<<strStatus;
+	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(View.Width+(View.ViOpt.ShowScrollbar?1:0)) << strStatus;
 
 	if (Opt.ViewerEditorClock && IsFullScreen())
 		ShowTime(FALSE);

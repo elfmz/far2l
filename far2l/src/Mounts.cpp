@@ -80,12 +80,12 @@ namespace Mounts
 
 		ConfigReader cfg_reader(HOTKEYS_SECTION);
 		for (auto &m : *this) {
-			if (max_path < m.path.GetLength())
-				max_path = m.path.GetLength();
-			if (max_col3 < m.col3.GetLength())
-				max_col3 = m.col3.GetLength();
-			if (max_col2 < m.col2.GetLength())
-				max_col2 = m.col2.GetLength();
+			if (max_path < m.path.CellsCount())
+				max_path = m.path.CellsCount();
+			if (max_col3 < m.col3.CellsCount())
+				max_col3 = m.col3.CellsCount();
+			if (max_col2 < m.col2.CellsCount())
+				max_col2 = m.col2.CellsCount();
 			wchar_t def_hk[] = {DefaultHotKey(m.id, m.path), 0};
 			auto hk = cfg_reader.GetString(SettingsKey(m.id), def_hk);
 			m.hotkey = hk.IsEmpty() ? 0 : *hk.CPtr();

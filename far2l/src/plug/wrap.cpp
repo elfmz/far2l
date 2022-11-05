@@ -1271,10 +1271,12 @@ void AnsiVBufToUnicode(PCHAR_INFO VBufA, PCHAR_INFO VBuf, size_t Size,bool NoCvt
 			}
 			else
 			{
-				AnsiToUnicodeBin(&VBufA[i].Char.AsciiChar,&VBuf[i].Char.UnicodeChar,1);
+				WCHAR wc{};
+				AnsiToUnicodeBin(&VBufA[i].Char.AsciiChar,&wc,1);
+				CI_SET_WCHAR(VBuf[i], wc);
 			}
 
-			VBuf[i].Attributes = VBufA[i].Attributes;
+			CI_SET_ATTR(VBuf[i], VBufA[i].Attributes);
 		}
 	}
 }
@@ -4046,7 +4048,7 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 
 		ErrnoSaver ErSr;
 		const wchar_t *codePageName = L"";//FormatCodePageName(nCP, cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t));
-		sTableName<<fmt::Width(5)<<nCP<<BoxSymbols[BS_V1]<<L" "<<codePageName;
+		sTableName<<fmt::Expand(5)<<nCP<<BoxSymbols[BS_V1]<<L" "<<codePageName;
 		sTableName.strValue().GetCharString(TableSet->TableName, sizeof(TableSet->TableName) - 1, CP_OEMCP);
 		wchar_t *us=AnsiToUnicodeBin((char*)TableSet->DecodeTable, sizeof(TableSet->DecodeTable), nCP);
 		WINPORT(CharLowerBuff)(us, sizeof(TableSet->DecodeTable));

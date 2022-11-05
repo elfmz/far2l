@@ -480,14 +480,16 @@ typedef DWORD64 COMP_CHAR;
 
 typedef struct _CHAR_INFO {
     union {
-		// WCHAR or result of CompositeCharRegister()
-		// can be differentiated using CI_USING_COMPOSITE_CHAR() that checks presence of highest bit
+        // WCHAR or result of CompositeCharRegister() can be differentiated
+        // using CI_USING_COMPOSITE_CHAR() that checks presence of highest bit
+        // to change this field better use CI_SET_WCHAR/CI_SET_WCATTR/CI_SET_COMPOSITE
+        // that guards against unwanted sign extension if casting from wchar_t
         COMP_CHAR UnicodeChar;
         CHAR   AsciiChar;
     } Char;
 
-	// low 16 bits - legacy attributes, followed by two 24-bit RGB colors
-	// that used if any of them is not zero, in such case legacy color attributes are ignored
+    // low 16 bits - usual attributes, followed by two 24-bit RGB colors that used
+    // if FOREGROUND_TRUECOLOR/BACKGROUND_TRUECOLOR defined and backend supports truecolor
     DWORD64 Attributes;
 } CHAR_INFO, *PCHAR_INFO;
 

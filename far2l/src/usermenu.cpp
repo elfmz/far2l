@@ -491,7 +491,7 @@ static int FillUserMenu(VMenu& UserMenu,const wchar_t *MenuKey,int MenuPos,int *
 			FuncNum=PrepareHotKey(strHotKey);
 			int Offset=strHotKey.At(0)==L'&'?5:4;
 			FormatString FString;
-			FString<<((!strHotKey.IsEmpty() && !FuncNum)?L"&":L"")<<fmt::LeftAlign()<<fmt::Width(Offset)<<fmt::Precision(Offset)<<strHotKey;
+			FString<<((!strHotKey.IsEmpty() && !FuncNum)?L"&":L"")<<fmt::LeftAlign()<<fmt::Size(Offset)<<strHotKey;
 			UserMenuItem.strName=std::move(FString.strValue());
 			UserMenuItem.strName+=strLabel;
 

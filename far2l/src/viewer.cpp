@@ -137,7 +137,7 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	for (int i=0; i<=MAXSCRY; i++)
 	{
 		Strings[i] = new ViewerString();
-		Strings[i]->lpData = new wchar_t[MAX_VIEWLINEB];
+		Strings[i]->lpData[MAX_VIEWLINEB] = 0;
 	}
 
 	strLastSearchStr = strGlobalSearchString;
@@ -246,7 +246,6 @@ Viewer::~Viewer()
 
 	for (int i=0; i<=MAXSCRY; i++)
 	{
-		delete [] Strings[i]->lpData;
 		delete Strings[i];
 	}
 
@@ -517,7 +516,7 @@ void Viewer::ShowPage(int nMode)
 			SetScreen(X1,Y1,X2,Y2,L' ',COL_VIEWERTEXT);
 			GotoXY(X1,Y1);
 			SetColor(COL_WARNDIALOGTEXT);
-			FS<<fmt::Precision(XX2-X1+1)<<Msg::ViewerCannotOpenFile;
+			FS << fmt::Cells() << fmt::Truncate(XX2 - X1 + 1) << Msg::ViewerCannotOpenFile;
 			ShowStatus();
 		}
 
@@ -684,7 +683,7 @@ void Viewer::ShowHex()
 
 		if (EndFile)
 		{
-			FS<<fmt::Width(ObjWidth)<<L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
 			continue;
 		}
 
@@ -861,18 +860,18 @@ void Viewer::ShowHex()
 
 		if (StrLength(OutStr)>HexLeftPos)
 		{
-			FS<<fmt::LeftAlign()<<fmt::Width(ObjWidth)<<fmt::Precision(ObjWidth)<<OutStr+static_cast<size_t>(HexLeftPos);
+			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(ObjWidth) << OutStr + static_cast<size_t>(HexLeftPos);
 		}
 		else
 		{
-			FS<<fmt::Width(ObjWidth)<<L"";
+			FS << fmt::Cells() << fmt::Expand(ObjWidth) << L"";
 		}
 
 		if (bSelStartFound && bSelEndFound)
 		{
 			SetColor(COL_VIEWERSELECTEDTEXT);
 			GotoXY((int)((int64_t)X1+SelStart-HexLeftPos),Y);
-			FS<<fmt::Precision(SelEnd-SelStart+1)<<OutStr+static_cast<size_t>(SelStart);
+			FS << fmt::Cells() << fmt::Truncate(SelEnd - SelStart + 1) << OutStr + static_cast<size_t>(SelStart);
 //			SelSize = 0;
 		}
 	}
@@ -1211,7 +1210,6 @@ int Viewer::ProcessKey(int Key)
 		}
 		return TRUE;
 	}
-	ViewerString vString;
 
 	/* $ 22.01.2001 IS
 	     Происходят какие-то манипуляции -> снимем выделение
@@ -1683,17 +1681,13 @@ int Viewer::ProcessKey(int Key)
 
 		case KEY_ALTPGDN: case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
 		{
-			vString.lpData = new(std::nothrow) wchar_t[MAX_VIEWLINEB];
-
-			if (!vString.lpData)
-				return TRUE;
-
+			ViewerString vString;
+			vString.lpData[MAX_VIEWLINEB] = 0;
 			const auto InitialFilePos = FilePos;
 			for (unsigned boost = 0; boost <= iBoostPg; boost+= 4)
 			{
 				if (LastPage || !ViewFile.Opened())
 				{
-					delete[] vString.lpData;
 					return TRUE;
 				}
 
@@ -1705,7 +1699,6 @@ int Viewer::ProcessKey(int Key)
 
 					if (LastPage)
 					{
-						delete[] vString.lpData;
 						return TRUE;
 					}
 				}
@@ -1727,7 +1720,6 @@ int Viewer::ProcessKey(int Key)
 					InternalKey++;
 					ProcessKey(KEY_CTRLPGDN);
 					InternalKey--;
-					delete[] vString.lpData;
 					return TRUE;
 				}
 
@@ -1740,7 +1732,6 @@ int Viewer::ProcessKey(int Key)
 			}
 			Show();
 
-			delete [] vString.lpData;
 //      LastSelPos=FilePos;
 			return TRUE;
 		}
@@ -2446,7 +2437,7 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
 			strProgress.ReleaseBuffer(Length);
 			FormatString strTmp;
-			strTmp<<L" "<<fmt::Width(PercentLength)<<strPercent<<L"%";
+			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
 			strProgress+=strTmp;
 		}
 

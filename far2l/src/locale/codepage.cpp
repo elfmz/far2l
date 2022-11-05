@@ -188,7 +188,7 @@ static void FormatCodePageString(UINT CodePage, const wchar_t *CodePageName, For
 {
 	if (CodePage!=CP_AUTODETECT)
 	{
-		CodePageNameString<<fmt::Width(5)<<CodePage<<BoxSymbols[BS_V1]<<(!IsCodePageNameCustom||CallbackCallSource==CodePagesFill?L' ':L'*');
+		CodePageNameString<<fmt::Expand(5)<<CodePage<<BoxSymbols[BS_V1]<<(!IsCodePageNameCustom||CallbackCallSource==CodePagesFill?L' ':L'*');
 	}
 	CodePageNameString<<CodePageName;
 }

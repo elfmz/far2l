@@ -40,6 +40,7 @@ class VTFar2lExtensios
 	void OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser);
 	void OnInterract_DisplayNotification(StackSerializer &stk_ser);
 	void OnInterract_SetFKeyTitles(StackSerializer &stk_ser);
+	void OnInterract_GetColorPalette(StackSerializer &stk_ser);
 
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdexcept>
 #include <vector>
+#include <map>
 #include <WinCompat.h>
 #include <StackSerializer.h>
 
@@ -12,35 +13,33 @@ class TTYOutput
 		bool visible = false;
 	} _cursor;
 
-	struct Attributes
-	{
-		Attributes() = default;
-		Attributes(const Attributes &) = default;
-		Attributes(WORD attributes);
-
-		bool foreground_intensive = false;
-		bool background_intensive = false;
-		unsigned char foreground = -1;
-		unsigned char background = -1;
-
-		bool operator ==(const Attributes &attr) const;
-		bool operator !=(const Attributes &attr) const {return !(operator ==(attr)); }
-	} _attr;
-
-	int _out;
 	std::vector<char> _rawbuf;
 	struct {
 		WCHAR wch = 0;
 		unsigned int count = 0;
 		std::string tmp;
 	} _same_chars;
+
+	struct TrueColors {
+		void AppendSuffix(std::string &out, DWORD rgb);
+		std::map<DWORD, BYTE> _colors256_lookup;
+	} _true_colors;
+
+	int _out;
 	bool _far2l_tty, _kernel_tty;
+	bool _prev_attr_valid{false};
+	DWORD64 _prev_attr{};
+	std::string _tmp_attrs;
 
 	void WriteReally(const char *str, int len);
 	void FinalizeSameChars();
 	void WriteWChar(WCHAR wch);
 	void Write(const char *str, int len);
 	void Format(const char *fmt, ...);
+
+	void AppendTrueColorSuffix(std::string &out, DWORD rgb);
+	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
+
 public:
 	TTYOutput(int out, bool far2l_tty);
 	~TTYOutput();

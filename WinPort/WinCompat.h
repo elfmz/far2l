@@ -466,7 +466,7 @@ typedef struct _SMALL_RECT {
 typedef struct _CONSOLE_SCREEN_BUFFER_INFO {
     COORD dwSize;
     COORD dwCursorPosition;
-    WORD  wAttributes;
+    DWORD64  wAttributes;
     SMALL_RECT srWindow;
     COORD dwMaximumWindowSize;
 } CONSOLE_SCREEN_BUFFER_INFO, *PCONSOLE_SCREEN_BUFFER_INFO;
@@ -476,14 +476,43 @@ typedef struct _CONSOLE_CURSOR_INFO {
     BOOL   bVisible;
 } CONSOLE_CURSOR_INFO, *PCONSOLE_CURSOR_INFO;
 
+typedef DWORD64 COMP_CHAR;
+
 typedef struct _CHAR_INFO {
     union {
-        WCHAR UnicodeChar;
+        // WCHAR or result of CompositeCharRegister() can be differentiated
+        // using CI_USING_COMPOSITE_CHAR() that checks presence of highest bit
+        // to change this field better use CI_SET_WCHAR/CI_SET_WCATTR/CI_SET_COMPOSITE
+        // that guards against unwanted sign extension if casting from wchar_t
+        COMP_CHAR UnicodeChar;
         CHAR   AsciiChar;
     } Char;
-    WORD Attributes;
+
+    // low 16 bits - usual attributes, followed by two 24-bit RGB colors that used
+    // if FOREGROUND_TRUECOLOR/BACKGROUND_TRUECOLOR defined and backend supports truecolor
+    DWORD64 Attributes;
 } CHAR_INFO, *PCHAR_INFO;
 
+#define COMPOSITE_CHAR_MARK (COMP_CHAR(1) << 63)
+
+#define CI_SET_ATTR(CI, ATTR)       { (CI).Attributes = (DWORD64)ATTR; }
+#define CI_SET_WCHAR(CI, WC)        { (CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); }
+#define CI_SET_COMPOSITE(CI, PWC)   { (CI).Char.UnicodeChar = WINPORT(CompositeCharRegister)(PWC); }
+
+#define CI_SET_WCATTR(CI, WC, ATTR) {(CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); (CI).Attributes = (DWORD64)ATTR;}
+
+#define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
+#define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
+	|| (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
+
+#define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
+#define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))
+#define SET_RGB_FORE(ATTR, RGB)  \
+	((ATTR) = ((ATTR) & 0xffffff000000ffff) | FOREGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 16))
+#define SET_RGB_BACK(ATTR, RGB)  \
+	((ATTR) = ((ATTR) & 0x000000ffffffffff) | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 40))
+#define SET_RGB_BOTH(ATTR, RGB_FORE, RGB_BACK)  \
+	((ATTR) = ((ATTR) & 0xffff) | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB_FORE)) & 0xffffff) << 16) | ((((DWORD64)(RGB_BACK)) & 0xffffff) << 40) )
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {
     COORD dwSize;
@@ -578,15 +607,17 @@ typedef struct _INPUT_RECORD {
 #define BACKGROUND_GREEN     0x0020 // background color contains green.
 #define BACKGROUND_RED       0x0040 // background color contains red.
 #define BACKGROUND_INTENSITY 0x0080 // background color is intensified.
-#define COMMON_LVB_LEADING_BYTE    0x0100 // Leading Byte of DBCS
-#define COMMON_LVB_TRAILING_BYTE   0x0200 // Trailing Byte of DBCS
-#define COMMON_LVB_GRID_HORIZONTAL 0x0400 // DBCS: Grid attribute: top horizontal.
-#define COMMON_LVB_GRID_LVERTICAL  0x0800 // DBCS: Grid attribute: left vertical.
-#define COMMON_LVB_GRID_RVERTICAL  0x1000 // DBCS: Grid attribute: right vertical.
-#define COMMON_LVB_REVERSE_VIDEO   0x4000 // DBCS: Reverse fore/back ground attribute.
-#define COMMON_LVB_UNDERSCORE      0x8000 // DBCS: Underscore.
+#define FOREGROUND_TRUECOLOR    0x0100 // Use 24 bit RGB colors set by SET_RGB_FORE
+#define BACKGROUND_TRUECOLOR    0x0200 // Use 24 bit RGB colors set by SET_RGB_BACK
+#define COMMON_LVB_REVERSE_VIDEO   0x4000 // Reverse fore/back ground attribute.
+#define COMMON_LVB_UNDERSCORE      0x8000 // Underscore.
 
-#define COMMON_LVB_SBCSDBCS        0x0300 // SBCS or DBCS flag.
+// Constants below not implemented and their bit values are reserved and must be zero-inited
+// #define COMMON_LVB_GRID_HORIZONTAL
+// #define COMMON_LVB_GRID_LVERTICAL
+// #define COMMON_LVB_GRID_RVERTICAL
+// #define COMMON_LVB_SBCSDBCS
+
 
 
 //

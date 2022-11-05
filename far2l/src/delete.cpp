@@ -578,7 +578,7 @@ void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent)
 			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
 			strProgress.ReleaseBuffer(Length);
 			FormatString strTmp;
-			strTmp<<L" "<<fmt::Width(3)<<Percent<<L"%";
+			strTmp<<L" "<<fmt::Expand(3)<<Percent<<L"%";
 			strProgress+=strTmp;
 			DeleteTitle->Set(L"{%d%%} %ls", Percent, (Wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle).CPtr());
 		}

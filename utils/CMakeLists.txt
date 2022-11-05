@@ -30,7 +30,9 @@ set(SOURCES
   src/TestPath.cpp
   src/PipeIPC.cpp
   src/PathParts.cpp
+  src/CharClasses.cpp
   src/POpen.cpp
+  src/VT256ColorTable.cpp
 )
 
 add_library (utils ${SOURCES})

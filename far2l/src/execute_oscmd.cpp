@@ -165,7 +165,7 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 	{
 	  //CmdStr.SetString(L"");
 	  GotoXY(X1,Y1);
-	  FS<<fmt::Width(X2-X1+1)<<L"";
+	  FS<<fmt::Expand(X2-X1+1)<<L"";
 	  Show();
 	  return TRUE;
 	}

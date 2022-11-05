@@ -14,7 +14,8 @@ class ConsoleOutput : public IConsoleOutput
 	std::wstring _title;
 	IConsoleOutputBackend *_backend;
 	DWORD _mode;	
-	USHORT _attributes;
+	DWORD64 _attributes;
+	COORD _prev_pos{-1, -1};
 	
 	struct {
 		COORD pos;
@@ -43,24 +44,25 @@ class ConsoleOutput : public IConsoleOutput
 		union {
 			const WCHAR *str;
 			TCHAR chr;
-			WORD attr;
+			DWORD64 attr;
 		};
 	};
 	
-	bool ModifySequenceEntityAt(SequenceModifier &sm, COORD pos);
+	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 
 	virtual const WCHAR *LockedGetTitle();
 	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width);
 	virtual void Unlock();
+	void SetUpdateCellArea(SMALL_RECT &area, COORD pos);
 
 public:
 	ConsoleOutput();
 	virtual void SetBackend(IConsoleOutputBackend *listener);
 
-	virtual void SetAttributes(USHORT attributes);
-	virtual USHORT GetAttributes();
+	virtual void SetAttributes(DWORD64 attributes);
+	virtual DWORD64 GetAttributes();
 	virtual void SetCursor(COORD pos);
 	virtual void SetCursor(UCHAR height, bool visible);
 	virtual COORD GetCursor();
@@ -86,7 +88,7 @@ public:
 	virtual size_t WriteString(const WCHAR *data, size_t count);
 	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos);
 	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
-	virtual size_t FillAttributeAt(WORD wAttribute, size_t count, COORD &pos);
+	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos);
 	
 	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
@@ -102,4 +104,5 @@ public:
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool SetFKeyTitles(const CHAR **titles);
+	virtual BYTE GetColorPalette();
 };

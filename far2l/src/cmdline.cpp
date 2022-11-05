@@ -116,8 +116,7 @@ void CommandLine::DisplayObject()
 	SetColor(COL_COMMANDLINEPREFIX);
 	Text(strTruncDir);
 	CmdStr.SetObjectColor(COL_COMMANDLINE,COL_COMMANDLINESELECTED);
-
-	CmdStr.SetPosition(X1+(int)strTruncDir.GetLength(),Y1,X2,Y2);
+	CmdStr.SetPosition(X1+(int)strTruncDir.CellsCount(),Y1,X2,Y2);
 
 	CmdStr.Show();
 
@@ -667,9 +666,7 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 						{
 							if (PushDirStackSize)
 							{
-								wchar_t * p = strDestStr.GetBuffer(strDestStr.GetLength()+PushDirStackSize+1);
-								wmemset(p + strDestStr.GetLength(),L'+',PushDirStackSize);
-								strDestStr.ReleaseBuffer(strDestStr.GetLength()+PushDirStackSize);
+								strDestStr.Append(L'+', PushDirStackSize);
 							}
 
 							break;

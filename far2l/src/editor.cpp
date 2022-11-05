@@ -315,7 +315,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		//DisableOut=FALSE;
 	}
 
-	CurPos=CurLine->GetTabCurPos();
+	CurPos=CurLine->GetCellCurPos();
 
 	if (!EdOpt.CursorBeyondEOL)
 	{
@@ -327,7 +327,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		{
 			CurLine->SetCurPos(Length);
 			CurLine->SetLeftPos(0);
-			CurPos=CurLine->GetTabCurPos();
+			CurPos=CurLine->GetCellCurPos();
 		}
 	}
 
@@ -393,7 +393,7 @@ void Editor::ShowEditor(int CurLineOnly)
 				//CurPtr->SetTables(UseDecodeTable ? &TableSet:nullptr);
 				//_D(SysLog(L"Setleftpos 3 to %i",LeftPos));
 				CurPtr->SetLeftPos(LeftPos);
-				CurPtr->SetTabCurPos(CurPos);
+				CurPtr->SetCellCurPos(CurPos);
 				CurPtr->FastShow();
 				CurPtr->SetEditBeyondEnd(EdOpt.CursorBeyondEOL);
 				CurPtr=CurPtr->m_next;
@@ -482,9 +482,9 @@ int Editor::BlockStart2NumLine(int *Pos)
 		if (Pos)
 		{
 			if (VBlockStart)
-				*Pos=eBlock->RealPosToTab(eBlock->TabPosToReal(VBlockX));
+				*Pos=eBlock->RealPosToCell(eBlock->CellPosToReal(VBlockX));
 			else
-				*Pos=eBlock->RealPosToTab(eBlock->SelStart);
+				*Pos=eBlock->RealPosToCell(eBlock->SelStart);
 		}
 
 		return CalcDistance(TopList,eBlock,-1);
@@ -508,7 +508,7 @@ int Editor::BlockEnd2NumLine(int *Pos)
 		{
 			for (int Line=VBlockSizeY; eLine  && Line > 0; Line--, eLine=eLine->m_next)
 			{
-				iPos=eLine->RealPosToTab(eLine->TabPosToReal(VBlockX+VBlockSizeX));
+				iPos=eLine->RealPosToCell(eLine->CellPosToReal(VBlockX+VBlockSizeX));
 				iLine++;
 			}
 
@@ -543,7 +543,7 @@ int Editor::BlockEnd2NumLine(int *Pos)
 				}
 				else
 				{
-					iPos=eLine->RealPosToTab(EndSel);
+					iPos=eLine->RealPosToCell(EndSel);
 					iLine++;
 				}
 
@@ -576,7 +576,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 		case MCODE_C_SELECTED:
 			return (int64_t)(BlockStart || VBlockStart?TRUE:FALSE);
 		case MCODE_V_EDITORCURPOS:
-			return (int64_t)(CurLine->GetTabCurPos()+1);
+			return (int64_t)(CurLine->GetCellCurPos()+1);
 		case MCODE_V_EDITORREALPOS:
 			return (int64_t)(CurLine->GetCurPos()+1);
 		case MCODE_V_EDITORCURLINE:
@@ -693,7 +693,7 @@ int64_t Editor::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							if (iLine > -1 && iPos > -1)
 							{
 								GoToLine(iLine);
-								CurLine->SetCurPos(CurLine->TabPosToReal(iPos));
+								CurLine->SetCurPos(CurLine->CellPosToReal(iPos));
 								return 1;
 							}
 
@@ -1160,11 +1160,11 @@ int Editor::ProcessKey(int Key)
 			{
 				if (SelAtBeginning || SelFirst)
 				{
-					CurLine->Select(SelStart-1,SelEnd);
+					CurLine->Select(CurLine->CalcPosBwdTo(SelStart), SelEnd);
 				}
 				else
 				{
-					CurLine->Select(SelStart,SelEnd-1);
+					CurLine->Select(SelStart, CurLine->CalcPosBwdTo(SelEnd));
 				}
 			}
 
@@ -1194,11 +1194,11 @@ int Editor::ProcessKey(int Key)
 
 			if (SelAtBeginning)
 			{
-				CurLine->Select(SelStart+1,SelEnd);
+				CurLine->Select(CurLine->CalcPosFwdTo(SelStart), SelEnd);
 			}
 			else
 			{
-				CurLine->Select(SelStart,SelEnd+1);
+				CurLine->Select(SelStart, CurLine->CalcPosFwdTo(SelEnd));
 			}
 
 			Edit *OldCur=CurLine;
@@ -1330,7 +1330,7 @@ int Editor::ProcessKey(int Key)
 		{
 			if (!CurLine->m_next)return TRUE;
 
-			CurPos=CurLine->RealPosToTab(CurPos);
+			CurPos=CurLine->RealPosToCell(CurPos);
 
 			if (SelAtBeginning)//Снимаем выделение
 			{
@@ -1347,9 +1347,9 @@ int Editor::ProcessKey(int Key)
 
 				CurLine->m_next->GetRealSelection(SelStart,SelEnd);
 
-				if (SelStart!=-1)SelStart=CurLine->m_next->RealPosToTab(SelStart);
+				if (SelStart!=-1)SelStart=CurLine->m_next->RealPosToCell(SelStart);
 
-				if (SelEnd!=-1)SelEnd=CurLine->m_next->RealPosToTab(SelEnd);
+				if (SelEnd!=-1)SelEnd=CurLine->m_next->RealPosToCell(SelEnd);
 
 				if (SelStart==-1)
 				{
@@ -1369,9 +1369,9 @@ int Editor::ProcessKey(int Key)
 					}
 				}
 
-				if (SelStart!=-1)SelStart=CurLine->m_next->TabPosToReal(SelStart);
+				if (SelStart!=-1)SelStart=CurLine->m_next->CellPosToReal(SelStart);
 
-				if (SelEnd!=-1)SelEnd=CurLine->m_next->TabPosToReal(SelEnd);
+				if (SelEnd!=-1)SelEnd=CurLine->m_next->CellPosToReal(SelEnd);
 
 				/*if(!EdOpt.CursorBeyondEOL && SelEnd>CurLine->m_next->GetLength())
 				{
@@ -1385,8 +1385,8 @@ int Editor::ProcessKey(int Key)
 			else //расширяем выделение
 			{
 				CurLine->Select(SelStart,-1);
-				SelStart=CurLine->m_next->TabPosToReal(0);
-				SelEnd=CurLine->m_next->TabPosToReal(CurPos);
+				SelStart=CurLine->m_next->CellPosToReal(0);
+				SelEnd=CurLine->m_next->CellPosToReal(CurPos);
 			}
 
 			if (!EdOpt.CursorBeyondEOL && SelEnd > CurLine->m_next->GetLength())
@@ -1414,22 +1414,22 @@ int Editor::ProcessKey(int Key)
 			if (SelAtBeginning || SelFirst) // расширяем выделение
 			{
 				CurLine->Select(0,SelEnd);
-				SelStart=CurLine->RealPosToTab(CurPos);
+				SelStart=CurLine->RealPosToCell(CurPos);
 
 				if (!EdOpt.CursorBeyondEOL &&
-				        CurLine->m_prev->TabPosToReal(SelStart)>CurLine->m_prev->GetLength())
+				        CurLine->m_prev->CellPosToReal(SelStart)>CurLine->m_prev->GetLength())
 				{
-					SelStart=CurLine->m_prev->RealPosToTab(CurLine->m_prev->GetLength());
+					SelStart=CurLine->m_prev->RealPosToCell(CurLine->m_prev->GetLength());
 				}
 
-				SelStart=CurLine->m_prev->TabPosToReal(SelStart);
+				SelStart=CurLine->m_prev->CellPosToReal(SelStart);
 				CurLine->m_prev->Select(SelStart,-1);
 				BlockStart=CurLine->m_prev;
 				BlockStartLine=NumLine-1;
 			}
 			else // снимаем выделение
 			{
-				CurPos=CurLine->RealPosToTab(CurPos);
+				CurPos=CurLine->RealPosToCell(CurPos);
 
 				if (!SelStart)
 				{
@@ -1442,15 +1442,15 @@ int Editor::ProcessKey(int Key)
 
 				CurLine->m_prev->GetRealSelection(SelStart,SelEnd);
 
-				if (SelStart!=-1)SelStart=CurLine->m_prev->RealPosToTab(SelStart);
+				if (SelStart!=-1)SelStart=CurLine->m_prev->RealPosToCell(SelStart);
 
-				if (SelStart!=-1)SelEnd=CurLine->m_prev->RealPosToTab(SelEnd);
+				if (SelStart!=-1)SelEnd=CurLine->m_prev->RealPosToCell(SelEnd);
 
 				if (SelStart==-1)
 				{
 					BlockStart=CurLine->m_prev;
 					BlockStartLine=NumLine-1;
-					SelStart=CurLine->m_prev->TabPosToReal(CurPos);
+					SelStart=CurLine->m_prev->CellPosToReal(CurPos);
 					SelEnd=-1;
 				}
 				else
@@ -1465,8 +1465,8 @@ int Editor::ProcessKey(int Key)
 						SelEnd=CurPos;
 					}
 
-					SelStart=CurLine->m_prev->TabPosToReal(SelStart);
-					SelEnd=CurLine->m_prev->TabPosToReal(SelEnd);
+					SelStart=CurLine->m_prev->CellPosToReal(SelStart);
+					SelEnd=CurLine->m_prev->CellPosToReal(SelEnd);
 
 					if (!EdOpt.CursorBeyondEOL && SelEnd>CurLine->m_prev->GetLength())
 					{
@@ -1754,11 +1754,11 @@ int Editor::ProcessKey(int Key)
 				else
 					Show();
 
-				if (PrevMaxPos>CurLine->GetTabCurPos())
+				if (PrevMaxPos>CurLine->GetCellCurPos())
 				{
-					CurLine->SetTabCurPos(PrevMaxPos);
+					CurLine->SetCellCurPos(PrevMaxPos);
 					CurLine->FastShow();
-					CurLine->SetTabCurPos(PrevMaxPos);
+					CurLine->SetCellCurPos(PrevMaxPos);
 					Show();
 				}
 			}
@@ -1777,11 +1777,11 @@ int Editor::ProcessKey(int Key)
 				else
 					Show();
 
-				if (PrevMaxPos>CurLine->GetTabCurPos())
+				if (PrevMaxPos>CurLine->GetCellCurPos())
 				{
-					CurLine->SetTabCurPos(PrevMaxPos);
+					CurLine->SetCellCurPos(PrevMaxPos);
 					CurLine->FastShow();
-					CurLine->SetTabCurPos(PrevMaxPos);
+					CurLine->SetCellCurPos(PrevMaxPos);
 					Show();
 				}
 			}
@@ -1866,14 +1866,14 @@ int Editor::ProcessKey(int Key)
 		{
 			{
 				Flags.Set(FEDITOR_NEWUNDO);
-				int StartPos=CurLine->GetTabCurPos();
+				int StartPos=CurLine->GetCellCurPos();
 				NumLine=0;
 				TopScreen=CurLine=TopList;
 
 				if (Key == KEY_CTRLHOME || Key == KEY_CTRLNUMPAD7)
 					CurLine->SetCurPos(0);
 				else
-					CurLine->SetTabCurPos(StartPos);
+					CurLine->SetCellCurPos(StartPos);
 
 				Show();
 			}
@@ -1884,7 +1884,7 @@ int Editor::ProcessKey(int Key)
 		{
 			{
 				Flags.Set(FEDITOR_NEWUNDO);
-				int StartPos=CurLine->GetTabCurPos();
+				int StartPos=CurLine->GetCellCurPos();
 				NumLine=NumLastLine-1;
 				CurLine=EndList;
 
@@ -1902,7 +1902,7 @@ int Editor::ProcessKey(int Key)
 					CurLine->FastShow();
 				}
 				else
-					CurLine->SetTabCurPos(StartPos);
+					CurLine->SetCellCurPos(StartPos);
 
 				Show();
 			}
@@ -2138,9 +2138,9 @@ int Editor::ProcessKey(int Key)
 
 			Pasting++;
 			{
-				int Delta=CurLine->GetTabCurPos()-CurLine->RealPosToTab(CurPos-1);
+				int Delta=CurLine->GetCellCurPos()-CurLine->RealPosToCell(CurPos-1);
 
-				if (CurLine->GetTabCurPos()>VBlockX)
+				if (CurLine->GetCellCurPos()>VBlockX)
 					VBlockSizeX-=Delta;
 				else
 				{
@@ -2168,7 +2168,7 @@ int Editor::ProcessKey(int Key)
 		case KEY_ALTRIGHT:
 		{
 			/* $ 23.10.2000 tran
-			   вместо GetTabCurPos надо вызывать GetCurPos -
+			   вместо GetCellCurPos надо вызывать GetCurPos -
 			   сравнивать реальную позицию с реальной длиной
 			   а было сравнение видимой позицией с реальной длиной*/
 			if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos()>=CurLine->GetLength())
@@ -2186,14 +2186,14 @@ int Editor::ProcessKey(int Key)
 				     выделится блок шириной в 1 колонку, нажми еще alt-right
 				     выделение сбросится
 				*/
-				int VisPos=CurLine->RealPosToTab(CurPos),
-				           NextVisPos=CurLine->RealPosToTab(CurPos+1);
+				int VisPos=CurLine->RealPosToCell(CurPos),
+				           NextVisPos=CurLine->RealPosToCell(CurPos+1);
 				//_D(SysLog(L"CurPos=%i, VisPos=%i, NextVisPos=%i",
-				//    CurPos,VisPos, NextVisPos); //,CurLine->GetTabCurPos()));
+				//    CurPos,VisPos, NextVisPos); //,CurLine->GetCellCurPos()));
 				Delta=NextVisPos-VisPos;
 				//_D(SysLog(L"Delta=%i",Delta));
 
-				if (CurLine->GetTabCurPos()>=VBlockX+VBlockSizeX)
+				if (CurLine->GetCellCurPos()>=VBlockX+VBlockSizeX)
 					VBlockSizeX+=Delta;
 				else
 				{
@@ -2692,7 +2692,7 @@ int Editor::ProcessKey(int Key)
 
 					if (PrevLine)
 					{
-						int TabPos=CurLine->GetTabCurPos();
+						int TabPos=CurLine->GetCellCurPos();
 						CurLine->SetCurPos(0);
 						const wchar_t *PrevStr=nullptr;
 						int PrevLength=0;
@@ -2700,7 +2700,7 @@ int Editor::ProcessKey(int Key)
 
 						for (int I=0; I<PrevLength && IsSpace(PrevStr[I]); I++)
 						{
-							int NewTabPos=CurLine->GetTabCurPos();
+							int NewTabPos=CurLine->GetCellCurPos();
 
 							if (NewTabPos==TabPos)
 								break;
@@ -2709,7 +2709,7 @@ int Editor::ProcessKey(int Key)
 							{
 								CurLine->ProcessKey(KEY_BS);
 
-								while (CurLine->GetTabCurPos()<TabPos)
+								while (CurLine->GetCellCurPos()<TabPos)
 									CurLine->ProcessKey(' ');
 
 								break;
@@ -2719,7 +2719,7 @@ int Editor::ProcessKey(int Key)
 								CurLine->ProcessKey(PrevStr[I]);
 						}
 
-						CurLine->SetTabCurPos(TabPos);
+						CurLine->SetCellCurPos(TabPos);
 					}
 				}
 
@@ -3110,7 +3110,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 	if (CurLine==DelPtr)
 	{
 		int LeftPos,CurPos;
-		CurPos=DelPtr->GetTabCurPos();
+		CurPos=DelPtr->GetCellCurPos();
 		LeftPos=DelPtr->GetLeftPos();
 
 		if (DelPtr->m_next)
@@ -3125,7 +3125,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 		}
 
 		CurLine->SetLeftPos(LeftPos);
-		CurLine->SetTabCurPos(CurPos);
+		CurLine->SetCellCurPos(CurPos);
 	}
 
 	if (DelPtr->m_prev)
@@ -3244,7 +3244,7 @@ void Editor::InsertString()
 				if (!IsSpace(Str[I]))
 				{
 					PrevLine->SetCurPos(I);
-					IndentPos=PrevLine->GetTabCurPos();
+					IndentPos=PrevLine->GetCellCurPos();
 					SrcIndent=PrevLine;
 					Found=TRUE;
 					break;
@@ -3366,7 +3366,7 @@ void Editor::InsertString()
 					Decrement++;
 				else
 				{
-					int TabPos=CurLine->RealPosToTab(I);
+					int TabPos=CurLine->RealPosToCell(I);
 					Decrement+=EdOpt.TabSize - (TabPos % EdOpt.TabSize);
 				}
 			}
@@ -3389,7 +3389,7 @@ void Editor::InsertString()
 					SrcIndent->GetBinaryString(&PrevStr,nullptr,PrevLength);
 				}
 
-				for (int I=0; CurLine->GetTabCurPos()<IndentPos; I++)
+				for (int I=0; CurLine->GetCellCurPos()<IndentPos; I++)
 				{
 					if (SrcIndent && I<PrevLength && IsSpace(PrevStr[I]))
 					{
@@ -3401,13 +3401,13 @@ void Editor::InsertString()
 					}
 				}
 
-				while (CurLine->GetTabCurPos()>IndentPos)
+				while (CurLine->GetCellCurPos()>IndentPos)
 					CurLine->ProcessKey(KEY_BS);
 
 				CurLine->SetOvertypeMode(SaveOvertypeMode);
 			}
 
-			CurLine->SetTabCurPos(IndentPos);
+			CurLine->SetCellCurPos(IndentPos);
 		}
 
 		CurLine->GetBinaryString(&CurLineStr,nullptr,Length);
@@ -3453,12 +3453,12 @@ void Editor::Down()
 	if (Y>=Y2-Y1)
 		TopScreen=TopScreen->m_next;
 
-	CurPos=CurLine->GetTabCurPos();
+	CurPos=CurLine->GetCellCurPos();
 	LeftPos=CurLine->GetLeftPos();
 	CurLine=CurLine->m_next;
 	NumLine++;
 	CurLine->SetLeftPos(LeftPos);
-	CurLine->SetTabCurPos(CurPos);
+	CurLine->SetCellCurPos(CurPos);
 }
 
 
@@ -3477,12 +3477,12 @@ void Editor::ScrollDown()
 	}
 
 	TopScreen=TopScreen->m_next;
-	CurPos=CurLine->GetTabCurPos();
+	CurPos=CurLine->GetCellCurPos();
 	LeftPos=CurLine->GetLeftPos();
 	CurLine=CurLine->m_next;
 	NumLine++;
 	CurLine->SetLeftPos(LeftPos);
-	CurLine->SetTabCurPos(CurPos);
+	CurLine->SetCellCurPos(CurPos);
 }
 
 
@@ -3497,12 +3497,12 @@ void Editor::Up()
 	if (CurLine==TopScreen)
 		TopScreen=TopScreen->m_prev;
 
-	CurPos=CurLine->GetTabCurPos();
+	CurPos=CurLine->GetCellCurPos();
 	LeftPos=CurLine->GetLeftPos();
 	CurLine=CurLine->m_prev;
 	NumLine--;
 	CurLine->SetLeftPos(LeftPos);
-	CurLine->SetTabCurPos(CurPos);
+	CurLine->SetCellCurPos(CurPos);
 }
 
 
@@ -3521,12 +3521,12 @@ void Editor::ScrollUp()
 	}
 
 	TopScreen=TopScreen->m_prev;
-	CurPos=CurLine->GetTabCurPos();
+	CurPos=CurLine->GetCellCurPos();
 	LeftPos=CurLine->GetLeftPos();
 	CurLine=CurLine->m_prev;
 	NumLine--;
 	CurLine->SetLeftPos(LeftPos);
-	CurLine->SetTabCurPos(CurPos);
+	CurLine->SetCellCurPos(CurPos);
 }
 
 /* $ 21.01.2001 SVS
@@ -3698,10 +3698,10 @@ BOOL Editor::Search(int Next)
 				TopScreen=TmpPtr;
 				NumLine=NewNumLine;
 				int LeftPos=CurPtr->GetLeftPos();
-				int TabCurPos=CurPtr->GetTabCurPos();
+				int CellCurPos=CurPtr->GetCellCurPos();
 
-				if (ObjWidth>8 && TabCurPos-LeftPos+SearchLength>ObjWidth-8)
-					CurPtr->SetLeftPos(TabCurPos+SearchLength-ObjWidth+8);
+				if (ObjWidth>8 && CellCurPos-LeftPos+SearchLength>ObjWidth-8)
+					CurPtr->SetLeftPos(CellCurPos+SearchLength-ObjWidth+8);
 
 				if (ReplaceMode)
 				{
@@ -3712,7 +3712,7 @@ BOOL Editor::Search(int Next)
 						Show();
 						SHORT CurX,CurY;
 						GetCursorPos(CurX,CurY);
-						ScrBuf.ApplyColor(CurX,CurY,CurPtr->RealPosToTab(CurPtr->TabPosToReal(CurX)+SearchLength)-1,CurY,FarColorToReal(COL_EDITORSELECTEDTEXT));
+						ScrBuf.ApplyColor(CurX,CurY,CurPtr->RealPosToCell(CurPtr->CellPosToReal(CurX)+SearchLength)-1,CurY,FarColorToReal(COL_EDITORSELECTEDTEXT));
 						FARString strQSearchStr(CurPtr->GetStringAddr()+CurPtr->GetCurPos(),SearchLength), strQReplaceStr=strReplaceStrCurrent;
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
@@ -4371,7 +4371,7 @@ void Editor::GoToLine(int Line)
 		bool bReverse = false;
 		int LastNumLine=NumLine;
 		int CurScrLine=CalcDistance(TopScreen,CurLine,-1);
-		int CurPos=CurLine->GetTabCurPos();
+		int CurPos=CurLine->GetCellCurPos();
 		int LeftPos=CurLine->GetLeftPos();
 
 		if (Line < NumLine)
@@ -4413,7 +4413,7 @@ void Editor::GoToLine(int Line)
 			TopScreen=CurLine;
 
 		CurLine->SetLeftPos(LeftPos);
-		CurLine->SetTabCurPos(CurPos);
+		CurLine->SetCellCurPos(CurPos);
 	}
 
 // <GOTO_UNMARK:2>
@@ -4433,7 +4433,7 @@ void Editor::GoToPosition()
 	Builder.ShowDialog();
 	if(!strData.IsEmpty())
 	{
-		int LeftPos=CurLine->GetTabCurPos()+1;
+		int LeftPos=CurLine->GetCellCurPos()+1;
 		int CurPos=CurLine->GetCurPos();
 
 		int NewLine=0, NewCol=0;
@@ -4442,12 +4442,12 @@ void Editor::GoToPosition()
 
 		if (NewCol == -1)
 		{
-			CurLine->SetTabCurPos(CurPos);
+			CurLine->SetCellCurPos(CurPos);
 			CurLine->SetLeftPos(LeftPos);
 		}
 		else
 		{
-			CurLine->SetTabCurPos(NewCol);
+			CurLine->SetCellCurPos(NewCol);
 		}
 		Show();
 	}
@@ -4458,7 +4458,7 @@ void Editor::GetRowCol(const wchar_t *_argv,int *row,int *col)
 	int x=0xffff,y;
 	int l;
 	wchar_t *argvx=0;
-	int LeftPos=CurLine->GetTabCurPos() + 1;
+	int LeftPos=CurLine->GetCellCurPos() + 1;
 	FARString strArg = _argv;
 	// что бы не оставить "врагу" выбора - только то, что мы хотим ;-)
 	// "прибьем" все внешние пробелы.
@@ -4931,7 +4931,7 @@ void Editor::DeleteVBlock()
 			{
 				TopScreen=NewTopScreen;
 				CurLine=CurPtr;
-				CurPtr->SetTabCurPos(VBlockX);
+				CurPtr->SetCellCurPos(VBlockX);
 				break;
 			}
 
@@ -4949,9 +4949,9 @@ void Editor::DeleteVBlock()
 	for (int Line=0; CurPtr && Line<VBlockSizeY; Line++,CurPtr=CurPtr->m_next)
 	{
 		TextChanged(1);
-		int TBlockX=CurPtr->TabPosToReal(VBlockX);
-		int TBlockSizeX=CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-
-		                CurPtr->TabPosToReal(VBlockX);
+		int TBlockX=CurPtr->CellPosToReal(VBlockX);
+		int TBlockSizeX=CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-
+		                CurPtr->CellPosToReal(VBlockX);
 		const wchar_t *CurStr,*EndSeq;
 		int Length;
 		CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
@@ -5048,8 +5048,8 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 
 	for (int Line=0; CurPtr && Line<VBlockSizeY; Line++,CurPtr=CurPtr->m_next)
 	{
-		int TBlockX=CurPtr->TabPosToReal(VBlockX);
-		int TBlockSizeX=CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-TBlockX;
+		int TBlockX=CurPtr->CellPosToReal(VBlockX);
+		int TBlockSizeX=CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-TBlockX;
 		const wchar_t *CurStr,*EndSeq;
 		int Length;
 		CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
@@ -5104,7 +5104,7 @@ void Editor::VPaste(wchar_t *ClipText)
 
 		VBlockStart=CurLine;
 		BlockStartLine=NumLine;
-		int StartPos=CurLine->GetTabCurPos();
+		int StartPos=CurLine->GetCellCurPos();
 		VBlockX=StartPos;
 		VBlockSizeX=0;
 		VBlockY=NumLine;
@@ -5120,7 +5120,7 @@ void Editor::VPaste(wchar_t *ClipText)
 			{
 				const size_t EolLength = (ClipText[I] == '\r' || ClipText[I + 1] == '\n') ? 2 : 1;
 
-				int CurWidth=CurLine->GetTabCurPos()-StartPos;
+				int CurWidth=CurLine->GetCellCurPos()-StartPos;
 
 				if (CurWidth>VBlockSizeX)
 					VBlockSizeX=CurWidth;
@@ -5147,7 +5147,7 @@ void Editor::VPaste(wchar_t *ClipText)
 				else
 				{
 					ProcessKey(KEY_DOWN);
-					CurLine->SetTabCurPos(StartPos);
+					CurLine->SetCellCurPos(StartPos);
 					CurLine->SetOvertypeMode(FALSE);
 				}
 
@@ -5155,7 +5155,7 @@ void Editor::VPaste(wchar_t *ClipText)
 				continue;
 			}
 
-		int CurWidth=CurLine->GetTabCurPos()-StartPos;
+		int CurWidth=CurLine->GetCellCurPos()-StartPos;
 
 		if (CurWidth>VBlockSizeX)
 			VBlockSizeX=CurWidth;
@@ -5172,7 +5172,7 @@ void Editor::VPaste(wchar_t *ClipText)
 		TopScreen=SavedTopScreen;
 		CurLine=VBlockStart;
 		NumLine=BlockStartLine;
-		CurLine->SetTabCurPos(StartPos);
+		CurLine->SetCellCurPos(StartPos);
 		Pasting--;
 		Unlock();
 		AddUndoData(UNDO_END);
@@ -5193,9 +5193,9 @@ void Editor::VBlockShift(int Left)
 	for (int Line=0; CurPtr && Line<VBlockSizeY; Line++,CurPtr=CurPtr->m_next)
 	{
 		TextChanged(1);
-		int TBlockX=CurPtr->TabPosToReal(VBlockX);
-		int TBlockSizeX=CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-
-		                CurPtr->TabPosToReal(VBlockX);
+		int TBlockX=CurPtr->CellPosToReal(VBlockX);
+		int TBlockSizeX=CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-
+		                CurPtr->CellPosToReal(VBlockX);
 		const wchar_t *CurStr,*EndSeq;
 		int Length;
 		CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
@@ -5206,11 +5206,11 @@ void Editor::VBlockShift(int Left)
 		if ((Left && CurStr[TBlockX-1]==L'\t') ||
 		        (!Left && TBlockX+TBlockSizeX<Length && CurStr[TBlockX+TBlockSizeX]==L'\t'))
 		{
-			CurPtr->ReplaceTabs();
+			CurPtr->ExpandTabs();
 			CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
-			TBlockX=CurPtr->TabPosToReal(VBlockX);
-			TBlockSizeX=CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-
-			            CurPtr->TabPosToReal(VBlockX);
+			TBlockX=CurPtr->CellPosToReal(VBlockX);
+			TBlockSizeX=CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-
+			            CurPtr->CellPosToReal(VBlockX);
 		}
 
 		AddUndoData(UNDO_EDIT,CurPtr->GetStringAddr(),CurPtr->GetEOL(),BlockStartLine+Line,CurPtr->GetCurPos(),CurPtr->GetLength());
@@ -5249,7 +5249,7 @@ void Editor::VBlockShift(int Left)
 	}
 
 	VBlockX+=Left ? -1:1;
-	CurLine->SetTabCurPos(Left ? VBlockX:VBlockX+VBlockSizeX);
+	CurLine->SetCellCurPos(Left ? VBlockX:VBlockX+VBlockSizeX);
 	AddUndoData(UNDO_END);
 }
 
@@ -5291,10 +5291,10 @@ int Editor::EditorControl(int Command,void *Param)
 				}
 				else if (VBlockStart && DestLine>=VBlockY && DestLine<VBlockY+VBlockSizeY)
 				{
-					GetString->SelStart=CurPtr->TabPosToReal(VBlockX);
+					GetString->SelStart=CurPtr->CellPosToReal(VBlockX);
 					GetString->SelEnd=GetString->SelStart+
-					                  CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-
-					                  CurPtr->TabPosToReal(VBlockX);
+					                  CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-
+					                  CurPtr->CellPosToReal(VBlockX);
 				}
 
 				_ECTLLOG(SysLog(L"EditorGetString{"));
@@ -5467,7 +5467,7 @@ int Editor::EditorControl(int Command,void *Param)
 				Info->TotalLines=NumLastLine;
 				Info->CurLine=NumLine;
 				Info->CurPos=CurLine->GetCurPos();
-				Info->CurTabPos=CurLine->GetTabCurPos();
+				Info->CurTabPos=CurLine->GetCellCurPos();
 				Info->TopScreenLine=NumLine-CalcDistance(TopScreen,CurLine,-1);
 				Info->LeftPos=CurLine->GetLeftPos();
 				Info->Overtype=Flags.Check(FEDITOR_OVERTYPE);
@@ -5559,7 +5559,7 @@ int Editor::EditorControl(int Command,void *Param)
 					CurLine->SetCurPos(Pos->CurPos);
 
 				if (Pos->CurTabPos >= 0)
-					CurLine->SetTabCurPos(Pos->CurTabPos);
+					CurLine->SetCellCurPos(Pos->CurTabPos);
 
 				if (Pos->LeftPos >= 0)
 					CurLine->SetLeftPos(Pos->LeftPos);
@@ -5687,7 +5687,7 @@ int Editor::EditorControl(int Command,void *Param)
 					return FALSE;
 				}
 
-				ecp->DestPos=CurPtr->TabPosToReal(ecp->SrcPos);
+				ecp->DestPos=CurPtr->CellPosToReal(ecp->SrcPos);
 				_ECTLLOG(SysLog(L"EditorConvertPos{"));
 				_ECTLLOG(SysLog(L"  StringNumber =%d",ecp->StringNumber));
 				_ECTLLOG(SysLog(L"  SrcPos       =%d",ecp->SrcPos));
@@ -5711,7 +5711,7 @@ int Editor::EditorControl(int Command,void *Param)
 					return FALSE;
 				}
 
-				ecp->DestPos=CurPtr->RealPosToTab(ecp->SrcPos);
+				ecp->DestPos=CurPtr->RealPosToCell(ecp->SrcPos);
 				_ECTLLOG(SysLog(L"EditorConvertPos{"));
 				_ECTLLOG(SysLog(L"  StringNumber =%d",ecp->StringNumber));
 				_ECTLLOG(SysLog(L"  SrcPos       =%d",ecp->SrcPos));
@@ -5741,7 +5741,7 @@ int Editor::EditorControl(int Command,void *Param)
 				}
 
 				AddUndoData(UNDO_EDIT,CurPtr->GetStringAddr(),CurPtr->GetEOL(),StringNumber,CurPtr->GetCurPos(),CurPtr->GetLength());
-				CurPtr->ReplaceTabs();
+				CurPtr->ExpandTabs();
 			}
 
 			return TRUE;
@@ -6381,14 +6381,14 @@ void Editor::SetReplaceMode(int Mode)
 
 int Editor::GetLineCurPos()
 {
-	return CurLine->GetTabCurPos();
+	return CurLine->GetCellCurPos();
 }
 
 void Editor::BeginVBlockMarking()
 {
 	UnmarkBlock();
 	VBlockStart=CurLine;
-	VBlockX=CurLine->GetTabCurPos();
+	VBlockX=CurLine->GetCellCurPos();
 	VBlockSizeX=0;
 	VBlockY=NumLine;
 	VBlockSizeY=1;
@@ -6454,9 +6454,9 @@ void Editor::Xlat()
 
 		for (Line=0; CurPtr && Line<VBlockSizeY; Line++,CurPtr=CurPtr->m_next)
 		{
-			int TBlockX=CurPtr->TabPosToReal(VBlockX);
-			int TBlockSizeX=CurPtr->TabPosToReal(VBlockX+VBlockSizeX)-
-			                CurPtr->TabPosToReal(VBlockX);
+			int TBlockX=CurPtr->CellPosToReal(VBlockX);
+			int TBlockSizeX=CurPtr->CellPosToReal(VBlockX+VBlockSizeX)-
+			                CurPtr->CellPosToReal(VBlockX);
 			const wchar_t *CurStr,*EndSeq;
 			int Length;
 			CurPtr->GetBinaryString(&CurStr,&EndSeq,Length);
@@ -6580,7 +6580,7 @@ void Editor::SetConvertTabs(int NewMode)
 			CurPtr->SetConvertTabs(NewMode);
 
 			if (NewMode == EXPAND_ALLTABS)
-				CurPtr->ReplaceTabs();
+				CurPtr->ExpandTabs();
 
 			CurPtr=CurPtr->m_next;
 		}
@@ -6693,7 +6693,7 @@ void Editor::EditorShowMsg(const wchar_t *Title,const wchar_t *Msg, const wchar_
 			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
 			strProgress.ReleaseBuffer(Length);
 			FormatString strTmp;
-			strTmp<<L" "<<fmt::Width(PercentLength)<<strPercent<<L"%";
+			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
 			strProgress+=strTmp;
 		}
 
@@ -6840,7 +6840,7 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 			for (DWORD I=0; I < (DWORD)pp->ScreenLine; I++)
 				ProcessKey(KEY_DOWN);
 
-			CurLine->SetTabCurPos(pp->LinePos);
+			CurLine->SetCellCurPos(pp->LinePos);
 			Unlock();
 		}
 
@@ -6877,7 +6877,7 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 				ProcessKey(KEY_DOWN);
 
 			if(translateTabs) CurLine->SetCurPos(pp->LinePos);
-			else CurLine->SetTabCurPos(pp->LinePos);
+			else CurLine->SetCellCurPos(pp->LinePos);
 			CurLine->SetLeftPos(pp->LeftPos);
 			Unlock();
 		}
@@ -6890,7 +6890,7 @@ void Editor::GetCacheParams(EditorCacheParams *pp)
 	memset(&pp->SavePos,0xff,sizeof(InternalEditorBookMark));
 	pp->Line = NumLine;
 	pp->ScreenLine = CalcDistance(TopScreen, CurLine,-1);
-	pp->LinePos = CurLine->GetTabCurPos();
+	pp->LinePos = CurLine->GetCellCurPos();
 	pp->LeftPos = CurLine->GetLeftPos();
 	pp->CodePage = m_codepage;
 
@@ -6963,7 +6963,7 @@ void Editor::SetCurPos(int NewCol, int NewRow)
 {
 	Lock();
 	GoToLine(NewRow);
-	CurLine->SetTabCurPos(NewCol);
+	CurLine->SetCellCurPos(NewCol);
 	//CurLine->SetLeftPos(LeftPos); ???
 	Unlock();
 }

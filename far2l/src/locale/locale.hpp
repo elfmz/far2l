@@ -40,11 +40,11 @@ extern const wchar_t WIN_EOL_fmt[];
 
 inline int __cdecl StrLength(const wchar_t *str) { return (int) wcslen(str); }
 
-inline int IsSpace(wchar_t x) { return x==L' ' || x==L'\t';  }
+inline bool IsSpace(wchar_t x) { return x==L' ' || x==L'\t' || x==0x3000;  }
 
-inline int IsEol(wchar_t x) { return x==L'\r' || x==L'\n'; }
+inline bool IsEol(wchar_t x) { return x==L'\r' || x==L'\n'; }
 
-inline int IsSpaceOrEos(wchar_t x) { return !x || x==L' ' || x==L'\t'; }
+inline bool IsSpaceOrEos(wchar_t x) { return !x || IsSpace(x); }
 
 inline wchar_t __cdecl Upper(wchar_t Ch)
 {

@@ -986,7 +986,7 @@ void Help::OutString(const wchar_t *Str)
 	if (!Locked() && WhereX()<X2)
 	{
 		SetColor(CurColor);
-		FS<<fmt::Width(X2-WhereX())<<L"";
+		FS << fmt::Cells() << fmt::Expand(X2 - WhereX()) << L"";
 	}
 }
 

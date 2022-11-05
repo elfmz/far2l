@@ -397,6 +397,16 @@ static void WINAPI farBackgroundTaskW(const wchar_t *Info, BOOL Started)
 		CtrlObject->Plugins.BackroundTaskFinished(Info);
 }
 
+static size_t WINAPI farStrCellsCount(const wchar_t *Str, size_t CharsCount)
+{
+	return StrCellsCount(Str, CharsCount);
+}
+
+static size_t WINAPI farStrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
+{
+	return StrSizeOfCells(Str, CharsCount, *CellsCount, RoundUp != FALSE);
+}
+
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
 	static PluginStartupInfo StartupInfo{};
@@ -459,6 +469,8 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.DisplayNotification = farDisplayNotificationW;
 		StandardFunctions.DispatchInterThreadCalls = farDispatchInterThreadCallsW;
 		StandardFunctions.BackgroundTask = farBackgroundTaskW;
+		StandardFunctions.StrCellsCount = farStrCellsCount;
+		StandardFunctions.StrSizeOfCells = farStrSizeOfCells;
 	}
 
 	if (!StartupInfo.StructSize)

@@ -477,9 +477,9 @@ int VMenu::AddItem(const MenuItemEx *NewItem,int PosAdd)
 	Item[PosAdd]->ShowPos = 0;
 
 	if (CheckFlags(VMENU_SHOWAMPERSAND))
-		UpdateMaxLength((int)Item[PosAdd]->strName.GetLength());
+		UpdateMaxLength((int)Item[PosAdd]->strName.CellsCount());
 	else
-		UpdateMaxLength(HiStrlen(Item[PosAdd]->strName));
+		UpdateMaxLength(HiStrCellsCount(Item[PosAdd]->strName));
 
 	UpdateItemFlags(PosAdd, NewItem->Flags);
 
@@ -1070,9 +1070,9 @@ int VMenu::ProcessKey(int Key)
 				for (int I=0; I < ItemCount; ++I)
 				{
 					if (CheckFlags(VMENU_SHOWAMPERSAND))
-						_len=static_cast<int>(Item[I]->strName.GetLength());
+						_len=static_cast<int>(Item[I]->strName.CellsCount());
 					else
-						_len=HiStrlen(Item[I]->strName);
+						_len=HiStrCellsCount(Item[I]->strName);
 
 					if (_len >= MaxLineWidth)
 						Item[I]->ShowPos = _len - MaxLineWidth;
@@ -1495,9 +1495,9 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 	int ItemShowPos = Item[Pos]->ShowPos;
 
 	if (VMFlags.Check(VMENU_SHOWAMPERSAND))
-		_len = (int)Item[Pos]->strName.GetLength();
+		_len = (int)Item[Pos]->strName.CellsCount();
 	else
-		_len = HiStrlen(Item[Pos]->strName);
+		_len = HiStrCellsCount(Item[Pos]->strName);
 
 	if (_len < MaxLineWidth || (Direct < 0 && !ItemShowPos) || (Direct > 0 && ItemShowPos > _len))
 		return false;
@@ -1731,7 +1731,7 @@ void VMenu::DrawTitles()
 		GotoXY(X1+(X2-X1-1-WidthTitle)/2,Y1);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Width(WidthTitle) << fmt::Precision(WidthTitle) << strDisplayTitle << L" ";
+		FS << L" " << fmt::Size(WidthTitle) << strDisplayTitle << L" ";
 	}
 
 	if (!strBottomTitle.IsEmpty())
@@ -1744,7 +1744,7 @@ void VMenu::DrawTitles()
 		GotoXY(X1+(X2-X1-1-WidthTitle)/2,Y2);
 		SetColor(Colors[VMenuColorTitle]);
 
-		FS << L" " << fmt::Width(WidthTitle) << fmt::Precision(WidthTitle) << strBottomTitle << L" ";
+		FS << L" " << fmt::Size(WidthTitle) << strBottomTitle << L" ";
 	}
 }
 
@@ -1763,9 +1763,9 @@ void VMenu::ShowMenu(bool IsParent)
 		int ItemLen;
 
 		if (CheckFlags(VMENU_SHOWAMPERSAND))
-			ItemLen = static_cast<int>(Item[i]->strName.GetLength());
+			ItemLen = static_cast<int>(Item[i]->strName.CellsCount());
 		else
-			ItemLen = HiStrlen(Item[i]->strName);
+			ItemLen = HiStrCellsCount(Item[i]->strName);
 
 		if (ItemLen > MaxItemLength)
 			MaxItemLength = ItemLen;
@@ -1947,7 +1947,7 @@ void VMenu::ShowMenu(bool IsParent)
 						ItemWidth = X2-X1-3;
 
 					GotoXY(X1+(X2-X1-1-ItemWidth)/2,Y);
-					FS << L" " << fmt::LeftAlign() << fmt::Width(ItemWidth) << fmt::Precision(ItemWidth) << Item[I]->strName << L" ";
+					FS << L" " << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
 				}
 
 				strTmpStr.ReleaseBuffer();
@@ -1990,9 +1990,9 @@ void VMenu::ShowMenu(bool IsParent)
 				int strMItemPtrLen;
 
 				if (CheckFlags(VMENU_SHOWAMPERSAND))
-					strMItemPtrLen = static_cast<int>(strMItemPtr.GetLength());
+					strMItemPtrLen = static_cast<int>(strMItemPtr.CellsCount());
 				else
-					strMItemPtrLen = HiStrlen(strMItemPtr);
+					strMItemPtrLen = HiStrCellsCount(strMItemPtr);
 
 				// fit menu FARString into available space
 				if (strMItemPtrLen > MaxLineWidth)
@@ -2048,7 +2048,7 @@ void VMenu::ShowMenu(bool IsParent)
 				{
 					int Width = X2-WhereX()+(BoxType==NO_BOX?1:0);
 					if (Width > 0)
-						FS << fmt::Width(Width) << L"";
+						FS << fmt::Expand(Width) << L"";
 				}
 
 				if (Item[I]->Flags & MIF_SUBMENU)
@@ -2089,7 +2089,7 @@ void VMenu::ShowMenu(bool IsParent)
 
 			SetColor(Colors[VMenuColorText]);
 			// сделаем добавочку для NO_BOX
-			FS << fmt::Width(((BoxType!=NO_BOX)?X2-X1-1:X2-X1)+((BoxType==NO_BOX)?1:0)) << L"";
+			FS << fmt::Expand(((BoxType!=NO_BOX)?X2-X1-1:X2-X1)+((BoxType==NO_BOX)?1:0)) << L"";
 		}
 	}
 
@@ -2288,7 +2288,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 void VMenu::UpdateMaxLengthFromTitles()
 {
 	//тайтл + 2 пробела вокруг
-	UpdateMaxLength((int)Max(strTitle.GetLength(),strBottomTitle.GetLength())+2);
+	UpdateMaxLength((int)Max(strTitle.CellsCount(),strBottomTitle.CellsCount())+2);
 }
 
 void VMenu::UpdateMaxLength(int Length)
@@ -2337,7 +2337,7 @@ void VMenu::SetBottomTitle(const wchar_t *BottomTitle)
 	else
 		strBottomTitle.Clear();
 
-	UpdateMaxLength((int)strBottomTitle.GetLength() + 2);
+	UpdateMaxLength((int)strBottomTitle.CellsCount() + 2);
 }
 
 void VMenu::SetTitle(const wchar_t *Title)
@@ -2351,7 +2351,7 @@ void VMenu::SetTitle(const wchar_t *Title)
 	else
 		strTitle.Clear();
 
-	UpdateMaxLength((int)strTitle.GetLength() + 2);
+	UpdateMaxLength((int)strTitle.CellsCount() + 2);
 
 	if (CheckFlags(VMENU_CHANGECONSOLETITLE))
 	{

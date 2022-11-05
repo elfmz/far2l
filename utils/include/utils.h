@@ -234,22 +234,22 @@ template <class CharT>
 }
 
 template <class CharT>
-	void StrTrimRight(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+	void StrTrimRight(std::basic_string<CharT> &str, const char *spaces = " \t")
 {
-	while (!str.empty() && strchr(spaces, str[str.size() - 1]) != NULL) {
-		str.resize(str.size() - 1);
+	while (!str.empty() && unsigned(str.back()) <= 0x7f && strchr(spaces, str.back()) != NULL) {
+		str.pop_back();
 	}
 }
 template <class CharT>
-	void StrTrimLeft(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+	void StrTrimLeft(std::basic_string<CharT> &str, const char *spaces = " \t")
 {
-	while (!str.empty() && strchr(spaces, str[0]) != NULL) {
+	while (!str.empty() && unsigned(str[0]) <= 0x7f && strchr(spaces, str[0]) != NULL) {
 		str.erase(0, 1);
 	}
 }
 
 template <class CharT>
-	void StrTrim(std::basic_string<CharT> &str, const CharT *spaces = " \t")
+	void StrTrim(std::basic_string<CharT> &str, const char *spaces = " \t")
 {
 	StrTrimRight(str, spaces);
 	StrTrimLeft(str, spaces);
@@ -335,3 +335,8 @@ bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+
+bool IsCharFullWidth(wchar_t c);
+bool IsCharPrefix(wchar_t c);
+bool IsCharSuffix(wchar_t c);
+bool IsCharXxxfix(wchar_t c);

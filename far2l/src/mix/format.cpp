@@ -38,34 +38,60 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void BaseFormat::Reset()
 {
-	_Width=0;
-	_Precision=static_cast<size_t>(-1);
-	_FillChar=L' ';
-	_Align=fmt::A_RIGHT;
+	_Cells = false;
+	_Skip = 0;
+	_Expand = 0;
+	_Truncate = static_cast<size_t>(-1);
+	_FillChar = L' ';
+	_Align = fmt::A_RIGHT;
 }
 
-void BaseFormat::Put(LPCWSTR Data,size_t Length)
+void BaseFormat::Put(LPCWSTR Data, size_t Length)
 {
-	if (_Precision==static_cast<size_t>(-1))
-	{
-		_Precision=Length;
-	}
-
-	FARString OutStr(Data,Min(_Precision,Length));
-
-	if (_Align==fmt::A_RIGHT)
-	{
-		while (OutStr.GetLength()<_Width)
-		{
-			OutStr.Insert(0,_FillChar);
+	if (_Skip != 0) {
+		size_t SkipChars;
+		if (_Cells) {
+			size_t ng = _Skip;
+			SkipChars = StrSizeOfCells(Data, Length, ng, true);
+		} else {
+			SkipChars = _Skip;
+		}
+		if (SkipChars < Length) {
+			Data+= SkipChars;
+			Length-= SkipChars;
+		} else {
+			Data+= Length;
+			Length = 0;
 		}
 	}
-	else
+
+	if (_Truncate != static_cast<size_t>(-1))
 	{
-		while (OutStr.GetLength()<_Width)
+		if (_Cells)
 		{
-			OutStr.Append(_FillChar);
+			size_t ng = _Truncate;
+			Length = StrSizeOfCells(Data, Length, ng, false);
 		}
+		else if (Length > _Truncate)
+		{
+			Length = _Truncate;
+		}
+	}
+
+	FARString OutStr(Data, Length);
+
+	size_t Count = _Cells ? OutStr.CellsCount() : OutStr.GetLength();
+
+	if (_Align == fmt::A_RIGHT)
+	{
+		for(;Count < _Expand; ++Count)
+		{
+			OutStr.Insert(0, _FillChar);
+		}
+	}
+	else if (_Expand > Count)
+	{
+		OutStr.Append(_FillChar, _Expand - Count);
 	}
 
 	Commit(OutStr);
@@ -109,18 +135,42 @@ BaseFormat& BaseFormat::operator<<(FARString& String)
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Width& Manipulator)
+BaseFormat& BaseFormat::operator<<(const fmt::Chars&)
 {
-	SetWidth(Manipulator.GetValue());
+	SetCells(false);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Precision& Manipulator)
+BaseFormat& BaseFormat::operator<<(const fmt::Cells&)
 {
-	SetPrecision(Manipulator.GetValue());
+	SetCells(true);
 	return *this;
 }
 
+BaseFormat& BaseFormat::operator<<(const fmt::Skip& Manipulator)
+{
+	SetSkip(Manipulator.GetValue());
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Expand& Manipulator)
+{
+	SetExpand(Manipulator.GetValue());
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Truncate& Manipulator)
+{
+	SetTruncate(Manipulator.GetValue());
+	return *this;
+}
+
+BaseFormat& BaseFormat::operator<<(const fmt::Size& Manipulator)
+{
+	SetTruncate(Manipulator.GetValue());
+	SetExpand(Manipulator.GetValue());
+	return *this;
+}
 
 BaseFormat& BaseFormat::operator<<(const fmt::FillChar& Manipulator)
 {

@@ -83,7 +83,6 @@ void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 			if (piece) {
 				Text(str, piece);
 				print_len-= (int)cells;
-				str+= piece;
 			}
 		}
 		if (!str[piece]) {

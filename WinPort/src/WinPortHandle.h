@@ -15,15 +15,17 @@ class WinPortHandle
 {
 	std::atomic<unsigned int> _refcnt{0};
 
+protected:
+	virtual bool Cleanup();
+
 public:
 	WinPortHandle();
 	virtual ~WinPortHandle();
 	
 	virtual bool WaitHandle(DWORD msec) {return true; }
-	virtual void OnReleased() {delete this; };
 
 	void Reference();
-	void Dereference();
+	bool Dereference();
 };
 
 template <class T> 

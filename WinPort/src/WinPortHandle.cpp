@@ -17,10 +17,18 @@ void WinPortHandle::Reference()
 	++_refcnt;
 }
 
-void WinPortHandle::Dereference()
+bool WinPortHandle::Dereference()
 {
 	if (0 == --_refcnt)
-		OnReleased();
+		return Cleanup();
+
+	return true;
+}
+
+bool WinPortHandle::Cleanup()
+{
+	delete this;
+	return true;
 }
 
 static struct WinPortHandles : std::set<WinPortHandle *>, std::mutex
@@ -46,8 +54,7 @@ bool WinPortHandle_Deregister(HANDLE h)
 			return false;
 		}
 	}
-	wph->Dereference();
-	return true;
+	return wph->Dereference();
 }
 
 

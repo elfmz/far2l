@@ -302,11 +302,13 @@ FARString& FARString::Append(wchar_t Ch, size_t Count)
 
 FARString& FARString::Insert(size_t Pos, wchar_t Ch, size_t Count)
 {
-	size_t nNewLength = m_pContent->GetLength() + Count;
-	PrepareForModify(nNewLength);
-	wmemmove(m_pContent->GetData() + Count, m_pContent->GetData(), m_pContent->GetLength());
-	wmemset(m_pContent->GetData(), Ch, Count);
-	m_pContent->SetLength(nNewLength);
+	if (LIKELY(Pos <= m_pContent->GetLength())) {
+		size_t nNewLength = m_pContent->GetLength() + Count;
+		PrepareForModify(nNewLength);
+		wmemmove(m_pContent->GetData() + Pos + Count, m_pContent->GetData() + Pos, m_pContent->GetLength() - Pos);
+		wmemset(m_pContent->GetData() + Pos, Ch, Count);
+		m_pContent->SetLength(nNewLength);
+	}
 
 	return *this;
 }

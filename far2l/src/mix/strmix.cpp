@@ -447,18 +447,22 @@ FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 	return strDest;
 }
 
-FARString FixedSizeStr(FARString str, size_t Length, bool RAlign)
+FARString FixedSizeStr(FARString str, size_t Cells, bool RAlign, bool TruncateCenter)
 {
-	if (str.CellsCount() > Length)
+	const size_t InitialStrCells = str.CellsCount();
+	if (InitialStrCells > Cells)
 	{
-		TruncStr(str, Length);
+		if (TruncateCenter)
+			TruncStrFromCenter(str, Cells);
+		else
+			TruncStr(str, Cells);
 	}
-	else while (str.CellsCount() < Length)
+	else if (InitialStrCells < Cells)
 	{
 		if (RAlign)
-			str.Insert(0, L" ", 1);
+			str.Insert(0, L' ', Cells - InitialStrCells);
 		else
-			str.Append(L" ", 1);
+			str.Append(L' ', Cells - InitialStrCells);
 	}
 	return str;
 }

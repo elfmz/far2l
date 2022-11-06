@@ -80,18 +80,14 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 
 	FARString OutStr(Data, Length);
 
-	size_t Count = _Cells ? OutStr.CellsCount() : OutStr.GetLength();
+	const size_t Count = _Cells ? OutStr.CellsCount() : OutStr.GetLength();
 
-	if (_Align == fmt::A_RIGHT)
+	if (_Expand > Count)
 	{
-		for(;Count < _Expand; ++Count)
-		{
-			OutStr.Insert(0, _FillChar);
-		}
-	}
-	else if (_Expand > Count)
-	{
-		OutStr.Append(_FillChar, _Expand - Count);
+		if (_Align == fmt::A_RIGHT)
+			OutStr.Insert(0, _FillChar, _Expand - Count);
+		else
+			OutStr.Append(_FillChar, _Expand - Count);
 	}
 
 	Commit(OutStr);

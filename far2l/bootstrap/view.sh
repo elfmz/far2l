@@ -298,21 +298,28 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 	TLINES=$( bash -c "echo ${LINES}" )
 	TCOLUMNS=$(( ${TCOLUMNS:-80} - 0 ))
 	TLINES=$(( ${TLINES:-25} - 2 ))
-	VCHAFA="no"
+	VPRETTY="no"
 	if command -v chafa >/dev/null 2>&1; then
-		VCHAFA="yes"
+		VPRETTY="yes"
 		# chafa -c 16 --color-space=din99d --dither=ordered -w 9 --symbols all --fill all !.! && read -n1 -r -p "$1" >>"$2" 2>&1
 		TCOLUMNS=$(( ${TCOLUMNS:-80} - 1 ))
 		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
 		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
-		chafa -c 16 --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		chafa --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
 		clear
+
+	elif command -v timg >/dev/null 2>&1; then
+		VPRETTY="yes"
+		timg "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		clear
+
 	else
-		echo "Install <chafa> to see picture" >>"$2" 2>&1
+		echo "Install <chafa> or <timg> to see pretty picture" >>"$2" 2>&1
 	fi
+
 	VJP2A="no"
 	if [[ "$FILE" == *": "*"JPEG image"* ]] \
-		&& [[ "$VCHAFA" == "no" ]]; then
+		&& [[ "$VPRETTY" == "no" ]]; then
 		if command -v jp2a >/dev/null 2>&1; then
 			VJP2A="yes"
 			# jp2a --colors "$1" >>"$2" 2>&1
@@ -328,7 +335,7 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 		fi
 	fi
 	VASCIIART="no"
-	if [[ "$VCHAFA" == "no" ]] \
+	if [[ "$VPRETTY" == "no" ]] \
 		&& [[ "$VJP2A" == "no" ]]; then
 		if command -v asciiart >/dev/null 2>&1; then
 			VASCIIART="yes"

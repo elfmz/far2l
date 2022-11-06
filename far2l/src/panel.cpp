@@ -468,18 +468,18 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
 				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : L' ', m.hotkey ? L' ' : 0, 0};
 				ChDiskItem.strName = HotKeyStr;
-				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true);
+				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true, false);
 				if (mounts.max_col2)
 				{
 					ChDiskItem.strName+= L' ';
 					ChDiskItem.strName+= BoxSymbols[BS_V1];
 					ChDiskItem.strName+= L' ';
-					ChDiskItem.strName+= FixedSizeStr(m.col2, std::min(mounts.max_col2, (size_t)24), false);
+					ChDiskItem.strName+= FixedSizeStr(m.col2, std::min(mounts.max_col2, (size_t)24), false, true);
 				}
 				ChDiskItem.strName+= L' ';
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
 				ChDiskItem.strName+= L' ';
-				ChDiskItem.strName+= FixedSizeStr(m.col3, std::min(mounts.max_col3, (size_t)24), false);
+				ChDiskItem.strName+= FixedSizeStr(m.col3, std::min(mounts.max_col3, (size_t)24), false, true);
 
 				PanelMenuItem item;
 				wcsncpy(item.location.path, m.path.CPtr(), ARRAYSIZE(item.location.path) - 1);

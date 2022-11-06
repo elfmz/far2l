@@ -163,14 +163,13 @@ public:
 	FARString& Append(const wchar_t* Str, size_t StrLen) { return Replace(GetLength(), 0, Str, StrLen); }
 	FARString& Append(const FARString& Str) { return Append(Str.CPtr(), Str.GetLength()); }
 	FARString& Append(const wchar_t* Str) { return Append(Str, StrLength(NullToEmpty(Str))); }
-	FARString& Append(wchar_t Ch, size_t Count);
-	FARString& Append(wchar_t Ch) { return Append(Ch, 1); }
+	FARString& Append(wchar_t Ch, size_t Count = 1);
 	FARString& Append(const char *lpszAdd, UINT CodePage=CP_UTF8);
 
 	FARString& Insert(size_t Pos, const wchar_t* Str, size_t StrLen) { return Replace(Pos, 0, Str, StrLen); }
 	FARString& Insert(size_t Pos, const FARString& Str) { return Insert(Pos, Str.CPtr(), Str.GetLength()); }
 	FARString& Insert(size_t Pos, const wchar_t* Str) { return Insert(Pos, Str, StrLength(NullToEmpty(Str))); }
-	FARString& Insert(size_t Pos, wchar_t Ch) { return Insert(Pos, &Ch, 1); }
+	FARString& Insert(size_t Pos, wchar_t Ch, size_t Count = 1);
 
 	FARString& Copy(const wchar_t *Str, size_t StrLen) { return Replace(0, GetLength(), Str, StrLen); }
 	FARString& Copy(const wchar_t *Str) { return Copy(Str, StrLength(NullToEmpty(Str))); }

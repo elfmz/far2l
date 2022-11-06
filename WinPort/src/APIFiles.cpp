@@ -63,15 +63,45 @@ extern "C"
 {
 	struct WinPortHandleFile : WinPortHandle
 	{
+		int fd;
+
 		WinPortHandleFile(int fd_ = -1) : fd(fd_) {}
 
 		virtual ~WinPortHandleFile()
 		{
-			if (os_call_int(sdc_close, fd) == -1 ){
-				fprintf(stderr, "~WinPortHandleFile: error %u closing fd %d", errno, fd);
-			}	
+			if (fd != -1) {
+				fprintf(stderr, "~WinPortHandleFile: unclosed fd %d\n", fd);
+			}
 		}
-		int fd;
+
+	protected:
+		bool EnsureClosed()
+		{
+			bool out = (fd == -1 || os_call_int(sdc_close, fd) == 0);
+			if (!out) {
+				fprintf(stderr, "WinPortHandleFile: error %u closing fd %d\n", errno, fd);
+			}
+
+			fd = -1;
+			return out;
+		}
+
+		virtual bool Cleanup()
+		{
+			bool out = EnsureClosed();
+			int saved_errno;
+			if (!out) {
+				saved_errno = errno;
+			}
+			if (!WinPortHandle::Cleanup()) {
+				return false;
+			}
+			if (!out) {
+				errno = saved_errno;
+			}
+			return out;
+		}
+
 	};
 	
 

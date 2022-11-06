@@ -2865,7 +2865,12 @@ void ShellFileTransfer::Do()
 		_DestFile.SetTime(nullptr, nullptr, &_SrcData.ftLastWriteTime, nullptr);
 	}
 
-	_DestFile.Close();
+	if (!_DestFile.Close())
+	{	// #1387
+		// if file located on old samba share then in out of space condition
+		// write()-s succeed but close() reports error
+		throw ErrnoSaver();
+	}
 
 	_Done = true;
 

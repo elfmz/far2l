@@ -58,7 +58,7 @@ namespace VTLog
 	static void EncodeLine(std::string &out, unsigned int Width, const CHAR_INFO *Chars, bool colored)
 	{
 		DWORD64 attr_prev = (DWORD64)-1;
-		for (unsigned int i = 0; i < Width; ++i) {
+		for (unsigned int i = 0; i < Width; ++i) if (Chars[i].Char.UnicodeChar) {
 			const DWORD64 attr_now = Chars[i].Attributes;
 			if ( colored && attr_now != attr_prev) {
 				const bool tc_back_now = (attr_now & BACKGROUND_TRUECOLOR) != 0;
@@ -108,11 +108,8 @@ namespace VTLog
 			} else if (Chars[i].Char.UnicodeChar > 0x80) {
 				Wide2MB_UnescapedAppend(Chars[i].Char.UnicodeChar, out);
 
-			} else if (Chars[i].Char.UnicodeChar != 0) {
-				out+= (char)(unsigned char)Chars[i].Char.UnicodeChar;
-
 			} else {
-				out+= L' ';
+				out+= (char)(unsigned char)Chars[i].Char.UnicodeChar;
 			}
 		}
 		if (colored && attr_prev != 0xffff) {

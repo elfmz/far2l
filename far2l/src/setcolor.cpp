@@ -531,6 +531,58 @@ void GetColor(int PaletteIndex)
 	}
 }
 
+static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
+{
+	// Trick to fix #1392:
+	// For foreground-colored boxes invert Fg&Bg colors and add COMMON_LVB_REVERSE_VIDEO attribute
+	// this will put real colors on them if mapping of colors is different for Fg and Bg indexes
+
+	// Ensure everything is on screen and will use console API then
+	ScrBuf.Flush();
+
+	SMALL_RECT DlgRect{};
+	SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&DlgRect);
+
+	for (int ID = 2; ID <= 17; ++ID)
+	{
+		SMALL_RECT ItemRect{};
+		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect))
+		{
+			ItemRect.Left+= DlgRect.Left;
+			ItemRect.Right+= DlgRect.Left;
+			ItemRect.Top+= DlgRect.Top;
+			ItemRect.Bottom+= DlgRect.Top;
+
+			CHAR_INFO ci{};
+			SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
+			WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
+			if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
+				continue; // this cell is already tweaked during prev paint
+
+			DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
+
+			InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
+
+			InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
+
+			if (ci.Attributes & FOREGROUND_TRUECOLOR)
+			{
+				InvColors|= BACKGROUND_TRUECOLOR;
+				SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+			}
+
+			if (ci.Attributes & BACKGROUND_TRUECOLOR)
+			{
+				InvColors|= FOREGROUND_TRUECOLOR;
+				SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
+			}
+
+			DWORD NumberOfAttrsWritten{};
+			WINPORT(FillConsoleOutputAttribute)(0, InvColors, ItemRect.Right - ItemRect.Left,
+				COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
+		}
+	}
+}
 
 static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
@@ -575,10 +627,15 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 			}
 
 			break;
+
+		case DN_DRAWDIALOGDONE:
+			GetColorDlgProc_OnDrawn(hDlg);
+			break;
 	}
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
+
 
 
 int GetColorDialog(WORD& Color,bool bCentered,bool bAddTransparent)

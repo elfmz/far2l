@@ -36,7 +36,7 @@ void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 	char buf[64];
 	const auto &it = _colors256_lookup.find(rgb);
 	if (it != _colors256_lookup.end()) {
-		sprintf(buf, "5;%u;", it->second + 16);
+		sprintf(buf, "5;%u;", ((unsigned int)it->second) + 16);
 	} else {
 		sprintf(buf, "2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 	}

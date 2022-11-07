@@ -1350,19 +1350,14 @@ bool FarEditorSet::checkConEmu()
   return conemu;*/
 }
 
-bool FarEditorSet::checkFarTrueMod() //TODO
+bool FarEditorSet::checkFarTrueMod()
 {
-  return false;
-  /*EditorAnnotation ea;
-  ea.StringNumber = 1;
-  ea.StartPos = 1;
-  ea.EndPos = 2;
-  return !!Info.EditorControl(ECTL_ADDANNOTATION, &ea);*/
+  return WINPORT(GetConsoleColorPalette)() >= 24;
 }
 
 bool FarEditorSet::checkConsoleAnnotationAvailable()
 {
-  return checkConEmu()&&checkFarTrueMod();
+  return checkFarTrueMod();
 }
 
 bool FarEditorSet::SetBgEditor()

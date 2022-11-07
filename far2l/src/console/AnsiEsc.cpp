@@ -148,6 +148,7 @@ void FontState::ParseSuffixM(const int *args, int argc)
 			concealed = false;
 			bold = false;
 			underline = false;
+			strikeout = false;
 
 		case 39:
 		case 49: {
@@ -177,6 +178,9 @@ void FontState::ParseSuffixM(const int *args, int argc)
 		case  8:
 			concealed = 1;
 			break;
+		case  9:
+			strikeout = true;
+			break;
 		case 21: // oops, this actually turns on double underline
 			// but xterm turns off bold too, so that's alright
 		case 22:
@@ -192,6 +196,9 @@ void FontState::ParseSuffixM(const int *args, int argc)
 		case 28:
 			concealed = 0;
 			break;
+		case 29:
+			strikeout = false;
+			break;
 		}
 	}
 }
@@ -200,6 +207,7 @@ void FontState::FromConsoleAttributes(DWORD64 qAttributes)
 {
 	bold = (qAttributes & FOREGROUND_INTENSITY) != 0;
 	underline = (qAttributes & COMMON_LVB_UNDERSCORE) != 0;
+	strikeout = (qAttributes & COMMON_LVB_STRIKEOUT) != 0;
 	rvideo = (qAttributes & COMMON_LVB_REVERSE_VIDEO) != 0;
 	foreground = Attr2Ansi[qAttributes & 7];
 	background = Attr2Ansi[(qAttributes >> 4) & 7];
@@ -248,6 +256,10 @@ DWORD64 FontState::ToConsoleAttributes()
 
 	if (underline) {
 		attribut|= COMMON_LVB_UNDERSCORE;
+	}
+
+	if (strikeout) {
+		attribut|= COMMON_LVB_STRIKEOUT;
 	}
 
 	return attribut;

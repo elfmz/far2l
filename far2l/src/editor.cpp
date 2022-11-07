@@ -5747,11 +5747,12 @@ int Editor::EditorControl(int Command,void *Param)
 			return TRUE;
 		}
 		// TODO: Если DI_MEMOEDIT не будет юзать раскаску, то должно выполняется в FileEditor::EditorControl(), в диалоге - нафиг ненать
+		case ECTL_ADDTRUECOLOR:
 		case ECTL_ADDCOLOR:
 		{
 			if (Param)
 			{
-				EditorColor *col=(EditorColor *)Param;
+				const EditorColor *col=(EditorColor *)Param;
 				_ECTLLOG(SysLog(L"EditorColor{"));
 				_ECTLLOG(SysLog(L"  StringNumber=%d",col->StringNumber));
 				_ECTLLOG(SysLog(L"  ColorItem   =%d (0x%08X)",col->ColorItem,col->ColorItem));
@@ -5759,7 +5760,7 @@ int Editor::EditorControl(int Command,void *Param)
 				_ECTLLOG(SysLog(L"  EndPos      =%d",col->EndPos));
 				_ECTLLOG(SysLog(L"  Color       =%d (0x%08X)",col->Color,col->Color));
 				_ECTLLOG(SysLog(L"}"));
-				ColorItem newcol;
+				ColorItem newcol{0};
 				newcol.StartPos=col->StartPos+(col->StartPos!=-1?X1:0);
 				newcol.EndPos=col->EndPos+X1;
 				newcol.Color=col->Color;
@@ -5774,6 +5775,12 @@ int Editor::EditorControl(int Command,void *Param)
 				if (!col->Color)
 					return(CurPtr->DeleteColor(newcol.StartPos));
 
+				if (Command == ECTL_ADDTRUECOLOR)
+				{
+					const EditorTrueColor *tcol = (EditorTrueColor *)Param;
+					newcol.TrueFore = tcol->TrueFore;
+					newcol.TrueBack = tcol->TrueBack;
+				}
 				CurPtr->AddColor(&newcol);
 				return TRUE;
 			}
@@ -5781,6 +5788,7 @@ int Editor::EditorControl(int Command,void *Param)
 			break;
 		}
 		// TODO: Если DI_MEMOEDIT не будет юзать раскаску, то должно выполняется в FileEditor::EditorControl(), в диалоге - нафиг ненать
+		case ECTL_GETTRUECOLOR:
 		case ECTL_GETCOLOR:
 		{
 			if (Param)
@@ -5805,6 +5813,12 @@ int Editor::EditorControl(int Command,void *Param)
 				col->StartPos=curcol.StartPos-X1;
 				col->EndPos=curcol.EndPos-X1;
 				col->Color=curcol.Color;
+				if (Command == ECTL_ADDTRUECOLOR)
+				{
+					EditorTrueColor *tcol = (EditorTrueColor *)Param;
+					tcol->TrueFore = curcol.TrueFore;
+					tcol->TrueBack = curcol.TrueBack;
+				}
 				_ECTLLOG(SysLog(L"EditorColor{"));
 				_ECTLLOG(SysLog(L"  StringNumber=%d",col->StringNumber));
 				_ECTLLOG(SysLog(L"  ColorItem   =%d (0x%08X)",col->ColorItem,col->ColorItem));

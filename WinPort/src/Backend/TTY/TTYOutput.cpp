@@ -22,7 +22,7 @@
 
 #define ATTRIBUTES_AFFECTING_BACKGROUND \
 	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY \
-	| BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE)
+	| BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)
 
 void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 {
@@ -97,6 +97,10 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 	if ((attr & BACKGROUND_TRUECOLOR) != 0 && (GET_RGB_BACK(xa) != 0 || (xa & BACKGROUND_TRUECOLOR) != 0)) {
 		_tmp_attrs+= "48;";
 		_true_colors.AppendSuffix(_tmp_attrs, GET_RGB_BACK(attr));
+	}
+
+	if ( (xa & COMMON_LVB_STRIKEOUT) != 0) {
+		_tmp_attrs+= (attr & COMMON_LVB_STRIKEOUT) ? "9;" : "29;";
 	}
 
 	if ( (xa & COMMON_LVB_UNDERSCORE) != 0) {

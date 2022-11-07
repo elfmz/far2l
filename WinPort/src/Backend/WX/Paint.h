@@ -99,6 +99,7 @@ class ConsolePainter
 	unsigned int _start_y;
 	uint8_t _prev_fit_font_index;
 	bool	_prev_underlined;
+	bool	_prev_strikeout;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 
 	friend struct WXCustomDrawCharPainter;
@@ -107,7 +108,7 @@ class ConsolePainter
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr, unsigned int nx);
 	void FlushBackground(unsigned int cx_end);
 	void FlushText(unsigned int cx_end);
-	void FlushUnderline(unsigned int cx_end);
+	void FlushDecorations(unsigned int cx_end);
 		
 public:
 	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);

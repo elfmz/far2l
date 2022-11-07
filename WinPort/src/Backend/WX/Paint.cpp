@@ -506,7 +506,8 @@ void CursorProps::Update()
 
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer, CursorProps &cursor_props) :
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(cursor_props),
-	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0), _prev_underlined(false)
+	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
+	_prev_underlined(false), _prev_strikeout(false)
 {
 	_dc.SetPen(context->GetTransparentPen());
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
@@ -575,20 +576,31 @@ void ConsolePainter::FlushText(unsigned int cx_end)
 		_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
 		_buffer.Empty();
 	}
-	FlushUnderline(cx_end);
+	FlushDecorations(cx_end);
 	_start_cx = (unsigned int)-1;
 	_prev_fit_font_index = 0;
 }
 
-void ConsolePainter::FlushUnderline(unsigned int cx_end)
+void ConsolePainter::FlushDecorations(unsigned int cx_end)
 {
+	if (!_prev_underlined && !_prev_strikeout) {
+		return;
+	}
+	_dc.SetPen(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
+
 	if (_prev_underlined) {
-		_dc.SetPen(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
 		_dc.DrawLine(_start_cx * _context->FontWidth(), _start_y + _context->FontHeight() - 1,
 			cx_end * _context->FontWidth(), _start_y + _context->FontHeight() - 1);
-		_dc.SetPen(_context->GetTransparentPen());
 		_prev_underlined = false;
 	}
+
+	if (_prev_strikeout) {
+		_dc.DrawLine(_start_cx * _context->FontWidth(), _start_y + (_context->FontHeight() / 2),
+			cx_end * _context->FontWidth(), _start_y + (_context->FontHeight() / 2));
+		_prev_strikeout = false;
+	}
+
+	_dc.SetPen(_context->GetTransparentPen());
 }
 
 static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
@@ -710,7 +722,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		FlushBackground(cx + nx);
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
 		custom_draw(cdp, _start_y, cx);
-		FlushUnderline(cx);
+		FlushDecorations(cx);
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
         return;
@@ -718,8 +730,9 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 
 	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz);
 	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
+	const bool strikeout = (attributes & COMMON_LVB_STRIKEOUT) != 0;
 	
-	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined
+	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
 	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {
 		_buffer+= wcz;
 		return;
@@ -730,6 +743,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 
 	_prev_fit_font_index = fit_font_index;
 	_prev_underlined = underlined;
+	_prev_strikeout = strikeout;
 
 	_start_cx = cx;
 	_buffer = wcz;

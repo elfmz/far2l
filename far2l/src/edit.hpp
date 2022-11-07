@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bitflags.hpp"
 #include "FilesSuggestor.hpp"
 #include <memory>
+#include <vector>
 
 // Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITLINE
@@ -66,6 +67,9 @@ struct ColorItem
 	int StartPos;
 	int EndPos;
 	int Color;
+	FarTrueColor TrueFore;
+	FarTrueColor TrueBack;
+	bool TrueColorDefined;
 };
 
 enum SetCPFlags
@@ -144,8 +148,9 @@ class Edit:public ScreenObject
 
 		wchar_t *Mask;
 
-		ColorItem *ColorList;
-		int    ColorCount;
+//		ColorItem *ColorList;
+//		int    ColorCount;
+		std::vector<ColorItem> ColorList;
 
 		int    Color;
 		int    SelColor;
@@ -297,9 +302,9 @@ class Edit:public ScreenObject
 
 		void  InsertTab();
 
-		void  AddColor(ColorItem *col);
-		int   DeleteColor(int ColorPos);
-		int   GetColor(ColorItem *col,int Item);
+		void  AddColor(const ColorItem *col);
+		size_t DeleteColor(int ColorPos);
+		bool  GetColor(ColorItem *col,int Item);
 
 		void Xlat(bool All=false);
 

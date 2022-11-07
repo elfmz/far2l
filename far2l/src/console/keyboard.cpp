@@ -797,7 +797,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				return(KEY_NONE);
 		}
 
-		if (!WaitInMainLoop && LoopCount == 4)
+		if (!WaitInMainLoop && LoopCount == 3)
 		{
 			LastEventIdle = TRUE;
 			ZeroFill(*rec);

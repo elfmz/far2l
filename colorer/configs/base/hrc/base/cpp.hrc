@@ -218,6 +218,7 @@
 <!-- !!EE (add keywords): STL  -->
   <keywords region="KeywordSTL">
    <word name="std" region="KeywordNamespace"/>
+   <word name="chrono" region="KeywordNamespace"/>
 
    <!-- c++11 -->
    <word name="move"/>
@@ -230,17 +231,25 @@
    <word name="list"/>
    <word name="set"/>
    <word name="multiset"/>
+   <word name="unordered_set"/>
+   <word name="unordered_multiset"/>
    <word name="map"/>
    <word name="multimap"/>
+   <word name="unordered_map"/>
+   <word name="unordered_multimap"/>
    <word name="hash_map"/>
    <word name="deque"/>
    <word name="stack"/>
    <word name="queue"/>
    <word name="priority_queue"/>
    <word name="string"/>
+   <word name="wstring"/>
    <word name="array"/>
    <word name="valarray"/>
    <word name="biset"/>
+   <word name="mutex"/>
+   <word name="unique_lock"/>
+   <word name="lock_guard"/>
 
    <word name="char_traits"/>
    <word name="basic_string"/>
@@ -295,6 +304,8 @@
    <word name="raw_storage_iterator"/>
    <word name="allocator"/>
    <word name="auto_ptr"/>
+   <word name="shared_ptr"/>
+   <word name="unique_ptr"/>
    <word name="pair"/>
 
    <!-- alogoritms -->

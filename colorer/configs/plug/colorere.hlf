@@ -68,13 +68,13 @@ $^#FarColorer's settings.#
   #Log file#
      Full path in this field specifies the file that will store diagnostic messages
 
-  #--------------------------TrueMod Settings------------------------#
+  #--------------------------TrueColor Settings------------------------#
   #Enabled#
-     Enable/Disable TrueMod in plugin.
+     Enable/Disable using of TrueColor (24 bit RGB) coloring.
 
   #Color style:#
-     Choose a color style, which will be used for coloring text in TrueMod. 
-     The choice does not work if the plugin is disabled.
+     Choose a color style, which will be used for coloring text in TrueColor. 
+     The choice does not work if TrueColor is disabled or unavailable.
   #------------------------------------------------------------------#
 
   #[ Test schema library ]#

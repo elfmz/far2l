@@ -148,8 +148,6 @@ class Edit:public ScreenObject
 
 		wchar_t *Mask;
 
-//		ColorItem *ColorList;
-//		int    ColorCount;
 		std::vector<ColorItem> ColorList;
 
 		int    Color;

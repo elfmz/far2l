@@ -368,7 +368,7 @@ void HRCParserImpl::addPrototypeDetectParam(const xercesc::DOMElement* elem)
   CString weight = CString(elem->getAttribute(hrcFilenameAttrWeight));
   UnicodeTools::getNumber(&weight, &prior);
   auto* ftc = new FileTypeChooser(ctype, prior, matchRE);
-  parseProtoType->chooserVector.push_back(ftc);
+  parseProtoType->chooserVector.emplace_back(ftc);
 }
 
 void HRCParserImpl::addPrototypeParameters(const xercesc::DOMElement* elem)

@@ -1748,18 +1748,15 @@ void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
     //если его изменили  
     if (!v.equals(def_value)){
       if (type->getParamValue(p)==nullptr){
-        ((FileTypeImpl*)type)->addParam(&p);
+        type->addParam(&p);
       }
       type->setParamValue(p,&v);
     }
   }else{//было пользовательское значение
     if (!v.equals(value)){//changed
       if (v.equals(def_value)){
-         //delete value
-         delete type->getParamUserValue(p);
-        ((FileTypeImpl*)type)->removeParamValue(p);
+        type->removeParamValue(p);
       }else{
-        delete type->getParamUserValue(p);
         type->setParamValue(p,&v);
       }
     }

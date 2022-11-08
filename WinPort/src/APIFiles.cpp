@@ -79,7 +79,8 @@ extern "C"
 		{
 			bool out = (fd == -1 || os_call_int(sdc_close, fd) == 0);
 			if (!out) {
-				fprintf(stderr, "WinPortHandleFile: error %u closing fd %d\n", errno, fd);
+				ErrnoSaver es;
+				fprintf(stderr, "WinPortHandleFile: error %u closing fd %d\n", es.Get(), fd);
 			}
 
 			fd = -1;

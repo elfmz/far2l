@@ -567,13 +567,11 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 
 			if (ci.Attributes & FOREGROUND_TRUECOLOR)
 			{
-				InvColors|= BACKGROUND_TRUECOLOR;
 				SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
 			}
 
 			if (ci.Attributes & BACKGROUND_TRUECOLOR)
 			{
-				InvColors|= FOREGROUND_TRUECOLOR;
 				SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
 			}
 

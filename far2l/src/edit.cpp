@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
+#include "VT256ColorTable.h"
 #include  <cwctype>
 
 static int Recurse=0;
@@ -115,8 +116,6 @@ Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData):
 	SelColor=F_WHITE|B_BLACK;
 	ColorUnChanged=COL_DIALOGEDITUNCHANGED;
 	EndType=EOL_NONE;
-	ColorList=nullptr;
-	ColorCount=0;
 	TabSize=Opt.EdOpt.TabSize;
 	TabExpandMode = EXPAND_NOTABS;
 	Flags.Change(FEDITLINE_DELREMOVESBLOCKS,Opt.EdOpt.DelRemovesBlocks);
@@ -128,9 +127,6 @@ Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData):
 
 Edit::~Edit()
 {
-	if (ColorList)
-		free(ColorList);
-
 	if (Mask)
 		free(Mask);
 
@@ -2453,53 +2449,42 @@ void Edit::DeleteBlock()
 }
 
 
-void Edit::AddColor(ColorItem *col)
+void Edit::AddColor(const ColorItem *col)
 {
-	if (!(ColorCount & 15))
-		ColorList=(ColorItem *)realloc(ColorList,(ColorCount+16)*sizeof(*ColorList));
-
-	ColorList[ColorCount++]=*col;
+	ColorList.emplace_back(*col);
 }
 
 
-int Edit::DeleteColor(int ColorPos)
+size_t Edit::DeleteColor(int ColorPos)
 {
-	int Src;
+	if (ColorList.empty())
+		return 0;
 
-	if (!ColorCount)
-		return FALSE;
+	size_t Dest, Src;
 
-	int Dest=0;
-
-	for (Src=0; Src<ColorCount; Src++)
-		if (ColorPos!=-1 && ColorList[Src].StartPos!=ColorPos)
+	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
+		if (ColorPos != -1 && ColorList[Src].StartPos != ColorPos)
 		{
-			if (Dest!=Src)
-				ColorList[Dest]=ColorList[Src];
+			if (Dest != Src)
+				ColorList[Dest] = ColorList[Src];
 
-			Dest++;
+			++Dest;
 		}
 
-	int DelCount=ColorCount-Dest;
-	ColorCount=Dest;
+	const size_t DelCount = ColorList.size() - Dest;
+	ColorList.resize(Dest);
 
-	if (!ColorCount)
-	{
-		free(ColorList);
-		ColorList=nullptr;
-	}
-
-	return(DelCount);
+	return DelCount;
 }
 
 
-int Edit::GetColor(ColorItem *col,int Item)
+bool Edit::GetColor(ColorItem *col, int Item)
 {
-	if (Item >= ColorCount)
-		return FALSE;
+	if (Item >= (int)ColorList.size())
+		return false;
 
-	*col=ColorList[Item];
-	return TRUE;
+	*col = ColorList[Item];
+	return true;
 }
 
 
@@ -2509,50 +2494,57 @@ void Edit::ApplyColor()
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
 	// Обрабатываем элементы ракраски
-	for (int Col = 0; Col < ColorCount; Col++)
+	for (auto &CurItem : ColorList)
 	{
-		ColorItem *CurItem = ColorList+Col;
-
 		// Пропускаем элементы у которых начало больше конца
-		if (CurItem->StartPos > CurItem->EndPos)
+		if (CurItem.StartPos > CurItem.EndPos)
 			continue;
 
 		// Отсекаем элементы заведомо не попадающие на экран
-		if (CurItem->StartPos-LeftPos > X2 && CurItem->EndPos-LeftPos < X1)
+		if (CurItem.StartPos-LeftPos > X2 && CurItem.EndPos-LeftPos < X1)
 			continue;
 
-		int Attr = CurItem->Color;
-		int Length = CurItem->EndPos-CurItem->StartPos+1;
+		DWORD64 Attr = CurItem.Color;
+		if (CurItem.TrueFore.Flags & 1)
+		{
+			SET_RGB_FORE(Attr, COMPOSE_RGB(CurItem.TrueFore.R, CurItem.TrueFore.G, CurItem.TrueFore.B));
+		}
+		if (CurItem.TrueBack.Flags & 1)
+		{
+			SET_RGB_BACK(Attr, COMPOSE_RGB(CurItem.TrueBack.R, CurItem.TrueBack.G, CurItem.TrueBack.B));
+		}
 
-		if (CurItem->StartPos+Length >= StrSize)
-			Length = StrSize-CurItem->StartPos;
+		int Length = CurItem.EndPos - CurItem.StartPos+1;
+
+		if (CurItem.StartPos + Length >= StrSize)
+			Length = StrSize - CurItem.StartPos;
 
 		// Получаем начальную позицию
 		int RealStart, Start;
 
 		// Если предыдущая позиция равна текущей, то ничего не вычисляем
 		// и сразу берём ранее вычисленное значение
-		if (Pos == CurItem->StartPos)
+		if (Pos == CurItem.StartPos)
 		{
 			RealStart = TabPos;
 			Start = TabEditorPos;
 		}
 		// Если вычисление идёт первый раз или предыдущая позиция больше текущей,
 		// то производим вычисление с начала строки
-		else if (Pos == INT_MIN || CurItem->StartPos < Pos)
+		else if (Pos == INT_MIN || CurItem.StartPos < Pos)
 		{
-			RealStart = RealPosToCell(CurItem->StartPos);
+			RealStart = RealPosToCell(CurItem.StartPos);
 			Start = RealStart-LeftPos;
 		}
 		// Для отптимизации делаем вычисление относительно предыдущей позиции
 		else
 		{
-			RealStart = RealPosToCell(TabPos, Pos, CurItem->StartPos, nullptr);
+			RealStart = RealPosToCell(TabPos, Pos, CurItem.StartPos, nullptr);
 			Start = RealStart-LeftPos;
 		}
 
 		// Запоминаем вычисленные значения для их дальнейшего повторного использования
-		Pos = CurItem->StartPos;
+		Pos = CurItem.StartPos;
 		TabPos = RealStart;
 		TabEditorPos = Start;
 
@@ -2567,7 +2559,7 @@ void Edit::ApplyColor()
 			Attr &= ~ECF_TAB1;
 
 		// Получаем конечную позицию
-		int EndPos = CurItem->EndPos;
+		int EndPos = CurItem.EndPos;
 		int RealEnd, End;
 
 		// Обрабатываем случай, когда предыдущая позиция равна текущей, то есть

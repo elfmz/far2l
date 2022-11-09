@@ -2975,14 +2975,17 @@ DWORD ShellFileTransfer::PieceCopy()
 	if (BytesWritten > BytesRead)
 	{	// likely we written bit more due to no_buffering requires aligned io
 		// move backward and correct file size
-		_DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT);
-		_DestFile.SetEnd();
+		if (!_DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT))
+			throw ErrnoSaver();
+		if (!_DestFile.SetEnd())
+			throw ErrnoSaver();
 		return BytesRead;
 	}
 
 	if (BytesWritten < BytesRead)
 	{	// if written less than read then need to rewind source file by difference
-		_SrcFile.SetPointer((INT64)BytesWritten - (INT64)BytesRead, nullptr, FILE_CURRENT);
+		if (!_SrcFile.SetPointer((INT64)BytesWritten - (INT64)BytesRead, nullptr, FILE_CURRENT))
+			throw ErrnoSaver();
 	}
 
 	return BytesWritten;

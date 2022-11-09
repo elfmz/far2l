@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding='UTF-8'?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
   "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY c-unix SYSTEM "c-unix.ent.hrc">
 <!ENTITY c-win32 SYSTEM "c-win32.ent.hrc">
 ]>
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
@@ -59,6 +60,8 @@
   <region name="KeywordLibFunctions" parent="def:FunctionKeyword"/>
   <region name="KeywordStructure" parent="def:StructKeyword"/>
 
+  <region name="KeywordUnixIO" parent="KeywordStructure"/>
+  <region name="KeywordUnix" parent="KeywordLibFunctions"/>
   <region name="KeywordWin32" parent="KeywordLibFunctions"/>
   <region name="KeywordOpenGL" parent="KeywordLibFunctions"/>
   <region name="KeywordNetwork" parent="KeywordLibFunctions"/>
@@ -648,6 +651,7 @@
    <inherit scheme="Keyword-Stdlibs"/>
 
    <inherit scheme="Keywords-win32"/>
+   <inherit scheme="Keywords-unix"/>
 
  </scheme>
  
@@ -908,6 +912,7 @@
 		</keywords>
 	</scheme>
 	
+	&c-unix;
 	&c-win32;
 	
 	</type>

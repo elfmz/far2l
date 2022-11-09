@@ -1350,19 +1350,14 @@ bool FarEditorSet::checkConEmu()
   return conemu;*/
 }
 
-bool FarEditorSet::checkFarTrueMod() //TODO
+bool FarEditorSet::checkFarTrueMod()
 {
-  return false;
-  /*EditorAnnotation ea;
-  ea.StringNumber = 1;
-  ea.StartPos = 1;
-  ea.EndPos = 2;
-  return !!Info.EditorControl(ECTL_ADDANNOTATION, &ea);*/
+  return WINPORT(GetConsoleColorPalette)() >= 24;
 }
 
 bool FarEditorSet::checkConsoleAnnotationAvailable()
 {
-  return checkConEmu()&&checkFarTrueMod();
+  return checkFarTrueMod();
 }
 
 bool FarEditorSet::SetBgEditor()
@@ -1753,18 +1748,15 @@ void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
     //если его изменили  
     if (!v.equals(def_value)){
       if (type->getParamValue(p)==nullptr){
-        ((FileTypeImpl*)type)->addParam(&p);
+        type->addParam(&p);
       }
       type->setParamValue(p,&v);
     }
   }else{//было пользовательское значение
     if (!v.equals(value)){//changed
       if (v.equals(def_value)){
-         //delete value
-         delete type->getParamUserValue(p);
-        ((FileTypeImpl*)type)->removeParamValue(p);
+        type->removeParamValue(p);
       }else{
-        delete type->getParamUserValue(p);
         type->setParamValue(p,&v);
       }
     }

@@ -1568,10 +1568,12 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_GETSTACKBOOKMARKS,
 	ECTL_UNDOREDO,
 	ECTL_GETFILENAME,
-#ifdef FAR_USE_INTERNALS
-	ECTL_SERVICEREGION,
-#endif // END FAR_USE_INTERNALS
+	ECTL_ADDTRUECOLOR,
+	ECTL_GETTRUECOLOR,
 };
+//#ifdef FAR_USE_INTERNALS
+//	ECTL_SERVICEREGION, // WTF
+//#endif // END FAR_USE_INTERNALS
 
 enum EDITOR_SETPARAMETER_TYPES
 {
@@ -1761,6 +1763,21 @@ struct EditorColor
 	int StartPos;
 	int EndPos;
 	int Color;
+};
+
+struct FarTrueColor
+{
+	unsigned char R;
+	unsigned char G;
+	unsigned char B;
+	unsigned char Flags; // bit one - 'active' flag, others - ignored and must be set to zero
+};
+
+struct EditorTrueColor
+{
+	struct EditorColor Base;
+	struct FarTrueColor TrueFore;
+	struct FarTrueColor TrueBack;
 };
 
 struct EditorSaveFile

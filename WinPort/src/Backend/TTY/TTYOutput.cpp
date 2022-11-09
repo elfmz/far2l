@@ -22,7 +22,7 @@
 
 #define ATTRIBUTES_AFFECTING_BACKGROUND \
 	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY \
-	| BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE)
+	| BACKGROUND_TRUECOLOR | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)
 
 void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 {
@@ -36,7 +36,7 @@ void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 	char buf[64];
 	const auto &it = _colors256_lookup.find(rgb);
 	if (it != _colors256_lookup.end()) {
-		sprintf(buf, "5;%u;", it->second + 16);
+		sprintf(buf, "5;%u;", ((unsigned int)it->second) + 16);
 	} else {
 		sprintf(buf, "2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 	}
@@ -62,7 +62,9 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 	}
 	if (is_space && (xa & ATTRIBUTES_AFFECTING_BACKGROUND) == 0) {
 		if ((attr & BACKGROUND_TRUECOLOR) == 0 || GET_RGB_BACK(xa) == 0) {
-			return;
+			if ( ((attr | _prev_attr) & COMMON_LVB_REVERSE_VIDEO) == 0) {
+				return;
+			}
 		}
 	}
 
@@ -73,10 +75,19 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 		_tmp_attrs+= (attr & FOREGROUND_INTENSITY) ? "1;" : "22;";
 	}
 
+	bool emit_tc_fore =
+		((attr & FOREGROUND_TRUECOLOR) != 0 && (GET_RGB_FORE(xa) != 0 || (xa & FOREGROUND_TRUECOLOR) != 0));
+
+	bool emit_tc_back =
+		((attr & BACKGROUND_TRUECOLOR) != 0 && (GET_RGB_BACK(xa) != 0 || (xa & BACKGROUND_TRUECOLOR) != 0));
+
 	if ( ((xa & (FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY)) != 0)
 	  || ((_prev_attr & FOREGROUND_TRUECOLOR) != 0 && (attr & FOREGROUND_TRUECOLOR) == 0) ) {
 		_tmp_attrs+= (attr & FOREGROUND_INTENSITY) ? '9' : '3';
 		AppendAnsiColorSuffix<FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE>(_tmp_attrs, attr);
+		if ((attr & FOREGROUND_TRUECOLOR) != 0) {
+			emit_tc_fore = true;
+		}
 	}
 
 	if ( ((xa & (BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY)) != 0)
@@ -87,16 +98,23 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 			_tmp_attrs+= '4';
 		}
 		AppendAnsiColorSuffix<BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE>(_tmp_attrs, attr);
+		if ((attr & BACKGROUND_TRUECOLOR) != 0) {
+			emit_tc_back = true;
+		}
 	}
 
-	if ((attr & FOREGROUND_TRUECOLOR) != 0 && (GET_RGB_FORE(xa) != 0 || (xa & FOREGROUND_TRUECOLOR) != 0)) {
+	if (emit_tc_fore) {
 		_tmp_attrs+= "38;";
 		_true_colors.AppendSuffix(_tmp_attrs, GET_RGB_FORE(attr));
 	}
 
-	if ((attr & BACKGROUND_TRUECOLOR) != 0 && (GET_RGB_BACK(xa) != 0 || (xa & BACKGROUND_TRUECOLOR) != 0)) {
+	if (emit_tc_back) {
 		_tmp_attrs+= "48;";
 		_true_colors.AppendSuffix(_tmp_attrs, GET_RGB_BACK(attr));
+	}
+
+	if ( (xa & COMMON_LVB_STRIKEOUT) != 0) {
+		_tmp_attrs+= (attr & COMMON_LVB_STRIKEOUT) ? "9;" : "29;";
 	}
 
 	if ( (xa & COMMON_LVB_UNDERSCORE) != 0) {

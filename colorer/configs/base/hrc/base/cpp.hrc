@@ -250,6 +250,7 @@
    <word name="mutex"/>
    <word name="unique_lock"/>
    <word name="lock_guard"/>
+   <word name="atomic"/>
 
    <word name="char_traits"/>
    <word name="basic_string"/>

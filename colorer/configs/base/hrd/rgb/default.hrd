@@ -16,7 +16,7 @@
   <assign name="def:NumberSuffix" fore="#008000"/>
 
   <assign name="def:String" fore="#88ee88"/>
-  <assign name="def:StringContent" fore="#ee8888" style='1'/>
+  <assign name="def:StringContent" fore="#999911" style='1'/>
   <assign name="def:StringEdge" fore="#40a000"/>
   <assign name="def:Character" fore="#aaff88"/>
   <assign name="def:CharacterContent" fore="#aaff88"/>
@@ -36,8 +36,6 @@
 
   <assign name="def:Keyword" fore="#FFFFFF"/>
   <assign name="def:KeywordStrong" fore="#bb7977" style='1'/>
-  <assign name="def:TypeKeyword"   fore="#ffaf9f"/>
-
   <assign name="def:FunctionKeyword" fore="#DDDD00"/>
   <assign name="def:DeprecatedKeyword" fore="#DD6622"/>
   <assign name="def:InterfaceKeyword" fore="#DD8800"/>
@@ -62,7 +60,7 @@
   <assign name="def:OpenTag" fore="#A697F0"/>
   <assign name="def:CloseTag" fore="#A697F0"/>
 
-  <assign name="def:Label" fore="#5aa3ff" style='4'/>
+  <assign name="def:Label" fore="#ff20a0"/>
   <assign name="def:LabelStrong" fore="#5aa3ff" back="#200050"/>
 
   <assign name="def:Insertion" fore="#DADAFF" back="#200050"/>
@@ -72,18 +70,18 @@
   <assign name="def:Error" fore="#EEEEFF" back="#883355" style='3'/>
   <assign name="def:ErrorText" fore="#ee00ee" style='1'/>
 
-  <assign name="def:TODO" fore="#ffffff" back="#606000" style='4'/>
+  <assign name="def:TODO" fore="#ffff88" back="#606000"/>
   <assign name="def:Debug" fore="#80abfd" back="#007084"/>
 
   <assign name="def:Path" fore="#f040e0"/>
-  <assign name="def:URI" fore="#5555DD"/>
+  <assign name="def:URI" fore="#8888ff" style='4'/>
   <assign name="def:EMail" fore="#7144c4"/>
 
   <assign name="def:Date" fore="#009797"/>
   <assign name="def:Time" fore="#8745a0"/>
 
-  <assign name="def:PairStart" fore="#FF4040" back='#000050' style='4'/>
-  <assign name="def:PairEnd" fore="#FF4040" back='#000050' style='4'/>
+  <assign name="def:PairStart" fore="#FF4040" back='#000050'/>
+  <assign name="def:PairEnd" fore="#FF4040" back='#000050'/>
   <assign name="def:PairStrongStart" fore="#EE00EE"/>
   <assign name="def:PairStrongEnd" fore="#EE00EE"/>
 

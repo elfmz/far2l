@@ -700,11 +700,15 @@ void WXCustomDrawChar::Painter::FillPixel(wxCoord left, wxCoord top)
 
 void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx)
 {
+	if (!wcz[0] || !WCHAR_IS_VALID(wcz[0])) {
+		wcz = L" ";
+	}
+
 	WXCustomDrawChar::DrawT custom_draw = nullptr;
 
-	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0]) || (_context->IsCustomDrawEnabled()
+	if ((!wcz[1] && (wcz[0] == L' ' || (_context->IsCustomDrawEnabled()
 	 && (custom_draw = WXCustomDrawChar::Get(wcz[0])) != nullptr)))) {
-		if (!_buffer.empty()) 
+		if (!_buffer.empty())
 			FlushBackground(cx + nx - 1);
 		FlushText(cx + nx - 1);
 	}
@@ -712,7 +716,10 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back, nx);
 
-	if (!wcz[0] || (!wcz[1] && (wcz[0] == L' ' || !WCHAR_IS_VALID(wcz[0])))) {
+	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
+	const bool strikeout = (attributes & COMMON_LVB_STRIKEOUT) != 0;
+
+	if (!strikeout && !underlined && wcz[0] == L' ' && !wcz[1]) {
 		return;
 	}
 
@@ -722,15 +729,19 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		FlushBackground(cx + nx);
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
 		custom_draw(cdp, _start_y, cx);
-		FlushDecorations(cx);
+		if (underlined || strikeout) {
+			_start_cx = cx;
+			_prev_underlined = underlined;
+			_prev_strikeout = strikeout;
+			_clr_text = clr_text;
+			FlushDecorations(cx + nx);
+		}
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
         return;
 	}
 
 	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz);
-	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
-	const bool strikeout = (attributes & COMMON_LVB_STRIKEOUT) != 0;
 	
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
 	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {

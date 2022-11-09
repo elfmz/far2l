@@ -56,27 +56,31 @@ bool FileMasksWithExclude::IsExcludeMask(const wchar_t *masks)
 
 const wchar_t *FileMasksWithExclude::FindExcludeChar(const wchar_t *masks)
 {
-	const wchar_t *pExclude = masks;
-
-	if (*pExclude == '\\')
+	if (masks)
 	{
-		pExclude++;
-
-		while (*pExclude && (*pExclude != '\\' || *(pExclude-1) == GOOD_SLASH))
-			pExclude++;
-
-		while (*pExclude && *pExclude != EXCLUDEMASKSEPARATOR)
-			pExclude++;
-
-		if (*pExclude != EXCLUDEMASKSEPARATOR)
-			pExclude = nullptr;
+		for (bool regexp=false; *masks; masks++)
+		{
+			if (!regexp)
+			{
+				if (*masks == EXCLUDEMASKSEPARATOR)
+					return masks;
+				if (*masks == L'/')
+					regexp = true;
+			}
+			else
+			{
+				if (*masks == L'\\')
+				{
+					if (*(++masks) == 0) // skip the next char
+						break;
+				}
+				else if (*masks == L'/')
+					regexp = false;
+			}
+		}
 	}
-	else
-	{
-		pExclude = wcschr(masks,EXCLUDEMASKSEPARATOR);
-	}
 
-	return pExclude;
+	return nullptr;
 }
 
 /*

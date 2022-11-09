@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 #include <colorer/parsers/HRCParserImpl.h>
 #include <colorer/parsers/FileTypeChooser.h>
 

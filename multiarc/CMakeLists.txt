@@ -119,6 +119,10 @@ set(SOURCES
         src/formats/7z/C/7zArcIn.c
         src/formats/7z/C/Bra.c
         src/formats/7z/C/Blake2s.c
+        src/formats/7z/C/LzFindOpt.c
+        src/formats/7z/C/Ppmd7aDec.c
+        src/formats/7z/C/Sha1Opt.c
+        src/formats/7z/C/Sha256Opt.c
 
         src/formats/ha/ha/acoder.c
         src/formats/ha/ha/archive.c

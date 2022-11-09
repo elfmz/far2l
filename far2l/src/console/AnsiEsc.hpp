@@ -14,6 +14,7 @@ namespace AnsiEsc
 		BYTE	background = 0;	    // ANSI base color (0 to 7; add 40)
 		bool	bold = false;		//
 		bool	underline = false;	//
+		bool	strikeout = false;  //
 		bool	rvideo = false; 	// swap console foreground & background attributes
 		bool	concealed = false;	// set foreground/bold to background/underline
 

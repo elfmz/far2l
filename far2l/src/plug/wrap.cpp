@@ -3514,11 +3514,13 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 	switch (Command)
 	{
 		case oldfar::ECTL_ADDCOLOR:			Command = ECTL_ADDCOLOR; break;
+		case oldfar::ECTL_ADDTRUECOLOR:			Command = ECTL_ADDTRUECOLOR; break;
 		case oldfar::ECTL_DELETEBLOCK:	Command = ECTL_DELETEBLOCK; break;
 		case oldfar::ECTL_DELETECHAR:		Command = ECTL_DELETECHAR; break;
 		case oldfar::ECTL_DELETESTRING:	Command = ECTL_DELETESTRING; break;
 		case oldfar::ECTL_EXPANDTABS:		Command = ECTL_EXPANDTABS; break;
 		case oldfar::ECTL_GETCOLOR:			Command = ECTL_GETCOLOR; break;
+		case oldfar::ECTL_GETTRUECOLOR:			Command = ECTL_GETTRUECOLOR; break;
 		case oldfar::ECTL_GETBOOKMARKS:	Command = ECTL_GETBOOKMARKS; break;
 		case oldfar::ECTL_INSERTSTRING:	Command = ECTL_INSERTSTRING; break;
 		case oldfar::ECTL_QUIT:					Command = ECTL_QUIT; break;

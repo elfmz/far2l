@@ -1232,6 +1232,8 @@ namespace oldfar
 		ECTL_DELETESTACKBOOKMARK,
 		ECTL_GETSTACKBOOKMARKS,
 		ECTL_SERVICEREGION,
+		ECTL_ADDTRUECOLOR,
+		ECTL_GETTRUECOLOR,
 	};
 
 	enum EDITOR_SETPARAMETER_TYPES
@@ -1404,6 +1406,21 @@ namespace oldfar
 		int StartPos;
 		int EndPos;
 		int Color;
+	};
+
+	struct FarTrueColor
+	{
+		unsigned char R;
+		unsigned char G;
+		unsigned char B;
+		unsigned char Flags; // bit one - 'active' flag, others - ignored and must be set to zero
+	};
+
+	struct EditorTrueColor
+	{
+		struct EditorColor Base;
+		struct FarTrueColor TrueFore;
+		struct FarTrueColor TrueBack;
 	};
 
 	struct EditorSaveFile

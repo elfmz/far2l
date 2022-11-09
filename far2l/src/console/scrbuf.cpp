@@ -186,7 +186,7 @@ void ScreenBuf::Read(int X1,int Y1,int X2,int Y2,CHAR_INFO *Text,int MaxTextLeng
 /* Изменить значение цветовых атрибутов в соответствии с маской
    (в основном применяется для "создания" тени)
 */
-void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,WORD ColorMask)
+void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,DWORD64 ColorMask)
 {
 	CriticalSectionLock Lock(CS);
 	int Width=X2-X1+1;
@@ -216,7 +216,7 @@ void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,WORD ColorMask)
 
 /* Непосредственное изменение цветовых атрибутов
 */
-void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,WORD Color)
+void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color)
 {
 	CriticalSectionLock Lock(CS);
 	if(X1<=ScrX && Y1<=ScrY && X2>=0 && Y2>=0)
@@ -253,7 +253,7 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,WORD Color)
 
 /* Непосредственное изменение цветовых атрибутов с заданым цетом исключением
 */
-void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,int Color,WORD ExceptColor)
+void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color,DWORD64 ExceptColor)
 {
 	CriticalSectionLock Lock(CS);
 	if(X1<=ScrX && Y1<=ScrY && X2>=0 && Y2>=0)
@@ -285,7 +285,7 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,int Color,WORD ExceptColo
 
 /* Закрасить прямоугольник символом Ch и цветом Color
 */
-void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,WORD Color)
+void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,DWORD64 Color)
 {
 	CriticalSectionLock Lock(CS);
 	int Width=X2-X1+1;

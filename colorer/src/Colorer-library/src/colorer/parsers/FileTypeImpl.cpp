@@ -1,8 +1,6 @@
 #include <colorer/parsers/FileTypeImpl.h>
 #include <colorer/unicode/UnicodeTools.h>
 
-#include <memory>
-
 FileTypeImpl::FileTypeImpl(HRCParserImpl* hrcParser): name(nullptr), group(nullptr), description(nullptr)
 {
   this->hrcParser = hrcParser;
@@ -72,11 +70,12 @@ const String* FileTypeImpl::getParamUserValue(const String &name) const{
 }
 
 TypeParameter* FileTypeImpl::addParam(const String *name){
-  auto* tp = new TypeParameter;
-  tp->name.reset(new SString(name));
-  std::pair<SString, TypeParameter*> pp(name, tp);
-  paramsHash.emplace(pp);
-  return tp;
+  const auto &ir = paramsHash.emplace(name, std::unique_ptr<TypeParameter>());
+  if (ir.second) {
+    ir.first->second.reset(new TypeParameter);
+    ir.first->second->name.reset(new SString(name));
+  }
+  return ir.first->second.get();
 }
 
 void FileTypeImpl::setParamValue(const String &name, const String *value){

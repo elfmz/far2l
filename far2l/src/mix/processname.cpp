@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "strmix.hpp"
 #include "pathmix.hpp"
+#include "CFileMask.hpp"
 
 // обработать имя файла: сравнить с маской, масками, сгенерировать по маске
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags)
@@ -50,21 +51,8 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 
 	if (flags == PN_CMPNAMELIST)
 	{
-		int Found=FALSE;
-		FARString strFileMask;
-		const wchar_t *MaskPtr;
-		MaskPtr=param1;
-
-		while ((MaskPtr=GetCommaWord(MaskPtr,strFileMask)))
-		{
-			if (CmpName(strFileMask,param2,skippath))
-			{
-				Found=TRUE;
-				break;
-			}
-		}
-
-		return Found;
+		CFileMask Masks;
+		return Masks.Set(param1,FMF_SILENT) && Masks.Compare(skippath ? PointToName(param2):param2);
 	}
 
 	if (flags&PN_GENERATENAME)

@@ -292,8 +292,10 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 	|| [[ "$FILE" == *": "*"SVG"*" image"* ]] \
 	|| [[ "$FILE" == *": "*"JPEG"*" image"* ]] \
 	|| [[ "$FILEMIME" == *": image/"* ]]; then
-	TCOLUMNS=$( tput cols )
-	TLINES=$( tput lines )
+	# ??? workaround for bash to get values of variables
+	bash -c "echo ${FOO}" >/dev/null 2>&1
+	TCOLUMNS=$( bash -c "echo ${COLUMNS}" )
+	TLINES=$( bash -c "echo ${LINES}" )
 	TCOLUMNS=$(( ${TCOLUMNS:-80} - 0 ))
 	TLINES=$(( ${TLINES:-25} - 2 ))
 	VPRETTY="no"
@@ -303,13 +305,7 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 		TCOLUMNS=$(( ${TCOLUMNS:-80} - 1 ))
 		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
 		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
-		for i in $( seq $TLINES ); do echo; done
-		clear
-		DESCRIPTION="Image name, dimensions and color depth will be here soon (really soon)"
-		# Best settings for the fonts with limited character ranges (Consolas, Lucida Console, etc.)
-		#chafa -c full --color-space=din99d -w 9 --symbols solid+half+space-wide-inverted --fill all "$1" && echo -n $DESCRIPTION && read -n1 -r -p "" >>"$2" 2>&1
-		# Settings for the fonts with extended character ranges (Cascadia Code, Cascadia Mono, etc.)
-		chafa --color-space=din99d -w 9 --symbols all --fill all "$1" && echo -n $DESCRIPTION && read -n1 -r -p "" >>"$2" 2>&1
+		chafa --color-space=din99d -w 9 --symbols all --fill all "$1" && read -n1 -r -p "" >>"$2" 2>&1
 		clear
 
 	elif command -v timg >/dev/null 2>&1; then

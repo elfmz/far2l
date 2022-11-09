@@ -645,6 +645,16 @@
      <word name="stdin"/>
      <word name="stdout"/>
      <word name="stderr"/>
+     <word name="uint8_t"/>
+     <word name="int8_t"/>
+     <word name="uint16_t"/>
+     <word name="int16_t"/>
+     <word name="uint32_t"/>
+     <word name="int32_t"/>
+     <word name="uint64_t"/>
+     <word name="int64_t"/>
+     <word name="uintptr_t"/>
+     <word name="intptr_t"/>
      <word name="FILE"/>
    </keywords>
    

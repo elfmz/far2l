@@ -67,7 +67,6 @@ WinPortHandle *WinPortHandle_Reference(HANDLE h)
 		if (g_winport_handles.find(wph)==g_winport_handles.end())
 			return NULL;
 		wph->Reference();
-	}	
+	}
 	return wph;
 }
-

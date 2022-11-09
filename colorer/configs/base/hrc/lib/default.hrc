@@ -136,6 +136,7 @@
     </scheme>
 
     <scheme name="Number">
+      <inherit scheme="BinNumber"/>
       <inherit scheme="CHexNumber"/>
       <inherit scheme="FloatNumber"/>
       <inherit scheme="DecNumber"/>

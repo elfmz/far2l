@@ -21,8 +21,7 @@
 #define ESC "\x1b"
 
 #define ATTRIBUTES_AFFECTING_BACKGROUND \
-	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY \
-	| BACKGROUND_TRUECOLOR | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)
+	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY | BACKGROUND_TRUECOLOR)
 
 void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 {
@@ -62,7 +61,7 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 	}
 	if (is_space && (xa & ATTRIBUTES_AFFECTING_BACKGROUND) == 0) {
 		if ((attr & BACKGROUND_TRUECOLOR) == 0 || GET_RGB_BACK(xa) == 0) {
-			if ( ((attr | _prev_attr) & COMMON_LVB_REVERSE_VIDEO) == 0) {
+			if ( ((attr | _prev_attr) & (COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)) == 0) {
 				return;
 			}
 		}

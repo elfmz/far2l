@@ -1311,36 +1311,35 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
     ec.Base.StartPos = s;
     ec.Base.EndPos = e-1;
 	if (col.fg || col.bk) {
-		if (col.style & AI_STYLE_UNDERLINE) {
-		    ec.Base.Color|= COMMON_LVB_UNDERSCORE;
-		}
-		if (col.style & AI_STYLE_STRIKEOUT) {
-		    ec.Base.Color|= COMMON_LVB_STRIKEOUT;
-		}
-        ec.TrueFore.R = ((col.fg >> 16) & 0xFF);
-        ec.TrueFore.G = ((col.fg >> 8) & 0xFF);
-        ec.TrueFore.B = ((col.fg) & 0xFF);
-        ec.TrueFore.Flags = 1;
-        ec.TrueBack.R = ((col.bk >> 16) & 0xFF);
-        ec.TrueBack.G = ((col.bk >> 8) & 0xFF);
-        ec.TrueBack.B = ((col.bk) & 0xFF);
-        ec.TrueBack.Flags = 1;
+      ec.TrueFore.R = ((col.fg >> 16) & 0xFF);
+      ec.TrueFore.G = ((col.fg >> 8) & 0xFF);
+      ec.TrueFore.B = ((col.fg) & 0xFF);
+      ec.TrueFore.Flags = 1;
+      ec.TrueBack.R = ((col.bk >> 16) & 0xFF);
+      ec.TrueBack.G = ((col.bk >> 8) & 0xFF);
+      ec.TrueBack.B = ((col.bk) & 0xFF);
+      ec.TrueBack.Flags = 1;
 
-        if (ec.TrueFore.R > 0x10) ec.Base.Color|= FOREGROUND_RED;
-        if (ec.TrueFore.G > 0x10) ec.Base.Color|= FOREGROUND_GREEN;
-        if (ec.TrueFore.B > 0x10) ec.Base.Color|= FOREGROUND_BLUE;
+      if (ec.TrueFore.R > 0x10) ec.Base.Color|= FOREGROUND_RED;
+      if (ec.TrueFore.G > 0x10) ec.Base.Color|= FOREGROUND_GREEN;
+      if (ec.TrueFore.B > 0x10) ec.Base.Color|= FOREGROUND_BLUE;
 
-        if (ec.TrueBack.R > 0x10) ec.Base.Color|= BACKGROUND_RED;
-        if (ec.TrueBack.G > 0x10) ec.Base.Color|= BACKGROUND_GREEN;
-        if (ec.TrueBack.B > 0x10) ec.Base.Color|= BACKGROUND_BLUE;
+      if (ec.TrueBack.R > 0x10) ec.Base.Color|= BACKGROUND_RED;
+      if (ec.TrueBack.G > 0x10) ec.Base.Color|= BACKGROUND_GREEN;
+      if (ec.TrueBack.B > 0x10) ec.Base.Color|= BACKGROUND_BLUE;
 
-        if (ec.TrueFore.R > 0x80 || ec.TrueFore.G > 0x80 || ec.TrueFore.B > 0x80) {
-            ec.Base.Color = FOREGROUND_INTENSITY;
-        }
-
-        if (ec.Base.Color == 0 || ec.TrueBack.R > 0x80 || ec.TrueBack.G > 0x80 || ec.TrueBack.B > 0x80) {
-            ec.Base.Color = BACKGROUND_INTENSITY;
-        }
+      if (ec.TrueFore.R > 0x80 || ec.TrueFore.G > 0x80 || ec.TrueFore.B > 0x80) {
+        ec.Base.Color = FOREGROUND_INTENSITY;
+      }
+      if (ec.Base.Color == 0 || ec.TrueBack.R > 0x80 || ec.TrueBack.G > 0x80 || ec.TrueBack.B > 0x80) {
+        ec.Base.Color = BACKGROUND_INTENSITY;
+      }
+      if (col.style & AI_STYLE_UNDERLINE) {
+        ec.Base.Color|= COMMON_LVB_UNDERSCORE;
+      }
+      if (col.style & AI_STYLE_STRIKEOUT) {
+        ec.Base.Color|= COMMON_LVB_STRIKEOUT;
+      }
 	}
 
 #if 0

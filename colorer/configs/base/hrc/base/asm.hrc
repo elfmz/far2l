@@ -85,6 +85,30 @@
     </scheme>
     <scheme name="asm_shared">
       <keywords ignorecase="yes" region="asmDefinition">
+        <word name=".global"/>
+        <word name=".globl"/>
+        <word name=".ascii"/>
+        <word name=".asciz"/>
+        <word name=".quad"/>
+        <word name=".word"/>
+        <word name=".byte"/>
+        <word name=".long"/>
+        <word name=".short"/>
+        <word name=".int"/>
+        <word name=".set"/>
+        <word name=".text"/>
+        <word name=".data"/>
+        <word name=".bss"/>
+        <word name=".align"/>
+        <word name=".purgem"/>
+        <word name=".macro"/>
+        <word name=".endm"/>
+        <word name=".endr"/>
+        <word name=".type"/>
+        <word name="%object"/>
+        <word name="%function"/>
+      </keywords>
+      <keywords ignorecase="yes" region="asmDefinition">
         <word name="align"/>
         <word name="db"/>
         <word name="dd"/>

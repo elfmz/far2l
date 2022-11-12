@@ -566,9 +566,16 @@ void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2)
 	Y2=MessageY2;
 }
 
+static FARString s_ErrorString;
+
 bool GetErrorString(FARString &strErrStr)
 {
 	auto err = errno;
+	if (err == -1 && !s_ErrorString.IsEmpty()) {
+		strErrStr = s_ErrorString;
+		return true;
+	}
+
 	const char *str = strerror(err);
 	if (str) {
 		strErrStr.Format(L"%s (%u)", str, err);
@@ -578,6 +585,11 @@ bool GetErrorString(FARString &strErrStr)
 	return true;
 }
 
+void SetErrorString(const FARString &strErrStr)
+{
+	s_ErrorString = strErrStr;
+	errno = -1;
+}
 
 void SetMessageHelp(const wchar_t *Topic)
 {

@@ -185,7 +185,7 @@
    <word name="__uuidof"/>
    <word name="__virtual_inheritance"/>
 
-   <word name="nullptr" region="KeywordConstant"/>
+   <word name="nullptr" region="c:KeywordConstant"/>
   </keywords>
 
 

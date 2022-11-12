@@ -134,6 +134,8 @@ size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1)
 size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);
 
+bool ReadWholeFile(const char *path, std::string &result, size_t limit = (size_t)-1);
+
 
 int pipe_cloexec(int pipedes[2]);
 

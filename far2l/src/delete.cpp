@@ -801,25 +801,40 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 	return DELETE_SUCCESS;
 }
 
-int RemoveToRecycleBin(const wchar_t *Name)
+static int RemoveToRecycleBin(const wchar_t *Name)
 {
-	std::string name_mb = Wide2MB(Name);
+	FARString err_file;
+	FarMkTempEx(err_file, L"trash");
+
+	std::string name_arg = Wide2MB(Name);
+	std::string err_file_arg = err_file.GetMB();
 
 	unsigned int flags = EF_HIDEOUT;
-	if (sudo_client_is_required_for(name_mb.c_str(), true))
+	if (sudo_client_is_required_for(name_arg.c_str(), true))
 		flags|= EF_SUDO;
 
-	QuoteCmdArgIfNeed(name_mb);
+	QuoteCmdArgIfNeed(name_arg);
+	QuoteCmdArgIfNeed(err_file_arg);
 
 	std::string cmd = GetMyScriptQuoted("trash.sh");
 	cmd+= ' ';
-	cmd+= name_mb;
+	cmd+= name_arg;
+	cmd+= ' ';
+	cmd+= err_file_arg;
 
 	int r = farExecuteA(cmd.c_str(), flags);
-	if (r==0)
+	if (r == 0)
 		return TRUE;
 
-	errno = r;
+	std::string err_str;
+	if (ReadWholeFile(err_file.GetMB().c_str(), err_str, 0x10000)) {
+		// gio: file:///.../xxx/yyy: Unable to trash file .../xxx/yyy: Permission denied
+		err_str.erase(0, err_str.rfind(':') + 1);
+		StrTrim(err_str, " \t\r\n");
+		SetErrorString(err_str);
+	}
+	unlink(err_file.GetMB().c_str());
+
 	return FALSE;
 }
 

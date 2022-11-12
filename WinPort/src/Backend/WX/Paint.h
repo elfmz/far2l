@@ -45,7 +45,7 @@ public:
 	ConsolePaintContext(wxWindow *window);
 	void ShowFontDialog();
 	
-	uint8_t CharFitTest(wxPaintDC &dc, const wchar_t *wcz);
+	uint8_t CharFitTest(wxPaintDC &dc, const wchar_t *wcz, unsigned int nx);
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );

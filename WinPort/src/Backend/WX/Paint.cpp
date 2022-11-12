@@ -275,7 +275,7 @@ void ConsolePaintContext::ShowFontDialog()
 	SetFont(font);
 }
 
-uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz)
+uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz, unsigned int nx)
 {
 #ifdef DYNAMIC_FONTS
 	const bool cacheable = (size_t(wcz[0]) <= _char_fit_cache.checked.size() && wcz[1] == 0);
@@ -285,37 +285,34 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz)
 
 	uint8_t font_index = 0;
 	_cft_tmp = wcz;
-	wxCoord w, h = _font_height, d = _font_descent;
-	dc.GetTextExtent(_cft_tmp, &w, &h, &d);
-	for (uint8_t try_index = 1; try_index != 0xff && (unsigned)h > _font_height + std::max(0, int(d) - int(_font_descent)); ++try_index) {
-
-		if (try_index >= _fonts.size()) {
-			wxFont smallest = _fonts.back();
-			wxSize px_size = smallest.GetPixelSize();
-			if (px_size.GetHeight() <= 4) {
+	for (font_index = 0; font_index != 0xff; ++font_index) {
+		if (font_index >= _fonts.size()) {
+			wxSize px_size = _fonts.front().GetPixelSize();
+			if (px_size.GetHeight() <= (int)unsigned(font_index) + 4)
 				break;
-			}
-			px_size.SetHeight(px_size.GetHeight() - 1);
+
+			px_size.SetHeight(px_size.GetHeight() - font_index);
 			px_size.SetWidth(0);
-			smallest.SetPixelSize(px_size);
-			_fonts.emplace_back(smallest);
+
+			_fonts.emplace_back(_fonts.front());
+			_fonts.back().SetPixelSize(px_size);
 		}
-		assert(try_index < _fonts.size());
-		dc.SetFont(_fonts[try_index]);
-		dc.GetTextExtent(_cft_tmp, &w, &h, &d);
-		font_index = try_index;
-	}
-	if (font_index != 0) {
-//		fprintf(stderr, "Changed[%d] point size = %u -> %u for '%ls'\n",
-//			font_index, _fonts[0].GetPointSize(), _fonts[font_index].GetPointSize(), wcz);
-		ApplyFont(dc);
+		assert(font_index < _fonts.size());
+
+		wxCoord w = _font_width, h = _font_height, d = _font_descent;
+		dc.GetTextExtent(_cft_tmp, &w, &h, &d, NULL, &_fonts[font_index]);
+		const unsigned limh = _font_height + std::max(0, int(d) - int(_font_descent));
+		const unsigned limw = _font_width * nx;
+		if  (unsigned(h) <= limh && unsigned(w) <= limw) {
+			break;
+		}
 	}
 	
 	if (cacheable) {
 		_char_fit_cache.result[ size_t(wcz[0])  - 1 ] = font_index;
 		_char_fit_cache.checked[ size_t(wcz[0])  - 1 ] = true;
 	}
-	
+
 	return font_index;
 
 #else
@@ -741,7 +738,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
         return;
 	}
 
-	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz);
+	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz, nx);
 	
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
 	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {

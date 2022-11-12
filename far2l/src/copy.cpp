@@ -93,7 +93,7 @@ extern long WaitUserTime;
 /* Для того, что бы время при ожидании пользователя тикало, а remaining/speed нет */
 static long OldCalcTime;
 
-#define PROGRESS_REFRESH_THRESHOLD    500 // msec
+#define PROGRESS_REFRESH_THRESHOLD    200 // msec
 
 enum {COPY_BUFFER_SIZE  = 0x800000, COPY_PIECE_MINIMAL = 0x10000};
 

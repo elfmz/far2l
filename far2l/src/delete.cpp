@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "dirmix.hpp"
 #include "strmix.hpp"
+#include "flink.hpp"
 #include "panelmix.hpp"
 #include "mix.hpp"
 #include "dirinfo.hpp"
@@ -64,20 +65,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #include <errno.h>
 #endif
 
+enum DeletionResult
+{
+	DELETE_SUCCESS,
+	DELETE_YES,
+	DELETE_SKIP,
+	DELETE_CANCEL,
+	DELETE_NO_RECYCLE_BIN
+};
+
+
 static void ShellDeleteMsg(const wchar_t *Name,int Wipe,int Percent);
-static int ShellRemoveFile(const wchar_t *Name,int Wipe);
-static int ERemoveDirectory(const wchar_t *Name,int Wipe);
-static int RemoveToRecycleBin(const wchar_t *Name);
+static DeletionResult ShellRemoveFile(const wchar_t *Name,int Wipe, int Opt_DeleteToRecycleBin);
+static DeletionResult ERemoveDirectory(const wchar_t *Name,int Wipe);
+static DeletionResult RemoveToRecycleBin(const wchar_t *Name);
 static int WipeFile(const wchar_t *Name);
 static int WipeDirectory(const wchar_t *Name);
 static void PR_ShellDeleteMsg();
 
-static int ReadOnlyDeleteMode,SkipMode,SkipWipeMode,SkipFoldersMode,DeleteAllFolders;
+static int ReadOnlyDeleteMode,SkipMode,SkipWipeMode,SkipFoldersMode,SkipRecycleMode,DeleteAllFolders;
 ULONG ProcessedItems;
 
 ConsoleTitle *DeleteTitle=nullptr;
-
-enum {DELETE_SUCCESS,DELETE_YES,DELETE_SKIP,DELETE_CANCEL};
 
 struct AskDeleteReadOnly
 {
@@ -89,26 +98,197 @@ struct AskDeleteReadOnly
 			_ump->Unmake();
 	}
 	
-	inline int Choice() const
+	inline DeletionResult Choice() const
 	{
 		return _r;
 	}
 
 	private:
 	IUnmakeWritablePtr _ump;
-	int _r;
+	DeletionResult _r;
 };
+
+static DeletionResult ShellDeleteDirectory(int ItemsCount, int UpdateDiz, Panel *SrcPanel, FARString strSelName, DWORD FileAttr, int Wipe, int Opt_DeleteToRecycleBin, bool &Cancel, BOOL &NeedSetUpADir)
+{
+	FAR_FIND_DATA_EX FindData;
+	if (!DeleteAllFolders)
+	{
+		FARString strFullName;
+		ConvertNameToFull(strSelName, strFullName);
+
+		if (TestFolder(strFullName) == TSTFLD_NOTEMPTY)
+		{
+			int MsgCode=0;
+			// для symlink`а не нужно подтверждение
+			if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
+				MsgCode=Message(MSG_WARNING,4,(Wipe?Msg::WipeFolderTitle:Msg::DeleteFolderTitle),
+				                (Wipe?Msg::WipeFolderConfirm:Msg::DeleteFolderConfirm),strFullName,
+				                (Wipe?Msg::DeleteFileWipe:Msg::DeleteFileDelete),Msg::DeleteFileAll,
+				                Msg::DeleteFileSkip,Msg::DeleteFileCancel);
+
+			if (MsgCode<0 || MsgCode==3)
+			{
+				NeedSetUpADir=FALSE;
+				return DELETE_CANCEL;
+			}
+
+			if (MsgCode==1)
+				DeleteAllFolders=1;
+
+			if (MsgCode==2)
+				return DELETE_SKIP;
+		}
+	}
+
+	bool DirSymLink=(FileAttr&FILE_ATTRIBUTE_DIRECTORY && FileAttr&FILE_ATTRIBUTE_REPARSE_POINT);
+
+	if (!DirSymLink && (!Opt_DeleteToRecycleBin || Wipe))
+	{
+		FARString strFullName;
+		ScanTree ScTree(TRUE,TRUE,FALSE);
+		FARString strSelFullName;
+
+		if (IsAbsolutePath(strSelName))
+		{
+			strSelFullName=strSelName;
+		}
+		else
+		{
+			SrcPanel->GetCurDir(strSelFullName);
+			AddEndSlash(strSelFullName);
+			strSelFullName+=strSelName;
+		}
+
+		ScTree.SetFindPath(strSelFullName,L"*", 0);
+		DWORD StartTime=WINPORT(GetTickCount)();
+
+		while (ScTree.GetNextName(&FindData,strFullName))
+		{
+			DWORD CurTime=WINPORT(GetTickCount)();
+
+			if (CurTime-StartTime>RedrawTimeout)
+			{
+				StartTime=CurTime;
+
+				if (CheckForEscSilent())
+				{
+					int AbortOp = ConfirmAbortOp();
+
+					if (AbortOp)
+					{
+						Cancel=true;
+						break;
+					}
+				}
+
+				ShellDeleteMsg(strFullName,Wipe,Opt.DelOpt.DelShowTotal?(ItemsCount?(ProcessedItems*100/ItemsCount):0):-1);
+			}
+
+			if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			{
+				if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+				{
+					if (FindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+						apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
+
+					int MsgCode=ERemoveDirectory(strFullName,Wipe);
+
+					if (MsgCode==DELETE_CANCEL)
+					{
+						Cancel=true;
+						break;
+					}
+					else if (MsgCode==DELETE_SKIP)
+					{
+						ScTree.SkipDir();
+						continue;
+					}
+
+					TreeList::DelTreeName(strFullName);
+
+					if (UpdateDiz)
+						SrcPanel->DeleteDiz(strFullName);
+
+					continue;
+				}
+
+				if (!DeleteAllFolders && !ScTree.IsDirSearchDone() && TestFolder(strFullName) == TSTFLD_NOTEMPTY)
+				{
+					int MsgCode=Message(MSG_WARNING,4,(Wipe?Msg::WipeFolderTitle:Msg::DeleteFolderTitle),
+					                    (Wipe?Msg::WipeFolderConfirm:Msg::DeleteFolderConfirm),strFullName,
+					                    (Wipe?Msg::DeleteFileWipe:Msg::DeleteFileDelete),Msg::DeleteFileAll,
+					                    Msg::DeleteFileSkip,Msg::DeleteFileCancel);
+
+					if (MsgCode<0 || MsgCode==3)
+					{
+						Cancel=true;
+						break;
+					}
+
+					if (MsgCode==1)
+						DeleteAllFolders=1;
+
+					if (MsgCode==2)
+					{
+						ScTree.SkipDir();
+						continue;
+					}
+				}
+
+				if (ScTree.IsDirSearchDone())
+				{
+					if (FindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+						apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
+
+					int MsgCode=ERemoveDirectory(strFullName,Wipe);
+
+					if (MsgCode==DELETE_CANCEL)
+					{
+						Cancel=true;;
+						break;
+					}
+					else if (MsgCode==DELETE_SKIP)
+					{
+						//ScTree.SkipDir();
+						continue;
+					}
+
+					TreeList::DelTreeName(strFullName);
+				}
+			}
+			else
+			{
+				if (ShellRemoveFile(strFullName,Wipe,Opt_DeleteToRecycleBin)==DELETE_CANCEL)
+				{
+					Cancel=true;
+					break;
+				}
+			}
+		}
+	}
+
+	if (Cancel)
+		return DELETE_CANCEL;
+
+	if (FileAttr & FILE_ATTRIBUTE_READONLY)
+		apiMakeWritable(strSelName);
+
+	// нефига здесь выделываться, а надо учесть, что удаление
+	// симлинка в корзину чревато потерей оригинала.
+	if (DirSymLink || !Opt_DeleteToRecycleBin || Wipe)
+		return ERemoveDirectory(strSelName, Wipe);
+
+	return RemoveToRecycleBin(strSelName);
+}
 
 void ShellDelete(Panel *SrcPanel,int Wipe)
 {
 	SudoClientRegion scr;
 	//todo ChangePriority ChPriority(Opt.DelThreadPriority);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
-	FAR_FIND_DATA_EX FindData;
 	FARString strDeleteFilesMsg;
 	FARString strSelName;
 	FARString strDizName;
-	FARString strFullName;
 	DWORD FileAttr;
 	int SelCount,UpdateDiz;
 	int DizPresent;
@@ -186,7 +366,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 				DelMsg = folder ? Msg::AskWipeFolder : Msg::AskWipeFile;
 			else
 			{
-				if (Opt.DeleteToRecycleBin && !(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
+				if (Opt_DeleteToRecycleBin && !(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
 					DelMsg = folder ? Msg::AskDeleteRecycleFolder : Msg::AskDeleteRecycleFile;
 				else
 					DelMsg = folder ? Msg::AskDeleteFolder : Msg::AskDeleteFile;
@@ -199,7 +379,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 				DelMsg=Msg::AskWipe;
 				TitleMsg=Msg::DeleteWipeTitle;
 			}
-			else if (Opt.DeleteToRecycleBin && !(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
+			else if (Opt_DeleteToRecycleBin && !(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
 				DelMsg=Msg::AskDeleteRecycle;
 			else
 				DelMsg=Msg::AskDelete;
@@ -207,7 +387,8 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 		SetMessageHelp(L"DeleteFile");
 
-		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,(Wipe?Msg::DeleteWipe:Opt.DeleteToRecycleBin?Msg::DeleteRecycle:Msg::Delete),Msg::Cancel))
+		if (Message(0,2,TitleMsg,DelMsg,strDeleteFilesMsg,
+				(Wipe ? Msg::DeleteWipe : (Opt_DeleteToRecycleBin ? Msg::DeleteRecycle : Msg::Delete)), Msg::Cancel))
 		{
 			NeedUpdate=FALSE;
 			goto done;
@@ -250,6 +431,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 		SkipMode=-1;
 		SkipWipeMode=-1;
 		SkipFoldersMode=-1;
+		SkipRecycleMode=-1;
 		ULONG ItemsCount=0;
 		ProcessedItems=0;
 
@@ -327,215 +509,25 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 				ShellDeleteMsg(strSelName,Wipe,Opt.DelOpt.DelShowTotal?(ItemsCount?(ProcessedItems*100/ItemsCount):0):-1);
 			}
 
+			DeletionResult DR;
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				if (!DeleteAllFolders)
-				{
-					ConvertNameToFull(strSelName, strFullName);
-
-					if (TestFolder(strFullName) == TSTFLD_NOTEMPTY)
-					{
-						int MsgCode=0;
-
-						// для symlink`а не нужно подтверждение
-						if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
-							MsgCode=Message(MSG_WARNING,4,(Wipe?Msg::WipeFolderTitle:Msg::DeleteFolderTitle),
-							                (Wipe?Msg::WipeFolderConfirm:Msg::DeleteFolderConfirm),strFullName,
-							                (Wipe?Msg::DeleteFileWipe:Msg::DeleteFileDelete),Msg::DeleteFileAll,
-							                Msg::DeleteFileSkip,Msg::DeleteFileCancel);
-
-						if (MsgCode<0 || MsgCode==3)
-						{
-							NeedSetUpADir=FALSE;
-							break;
-						}
-
-						if (MsgCode==1)
-							DeleteAllFolders=1;
-
-						if (MsgCode==2)
-							continue;
-					}
-				}
-
-				bool DirSymLink=(FileAttr&FILE_ATTRIBUTE_DIRECTORY && FileAttr&FILE_ATTRIBUTE_REPARSE_POINT);
-
-				if (!DirSymLink && (!Opt.DeleteToRecycleBin || Wipe))
-				{
-					FARString strFullName;
-					ScanTree ScTree(TRUE,TRUE,FALSE);
-					FARString strSelFullName;
-
-					if (IsAbsolutePath(strSelName))
-					{
-						strSelFullName=strSelName;
-					}
-					else
-					{
-						SrcPanel->GetCurDir(strSelFullName);
-						AddEndSlash(strSelFullName);
-						strSelFullName+=strSelName;
-					}
-
-					ScTree.SetFindPath(strSelFullName,L"*", 0);
-					DWORD StartTime=WINPORT(GetTickCount)();
-
-					while (ScTree.GetNextName(&FindData,strFullName))
-					{
-						DWORD CurTime=WINPORT(GetTickCount)();
-
-						if (CurTime-StartTime>RedrawTimeout)
-						{
-							StartTime=CurTime;
-
-							if (CheckForEscSilent())
-							{
-								int AbortOp = ConfirmAbortOp();
-
-								if (AbortOp)
-								{
-									Cancel=true;
-									break;
-								}
-							}
-
-							ShellDeleteMsg(strFullName,Wipe,Opt.DelOpt.DelShowTotal?(ItemsCount?(ProcessedItems*100/ItemsCount):0):-1);
-						}
-
-						if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-						{
-							if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-							{
-								if (FindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-									apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
-
-								int MsgCode=ERemoveDirectory(strFullName,Wipe);
-
-								if (MsgCode==DELETE_CANCEL)
-								{
-									Cancel=true;
-									break;
-								}
-								else if (MsgCode==DELETE_SKIP)
-								{
-									ScTree.SkipDir();
-									continue;
-								}
-
-								TreeList::DelTreeName(strFullName);
-
-								if (UpdateDiz)
-									SrcPanel->DeleteDiz(strFullName);
-
-								continue;
-							}
-
-							if (!DeleteAllFolders && !ScTree.IsDirSearchDone() && TestFolder(strFullName) == TSTFLD_NOTEMPTY)
-							{
-								int MsgCode=Message(MSG_WARNING,4,(Wipe?Msg::WipeFolderTitle:Msg::DeleteFolderTitle),
-								                    (Wipe?Msg::WipeFolderConfirm:Msg::DeleteFolderConfirm),strFullName,
-								                    (Wipe?Msg::DeleteFileWipe:Msg::DeleteFileDelete),Msg::DeleteFileAll,
-								                    Msg::DeleteFileSkip,Msg::DeleteFileCancel);
-
-								if (MsgCode<0 || MsgCode==3)
-								{
-									Cancel=true;
-									break;
-								}
-
-								if (MsgCode==1)
-									DeleteAllFolders=1;
-
-								if (MsgCode==2)
-								{
-									ScTree.SkipDir();
-									continue;
-								}
-							}
-
-							if (ScTree.IsDirSearchDone())
-							{
-								if (FindData.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-									apiMakeWritable(strFullName); //apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
-
-								int MsgCode=ERemoveDirectory(strFullName,Wipe);
-
-								if (MsgCode==DELETE_CANCEL)
-								{
-									Cancel=true;;
-									break;
-								}
-								else if (MsgCode==DELETE_SKIP)
-								{
-									//ScTree.SkipDir();
-									continue;
-								}
-
-								TreeList::DelTreeName(strFullName);
-							}
-						}
-						else
-						{
-							if (ShellRemoveFile(strFullName,Wipe)==DELETE_CANCEL)
-							{
-								Cancel=true;
-								break;
-							}
-						}
-					}
-				}
-
-				if (!Cancel)
-				{
-					if (FileAttr & FILE_ATTRIBUTE_READONLY)
-						apiMakeWritable(strSelName); //apiSetFileAttributes(strSelName,FILE_ATTRIBUTE_NORMAL);
-
-					int DeleteCode;
-
-					// нефига здесь выделываться, а надо учесть, что удаление
-					// симлинка в корзину чревато потерей оригинала.
-					if (DirSymLink || !Opt.DeleteToRecycleBin || Wipe)
-					{
-						DeleteCode=ERemoveDirectory(strSelName,Wipe);
-
-						if (DeleteCode==DELETE_CANCEL)
-							break;
-						else if (DeleteCode==DELETE_SUCCESS)
-						{
-							TreeList::DelTreeName(strSelName);
-
-							if (UpdateDiz)
-								SrcPanel->DeleteDiz(strSelName);
-						}
-					}
-					else
-					{
-						DeleteCode=RemoveToRecycleBin(strSelName);
-
-						if (!DeleteCode)
-							Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotDeleteFolder,strSelName,Msg::Ok);
-						else
-						{
-							TreeList::DelTreeName(strSelName);
-
-							if (UpdateDiz)
-								SrcPanel->DeleteDiz(strSelName);
-						}
-					}
-				}
+				DR = ShellDeleteDirectory(ItemsCount, UpdateDiz, SrcPanel, strSelName, FileAttr, Wipe, Opt_DeleteToRecycleBin, Cancel, NeedSetUpADir);
+				if (DR == DELETE_NO_RECYCLE_BIN)
+					DR = ShellDeleteDirectory(ItemsCount, UpdateDiz, SrcPanel, strSelName, FileAttr, Wipe, FALSE, Cancel, NeedSetUpADir);
 			}
 			else
 			{
-				int DeleteCode=ShellRemoveFile(strSelName,Wipe);
-
-				if (DeleteCode==DELETE_SUCCESS && UpdateDiz)
-				{
-					SrcPanel->DeleteDiz(strSelName);
-				}
-
-				if (DeleteCode==DELETE_CANCEL)
-					break;
+				DR = ShellRemoveFile(strSelName, Wipe, Opt_DeleteToRecycleBin);
 			}
+
+			if (DR == DELETE_SUCCESS && UpdateDiz)
+			{
+				SrcPanel->DeleteDiz(strSelName);
+			}
+
+			if (DR == DELETE_CANCEL)
+				break;
 		}
 	}
 
@@ -545,7 +537,7 @@ void ShellDelete(Panel *SrcPanel,int Wipe)
 
 	delete DeleteTitle;
 done:
-	Opt.DeleteToRecycleBin=Opt_DeleteToRecycleBin;
+	//Opt.DeleteToRecycleBin=Opt_DeleteToRecycleBin;
 	// Разрешить перерисовку фрейма
 	FrameFromLaunched->Unlock();
 
@@ -642,7 +634,7 @@ AskDeleteReadOnly::AskDeleteReadOnly(const wchar_t *Name,int Wipe)
 
 
 
-int ShellRemoveFile(const wchar_t *Name, int Wipe)
+static DeletionResult ShellRemoveFile(const wchar_t *Name, int Wipe, int Opt_DeleteToRecycleBin)
 {
 	ProcessedItems++;
 	int MsgCode=0;
@@ -653,7 +645,7 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 	FARString strFullName;
 	ConvertNameToFull(Name, strFullName);
 
-	if (Wipe || Opt.DeleteToRecycleBin)
+	if (Wipe || Opt_DeleteToRecycleBin)
 	{  /* in case its a not a simple deletion - check/sanitize RO files prior any actions,
 		* cuz code that doing such things is not aware about such complications
 		*/
@@ -670,7 +662,7 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 			{
 				MsgCode=SkipWipeMode;
 			}
-			else if (0) //todo if (GetNumberOfLinks(strFullName)>1)
+			else if (GetNumberOfLinks(strFullName) > 1)
 			{
 				/*
 				                            Файл
@@ -702,7 +694,7 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 						return DELETE_SUCCESS;
 			}
 		}
-		else if (!Opt.DeleteToRecycleBin)
+		else if (!Opt_DeleteToRecycleBin)
 		{
 			// first try simple removal, only if it will fail
 			// then fallback to AskDeleteRO and sdc_remove
@@ -720,16 +712,24 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 				break;
 			}
 		}
-		else if (RemoveToRecycleBin(strFullName))
-			break;
+		else
+		{
+			const auto DR = RemoveToRecycleBin(strFullName);
+			if (DR == DELETE_NO_RECYCLE_BIN)
+			{
+				Opt_DeleteToRecycleBin = 0;
+				continue;
+			}
+			return DR;
+		}
 
 		if (SkipMode!=-1)
 			MsgCode=SkipMode;
 		else
 		{
 			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
-			                Msg::CannotDeleteFile,strFullName,Msg::DeleteRetry,
-			                Msg::DeleteSkip,Msg::DeleteFileSkipAll,Msg::DeleteCancel);
+                Msg::CannotDeleteFile,strFullName,Msg::DeleteRetry,
+                Msg::DeleteSkip,Msg::DeleteFileSkipAll,Msg::DeleteCancel);
 		}
 
 		switch (MsgCode)
@@ -749,7 +749,7 @@ int ShellRemoveFile(const wchar_t *Name, int Wipe)
 }
 
 
-int ERemoveDirectory(const wchar_t *Name,int Wipe)
+DeletionResult ERemoveDirectory(const wchar_t *Name,int Wipe)
 {
 	ProcessedItems++;
 
@@ -790,10 +790,10 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 			case -2:
 			case 3:
 				return DELETE_CANCEL;
-			case 1:
-				return DELETE_SKIP;
 			case 2:
 				SkipFoldersMode=2;
+				return DELETE_SKIP;
+			case 1:
 				return DELETE_SKIP;
 		}
 	}
@@ -801,7 +801,7 @@ int ERemoveDirectory(const wchar_t *Name,int Wipe)
 	return DELETE_SUCCESS;
 }
 
-static int RemoveToRecycleBin(const wchar_t *Name)
+static DeletionResult RemoveToRecycleBin(const wchar_t *Name)
 {
 	FARString err_file;
 	FarMkTempEx(err_file, L"trash");
@@ -822,20 +822,39 @@ static int RemoveToRecycleBin(const wchar_t *Name)
 	cmd+= ' ';
 	cmd+= err_file_arg;
 
-	int r = farExecuteA(cmd.c_str(), flags);
-	if (r == 0)
-		return TRUE;
+	for (;;) {
+		int r = farExecuteA(cmd.c_str(), flags);
 
-	std::string err_str;
-	if (ReadWholeFile(err_file.GetMB().c_str(), err_str, 0x10000)) {
-		// gio: file:///.../xxx/yyy: Unable to trash file .../xxx/yyy: Permission denied
-		err_str.erase(0, err_str.rfind(':') + 1);
-		StrTrim(err_str, " \t\r\n");
-		SetErrorString(err_str);
+		std::string err_str;
+		if (r != 0 && ReadWholeFile(err_file.GetMB().c_str(), err_str, 0x10000)) {
+			// gio: file:///.../xxx/yyy: Unable to trash file .../xxx/yyy: Permission denied
+			err_str.erase(0, err_str.rfind(':') + 1);
+			StrTrim(err_str, " \t\r\n");
+			SetErrorString(err_str);
+		}
+		unlink(err_file.GetMB().c_str());
+
+		if (r == 0)
+			return DELETE_SUCCESS;
+
+		const int MsgCode = (SkipRecycleMode != -1)
+					? SkipRecycleMode
+					: Message(MSG_WARNING|MSG_ERRORTYPE, 5, Msg::Error,
+						Msg::CannotDeleteFile, Name,
+						Msg::DeleteRetry, Msg::DeleteRetryNotRecycleBin,
+						Msg::DeleteSkip, Msg::DeleteFileSkipAll, Msg::DeleteCancel);
+
+		switch (MsgCode) {
+			case 4:
+				return DELETE_CANCEL;
+			case 3:
+				SkipRecycleMode = 2;
+			case 2:
+				return DELETE_SKIP;
+			case 1:
+				return DELETE_NO_RECYCLE_BIN;
+		}
 	}
-	unlink(err_file.GetMB().c_str());
-
-	return FALSE;
 }
 
 static FARString WipingRename(const wchar_t *Name)

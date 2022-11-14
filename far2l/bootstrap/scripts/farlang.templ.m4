@@ -4721,6 +4721,16 @@ DeleteRetry
 "&Reiterar"
 "&Повторити"
 
+DeleteRetryNotRecycleBin
+"&Без корзины"
+"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+
 DeleteSkip
 "П&ропустить"
 "&Skip"

@@ -102,7 +102,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 	CtrlObject->Cp()->Redraw();
 }
 
-int CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
+bool CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
 {
 	if (!SrcPanel)
 		SrcPanel=CtrlObject->Cp()->ActivePanel;
@@ -122,11 +122,11 @@ int CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName)
 		if (wcsstr(strAnotherCurDir,strFullName))
 		{
 			((FileList*)AnotherPanel)->CloseChangeNotification();
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)

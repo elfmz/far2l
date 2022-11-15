@@ -157,11 +157,11 @@ typedef union {
   struct LZH_Level2 l2;
 } LZH_Header;
 
-BOOL CheckLZHHeader(struct LZH_Level0 *lzh)
+static BOOL CheckLZHHeader(struct LZH_Level0 *lzh)
 {
   return lzh->HeadID[0]=='-' && lzh->HeadID[1]=='l' && (lzh->HeadID[2]=='h' || lzh->HeadID[2]=='z') &&
         ((lzh->Method>='0' && lzh->Method<='9') || lzh->Method=='d' || lzh->Method=='s') &&
-        lzh->free1 == '-' && lzh->FLevel >= 0 && lzh->FLevel <= 2;
+        lzh->free1 == '-' && lzh->FLevel <= 2;
 }
 
 

@@ -527,13 +527,13 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 		else
 		{
 			wchar_t DHLine[4]={BoxSymbols[BS_H2],BoxSymbols[BS_H2],BoxSymbols[BS_H2],0};
-			strTotalStr.Format(L" %ls (%d) %ls %ls ",strFormSize.CPtr(),TotalFileCount,DHLine,strFreeSize.CPtr());
+			strTotalStr.Format(L" %ls (%ld) %ls %ls ",strFormSize.CPtr(),TotalFileCount,DHLine,strFreeSize.CPtr());
 
 			if ((int)strTotalStr.GetLength()> X2-X1-1)
 			{
 				InsertCommas(FreeDiskSize>>20,strFreeSize);
 				InsertCommas(TotalFileSize>>20,strFormSize);
-				strTotalStr.Format(L" %ls %ls (%d) %ls %ls %ls ",
+				strTotalStr.Format(L" %ls %ls (%ld) %ls %ls %ls ",
 					strFormSize.CPtr(), Msg::ListMb.CPtr(), TotalFileCount, DHLine, strFreeSize.CPtr(), Msg::ListMb.CPtr());
 			}
 		}

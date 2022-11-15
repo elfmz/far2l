@@ -115,19 +115,19 @@ namespace Mounts
 		ReplaceStrings(str, L"$U", val);
 
 		if (mp.total)
-			val.Format(L"%d", (mp.avail * 100) / mp.total);
+			val.Format(L"%lld", (mp.avail * 100) / mp.total);
 		else
 			val = L"NA";
 		ReplaceStrings(str, L"$a", val);
 
 		if (mp.total)
-			val.Format(L"%d", (mp.freee * 100) / mp.total);
+			val.Format(L"%lld", (mp.freee * 100) / mp.total);
 		else
 			val = L"NA";
 		ReplaceStrings(str, L"$f", val);
 
 		if (mp.total)
-			val.Format(L"%d", ((mp.total - mp.freee) * 100) / mp.total);
+			val.Format(L"%lld", ((mp.total - mp.freee) * 100) / mp.total);
 		else
 			val = L"NA";
 		ReplaceStrings(str, L"$u", val);

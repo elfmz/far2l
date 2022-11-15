@@ -5478,7 +5478,7 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 	}
 	else
 	{
-		if (AMacroFunction && Index >=0 && Index < CMacroFunction)
+		if (AMacroFunction && Index < CMacroFunction)
 			AMacroFunction[Index].Code=MCODE_F_NOFUNC;
 		else
 			return false;
@@ -5489,7 +5489,7 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 
 const TMacroFunction *KeyMacro::GetMacroFunction(size_t Index)
 {
-	if (AMacroFunction && Index >= 0 && Index < CMacroFunction)
+	if (AMacroFunction && Index < CMacroFunction)
 		return AMacroFunction+Index;
 
 	return nullptr;

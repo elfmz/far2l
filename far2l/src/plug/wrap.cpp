@@ -1238,7 +1238,7 @@ void UnicodeListItemToAnsi(FarListItem* li, oldfar::FarListItem* liA)
 
 size_t GetAnsiVBufSize(oldfar::FarDialogItem &diA)
 {
-	return (diA.X2-diA.X1+1)*(diA.Y2-diA.Y1+1);
+	return size_t(diA.X2-diA.X1+1) * (diA.Y2-diA.Y1+1);
 }
 
 PCHAR_INFO GetAnsiVBufPtr(PCHAR_INFO VBuf, size_t Size)

@@ -57,7 +57,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 	if (sdc_read(fd, &eh, sizeof(eh)) == sizeof(eh) && eh.e_phnum) {
 		
 		info.machine = E::C(((uint16_t *)&eh.e_ident)[9]);
-		uint64_t tmp = E::C(eh.e_phoff) + E::C(eh.e_phnum) * E::C(eh.e_phentsize);
+		uint64_t tmp = E::C(eh.e_phoff) + uint64_t(E::C(eh.e_phnum)) * E::C(eh.e_phentsize);
 		if (info.elf_length < tmp) info.elf_length = tmp;
 		for (size_t i = 0; i < E::C(eh.e_phnum); ++i) {
 			Phdr ph = {};
@@ -81,7 +81,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 			Shdr sh = {};
 			std::vector<char> strings;
 			E::C(eh.e_shstrndx);
-			if (sdc_lseek(fd, E::C(eh.e_shoff) + E::C(eh.e_shstrndx) * E::C(eh.e_shentsize), SEEK_SET) != (off_t)-1
+			if (sdc_lseek(fd, E::C(eh.e_shoff) + off_t(E::C(eh.e_shstrndx)) * E::C(eh.e_shentsize), SEEK_SET) != (off_t)-1
 			&& sdc_read(fd, &sh, sizeof(sh)) == sizeof(sh)) {
 				strings.resize(E::C(sh.sh_size) + 1);
 				if (sdc_lseek(fd, E::C(sh.sh_offset), SEEK_SET) != -1) {
@@ -89,7 +89,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 				}
 			}
 
-			tmp = E::C(eh.e_shoff) + E::C(eh.e_shnum) * E::C(eh.e_shentsize);
+			tmp = E::C(eh.e_shoff) + uint64_t(E::C(eh.e_shnum)) * E::C(eh.e_shentsize);
 			if (info.elf_length < tmp) info.elf_length = tmp;
 			for (size_t i = 0; i < E::C(eh.e_shnum); ++i) {
 				if (sdc_lseek(fd, E::C(eh.e_shoff) + i * E::C(eh.e_shentsize), SEEK_SET) != (off_t)-1

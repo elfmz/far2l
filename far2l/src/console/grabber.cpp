@@ -49,8 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Grabber::Grabber() :
 	CMM(MACRO_OTHER)
 {
-	Frame *pFrame = FrameManager->GetCurrentFrame();
-	pFrame->Lock();
+	LockCurrentFrame LCF;
+	LCF.RefreshOnUnlock();
 	SaveScr=new SaveScreen;
 	memset(&GArea,0,sizeof(GArea));
 	memset(&PrevArea,0,sizeof(PrevArea));
@@ -73,8 +73,6 @@ Grabber::Grabber() :
 	DisplayObject();
 	Process();
 	delete SaveScr;
-	pFrame->Unlock();
-	FrameManager->RefreshFrame();
 }
 
 

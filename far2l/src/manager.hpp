@@ -222,11 +222,26 @@ class Manager
 
 extern Manager *FrameManager;
 
-class LockBottomFrame
-{
-	Frame *_frame;
 
-public:
+struct LockFrame
+{
+	LockFrame(Frame *frame);
+	~LockFrame();
+
+	inline void RefreshOnUnlock() { _refresh = true;}
+
+private:
+	Frame *_frame;
+	bool _refresh;
+};
+
+
+struct LockBottomFrame : LockFrame
+{
 	LockBottomFrame();
-	~LockBottomFrame();
+};
+
+struct LockCurrentFrame : LockFrame
+{
+	LockCurrentFrame();
 };

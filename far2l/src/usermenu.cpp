@@ -254,7 +254,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	// по умолчанию меню - это FarMenu.ini
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
-	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
+	strLocalMenuKey.Format(L"UserMenu/LocalMenu%lu",(unsigned long)GetProcessUptimeMSec());
 	{ ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection(); }
 	ConfigReaderScope::Update(s_cfg_reader);
 	MenuModified=MenuNeedRefresh=false;

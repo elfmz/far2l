@@ -12,7 +12,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 
 	COORD prev_size = {(SHORT)_width, _width ? (SHORT)(_console_chars.size() / _width) : (SHORT)0 };
 	ConsoleChars other_chars; 
-	other_chars.resize(height * width);
+	other_chars.resize(size_t(height) * width);
 	_console_chars.swap(other_chars);
 	_width = width;
 	for (auto &i : _console_chars) {

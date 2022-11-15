@@ -164,8 +164,8 @@ void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
 
 	int NX1,NX2,NY1,NY2;
 	NX1=NX2=NY1=NY2=0;
-	PCHAR_INFO NewBuf = new CHAR_INFO[NewX*NewY];
-	CleanupBuffer(NewBuf,NewX*NewY);
+	PCHAR_INFO NewBuf = new CHAR_INFO[size_t(NewX) * NewY];
+	CleanupBuffer(NewBuf, size_t(NewX) * NewY);
 	int NewWidth=Min(OWi,NewX);
 	int NewHeight=Min(OHe,NewY);
 	int iYReal;

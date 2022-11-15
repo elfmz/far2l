@@ -383,7 +383,7 @@ void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 //#define LOG_OUTPUT_COUNT
 void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 {
-	_cur_output.resize(_cur_width * _cur_height);
+	_cur_output.resize(size_t(_cur_width) * _cur_height);
 
 	COORD data_size = {CheckedCast<SHORT>(_cur_width), CheckedCast<SHORT>(_cur_height) };
 	COORD data_pos = {0, 0};
@@ -397,14 +397,14 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 
 	} else if (_cur_width != _prev_width || _cur_height != _prev_height) {
 		for (unsigned int y = 0; y < _cur_height; ++y) {
-			const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
+			const CHAR_INFO *cur_line = &_cur_output[size_t(y) * _cur_width];
 			tty_out.MoveCursorLazy(y + 1, 1);
 			tty_out.WriteLine(cur_line, _cur_width);
 		}
 
 	} else for (unsigned int y = 0; y < _cur_height; ++y) {
-		const CHAR_INFO *cur_line = &_cur_output[y * _cur_width];
-		const CHAR_INFO *prev_line = &_prev_output[y * _prev_width];
+		const CHAR_INFO *cur_line = &_cur_output[size_t(y) * _cur_width];
+		const CHAR_INFO *prev_line = &_prev_output[size_t(y) * _prev_width];
 
 		const auto ApproxWeight = [&](unsigned int x_)
 		{

@@ -91,7 +91,7 @@ struct ReStringView // TODO: replace with std::wstring_view once will adopt C++1
 	inline size_t size() const { return _sz; }
 	inline bool empty() const { return _sz == 0; }
 
-	inline const wchar_t operator[](size_t i) const { return _pw[i]; }
+	inline wchar_t operator[](size_t i) const { return _pw[i]; }
 
 	size_t rfind(wchar_t c) const
 	{

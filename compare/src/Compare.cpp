@@ -674,7 +674,7 @@ static void FreeDirList(OwnPanelInfo *AInfo)
     }
     free(AInfo->lpwszCurDir);
 #endif
-    free(AInfo->PanelItems);
+    delete[] AInfo->PanelItems;
   }
 }
 

@@ -3202,7 +3202,9 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 		}// ShowDlg
 		else
 		{
-			Relative=(Flags&VSP_RELATIVE)*(Offset<0?-1:1);
+			Relative = Flags & VSP_RELATIVE;
+			if (Offset < 0)
+				Relative = -Relative;
 
 			if (Flags&VSP_PERCENT)
 			{

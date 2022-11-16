@@ -686,6 +686,13 @@ BOOL apiSetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
 	return FALSE;
 }
 
+bool apiPathExists(LPCWSTR lpPathName)
+{
+	struct stat s{};
+	return sdc_lstat(Wide2MB(lpPathName).c_str(), &s) == 0;
+}
+
+
 IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 {
 	FARString strFullName;

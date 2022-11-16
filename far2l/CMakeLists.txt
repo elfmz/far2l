@@ -106,7 +106,9 @@ src/bookmarks/Bookmarks.cpp
 src/bookmarks/BookmarksMenu.cpp
 src/bookmarks/BookmarksLegacy.cpp
 
+src/cfg/AllXLats.cpp
 src/cfg/config.cpp
+src/cfg/ConfigSaveLoad.cpp
 src/cfg/ConfigRW.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp

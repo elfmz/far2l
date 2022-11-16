@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "syslog.hpp"
 #include "config.hpp"
+#include "ConfigSaveLoad.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
 #include "pathmix.hpp"

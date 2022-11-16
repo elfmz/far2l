@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "message.hpp"
 #include "config.hpp"
+#include "ConfigSaveLoad.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
 #include "setcolor.hpp"

@@ -589,7 +589,7 @@ struct Options
 	ScreenSizes ScrSize;
 	MacroOptions Macro;
 
-	int FindCodePage;
+	DWORD FindCodePage;
 
 	TreeOptions Tree;
 	InfoPanelOptions InfoPanel;

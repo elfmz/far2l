@@ -83,7 +83,8 @@ static bool WipeFile(const wchar_t *Name);
 static bool WipeDirectory(const wchar_t *Name);
 static void PR_ShellDeleteMsg();
 
-static int ReadOnlyDeleteMode,SkipMode,SkipWipeMode,SkipFoldersMode,SkipRecycleMode,DeleteAllFolders;
+static int ReadOnlyDeleteMode,SkipMode,SkipWipeMode,SkipFoldersMode,SkipRecycleMode;
+static bool DeleteAllFolders;
 ULONG ProcessedItems;
 
 struct AskDeleteReadOnly
@@ -109,11 +110,11 @@ struct AskDeleteReadOnly
 
 class ShellDeleteMsgState
 {
-	clock_t _last_redraw = 0;
+	clock_t _last_redraw{0};
 	ConsoleTitle _delete_title{Msg::DeletingTitle};
 
 public:
-	bool Update(const wchar_t *Name, bool Wipe, ULONG Processed = (ULONG)-1, ULONG Total = (ULONG)-1)
+	bool Update(const wchar_t *name, bool wipe, ULONG processed = (ULONG)-1, ULONG total = (ULONG)-1)
 	{
 		const clock_t now = GetProcessUptimeMSec();
 
@@ -121,13 +122,13 @@ public:
 		{
 			_last_redraw = now;
 
-			const int Percent = (Opt.DelOpt.DelShowTotal && Total != (ULONG)-1)
-				? ( Total ? (Processed * 100 / Total) : 0) : -1;
+			const int percent = (Opt.DelOpt.DelShowTotal && total != (ULONG)-1)
+				? ( total ? (processed * 100 / total) : 0) : -1;
 
-			if (Percent > 0)
-				_delete_title.Set(L"{%d%%} %ls", Percent, (Wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle).CPtr());
+			if (percent != -1)
+				_delete_title.Set(L"{%d%%} %ls", percent, (wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle).CPtr());
 
-			ShellDeleteMsg(Name, Wipe, Percent);
+			ShellDeleteMsg(name, wipe, percent);
 
 			if (CheckForEscSilent() && ConfirmAbortOp())
 				return false;
@@ -169,7 +170,7 @@ static DeletionResult ShellConfirmDirectoryDeletion(const FARString &strFullName
 		return DELETE_SKIP;
 
 	if (MsgCode == 1)
-		DeleteAllFolders = 1;
+		DeleteAllFolders = true;
 
 	return DELETE_YES;
 }
@@ -244,6 +245,27 @@ static DeletionResult ShellDeleteDirectory(int ItemsCount, bool UpdateDiz, Panel
 	return RemoveToRecycleBin(strSelName);
 }
 
+static void FormatDeleteMultipleFilesMsg(FARString &strDeleteFilesMsg, const int SelCount)
+{
+	// в зависимости от числа ставим нужное окончание
+	const wchar_t *Ends = Msg::AskDeleteItemsA;
+	wchar_t StrItems[16];
+	_itow(SelCount, StrItems, 10);
+	const int LenItems = StrLength(StrItems);
+
+	if (LenItems > 0)
+	{
+		if ((LenItems >= 2 && StrItems[LenItems - 2] == L'1') ||
+		        StrItems[LenItems - 1] >= L'5' ||
+		        StrItems[LenItems - 1] == L'0')
+			Ends = Msg::AskDeleteItemsS;
+		else if (StrItems[LenItems - 1] == L'1')
+			Ends = Msg::AskDeleteItems0;
+	}
+
+	strDeleteFilesMsg.Format(Msg::AskDeleteItems, SelCount, Ends);
+}
+
 static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
 {
 	const int SelCount = SrcPanel->GetSelCount();
@@ -261,30 +283,14 @@ static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
 
 	if (SelCount == 1)
 	{
-		if (TestParentFolderName(strSelName) || strSelName.IsEmpty())
+		if (strSelName.IsEmpty() || TestParentFolderName(strSelName))
 			return false;
 
 		strDeleteFilesMsg = strSelName;
 	}
 	else
 	{
-		// в зависимости от числа ставим нужное окончание
-		const wchar_t *Ends = Msg::AskDeleteItemsA;
-		wchar_t StrItems[16];
-		_itow(SelCount, StrItems, 10);
-		const int LenItems = StrLength(StrItems);
-
-		if (LenItems > 0)
-		{
-			if ((LenItems >= 2 && StrItems[LenItems - 2] == L'1') ||
-			        StrItems[LenItems - 1] >= L'5' ||
-			        StrItems[LenItems - 1] == L'0')
-				Ends = Msg::AskDeleteItemsS;
-			else if (StrItems[LenItems - 1] == L'1')
-				Ends = Msg::AskDeleteItems0;
-		}
-
-		strDeleteFilesMsg.Format(Msg::AskDeleteItems, SelCount, Ends);
+		FormatDeleteMultipleFilesMsg(strDeleteFilesMsg, SelCount);
 	}
 
 	if (Opt.Confirm.Delete || SelCount > 1)// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
@@ -375,7 +381,7 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 	SudoClientRegion scr;
 	//todo ChangePriority ChPriority(Opt.DelThreadPriority);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
-	DeleteAllFolders=!Opt.Confirm.DeleteFolder;
+	DeleteAllFolders = !Opt.Confirm.DeleteFolder;
 
 	const bool UpdateDiz = (Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS
 		|| (SrcPanel->IsDizDisplayed() && Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED));
@@ -407,7 +413,6 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 	SkipFoldersMode=-1;
 	SkipRecycleMode=-1;
 	ProcessedItems=0;
-
 
 	ULONG ItemsCount = 0;
 
@@ -641,8 +646,8 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 		else
 		{
 			MsgCode=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
-                Msg::CannotDeleteFile,strFullName,Msg::DeleteRetry,
-                Msg::DeleteSkip,Msg::DeleteFileSkipAll,Msg::DeleteCancel);
+				Msg::CannotDeleteFile,strFullName,Msg::DeleteRetry,
+				Msg::DeleteSkip,Msg::DeleteFileSkipAll,Msg::DeleteCancel);
 		}
 
 		switch (MsgCode)
@@ -795,35 +800,33 @@ static FARString WipingRename(const wchar_t *Name)
 
 static bool WipeFile(const wchar_t *Name)
 {
-	uint64_t FileSize;
 	apiMakeWritable(Name); //apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
 	File WipeFile;
-	if(!WipeFile.Open(Name, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT|FILE_FLAG_WRITE_THROUGH|FILE_FLAG_SEQUENTIAL_SCAN))
+	uint64_t FileSize;
+	if (!WipeFile.Open(Name, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_WRITE_THROUGH|FILE_FLAG_SEQUENTIAL_SCAN)
+	  || !WipeFile.GetSize(FileSize))
 	{
 		return false;
 	}
 
-	if (!WipeFile.GetSize(FileSize))
+	if (FileSize)
 	{
-		WipeFile.Close();
-		return false;
-	}
-
-	if(FileSize)
-	{
-		const int BufSize=65536;
-		LPBYTE Buf=new BYTE[BufSize];
-		memset(Buf, Opt.WipeSymbol, BufSize); // используем символ заполнитель
-		DWORD Written;
-		while (FileSize>0)
+		std::vector<BYTE> Buf(0x10000, (BYTE)(unsigned int)Opt.WipeSymbol);
+		// fill equal to actual size of file to ensure it will overwrite original sectors
+		for (uint64_t WrittenSize = 0; WrittenSize < FileSize; )
 		{
-			DWORD WriteSize=(DWORD)Min((uint64_t)BufSize,FileSize);
-			WipeFile.Write(Buf,WriteSize,&Written);
-			FileSize-=WriteSize;
+			DWORD WriteSize = (DWORD)Min((uint64_t)Buf.size(), FileSize - WrittenSize);
+			if (!WipeFile.Write(Buf.data(), WriteSize, &WriteSize) || WriteSize == 0)
+				return false;
+
+			WrittenSize+= WriteSize;
+			if (WriteSize < Buf.size())
+			{ // append alignment tail to hide original size
+				if (WipeFile.Write(Buf.data(), DWORD(Buf.size() - WriteSize), &WriteSize))
+					WrittenSize+= WriteSize;
+			}
 		}
-		WipeFile.Write(Buf,BufSize,&Written);
-		delete[] Buf;
-		WipeFile.SetPointer(0,nullptr,FILE_BEGIN);
+		WipeFile.SetPointer(0, nullptr, FILE_BEGIN);
 		WipeFile.SetEnd();
 	}
 
@@ -893,7 +896,7 @@ void DeleteDirTree(const wchar_t *Dir)
 			apiMakeWritable(strFullName);
 //		apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
 
-		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		if ( (FindData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) == FILE_ATTRIBUTE_DIRECTORY)
 		{
 			if (ScTree.IsDirSearchDone())
 				apiRemoveDirectory(strFullName);

@@ -2408,24 +2408,6 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 
 	if (PanelMode!=PLUGIN_PANEL)
 	{
-		/* $ 28.08.2007 YJH
-		+ У форточек сносит крышу на GetFileAttributes("..") при нахождении в
-		корне UNC пути. Приходится обходить в ручную */
-		/* if (dot2Present &&
-		        !StrCmpN(strCurDir, L"//?/", 4) && strCurDir.At(4) &&
-		        !StrCmpN(&strCurDir[5], L":/",2))
-		{
-			if (!strCurDir.At(7))
-			{
-				strSetDir = strCurDir.CPtr()+4;
-			}
-			else
-			{
-				strSetDir = strCurDir;
-				CutToSlash(strSetDir);
-			}
-		} */
-
 		PrepareDiskPath(strSetDir);
 	}
 
@@ -4401,7 +4383,7 @@ bool FileList::ApplyCommand()
 
 			if (!strConvertedCommand.IsEmpty())
 			{
-				ProcessOSAliases(strConvertedCommand);
+				//ProcessOSAliases(strConvertedCommand);
 
 				if (!isSilent)   // TODO: Здесь не isSilent!
 				{

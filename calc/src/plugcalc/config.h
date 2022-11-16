@@ -13,7 +13,6 @@
 
 // configuration
 
-BOOL InitConfig();
 BOOL LoadConfig();
 BOOL CheckConfig();
 BOOL SaveConfig();

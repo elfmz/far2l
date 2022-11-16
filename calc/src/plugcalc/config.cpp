@@ -125,11 +125,6 @@ static const struct
 };
 
 
-BOOL InitConfig()
-{
-	return TRUE;
-}
-
 BOOL LoadConfig()
 {
 	api->SettingsBegin();

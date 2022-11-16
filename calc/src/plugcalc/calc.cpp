@@ -81,7 +81,6 @@ static int curRadio = 4;
 void CalcStartup()
 {
 	srand((unsigned)time(0));
-	InitConfig();
 }
 
 void CalcOpenFromEditor()

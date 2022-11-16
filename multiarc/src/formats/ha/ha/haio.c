@@ -103,7 +103,7 @@ void clearcrc(void) {
 
 void bread(void) {
 	
-    register S16B i;
+    register int i;
     register unsigned char *ptr;
 
     if (inspecial!=NULL) {
@@ -133,7 +133,7 @@ void bread(void) {
 
 void bwrite(void) {
 
-    register S16B i;
+    register int i;
     register unsigned char *ptr;
 
     if (obl) {

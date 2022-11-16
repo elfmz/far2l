@@ -559,13 +559,13 @@ m1:
 
 					for (int I=(int)strSplitLine.GetLength()-1; I > 0; I--)
 					{
-						if (I > 0 && strSplitLine.At(I)==L'~' && strSplitLine.At(I-1)==L'~')
+						if (strSplitLine.At(I)==L'~' && strSplitLine.At(I-1)==L'~')
 						{
 							I--;
 							continue;
 						}
 
-						if (I > 0 && strSplitLine.At(I)==L'~' && strSplitLine.At(I-1)!=L'~')
+						if (strSplitLine.At(I)==L'~' && strSplitLine.At(I-1)!=L'~')
 						{
 							do
 							{

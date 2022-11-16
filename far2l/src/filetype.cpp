@@ -272,14 +272,16 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 			{
 				strCommand.LShift(1);
 			}
+			else if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS)) //AN
+			{
+				CtrlObject->CmdHistory->AddToHistory(strCommand);
+			}
 
-			ProcessOSAliases(strCommand);
+			//ProcessOSAliases(strCommand);
 
 			if (!isSilent)
 			{
 				CtrlObject->CmdLine->ExecString(strCommand, false, false, ListFileUsed);
-				if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS)) //AN
-					CtrlObject->CmdHistory->AddToHistory(strCommand);
 			}
 			else
 			{

@@ -858,10 +858,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								isSilent=true;
 							}
 
-							ProcessOSAliases(strCommand);
-							// TODO: Ахтунг. В режиме isSilent имеем проблемы с командами, которые выводят что-то на экран
-							//       Здесь необходимо переделка, например, перед исполнением подсунуть временный экранный буфер, а потом его содержимое подсунуть в ScreenBuf...
-
+							// ProcessOSAliases(strCommand);
 							if (!isSilent)
 							{
 								CtrlObject->CmdLine->ExecString(strCommand,FALSE, 0, 0, ListFileUsed);

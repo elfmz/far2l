@@ -48,6 +48,4 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
 bool IsDirectExecutableFilePath(const char *path);
 
-bool ProcessOSAliases(FARString &strStr);
-
 bool POpen(std::vector<std::wstring> &result, const char *command);

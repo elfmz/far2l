@@ -96,19 +96,6 @@ static void info(void) {
 }
 
 
-static void infoout(unsigned char *buf, unsigned blen) {
-
-    U16B i;
-    char ds[10];
-    
-    for (i=0;i<blen;++i) {
-	if (ilen) PERROR_ON_FAIL("write", write(arcfile,",",1));
-	if (!(ilen++&0xf)) PERROR_ON_FAIL("write", write(arcfile,"\n\t",2));
-	sprintf(ds,"0x%02X",buf[i]);
-	PERROR_ON_FAIL("write", write(arcfile,ds,strlen(ds)));
-    }
-}
-
 static void usage(int ex) {
     
     banner();

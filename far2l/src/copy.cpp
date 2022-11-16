@@ -1200,9 +1200,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 				CurCopiedSize=0;
 				strNameTmp = NamePtr;
 
-				if ((strNameTmp.GetLength() == 2) && IsAlpha(strNameTmp.At(0)) && (strNameTmp.At(1) == L':'))
-					PrepareDiskPath(strNameTmp);
-
 				if (!StrCmp(strNameTmp,L"..") && IsLocalRootPath(strSrcDir))
 				{
 					if (!Message(MSG_WARNING,2,Msg::Error,((!Move?Msg::CannotCopyToTwoDot:Msg::CannotMoveToTwoDot)),Msg::CannotCopyMoveToTwoDot,Msg::CopySkip,Msg::CopyCancel))

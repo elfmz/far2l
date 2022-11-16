@@ -2029,7 +2029,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 			Update(Param1?UPDATE_KEEP_SELECTION:0);
 
 			if (GetType() == QVIEW_PANEL)
-				UpdateViewPanel();
+				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
 
 			Result=TRUE;
 			break;

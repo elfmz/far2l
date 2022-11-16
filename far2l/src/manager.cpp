@@ -1795,20 +1795,31 @@ Frame* Manager::GetTopModal()
 
 /////////
 
-LockBottomFrame::LockBottomFrame()
-	: _frame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+
+LockFrame::LockFrame(Frame *frame)
+	: _frame(frame)
 {
 	if (_frame)
-	{
-		if (_frame->Locked())
-			_frame = nullptr;
-		else
-			_frame->Lock();
-	}
+		_frame->Lock();
 }
 
-LockBottomFrame::~LockBottomFrame()
+LockFrame::~LockFrame()
 {
 	if (_frame)
 		_frame->Unlock();
+
+	if (_refresh && FrameManager)
+		FrameManager->RefreshFrame(_frame);
+}
+
+///
+
+LockBottomFrame::LockBottomFrame()
+	: LockFrame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+{
+}
+
+LockCurrentFrame::LockCurrentFrame()
+	: LockFrame(FrameManager ? FrameManager->GetCurrentFrame() : nullptr)
+{
 }

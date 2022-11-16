@@ -273,6 +273,9 @@ BOOL apiSetFileAttributes(
     DWORD dwFileAttributes
 );
 
+
+bool apiPathExists(LPCWSTR lpPathName);
+
 struct IUnmakeWritable
 {
 	virtual ~IUnmakeWritable() {} 

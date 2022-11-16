@@ -77,40 +77,40 @@ FARString strKeyNameConsoleDetachKey;
 static const wchar_t szCtrlDot[]=L"Ctrl.";
 static const wchar_t szCtrlShiftDot[]=L"CtrlShift.";
 
-// KeyName
-static const char NKeyColors[]="Colors";
-static const char NKeyScreen[]="Screen";
-static const char NKeyCmdline[]="Cmdline";
-static const char NKeyInterface[]="Interface";
-static const char NKeyInterfaceCompletion[]="Interface/Completion";
-static const char NKeyViewer[]="Viewer";
-static const char NKeyDialog[]="Dialog";
-static const char NKeyEditor[]="Editor";
-static const char NKeyNotifications[]="Notifications";
-static const char NKeyXLat[]="XLat";
-static const char NKeySystem[]="System";
-static const char NKeySystemExecutor[]="System/Executor";
-static const char NKeySystemNowell[]="System/Nowell";
-static const char NKeyHelp[]="Help";
-static const char NKeyLanguage[]="Language";
-static const char NKeyConfirmations[]="Confirmations";
-static const char NKeyPluginConfirmations[]="PluginConfirmations";
-static const char NKeyPanel[]="Panel";
-static const char NKeyPanelLeft[]="Panel/Left";
-static const char NKeyPanelRight[]="Panel/Right";
-static const char NKeyPanelLayout[]="Panel/Layout";
-static const char NKeyPanelTree[]="Panel/Tree";
-static const char NKeyLayout[]="Layout";
-static const char NKeyDescriptions[]="Descriptions";
-static const char NKeyKeyMacros[]="KeyMacros";
-static const char NKeyPolicies[]="Policies";
-static const char NKeySavedHistory[]="SavedHistory";
-static const char NKeySavedViewHistory[]="SavedViewHistory";
-static const char NKeySavedFolderHistory[]="SavedFolderHistory";
-static const char NKeySavedDialogHistory[]="SavedDialogHistory";
-static const char NKeyCodePages[]="CodePages";
+// Section
+static const char NSecColors[]="Colors";
+static const char NSecScreen[]="Screen";
+static const char NSecCmdline[]="Cmdline";
+static const char NSecInterface[]="Interface";
+static const char NSecInterfaceCompletion[]="Interface/Completion";
+static const char NSecViewer[]="Viewer";
+static const char NSecDialog[]="Dialog";
+static const char NSecEditor[]="Editor";
+static const char NSecNotifications[]="Notifications";
+static const char NSecXLat[]="XLat";
+static const char NSecSystem[]="System";
+static const char NSecSystemExecutor[]="System/Executor";
+static const char NSecSystemNowell[]="System/Nowell";
+static const char NSecHelp[]="Help";
+static const char NSecLanguage[]="Language";
+static const char NSecConfirmations[]="Confirmations";
+static const char NSecPluginConfirmations[]="PluginConfirmations";
+static const char NSecPanel[]="Panel";
+static const char NSecPanelLeft[]="Panel/Left";
+static const char NSecPanelRight[]="Panel/Right";
+static const char NSecPanelLayout[]="Panel/Layout";
+static const char NSecPanelTree[]="Panel/Tree";
+static const char NSecLayout[]="Layout";
+static const char NSecDescriptions[]="Descriptions";
+static const char NSecKeyMacros[]="KeyMacros";
+static const char NSecPolicies[]="Policies";
+static const char NSecSavedHistory[]="SavedHistory";
+static const char NSecSavedViewHistory[]="SavedViewHistory";
+static const char NSecSavedFolderHistory[]="SavedFolderHistory";
+static const char NSecSavedDialogHistory[]="SavedDialogHistory";
+static const char NSecCodePages[]="CodePages";
 static const char NParamHistoryCount[]="HistoryCount";
-static const char NKeyVMenu[]="VMenu";
+static const char NSecVMenu[]="VMenu";
 
 static const wchar_t *constBatchExt=L".BAT;.CMD;";
 
@@ -699,333 +699,383 @@ void SetFolderInfoFiles()
 }
 
 
-// Структура, описывающая всю конфигурацию(!)
 static struct FARConfig
 {
-	int   IsSave;   // =1 - будет записываться в SaveConfig()
-	DWORD ValType;  // REG_DWORD, REG_SZ, REG_BINARY
-	const char *KeyName;
-	const char *ValName;
-	void *ValPtr;   // адрес переменной, куда помещаем данные
-	DWORD DefDWord; // он же размер данных для REG_SZ и REG_BINARY
-	const wchar_t *DefStr;   // строка/данные по умолчанию
+	const char *Section;
+	const char *Key;
+	DWORD BinSize;  // used only with Type == VT_BIN
+	bool  IsSave;   // =true - будет записываться в SaveConfig()
+
+	enum T
+	{
+		T_BIN,
+		T_STR,
+		T_DWORD,
+		T_INT,
+		T_BOOL
+	} Type : 8;
+
+	union V
+	{
+		FARString *Str;
+		BYTE *Bin;
+		DWORD *DW;
+		int *I;
+		bool *B;
+	} Value;
+
+	union D {
+		const wchar_t *Str;
+		const BYTE *Bin;
+		DWORD DW;
+		int I;
+		bool B;
+	} Default;
+
+///
+
+	constexpr FARConfig(bool save, const char *section, const char *key, BYTE *data_bin, DWORD data_size, const BYTE *data_def)
+		: Section{section}, Key{key}, BinSize{data_size}, IsSave{save}, Type{T_BIN},
+		Value{.Bin = data_bin}, Default{.Bin = data_def}
+	{ }
+
+	constexpr FARConfig(bool save, const char *section, const char *key, FARString *data_str, const wchar_t *data_def)
+		: Section{section}, Key{key}, BinSize{0}, IsSave{save}, Type{T_STR},
+		Value{.Str = data_str}, Default{.Str = data_def}
+	{ }
+
+	constexpr FARConfig(bool save, const char *section, const char *key, DWORD *data_dw, DWORD data_def)
+		: Section{section}, Key{key}, BinSize{0}, IsSave{save}, Type{T_DWORD},
+		Value{.DW = data_dw}, Default{.DW = data_def}
+	{ }
+
+	constexpr FARConfig(bool save, const char *section, const char *key, int *data_i, int data_def)
+		: Section{section}, Key{key}, BinSize{0}, IsSave{save}, Type{T_INT},
+		Value{.I = data_i}, Default{.I = data_def}
+	{ }
+
+	constexpr FARConfig(bool save, const char *section, const char *key, bool *data_b, bool data_def)
+		: Section{section}, Key{key}, BinSize{0}, IsSave{save}, Type{T_BOOL},
+		Value{.B = data_b}, Default{.B = data_def}
+	{ }
+
 } CFG[]=
 {
-	{1, REG_BINARY, NKeyColors, "CurrentPalette",(char*)Palette,(DWORD)SizeArrayPalette,(wchar_t*)DefaultPalette},
+	{true,  NSecColors, "CurrentPalette", (BYTE*)Palette, (DWORD)SizeArrayPalette, (const BYTE*)DefaultPalette},
 
-	{1, REG_DWORD,  NKeyScreen, "Clock", &Opt.Clock, 1, 0},
-	{1, REG_DWORD,  NKeyScreen, "ViewerEditorClock",&Opt.ViewerEditorClock,0, 0},
-	{1, REG_DWORD,  NKeyScreen, "KeyBar",&Opt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyScreen, "ScreenSaver",&Opt.ScreenSaver, 0, 0},
-	{1, REG_DWORD,  NKeyScreen, "ScreenSaverTime",&Opt.ScreenSaverTime,5, 0},
-	{0, REG_DWORD,  NKeyScreen, "DeltaXY", &Opt.ScrSize.DeltaXY, 0, 0},
+	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
+	{true,  NSecScreen, "ViewerEditorClock",&Opt.ViewerEditorClock, 0},
+	{true,  NSecScreen, "KeyBar",&Opt.ShowKeyBar, 1},
+	{true,  NSecScreen, "ScreenSaver",&Opt.ScreenSaver, 0},
+	{true,  NSecScreen, "ScreenSaverTime",&Opt.ScreenSaverTime, 5},
+	{false, NSecScreen, "DeltaXY", (DWORD *)&Opt.ScrSize.DeltaXY, 0},
 
-	{1, REG_DWORD,  NKeyCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat,0, 0},
-	{1, REG_SZ,     NKeyCmdline, "PromptFormat",&Opt.CmdLine.strPromptFormat, 0, L"$p$# "},
-	{1, REG_DWORD,  NKeyCmdline, "UseShell",&Opt.CmdLine.UseShell, 0, 0},
-	{1, REG_SZ,     NKeyCmdline, "Shell",&Opt.CmdLine.strShell, 0, L"/bin/bash"},
-	{1, REG_DWORD,  NKeyCmdline, "DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks,1, 0},
-	{1, REG_DWORD,  NKeyCmdline, "EditBlock", &Opt.CmdLine.EditBlock,0, 0},
-	{1, REG_DWORD,  NKeyCmdline, "AutoComplete",&Opt.CmdLine.AutoComplete,1, 0},
-	{1, REG_DWORD,  NKeyCmdline, "WaitKeypress",&Opt.CmdLine.WaitKeypress,1, 0},
+	{true,  NSecCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat,0},
+	{true,  NSecCmdline, "PromptFormat",&Opt.CmdLine.strPromptFormat, L"$p$# "},
+	{true,  NSecCmdline, "UseShell",&Opt.CmdLine.UseShell, 0},
+	{true,  NSecCmdline, "Shell",&Opt.CmdLine.strShell, L"/bin/bash"},
+	{true,  NSecCmdline, "DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks, 1},
+	{true,  NSecCmdline, "EditBlock", &Opt.CmdLine.EditBlock, 0},
+	{true,  NSecCmdline, "AutoComplete",&Opt.CmdLine.AutoComplete, 1},
+	{true,  NSecCmdline, "WaitKeypress",&Opt.CmdLine.WaitKeypress, 1},
 
-	{1, REG_DWORD,  NKeyInterface, "Mouse",&Opt.Mouse,1, 0},
-	{0, REG_DWORD,  NKeyInterface, "UseVk_oem_x",&Opt.UseVk_oem_x,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "ShowMenuBar",&Opt.ShowMenuBar,0, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize1",&Opt.CursorSize[0],15, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize2",&Opt.CursorSize[1],10, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize3",&Opt.CursorSize[2],99, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize4",&Opt.CursorSize[3],99, 0},
-	{0, REG_DWORD,  NKeyInterface, "ShiftsKeyRules",&Opt.ShiftsKeyRules,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "CtrlPgUp",&Opt.PgUpChangeDisk, 1, 0},
+	{true,  NSecInterface, "Mouse",&Opt.Mouse, 1},
+	{false, NSecInterface, "UseVk_oem_x",&Opt.UseVk_oem_x, 1},
+	{true,  NSecInterface, "ShowMenuBar",&Opt.ShowMenuBar, 0},
+	{false, NSecInterface, "CursorSize1",&Opt.CursorSize[0], 15},
+	{false, NSecInterface, "CursorSize2",&Opt.CursorSize[1], 10},
+	{false, NSecInterface, "CursorSize3",&Opt.CursorSize[2], 99},
+	{false, NSecInterface, "CursorSize4",&Opt.CursorSize[3], 99},
+	{false, NSecInterface, "ShiftsKeyRules",&Opt.ShiftsKeyRules, 1},
+	{true,  NSecInterface, "CtrlPgUp",&Opt.PgUpChangeDisk, 1},
 
-	{1, REG_DWORD,  NKeyInterface, "ConsolePaintSharp",&Opt.ConsolePaintSharp, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveCtrlLeft",&Opt.ExclusiveCtrlLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveCtrlRight",&Opt.ExclusiveCtrlRight, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveAltLeft",&Opt.ExclusiveAltLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveAltRight",&Opt.ExclusiveAltRight, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveWinLeft",&Opt.ExclusiveWinLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveWinRight",&Opt.ExclusiveWinRight, 0, 0},
+	{true,  NSecInterface, "ConsolePaintSharp",&Opt.ConsolePaintSharp, 0},
+	{true,  NSecInterface, "ExclusiveCtrlLeft",&Opt.ExclusiveCtrlLeft, 0},
+	{true,  NSecInterface, "ExclusiveCtrlRight",&Opt.ExclusiveCtrlRight, 0},
+	{true,  NSecInterface, "ExclusiveAltLeft",&Opt.ExclusiveAltLeft, 0},
+	{true,  NSecInterface, "ExclusiveAltRight",&Opt.ExclusiveAltRight, 0},
+	{true,  NSecInterface, "ExclusiveWinLeft",&Opt.ExclusiveWinLeft, 0},
+	{true,  NSecInterface, "ExclusiveWinRight",&Opt.ExclusiveWinRight, 0},
 
-	{0, REG_DWORD,  NKeyInterface, "ShowTimeoutDelFiles",&Opt.ShowTimeoutDelFiles, 50, 0},
-	{0, REG_DWORD,  NKeyInterface, "ShowTimeoutDACLFiles",&Opt.ShowTimeoutDACLFiles, 50, 0},
-	{0, REG_DWORD,  NKeyInterface, "FormatNumberSeparators",&Opt.FormatNumberSeparators, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "CopyShowTotal",&Opt.CMOpt.CopyShowTotal,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "DelShowTotal",&Opt.DelOpt.DelShowTotal,0, 0},
-	{1, REG_SZ,     NKeyInterface, "WindowTitle",&Opt.strWindowTitle, 0, L"%State - FAR2L %Ver %Backend %User@%Host"}, // %Platform 
-	{1, REG_SZ,     NKeyInterfaceCompletion, "Exceptions",&Opt.AutoComplete.Exceptions, 0, L"git*reset*--hard;*://*:*@*"},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "ShowList",&Opt.AutoComplete.ShowList, 1, 0},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "ModalList",&Opt.AutoComplete.ModalList, 0, 0},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "Append",&Opt.AutoComplete.AppendCompletion, 0, 0},
+	{false, NSecInterface, "ShowTimeoutDelFiles",&Opt.ShowTimeoutDelFiles, 50},
+	{false, NSecInterface, "ShowTimeoutDACLFiles",&Opt.ShowTimeoutDACLFiles, 50},
+	{false, NSecInterface, "FormatNumberSeparators",&Opt.FormatNumberSeparators, 0},
+	{true,  NSecInterface, "CopyShowTotal",&Opt.CMOpt.CopyShowTotal,1},
+	{true,  NSecInterface, "DelShowTotal",&Opt.DelOpt.DelShowTotal,0},
+	{true,  NSecInterface, "WindowTitle",&Opt.strWindowTitle, L"%State - FAR2L %Ver %Backend %User@%Host"}, // %Platform 
+	{true,  NSecInterfaceCompletion, "Exceptions",&Opt.AutoComplete.Exceptions, L"git*reset*--hard;*://*:*@*"},
+	{true,  NSecInterfaceCompletion, "ShowList",&Opt.AutoComplete.ShowList, 1},
+	{true,  NSecInterfaceCompletion, "ModalList",&Opt.AutoComplete.ModalList, 0},
+	{true,  NSecInterfaceCompletion, "Append",&Opt.AutoComplete.AppendCompletion, 0},
 
-	{1, REG_SZ,     NKeyViewer, "ExternalViewerName",&Opt.strExternalViewer, 0, L""},
-	{1, REG_DWORD,  NKeyViewer, "UseExternalViewer",&Opt.ViOpt.UseExternalViewer,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "SaveViewerPos",&Opt.ViOpt.SavePos,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "SaveViewerShortPos",&Opt.ViOpt.SaveShortPos,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "AutoDetectCodePage",&Opt.ViOpt.AutoDetectCodePage,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "SearchRegexp",&Opt.ViOpt.SearchRegexp,0, 0},
+	{true,  NSecViewer, "ExternalViewerName",&Opt.strExternalViewer, L""},
+	{true,  NSecViewer, "UseExternalViewer",&Opt.ViOpt.UseExternalViewer,0},
+	{true,  NSecViewer, "SaveViewerPos",&Opt.ViOpt.SavePos,1},
+	{true,  NSecViewer, "SaveViewerShortPos",&Opt.ViOpt.SaveShortPos,1},
+	{true,  NSecViewer, "AutoDetectCodePage",&Opt.ViOpt.AutoDetectCodePage,0},
+	{true,  NSecViewer, "SearchRegexp",&Opt.ViOpt.SearchRegexp,0},
 
-	{1, REG_DWORD,  NKeyViewer, "TabSize",&Opt.ViOpt.TabSize,8, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowKeyBar",&Opt.ViOpt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowTitleBar",&Opt.ViOpt.ShowTitleBar,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowArrows",&Opt.ViOpt.ShowArrows,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowScrollbar",&Opt.ViOpt.ShowScrollbar,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "IsWrap",&Opt.ViOpt.ViewerIsWrap,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "Wrap",&Opt.ViOpt.ViewerWrap,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "PersistentBlocks",&Opt.ViOpt.PersistentBlocks,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "DefaultCodePage",&Opt.ViOpt.DefaultCodePage,CP_UTF8, 0},
+	{true,  NSecViewer, "TabSize",&Opt.ViOpt.TabSize,8},
+	{true,  NSecViewer, "ShowKeyBar",&Opt.ViOpt.ShowKeyBar,1},
+	{true,  NSecViewer, "ShowTitleBar",&Opt.ViOpt.ShowTitleBar,1},
+	{true,  NSecViewer, "ShowArrows",&Opt.ViOpt.ShowArrows,1},
+	{true,  NSecViewer, "ShowScrollbar",&Opt.ViOpt.ShowScrollbar,0},
+	{true,  NSecViewer, "IsWrap",&Opt.ViOpt.ViewerIsWrap,1},
+	{true,  NSecViewer, "Wrap",&Opt.ViOpt.ViewerWrap,0},
+	{true,  NSecViewer, "PersistentBlocks",&Opt.ViOpt.PersistentBlocks,0},
+	{true,  NSecViewer, "DefaultCodePage",&Opt.ViOpt.DefaultCodePage,CP_UTF8},
 
-	{1, REG_DWORD,  NKeyDialog, "EditHistory",&Opt.Dialogs.EditHistory,1, 0},
-	{1, REG_DWORD,  NKeyDialog, "EditBlock",&Opt.Dialogs.EditBlock,0, 0},
-	{1, REG_DWORD,  NKeyDialog, "AutoComplete",&Opt.Dialogs.AutoComplete,1, 0},
-	{1, REG_DWORD,  NKeyDialog, "EULBsClear",&Opt.Dialogs.EULBsClear,0, 0},
-	{0, REG_DWORD,  NKeyDialog, "SelectFromHistory",&Opt.Dialogs.SelectFromHistory,0, 0},
-	{0, REG_DWORD,  NKeyDialog, "EditLine",&Opt.Dialogs.EditLine,0, 0},
-	{1, REG_DWORD,  NKeyDialog, "MouseButton",&Opt.Dialogs.MouseButton,0xFFFF, 0},
-	{1, REG_DWORD,  NKeyDialog, "DelRemovesBlocks",&Opt.Dialogs.DelRemovesBlocks,1, 0},
-	{0, REG_DWORD,  NKeyDialog, "CBoxMaxHeight",&Opt.Dialogs.CBoxMaxHeight,24, 0},
+	{true,  NSecDialog, "EditHistory",&Opt.Dialogs.EditHistory,1},
+	{true,  NSecDialog, "EditBlock",&Opt.Dialogs.EditBlock,0},
+	{true,  NSecDialog, "AutoComplete",&Opt.Dialogs.AutoComplete,1},
+	{true,  NSecDialog, "EULBsClear",&Opt.Dialogs.EULBsClear,0},
+	{false, NSecDialog, "SelectFromHistory",&Opt.Dialogs.SelectFromHistory,0},
+	{false, NSecDialog, "EditLine",&Opt.Dialogs.EditLine,0},
+	{true,  NSecDialog, "MouseButton",&Opt.Dialogs.MouseButton,0xFFFF},
+	{true,  NSecDialog, "DelRemovesBlocks",&Opt.Dialogs.DelRemovesBlocks,1},
+	{false, NSecDialog, "CBoxMaxHeight",&Opt.Dialogs.CBoxMaxHeight,24},
 
-	{1, REG_SZ,     NKeyEditor, "ExternalEditorName",&Opt.strExternalEditor, 0, L""},
-	{1, REG_DWORD,  NKeyEditor, "UseExternalEditor",&Opt.EdOpt.UseExternalEditor,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "ExpandTabs",&Opt.EdOpt.ExpandTabs,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "TabSize",&Opt.EdOpt.TabSize,8, 0},
-	{1, REG_DWORD,  NKeyEditor, "PersistentBlocks",&Opt.EdOpt.PersistentBlocks,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "DelRemovesBlocks",&Opt.EdOpt.DelRemovesBlocks,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "AutoIndent",&Opt.EdOpt.AutoIndent,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SaveEditorPos",&Opt.EdOpt.SavePos,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "SaveEditorShortPos",&Opt.EdOpt.SaveShortPos,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "AutoDetectCodePage",&Opt.EdOpt.AutoDetectCodePage,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "EditorCursorBeyondEOL",&Opt.EdOpt.CursorBeyondEOL,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Вернём назад дефолт 1.65 - не предупреждать и не блокировать
-	{0, REG_DWORD,  NKeyEditor, "EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS размер буфера undo в редакторе
-	{0, REG_SZ,     NKeyEditor, "WordDiv",&Opt.strWordDiv, 0, WordDiv0},
-	{0, REG_DWORD,  NKeyEditor, "BSLikeDel",&Opt.EdOpt.BSLikeDel,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "EditorF7Rules",&Opt.EdOpt.F7Rules,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "FileSizeLimit",&Opt.EdOpt.FileSizeLimitLo,(DWORD)0, 0},
-	{0, REG_DWORD,  NKeyEditor, "FileSizeLimitHi",&Opt.EdOpt.FileSizeLimitHi,(DWORD)0, 0},
-	{0, REG_DWORD,  NKeyEditor, "CharCodeBase",&Opt.EdOpt.CharCodeBase,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "AllowEmptySpaceAfterEof", &Opt.EdOpt.AllowEmptySpaceAfterEof,0,0},//skv
-	{1, REG_DWORD,  NKeyEditor, "DefaultCodePage",&Opt.EdOpt.DefaultCodePage,CP_UTF8, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowScrollBar",&Opt.EdOpt.ShowScrollBar,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "EditOpenedForWrite",&Opt.EdOpt.EditOpenedForWrite,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchSelFound",&Opt.EdOpt.SearchSelFound,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchRegexp",&Opt.EdOpt.SearchRegexp,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchPickUpWord",&Opt.EdOpt.SearchPickUpWord,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowWhiteSpace",&Opt.EdOpt.ShowWhiteSpace,0, 0},
+	{true,  NSecEditor, "ExternalEditorName",&Opt.strExternalEditor, L""},
+	{true,  NSecEditor, "UseExternalEditor",&Opt.EdOpt.UseExternalEditor,0},
+	{true,  NSecEditor, "ExpandTabs",&Opt.EdOpt.ExpandTabs,0},
+	{true,  NSecEditor, "TabSize",&Opt.EdOpt.TabSize,8},
+	{true,  NSecEditor, "PersistentBlocks",&Opt.EdOpt.PersistentBlocks,0},
+	{true,  NSecEditor, "DelRemovesBlocks",&Opt.EdOpt.DelRemovesBlocks,1},
+	{true,  NSecEditor, "AutoIndent",&Opt.EdOpt.AutoIndent,0},
+	{true,  NSecEditor, "SaveEditorPos",&Opt.EdOpt.SavePos,1},
+	{true,  NSecEditor, "SaveEditorShortPos",&Opt.EdOpt.SaveShortPos,1},
+	{true,  NSecEditor, "AutoDetectCodePage",&Opt.EdOpt.AutoDetectCodePage,0},
+	{true,  NSecEditor, "EditorCursorBeyondEOL",&Opt.EdOpt.CursorBeyondEOL,1},
+	{true,  NSecEditor, "ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0}, // Вернём назад дефолт 1.65 - не предупреждать и не блокировать
+	{false, NSecEditor, "EditorUndoSize",&Opt.EdOpt.UndoSize,0}, // $ 03.12.2001 IS размер буфера undo в редакторе
+	{false, NSecEditor, "WordDiv",&Opt.strWordDiv, WordDiv0},
+	{false, NSecEditor, "BSLikeDel",&Opt.EdOpt.BSLikeDel,1},
+	{false, NSecEditor, "EditorF7Rules",&Opt.EdOpt.F7Rules,1},
+	{false, NSecEditor, "FileSizeLimit",&Opt.EdOpt.FileSizeLimitLo,0},
+	{false, NSecEditor, "FileSizeLimitHi",&Opt.EdOpt.FileSizeLimitHi,0},
+	{false, NSecEditor, "CharCodeBase",&Opt.EdOpt.CharCodeBase,1},
+	{false, NSecEditor, "AllowEmptySpaceAfterEof", &Opt.EdOpt.AllowEmptySpaceAfterEof,0},//skv
+	{true,  NSecEditor, "DefaultCodePage",&Opt.EdOpt.DefaultCodePage,CP_UTF8},
+	{true,  NSecEditor, "ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1},
+	{true,  NSecEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1},
+	{true,  NSecEditor, "ShowScrollBar",&Opt.EdOpt.ShowScrollBar,0},
+	{true,  NSecEditor, "EditOpenedForWrite",&Opt.EdOpt.EditOpenedForWrite,1},
+	{true,  NSecEditor, "SearchSelFound",&Opt.EdOpt.SearchSelFound,0},
+	{true,  NSecEditor, "SearchRegexp",&Opt.EdOpt.SearchRegexp,0},
+	{true,  NSecEditor, "SearchPickUpWord",&Opt.EdOpt.SearchPickUpWord,0},
+	{true,  NSecEditor, "ShowWhiteSpace",&Opt.EdOpt.ShowWhiteSpace,0},
 
-	{1, REG_DWORD,  NKeyNotifications, "OnFileOperation",&Opt.NotifOpt.OnFileOperation,1, 0},
-	{1, REG_DWORD,  NKeyNotifications, "OnConsole",&Opt.NotifOpt.OnConsole,1, 0},
-	{1, REG_DWORD,  NKeyNotifications, "OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1, 0},
+	{true,  NSecNotifications, "OnFileOperation",&Opt.NotifOpt.OnFileOperation,1},
+	{true,  NSecNotifications, "OnConsole",&Opt.NotifOpt.OnConsole,1},
+	{true,  NSecNotifications, "OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1},
 
-	{0, REG_DWORD,  NKeyXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE, 0},
-	{1, REG_DWORD,  NKeyXLat, "EnableForFastFileFind",&Opt.XLat.EnableForFastFileFind,1, 0},
-	{1, REG_DWORD,  NKeyXLat, "EnableForDialogs",&Opt.XLat.EnableForDialogs,1, 0},
-	{1, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
-	{1, REG_SZ,     NKeyXLat, "XLat",&Opt.XLat.XLat,0,L"ru:qwerty-йцукен"},
+	{false, NSecXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE},
+	{true,  NSecXLat, "EnableForFastFileFind",&Opt.XLat.EnableForFastFileFind,1},
+	{true,  NSecXLat, "EnableForDialogs",&Opt.XLat.EnableForDialogs,1},
+	{true,  NSecXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat,WordDivForXlat0},
+	{true,  NSecXLat, "XLat",&Opt.XLat.XLat,L"ru:qwerty-йцукен"},
 
-	{1, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedViewHistory, NParamHistoryCount,&Opt.ViewHistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedDialogHistory, NParamHistoryCount,&Opt.DialogsHistoryCount,512, 0},
+	{true,  NSecSavedHistory, NParamHistoryCount,&Opt.HistoryCount,512},
+	{true,  NSecSavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512},
+	{true,  NSecSavedViewHistory, NParamHistoryCount,&Opt.ViewHistoryCount,512},
+	{true,  NSecSavedDialogHistory, NParamHistoryCount,&Opt.DialogsHistoryCount,512},
 
-	{1, REG_DWORD,  NKeySystem, "SaveHistory",&Opt.SaveHistory,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SaveFoldersHistory",&Opt.SaveFoldersHistory,1, 0},
-	{0, REG_DWORD,  NKeySystem, "SavePluginFoldersHistory",&Opt.SavePluginFoldersHistory,0, 0},
-	{1, REG_DWORD,  NKeySystem, "SaveViewHistory",&Opt.SaveViewHistory,1, 0},
-	{1, REG_DWORD,  NKeySystem, "AutoSaveSetup",&Opt.AutoSaveSetup,0, 0},
-	{1, REG_DWORD,  NKeySystem, "DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0, 0},
-	{1, REG_DWORD,  NKeySystem, "DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
-	{0, REG_DWORD,  NKeySystem, "WipeSymbol",&Opt.WipeSymbol,0, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoEnabled",&Opt.SudoEnabled,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoConfirmModify",&Opt.SudoConfirmModify,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60, 0},
+	{true,  NSecSystem, "SaveHistory",&Opt.SaveHistory,1},
+	{true,  NSecSystem, "SaveFoldersHistory",&Opt.SaveFoldersHistory,1},
+	{false, NSecSystem, "SavePluginFoldersHistory",&Opt.SavePluginFoldersHistory,0},
+	{true,  NSecSystem, "SaveViewHistory",&Opt.SaveViewHistory,1},
+	{true,  NSecSystem, "AutoSaveSetup",&Opt.AutoSaveSetup,0},
+	{true,  NSecSystem, "DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0},
+	{true,  NSecSystem, "DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1},
+	{false, NSecSystem, "WipeSymbol",&Opt.WipeSymbol,0},
+	{true,  NSecSystem, "SudoEnabled",&Opt.SudoEnabled,1},
+	{true,  NSecSystem, "SudoConfirmModify",&Opt.SudoConfirmModify,1},
+	{true,  NSecSystem, "SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60},
 
-	{1, REG_DWORD,  NKeySystem, "UseCOW",&Opt.CMOpt.SparseFiles, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "SparseFiles",&Opt.CMOpt.SparseFiles, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "HowCopySymlink",&Opt.CMOpt.HowCopySymlink, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "CopyXAttr",&Opt.CMOpt.CopyXAttr, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1, 0},
-	{1, REG_DWORD,  NKeySystem, "MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},
-	{1, REG_DWORD,  NKeySystem, "CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3, 0},
+	{true,  NSecSystem, "UseCOW",&Opt.CMOpt.SparseFiles, 0},
+	{true,  NSecSystem, "SparseFiles",&Opt.CMOpt.SparseFiles, 0},
+	{true,  NSecSystem, "HowCopySymlink",&Opt.CMOpt.HowCopySymlink, 1},
+	{true,  NSecSystem, "WriteThrough",&Opt.CMOpt.WriteThrough, 0},
+	{true,  NSecSystem, "CopyXAttr",&Opt.CMOpt.CopyXAttr, 0},
+	{false, NSecSystem, "CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1},
+	{true,  NSecSystem, "MultiCopy",&Opt.CMOpt.MultiCopy,0},
+	{true,  NSecSystem, "CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3},
 
-	{1, REG_DWORD,  NKeySystem, "InactivityExit",&Opt.InactivityExit,0, 0},
-	{1, REG_DWORD,  NKeySystem, "InactivityExitTime",&Opt.InactivityExitTime,15, 0},
-	{1, REG_DWORD,  NKeySystem, "DriveMenuMode2",&Opt.ChangeDriveMode,(DWORD)-1, 0},
-	{1, REG_DWORD,  NKeySystem, "DriveDisconnetMode",&Opt.ChangeDriveDisconnetMode,1, 0},
+	{true,  NSecSystem, "InactivityExit",&Opt.InactivityExit,0},
+	{true,  NSecSystem, "InactivityExitTime",&Opt.InactivityExitTime,15},
+	{true,  NSecSystem, "DriveMenuMode2",&Opt.ChangeDriveMode,-1},
+	{true,  NSecSystem, "DriveDisconnetMode",&Opt.ChangeDriveDisconnetMode,1},
 
-	{1, REG_SZ,     NKeySystem, "DriveExceptions",&Opt.ChangeDriveExceptions, 0,
+	{true,  NSecSystem, "DriveExceptions",&Opt.ChangeDriveExceptions,
 		L"/System/*;/proc;/proc/*;/sys;/sys/*;/dev;/dev/*;/run;/run/*;/tmp;/snap;/snap/*;/private;/private/*;/var/lib/lxcfs;/var/snap/*;/var/spool/cron;/tmp/.*"},
-	{1, REG_SZ,     NKeySystem, "DriveColumn2",&Opt.ChangeDriveColumn2, 0, L"$U/$T"},
-	{1, REG_SZ,     NKeySystem, "DriveColumn3",&Opt.ChangeDriveColumn3, 0, L"$S$D"},
+	{true,  NSecSystem, "DriveColumn2",&Opt.ChangeDriveColumn2, L"$U/$T"},
+	{true,  NSecSystem, "DriveColumn3",&Opt.ChangeDriveColumn3, L"$S$D"},
 
-	{1, REG_DWORD,  NKeySystem, "AutoUpdateRemoteDrive",&Opt.AutoUpdateRemoteDrive,1, 0},
-	{1, REG_DWORD,  NKeySystem, "FileSearchMode",&Opt.FindOpt.FileSearchMode,FINDAREA_FROM_CURRENT, 0},
-	{0, REG_DWORD,  NKeySystem, "CollectFiles",&Opt.FindOpt.CollectFiles, 1, 0},
-	{1, REG_SZ,     NKeySystem, "SearchInFirstSize",&Opt.FindOpt.strSearchInFirstSize, 0, L""},
-	{1, REG_DWORD,  NKeySystem, "FindAlternateStreams",&Opt.FindOpt.FindAlternateStreams,0,0},
-	{1, REG_SZ,     NKeySystem, "SearchOutFormat",&Opt.FindOpt.strSearchOutFormat, 0, L"D,S,A"},
-	{1, REG_SZ,     NKeySystem, "SearchOutFormatWidth",&Opt.FindOpt.strSearchOutFormatWidth, 0, L"14,13,0"},
-	{1, REG_DWORD,  NKeySystem, "FindFolders",&Opt.FindOpt.FindFolders, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "FindSymLinks",&Opt.FindOpt.FindSymLinks, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "UseFilterInSearch",&Opt.FindOpt.UseFilter,0,0},
-	{1, REG_DWORD,  NKeySystem, "FindCodePage",&Opt.FindCodePage, CP_AUTODETECT, 0},
-	{0, REG_DWORD,  NKeySystem, "CmdHistoryRule",&Opt.CmdHistoryRule,0, 0},
-	{0, REG_DWORD,  NKeySystem, "SetAttrFolderRules",&Opt.SetAttrFolderRules,1, 0},
-	{0, REG_DWORD,  NKeySystem, "MaxPositionCache",&Opt.MaxPositionCache,POSCACHE_MAX_ELEMENTS, 0},
-	{0, REG_SZ,     NKeySystem, "ConsoleDetachKey", &strKeyNameConsoleDetachKey, 0, L"CtrlAltTab"},
-	{0, REG_DWORD,  NKeySystem, "SilentLoadPlugin",  &Opt.LoadPlug.SilentLoadPlugin, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "OEMPluginsSupport",  &Opt.LoadPlug.OEMPluginsSupport, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "MultiMakeDir",&Opt.MultiMakeDir,0, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDelta", &Opt.MsWheelDelta, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaView", &Opt.MsWheelDeltaView, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaEdit", &Opt.MsWheelDeltaEdit, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaHelp", &Opt.MsWheelDeltaHelp, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDelta", &Opt.MsHWheelDelta, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDeltaView", &Opt.MsHWheelDeltaView, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDeltaEdit", &Opt.MsHWheelDeltaEdit, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "SubstNameRule", &Opt.SubstNameRule, 2, 0},
-	{0, REG_DWORD,  NKeySystem, "ShowCheckingFile", &Opt.ShowCheckingFile, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "DelThreadPriority", &Opt.DelThreadPriority, 0, 0},
-	{0, REG_SZ,     NKeySystem, "QuotedSymbols",&Opt.strQuotedSymbols, 0, L" $&()[]{};|*?!'`\"\\\xA0"}, //xA0 => 160 =>oem(0xFF)
-	{0, REG_DWORD,  NKeySystem, "QuotedName",&Opt.QuotedName,QUOTEDNAME_INSERT, 0},
-	//{0, REG_DWORD,  NKeySystem, "CPAJHefuayor",&Opt.strCPAJHefuayor,0, 0},
-	{0, REG_DWORD,  NKeySystem, "PluginMaxReadData",&Opt.PluginMaxReadData,0x40000, 0},
-	{0, REG_DWORD,  NKeySystem, "UseNumPad",&Opt.UseNumPad,1, 0},
-	{0, REG_DWORD,  NKeySystem, "CASRule",&Opt.CASRule,0xFFFFFFFFU, 0},
-	{0, REG_DWORD,  NKeySystem, "AllCtrlAltShiftRule",&Opt.AllCtrlAltShiftRule,0x0000FFFF, 0},
-	{1, REG_DWORD,  NKeySystem, "ScanJunction",&Opt.ScanJunction,1, 0},
-	{1, REG_DWORD,  NKeySystem, "OnlyFilesSize",&Opt.OnlyFilesSize, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "UsePrintManager",&Opt.UsePrintManager,1, 0},
-	{0, REG_DWORD,  NKeySystem, "WindowMode",&Opt.WindowMode, 0, 0},
+	{true,  NSecSystem, "AutoUpdateRemoteDrive",&Opt.AutoUpdateRemoteDrive,1},
+	{true,  NSecSystem, "FileSearchMode",&Opt.FindOpt.FileSearchMode,FINDAREA_FROM_CURRENT},
+	{false, NSecSystem, "CollectFiles",&Opt.FindOpt.CollectFiles, 1},
+	{true,  NSecSystem, "SearchInFirstSize",&Opt.FindOpt.strSearchInFirstSize, L""},
+	{true,  NSecSystem, "FindAlternateStreams",&Opt.FindOpt.FindAlternateStreams,0},
+	{true,  NSecSystem, "SearchOutFormat",&Opt.FindOpt.strSearchOutFormat, L"D,S,A"},
+	{true,  NSecSystem, "SearchOutFormatWidth",&Opt.FindOpt.strSearchOutFormatWidth, L"14,13,0"},
+	{true,  NSecSystem, "FindFolders",&Opt.FindOpt.FindFolders, 1},
+	{true,  NSecSystem, "FindSymLinks",&Opt.FindOpt.FindSymLinks, 1},
+	{true,  NSecSystem, "UseFilterInSearch",&Opt.FindOpt.UseFilter,0},
+	{true,  NSecSystem, "FindCodePage",&Opt.FindCodePage, CP_AUTODETECT},
+	{false, NSecSystem, "CmdHistoryRule",&Opt.CmdHistoryRule,0},
+	{false, NSecSystem, "SetAttrFolderRules",&Opt.SetAttrFolderRules,1},
+	{false, NSecSystem, "MaxPositionCache",&Opt.MaxPositionCache,POSCACHE_MAX_ELEMENTS},
+	{false, NSecSystem, "ConsoleDetachKey", &strKeyNameConsoleDetachKey, L"CtrlAltTab"},
+	{false, NSecSystem, "SilentLoadPlugin",  &Opt.LoadPlug.SilentLoadPlugin, 0},
+	{true,  NSecSystem, "OEMPluginsSupport",  &Opt.LoadPlug.OEMPluginsSupport, 1},
+	{true,  NSecSystem, "ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1},
+	{true,  NSecSystem, "MultiMakeDir",&Opt.MultiMakeDir,0},
+	{false, NSecSystem, "MsWheelDelta", &Opt.MsWheelDelta, 1},
+	{false, NSecSystem, "MsWheelDeltaView", &Opt.MsWheelDeltaView, 1},
+	{false, NSecSystem, "MsWheelDeltaEdit", &Opt.MsWheelDeltaEdit, 1},
+	{false, NSecSystem, "MsWheelDeltaHelp", &Opt.MsWheelDeltaHelp, 1},
+	{false, NSecSystem, "MsHWheelDelta", &Opt.MsHWheelDelta, 1},
+	{false, NSecSystem, "MsHWheelDeltaView", &Opt.MsHWheelDeltaView, 1},
+	{false, NSecSystem, "MsHWheelDeltaEdit", &Opt.MsHWheelDeltaEdit, 1},
+	{false, NSecSystem, "SubstNameRule", &Opt.SubstNameRule, 2},
+	{false, NSecSystem, "ShowCheckingFile", &Opt.ShowCheckingFile, 0},
+	{false, NSecSystem, "DelThreadPriority", &Opt.DelThreadPriority, 0},
+	{false, NSecSystem, "QuotedSymbols",&Opt.strQuotedSymbols, L" $&()[]{};|*?!'`\"\\\xA0"}, //xA0 => 160 =>oem(0xFF)
+	{false, NSecSystem, "QuotedName",&Opt.QuotedName,QUOTEDNAME_INSERT},
+	//{false, NSecSystem, "CPAJHefuayor",&Opt.strCPAJHefuayor,0},
+	{false, NSecSystem, "PluginMaxReadData",&Opt.PluginMaxReadData,0x40000},
+	{false, NSecSystem, "UseNumPad",&Opt.UseNumPad,1},
+	{false, NSecSystem, "CASRule",&Opt.CASRule,-1},
+	{false, NSecSystem, "AllCtrlAltShiftRule",&Opt.AllCtrlAltShiftRule,0x0000FFFF},
+	{true,  NSecSystem, "ScanJunction",&Opt.ScanJunction,1},
+	{true,  NSecSystem, "OnlyFilesSize",&Opt.OnlyFilesSize, 0},
+	{false, NSecSystem, "UsePrintManager",&Opt.UsePrintManager,1},
+	{false, NSecSystem, "WindowMode",&Opt.WindowMode, 0},
 
-	{0, REG_DWORD,  NKeySystemNowell, "MoveRO",&Opt.Nowell.MoveRO,1, 0},
+	{false, NSecSystemNowell, "MoveRO",&Opt.Nowell.MoveRO,1},
 
-	{0, REG_DWORD,  NKeySystemExecutor, "RestoreCP",&Opt.RestoreCPAfterExecute,1, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "UseAppPath",&Opt.ExecuteUseAppPath,1, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "ShowErrorMessage",&Opt.ExecuteShowErrorMessage,1, 0},
-	{0, REG_SZ,     NKeySystemExecutor, "BatchType",&Opt.strExecuteBatchType,0,constBatchExt},
-	{0, REG_DWORD,  NKeySystemExecutor, "FullTitle",&Opt.ExecuteFullTitle,0, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "SilentExternal",&Opt.ExecuteSilentExternal,0, 0},
+	{false, NSecSystemExecutor, "RestoreCP",&Opt.RestoreCPAfterExecute,1},
+	{false, NSecSystemExecutor, "UseAppPath",&Opt.ExecuteUseAppPath,1},
+	{false, NSecSystemExecutor, "ShowErrorMessage",&Opt.ExecuteShowErrorMessage,1},
+	{false, NSecSystemExecutor, "BatchType",&Opt.strExecuteBatchType,constBatchExt},
+	{false, NSecSystemExecutor, "FullTitle",&Opt.ExecuteFullTitle,0},
+	{false, NSecSystemExecutor, "SilentExternal",&Opt.ExecuteSilentExternal,0},
 
-	{0, REG_DWORD,  NKeyPanelTree, "MinTreeCount",&Opt.Tree.MinTreeCount, 4, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "TreeFileAttr",&Opt.Tree.TreeFileAttr, FILE_ATTRIBUTE_HIDDEN, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "LocalDisk",&Opt.Tree.LocalDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "NetDisk",&Opt.Tree.NetDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "RemovableDisk",&Opt.Tree.RemovableDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "NetPath",&Opt.Tree.NetPath, 2, 0},
-	{1, REG_DWORD,  NKeyPanelTree, "AutoChangeFolder",&Opt.Tree.AutoChangeFolder,0, 0}, // ???
+	{false, NSecPanelTree, "MinTreeCount",&Opt.Tree.MinTreeCount, 4},
+	{false, NSecPanelTree, "TreeFileAttr",&Opt.Tree.TreeFileAttr, FILE_ATTRIBUTE_HIDDEN},
+	{false, NSecPanelTree, "LocalDisk",&Opt.Tree.LocalDisk, 2},
+	{false, NSecPanelTree, "NetDisk",&Opt.Tree.NetDisk, 2},
+	{false, NSecPanelTree, "RemovableDisk",&Opt.Tree.RemovableDisk, 2},
+	{false, NSecPanelTree, "NetPath",&Opt.Tree.NetPath, 2},
+	{true,  NSecPanelTree, "AutoChangeFolder",&Opt.Tree.AutoChangeFolder,0}, // ???
 
-	{0, REG_DWORD,  NKeyHelp, "ActivateURL",&Opt.HelpURLRules,1, 0},
+	{false, NSecHelp, "ActivateURL",&Opt.HelpURLRules,1},
 
-	{1, REG_SZ,     NKeyLanguage, "Help",&Opt.strHelpLanguage, 0, L"English"},
-	{1, REG_SZ,     NKeyLanguage, "Main",&Opt.strLanguage, 0, L"English"},
+	{true,  NSecLanguage, "Help",&Opt.strHelpLanguage, L"English"},
+	{true,  NSecLanguage, "Main",&Opt.strLanguage, L"English"},
 
-	{1, REG_DWORD,  NKeyConfirmations, "Copy",&Opt.Confirm.Copy,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Move",&Opt.Confirm.Move,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RO",&Opt.Confirm.RO,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Drag",&Opt.Confirm.Drag,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Delete",&Opt.Confirm.Delete,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "DeleteFolder",&Opt.Confirm.DeleteFolder,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Esc",&Opt.Confirm.Esc,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveConnection",&Opt.Confirm.RemoveConnection,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveSUBST",&Opt.Confirm.RemoveSUBST,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "DetachVHD",&Opt.Confirm.DetachVHD,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveHotPlug",&Opt.Confirm.RemoveHotPlug,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "AllowReedit",&Opt.Confirm.AllowReedit,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "HistoryClear",&Opt.Confirm.HistoryClear,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Exit",&Opt.Confirm.Exit,1, 0},
-	{0, REG_DWORD,  NKeyConfirmations, "EscTwiceToInterrupt",&Opt.Confirm.EscTwiceToInterrupt,0, 0},
+	{true,  NSecConfirmations, "Copy",&Opt.Confirm.Copy,1},
+	{true,  NSecConfirmations, "Move",&Opt.Confirm.Move,1},
+	{true,  NSecConfirmations, "RO",&Opt.Confirm.RO,1},
+	{true,  NSecConfirmations, "Drag",&Opt.Confirm.Drag,1},
+	{true,  NSecConfirmations, "Delete",&Opt.Confirm.Delete,1},
+	{true,  NSecConfirmations, "DeleteFolder",&Opt.Confirm.DeleteFolder,1},
+	{true,  NSecConfirmations, "Esc",&Opt.Confirm.Esc,1},
+	{true,  NSecConfirmations, "RemoveConnection",&Opt.Confirm.RemoveConnection,1},
+	{true,  NSecConfirmations, "RemoveSUBST",&Opt.Confirm.RemoveSUBST,1},
+	{true,  NSecConfirmations, "DetachVHD",&Opt.Confirm.DetachVHD,1},
+	{true,  NSecConfirmations, "RemoveHotPlug",&Opt.Confirm.RemoveHotPlug,1},
+	{true,  NSecConfirmations, "AllowReedit",&Opt.Confirm.AllowReedit,1},
+	{true,  NSecConfirmations, "HistoryClear",&Opt.Confirm.HistoryClear,1},
+	{true,  NSecConfirmations, "Exit",&Opt.Confirm.Exit,1},
+	{false, NSecConfirmations, "EscTwiceToInterrupt",&Opt.Confirm.EscTwiceToInterrupt,0},
 
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "OpenFilePlugin", &Opt.PluginConfirm.OpenFilePlugin, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "StandardAssociation", &Opt.PluginConfirm.StandardAssociation, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "EvenIfOnlyOnePlugin", &Opt.PluginConfirm.EvenIfOnlyOnePlugin, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "SetFindList", &Opt.PluginConfirm.SetFindList, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "Prefix", &Opt.PluginConfirm.Prefix, 0, 0},
+	{true,  NSecPluginConfirmations,  "OpenFilePlugin", &Opt.PluginConfirm.OpenFilePlugin, 0},
+	{true,  NSecPluginConfirmations,  "StandardAssociation", &Opt.PluginConfirm.StandardAssociation, 0},
+	{true,  NSecPluginConfirmations,  "EvenIfOnlyOnePlugin", &Opt.PluginConfirm.EvenIfOnlyOnePlugin, 0},
+	{true,  NSecPluginConfirmations,  "SetFindList", &Opt.PluginConfirm.SetFindList, 0},
+	{true,  NSecPluginConfirmations,  "Prefix", &Opt.PluginConfirm.Prefix, 0},
 
-	{0, REG_DWORD,  NKeyPanel, "ShellRightLeftArrowsRule",&Opt.ShellRightLeftArrowsRule,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "ShowHidden",&Opt.ShowHidden,1, 0},
-	{1, REG_DWORD,  NKeyPanel, "Highlight",&Opt.Highlight,1, 0},
-	{1, REG_DWORD,  NKeyPanel, "SortFolderExt",&Opt.SortFolderExt,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "SelectFolders",&Opt.SelectFolders,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "ReverseSort",&Opt.ReverseSort,1, 0},
-	{0, REG_DWORD,  NKeyPanel, "RightClickRule",&Opt.PanelRightClickRule,2, 0},
-	{0, REG_DWORD,  NKeyPanel, "CtrlFRule",&Opt.PanelCtrlFRule,1, 0},
-	{0, REG_DWORD,  NKeyPanel, "CtrlAltShiftRule",&Opt.PanelCtrlAltShiftRule,0, 0},
-	{0, REG_DWORD,  NKeyPanel, "RememberLogicalDrives",&Opt.RememberLogicalDrives, 0, 0},
-	{1, REG_DWORD,  NKeyPanel, "AutoUpdateLimit",&Opt.AutoUpdateLimit, 0, 0},
+	{false, NSecPanel, "ShellRightLeftArrowsRule",&Opt.ShellRightLeftArrowsRule,0},
+	{true,  NSecPanel, "ShowHidden",&Opt.ShowHidden,1},
+	{true,  NSecPanel, "Highlight",&Opt.Highlight,1},
+	{true,  NSecPanel, "SortFolderExt",&Opt.SortFolderExt,0},
+	{true,  NSecPanel, "SelectFolders",&Opt.SelectFolders,0},
+	{true,  NSecPanel, "ReverseSort",&Opt.ReverseSort,1},
+	{false, NSecPanel, "RightClickRule",&Opt.PanelRightClickRule,2},
+	{false, NSecPanel, "CtrlFRule",&Opt.PanelCtrlFRule,1},
+	{false, NSecPanel, "CtrlAltShiftRule",&Opt.PanelCtrlAltShiftRule,0},
+	{false, NSecPanel, "RememberLogicalDrives",&Opt.RememberLogicalDrives, 0},
+	{true,  NSecPanel, "AutoUpdateLimit",&Opt.AutoUpdateLimit, 0},
 
-	{1, REG_DWORD,  NKeyPanelLeft, "Type",&Opt.LeftPanel.Type,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "Visible",&Opt.LeftPanel.Visible,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "Focus",&Opt.LeftPanel.Focus,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "ViewMode",&Opt.LeftPanel.ViewMode,2, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortMode",&Opt.LeftPanel.SortMode,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortOrder",&Opt.LeftPanel.SortOrder,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortGroups",&Opt.LeftPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "NumericSort",&Opt.LeftPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "CaseSensitiveSortNix",&Opt.LeftPanel.CaseSensitiveSort,1, 0},
-	{1, REG_SZ,     NKeyPanelLeft, "Folder",&Opt.strLeftFolder, 0, L""},
-	{1, REG_SZ,     NKeyPanelLeft, "CurFile",&Opt.strLeftCurFile, 0, L""},
-	{1, REG_DWORD,  NKeyPanelLeft, "SelectedFirst",&Opt.LeftSelectedFirst,0,0},
-	{1, REG_DWORD,  NKeyPanelLeft, "DirectoriesFirst",&Opt.LeftPanel.DirectoriesFirst,1,0},
+	{true,  NSecPanelLeft, "Type",&Opt.LeftPanel.Type,0},
+	{true,  NSecPanelLeft, "Visible",&Opt.LeftPanel.Visible,1},
+	{true,  NSecPanelLeft, "Focus",&Opt.LeftPanel.Focus,1},
+	{true,  NSecPanelLeft, "ViewMode",&Opt.LeftPanel.ViewMode,2},
+	{true,  NSecPanelLeft, "SortMode",&Opt.LeftPanel.SortMode,1},
+	{true,  NSecPanelLeft, "SortOrder",&Opt.LeftPanel.SortOrder,1},
+	{true,  NSecPanelLeft, "SortGroups",&Opt.LeftPanel.SortGroups,0},
+	{true,  NSecPanelLeft, "NumericSort",&Opt.LeftPanel.NumericSort,0},
+	{true,  NSecPanelLeft, "CaseSensitiveSortNix",&Opt.LeftPanel.CaseSensitiveSort,1},
+	{true,  NSecPanelLeft, "Folder",&Opt.strLeftFolder, L""},
+	{true,  NSecPanelLeft, "CurFile",&Opt.strLeftCurFile, L""},
+	{true,  NSecPanelLeft, "SelectedFirst",&Opt.LeftSelectedFirst,0},
+	{true,  NSecPanelLeft, "DirectoriesFirst",&Opt.LeftPanel.DirectoriesFirst,1},
 
-	{1, REG_DWORD,  NKeyPanelRight, "Type",&Opt.RightPanel.Type,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "Visible",&Opt.RightPanel.Visible,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "Focus",&Opt.RightPanel.Focus,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "ViewMode",&Opt.RightPanel.ViewMode,2, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortMode",&Opt.RightPanel.SortMode,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortOrder",&Opt.RightPanel.SortOrder,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortGroups",&Opt.RightPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "NumericSort",&Opt.RightPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "CaseSensitiveSortNix",&Opt.RightPanel.CaseSensitiveSort,1, 0},
-	{1, REG_SZ,     NKeyPanelRight, "Folder",&Opt.strRightFolder, 0,L""},
-	{1, REG_SZ,     NKeyPanelRight, "CurFile",&Opt.strRightCurFile, 0,L""},
-	{1, REG_DWORD,  NKeyPanelRight, "SelectedFirst",&Opt.RightSelectedFirst,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "DirectoriesFirst",&Opt.RightPanel.DirectoriesFirst,1,0},
+	{true,  NSecPanelRight, "Type",&Opt.RightPanel.Type,0},
+	{true,  NSecPanelRight, "Visible",&Opt.RightPanel.Visible,1},
+	{true,  NSecPanelRight, "Focus",&Opt.RightPanel.Focus,0},
+	{true,  NSecPanelRight, "ViewMode",&Opt.RightPanel.ViewMode,2},
+	{true,  NSecPanelRight, "SortMode",&Opt.RightPanel.SortMode,1},
+	{true,  NSecPanelRight, "SortOrder",&Opt.RightPanel.SortOrder,1},
+	{true,  NSecPanelRight, "SortGroups",&Opt.RightPanel.SortGroups,0},
+	{true,  NSecPanelRight, "NumericSort",&Opt.RightPanel.NumericSort,0},
+	{true,  NSecPanelRight, "CaseSensitiveSortNix",&Opt.RightPanel.CaseSensitiveSort,1},
+	{true,  NSecPanelRight, "Folder",&Opt.strRightFolder,L""},
+	{true,  NSecPanelRight, "CurFile",&Opt.strRightCurFile,L""},
+	{true,  NSecPanelRight, "SelectedFirst",&Opt.RightSelectedFirst,0},
+	{true,  NSecPanelRight, "DirectoriesFirst",&Opt.RightPanel.DirectoriesFirst,1},
 
-	{1, REG_DWORD,  NKeyPanelLayout, "ColumnTitles",&Opt.ShowColumnTitles,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "StatusLine",&Opt.ShowPanelStatus,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "TotalInfo",&Opt.ShowPanelTotals,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "FreeInfo",&Opt.ShowPanelFree,0, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "Scrollbar",&Opt.ShowPanelScrollbar,0, 0},
-	{0, REG_DWORD,  NKeyPanelLayout, "ScrollbarMenu",&Opt.ShowMenuScrollbar,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "ScreensNumber",&Opt.ShowScreensNumber,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "SortMode",&Opt.ShowSortMode,1, 0},
+	{true,  NSecPanelLayout, "ColumnTitles",&Opt.ShowColumnTitles,1},
+	{true,  NSecPanelLayout, "StatusLine",&Opt.ShowPanelStatus,1},
+	{true,  NSecPanelLayout, "TotalInfo",&Opt.ShowPanelTotals,1},
+	{true,  NSecPanelLayout, "FreeInfo",&Opt.ShowPanelFree,0},
+	{true,  NSecPanelLayout, "Scrollbar",&Opt.ShowPanelScrollbar,0},
+	{false, NSecPanelLayout, "ScrollbarMenu",&Opt.ShowMenuScrollbar,1},
+	{true,  NSecPanelLayout, "ScreensNumber",&Opt.ShowScreensNumber,1},
+	{true,  NSecPanelLayout, "SortMode",&Opt.ShowSortMode,1},
 
-	{1, REG_DWORD,  NKeyLayout, "LeftHeightDecrement",&Opt.LeftHeightDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "RightHeightDecrement",&Opt.RightHeightDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "WidthDecrement",&Opt.WidthDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "FullscreenHelp",&Opt.FullScreenHelp,0, 0},
+	{true,  NSecLayout, "LeftHeightDecrement",&Opt.LeftHeightDecrement,0},
+	{true,  NSecLayout, "RightHeightDecrement",&Opt.RightHeightDecrement,0},
+	{true,  NSecLayout, "WidthDecrement",&Opt.WidthDecrement,0},
+	{true,  NSecLayout, "FullscreenHelp",&Opt.FullScreenHelp,0},
 
-	{1, REG_SZ,     NKeyDescriptions, "ListNames",&Opt.Diz.strListNames, 0, L"Descript.ion,Files.bbs"},
-	{1, REG_DWORD,  NKeyDescriptions, "UpdateMode",&Opt.Diz.UpdateMode,DIZ_UPDATE_IF_DISPLAYED, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "ROUpdate",&Opt.Diz.ROUpdate,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "SetHidden",&Opt.Diz.SetHidden,1, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "StartPos",&Opt.Diz.StartPos,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "AnsiByDefault",&Opt.Diz.AnsiByDefault,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "SaveInUTF",&Opt.Diz.SaveInUTF,0, 0},
+	{true,  NSecDescriptions, "ListNames",&Opt.Diz.strListNames, L"Descript.ion,Files.bbs"},
+	{true,  NSecDescriptions, "UpdateMode",&Opt.Diz.UpdateMode,DIZ_UPDATE_IF_DISPLAYED},
+	{true,  NSecDescriptions, "ROUpdate",&Opt.Diz.ROUpdate,0},
+	{true,  NSecDescriptions, "SetHidden",&Opt.Diz.SetHidden,1},
+	{true,  NSecDescriptions, "StartPos",&Opt.Diz.StartPos,0},
+	{true,  NSecDescriptions, "AnsiByDefault",&Opt.Diz.AnsiByDefault,0},
+	{true,  NSecDescriptions, "SaveInUTF",&Opt.Diz.SaveInUTF,0},
 
-	{0, REG_DWORD,  NKeyKeyMacros, "MacroReuseRules",&Opt.Macro.MacroReuseRules,0, 0},
-	{0, REG_SZ,     NKeyKeyMacros, "DateFormat",&Opt.Macro.strDateFormat, 0, L"%a %b %d %H:%M:%S %Z %Y"},
-	{0, REG_SZ,     NKeyKeyMacros, "CONVFMT",&Opt.Macro.strMacroCONVFMT, 0, L"%.6g"},
-	{0, REG_DWORD,  NKeyKeyMacros, "CallPluginRules",&Opt.Macro.CallPluginRules,0, 0},
+	{false, NSecKeyMacros, "MacroReuseRules",&Opt.Macro.MacroReuseRules,0},
+	{false, NSecKeyMacros, "DateFormat",&Opt.Macro.strDateFormat, L"%a %b %d %H:%M:%S %Z %Y"},
+	{false, NSecKeyMacros, "CONVFMT",&Opt.Macro.strMacroCONVFMT, L"%.6g"},
+	{false, NSecKeyMacros, "CallPluginRules",&Opt.Macro.CallPluginRules,0},
 
-	{0, REG_DWORD,  NKeyPolicies, "ShowHiddenDrives",&Opt.Policies.ShowHiddenDrives,1, 0},
-	{0, REG_DWORD,  NKeyPolicies, "DisabledOptions",&Opt.Policies.DisabledOptions,0, 0},
+	{false, NSecPolicies, "ShowHiddenDrives",&Opt.Policies.ShowHiddenDrives,1},
+	{false, NSecPolicies, "DisabledOptions",&Opt.Policies.DisabledOptions,0},
 
 
-	{0, REG_DWORD,  NKeySystem, "ExcludeCmdHistory",&Opt.ExcludeCmdHistory,0, 0}, //AN
+	{false, NSecSystem, "ExcludeCmdHistory",&Opt.ExcludeCmdHistory,0}, //AN
 
-	{1, REG_DWORD,  NKeyCodePages, "CPMenuMode2",&Opt.CPMenuMode,1,0},
+	{true,  NSecCodePages, "CPMenuMode2",&Opt.CPMenuMode,1},
 
-	{1, REG_SZ,     NKeySystem, "FolderInfo",&Opt.InfoPanel.strFolderInfoFiles, 0, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
+	{true,  NSecSystem, "FolderInfo",&Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 
-	{1, REG_DWORD,  NKeyVMenu, "LBtnClick",&Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL, 0},
-	{1, REG_DWORD,  NKeyVMenu, "RBtnClick",&Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL, 0},
-	{1, REG_DWORD,  NKeyVMenu, "MBtnClick",&Opt.VMenu.MBtnClick, VMENUCLICK_APPLY, 0},
+	{true,  NSecVMenu, "LBtnClick",&Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
+	{true,  NSecVMenu, "RBtnClick",&Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
+	{true,  NSecVMenu, "MBtnClick",&Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},
 };
 
 static bool g_config_ready = false;
@@ -1039,7 +1089,7 @@ void ReadConfig()
 	ConfigReader cfg_reader;
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	cfg_reader.SelectSection(NKeySystem);
+	cfg_reader.SelectSection(NSecSystem);
 	Opt.LoadPlug.strPersonalPluginsPath = cfg_reader.GetString("PersonalPluginsPath", L"");
 	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
 	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
@@ -1047,24 +1097,30 @@ void ReadConfig()
 
 	for (I=0; I < ARRAYSIZE(CFG); ++I)
 	{
-		cfg_reader.SelectSection(CFG[I].KeyName);
-		switch (CFG[I].ValType)
+		cfg_reader.SelectSection(CFG[I].Section);
+		switch (CFG[I].Type)
 		{
-			case REG_DWORD:
-				if ((int *)CFG[I].ValPtr == &Opt.Confirm.Exit) {
+			case FARConfig::T_INT:
+				if ((int *)CFG[I].Value.I == &Opt.Confirm.Exit) {
 					// when background mode available then exit dialog allows also switch to background
 					// so saved settings must differ for that two modes
-					CFG[I].ValName = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
+					CFG[I].Key = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
 				}
-				*(unsigned int *)CFG[I].ValPtr = cfg_reader.GetUInt(CFG[I].ValName, (unsigned int)CFG[I].DefDWord);
+				*CFG[I].Value.I = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.I);
 				break;
-			case REG_SZ:
-				*(FARString *)CFG[I].ValPtr = cfg_reader.GetString(CFG[I].ValName, CFG[I].DefStr);
+			case FARConfig::T_DWORD:
+				*CFG[I].Value.DW = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.DW);
 				break;
-			case REG_BINARY:
-				int Size = cfg_reader.GetBytes((BYTE*)CFG[I].ValPtr, CFG[I].DefDWord, CFG[I].ValName, (BYTE*)CFG[I].DefStr);
-				if (Size > 0 && Size < (int)CFG[I].DefDWord)
-					memset(((BYTE*)CFG[I].ValPtr)+Size,0,CFG[I].DefDWord-Size);
+			case FARConfig::T_BOOL:
+				*CFG[I].Value.B = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.B);
+				break;
+			case FARConfig::T_STR:
+				*CFG[I].Value.Str = cfg_reader.GetString(CFG[I].Key, CFG[I].Default.Str);
+				break;
+			case FARConfig::T_BIN:
+				int Size = cfg_reader.GetBytes(CFG[I].Value.Bin, CFG[I].BinSize, CFG[I].Key, (BYTE*)CFG[I].Default.Bin);
+				if (Size > 0 && Size < (int)CFG[I].BinSize)
+					memset(CFG[I].Value.Bin + Size, 0, CFG[I].BinSize - Size);
 
 				break;
 		}
@@ -1127,7 +1183,7 @@ void ReadConfig()
 	if (Opt.ViOpt.TabSize<1 || Opt.ViOpt.TabSize>512)
 		Opt.ViOpt.TabSize=8;
 
-	cfg_reader.SelectSection(NKeyKeyMacros);
+	cfg_reader.SelectSection(NSecKeyMacros);
 
 	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlDot", szCtrlDot);
 
@@ -1146,7 +1202,7 @@ void ReadConfig()
 		Opt.strExecuteBatchType=constBatchExt;
 
 	{
-		//cfg_reader.SelectSection(NKeyXLat);
+		//cfg_reader.SelectSection(NSecXLat);
 		AllXlats xlats;
 		std::string SetXLat;
 		for (const auto &xlat : xlats) {
@@ -1252,25 +1308,31 @@ void SaveConfig(int Ask)
 	ConfigWriter cfg_writer;
 
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-	cfg_writer.SelectSection(NKeySystem);
+	cfg_writer.SelectSection(NSecSystem);
 	cfg_writer.SetString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
-//	cfg_writer.SetString(NKeyLanguage, "Main", Opt.strLanguage);
+//	cfg_writer.SetString(NSecLanguage, "Main", Opt.strLanguage);
 
 	for (size_t I=0; I < ARRAYSIZE(CFG); ++I)
 	{
 		if (CFG[I].IsSave)
 		{
-			cfg_writer.SelectSection(CFG[I].KeyName);
-			switch (CFG[I].ValType)
+			cfg_writer.SelectSection(CFG[I].Section);
+			switch (CFG[I].Type)
 			{
-				case REG_DWORD:
-					cfg_writer.SetUInt(CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
+				case FARConfig::T_BOOL:
+					cfg_writer.SetInt(CFG[I].Key, *CFG[I].Value.B);
 					break;
-				case REG_SZ:
-					cfg_writer.SetString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
+				case FARConfig::T_INT:
+					cfg_writer.SetInt(CFG[I].Key, *CFG[I].Value.I);
 					break;
-				case REG_BINARY:
-					cfg_writer.SetBytes(CFG[I].ValName, (const BYTE*)CFG[I].ValPtr, CFG[I].DefDWord);
+				case FARConfig::T_DWORD:
+					cfg_writer.SetUInt(CFG[I].Key, *CFG[I].Value.DW);
+					break;
+				case FARConfig::T_STR:
+					cfg_writer.SetString(CFG[I].Key, CFG[I].Value.Str->CPtr());
+					break;
+				case FARConfig::T_BIN:
+					cfg_writer.SetBytes(CFG[I].Key, CFG[I].Value.Bin, CFG[I].BinSize);
 					break;
 			}
 		}

@@ -462,7 +462,7 @@ int CommandLine::ProcessKey(int Key)
 			if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTCMDLINE))
 				CtrlObject->CmdHistory->AddToHistory(strStr);
 
-			ProcessOSAliases(strStr);
+			// ProcessOSAliases(strStr);
 
 			if (ActivePanel->ProcessPluginEvent(FE_COMMAND,(void *)strStr.CPtr())) {
 				FARString strCurDirFromPanel;

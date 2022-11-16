@@ -74,7 +74,7 @@ static void tabinit(U16B t[], U16B tl, U16B ival) {
 
     register U16B i,j;
     
-    for (i=tl;i<2*tl;++i) t[i]=ival;
+    for (i=tl;(unsigned)i<(unsigned)tl*2;++i) t[i]=ival;
     for (i=tl-1,j=(tl<<1)-2;i;--i,j-=2) {
 	t[i]=t[j]+t[j+1];
     }

@@ -477,8 +477,3 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 	return L"";
 }
 
-bool ProcessOSAliases(FARString &strStr)
-{
-	return false;
-}
-

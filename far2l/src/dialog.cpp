@@ -640,12 +640,7 @@ void Dialog::ProcessCenterGroup()
 		// Их координаты X не важны. Удобно использовать для центрирования
 		// групп кнопок.
 		if ((Item[I]->Flags & DIF_CENTERGROUP) &&
-		        (!I ||
-		         (I > 0 &&
-		          (!(Item[I-1]->Flags & DIF_CENTERGROUP) ||
-		           Item[I-1]->Y1!=Item[I]->Y1)
-		         )
-		        )
+		        (I == 0 || (Item[I-1]->Flags & DIF_CENTERGROUP) == 0 || Item[I-1]->Y1 != Item[I]->Y1)
 		   )
 		{
 			int Length=0;
@@ -728,13 +723,14 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	DWORD ItemFlags;
 	_DIALOG(CleverSysLog CL(L"Init Dialog"));
 
-	if (ID+1 > ItemCount)
-		return (unsigned)-1;
-
 	if (ID == (unsigned)-1) // инициализируем все?
 	{
 		ID=0;
 		InitItemCount=ItemCount;
+	}
+	else if (ID+1 > ItemCount)
+	{
+		return (unsigned)-1;
 	}
 	else
 	{

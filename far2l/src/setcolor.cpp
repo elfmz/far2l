@@ -605,13 +605,12 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 				SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, (LONG_PTR)DlgItem);
 				NewColor=*CurColor;
 
-				if (Param1 >= 2 && Param1 <= 17) // Fore
+				if (Param1 <= 17) // Fore
 				{
 					NewColor&=~0x0F;
 					NewColor|=(DlgItem->Flags & B_MASK)>>4;
 				}
-
-				if (Param1 >= 19 && Param1 <= 34) // Back
+				else if (Param1 >= 19) // Back
 				{
 					NewColor&=~0xF0;
 					NewColor|=DlgItem->Flags & B_MASK;

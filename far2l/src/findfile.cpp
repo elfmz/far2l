@@ -1131,8 +1131,7 @@ static int FindStringBMH(const unsigned char* searchBuffer, size_t searchBufferC
 
 static bool ScanFile(const wchar_t *Name)
 {
-#define RETURN(r) { result = (r); goto exit; }
-#define CONTINUE(r) { if ((r) || cpIndex==codePagesCount-1) RETURN(r) else continue; }
+#define RETURN_OR_CONTINUE(r) { if ((r) || cpIndex==codePagesCount-1) return r; else continue; }
 	// Длина строки поиска
 	const size_t findStringCount = strFindStr.GetLength();
 
@@ -1145,8 +1144,8 @@ static bool ScanFile(const wchar_t *Name)
 	if(!file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 		return false;
 
-	char readBufferA[0x10000] __attribute__((aligned(0x1000)));
-	wchar_t readBuffer[ARRAYSIZE(readBufferA)] __attribute__((aligned(0x1000)));
+	uint8_t readBufferB[0x10000] __attribute__((aligned(0x1000)));
+	wchar_t readBuffer[ARRAYSIZE(readBufferB)] __attribute__((aligned(0x1000)));
 
 	// Количество считанных из файла байт
 	DWORD readBlockSize = 0;
@@ -1168,14 +1167,13 @@ static bool ScanFile(const wchar_t *Name)
 
 	UINT LastPercents=0;
 
-	// Результат поиска
-	bool result = false;
-
 	// Основной цикл чтения из файла
 
 	while (!StopFlag && 
-		file.Read(readBufferA, (!SearchInFirst || 
-			alreadyRead+sizeof(readBufferA) <= SearchInFirst)?sizeof(readBufferA):static_cast<DWORD>(SearchInFirst-alreadyRead), &readBlockSize))
+		file.Read(readBufferB,
+			(!SearchInFirst || alreadyRead + sizeof(readBufferB) <= SearchInFirst)
+				? sizeof(readBufferB) : DWORD(SearchInFirst - alreadyRead),
+			&readBlockSize))
 	{
 		UINT Percents=static_cast<UINT>(FileSize?alreadyRead*100/FileSize:0);
 		if (Percents!=LastPercents)
@@ -1192,11 +1190,11 @@ static bool ScanFile(const wchar_t *Name)
 		{
 			// Выходим, если ничего не прочитали или прочитали мало
 			if (!readBlockSize || readBlockSize<hexFindStringSize)
-				RETURN(false)
+				return false;
 
 			// Ищем
-			if (FindStringBMH((const unsigned char *)readBufferA, readBlockSize)!=-1)
-				RETURN(true)
+			if (FindStringBMH(readBufferB, readBlockSize)!=-1)
+				return true;
 		}
 		else
 		{
@@ -1207,7 +1205,7 @@ static bool ScanFile(const wchar_t *Name)
 
 				// Пропускаем ошибочные кодовые страницы
 				if (!cpi->MaxCharSize)
-					CONTINUE(false)
+					RETURN_OR_CONTINUE(false)
 
 				// Если начало файла очищаем информацию о поиске по словам
 				if (WholeWords && alreadyRead==readBlockSize)
@@ -1220,11 +1218,11 @@ static bool ScanFile(const wchar_t *Name)
 				if (!readBlockSize)
 					// Если поиск по словам и в конце предыдущего блока было что-то найдено,
 					// то считаем, что нашли то, что нужно
-					CONTINUE(WholeWords && cpi->WordFound)
+					RETURN_OR_CONTINUE(WholeWords && cpi->WordFound)
 
 				// Выходим, если прочитали меньше размера строки поиска и нет поиска по словам
 				if (readBlockSize < findStringCount && !(WholeWords && cpi->WordFound))
-					CONTINUE(FALSE)
+					RETURN_OR_CONTINUE(FALSE)
 
 				// Количество символов в выходном буфере
 				unsigned int bufferCount;
@@ -1240,16 +1238,16 @@ static bool ScanFile(const wchar_t *Name)
 
 					// Выходим, если размер буфера меньше длины строки посика
 					if (bufferCount < findStringCount)
-						CONTINUE(false)
+						RETURN_OR_CONTINUE(false)
 						
 
 					// Копируем буфер чтения в буфер сравнения
 					//todo
 					if (cpi->CodePage==CP_WIDE_BE) {
-						WideReverse((const wchar_t*)readBufferA, readBuffer, bufferCount);
+						WideReverse((const wchar_t*)readBufferB, readBuffer, bufferCount);
 						buffer = readBuffer;
 					} else {
-						buffer = (wchar_t*)readBufferA;
+						buffer = (wchar_t*)readBufferB;
 					}
 				}
 				else
@@ -1258,7 +1256,7 @@ static bool ScanFile(const wchar_t *Name)
 					bufferCount = WINPORT(MultiByteToWideChar)(
 					                  cpi->CodePage,
 					                  0,
-					                  (char *)readBufferA,
+					                  (char *)readBufferB,
 					                  readBlockSize,
 					                  readBuffer,
 					                  ARRAYSIZE(readBuffer)
@@ -1266,7 +1264,7 @@ static bool ScanFile(const wchar_t *Name)
 
 					// Выходим, если нам не удалось сконвертировать строку
 					if (!bufferCount)
-						CONTINUE(false)
+						RETURN_OR_CONTINUE(false)
 
 					// Если прочитали меньше размера строки поиска и поиска по словам, то проверяем
 					// первый символ блока на разделитель и выходим
@@ -1275,17 +1273,18 @@ static bool ScanFile(const wchar_t *Name)
 					{
 						// Если конец файла, то считаем, что есть разделитель в конце
 						if (findStringCount-1>=bufferCount)
-							RETURN(true)
-							// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
-							// при переходе между блоками
-							cpi->LastSymbol = readBuffer[findStringCount-1];
+							return true;
+
+						// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
+						// при переходе между блоками
+						cpi->LastSymbol = readBuffer[findStringCount-1];
 
 						if (IsWordDiv(cpi->LastSymbol))
-							RETURN(true)
+							return true;
 
 						// Если размер буфера меньше размера слова, то выходим
 						if (readBlockSize < findStringCount)
-							CONTINUE(false)
+							RETURN_OR_CONTINUE(false)
 					}
 
 					// Устанавливаем буфер сравнения
@@ -1305,7 +1304,7 @@ static bool ScanFile(const wchar_t *Name)
 
 					// Если подстрока найдена и отключен поиск по словам, то считаем что всё хорошо
 					if (!WholeWords)
-						RETURN(TRUE)
+						return true;
 
 					// Устанавливаем позицию в исходном буфере
 					index += foundIndex;
@@ -1341,8 +1340,8 @@ static bool ScanFile(const wchar_t *Name)
 							cpi->LastSymbol = buffer[index+findStringCount];
 
 							if (IsWordDiv(cpi->LastSymbol))
-								RETURN(true)
-							}
+								return true;
+						}
 						else
 							cpi->WordFound = true;
 					}
@@ -1351,7 +1350,7 @@ static bool ScanFile(const wchar_t *Name)
 
 				// Выходим, если мы вышли за пределы количества байт разрешённых для поиска
 				if (SearchInFirst && SearchInFirst>=alreadyRead)
-					CONTINUE(false)
+					RETURN_OR_CONTINUE(false)
 				// Запоминаем последний символ блока
 				cpi->LastSymbol = buffer[bufferCount-1];
 			}
@@ -1361,22 +1360,17 @@ static bool ScanFile(const wchar_t *Name)
 		}
 
 		// Если мы потенциально прочитали не весь файл
-		if (readBlockSize==sizeof(readBufferA))
+		if (readBlockSize==sizeof(readBufferB))
 		{
 			// Отступаем назад на длину слова поиска минус 1
 			if (!file.SetPointer(-1*offset, nullptr, FILE_CURRENT))
-				RETURN(FALSE)
+				return false;
 			alreadyRead -= offset;
 		}
 	}
 
-exit:
-	// Закрываем хэндл файла
-	file.Close();
-	// Возвращаем результат
-	return (result);
-#undef CONTINUE
-#undef RETURN
+	return false;
+#undef RETURN_OR_CONTINUE
 }
 
 static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& FindData, size_t ArcIndex);

@@ -121,7 +121,7 @@ int WINAPI TextToCharInfo(const char *Text,WORD Attr, CHAR_INFO *CharInfo, int L
 
 inline void SetVidChar(CHAR_INFO& CI, COMP_CHAR Chr)
 {
-	CI.Char.UnicodeChar = (Chr >= 0 && (Chr < L'\x20' || Chr == L'\x7f')) ? Oem2Unicode[Chr] : Chr;
+	CI.Char.UnicodeChar = (Chr < L'\x20' || Chr == L'\x7f') ? Oem2Unicode[Chr] : Chr;
 }
 
 int HiStrCellsCount(const wchar_t *Str);

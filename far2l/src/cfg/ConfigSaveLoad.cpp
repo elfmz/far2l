@@ -66,6 +66,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "AllXLats.hpp"
 
+void SanitizeHistoryCounts();
+
 static const wchar_t *constBatchExt=L".BAT;.CMD;";
 
 // Стандартный набор разделителей
@@ -115,8 +117,7 @@ static const char NSecVMenu[]="VMenu";
 
 
 static FARString strKeyNameConsoleDetachKey;
-
-void SanitizeHistoryCounts();
+static bool g_config_ready = false;
 
 static struct FARConfig
 {
@@ -143,7 +144,8 @@ static struct FARConfig
 		bool *B;
 	} Value;
 
-	union D {
+	union D
+	{
 		const wchar_t *Str;
 		const BYTE *Bin;
 		DWORD DW;
@@ -497,72 +499,93 @@ static struct FARConfig
 	{true,  NSecVMenu, "MBtnClick",&Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},
 };
 
-static bool g_config_ready = false;
-
-void ReadConfig()
+static void LoadCFG(ConfigReader &cfg_reader)
 {
-	FARString strKeyNameFromReg;
-	FARString strPersonalPluginsPath;
-	size_t I;
-
-	ConfigReader cfg_reader;
-
-	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	cfg_reader.SelectSection(NSecSystem);
-	Opt.LoadPlug.strPersonalPluginsPath = cfg_reader.GetString("PersonalPluginsPath", L"");
-	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
-	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
-	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-
-	for (I=0; I < ARRAYSIZE(CFG); ++I)
+	for (auto &c : CFG)
 	{
-		cfg_reader.SelectSection(CFG[I].Section);
-		switch (CFG[I].Type)
+		cfg_reader.SelectSection(c.Section);
+		switch (c.Type)
 		{
 			case FARConfig::T_INT:
-				if ((int *)CFG[I].Value.I == &Opt.Confirm.Exit) {
+				if ((int *)c.Value.I == &Opt.Confirm.Exit) {
 					// when background mode available then exit dialog allows also switch to background
 					// so saved settings must differ for that two modes
-					CFG[I].Key = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
+					c.Key = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
 				}
-				*CFG[I].Value.I = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.I);
+				*c.Value.I = cfg_reader.GetUInt(c.Key, (unsigned int)c.Default.I);
 				break;
 			case FARConfig::T_DWORD:
-				*CFG[I].Value.DW = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.DW);
+				*c.Value.DW = cfg_reader.GetUInt(c.Key, (unsigned int)c.Default.DW);
 				break;
 			case FARConfig::T_BOOL:
-				*CFG[I].Value.B = cfg_reader.GetUInt(CFG[I].Key, (unsigned int)CFG[I].Default.B);
+				*c.Value.B = cfg_reader.GetUInt(c.Key, (unsigned int)c.Default.B);
 				break;
 			case FARConfig::T_STR:
-				*CFG[I].Value.Str = cfg_reader.GetString(CFG[I].Key, CFG[I].Default.Str);
+				*c.Value.Str = cfg_reader.GetString(c.Key, c.Default.Str);
 				break;
 			case FARConfig::T_BIN:
-				int Size = cfg_reader.GetBytes(CFG[I].Value.Bin, CFG[I].BinSize, CFG[I].Key, (BYTE*)CFG[I].Default.Bin);
-				if (Size > 0 && Size < (int)CFG[I].BinSize)
-					memset(CFG[I].Value.Bin + Size, 0, CFG[I].BinSize - Size);
+				int Size = cfg_reader.GetBytes(c.Value.Bin, c.BinSize, c.Key, (BYTE*)c.Default.Bin);
+				if (Size > 0 && Size < (int)c.BinSize)
+					memset(c.Value.Bin + Size, 0, c.BinSize - Size);
 
 				break;
 		}
 	}
+}
 
-	/* <ПОСТПРОЦЕССЫ> *************************************************** */
-
-	SanitizeHistoryCounts();
-
-	if (Opt.ShowMenuBar)
-		Opt.ShowMenuBar=1;
-
-	if (Opt.PluginMaxReadData < 0x1000) // || Opt.PluginMaxReadData > 0x80000)
-		Opt.PluginMaxReadData=0x20000;
-
-	if(ExplicitWindowMode)
+static void SaveCFG(ConfigWriter &cfg_writer)
+{
+	for (const auto &c : CFG)
 	{
-		Opt.WindowMode=TRUE;
+		if (c.IsSave)
+		{
+			cfg_writer.SelectSection(c.Section);
+			switch (c.Type)
+			{
+				case FARConfig::T_BOOL:
+					cfg_writer.SetInt(c.Key, *c.Value.B);
+					break;
+				case FARConfig::T_INT:
+					cfg_writer.SetInt(c.Key, *c.Value.I);
+					break;
+				case FARConfig::T_DWORD:
+					cfg_writer.SetUInt(c.Key, *c.Value.DW);
+					break;
+				case FARConfig::T_STR:
+					cfg_writer.SetString(c.Key, c.Value.Str->CPtr());
+					break;
+				case FARConfig::T_BIN:
+					cfg_writer.SetBytes(c.Key, c.Value.Bin, c.BinSize);
+					break;
+			}
+		}
 	}
+}
 
-	Opt.HelpTabSize=8; // пока жестко пропишем...
+static void SanitizeXlat()
+{
+	// ensure Opt.XLat.XLat specifies some known xlat
+	//cfg_reader.SelectSection(NSecXLat);
+	AllXlats xlats;
+	std::string SetXLat;
+	for (const auto &xlat : xlats) {
+		if (Opt.XLat.XLat == xlat) {
+			SetXLat.clear();
+			break;
+		}
+		if (SetXLat.empty()) {
+			SetXLat = xlat;
+		}
+	}
+	if (!SetXLat.empty()) {
+		Opt.XLat.XLat = SetXLat;
+	}
+}
+
+static void SanitizePalette()
+{
 	//   Уточняем алгоритм "взятия" палитры.
-	for (I=COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR+1;
+	for (size_t I=COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR+1;
 	        I < (COL_LASTPALETTECOLOR-COL_FIRSTPALETTECOLOR);
 	        ++I)
 	{
@@ -580,6 +603,41 @@ void ReadConfig()
 			*/
 		}
 	}
+}
+
+////
+
+void ReadConfig()
+{
+	FARString strKeyNameFromReg;
+	FARString strPersonalPluginsPath;
+
+	ConfigReader cfg_reader;
+
+	/* <ПРЕПРОЦЕССЫ> *************************************************** */
+	cfg_reader.SelectSection(NSecSystem);
+	Opt.LoadPlug.strPersonalPluginsPath = cfg_reader.GetString("PersonalPluginsPath", L"");
+	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
+	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
+	/* *************************************************** </ПРЕПРОЦЕССЫ> */
+	LoadCFG(cfg_reader);
+	/* <ПОСТПРОЦЕССЫ> *************************************************** */
+
+	SanitizeHistoryCounts();
+
+	if (Opt.ShowMenuBar)
+		Opt.ShowMenuBar=1;
+
+	if (Opt.PluginMaxReadData < 0x1000) // || Opt.PluginMaxReadData > 0x80000)
+		Opt.PluginMaxReadData=0x20000;
+
+	if(ExplicitWindowMode)
+	{
+		Opt.WindowMode=TRUE;
+	}
+
+	Opt.HelpTabSize=8; // пока жестко пропишем...
+	SanitizePalette();
 
 	Opt.ViOpt.ViewerIsWrap&=1;
 	Opt.ViOpt.ViewerWrap&=1;
@@ -620,24 +678,7 @@ void ReadConfig()
 	if (Opt.strExecuteBatchType.IsEmpty()) // предохраняемся
 		Opt.strExecuteBatchType=constBatchExt;
 
-	{
-		//cfg_reader.SelectSection(NSecXLat);
-		AllXlats xlats;
-		std::string SetXLat;
-		for (const auto &xlat : xlats) {
-			if (Opt.XLat.XLat == xlat) {
-				SetXLat.clear();
-				break;
-			}
-			if (SetXLat.empty()) {
-				SetXLat = xlat;
-			}
-		}
-		if (!SetXLat.empty()) {
-			Opt.XLat.XLat = SetXLat;
-		}
-	}
-
+	SanitizeXlat();
 
 	memset(Opt.FindOpt.OutColumnTypes,0,sizeof(Opt.FindOpt.OutColumnTypes));
 	memset(Opt.FindOpt.OutColumnWidths,0,sizeof(Opt.FindOpt.OutColumnWidths));
@@ -725,33 +766,7 @@ void SaveConfig(int Ask)
 	cfg_writer.SelectSection(NSecSystem);
 	cfg_writer.SetString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
 //	cfg_writer.SetString(NSecLanguage, "Main", Opt.strLanguage);
-
-	for (size_t I=0; I < ARRAYSIZE(CFG); ++I)
-	{
-		if (CFG[I].IsSave)
-		{
-			cfg_writer.SelectSection(CFG[I].Section);
-			switch (CFG[I].Type)
-			{
-				case FARConfig::T_BOOL:
-					cfg_writer.SetInt(CFG[I].Key, *CFG[I].Value.B);
-					break;
-				case FARConfig::T_INT:
-					cfg_writer.SetInt(CFG[I].Key, *CFG[I].Value.I);
-					break;
-				case FARConfig::T_DWORD:
-					cfg_writer.SetUInt(CFG[I].Key, *CFG[I].Value.DW);
-					break;
-				case FARConfig::T_STR:
-					cfg_writer.SetString(CFG[I].Key, CFG[I].Value.Str->CPtr());
-					break;
-				case FARConfig::T_BIN:
-					cfg_writer.SetBytes(CFG[I].Key, CFG[I].Value.Bin, CFG[I].BinSize);
-					break;
-			}
-		}
-	}
-
+	SaveCFG(cfg_writer);
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 	FileFilter::SaveFilters(cfg_writer);
 	FileList::SavePanelModes(cfg_writer);

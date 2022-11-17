@@ -68,6 +68,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Options Opt={0};
 
+int &Confirmation::ExitEffective()
+{
+	return WINPORT(ConsoleBackgroundMode)(FALSE) ? ExitOrBknd : Exit;
+}
+
 static DWORD ApplyConsoleTweaks()
 {
 	DWORD tweaks = 0;
@@ -451,7 +456,7 @@ void SetConfirmations()
 	Builder.AddCheckbox(Msg::SetConfirmRemoveHotPlug, &Opt.Confirm.RemoveHotPlug);
 	Builder.AddCheckbox(Msg::SetConfirmAllowReedit, &Opt.Confirm.AllowReedit);
 	Builder.AddCheckbox(Msg::SetConfirmHistoryClear, &Opt.Confirm.HistoryClear);
-	Builder.AddCheckbox(Msg::SetConfirmExit, &Opt.Confirm.Exit);
+	Builder.AddCheckbox(Msg::SetConfirmExit, &Opt.Confirm.ExitEffective());
 	Builder.AddOKCancel();
 
 	Builder.ShowDialog();
@@ -617,6 +622,7 @@ void NotificationsConfig(NotificationsOptions &NotifOpt)
 
 	if (Builder.ShowDialog())
 	{
+		// nothing to do/sanitize here
 	}
 }
 

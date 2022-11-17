@@ -104,7 +104,7 @@ template <class T> void Array<T>::Add(size_t Items)
   {
     if (MaxSize!=0 && BufSize>MaxSize)
     {
-      ErrHandler.GeneralErrMsg(L"Maximum allowed array size (%u) is exceeded",MaxSize);
+      ErrHandler.GeneralErrMsg(L"Maximum allowed array size (%lu) is exceeded",MaxSize);
       ErrHandler.MemoryError();
     }
 

@@ -296,6 +296,7 @@ MountInfo::MountInfo(bool for_location_menu)
 		fprintf(stderr, "%s: no mountpoints found\n", __FUNCTION__);
 
 	} else if (for_location_menu) {
+		// TODO: honor Opt.RememberLogicalDrives
 		if (s_mount_info_threads != 0) {
 			fprintf(stderr, "%s: still %u old threads hanging around\n",
 				__FUNCTION__, (unsigned int)s_mount_info_threads);

@@ -191,34 +191,34 @@ FileList::~FileList()
 	delete Filter;
 }
 
-
 void FileList::DeleteListData(FileListItem **(&ListData),int &FileCount)
 {
 	if (ListData)
 	{
 		for (int I=0; I<FileCount; I++)
-		{
-			if (ListData[I]->CustomColumnNumber>0 && ListData[I]->CustomColumnData)
-			{
-				for (int J=0; J < ListData[I]->CustomColumnNumber; J++)
-					delete[] ListData[I]->CustomColumnData[J];
-
-				delete[] ListData[I]->CustomColumnData;
-			}
-
-			if (ListData[I]->UserFlags & PPIF_USERDATA)
-				free((void *)ListData[I]->UserData);
-
-			if (ListData[I]->DizText && ListData[I]->DeleteDiz)
-				delete[] ListData[I]->DizText;
-
-			delete ListData[I]; //!!!
-		}
+			delete ListData[I]; //!!! see ~FileListItem
 
 		free(ListData);
 		ListData=nullptr;
 		FileCount=0;
 	}
+}
+
+FileListItem::~FileListItem()
+{
+	if (CustomColumnNumber>0 && CustomColumnData)
+	{
+		for (int J=0; J < CustomColumnNumber; J++)
+			delete[] CustomColumnData[J];
+
+		delete[] CustomColumnData;
+	}
+
+	if (UserFlags & PPIF_USERDATA)
+		free((void *)UserData);
+
+	if (DizText && DeleteDiz)
+		delete[] DizText;
 }
 
 void FileList::Up(int Count)
@@ -3272,17 +3272,6 @@ uint64_t FileList::GetLastSelectedSize()
 }
 
 
-int FileList::GetLastSelectedItem(FileListItem *LastItem)
-{
-	if (LastSelPosition>=0 && LastSelPosition<FileCount)
-	{
-		*LastItem=*ListData[LastSelPosition];
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
 int FileList::GetCurName(FARString &strName)
 {
 	if (!FileCount)
@@ -4797,16 +4786,15 @@ void FileList::IfGoHome(wchar_t Drive)
 }
 
 
-BOOL FileList::GetItem(int Index,void *Dest)
+const void *FileList::GetItem(int Index)
 {
 	if (Index == -1 || Index == -2)
 		Index=GetCurrentPos();
 
 	if ((DWORD)Index >= (DWORD)FileCount)
-		return FALSE;
+		return nullptr;
 
-	*((FileListItem *)Dest)=*ListData[Index];
-	return TRUE;
+	return ListData[Index];
 }
 
 void FileList::ClearAllItem()

@@ -264,9 +264,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				ListData=pTemp;
 			}
 
-			ListData[FileCount] = new FileListItem;
-			ListData[FileCount]->Clear();
-			NewPtr=ListData[FileCount];
+			NewPtr = ListData[FileCount] = new FileListItem;
 			NewPtr->FileAttr = fdata.dwFileAttributes;
 			NewPtr->FileMode = fdata.dwUnixMode;
 			NewPtr->CreationTime = fdata.ftCreationTime;
@@ -398,7 +396,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				TwoDotsTimes[3]=fdata.ftChangeTime;
 			}
 
-			AddParentPoint(ListData[FileCount],FileCount,TwoDotsTimes,TwoDotsOwner,TwoDotsGroup);
+			InitParentPoint(ListData[FileCount],FileCount,TwoDotsTimes,TwoDotsOwner,TwoDotsGroup);
 
 			//if (NeedHighlight)
 			//	CtrlObject->HiFiles->GetHiColor(&ListData[FileCount],1);
@@ -707,17 +705,17 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 	for (int i=0; i < FileCount; i++)
 	{
-		ListData[FileListCount] = new FileListItem;
-		FileListItem *CurListData=ListData[FileListCount];
-		CurListData->Clear();
-
 		if (UseFilter && (Info.Flags & OPIF_USEFILTER))
+		{
 			//if (!(CurPanelData->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			if (!Filter->FileInFilter(PanelData[i].FindData))
 				continue;
+		}
 
 		if (!Opt.ShowHidden && (PanelData[i].FindData.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM)))
 			continue;
+
+		FileListItem *CurListData = ListData[FileListCount] = new FileListItem;
 
 		//memset(CurListData,0,sizeof(*CurListData));
 		PluginToFileListItem(&PanelData[i],CurListData);
@@ -755,10 +753,8 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 	if ((Info.Flags & OPIF_ADDDOTS) && !DotsPresent)
 	{
-		ListData[FileCount] = new FileListItem;
-		FileListItem *CurPtr = ListData[FileCount];
-		CurPtr->Clear();
-		AddParentPoint(CurPtr,FileCount);
+		FileListItem *CurPtr = ListData[FileCount] = new FileListItem;
+		InitParentPoint(CurPtr, FileCount);
 
 		if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
 			CtrlObject->HiFiles->GetHiColor(&CurPtr,1,(Info.Flags&OPIF_USEATTRHIGHLIGHTING)!=0);
@@ -917,9 +913,8 @@ void FileList::ReadSortGroups(bool UpdateFilterCurrentTime)
 }
 
 // Обнулить текущий CurPtr и занести предопределенные данные для каталога ".."
-void FileList::AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner,FARString Group)
+void FileList::InitParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times,FARString Owner,FARString Group)
 {
-	CurPtr->Clear();
 	CurPtr->FileAttr = FILE_ATTRIBUTE_DIRECTORY;
 	CurPtr->FileMode = S_IFDIR | S_IXUSR | S_IXGRP | S_IXOTH;
 	CurPtr->strName = L"..";

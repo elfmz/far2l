@@ -96,7 +96,7 @@ inline BOOL IsValidHeader(const unsigned char *Data, const unsigned char *DataEn
     && Data+MIN_HEADER_LEN+pHdr->FileNameLen+pHdr->ExtraFieldLen<DataEnd);
 }
 
-ULONGLONG GetFilePosition(HANDLE Handle)
+static ULONGLONG GetFilePosition(HANDLE Handle)
 {
   ULARGE_INTEGER ul;
   ul.QuadPart=0;

@@ -379,7 +379,6 @@ static ULONG ShellCalcCountOfItemsToDelete(Panel *SrcPanel, bool Wipe)
 void ShellDelete(Panel *SrcPanel, bool Wipe)
 {
 	SudoClientRegion scr;
-	//todo ChangePriority ChPriority(Opt.DelThreadPriority);
 	TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellDeleteMsg);
 	DeleteAllFolders = !Opt.Confirm.DeleteFolder;
 

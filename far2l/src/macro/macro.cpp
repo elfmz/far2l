@@ -3440,15 +3440,14 @@ static bool panelitemFunc(const TMacroFunction*)
 
 	int Index=(int)(P1.toInteger())-1;
 	int TypeInfo=(int)P2.toInteger();
-	FileListItem filelistItem;
 
 	if (TypePanel == TREE_PANEL)
 	{
-		TreeItem treeItem;
+		const TreeItem *treeItem = (const TreeItem *)SelPanel->GetItem(Index);
 
-		if (SelPanel->GetItem(Index,&treeItem) && !TypeInfo)
+		if (treeItem && !TypeInfo)
 		{
-			VMStack.Push(TVar(treeItem.strName));
+			VMStack.Push(TVar(treeItem->strName));
 			return true;
 		}
 	}
@@ -3459,91 +3458,92 @@ static bool panelitemFunc(const TMacroFunction*)
 		if (TypeInfo == 11)
 			SelPanel->ReadDiz();
 
-		if (!SelPanel->GetItem(Index,&filelistItem))
+		const FileListItem *filelistItem = (const FileListItem *)SelPanel->GetItem(Index);
+		if (!filelistItem)
 			TypeInfo=-1;
 
 		switch (TypeInfo)
 		{
 			case 0:  // Name
-				Ret=TVar(filelistItem.strName);
+				Ret=TVar(filelistItem->strName);
 				break;
 			case 1:  // ShortName obsolete, use Name
-				Ret=TVar(filelistItem.strName);
+				Ret=TVar(filelistItem->strName);
 				break;
 			case 2:  // FileAttr
-				Ret=TVar((int64_t)filelistItem.FileAttr);
+				Ret=TVar((int64_t)filelistItem->FileAttr);
 				break;
 			case 3:  // CreationTime
-				ConvertDate(filelistItem.CreationTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
+				ConvertDate(filelistItem->CreationTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
 				strDate += L" ";
 				strDate += strTime;
 				Ret=TVar(strDate.CPtr());
 				break;
 			case 4:  // AccessTime
-				ConvertDate(filelistItem.AccessTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
+				ConvertDate(filelistItem->AccessTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
 				strDate += L" ";
 				strDate += strTime;
 				Ret=TVar(strDate.CPtr());
 				break;
 			case 5:  // WriteTime
-				ConvertDate(filelistItem.WriteTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
+				ConvertDate(filelistItem->WriteTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
 				strDate += L" ";
 				strDate += strTime;
 				Ret=TVar(strDate.CPtr());
 				break;
 			case 6:  // FileSize
-				Ret=TVar((int64_t)filelistItem.FileSize);
+				Ret=TVar((int64_t)filelistItem->FileSize);
 				break;
 			case 7:  // PhysicalSize
-				Ret=TVar((int64_t)filelistItem.PhysicalSize);
+				Ret=TVar((int64_t)filelistItem->PhysicalSize);
 				break;
 			case 8:  // Selected
-				Ret=TVar((int64_t)((DWORD)filelistItem.Selected));
+				Ret=TVar((int64_t)((DWORD)filelistItem->Selected));
 				break;
 			case 9:  // NumberOfLinks
-				Ret=TVar((int64_t)filelistItem.NumberOfLinks);
+				Ret=TVar((int64_t)filelistItem->NumberOfLinks);
 				break;
 			case 10:  // SortGroup
-				Ret=filelistItem.SortGroup;
+				Ret=filelistItem->SortGroup;
 				break;
 			case 11:  // DizText
 			{
-				const wchar_t *LPtr=filelistItem.DizText;
+				const wchar_t *LPtr=filelistItem->DizText;
 				Ret=TVar(LPtr);
 				break;
 			}
 			case 12:  // Owner
-				Ret=TVar(filelistItem.strOwner);
+				Ret=TVar(filelistItem->strOwner);
 				break;
 			case 13:  // CRC32
-				Ret=TVar((int64_t)filelistItem.CRC32);
+				Ret=TVar((int64_t)filelistItem->CRC32);
 				break;
 			case 14:  // Position
-				Ret=filelistItem.Position;
+				Ret=filelistItem->Position;
 				break;
 			case 15:  // CreationTime (FILETIME)
-				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.CreationTime));
+				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem->CreationTime));
 				break;
 			case 16:  // AccessTime (FILETIME)
-				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.AccessTime));
+				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem->AccessTime));
 				break;
 			case 17:  // WriteTime (FILETIME)
-				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.WriteTime));
+				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem->WriteTime));
 				break;
 			case 18: // NumberOfStreams (deprecated)
-				Ret=TVar((int64_t)((filelistItem.FileAttr & FILE_ATTRIBUTE_DIRECTORY) ? 0 : 1));
+				Ret=TVar((int64_t)((filelistItem->FileAttr & FILE_ATTRIBUTE_DIRECTORY) ? 0 : 1));
 				break;
 			case 19: // StreamsSize (deprecated)
 				Ret=TVar((int64_t)0);
 				break;
 			case 20:  // ChangeTime
-				ConvertDate(filelistItem.ChangeTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
+				ConvertDate(filelistItem->ChangeTime,strDate,strTime,8,FALSE,FALSE,TRUE,TRUE);
 				strDate += L" ";
 				strDate += strTime;
 				Ret=TVar(strDate.CPtr());
 				break;
 			case 21:  // ChangeTime (FILETIME)
-				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem.ChangeTime));
+				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem->ChangeTime));
 				break;
 		}
 	}

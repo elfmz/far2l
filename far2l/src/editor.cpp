@@ -5813,7 +5813,7 @@ int Editor::EditorControl(int Command,void *Param)
 				col->StartPos=curcol.StartPos-X1;
 				col->EndPos=curcol.EndPos-X1;
 				col->Color=curcol.Color;
-				if (Command == ECTL_ADDTRUECOLOR)
+				if (Command == ECTL_GETTRUECOLOR)
 				{
 					EditorTrueColor *tcol = (EditorTrueColor *)Param;
 					tcol->TrueFore = curcol.TrueFore;

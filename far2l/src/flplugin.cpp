@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "panelmix.hpp"
 #include "mix.hpp"
+#include "ChunkedData.hpp"
 
 /*
    В стеке ФАРова панель не хранится - только плагиновые!
@@ -221,107 +222,88 @@ void FileList::FreePluginPanelItem(PluginPanelItem *pi)
 		free((void*)pi->UserData);
 }
 
-size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
+size_t FileList::FileListToPluginItem2(FileListItem *fi, PluginPanelItem *pi)
 {
-	size_t size=sizeof(*pi);
-	size+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
-	size+=fi->strOwner.IsEmpty()?0:sizeof(wchar_t)*(fi->strOwner.GetLength()+1);
-	size+=fi->strGroup.IsEmpty()?0:sizeof(wchar_t)*(fi->strGroup.GetLength()+1);
-	size+=fi->DizText?sizeof(wchar_t)*(wcslen(fi->DizText)+1):0;
-	size+=fi->CustomColumnNumber*sizeof(wchar_t*);
+	if (pi) { // first setup trivial stuff
+		pi->FindData.nFileSize = fi->FileSize;
+		pi->FindData.nPhysicalSize = fi->PhysicalSize;
+		pi->FindData.dwFileAttributes = fi->FileAttr;
+		pi->FindData.dwUnixMode = fi->FileMode;
+		pi->FindData.ftLastWriteTime = fi->WriteTime;
+		pi->FindData.ftCreationTime = fi->CreationTime;
+		pi->FindData.ftLastAccessTime = fi->AccessTime;
+		pi->NumberOfLinks = fi->NumberOfLinks;
+		pi->Flags = fi->Selected ? fi->UserFlags | PPIF_SELECTED : fi->UserFlags;
+		pi->CustomColumnNumber = fi->CustomColumnNumber;
 
-	for (int ii=0; ii<fi->CustomColumnNumber; ii++)
-	{
-		size+=fi->CustomColumnData[ii]?sizeof(wchar_t)*(wcslen(fi->CustomColumnData[ii])+1):0;
+		// following may be changed later to non-NULL
+		pi->CustomColumnData = nullptr;
+		pi->Description = nullptr;
+		pi->Owner = nullptr;
+		pi->Group = nullptr;
 	}
 
-	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA))
-	{
-		size+=*(DWORD *)fi->UserData;
+	ChunkedData data(pi);
+	data.Inflate(sizeof(*pi));
+
+	// append CustomColumnData prior wchar-s as sizeof(wchar_t *) >= sizeof(wchar_t)
+	// so its more alignment/space efficient to put it at beginning
+	if (fi->CustomColumnNumber) {
+		data.Align(sizeof(wchar_t *));
+		data.Inflate(fi->CustomColumnNumber * sizeof(wchar_t *));
+		if (pi) {
+			pi->CustomColumnData = (wchar_t **)data.Recent();
+		}
 	}
 
-	if (pi)
-	{
-		char* data=(char*)(pi+1);
-
-		pi->FindData.lpwszFileName=wcscpy((wchar_t*)data,fi->strName);
-		data+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
-		pi->FindData.nFileSize=fi->FileSize;
-		pi->FindData.nPhysicalSize=fi->PhysicalSize;
-		pi->FindData.dwFileAttributes=fi->FileAttr;
-		pi->FindData.dwUnixMode=fi->FileMode;
-		pi->FindData.ftLastWriteTime=fi->WriteTime;
-		pi->FindData.ftCreationTime=fi->CreationTime;
-		pi->FindData.ftLastAccessTime=fi->AccessTime;
-		pi->NumberOfLinks=fi->NumberOfLinks;
-		pi->Flags=fi->UserFlags;
-
-		if (fi->Selected) pi->Flags|=PPIF_SELECTED;
-
-		pi->CustomColumnNumber=fi->CustomColumnNumber;
-		pi->CustomColumnData=(wchar_t**)data;
-		data+=fi->CustomColumnNumber*sizeof(wchar_t*);
-
-		for (int ii=0; ii<fi->CustomColumnNumber; ii++)
-		{
-			if (!fi->CustomColumnData[ii])
-			{
-				((const wchar_t**)(pi->CustomColumnData))[ii]=nullptr;
-			}
-			else
-			{
-				((const wchar_t**)(pi->CustomColumnData))[ii]=wcscpy((wchar_t*)data,fi->CustomColumnData[ii]);
-				data+=sizeof(wchar_t)*(wcslen(fi->CustomColumnData[ii])+1);
-			}
+	data.Align(sizeof(wchar_t));
+	for (int i = 0; i < fi->CustomColumnNumber; ++i) {
+		data.Append(fi->CustomColumnData[i]);
+		if (pi) {
+			((const wchar_t**)(pi->CustomColumnData))[i] = (const wchar_t *)data.Recent();
 		}
-
-		if (!fi->DizText)
-		{
-			pi->Description=nullptr;
-		}
-		else
-		{
-			pi->Description=wcscpy((wchar_t*)data,fi->DizText);
-			data+=sizeof(wchar_t)*(wcslen(fi->DizText)+1);
-		}
-
-		pi->CRC32=fi->CRC32;
-		pi->Reserved[0]=pi->Reserved[1]=0;
-
-		if (fi->strOwner.IsEmpty())
-		{
-			pi->Owner=nullptr;
-		}
-		else
-		{
-			pi->Owner=wcscpy((wchar_t*)data,fi->strOwner);
-			data+= sizeof(wchar_t) * (wcslen(fi->strOwner) + 1);
-		}
-
-		if (fi->strGroup.IsEmpty())
-		{
-			pi->Group=nullptr;
-		}
-		else
-		{
-			pi->Group=wcscpy((wchar_t*)data,fi->strGroup);
-			data+= sizeof(wchar_t) * (wcslen(fi->strGroup) + 1);
-		}
-
-		// copy user data at the end to avoid alignment troubles(hooting)
-		if (fi->UserData&&(fi->UserFlags&PPIF_USERDATA))
-		{
-			DWORD Size=*(DWORD *)fi->UserData;
-			pi->UserData=(DWORD_PTR)data;
-			memcpy((void *)pi->UserData,(const void *)fi->UserData,Size);
-			//data+=Size;
-		}
-		else
-			pi->UserData=fi->UserData;
-
 	}
 
-	return size;
+	data.Append(fi->strName);
+	if (pi) {
+		pi->FindData.lpwszFileName = (wchar_t *)data.Recent();
+	}
+
+	if (fi->DizText) {
+		data.Append(fi->DizText);
+		if (pi) {
+			pi->Description = (const wchar_t *)data.Recent();
+		}
+	}
+
+	if (!fi->strOwner.IsEmpty()) {
+		data.Append(fi->strOwner);
+		if (pi) {
+			pi->Owner = (const wchar_t *)data.Recent();
+		}
+	}
+
+	if (!fi->strGroup.IsEmpty()) {
+		data.Append(fi->strGroup);
+		if (pi) {
+			pi->Group = (const wchar_t *)data.Recent();
+		}
+	}
+
+	// copy user data at the end to avoid alignment gaps after
+	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA) != 0) {
+		const DWORD ud_size = *(const DWORD *)fi->UserData;
+		data.Align((ud_size >= 8) ? 8 : 4);
+		data.Append((const void *)fi->UserData, ud_size);
+		if (pi) {
+			pi->UserData = (DWORD_PTR)data.Recent();
+		}
+	}
+	else if (pi) {
+		pi->UserData = fi->UserData;
+	}
+
+	return data.Length();
 }
 
 void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)

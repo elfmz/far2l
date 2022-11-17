@@ -4,6 +4,10 @@
 
 #include "FARString.hpp"
 
+#define CONFIG_INI "settings/config.ini"
+
+void ConfigLegacyUpgrade();
+
 class ConfigSection
 {
 protected:
@@ -83,8 +87,6 @@ public:
 		{ SetBytes(name, (const unsigned char *)&pod, sizeof(pod)); }
 	void RemoveKey(const std::string &name);
 };
-
-void CheckForConfigUpgrade();
 
 class ConfigReaderScope
 {

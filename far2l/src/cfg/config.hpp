@@ -133,7 +133,12 @@ struct Confirmation
 	int Drag;
 	int Delete;
 	int DeleteFolder;
-	int Exit;
+
+	int Exit;        // see ExitEffective()
+	int ExitOrBknd;  // see ExitEffective()
+	/// returns reference to Exit or ExitOrBknd - depending of background mode availability
+	int &ExitEffective();
+
 	int Esc;  // Для CheckForEsc
 	/* $ 12.03.2002 VVM
 	  + Opt.EscTwiceToInterrupt
@@ -532,8 +537,6 @@ struct Options
 	int FullScreenHelp;
 	int HelpTabSize;
 
-	int HelpURLRules; // =0 отключить возможность запуска URL-приложений
-
 	// запоминать логические диски и не опрашивать каждый раз. Для предотвращения "просыпания" "зеленых" винтов.
 	int RememberLogicalDrives;
 	/*
@@ -565,7 +568,6 @@ struct Options
 	int ExecuteUseAppPath;
 	int ExecuteFullTitle;
 	int ExecuteSilentExternal;
-	FARString strExecuteBatchType;
 
 	DWORD PluginMaxReadData;
 	int UseNumPad;
@@ -574,7 +576,6 @@ struct Options
 
 	DWORD ShowTimeoutDelFiles; // таймаут в процессе удаления (в ms)
 	DWORD ShowTimeoutDACLFiles;
-	int DelThreadPriority; // приоритет процесса удаления, по умолчанию = THREAD_PRIORITY_NORMAL
 
 	//int CPAJHefuayor; // производное от "Close Plugin And Jump:
 	// Highly experimental feature, use at your own risk"

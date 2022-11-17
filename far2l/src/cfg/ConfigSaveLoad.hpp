@@ -1,5 +1,5 @@
 #pragma once
 
-void ReadConfig();
+void LoadConfig();
 void AssertConfigLoaded();
 void SaveConfig(int Ask);

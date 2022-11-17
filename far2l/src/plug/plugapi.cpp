@@ -746,7 +746,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				{&Opt.Confirm.RemoveConnection,FCS_DISCONNECTNETWORKDRIVE},
 				{&Opt.Confirm.AllowReedit,FCS_RELOADEDITEDFILE},
 				{&Opt.Confirm.HistoryClear,FCS_CLEARHISTORYLIST},
-				{&Opt.Confirm.Exit,FCS_EXIT},
+				{&Opt.Confirm.ExitEffective(),FCS_EXIT},
 			};
 
 			for (size_t I=0; I < ARRAYSIZE(OSys); ++I)

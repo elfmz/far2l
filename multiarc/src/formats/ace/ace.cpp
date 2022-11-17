@@ -72,7 +72,7 @@ struct ACEHEADER
 static HANDLE ArcHandle;
 static DWORD NextPosition,FileSize,SFXSize;
 static struct ACEHEADER MainHeader;
-int HostOS=0, UnpVer=0;
+static int HostOS=0, UnpVer=0;
 
 #if defined(CALC_CRC)
 #define CRCPOLY 0xEDB88320

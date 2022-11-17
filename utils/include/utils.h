@@ -333,6 +333,21 @@ template <typename ARRAY_T, class CHAR_T>
 	dst[i] = 0;
 }
 
+template <class V, class A>
+	inline V AlignUp(V v, A a)
+{
+	const auto r = v % a;
+	return r ? v + (a - (A)r) : v;
+}
+
+template <class V, class A>
+	inline V AlignDown(V v, A a)
+{
+	const auto r = v % a;
+	return v - r;
+}
+
+
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);
 

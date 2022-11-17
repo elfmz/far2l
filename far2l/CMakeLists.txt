@@ -110,6 +110,7 @@ src/cfg/AllXLats.cpp
 src/cfg/config.cpp
 src/cfg/ConfigSaveLoad.cpp
 src/cfg/ConfigRW.cpp
+src/cfg/ConfigLegacy.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp
 
@@ -154,6 +155,7 @@ src/mix/RegExp.cpp
 src/mix/strmix.cpp
 src/mix/FSFileFlags.cpp
 src/mix/StrCells.cpp
+src/mix/ChunkedData.cpp
 )
 
 # Set target names for the executables

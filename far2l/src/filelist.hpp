@@ -47,117 +47,52 @@ class FileFilter;
 
 struct FileListItem
 {
+	FileListItem() = default;
+	~FileListItem();
+
+	FileListItem(const FileListItem&) = delete;
+	FileListItem& operator=(const FileListItem &fliCopy) = delete;
+
+////
+
 	FARString strName;
 	FARString strOwner, strGroup;
 	FARString strCustomData;
 
-	uint64_t FileSize;
-	uint64_t PhysicalSize;
+	uint64_t FileSize{0};
+	uint64_t PhysicalSize{0};
 
-	FILETIME CreationTime;
-	FILETIME AccessTime;
-	FILETIME WriteTime;
-	FILETIME ChangeTime;
+	FILETIME CreationTime{0};
+	FILETIME AccessTime{0};
+	FILETIME WriteTime{0};
+	FILETIME ChangeTime{0};
 
-	wchar_t *DizText;
-	wchar_t **CustomColumnData;
+	wchar_t *DizText{nullptr};
+	wchar_t **CustomColumnData{nullptr};
 
-	DWORD_PTR UserData;
+	DWORD_PTR UserData{0};
 
-	HighlightDataColor Colors; // 5 DWORDs
+	HighlightDataColor Colors{0}; // 5 DWORDs
 
-	DWORD NumberOfLinks;
-	DWORD UserFlags;
-	DWORD FileAttr;
-	DWORD FileMode;
-	DWORD CRC32;
+	DWORD NumberOfLinks{0};
+	DWORD UserFlags{0};
+	DWORD FileAttr{0};
+	DWORD FileMode{0};
+	DWORD CRC32{0};
 
-	int Position;
-	int SortGroup;
-	int CustomColumnNumber;
+	int Position{0};
+	int SortGroup{0};
+	int CustomColumnNumber{0};
 
-	bool Selected;
-	bool PrevSelected;
-	bool DeleteDiz;
-	uint8_t ShowFolderSize;
+	bool Selected{false};
+	bool PrevSelected{false};
+	bool DeleteDiz{false};
+	uint8_t ShowFolderSize{0};
 
 	/// temporary values used to optimize sorting, they fit into
 	/// 8-bytes alignment gap so there is no memory waisted
-	unsigned short FileNamePos;	// offset from beginning of StrName
-	unsigned short FileExtPos; // offset from FileNamePos
-
-	void Clear()
-	{
-		strName.Clear();
-		strOwner.Clear();
-		strGroup.Clear();
-		strCustomData.Clear();;
-
-		FileSize = 0;
-		PhysicalSize = 0;
-
-		memset(&CreationTime, 0, sizeof(CreationTime));
-		memset(&AccessTime, 0, sizeof(AccessTime));
-		memset(&WriteTime, 0, sizeof(WriteTime));
-		memset(&ChangeTime, 0, sizeof(ChangeTime));
-
-		DizText = nullptr;
-		CustomColumnData = nullptr;;
-
-		UserData = 0;
-
-		memset(&Colors, 0, sizeof(HighlightDataColor));
-
-		NumberOfLinks = 0;
-		UserFlags = 0;
-		FileAttr = 0;
-		FileMode = 0;
-		CRC32 = 0;
-
-		Position = 0;
-		SortGroup = 0;
-		CustomColumnNumber = 0;
-
-		Selected = false;
-		PrevSelected = false;
-		DeleteDiz = false;
-		ShowFolderSize = 0;
-	}
-
-	FileListItem& operator=(const FileListItem &fliCopy)
-	{
-		if (this != &fliCopy)
-		{
-			Selected = fliCopy.Selected;
-			PrevSelected = fliCopy.PrevSelected;
-			ShowFolderSize = fliCopy.ShowFolderSize;
-			Colors=fliCopy.Colors;
-			NumberOfLinks = fliCopy.NumberOfLinks;
-			UserFlags = fliCopy.UserFlags;
-			UserData = fliCopy.UserData;
-			Position = fliCopy.Position;
-			SortGroup = fliCopy.SortGroup;
-			DizText = fliCopy.DizText;
-			DeleteDiz = fliCopy.DeleteDiz;
-			strOwner = fliCopy.strOwner;
-			strGroup = fliCopy.strGroup;
-			CustomColumnData = fliCopy.CustomColumnData;
-			CustomColumnNumber = fliCopy.CustomColumnNumber;
-			CRC32 = fliCopy.CRC32;
-			FileAttr = fliCopy.FileAttr;
-			FileMode = fliCopy.FileMode;
-			CreationTime=fliCopy.CreationTime;
-			AccessTime=fliCopy.AccessTime;
-			WriteTime=fliCopy.WriteTime;
-			ChangeTime=fliCopy.ChangeTime;
-			FileSize = fliCopy.FileSize;
-			PhysicalSize = fliCopy.PhysicalSize;
-			strName = fliCopy.strName;
-			strCustomData = fliCopy.strCustomData;
-		}
-
-		return *this;
-	}
+	unsigned short FileNamePos{0};	// offset from beginning of StrName
+	unsigned short FileExtPos{0}; // offset from FileNamePos
 };
 
 struct PluginsListItem
@@ -267,7 +202,6 @@ class FileList:public Panel
 		virtual void ClearLastGetSelection();
 
 		virtual uint64_t GetLastSelectedSize();
-		virtual int GetLastSelectedItem(FileListItem *LastItem);
 
 		virtual int GetCurName(FARString &strName);
 		virtual int GetCurBaseName(FARString &strName);
@@ -301,7 +235,7 @@ class FileList:public Panel
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
 		void ProcessCopyKeys(int Key);
 		void ReadSortGroups(bool UpdateFilterCurrentTime=true);
-		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"",FARString Group=L"");
+		void InitParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"",FARString Group=L"");
 		int  ProcessOneHostFile(int Idx);
 
 	protected:
@@ -405,8 +339,7 @@ class FileList:public Panel
 
 		FARString &CreateFullPathName(const wchar_t *Name,DWORD FileAttr, FARString &strDest,int UNC);
 
-
-		virtual BOOL GetItem(int Index,void *Dest);
+		virtual const void *GetItem(int Index);
 		virtual BOOL UpdateKeyBar();
 
 		virtual void IfGoHome(wchar_t Drive);

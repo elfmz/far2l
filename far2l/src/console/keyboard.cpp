@@ -1616,7 +1616,7 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
    5. "Oem" и 5 десятичных цифр (с ведущими нулями)
    6. только модификаторы (Alt/RAlt/Ctrl/RCtrl/Shift)
 */
-uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
+uint32_t KeyNameToKey(const wchar_t *Name)
 {
 	if (!Name || !*Name)
 		return KEY_INVALID;
@@ -1732,6 +1732,12 @@ uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 	*/
 	// _SVS(SysLog(L"Key=0x%08X (%c) => '%ls'",Key,(Key?Key:' '),Name));
 	return (!Key || Pos < Len)? KEY_INVALID : Key;
+}
+
+uint32_t KeyNameToKey(const wchar_t *Name, uint32_t Default)
+{
+	const uint32_t Key = KeyNameToKey(Name);
+	return (Key == KEY_INVALID) ? Default : Key;
 }
 
 BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)

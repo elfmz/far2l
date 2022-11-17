@@ -176,6 +176,7 @@
    <word name="typeid"/>
    <word name="typename"/>
    <word name="virtual"/>
+   <word name="constexpr"/>
    <word name="xor"/>
    <word name="xor_eq"/>
    <word name="__based"/>

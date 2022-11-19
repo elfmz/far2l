@@ -791,6 +791,42 @@ int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplS
 	return ReplacedCount;
 }
 
+int ReplaceChars(FARString &strStr, wchar_t FindCh, wchar_t ReplCh)
+{
+	int ReplacedCount = 0;
+	size_t Pos, StartPos = 0;
+	while (strStr.Pos(Pos, FindCh, StartPos))
+	{
+		strStr.ReplaceChar(Pos, ReplCh);
+		++ReplacedCount;
+		StartPos = Pos + 1;
+	}
+	return ReplacedCount;
+}
+
+int ReplaceTabsBySpaces(FARString &strStr, size_t TabSize)
+{
+	int ReplacedCount = 0;
+	ssize_t Adjust = 0;
+	size_t Pos, StartPos = 0;
+	while (strStr.Pos(Pos, L'\t', StartPos))
+	{
+		if (TabSize > 1)
+		{
+			const size_t SpacesCount = TabSize - ((Pos + Adjust) % TabSize);
+			strStr.Replace(Pos, 1, L' ', SpacesCount);
+			Adjust+= SpacesCount;
+			Adjust--;
+		}
+		else
+			strStr.ReplaceChar(Pos, L' ');
+		++ReplacedCount;
+		StartPos = Pos + 1;
+	}
+	return ReplacedCount;
+}
+
+
 /*
 From PHP 4.x.x
 Форматирует исходный текст по заданной ширине, используя

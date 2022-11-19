@@ -134,11 +134,9 @@ void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
 	if (strMask.PosI(pos,L"%PATHEXT%"))
 	{
 		{
-			size_t IQ1=(strMask.At(pos+9) == L',' || strMask.At(pos+9) == L';')?10:9;
-			wchar_t *Ptr = strMask.GetBuffer();
 			// Если встречается %pathext%, то допишем в конец...
-			wmemmove(Ptr+pos,Ptr+pos+IQ1,strMask.GetLength()-pos-IQ1+1);
-			strMask.ReleaseBuffer();
+			size_t IQ1=(strMask.At(pos+9) == L',' || strMask.At(pos+9) == L';')?10:9;
+			strMask.Remove(pos, IQ1);
 		}
 		size_t posSeparator;
 
@@ -1132,13 +1130,8 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			            FilterDlg[ID_FF_SIZETOEDIT].strData);
 			bRelative = FilterDlg[ID_FF_DATERELATIVE].Selected!=0;
 
-			LPWSTR TimeBefore = FilterDlg[ID_FF_TIMEBEFOREEDIT].strData.GetBuffer();
-			TimeBefore[8] = TimeSeparator;
-			FilterDlg[ID_FF_TIMEBEFOREEDIT].strData.ReleaseBuffer(FilterDlg[ID_FF_TIMEBEFOREEDIT].strData.GetLength());
-
-			LPWSTR TimeAfter = FilterDlg[ID_FF_TIMEAFTEREDIT].strData.GetBuffer();
-			TimeAfter[8] = TimeSeparator;
-			FilterDlg[ID_FF_TIMEAFTEREDIT].strData.ReleaseBuffer(FilterDlg[ID_FF_TIMEAFTEREDIT].strData.GetLength());
+			FilterDlg[ID_FF_TIMEBEFOREEDIT].strData.ReplaceChar(8, TimeSeparator);
+			FilterDlg[ID_FF_TIMEAFTEREDIT].strData.ReplaceChar(8, TimeSeparator);
 
 			StrToDateTime(FilterDlg[bRelative?ID_FF_DAYSAFTEREDIT:ID_FF_DATEAFTEREDIT].strData,FilterDlg[ID_FF_TIMEAFTEREDIT].strData,DateAfter,DateFormat,DateSeparator,TimeSeparator,bRelative);
 			StrToDateTime(FilterDlg[bRelative?ID_FF_DAYSBEFOREEDIT:ID_FF_DATEBEFOREEDIT].strData,FilterDlg[ID_FF_TIMEBEFOREEDIT].strData,DateBefore,DateFormat,DateSeparator,TimeSeparator,bRelative);

@@ -217,17 +217,16 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 void CreatePath(FARString &strPath)
 {
 	wchar_t *ChPtr = strPath.GetBuffer();
-//	wchar_t *DirPart = ChPtr;
-	BOOL bEnd = FALSE;
+	bool bEnd = false;
 
 	for (;;)
 	{
 		if (!*ChPtr || IsSlash(*ChPtr))
 		{
-			if (!*ChPtr)
-				bEnd = TRUE;
-
-			*ChPtr = 0;
+			if (*ChPtr)
+				*ChPtr = 0;
+			else
+				bEnd = true;
 
 			if (apiCreateDirectory(strPath, nullptr))
 				TreeList::AddTreeName(strPath);
@@ -236,7 +235,6 @@ void CreatePath(FARString &strPath)
 				break;
 
 			*ChPtr = GOOD_SLASH;
-//			DirPart = ChPtr+1;
 		}
 
 		ChPtr++;

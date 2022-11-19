@@ -385,13 +385,13 @@ void SetColors()
 			if (GroupsCode==12)
 			{
 				//                   было sizeof(Palette)
-				memcpy(Palette,DefaultPalette,SizeArrayPalette);
+				memcpy(Palette, DefaultPalette, SIZE_ARRAY_PALETTE);
 				break;
 			}
 
 			if (GroupsCode==13)
 			{
-				memcpy(Palette,BlackPalette,SizeArrayPalette);
+				memcpy(Palette, BlackPalette, SIZE_ARRAY_PALETTE);
 				break;
 			}
 

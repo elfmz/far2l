@@ -1465,32 +1465,21 @@ int FileList::ProcessKey(int Key)
 								PluginMode=FALSE;
 							}
 
-							size_t pos;
-
 							// проверим путь к файлу
-							if (FindLastSlash(pos,strFileName) && pos)
+							FARString strDir = strFileName;
+							if (CutToSlash(strDir, false)
+							  && !IsLocalRootPath(strDir)
+							  && !apiPathIsDir(strDir))
 							{
-								if (!(HasPathPrefix(strFileName) && pos==3))
+								SetMessageHelp(L"WarnEditorPath");
+
+								if (Message(MSG_WARNING,2,Msg::Warning,
+										Msg::EditNewPath1,
+										Msg::EditNewPath2,
+										Msg::EditNewPath3,
+										Msg::HYes,Msg::HNo))
 								{
-									wchar_t *lpwszFileName = strFileName.GetBuffer();
-									wchar_t wChr = lpwszFileName[pos+1];
-									lpwszFileName[pos+1]=0;
-									DWORD CheckFAttr=apiGetFileAttributes(lpwszFileName);
-
-									if (CheckFAttr == INVALID_FILE_ATTRIBUTES)
-									{
-										SetMessageHelp(L"WarnEditorPath");
-
-										if (Message(MSG_WARNING,2,Msg::Warning,
-													Msg::EditNewPath1,
-													Msg::EditNewPath2,
-													Msg::EditNewPath3,
-													Msg::HYes,Msg::HNo))
-											return FALSE;
-									}
-
-									lpwszFileName[pos+1]=wChr;
-									//strFileName.ReleaseBuffer (); это не надо так как строка не поменялась
+									return FALSE;
 								}
 							}
 						}

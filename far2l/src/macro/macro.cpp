@@ -5451,9 +5451,10 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 
 bool KeyMacro::UnregMacroFunction(size_t Index)
 {
-	if (Index < 0) // size_t < 0 ???
-	{
-		if (AMacroFunction)
+	if (Index == (size_t)-1)
+	{	
+		fprintf(stderr, "If you see this in output - uncomment code below and check again\n");
+		/*if (AMacroFunction)
 		{
 			TMacroFunction *pTemp;
 			for (size_t I=0; I < CMacroFunction; ++I)
@@ -5474,15 +5475,12 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 			AllocatedFuncCount=0;
 			free(AMacroFunction);
 			AMacroFunction=nullptr;
-		}
+		} */
 	}
+	else if (AMacroFunction && Index < CMacroFunction)
+		AMacroFunction[Index].Code=MCODE_F_NOFUNC;
 	else
-	{
-		if (AMacroFunction && Index < CMacroFunction)
-			AMacroFunction[Index].Code=MCODE_F_NOFUNC;
-		else
-			return false;
-	}
+		return false;
 
 	return true;
 }
@@ -6371,7 +6369,7 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 {
 	if (MacroLIB)
 	{
-		for (int I=0; I < 2; ++I)
+		for (int I=0;; ++I)
 		{
 			int Pos,Len;
 			MacroRecord *MPtr=nullptr;
@@ -6412,7 +6410,7 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 			}
 
 			// здесь смотрим на MACRO_COMMON
-			if (ChechMode != -1 && !I && UseCommon)
+			if (I == 0 && ChechMode != -1 && UseCommon)
 				ChechMode=MACRO_COMMON;
 			else
 				break;

@@ -434,7 +434,7 @@ static void RegValueSerializeBinary(std::ofstream &os, const BYTE *lpData, DWORD
 	}
 }
 
-static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData, DWORD cbData)
+static void RegValueSerialize(std::ofstream &os, DWORD Type, const VOID *lpData, DWORD cbData)
 {
 	static_assert(sizeof(DWORD) == sizeof(unsigned int ), "bad DWORD size");
 	static_assert(sizeof(DWORD64) == sizeof(unsigned long long), "bad DWORD64 size");
@@ -483,12 +483,12 @@ static void RegValueSerialize(std::ofstream &os, DWORD Type, const BYTE *lpData,
 		
 		case REG_BINARY: {
 			os << "BINARY" << std::endl;
-			RegValueSerializeBinary(os, lpData, cbData);
+			RegValueSerializeBinary(os, (const BYTE *)lpData, cbData);
 		} break;
 
 		default: {
 			os << std::hex << Type << std::endl;
-			RegValueSerializeBinary(os, lpData, cbData);
+			RegValueSerializeBinary(os, (const BYTE *)lpData, cbData);
 		}
 	}
 }

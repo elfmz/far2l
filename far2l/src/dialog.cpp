@@ -1689,7 +1689,6 @@ void Dialog::ShowDialog(unsigned ID)
 		return;
 
 	FARString strStr;
-	wchar_t *lpwszStr;
 	DialogItemEx *CurItem;
 	int X,Y;
 	unsigned I,DrawItemCount;
@@ -1829,13 +1828,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 					if (LenText < CW-2)
 					{
-						int iLen = (int)strStr.GetLength();
-						lpwszStr = strStr.GetBuffer(iLen + 3);
-						{
-							wmemmove(lpwszStr+1, lpwszStr, iLen);
-							*lpwszStr = lpwszStr[++iLen] = L' ';
-						}
-						strStr.ReleaseBuffer(iLen+1);
+						strStr.Insert(0, L' ');
 						LenText=LenStrItem(I, strStr);
 					}
 
@@ -3039,9 +3032,7 @@ int Dialog::ProcessKey(int Key)
 									*/
 									if (CurPos > Length)
 									{
-										LPWSTR Str=strStr.GetBuffer(CurPos);
-										wmemset(Str+Length,L' ',CurPos-Length);
-										strStr.ReleaseBuffer(CurPos);
+										strStr.Append(L' ', CurPos - Length);
 									}
 
 									FARString strAdd;

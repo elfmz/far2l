@@ -803,8 +803,6 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 	if (Key!=KEY_F4 && Key!=KEY_IDLE)
 		F4KeyOnly=false;
 
-	DWORD FNAttr;
-
 	if (Flags.Check(FFILEEDIT_REDRAWTITLE) && (((unsigned int)Key & 0x00ffffff) < KEY_END_FKEY || IS_INTERNAL_KEY_REAL((unsigned int)Key & 0x00ffffff)))
 		ShowConsoleTitle();
 
@@ -996,36 +994,19 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 				while (!Done) // бьемся до упора
 				{
-					size_t pos;
-
-					// проверим путь к файлу, может его уже снесли...
-					if (FindLastSlash(pos,strFullFileName))
-					{
-						wchar_t *lpwszPtr = strFullFileName.GetBuffer();
-						wchar_t wChr = lpwszPtr[pos+1];
-						lpwszPtr[pos+1]=0;
-
-						// В корне?
-						if (!IsLocalRootPath(lpwszPtr))
-						{
-							// а дальше? каталог существует?
-							if ((FNAttr=apiGetFileAttributes(lpwszPtr)) == INVALID_FILE_ATTRIBUTES ||
-							        !(FNAttr&FILE_ATTRIBUTE_DIRECTORY)
-							        //|| LocalStricmp(OldCurDir,FullFileName)  // <- это видимо лишнее.
-							   )
-								Flags.Set(FFILEEDIT_SAVETOSAVEAS);
-						}
-
-						lpwszPtr[pos+1]=wChr;
-						//strFullFileName.ReleaseBuffer (); так как ничего не поменялось то это лишнее.
-					}
-
-					if (Key == KEY_F2 &&
-					        (FNAttr=apiGetFileAttributes(strFullFileName)) != INVALID_FILE_ATTRIBUTES &&
-					        !(FNAttr&FILE_ATTRIBUTE_DIRECTORY)
-					   )
+					if (Key == KEY_F2 && apiPathIsFile(strFullFileName))
 					{
 						Flags.Clear(FFILEEDIT_SAVETOSAVEAS);
+					}
+					else if (!Flags.Check(FFILEEDIT_SAVETOSAVEAS))
+					{
+						FARString strDir = strFullFileName;
+						if (CutToSlash(strDir, false)  // проверим путь к файлу, может его уже снесли...
+						  && !IsLocalRootPath(strDir)  // В корне?
+						  && !apiPathIsDir(strDir))    // каталог существует?
+						{
+							Flags.Set(FFILEEDIT_SAVETOSAVEAS);
+						}
 					}
 
 					UINT codepage = m_codepage;

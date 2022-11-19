@@ -80,6 +80,8 @@ FARString& WINAPI QuoteSpaceOnly(FARString &strStr);
 FARString &RemoveChar(FARString &strStr,wchar_t Target,BOOL Dup=TRUE);
 wchar_t *InsertString(wchar_t *Str,int Pos,const wchar_t *InsStr,int InsSize=0);
 int ReplaceStrings(FARString &strStr,const wchar_t *FindStr,const wchar_t *ReplStr,int Count=-1,BOOL IgnoreCase=FALSE);
+int ReplaceChars(FARString &strStr, wchar_t FindCh, wchar_t ReplCh);
+int ReplaceTabsBySpaces(FARString &strStr, size_t TabSize = 1);
 
 const wchar_t *GetCommaWord(const wchar_t *Src,FARString &strWord,wchar_t Separator=L',');
 

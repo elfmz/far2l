@@ -69,52 +69,52 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void SanitizeHistoryCounts();
 
 // Стандартный набор разделителей
-static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
+static constexpr const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
 
 // Стандартный набор разделителей для функции Xlat
-static const wchar_t *WordDivForXlat0 = L" \t!#$%^&*()+|=\\/@?";
+static constexpr const wchar_t *WordDivForXlat0 = L" \t!#$%^&*()+|=\\/@?";
 
-static const wchar_t *szCtrlDot = L"Ctrl.";
-static const wchar_t *szCtrlShiftDot = L"CtrlShift.";
+static constexpr const wchar_t *szCtrlDot = L"Ctrl.";
+static constexpr const wchar_t *szCtrlShiftDot = L"CtrlShift.";
 
 // Section
-static const char *NSecColors = "Colors";
-static const char *NSecScreen = "Screen";
-static const char *NSecCmdline = "Cmdline";
-static const char *NSecInterface = "Interface";
-static const char *NSecInterfaceCompletion = "Interface/Completion";
-static const char *NSecViewer = "Viewer";
-static const char *NSecDialog = "Dialog";
-static const char *NSecEditor = "Editor";
-static const char *NSecNotifications = "Notifications";
-static const char *NSecXLat = "XLat";
-static const char *NSecSystem = "System";
-static const char *NSecSystemExecutor = "System/Executor";
-static const char *NSecSystemNowell = "System/Nowell";
-static const char *NSecLanguage = "Language";
-static const char *NSecConfirmations = "Confirmations";
-static const char *NSecPluginConfirmations = "PluginConfirmations";
-static const char *NSecPanel = "Panel";
-static const char *NSecPanelLeft = "Panel/Left";
-static const char *NSecPanelRight = "Panel/Right";
-static const char *NSecPanelLayout = "Panel/Layout";
-static const char *NSecPanelTree = "Panel/Tree";
-static const char *NSecLayout = "Layout";
-static const char *NSecDescriptions = "Descriptions";
-static const char *NSecKeyMacros = "KeyMacros";
-static const char *NSecPolicies = "Policies";
-static const char *NSecSavedHistory = "SavedHistory";
-static const char *NSecSavedViewHistory = "SavedViewHistory";
-static const char *NSecSavedFolderHistory = "SavedFolderHistory";
-static const char *NSecSavedDialogHistory = "SavedDialogHistory";
-static const char *NSecCodePages = "CodePages";
-static const char *NParamHistoryCount = "HistoryCount";
-static const char *NSecVMenu = "VMenu";
+static constexpr const char *NSecColors = "Colors";
+static constexpr const char *NSecScreen = "Screen";
+static constexpr const char *NSecCmdline = "Cmdline";
+static constexpr const char *NSecInterface = "Interface";
+static constexpr const char *NSecInterfaceCompletion = "Interface/Completion";
+static constexpr const char *NSecViewer = "Viewer";
+static constexpr const char *NSecDialog = "Dialog";
+static constexpr const char *NSecEditor = "Editor";
+static constexpr const char *NSecNotifications = "Notifications";
+static constexpr const char *NSecXLat = "XLat";
+static constexpr const char *NSecSystem = "System";
+static constexpr const char *NSecSystemExecutor = "System/Executor";
+static constexpr const char *NSecSystemNowell = "System/Nowell";
+static constexpr const char *NSecLanguage = "Language";
+static constexpr const char *NSecConfirmations = "Confirmations";
+static constexpr const char *NSecPluginConfirmations = "PluginConfirmations";
+static constexpr const char *NSecPanel = "Panel";
+static constexpr const char *NSecPanelLeft = "Panel/Left";
+static constexpr const char *NSecPanelRight = "Panel/Right";
+static constexpr const char *NSecPanelLayout = "Panel/Layout";
+static constexpr const char *NSecPanelTree = "Panel/Tree";
+static constexpr const char *NSecLayout = "Layout";
+static constexpr const char *NSecDescriptions = "Descriptions";
+static constexpr const char *NSecKeyMacros = "KeyMacros";
+static constexpr const char *NSecPolicies = "Policies";
+static constexpr const char *NSecSavedHistory = "SavedHistory";
+static constexpr const char *NSecSavedViewHistory = "SavedViewHistory";
+static constexpr const char *NSecSavedFolderHistory = "SavedFolderHistory";
+static constexpr const char *NSecSavedDialogHistory = "SavedDialogHistory";
+static constexpr const char *NSecCodePages = "CodePages";
+static constexpr const char *NParamHistoryCount = "HistoryCount";
+static constexpr const char *NSecVMenu = "VMenu";
 
 static FARString strKeyNameConsoleDetachKey;
 static bool g_config_ready = false;
 
-static const class OptSerializer
+static constexpr class OptSerializer
 {
 	const char *_section;
 	const char *_key;
@@ -229,7 +229,7 @@ public:
 
 } s_opt_serializers[] =
 {
-	{true,  NSecColors, "CurrentPalette", (WORD)(unsigned int)SizeArrayPalette, (BYTE*)Palette, (const BYTE*)DefaultPalette},
+	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
@@ -744,3 +744,4 @@ void SaveConfig(int Ask)
 
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
+

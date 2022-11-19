@@ -236,7 +236,7 @@ public:
 	{true,  NSecScreen, "KeyBar", &Opt.ShowKeyBar, 1},
 	{true,  NSecScreen, "ScreenSaver", &Opt.ScreenSaver, 0},
 	{true,  NSecScreen, "ScreenSaverTime", &Opt.ScreenSaverTime, 5},
-	{false, NSecScreen, "DeltaXY", (DWORD *)&Opt.ScrSize.DeltaXY, 0},
+	{false, NSecScreen, "DeltaXY", &Opt.ScrSize.dwDeltaXY, 0},
 
 	{true,  NSecCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat, 0},
 	{true,  NSecCmdline, "PromptFormat", &Opt.CmdLine.strPromptFormat, L"$p$# "},

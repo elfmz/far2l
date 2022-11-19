@@ -1244,7 +1244,7 @@ static bool ScanFile(const wchar_t *Name)
 					// Копируем буфер чтения в буфер сравнения
 					//todo
 					if (cpi->CodePage==CP_WIDE_BE) {
-						WideReverse((const wchar_t*)readBufferB, readBuffer, bufferCount);
+						RevBytes(readBuffer, (const wchar_t*)readBufferB, bufferCount);
 						buffer = readBuffer;
 					} else {
 						buffer = (wchar_t*)readBufferB;

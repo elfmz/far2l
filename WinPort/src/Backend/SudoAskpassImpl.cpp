@@ -22,6 +22,7 @@ class SudoAskpassScreen
 	} _result = RES_PENDING;
 	bool _password_expected = false;
 	bool _need_repaint = false;
+	uint64_t _panno_hash = 0;
 
 	SMALL_RECT _rect{0}; // filled by Repaint()
 
@@ -39,12 +40,10 @@ class SudoAskpassScreen
 		} else if (rec.wVirtualKeyCode == VK_BACK) {
 			if (!_input.empty()) {
 				_input.resize(_input.size() - 1);
-				PaintPasswordPanno();
 			}
 
 		} else if (rec.uChar.UnicodeChar) {
 			_input+= rec.uChar.UnicodeChar;
-			PaintPasswordPanno();
 		}
 	}
 
@@ -153,8 +152,7 @@ class SudoAskpassScreen
 
 		const wchar_t glyphs[] = {L'■', L'▲', L'●'};
 
-		const uint64_t hash64 = TypedPasswordHash();
-		uint32_t hash32 = uint32_t(hash64 ^ (hash64 >> 32));
+		uint32_t hash32 = uint32_t(_panno_hash ^ (_panno_hash >> 32));
 
 		for (SHORT i = -2; i < 2; ++i, hash32>>= 8) {
 			CHAR_INFO ci{};
@@ -191,12 +189,16 @@ public:
 	bool Loop()
 	{
 		for (;;) {
-			if (g_winport_con_in->WaitForNonEmpty(1000, _cip)) {
+			if (g_winport_con_in->WaitForNonEmpty(700, _cip)) {
 				DispatchInput();
-			}/* else {
-				// repaint periodically to ensure not overpainted by somebody else
-				_need_repaint = true;
-			} */
+
+			} else {
+				uint64_t hash = TypedPasswordHash();
+				if (_panno_hash != hash) {
+					_panno_hash  = hash;
+					_need_repaint = true;
+				}
+			}
 
 			if (_result != RES_PENDING)
 				return _result == RES_OK;

@@ -296,7 +296,11 @@ struct NowellOptions
 
 struct ScreenSizes
 {
-	COORD DeltaXY;            // на сколько поз. изменить размеры для распахнутого экрана
+	union
+	{
+		COORD DeltaXY;            // на сколько поз. изменить размеры для распахнутого экрана
+		DWORD dwDeltaXY;
+	};
 	int WScreenSizeSet;
 	COORD WScreenSize[4];
 };

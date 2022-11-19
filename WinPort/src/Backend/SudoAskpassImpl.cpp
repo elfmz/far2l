@@ -124,15 +124,14 @@ class SudoAskpassScreen
 		if (_input.empty())
 			return 0;
 
-		uint64_t hash64 = crc64(0x1215814a,
+		uint64_t hash64 = crc64(0x1215b814a,
 			(const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
 
 		const std::string &salt_file = InMyConfig("askpass.salt");
 		std::string salt;
 		if (!ReadWholeFile(salt_file.c_str(), salt, 0x1000)) {
-			typedef std::mt19937 rng_type;
-			std::uniform_int_distribution<rng_type::result_type> udist(1, 127);
-			rng_type rng;
+			std::uniform_int_distribution<std::mt19937::result_type> udist(1, 127);
+			std::mt19937 rng;
 			rng.seed(getpid() ^ time(NULL));
 			for (size_t i = 0; i < 0x20; ++i) {
 				salt+= udist(rng);

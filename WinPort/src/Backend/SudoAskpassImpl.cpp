@@ -1,6 +1,7 @@
 #include <vector>
 #include <utils.h>
 #include <crc64.h>
+#include <fstream>
 #include <SavedScreen.h>
 #include "Backend.h"
 #include "SudoAskpassImpl.h"
@@ -125,21 +126,25 @@ class SudoAskpassScreen
 
 		const wchar_t glyphs[] = {L'■', L'▲', L'●'};
 
-		uint64_t hash64 = _input.empty() ? 0 : crc64(0x1215814a,
-			(const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
+		uint64_t hash64 = 0;
 
-		for (SHORT i = -4; i < 4; ++i, hash64>>= 8) {
-			CHAR_INFO ci{};
-			ci.Attributes = BACKGROUND_RED;
-			switch ((hash64 & 0xf) % 4) {
-				case 0: ci.Attributes|= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
-				case 1: ci.Attributes|= FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
-				case 2: ci.Attributes|= FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
-				case 3: ci.Attributes|= FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
+		if (!_input.empty()) {
+			hash64 = crc64(0x1215814a, (const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
+			try {
+				std::ifstream f_mid("/etc/machine-id");
+				std::string mid;
+				if (std::getline(f_mid, mid)) {
+					hash64 = crc64(hash64, (const unsigned char *)mid.c_str(), mid.size());
+				}
+			} catch(std::exception &) {
 			}
+		}
 
-			CI_SET_WCHAR(ci, glyphs[((hash64 >> 4) & 0xf) % ARRAYSIZE(glyphs)]);
 
+		for (SHORT i = -2; i < 2; ++i, hash64>>= 8) {
+			CHAR_INFO ci{};
+			ci.Attributes|= BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+			CI_SET_WCHAR(ci, glyphs[(hash64 & 0xff) % ARRAYSIZE(glyphs)]);
 			COORD pos{SHORT(SHORT(_width / 2) + i), _rect.Bottom};
 			g_winport_con_out->Write(ci, pos);
 		}

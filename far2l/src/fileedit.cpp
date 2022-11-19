@@ -1687,25 +1687,20 @@ void FileEditor::BaseContentWriter::EncodeAndWrite(UINT codepage, const wchar_t 
 			Wide2MB(Str, Length, _tmpstr);
 			Write(_tmpstr.data(), _tmpstr.size());
 		}
-		else if (codepage == CP_WIDE_BE)
+		else 
 		{
-			if (_tmpwstr.size() < Length)
-				_tmpwstr.resize(Length + 0x20);
+			ssize_t cnt = (codepage == CP_WIDE_BE) ? Length * sizeof(wchar_t)
+				: WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
 
-			WideReverse(Str, (wchar_t *)_tmpwstr.data(), Length);
-			Write(_tmpwstr.data(), Length * sizeof(wchar_t));
-
-		} else {
-			int cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
 			if (cnt <= 0)
 				return;
 
-			if (_tmpstr.size() < (size_t)cnt)
-				_tmpstr.resize(cnt + 0x20);
+			if (_tmpcvec.size() < (size_t)cnt)
+				_tmpcvec.resize(cnt + 0x20);
 
-			cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, (char *)_tmpstr.data(), _tmpstr.size(), nullptr, nullptr);
+			cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, _tmpcvec.data(), _tmpcvec.size(), nullptr, nullptr);
 			if (cnt > 0)
-				Write(_tmpstr.data(), cnt);
+				Write(_tmpcvec.data(), cnt);
 		}
 }
 

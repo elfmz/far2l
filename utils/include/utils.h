@@ -4,6 +4,7 @@
 #include <cstdarg>
 #include <sys/types.h>
 #include "cctweaks.h"
+#include "BitTwiddle.hpp"
 #include "MatchWildcard.hpp"
 #include "WideMB.h"
 #include "Escaping.h"
@@ -290,15 +291,6 @@ bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2);
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
-
-template <class POD_T>
-	void ZeroFill(POD_T &dst)
-{
-	static_assert ( std::is_pod<POD_T>::value, "ZeroFill should be used with POD types only");
-	static_assert ( sizeof(dst) != sizeof(void *), "ZeroFill should not be used with pointers");
-	memset(&dst, 0, sizeof(dst));
-}
-
 template <class STRING_T, typename ARRAY_T>
 	void StrAssignArray(STRING_T &s, const ARRAY_T &a)
 {
@@ -331,20 +323,6 @@ template <typename ARRAY_T, class CHAR_T>
 		dst[i] = src[i];
 	}
 	dst[i] = 0;
-}
-
-template <class V, class A>
-	inline V AlignUp(V v, A a)
-{
-	const auto r = v % a;
-	return r ? v + (a - (A)r) : v;
-}
-
-template <class V, class A>
-	inline V AlignDown(V v, A a)
-{
-	const auto r = v % a;
-	return v - r;
 }
 
 

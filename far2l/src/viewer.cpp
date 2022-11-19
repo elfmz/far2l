@@ -755,12 +755,7 @@ void Viewer::ShowHex()
 				}
 				else
 				{
-					WCHAR OutChar = Ch;
-
-					if (VM.CodePage == CP_UTF16BE) {
-						OutChar = WideReverse(OutChar);
-					}
-
+					WCHAR OutChar = (VM.CodePage == CP_UTF16BE) ? RevBytes(uint16_t(Ch)) : Ch;
 
 					int OutStrLen=StrLength(OutStr);
 					swprintf(OutStr+OutStrLen,ARRAYSIZE(OutStr)-OutStrLen,L"%02X%02X ", (unsigned int)HIBYTE(OutChar), (unsigned int)LOBYTE(OutChar));
@@ -2956,7 +2951,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 
 		if (VM.CodePage == CP_WIDE_BE && !Raw) {
-			WideReverse((wchar_t *)Buf, ResultedCount);
+			RevBytes(Buf, ResultedCount);
 		}
 
 		return ResultedCount;

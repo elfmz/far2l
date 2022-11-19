@@ -21,17 +21,6 @@
 #include "UtfConvert.hpp"
 
 
-template <class V>
-	static void RevBytes(V *values, size_t count)
-{
-	for (size_t i = 0; i < count; ++i) {
-		switch (sizeof(V)) {
-			case 2: values[i] = (V)__builtin_bswap16((uint16_t)values[i]); break;
-			case 4: values[i] = (V)__builtin_bswap32((uint32_t)values[i]); break;
-		}
-	}
-}
-
 //			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
 //			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
 template <class SRC_T, class DST_T>
@@ -862,7 +851,7 @@ extern "C" {
 			break;
 
 		case CP_UTF32BE:
-			ret = wide_2_bytes<uint16_t, true>( flags, src, srclen, dst, dstlen );
+			ret = wide_2_bytes<uint32_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF8:

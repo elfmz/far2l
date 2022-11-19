@@ -275,7 +275,7 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 				}
 
 				if (bBigEndian)
-					WideReverse(wReadBuf, ReadSize / sizeof(wReadBuf[0]));
+					RevBytes(wReadBuf, ReadSize / sizeof(wReadBuf[0]));
 
 				ReadPos = 0;
 				ReadBufPtr = wReadBuf;
@@ -443,7 +443,7 @@ wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, 
 
 					break;
 				}
-				lpwszDest[nLength] = WideReverse((wchar_t)fgetwc(file));
+				lpwszDest[nLength] = RevBytes((wchar_t)fgetwc(file));
 				if (lpwszDest[nLength] == '\n')
 					break;
 			}
@@ -664,8 +664,8 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 
 		nExitCode = UTF32Reader->GetString((uint32_t **)DestStr, Length, nCodePage == CP_UTF32BE);
 		if (nExitCode && nCodePage == CP_UTF32BE)
-				WideReverse(*DestStr, Length);
-			
+			RevBytes(*DestStr, Length);
+
 		return nExitCode;
 	}
 
@@ -680,7 +680,7 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 		if (sizeof(wchar_t)==2) {
 			*DestStr = (LPWSTR)u16;
 			if (nExitCode && nCodePage == CP_UTF32BE)
-					WideReverse(*DestStr, Length);
+				RevBytes(*DestStr, Length);
 			return nExitCode;
 		}
 		Str = (char *)u16;

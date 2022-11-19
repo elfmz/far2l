@@ -249,7 +249,7 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 	const bool DataEndsInside = (Data + DataLen > CPtr() && Data + DataLen <= CEnd());
 	assert(DataStartsInside == DataEndsInside);
 
-	if (!Len && !DataLen)
+	if (UNLIKELY(!Len && !DataLen))
 		return *this;
 
 	const size_t NewLength = m_pContent->GetLength() + DataLen - Len;
@@ -264,7 +264,8 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 		Content *NewData = Content::Create(NewLength);
 		wmemcpy(NewData->GetData(), m_pContent->GetData(), Pos);
 		wmemcpy(NewData->GetData() + Pos, Data, DataLen);
-		wmemcpy(NewData->GetData() + Pos + DataLen, m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
+		wmemcpy(NewData->GetData() + Pos + DataLen,
+			m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
 		m_pContent->DecRef();
 		m_pContent = NewData;
 	}
@@ -272,6 +273,47 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 	m_pContent->SetLength(NewLength);
 
 	return *this;
+}
+
+FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t Ch, size_t Count)
+{
+	// Pos & Len must be valid
+	assert(Pos <= m_pContent->GetLength());
+	assert(Len <= m_pContent->GetLength());
+	assert(Pos + Len <= m_pContent->GetLength());
+
+	if (UNLIKELY(!Len && !Count))
+		return *this;
+
+	const size_t NewLength = m_pContent->GetLength() + Count - Len;
+	if (m_pContent->GetRefs() == 1 && NewLength <= m_pContent->GetCapacity())
+	{
+		wmemmove(m_pContent->GetData() + Pos + Count,
+			m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
+		wmemset(m_pContent->GetData() + Pos, Ch, Count);
+	}
+	else
+	{
+		Content *NewData = Content::Create(NewLength);
+		wmemcpy(NewData->GetData(), m_pContent->GetData(), Pos);
+		wmemset(NewData->GetData() + Pos, Ch, Count);
+		wmemcpy(NewData->GetData() + Pos + Count,
+			m_pContent->GetData() + Pos + Len, m_pContent->GetLength() - Pos - Len);
+		m_pContent->DecRef();
+		m_pContent = NewData;
+	}
+
+	m_pContent->SetLength(NewLength);
+
+	return *this;
+}
+
+wchar_t FARString::ReplaceChar(size_t Pos, wchar_t Ch)
+{
+	assert(Pos < m_pContent->GetLength());
+	PrepareForModify();
+	std::swap(m_pContent->GetData()[Pos], Ch);
+	return Ch;
 }
 
 FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
@@ -289,30 +331,6 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 
 	return *this;
 }
-
-FARString& FARString::Append(wchar_t Ch, size_t Count)
-{
-	size_t nNewLength = m_pContent->GetLength() + Count;
-	PrepareForModify(nNewLength);
-	wmemset(m_pContent->GetData() + m_pContent->GetLength(), Ch, Count);
-	m_pContent->SetLength(nNewLength);
-
-	return *this;
-}
-
-FARString& FARString::Insert(size_t Pos, wchar_t Ch, size_t Count)
-{
-	if (LIKELY(Pos <= m_pContent->GetLength())) {
-		size_t nNewLength = m_pContent->GetLength() + Count;
-		PrepareForModify(nNewLength);
-		wmemmove(m_pContent->GetData() + Pos + Count, m_pContent->GetData() + Pos, m_pContent->GetLength() - Pos);
-		wmemset(m_pContent->GetData() + Pos, Ch, Count);
-		m_pContent->SetLength(nNewLength);
-	}
-
-	return *this;
-}
-
 
 FARString& FARString::Copy(const FARString &Str)
 {
@@ -441,6 +459,13 @@ FARString& FARString::Clear()
 	return *this;
 }
 
+void FARString::Reserve(size_t DesiredCapacity)
+{
+	if (DesiredCapacity > m_pContent->GetCapacity())
+	{
+		PrepareForModify(DesiredCapacity);
+	}
+}
 
 static void FARStringFmt(FARString &str, bool append, const wchar_t *format, va_list argptr)
 {
@@ -573,6 +598,47 @@ std::string FARString::GetMB() const
 	Wide2MB(CPtr(), GetLength(), out);
 	return out;
 }
+
+bool FARString::Contains(wchar_t Ch, size_t nStartPos) const
+{
+	return wcschr(m_pContent->GetData() + nStartPos, Ch) != nullptr;
+}
+
+bool FARString::Contains(const wchar_t *lpwszFind, size_t nStartPos) const
+{
+	return wcsstr(m_pContent->GetData() + nStartPos, lpwszFind) != nullptr;
+}
+
+bool FARString::Begins(const FARString &strFind) const
+{
+	return m_pContent->GetLength() >= strFind.m_pContent->GetLength()
+		&& wmemcmp(m_pContent->GetData(),
+			strFind.m_pContent->GetData(), strFind.m_pContent->GetLength()) == 0;
+}
+
+bool FARString::Begins(const wchar_t *lpwszFind) const
+{
+	const size_t nFind = wcslen(lpwszFind);
+
+	return m_pContent->GetLength() >= nFind
+		&& wcsncmp(m_pContent->GetData(), lpwszFind, nFind) == 0;
+}
+
+bool FARString::Ends(const FARString &strFind) const
+{
+	return m_pContent->GetLength() >= strFind.m_pContent->GetLength()
+		&& wmemcmp(m_pContent->GetData() + m_pContent->GetLength() - strFind.m_pContent->GetLength(),
+			strFind.m_pContent->GetData(), strFind.m_pContent->GetLength()) == 0;
+}
+
+bool FARString::Ends(const wchar_t *lpwszFind) const
+{
+	const size_t nFind = wcslen(lpwszFind);
+
+	return m_pContent->GetLength() >= nFind
+		&& wmemcmp(m_pContent->GetData() + m_pContent->GetLength() - nFind, lpwszFind, nFind) == 0;
+}
+
 
 size_t FARString::CellsCount() const
 {

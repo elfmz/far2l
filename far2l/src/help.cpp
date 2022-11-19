@@ -200,9 +200,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	wchar_t *ReadStr;
 	FARString strSplitLine;
 	int Formatting=TRUE,RepeatLastLine,BreakProcess;
-	size_t PosTab;
 	const int MaxLength=X2-X1-1;
-	FARString strTabSpace;
 	FARString strPath;
 
 	if (StackData.strHelpTopic.At(0)==HelpBeginLink)
@@ -294,13 +292,6 @@ int Help::ReadHelp(const wchar_t *Mask)
 	int NearTopicFound=0;
 	wchar_t PrevSymbol=0;
 
-	LPWSTR TabSpace=strTabSpace.GetBuffer(CtrlTabSize+1);
-	for (int i=0; i < CtrlTabSize; i++)
-	{
-		TabSpace[i]=L' ';
-	}
-	strTabSpace.ReleaseBuffer(CtrlTabSize);
-
 	StartPos = (DWORD)-1;
 	LastStartPos = (DWORD)-1;
 	int RealMaxLength;
@@ -388,16 +379,8 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 		RepeatLastLine=FALSE;
 
-		while (strReadStr.Pos(PosTab,L'\t'))
-		{
-			wchar_t *lpwszPtr = strReadStr.GetBuffer();
-			lpwszPtr[PosTab]=L' ';
-			strReadStr.ReleaseBuffer();
-
-			if (CtrlTabSize > 1) // заменим табулятор по всем праивилам
-				strReadStr.Insert(PosTab, strTabSpace.CPtr(), CtrlTabSize - (PosTab % CtrlTabSize));
-		}
-
+		// заменим табулятор по всем праивилам
+		ReplaceTabsBySpaces(strReadStr, CtrlTabSize);
 		RemoveTrailingSpaces(strReadStr);
 
 		if (!strCtrlStartPosChar.IsEmpty() && wcsstr(strReadStr, strCtrlStartPosChar))
@@ -458,12 +441,13 @@ m1:
 			{
 				if (!StrCmpNI(strReadStr.CPtr(),L"<!Macro:",8) && CtrlObject)
 				{
-					if (strReadStr.Pos(PosTab,L'>') && strReadStr.At(PosTab-1) != L'!')
+					size_t PosEnd;
+					if (!strReadStr.Pos(PosEnd, L'>') || strReadStr.At(PosEnd - 1) != L'!')
 						continue;
 
-					strMacroArea=strReadStr.SubStr(8,PosTab-1-8); //???
-					MacroProcess=true;
-					MI=0;
+					strMacroArea = strReadStr.SubStr(8, PosEnd - 1 - 8); //???
+					MacroProcess=  true;
+					MI = 0;
 					continue;
 				}
 

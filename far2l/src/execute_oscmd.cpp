@@ -170,7 +170,6 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 	  return TRUE;
 	}
 	*/
-	strDir.ReleaseBuffer();
 
 	if (SetPanel->GetType()==FILE_PANEL && SetPanel->GetMode()==PLUGIN_PANEL)
 	{

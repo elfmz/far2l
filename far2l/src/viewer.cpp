@@ -2428,19 +2428,13 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 
 		size_t PercentLength=Max(strPercent.strValue().GetLength(),(size_t)3);
 		size_t Length=Max(Min(static_cast<int>(MAX_WIDTH_MESSAGE-2),StrLength(MsgStr)),40)-PercentLength-2;
-		wchar_t *Progress=strProgress.GetBuffer(Length);
-
-		if (Progress)
-		{
-			size_t CurPos=Min(Percent,100)*Length/100;
-			wmemset(Progress,BoxSymbols[BS_X_DB],CurPos);
-			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
-			strProgress.ReleaseBuffer(Length);
-			FormatString strTmp;
-			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
-			strProgress+=strTmp;
-		}
-
+		size_t CurPos=Min(Percent,100)*Length/100;
+		strProgress.Reserve(Length);
+		strProgress.Append(BoxSymbols[BS_X_DB], CurPos);
+		strProgress.Append(BoxSymbols[BS_X_B0], Length - CurPos);
+		FormatString strTmp;
+		strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
+		strProgress+=strTmp;
 	}
 
 	Message(0,0,Msg::ViewSearchTitle,(SearchHex?Msg::ViewSearchingHex:Msg::ViewSearchingFor),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());

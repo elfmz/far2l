@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "colors.hpp"
 
-unsigned char DefaultPalette[]=
+unsigned char DefaultPalette[SIZE_ARRAY_PALETTE]=
 {
 	F_WHITE|B_CYAN,                         // COL_MENUTEXT,
 	F_WHITE|B_BLACK,                        // COL_MENUSELECTEDTEXT,
@@ -215,8 +215,7 @@ unsigned char DefaultPalette[]=
 	F_YELLOW|B_LIGHTGRAY,                   // COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
 };
 
-
-unsigned char BlackPalette[]=
+unsigned char BlackPalette[SIZE_ARRAY_PALETTE]=
 {
 	F_BLACK|B_LIGHTGRAY,                    // COL_MENUTEXT,
 	F_LIGHTGRAY|B_BLACK,                    // COL_MENUSELECTEDTEXT,
@@ -395,12 +394,11 @@ unsigned char BlackPalette[]=
 };
 
 
-int SizeArrayPalette=ARRAYSIZE(DefaultPalette);
-unsigned char Palette[ARRAYSIZE(DefaultPalette)];
+unsigned char Palette[SIZE_ARRAY_PALETTE];
 
 BYTE FarColorToReal(int FarColor)
 {
-	return (FarColor<COL_FIRSTPALETTECOLOR)?FarColor:Palette[(FarColor-COL_FIRSTPALETTECOLOR)%SizeArrayPalette];
+	return (FarColor<COL_FIRSTPALETTECOLOR)?FarColor:Palette[(FarColor-COL_FIRSTPALETTECOLOR)%SIZE_ARRAY_PALETTE];
 }
 
 /*

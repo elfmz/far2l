@@ -385,71 +385,59 @@ void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
 	strColumnTitles.Clear();
 	strColumnWidths.Clear();
 
-	for (int I=0; I<ColumnCount; I++)
+	for (int I = 0; I < ColumnCount; ++I)
 	{
-		FARString strType;
-		int ColumnType=ViewColumnTypes[I] & 0xff;
-		strType = ColumnSymbol[ColumnType];
-
-		if (ColumnType==NAME_COLUMN)
+		const int ColumnType = ViewColumnTypes[I] & 0xff;
+		strColumnTitles += ColumnSymbol[ColumnType];
+		switch (ColumnType)
 		{
-			if (ViewColumnTypes[I] & COLUMN_MARK)
-				strType += L"M";
+			case NAME_COLUMN:
+				if (ViewColumnTypes[I] & COLUMN_MARK)
+					strColumnTitles += L'M';
 
-			if (ViewColumnTypes[I] & COLUMN_NAMEONLY)
-				strType += L"O";
+				if (ViewColumnTypes[I] & COLUMN_NAMEONLY)
+					strColumnTitles += L'O';
 
-			if (ViewColumnTypes[I] & COLUMN_RIGHTALIGN)
-				strType += L"R";
+				if (ViewColumnTypes[I] & COLUMN_RIGHTALIGN)
+					strColumnTitles += L'R';
+			break;
+
+			case SIZE_COLUMN: case PHYSICAL_COLUMN:
+				if (ViewColumnTypes[I] & COLUMN_COMMAS)
+					strColumnTitles += L'C';
+
+				if (ViewColumnTypes[I] & COLUMN_ECONOMIC)
+					strColumnTitles += L'E';
+
+				if (ViewColumnTypes[I] & COLUMN_FLOATSIZE)
+					strColumnTitles += L'F';
+
+				if (ViewColumnTypes[I] & COLUMN_THOUSAND)
+					strColumnTitles += L'T';
+			break;
+
+			case WDATE_COLUMN: case ADATE_COLUMN: case CDATE_COLUMN: case CHDATE_COLUMN:
+				if (ViewColumnTypes[I] & COLUMN_BRIEF)
+					strColumnTitles += L'B';
+
+				if (ViewColumnTypes[I] & COLUMN_MONTH)
+					strColumnTitles += L'M';
+			break;
+
+			case OWNER_COLUMN:
+				if (ViewColumnTypes[I] & COLUMN_FULLOWNER)
+					strColumnTitles += L'L';
+			break;
 		}
 
-		if (ColumnType==SIZE_COLUMN || ColumnType==PHYSICAL_COLUMN)
+		strColumnWidths.AppendFormat(L"%d", ViewColumnWidths[I]);
+		if (ViewColumnWidthsTypes[I] == PERCENT_WIDTH)
+			strColumnWidths += L'%';
+
+		if (I < ColumnCount - 1)
 		{
-			if (ViewColumnTypes[I] & COLUMN_COMMAS)
-				strType += L"C";
-
-			if (ViewColumnTypes[I] & COLUMN_ECONOMIC)
-				strType += L"E";
-
-			if (ViewColumnTypes[I] & COLUMN_FLOATSIZE)
-				strType += L"F";
-
-			if (ViewColumnTypes[I] & COLUMN_THOUSAND)
-				strType += L"T";
-		}
-
-		if (ColumnType==WDATE_COLUMN || ColumnType==ADATE_COLUMN || ColumnType==CDATE_COLUMN  || ColumnType==CHDATE_COLUMN)
-		{
-			if (ViewColumnTypes[I] & COLUMN_BRIEF)
-				strType += L"B";
-
-			if (ViewColumnTypes[I] & COLUMN_MONTH)
-				strType += L"M";
-		}
-
-		if (ColumnType==OWNER_COLUMN)
-		{
-			if (ViewColumnTypes[I] & COLUMN_FULLOWNER)
-				strType += L"L";
-		}
-
-		strColumnTitles += strType;
-		wchar_t *lpwszWidth = strType.GetBuffer(20);
-		_itow(ViewColumnWidths[I],lpwszWidth,10);
-		strType.ReleaseBuffer();
-		strColumnWidths += strType;
-
-		switch (ViewColumnWidthsTypes[I])
-		{
-			case PERCENT_WIDTH:
-				strColumnWidths += L"%";
-				break;
-		}
-
-		if (I<ColumnCount-1)
-		{
-			strColumnTitles += L",";
-			strColumnWidths += L",";
+			strColumnTitles += L',';
+			strColumnWidths += L',';
 		}
 	}
 }
@@ -494,7 +482,7 @@ const FARString FormatStr_Attribute( DWORD FileAttributes, DWORD UnixMode, int W
 	}
 
 	if (Width > 0)
-		strResult<<fmt::Expand(Width)<<fmt::Truncate(Width);
+		strResult<<fmt::Size(Width);
 
 	strResult<<OutStr;
 
@@ -592,10 +580,10 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 			PtrName=Msg::ListSymLink;
 		}
 
-		strResult<<fmt::Expand(Width)<<fmt::Truncate(Width);
+		strResult<<fmt::Size(Width);
 		if (StrLength(PtrName) <= Width-2) {
-			// precombine into tmp string to avoid miseffect of fmt::Expand etc (#1137)
-			strResult<<FARString(L"<").Append(PtrName).Append(L">");
+			// precombine into tmp string to avoid miseffect of fmt::Size etc (#1137)
+			strResult<<FARString(L"<").Append(PtrName).Append(L'>');
 		} else {
 			strResult<<PtrName;
 		}

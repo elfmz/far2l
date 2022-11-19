@@ -323,7 +323,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		*/
 		case ACTL_GETCOLOR:
 		{
-			if ((int)(INT_PTR)Param < SizeArrayPalette && (int)(INT_PTR)Param >= 0)
+			if ((int)(INT_PTR)Param < SIZE_ARRAY_PALETTE && (int)(INT_PTR)Param >= 0)
 				return (int)((unsigned int)Palette[(int)(INT_PTR)Param]);
 
 			return -1;
@@ -336,9 +336,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		case ACTL_GETARRAYCOLOR:
 		{
 			if (Param)
-				memcpy(Param,Palette,SizeArrayPalette);
+				memcpy(Param, Palette, SIZE_ARRAY_PALETTE);
 
-			return SizeArrayPalette;
+			return SIZE_ARRAY_PALETTE;
 		}
 		/*
 		  Param=FARColor{
@@ -356,7 +356,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 				if (Pal->Colors &&
 				        Pal->StartIndex >= 0 &&
-				        Pal->StartIndex+Pal->ColorCount <= SizeArrayPalette)
+				        Pal->StartIndex+Pal->ColorCount <= SIZE_ARRAY_PALETTE)
 				{
 					memmove(Palette+Pal->StartIndex,Pal->Colors,Pal->ColorCount);
 
@@ -1772,13 +1772,7 @@ static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
 	FARString strFullName;
 	strFullName = strPluginSearchPath;
 	strFullName += CurPanelItem->FindData.lpwszFileName;
-	wchar_t *lpwszFullName = strFullName.GetBuffer();
-
-	for (int I=0; lpwszFullName[I]; I++)
-		if (lpwszFullName[I]==L'\x1')
-			lpwszFullName[I]=GOOD_SLASH;
-
-	strFullName.ReleaseBuffer();
+	ReplaceChars(strFullName, L'\x1', GOOD_SLASH);
 	PluginPanelItem *DestItem=PluginDirList+DirListItemsNumber;
 	*DestItem=*CurPanelItem;
 
@@ -1798,15 +1792,10 @@ static void ScanPluginDir()
 	PluginPanelItem *PanelData=nullptr;
 	int ItemCount=0;
 	int AbortOp=FALSE;
-	FARString strDirName;
-	strDirName = strPluginSearchPath;
-	wchar_t *lpwszDirName = strDirName.GetBuffer();
-
-	for (int i=0; lpwszDirName[i]; i++)
-		if (lpwszDirName[i]=='\x1')
-			lpwszDirName[i]=lpwszDirName[i+1]? GOOD_SLASH : 0;
-
-	strDirName.ReleaseBuffer();
+	FARString strDirName = strPluginSearchPath;
+	ReplaceChars(strDirName, '\x1', GOOD_SLASH);
+	while (strDirName.GetLength() > 1 && strDirName.Ends(GOOD_SLASH))
+		strDirName.Truncate(strDirName.GetLength() - 1);
 	TruncStr(strDirName,30);
 	CenterStr(strDirName,strDirName,30);
 

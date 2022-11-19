@@ -1,7 +1,8 @@
+#include <random>
 #include <vector>
 #include <utils.h>
 #include <crc64.h>
-#include <fstream>
+#include <fcntl.h>
 #include <SavedScreen.h>
 #include "Backend.h"
 #include "SudoAskpassImpl.h"
@@ -118,6 +119,33 @@ class SudoAskpassScreen
 		PaintPasswordPanno();
 	}
 
+	uint64_t TypedPasswordHash()
+	{
+		if (_input.empty())
+			return 0;
+
+		uint64_t hash64 = crc64(0x1215814a,
+			(const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
+
+		const std::string &salt_file = InMyConfig("askpass.salt");
+		std::string salt;
+		if (!ReadWholeFile(salt_file.c_str(), salt, 0x1000)) {
+			typedef std::mt19937 rng_type;
+			std::uniform_int_distribution<rng_type::result_type> udist(1, 127);
+			rng_type rng;
+			rng.seed(getpid() ^ time(NULL));
+			for (size_t i = 0; i < 0x20; ++i) {
+				salt+= udist(rng);
+			}
+			FDScope fd(open(salt_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0600));
+			if (fd) {
+				WriteAll(fd, salt.c_str(), salt.size());
+			}
+		}
+
+		return crc64(hash64, (const unsigned char *)salt.c_str(), salt.size() * sizeof(*salt.c_str()));
+	}
+
 	void PaintPasswordPanno()
 	{
 		if (!_password_expected) {
@@ -126,25 +154,18 @@ class SudoAskpassScreen
 
 		const wchar_t glyphs[] = {L'■', L'▲', L'●'};
 
-		uint64_t hash64 = 0;
+		const uint64_t hash64 = TypedPasswordHash();
+		uint32_t hash32 = uint32_t(hash64 ^ (hash64 >> 32));
 
-		if (!_input.empty()) {
-			hash64 = crc64(0x1215814a, (const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
-			try {
-				std::ifstream f_mid("/etc/machine-id");
-				std::string mid;
-				if (std::getline(f_mid, mid)) {
-					hash64 = crc64(hash64, (const unsigned char *)mid.c_str(), mid.size());
-				}
-			} catch(std::exception &) {
-			}
-		}
-
-
-		for (SHORT i = -2; i < 2; ++i, hash64>>= 8) {
+		for (SHORT i = -2; i < 2; ++i, hash32>>= 8) {
 			CHAR_INFO ci{};
-			ci.Attributes|= BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-			CI_SET_WCHAR(ci, glyphs[(hash64 & 0xff) % ARRAYSIZE(glyphs)]);
+			ci.Attributes = BACKGROUND_RED;
+			switch ((hash32 & 0xf) % 3) {
+				case 0: ci.Attributes|= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
+				case 1: ci.Attributes|= FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
+				case 2: ci.Attributes|= FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
+			}
+			CI_SET_WCHAR(ci, glyphs[((hash32 >> 4) & 0xf) % ARRAYSIZE(glyphs)]);
 			COORD pos{SHORT(SHORT(_width / 2) + i), _rect.Bottom};
 			g_winport_con_out->Write(ci, pos);
 		}

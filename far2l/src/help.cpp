@@ -1392,15 +1392,10 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	// URL активатор - это ведь так просто :-)))
 	{
 		strNewTopic = StackData.strSelTopic;
-
-		if (strNewTopic.Pos(pos,L':') && strNewTopic.At(0) != L':') // наверное подразумевается URL
-		{
-			strNewTopic.ReplaceChar(pos, 0);
-			if (RunURL(strNewTopic.CPtr(), StackData.strSelTopic.CPtr()))
-			{
-				return FALSE;
-			}
-			strNewTopic.ReplaceChar(pos, L':');
+		if (strNewTopic.Begins("http:") || strNewTopic.Begins("https:") || strNewTopic.Begins("mailto:"))
+		{ // наверное подразумевается URL
+			farExecuteA(strNewTopic.GetMB().c_str(), EF_NOWAIT | EF_HIDEOUT | EF_NOCMDPRINT | EF_OPEN);
+			return FALSE;
 		}
 	}
 	// а вот теперь попробуем...

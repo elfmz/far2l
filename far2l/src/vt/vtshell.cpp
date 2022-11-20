@@ -23,6 +23,7 @@
 #include <StackSerializer.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
+#include "dirmix.hpp"
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
@@ -410,6 +411,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
 
 		const auto color_bpp = WINPORT(GetConsoleColorPalette)();
+		std::string askpass_app;
+		if (Opt.SudoEnabled) {
+			askpass_app = GetHelperPathName("far2l_askpass");
+		}
 
 		int r = fork();
 		if (r != 0) {
@@ -430,6 +435,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			default:
 				setenv("TERM", "xterm", 1);
 				unsetenv("COLORTERM");
+		}
+
+		if (!askpass_app.empty()) {
+			setenv("SUDO_ASKPASS", askpass_app.c_str(), 1);
 		}
 
 		setenv("COLORFGBG", colorfgbg, 1);

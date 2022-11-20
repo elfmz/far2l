@@ -167,7 +167,7 @@ SudoAskpassResult SudoAskpassServer::sRequestToServer(unsigned char code, std::s
 		fprintf(stderr, "sRequestToServer: no ipc\n");
 		return SAR_FAILED;
 	}
-	fprintf(stderr, "sRequestToServer: ipc_srv='%s'\n", ipc_srv);
+//	fprintf(stderr, "sRequestToServer: ipc_srv='%s'\n", ipc_srv);
 
 	SudoAskpassResult out = SAR_FAILED;
 	try {

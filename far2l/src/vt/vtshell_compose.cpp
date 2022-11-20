@@ -175,7 +175,8 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 
 	if (need_sudo) {
-		content+= StrPrintf("sudo sh -c \"cd \\\"%s\\\" && %s%s\"\n",
+		content+= Opt.SudoEnabled ? "sudo -A " : "sudo ";
+		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s%s\"\n",
 			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
 	} else {
 		content+= StrPrintf("cd \"%s\" && %s%s\n",

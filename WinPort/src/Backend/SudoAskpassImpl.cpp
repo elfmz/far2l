@@ -22,6 +22,8 @@ class SudoAskpassScreen
 	} _result = RES_PENDING;
 	bool _password_expected = false;
 	bool _need_repaint = false;
+
+	// 0 - password is empty, 1 - non-empty but yet not hashed, otherwise - hash value
 	uint64_t _panno_hash = 0;
 
 	SMALL_RECT _rect{0}; // filled by Repaint()
@@ -40,10 +42,20 @@ class SudoAskpassScreen
 		} else if (rec.wVirtualKeyCode == VK_BACK) {
 			if (!_input.empty()) {
 				_input.resize(_input.size() - 1);
+				if (_input.empty() && _password_expected && _panno_hash != 0) {
+					// immediately indicate password became empty
+					_panno_hash = 0;
+					_need_repaint = true;
+				}
 			}
 
 		} else if (rec.uChar.UnicodeChar) {
 			_input+= rec.uChar.UnicodeChar;
+			if (_password_expected && _panno_hash == 0) {
+				// immediately indicate password became non-empty
+				_panno_hash = 1;
+				_need_repaint = true;
+			}
 		}
 	}
 
@@ -142,7 +154,7 @@ class SudoAskpassScreen
 		}
 
 		hash64 = crc64(hash64, (const unsigned char *)salt.c_str(), salt.size() * sizeof(*salt.c_str()));
-		return hash64 ? hash64 : 1; // never zero for nonempty password
+		return (hash64 > 1) ? hash64 : 2; // bigger than 1 for nonempty password
 	}
 
 	void PaintPasswordPanno()
@@ -152,7 +164,9 @@ class SudoAskpassScreen
 		}
 
 		// if input is empty: paint 3 white squares
-		// else: paint 3 different glyphs of different colors all deduced from password
+		// if input is non-empty but not yet hashed: paint 3 yellow squares
+		// else: paint 3 different glyphs of different colors all deduced from hash
+
 		std::vector<wchar_t> glyphs{L'■', L'▲', L'●'};
 		std::vector<uint64_t> colors { // should be same size as glyphs
 			BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
@@ -164,18 +178,27 @@ class SudoAskpassScreen
 
 		for (SHORT i = 0, ii = SHORT(glyphs.size()); i < ii; ++i, hash32>>= 8) {
 			CHAR_INFO ci{};
-			if (_panno_hash != 0) {
+			if (_panno_hash > 1) { // for hashed input use 3 different colors
 				const size_t color_index = (hash32 & 0xf) % colors.size();
 				ci.Attributes = colors[color_index];
 				colors.erase(colors.begin() + color_index);
-			} else {
-				ci.Attributes = BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+
+			} else if (_panno_hash == 1) { // for unhashed nonempty input use yellow
+				ci.Attributes = BACKGROUND_RED | FOREGROUND_INTENSITY
+					| FOREGROUND_RED | FOREGROUND_GREEN;
+
+			} else { // for empty input use white
+				ci.Attributes = BACKGROUND_RED | FOREGROUND_INTENSITY
+					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 			}
 
-			const size_t glyph_index = ((hash32 >> 4) & 0xf) % glyphs.size();
-			CI_SET_WCHAR(ci, glyphs[glyph_index]);
-			if (_panno_hash) { // for an empty input show just 3 first glyphs that are squares
+			if (_panno_hash > 1) { // for hashed input show 3 different shapes
+				const size_t glyph_index = ((hash32 >> 4) & 0xf) % glyphs.size();
+				CI_SET_WCHAR(ci, glyphs[glyph_index]);
 				glyphs.erase(glyphs.begin() + glyph_index);
+
+			} else { // for empty/unhashed input show 3 squares
+				CI_SET_WCHAR(ci, glyphs[0]);
 			}
 
 			// * 2 is for extra gap for better distinction
@@ -211,7 +234,7 @@ public:
 			} else if (_password_expected) {
 				const uint64_t hash = TypedPasswordHash();
 				if (_panno_hash != hash) {
-					_panno_hash  = hash;
+					_panno_hash = hash;
 					_need_repaint = true;
 				}
 			}

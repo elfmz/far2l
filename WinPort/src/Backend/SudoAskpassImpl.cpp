@@ -121,7 +121,7 @@ class SudoAskpassScreen
 	uint64_t TypedPasswordHash()
 	{
 		if (_input.empty())
-			return 0;
+			return 0; // always zero for empty password
 
 		uint64_t hash64 = crc64(0x1215b814a,
 			(const unsigned char *)_input.c_str(), _input.size() * sizeof(*_input.c_str()));
@@ -141,7 +141,8 @@ class SudoAskpassScreen
 			}
 		}
 
-		return crc64(hash64, (const unsigned char *)salt.c_str(), salt.size() * sizeof(*salt.c_str()));
+		hash64 = crc64(hash64, (const unsigned char *)salt.c_str(), salt.size() * sizeof(*salt.c_str()));
+		return hash64 ? hash64 : 1; // never zero for nonempty password
 	}
 
 	void PaintPasswordPanno()
@@ -150,20 +151,35 @@ class SudoAskpassScreen
 			return;
 		}
 
-		const wchar_t glyphs[] = {L'■', L'▲', L'●'};
+		// if input is empty: paint 3 white squares
+		// else: paint 3 different glyphs of different colors all deduced from password
+		std::vector<wchar_t> glyphs{L'■', L'▲', L'●'};
+		std::vector<uint64_t> colors { // should be same size as glyphs
+			BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+			BACKGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+			BACKGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY
+		};
 
 		uint32_t hash32 = uint32_t(_panno_hash ^ (_panno_hash >> 32));
 
-		for (SHORT i = -2; i < 2; ++i, hash32>>= 8) {
+		for (SHORT i = 0, ii = SHORT(glyphs.size()); i < ii; ++i, hash32>>= 8) {
 			CHAR_INFO ci{};
-			ci.Attributes = BACKGROUND_RED;
-			switch ((hash32 & 0xf) % 3) {
-				case 0: ci.Attributes|= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
-				case 1: ci.Attributes|= FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
-				case 2: ci.Attributes|= FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
+			if (_panno_hash != 0) {
+				const size_t color_index = (hash32 & 0xf) % colors.size();
+				ci.Attributes = colors[color_index];
+				colors.erase(colors.begin() + color_index);
+			} else {
+				ci.Attributes = BACKGROUND_RED | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
 			}
-			CI_SET_WCHAR(ci, glyphs[((hash32 >> 4) & 0xf) % ARRAYSIZE(glyphs)]);
-			COORD pos{SHORT(SHORT(_width / 2) + i * 2), _rect.Bottom};
+
+			const size_t glyph_index = ((hash32 >> 4) & 0xf) % glyphs.size();
+			CI_SET_WCHAR(ci, glyphs[glyph_index]);
+			if (_panno_hash) { // for an empty input show just 3 first glyphs that are squares
+				glyphs.erase(glyphs.begin() + glyph_index);
+			}
+
+			// * 2 is for extra gap for better distinction
+			COORD pos{SHORT(SHORT(_width / 2) + i * 2 - ii), _rect.Bottom};
 			g_winport_con_out->Write(ci, pos);
 		}
 	}

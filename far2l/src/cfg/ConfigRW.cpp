@@ -121,10 +121,10 @@ std::vector<std::string> ConfigReader::EnumKeys()
 	return _selected_section_values->EnumKeys();
 }
 
-std::vector<std::string> ConfigReader::EnumSectionsAt()
+std::vector<std::string> ConfigReader::EnumSectionsAt(bool recursed)
 {
 	assert(_selected_kfh != nullptr);
-	return _selected_kfh->EnumSectionsAt(_section);
+	return _selected_kfh->EnumSectionsAt(_section, recursed);
 }
 
 bool ConfigReader::HasKey(const std::string &name) const

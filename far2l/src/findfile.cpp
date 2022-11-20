@@ -1231,7 +1231,7 @@ static bool ScanFile(const wchar_t *Name)
 				wchar_t *buffer;
 
 				// Перегоняем буфер в wchar_t
-				if (IsFullWideCodePage(cpi->CodePage))
+				if (cpi->CodePage == CP_WIDE_LE)
 				{
 					// Вычисляем размер буфера в wchar_t
 					bufferCount = readBlockSize / sizeof(wchar_t);
@@ -1242,13 +1242,7 @@ static bool ScanFile(const wchar_t *Name)
 						
 
 					// Копируем буфер чтения в буфер сравнения
-					//todo
-					if (cpi->CodePage==CP_WIDE_BE) {
-						RevBytes(readBuffer, (const wchar_t*)readBufferB, bufferCount);
-						buffer = readBuffer;
-					} else {
-						buffer = (wchar_t*)readBufferB;
-					}
+					buffer = (wchar_t*)readBufferB;
 				}
 				else
 				{

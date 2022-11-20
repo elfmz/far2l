@@ -163,7 +163,7 @@ class SudoAskpassScreen
 				case 2: ci.Attributes|= FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
 			}
 			CI_SET_WCHAR(ci, glyphs[((hash32 >> 4) & 0xf) % ARRAYSIZE(glyphs)]);
-			COORD pos{SHORT(SHORT(_width / 2) + i), _rect.Bottom};
+			COORD pos{SHORT(SHORT(_width / 2) + i * 2), _rect.Bottom};
 			g_winport_con_out->Write(ci, pos);
 		}
 	}
@@ -192,8 +192,8 @@ public:
 			if (g_winport_con_in->WaitForNonEmpty(700, _cip)) {
 				DispatchInput();
 
-			} else {
-				uint64_t hash = TypedPasswordHash();
+			} else if (_password_expected) {
+				const uint64_t hash = TypedPasswordHash();
 				if (_panno_hash != hash) {
 					_panno_hash  = hash;
 					_need_repaint = true;

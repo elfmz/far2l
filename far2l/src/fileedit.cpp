@@ -1689,8 +1689,7 @@ void FileEditor::BaseContentWriter::EncodeAndWrite(UINT codepage, const wchar_t 
 		}
 		else 
 		{
-			ssize_t cnt = (codepage == CP_WIDE_BE) ? Length * sizeof(wchar_t)
-				: WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
+			int cnt = WINPORT(WideCharToMultiByte)(codepage, 0, Str, Length, nullptr, 0, nullptr, nullptr);
 
 			if (cnt <= 0)
 				return;

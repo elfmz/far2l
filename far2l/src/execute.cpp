@@ -332,10 +332,10 @@ static std::string GetOpenShVerb(const char *verb)
 	return out;
 }
 
-static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForIdle , bool Silent , bool RunAs)
 {
-	fprintf(stderr, "ExecuteA: SeparateWindow=%d DirectRun=%d FolderRun=%d WaitForIdle=%d Silent=%d RunAs=%d CmdStr='%s'\n",
-			SeparateWindow, DirectRun, FolderRun, WaitForIdle, Silent, RunAs, CmdStr);
+	fprintf(stderr, "ExecuteA: SeparateWindow=%d DirectRun=%d WaitForIdle=%d Silent=%d RunAs=%d CmdStr='%s'\n",
+			SeparateWindow, DirectRun, WaitForIdle, Silent, RunAs, CmdStr);
 
 	int r = -1;
 	ExecClassifier ec(CmdStr, DirectRun);
@@ -374,9 +374,9 @@ static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, boo
 }
 
 
-int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
-	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, FolderRun , WaitForIdle , Silent , RunAs);
+	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, WaitForIdle , Silent , RunAs);
 }
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
@@ -425,7 +425,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 			cd_prev[0] = 0;
 		}
 
-		r = Execute(CmdLine, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+		r = Execute(CmdLine, SeparateWindow, DirectRun, WaitForIdle , Silent , RunAs);
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (sdc_getcwd(cd, MAX_PATH)) {

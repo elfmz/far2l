@@ -213,7 +213,6 @@ extern "C" {
 	WINPORT_DECL(IsCharAlphaNumeric, BOOL, (WCHAR ch));
 	WINPORT_DECL(CompareString, int, ( LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2));
 	WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2));
-	WINPORT_DECL(IsTextUnicode, BOOL, (CONST VOID* lpv, int iSize, LPINT lpiResult));
 	WINPORT_DECL(WideCharToMultiByte, int, ( UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, 
 		int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar));
 	WINPORT_DECL(MultiByteToWideChar, int, ( UINT CodePage, DWORD dwFlags, 

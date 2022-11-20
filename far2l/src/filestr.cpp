@@ -344,7 +344,7 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 	return (ExitCode);
 }
 
-bool IsTextUTF8(const LPBYTE Buffer,size_t Length)
+static bool IsTextUTF8(const LPBYTE Buffer,size_t Length)
 {
 	bool Ascii=true;
 	UINT Octets=0;
@@ -760,6 +760,27 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	return 1;
 }
 
+template <class T>
+	size_t EstimateEncodingValidity(bool rev, const T *data, size_t count)
+{
+	// if text in given codepage contains only valid unicode characters then
+	// return count of well-known control characters widely used in texts
+	// like '\r' '\n' '\t' ' ' 
+	size_t out = 0;
+	for (size_t i = 0; i < count; ++i) {
+		T v = rev ? RevBytes(data[i]) : data[i];
+		if (v == 10 || v == 13 || v == 7 || v == 32) {
+			++out;
+		}
+		if (!WCHAR_IS_VALID(v)) {
+			return 0;
+		}
+	}
+	if (out < count / 32) { // too few controls for normal text
+		return 0;
+	}
+	return out;
+}
 
 bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics)
 {
@@ -768,45 +789,42 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 	bool bDetect=false;
 
 	DWORD Readed = 0;	
-	if (file.Read(&dwTemp, sizeof(dwTemp), &Readed) && Readed > 1 ) // minimum signature size is 2 bytes
+	if (!file.Read(&dwTemp, sizeof(dwTemp), &Readed))
 	{
-		if (Readed>=4 && dwTemp == SIGN_UTF32LE)
-		{
-			nCodePage = CP_UTF32LE;
-			file.SetPointer(4, nullptr, FILE_BEGIN);
-			bSignatureFound = true;
-		}
-		else if (Readed>=4 && dwTemp == SIGN_UTF32BE)
-		{
-			nCodePage = CP_UTF32BE;
-			file.SetPointer(4, nullptr, FILE_BEGIN);
-			bSignatureFound = true;
-		}
-		else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16LE)
-		{
-			nCodePage = CP_UTF16LE;
-			file.SetPointer(2, nullptr, FILE_BEGIN);
-			bSignatureFound = true;
-		}
-		else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16BE)
-		{
-			nCodePage = CP_UTF16BE;
-			file.SetPointer(2, nullptr, FILE_BEGIN);
-			bSignatureFound = true;
-		}
-		else if (Readed>=3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
-		{
-			nCodePage = CP_UTF8;
-			file.SetPointer(3, nullptr, FILE_BEGIN);
-			bSignatureFound = true;
-		}
-		else
-		{
-			file.SetPointer(0, nullptr, FILE_BEGIN);
-		}
-	} else {
-		file.SetPointer(0, nullptr, FILE_BEGIN);
+		fprintf(stderr, "%s: read error %u\n", __FUNCTION__, WINPORT(GetLastError)());
 	}
+	else if (Readed>=4 && dwTemp == SIGN_UTF32LE)
+	{
+		nCodePage = CP_UTF32LE;
+		file.SetPointer(4, nullptr, FILE_BEGIN);
+		bSignatureFound = true;
+	}
+	else if (Readed>=4 && dwTemp == SIGN_UTF32BE)
+	{
+		nCodePage = CP_UTF32BE;
+		file.SetPointer(4, nullptr, FILE_BEGIN);
+		bSignatureFound = true;
+	}
+	else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16LE)
+	{
+		nCodePage = CP_UTF16LE;
+		file.SetPointer(2, nullptr, FILE_BEGIN);
+		bSignatureFound = true;
+	}
+	else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16BE)
+	{
+		nCodePage = CP_UTF16BE;
+		file.SetPointer(2, nullptr, FILE_BEGIN);
+		bSignatureFound = true;
+	}
+	else if (Readed>=3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
+	{
+		nCodePage = CP_UTF8;
+		file.SetPointer(3, nullptr, FILE_BEGIN);
+		bSignatureFound = true;
+	}
+	else
+		file.SetPointer(0, nullptr, FILE_BEGIN);
 
 	if (bSignatureFound)
 	{
@@ -815,46 +833,38 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 	else if (bUseHeuristics)
 	{
 		file.SetPointer(0, nullptr, FILE_BEGIN);
-		DWORD Size=0x8000; // BUGBUG. TODO: configurable
-		LPVOID Buffer=malloc(Size);
+		uint8_t Buffer[0x8000]; // BUGBUG. TODO: configurable
 		DWORD ReadSize = 0;
-		bool ReadResult = file.Read(Buffer, Size, &ReadSize);
+		bool ReadResult = file.Read(Buffer, sizeof(Buffer), &ReadSize);
 		file.SetPointer(0, nullptr, FILE_BEGIN);
 
 		if (ReadResult && ReadSize)
 		{
-			int test=
-				IS_TEXT_UNICODE_STATISTICS|
-				IS_TEXT_UNICODE_REVERSE_STATISTICS|
-				IS_TEXT_UNICODE_CONTROLS|
-				IS_TEXT_UNICODE_REVERSE_CONTROLS|
-				IS_TEXT_UNICODE_ILLEGAL_CHARS|
-				IS_TEXT_UNICODE_ODD_LENGTH|
-				IS_TEXT_UNICODE_NULL_BYTES;
-
-			if (WINPORT(IsTextUnicode)(Buffer, ReadSize, &test))
+			const size_t cc_u16le = EstimateEncodingValidity(false, (const uint16_t *)Buffer, ReadSize / sizeof(uint16_t));
+			const size_t cc_u16be = EstimateEncodingValidity(true, (const uint16_t *)Buffer, ReadSize / sizeof(uint16_t));
+			const size_t cc_u32le = EstimateEncodingValidity(false, (const uint32_t *)Buffer, ReadSize / sizeof(uint32_t));
+			const size_t cc_u32be = EstimateEncodingValidity(true, (const uint32_t *)Buffer, ReadSize / sizeof(uint32_t));
+			if (cc_u16le > cc_u16be && cc_u16le > cc_u32le && cc_u16le > cc_u32be)
 			{
-				if (!(test&IS_TEXT_UNICODE_ODD_LENGTH) && !(test&IS_TEXT_UNICODE_ILLEGAL_CHARS))
-				{
-					if ((test&IS_TEXT_UNICODE_NULL_BYTES) || (test&IS_TEXT_UNICODE_CONTROLS) || (test&IS_TEXT_UNICODE_REVERSE_CONTROLS))
-					{
-						if ((test&IS_TEXT_UNICODE_CONTROLS) || (test&IS_TEXT_UNICODE_STATISTICS))
-						{
-							nCodePage = CP_WIDE_LE;
-							bDetect = true;
-						}
-						else if ((test&IS_TEXT_UNICODE_REVERSE_CONTROLS) || (test&IS_TEXT_UNICODE_REVERSE_STATISTICS))
-						{
-							nCodePage = CP_WIDE_BE;
-							bDetect = true;
-						}
-					}
-				}
+				nCodePage=CP_UTF16LE;
+				bDetect=true;
 			}
-			if(bDetect) {
-				// do nothing
-			} else
-			if (IsTextUTF8(reinterpret_cast<LPBYTE>(Buffer), ReadSize))
+			else if (cc_u16be > cc_u16le && cc_u16be > cc_u32le && cc_u16be > cc_u32be)
+			{
+				nCodePage=CP_UTF16BE;
+				bDetect=true;
+			}
+			if (cc_u32le > cc_u16be && cc_u32le > cc_u16le && cc_u32le > cc_u32be)
+			{
+				nCodePage=CP_UTF32LE;
+				bDetect=true;
+			}
+			else if (cc_u32be > cc_u16be && cc_u32be > cc_u16le && cc_u32be > cc_u32le)
+			{
+				nCodePage=CP_UTF32BE;
+				bDetect=true;
+			}
+			else if (IsTextUTF8(reinterpret_cast<LPBYTE>(Buffer), ReadSize))
 			{
 				nCodePage=CP_UTF8;
 				bDetect=true;
@@ -870,8 +880,6 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 				}
 			}
 		}
-
-		free(Buffer);
 	}
 
 	if (pSignatureFound)

@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <utils.h>
+#include <StackHeapArray.hpp>
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
 # include <alloca.h>
@@ -21,22 +22,9 @@
 #include "UtfConvert.hpp"
 
 
-//			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
-//			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
 template <class SRC_T, class DST_T>
-	int utf_translation(int flags, const SRC_T *src, size_t srclen, DST_T *dst, size_t dstlen)
+	int TranscodeUTF(int flags, const SRC_T *src, size_t srclen, DST_T *dst, size_t dstlen)
 {
-	if (sizeof(SRC_T) == sizeof(DST_T)) { // noop shortcut
-		if (dstlen != 0) {
-			if (dstlen < srclen) {
-				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
-				return 0;
-			}
-			memcpy(dst, src, srclen * sizeof(DST_T));
-		}
-		return srclen;
-	}
-
 	const bool fail_on_illformed = ((flags & MB_ERR_INVALID_CHARS) != 0);
 
 	if (dstlen == 0) {
@@ -78,16 +66,35 @@ template <class SRC_T, class DST_T>
 }
 
 template <class BYTES_TYPE, bool BYTEREV>
-	static int wide_2_bytes( int flags, const WCHAR *src, int srclen, void *dst, int dstlen)
+	static int Wide2Bytes( int flags, const WCHAR *src, int srclen, void *dst, int dstlen)
 {
 	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
 		srclen = tzlen(src) + 1;
 	}
-	if (dstlen < 0) {
+
+	if (dstlen > 0) {
+		dstlen/= sizeof(BYTES_TYPE);
+		// if dstlen specified was nonzero but obviousy too small then fail fast
+		if (dstlen == 0 || (sizeof(BYTES_TYPE) == sizeof(WCHAR) && dstlen < srclen)) {
+			WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+			return 0;
+		}
+
+	} else {
 		dstlen = 0;
 	}
 
-	int r = utf_translation(flags, src, srclen, (BYTES_TYPE *)dst, dstlen / sizeof(BYTES_TYPE));
+	int r;
+	if (sizeof(BYTES_TYPE) == sizeof(WCHAR)) { // noop shortcut
+		if (dstlen) {
+			memcpy(dst, src, srclen * sizeof(WCHAR));
+		}
+		r = srclen;
+
+	} else {
+		r = TranscodeUTF(flags, src, srclen, (BYTES_TYPE *)dst, dstlen);
+	}
+
 	if (r > 0) {
 		if (BYTEREV && dstlen) {
 			RevBytes((BYTES_TYPE *)dst, r);
@@ -98,23 +105,35 @@ template <class BYTES_TYPE, bool BYTEREV>
 }
 
 template <class BYTES_TYPE, bool BYTEREV>
-	static int bytes_2_wide( int flags, const void *src, int srclen, WCHAR *dst, int dstlen)
+	static int Bytes2Wide( int flags, const void *src, int srclen, WCHAR *dst, int dstlen)
 {
 	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
 		srclen = tzlen((const BYTES_TYPE*)src) + 1;
+	} else {
+		srclen/= sizeof(BYTES_TYPE);
 	}
 	if (dstlen < 0) {
 		dstlen = 0;
 	}
 
-	if (BYTEREV && (size_t)srclen >= sizeof(BYTES_TYPE)) {
-		std::vector<BYTES_TYPE> reversed_src(srclen / sizeof(BYTES_TYPE));
-		memcpy(reversed_src.data(), src, reversed_src.size() * sizeof(BYTES_TYPE));
-		RevBytes(reversed_src.data(), reversed_src.size());
-		return utf_translation(flags, reversed_src.data(), reversed_src.size(), dst, dstlen);
+	if (sizeof(BYTES_TYPE) == sizeof(WCHAR)) { // noop shortcut
+		if (dstlen != 0) {
+			if (dstlen < srclen) {
+				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+				return 0;
+			}
+			memcpy(dst, src, srclen * sizeof(WCHAR));
+		}
+		return srclen;
 	}
 
-	return utf_translation(flags, (const BYTES_TYPE *)src, srclen / sizeof(BYTES_TYPE), dst, dstlen);
+	if (BYTEREV && srclen > 0) {
+		StackHeapArray<BYTES_TYPE> reversed_src(srclen);
+		RevBytes(reversed_src.Get(), (const BYTES_TYPE *)src, reversed_src.Count());
+		return TranscodeUTF(flags, reversed_src.Get(), reversed_src.Count(), dst, dstlen);
+	}
+
+	return TranscodeUTF(flags, (const BYTES_TYPE *)src, srclen, dst, dstlen);
 }
 
 
@@ -600,23 +619,23 @@ extern "C" {
 			break;
 
 		case CP_UTF16LE:
-			ret = bytes_2_wide<uint16_t, false>( flags, src, srclen, dst, dstlen );
+			ret = Bytes2Wide<uint16_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF16BE:
-			ret = bytes_2_wide<uint16_t, true>( flags, src, srclen, dst, dstlen );
+			ret = Bytes2Wide<uint16_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32LE:
-			ret = bytes_2_wide<uint32_t, false>( flags, src, srclen, dst, dstlen );
+			ret = Bytes2Wide<uint32_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32BE:
-			ret = bytes_2_wide<uint32_t, true>( flags, src, srclen, dst, dstlen );
+			ret = Bytes2Wide<uint32_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF8:
-			ret = bytes_2_wide<uint8_t, false>( flags, src, srclen, dst, dstlen);
+			ret = Bytes2Wide<uint8_t, false>( flags, src, srclen, dst, dstlen);
 			break;
 
 		default:
@@ -839,19 +858,19 @@ extern "C" {
 			break;
 		
 		case CP_UTF16LE:
-			ret = wide_2_bytes<uint16_t, false>( flags, src, srclen, dst, dstlen );
+			ret = Wide2Bytes<uint16_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF16BE:
-			ret = wide_2_bytes<uint16_t, true>( flags, src, srclen, dst, dstlen );
+			ret = Wide2Bytes<uint16_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32LE:
-			ret = wide_2_bytes<uint32_t, false>( flags, src, srclen, dst, dstlen );
+			ret = Wide2Bytes<uint32_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32BE:
-			ret = wide_2_bytes<uint32_t, true>( flags, src, srclen, dst, dstlen );
+			ret = Wide2Bytes<uint32_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF8:
@@ -862,7 +881,7 @@ extern "C" {
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;
 			}
-			ret = wide_2_bytes<uint8_t, false>( flags, src, srclen, dst, dstlen );
+			ret = Wide2Bytes<uint8_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		default:

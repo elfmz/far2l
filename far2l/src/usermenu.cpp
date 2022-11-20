@@ -868,7 +868,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								SaveScreen SaveScr;
 								CtrlObject->Cp()->LeftPanel->CloseFile();
 								CtrlObject->Cp()->RightPanel->CloseFile();
-								Execute(strCommand, 0, 0, 0, ListFileUsed, true);
+								Execute(strCommand, 0, 0, ListFileUsed, true);
 							}
 //							WaitForClose(strName);
 						}

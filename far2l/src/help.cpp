@@ -111,7 +111,7 @@ static const wchar_t *PluginContents=L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic=L":Help";
 static const wchar_t *HelpContents=L"Contents";
 
-static int RunURL(const wchar_t *Protocol, wchar_t *URLPath);
+static int RunURL(const wchar_t *Protocol, const wchar_t *URLPath);
 
 Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 	CMM(MACRO_HELP),
@@ -635,12 +635,7 @@ void Help::AddLine(const wchar_t *Line)
 
 		if (StartPos0 > 0)
 		{
-			LPWSTR Space=strLine.GetBuffer(StartPos0+1);
-			for (DWORD i=0; i < StartPos0; i++)
-			{
-				Space[i]=L' ';
-			}
-			strLine.ReleaseBuffer(StartPos0);
+			strLine.Append(L' ', StartPos0);
 		}
 	}
 
@@ -1381,9 +1376,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	        && !StackData.strHelpPath.IsEmpty())
 	{
 		FARString strFullPath;
-		wchar_t *lpwszHelpTopic = strNewTopic.GetBuffer(pos);
-		far_wcsncpy(lpwszHelpTopic, StackData.strSelTopic.CPtr()+1,pos);
-		strNewTopic.ReleaseBuffer();
+		strNewTopic.Copy(StackData.strSelTopic.CPtr()+1,pos);
 		strFullPath = StackData.strHelpPath;
 		// уберем _все_ конечные слеши и добавим один
 		DeleteEndSlash(strFullPath, true);
@@ -1402,22 +1395,12 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 
 		if (strNewTopic.Pos(pos,L':') && strNewTopic.At(0) != L':') // наверное подразумевается URL
 		{
-			wchar_t *lpwszNewTopic = strNewTopic.GetBuffer();
-			lpwszNewTopic[pos] = 0;
-			wchar_t *lpwszTopic = StackData.strSelTopic.GetBuffer();
-
-			if (RunURL(lpwszNewTopic, lpwszTopic))
+			strNewTopic.ReplaceChar(pos, 0);
+			if (RunURL(strNewTopic.CPtr(), StackData.strSelTopic.CPtr()))
 			{
-				StackData.strSelTopic.ReleaseBuffer();
 				return FALSE;
 			}
-			else
-			{
-				StackData.strSelTopic.ReleaseBuffer();
-			}
-
-			lpwszNewTopic[pos] = L':';
-			//strNewTopic.ReleaseBuffer (); не надо, так как строка не поменялась
+			strNewTopic.ReplaceChar(pos, L':');
 		}
 	}
 	// а вот теперь попробуем...
@@ -2051,11 +2034,10 @@ void Help::InitKeyBar()
      Protocol="mailto"
      URLPath ="mailto:vskirdin@mail.ru?Subject=Reversi"
 */
-static int RunURL(const wchar_t *Protocol, wchar_t *URLPath)
+static int RunURL(const wchar_t *Protocol, const wchar_t *URLPath)
 {
-	int EditCode=0;
-
-	return EditCode;
+	fprintf(stderr, "TODO: %s('%ls', '%ls')\n", __FUNCTION__, Protocol, URLPath);
+	return 0;
 }
 
 void Help::OnChangeFocus(int Focus)

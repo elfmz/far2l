@@ -5314,7 +5314,7 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 #if 1
 		std::string strUpKeyName = "KeyMacros/Funcs";
 		ConfigReader cfg_reader(strUpKeyName);
-		const auto &Sections = cfg_reader.EnumSectionsAt();
+		const auto &Sections = cfg_reader.EnumSectionsAt(true);
 		for (const auto &strFuncSection : Sections)
 		{
 			cfg_reader.SelectSection(strFuncSection);
@@ -5348,10 +5348,7 @@ int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 			bool UsePluginFunc = !((Flags & 2) && (mr.Buffer || strGUID.IsEmpty()));
 
 			// зарегистрировать функцию
-			FARString strFuncName(strFuncSection);
-			size_t pos;
-			if (strFuncName.RPos(pos, L'/'))
-				strFuncName.LShift(pos + 1);
+			FARString strFuncName = strFuncSection.substr(strUpKeyName.size() + 1);
 
 			TMacroFunction MFunc={
 				strFuncName.CPtr(),
@@ -5512,23 +5509,17 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 	int ErrorCount=0;
 
 	ConfigReader cfg_reader(strUpKeyName);
-	const auto &Sections = cfg_reader.EnumSectionsAt();
+	const auto &Sections = cfg_reader.EnumSectionsAt(true);
 	for (const auto &MacroSection : Sections)
 	{
 		DWORD MFlags = 0;
-		FARString strKeyText = MacroSection;
-		size_t pos;
-
-		if (strKeyText.RPos(pos, L'/'))
-		{
-			strKeyText.LShift(pos + 1);
-		}
+		FARString strKeyText = MacroSection.substr(strUpKeyName.size() + 1);
 
 		// ПОМНИМ! что название макроса, начинающееся на символ ~ - это
 		// заблокированный макрос!!!
 		if (strKeyText.At(0) == L'~' && strKeyText.At(1))
 		{
-			pos = 1;
+			size_t pos = 1;
 
 			while (strKeyText.At(pos) && strKeyText.At(pos) == L'~')// && IsSpace(KeyText[1]))
 				++pos;
@@ -6461,7 +6452,7 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 
 			if (Mode >= MACRO_OTHER || Mode == MACRO_FUNCS)
 			{
-				const auto &Sections = cfg_reader.EnumSectionsAt();
+				const auto &Sections = cfg_reader.EnumSectionsAt(true);
 				if (Pos < 0 || Pos >= (int)Sections.size())
 					return -1;
 
@@ -6478,12 +6469,7 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 					strDescription = strDescr;
 				}
 
-				strKeyName = Sections[Pos];
-				size_t pos;
-
-				if (strKeyName.RPos(pos, L'/'))
-					strKeyName.LShift(pos + 1);
-
+				strKeyName = Sections[Pos].substr(strUpKeyName.size() + 1);
 				return Pos + 1;
 
 			}

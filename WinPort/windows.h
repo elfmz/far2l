@@ -139,7 +139,6 @@
 #define    IsCharAlphaNumeric			WINPORT(IsCharAlphaNumeric)
 #define    CompareString			WINPORT(CompareString)
 #define    CompareStringA			WINPORT(CompareStringA)
-#define    IsTextUnicode			WINPORT(IsTextUnicode)
 #define    WideCharToMultiByte			WINPORT(WideCharToMultiByte)
 #define    MultiByteToWideChar			WINPORT(MultiByteToWideChar)
 #define    CharUpper			WINPORT(CharUpper)

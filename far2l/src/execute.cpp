@@ -162,6 +162,15 @@ public:
 	bool IsExecutable() const {return _executable; }
 };
 
+static std::string GetOpenShVerb(const char *verb)
+{
+	std::string out = GetMyScriptQuoted("open.sh");
+	out+= ' ';
+	out+= verb;
+	out+= ' ';
+	return out;
+}
+
 
 bool IsDirectExecutableFilePath(const char *path)
 {
@@ -183,6 +192,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	if (NeedSudo) {
 		return sudo_client_execute(CmdStr, false, NoWait);
 	}
+
 // DEBUG
 //	fdr = open(DEVNULL, O_RDONLY);
 //	if (fdr==-1) perror("stdin error opening " DEVNULL);
@@ -229,6 +239,13 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 //	fprintf(stderr, "TODO: Execute('%ls')\n", CmdStr);
 	int r;
+	if (ExecFlags & EF_OPEN) {
+		std::string OpenCmd = GetOpenShVerb("other");
+		OpenCmd+= ' ';
+		OpenCmd+= CmdStr;
+		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
+	}
+
 	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 //		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
@@ -321,15 +338,6 @@ void QueueDeleteOnClose(const wchar_t *Name)
 	cmd.insert(0, GetMyScriptQuoted("closewait.sh"));
 
 	farExecuteA(cmd.c_str(), EF_NOWAIT | EF_HIDEOUT);
-}
-
-static std::string GetOpenShVerb(const char *verb)
-{
-	std::string out = GetMyScriptQuoted("open.sh");
-	out+= ' ';
-	out+= verb;
-	out+= ' ';
-	return out;
 }
 
 static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForIdle , bool Silent , bool RunAs)

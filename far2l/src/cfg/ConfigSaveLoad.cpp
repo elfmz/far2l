@@ -265,6 +265,8 @@ public:
 	{true,  NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
 
+	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
+
 	{false, NSecInterface, "ShowTimeoutDelFiles", &Opt.ShowTimeoutDelFiles, 50},
 	{false, NSecInterface, "ShowTimeoutDACLFiles", &Opt.ShowTimeoutDACLFiles, 50},
 	{false, NSecInterface, "FormatNumberSeparators", &Opt.FormatNumberSeparators, 0},

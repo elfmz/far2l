@@ -12,14 +12,15 @@
 #include "TTYInput.h"
 #include "IFar2lInterractor.h"
 #include "TTYXGlue.h"
+#include "OSC52ClipboardBackend.h"
 
-class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
+class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor, IOSC52Interractor
 {
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
-
+	bool _osc52clip_set = false;
 
 	enum {
 		FKS_UNKNOWN,
@@ -95,6 +96,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DetachNotifyPipe();
 
 protected:
+	// IOSC52Interractor
+	virtual void OSC52SetClipboard(const char *text);
+
 	// IFar2lInterractor
 	virtual bool Far2lInterract(StackSerializer &stk_ser, bool wait);
 
@@ -105,7 +109,7 @@ protected:
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleAdhocQuickEdit();
-	virtual DWORD OnConsoleSetTweaks(DWORD tweaks);
+	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleExit();

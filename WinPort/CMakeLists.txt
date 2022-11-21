@@ -34,6 +34,7 @@ src/Backend/TTY/TTYInput.cpp
 src/Backend/TTY/TTYInputSequenceParser.cpp
 src/Backend/TTY/TTYOutput.cpp
 src/Backend/TTY/TTYFar2lClipboardBackend.cpp
+src/Backend/TTY/OSC52ClipboardBackend.cpp
 src/Backend/TTY/TTYNegotiateFar2l.cpp
 src/Backend/TTY/TTYXGlue.cpp
 )

@@ -104,18 +104,20 @@ class SudoAskpassScreen
 		_rect.Right = _rect.Left + w - 1;
 		_rect.Top = 0;
 		_rect.Bottom = _rect.Top + 4;
+		const DWORD64 AttrFrame = _password_expected
+			? FOREGROUND_RED | BACKGROUND_RED
+			: FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN;
+		const DWORD64 AttrInner =
+			FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
+		CHAR_INFO ci{};
+		CI_SET_WCHAR(ci, L' ');
 		for (SHORT y = _rect.Top; y <= _rect.Bottom; ++y) {
 			for (SHORT x = _rect.Left; x <= _rect.Right; ++x) {
+				ci.Attributes = (x == _rect.Left || x == _rect.Right || y == _rect.Top || y == _rect.Bottom)
+					? AttrFrame : AttrInner;
 				COORD pos{x, y};
-				if (x == _rect.Left || x == _rect.Right || y == _rect.Top || y == _rect.Bottom) {
-					g_winport_con_out->FillAttributeAt(FOREGROUND_RED | BACKGROUND_RED, 1, pos);
-				} else {
-					g_winport_con_out->FillAttributeAt(
-						FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE, 1, pos);
-				}
-				pos = COORD{x, y};
-				g_winport_con_out->FillCharacterAt(' ', 1, pos);
+				g_winport_con_out->Write(ci, pos);
 			}
 		}
 
@@ -125,9 +127,9 @@ class SudoAskpassScreen
 
 		g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 		WriteCentered(_text, _rect.Top + 2);
-//		COORD pos = {};
-//		g_winport_con_out->FillAttributeAt(FOREGROUND_GREEN, _width * _height, pos);
-		PaintPasswordPanno();
+		if (_password_expected) {
+			PaintPasswordPanno();
+		}
 	}
 
 	uint64_t TypedPasswordHash()
@@ -148,7 +150,7 @@ class SudoAskpassScreen
 				salt+= udist(rng);
 			}
 			FDScope fd(open(salt_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0600));
-			if (fd) {
+			if (fd.Valid()) {
 				WriteAll(fd, salt.c_str(), salt.size());
 			}
 		}
@@ -159,10 +161,6 @@ class SudoAskpassScreen
 
 	void PaintPasswordPanno()
 	{
-		if (!_password_expected) {
-			return;
-		}
-
 		// if input is empty: paint 3 white squares
 		// if input is non-empty but not yet hashed: paint 3 yellow squares
 		// else: paint 3 different glyphs of different colors all deduced from hash
@@ -221,6 +219,9 @@ public:
 
 	~SudoAskpassScreen()
 	{
+		for (wchar_t &c : _input) {
+			*static_cast<volatile wchar_t *>(&c) = 0;
+		}
 		if (_ir_resized.EventType != NOOP_EVENT)
 				g_winport_con_in->Enqueue(&_ir_resized, 1);
 	}

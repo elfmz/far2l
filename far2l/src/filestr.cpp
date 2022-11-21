@@ -607,7 +607,6 @@ public:
 //////
 GetFileString::GetFileString(File& SrcFile):
 	context(SrcFile), 
-	UTF32Reader(nullptr), UTF16Reader(nullptr), CharReader(nullptr),
 	Peek(false),
 	LastLength(0),
 	LastString(nullptr),
@@ -618,10 +617,6 @@ GetFileString::GetFileString(File& SrcFile):
 
 GetFileString::~GetFileString()
 {
-
-	delete UTF32Reader;
-	delete UTF16Reader;
-	delete CharReader;
 }
 
 int GetFileString::PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length)
@@ -660,7 +655,7 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 			return 0;
 
 		if (!UTF32Reader)
-			UTF32Reader = new UTF32_StringReader(context);
+			UTF32Reader.reset(new UTF32_StringReader(context));
 
 		nExitCode = UTF32Reader->GetString((uint32_t **)DestStr, Length, nCodePage == CP_UTF32BE);
 		if (nExitCode && nCodePage == CP_UTF32BE)
@@ -674,7 +669,8 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	if (nCodePage == CP_UTF16LE || nCodePage == CP_UTF16BE)
 	{
 		if (!UTF16Reader)
-			UTF16Reader = new UTF16_StringReader(context);
+			UTF16Reader.reset(new UTF16_StringReader(context));
+
 		uint16_t *u16 = NULL;
 		nExitCode = UTF16Reader->GetString(&u16, Length, nCodePage == CP_UTF16BE);
 		if (sizeof(wchar_t)==2) {
@@ -689,7 +685,7 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	else
 	{
 		if (!CharReader)
-			CharReader = new Char_StringReader(context);
+			CharReader.reset(new Char_StringReader(context));
 		nExitCode = CharReader->GetString(&Str, Length);
 	}
 
@@ -760,19 +756,68 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	return 1;
 }
 
-template <class T>
-	size_t EstimateEncodingValidity(bool rev, const T *data, size_t count)
+static bool GetFileFormatBySignature(File& file, UINT& nCodePage)
 {
-	// if text in given codepage contains only valid unicode characters then
-	// return count of well-known control characters widely used in texts
-	// like '\r' '\n' '\t' ' ' 
+	DWORD dwTemp = 0;
+	DWORD Readed = 0;
+	if (!file.Read(&dwTemp, sizeof(dwTemp), &Readed))
+	{
+		fprintf(stderr, "%s: read error %u\n", __FUNCTION__, WINPORT(GetLastError)());
+		return false;
+	}
+	if (Readed>=4 && dwTemp == SIGN_UTF32LE)
+	{
+		nCodePage = CP_UTF32LE;
+		file.SetPointer(4, nullptr, FILE_BEGIN);
+		return true;
+	}
+	if (Readed>=4 && dwTemp == SIGN_UTF32BE)
+	{
+		nCodePage = CP_UTF32BE;
+		file.SetPointer(4, nullptr, FILE_BEGIN);
+		return true;
+	}
+	if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16LE)
+	{
+		nCodePage = CP_UTF16LE;
+		file.SetPointer(2, nullptr, FILE_BEGIN);
+		return true;
+	}
+	if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16BE)
+	{
+		nCodePage = CP_UTF16BE;
+		file.SetPointer(2, nullptr, FILE_BEGIN);
+		return true;
+	}
+	if (Readed>=3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
+	{
+		nCodePage = CP_UTF8;
+		file.SetPointer(3, nullptr, FILE_BEGIN);
+		return true;
+	}
+
+	file.SetPointer(0, nullptr, FILE_BEGIN);
+	return false;
+}
+
+template <class T>
+	size_t EstimateEncodingValidity(bool rev, const void *buf, size_t size)
+{
+	/// if text in given codepage contains only valid unicode characters then
+	/// return count of well-known control characters widely used in texts
+	/// like '\r' '\n' '\t' ' '
+	const size_t count = size / sizeof(T);
+	if (count * sizeof(T) != size) { // expecting aligned size
+		return 0;
+	}
+	const T *data = (const T *)buf;
 	size_t out = 0;
 	for (size_t i = 0; i < count; ++i) {
 		T v = rev ? RevBytes(data[i]) : data[i];
-		if (v == 10 || v == 13 || v == 7 || v == 32) {
+		if (v == (T)'\r' || v == (T)'\n' || v == (T)'\t' || v == (T)' ') {
 			++out;
 		}
-		if (!WCHAR_IS_VALID(v)) {
+		if (!WCHAR_IS_VALID(v)) { // may be try to transcode?
 			return 0;
 		}
 	}
@@ -782,111 +827,68 @@ template <class T>
 	return out;
 }
 
-bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics)
+static bool GetFileFormatByHeuristics(File& file, UINT& nCodePage)
 {
-	DWORD dwTemp=0;
-	bool bSignatureFound = false;
-	bool bDetect=false;
+	file.SetPointer(0, nullptr, FILE_BEGIN);
+	BYTE Buffer[0x8000]; // Must be aligned by 32 bits
+	DWORD ReadSize = 0;
+	bool ReadResult = file.Read(Buffer, sizeof(Buffer), &ReadSize);
+	file.SetPointer(0, nullptr, FILE_BEGIN);
+	if (!ReadResult || ReadSize < 2)
+		return false;
 
-	DWORD Readed = 0;	
-	if (!file.Read(&dwTemp, sizeof(dwTemp), &Readed))
-	{
-		fprintf(stderr, "%s: read error %u\n", __FUNCTION__, WINPORT(GetLastError)());
-	}
-	else if (Readed>=4 && dwTemp == SIGN_UTF32LE)
-	{
-		nCodePage = CP_UTF32LE;
-		file.SetPointer(4, nullptr, FILE_BEGIN);
-		bSignatureFound = true;
-	}
-	else if (Readed>=4 && dwTemp == SIGN_UTF32BE)
-	{
-		nCodePage = CP_UTF32BE;
-		file.SetPointer(4, nullptr, FILE_BEGIN);
-		bSignatureFound = true;
-	}
-	else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16LE)
+	const auto Val16LE = EstimateEncodingValidity<uint16_t>(false, Buffer, ReadSize);
+	const auto Val16BE = EstimateEncodingValidity<uint16_t>(true, Buffer, ReadSize);
+	const auto Val32LE = EstimateEncodingValidity<uint32_t>(false, Buffer, ReadSize);
+	const auto Val32BE = EstimateEncodingValidity<uint32_t>(true, Buffer, ReadSize);
+	if (Val16LE > Val16BE && Val16LE > Val32LE && Val16LE > Val32BE)
 	{
 		nCodePage = CP_UTF16LE;
-		file.SetPointer(2, nullptr, FILE_BEGIN);
-		bSignatureFound = true;
+		return true;
 	}
-	else if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16BE)
+	if (Val16BE > Val16LE && Val16BE > Val32LE && Val16BE > Val32BE)
 	{
 		nCodePage = CP_UTF16BE;
-		file.SetPointer(2, nullptr, FILE_BEGIN);
-		bSignatureFound = true;
+		return true;
 	}
-	else if (Readed>=3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
+	if (Val32LE > Val16BE && Val32LE > Val16LE && Val32LE > Val32BE)
+	{
+		nCodePage = CP_UTF32LE;
+		return true;
+	}
+	if (Val32BE > Val16BE && Val32BE > Val16LE && Val32BE > Val32LE)
+	{
+		nCodePage = CP_UTF32BE;
+		return true;
+	}
+	if (IsTextUTF8(Buffer, ReadSize))
 	{
 		nCodePage = CP_UTF8;
-		file.SetPointer(3, nullptr, FILE_BEGIN);
-		bSignatureFound = true;
+		return true;
 	}
-	else
-		file.SetPointer(0, nullptr, FILE_BEGIN);
-
-	if (bSignatureFound)
+	const int cp = DetectCodePage(reinterpret_cast<LPCSTR>(Buffer), ReadSize);
+	if (cp != -1)
 	{
-		bDetect = true;
+		nCodePage = cp;
+		return true;
 	}
-	else if (bUseHeuristics)
-	{
-		file.SetPointer(0, nullptr, FILE_BEGIN);
-		uint8_t Buffer[0x8000]; // BUGBUG. TODO: configurable
-		DWORD ReadSize = 0;
-		bool ReadResult = file.Read(Buffer, sizeof(Buffer), &ReadSize);
-		file.SetPointer(0, nullptr, FILE_BEGIN);
+	return false;
+}
 
-		if (ReadResult && ReadSize)
-		{
-			const size_t cc_u16le = EstimateEncodingValidity(false, (const uint16_t *)Buffer, ReadSize / sizeof(uint16_t));
-			const size_t cc_u16be = EstimateEncodingValidity(true, (const uint16_t *)Buffer, ReadSize / sizeof(uint16_t));
-			const size_t cc_u32le = EstimateEncodingValidity(false, (const uint32_t *)Buffer, ReadSize / sizeof(uint32_t));
-			const size_t cc_u32be = EstimateEncodingValidity(true, (const uint32_t *)Buffer, ReadSize / sizeof(uint32_t));
-			if (cc_u16le > cc_u16be && cc_u16le > cc_u32le && cc_u16le > cc_u32be)
-			{
-				nCodePage=CP_UTF16LE;
-				bDetect=true;
-			}
-			else if (cc_u16be > cc_u16le && cc_u16be > cc_u32le && cc_u16be > cc_u32be)
-			{
-				nCodePage=CP_UTF16BE;
-				bDetect=true;
-			}
-			if (cc_u32le > cc_u16be && cc_u32le > cc_u16le && cc_u32le > cc_u32be)
-			{
-				nCodePage=CP_UTF32LE;
-				bDetect=true;
-			}
-			else if (cc_u32be > cc_u16be && cc_u32be > cc_u16le && cc_u32be > cc_u32le)
-			{
-				nCodePage=CP_UTF32BE;
-				bDetect=true;
-			}
-			else if (IsTextUTF8(reinterpret_cast<LPBYTE>(Buffer), ReadSize))
-			{
-				nCodePage=CP_UTF8;
-				bDetect=true;
-			}
-			else
-			{
-				int cp = DetectCodePage(reinterpret_cast<LPCSTR>(Buffer), ReadSize);
-
-				if (cp != -1)
-				{
-					nCodePage = cp;
-					bDetect = true;
-				}
-			}
-		}
-	}
+bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics)
+{
+	const bool bSignatureFound = GetFileFormatBySignature(file, nCodePage);
 
 	if (pSignatureFound)
-	{
 		*pSignatureFound = bSignatureFound;
-	}
-	return bDetect;
+
+	if (bSignatureFound)
+		return true;
+
+	if (!bUseHeuristics)
+		return false;
+
+	return GetFileFormatByHeuristics(file, nCodePage);
 }
 
 bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported)
@@ -896,7 +898,7 @@ bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFoun
 		return false;
 
 	UINT detectedCodePage = nCodePage;
-	if (!GetFileFormat(f,detectedCodePage,pSignatureFound,bUseHeuristics))
+	if (!GetFileFormat(f, detectedCodePage, pSignatureFound, bUseHeuristics))
 		return false;
 
 	// Проверяем поддерживается или нет задетектированная кодовая страница

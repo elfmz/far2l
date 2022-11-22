@@ -318,7 +318,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(SetConsoleTweaks, DWORD, (DWORD tweaks))
+	WINPORT_DECL(SetConsoleTweaks, DWORD64, (DWORD64 tweaks))
 	{
 		return g_winport_con_out->SetConsoleTweaks(tweaks);
 	}

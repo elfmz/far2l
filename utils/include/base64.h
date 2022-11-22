@@ -3,7 +3,7 @@
 #include <vector>
 
 
-void base64_encode(std::string &ret, const unsigned char* buf, size_t bufLen);
+void base64_encode(std::string &ret, const unsigned char* buf, size_t bufLen); // appends to ret
 std::string base64_encode(const unsigned char* buf, size_t bufLen);
 
 

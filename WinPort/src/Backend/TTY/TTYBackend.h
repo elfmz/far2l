@@ -90,8 +90,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 
-	void WriteLineDebugColored(TTYOutput &tty_out, const CHAR_INFO *line, unsigned int cnt, WORD attrs);
-
+	void ChooseSimpleClipboardBackend();
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);

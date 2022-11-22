@@ -173,12 +173,7 @@ void TTYBackend::ReaderThread()
 
 			} else {
 				g_winport_backend = L"TTY";
-				if (_osc52clip_set) {
-					IOSC52Interractor *interractor = this;
-					_clipboard_backend_setter.Set<OSC52ClipboardBackend>(interractor);
-				} else {
-					_clipboard_backend_setter.Set<FSClipboardBackend>();
-				}
+				ChooseSimpleClipboardBackend();
 			}
 		}
 		prev_far2l_tty = _far2l_tty;
@@ -317,7 +312,7 @@ void TTYBackend::WriterThread()
 					_async_cond.wait(lock);
 				}
 				if (_ae.all != 0) {
-					std::swap(ae, _ae);
+					std::swap(ae.all, _ae.all);
 					break;
 				}
 			} while (!_exiting && !_deadio);
@@ -337,8 +332,9 @@ void TTYBackend::WriterThread()
 			if (ae.flags.far2l_interract)
 				DispatchFar2lInterract(tty_out);
 
-			if (_ae.flags.osc52clip_set)
+			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
+			}
 
 			tty_out.Flush();
 			tcdrain(_stdout);
@@ -665,7 +661,13 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
+	const auto prev_osc52clip_set = _osc52clip_set;
 	_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
+
+	if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+		ChooseSimpleClipboardBackend();
+	}
+
 	return (_far2l_tty || _ttyx) ? 0 : TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
 }
 
@@ -680,6 +682,16 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 		stk_ser.PushPOD(maximized ? FARTTY_INTERRACT_WINDOW_MAXIMIZE : FARTTY_INTERRACT_WINDOW_RESTORE);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
+}
+
+void TTYBackend::ChooseSimpleClipboardBackend()
+{
+	if (_osc52clip_set) {
+		IOSC52Interractor *interractor = this;
+		_clipboard_backend_setter.Set<OSC52ClipboardBackend>(interractor);
+	} else {
+		_clipboard_backend_setter.Set<FSClipboardBackend>();
+	}
 }
 
 void TTYBackend::OSC52SetClipboard(const char *text)

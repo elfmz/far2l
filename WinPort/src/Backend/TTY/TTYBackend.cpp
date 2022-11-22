@@ -337,6 +337,9 @@ void TTYBackend::WriterThread()
 			if (ae.flags.far2l_interract)
 				DispatchFar2lInterract(tty_out);
 
+			if (_ae.flags.osc52clip_set)
+				DispatchOSC52ClipSet(tty_out);
+
 			tty_out.Flush();
 			tcdrain(_stdout);
 
@@ -516,6 +519,16 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 	}
 }
 
+void TTYBackend::DispatchOSC52ClipSet(TTYOutput &tty_out)
+{
+	std::string osc52clip;
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		osc52clip.swap(_osc52clip);
+	}
+	tty_out.SendOSC52ClipSet(osc52clip);
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 void TTYBackend::KickAss(bool flush_input_queue)
@@ -653,7 +666,7 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
 	_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
-	return (_far2l_tty || _ttyx) ? 0 : CONSOLE_OSC52CLIP_SET;
+	return (_far2l_tty || _ttyx) ? 0 : TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
 }
 
 void TTYBackend::OnConsoleChangeFont()
@@ -671,7 +684,11 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 
 void TTYBackend::OSC52SetClipboard(const char *text)
 {
-	fprintf(stderr, "TODO: TTYBackend::OSC52SetClipboard - '%s'\n", text);
+	fprintf(stderr, "TTYBackend::OSC52SetClipboard\n");
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_osc52clip = text;
+	_ae.flags.osc52clip_set = true;
+	_async_cond.notify_all();
 }
 
 bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)

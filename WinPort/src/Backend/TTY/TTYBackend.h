@@ -81,9 +81,12 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 			bool title_changed : 1;
 			bool far2l_interract : 1;
 			bool go_background : 1;
+			bool osc52clip_set : 1;
 		} flags;
 		uint32_t all;
 	} _ae {};
+
+	std::string _osc52clip;
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 
@@ -92,6 +95,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
+	void DispatchOSC52ClipSet(TTYOutput &tty_out);
 
 	void DetachNotifyPipe();
 

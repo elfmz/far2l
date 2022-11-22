@@ -57,4 +57,5 @@ public:
 	void ChangeTitle(std::string title);
 
 	void SendFar2lInterract(const StackSerializer &stk_ser);
+	void SendOSC52ClipSet(const std::string &clip_data);
 };

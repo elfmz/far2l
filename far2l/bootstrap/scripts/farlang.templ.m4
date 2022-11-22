@@ -1968,14 +1968,14 @@ upd:"Disable antialiasing"
 "Відключити згладжування"
 
 ConfigOSC52ClipSet
-"Исп. OSC52 для записи в буфер обмена"
-"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
-upd:"Use OSC52 to set clipboard data"
+"Исп. OSC&52 для записи в буфер обмена"
+"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
 
 ConfigExclusiveKeys
 "&Экслюзивная обработка нажатий, включающих:"

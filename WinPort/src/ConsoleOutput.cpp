@@ -617,7 +617,7 @@ void ConsoleOutput::AdhocQuickEdit()
 		_backend->OnConsoleAdhocQuickEdit();
 }
 
-DWORD ConsoleOutput::SetConsoleTweaks(DWORD tweaks)
+DWORD64 ConsoleOutput::SetConsoleTweaks(DWORD64 tweaks)
 {
 	if (!_backend)
 		return 0;

@@ -98,7 +98,7 @@ public:
 	virtual void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
 	
 	virtual void AdhocQuickEdit();
-	virtual DWORD SetConsoleTweaks(DWORD tweaks);
+	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks);
 	virtual void ConsoleChangeFont();
 	virtual bool IsActive();
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);

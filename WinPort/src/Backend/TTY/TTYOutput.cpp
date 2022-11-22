@@ -448,3 +448,11 @@ void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
 
 	Write(request.c_str(), request.size());
 }
+
+void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
+{
+	std::string request = ESC "]52;;";
+	base64_encode(request, (const unsigned char *)clip_data.data(), clip_data.size());
+	request+= '\a';
+	Write(request.c_str(), request.size());
+}

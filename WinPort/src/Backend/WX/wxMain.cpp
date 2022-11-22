@@ -200,6 +200,7 @@ struct EventWithRect : EventWith<SMALL_RECT>
 
 typedef EventWith<bool> EventWithBool;
 typedef EventWith<DWORD> EventWithDWORD;
+typedef EventWith<DWORD64> EventWithDWORD64;
 
 ///////////////////////////////////////////
 
@@ -1328,7 +1329,7 @@ void WinPortPanel::OnConsoleAdhocQuickEdit()
 
 void WinPortPanel::OnConsoleSetTweaksSync( wxCommandEvent& event )
 {
-	EventWithDWORD *e = (EventWithDWORD *)&event;
+	EventWithDWORD64 *e = (EventWithDWORD64 *)&event;
 	_exclusive_hotkeys.SetTriggerKeys( (e->cookie & EXCLUSIVE_CTRL_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_CTRL_RIGHT) != 0, (e->cookie & EXCLUSIVE_ALT_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_ALT_RIGHT) != 0,  (e->cookie & EXCLUSIVE_WIN_LEFT) != 0,
@@ -1337,9 +1338,9 @@ void WinPortPanel::OnConsoleSetTweaksSync( wxCommandEvent& event )
 	_paint_context.SetSharp( (e->cookie & CONSOLE_PAINT_SHARP) != 0);
 }
 
-DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
+DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	DWORD out = 0;
+	DWORD64 out = TWEAK_STATUS_SUPPORT_CHANGE_FONT;
 
 	if (_paint_context.IsSharpSupported())
 		out|= TWEAK_STATUS_SUPPORT_PAINT_SHARP;
@@ -1347,7 +1348,7 @@ DWORD WinPortPanel::OnConsoleSetTweaks(DWORD tweaks)
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
-	EventWithDWORD *event = new(std::nothrow) EventWithDWORD(tweaks, WX_CONSOLE_SET_TWEAKS);
+	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
 	if (event)
 		wxQueueEvent(this, event);
 

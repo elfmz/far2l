@@ -1967,6 +1967,16 @@ upd:"Disable antialiasing"
 upd:"Disable antialiasing"
 "Відключити згладжування"
 
+ConfigOSC52ClipSet
+"Исп. OSC&52 для записи в буфер обмена"
+"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+
 ConfigExclusiveKeys
 "&Экслюзивная обработка нажатий, включающих:"
 "&Exclusively handle hotkeys that include:"

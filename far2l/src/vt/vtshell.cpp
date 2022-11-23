@@ -863,7 +863,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				// release no more needed memory
 				std::vector<unsigned char>().swap(plain);
 			}
-			clip.Copy(ws.c_str(), true);
+			clip.Copy(ws.c_str(), false);
 			clip.Close();
 		}
 	}

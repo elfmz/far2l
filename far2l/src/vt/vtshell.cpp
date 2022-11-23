@@ -6,6 +6,8 @@
 #include "fileedit.hpp"
 #include "fileview.hpp"
 #include "interf.hpp"
+#include "clipboard.hpp"
+#include "message.hpp"
 #include <signal.h>
 #include <pthread.h>
 #include <mutex>
@@ -29,6 +31,7 @@
 #include "VTFar2lExtensios.h"
 #include "InterThreadCall.hpp"
 #include "vtshell_compose.h"
+#include "../WinPort/src/SavedScreen.h"
 #define __USE_BSD 
 #include <termios.h> 
 #include "palette.hpp"
@@ -367,6 +370,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
+	bool _allow_osc_clipset = false;
 
 	int ExecLeaderProcess()
 	{
@@ -760,6 +764,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case ':': {
 					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
 					if (str[6] && _far2l_exts) {
+						VTAnsiSuspend vta_suspend(_vta);
 						StackSerializer stk_ser;
 						uint8_t id = 0;
 						try {
@@ -805,6 +810,61 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			if (!reply.empty())
 				_input_reader.InjectInput(reply.c_str(), reply.size());
+		}
+	}
+
+	virtual bool OnOSCommand(int id, std::string &str)
+	{
+		if (id == 52) try {
+			OnOSC_ClipboardSet(str);
+			return true;
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", "OnOSCommand", e.what());
+		}
+
+		return false;
+	}
+
+	void OnOSC_ClipboardSet(std::string &str)
+	{
+		StrTrim(str, "; \t");
+		if (!_allow_osc_clipset) {
+			{
+				VTAnsiSuspend vta_suspend(_vta); // preserve console state
+				std::lock_guard<std::mutex> lock(_far2l_exts_mutex); // stop input readout
+				SavedScreen saved_scr;
+				auto choice = Message(MSG_KEEPBACKGROUND, 3,
+					Msg::TerminalClipboardAccessTitle,
+					Msg::TerminalClipboardSetText,
+					Msg::TerminalClipboardAccessBlock,		// 0
+					Msg::TerminalClipboardSetAllowOnce,		// 1
+					Msg::TerminalClipboardSetAllowForCommand);	// 2
+				if (choice != 1 && choice != 2) {
+					return;
+				}
+				if (choice == 2) {
+					_allow_osc_clipset = true;
+				}
+			}
+			OnTerminalResized(); // window could resize during dialog box processing
+		}
+
+		std::vector<unsigned char> plain;
+		base64_decode(plain, str);
+		{ // release no more needed memory
+			std::string().swap(str);
+		}
+		Clipboard clip;
+		if (clip.Open()) {
+			std::wstring ws;
+			MB2Wide((char *)plain.data(), strnlen((char *)plain.data(), plain.size()), ws);
+			{
+				// release no more needed memory
+				std::vector<unsigned char>().swap(plain);
+			}
+			clip.Copy(ws.c_str(), true);
+			clip.Close();
 		}
 	}
 	
@@ -1054,6 +1114,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		OnKeypadChange(0);
 		_vta.OnStop();
+		_allow_osc_clipset = false;
 		DeliverPendingWindowInfo();
 
 		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);

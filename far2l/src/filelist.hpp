@@ -59,40 +59,40 @@ struct FileListItem
 	FARString strOwner, strGroup;
 	FARString strCustomData;
 
-	uint64_t FileSize{0};
-	uint64_t PhysicalSize{0};
+	uint64_t FileSize{};
+	uint64_t PhysicalSize{};
 
-	FILETIME CreationTime{0};
-	FILETIME AccessTime{0};
-	FILETIME WriteTime{0};
-	FILETIME ChangeTime{0};
+	FILETIME CreationTime{};
+	FILETIME AccessTime{};
+	FILETIME WriteTime{};
+	FILETIME ChangeTime{};
 
-	wchar_t *DizText{nullptr};
-	wchar_t **CustomColumnData{nullptr};
+	wchar_t *DizText{};
+	wchar_t **CustomColumnData{};
 
-	DWORD_PTR UserData{0};
+	DWORD_PTR UserData{};
 
-	HighlightDataColor Colors{0}; // 5 DWORDs
+	HighlightDataColor Colors{}; // 5 DWORDs
 
-	DWORD NumberOfLinks{0};
-	DWORD UserFlags{0};
-	DWORD FileAttr{0};
-	DWORD FileMode{0};
-	DWORD CRC32{0};
+	DWORD NumberOfLinks{};
+	DWORD UserFlags{};
+	DWORD FileAttr{};
+	DWORD FileMode{};
+	DWORD CRC32{};
 
-	int Position{0};
-	int SortGroup{0};
-	int CustomColumnNumber{0};
+	int Position{};
+	int SortGroup{};
+	int CustomColumnNumber{};
 
-	bool Selected{false};
-	bool PrevSelected{false};
-	bool DeleteDiz{false};
-	uint8_t ShowFolderSize{0};
+	bool Selected{};
+	bool PrevSelected{};
+	bool DeleteDiz{};
+	uint8_t ShowFolderSize{};
 
 	/// temporary values used to optimize sorting, they fit into
 	/// 8-bytes alignment gap so there is no memory waisted
-	unsigned short FileNamePos{0};	// offset from beginning of StrName
-	unsigned short FileExtPos{0}; // offset from FileNamePos
+	unsigned short FileNamePos{};	// offset from beginning of StrName
+	unsigned short FileExtPos{}; // offset from FileNamePos
 };
 
 struct PluginsListItem

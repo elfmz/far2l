@@ -1106,6 +1106,9 @@ void InterpretEscSeq( void )
 			g_title.swap(os_cmd_arg);
 			os_cmd_arg.clear();
 			ApplyConsoleTitle();
+
+		} else if (g_vt_shell) {
+			g_vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
 		}
 	}
 }

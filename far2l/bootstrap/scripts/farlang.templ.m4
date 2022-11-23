@@ -22732,6 +22732,36 @@ upd:"Clipboard access"
 upd:"Clipboard access"
 "Доступ до буфера обміну"
 
+TerminalClipboardSetText
+"Приложение хочет записать в буфер обмена."
+"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+
+TerminalClipboardSetAllowOnce
+"&Разрешить однократно"
+"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+
+TerminalClipboardSetAllowForCommand
+"Разрешить &этой команде"
+"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+
 TerminalClipboardAccessText
 "Укажите как это приложение может пользоваться буфером обмена."
 "Please choose how this terminal application may use clipboard."

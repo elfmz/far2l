@@ -2989,7 +2989,7 @@ void FileList::ChangeDirectoriesFirst(int Mode)
 
 int FileList::GoToFile(long idxItem)
 {
-	if (idxItem < ListData.Count())
+	if (idxItem >= 0 && idxItem < ListData.Count())
 	{
 		CurFile=idxItem;
 		CorrectPosition();
@@ -3938,7 +3938,7 @@ void FileList::RestoreSelection()
 
 int FileList::GetFileName(FARString &strName,int Pos,DWORD &FileAttr)
 {
-	if (Pos >= ListData.Count())
+	if (Pos < 0 || Pos >= ListData.Count())
 		return FALSE;
 
 	strName = ListData[Pos]->strName;

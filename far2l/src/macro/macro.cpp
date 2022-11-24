@@ -3519,7 +3519,7 @@ static bool panelitemFunc(const TMacroFunction*)
 				Ret=TVar((int64_t)filelistItem->CRC32);
 				break;
 			case 14:  // Position
-				Ret=filelistItem->Position;
+				Ret=(int)filelistItem->Position;
 				break;
 			case 15:  // CreationTime (FILETIME)
 				Ret=TVar((int64_t)FileTimeToUI64(&filelistItem->CreationTime));

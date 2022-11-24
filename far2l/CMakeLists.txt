@@ -37,6 +37,7 @@ src/flink.cpp
 src/flplugin.cpp
 src/flshow.cpp
 src/flupdate.cpp
+src/fldata.cpp
 src/fnparce.cpp
 src/foldtree.cpp
 src/frame.cpp

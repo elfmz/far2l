@@ -369,7 +369,7 @@ void FileList::ShowFileList(int Fast)
 	GotoXY(TitleX,Y1);
 	Text(strTitle);
 
-	if (!FileCount)
+	if (ListData.IsEmpty())
 	{
 		SetScreen(X1+1,Y2-1,X2-1,Y2-1,L' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
@@ -377,7 +377,7 @@ void FileList::ShowFileList(int Fast)
 		//FS<<fmt::Expand(X2-X1-1)<<L"";
 	}
 
-	if (PanelMode==PLUGIN_PANEL && FileCount>0 && (Info.Flags & OPIF_REALNAMES))
+	if (PanelMode==PLUGIN_PANEL && !ListData.IsEmpty() && (Info.Flags & OPIF_REALNAMES))
 	{
 		if (!strInfoCurDir.IsEmpty())
 		{
@@ -426,7 +426,7 @@ void FileList::ShowFileList(int Fast)
 	if (Opt.ShowPanelScrollbar)
 	{
 		SetColor(COL_PANELSCROLLBAR);
-		ScrollBarEx(X2,Y1+1+Opt.ShowColumnTitles,Height,Round(CurTopFile,Columns),Round(FileCount,Columns));
+		ScrollBarEx(X2,Y1+1+Opt.ShowColumnTitles,Height,Round(CurTopFile,Columns),Round(ListData.Count(),Columns));
 	}
 
 	ShowScreensCount();
@@ -447,11 +447,11 @@ int FileList::GetShowColor(int Position, int ColorType)
 	DWORD ColorAttr=COL_PANELTEXT;
 	const DWORD FarColor[] = {COL_PANELTEXT,COL_PANELSELECTEDTEXT,COL_PANELCURSOR,COL_PANELSELECTEDCURSOR};
 
-	if (ListData && Position < FileCount)
+	if (Position >= 0 && Position < ListData.Count())
 	{
 		int Pos = HIGHLIGHTCOLOR_NORMAL;
 
-		if (CurFile==Position && Focus && FileCount > 0)
+		if (CurFile==Position && Focus && !ListData.IsEmpty())
 		{
 			Pos=ListData[Position]->Selected?HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR:HIGHLIGHTCOLOR_UNDERCURSOR;
 		}
@@ -964,7 +964,7 @@ void FileList::ShowList(int ShowStatus,int StartColumn)
 				continue;
 			}
 
-			if (ListPos<FileCount)
+			if (ListPos<ListData.Count())
 			{
 				if (!ShowStatus && !StatusShown && CurFile==ListPos && Opt.ShowPanelStatus)
 				{

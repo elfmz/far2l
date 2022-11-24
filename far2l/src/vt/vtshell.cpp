@@ -834,6 +834,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
 				std::lock_guard<std::mutex> lock(_far2l_exts_mutex); // stop input readout
 				SavedScreen saved_scr;
+				ScrBuf.FillBuf();
 				auto choice = Message(MSG_KEEPBACKGROUND, 3,
 					Msg::TerminalClipboardAccessTitle,
 					Msg::TerminalClipboardSetText,

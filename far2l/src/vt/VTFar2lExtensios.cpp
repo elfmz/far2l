@@ -9,6 +9,7 @@
 
 #include "VTFar2lExtensios.h"
 #include "headers.hpp"
+#include "scrbuf.hpp"
 #include "lang.hpp"
 #include "dialog.hpp"
 #include "message.hpp"
@@ -240,6 +241,7 @@ char VTFar2lExtensios::ClipboardAuthorize(const std::string &client_id)
 
 	{
 		SavedScreen saved_scr;
+		ScrBuf.FillBuf();
 		choice = Message(MSG_KEEPBACKGROUND, 4,
 			Msg::TerminalClipboardAccessTitle,
 			Msg::TerminalClipboardAccessText,

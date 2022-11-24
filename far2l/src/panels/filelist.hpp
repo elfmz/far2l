@@ -94,10 +94,10 @@ struct FileListItem
 
 struct ListDataVec : protected std::vector<FileListItem *>
 {
-	using typename std::vector<FileListItem *>::iterator;
-	using typename std::vector<FileListItem *>::begin;
-	using typename std::vector<FileListItem *>::end;
-	using typename std::vector<FileListItem *>::operator[];
+	using std::vector<FileListItem *>::iterator;
+	using std::vector<FileListItem *>::begin;
+	using std::vector<FileListItem *>::end;
+	using std::vector<FileListItem *>::operator[];
 
 	ListDataVec(const ListDataVec &) = delete;
 	ListDataVec &operator =(const ListDataVec &) = delete;

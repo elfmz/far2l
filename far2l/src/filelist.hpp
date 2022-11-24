@@ -42,18 +42,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "FSNotify.h"
 #include <memory>
-
-class FileFilter;
+#include <vector>
 
 struct FileListItem
 {
-	FileListItem() = default;
+	FileListItem(const FileListItem &) = delete;
+	FileListItem& operator=(const FileListItem &) = delete;
+
+	FileListItem();
 	~FileListItem();
-
-	FileListItem(const FileListItem&) = delete;
-	FileListItem& operator=(const FileListItem &fliCopy) = delete;
-
-////
 
 	FARString strName;
 	FARString strOwner, strGroup;
@@ -80,7 +77,7 @@ struct FileListItem
 	DWORD FileMode{};
 	DWORD CRC32{};
 
-	int Position{};
+	unsigned int Position{}; // for unsorted sorting..
 	int SortGroup{};
 	int CustomColumnNumber{};
 
@@ -93,6 +90,35 @@ struct FileListItem
 	/// 8-bytes alignment gap so there is no memory waisted
 	unsigned short FileNamePos{};	// offset from beginning of StrName
 	unsigned short FileExtPos{}; // offset from FileNamePos
+};
+
+struct ListDataVec : protected std::vector<FileListItem *>
+{
+	using typename std::vector<FileListItem *>::iterator;
+	using typename std::vector<FileListItem *>::begin;
+	using typename std::vector<FileListItem *>::end;
+	using typename std::vector<FileListItem *>::operator[];
+
+	ListDataVec(const ListDataVec &) = delete;
+	ListDataVec &operator =(const ListDataVec &) = delete;
+
+	ListDataVec();
+	~ListDataVec();
+
+	void Clear();
+
+	FileListItem *Add();
+
+	// занести предопределенные данные для каталога ".."
+	FileListItem *AddParentPoint();
+	FileListItem *AddParentPoint(const FILETIME* Times, FARString Owner, FARString Group);
+
+	void ReserveExtra(int extra);
+	void Swap(ListDataVec &other);
+
+	inline FileListItem **Data() { return data(); }
+	inline int Count() const { return (int)size(); }
+	inline bool IsEmpty() const { return empty(); }
 };
 
 struct PluginsListItem
@@ -113,16 +139,15 @@ struct PluginsListItem
 
 struct PrevDataItem
 {
-	FileListItem **PrevListData;
-	int PrevFileCount;
+	ListDataVec PrevListData;
 	FARString strPrevName;
 	int PrevTopFile;
 };
 
-class FileList:public Panel
+class FileList : public Panel
 {
 	private:
-		FileFilter *Filter;
+		class FileFilter *Filter;
 		DizList Diz;
 		int DizRead;
 		/* $ 09.11.2001 IS
@@ -133,8 +158,7 @@ class FileList:public Panel
 
 		FARString strOriginalCurDir;
 		FARString strPluginDizName;
-		FileListItem **ListData;
-		int FileCount;
+		ListDataVec ListData;
 		HANDLE hPlugin;
 		DList<PrevDataItem*>PrevDataList;
 		DList<PluginsListItem*>PluginsList;
@@ -170,7 +194,6 @@ class FileList:public Panel
 		virtual void SetSelectedFirstMode(int Mode);
 		virtual int GetSelectedFirstMode() {return SelectedFirst;}
 		virtual void DisplayObject();
-		void DeleteListData(FileListItem **(&ListData),int &FileCount);
 		void Up(int Count);
 		void Down(int Count);
 		void Scroll(int Count);
@@ -195,7 +218,7 @@ class FileList:public Panel
 		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
 
-		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);
+		void MoveSelection(ListDataVec &NewList, ListDataVec &OldList);
 		virtual int GetSelCount();
 		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fde=nullptr);
 		virtual void UngetSelName();
@@ -235,7 +258,6 @@ class FileList:public Panel
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
 		void ProcessCopyKeys(int Key);
 		void ReadSortGroups(bool UpdateFilterCurrentTime=true);
-		void InitParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"",FARString Group=L"");
 		int  ProcessOneHostFile(int Idx);
 
 	protected:
@@ -335,7 +357,7 @@ class FileList:public Panel
 		virtual void SetTitle();
 		//virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		int PluginPanelHelp(HANDLE hPlugin);
-		virtual long GetFileCount() {return FileCount;}
+		virtual long GetFileCount() {return ListData.Count();}
 
 		FARString &CreateFullPathName(const wchar_t *Name,DWORD FileAttr, FARString &strDest,int UNC);
 

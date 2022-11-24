@@ -855,17 +855,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		{ // release no more needed memory
 			std::string().swap(str);
 		}
-		Clipboard clip;
-		if (clip.Open()) {
-			std::wstring ws;
-			MB2Wide((char *)plain.data(), strnlen((char *)plain.data(), plain.size()), ws);
-			{
-				// release no more needed memory
-				std::vector<unsigned char>().swap(plain);
-			}
-			clip.Copy(ws.c_str(), false);
-			clip.Close();
+		std::wstring ws;
+		MB2Wide((char *)plain.data(), strnlen((char *)plain.data(), plain.size()), ws);
+		{// release no more needed memory
+			std::vector<unsigned char>().swap(plain);
 		}
+		CopyToClipboard(ws.c_str());
 	}
 	
 	virtual void InjectInput(const char *str)
@@ -880,6 +875,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (wz) {
 			out = Wide2MB(&wz[0]);
 			free(wz);
+			// #1424, convert: "\n" -> "\r",  "\r\n" -> "\r"
+			for (size_t i = out.size(); i > 0; ) {
+				--i;
+				if (out[i] == '\n') {
+					if (i == 0 || out[i - 1] != '\r') {
+						out[i] = '\r';
+					} else {
+						out.erase(i, 1);
+					}
+				}
+			}
 		}
 
 		return out;

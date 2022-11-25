@@ -149,6 +149,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 #endif
 
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
+    Format(ESC "[?2004h");
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -172,6 +173,7 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
+        Format(ESC "[?2004l");
 		Flush();
 
 	} catch (std::exception &) {

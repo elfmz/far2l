@@ -331,6 +331,16 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 0;
 	}
 
+    if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && s[3] == '0' && s[4] == '~') {
+        bracketed_paste = true;
+        return 5;
+	}
+
+    if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && s[3] == '1' && s[4] == '~') {
+        bracketed_paste = false;
+        return 5;
+	}
+
 	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
 		if (l < 5)
 			return 0;
@@ -470,6 +480,11 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
+
+    if (bracketed_paste) {
+        ir.Event.KeyEvent.dwControlKeyState |= NO_AUTO_INDENT;
+    }
+
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
 	if (_handler) {
 		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);

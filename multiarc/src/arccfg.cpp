@@ -41,7 +41,7 @@ int ConfigGeneral()
 //  DialogItems[7].Param.Selected=Opt.DeleteExtFile;
 //  DialogItems[8].Param.Selected=Opt.AddExtArchive;
   DialogItems[8].Selected=Opt.AdvFlags.AutoResetExactArcName;
-  ArrayCpyZ(DialogItems[12].Data, Opt.DescriptionNames.c_str());
+  strncpy(DialogItems[12].Data,Opt.DescriptionNames.c_str(),ARRAYSIZE(DialogItems[12].Data));
   DialogItems[13].Selected=Opt.ReadDescriptions;
   DialogItems[14].Selected=Opt.UpdateDescriptions;
   int ExitCode=Info.Dialog(Info.ModuleNumber,-1,-1,76,19,"ArcSettings1",DialogItems,

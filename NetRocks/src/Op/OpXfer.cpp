@@ -292,7 +292,7 @@ void OpXfer::Transfer()
 		path_dst = _dst_dir;
 		path_dst+= subpath;
 		{
-			std::unique_lock<std::mutex> lock(_state.mtx);
+			std::lock_guard<std::mutex> lock(_state.mtx);
 			_state.path = subpath;
 			_state.stats.file_complete = 0;
 			_state.stats.file_total = S_ISDIR(e.second.mode) ? 0 : e.second.size;
@@ -332,7 +332,7 @@ void OpXfer::Transfer()
 
 			if (S_ISREG(e.second.mode)) {
 				// symlinks are not counted in all_total, need to add size for symlink's target if gonna file-copy it
-				std::unique_lock<std::mutex> lock(_state.mtx);
+				std::lock_guard<std::mutex> lock(_state.mtx);
 				_state.stats.all_total+= e.second.size;
 			}
 		}
@@ -374,7 +374,7 @@ void OpXfer::Transfer()
 				}
 
 				if (xoa == XOA_SKIP) {
-					std::unique_lock<std::mutex> lock(_state.mtx);
+					std::lock_guard<std::mutex> lock(_state.mtx);
 					_state.stats.all_complete+= e.second.size;
 					_state.stats.file_complete+= e.second.size;
 					_state.stats.count_complete++;
@@ -384,7 +384,7 @@ void OpXfer::Transfer()
 
 			if (_on_site_move) try {
 				_base_host->Rename(e.first, path_dst);
-				std::unique_lock<std::mutex> lock(_state.mtx);
+				std::lock_guard<std::mutex> lock(_state.mtx);
 				_state.stats.all_complete+= e.second.size;
 				_state.stats.file_complete+= e.second.size;
 				_state.stats.count_complete++;

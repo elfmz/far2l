@@ -349,7 +349,7 @@ public:
 		}
 
 		if (nmb_enum) {
-			FileInformation file_info;
+			FileInformation file_info{};
 			file_info.mode = S_IFDIR | DEFAULT_ACCESS_MODE_DIRECTORY;
 			for (const auto &i : nmb_enum->WaitResults()) {
 				_net.emplace(i.first, file_info);

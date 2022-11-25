@@ -229,9 +229,9 @@ int TmpPanel::PutOneFile(const TCHAR* SrcPath, PluginPanelItem &PanelItem)
 #else
   *CurPanelItem->FindData.cFileName = 0;
 #endif
+  lstrcpy((TCHAR*)CurPanelItem->FindData.FILE_NAME, SrcPath);
   if (*SrcPath)
   {
-    lstrcpy((TCHAR*)CurPanelItem->FindData.FILE_NAME, SrcPath);
     FSF.AddEndSlash((TCHAR*)CurPanelItem->FindData.FILE_NAME);
   }
   lstrcat((TCHAR*)CurPanelItem->FindData.FILE_NAME, PanelItem.FindData.FILE_NAME);

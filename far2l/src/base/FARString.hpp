@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "locale.hpp"
 #include "lang.hpp"
 
-#define NullToEmpty(s) (s?s:L"")
+inline const wchar_t *NullToEmpty(const wchar_t *s) { return s ? s : L""; }
 
 /***********************************************************************************************************
  * This is a FARString - homegrew reference-counted string widely used in this project.

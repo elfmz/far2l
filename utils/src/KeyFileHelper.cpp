@@ -315,11 +315,8 @@ static inline mode_t MakeFileMode(struct stat &filestat)
 	return (filestat.st_mode | 0600) & 0777;
 }
 
-template <class ValuesProviderT>
-static bool LoadKeyFile(const std::string &filename, struct stat &filestat, ValuesProviderT values_provider)
+static bool LoadKeyFileContent(const std::string &filename, struct stat &filestat, std::string &content)
 {
-	std::string content;
-
 	for (size_t load_attempts = 0;; ++load_attempts) {
 		if (stat(filename.c_str(), &filestat) == -1) {
 			return false;
@@ -331,11 +328,12 @@ static bool LoadKeyFile(const std::string &filename, struct stat &filestat, Valu
 			return false;
 		}
 
+		content.resize(filestat.st_size);
+
 		if (filestat.st_size == 0) {
-			return true;
+			break;
 		}
 
-		content.resize(filestat.st_size);
 		ssize_t r = ReadAll(fd, &content[0], content.size());
 		if (r == (ssize_t)filestat.st_size) {
 			struct stat s2 {};
@@ -356,6 +354,17 @@ static bool LoadKeyFile(const std::string &filename, struct stat &filestat, Valu
 		// seems tried to read at the moment when smbd else modifies file
 		// usleep random time to effectively avoid long waits on mutual conflicts
 		usleep(10000 + 1000 * (rand() % 100));
+	}
+
+	return true;
+}
+
+template <class ValuesProviderT>
+	static bool LoadKeyFile(const std::string &filename, struct stat &filestat, ValuesProviderT values_provider)
+{
+	std::string content;
+	if (!LoadKeyFileContent(filename, filestat,content)) {
+		return false;
 	}
 
 	KFEscaping esc, esc_val;

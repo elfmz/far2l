@@ -1477,7 +1477,7 @@ int WriteInput(int Key,DWORD Flags)
 			if (Key < 0x30 || Key > 0x5A) // 0-9:;<=>?@@ A..Z  //?????
 				Key=0;
 
-			Rec.Event.KeyEvent.uChar.UnicodeChar=Rec.Event.KeyEvent.uChar.AsciiChar=Key;
+			Rec.Event.KeyEvent.uChar.UnicodeChar=/*Rec.Event.KeyEvent.uChar.AsciiChar=*/Key;
 			Rec.Event.KeyEvent.dwControlKeyState=0;
 		}
 

@@ -94,6 +94,8 @@ static clock_t PressedLastTime,KeyPressedLastTime;
 static int ShiftState=0;
 static int LastShiftEnterPressed=FALSE;
 
+BOOL BracketedPasteMode=FALSE;
+
 /* ----------------------------------------------------------------- */
 static struct TTable_KeyToVK
 {
@@ -849,6 +851,9 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	if (rec->EventType==KEY_EVENT)
 	{
+
+        BracketedPasteMode = (rec->Event.KeyEvent.dwControlKeyState & NO_AUTO_INDENT);
+
 		/* коррекция шифта, т.к.
 		NumLock=ON Shift-Numpad1
 		   Dn, 1, Vk=0x0010, Scan=0x002A Ctrl=0x00000030 (caSa - cecN)

@@ -37,6 +37,7 @@
 #include "palette.hpp"
 #include "AnsiEsc.hpp"
 
+bool bracketed_paste_mode = false;
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
     WCHAR uc = 0);
@@ -888,6 +889,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				}
 			}
 		}
+
+        if (bracketed_paste_mode) {
+            out.insert(0, "\x1b[200~");
+            out.append("\x1b[201~");
+        }
 
 		return out;
 	}

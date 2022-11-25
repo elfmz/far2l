@@ -3,6 +3,7 @@
 #include <farplug-wide.h>
 #include <algorithm>
 #include <ctype.h>
+#include <assert.h>
 #include <utils.h>
 #include <KeyFileHelper.h>
 
@@ -242,7 +243,7 @@ LONG_PTR WINAPI ShowDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
  ****************************************************************************/
 static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 {
-  static struct InitDialogItem {
+  static constexpr struct InitDialogItem {
     unsigned char Type;
     unsigned char X1, Y1, X2, Y2;
     int           Data;
@@ -283,11 +284,9 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
   KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
 
   size_t DlgData=0;
-  bool bNoFocus = true;
-  size_t i;
-  for (i = 0; i < ARRAYSIZE(InitItems); i++)
+
+  for (size_t i = 0; i < ARRAYSIZE(InitItems); i++)
   {
-    DWORD dwRegValue;
     DialogItems[i].Type           = InitItems[i].Type;
     DialogItems[i].X1             = InitItems[i].X1;
     DialogItems[i].Y1             = InitItems[i].Y1;
@@ -303,12 +302,14 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
             ? L"" : GetMsg(InitItems[i].Data);
 #endif
 
-    dwRegValue = InitItems[i].SelectedRegValue
+    const DWORD dwRegValue = InitItems[i].SelectedRegValue
         ? kfh.GetInt(InitItems[i].SelectedRegValue, InitItems[i].DefaultRegValue)
         : InitItems[i].DefaultRegValue;
 
     if (DialogItems[i].Type == DI_CHECKBOX || DialogItems[i].Type == DI_RADIOBUTTON)
+    {
       DialogItems[i].Param.Selected = dwRegValue;
+    }
     else if (DialogItems[i].Type == DI_FIXEDIT)
     {
 #ifndef UNICODE
@@ -322,10 +323,15 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
                           - (_tcschr(DialogItems[i-1].PtrData, _T('&'))?1:0) + 5;
       DialogItems[i].X2 += DialogItems[i].X1;
     }
+  }
 
+  bool bNoFocus = true;
+  for (size_t i = 0; i < ARRAYSIZE(InitItems); i++)
+  {
     switch (InitItems[i].Data)
     {
       case MCompareContents:
+        assert(i + 3 < ARRAYSIZE(InitItems));
         DlgData += i;
         if (bPluginPanels)
         {
@@ -334,30 +340,32 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         if (!DialogItems[i].Param.Selected)
         {
-          InitItems[i+1].Flags |= DIF_DISABLE;
-          InitItems[i+2].Flags |= DIF_DISABLE;
-          InitItems[i+3].Flags |= DIF_DISABLE;
+          DialogItems[i+1].Flags |= DIF_DISABLE;
+          DialogItems[i+2].Flags |= DIF_DISABLE;
+          DialogItems[i+3].Flags |= DIF_DISABLE;
         }
         else
         {
-          InitItems[i+1].Flags &= ~DIF_DISABLE;
-          InitItems[i+2].Flags &= ~DIF_DISABLE;
-          InitItems[i+3].Flags &= ~DIF_DISABLE;
+          DialogItems[i+1].Flags &= ~DIF_DISABLE;
+          DialogItems[i+2].Flags &= ~DIF_DISABLE;
+          DialogItems[i+3].Flags &= ~DIF_DISABLE;
         }
         break;
       case MCompareContentsIgnore:
+        assert(i + 2 < ARRAYSIZE(InitItems));
         if (!DialogItems[i].Param.Selected || DialogItems[i].Flags & DIF_DISABLE)
         {
-          InitItems[i+1].Flags |= DIF_DISABLE;
-          InitItems[i+2].Flags |= DIF_DISABLE;
+          DialogItems[i+1].Flags |= DIF_DISABLE;
+          DialogItems[i+2].Flags |= DIF_DISABLE;
         }
         else
         {
-          InitItems[i+1].Flags &= ~DIF_DISABLE;
-          InitItems[i+2].Flags &= ~DIF_DISABLE;
+          DialogItems[i+1].Flags &= ~DIF_DISABLE;
+          DialogItems[i+2].Flags &= ~DIF_DISABLE;
         }
         break;
       case MCompareIgnoreWhitespace:
+        assert(i > 0);
         if (DialogItems[i].Param.Selected == DialogItems[i-1].Param.Selected)
         {
           DialogItems[i-1].Param.Selected = 1;
@@ -365,6 +373,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MProcessSubfolders:
+        assert(i + 2 < ARRAYSIZE(InitItems));
         DlgData += i<<8;
         if (bPluginPanels)
         {
@@ -373,13 +382,13 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         if (!DialogItems[i].Param.Selected)
         {
-          InitItems[i+1].Flags |= DIF_DISABLE;
-          InitItems[i+2].Flags |= DIF_DISABLE;
+          DialogItems[i+1].Flags |= DIF_DISABLE;
+          DialogItems[i+2].Flags |= DIF_DISABLE;
         }
         else
         {
-          InitItems[i+1].Flags &= ~DIF_DISABLE;
-          InitItems[i+2].Flags &= ~DIF_DISABLE;
+          DialogItems[i+1].Flags &= ~DIF_DISABLE;
+          DialogItems[i+2].Flags &= ~DIF_DISABLE;
         }
         break;
       case MProcessSelected:
@@ -390,16 +399,17 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MCompareTime:
+        assert(i + 2 < ARRAYSIZE(InitItems));
         DlgData += i<<16;
         if (!DialogItems[i].Param.Selected)
         {
-          InitItems[i+1].Flags |= DIF_DISABLE;
-          InitItems[i+2].Flags |= DIF_DISABLE;
+          DialogItems[i+1].Flags |= DIF_DISABLE;
+          DialogItems[i+2].Flags |= DIF_DISABLE;
         }
         else
         {
-          InitItems[i+1].Flags &= ~DIF_DISABLE;
-          InitItems[i+2].Flags &= ~DIF_DISABLE;
+          DialogItems[i+1].Flags &= ~DIF_DISABLE;
+          DialogItems[i+2].Flags &= ~DIF_DISABLE;
         }
         break;
       case MOK:
@@ -430,7 +440,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 
   if (ExitCode == (ARRAYSIZE(InitItems) - 2))
   {
-    for (i = 0; i < ARRAYSIZE(InitItems); i++)
+    for (size_t i = 0; i < ARRAYSIZE(InitItems); i++)
       if (InitItems[i].StoreTo)
       {
         if (InitItems[i].Type == DI_CHECKBOX || InitItems[i].Type == DI_RADIOBUTTON)
@@ -443,7 +453,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 #endif
 
     KeyFileHelper kfh(INI_LOCATION);
-    for (i = 0; i < ARRAYSIZE(InitItems); i++)
+    for (size_t i = 0; i < ARRAYSIZE(InitItems); i++)
       if (!(CheckDisabled((int)i)) && InitItems[i].SelectedRegValue)
       {
         kfh.SetInt(INI_SECTION, InitItems[i].SelectedRegValue, *InitItems[i].StoreTo);

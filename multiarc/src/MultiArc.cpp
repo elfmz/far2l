@@ -33,7 +33,7 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
   //Opt.ExactArcName=GetRegKey(HKEY_CURRENT_USER, "", "ExactArcName", 0);
   Opt.AdvFlags=kfh.GetInt("AdvFlags", 2);
 
-  kfh.GetChars(Opt.DescriptionNames,sizeof(Opt.DescriptionNames),"DescriptionNames","descript.ion,files.bbs");
+  Opt.DescriptionNames=kfh.GetString("DescriptionNames","descript.ion,files.bbs");
   Opt.ReadDescriptions=kfh.GetInt("ReadDescriptions",0);
   Opt.UpdateDescriptions=kfh.GetInt("UpdateDescriptions",0);
   //Opt.UserBackground=GetRegKey(HKEY_CURRENT_USER,"","Background",0); // $ 06.02.2002 AA
@@ -131,47 +131,58 @@ std::string MakeFullName(const char *name)
 	return out;
 }
 
+static HANDLE OpenPluginWithCmdLine(const char *CmdLine)
+{
+  const size_t Prefix1Len = strnlen(Opt.CommandPrefix1, ARRAYSIZE(Opt.CommandPrefix1));
+  if (strncmp(CmdLine, Opt.CommandPrefix1, Prefix1Len) != 0)
+    return INVALID_HANDLE_VALUE;
+
+  if (CmdLine[Prefix1Len] != ':' || CmdLine[Prefix1Len + 1] == 0)
+    return INVALID_HANDLE_VALUE;
+
+  char oldfilename[NM+2];
+  strncpy(oldfilename, &CmdLine[Prefix1Len + 1], sizeof(oldfilename) - 1);
+
+  FSF.Unquote(oldfilename);
+  FSF.ExpandEnvironmentStr(oldfilename, oldfilename, NM);
+  std::string filename = MakeFullName(oldfilename);
+  if (filename.empty())
+    return INVALID_HANDLE_VALUE;
+
+  HANDLE h = WINPORT(CreateFile)(StrMB2Wide(filename).c_str(), GENERIC_READ,
+		FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (h == INVALID_HANDLE_VALUE)
+    return INVALID_HANDLE_VALUE;
+
+  DWORD datasize = (DWORD)Info.AdvControl(Info.ModuleNumber, ACTL_GETPLUGINMAXREADDATA, (void *)0);
+  if (!datasize)
+    return INVALID_HANDLE_VALUE;
+
+  unsigned char *data = (unsigned char *)malloc(datasize);
+  if (!data)
+    return INVALID_HANDLE_VALUE;
+
+  if (!WINPORT(ReadFile)(h, data, datasize, &datasize, NULL))
+    datasize = 0;
+
+  WINPORT(CloseHandle)(h);
+
+  h = (datasize == 0) ? INVALID_HANDLE_VALUE
+    : OpenFilePlugin(filename.c_str(), data, datasize, OPM_COMMANDS);
+
+  free(data);
+
+  return h;
+}
+
 SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
 {
   if (ArcPlugin==NULL)
     return INVALID_HANDLE_VALUE;
+
   if (OpenFrom==OPEN_COMMANDLINE)
-  {
-    if (strncmp(Opt.CommandPrefix1,(char *)Item,strlen(Opt.CommandPrefix1))==0 &&
-        (((char *)Item)[strlen(Opt.CommandPrefix1)]==':'))
-    {
-      if (((char *)Item)[strlen(Opt.CommandPrefix1)+1]==0)
-        return INVALID_HANDLE_VALUE;
-      char oldfilename[NM+2];
-      strncpy(oldfilename,&((char *)Item)[strlen(Opt.CommandPrefix1)+1],sizeof(oldfilename) - 1);
-      FSF.Unquote(oldfilename);
-      FSF.ExpandEnvironmentStr(oldfilename,oldfilename,NM);
-      std::string filename = MakeFullName(oldfilename);
-      if (filename.empty())
-        return INVALID_HANDLE_VALUE;
-      HANDLE h = WINPORT(CreateFile)(StrMB2Wide(filename).c_str(),GENERIC_READ,FILE_SHARE_READ,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-      if (h == INVALID_HANDLE_VALUE)
-        return INVALID_HANDLE_VALUE;
-      DWORD size = (DWORD)Info.AdvControl(Info.ModuleNumber,ACTL_GETPLUGINMAXREADDATA,(void *)0);
-      unsigned char *data;
-      data = (unsigned char *) malloc(size*sizeof(unsigned char));
-      if (!data)
-        return INVALID_HANDLE_VALUE;
-      DWORD datasize;
-      BOOL b = WINPORT(ReadFile)(h,data,size,&datasize,NULL);
-      WINPORT(CloseHandle)(h);
-      if (!(b&&datasize))
-      {
-        free(data);
-        return INVALID_HANDLE_VALUE;
-      }
-      h = OpenFilePlugin(filename.c_str(), data, datasize, OPM_COMMANDS);
-      free(data);
-      if ((h==(HANDLE)-2) || h==INVALID_HANDLE_VALUE)
-        return INVALID_HANDLE_VALUE;
-      return h;
-    }
-  }
+    return OpenPluginWithCmdLine((const char *)Item);
+
   return INVALID_HANDLE_VALUE;
 }
 

@@ -273,7 +273,7 @@ struct Options
 {
   int HideOutput;
   int ProcessShiftF1;
-  char DescriptionNames[NM];
+  std::string DescriptionNames;
   int ReadDescriptions;
   int UpdateDescriptions;
   /* $ 13.09.2000 tran

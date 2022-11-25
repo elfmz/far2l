@@ -230,10 +230,12 @@ public:
 
 		if (create_path) {
 			const size_t p = path.rfind(GOOD_SLASH);
-			struct stat s;
-			if (stat(path.substr(0, p).c_str(), &s) == -1) {
-				for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
-					EnsureDir(path.substr(0, i).c_str(), PL_PRIVATE);
+			if (p != std::string::npos) {
+				struct stat s;
+				if (stat(path.substr(0, p).c_str(), &s) == -1) {
+					for (size_t i = 1; i <= p; ++i) if (path[i] == GOOD_SLASH) {
+						EnsureDir(path.substr(0, i).c_str(), PL_PRIVATE);
+					}
 				}
 			}
 		}

@@ -401,6 +401,7 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 
 	/*& 31.05.2001 OT Запретить перерисовку текущего фрейма*/
 	LockCurrentFrame LCF;
+	LCF.RefreshOnUnlock();
 	wakeful W;
 	if (SrcPanel->GetType()==TREE_PANEL)
 		FarChDir(L"/");

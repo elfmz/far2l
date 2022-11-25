@@ -23,12 +23,14 @@ Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const
 
 void Enumer::Scan(bool recurse)
 {
-	for (auto path : _items) {
+	std::string subpath;
+	for (const auto &path : _items) {
 		if (OnScanningPath(path)) {
 			if (recurse) {
-				path+= '/';
+				subpath = path;
+				subpath+= '/';
 				_scan_depth_limit = 255;
-				ScanItem(path);
+				ScanItem(subpath);
 			}
 		}
 	}

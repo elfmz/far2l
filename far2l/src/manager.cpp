@@ -1797,7 +1797,7 @@ Frame* Manager::GetTopModal()
 
 
 LockFrame::LockFrame(Frame *frame)
-	: _frame(frame)
+	: _frame(frame), _refresh(false)
 {
 	if (_frame)
 		_frame->Lock();

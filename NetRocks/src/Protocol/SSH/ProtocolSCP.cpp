@@ -199,6 +199,7 @@ public:
 
 		cmd.Execute();
 		while (cmd.FetchOutput()) {
+			; // nothing
 		}
 		_output.swap(cmd.output);
 		_error.swap(cmd.error);
@@ -631,13 +632,16 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 
 	if (_quirks.use_ls) {
 		SimpleCommand ls_cmd(_conn);
-		if (ls_cmd.Execute("busybox") == 0) {
-			std::vector<std::string> words;
-			StrExplode(words, ls_cmd.Output(), " ,");
-			if (std::find(words.begin(), words.end(), "ls") != words.end()) {
-				fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox detected -> disable -f argument for ls\n");
+		if (ls_cmd.Execute("readlink /bin/sh") == 0) {
+			if (ls_cmd.Output().find("busybox") != std::string::npos) {
+				fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox detected\n");
 				_quirks.ls_supports_dash_f = false;
 			}
+		} else if (ls_cmd.Execute("busybox") == 0) {
+			// readlink not exists or /bin/sh not exists and also busybox exists?
+			// Its enough arguments to assume that ls will be handled by busybox.
+			fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox assumed\n");
+			_quirks.ls_supports_dash_f = false;
 		}
 	}
 }

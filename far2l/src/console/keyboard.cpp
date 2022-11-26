@@ -73,6 +73,7 @@ SHORT PrevMouseX=0,PrevMouseY=0,MouseX=0,MouseY=0;
 int PreMouseEventFlags=0,MouseEventFlags=0;
 // только что был ввод Alt-Цифира?
 int ReturnAltValue=0;
+bool BracketedPasteMode = false;
 
 /* end Глобальные переменные */
 
@@ -814,6 +815,13 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 		LoopCount++;
 	} // while (1)
+
+	if (rec->EventType==BRACKETED_PASTE_EVENT)
+	{
+		Console.ReadInput(*rec);
+		BracketedPasteMode = (rec->Event.BracketedPaste.bStartPaste != FALSE);
+		return KEY_NONE;
+	}
 
 	if (rec->EventType==NOOP_EVENT) {
 		Console.ReadInput(*rec);

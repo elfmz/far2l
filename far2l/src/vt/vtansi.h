@@ -3,6 +3,7 @@
 
 struct IVTShell
 {
+	virtual void OnBracketedPasteExpectation(bool enabled) = 0;
 	virtual void OnApplicationProtocolCommand(const char *str) = 0;
 	virtual bool OnOSCommand(int id, std::string &str) = 0;
 	virtual void InjectInput(const char *str) = 0;

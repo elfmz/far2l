@@ -114,6 +114,7 @@ class TTYInputSequenceParser
 	void ParseMouse(char action, char col, char raw);
 	void ParseAPC(const char *s, size_t l);
 	size_t ParseEscapeSequence(const char *s, size_t l);
+	void OnBracketedPaste(bool start);
 
 	void AddPendingKeyEvent(const TTYInputKey &k);
 	size_t ParseIntoPending(const char *s, size_t l);

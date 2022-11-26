@@ -37,6 +37,8 @@
 #include "palette.hpp"
 #include "AnsiEsc.hpp"
 
+#define BRACKETED_PASTE_SEQ_START "\x1b[200~"
+#define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
     WCHAR uc = 0);
@@ -259,6 +261,7 @@ public:
 		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 		virtual void OnInputInjected(const std::string &str) = 0;
+		virtual void OnBracketedPaste(bool start) = 0;
 		virtual void OnRequestShutdown() = 0;
 	};
 
@@ -328,6 +331,9 @@ private:
 			} else if (ir.EventType == KEY_EVENT) {
 				_processor->OnInputKey(ir.Event.KeyEvent);
 
+			} else if (ir.EventType == BRACKETED_PASTE_EVENT) {
+				_processor->OnBracketedPaste(ir.Event.BracketedPaste.bStartPaste != FALSE);
+
 			} else if (ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 				_processor->OnInputResized(ir);
 			}
@@ -364,13 +370,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	pid_t _leader_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad{0};
+	std::atomic<bool> _bracketed_paste_expected{false};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::mutex _far2l_exts_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
-	bool _allow_osc_clipset = false;
+	bool _allow_osc_clipset{false};
 
 	int ExecLeaderProcess()
 	{
@@ -641,6 +648,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
+	virtual void OnBracketedPaste(bool start) //called from worker thread
+	{
+		if (_bracketed_paste_expected) {
+			const char *seq = start ? BRACKETED_PASTE_SEQ_START : BRACKETED_PASTE_SEQ_STOP;
+			if (!WriteTerm(seq, strlen(seq))) {
+				fprintf(stderr, "VT: OnBracketedPaste - write error %d\n", errno);
+			}
+		}
+	}
+
 	virtual void OnInputInjected(const std::string &str) //called from worker thread
 	{
 		if (!WriteTerm(str.c_str(), str.size())) {
@@ -741,6 +758,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 //		fprintf(stderr, "VTShell::OnKeypadChange: %u\n", keypad);
 		_keypad = keypad;
+	}
+
+	virtual void OnBracketedPasteExpectation(bool enabled)
+	{
+		_bracketed_paste_expected = enabled;
 	}
 
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
@@ -887,6 +909,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					}
 				}
 			}
+		}
+
+		if (_bracketed_paste_expected) {
+			out.insert(0, BRACKETED_PASTE_SEQ_START);
+			out.append(BRACKETED_PASTE_SEQ_STOP);
 		}
 
 		return out;
@@ -1122,6 +1149,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		OnKeypadChange(0);
 		_vta.OnStop();
 		_allow_osc_clipset = false;
+		_bracketed_paste_expected = false;
 		DeliverPendingWindowInfo();
 
 		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);

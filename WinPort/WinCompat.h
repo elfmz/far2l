@@ -577,12 +577,16 @@ typedef struct _MOUSE_EVENT_RECORD {
 #define MOUSE_WHEELED 0x0004
 #define MOUSE_HWHEELED 0x0008
 
+typedef struct _BRACKETED_PASTE {
+    BOOL bStartPaste;
+} BRACKETED_PASTE, *PBRACKETED_PASTE;
 
 #define KEY_EVENT         0x0001 // Event contains key event record
 #define MOUSE_EVENT       0x0002 // Event contains mouse event record
 #define WINDOW_BUFFER_SIZE_EVENT 0x0004 // Event contains window change event record
 #define MENU_EVENT 0x0008 // Event contains menu event record
 #define FOCUS_EVENT 0x0010 // event contains focus change
+#define BRACKETED_PASTE_EVENT 0x0020 // event contains bracketed paste state change
 #define NOOP_EVENT 0x0080 // nothing interesting, typically injected to kick events dispatcher
 
 
@@ -594,6 +598,7 @@ typedef struct _INPUT_RECORD {
         WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
         MENU_EVENT_RECORD MenuEvent;
         FOCUS_EVENT_RECORD FocusEvent;
+        BRACKETED_PASTE BracketedPaste;
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
 

@@ -3222,7 +3222,7 @@ void Editor::InsertString()
 
 	int IndentPos=0;
 
-	if (EdOpt.AutoIndent && !Pasting)
+	if (EdOpt.AutoIndent && !Pasting && !BracketedPasteMode)
 	{
 		Edit *PrevLine=CurLine;
 

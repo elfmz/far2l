@@ -95,10 +95,10 @@ struct FileListItem
 template <class T>
 	struct StdVecWrap : protected std::vector<T>
 {
-	using typename std::vector<T>::iterator;
-	using typename std::vector<T>::begin;
-	using typename std::vector<T>::end;
-	using typename std::vector<T>::operator[];
+	using std::vector<T>::iterator;
+	using std::vector<T>::begin;
+	using std::vector<T>::end;
+	using std::vector<T>::operator[];
 
 	void ReserveExtra(int extra)
 	{

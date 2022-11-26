@@ -631,14 +631,15 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 
 	if (_quirks.use_ls) {
 		SimpleCommand ls_cmd(_conn);
-		ls_cmd.Execute("%s", "ls --help");
-		if (ls_cmd.Output().find("BusyBox") != std::string::npos
-		  || ls_cmd.Error().find("BusyBox") != std::string::npos) {
-			fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox detected -> disable -f argument for ls\n");
-			_quirks.ls_supports_dash_f = false;
+		if (ls_cmd.Execute("busybox") == 0) {
+			std::vector<std::string> words;
+			StrExplode(words, ls_cmd.Output(), " ,");
+			if (std::find(words.begin(), words.end(), "ls") != words.end()) {
+				fprintf(stderr, "ProtocolSCP::ProtocolSCP: BusyBox detected -> disable -f argument for ls\n");
+				_quirks.ls_supports_dash_f = false;
+			}
 		}
 	}
-
 }
 
 ProtocolSCP::~ProtocolSCP()

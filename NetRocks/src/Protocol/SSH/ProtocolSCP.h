@@ -8,6 +8,8 @@ struct SCPQuirks
 {
 	bool use_ls;
 	bool ls_supports_dash_f;
+	const char *rm_file;
+	const char *rm_dir;
 };
 
 class ProtocolSCP : public IProtocol

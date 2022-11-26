@@ -73,6 +73,7 @@ SHORT PrevMouseX=0,PrevMouseY=0,MouseX=0,MouseY=0;
 int PreMouseEventFlags=0,MouseEventFlags=0;
 // только что был ввод Alt-Цифира?
 int ReturnAltValue=0;
+bool BracketedPasteMode = false;
 
 /* end Глобальные переменные */
 
@@ -93,8 +94,6 @@ static BOOL IsKeyRCASPressed=FALSE; // Right CtrlAltShift - нажато или 
 static clock_t PressedLastTime,KeyPressedLastTime;
 static int ShiftState=0;
 static int LastShiftEnterPressed=FALSE;
-
-BOOL BracketedPasteMode=FALSE;
 
 /* ----------------------------------------------------------------- */
 static struct TTable_KeyToVK
@@ -817,6 +816,13 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		LoopCount++;
 	} // while (1)
 
+	if (rec->EventType==BRACKETED_PASTE_EVENT)
+	{
+		Console.ReadInput(*rec);
+		BracketedPasteMode = (rec->Event.BracketedPaste.bStartPaste != FALSE);
+		return KEY_NONE;
+	}
+
 	if (rec->EventType==NOOP_EVENT) {
 		Console.ReadInput(*rec);
 		memset(rec,0,sizeof(*rec));
@@ -851,9 +857,6 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	if (rec->EventType==KEY_EVENT)
 	{
-
-        BracketedPasteMode = (rec->Event.KeyEvent.dwControlKeyState & NO_AUTO_INDENT);
-
 		/* коррекция шифта, т.к.
 		NumLock=ON Shift-Numpad1
 		   Dn, 1, Vk=0x0010, Scan=0x002A Ctrl=0x00000030 (caSa - cecN)

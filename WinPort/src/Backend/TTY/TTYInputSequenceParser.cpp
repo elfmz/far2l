@@ -331,14 +331,9 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 0;
 	}
 
-    if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && s[3] == '0' && s[4] == '~') {
-        bracketed_paste = true;
-        return 5;
-	}
-
-    if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && s[3] == '1' && s[4] == '~') {
-        bracketed_paste = false;
-        return 5;
+	if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && (s[3] == '0' || s[3] == '1') && s[4] == '~') {
+		OnBracketedPaste(s[3] == '0');
+		return 5;
 	}
 
 	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
@@ -480,11 +475,6 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
-
-    if (bracketed_paste) {
-        ir.Event.KeyEvent.dwControlKeyState |= NO_AUTO_INDENT;
-    }
-
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
 	if (_handler) {
 		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
@@ -588,6 +578,14 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 
+}
+
+void TTYInputSequenceParser::OnBracketedPaste(bool start)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = BRACKETED_PASTE_EVENT;
+	ir.Event.BracketedPaste.bStartPaste = start ? TRUE : FALSE;
+	_ir_pending.emplace_back(ir);
 }
 
 //////////////////

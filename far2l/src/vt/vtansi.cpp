@@ -172,8 +172,6 @@ jadoxa@yahoo.com.au
 #include "AnsiEsc.hpp"
 #include "UtfConvert.hpp"
 
-extern bool bracketed_paste_mode;
-
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
 
 // ========== Global variables and constants
@@ -674,13 +672,14 @@ void InterpretEscSeq( void )
 //					g_alternative_screen_buffer.Toggle(suffix == 'h');
 //					break;
 
+				case 2004:
+					if (g_vt_shell)
+						g_vt_shell->OnBracketedPasteExpectation(suffix == 'h');
+					break;
+
 				case 1049:
 					g_alternative_screen_buffer.Toggle(suffix == 'h');
 					break;
-
-                case 2004:
-                    bracketed_paste_mode = (suffix == 'h');
-                    break;
 
 				case 25:
 					WINPORT(GetConsoleCursorInfo)( hConOut, &CursInfo );

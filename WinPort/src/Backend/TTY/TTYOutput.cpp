@@ -172,7 +172,6 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
-        Format(ESC "[?2004l");
 		Flush();
 
 	} catch (std::exception &) {

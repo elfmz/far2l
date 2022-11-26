@@ -53,7 +53,7 @@ extern DWORD MouseButtonState,PrevMouseButtonState;
 extern SHORT PrevMouseX,PrevMouseY,MouseX,MouseY;
 extern int PreMouseEventFlags,MouseEventFlags;
 extern int ReturnAltValue;
-extern int BracketedPasteMode;
+extern bool BracketedPasteMode;
 
 void InitKeysArray();
 bool KeyToKeyLayoutCompare(int Key, int CompareKey);

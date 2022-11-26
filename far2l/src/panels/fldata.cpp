@@ -69,16 +69,6 @@ FileListItem *ListDataVec::AddParentPoint(const FILETIME* Times, FARString Owner
 	return item;
 }
 
-void ListDataVec::ReserveExtra(int extra)
-{
-	reserve(size() + (size_t)extra);
-}
-
-void ListDataVec::Swap(ListDataVec &other)
-{
-	return swap(other);
-}
-
 ////////////////////////////////////////////////////////////////////////////
 
 FileListItem::FileListItem()
@@ -103,3 +93,27 @@ FileListItem::~FileListItem()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+
+PluginPanelItemVec::PluginPanelItemVec()
+{
+}
+
+PluginPanelItemVec::~PluginPanelItemVec()
+{
+	Clear();
+}
+
+void PluginPanelItemVec::Add(FileListItem *CreateFrom)
+{
+	emplace_back();
+	FileList::FileListToPluginItem(CreateFrom, &back());
+}
+
+void PluginPanelItemVec::Clear()
+{
+	for (auto &Item : *this) {
+		FileList::FreePluginPanelItem(&Item);
+	}
+	clear();
+}

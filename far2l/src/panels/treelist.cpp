@@ -1567,7 +1567,7 @@ int TreeList::GetSelCount()
 
 int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd)
 {
-        FileMode = 0640;
+	FileMode = 0640;
 
 	if (!strName)
 	{

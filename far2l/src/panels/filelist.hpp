@@ -92,13 +92,31 @@ struct FileListItem
 	unsigned short FileExtPos{}; // offset from FileNamePos
 };
 
-struct ListDataVec : protected std::vector<FileListItem *>
+template <class T>
+	struct StdVecWrap : protected std::vector<T>
 {
-	using std::vector<FileListItem *>::iterator;
-	using std::vector<FileListItem *>::begin;
-	using std::vector<FileListItem *>::end;
-	using std::vector<FileListItem *>::operator[];
+	using typename std::vector<T>::iterator;
+	using typename std::vector<T>::begin;
+	using typename std::vector<T>::end;
+	using typename std::vector<T>::operator[];
 
+	void ReserveExtra(int extra)
+	{
+		std::vector<T>::reserve(std::vector<T>::size() + (size_t)extra);
+	}
+
+	void Swap(StdVecWrap<T> &other)
+	{
+		return std::vector<T>::swap(other);
+	}
+
+	inline T *Data() { return std::vector<T>::data(); }
+	inline int Count() const { return (int)std::vector<T>::size(); }
+	inline bool IsEmpty() const { return std::vector<T>::empty(); }
+};
+
+struct ListDataVec : StdVecWrap<FileListItem *>
+{
 	ListDataVec(const ListDataVec &) = delete;
 	ListDataVec &operator =(const ListDataVec &) = delete;
 
@@ -112,13 +130,19 @@ struct ListDataVec : protected std::vector<FileListItem *>
 	// занести предопределенные данные для каталога ".."
 	FileListItem *AddParentPoint();
 	FileListItem *AddParentPoint(const FILETIME* Times, FARString Owner, FARString Group);
+};
 
-	void ReserveExtra(int extra);
-	void Swap(ListDataVec &other);
 
-	inline FileListItem **Data() { return data(); }
-	inline int Count() const { return (int)size(); }
-	inline bool IsEmpty() const { return empty(); }
+struct PluginPanelItemVec : StdVecWrap<PluginPanelItem>
+{
+	PluginPanelItemVec(const PluginPanelItemVec &) = delete;
+	PluginPanelItemVec &operator =(const PluginPanelItemVec &) = delete;
+
+	PluginPanelItemVec();
+	~PluginPanelItemVec();
+
+	void Add(FileListItem *CreateFrom);
+	void Clear();
 };
 
 struct PluginsListItem
@@ -236,8 +260,7 @@ class FileList : public Panel
 		void SelectSortMode();
 		bool ApplyCommand();
 		void DescribeFiles();
-		void CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber,BOOL AddTwoDot=TRUE);
-		void DeletePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber);
+		void CreatePluginItemList(PluginPanelItemVec &ItemList);
 		HANDLE OpenPluginForFile(const wchar_t *FileName,DWORD FileAttr, OPENFILEPLUGINTYPE Type);
 		int PreparePanelView(PanelViewSettings *PanelView);
 		int PrepareColumnWidths(unsigned int *ColumnTypes,int *ColumnWidths,

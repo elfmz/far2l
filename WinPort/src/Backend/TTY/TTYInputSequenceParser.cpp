@@ -521,7 +521,10 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			_mouse.middle = true;
 			break;
 
-		case '^': // right press
+		case '2': // right+middle press
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '"': // right press
 			if (now - _mouse.right_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 				_mouse.right_ts = 0;

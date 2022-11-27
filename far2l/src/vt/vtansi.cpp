@@ -668,6 +668,15 @@ void InterpretEscSeq( void )
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 			for (i = 0; i < es_argc; ++i) {
 				switch (es_argv[i]) {
+				case MEX_X10_MOUSE:
+				case MEX_VT200_MOUSE:
+				case MEX_VT200_HIGHLIGHT_MOUSE:
+				case MEX_BTN_EVENT_MOUSE:
+				case MEX_ANY_EVENT_MOUSE:
+					if (g_vt_shell)
+						g_vt_shell->OnMouseExpectation( (suffix == 'h') ? (MouseExpectation)es_argv[i] : MEX_NONE );
+					break;
+
 //				case 47: case 1047:
 //					g_alternative_screen_buffer.Toggle(suffix == 'h');
 //					break;

@@ -30,6 +30,7 @@
 #include "InterThreadCall.hpp"
 #include "vtshell_compose.h"
 #include "vtshell_ioreaders.h"
+#include "vtshell_mouse.h"
 #include "../WinPort/src/SavedScreen.h"
 #define __USE_BSD 
 #include <termios.h> 
@@ -80,7 +81,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::atomic<bool> _bracketed_paste_expected{false};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
-	std::mutex _far2l_exts_mutex, _write_term_mutex;
+	std::unique_ptr<VTMouse> _mouse;
+	std::mutex _read_state_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
@@ -325,8 +327,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
 		{
-			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			std::lock_guard<std::mutex> lock(_read_state_mutex);
 			if (_far2l_exts && _far2l_exts->OnInputMouse(MouseEvent))
+				return;
+
+			if (_mouse && _mouse->OnInputMouse(MouseEvent))
 				return;
 		}
 
@@ -375,7 +380,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
 		{
-			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			std::lock_guard<std::mutex> lock(_read_state_mutex);
 			if (_far2l_exts && _far2l_exts->OnInputKey(KeyEvent))
 				return;
 		}
@@ -467,6 +472,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_keypad = keypad;
 	}
 
+	virtual void OnMouseExpectation(MouseExpectation mex)
+	{
+		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
+
+		std::lock_guard<std::mutex> lock(_read_state_mutex);
+		_mouse.reset();
+		if (mex != MEX_NONE) {
+			_mouse.reset(new VTMouse(this, mex));
+		}
+	}
+
 	virtual void OnBracketedPasteExpectation(bool enabled)
 	{
 		_bracketed_paste_expected = enabled;
@@ -478,7 +494,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			std::string reply;
 			switch (str[5]) {
 				case '1': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					if (!_far2l_exts)
 						_far2l_exts.reset(new VTFar2lExtensios(this));
 
@@ -486,12 +502,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				} break;
 
 				case '0': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					_far2l_exts.reset();
 				} break;
 
 				case ':': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					if (str[6] && _far2l_exts) {
 						VTAnsiSuspend vta_suspend(_vta);
 						StackSerializer stk_ser;
@@ -561,7 +577,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (!_allow_osc_clipset) {
 			{
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
-				std::lock_guard<std::mutex> lock(_far2l_exts_mutex); // stop input readout
+				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
 				SavedScreen saved_scr;
 				ScrBuf.FillBuf();
 				auto choice = Message(MSG_KEEPBACKGROUND, 3,
@@ -859,8 +875,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_bracketed_paste_expected = false;
 		DeliverPendingWindowInfo();
 
-		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+		std::lock_guard<std::mutex> lock(_read_state_mutex);
 		_far2l_exts.reset();
+		_mouse.reset();
 		return _exit_code;
 	}	
 

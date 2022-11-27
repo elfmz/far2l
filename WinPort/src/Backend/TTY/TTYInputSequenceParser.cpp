@@ -521,7 +521,7 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			_mouse.middle = true;
 			break;
 
-		case '2': // right+middle press
+		case '2': // ctrl+right press
 			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 
 		case '"': // right press

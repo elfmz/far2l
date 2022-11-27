@@ -635,10 +635,9 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 
 	bool busybox = false;
 	if (cmd.Execute("readlink /bin/sh") == 0) {
-		if (cmd.Output().find("busybox") != std::string::npos) {
+		if (cmd.Output().find("busybox") != std::string::npos && cmd.Execute("busybox") == 0) {
 			fprintf(stderr, "ProtocolSCP: BusyBox detected\n");
 			busybox = true;
-			cmd.Execute("busybox"); // will analyze its output below
 		}
 	} else if (cmd.Execute("busybox") == 0) {
 		// readlink not exists or /bin/sh not exists and also busybox exists?

@@ -638,6 +638,7 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 		if (cmd.Output().find("busybox") != std::string::npos) {
 			fprintf(stderr, "ProtocolSCP: BusyBox detected\n");
 			busybox = true;
+			cmd.Execute("busybox"); // will analyze its output below
 		}
 	} else if (cmd.Execute("busybox") == 0) {
 		// readlink not exists or /bin/sh not exists and also busybox exists?
@@ -647,18 +648,19 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 	}
 
 	if (busybox) {
-		if (_quirks.use_ls) {
-			_quirks.ls_supports_dash_f = false;
-		}
-		// some busybox systems may miss very usual things
-		if (cmd.Execute("%s --help", _quirks.rm_file) != 0) {
+		// some busybox systems may miss very usual things, analyze busybox command output
+		// where it printed lit of supported commands
+		std::vector<std::string> words;
+		StrExplode(words, cmd.Output(), "\t ,");
+		if (std::find(words.begin(), words.end(), _quirks.rm_file) == words.end()) {
 			fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_file);
 			_quirks.rm_file = "rm -f";
 		}
-		if (cmd.Execute("%s --help", _quirks.rm_dir) != 0) {
+		if (std::find(words.begin(), words.end(), _quirks.rm_dir) == words.end()) {
 			fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_dir);
 			_quirks.rm_dir = "rm -f -d";
 		}
+		_quirks.ls_supports_dash_f = false;
 	}
 }
 

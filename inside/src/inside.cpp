@@ -5,7 +5,9 @@
 # include "elf/PluginImplELF.h"
 # include <elf.h>
 #endif
+# include "Storage.h"
 #include <sudo.h>
+#include <utils.h>
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
@@ -266,15 +268,19 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 		return 0;
 
 	struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX,  3,  1,  70, 5,  0,{},0,0, {}},
-            {DI_TEXT,      -1,  2,  0,  2,  0,{},0,0, {}},
-            {DI_BUTTON,     34, 4,  0,  4,  0,{},0,0, {}}
+            {DI_DOUBLEBOX,  3,  1,  70, 5,  0, {}, 0, 0, {}},
+            {DI_TEXT,      -1,  2,  0,  2,  0, {}, 0, 0, {}},
+            {DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}},
+            {DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
 	};
 
-	strncpy(fdi[0].Data, G.GetMsg(MTitle), sizeof(fdi[0].Data));
-	strncpy(fdi[1].Data, G.GetMsg(MDescription), sizeof(fdi[1].Data));
-	strncpy(fdi[2].Data, G.GetMsg(MOK), sizeof(fdi[2].Data));
+	ArrayCpyZ(fdi[0].Data, G.GetMsg(MTitle));
+	ArrayCpyZ(fdi[1].Data, G.GetMsg(MDescription));
+	ArrayCpyZ(fdi[2].Data, G.GetMsg(MOK));
+	ArrayCpyZ(fdi[3].Data, G.GetMsg(MCleanup));
 
-	G.info.Dialog(G.info.ModuleNumber, -1, -1, 74, 7, NULL, fdi, ARRAYSIZE(fdi));
+	if (G.info.Dialog(G.info.ModuleNumber, -1, -1, 74, 7, NULL, fdi, ARRAYSIZE(fdi)) == 3) {
+		Storage::Clear();
+	}
 	return 1;
 }

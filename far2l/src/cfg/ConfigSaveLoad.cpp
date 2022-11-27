@@ -398,7 +398,6 @@ public:
 	{false, NSecSystem, "MaxPositionCache", &Opt.MaxPositionCache, POSCACHE_MAX_ELEMENTS},
 	{false, NSecSystem, "ConsoleDetachKey", &strKeyNameConsoleDetachKey, L"CtrlAltTab"},
 	{false, NSecSystem, "SilentLoadPlugin",  &Opt.LoadPlug.SilentLoadPlugin, 0},
-	{true,  NSecSystem, "OEMPluginsSupport",  &Opt.LoadPlug.OEMPluginsSupport, 1},
 	{true,  NSecSystem, "ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1},
 	{true,  NSecSystem, "MultiMakeDir", &Opt.MultiMakeDir, 0},
 	{false, NSecSystem, "MsWheelDelta", &Opt.MsWheelDelta, 1},

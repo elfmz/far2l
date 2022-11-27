@@ -4,6 +4,7 @@ enum LanguageID
 {
   MTitle,
   MDescription,
-  MOK
+  MOK,
+  MCleanup
 };
 

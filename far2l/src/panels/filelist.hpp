@@ -95,7 +95,7 @@ struct FileListItem
 template <class T>
 	struct StdVecWrap : protected std::vector<T>
 {
-	using std::vector<T>::iterator;
+	using typename std::vector<T>::iterator;
 	using std::vector<T>::begin;
 	using std::vector<T>::end;
 	using std::vector<T>::operator[];

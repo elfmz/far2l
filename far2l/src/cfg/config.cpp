@@ -478,7 +478,6 @@ void PluginsManagerSettings()
 {
 	DialogBuilder Builder(Msg::PluginsManagerSettingsTitle, L"PluginsManagerSettings");
 
-	Builder.AddCheckbox(Msg::PluginsManagerOEMPluginsSupport, &Opt.LoadPlug.OEMPluginsSupport);
 	Builder.AddCheckbox(Msg::PluginsManagerScanSymlinks, &Opt.LoadPlug.ScanSymlinks);
 	Builder.AddText(Msg::PluginsManagerPersonalPath);
 	Builder.AddEditField(&Opt.LoadPlug.strPersonalPluginsPath, 45, L"PersPath", DIF_EDITPATH);

@@ -134,7 +134,6 @@ static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)
 PluginManager::PluginManager():
 	PluginsData(nullptr),
 	PluginsCount(0),
-	OemPluginsCount(0),
 	CurPluginItem(nullptr),
 	CurEditor(nullptr),
 	CurViewer(nullptr)
@@ -168,10 +167,6 @@ bool PluginManager::AddPlugin(Plugin *pPlugin)
 	PluginsData = NewPluginsData;
 	PluginsData[PluginsCount]=pPlugin;
 	PluginsCount++;
-	if(pPlugin->IsOemPlugin())
-	{
-		OemPluginsCount++;
-	}
 	return true;
 }
 
@@ -181,10 +176,6 @@ bool PluginManager::RemovePlugin(Plugin *pPlugin)
 	{
 		if (PluginsData[i] == pPlugin)
 		{
-			if(pPlugin->IsOemPlugin())
-			{
-				OemPluginsCount--;
-			}
 			delete pPlugin;
 			memmove(&PluginsData[i], &PluginsData[i+1], (PluginsCount-i-1)*sizeof(Plugin*));
 			PluginsCount--;
@@ -1272,9 +1263,6 @@ void PluginManager::Configure(int StartPos)
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
-						if (pPlugin->IsOemPlugin())
-							ListItem.Flags=LIF_CHECKED|L'A';
-
 						if (!HotKeysPresent)
 							ListItem.strName = strName;
 						else if (!strHotKey.IsEmpty())
@@ -1445,9 +1433,6 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
-						if (pPlugin->IsOemPlugin())
-							ListItem.Flags=LIF_CHECKED|L'A';
-
 						if (!HotKeysPresent)
 							ListItem.strName = strName;
 						else if (!strHotKey.IsEmpty())
@@ -1595,7 +1580,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	}
 
 	// restore title for old plugins only.
-	if (item.pPlugin->IsOemPlugin() && Editor && CurEditor)
+	if (item.pPlugin->IsPluginMB() && Editor && CurEditor)
 	{
 		CurEditor->SetPluginTitle(nullptr);
 	}

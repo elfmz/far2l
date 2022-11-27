@@ -70,7 +70,6 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	} else {
 		seq[3] = sClickMatrix[ibut][imod];
 	}
-	fprintf(stderr, "MouseSeq: '%s'\n", &seq[1]);
 
 	_vtshell->InjectInput(seq);
 	return true;

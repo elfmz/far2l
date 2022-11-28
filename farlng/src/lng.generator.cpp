@@ -401,218 +401,217 @@ int main_generator (int argc, char** argv)
 						sprintf (lpString, ".Language=%s,%s\r\n\n", pLangEntries[i].lpLanguageName, pLangEntries[i].lpLanguageDescription);
 						SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
 					}
+			}
+
+			char *lpHHead;
+			char *lpHTail;
+			char *lpEnum = NULL;
+
+			if ( ReadComments (lpStart, &lpHHead, "hhead:", "") )
+			{
+				SmartWrite (hHFile, lpHHead, &dwHeaderCRC32);
+				free(lpHHead);
+			}
+
+			ReadComments (lpStart, &lpHTail, "htail:", "");
+
+			ReadComments (lpStart, &lpEnum, "enum:", "");
+			//sprintf (lpString, "enum %s{\r\n", lpEnum? lpEnum : "");
+			sprintf (lpString, "/* FarLang  - start */\r\n");
+			free(lpEnum);
+			SmartWrite (hHFile, lpString, &dwHeaderCRC32);
+
+			// read strings
+
+			bool bRead = true;
+			int nMsgIndex = 0;
+
+			while ( bRead )
+			{
+				char *lpMsgID;
+				char *lpLNGString;
+				char *lpHComments;
+
+				if ( ReadComments(lpStart, &lpHComments, "h:", "") )
+				{
+					SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
+					free (lpHComments);
 				}
 
-				char *lpHHead;
-				char *lpHTail;
-				char *lpEnum = NULL;
+				ReadComments(lpStart, &lpHComments, "he:", "");
 
-				if ( ReadComments (lpStart, &lpHHead, "hhead:", "") )
+				bRead = ReadFromBufferEx (lpStart, &lpMsgID);
+
+				if ( bRead )
 				{
-					SmartWrite (hHFile, lpHHead, &dwHeaderCRC32);
-					free(lpHHead);
-				}
+					char *lpLngComments = NULL;
+					char *lpELngComments  = NULL;
+					char *lpSpecificLngComments  = NULL;
 
-				ReadComments (lpStart, &lpHTail, "htail:", "");
+					//sprintf (lpString, "\t%s,\r\n", lpMsgID);
+					sprintf (lpString, "DECLARE_FARLANGMSG(%s, %d)\r\n", lpMsgID, nMsgIndex);
+					SmartWrite (hHFile, lpString, &dwHeaderCRC32);
+					++nMsgIndex;
 
-				ReadComments (lpStart, &lpEnum, "enum:", "");
-				//sprintf (lpString, "enum %s{\r\n", lpEnum? lpEnum : "");
-				sprintf (lpString, "/* FarLang  - start */\r\n");
-				free(lpEnum);
-				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
+					ReadComments(lpStart, &lpLngComments, "l:", "");
+					ReadComments(lpStart, &lpELngComments, "le:", "");
 
-				// read strings
-
-				bool bRead = true;
-				int nMsgIndex = 0;
-
-				while ( bRead )
-				{
-					char *lpMsgID;
-					char *lpLNGString;
-					char *lpHComments;
-
-					if ( ReadComments(lpStart, &lpHComments, "h:", "") )
+					for (int i = 0; i < dwLangs; i++)
 					{
-						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
-						free (lpHComments);
-					}
+						if ( lpLngComments )
+							SmartWrite (pLangEntries[i].hLNGFile, lpLngComments, &pLangEntries[i].dwCRC32);
 
-					ReadComments(lpStart, &lpHComments, "he:", "");
-
-					bRead = ReadFromBufferEx (lpStart, &lpMsgID);
-
-					if ( bRead )
-					{
-						char *lpLngComments = NULL;
-						char *lpELngComments  = NULL;
-						char *lpSpecificLngComments  = NULL;
-
-						//sprintf (lpString, "\t%s,\r\n", lpMsgID);
-						sprintf (lpString, "DECLARE_FARLANGMSG(%s, %d)\r\n", lpMsgID, nMsgIndex);
-						SmartWrite (hHFile, lpString, &dwHeaderCRC32);
-						++nMsgIndex;
-
-						ReadComments(lpStart, &lpLngComments, "l:", "");
-						ReadComments(lpStart, &lpELngComments, "le:", "");
-
-						for (int i = 0; i < dwLangs; i++)
+						if ( ReadComments(lpStart, &lpSpecificLngComments, "ls:", "") )
 						{
-							if ( lpLngComments )
-								SmartWrite (pLangEntries[i].hLNGFile, lpLngComments, &pLangEntries[i].dwCRC32);
-
-							if ( ReadComments(lpStart, &lpSpecificLngComments, "ls:", "") )
-							{
-								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
-								free (lpSpecificLngComments);
-							}
-
-							ReadComments(lpStart, &lpSpecificLngComments, "lse:", "");
-
-							bRead = ReadFromBufferEx (lpStart, &lpLNGString);
-
-							if ( bRead )
-							{
-								if ( !strncmp (lpLNGString, "upd:", 4) )
-								{
-									size_t length = strlen(lpLNGString);
-									memmove(lpLNGString, lpLNGString+4, length-3);
-
-									/*
-									printf (
-											"WARNING: String %s (ID = %s) of %s language needs update!\n",
-											lpLNGString,
-											lpMsgID,
-											pLangEntries[i].lpLanguageName
-											);
-									*/
-									SmartWrite (pLangEntries[i].hLNGFile, "// need translation:\r\n", &pLangEntries[i].dwCRC32);
-									pLangEntries[i].cNeedUpdate++;
-								}
-
-								sprintf (lpString, "//[%s]\r\n%s\r\n", lpMsgID, lpLNGString);
-								SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
-								free (lpLNGString);
-							}
-
-							if ( lpSpecificLngComments )
-							{
-								SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
-								free (lpSpecificLngComments);
-							}
-
-							if ( lpELngComments )
-								SmartWrite (pLangEntries[i].hLNGFile, lpELngComments, &pLangEntries[i].dwCRC32);
+							SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
+							free (lpSpecificLngComments);
 						}
 
-						free (lpMsgID);
+						ReadComments(lpStart, &lpSpecificLngComments, "lse:", "");
 
-						if ( lpLngComments )
-							free (lpLngComments);
+						bRead = ReadFromBufferEx (lpStart, &lpLNGString);
+
+						if ( bRead )
+						{
+							if ( !strncmp (lpLNGString, "upd:", 4) )
+							{
+								size_t length = strlen(lpLNGString);
+								memmove(lpLNGString, lpLNGString+4, length-3);
+
+								/*
+								printf (
+										"WARNING: String %s (ID = %s) of %s language needs update!\n",
+										lpLNGString,
+										lpMsgID,
+										pLangEntries[i].lpLanguageName
+										);
+								*/
+								SmartWrite (pLangEntries[i].hLNGFile, "// need translation:\r\n", &pLangEntries[i].dwCRC32);
+								pLangEntries[i].cNeedUpdate++;
+							}
+
+							sprintf (lpString, "//[%s]\r\n%s\r\n", lpMsgID, lpLNGString);
+							SmartWrite (pLangEntries[i].hLNGFile, lpString, &pLangEntries[i].dwCRC32);
+							free (lpLNGString);
+						}
+
+						if ( lpSpecificLngComments )
+						{
+							SmartWrite (pLangEntries[i].hLNGFile, lpSpecificLngComments, &pLangEntries[i].dwCRC32);
+							free (lpSpecificLngComments);
+						}
 
 						if ( lpELngComments )
-							free (lpELngComments);
-
+							SmartWrite (pLangEntries[i].hLNGFile, lpELngComments, &pLangEntries[i].dwCRC32);
 					}
 
-					if ( lpHComments )
-					{
-						SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
-						free (lpHComments);
-					}
+					free (lpMsgID);
+
+					if ( lpLngComments )
+						free (lpLngComments);
+
+					if ( lpELngComments )
+						free (lpELngComments);
+
 				}
 
-				// output needed translations statistics
-				for (int i = 0; i < dwLangs; i++)
+				if ( lpHComments )
 				{
-					if (pLangEntries[i].cNeedUpdate > 0)
-					{
-						printf ("INFO: There are %d strings that require review in %s translation!\n\n",
-								pLangEntries[i].cNeedUpdate,
-								pLangEntries[i].lpLanguageName);
-					}
+					SmartWrite (hHFile, lpHComments, &dwHeaderCRC32);
+					free (lpHComments);
 				}
+			}
 
-				// write .h file footer
-
-				lseek(hHFile, -2, SEEK_CUR);
-
-//				sprintf (lpString, "\r\n};\r\n");
-				sprintf (lpString, "\r\n/* FarLang  - end */\r\n");
-				SmartWrite (hHFile, lpString, &dwHeaderCRC32);
-
-				if ( lpHTail )
+			// output needed translations statistics
+			for (int i = 0; i < dwLangs; i++)
+			{
+				if (pLangEntries[i].cNeedUpdate > 0)
 				{
-					SmartWrite (hHFile, lpHTail, &dwHeaderCRC32);
-					free (lpHTail);
+					printf ("INFO: There are %d strings that require review in %s translation!\n\n",
+							pLangEntries[i].cNeedUpdate,
+							pLangEntries[i].lpLanguageName);
 				}
+			}
 
-				// play with CRC
+			// write .h file footer
 
-				for (int i = 0; i < dwLangs; i++)
-				{
-					close(pLangEntries[i].hLNGFile);
-					pLangEntries[i].hLNGFile = -1;
+			lseek(hHFile, -2, SEEK_CUR);
 
-					sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
+//			sprintf (lpString, "\r\n};\r\n");
+			sprintf (lpString, "\r\n/* FarLang  - end */\r\n");
+			SmartWrite (hHFile, lpString, &dwHeaderCRC32);
 
-					bUpdate = true;
+			if ( lpHTail )
+			{
+				SmartWrite (hHFile, lpHTail, &dwHeaderCRC32);
+				free (lpHTail);
+			}
 
-					if ( key_file )
-					{
-						if ( pLangEntries[i].dwCRC32 == pLangEntries[i].dwOldCRC32 )
-						{
-							// printf ("INFO: Language file \"%s\" doesn't need to be updated.\r\n", pLangEntries[i].lpLNGFileName);
-							bUpdate = false;
-						}
-						else
-						{
-							key_file->SetInt(lpFullName, "CRC32", pLangEntries[i].dwCRC32);
-						}
-					}
+			// play with CRC
 
-					if ( bUpdate )
-					{
-						if (rename(pLangEntries[i].lpLNGFileNameTemp, lpFullName) == -1) {
-							printf ("ERROR: Failed to rename '%s' -> '%s'.\n",
-								pLangEntries[i].lpLNGFileNameTemp, lpFullName);
-						}
-					}
+			for (int i = 0; i < dwLangs; i++)
+			{
+				close(pLangEntries[i].hLNGFile);
+				pLangEntries[i].hLNGFile = -1;
 
-					unlink(pLangEntries[i].lpLNGFileNameTemp);
-
-					free (pLangEntries[i].lpLNGFileNameTemp);
-					free (pLangEntries[i].lpLNGFileName);
-					free (pLangEntries[i].lpLanguageName);
-					free (pLangEntries[i].lpLanguageDescription);
-				}
-
-				free(pLangEntries);
-
-				sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
+				sprintf (lpFullName, "%s/%s", lpLNGOutputPath?lpLNGOutputPath:".", pLangEntries[i].lpLNGFileName);
 
 				bUpdate = true;
 
 				if ( key_file )
 				{
-					if ( dwHeaderCRC32 == dwHeaderOldCRC32 )
+					if ( pLangEntries[i].dwCRC32 == pLangEntries[i].dwOldCRC32 )
 					{
-						// printf ("INFO: Header file \"%s\" doesn't need to be updated.\r\n", lpHPPFileName);
+						// printf ("INFO: Language file \"%s\" doesn't need to be updated.\r\n", pLangEntries[i].lpLNGFileName);
 						bUpdate = false;
 					}
 					else
 					{
-						key_file->SetInt(lpFullName, "CRC32", dwHeaderCRC32);
+						key_file->SetInt(lpFullName, "CRC32", pLangEntries[i].dwCRC32);
 					}
 				}
 
 				if ( bUpdate )
 				{
-					if (rename(lpHPPFileNameTemp, lpFullName) == -1) {
-						printf ("ERROR: Failed to rename '%s' -> '%s'.\n", lpHPPFileNameTemp, lpFullName);
+					if (rename(pLangEntries[i].lpLNGFileNameTemp, lpFullName) == -1) {
+						printf ("ERROR: Failed to rename '%s' -> '%s'.\n",
+							pLangEntries[i].lpLNGFileNameTemp, lpFullName);
 					}
 				}
 
+				unlink(pLangEntries[i].lpLNGFileNameTemp);
+
+				free (pLangEntries[i].lpLNGFileNameTemp);
+				free (pLangEntries[i].lpLNGFileName);
+				free (pLangEntries[i].lpLanguageName);
+				free (pLangEntries[i].lpLanguageDescription);
+			}
+
+			free(pLangEntries);
+
+			sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
+
+			bUpdate = true;
+
+			if ( key_file )
+			{
+				if ( dwHeaderCRC32 == dwHeaderOldCRC32 )
+				{
+					// printf ("INFO: Header file \"%s\" doesn't need to be updated.\r\n", lpHPPFileName);
+					bUpdate = false;
+				}
+				else
+				{
+					key_file->SetInt(lpFullName, "CRC32", dwHeaderCRC32);
+				}
+			}
+
+			if ( bUpdate )
+			{
+				if (rename(lpHPPFileNameTemp, lpFullName) == -1) {
+					printf ("ERROR: Failed to rename '%s' -> '%s'.\n", lpHPPFileNameTemp, lpFullName);
+				}
+			}
 		}
 		else
 			printf ("ERROR: Can't create the header file, exiting.\n");

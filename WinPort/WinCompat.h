@@ -362,11 +362,26 @@ typedef int HRESULT;
 #endif
 
 typedef struct _FILETIME {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    DWORD dwHighDateTime;
+    DWORD dwLowDateTime;
+#else
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
+#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 
 typedef union _LARGE_INTEGER {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    struct {
+        LONG HighPart;
+        DWORD LowPart;
+    } u;
+    struct {
+        LONG HighPart;
+        DWORD LowPart;
+    };
+#else
     struct {
         DWORD LowPart;
         LONG HighPart;
@@ -375,11 +390,22 @@ typedef union _LARGE_INTEGER {
         DWORD LowPart;
         LONG HighPart;
     };
+#endif
     LONGLONG QuadPart;
 } LARGE_INTEGER;
 typedef LARGE_INTEGER *PLARGE_INTEGER;
 
 typedef union _ULARGE_INTEGER {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    struct {
+        DWORD HighPart;
+        DWORD LowPart;
+    } u;
+    struct {
+        DWORD HighPart;
+        DWORD LowPart;
+    };
+#else
     struct {
         DWORD LowPart;
         DWORD HighPart;
@@ -388,6 +414,7 @@ typedef union _ULARGE_INTEGER {
         DWORD LowPart;
         DWORD HighPart;
     };
+#endif
     ULONGLONG QuadPart;
 } ULARGE_INTEGER;
 typedef ULARGE_INTEGER *PULARGE_INTEGER;

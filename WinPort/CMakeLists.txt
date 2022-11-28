@@ -39,7 +39,7 @@ src/Backend/TTY/TTYNegotiateFar2l.cpp
 src/Backend/TTY/TTYXGlue.cpp
 )
 
-add_library (WinPort ${SOURCES})
+add_library (WinPort STATIC ${SOURCES})
 
 target_include_directories(WinPort PRIVATE .)
 target_include_directories(WinPort PRIVATE src)

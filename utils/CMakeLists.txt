@@ -36,7 +36,7 @@ set(SOURCES
   src/ReadWholeFile.cpp
 )
 
-add_library (utils ${SOURCES})
+add_library (utils STATIC ${SOURCES})
 
 
 target_include_directories(utils PRIVATE include)

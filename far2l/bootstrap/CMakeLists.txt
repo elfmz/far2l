@@ -3,11 +3,10 @@ cmake_minimum_required (VERSION 3.0.2)
 # Make TOOLS folder overridable in command line when configuring build.
 # This will allow specifying host far2l tools location when doing cross-platform builds.
 # Cross compile of far2l requires tools to be pre-compiled for host architecture.
-set(TOOLS "${CMAKE_BINARY_DIR}/tools" CACHE STRING "")
-set(FARLNGTOOL "${TOOLS}/farlng")
+set(FARLNGTOOL "${CMAKE_CURRENT_SOURCE_DIR}/scripts/farlng.pl")
 
 add_custom_target(bootstrap 
-  DEPENDS farlng copyright.inc farversion.inc farlang.templ 
+  DEPENDS copyright.inc farversion.inc farlang.templ 
 )
 
 message(STATUS "generating headers and languages")
@@ -89,7 +88,7 @@ add_custom_command(TARGET bootstrap
 )
 
 add_custom_command(TARGET bootstrap
-   COMMAND "${FARLNGTOOL}" generator -nc -i "${BOOTSTRAP}/lang.ini" -ol "${BOOTSTRAP}" "${BOOTSTRAP}/farlang.templ"
+   COMMAND "${FARLNGTOOL}" "${BOOTSTRAP}/farlang.templ" "${BOOTSTRAP}"
    WORKING_DIRECTORY "${BOOTSTRAP}"
    DEPENDS "${BOOTSTRAP}/farlang.templ"
    COMMENT generating languages

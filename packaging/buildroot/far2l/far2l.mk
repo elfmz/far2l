@@ -1,6 +1,6 @@
 ################################################################################
 #
-# unzip
+# far2l
 #
 ################################################################################
 
@@ -10,27 +10,26 @@ FAR2L_LICENSE = GPL-2
 FAR2L_LICENSE_FILES = LICENSE.txt
 FAR2L_INSTALL_STAGING = YES
 
-FAR2L_DEPENDENCIES = \
-	fmt \
-	spdlog \
-	libarchive \
-	xerces \
-	libnfs \
-	libssh
-
-# broken in buildroot for now	neon 
+FAR2L_DEPENDENCIES =
 
 ifeq ($(BR2_PACKAGE_FAR2L_COLORER),y)
 FAR2L_DEPENDENCIES += spdlog xerces
 endif
 
-ifeq ($(BR2_PACKAGE_FAR2L_NETROCKS),y)
-FAR2L_DEPENDENCIES += libssh libnfs neon libopenssl
-endif
-
 ifeq ($(BR2_PACKAGE_FAR2L_MULTIARC),y)
 FAR2L_DEPENDENCIES += pcre2 libarchive
 endif
+
+ifeq ($(BR2_PACKAGE_FAR2L_NETROCKS),y)
+FAR2L_DEPENDENCIES += libssh libnfs libopenssl
+endif
+
+ifeq ($(BR2_PACKAGE_FAR2L_INSIDE),y)
+FAR2L_DEPENDENCIES += elfutils
+endif
+
+# 'neon' needed for NetRocks/WebDAV broken in buildroot (nov 2022)
+# 'uchardet' absent in buildroot (nov 2022)
 
 FAR2L_CONF_OPTS = \
 	-DTTYX=$(if $(BR2_PACKAGE_FAR2L_TTYXI),ON,OFF) \

@@ -7,88 +7,15 @@ config BR2_PACKAGE_FAR2L
 	  Oldschool file manager, with built-in terminal and other usefullness'es
 
 if BR2_PACKAGE_FAR2L
+
 config BR2_PACKAGE_FAR2L_TTYXI
 	bool "TTY Xi extensions"
+	depends on BR2_PACKAGE_XORG7
+	select BR2_PACKAGE_XLIB_LIBX11
 	select BR2_PACKAGE_XLIB_LIBXI
 	default n
 	help
 	  Provides improved user experience when running inside of X11/Xi capable session.
-
-config BR2_PACKAGE_FAR2L_ALIGN
-	bool "Align plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_AUTOWRAP
-	bool "AutoWrap plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_CALC
-	bool "Calculator plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_COLORER
-	bool "Colorer plugin"
-	default y
-	select BR2_PACKAGE_XERCES
-	select BR2_PACKAGE_SPDLOG
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_COMPARE
-	bool "Compare plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_DRAWLINE
-	bool "DrawLine plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_EDITCASE
-	bool "EditCase plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_EDITORCOMP
-	bool "Editor Autocompletion plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_FILECASE
-	bool "FileCase plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_INCSRCH
-	bool "IncSearch plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_INSIDE
-	bool "Inside plugin"
-	default y
-	help
-	  Optional plugin
-
-config BR2_PACKAGE_FAR2L_MULTIARC
-	bool "MultiArc plugin"
-	default y
-	select BR2_PACKAGE_PCRE2
-	select BR2_PACKAGE_LIBARCHIVE
-	help
-	  Optional plugin
 
 config BR2_PACKAGE_FAR2L_NETROCKS
 	bool "NetRocks plugin"
@@ -97,21 +24,99 @@ config BR2_PACKAGE_FAR2L_NETROCKS
 	select BR2_PACKAGE_LIBNFS
 	select BR2_PACKAGE_LIBOPENSSL
 	help
-	  Optional plugin
+	  SFTP/SCP/NFS/FTP servers browsing and file transfer.
 
 # NEON is broken in buildroot currently, so dont use it
 #select BR2_PACKAGE_NEON
+
+config BR2_PACKAGE_FAR2L_COLORER
+	bool "Colorer plugin"
+	default y
+	select BR2_PACKAGE_XERCES
+	select BR2_PACKAGE_SPDLOG
+	help
+	  Text editor syntax coloring plugin.
+
+config BR2_PACKAGE_FAR2L_MULTIARC
+	bool "MultiArc plugin"
+	default y
+	select BR2_PACKAGE_PCRE2
+	select BR2_PACKAGE_LIBARCHIVE
+	help
+	  Various archive file types support.
+
+
+config BR2_PACKAGE_FAR2L_INSIDE
+	bool "Inside plugin"
+	default y
+	select BR2_PACKAGE_ELFUTILS
+	help
+	  Allows looking 'inside' of ELF files and some documents.
+
+config BR2_PACKAGE_FAR2L_ALIGN
+	bool "Align plugin"
+	default y
+	help
+	  Text edit alignment and right edge justification plugin.
+
+config BR2_PACKAGE_FAR2L_AUTOWRAP
+	bool "AutoWrap plugin"
+	default y
+	help
+	  Text edit plugin for automatic word wrapping.
+
+config BR2_PACKAGE_FAR2L_CALC
+	bool "Calculator plugin"
+	default y
+	help
+	  Calculator that can be used from menu or command line by calc: prefix.
+
+config BR2_PACKAGE_FAR2L_COMPARE
+	bool "Compare plugin"
+	default y
+	help
+	  Advanced compare plugin.
+
+config BR2_PACKAGE_FAR2L_DRAWLINE
+	bool "DrawLine plugin"
+	default y
+	help
+	  Provides easy way to draw pseudographic lines in text editor.
+
+config BR2_PACKAGE_FAR2L_EDITCASE
+	bool "EditCase plugin"
+	default y
+	help
+	  Editor text case conversion plugin.
+
+config BR2_PACKAGE_FAR2L_EDITORCOMP
+	bool "Autocompletion plugin"
+	default y
+	help
+	  Generic and simple autocompletion in text editor.
+
+config BR2_PACKAGE_FAR2L_FILECASE
+	bool "FileCase plugin"
+	default y
+	help
+	  Rename files with automatic names case covertion.
+
+config BR2_PACKAGE_FAR2L_INCSRCH
+	bool "IncSearch plugin"
+	default y
+	help
+	  Incremental search capability for text editor.
 
 config BR2_PACKAGE_FAR2L_SIMPLEINDENT
 	bool "Simple indent plugin"
 	default y
 	help
-	  Optional plugin
+	  Text editor indentation plugin.
 
 config BR2_PACKAGE_FAR2L_TMPPANEL
 	bool "Temporary panel plugin"
 	default y
 	help
-	  Optional plugin
+	  Temporary panel for easy panels grouping etc.
 
 endif

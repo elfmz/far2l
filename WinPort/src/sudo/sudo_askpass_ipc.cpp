@@ -183,7 +183,7 @@ SudoAskpassResult SudoAskpassServer::sRequestToServer(unsigned char code, std::s
 		int rlen = sock.Recv(&buf, sizeof(buf));
 		if (rlen > 0) {
 			out = (SudoAskpassResult)buf.code;
-			if (out == SAR_OK && rlen >= 1)
+			if (out == SAR_OK)
 				str.assign(buf.str, rlen - 1);
 		}
 	} catch (std::exception &e) {

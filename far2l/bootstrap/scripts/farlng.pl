@@ -17,8 +17,8 @@ open($feed, '<', $feed_file) or die "$feed_file: $!";
 
 my $hpp_file = Unquote(FeedExpression(1));
 my $langs_count = FeedExpression(1);
-die "No languages in $1" if $langs_count <= 0;
-die "No HPP file in $1" if $hpp_file eq '';
+die "No languages in $feed_file" if $langs_count <= 0;
+die "No HPP file in $feed_file" if $hpp_file eq '';
 
 my $hpp;
 open($hpp, '>', "$out_dir/$hpp_file") or die "$out_dir/$hpp_file: $!";
@@ -72,6 +72,12 @@ print $hpp $htail;
 close($hpp);
 close($feed);
 
+for my $lang (@langs) {
+	close($lang);
+}
+
+
+#############################################
 
 my $line_from_feed = '';
 

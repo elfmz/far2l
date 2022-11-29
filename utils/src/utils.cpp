@@ -23,7 +23,7 @@ char MakeHexDigit(const unsigned char c)
 		return '0' + c;
 	}
 
-	if (c >= 0xa && c <= 0xf) {
+	if (c <= 0xf) {
 		return 'a' + (c - 0xa);
 	}
 

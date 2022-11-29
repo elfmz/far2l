@@ -1,12 +1,7 @@
 cmake_minimum_required (VERSION 3.0.2)
 
-# Make TOOLS folder overridable in command line when configuring build.
-# This will allow specifying host far2l tools location when doing cross-platform builds.
-# Cross compile of far2l requires tools to be pre-compiled for host architecture.
-set(FARLNGTOOL "${CMAKE_CURRENT_SOURCE_DIR}/scripts/farlng.pl")
-
 add_custom_target(bootstrap 
-  DEPENDS copyright.inc farversion.inc farlang.templ 
+  DEPENDS copyright.inc farversion.inc farlang.templ lang.inc
 )
 
 message(STATUS "generating headers and languages")
@@ -62,38 +57,38 @@ add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
    COMMENT generating language template
 )
 
-add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
-   WORKING_DIRECTORY "${SCRIPTS}"
-   DEPENDS ${DEPENDENCIES}
-   COMMENT generating lang eng
-)
-add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
-   WORKING_DIRECTORY "${SCRIPTS}"
-   DEPENDS ${DEPENDENCIES}
-   COMMENT generating lang rus
-)
-add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
-   WORKING_DIRECTORY "${SCRIPTS}"
-   DEPENDS ${DEPENDENCIES}
-   COMMENT generating lang hun
-)
-add_custom_command(TARGET bootstrap
-   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
-   WORKING_DIRECTORY "${SCRIPTS}"
-   DEPENDS ${DEPENDENCIES}
-   COMMENT generating lang ukr
-)
-
-add_custom_command(TARGET bootstrap
-   COMMAND "${FARLNGTOOL}" "${BOOTSTRAP}/farlang.templ" "${BOOTSTRAP}"
+add_custom_command(OUTPUT "${BOOTSTRAP}/lang.inc"
+   COMMAND "${SCRIPTS}/farlng.pl" "${BOOTSTRAP}/farlang.templ" "${BOOTSTRAP}"
    WORKING_DIRECTORY "${BOOTSTRAP}"
    DEPENDS "${BOOTSTRAP}/farlang.templ"
    COMMENT generating languages
 )
 
+
+add_custom_command(TARGET bootstrap
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
+   WORKING_DIRECTORY "${SCRIPTS}"
+   DEPENDS ${DEPENDENCIES}
+   COMMENT generating help eng
+)
+add_custom_command(TARGET bootstrap
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
+   WORKING_DIRECTORY "${SCRIPTS}"
+   DEPENDS ${DEPENDENCIES}
+   COMMENT generating help rus
+)
+add_custom_command(TARGET bootstrap
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
+   WORKING_DIRECTORY "${SCRIPTS}"
+   DEPENDS ${DEPENDENCIES}
+   COMMENT generating help hun
+)
+add_custom_command(TARGET bootstrap
+   COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
+   WORKING_DIRECTORY "${SCRIPTS}"
+   DEPENDS ${DEPENDENCIES}
+   COMMENT generating help ukr
+)
 
 # older cmake versions does not support copying of multiple files,
 # so we use simple stupid /bin/cp and wildcards

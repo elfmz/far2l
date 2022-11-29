@@ -68,7 +68,7 @@ namespace Sudo
 			bt.RecvPOD(cmd);
 
 			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
-				throw "ping failed";
+				throw std::runtime_error("ping failed");
 				
 			std::string cwd = g_curdir_override;
 			if (cwd.empty()) {
@@ -90,13 +90,13 @@ namespace Sudo
 				bt.RecvPOD(cmd);
 			
 				if (bt.IsFailed() || cmd!=SUDO_CMD_CHDIR)
-					throw "chdir failed";
+					throw std::runtime_error("chdir failed");
 					
 				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_curdir_override.c_str(), r);
 			}
 
-		} catch (const char *what) {
-			fprintf(stderr, "Sudo::ClientInitSequence - %s\n", what);
+		} catch (std::exception &e) {
+			fprintf(stderr, "Sudo::ClientInitSequence - %s\n", e.what());
 			CloseClientConnection();
 			return false;
 		}

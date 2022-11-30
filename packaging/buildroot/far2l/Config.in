@@ -1,12 +1,19 @@
+comment "far2l needs a toolchain w/ wchar, threads"
+	depends on !BR2_USE_WCHAR || !BR2_TOOLCHAIN_HAS_THREADS
+
 config BR2_PACKAGE_FAR2L
 	bool "far2l"
 	depends on BR2_TOOLCHAIN_HAS_THREADS
 	depends on BR2_USE_WCHAR
+	select BR2_INSTALL_LIBSTDCPP
 	default n
 	help
 	  Oldschool file manager, with built-in terminal and other usefullness'es
 
 if BR2_PACKAGE_FAR2L
+
+comment "TTY Xi needs libX11 and libXi from XOrg"
+	depends on !BR2_PACKAGE_XORG7
 
 config BR2_PACKAGE_FAR2L_TTYXI
 	bool "TTY Xi extensions"

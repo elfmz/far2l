@@ -62,8 +62,8 @@ extern "C" {
  __attribute__ ((visibility("default"))) int sdc_unlink(const char *path);
  __attribute__ ((visibility("default"))) int sdc_chmod(const char *pathname, mode_t mode);
  __attribute__ ((visibility("default"))) int sdc_chown(const char *pathname, uid_t owner, gid_t group);
- __attribute__ ((visibility("default"))) int sdc_utimes(const char *filename, const struct timeval times[2]);
- __attribute__ ((visibility("default"))) int sdc_futimes(int fd, const struct timeval tv[2]);
+ __attribute__ ((visibility("default"))) int sdc_utimens(const char *filename, const struct timespec times[2]);
+ __attribute__ ((visibility("default"))) int sdc_futimens(int fd, const struct timespec times[2]);
  __attribute__ ((visibility("default"))) int sdc_rename(const char *path1, const char *path2);
  __attribute__ ((visibility("default"))) int sdc_symlink(const char *path1, const char *path2);
  __attribute__ ((visibility("default"))) int sdc_link(const char *path1, const char *path2);

@@ -4024,8 +4024,8 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 		for (unsigned int i = 0; i < 256; ++i)
 		{
 			TableSet->EncodeTable[i] = TableSet->DecodeTable[i] = i;
-			TableSet->UpperTable[i] = _toupper(i);
-			TableSet->LowerTable[i] = _tolower(i);
+			TableSet->UpperTable[i] = toupper(i);
+			TableSet->LowerTable[i] = tolower(i);
 		}
 
 		FormatString sTableName;

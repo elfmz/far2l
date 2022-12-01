@@ -2000,12 +2000,8 @@ void ShellCopy::SetEnqueuedDirectoriesAttributes()
 		struct timespec ts[2] = {};
 		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixAccessTime, &ts[0]);
 		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixModificationTime, &ts[1]);
-		const struct timeval tv[2] = {
-			{ts[0].tv_sec, suseconds_t(ts[0].tv_nsec / 1000)},
-			{ts[1].tv_sec, suseconds_t(ts[1].tv_nsec / 1000)}
-		};
-		if (sdc_utimes(cd.Path.c_str(), tv) == -1) {
-			fprintf(stderr, "sdc_utimes error %d for '%s'\n", errno, cd.Path.c_str());
+		if (sdc_utimens(cd.Path.c_str(), ts) == -1) {
+			fprintf(stderr, "sdc_utimens error %d for '%s'\n", errno, cd.Path.c_str());
 		}
 		if (Flags.COPYACCESSMODE) {
 			if (sdc_chmod(cd.Path.c_str(), cd.dwUnixMode) == -1) {

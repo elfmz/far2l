@@ -2,6 +2,7 @@
 #include <string>
 #include <mutex>
 #include <utils.h>
+#include <limits.h>
 #include <LocalSocket.h>
 
 namespace Sudo

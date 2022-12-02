@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <memory.h>
 #include <wctype.h>
+#include <limits.h>
 
 #ifdef __linux__
 // for PATH_MAX

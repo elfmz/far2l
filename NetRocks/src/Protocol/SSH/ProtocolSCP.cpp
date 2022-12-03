@@ -670,7 +670,8 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 			}
 		} else {
 			// some routers have rmdir, but have no unlink (and also no applets list from busybox w/o args)
-			if (cmd.Execute("ls /bin/unlink") != 0) {
+			std::string probe_command = "ls /bin/"; probe_command += _quirks.rm_file;
+			if (cmd.Execute(probe_command.c_str()) != 0) {
 				fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_file);
 				_quirks.rm_file = "rm -f";
 			}

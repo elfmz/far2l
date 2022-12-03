@@ -14,6 +14,7 @@ If request ID is zero then server doesnt reply on such request, if ID is not zer
 completion server sends back to client reply that has similar encoding and same ID on top of its
 arguments stack, however other reply's arguments represent result of requested operation.
 Note that in descriptions below arguments are listed in stack top->bottom order.
+All integer values are in little-endian format.
 */
 
 /** Initiates ad-hoc copy-to-clipboard starting at last mouse click position
@@ -53,7 +54,8 @@ Note that in descriptions below arguments are listed in stack top->bottom order.
 /** Gets maximum possible size of window
  In: N/A
  Out:
-  COORD (window size)
+  uint16_t (height)
+  uint16_t (width)
 */
 #define FARTTY_INTERRACT_GET_WINDOW_MAXSIZE        'w'
 

@@ -506,7 +506,7 @@ void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
 				if (id && _far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
 			}
 		}
-		i->stk_ser.PushPOD(id);
+		i->stk_ser.PushNum(id);
 
 		if (i->waited)
 			_far2l_interracts_sent.emplace(id, i);
@@ -570,9 +570,10 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 
 		try {
 			StackSerializer stk_ser;
-			stk_ser.PushPOD(FARTTY_INTERRACT_GET_WINDOW_MAXSIZE);
+			stk_ser.PushNum(FARTTY_INTERRACT_GET_WINDOW_MAXSIZE);
 			if (Far2lInterract(stk_ser, true)) {
-				stk_ser.PopPOD(out);
+				stk_ser.PopNum(out.Y);
+				stk_ser.PopNum(out.X);
 				_largest_window_size = out;
 				_largest_window_size_ready = true;
 			}
@@ -596,14 +597,14 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 			if (state != 0) {
 				stk_ser.PushStr(titles[i]);
 			}
-			stk_ser.PushPOD(state);
+			stk_ser.PushNum(state);
 		}
-		stk_ser.PushPOD(FARTTY_INTERRACT_SET_FKEY_TITLES);
+		stk_ser.PushNum(FARTTY_INTERRACT_SET_FKEY_TITLES);
 
 		if (Far2lInterract(stk_ser, detect_support)) {
 			if (detect_support) {
 				bool supported = false;
-				stk_ser.PopPOD(supported);
+				stk_ser.PopNum(supported);
 				fprintf(stderr, "%s: %ssupported\n",
 					__FUNCTION__, supported ? "" : "not ");
 				_fkeys_support = supported
@@ -624,11 +625,11 @@ BYTE TTYBackend::OnConsoleGetColorPalette()
 {
 	if (_far2l_tty) try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD(FARTTY_INTERRACT_GET_COLOR_PALETTE);
+		stk_ser.PushNum(FARTTY_INTERRACT_GET_COLOR_PALETTE);
 		Far2lInterract(stk_ser, true);
 		uint8_t bits, reserved;
-		stk_ser.PopPOD(bits);
-		stk_ser.PopPOD(reserved);
+		stk_ser.PopNum(bits);
+		stk_ser.PopNum(reserved);
 		return bits;
 
 	} catch (std::exception &) {
@@ -654,7 +655,7 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD(FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT);
+		stk_ser.PushNum(FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
@@ -679,7 +680,7 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushPOD(maximized ? FARTTY_INTERRACT_WINDOW_MAXIMIZE : FARTTY_INTERRACT_WINDOW_RESTORE);
+		stk_ser.PushNum(maximized ? FARTTY_INTERRACT_WINDOW_MAXIMIZE : FARTTY_INTERRACT_WINDOW_RESTORE);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }
@@ -756,10 +757,10 @@ static void OnFar2lKey(bool down, StackSerializer &stk_ser)
 		ir.Event.KeyEvent.bKeyDown = down ? TRUE : FALSE;
 
 		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)stk_ser.PopU32();
-		stk_ser.PopPOD(ir.Event.KeyEvent.dwControlKeyState);
-		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualScanCode);
-		stk_ser.PopPOD(ir.Event.KeyEvent.wVirtualKeyCode);
-		stk_ser.PopPOD(ir.Event.KeyEvent.wRepeatCount);
+		stk_ser.PopNum(ir.Event.KeyEvent.dwControlKeyState);
+		stk_ser.PopNum(ir.Event.KeyEvent.wVirtualScanCode);
+		stk_ser.PopNum(ir.Event.KeyEvent.wVirtualKeyCode);
+		stk_ser.PopNum(ir.Event.KeyEvent.wRepeatCount);
 		g_winport_con_in->Enqueue(&ir, 1);
 
 	} catch (std::exception &) {
@@ -799,13 +800,13 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 				| ( (ir.Event.MouseEvent.dwButtonState & 0xff00) << 8);
 
 		} else {
-			stk_ser.PopPOD(ir.Event.MouseEvent.dwEventFlags);
-			stk_ser.PopPOD(ir.Event.MouseEvent.dwControlKeyState);
-			stk_ser.PopPOD(ir.Event.MouseEvent.dwButtonState);
+			stk_ser.PopNum(ir.Event.MouseEvent.dwEventFlags);
+			stk_ser.PopNum(ir.Event.MouseEvent.dwControlKeyState);
+			stk_ser.PopNum(ir.Event.MouseEvent.dwButtonState);
 		}
 
-		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.Y);
-		stk_ser.PopPOD(ir.Event.MouseEvent.dwMousePosition.X);
+		stk_ser.PopNum(ir.Event.MouseEvent.dwMousePosition.Y);
+		stk_ser.PopNum(ir.Event.MouseEvent.dwMousePosition.X);
 
 		g_winport_con_in->Enqueue(&ir, 1);
 
@@ -869,7 +870,7 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 	}
 
 	uint8_t id;
-	stk_ser.PopPOD(id);
+	stk_ser.PopNum(id);
 
 	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
 
@@ -958,7 +959,7 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 		StackSerializer stk_ser;
 		stk_ser.PushStr(Wide2MB(text));
 		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushPOD(FARTTY_INTERRACT_DESKTOP_NOTIFICATION);
+		stk_ser.PushNum(FARTTY_INTERRACT_DESKTOP_NOTIFICATION);
 		Far2lInterract(stk_ser, false);
 	} catch (std::exception &) {}
 }

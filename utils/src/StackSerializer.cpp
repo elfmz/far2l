@@ -2,6 +2,10 @@
 #include "StackSerializer.h"
 #include "base64.h"
 
+StackSerializer::StackSerializer()
+{
+}
+
 StackSerializer::StackSerializer(const char *str, size_t len)
 {
 	FromBase64(str, len);
@@ -81,7 +85,7 @@ void StackSerializer::PushStr(const char *str)
 	uint32_t str_sz = (uint32_t)strlen(str);
 	if (str_sz)
 		Push(str, str_sz);
-	PushPOD(str_sz);
+	PushNum(str_sz);
 }
 
 void StackSerializer::PushStr(const std::string &str)
@@ -92,13 +96,13 @@ void StackSerializer::PushStr(const std::string &str)
 
 	if (str_sz)
 		Push(str.c_str(), str_sz);
-	PushPOD(str_sz);
+	PushNum(str_sz);
 }
 
 void StackSerializer::PopStr(std::string &str)
 {
 	uint32_t str_sz = 0;
-	PopPOD(str_sz);
+	PopNum(str_sz);
 	str.resize(str_sz);
 	if (str_sz)
 		Pop(&str[0], str_sz);
@@ -115,28 +119,28 @@ std::string StackSerializer::PopStr()
 char StackSerializer::PopChar()
 {
 	char out;
-	PopPOD(out);
+	PopNum(out);
 	return out;
 }
 
 uint8_t StackSerializer::PopU8()
 {
 	uint8_t out;
-	PopPOD(out);
+	PopNum(out);
 	return out;
 }
 
 uint16_t StackSerializer::PopU16()
 {
 	uint16_t out;
-	PopPOD(out);
-	return out;
+	PopNum(out);
+	return LITEND(out);
 }
 
 uint32_t StackSerializer::PopU32()
 {
 	uint32_t out;
-	PopPOD(out);
-	return out;
+	PopNum(out);
+	return LITEND(out);
 }
 

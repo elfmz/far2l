@@ -1,4 +1,5 @@
 #pragma once
+#include <endian.h>
 
 template <class POD_T>
 	inline void ZeroFill(POD_T &dst)
@@ -49,3 +50,9 @@ template <class V>
 		dst_values[i] = RevBytes(src_values[i]);
 	}
 }
+
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+# define LITEND(V)   (RevBytes(V))
+#else
+# define LITEND(V)   (V)
+#endif

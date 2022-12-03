@@ -523,7 +523,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 						}
 
 						if (id) try {
-							stk_ser.PushPOD(id);
+							stk_ser.PushNum(id);
 							reply = "\x1b_far2l";
 							reply+= stk_ser.ToBase64();
 							reply+= '\x07';

@@ -2,14 +2,13 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
+#include "BitTwiddle.hpp"
 
 class StackSerializer
 {
 	std::vector<unsigned char> _data;
-
 public:
-	StackSerializer() = default;
-
+	StackSerializer();
 	StackSerializer(const char *str, size_t len);
 	StackSerializer(const std::string &str);
 
@@ -32,15 +31,17 @@ public:
 	///
 
 	template <class POD>
-		void PushPOD(const POD &p)
+		void PushNum(const POD &p)
 	{
-		Push(&p, sizeof(p));
+		const auto px = LITEND(p);
+		Push(&px, sizeof(px));
 	}
 
 	template <class POD>
-		void PopPOD(POD &p)
+		void PopNum(POD &p)
 	{
 		Pop(&p, sizeof(p));
+		p = LITEND(p);
 	}
 
 	///

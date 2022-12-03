@@ -640,16 +640,16 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 			busybox = true;
 		}
 	} else {
-        int busybox_return_code = cmd.Execute("busybox 2>&1");
-        if (busybox_return_code == 0 || // busybox found and returns list of available applets OR
-            // busybox found and returns "busybox: applet not found"
-            (busybox_return_code == 127 && cmd.Output().find("applet not found") != std::string::npos))
-        {
+		int busybox_return_code = cmd.Execute("busybox 2>&1");
+		if (busybox_return_code == 0 || // busybox found and returns list of available applets OR
+			// busybox found and returns "busybox: applet not found"
+			(busybox_return_code == 127 && cmd.Output().find("applet not found") != std::string::npos))
+		{
 			// readlink not exists or /bin/sh not exists and also busybox exists?
 			// Its enough arguments to assume that ls will be handled by busybox.
 			fprintf(stderr, "ProtocolSCP: BusyBox assumed\n");
 			busybox = true;
-        }
+		}
 	}
 
 	if (busybox) {

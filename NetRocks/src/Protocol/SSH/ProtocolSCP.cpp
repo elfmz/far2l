@@ -663,7 +663,7 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 		}
 		if (std::find(words.begin(), words.end(), _quirks.rm_dir) == words.end()) {
 			fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_dir);
-			_quirks.rm_dir = "rm -f -r"; // using -r as -d not supported on some devices
+			_quirks.rm_dir = "rm -f -d";
 		}
 		_quirks.ls_supports_dash_f = false;
 	}

@@ -61,6 +61,7 @@ ArcPlugins::ArcPlugins(const char *ModuleName)
 	AddPluginItem(ZIP_IsArchive, ZIP_OpenArchive, ZIP_GetArcItem, NULL,
 		ZIP_CloseArchive, ZIP_GetFormatName, ZIP_GetDefaultCommands, NULL, ZIP_GetSFXPos);
 
+#ifndef ENDIAN_IS_BIG // these not yet adaptated to big endian build
 	AddPluginItem(SEVENZ_IsArchive, SEVENZ_OpenArchive, SEVENZ_GetArcItem, NULL,
 		SEVENZ_CloseArchive, SEVENZ_GetFormatName, SEVENZ_GetDefaultCommands, NULL, NULL);
 
@@ -83,6 +84,7 @@ ArcPlugins::ArcPlugins(const char *ModuleName)
 
 	AddPluginItem(LZH_IsArchive, LZH_OpenArchive, LZH_GetArcItem, NULL,
 		LZH_CloseArchive, LZH_GetFormatName, LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
+#endif
 
 #ifdef HAVE_PCRE
 	AddPluginItem(CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule,

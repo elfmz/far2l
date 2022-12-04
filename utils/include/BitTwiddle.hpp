@@ -59,12 +59,18 @@ template <class V>
 }
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-# define LITEND(V)   (RevBytes(V))
-#else
-# define LITEND(V)   (V)
+# define ENDIAN_IS_BIG
 #endif
 
-#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#ifdef ENDIAN_IS_BIG
+# define LITEND(V)   (RevBytes(V))
+# define BIGEND(V)   (V)
+#else
+# define LITEND(V)   (V)
+# define BIGEND(V)   (RevBytes(V))
+#endif
+
+#ifdef ENDIAN_IS_BIG
 # define LITEND_FILETIME_CONVERT(FT) { \
 	std::swap((FT).dwLowDateTime, (FT).dwHighDateTime); \
 	(FT).dwLowDateTime = __builtin_bswap32((FT).dwLowDateTime); \

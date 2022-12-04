@@ -263,8 +263,7 @@ FARString& WINAPI TruncStr(FARString &strStr, int MaxLength)
 
 wchar_t* TruncStrFromCenter(wchar_t *Str, int MaxLength)
 {
-	assert(MaxLength >= 0);
-
+	//assert(MaxLength >= 0);
 	MaxLength = Max(0, MaxLength);
 
 	const size_t Len = StrLength(Str);

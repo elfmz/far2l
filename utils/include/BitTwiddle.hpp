@@ -33,13 +33,14 @@ template <class V, class A>
 template <class V>
 	inline V RevBytes(const V &value)
 {
+	static_assert(sizeof(V) == 1 || sizeof(V) == 2 || sizeof(V) == 4 || sizeof(V) == 8, "RevBytes works only with sane-sized integers");
 	switch (sizeof(V)) {
-		case 1: return value;
-		case 2: return (V)__builtin_bswap16((uint16_t)value);
-		case 4: return (V)__builtin_bswap32((uint32_t)value);
 		case 8: return (V)__builtin_bswap64((uint64_t)value);
+		case 4: return (V)__builtin_bswap32((uint32_t)value);
+		case 2: return (V)__builtin_bswap16((uint16_t)value);
+		default: // case 1:
+			return value;
 	}
-	abort();
 }
 
 template <class V>

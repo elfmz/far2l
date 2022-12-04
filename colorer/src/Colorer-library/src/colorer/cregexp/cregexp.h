@@ -112,6 +112,10 @@ enum EMetaSymbols
   ReChrLast,
 };
 
+#ifdef __HAIKU__
+#undef EOK
+#endif
+
 enum EError
 {
   EOK = 0, EERROR, ESYNTAX, EBRACKETS, EENUM, EOP

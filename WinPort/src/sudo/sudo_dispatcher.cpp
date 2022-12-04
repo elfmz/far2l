@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
   #include <sys/mount.h>
-#else
+#elif !defined(__HAIKU__)
   #include <sys/statfs.h>
   #include <sys/ioctl.h>
 #  if !defined(__CYGWIN__)
@@ -279,7 +279,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 		std::string path;
 		bt.RecvStr(path);
 		int r = -1;
@@ -312,6 +312,8 @@ namespace Sudo
 			return;
 		}
 
+#elif defined(__HAIKU__)
+        // ???
 #elif !defined(__CYGWIN__)
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
@@ -354,13 +356,13 @@ namespace Sudo
 			case SUDO_CMD_OPEN:
 				OnSudoDispatch_Open(bt);
 				break;
-				
+#ifndef __HAIKU__
 			case SUDO_CMD_STATFS:
 				OnSudoDispatch_StatCommon<struct statfs>(&statfs, bt);
 				break;
-				
+#endif
 			case SUDO_CMD_STATVFS:
-				OnSudoDispatch_StatCommon<struct statvfs>(&statvfs, bt);
+                OnSudoDispatch_StatCommon<struct statvfs>(&statvfs, bt);
 				break;
 				
 			case SUDO_CMD_STAT:

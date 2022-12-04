@@ -4,7 +4,7 @@
 #include <sys/statvfs.h>
 #ifdef __APPLE__
   #include <sys/mount.h>
-#elif !defined(__FreeBSD__)
+#elif !defined(__FreeBSD__) && !defined(__HAIKU__)
   #include <sys/statfs.h>
 #endif
 #include <dirent.h>
@@ -20,10 +20,10 @@ extern "C" {
 	 SCM_CONFIRM_NONE
  } SudoClientMode;
 
- void sudo_client_configure(SudoClientMode mode, int password_expiration, 
+ void sudo_client_configure(SudoClientMode mode, int password_expiration,
 	const char *sudo_app, const char *askpass_app,
 	const char *sudo_title, const char *sudo_prompt, const char *sudo_confirm);
-	
+
  int sudo_main_askpass();
  int sudo_main_dispatcher(int argc, char *argv[]);
 
@@ -43,7 +43,7 @@ extern "C" {
  __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count);
  __attribute__ ((visibility("default"))) ssize_t sdc_pwrite(int fd, const void *buf, size_t count, off_t offset);
  __attribute__ ((visibility("default"))) ssize_t sdc_pread(int fd, void *buf, size_t count, off_t offset);
-#ifndef __FreeBSD__
+#if  !defined(__FreeBSD__) && !defined(__HAIKU__)
  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf);
 #endif
  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf);
@@ -101,7 +101,7 @@ public:
 		if (enter)
 			sudo_silent_query_region_enter();
 	}
-	
+
 	inline void Enter()
 	{
 		if (!_entered) {

@@ -105,7 +105,7 @@ static void SetupStdHandles()
 		if (!freopen(DEVNULL, "r", stdin)) {
 			perror("freopen stdin");
 		}
-#if !defined(__CYGWIN__) //TODO
+#if !defined(__CYGWIN__) && !defined(__HAIKU__) //TODO
 		ioctl(0, TIOCNOTTY, NULL);
 #endif
 	}

@@ -4,6 +4,9 @@
 #include <os_call.hpp>
 #include "PipeIPC.h"
 
+#ifdef __HAIKU__
+  #include <posix/sys/select.h>
+#endif
 
 static std::string FormatIPCError(const char *msg, unsigned int code)
 {

@@ -1,3 +1,8 @@
+#if defined(__HAIKU__)
+#include <cstring>
+#include <posix/sys/select.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

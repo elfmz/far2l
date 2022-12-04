@@ -177,6 +177,7 @@ BOOL WINAPI _export ZIP_OpenArchive(const char *Name,int *Type,bool Silent)
         {
           WINPORT(SetFilePointer)(ArcHandle,I+48-ReadSize,NULL,FILE_CURRENT);
           WINPORT(ReadFile)(ArcHandle,&NextPosition.QuadPart,sizeof(NextPosition.QuadPart),&ReadSizeO,NULL);
+          LITEND_INPLACE(NextPosition.QuadPart);
           bFound=true;
           break;
         }
@@ -184,6 +185,7 @@ BOOL WINAPI _export ZIP_OpenArchive(const char *Name,int *Type,bool Silent)
         {
           WINPORT(SetFilePointer)(ArcHandle,I+16-ReadSize,NULL,FILE_CURRENT);
           WINPORT(ReadFile)(ArcHandle,&NextPosition.u.LowPart,sizeof(NextPosition.u.LowPart),&ReadSizeO,NULL);
+          LITEND_INPLACE(NextPosition.u.LowPart);
           if (NextPosition.u.LowPart != 0xffffffff)
           {
             NextPosition.u.HighPart=0;
@@ -333,9 +335,8 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
   }
   
   char cFileName[NM + 1] = {0};
-  DWORD SizeToRead=std::min(DWORD(ZipHeader.NameLen), DWORD(ARRAYSIZE(cFileName)-1));
-  if (!WINPORT(ReadFile)(ArcHandle,cFileName,SizeToRead,&ReadSize,NULL) ||
-      ReadSize!=SizeToRead)
+  DWORD SizeToRead=std::min(DWORD(LITEND(ZipHeader.NameLen)), DWORD(ARRAYSIZE(cFileName)-1));
+  if (!WINPORT(ReadFile)(ArcHandle,cFileName,SizeToRead,&ReadSize,NULL) || ReadSize!=SizeToRead)
     return(GETARC_READERROR);
     
   Info->PathName.assign(cFileName, strnlen(cFileName, ReadSize));
@@ -444,13 +445,13 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
             return(GETARC_READERROR);
 
 
-          LITEND_FILETIME_CONVERT(Times.Modification);
+          LITEND_INPLACE_FILETIME(Times.Modification);
           Info->ftLastWriteTime = Times.Modification;
 
-          LITEND_FILETIME_CONVERT(Times.Access);
+          LITEND_INPLACE_FILETIME(Times.Access);
           Info->ftLastAccessTime = Times.Access;
 
-          LITEND_FILETIME_CONVERT(Times.Creation);
+          LITEND_INPLACE_FILETIME(Times.Creation);
           Info->ftCreationTime = Times.Creation;
         }
       }

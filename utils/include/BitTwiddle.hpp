@@ -64,19 +64,20 @@ template <class V>
 
 #ifdef ENDIAN_IS_BIG
 # define LITEND(V)   (RevBytes(V))
+# define LITEND_INPLACE(V)   V = LITEND(V)
 # define BIGEND(V)   (V)
-#else
-# define LITEND(V)   (V)
-# define BIGEND(V)   (RevBytes(V))
-#endif
-
-#ifdef ENDIAN_IS_BIG
-# define LITEND_FILETIME_CONVERT(FT) { \
+# define BIGEND_INPLACE(V)
+# define LITEND_INPLACE_FILETIME(FT) { \
 	std::swap((FT).dwLowDateTime, (FT).dwHighDateTime); \
 	(FT).dwLowDateTime = __builtin_bswap32((FT).dwLowDateTime); \
 	(FT).dwHighDateTime = __builtin_bswap32((FT).dwHighDateTime); \
 }
-#else
-# define LITEND_FILETIME_CONVERT(FT)
-#endif
 
+#else // #ifdef ENDIAN_IS_BIG
+# define LITEND(V)   (V)
+# define LITEND_INPLACE(V) 
+# define BIGEND(V)   (RevBytes(V))
+# define BIGEND_INPLACE(V)   V = BIGEND(V)
+# define LITEND_INPLACE_FILETIME(FT)
+
+#endif // #ifdef ENDIAN_IS_BIG

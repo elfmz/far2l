@@ -6,6 +6,15 @@
 #include <fcntl.h> // for O_RDONLY
 
 #include "../../../WinPort/sudo.h" // for sdc_open
+#ifdef __HAIKU__
+  #define PF_W PF_WRITE
+  #define PF_R PF_READ
+  #define PF_X PF_EXECUTE
+
+  #define SHF_MERGE     0x10
+  #define SHF_STRINGS   0x20
+  #define SHF_INFO_LINK 0x10
+#endif
 
 struct ELFInfo
 {

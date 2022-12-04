@@ -1,3 +1,6 @@
+#ifdef __HAIKU__
+#define _DEFAULT_SOURCE 1
+#endif
 #include <time.h>
 #include "WinCompat.h"
 #include "WinPort.h"

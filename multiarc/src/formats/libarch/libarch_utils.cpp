@@ -1,3 +1,6 @@
+#ifdef __HAIKU__
+#define _DEFAULT_SOURCE 1
+#endif
 #include <string.h>
 
 #include <string>

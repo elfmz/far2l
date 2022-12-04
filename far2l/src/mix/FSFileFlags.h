@@ -40,6 +40,15 @@ public:
 # define FS_FLAGS_WITHOUT_HIDDEN(flags) ((flags) & (~(UF_HIDDEN)))
 # define FS_FLAGS_WITH_HIDDEN(flags) ((flags) | (UF_HIDDEN))
 
+#elif defined(__HAIKU__)
+// TODO ?
+# define FS_FLAGS_CONTAIN_IMMUTABLE(flags) false
+# define FS_FLAGS_WITHOUT_IMMUTABLE(flags) false
+# define FS_FLAGS_WITH_IMMUTABLE(flags) false
+
+# define FS_FLAGS_CONTAIN_APPEND(flags) false
+# define FS_FLAGS_WITHOUT_APPEND(flags) false
+# define FS_FLAGS_WITH_APPEND(flags) false
 #else
 # define FS_FLAGS_CONTAIN_IMMUTABLE(flags) (((flags) & FS_IMMUTABLE_FL) != 0)
 # define FS_FLAGS_WITHOUT_IMMUTABLE(flags) ((flags) & (~FS_IMMUTABLE_FL))

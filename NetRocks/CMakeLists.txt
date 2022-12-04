@@ -159,6 +159,7 @@ endif (OPENSSL_FOUND)
 		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
 		PREFIX ""
 		SUFFIX ".broker")
+        target_link_libraries(NetRocks-FTP network)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")

@@ -51,7 +51,7 @@ template <class V>
 	}
 }
 
-#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 # define LITEND(V)   (RevBytes(V))
 #else
 # define LITEND(V)   (V)

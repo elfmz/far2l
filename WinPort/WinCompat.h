@@ -372,6 +372,16 @@ typedef struct _FILETIME {
 #endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+# define LITEND_FILETIME_CONVERT(FT) { \
+	std::swap(FT.dwLowDateTime, dwHighDateTime); \
+	FT.dwLowDateTime = __builtin_bswap32(FT.dwLowDateTime); \
+	FT.dwHighDateTime = __builtin_bswap32(FT.dwHighDateTime); \
+}
+#else
+# define LITEND_FILETIME_CONVERT(FT)
+#endif
+
 typedef union _LARGE_INTEGER {
 #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
     struct {

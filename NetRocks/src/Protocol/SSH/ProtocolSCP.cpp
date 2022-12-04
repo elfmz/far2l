@@ -634,31 +634,49 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 	}
 
 	bool busybox = false;
+	bool applets_list = false;
 	if (cmd.Execute("readlink /bin/sh") == 0) {
 		if (cmd.Output().find("busybox") != std::string::npos && cmd.Execute("busybox") == 0) {
 			fprintf(stderr, "ProtocolSCP: BusyBox detected\n");
 			busybox = true;
 		}
-	} else if (cmd.Execute("busybox") == 0) {
-		// readlink not exists or /bin/sh not exists and also busybox exists?
-		// Its enough arguments to assume that ls will be handled by busybox.
-		fprintf(stderr, "ProtocolSCP: BusyBox assumed\n");
-		busybox = true;
+	} else {
+		int busybox_return_code = cmd.Execute("busybox 2>&1");
+		if (busybox_return_code == 0 || // busybox found and returns list of available applets OR
+			// busybox found and returns "busybox: applet not found"
+			(busybox_return_code == 127 && cmd.Output().find("applet not found") != std::string::npos))
+		{
+			// readlink not exists or /bin/sh not exists and also busybox exists?
+			// Its enough arguments to assume that ls will be handled by busybox.
+			fprintf(stderr, "ProtocolSCP: BusyBox assumed\n");
+			busybox = true;
+			applets_list = (busybox_return_code == 0);
+		}
 	}
 
 	if (busybox) {
-		// some busybox systems may miss very usual things, analyze busybox command output
-		// where it printed lit of supported commands
-		std::vector<std::string> words;
-		StrExplode(words, cmd.Output(), "\t ,");
-		if (std::find(words.begin(), words.end(), _quirks.rm_file) == words.end()) {
-			fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_file);
-			_quirks.rm_file = "rm -f";
+		if (applets_list) {
+			// some busybox systems may miss very usual things, analyze busybox command output
+			// where it printed lit of supported commands
+			std::vector<std::string> words;
+			StrExplode(words, cmd.Output(), "\t ,");
+			if (std::find(words.begin(), words.end(), _quirks.rm_file) == words.end()) {
+				fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_file);
+				_quirks.rm_file = "rm -f";
+			}
+			if (std::find(words.begin(), words.end(), _quirks.rm_dir) == words.end()) {
+				fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_dir);
+				_quirks.rm_dir = "rm -f -d";
+			}
+		} else {
+			// some routers have rmdir, but have no unlink (and also no applets list from busybox w/o args)
+			std::string probe_command = "ls /bin/"; probe_command += _quirks.rm_file;
+			if (cmd.Execute(probe_command.c_str()) != 0) {
+				fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_file);
+				_quirks.rm_file = "rm -f";
+			}
 		}
-		if (std::find(words.begin(), words.end(), _quirks.rm_dir) == words.end()) {
-			fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_dir);
-			_quirks.rm_dir = "rm -f -d";
-		}
+
 		_quirks.ls_supports_dash_f = false;
 	}
 }

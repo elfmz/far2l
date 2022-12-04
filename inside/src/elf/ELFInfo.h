@@ -4,6 +4,7 @@
 #include <vector>
 #include <elf.h>
 #include <fcntl.h> // for O_RDONLY
+#include <BitTwiddle.hpp>
 
 #include "../../../WinPort/sudo.h" // for sdc_open
 
@@ -24,22 +25,16 @@ struct ELFInfo
 };
 
 
-struct ELF_EndianessSame
+struct ELF_EndianessBig
 {
 	template <class T>
-		static T C(T v) { return v; }
+		static T C(const T &v) { return BIGEND(v); }
 };
 
-struct ELF_EndianessReverse
+struct ELF_EndianessLittle
 {
 	template <class T>
-		static T C(T v)
-	{
-		for (size_t i = 0; i< sizeof(v) / 2; ++i) {
-			std::swap( ((char *)&v)[i], ((char *)&v)[sizeof(v) - 1 - i]);
-		}
-		return v; 
-	}
+		static T C(const T &v) { return LITEND(v); }
 };
 
 template <class E, class Ehdr, class Phdr, class Shdr>

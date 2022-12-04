@@ -33,15 +33,15 @@ PluginImplELF::PluginImplELF(const char *name, uint8_t bitness, uint8_t endianes
 {
 	if (bitness == 2) {
 		if (endianess == 2) {
-			FillELFInfo<ELF_EndianessReverse, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
+			FillELFInfo<ELF_EndianessBig, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
 		} else {
-			FillELFInfo<ELF_EndianessSame, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
+			FillELFInfo<ELF_EndianessLittle, Elf64_Ehdr, Elf64_Phdr, Elf64_Shdr>(*_elf_info, name);
 		}
 	} else {
 		if (endianess== 2) {
-			FillELFInfo<ELF_EndianessReverse, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
+			FillELFInfo<ELF_EndianessBig, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
 		} else {
-			FillELFInfo<ELF_EndianessSame, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
+			FillELFInfo<ELF_EndianessLittle, Elf32_Ehdr, Elf32_Phdr, Elf32_Shdr>(*_elf_info, name);
 		}
 	}
 	fprintf(stderr, "Inside::PluginImplELF('%s', %d, %d)\n", name, bitness, endianess);

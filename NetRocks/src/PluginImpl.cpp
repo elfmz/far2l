@@ -1,6 +1,7 @@
 #include <vector>
 #include <mutex>
 #include <wchar.h>
+#include <limits.h>
 #include "Globals.h"
 #include <utils.h>
 #include "SitesConfig.h"

@@ -67,34 +67,6 @@ inline bool IsFullWideCodePage(UINT CP) { return (CP==CP_UTF16LE || CP==CP_UTF16
 inline bool IsUnicodeOrUtfCodePage(UINT CP) { return (CP==CP_UTF8 || CP==CP_UTF16LE || CP==CP_UTF16BE); }
 #endif
 
-inline static wchar_t WideReverse(wchar_t w)
-{
-	union {
-		uint8_t b[sizeof(wchar_t)];
-		wchar_t w;
-	} u;
-	u.w = w;
-#if (__WCHAR_MAX__ > 0xffff)
-	std::swap(u.b[0], u.b[3]);
-	std::swap(u.b[1], u.b[2]);
-#else
-	std::swap(u.b[0], u.b[1]);
-#endif
-	return u.w;
-}
-
-inline static void WideReverse(const wchar_t *src, wchar_t *dst, size_t l) {
-	for ( ; l; --l, ++src, ++dst) {
-		*dst = WideReverse(*src);
-	}
-}
-
-inline static void WideReverse(wchar_t *inplace, size_t l) {
-	for ( ; l; --l, ++inplace) {
-		*inplace = WideReverse(*inplace);
-	}
-}
-
 bool IsCodePageSupported(UINT CodePage);
 
 UINT SelectCodePage(UINT nCurrent, bool bShowUnicode, bool bShowUTF, bool bShowUTF7 = false, bool bShowAuto = false);

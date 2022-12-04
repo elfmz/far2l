@@ -1,17 +1,22 @@
 #include "Storage.h"
 #include <crc64.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <dirent.h>
+#include <string.h>
 #include <utils.h>
 #include <sudo.h>
 
 namespace Storage
 {
+#define STORAGE_DIR "plugins/inside/stg"
+
 	static std::string StoragePath(const std::string &key_file, const std::string &key_string)
 	{
 		uint64_t crc = crc64(0, (const unsigned char *)key_string.c_str(), key_string.size());
 		crc = crc64(crc, (const unsigned char *)key_file.c_str(), key_file.size());
 		char buf[128] = {};
-		snprintf(buf, sizeof(buf) - 1, "plugins/inside/stg/%llx", (unsigned long long)crc);
+		snprintf(buf, sizeof(buf) - 1, "%s/%llx", STORAGE_DIR, (unsigned long long)crc);
 		return InMyConfig(buf);
 	}
 
@@ -24,6 +29,35 @@ namespace Storage
 				return true;
 			if (sdc_write(fd_dst, buf, (size_t)r) != r)
 				return false;
+		}
+	}
+
+	void Clear()
+	{
+		std::string stg_path = InMyConfig(STORAGE_DIR);
+		DIR *dir = opendir(stg_path.c_str());
+		if (!dir)
+			return;
+
+		std::vector<std::string> entries;
+		for (;;) {
+			struct dirent *de = readdir(dir);
+			if (!de) break;
+			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+				entries.emplace_back(de->d_name);
+		}
+		closedir(dir);
+
+		stg_path+= '/';
+		const size_t dir_length = stg_path.size();
+		for (const auto &entry : entries) {
+			stg_path.resize(dir_length);
+			stg_path+= entry;
+			if (remove(stg_path.c_str()) == 0) {
+				fprintf(stderr, "Inside: removed entry '%s'\n", entry.c_str());
+			} else {
+				fprintf(stderr, "Inside: error %u removing entry '%s'\n", errno, entry.c_str());
+			}
 		}
 	}
 

@@ -638,6 +638,7 @@ ArcCommand::~ArcCommand() //$ AA 25.11.2001
 {
 /*  if(CommentFile!=INVALID_HANDLE_VALUE)
     WINPORT(CloseHandle)(CommentFile);*/
-    sdc_remove(CommentFileName);
+    if (*CommentFileName)
+      sdc_remove(CommentFileName);
 }
 

@@ -24,7 +24,6 @@ src/fileattr.cpp
 src/fileedit.cpp
 src/filefilter.cpp
 src/filefilterparams.cpp
-src/filelist.cpp
 src/FilesSuggestor.cpp
 src/fileowner.cpp
 src/filepanels.cpp
@@ -32,11 +31,7 @@ src/filestr.cpp
 src/filetype.cpp
 src/fileview.cpp
 src/findfile.cpp
-src/flmodes.cpp
 src/flink.cpp
-src/flplugin.cpp
-src/flshow.cpp
-src/flupdate.cpp
 src/fnparce.cpp
 src/foldtree.cpp
 src/frame.cpp
@@ -45,7 +40,6 @@ src/help.cpp
 src/hilight.cpp
 src/hmenu.cpp
 src/Mounts.cpp
-src/infolist.cpp
 src/keybar.cpp
 src/main.cpp
 src/manager.cpp
@@ -55,9 +49,7 @@ src/mkdir.cpp
 src/modal.cpp
 src/namelist.cpp
 src/options.cpp
-src/panel.cpp
 src/plist.cpp
-src/qview.cpp
 src/rdrwdsk.cpp
 src/RefreshFrameManager.cpp
 src/scantree.cpp
@@ -67,13 +59,23 @@ src/stddlg.cpp
 src/synchro.cpp
 src/syslog.cpp
 src/TPreRedrawFunc.cpp
-src/treelist.cpp
 src/usermenu.cpp
 src/viewer.cpp
 src/vmenu.cpp
 src/execute_oscmd.cpp
 src/ViewerPrinter.cpp
 src/fileholder.cpp
+
+src/panels/panel.cpp
+src/panels/filelist.cpp
+src/panels/fldata.cpp
+src/panels/flmodes.cpp
+src/panels/flplugin.cpp
+src/panels/flshow.cpp
+src/panels/flupdate.cpp
+src/panels/infolist.cpp
+src/panels/qview.cpp
+src/panels/treelist.cpp
 
 src/console/AnsiEsc.cpp
 src/console/keyboard.cpp
@@ -106,8 +108,11 @@ src/bookmarks/Bookmarks.cpp
 src/bookmarks/BookmarksMenu.cpp
 src/bookmarks/BookmarksLegacy.cpp
 
+src/cfg/AllXLats.cpp
 src/cfg/config.cpp
+src/cfg/ConfigSaveLoad.cpp
 src/cfg/ConfigRW.cpp
+src/cfg/ConfigLegacy.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp
 
@@ -125,6 +130,8 @@ src/vt/vtshell.cpp
 src/vt/vtshell_translation.cpp
 src/vt/vtshell_compose.cpp
 src/vt/vtshell_leader.cpp
+src/vt/vtshell_ioreaders.cpp
+src/vt/vtshell_mouse.cpp
 src/vt/vtlog.cpp
 src/vt/vtcompletor.cpp
 src/vt/VTFar2lExtensios.cpp
@@ -152,6 +159,7 @@ src/mix/RegExp.cpp
 src/mix/strmix.cpp
 src/mix/FSFileFlags.cpp
 src/mix/StrCells.cpp
+src/mix/ChunkedData.cpp
 )
 
 # Set target names for the executables
@@ -196,6 +204,7 @@ target_include_directories(far2l PRIVATE
 	src/bookmarks
 	src/cfg
 	src/console
+	src/panels
 	src/filemask
 	src/hist
 	src/locale

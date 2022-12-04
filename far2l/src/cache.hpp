@@ -87,20 +87,6 @@ private:
 	// something from /proc/ that has zero stat size but still can read some content from it
 	bool PseudoFile = false;
 
-
-	template <class T>
-		inline T AlignUp(T v)
-	{
-		T a = v & (T)(AlignSize - 1);
-		return a ? v + (AlignSize - a) : v;
-	}
-
-	template <class T>
-		inline T AlignDown(T v)
-	{
-		return v & (~(T)(AlignSize - 1));
-	}
-
 	DWORD DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize);
 	LPBYTE AllocBuffer(size_t Size);
 

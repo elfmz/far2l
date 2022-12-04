@@ -530,7 +530,9 @@ static void ModalViewFileInternal(const std::string &pathname, int DisableHistor
 	FrameManager->EnterModalEV();
 	FrameManager->ExecuteModal();
 	FrameManager->ExitModalEV();
-	Viewer.GetExitCode();	
+	const int r = Viewer.GetExitCode();
+	if (r != 0)
+		fprintf(stderr, "%s: viewer error %d for '%s'\n", __FUNCTION__, r, pathname.c_str());
 }
 
 void ModalViewFile(const std::string &pathname, bool scroll_to_end)

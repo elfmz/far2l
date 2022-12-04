@@ -111,7 +111,7 @@ class PluginA: public Plugin
 				const std::string &moduleID);
 		~PluginA();
 
-		bool IsOemPlugin() {return true;}
+		bool IsPluginMB() {return true;}
 
 		bool Load();
 		bool LoadFromCache();

@@ -93,7 +93,7 @@ extern long WaitUserTime;
 /* Для того, что бы время при ожидании пользователя тикало, а remaining/speed нет */
 static long OldCalcTime;
 
-#define PROGRESS_REFRESH_THRESHOLD    500 // msec
+#define PROGRESS_REFRESH_THRESHOLD    200 // msec
 
 enum {COPY_BUFFER_SIZE  = 0x800000, COPY_PIECE_MINIMAL = 0x10000};
 
@@ -247,9 +247,8 @@ void CopyProgress::Flush()
 		{
 			if (CheckForEscSilent())
 			{
-				(*FrameManager)[0]->Lock();
+				LockFrame LF((*FrameManager)[0]);
 				IsCancelled=ConfirmAbortOp()!=0;
-				(*FrameManager)[0]->Unlock();
 			}
 		}
 
@@ -540,7 +539,7 @@ static void GenerateName(FARString &strName,const wchar_t *Path=nullptr)
 	FARString strExt=PointToExt(strName);
 	size_t NameLength=strName.GetLength()-strExt.GetLength();
 
-	for (int i=1; apiGetFileAttributes(strName)!=INVALID_FILE_ATTRIBUTES; i++)
+	for (int i=1; apiPathExists(strName); i++)
 	{
 		WCHAR Suffix[20]=L"_";
 		_itow(i,Suffix+1,10);
@@ -1199,9 +1198,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			{
 				CurCopiedSize=0;
 				strNameTmp = NamePtr;
-
-				if ((strNameTmp.GetLength() == 2) && IsAlpha(strNameTmp.At(0)) && (strNameTmp.At(1) == L':'))
-					PrepareDiskPath(strNameTmp);
 
 				if (!StrCmp(strNameTmp,L"..") && IsLocalRootPath(strSrcDir))
 				{
@@ -2004,12 +2000,8 @@ void ShellCopy::SetEnqueuedDirectoriesAttributes()
 		struct timespec ts[2] = {};
 		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixAccessTime, &ts[0]);
 		WINPORT(FileTime_Win32ToUnix)(&cd.ftUnixModificationTime, &ts[1]);
-		const struct timeval tv[2] = {
-			{ts[0].tv_sec, suseconds_t(ts[0].tv_nsec / 1000)},
-			{ts[1].tv_sec, suseconds_t(ts[1].tv_nsec / 1000)}
-		};
-		if (sdc_utimes(cd.Path.c_str(), tv) == -1) {
-			fprintf(stderr, "sdc_utimes error %d for '%s'\n", errno, cd.Path.c_str());
+		if (sdc_utimens(cd.Path.c_str(), ts) == -1) {
+			fprintf(stderr, "sdc_utimens error %d for '%s'\n", errno, cd.Path.c_str());
 		}
 		if (Flags.COPYACCESSMODE) {
 			if (sdc_chmod(cd.Path.c_str(), cd.dwUnixMode) == -1) {

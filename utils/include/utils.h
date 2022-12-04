@@ -4,6 +4,7 @@
 #include <cstdarg>
 #include <sys/types.h>
 #include "cctweaks.h"
+#include "BitTwiddle.hpp"
 #include "MatchWildcard.hpp"
 #include "WideMB.h"
 #include "Escaping.h"
@@ -133,6 +134,8 @@ void CheckedCloseFDPair(int *fd);
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
 size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);
+
+bool ReadWholeFile(const char *path, std::string &result, size_t limit = (size_t)-1);
 
 
 int pipe_cloexec(int pipedes[2]);
@@ -288,15 +291,6 @@ bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2);
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
-
-template <class POD_T>
-	void ZeroFill(POD_T &dst)
-{
-	static_assert ( std::is_pod<POD_T>::value, "ZeroFill should be used with POD types only");
-	static_assert ( sizeof(dst) != sizeof(void *), "ZeroFill should not be used with pointers");
-	memset(&dst, 0, sizeof(dst));
-}
-
 template <class STRING_T, typename ARRAY_T>
 	void StrAssignArray(STRING_T &s, const ARRAY_T &a)
 {
@@ -330,6 +324,7 @@ template <typename ARRAY_T, class CHAR_T>
 	}
 	dst[i] = 0;
 }
+
 
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);

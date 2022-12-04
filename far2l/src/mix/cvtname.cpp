@@ -320,10 +320,17 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 {
 	// elevation not required during cosmetic operation 
-
 	if (!strPath.IsEmpty())
 	{
-/*		if (strPath.At(1)==L':' || (strPath.At(0)==L'/' && strPath.At(1)==L'/'))
+		if (CheckFullPath && strPath[0] != L'/') {
+			ConvertNameToFull(strPath, strPath);
+		}
+	}
+
+/*
+		if (strPath.At(1)==L':' || (strPath.At(0)==L'/' && strPath.At(1)==L'/'))
+	if (!strPath.IsEmpty())
+	{
 		{
 			bool DoubleSlash = strPath.At(1)==L'/';
 			while(ReplaceStrings(strPath,L"//",L"/"));
@@ -422,9 +429,9 @@ FARString& PrepareDiskPath(FARString &strPath, bool CheckFullPath)
 			}
 
 			strPath.ReleaseBuffer(strPath.GetLength());
-		}*/
+		}
 	}
-
+*/
 	return strPath;
 }
 

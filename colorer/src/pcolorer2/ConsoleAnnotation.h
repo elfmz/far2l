@@ -85,15 +85,15 @@ struct AnnotationInfo
         /**
          * Validity indicators;
          */
-        int bk_valid :1;
-        int fg_valid :1;
+        unsigned int bk_valid :1;
+        unsigned int fg_valid :1;
 
         /**
          * Custom border over the character position.
          *
          * bit 0 - left, bit 1 - top, bit 2 - right, bit 3 - bottom
          */
-        int border_visible :4;
+        unsigned int border_visible :4;
         /**
          * When border within character has angles (f.e. left+top),
          * console server may choose to draw it in some nice way (rounded, etc)

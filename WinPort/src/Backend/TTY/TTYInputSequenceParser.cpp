@@ -331,6 +331,11 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 0;
 	}
 
+	if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && (s[3] == '0' || s[3] == '1') && s[4] == '~') {
+		OnBracketedPaste(s[3] == '0');
+		return 5;
+	}
+
 	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
 		if (l < 5)
 			return 0;
@@ -516,7 +521,10 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			_mouse.middle = true;
 			break;
 
-		case '^': // right press
+		case '2': // ctrl+right press
+			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+
+		case '"': // right press
 			if (now - _mouse.right_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 				_mouse.right_ts = 0;
@@ -573,6 +581,14 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 
+}
+
+void TTYInputSequenceParser::OnBracketedPaste(bool start)
+{
+	INPUT_RECORD ir = {};
+	ir.EventType = BRACKETED_PASTE_EVENT;
+	ir.Event.BracketedPaste.bStartPaste = start ? TRUE : FALSE;
+	_ir_pending.emplace_back(ir);
 }
 
 //////////////////

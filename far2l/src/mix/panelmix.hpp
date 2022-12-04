@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class Panel;
 
 void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir=FALSE);
-int  CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName);
+bool CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName);
 
 int _MakePath1(DWORD Key,FARString &strPathName, const wchar_t *Param2);
 

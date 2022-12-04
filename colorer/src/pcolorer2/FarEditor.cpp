@@ -906,7 +906,7 @@ void FarEditor::showOutliner(Outliner *outliner)
         wchar_t * menuItem = new wchar_t[255];
 
         if (!oldOutline){
-          int si = swprintf(menuItem, 255, L"%4d ", item->lno+1);
+          int si = swprintf(menuItem, 255, L"%4ld ", item->lno+1);
 
           for (int lIdx = 0; lIdx < treeLevel; lIdx++){
             menuItem[si++] = ' ';

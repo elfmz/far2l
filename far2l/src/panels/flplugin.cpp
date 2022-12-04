@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "panelmix.hpp"
 #include "mix.hpp"
+#include "ChunkedData.hpp"
 
 /*
    В стеке ФАРова панель не хранится - только плагиновые!
@@ -221,107 +222,88 @@ void FileList::FreePluginPanelItem(PluginPanelItem *pi)
 		free((void*)pi->UserData);
 }
 
-size_t FileList::FileListToPluginItem2(FileListItem *fi,PluginPanelItem *pi)
+size_t FileList::FileListToPluginItem2(FileListItem *fi, PluginPanelItem *pi)
 {
-	size_t size=sizeof(*pi);
-	size+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
-	size+=fi->strOwner.IsEmpty()?0:sizeof(wchar_t)*(fi->strOwner.GetLength()+1);
-	size+=fi->strGroup.IsEmpty()?0:sizeof(wchar_t)*(fi->strGroup.GetLength()+1);
-	size+=fi->DizText?sizeof(wchar_t)*(wcslen(fi->DizText)+1):0;
-	size+=fi->CustomColumnNumber*sizeof(wchar_t*);
+	if (pi) { // first setup trivial stuff
+		pi->FindData.nFileSize = fi->FileSize;
+		pi->FindData.nPhysicalSize = fi->PhysicalSize;
+		pi->FindData.dwFileAttributes = fi->FileAttr;
+		pi->FindData.dwUnixMode = fi->FileMode;
+		pi->FindData.ftLastWriteTime = fi->WriteTime;
+		pi->FindData.ftCreationTime = fi->CreationTime;
+		pi->FindData.ftLastAccessTime = fi->AccessTime;
+		pi->NumberOfLinks = fi->NumberOfLinks;
+		pi->Flags = fi->Selected ? fi->UserFlags | PPIF_SELECTED : fi->UserFlags;
+		pi->CustomColumnNumber = fi->CustomColumnNumber;
 
-	for (int ii=0; ii<fi->CustomColumnNumber; ii++)
-	{
-		size+=fi->CustomColumnData[ii]?sizeof(wchar_t)*(wcslen(fi->CustomColumnData[ii])+1):0;
+		// following may be changed later to non-NULL
+		pi->CustomColumnData = nullptr;
+		pi->Description = nullptr;
+		pi->Owner = nullptr;
+		pi->Group = nullptr;
 	}
 
-	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA))
-	{
-		size+=*(DWORD *)fi->UserData;
+	ChunkedData data(pi);
+	data.Inflate(sizeof(*pi));
+
+	// append CustomColumnData prior wchar-s as sizeof(wchar_t *) >= sizeof(wchar_t)
+	// so its more alignment/space efficient to put it at beginning
+	if (fi->CustomColumnNumber) {
+		data.Align(sizeof(wchar_t *));
+		data.Inflate(fi->CustomColumnNumber * sizeof(wchar_t *));
+		if (pi) {
+			pi->CustomColumnData = (wchar_t **)data.Recent();
+		}
 	}
 
-	if (pi)
-	{
-		char* data=(char*)(pi+1);
-
-		pi->FindData.lpwszFileName=wcscpy((wchar_t*)data,fi->strName);
-		data+=sizeof(wchar_t)*(fi->strName.GetLength()+1);
-		pi->FindData.nFileSize=fi->FileSize;
-		pi->FindData.nPhysicalSize=fi->PhysicalSize;
-		pi->FindData.dwFileAttributes=fi->FileAttr;
-		pi->FindData.dwUnixMode=fi->FileMode;
-		pi->FindData.ftLastWriteTime=fi->WriteTime;
-		pi->FindData.ftCreationTime=fi->CreationTime;
-		pi->FindData.ftLastAccessTime=fi->AccessTime;
-		pi->NumberOfLinks=fi->NumberOfLinks;
-		pi->Flags=fi->UserFlags;
-
-		if (fi->Selected) pi->Flags|=PPIF_SELECTED;
-
-		pi->CustomColumnNumber=fi->CustomColumnNumber;
-		pi->CustomColumnData=(wchar_t**)data;
-		data+=fi->CustomColumnNumber*sizeof(wchar_t*);
-
-		for (int ii=0; ii<fi->CustomColumnNumber; ii++)
-		{
-			if (!fi->CustomColumnData[ii])
-			{
-				((const wchar_t**)(pi->CustomColumnData))[ii]=nullptr;
-			}
-			else
-			{
-				((const wchar_t**)(pi->CustomColumnData))[ii]=wcscpy((wchar_t*)data,fi->CustomColumnData[ii]);
-				data+=sizeof(wchar_t)*(wcslen(fi->CustomColumnData[ii])+1);
-			}
+	data.Align(sizeof(wchar_t));
+	for (int i = 0; i < fi->CustomColumnNumber; ++i) {
+		data.Append(fi->CustomColumnData[i]);
+		if (pi) {
+			((const wchar_t**)(pi->CustomColumnData))[i] = (const wchar_t *)data.Recent();
 		}
-
-		if (!fi->DizText)
-		{
-			pi->Description=nullptr;
-		}
-		else
-		{
-			pi->Description=wcscpy((wchar_t*)data,fi->DizText);
-			data+=sizeof(wchar_t)*(wcslen(fi->DizText)+1);
-		}
-
-		pi->CRC32=fi->CRC32;
-		pi->Reserved[0]=pi->Reserved[1]=0;
-
-		if (fi->strOwner.IsEmpty())
-		{
-			pi->Owner=nullptr;
-		}
-		else
-		{
-			pi->Owner=wcscpy((wchar_t*)data,fi->strOwner);
-			data+= sizeof(wchar_t) * (wcslen(fi->strOwner) + 1);
-		}
-
-		if (fi->strGroup.IsEmpty())
-		{
-			pi->Group=nullptr;
-		}
-		else
-		{
-			pi->Group=wcscpy((wchar_t*)data,fi->strGroup);
-			data+= sizeof(wchar_t) * (wcslen(fi->strGroup) + 1);
-		}
-
-		// copy user data at the end to avoid alignment troubles(hooting)
-		if (fi->UserData&&(fi->UserFlags&PPIF_USERDATA))
-		{
-			DWORD Size=*(DWORD *)fi->UserData;
-			pi->UserData=(DWORD_PTR)data;
-			memcpy((void *)pi->UserData,(const void *)fi->UserData,Size);
-			//data+=Size;
-		}
-		else
-			pi->UserData=fi->UserData;
-
 	}
 
-	return size;
+	data.Append(fi->strName);
+	if (pi) {
+		pi->FindData.lpwszFileName = (wchar_t *)data.Recent();
+	}
+
+	if (fi->DizText) {
+		data.Append(fi->DizText);
+		if (pi) {
+			pi->Description = (const wchar_t *)data.Recent();
+		}
+	}
+
+	if (!fi->strOwner.IsEmpty()) {
+		data.Append(fi->strOwner);
+		if (pi) {
+			pi->Owner = (const wchar_t *)data.Recent();
+		}
+	}
+
+	if (!fi->strGroup.IsEmpty()) {
+		data.Append(fi->strGroup);
+		if (pi) {
+			pi->Group = (const wchar_t *)data.Recent();
+		}
+	}
+
+	// copy user data at the end to avoid alignment gaps after
+	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA) != 0) {
+		const DWORD ud_size = *(const DWORD *)fi->UserData;
+		data.Align((ud_size >= 8) ? 8 : 4);
+		data.Append((const void *)fi->UserData, ud_size);
+		if (pi) {
+			pi->UserData = (DWORD_PTR)data.Recent();
+		}
+	}
+	else if (pi) {
+		pi->UserData = fi->UserData;
+	}
+
+	return data.Length();
 }
 
 void FileList::PluginToFileListItem(PluginPanelItem *pi,FileListItem *fi)
@@ -398,83 +380,65 @@ HANDLE FileList::OpenPluginForFile(const wchar_t *FileName, DWORD FileAttr, OPEN
 }
 
 
-void FileList::CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber,BOOL AddTwoDot)
+void FileList::CreatePluginItemList(PluginPanelItemVec &ItemList) // Add but not Create
 {
-	if (!ListData)
+	if (ListData.IsEmpty())
 		return;
 
-	long SaveSelPosition=GetSelPosition;
-	long OldLastSelPosition=LastSelPosition;
-	FARString strSelName;
-	DWORD FileAttr;
-	ItemNumber=0;
-	ItemList=new PluginPanelItem[SelFileCount+1]();
+	const auto SaveSelPosition = GetSelPosition;
+	const auto OldLastSelPosition = LastSelPosition;
 
-	if (ItemList)
-	{
-		GetSelNameCompat(nullptr,FileAttr);
+	try {
+		ItemList.ReserveExtra(SelFileCount + 1);
 
-		while (GetSelNameCompat(&strSelName,FileAttr))
+		FARString strSelName;
+		DWORD FileAttr = 0;
+		GetSelNameCompat(nullptr, FileAttr);
+
+		while (GetSelNameCompat(&strSelName, FileAttr))
+		{
 			if ((!(FileAttr & FILE_ATTRIBUTE_DIRECTORY) || !TestParentFolderName(strSelName))
-			        && LastSelPosition>=0 && LastSelPosition<FileCount)
+				&& LastSelPosition >= 0 && LastSelPosition < ListData.Count())
 			{
-				FileListToPluginItem(ListData[LastSelPosition],ItemList+ItemNumber);
-				ItemNumber++;
+				ItemList.Add(ListData[LastSelPosition]);
 			}
-
-		if (AddTwoDot && !ItemNumber && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) // это про ".."
-		{
-			FileListToPluginItem(ListData[0],ItemList+ItemNumber);
-			//ItemList->FindData.lpwszFileName = wcsdup (ListData[0]->strName);
-			//ItemList->FindData.dwFileAttributes=ListData[0]->FileAttr;
-			ItemNumber++;
-		}
-	}
-
-	LastSelPosition=OldLastSelPosition;
-	GetSelPosition=SaveSelPosition;
-}
-
-
-void FileList::DeletePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber)
-{
-	PluginPanelItem *PItemList=ItemList;
-
-	if (PItemList)
-	{
-		for (int I=0; I<ItemNumber; I++,PItemList++)
-		{
-			FreePluginPanelItem(PItemList);
 		}
 
-		delete[] ItemList;
+		if (ItemList.IsEmpty() && !ListData.IsEmpty() && TestParentFolderName(ListData[0]->strName)) // это про ".."
+		{
+			ItemList.Add(ListData[0]);
+		}
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
 	}
+
+	LastSelPosition = OldLastSelPosition;
+	GetSelPosition = SaveSelPosition;
 }
 
 
 void FileList::PluginDelete()
 {
 	_ALGO(CleverSysLog clv(L"FileList::PluginDelete()"));
-	PluginPanelItem *ItemList;
-	int ItemNumber;
 	SaveSelection();
-	CreatePluginItemList(ItemList,ItemNumber);
+	PluginPanelItemVec ItemList;
+	CreatePluginItemList(ItemList);
 
-	if (ItemList && ItemNumber>0)
+	if (ItemList.IsEmpty())
+		return;
+
+	if (CtrlObject->Plugins.DeleteFiles(hPlugin,ItemList.Data(),ItemList.Count(),0))
 	{
-		if (CtrlObject->Plugins.DeleteFiles(hPlugin,ItemList,ItemNumber,0))
-		{
-			SetPluginModified();
-			PutDizToPlugin(this,ItemList,ItemNumber,TRUE,FALSE,nullptr,&Diz);
-		}
-
-		DeletePluginItemList(ItemList,ItemNumber);
-		Update(UPDATE_KEEP_SELECTION);
-		Redraw();
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-		AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-		AnotherPanel->Redraw();
+		SetPluginModified();
+		PutDizToPlugin(this,ItemList.Data(),ItemList.Count(),TRUE,FALSE,nullptr,&Diz);
 	}
+	ItemList.Clear();
+
+	Update(UPDATE_KEEP_SELECTION);
+	Redraw();
+	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+	AnotherPanel->Redraw();
 }
 
 
@@ -559,69 +523,65 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 void FileList::PluginGetFiles(const wchar_t **DestPath,int Move)
 {
 	_ALGO(CleverSysLog clv(L"FileList::PluginGetFiles()"));
-	PluginPanelItem *ItemList, *PList;
-	int ItemNumber;
 	SaveSelection();
-	CreatePluginItemList(ItemList,ItemNumber);
+	PluginPanelItemVec ItemList;
+	CreatePluginItemList(ItemList);
+	if (ItemList.IsEmpty())
+		return;
 
-	if (ItemList && ItemNumber>0)
+	const int GetCode = CtrlObject->Plugins.GetFiles(hPlugin, ItemList.Data(), ItemList.Count(), Move, DestPath, 0);
+
+	if ((Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
+	        Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS)
 	{
-		int GetCode=CtrlObject->Plugins.GetFiles(hPlugin,ItemList,ItemNumber,Move,DestPath,0);
-
-		if ((Opt.Diz.UpdateMode==DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
-		        Opt.Diz.UpdateMode==DIZ_UPDATE_ALWAYS)
+		DizList DestDiz;
+		bool DizFound = false;
+		for (auto &Item : ItemList)
 		{
-			DizList DestDiz;
-			int DizFound=FALSE;
-			PList=ItemList;
-
-			for (int I=0; I<ItemNumber; I++,PList++)
-				if (PList->Flags & PPIF_PROCESSDESCR)
+			if (Item.Flags & PPIF_PROCESSDESCR)
+			{
+				if (!DizFound)
 				{
-					if (!DizFound)
-					{
-						CtrlObject->Cp()->LeftPanel->ReadDiz();
-						CtrlObject->Cp()->RightPanel->ReadDiz();
-						DestDiz.Read(*DestPath);
-						DizFound=TRUE;
-					}
-
-					FARString strName = PList->FindData.lpwszFileName;
-					CopyDiz(strName,strName,&DestDiz);
+					CtrlObject->Cp()->LeftPanel->ReadDiz();
+					CtrlObject->Cp()->RightPanel->ReadDiz();
+					DestDiz.Read(*DestPath);
+					DizFound = true;
 				}
 
-			DestDiz.Flush(*DestPath);
-		}
-
-		if (GetCode==1)
-		{
-			if (!ReturnCurrentFile)
-				ClearSelection();
-
-			if (Move)
-			{
-				SetPluginModified();
-				PutDizToPlugin(this,ItemList,ItemNumber,TRUE,FALSE,nullptr,&Diz);
+				FARString strName = Item.FindData.lpwszFileName;
+				CopyDiz(strName, strName, &DestDiz);
 			}
 		}
-		else if (!ReturnCurrentFile)
-			PluginClearSelection(ItemList,ItemNumber);
 
-		DeletePluginItemList(ItemList,ItemNumber);
-		Update(UPDATE_KEEP_SELECTION);
-		Redraw();
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-		AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-		AnotherPanel->Redraw();
+		DestDiz.Flush(*DestPath);
 	}
+
+	if (GetCode==1)
+	{
+		if (!ReturnCurrentFile)
+			ClearSelection();
+
+		if (Move)
+		{
+			SetPluginModified();
+			PutDizToPlugin(this, ItemList.Data(), ItemList.Count(), TRUE, FALSE, nullptr, &Diz);
+		}
+	}
+	else if (!ReturnCurrentFile)
+		PluginClearSelection(ItemList.Data(), ItemList.Count());
+
+	ItemList.Clear();
+	Update(UPDATE_KEEP_SELECTION);
+	Redraw();
+	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+	AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+	AnotherPanel->Redraw();
 }
 
 
 void FileList::PluginToPluginFiles(int Move)
 {
 	_ALGO(CleverSysLog clv(L"FileList::PluginToPluginFiles()"));
-	PluginPanelItem *ItemList;
-	int ItemNumber;
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 	FARString strTempDir;
 
@@ -635,54 +595,55 @@ void FileList::PluginToPluginFiles(int Move)
 
 	SaveSelection();
 	apiCreateDirectory(strTempDir,nullptr);
-	CreatePluginItemList(ItemList,ItemNumber);
 
-	if (ItemList && ItemNumber>0)
+	PluginPanelItemVec ItemList;
+	CreatePluginItemList(ItemList);
+	if (ItemList.IsEmpty())
+		return;
+
+	const wchar_t *lpwszTempDir=strTempDir;
+	int PutCode=CtrlObject->Plugins.GetFiles(hPlugin,ItemList.Data(),ItemList.Count(),FALSE,&lpwszTempDir,OPM_SILENT);
+	strTempDir=lpwszTempDir;
+
+	if (PutCode==1 || PutCode==2)
 	{
-		const wchar_t *lpwszTempDir=strTempDir;
-		int PutCode=CtrlObject->Plugins.GetFiles(hPlugin,ItemList,ItemNumber,FALSE,&lpwszTempDir,OPM_SILENT);
-		strTempDir=lpwszTempDir;
+		FARString strSaveDir;
+		apiGetCurrentDirectory(strSaveDir);
+		FarChDir(strTempDir);
+		PutCode=CtrlObject->Plugins.PutFiles(AnotherFilePanel->hPlugin,ItemList.Data(),ItemList.Count(),FALSE,0);
 
 		if (PutCode==1 || PutCode==2)
 		{
-			FARString strSaveDir;
-			apiGetCurrentDirectory(strSaveDir);
-			FarChDir(strTempDir);
-			PutCode=CtrlObject->Plugins.PutFiles(AnotherFilePanel->hPlugin,ItemList,ItemNumber,FALSE,0);
+			if (!ReturnCurrentFile)
+				ClearSelection();
 
-			if (PutCode==1 || PutCode==2)
-			{
-				if (!ReturnCurrentFile)
-					ClearSelection();
+			AnotherPanel->SetPluginModified();
+			PutDizToPlugin(AnotherFilePanel,ItemList.Data(),ItemList.Count(),FALSE,FALSE,&Diz,&AnotherFilePanel->Diz);
 
-				AnotherPanel->SetPluginModified();
-				PutDizToPlugin(AnotherFilePanel,ItemList,ItemNumber,FALSE,FALSE,&Diz,&AnotherFilePanel->Diz);
-
-				if (Move)
-					if (CtrlObject->Plugins.DeleteFiles(hPlugin,ItemList,ItemNumber,OPM_SILENT))
-					{
-						SetPluginModified();
-						PutDizToPlugin(this,ItemList,ItemNumber,TRUE,FALSE,nullptr,&Diz);
-					}
-			}
-			else if (!ReturnCurrentFile)
-				PluginClearSelection(ItemList,ItemNumber);
-
-			FarChDir(strSaveDir);
+			if (Move)
+				if (CtrlObject->Plugins.DeleteFiles(hPlugin,ItemList.Data(),ItemList.Count(),OPM_SILENT))
+				{
+					SetPluginModified();
+					PutDizToPlugin(this,ItemList.Data(),ItemList.Count(),TRUE,FALSE,nullptr,&Diz);
+				}
 		}
+		else if (!ReturnCurrentFile)
+			PluginClearSelection(ItemList.Data(),ItemList.Count());
 
-		DeleteDirTree(strTempDir);
-		DeletePluginItemList(ItemList,ItemNumber);
-		Update(UPDATE_KEEP_SELECTION);
-		Redraw();
-
-		if (PanelMode==PLUGIN_PANEL)
-			AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-		else
-			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
-
-		AnotherPanel->Redraw();
+		FarChDir(strSaveDir);
 	}
+
+	DeleteDirTree(strTempDir);
+	ItemList.Clear();
+	Update(UPDATE_KEEP_SELECTION);
+	Redraw();
+
+	if (PanelMode==PLUGIN_PANEL)
+		AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+	else
+		AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+
+	AnotherPanel->Redraw();
 }
 
 
@@ -764,18 +725,18 @@ void FileList::PluginPutFilesToNew()
 
 	if (hNewPlugin!=INVALID_HANDLE_VALUE && hNewPlugin!=(HANDLE)-2)
 	{
-		_ALGO(SysLog(L"Create: FileList TmpPanel, FileCount=%d",FileCount));
+		_ALGO(SysLog(L"Create: FileList TmpPanel, FileCount=%d",ListData.Count()));
 		FileList TmpPanel;
 		TmpPanel.SetPluginMode(hNewPlugin,L"");  // SendOnFocus??? true???
 		TmpPanel.SetModalMode(TRUE);
-		int PrevFileCount=FileCount;
+		auto PrevFileCount = ListData.Count();
 		/* $ 12.04.2002 IS
 		   Если PluginPutFilesToAnother вернула число, отличное от 2, то нужно
 		   попробовать установить курсор на созданный файл.
 		*/
 		int rc=PluginPutFilesToAnother(FALSE,&TmpPanel);
 
-		if (rc!=2 && FileCount==PrevFileCount+1)
+		if (rc!=2 && ListData.Count() == PrevFileCount + 1)
 		{
 			int LastPos = 0;
 			/* Место, где вычисляются координаты вновь созданного файла
@@ -786,20 +747,12 @@ void FileList::PluginPutFilesToNew()
 			*/
 			FileListItem *PtrListData, *PtrLastPos = nullptr;
 
-			for (int i = 0; i < FileCount; i++)
+			for (int i = 0; i < ListData.Count(); ++i)
 			{
 				PtrListData = ListData[i];
 				if ((PtrListData->FileAttr & FILE_ATTRIBUTE_DIRECTORY) == 0)
 				{
-					if (PtrLastPos)
-					{
-						if (FileTimeDifference(&PtrListData->CreationTime, &PtrLastPos->CreationTime) > 0)
-						{
-							LastPos = i;
-							PtrLastPos = PtrListData;
-						}
-					}
-					else
+					if (!PtrLastPos || FileTimeDifference(&PtrListData->CreationTime, &PtrLastPos->CreationTime) > 0)
 					{
 						LastPos = i;
 						PtrLastPos = PtrListData;
@@ -832,42 +785,41 @@ int FileList::PluginPutFilesToAnother(int Move,Panel *AnotherPanel)
 		return 0;
 
 	FileList *AnotherFilePanel=(FileList *)AnotherPanel;
-	PluginPanelItem *ItemList;
-	int ItemNumber,PutCode=0;
 	SaveSelection();
-	CreatePluginItemList(ItemList,ItemNumber);
+	PluginPanelItemVec ItemList;
+	CreatePluginItemList(ItemList);
 
-	if (ItemList && ItemNumber>0)
+	if (ItemList.IsEmpty())
+		return 0;
+
+	SetCurPath();
+	_ALGO(SysLog(L"call Plugins.PutFiles"));
+	int PutCode=CtrlObject->Plugins.PutFiles(AnotherFilePanel->hPlugin,ItemList.Data(),ItemList.Count(),Move,0);
+
+	if (PutCode==1 || PutCode==2)
 	{
-		SetCurPath();
-		_ALGO(SysLog(L"call Plugins.PutFiles"));
-		PutCode=CtrlObject->Plugins.PutFiles(AnotherFilePanel->hPlugin,ItemList,ItemNumber,Move,0);
-
-		if (PutCode==1 || PutCode==2)
+		if (!ReturnCurrentFile)
 		{
-			if (!ReturnCurrentFile)
-			{
-				_ALGO(SysLog(L"call ClearSelection()"));
-				ClearSelection();
-			}
-
-			_ALGO(SysLog(L"call PutDizToPlugin"));
-			PutDizToPlugin(AnotherFilePanel,ItemList,ItemNumber,FALSE,Move,&Diz,&AnotherFilePanel->Diz);
-			AnotherPanel->SetPluginModified();
+			_ALGO(SysLog(L"call ClearSelection()"));
+			ClearSelection();
 		}
-		else if (!ReturnCurrentFile)
-			PluginClearSelection(ItemList,ItemNumber);
 
-		_ALGO(SysLog(L"call DeletePluginItemList"));
-		DeletePluginItemList(ItemList,ItemNumber);
-		Update(UPDATE_KEEP_SELECTION);
-		Redraw();
+		_ALGO(SysLog(L"call PutDizToPlugin"));
+		PutDizToPlugin(AnotherFilePanel,ItemList.Data(),ItemList.Count(),FALSE,Move,&Diz,&AnotherFilePanel->Diz);
+		AnotherPanel->SetPluginModified();
+	}
+	else if (!ReturnCurrentFile)
+		PluginClearSelection(ItemList.Data(),ItemList.Count());
 
-		if (AnotherPanel==CtrlObject->Cp()->GetAnotherPanel(this))
-		{
-			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
-			AnotherPanel->Redraw();
-		}
+	_ALGO(SysLog(L"call DeletePluginItemList"));
+	ItemList.Clear();
+	Update(UPDATE_KEEP_SELECTION);
+	Redraw();
+
+	if (AnotherPanel==CtrlObject->Cp()->GetAnotherPanel(this))
+	{
+		AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+		AnotherPanel->Redraw();
 	}
 
 	return PutCode;
@@ -893,32 +845,31 @@ void FileList::ProcessHostFile()
 	_ALGO(CleverSysLog clv(L"FileList::ProcessHostFile()"));
 
 	//_ALGO(SysLog(L"FileName='%ls'",(FileName?FileName:"(nullptr)")));
-	if (FileCount>0 && SetCurPath())
+	if (!ListData.IsEmpty() && SetCurPath())
 	{
 		int Done=FALSE;
 		SaveSelection();
 
 		if (PanelMode==PLUGIN_PANEL && !(*PluginsList.Last())->strHostFile.IsEmpty())
 		{
-			PluginPanelItem *ItemList = nullptr;
-			int ItemNumber;
 			_ALGO(SysLog(L"call CreatePluginItemList"));
-			CreatePluginItemList(ItemList,ItemNumber);
+			PluginPanelItemVec ItemList;
+			CreatePluginItemList(ItemList);
 			_ALGO(SysLog(L"call Plugins.ProcessHostFile"));
-			Done=CtrlObject->Plugins.ProcessHostFile(hPlugin,ItemList,ItemNumber,0);
+			Done=CtrlObject->Plugins.ProcessHostFile(hPlugin,ItemList.Data(),ItemList.Count(),0);
 
 			if (Done)
 				SetPluginModified();
 			else
 			{
 				if (!ReturnCurrentFile)
-					PluginClearSelection(ItemList,ItemNumber);
+					PluginClearSelection(ItemList.Data(),ItemList.Count());
 
 				Redraw();
 			}
 
 			_ALGO(SysLog(L"call DeletePluginItemList"));
-			DeletePluginItemList(ItemList,ItemNumber);
+			ItemList.Clear();
 
 			if (Done)
 				ClearSelection();
@@ -929,7 +880,7 @@ void FileList::ProcessHostFile()
 
 			if (SCount > 0)
 			{
-				for (int I=0; I < FileCount; ++I)
+				for (int I = 0; I < ListData.Count(); ++I)
 				{
 					if (ListData[I]->Selected)
 					{
@@ -982,10 +933,10 @@ int FileList::ProcessOneHostFile(int Idx)
 
 	if (hNewPlugin!=INVALID_HANDLE_VALUE && hNewPlugin!=(HANDLE)-2)
 	{
-		PluginPanelItem *ItemList;
-		int ItemNumber;
 		_ALGO(SysLog(L"call Plugins.GetFindData"));
 
+		PluginPanelItem *ItemList;
+		int ItemNumber;
 		if (CtrlObject->Plugins.GetFindData(hNewPlugin,&ItemList,&ItemNumber,OPM_TOPLEVEL))
 		{
 			_ALGO(SysLog(L"call Plugins.ProcessHostFile"));
@@ -1043,19 +994,19 @@ void FileList::SetPluginMode(HANDLE hPlugin,const wchar_t *PluginFile,bool SendO
 void FileList::PluginGetPanelInfo(PanelInfo &Info)
 {
 	CorrectPosition();
-	Info.CurrentItem=CurFile;
-	Info.TopPanelItem=CurTopFile;
-	Info.ItemsNumber=FileCount;
-	Info.SelectedItemsNumber=ListData?GetSelCount():0;
+	Info.CurrentItem = CurFile;
+	Info.TopPanelItem = CurTopFile;
+	Info.ItemsNumber = ListData.Count();
+	Info.SelectedItemsNumber = Info.ItemsNumber ? GetSelCount() : 0;
 }
 
 size_t FileList::PluginGetPanelItem(int ItemNumber,PluginPanelItem *Item)
 {
-	size_t result=0;
+	size_t result = 0;
 
-	if (ListData && ItemNumber<FileCount)
+	if (ItemNumber >= 0 && ItemNumber < ListData.Count())
 	{
-		result=FileListToPluginItem2(ListData[ItemNumber],Item);
+		result = FileListToPluginItem2(ListData[ItemNumber], Item);
 	}
 
 	return result;
@@ -1065,7 +1016,7 @@ size_t FileList::PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item
 {
 	size_t result=0;
 
-	if (ListData && ItemNumber<FileCount)
+	if (ItemNumber >= 0 && ItemNumber < ListData.Count())
 	{
 		if (ItemNumber==CacheSelIndex)
 		{
@@ -1077,7 +1028,7 @@ size_t FileList::PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item
 
 			int CurSel=CacheSelIndex,StartValue=CacheSelIndex>=0?CacheSelPos+1:0;
 
-			for (int i=StartValue; i<FileCount; i++)
+			for (int i=StartValue; i<ListData.Count(); i++)
 			{
 				if (ListData[i]->Selected)
 					CurSel++;
@@ -1120,7 +1071,7 @@ void FileList::PluginSetSelection(int ItemNumber,bool Selection)
 
 void FileList::PluginClearSelection(int SelectedItemNumber)
 {
-	if (ListData && SelectedItemNumber<FileCount)
+	if (SelectedItemNumber >= 0 && SelectedItemNumber < ListData.Count())
 	{
 		if (SelectedItemNumber<=CacheSelClearIndex)
 		{
@@ -1129,7 +1080,7 @@ void FileList::PluginClearSelection(int SelectedItemNumber)
 
 		int CurSel=CacheSelClearIndex,StartValue=CacheSelClearIndex>=0?CacheSelClearPos+1:0;
 
-		for (int i=StartValue; i<FileCount; i++)
+		for (int i=StartValue; i<ListData.Count(); i++)
 		{
 			if (ListData[i]->Selected)
 			{
@@ -1213,7 +1164,7 @@ void FileList::PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber)
 		if (!(CurPluginPtr->Flags & PPIF_SELECTED))
 		{
 			while (StrCmp(CurPluginPtr->FindData.lpwszFileName,ListData[FileNumber]->strName))
-				if (++FileNumber>=FileCount)
+				if (++FileNumber >= ListData.Count())
 					return;
 
 			Select(ListData[FileNumber++],0);

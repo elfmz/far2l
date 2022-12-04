@@ -146,7 +146,6 @@ class ShellCopy
 		COPY_FLAGS Flags;
 		Panel *SrcPanel,*DestPanel;
 		int SrcPanelMode,DestPanelMode;
-		int SrcDriveType,DestDriveType;
 		DizList DestDiz;
 		FARString strDestDizPath;
 		FARString strCopiedName;

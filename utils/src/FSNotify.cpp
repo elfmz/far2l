@@ -10,6 +10,7 @@
 # include <sys/inotify.h>
 #endif
 #include <pthread.h>
+#include <limits.h>
 #include <dirent.h>
 #include <string.h>
 #include <sys/types.h>

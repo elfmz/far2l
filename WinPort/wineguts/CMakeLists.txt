@@ -101,5 +101,5 @@ else()
 endif()
 
 
-add_library (wineguts ${SOURCES})
+add_library (wineguts STATIC ${SOURCES})
 

@@ -140,7 +140,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleAdhocQuickEdit();
-	virtual DWORD OnConsoleSetTweaks(DWORD tweaks);
+	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();

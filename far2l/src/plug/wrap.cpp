@@ -1238,7 +1238,7 @@ void UnicodeListItemToAnsi(FarListItem* li, oldfar::FarListItem* liA)
 
 size_t GetAnsiVBufSize(oldfar::FarDialogItem &diA)
 {
-	return (diA.X2-diA.X1+1)*(diA.Y2-diA.Y1+1);
+	return size_t(diA.X2-diA.X1+1) * (diA.Y2-diA.Y1+1);
 }
 
 PCHAR_INFO GetAnsiVBufPtr(PCHAR_INFO VBuf, size_t Size)
@@ -4024,8 +4024,8 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 		for (unsigned int i = 0; i < 256; ++i)
 		{
 			TableSet->EncodeTable[i] = TableSet->DecodeTable[i] = i;
-			TableSet->UpperTable[i] = _toupper(i);
-			TableSet->LowerTable[i] = _tolower(i);
+			TableSet->UpperTable[i] = toupper(i);
+			TableSet->LowerTable[i] = tolower(i);
 		}
 
 		FormatString sTableName;

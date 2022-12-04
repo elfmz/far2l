@@ -42,122 +42,107 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "FSNotify.h"
 #include <memory>
-
-class FileFilter;
+#include <vector>
 
 struct FileListItem
 {
+	FileListItem(const FileListItem &) = delete;
+	FileListItem& operator=(const FileListItem &) = delete;
+
+	FileListItem();
+	~FileListItem();
+
 	FARString strName;
 	FARString strOwner, strGroup;
 	FARString strCustomData;
 
-	uint64_t FileSize;
-	uint64_t PhysicalSize;
+	uint64_t FileSize{};
+	uint64_t PhysicalSize{};
 
-	FILETIME CreationTime;
-	FILETIME AccessTime;
-	FILETIME WriteTime;
-	FILETIME ChangeTime;
+	FILETIME CreationTime{};
+	FILETIME AccessTime{};
+	FILETIME WriteTime{};
+	FILETIME ChangeTime{};
 
-	wchar_t *DizText;
-	wchar_t **CustomColumnData;
+	wchar_t *DizText{};
+	wchar_t **CustomColumnData{};
 
-	DWORD_PTR UserData;
+	DWORD_PTR UserData{};
 
-	HighlightDataColor Colors; // 5 DWORDs
+	HighlightDataColor Colors{}; // 5 DWORDs
 
-	DWORD NumberOfLinks;
-	DWORD UserFlags;
-	DWORD FileAttr;
-	DWORD FileMode;
-	DWORD CRC32;
+	DWORD NumberOfLinks{};
+	DWORD UserFlags{};
+	DWORD FileAttr{};
+	DWORD FileMode{};
+	DWORD CRC32{};
 
-	int Position;
-	int SortGroup;
-	int CustomColumnNumber;
+	unsigned int Position{}; // for unsorted sorting..
+	int SortGroup{};
+	int CustomColumnNumber{};
 
-	bool Selected;
-	bool PrevSelected;
-	bool DeleteDiz;
-	uint8_t ShowFolderSize;
+	bool Selected{};
+	bool PrevSelected{};
+	bool DeleteDiz{};
+	uint8_t ShowFolderSize{};
 
 	/// temporary values used to optimize sorting, they fit into
 	/// 8-bytes alignment gap so there is no memory waisted
-	unsigned short FileNamePos;	// offset from beginning of StrName
-	unsigned short FileExtPos; // offset from FileNamePos
+	unsigned short FileNamePos{};	// offset from beginning of StrName
+	unsigned short FileExtPos{}; // offset from FileNamePos
+};
 
-	void Clear()
+template <class T>
+	struct StdVecWrap : protected std::vector<T>
+{
+	using typename std::vector<T>::iterator;
+	using std::vector<T>::begin;
+	using std::vector<T>::end;
+	using std::vector<T>::operator[];
+
+	void ReserveExtra(int extra)
 	{
-		strName.Clear();
-		strOwner.Clear();
-		strGroup.Clear();
-		strCustomData.Clear();;
-
-		FileSize = 0;
-		PhysicalSize = 0;
-
-		memset(&CreationTime, 0, sizeof(CreationTime));
-		memset(&AccessTime, 0, sizeof(AccessTime));
-		memset(&WriteTime, 0, sizeof(WriteTime));
-		memset(&ChangeTime, 0, sizeof(ChangeTime));
-
-		DizText = nullptr;
-		CustomColumnData = nullptr;;
-
-		UserData = 0;
-
-		memset(&Colors, 0, sizeof(HighlightDataColor));
-
-		NumberOfLinks = 0;
-		UserFlags = 0;
-		FileAttr = 0;
-		FileMode = 0;
-		CRC32 = 0;
-
-		Position = 0;
-		SortGroup = 0;
-		CustomColumnNumber = 0;
-
-		Selected = false;
-		PrevSelected = false;
-		DeleteDiz = false;
-		ShowFolderSize = 0;
+		std::vector<T>::reserve(std::vector<T>::size() + (size_t)extra);
 	}
 
-	FileListItem& operator=(const FileListItem &fliCopy)
+	void Swap(StdVecWrap<T> &other)
 	{
-		if (this != &fliCopy)
-		{
-			Selected = fliCopy.Selected;
-			PrevSelected = fliCopy.PrevSelected;
-			ShowFolderSize = fliCopy.ShowFolderSize;
-			Colors=fliCopy.Colors;
-			NumberOfLinks = fliCopy.NumberOfLinks;
-			UserFlags = fliCopy.UserFlags;
-			UserData = fliCopy.UserData;
-			Position = fliCopy.Position;
-			SortGroup = fliCopy.SortGroup;
-			DizText = fliCopy.DizText;
-			DeleteDiz = fliCopy.DeleteDiz;
-			strOwner = fliCopy.strOwner;
-			strGroup = fliCopy.strGroup;
-			CustomColumnData = fliCopy.CustomColumnData;
-			CustomColumnNumber = fliCopy.CustomColumnNumber;
-			CRC32 = fliCopy.CRC32;
-			FileAttr = fliCopy.FileAttr;
-			FileMode = fliCopy.FileMode;
-			CreationTime=fliCopy.CreationTime;
-			AccessTime=fliCopy.AccessTime;
-			WriteTime=fliCopy.WriteTime;
-			ChangeTime=fliCopy.ChangeTime;
-			FileSize = fliCopy.FileSize;
-			PhysicalSize = fliCopy.PhysicalSize;
-			strName = fliCopy.strName;
-			strCustomData = fliCopy.strCustomData;
-		}
-
-		return *this;
+		return std::vector<T>::swap(other);
 	}
+
+	inline T *Data() { return std::vector<T>::data(); }
+	inline int Count() const { return (int)std::vector<T>::size(); }
+	inline bool IsEmpty() const { return std::vector<T>::empty(); }
+};
+
+struct ListDataVec : StdVecWrap<FileListItem *>
+{
+	ListDataVec(const ListDataVec &) = delete;
+	ListDataVec &operator =(const ListDataVec &) = delete;
+
+	ListDataVec();
+	~ListDataVec();
+
+	void Clear();
+
+	FileListItem *Add();
+
+	// занести предопределенные данные для каталога ".."
+	FileListItem *AddParentPoint();
+	FileListItem *AddParentPoint(const FILETIME* Times, FARString Owner, FARString Group);
+};
+
+
+struct PluginPanelItemVec : StdVecWrap<PluginPanelItem>
+{
+	PluginPanelItemVec(const PluginPanelItemVec &) = delete;
+	PluginPanelItemVec &operator =(const PluginPanelItemVec &) = delete;
+
+	PluginPanelItemVec();
+	~PluginPanelItemVec();
+
+	void Add(FileListItem *CreateFrom);
+	void Clear();
 };
 
 struct PluginsListItem
@@ -178,16 +163,15 @@ struct PluginsListItem
 
 struct PrevDataItem
 {
-	FileListItem **PrevListData;
-	int PrevFileCount;
+	ListDataVec PrevListData;
 	FARString strPrevName;
 	int PrevTopFile;
 };
 
-class FileList:public Panel
+class FileList : public Panel
 {
 	private:
-		FileFilter *Filter;
+		class FileFilter *Filter;
 		DizList Diz;
 		int DizRead;
 		/* $ 09.11.2001 IS
@@ -198,8 +182,7 @@ class FileList:public Panel
 
 		FARString strOriginalCurDir;
 		FARString strPluginDizName;
-		FileListItem **ListData;
-		int FileCount;
+		ListDataVec ListData;
 		HANDLE hPlugin;
 		DList<PrevDataItem*>PrevDataList;
 		DList<PluginsListItem*>PluginsList;
@@ -235,7 +218,6 @@ class FileList:public Panel
 		virtual void SetSelectedFirstMode(int Mode);
 		virtual int GetSelectedFirstMode() {return SelectedFirst;}
 		virtual void DisplayObject();
-		void DeleteListData(FileListItem **(&ListData),int &FileCount);
 		void Up(int Count);
 		void Down(int Count);
 		void Scroll(int Count);
@@ -260,14 +242,13 @@ class FileList:public Panel
 		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
 
-		void MoveSelection(FileListItem **FileList,long FileCount,FileListItem **OldList,long OldFileCount);
+		void MoveSelection(ListDataVec &NewList, ListDataVec &OldList);
 		virtual int GetSelCount();
 		virtual int GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fde=nullptr);
 		virtual void UngetSelName();
 		virtual void ClearLastGetSelection();
 
 		virtual uint64_t GetLastSelectedSize();
-		virtual int GetLastSelectedItem(FileListItem *LastItem);
 
 		virtual int GetCurName(FARString &strName);
 		virtual int GetCurBaseName(FARString &strName);
@@ -279,8 +260,7 @@ class FileList:public Panel
 		void SelectSortMode();
 		bool ApplyCommand();
 		void DescribeFiles();
-		void CreatePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber,BOOL AddTwoDot=TRUE);
-		void DeletePluginItemList(PluginPanelItem *(&ItemList),int &ItemNumber);
+		void CreatePluginItemList(PluginPanelItemVec &ItemList);
 		HANDLE OpenPluginForFile(const wchar_t *FileName,DWORD FileAttr, OPENFILEPLUGINTYPE Type);
 		int PreparePanelView(PanelViewSettings *PanelView);
 		int PrepareColumnWidths(unsigned int *ColumnTypes,int *ColumnWidths,
@@ -301,7 +281,6 @@ class FileList:public Panel
 		void PluginClearSelection(PluginPanelItem *ItemList,int ItemNumber);
 		void ProcessCopyKeys(int Key);
 		void ReadSortGroups(bool UpdateFilterCurrentTime=true);
-		void AddParentPoint(FileListItem *CurPtr,long CurFilePos,FILETIME* Times=nullptr,FARString Owner=L"",FARString Group=L"");
 		int  ProcessOneHostFile(int Idx);
 
 	protected:
@@ -401,12 +380,11 @@ class FileList:public Panel
 		virtual void SetTitle();
 		//virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		int PluginPanelHelp(HANDLE hPlugin);
-		virtual long GetFileCount() {return FileCount;}
+		virtual long GetFileCount() {return ListData.Count();}
 
 		FARString &CreateFullPathName(const wchar_t *Name,DWORD FileAttr, FARString &strDest,int UNC);
 
-
-		virtual BOOL GetItem(int Index,void *Dest);
+		virtual const void *GetItem(int Index);
 		virtual BOOL UpdateKeyBar();
 
 		virtual void IfGoHome(wchar_t Drive);

@@ -19,11 +19,11 @@
 ////////////////////////////
 char MakeHexDigit(const unsigned char c)
 {
-	if (c >= 0 && c <= 9) {
+	if (c <= 9) {
 		return '0' + c;
 	}
 
-	if (c >= 0xa && c <= 0xf) {
+	if (c <= 0xf) {
 		return 'a' + (c - 0xa);
 	}
 

@@ -174,7 +174,7 @@ class PluginManager:
                 ItemNumber -= 1
 
     def DeleteFiles(self, hPlugin, PanelItem, ItemsNumber, OpMode):
-        log.debug("DeleteFiles({0}, {1}, {2})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
+        log.debug("DeleteFiles({0}, {1}, {2}, {3})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
         plugin = self.pluginGet(hPlugin)
         return plugin.DeleteFiles(PanelItem, ItemsNumber, OpMode)
 

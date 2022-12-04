@@ -271,7 +271,7 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	if ( (height - _scroll_region.top) < 2 || width==0)
 		return;
 
-	_temp_chars.resize(width * (height - 1) );
+	_temp_chars.resize(size_t(width) * (height - 1) );
 	if (_temp_chars.empty())
 		return;
 	
@@ -617,7 +617,7 @@ void ConsoleOutput::AdhocQuickEdit()
 		_backend->OnConsoleAdhocQuickEdit();
 }
 
-DWORD ConsoleOutput::SetConsoleTweaks(DWORD tweaks)
+DWORD64 ConsoleOutput::SetConsoleTweaks(DWORD64 tweaks)
 {
 	if (!_backend)
 		return 0;

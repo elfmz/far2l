@@ -1860,11 +1860,7 @@ int Edit::GetSelString(FARString &strStr)
 		return FALSE;
 	}
 
-	int CopyLength;
-	CopyLength=SelEnd-SelStart+1;
-	wchar_t *lpwszStr = strStr.GetBuffer(CopyLength+1);
-	far_wcsncpy(lpwszStr,this->Str+SelStart,CopyLength);
-	strStr.ReleaseBuffer();
+	strStr.Copy(this->Str + SelStart, SelEnd - SelStart + 1);
 	return TRUE;
 }
 

@@ -744,7 +744,7 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu=TRUE;
 	};
 
-	if (!Ask || ((!Opt.Confirm.Exit || ConfirmExit()) && CtrlObject->Plugins.MayExitFar()))
+	if (!Ask || ((!Opt.Confirm.ExitEffective() || ConfirmExit()) && CtrlObject->Plugins.MayExitFar()))
 	{
 		/* $ 29.12.2000 IS
 		   + Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим
@@ -1795,20 +1795,31 @@ Frame* Manager::GetTopModal()
 
 /////////
 
-LockBottomFrame::LockBottomFrame()
-	: _frame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+
+LockFrame::LockFrame(Frame *frame)
+	: _frame(frame), _refresh(false)
 {
 	if (_frame)
-	{
-		if (_frame->Locked())
-			_frame = nullptr;
-		else
-			_frame->Lock();
-	}
+		_frame->Lock();
 }
 
-LockBottomFrame::~LockBottomFrame()
+LockFrame::~LockFrame()
 {
 	if (_frame)
 		_frame->Unlock();
+
+	if (_refresh && FrameManager)
+		FrameManager->RefreshFrame(_frame);
+}
+
+///
+
+LockBottomFrame::LockBottomFrame()
+	: LockFrame(FrameManager ? FrameManager->GetBottomFrame() : nullptr)
+{
+}
+
+LockCurrentFrame::LockCurrentFrame()
+	: LockFrame(FrameManager ? FrameManager->GetCurrentFrame() : nullptr)
+{
 }

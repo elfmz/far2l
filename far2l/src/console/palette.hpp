@@ -35,10 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-extern unsigned char DefaultPalette[];
-extern unsigned char Palette[];
-extern unsigned char BlackPalette[];
-extern int SizeArrayPalette;
+#define SIZE_ARRAY_PALETTE	147
+
+extern unsigned char DefaultPalette[SIZE_ARRAY_PALETTE];
+extern unsigned char Palette[SIZE_ARRAY_PALETTE];
+extern unsigned char BlackPalette[SIZE_ARRAY_PALETTE];
 
 BYTE FarColorToReal(int FarColor);
 void ConvertCurrentPalette();

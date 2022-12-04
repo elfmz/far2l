@@ -166,7 +166,6 @@ class Panel:public ScreenObject
 		virtual void UngetSelName() {};
 		virtual void ClearLastGetSelection() {};
 		virtual uint64_t GetLastSelectedSize() {return (uint64_t)(-1);};
-		virtual int GetLastSelectedItem(struct FileListItem *LastItem) {return 0;};
 
 		virtual int GetCurName(FARString &strName);
 		virtual int GetCurBaseName(FARString &strName);
@@ -273,7 +272,7 @@ class Panel:public ScreenObject
 		virtual BOOL UpdateKeyBar() { return FALSE; };
 
 		virtual long GetFileCount() {return 0;}
-		virtual BOOL GetItem(int,void *) {return FALSE;};
+		virtual const void *GetItem(int) {return nullptr;};
 
 		bool ExecShortcutFolder(int Pos);
 		bool SaveShortcutFolder(int Pos);

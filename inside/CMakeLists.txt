@@ -6,6 +6,7 @@ src/Globals.cpp
 src/Commands.cpp
 src/ItemList.cpp
 src/PluginImpl.cpp
+src/Storage.cpp
 
 src/plain/PluginImplPlain.cpp
 
@@ -15,7 +16,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(SOURCES
 		${SOURCES}
 		src/elf/Dumper.cpp
-		src/elf/Storage.cpp
 		src/elf/PluginImplELF.cpp
 	)
 endif()

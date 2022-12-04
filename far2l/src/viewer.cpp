@@ -755,12 +755,7 @@ void Viewer::ShowHex()
 				}
 				else
 				{
-					WCHAR OutChar = Ch;
-
-					if (VM.CodePage == CP_UTF16BE) {
-						OutChar = WideReverse(OutChar);
-					}
-
+					WCHAR OutChar = (VM.CodePage == CP_UTF16BE) ? RevBytes(uint16_t(Ch)) : Ch;
 
 					int OutStrLen=StrLength(OutStr);
 					swprintf(OutStr+OutStrLen,ARRAYSIZE(OutStr)-OutStrLen,L"%02X%02X ", (unsigned int)HIBYTE(OutChar), (unsigned int)LOBYTE(OutChar));
@@ -2428,19 +2423,13 @@ void ViewerSearchMsg(const wchar_t *MsgStr,int Percent)
 
 		size_t PercentLength=Max(strPercent.strValue().GetLength(),(size_t)3);
 		size_t Length=Max(Min(static_cast<int>(MAX_WIDTH_MESSAGE-2),StrLength(MsgStr)),40)-PercentLength-2;
-		wchar_t *Progress=strProgress.GetBuffer(Length);
-
-		if (Progress)
-		{
-			size_t CurPos=Min(Percent,100)*Length/100;
-			wmemset(Progress,BoxSymbols[BS_X_DB],CurPos);
-			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
-			strProgress.ReleaseBuffer(Length);
-			FormatString strTmp;
-			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
-			strProgress+=strTmp;
-		}
-
+		size_t CurPos=Min(Percent,100)*Length/100;
+		strProgress.Reserve(Length);
+		strProgress.Append(BoxSymbols[BS_X_DB], CurPos);
+		strProgress.Append(BoxSymbols[BS_X_B0], Length - CurPos);
+		FormatString strTmp;
+		strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
+		strProgress+=strTmp;
 	}
 
 	Message(0,0,Msg::ViewSearchTitle,(SearchHex?Msg::ViewSearchingHex:Msg::ViewSearchingFor),MsgStr,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
@@ -2962,7 +2951,7 @@ int Viewer::vread(wchar_t *Buf,int Count, bool Raw)
 		}
 
 		if (VM.CodePage == CP_WIDE_BE && !Raw) {
-			WideReverse((wchar_t *)Buf, ResultedCount);
+			RevBytes(Buf, ResultedCount);
 		}
 
 		return ResultedCount;
@@ -3202,7 +3191,9 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 		}// ShowDlg
 		else
 		{
-			Relative=(Flags&VSP_RELATIVE)*(Offset<0?-1:1);
+			Relative = Flags & VSP_RELATIVE;
+			if (Offset < 0)
+				Relative = -Relative;
 
 			if (Flags&VSP_PERCENT)
 			{

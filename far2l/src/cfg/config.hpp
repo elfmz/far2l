@@ -133,7 +133,12 @@ struct Confirmation
 	int Drag;
 	int Delete;
 	int DeleteFolder;
-	int Exit;
+
+	int Exit;        // see ExitEffective()
+	int ExitOrBknd;  // see ExitEffective()
+	/// returns reference to Exit or ExitOrBknd - depending of background mode availability
+	int &ExitEffective();
+
 	int Esc;  // Для CheckForEsc
 	/* $ 12.03.2002 VVM
 	  + Opt.EscTwiceToInterrupt
@@ -291,7 +296,11 @@ struct NowellOptions
 
 struct ScreenSizes
 {
-	COORD DeltaXY;            // на сколько поз. изменить размеры для распахнутого экрана
+	union
+	{
+		COORD DeltaXY;            // на сколько поз. изменить размеры для распахнутого экрана
+		DWORD dwDeltaXY;
+	};
 	int WScreenSizeSet;
 	COORD WScreenSize[4];
 };
@@ -306,7 +315,6 @@ struct LoadPluginsOptions
 	FARString strCustomPluginsPath;  // путь для поиска плагинов, указанный в /p
 	FARString strPersonalPluginsPath;
 	int SilentLoadPlugin; // при загрузке плагина с кривым...
-	int OEMPluginsSupport;
 	int ScanSymlinks;
 };
 
@@ -469,6 +477,7 @@ struct Options
 	int NoGraphics;
 	int NoBoxes;
 	int ConsolePaintSharp, ExclusiveCtrlLeft, ExclusiveCtrlRight, ExclusiveAltLeft, ExclusiveAltRight, ExclusiveWinLeft, ExclusiveWinRight;
+	int OSC52ClipSet;
 
 	Confirmation Confirm;
 	PluginConfirmation PluginConfirm;
@@ -532,8 +541,6 @@ struct Options
 	int FullScreenHelp;
 	int HelpTabSize;
 
-	int HelpURLRules; // =0 отключить возможность запуска URL-приложений
-
 	// запоминать логические диски и не опрашивать каждый раз. Для предотвращения "просыпания" "зеленых" винтов.
 	int RememberLogicalDrives;
 	/*
@@ -565,7 +572,6 @@ struct Options
 	int ExecuteUseAppPath;
 	int ExecuteFullTitle;
 	int ExecuteSilentExternal;
-	FARString strExecuteBatchType;
 
 	DWORD PluginMaxReadData;
 	int UseNumPad;
@@ -574,7 +580,6 @@ struct Options
 
 	DWORD ShowTimeoutDelFiles; // таймаут в процессе удаления (в ms)
 	DWORD ShowTimeoutDACLFiles;
-	int DelThreadPriority; // приоритет процесса удаления, по умолчанию = THREAD_PRIORITY_NORMAL
 
 	//int CPAJHefuayor; // производное от "Close Plugin And Jump:
 	// Highly experimental feature, use at your own risk"
@@ -589,7 +594,7 @@ struct Options
 	ScreenSizes ScrSize;
 	MacroOptions Macro;
 
-	int FindCodePage;
+	DWORD FindCodePage;
 
 	TreeOptions Tree;
 	InfoPanelOptions InfoPanel;
@@ -617,10 +622,7 @@ void SetDizConfig();
 void ViewerConfig(ViewerOptions &ViOpt,bool Local=false);
 void EditorConfig(EditorOptions &EdOpt,bool Local=false);
 void NotificationsConfig(NotificationsOptions &NotifOpt);
-void ReadConfig();
 void ApplyConfig();
-void AssertConfigLoaded();
-void SaveConfig(int Ask);
 void SetFolderInfoFiles();
 void InfoPanelSettings();
 void AutoCompleteSettings();

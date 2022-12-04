@@ -2557,17 +2557,9 @@ int Editor::ProcessKey(int Key)
 
 				strTStr = Fmt;
 
-				wchar_t *Ptr=strTStr.GetBuffer();
+				// заменим L'\n' на L'\r' по правилам Paset ;-)
+				ReplaceChars(strTStr, L'\n', L'\r');
 
-				while (*Ptr) // заменим L'\n' на L'\r' по правилам Paset ;-)
-				{
-					if (*Ptr == L'\n')
-						*Ptr=L'\r';
-
-					++Ptr;
-				}
-
-				strTStr.ReleaseBuffer();
 				Pasting++;
 				//_SVS(SysLogDump(Fmt,0,TStr,strlen(TStr),nullptr));
 				TextChanged(1);
@@ -3230,7 +3222,7 @@ void Editor::InsertString()
 
 	int IndentPos=0;
 
-	if (EdOpt.AutoIndent && !Pasting)
+	if (EdOpt.AutoIndent && !Pasting && !BracketedPasteMode)
 	{
 		Edit *PrevLine=CurLine;
 
@@ -5813,7 +5805,7 @@ int Editor::EditorControl(int Command,void *Param)
 				col->StartPos=curcol.StartPos-X1;
 				col->EndPos=curcol.EndPos-X1;
 				col->Color=curcol.Color;
-				if (Command == ECTL_ADDTRUECOLOR)
+				if (Command == ECTL_GETTRUECOLOR)
 				{
 					EditorTrueColor *tcol = (EditorTrueColor *)Param;
 					tcol->TrueFore = curcol.TrueFore;
@@ -6698,19 +6690,14 @@ void Editor::EditorShowMsg(const wchar_t *Title,const wchar_t *Msg, const wchar_
 
 		size_t PercentLength=Max(strPercent.strValue().GetLength(),(size_t)3);
 		size_t Length=Max(Min(static_cast<int>(MAX_WIDTH_MESSAGE-2),StrLength(Name)),40)-PercentLength-2;
-		wchar_t *Progress=strProgress.GetBuffer(Length);
 
-		if (Progress)
-		{
-			size_t CurPos=Min(Percent,100)*Length/100;
-			wmemset(Progress,BoxSymbols[BS_X_DB],CurPos);
-			wmemset(Progress+(CurPos),BoxSymbols[BS_X_B0],Length-CurPos);
-			strProgress.ReleaseBuffer(Length);
-			FormatString strTmp;
-			strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
-			strProgress+=strTmp;
-		}
-
+		size_t CurPos = Min(Percent, 100) * Length / 100;
+		strProgress.Reserve(Length);
+		strProgress.Append(BoxSymbols[BS_X_DB], CurPos);
+		strProgress.Append(BoxSymbols[BS_X_B0], Length - CurPos);
+		FormatString strTmp;
+		strTmp<<L" "<<fmt::Expand(PercentLength)<<strPercent<<L"%";
+		strProgress+=strTmp;
 	}
 
 	Message(0,0,Title,Msg,Name,strProgress.IsEmpty()?nullptr:strProgress.CPtr());

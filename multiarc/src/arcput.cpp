@@ -536,7 +536,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
       pdd.NoChangeArcName=TRUE;
       pdd.OldExactState=TRUE;
       RestoreExactState=TRUE;
-      strcpy(DialogItems[PDI_ARCNAMEEDT].Data, ArcName);
+      ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, ArcName);
     }
     else
     {
@@ -559,7 +559,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
         {
           char CurDir[NM] = {0};
           if (sdc_getcwd(CurDir, sizeof(CurDir)))
-			strcpy(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
+			ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
         }
         else
         {
@@ -568,7 +568,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
 #else //_GROUP_NAME_
         if (ItemsNumber==1 && pi.SelectedItemsNumber==1 && !(pi.SelectedItems[0].Flags&PPIF_SELECTED))
         {
-          strcpy(DialogItems[PDI_ARCNAMEEDT].Data, PanelItem->FindData.cFileName);
+          ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, PanelItem->FindData.cFileName);
           char *Dot=strrchr(DialogItems[PDI_ARCNAMEEDT].Data,'.');
           if(Dot!=NULL)
             *Dot=0;
@@ -577,7 +577,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
         {
           char CurDir[NM];
           GetCurrentDirectory(sizeof(CurDir),CurDir);
-          strcpy(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
+          ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
         }
 #endif //else _GROUP_NAME_
         if(pdd.OldExactState && !*ArcName)

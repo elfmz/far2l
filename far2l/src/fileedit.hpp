@@ -87,7 +87,7 @@ class FileEditor : public Frame
 
 		private:
 			std::string _tmpstr;
-			std::wstring _tmpwstr;
+			std::vector<char> _tmpcvec;
 		};
 
 		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine=-1,int StartChar=-1,const wchar_t *PluginData=nullptr,int OpenModeExstFile=FEOPMODE_QUERY);

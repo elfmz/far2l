@@ -165,7 +165,6 @@ class PluginManager
 
 		Plugin **PluginsData;
 		int PluginsCount;
-		int OemPluginsCount;
 		struct BackgroundTasks : std::map<std::wstring, unsigned int>, std::mutex {} BgTasks;
 
 	public:
@@ -217,7 +216,6 @@ class PluginManager
 		Plugin *GetPlugin(int PluginNumber);
 
 		int GetPluginsCount() { return PluginsCount; }
-		int GetOemPluginsCount() { return OemPluginsCount; }
 
 		BOOL IsPluginsLoaded() { return Flags.Check(PSIF_PLUGINSLOADDED); }
 

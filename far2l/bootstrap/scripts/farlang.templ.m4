@@ -1967,6 +1967,16 @@ upd:"Disable antialiasing"
 upd:"Disable antialiasing"
 "Відключити згладжування"
 
+ConfigOSC52ClipSet
+"Исп. OSC&52 для записи в буфер обмена"
+"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+upd:"Use OSC&52 to set clipboard data"
+
 ConfigExclusiveKeys
 "&Экслюзивная обработка нажатий, включающих:"
 "&Exclusively handle hotkeys that include:"
@@ -4721,6 +4731,16 @@ DeleteRetry
 "&Reiterar"
 "&Повторити"
 
+DeleteRetryNotRecycleBin
+"&Без корзины"
+"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+upd:"&No Recycle Bin"
+
 DeleteSkip
 "П&ропустить"
 "&Skip"
@@ -5387,14 +5407,14 @@ upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
 
 VTStartTipPendCmdMouse
 l:
-" MouseScrollUp - автозавершающийся просмотр лога терминала.               "
-" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" MouseScrollUp - pause and open autoclosing viewer with console log.      "
-" MouseScrollUp - перегляд лога терміналу, що завершується автоматично.    "
+" Ctrl+Shift+MouseScrollUp - автозавершающийся просмотр лога терминала.               "
+" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
+" Ctrl+Shift+MouseScrollUp - перегляд лога терміналу, що завершується автоматично.    "
 
 BookmarkBottom
 "Редактирование: Del,Ins,F4,Shift+Вверх,Shift+Вниз"
@@ -15750,16 +15770,6 @@ upd:"Plugins manager settings"
 upd:"Plugins manager settings"
 "Параметри менеджера зовнішніх модулів"
 
-PluginsManagerOEMPluginsSupport
-"Поддержка OEM-плагинов"
-"OEM plugins support"
-upd:"OEM plugins support"
-upd:"OEM plugins support"
-upd:"OEM plugins support"
-upd:"OEM plugins support"
-upd:"OEM plugins support"
-"Підтримка OEM-плагінів"
-
 PluginsManagerScanSymlinks
 "Ск&анировать символические ссылки"
 "Scan s&ymbolic links"
@@ -22711,6 +22721,36 @@ upd:"Clipboard access"
 upd:"Clipboard access"
 upd:"Clipboard access"
 "Доступ до буфера обміну"
+
+TerminalClipboardSetText
+"Приложение хочет записать в буфер обмена."
+"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+upd:"Application wants to set clipboard data."
+
+TerminalClipboardSetAllowOnce
+"&Разрешить однократно"
+"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+upd:"&Allow once"
+
+TerminalClipboardSetAllowForCommand
+"Разрешить &этой команде"
+"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
+upd:"Allow for &this command"
 
 TerminalClipboardAccessText
 "Укажите как это приложение может пользоваться буфером обмена."

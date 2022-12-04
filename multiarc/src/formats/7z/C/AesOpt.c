@@ -507,7 +507,7 @@ VAES_COMPAT_STUB (AesCtr_Code_HW)
 
 
 #elif defined(MY_CPU_ARM_OR_ARM64) && defined(MY_CPU_LE)
-
+ #if defined(__ARM_NEON) || defined(__ARM_NEON__)
   #if defined(__clang__)
     #if (__clang_major__ >= 8) // fix that check
       #define USE_HW_AES
@@ -521,7 +521,7 @@ VAES_COMPAT_STUB (AesCtr_Code_HW)
       #define USE_HW_AES
     #endif
   #endif
-
+ #endif
 #ifdef USE_HW_AES
 
 // #pragma message("=== AES HW === ")

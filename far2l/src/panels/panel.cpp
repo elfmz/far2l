@@ -239,9 +239,6 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 				item->pPlugin = pPlugin;
 				item->nItem = PluginItem;
 
-				if (pPlugin->IsOemPlugin())
-					OneItem.Item.Flags=LIF_CHECKED|L'A';
-
 				OneItem.Item.strName = strMenuText;
 				OneItem.Item.UserDataSize=sizeof(PanelMenuItem);
 				OneItem.Item.UserData=(char*)item;
@@ -2029,7 +2026,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 			Update(Param1?UPDATE_KEEP_SELECTION:0);
 
 			if (GetType() == QVIEW_PANEL)
-				UpdateViewPanel();
+				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
 
 			Result=TRUE;
 			break;

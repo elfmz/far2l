@@ -6,8 +6,9 @@
 #include "fileedit.hpp"
 #include "fileview.hpp"
 #include "interf.hpp"
+#include "clipboard.hpp"
+#include "message.hpp"
 #include <signal.h>
-#include <pthread.h>
 #include <mutex>
 #include <list>
 #include <atomic>
@@ -21,18 +22,23 @@
 #include <condition_variable>
 #include <base64.h> 
 #include <StackSerializer.h>
-#include <os_call.hpp>
 #include <ScopeHelpers.h>
+#include "dirmix.hpp"
 #include "vtansi.h"
 #include "vtlog.h"
 #include "VTFar2lExtensios.h"
 #include "InterThreadCall.hpp"
 #include "vtshell_compose.h"
+#include "vtshell_ioreaders.h"
+#include "vtshell_mouse.h"
+#include "../WinPort/src/SavedScreen.h"
 #define __USE_BSD 
 #include <termios.h> 
 #include "palette.hpp"
 #include "AnsiEsc.hpp"
 
+#define BRACKETED_PASTE_SEQ_START "\x1b[200~"
+#define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
     WCHAR uc = 0);
@@ -59,294 +65,6 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 # define DbgPrintEscaped(i, s, l) 
 #endif
 
-template <class T> 
-class StopAndStart
-{
-	T &_t;
-public:
-	StopAndStart(T &t) : _t(t)
-	{
-		_t.Stop();
-	}
-	~StopAndStart()
-	{
-		_t.Start();
-	}	
-};
-
-class WithThread
-{
-public:
-	WithThread() : _started(false), _thread(0)
-	{
-	}
-	
-	virtual ~WithThread()
-	{
-		assert(!_started);
-	}
-
-protected:
-	volatile bool  _started;
-
-	bool Start()
-	{
-		assert(!_started);
-		_started = true;
-		if (pthread_create(&_thread, NULL, sThreadProc, this)) {
-			perror("VT: pthread_create");
-			_started = false;
-			return false;
-		}		
-		return true;
-	}
-
-	virtual void OnJoin() {}
-	void Join()
-	{
-		if (_started) {
-			_started = false;
-			OnJoin();
-			pthread_join(_thread, NULL);
-			_thread = 0;
-		}
-	}
-	
-	virtual void *ThreadProc() = 0;
-
-private:
-	pthread_t _thread;
-	
-	static void *sThreadProc(void *p)
-	{
-		return ((WithThread *)p)->ThreadProc();
-	}
-};
-
-class VTOutputReader : protected WithThread
-{
-public:
-	struct IProcessor
-	{
-		virtual bool OnProcessOutput(const char *buf, int len) = 0;
-	};
-	
-	VTOutputReader(IProcessor *processor) 
-		: _processor(processor), _fd_out(-1), _deactivated(false)
-	{
-		_pipe[0] = _pipe[1] = -1;
-	}
-	
-	virtual ~VTOutputReader()
-	{
-		Stop();
-		CheckedCloseFDPair(_pipe);
-	}
-	
-	void Start(int fd_out = -1)
-	{
-		if (fd_out != -1 ) {
-			_fd_out = fd_out;
-			InterThreadLock itl;
-			_deactivated = false;
-		}
-
-		if (_pipe[0] == -1) {
-			if (pipe_cloexec(_pipe)==-1) {
-				perror("VTOutputReader: pipe_cloexec 1");
-				_pipe[0] = _pipe[1] = -1;
-				return;
-			}
-		}
-
-		if (!WithThread::Start()) {
-			perror("VTOutputReader::Start");
-		}
-	}
-	
-	void Stop()
-	{
-		if (_started) {
-			Join();
-			CheckedCloseFDPair(_pipe);
-		}
-	}
-
-	void WaitDeactivation()
-	{
-		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(_deactivated);
-	}
-
-	void KickAss()
-	{
-		char c = 0;
-		if (os_call_ssize(write, _pipe[1], (const void *)&c, sizeof(c)) != sizeof(c))
-			perror("VTOutputReader::Stop - write");
-	}
-
-protected:
-	virtual void OnJoin()
-	{
-		KickAss();
-		WithThread::OnJoin();
-	}
-
-private:
-	IProcessor *_processor;
-	int _fd_out, _pipe[2];
-	std::mutex _mutex;
-	bool _deactivated;
-	
-	virtual void *ThreadProc()
-	{
-		char buf[0x1000];
-		fd_set rfds;
-		
-		for (;;) {
-			FD_ZERO(&rfds);
-			FD_SET(_fd_out, &rfds);
-			FD_SET(_pipe[0], &rfds);
-			
-			int r = os_call_int(select, std::max(_fd_out, _pipe[0]) + 1, &rfds, (fd_set *)nullptr, (fd_set *)nullptr, (timeval *)nullptr);
-			if (r <= 0) {
-				perror("VTOutputReader select");
-				break;
-			}
-			if (FD_ISSET(_fd_out, &rfds)) {
-				r = os_call_ssize(read, _fd_out, (void *)buf, sizeof(buf));
-				if (r <= 0) break;
-#if 1 //set to 0 to test extremely fragmented output processing 
-				if (!_processor->OnProcessOutput(buf, r)) break;
-#else 
-				for (int i = 0; r > 0;) {
-					int n = 1 + (rand()%7);
-					if (n > r) n = r;
-					if (!_processor->OnProcessOutput(&buf[i], n)) break;
-					i+= n;
-					r-= n;
-				}
-				if (r) break;
-#endif
-			}
-			if (FD_ISSET(_pipe[0], &rfds)) {
-				r = os_call_ssize(read, _pipe[0], (void *)buf, sizeof(buf));
-				if (r < 0) {
-					perror("VTOutputReader read pipe[0]");
-					break;
-				}
-			}
-			if (!_started)
-				return NULL; //stop thread requested
-		}
-
-		//thread stopped due to output deactivated
-		InterThreadLockAndWake itlw;
-		_deactivated = true;
-		return NULL;
-	}
-};
-
-class VTInputReader : protected WithThread
-{
-public:
-	struct IProcessor
-	{
-		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
-		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
-		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
-		virtual void OnInputInjected(const std::string &str) = 0;
-		virtual void OnRequestShutdown() = 0;
-	};
-
-	VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
-	{
-	}
-	
-	void Start()
-	{
-		if (!_started) {
-			_stop = false;
-			WithThread::Start();
-		}
-	}
-
-	void Stop()
-	{
-		if (_started) {
-			_stop = true;
-			Join();
-		}
-	}
-
-	void InjectInput(const char *str, size_t len)
-	{
-		{
-			std::unique_lock<std::mutex> locker(_pending_injected_inputs_mutex);
-			_pending_injected_inputs.emplace_back(str, len);
-		}
-		KickInputThread();
-	}
-
-protected:
-	virtual void OnJoin()
-	{
-		KickInputThread();
-		WithThread::OnJoin();
-	}
-
-private:
-	std::atomic<bool> _stop{false};
-	IProcessor *_processor;
-	std::list<std::string> _pending_injected_inputs;
-	std::mutex _pending_injected_inputs_mutex;
-
-	void KickInputThread()
-	{
-		// write some dummy console input to kick pending ReadConsoleInput
-		INPUT_RECORD ir = {};
-		ir.EventType = NOOP_EVENT;
-		DWORD dw = 0;
-		WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
-	}
-
-	virtual void *ThreadProc()
-	{
-		std::list<std::string> pending_injected_inputs;
-		while (!_stop) {
-			INPUT_RECORD ir = {0};
-			DWORD dw = 0;
-			if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
-				perror("VT: ReadConsoleInput");
-				usleep(100000);
-			} else if (ir.EventType == MOUSE_EVENT) {
-				_processor->OnInputMouse(ir.Event.MouseEvent);
-
-			} else if (ir.EventType == KEY_EVENT) {
-				_processor->OnInputKey(ir.Event.KeyEvent);
-
-			} else if (ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
-				_processor->OnInputResized(ir);
-			}
-			{
-				std::unique_lock<std::mutex> locker(_pending_injected_inputs_mutex);
-				pending_injected_inputs.swap(_pending_injected_inputs);
-			}
-			for(const auto &pri : pending_injected_inputs) {
-				_processor->OnInputInjected(pri);
-			}
-
-			pending_injected_inputs.clear();
-
-			if (CloseFAR) {
-				_processor->OnRequestShutdown();
-				break;
-			}
-		}
-
-		return nullptr;
-	}
-};
-
 int VTShell_Leader(const char *shell, const char *pty);
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
@@ -360,12 +78,15 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	pid_t _leader_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad{0};
+	std::atomic<bool> _bracketed_paste_expected{false};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
-	std::mutex _far2l_exts_mutex, _write_term_mutex;
+	std::unique_ptr<VTMouse> _mouse;
+	std::mutex _read_state_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
 	unsigned int _exit_code;
+	bool _allow_osc_clipset{false};
 
 	int ExecLeaderProcess()
 	{
@@ -410,6 +131,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
 
 		const auto color_bpp = WINPORT(GetConsoleColorPalette)();
+		std::string askpass_app;
+		if (Opt.SudoEnabled) {
+			askpass_app = GetHelperPathName("far2l_askpass");
+		}
 
 		int r = fork();
 		if (r != 0) {
@@ -430,6 +155,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			default:
 				setenv("TERM", "xterm", 1);
 				unsetenv("COLORTERM");
+		}
+
+		if (!askpass_app.empty()) {
+			setenv("SUDO_ASKPASS", askpass_app.c_str(), 1);
 		}
 
 		setenv("COLORFGBG", colorfgbg, 1);
@@ -598,8 +327,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
 		{
-			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			std::lock_guard<std::mutex> lock(_read_state_mutex);
 			if (_far2l_exts && _far2l_exts->OnInputMouse(MouseEvent))
+				return;
+
+			if (_mouse && _mouse->OnInputMouse(MouseEvent))
 				return;
 		}
 
@@ -628,6 +360,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return true;
 	}
 
+	virtual void OnBracketedPaste(bool start) //called from worker thread
+	{
+		if (_bracketed_paste_expected) {
+			const char *seq = start ? BRACKETED_PASTE_SEQ_START : BRACKETED_PASTE_SEQ_STOP;
+			if (!WriteTerm(seq, strlen(seq))) {
+				fprintf(stderr, "VT: OnBracketedPaste - write error %d\n", errno);
+			}
+		}
+	}
+
 	virtual void OnInputInjected(const std::string &str) //called from worker thread
 	{
 		if (!WriteTerm(str.c_str(), str.size())) {
@@ -638,7 +380,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) //called from worker thread
 	{
 		{
-			std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+			std::lock_guard<std::mutex> lock(_read_state_mutex);
 			if (_far2l_exts && _far2l_exts->OnInputKey(KeyEvent))
 				return;
 		}
@@ -730,13 +472,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_keypad = keypad;
 	}
 
+	virtual void OnMouseExpectation(MouseExpectation mex)
+	{
+		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
+
+		std::lock_guard<std::mutex> lock(_read_state_mutex);
+		_mouse.reset();
+		if (mex != MEX_NONE) {
+			_mouse.reset(new VTMouse(this, mex));
+		}
+	}
+
+	virtual void OnBracketedPasteExpectation(bool enabled)
+	{
+		_bracketed_paste_expected = enabled;
+	}
+
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
 	{
 		if (strncmp(str, "far2l", 5) == 0) {
 			std::string reply;
 			switch (str[5]) {
 				case '1': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					if (!_far2l_exts)
 						_far2l_exts.reset(new VTFar2lExtensios(this));
 
@@ -744,13 +502,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				} break;
 
 				case '0': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					_far2l_exts.reset();
 				} break;
 
 				case ':': {
-					std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					if (str[6] && _far2l_exts) {
+						VTAnsiSuspend vta_suspend(_vta);
 						StackSerializer stk_ser;
 						uint8_t id = 0;
 						try {
@@ -798,6 +557,57 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				_input_reader.InjectInput(reply.c_str(), reply.size());
 		}
 	}
+
+	virtual bool OnOSCommand(int id, std::string &str)
+	{
+		if (id == 52) try {
+			OnOSC_ClipboardSet(str);
+			return true;
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", "OnOSCommand", e.what());
+		}
+
+		return false;
+	}
+
+	void OnOSC_ClipboardSet(std::string &str)
+	{
+		StrTrim(str, "; \t");
+		if (!_allow_osc_clipset) {
+			{
+				VTAnsiSuspend vta_suspend(_vta); // preserve console state
+				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
+				SavedScreen saved_scr;
+				ScrBuf.FillBuf();
+				auto choice = Message(MSG_KEEPBACKGROUND, 3,
+					Msg::TerminalClipboardAccessTitle,
+					Msg::TerminalClipboardSetText,
+					Msg::TerminalClipboardAccessBlock,		// 0
+					Msg::TerminalClipboardSetAllowOnce,		// 1
+					Msg::TerminalClipboardSetAllowForCommand);	// 2
+				if (choice != 1 && choice != 2) {
+					return;
+				}
+				if (choice == 2) {
+					_allow_osc_clipset = true;
+				}
+			}
+			OnTerminalResized(); // window could resize during dialog box processing
+		}
+
+		std::vector<unsigned char> plain;
+		base64_decode(plain, str);
+		{ // release no more needed memory
+			std::string().swap(str);
+		}
+		std::wstring ws;
+		MB2Wide((char *)plain.data(), strnlen((char *)plain.data(), plain.size()), ws);
+		{// release no more needed memory
+			std::vector<unsigned char>().swap(plain);
+		}
+		CopyToClipboard(ws.c_str());
+	}
 	
 	virtual void InjectInput(const char *str)
 	{
@@ -811,6 +621,22 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (wz) {
 			out = Wide2MB(&wz[0]);
 			free(wz);
+			// #1424, convert: "\n" -> "\r",  "\r\n" -> "\r"
+			for (size_t i = out.size(); i > 0; ) {
+				--i;
+				if (out[i] == '\n') {
+					if (i == 0 || out[i - 1] != '\r') {
+						out[i] = '\r';
+					} else {
+						out.erase(i, 1);
+					}
+				}
+			}
+		}
+
+		if (_bracketed_paste_expected) {
+			out.insert(0, BRACKETED_PASTE_SEQ_START);
+			out.append(BRACKETED_PASTE_SEQ_STOP);
 		}
 
 		return out;
@@ -1045,10 +871,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		OnKeypadChange(0);
 		_vta.OnStop();
+		_allow_osc_clipset = false;
+		_bracketed_paste_expected = false;
 		DeliverPendingWindowInfo();
 
-		std::lock_guard<std::mutex> lock(_far2l_exts_mutex);
+		std::lock_guard<std::mutex> lock(_read_state_mutex);
 		_far2l_exts.reset();
+		_mouse.reset();
 		return _exit_code;
 	}	
 
@@ -1066,6 +895,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _leader_pid != -1;
 	}
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::unique_ptr<VTShell> g_vts;
 static std::mutex g_vts_mutex;

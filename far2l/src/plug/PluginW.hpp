@@ -117,7 +117,7 @@ class PluginW: public Plugin
 				const std::string &moduleID);
 		~PluginW();
 
-		bool IsOemPlugin() {return false;}
+		bool IsPluginMB() {return false;}
 
 		bool Load();
 		bool LoadFromCache();

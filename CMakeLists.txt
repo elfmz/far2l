@@ -124,6 +124,11 @@ if(NOT GAWK)
   message(FATAL_ERROR "${ColorRed}gawk not found - please install it${ColorNormal}")
 endif ()
 
+if(MUSL)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__MUSL__")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__MUSL__")
+endif()
+
 if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
     message("Please consider to switch to newer CMake")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")

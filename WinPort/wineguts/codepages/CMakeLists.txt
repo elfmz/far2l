@@ -1,5 +1,5 @@
 
 file(GLOB_RECURSE SOURCES "*.c")
 
-add_library (codepages ${SOURCES})
+add_library (codepages STATIC ${SOURCES})
 

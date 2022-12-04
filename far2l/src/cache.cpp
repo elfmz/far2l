@@ -257,14 +257,14 @@ LPBYTE BufferedFileView::AllocBuffer(size_t Size)
 
 void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter)
 {
-	bi.Ptr = AlignDown(Ptr);
+	bi.Ptr = AlignDown(Ptr, AlignSize);
 	if (bi.Ptr > AheadCount * AlignSize) {
 		bi.Ptr-= CountLefter * AlignSize;
 	} else {
 		bi.Ptr= 0;
 	}
 
-	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize);
+	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize, AlignSize);
 }
 
 

@@ -415,7 +415,8 @@ BoolInt CPU_IsSupported_AES (void) { return APPLE_CRYPTO_SUPPORT_VAL; }
 
 #else // __APPLE__
 
-#include <sys/auxv.h>
+#if !defined(__UCLIBC__)
+# include <sys/auxv.h>
 
 #define USE_HWCAP
 
@@ -444,6 +445,10 @@ BoolInt CPU_IsSupported_AES (void) { return APPLE_CRYPTO_SUPPORT_VAL; }
   MY_HWCAP_CHECK_FUNC(NEON)
 
 #endif // USE_HWCAP
+#else // !defined(__UCLIBC__)
+  #define MY_HWCAP_CHECK_FUNC(name) \
+  BoolInt CPU_IsSupported_ ## name() { return 0; }
+#endif // !defined(__UCLIBC__)
 
 MY_HWCAP_CHECK_FUNC (CRC32)
 MY_HWCAP_CHECK_FUNC (SHA1)

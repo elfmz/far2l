@@ -1567,7 +1567,7 @@ int TreeList::GetSelCount()
 
 int TreeList::GetSelName(FARString *strName,DWORD &FileAttr,DWORD &FileMode,FAR_FIND_DATA_EX *fd)
 {
-        FileMode = 0640;
+	FileMode = 0640;
 
 	if (!strName)
 	{
@@ -2134,16 +2134,15 @@ FARString &TreeList::CreateTreeFileName(const wchar_t *Path,FARString &strDest)
 		return strDest;
 }
 
-BOOL TreeList::GetItem(int Index,void *Dest)
+const void *TreeList::GetItem(int Index)
 {
 	if (Index == -1 || Index == -2)
 		Index=GetCurrentPos();
 
 	if (Index >= (int)TreeCount)
-		return FALSE;
+		return nullptr;
 
-	*((TreeItem *)Dest) = *ListData[Index];
-	return TRUE;
+	return ListData[Index];
 }
 
 int TreeList::GetCurrentPos()

@@ -33,9 +33,10 @@ set(SOURCES
   src/CharClasses.cpp
   src/POpen.cpp
   src/VT256ColorTable.cpp
+  src/ReadWholeFile.cpp
 )
 
-add_library (utils ${SOURCES})
+add_library (utils STATIC ${SOURCES})
 
 
 target_include_directories(utils PRIVATE include)

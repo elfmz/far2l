@@ -668,9 +668,23 @@ void InterpretEscSeq( void )
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 			for (i = 0; i < es_argc; ++i) {
 				switch (es_argv[i]) {
+				case MEX_X10_MOUSE:
+				case MEX_VT200_MOUSE:
+				case MEX_VT200_HIGHLIGHT_MOUSE:
+				case MEX_BTN_EVENT_MOUSE:
+				case MEX_ANY_EVENT_MOUSE:
+					if (g_vt_shell)
+						g_vt_shell->OnMouseExpectation( (suffix == 'h') ? (MouseExpectation)es_argv[i] : MEX_NONE );
+					break;
+
 //				case 47: case 1047:
 //					g_alternative_screen_buffer.Toggle(suffix == 'h');
 //					break;
+
+				case 2004:
+					if (g_vt_shell)
+						g_vt_shell->OnBracketedPasteExpectation(suffix == 'h');
+					break;
 
 				case 1049:
 					g_alternative_screen_buffer.Toggle(suffix == 'h');
@@ -1106,6 +1120,9 @@ void InterpretEscSeq( void )
 			g_title.swap(os_cmd_arg);
 			os_cmd_arg.clear();
 			ApplyConsoleTitle();
+
+		} else if (g_vt_shell) {
+			g_vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
 		}
 	}
 }

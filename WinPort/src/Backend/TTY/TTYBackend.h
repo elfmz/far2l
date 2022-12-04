@@ -12,14 +12,15 @@
 #include "TTYInput.h"
 #include "IFar2lInterractor.h"
 #include "TTYXGlue.h"
+#include "OSC52ClipboardBackend.h"
 
-class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor
+class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInterractor, IOSC52Interractor
 {
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
-
+	bool _osc52clip_set = false;
 
 	enum {
 		FKS_UNKNOWN,
@@ -36,7 +37,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	unsigned int _prev_width = 0, _prev_height = 0;
 	std::vector<CHAR_INFO> _cur_output, _prev_output;
 
-	long _terminal_size_change_id;
+	long _terminal_size_change_id = 0;
 
 	pthread_t _reader_trd = 0;
 	volatile bool _exiting = false;
@@ -54,7 +55,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _async_mutex;
 	ITTYXGluePtr _ttyx;
 
-	COORD _largest_window_size;
+	COORD _largest_window_size{};
 	std::atomic<bool> _largest_window_size_ready{false};
 	std::atomic<bool> _flush_input_queue{false};
 
@@ -80,21 +81,27 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 			bool title_changed : 1;
 			bool far2l_interract : 1;
 			bool go_background : 1;
+			bool osc52clip_set : 1;
 		} flags;
 		uint32_t all;
 	} _ae {};
 
+	std::string _osc52clip;
+
 	ClipboardBackendSetter _clipboard_backend_setter;
 
-	void WriteLineDebugColored(TTYOutput &tty_out, const CHAR_INFO *line, unsigned int cnt, WORD attrs);
-
+	void ChooseSimpleClipboardBackend();
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInterract(TTYOutput &tty_out);
+	void DispatchOSC52ClipSet(TTYOutput &tty_out);
 
 	void DetachNotifyPipe();
 
 protected:
+	// IOSC52Interractor
+	virtual void OSC52SetClipboard(const char *text);
+
 	// IFar2lInterractor
 	virtual bool Far2lInterract(StackSerializer &stk_ser, bool wait);
 
@@ -105,7 +112,7 @@ protected:
 	virtual void OnConsoleOutputWindowMoved(bool absolute, COORD pos);
 	virtual COORD OnConsoleGetLargestWindowSize();
 	virtual void OnConsoleAdhocQuickEdit();
-	virtual DWORD OnConsoleSetTweaks(DWORD tweaks);
+	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
 	virtual void OnConsoleChangeFont();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleExit();

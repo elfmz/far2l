@@ -213,7 +213,7 @@ void MY_FAST_CALL Sha1_UpdateBlocks_HW(UInt32 state[5], const Byte *data, size_t
 #endif // USE_HW_SHA
 
 #elif defined(MY_CPU_ARM_OR_ARM64)
-
+ #if defined(__ARM_NEON) || defined(__ARM_NEON__)
   #if defined(__clang__)
     #if (__clang_major__ >= 8) // fix that check
       #define USE_HW_SHA
@@ -227,7 +227,7 @@ void MY_FAST_CALL Sha1_UpdateBlocks_HW(UInt32 state[5], const Byte *data, size_t
       #define USE_HW_SHA
     #endif
   #endif
-
+ #endif
 #ifdef USE_HW_SHA
 
 // #pragma message("=== Sha1 HW === ")

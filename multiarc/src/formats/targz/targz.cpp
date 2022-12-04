@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <utils.h>
 #include <string.h>
+#include <stdlib.h>
 #include <farplug-mb.h>
 using namespace oldfar;
 #include "fmt.hpp"
@@ -39,10 +40,6 @@ using namespace oldfar;
 #endif
 #endif
 */
-
-uint64_t __cdecl _strtoui64 (const char *nptr,char **endptr,int ibase);
-static uint64_t __cdecl _strtoxq (const char *nptr,const char **endptr,int ibase,int flags);
-int64_t __cdecl _strtoi64(const char *nptr,char **endptr,int ibase);
 
 #if defined(USE_TAR_H)
 #include "tar.h"
@@ -133,16 +130,16 @@ typedef union {
 
 
 
-int IsTarHeader(const unsigned char *Data,int DataSize);
-int64_t GetOctal(const char *Str);
-int GetArcItemGZIP(struct ArcItemInfo *Info);
-int GetArcItemTAR(struct ArcItemInfo *Info);
+static int IsTarHeader(const unsigned char *Data,int DataSize);
+static int64_t GetOctal(const char *Str);
+static int GetArcItemGZIP(struct ArcItemInfo *Info);
+static int GetArcItemTAR(struct ArcItemInfo *Info);
 static int64_t Oct2Size (const char *where0, size_t digs0);
 
-HANDLE ArcHandle;
-FAR_INT64 NextPosition,FileSize;
-int ArcType;
-enum archive_format TarArchiveFormat;
+static HANDLE ArcHandle;
+static FAR_INT64 NextPosition,FileSize;
+static int ArcType;
+static enum archive_format TarArchiveFormat;
 static std::string ZipName;
 
 typedef int  (WINAPI *FARSTDMKLINK)(const char *Src,const char *Dest,DWORD Flags);
@@ -150,8 +147,8 @@ typedef int  (WINAPI *FARSTDMKLINK)(const char *Src,const char *Dest,DWORD Flags
 typedef void (__cdecl *MAFREE)(void *block);
 typedef void * (__cdecl *MAMALLOC)(size_t size);
 
-MAFREE MA_free;
-MAMALLOC MA_malloc;
+static MAFREE MA_free;
+static MAMALLOC MA_malloc;
 
 void  WINAPI _export TARGZ_SetFarInfo(const struct PluginStartupInfo *Info)
 {
@@ -243,7 +240,7 @@ int WINAPI _export TARGZ_GetArcItem(struct ArcItemInfo *Info)
   return GetArcItemTAR(Info);
 }
 
-int GetArcItemGZIP(struct ArcItemInfo *Info)
+static int GetArcItemGZIP(struct ArcItemInfo *Info)
 {
   DWORD ReadSize;
   struct GZHeader
@@ -319,7 +316,7 @@ int GetArcItemGZIP(struct ArcItemInfo *Info)
 }
 
 
-int GetArcItemTAR(struct ArcItemInfo *Info)
+static int GetArcItemTAR(struct ArcItemInfo *Info)
 {
   TARHeader TAR_hdr;
   DWORD ReadSize;
@@ -409,8 +406,9 @@ int GetArcItemTAR(struct ArcItemInfo *Info)
       UnixTimeToFileTime((DWORD)GetOctal(TAR_hdr.header.mtime),&Info->ftLastWriteTime);
     }
 
-    DWORD64 TarItemSize = (TAR_hdr.header.typeflag == DIRTYPE) ? 0 : // #348
-			Oct2Size(TAR_hdr.header.size,sizeof(TAR_hdr.header.size));
+    DWORD64 TarItemSize = (TAR_hdr.header.typeflag == DIRTYPE) // #348
+		? 0 : Oct2Size(TAR_hdr.header.size, sizeof(TAR_hdr.header.size));
+
     Info->nFileSize=TarItemSize;
     Info->nPhysicalSize=TarItemSize;
 
@@ -607,7 +605,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
    return(FALSE);
 }
 
-int IsTarHeader(const BYTE *Data,int DataSize)
+static int IsTarHeader(const BYTE *Data,int DataSize)
 {
   size_t I;
   struct posix_header *Header;
@@ -663,11 +661,9 @@ int IsTarHeader(const BYTE *Data,int DataSize)
 }
 
 
-int64_t GetOctal(const char *Str)
+static int64_t GetOctal(const char *Str)
 {
-  char *endptr;
-  return _strtoi64(Str,&endptr,8);
-//  return(strtoul(Str,&endptr,8));
+	return strtoll(Str, nullptr, 8);
 }
 
 static int64_t Oct2Size (const char *where0, size_t digs0)
@@ -693,7 +689,7 @@ static int64_t Oct2Size (const char *where0, size_t digs0)
   while (digs != 0 && *where >= '0' && *where <= '7')
   {
     if (((value << 3) >> 3) != value)
-      goto out_of_range;
+      return -1;// goto out_of_range;
     value = (value << 3) | (*where++ - '0');
     --digs;
   }
@@ -702,204 +698,4 @@ static int64_t Oct2Size (const char *where0, size_t digs0)
     return -1;
 
   return value;
-
-out_of_range:
-  return -1;
 }
-
-//#if _MSC_VER < 1310
-
-// strtoq.c
-
-/***
-*strtoi64, strtoui64(nptr,endptr,ibase) - Convert ascii string to int64_t un/signed
-*    int.
-*
-*Purpose:
-*    Convert an ascii string to a 64-bit int64_t value.  The base
-*    used for the caculations is supplied by the caller.  The base
-*    must be in the range 0, 2-36.  If a base of 0 is supplied, the
-*    ascii string must be examined to determine the base of the
-*    number:
-*        (a) First char = '0', second char = 'x' or 'X',
-*            use base 16.
-*        (b) First char = '0', use base 8
-*        (c) First char in range '1' - '9', use base 10.
-*
-*    If the 'endptr' value is non-NULL, then strtoq/strtouq places
-*    a pointer to the terminating character in this value.
-*    See ANSI standard for details
-*
-*Entry:
-*    nptr == NEAR/FAR pointer to the start of string.
-*    endptr == NEAR/FAR pointer to the end of the string.
-*    ibase == integer base to use for the calculations.
-*
-*    string format: [whitespace] [sign] [0] [x] [digits/letters]
-*
-*Exit:
-*    Good return:
-*        result
-*
-*    Overflow return:
-*        strtoi64 -- _I64_MAX or _I64_MIN
-*        strtoui64 -- _UI64_MAX
-*        strtoi64/strtoui64 -- errno == ERANGE
-*
-*    No digits or bad base return:
-*        0
-*        endptr = nptr*
-*
-*Exceptions:
-*    None.
-*******************************************************************************/
-
-static uint64_t __cdecl _strtoxq (const char *nptr,const char **endptr,int ibase,int flags)
-{
-/* flag values */
-#define FL_UNSIGNED   1       /* strtouq called */
-#define FL_NEG        2       /* negative sign found */
-#define FL_OVERFLOW   4       /* overflow occured */
-#define FL_READDIGIT  8       /* we've read at least one correct digit */
-#undef _UI64_MAX
-#define _UI64_MAX     uint64_t(0xFFFFFFFFFFFFFFFF)
-#define _UI64_MAXDIV8 uint64_t(0x1FFFFFFFFFFFFFFF)
-#undef _I64_MIN
-#define _I64_MIN    (int64_t(-9223372036854775807) )
-#undef _I64_MAX
-#define _I64_MAX      int64_t(9223372036854775807)
-
-    const char *p;
-    char c;
-    uint64_t number;
-    unsigned digval;
-    uint64_t maxval;
-
-    p = nptr;            /* p is our scanning pointer */
-    number = 0;            /* start with zero */
-
-    c = *p++;            /* read char */
-    while (c == 0x09 || c == 0x0D || c == 0x20)
-        c = *p++;        /* skip whitespace */
-
-    if (c == '-') {
-        flags |= FL_NEG;    /* remember minus sign */
-        c = *p++;
-    }
-    else if (c == '+')
-        c = *p++;        /* skip sign */
-
-    if (ibase < 0 || ibase == 1 || ibase > 36) {
-        /* bad base! */
-        if (endptr)
-            /* store beginning of string in endptr */
-            *endptr = nptr;
-        return 0L;        /* return 0 */
-    }
-    else if (ibase == 0) {
-        /* determine base free-lance, based on first two chars of
-           string */
-        if (c != '0')
-            ibase = 10;
-        else if (*p == 'x' || *p == 'X')
-            ibase = 16;
-        else
-            ibase = 8;
-    }
-
-    if (ibase == 16) {
-        /* we might have 0x in front of number; remove if there */
-        if (c == '0' && (*p == 'x' || *p == 'X')) {
-            ++p;
-            c = *p++;    /* advance past prefix */
-        }
-    }
-
-    /* if our number exceeds this, we will overflow on multiply */
-#ifdef _MSC_VER
-#if _MSC_VER >= 1310
-    maxval = (uint64_t)0x1FFFFFFFFFFFFFFFi64; // hack for VC.2003 = _UI64_MAX/8 :-)
-#else
-    maxval = _UI64_MAX / (uint64_t)ibase;
-#endif
-#else
-    maxval = _UI64_MAX / (uint64_t)ibase;
-#endif
-
-    for (;;) {    /* exit in middle of loop */
-        /* convert c to value */
-        if ( (BYTE)c >= '0' && (BYTE)c <= '9' )
-            digval = c - '0';
-        else if ( (BYTE)c >= 'A' && (BYTE)c <= 'Z')
-            digval = c - 'A' + 10;
-        else if ((BYTE)c >= 'a' && (BYTE)c <= 'z')
-            digval = c - 'a' + 10;
-        else
-            break;
-        if (digval >= (unsigned)ibase)
-            break;        /* exit loop if bad digit found */
-
-        /* record the fact we have read one digit */
-        flags |= FL_READDIGIT;
-
-        /* we now need to compute number = number * base + digval,
-           but we need to know if overflow occured.  This requires
-           a tricky pre-check. */
-
-        if (number < maxval || (number == maxval &&
-        (uint64_t)digval <= _UI64_MAX % (uint64_t)ibase)) {
-            /* we won't overflow, go ahead and multiply */
-            number = number * (uint64_t)ibase + (uint64_t)digval;
-        }
-        else {
-            /* we would have overflowed -- set the overflow flag */
-            flags |= FL_OVERFLOW;
-        }
-
-        c = *p++;        /* read next digit */
-    }
-
-    --p;                /* point to place that stopped scan */
-
-    if (!(flags & FL_READDIGIT)) {
-        /* no number there; return 0 and point to beginning of
-           string */
-        if (endptr)
-            /* store beginning of string in endptr later on */
-            p = nptr;
-        number = 0;        /* return 0 */
-    }
-    else if ( (flags & FL_OVERFLOW) ||
-              ( !(flags & FL_UNSIGNED) &&
-                ( ( (flags & FL_NEG) && (number > -_I64_MIN) ) ||
-                  ( !(flags & FL_NEG) && (number > _I64_MAX) ) ) ) )
-    {
-        /* overflow or signed overflow occurred */
-//        errno = ERANGE;
-        if ( flags & FL_UNSIGNED )
-            number = _UI64_MAX;
-        else if ( flags & FL_NEG )
-            number = _I64_MIN;
-        else
-            number = _I64_MAX;
-    }
-    if (endptr != NULL)
-        /* store pointer to char that stopped the scan */
-        *endptr = p;
-
-    if (flags & FL_NEG)
-        /* negate result if there was a neg sign */
-        number = (uint64_t)(-(int64_t)number);
-
-    return number;            /* done. */
-}
-
-int64_t __cdecl _strtoi64(const char *nptr,char **endptr,int ibase)
-{
-    return (int64_t) _strtoxq(nptr, (const char **)endptr, ibase, 0);
-}
-uint64_t __cdecl _strtoui64 (const char *nptr,char **endptr,int ibase)
-{
-    return _strtoxq(nptr, (const char **)endptr, ibase, FL_UNSIGNED);
-}
-//#endif

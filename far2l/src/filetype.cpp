@@ -272,14 +272,16 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 			{
 				strCommand.LShift(1);
 			}
+			else if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS)) //AN
+			{
+				CtrlObject->CmdHistory->AddToHistory(strCommand);
+			}
 
-			ProcessOSAliases(strCommand);
+			//ProcessOSAliases(strCommand);
 
 			if (!isSilent)
 			{
 				CtrlObject->CmdLine->ExecString(strCommand, false, false, ListFileUsed);
-				if (CanAddHistory && !(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTFARASS)) //AN
-					CtrlObject->CmdHistory->AddToHistory(strCommand);
 			}
 			else
 			{
@@ -287,14 +289,14 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 				SaveScreen SaveScr;
 				CtrlObject->Cp()->LeftPanel->CloseFile();
 				CtrlObject->Cp()->RightPanel->CloseFile();
-				Execute(strCommand, 0, 0, 0, ListFileUsed, true);
+				Execute(strCommand, 0, 0, ListFileUsed, true);
 #else
 				// здесь была бага с прорисовкой (и... вывод данных
 				// на команду "@type !@!" пропадал с экрана)
 				// сделаем по аналогии с CommandLine::CmdExecute()
 				{
 					RedrawDesktop RdrwDesktop(TRUE);
-					Execute(strCommand, 0, 0, 0, ListFileUsed);
+					Execute(strCommand, 0, 0, ListFileUsed);
 					ScrollScreen(1); // обязательно, иначе деструктор RedrawDesktop
 					// проредравив экран забьет последнюю строку вывода.
 				}
@@ -363,7 +365,7 @@ void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHis
 			SaveScreen SaveScr;
 			CtrlObject->Cp()->LeftPanel->CloseFile();
 			CtrlObject->Cp()->RightPanel->CloseFile();
-			Execute(strExecStr.CPtr()+1, 0, 0, 0, ListFileUsed);
+			Execute(strExecStr.CPtr()+1, 0, 0, ListFileUsed);
 		}
 	}
 

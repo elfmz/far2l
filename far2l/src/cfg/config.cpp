@@ -64,69 +64,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
+#include "AllXLats.hpp"
 
 Options Opt={0};
 
-// Стандартный набор разделителей
-static const wchar_t *WordDiv0 = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
-
-// Стандартный набор разделителей для функции Xlat
-static const wchar_t *WordDivForXlat0=L" \t!#$%^&*()+|=\\/@?";
-
-FARString strKeyNameConsoleDetachKey;
-static const wchar_t szCtrlDot[]=L"Ctrl.";
-static const wchar_t szCtrlShiftDot[]=L"CtrlShift.";
-
-// KeyName
-static const char NKeyColors[]="Colors";
-static const char NKeyScreen[]="Screen";
-static const char NKeyCmdline[]="Cmdline";
-static const char NKeyInterface[]="Interface";
-static const char NKeyInterfaceCompletion[]="Interface/Completion";
-static const char NKeyViewer[]="Viewer";
-static const char NKeyDialog[]="Dialog";
-static const char NKeyEditor[]="Editor";
-static const char NKeyNotifications[]="Notifications";
-static const char NKeyXLat[]="XLat";
-static const char NKeySystem[]="System";
-static const char NKeySystemExecutor[]="System/Executor";
-static const char NKeySystemNowell[]="System/Nowell";
-static const char NKeyHelp[]="Help";
-static const char NKeyLanguage[]="Language";
-static const char NKeyConfirmations[]="Confirmations";
-static const char NKeyPluginConfirmations[]="PluginConfirmations";
-static const char NKeyPanel[]="Panel";
-static const char NKeyPanelLeft[]="Panel/Left";
-static const char NKeyPanelRight[]="Panel/Right";
-static const char NKeyPanelLayout[]="Panel/Layout";
-static const char NKeyPanelTree[]="Panel/Tree";
-static const char NKeyLayout[]="Layout";
-static const char NKeyDescriptions[]="Descriptions";
-static const char NKeyKeyMacros[]="KeyMacros";
-static const char NKeyPolicies[]="Policies";
-static const char NKeySavedHistory[]="SavedHistory";
-static const char NKeySavedViewHistory[]="SavedViewHistory";
-static const char NKeySavedFolderHistory[]="SavedFolderHistory";
-static const char NKeySavedDialogHistory[]="SavedDialogHistory";
-static const char NKeyCodePages[]="CodePages";
-static const char NParamHistoryCount[]="HistoryCount";
-static const char NKeyVMenu[]="VMenu";
-
-static const wchar_t *constBatchExt=L".BAT;.CMD;";
-
-struct AllXlats : std::vector<std::string>
+int &Confirmation::ExitEffective()
 {
-	AllXlats()
-		: std::vector<std::string>(KeyFileReadHelper(InMyConfig("xlats.ini")).EnumSections())
-	{
-		const auto &xlats_global = KeyFileReadHelper(GetHelperPathName("xlats.ini")).EnumSections();
-		for (const auto &xlat : xlats_global) { // local overrides global
-			if (std::find(begin(), end(), xlat) == end()) {
-				emplace_back(xlat);
-			}
-		}
-	}
-};
+	return WINPORT(ConsoleBackgroundMode)(FALSE) ? ExitOrBknd : Exit;
+}
 
 static DWORD ApplyConsoleTweaks()
 {
@@ -138,6 +83,7 @@ static DWORD ApplyConsoleTweaks()
 	if (Opt.ExclusiveWinLeft) tweaks|= EXCLUSIVE_WIN_LEFT;
 	if (Opt.ExclusiveWinRight) tweaks|= EXCLUSIVE_WIN_RIGHT;
 	if (Opt.ConsolePaintSharp) tweaks|= CONSOLE_PAINT_SHARP;
+	if (Opt.OSC52ClipSet) tweaks|= CONSOLE_OSC52CLIP_SET;
 	return WINPORT(SetConsoleTweaks)(tweaks);
 }
 
@@ -166,7 +112,7 @@ static void AddHistorySettings(DialogBuilder &Builder, FarLangMsg MTitle, int *O
 	Builder.LinkFlags(EnabledCheckBox, CountText, DIF_DISABLE);
 }
 
-static void SanitizeHistoryCounts()
+void SanitizeHistoryCounts()
 {
 	Opt.HistoryCount = std::max(Opt.HistoryCount, 16);
 	Opt.FoldersHistoryCount = std::max(Opt.FoldersHistoryCount, 16);
@@ -345,12 +291,23 @@ void InterfaceSettings()
 		
 		const DWORD supported_tweaks = ApplyConsoleTweaks();
 		int ChangeFontID = -1;
-		DialogItemEx *Item = Builder.AddButton(Msg::ConfigConsoleChangeFont, ChangeFontID);
-		
+		DialogItemEx *ChangeFontItem = nullptr;
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {
-			Builder.AddCheckboxAfter(Item, Msg::ConfigConsolePaintSharp, &Opt.ConsolePaintSharp);
+			ChangeFontItem = Builder.AddButton(Msg::ConfigConsoleChangeFont, ChangeFontID);
 		}
-		
+
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {
+			if (ChangeFontItem)
+				Builder.AddCheckboxAfter(ChangeFontItem, Msg::ConfigConsolePaintSharp, &Opt.ConsolePaintSharp);
+			else
+				Builder.AddCheckbox(Msg::ConfigConsolePaintSharp, &Opt.ConsolePaintSharp);
+		}
+
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
+			Builder.AddCheckbox(Msg::ConfigOSC52ClipSet, &Opt.OSC52ClipSet);
+		}
+
+
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);
 		
@@ -377,7 +334,7 @@ void InterfaceSettings()
 			break;
 		}
 		
-		if (clicked_id != ChangeFontID)
+		if (ChangeFontID == -1 || clicked_id != ChangeFontID)
 			break;
 		
 		WINPORT(ConsoleChangeFont)();
@@ -511,7 +468,7 @@ void SetConfirmations()
 	Builder.AddCheckbox(Msg::SetConfirmRemoveHotPlug, &Opt.Confirm.RemoveHotPlug);
 	Builder.AddCheckbox(Msg::SetConfirmAllowReedit, &Opt.Confirm.AllowReedit);
 	Builder.AddCheckbox(Msg::SetConfirmHistoryClear, &Opt.Confirm.HistoryClear);
-	Builder.AddCheckbox(Msg::SetConfirmExit, &Opt.Confirm.Exit);
+	Builder.AddCheckbox(Msg::SetConfirmExit, &Opt.Confirm.ExitEffective());
 	Builder.AddOKCancel();
 
 	Builder.ShowDialog();
@@ -521,7 +478,6 @@ void PluginsManagerSettings()
 {
 	DialogBuilder Builder(Msg::PluginsManagerSettingsTitle, L"PluginsManagerSettings");
 
-	Builder.AddCheckbox(Msg::PluginsManagerOEMPluginsSupport, &Opt.LoadPlug.OEMPluginsSupport);
 	Builder.AddCheckbox(Msg::PluginsManagerScanSymlinks, &Opt.LoadPlug.ScanSymlinks);
 	Builder.AddText(Msg::PluginsManagerPersonalPath);
 	Builder.AddEditField(&Opt.LoadPlug.strPersonalPluginsPath, 45, L"PersPath", DIF_EDITPATH);
@@ -677,6 +633,7 @@ void NotificationsConfig(NotificationsOptions &NotifOpt)
 
 	if (Builder.ShowDialog())
 	{
+		// nothing to do/sanitize here
 	}
 }
 
@@ -698,592 +655,10 @@ void SetFolderInfoFiles()
 	}
 }
 
-
-// Структура, описывающая всю конфигурацию(!)
-static struct FARConfig
-{
-	int   IsSave;   // =1 - будет записываться в SaveConfig()
-	DWORD ValType;  // REG_DWORD, REG_SZ, REG_BINARY
-	const char *KeyName;
-	const char *ValName;
-	void *ValPtr;   // адрес переменной, куда помещаем данные
-	DWORD DefDWord; // он же размер данных для REG_SZ и REG_BINARY
-	const wchar_t *DefStr;   // строка/данные по умолчанию
-} CFG[]=
-{
-	{1, REG_BINARY, NKeyColors, "CurrentPalette",(char*)Palette,(DWORD)SizeArrayPalette,(wchar_t*)DefaultPalette},
-
-	{1, REG_DWORD,  NKeyScreen, "Clock", &Opt.Clock, 1, 0},
-	{1, REG_DWORD,  NKeyScreen, "ViewerEditorClock",&Opt.ViewerEditorClock,0, 0},
-	{1, REG_DWORD,  NKeyScreen, "KeyBar",&Opt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyScreen, "ScreenSaver",&Opt.ScreenSaver, 0, 0},
-	{1, REG_DWORD,  NKeyScreen, "ScreenSaverTime",&Opt.ScreenSaverTime,5, 0},
-	{0, REG_DWORD,  NKeyScreen, "DeltaXY", &Opt.ScrSize.DeltaXY, 0, 0},
-
-	{1, REG_DWORD,  NKeyCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat,0, 0},
-	{1, REG_SZ,     NKeyCmdline, "PromptFormat",&Opt.CmdLine.strPromptFormat, 0, L"$p$# "},
-	{1, REG_DWORD,  NKeyCmdline, "UseShell",&Opt.CmdLine.UseShell, 0, 0},
-	{1, REG_SZ,     NKeyCmdline, "Shell",&Opt.CmdLine.strShell, 0, L"/bin/bash"},
-	{1, REG_DWORD,  NKeyCmdline, "DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks,1, 0},
-	{1, REG_DWORD,  NKeyCmdline, "EditBlock", &Opt.CmdLine.EditBlock,0, 0},
-	{1, REG_DWORD,  NKeyCmdline, "AutoComplete",&Opt.CmdLine.AutoComplete,1, 0},
-	{1, REG_DWORD,  NKeyCmdline, "WaitKeypress",&Opt.CmdLine.WaitKeypress,1, 0},
-
-	{1, REG_DWORD,  NKeyInterface, "Mouse",&Opt.Mouse,1, 0},
-	{0, REG_DWORD,  NKeyInterface, "UseVk_oem_x",&Opt.UseVk_oem_x,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "ShowMenuBar",&Opt.ShowMenuBar,0, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize1",&Opt.CursorSize[0],15, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize2",&Opt.CursorSize[1],10, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize3",&Opt.CursorSize[2],99, 0},
-	{0, REG_DWORD,  NKeyInterface, "CursorSize4",&Opt.CursorSize[3],99, 0},
-	{0, REG_DWORD,  NKeyInterface, "ShiftsKeyRules",&Opt.ShiftsKeyRules,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "CtrlPgUp",&Opt.PgUpChangeDisk, 1, 0},
-
-	{1, REG_DWORD,  NKeyInterface, "ConsolePaintSharp",&Opt.ConsolePaintSharp, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveCtrlLeft",&Opt.ExclusiveCtrlLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveCtrlRight",&Opt.ExclusiveCtrlRight, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveAltLeft",&Opt.ExclusiveAltLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveAltRight",&Opt.ExclusiveAltRight, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveWinLeft",&Opt.ExclusiveWinLeft, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "ExclusiveWinRight",&Opt.ExclusiveWinRight, 0, 0},
-
-	{0, REG_DWORD,  NKeyInterface, "ShowTimeoutDelFiles",&Opt.ShowTimeoutDelFiles, 50, 0},
-	{0, REG_DWORD,  NKeyInterface, "ShowTimeoutDACLFiles",&Opt.ShowTimeoutDACLFiles, 50, 0},
-	{0, REG_DWORD,  NKeyInterface, "FormatNumberSeparators",&Opt.FormatNumberSeparators, 0, 0},
-	{1, REG_DWORD,  NKeyInterface, "CopyShowTotal",&Opt.CMOpt.CopyShowTotal,1, 0},
-	{1, REG_DWORD,  NKeyInterface, "DelShowTotal",&Opt.DelOpt.DelShowTotal,0, 0},
-	{1, REG_SZ,     NKeyInterface, "WindowTitle",&Opt.strWindowTitle, 0, L"%State - FAR2L %Ver %Backend %User@%Host"}, // %Platform 
-	{1, REG_SZ,     NKeyInterfaceCompletion, "Exceptions",&Opt.AutoComplete.Exceptions, 0, L"git*reset*--hard;*://*:*@*"},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "ShowList",&Opt.AutoComplete.ShowList, 1, 0},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "ModalList",&Opt.AutoComplete.ModalList, 0, 0},
-	{1, REG_DWORD,  NKeyInterfaceCompletion, "Append",&Opt.AutoComplete.AppendCompletion, 0, 0},
-
-	{1, REG_SZ,     NKeyViewer, "ExternalViewerName",&Opt.strExternalViewer, 0, L""},
-	{1, REG_DWORD,  NKeyViewer, "UseExternalViewer",&Opt.ViOpt.UseExternalViewer,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "SaveViewerPos",&Opt.ViOpt.SavePos,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "SaveViewerShortPos",&Opt.ViOpt.SaveShortPos,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "AutoDetectCodePage",&Opt.ViOpt.AutoDetectCodePage,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "SearchRegexp",&Opt.ViOpt.SearchRegexp,0, 0},
-
-	{1, REG_DWORD,  NKeyViewer, "TabSize",&Opt.ViOpt.TabSize,8, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowKeyBar",&Opt.ViOpt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowTitleBar",&Opt.ViOpt.ShowTitleBar,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowArrows",&Opt.ViOpt.ShowArrows,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "ShowScrollbar",&Opt.ViOpt.ShowScrollbar,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "IsWrap",&Opt.ViOpt.ViewerIsWrap,1, 0},
-	{1, REG_DWORD,  NKeyViewer, "Wrap",&Opt.ViOpt.ViewerWrap,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "PersistentBlocks",&Opt.ViOpt.PersistentBlocks,0, 0},
-	{1, REG_DWORD,  NKeyViewer, "DefaultCodePage",&Opt.ViOpt.DefaultCodePage,CP_UTF8, 0},
-
-	{1, REG_DWORD,  NKeyDialog, "EditHistory",&Opt.Dialogs.EditHistory,1, 0},
-	{1, REG_DWORD,  NKeyDialog, "EditBlock",&Opt.Dialogs.EditBlock,0, 0},
-	{1, REG_DWORD,  NKeyDialog, "AutoComplete",&Opt.Dialogs.AutoComplete,1, 0},
-	{1, REG_DWORD,  NKeyDialog, "EULBsClear",&Opt.Dialogs.EULBsClear,0, 0},
-	{0, REG_DWORD,  NKeyDialog, "SelectFromHistory",&Opt.Dialogs.SelectFromHistory,0, 0},
-	{0, REG_DWORD,  NKeyDialog, "EditLine",&Opt.Dialogs.EditLine,0, 0},
-	{1, REG_DWORD,  NKeyDialog, "MouseButton",&Opt.Dialogs.MouseButton,0xFFFF, 0},
-	{1, REG_DWORD,  NKeyDialog, "DelRemovesBlocks",&Opt.Dialogs.DelRemovesBlocks,1, 0},
-	{0, REG_DWORD,  NKeyDialog, "CBoxMaxHeight",&Opt.Dialogs.CBoxMaxHeight,24, 0},
-
-	{1, REG_SZ,     NKeyEditor, "ExternalEditorName",&Opt.strExternalEditor, 0, L""},
-	{1, REG_DWORD,  NKeyEditor, "UseExternalEditor",&Opt.EdOpt.UseExternalEditor,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "ExpandTabs",&Opt.EdOpt.ExpandTabs,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "TabSize",&Opt.EdOpt.TabSize,8, 0},
-	{1, REG_DWORD,  NKeyEditor, "PersistentBlocks",&Opt.EdOpt.PersistentBlocks,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "DelRemovesBlocks",&Opt.EdOpt.DelRemovesBlocks,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "AutoIndent",&Opt.EdOpt.AutoIndent,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SaveEditorPos",&Opt.EdOpt.SavePos,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "SaveEditorShortPos",&Opt.EdOpt.SaveShortPos,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "AutoDetectCodePage",&Opt.EdOpt.AutoDetectCodePage,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "EditorCursorBeyondEOL",&Opt.EdOpt.CursorBeyondEOL,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ReadOnlyLock",&Opt.EdOpt.ReadOnlyLock,0, 0}, // Вернём назад дефолт 1.65 - не предупреждать и не блокировать
-	{0, REG_DWORD,  NKeyEditor, "EditorUndoSize",&Opt.EdOpt.UndoSize,0, 0}, // $ 03.12.2001 IS размер буфера undo в редакторе
-	{0, REG_SZ,     NKeyEditor, "WordDiv",&Opt.strWordDiv, 0, WordDiv0},
-	{0, REG_DWORD,  NKeyEditor, "BSLikeDel",&Opt.EdOpt.BSLikeDel,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "EditorF7Rules",&Opt.EdOpt.F7Rules,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "FileSizeLimit",&Opt.EdOpt.FileSizeLimitLo,(DWORD)0, 0},
-	{0, REG_DWORD,  NKeyEditor, "FileSizeLimitHi",&Opt.EdOpt.FileSizeLimitHi,(DWORD)0, 0},
-	{0, REG_DWORD,  NKeyEditor, "CharCodeBase",&Opt.EdOpt.CharCodeBase,1, 0},
-	{0, REG_DWORD,  NKeyEditor, "AllowEmptySpaceAfterEof", &Opt.EdOpt.AllowEmptySpaceAfterEof,0,0},//skv
-	{1, REG_DWORD,  NKeyEditor, "DefaultCodePage",&Opt.EdOpt.DefaultCodePage,CP_UTF8, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowKeyBar",&Opt.EdOpt.ShowKeyBar,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowTitleBar",&Opt.EdOpt.ShowTitleBar,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowScrollBar",&Opt.EdOpt.ShowScrollBar,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "EditOpenedForWrite",&Opt.EdOpt.EditOpenedForWrite,1, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchSelFound",&Opt.EdOpt.SearchSelFound,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchRegexp",&Opt.EdOpt.SearchRegexp,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "SearchPickUpWord",&Opt.EdOpt.SearchPickUpWord,0, 0},
-	{1, REG_DWORD,  NKeyEditor, "ShowWhiteSpace",&Opt.EdOpt.ShowWhiteSpace,0, 0},
-
-	{1, REG_DWORD,  NKeyNotifications, "OnFileOperation",&Opt.NotifOpt.OnFileOperation,1, 0},
-	{1, REG_DWORD,  NKeyNotifications, "OnConsole",&Opt.NotifOpt.OnConsole,1, 0},
-	{1, REG_DWORD,  NKeyNotifications, "OnlyIfBackground",&Opt.NotifOpt.OnlyIfBackground,1, 0},
-
-	{0, REG_DWORD,  NKeyXLat, "Flags",&Opt.XLat.Flags,(DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE, 0},
-	{1, REG_DWORD,  NKeyXLat, "EnableForFastFileFind",&Opt.XLat.EnableForFastFileFind,1, 0},
-	{1, REG_DWORD,  NKeyXLat, "EnableForDialogs",&Opt.XLat.EnableForDialogs,1, 0},
-	{1, REG_SZ,     NKeyXLat, "WordDivForXlat",&Opt.XLat.strWordDivForXlat, 0,WordDivForXlat0},
-	{1, REG_SZ,     NKeyXLat, "XLat",&Opt.XLat.XLat,0,L"ru:qwerty-йцукен"},
-
-	{1, REG_DWORD,  NKeySavedHistory, NParamHistoryCount,&Opt.HistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedFolderHistory, NParamHistoryCount,&Opt.FoldersHistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedViewHistory, NParamHistoryCount,&Opt.ViewHistoryCount,512, 0},
-	{1, REG_DWORD,  NKeySavedDialogHistory, NParamHistoryCount,&Opt.DialogsHistoryCount,512, 0},
-
-	{1, REG_DWORD,  NKeySystem, "SaveHistory",&Opt.SaveHistory,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SaveFoldersHistory",&Opt.SaveFoldersHistory,1, 0},
-	{0, REG_DWORD,  NKeySystem, "SavePluginFoldersHistory",&Opt.SavePluginFoldersHistory,0, 0},
-	{1, REG_DWORD,  NKeySystem, "SaveViewHistory",&Opt.SaveViewHistory,1, 0},
-	{1, REG_DWORD,  NKeySystem, "AutoSaveSetup",&Opt.AutoSaveSetup,0, 0},
-	{1, REG_DWORD,  NKeySystem, "DeleteToRecycleBin",&Opt.DeleteToRecycleBin,0, 0},
-	{1, REG_DWORD,  NKeySystem, "DeleteToRecycleBinKillLink",&Opt.DeleteToRecycleBinKillLink,1, 0},
-	{0, REG_DWORD,  NKeySystem, "WipeSymbol",&Opt.WipeSymbol,0, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoEnabled",&Opt.SudoEnabled,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoConfirmModify",&Opt.SudoConfirmModify,1, 0},
-	{1, REG_DWORD,  NKeySystem, "SudoPasswordExpiration",&Opt.SudoPasswordExpiration,15*60, 0},
-
-	{1, REG_DWORD,  NKeySystem, "UseCOW",&Opt.CMOpt.SparseFiles, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "SparseFiles",&Opt.CMOpt.SparseFiles, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "HowCopySymlink",&Opt.CMOpt.HowCopySymlink, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "WriteThrough",&Opt.CMOpt.WriteThrough, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "CopyXAttr",&Opt.CMOpt.CopyXAttr, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "CopyAccessMode",&Opt.CMOpt.CopyAccessMode,1, 0},
-	{1, REG_DWORD,  NKeySystem, "MultiCopy",&Opt.CMOpt.MultiCopy,0, 0},
-	{1, REG_DWORD,  NKeySystem, "CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3, 0},
-
-	{1, REG_DWORD,  NKeySystem, "InactivityExit",&Opt.InactivityExit,0, 0},
-	{1, REG_DWORD,  NKeySystem, "InactivityExitTime",&Opt.InactivityExitTime,15, 0},
-	{1, REG_DWORD,  NKeySystem, "DriveMenuMode2",&Opt.ChangeDriveMode,(DWORD)-1, 0},
-	{1, REG_DWORD,  NKeySystem, "DriveDisconnetMode",&Opt.ChangeDriveDisconnetMode,1, 0},
-
-	{1, REG_SZ,     NKeySystem, "DriveExceptions",&Opt.ChangeDriveExceptions, 0,
-		L"/System/*;/proc;/proc/*;/sys;/sys/*;/dev;/dev/*;/run;/run/*;/tmp;/snap;/snap/*;/private;/private/*;/var/lib/lxcfs;/var/snap/*;/var/spool/cron"},
-	{1, REG_SZ,     NKeySystem, "DriveColumn2",&Opt.ChangeDriveColumn2, 0, L"$U/$T"},
-	{1, REG_SZ,     NKeySystem, "DriveColumn3",&Opt.ChangeDriveColumn3, 0, L"$S$D"},
-
-	{1, REG_DWORD,  NKeySystem, "AutoUpdateRemoteDrive",&Opt.AutoUpdateRemoteDrive,1, 0},
-	{1, REG_DWORD,  NKeySystem, "FileSearchMode",&Opt.FindOpt.FileSearchMode,FINDAREA_FROM_CURRENT, 0},
-	{0, REG_DWORD,  NKeySystem, "CollectFiles",&Opt.FindOpt.CollectFiles, 1, 0},
-	{1, REG_SZ,     NKeySystem, "SearchInFirstSize",&Opt.FindOpt.strSearchInFirstSize, 0, L""},
-	{1, REG_DWORD,  NKeySystem, "FindAlternateStreams",&Opt.FindOpt.FindAlternateStreams,0,0},
-	{1, REG_SZ,     NKeySystem, "SearchOutFormat",&Opt.FindOpt.strSearchOutFormat, 0, L"D,S,A"},
-	{1, REG_SZ,     NKeySystem, "SearchOutFormatWidth",&Opt.FindOpt.strSearchOutFormatWidth, 0, L"14,13,0"},
-	{1, REG_DWORD,  NKeySystem, "FindFolders",&Opt.FindOpt.FindFolders, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "FindSymLinks",&Opt.FindOpt.FindSymLinks, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "UseFilterInSearch",&Opt.FindOpt.UseFilter,0,0},
-	{1, REG_DWORD,  NKeySystem, "FindCodePage",&Opt.FindCodePage, CP_AUTODETECT, 0},
-	{0, REG_DWORD,  NKeySystem, "CmdHistoryRule",&Opt.CmdHistoryRule,0, 0},
-	{0, REG_DWORD,  NKeySystem, "SetAttrFolderRules",&Opt.SetAttrFolderRules,1, 0},
-	{0, REG_DWORD,  NKeySystem, "MaxPositionCache",&Opt.MaxPositionCache,POSCACHE_MAX_ELEMENTS, 0},
-	{0, REG_SZ,     NKeySystem, "ConsoleDetachKey", &strKeyNameConsoleDetachKey, 0, L"CtrlAltTab"},
-	{0, REG_DWORD,  NKeySystem, "SilentLoadPlugin",  &Opt.LoadPlug.SilentLoadPlugin, 0, 0},
-	{1, REG_DWORD,  NKeySystem, "OEMPluginsSupport",  &Opt.LoadPlug.OEMPluginsSupport, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1, 0},
-	{1, REG_DWORD,  NKeySystem, "MultiMakeDir",&Opt.MultiMakeDir,0, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDelta", &Opt.MsWheelDelta, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaView", &Opt.MsWheelDeltaView, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaEdit", &Opt.MsWheelDeltaEdit, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsWheelDeltaHelp", &Opt.MsWheelDeltaHelp, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDelta", &Opt.MsHWheelDelta, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDeltaView", &Opt.MsHWheelDeltaView, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "MsHWheelDeltaEdit", &Opt.MsHWheelDeltaEdit, 1, 0},
-	{0, REG_DWORD,  NKeySystem, "SubstNameRule", &Opt.SubstNameRule, 2, 0},
-	{0, REG_DWORD,  NKeySystem, "ShowCheckingFile", &Opt.ShowCheckingFile, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "DelThreadPriority", &Opt.DelThreadPriority, 0, 0},
-	{0, REG_SZ,     NKeySystem, "QuotedSymbols",&Opt.strQuotedSymbols, 0, L" $&()[]{};|*?!'`\"\\\xA0"}, //xA0 => 160 =>oem(0xFF)
-	{0, REG_DWORD,  NKeySystem, "QuotedName",&Opt.QuotedName,QUOTEDNAME_INSERT, 0},
-	//{0, REG_DWORD,  NKeySystem, "CPAJHefuayor",&Opt.strCPAJHefuayor,0, 0},
-	{0, REG_DWORD,  NKeySystem, "PluginMaxReadData",&Opt.PluginMaxReadData,0x40000, 0},
-	{0, REG_DWORD,  NKeySystem, "UseNumPad",&Opt.UseNumPad,1, 0},
-	{0, REG_DWORD,  NKeySystem, "CASRule",&Opt.CASRule,0xFFFFFFFFU, 0},
-	{0, REG_DWORD,  NKeySystem, "AllCtrlAltShiftRule",&Opt.AllCtrlAltShiftRule,0x0000FFFF, 0},
-	{1, REG_DWORD,  NKeySystem, "ScanJunction",&Opt.ScanJunction,1, 0},
-	{1, REG_DWORD,  NKeySystem, "OnlyFilesSize",&Opt.OnlyFilesSize, 0, 0},
-	{0, REG_DWORD,  NKeySystem, "UsePrintManager",&Opt.UsePrintManager,1, 0},
-	{0, REG_DWORD,  NKeySystem, "WindowMode",&Opt.WindowMode, 0, 0},
-
-	{0, REG_DWORD,  NKeySystemNowell, "MoveRO",&Opt.Nowell.MoveRO,1, 0},
-
-	{0, REG_DWORD,  NKeySystemExecutor, "RestoreCP",&Opt.RestoreCPAfterExecute,1, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "UseAppPath",&Opt.ExecuteUseAppPath,1, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "ShowErrorMessage",&Opt.ExecuteShowErrorMessage,1, 0},
-	{0, REG_SZ,     NKeySystemExecutor, "BatchType",&Opt.strExecuteBatchType,0,constBatchExt},
-	{0, REG_DWORD,  NKeySystemExecutor, "FullTitle",&Opt.ExecuteFullTitle,0, 0},
-	{0, REG_DWORD,  NKeySystemExecutor, "SilentExternal",&Opt.ExecuteSilentExternal,0, 0},
-
-	{0, REG_DWORD,  NKeyPanelTree, "MinTreeCount",&Opt.Tree.MinTreeCount, 4, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "TreeFileAttr",&Opt.Tree.TreeFileAttr, FILE_ATTRIBUTE_HIDDEN, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "LocalDisk",&Opt.Tree.LocalDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "NetDisk",&Opt.Tree.NetDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "RemovableDisk",&Opt.Tree.RemovableDisk, 2, 0},
-	{0, REG_DWORD,  NKeyPanelTree, "NetPath",&Opt.Tree.NetPath, 2, 0},
-	{1, REG_DWORD,  NKeyPanelTree, "AutoChangeFolder",&Opt.Tree.AutoChangeFolder,0, 0}, // ???
-
-	{0, REG_DWORD,  NKeyHelp, "ActivateURL",&Opt.HelpURLRules,1, 0},
-
-	{1, REG_SZ,     NKeyLanguage, "Help",&Opt.strHelpLanguage, 0, L"English"},
-	{1, REG_SZ,     NKeyLanguage, "Main",&Opt.strLanguage, 0, L"English"},
-
-	{1, REG_DWORD,  NKeyConfirmations, "Copy",&Opt.Confirm.Copy,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Move",&Opt.Confirm.Move,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RO",&Opt.Confirm.RO,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Drag",&Opt.Confirm.Drag,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Delete",&Opt.Confirm.Delete,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "DeleteFolder",&Opt.Confirm.DeleteFolder,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Esc",&Opt.Confirm.Esc,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveConnection",&Opt.Confirm.RemoveConnection,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveSUBST",&Opt.Confirm.RemoveSUBST,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "DetachVHD",&Opt.Confirm.DetachVHD,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "RemoveHotPlug",&Opt.Confirm.RemoveHotPlug,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "AllowReedit",&Opt.Confirm.AllowReedit,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "HistoryClear",&Opt.Confirm.HistoryClear,1, 0},
-	{1, REG_DWORD,  NKeyConfirmations, "Exit",&Opt.Confirm.Exit,1, 0},
-	{0, REG_DWORD,  NKeyConfirmations, "EscTwiceToInterrupt",&Opt.Confirm.EscTwiceToInterrupt,0, 0},
-
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "OpenFilePlugin", &Opt.PluginConfirm.OpenFilePlugin, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "StandardAssociation", &Opt.PluginConfirm.StandardAssociation, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "EvenIfOnlyOnePlugin", &Opt.PluginConfirm.EvenIfOnlyOnePlugin, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "SetFindList", &Opt.PluginConfirm.SetFindList, 0, 0},
-	{1, REG_DWORD,  NKeyPluginConfirmations,  "Prefix", &Opt.PluginConfirm.Prefix, 0, 0},
-
-	{0, REG_DWORD,  NKeyPanel, "ShellRightLeftArrowsRule",&Opt.ShellRightLeftArrowsRule,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "ShowHidden",&Opt.ShowHidden,1, 0},
-	{1, REG_DWORD,  NKeyPanel, "Highlight",&Opt.Highlight,1, 0},
-	{1, REG_DWORD,  NKeyPanel, "SortFolderExt",&Opt.SortFolderExt,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "SelectFolders",&Opt.SelectFolders,0, 0},
-	{1, REG_DWORD,  NKeyPanel, "ReverseSort",&Opt.ReverseSort,1, 0},
-	{0, REG_DWORD,  NKeyPanel, "RightClickRule",&Opt.PanelRightClickRule,2, 0},
-	{0, REG_DWORD,  NKeyPanel, "CtrlFRule",&Opt.PanelCtrlFRule,1, 0},
-	{0, REG_DWORD,  NKeyPanel, "CtrlAltShiftRule",&Opt.PanelCtrlAltShiftRule,0, 0},
-	{0, REG_DWORD,  NKeyPanel, "RememberLogicalDrives",&Opt.RememberLogicalDrives, 0, 0},
-	{1, REG_DWORD,  NKeyPanel, "AutoUpdateLimit",&Opt.AutoUpdateLimit, 0, 0},
-
-	{1, REG_DWORD,  NKeyPanelLeft, "Type",&Opt.LeftPanel.Type,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "Visible",&Opt.LeftPanel.Visible,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "Focus",&Opt.LeftPanel.Focus,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "ViewMode",&Opt.LeftPanel.ViewMode,2, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortMode",&Opt.LeftPanel.SortMode,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortOrder",&Opt.LeftPanel.SortOrder,1, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "SortGroups",&Opt.LeftPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "NumericSort",&Opt.LeftPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelLeft, "CaseSensitiveSortNix",&Opt.LeftPanel.CaseSensitiveSort,1, 0},
-	{1, REG_SZ,     NKeyPanelLeft, "Folder",&Opt.strLeftFolder, 0, L""},
-	{1, REG_SZ,     NKeyPanelLeft, "CurFile",&Opt.strLeftCurFile, 0, L""},
-	{1, REG_DWORD,  NKeyPanelLeft, "SelectedFirst",&Opt.LeftSelectedFirst,0,0},
-	{1, REG_DWORD,  NKeyPanelLeft, "DirectoriesFirst",&Opt.LeftPanel.DirectoriesFirst,1,0},
-
-	{1, REG_DWORD,  NKeyPanelRight, "Type",&Opt.RightPanel.Type,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "Visible",&Opt.RightPanel.Visible,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "Focus",&Opt.RightPanel.Focus,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "ViewMode",&Opt.RightPanel.ViewMode,2, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortMode",&Opt.RightPanel.SortMode,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortOrder",&Opt.RightPanel.SortOrder,1, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "SortGroups",&Opt.RightPanel.SortGroups,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "NumericSort",&Opt.RightPanel.NumericSort,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "CaseSensitiveSortNix",&Opt.RightPanel.CaseSensitiveSort,1, 0},
-	{1, REG_SZ,     NKeyPanelRight, "Folder",&Opt.strRightFolder, 0,L""},
-	{1, REG_SZ,     NKeyPanelRight, "CurFile",&Opt.strRightCurFile, 0,L""},
-	{1, REG_DWORD,  NKeyPanelRight, "SelectedFirst",&Opt.RightSelectedFirst,0, 0},
-	{1, REG_DWORD,  NKeyPanelRight, "DirectoriesFirst",&Opt.RightPanel.DirectoriesFirst,1,0},
-
-	{1, REG_DWORD,  NKeyPanelLayout, "ColumnTitles",&Opt.ShowColumnTitles,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "StatusLine",&Opt.ShowPanelStatus,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "TotalInfo",&Opt.ShowPanelTotals,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "FreeInfo",&Opt.ShowPanelFree,0, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "Scrollbar",&Opt.ShowPanelScrollbar,0, 0},
-	{0, REG_DWORD,  NKeyPanelLayout, "ScrollbarMenu",&Opt.ShowMenuScrollbar,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "ScreensNumber",&Opt.ShowScreensNumber,1, 0},
-	{1, REG_DWORD,  NKeyPanelLayout, "SortMode",&Opt.ShowSortMode,1, 0},
-
-	{1, REG_DWORD,  NKeyLayout, "LeftHeightDecrement",&Opt.LeftHeightDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "RightHeightDecrement",&Opt.RightHeightDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "WidthDecrement",&Opt.WidthDecrement,0, 0},
-	{1, REG_DWORD,  NKeyLayout, "FullscreenHelp",&Opt.FullScreenHelp,0, 0},
-
-	{1, REG_SZ,     NKeyDescriptions, "ListNames",&Opt.Diz.strListNames, 0, L"Descript.ion,Files.bbs"},
-	{1, REG_DWORD,  NKeyDescriptions, "UpdateMode",&Opt.Diz.UpdateMode,DIZ_UPDATE_IF_DISPLAYED, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "ROUpdate",&Opt.Diz.ROUpdate,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "SetHidden",&Opt.Diz.SetHidden,1, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "StartPos",&Opt.Diz.StartPos,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "AnsiByDefault",&Opt.Diz.AnsiByDefault,0, 0},
-	{1, REG_DWORD,  NKeyDescriptions, "SaveInUTF",&Opt.Diz.SaveInUTF,0, 0},
-
-	{0, REG_DWORD,  NKeyKeyMacros, "MacroReuseRules",&Opt.Macro.MacroReuseRules,0, 0},
-	{0, REG_SZ,     NKeyKeyMacros, "DateFormat",&Opt.Macro.strDateFormat, 0, L"%a %b %d %H:%M:%S %Z %Y"},
-	{0, REG_SZ,     NKeyKeyMacros, "CONVFMT",&Opt.Macro.strMacroCONVFMT, 0, L"%.6g"},
-	{0, REG_DWORD,  NKeyKeyMacros, "CallPluginRules",&Opt.Macro.CallPluginRules,0, 0},
-
-	{0, REG_DWORD,  NKeyPolicies, "ShowHiddenDrives",&Opt.Policies.ShowHiddenDrives,1, 0},
-	{0, REG_DWORD,  NKeyPolicies, "DisabledOptions",&Opt.Policies.DisabledOptions,0, 0},
-
-
-	{0, REG_DWORD,  NKeySystem, "ExcludeCmdHistory",&Opt.ExcludeCmdHistory,0, 0}, //AN
-
-	{1, REG_DWORD,  NKeyCodePages, "CPMenuMode2",&Opt.CPMenuMode,1,0},
-
-	{1, REG_SZ,     NKeySystem, "FolderInfo",&Opt.InfoPanel.strFolderInfoFiles, 0, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
-
-	{1, REG_DWORD,  NKeyVMenu, "LBtnClick",&Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL, 0},
-	{1, REG_DWORD,  NKeyVMenu, "RBtnClick",&Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL, 0},
-	{1, REG_DWORD,  NKeyVMenu, "MBtnClick",&Opt.VMenu.MBtnClick, VMENUCLICK_APPLY, 0},
-};
-
-static bool g_config_ready = false;
-
-void ReadConfig()
-{
-	FARString strKeyNameFromReg;
-	FARString strPersonalPluginsPath;
-	size_t I;
-
-	ConfigReader cfg_reader;
-
-	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	cfg_reader.SelectSection(NKeySystem);
-	Opt.LoadPlug.strPersonalPluginsPath = cfg_reader.GetString("PersonalPluginsPath", L"");
-	bool ExplicitWindowMode=Opt.WindowMode!=FALSE;
-	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
-	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-
-	for (I=0; I < ARRAYSIZE(CFG); ++I)
-	{
-		cfg_reader.SelectSection(CFG[I].KeyName);
-		switch (CFG[I].ValType)
-		{
-			case REG_DWORD:
-				if ((int *)CFG[I].ValPtr == &Opt.Confirm.Exit) {
-					// when background mode available then exit dialog allows also switch to background
-					// so saved settings must differ for that two modes
-					CFG[I].ValName = WINPORT(ConsoleBackgroundMode)(FALSE) ? "ExitOrBknd" : "Exit";
-				}
-				*(unsigned int *)CFG[I].ValPtr = cfg_reader.GetUInt(CFG[I].ValName, (unsigned int)CFG[I].DefDWord);
-				break;
-			case REG_SZ:
-				*(FARString *)CFG[I].ValPtr = cfg_reader.GetString(CFG[I].ValName, CFG[I].DefStr);
-				break;
-			case REG_BINARY:
-				int Size = cfg_reader.GetBytes((BYTE*)CFG[I].ValPtr, CFG[I].DefDWord, CFG[I].ValName, (BYTE*)CFG[I].DefStr);
-				if (Size > 0 && Size < (int)CFG[I].DefDWord)
-					memset(((BYTE*)CFG[I].ValPtr)+Size,0,CFG[I].DefDWord-Size);
-
-				break;
-		}
-	}
-
-	/* <ПОСТПРОЦЕССЫ> *************************************************** */
-
-	SanitizeHistoryCounts();
-
-	if (Opt.ShowMenuBar)
-		Opt.ShowMenuBar=1;
-
-	if (Opt.PluginMaxReadData < 0x1000) // || Opt.PluginMaxReadData > 0x80000)
-		Opt.PluginMaxReadData=0x20000;
-
-	if(ExplicitWindowMode)
-	{
-		Opt.WindowMode=TRUE;
-	}
-
-	Opt.HelpTabSize=8; // пока жестко пропишем...
-	//   Уточняем алгоритм "взятия" палитры.
-	for (I=COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR+1;
-	        I < (COL_LASTPALETTECOLOR-COL_FIRSTPALETTECOLOR);
-	        ++I)
-	{
-		if (!Palette[I])
-		{
-			if (!Palette[COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR])
-				Palette[I]=DefaultPalette[I];
-			else if (Palette[COL_PRIVATEPOSITION_FOR_DIF165ABOVE-COL_FIRSTPALETTECOLOR] == 1)
-				Palette[I]=BlackPalette[I];
-
-			/*
-			else
-			  в других случаях нифига ничего не делаем, т.к.
-			  есть другие палитры...
-			*/
-		}
-	}
-
-	Opt.ViOpt.ViewerIsWrap&=1;
-	Opt.ViOpt.ViewerWrap&=1;
-
-	// Исключаем случайное стирание разделителей ;-)
-	if (Opt.strWordDiv.IsEmpty())
-		Opt.strWordDiv = WordDiv0;
-
-	// Исключаем случайное стирание разделителей
-	if (Opt.XLat.strWordDivForXlat.IsEmpty())
-		Opt.XLat.strWordDivForXlat = WordDivForXlat0;
-
-	Opt.PanelRightClickRule%=3;
-	Opt.PanelCtrlAltShiftRule%=3;
-	Opt.ConsoleDetachKey=KeyNameToKey(strKeyNameConsoleDetachKey);
-
-	if (Opt.EdOpt.TabSize<1 || Opt.EdOpt.TabSize>512)
-		Opt.EdOpt.TabSize=8;
-
-	if (Opt.ViOpt.TabSize<1 || Opt.ViOpt.TabSize>512)
-		Opt.ViOpt.TabSize=8;
-
-	cfg_reader.SelectSection(NKeyKeyMacros);
-
-	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlDot", szCtrlDot);
-
-	if ((Opt.Macro.KeyMacroCtrlDot=KeyNameToKey(strKeyNameFromReg)) == KEY_INVALID)
-		Opt.Macro.KeyMacroCtrlDot=KEY_CTRLDOT;
-
-	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlShiftDot", szCtrlShiftDot);
-
-	if ((Opt.Macro.KeyMacroCtrlShiftDot=KeyNameToKey(strKeyNameFromReg)) == KEY_INVALID)
-		Opt.Macro.KeyMacroCtrlShiftDot=KEY_CTRLSHIFTDOT;
-
-	Opt.EdOpt.strWordDiv = Opt.strWordDiv;
-	FileList::ReadPanelModes(cfg_reader);
-
-	if (Opt.strExecuteBatchType.IsEmpty()) // предохраняемся
-		Opt.strExecuteBatchType=constBatchExt;
-
-	{
-		//cfg_reader.SelectSection(NKeyXLat);
-		AllXlats xlats;
-		std::string SetXLat;
-		for (const auto &xlat : xlats) {
-			if (Opt.XLat.XLat == xlat) {
-				SetXLat.clear();
-				break;
-			}
-			if (SetXLat.empty()) {
-				SetXLat = xlat;
-			}
-		}
-		if (!SetXLat.empty()) {
-			Opt.XLat.XLat = SetXLat;
-		}
-	}
-
-
-	memset(Opt.FindOpt.OutColumnTypes,0,sizeof(Opt.FindOpt.OutColumnTypes));
-	memset(Opt.FindOpt.OutColumnWidths,0,sizeof(Opt.FindOpt.OutColumnWidths));
-	memset(Opt.FindOpt.OutColumnWidthType,0,sizeof(Opt.FindOpt.OutColumnWidthType));
-	Opt.FindOpt.OutColumnCount=0;
-
-
-	if (!Opt.FindOpt.strSearchOutFormat.IsEmpty())
-	{
-		if (Opt.FindOpt.strSearchOutFormatWidth.IsEmpty())
-			Opt.FindOpt.strSearchOutFormatWidth=L"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
-		TextToViewSettings(Opt.FindOpt.strSearchOutFormat.CPtr(),Opt.FindOpt.strSearchOutFormatWidth.CPtr(),
-                                  Opt.FindOpt.OutColumnTypes,Opt.FindOpt.OutColumnWidths,Opt.FindOpt.OutColumnWidthType,
-                                  Opt.FindOpt.OutColumnCount);
-	}
-
-	FileFilter::InitFilter(cfg_reader);
-
-	g_config_ready = true;
-	/* *************************************************** </ПОСТПРОЦЕССЫ> */
-}
-
 void ApplyConfig()
 {
 	ApplySudoConfiguration();
 	ApplyConsoleTweaks();
-}
-
-void AssertConfigLoaded()
-{
-	if (!g_config_ready)
-	{
-		fprintf(stderr, "%s: oops\n", __FUNCTION__);
-		abort();
-	}
-}
-
-void SaveConfig(int Ask)
-{
-	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Сохранить параметры
-		return;
-
-	if (Ask && Message(0,2,Msg::SaveSetupTitle,Msg::SaveSetupAsk1,Msg::SaveSetupAsk2,Msg::SaveSetup,Msg::Cancel))
-		return;
-
-	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	Panel *LeftPanel=CtrlObject->Cp()->LeftPanel;
-	Panel *RightPanel=CtrlObject->Cp()->RightPanel;
-	Opt.LeftPanel.Focus=LeftPanel->GetFocus();
-	Opt.LeftPanel.Visible=LeftPanel->IsVisible();
-	Opt.RightPanel.Focus=RightPanel->GetFocus();
-	Opt.RightPanel.Visible=RightPanel->IsVisible();
-
-	if (LeftPanel->GetMode()==NORMAL_PANEL)
-	{
-		Opt.LeftPanel.Type=LeftPanel->GetType();
-		Opt.LeftPanel.ViewMode=LeftPanel->GetViewMode();
-		Opt.LeftPanel.SortMode=LeftPanel->GetSortMode();
-		Opt.LeftPanel.SortOrder=LeftPanel->GetSortOrder();
-		Opt.LeftPanel.SortGroups=LeftPanel->GetSortGroups();
-		Opt.LeftPanel.NumericSort=LeftPanel->GetNumericSort();
-		Opt.LeftPanel.CaseSensitiveSort=LeftPanel->GetCaseSensitiveSort();
-		Opt.LeftSelectedFirst=LeftPanel->GetSelectedFirstMode();
-		Opt.LeftPanel.DirectoriesFirst=LeftPanel->GetDirectoriesFirst();
-	}
-
-	LeftPanel->GetCurDir(Opt.strLeftFolder);
-	LeftPanel->GetCurBaseName(Opt.strLeftCurFile);
-
-	if (RightPanel->GetMode()==NORMAL_PANEL)
-	{
-		Opt.RightPanel.Type=RightPanel->GetType();
-		Opt.RightPanel.ViewMode=RightPanel->GetViewMode();
-		Opt.RightPanel.SortMode=RightPanel->GetSortMode();
-		Opt.RightPanel.SortOrder=RightPanel->GetSortOrder();
-		Opt.RightPanel.SortGroups=RightPanel->GetSortGroups();
-		Opt.RightPanel.NumericSort=RightPanel->GetNumericSort();
-		Opt.RightPanel.CaseSensitiveSort=RightPanel->GetCaseSensitiveSort();
-		Opt.RightSelectedFirst=RightPanel->GetSelectedFirstMode();
-		Opt.RightPanel.DirectoriesFirst=RightPanel->GetDirectoriesFirst();
-	}
-
-	RightPanel->GetCurDir(Opt.strRightFolder);
-	RightPanel->GetCurBaseName(Opt.strRightCurFile);
-	CtrlObject->HiFiles->SaveHiData();
-
-	ConfigWriter cfg_writer;
-
-	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-	cfg_writer.SelectSection(NKeySystem);
-	cfg_writer.SetString("PersonalPluginsPath", Opt.LoadPlug.strPersonalPluginsPath);
-//	cfg_writer.SetString(NKeyLanguage, "Main", Opt.strLanguage);
-
-	for (size_t I=0; I < ARRAYSIZE(CFG); ++I)
-	{
-		if (CFG[I].IsSave)
-		{
-			cfg_writer.SelectSection(CFG[I].KeyName);
-			switch (CFG[I].ValType)
-			{
-				case REG_DWORD:
-					cfg_writer.SetUInt(CFG[I].ValName, *(unsigned int *)CFG[I].ValPtr);
-					break;
-				case REG_SZ:
-					cfg_writer.SetString(CFG[I].ValName, ((const FARString *)CFG[I].ValPtr)->CPtr());
-					break;
-				case REG_BINARY:
-					cfg_writer.SetBytes(CFG[I].ValName, (const BYTE*)CFG[I].ValPtr, CFG[I].DefDWord);
-					break;
-			}
-		}
-	}
-
-	/* <ПОСТПРОЦЕССЫ> *************************************************** */
-	FileFilter::SaveFilters(cfg_writer);
-	FileList::SavePanelModes(cfg_writer);
-
-	if (Ask)
-		CtrlObject->Macro.SaveMacros();
-
-	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
 void LanguageSettings()

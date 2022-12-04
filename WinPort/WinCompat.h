@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <memory.h>
 #include <wctype.h>
+#include <limits.h>
 
 #ifdef __linux__
 // for PATH_MAX
@@ -365,11 +366,26 @@ typedef int HRESULT;
 #endif
 
 typedef struct _FILETIME {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    DWORD dwHighDateTime;
+    DWORD dwLowDateTime;
+#else
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
+#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 
 typedef union _LARGE_INTEGER {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    struct {
+        LONG HighPart;
+        DWORD LowPart;
+    } u;
+    struct {
+        LONG HighPart;
+        DWORD LowPart;
+    };
+#else
     struct {
         DWORD LowPart;
         LONG HighPart;
@@ -378,11 +394,22 @@ typedef union _LARGE_INTEGER {
         DWORD LowPart;
         LONG HighPart;
     };
+#endif
     LONGLONG QuadPart;
 } LARGE_INTEGER;
 typedef LARGE_INTEGER *PLARGE_INTEGER;
 
 typedef union _ULARGE_INTEGER {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    struct {
+        DWORD HighPart;
+        DWORD LowPart;
+    } u;
+    struct {
+        DWORD HighPart;
+        DWORD LowPart;
+    };
+#else
     struct {
         DWORD LowPart;
         DWORD HighPart;
@@ -391,6 +418,7 @@ typedef union _ULARGE_INTEGER {
         DWORD LowPart;
         DWORD HighPart;
     };
+#endif
     ULONGLONG QuadPart;
 } ULARGE_INTEGER;
 typedef ULARGE_INTEGER *PULARGE_INTEGER;
@@ -580,12 +608,16 @@ typedef struct _MOUSE_EVENT_RECORD {
 #define MOUSE_WHEELED 0x0004
 #define MOUSE_HWHEELED 0x0008
 
+typedef struct _BRACKETED_PASTE {
+    BOOL bStartPaste;
+} BRACKETED_PASTE, *PBRACKETED_PASTE;
 
 #define KEY_EVENT         0x0001 // Event contains key event record
 #define MOUSE_EVENT       0x0002 // Event contains mouse event record
 #define WINDOW_BUFFER_SIZE_EVENT 0x0004 // Event contains window change event record
 #define MENU_EVENT 0x0008 // Event contains menu event record
 #define FOCUS_EVENT 0x0010 // event contains focus change
+#define BRACKETED_PASTE_EVENT 0x0020 // event contains bracketed paste state change
 #define NOOP_EVENT 0x0080 // nothing interesting, typically injected to kick events dispatcher
 
 
@@ -597,6 +629,7 @@ typedef struct _INPUT_RECORD {
         WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
         MENU_EVENT_RECORD MenuEvent;
         FOCUS_EVENT_RECORD FocusEvent;
+        BRACKETED_PASTE BracketedPaste;
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
 
@@ -684,10 +717,10 @@ typedef struct _UNICODE_STRING {
 #define FALSE 0
 
 typedef struct _GUID {
-    unsigned long  Data1;
-    unsigned short Data2;
-    unsigned short Data3;
-    unsigned char  Data4[ 8 ];
+    uint32_t Data1;
+    uint16_t Data2;
+    uint16_t Data3;
+    uint8_t Data4[ 8 ];
 } GUID, IID;
 
 typedef struct tagRECT {

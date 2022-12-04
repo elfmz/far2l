@@ -4,7 +4,7 @@
 #include <StackSerializer.h>
 #include <string>
 #include <set>
-#include "vtansi.h"
+#include "IVTShell.h"
 
 class VTFar2lExtensios
 {

@@ -10,7 +10,7 @@ LocalFileXmlInputSource::LocalFileXmlInputSource(const XMLCh* path, const XMLCh*
   if (xercesc::XMLString::findAny(path, kPercent) != nullptr) {
     XMLCh* e_path = ExpandEnvironment(path);
     input_source->setSystemId(e_path);
-    delete e_path;
+    delete[] e_path;
   }
 }
 

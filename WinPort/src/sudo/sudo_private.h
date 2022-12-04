@@ -2,6 +2,7 @@
 #include <string>
 #include <mutex>
 #include <utils.h>
+#include <limits.h>
 #include <LocalSocket.h>
 
 namespace Sudo
@@ -28,7 +29,7 @@ namespace Sudo
 		SUDO_CMD_UNLINK,
 		SUDO_CMD_CHMOD,
 		SUDO_CMD_CHOWN,
-		SUDO_CMD_UTIMES,
+		SUDO_CMD_UTIMENS,
 		SUDO_CMD_RENAME,
 		SUDO_CMD_SYMLINK,
 		SUDO_CMD_LINK,

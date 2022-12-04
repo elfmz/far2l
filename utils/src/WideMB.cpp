@@ -122,7 +122,7 @@ void Wide2MB_UnescapedAppend(const wchar_t wc, std::string &dst)
 	UtfConvert(&wc, len, pb, false);
 }
 
-static void Wide2MB_UnescapedAppend(const wchar_t *src_begin, size_t src_len, std::string &dst)
+void Wide2MB_UnescapedAppend(const wchar_t *src_begin, size_t src_len, std::string &dst)
 {
 	StdPushBack<std::string> pb(dst);
 	UtfConvert(src_begin, src_len, pb, false);

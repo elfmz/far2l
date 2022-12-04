@@ -148,7 +148,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 	}
 #endif
 
-	Format(ESC "7" ESC "[?47h" ESC "[?1049h");
+	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -171,7 +171,7 @@ TTYOutput::~TTYOutput()
 		if (!_kernel_tty) {
 			Format(ESC "[0 q");
 		}
-		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" "\r\n");
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
 		Flush();
 
 	} catch (std::exception &) {
@@ -446,5 +446,13 @@ void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
 	request+= stk_ser.ToBase64();
 	request+= '\x07';
 
+	Write(request.c_str(), request.size());
+}
+
+void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
+{
+	std::string request = ESC "]52;;";
+	base64_encode(request, (const unsigned char *)clip_data.data(), clip_data.size());
+	request+= '\a';
 	Write(request.c_str(), request.size());
 }

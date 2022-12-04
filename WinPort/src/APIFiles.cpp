@@ -543,8 +543,8 @@ extern "C"
 		if (lpLastWriteTime) {
 			WINPORT(FileTime_Win32ToUnix)(lpLastWriteTime, &ts[1]);
 		}
-		const struct timeval tv[2] = { {ts[0].tv_sec, suseconds_t(ts[0].tv_nsec / 1000)}, {ts[1].tv_sec, suseconds_t(ts[1].tv_nsec / 1000)}};
-		if (os_call_int(sdc_futimes, wph->fd, tv) < 0)
+
+		if (os_call_int(sdc_futimens, wph->fd, (const struct timespec *)ts) < 0)
 			return FALSE;
 
 		return TRUE;

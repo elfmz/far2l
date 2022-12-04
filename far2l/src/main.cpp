@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "SafeMMap.hpp"
 #include "ConfigRW.hpp"
+#include "ConfigSaveLoad.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT=0;
@@ -408,7 +409,7 @@ int FarAppMain(int argc, char **argv)
 	//  иначе - смотря что указал юзвер.
 
 	Opt.strRegRoot = L"Software/Far2";
-	CheckForConfigUpgrade();
+	ConfigLegacyUpgrade();
 
 	// По умолчанию - брать плагины из основного каталога
 	Opt.LoadPlug.MainPluginDir=TRUE;
@@ -638,7 +639,7 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal=FALSE;
 	}
 
-	ReadConfig();
+	LoadConfig();
 	InitConsole();
 	static_assert(!IsPtr(Msg::NewFileName._id),
 		"Too many language messages. Need to refactor code to eliminate use of IsPtr.");

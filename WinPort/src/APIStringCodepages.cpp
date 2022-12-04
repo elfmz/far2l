@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <utils.h>
+#include <StackHeapArray.hpp>
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)
 # include <alloca.h>
@@ -21,27 +22,15 @@
 #include "UtfConvert.hpp"
 
 
-
-//			ConversionResult (* fnCalcSpace) (int *out, const SRC_T** src, const SRC_T* src_end, ConversionFlags flags),
-//			ConversionResult (* fnConvert) (const SRC_T** src, const SRC_T* src_end, DST_T** dst, DST_T* dst_end, ConversionFlags flag
 template <class SRC_T, class DST_T>
-	int utf_translation(int flags, const SRC_T *src, int srclen, DST_T *dst, int dstlen)
+	int TranscodeUTF(int flags, const SRC_T *src, size_t srclen, DST_T *dst, size_t dstlen)
 {
 	const bool fail_on_illformed = ((flags & MB_ERR_INVALID_CHARS) != 0);
-	size_t srclen_sz;
-	if (srclen < 0) {
-		for (srclen_sz = 0; src[srclen_sz]; ++srclen_sz) {}
-		// per MSDN - convertion should include terminating NUL char
-		++srclen_sz;
-
-	} else {
-		srclen_sz = (size_t)srclen;
-	}
 
 	if (dstlen == 0) {
 		DummyPushBack<DST_T> pb;
 		try {
-			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			const unsigned ucr = UtfConvert(src, srclen, pb, fail_on_illformed);
 			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 			}
@@ -55,7 +44,7 @@ template <class SRC_T, class DST_T>
 
 	ArrayPushBack<DST_T> pb(dst, dst + dstlen);
 	try {
-			const unsigned ucr = UtfConvert(src, srclen_sz, pb, fail_on_illformed);
+			const unsigned ucr = UtfConvert(src, srclen, pb, fail_on_illformed);
 			if (ucr & (CONV_ILLFORMED_CHARS | CONV_NEED_MORE_SRC)) {
 				WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION );
 
@@ -76,118 +65,77 @@ template <class SRC_T, class DST_T>
 	return (int)pb.size();
 }
 
-static int utf32_utf8_wcstombs( int flags, const WCHAR *src, int srclen, char *dst, int dstlen)
+template <class BYTES_TYPE, bool BYTEREV>
+	static int Wide2Bytes( int flags, const WCHAR *src, int srclen, void *dst, int dstlen)
 {
-	return utf_translation(flags, (const uint32_t *)src, srclen, (uint8_t *)dst, dstlen);
-}
-	
-static int utf32_utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen)
-{
-	return utf_translation(flags, (const uint8_t *)src, srclen, (uint32_t *)dst, dstlen);
-}
-	
-static int wide_cvtstub( int flags, const wchar_t *src, int srclen, wchar_t *dst, int dstlen)
-{
-	if (srclen==-1)
-		srclen = wcslen(src) + 1;
-		
-	if (dstlen != 0) {
-		if (dstlen < srclen)
-			return -1;
-			
-		memcpy(dst, src, srclen * sizeof(WCHAR));
+	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
+		srclen = tzlen(src) + 1;
 	}
-	return srclen;
-}
-	
-static int wide_utf16_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
-{
-	int ret;
-	
-	if (dstlen > 0) dstlen/= sizeof(uint16_t);
-	
-	if (sizeof(WCHAR) == 4) {
-		ret = utf_translation(flags, (const uint32_t *)src, srclen, (uint16_t *)dst, dstlen);
-	} else
-		ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
-	
-	if (ret > 0)  {
-		if (reverse && dstlen > 0) {
-			for (int i = 0; i < ret; ++i) {
-				std::swap(dst[i * 2], dst[i * 2 + 1]);
-			}
-		}		
-		ret*= sizeof(uint16_t);
-	}
-	
-	return ret;
-}
 
-static int wide_utf32_wcstombs( int flags, const wchar_t *src, int srclen, char *dst, int dstlen, bool reverse)
-{
-	dstlen/= sizeof(wchar_t);
-	int ret = wide_cvtstub( flags, src, srclen, (wchar_t *)dst, dstlen);
-	if (ret > 0)  {
-		if (reverse && dstlen > 0) {
-			for (int i = 0; i < ret; ++i) {
-				std::swap(dst[i * 4], dst[i * 4 + 3]);
-				std::swap(dst[i * 4 + 1], dst[i * 4 + 2]);
-			}
+	if (dstlen > 0) {
+		dstlen/= sizeof(BYTES_TYPE);
+		// if dstlen specified was nonzero but obviousy too small then fail fast
+		if (dstlen == 0 || (sizeof(BYTES_TYPE) == sizeof(WCHAR) && dstlen < srclen)) {
+			WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+			return 0;
 		}
-		ret*= sizeof(wchar_t);
+
+	} else {
+		dstlen = 0;
 	}
-	return ret;
+
+	int r;
+	if (sizeof(BYTES_TYPE) == sizeof(WCHAR)) { // noop shortcut
+		if (dstlen) {
+			memcpy(dst, src, srclen * sizeof(WCHAR));
+		}
+		r = srclen;
+
+	} else {
+		r = TranscodeUTF(flags, src, srclen, (BYTES_TYPE *)dst, dstlen);
+	}
+
+	if (r > 0) {
+		if (BYTEREV && dstlen) {
+			RevBytes((BYTES_TYPE *)dst, r);
+		}
+		r*= sizeof(BYTES_TYPE);
+	}
+	return r;
 }
 
-static int wide_utf32_mbstowcs( int flags, const char *src, int srclen, wchar_t *dst, int dstlen, bool reverse)
+template <class BYTES_TYPE, bool BYTEREV>
+	static int Bytes2Wide( int flags, const void *src, int srclen, WCHAR *dst, int dstlen)
 {
-	if (srclen > 0) srclen/= sizeof(wchar_t);
-	int ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
-	if (ret > 0)  {
-		if (reverse && dstlen > 0) {
-			char *dst_as_chars = (char *)dst;
-			for (int i = 0; i < ret; ++i) {				
-				std::swap(dst_as_chars[i * 4], dst_as_chars[i * 4 + 3]);
-				std::swap(dst_as_chars[i * 4 + 1], dst_as_chars[i * 4 + 2]);
+	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
+		srclen = tzlen((const BYTES_TYPE*)src) + 1;
+	} else {
+		srclen/= sizeof(BYTES_TYPE);
+	}
+	if (dstlen < 0) {
+		dstlen = 0;
+	}
+
+	if (sizeof(BYTES_TYPE) == sizeof(WCHAR)) { // noop shortcut
+		if (dstlen != 0) {
+			if (dstlen < srclen) {
+				WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
+				return 0;
 			}
+			memcpy(dst, src, srclen * sizeof(WCHAR));
 		}
+		return srclen;
 	}
-	return ret;
+
+	if (BYTEREV && srclen > 0) {
+		StackHeapArray<BYTES_TYPE> reversed_src(srclen);
+		RevBytes(reversed_src.Get(), (const BYTES_TYPE *)src, reversed_src.Count());
+		return TranscodeUTF(flags, reversed_src.Get(), reversed_src.Count(), dst, dstlen);
+	}
+
+	return TranscodeUTF(flags, (const BYTES_TYPE *)src, srclen, dst, dstlen);
 }
 
-
-static int wide_utf16_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen, bool reverse)
-{
-	int ret;
-	
-	if (srclen > 0) srclen/= sizeof(uint16_t);
-	
-	char *tmp = NULL;
-	if (reverse) {
-		if (srclen==-1) srclen = wcslen((const wchar_t *)src) + 1;
-		
-		const bool onstack = (srclen < 0x10000);
-		tmp = (char *) (onstack ? alloca(srclen * sizeof(uint16_t)) : malloc(srclen * sizeof(uint16_t)));
-			
-		if (!tmp) 
-			return -2;
-			
-		for (int i = 0; i < srclen; ++i) {
-			tmp[2 * i] = src[2 * i + 1];
-			tmp[2 * i + 1] = src[2 * i];
-		}
-		src = tmp;
-		if (onstack) tmp = NULL;
-	}
-	
-	if (sizeof(WCHAR)==4) {
-		ret = utf_translation(flags, (const uint16_t *)src, srclen, (uint32_t *)dst, dstlen);
-	} else
-		ret = wide_cvtstub( flags, (const wchar_t *)src, srclen, dst, dstlen);
-		
-	free(tmp);
-	return ret;
-}
 
 #define IsLocaleMatches(current, wanted_literal) \
 	( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
@@ -375,113 +323,7 @@ static UINT TranslateCodepage(UINT codepage)
 	}
 }
 
-
 extern "C" {
-	WINPORT_DECL(IsTextUnicode, BOOL, (CONST VOID* buf, int len, LPINT pf))
-	{//borrowed from wine
-		static const WCHAR std_control_chars[] = {'\r','\n','\t',' ',0x3000,0};
-		static const WCHAR byterev_control_chars[] = {0x0d00,0x0a00,0x0900,0x2000,0};
-		const WCHAR *s = (const WCHAR *)buf;
-		int i;
-		unsigned int flags = ~0U, out_flags = 0;
-
-		if (len < (int)sizeof(WCHAR))
-		{
-			/* FIXME: MSDN documents IS_TEXT_UNICODE_BUFFER_TOO_SMALL but there is no such thing... */
-			if (pf) *pf = 0;
-			return FALSE;
-		}
-		if (pf)
-			flags = *pf;
-		/*
-		* Apply various tests to the text string. According to the
-		* docs, each test "passed" sets the corresponding flag in
-		* the output flags. But some of the tests are mutually
-		* exclusive, so I don't see how you could pass all tests ...
-		*/
-
-		/* Check for an odd length ... pass if even. */
-		if (len & 1) out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
-
-		if (((const char *)buf)[len - 1] == 0)
-			len--;  /* Windows seems to do something like that to avoid e.g. false IS_TEXT_UNICODE_NULL_BYTES  */
-
-		len /= sizeof(WCHAR);
-		/* Windows only checks the first 256 characters */
-		if (len > 256) len = 256;
-
-		/* Check for the special byte order unicode marks. */
-		if (*s == 0xFEFF) out_flags |= IS_TEXT_UNICODE_SIGNATURE;
-		if (*s == 0xFFFE) out_flags |= IS_TEXT_UNICODE_REVERSE_SIGNATURE;
-
-		/* apply some statistical analysis */
-		if (flags & IS_TEXT_UNICODE_STATISTICS)
-		{
-			int stats = 0;
-			/* FIXME: checks only for ASCII characters in the unicode stream */
-			for (i = 0; i < len; i++)
-			{
-				if (s[i] <= 255) stats++;
-			}
-			if (stats > len / 2)
-				out_flags |= IS_TEXT_UNICODE_STATISTICS;
-		}
-
-		/* Check for unicode NULL chars */
-		if (flags & IS_TEXT_UNICODE_NULL_BYTES)
-		{
-			for (i = 0; i < len; i++)
-			{
-				if (!(s[i] & 0xff) || !(s[i] >> 8))
-				{
-					out_flags |= IS_TEXT_UNICODE_NULL_BYTES;
-					break;
-				}
-			}
-		}
-
-		if (flags & IS_TEXT_UNICODE_CONTROLS)
-		{
-			for (i = 0; i < len; i++)
-			{
-				if (wcschr(std_control_chars, s[i]))
-				{
-					out_flags |= IS_TEXT_UNICODE_CONTROLS;
-					break;
-				}
-			}
-		}
-
-		if (flags & IS_TEXT_UNICODE_REVERSE_CONTROLS)
-		{
-			for (i = 0; i < len; i++)
-			{
-				if (wcschr(byterev_control_chars, s[i]))
-				{
-					out_flags |= IS_TEXT_UNICODE_REVERSE_CONTROLS;
-					break;
-				}
-			}
-		}
-
-		if (pf)
-		{
-			out_flags &= *pf;
-			*pf = out_flags;
-		}
-		/* check for flags that indicate it's definitely not valid Unicode */
-		if (out_flags & (IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK)) return FALSE;
-		/* now check for invalid ASCII, and assume Unicode if so */
-		if (out_flags & IS_TEXT_UNICODE_NOT_ASCII_MASK) return TRUE;
-		/* now check for Unicode flags */
-		if (out_flags & IS_TEXT_UNICODE_UNICODE_MASK) return TRUE;
-		/* no flags set */
-		return FALSE;
-	}
-
-
-
-
 	/***********************************************************************
 	*              utf7_write_w
 	*
@@ -671,27 +513,23 @@ extern "C" {
 			break;
 
 		case CP_UTF16LE:
-			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			ret = Bytes2Wide<uint16_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF16BE:
-			ret = wide_utf16_mbstowcs( flags, src, srclen, dst, dstlen, true );
+			ret = Bytes2Wide<uint16_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32LE:
-			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, false );
+			ret = Bytes2Wide<uint32_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32BE:
-			ret = wide_utf32_mbstowcs( flags, src, srclen, dst, dstlen, true );
+			ret = Bytes2Wide<uint32_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF8:
-			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_mbstowcs( flags, src, srclen, dst, dstlen);
-			} else {
-				ret = wine_utf8_mbstowcs( flags, src, srclen, dst, dstlen );
-			}
+			ret = Bytes2Wide<uint8_t, false>( flags, src, srclen, dst, dstlen);
 			break;
 
 		default:
@@ -914,19 +752,19 @@ extern "C" {
 			break;
 		
 		case CP_UTF16LE:
-			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, false );
+			ret = Wide2Bytes<uint16_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF16BE:
-			ret = wide_utf16_wcstombs( flags, src, srclen, dst, dstlen, true );
+			ret = Wide2Bytes<uint16_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32LE:
-			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, false );
+			ret = Wide2Bytes<uint32_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF32BE:
-			ret = wide_utf32_wcstombs( flags, src, srclen, dst, dstlen, true );
+			ret = Wide2Bytes<uint32_t, true>( flags, src, srclen, dst, dstlen );
 			break;
 
 		case CP_UTF8:
@@ -937,12 +775,7 @@ extern "C" {
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;
 			}
-			
-			if (sizeof(wchar_t)==4) {
-				ret = utf32_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-			} else {
-				ret = wine_utf8_wcstombs( flags, src, srclen, dst, dstlen );
-			}
+			ret = Wide2Bytes<uint8_t, false>( flags, src, srclen, dst, dstlen );
 			break;
 
 		default:
@@ -958,12 +791,10 @@ extern "C" {
 			break;
 		}
 
-		if (ret <= 0)
-		{
-			switch(ret)
-			{
-			case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
-			case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
+		if (ret < 0) {
+			switch (ret) {
+				case -1: WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER ); break;
+				case -2: WINPORT(SetLastError)( ERROR_NO_UNICODE_TRANSLATION ); break;
 			}
 			ret = 0;
 		}

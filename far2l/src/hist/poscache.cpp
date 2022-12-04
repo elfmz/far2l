@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "udlist.hpp"
 #include "config.hpp"
+#include "ConfigSaveLoad.hpp"
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
 	: _kind(kind),

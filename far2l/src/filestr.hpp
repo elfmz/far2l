@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <vector>
+#include <memory>
 #include <WinCompat.h>
 #include "FARString.hpp"
 
@@ -110,6 +111,7 @@ class GetFileString
 public:
 		GetFileString(File& SrcFile);
 		~GetFileString();
+
 		int PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length);
 		int GetString(LPWSTR* DestStr, UINT nCodePage, int& Length);
 		bool IsConversionValid() { return !context.SomeDataLost; }
@@ -118,9 +120,10 @@ public:
 		GetFileString(const GetFileString&) = delete;
 
 		GetFileStringContext context;
-		UTF32_StringReader *UTF32Reader;
-		UTF16_StringReader *UTF16Reader;
-		Char_StringReader *CharReader;
+
+		std::unique_ptr<UTF32_StringReader> UTF32Reader;
+		std::unique_ptr<UTF16_StringReader> UTF16Reader;
+		std::unique_ptr<Char_StringReader> CharReader;
 
 		bool Peek;
 		int LastLength;

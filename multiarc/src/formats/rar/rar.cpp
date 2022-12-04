@@ -191,7 +191,7 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
       return GETARC_EOF;	  
   }
 
-  Wide2MB(HeaderData.FileNameW, Info->PathName);
+  Wide2MB(HeaderData.FileNameW, wcsnlen(HeaderData.FileNameW, ARRAYSIZE(HeaderData.FileNameW)), Info->PathName);
   Info->dwFileAttributes = WINPORT(EvaluateAttributes)(HeaderData.FileAttr, HeaderData.FileNameW);
   Info->dwUnixMode = HeaderData.FileAttr;
   

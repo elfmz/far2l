@@ -162,6 +162,15 @@ public:
 	bool IsExecutable() const {return _executable; }
 };
 
+static std::string GetOpenShVerb(const char *verb)
+{
+	std::string out = GetMyScriptQuoted("open.sh");
+	out+= ' ';
+	out+= verb;
+	out+= ' ';
+	return out;
+}
+
 
 bool IsDirectExecutableFilePath(const char *path)
 {
@@ -183,6 +192,7 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	if (NeedSudo) {
 		return sudo_client_execute(CmdStr, false, NoWait);
 	}
+
 // DEBUG
 //	fdr = open(DEVNULL, O_RDONLY);
 //	if (fdr==-1) perror("stdin error opening " DEVNULL);
@@ -229,6 +239,13 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 //	fprintf(stderr, "TODO: Execute('%ls')\n", CmdStr);
 	int r;
+	if (ExecFlags & EF_OPEN) {
+		std::string OpenCmd = GetOpenShVerb("other");
+		OpenCmd+= ' ';
+		OpenCmd+= CmdStr;
+		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
+	}
+
 	if (ExecFlags & EF_HIDEOUT) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 //		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
@@ -323,19 +340,10 @@ void QueueDeleteOnClose(const wchar_t *Name)
 	farExecuteA(cmd.c_str(), EF_NOWAIT | EF_HIDEOUT);
 }
 
-static std::string GetOpenShVerb(const char *verb)
+static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForIdle , bool Silent , bool RunAs)
 {
-	std::string out = GetMyScriptQuoted("open.sh");
-	out+= ' ';
-	out+= verb;
-	out+= ' ';
-	return out;
-}
-
-static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
-{
-	fprintf(stderr, "ExecuteA: SeparateWindow=%d DirectRun=%d FolderRun=%d WaitForIdle=%d Silent=%d RunAs=%d CmdStr='%s'\n",
-			SeparateWindow, DirectRun, FolderRun, WaitForIdle, Silent, RunAs, CmdStr);
+	fprintf(stderr, "ExecuteA: SeparateWindow=%d DirectRun=%d WaitForIdle=%d Silent=%d RunAs=%d CmdStr='%s'\n",
+			SeparateWindow, DirectRun, WaitForIdle, Silent, RunAs, CmdStr);
 
 	int r = -1;
 	ExecClassifier ec(CmdStr, DirectRun);
@@ -374,9 +382,9 @@ static int ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, boo
 }
 
 
-int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun, bool FolderRun , bool WaitForIdle , bool Silent , bool RunAs)
+int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun , bool WaitForIdle , bool Silent , bool RunAs)
 {
-	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, FolderRun , WaitForIdle , Silent , RunAs);
+	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, WaitForIdle , Silent , RunAs);
 }
 
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
@@ -425,7 +433,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 			cd_prev[0] = 0;
 		}
 
-		r = Execute(CmdLine, SeparateWindow, DirectRun, false , WaitForIdle , Silent , RunAs);
+		r = Execute(CmdLine, SeparateWindow, DirectRun, WaitForIdle , Silent , RunAs);
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (sdc_getcwd(cd, MAX_PATH)) {
@@ -475,10 +483,5 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 {
 	return L"";
-}
-
-bool ProcessOSAliases(FARString &strStr)
-{
-	return false;
 }
 

@@ -66,6 +66,7 @@ namespace VTLog
 				const bool tc_fore_now = (attr_now & FOREGROUND_TRUECOLOR) != 0;
 				const bool tc_fore_prev = (attr_prev & FOREGROUND_TRUECOLOR) != 0;
 
+				const size_t out_len_before_attr = out.size();
 				out+= "\033[";
 				if ( attr_prev == (DWORD64)-1
 				|| (attr_prev&FOREGROUND_INTENSITY) != (attr_now&FOREGROUND_INTENSITY)) {
@@ -94,16 +95,18 @@ namespace VTLog
 					out+= StrPrintf("48;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 				}
 
-				assert(out.back() == ';');
-				out.back() = 'm';
-				attr_prev = attr_now;
+				if (out.back() == ';') {
+					out.back() = 'm';
+					attr_prev = attr_now;
+
+				} else { // no visible attributes changed --> dismiss sequence start
+					out.resize(out_len_before_attr);
+				}
 			}
 
 			if (CI_USING_COMPOSITE_CHAR(Chars[i])) {
 				const wchar_t *pwc = WINPORT(CompositeCharLookup)(Chars[i].Char.UnicodeChar);
-				for (; pwc && *pwc; ++pwc) {
-					Wide2MB_UnescapedAppend(*pwc, out);
-				}
+				Wide2MB_UnescapedAppend(pwc, wcslen(pwc), out);
 
 			} else if (Chars[i].Char.UnicodeChar > 0x80) {
 				Wide2MB_UnescapedAppend(Chars[i].Char.UnicodeChar, out);

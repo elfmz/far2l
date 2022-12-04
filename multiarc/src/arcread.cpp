@@ -219,14 +219,14 @@ bool PluginClass::EnsureFindDataUpToDate(int OpMode)
   ssize_t read_size = Data ? sdc_read(fd, Data, size) : -1;
   sdc_close(fd);
 
-  if (read_size <= 0)
-      return false;
+  bool ReadArcOK = false;
+  if (read_size > 0)
+  {
+    DWORD SFXSize = 0;
 
-  DWORD SFXSize = 0;
-
-  bool ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read_size, &SFXSize)
-              && ReadArchive(ArcName, OpMode));
-
+    ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read_size, &SFXSize)
+                && ReadArchive(ArcName, OpMode));
+  }
   free(Data);
 
   return ReadArcOK;
@@ -451,7 +451,7 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
   Info->InfoLines = InfoLines;
   Info->InfoLinesNumber = ARRAYSIZE(InfoLines);
 
-  ArrayCpyZ(DescrFilesString, Opt.DescriptionNames);
+  ArrayCpyZ(DescrFilesString, Opt.DescriptionNames.c_str());
 
   size_t DescrFilesNumber = 0;
   char *NamePtr=DescrFilesString;

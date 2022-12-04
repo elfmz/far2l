@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 
-#if !defined(__FreeBSD__) && !defined(__MUSL__) && !defined(__HAIKU__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+#if !defined(__FreeBSD__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
 # include <execinfo.h>
 # define HAS_BACKTRACE
 #endif
@@ -99,10 +99,7 @@ static void FDWriteSignalInfo(int fd, int num, siginfo_t *info, void *ctx)
 
 	const ucontext_t *uctx = (const ucontext_t *)ctx;
 	const long *mctx = (const long *)&uctx->uc_mcontext;
-	size_t mctx_count = sizeof(uctx->uc_mcontext) / sizeof(*mctx);
-	if (mctx_count * sizeof(*mctx) > sizeof(uctx->uc_mcontext)) {
-		--mctx_count;
-	}
+	const size_t mctx_count = sizeof(uctx->uc_mcontext) / sizeof(*mctx);
 
 	for (size_t i = 0; i < mctx_count; ++i) {
 		if (i == 0) {

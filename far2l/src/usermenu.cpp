@@ -254,7 +254,7 @@ void UserMenu::ProcessUserMenu(bool ChoiceMenuType)
 	// по умолчанию меню - это FarMenu.ini
 	MenuMode=MM_LOCAL;
 	FARString strLocalMenuKey;
-	strLocalMenuKey.Format(L"UserMenu/LocalMenu%u",GetProcessUptimeMSec());
+	strLocalMenuKey.Format(L"UserMenu/LocalMenu%lu",(unsigned long)GetProcessUptimeMSec());
 	{ ConfigWriter(strLocalMenuKey.GetMB()).RemoveSection(); }
 	ConfigReaderScope::Update(s_cfg_reader);
 	MenuModified=MenuNeedRefresh=false;
@@ -858,10 +858,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								isSilent=true;
 							}
 
-							ProcessOSAliases(strCommand);
-							// TODO: Ахтунг. В режиме isSilent имеем проблемы с командами, которые выводят что-то на экран
-							//       Здесь необходимо переделка, например, перед исполнением подсунуть временный экранный буфер, а потом его содержимое подсунуть в ScreenBuf...
-
+							// ProcessOSAliases(strCommand);
 							if (!isSilent)
 							{
 								CtrlObject->CmdLine->ExecString(strCommand,FALSE, 0, 0, ListFileUsed);
@@ -871,7 +868,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 								SaveScreen SaveScr;
 								CtrlObject->Cp()->LeftPanel->CloseFile();
 								CtrlObject->Cp()->RightPanel->CloseFile();
-								Execute(strCommand, 0, 0, 0, ListFileUsed, true);
+								Execute(strCommand, 0, 0, ListFileUsed, true);
 							}
 //							WaitForClose(strName);
 						}

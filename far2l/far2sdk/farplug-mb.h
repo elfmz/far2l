@@ -1562,12 +1562,12 @@ namespace oldfar
 
 	enum EXECUTEFLAGS
 	{
-		EF_HIDEOUT = 0x01,
-		EF_NOWAIT = 0x02,
-		EF_SUDO = 0x04,
-		EF_NOTIFY = 0x08,
-		EF_NOCMDPRINT = 0x10
-
+		EF_HIDEOUT = 0x01,    // dont display output of the command
+		EF_NOWAIT = 0x02,     // dont wait for command completion
+		EF_SUDO = 0x04,       // command must be run with root priviledges
+		EF_NOTIFY = 0x08,     // notify when command completed (if such notifications enabled in settings)
+		EF_NOCMDPRINT = 0x10, // dont print command in command line nor include it to history
+		EF_OPEN = 0x20        // use desktop shell (if present) to open command (e.g. URLs, documents..)
 	};
 
 	typedef int (WINAPI *FAREXECUTE)(const char *CmdStr, unsigned int ExecFlags);

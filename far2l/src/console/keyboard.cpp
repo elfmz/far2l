@@ -73,6 +73,7 @@ SHORT PrevMouseX=0,PrevMouseY=0,MouseX=0,MouseY=0;
 int PreMouseEventFlags=0,MouseEventFlags=0;
 // только что был ввод Alt-Цифира?
 int ReturnAltValue=0;
+bool BracketedPasteMode = false;
 
 /* end Глобальные переменные */
 
@@ -815,6 +816,13 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		LoopCount++;
 	} // while (1)
 
+	if (rec->EventType==BRACKETED_PASTE_EVENT)
+	{
+		Console.ReadInput(*rec);
+		BracketedPasteMode = (rec->Event.BracketedPaste.bStartPaste != FALSE);
+		return KEY_NONE;
+	}
+
 	if (rec->EventType==NOOP_EVENT) {
 		Console.ReadInput(*rec);
 		memset(rec,0,sizeof(*rec));
@@ -1477,7 +1485,7 @@ int WriteInput(int Key,DWORD Flags)
 			if (Key < 0x30 || Key > 0x5A) // 0-9:;<=>?@@ A..Z  //?????
 				Key=0;
 
-			Rec.Event.KeyEvent.uChar.UnicodeChar=Rec.Event.KeyEvent.uChar.AsciiChar=Key;
+			Rec.Event.KeyEvent.uChar.UnicodeChar=/*Rec.Event.KeyEvent.uChar.AsciiChar=*/Key;
 			Rec.Event.KeyEvent.dwControlKeyState=0;
 		}
 
@@ -1616,7 +1624,7 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key,int& Len)
    5. "Oem" и 5 десятичных цифр (с ведущими нулями)
    6. только модификаторы (Alt/RAlt/Ctrl/RCtrl/Shift)
 */
-uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
+uint32_t KeyNameToKey(const wchar_t *Name)
 {
 	if (!Name || !*Name)
 		return KEY_INVALID;
@@ -1732,6 +1740,12 @@ uint32_t WINAPI KeyNameToKey(const wchar_t *Name)
 	*/
 	// _SVS(SysLog(L"Key=0x%08X (%c) => '%ls'",Key,(Key?Key:' '),Name));
 	return (!Key || Pos < Len)? KEY_INVALID : Key;
+}
+
+uint32_t KeyNameToKey(const wchar_t *Name, uint32_t Default)
+{
+	const uint32_t Key = KeyNameToKey(Name);
+	return (Key == KEY_INVALID) ? Default : Key;
 }
 
 BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)

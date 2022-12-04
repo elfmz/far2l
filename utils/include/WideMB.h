@@ -33,7 +33,7 @@ std::wstring StrMB2Wide(const std::string &src);
 // converts wchar_t(s) to multibyte _appending_ result to dst, doesnt care about escaping
 // replaces untranslateble wchar_t-s by CHAR_REPLACEMENT
 void Wide2MB_UnescapedAppend(const wchar_t wc, std::string &dst);
-void Wide2MB_UnescapedAppend(const wchar_t *src_begin, const wchar_t *src_end, std::string &dst);
+void Wide2MB_UnescapedAppend(const wchar_t *src_begin, size_t src_len, std::string &dst);
 
 // same as MB2Wide but skips processing of up to last 6 invalid source chars and returns count of processed chars
 size_t MB2Wide_HonorIncomplete(const char *src, size_t src_len, std::wstring &dst, bool append = false);

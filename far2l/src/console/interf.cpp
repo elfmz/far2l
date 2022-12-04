@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keys.hpp"
 #include "colors.hpp"
 #include "ctrlobj.hpp"
+#include "ConfigSaveLoad.hpp"
 #include "filepanels.hpp"
 #include "panel.hpp"
 #include "fileedit.hpp"

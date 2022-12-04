@@ -53,6 +53,7 @@ extern DWORD MouseButtonState,PrevMouseButtonState;
 extern SHORT PrevMouseX,PrevMouseY,MouseX,MouseY;
 extern int PreMouseEventFlags,MouseEventFlags;
 extern int ReturnAltValue;
+extern bool BracketedPasteMode;
 
 void InitKeysArray();
 bool KeyToKeyLayoutCompare(int Key, int CompareKey);
@@ -61,7 +62,8 @@ int KeyToKeyLayout(int Key);
 // возвращает: 1 - LeftPressed, 2 - Right Pressed, 3 - Middle Pressed, 0 - none
 DWORD IsMouseButtonPressed();
 int TranslateKeyToVK(int Key,int &VirtKey,int &ControlState,INPUT_RECORD *rec=nullptr);
-uint32_t WINAPI KeyNameToKey(const wchar_t *Name);
+uint32_t KeyNameToKey(const wchar_t *Name);
+uint32_t KeyNameToKey(const wchar_t *Name, uint32_t Default);
 BOOL WINAPI KeyToText(uint32_t Key, FARString &strKeyText);
 int WINAPI InputRecordToKey(const INPUT_RECORD *Rec);
 DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro=false,bool ProcessMouse=false,bool AllowSynchro=true);

@@ -640,12 +640,7 @@ void Dialog::ProcessCenterGroup()
 		// Их координаты X не важны. Удобно использовать для центрирования
 		// групп кнопок.
 		if ((Item[I]->Flags & DIF_CENTERGROUP) &&
-		        (!I ||
-		         (I > 0 &&
-		          (!(Item[I-1]->Flags & DIF_CENTERGROUP) ||
-		           Item[I-1]->Y1!=Item[I]->Y1)
-		         )
-		        )
+		        (I == 0 || (Item[I-1]->Flags & DIF_CENTERGROUP) == 0 || Item[I-1]->Y1 != Item[I]->Y1)
 		   )
 		{
 			int Length=0;
@@ -728,13 +723,14 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	DWORD ItemFlags;
 	_DIALOG(CleverSysLog CL(L"Init Dialog"));
 
-	if (ID+1 > ItemCount)
-		return (unsigned)-1;
-
 	if (ID == (unsigned)-1) // инициализируем все?
 	{
 		ID=0;
 		InitItemCount=ItemCount;
+	}
+	else if (ID+1 > ItemCount)
+	{
+		return (unsigned)-1;
 	}
 	else
 	{
@@ -1693,7 +1689,6 @@ void Dialog::ShowDialog(unsigned ID)
 		return;
 
 	FARString strStr;
-	wchar_t *lpwszStr;
 	DialogItemEx *CurItem;
 	int X,Y;
 	unsigned I,DrawItemCount;
@@ -1833,13 +1828,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 					if (LenText < CW-2)
 					{
-						int iLen = (int)strStr.GetLength();
-						lpwszStr = strStr.GetBuffer(iLen + 3);
-						{
-							wmemmove(lpwszStr+1, lpwszStr, iLen);
-							*lpwszStr = lpwszStr[++iLen] = L' ';
-						}
-						strStr.ReleaseBuffer(iLen+1);
+						strStr.Insert(0, L' ');
 						LenText=LenStrItem(I, strStr);
 					}
 
@@ -3043,9 +3032,7 @@ int Dialog::ProcessKey(int Key)
 									*/
 									if (CurPos > Length)
 									{
-										LPWSTR Str=strStr.GetBuffer(CurPos);
-										wmemset(Str+Length,L' ',CurPos-Length);
-										strStr.ReleaseBuffer(CurPos);
+										strStr.Append(L' ', CurPos - Length);
 									}
 
 									FARString strAdd;

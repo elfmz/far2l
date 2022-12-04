@@ -54,7 +54,7 @@ static int ArcComment, ArcVolume, ArcRecovery, ArcLastChapter;
 #define CRC_MASK        0xFFFFFFFFL
 static DWORD crctable[UCHAR_MAX + 1];
 static BOOL CRCInit=FALSE;
-DWORD CRC;
+static DWORD CRC;
 
 #define UPDATE_CRC(r,c) r=crctable[((BYTE)(r)^(BYTE)(c))&0xff]^(r>>CHAR_BIT)
 #define CRCPOLY         0xEDB88320L

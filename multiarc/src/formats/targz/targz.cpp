@@ -276,6 +276,7 @@ static int GetArcItemGZIP(struct ArcItemInfo *Info)
     WORD ExtraLength = 0;
     if (!WINPORT(ReadFile)(ArcHandle,&ExtraLength,sizeof(ExtraLength),&ReadSize,NULL))
       return(GETARC_READERROR);
+    LITEND_INPLACE(ExtraLength);
     WINPORT(SetFilePointer)(ArcHandle,ExtraLength,NULL,FILE_CURRENT);
   }
 
@@ -307,10 +308,10 @@ static int GetArcItemGZIP(struct ArcItemInfo *Info)
   Info->Encrypted=(Header.Flags & 32)!=0;
   WINPORT(SetFilePointer)(ArcHandle,-4,NULL,FILE_END);
 
-  // reading 32-bit size into 64 bit fine unless host is a big-endian...
-  Info->nFileSize = 0;
-  if (!WINPORT(ReadFile)(ArcHandle,&Info->nFileSize,sizeof(DWORD),&ReadSize,NULL))
+  uint32_t nFileSizeRaw = 0;
+  if (!WINPORT(ReadFile)(ArcHandle,&nFileSizeRaw,sizeof(nFileSizeRaw),&ReadSize,NULL))
     return(GETARC_READERROR);
+  Info->nFileSize = LITEND(nFileSizeRaw);
 
   return(GETARC_SUCCESS);
 }

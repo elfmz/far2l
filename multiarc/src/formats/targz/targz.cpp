@@ -301,7 +301,7 @@ static int GetArcItemGZIP(struct ArcItemInfo *Info)
 
   ZipName.clear();
 
-  UnixTimeToFileTime(Header.FileTime,&Info->ftLastWriteTime);
+  UnixTimeToFileTime(LITEND(Header.FileTime),&Info->ftLastWriteTime);
 
   Info->Comment=(Header.Flags & 16)!=0;
   Info->Encrypted=(Header.Flags & 32)!=0;

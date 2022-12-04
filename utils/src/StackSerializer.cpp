@@ -134,13 +134,13 @@ uint16_t StackSerializer::PopU16()
 {
 	uint16_t out;
 	PopNum(out);
-	return LITEND(out);
+	return out;
 }
 
 uint32_t StackSerializer::PopU32()
 {
 	uint32_t out;
 	PopNum(out);
-	return LITEND(out);
+	return out;
 }
 

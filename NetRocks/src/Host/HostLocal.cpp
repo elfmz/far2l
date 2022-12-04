@@ -5,6 +5,7 @@
 #include <sys/statvfs.h>
 #include <utime.h>
 #include <dirent.h>
+#include <limits.h>
 
 #ifdef __APPLE__
   #include <sys/mount.h>

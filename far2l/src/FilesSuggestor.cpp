@@ -133,7 +133,8 @@ void *FilesSuggestor::ThreadProc()
 				}
 				if (de->d_name[0] && strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
 					bool dir = false;
-					switch (de->d_type) {
+#ifndef __HAIKU__
+                    switch (de->d_type) {
 						case DT_DIR:
 							dir = true;
 							break;
@@ -147,10 +148,16 @@ void *FilesSuggestor::ThreadProc()
 							break;
 
 						default:
+#endif
 							stat_path.resize(stat_path_len);
 							stat_path+= de->d_name;
 							dir = (sdc_stat(stat_path.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
-					}
+#ifndef __HAIKU__
+                    }
+#endif
+                    stat_path.resize(stat_path_len);
+                    stat_path+= de->d_name;
+                    dir = (sdc_stat(stat_path.c_str(), &s) == 0 && S_ISDIR(s.st_mode));
 
 					std::lock_guard<std::mutex> lock(_mtx);
 					_suggestions.emplace_back(Suggestion{de->d_name, dir});

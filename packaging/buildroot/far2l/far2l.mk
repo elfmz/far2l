@@ -55,4 +55,8 @@ ifeq ($(BR2_PACKAGE_MUSL),y)
 FAR2L_CONF_OPTS += -DMUSL=ON
 endif
 
+ifeq ($(BR2_PACKAGE_BUSYBOX),y)
+FAR2L_CONF_OPTS += -DTAR_LIMITED_ARGS=ON
+endif
+
 $(eval $(cmake-package))

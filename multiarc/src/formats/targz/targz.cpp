@@ -510,7 +510,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
    static const char * Commands[5][15]=
    {
      { // TAR_FORMAT
-#if defined(__MUSL__) || defined(__UCLIBC__)
+#if defined(__TAR_LIMITED_ARGS__)
        "tar -xf %%A %%FSq32768",
        "tar -O -xf %%A %%fSq > %%fWq",
        "",

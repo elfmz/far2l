@@ -510,6 +510,23 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
    static const char * Commands[5][15]=
    {
      { // TAR_FORMAT
+#if defined(__TAR_LIMITED_ARGS__)
+       "tar -xf %%A %%FSq32768",
+       "tar -O -xf %%A %%fSq > %%fWq",
+       "",
+       "tar --delete -f %%A %%FSq32768",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "tar -cf %%A %%FSq32768",
+       "tar --remove-files -cf %%A %%FSq32768",
+       "tar -cf %%A %%FSq32768",
+       "tar --remove-files -cf %%A %%FSq32768",
+       "*"
+#else
        "tar --force-local -xf %%A %%FSq32768",
        "tar --force-local -O -xf %%A %%fSq > %%fWq",
        "",
@@ -525,6 +542,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type,int Command,char *Dest)
        "tar --force-local -rf %%A %%FSq32768",
        "tar --force-local --remove-files -rf %%A %%FSq32768",
        "*"
+#endif
      },
 
      { // GZ_FORMAT

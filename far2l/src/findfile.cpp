@@ -1108,7 +1108,7 @@ static int FindStringBMH(const wchar_t* searchBuffer, size_t searchBufferCount)
 	return -1;
 }
 
-// Алгоритма Бойера-Мура-Хорспула поиска подстроки (Char версия)
+// Алгоритма Бойера-Мура-Хорспула поиска подстроки (unsigned char версия для hexFindString)
 static int FindStringBMH(const unsigned char* searchBuffer, size_t searchBufferCount)
 {
 	const unsigned char *buffer = searchBuffer;
@@ -1428,6 +1428,17 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem,
 	if (ArcIndex != LIST_INDEX_NONE)
 	{
 		FileToReport.Insert(0, strPluginSearchPath);
+	}
+	else if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+
+	{	// If searching files content and file's size smaller than length of searched string's
+		// characters count - then file cannot contain it (in any codepage).
+		// This small optimization also resolves stuck on attempt to scan pseudo files like
+		// /proc/kmsg cuz they have zero size reported
+		if (!SearchHex && FindData.nFileSize < strFindStr.GetLength())
+			return;
+		if (SearchHex && FindData.nFileSize < hexFindStringSize)
+			return;
 	}
 
 	if (strFindStr.IsEmpty())

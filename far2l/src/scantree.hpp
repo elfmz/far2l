@@ -87,6 +87,8 @@ class ScanTree
 			std::unique_ptr<FindFile> Enumer;
 			std::list<FAR_FIND_DATA_EX> Postponed;
 			FARString RealPath;
+			uint64_t UnixDevice{};
+			uint64_t UnixNode{};
 			bool InsideSymlink = false;
 
 			bool GetNext(FAR_FIND_DATA_EX *fdata, bool FilesFirst);

@@ -85,16 +85,24 @@ void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
 		// check if converted path points to same location is already scanned or to parent path of already scanned location
 		// NB: in original FAR here was exact-match check all pathes (not only symlinks)
 		// that caused excessive scan from FS root cuz in Linux links pointing to / are usual situation unlike Windows
+		// NB2: There're two recursive protection checks, excessive on first look:
+		// Check by path: if real path is equal OR represents parent of some previously scanned path
+		// Check by inode: inode matches some previously scanned inode
+		// while check-by-path 'includes' check-by-node functionality, later is needed cuz in some
+		// complex cases realpath() fails with error like ELOOP fails resulting path be unresolved,
+		// so check-by-inode works as last resort to avoid unlimited recursion scan in such cases.
 		const auto &RealPath = ScanDirStack.back().RealPath;
 		for (auto it = ScanDirStack.rbegin();;) {
 			if (ScanDirStack.rend() == ++it)
 				break;
 			const auto &IthPath = it->RealPath;
-			if (IthPath.Begins(RealPath) &&
+			if ( (it->UnixDevice == fdata->UnixDevice && it->UnixNode == fdata->UnixNode)
+				||
+				(IthPath.Begins(RealPath) &&
 				(IthPath.GetLength() == RealPath.GetLength()
 					|| IthPath.At(RealPath.GetLength()) == GOOD_SLASH
 						|| RealPath.GetLength() == 1))
-			{ // recursion! revert state changes made so far and bail out
+				) { // recursion! revert state changes made so far and bail out
 				ScanDirStack.pop_back();
 				strFindPath.resize(strFindPath.size() - fdata->strFileName.GetLength());
 				return;
@@ -104,6 +112,8 @@ void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
 	else
 		ScanDirStack.back().RealPath = strFindPath;
 
+	ScanDirStack.back().UnixDevice = fdata->UnixDevice;
+	ScanDirStack.back().UnixNode = fdata->UnixNode;
 	ScanDirStack.back().InsideSymlink = InsideSymlink;
 
 	StartEnumSubdir();

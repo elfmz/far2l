@@ -1,7 +1,3 @@
-#ifdef __HAIKU__
-#include <cstring>
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

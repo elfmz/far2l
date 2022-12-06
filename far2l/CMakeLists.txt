@@ -63,6 +63,7 @@ src/usermenu.cpp
 src/viewer.cpp
 src/vmenu.cpp
 src/execute_oscmd.cpp
+src/ViewerStrings.cpp
 src/ViewerPrinter.cpp
 src/fileholder.cpp
 

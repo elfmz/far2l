@@ -40,18 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "cache.hpp"
 #include "fileholder.hpp"
-
-/* $ 10.07.2000 tran
-   ! modified MAXSCRY from 120 to 300
-   on win200, with Console height FAR work, but trap on viewer... */
-#define  MAXSCRY     0x400
-
-/* $ 12.07.2000 SVS
-  - из-за увеличения длины строки до 0x800 вылетал FAR
-    по Alt-F7. Сократим MAX_VIEWLINE до 1024 (0x400)
-*/
-#define MAX_VIEWLINE  0x2000 // 0x400
-#define MAX_VIEWLINEB 0x200f // 0x40f
+#include "ViewerStrings.hpp"
 
 #define VIEWER_UNDO_COUNT   64
 
@@ -59,15 +48,6 @@ enum {VIEW_UNWRAP=0,VIEW_WRAP=1, VIEW_WORDWRAP=2};
 
 class FileViewer;
 class KeyBar;
-
-struct ViewerString
-{
-	int64_t nFilePos;
-	int64_t nSelStart;
-	int64_t nSelEnd;
-	bool bSelection;
-	wchar_t lpData[MAX_VIEWLINEB + 1];
-};
 
 struct InternalViewerBookMark
 {
@@ -109,7 +89,7 @@ class Viewer:public ScreenObject
 		NamesList ViewNamesList;
 		KeyBar *ViewKeyBar;
 
-		ViewerString *Strings[MAXSCRY+1];
+		ViewerStrings Strings;
 
 		FARString strFileName;
 		FARString strFullFileName;
@@ -179,7 +159,7 @@ class Viewer:public ScreenObject
 		void AdjustWidth();
 		void AdjustFilePos();
 
-		void ReadString(ViewerString *pString, int MaxSize, int StrSize);
+		void ReadString(ViewerString &rString, int MaxSize, int StrSize);
 		int CalcStrSize(const wchar_t *Str,int Length);
 		void ChangeViewKeyBar();
 		void SetCRSym();

@@ -68,6 +68,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WideMB.h"
 #include "UtfConvert.hpp"
 
+#define MAX_VIEWLINE 0x2000
+
 static void PR_ViewerSearchMsg();
 static void ViewerSearchMsg(const wchar_t *Name,int Percent);
 
@@ -133,12 +135,6 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage):
 	m_bQuickView(bQuickView)
 {
 	_OT(SysLog(L"[%p] Viewer::Viewer()", this));
-
-	for (int i=0; i<=MAXSCRY; i++)
-	{
-		Strings[i] = new ViewerString();
-		Strings[i]->lpData[MAX_VIEWLINEB] = 0;
-	}
 
 	strLastSearchStr = strGlobalSearchString;
 	LastSearchCase=GlobalSearchCase;
@@ -242,11 +238,6 @@ Viewer::~Viewer()
 			rmdir(strProcessedViewName.GetMB().c_str());
 			strProcessedViewName.Clear();
 		}
-	}
-
-	for (int i=0; i<=MAXSCRY; i++)
-	{
-		delete Strings[i];
 	}
 
 	if (!OpenFailed && bVE_READ_Sent)
@@ -542,47 +533,31 @@ void Viewer::ShowPage(int nMode)
 
 			for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 			{
-				Strings[I]->nFilePos = vtell();
+				Strings[I].nFilePos = vtell();
 
 				if (Y==Y1+1 && !ViewFile.Eof())
 					SecondPos=vtell();
 
-				ReadString(Strings[I],-1,MAX_VIEWLINEB);
+				ReadString(Strings[I],-1,MAX_VIEWLINE);
 			}
 
 			break;
 		case SHOW_UP:
 
-			for (I=Y2-Y1-1; I>=0; I--)
-			{
-				Strings[I+1]->nFilePos = Strings[I]->nFilePos;
-				Strings[I+1]->nSelStart = Strings[I]->nSelStart;
-				Strings[I+1]->nSelEnd = Strings[I]->nSelEnd;
-				Strings[I+1]->bSelection = Strings[I]->bSelection;
-				wcscpy(Strings[I+1]->lpData, Strings[I]->lpData);
-			}
-
-			Strings[0]->nFilePos = FilePos;
-			SecondPos = Strings[1]->nFilePos;
-			ReadString(Strings[0],(int)(SecondPos-FilePos),MAX_VIEWLINEB);
+			Strings.ScrollUp();
+			Strings[0].nFilePos = FilePos;
+			SecondPos = Strings[1].nFilePos;
+			ReadString(Strings[0],(int)(SecondPos-FilePos),MAX_VIEWLINE);
 			break;
 		case SHOW_DOWN:
 
-			for (I=0; I<Y2-Y1; I++)
-			{
-				Strings[I]->nFilePos = Strings[I+1]->nFilePos;
-				Strings[I]->nSelStart = Strings[I+1]->nSelStart;
-				Strings[I]->nSelEnd = Strings[I+1]->nSelEnd;
-				Strings[I]->bSelection = Strings[I+1]->bSelection;
-				wcscpy(Strings[I]->lpData, Strings[I+1]->lpData);
-			}
-
-			FilePos = Strings[0]->nFilePos;
-			SecondPos = Strings[1]->nFilePos;
-			vseek(Strings[Y2-Y1]->nFilePos, SEEK_SET);
-			ReadString(Strings[Y2-Y1],-1,MAX_VIEWLINEB);
-			Strings[Y2-Y1]->nFilePos = vtell();
-			ReadString(Strings[Y2-Y1],-1,MAX_VIEWLINEB);
+			vseek(Strings[Y2-Y1].nFilePos, SEEK_SET);
+			Strings.ScrollDown();
+			FilePos = Strings[0].nFilePos;
+			SecondPos = Strings[1].nFilePos;
+			ReadString(Strings[Y2-Y1],-1,MAX_VIEWLINE);
+			Strings[Y2-Y1].nFilePos = vtell();
+			ReadString(Strings[Y2-Y1],-1,MAX_VIEWLINE);
 			break;
 	}
 
@@ -598,16 +573,17 @@ void Viewer::ShowPage(int nMode)
 
 		for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 		{
-			int StrLen = printer->Length(Strings[I]->lpData);
+			int StrLen = printer->Length(Strings[I].Chars());
 			GotoXY(X1,Y);
 
-			printer->Print(LeftPos, Width, Strings[I]->lpData);
+			printer->Print(LeftPos, Width, Strings[I].Chars());
 
-			if (SelectSize && Strings[I]->bSelection)
+			auto &StringI = Strings[I];
+			if (SelectSize && StringI.bSelection)
 			{
-				auto visualSelStart = printer->Length(Strings[I]->lpData, Strings[I]->nSelStart);
-				auto visualSelLength = printer->Length(&Strings[I]->lpData[Strings[I]->nSelStart],
-														Strings[I]->nSelEnd - Strings[I]->nSelStart);
+				auto visualSelStart = printer->Length(StringI.Chars(), StringI.nSelStart);
+				auto visualSelLength = printer->Length(StringI.Chars(StringI.nSelStart),
+														StringI.nSelEnd - StringI.nSelStart);
 
 				if (!VM.Wrap && AdjustSelPosition &&
 					(visualSelStart < LeftPos || (visualSelStart > LeftPos
@@ -632,7 +608,7 @@ void Viewer::ShowPage(int nMode)
 //						selPrinter.EnableBOMSkip();
 					printer->SetSelection(true);
 					printer->Print(SelSkip,
-						visualSelLength - SelSkip, &Strings[I]->lpData[Strings[I]->nSelStart]);
+						visualSelLength - SelSkip, StringI.Chars(StringI.nSelStart));
 					printer->SetSelection(false);
 				}
 			}
@@ -644,7 +620,7 @@ void Viewer::ShowPage(int nMode)
 				BoxText(0xbb);
 			}
 
-			if (LeftPos>0 && *Strings[I]->lpData  && ViOpt.ShowArrows)
+			if (LeftPos>0 && ViOpt.ShowArrows && !Strings[I].IsEmpty())
 			{
 				GotoXY(X1,Y);
 				SetColor(COL_VIEWERARROWS);
@@ -936,18 +912,20 @@ void Viewer::SetStatusMode(int Mode)
 }
 
 
-void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
+void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 {
 	WCHAR Ch, Ch2;
 	int64_t OutPtr;
 	bool bSelStartFound = false, bSelEndFound = false;
-	pString->bSelection = false;
+	rString.bSelection = false;
 	AdjustWidth();
 	OutPtr=0;
+	rString.SetChar(0, 0);
 
 	if (VM.Hex)
 	{
-		size_t len = 16;
+		wchar_t piece[16]{0};
+		size_t len = ARRAYSIZE(piece);
 		// Alter-1: ::vread accepts number of codepoint units:
 		// 4-bytes for UTF32, 2-bytes for UTF16 and 1-bytes for everything else
 		// But we always display 16 bytes
@@ -956,8 +934,8 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 			case CP_UTF16LE: case CP_UTF16BE: len/= 2; break;
 		} // TODO: ???
 
-		OutPtr=vread(pString->lpData, len);
-		pString->lpData[len] = 0;
+		OutPtr = vread(piece, len);
+		rString.SetChars(0, piece, (size_t)OutPtr);
 	}
 	else
 	{
@@ -965,7 +943,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 		if (SelectSize && vtell() > SelectPos)
 		{
-			pString->nSelStart = 0;
+			rString.nSelStart = 0;
 			bSelStartFound = true;
 		}
 
@@ -990,7 +968,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 					if (VM.WordWrap)
 					{
-						if (!IsSpace(Ch) && !IsSpace(pString->lpData[(int)OutPtr]))
+						if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr)))
 						{
 							int64_t SavePtr=OutPtr;
 
@@ -998,7 +976,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 							   добавил в качестве wordwrap разделителей , ; > ) */
 							while (OutPtr)
 							{
-								Ch2=pString->lpData[(int)OutPtr];
+								Ch2=*rString.Chars((size_t)OutPtr);
 
 								if (IsSpace(Ch2) || Ch2==L',' || Ch2==L';' || Ch2==L'>'|| Ch2==L')')
 									break;
@@ -1006,19 +984,18 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 								OutPtr--;
 							}
 
-							Ch2=pString->lpData[(int)OutPtr];
+							Ch2=*rString.Chars((size_t)OutPtr);
 
 							if (Ch2==L',' || Ch2==L';' || Ch2==L')' || Ch2==L'>')
 								OutPtr++;
 							else
-								while (IsSpace(pString->lpData[(int)OutPtr]) && OutPtr<=SavePtr)
+								while (OutPtr<=SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
 									OutPtr++;
 
 							if (OutPtr < SavePtr && OutPtr)
 							{
 								vseek(-CalcCodeUnitsDistance(VM.CodePage,
-										&pString->lpData[(size_t)OutPtr],
-										&pString->lpData[(size_t)SavePtr]),
+									rString.Chars((size_t)OutPtr), rString.Chars((size_t)SavePtr)),
 									SEEK_CUR);
 							}
 							else
@@ -1045,7 +1022,7 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 
 			if (SelectSize > 0 && SelectPos==vtell())
 			{
-				pString->nSelStart = OutPtr+(CRSkipped?1:0);;
+				rString.nSelStart = OutPtr+(CRSkipped?1:0);;
 				bSelStartFound = true;
 			}
 
@@ -1061,19 +1038,19 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 			if (CRSkipped)
 			{
 				CRSkipped=false;
-				pString->lpData[(int)OutPtr++]=L'\r';
+				rString.SetChar(size_t(OutPtr++), L'\r');
 			}
 
 			if (Ch==L'\t')
 			{
 				do
 				{
-					pString->lpData[(int)OutPtr++]=L' ';
+					rString.SetChar(size_t(OutPtr++), L' ');
 				}
-				while ((OutPtr % ViOpt.TabSize) && ((int)OutPtr < (MAX_VIEWLINEB-1)));
+				while ((OutPtr % ViOpt.TabSize) && ((int)OutPtr < (MAX_VIEWLINE-1)));
 
 				if (VM.Wrap && OutPtr>XX2-X1)
-					pString->lpData[XX2-X1+1]=0;
+					rString.SetChar(XX2-X1+1, 0);
 
 				continue;
 			}
@@ -1105,39 +1082,37 @@ void Viewer::ReadString(ViewerString *pString, int MaxSize, int StrSize)
 			if (!Ch || Ch==L'\n')
 				Ch=L' ';
 
-			pString->lpData[(int)OutPtr++]=Ch;
-			pString->lpData[(int)OutPtr]=0;
+			rString.SetChar(size_t(OutPtr++), Ch);
+			rString.SetChar(size_t(OutPtr), 0);
 
 			if (SelectSize > 0 && (SelectPos+SelectSize)==vtell())
 			{
-				pString->nSelEnd = OutPtr;
+				rString.nSelEnd = OutPtr;
 				bSelEndFound = true;
 			}
 		}
 	}
 
-	pString->lpData[(int)OutPtr]=0;
-
 	if (!bSelEndFound && SelectSize && vtell() < SelectPos+SelectSize)
 	{
 		bSelEndFound = true;
-		pString->nSelEnd = wcslen(pString->lpData);
+		rString.nSelEnd = wcslen(rString.Chars());
 	}
 
 	if (bSelStartFound)
 	{
-		if (pString->nSelStart > (int64_t)wcslen(pString->lpData))
+		if (rString.nSelStart > (int64_t)wcslen(rString.Chars()))
 			bSelStartFound = false;
 
 		if (bSelEndFound)
-			if (pString->nSelStart > pString->nSelEnd)
+			if (rString.nSelStart > rString.nSelEnd)
 				bSelStartFound = false;
 	}
 
 	LastPage=ViewFile.Eof();
 
 	if (bSelStartFound && bSelEndFound)
-		pString->bSelection = true;
+		rString.bSelection = true;
 }
 
 
@@ -1677,7 +1652,6 @@ int Viewer::ProcessKey(int Key)
 		case KEY_ALTPGDN: case KEY_PGDN: case KEY_NUMPAD3:  case KEY_SHIFTNUMPAD3: case KEY_CTRLDOWN:
 		{
 			ViewerString vString;
-			vString.lpData[MAX_VIEWLINEB] = 0;
 			const auto InitialFilePos = FilePos;
 			for (unsigned boost = 0; boost <= iBoostPg; boost+= 4)
 			{
@@ -1690,7 +1664,7 @@ int Viewer::ProcessKey(int Key)
 
 				for (int i=Y1; i<Y2; i++)
 				{
-					ReadString(&vString,-1, MAX_VIEWLINEB);
+					ReadString(vString,-1, MAX_VIEWLINE);
 
 					if (LastPage)
 					{
@@ -1701,7 +1675,7 @@ int Viewer::ProcessKey(int Key)
 				FilePos=vtell();
 
 				for (int i=Y1; i<=Y2; i++)
-					ReadString(&vString,-1, MAX_VIEWLINEB);
+					ReadString(vString,-1, MAX_VIEWLINE);
 
 				/* $ 02.06.2003 VVM
 				  + Старое поведение оставим на Ctrl-Down */
@@ -1824,7 +1798,7 @@ int Viewer::ProcessKey(int Key)
 
 				for (I=0,Y=Y1; Y<=Y2; Y++,I++)
 				{
-					Len = StrLength(Strings[I]->lpData);
+					Len = StrLength(Strings[I].Chars());
 
 					if (Len > MaxLen)
 						MaxLen = Len;

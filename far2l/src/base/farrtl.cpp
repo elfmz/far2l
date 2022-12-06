@@ -4,9 +4,6 @@ farrtl.cpp
 Переопределение различных CRT функций
 */
 
-#ifdef __HAIKU__
-  #define _GNU_SOURCE 1
-#endif
 #include "headers.hpp"
 
 // dest и src НЕ ДОЛЖНЫ пересекаться

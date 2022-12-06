@@ -157,6 +157,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "CYGWIN")
   message(STATUS "Running under cygwin, wow!")
 endif()
 
+if (CMAKE_SYSTEM_NAME MATCHES "Haiku")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GNU_SOURCE -D_DEFAULT_SOURCE -Wno-attributes")
+endif()
+
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 

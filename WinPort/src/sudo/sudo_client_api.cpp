@@ -18,7 +18,7 @@
 #include "sudo_private.h"
 #include "sudo.h"
 
-#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__CYGWIN__)
+#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 # include <sys/ioctl.h>
 # include <linux/fs.h>
 #endif
@@ -269,7 +269,7 @@ template <class STAT_STRUCT>
 		return -1;
 	}
 }
-#if !defined(__FreeBSD__) && !defined(__CYGWIN__)
+#if !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
 {
 	int saved_errno = errno;
@@ -759,7 +759,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
  {
 	ClientReconstructCurDir crcd(path);
 
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__HAIKU__)
 	//TODO
 	*flags = 0;
 	return 0;
@@ -802,7 +802,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
  
  extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags)
  {
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__HAIKU__)
 	//TODO
 	return 0;
 

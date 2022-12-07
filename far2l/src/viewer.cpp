@@ -924,8 +924,8 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 
 	if (VM.Hex)
 	{
-		wchar_t piece[16]{0};
-		size_t len = ARRAYSIZE(piece);
+		wchar_t piece[16 + 1]{0};
+		size_t len = ARRAYSIZE(piece) - 1;
 		// Alter-1: ::vread accepts number of codepoint units:
 		// 4-bytes for UTF32, 2-bytes for UTF16 and 1-bytes for everything else
 		// But we always display 16 bytes
@@ -935,7 +935,8 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		} // TODO: ???
 
 		OutPtr = vread(piece, len);
-		rString.SetChars(0, piece, (size_t)OutPtr);
+		piece[OutPtr] = 0;
+		rString.SetChars(0, piece, (size_t)(OutPtr + 1));
 	}
 	else
 	{

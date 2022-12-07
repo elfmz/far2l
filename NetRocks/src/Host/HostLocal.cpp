@@ -9,7 +9,7 @@
 
 #ifdef __APPLE__
   #include <sys/mount.h>
-#elif !defined(__FreeBSD__)
+#elif !defined(__FreeBSD__) && !defined(__HAIKU__)
   #include <sys/statfs.h>
 #endif
 

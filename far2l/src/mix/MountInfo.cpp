@@ -12,6 +12,8 @@
 #  include <sys/ucred.h>
 # endif
 # include <sys/mount.h>
+#elif defined(__HAIKU__)
+#  include <kernel/fs_info.h>
 #else
 # include <sys/statfs.h>
 # include <linux/fs.h>
@@ -346,6 +348,7 @@ const std::vector<Mountpoint> &MountInfo::Enum() const
 std::string MountInfo::GetFileSystem(const std::string &path) const
 {
 	std::string out;
+#ifndef __HAIKU__
 	size_t longest_match = 0;
 	for (const auto &it : *_mountpoints) {
 		if (it.path.size() > longest_match && StrStartsFrom(path, it.path.c_str())) {
@@ -354,7 +357,7 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 		}
 	}
 
-	if (out.empty()) {
+    if (out.empty()) {
 		struct statfs sfs{};
 #if !defined(__FreeBSD__) && !defined(__CYGWIN__)
 		if (sdc_statfs(path.c_str(), &sfs) == 0) {
@@ -373,7 +376,14 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 			}
 		}
 	}
-
+#else
+    dev_t dev = dev_for_path(path.c_str());
+    if (dev >= 0) {
+        fs_info fsinfo;
+        if (fs_stat_dev(dev, &fsinfo) == B_OK)
+            out = fsinfo.fsh_name;
+    }
+#endif
 	return out;
 }
 

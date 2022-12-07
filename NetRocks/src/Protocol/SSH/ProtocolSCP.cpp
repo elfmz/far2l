@@ -532,7 +532,11 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 				t = *tnow;
 
 			if (str_yt.find(':') == std::string::npos) {
-				t.tm_year = atoul(str_yt.c_str()) - 1900;
+#ifndef __HAIKU__
+                t.tm_year = atoul(str_yt.c_str()) - 1900;
+#else
+                t.tm_year = atoul(str_yt.c_str(), str_yt.length()) - 1900;
+#endif
 			} else {
 				if (sscanf(str_yt.c_str(), "%d:%d", &t.tm_hour, &t.tm_min) <= -1) {
 					perror("scanf(str_yt)");

@@ -62,10 +62,13 @@ typedef unsigned __int64 uint64_t;
 #define _chsize sdc_ftruncate
 #define _itoa itoa
 
+#ifndef __HAIKU__
 #define __cdecl
 #define __stdcall
+#endif
 #define _export
 #define _cdecl
+
 
 #define _UI64_MAX  0xffffffffffffffff
 

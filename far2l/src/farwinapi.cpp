@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
 # include <sys/mount.h>
-#else
+#elif !defined(__HAIKU__)
 # include <sys/statfs.h>
 # include <sys/ioctl.h>
 # include <linux/fs.h>

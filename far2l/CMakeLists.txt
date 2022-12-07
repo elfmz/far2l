@@ -233,11 +233,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	PRIVATE ${WINPORT}
 	PRIVATE c
 	PRIVATE ${UCHARDET_LIBRARIES})
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Haiku")
+    target_link_libraries(far2l
+        PRIVATE ${WINPORT}
+        PRIVATE gnu
+        PRIVATE ${UCHARDET_LIBRARIES})
 else()
     target_link_libraries(far2l
 	PRIVATE ${WINPORT}
-	PRIVATE dl
-	PRIVATE ${UCHARDET_LIBRARIES})
+        PRIVATE dl
+        PRIVATE ${UCHARDET_LIBRARIES})
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD

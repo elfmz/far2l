@@ -757,22 +757,11 @@ extern "C"
                         case DT_SOCK: hint_mode_type = S_IFSOCK; break;
                         default: hint_mode_type = 0;
                     }
-#else
-                struct stat sp;
-                if (stat(de->d_name, &sp) != B_OK)
-                    return false;
-                mode_t hint_mode_type = sp.st_mode & S_IFMT;
-                bool preMatch;
-                switch (sp.st_mode) {
-                    case S_IFDIR: preMatch = (_flags & FIND_FILE_FLAG_NO_DIRS) == 0; break;
-                    case S_IFREG: preMatch = (_flags & FIND_FILE_FLAG_NO_FILES) == 0; break;
-                    case S_IFLNK: preMatch = (_flags & FIND_FILE_FLAG_NO_LINKS) == 0; break;
-                    default: preMatch = (_flags & FIND_FILE_FLAG_NO_DEVICES) == 0;
-                }
-
-                if (preMatch && MatchName(de->d_name) ) {
-#endif
 					if (MatchAttributesAndFillWFD(de->d_name, lpFindFileData, hint_mode_type))
+#else
+                if (MatchName(de->d_name) ) {
+					if (MatchAttributesAndFillWFD(de->d_name, lpFindFileData))
+#endif
 						return true;
 				}
 			}

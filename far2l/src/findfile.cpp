@@ -73,11 +73,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "setattr.hpp"
 #include "udlist.hpp"
 #include "InterThreadCall.hpp"
+#include "FindPattern.hpp"
 #include "ThreadedWorkQueue.h"
 #include "MountInfo.h"
+#include "SafeMMap.hpp"
 #include <atomic>
+#include <algorithm>
+#include <fcntl.h>
 
 constexpr DWORD LIST_INDEX_NONE = std::numeric_limits<DWORD>::max();
+#define FILE_SCAN_MMAP_WINDOW	0x10000 // must be power of 2 and multiple of page size (0x1000)
+#define FILE_SCAN_READING_SIZE  0xf00   // to ensure scan function stack frame fits into single page
 
 static bool AnySetFindList=false;
 
@@ -318,21 +324,10 @@ static bool UseFilter=false;
 static UINT CodePage=CP_AUTODETECT;
 static UINT64 SearchInFirst=0;
 
-static int codePagesCount;
+//static size_t LookBehind = 0;
 
-struct CodePageInfo
-{
-	UINT CodePage;
-	UINT MaxCharSize;
-	wchar_t LastSymbol;
-	bool WordFound;
-} *codePages;
+static std::unique_ptr<FindPattern> findPattern;
 
-static unsigned char *hexFindString;
-static size_t hexFindStringSize;
-static wchar_t *findString,*findStringBuffer;
-
-static size_t *skipCharsTable;
 static int favoriteCodePages = 0;
 
 static bool InFileSearchInited=false;
@@ -415,194 +410,103 @@ enum FINDDLG
 	FD_BUTTON_STOP,
 };
 
+static void InitInFileSearchText()
+{
+	// Формируем список кодовых страниц
+	std::vector<unsigned int> codepages;
+	if (CodePage == CP_AUTODETECT) {
+		bool hasSelected = false;
+		// Проверяем наличие выбранных страниц символов
+		ConfigReader cfg_reader(FavoriteCodePagesKey);
+		const auto &cfg_codepages = cfg_reader.EnumKeys();
+		for (const auto &cp : cfg_codepages) {
+			int selectType = cfg_reader.GetInt(cp, 0);
+			if (selectType & CPST_FIND) {
+				hasSelected = true;
+				// codePageName = cp;
+				break;
+			}
+		}
+
+		// Добавляем стандартные таблицы символов
+		if (!hasSelected) {
+			codepages.emplace_back(WINPORT(GetOEMCP)());
+			codepages.emplace_back(WINPORT(GetACP)());
+			codepages.emplace_back(CP_KOI8R);
+			codepages.emplace_back(CP_UTF7);
+			codepages.emplace_back(CP_UTF8);
+			codepages.emplace_back(CP_UTF16LE);
+			codepages.emplace_back(CP_UTF16BE);
+#if (__WCHAR_MAX__ > 0xffff)					
+			codepages.emplace_back(CP_UTF32LE);
+			codepages.emplace_back(CP_UTF32BE);
+#endif					
+		}
+
+		// Добавляем стандартные таблицы символов
+		for (const auto &cp : cfg_codepages) {
+			int selectType = cfg_reader.GetInt(cp, 0);
+			if (selectType & (hasSelected?CPST_FIND:CPST_FAVORITE)) {
+				codepages.emplace_back(atoi(cp.c_str()));
+			}
+		}
+	}
+	else {
+		codepages.emplace_back(CodePage);
+	}
+
+	// Проверяем дубли
+	std::sort(codepages.begin(), codepages.end());
+	codepages.erase(std::unique(codepages.begin(), codepages.end()), codepages.end());
+
+	for (const auto &codepage : codepages) {
+		if (!findPattern->AddTextPattern(strFindStr.CPtr(), codepage)) {
+			fprintf(stderr, "%s: can't add codepage=%d pattern='%ls'\n",
+				__FUNCTION__, codepage, strFindStr.CPtr());
+		}
+	}
+}
+
+static void InitInFileSearchHex()
+{
+	// Формируем hex-строку для поиска
+	std::vector<uint8_t> pattern;
+	bool flag = false;
+	for (size_t index = 0; index < strFindStr.GetLength(); index++)
+	{
+		const BYTE quart = ParseHexDigit(strFindStr.At(index));
+		if (quart == 0xff)
+			continue;
+
+		if (!flag)
+			pattern.emplace_back(quart << 4);
+		else
+			pattern.back() |= quart;
+
+		flag = !flag;
+	}
+	if (!pattern.empty()) {
+		findPattern->AddBytesPattern(pattern.data(), pattern.size());
+	} else {
+		fprintf(stderr, "%s: bad hex string='%ls'\n", __FUNCTION__, strFindStr.CPtr());
+	}
+}
+
 static void InitInFileSearch()
 {
-	if (!InFileSearchInited && !strFindStr.IsEmpty())
-	{
-		size_t findStringCount = strFindStr.GetLength();
+	if (!InFileSearchInited && !strFindStr.IsEmpty()) {
 
-		if (!SearchHex)
-		{
-			// Формируем строку поиска
-			if (!CmpCase)
-			{
-				findStringBuffer = (wchar_t *)malloc(2*findStringCount*sizeof(wchar_t));
-				findString=findStringBuffer;
+		findPattern.reset(new FindPattern(CmpCase != 0 && !SearchHex, WholeWords != 0 && !SearchHex));
 
-				for (size_t index = 0; index<strFindStr.GetLength(); index++)
-				{
-					wchar_t ch = strFindStr[index];
+		if (SearchHex) {
+			InitInFileSearchHex();
 
-					if (WINPORT(IsCharLower)(ch))
-					{
-						findString[index]=Upper(ch);
-						findString[index+findStringCount]=ch;
-					}
-					else
-					{
-						findString[index]=ch;
-						findString[index+findStringCount]=Lower(ch);
-					}
-				}
-			}
-			else
-				findString = strFindStr.GetBuffer();
-
-			// Инициализируем данные для алгоритма поиска
-			skipCharsTable = (size_t *)malloc((MAX_VKEY_CODE+1)*sizeof(size_t));
-
-			for (size_t index = 0; index < MAX_VKEY_CODE+1; index++)
-				skipCharsTable[index] = findStringCount;
-
-			for (size_t index = 0; index < findStringCount-1; index++)
-				skipCharsTable[findString[index]] = findStringCount-1-index;
-
-			if (!CmpCase)
-				for (size_t index = 0; index < findStringCount-1; index++)
-					skipCharsTable[findString[index+findStringCount]] = findStringCount-1-index;
-
-			// Формируем список кодовых страниц
-			if (CodePage == CP_AUTODETECT)
-			{
-				// FARString codePageName;
-				bool hasSelected = false;
-				// Проверяем наличие выбранных страниц символов
-				ConfigReader cfg_reader(FavoriteCodePagesKey);
-				const auto &codepages = cfg_reader.EnumKeys();
-				for (const auto &cp : codepages)
-				{
-					int selectType = cfg_reader.GetInt(cp, 0);
-					if (selectType & CPST_FIND)
-					{
-						hasSelected = true;
-						// codePageName = cp;
-						break;
-					}
-				}
-
-				// Добавляем стандартные таблицы символов
-				if (!hasSelected)
-				{
-					codePagesCount = StandardCPCount;
-					codePages = (CodePageInfo *)malloc(codePagesCount*sizeof(CodePageInfo));
-					codePages[0].CodePage = WINPORT(GetOEMCP)();
-					codePages[1].CodePage = WINPORT(GetACP)();
-					codePages[2].CodePage = CP_KOI8R;
-					codePages[3].CodePage = CP_UTF7;
-					codePages[4].CodePage = CP_UTF8;
-					codePages[5].CodePage = CP_UTF16LE;
-					codePages[6].CodePage = CP_UTF16BE;
-#if (__WCHAR_MAX__ > 0xffff)					
-					codePages[7].CodePage = CP_UTF32LE;
-					codePages[8].CodePage = CP_UTF32BE;
-#endif					
-				}
-				else
-				{
-					codePagesCount = 0;
-					codePages = nullptr;
-				}
-
-				// Добавляем стандартные таблицы символов
-				for (const auto &cp : codepages)
-				{
-					int selectType = cfg_reader.GetInt(cp, 0);
-					if (selectType & (hasSelected?CPST_FIND:CPST_FAVORITE))
-					{
-						UINT codePage = atoi(cp.c_str());
-
-						// Проверяем дубли
-						if (!hasSelected)
-						{
-							bool isDouble = false;
-
-							for (int j = 0; j<StandardCPCount; j++)
-								if (codePage == codePages[j].CodePage)
-								{
-									isDouble = true;
-									break;
-								}
-
-							if (isDouble)
-								continue;
-						}
-
-						codePages = (CodePageInfo *)realloc((void *)codePages, ++codePagesCount*sizeof(CodePageInfo));
-						codePages[codePagesCount-1].CodePage = codePage;
-					}
-				}
-			}
-			else
-			{
-				codePagesCount = 1;
-				codePages = (CodePageInfo *)malloc(codePagesCount*sizeof(CodePageInfo));
-				codePages[0].CodePage = CodePage;
-			}
-
-			for (int index = 0; index<codePagesCount; index++)
-			{
-				CodePageInfo *cp = codePages+index;
-
-				if (IsFullWideCodePage(cp->CodePage)) {
-					cp->MaxCharSize = sizeof(wchar_t);
-				} else
-				{
-					CPINFO cpi;
-
-					if (!WINPORT(GetCPInfo)(cp->CodePage, &cpi))
-						cpi.MaxCharSize = 0; //Считаем, что ошибка и потом такие таблицы в поиске пропускаем
-
-					cp->MaxCharSize = cpi.MaxCharSize;
-				}
-
-				cp->LastSymbol = 0;
-				cp->WordFound = false;
-			}
-		}
-		else
-		{
-			// Формируем hex-строку для поиска
-			hexFindStringSize = 0;
-
-			if (SearchHex)
-			{
-				bool flag = false;
-				hexFindString = (unsigned char *)malloc((findStringCount-findStringCount/3+1)/2);
-
-				for (size_t index = 0; index < strFindStr.GetLength(); index++)
-				{
-					wchar_t symbol = strFindStr.At(index);
-					BYTE offset = 0;
-
-					if (symbol >= L'a' && symbol <= L'f')
-						offset = 87;
-					else if (symbol >= L'A' && symbol <= L'F')
-						offset = 55;
-					else if (symbol >= L'0' && symbol <= L'9')
-						offset = 48;
-					else
-						continue;
-
-					if (!flag)
-						hexFindString[hexFindStringSize++] = ((BYTE)symbol-offset)<<4;
-					else
-						hexFindString[hexFindStringSize-1] |= ((BYTE)symbol-offset);
-
-					flag = !flag;
-				}
-			}
-
-			// Инициализируем данные для алгоритма поиска
-			skipCharsTable = (size_t *)malloc((255+1)*sizeof(size_t));
-
-			for (size_t index = 0; index < 255+1; index++)
-				skipCharsTable[index] = hexFindStringSize;
-
-			for (size_t index = 0; index < (size_t)hexFindStringSize-1; index++)
-				skipCharsTable[hexFindString[index]] = hexFindStringSize-1-index;
+		} else {
+			InitInFileSearchText();
 		}
 
-		InFileSearchInited=true;
+		findPattern->GetReady();
+		InFileSearchInited = true;
 	}
 }
 
@@ -610,39 +514,8 @@ static void ReleaseInFileSearch()
 {
 	if (InFileSearchInited && !strFindStr.IsEmpty())
 	{
-		if (skipCharsTable)
-		{
-			free(skipCharsTable);
-			skipCharsTable=nullptr;
-		}
-
-		if (codePages)
-		{
-			free(codePages);
-			codePages=nullptr;
-		}
-
-		if (findStringBuffer)
-		{
-			free(findStringBuffer);
-			findStringBuffer=nullptr;
-		}
-
-		if (hexFindString)
-		{
-			free(hexFindString);
-			hexFindString=nullptr;
-		}
-
-		InFileSearchInited=false;
+		InFileSearchInited = false;
 	}
-}
-
-// Проверяем символ на принадлежность разделителям слов
-static bool IsWordDiv(const wchar_t symbol)
-{
-	// Так же разделителем является конец строки и пробельные символы
-	return !symbol||IsSpace(symbol)||IsEol(symbol)||IsWordDiv(Opt.strWordDiv,symbol);
 }
 
 static void SetPluginDirectory(const wchar_t *DirName,HANDLE hPlugin,bool UpdatePanel=false)
@@ -1082,289 +955,72 @@ static bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, con
 	return nResult;
 }
 
-// Алгоритма Бойера-Мура-Хорспула поиска подстроки (Unicode версия)
-
-#define WC16(wc) ((wc)&0xffff) //workaround since buffers were designed for 16bit wchar_t
-
-static int FindStringBMH(const wchar_t* searchBuffer, size_t searchBufferCount)
+static bool ScanFileByReading(const char *Name)
 {
-	size_t findStringCount = strFindStr.GetLength();
-	const wchar_t *buffer = searchBuffer;
-	const wchar_t *findStringLower = CmpCase ? nullptr : findString+findStringCount;
-	size_t lastBufferChar = findStringCount-1;
-	while (searchBufferCount>=findStringCount)
-	{
-		for (size_t index = lastBufferChar; 
-			WC16(buffer[index])==WC16(findString[index]) || (findStringLower && WC16(buffer[index])==WC16(findStringLower[index])); index--) {
-			if (!index)
-				return static_cast<int>(buffer-searchBuffer);				
-		}
-		
-		size_t offset = skipCharsTable[WC16(buffer[lastBufferChar])];
-		searchBufferCount-= offset;
-		buffer+= offset;
-	}
-
-	return -1;
-}
-
-// Алгоритма Бойера-Мура-Хорспула поиска подстроки (unsigned char версия для hexFindString)
-static int FindStringBMH(const unsigned char* searchBuffer, size_t searchBufferCount)
-{
-	const unsigned char *buffer = searchBuffer;
-	size_t lastBufferChar = hexFindStringSize-1;
-
-	while (searchBufferCount>=hexFindStringSize)
-	{
-		for (size_t index = lastBufferChar; buffer[index]==hexFindString[index]; index--)
-			if (!index)
-				return static_cast<int>(buffer-searchBuffer);
-
-		size_t offset = skipCharsTable[buffer[lastBufferChar]];
-		searchBufferCount -= offset;
-		buffer += offset;
-	}
-
-	return -1;
-}
-
-
-static bool ScanFile(const wchar_t *Name)
-{
-#define RETURN_OR_CONTINUE(r) { if ((r) || cpIndex==codePagesCount-1) return r; else continue; }
-	// Длина строки поиска
-	const size_t findStringCount = strFindStr.GetLength();
-
-	// Если строки поиска пустая, то считаем, что мы всегда что-нибудь найдём
-	if (findStringCount == 0)
-		return true;
-
-	File file;
-	// Открываем файл
-	if(!file.Open(Name, FILE_READ_DATA, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
+	uint8_t buf[FILE_SCAN_READING_SIZE];
+	FDScope fd(sdc_open(Name, O_RDONLY));
+	if (!fd.Valid())
 		return false;
 
-	uint8_t readBufferB[0x10000] __attribute__((aligned(0x1000)));
-	wchar_t readBuffer[ARRAYSIZE(readBufferB)] __attribute__((aligned(0x1000)));
+	size_t len = ReadAll(fd, buf, sizeof(buf));
+	if (len == 0)
+		return false;
 
-	// Количество считанных из файла байт
-	DWORD readBlockSize = 0;
-	// Количество прочитанных из файла байт
-	uint64_t alreadyRead = 0;
-	// Смещение на которое мы отступили при переходе между блоками
-	int offset=0;
+	return (findPattern->Match(buf, len, true, true).first != (size_t)-1);
+}
 
-	if (SearchHex)
-		offset = (int)hexFindStringSize-1;
+static bool ScanFileByMapping(const char *Name)
+{
+	off_t FileSize = 0, FilePos = 0;
+	try {
+		SafeMMap smm(Name, SafeMMap::M_READ, FILE_SCAN_MMAP_WINDOW);
+		FileSize = smm.FileSize();
 
-	UINT64 FileSize=0;
-	file.GetSize(FileSize);
+		if (SearchInFirst && FileSize > (off_t)SearchInFirst)
+			FileSize = (off_t)SearchInFirst;
 
-	if (SearchInFirst)
-	{
-		FileSize=Min(SearchInFirst,FileSize);
-	}
-
-	UINT LastPercents=0;
-
-	// Основной цикл чтения из файла
-
-	while (!StopFlag && 
-		file.Read(readBufferB,
-			(!SearchInFirst || alreadyRead + sizeof(readBufferB) <= SearchInFirst)
-				? sizeof(readBufferB) : DWORD(SearchInFirst - alreadyRead),
-			&readBlockSize))
-	{
-		UINT Percents=static_cast<UINT>(FileSize?alreadyRead*100/FileSize:0);
-		if (Percents!=LastPercents)
-		{
-			itd.SetPercent(Percents);
-			LastPercents=Percents;
-		}
-
-		// Увеличиваем счётчик прочитанных байт
-		alreadyRead += readBlockSize;
-
-		// Для hex и обыкновенного поиска разные ветки
-		if (SearchHex)
-		{
-			// Выходим, если ничего не прочитали или прочитали мало
-			if (!readBlockSize || readBlockSize<hexFindStringSize)
-				return false;
-
-			// Ищем
-			if (FindStringBMH(readBufferB, readBlockSize)!=-1)
+		const void *View = smm.View();
+		size_t Length = smm.Length();
+		for (UINT LastPercents = 0;;) {
+			const bool FirstFragment = (FilePos == 0);
+			const bool LastFragement = (FilePos + off_t(smm.Length()) >= FileSize);
+			if (findPattern->Match(View, Length, FirstFragment, LastFragement).first != (size_t)-1) {
 				return true;
-		}
-		else
-		{
-			for (int cpIndex = 0; cpIndex<codePagesCount; cpIndex++)
-			{
-				// Информация о кодовой странице
-				CodePageInfo *cpi = codePages+cpIndex;
+			}
+			if (LastFragement) {
+				break;
+			}
+			UINT Percents = static_cast<UINT>(FileSize ? FilePos * 100 / FileSize : 0);
+			if (Percents != LastPercents) {
+				itd.SetPercent(Percents);
+				LastPercents = Percents;
+			}
+			FilePos+= smm.Length();
 
-				// Пропускаем ошибочные кодовые страницы
-				if (!cpi->MaxCharSize)
-					RETURN_OR_CONTINUE(false)
+			const size_t LookBehind = findPattern->LookBehind();
+			const size_t LookBehindAligned = AlignUp(LookBehind, smm.Page());
 
-				// Если начало файла очищаем информацию о поиске по словам
-				if (WholeWords && alreadyRead==readBlockSize)
-				{
-					cpi->WordFound = false;
-					cpi->LastSymbol = 0;
-				}
-
-				// Если ничего не прочитали
-				if (!readBlockSize)
-					// Если поиск по словам и в конце предыдущего блока было что-то найдено,
-					// то считаем, что нашли то, что нужно
-					RETURN_OR_CONTINUE(WholeWords && cpi->WordFound)
-
-				// Выходим, если прочитали меньше размера строки поиска и нет поиска по словам
-				if (readBlockSize < findStringCount && !(WholeWords && cpi->WordFound))
-					RETURN_OR_CONTINUE(FALSE)
-
-				// Количество символов в выходном буфере
-				unsigned int bufferCount;
-
-				// Буфер для поиска
-				wchar_t *buffer;
-
-				// Перегоняем буфер в wchar_t
-				if (cpi->CodePage == CP_WIDE_LE)
-				{
-					// Вычисляем размер буфера в wchar_t
-					bufferCount = readBlockSize / sizeof(wchar_t);
-
-					// Выходим, если размер буфера меньше длины строки посика
-					if (bufferCount < findStringCount)
-						RETURN_OR_CONTINUE(false)
-						
-
-					// Копируем буфер чтения в буфер сравнения
-					buffer = (wchar_t*)readBufferB;
-				}
-				else
-				{
-					// Конвертируем буфер чтения из кодировки поиска в wchar_t
-					bufferCount = WINPORT(MultiByteToWideChar)(
-					                  cpi->CodePage,
-					                  0,
-					                  (char *)readBufferB,
-					                  readBlockSize,
-					                  readBuffer,
-					                  ARRAYSIZE(readBuffer)
-					              );
-
-					// Выходим, если нам не удалось сконвертировать строку
-					if (!bufferCount)
-						RETURN_OR_CONTINUE(false)
-
-					// Если прочитали меньше размера строки поиска и поиска по словам, то проверяем
-					// первый символ блока на разделитель и выходим
-					// Если у нас поиск по словам и в конце предыдущего блока было вхождение
-					if (WholeWords && cpi->WordFound)
-					{
-						// Если конец файла, то считаем, что есть разделитель в конце
-						if (findStringCount-1>=bufferCount)
-							return true;
-
-						// Проверяем первый символ текущего блока с учётом обратного смещения, которое делается
-						// при переходе между блоками
-						cpi->LastSymbol = readBuffer[findStringCount-1];
-
-						if (IsWordDiv(cpi->LastSymbol))
-							return true;
-
-						// Если размер буфера меньше размера слова, то выходим
-						if (readBlockSize < findStringCount)
-							RETURN_OR_CONTINUE(false)
-					}
-
-					// Устанавливаем буфер сравнения
-					buffer = readBuffer;
-				}
-
-				unsigned int index = 0;
-
-				do
-				{
-					// Ищем подстроку в буфере и возвращаем индекс её начала в случае успеха
-					int foundIndex = FindStringBMH(buffer+index, bufferCount-index);
-
-					// Если подстрока не найдена идём на следующий шаг
-					if (foundIndex == -1)
-						break;
-
-					// Если подстрока найдена и отключен поиск по словам, то считаем что всё хорошо
-					if (!WholeWords)
-						return true;
-
-					// Устанавливаем позицию в исходном буфере
-					index += foundIndex;
-
-					// Если идёт поиск по словам, то делаем соответвующие проверки
-					bool firstWordDiv = false;
-
-					// Если мы находимся в начале блока
-					if (!index)
-					{
-						// Если мы находимся в начале файла, то считаем, что разделитель есть
-						// Если мы находимся в начале блока, то проверяем является
-						// или нет последний символ предыдущего блока разделителем
-						if (alreadyRead==readBlockSize || IsWordDiv(cpi->LastSymbol))
-							firstWordDiv = true;
-					}
-					else
-					{
-						// Проверяем является или нет предыдущий найденному символ блока разделителем
-						cpi->LastSymbol = buffer[index-1];
-
-						if (IsWordDiv(cpi->LastSymbol))
-							firstWordDiv = true;
-					}
-
-					// Проверяем разделитель в конце, только если найден разделитель в начале
-					if (firstWordDiv)
-					{
-						// Если блок выбран не до конца
-						if (index+findStringCount!=bufferCount)
-						{
-							// Проверяем является или нет последующий за найденным символ блока разделителем
-							cpi->LastSymbol = buffer[index+findStringCount];
-
-							if (IsWordDiv(cpi->LastSymbol))
-								return true;
-						}
-						else
-							cpi->WordFound = true;
-					}
-				}
-				while (++index<=bufferCount-findStringCount);
-
-				// Выходим, если мы вышли за пределы количества байт разрешённых для поиска
-				if (SearchInFirst && SearchInFirst>=alreadyRead)
-					RETURN_OR_CONTINUE(false)
-				// Запоминаем последний символ блока
-				cpi->LastSymbol = buffer[bufferCount-1];
+			if (LookBehindAligned >= smm.Length()) {
+				throw std::runtime_error("LookBehindAligned too big");
 			}
 
-			// Получаем смещение на которое мы отступили при переходе между блоками
-			offset = (int)((CodePage==CP_AUTODETECT?sizeof(wchar_t):codePages->MaxCharSize)*(findStringCount-1));
+			FilePos-= LookBehindAligned;
+			smm.Slide(FilePos);
+			Length = smm.Length();
+			if (Length < (LookBehindAligned - LookBehind)) {
+				throw std::runtime_error(
+					StrPrintf("Length less that alignment gap (%llx < %llx - %llx)",
+						(long long)Length, (long long)LookBehindAligned, (long long)LookBehind));
+			}
+			Length-= (LookBehindAligned - LookBehind);
+			View = (const unsigned char *)smm.View() + (LookBehindAligned - LookBehind);
 		}
-
-		// Если мы потенциально прочитали не весь файл
-		if (readBlockSize==sizeof(readBufferB))
-		{
-			// Отступаем назад на длину слова поиска минус 1
-			if (!file.SetPointer(-1*offset, nullptr, FILE_CURRENT))
-				return false;
-			alreadyRead -= offset;
-		}
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s(%s) - %s [FilePos=%llx FileSize=%llx]\n",
+			__FUNCTION__, Name, e.what(), (long long)FilePos, (long long)FileSize);
 	}
 
 	return false;
-#undef RETURN_OR_CONTINUE
 }
 
 static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DATA_EX& FindData, size_t ArcIndex);
@@ -1398,7 +1054,17 @@ struct ScanFileWorkItem : IThreadedWorkItem
 	{
 		SudoClientRegion scr;
 		SudoSilentQueryRegion ssqr;
-		_Result = ScanFile(_FileToScan);
+		const auto &FileToScanMB = _FileToScan.GetMB();
+		// Если строки поиска пустая, то считаем, что мы всегда что-нибудь найдём
+		if (strFindStr.IsEmpty()) {
+			_Result = true;
+
+		} else if (_FindData.nFileSize > FILE_SCAN_READING_SIZE) {
+			_Result = ScanFileByMapping(FileToScanMB.c_str());
+
+		} else {
+			_Result = ScanFileByReading(FileToScanMB.c_str());
+		}
 	}
 
 private:
@@ -1435,9 +1101,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem* FileItem,
 		// characters count - then file cannot contain it (in any codepage).
 		// This small optimization also resolves stuck on attempt to scan pseudo files like
 		// /proc/kmsg cuz they have zero size reported
-		if (!SearchHex && FindData.nFileSize < strFindStr.GetLength())
-			return;
-		if (SearchHex && FindData.nFileSize < hexFindStringSize)
+		if (findPattern && FindData.nFileSize < findPattern->MinPatternSize())
 			return;
 	}
 

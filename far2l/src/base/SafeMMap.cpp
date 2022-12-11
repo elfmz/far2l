@@ -27,7 +27,6 @@
 #include <atomic>
 
 #include <utils.h>
-#include <ScopeHelpers.h>
 #include "SafeMMap.hpp"
 #include "farversion.h"
 
@@ -163,8 +162,8 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 		for (const auto &smm : s_safe_mmaps) {
 			if ((uintptr_t)info->si_addr >= (uintptr_t)smm->_view && 
 				(uintptr_t)info->si_addr - (uintptr_t)smm->_view < (uintptr_t)smm->_len) {
-				if (!smm->_remapped) {
-					smm->_remapped = true;
+				if (!smm->_dummy) {
+					smm->_dummy = true;
 					mmap(smm->_view, smm->_len, smm->_prot,
 						MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
 					return;
@@ -207,29 +206,35 @@ void SafeMMap::sUnregisterSignalHandler()
 
 
 SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
-	: _prot((m == M_READ) ? PROT_READ : PROT_WRITE)
+	:
+	_fd(sdc_open(path, (m == M_WRITE) ? O_RDWR : O_RDONLY)),
+	_pg(getpagesize()),
+	_prot((m == M_READ) ? PROT_READ : PROT_WRITE),
+	_flags((m == M_WRITE) ? MAP_SHARED : MAP_PRIVATE)
 {
-#ifdef PRINT_FAULTS
-	getrusage(RUSAGE_SELF, &s_usg);
-#endif
-	FDScope fd(sdc_open(path, (m == M_WRITE) ? O_RDWR : O_RDONLY));
-	if (fd == -1) {
+	if (!_fd.Valid()) {
 		throw std::runtime_error(StrPrintf("Open error %u", errno));
 	}
 
+#ifdef PRINT_FAULTS
+	getrusage(RUSAGE_SELF, &s_usg);
+#endif
+
 	struct stat s{};
-	if (sdc_fstat(fd, &s) != 0) {
+	if (sdc_fstat(_fd, &s) != 0) {
 		throw std::runtime_error(StrPrintf("Stat error %u", errno));
 	}
 
-	_len = std::min((size_t)s.st_size, len_limit);
+	_file_size = s.st_size;
+
+	_len = (size_t)std::min(s.st_size, (off_t)len_limit);
 	if (_len == 0) {
 		return;
 	}
 
-	_view = mmap(NULL, _len, _prot, (m == M_WRITE) ? MAP_SHARED : MAP_PRIVATE, fd, 0);
+	_view = mmap(NULL, _len, _prot, _flags, _fd, 0);
 	if (!_view || (_view == MAP_FAILED))
-		throw std::runtime_error(StrPrintf("Map error %u", errno));
+		throw std::runtime_error(StrPrintf("SafeMMap::SafeMMap: mmap error %u", errno));
 
 	SMM_Lock sl;
 	s_safe_mmaps.insert(this);
@@ -242,11 +247,63 @@ SafeMMap::~SafeMMap()
 			SMM_Lock sl;
 			s_safe_mmaps.erase(this);
 		}
-		munmap(_view, _len);
+		if (munmap(_view, _len) == -1) {
+			perror("~SafeMMap: munmap");
+		}
 #ifdef PRINT_FAULTS
 		struct rusage usg {};
 		getrusage(RUSAGE_SELF, &usg);
 		fprintf(stderr, "FAULTS: %u %u\n", usg.ru_majflt - s_usg.ru_majflt, usg.ru_minflt - s_usg.ru_minflt);
 #endif
 	}
+}
+
+void SafeMMap::Slide(off_t file_offset)
+{
+	if (file_offset >= _file_size) {
+		fprintf(stderr, "SafeMMap::Slide: file_offset[%llx] >= _file_size[%llx]\n",
+			(unsigned long long)file_offset, (unsigned long long)_file_size);
+	}
+
+	const size_t new_len = (size_t)std::min((off_t)_len, _file_size - file_offset);
+	// In documentation only BSD and Linux clearly stating that using MAP_FIXED
+	// unmaps previous mapping(s) from affected address range.
+	// So for that systems use approach looking most optimal: remap same pages to
+	// different region of file. At least this should allow VMM to avoid searching
+	// for free pages as well as reduce syscalls count by avoiding call to munmap().
+#if defined(__linux__) || defined(__FreeBSD__)
+	void *new_view = mmap(_view, new_len, _prot, _flags | MAP_FIXED, _fd, file_offset);
+#else
+	void *new_view = mmap(nullptr, new_len, _prot, _flags, _fd, file_offset);
+#endif
+	if (!new_view || (new_view == MAP_FAILED)) {
+		throw std::runtime_error(StrPrintf("SafeMMap::Slide: mmap error %u", errno));
+	}
+
+	if (_view != new_view) {
+#if !defined(__linux__) && !defined(__FreeBSD__)
+		fprintf(stderr, "SafeMMap::Slide: _view[%p] != new_view[%p]\n", _view, new_view);
+#endif
+		if (munmap(_view, _len) == -1) {
+			perror("SafeMMap::Slide: munmap prev range");
+		}
+		_view = new_view;
+		_len = new_len;
+
+	} else if (new_len < _len) {
+		const size_t al_new_len = AlignUp(new_len, _pg);
+		const size_t al_len = AlignUp(_len, _pg);
+		if (al_new_len < al_len) {
+			// From documentation:
+			//   If the memory region specified by addr and len overlaps pages of any existing
+			//   mapping(s), then the overlapped part of the existing mapping(s) will be discarded
+			// That means if not whole range remapped - then have to explicitly unmap remainder.
+			if (munmap((unsigned char *)_view + al_new_len, al_len - al_new_len) == -1) {
+				perror("SafeMMap::Slide: munmap remainder");
+			}
+		}
+		_len = new_len;
+	}
+
+//	fprintf(stderr, "SafeMMap::Slide: _view=%p len=%lx\n", _view, _len);
 }

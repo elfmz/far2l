@@ -11,10 +11,6 @@
 #include <utils.h>
 #include <StackHeapArray.hpp>
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
-# include <alloca.h>
-#endif
-
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "wineguts.h"

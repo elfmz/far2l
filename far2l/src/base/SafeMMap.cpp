@@ -305,5 +305,11 @@ void SafeMMap::Slide(off_t file_offset)
 		_len = new_len;
 	}
 
+	if (_dummy) {
+		_dummy = false;
+		fprintf(stderr, "SafeMMap::Slide(0x%llx): dummy slided away\n", (unsigned long long)file_offset);
+	}
+
+
 //	fprintf(stderr, "SafeMMap::Slide: _view=%p len=%lx\n", _view, _len);
 }

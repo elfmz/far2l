@@ -80,10 +80,10 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 		if ((ch >= 0 && ch < 0x20)) {
 			out+= '\x01';
 
+		} else if (ch == '\'') {
+			out+= "'\\''";
+
 		} else {
-			if (ch == '\'' || ch == '\\') {
-				out+= '\\';
-			}
 			out+= ch;
 		}
 	}
@@ -105,7 +105,7 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bo
 	const char *pwd_file_ext = need_sudo ? ".spwd" : ".pwd";
 
 	unsigned int id = ++s_vt_script_id;
-	char name[128]; 
+	char name[128];
 	sprintf(name, "vtcmd/%x_%u", getpid(), id);
 	_cmd_script = InMyTemp(name);
 	_pwd_file = _cmd_script + pwd_file_ext;

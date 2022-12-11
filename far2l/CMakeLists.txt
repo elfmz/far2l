@@ -31,6 +31,7 @@ src/filestr.cpp
 src/filetype.cpp
 src/fileview.cpp
 src/findfile.cpp
+src/FindPattern.cpp
 src/flink.cpp
 src/fnparce.cpp
 src/foldtree.cpp

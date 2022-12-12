@@ -3,56 +3,57 @@
 #include <stdint.h>
 #include <assert.h>
 
+// inspired by Aho-Corasick
+
 template <class ELEMENT_T, size_t MAX_ELEMENTS>
 	struct ScannedPattern
 {
-	// inspired by Aho-Corasick
 	class Chunk
 	{
-		uint16_t _rewind_pos;
-		unsigned char _len;     	// never zero
-		unsigned char _alt_len;     // can be zero
-		struct Elements
-		{
-			ELEMENT_T contained[MAX_ELEMENTS];
+		uint16_t _rewind_pos{0};
+		unsigned char _base_len{0};     // never zero
+		unsigned char _alt_len{0};      // can be zero meaning no alternative case representation
+		ELEMENT_T _base[MAX_ELEMENTS];
+		ELEMENT_T _alt[MAX_ELEMENTS];
 
-			bool NonEmptyMatchData(const ELEMENT_T *data, unsigned char len) const;
-
-		} _elements, _alt_elements;
+		static bool MatchNonEmptyData(const ELEMENT_T *left, const ELEMENT_T *right, unsigned char len);
 
 	public:
+		static constexpr size_t CapacitySize = MAX_ELEMENTS * sizeof(ELEMENT_T);
+
 		Chunk() = default;
 
-		Chunk(size_t len, const ELEMENT_T *elements,
-			size_t alt_len, const ELEMENT_T *alt_elements)
+		void SetBase(const ELEMENT_T *elements, size_t len)
+		{
+			assert(len && len <= MAX_ELEMENTS);
+			_base_len = len;
+			std::copy(elements, elements + len, &_base[0]);
+		}
+
+		void SetAlt(const ELEMENT_T *elements, size_t len)
 		{
 			assert(len <= MAX_ELEMENTS);
-			assert(alt_len <= MAX_ELEMENTS);
-			_rewind_pos = 0;
-			_len = len;
-			_alt_len = alt_len;
-			std::copy(elements, elements + len, &_elements.contained[0]);
-			std::copy(alt_elements, alt_elements + alt_len, &_alt_elements.contained[0]);
+			_alt_len = len;
+			std::copy(elements, elements + len, &_alt[0]);
 		}
 
 		bool operator ==(const Chunk &other) const
 		{
-			return _len == other._len && _elements.NonEmptyMatchData(other._elements.contained, _len)
+			return _base_len == other._base_len && MatchNonEmptyData(_base, other._base, _base_len)
 				&& _alt_len == other._alt_len
-				&& (_alt_len == 0 || _alt_elements.NonEmptyMatchData(other._alt_elements.contained, _alt_len));
+				&& (_alt_len == 0 || MatchNonEmptyData(_alt, other._alt, _alt_len));
 		}
 
 		inline size_t Match(const ELEMENT_T *data, size_t len) const
 		{
-			if (len >= _len && _elements.NonEmptyMatchData(data, _len)) {
-				return _len;
-			}
+			return (len >= _base_len && MatchNonEmptyData(data, _base, _base_len))
+				? _base_len
+				: ((_alt_len && len >= _alt_len && MatchNonEmptyData(data, _alt, _alt_len)) ? _alt_len : 0);
+		}
 
-			if (_alt_len && len >= _alt_len && _alt_elements.NonEmptyMatchData(data, _alt_len)) {
-				return _alt_len;
-			}
-
-			return 0;
+		inline size_t MatchBase(const ELEMENT_T *data, size_t len) const
+		{
+			return (len >= _base_len && MatchNonEmptyData(data, _base, _base_len)) ? _base_len : 0;
 		}
 
 		void SetRewindPos(size_t rewind_pos)
@@ -68,12 +69,12 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 
 		inline size_t MinLen() const
 		{
-			return (_alt_len && _alt_len < _len) ? _alt_len : _len;
+			return (_alt_len && _alt_len < _base_len) ? _alt_len : _base_len;
 		}
 
 		inline size_t MaxLen() const
 		{
-			return (_alt_len && _alt_len > _len) ? _alt_len : _len;
+			return (_alt_len > _base_len) ? _alt_len : _base_len;
 		}
 
 		inline size_t MinSize() const
@@ -91,14 +92,8 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 
 	Chain chain;
 
-	ScannedPattern(const std::vector<std::pair<std::vector<ELEMENT_T>, std::vector<ELEMENT_T>>> &chain_src)
+	void GetReady()
 	{
-		chain.clear();
-		for (const auto &chunk_src : chain_src) {
-			chain.emplace_back(
-				chunk_src.first.size(), chunk_src.first.data(),
-				chunk_src.second.size(), chunk_src.second.data());
-		}
 		for (size_t i = 1; i < chain.size(); ++i) {
 			for (size_t j = i - 1; j >= 1; --j) {
 				if (std::equal(chain.begin(), chain.begin() + j, chain.begin() + (i - j))) {
@@ -142,8 +137,8 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 	}
 };
 
-typedef ScannedPattern<uint8_t, 6> ScannedPatternUTF8;
-typedef ScannedPattern<uint16_t, 2> ScannedPatternUTF16;
+typedef ScannedPattern<uint8_t, 6> ScannedPattern8x;
+typedef ScannedPattern<uint16_t, 2> ScannedPattern16x;
 typedef ScannedPattern<uint8_t, 1> ScannedPattern8;
 typedef ScannedPattern<uint16_t, 1> ScannedPattern16;
 typedef ScannedPattern<uint32_t, 1> ScannedPattern32;
@@ -159,24 +154,13 @@ class FindPattern
 	template <class ScannedPatternT>
 		struct PatternsVec : std::vector<ScannedPatternT>
 	{
-		template <class CHAIN_SRC_T>
-			void EmplaceUniq(const CHAIN_SRC_T &new_chain_src)
-		{
-			std::vector<ScannedPatternT>::emplace_back(new_chain_src);
-			for (size_t i = 0; i + 1 < std::vector<ScannedPatternT>::size(); ++i) {
-				if (std::vector<ScannedPatternT>::operator[](i) == std::vector<ScannedPatternT>::back()) {
-					std::vector<ScannedPatternT>::pop_back();
-					return;
-				}
-			}
-		}
 	};
 
-	PatternsVec<ScannedPatternUTF8>  _patternsUTF8;
-	PatternsVec<ScannedPatternUTF16> _patternsUTF16;
-	PatternsVec<ScannedPattern8>     _patterns8;
-	PatternsVec<ScannedPattern16>    _patterns16;
-	PatternsVec<ScannedPattern32>    _patterns32;
+	PatternsVec<ScannedPattern8x>    _patterns8x;  // multibyte UTF7, UTF8
+	PatternsVec<ScannedPattern16x>   _patterns16x; // multiword UTF16
+	PatternsVec<ScannedPattern8>     _patterns8;   // single byte encodings and single byte UTF7, UTF8
+	PatternsVec<ScannedPattern16>    _patterns16;  // double-byte encodings and single word UTF16
+	PatternsVec<ScannedPattern32>    _patterns32;  // UTF32
 
 public:
 	FindPattern(bool case_sensitive, bool whole_words);

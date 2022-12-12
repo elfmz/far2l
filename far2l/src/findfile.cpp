@@ -955,6 +955,12 @@ static bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX& FindData, con
 	return nResult;
 }
 
+template <class N>
+	static N ApplyScanFileLengthLimit(N v)
+{
+	return (SearchInFirst && (N)SearchInFirst < v) ? (N)SearchInFirst : v;
+}
+
 static bool ScanFileByReading(const char *Name)
 {
 	uint8_t buf[FILE_SCAN_READING_SIZE];
@@ -962,7 +968,7 @@ static bool ScanFileByReading(const char *Name)
 	if (!fd.Valid())
 		return false;
 
-	size_t len = ReadAll(fd, buf, sizeof(buf));
+	size_t len = ReadAll(fd, buf, ApplyScanFileLengthLimit(sizeof(buf)));
 	if (len == 0)
 		return false;
 
@@ -974,10 +980,7 @@ static bool ScanFileByMapping(const char *Name)
 	off_t FileSize = 0, FilePos = 0;
 	try {
 		SafeMMap smm(Name, SafeMMap::M_READ, FILE_SCAN_MMAP_WINDOW);
-		FileSize = smm.FileSize();
-
-		if (SearchInFirst && FileSize > (off_t)SearchInFirst)
-			FileSize = (off_t)SearchInFirst;
+		FileSize = ApplyScanFileLengthLimit(smm.FileSize());
 
 		const void *View = smm.View();
 		size_t Length = smm.Length();

@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-// inspired by Aho-Corasick
-
 template <class ELEMENT_T, size_t MAX_ELEMENTS>
 	struct ScannedPattern
 {
@@ -91,7 +89,13 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 	typedef std::vector<Chunk> Chain;
 
 	Chain chain;
-
+	/** This is a most tricky function:
+	  * go through chain and for each non-heading chunk assign 'rewind' position that specifies
+	  * where MatchPattern() routine will seek back in pattern chain in case of mismatching this
+	  * particular chunk while all previous chunks where recently matched.
+	  * Using correct rewind value ensures finding matches in cases like:
+	  * {'ac' IN 'aac'}  {'abc' IN 'ababc'} {'bdbdba' IN 'bdbdbdba'} etc
+	  */
 	void GetReady()
 	{
 		for (size_t i = 1; i < chain.size(); ++i) {
@@ -118,6 +122,7 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 		return chain == other.chain;
 	}
 
+	/** returns minimal size (in bytes) of string that could match this pattern */
 	size_t MinSize() const
 	{
 		size_t out = 0;
@@ -127,6 +132,9 @@ template <class ELEMENT_T, size_t MAX_ELEMENTS>
 		return out;
 	}
 
+	/** returns size (in bytes) of sub string that should be read from tail of previous scan window
+	  * to ensure matching substring that happen to be crossed by scan windows boundary
+	  */
 	size_t LookBehind() const
 	{
 		size_t out = 0;

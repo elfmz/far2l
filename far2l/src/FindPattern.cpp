@@ -177,7 +177,7 @@ bool FindPattern::AddTextPattern(const wchar_t *pattern, unsigned int codepage)
 			AddUniqPattern(_patterns8x, sp8x);
 		}
 
-	} else if ( (codepage == CP_UTF16BE || codepage == CP_UTF16LE) && !utf_all_short) {
+	} else if (codepage == CP_UTF16BE || codepage == CP_UTF16LE) {
 		if (utf_all_short) {
 			AddUniqPattern(_patterns16, sp16);
 		} else {
@@ -259,10 +259,14 @@ void FindPattern::GetReady()
 			_min_pattern_size, _look_behind);
 }
 
+/** Helper function used if MatchPattern found match, its goal is to go back and find starting position of
+  * matched substring. MatchPattern could do remembering itself, but this would defeat its performance.
+  */
 template <class PatternT, class ELEMENT_T>
 	std::pair<size_t, size_t> LookupMatchedRange(const PatternT &pattern, const ELEMENT_T *data, size_t edge)
 {
 	size_t len = 0;
+	// go back in pattern elements sequence finding matched length to do next back step until reaching pattern start
 	for (size_t chain_pos = pattern.chain.size(); chain_pos; ) {
 		--chain_pos;
 		const auto &chunk = pattern.chain[chain_pos];
@@ -278,9 +282,16 @@ template <class PatternT, class ELEMENT_T>
 		}
 	}
 
-	return std::make_pair(edge - len, edge);
+	return std::make_pair(edge - len, edge); //  [start, edge) so caller will know exact range of matched substring
 }
 
+/** Actual finder routine. It sequentially goes through data array comparing current element with currently
+  * selected pattern's chunk. Note that chunk may represent more than single element so in case of match
+  * data iterated forward by all matched elements and pattern iterated to next chunk. In case of mismatch
+  * one of two actions could be taken, depending on chunk position in pattern:
+  *  - if chunk is at the head of pattern - then data array iterated forward by single element
+  *  - otherwise then pattern is 'rewinded' to pre-defined during pattern creation point
+  */
 template <bool WITH_ALT, class PatternT, class ELEMENT_T>
 	std::pair<size_t, size_t> MatchPattern(const PatternT &pattern, const ELEMENT_T *data, size_t len)
 {

@@ -53,6 +53,7 @@ template <class PatternsT>
 {
 	if (std::find(patterns.begin(), patterns.end(), sp) == patterns.end()) {
 		patterns.emplace_back(sp);
+		patterns.back().GetReady();
 	}
 }
 
@@ -253,7 +254,7 @@ void FindPattern::GetReady()
 		_look_behind = AlignUp(_look_behind, 2);
 	}
 
-	fprintf(stderr, "FindPattern::GetReady: 8x:%lu 16x:%lu 8:%lu 16:%lu 32:%lu _min_pattern_size=%lu _look_behind=%lu\n",
+	fprintf(stderr, "FindPattern::GetReady: 8x:%lu 16x:%lu 8:%lu 16:%lu 32:%lu MPS=%lu LB=%lu\n",
 			_patterns8x.size(), _patterns16x.size(),
 			_patterns8.size(), _patterns16.size(), _patterns32.size(),
 			_min_pattern_size, _look_behind);

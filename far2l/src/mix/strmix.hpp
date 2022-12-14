@@ -94,10 +94,10 @@ uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr);
 FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits=0);
 FARString &InsertCommas(uint64_t li, FARString &strDest);
 
-inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr)
+inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) noexcept
 	{ return wcschr(WordDiv, Chr) != nullptr; }
 
-inline bool IsWordDivSTNR(const wchar_t *WordDiv, wchar_t Chr)
+inline bool IsWordDivSTNR(const wchar_t *WordDiv, wchar_t Chr) noexcept
 	{ return wcschr(WordDiv, Chr) != nullptr || IsSpace(Chr) || IsEol(Chr); }
 
 //   WordDiv  - набор разделителей слова в кодировке OEM

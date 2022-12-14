@@ -459,11 +459,12 @@ static void InitInFileSearchText()
 	std::sort(codepages.begin(), codepages.end());
 	codepages.erase(std::unique(codepages.begin(), codepages.end()), codepages.end());
 
-	for (const auto &codepage : codepages) {
-		if (!findPattern->AddTextPattern(strFindStr.CPtr(), codepage)) {
-			fprintf(stderr, "%s: can't add codepage=%d pattern='%ls'\n",
-				__FUNCTION__, codepage, strFindStr.CPtr());
-		}
+	for (const auto &codepage : codepages) try {
+		findPattern->AddTextPattern(strFindStr.CPtr(), codepage);
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: codepage=%d pattern='%ls' exception='%s'\n",
+			__FUNCTION__, codepage, strFindStr.CPtr(), e.what());
 	}
 }
 
@@ -485,16 +486,12 @@ static void InitInFileSearchHex()
 
 		flag = !flag;
 	}
-	if (!pattern.empty()) {
-		findPattern->AddBytesPattern(pattern.data(), pattern.size());
-	} else {
-		fprintf(stderr, "%s: bad hex string='%ls'\n", __FUNCTION__, strFindStr.CPtr());
-	}
+	findPattern->AddBytesPattern(pattern.data(), pattern.size());
 }
 
 static void InitInFileSearch()
 {
-	if (!InFileSearchInited && !strFindStr.IsEmpty()) {
+	if (!InFileSearchInited && !strFindStr.IsEmpty()) try {
 
 		findPattern.reset(new FindPattern(CmpCase != 0 && !SearchHex, WholeWords != 0 && !SearchHex));
 
@@ -507,6 +504,11 @@ static void InitInFileSearch()
 
 		findPattern->GetReady();
 		InFileSearchInited = true;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+		FARString err_str(e.what());
+		Message(MSG_WARNING, 1, Msg::Error, err_str, Msg::Ok);
 	}
 }
 
@@ -962,7 +964,7 @@ template <class N>
 }
 
 static bool ScanFileByReading(const char *Name)
-{
+{	// used for short files where single read is more optimal than mmap
 	uint8_t buf[FILE_SCAN_READING_SIZE];
 	FDScope fd(sdc_open(Name, O_RDONLY));
 	if (!fd.Valid())
@@ -1004,16 +1006,15 @@ static bool ScanFileByMapping(const char *Name)
 			const size_t LookBehindAligned = AlignUp(LookBehind, smm.Page());
 
 			if (LookBehindAligned >= smm.Length()) {
-				throw std::runtime_error("LookBehindAligned too big");
+				ThrowPrintf("LookBehindAligned too big");
 			}
 
 			FilePos-= LookBehindAligned;
 			smm.Slide(FilePos);
 			Length = smm.Length();
 			if (Length < (LookBehindAligned - LookBehind)) {
-				throw std::runtime_error(
-					StrPrintf("Length less that alignment gap (%llx < %llx - %llx)",
-						(long long)Length, (long long)LookBehindAligned, (long long)LookBehind));
+				ThrowPrintf("Length less that alignment gap (%llx < %llx - %llx)",
+						(long long)Length, (long long)LookBehindAligned, (long long)LookBehind);
 			}
 			Length-= (LookBehindAligned - LookBehind);
 			View = (const unsigned char *)smm.View() + (LookBehindAligned - LookBehind);

@@ -213,7 +213,7 @@ SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
 	_flags((m == M_WRITE) ? MAP_SHARED : MAP_PRIVATE)
 {
 	if (!_fd.Valid()) {
-		throw std::runtime_error(StrPrintf("Open error %u", errno));
+		ThrowPrintf("Open error %u", errno);
 	}
 
 #ifdef PRINT_FAULTS
@@ -222,7 +222,7 @@ SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
 
 	struct stat s{};
 	if (sdc_fstat(_fd, &s) != 0) {
-		throw std::runtime_error(StrPrintf("Stat error %u", errno));
+		ThrowPrintf("Stat error %u", errno);
 	}
 
 	_file_size = s.st_size;
@@ -234,7 +234,7 @@ SafeMMap::SafeMMap(const char *path, enum Mode m, size_t len_limit)
 
 	_view = mmap(NULL, _len, _prot, _flags, _fd, 0);
 	if (!_view || (_view == MAP_FAILED))
-		throw std::runtime_error(StrPrintf("SafeMMap::SafeMMap: mmap error %u", errno));
+		ThrowPrintf("SafeMMap::SafeMMap: mmap error %u", errno);
 
 	SMM_Lock sl;
 	s_safe_mmaps.insert(this);
@@ -277,7 +277,7 @@ void SafeMMap::Slide(off_t file_offset)
 	void *new_view = mmap(nullptr, new_len, _prot, _flags, _fd, file_offset);
 #endif
 	if (!new_view || (new_view == MAP_FAILED)) {
-		throw std::runtime_error(StrPrintf("SafeMMap::Slide: mmap error %u", errno));
+		ThrowPrintf("SafeMMap::Slide: mmap error %u", errno);
 	}
 
 	if (_view != new_view) {

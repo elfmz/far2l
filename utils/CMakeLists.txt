@@ -34,6 +34,7 @@ set(SOURCES
   src/POpen.cpp
   src/VT256ColorTable.cpp
   src/ReadWholeFile.cpp
+  src/ThrowPrintf.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

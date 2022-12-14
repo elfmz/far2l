@@ -1,147 +1,135 @@
 #pragma once
 #include <vector>
 #include <stdint.h>
-#include <assert.h>
 
-template <class ELEMENT_T, size_t MAX_ELEMENTS>
+template <class CodeUnitT, size_t MAX_CODEUNITS>
 	struct ScannedPattern
 {
-	class Chunk
-	{
-		uint16_t _rewind_pos{0};
-		unsigned char _base_len{0};     // never zero
-		unsigned char _alt_len{0};      // can be zero meaning no alternative case representation
-		ELEMENT_T _base[MAX_ELEMENTS];
-		ELEMENT_T _alt[MAX_ELEMENTS];
+	class CodePoint
+	{ // represents single code point (grapheme), can be fixed (e.g. UTF32) or variable (e.g. UTF8) size
+		uint16_t _rewind_pos;
+		unsigned char _base_cnt;       // nonzero count of code units used for 'base' representation
+		unsigned char _alt_cnt;        // can be zero meaning no alternative case representation
+		CodeUnitT _base[MAX_CODEUNITS];// base representation of code point
+		CodeUnitT _alt[MAX_CODEUNITS]; // optional alternative case representation of code point
 
-		static bool MatchNonEmptyData(const ELEMENT_T *left, const ELEMENT_T *right, unsigned char len);
+		static bool MatchNonEmptyData(const CodeUnitT *left, const CodeUnitT *right, unsigned char len) noexcept;
 
 	public:
-		static constexpr size_t CapacitySize = MAX_ELEMENTS * sizeof(ELEMENT_T);
+		static constexpr size_t CodeUnitSize = sizeof(CodeUnitT);
 
-		Chunk() = default;
-
-		void SetBase(const ELEMENT_T *elements, size_t len)
+		// separate Setup() method instead of c-tor resulted in smaller code
+		void Setup(const CodeUnitT *base_data, size_t base_cnt, const CodeUnitT *alt_data, size_t alt_cnt)
 		{
-			assert(len && len <= MAX_ELEMENTS);
-			_base_len = len;
-			std::copy(elements, elements + len, &_base[0]);
+			if (base_cnt != 0 && base_cnt <= MAX_CODEUNITS && alt_cnt <= MAX_CODEUNITS) {
+				_rewind_pos = 0;
+				_base_cnt = base_cnt;
+				_alt_cnt = alt_cnt;
+				memcpy(_base, base_data, base_cnt * CodeUnitSize);
+				memcpy(_alt, alt_data, alt_cnt * CodeUnitSize);
+
+			} else {
+				ThrowPrintf("CodePoint<%ld>: bad base_cnt=%ld alt_cnt=%ld", MAX_CODEUNITS, base_cnt, alt_cnt);
+			}
 		}
 
-		void SetAlt(const ELEMENT_T *elements, size_t len)
+		bool operator ==(const CodePoint &other) const noexcept
 		{
-			assert(len <= MAX_ELEMENTS);
-			_alt_len = len;
-			std::copy(elements, elements + len, &_alt[0]);
+			// _rewind_pos ignored intentionally to allow
+			// AddUniqPattern and Sequence::EqualParts to work correctly
+			return _base_cnt == other._base_cnt && MatchNonEmptyData(_base, other._base, _base_cnt)
+				&& _alt_cnt == other._alt_cnt
+				&& (_alt_cnt == 0 || MatchNonEmptyData(_alt, other._alt, _alt_cnt));
 		}
 
-		bool operator ==(const Chunk &other) const
+		inline bool operator !=(const CodePoint &other) const noexcept
 		{
-			return _base_len == other._base_len && MatchNonEmptyData(_base, other._base, _base_len)
-				&& _alt_len == other._alt_len
-				&& (_alt_len == 0 || MatchNonEmptyData(_alt, other._alt, _alt_len));
+			return !operator ==(other);
 		}
 
-		inline size_t Match(const ELEMENT_T *data, size_t len) const
+		inline size_t Match(const CodeUnitT *data, size_t len) const noexcept
 		{
-			return (len >= _base_len && MatchNonEmptyData(data, _base, _base_len))
-				? _base_len
-				: ((_alt_len && len >= _alt_len && MatchNonEmptyData(data, _alt, _alt_len)) ? _alt_len : 0);
+			return (len >= _base_cnt && MatchNonEmptyData(data, _base, _base_cnt))
+				? _base_cnt
+				: ((_alt_cnt && len >= _alt_cnt && MatchNonEmptyData(data, _alt, _alt_cnt)) ? _alt_cnt : 0);
 		}
 
-		inline size_t MatchBase(const ELEMENT_T *data, size_t len) const
+		inline size_t MatchOnlyBase(const CodeUnitT *data, size_t len) const noexcept
 		{
-			return (len >= _base_len && MatchNonEmptyData(data, _base, _base_len)) ? _base_len : 0;
+			return (len >= _base_cnt && MatchNonEmptyData(data, _base, _base_cnt)) ? _base_cnt : 0;
+		}
+
+		inline size_t RewindPos() const noexcept
+		{
+			return _rewind_pos;
 		}
 
 		void SetRewindPos(size_t rewind_pos)
 		{
 			_rewind_pos = rewind_pos;
-			assert(_rewind_pos == rewind_pos);
+			if (_rewind_pos != rewind_pos) {
+				ThrowPrintf("too distant rewind_pos");
+			}
 		}
 
-		size_t RewindPos() const
+		size_t MinCnt() const noexcept
 		{
-			return _rewind_pos;
+			return (_alt_cnt && _alt_cnt < _base_cnt) ? _alt_cnt : _base_cnt;
 		}
 
-		inline size_t MinLen() const
+		size_t MaxCnt() const noexcept
 		{
-			return (_alt_len && _alt_len < _base_len) ? _alt_len : _base_len;
+			return (_alt_cnt > _base_cnt) ? _alt_cnt : _base_cnt;
 		}
 
-		inline size_t MaxLen() const
+		size_t MinSize() const noexcept
 		{
-			return (_alt_len > _base_len) ? _alt_len : _base_len;
+			return MinCnt() * CodeUnitSize;
 		}
 
-		inline size_t MinSize() const
+		size_t MaxSize() const noexcept
 		{
-			return MinLen() * sizeof(ELEMENT_T);
-		}
-
-		inline size_t MaxSize() const
-		{
-			return MaxLen() * sizeof(ELEMENT_T);
+			return MaxCnt() * CodeUnitSize;
 		}
 	};
 
-	typedef std::vector<Chunk> Chain;
-
-	Chain chain;
-	/** This is a most tricky function:
-	  * go through chain and for each non-heading chunk assign 'rewind' position that specifies
-	  * where MatchPattern() routine will seek back in pattern chain in case of mismatching this
-	  * particular chunk while all previous chunks where recently matched.
-	  * Using correct rewind value ensures finding matches in cases like:
-	  * {'ac' IN 'aac'}  {'abc' IN 'ababc'} {'bdbdba' IN 'bdbdbdba'} etc
-	  */
-	void GetReady()
-	{
-		for (size_t i = 1; i < chain.size(); ++i) {
-			for (size_t j = i - 1; j >= 1; --j) {
-				if (std::equal(chain.begin(), chain.begin() + j, chain.begin() + (i - j))) {
-					size_t n = 2;
-					for (;j * n < i; ++n) {
-						if (!std::equal(chain.begin(), chain.begin() + j, chain.begin() + j * (n - 1))) {
-							break;
-						}
-						if (!std::equal(chain.begin(), chain.begin() + j, chain.begin() + (i - j * n))) {
-							break;
-						}
-					}
-					chain[i].SetRewindPos(j * (n - 1));
-					break;
-				}
-			}
+	struct Sequence : std::vector<CodePoint>
+	{	// all this methods used only in init so don't inline them to make code smaller
+		void FN_NOINLINE EmplaceCodePoint(
+			const CodeUnitT *base_data, size_t base_cnt,
+			const CodeUnitT *alt_data, size_t alt_cnt)
+		{
+			std::vector<CodePoint>::emplace_back();
+			std::vector<CodePoint>::back().Setup(base_data, base_cnt, alt_data, alt_cnt);
 		}
+
+		static bool FN_NOINLINE EqualRanges(
+			typename std::vector<CodePoint>::const_iterator start1,
+			typename std::vector<CodePoint>::const_iterator start2,
+			size_t count) noexcept
+		{
+			return std::equal(start1, start1 + count, start2);
+		}
+
+		bool EqualParts(size_t start1, size_t start2, size_t count) const noexcept
+		{
+			return EqualRanges(
+				std::vector<CodePoint>::begin() + start1,
+				std::vector<CodePoint>::begin() + start2,
+				count
+			);
+		}
+	} seq;
+
+	bool operator ==(const ScannedPattern &other) const noexcept
+	{
+		return other.seq.size() == seq.size()
+			&& Sequence::EqualRanges(seq.begin(), other.seq.begin(), seq.size());
 	}
 
-	bool operator ==(const ScannedPattern &other) const
+	bool operator !=(const ScannedPattern &other) const noexcept
 	{
-		return chain == other.chain;
-	}
-
-	/** returns minimal size (in bytes) of string that could match this pattern */
-	size_t MinSize() const
-	{
-		size_t out = 0;
-		for (const auto &chunk : chain) {
-			out+= chunk.MinSize();
-		}
-		return out;
-	}
-
-	/** returns size (in bytes) of sub string that should be read from tail of previous scan window
-	  * to ensure matching substring that happen to be crossed by scan windows boundary
-	  */
-	size_t LookBehind() const
-	{
-		size_t out = 0;
-		for (size_t i = 1; i < chain.size(); ++i) {
-			out+= chain[i].MaxSize();
-		}
-		return out;
+		return !operator ==(other);
 	}
 };
 
@@ -159,27 +147,55 @@ class FindPattern
 	size_t _min_pattern_size{0};
 	size_t _look_behind{0};
 
-	template <class ScannedPatternT>
-		struct PatternsVec : std::vector<ScannedPatternT>
-	{
-	};
+	std::vector<ScannedPattern8x>    _patterns8x;  // multibyte UTF7, UTF8
+	std::vector<ScannedPattern16x>   _patterns16x; // multiword UTF16
+	std::vector<ScannedPattern8>     _patterns8;   // single byte encodings and single byte UTF7, UTF8
+	std::vector<ScannedPattern16>    _patterns16;  // double-byte encodings and single word UTF16
+	std::vector<ScannedPattern32>    _patterns32;  // UTF32
 
-	PatternsVec<ScannedPattern8x>    _patterns8x;  // multibyte UTF7, UTF8
-	PatternsVec<ScannedPattern16x>   _patterns16x; // multiword UTF16
-	PatternsVec<ScannedPattern8>     _patterns8;   // single byte encodings and single byte UTF7, UTF8
-	PatternsVec<ScannedPattern16>    _patterns16;  // double-byte encodings and single word UTF16
-	PatternsVec<ScannedPattern32>    _patterns32;  // UTF32
+	template <class Patterns>
+		void AccontMinimalAndLookBehindSizesFor(Patterns &patterns) noexcept
+	{
+		size_t min_pattern_size = 0, look_behind = 0;
+		for (const auto &pattern : patterns) {
+			for (const auto &code_point : pattern.seq) {
+				min_pattern_size+= code_point.MinSize();
+				look_behind+= code_point.MaxSize();
+			}
+		}
+		if (look_behind >= Patterns::value_type::CodePoint::CodeUnitSize) {
+			look_behind-= Patterns::value_type::CodePoint::CodeUnitSize;
+		}
+		_min_pattern_size = std::min(_min_pattern_size, min_pattern_size);
+		_look_behind = std::max(_look_behind, look_behind);
+	}
 
 public:
 	FindPattern(bool case_sensitive, bool whole_words);
 
 	void AddBytesPattern(const uint8_t *pattern, size_t len);
-	bool AddTextPattern(const wchar_t *pattern, unsigned int codepage);
+	void AddTextPattern(const wchar_t *pattern, unsigned int codepage);
 
+	/** Call this once after all patterns added but before using any other method below.
+	  */
 	void GetReady();
 
-	inline size_t MinPatternSize() const { return _min_pattern_size; }
-	inline size_t LookBehind() const { return _look_behind; }
+	/** Minimal size (in bytes) of content that can match any of added pattern.
+	  */
+	inline size_t MinPatternSize() const noexcept { return _min_pattern_size; }
 
-	std::pair<size_t, size_t> Match(const void *data, size_t len, bool first_fragment, bool last_fragment);
+	/** Size (in bytes) of substring that should be prepended from tail of previous scan window
+	  * to ensure matching substring that happen to be crossed by scan windows boundary.
+	  * Returned value guaranteed to be aligned by size of largest searched codepoint.
+	  */
+	inline size_t LookBehind() const noexcept { return _look_behind; }
+
+	/** Searches given data array for substring matching any of added pattern.
+	  * Data array pointer expected to be aligned by size of largest searched codepoint.
+	  * Following arguments needed by whole_words to correctly treat edging scan windows:
+	  *  first_fragment indicates if this is very first scan window of actually checked content.
+	  *  last_fragment indicates if this is very last scan window of actually checked content.
+	  * Returns {start, len} of matching region or {-1, 0} if no match found.
+	  */
+	std::pair<size_t, size_t> Match(const void *data, size_t len, bool first_fragment, bool last_fragment) const noexcept;
 };

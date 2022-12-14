@@ -335,3 +335,6 @@ bool IsCharFullWidth(wchar_t c);
 bool IsCharPrefix(wchar_t c);
 bool IsCharSuffix(wchar_t c);
 bool IsCharXxxfix(wchar_t c);
+
+void FN_NORETURN FN_PRINTF_ARGS(1) ThrowPrintf(const char *format, ...); // throws std::runtime_error with formatted .what()
+

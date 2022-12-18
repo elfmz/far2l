@@ -87,7 +87,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 			std::vector<char> strings;
 			if (sdc_lseek(fd, E::C(eh.e_shoff) + off_t(E::C(eh.e_shstrndx)) * E::C(eh.e_shentsize), SEEK_SET) != (off_t)-1
 			&& sdc_read(fd, &sh, sizeof(sh)) == sizeof(sh)
-			&& E::C(sh.sh_offset) <= s.st_size && E::C(sh.sh_offset) + E::C(sh.sh_size) <= s.st_size) {
+			&& off_t(E::C(sh.sh_offset)) <= s.st_size && off_t(E::C(sh.sh_offset) + E::C(sh.sh_size)) <= s.st_size) {
 				try {
 					strings.resize(E::C(sh.sh_size) + 1);
 					if (sdc_lseek(fd, E::C(sh.sh_offset), SEEK_SET) != -1) {

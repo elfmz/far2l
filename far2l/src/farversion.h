@@ -25,7 +25,9 @@ extern const char *FAR_BUILD;
 # else
 # define FAR_PLATFORM "rv32"
 # endif
-#else
+#ifif defined(__i386__)
 # define FAR_PLATFORM "x86"
+#else
+# define FAR_PLATFORM "unknown"
 #endif
 

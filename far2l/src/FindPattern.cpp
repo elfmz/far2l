@@ -67,7 +67,7 @@ public:
 		return _rew;
 	}
 
-	void SetRewind(size_t rew)
+	void SetRewind(size_t rew) noexcept
 	{
 		_rew = rew;
 	}
@@ -188,7 +188,7 @@ template <class CodePointT>
 
 	virtual uint64_t Summary() const noexcept
 	{
-		return uint32_t(sizeof(CodeUnit) | (CodePointT::MaxCodeUnits << 8) | (_seq.size() << 16));
+		return uint64_t(sizeof(CodeUnit) | (CodePointT::MaxCodeUnits << 8) | (_seq.size() << 16));
 	}
 
 	virtual const Metrics &GetMetrics() const noexcept

@@ -2184,9 +2184,9 @@ void VMenu::AssignHighlights(int Reverse)
 		std::reverse(ShuffledItem.begin(), ShuffledItem.end());
 	UsedChars Used;
 	// проверка заданных хоткеев
-	for (size_t I = ShuffledItem.size(); I > 0;)
+	for (size_t I = 0; I < ShuffledItem.size();)
 	{
-		MenuItemEx *ItemI = ShuffledItem[--I];
+		MenuItemEx *ItemI = ShuffledItem[I];
 		wchar_t Ch = 0;
 		int ShowPos = HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
 		const wchar_t *Name = ItemI->strName.CPtr() + ShowPos;
@@ -2212,6 +2212,8 @@ void VMenu::AssignHighlights(int Reverse)
 			ItemI->AmpPos = static_cast<short>(ChPtr-Name)+static_cast<short>(ShowPos);
 			ShuffledItem.erase(ShuffledItem.begin() + I);
 		}
+		else
+			++I;
 	}
 
 	// Two attempts: 1st try to assign hotkeys on list in initial order, but if _few_ items

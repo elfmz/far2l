@@ -34,7 +34,7 @@ public:
 
 	/** Size (in bytes) of substring that should be prepended from tail of previous scan window
 	  * to ensure matching substring that happen to be crossed by scan windows boundary.
-	  * Returned value guaranteed to be aligned by size of largest searched codepoint.
+	  * Returned value guaranteed to be aligned by size of largest searched codeunit.
 	  */
 	inline size_t LookBehind() const noexcept { return _look_behind; }
 

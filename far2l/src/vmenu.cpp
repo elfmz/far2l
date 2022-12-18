@@ -36,7 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <vector>
+#include <algorithm>
 #include "vmenu.hpp"
 #include "keyboard.hpp"
 #include "lang.hpp"
@@ -57,6 +58,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "processname.hpp"
 #include "pathmix.hpp"
 #include "cmdline.hpp"
+#include "UsedChars.hpp"
+
 VMenu::VMenu(const wchar_t *Title,       // заголовок меню
              MenuDataEx *Data, // пункты меню
              int ItemCount,     // количество пунктов меню
@@ -73,7 +76,6 @@ VMenu::VMenu(const wchar_t *Title,       // заголовок меню
 	ParentDialog(ParentDialog),
 	VMenuProc(Proc?Proc:(FARWINDOWPROC)VMenu::DefMenuProc),
 	OldTitle(nullptr),
-	Used(new bool[MAX_VKEY_CODE]),
 	bFilterEnabled(false),
 	bFilterLocked(false),
 	Item(nullptr),
@@ -131,7 +133,6 @@ VMenu::~VMenu()
 	bool WasVisible=Flags.Check(FSCROBJ_VISIBLE)!=0;
 	Hide();
 	DeleteItems();
-	delete[] Used;
 	SetCursorType(PrevCursorVisible,PrevCursorSize);
 
 	if (!CheckFlags(VMENU_LISTBOX))
@@ -2164,8 +2165,6 @@ void VMenu::AssignHighlights(int Reverse)
 {
 	CriticalSectionLock Lock(CS);
 
-	memset(Used,0,MAX_VKEY_CODE);
-
 	/* $ 02.12.2001 KM
 	   + Поелику VMENU_SHOWAMPERSAND сбрасывается для корректной
 	     работы ShowMenu сделаем сохранение энтого флага, в противном
@@ -2179,15 +2178,19 @@ void VMenu::AssignHighlights(int Reverse)
 	if (VMOldFlags.Check(VMENU_SHOWAMPERSAND))
 		SetFlags(VMENU_SHOWAMPERSAND);
 
-	int I, Delta = Reverse ? -1 : 1;
-
+	std::vector<MenuItemEx *> ShuffledItem;
+	ShuffledItem.insert(ShuffledItem.end(), &Item[0], &Item[ItemCount]);
+	if (Reverse)
+		std::reverse(ShuffledItem.begin(), ShuffledItem.end());
+	UsedChars Used;
 	// проверка заданных хоткеев
-	for (I = Reverse ? ItemCount-1 : 0; I>=0 && I<ItemCount; I+=Delta)
+	for (size_t I = ShuffledItem.size(); I > 0;)
 	{
+		MenuItemEx *ItemI = ShuffledItem[--I];
 		wchar_t Ch = 0;
-		int ShowPos = HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-		const wchar_t *Name = Item[I]->strName.CPtr() + ShowPos;
-		Item[I]->AmpPos = -1;
+		int ShowPos = HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+		const wchar_t *Name = ItemI->strName.CPtr() + ShowPos;
+		ItemI->AmpPos = -1;
 		// TODO: проверка на LIF_HIDDEN
 		const wchar_t *ChPtr = wcschr(Name, L'&');
 
@@ -2204,40 +2207,63 @@ void VMenu::AssignHighlights(int Reverse)
 			}
 		}
 
-		if (Ch && !Used[Upper(Ch)] && !Used[Lower(Ch)])
+		if (Ch && Used.Set(Ch))
 		{
-			wchar_t ChKey=KeyToKeyLayout(Ch);
-			Used[Upper(ChKey)] = true;
-			Used[Lower(ChKey)] = true;
-			Used[Upper(Ch)] = true;
-			Used[Lower(Ch)] = true;
-			Item[I]->AmpPos = static_cast<short>(ChPtr-Name)+static_cast<short>(ShowPos);
+			ItemI->AmpPos = static_cast<short>(ChPtr-Name)+static_cast<short>(ShowPos);
+			ShuffledItem.erase(ShuffledItem.begin() + I);
 		}
 	}
 
-	// TODO:  ЭТОТ цикл нужно уточнить - возможно вылезут артефакты (хотя не уверен)
-	for (I = Reverse ? ItemCount-1 : 0; I>=0 && I<ItemCount; I+=Delta)
+	// Two attempts: 1st try to assign hotkeys on list in initial order, but if _few_ items
+	// failed to set hotkeys - then retry with giving them more priority.
+	// This is to resolve problems with assigning hotkeys to items like {"ARC", "ARJ", "RAR"}
+	for (int Attempt = 0; Attempt < 2; ++Attempt)
 	{
-		int ShowPos = HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-		const wchar_t *Name = Item[I]->strName.CPtr() + ShowPos;
-		const wchar_t *ChPtr = wcschr(Name, L'&');
-
-		if (!ChPtr || CheckFlags(VMENU_SHOWAMPERSAND))
+		// TODO:  ЭТОТ цикл нужно уточнить - возможно вылезут артефакты (хотя не уверен)
+		size_t FailedsCount = 0;
+		for (size_t I = 0; I < ShuffledItem.size(); ++I)
 		{
-			// TODO: проверка на LIF_HIDDEN
-			for (int J=0; Name[J]; J++)
-			{
-				wchar_t Ch = Name[J];
+			MenuItemEx *ItemI = ShuffledItem[I];
+			int ShowPos = HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+			const wchar_t *Name = ItemI->strName.CPtr() + ShowPos;
+			const wchar_t *ChPtr = wcschr(Name, L'&');
 
-				if ((Ch == L'&' || IsAlpha(Ch) || (Ch >= L'0' && Ch <=L'9')) && !Used[Upper(Ch)] && !Used[Lower(Ch)])
+			if (!ChPtr || CheckFlags(VMENU_SHOWAMPERSAND))
+			{
+				// TODO: проверка на LIF_HIDDEN
+				int J;
+				for (J=0; Name[J]; J++)
 				{
-					wchar_t ChKey=KeyToKeyLayout(Ch);
-					Used[Upper(ChKey)] = true;
-					Used[Lower(ChKey)] = true;
-					Used[Upper(Ch)] = true;
-					Used[Lower(Ch)] = true;
-					Item[I]->AmpPos = J + ShowPos;
-					break;
+					wchar_t Ch = Name[J];
+
+					if ((Ch == L'&' || IsAlpha(Ch) || (Ch >= L'0' && Ch <=L'9')) && Used.Set(Ch))
+					{
+						ItemI->AmpPos = J + ShowPos;
+						break;
+					}
+				}
+				if (!Name[J])
+					++FailedsCount;
+			}
+		}
+
+		if (Attempt == 0)
+		{
+			if (FailedsCount == 0 || FailedsCount > 10)
+				break;
+
+			for (size_t I = 0; I < ShuffledItem.size(); ++I) 
+			{
+				MenuItemEx *ItemI = ShuffledItem[I];
+				if (ItemI->AmpPos == -1)
+				{
+					ShuffledItem.erase(ShuffledItem.begin() + I);
+					ShuffledItem.insert(ShuffledItem.begin(), ItemI);
+				}
+				else
+				{
+					Used.Unset(ItemI->strName.CPtr()[ItemI->AmpPos]);
+					ItemI->AmpPos = -1;
 				}
 			}
 		}

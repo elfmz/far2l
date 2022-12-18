@@ -17,9 +17,6 @@ class FindPattern
 	std::vector<ScannedPatternPtr> _patterns;
 	void AddPattern(ScannedPatternPtr &&new_p);
 
-	std::pair<size_t, size_t> FindMatchConcurrent(const ScannedPatternPtr *patterns, size_t count,
-		const void *data, const void *edge, bool first_fragment, bool last_fragment) const noexcept;
-
 public:
 	FindPattern(bool case_sensitive, bool whole_words);
 	~FindPattern();
@@ -42,7 +39,7 @@ public:
 	inline size_t LookBehind() const noexcept { return _look_behind; }
 
 	/** Searches given data array for substring matching any of added pattern.
-	  * Data array pointer expected to be aligned by size of largest searched codepoint.
+	  * Data array pointer expected to be aligned by size of largest searched codeunit.
 	  * Following arguments needed by whole_words to correctly treat edging scan windows:
 	  *  first_fragment indicates if this is very first scan window of actually checked content.
 	  *  last_fragment indicates if this is very last scan window of actually checked content.

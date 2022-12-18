@@ -81,10 +81,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <fcntl.h>
 
-constexpr DWORD LIST_INDEX_NONE = std::numeric_limits<DWORD>::max();
-#define FILE_SCAN_MMAP_WINDOW	0x10000 // must be power of 2 and multiple of page size (0x1000)
-#define FILE_SCAN_READING_SIZE  0xf00   // to ensure scan function stack frame fits into single page
+// mmap'ed window size limit, must be multiple of any sane page size (0x1000 on intel)
+#if defined(__LP64__) || defined(_LP64)
+# define FILE_SCAN_MMAP_WINDOW	0x100000
+#else
+# define FILE_SCAN_MMAP_WINDOW	0x10000
+#endif
 
+// open()+read() used for short files where single read is more optimal than mmap
+// use such value to ensure scan function stack frame fits into single page
+#define FILE_SCAN_READING_SIZE  0xf00
+
+constexpr DWORD LIST_INDEX_NONE = std::numeric_limits<DWORD>::max();
 static bool AnySetFindList=false;
 
 // Список найденных файлов. Индекс из списка хранится в меню.
@@ -964,7 +972,7 @@ template <class N>
 }
 
 static bool ScanFileByReading(const char *Name)
-{	// used for short files where single read is more optimal than mmap
+{
 	uint8_t buf[FILE_SCAN_READING_SIZE];
 	FDScope fd(sdc_open(Name, O_RDONLY));
 	if (!fd.Valid())
@@ -974,7 +982,7 @@ static bool ScanFileByReading(const char *Name)
 	if (len == 0)
 		return false;
 
-	return (findPattern->Match(buf, len, true, true).first != (size_t)-1);
+	return (findPattern->FindMatch(buf, len, true, true).first != (size_t)-1);
 }
 
 static bool ScanFileByMapping(const char *Name)
@@ -989,7 +997,7 @@ static bool ScanFileByMapping(const char *Name)
 		for (UINT LastPercents = 0;;) {
 			const bool FirstFragment = (FilePos == 0);
 			const bool LastFragement = (FilePos + off_t(smm.Length()) >= FileSize);
-			if (findPattern->Match(View, Length, FirstFragment, LastFragement).first != (size_t)-1) {
+			if (findPattern->FindMatch(View, Length, FirstFragment, LastFragement).first != (size_t)-1) {
 				return true;
 			}
 			if (LastFragement) {
@@ -1031,7 +1039,7 @@ static void AddMenuRecord(HANDLE hDlg,const wchar_t *FullName, const FAR_FIND_DA
 
 struct ScanFileWorkItem : IThreadedWorkItem
 {
-	ScanFileWorkItem(HANDLE hDlg, FARString &FileToScan, FARString &FileToReport,
+	FN_NOINLINE ScanFileWorkItem(HANDLE hDlg, FARString &FileToScan, FARString &FileToReport,
 			bool RemoveTemp, const FAR_FIND_DATA_EX &FindData, size_t ArcIndex)
 		:
 		_hDlg(hDlg),
@@ -1043,7 +1051,7 @@ struct ScanFileWorkItem : IThreadedWorkItem
 	{
 	}
 
-	virtual ~ScanFileWorkItem()
+	virtual FN_NOINLINE ~ScanFileWorkItem()
 	{
 		if (_RemoveTemp)
 			DeleteFileWithFolder(_FileToScan);
@@ -1054,7 +1062,7 @@ struct ScanFileWorkItem : IThreadedWorkItem
 
 	// invoked within worker thread, so make sure no FARString copied within this function
 	// as it has not thread-safe (but fast!) reference counters implementation
-	virtual void WorkProc()
+	virtual void FN_NOINLINE WorkProc()
 	{
 		SudoClientRegion scr;
 		SudoSilentQueryRegion ssqr;

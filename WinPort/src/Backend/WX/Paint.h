@@ -104,7 +104,6 @@ class ConsolePainter
 
 	friend struct WXCustomDrawCharPainter;
 
-	void SetFillColor(const WinPortRGB &clr);
 	void PrepareBackground(unsigned int cx, const WinPortRGB &clr, unsigned int nx);
 	void FlushBackground(unsigned int cx_end);
 	void FlushText(unsigned int cx_end);
@@ -112,6 +111,7 @@ class ConsolePainter
 		
 public:
 	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
+	void SetFillColor(const WinPortRGB &clr);
 	
 
 	void NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx);

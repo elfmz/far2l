@@ -420,7 +420,21 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 			painter.NextChar(cx, attributes, pwcz, nx);
 		}
 		painter.LineFlush(area.Right + 1);
-	}		
+	}
+
+	// check if there is unused space in right and bottom and fill it with black color
+	const int right_edge = (area.Right + 1) * _font_width;
+	const int bottom_edge = (area.Bottom + 1) * _font_height;
+	if (right_edge <= box.GetRight()) {
+		painter.SetFillColor(WinPortRGB());
+		dc.DrawRectangle((area.Right + 1) * _font_width, box.GetTop(),
+			box.GetRight() + 1 - right_edge, box.GetHeight());
+	}
+	if (bottom_edge <= box.GetBottom()) {
+		painter.SetFillColor(WinPortRGB());
+		dc.DrawRectangle(box.GetLeft(), bottom_edge,
+			box.GetWidth(), box.GetBottom() + 1 - bottom_edge);
+	}
 }
 
 

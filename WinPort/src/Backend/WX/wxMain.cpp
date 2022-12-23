@@ -5,7 +5,11 @@
 #define TIMER_ID     10
 
 // interval of timer that used to blink cursor and do some other things
-#define TIMER_PERIOD 500        // 0.5 second
+#define TIMER_PERIOD 500             // 0.5 second
+
+// time interval that used for deferred extra refresh after last title update
+// see comment on WinPortPanel::OnTitleChangedSync
+#define TIMER_EXTRA_REFRESH 100   // 0.1 second
 
 // how many timer ticks may pass since last input activity
 // before timer will be stopped until restarted by some activity
@@ -254,12 +258,15 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 WinPortFrame::WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
-        : wxFrame(NULL, wxID_ANY, title, pos, size), _shown(false), 
-		_menu_bar(nullptr)
+        : _shown(false),  _menu_bar(nullptr)
 {
+	// far2l doesn't need special erase background
+	SetBackgroundStyle(wxBG_STYLE_PAINT);
+	Create(NULL, wxID_ANY, title, pos, size);
+	SetBackgroundColour(*wxBLACK);
+
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
-	SetBackgroundColour(*wxBLACK);
 }
 
 WinPortFrame::~WinPortFrame()
@@ -404,12 +411,17 @@ wxEND_EVENT_TABLE()
 
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
-        : wxPanel(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER), 
+        :
 		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
 		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
 		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false), _last_valid_display(0),
-		_refresh_rects_throttle(0), _pending_refreshes(0), _repaint_on_next_timer(false), _timer_idling_counter(0), _stolen_key(0)
+		_refresh_rects_throttle(0), _pending_refreshes(0), _timer_idling_counter(0), _stolen_key(0)
 {
+	// far2l doesn't need special erase background
+	SetBackgroundStyle(wxBG_STYLE_PAINT);
+	Create(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER);
+	SetBackgroundColour(*wxBLACK);
+
 	g_winport_con_out->SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID);
 	_periodic_timer->Start(TIMER_PERIOD);
@@ -573,17 +585,24 @@ void WinPortPanel::CheckForResizePending()
 
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
+	if (_extra_refresh) {
+		// see comment on WinPortPanel::OnTitleChangedSync
+		if (WINPORT(GetTickCount)() - _last_title_ticks > TIMER_EXTRA_REFRESH) {
+			_periodic_timer->Stop();
+			_extra_refresh = false;
+			Refresh();
+			_periodic_timer->Start(TIMER_PERIOD);
+			fprintf(stderr, "Extra refresh\n");
+		}
+		return;
+	}
+
 	CheckForResizePending();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
 	_paint_context.BlinkCursor();
-	if (_repaint_on_next_timer) {
-		_repaint_on_next_timer = false;
-		Refresh(false);
-		Update();
-	}
 	++_timer_idling_counter;
 	// stop timer if counter reached limit and cursor is visible and no other timer-dependent things remained
 	if (_timer_idling_counter >= TIMER_IDLING_CYCLES && _paint_context.CursorBlinkState() && _text2clip.empty()) {
@@ -594,8 +613,13 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 void WinPortPanel::ResetTimerIdling()
 {
 	if (_timer_idling_counter >= TIMER_IDLING_CYCLES && !_periodic_timer->IsRunning()) {
-		_periodic_timer->Start(TIMER_PERIOD);
+		_periodic_timer->Start(_extra_refresh ? TIMER_EXTRA_REFRESH : TIMER_PERIOD);
+
+	} else if (_extra_refresh) {
+		_periodic_timer->Stop();
+		_periodic_timer->Start(TIMER_EXTRA_REFRESH);
 	}
+
 	_timer_idling_counter = 0;
 }
 
@@ -801,6 +825,14 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 		refresh_rects.swap(_refresh_rects);	
 	}
 
+#ifndef __APPLE__
+	// see comment on WinPortPanel::OnTitleChangedSync
+	if (WINPORT(GetTickCount)() - _last_title_ticks < TIMER_EXTRA_REFRESH && !_extra_refresh) {
+		_extra_refresh = true;
+		ResetTimerIdling();
+	}
+#endif
+
 	for (const auto & r : refresh_rects) {
 		_paint_context.RefreshArea( r );
 		// Seems there is some sort of limitation of how many fragments
@@ -840,13 +872,16 @@ void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 
 void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 {
+	// Workaround for #1303 #1454:
+	// When running in X session there is floating bug somewhere in WX or GTK or even XOrg that
+	// causes window repaint to be lost randomly in case repaint happened right after title change.
+	// In case of far2l title change happens together with content changes that causes this issue.
+	// So workaround is to detect if some refresh happened just after title changed and repeat
+	// do extra refresh just in case. Note that 'just after' means 'during TIMER_EXTRA_REFRESH'.
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
 	_frame->SetTitle(title.c_str());
-	if (g_remote) { // under xrdp/forwarded x11 (repro?) - force full repaint after some time to workaround #1303
-		_repaint_on_next_timer = true;
-		ResetTimerIdling();
-	}
+	_last_title_ticks = WINPORT(GetTickCount)();
 }
 
 

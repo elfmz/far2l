@@ -1094,6 +1094,8 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		}
 	}
 
+	rString.SetChar(size_t(OutPtr), 0);
+
 	if (!bSelEndFound && SelectSize && vtell() < SelectPos+SelectSize)
 	{
 		bSelEndFound = true;

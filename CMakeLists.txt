@@ -12,6 +12,8 @@ string(ASCII 27 Esc)
 set(ColorNormal "${Esc}[m")
 set(ColorRed "${Esc}[1;31m")
 
+include(GNUInstallDirs)
+
 # just to force reconfigure if packaging/version changed
 configure_file(${CMAKE_SOURCE_DIR}/packaging/version ${CMAKE_BINARY_DIR}/packaging/version @ONLY)
 
@@ -488,6 +490,8 @@ endif()
 # common install directives
 
 add_subdirectory (packaging)
+
+add_subdirectory(man)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(FIXUP_SCRIPT packaging/osx/FixupBundle.cmake)

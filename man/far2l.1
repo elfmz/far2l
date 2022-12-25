@@ -1,0 +1,118 @@
+.\" -*- mode: troff; coding: UTF-8 -*-
+.\"TOPICS "Topics:"
+.TH FAR2L 1 "25-12-22" "FAR2L Version 2.4.1" "Linux fork of FAR Manager v2"
+.\"SKIP_SECTION"
+.SH "NAME"
+far2l \- Oldschool file manager, with built\-in terminal and other usefullness\'es.
+.\"SKIP_SECTION"
+.SH "SYNOPSIS"
+.B far2l
+[\fI\,OPTION\/\fR] [\fB\-cd \fI\,APATH\/\fR \fB \-cd \fI\,PPATH\/\fR]]
+.\"NODE "DESCRIPTION"
+.SH "DESCRIPTION"
+.B far2l
+is a Linux fork of FAR Manager v2, directory browser/file manager for
+Unix\-like operating systems.
+.\"NODE "OPTIONS"
+.\"DONT_SPLIT"
+.SH "OPTIONS"
+.TP
+\fB\-h\fR
+Display this help and exit.
+.TP
+\fB\-a\fR
+Disable display of characters with codes 0 - 31 and 255.
+.TP
+\fB\-ag\fR
+Disable display of pseudographics with codes > 127.
+.TP
+\fB\-an\fR
+Disable display of pseudographics characters completely.
+.TP
+\fB\-co\fR
+Forces FAR to load plugins from the cache only.
+.TP
+\fB\-cd\fR \fI\,APATH\/\fR|\fI\,PPATH\/\fR
+Change panel's directory to specified path.
+\fI\,APATH\/\fR \- path to a folder (or a file or an archive or command with prefix)
+for the active panel.
+\fI\,PPATH\/\fR \- path to a folder (or a file or an archive or command with prefix)
+for the passive panel.
+.TP
+\fB\-m\fR
+Do not load macros.
+.TP
+\fB\-ma\fR
+Do not execute auto run macros.
+.TP
+\fB\-u\fR \fI\,IDENTITY\/\fR OR \fI\,/PATH/NAME\/\fR
+      Allows to specify separate settings \fI\,IDENTITY\/\fR or FS location.
+.TP
+\fB\-v\fR \fI\,FILENAME\/\fR
+View the specified file.
+.TP
+\fB\-v\fR \- \fI\,COMMAND LINE\/\fR
+ Executes given \fI\,COMMAND LINE\/\fR and opens viewer with its output.
+.TP
+\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] \fI\,FILENAME\/\fR
+ Edit the specified file with optional cursor position specification.
+.TP
+\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] \fI\,COMMAND LINE\/\fR
+Executes given command line and opens editor with its output.
+.\"NODE "BACKEND OPTIONS"
+.\"DONT_SPLIT"
+.SH "BACKEND-SPECIFIC OPTIONS"
+.TP
+\fB\-\-tty\fP
+force using TTY backend only (disable GUI/TTY autodetection)
+.TP
+\fB\-\-notty\fP
+don't fallback to TTY backend if GUI backend failed
+.TP
+\fB\-\-nodetect\fP, \fB\-\-nodetect\fP=[f|][x|xi]
+don't detect if TTY backend supports FAR2L or X11/Xi extensions
+.TP
+\fB\-\-mortal\fP
+terminate instead of going to background on getting SIGHUP (default if in Linux TTY)
+.TP
+\fB\-\-immortal\fP
+go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)
+.TP
+\fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
+ESC expiration in \fI\,N\/\fR msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)
+.TP
+\fB\-\-primary-selection\fP
+use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)
+.\"NODE "FULL HELP"
+.SH "FULL HELP"
+far2l historically has its own contextual help system that can be found via pressing F1 key wherever in its TUI.
+.\"NODE "LICENSE"
+.SH "LICENSE"
+This program is distributed under the terms of the GNU General Public
+License as published by the Free Software Foundation. See the built\-in
+help for details on the License and the lack of warranty.
+.\"NODE "AVAILABILITY"
+.SH "AVAILABILITY"
+The latest version of this program can be found at
+	https://github.com/elfmz/far2l
+.\"NODE "SEE ALSO"
+.SH "SEE ALSO"
+mc(1), ed(1), gpm(1), terminfo(1), view(1), sh(1), bash(1),
+tcsh(1), zsh(1).
+.PP
+.nf
+Linux fork of FAR Manager v2 on the World Wide Web:
+	https://github.com/elfmz/far2l
+.fi
+.\"NODE "AUTHORS"
+.SH "AUTHORS"
+Authors and contributors are listed in the copyright file.
+.\"NODE "BUGS"
+.SH "BUGS"
+If you want to report a problem with the program, please create bugreport
+at https://github.com/elfmz/far2l/issues.
+.PP
+Provide a detailed description of the bug, the version of the program
+you are running.
+If the program crashes, we would appreciate a stack trace.
+

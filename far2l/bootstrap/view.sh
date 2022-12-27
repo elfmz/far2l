@@ -31,11 +31,6 @@ FILECHARSET="$(echo "$FILEMIME" | sed -n -e 's/^.\{0,100\}: .\{1,100\};[ ]\{0,10
 
 # Optional per-user script
 if [ -x ~/.config/far2l/view.sh ]; then
-. ~/.config/far2l/view.sh
-fi
-
-# Optional per-user script
-if [ -x ~/.config/far2l/view.sh ]; then
 	# safely source this script from user config dir if it copied there without changes
 	export far2l_view_per_user_script_sourced=$((${far2l_view_per_user_script_sourced:-0}+0))
 	if [ ${far2l_view_per_user_script_sourced} -lt 1 ]; then

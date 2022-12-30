@@ -331,8 +331,7 @@ static std::atomic<bool> PauseFlag{false}, StopFlag{false};
 static bool UseFilter=false;
 static UINT CodePage=CP_AUTODETECT;
 static UINT64 SearchInFirst=0;
-
-//static size_t LookBehind = 0;
+static bool UseSelectedCodepages = false;
 
 static std::unique_ptr<FindPattern> findPattern;
 
@@ -418,56 +417,66 @@ enum FINDDLG
 	FD_BUTTON_STOP,
 };
 
+// This function returns count of manually selected (by SPACE in combobox) codepages, also
+// it optionally fills provided vector with either manually selected (if any) either favorite codepages
+static int CheckSelectedCodepages(std::vector<unsigned int> *chosen_codepages = nullptr)
+{
+	// Проверяем наличие выбранных страниц символов
+	ConfigReader cfg_reader(FavoriteCodePagesKey);
+	int countSelected = 0;
+	const auto &cfg_codepages = cfg_reader.EnumKeys();
+	for (const auto &cp : cfg_codepages) {
+		if (cfg_reader.GetInt(cp, 0) & CPST_FIND) {
+			CPINFO cpi{};
+			if (WINPORT(GetCPInfo)(atoi(cp.c_str()), &cpi)) {
+				++countSelected;
+			} else {
+				fprintf(stderr, "%s: bad codepage '%s'\n", __FUNCTION__, cp.c_str());
+			}
+		}
+	}
+
+	if (chosen_codepages) {
+		for (const auto &cp : cfg_codepages) {
+			const int selectType = cfg_reader.GetInt(cp, 0);
+			if (selectType & (countSelected ? CPST_FIND : CPST_FAVORITE)) {
+				chosen_codepages->emplace_back(atoi(cp.c_str()));
+			}
+		}
+	}
+
+	return countSelected;
+}
+
 static void InitInFileSearchText()
 {
 	// Формируем список кодовых страниц
 	std::vector<unsigned int> codepages;
-	if (CodePage == CP_AUTODETECT) {
-		bool hasSelected = false;
-		// Проверяем наличие выбранных страниц символов
-		ConfigReader cfg_reader(FavoriteCodePagesKey);
-		const auto &cfg_codepages = cfg_reader.EnumKeys();
-		for (const auto &cp : cfg_codepages) {
-			int selectType = cfg_reader.GetInt(cp, 0);
-			if (selectType & CPST_FIND) {
-				hasSelected = true;
-				// codePageName = cp;
-				break;
-			}
-		}
-
-		// Добавляем стандартные таблицы символов
-		if (!hasSelected) {
-			codepages.emplace_back(WINPORT(GetOEMCP)());
-			codepages.emplace_back(WINPORT(GetACP)());
-			codepages.emplace_back(CP_KOI8R);
-			codepages.emplace_back(CP_UTF7);
-			codepages.emplace_back(CP_UTF8);
-			codepages.emplace_back(CP_UTF16LE);
-			codepages.emplace_back(CP_UTF16BE);
-#if (__WCHAR_MAX__ > 0xffff)					
-			codepages.emplace_back(CP_UTF32LE);
-			codepages.emplace_back(CP_UTF32BE);
-#endif					
-		}
-
-		// Добавляем стандартные таблицы символов
-		for (const auto &cp : cfg_codepages) {
-			int selectType = cfg_reader.GetInt(cp, 0);
-			if (selectType & (hasSelected?CPST_FIND:CPST_FAVORITE)) {
-				codepages.emplace_back(atoi(cp.c_str()));
-			}
-		}
-	}
-	else {
+	if (CodePage != CP_AUTODETECT) {
 		codepages.emplace_back(CodePage);
+
+	} else if (CheckSelectedCodepages(&codepages) == 0) {
+		// Добавляем стандартные таблицы символов
+		codepages.emplace_back(WINPORT(GetOEMCP)());
+		codepages.emplace_back(WINPORT(GetACP)());
+		codepages.emplace_back(CP_KOI8R);
+		codepages.emplace_back(CP_UTF7);
+		codepages.emplace_back(CP_UTF8);
+		codepages.emplace_back(CP_UTF16LE);
+		codepages.emplace_back(CP_UTF16BE);
+#if (__WCHAR_MAX__ > 0xffff)
+		codepages.emplace_back(CP_UTF32LE);
+		codepages.emplace_back(CP_UTF32BE);
+#endif
 	}
 
 	// Проверяем дубли
 	std::sort(codepages.begin(), codepages.end());
 	codepages.erase(std::unique(codepages.begin(), codepages.end()), codepages.end());
 
+
 	for (const auto &codepage : codepages) try {
+		//fprintf(stderr, "!!! CP = %d\n", codepage);
 		findPattern->AddTextPattern(strFindStr.CPtr(), codepage);
 
 	} catch (std::exception &e) {
@@ -650,6 +659,27 @@ static void AdvancedDialog()
 	}
 }
 
+static void UpdateCodepagesTopItemTitle(HANDLE hDlg, bool TopIsSelected, int SelectedCount)
+{
+	FarListGetItem TopItemGet = { 0, {} };
+	SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&TopItemGet);
+
+	FarListUpdate TopItemUpdate = {0, TopItemGet.Item};
+	FARString tmp;
+	if (SelectedCount > 0)
+	{
+		tmp.Format(Msg::FindFileSelectedCodePages, SelectedCount);
+		TopItemUpdate.Item.Text = tmp.CPtr();
+	}
+	else
+		TopItemUpdate.Item.Text = Msg::FindFileAllCodePages;
+
+	if (TopIsSelected)
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, FAD_COMBOBOX_CP, (LONG_PTR)TopItemUpdate.Item.Text);
+
+	SendDlgMessage(hDlg, DM_LISTUPDATE, FAD_COMBOBOX_CP, (LONG_PTR)&TopItemUpdate);
+}
+
 static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	Vars* v = reinterpret_cast<Vars*>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
@@ -679,9 +709,11 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 			// так что получаем CodePage из списка выбора
 			FarListPos Position;
 			SendDlgMessage(hDlg, DM_LISTGETCURPOS, FAD_COMBOBOX_CP, (LONG_PTR)&Position);
+			UpdateCodepagesTopItemTitle(hDlg, Position.SelectPos == 0, CheckSelectedCodepages());
 			FarListGetItem Item = { Position.SelectPos, {} };
 			SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
 			CodePage = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Position.SelectPos);
+			UseSelectedCodepages = false;
 			return TRUE;
 		}
 		case DN_CLOSE:
@@ -791,6 +823,17 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 			{
 				case FAD_COMBOBOX_CP:
 				{
+					if (Param2 == KEY_ENTER && UseSelectedCodepages)
+					{
+						// if last user action was related to selected codepages list modification
+						// and that list is not empty then obviously user was intended to use it
+						FarListPos Pos = {0, -1};
+						SendDlgMessage(hDlg, DM_LISTSETCURPOS, FAD_COMBOBOX_CP, reinterpret_cast<LONG_PTR>(&Pos));
+						UpdateCodepagesTopItemTitle(hDlg, true, CheckSelectedCodepages());
+					}
+					if (Param2 != KEY_IDLE && Param2 != KEY_NONE)
+						UseSelectedCodepages = false;
+
 					switch (Param2)
 					{
 						case KEY_INS:
@@ -804,11 +847,11 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 							// Получаем номер выбранной таблицы символов
 							FarListGetItem Item = { Position.SelectPos, {} };
 							SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
+							FarListInfo Info{};
+							SendDlgMessage(hDlg, DM_LISTINFO, FAD_COMBOBOX_CP, (LONG_PTR)&Info);
 							UINT SelectedCodePage = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Position.SelectPos);
-							// Разрешаем отмечать только стандартные и любимые таблицы символов
-							int FavoritesIndex = 2 + StandardCPCount + 2;
 
-							if (Position.SelectPos > 1 && Position.SelectPos < FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0))
+							if (!(Item.Item.Flags&LIF_SEPARATOR) && SelectedCodePage && Position.SelectPos > 1)
 							{
 								// Преобразуем номер таблицы символов к строке
 								const std::string &strCodePageName = StrPrintf("%u", SelectedCodePage);
@@ -826,49 +869,42 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 										cfg_writer.SetInt(strCodePageName, CPST_FAVORITE);
 									else
 										cfg_writer.RemoveKey(strCodePageName);
-
-									Item.Item.Flags &= ~LIF_CHECKED;
 								}
 								else
 								{
-									ConfigWriter(FavoriteCodePagesKey).SetInt(strCodePageName,
-										CPST_FIND | (SelectType & CPST_FAVORITE ?  CPST_FAVORITE : 0));
-									Item.Item.Flags |= LIF_CHECKED;
-								}
-
-								// Обновляем текущий элемент в выпадающем списке
-								SendDlgMessage(hDlg, DM_LISTUPDATE, FAD_COMBOBOX_CP, (LONG_PTR)&Item);
-
-								if (Position.SelectPos<FavoritesIndex + (favoriteCodePages ? favoriteCodePages + 1 : 0)-2)
-								{
-									FarListPos Pos={Position.SelectPos+1,Position.TopPos};
-									SendDlgMessage(hDlg, DM_LISTSETCURPOS, FAD_COMBOBOX_CP,reinterpret_cast<LONG_PTR>(&Pos));
+									ConfigWriter(FavoriteCodePagesKey).SetInt(
+										strCodePageName, CPST_FIND | (SelectType & CPST_FAVORITE));
 								}
 
 								// Обрабатываем случай, когда таблица символов может присутствовать, как в стандартных, так и в любимых,
 								// т.е. выбор/снятие флага автоматически происходит у обоих элементов
-								bool bStandardCodePage = Position.SelectPos < FavoritesIndex;
-
-								for (int Index = bStandardCodePage ? FavoritesIndex : 0; Index < (bStandardCodePage ? FavoritesIndex + favoriteCodePages : FavoritesIndex); Index++)
+								for (int Index = 1; Index < Info.ItemsNumber; Index++)
 								{
 									// Получаем элемент таблицы символов
 									FarListGetItem CheckItem = { Index, {} };
 									SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
 
 									// Обрабатываем только таблицы символов
-									if (!(CheckItem.Item.Flags&LIF_SEPARATOR))
+									if (!(CheckItem.Item.Flags & LIF_SEPARATOR)
+									  && SelectedCodePage == (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index) )
 									{
-										if (SelectedCodePage == (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index))
-										{
-											if (Item.Item.Flags & LIF_CHECKED)
-												CheckItem.Item.Flags |= LIF_CHECKED;
-											else
-												CheckItem.Item.Flags &= ~LIF_CHECKED;
+										if (Item.Item.Flags & LIF_CHECKED)
+											CheckItem.Item.Flags &= ~LIF_CHECKED;
+										else
+											CheckItem.Item.Flags |= LIF_CHECKED;
 
-											SendDlgMessage(hDlg, DM_LISTUPDATE, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
-											break;
-										}
+										SendDlgMessage(hDlg, DM_LISTUPDATE, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
 									}
+								}
+
+								const int countSelected = CheckSelectedCodepages();
+								UseSelectedCodepages = (countSelected != 0);
+								UpdateCodepagesTopItemTitle(hDlg, Position.SelectPos == 0, countSelected);
+
+								if (Position.SelectPos + 1 < Info.ItemsNumber)
+								{
+									FarListPos Pos = { Position.SelectPos + 1, Position.TopPos};
+									SendDlgMessage(hDlg, DM_LISTSETCURPOS, FAD_COMBOBOX_CP, reinterpret_cast<LONG_PTR>(&Pos));
 								}
 							}
 						}

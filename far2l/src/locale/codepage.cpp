@@ -193,6 +193,15 @@ static void FormatCodePageString(UINT CodePage, const wchar_t *CodePageName, For
 	CodePageNameString<<CodePageName;
 }
 
+static int GetCodePageSelectType(UINT codePage) //selectedCodePages, (selectType & CPST_FIND) != 0
+{
+	if (codePage == CP_AUTODETECT)
+		return 0;
+	// Получаем признак выбранности таблицы символов
+	s_cfg_reader->SelectSection(FavoriteCodePagesKey);
+	return s_cfg_reader->GetInt(StrPrintf("%u", codePage), 0);
+}
+
 // Добавляем таблицу символов
 static void AddCodePage(const wchar_t *codePageName, UINT codePage, int position, bool enabled, bool checked, bool IsCodePageNameCustom)
 {
@@ -267,17 +276,7 @@ static void AddCodePage(const wchar_t *codePageName, UINT codePage, int position
 // Добавляем стандартную таблицу символов
 static void AddStandardCodePage(const wchar_t *codePageName, UINT codePage, int position = -1, bool enabled = true)
 {
-	bool checked = false;
-
-	if (selectedCodePages && codePage!=CP_AUTODETECT)
-	{
-		s_cfg_reader->SelectSection(FavoriteCodePagesKey);
-		int selectType = s_cfg_reader->GetInt(StrPrintf("%u", codePage), 0);
-
-		if (selectType & CPST_FIND)
-			checked = true;
-	}
-
+	bool checked = selectedCodePages && (GetCodePageSelectType(codePage) & CPST_FIND) != 0;
 	AddCodePage(codePageName, codePage, position, enabled, checked, false);
 }
 
@@ -389,10 +388,9 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 	// Формируем имя таблиц символов
 	bool IsCodePageNameCustom = false;
 	wchar_t *codePageName = FormatCodePageName(_wtoi(lpwszCodePage), cpiex.CodePageName, sizeof(cpiex.CodePageName)/sizeof(wchar_t), IsCodePageNameCustom);
-	// Получаем признак выбранности таблицы символов
-	s_cfg_reader->SelectSection(FavoriteCodePagesKey);
-	int selectType = s_cfg_reader->GetInt(Wide2MB(lpwszCodePage), 0);
 
+	int selectType = GetCodePageSelectType(codePage);
+	bool checked = selectedCodePages && (selectType & CPST_FIND) != 0;
 	// Добавляем таблицу символов либо в нормальные, либо в выбранные таблицы символов
 	if (selectType & CPST_FAVORITE)
 	{
@@ -410,7 +408,7 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 		        favoriteCodePages
 		    ),
 		    true,
-		    selectType & CPST_FIND ? true : false,
+			checked,
 			IsCodePageNameCustom
 		);
 		// Увеличиваем счётчик выбранных таблиц символов
@@ -432,7 +430,7 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 		        normalCodePages
 		    ),
 			true,
-			false,
+			checked,
 			IsCodePageNameCustom
 		);
 		// Увеличиваем счётчик выбранных таблиц символов
@@ -447,19 +445,20 @@ static void AddCodePages(DWORD codePages)
 {
 	// Добавляем стандартные таблицы символов
 	AddStandardCodePage((codePages & ::SearchAll) ? Msg::FindFileAllCodePages : Msg::EditOpenAutoDetect, CP_AUTODETECT, -1, (codePages & ::SearchAll) || (codePages & ::Auto));
-	AddSeparator(Msg::GetCodePageSystem);
-	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, true);
-	AddStandardCodePage(L"ANSI", WINPORT(GetACP)(), -1, true);
-	AddStandardCodePage(L"KOI8", CP_KOI8R, -1, true);
 	AddSeparator(Msg::GetCodePageUnicode);
+
+	AddStandardCodePage(L"UTF-8", CP_UTF8, -1, true);
 	AddStandardCodePage(L"UTF-7", CP_UTF7, -1, true);
 	AddStandardCodePage(L"UTF-16 (Little endian)", CP_UTF16LE, -1, true);
 	AddStandardCodePage(L"UTF-16 (Big endian)", CP_UTF16BE, -1, true);
-	AddStandardCodePage(L"DOS", WINPORT(GetOEMCP)(), -1, true);
 	if (sizeof(wchar_t)==4) {
 		AddStandardCodePage(L"UTF-32 (Little endian)", CP_UTF32LE, -1, true);
 		AddStandardCodePage(L"UTF-32 (Big endian)", CP_UTF32BE, -1, true);
 	}
+	AddSeparator(Msg::GetCodePageSystem);
+	AddStandardCodePage(L"ANSI", WINPORT(GetACP)(), -1, true);
+	AddStandardCodePage(L"KOI8", CP_KOI8R, -1, true);
+	AddStandardCodePage(L"OEM", WINPORT(GetOEMCP)(), -1, true);
 	// Получаем таблицы символов установленные в системе
 	WINPORT(EnumSystemCodePages)((CODEPAGE_ENUMPROCW)EnumCodePagesProc, 0);//CP_INSTALLED
 }
@@ -488,7 +487,7 @@ static void ProcessSelected(bool select)
 			ConfigWriter cfg_writer;
 			cfg_writer.SelectSection(FavoriteCodePagesKey);
 			if (select)
-				cfg_writer.SetInt(strCPName, CPST_FAVORITE | (selectType & CPST_FIND ? CPST_FIND : 0));
+				cfg_writer.SetInt(strCPName, CPST_FAVORITE | (selectType & CPST_FIND));
 			else if (selectType & CPST_FIND)
 				cfg_writer.SetInt(strCPName, CPST_FIND);
 			else

@@ -786,7 +786,9 @@ static const unsigned short uni2cp_high[256] =
 
 const struct sbcs_table DECLSPEC_HIDDEN cptable_866uk =
 {
-    { 866, 1, 0x003f, 0x003f, "OEM Ukrainian" },
+    // its 866 that appeared to have several subkinds but ID must be unique across all codepages,
+    // couldn't invent anything better than (ab)using next ID that is not implemented here anyway
+    { 867, 1, 0x003f, 0x003f, "OEM Ukrainian" },
     cp2uni,
     cp2uni + 256,
     uni2cp_low,

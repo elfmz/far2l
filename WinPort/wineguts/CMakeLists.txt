@@ -37,7 +37,6 @@ codepages/c_866.uk.c
 codepages/c_869.c
 codepages/c_874.c
 codepages/c_875.c
-codepages/c_878.c
 codepages/c_1006.c
 codepages/c_1026.c
 codepages/c_1250.c

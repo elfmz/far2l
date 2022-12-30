@@ -25,15 +25,6 @@ void ViewerPrinter::SetSelection(bool selection)
 	_selection = selection;
 }
 
-bool ViewerPrinter::ShouldSkip(wchar_t ch)
-{
-	if (_bom_skip && ch == 0xFEFF) {
-		return true;
-	}
-
-	return false;
-}
-
 //
 
 PlainViewerPrinter::PlainViewerPrinter(int color)
@@ -72,7 +63,7 @@ void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 			skip_len--;
 	}
 
-	for (;;) {
+	while (print_len > 0) {
 		size_t piece = 0;
 		while (str[piece] && !ShouldSkip(str[piece])) {
 			++piece;

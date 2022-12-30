@@ -11461,15 +11461,26 @@ FindFileWholeWords
 "Толькі по&ўныя словы"
 
 FindFileAllCodePages
-"Все кодовые страницы"
-"All code pages"
+"Стандартные кодовые страницы"
+"Standart code pages"
 upd:"Všechny znakové sady"
 upd:"Alle Zeichentabellen"
 "Minden kódlappal"
 "Wszystkie zainstalowane"
 "Todas las tablas de caracteres"
-"Всі кодові сторінки"
-"Усе кодавые старонкі"
+"Стандартні кодові сторінки"
+"Стандартныя кодавые старонкі"
+
+FindFileSelectedCodePages
+"Выбранные кодовые страницы (%d)"
+"Selected code pages (%d)"
+upd:"Selected code pages (%d)"
+upd:"Selected code pages (%d)"
+upd:"Selected code pages (%d)"
+upd:"Selected code pages (%d)"
+upd:"Selected code pages (%d)"
+"Вибрані кодові сторінки (%d)"
+"Выбраныя кодавые старонкі (%d)"
 
 FindArchives
 "Искать в а&рхивах"

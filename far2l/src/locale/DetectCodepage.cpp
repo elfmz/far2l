@@ -18,25 +18,35 @@ static bool IsDecimalNumber(const char *s)
 	return true;
 }
 
-static int TranslateUDCharset(const char *cs)
+static int CheckForEncodedInName(const char *cs)
 {
 	if (strncasecmp(cs, "windows-", 8) == 0) {
 		if (IsDecimalNumber(cs + 8)) {
 			return atoi(cs + 8);
 		}
 		if (strcasecmp(cs + 8, "31j") == 0) {
-				return 932;
+			return 932;
 		}
 	}
 
 	if (strncasecmp(cs, "CP", 2) == 0 && IsDecimalNumber(cs + 2)) {
-		return atoi(cs + 2);
+		cs+= 2;
+	} else if (strncasecmp(cs, "IBM", 3) == 0 && IsDecimalNumber(cs + 3)) {
+		cs+= 3;
+	} else {
+		return -1;
 	}
 
-	if (strncasecmp(cs, "IBM", 3) == 0 && IsDecimalNumber(cs + 3)) {
-		return atoi(cs + 3);
+	int r = atoi(cs);
+	if (r == 878) {   // IBM KOI8-R
+		return 20866; // MS KOI8-R
 	}
 
+	return r;
+}
+
+static int CheckForHardcodedByName(const char *cs)
+{
 	if (!strcasecmp(cs, "UTF16-LE") || !strcasecmp(cs, "UTF16"))
 		return CP_UTF16LE;
 	if (!strcasecmp(cs, "UTF16-BE"))
@@ -74,7 +84,16 @@ static int TranslateUDCharset(const char *cs)
 	if (!strcasecmp(cs, "EUC-JP"))
 		return 20932;
 
-	fprintf(stderr, "TranslateUDCharset: unknown charset '%s'\n", cs);
+	return -1;
+}
+
+static int TranslateUDCharset(const char *cs)
+{
+	int r = CheckForEncodedInName(cs);
+	if (r == -1)
+		r = CheckForHardcodedByName(cs);
+	if (r == -1)
+		fprintf(stderr, "TranslateUDCharset: unknown charset '%s'\n", cs);
 
 	/*
 		and the rest:

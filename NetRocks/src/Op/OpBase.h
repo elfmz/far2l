@@ -22,6 +22,8 @@ protected:
 
 	ProgressState _state;
 
+	void ResetProgressState();
+
 	bool WaitThread(unsigned int msec = (unsigned int)-1);
 
 	bool WaitThreadBeforeShowProgress();

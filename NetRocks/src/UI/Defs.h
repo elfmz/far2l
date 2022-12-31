@@ -82,13 +82,5 @@ struct ProgressState
 	std::string path;
 	bool paused = false, aborting = false, finished = false;
 	IAbortableOperationsHost *ao_host = nullptr;
-
-	void Reset()
-	{
-		stats = ProgressStateStats();
-		path.clear();
-		paused = aborting = finished = false;
-	}
 };
-
 

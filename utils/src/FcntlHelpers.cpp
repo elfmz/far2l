@@ -43,3 +43,12 @@ void MakeFDNonCloexec(int fd)
 {
 	FcntlFx(fd, F_GETFD, F_SETFD, -FD_CLOEXEC);
 }
+
+void HintFDSequentialAccess(int fd)
+{
+#if defined(__linux__) || defined(__FreeBSD__)
+	if (posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL) == -1) {
+		perror("posix_fadvise(POSIX_FADV_SEQUENTIAL)");
+	}
+#endif
+}

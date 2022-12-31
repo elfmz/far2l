@@ -2181,8 +2181,8 @@ static void ArchiveSearch(HANDLE hDlg, const wchar_t *ArcName)
 	size_t SaveArcIndex = itd.GetFindFileArcIndex();
 	{
 		SearchMode=FINDAREA_FROM_CURRENT;
-		OpenPluginInfo Info;
 		{
+			OpenPluginInfo Info;
 			PluginLocker Lock;
 			int SavePluginsOutput=DisablePluginsOutput;
 			DisablePluginsOutput=TRUE;
@@ -2779,8 +2779,8 @@ static bool FindFilesProcess(Vars& v)
 					if (ArcItem.hPlugin != INVALID_HANDLE_VALUE)
 					{
 						PluginLocker Lock;
-						OpenPluginInfo Info;
-						CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
+//						OpenPluginInfo Info;
+//						CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
 						if (SearchMode==FINDAREA_ROOT ||
 							    SearchMode==FINDAREA_ALL ||
 							    SearchMode==FINDAREA_ALL_BUTNETWORK ||

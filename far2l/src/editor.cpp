@@ -1444,7 +1444,7 @@ int Editor::ProcessKey(int Key)
 
 				if (SelStart!=-1)SelStart=CurLine->m_prev->RealPosToCell(SelStart);
 
-				if (SelStart!=-1)SelEnd=CurLine->m_prev->RealPosToCell(SelEnd);
+				if (SelEnd!=-1)SelEnd=CurLine->m_prev->RealPosToCell(SelEnd);
 
 				if (SelStart==-1)
 				{

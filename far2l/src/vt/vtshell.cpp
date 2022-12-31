@@ -210,7 +210,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
 		_slavename.clear();
 		if (fd_term!=-1) {
-			fcntl(fd_term, F_SETFD, FD_CLOEXEC);
+			MakeFDCloexec(fd_term);
 			
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
 				UpdateTerminalSize(fd_term);
@@ -241,8 +241,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				CheckedCloseFDPair(fd_in);
 				return false;
 			}
-			fcntl(fd_in[1], F_SETFD, FD_CLOEXEC);
-			fcntl(fd_out[0], F_SETFD, FD_CLOEXEC);
+			MakeFDCloexec(fd_in[1]);
+			MakeFDCloexec(fd_out[0]);
 			
 			_pipes_fallback_in = fd_in[0];
 			_pipes_fallback_out = fd_out[1];
@@ -264,7 +264,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);
-			fcntl(_fd_out, F_SETFD, FD_CLOEXEC);
+			MakeFDCloexec(_fd_out);
 		}
 
 		return true;

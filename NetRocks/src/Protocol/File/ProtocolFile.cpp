@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <algorithm>
 #include <StringConfig.h>
+#include <utils.h>
 #include "ProtocolFile.h"
 
 
@@ -31,7 +32,7 @@ ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
 		if (pipe(child_stdout) < 0) {
 			throw std::runtime_error("Can't create pipe");
 		}
-		fcntl(child_stdout[0], F_SETFD, fcntl(child_stdout[0], F_GETFD) | FD_CLOEXEC);
+		MakeFDCloexec(child_stdout[0]);
 		pid_t pid = fork();
 		if (pid == 0) {
 			dup2(child_stdout[1], 1);

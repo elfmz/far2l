@@ -68,7 +68,10 @@ static void ListFileAppend(const std::string &filename, std::string line)
 
 static uint64_t CalculateDataID(UINT fmt, const void *data, uint32_t len)
 {
-	if (fmt == CF_UNICODETEXT) {
+	if (!data) {
+		len = 0;
+
+	} else if (fmt == CF_UNICODETEXT) {
 		len = wcsnlen((const wchar_t *)data, len / sizeof(wchar_t)) * sizeof(wchar_t);
 
 	} else if (fmt == CF_TEXT) {
@@ -358,19 +361,21 @@ void VTFar2lExtensios::OnInterract_ClipboardSetData(StackSerializer &stk_ser)
 		stk_ser.PopNum(len);
 		if (len && len + uint32_t(_clipboard_chunks.size()) >= len) {
 			data = (unsigned char *)WINPORT(ClipboardAlloc)(len + uint32_t(_clipboard_chunks.size()));
-			memcpy(data, _clipboard_chunks.data(), uint32_t(_clipboard_chunks.size()));
-			stk_ser.Pop(data + uint32_t(_clipboard_chunks.size()), len);
-			len+= uint32_t(_clipboard_chunks.size());
+			if (data) {
+				memcpy(data, _clipboard_chunks.data(), uint32_t(_clipboard_chunks.size()));
+				stk_ser.Pop(data + uint32_t(_clipboard_chunks.size()), len);
+				len+= uint32_t(_clipboard_chunks.size());
 #if (__WCHAR_MAX__ <= 0xffff)
-			if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
-				UtfConverter<uint32_t, uint16_t> cvt((const uint32_t *)data, len / sizeof(uint32_t));
-				void *new_data = ClipboardAllocFromVector(cvt, len);
-				if (new_data) {
-					WINPORT(ClipboardFree)(data);
-					data = new_data;
+				if (fmt == CF_UNICODETEXT) { // UTF32 -> UTF16
+					UtfConverter<uint32_t, uint16_t> cvt((const uint32_t *)data, len / sizeof(uint32_t));
+					void *new_data = ClipboardAllocFromVector(cvt, len);
+					if (new_data) {
+						WINPORT(ClipboardFree)(data);
+						data = new_data;
+					}
 				}
-			}
 #endif
+			}
 		} else
 			data = nullptr;
 

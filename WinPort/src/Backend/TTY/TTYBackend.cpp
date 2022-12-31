@@ -91,8 +91,7 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, const
 	if (pipe_cloexec(_kickass) == -1) {
 		_kickass[0] = _kickass[1] = -1;
 	} else {
-		fcntl(_kickass[1], F_SETFL,
-			fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
+		MakeFDNonBlocking(_kickass[1]);
 	}
 
 	g_vtb = this;
@@ -122,8 +121,7 @@ TTYBackend::~TTYBackend()
 void TTYBackend::DetachNotifyPipe()
 {
 	if (_notify_pipe != -1) {
-	    fcntl(_notify_pipe, F_SETFL,
-			fcntl(_notify_pipe, F_GETFL, 0) | O_NONBLOCK);
+		MakeFDNonBlocking(_notify_pipe);
 
 		if (_result && write(_notify_pipe, _result,
 				sizeof(*_result)) != sizeof(*_result)) {

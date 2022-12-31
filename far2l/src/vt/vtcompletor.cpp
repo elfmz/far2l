@@ -67,10 +67,10 @@ bool VTCompletor::EnsureStarted()
 		return false;
 	}
 
-	fcntl(pipe_in[0], F_SETFD, FD_CLOEXEC);
-	fcntl(pipe_in[1], F_SETFD, FD_CLOEXEC);
-	fcntl(pipe_out[0], F_SETFD, FD_CLOEXEC);
-	fcntl(pipe_out[1], F_SETFD, FD_CLOEXEC);
+	MakeFDCloexec(pipe_in[0]);
+	MakeFDCloexec(pipe_in[1]);
+	MakeFDCloexec(pipe_out[0]);
+	MakeFDCloexec(pipe_out[1]);
 
 	if (_pid==0) {
 		dup2(pipe_in[0], STDIN_FILENO);

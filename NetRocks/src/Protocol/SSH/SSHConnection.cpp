@@ -351,7 +351,7 @@ void SSHExecutedCommand::IOLoop()
 		throw ProtocolError("ssh execute",  ssh_get_error(_conn->ssh));
 	}
 
-	fcntl(fd_in, F_SETFL, fcntl(fd_in, F_GETFL, 0) | O_NONBLOCK);
+	MakeFDNonBlocking(fd_in);
 
 	for (unsigned int idle = 0;;) {
 		char buf[0x8000];
@@ -478,7 +478,7 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 		throw ProtocolError("pipe",  ssh_get_error(_conn->ssh));
 	}
 
-	fcntl(_kickass[1], F_SETFL, fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
+	MakeFDNonBlocking(_kickass[1]);
 
 	if (!StartThread()) {
 		CheckedCloseFDPair(_kickass);

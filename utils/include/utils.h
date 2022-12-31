@@ -131,6 +131,11 @@ void FilePathHashSuffix(std::string &pathname);
 void CheckedCloseFD(int &fd);
 void CheckedCloseFDPair(int *fd);
 
+void MakeFDBlocking(int fd);
+void MakeFDNonBlocking(int fd);
+void MakeFDCloexec(int fd);
+void MakeFDNonCloexec(int fd);
+
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
 size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);

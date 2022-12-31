@@ -133,7 +133,7 @@ namespace Sudo
 			throw std::runtime_error("pipe-leash");
 		}
 
-		fcntl(leash[0], F_SETFD, FD_CLOEXEC);
+		MakeFDCloexec(leash[0]);
 
 		int r = fork();
 		if (r == 0) {

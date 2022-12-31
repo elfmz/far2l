@@ -343,8 +343,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	FDScope std_in(dup(0));
 	FDScope std_out(dup(1));
 
-	fcntl(std_in, F_SETFD, FD_CLOEXEC);
-	fcntl(std_out, F_SETFD, FD_CLOEXEC);
+	MakeFDCloexec(std_in);
+	MakeFDCloexec(std_out);
 
 //	tcgetattr(std_out, &g_ts_tstp);
 
@@ -422,13 +422,13 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 					perror("notify_pipe");
 					return -1;
 				}
-				fcntl(new_notify_pipe[0], F_SETFD, FD_CLOEXEC);
-				fcntl(std_in, F_SETFD, 0);
-				fcntl(std_out, F_SETFD, 0);
+				MakeFDCloexec(new_notify_pipe[0]);
+				MakeFDNonCloexec(std_in);
+				MakeFDNonCloexec(std_out);
 				g_sigwinch_pid = fork();
-				fcntl(std_in, F_SETFD, FD_CLOEXEC);
-				fcntl(std_out, F_SETFD, FD_CLOEXEC);
-				fcntl(new_notify_pipe[1], F_SETFD, FD_CLOEXEC);
+				MakeFDCloexec(std_in);
+				MakeFDCloexec(std_out);
+				MakeFDCloexec(new_notify_pipe[1]);
 				if (g_sigwinch_pid == 0) {
 					{
 						setsid();

@@ -80,7 +80,8 @@ void PipeIPCSender::SendString(const std::string &s)
 PipeIPCRecver::PipeIPCRecver(int fd) : _fd(fd), _aborted(false)
 {
 	if (pipe_cloexec(_kickass) != -1) {
-		fcntl(_kickass[1], F_SETFL, fcntl(_kickass[1], F_GETFL, 0) | O_NONBLOCK);
+		MakeFDNonBlocking(_kickass[1]);
+
 	} else {
 		_kickass[0] = _kickass[1] = -1;
 	}
@@ -194,8 +195,8 @@ PipeIPCFD::PipeIPCFD()
 		throw PipeIPCError("PipeIPCFD: pipe[broker2master]", errno);
 	}
 
-	fcntl(master2broker[1], F_SETFD, FD_CLOEXEC);
-	fcntl(broker2master[0], F_SETFD, FD_CLOEXEC);
+	MakeFDCloexec(master2broker[1]);
+	MakeFDCloexec(broker2master[0]);
 
 	sprintf(broker_arg_r, "%d", master2broker[0]);
 	sprintf(broker_arg_w, "%d", broker2master[1]);

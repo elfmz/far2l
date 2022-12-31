@@ -143,7 +143,7 @@ struct InitDialogItem
 
 void InitDialogItems(const InitDialogItem *Init,FarDialogItem *Item, int ItemsNumber);
 
-bool SetSocketBlockingEnabled(int fd, bool blocking);
+void SetSocketBlockingEnabled(int fd, bool blocking);
 
 
 #endif

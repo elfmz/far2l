@@ -58,9 +58,7 @@ bool BufferedFileView::Open(const std::string &PathName)
 		return false;
 	}
 
-#ifndef __APPLE__
-	posix_fadvise(FD, 0, 0, POSIX_FADV_SEQUENTIAL); // todo: sdc_posix_fadvise
-#endif
+	HintFDSequentialAccess(FD);
 
 	FileSize = 0;
 	ActualizeFileSize();

@@ -135,6 +135,7 @@ void MakeFDBlocking(int fd);
 void MakeFDNonBlocking(int fd);
 void MakeFDCloexec(int fd);
 void MakeFDNonCloexec(int fd);
+void HintFDSequentialAccess(int fd);
 
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk = (size_t)-1);
 size_t ReadAll(int fd, void *data, size_t len);

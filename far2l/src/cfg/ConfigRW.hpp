@@ -28,7 +28,7 @@ class ConfigReader : public ConfigSection
 	std::unique_ptr<KeyFileValues> _empty_values;
 	KeyFileReadHelper *_selected_kfh = nullptr;
 	const KeyFileValues *_selected_section_values = nullptr;
-	bool _has_section;
+	bool _has_section = false;
 
 	virtual void OnSectionSelected();
 

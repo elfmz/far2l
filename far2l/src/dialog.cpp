@@ -4713,14 +4713,11 @@ LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	}
 
 	// предварительно проверим...
-	if ((unsigned)Param1 >= Dlg->ItemCount && Dlg->Item)
+	if (Param1 < 0 || (unsigned)Param1 >= Dlg->ItemCount || !Dlg->Item)
 		return 0;
 
-	if (Param1>=0)
-	{
-		CurItem=Dlg->Item[Param1];
-		Type=CurItem->Type;
-	}
+	CurItem = Dlg->Item[Param1];
+	Type = CurItem->Type;
 
 	switch (Msg)
 	{

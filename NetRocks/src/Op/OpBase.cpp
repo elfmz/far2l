@@ -23,19 +23,27 @@ void OpBase::SetNotifyTitle(int title_lng)
 	_notify_title_lng = title_lng;
 }
 
+void OpBase::ResetProgressState()
+{
+	std::lock_guard<std::mutex> locker(_state.mtx);
+	_state.stats = ProgressStateStats();
+	_state.path.clear();
+	_state.paused = _state.aborting = _state.finished = false;
+}
 
 void *OpBase::ThreadProc()
 {
 	void *out = this;
 	try {
-		_state.Reset();
+		ResetProgressState();
 		SudoClientRegion sdc_region;
 		Process();
+		out = nullptr;
+
+		std::lock_guard<std::mutex> locker(_state.mtx);
 		fprintf(stderr,
 			"NetRocks::OpBase('%s'): count=%llu all_total=%llu\n",
 			_base_dir.c_str(), _state.stats.count_total, _state.stats.all_total);
-
-		out = nullptr;
 
 	} catch (AbortError &) {
 		fprintf(stderr, "NetRocks::OpBase('%s'): aborted\n", _base_dir.c_str());

@@ -363,6 +363,7 @@ void OpXfer::Transfer()
 				}
 				if (xoa == XOA_RESUME) {
 					if (existing_file_info.size < e.second.size) {
+						std::lock_guard<std::mutex> lock(_state.mtx);
 						_state.stats.all_complete+= existing_file_info.size;
 						_state.stats.file_complete = existing_file_info.size;
 					} else {

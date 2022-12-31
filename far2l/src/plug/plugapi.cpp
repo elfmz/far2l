@@ -779,6 +779,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		}
 		case ACTL_REDRAWALL:
 		{
+			if (!FrameManager)
+				return TRUE;
+
 			int Ret=FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 			FrameManager->PluginCommit();
 			return Ret;
@@ -803,7 +806,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		case ACTL_QUIT:
 		{
 			CloseFARMenu=TRUE;
-			FrameManager->ExitMainLoop(FALSE);
+			if (FrameManager)
+				FrameManager->ExitMainLoop(FALSE);
 			return TRUE;
 		}
 

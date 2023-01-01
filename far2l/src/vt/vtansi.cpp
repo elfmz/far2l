@@ -1438,7 +1438,7 @@ void ParseAndPrintString( HANDLE hDev,
 		}
 	}
 	FlushBuffer();
-	assert(i == 0);
+	ASSERT(i == 0);
 }
 
 

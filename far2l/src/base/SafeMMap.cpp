@@ -27,6 +27,7 @@
 #include <atomic>
 
 #include <utils.h>
+#include <windows.h>
 #include "SafeMMap.hpp"
 #include "farversion.h"
 
@@ -180,7 +181,7 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 	}
 
 	WriteCrashSigLog(num, info, ctx);
-	abort();
+	ABORT_MSG("see %s", s_crash_log.c_str());
 }
 
 void SafeMMap::sRegisterSignalHandler()

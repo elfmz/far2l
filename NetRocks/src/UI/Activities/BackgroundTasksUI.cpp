@@ -37,8 +37,7 @@ void BackgroundTasksList()
 				case BTS_ABORTED:  item_text = prefix_aborted; break;
 
 				default:
-					fprintf(stderr, "BackgroundTasksList: unexpected status %u\n", info[i].status);
-					abort();
+					ABORT_MSG("unexpected status %u", info[i].status);
 			}
 			item_text+= StrMB2Wide(info[i].information);
 			menu_items[i].Text = str_pool.emplace(item_text).first->c_str();

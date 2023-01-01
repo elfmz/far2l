@@ -149,9 +149,9 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 #endif
 	if (plain) {
 		out = new PluginImplPlain(Name, plain);
-
-	} else
-		abort();
+	} else {
+		ABORT();
+	}
 
 	return out ? (HANDLE)out : INVALID_HANDLE_VALUE;
 }

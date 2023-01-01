@@ -65,7 +65,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include <KeyFileHelper.h>
 #include <crc64.h>
-#include <assert.h>
 
 const char *FmtDiskMenuStringD = "DiskMenuString%d";
 const char *FmtPluginMenuStringD = "PluginMenuString%d";
@@ -221,7 +220,7 @@ bool PluginManager::LoadPlugin(
 			pPlugin = new(std::nothrow) PluginA(this, strModuleName, SettingsName, ModuleID);
 			break;
 		default:
-			abort();
+			ABORT();
 	}
 
 	if (!pPlugin)
@@ -759,7 +758,7 @@ void PluginManager::ClosePlugin(HANDLE hPlugin)
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 	const auto RefCnt = ph->RefCnt;
-	assert(RefCnt > 0);
+	ASSERT(RefCnt > 0);
 	ph->RefCnt = RefCnt - 1;
 	if (RefCnt == 1) {
 		ph->pPlugin->ClosePlugin(ph->hPlugin);
@@ -771,7 +770,7 @@ void PluginManager::RetainPlugin(HANDLE hPlugin)
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
 	const auto RefCnt = ph->RefCnt;
-	assert(RefCnt > 0);
+	ASSERT(RefCnt > 0);
 	ph->RefCnt = RefCnt + 1;
 }
 

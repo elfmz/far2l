@@ -1,72 +1,72 @@
-#include <set>
-#include <mutex>
 #include "WinPortHandle.h"
 #include "WinCompat.h"
 #include "WinPort.h"
+#include <utils.h>
 
-WinPortHandle::WinPortHandle()
+// #define DEBUG_HANDLE_LEAK
+
+#ifdef DEBUG_HANDLE_LEAK
+static std::atomic<long> s_handles_count{0};
+static std::atomic<long> s_handles_count_max{0};
+static void DebugHandleLeakIncrement()
 {
+	long v = ++s_handles_count;
+	if (v > s_handles_count_max) {
+		s_handles_count_max = v;
+		fprintf(stderr, " !!! DebugHandleLeakIncrement: maximum updated to %ld\n", v);
+	}
 }
 
-WinPortHandle::~WinPortHandle() 
+# define DEBUG_HANDLE_LEAK_INCREMENT DebugHandleLeakIncrement()
+# define DEBUG_HANDLE_LEAK_DECREMENT --s_handles_count
+
+
+#else
+# define DEBUG_HANDLE_LEAK_INCREMENT
+# define DEBUG_HANDLE_LEAK_DECREMENT
+#endif
+
+WinPortHandle::WinPortHandle(uint32_t type_magic)
+	: _magic(type_magic | CommonMagicGood)
 {
+	DEBUG_HANDLE_LEAK_INCREMENT;
 }
 
-void WinPortHandle::Reference()
+WinPortHandle::~WinPortHandle()
 {
-	++_refcnt;
+	DEBUG_HANDLE_LEAK_DECREMENT;
+	ASSERT_MSG((_magic & CommonMagicMask) == CommonMagicGood, "bad magic=0x%x", _magic);
+	_magic = CommonMagicBad | (_magic & TypeMagicMask);
 }
 
-bool WinPortHandle::Dereference()
+HANDLE WinPortHandle::Register()
 {
-	if (0 == --_refcnt)
-		return Cleanup();
-
-	return true;
+	return reinterpret_cast<HANDLE>(this);
 }
 
-bool WinPortHandle::Cleanup()
-{
-	delete this;
-	return true;
-}
-
-static struct WinPortHandles : std::set<WinPortHandle *>, std::mutex
-{
-} g_winport_handles;
-
-
-HANDLE WinPortHandle_Register(WinPortHandle *wph)
-{
-	std::lock_guard<std::mutex> lock(g_winport_handles);
-	wph->Reference();
-	g_winport_handles.insert(wph);
-	return (HANDLE)wph;
-}
-
-bool WinPortHandle_Deregister(HANDLE h)
+bool WinPortHandle::Deregister(HANDLE h) noexcept
 {
 	WinPortHandle *wph = reinterpret_cast<WinPortHandle *>(h);
-	{
-		std::lock_guard<std::mutex> lock(g_winport_handles);
-		if (g_winport_handles.erase(wph)==0) {
-			WINPORT(SetLastError)(ERROR_INVALID_HANDLE);
-			return false;
-		}
+	bool out = wph->Cleanup();
+	int saved_errno;
+	if (!out) {
+		saved_errno = errno;
 	}
-	return wph->Dereference();
+	delete wph;
+	if (!out) {
+		errno = saved_errno;
+	}
+	return out;
 }
 
-
-
-WinPortHandle *WinPortHandle_Reference(HANDLE h)
+WinPortHandle *WinPortHandle::Access(HANDLE h, uint32_t type_magic) noexcept
 {
-	WinPortHandle *wph = reinterpret_cast<WinPortHandle *>(h);
-	{
-		std::lock_guard<std::mutex> lock(g_winport_handles);
-		if (g_winport_handles.find(wph)==g_winport_handles.end())
-			return NULL;
-		wph->Reference();
+	if (UNLIKELY(!h || h == INVALID_HANDLE_VALUE)) {
+		return nullptr;
 	}
+
+	WinPortHandle *wph = reinterpret_cast<WinPortHandle *>(h);
+	const uint32_t expected = CommonMagicGood | type_magic;
+	ASSERT_MSG(wph->_magic == expected, "bad magic=0x%x expected=0x%x", wph->_magic, expected);
 	return wph;
 }

@@ -16,7 +16,6 @@
 // Registry operations
 #include <functional>
 #include <algorithm>
-#include <assert.h>
 
 #include <utils.h>
 #include <KeyFileHelper.h>
@@ -43,7 +42,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
   int SysWordDivLen = (int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, SysWordDiv);
   if (SysWordDivLen > 0)
   {
-    assert(SysWordDivLen <= (int)ARRAYSIZE(SysWordDiv));
+    ASSERT(SysWordDivLen <= (int)ARRAYSIZE(SysWordDiv));
     WordDiv.append(SysWordDiv, SysWordDivLen);
   }
   WordDiv+= KeyFileReadSection(INI_LOCATION, INI_SECTION).GetString("AddWordDiv", L"#");

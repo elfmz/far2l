@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <assert.h>
 #include <vector>
 #include "utils.h"
 #include "UtfConvert.hpp"

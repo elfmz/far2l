@@ -4,7 +4,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <assert.h>
 #include <fcntl.h>
 #include <errno.h>
 

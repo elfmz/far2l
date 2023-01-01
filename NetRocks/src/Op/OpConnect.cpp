@@ -13,7 +13,7 @@ static std::shared_ptr<IHost> CreateRemoteHost(const std::string &standalone_con
 				location.url.port, location.url.username, location.url.password);
 
 		default:
-			abort();
+			ABORT();
 	}
 }
 

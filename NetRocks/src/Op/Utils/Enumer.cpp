@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <sys/stat.h>
 #include <utils.h>
 #include "Enumer.h"
@@ -10,7 +9,7 @@ Enumer::Enumer(Path2FileInformation &result, std::shared_ptr<IHost> &host, const
 	:
 	_result(result), _host(host), _no_special_files(no_special_files), _state(state), _wea_state(wea_state)
 {
-	assert(dir.empty() || dir[dir.size() - 1] == '/');
+	ASSERT(dir.empty() || dir[dir.size() - 1] == '/');
 	std::string item_path;
 	for (int i = 0; i < items_count; ++i) {
 		if (FILENAME_ENUMERABLE(items[i].FindData.lpwszFileName)) {

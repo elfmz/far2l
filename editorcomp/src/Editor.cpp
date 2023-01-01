@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <utils.h>
 #include <farplug-wide.h>
 #include "Editor.h"

@@ -1,56 +1,58 @@
 #pragma once
 #include "WinCompat.h"
 #include "WinPort.h"
+#include <cctweaks.h>
 #include <vector>
 #include <atomic>
 
 class WinPortHandle;
 
-HANDLE WinPortHandle_Register(WinPortHandle *wph);
-bool WinPortHandle_Deregister(HANDLE h);
-
-WinPortHandle *WinPortHandle_Reference(HANDLE h);
-
 class WinPortHandle
 {
-	std::atomic<unsigned int> _refcnt{0};
+	volatile uint32_t _magic;
 
 protected:
-	virtual bool Cleanup();
+	virtual ~WinPortHandle(); // use Deregister to delete
+
+	virtual bool Cleanup() noexcept = 0;
 
 public:
-	WinPortHandle();
-	virtual ~WinPortHandle();
-	
-	virtual bool WaitHandle(DWORD msec) {return true; }
+	static constexpr uint32_t TypeMagicMask   = 0x00000001; // one bit for type-specific magic (file/registry)
+	static constexpr uint32_t CommonMagicMask = ~TypeMagicMask;
+	static constexpr uint32_t CommonMagicGood = 0xcafebabe;
+	static constexpr uint32_t CommonMagicBad  = CommonMagicGood ^ CommonMagicMask;
 
-	void Reference();
-	bool Dereference();
+	WinPortHandle(uint32_t type_magic);
+
+	HANDLE Register();
+	static WinPortHandle *Access(HANDLE h, uint32_t type_magic) noexcept;
+	static bool Deregister(HANDLE h) noexcept;
+};
+
+template <uint32_t MAGIC>
+	struct MagicWinPortHandle : WinPortHandle
+{
+	static constexpr uint32_t TypeMagic = MAGIC;
+
+	MagicWinPortHandle() : WinPortHandle(TypeMagic)
+	{
+		static_assert((TypeMagic & WinPortHandle::CommonMagicMask) == 0, "Bad MAGIC");
+	}
 };
 
 template <class T> 
 	class AutoWinPortHandle
 {
-	WinPortHandle *_wph;
 	T *_p;
 
 public:
-	AutoWinPortHandle(HANDLE h) : _wph(WinPortHandle_Reference(h))
+	AutoWinPortHandle(HANDLE h) : _p((T *)WinPortHandle::Access(h, T::TypeMagic))
 	{
-		_p = dynamic_cast<T *>(_wph);
-		if (!_p) {
-			WINPORT(SetLastError)(ERROR_INVALID_HANDLE);
-		}
-	}
-	~AutoWinPortHandle()
-	{
-		if (_wph)
-			_wph->Dereference();
 	}
 
 	operator bool()
 	{
-		return _p!=nullptr;
+		return _p != nullptr;
 	}
 
 	T * operator -> ()
@@ -61,51 +63,5 @@ public:
 	T * get()
 	{
 		return _p;
-	}
-};
-
-
-
-template <class T> 
-	class AutoWinPortHandles
-{
-	std::vector<WinPortHandle *> _wphs;
-	std::vector<T *> _ps;
-	bool _good;
-public:
-	AutoWinPortHandles(HANDLE *handles, size_t count) : _good(count > 0)
-	{
-		_wphs.resize(count);
-		_ps.resize(count);
-		for (size_t i = 0; i < count; ++i) {
-			WinPortHandle *wph;
-			_wphs[i] = wph = WinPortHandle_Reference(handles[i]);
-			if (wph) {
-				T *p;
-				_ps[i] = p = dynamic_cast<T *>(wph);
-				if (!p) {
-					_good = false;
-					WINPORT(SetLastError)(ERROR_INVALID_HANDLE);
-					//break;
-				}
-			}
-		}
-	}
-	~AutoWinPortHandles()
-	{
-		for (auto wph : _wphs) {
-			if (wph)
-				wph->Dereference();
-		}
-	}
-
-	operator bool()
-	{
-		return _good;
-	}
-	
-	T ** get()
-	{
-		return &_ps[0];
 	}
 };

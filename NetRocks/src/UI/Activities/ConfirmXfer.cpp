@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <utils.h>
 #include "ConfirmXfer.h"
 #include "../../Globals.h"
@@ -35,8 +34,8 @@ ConfirmXfer::ConfirmXfer(XferKind xk, XferDirection xd)
 		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, (_xd == XD_UPLOAD) ? MXferMoveUploadText
 				: ((_xd == XD_CROSSLOAD) ? MXferMoveCrossloadText : MXferMoveDownloadText));
 	} else {
-		assert(_xk == XK_RENAME);
-		assert(_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD);
+		ASSERT(_xk == XK_RENAME);
+		ASSERT(_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD);
 		_i_dblbox = _di.SetBoxTitleItem(MXferRenameTitle);
 		_i_text = _di.Add(DI_TEXT, 5,2,62,2, 0, MXferRenameText);
 	}

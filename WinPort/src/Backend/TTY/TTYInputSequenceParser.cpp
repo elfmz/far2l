@@ -1,11 +1,9 @@
 #include <stdarg.h>
 #include <string>
 #include <base64.h>
+#include <utils.h>
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
-#include "WinPort.h"
-
-#include "WideMB.h"
 
 
 //See:
@@ -23,10 +21,9 @@ template <typename First, typename Second, class ... Types>
 		for (const auto &s_i : second) {
 			if (memcmp(f_i.first.chars, s_i.first.chars,
 				std::min(sizeof(f_i.first.chars), sizeof(s_i.first.chars)) ) == 0) {
-				fprintf(stderr, "AssertNoConflictsBetween: '%s' vs '%s'\n",
+				ABORT_MSG("'%s' vs '%s'\n",
 					std::string(f_i.first.chars, sizeof(f_i.first.chars)).c_str(),
 					std::string(s_i.first.chars, sizeof(s_i.first.chars)).c_str());
-				abort();
 			}
 		}
 	}
@@ -69,10 +66,7 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 		case 7: _nch2key7.Add(tmp, k); break;
 		case 8: _nch2key8.Add(tmp, k); break;
 		default:
-			fprintf(stderr,
-				"TTYInputSequenceParser::AddStr(0x%x, 0x%x, '%s') - unexpected: %d\n",
-				vk, control_keys, fmt, r);
-			abort();
+			ABORT_MSG("unexpected r=%d for vk=0x%x control_keys=0x%x fmt='%s'", r, vk, control_keys, fmt);
 	}
 }
 
@@ -427,7 +421,7 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 			return (size_t)TTY_PARSED_PLAINCHARS;
 	}
 
-	abort();
+	ABORT();
 }
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)

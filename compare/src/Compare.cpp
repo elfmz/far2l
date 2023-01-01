@@ -3,7 +3,6 @@
 #include <farplug-wide.h>
 #include <algorithm>
 #include <ctype.h>
-#include <assert.h>
 #include <utils.h>
 #include <KeyFileHelper.h>
 
@@ -331,7 +330,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
     switch (InitItems[i].Data)
     {
       case MCompareContents:
-        assert(i + 3 < ARRAYSIZE(InitItems));
+        ASSERT(i + 3 < ARRAYSIZE(InitItems));
         DlgData += i;
         if (bPluginPanels)
         {
@@ -352,7 +351,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MCompareContentsIgnore:
-        assert(i + 2 < ARRAYSIZE(InitItems));
+        ASSERT(i + 2 < ARRAYSIZE(InitItems));
         if (!DialogItems[i].Param.Selected || DialogItems[i].Flags & DIF_DISABLE)
         {
           DialogItems[i+1].Flags |= DIF_DISABLE;
@@ -365,7 +364,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MCompareIgnoreWhitespace:
-        assert(i > 0);
+        ASSERT(i > 0);
         if (DialogItems[i].Param.Selected == DialogItems[i-1].Param.Selected)
         {
           DialogItems[i-1].Param.Selected = 1;
@@ -373,7 +372,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MProcessSubfolders:
-        assert(i + 2 < ARRAYSIZE(InitItems));
+        ASSERT(i + 2 < ARRAYSIZE(InitItems));
         DlgData += i<<8;
         if (bPluginPanels)
         {
@@ -399,7 +398,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
         }
         break;
       case MCompareTime:
-        assert(i + 2 < ARRAYSIZE(InitItems));
+        ASSERT(i + 2 < ARRAYSIZE(InitItems));
         DlgData += i<<16;
         if (!DialogItems[i].Param.Selected)
         {

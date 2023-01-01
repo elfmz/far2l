@@ -1434,10 +1434,7 @@ const String *FarEditorSet::getParamDefValue(FileTypeImpl *type, SString param)
   const String *value;
   value = type->getParamDefaultValue(param);
   if (value == nullptr) value = defaultType->getParamValue(param);
-  if (value == nullptr) {
-    fprintf(stderr, "FarEditorSet::getParamDefValue: NULL for '%ls'\n", param.getWChars());
-    abort();
-  }
+  ASSERT_MSG(value != nullptr, "no value for '%ls'", param.getWChars());
   StringBuffer *p=new StringBuffer("<default-");
   p->append(SString(value));
   p->append(SString(">"));

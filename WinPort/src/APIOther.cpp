@@ -75,7 +75,12 @@ extern "C" {
 
 	BOOL WINPORT(CloseHandle)(HANDLE hObject)
 	{
-		if (!WinPortHandle_Deregister(hObject)) {
+		if (!hObject || hObject == INVALID_HANDLE_VALUE) {
+			WINPORT(SetLastError)(ERROR_INVALID_HANDLE);
+			return FALSE;
+		}
+
+		if (!WinPortHandle::Deregister(hObject)) {
 			return FALSE;
 		}
 

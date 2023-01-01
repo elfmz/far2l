@@ -766,7 +766,6 @@ extern "C" {
 		case CP_UTF8:
 			if (defchar || used)
 			{
-				//abort();
 				fprintf(stderr, "WideCharToMultiByte: 'defchar' and 'used' can't be used with UTF8\n");
 				WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 				return 0;

@@ -168,11 +168,8 @@ extern "C" {
 	static ClipboardAllocHeader *ClipboardAccess(PVOID hMem)
 	{
 		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)((char *)hMem - sizeof(ClipboardAllocHeader));
-		if (hdr->magic != CAH_ALLOCED_MAGIC) {
-			fprintf(stderr, "%s: %s magic (0x%llx)\n", __FUNCTION__, 
-				(hdr->magic == CAH_FREED_MAGIC) ? "freed" : "bad", (unsigned long long)hdr->magic);
-			abort();
-		}
+		ASSERT_MSG(hdr->magic == CAH_ALLOCED_MAGIC, "%s magic (0x%llx)",
+			(hdr->magic == CAH_FREED_MAGIC) ? "freed" : "bad", (unsigned long long)hdr->magic);
 		return hdr;
 	}
 

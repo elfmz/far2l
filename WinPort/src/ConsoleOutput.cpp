@@ -130,7 +130,6 @@ COORD ConsoleOutput::GetCursor(UCHAR &height, bool &visible)
 
 void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 {
-	//if (height==23) abort();
 	ApplyConsoleSizeLimits(width, height);
 	{
 		std::lock_guard<std::mutex> lock(_mutex);

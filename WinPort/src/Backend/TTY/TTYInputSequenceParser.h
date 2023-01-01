@@ -1,5 +1,6 @@
 #pragma once
 #include <WinCompat.h>
+#include <WinPort.h>
 #include <map>
 #include <StackSerializer.h>
 
@@ -42,10 +43,7 @@ template <size_t N, class V>
 	{
 		NChars<N> nc(s);
 		auto ir = std::map<NChars<N>, V>::emplace(nc, v);
-		if (!ir.second) {
-			fprintf(stderr, "NCharsMap: can't add '%s'\n", s);
-			abort();
-		}
+		ASSERT_MSG(ir.second, "can't add '%s'", s);
 	}
 
 	bool Lookup(const char *s, V &out) const

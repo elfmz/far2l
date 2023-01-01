@@ -1,6 +1,6 @@
 #include "ThreadedWorkQueue.h"
+#include "debug.h"
 #include <unistd.h>
-#include <assert.h>
 
 class ThreadedWorker : public Threaded
 {
@@ -48,7 +48,7 @@ ThreadedWorkQueue::~ThreadedWorkQueue()
 		_cond.notify_all();
 	}
 	_workers.clear(); // this also joins them
-	assert(_working == 0);
+	ASSERT(_working == 0);
 
 	fprintf(stderr,
 		"%s: threads=%lu/%lu done=%lu finalized=%lu unprocessed_backlog=%lu unprocessed_done=%lu _backlog_waits=%lu\n",

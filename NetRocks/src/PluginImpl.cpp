@@ -35,8 +35,7 @@ public:
 	{
 		std::lock_guard<std::mutex> locker(_mutex);
 		if (!_all.emplace((void *)it, it).second) {
-			fprintf(stderr, "AllNetRocks - dup entry: %p\n", it);
-			abort();
+			ABORT_MSG("dup entry %p", it);
 		}
 	}
 

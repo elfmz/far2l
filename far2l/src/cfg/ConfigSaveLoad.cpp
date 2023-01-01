@@ -675,11 +675,7 @@ void LoadConfig()
 
 void AssertConfigLoaded()
 {
-	if (!g_config_ready)
-	{
-		fprintf(stderr, "%s: oops\n", __FUNCTION__);
-		abort();
-	}
+	ASSERT(g_config_ready);
 }
 
 void SaveConfig(int Ask)

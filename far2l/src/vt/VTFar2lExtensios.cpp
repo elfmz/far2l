@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <base64.h>
 #include <crc64.h>
 #include <utils.h>

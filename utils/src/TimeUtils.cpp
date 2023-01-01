@@ -1,4 +1,5 @@
 #include "TimeUtils.h"
+#include "debug.h"
 #include <stdlib.h>
 
 std::chrono::milliseconds TimeMSNow()
@@ -22,7 +23,7 @@ std::string TimeString(const struct tm &t, TimeStringFormat tsf)
 			break;
 
 		default:
-			abort();
+			ABORT();
 	}
 	
 	return buf;

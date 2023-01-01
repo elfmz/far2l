@@ -219,7 +219,7 @@ namespace VTLog
 	void Resume()
 	{
 		if (__sync_sub_and_fetch(&g_pause_cnt, 1) < 0) {
-			abort();
+			ABORT();
 		}
 	}
 	

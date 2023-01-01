@@ -36,6 +36,7 @@ set(SOURCES
   src/ReadWholeFile.cpp
   src/ThrowPrintf.cpp
   src/FcntlHelpers.cpp
+  src/Panic.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

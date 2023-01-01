@@ -469,6 +469,12 @@
 		<word name='TIOCSTI'/>
 		<word name='TIOCSWINSZ'/>
 		<word name='TIOCVHANGUP'/>
+		<word name='POSIX_FADV_NORMAL'/>
+		<word name='POSIX_FADV_RANDOM'/>
+		<word name='POSIX_FADV_SEQUENTIAL'/>
+		<word name='POSIX_FADV_WILLNEED'/>
+		<word name='POSIX_FADV_DONTNEED'/>
+		<word name='POSIX_FADV_NOREUSE'/>
 		<word name='PTHREAD_BARRIER_SERIAL_THREAD'/>
 		<word name='PTHREAD_MUTEX_INITIALIZER'/>
 		<word name='PTHREAD_RWLOCK_INITIALIZER'/>
@@ -536,6 +542,7 @@
 		<word name='unlink'/>
 		<word name='utime'/>
 		<word name='write'/>
+		<word name='posix_fadvise'/>
    </keywords>
 
    <keywords region='KeywordUnix'>

@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <StackHeapArray.hpp>
 #include <stdarg.h>
-#include <assert.h>
 #include <limits>
 #include "lang.hpp"
 
@@ -60,7 +59,7 @@ static DbgStr &DBGSTR()
 void FN_NOINLINE dbgStrCreated(void *c, unsigned int Capacity)
 {
 	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
-	if (!DBGSTR().Instances.insert(c).second) abort();
+	if (!DBGSTR().Instances.insert(c).second) { ABORT(); }
 //	fprintf(stderr, "dbgStrCreated: Instances=%lu Addrefs=%llu [%u]\n",
 //		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
 }
@@ -68,7 +67,7 @@ void FN_NOINLINE dbgStrCreated(void *c, unsigned int Capacity)
 void FN_NOINLINE dbgStrDestroyed(void *c, unsigned int Capacity)
 {
 	std::lock_guard<std::mutex> lock(DBGSTR().Mtx);
-	if (!DBGSTR().Instances.erase(c)) abort();
+	if (!DBGSTR().Instances.erase(c)) { ABORT(); }
 //	fprintf(stderr, "dbgStrDestroyed: Instances=%lu Addrefs=%llu [%u]\n",
 //		(unsigned long)DBGSTR().Instances.size(), DBGSTR().Addrefs, Capacity);
 }
@@ -144,11 +143,8 @@ FARString::Content *FARString::Content::Create(size_t nCapacity, const wchar_t *
 void FN_NOINLINE FARString::Content::Destroy(Content *c)
 {
 	dbgStrDestroyed(c, c->m_nCapacity);
-
-	if (LIKELY(c != EmptySingleton()))
-		free(c);
-	else
-		abort();
+	ASSERT(c != EmptySingleton());
+	free(c);
 }
 
 void FARString::Content::AddRef()
@@ -240,14 +236,14 @@ size_t FARString::GetCharString(char *lpszStr, size_t nSize, UINT CodePage) cons
 FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_t DataLen)
 {
 	// Pos & Len must be valid
-	assert(Pos <= m_pContent->GetLength());
-	assert(Len <= m_pContent->GetLength());
-	assert(Pos + Len <= m_pContent->GetLength());
+	ASSERT(Pos <= m_pContent->GetLength());
+	ASSERT(Len <= m_pContent->GetLength());
+	ASSERT(Pos + Len <= m_pContent->GetLength());
 
 	// Data and *this must not intersect (but Data can be located entirely within *this)
 	const bool DataStartsInside = (Data >= CPtr() && Data < CEnd());
 	const bool DataEndsInside = (Data + DataLen > CPtr() && Data + DataLen <= CEnd());
-	assert(DataStartsInside == DataEndsInside);
+	ASSERT(DataStartsInside == DataEndsInside);
 
 	if (UNLIKELY(!Len && !DataLen))
 		return *this;
@@ -278,9 +274,9 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t* Data, size_
 FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t Ch, size_t Count)
 {
 	// Pos & Len must be valid
-	assert(Pos <= m_pContent->GetLength());
-	assert(Len <= m_pContent->GetLength());
-	assert(Pos + Len <= m_pContent->GetLength());
+	ASSERT(Pos <= m_pContent->GetLength());
+	ASSERT(Len <= m_pContent->GetLength());
+	ASSERT(Pos + Len <= m_pContent->GetLength());
 
 	if (UNLIKELY(!Len && !Count))
 		return *this;
@@ -310,7 +306,7 @@ FARString& FARString::Replace(size_t Pos, size_t Len, const wchar_t Ch, size_t C
 
 wchar_t FARString::ReplaceChar(size_t Pos, wchar_t Ch)
 {
-	assert(Pos < m_pContent->GetLength());
+	ASSERT(Pos < m_pContent->GetLength());
 	PrepareForModify();
 	std::swap(m_pContent->GetData()[Pos], Ch);
 	return Ch;

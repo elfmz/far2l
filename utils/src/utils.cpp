@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 #include <os_call.hpp>
 
 #include <algorithm>
@@ -36,12 +37,13 @@ void CheckedCloseFD(int &fd)
 {
 	int tmp = fd;
 	if (tmp != -1) {
-               fd = -1;
-               if (os_call_int(close, tmp) != 0) {
-                       perror("CheckedCloseFD");
-                       abort();
-               }
-       }
+		fd = -1;
+		if (os_call_int(close, tmp) != 0) {
+			const int err = errno;
+			fprintf(stderr, "%s: %d\n", __FUNCTION__, err);
+			ASSERT(err != EBADF);
+		}
+	}
 }
 
 void CheckedCloseFDPair(int *fd)

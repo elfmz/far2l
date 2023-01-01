@@ -7,7 +7,16 @@
 
 #ifdef MY_CPU_X86_OR_AMD64
 
-  #if defined(__clang__)
+#if defined(__APPLE__) || defined(__FreeBSD__)
+# include <AvailabilityMacros.h>
+# if !defined(MAC_OS_X_VERSION_10_12)
+#  define DONT_USE_INTEL_AES /* fixes build under ElCapitan */
+# endif
+#endif
+
+  #ifdef DONT_USE_INTEL_AES
+	#warning "Intel AES prohibited"
+  #elif defined(__clang__)
     #if __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8)
       #define USE_INTEL_AES
         #define ATTRIB_AES __attribute__((__target__("aes")))

@@ -198,8 +198,7 @@ Glossary:
  In:
   uint32_t (format ID)
  Out:
-  int8_t (1 - success, 0 - failure, -1 - clipboard wasn't open)
-  uint32_t (size of data)
+  uint32_t (0 - on failure, -1 - clipboard wasn't open, other value - size of data - on success)
   data of specified size
   uint64_t OPTIONAL (clipboard data ID, only if server reported FARTTY_FEATCLIP_DATA_ID)
 */

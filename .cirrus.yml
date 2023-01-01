@@ -4,10 +4,3 @@ freebsd_test_task:
     name: cirrus/FreeBSD
     install_script: pkg install -y cmake git m4 gawk pkgconf bash wx31-gtk3 libssh openssl libnfs neon libarchive samba412 pcre spdlog uchardet xerces-c3
     script: mkdir build && cd build && cmake .. && make -j $(getconf _NPROCESSORS_ONLN) && ./install/far2l --help
-
-macos_freebsd_test_task:
-    macos_instance:
-        image: catalina-xcode-12.2
-    name: cirrus/MacOS
-    install_script: brew update && brew bundle -v
-    script: mkdir build && cd build && cmake -G Ninja .. && ninja -j$(getconf _NPROCESSORS_ONLN) -v

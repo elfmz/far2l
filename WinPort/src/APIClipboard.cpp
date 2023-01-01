@@ -148,7 +148,9 @@ extern "C" {
 			fprintf(stderr, "%s: insane amount wanted (%lu)\n", __FUNCTION__, (unsigned long)dwBytes);
 			return NULL;
 		}
-		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)malloc(sizeof(ClipboardAllocHeader) + dwBytes);
+		// allocate by one wchar_t more to ensure NUL-termination of any sane text format if setter didnt do that properly
+		const size_t payload_size = dwBytes + sizeof(wchar_t);
+		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)malloc(sizeof(ClipboardAllocHeader) + payload_size);
 		if (!hdr) {
 			fprintf(stderr, "%s: malloc(%lu) failed\n", __FUNCTION__, (unsigned long)(sizeof(ClipboardAllocHeader) + dwBytes));
 			return NULL;
@@ -156,7 +158,7 @@ extern "C" {
 		hdr->magic = CAH_ALLOCED_MAGIC;
 		hdr->size = (DWORD)dwBytes;
 		void *rv = hdr + 1;
-		memset(rv, 0, dwBytes);
+		memset(rv, 0, payload_size);
 		auto pending_clipboard_allocations = ++s_pending_clipboard_allocations;
 		if (pending_clipboard_allocations > 10) {
 			fprintf(stderr, "%s: suspicious pending_clipboard_allocations=(%lu)\n",

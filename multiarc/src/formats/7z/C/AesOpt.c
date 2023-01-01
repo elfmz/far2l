@@ -7,7 +7,7 @@
 
 #ifdef MY_CPU_X86_OR_AMD64
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__)
 # include <AvailabilityMacros.h>
 # if !defined(MAC_OS_X_VERSION_10_12)
 #  define DONT_USE_INTEL_AES /* fixes build under ElCapitan */

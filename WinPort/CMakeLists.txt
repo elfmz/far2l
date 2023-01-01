@@ -17,6 +17,7 @@ src/ConsoleBuffer.cpp
 src/ConsoleInput.cpp
 src/ConsoleOutput.cpp
 src/WinPortHandle.cpp
+src/CustomPanic.cpp
 src/PathHelpers.cpp
 src/SavedScreen.cpp
 src/sudo/sudo_common.cpp

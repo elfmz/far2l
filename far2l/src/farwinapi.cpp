@@ -116,7 +116,7 @@ bool FindFile::Get(FAR_FIND_DATA_EX& FindData)
 	if ((FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && FindData.strFileName.At(0) == L'.'
 		&& ((FindData.strFileName.At(1) == L'.' && !FindData.strFileName.At(2)) || !FindData.strFileName.At(1)))
 	{ // FIND_FILE_FLAG_NO_CUR_UP should handle this
-		abort();
+		ABORT();
 	}
 
 	return true;

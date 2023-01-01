@@ -1,7 +1,6 @@
 #include "tools.h"
 #include <string>
 #include <utils.h>
-#include <assert.h>
 
 wchar_t *rtrim(wchar_t* str)
 {
@@ -57,7 +56,7 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
 	std::fill(new_path.begin() + unconverted_len, new_path.end(), 0);
   }
   p = FSF.ConvertPath(CPM_FULL, &new_path[0], &new_path[0], static_cast<int>(new_path.size()));
-  assert(p <= new_path.size());
+  ASSERT(p <= new_path.size());
   //new_path.resize(p);
 
   wchar_t *out = new wchar_t[p];

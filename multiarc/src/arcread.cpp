@@ -1,5 +1,4 @@
 #include <fcntl.h>
-#include <assert.h>
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 

@@ -101,7 +101,6 @@ bool CalcConfig()
 	LoadConfig();
 	CheckConfig();
 	SaveConfig();
-
 	if (ConfigDialog())
 	{
 		CheckConfig();

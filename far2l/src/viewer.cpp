@@ -1178,7 +1178,7 @@ int Viewer::ProcessKey(int Key)
 			int64_t NewSelectPos = SelectPos;
 			if (Key == KEY_SHIFTLEFT)
 				--NewSelectPos;
-			fprintf(stderr, "SELECTIO CHANGE: [%ld +%ld)\n", (unsigned long)NewSelectPos, NewSelectSize);
+//			fprintf(stderr, "SELECTIO CHANGE: [%ld +%ld)\n", (unsigned long)NewSelectPos, NewSelectSize);
 			SelectText(NewSelectPos, NewSelectSize, SelectFlags);
 		}
 		return TRUE;

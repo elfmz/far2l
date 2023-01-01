@@ -305,8 +305,8 @@ void GetVideoMode(COORD& Size)
 	Console.GetSize(Size);
 	ScrX=Size.X-1;
 	ScrY=Size.Y-1;
-	assert(ScrX>0);
-	assert(ScrY>0);
+	ASSERT(ScrX>0);
+	ASSERT(ScrY>0);
 	WidthNameForMessage=(ScrX*38)/100+1;
 
 	if (PrevScrX == -1) PrevScrX=ScrX;

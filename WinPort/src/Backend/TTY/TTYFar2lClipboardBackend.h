@@ -42,7 +42,7 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 		std::vector<unsigned char> data;
 	};
 	struct Cache : std::map<UINT, CachedData> { } _data_cache;
-	struct std::map<std::string, UINT> _formats_cache;
+	std::map<std::string, UINT> _formats_cache;
 
 	std::unique_ptr<FSClipboardBackend> _fallback_backend;
 	IFar2lInterractor *_interractor;

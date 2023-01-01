@@ -1,4 +1,5 @@
 #include "Threaded.h"
+#include "debug.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <algorithm>
@@ -11,8 +12,7 @@ Threaded::~Threaded()
 {
 	std::lock_guard<std::mutex> lock(_trd_mtx);
 	if (!_self_destruct && (!_trd_exited || !_trd_joined)) {
-		fprintf(stderr, "~Threaded: still busy\n");
-		abort();
+		ABORT();
 	}
 }
 

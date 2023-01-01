@@ -2,9 +2,9 @@
 #include <iterator>
 #include <stdexcept>
 #include <vector>
-#include <assert.h>
 #include <string.h>
 #include "cctweaks.h"
+#include "debug.h"
 #include "ww898/utf_converters.hpp"
 #include "UtfDefines.h"
 
@@ -124,7 +124,7 @@ template <typename CHAR_SRC, typename PUSHBACK_DST>
 			dst_pb.push_back(CHAR_REPLACEMENT);
 
 		} catch (std::runtime_error &) {
-			assert(dst_pb.fully_filled());
+			ASSERT(dst_pb.fully_filled());
 			src_len = src - src_begin;
 			out|= CONV_NEED_MORE_DST;
 			break;

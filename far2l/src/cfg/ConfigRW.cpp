@@ -1,6 +1,5 @@
 #include "headers.hpp"
 #include "ConfigRW.hpp"
-#include <assert.h>
 #include <algorithm>
 
 static bool IsSectionOrSubsection(const std::string &haystack, const char *needle)
@@ -117,31 +116,31 @@ void ConfigReader::OnSectionSelected()
 
 std::vector<std::string> ConfigReader::EnumKeys()
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->EnumKeys();
 }
 
 std::vector<std::string> ConfigReader::EnumSectionsAt(bool recursed)
 {
-	assert(_selected_kfh != nullptr);
+	ASSERT(_selected_kfh != nullptr);
 	return _selected_kfh->EnumSectionsAt(_section, recursed);
 }
 
 bool ConfigReader::HasKey(const std::string &name) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->HasKey(name);
 }
 
 FARString ConfigReader::GetString(const std::string &name, const wchar_t *def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetString(name, def);
 }
 
 bool ConfigReader::GetString(FARString &out, const std::string &name, const wchar_t *def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	if (!_selected_section_values->HasKey(name)) {
 		return false;
 	}
@@ -151,7 +150,7 @@ bool ConfigReader::GetString(FARString &out, const std::string &name, const wcha
 
 bool ConfigReader::GetString(std::string &out, const std::string &name, const char *def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	if (!_selected_section_values->HasKey(name)) {
 		return false;
 	}
@@ -161,31 +160,31 @@ bool ConfigReader::GetString(std::string &out, const std::string &name, const ch
 
 int ConfigReader::GetInt(const std::string &name, int def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetInt(name, def);
 }
 
 unsigned int ConfigReader::GetUInt(const std::string &name, unsigned int def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetUInt(name, def);
 }
 
 unsigned long long ConfigReader::GetULL(const std::string &name, unsigned long long def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetULL(name, def);
 }
 
 size_t ConfigReader::GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetBytes(out, len, name, def);
 }
 
 bool ConfigReader::GetBytes(std::vector<unsigned char> &out, const std::string &name) const
 {
-	assert(_selected_section_values != nullptr);
+	ASSERT(_selected_section_values != nullptr);
 	return _selected_section_values->GetBytes(out, name);
 }
 

@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <utils.h>
 #include "DialogUtils.h"
 #include "../Globals.h"
@@ -295,7 +294,7 @@ void BaseDialog::Close(int code)
 
 void BaseDialog::SetDefaultDialogControl(int ctl)
 {
-	assert(_dlg == INVALID_HANDLE_VALUE);
+	ASSERT(_dlg == INVALID_HANDLE_VALUE);
 
 	if (ctl == -1) {
 		if (!_di.empty()) {
@@ -312,7 +311,7 @@ void BaseDialog::SetDefaultDialogControl(int ctl)
 
 void BaseDialog::SetFocusedDialogControl(int ctl)
 {
-	assert(_dlg == INVALID_HANDLE_VALUE);
+	ASSERT(_dlg == INVALID_HANDLE_VALUE);
 
 	if (ctl == -1) {
 		if (!_di.empty()) {

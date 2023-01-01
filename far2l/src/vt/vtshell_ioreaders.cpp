@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
-#include <assert.h>
 #include <os_call.hpp>
 #include "vtshell_ioreaders.h"
 #include "InterThreadCall.hpp"
@@ -14,12 +13,12 @@ WithThread::WithThread()
 	
 WithThread::~WithThread()
 {
-	assert(!_started);
+	ASSERT(!_started);
 }
 
 bool WithThread::Start()
 {
-	assert(!_started);
+	ASSERT(!_started);
 	_started = true;
 	if (pthread_create(&_thread, NULL, sThreadProc, this)) {
 		perror("VT: pthread_create");

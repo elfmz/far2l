@@ -1,7 +1,6 @@
 #include "headers.hpp"
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <string.h>
 #include <windows.h>
 #include <limits>
@@ -246,7 +245,7 @@ template <class CodePointT>
 
 	bool FN_NOINLINE SameParts(size_t start1, size_t start2, size_t count) const noexcept
 	{
-		//assert(std::max(start1, start2) + count <= _seq.size());
+		//ASSERT(std::max(start1, start2) + count <= _seq.size());
 		for (size_t i = 0; i != count; ++i) {
 			if (!_seq[start1 + i].SameAs(_seq[start2 + i])) {
 				return false;
@@ -277,8 +276,7 @@ template <class CodePointT>
 				len+= seq_it->MaxCnt();
 
 			} else {
-				fprintf(stderr, "LookupMatchedRange: fixme\n");
-				abort();
+				ABORT();
 			}
 		}
 		return len;

@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <utils.h>
 #include "WhatOnError.h"
 #include "../../Globals.h"
@@ -37,10 +36,8 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 		case WEK_SYMLINK_QUERY:     title_lng = MErrorSymlinkQuery; break;
 		case WEK_SYMLINK_CREATE:     title_lng = MErrorSymlinkCreate; break;
 
-		default: {
-			fprintf(stderr, "Error: wrong kind %u\n", wek);
-			abort();
-		}
+		default:
+			ABORT_MSG("wrong kind %u", wek);
 	}
 
 	_di.SetBoxTitleItem(title_lng);

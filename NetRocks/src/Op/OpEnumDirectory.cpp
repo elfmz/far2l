@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <utils.h>
 #include "OpEnumDirectory.h"
 #include "../UI/Activities/Confirm.h"

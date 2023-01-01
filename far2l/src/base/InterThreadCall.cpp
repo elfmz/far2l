@@ -1,10 +1,8 @@
-#include <assert.h>
-#include <cctweaks.h>
 #include <vector>
 #include <mutex>
 #include <atomic>
-#include <WinCompat.h>
-#include <WinPort.h>
+#include <windows.h>
+#include <utils.h>
 
 #include "InterThreadCall.hpp"
 
@@ -83,7 +81,7 @@ InterThreadCallsDispatcherThread::InterThreadCallsDispatcherThread()
 
 InterThreadCallsDispatcherThread::~InterThreadCallsDispatcherThread()
 {
-	assert((IsCurrentThreadDispatchesInterThreadCalls()));
+	ASSERT(IsCurrentThreadDispatchesInterThreadCalls());
 	InterThreadCallDelegates interlocked_delegates;
 	{
 		std::lock_guard<std::mutex> lock(s_inter_thread_call_synch.mtx);

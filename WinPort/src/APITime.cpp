@@ -4,6 +4,7 @@
 #ifdef __APPLE__
 #include <mach/mach_time.h>
 #endif
+#include <cctweaks.h>
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -333,36 +334,18 @@ WINPORT_DECL(FileTimeToSystemTime, BOOL, (const FILETIME *lpFileTime, LPSYSTEMTI
 	return TRUE;
 }
 
-
-BOOLEAN WINAPI RtlTimeToSecondsSince1970( const LARGE_INTEGER *Time, LPDWORD Seconds )
-{
-    ULONGLONG tmp = Time->QuadPart / TICKSPERSEC - SECS_1601_TO_1970;
-    if (tmp > 0xffffffff) return FALSE;
-    *Seconds = tmp;
-    return TRUE;
-}
-
 WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *ft, LPWORD fatdate, LPWORD fattime))
 {
-    LARGE_INTEGER       li;
-    ULONG               t;
-    time_t              unixtime;
-    struct tm*          tm;
-
-    if (!fatdate || !fattime)
+    if (UNLIKELY(!fatdate || !fattime))
     {
         WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    li.u.LowPart = ft->dwLowDateTime;
-    li.u.HighPart = ft->dwHighDateTime;
-    if (!RtlTimeToSecondsSince1970( &li, &t ))
-    {
-        WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    unixtime = t;
-    tm = gmtime( &unixtime );
+    uint64_t xtm = ft->dwHighDateTime;
+    xtm<<= 32;
+    xtm|= ft->dwLowDateTime;
+    time_t unixtime = xtm / TICKSPERSEC - SECS_1601_TO_1970;
+    struct tm *tm = gmtime( &unixtime );
     if (fattime)
         *fattime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
     if (fatdate)
@@ -370,12 +353,6 @@ WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *ft, LPWORD fatdate, L
                    + tm->tm_mday;
     return TRUE;
 }
-
-void WINAPI RtlSecondsSince1970ToTime( DWORD Seconds, LARGE_INTEGER *Time ) 
-{
-    Time->QuadPart = Seconds * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
-}
-
 
 WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft))
 {
@@ -387,7 +364,12 @@ WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETI
     newtm.tm_mon = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
     newtm.tm_isdst = -1;
-    RtlSecondsSince1970ToTime( timegm(&newtm), (LARGE_INTEGER *)ft );
+
+    uint64_t xtm = timegm(&newtm);
+    xtm*= TICKSPERSEC;
+    xtm+= TICKS_1601_TO_1970;
+    ft->dwLowDateTime = DWORD(xtm & 0xffffffff);
+    ft->dwHighDateTime = DWORD(xtm >> 32);
     return TRUE;
 }
 

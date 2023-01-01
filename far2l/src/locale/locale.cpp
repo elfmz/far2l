@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "locale.hpp"
 
 const wchar_t DOS_EOL_fmt[]  = L"\r\n";
@@ -234,7 +233,7 @@ int NumStrCmp(const wchar_t *s1, size_t n1, const wchar_t *s2, size_t n2, bool I
 	else if (l2 == n2 || !*s2)
 		return 1;
 
-	assert(false);
+	ABORT();
 	return 0;
 }
 

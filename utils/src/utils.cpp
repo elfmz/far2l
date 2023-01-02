@@ -219,55 +219,6 @@ std::wstring FileSizeString(unsigned long long value)
 	return str;
 }
 
-
-
-#ifdef __CYGWIN__
-extern "C"
-{
-char * itoa(int i, char *a, int radix)
-{
-	switch (radix) {
-		case 10: sprintf(a, "%d", i); break;
-		case 16: sprintf(a, "%x", i); break;
-	}
-	return a;
-}
-}
-#endif
-
-unsigned long htoul(const char *str, size_t maxlen)
-{
-	unsigned long out = 0;
-
-	for (size_t i = 0; i != maxlen; ++i) {
-		unsigned char x = ParseHexDigit(str[i]);
-		if (x == 0xff) {
-			break;
-		}
-		out<<= 4;
-		out|= (unsigned char)x;
-	}
-
-	return out;
-}
-
-unsigned long atoul(const char *str, size_t maxlen)
-{
-	unsigned long out = 0;
-
-	for (size_t i = 0; i != maxlen; ++i) {
-		if (str[i] >= '0' && str[i] <= '9') {
-			out*= 10;
-			out+= str[i] - '0';
-
-		} else
-			break;
-	}
-
-	return out;
-}
-
-
 static inline bool CaseIgnoreEngChrMatch(const char c1, const char c2)
 {
 	if (c1 != c2) {

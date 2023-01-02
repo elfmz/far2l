@@ -12,6 +12,7 @@
 #include "ErrnoSaver.hpp"
 #include "PlatformConstants.h"
 #include "debug.h"
+#include "IntStrConv.h"
 
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
@@ -29,10 +30,6 @@ template <class C> static size_t tnzlen(const C *ptz, size_t n)
 	for (i = 0; i < n && ptz[i]; ++i);
 	return i;
 }
-
-
-unsigned long htoul(const char *str, size_t maxlen = (size_t)-1);
-unsigned long atoul(const char *str, size_t maxlen = (size_t)-1);
 
 // converts given hex digit to value between 0x0 and 0xf
 // in case of error returns 0xff

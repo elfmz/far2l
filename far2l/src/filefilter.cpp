@@ -57,6 +57,7 @@ static FileFilterParams FoldersFilter;
 
 static bool bMenuOpen = false;
 
+
 FileFilter::FileFilter(Panel *HostPanel, FAR_FILE_FILTER_TYPE FilterType):
 	m_HostPanel(HostPanel),
 	m_FilterType(FilterType)
@@ -973,15 +974,16 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 		strMask.Format(L"*%ls",DotPtr);
 
 	// сначала поиск...
-	unsigned int Cnt=ExtCount;
-
-	if (_lfind(strMask.CPtr(),*ExtPtr,&Cnt,MAX_PATH*sizeof(wchar_t),ExtSort))
-		return -1;
+	for (unsigned int i = 0; i < ExtCount; ++i)
+	{
+		if (ExtSort((*ExtPtr) + i * MAX_PATH, strMask.CPtr()) == 0) {
+			return -1;
+		}
+	}
 
 	// ... а потом уже выделение памяти!
-	wchar_t *NewPtr;
-
-	if (!(NewPtr=(wchar_t *)realloc(*ExtPtr,MAX_PATH*(ExtCount+1)*sizeof(wchar_t))))
+	wchar_t *NewPtr = (wchar_t *)realloc(*ExtPtr, MAX_PATH * (ExtCount + 1) * sizeof(wchar_t));
+	if (!NewPtr)
 		return 0;
 
 	*ExtPtr=NewPtr;

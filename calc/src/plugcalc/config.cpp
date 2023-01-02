@@ -14,7 +14,7 @@
 #include <algorithm>
 
 #include <sgml/sgml.h>
-
+#include <utils.h>
 #include "api.h"
 #include "newparse.h"
 #include "calc.h"

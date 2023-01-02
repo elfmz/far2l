@@ -30,7 +30,7 @@ void FN_NORETURN Panic(const char *format, ...) noexcept
 		time_t now = time(NULL);
 		struct tm t{};
 		localtime_r(&now, &t);
-		fprintf(flog, "[PANIC %u/%02u/%02u %02u:%02u] ",
+		fprintf(flog, "[%u/%02u/%02u %02u:%02u] ",
 			t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min);
 		vfprintf(flog, format, args4log);
 		fputc('\n', flog);

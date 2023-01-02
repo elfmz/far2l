@@ -349,7 +349,7 @@ class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 			file_info.access_time.tv_sec = atol(str_access.c_str());
 			file_info.modification_time.tv_sec = atol(str_modify.c_str());
 			file_info.status_change_time.tv_sec = atol(str_change.c_str());
-			file_info.mode = htoul(str_mode.c_str());
+			file_info.mode = htoul(str_mode.c_str(), str_mode.size());
 			file_info.size = atol(str_size.c_str());
 
 			owner = str_owner;
@@ -532,11 +532,7 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 				t = *tnow;
 
 			if (str_yt.find(':') == std::string::npos) {
-#ifndef __HAIKU__
-                t.tm_year = atoul(str_yt.c_str()) - 1900;
-#else
-                t.tm_year = atoul(str_yt.c_str(), str_yt.length()) - 1900;
-#endif
+				t.tm_year = atoul(str_yt.c_str(), str_yt.length()) - 1900;
 			} else {
 				if (sscanf(str_yt.c_str(), "%d:%d", &t.tm_hour, &t.tm_min) <= -1) {
 					perror("scanf(str_yt)");

@@ -37,6 +37,7 @@ set(SOURCES
   src/ThrowPrintf.cpp
   src/FcntlHelpers.cpp
   src/Panic.cpp
+  src/IntStrConv.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

@@ -1,8 +1,10 @@
 #pragma once
 
+/*** This particular file distributed under Public Domain terms. ***/
+
 /** This file contains main definitions of commands used by far2l TTY extensions,
- as well as some documentation for them.
-*/
+ * as well as some documentation for them.
+ */
 
 ////////////////////
 /**

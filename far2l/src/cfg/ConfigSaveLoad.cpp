@@ -379,7 +379,7 @@ public:
 
 	{true,  NSecSystem, "DriveExceptions", &Opt.ChangeDriveExceptions,
 		L"/System/*;/proc;/proc/*;/sys;/sys/*;/dev;/dev/*;/run;/run/*;/tmp;/snap;/snap/*;/private;/private/*;/var/lib/lxcfs;/var/snap/*;/var/spool/cron;/tmp/.*"},
-	{true,  NSecSystem, "DriveColumn2", &Opt.ChangeDriveColumn2, L"$U/$T"},
+	{true,  NSecSystem, "DriveColumn2", &Opt.ChangeDriveColumn2, L"$U$</$>$T"},
 	{true,  NSecSystem, "DriveColumn3", &Opt.ChangeDriveColumn3, L"$S$D"},
 
 	{true,  NSecSystem, "AutoUpdateRemoteDrive", &Opt.AutoUpdateRemoteDrive, 1},

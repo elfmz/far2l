@@ -4240,7 +4240,7 @@ $ #Change location configuration#
 menu: #mountpoints#, #bookmarks# and #plugins#.
     Also you can customize mountpoints items by specifing wildcards exceptions
 and changing templates of what should be included into additional columns.
-    Following abbreviations can be used there:
+    Following abbreviations can be used there to represent values:
     #$T# - total disk space
     #$U# - used disk space
     #$F# - free disk space
@@ -4254,6 +4254,9 @@ and changing templates of what should be included into additional columns.
        ! - for readonly FS
        ? - for erroring/unresponsive FS
        <space> - for normally mounted and accessible FS
+    Following abbreviations can be used there for extra alignment:
+    #$<# - pad word on the left with spaces so its length will be same as longer word at same place
+    #$># - pad word on the right with spaces so its length will be same as longer word at same place
 
 @KeyMacroRecPlay
 $ #Macro command: recording and playing-back#

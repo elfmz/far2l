@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <errno.h>
 
 enum PrivacyLevel

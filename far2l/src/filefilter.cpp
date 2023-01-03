@@ -974,7 +974,7 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD 
 		strMask.Format(L"*%ls",DotPtr);
 
 	// сначала поиск...
-	for (unsigned int i = 0; i < ExtCount; ++i)
+	for (int i = 0; i < ExtCount; ++i)
 	{
 		if (ExtSort((*ExtPtr) + i * MAX_PATH, strMask.CPtr()) == 0) {
 			return -1;

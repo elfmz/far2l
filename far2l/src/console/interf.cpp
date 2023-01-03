@@ -203,7 +203,8 @@ void SetVideoMode()
 {
 	if (!IsFullscreen())
 	{
-		ChangeVideoMode(InitSize.X==CurSize.X && InitSize.Y==CurSize.Y);
+		const COORD LargestSize = Console.GetLargestWindowSize();
+		ChangeVideoMode(LargestSize.X != CurSize.X || LargestSize.Y != CurSize.Y);
 	}
 	else
 	{

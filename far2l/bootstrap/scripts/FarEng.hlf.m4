@@ -4255,8 +4255,8 @@ and changing templates of what should be included into additional columns.
        ? - for erroring/unresponsive FS
        <space> - for normally mounted and accessible FS
     Following abbreviations can be used there for extra alignment:
-    #$<# - pad word on the left with spaces so its length will be same as longer word at same place
-    #$># - pad word on the right with spaces so its length will be same as longer word at same place
+    #$<# - pad word on the left with spaces so its length will be same as longest word at same place
+    #$># - pad word on the right with spaces so its length will be same as longest word at same place
 
 @KeyMacroRecPlay
 $ #Macro command: recording and playing-back#

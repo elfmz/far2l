@@ -10,20 +10,6 @@ static std::mutex g_winport_con_mode_mutex;
 
 extern "C" {
 	
-	WINPORT_DECL(GetConsoleFontSize,COORD,( HANDLE hConsoleOutput, DWORD  nFont))
-	{
-		//hardcoded for a now
-		COORD rv = {16, 24};
-		return rv;
-	}
-
-	WINPORT_DECL(GetCurrentConsoleFont,BOOL,( HANDLE hConsoleOutput, BOOL bMaximumWindow,PCONSOLE_FONT_INFO lpConsoleCurrentFont))
-	{
-		lpConsoleCurrentFont->nFont = 0; //hardcoded for a now
-		lpConsoleCurrentFont->dwFontSize = WINPORT(GetConsoleFontSize)(hConsoleOutput, lpConsoleCurrentFont->nFont);
-		return TRUE;
-	}
-
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput))
 	{
 		return g_winport_con_out->GetLargestConsoleWindowSize();

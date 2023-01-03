@@ -18,8 +18,6 @@
 # endif
 #define swprintf swprintf_ws2ls
 
-#define    GetConsoleFontSize			WINPORT(GetConsoleFontSize)
-#define    GetCurrentConsoleFont		WINPORT(GetCurrentConsoleFont)
 #define    GetLargestConsoleWindowSize		WINPORT(GetLargestConsoleWindowSize)
 #define    SetConsoleWindowInfo			WINPORT(SetConsoleWindowInfo)
 #define    SetConsoleTitle			WINPORT(SetConsoleTitle)

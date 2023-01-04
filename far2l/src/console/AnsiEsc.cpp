@@ -215,7 +215,6 @@ void FontState::ParseSuffixM(const int *args, int argc)
 
 void FontState::ParseOSC4(std::string &args)
 {
-	fprintf(stderr, " !!! ParseOSC4(%s)\n", args.c_str());
 	std::size_t pos = 0;
 	unsigned int index = stoi(args, &pos, 10 );
 	if (pos == 0 || pos + 2 >= args.size() || args[pos] != ';' || args[pos + 1] != '#')

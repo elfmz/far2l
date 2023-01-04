@@ -164,13 +164,14 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 	}
 	if (!TestPath(InMyConfig("nottypalette")).Exists()) {
 		_ttypalette_adjusted = true;
-		for (int i = 0; i < 16; ++i) {
+		for (unsigned int i = 0; i < 16; ++i) {
+			unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
 			if (far2l_tty) { // far2l may set separate foreground & background colors
 				Format(ESC "]4;%d;#%06x;#%06x\a", i,
-					g_winport_palette.foreground[i], g_winport_palette.background[i]);
+					g_winport_palette.foreground[j].AsBGR(), g_winport_palette.background[j].AsBGR());
 			} else {
 				Format(ESC "]4;%d;#%06x\a", i,
-					(i < 8) ? g_winport_palette.background[i] : g_winport_palette.foreground[i]);
+					(i < 8) ? g_winport_palette.background[j].AsBGR() : g_winport_palette.foreground[j].AsBGR());
 			}
 		}
 	}

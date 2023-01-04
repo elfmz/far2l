@@ -22,6 +22,7 @@
 #include <os_call.hpp>
 
 #include "Backend.h"
+#include "WinPortRGB.h"
 #include "ConsoleOutput.h"
 #include "ConsoleInput.h"
 #include "WinPortHandle.h"
@@ -294,6 +295,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	g_winport_con_out = winport_con_out.get();
 	g_winport_con_in = winport_con_in.get();
 	ArgOptions arg_opts;
+
+	InitPalette();
 
 #if defined(__linux__) || defined(__FreeBSD__)
 	unsigned long int leds = 0;

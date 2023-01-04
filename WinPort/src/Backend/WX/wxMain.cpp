@@ -116,14 +116,6 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 	DetectHostAbilities();
 
-	if (!InitPalettes()) {
-		uint xc,yc;
-		g_winport_con_out->GetSize(xc, yc);
-		g_winport_con_out->SetCursor( COORD {SHORT((xc>>1) - 5), SHORT(yc>>1)});
-		WCHAR msg[] = L"ERROR IN PALETTE FILE";
-		g_winport_con_out->WriteString(msg, wcslen(msg));
-	}
-
 	bool primary_selection = false;
 	for (int i = 0; i < a->argc; ++i) {
 		if (strcmp(a->argv[i], "--primary-selection") == 0) {

@@ -13,10 +13,13 @@
 #endif
 #include <os_call.hpp>
 #include <VT256ColorTable.h>
+#include <utils.h>
+#include <TestPath.h>
 #include "TTYOutput.h"
 #include "FarTTY.h"
 #include "WideMB.h"
 #include "WinPort.h"
+#include "../WinPortRGB.h"
 
 #define ESC "\x1b"
 
@@ -158,7 +161,15 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 		stk_ser.PushNum(FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInterract(stk_ser);
+
+	} else if (!TestPath(InMyConfig("nottypalette")).Exists()) {
+		_ttypalette_adjusted = true;
+		for (int i = 0; i < 16; ++i) {
+			Format(ESC "]4;%d;#%06x\a", i,
+				(i < 8) ? g_winport_palette.background[i] : g_winport_palette.foreground[i]);
+		}
 	}
+
 	Flush();
 }
 
@@ -172,6 +183,11 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
+		if (_ttypalette_adjusted) {
+			for (int i = 0; i < 16; ++i) {
+				Format(ESC "]104;%d\a", i);
+			}
+		}
 		Flush();
 
 	} catch (std::exception &) {

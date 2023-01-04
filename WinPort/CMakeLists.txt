@@ -27,6 +27,7 @@ src/sudo/sudo_dispatcher.cpp
 src/sudo/sudo_askpass.cpp
 src/sudo/sudo_askpass_ipc.cpp
 src/Backend/WinPortMain.cpp
+src/Backend/WinPortRGB.cpp
 src/Backend/SudoAskpassImpl.cpp
 src/Backend/FSClipboardBackend.cpp
 src/Backend/TTY/TTYBackend.cpp

@@ -15,8 +15,8 @@
 what=$1
 shift
 
-# Define OPEN_TERM here to allow overriding its from ~/.config/far2l/open.sh
-OPEN_TERM=xterm
+# Define EXEC_TERM here to allow overriding its from ~/.config/far2l/open.sh
+EXEC_TERM=xterm
 
 if [ -x ~/.config/far2l/open.sh ]; then
 . ~/.config/far2l/open.sh
@@ -24,8 +24,8 @@ fi
 
 if [ "$what" = "exec" ] ; then
 	if ( [ -f "$1" ] && [ -x "$1" ] ) || command -v "$1" >/dev/null 2>/dev/null ; then
-		if command -v $OPEN_TERM >/dev/null 2>/dev/null ; then
-			$OPEN_TERM -e "$@" >/dev/null 2>/dev/null &
+		if command -v $EXEC_TERM >/dev/null 2>/dev/null ; then
+			$EXEC_TERM -e "$@" >/dev/null 2>/dev/null &
 			exit 0
 		fi
 	fi

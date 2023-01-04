@@ -73,6 +73,9 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	if (!ssh)
 		throw ProtocolError("SSH session");
 
+	fprintf(stderr, "Compiled for libssh %u.%u.%u ssh_version returned '%s'\n",
+		LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO, ssh_version(0));
+
 	ssh_options_set(ssh, SSH_OPTIONS_HOST, host.c_str());
 	if (port > 0)
 		ssh_options_set(ssh, SSH_OPTIONS_PORT, &port);

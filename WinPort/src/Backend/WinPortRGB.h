@@ -30,6 +30,17 @@ struct WinPortRGB
 
 		return false;
 	}
+
+	inline uint32_t AsRGB() const
+	{
+		return uint32_t(r) | (uint32_t(g) << 8) | (uint32_t(b) << 16);
+	}
+
+
+	inline uint32_t AsBGR() const
+	{
+		return uint32_t(b) | (uint32_t(g) << 8) | (uint32_t(r) << 16);
+	}
 };
 
 struct WinPortPalette

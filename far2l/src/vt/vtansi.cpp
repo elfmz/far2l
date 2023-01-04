@@ -1121,6 +1121,12 @@ void InterpretEscSeq( void )
 			os_cmd_arg.clear();
 			ApplyConsoleTitle();
 
+		} else if (es_argc >= 1 && es_argv[0] == 4) {
+			ansiState.font_state.ParseOSC4(os_cmd_arg);
+
+		} else if (es_argc >= 1 && es_argv[0] == 104) {
+			ansiState.font_state.ParseOSC104(os_cmd_arg);
+
 		} else if (g_vt_shell) {
 			g_vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
 		}

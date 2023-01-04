@@ -6,6 +6,7 @@
 
 namespace AnsiEsc
 {
+#define BGR2RGB(COLOR) ((((COLOR) & 0xff0000) >> 16) | ((COLOR) & 0x00ff00) | (((COLOR) & 0x0000ff) << 16))
 
 #define FOREGROUND_BLACK 0
 #define FOREGROUND_WHITE FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
@@ -13,7 +14,7 @@ namespace AnsiEsc
 #define BACKGROUND_BLACK 0
 #define BACKGROUND_WHITE BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE
 
-static const BYTE ForegroundColor[16] = {
+static const BYTE g_def_palette_foreground[16] = {
 	FOREGROUND_BLACK,			// black foreground
 	FOREGROUND_RED,			// red foreground
 	FOREGROUND_GREEN,			// green foreground
@@ -34,7 +35,7 @@ static const BYTE ForegroundColor[16] = {
 
 };
 
-static const BYTE BackgroundColor[16] = {
+static const BYTE g_def_palette_background[16] = {
 	BACKGROUND_BLACK,			// black background
 	BACKGROUND_RED,			// red background
 	BACKGROUND_GREEN,			// green background
@@ -73,6 +74,15 @@ BYTE ConsoleColorToAnsi(BYTE clr)
 
 
 /////////////////
+
+FontState::FontState()
+{
+	for (size_t i = 0; i < 16; ++i) {
+		palette_foreground[i] = g_def_palette_foreground[i];
+		palette_background[i] = g_def_palette_background[i];
+	}
+}
+
 void FontState::ParseSuffixM(const int *args, int argc)
 {
 	int argz = 0;
@@ -203,6 +213,45 @@ void FontState::ParseSuffixM(const int *args, int argc)
 	}
 }
 
+void FontState::ParseOSC4(std::string &args)
+{
+	fprintf(stderr, " !!! ParseOSC4(%s)\n", args.c_str());
+	std::size_t pos = 0;
+	unsigned int index = stoi(args, &pos, 10 );
+	if (pos == 0 || pos + 2 >= args.size() || args[pos] != ';' || args[pos + 1] != '#')
+		return;
+
+	args.erase(0, pos + 2);
+	unsigned int color = BGR2RGB(stoi(args, &pos, 16 ));
+	if (pos == 0 || index >= ARRAYSIZE(palette_foreground)) {
+		return;
+	}
+	palette_background[index] = palette_foreground[index] = 0;
+	SET_RGB_FORE(palette_foreground[index], color);
+	SET_RGB_BACK(palette_background[index], color);
+
+	if (pos + 2 < args.size() && args[pos] == ';' && args[pos + 1] == '#') {
+		args.erase(0, pos + 2);
+		color = BGR2RGB(stoi(args, &pos, 16 ));
+		if (pos == 0) {
+			return;
+		}
+		palette_background[index] = 0;
+		SET_RGB_BACK(palette_background[index], color);
+	}
+}
+
+void FontState::ParseOSC104(std::string &args)
+{
+	const unsigned int index = stoi(args);
+	if (index < ARRAYSIZE(palette_foreground)) {
+		palette_foreground[index] = g_def_palette_foreground[index];
+	}
+	if (index < ARRAYSIZE(palette_background)) {
+		palette_background[index] = g_def_palette_background[index];
+	}
+}
+
 void FontState::FromConsoleAttributes(DWORD64 qAttributes)
 {
 	bold = (qAttributes & FOREGROUND_INTENSITY) != 0;
@@ -228,14 +277,14 @@ DWORD64 FontState::ToConsoleAttributes()
 	DWORD64 attribut = 0;
 
 	if (concealed) {
-		attribut = ForegroundColor[background] | BackgroundColor[background];
+		attribut = palette_foreground[background] | palette_background[background];
 
 		if (use_rgb_background) {
 			SET_RGB_BOTH(attribut, rgb_background, rgb_background);
 		}
 
 	} else {
-		attribut = ForegroundColor[foreground] | BackgroundColor[background];
+		attribut = palette_foreground[foreground] | palette_background[background];
 
 		if (use_rgb_foreground) {
 			SET_RGB_FORE(attribut, rgb_foreground);

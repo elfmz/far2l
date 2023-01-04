@@ -161,12 +161,17 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 		stk_ser.PushNum(FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInterract(stk_ser);
-
-	} else if (!TestPath(InMyConfig("nottypalette")).Exists()) {
+	}
+	if (!TestPath(InMyConfig("nottypalette")).Exists()) {
 		_ttypalette_adjusted = true;
 		for (int i = 0; i < 16; ++i) {
-			Format(ESC "]4;%d;#%06x\a", i,
-				(i < 8) ? g_winport_palette.background[i] : g_winport_palette.foreground[i]);
+			if (far2l_tty) { // far2l may set separate foreground & background colors
+				Format(ESC "]4;%d;#%06x;#%06x\a", i,
+					g_winport_palette.foreground[i], g_winport_palette.background[i]);
+			} else {
+				Format(ESC "]4;%d;#%06x\a", i,
+					(i < 8) ? g_winport_palette.background[i] : g_winport_palette.foreground[i]);
+			}
 		}
 	}
 

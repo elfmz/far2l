@@ -27,6 +27,7 @@ class TTYOutput
 
 	int _out;
 	bool _far2l_tty, _kernel_tty;
+	bool _ttypalette_adjusted{false};
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};
 	std::string _tmp_attrs;

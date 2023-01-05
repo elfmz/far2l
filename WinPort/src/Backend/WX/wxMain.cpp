@@ -301,19 +301,27 @@ WinPortFrame::WinPortFrame(const wxString& title)
 		style|= wxMAXIMIZE;
 	}
 
-	wxDisplay disp(GetDisplayIndex());
+	int disp_index = wxDisplay::GetFromPoint(ws.pos);
+	if (disp_index < 0 || disp_index >= (int)wxDisplay::GetCount()) {
+		disp_index = 0;
+	}
+
+	wxDisplay disp(disp_index);
 	wxRect rc = disp.GetClientArea();
+	fprintf(stderr, "WinPortFrame: display %d from %d.%d area %d.%d - %d.%d\n",
+		disp_index, ws.pos.x, ws.pos.y, rc.GetLeft(), rc.GetTop(), rc.GetRight(), rc.GetBottom());
+
 	if (ws.size.GetWidth() > rc.GetWidth()) {
 		ws.size.SetWidth(rc.GetWidth());
 	}
 	if (ws.size.GetHeight() > rc.GetHeight()) {
 		ws.size.SetHeight(rc.GetHeight());
 	}
-	if (ws.pos.x + ws.size.GetWidth() > rc.GetWidth()) {
-		ws.pos.x = rc.GetWidth() - ws.size.GetWidth();
+	if (ws.pos.x + ws.size.GetWidth() > rc.GetRight()) {
+		ws.pos.x = rc.GetRight() - ws.size.GetWidth();
 	}
-	if (ws.pos.y + ws.size.GetHeight() > rc.GetHeight()) {
-		ws.pos.y = rc.GetHeight() - ws.size.GetHeight();
+	if (ws.pos.y + ws.size.GetHeight() > rc.GetBottom()) {
+		ws.pos.y = rc.GetBottom() - ws.size.GetHeight();
 	}
 	if (ws.pos.x < rc.GetLeft()) {
 		ws.pos.x = rc.GetLeft();
@@ -346,17 +354,6 @@ WinPortFrame::~WinPortFrame()
 	delete _menu_bar;
 	delete _panel;
 	_panel = NULL;
-}
-
-int WinPortFrame::GetDisplayIndex()
-{
-	int disp_index = wxDisplay::GetFromWindow(this);
-	if (disp_index < 0 || disp_index >= (int)wxDisplay::GetCount()) {
-		fprintf(stderr, "OnConsoleGetLargestWindowSize: bad display %d will use %d\n", disp_index, _last_valid_display);
-		return _last_valid_display;
-	}
-	_last_valid_display = disp_index;
-	return disp_index;
 }
 
 void WinPortFrame::OnEraseBackground(wxEraseEvent &event)
@@ -509,6 +506,7 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	_periodic_timer = new wxTimer(this, TIMER_ID);
 	_periodic_timer->Start(TIMER_PERIOD);
 	OnConsoleOutputTitleChanged();
+	_resize_pending = RP_INSTANT;
 }
 
 WinPortPanel::~WinPortPanel()
@@ -527,6 +525,7 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	GetClientSize(&w, &h);
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
 	_initialized = true;
+	SetConsoleSizeFromWindow();
 
 	if (g_winport_app_thread) {
 #ifdef __APPLE__
@@ -601,6 +600,36 @@ void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 
 }
 
+void WinPortPanel::SetConsoleSizeFromWindow()
+{
+	unsigned int prev_width = 0, prev_height = 0;
+
+	g_winport_con_out->GetSize(prev_width, prev_height);
+
+	int width = 0, height = 0;
+	_frame->GetClientSize(&width, &height);
+	const unsigned int font_width = _paint_context.FontWidth();
+	const unsigned int font_height = _paint_context.FontHeight();
+#ifndef __APPLE__
+	fprintf(stderr, "Current client size: %u %u font %u %u\n",
+		width, height, font_width, font_height);
+#endif
+	width/= font_width;
+	height/= font_height;
+	if (width != (int)prev_width || height != (int)prev_height) {
+		fprintf(stderr, "Changing size: %u x %u\n", width, height);
+#ifdef __APPLE__
+		SetSize(width * font_width, height * font_height);
+#endif
+		g_winport_con_out->SetSize(width, height);
+		INPUT_RECORD ir = {0};
+		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+		ir.Event.WindowBufferSizeEvent.dwSize.X = width;
+		ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
+}
+
 void WinPortPanel::CheckForResizePending()
 {
 #ifndef __APPLE__
@@ -608,35 +637,12 @@ void WinPortPanel::CheckForResizePending()
 #endif
 	{
 #ifndef __APPLE__
-		fprintf(stderr, "CheckForResizePending\n");
+		fprintf(stderr, "%lu CheckForResizePending\n", GetProcessUptimeMSec());
 #endif
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {
-			unsigned int prev_width = 0, prev_height = 0;
 			_resize_pending = RP_NONE;
-
-			g_winport_con_out->GetSize(prev_width, prev_height);
-	
-			int width = 0, height = 0;
-			_frame->GetClientSize(&width, &height);
-#ifndef __APPLE__			
-			fprintf(stderr, "Current client size: %u %u font %u %u\n", 
-				width, height, _paint_context.FontWidth(), _paint_context.FontHeight());
-#endif
-			width/= _paint_context.FontWidth(); 
-			height/= _paint_context.FontHeight();
-			if (width!=(int)prev_width || height!=(int)prev_height) {
-				fprintf(stderr, "Changing size: %u x %u\n", width, height);
-#ifdef __APPLE__
-				this->SetSize(width * _paint_context.FontWidth(), height * _paint_context.FontHeight());
-#endif
-				g_winport_con_out->SetSize(width, height);
-				INPUT_RECORD ir = {0};
-				ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
-				ir.Event.WindowBufferSizeEvent.dwSize.X = width;
-				ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
-				g_winport_con_in->Enqueue(&ir, 1);
-			}
+			SetConsoleSizeFromWindow();
 #ifndef __APPLE__
 			Refresh(false);
 #endif
@@ -837,7 +843,14 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 			(SHORT)(sz.GetHeight() / _paint_context.FontHeight())};
 	}
 
-	wxDisplay disp(_frame->GetDisplayIndex());
+
+	int disp_index = wxDisplay::GetFromWindow(this);
+	if (disp_index < 0 || disp_index >= (int)wxDisplay::GetCount()) {
+		fprintf(stderr, "OnConsoleGetLargestWindowSize: bad display %d\n", disp_index);
+		disp_index = 0;
+	}
+
+	wxDisplay disp(disp_index);
 	wxRect rc_disp = disp.GetClientArea();
 	wxSize sz_frame = _frame->GetSize();
 
@@ -1528,9 +1541,24 @@ void WinPortPanel::OnConsoleSaveWindowStateSync(wxCommandEvent& event)
 		WinState ws;
 		ws.maximized = _frame->IsMaximized();
 		ws.fullscreen = _frame->IsFullScreen();
+
 		if (!ws.maximized && !ws.fullscreen) {
 			ws.size = _frame->GetSize();
 			ws.pos = _frame->GetPosition();
+
+		} else {
+			// if window maximized on different display - have to save its position anyway
+			// however dont save frame's position in such case but save workarea left.top instead
+			// cuz maximized window's pos can be outside of related display
+			const int prev_disp_index = wxDisplay::GetFromPoint(ws.pos);
+			const int disp_index = wxDisplay::GetFromWindow(_frame);
+//			fprintf(stderr, "prev_disp_index=%d disp_index=%d\n", prev_disp_index, disp_index);
+			if (prev_disp_index != disp_index && disp_index >= 0 && disp_index < (int)wxDisplay::GetCount()) {
+				wxDisplay disp(disp_index);
+				wxRect rc = disp.GetClientArea();
+				ws.pos.x = rc.GetLeft();
+				ws.pos.y = rc.GetTop();
+			}
 		}
 		ws.Save();
 	}
@@ -1542,7 +1570,6 @@ void WinPortPanel::OnConsoleSaveWindowState()
 	if (event)
 		wxQueueEvent(this, event);
 }
-
 
 void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )
 {

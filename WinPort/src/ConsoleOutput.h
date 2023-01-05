@@ -100,6 +100,7 @@ public:
 	virtual void AdhocQuickEdit();
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks);
 	virtual void ConsoleChangeFont();
+	virtual void ConsoleSaveWindowState();
 	virtual bool IsActive();
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text);
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);

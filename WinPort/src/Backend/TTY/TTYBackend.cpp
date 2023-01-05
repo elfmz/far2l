@@ -673,6 +673,10 @@ void TTYBackend::OnConsoleChangeFont()
 {
 }
 
+void TTYBackend::OnConsoleSaveWindowState()
+{
+}
+
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {

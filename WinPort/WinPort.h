@@ -84,6 +84,7 @@ extern "C" {
 #define TWEAK_STATUS_SUPPORT_OSC52CLIP_SET	0x4
 #define TWEAK_STATUS_SUPPORT_CHANGE_FONT	0x8
 
+	WINPORT_DECL(SaveConsoleWindowState,VOID,());
 	WINPORT_DECL(ConsoleChangeFont, VOID, ());
 	WINPORT_DECL(IsConsoleActive, BOOL, ());
 	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text));

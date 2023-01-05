@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x02
+#define FAR2L_BACKEND_ABI_VERSION	0x03
 
 class IConsoleOutputBackend
 {
@@ -24,6 +24,7 @@ public:
 	virtual void OnConsoleAdhocQuickEdit() = 0;
 	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks) = 0;
 	virtual void OnConsoleChangeFont() = 0;
+	virtual void OnConsoleSaveWindowState() = 0;
 	virtual void OnConsoleSetMaximized(bool maximized) = 0;
 	virtual void OnConsoleExit() = 0;
 	virtual bool OnConsoleIsActive() = 0;
@@ -179,6 +180,7 @@ public:
 	virtual void AdhocQuickEdit() = 0;
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks) = 0;
 	virtual void ConsoleChangeFont() = 0;
+	virtual void ConsoleSaveWindowState() = 0;
 	virtual bool IsActive() = 0;
 	virtual void ConsoleDisplayNotification(const WCHAR *title, const WCHAR *text) = 0;
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;

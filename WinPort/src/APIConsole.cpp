@@ -309,6 +309,11 @@ extern "C" {
 		return g_winport_con_out->SetConsoleTweaks(tweaks);
 	}
 
+	WINPORT_DECL(SaveConsoleWindowState,VOID,())
+	{
+		return g_winport_con_out->ConsoleSaveWindowState();
+	}
+
 	WINPORT_DECL(ConsoleChangeFont, VOID, ())
 	{
 		return g_winport_con_out->ConsoleChangeFont();

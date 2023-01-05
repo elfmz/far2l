@@ -114,6 +114,7 @@ protected:
 	virtual void OnConsoleAdhocQuickEdit();
 	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
 	virtual void OnConsoleChangeFont();
+	virtual void OnConsoleSaveWindowState();
 	virtual void OnConsoleSetMaximized(bool maximized);
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();

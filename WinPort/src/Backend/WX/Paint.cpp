@@ -426,12 +426,12 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	const int right_edge = (area.Right + 1) * _font_width;
 	const int bottom_edge = (area.Bottom + 1) * _font_height;
 	if (right_edge <= box.GetRight()) {
-		painter.SetFillColor(WinPortRGB());
+		painter.SetFillColor(g_winport_palette.background[0]);
 		dc.DrawRectangle((area.Right + 1) * _font_width, box.GetTop(),
 			box.GetRight() + 1 - right_edge, box.GetHeight());
 	}
 	if (bottom_edge <= box.GetBottom()) {
-		painter.SetFillColor(WinPortRGB());
+		painter.SetFillColor(g_winport_palette.background[0]);
 		dc.DrawRectangle(box.GetLeft(), bottom_edge,
 			box.GetWidth(), box.GetBottom() + 1 - bottom_edge);
 	}

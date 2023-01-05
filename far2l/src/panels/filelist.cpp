@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
+#include <memory>
 #include "filelist.hpp"
 #include "keyboard.hpp"
 #include "keys.hpp"
@@ -638,13 +638,13 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 			if (mps->Mode == 1 && mps->Index >= ListData.Count())
 				return Result;
 
-			UserDefinedList *itemsList=nullptr;
+			std::unique_ptr<UserDefinedList> itemsList;
 
 			if (mps->Action != 3)
 			{
 				if (mps->Mode == 2)
 				{
-					itemsList=new UserDefinedList(L';',L',',ULF_UNIQUE);
+					itemsList.reset(new UserDefinedList(L';',L',',ULF_UNIQUE));
 					if (!itemsList->Set(mps->Item->s()))
 						return Result;
 				}
@@ -776,9 +776,6 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					SortFileList(TRUE);
 				Redraw();
 			}
-
-			if (itemsList)
-				delete itemsList;
 
 			return Result;
 		}

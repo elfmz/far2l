@@ -611,7 +611,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
                   DialogItems, ARRAYSIZE(DialogItems),
                   0,0,PluginClass::PutDlgProc,(LONG_PTR)&pdd);
 
-      strcpy(pdd.Password1,DialogItems[PDI_PASS0WEDT].Data);
+      ArrayCpyZ(pdd.Password1,DialogItems[PDI_PASS0WEDT].Data);
       //strcpy(pdd.Password2,DialogItems[PDI_PASS1WEDT].Data); //$ AA 28.11.2001
       Opt.UserBackground=DialogItems[PDI_BGROUNDCHECK].Selected;
       Opt.PriorityClass=DialogItems[PDI_PRIORCBOX].ListPos;

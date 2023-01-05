@@ -155,6 +155,7 @@ struct WinState
 	wxPoint pos {40, 40};
 	wxSize size {600, 440};
 	bool maximized{false};
+	bool fullscreen{false};
 
 	WinState()
 	{
@@ -172,6 +173,7 @@ struct WinState
 			return;
 		}
 		maximized = (i & 2) != 0;
+		fullscreen = (i & 4) != 0;
 
 		getline(is, str);
 		i = atoi(str.c_str());
@@ -199,9 +201,8 @@ struct WinState
 			fprintf(stderr, "WinState: can't create\n");
 		}
 		int flags = 1;
-		if (maximized) {
-			flags|= 2;
-		}
+		if (maximized) flags|= 2;
+		if (fullscreen) flags|= 4;
 		os << flags << std::endl;
 		os << size.GetWidth() << std::endl;
 		os << size.GetHeight() << std::endl;
@@ -249,6 +250,7 @@ wxDEFINE_EVENT(WX_CONSOLE_SET_MAXIMIZED, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SET_TWEAKS, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SAVE_WIN_STATE, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
@@ -283,7 +285,6 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_PAINT(WinPortFrame::OnPaint)
 	EVT_SHOW(WinPortFrame::OnShow)
 	EVT_CLOSE(WinPortFrame::OnClose)
-	EVT_MOVE(WinPortFrame::OnMove)
 	EVT_CHAR(WinPortFrame::OnChar)
 	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_END, WinPortFrame::OnAccelerator)
 	EVT_MENU_RANGE(ID_CTRL_SHIFT_BASE, ID_CTRL_SHIFT_END, WinPortFrame::OnAccelerator)
@@ -334,6 +335,9 @@ WinPortFrame::WinPortFrame(const wxString& title)
 		Maximize();
 	}
 #endif
+	if (ws.fullscreen && g_maximize >= 0) {
+		ShowFullScreen(true);
+	}
 }
 
 WinPortFrame::~WinPortFrame()
@@ -420,11 +424,6 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 	}
 }	
 
-void WinPortFrame::OnMove(wxMoveEvent &event)
-{
-	_panel->OnMoved();
-}
-
 void WinPortFrame::OnClose(wxCloseEvent &event)
 {
 	if (WINPORT(GenerateConsoleCtrlEvent)(CTRL_CLOSE_EVENT, 0)) {
@@ -476,6 +475,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_TWEAKS, WinPortPanel::OnConsoleSetTweaksSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SAVE_WIN_STATE, WinPortPanel::OnConsoleSaveWindowStateSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 	
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
@@ -647,20 +647,6 @@ void WinPortPanel::CheckForResizePending()
 	}
 }
 
-void WinPortPanel::CheckForWinStateDirty()
-{
-	if (_initialized && _winstate_dirty && !_frame->IsFullScreen() && _frame->IsShown()) {
-		_winstate_dirty = false;
-		WinState ws;
-		ws.maximized = _frame->IsMaximized();
-		if (!ws.maximized) {
-			ws.size = _frame->GetSize();
-			ws.pos = _frame->GetPosition();
-		}
-		ws.Save();
-	}
-}
-
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
 	if (_extra_refresh) {
@@ -676,7 +662,6 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	}
 
 	CheckForResizePending();
-	CheckForWinStateDirty();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
@@ -1211,7 +1196,6 @@ void WinPortPanel::OnEraseBackground( wxEraseEvent& event )
 
 void WinPortPanel::OnSize(wxSizeEvent &event)
 {
-	_winstate_dirty = true;
 	if (_resize_pending==RP_INSTANT) {
 		CheckForResizePending();
 	} else {
@@ -1219,12 +1203,6 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 		ResetTimerIdling();
 		//fprintf(stderr, "RP_DEFER\n");
 	}
-}
-
-void WinPortPanel::OnMoved()
-{
-	_winstate_dirty = true;
-	ResetTimerIdling();
 }
 
 COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
@@ -1540,6 +1518,27 @@ void WinPortPanel::OnConsoleChangeFontSync(wxCommandEvent& event)
 void WinPortPanel::OnConsoleChangeFont()
 {
 	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_CHANGE_FONT);
+	if (event)
+		wxQueueEvent(this, event);
+}
+
+void WinPortPanel::OnConsoleSaveWindowStateSync(wxCommandEvent& event)
+{
+	if (_frame->IsShown()) {
+		WinState ws;
+		ws.maximized = _frame->IsMaximized();
+		ws.fullscreen = _frame->IsFullScreen();
+		if (!ws.maximized && !ws.fullscreen) {
+			ws.size = _frame->GetSize();
+			ws.pos = _frame->GetPosition();
+		}
+		ws.Save();
+	}
+}
+
+void WinPortPanel::OnConsoleSaveWindowState()
+{
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_SAVE_WIN_STATE);
 	if (event)
 		wxQueueEvent(this, event);
 }

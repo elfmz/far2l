@@ -630,6 +630,12 @@ void ConsoleOutput::ConsoleChangeFont()
 		_backend->OnConsoleChangeFont();
 }
 
+void ConsoleOutput::ConsoleSaveWindowState()
+{
+	if (_backend)
+		_backend->OnConsoleSaveWindowState();
+}
+
 bool ConsoleOutput::IsActive()
 {
 	return _backend ? _backend->OnConsoleIsActive() : false;

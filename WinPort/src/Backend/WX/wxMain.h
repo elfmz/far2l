@@ -103,10 +103,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	wchar_t _stolen_key;
 	std::atomic<unsigned int> _last_title_ticks{0};
 	bool _extra_refresh{false};
-	bool _winstate_dirty{false};
 
 	void CheckForResizePending();
-	void CheckForWinStateDirty();
 	void CheckPutText2CLip();
 	void OnInitialized( wxCommandEvent& event );
 	void OnTimerPeriodic(wxTimerEvent& event);	
@@ -118,6 +116,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void OnConsoleAdhocQuickEditSync( wxCommandEvent& event );
 	void OnConsoleSetTweaksSync( wxCommandEvent& event );
 	void OnConsoleChangeFontSync(wxCommandEvent& event);
+	void OnConsoleSaveWindowStateSync(wxCommandEvent& event);
 	void OnConsoleExitSync( wxCommandEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
@@ -143,6 +142,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleAdhocQuickEdit();
 	virtual DWORD64 OnConsoleSetTweaks(DWORD64 tweaks);
 	virtual void OnConsoleChangeFont();
+	virtual void OnConsoleSaveWindowState();
 	virtual void OnConsoleExit();
 	virtual bool OnConsoleIsActive();
 	virtual void OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text);
@@ -156,7 +156,6 @@ public:
 	void CompleteInitialization();
 	void OnChar( wxKeyEvent& event );
 	virtual void OnTouchbarKey(bool alternate, int index);
-	void OnMoved();
 };
 
 ///////////////////////////////////////////
@@ -185,7 +184,6 @@ class WinPortFrame: public wxFrame
 	void OnAccelerator(wxCommandEvent &event);
 	void OnShow(wxShowEvent &show);
 	void OnClose(wxCloseEvent &show);
-	void OnMove(wxMoveEvent& event);
 
 public:
     WinPortFrame(const wxString& title);

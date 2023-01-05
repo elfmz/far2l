@@ -95,7 +95,6 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	DWORD _mouse_state, _mouse_qedit_start_ticks, _mouse_qedit_moved;
 	COORD _mouse_qedit_start, _mouse_qedit_last;
 	
-	int _last_valid_display;
 	DWORD _refresh_rects_throttle;
 	unsigned int _pending_refreshes;
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
@@ -131,7 +130,6 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void ResetInputState();
 	COORD TranslateMousePosition( wxMouseEvent &event );
 	void DamageAreaBetween(COORD c1, COORD c2);
-	int GetDisplayIndex();
 	void ResetTimerIdling();
 
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count);
@@ -156,6 +154,7 @@ public:
 	void CompleteInitialization();
 	void OnChar( wxKeyEvent& event );
 	virtual void OnTouchbarKey(bool alternate, int index);
+	void OnMoved();
 };
 
 ///////////////////////////////////////////
@@ -176,6 +175,7 @@ class WinPortFrame: public wxFrame
 	bool _shown;
 	wxMenuBar *_menu_bar;
 	std::vector<wxMenu *> _menus;
+	int _last_valid_display{0};
 
 	void OnEraseBackground(wxEraseEvent &event);
 	void OnPaint(wxPaintEvent &event);
@@ -183,8 +183,10 @@ class WinPortFrame: public wxFrame
 	void OnAccelerator(wxCommandEvent &event);
 	void OnShow(wxShowEvent &show);
 	void OnClose(wxCloseEvent &show);
+	void OnMove(wxMoveEvent& event);
 
 public:
-    WinPortFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
+    WinPortFrame(const wxString& title);
 	virtual ~WinPortFrame();
+	int GetDisplayIndex();
 };

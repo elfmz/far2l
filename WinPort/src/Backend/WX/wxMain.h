@@ -104,6 +104,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	std::atomic<unsigned int> _last_title_ticks{0};
 	bool _extra_refresh{false};
 
+	void SetConsoleSizeFromWindow();
 	void CheckForResizePending();
 	void CheckPutText2CLip();
 	void OnInitialized( wxCommandEvent& event );
@@ -176,7 +177,6 @@ class WinPortFrame: public wxFrame
 	bool _shown;
 	wxMenuBar *_menu_bar;
 	std::vector<wxMenu *> _menus;
-	int _last_valid_display{0};
 
 	void OnEraseBackground(wxEraseEvent &event);
 	void OnPaint(wxPaintEvent &event);
@@ -188,5 +188,4 @@ class WinPortFrame: public wxFrame
 public:
     WinPortFrame(const wxString& title);
 	virtual ~WinPortFrame();
-	int GetDisplayIndex();
 };

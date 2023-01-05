@@ -862,56 +862,6 @@ int Manager::ProcessKey(DWORD Key)
 		{
 			switch (Key)
 			{
-				// <Удалить после появления макрофункции Scroll>
-				case KEY_CTRLALTUP:
-					if(Opt.WindowMode)
-					{
-						Console.ScrollWindow(-1);
-						return TRUE;
-					}
-					break;
-
-				case KEY_CTRLALTDOWN:
-					if(Opt.WindowMode)
-					{
-						Console.ScrollWindow(1);
-						return TRUE;
-					}
-					break;
-
-				case KEY_CTRLALTPGUP:
-					if(Opt.WindowMode)
-					{
-						Console.ScrollWindow(-ScrY);
-						return TRUE;
-					}
-					break;
-
-				case KEY_CTRLALTHOME:
-					if(Opt.WindowMode)
-					{
-						while(Console.ScrollWindow(-ScrY));
-						return TRUE;
-					}
-					break;
-
-				case KEY_CTRLALTPGDN:
-					if(Opt.WindowMode)
-					{
-						Console.ScrollWindow(ScrY);
-						return TRUE;
-					}
-					break;
-
-				case KEY_CTRLALTEND:
-					if(Opt.WindowMode)
-					{
-						while(Console.ScrollWindow(ScrY));
-						return TRUE;
-					}
-					break;
-				// </Удалить после появления макрофункции Scroll>
-
 				case KEY_CTRLW:
 					ShowProcessList();
 					return TRUE;
@@ -924,12 +874,12 @@ int Manager::ProcessKey(DWORD Key)
 				{
 					//_MANAGER(SysLog(1,"Manager::ProcessKey, KEY_ALTF9 pressed..."));
 					WINPORT(Sleep)(10);
-					SetVideoMode();
+					ToggleVideoMode();
 					WINPORT(Sleep)(10);
 
 					/* В процессе исполнения Alt-F9 (в нормальном режиме) в очередь
 					   консоли попадает WINDOW_BUFFER_SIZE_EVENT, формируется в
-					   ChangeVideoMode().
+					   ToggleVideoMode().
 					   В режиме исполнения макросов ЭТО не происходит по вполне понятным
 					   причинам.
 					*/

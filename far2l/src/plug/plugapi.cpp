@@ -817,21 +817,14 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				if(Param)
 				{
 					SMALL_RECT& Rect=*reinterpret_cast<PSMALL_RECT>(Param);
-					if(Opt.WindowMode)
+					COORD Size;
+					if(Console.GetSize(Size))
 					{
-						Result=Console.GetWorkingRect(Rect);
-					}
-					else
-					{
-						COORD Size;
-						if(Console.GetSize(Size))
-						{
-							Rect.Left=0;
-							Rect.Top=0;
-							Rect.Right=Size.X-1;
-							Rect.Bottom=Size.Y-1;
-							Result=TRUE;
-						}
+						Rect.Left=0;
+						Rect.Top=0;
+						Rect.Right=Size.X-1;
+						Rect.Bottom=Size.Y-1;
+						Result=TRUE;
 					}
 				}
 				return Result;

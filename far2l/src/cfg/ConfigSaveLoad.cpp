@@ -419,7 +419,6 @@ public:
 	{true,  NSecSystem, "ScanJunction", &Opt.ScanJunction, 1},
 	{true,  NSecSystem, "OnlyFilesSize", &Opt.OnlyFilesSize, 0},
 	{false, NSecSystem, "UsePrintManager", &Opt.UsePrintManager, 1},
-	{false, NSecSystem, "WindowMode", &Opt.WindowMode, 0},
 
 	{false, NSecSystemNowell, "MoveRO", &Opt.Nowell.MoveRO, 1},
 
@@ -595,7 +594,6 @@ void LoadConfig()
 	ConfigReader cfg_reader;
 
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
-	bool ExplicitWindowMode = (Opt.WindowMode != FALSE);
 	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 	for (const auto &opt_ser : s_opt_serializers)
@@ -610,9 +608,6 @@ void LoadConfig()
 
 	if (Opt.PluginMaxReadData < 0x1000) // || Opt.PluginMaxReadData > 0x80000)
 		Opt.PluginMaxReadData = 0x20000;
-
-	if (ExplicitWindowMode)
-		Opt.WindowMode = TRUE;
 
 	Opt.HelpTabSize = 8; // пока жестко пропишем...
 	SanitizePalette();

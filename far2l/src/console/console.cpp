@@ -74,15 +74,7 @@ bool console::GetSize(COORD& Size)
 	CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenBufferInfo;
 	if(WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &ConsoleScreenBufferInfo))
 	{
-		if(Opt.WindowMode)
-		{
-			Size.X=ConsoleScreenBufferInfo.srWindow.Right-ConsoleScreenBufferInfo.srWindow.Left+1;
-			Size.Y=ConsoleScreenBufferInfo.srWindow.Bottom-ConsoleScreenBufferInfo.srWindow.Top+1;
-		}
-		else
-		{
-			Size=ConsoleScreenBufferInfo.dwSize;
-		}
+		Size=ConsoleScreenBufferInfo.dwSize;
 		Result=true;
 	}
 	return Result;
@@ -90,29 +82,7 @@ bool console::GetSize(COORD& Size)
 
 bool console::SetSize(COORD Size)
 {
-	bool Result=false;
-	if(Opt.WindowMode)
-	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
-		WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &csbi);
-		csbi.srWindow.Left=0;
-		csbi.srWindow.Right=Size.X-1;
-		csbi.srWindow.Bottom=csbi.dwSize.Y-1;
-		csbi.srWindow.Top=csbi.srWindow.Bottom-(Size.Y-1);
-		COORD WindowCoord={(SHORT)(csbi.srWindow.Right-csbi.srWindow.Left+1), (SHORT)(csbi.srWindow.Bottom-csbi.srWindow.Top+1)};
-		if(WindowCoord.X>csbi.dwSize.X || WindowCoord.Y>csbi.dwSize.Y)
-		{
-			WindowCoord.X=Max(WindowCoord.X,csbi.dwSize.X);
-			WindowCoord.Y=Max(WindowCoord.Y,csbi.dwSize.Y);
-			WINPORT(SetConsoleScreenBufferSize)(GetOutputHandle(), WindowCoord);
-		}
-		Result=SetWindowRect(csbi.srWindow);
-	}
-	else
-	{
-		Result=WINPORT(SetConsoleScreenBufferSize)(GetOutputHandle(), Size)!=FALSE;
-	}
-	return Result;
+	return WINPORT(SetConsoleScreenBufferSize)(GetOutputHandle(), Size)!=FALSE;
 }
 
 bool console::GetWindowRect(SMALL_RECT& ConsoleWindow)
@@ -259,14 +229,6 @@ bool console::PeekInput(INPUT_RECORD& Buffer)
 		}
 	}
 
-	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
-	{
-		Buffer.Event.MouseEvent.dwMousePosition.Y=Max(0, Buffer.Event.MouseEvent.dwMousePosition.Y-GetDelta());
-		COORD Size;
-		GetSize(Size);
-		Buffer.Event.MouseEvent.dwMousePosition.X=Min(Buffer.Event.MouseEvent.dwMousePosition.X, static_cast<SHORT>(Size.X-1));
-	}
-
 	return true;
 }
 
@@ -279,22 +241,11 @@ bool console::ReadInput(INPUT_RECORD& Buffer)
 
 	} while (InspectStickyKeyEvent(Buffer));
 
-	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
-	{
-		Buffer.Event.MouseEvent.dwMousePosition.Y=Max(0, Buffer.Event.MouseEvent.dwMousePosition.Y-GetDelta());
-		COORD Size;
-		GetSize(Size);
-		Buffer.Event.MouseEvent.dwMousePosition.X=Min(Buffer.Event.MouseEvent.dwMousePosition.X, static_cast<SHORT>(Size.X-1));
-	}
 	return true;
 }
 
 bool console::WriteInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsWritten)
 {
-	if(Opt.WindowMode && Buffer.EventType==MOUSE_EVENT)
-	{
-		Buffer.Event.MouseEvent.dwMousePosition.Y+=GetDelta();
-	}
 	return WINPORT(WriteConsoleInput)(GetInputHandle(), &Buffer, Length, &NumberOfEventsWritten)!=FALSE;
 }
 
@@ -304,9 +255,6 @@ const unsigned int MAXSIZE=0x8000;
 bool console::ReadOutput(CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& ReadRegion)
 {
 	bool Result=false;
-	int Delta=Opt.WindowMode?GetDelta():0;
-	ReadRegion.Top+=Delta;
-	ReadRegion.Bottom+=Delta;
 
 	// skip unused region
 	PCHAR_INFO BufferStart=&Buffer+BufferCoord.Y*BufferSize.X;
@@ -332,21 +280,12 @@ bool console::ReadOutput(CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord,
 		Result=WINPORT(ReadConsoleOutput)(GetOutputHandle(), BufferStart, BufferSize, BufferCoord, &ReadRegion)!=FALSE;
 	}
 
-	if(Opt.WindowMode)
-	{
-		ReadRegion.Top-=Delta;
-		ReadRegion.Bottom-=Delta;
-	}
-
 	return Result;
 }
 
 bool console::WriteOutput(const CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& WriteRegion)
 {
 	bool Result=false;
-	int Delta=Opt.WindowMode?GetDelta():0;
-	WriteRegion.Top+=Delta;
-	WriteRegion.Bottom+=Delta;
 
 	// skip unused region
 	const CHAR_INFO* BufferStart=&Buffer+BufferCoord.Y*BufferSize.X;
@@ -370,12 +309,6 @@ bool console::WriteOutput(const CHAR_INFO& Buffer, COORD BufferSize, COORD Buffe
 	else
 	{
 		Result=WINPORT(WriteConsoleOutput)(GetOutputHandle(), BufferStart, BufferSize, BufferCoord, &WriteRegion)!=FALSE;
-	}
-
-	if(Opt.WindowMode)
-	{
-		WriteRegion.Top-=Delta;
-		WriteRegion.Bottom-=Delta;
 	}
 
 	return Result;
@@ -421,10 +354,6 @@ bool console::GetCursorPosition(COORD& Position)
 	if(WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &ConsoleScreenBufferInfo))
 	{
 		Position=ConsoleScreenBufferInfo.dwCursorPosition;
-		if(Opt.WindowMode)
-		{
-			Position.Y-=GetDelta();
-		}
 		Result=true;
 	}
 	return Result;
@@ -432,16 +361,6 @@ bool console::GetCursorPosition(COORD& Position)
 
 bool console::SetCursorPosition(COORD Position)
 {
-
-	if(Opt.WindowMode)
-	{
-		ResetPosition();
-		COORD Size;
-		GetSize(Size);
-		Position.X=Min(Position.X,static_cast<SHORT>(Size.X-1));
-		Position.Y=Max(static_cast<SHORT>(0),Position.Y);
-		Position.Y+=GetDelta();
-	}
 	return WINPORT(SetConsoleCursorPosition)(GetOutputHandle(), Position)!=FALSE;
 }
 
@@ -578,16 +497,4 @@ int console::GetDelta()
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	WINPORT(GetConsoleScreenBufferInfo)(GetOutputHandle(), &csbi);
 	return csbi.dwSize.Y-(csbi.srWindow.Bottom-csbi.srWindow.Top+1);
-}
-
-BOOL console::IsZoomed()
-{
-	//todo
-	return FALSE;
-}
-
-BOOL console::IsIconic()
-{
-	//todo
-	return FALSE;
 }

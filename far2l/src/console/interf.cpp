@@ -65,7 +65,6 @@ static SMALL_RECT windowholder_rect;
 WCHAR Oem2Unicode[256];
 WCHAR BoxSymbols[64];
 
-COORD InitSize{};
 COORD CurSize{};
 SHORT ScrX=0,ScrY=0;
 SHORT PrevScrX=-1,PrevScrY=-1;
@@ -78,7 +77,7 @@ COORD InitialSize;
 
 const size_t StackBufferSize=0x2000;
 
-void InitConsole(int FirstInit)
+void InitConsole()
 {
 	InitRecodeOutTable();
 	Console.GetCursorInfo(InitialCursorInfo);
@@ -102,27 +101,18 @@ void InitConsole(int FirstInit)
 	   если размер консольного буфера больше размера окна, выставим
 	   их равными
 	*/
-	if (FirstInit)
-	{
-		SMALL_RECT WindowRect;
-		Console.GetWindowRect(WindowRect);
-		GetVideoMode(InitSize);
+	SMALL_RECT WindowRect;
+	Console.GetWindowRect(WindowRect);
 
-		if(Opt.WindowMode)
-		{
-			Console.ResetPosition();
-		}
-		else
-		{
-			if (WindowRect.Left || WindowRect.Top || WindowRect.Right != InitSize.X-1 || WindowRect.Bottom != InitSize.Y-1)
-			{
-				COORD newSize;
-				newSize.X = WindowRect.Right - WindowRect.Left + 1;
-				newSize.Y = WindowRect.Bottom - WindowRect.Top + 1;
-				Console.SetSize(newSize);
-				GetVideoMode(InitSize);
-			}
-		}
+	COORD InitSize{};
+	GetVideoMode(InitSize);
+	if (WindowRect.Left || WindowRect.Top || WindowRect.Right != InitSize.X-1 || WindowRect.Bottom != InitSize.Y-1)
+	{
+		COORD newSize;
+		newSize.X = WindowRect.Right - WindowRect.Left + 1;
+		newSize.Y = WindowRect.Bottom - WindowRect.Top + 1;
+		Console.SetSize(newSize);
+		GetVideoMode(InitSize);
 	}
 
 	GetVideoMode(CurSize);
@@ -199,87 +189,10 @@ void FlushInputBuffer()
 	MouseEventFlags=0;
 }
 
-void SetVideoMode()
+void ToggleVideoMode()
 {
-	if (!IsFullscreen())
-	{
-		const COORD LargestSize = Console.GetLargestWindowSize();
-		ChangeVideoMode(LargestSize.X != CurSize.X || LargestSize.Y != CurSize.Y);
-	}
-	else
-	{
-		ChangeVideoMode(ScrY==24?50:25,80);
-	}
-}
-
-void ChangeVideoMode(int Maximized)
-{
-	COORD coordScreen;
-
-	if (Maximized)
-	{
-		WINPORT(SetConsoleWindowMaximized)(TRUE);
-		//SendMessage(Console.GetWindow(),WM_SYSCOMMAND,SC_MAXIMIZE,0);
-		coordScreen = Console.GetLargestWindowSize();
-		coordScreen.X+=Opt.ScrSize.DeltaXY.X;
-		coordScreen.Y+=Opt.ScrSize.DeltaXY.Y;
-	}
-	else
-	{
-		WINPORT(SetConsoleWindowMaximized)(FALSE);
-		//SendMessage(Console.GetWindow(),WM_SYSCOMMAND,SC_RESTORE,0);
-		coordScreen = InitSize;
-	}
-
-	ChangeVideoMode(coordScreen.Y,coordScreen.X);
-}
-
-void ChangeVideoMode(int NumLines,int NumColumns)
-{
-	int xSize=NumColumns,ySize=NumLines;
-
-	COORD Size;
-	Console.GetSize(Size);
-
-	SMALL_RECT srWindowRect;
-	srWindowRect.Right = xSize-1;
-	srWindowRect.Bottom = ySize-1;
-	srWindowRect.Left = srWindowRect.Top = 0;
-	
-	COORD coordScreen={(SHORT)xSize,(SHORT)ySize};
-
-	if (xSize>Size.X || ySize > Size.Y)
-	{
-		if (Size.X < xSize-1)
-		{
-			srWindowRect.Right = Size.X - 1;
-			Console.SetWindowRect(srWindowRect);
-			srWindowRect.Right = xSize-1;
-		}
-
-		if (Size.Y < ySize-1)
-		{
-			srWindowRect.Bottom=Size.Y - 1;
-			Console.SetWindowRect(srWindowRect);
-			srWindowRect.Bottom = ySize-1;
-		}
-
-		Console.SetSize(coordScreen);
-	}
-
-	if (!Console.SetWindowRect(srWindowRect))
-	{
-		Console.SetSize(coordScreen);
-		Console.SetWindowRect(srWindowRect);
-	}
-	else
-	{
-		Console.SetSize(coordScreen);
-	}
-
-	// зашлем эвент только в случае, когда макросы не исполняются
-	if (CtrlObject && !CtrlObject->Macro.IsExecuting())
-		GenerateWINDOW_BUFFER_SIZE_EVENT(NumColumns,NumLines);
+	const COORD LargestSize = Console.GetLargestWindowSize();
+	WINPORT(SetConsoleWindowMaximized)(LargestSize.X != CurSize.X || LargestSize.Y != CurSize.Y);
 }
 
 void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx, int Sy)
@@ -441,10 +354,8 @@ void GetCursorPos(SHORT& X,SHORT& Y)
 
 void SetCursorType(bool Visible, DWORD Size)
 {
-	if (Size==(DWORD)-1 || !Visible)
-		Size=IsFullscreen()?
-		     (Opt.CursorSize[1]?Opt.CursorSize[1]:InitialCursorInfo.dwSize):
-				     (Opt.CursorSize[0]?Opt.CursorSize[0]:InitialCursorInfo.dwSize);
+	if (Size == (DWORD)-1 || !Visible)
+		Size = (Opt.CursorSize[0] ? Opt.CursorSize[0] : InitialCursorInfo.dwSize);
 
 	ScrBuf.SetCursorType(Visible,Size);
 }
@@ -797,10 +708,6 @@ void ClearScreen(int Color)
 {
 	Color=FarColorToReal(Color);
 	ScrBuf.FillRect(0,0,ScrX,ScrY,L' ',Color);
-	if(Opt.WindowMode)
-	{
-		Console.ClearExtraRegions(Color);
-	}
 	ScrBuf.ResetShadow();
 	ScrBuf.Flush();
 	Console.SetTextAttributes(Color);
@@ -1261,17 +1168,6 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 	}
 
 	return 0;
-}
-
-bool IsFullscreen()
-{
-	bool Result=false;
-	/*DWORD ModeFlags=0;
-	if(Console.GetDisplayMode(ModeFlags) && ModeFlags&CONSOLE_FULLSCREEN_HARDWARE)
-	{
-		Result=true;
-	}*/
-	return Result;
 }
 
 bool CheckForInactivityExit()

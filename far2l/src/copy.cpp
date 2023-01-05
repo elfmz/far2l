@@ -119,7 +119,6 @@ static FARString strTotalCopySizeText;
 static FileFilter *Filter;
 static int UseFilter=FALSE;
 
-static BOOL ZoomedState,IconicState;
 static clock_t ProgressUpdateTime;              // Last progress bar update time
 
 ShellCopyFileExtendedAttributes::ShellCopyFileExtendedAttributes(File &f)
@@ -559,39 +558,6 @@ void PR_ShellCopyMsg()
 	}
 }
 
-BOOL CheckAndUpdateConsole(BOOL IsChangeConsole)
-{
-	BOOL curZoomedState = Console.IsZoomed();
-	BOOL curIconicState = Console.IsIconic();
-
-	if (ZoomedState!=curZoomedState && IconicState==curIconicState)
-	{
-		ZoomedState=curZoomedState;
-		ChangeVideoMode(ZoomedState);
-		Frame *frame=FrameManager->GetBottomFrame();
-		int LockCount=-1;
-
-		while (frame->Locked())
-		{
-			LockCount++;
-			frame->Unlock();
-		}
-
-		FrameManager->ResizeAllFrame();
-		FrameManager->PluginCommit();
-
-		while (LockCount > 0)
-		{
-			frame->Lock();
-			LockCount--;
-		}
-
-		IsChangeConsole=TRUE;
-	}
-
-	return IsChangeConsole;
-}
-
 #define USE_PAGE_SIZE 0x1000
 template <class T> static T AlignPageUp(T v)
 {
@@ -646,8 +612,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,        // исходная панель (�
 			return;
 	}
 
-	ZoomedState=Console.IsZoomed();
-	IconicState=Console.IsIconic();
 	// Создадим объект фильтра
 	Filter=new FileFilter(SrcPanel, FFT_COPY);
 	// $ 26.05.2001 OT Запретить перерисовку панелей во время копирования
@@ -2792,11 +2756,7 @@ void ShellFileTransfer::Do()
 	{
 		ProgressUpdate(false, _SrcData, _strDestName);
 
-		BOOL IsChangeConsole = OrigScrX != ScrX || OrigScrY != ScrY;
-
-		IsChangeConsole = CheckAndUpdateConsole(IsChangeConsole);
-
-		if (IsChangeConsole)
+		if (OrigScrX != ScrX || OrigScrY != ScrY)
 		{
 			OrigScrX = ScrX;
 			OrigScrY = ScrY;

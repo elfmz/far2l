@@ -27,7 +27,7 @@ class TTYOutput
 
 	int _out;
 	bool _far2l_tty, _kernel_tty;
-	bool _ttypalette_adjusted{false};
+	bool _palette_overriden{false};
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};
 	std::string _tmp_attrs;
@@ -47,6 +47,7 @@ public:
 
 	void Flush();
 
+	void ChangePalette(bool override_palette);
 	void ChangeCursorHeight(unsigned int height);
 	void ChangeCursor(bool visible, bool force = false);
 	int WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const;

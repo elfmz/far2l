@@ -162,19 +162,6 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInterract(stk_ser);
 	}
-	if (!TestPath(InMyConfig("nottypalette")).Exists()) {
-		_ttypalette_adjusted = true;
-		for (unsigned int i = 0; i < 16; ++i) {
-			unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
-			if (far2l_tty) { // far2l may set separate foreground & background colors
-				Format(ESC "]4;%d;#%06x;#%06x\a", i,
-					g_winport_palette.foreground[j].AsBGR(), g_winport_palette.background[j].AsBGR());
-			} else {
-				Format(ESC "]4;%d;#%06x\a", i,
-					(i < 8) ? g_winport_palette.background[j].AsBGR() : g_winport_palette.foreground[j].AsBGR());
-			}
-		}
-	}
 
 	Flush();
 }
@@ -189,14 +176,35 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
-		if (_ttypalette_adjusted) {
-			for (int i = 0; i < 16; ++i) {
-				Format(ESC "]104;%d\a", i);
-			}
-		}
+		ChangePalette(false);
 		Flush();
 
 	} catch (std::exception &) {
+	}
+}
+
+void TTYOutput::ChangePalette(bool override_palette)
+{
+	if (override_palette) {
+		if (!_palette_overriden) {
+			for (unsigned int i = 0; i < 16; ++i) {
+				unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
+				if (_far2l_tty) { // far2l may set separate foreground & background colors
+					Format(ESC "]4;%d;#%06x;#%06x\a", i,
+						g_winport_palette.foreground[j].AsBGR(), g_winport_palette.background[j].AsBGR());
+				} else {
+					Format(ESC "]4;%d;#%06x\a", i,
+						(i < 8) ? g_winport_palette.background[j].AsBGR() : g_winport_palette.foreground[j].AsBGR());
+				}
+			}
+			_palette_overriden = true;
+		}
+
+	} else if (_palette_overriden) {
+		for (int i = 0; i < 16; ++i) {
+			Format(ESC "]104;%d\a", i);
+		}
+		_palette_overriden = false;
 	}
 }
 

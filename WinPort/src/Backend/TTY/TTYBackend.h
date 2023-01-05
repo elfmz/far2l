@@ -21,6 +21,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
 	bool _osc52clip_set = false;
+	volatile bool _override_palette = false;
 
 	enum {
 		FKS_UNKNOWN,
@@ -82,6 +83,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 			bool far2l_interract : 1;
 			bool go_background : 1;
 			bool osc52clip_set : 1;
+			bool update_palette : 1;
 		} flags;
 		uint32_t all;
 	} _ae {};

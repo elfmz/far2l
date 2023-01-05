@@ -1543,8 +1543,20 @@ void WinPortPanel::OnConsoleSaveWindowStateSync(wxCommandEvent& event)
 		ws.fullscreen = _frame->IsFullScreen();
 
 		if (!ws.maximized && !ws.fullscreen) {
-			ws.size = _frame->GetSize();
 			ws.pos = _frame->GetPosition();
+			ws.size = _frame->GetSize();
+
+			// align saved size by font dimensions to avoid blank edges on next start
+			int width = 0, height = 0;
+			_frame->GetClientSize(&width, &height);
+			const unsigned int font_width = _paint_context.FontWidth();
+			const unsigned int font_height = _paint_context.FontHeight();
+			if (width % font_width) {
+				ws.size.SetWidth(ws.size.GetWidth() - (width % font_width));
+			}
+			if (height % font_height) {
+				ws.size.SetHeight(ws.size.GetHeight() - (height % font_height));
+			}
 
 		} else {
 			// if window maximized on different display - have to save its position anyway

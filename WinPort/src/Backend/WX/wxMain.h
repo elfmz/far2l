@@ -103,8 +103,10 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	wchar_t _stolen_key;
 	std::atomic<unsigned int> _last_title_ticks{0};
 	bool _extra_refresh{false};
+	bool _winstate_dirty{false};
 
 	void CheckForResizePending();
+	void CheckForWinStateDirty();
 	void CheckPutText2CLip();
 	void OnInitialized( wxCommandEvent& event );
 	void OnTimerPeriodic(wxTimerEvent& event);	

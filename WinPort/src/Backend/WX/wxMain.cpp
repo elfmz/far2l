@@ -152,8 +152,8 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 struct WinState
 {
-	wxPoint pos {0, 0};
-	wxSize size {800, 600};
+	wxPoint pos {40, 40};
+	wxSize size {600, 440};
 	bool maximized{false};
 
 	WinState()
@@ -314,6 +314,12 @@ WinPortFrame::WinPortFrame(const wxString& title)
 	if (ws.pos.y + ws.size.GetHeight() > rc.GetHeight()) {
 		ws.pos.y = rc.GetHeight() - ws.size.GetHeight();
 	}
+	if (ws.pos.x < rc.GetLeft()) {
+		ws.pos.x = rc.GetLeft();
+	}
+	if (ws.pos.y < rc.GetTop()) {
+		ws.pos.y = rc.GetTop();
+	}
 
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -322,6 +328,12 @@ WinPortFrame::WinPortFrame(const wxString& title)
 
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
+
+#ifdef __APPLE__
+	if (style & wxMAXIMIZE) { // under MacOS wxMAXIMIZE doesn't do what should do...
+		Maximize();
+	}
+#endif
 }
 
 WinPortFrame::~WinPortFrame()
@@ -628,21 +640,25 @@ void WinPortPanel::CheckForResizePending()
 #ifndef __APPLE__
 			Refresh(false);
 #endif
-
-			if (!_frame->IsFullScreen() && _frame->IsShown()) {
-				WinState ws;
-				ws.maximized = _frame->IsMaximized();
-				if (!ws.maximized) {
-					ws.size = _frame->GetSize();
-					ws.pos = _frame->GetPosition();
-				}
-				ws.Save();
-			}
 		} else if (_resize_pending != RP_INSTANT) {
 			_resize_pending = RP_INSTANT;
 			//fprintf(stderr, "RP_INSTANT\n");
 		}
-	}	
+	}
+}
+
+void WinPortPanel::CheckForWinStateDirty()
+{
+	if (_initialized && _winstate_dirty && !_frame->IsFullScreen() && _frame->IsShown()) {
+		_winstate_dirty = false;
+		WinState ws;
+		ws.maximized = _frame->IsMaximized();
+		if (!ws.maximized) {
+			ws.size = _frame->GetSize();
+			ws.pos = _frame->GetPosition();
+		}
+		ws.Save();
+	}
 }
 
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
@@ -660,6 +676,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	}
 
 	CheckForResizePending();
+	CheckForWinStateDirty();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
@@ -1194,6 +1211,7 @@ void WinPortPanel::OnEraseBackground( wxEraseEvent& event )
 
 void WinPortPanel::OnSize(wxSizeEvent &event)
 {
+	_winstate_dirty = true;
 	if (_resize_pending==RP_INSTANT) {
 		CheckForResizePending();
 	} else {
@@ -1205,7 +1223,7 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 
 void WinPortPanel::OnMoved()
 {
-	_resize_pending = RP_DEFER;	
+	_winstate_dirty = true;
 	ResetTimerIdling();
 }
 

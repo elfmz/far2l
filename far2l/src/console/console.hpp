@@ -50,9 +50,6 @@ public:
 	HANDLE GetOutputHandle();
 	HANDLE GetErrorHandle();
 
-	BOOL IsZoomed();
-	BOOL IsIconic();
-
 	bool GetSize(COORD& Size);
 	bool SetSize(COORD Size);
 

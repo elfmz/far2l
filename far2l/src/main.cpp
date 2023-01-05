@@ -575,12 +575,6 @@ int FarAppMain(int argc, char **argv)
 
 					break;
 
-				case L'W':
-					{
-						Opt.WindowMode=TRUE;
-					}
-					break;
-
 				case L'U':
 					{ // skip 2 args as this case is processed in SetCustomSettings()
 						I++;

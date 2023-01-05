@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern WCHAR Oem2Unicode[];
 extern WCHAR BoxSymbols[];
-extern COORD InitSize, CurSize;
+extern COORD CurSize;
 extern SHORT ScrX,ScrY;
 extern SHORT PrevScrX,PrevScrY;
 extern DWORD InitialConsoleMode;
@@ -60,14 +60,12 @@ void ShowTime(int ShowAlways);
   По умолчанию - да.
   С 0 используется для ConsoleDetach.
 */
-void InitConsole(int FirstInit=TRUE);
+void InitConsole();
 void CloseConsole();
 void SetFarConsoleMode(BOOL SetsActiveBuffer=FALSE);
 void ChangeConsoleMode(int Mode);
 void FlushInputBuffer();
-void SetVideoMode();
-void ChangeVideoMode(int Maximized);
-void ChangeVideoMode(int NumLines,int NumColumns);
+void ToggleVideoMode();
 void GetVideoMode(COORD& Size);
 void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx=-1, int Sy=-1);
 void SaveConsoleWindowRect();
@@ -130,6 +128,5 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct);
 FARString& HiText2Str(FARString& strDest, const wchar_t *Str);
 #define RemoveHighlights(Str) RemoveChar(Str,L'&')
 
-bool IsFullscreen();
 bool CheckForInactivityExit();
 void CheckForPendingCtrlHandleEvent();

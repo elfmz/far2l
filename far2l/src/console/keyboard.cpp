@@ -635,27 +635,9 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	LastEventIdle=FALSE;
 	SetFarConsoleMode();
-	BOOL ZoomedState=Console.IsZoomed();
-	BOOL IconicState=Console.IsIconic();
-
-	bool FullscreenState=IsFullscreen();
 
 	for (DWORD LoopCount=0;;)
 	{
-		// "Реакция" на максимизацию/восстановление окна консоли
-		if (ZoomedState!=Console.IsZoomed() && IconicState==Console.IsIconic())
-		{
-			ZoomedState=!ZoomedState;
-			ChangeVideoMode(ZoomedState);
-		}
-
-		bool CurrentFullscreenState=IsFullscreen();
-		if(CurrentFullscreenState && !FullscreenState)
-		{
-			ChangeVideoMode(25,80);
-		}
-		FullscreenState=CurrentFullscreenState;
-
 		/* $ 26.04.2001 VVM
 		   ! Убрал подмену колесика */
 		if (Console.PeekInput(*rec))
@@ -978,16 +960,6 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		ShowTime(1);
 
 	bool SizeChanged=false;
-	if(Opt.WindowMode)
-	{
-		SMALL_RECT CurConRect;
-		Console.GetWindowRect(CurConRect);
-		if(CurConRect.Bottom-CurConRect.Top!=ScrY || CurConRect.Right-CurConRect.Left!=ScrX)
-		{
-			SizeChanged=true;
-		}
-	}
-
 	/*& 17.05.2001 OT Изменился размер консоли, генерим клавишу*/
 	if (rec->EventType==WINDOW_BUFFER_SIZE_EVENT || SizeChanged)
 	{
@@ -996,17 +968,12 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		//// // _SVS(SysLog(1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT)"));
 		WINPORT(Sleep)(10);
 		GetVideoMode(CurSize);
-		bool NotIgnore=Opt.WindowMode && (rec->Event.WindowBufferSizeEvent.dwSize.X!=CurSize.X || rec->Event.WindowBufferSizeEvent.dwSize.Y!=CurSize.Y);
-		if (PScrX+1 == CurSize.X && PScrY+1 == CurSize.Y && !NotIgnore)
+		if (PScrX+1 == CurSize.X && PScrY+1 == CurSize.Y)
 		{
 			return KEY_NONE;
 		}
 		else
 		{
-			if(Opt.WindowMode && (PScrX+1>CurSize.X || PScrY+1>CurSize.Y))
-			{
-				//Console.ClearExtraRegions(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
-			}
 			PrevScrX=PScrX;
 			PrevScrY=PScrY;
 			//// // _SVS(SysLog(-1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT); return KEY_CONSOLE_BUFFER_RESIZE"));

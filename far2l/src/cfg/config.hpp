@@ -603,8 +603,6 @@ struct Options
 
 	bool IsUserAdmin;
 	FARString strWindowTitle;
-
-	BOOL WindowMode;
 };
 
 extern Options Opt;

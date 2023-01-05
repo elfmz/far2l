@@ -1048,7 +1048,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Cond=GetSubKey(CtrlObject->Macro.GetMode());
 					break;
 				case MCODE_C_FULLSCREENMODE: // Fullscreen?
-					Cond=IsFullscreen();
+					Cond=false;
 					break;
 				case MCODE_C_ISUSERADMIN: // IsUserAdmin?
 					Cond=(int64_t)Opt.IsUserAdmin;
@@ -1988,24 +1988,7 @@ static bool windowscrollFunc(const TMacroFunction*)
 	VMStack.Pop(A); // 0 - вертикаль (по умолчанию), 1 - горизонталь.
 	VMStack.Pop(L); // Положительное число - вперёд (вниз/вправо), отрицательное - назад (вверх/влево).
 
-	if (Opt.WindowMode)
-	{
-		int Lines=(int)L.i(), Columns=0;
-		L=0;
-		if (A.i())
-		{
-			Columns=Lines;
-			Lines=0;
-		}
-
-		if (Console.ScrollWindow(Lines, Columns))
-		{
-			Ret=true;
-			L=1;
-		}
-	}
-	else
-		L=0;
+	L=0;
 
 	VMStack.Push(L);
 	return Ret;

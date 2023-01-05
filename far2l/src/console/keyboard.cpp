@@ -531,7 +531,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	CheckForPendingCtrlHandleEvent();
 
-	if (FrameManager && FrameManager->RegularIdleWantersCount())
+	if (LIKELY(FrameManager) && FrameManager->RegularIdleWantersCount())
 	{
 		clock_t now = GetProcessUptimeMSec();
 		if (now - sLastIdleDelivered >= 1000) {
@@ -597,7 +597,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		if (!ExcludeMacro && CtrlObject && CtrlObject->Macro.IsRecording() && (CalcKey == (KEY_ALT|KEY_NUMPAD0) || CalcKey == (KEY_ALT|KEY_INS)))
 		{
 			_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(CalcKey)));
-			FrameManager->SetLastInputRecord(rec);
+			if (LIKELY(FrameManager))
+				FrameManager->SetLastInputRecord(rec);
 			if (CtrlObject->Macro.ProcessKey(CalcKey))
 			{
 				RunGraber();
@@ -611,7 +612,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		if (!NotMacros)
 		{
 			_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(CalcKey)));
-			FrameManager->SetLastInputRecord(rec);
+			if (LIKELY(FrameManager))
+				FrameManager->SetLastInputRecord(rec);
 			if (!ExcludeMacro && CtrlObject && CtrlObject->Macro.ProcessKey(CalcKey))
 			{
 				rec->EventType=0;
@@ -716,7 +718,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			   нажатии на F10 в панелях, только не запрашиваем подтверждение закрытия,
 			   если это возможно.
 			*/
-			FrameManager->ExitMainLoop(FALSE);
+			if (LIKELY(FrameManager))
+				FrameManager->ExitMainLoop(FALSE);
 
 			return KEY_NONE;
 		}
@@ -944,7 +947,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 	if (ReturnAltValue && !NotMacros)
 	{
 		_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(CalcKey)));
-		FrameManager->SetLastInputRecord(rec);
+		if (LIKELY(FrameManager))
+			FrameManager->SetLastInputRecord(rec);
 		if (CtrlObject && CtrlObject->Macro.ProcessKey(CalcKey))
 		{
 			rec->EventType=0;
@@ -979,7 +983,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			//// // _SVS(SysLog(-1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT); return KEY_CONSOLE_BUFFER_RESIZE"));
 			WINPORT(Sleep)(10);
 
-			if (FrameManager)
+			if (LIKELY(FrameManager))
 			{
 				ScrBuf.ResetShadow();
 				// апдейтим панели (именно они сейчас!)
@@ -1072,7 +1076,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 			{
 				_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(Key)));
-				if(FrameManager)
+				if (LIKELY(FrameManager))
 				{
 					FrameManager->SetLastInputRecord(rec);
 				}
@@ -1307,7 +1311,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 					else
 					{
 						_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(MsCalcKey)));
-						FrameManager->SetLastInputRecord(rec);
+						if (LIKELY(FrameManager))
+							FrameManager->SetLastInputRecord(rec);
 						if (CtrlObject->Macro.ProcessKey(MsCalcKey))
 						{
 							memset(rec,0,sizeof(*rec));
@@ -1326,7 +1331,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 	{
 		_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)",__LINE__,_FARKEY_ToName(CalcKey)));
-		if(FrameManager)
+		if (LIKELY(FrameManager))
 		{
 			FrameManager->SetLastInputRecord(rec);
 		}

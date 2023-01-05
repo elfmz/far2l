@@ -266,6 +266,7 @@ public:
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
 
 	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
+	{true,  NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
 
 	{false, NSecInterface, "ShowTimeoutDelFiles", &Opt.ShowTimeoutDelFiles, 50},
 	{false, NSecInterface, "ShowTimeoutDACLFiles", &Opt.ShowTimeoutDACLFiles, 50},

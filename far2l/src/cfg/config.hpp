@@ -478,6 +478,7 @@ struct Options
 	int NoBoxes;
 	int ConsolePaintSharp, ExclusiveCtrlLeft, ExclusiveCtrlRight, ExclusiveAltLeft, ExclusiveAltRight, ExclusiveWinLeft, ExclusiveWinRight;
 	int OSC52ClipSet;
+	int TTYPaletteOverride;
 
 	Confirmation Confirm;
 	PluginConfirmation PluginConfirm;

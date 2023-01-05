@@ -300,6 +300,7 @@ void TTYBackend::WriterThread()
 	bool gone_background = false;
 	try {
 		TTYOutput tty_out(_stdout, _far2l_tty);
+		tty_out.ChangePalette(_override_palette);
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
 			ae.all = 0;
@@ -331,6 +332,10 @@ void TTYBackend::WriterThread()
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
+			}
+
+			if (ae.flags.update_palette) {
+				tty_out.ChangePalette(_override_palette);
 			}
 
 			tty_out.Flush();
@@ -666,7 +671,23 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		ChooseSimpleClipboardBackend();
 	}
 
-	return (_far2l_tty || _ttyx) ? 0 : TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
+	const bool override_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
+	if (_override_palette != override_palette) {
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_override_palette = override_palette;
+		_ae.flags.update_palette = true;
+		_async_cond.notify_all();
+	}
+
+//
+
+	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
+
+	if (!_far2l_tty && !_ttyx) {
+		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
+	}
+
+	return out;
 }
 
 void TTYBackend::OnConsoleChangeFont()

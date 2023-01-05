@@ -75,7 +75,7 @@ int &Confirmation::ExitEffective()
 
 static DWORD ApplyConsoleTweaks()
 {
-	DWORD tweaks = 0;
+	DWORD64 tweaks = 0;
 	if (Opt.ExclusiveCtrlLeft) tweaks|= EXCLUSIVE_CTRL_LEFT;
 	if (Opt.ExclusiveCtrlRight) tweaks|= EXCLUSIVE_CTRL_RIGHT;
 	if (Opt.ExclusiveAltLeft) tweaks|= EXCLUSIVE_ALT_LEFT;
@@ -84,6 +84,7 @@ static DWORD ApplyConsoleTweaks()
 	if (Opt.ExclusiveWinRight) tweaks|= EXCLUSIVE_WIN_RIGHT;
 	if (Opt.ConsolePaintSharp) tweaks|= CONSOLE_PAINT_SHARP;
 	if (Opt.OSC52ClipSet) tweaks|= CONSOLE_OSC52CLIP_SET;
+	if (Opt.TTYPaletteOverride) tweaks|= CONSOLE_TTY_PALETTE_OVERRIDE;
 	return WINPORT(SetConsoleTweaks)(tweaks);
 }
 
@@ -307,6 +308,9 @@ void InterfaceSettings()
 			Builder.AddCheckbox(Msg::ConfigOSC52ClipSet, &Opt.OSC52ClipSet);
 		}
 
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_TTY_PALETTE) {
+			Builder.AddCheckbox(Msg::ConfigTTYPaletteOverride, &Opt.TTYPaletteOverride);
+		}
 
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);

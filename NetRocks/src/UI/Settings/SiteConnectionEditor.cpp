@@ -293,6 +293,12 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 				UpdateEnabledButtons();
 			} break;
 
+		case DN_CLOSE: {
+			if (param1 == _i_save || param1 == _i_connect) {
+				DataFromDialog();
+			}
+		} break;
+
 		case DN_BTNCLICK:
 			if (param1 == _i_protocol_options) {
 				ProtocolOptions();
@@ -303,10 +309,6 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 				DisplayNameAutogenerateAndApply();
 				return TRUE;
 
-			}
-
-			if (param1 == _i_save || param1 == _i_connect) {
-				DataFromDialog();
 			}
 		break;
 

@@ -17,7 +17,9 @@
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
+#include "EnsureDir.h"
 #include <utils.h>
+#include <RandomString.h>
 #include <os_call.hpp>
 
 static std::atomic<int>	s_reg_wipe_count{0};
@@ -89,14 +91,11 @@ static std::string LitterFile(const char *path)
 
 	srand(fd ^ time(nullptr));
 
-	unsigned char garbage[128];
+	char garbage[128];
+	RandomStringBuffer(garbage, sizeof(garbage), sizeof(garbage));
 	for (off_t i = 0; i < s.st_size;) {
 		const size_t piece = (s.st_size - i > (off_t)sizeof(garbage))
 			? sizeof(garbage) : (size_t) (s.st_size - i);
-		for (size_t j = 0; j < piece; ++j) {
-			garbage[j] = rand() % 0xff;
-		}
-
 		if (os_call_v<ssize_t, -1>(write, fd,
 			(const void *)&garbage[0], piece) != (ssize_t)piece) {
 			perror("LitterFile - write");
@@ -111,9 +110,9 @@ static std::string LitterFile(const char *path)
 	size_t p = garbage_path.rfind('/');
 	if (p != std::string::npos) {
 		size_t l = garbage_path.size();
-		garbage_path.resize(p + 1);
-		for (size_t i = p + 1; i < l; ++i) {
-			garbage_path+= 'a' + (rand() % ('z' - 'a' + 1));
+		if (l > p + 1) {
+			garbage_path.resize(p + 1);
+			RandomStringAppend(garbage_path, l - garbage_path.size(), l - garbage_path.size());
 		}
 	}
 	if (os_call_int(rename, path, garbage_path.c_str()) == 0) {
@@ -813,14 +812,15 @@ extern "C" {
 
 	void WinPortInitRegistry()
 	{
-		int ret = mkdir( GetRegistrySubroot("") .c_str(), 0775);
-		if (ret < 0 && EEXIST != errno)
-			fprintf(stderr, "WinPortInitRegistry: errno=%d \n", errno);
+		unsigned int fail_mask = 0;
+		if (!EnsureDir(GetRegistrySubroot("").c_str())) fail_mask|= 0x1;
+		if (!EnsureDir(HKDir(HKEY_LOCAL_MACHINE).c_str())) fail_mask|= 0x2;
+		if (!EnsureDir(HKDir(HKEY_USERS).c_str())) fail_mask|= 0x4;
+		if (!EnsureDir(HKDir(HKEY_CURRENT_USER).c_str())) fail_mask|= 0x8;
+		if (fail_mask)
+			fprintf(stderr, "WinPortInitRegistry: fail_mask=0x%x errno=%d \n", fail_mask, errno);
 		else
 			fprintf(stderr, "WinPortInitRegistry: OK \n");
-		mkdir(HKDir(HKEY_LOCAL_MACHINE).c_str(), 0775);
-		mkdir(HKDir(HKEY_USERS).c_str(), 0775);
-		mkdir(HKDir(HKEY_CURRENT_USER).c_str(), 0775);
 	}
 
 }

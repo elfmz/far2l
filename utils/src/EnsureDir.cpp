@@ -10,7 +10,7 @@
 #include "ScopeHelpers.h"
 #include "utils.h"
 
-static int NonZeroErrnono()
+static int NonZeroErrno()
 {
 	const int err = errno;
 	return err ? err : -1;
@@ -22,7 +22,7 @@ static int MakeDirs(const char *dir, mode_t mode)
 		return 0;
 	}
 
-	if (LIKELY(NonZeroErrnono() == EEXIST)) {
+	if (LIKELY(NonZeroErrno() == EEXIST)) {
 		return EEXIST;
 	}
 
@@ -37,7 +37,7 @@ static int MakeDirs(const char *dir, mode_t mode)
 		if (i > 0 && (!c || c == '/')) {
 			xdir[i] = 0;
 			if (UNLIKELY(os_call_int(mkdir, (const char *)xdir, mode) == -1)) {
-				err = NonZeroErrnono();
+				err = NonZeroErrno();
 			}
 			xdir[i] = c;
 		}

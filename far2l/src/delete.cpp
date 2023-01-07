@@ -61,9 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "execute.hpp"
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
-  #include <errno.h>
-#endif
+#include <RandomString.h>
+#include <errno.h>
 
 enum DeletionResult
 {
@@ -773,11 +772,17 @@ static DeletionResult RemoveToRecycleBin(const wchar_t *Name)
 static FARString WipingRename(const wchar_t *Name)
 {
 	FARString strTempName = Name;
-	CutToSlash(strTempName, false);
-	for (size_t i = 0, ii = 3 + (rand() % 4);
-			(i < ii || apiPathExists(strTempName)); ++i)
-	{
-		strTempName+= (wchar_t)'a' + (rand() % 26);
+	char tmpName[33]{};
+	for (size_t tmpLen = 4;;) {
+		CutToSlash(strTempName, false);
+		RandomStringBuffer(tmpName, tmpLen, tmpLen);
+		strTempName+= tmpName;
+		if (!apiPathExists(strTempName)) {
+			break;
+		}
+		if (tmpLen + 1 < sizeof(tmpName) - 1) {
+			++tmpLen;
+		}
 	}
 
 	if (!apiMoveFile(Name, strTempName))

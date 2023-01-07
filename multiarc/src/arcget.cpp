@@ -1,6 +1,7 @@
 #include "MultiArc.hpp"
 #include "marclng.hpp"
 #include <farkeys.h>
+#include <utils.h>
 #include <errno.h>
 
 class TRecur //$ 07.04.2002 AA
@@ -14,22 +15,7 @@ int TRecur::Count=0;
 
 inline void CreateDirectory(char *FullPath) //$ 16.05.2002 AA
 {
-  if(!FileExists(FullPath))
-    for(char *c=FullPath; *c; c++)
-    {
-      if(*c!=' ')
-      {
-        for(; *c; c++)
-          if(*c=='/')
-          {
-            *c=0;
-            mkdir(FullPath, 0777);
-            *c='/';
-          }
-        mkdir(FullPath, 0777);
-        break;
-      }
-    }
+  EnsureDir(FullPath);
 }
 
 int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber,

@@ -151,7 +151,9 @@ NMBEnum::NMBEnum(const std::string &group)
 			perror("NetBiosNSEnum - SO_RCVTIMEO");
 		}
 
-		StartThread();
+		if (!StartThread()) {
+			perror("NetBiosNSEnum - thread");
+		}
 	} else {
 		perror("NetBiosNSEnum - socket");
 	}

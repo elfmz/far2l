@@ -152,7 +152,7 @@ private:
 	FDScope _fd_out;
 	FDScope _fd_in;
 	FDScope _fd_ctl;
-	bool _alive_out, _alive_err;
+	bool _alive_out{false}, _alive_err{false};
 
 	fd_set _fdr, _fde;
 	char _buf[0x10000];

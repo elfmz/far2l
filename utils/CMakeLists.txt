@@ -38,6 +38,7 @@ set(SOURCES
   src/FcntlHelpers.cpp
   src/Panic.cpp
   src/IntStrConv.cpp
+  src/EnsureDir.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

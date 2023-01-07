@@ -21,7 +21,7 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 	SiteSpecification _site_specification;
 
 	Identity _identity;
-	unsigned int _login_mode;
+	unsigned int _login_mode{0};
 	std::string _password;
 	std::string _options;
 	unsigned int _codepage{0};

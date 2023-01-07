@@ -69,10 +69,10 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 
 		TTYRawMode tty_raw_mode(fd_stdin, fd_stdout);
 
-		FDScope fd_err(open((fifo + ".err").c_str(), O_RDONLY));
-		FDScope fd_out(open((fifo + ".out").c_str(), O_RDONLY));
-		FDScope fd_in(open((fifo + ".in").c_str(), O_WRONLY));
-		FDScope fd_ctl(open((fifo + ".ctl").c_str(), O_WRONLY));
+		FDScope fd_err((fifo + ".err").c_str(), O_RDONLY | O_CLOEXEC);
+		FDScope fd_out((fifo + ".out").c_str(), O_RDONLY | O_CLOEXEC);
+		FDScope fd_in((fifo + ".in").c_str(), O_WRONLY | O_CLOEXEC);
+		FDScope fd_ctl((fifo + ".ctl").c_str(), O_WRONLY | O_CLOEXEC);
 
 		if (!fd_ctl.Valid() || !fd_in.Valid() || !fd_out.Valid() || !fd_err.Valid()) {
 			throw std::runtime_error("Can't open FIFO");

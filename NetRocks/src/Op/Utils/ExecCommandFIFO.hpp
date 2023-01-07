@@ -10,10 +10,10 @@ class ExecCommandFIFO
 	void CleanupFIFO()
 	{
 		{
-			FDScope fd_ctl(open((_fifo + ".ctl").c_str(), O_WRONLY | O_NONBLOCK));
-			FDScope fd_in(open((_fifo + ".in").c_str(), O_WRONLY | O_NONBLOCK));
-			FDScope fd_out(open((_fifo + ".out").c_str(), O_RDONLY | O_NONBLOCK));
-			FDScope fd_err(open((_fifo + ".err").c_str(), O_RDONLY | O_NONBLOCK));
+			FDScope fd_ctl((_fifo + ".ctl").c_str(), O_WRONLY | O_NONBLOCK | O_CLOEXEC);
+			FDScope fd_in((_fifo + ".in").c_str(), O_WRONLY | O_NONBLOCK | O_CLOEXEC);
+			FDScope fd_out((_fifo + ".out").c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+			FDScope fd_err((_fifo + ".err").c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
 		}
 
 		unlink((_fifo + ".ctl").c_str());
@@ -61,7 +61,7 @@ public:
 	static int sReadStatus(const std::string &fifo)
 	{
 		int status = -1;
-		FDScope fd_status(open((fifo + ".status").c_str(), O_RDONLY));
+		FDScope fd_status((fifo + ".status").c_str(), O_RDONLY | O_CLOEXEC);
 		if (fd_status.Valid()) {
 			ReadAll(fd_status, &status, sizeof(status));
 		}

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <streambuf>
 #include <utils.h>
+#include <EnsureDir.h>
 #include <base64.h>
 
 #include "SitesConfig.h"

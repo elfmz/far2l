@@ -37,7 +37,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 
 	try {
 		{
-			FDScope info_fd(open(info_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600));
+			FDScope info_fd(info_path.c_str(), O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);
 			if (info_fd.Valid()) {
 				if (info.size() >= TTY_INFO_MAXTEXT) {
 					WriteAll(info_fd, info.c_str(), TTY_INFO_MAXTEXT);
@@ -127,7 +127,7 @@ class TTYInfoReader
 public:
 	TTYInfoReader(const std::string &info_file)
 	{
-		FDScope info_fd(open(info_file.c_str(), O_RDONLY));
+		FDScope info_fd(info_file.c_str(), O_RDONLY | O_CLOEXEC);
 		if (info_fd.Valid()) {
 			const size_t rd_len = ReadAll(info_fd, _buf, sizeof(_buf) - 1);
 			const size_t text_len = strlen(_buf);

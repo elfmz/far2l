@@ -7,66 +7,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
-
-enum PrivacyLevel
-{
-	// if dir exists and accessible - don't care who owns it, if not exists - create accessible for all (0777)
-	PL_ALL = 0,
-
-	// if dir exists and accessible - don't care who owns it, if not exists - create accessible to current user only
-	PL_ANY,
-
-	// fail if dir owned by nor current user nor root
-	PL_PRIVATE
-};
-
-static bool EnsureDir(const char *dir, PrivacyLevel pl)
-{
-	struct stat s{};
-	for (int i = 0; stat(dir, &s) == -1; ++i) {
-		if (i > 10) {
-			fprintf(stderr, "%s('%s', %u) dir-pear; stat errno=%u\n", __FUNCTION__, dir, pl, errno);
-			return false;
-		}
-		if (mkdir(dir, (pl == PL_ALL) ? 0777 : 0700) == 0) {
-			return true;
-		}
-		if (errno != EEXIST) {
-			return false;
-		}
-		usleep(i * 1000);
-	}
-
-	if ((s.st_mode & S_IFMT) != S_IFDIR) {
-		fprintf(stderr, "%s('%s', %u) its not a dir; mode=0%o\n", __FUNCTION__, dir, pl, s.st_mode);
-		return false;
-	}
-
-	const auto uid = geteuid();
-	if (pl >= PL_PRIVATE && uid != s.st_uid && s.st_uid != 0) {
-		fprintf(stderr, "%s('%s', %u) uid=%u but st_uid=%u\n", __FUNCTION__, dir, pl, uid, s.st_uid);
-		return false;
-	}
-
-	if ( ((s.st_mode & S_IWOTH) != 0)
-	  || ((s.st_mode & S_IWUSR) != 0 && s.st_uid == uid)
-	  || ((s.st_mode & S_IWGRP) != 0 && s.st_gid == getegid())) {
-		return true;
-	}
-
-	// may be mode bits lie us? check it with stick
-	std::string check_path = dir;
-	check_path+= "/.stick-check.far2l";
-	int fd = open(check_path.c_str(), O_CREAT | O_RDWR | O_CLOEXEC, 0600);
-	if (fd != -1) {
-		close(fd);
-		unlink(check_path.c_str());
-		fprintf(stderr, "%s('%s', %u) file allowed; mode=0%o\n", __FUNCTION__, dir, pl, s.st_mode);
-		return true;
-	}
-
-	return false;
-}
+#include "EnsureDir.h"
 
 static std::string GetTempSubdirUncached(const char *what)
 {

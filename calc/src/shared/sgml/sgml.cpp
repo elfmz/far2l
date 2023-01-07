@@ -82,7 +82,7 @@ bool CSgmlEl::init()
 
 bool CSgmlEl::readfile(std::string &path, std::wstring &content)
 {
-	FDScope fd(open(path.c_str(), O_RDONLY));
+	FDScope fd(path.c_str(), O_RDONLY | O_CLOEXEC);
 	if (!fd.Valid())
 		return false;
 

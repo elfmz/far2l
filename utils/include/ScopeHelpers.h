@@ -9,6 +9,7 @@ public:
 	FDScope(const FDScope &) = delete;
 	inline FDScope &operator = (const FDScope &) = delete;
 
+	FDScope(const char *path, int opts, int mode = 0700);
 	FDScope(int fd = -1) : _fd(fd) {}
 	~FDScope();
 

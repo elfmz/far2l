@@ -194,7 +194,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
 		if (!data_format) {
-			fprintf(stderr, 
+			fprintf(stderr,
 				"SetClipboardData(%u, %p [%lu]) - unrecognized format\n",
 				format, data, (unsigned long)len);
 		} else {

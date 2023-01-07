@@ -10,7 +10,7 @@
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
-#if 1 // change to 1 to enable self-contradiction check on startup
+#if 0 // change to 1 to enable self-contradiction check on startup
 
 template <typename Last> static void AssertNoConflictsBetween(const Last &last) { }
 

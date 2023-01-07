@@ -39,6 +39,7 @@ set(SOURCES
   src/Panic.cpp
   src/IntStrConv.cpp
   src/EnsureDir.cpp
+  src/RandomString.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

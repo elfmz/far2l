@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <utils.h>
+#include <RandomString.h>
 #include <base64.h>
 #include <UtfConvert.hpp>
 #include "TTYFar2lClipboardBackend.h"
@@ -25,13 +26,7 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 		gethostname(buf, sizeof(buf) - 1);
 		size_t l = strnlen(buf, sizeof(buf) / 2);
 		buf[l++] = '-';
-		for (; l < sizeof(buf); ++l) {
-			if (rand() & 3) {
-				buf[l] = 'a' + rand() % ('z' + 1 - 'a');
-			} else {
-				buf[l] = '0' + rand() % ('9' + 1 - '0');
-			}
-		}
+		RandomStringBuffer(&buf[l], sizeof(buf) - l, sizeof(buf) - l);
 		if (fd != -1) {
 			if (pwrite(fd, buf, sizeof(buf), 0) != sizeof(buf)) {
 				perror("pwrite");

@@ -27,8 +27,14 @@ static void InitDefaultPalette()
 						g_winport_palette.foreground[i].b = 0xc0;
 			} break;
 
+			// tweaked blue to make it more readable on dark background
+			case FOREGROUND_BLUE: {
+				g_winport_palette.foreground[i].r = 0;
+				g_winport_palette.foreground[i].g = 0x28;
+				g_winport_palette.foreground[i].b = 0xa0;
+			} break;
+
 			case (FOREGROUND_BLUE|FOREGROUND_INTENSITY): {
-				// tweaked bright blue to make it more readable on dark background
 				g_winport_palette.foreground[i].r = 0;
 				g_winport_palette.foreground[i].g = 0x55;
 				g_winport_palette.foreground[i].b = 0xff;

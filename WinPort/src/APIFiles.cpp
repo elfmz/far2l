@@ -486,11 +486,10 @@ extern "C"
 	DWORD WINPORT(SetFilePointer)( HANDLE hFile, LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod)
 	{
 		LARGE_INTEGER liDistanceToMove, liNewFilePointer = {};
+		liDistanceToMove.LowPart = lDistanceToMove;
 		if (lpDistanceToMoveHigh) {
-			liDistanceToMove.LowPart = lDistanceToMove;
-			liDistanceToMove.HighPart = lpDistanceToMoveHigh ? *lpDistanceToMoveHigh : 0;
+			liDistanceToMove.HighPart = *lpDistanceToMoveHigh;
 		} else {
-			liDistanceToMove.LowPart = lDistanceToMove;
 			liDistanceToMove.HighPart = (lDistanceToMove < 0) ? -1 : 0;
 		}
 		auto r = WINPORT(SetFilePointerEx)( hFile, liDistanceToMove, &liNewFilePointer, dwMoveMethod);

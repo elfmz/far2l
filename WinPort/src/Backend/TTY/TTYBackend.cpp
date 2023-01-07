@@ -94,6 +94,11 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, const
 		MakeFDNonBlocking(_kickass[1]);
 	}
 
+	struct winsize w{};
+	if (GetWinSize(w)) {
+		g_winport_con_out->SetSize(w.ws_col, w.ws_row);
+	}
+	g_winport_con_out->GetSize(_cur_width, _cur_height);
 	g_vtb = this;
 }
 
@@ -116,6 +121,20 @@ TTYBackend::~TTYBackend()
 
 	CheckedCloseFDPair(_kickass);
 	DetachNotifyPipe();
+}
+
+bool TTYBackend::GetWinSize(struct winsize &w)
+{
+	int r = ioctl(_stdout, TIOCGWINSZ, &w);
+	if (UNLIKELY(r != 0)) {
+		r = ioctl(_stdin, TIOCGWINSZ, &w);
+		if (UNLIKELY(r != 0)) {
+			perror("GetWinSize");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void TTYBackend::DetachNotifyPipe()
@@ -301,6 +320,7 @@ void TTYBackend::WriterThread()
 	try {
 		TTYOutput tty_out(_stdout, _far2l_tty);
 		tty_out.ChangePalette(_override_palette);
+//		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
 			ae.all = 0;
@@ -362,28 +382,24 @@ void TTYBackend::WriterThread()
 
 void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
-	struct winsize w = {};
-	int r = ioctl(_stdout, TIOCGWINSZ, &w);
-	if (r != 0) {
-		r = ioctl(_stdin, TIOCGWINSZ, &w);
+	struct winsize w{};
+	if (!GetWinSize(w)) {
+		return;
 	}
-	if (r == 0) {
-		if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
-			_cur_width = w.ws_col;
-			_cur_height = w.ws_row;
-			g_winport_con_out->SetSize(_cur_width, _cur_height);
-			g_winport_con_out->GetSize(_cur_width, _cur_height);
-			INPUT_RECORD ir = {};
-			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
-			ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
-			ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
-			g_winport_con_in->Enqueue(&ir, 1);
-		}
-		std::vector<CHAR_INFO> tmp;
-		tty_out.MoveCursorStrict(1, 1);
-		_prev_height = _prev_width = 0;
-		_prev_output.swap(tmp);// ensure memory released
+
+	if (_cur_width != w.ws_col || _cur_height != w.ws_row) {
+		g_winport_con_out->SetSize(w.ws_col, w.ws_row);
+		g_winport_con_out->GetSize(_cur_width, _cur_height);
+		INPUT_RECORD ir = {};
+		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+		ir.Event.WindowBufferSizeEvent.dwSize.X = _cur_width;
+		ir.Event.WindowBufferSizeEvent.dwSize.Y = _cur_height;
+		g_winport_con_in->Enqueue(&ir, 1);
 	}
+	std::vector<CHAR_INFO> tmp;
+	tty_out.MoveCursorStrict(1, 1);
+	_prev_height = _prev_width = 0;
+	_prev_output.swap(tmp);// ensure memory released
 }
 
 //#define LOG_OUTPUT_COUNT

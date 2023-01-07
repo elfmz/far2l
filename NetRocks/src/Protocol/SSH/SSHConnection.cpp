@@ -319,10 +319,10 @@ void SSHExecutedCommand::OnReadFDCtl(int fd)
 
 void SSHExecutedCommand::IOLoop()
 {
-	FDScope fd_err(open((_fifo + ".err").c_str(), O_WRONLY));
-	FDScope fd_out(open((_fifo + ".out").c_str(), O_WRONLY));
-	FDScope fd_in(open((_fifo + ".in").c_str(), O_RDONLY));
-	FDScope fd_ctl(open((_fifo + ".ctl").c_str(), O_RDONLY));
+	FDScope fd_err(open((_fifo + ".err").c_str(), O_WRONLY | O_CLOEXEC));
+	FDScope fd_out(open((_fifo + ".out").c_str(), O_WRONLY | O_CLOEXEC));
+	FDScope fd_in(open((_fifo + ".in").c_str(), O_RDONLY | O_CLOEXEC));
+	FDScope fd_ctl(open((_fifo + ".ctl").c_str(), O_RDONLY | O_CLOEXEC));
 
 	if (!fd_err.Valid() || !fd_out.Valid() || !fd_in.Valid() || !fd_ctl.Valid())
 		throw ProtocolError("fifo");
@@ -416,7 +416,7 @@ void SSHExecutedCommand::IOLoop()
 			if (status == 0) {
 				_succeess = true;
 			}
-			FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600));
+			FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600));
 			if (fd_status.Valid()) {
 				WriteAll(fd_status, &status, sizeof(status));
 			}

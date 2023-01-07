@@ -258,7 +258,7 @@ class LIBARCH_Add
 			_illformed_parts.emplace_back(_added_parts.back());
 
 			off_t written = 0;
-			FDScope fd(open(path, O_RDONLY));
+			FDScope fd(path, O_RDONLY | O_CLOEXEC);
 			if (!fd.Valid()) {
 				throw std::underflow_error("open file failed");
 			}

@@ -4,7 +4,7 @@
 
 bool ReadWholeFile(const char *path, std::string &result, size_t limit)
 {
-	FDScope fd(open(path, O_RDONLY));
+	FDScope fd(path, O_RDONLY);
 	if (!fd.Valid())
 		return false;
 

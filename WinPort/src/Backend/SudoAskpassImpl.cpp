@@ -149,7 +149,7 @@ class SudoAskpassScreen
 			for (size_t i = 0; i < 0x20; ++i) {
 				salt+= udist(rng);
 			}
-			FDScope fd(open(salt_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0600));
+			FDScope fd(salt_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT | O_CLOEXEC, 0600);
 			if (fd.Valid()) {
 				WriteAll(fd, salt.c_str(), salt.size());
 			}

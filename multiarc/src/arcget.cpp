@@ -2,6 +2,7 @@
 #include "marclng.hpp"
 #include <farkeys.h>
 #include <utils.h>
+#include <EnsureDir.h>
 #include <errno.h>
 
 class TRecur //$ 07.04.2002 AA

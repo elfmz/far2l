@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <os_call.hpp>
 
 #include "ScopeHelpers.h"
 #include "utils.h"
@@ -322,7 +323,7 @@ static bool LoadKeyFileContent(const std::string &filename, struct stat &filesta
 			return false;
 		}
 
-		FDScope fd(open(filename.c_str(), O_RDONLY, MakeFileMode(filestat)));
+		FDScope fd(filename.c_str(), O_RDONLY | O_CLOEXEC);
 		if (!fd.Valid()) {
 			fprintf(stderr, "%s: error=%d opening '%s'\n", __FUNCTION__, errno, filename.c_str());
 			return false;
@@ -642,7 +643,7 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 	unsigned int  tmp_uniq = ++s_tmp_uniq;
 	tmp+= StrPrintf(".%u-%u", getpid(), tmp_uniq);
 	try {
-		FDScope fd(creat(tmp.c_str(), MakeFileMode(_filestat)));
+		FDScope fd(tmp.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, MakeFileMode(_filestat));
 		if (!fd.Valid()) {
 			throw std::runtime_error("create file failed");
 		}
@@ -680,15 +681,19 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 			"KeyFileHelper::Save: exception '%s' errno=%u while saving '%s'\n",
 				e.what(), errno, tmp.c_str());
 
-		remove(tmp.c_str());
+		if (os_call_int(remove, tmp.c_str()) == -1) {
+			perror("remove");
+		}
 		return false;
 	}
 
-	if (rename(tmp.c_str(), _filename.c_str()) == -1) {
+	if (os_call_int(rename, tmp.c_str(), _filename.c_str()) == -1) {
 		fprintf(stderr,
 			"KeyFileHelper::Save: errno=%u while renaming '%s' -> '%s'\n",
 				errno, tmp.c_str(), _filename.c_str());
-		remove(tmp.c_str());
+		if (os_call_int(remove, tmp.c_str()) == -1) {
+			perror("remove");
+		}
 		return false;
 	}
 
@@ -837,7 +842,7 @@ void KeyFileHelper::RenameSection(const std::string &src, const std::string &dst
 	}
 
 	if (recursed) {
-		const auto subsections = EnumSectionsAt(src, true);
+		const auto &subsections = EnumSectionsAt(src, true);
 		for (auto subsection : subsections) {
 			auto section_values = _kf[subsection];
 			_kf.erase(subsection);

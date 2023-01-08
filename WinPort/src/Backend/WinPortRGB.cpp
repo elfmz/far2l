@@ -12,7 +12,7 @@ WinPortPalette g_winport_palette __attribute__ ((visibility("default")));
 
 static void InitDefaultPalette()
 {
-	for ( unsigned int i = 0; i < 16; ++i) {
+	for ( unsigned int i = 0; i < BASE_PALETTE_SIZE; ++i) {
 
 		switch (i) {
 			case FOREGROUND_INTENSITY: {
@@ -91,7 +91,7 @@ static bool LoadPalette(KeyFileHelper &kfh)
 {
 	char name[16];
 	bool out = true;
-	for (unsigned int i = 0; i < 16; ++i) {
+	for (unsigned int i = 0; i < BASE_PALETTE_SIZE; ++i) {
 		snprintf(name, sizeof(name), "%d", i);
 
 		if (!LoadPaletteEntry(kfh, "foreground", name, g_winport_palette.foreground[i])
@@ -105,7 +105,7 @@ static bool LoadPalette(KeyFileHelper &kfh)
 static void SavePalette(KeyFileHelper &kfh)
 {
 	char name[16], value[16];
-	for (int i=0; i<16; i++) {
+	for (int i = 0; i < BASE_PALETTE_SIZE; ++i) {
 		snprintf(name, sizeof(name), "%d", i);
 
 		snprintf(value, sizeof(value), "#%02X%02X%02X",

@@ -39,16 +39,17 @@ extern bool g_broadway;
 extern bool g_wayland;
 extern bool g_remote;
 
+WinPortPalette g_wx_palette;
 
 
 static const WinPortRGB &InternalConsoleForeground2RGB(USHORT attributes)
 {
-	return g_winport_palette.foreground[(attributes & 0x0f)];
+	return g_wx_palette.foreground[(attributes & 0x0f)];
 }
 
 static const WinPortRGB &InternalConsoleBackground2RGB(USHORT attributes)
 {
-	return g_winport_palette.background[(attributes & 0xf0) >> 4];
+	return g_wx_palette.background[(attributes & 0xf0) >> 4];
 }
 
 WinPortRGB ConsoleForeground2RGB(DWORD64 attributes)

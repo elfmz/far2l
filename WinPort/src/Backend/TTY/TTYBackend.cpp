@@ -319,7 +319,7 @@ void TTYBackend::WriterThread()
 	bool gone_background = false;
 	try {
 		TTYOutput tty_out(_stdout, _far2l_tty);
-		tty_out.ChangePalette(_override_palette);
+		tty_out.ChangePalette(_palette);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;
@@ -331,9 +331,16 @@ void TTYBackend::WriterThread()
 				}
 				if (_ae.all != 0) {
 					std::swap(ae.all, _ae.all);
+					if (ae.flags.palette) {
+						_async_cond.notify_all();
+					}
 					break;
 				}
 			} while (!_exiting && !_deadio);
+
+			if (ae.flags.palette) {
+				DispatchPalette(tty_out);
+			}
 
 			if (ae.flags.term_resized) {
 				DispatchTermResized(tty_out);
@@ -352,10 +359,6 @@ void TTYBackend::WriterThread()
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
-			}
-
-			if (ae.flags.update_palette) {
-				tty_out.ChangePalette(_override_palette);
 			}
 
 			tty_out.Flush();
@@ -379,6 +382,26 @@ void TTYBackend::WriterThread()
 
 
 /////////////////////////////////////////////////////////////////////////
+
+void TTYBackend::DispatchPalette(TTYOutput &tty_out)
+{
+	TTYBasePalette palette;
+	{
+		std::lock_guard<std::mutex> lock(_palette_mtx);
+		palette = _palette;
+		if (_override_default_palette) {
+			for (size_t i = 0; i < BASE_PALETTE_SIZE; ++i) {
+				if (palette.background[i] == (DWORD)-1) {
+					palette.background[i] = g_winport_palette.background[i].AsRGB();
+				}
+				if (palette.foreground[i] == (DWORD)-1) {
+					palette.foreground[i] = g_winport_palette.foreground[i].AsRGB();
+				}
+			}
+		}
+	}
+	tty_out.ChangePalette(palette);
+}
 
 void TTYBackend::DispatchTermResized(TTYOutput &tty_out)
 {
@@ -687,12 +710,22 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		ChooseSimpleClipboardBackend();
 	}
 
-	const bool override_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-	if (_override_palette != override_palette) {
-		std::unique_lock<std::mutex> lock(_async_mutex);
-		_override_palette = override_palette;
-		_ae.flags.update_palette = true;
-		_async_cond.notify_all();
+	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
+
+	{
+		std::lock_guard<std::mutex> lock(_palette_mtx);
+		std::swap(override_default_palette, _override_default_palette);
+	}
+
+	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
+		{
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_ae.flags.palette = true;
+			_async_cond.notify_all();
+			while (_ae.flags.palette) {
+				_async_cond.wait(lock);
+			}
+		}
 	}
 
 //
@@ -705,6 +738,32 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 	return out;
 }
+
+void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
+{
+	if (Index >= BASE_PALETTE_SIZE) {
+		fprintf(stderr, "%s: too big index=%u\n", __FUNCTION__, Index);
+		return;
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(_palette_mtx);
+		if (_palette.foreground[Index] == *ColorFG && _palette.background[Index] == *ColorBK) {
+			return;
+		}
+
+		std::swap(_palette.foreground[Index], *ColorFG);
+		std::swap(_palette.background[Index], *ColorBK);
+	}
+
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_ae.flags.palette = true;
+	_async_cond.notify_all();
+	while (_ae.flags.palette) {
+		_async_cond.wait(lock);
+	}
+}
+
 
 void TTYBackend::OnConsoleChangeFont()
 {

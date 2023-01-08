@@ -344,6 +344,11 @@ extern "C" {
 		return g_winport_con_out->GetColorPalette();
 	}
 
+	WINPORT_DECL(OverrideConsoleColor, VOID, (DWORD Index, DWORD *ColorFG, DWORD *ColorBK))
+	{
+		return g_winport_con_out->OverrideColor(Index, ColorFG, ColorBK);
+	}
+
 	static struct {
 		struct Cmp
 		{

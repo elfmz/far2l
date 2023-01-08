@@ -168,11 +168,14 @@ jadoxa@yahoo.com.au
 
 #include <mutex>
 #include <atomic>
+#include <map>
 #include "vtansi.h"
 #include "AnsiEsc.hpp"
 #include "UtfConvert.hpp"
 
 #define is_digit(c) ('0' <= (c) && (c) <= '9')
+
+#define BGR2RGB(COLOR) ((((COLOR) & 0xff0000) >> 16) | ((COLOR) & 0x00ff00) | (((COLOR) & 0x0000ff) << 16))
 
 // ========== Global variables and constants
 
@@ -230,6 +233,7 @@ static std::mutex g_vt_ansi_mutex;
 IVTShell *g_vt_shell = nullptr;
 static std::string g_title;
 static std::atomic<bool> g_output_disabled{false};
+static std::map<DWORD, std::pair<DWORD, DWORD> > g_orig_palette;
 
 static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 
@@ -646,6 +650,38 @@ static void LimitByScrollRegion(SMALL_RECT &rect)
 // es_argc = 3, es_argv[0] = 33, es_argv[1] = 45, es_argv[2] = 1
 // suffix = 'm'
 //-----------------------------------------------------------------------------
+
+static void ParseOSCPalette(int cmd, std::string &args)
+{
+	size_t pos = 0;
+	unsigned int index = stoi(args, &pos, 10);
+	// Win <-> TTY color index adjustement
+	index = (((index) & 0b001) << 2 | ((index) & 0b100) >> 2 | ((index) & 0b1010));
+
+	DWORD fg = 0xffffffff, bk = 0xffffffff;
+	if (cmd == 4) {
+		if (pos + 2 >= args.size() || args[pos] != ';' || args[pos + 1] != '#') {
+			fprintf(stderr, "%s: bad args='%s'\n", __FUNCTION__, args.c_str());
+			return;
+		}
+		args.erase(0, pos + 2);
+		fg = bk = BGR2RGB(stoi(args, &pos, 16 ));
+		if (pos == 0) {
+			return;
+		}
+		if (pos + 2 < args.size() && args[pos] == ';' && args[pos + 1] == '#') {
+			args.erase(0, pos + 2);
+			bk = BGR2RGB(stoi(args, &pos, 16 ));
+			if (pos == 0) {
+				bk = fg;
+			}
+		}
+	}
+
+	WINPORT(OverrideConsoleColor)(index, &fg, &bk);
+	// remember very first original...
+	g_orig_palette.emplace(index, std::make_pair(fg, bk));
+}
 
 void InterpretEscSeq( void )
 {
@@ -1121,11 +1157,8 @@ void InterpretEscSeq( void )
 			os_cmd_arg.clear();
 			ApplyConsoleTitle();
 
-		} else if (es_argc >= 1 && es_argv[0] == 4) {
-			ansiState.font_state.ParseOSC4(os_cmd_arg);
-
-		} else if (es_argc >= 1 && es_argv[0] == 104) {
-			ansiState.font_state.ParseOSC104(os_cmd_arg);
+		} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
+			ParseOSCPalette(es_argv[0], os_cmd_arg);
 
 		} else if (g_vt_shell) {
 			g_vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
@@ -1510,6 +1543,10 @@ void VTAnsi::OnStart()
 
 void VTAnsi::OnStop()
 {
+	for (auto &it : g_orig_palette) { // restore all changed palette colors
+		WINPORT(OverrideConsoleColor)(it.first, &it.second.first, &it.second.second);
+	}
+	g_orig_palette.clear();
 	g_alternative_screen_buffer.Reset();
 	g_saved_state.ApplyToConsole(NULL, false);
 	ResetTerminal();

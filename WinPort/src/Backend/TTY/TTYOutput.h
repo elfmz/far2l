@@ -4,6 +4,15 @@
 #include <map>
 #include <WinCompat.h>
 #include <StackSerializer.h>
+#include "../WinPortRGB.h"
+
+struct TTYBasePalette
+{
+	TTYBasePalette();
+
+	DWORD foreground[BASE_PALETTE_SIZE];
+	DWORD background[BASE_PALETTE_SIZE];
+};
 
 class TTYOutput
 {
@@ -27,7 +36,7 @@ class TTYOutput
 
 	int _out;
 	bool _far2l_tty, _kernel_tty;
-	bool _palette_overriden{false};
+	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};
 	std::string _tmp_attrs;
@@ -47,7 +56,7 @@ public:
 
 	void Flush();
 
-	void ChangePalette(bool override_palette);
+	void ChangePalette(const TTYBasePalette &palette);
 	void ChangeCursorHeight(unsigned int height);
 	void ChangeCursor(bool visible, bool force = false);
 	int WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const;

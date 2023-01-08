@@ -22,11 +22,10 @@ TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interracto
 	}
 
 	if (r < (ssize_t)sizeof(buf)) {
-		srand(fd ^ getpid() ^ time(NULL) ^ (unsigned int)(uintptr_t)&fd);
 		gethostname(buf, sizeof(buf) - 1);
 		size_t l = strnlen(buf, sizeof(buf) / 2);
 		buf[l++] = '-';
-		RandomStringBuffer(&buf[l], sizeof(buf) - l, sizeof(buf) - l);
+		RandomStringBuffer(&buf[l], sizeof(buf) - l, sizeof(buf) - l, RNDF_LOCASE | RNDF_DIGITS);
 		if (fd != -1) {
 			if (pwrite(fd, buf, sizeof(buf), 0) != sizeof(buf)) {
 				perror("pwrite");

@@ -129,6 +129,8 @@ Glossary:
 
  Passcode - random string that client sends to server to identify itself. Server on its side may
   ask user for allowing clipboard access and may use this passcode to remember user's choice.
+  Its recommended to remember passcode on server side on per-client identity basis, to protect
+  against malicious client that somehow stolen other client's passcode.
 
  Clipboard format ID - value that describes kind of data to be transferred. ID can be predefined
   or dynamically registered. In first case it describes some well-known data format, in another -

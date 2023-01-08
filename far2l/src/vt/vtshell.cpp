@@ -85,6 +85,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::mutex _read_state_mutex, _write_term_mutex;
 
 	std::string _start_marker, _exit_marker;
+	std::string _host_id;
 	unsigned int _exit_code;
 	bool _allow_osc_clipset{false};
 
@@ -496,7 +497,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				case '1': {
 					std::lock_guard<std::mutex> lock(_read_state_mutex);
 					if (!_far2l_exts)
-						_far2l_exts.reset(new VTFar2lExtensios(this));
+						_far2l_exts.reset(new VTFar2lExtensios(this, _host_id));
 
 					reply = "\x1b_far2lok\x07";
 				} break;
@@ -533,6 +534,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 						}
 					}
 
+				} break;
+
+				case '#': { // NetRocks host identity, used to fortify clipboard auth
+					if (_host_id.empty()) {
+						_host_id = str + 6;
+					} else {
+						fprintf(stderr, "VT: superfluous host_id='%s', prev='%s'\n", str + 6, _host_id.c_str());
+					}
 				} break;
 
 				case '_': { // internal markers control
@@ -846,6 +855,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	int ExecuteCommand(const char *cmd, bool force_sudo)
 	{
+		_host_id.clear();
 		CheckLeaderAlive();
 		if (_leader_pid == -1) {
 			fprintf(stderr, "%s: no leader\n", __FUNCTION__);
@@ -877,6 +887,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
 		_far2l_exts.reset();
+		_host_id.clear();
 		_mouse.reset();
 		return _exit_code;
 	}	

@@ -992,8 +992,13 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				if (GlobalSaveScrPtr)
 					GlobalSaveScrPtr->Discard();
 
-				FrameManager->ResizeAllFrame();
-				FrameManager->GetCurrentFrame()->Show();
+				if (LIKELY(FrameManager))
+				{
+					FrameManager->ResizeAllFrame();
+					auto *CurFrame = FrameManager->GetCurrentFrame();
+					if (LIKELY(CurFrame))
+						CurFrame->Show();
+				}
 				//// // _SVS(SysLog(L"PreRedrawFunc = %p",PreRedrawFunc));
 				PreRedrawItem preRedrawItem=PreRedraw.Peek();
 

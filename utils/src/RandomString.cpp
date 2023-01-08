@@ -2,13 +2,16 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <atomic>
 #include "BitTwiddle.hpp"
 #include "RandomString.h"
+
+static std::atomic<uint32_t> s_rnd_next_seed;
 
 size_t RandomStringBuffer(unsigned char *out, size_t min_len, size_t max_len, unsigned int flags)
 {
 	std::mt19937 rng;
-	rng.seed(getpid() ^ time(NULL) ^ RevBytes(uint32_t(clock())));
+	rng.seed(getpid() ^ time(NULL) ^ RevBytes(uint32_t(clock())) ^ uint32_t(s_rnd_next_seed));
 	size_t len = min_len;
 	if (max_len > min_len) {
 		std::uniform_int_distribution<std::mt19937::result_type> len_dist(0, max_len - min_len);
@@ -45,6 +48,9 @@ size_t RandomStringBuffer(unsigned char *out, size_t min_len, size_t max_len, un
 		out[i] = v;
 		++i;
 	}
+
+	std::uniform_int_distribution<std::mt19937::result_type> seed_dist(0, 0xffffffff);
+	s_rnd_next_seed = seed_dist(rng);
 
 	return len;
 }

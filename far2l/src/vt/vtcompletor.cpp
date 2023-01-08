@@ -13,6 +13,7 @@
 #include <string>
 #include <time.h>
 #include <utils.h>
+#include <RandomString.h>
 #include "vtcompletor.h"
 
 static const char *vtc_inputrc = "set completion-query-items 0\n"
@@ -103,11 +104,9 @@ void VTCompletor::Stop()
 
 static void AvoidMarkerCollision(std::string &marker, const std::string &cmd)
 {
-	if (cmd.find(marker) != std::string::npos) {
-		srand(time(NULL) ^ (((uintptr_t)&marker) & 0xff));
-		do {
-			marker+= 'a' + (rand() % ('z' + 1 - 'a'));
-		} while (cmd.find(marker) != std::string::npos);
+	for (const size_t orig_len = marker.size(); cmd.find(marker) != std::string::npos; ) {
+		marker.resize(orig_len);
+		RandomStringAppend(marker, 4, 10, RNDF_ALNUM);
 	}
 }
 

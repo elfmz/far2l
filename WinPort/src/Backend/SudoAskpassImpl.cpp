@@ -144,7 +144,7 @@ class SudoAskpassScreen
 		std::string salt;
 		if (!ReadWholeFile(salt_file.c_str(), salt, 0x1000)) {
 			salt.clear();
-			RandomStringAppend(salt, 0x20, 0x20);
+			RandomStringAppend(salt, 0x20, 0x20, RNDF_NZ);
 			FDScope fd(salt_file.c_str(), O_WRONLY | O_TRUNC | O_CREAT | O_CLOEXEC, 0600);
 			if (fd.Valid()) {
 				WriteAll(fd, salt.c_str(), salt.size());

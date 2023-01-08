@@ -17,11 +17,12 @@ class VTFar2lExtensios
 
 	std::string _tmp_input_event;
 	IVTShell *_vt_shell;
+	std::string _client_id_prefix;
 
 	std::set<std::string> _autheds;
 	std::vector<unsigned char> _clipboard_chunks;
 
-	char ClipboardAuthorize(const std::string &client_id);
+	char ClipboardAuthorize(std::string client_id);
 
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);
@@ -44,7 +45,7 @@ class VTFar2lExtensios
 
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:
-	VTFar2lExtensios(IVTShell *vt_shell);
+	VTFar2lExtensios(IVTShell *vt_shell, const std::string &host_id);
 	~VTFar2lExtensios();
 
 	bool OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent);

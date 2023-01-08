@@ -775,7 +775,7 @@ static FARString WipingRename(const wchar_t *Name)
 	char tmpName[33]{};
 	for (size_t tmpLen = 4;;) {
 		CutToSlash(strTempName, false);
-		RandomStringBuffer(tmpName, tmpLen, tmpLen);
+		RandomStringBuffer(tmpName, tmpLen, tmpLen, RNDF_ALNUM);
 		strTempName+= tmpName;
 		if (!apiPathExists(strTempName)) {
 			break;

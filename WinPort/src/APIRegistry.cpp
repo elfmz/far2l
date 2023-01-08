@@ -92,7 +92,7 @@ static std::string LitterFile(const char *path)
 	srand(fd ^ time(nullptr));
 
 	char garbage[128];
-	RandomStringBuffer(garbage, sizeof(garbage), sizeof(garbage));
+	RandomStringBuffer(garbage, sizeof(garbage), sizeof(garbage), RNDF_NZ);
 	for (off_t i = 0; i < s.st_size;) {
 		const size_t piece = (s.st_size - i > (off_t)sizeof(garbage))
 			? sizeof(garbage) : (size_t) (s.st_size - i);
@@ -112,7 +112,7 @@ static std::string LitterFile(const char *path)
 		size_t l = garbage_path.size();
 		if (l > p + 1) {
 			garbage_path.resize(p + 1);
-			RandomStringAppend(garbage_path, l - garbage_path.size(), l - garbage_path.size());
+			RandomStringAppend(garbage_path, l - garbage_path.size(), l - garbage_path.size(), RNDF_ALNUM);
 		}
 	}
 	if (os_call_int(rename, path, garbage_path.c_str()) == 0) {

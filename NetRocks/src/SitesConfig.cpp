@@ -40,8 +40,8 @@ static void StringObfuscate(std::string &s)
 {
 	const std::string &key = ObfuscationKey();
 	std::vector<unsigned char> data;
-	char salt[7];
-	unsigned char salt_len = (unsigned char)RandomStringBuffer(salt, 3, sizeof(salt), false);
+	unsigned char salt[7];
+	unsigned char salt_len = (unsigned char)RandomStringBuffer(salt, 3, sizeof(salt), RNDF_ANY);
 	data.emplace_back(salt_len ^ ((unsigned char)key[key.size() - 1]));
 	data.insert(data.end(), &salt[0], &salt[0] + salt_len);
 	for (size_t i = 0; i < s.size(); ++i) {

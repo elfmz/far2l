@@ -64,6 +64,18 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 
 	std::string fifo = argv[0];
 
+	if (argc > 1) {
+		std::string identity = argv[1];
+		for (auto &c : identity) {
+			if (((unsigned char)c) < 32) {
+				c = ' ';
+			}
+		}
+		identity.insert(0, "'\033_far2l#");
+		identity+= '\a';
+		write(1, identity.c_str(), identity.size());
+	}
+
 	try {
 		int fd_stdin = 0, fd_stdout = 1, fd_stderr = 2;
 
@@ -184,7 +196,19 @@ void OpExecute::Do()
 	}
 
 	if (_status == 0) {
-		_status = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", StrMB2Wide(_fifo.FileName()).c_str(), EF_NOCMDPRINT);
+		std::string fifo_arg = _fifo.FileName();
+		QuoteCmdArgIfNeed(fifo_arg);
+
+		IHost::Identity identity;
+		_base_host->GetIdentity(identity);
+		std::string identity_arg = StrPrintf("%s@%s", identity.username.c_str(), identity.host.c_str());
+		QuoteCmdArgIfNeed(identity_arg);
+
+		std::wstring args = StrMB2Wide(fifo_arg);
+		args+= L' ';
+		args+= StrMB2Wide(identity_arg);
+
+		_status = G.info.FSF->ExecuteLibrary(G.plugin_path.c_str(), L"OpExecute_Shell", args.c_str(), EF_NOCMDPRINT);
 	}
 
 	if (G.GetGlobalConfigBool("EnableDesktopNotifications", true)) {

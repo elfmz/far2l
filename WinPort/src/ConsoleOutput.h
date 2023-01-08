@@ -106,4 +106,5 @@ public:
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool SetFKeyTitles(const CHAR **titles);
 	virtual BYTE GetColorPalette();
+	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 };

@@ -293,8 +293,8 @@ void PrepareTemporaryOpenPath(FARString &Path)
 		time_t delta = std::min(now - ts_mod.tv_sec, now - ts_change.tv_sec);
 		if (delta > 60) {//one minute ought be enouht to open anything (c)
 			outdated.push_back(found_name);
-			fprintf(stderr, "PrepareTemporaryOpenPath: delta=%u for '%ls'\n", 
-				(unsigned int)delta, found_name.CPtr());
+			fprintf(stderr, "PrepareTemporaryOpenPath: delta=%llu for '%ls'\n",
+				(unsigned long long)delta, found_name.CPtr());
 		}
 	};
 

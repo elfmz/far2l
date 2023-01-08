@@ -12,9 +12,6 @@ namespace AnsiEsc
 	{
 		FontState();
 
-		DWORD64	palette_foreground[16];
-		DWORD64	palette_background[16];
-
 		BYTE	foreground = 0;	    // ANSI base color (0 to 7; add 30)
 		BYTE	background = 0;	    // ANSI base color (0 to 7; add 40)
 		bool	bold = false;		//
@@ -30,8 +27,6 @@ namespace AnsiEsc
 		DWORD	rgb_background = 0;
 
 		void ParseSuffixM(const int *args, int argc);
-		void ParseOSC4(std::string &args);
-		void ParseOSC104(std::string &args);
 		void FromConsoleAttributes(DWORD64 qAttributes);
 		DWORD64 ToConsoleAttributes();
 	};

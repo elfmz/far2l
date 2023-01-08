@@ -662,6 +662,12 @@ BYTE ConsoleOutput::GetColorPalette()
 	return _backend ? _backend->OnConsoleGetColorPalette() : 4;
 }
 
+void ConsoleOutput::OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
+{
+	if (_backend)
+		_backend->OnConsoleOverrideColor(Index, ColorFG, ColorBK);
+}
+
 const WCHAR *ConsoleOutput::LockedGetTitle()
 {
 	_mutex.lock();

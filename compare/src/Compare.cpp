@@ -539,8 +539,8 @@ static TCHAR *BuildFullFilename(const TCHAR *cpDir, const TCHAR *cpFileName)
 }
 
 struct FileIndex {
-  PluginPanelItem **ppi;
-  int iCount;
+  PluginPanelItem **ppi{nullptr};
+  int iCount{0};
 };
 
 /****************************************************************************

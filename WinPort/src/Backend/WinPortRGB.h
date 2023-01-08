@@ -43,10 +43,12 @@ struct WinPortRGB
 	}
 };
 
+#define BASE_PALETTE_SIZE 16
+
 struct WinPortPalette
 {
-	WinPortRGB background[16];
-	WinPortRGB foreground[16];
+	WinPortRGB background[BASE_PALETTE_SIZE];
+	WinPortRGB foreground[BASE_PALETTE_SIZE];
 };
 
 extern WinPortPalette g_winport_palette;

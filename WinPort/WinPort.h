@@ -93,6 +93,7 @@ extern "C" {
 	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text));
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles));
+	WINPORT_DECL(OverrideConsoleColor, VOID, (DWORD Index, DWORD *ColorFG, DWORD *ColorBK)); // 0xffffffff - to apply default color
 
 #ifdef WINPORT_REGISTRY
 	///Registry API

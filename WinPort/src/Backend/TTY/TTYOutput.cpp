@@ -26,6 +26,14 @@
 #define ATTRIBUTES_AFFECTING_BACKGROUND \
 	(BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY | BACKGROUND_TRUECOLOR)
 
+TTYBasePalette::TTYBasePalette()
+{
+	for (size_t i = 0; i < BASE_PALETTE_SIZE; ++i) {
+		foreground[i] = (DWORD)-1;
+		background[i] = (DWORD)-1;
+	}
+}
+
 void TTYOutput::TrueColors::AppendSuffix(std::string &out, DWORD rgb)
 {
 	// first try to deduce 256-color palette index...
@@ -176,35 +184,36 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
-		ChangePalette(false);
+		TTYBasePalette def_palette;
+		ChangePalette(def_palette);
 		Flush();
 
 	} catch (std::exception &) {
 	}
 }
 
-void TTYOutput::ChangePalette(bool override_palette)
+void TTYOutput::ChangePalette(const TTYBasePalette &palette)
 {
-	if (override_palette) {
-		if (!_palette_overriden) {
-			for (unsigned int i = 0; i < 16; ++i) {
-				unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
-				if (_far2l_tty) { // far2l may set separate foreground & background colors
-					Format(ESC "]4;%d;#%06x;#%06x\a", i,
-						g_winport_palette.foreground[j].AsBGR(), g_winport_palette.background[j].AsBGR());
-				} else {
-					Format(ESC "]4;%d;#%06x\a", i,
-						(i < 8) ? g_winport_palette.background[j].AsBGR() : g_winport_palette.foreground[j].AsBGR());
-				}
-			}
-			_palette_overriden = true;
-		}
+	for (size_t i = 0; i < BASE_PALETTE_SIZE; ++i) {
+		// Win <-> TTY color index adjustement
+		const unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
+		if (_palette.background[i] != palette.background[i] || _palette.foreground[i] != palette.foreground[i]) {
+			_palette.background[i] = palette.background[i];
+			_palette.foreground[i] = palette.foreground[i];
 
-	} else if (_palette_overriden) {
-		for (int i = 0; i < 16; ++i) {
-			Format(ESC "]104;%d\a", i);
+			if (palette.foreground[i] == (DWORD)-1 || palette.background[i] == (DWORD)-1) {
+				Format(ESC "]104;%d\a", j);
+				continue;
+			}
+
+			WinPortRGB fg(palette.foreground[i]), bk(palette.background[i]);
+
+			if (_far2l_tty) { // far2l may set separate foreground & background colors
+				Format(ESC "]4;%d;#%06x;#%06x\a", j, fg.AsBGR(), bk.AsBGR());
+			} else {
+				Format(ESC "]4;%d;#%06x\a", j, (i < 8) ? bk.AsBGR() : fg.AsBGR());
+			}
 		}
-		_palette_overriden = false;
 	}
 }
 

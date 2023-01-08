@@ -71,9 +71,11 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 				c = ' ';
 			}
 		}
-		identity.insert(0, "'\033_far2l#");
-		identity+= '\a';
-		write(1, identity.c_str(), identity.size());
+		identity.insert(0, "\033_far2l#");
+		identity+= "\a";
+		if (write(1, identity.c_str(), identity.size()) == -1) {
+			perror("write");
+		}
 	}
 
 	try {

@@ -132,6 +132,8 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		wxTheClipboard->UsePrimarySelection(true);
 	}
 
+	g_wx_palette = g_winport_palette;
+
 	ClipboardBackendSetter clipboard_backend_setter;
 	clipboard_backend_setter.Set<wxClipboardBackend>();
 	if (a->app_main && !g_winport_app_thread) {
@@ -1635,4 +1637,30 @@ void WinPortPanel::ResetInputState()
 	}
 	
 	_exclusive_hotkeys.Reset();
+}
+
+static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
+{
+	WinPortRGB fg(*ColorFG), bk(*ColorBK);
+	if (*ColorFG == (DWORD)-1) {
+		fg = g_winport_palette.foreground[Index];
+	}
+	if (*ColorBK == (DWORD)-1) {
+		bk = g_winport_palette.background[Index];
+	}
+	*ColorFG = g_wx_palette.foreground[Index].AsRGB();
+	*ColorBK = g_wx_palette.background[Index].AsRGB();
+	g_wx_palette.foreground[Index] = fg;
+	g_wx_palette.background[Index] = bk;
+}
+
+void WinPortPanel::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
+{
+	if (Index >= BASE_PALETTE_SIZE) {
+		fprintf(stderr, "%s: too big index=%u\n", __FUNCTION__, Index);
+		return;
+	}
+
+	auto fn = std::bind(&ConsoleOverrideColorInMain, Index, ColorFG, ColorBK);
+	CallInMainNoRet(fn);
 }

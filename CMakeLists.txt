@@ -523,5 +523,5 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PRO
 install(FILES "${PROJECT_BINARY_DIR}/far2l_askpass" DESTINATION "lib/far2l" COMPONENT system)
 install(FILES "${PROJECT_BINARY_DIR}/far2l_sudoapp" DESTINATION "lib/far2l" COMPONENT system)
 install(CODE "
-	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f \"\${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb\")
+	execute_process(COMMAND ${CMAKE_COMMAND} -E remove -f \"\${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/objinfo/plug/objinfo.far-plug-mb\")
 	" COMPONENT system)

@@ -131,6 +131,10 @@ void ControlObject::Init()
 		Console.SetTitle(strOldTitle);
 	}
 	Macro.LoadMacros();
+
+	auto *CurFrame = FrameManager->GetCurrentFrame();
+	if (LIKELY(CurFrame))
+		CurFrame->Show(); // otherwise panels displayed empty on start sometimes
 	/*
 		FarChDir(StartCurDir);
 	*/

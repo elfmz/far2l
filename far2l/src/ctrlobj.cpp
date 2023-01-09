@@ -107,6 +107,9 @@ void ControlObject::Init()
 
 	this->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
+	FrameManager->InsertFrame(FPanels);
+	FrameManager->PluginCommit();
+
 	Cp()->LeftPanel->Update(0);
 	Cp()->RightPanel->Update(0);
 
@@ -116,7 +119,6 @@ void ControlObject::Init()
 		Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
 	}
 
-	FrameManager->InsertFrame(FPanels);
 	FARString strStartCurDir;
 	Cp()->ActivePanel->GetCurDir(strStartCurDir);
 	FarChDir(strStartCurDir);

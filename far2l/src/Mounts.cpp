@@ -150,11 +150,11 @@ namespace Mounts
 
 		static size_t LeftWordLength(const FARString &str, size_t pos)
 		{
-			size_t out = pos;
-			while (out > 0 && !IsWordDiv(str.At(out))) {
+			ssize_t out = pos;
+			while (out >= 0 && !IsWordDiv(str.At(out))) {
 				--out;
 			}
-			return pos + 1 - out;
+			return ssize_t(pos) - out;
 		}
 
 		static size_t RightWordLength(const FARString &str, size_t pos)
@@ -172,8 +172,8 @@ namespace Mounts
 			size_t m = 0;
 			const int str_len = str.GetLength();
 			for (int i = str_len - 2; i >= 0; --i) {
-				if (str.At(i) == '$' && ((str.At(i + 1) == '<' && i > 0)
-						|| (str.At(i + 1) == '>' && i + 2 < str_len))
+				if (str.At(i) == '$' && ((str.At(i + 1) == '<' && i >= 0)
+						|| (str.At(i + 1) == '>' && i + 2 <= str_len))
 					) {
 					const size_t len = (str.At(i + 1) == '>')
 						? RightWordLength(str, i + 2) : LeftWordLength(str, i - 1);
@@ -192,7 +192,9 @@ namespace Mounts
 			size_t m = 0;
 			const int str_len = str.GetLength();
 			for (int i = str_len - 2; i >= 0; --i) {
-				if (str.At(i) == '$' && (str.At(i + 1) == '>' || str.At(i + 1) == '<')) {
+				if (str.At(i) == '$' && ((str.At(i + 1) == '<' && i >= 0)
+						|| (str.At(i + 1) == '>' && i + 2 <= str_len))
+					) {
 					const size_t len = (str.At(i + 1) == '>')
 						? RightWordLength(str, i + 2) : LeftWordLength(str, i - 1);
 					str.Replace(i, 2, L' ', _maximums[m] - len);

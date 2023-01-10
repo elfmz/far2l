@@ -211,29 +211,6 @@ extern "C" {
 		return g_winport_con_in->WaitForNonEmpty((dwTimeout == INFINITE) ? -1 : dwTimeout) ? TRUE : FALSE;
 	}
 
-	WINPORT_DECL(ReadConsole,BOOL,(HANDLE hConsoleInput, WCHAR *lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl))
-	{
-		INPUT_RECORD ir;
-		*lpNumberOfCharsRead = 0;
-		if (pInputControl) {
-			fprintf(stderr, "TODO: ReadConsole - pInputControl\n");
-		}
-		while (nNumberOfCharsToRead) {
-			DWORD rd = 0;
-			if (!WINPORT(ReadConsoleInput)(hConsoleInput, &ir, 1, &rd))
-				return FALSE;
-			if (ir.EventType==KEY_EVENT && 
-				ir.Event.KeyEvent.bKeyDown && 
-				ir.Event.KeyEvent.uChar.UnicodeChar) {
-				*lpBuffer = ir.Event.KeyEvent.uChar.UnicodeChar;
-				++lpBuffer;
-				--nNumberOfCharsToRead;
-				++(*lpNumberOfCharsRead);
-			}
-		}
-		return TRUE;
-	}
-
 	WINPORT_DECL(WriteConsoleInput,BOOL,(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten))
 	{
 		g_winport_con_in->Enqueue(lpBuffer, nLength);

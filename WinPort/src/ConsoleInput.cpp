@@ -23,17 +23,32 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 	}
 }
 
+static void InspectCallbacks(INPUT_RECORD *data, DWORD size, bool invoke)
+{
+	for (DWORD i = 0; i < size; ++i) {
+		if (data[i].EventType == CALLBACK_EVENT) {
+			data[i].EventType = NOOP_EVENT;
+			if (invoke) {
+				data[i].Event.CallbackEvent.Function(data[i].Event.CallbackEvent.Context);
+			}
+		}
+	}
+}
+
 DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority)
 {
 	DWORD i;
-	std::unique_lock<std::mutex> lock(_mutex);
-	if (requestor_priority < CurrentPriority()) {
-		//fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
-		return 0;
-	}
+	{
+		std::unique_lock<std::mutex> lock(_mutex);
+		if (requestor_priority < CurrentPriority()) {
+			//fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
+			return 0;
+		}
 
-	for (i = 0; (i < size && i < _pending.size()); ++i)
-		data[i] = _pending[i];
+		for (i = 0; (i < size && i < _pending.size()); ++i)
+			data[i] = _pending[i];
+	}
+	InspectCallbacks(data, i, false);
 
 	//if (i) {
 	//	fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
@@ -45,16 +60,19 @@ DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_
 DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority)
 {
 	DWORD i;
-	std::unique_lock<std::mutex> lock(_mutex);
-	if (requestor_priority < CurrentPriority()) {
-		// fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
-		return 0;
-	}
+	{
+		std::unique_lock<std::mutex> lock(_mutex);
+		if (requestor_priority < CurrentPriority()) {
+			// fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
+			return 0;
+		}
 
-	for (i = 0; (i < size && !_pending.empty()); ++i) {
-		data[i] = _pending.front();
-		_pending.pop_front();
+		for (i = 0; (i < size && !_pending.empty()); ++i) {
+			data[i] = _pending.front();
+			_pending.pop_front();
+		}
 	}
+	InspectCallbacks(data, i, true);
 
 	// fprintf(stderr,"%s: result %u\n", __FUNCTION__, i);
 	return i;

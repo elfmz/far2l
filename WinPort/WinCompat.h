@@ -443,6 +443,11 @@ typedef struct _KEY_EVENT_RECORD {
     DWORD dwControlKeyState;
 } KEY_EVENT_RECORD, *PKEY_EVENT_RECORD;
 
+typedef struct _CALLBACK_EVENT_RECORD {
+	VOID (*Function)(VOID *Context);
+	VOID *Context;
+} CALLBACK_EVENT_RECORD, *PCALLBACK_EVENT_RECORD;
+
 //
 // ControlKeyState flags
 //
@@ -492,6 +497,7 @@ typedef struct _BRACKETED_PASTE {
 #define MENU_EVENT 0x0008 // Event contains menu event record
 #define FOCUS_EVENT 0x0010 // event contains focus change
 #define BRACKETED_PASTE_EVENT 0x0020 // event contains bracketed paste state change
+#define CALLBACK_EVENT 0x0040 // callback to be invoked when its record dequeued, its translated into NOOP_EVENT when invoked
 #define NOOP_EVENT 0x0080 // nothing interesting, typically injected to kick events dispatcher
 
 
@@ -504,6 +510,7 @@ typedef struct _INPUT_RECORD {
         MENU_EVENT_RECORD MenuEvent;
         FOCUS_EVENT_RECORD FocusEvent;
         BRACKETED_PASTE BracketedPaste;
+        CALLBACK_EVENT_RECORD CallbackEvent;
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
 

@@ -49,8 +49,6 @@
 #define    SetConsoleDisplayMode			WINPORT(SetConsoleDisplayMode)
 #define    GetConsoleDisplayMode			WINPORT(GetConsoleDisplayMode)
 
-#define    AddConsoleAlias			WINPORT(AddConsoleAlias)
-#define    GetConsoleAlias			WINPORT(GetConsoleAlias)
 #define    GenerateConsoleCtrlEvent			WINPORT(GenerateConsoleCtrlEvent)
 #define    GenerateConsoleCtrlEvent			WINPORT(GenerateConsoleCtrlEvent)
 

@@ -92,8 +92,6 @@ public:
 
 	bool GetNumberOfInputEvents(DWORD& NumberOfEvents);
 
-	DWORD GetAlias(LPCWSTR Source, LPWSTR TargetBuffer, DWORD TargetBufferLength, LPCWSTR ExeName);
-
 	bool GetDisplayMode(DWORD& Mode);
 
 	COORD GetLargestWindowSize();

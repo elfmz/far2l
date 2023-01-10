@@ -58,8 +58,6 @@ extern "C" {
 	WINPORT_DECL(SetConsoleWindowMaximized,VOID,(BOOL Maximized));
 	WINPORT_DECL(GetConsoleColorPalette,BYTE,()); // Returns current color resolution: 4, 8, 24
 
-	//WINPORT_DECL(AddConsoleAlias, BOOL,( LPCWSTR Source, LPCWSTR Target, LPCWSTR ExeName));
-	WINPORT_DECL(GetConsoleAlias, DWORD,(LPWSTR lpSource, LPWSTR lpTargetBuffer, DWORD TargetBufferLength, LPWSTR lpExeName));
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ));
 	WINPORT_DECL(SetConsoleCtrlHandler, BOOL, (PHANDLER_ROUTINE HandlerRoutine, BOOL Add ));
 	

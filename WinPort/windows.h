@@ -43,7 +43,6 @@
 #define    GetNumberOfConsoleInputEvents			WINPORT(GetNumberOfConsoleInputEvents)
 #define    PeekConsoleInput			WINPORT(PeekConsoleInput)
 #define    ReadConsoleInput			WINPORT(ReadConsoleInput)
-#define    ReadConsole			WINPORT(ReadConsole)
 #define    WriteConsoleInput			WINPORT(WriteConsoleInput)
 	
 #define    SetConsoleDisplayMode			WINPORT(SetConsoleDisplayMode)

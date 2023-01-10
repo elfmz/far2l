@@ -271,12 +271,12 @@ wxEvtHandler *WinPort_EventHandler()
 
 bool WinPortApp::OnInit()
 {
-	g_winport_frame = new WinPortFrame("WinPortApp");
+	g_winport_frame = new WinPortFrame(APP_BASENAME);
 //    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
 	g_winport_frame->Show( true );
 	if (g_broadway)
 		g_winport_frame->Maximize();
-		
+
 	return true;
 }
 
@@ -356,6 +356,7 @@ WinPortFrame::~WinPortFrame()
 	delete _menu_bar;
 	delete _panel;
 	_panel = NULL;
+	g_winport_frame = nullptr;
 }
 
 void WinPortFrame::OnEraseBackground(wxEraseEvent &event)
@@ -817,13 +818,6 @@ void WinPortPanel::OnConsoleOutputResized()
 		wxQueueEvent	(this, event);
 }
 
-void WinPortPanel::OnConsoleOutputTitleChanged()
-{
-	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_TITLE_CHANGED);
-	if (event)
-		wxQueueEvent	(this, event);
-}
-
 void WinPortPanel::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
 {
 	SMALL_RECT rect = {pos.X, pos.Y, absolute ? (SHORT)1 : (SHORT)0, 0};
@@ -942,20 +936,56 @@ void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 	Refresh(false);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Workaround for #1303 #1454:
+// When running in X session there is floating bug somewhere in WX or GTK or even XOrg that
+// causes window repaint to be lost randomly in case repaint happened right after title change.
+// In case of far2l title change happens together with content changes that causes this issue.
+// So workaround is to detect if some refresh happened just after title changed and repeat
+// do extra refresh just in case. Note that 'just after' means 'during TIMER_EXTRA_REFRESH'.
 void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 {
-	// Workaround for #1303 #1454:
-	// When running in X session there is floating bug somewhere in WX or GTK or even XOrg that
-	// causes window repaint to be lost randomly in case repaint happened right after title change.
-	// In case of far2l title change happens together with content changes that causes this issue.
-	// So workaround is to detect if some refresh happened just after title changed and repeat
-	// do extra refresh just in case. Note that 'just after' means 'during TIMER_EXTRA_REFRESH'.
+	if (!g_winport_frame) {
+		fprintf(stderr, "%s: frame is gone\n", __FUNCTION__);
+		return;
+	}
+
+	// first finalize any still pending repaints
+	OnRefreshSync( event );
+	Update();
+
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
 	_frame->SetTitle(title.c_str());
 	_last_title_ticks = WINPORT(GetTickCount)();
 }
 
+static void TitleChangeCallback(PVOID ctx)
+{
+	WinPortPanel *it = (WinPortPanel *)ctx;
+	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_TITLE_CHANGED);
+	if (!g_winport_frame) {
+		fprintf(stderr, "%s: frame is gone\n", __FUNCTION__);
+
+	} else if (event)
+		wxQueueEvent(it, event);
+}
+
+// Another level of workaround for #1303 #1454:
+// Problem happens if window title change happened just before repaint but
+// it doesn't happen if title changed after repaint even if just after repaint.
+// So instead of appling new title just when application wanted it to apply
+// - wait until application will invoke some console readout function, meaning
+// it entered idle state and risk of upcoming repaints is much lowered then.
+// Do this by using CALLBACK_EVENT functionality that was added exactly for this.
+void WinPortPanel::OnConsoleOutputTitleChanged()
+{
+	INPUT_RECORD ir{CALLBACK_EVENT};
+	ir.Event.CallbackEvent.Function = TitleChangeCallback;
+	ir.Event.CallbackEvent.Context = this;
+	g_winport_con_in->Enqueue(&ir, 1);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool IsForcedCharTranslation(int code)
 {

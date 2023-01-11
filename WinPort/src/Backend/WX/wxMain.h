@@ -73,36 +73,36 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	KeyTracker _key_tracker;
 	
 	ConsolePaintContext _paint_context;
+	WinPortFrame *_frame;
+
 	COORD _last_mouse_click{};
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
-	std::atomic<bool> _has_focus{false};
-	MOUSE_EVENT_RECORD _prev_mouse_event;
-	DWORD _prev_mouse_event_ts;
+	std::atomic<bool> _has_focus{true};
+	MOUSE_EVENT_RECORD _prev_mouse_event{};
+	DWORD _prev_mouse_event_ts{0};
 
-	WinPortFrame *_frame;
-	wxTimer* _periodic_timer;
-	bool _last_keydown_enqueued;
-	bool _initialized;
-	bool _adhoc_quickedit;
+	wxTimer* _periodic_timer{nullptr};
+	unsigned int _timer_idling_counter{0};
+	std::atomic<unsigned int> _last_title_ticks{0};
+	bool _extra_refresh{false};
+	bool _last_keydown_enqueued{false};
+	bool _initialized{false};
+	bool _adhoc_quickedit{false};
 	enum
 	{
 		RP_NONE,
 		RP_DEFER,
 		RP_INSTANT
-	} _resize_pending;
-	DWORD _mouse_state, _mouse_qedit_start_ticks, _mouse_qedit_moved;
-	COORD _mouse_qedit_start, _mouse_qedit_last;
+	} _resize_pending{RP_NONE};
+	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
+	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
+	wchar_t _stolen_key{0};
 	
-	DWORD _refresh_rects_throttle;
-	unsigned int _pending_refreshes;
+	DWORD _refresh_rects_throttle{0};
+	unsigned int _pending_refreshes{0};
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
-
-	unsigned int _timer_idling_counter;
-	wchar_t _stolen_key;
-	std::atomic<unsigned int> _last_title_ticks{0};
-	bool _extra_refresh{false};
 
 	void SetConsoleSizeFromWindow();
 	void CheckForResizePending();

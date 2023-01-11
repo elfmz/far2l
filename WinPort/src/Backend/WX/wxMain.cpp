@@ -494,11 +494,7 @@ wxEND_EVENT_TABLE()
 
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
-        :
-		_paint_context(this), _has_focus(true), _prev_mouse_event_ts(0), _frame(frame), _periodic_timer(NULL),
-		_last_keydown_enqueued(false), _initialized(false), _adhoc_quickedit(false),
-		_resize_pending(RP_NONE),  _mouse_state(0), _mouse_qedit_start_ticks(0), _mouse_qedit_moved(false),
-		_refresh_rects_throttle(0), _pending_refreshes(0), _timer_idling_counter(0), _stolen_key(0)
+        : _paint_context(this), _frame(frame)
 {
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);

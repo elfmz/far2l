@@ -74,6 +74,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	
 	ConsolePaintContext _paint_context;
 	WinPortFrame *_frame;
+	DWORD _refresh_rects_throttle;
 
 	COORD _last_mouse_click{};
 	wxMouseEvent _last_mouse_event;
@@ -100,7 +101,6 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
 	
-	DWORD _refresh_rects_throttle{0};
 	unsigned int _pending_refreshes{0};
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
@@ -119,6 +119,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void OnConsoleChangeFontSync(wxCommandEvent& event);
 	void OnConsoleSaveWindowStateSync(wxCommandEvent& event);
 	void OnConsoleExitSync( wxCommandEvent& event );
+	void OnIdle( wxIdleEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );
 	void OnPaint( wxPaintEvent& event );

@@ -477,7 +477,8 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SAVE_WIN_STATE, WinPortPanel::OnConsoleSaveWindowStateSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
-	
+
+	EVT_IDLE(WinPortPanel::OnIdle)
 	EVT_KEY_DOWN(WinPortPanel::OnKeyDown)
 	EVT_KEY_UP(WinPortPanel::OnKeyUp)
 	EVT_CHAR(WinPortPanel::OnChar)
@@ -494,7 +495,7 @@ wxEND_EVENT_TABLE()
 
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
-        : _paint_context(this), _frame(frame)
+        : _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -702,12 +703,19 @@ static int ProcessAllEvents()
 	return 0;
 }
 
+void WinPortPanel::OnIdle( wxIdleEvent& event )
+{
+	// first finalize any still pending repaints
+	wxCommandEvent cmd_evnt;
+	OnRefreshSync(cmd_evnt);
+}
+
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	enum {
 		A_NOTHING,
 		A_QUEUE,
-		A_THROTTLE
+		A_THROTTLE // dont emit WX_CONSOLE_REFRESH but instead do ProcessAllEvents to dispatch already queued events
 	} action;
 
 	{
@@ -726,6 +734,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 		} else {
 			action = A_NOTHING;
 		}
+
 		for (size_t i = 0; i < count; ++i) {
 #ifdef AREAS_REDUCTION
 			SMALL_RECT area = areas[i];

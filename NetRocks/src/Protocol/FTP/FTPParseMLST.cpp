@@ -56,17 +56,17 @@ static void ParseTime(timespec &ts, const char *str, size_t len)
 	struct tm t{};
 
 	if (len >= 4) {
-		t.tm_year = atoul(str, 4) - 1900;
+		t.tm_year = natoul(str, 4) - 1900;
 		if (len >= 6) {
-			t.tm_mon = atoul(str + 4, 2) - 1;
+			t.tm_mon = natoul(str + 4, 2) - 1;
 			if (len >= 8) {
-				t.tm_mday = atoul(str + 6, 2);
+				t.tm_mday = natoul(str + 6, 2);
 				if (len >= 10) {
-					t.tm_hour = atoul(str + 8, 2);
+					t.tm_hour = natoul(str + 8, 2);
 					if (len >= 12) {
-						t.tm_min = atoul(str + 10, 2);
+						t.tm_min = natoul(str + 10, 2);
 						if (len >= 14) {
-							t.tm_sec = atoul(str + 12, 2);
+							t.tm_sec = natoul(str + 12, 2);
 						}
 					}
 				}
@@ -78,7 +78,7 @@ static void ParseTime(timespec &ts, const char *str, size_t len)
 
 	if (len > 15 && str[14] == '.') {
 		size_t deci_len = std::min(len - 15, (size_t)9);
-		ts.tv_nsec = atoul(str + 15, deci_len);
+		ts.tv_nsec = natoul(str + 15, deci_len);
 		for (size_t i = deci_len; i < 9; ++i) {
 			ts.tv_nsec*= 10;
 		}

@@ -90,7 +90,7 @@ wchar_t * _itow(int i, wchar_t *w, int radix)
 }
 
 
-unsigned long htoul(const char *str, size_t maxlen)
+unsigned long nhtoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
 
@@ -106,7 +106,7 @@ unsigned long htoul(const char *str, size_t maxlen)
 	return out;
 }
 
-unsigned long atoul(const char *str, size_t maxlen)
+unsigned long natoul(const char *str, size_t maxlen)
 {
 	unsigned long out = 0;
 

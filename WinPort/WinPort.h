@@ -91,6 +91,7 @@ extern "C" {
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (const CHAR **titles));
 	WINPORT_DECL(OverrideConsoleColor, VOID, (DWORD Index, DWORD *ColorFG, DWORD *ColorBK)); // 0xffffffff - to apply default color
+	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (BOOL RepaintsEnabled));
 
 #ifdef WINPORT_REGISTRY
 	///Registry API
@@ -317,7 +318,17 @@ template <class CHAR_T>
 	return out;
 }
 
-
+struct ConsoleRepaintsDeferScope
+{
+	ConsoleRepaintsDeferScope()
+	{
+		WINPORT(SetConsoleRepaintsDefer)(TRUE);
+	}
+	~ConsoleRepaintsDeferScope()
+	{
+		WINPORT(SetConsoleRepaintsDefer)(FALSE);
+	}
+};
 
 #endif
 #endif /* FAR_PYTHON_GEN */

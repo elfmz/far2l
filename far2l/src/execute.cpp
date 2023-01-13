@@ -254,7 +254,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
 			CtrlObject->CmdLine->ShowBackground();
-			CtrlObject->CmdLine->Redraw();
+			CtrlObject->CmdLine->RedrawWithoutComboBoxArrow();
 		}
 //		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();
@@ -428,6 +428,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 		r = -1; 
 	} else {
 		CtrlObject->CmdLine->SetString(L"", TRUE);
+
 		char cd_prev[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd_prev, MAX_PATH)) {
 			cd_prev[0] = 0;

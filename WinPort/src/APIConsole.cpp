@@ -321,9 +321,9 @@ extern "C" {
 		return g_winport_con_out->OverrideColor(Index, ColorFG, ColorBK);
 	}
 
-	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (BOOL RepaintsEnabled))
+	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (BOOL Deferring))
 	{
-		if (RepaintsEnabled) {
+		if (Deferring) {
 			g_winport_con_out->RepaintsDeferStart();
 		} else {
 			g_winport_con_out->RepaintsDeferFinish();

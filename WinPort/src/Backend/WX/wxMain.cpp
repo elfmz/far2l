@@ -642,7 +642,7 @@ void WinPortPanel::CheckForResizePending()
 #endif
 	{
 #ifndef __APPLE__
-		fprintf(stderr, "%lu CheckForResizePending\n", GetProcessUptimeMSec());
+		fprintf(stderr, "%lu CheckForResizePending\n", (unsigned long)GetProcessUptimeMSec());
 #endif
 		DWORD conmode = 0;
 		if (WINPORT(GetConsoleMode)(NULL, &conmode) && (conmode&ENABLE_WINDOW_INPUT)!=0) {

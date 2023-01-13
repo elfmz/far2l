@@ -123,10 +123,11 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_descent(0), _font_thickness(2),
-	_buffered_paint(false), _sharp(false), _refreshed_once(false)
+	_buffered_paint(false), _sharp(false), _stage(STG_NOT_REFRESHED)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
+	_fonts.reserve(32);
 
 	_window->SetBackgroundColour(*wxBLACK);
 	wxFont font;
@@ -276,27 +277,25 @@ void ConsolePaintContext::ShowFontDialog()
 	SetFont(font);
 }
 
-uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz, unsigned int nx)
+uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t wc, unsigned int nx)
 {
 #ifdef DYNAMIC_FONTS
-	const bool cacheable = (size_t(wcz[0]) <= _char_fit_cache.checked.size() && wcz[1] == 0);
-	if (cacheable && _char_fit_cache.checked[ size_t(wcz[0])  - 1 ]) {
-		return _char_fit_cache.result[ size_t(wcz[0])  - 1 ];
+	const bool cacheable = (size_t((uint32_t)wc) - 1 < _char_fit_cache.checked.size()); //  && wcz[1] == 0
+	if (cacheable && _char_fit_cache.checked[ size_t((uint32_t)wc) - 1 ]) {
+		return _char_fit_cache.result[ size_t((uint32_t)wc) - 1 ];
 	}
 
 	uint8_t font_index = 0;
-	_cft_tmp = wcz;
+	_cft_tmp = wc;
 	for (font_index = 0; font_index != 0xff; ++font_index) {
 		if (font_index >= _fonts.size()) {
-			wxSize px_size = _fonts.front().GetPixelSize();
-			if (px_size.GetHeight() <= (int)unsigned(font_index) + 4)
+			const auto &prev = _fonts.back();
+			auto pt_size = prev.GetPointSize();
+			if (pt_size <= 4)
 				break;
 
-			px_size.SetHeight(px_size.GetHeight() - font_index);
-			px_size.SetWidth(0);
-
-			_fonts.emplace_back(_fonts.front());
-			_fonts.back().SetPixelSize(px_size);
+			_fonts.emplace_back(prev);
+			_fonts.back().SetPointSize(pt_size - 1);
 		}
 		assert(font_index < _fonts.size());
 
@@ -308,10 +307,13 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, const wchar_t *wcz, unsi
 			break;
 		}
 	}
-	
+//	if (font_index > 0) {
+//		fprintf(stderr, "CharFitTest('%lc') -> %u\n", wc, font_index);
+//	}
+
 	if (cacheable) {
-		_char_fit_cache.result[ size_t(wcz[0])  - 1 ] = font_index;
-		_char_fit_cache.checked[ size_t(wcz[0])  - 1 ] = true;
+		_char_fit_cache.result[ size_t((uint32_t)wc) - 1 ] = font_index;
+		_char_fit_cache.checked[ size_t((uint32_t)wc) - 1 ] = true;
 	}
 
 	return font_index;
@@ -331,9 +333,9 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
-	if (UNLIKELY(!_refreshed_once)) {
+	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
 		// not refreshed yet - so early start so nothing to paint yet
-		// so simple fill with background color for the sake of faster startup
+		// so simple fill with background color for the sake of faster start
 		dc.SetBackground(GetBrush(g_wx_palette.background[0]));
 		dc.Clear();
 		return;
@@ -453,12 +455,21 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		dc.DrawRectangle(box.GetLeft(), bottom_edge,
 			box.GetWidth(), box.GetBottom() + 1 - bottom_edge);
 	}
+
+
+	if (UNLIKELY(_stage == STG_REFRESHED)) {
+		_stage = STG_PAINTED;
+		fprintf(stderr, "FIRST_PAINT: %lu msec\n", (unsigned long)GetProcessUptimeMSec());
+	}
 }
 
 
 void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 {
-	_refreshed_once = true;
+	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
+		_stage = STG_REFRESHED;
+	}
+
 	wxRect rc;
 	rc.SetLeft(((int)area.Left) * _font_width);
 	rc.SetRight(((int)area.Right) * _font_width + _font_width - 1);
@@ -728,7 +739,6 @@ void WXCustomDrawChar::Painter::FillPixel(wxCoord left, wxCoord top)
 	((WXCustomDrawCharPainter *)this)->FillRectangleImpl(left, top, left, top);
 }
 
-
 void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx)
 {
 	if (!wcz[0] || !WCHAR_IS_VALID(wcz[0])) {
@@ -772,7 +782,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
         return;
 	}
 
-	uint8_t fit_font_index = _context->CharFitTest(_dc, wcz, nx);
+	uint8_t fit_font_index = _context->CharFitTest(_dc, *wcz, nx);
 	
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
 	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {

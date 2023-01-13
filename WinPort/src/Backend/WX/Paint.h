@@ -25,7 +25,12 @@ class ConsolePaintContext
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_descent, _font_thickness;
-	bool _custom_draw_enabled, _buffered_paint, _sharp, _refreshed_once;
+	bool _custom_draw_enabled, _buffered_paint, _sharp;
+	enum {
+		STG_NOT_REFRESHED,
+		STG_REFRESHED,
+		STG_PAINTED
+	} _stage;
 	CursorProps _cursor_props;
 	struct {
 		std::vector<bool> checked;
@@ -45,7 +50,7 @@ public:
 	ConsolePaintContext(wxWindow *window);
 	void ShowFontDialog();
 	
-	uint8_t CharFitTest(wxPaintDC &dc, const wchar_t *wcz, unsigned int nx);
+	uint8_t CharFitTest(wxPaintDC &dc, wchar_t wcz, unsigned int nx);
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
 	void OnPaint(SMALL_RECT *qedit = NULL);	
 	void RefreshArea( const SMALL_RECT &area );

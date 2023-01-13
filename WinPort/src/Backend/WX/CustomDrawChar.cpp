@@ -120,6 +120,64 @@ namespace WXCustomDrawChar
 		}
 	}
 
+	template <bool TOP_DOWN>
+		static void Draw_VerticalArrow(Painter &p, unsigned int start_y, unsigned int cx) /* ↑↓ */
+	{
+		SingleLineBoxMetrics m(p, start_y, cx);
+		int top = m.top + p.fh / 8;
+		int bottom = m.bottom - p.fh / 8;
+		int arrow = std::min(p.fw / 4, p.fh / 4);
+
+		p.FillRectangle(m.middle_x, top, m.middle_x + p.thickness - 1, bottom);
+		for (int i = arrow; i > 0; --i) if (TOP_DOWN) {
+			p.FillPixel(m.middle_x - i, bottom - i);
+			p.FillPixel(m.middle_x + p.thickness - 1 + i, bottom - i);
+		} else {
+			p.FillPixel(m.middle_x - i, top + i);
+			p.FillPixel(m.middle_x + p.thickness - 1 + i, top + i);
+		}
+		if (p.MayDrawFadedEdges()) {
+			p.SetColorFaded();
+			p.FillRectangle(m.middle_x - 1, top, m.middle_x - 1, bottom);
+			for (int i = arrow; i > 0; --i) if (TOP_DOWN) {
+				p.FillPixel(m.middle_x - i - 1, bottom - i);
+				p.FillPixel(m.middle_x + p.thickness - 1 + i - 1, bottom - i);
+			} else {
+				p.FillPixel(m.middle_x - i - 1, top + i);
+				p.FillPixel(m.middle_x + p.thickness - 1 + i - 1, top + i);
+			}
+		}
+	}
+
+	template <bool LEFT_RIGHT>
+		static void Draw_HorizontalArrow(Painter &p, unsigned int start_y, unsigned int cx) /* ←→ */
+	{
+		SingleLineBoxMetrics m(p, start_y, cx);
+		int left = m.left + p.fw / 8;
+		int right = m.right - p.fw / 8;
+		int arrow = std::min(p.fw / 4, p.fh / 4);
+
+		p.FillRectangle(m.left, m.middle_y, m.right, m.middle_y + p.thickness - 1);
+		for (int i = arrow; i > 0; --i) if (LEFT_RIGHT) {
+			p.FillPixel(right - i, m.middle_y - i);
+			p.FillPixel(right - i, m.middle_y + p.thickness - 1 + i);
+		} else {
+			p.FillPixel(left + i, m.middle_y - i);
+			p.FillPixel(left + i, m.middle_y + p.thickness - 1 + i);
+		}
+		if (p.MayDrawFadedEdges()) {
+			p.SetColorFaded();
+			p.FillRectangle(m.left, m.middle_y - 1, m.right, m.middle_y - 1);
+			for (int i = arrow; i > 0; --i) if (LEFT_RIGHT) {
+				p.FillPixel(right - i, m.middle_y - 1 - i);
+				p.FillPixel(right - i, m.middle_y - 1 + p.thickness - 1 + i);
+			} else {
+				p.FillPixel(left + i, m.middle_y - 1 - i);
+				p.FillPixel(left + i, m.middle_y - 1 + p.thickness - 1 + i);
+			}
+		}
+	}
+
 	static void Draw_2500(Painter &p, unsigned int start_y, unsigned int cx) /* ─ */
 	{
 		SingleLineBoxMetrics m(p, start_y, cx);
@@ -1031,6 +1089,10 @@ namespace WXCustomDrawChar
 	DrawT Get(const wchar_t c)
 	{
 		switch (c) {
+			case 0x2190: return Draw_HorizontalArrow<false>; 		/* ← */
+			case 0x2191: return Draw_VerticalArrow<false>; 			/* ↑ */
+			case 0x2192: return Draw_HorizontalArrow<true>; 		/* → */
+			case 0x2193: return Draw_VerticalArrow<true>; 			/* ↓ */
 			case 0x2500: return Draw_2500; 			/* ─ */
 			case 0x2501: return Draw_Thicker<Draw_2500>;	/* ━ */
 			case 0x2502: return Draw_2502; 			/* │ */
@@ -1141,6 +1203,7 @@ namespace WXCustomDrawChar
 /*
 
         0 	1 	2 	3 	4 	5 	6 	7 	8 	9 	A 	B 	C 	D 	E 	F
+U+219x  ← 	↑ 	→ 	↓
 
 U+250x 	─ 	━ 	│ 	┃ 	┄ 	┅ 	┆ 	┇ 	┈ 	┉ 	┊ 	┋ 	┌ 	┍ 	┎ 	┏
 

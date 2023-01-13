@@ -25,7 +25,7 @@ class ConsolePaintContext
 	std::vector<wxFont> _fonts;
 	wxWindow *_window;
 	unsigned int _font_width, _font_height, _font_descent, _font_thickness;
-	bool _custom_draw_enabled, _buffered_paint, _sharp;
+	bool _custom_draw_enabled, _buffered_paint, _sharp, _refreshed_once;
 	CursorProps _cursor_props;
 	struct {
 		std::vector<bool> checked;

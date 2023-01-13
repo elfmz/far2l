@@ -16,6 +16,12 @@ class ConsoleOutput : public IConsoleOutput
 	DWORD _mode;	
 	DWORD64 _attributes;
 	COORD _prev_pos{-1, -1};
+	unsigned short _repaint_defer{0}; // unlikely it will be more than 10..
+	struct DeferredRepaints : std::vector<SMALL_RECT>
+	{
+		void Add(const SMALL_RECT &area);
+		void Add(const SMALL_RECT *areas, size_t cnt);
+	} _deferred_repaints;
 	
 	struct {
 		COORD pos;
@@ -107,4 +113,6 @@ public:
 	virtual bool SetFKeyTitles(const CHAR **titles);
 	virtual BYTE GetColorPalette();
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
+	virtual void RepaintsDeferStart();
+	virtual void RepaintsDeferFinish();
 };

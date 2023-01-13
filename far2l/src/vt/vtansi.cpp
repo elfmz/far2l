@@ -1584,6 +1584,7 @@ void VTAnsi::Write(const char *str, size_t len)
 		--len;
 	}
 
+	ConsoleRepaintsDeferScope crds;
 	ParseAndPrintString(NULL, _ws.c_str(), _ws.size());
 }
 

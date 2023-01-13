@@ -764,7 +764,6 @@ void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *Colo
 	}
 }
 
-
 void TTYBackend::OnConsoleChangeFont()
 {
 }

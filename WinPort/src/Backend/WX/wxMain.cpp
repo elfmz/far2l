@@ -33,7 +33,6 @@ static WinPortFrame *g_winport_frame = nullptr;
 
 bool WinPortClipboard_IsBusy();
 
-
 static void NormalizeArea(SMALL_RECT &area)
 {
 	if (area.Left > area.Right) std::swap(area.Left, area.Right);
@@ -45,15 +44,23 @@ WinPortAppThread::WinPortAppThread(int argc, char **argv, int(*appmain)(int argc
 {
 }
 
-wxThreadError WinPortAppThread::Start(IConsoleOutputBackend *backend)
+bool WinPortAppThread::Prepare()
+{
+	_start.lock();
+	return Run() == wxTHREAD_NO_ERROR;
+}
+
+void WinPortAppThread::Start(IConsoleOutputBackend *backend)
 {
 	_backend = backend;
-	return Run();
+	_start.unlock();
 }
 
 wxThread::ExitCode WinPortAppThread::Entry()
 {
+	_start.lock();
 	g_exit_code = _appmain(_argc, _argv);
+	_start.unlock();
 	_backend->OnConsoleExit();
 	//exit(_r);
 	return 0;
@@ -138,7 +145,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	clipboard_backend_setter.Set<wxClipboardBackend>();
 	if (a->app_main && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(a->argc, a->argv, a->app_main);
-		if (!g_winport_app_thread) {
+		if (UNLIKELY(!g_winport_app_thread) || UNLIKELY(!g_winport_app_thread->Prepare())) {
 			wxUninitialize();
 			return false;
 		}
@@ -335,8 +342,6 @@ WinPortFrame::WinPortFrame(const wxString& title)
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	Create(NULL, wxID_ANY, title, ws.pos, ws.size, style);
-	SetBackgroundColour(*wxBLACK);
-
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
 
@@ -500,8 +505,6 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	Create(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER);
-	SetBackgroundColour(*wxBLACK);
-
 	g_winport_con_out->SetBackend(this);
 	_periodic_timer = new wxTimer(this, TIMER_ID);
 	_periodic_timer->Start(TIMER_PERIOD);
@@ -524,17 +527,16 @@ void WinPortPanel::OnInitialized( wxCommandEvent& event )
 	int w, h;
 	GetClientSize(&w, &h);
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
-	_initialized = true;
 	SetConsoleSizeFromWindow();
 
 	if (g_winport_app_thread) {
 #ifdef __APPLE__
 		Touchbar_Register(this);
 #endif
+		_app_entry_started = true;
 		WinPortAppThread *tmp = g_winport_app_thread;
 		g_winport_app_thread = NULL;
-		if (tmp->Start(this) != wxTHREAD_NO_ERROR)
-			delete tmp;
+		tmp->Start(this);
 	}
 }
 
@@ -617,23 +619,26 @@ void WinPortPanel::SetConsoleSizeFromWindow()
 	width/= font_width;
 	height/= font_height;
 	if (width != (int)prev_width || height != (int)prev_height) {
-		fprintf(stderr, "Changing size: %u x %u\n", width, height);
+		fprintf(stderr, "Changing size: %u x %u -> %u x %u %s\n",
+			prev_width, prev_height, width, height, _app_entry_started ? "with notify" : "");
 #ifdef __APPLE__
 		SetSize(width * font_width, height * font_height);
 #endif
 		g_winport_con_out->SetSize(width, height);
-		INPUT_RECORD ir = {0};
-		ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
-		ir.Event.WindowBufferSizeEvent.dwSize.X = width;
-		ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
-		g_winport_con_in->Enqueue(&ir, 1);
+		if (_app_entry_started) {
+			INPUT_RECORD ir = {0};
+			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+			ir.Event.WindowBufferSizeEvent.dwSize.X = width;
+			ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
+			g_winport_con_in->Enqueue(&ir, 1);
+		}
 	}
 }
 
 void WinPortPanel::CheckForResizePending()
 {
 #ifndef __APPLE__
-	if (_initialized && _resize_pending!=RP_NONE)
+	if (_app_entry_started && _resize_pending!=RP_NONE)
 #endif
 	{
 #ifndef __APPLE__

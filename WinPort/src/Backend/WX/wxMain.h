@@ -25,6 +25,7 @@
 #include <vector>
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 
 #ifdef __APPLE__
 # include "Mac/dockicon.h"
@@ -34,6 +35,7 @@
 
 class WinPortAppThread : public wxThread
 {
+	std::mutex _start;
 	IConsoleOutputBackend *_backend;
 	char **_argv;
 	int _argc;
@@ -46,7 +48,9 @@ class WinPortAppThread : public wxThread
 
 public:
 	WinPortAppThread(int argc, char **argv, int(*appmain)(int argc, char **argv));
-	wxThreadError Start(IConsoleOutputBackend *backend);
+	bool Prepare();
+
+	void Start(IConsoleOutputBackend *backend);
 };
 
 //////////////////////////////////////////
@@ -89,7 +93,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	std::atomic<unsigned int> _last_title_ticks{0};
 	bool _extra_refresh{false};
 	bool _last_keydown_enqueued{false};
-	bool _initialized{false};
+	bool _app_entry_started{false};
 	bool _adhoc_quickedit{false};
 	enum
 	{

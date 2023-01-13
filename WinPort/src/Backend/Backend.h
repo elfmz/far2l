@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x03
+#define FAR2L_BACKEND_ABI_VERSION	0x04
 
 class IConsoleOutputBackend
 {
@@ -188,6 +188,8 @@ public:
 	virtual bool SetFKeyTitles(const CHAR **titles) = 0;
 	virtual BYTE GetColorPalette() = 0;
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
+	virtual void RepaintsDeferStart() = 0;
+	virtual void RepaintsDeferFinish() = 0;
 
 	inline std::wstring GetTitle()
 	{

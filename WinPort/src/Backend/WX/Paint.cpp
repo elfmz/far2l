@@ -123,7 +123,7 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 
 ConsolePaintContext::ConsolePaintContext(wxWindow *window) :
 	_window(window), _font_width(12), _font_height(16), _font_descent(0), _font_thickness(2),
-	_buffered_paint(false), _sharp(false)
+	_buffered_paint(false), _sharp(false), _refreshed_once(false)
 {
 	_char_fit_cache.checked.resize(0xffff);
 	_char_fit_cache.result.resize(0xffff);
@@ -331,6 +331,14 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 {
 	wxPaintDC dc(_window);
+	if (UNLIKELY(!_refreshed_once)) {
+		// not refreshed yet - so early start so nothing to paint yet
+		// so simple fill with background color for the sake of faster startup
+		dc.SetBackground(GetBrush(g_wx_palette.background[0]));
+		dc.Clear();
+		return;
+	}
+
 #if wxUSE_GRAPHICS_CONTEXT
 	wxGraphicsContext* gctx = dc.GetGraphicsContext();
 	if (gctx) {
@@ -344,19 +352,29 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 	}
 #endif
 	unsigned int cw, ch; g_winport_con_out->GetSize(cw, ch);
-	if (cw > MAXSHORT) cw = MAXSHORT;
-	if (ch > MAXSHORT) ch = MAXSHORT;
+	if (UNLIKELY(cw > MAXSHORT)) cw = MAXSHORT;
+	if (UNLIKELY(ch > MAXSHORT)) ch = MAXSHORT;
 
 	wxRegion rgn = _window->GetUpdateRegion();
 	wxRect box = rgn.GetBox();
 	SMALL_RECT area = {SHORT(box.GetLeft() / _font_width), SHORT(box.GetTop() / _font_height),
 		SHORT(box.GetRight() / _font_width), SHORT(box.GetBottom() / _font_height)};
 
-	if (area.Left < 0 ) area.Left = 0;
-	if (area.Top < 0 ) area.Top = 0;
-	if ((unsigned)area.Right >= cw) area.Right = cw - 1;
-	if ((unsigned)area.Bottom >= ch) area.Bottom = ch - 1;
-	if (area.Right < area.Left || area.Bottom < area.Top) return;
+	if (UNLIKELY(area.Left < 0)) {
+		area.Left = 0;
+	}
+	if (UNLIKELY(area.Top < 0)) {
+		area.Top = 0;
+	}
+	if (UNLIKELY((unsigned)area.Right >= cw)) {
+		area.Right = cw - 1;
+	}
+	if (UNLIKELY((unsigned)area.Bottom >= ch)) {
+		area.Bottom = ch - 1;
+	}
+	if (UNLIKELY(area.Right < area.Left) || UNLIKELY(area.Bottom < area.Top)) {
+		return;
+	}
 
 	wxString tmp;
 	_line.resize(cw);
@@ -440,6 +458,7 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 
 void ConsolePaintContext::RefreshArea( const SMALL_RECT &area )
 {
+	_refreshed_once = true;
 	wxRect rc;
 	rc.SetLeft(((int)area.Left) * _font_width);
 	rc.SetRight(((int)area.Right) * _font_width + _font_width - 1);

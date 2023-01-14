@@ -162,7 +162,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 struct WinState
 {
 	wxPoint pos {40, 40};
-	wxSize size {600, 440};
+	wxSize size {800, 440};
 	bool maximized{false};
 	bool fullscreen{false};
 

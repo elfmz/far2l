@@ -850,7 +850,7 @@ void CommandLine::ResizeConsole()
 //  this->DisplayObject();
 }
 
-void CommandLine::RedrawWithoutComboBoxArrow()
+void CommandLine::RedrawWithoutComboBoxMark()
 {
 	Redraw();
 	// erase \x2191 character...

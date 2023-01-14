@@ -254,7 +254,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
 			CtrlObject->CmdLine->ShowBackground();
-			CtrlObject->CmdLine->RedrawWithoutComboBoxArrow();
+			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
 		}
 //		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();

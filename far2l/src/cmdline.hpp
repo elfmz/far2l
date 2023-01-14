@@ -119,5 +119,5 @@ class CommandLine:public ScreenObject
 		void DisableAC(){return CmdStr.DisableAC();}
 		void RevertAC(){return CmdStr.RevertAC();}
 
-		void RedrawWithoutComboBoxArrow();
+		void RedrawWithoutComboBoxMark();
 };

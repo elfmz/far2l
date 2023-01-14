@@ -5940,15 +5940,15 @@ upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
 
 VTStartTipPendCmdMouse
 l:
-" Ctrl+Shift+MouseScrollUp - автозавершающийся просмотр лога терминала.               "
-" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-upd:" Ctrl+Shift+MouseScrollUp - pause and open autoclosing viewer with console log.      "
-" Ctrl+Shift+MouseScrollUp - перегляд лога терміналу, що завершується автоматично.    "
-" Ctrl+Shift+MouseScrollUp - які аўтазавяршае прагляд лога тэрмінала.                 "
+" Ctrl+Shift+MouseScrollUp - автозавершающийся просмотр лога терминала.    "
+" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
+" Ctrl+Shift+MouseScrollUp - перегляд лога, що завершується автоматично.   "
+" Ctrl+Shift+MouseScrollUp - прагляд лога, які завяршаецца аўтаматычна.    "
 
 BookmarkBottom
 "Редактирование: Del,Ins,F4,Shift+Вверх,Shift+Вниз"

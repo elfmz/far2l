@@ -205,4 +205,4 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * See HACKING.md
 
 ## Known issues:
-* Only valid translations are English, Russian and Ukrainian, all other languages require deep correction.
+* Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.

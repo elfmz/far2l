@@ -319,7 +319,7 @@ void TTYBackend::WriterThread()
 	bool gone_background = false;
 	try {
 		TTYOutput tty_out(_stdout, _far2l_tty);
-		tty_out.ChangePalette(_palette);
+		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae;

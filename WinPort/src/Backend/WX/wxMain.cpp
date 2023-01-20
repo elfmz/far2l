@@ -159,67 +159,59 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 ///////////////
 
-struct WinState
+WinState::WinState()
 {
-	wxPoint pos {40, 40};
-	wxSize size {800, 440};
-	bool maximized{false};
-	bool fullscreen{false};
+	std::ifstream is;
+	is.open(InMyConfig("winstate").c_str());
+	if (!is.is_open()) {
+		fprintf(stderr, "WinState: can't open\n");
+		return;
+	}
+	std::string str;
+	getline (is, str);
+	int i = atoi(str.c_str());
+	if ((i & 1) == 0) {
+		fprintf(stderr, "WinState: bad flags [%d]\n", i);
+		return;
+	}
+	maximized = (i & 2) != 0;
+	fullscreen = (i & 4) != 0;
 
-	WinState()
-	{
-		std::ifstream is;
-		is.open(InMyConfig("winstate").c_str());
-		if (!is.is_open()) {
-			fprintf(stderr, "WinState: can't open\n");
-			return;
-		}
-		std::string str;
-		getline (is, str);
-		int i = atoi(str.c_str());
-		if ((i & 1) == 0) {
-			fprintf(stderr, "WinState: bad flags field [%d]\n", i);
-			return;
-		}
-		maximized = (i & 2) != 0;
-		fullscreen = (i & 4) != 0;
-
-		getline(is, str);
-		i = atoi(str.c_str());
-		if (i >= 100) {
-			size.SetWidth(i);
-		}
-
-		getline(is, str);
-		i = atoi(str.c_str());
-		if (i >= 100) {
-			size.SetHeight(i);
-		}
-
-		getline(is, str);
-		pos.x = atoi(str.c_str());
-		getline(is, str);
-		pos.y = atoi(str.c_str());
+	getline(is, str);
+	i = atoi(str.c_str());
+	if (i >= 100) {
+		size.SetWidth(i);
 	}
 
-	void Save()
-	{
-		std::ofstream os;
-		os.open(InMyConfig("winstate").c_str());
-		if (!os.is_open()) {
-			fprintf(stderr, "WinState: can't create\n");
-		}
-		int flags = 1;
-		if (maximized) flags|= 2;
-		if (fullscreen) flags|= 4;
-		os << flags << std::endl;
-		os << size.GetWidth() << std::endl;
-		os << size.GetHeight() << std::endl;
-		os << pos.x << std::endl;
-		os << pos.y << std::endl;
-		fprintf(stderr, "WinState: saved flags=%d size={%d, %d} pos={%d, %d}\n",
-			flags, size.GetWidth(), size.GetHeight(), pos.x, pos.y);
+	getline(is, str);
+	i = atoi(str.c_str());
+	if (i >= 100) {
+		size.SetHeight(i);
 	}
+
+	getline(is, str);
+	pos.x = atoi(str.c_str());
+	getline(is, str);
+	pos.y = atoi(str.c_str());
+}
+
+void WinState::Save()
+{
+	std::ofstream os;
+	os.open(InMyConfig("winstate").c_str());
+	if (!os.is_open()) {
+		fprintf(stderr, "WinState: can't create\n");
+	}
+	int flags = 1;
+	if (maximized) flags|= 2;
+	if (fullscreen) flags|= 4;
+	os << flags << std::endl;
+	os << size.GetWidth() << std::endl;
+	os << size.GetHeight() << std::endl;
+	os << pos.x << std::endl;
+	os << pos.y << std::endl;
+	fprintf(stderr, "WinState: saved flags=%d size={%d, %d} pos={%d, %d}\n",
+		flags, size.GetWidth(), size.GetHeight(), pos.x, pos.y);
 };
 
 
@@ -281,9 +273,6 @@ bool WinPortApp::OnInit()
 	g_winport_frame = new WinPortFrame(APP_BASENAME);
 //    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
 	g_winport_frame->Show( true );
-	if (g_broadway)
-		g_winport_frame->Maximize();
-
 	return true;
 }
 
@@ -298,19 +287,19 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 	EVT_MENU_RANGE(ID_CTRL_BASE, ID_CTRL_END, WinPortFrame::OnAccelerator)
 	EVT_MENU_RANGE(ID_CTRL_SHIFT_BASE, ID_CTRL_SHIFT_END, WinPortFrame::OnAccelerator)
 	EVT_MENU_RANGE(ID_ALT_BASE, ID_ALT_END, WinPortFrame::OnAccelerator)
+
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SAVE_WIN_STATE, WinPortFrame::OnConsoleSaveWindowStateSync)
 wxEND_EVENT_TABLE()
 
 WinPortFrame::WinPortFrame(const wxString& title)
         : _shown(false),  _menu_bar(nullptr)
 {
-	WinState ws;
-
 	long style = wxDEFAULT_FRAME_STYLE;
-	if (g_maximize >= 0 && (ws.maximized || g_maximize > 0)) {
+	if (g_maximize >= 0 && (_win_state.maximized || g_maximize > 0 || g_broadway)) {
 		style|= wxMAXIMIZE;
 	}
 
-	int disp_index = wxDisplay::GetFromPoint(ws.pos);
+	int disp_index = wxDisplay::GetFromPoint(_win_state.pos);
 	if (disp_index < 0 || disp_index >= (int)wxDisplay::GetCount()) {
 		disp_index = 0;
 	}
@@ -318,30 +307,30 @@ WinPortFrame::WinPortFrame(const wxString& title)
 	wxDisplay disp(disp_index);
 	wxRect rc = disp.GetClientArea();
 	fprintf(stderr, "WinPortFrame: display %d from %d.%d area %d.%d - %d.%d\n",
-		disp_index, ws.pos.x, ws.pos.y, rc.GetLeft(), rc.GetTop(), rc.GetRight(), rc.GetBottom());
+		disp_index, _win_state.pos.x, _win_state.pos.y, rc.GetLeft(), rc.GetTop(), rc.GetRight(), rc.GetBottom());
 
-	if (ws.size.GetWidth() > rc.GetWidth()) {
-		ws.size.SetWidth(rc.GetWidth());
+	if (_win_state.size.GetWidth() > rc.GetWidth()) {
+		_win_state.size.SetWidth(rc.GetWidth());
 	}
-	if (ws.size.GetHeight() > rc.GetHeight()) {
-		ws.size.SetHeight(rc.GetHeight());
+	if (_win_state.size.GetHeight() > rc.GetHeight()) {
+		_win_state.size.SetHeight(rc.GetHeight());
 	}
-	if (ws.pos.x + ws.size.GetWidth() > rc.GetRight()) {
-		ws.pos.x = rc.GetRight() - ws.size.GetWidth();
+	if (_win_state.pos.x + _win_state.size.GetWidth() > rc.GetRight()) {
+		_win_state.pos.x = rc.GetRight() - _win_state.size.GetWidth();
 	}
-	if (ws.pos.y + ws.size.GetHeight() > rc.GetBottom()) {
-		ws.pos.y = rc.GetBottom() - ws.size.GetHeight();
+	if (_win_state.pos.y + _win_state.size.GetHeight() > rc.GetBottom()) {
+		_win_state.pos.y = rc.GetBottom() - _win_state.size.GetHeight();
 	}
-	if (ws.pos.x < rc.GetLeft()) {
-		ws.pos.x = rc.GetLeft();
+	if (_win_state.pos.x < rc.GetLeft()) {
+		_win_state.pos.x = rc.GetLeft();
 	}
-	if (ws.pos.y < rc.GetTop()) {
-		ws.pos.y = rc.GetTop();
+	if (_win_state.pos.y < rc.GetTop()) {
+		_win_state.pos.y = rc.GetTop();
 	}
 
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
-	Create(NULL, wxID_ANY, title, ws.pos, ws.size, style);
+	Create(NULL, wxID_ANY, title, _win_state.pos, _win_state.size, style);
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
 
@@ -350,7 +339,7 @@ WinPortFrame::WinPortFrame(const wxString& title)
 		Maximize();
 	}
 #endif
-	if (ws.fullscreen && g_maximize >= 0) {
+	if (_win_state.fullscreen && g_maximize >= 0) {
 		ShowFullScreen(true);
 	}
 }
@@ -363,6 +352,50 @@ WinPortFrame::~WinPortFrame()
 	_panel = NULL;
 	g_winport_frame = nullptr;
 }
+
+void WinPortFrame::OnInitialized()
+{
+	if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
+		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
+		SetSize(_win_state.pos.x, _win_state.pos.y,
+			_win_state.size.GetWidth(), _win_state.size.GetHeight());
+	}
+}
+
+void WinPortFrame::OnConsoleSaveWindowStateSync(wxCommandEvent& event)
+{
+	if (IsShown()) {
+		_win_state.maximized = IsMaximized();
+		_win_state.fullscreen = IsFullScreen();
+
+		if (!_win_state.maximized && !_win_state.fullscreen) {
+			_win_state.pos = GetPosition();
+			_win_state.size = GetSize();
+
+			// align saved size by font dimensions to avoid blank edges on next start
+			int gap_horz = 0, gap_vert = 0;
+			_panel->GetAlignmentGaps(gap_horz, gap_vert);
+			_win_state.size.SetWidth(_win_state.size.GetWidth() - gap_horz);
+			_win_state.size.SetHeight(_win_state.size.GetHeight() - gap_vert);
+
+		} else {
+			// if window maximized on different display - have to save its position anyway
+			// however dont save frame's position in such case but save workarea left.top instead
+			// cuz maximized window's pos can be outside of related display
+			const int prev_disp_index = wxDisplay::GetFromPoint(_win_state.pos);
+			const int disp_index = wxDisplay::GetFromWindow(this);
+//			fprintf(stderr, "prev_disp_index=%d disp_index=%d\n", prev_disp_index, disp_index);
+			if (prev_disp_index != disp_index && disp_index >= 0 && disp_index < (int)wxDisplay::GetCount()) {
+				wxDisplay disp(disp_index);
+				wxRect rc = disp.GetClientArea();
+				_win_state.pos.x = rc.GetLeft();
+				_win_state.pos.y = rc.GetTop();
+			}
+		}
+		_win_state.Save();
+	}
+}
+
 
 void WinPortFrame::OnEraseBackground(wxEraseEvent &event)
 {
@@ -480,7 +513,6 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_TWEAKS, WinPortPanel::OnConsoleSetTweaksSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
-	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SAVE_WIN_STATE, WinPortPanel::OnConsoleSaveWindowStateSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 
 	EVT_IDLE(WinPortPanel::OnIdle)
@@ -521,10 +553,22 @@ WinPortPanel::~WinPortPanel()
 	g_winport_con_out->SetBackend(NULL);
 }
 
+void WinPortPanel::GetAlignmentGaps(int &horz, int &vert)
+{
+	int width = 0, height = 0;
+	GetClientSize(&width, &height);
+	const unsigned int font_width = _paint_context.FontWidth();
+	const unsigned int font_height = _paint_context.FontHeight();
+	horz = (width % font_width);
+	vert = (height % font_height);
+}
 
 void WinPortPanel::OnInitialized( wxCommandEvent& event )
 {
 	int w, h;
+
+	_frame->OnInitialized();
+
 	GetClientSize(&w, &h);
 	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
 	SetConsoleSizeFromWindow();
@@ -1577,52 +1621,11 @@ void WinPortPanel::OnConsoleChangeFont()
 		wxQueueEvent(this, event);
 }
 
-void WinPortPanel::OnConsoleSaveWindowStateSync(wxCommandEvent& event)
-{
-	if (_frame->IsShown()) {
-		WinState ws;
-		ws.maximized = _frame->IsMaximized();
-		ws.fullscreen = _frame->IsFullScreen();
-
-		if (!ws.maximized && !ws.fullscreen) {
-			ws.pos = _frame->GetPosition();
-			ws.size = _frame->GetSize();
-
-			// align saved size by font dimensions to avoid blank edges on next start
-			int width = 0, height = 0;
-			_frame->GetClientSize(&width, &height);
-			const unsigned int font_width = _paint_context.FontWidth();
-			const unsigned int font_height = _paint_context.FontHeight();
-			if (width % font_width) {
-				ws.size.SetWidth(ws.size.GetWidth() - (width % font_width));
-			}
-			if (height % font_height) {
-				ws.size.SetHeight(ws.size.GetHeight() - (height % font_height));
-			}
-
-		} else {
-			// if window maximized on different display - have to save its position anyway
-			// however dont save frame's position in such case but save workarea left.top instead
-			// cuz maximized window's pos can be outside of related display
-			const int prev_disp_index = wxDisplay::GetFromPoint(ws.pos);
-			const int disp_index = wxDisplay::GetFromWindow(_frame);
-//			fprintf(stderr, "prev_disp_index=%d disp_index=%d\n", prev_disp_index, disp_index);
-			if (prev_disp_index != disp_index && disp_index >= 0 && disp_index < (int)wxDisplay::GetCount()) {
-				wxDisplay disp(disp_index);
-				wxRect rc = disp.GetClientArea();
-				ws.pos.x = rc.GetLeft();
-				ws.pos.y = rc.GetTop();
-			}
-		}
-		ws.Save();
-	}
-}
-
 void WinPortPanel::OnConsoleSaveWindowState()
 {
 	wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_SAVE_WIN_STATE);
 	if (event)
-		wxQueueEvent(this, event);
+		wxQueueEvent(_frame, event);
 }
 
 void WinPortPanel::OnConsoleExitSync( wxCommandEvent& event )

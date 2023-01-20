@@ -160,12 +160,23 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 public:
     WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
 	virtual ~WinPortPanel();
-	void CompleteInitialization();
+	void GetAlignmentGaps(int &horz, int &vert);
 	void OnChar( wxKeyEvent& event );
 	virtual void OnTouchbarKey(bool alternate, int index);
 };
 
 ///////////////////////////////////////////
+
+struct WinState
+{
+	wxPoint pos {40, 40};
+	wxSize size {800, 440};
+	bool maximized{false};
+	bool fullscreen{false};
+
+	WinState();
+	void Save();
+};
 
 class WinPortFrame: public wxFrame
 {
@@ -183,6 +194,7 @@ class WinPortFrame: public wxFrame
 	bool _shown;
 	wxMenuBar *_menu_bar;
 	std::vector<wxMenu *> _menus;
+	WinState _win_state;
 
 	void OnEraseBackground(wxEraseEvent &event);
 	void OnPaint(wxPaintEvent &event);
@@ -190,8 +202,12 @@ class WinPortFrame: public wxFrame
 	void OnAccelerator(wxCommandEvent &event);
 	void OnShow(wxShowEvent &show);
 	void OnClose(wxCloseEvent &show);
+	void OnConsoleSaveWindowStateSync(wxCommandEvent& event);
 
 public:
-    WinPortFrame(const wxString& title);
+	WinPortFrame(const wxString& title);
 	virtual ~WinPortFrame();
+
+	void OnInitialized();
+	void SaveWindowState();
 };

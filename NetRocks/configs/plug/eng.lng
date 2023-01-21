@@ -220,6 +220,7 @@
 "Enable TCP_&QUICKACK option"
 "Automatically retr&y connect, times:"
 "Connection t&imeout, seconds:"
+"Allowed host &keys:"
 "Use OpenSS&H configuration files"
 "Enable &sandbox (if you don't trust server)"
 

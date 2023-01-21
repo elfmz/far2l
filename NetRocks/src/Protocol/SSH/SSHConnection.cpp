@@ -76,6 +76,15 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	fprintf(stderr, "Compiled for libssh %u.%u.%u ssh_version returned '%s'\n",
 		LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO, ssh_version(0));
 
+
+	const std::string &hostkeys = protocol_options.GetString("HostKeys");
+	if (!hostkeys.empty()) {
+		int rc = ssh_options_set(ssh, SSH_OPTIONS_HOSTKEYS, hostkeys.c_str());
+		if (rc != SSH_OK) {
+			fprintf(stderr, "HostKeys set error %u '%s'\n", rc, ssh_get_error(ssh));
+		}
+	}
+
 	ssh_options_set(ssh, SSH_OPTIONS_HOST, host.c_str());
 	if (port > 0)
 		ssh_options_set(ssh, SSH_OPTIONS_PORT, &port);
@@ -137,7 +146,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 		switch (key_import_result) {
 			case SSH_EOF:
-				throw std::runtime_error(StrPrintf("Cannot read key file \'%s\'", key_path_spec.c_str()));
+				throw std::runtime_error(StrPrintf("Cannot read key file: %s", key_path_spec.c_str()));
 
 			case SSH_ERROR:
 				throw ProtocolAuthFailedError();
@@ -147,7 +156,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 
 			default:
 				throw std::runtime_error(
-					StrPrintf("Unexpected error %u while loading key from \'%s\'",
+					StrPrintf("Unexpected error %u while loading key from: %s",
 					key_import_result, key_path_spec.c_str()));
 		}
 	}

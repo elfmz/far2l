@@ -651,30 +651,31 @@ static void LimitByScrollRegion(SMALL_RECT &rect)
 // suffix = 'm'
 //-----------------------------------------------------------------------------
 
-static void ParseOSCPalette(int cmd, std::string &args)
+static void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 {
 	size_t pos = 0;
-	unsigned int index = stoi(args, &pos, 10);
+	unsigned int index = DecToULong(args, args_size, &pos);
 	// Win <-> TTY color index adjustement
 	index = (((index) & 0b001) << 2 | ((index) & 0b100) >> 2 | ((index) & 0b1010));
 
 	DWORD fg = 0xffffffff, bk = 0xffffffff;
 	if (cmd == 4) {
-		if (pos + 2 >= args.size() || args[pos] != ';' || args[pos + 1] != '#') {
-			fprintf(stderr, "%s: bad args='%s'\n", __FUNCTION__, args.c_str());
+		if (pos + 2 >= args_size || args[pos] != ';' || args[pos + 1] != '#') {
+			fprintf(stderr, "%s: bad args='%s'\n", __FUNCTION__, args);
 			return;
 		}
-		args.erase(0, pos + 2);
-		fg = bk = BGR2RGB(stoi(args, &pos, 16 ));
-		if (pos == 0) {
+		pos+= 2;
+		size_t saved_pos = pos;
+		fg = HexToULong(args, args_size, &pos);
+		if (pos == saved_pos) {
 			return;
 		}
-		if (pos + 2 < args.size() && args[pos] == ';' && args[pos + 1] == '#') {
-			args.erase(0, pos + 2);
-			bk = BGR2RGB(stoi(args, &pos, 16 ));
-			if (pos == 0) {
-				bk = fg;
-			}
+		fg = bk = BGR2RGB(fg);
+		if (pos + 2 < args_size && args[pos] == ';' && args[pos + 1] == '#') {
+			pos+= 2;
+			saved_pos = pos;
+			bk = HexToULong(args, args_size, &pos);
+			bk = (pos == saved_pos) ? fg : BGR2RGB(bk);
 		}
 	}
 
@@ -1158,7 +1159,7 @@ void InterpretEscSeq( void )
 			ApplyConsoleTitle();
 
 		} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
-			ParseOSCPalette(es_argv[0], os_cmd_arg);
+			ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
 
 		} else if (g_vt_shell) {
 			g_vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);

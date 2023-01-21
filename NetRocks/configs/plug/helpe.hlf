@@ -122,6 +122,7 @@ $^#SFTP:// SCP:// protocols specific options#
  #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
  #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
  #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er account by using command line like [sudo /usr/lib/openssh/sftp-server]
+ #Allowed host keys# if non-empty then forces using only specified key-exchange algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. ssh-rsa if server doesn't support modern ones.
 
  ~Contents~@Contents@
 

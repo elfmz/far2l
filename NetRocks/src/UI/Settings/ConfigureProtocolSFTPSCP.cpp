@@ -18,6 +18,7 @@
 | Max write block size, bytes:                [9999999]      |
 | Automatically retry connect, times:         [##]           |
 | Connection timeout, seconds:                [###]          |
+| Allowed host keys:    [EDIT..............................] |
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
 | [ ] Use OpenSSH config files                               |
@@ -35,6 +36,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_compression = -1;
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
+	int _i_allowed_hostkeys = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	int _i_use_openssh_configs = -1;
 
@@ -160,6 +162,10 @@ public:
 		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "20", "999");
 
 		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPAllowedHostkeys);
+		_i_allowed_hostkeys = _di.AddAtLine(DI_EDIT, 27,62, 0, "");
+
+		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
 
 		_di.NextLine();
@@ -222,6 +228,9 @@ public:
 		if (_i_custom_subsystem != -1) {
 			TextToDialogControl(_i_custom_subsystem, sc.GetString("CustomSubsystem"));
 		}
+
+		TextToDialogControl(_i_allowed_hostkeys, sc.GetString("HostKeys"));
+
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
 			sc.Delete("SSHAgentEnable");
@@ -258,6 +267,8 @@ public:
 				TextFromDialogControl(_i_custom_subsystem, str);
 				sc.SetString("CustomSubsystem", str);
 			}
+			TextFromDialogControl(_i_allowed_hostkeys, str);
+			sc.SetString("HostKeys", str);
 
 	//		sc.SetInt("Sandbox", IsCheckedDialogControl(_i_enable_sandbox) ? 1 : 0);
 			options = sc.Serialize();

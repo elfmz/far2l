@@ -57,9 +57,24 @@ void *OpBase::ThreadProc()
 			aborting = _state.aborting;
 		}
 		if (!aborting) {
-			const std::wstring &tmp_what = MB2Wide(e.what());
-			const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), tmp_what.c_str(), G.GetMsgWide(MOK)};
-			G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+			const std::wstring &what = MB2Wide(e.what());
+			// split long string into two (for now) parts if appropriate
+			size_t div_pos = what.rfind(L": "), div_len = 2;
+			if (div_pos == std::string::npos) {
+				div_pos = what.rfind(L" - ");
+				div_len = 3;
+			}
+			if (what.size() > 20 && div_pos != std::string::npos && div_pos != 0 && div_pos + div_len < what.size()) {
+				const auto &what1 = what.substr(0, div_pos);
+				for (div_pos+= div_len; div_pos < what.size() && what[div_pos] == ' '; ++div_pos) {
+				}
+				const auto &what2 = what.substr(div_pos);
+				const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), what1.c_str(), what2.c_str(), G.GetMsgWide(MOK)};
+				G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+			} else {
+				const wchar_t *msg[] = { G.GetMsgWide(MOperationFailed), what.c_str(), G.GetMsgWide(MOK)};
+				G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
+			}
 		}
 	}
 	{

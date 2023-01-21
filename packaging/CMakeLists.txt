@@ -20,7 +20,7 @@ LIST(APPEND PACKAGE_DEPENDENCIES libminizip1 libpcre3)
 # from main project
 IF (${USEWX})
     find_package(wxWidgets REQUIRED core base)
-    IF (${wxWidgets_VERSION_STRING} MATCHES "3.2.1")
+    IF (${wxWidgets_VERSION_STRING} EQUAL "3.2.1")
         LIST(APPEND PACKAGE_DEPENDENCIES "libwxgtk3.2-1, libwxbase3.2-1")
     ELSE()
         LIST(APPEND PACKAGE_DEPENDENCIES libwxgtk3.0-gtk3-0v5)

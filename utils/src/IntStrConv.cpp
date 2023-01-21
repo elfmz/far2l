@@ -89,38 +89,42 @@ wchar_t * _itow(int i, wchar_t *w, int radix)
 	return neg ? w-1 : w;
 }
 
+}
 
-unsigned long nhtoul(const char *str, size_t maxlen)
+unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos)
 {
 	unsigned long out = 0;
-
-	for (size_t i = 0; i != maxlen; ++i) {
+	size_t i;
+	for (i = pos ? *pos : 0; i < maxlen; ++i) {
 		unsigned char x = ParseHexDigit(str[i]);
 		if (x == 0xff) {
 			break;
 		}
 		out<<= 4;
-		out|= (unsigned char)x;
+		out|= (unsigned long)x;
+	}
+	if (pos) {
+		*pos = i;
 	}
 
 	return out;
 }
 
-unsigned long natoul(const char *str, size_t maxlen)
+unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
 {
 	unsigned long out = 0;
-
-	for (size_t i = 0; i != maxlen; ++i) {
-		if (str[i] >= '0' && str[i] <= '9') {
-			out*= 10;
-			out+= str[i] - '0';
-
-		} else
+	size_t i;
+	for (i = pos ? *pos : 0; i < maxlen; ++i) {
+		const auto ch = str[i];
+		if (ch < '0' || ch > '9') {
 			break;
+		}
+		out*= 10;
+		out+= ch - '0';
 	}
-
+	if (pos) {
+		*pos = i;
+	}
 	return out;
-}
-
 }
 

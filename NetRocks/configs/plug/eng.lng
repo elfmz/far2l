@@ -221,7 +221,10 @@
 "Automatically retr&y connect, times:"
 "Connection t&imeout, seconds:"
 "Allowed host &keys:"
-"Use OpenSS&H configuration files"
+"OpenSS&H config files:"
+"(Default config files)"
+"(Don't use config files)"
+"(Specified config files)"
 "Enable &sandbox (if you don't trust server)"
 
 "File Protocol options"

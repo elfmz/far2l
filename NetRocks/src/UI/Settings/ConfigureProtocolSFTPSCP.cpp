@@ -19,9 +19,9 @@
 | Automatically retry connect, times:         [##]           |
 | Connection timeout, seconds:                [###]          |
 | Allowed host keys:    [EDIT..............................] |
+| OpenSSH config files: [COMBOBOX Config file              ] |  (Default), (None), ...
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
-| [ ] Use OpenSSH config files                               |
 |------------------------------------------------------------|
 |             [  OK    ]        [        Cancel       ]      |
  ============================================================
@@ -38,12 +38,16 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_allowed_hostkeys = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
-	int _i_use_openssh_configs = -1;
+	int _i_openssh_configs = -1;
+	std::string _openssh_configs;
+	std::wstring _openssh_configs_initial;
 
 	FarListWrapper _di_authmode;
 	FarListWrapper _di_compression;
+	FarListWrapper _di_openssh_configs;
 
 	bool _keypath_enabled = true, _subsystem_enabled = true, _ok_enabled = true;
+	bool _openssh_configs_recursion_guard = false;
 
 	void UpdateEnableds(bool due_authmode_changed)
 	{
@@ -94,6 +98,29 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 
 	}
 
+	void OnOpenSSHConfigsChanged()
+	{
+		if (!_openssh_configs_recursion_guard) {
+			_openssh_configs_recursion_guard = true;
+			const int pos = GetDialogListPosition(_i_openssh_configs);
+			switch (pos) {
+				case 0: case 1: { // simulate readonly-ness...
+					TextToDialogControl(_i_openssh_configs, _di_openssh_configs.At(pos)->Text);
+				} break;
+				case 2: {
+					std::wstring str;
+					TextFromDialogControl(_i_openssh_configs, str);
+					if (!str.empty() && str.front() == '(' && str.back() == ')') {
+						TextToDialogControl(_i_openssh_configs, _openssh_configs);
+					} else {
+						StrWide2MB(str, _openssh_configs);
+					}
+				} break;
+			}
+			_openssh_configs_recursion_guard = false;
+		}
+	}
+
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
 #ifndef __linux__
@@ -106,6 +133,10 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 		|| (msg == DN_BTNCLICK && (param1 == _i_use_custom_subsystem))
 		|| (msg == DN_EDITCHANGE && (param1 == _i_auth_mode || param1 == _i_privkey_path || param1 == _i_custom_subsystem)) ) {
 			UpdateEnableds(msg == DN_EDITCHANGE && param1 == _i_auth_mode);
+		}
+
+		if (msg == DN_EDITCHANGE && param1 == _i_openssh_configs) {
+			OnOpenSSHConfigsChanged();
 		}
 
 		return BaseDialog::DlgProc(msg, param1, param2);
@@ -123,6 +154,10 @@ public:
 		_di_compression.Add(MSFTPCompressionIncoming);
 		_di_compression.Add(MSFTPCompressionOutgoing);
 		_di_compression.Add(MSFTPCompressionAll);
+
+		_di_openssh_configs.Add(MSFTPCfgFilesDefault);
+		_di_openssh_configs.Add(MSFTPCfgFilesNone);
+		_di_openssh_configs.Add(MSFTPCfgFilesSpecified);
 
 		_di.SetBoxTitleItem(scp ? MSCPOptionsTitle : MSFTPOptionsTitle);
 
@@ -162,6 +197,11 @@ public:
 		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "20", "999");
 
 		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPOpenSSHConfigs);
+		_i_openssh_configs = _di.AddAtLine(DI_COMBOBOX, 27,62, DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di[_i_openssh_configs].ListItems = _di_openssh_configs.Get();
+
+		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPAllowedHostkeys);
 		_i_allowed_hostkeys = _di.AddAtLine(DI_EDIT, 27,62, 0, "");
 
@@ -170,9 +210,6 @@ public:
 
 		_di.NextLine();
 		_i_tcp_quickack = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPQuickAck);
-
-		_di.NextLine();
-		_i_use_openssh_configs = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPUseOpenSSHConfigs);
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,61, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -206,6 +243,19 @@ public:
 		SetDialogListPosition(_i_compression, // 0 - none, 1 - incoming, 2 - outgoing, 3 - all
 			std::min(std::max(0, sc.GetInt("Compression", 0)), 3));
 
+
+		_openssh_configs = sc.GetString("OpenSSHConfigs");
+		if (_openssh_configs.empty()) {
+			SetDialogListPosition(_i_openssh_configs, 0);
+		} else if (_openssh_configs == "-") {
+			SetDialogListPosition(_i_openssh_configs, 1);
+			_openssh_configs = "";
+		} else {
+			StrMB2Wide(_openssh_configs, _openssh_configs_initial);
+			_di_openssh_configs.At(2)->Text = _openssh_configs_initial.c_str();
+			SetDialogListPosition(_i_openssh_configs, 2);
+		}
+
 		TextToDialogControl(_i_privkey_path, sc.GetString("PrivKeyPath"));
 
 		if (_i_max_read_block_size != -1) {
@@ -217,7 +267,7 @@ public:
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
-		SetCheckedDialogControl(_i_use_openssh_configs, sc.GetInt("UseOpenSSHConfigs", 0) != 0);
+//		SetCheckedDialogControl(_i_use_openssh_configs, sc.GetInt("UseOpenSSHConfigs", 0) != 0);
 
 		LongLongToDialogControl(_i_connect_retries, std::max((int)1, sc.GetInt("ConnectRetries", 2)));
 		LongLongToDialogControl(_i_connect_timeout, std::max((int)1, sc.GetInt("ConnectTimeout", 20)));
@@ -242,9 +292,13 @@ public:
 				case 3: sc.SetInt("SSHAgentEnable", 1); break;
 			}
 
+			std::string str;
+
+			TextFromDialogControl(_i_openssh_configs, str);
+			fprintf(stderr, " !!! %d '%s'!!!\n", GetDialogListPosition(_i_openssh_configs), str.c_str());
+
 			sc.SetInt("Compression", GetDialogListPosition(_i_compression));
 
-			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
 			sc.SetString("PrivKeyPath", str);
 			if (_i_max_read_block_size != -1) {
@@ -255,7 +309,7 @@ public:
 			}
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);
-			sc.SetInt("UseOpenSSHConfigs", IsCheckedDialogControl(_i_use_openssh_configs) ? 1 : 0);
+//			sc.SetInt("UseOpenSSHConfigs", IsCheckedDialogControl(_i_use_openssh_configs) ? 1 : 0);
 
 			sc.SetInt("ConnectRetries", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_retries)));
 			sc.SetInt("ConnectTimeout", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_timeout)));
@@ -267,6 +321,19 @@ public:
 				TextFromDialogControl(_i_custom_subsystem, str);
 				sc.SetString("CustomSubsystem", str);
 			}
+
+			switch (GetDialogListPosition(_i_openssh_configs)) {
+				case 1:
+					sc.SetString("OpenSSHConfigs", "-");
+					break;
+				case 2:
+					TextFromDialogControl(_i_openssh_configs, str);
+					sc.SetString("OpenSSHConfigs", str);
+					break;
+				default:
+					sc.Delete("OpenSSHConfigs");
+			}
+
 			TextFromDialogControl(_i_allowed_hostkeys, str);
 			sc.SetString("HostKeys", str);
 

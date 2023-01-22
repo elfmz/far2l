@@ -292,13 +292,9 @@ public:
 				case 3: sc.SetInt("SSHAgentEnable", 1); break;
 			}
 
-			std::string str;
-
-			TextFromDialogControl(_i_openssh_configs, str);
-			fprintf(stderr, " !!! %d '%s'!!!\n", GetDialogListPosition(_i_openssh_configs), str.c_str());
-
 			sc.SetInt("Compression", GetDialogListPosition(_i_compression));
 
+			std::string str;
 			TextFromDialogControl(_i_privkey_path, str);
 			sc.SetString("PrivKeyPath", str);
 			if (_i_max_read_block_size != -1) {

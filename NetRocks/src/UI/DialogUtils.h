@@ -52,6 +52,7 @@ struct FarListWrapper
 	void Add(int text_lng, DWORD flags = 0);
 
 	FarList *Get() { return &_list; }
+	FarListItem *At(size_t i) { return &_items[i]; }
 
 	bool Select(const char *text);
 	const char *GetSelection() const;

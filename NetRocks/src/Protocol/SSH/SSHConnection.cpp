@@ -91,16 +91,29 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 
 	ssh_options_set(ssh, SSH_OPTIONS_USER, username.c_str());
 
-	if (protocol_options.GetInt("UseOpenSSHConfigs", 0) ) {
-		struct stat s{};
-		if (stat("/etc/ssh/ssh_config", &s) == 0) {
-			ssh_options_parse_config(ssh, "/etc/ssh/ssh_config");
+	const auto &openssh_cfgs = protocol_options.GetString("OpenSSHConfigs");
+	if (!openssh_cfgs.empty()) {
+		if (openssh_cfgs != "-") {
+			std::vector<std::string> openssh_cfgs_parts;
+			StrExplode(openssh_cfgs_parts, openssh_cfgs, ";:");
+			for (const auto &part : openssh_cfgs_parts) {
+				Environment::ExplodeCommandLine ecl_part(part);
+				for (const auto &openssh_cfg : ecl_part) {
+					int r = ssh_options_parse_config(ssh, openssh_cfg.c_str());
+					if (r != SSH_OK) {
+						fprintf(stderr, "parse_config error %d for '%s'\n", r, openssh_cfg.c_str());
+					} else {
+						fprintf(stderr, "parse_config OK for '%s'\n", openssh_cfg.c_str());
+					}
+				}
+			}
 		}
-		std::string per_user_config = GetMyHome();
-		per_user_config+= "/.ssh/config";
-		if (stat(per_user_config.c_str(), &s) == 0) {
-			ssh_options_parse_config(ssh, per_user_config.c_str());
-		}
+#if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 9, 0))
+		int v = 0;
+		ssh_options_set(ssh, SSH_OPTIONS_PROCESS_CONFIG, &v);
+#else
+		fprintf(stderr, "Current libssh doesn't support SSH_OPTIONS_PROCESS_CONFIG\n");
+#endif
 	}
 
 #if (LIBSSH_VERSION_INT >= SSH_VERSION_INT(0, 8, 0))

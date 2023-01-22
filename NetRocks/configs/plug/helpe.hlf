@@ -123,6 +123,7 @@ $^#SFTP:// SCP:// protocols specific options#
  #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
  #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er account by using command line like [sudo /usr/lib/openssh/sftp-server]
  #Allowed host keys# if non-empty then forces using only specified key-exchange algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. ssh-rsa if server doesn't support modern ones.
+ #OpenSSH config files# allows to specify which OpenSSH config files to use for this connection. By default ~~/.ssh/config and /etc/ssh/ssh_config are used. Note that libssh version prior 0.9.0 always parses default config files regardless of this option (so you can only add extra configs), but since version 0.9.0 its possible to disable/override default config files parsing. To specify more then one file - use colon to separate their pathes.
 
  ~Contents~@Contents@
 

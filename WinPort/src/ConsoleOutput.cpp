@@ -175,6 +175,12 @@ void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 		std::lock_guard<std::mutex> lock(_mutex);
 		_scroll_region = {0, MAXSHORT};
 		_buf.SetSize(width, height, _attributes);
+		if (_cursor.pos.X >= (int)width && width > 0) {
+			_cursor.pos.X = width - 1;
+		}
+		if (_cursor.pos.Y >= (int)height && height > 0) {
+			_cursor.pos.Y = height - 1;
+		}
 	}
 	if (_backend)
 		_backend->OnConsoleOutputResized();

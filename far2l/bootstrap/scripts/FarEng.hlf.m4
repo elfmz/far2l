@@ -2452,7 +2452,8 @@ code words:
      $h - delete the previous character
      $l - the < character
      $## - ## character if user is root, otherwise $
-     $p - current drive and path
+     $p - current drive and path, possible abbreviated
+     $r - current drive and path, not abbreviated
      $q - the = character
      $s - space
      $t - current time in HH:MM:SS format

@@ -757,6 +757,7 @@ static DeletionResult RemoveToRecycleBin(const wchar_t *Name)
 						Msg::DeleteSkip, Msg::DeleteFileSkipAll, Msg::DeleteCancel);
 
 		switch (MsgCode) {
+			case -1:
 			case 4:
 				return DELETE_CANCEL;
 			case 3:

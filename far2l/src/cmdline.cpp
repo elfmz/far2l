@@ -624,112 +624,123 @@ int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 void CommandLine::GetPrompt(FARString &strDestStr)
 {
+	FARString strExpandedFormatStr;
 	if (Opt.CmdLine.UsePromptFormat)
 	{
-		FARString strFormatStr, strExpandedFormatStr;
+		FARString strFormatStr;
 		strFormatStr = Opt.CmdLine.strPromptFormat;
 		apiExpandEnvironmentStrings(strFormatStr, strExpandedFormatStr);
-		const wchar_t *Format=strExpandedFormatStr;
-		wchar_t ChrFmt[][2]=
-		{
-			{L'A',L'&'},   // $A - & (Ampersand)
-			{L'B',L'|'},   // $B - | (pipe)
-			{L'C',L'('},   // $C - ( (Left parenthesis)
-			{L'F',L')'},   // $F - ) (Right parenthesis)
-			{L'G',L'>'},   // $G - > (greater-than sign)
-			{L'L',L'<'},   // $L - < (less-than sign)
-			{L'Q',L'='},   // $Q - = (equal sign)
-			{L'S',L' '},   // $S - (space)
-			{L'$',L'$'},   // $$ - $ (dollar sign)
-		};
 
-		while (*Format)
+	} else { // default prompt
+		strExpandedFormatStr = "$p$# ";
+	}
+
+	constexpr wchar_t ChrFmt[][2]=
+	{
+		{L'A',L'&'},   // $A - & (Ampersand)
+		{L'B',L'|'},   // $B - | (pipe)
+		{L'C',L'('},   // $C - ( (Left parenthesis)
+		{L'F',L')'},   // $F - ) (Right parenthesis)
+		{L'G',L'>'},   // $G - > (greater-than sign)
+		{L'L',L'<'},   // $L - < (less-than sign)
+		{L'Q',L'='},   // $Q - = (equal sign)
+		{L'S',L' '},   // $S - (space)
+		{L'$',L'$'},   // $$ - $ (dollar sign)
+	};
+
+	const wchar_t *Format=strExpandedFormatStr;
+	while (*Format)
+	{
+		if (*Format==L'$')
 		{
-			if (*Format==L'$')
+			wchar_t Chr=Upper(*++Format);
+			size_t I;
+
+			for (I=0; I < ARRAYSIZE(ChrFmt); ++I)
 			{
-				wchar_t Chr=Upper(*++Format);
-				size_t I;
-
-				for (I=0; I < ARRAYSIZE(ChrFmt); ++I)
+				if (ChrFmt[I][0] == Chr)
 				{
-					if (ChrFmt[I][0] == Chr)
+					strDestStr += ChrFmt[I][1];
+					break;
+				}
+			}
+
+			if (I == ARRAYSIZE(ChrFmt))
+			{
+				switch (Chr)
+				{
+						/* эти не раелизованы
+						$E - Escape code (ASCII code 27)
+						$V - Windows XP version number
+						$_ - Carriage return and linefeed
+						$M - Отображение полного имени удаленного диска, связанного с именем текущего диска, или пустой строки, если текущий диск не является сетевым.
+						*/
+					case L'+': // $+  - Отображение нужного числа знаков плюс (+) в зависимости от текущей глубины стека каталогов PUSHD, по одному знаку на каждый сохраненный путь.
 					{
-						strDestStr += ChrFmt[I][1];
+						if (PushDirStackSize)
+						{
+							strDestStr.Append(L'+', PushDirStackSize);
+						}
+
+						break;
+					}
+					case L'H': // $H - Backspace (erases previous character)
+					{
+						if (!strDestStr.IsEmpty())
+							strDestStr.Truncate(strDestStr.GetLength()-1);
+
+						break;
+					}
+					case L'@': // $@xx - Admin
+					{
+						wchar_t lb=*++Format;
+						wchar_t rb=*++Format;
+						if ( Opt.IsUserAdmin )
+						{
+							strDestStr += lb;
+							strDestStr += Msg::ConfigCmdlinePromptFormatAdmin;
+							strDestStr += rb;
+						}
+						break;
+					}
+					case L'D': // $D - Current date
+					case L'T': // $T - Current time
+					{
+						FARString strDateTime;
+						MkStrFTime(strDateTime,(Chr==L'D'?L"%D":L"%T"));
+						strDestStr += strDateTime;
+						break;
+					}
+					case L'R': // $R - Current drive and path, always full
+					{
+						strDestStr += strCurDir;
+						break;
+					}
+					case L'P': // $P - Current drive and path, shortened home
+					{
+						static FARString s_Home = GetMyHome();
+						if (strCurDir.Begins(s_Home)) {
+							strDestStr += L'~';
+							strDestStr += strCurDir.CPtr() + s_Home.GetLength();
+						} else {
+							strDestStr += strCurDir;
+						}
+						break;
+					}
+					case L'#': // # or $ - depending of user root or not
+					{
+						strDestStr += Opt.IsUserAdmin ? L"#" : L"$";
 						break;
 					}
 				}
-
-				if (I == ARRAYSIZE(ChrFmt))
-				{
-					switch (Chr)
-					{
-							/* эти не раелизованы
-							$E - Escape code (ASCII code 27)
-							$V - Windows XP version number
-							$_ - Carriage return and linefeed
-							$M - Отображение полного имени удаленного диска, связанного с именем текущего диска, или пустой строки, если текущий диск не является сетевым.
-							*/
-						case L'+': // $+  - Отображение нужного числа знаков плюс (+) в зависимости от текущей глубины стека каталогов PUSHD, по одному знаку на каждый сохраненный путь.
-						{
-							if (PushDirStackSize)
-							{
-								strDestStr.Append(L'+', PushDirStackSize);
-							}
-
-							break;
-						}
-						case L'H': // $H - Backspace (erases previous character)
-						{
-							if (!strDestStr.IsEmpty())
-								strDestStr.Truncate(strDestStr.GetLength()-1);
-
-							break;
-						}
-						case L'@': // $@xx - Admin
-						{
-							wchar_t lb=*++Format;
-							wchar_t rb=*++Format;
-							if ( Opt.IsUserAdmin )
-							{
-								strDestStr += lb;
-								strDestStr += Msg::ConfigCmdlinePromptFormatAdmin;
-								strDestStr += rb;
-							}
-							break;
-						}
-						case L'D': // $D - Current date
-						case L'T': // $T - Current time
-						{
-							FARString strDateTime;
-							MkStrFTime(strDateTime,(Chr==L'D'?L"%D":L"%T"));
-							strDestStr += strDateTime;
-							break;
-						}
-						case L'P': // $P - Current drive and path
-						{
-							strDestStr += strCurDir;
-							break;
-						}
-						case L'#': // # or $ - depending of user root or not
-						{
-							strDestStr += Opt.IsUserAdmin ? L"#" : L"$";
-							break;
-						}
-					}
-				}
-
-				Format++;
 			}
-			else
-			{
-				strDestStr += *(Format++);
-			}
+
+			Format++;
 		}
-	}
-	else // default prompt = "$p$# "
-	{
-		strDestStr = strCurDir;
-		strDestStr += Opt.IsUserAdmin ? L"# " : L"$ ";
+		else
+		{
+			strDestStr += *(Format++);
+		}
 	}
 }
 

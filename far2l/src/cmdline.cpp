@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "keyboard.hpp"
 #include "vmenu.hpp"
+#include "CachedCreds.hpp"
 #include "exitcode.hpp"
 #include "vtlog.h"
 #include "vtshell.h"
@@ -718,10 +719,10 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 					}
 					case L'P': // $P - Current drive and path, shortened home
 					{
-						static FARString s_Home = GetMyHome();
-						if (strCurDir.Begins(s_Home)) {
+						const auto &strHome = CachedHomeDir();
+						if (strCurDir.Begins(strHome)) {
 							strDestStr += L'~';
-							strDestStr += strCurDir.CPtr() + s_Home.GetLength();
+							strDestStr += strCurDir.CPtr() + strHome.GetLength();
 						} else {
 							strDestStr += strCurDir;
 						}
@@ -730,6 +731,16 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 					case L'#': // # or $ - depending of user root or not
 					{
 						strDestStr += Opt.IsUserAdmin ? L"#" : L"$";
+						break;
+					}
+					case L'U': // User name
+					{
+						strDestStr += CachedUserName();
+						break;
+					}
+					case L'N': // Host name
+					{
+						strDestStr += CachedComputerName();
 						break;
 					}
 				}

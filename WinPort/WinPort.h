@@ -126,9 +126,6 @@ extern "C" {
 	WINPORT_DECL(SetLastError, VOID, (DWORD code));
 	WINPORT_DECL(GetCurrentProcessId, DWORD, ());
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ());
-	WINPORT_DECL(GetComputerName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));
-	WINPORT_DECL(GetUserName, BOOL, (LPWSTR lpBuffer, LPDWORD nSize));
-	
 
 //files
 

@@ -2454,6 +2454,8 @@ code words:
      $## - ## character if user is root, otherwise $
      $p - current drive and path, possible abbreviated
      $r - current drive and path, not abbreviated
+     $u - login user name
+     $n - computer name
      $q - the = character
      $s - space
      $t - current time in HH:MM:SS format

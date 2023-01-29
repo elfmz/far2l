@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "drivemix.hpp"
+#include "CachedCreds.hpp"
 #include "dirmix.hpp"
 #include "pathmix.hpp"
 #include "strmix.hpp"
@@ -133,28 +134,13 @@ void InfoList::DisplayObject()
 	/* #1 - computer name/user name */
 
 	{
-		FARString strComputerName, strUserName;
-		DWORD dwSize = 256; //MAX_COMPUTERNAME_LENGTH+1;
-		wchar_t *ComputerName = strComputerName.GetBuffer(dwSize);
-//		if (Opt.InfoPanel.ComputerNameFormat == ComputerNamePhysicalNetBIOS || !GetComputerNameEx(Opt.InfoPanel.ComputerNameFormat, ComputerName, &dwSize))
-		{
-			dwSize = MAX_COMPUTERNAME_LENGTH+1;
-			WINPORT(GetComputerName)(ComputerName, &dwSize);  // retrieves only the NetBIOS name of the local computer
-		}
-		strComputerName.ReleaseBuffer();
-
 		GotoXY(X1+2,CurY++);
 		PrintText(Msg::InfoCompName);
-		PrintInfo(strComputerName);
-
-		dwSize = 256;
-		wchar_t *UserName = strUserName.GetBuffer(dwSize);
-		WINPORT(GetUserName)(UserName, &dwSize);
-		strUserName.ReleaseBuffer();
+		PrintInfo(CachedComputerName());
 
 		GotoXY(X1+2,CurY++);
 		PrintText(Msg::InfoUserName);
-		PrintInfo(strUserName);
+		PrintInfo(CachedUserName());
 	}
 
 	/* #2 - disk info */

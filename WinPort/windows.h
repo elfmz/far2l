@@ -70,9 +70,6 @@
 #define    SetLastError			WINPORT(SetLastError)
 #define    GetCurrentProcessId			WINPORT(GetCurrentProcessId)
 #define    GetDoubleClickTime			WINPORT(GetDoubleClickTime)
-#define    GetComputerName			WINPORT(GetComputerName)
-#define    GetUserName			WINPORT(GetUserName)
-	
 
 //files
 

@@ -2577,7 +2577,7 @@ upd:"Use shell"
 
 ConfigCmdlineUsePromptFormat
 "Установить &формат командной строки"
-"Set command line &prompt format"
+"Set &command line prompt format"
 "Nastavit formát &příkazového řádku"
 "&Promptformat der Kommandozeile"
 "Parancssori &prompt formátuma"

@@ -163,6 +163,7 @@ src/mix/FSFileFlags.cpp
 src/mix/StrCells.cpp
 src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
+src/mix/CachedCreds.cpp
 )
 
 # Set target names for the executables

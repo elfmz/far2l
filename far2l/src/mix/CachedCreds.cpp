@@ -10,7 +10,7 @@ static std::string UncachedComputerName()
 {
 	char buf[0x100] = {};
 	if (gethostname(&buf[0], ARRAYSIZE(buf) - 1) == -1) {
-		perror("GetComputerNameUncached - gethostname");
+		perror("CachedCreds - gethostname");
 		return std::string();
 	}
 	return buf;
@@ -20,7 +20,7 @@ static std::string UncachedUserName()
 {
 	struct passwd *pw = getpwuid(getuid());
 	if (!pw || !pw->pw_name) {
-		perror("GetUserNameUncached - getpwuid");
+		perror("CachedCreds - getpwuid");
 		return std::string();
 	}
 	return pw->pw_name;

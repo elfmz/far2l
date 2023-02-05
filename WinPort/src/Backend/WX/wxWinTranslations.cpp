@@ -1,7 +1,7 @@
 #include "wxWinTranslations.h"
 #include "KeyFileHelper.h"
 #include "utils.h"
-#include "WinCompat.h"
+#include "WinPort.h"
 #include "Backend.h"
 
 #include <wx/wx.h>
@@ -36,7 +36,6 @@
 
 
 extern bool g_broadway;
-extern bool g_wayland;
 extern bool g_remote;
 
 WinPortPalette g_wx_palette;
@@ -406,6 +405,8 @@ bool KeyTracker::RightControl() const
 
 //////////////////////
 
+static DWORD s_cached_led_state = 0;
+
 wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker)
 {
 	auto key_code = event.GetKeyCode();
@@ -449,19 +450,12 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
-	
-	// Getting LED modifiers not supported on broadway and wayland, also it requires
-	// 3 server roundtrips that is too time-expensive for remotely forwarded connections.
-	if (!g_broadway && !g_wayland && !g_remote) {
-		if (wxGetKeyState(WXK_NUMLOCK))
-			Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
-		
-		if (wxGetKeyState(WXK_SCROLL))
-			Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
-		
-		if (wxGetKeyState(WXK_CAPITAL))
-			Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
+
+	if (KeyDown || WINPORT(GetTickCount)() - key_tracker.LastKeydownTicks() > 500) {
+		s_cached_led_state = WxKeyboardLedsState();
 	}
+
+	Event.KeyEvent.dwControlKeyState|= s_cached_led_state;
 
 	// Keep in mind that key composing combinations with AltGr+.. arrive as keydown of Ctrl+Alt+..
 	// so if event.ControlDown() and event.AltDown() are together then don't believe them and
@@ -486,3 +480,69 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 	}
 }
+
+//////////////
+
+static unsigned int s_wx_assert_cached_bits = 0;
+static unsigned int s_wx_assert_cache_bit = 0;
+static unsigned int s_remote_time_avg = 0;
+
+#define REMOTE_SLOWNESS_TRSH_MSEC		50
+
+DWORD WxKeyboardLedsState()
+{
+	// Getting LED modifiers requires 3 server roundtrips that
+	// can be too time-expensive for remotely forwarded connections.
+	clock_t stopwatch = 0;
+	if (g_remote) {
+		if (s_remote_time_avg > REMOTE_SLOWNESS_TRSH_MSEC) {
+			return 0;
+		}
+		stopwatch = GetProcessUptimeMSec();
+	}
+
+	DWORD out = 0;
+	// Old non-GTK wxWidgets had missing support for this keys, and attempt
+	// to use wxGetKeyState with unsupported key causes assert callback
+	// to be invoked several times on each key event thats not good.
+	// Avoid asserts all the time by 'caching' unsupported state.
+	s_wx_assert_cache_bit = 1;
+	if ((s_wx_assert_cached_bits & 1) == 0 && wxGetKeyState(WXK_NUMLOCK)) {
+		out|= NUMLOCK_ON;
+	}
+
+	s_wx_assert_cache_bit = 2;
+	if ((s_wx_assert_cached_bits & 2) == 0 && wxGetKeyState(WXK_SCROLL)) {
+		out|= SCROLLLOCK_ON;
+	}
+
+	s_wx_assert_cache_bit = 4;
+	if ((s_wx_assert_cached_bits & 4) == 0 && wxGetKeyState(WXK_CAPITAL)) {
+		out|= CAPSLOCK_ON;
+	}
+
+	s_wx_assert_cache_bit = 0;
+
+	if (g_remote) {
+		s_remote_time_avg+= (unsigned int)(GetProcessUptimeMSec() - stopwatch);
+		s_remote_time_avg/= 2;
+		if (s_remote_time_avg > REMOTE_SLOWNESS_TRSH_MSEC) {
+			fprintf(stderr, "%s: remote is slow (%u)\n", __FUNCTION__, s_remote_time_avg);
+		}
+	}
+
+	return out;
+}
+
+void WinPortWxAssertHandler(const wxString& file, int line, const wxString& func, const wxString& cond, const wxString& msg)
+{
+	s_wx_assert_cached_bits|= s_wx_assert_cache_bit;
+
+	fprintf(stderr, "%s: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
+			__FUNCTION__,
+			static_cast<const wchar_t*>(file.wc_str()), line,
+			static_cast<const wchar_t*>(func.wc_str()),
+			static_cast<const wchar_t*>(cond.wc_str()),
+			static_cast<const wchar_t*>(msg.wc_str()));
+}
+

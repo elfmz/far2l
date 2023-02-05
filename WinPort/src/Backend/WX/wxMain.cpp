@@ -68,17 +68,6 @@ wxThread::ExitCode WinPortAppThread::Entry()
 
 ///////////
 
-static void WinPortWxAssertHandler(const wxString& file,
-		int line, const wxString& func,
-		const wxString& cond, const wxString& msg)
-{
-	fprintf(stderr, "WinPortWxAssertHandler: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
-			static_cast<const wchar_t*>(file.wc_str()), line,
-			static_cast<const wchar_t*>(func.wc_str()),
-			static_cast<const wchar_t*>(cond.wc_str()),
-			static_cast<const wchar_t*>(msg.wc_str()));
-}
-
 static void DetectHostAbilities()
 {
 	const char *gdk_backend = getenv("GDK_BACKEND");
@@ -629,12 +618,10 @@ void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 		case 11: ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT; break;
 	}
 
-	if (wxGetKeyState(WXK_NUMLOCK)) ir.Event.KeyEvent.dwControlKeyState|= NUMLOCK_ON;
-	if (wxGetKeyState(WXK_SCROLL)) ir.Event.KeyEvent.dwControlKeyState|= SCROLLLOCK_ON;
-	if (wxGetKeyState(WXK_CAPITAL)) ir.Event.KeyEvent.dwControlKeyState|= CAPSLOCK_ON;
 	if (wxGetKeyState(WXK_SHIFT)) ir.Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
 	if (wxGetKeyState(WXK_CONTROL)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 	if (wxGetKeyState(WXK_ALT)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
+	ir.Event.KeyEvent.dwControlKeyState|= WxKeyboardLedsState();
 
 	fprintf(stderr, "%s: F%d dwControlKeyState=0x%x\n", __FUNCTION__,
 		index + 1, ir.Event.KeyEvent.dwControlKeyState);

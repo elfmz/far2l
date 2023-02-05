@@ -1069,14 +1069,16 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 #ifdef __APPLE__
 	if (!event.RawControlDown() && !event.ShiftDown() && !event.MetaDown() && !event.AltDown() && event.CmdDown()
-		&& (uni == 'H' || uni == 'Q')) {
+		&& (uni == 'H' || uni == 'Q' || uni == 'M') ) {
 		fprintf(stderr, " Cmd+%lc\n", uni);
 		ResetInputState();
 		event.Skip();
 		_stolen_key = uni;
-		if (uni == 'Q') {
+		if (uni == 'M') {
+			_frame->Iconize();
+		} else if (uni == 'Q') {
 			_frame->Close();
-		} else {
+		} else { // 'H'
 			MacHide();
 			//_frame->Hide();
 		}

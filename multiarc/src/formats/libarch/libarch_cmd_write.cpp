@@ -202,16 +202,9 @@ class LIBARCH_Add
 		archive_entry_set_pathname(entry, entry_path.c_str());
 		archive_entry_set_size(entry, s.st_size);
 		archive_entry_set_perm(entry, s.st_mode & 07777);
-
-#ifdef __APPLE__
-		archive_entry_set_ctime(entry, s.st_ctimespec.tv_sec, s.st_ctimespec.tv_nsec);
-		archive_entry_set_atime(entry, s.st_atimespec.tv_sec, s.st_atimespec.tv_nsec);
-		archive_entry_set_mtime(entry, s.st_mtimespec.tv_sec, s.st_mtimespec.tv_nsec);
-#else
 		archive_entry_set_ctime(entry, s.st_ctim.tv_sec, s.st_ctim.tv_nsec);
 		archive_entry_set_atime(entry, s.st_atim.tv_sec, s.st_atim.tv_nsec);
 		archive_entry_set_mtime(entry, s.st_mtim.tv_sec, s.st_mtim.tv_nsec);
-#endif
 		off_t data_len = 0;
 
 		if (S_ISLNK(s.st_mode)) {

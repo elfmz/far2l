@@ -76,13 +76,8 @@ void FilesSuggestor::Suggest(const std::string &filter, std::vector<Suggestion> 
 		std::lock_guard<std::mutex> lock(_mtx);
 		need_reenumerate = (dir_path != _dir_path
 			  || dir_st.st_dev != _dir_st.st_dev || dir_st.st_ino != _dir_st.st_ino
-#ifdef __APPLE__
-			  || memcmp(&dir_st.st_mtimespec, &_dir_st.st_mtimespec, sizeof(dir_st.st_mtimespec)) != 0
-			  || memcmp(&dir_st.st_ctimespec, &_dir_st.st_ctimespec, sizeof(dir_st.st_ctimespec)) != 0
-#else
 			  || memcmp(&dir_st.st_mtim, &_dir_st.st_mtim, sizeof(dir_st.st_mtim)) != 0
 			  || memcmp(&dir_st.st_ctim, &_dir_st.st_ctim, sizeof(dir_st.st_ctim)) != 0
-#endif
 			);
 
 		if (need_reenumerate) {

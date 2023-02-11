@@ -604,9 +604,11 @@ void TreeList::SaveTreeFile()
 
 int TreeList::GetCacheTreeName(const wchar_t *Root, FARString &strName,int CreateDir)
 {
-	struct statvfs svfs = {};
+	unsigned long long fsid = 0;
+	struct statfs sfs = {};
+	memcpy(&fsid, &sfs.f_fsid, std::min(sizeof(fsid), sizeof(sfs.f_fsid)));
 
-	if (sdc_statvfs(Wide2MB(Root).c_str(), &svfs) != 0) {
+	if (sdc_statfs(Wide2MB(Root).c_str(), &sfs) != 0) {
 		return FALSE;
 	}
 
@@ -620,7 +622,7 @@ int TreeList::GetCacheTreeName(const wchar_t *Root, FARString &strName,int Creat
 		apiSetFileAttributes(strFolderName,Opt.Tree.TreeFileAttr);
 	}
 
-	strName.Format(L"%ls/%lx", strFolderName.CPtr(), (unsigned long)svfs.f_fsid);
+	strName.Format(L"%ls/%llx", strFolderName.CPtr(), fsid);
 	return TRUE;
 }
 

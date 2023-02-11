@@ -123,33 +123,33 @@ struct Mountpoints : std::vector<Mountpoint>
 
 static std::atomic<unsigned int> s_mount_info_threads{0};
 
-class ThreadedStatVFS : Threaded
+class ThreadedStatFS : Threaded
 {
 	std::shared_ptr<Mountpoints> _mps;
 	size_t _mpi;
 
 	void *ThreadProc()
 	{
-		struct statvfs s = {};
-		int r = statvfs((*_mps)[_mpi].path.c_str(), &s);
+		struct statfs s = {};
+		int r = statfs((*_mps)[_mpi].path.c_str(), &s);
 		if (r == 0) {
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_frsize;
 			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_frsize;
 			(*_mps)[_mpi].freee = ((unsigned long long)s.f_bfree) * s.f_frsize;
-			(*_mps)[_mpi].read_only = (s.f_flag & ST_RDONLY) != 0;
+			(*_mps)[_mpi].read_only = (s.f_flags & ST_RDONLY) != 0;
 			(*_mps)[_mpi].bad = false;
 		}
 		return nullptr;
 	}
 
 public:
-	ThreadedStatVFS(std::shared_ptr<Mountpoints> &mps, size_t mpi)
+	ThreadedStatFS(std::shared_ptr<Mountpoints> &mps, size_t mpi)
 		: _mps(mps), _mpi(mpi)
 	{
 		++s_mount_info_threads;
 	}
 
-	virtual ~ThreadedStatVFS()
+	virtual ~ThreadedStatFS()
 	{
 		--s_mount_info_threads;
 		std::unique_lock<std::mutex> lock(_mps->pending.mtx);
@@ -163,7 +163,7 @@ public:
 	void Start()
 	{
 		if (!StartThread(true)) {
-			fprintf(stderr, "ThreadedStatVFS: can't start thread\n");
+			fprintf(stderr, "ThreadedStatFS: can't start thread\n");
 			delete this;
 		}
 	}
@@ -285,7 +285,7 @@ MountInfo::MountInfo(bool for_location_menu)
 						false,
 						false,
 						((unsigned long long)fs.f_blocks) * fs.f_bsize, // unreliable due to MNT_NOWAIT
-						((unsigned long long)fs.f_bavail) * fs.f_bsize, // ThreadedStatVFS will set true nums
+						((unsigned long long)fs.f_bavail) * fs.f_bsize, // ThreadedStatFS will set true nums
 						((unsigned long long)fs.f_bfree) * fs.f_bsize  // ...
 					});
 				}
@@ -306,7 +306,7 @@ MountInfo::MountInfo(bool for_location_menu)
 		for (size_t i = 0; i < _mountpoints->size(); ++i) {
 			try {
 				(*_mountpoints)[i].bad = true;
-				(new ThreadedStatVFS(_mountpoints, i))->Start();
+				(new ThreadedStatFS(_mountpoints, i))->Start();
 				std::unique_lock<std::mutex> lock(_mountpoints->pending.mtx);
 				_mountpoints->pending.cnt++;
 

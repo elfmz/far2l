@@ -112,7 +112,8 @@ void InfoList::DisplayObject()
 	Panel *AnotherPanel;
 //	FARString strDriveRoot;
 	FARString strVolumeName, strFileSystemName;
-	DWORD MaxNameLength,FileSystemFlags,VolumeNumber;
+	DWORD MaxNameLength,FileSystemFlags;
+	DWORD64 VolumeNumber;
 	FARString strDiskNumber;
 	CloseFile();
 
@@ -163,7 +164,7 @@ void InfoList::DisplayObject()
 //		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 		strTitle=FARString(L" ")+L" ("+strFileSystemName+L") ";
 
-		strDiskNumber.Format(L"%04X-%04X",VolumeNumber>>16,VolumeNumber & 0xffff);
+		strDiskNumber.Format(L"%08X-%08X", (DWORD)(VolumeNumber >> 32), (DWORD)(VolumeNumber & 0xffffffff));
 	}
 	else // Error!
 		strTitle = strCurDir;//strDriveRoot;

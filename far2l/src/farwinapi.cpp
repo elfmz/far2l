@@ -478,24 +478,27 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 BOOL apiGetVolumeInformation(
     const wchar_t *lpwszRootPathName,
     FARString *pVolumeName,
-    LPDWORD lpVolumeSerialNumber,
+    DWORD64 *lpVolumeSerialNumber,
     LPDWORD lpMaximumComponentLength,
     LPDWORD lpFileSystemFlags,
     FARString *pFileSystemName
 )
 {
-	struct statvfs svfs = {};
+	struct statfs sfs = {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
-	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
+	if (sdc_statfs(path.c_str(), &sfs) != 0) {
 		return FALSE;
 	}
 
 	if (lpMaximumComponentLength)
-		*lpMaximumComponentLength = svfs.f_namemax;
-	if (lpVolumeSerialNumber)
-		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
+		*lpMaximumComponentLength = sfs.f_namelen;
+	if (lpVolumeSerialNumber) {
+		*lpVolumeSerialNumber = 0;
+		memcpy(lpVolumeSerialNumber, &sfs.f_fsid,
+			std::min(sizeof(*lpVolumeSerialNumber), sizeof(sfs.f_fsid)));
+	}
 	if (lpFileSystemFlags)
-		*lpFileSystemFlags = 0;//TODO: svfs.f_flags;
+		*lpFileSystemFlags = 0;//TODO: sfs.f_flags;
 
 	if (pVolumeName) {
 		pVolumeName->Clear();
@@ -647,8 +650,8 @@ int apiGetFileTypeByName(const wchar_t *Name)
 
 BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree, uint64_t *UserFree)
 {
-	struct statvfs s = {};
-	if (statvfs(Wide2MB(Path).c_str(), &s) != 0) {
+	struct statfs s = {};
+	if (statfs(Wide2MB(Path).c_str(), &s) != 0) {
 		return FALSE;
 	}
 	*TotalSize = *TotalFree = *UserFree = s.f_frsize;

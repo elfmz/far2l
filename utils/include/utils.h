@@ -17,6 +17,12 @@
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
 
+#ifdef __APPLE__
+# define st_mtim st_mtimespec
+# define st_ctim st_ctimespec
+# define st_atim st_atimespec
+#endif
+
 template <class C> static size_t tzlen(const C *ptz)
 {
 	const C *etz;

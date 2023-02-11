@@ -651,7 +651,7 @@ BOOL apiGetDiskSize(const wchar_t *Path,uint64_t *TotalSize, uint64_t *TotalFree
 	if (statfs(Wide2MB(Path).c_str(), &s) != 0) {
 		return FALSE;
 	}
-	*TotalSize = *TotalFree = *UserFree = s.f_frsize;
+	*TotalSize = *TotalFree = *UserFree = s.f_bsize; //f_frsize
 	*TotalSize*= s.f_blocks;
 	*TotalFree*= s.f_bfree;
 	*UserFree*= s.f_bavail;

@@ -133,9 +133,9 @@ class ThreadedStatFS : Threaded
 		struct statfs s = {};
 		int r = statfs((*_mps)[_mpi].path.c_str(), &s);
 		if (r == 0) {
-			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_frsize;
-			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_frsize;
-			(*_mps)[_mpi].freee = ((unsigned long long)s.f_bfree) * s.f_frsize;
+			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_bsize; //f_frsize;
+			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_bsize; //f_frsize;
+			(*_mps)[_mpi].freee = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].read_only = (s.f_flags & ST_RDONLY) != 0;
 			(*_mps)[_mpi].bad = false;
 		}
@@ -359,11 +359,7 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 
     if (out.empty()) {
 		struct statfs sfs{};
-#if !defined(__FreeBSD__) && !defined(__CYGWIN__)
 		if (sdc_statfs(path.c_str(), &sfs) == 0) {
-#else
-		if (statfs(path.c_str(), &sfs) == 0) {
-#endif
 #ifdef __APPLE__
 		out = sfs.f_fstypename;
 		if (out.empty())

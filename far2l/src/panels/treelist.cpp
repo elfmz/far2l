@@ -33,6 +33,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+# include <sys/mount.h>
+#elif !defined(__HAIKU__)
+# include <sys/statfs.h>
+#endif
 
 #include "treelist.hpp"
 #include "keyboard.hpp"

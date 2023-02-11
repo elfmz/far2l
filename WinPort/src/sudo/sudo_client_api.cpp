@@ -7,6 +7,12 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+# include <sys/mount.h>
+#elif !defined(__HAIKU__)
+# include <sys/statfs.h>
+#endif
 #include <sys/time.h>
 #include <sys/types.h>
 #ifndef __FreeBSD__
@@ -269,7 +275,6 @@ template <class STAT_STRUCT>
 		return -1;
 	}
 }
-#if !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
 {
 	int saved_errno = errno;
@@ -283,7 +288,6 @@ extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *p
 
 	return r;
 }
-#endif
 extern "C"  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf)
 {
 	int saved_errno = errno;

@@ -43,9 +43,7 @@ extern "C" {
  __attribute__ ((visibility("default"))) ssize_t sdc_read(int fd, void *buf, size_t count);
  __attribute__ ((visibility("default"))) ssize_t sdc_pwrite(int fd, const void *buf, size_t count, off_t offset);
  __attribute__ ((visibility("default"))) ssize_t sdc_pread(int fd, void *buf, size_t count, off_t offset);
-#if  !defined(__FreeBSD__) && !defined(__HAIKU__)
  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf);
-#endif
  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf);
  __attribute__ ((visibility("default"))) int sdc_stat(const char *path, struct stat *buf);
  __attribute__ ((visibility("default"))) int sdc_lstat(const char *path, struct stat *buf);

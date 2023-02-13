@@ -1357,8 +1357,8 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 			ir.Event.MouseEvent.dwEventFlags|= MOUSE_HWHEELED;
 		else
 			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-		if (event.GetWheelRotation() > 0)
-			ir.Event.MouseEvent.dwButtonState|= 0x00010000;
+		ir.Event.MouseEvent.dwButtonState|= (event.GetWheelRotation() > 0) ? 0x00010000 : 0xffff0000;
+
 	} else if ( event.ButtonDClick() ) {
 		
 		if (event.ButtonDClick(wxMOUSE_BTN_LEFT))

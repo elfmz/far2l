@@ -54,9 +54,10 @@ ArcPlugins::ArcPlugins(const char *ModuleName)
 	AddPluginItem(TARGZ_IsArchive, TARGZ_OpenArchive, TARGZ_GetArcItem, NULL,
 		TARGZ_CloseArchive, TARGZ_GetFormatName, TARGZ_GetDefaultCommands, TARGZ_SetFarInfo, TARGZ_GetSFXPos);
 #endif
-
+#ifdef HAVE_UNRAR
 	AddPluginItem(RAR_IsArchive, RAR_OpenArchive, RAR_GetArcItem, NULL,
 		RAR_CloseArchive, RAR_GetFormatName, RAR_GetDefaultCommands, RAR_SetFarInfo, RAR_GetSFXPos);
+#endif
 
 	AddPluginItem(ZIP_IsArchive, ZIP_OpenArchive, ZIP_GetArcItem, NULL,
 		ZIP_CloseArchive, ZIP_GetFormatName, ZIP_GetDefaultCommands, NULL, ZIP_GetSFXPos);

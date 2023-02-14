@@ -39,6 +39,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * libnfs-dev (needed for NetRocks/NFS)
 * libneon27-dev (or later, needed for NetRocks/WebDAV)
 * libarchive-dev (needed for better archives support in multiarc)
+* libunrar-dev (optionally needed for RAR archives support in multiarc - see UNRAR command line option)
 * libpcre3-dev (or in older distributives - libpcre2-dev) (needed for custom archives support in multiarc)
 * cmake ( >= 3.2.2 )
 * g++
@@ -78,13 +79,18 @@ cmake --build .
 
 ##### Additional build configuration options:
 
-To build without WX backend (console version only): change -DUSEWX=yes to -DUSEWX=no also in this case dont need to install libwxgtk\*-dev package
+To build without WX backend (console version only): change `-DUSEWX=yes` to `-DUSEWX=no` also in this case dont need to install libwxgtk\*-dev package
 
-To force-disable TTY|X and TTY|Xi backends: add argument -DTTYX=no; to disable only TTY|Xi - add argument -DTTYXI=no
+To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`
 
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
 
-To build with Python plugin: add argument -DPYTHON=yes
+To build with Python plugin: add argument `-DPYTHON=yes`
+
+To control how RAR archives will be handled in multiarc:
+ `-DUNRAR=bundled` (default) use bundled sources found in multiarc/src/formats/rar/unrar
+ `-DUNRAR=lib` use libunrar and unrar utility, also build requires libunrar-dev to be installed
+ `-DUNRAR=NO` dont use special unrar code, rar archives will be handled by libarchive unless its also disabled
 
 There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
 

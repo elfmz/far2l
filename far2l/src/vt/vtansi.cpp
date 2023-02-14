@@ -1426,7 +1426,7 @@ void ParseAndPrintString( HANDLE hDev,
 				os_cmd_arg.resize(os_cmd_arg.size() - 1);
 				done = true;
 			} else try {
-				os_cmd_arg+= *s;
+				Wide2MB(s, 1, os_cmd_arg, true);
 
 			} catch (std::exception &e) {
 				os_cmd_arg.clear();

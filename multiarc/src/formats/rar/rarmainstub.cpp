@@ -114,11 +114,6 @@ int rar_main(int argc, char *argv[])
 			la_args.Add(argv[i]);
 		}
 
-	//	la_args.emplace_back(NULL);
-		for (const auto &arg : la_args) {
-			fprintf(stderr, "'%s' ", arg);
-		}
-		fprintf(stderr, "\n");
 		return libarch_main((int)la_args.size(), la_args.data());
 
 	} catch (std::exception &e) {

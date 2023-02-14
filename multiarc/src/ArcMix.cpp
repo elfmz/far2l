@@ -101,7 +101,9 @@ const char *GetMsg(int MsgId)
 }
 
 
+#ifdef HAVE_UNRAR
 int rar_main(int argc, char *argv[]);
+#endif
 extern "C" int sevenz_main(int argc, char *argv[]);
 extern "C" int ha_main(int argc, char *argv[]);
 
@@ -115,8 +117,13 @@ SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 		return -1;
 
 	int r = -2;
-	if (strcmp(argv[0], "rar")==0) {
+
+	if (strcmp(argv[0], "7z")==0) {
+		r = sevenz_main(argc, &argv[0]);
+#ifdef HAVE_UNRAR
+	} else if (strcmp(argv[0], "rar")==0) {
 		r = rar_main(argc, &argv[0]);
+#endif
 	} else if (strcmp(argv[0], "7z")==0) {
 		r = sevenz_main(argc, &argv[0]);
 	} else if (strcmp(argv[0], "ha")==0) {

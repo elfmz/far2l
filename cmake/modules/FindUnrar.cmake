@@ -1,0 +1,30 @@
+# - Find unrar
+# Find the native UNRAR includes and library
+#
+#  UNRAR_INCLUDE_DIR - where to find rar.hpp, etc.
+#  UNRAR_LIBRARIES   - List of libraries when using unrar.
+#  UNRAR_FOUND       - True if unrar found.
+
+
+IF (UNRAR_INCLUDE_DIR)
+  # Already in cache, be silent
+  SET(UNRAR_FIND_QUIETLY TRUE)
+ENDIF (UNRAR_INCLUDE_DIR)
+
+FIND_PATH(UNRAR_INCLUDE_DIR rar.hpp PATH_SUFFIXES unrar)
+
+SET(UNRAR_NAMES unrar)
+FIND_LIBRARY(UNRAR_LIBRARY NAMES ${UNRAR_NAMES} )
+
+# handle the QUIETLY and REQUIRED arguments and set UNRAR_FOUND to TRUE if 
+# all listed variables are TRUE
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Unrar DEFAULT_MSG UNRAR_LIBRARY UNRAR_INCLUDE_DIR)
+
+IF(UNRAR_FOUND)
+  SET( UNRAR_LIBRARIES ${UNRAR_LIBRARY} )
+ELSE(UNRAR_FOUND)
+  SET( UNRAR_LIBRARIES )
+ENDIF(UNRAR_FOUND)
+
+MARK_AS_ADVANCED( UNRAR_LIBRARY UNRAR_INCLUDE_DIR )

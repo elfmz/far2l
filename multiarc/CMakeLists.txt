@@ -12,65 +12,12 @@ set(SOURCES
     src/global.cpp
     src/arcread.cpp
     src/arccmd.cpp
-    src/formats/rar/rar.cpp
     src/formats/ha/ha.cpp
     src/formats/arj/arj.cpp
     src/formats/ace/ace.cpp
     src/formats/arc/arc.cpp
     src/formats/zip/zip.cpp
     src/formats/lzh/lzh.cpp
-    src/formats/rar/unrar/scantree.cpp
-    src/formats/rar/unrar/sha1.cpp
-    src/formats/rar/unrar/threadpool.cpp
-    src/formats/rar/unrar/crc.cpp
-    src/formats/rar/unrar/hash.cpp
-    src/formats/rar/unrar/strlist.cpp
-    src/formats/rar/unrar/rs16.cpp
-    src/formats/rar/unrar/resource.cpp
-    src/formats/rar/unrar/consio.cpp
-    src/formats/rar/unrar/secpassword.cpp
-    src/formats/rar/unrar/qopen.cpp
-    src/formats/rar/unrar/recvol.cpp
-    src/formats/rar/unrar/rijndael.cpp
-    src/formats/rar/unrar/timefn.cpp
-    src/formats/rar/unrar/encname.cpp
-    src/formats/rar/unrar/rawread.cpp
-    src/formats/rar/unrar/file.cpp
-    src/formats/rar/unrar/strfn.cpp
-    src/formats/rar/unrar/sha256.cpp
-    src/formats/rar/unrar/filefn.cpp
-    src/formats/rar/unrar/filcreat.cpp
-    src/formats/rar/unrar/headers.cpp
-    src/formats/rar/unrar/blake2s.cpp
-    src/formats/rar/unrar/options.cpp
-    src/formats/rar/unrar/volume.cpp
-    src/formats/rar/unrar/system.cpp
-    src/formats/rar/unrar/crypt.cpp
-    src/formats/rar/unrar/rar.cpp
-    src/formats/rar/unrar/cmddata.cpp
-    src/formats/rar/unrar/extinfo.cpp
-    src/formats/rar/unrar/filestr.cpp
-    src/formats/rar/unrar/ui.cpp
-    src/formats/rar/unrar/list.cpp
-    src/formats/rar/unrar/find.cpp
-    src/formats/rar/unrar/smallfn.cpp
-    src/formats/rar/unrar/unicode.cpp
-    src/formats/rar/unrar/pathfn.cpp
-    src/formats/rar/unrar/global.cpp
-    src/formats/rar/unrar/rarvm.cpp
-    src/formats/rar/unrar/getbits.cpp
-    src/formats/rar/unrar/rs.cpp
-    src/formats/rar/unrar/errhnd.cpp
-    src/formats/rar/unrar/archive.cpp
-    src/formats/rar/unrar/dll.cpp
-    src/formats/rar/unrar/extract.cpp
-    src/formats/rar/unrar/match.cpp
-    src/formats/rar/unrar/unpack.cpp
-    src/formats/rar/unrar/arcread.cpp
-    src/formats/rar/unrar/rdwrfn.cpp
-    src/formats/rar/unrar/rarpch.cpp
-
-
 
         src/formats/7z/7z.cpp
         src/formats/7z/7zMain.c
@@ -138,6 +85,69 @@ set(SOURCES
         src/formats/ha/ha/swdict.c
 )
 
+if("${UNRAR}" STREQUAL "lib")
+	set(SOURCES
+        ${SOURCES}
+        src/formats/rar/rar.cpp
+        src/formats/rar/rarmainstub.cpp
+    )
+elseif(UNRAR)
+	set(SOURCES
+        ${SOURCES}
+        src/formats/rar/rar.cpp
+        src/formats/rar/unrar/scantree.cpp
+        src/formats/rar/unrar/sha1.cpp
+        src/formats/rar/unrar/threadpool.cpp
+        src/formats/rar/unrar/crc.cpp
+        src/formats/rar/unrar/hash.cpp
+        src/formats/rar/unrar/strlist.cpp
+        src/formats/rar/unrar/rs16.cpp
+        src/formats/rar/unrar/resource.cpp
+        src/formats/rar/unrar/consio.cpp
+        src/formats/rar/unrar/secpassword.cpp
+        src/formats/rar/unrar/qopen.cpp
+        src/formats/rar/unrar/recvol.cpp
+        src/formats/rar/unrar/rijndael.cpp
+        src/formats/rar/unrar/timefn.cpp
+        src/formats/rar/unrar/encname.cpp
+        src/formats/rar/unrar/rawread.cpp
+        src/formats/rar/unrar/file.cpp
+        src/formats/rar/unrar/strfn.cpp
+        src/formats/rar/unrar/sha256.cpp
+        src/formats/rar/unrar/filefn.cpp
+        src/formats/rar/unrar/filcreat.cpp
+        src/formats/rar/unrar/headers.cpp
+        src/formats/rar/unrar/blake2s.cpp
+        src/formats/rar/unrar/options.cpp
+        src/formats/rar/unrar/volume.cpp
+        src/formats/rar/unrar/system.cpp
+        src/formats/rar/unrar/crypt.cpp
+        src/formats/rar/unrar/cmddata.cpp
+        src/formats/rar/unrar/extinfo.cpp
+        src/formats/rar/unrar/filestr.cpp
+        src/formats/rar/unrar/ui.cpp
+        src/formats/rar/unrar/list.cpp
+        src/formats/rar/unrar/find.cpp
+        src/formats/rar/unrar/smallfn.cpp
+        src/formats/rar/unrar/unicode.cpp
+        src/formats/rar/unrar/pathfn.cpp
+        src/formats/rar/unrar/global.cpp
+        src/formats/rar/unrar/rarvm.cpp
+        src/formats/rar/unrar/getbits.cpp
+        src/formats/rar/unrar/rs.cpp
+        src/formats/rar/unrar/errhnd.cpp
+        src/formats/rar/unrar/archive.cpp
+        src/formats/rar/unrar/dll.cpp
+        src/formats/rar/unrar/extract.cpp
+        src/formats/rar/unrar/match.cpp
+        src/formats/rar/unrar/unpack.cpp
+        src/formats/rar/unrar/arcread.cpp
+        src/formats/rar/unrar/rdwrfn.cpp
+        src/formats/rar/unrar/rarpch.cpp
+        src/formats/rar/unrar/rar.cpp
+    )
+endif()
+
 if(PCRE_FOUND)
     set(SOURCES
         ${SOURCES}
@@ -165,11 +175,25 @@ endif()
 
 add_library (multiarc MODULE ${SOURCES})
 
-target_compile_definitions(multiarc PRIVATE -DRARDLL -D_7ZIP_ST -D_7ZIP_PPMD_SUPPPORT)
+target_compile_definitions(multiarc PRIVATE -D_7ZIP_ST -D_7ZIP_PPMD_SUPPPORT)
 
 target_link_libraries(multiarc utils far2l)
 
-target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
+if(NOT UNRAR)
+	message(STATUS "${ColorRed}rar archives support disabled due to UNRAR=${UNRAR}.${ColorNormal}")
+
+elseif("${UNRAR}" STREQUAL "lib")
+	message(STATUS "Using system unrar - will need libunrar and unrar tool.")
+	find_package(Unrar REQUIRED)
+	target_include_directories(multiarc PRIVATE ${UNRAR_INCLUDE_DIR})
+	target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
+    target_link_libraries(multiarc ${UNRAR_LIBRARIES})
+else()
+	message(STATUS "Using bundled unrar sources")
+	target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
+	target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
+endif()
+
 target_include_directories(multiarc PRIVATE src)
 target_include_directories(multiarc PRIVATE src/libpcre)
 target_include_directories(multiarc PRIVATE ../WinPort)

@@ -304,15 +304,31 @@ int WINAPI farExecuteA(const char *CmdStr, unsigned int ExecFlags)
 
 int WINAPI farExecuteLibraryA(const char *Library, const char *Symbol, const char *CmdStr, unsigned int ExecFlags)
 {
+	char cd_prev[MAX_PATH + 1] = {'.', 0};
+	if (!sdc_getcwd(cd_prev, MAX_PATH)) {
+		cd_prev[0] = 0;
+	}
+	if (sdc_chdir(g_strFarPath.GetMB().c_str()) == -1 ) {
+		perror("chdir farpath");
+	}
+
 	std::string actual_cmd = "\"";
 	actual_cmd+= EscapeCmdStr(g_strFarModuleName.GetMB());
 	actual_cmd+= "\" --libexec \"";
 	actual_cmd+= EscapeCmdStr(Library);
+	actual_cmd+= "\" \"";
+	actual_cmd+= EscapeCmdStr(cd_prev);
 	actual_cmd+= "\" ";
 	actual_cmd+= Symbol;
 	actual_cmd+= " ";
 	actual_cmd+= CmdStr;
-	return farExecuteA(actual_cmd.c_str(), ExecFlags);
+	int r = farExecuteA(actual_cmd.c_str(), ExecFlags);
+
+	if (sdc_chdir(cd_prev) == -1 ) {
+		perror("chdir prev");
+	}
+
+	return r;
 }
 
 

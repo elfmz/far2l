@@ -147,8 +147,15 @@ namespace Sudo
 				close(fd);
 			}
 
-			if (chdir("/bin") == -1)  //avoid locking arbitrary current dir
-				perror("chdir");
+			// avoid locking arbitrary current dir and
+			// allow starting in portable env (see #1505)
+			const char *farhome = getenv("FARHOME");
+			if (!farhome || chdir(farhome) == -1) {
+				if (chdir("/bin") == -1) {
+					perror("chdir");
+				}
+			}
+
 			//if process doesn't have terminal then sudo caches password per parent pid
 			//so don't use intermediate shell for running it!
 			r = execlp("sudo", "-n", "-A", "-k", g_sudo_app.c_str(), ipc.c_str(), NULL);

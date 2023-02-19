@@ -3110,6 +3110,7 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 						case KEY_SHIFTDEL:
 						{
 							RemoveSelectedCompletionMenuItem(ComplMenu);
+							PrevPos = -1; // force edit's content update on next iteration
 							break;
 						}
 

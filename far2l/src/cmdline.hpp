@@ -59,8 +59,8 @@ class CommandLine:public ScreenObject
 		SaveScreen *BackgroundScreen;
 		FARString strCurDir;
 		FARString strLastCmdStr;
+		FARString strLastCompletionCmdStr;
 		int LastCmdPartLength;
-		int LastKey;
 		int PushDirStackSize;
 
 	private:
@@ -69,7 +69,7 @@ class CommandLine:public ScreenObject
 		void GetPrompt(FARString &strDestStr);
 		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent=false);
 		bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
-		void ProcessCompletion(bool possibilities);
+		void ProcessTabCompletion();
 		void DrawComboBoxMark(wchar_t MarkChar);
 
 	public:

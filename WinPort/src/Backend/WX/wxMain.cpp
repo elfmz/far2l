@@ -182,6 +182,16 @@ WinState::WinState()
 	pos.x = atoi(str.c_str());
 	getline(is, str);
 	pos.y = atoi(str.c_str());
+
+	std::ifstream isconsize;
+	isconsize.open(InMyConfig("consolesize").c_str());
+	if (isconsize.is_open()) {
+		std::string str;
+		getline (isconsize, str);
+		charSize.x = atoi(str.c_str());
+		getline (isconsize, str);
+		charSize.y = atoi(str.c_str());
+	}
 }
 
 void WinState::Save()
@@ -348,6 +358,7 @@ void WinPortFrame::OnInitialized()
 		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
 		SetSize(_win_state.pos.x, _win_state.pos.y,
 			_win_state.size.GetWidth(), _win_state.size.GetHeight());
+		if(_win_state.charSize.x > 0 && _win_state.charSize.y > 0) _panel->SetClientCharSize(_win_state.charSize.x, _win_state.charSize.y);
 	}
 }
 
@@ -550,6 +561,11 @@ void WinPortPanel::GetAlignmentGaps(int &horz, int &vert)
 	const unsigned int font_height = _paint_context.FontHeight();
 	horz = (width % font_width);
 	vert = (height % font_height);
+}
+
+void WinPortPanel::SetClientCharSize(int cw, int ch)
+{
+	_frame->SetClientSize(cw*_paint_context.FontWidth(), ch*_paint_context.FontHeight());
 }
 
 void WinPortPanel::OnInitialized( wxCommandEvent& event )

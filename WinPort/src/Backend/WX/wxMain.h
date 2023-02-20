@@ -163,6 +163,7 @@ public:
 	void GetAlignmentGaps(int &horz, int &vert);
 	void OnChar( wxKeyEvent& event );
 	virtual void OnTouchbarKey(bool alternate, int index);
+	void SetClientCharSize(int cw, int ch);
 };
 
 ///////////////////////////////////////////
@@ -171,6 +172,7 @@ struct WinState
 {
 	wxPoint pos = wxDefaultPosition;
 	wxSize size {800, 440};
+	wxSize charSize {-1,-1};
 	bool maximized{false};
 	bool fullscreen{false};
 

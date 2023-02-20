@@ -169,7 +169,7 @@ public:
 
 struct WinState
 {
-	wxPoint pos {40, 40};
+	wxPoint pos = wxDefaultPosition;
 	wxSize size {800, 440};
 	bool maximized{false};
 	bool fullscreen{false};

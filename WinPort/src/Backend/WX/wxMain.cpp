@@ -310,10 +310,10 @@ WinPortFrame::WinPortFrame(const wxString& title)
 	if (_win_state.pos.y + _win_state.size.GetHeight() > rc.GetBottom()) {
 		_win_state.pos.y = rc.GetBottom() - _win_state.size.GetHeight();
 	}
-	if (_win_state.pos.x < rc.GetLeft()) {
+	if (_win_state.pos.x >= 0 && _win_state.pos.x < rc.GetLeft()) {
 		_win_state.pos.x = rc.GetLeft();
 	}
-	if (_win_state.pos.y < rc.GetTop()) {
+	if (_win_state.pos.y >= 0 && _win_state.pos.y < rc.GetTop()) {
 		_win_state.pos.y = rc.GetTop();
 	}
 

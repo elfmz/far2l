@@ -72,7 +72,6 @@ CommandLine::CommandLine():
 	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
 	BackgroundScreen(nullptr),
 	LastCmdPartLength(-1),
-	LastKey(0),
 	PushDirStackSize(0)
 {
 	CmdStr.SetEditBeyondEnd(FALSE);
@@ -161,10 +160,14 @@ int64_t CommandLine::VMProcess(int OpCode,void *vParam,int64_t iParam)
 	return 0;
 }
 
-void CommandLine::ProcessCompletion(bool possibilities)
+void CommandLine::ProcessTabCompletion()
 {
 	FARString strStr;
 	CmdStr.GetString(strStr);
+	// show all possibilities on double tab on same input string
+	const bool possibilities = !strLastCompletionCmdStr.IsEmpty() && strStr == strLastCompletionCmdStr;
+	strLastCompletionCmdStr = strStr;
+
 	if (!strStr.IsEmpty()) {
 		std::string cmd = strStr.GetMB();
 		VTCompletor vtc;		
@@ -209,15 +212,13 @@ int CommandLine::ProcessKey(int Key)
 	const wchar_t *PStr;
 	FARString strStr;
 
-	int SavedLastKey = LastKey;
-	
-	if ( Key!=KEY_NONE)
-		LastKey = Key;
-	
 	if ( Key==KEY_TAB || Key==KEY_SHIFTTAB) {
-		ProcessCompletion(SavedLastKey==Key);
+		ProcessTabCompletion();
 		return TRUE;
 	}
+
+	if (Key != KEY_NONE)
+		strLastCompletionCmdStr.Clear();
 	
 	if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT))
 	{

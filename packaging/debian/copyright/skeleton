@@ -7,8 +7,8 @@ Files: *
 Copyright:
 License: GPL-2
 
-Files: colorer/*
-Copyright: 1999-2009 Igor Ruskih
+Files: colorer/* colorer/src/pcolorer2/ConsoleAnnotation.h
+Copyright: 1999-2010 Igor Ruskih
            2009-2020 Aleksey Dobrunov
            2009-2020 Eugene Efremov
            2009-2020 Anatoly Techtonik
@@ -16,13 +16,17 @@ Copyright: 1999-2009 Igor Ruskih
            2009-2020 Max Galkin
 License: BSD-3-clause
 
-Files: colorer/src/Colorer-library/src/colorer/unicode/x_tables_generator.pl colorer/src/Colorer-library/src/colorer/unicode/x_encodings.pl colorer/src/pcolorer2/*
+Files: colorer/src/Colorer-library/src/colorer/unicode/x_tables_generator.pl colorer/src/Colorer-library/src/colorer/unicode/x_encodings.pl colorer/src/pcolorer2/ChooseTypeMenu.cpp colorer/src/pcolorer2/ConsoleAnnotation.h colorer/src/pcolorer2/FarEditor.h colorer/src/pcolorer2/FarEditorSet.h colorer/src/pcolorer2/FarHrcSettings.h colorer/src/pcolorer2/pcolorer.h colorer/src/pcolorer2/StringBuffer.cpp colorer/src/pcolorer2/tools.cpp colorer/src/pcolorer2/ChooseTypeMenu.h colorer/src/pcolorer2/FarEditor.cpp colorer/src/pcolorer2/FarEditorSet.cpp colorer/src/pcolorer2/FarHrcSettings.cpp colorer/src/pcolorer2/pcolorer.cpp colorer/src/pcolorer2/resource.h colorer/src/pcolorer2/StringBuffer.h colorer/src/pcolorer2/tools.h
 Copyright: 1999-2009 Igor Ruskih
            2009-2020 Aleksey Dobrunov
            2009-2020 Eugene Efremov
            2009-2020 Anatoly Techtonik
            2009-2020 2useven10
            2009-2020 Max Galkin
+License: GPL-2
+
+Files: colorer/configs/*
+Copyright: 1999-2009 Igor Ruskih
 License: GPL-2
 
 Files: farlng/*

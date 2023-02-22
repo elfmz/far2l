@@ -69,7 +69,7 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 		0};
 
 	if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
-		seq[3] = sWheelMatrix[ (MouseEvent.dwButtonState & 0x00010000) ? 0 : 1 ][ (imod & 1) ? 1 : 0 ];
+		seq[3] = sWheelMatrix[ (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0 : 1 ][ (imod & 1) ? 1 : 0 ];
 
 	} else if (MouseEvent.dwEventFlags & MOUSE_MOVED) {
 		seq[3] = sMoveMatrix[ibut][imod];

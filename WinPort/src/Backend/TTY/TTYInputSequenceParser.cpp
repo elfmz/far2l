@@ -524,7 +524,6 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 				_mouse.right_ts = 0;
 			} else
 				_mouse.right_ts = now;
-
 			_mouse.left_ts = _mouse.middle_ts = 0;
 			_mouse.right = true;
 			break;
@@ -571,7 +570,7 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_2ND_BUTTON_PRESSED;
 
 	if (_mouse.right)
-			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_3RD_BUTTON_PRESSED;
+			ir.Event.MouseEvent.dwButtonState|= RIGHTMOST_BUTTON_PRESSED;
 
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 

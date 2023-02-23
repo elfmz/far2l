@@ -167,31 +167,25 @@ WinState::WinState()
 	fullscreen = (i & 4) != 0;
 
 	getline(is, str);
-	i = atoi(str.c_str());
-	if (i >= 100) {
-		size.SetWidth(i);
-	}
+	int width = atoi(str.c_str());
+	if (width >= 100)
+		size.SetWidth(width);
 
 	getline(is, str);
-	i = atoi(str.c_str());
-	if (i >= 100) {
-		size.SetHeight(i);
+	int height = atoi(str.c_str());
+	if (height >= 100)
+		size.SetHeight(height);
+
+	// interpret negative widht/height values as size in chars
+	if (width < 0 && height < 0) {
+		charSize.SetWidth(-width);
+		charSize.SetHeight(-height);
 	}
 
 	getline(is, str);
 	pos.x = atoi(str.c_str());
 	getline(is, str);
 	pos.y = atoi(str.c_str());
-
-	std::ifstream isconsize;
-	isconsize.open(InMyConfig("consolesize").c_str());
-	if (isconsize.is_open()) {
-		std::string str;
-		getline (isconsize, str);
-		charSize.x = atoi(str.c_str());
-		getline (isconsize, str);
-		charSize.y = atoi(str.c_str());
-	}
 }
 
 void WinState::Save()
@@ -205,8 +199,15 @@ void WinState::Save()
 	if (maximized) flags|= 2;
 	if (fullscreen) flags|= 4;
 	os << flags << std::endl;
-	os << size.GetWidth() << std::endl;
-	os << size.GetHeight() << std::endl;
+	if (charSize.GetWidth() > 0 && charSize.GetHeight() > 0) {
+		// preserve size in chars if both original widht/height values are negative
+		os << -charSize.GetWidth() << std::endl;
+		os << -charSize.GetHeight() << std::endl;
+	}
+	else {
+		os << size.GetWidth() << std::endl;
+		os << size.GetHeight() << std::endl;
+	}
 	os << pos.x << std::endl;
 	os << pos.y << std::endl;
 	fprintf(stderr, "WinState: saved flags=%d size={%d, %d} pos={%d, %d}\n",
@@ -358,7 +359,9 @@ void WinPortFrame::OnInitialized()
 		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
 		SetSize(_win_state.pos.x, _win_state.pos.y,
 			_win_state.size.GetWidth(), _win_state.size.GetHeight());
-		if(_win_state.charSize.x > 0 && _win_state.charSize.y > 0) _panel->SetClientCharSize(_win_state.charSize.x, _win_state.charSize.y);
+		if(_win_state.charSize.GetWidth() > 0 && _win_state.charSize.GetHeight() > 0) {
+			_panel->SetClientCharSize(_win_state.charSize.GetWidth(), _win_state.charSize.GetHeight());
+		}
 	}
 }
 

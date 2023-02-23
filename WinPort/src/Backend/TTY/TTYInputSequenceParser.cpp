@@ -556,7 +556,17 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 		case 'P': // ctrl + mouse move
 			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 
-		case '@': // mouse move
+		case 'C': // mouse move
+			break;
+
+		case 'B': // RButon + mouse move
+			_mouse.right = true;
+			_mouse.right_ts = 0;
+			break;
+
+		case '@': // LButon + mouse move
+			_mouse.left = true;
+			_mouse.left_ts = 0;
 			break;
 
 		default:

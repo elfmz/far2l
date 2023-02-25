@@ -24,7 +24,7 @@
 
 #pragma once
 
-#if defined(_WIN32)
+#if (__WCHAR_MAX__ <= 0xffff)
 
 #include <ww898/cp_utf16.hpp>
 
@@ -33,7 +33,7 @@ namespace utf {
 using utfw = utf16;
 }}
 
-#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__HAIKU__)
+#else
 
 #include <ww898/cp_utf32.hpp>
 
@@ -42,6 +42,4 @@ namespace utf {
 using utfw = utf32;
 }}
 
-#else
-#error Unsupported platform
 #endif

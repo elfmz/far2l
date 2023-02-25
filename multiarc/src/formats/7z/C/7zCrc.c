@@ -71,88 +71,19 @@ UInt32 MY_FAST_CALL CrcUpdateT1(UInt32 v, const void *data, size_t size, const U
 
 #ifdef MY_CPU_LE
 
-#if defined(MY_CPU_ARM_OR_ARM64)
-
-// #pragma message("ARM*")
-
-  #if defined(_MSC_VER)
-    #if defined(MY_CPU_ARM64)
-    #if (_MSC_VER >= 1910)
-        #define USE_ARM64_CRC
-    #endif
-    #endif
-  #elif (defined(__clang__) && (__clang_major__ >= 3)) \
-     || (defined(__GNUC__) && (__GNUC__ > 4))
-      #if !defined(__ARM_FEATURE_CRC32)
-        #define __ARM_FEATURE_CRC32 1
-          #if (!defined(__clang__) || (__clang_major__ > 3)) // fix these numbers
-            #define ATTRIB_CRC __attribute__((__target__("arch=armv8-a+crc")))
-          #endif
-      #endif
-      #if defined(__ARM_FEATURE_CRC32)
-        #define USE_ARM64_CRC
-        #include <arm_acle.h>
-      #endif
-  #endif
-
-#else
-
-// no hardware CRC
-
-// #define USE_CRC_EMU
-
-#ifdef USE_CRC_EMU
-
-#pragma message("ARM64 CRC emulation")
-
-MY_FORCE_INLINE
-UInt32 __crc32b(UInt32 v, UInt32 data)
-{
-  const UInt32 *table = g_CrcTable;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data);
-  return v;
-}
-
-MY_FORCE_INLINE
-UInt32 __crc32w(UInt32 v, UInt32 data)
-{
-  const UInt32 *table = g_CrcTable;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  return v;
-}
-
-MY_FORCE_INLINE
-UInt32 __crc32d(UInt32 v, UInt64 data)
-{
-  const UInt32 *table = g_CrcTable;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  v = CRC_UPDATE_BYTE_2(v, (Byte)data); data >>= 8;
-  return v;
-}
-
-#endif // USE_CRC_EMU
-
+#if defined(MY_CPU_ARM_OR_ARM64) && defined(__ARM_FEATURE_CRC32)
+  #define USE_ARM_ACLE
+  #include <arm_acle.h>
 #endif // defined(MY_CPU_ARM64) && defined(MY_CPU_LE)
 
+#ifdef USE_ARM_ACLE
 
+  #define T0_32_UNROLL_BYTES (4 * 4)
+  #define T0_64_UNROLL_BYTES (4 * 8)
 
-#if defined(USE_ARM64_CRC) || defined(USE_CRC_EMU)
-
-#define T0_32_UNROLL_BYTES (4 * 4)
-#define T0_64_UNROLL_BYTES (4 * 8)
-
-#ifndef ATTRIB_CRC
-#define ATTRIB_CRC
-#endif
+  #ifndef ATTRIB_CRC
+    #define ATTRIB_CRC
+  #endif
 // #pragma message("USE ARM HW CRC")
 
 ATTRIB_CRC
@@ -219,7 +150,7 @@ UInt32 MY_FAST_CALL CrcUpdateT0_64(UInt32 v, const void *data, size_t size, cons
   return v;
 }
 
-#endif // defined(USE_ARM64_CRC) || defined(USE_CRC_EMU)
+#endif // defined(USE_ARM_ACLE)
 
 #endif // MY_CPU_LE
 
@@ -299,7 +230,7 @@ void MY_FAST_CALL CrcGenerateTable()
   #endif
 
   #ifdef MY_CPU_LE
-    #ifdef USE_ARM64_CRC
+    #ifdef USE_ARM_ACLE
       if (CPU_IsSupported_CRC32())
       {
         g_CrcUpdateT0_32 = CrcUpdateT0_32;
@@ -311,12 +242,6 @@ void MY_FAST_CALL CrcGenerateTable()
             CrcUpdateT0_64;
           #endif
       }
-    #endif
-    
-    #ifdef USE_CRC_EMU
-      g_CrcUpdateT0_32 = CrcUpdateT0_32;
-      g_CrcUpdateT0_64 = CrcUpdateT0_64;
-      g_CrcUpdate = CrcUpdateT0_64;
     #endif
   #endif
 }

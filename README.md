@@ -48,8 +48,23 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 #### Or simply on Debian/Ubuntu:
 ``` sh
 apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+```
+
+On Debian unstable/sid:
+
+`apt-get install far2l`
+
+A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
 
 ```
+# you will find the latest dsc link at http://packages.debian.org/sid/far2l
+dget http://deb.debian.org/debian/pool/main/f/far2l/far2l_2.5.0~beta+git20230223+ds-2.dsc
+dpkg-source -x *.dsc
+cd far2l-*/
+debuild
+# cd .. and install your self built far2l*.deb
+```
+
 In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build

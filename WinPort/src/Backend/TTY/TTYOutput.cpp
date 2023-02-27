@@ -435,22 +435,29 @@ int TTYOutput::WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) cons
 	return 6;
 }
 
+static inline bool ShouldPrintWCharAsSpace(wchar_t wc)
+{ // avoid writing control and invalid chars to TTY
+	return wc <= 0x20
+			|| (wc >= 0x7f && wc < 0xa0)
+			|| !WCHAR_IS_VALID(wc);
+}
+
 void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 {
 	for (;cnt; ++ci,--cnt, ++_cursor.x) if (ci->Char.UnicodeChar) {
-		const bool is_space = !CI_USING_COMPOSITE_CHAR(*ci) && (
-				ci->Char.UnicodeChar <= 0x20
-			|| (ci->Char.UnicodeChar >= 0x7f && ci->Char.UnicodeChar < 0xa0)
-			|| !WCHAR_IS_VALID(ci->Char.UnicodeChar));
+		const wchar_t *comp_seq = CI_USING_COMPOSITE_CHAR(*ci)
+			? WINPORT(CompositeCharLookup)(ci->Char.UnicodeChar) : nullptr;
+
+		const bool is_space = ShouldPrintWCharAsSpace(comp_seq ? *comp_seq : ci->Char.UnicodeChar);
 
 		WriteUpdatedAttributes(ci->Attributes, is_space);
 
 		if (is_space) {
 			WriteWChar(L' ');
 
-		} else if (CI_USING_COMPOSITE_CHAR(*ci)) {
-			for (const WCHAR *pw = WINPORT(CompositeCharLookup)(ci->Char.UnicodeChar); *pw; ++pw) {
-				WriteWChar(*pw);
+		} else if (comp_seq) {
+			for (; *comp_seq; ++comp_seq) {
+				WriteWChar(*comp_seq);
 			}
 
 		} else {

@@ -75,7 +75,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 
 		if (ok_enabled && subsystem_enabled) {
 			std::string str;
-			TextFromDialogControl(_i_privkey_path, str);
+			TextFromDialogControl(_i_custom_subsystem, str);
 			if (str.empty()) {
 				ok_enabled = false;
 			}

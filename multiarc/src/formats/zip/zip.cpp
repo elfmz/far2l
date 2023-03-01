@@ -338,7 +338,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
   DWORD SizeToRead=std::min(DWORD(LITEND(ZipHeader.NameLen)), DWORD(ARRAYSIZE(cFileName)-1));
   if (!WINPORT(ReadFile)(ArcHandle,cFileName,SizeToRead,&ReadSize,NULL) || ReadSize!=SizeToRead)
     return(GETARC_READERROR);
-    
+
   Info->PathName.assign(cFileName, strnlen(cFileName, ReadSize));
   Info->nFileSize=LITEND(ZipHeader.UnpSize);
   Info->nPhysicalSize=LITEND(ZipHeader.PackSize);
@@ -405,7 +405,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
             || ReadSize!=sizeof(BlockHead) )
       return(GETARC_READERROR);
 
-//	fprintf(stderr, "BlockHead.Type=0x%x\n", BlockHead.Type);
+//	fprintf(stderr, "BlockHead.Type=0x%x Length=0x%x\n", BlockHead.Type, BlockHead.Length);
     if (0xA==LITEND(BlockHead.Type)) // NTFS Header ID
     {
       WINPORT(SetFilePointer)(ArcHandle, 4, NULL, FILE_CURRENT); // Skip the reserved 4 bytes
@@ -467,16 +467,17 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
      }
      ZIP64;
 
-     if (!WINPORT(ReadFile)(ArcHandle, &ZIP64, LITEND(BlockHead.Length), &ReadSize,NULL)
+     if (!WINPORT(ReadFile)(ArcHandle, &ZIP64, std::min(LITEND(BlockHead.Length), (WORD)sizeof(ZIP64)), &ReadSize,NULL)
              || ReadSize!=LITEND(BlockHead.Length) )
        return(GETARC_READERROR);
-     if (LITEND(BlockHead.Length)>=4)
+     if (LITEND(BlockHead.Length) == sizeof(ZIP64))
      {
        Info->nFileSize=LITEND(ZIP64.OriginalSize.QuadPart);
-     }
-     if (LITEND(BlockHead.Length)>=8)
-     {
        Info->nPhysicalSize=LITEND(ZIP64.CompressedSize.QuadPart);
+     }
+     else if (LITEND(BlockHead.Length) != 8) // if size is 8 - then it contains only RelativeHeaderOffset
+     {
+       fprintf(stderr, "Unexpected ZIP64 block length %u\n", LITEND(BlockHead.Length));
      }
     }
     else if ((0x7075==LITEND(BlockHead.Type) || 0x6375==LITEND(BlockHead.Type)) // Unicode Path Extra Field || Unicode Comment Extra Field

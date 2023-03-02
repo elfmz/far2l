@@ -85,6 +85,8 @@ extern int CriticalInternalError;
 
 extern int _localLastError;
 
+extern unsigned int g_umask;
+
 extern int KeepUserScreen;
 extern FARString g_strDirToSet; //RAVE!!!
 

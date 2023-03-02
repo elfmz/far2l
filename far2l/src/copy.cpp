@@ -2811,7 +2811,7 @@ void ShellFileTransfer::Do()
 		if (_XAttrCopyPtr)
 			_XAttrCopyPtr->ApplyToCopied(_DestFile);
 
-		if (_Flags.COPYACCESSMODE && _ModeToCreateWith != _SrcData.dwUnixMode)
+		if (_Flags.COPYACCESSMODE && (_ModeToCreateWith != _SrcData.dwUnixMode || (g_umask & _SrcData.dwUnixMode) != 0))
 			_DestFile.Chmod(_SrcData.dwUnixMode);
 
 		_DestFile.SetTime(nullptr, nullptr, &_SrcData.ftLastWriteTime, nullptr);

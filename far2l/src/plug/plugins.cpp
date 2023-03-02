@@ -1166,7 +1166,7 @@ struct PluginMenuItemData
      списком только при нажатии на ESC
 */
 
-bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType)
+bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType, const char *MenuNameFmt)
 {
 	for (int I=0; I<PluginsCount; I++)
 	{
@@ -1183,7 +1183,8 @@ bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType)
 			if (bCached)
 			{
 				KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
-				if (!kfh.HasKey(StrPrintf(FmtPluginConfigStringD, J)))
+				const auto &key_name = StrPrintf(MenuNameFmt, J);
+				if (!kfh.HasKey(key_name))
 					break;
 			}
 			else if (J >= Info.PluginConfigStringsNumber)
@@ -1217,7 +1218,7 @@ void PluginManager::Configure(int StartPos)
 		{
 			BOOL NeedUpdateItems=TRUE;
 			int MenuItemNumber=0;
-			bool HotKeysPresent = CheckIfHotkeyPresent("ConfHotkey");
+			bool HotKeysPresent = CheckIfHotkeyPresent("ConfHotkey", FmtPluginConfigStringD);
 
 			if (NeedUpdateItems)
 			{
@@ -1375,7 +1376,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 		while (!Done)
 		{
-			bool HotKeysPresent = CheckIfHotkeyPresent("Hotkey");
+			bool HotKeysPresent = CheckIfHotkeyPresent("Hotkey", FmtPluginMenuStringD);
 
 			if (NeedUpdateItems)
 			{

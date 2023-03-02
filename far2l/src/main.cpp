@@ -820,6 +820,9 @@ int _cdecl main(int argc, char *argv[])
 		}
 	}
 
+	g_umask = umask(0077);
+	umask(g_umask);
+
 	setlocale(LC_ALL, "");//otherwise non-latin keys missing with XIM input method
 
 	SetupFarPath(argc, argv);

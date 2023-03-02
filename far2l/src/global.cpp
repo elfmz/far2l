@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 /* $ 29.06.2000 tran
   берем char *CopyRight из inc файла */
 #include "bootstrap/copyright.inc"
@@ -59,6 +58,8 @@ int WaitInFastFind=FALSE;
 int WaitInMainLoop=FALSE;
 
 clock_t StartIdleTime=0;
+
+unsigned int g_umask = 0;
 
 FARString g_strFarModuleName;
 FARString g_strFarPath;

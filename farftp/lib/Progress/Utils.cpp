@@ -25,7 +25,7 @@ double ToPercent(int64_t N1,int64_t N2)
 }
 
 /*
-   Create CPS value string with standart(?) round rulles.
+   Create CPS value string with standard(?) round rulles.
 
    The digit returns string with variable sizes from 1 to 5
    symbols in length.

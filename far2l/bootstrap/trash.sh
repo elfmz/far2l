@@ -18,6 +18,10 @@ if command -v gio >/dev/null 2>&1; then
 elif command -v gvfs-trash >/dev/null 2>&1; then
 	gvfs-trash -f -- "$1" 2>"$2"
 
+elif command -v osascript >/dev/null 2>&1; then
+	osascript -e "tell application \"Finder\" to delete POSIX file \"$1\"" 2>"$2"
+
 else
-	echo 'No gio or gvfs-trash available' >"$2"
+	echo 'No command-line trash tool available' >"$2"
+	exit 1
 fi

@@ -142,7 +142,7 @@
 
 <annotation><documentation>
 	It's very different from PCRE. 
-	We cannot use standart library...
+	We cannot use standard library...
 </documentation></annotation>
 
 

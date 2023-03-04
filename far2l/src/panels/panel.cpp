@@ -586,7 +586,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 								RemoveExternalSpaces(strName);
 
 								if (CtrlObject->Plugins.SetHotKeyDialog(strName,
-									CtrlObject->Plugins.GetHotKeySettingName(item->pPlugin, item->nItem, "DriveMenuHotkey")))
+									CtrlObject->Plugins.GetHotKeySettingName(item->pPlugin, item->nItem, PluginManager::HKK_DRIVEMENU)))
 								{
 									return SelPos;
 								}

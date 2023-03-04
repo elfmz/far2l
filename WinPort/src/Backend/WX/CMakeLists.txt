@@ -30,35 +30,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-	if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
-		message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
-
-	elseif(EXISTS "/usr/local/bin/wxgtk3u-3.1-config")
-		set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.1-config")
-		set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.1")
-		message(STATUS "Using known location of wx-config 3.1")
-
-	elseif (EXISTS "/usr/local/bin/wxgtk3u-3.0-config")
-		set(wxWidgets_CONFIG_EXECUTABLE "/usr/local/bin/wxgtk3u-3.0-config")
-		set(wxWidgets_wxrc_EXECUTABLE "/usr/local/bin/wxrc-gtk3u-3.0")
-		message(STATUS "Using known location of wx-config 3.0")
-
-	else()
-		message(STATUS "No wxgtk3u-3.*-config in expected locations")
-	endif()
-
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	if (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
-		# MacPorts
-		set(wxWidgets_CONFIG_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wx-config")
-		set(wxWidgets_wxrc_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.1/bin/wxrc")
-		message(STATUS "Using known location of wx-config 3.1")
-	else()
-		message(STATUS "No wx-config in expected locations")
-	endif()
-endif()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	find_package(wxWidgets REQUIRED core base adv)
 else()

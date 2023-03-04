@@ -718,7 +718,9 @@ static DeletionResult RemoveToRecycleBin(const wchar_t *Name)
 	FARString err_file;
 	FarMkTempEx(err_file, L"trash");
 
-	std::string name_arg = Wide2MB(Name);
+	FARString FullName;
+	ConvertNameToFull(Name, FullName);
+	std::string name_arg = FullName.GetMB();
 	std::string err_file_arg = err_file.GetMB();
 
 	unsigned int flags = EF_HIDEOUT;

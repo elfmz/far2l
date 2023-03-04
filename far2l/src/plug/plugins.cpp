@@ -1166,7 +1166,7 @@ struct PluginMenuItemData
      списком только при нажатии на ESC
 */
 
-bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType, const char *MenuNameFmt)
+bool PluginManager::CheckIfHotkeyPresent(HotKeyKind Kind)
 {
 	for (int I=0; I<PluginsCount; I++)
 	{
@@ -1182,18 +1182,19 @@ bool PluginManager::CheckIfHotkeyPresent(const char *HotKeyType, const char *Men
 		{
 			if (bCached)
 			{
+				const char *MenuNameFmt =  (Kind == HKK_CONFIG) ? FmtPluginConfigStringD : FmtPluginMenuStringD;
 				KeyFileReadSection kfh(PluginsIni(), pPlugin->GetSettingsName());
 				const auto &key_name = StrPrintf(MenuNameFmt, J);
 				if (!kfh.HasKey(key_name))
 					break;
 			}
-			else if (J >= Info.PluginConfigStringsNumber)
+			else if (J >= ((Kind == HKK_CONFIG) ? Info.PluginConfigStringsNumber : Info.PluginMenuStringsNumber))
 			{
 				break;
 			}
 
 			FARString strHotKey;
-			GetPluginHotKey(pPlugin, J, HotKeyType, strHotKey);
+			GetPluginHotKey(pPlugin, J, Kind, strHotKey);
 			if (!strHotKey.IsEmpty())
 			{
 				return true;
@@ -1218,7 +1219,7 @@ void PluginManager::Configure(int StartPos)
 		{
 			BOOL NeedUpdateItems=TRUE;
 			int MenuItemNumber=0;
-			bool HotKeysPresent = CheckIfHotkeyPresent("ConfHotkey", FmtPluginConfigStringD);
+			bool HotKeysPresent = CheckIfHotkeyPresent(HKK_CONFIG);
 
 			if (NeedUpdateItems)
 			{
@@ -1259,7 +1260,7 @@ void PluginManager::Configure(int StartPos)
 							strName = Info.PluginConfigStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,"ConfHotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,HKK_CONFIG,strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1318,7 +1319,7 @@ void PluginManager::Configure(int StartPos)
 							RemoveExternalSpaces(strName00);
 
 							if (SetHotKeyDialog(strName00,
-									GetHotKeySettingName(item->pPlugin, item->nItem, "ConfHotkey")))
+									GetHotKeySettingName(item->pPlugin, item->nItem, HKK_CONFIG)))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1376,7 +1377,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 		while (!Done)
 		{
-			bool HotKeysPresent = CheckIfHotkeyPresent("Hotkey", FmtPluginMenuStringD);
+			bool HotKeysPresent = CheckIfHotkeyPresent(HKK_MENU);
 
 			if (NeedUpdateItems)
 			{
@@ -1429,7 +1430,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							strName = Info.PluginMenuStrings[J];
 						}
 
-						GetPluginHotKey(pPlugin,J,"Hotkey",strHotKey);
+						GetPluginHotKey(pPlugin,J,HKK_MENU,strHotKey);
 						MenuItemEx ListItem;
 						ListItem.Clear();
 
@@ -1483,7 +1484,7 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 							RemoveExternalSpaces(strName00);
 
 							if (SetHotKeyDialog(strName00,
-									GetHotKeySettingName(item->pPlugin, item->nItem, "Hotkey")))
+									GetHotKeySettingName(item->pPlugin, item->nItem, HKK_MENU)))
 							{
 								PluginList.Hide();
 								NeedUpdateItems=TRUE;
@@ -1588,17 +1589,26 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 	return TRUE;
 }
 
-std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, const char *HotKeyType)
+std::string PluginManager::GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind)
 {
+	const char *NamePart;
+	switch (Kind) {
+		case HKK_CONFIG:    NamePart = "ConfHotkey";      break;
+		case HKK_MENU:      NamePart = "Hotkey";          break;
+		case HKK_DRIVEMENU: NamePart = "DriveMenuHotkey"; break;
+		default:
+			fprintf(stderr, "%s: wrong kind %u\n", __FUNCTION__, Kind);
+			abort();
+	}
 	std::string out = pPlugin->GetSettingsName();
-	out+= StrPrintf(":%s#%d", HotKeyType, ItemNumber);
+	out+= StrPrintf(":%s#%d", NamePart, ItemNumber);
 	return out;
 }
 
-void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, const char *HotKeyType, FARString &strHotKey)
+void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind, FARString &strHotKey)
 {
 	strHotKey = KeyFileReadSection(PluginsIni(), SettingsSection).GetString(
-		GetHotKeySettingName(pPlugin, ItemNumber, HotKeyType));
+		GetHotKeySettingName(pPlugin, ItemNumber, Kind));
 }
 
 bool PluginManager::SetHotKeyDialog(
@@ -1630,7 +1640,7 @@ bool PluginManager::GetDiskMenuItem(
 	LoadIfCacheAbsent();
 
 	FARString strHotKey;
-	GetPluginHotKey(pPlugin,PluginItem,"DriveMenuHotkey",strHotKey);
+	GetPluginHotKey(pPlugin,PluginItem,HKK_DRIVEMENU,strHotKey);
 	PluginHotkey = strHotKey.At(0);
 
 	if (pPlugin->CheckWorkFlags(PIWF_CACHED))

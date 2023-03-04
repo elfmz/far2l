@@ -19,7 +19,7 @@
 	<appinfo><problem>
 		This stuff must be a part of SGML package, not XML.
 		
-		Hovewer, SGML standart ISO 8879:1986 not allowed for free.
+		Hovewer, SGML standard ISO 8879:1986 not allowed for free.
 		Colorer is free, therefore colorer cannot complete support SGML.
 	</problem>
 		<mime type='application/sgml-open-catalog'/>

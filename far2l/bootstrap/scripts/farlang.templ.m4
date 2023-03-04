@@ -11473,7 +11473,7 @@ FindFileWholeWords
 
 FindFileAllCodePages
 "Стандартные кодовые страницы"
-"Standart code pages"
+"Standard code pages"
 upd:"Všechny znakové sady"
 upd:"Alle Zeichentabellen"
 "Minden kódlappal"

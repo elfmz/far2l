@@ -1,7 +1,7 @@
 #ifndef __FAR_PLUGINS_UTILITES
 #define __FAR_PLUGINS_UTILITES
 
-/** @mainpage FAR Standart Library
+/** @mainpage FAR Standard Library
     @author Jouri Mamaev JouriM@uran.ru
     @Eng
 

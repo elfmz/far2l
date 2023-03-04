@@ -44,6 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <new> // for std::nothrow
+#include <limits>
+#include <assert.h>
 #include <WinCompat.h>
 #include "farrtl.hpp"
 
@@ -212,6 +214,7 @@ bool TArray<Object>::setSize(size_t newSize)
 
 	if (newSize < Count)              // уменьшение размера
 	{
+		assert(Count < std::numeric_limits<size_t>::max() / sizeof(void *));
 		for (size_t i=newSize; i<Count; ++i)
 		{
 			delete items[i];
@@ -423,8 +426,8 @@ class TPointerArray
 			if (index>Count)
 				return nullptr;
 
+			assert(Count < std::numeric_limits<size_t>::max() / sizeof(void *));
 			Object *newItem = new(std::nothrow) Object;
-
 			if (newItem && setSize(Count+1))
 			{
 				for (size_t i=Count-1; i>index; i--)

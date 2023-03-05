@@ -174,6 +174,7 @@ class FileEditor : public Frame
 		int ProcessEditorInput(INPUT_RECORD *Rec);
 		void SetEditKeyBarStatefulLabels();
 		void ChangeEditKeyBar();
+		void ChooseTabSizeMenu();
 		DWORD EditorGetFileAttributes(const wchar_t *Name);
 		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
 		const wchar_t *GetPluginData() {return strPluginData.CPtr();}

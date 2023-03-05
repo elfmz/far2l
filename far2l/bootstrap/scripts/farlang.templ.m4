@@ -6158,7 +6158,7 @@ upd:"Space"
 upd:"Space"
 upd:"Space"
 upd:"Space"
-"Пргал"
+"Прбли"
 "Прблы"
 
 EditF8DOS
@@ -6244,15 +6244,15 @@ EditShiftF4
 "Змена"
 
 EditShiftF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ШирTab"
+"TabWdt"
+upd:"TabWdt"
+upd:"TabWdt"
+upd:"TabWdt"
+upd:"TabWdt"
+upd:"TabWdt"
+"ШирTab"
+"ШырTab"
 
 EditShiftF6
 ""
@@ -8220,6 +8220,29 @@ le://End of functional keys (Single Editor)
 ""
 ""
 ""
+
+EditTabWidthTitle
+"Ширина символа Tab"
+"Tab character width"
+upd:"Tab character width"
+upd:"Tab character width"
+upd:"Tab character width"
+upd:"Tab character width"
+upd:"Tab character width"
+"Ширина символу Tab"
+"Шырыня знака Tab"
+
+EditTabWidthItems
+"1 пробел;2 пробела;3 пробела;4 пробела;5 пробелов;6 пробелов;7 пробелов;8 пробелов;9 пробелов;10 пробелов"
+"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+upd:"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+upd:"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+upd:"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+upd:"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+upd:"1 space;2 spaces;3 spaces;4 spaces;5 spaces;6 spaces;7 spaces;8 spaces;9 spaces;10 spaces"
+"1 пробіл;2 пробіли;3 пробіли;4 пробіли;5 пробілів;6 пробілів;7 пробілів;8 пробілів;9 пробілів;10 пробілів"
+"1 прабел;2 прабела;3 прабела;4 прабела;5 прабелаў;6 прабелаў;7 прабелаў;8 прабелаў;9 прабелаў;10 прабелаў"
+
 
 EditSaveAs
 l:

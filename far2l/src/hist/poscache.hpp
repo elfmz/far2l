@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const DWORD64 POS_NONE = _UI64_MAX;
 
 // Максимальное количество элементов в кэше
-#define POSCACHE_MAX_ELEMENTS     512
+#define POSCACHE_MAX_ELEMENTS     2048
 
 // Количество закладок в редакторе/вьювере на одну позицию
 #define POSCACHE_BOOKMARK_COUNT   10

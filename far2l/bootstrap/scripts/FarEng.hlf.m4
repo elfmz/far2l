@@ -2705,6 +2705,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
    #F6#                      Switch to ~viewer~@Viewer@
+   #F5#                      Toggle Tab-to-spaces expansion
+   #Shift-F5#                Change Tab character width
+   #Ctrl-F5#                 Toggle whitespace characters displaying
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace

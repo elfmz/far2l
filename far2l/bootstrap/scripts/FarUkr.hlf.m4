@@ -2746,6 +2746,9 @@ $ #Редактор#
 #Shift-F2# ~Зберегти файл як ...~@FileSaveAs@
 #Shift-F4# Редагувати ~новий файл~@FileOpenCreate@
  #Alt-F5# ^<wrap>Друк файлу/виділеного блоку (використовується плагін "Print Manager").
+ #F5#                      Toggle Tab-to-spaces expansion
+ #Shift-F5#                Change Tab character width
+ #Ctrl-F5#                 Toggle whitespace characters displaying
 #F6# Перейти до ~програми перегляду~@Viewer@
 #F7# ~Пошук~@EditorSearch@
 #Ctrl-F7# ~Заміна~@EditorSearch@

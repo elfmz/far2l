@@ -172,6 +172,7 @@ class FileEditor : public Frame
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
 		BOOL SetFileName(const wchar_t *NewFileName);
 		int ProcessEditorInput(INPUT_RECORD *Rec);
+		void SetEditKeyBarStatefulLabels();
 		void ChangeEditKeyBar();
 		DWORD EditorGetFileAttributes(const wchar_t *Name);
 		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }

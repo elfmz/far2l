@@ -706,10 +706,7 @@ void FileEditor::InitKeyBar()
 	if (!Opt.UsePrintManager || CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 		EditKeyBar.Change(KBL_ALT,L"",5-1);
 
-	if (m_codepage!=WINPORT(GetOEMCP)())
-		EditKeyBar.Change(KBL_MAIN,(Opt.OnlyEditorViewerUsed?Msg::SingleEditF8DOS:Msg::EditF8DOS),7);
-	else
-		EditKeyBar.Change(KBL_MAIN,(Opt.OnlyEditorViewerUsed?Msg::SingleEditF8:Msg::EditF8),7);
+	SetEditKeyBarStatefulLabels();
 
 	EditKeyBar.ReadRegGroup(L"Editor",Opt.strLanguage);
 	EditKeyBar.SetAllRegGroup();
@@ -1184,6 +1181,11 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				if (!ProcessKey(KEY_F2)) // учтем факт того, что могли отказаться от сохранения
 					return FALSE;
 
+			case KEY_F5:
+				m_editor->SetConvertTabs(m_editor->GetConvertTabs() ? 0 : 1);
+				ChangeEditKeyBar();
+				return TRUE;
+
 			case KEY_F4:
 				if (F4KeyOnly)
 					return TRUE;
@@ -1593,10 +1595,12 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	EditFile.Close();
 	//if ( bCached )
 	m_editor->SetCacheParams(&cp);
+
 	SysErrorCode=WINPORT(GetLastError)();
 	apiGetFindDataForExactPathName(Name, FileInfo);
 	EditorGetFileAttributes(Name);
 	strLoadedFileName = Name;
+	ChangeEditKeyBar();
 	return TRUE;
 }
 
@@ -2046,7 +2050,10 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	/* 28.12.2001 VVM
 	  ! Проверить на успешную запись */
 	if (RetCode==SAVEFILE_SUCCESS)
+	{
 		m_editor->TextChanged(0);
+		m_editor->EnableSaveTabSettings();
+	}
 
 	if (GetDynamicallyBorn()) // принудительно сбросим Title // Flags.Check(FFILEEDIT_SAVETOSAVEAS) ????????
 		strTitle.Clear();
@@ -2204,13 +2211,20 @@ void FileEditor::SetTitle(const wchar_t *Title)
 	strTitle = Title;
 }
 
-void FileEditor::ChangeEditKeyBar()
+void FileEditor::SetEditKeyBarStatefulLabels()
 {
 	if (m_codepage!=WINPORT(GetOEMCP)())
 		EditKeyBar.Change((Opt.OnlyEditorViewerUsed?Msg::SingleEditF8DOS:Msg::EditF8DOS),7);
 	else
 		EditKeyBar.Change((Opt.OnlyEditorViewerUsed?Msg::SingleEditF8:Msg::EditF8),7);
 
+	EditKeyBar.Change(m_editor->GetConvertTabs() ? Msg::EditF5 : Msg::EditF5Spaces, 4);
+}
+
+
+void FileEditor::ChangeEditKeyBar()
+{
+	SetEditKeyBarStatefulLabels();
 	EditKeyBar.Redraw();
 }
 
@@ -2738,7 +2752,7 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 		pp->ScreenLine=static_cast<int>(PosCache.Param[1]);
 		pp->LinePos=static_cast<int>(PosCache.Param[2]);
 		pp->LeftPos=static_cast<int>(PosCache.Param[3]);
-		pp->CodePage=static_cast<UINT>(PosCache.Param[4]);
+		POSCACHE_EDIT_PARAM4_UNPACK(PosCache.Param[4], pp->CodePage, pp->ExpandTabs, pp->TabSize);
 
 		if (pp->Line < 0) pp->Line=0;
 
@@ -2769,7 +2783,8 @@ void FileEditor::SaveToCache()
 		poscache.Param[1] = cp.ScreenLine;
 		poscache.Param[2] = cp.LinePos;
 		poscache.Param[3] = cp.LeftPos;
-		poscache.Param[4] = Flags.Check(FFILEEDIT_CODEPAGECHANGEDBYUSER)?m_codepage:0;
+		const int codepage = Flags.Check(FFILEEDIT_CODEPAGECHANGEDBYUSER) ? m_codepage : 0;
+		POSCACHE_EDIT_PARAM4_PACK(poscache.Param[4], codepage, cp.ExpandTabs, cp.TabSize);
 
 		if (Opt.EdOpt.SaveShortPos)
 		{

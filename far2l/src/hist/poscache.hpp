@@ -55,7 +55,9 @@ struct PosCache
 			Param[1] = ScreenLine
 			Param[2] = LinePos
 			Param[3] = LeftPos
-			Param[4] = CodePage or 0
+			Param[4]:bits{0..15}  = CodePage or 0
+			Param[4]:bits{16..23} = TabSize
+			Param[4]:bits{24..31} = ExpandTabs
 		Viewer:
 			Param[0] = FilePos
 			Param[1] = LeftPos

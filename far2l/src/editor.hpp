@@ -69,6 +69,8 @@ struct EditorCacheParams
 	int ScreenLine;
 	int LeftPos;
 	int CodePage;
+	int TabSize;
+	int ExpandTabs;
 
 	InternalEditorBookMark SavePos;
 };
@@ -233,6 +235,7 @@ class Editor:public ScreenObject
 		Edit *CurLine;
 		Edit *LastGetLine;
 		int LastGetLineNumber;
+		bool SaveTabSettings;
 
 	private:
 		virtual void DisplayObject();
@@ -306,6 +309,7 @@ class Editor:public ScreenObject
 
 	public:
 
+		void EnableSaveTabSettings();
 		void SetCacheParams(EditorCacheParams *pp);
 		void GetCacheParams(EditorCacheParams *pp);
 
@@ -407,3 +411,12 @@ class Editor:public ScreenObject
 		void SetObjectColor(int Color,int SelColor,int ColorUnChanged);
 		void DrawScrollbar();
 };
+
+#define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE) do { \
+	VALUE = ( (DWORD(CP) & 0xffff) | ((DWORD(EXPAND_TABS) & 0xff) << 16) | ((DWORD(TAB_SIZE) & 0xff) << 24) ); \
+	} while (0)
+
+#define POSCACHE_EDIT_PARAM4_UNPACK(VALUE, CP, EXPAND_TABS, TAB_SIZE) do { \
+	CP = (((VALUE) & 0xffff) == 0xffff) ? -1 : ((VALUE) & 0xffff); \
+	EXPAND_TABS = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 16) & 0xff; \
+	TAB_SIZE = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 24) & 0xff; } while (0)

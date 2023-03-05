@@ -96,7 +96,8 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 	TopScreen(nullptr),
 	CurLine(nullptr),
 	LastGetLine(nullptr),
-	LastGetLineNumber(0)
+	LastGetLineNumber(0),
+	SaveTabSettings(false)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));
@@ -6806,6 +6807,10 @@ Edit *Editor::InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter, i
 	return pNewEdit;
 }
 
+void Editor::EnableSaveTabSettings()
+{
+	SaveTabSettings = true;
+}
 
 void Editor::SetCacheParams(EditorCacheParams *pp)
 {
@@ -6847,41 +6852,54 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 
 		CurLine->SetLeftPos(pp->LeftPos);
 	}
-	else if (StartLine != -1 || EdOpt.SavePos)
-	{
-		if (StartLine!=-1)
+	else {
+		if (StartLine != -1 || EdOpt.SavePos)
 		{
-			pp->Line = StartLine-1;
-			pp->ScreenLine = ObjHeight/2; //ScrY
-
-			if (pp->ScreenLine > pp->Line)
-				pp->ScreenLine = pp->Line;
-
-			pp->LinePos = 0;
-			if (StartChar > 0)
+			if (StartLine!=-1)
 			{
-				pp->LinePos = StartChar-1;
-				translateTabs = true;
+				pp->Line = StartLine-1;
+				pp->ScreenLine = ObjHeight/2; //ScrY
+
+				if (pp->ScreenLine > pp->Line)
+					pp->ScreenLine = pp->Line;
+
+				pp->LinePos = 0;
+				if (StartChar > 0)
+				{
+					pp->LinePos = StartChar-1;
+					translateTabs = true;
+				}
+			}
+
+			if (pp->ScreenLine > ObjHeight) //ScrY //BUGBUG
+				pp->ScreenLine=ObjHeight;//ScrY;
+
+			if (pp->Line >= pp->ScreenLine)
+			{
+				Lock();
+				GoToLine(pp->Line-pp->ScreenLine);
+				TopScreen = CurLine;
+
+				for (int I=0; I < pp->ScreenLine; I++)
+					ProcessKey(KEY_DOWN);
+
+				if(translateTabs) CurLine->SetCurPos(pp->LinePos);
+				else CurLine->SetCellCurPos(pp->LinePos);
+				CurLine->SetLeftPos(pp->LeftPos);
+				Unlock();
 			}
 		}
-
-		if (pp->ScreenLine > ObjHeight) //ScrY //BUGBUG
-			pp->ScreenLine=ObjHeight;//ScrY;
-
-		if (pp->Line >= pp->ScreenLine)
-		{
-			Lock();
-			GoToLine(pp->Line-pp->ScreenLine);
-			TopScreen = CurLine;
-
-			for (int I=0; I < pp->ScreenLine; I++)
-				ProcessKey(KEY_DOWN);
-
-			if(translateTabs) CurLine->SetCurPos(pp->LinePos);
-			else CurLine->SetCellCurPos(pp->LinePos);
-			CurLine->SetLeftPos(pp->LeftPos);
-			Unlock();
+		if (pp->TabSize > 0) {
+			SetTabSize(pp->TabSize - 1);
+			SaveTabSettings = true;
 		}
+		if (pp->ExpandTabs > 0) {
+			SetConvertTabs(pp->ExpandTabs - 1);
+			SaveTabSettings = true;
+		}
+		fprintf(stderr,
+			"Editor::SetCacheParams: ExpandTabs=%d TabSize=%d\n",
+			pp->ExpandTabs, pp->TabSize);
 	}
 }
 
@@ -6894,6 +6912,13 @@ void Editor::GetCacheParams(EditorCacheParams *pp)
 	pp->LinePos = CurLine->GetCellCurPos();
 	pp->LeftPos = CurLine->GetLeftPos();
 	pp->CodePage = m_codepage;
+	if (SaveTabSettings) {
+		pp->ExpandTabs = GetConvertTabs() + 1;
+		pp->TabSize = GetTabSize() + 1;
+	}
+	fprintf(stderr,
+		"Editor::GetCacheParams: SaveTabSettings=%d ExpandTabs=%d TabSize=%d\n",
+		SaveTabSettings, pp->ExpandTabs, pp->TabSize);
 
 	if (Opt.EdOpt.SaveShortPos)
 	{

@@ -372,6 +372,7 @@ class Editor:public ScreenObject
 		void SetWordDiv(const wchar_t *WordDiv) { EdOpt.strWordDiv = WordDiv; }
 		const wchar_t *GetWordDiv() { return EdOpt.strWordDiv; }
 
+		int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 		void SetShowWhiteSpace(int NewMode);
 
 		void GetSavePosMode(int &SavePos, int &SaveShortPos);

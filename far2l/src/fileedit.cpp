@@ -1193,6 +1193,12 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				ShowStatus();
 				return TRUE;
 
+			case KEY_CTRLF5:
+				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
+				m_editor->Show();
+				ChangeEditKeyBar();
+				return TRUE;
+
 			case KEY_F4:
 				if (F4KeyOnly)
 					return TRUE;
@@ -2220,12 +2226,14 @@ void FileEditor::SetTitle(const wchar_t *Title)
 
 void FileEditor::SetEditKeyBarStatefulLabels()
 {
-	if (m_codepage!=WINPORT(GetOEMCP)())
-		EditKeyBar.Change((Opt.OnlyEditorViewerUsed?Msg::SingleEditF8DOS:Msg::EditF8DOS),7);
+	if (m_codepage != WINPORT(GetOEMCP)())
+		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed?Msg::SingleEditF8DOS:Msg::EditF8DOS), 7);
 	else
-		EditKeyBar.Change((Opt.OnlyEditorViewerUsed?Msg::SingleEditF8:Msg::EditF8),7);
+		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed?Msg::SingleEditF8:Msg::EditF8), 7);
 
-	EditKeyBar.Change(m_editor->GetConvertTabs() ? Msg::EditF5 : Msg::EditF5Spaces, 4);
+	EditKeyBar.Change(KBL_MAIN, m_editor->GetConvertTabs() ? Msg::EditF5 : Msg::EditF5Spaces, 4);
+
+	EditKeyBar.Change(KBL_CTRL, m_editor->GetShowWhiteSpace() ? Msg::EditCtrlF5Hide : Msg::EditCtrlF5, 4);
 }
 
 

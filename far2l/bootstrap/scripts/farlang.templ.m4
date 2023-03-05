@@ -6151,15 +6151,15 @@ EditF12
 "Экраны"
 
 EditF5Spaces
-"Прблы"
-"Space"
-upd:"Space"
-upd:"Space"
-upd:"Space"
-upd:"Space"
-upd:"Space"
-"Прбли"
-"Прблы"
+"Прбелы"
+"Spaces"
+upd:"Spaces"
+upd:"Spaces"
+upd:"Spaces"
+upd:"Spaces"
+upd:"Spaces"
+"Прбіли"
+"Прбелы"
 
 EditF8DOS
 le:// don't count this - it's a F8 another text
@@ -6512,15 +6512,15 @@ EditCtrlF4
 ""
 
 EditCtrlF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ПокПрб"
+"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+"ПокПрб"
+"ПакПрб"
 
 EditCtrlF6
 ""
@@ -7135,6 +7135,17 @@ le://End of functional keys (Editor)
 ""
 ""
 ""
+
+EditCtrlF5Hide
+"СпрПрб"
+"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+"СхвПрб"
+"СхвПрб"
 
 SingleEditF1
 l:

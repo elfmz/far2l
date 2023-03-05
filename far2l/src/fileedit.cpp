@@ -1183,7 +1183,14 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 			case KEY_F5:
 				m_editor->SetConvertTabs(m_editor->GetConvertTabs() ? 0 : 1);
+				m_editor->EnableSaveTabSettings();
 				ChangeEditKeyBar();
+				ShowStatus();
+				return TRUE;
+
+			case KEY_SHIFTF5:
+				ChooseTabSizeMenu();
+				ShowStatus();
 				return TRUE;
 
 			case KEY_F4:
@@ -2228,6 +2235,38 @@ void FileEditor::ChangeEditKeyBar()
 	EditKeyBar.Redraw();
 }
 
+void FileEditor::ChooseTabSizeMenu()
+{
+	std::vector<std::wstring> items;
+	StrExplode(items, std::wstring(Msg::EditTabWidthItems.CPtr()), L";");
+	VMenu menu(Msg::EditTabWidthTitle,nullptr,0,ScrY-4);
+	menu.SetFlags(VMENU_WRAPMODE | VMENU_AUTOHIGHLIGHT);
+	menu.SetHelp(L"TabSizeMenu");
+	menu.SetPosition(-1, -1, 0, 0);
+
+	for (const auto &item : items)
+	{
+		MenuItemEx mi;
+		mi.SetSelect((&item - &items[0]) == (m_editor->GetTabSize() - 1));
+		mi.strName = item;
+		menu.AddItem(&mi);
+	}
+	menu.Show();
+	while (!menu.Done())
+	{
+		menu.ReadInput();
+		menu.ProcessInput();
+	}
+
+	int r = menu.GetExitCode();
+	if (r >= 0)
+	{
+		m_editor->SetTabSize(r + 1);
+		m_editor->EnableSaveTabSettings();
+		m_editor->Show();
+	}
+}
+
 FARString &FileEditor::GetTitle(FARString &strLocalTitle,int SubLen,int TruncSize)
 {
 	if (!strPluginTitle.IsEmpty())
@@ -2274,11 +2313,15 @@ void FileEditor::ShowStatus()
 
 	strLineStr.Format(L"%d/%d", m_editor->NumLine+1, m_editor->NumLastLine);
 	FARString strAttr(AttrStr);
+
+	FARString strTabMode;
+	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
 	FormatString FString;
 	FString<<fmt::LeftAlign()<<fmt::Expand(NameLength)<<strLocalTitle<<L' '<<
 	(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"':L' ')<<
+	strTabMode<<L' '<<
 	fmt::Expand(5)<<EOLName(m_editor->GlobalEOL)<<L' '<<
 	fmt::Expand(5)<<m_codepage<<L' '<<fmt::Expand(7)<<Msg::EditStatusLine<<L' '<<
 	fmt::Expand(SizeLineStr)<<fmt::Truncate(SizeLineStr)<<strLineStr<<L' '<<

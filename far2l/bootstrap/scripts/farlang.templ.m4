@@ -6063,15 +6063,15 @@ EditF4
 "Выйсці"
 
 EditF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Tab-ы"
+"Tabs"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+"Tab-і"
+"Tab-ы"
 
 EditF6
 "Просм"
@@ -6082,7 +6082,7 @@ EditF6
 "Zobacz"
 "Ver "
 "Прогл"
-"Прагляд"
+"Прагл"
 
 EditF7
 "Поиск"
@@ -6149,6 +6149,17 @@ EditF12
 "Pant. "
 "Екрани"
 "Экраны"
+
+EditF5Spaces
+"Прблы"
+"Space"
+upd:"Space"
+upd:"Space"
+upd:"Space"
+upd:"Space"
+upd:"Space"
+"Пргал"
+"Прблы"
 
 EditF8DOS
 le:// don't count this - it's a F8 another text

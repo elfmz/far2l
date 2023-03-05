@@ -1182,7 +1182,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					return FALSE;
 
 			case KEY_F5:
-				m_editor->SetConvertTabs(m_editor->GetConvertTabs() ? 0 : 1);
+				m_editor->SetConvertTabs( (m_editor->GetConvertTabs() != EXPAND_NOTABS) ? EXPAND_NOTABS : EXPAND_NEWTABS);
 				m_editor->EnableSaveTabSettings();
 				ChangeEditKeyBar();
 				ShowStatus();

@@ -2065,7 +2065,7 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	if (RetCode==SAVEFILE_SUCCESS)
 	{
 		m_editor->TextChanged(0);
-		m_editor->EnableSaveTabSettings();
+//		m_editor->EnableSaveTabSettings();
 	}
 
 	if (GetDynamicallyBorn()) // принудительно сбросим Title // Flags.Check(FFILEEDIT_SAVETOSAVEAS) ????????

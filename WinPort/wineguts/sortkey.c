@@ -42,6 +42,11 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
     key_len[0] = key_len[1] = key_len[2] = key_len[3] = 0;
     for (; srclen; srclen--, src++)
     {
+        if (!*src && (flags & NORM_STOP_ON_NULL) != 0)
+        {
+            srclen = 0;
+            break;
+        }
         unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
         dummy[0] = *src;
         if (decomposed_len)
@@ -99,6 +104,11 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
     for (; srclen; srclen--, src++)
     {
+        if (!*src && (flags & NORM_STOP_ON_NULL) != 0)
+        {
+            srclen = 0;
+            break;
+        }
         unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
         dummy[0] = *src;
         if (decomposed_len)
@@ -208,6 +218,13 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
      */
     while (len1 > 0 && len2 > 0)
     {
+        if (flags & NORM_STOP_ON_NULL)
+        {
+            if (!*str1) len1 = 0;
+            if (!*str2) len2 = 0;
+            if (!*str1 || !*str2) break;
+        }
+
         if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
         if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
 
@@ -268,6 +285,11 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
     }
     while (len1)
     {
+        if (!*str1 && (flags & NORM_STOP_ON_NULL) != 0)
+        {
+            len1 = 0;
+            break;
+        }
         if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
 
         ce1 = get_weight(dstr1[dpos1], type);
@@ -276,6 +298,11 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
     }
     while (len2)
     {
+        if (!*str2 && (flags & NORM_STOP_ON_NULL) != 0)
+        {
+            len2 = 0;
+            break;
+        }
         if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
 
         ce2 = get_weight(dstr2[dpos2], type);

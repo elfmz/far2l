@@ -1,0 +1,6 @@
+[*]
+indent_style = space
+indent_size = 2
+
+[sgml.cpp]
+indent_size = 4

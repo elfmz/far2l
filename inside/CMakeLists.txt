@@ -13,11 +13,11 @@ src/plain/PluginImplPlain.cpp
 )
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(SOURCES
-		${SOURCES}
-		src/elf/Dumper.cpp
-		src/elf/PluginImplELF.cpp
-	)
+    set(SOURCES
+        ${SOURCES}
+        src/elf/Dumper.cpp
+        src/elf/PluginImplELF.cpp
+    )
 endif()
 
 
@@ -36,11 +36,11 @@ target_include_directories(inside PRIVATE ../far2l/far2sdk)
 target_compile_definitions(inside PRIVATE)
 
 set_target_properties(inside
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/inside/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-mb")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/inside/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-mb")
 
 add_custom_command(TARGET inside POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/inside")
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/inside")

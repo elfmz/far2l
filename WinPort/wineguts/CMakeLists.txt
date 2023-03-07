@@ -81,22 +81,22 @@ codepages/c_28606.c
 )
 
 if (EACP)
-	set(SOURCES
-		${SOURCES}
-		codepages/c_932.c
-		codepages/c_936.c
-		codepages/c_949.c
-		codepages/c_950.c
-		codepages/c_1361.c
-		codepages/c_10001.c
-		codepages/c_10002.c
-		codepages/c_10003.c
-		codepages/c_10008.c
-		codepages/c_20932.c
-	)
+    set(SOURCES
+        ${SOURCES}
+        codepages/c_932.c
+        codepages/c_936.c
+        codepages/c_949.c
+        codepages/c_950.c
+        codepages/c_1361.c
+        codepages/c_10001.c
+        codepages/c_10002.c
+        codepages/c_10003.c
+        codepages/c_10008.c
+        codepages/c_20932.c
+    )
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_EACP")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNO_EACP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNO_EACP")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNO_EACP")
 endif()
 
 

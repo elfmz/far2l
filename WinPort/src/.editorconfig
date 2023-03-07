@@ -1,0 +1,6 @@
+[wineguts.h]
+indent_style = space
+
+[CMakeLists.txt]
+indent_style = tab
+indent_size = 4

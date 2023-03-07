@@ -10,7 +10,7 @@ class Editors {
 private:
     PluginStartupInfo info;
     FarStandardFunctions fsf;
-	Settings settings;
+    Settings settings;
 
     std::map<int, Editor *> editors;
 
@@ -23,7 +23,7 @@ public:
 
     void remove(Editor *&editor);
 
-	Settings *getSettings() { return &settings; }
+    Settings *getSettings() { return &settings; }
 };
 
 #endif //FAR_EDITORS_H

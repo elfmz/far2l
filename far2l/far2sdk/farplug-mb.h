@@ -36,12 +36,12 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIMESSAGE)(
-	    INT_PTR PluginNumber,
-	    DWORD Flags,
-	    const char *HelpTopic,
-	    const char * const *Items,
-	    int ItemsNumber,
-	    int ButtonsNumber
+		INT_PTR PluginNumber,
+		DWORD Flags,
+		const char *HelpTopic,
+		const char * const *Items,
+		int ItemsNumber,
+		int ButtonsNumber
 	);
 
 
@@ -418,50 +418,50 @@ namespace oldfar
 	};
 
 	typedef LONG_PTR(WINAPI *FARWINDOWPROC)(
-	    HANDLE   hDlg,
-	    int      Msg,
-	    int      Param1,
-	    LONG_PTR Param2
+		HANDLE   hDlg,
+		int      Msg,
+		int      Param1,
+		LONG_PTR Param2
 	);
 
 	typedef LONG_PTR(WINAPI *FARAPISENDDLGMESSAGE)(
-	    HANDLE   hDlg,
-	    int      Msg,
-	    int      Param1,
-	    LONG_PTR Param2
+		HANDLE   hDlg,
+		int      Msg,
+		int      Param1,
+		LONG_PTR Param2
 	);
 
 	typedef LONG_PTR(WINAPI *FARAPIDEFDLGPROC)(
-	    HANDLE   hDlg,
-	    int      Msg,
-	    int      Param1,
-	    LONG_PTR Param2
+		HANDLE   hDlg,
+		int      Msg,
+		int      Param1,
+		LONG_PTR Param2
 	);
 
 	typedef int (WINAPI *FARAPIDIALOG)(
-	    INT_PTR               PluginNumber,
-	    int                   X1,
-	    int                   Y1,
-	    int                   X2,
-	    int                   Y2,
-	    const char           *HelpTopic,
-	    struct FarDialogItem *Item,
-	    int                   ItemsNumber
+		INT_PTR               PluginNumber,
+		int                   X1,
+		int                   Y1,
+		int                   X2,
+		int                   Y2,
+		const char           *HelpTopic,
+		struct FarDialogItem *Item,
+		int                   ItemsNumber
 	);
 
 	typedef int (WINAPI *FARAPIDIALOGEX)(
-	    INT_PTR               PluginNumber,
-	    int                   X1,
-	    int                   Y1,
-	    int                   X2,
-	    int                   Y2,
-	    const char           *HelpTopic,
-	    struct FarDialogItem *Item,
-	    int                   ItemsNumber,
-	    DWORD                 Reserved,
-	    DWORD                 Flags,
-	    FARWINDOWPROC         DlgProc,
-	    LONG_PTR              Param
+		INT_PTR               PluginNumber,
+		int                   X1,
+		int                   Y1,
+		int                   X2,
+		int                   Y2,
+		const char           *HelpTopic,
+		struct FarDialogItem *Item,
+		int                   ItemsNumber,
+		DWORD                 Reserved,
+		DWORD                 Flags,
+		FARWINDOWPROC         DlgProc,
+		LONG_PTR              Param
 	);
 
 
@@ -509,18 +509,18 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIMENU)(
-	    INT_PTR                   PluginNumber,
-	    int                       X,
-	    int                       Y,
-	    int                       MaxHeight,
-	    DWORD                     Flags,
-	    const char               *Title,
-	    const char               *Bottom,
-	    const char               *HelpTopic,
-	    const int                *BreakKeys,
-	    int                      *BreakCode,
-	    const struct FarMenuItem *Item,
-	    int                       ItemsNumber
+		INT_PTR                   PluginNumber,
+		int                       X,
+		int                       Y,
+		int                       MaxHeight,
+		DWORD                     Flags,
+		const char               *Title,
+		const char               *Bottom,
+		const char               *HelpTopic,
+		const int                *BreakKeys,
+		int                      *BreakCode,
+		const struct FarMenuItem *Item,
+		int                       ItemsNumber
 	);
 
 
@@ -650,16 +650,16 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPICONTROL)(
-	    HANDLE hPlugin,
-	    int    Command,
-	    void  *Param
+		HANDLE hPlugin,
+		int    Command,
+		void  *Param
 	);
 
 	typedef void (WINAPI *FARAPITEXT)(
-	    int         X,
-	    int         Y,
-	    int         Color,
-	    const char *Str
+		int         X,
+		int         Y,
+		int         Color,
+		const char *Str
 	);
 
 	typedef HANDLE(WINAPI *FARAPISAVESCREEN)(int X1, int Y1, int X2, int Y2);
@@ -668,17 +668,17 @@ namespace oldfar
 
 
 	typedef int (WINAPI *FARAPIGETDIRLIST)(
-	    const char              *Dir,
-	    struct PluginPanelItem **pPanelItem,
-	    int                     *pItemsNumber
+		const char              *Dir,
+		struct PluginPanelItem **pPanelItem,
+		int                     *pItemsNumber
 	);
 
 	typedef int (WINAPI *FARAPIGETPLUGINDIRLIST)(
-	    INT_PTR                  PluginNumber,
-	    HANDLE                   hPlugin,
-	    const char              *Dir,
-	    struct PluginPanelItem **pPanelItem,
-	    int                     *pItemsNumber
+		INT_PTR                  PluginNumber,
+		HANDLE                   hPlugin,
+		const char              *Dir,
+		struct PluginPanelItem **pPanelItem,
+		int                     *pItemsNumber
 	);
 
 	typedef void (WINAPI *FARAPIFREEDIRLIST)(const struct PluginPanelItem *PanelItem);
@@ -694,13 +694,13 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIVIEWER)(
-	    const char *FileName,
-	    const char *Title,
-	    int X1,
-	    int Y1,
-	    int X2,
-	    int Y2,
-	    DWORD Flags
+		const char *FileName,
+		const char *Title,
+		int X1,
+		int Y1,
+		int X2,
+		int Y2,
+		DWORD Flags
 	);
 
 	enum EDITOR_FLAGS
@@ -731,21 +731,21 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIEDITOR)(
-	    const char *FileName,
-	    const char *Title,
-	    int X1,
-	    int Y1,
-	    int X2,
-	    int Y2,
-	    DWORD Flags,
-	    int StartLine,
-	    int StartChar
+		const char *FileName,
+		const char *Title,
+		int X1,
+		int Y1,
+		int X2,
+		int Y2,
+		DWORD Flags,
+		int StartLine,
+		int StartChar
 	);
 
 	typedef int (WINAPI *FARAPICMPNAME)(
-	    const char *Pattern,
-	    const char *String,
-	    int SkipPath
+		const char *Pattern,
+		const char *String,
+		int SkipPath
 	);
 
 
@@ -764,14 +764,14 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPICHARTABLE)(
-	    int Command,
-	    char *Buffer,
-	    int BufferSize
+		int Command,
+		char *Buffer,
+		int BufferSize
 	);
 
 	typedef const char*(WINAPI *FARAPIGETMSG)(
-	    INT_PTR PluginNumber,
-	    FarLangMsgID MsgId
+		INT_PTR PluginNumber,
+		FarLangMsgID MsgId
 	);
 
 
@@ -786,9 +786,9 @@ namespace oldfar
 	};
 
 	typedef BOOL (WINAPI *FARAPISHOWHELP)(
-	    const char *ModuleName,
-	    const char *Topic,
-	    DWORD       Flags
+		const char *ModuleName,
+		const char *Topic,
+		DWORD       Flags
 	);
 
 	enum ADVANCED_CONTROL_COMMANDS
@@ -1061,9 +1061,9 @@ namespace oldfar
 	};
 
 	typedef INT_PTR(WINAPI *FARAPIADVCONTROL)(
-	    INT_PTR ModuleNumber,
-	    int     Command,
-	    void   *Param
+		INT_PTR ModuleNumber,
+		int     Command,
+		void   *Param
 	);
 
 
@@ -1159,8 +1159,8 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIVIEWERCONTROL)(
-	    int Command,
-	    void *Param
+		int Command,
+		void *Param
 	);
 
 	enum VIEWER_EVENTS
@@ -1430,8 +1430,8 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIEDITORCONTROL)(
-	    int   Command,
-	    void *Param
+		int   Command,
+		void *Param
 	);
 
 	enum INPUTBOXFLAGS
@@ -1447,14 +1447,14 @@ namespace oldfar
 	};
 
 	typedef int (WINAPI *FARAPIINPUTBOX)(
-	    const char *Title,
-	    const char *SubTitle,
-	    const char *HistoryName,
-	    const char *SrcText,
-	    char *DestText,
-	    int   DestLength,
-	    const char *HelpTopic,
-	    DWORD Flags
+		const char *Title,
+		const char *SubTitle,
+		const char *HistoryName,
+		const char *SrcText,
+		char *DestText,
+		int   DestLength,
+		const char *HelpTopic,
+		DWORD Flags
 	);
 
 // <C&C++>
@@ -1510,9 +1510,9 @@ namespace oldfar
 	typedef void (WINAPI *FARSTDUNQUOTE)(char *Str);
 
 	typedef DWORD (WINAPI *FARSTDEXPANDENVIRONMENTSTR)(
-	    const char *src,
-	    char *dst,
-	    size_t size
+		const char *src,
+		char *dst,
+		size_t size
 	);
 
 	enum XLATMODE
@@ -1528,9 +1528,9 @@ namespace oldfar
 	typedef int (WINAPI *FARSTDKEYNAMETOKEY)(const char *Name);
 
 	typedef int (WINAPI *FRSUSERFUNC)(
-	    const WIN32_FIND_DATAA *FData,
-	    const char *FullName,
-	    void *Param
+		const WIN32_FIND_DATAA *FData,
+		const char *FullName,
+		void *Param
 	);
 
 	enum FRSMODE

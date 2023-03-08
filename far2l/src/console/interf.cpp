@@ -299,7 +299,7 @@ void ShowTime(int ShowAlways)
 	}
 
 	if ((!ShowAlways && lasttm.wMinute==tm.wMinute && lasttm.wHour==tm.wHour &&
-	        ScreenClockText[2].Char.UnicodeChar==L':') || ScreenSaverActive)
+		ScreenClockText[2].Char.UnicodeChar==L':') || ScreenSaverActive)
 		return;
 
 	ProcessShowClock++;
@@ -313,7 +313,7 @@ void ShowTime(int ShowAlways)
 	{
 		int ModType=CurFrame->GetType();
 		SetColor(ModType==MODALTYPE_VIEWER?COL_VIEWERCLOCK:
-		         (ModType==MODALTYPE_EDITOR?COL_EDITORCLOCK:COL_CLOCK));
+			(ModType==MODALTYPE_EDITOR?COL_EDITORCLOCK:COL_CLOCK));
 		Text(strClockText);
 		//ScrBuf.Flush();
 	}
@@ -1173,9 +1173,9 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 bool CheckForInactivityExit()
 {
 	if (Opt.InactivityExit && Opt.InactivityExitTime > 0 &&
-	        GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
-	        FrameManager && FrameManager->GetFrameCount()==1 &&
-	        (!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
+		GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
+		FrameManager && FrameManager->GetFrameCount()==1 &&
+		(!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
 	{
 		FrameManager->ExitMainLoop(FALSE);
 		return true;

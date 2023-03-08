@@ -118,39 +118,41 @@ static const char *levelNames[] = {"QUIET", "ERROR", "WARN", "TRACE", "INFO"};
 
 static FILE *cplog = 0;
 
-static void file_logger(int level, const char *cname, const char *msg, va_list v){
+static void file_logger(int level, const char *cname, const char *msg, va_list v)
+{
 
-  int idx = 0;
+	int idx = 0;
 
-  while (cplog == 0 && idx < 10){
-    char log_name[30];
+	while (cplog == 0 && idx < 10) {
+		char log_name[30];
 #ifdef __unix__
-    sprintf(log_name, "/tmp/cp-trace%d.log", idx);
+		sprintf(log_name, "/tmp/cp-trace%d.log", idx);
 #else
-    sprintf(log_name, "c:/cp-trace%d.log", idx);
+		sprintf(log_name, "c:/cp-trace%d.log", idx);
 #endif
-    cplog = fopen(log_name, "ab+");
-    idx++;
-  }
+		cplog = fopen(log_name, "ab+");
+		idx++;
+	}
 
-  fprintf(cplog, "[%s][%s] ", levelNames[level], cname);
+	fprintf(cplog, "[%s][%s] ", levelNames[level], cname);
 
-  vfprintf(cplog, msg, v);
+	vfprintf(cplog, msg, v);
 
-  //fprintf(cplog, "\n");
+	//fprintf(cplog, "\n");
 
-  fflush(cplog);
+	fflush(cplog);
 }
 #endif //CP_DBG
 
-void cp_logger(int level, const char *cname, const char *msg, ...){
+void cp_logger(int level, const char *cname, const char *msg, ...)
+{
 #ifdef CP_DBG
-  va_list v;
-  va_start(v, msg);
-  file_logger(level, cname, msg, v);
-  va_end (v);
+	va_list v;
+	va_start(v, msg);
+	file_logger(level, cname, msg, v);
+	va_end (v);
 #endif //CP_DBG
-  return;
+	return;
 }
 
 // Получаем кодовую страницу для элемента в меню
@@ -400,14 +402,14 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 
 		// Добавляем таблицу символов в выбранные
 		AddCodePage(
-		    codePageName,
-		    codePage,
-		    GetCodePageInsertPosition(
-		        codePage,
-		        GetItemsCount()-normalCodePages-favoriteCodePages-(normalCodePages?1:0),
-		        favoriteCodePages
-		    ),
-		    true,
+			codePageName,
+			codePage,
+			GetCodePageInsertPosition(
+				codePage,
+				GetItemsCount()-normalCodePages-favoriteCodePages-(normalCodePages?1:0),
+				favoriteCodePages
+			),
+			true,
 			checked,
 			IsCodePageNameCustom
 		);
@@ -422,13 +424,13 @@ static BOOL __stdcall EnumCodePagesProc(const wchar_t *lpwszCodePage)
 
 		// Добавляем таблицу символов в нормальные
 		AddCodePage(
-		    codePageName,
-		    codePage,
-		    GetCodePageInsertPosition(
-		        codePage,
-		        GetItemsCount()-normalCodePages,
-		        normalCodePages
-		    ),
+			codePageName,
+			codePage,
+			GetCodePageInsertPosition(
+				codePage,
+				GetItemsCount()-normalCodePages,
+				normalCodePages
+			),
 			true,
 			checked,
 			IsCodePageNameCustom
@@ -517,10 +519,10 @@ static void ProcessSelected(bool select)
 
 			// Ищем позицию, куда добавить элемент
 			int newPosition = GetCodePageInsertPosition(
-			                      codePage,
-			                      CodePages->GetItemCount()-normalCodePages-favoriteCodePages,
-			                      favoriteCodePages
-			                  );
+				codePage,
+				CodePages->GetItemCount()-normalCodePages-favoriteCodePages,
+				favoriteCodePages
+			);
 			// Добавляем кодовую страницу в выбранные
 			CodePages->AddItem(&newItem, newPosition);
 
@@ -549,12 +551,12 @@ static void ProcessSelected(bool select)
 
 				// Добавляем кодовою страницу в нормальные
 				CodePages->AddItem(
-				    &newItem,
-				    GetCodePageInsertPosition(
-				        codePage,
-				        CodePages->GetItemCount()-normalCodePages,
-				        normalCodePages
-				    )
+					&newItem,
+					GetCodePageInsertPosition(
+						codePage,
+						CodePages->GetItemCount()-normalCodePages,
+						normalCodePages
+					)
 				);
 				normalCodePages++;
 			}

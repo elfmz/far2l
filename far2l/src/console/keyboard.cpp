@@ -887,9 +887,9 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			  вылазил Shift после отпускания клавиш.
 			*/
 			if ((PrevVKKeyCode2==VK_SHIFT && PrevVKKeyCode==VK_RETURN &&
-			        rec->Event.KeyEvent.bKeyDown) ||
-			        (PrevVKKeyCode2==VK_RETURN && PrevVKKeyCode==VK_SHIFT &&
-			         !rec->Event.KeyEvent.bKeyDown))
+				rec->Event.KeyEvent.bKeyDown) ||
+				(PrevVKKeyCode2==VK_RETURN && PrevVKKeyCode==VK_SHIFT &&
+				!rec->Event.KeyEvent.bKeyDown))
 			{
 				if (PrevVKKeyCode2 != VK_SHIFT)
 				{
@@ -1020,7 +1020,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 
 		// Для NumPad!
 		if ((CalcKey&(KEY_CTRL|KEY_SHIFT|KEY_ALT|KEY_RCTRL|KEY_RALT)) == KEY_SHIFT &&
-		        (CalcKey&KEY_MASKF) >= KEY_NUMPAD0 && (CalcKey&KEY_MASKF) <= KEY_NUMPAD9)
+			(CalcKey&KEY_MASKF) >= KEY_NUMPAD0 && (CalcKey&KEY_MASKF) <= KEY_NUMPAD9)
 			ShiftPressed=SHIFT_PRESSED;
 		else
 			ShiftPressed=(CtrlState & SHIFT_PRESSED);
@@ -1029,8 +1029,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			return(KEY_NONE);
 
 		if (!rec->Event.KeyEvent.bKeyDown &&
-		        (KeyCode==VK_SHIFT || KeyCode==VK_CONTROL || KeyCode==VK_MENU) &&
-		        CurClock-PressedLastTime<500)
+			(KeyCode==VK_SHIFT || KeyCode==VK_CONTROL || KeyCode==VK_MENU) &&
+			CurClock-PressedLastTime<500)
 		{
 			uint32_t Key {std::numeric_limits<uint32_t>::max()};
 
@@ -1097,7 +1097,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		CtrlPressedLast=RightCtrlPressedLast=FALSE;
 		AltPressedLast=RightAltPressedLast=FALSE;
 		ShiftPressedLast=(KeyCode==VK_SHIFT && rec->Event.KeyEvent.bKeyDown) ||
-		                 (KeyCode==VK_RETURN && ShiftPressed && !rec->Event.KeyEvent.bKeyDown);
+			(KeyCode==VK_RETURN && ShiftPressed && !rec->Event.KeyEvent.bKeyDown);
 
 		if (!ShiftPressedLast)
 			if (KeyCode==VK_CONTROL && rec->Event.KeyEvent.bKeyDown)
@@ -1136,8 +1136,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 		if (KeyCode==VK_SHIFT || KeyCode==VK_MENU || KeyCode==VK_CONTROL || KeyCode==VK_NUMLOCK || KeyCode==VK_SCROLL || KeyCode==VK_CAPITAL)
 		{
 			if ((KeyCode==VK_NUMLOCK || KeyCode==VK_SCROLL || KeyCode==VK_CAPITAL) &&
-			        (CtrlState&(LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED|RIGHT_ALT_PRESSED|RIGHT_CTRL_PRESSED))
-			   )
+				(CtrlState&(LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED|RIGHT_ALT_PRESSED|RIGHT_CTRL_PRESSED))
+			)
 			{
 				// TODO:
 				;
@@ -1262,8 +1262,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 			short zDelta = HIWORD(rec->Event.MouseEvent.dwButtonState);
 			CalcKey = (zDelta>0)?KEY_MSWHEEL_RIGHT:KEY_MSWHEEL_LEFT;
 			CalcKey |= (CtrlState&SHIFT_PRESSED?KEY_SHIFT:0)|
-			           (CtrlState&(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)?KEY_CTRL:0)|
-			           (CtrlState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)?KEY_ALT:0);
+				(CtrlState&(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)?KEY_CTRL:0)|
+				(CtrlState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)?KEY_ALT:0);
 			memset(rec,0,sizeof(*rec));
 			rec->EventType = KEY_EVENT;
 		}
@@ -1304,8 +1304,8 @@ DWORD GetInputRecord(INPUT_RECORD *rec,bool ExcludeMacro,bool ProcessMouse,bool 
 				if (MsCalcKey)
 				{
 					MsCalcKey |= (CtrlState&SHIFT_PRESSED?KEY_SHIFT:0)|
-					             (CtrlState&(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)?KEY_CTRL:0)|
-					             (CtrlState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)?KEY_ALT:0);
+						(CtrlState&(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)?KEY_CTRL:0)|
+						(CtrlState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED)?KEY_ALT:0);
 
 					// для WaitKey()
 					if (ProcessMouse)
@@ -1848,11 +1848,11 @@ int TranslateKeyToVK(int Key,int &VirtKey,int &ControlState,INPUT_RECORD *Rec)
 
 		// здесь подход к Shift-клавишам другой, нежели для ControlState
 		Rec->Event.KeyEvent.dwControlKeyState=
-		    (FShift&KEY_SHIFT?SHIFT_PRESSED:0)|
-		    (FShift&KEY_ALT?LEFT_ALT_PRESSED:0)|
-		    (FShift&KEY_CTRL?LEFT_CTRL_PRESSED:0)|
-		    (FShift&KEY_RALT?RIGHT_ALT_PRESSED:0)|
-		    (FShift&KEY_RCTRL?RIGHT_CTRL_PRESSED:0);
+			(FShift&KEY_SHIFT?SHIFT_PRESSED:0)|
+			(FShift&KEY_ALT?LEFT_ALT_PRESSED:0)|
+			(FShift&KEY_CTRL?LEFT_CTRL_PRESSED:0)|
+			(FShift&KEY_RALT?RIGHT_ALT_PRESSED:0)|
+			(FShift&KEY_RCTRL?RIGHT_CTRL_PRESSED:0);
 	}
 
 	return VirtKey;
@@ -1880,7 +1880,7 @@ int IsNavKey(DWORD Key)
 
 	for (int I=0; I < int(ARRAYSIZE(NavKeys)); I++)
 		if ((!NavKeys[I][0] && Key==NavKeys[I][1]) ||
-		        (NavKeys[I][0] && (Key&0x00FFFFFF)==(NavKeys[I][1]&0x00FFFFFF)))
+			(NavKeys[I][0] && (Key&0x00FFFFFF)==(NavKeys[I][1]&0x00FFFFFF)))
 			return TRUE;
 
 	return FALSE;
@@ -2203,9 +2203,9 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 
 		//// // _SVS(SysLog(L"1 AltNumPad -> CalcKeyCode -> KeyCode=%ls  ScanCode=0x%0X AltValue=0x%0X CtrlState=%X GetAsyncKeyState(VK_SHIFT)=%X",_VK_KEY_ToName(KeyCode),ScanCode,AltValue,CtrlState,GetAsyncKeyState(VK_SHIFT)));
 		if (!(CtrlState & ENHANCED_KEY)
-		        //(CtrlState&NUMLOCK_ON) && KeyCode >= VK_NUMPAD0 && KeyCode <= VK_NUMPAD9 ||
-		        // !(CtrlState&NUMLOCK_ON) && KeyCode < VK_NUMPAD0
-		   )
+			//(CtrlState&NUMLOCK_ON) && KeyCode >= VK_NUMPAD0 && KeyCode <= VK_NUMPAD9 ||
+			// !(CtrlState&NUMLOCK_ON) && KeyCode < VK_NUMPAD0
+		)
 		{
 			//// // _SVS(SysLog(L"2 AltNumPad -> CalcKeyCode -> KeyCode=%ls  ScanCode=0x%0X AltValue=0x%0X CtrlState=%X GetAsyncKeyState(VK_SHIFT)=%X",_VK_KEY_ToName(KeyCode),ScanCode,AltValue,CtrlState,GetAsyncKeyState(VK_SHIFT)));
 			static unsigned int ScanCodes[]={82,79,80,81,75,76,77,71,72,73};
@@ -2614,8 +2614,8 @@ DWORD CalcKeyCode(INPUT_RECORD *rec,int RealKey,int *NotMacros)
 		if (KeyCode>='0' && KeyCode<='9')
 		{
 			if (WaitInFastFind > 0 &&
-			        CtrlObject->Macro.GetCurRecord(nullptr,nullptr) < MACROMODE_RECORDING &&
-			        CtrlObject->Macro.GetIndex(KEY_ALTSHIFT0+KeyCode-'0',-1) == -1)
+				CtrlObject->Macro.GetCurRecord(nullptr,nullptr) < MACROMODE_RECORDING &&
+				CtrlObject->Macro.GetIndex(KEY_ALTSHIFT0+KeyCode-'0',-1) == -1)
 			{
 				return KEY_ALT|KEY_SHIFT|Char;
 			}

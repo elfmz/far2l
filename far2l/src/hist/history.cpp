@@ -621,7 +621,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 							(Opt.Confirm.HistoryClear &&
 								!Message(MSG_WARNING,2,
 									((TypeHistory==HISTORYTYPE_CMD || TypeHistory==HISTORYTYPE_DIALOG ? Msg::HistoryTitle
-										(TypeHistory==HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle))),
+									: (TypeHistory==HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle))),
 									Msg::HistoryClear,
 									Msg::Clear,Msg::Cancel))))
 					{

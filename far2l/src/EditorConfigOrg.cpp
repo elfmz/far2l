@@ -56,13 +56,13 @@ static bool MatchEditorConfigFileSection(const char *edited_file, const std::str
 static bool ParseEditorConfigFile(const char *edited_file, KeyFileReadHelper &kfh, KeyFileValues &props)
 {
 	const auto &sections = kfh.EnumSections();
-	for (const auto &section : sections) {
-		if (!MatchEditorConfigFileSection(edited_file, section)) {
+	for (auto it = sections.rbegin(); it != sections.rend(); ++it) {
+		if (!MatchEditorConfigFileSection(edited_file, *it)) {
 			continue;
 		}
-		fprintf(stderr, "EditorConfigOrg: matched section '%s'\n", section.c_str());
+		fprintf(stderr, "EditorConfigOrg: matched section '%s'\n", it->c_str());
 
-		const KeyFileValues *values = kfh.GetSectionValues(section);
+		const KeyFileValues *values = kfh.GetSectionValues(*it);
 		if (!values) {
 			continue;
 		}

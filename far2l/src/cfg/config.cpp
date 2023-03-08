@@ -607,7 +607,7 @@ void EditorConfig(EditorOptions &EdOpt,bool Local)
 	if (!Local)
 	{
 		Builder.AddEmptyLine();
-		Builder.AddCheckbox(Msg::EditShareWrite, &EdOpt.EditOpenedForWrite);
+		Builder.AddCheckbox(Msg::EditUseEditorConfigOrg, &EdOpt.UseEditorConfigOrg);
 		Builder.AddCheckbox(Msg::EditLockROFileModification, &EdOpt.ReadOnlyLock, 1);
 		Builder.AddCheckbox(Msg::EditWarningBeforeOpenROFile, &EdOpt.ReadOnlyLock, 2);
 		Builder.AddCheckbox(Msg::EditAutoDetectCodePage, &EdOpt.AutoDetectCodePage);

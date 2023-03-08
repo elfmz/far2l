@@ -18,6 +18,7 @@ src/dlgedit.cpp
 src/DlgGuid.cpp
 src/edit.cpp
 src/editor.cpp
+src/EditorConfigOrg.cpp
 src/execute.cpp
 src/farwinapi.cpp
 src/fileattr.cpp

@@ -330,7 +330,7 @@ public:
 	{true,  NSecEditor, "ShowKeyBar", &Opt.EdOpt.ShowKeyBar, 1},
 	{true,  NSecEditor, "ShowTitleBar", &Opt.EdOpt.ShowTitleBar, 1},
 	{true,  NSecEditor, "ShowScrollBar", &Opt.EdOpt.ShowScrollBar, 0},
-	{true,  NSecEditor, "EditOpenedForWrite", &Opt.EdOpt.EditOpenedForWrite, 1},
+	{true,  NSecEditor, "UseEditorConfigOrg", &Opt.EdOpt.UseEditorConfigOrg, 1},
 	{true,  NSecEditor, "SearchSelFound", &Opt.EdOpt.SearchSelFound, 0},
 	{true,  NSecEditor, "SearchRegexp", &Opt.EdOpt.SearchRegexp, 0},
 	{true,  NSecEditor, "SearchPickUpWord", &Opt.EdOpt.SearchPickUpWord, 0},

@@ -44,10 +44,28 @@ public:
 class KeyFileReadHelper
 {
 protected:
-	struct Sections : std::map<std::string, KeyFileValues, KeyFileCmp> {
-		inline Sections(bool case_insensitive) :
-			std::map<std::string, KeyFileValues, KeyFileCmp>(KeyFileCmp(case_insensitive))
-		{ }
+	class Sections {
+		typedef std::map<std::string, KeyFileValues, KeyFileCmp> Map;
+		typedef std::vector<Map::iterator> IteratorsVec;
+
+	public:
+		Map _map;
+		IteratorsVec _ordered;
+
+		Map::const_iterator FindInMap(const std::string &name) const;
+		Map::iterator FindInMap(const std::string &name);
+		IteratorsVec::iterator FindInVec(Map::iterator it);
+
+	public:
+		Sections(bool case_insensitive);
+		size_t Size() const { return _map.size(); }
+		const KeyFileValues *Find(const std::string &section) const;
+		KeyFileValues *Find(const std::string &section);
+		KeyFileValues *Ensure(const std::string &section);
+		bool Remove(const std::string &section);
+		size_t RemoveAt(const std::string &section);
+		bool Rename(const std::string &section, const std::string &new_name);
+		const IteratorsVec &Enumeration() const;
 	} _kf;
 
 	struct stat _filestat {};

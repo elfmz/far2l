@@ -3,3 +3,6 @@ indent_style = space
 
 [*.sh]
 indent_style = tab
+
+[*.hlf]
+indent_size = 2

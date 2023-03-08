@@ -48,7 +48,7 @@ const DWORD64 POS_NONE = _UI64_MAX;
 
 struct PosCache
 {
-    /*
+/*
     Param:
     	Editor:
 			Param[0] = Line
@@ -64,10 +64,10 @@ struct PosCache
 			Param[2] = Hex?
 			Param[3] = 0
 			Param[4] = CodePage
-    */
+*/
 	DWORD64 Param[POSCACHE_PARAM_COUNT];
 
-    /*
+/*
     Position
     	Editor:
 			Position[0] = [POSCACHE_BOOKMARK_COUNT] Line
@@ -79,7 +79,7 @@ struct PosCache
 			Position[1] = [POSCACHE_BOOKMARK_COUNT] SavePosLeft
 			Position[2] = [POSCACHE_BOOKMARK_COUNT] 0
 			Position[3] = [POSCACHE_BOOKMARK_COUNT] 0
-    */
+*/
 	DWORD64 *Position[POSCACHE_POSITION_COUNT];
 };
 

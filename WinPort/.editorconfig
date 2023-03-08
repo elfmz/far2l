@@ -1,0 +1,8 @@
+[wineguts/*]
+indent_style = space
+
+[src/wineguts.h]
+indent_style = space
+
+[WinCompat.h]
+indent_style = space

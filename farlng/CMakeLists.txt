@@ -2,11 +2,11 @@
 project(farlng)
 
 set(SOURCES
-  src/farlng.cpp
-  src/lng.common.cpp
-  src/lng.convertor.cpp
-  src/lng.generator.cpp
-  src/lng.inserter.cpp
+    src/farlng.cpp
+    src/lng.common.cpp
+    src/lng.convertor.cpp
+    src/lng.generator.cpp
+    src/lng.inserter.cpp
 )
 
 set(CMAKE_CXX_VISIBILITY_PRESET default)

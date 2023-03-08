@@ -187,38 +187,38 @@ else()
 endif()
 
 if (NOT DEFINED USEUCD)
-	set(USEUCD "YES")
+    set(USEUCD "YES")
 endif()
 
 if (NOT USEUCD)
-	message(STATUS "Building without libuchardet due to USEUCD=${USEUCD}")
+    message(STATUS "Building without libuchardet due to USEUCD=${USEUCD}")
 else()
-	message(STATUS "Building with libuchardet")
-	find_package(Uchardet REQUIRED)
-	target_compile_definitions(far2l PRIVATE -DUSEUCD)
+    message(STATUS "Building with libuchardet")
+    find_package(Uchardet REQUIRED)
+    target_compile_definitions(far2l PRIVATE -DUSEUCD)
 endif()
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)
 
 target_include_directories(far2l PRIVATE
-	.
-	far2sdk
-	src
-	src/base
-	src/mix
-	src/bookmarks
-	src/cfg
-	src/console
-	src/panels
-	src/filemask
-	src/hist
-	src/locale
-	src/macro
-	src/plug
-	src/vt
-	${CMAKE_CURRENT_BINARY_DIR}
-	${UCHARDET_INCLUDE_DIRS}
-	../WinPort)
+    .
+    far2sdk
+    src
+    src/base
+    src/mix
+    src/bookmarks
+    src/cfg
+    src/console
+    src/panels
+    src/filemask
+    src/hist
+    src/locale
+    src/macro
+    src/plug
+    src/vt
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${UCHARDET_INCLUDE_DIRS}
+    ../WinPort)
 
 add_dependencies(far2l bootstrap WinPort)
 
@@ -234,9 +234,9 @@ set_target_properties(far2l
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     target_link_libraries(far2l
-	PRIVATE ${WINPORT}
-	PRIVATE c
-	PRIVATE ${UCHARDET_LIBRARIES})
+    PRIVATE ${WINPORT}
+    PRIVATE c
+    PRIVATE ${UCHARDET_LIBRARIES})
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Haiku")
     target_link_libraries(far2l
         PRIVATE ${WINPORT}
@@ -244,7 +244,7 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Haiku")
         PRIVATE ${UCHARDET_LIBRARIES})
 else()
     target_link_libraries(far2l
-	PRIVATE ${WINPORT}
+    PRIVATE ${WINPORT}
         PRIVATE dl
         PRIVATE ${UCHARDET_LIBRARIES})
 endif()

@@ -16,8 +16,8 @@ target_include_directories(SimpleIndent PRIVATE ../WinPort)
 target_include_directories(SimpleIndent PRIVATE ../far2l/far2sdk)
 
 set_target_properties(SimpleIndent
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/SimpleIndent/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-wide")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/SimpleIndent/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-wide")
 

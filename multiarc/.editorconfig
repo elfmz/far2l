@@ -2,22 +2,10 @@
 indent_style = space
 indent_size = 2
 
-[src/formats/7z/7z.cpp]
-indent_style = tab
-indent_size = 2
-
-[src/formats/custom/custom.cpp]
-indent_style = space
-indent_size = 4
-
 [src/formats/ha/ha/*]
 indent_style = space
 indent_size = 4
 
 [src/formats/libarch/*]
-indent_style = tab
-indent_size = 4
-
-[src/formats/rar/rarmainstub.cpp]
 indent_style = tab
 indent_size = 4

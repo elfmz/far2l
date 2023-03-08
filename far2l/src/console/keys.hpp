@@ -792,17 +792,17 @@ enum AddDefKeyboard
 #ifdef FAR_USE_INTERNALS
 #define IS_INTERNAL_KEY_REAL(Key)\
 	(\
-	 (Key)==KEY_MSWHEEL_UP||\
-	 (Key)==KEY_MSWHEEL_DOWN||\
-	 (Key)==KEY_NUMDEL||\
-	 (Key)==KEY_NUMENTER||\
-	 (Key)==KEY_MSWHEEL_LEFT||\
-	 (Key)==KEY_MSWHEEL_RIGHT||\
-	 (Key)==KEY_MSLCLICK||\
-	 (Key)==KEY_MSRCLICK||\
-	 (Key)==KEY_MSM1CLICK||\
-	 (Key)==KEY_MSM2CLICK||\
-	 (Key)==KEY_MSM3CLICK\
+		(Key)==KEY_MSWHEEL_UP||\
+		(Key)==KEY_MSWHEEL_DOWN||\
+		(Key)==KEY_NUMDEL||\
+		(Key)==KEY_NUMENTER||\
+		(Key)==KEY_MSWHEEL_LEFT||\
+		(Key)==KEY_MSWHEEL_RIGHT||\
+		(Key)==KEY_MSLCLICK||\
+		(Key)==KEY_MSRCLICK||\
+		(Key)==KEY_MSM1CLICK||\
+		(Key)==KEY_MSM2CLICK||\
+		(Key)==KEY_MSM3CLICK\
 	)
 #endif // END FAR_USE_INTERNALS
 

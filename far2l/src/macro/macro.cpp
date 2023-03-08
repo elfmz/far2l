@@ -1218,8 +1218,8 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						SelPanel->GetFileName(strFileName,SelPanel->GetCurrentPos(),FileAttr);
 						int GetFileCount=SelPanel->GetFileCount();
 						Cond=(!GetFileCount ||
-						      (GetFileCount == 1 && TestParentFolderName(strFileName)))
-						     ?1:0;
+								(GetFileCount == 1 && TestParentFolderName(strFileName)))
+							?1:0;
 					}
 
 					break;
@@ -1686,7 +1686,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						Cond=L"";
 
 					if ((CtrlObject->Macro.GetMode()==MACRO_VIEWER || CtrlObject->Macro.GetMode()==MACRO_QVIEWPANEL) &&
-					        CtrlObject->Plugins.CurViewer && CtrlObject->Plugins.CurViewer->IsVisible())
+						CtrlObject->Plugins.CurViewer && CtrlObject->Plugins.CurViewer->IsVisible())
 					{
 						if (CheckCode == MCODE_V_VIEWERFILENAME)
 						{
@@ -3845,8 +3845,8 @@ static bool callpluginFunc(const TMacroFunction*)
 		int ResultCallPlugin=0;
 
 		if (CtrlObject->Plugins.CallPlugin((DWORD)SysID.i(),OpenFrom,
-		                                   Param.isString() ? (void*)Param.s() :
-		                                   (void*)(size_t)Param.i(),&ResultCallPlugin))
+			Param.isString() ? (void*)Param.s() :
+			(void*)(size_t)Param.i(),&ResultCallPlugin))
 			Ret=ResultCallPlugin;
 
 		if( Opt.Macro.CallPluginRules )
@@ -4049,10 +4049,10 @@ int KeyMacro::GetKey()
 			}
 
 			if (Mode==MACRO_EDITOR &&
-			        IsRedrawEditor &&
-			        CtrlObject->Plugins.CurEditor &&
-			        CtrlObject->Plugins.CurEditor->IsVisible() &&
-			        LockScr)
+				IsRedrawEditor &&
+				CtrlObject->Plugins.CurEditor &&
+				CtrlObject->Plugins.CurEditor->IsVisible() &&
+				LockScr)
 			{
 				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
 				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
@@ -4124,10 +4124,10 @@ done:
 			will NOT send this event while screen is locked.
 		*/
 		if (Mode==MACRO_EDITOR &&
-		        IsRedrawEditor &&
-		        CtrlObject->Plugins.CurEditor &&
-		        CtrlObject->Plugins.CurEditor->IsVisible() &&
-		        LockScr)
+			IsRedrawEditor &&
+			CtrlObject->Plugins.CurEditor &&
+			CtrlObject->Plugins.CurEditor->IsVisible() &&
+			LockScr)
 		{
 			CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
 			CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
@@ -5103,7 +5103,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 				(Key&KEY_MACRO_ENDBASE) >= KEY_MACRO_BASE && (Key&KEY_MACRO_ENDBASE) <= KEY_MACRO_ENDBASE ||
 				(Key&KEY_OP_ENDBASE) >= KEY_OP_BASE && (Key&KEY_OP_ENDBASE) <= KEY_OP_ENDBASE ||
 				*/
-			    !KeyToText(Key,strMacroKeyText)
+				!KeyToText(Key,strMacroKeyText)
 			)
 			{
 				return Src?wcsdup(Src):nullptr;
@@ -5637,10 +5637,10 @@ void KeyMacro::RunStartMacro()
 		DWORD CurFlags;
 
 		if (((CurFlags=MR[I].Flags)&MFLAGS_MODEMASK)==MACRO_SHELL &&
-		        MR[I].BufferSize>0 &&
-		        // исполняем не задисабленные макросы
-		        !(CurFlags&MFLAGS_DISABLEMACRO) &&
-		        (CurFlags&MFLAGS_RUNAFTERFARSTART) && CtrlObject)
+			MR[I].BufferSize>0 &&
+			// исполняем не задисабленные макросы
+			!(CurFlags&MFLAGS_DISABLEMACRO) &&
+			(CurFlags&MFLAGS_RUNAFTERFARSTART) && CtrlObject)
 		{
 			if (CheckAll(MACRO_SHELL,CurFlags))
 				PostNewMacro(MR+I);
@@ -5666,11 +5666,11 @@ void KeyMacro::RunStartMacro()
 		DWORD CurFlags;
 
 		if (((CurFlags=MR[I].Flags)&MFLAGS_MODEMASK)==Mode &&   // этот макрос из этой оперы?
-		        MR[I].BufferSize > 0 &&                             // что-то должно быть
-		        !(CurFlags&MFLAGS_DISABLEMACRO) &&                  // исполняем не задисабленные макросы
-		        (CurFlags&MFLAGS_RUNAFTERFARSTART) &&               // и тока те, что должны стартовать
-		        !(CurFlags&MFLAGS_RUNAFTERFARSTARTED)      // и тем более, которые еще не стартовали
-		   )
+			MR[I].BufferSize > 0 &&                             // что-то должно быть
+			!(CurFlags&MFLAGS_DISABLEMACRO) &&                  // исполняем не задисабленные макросы
+			(CurFlags&MFLAGS_RUNAFTERFARSTART) &&               // и тока те, что должны стартовать
+			!(CurFlags&MFLAGS_RUNAFTERFARSTARTED)      // и тем более, которые еще не стартовали
+		)
 		{
 			if (CheckAll(Mode,CurFlags)) // прежде чем запостить - проверим флаги
 			{
@@ -5784,7 +5784,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		}
 	}
 	else if (Msg == DN_KEY && (((Param2&KEY_END_SKEY) < KEY_END_FKEY) ||
-	                           (((Param2&KEY_END_SKEY) > INTERNAL_KEY_BASE) && (Param2&KEY_END_SKEY) < INTERNAL_KEY_BASE_2)))
+		(((Param2&KEY_END_SKEY) > INTERNAL_KEY_BASE) && (Param2&KEY_END_SKEY) < INTERNAL_KEY_BASE_2)))
 	{
 		//if((Param2&0x00FFFFFF) >= 'A' && (Param2&0x00FFFFFF) <= 'Z' && ShiftPressed)
 		//Param2|=KEY_SHIFT;
@@ -5793,9 +5793,9 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		// <Обработка особых клавиш: F1 & Enter>
 		// Esc & (Enter и предыдущий Enter) - не обрабатываем
 		if (Param2 == KEY_ESC ||
-		        ((Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && (LastKey == KEY_ENTER||LastKey == KEY_NUMENTER)) ||
-		        Param2 == KEY_CTRLDOWN ||
-		        Param2 == KEY_F1)
+			((Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && (LastKey == KEY_ENTER||LastKey == KEY_NUMENTER)) ||
+			Param2 == KEY_CTRLDOWN ||
+			Param2 == KEY_F1)
 		{
 			return FALSE;
 		}
@@ -5854,31 +5854,31 @@ M1:
 				FARString strBuf;
 				if ((Mac->Flags&0xFF)==MACRO_COMMON)
 					strBuf.Format((!MacroDlg->RecBufferSize
-					                  ? (DisFlags ? Msg::MacroCommonDeleteAssign : Msg::MacroCommonDeleteKey)
-					                  : Msg::MacroCommonReDefinedKey), strKeyText.CPtr());
+						? (DisFlags ? Msg::MacroCommonDeleteAssign : Msg::MacroCommonDeleteKey)
+						: Msg::MacroCommonReDefinedKey), strKeyText.CPtr());
 				else
 					strBuf.Format((!MacroDlg->RecBufferSize
-					                  ? (DisFlags ? Msg::MacroDeleteAssign : Msg::MacroDeleteKey)
-					                  : Msg::MacroReDefinedKey), strKeyText.CPtr());
+						? (DisFlags ? Msg::MacroDeleteAssign : Msg::MacroDeleteKey)
+						: Msg::MacroReDefinedKey), strKeyText.CPtr());
 
 				// проверим "а не совпадает ли всё?"
 				int Result=0;
 				if (!(!DisFlags &&
-				        Mac->Buffer && MacroDlg->RecBuffer &&
-				        Mac->BufferSize == MacroDlg->RecBufferSize &&
-				        (
-				            (Mac->BufferSize >  1 && !memcmp(Mac->Buffer,MacroDlg->RecBuffer,MacroDlg->RecBufferSize*sizeof(DWORD))) ||
-				            (Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
-				        )
-				   ))
-					Result=Message(MSG_WARNING,2,Msg::Warning,
-					          strBuf,
-					          Msg::MacroSequence,
-					          strBufKey,
-					          (!MacroDlg->RecBufferSize?Msg::MacroDeleteKey2:
-					              (DisFlags?Msg::MacroDisDisabledKey:Msg::MacroReDefinedKey2)),
-					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisOverwrite:Msg::Yes),
-					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisAnotherKey:Msg::No));
+					Mac->Buffer && MacroDlg->RecBuffer &&
+					Mac->BufferSize == MacroDlg->RecBufferSize &&
+					(
+						(Mac->BufferSize >  1 && !memcmp(Mac->Buffer,MacroDlg->RecBuffer,MacroDlg->RecBufferSize*sizeof(DWORD))) ||
+						(Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
+					)
+				))
+				Result=Message(MSG_WARNING,2,Msg::Warning,
+					strBuf,
+					Msg::MacroSequence,
+					strBufKey,
+					(!MacroDlg->RecBufferSize?Msg::MacroDeleteKey2:
+						(DisFlags?Msg::MacroDisDisabledKey:Msg::MacroReDefinedKey2)),
+					(DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisOverwrite:Msg::Yes),
+					(DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisAnotherKey:Msg::No));
 
 				if (!Result)
 				{
@@ -6112,27 +6112,27 @@ int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 	if (MacroSettingsDlg[MS_CHECKBOX_A_PANEL].Selected)
 	{
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==0?MFLAGS_NOPLUGINPANELS:MFLAGS_NOFILEPANELS);
+			(MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==0?MFLAGS_NOPLUGINPANELS:MFLAGS_NOFILEPANELS);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==0?MFLAGS_NOFOLDERS:MFLAGS_NOFILES);
+			(MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==0?MFLAGS_NOFOLDERS:MFLAGS_NOFILES);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==0?MFLAGS_NOSELECTION:MFLAGS_SELECTION);
+			(MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==0?MFLAGS_NOSELECTION:MFLAGS_SELECTION);
 	}
 
 	if (MacroSettingsDlg[MS_CHECKBOX_P_PANEL].Selected)
 	{
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==0?MFLAGS_PNOPLUGINPANELS:MFLAGS_PNOFILEPANELS);
+			(MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==0?MFLAGS_PNOPLUGINPANELS:MFLAGS_PNOFILEPANELS);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==0?MFLAGS_PNOFOLDERS:MFLAGS_PNOFILES);
+			(MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==0?MFLAGS_PNOFOLDERS:MFLAGS_PNOFILES);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==0?MFLAGS_PNOSELECTION:MFLAGS_PSELECTION);
+			(MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==0?MFLAGS_PNOSELECTION:MFLAGS_PSELECTION);
 	}
 
 	Flags|=MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==2?0:
-	       (MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==0?MFLAGS_NOTEMPTYCOMMANDLINE:MFLAGS_EMPTYCOMMANDLINE);
+		(MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==0?MFLAGS_NOTEMPTYCOMMANDLINE:MFLAGS_EMPTYCOMMANDLINE);
 	Flags|=MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==2?0:
-	       (MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==0?MFLAGS_EDITNOSELECTION:MFLAGS_EDITSELECTION);
+		(MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==0?MFLAGS_EDITNOSELECTION:MFLAGS_EDITSELECTION);
 	return TRUE;
 }
 
@@ -6372,8 +6372,8 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 				for (Pos=0; Pos < Len; ++Pos, ++MPtr)
 				{
 					if (!((MPtr->Key ^ Key) & ~0xFFFFu) &&
-					        (Upper(static_cast<WCHAR>(MPtr->Key))==Upper(static_cast<WCHAR>(Key))) &&
-					        (MPtr->BufferSize > 0))
+						(Upper(static_cast<WCHAR>(MPtr->Key))==Upper(static_cast<WCHAR>(Key))) &&
+						(MPtr->BufferSize > 0))
 					{
 						//        && (ChechMode == -1 || (MPtr->Flags&MFLAGS_MODEMASK) == ChechMode))
 						//_SVS(SysLog(L"GetIndex: Pos=%d MPtr->Key=0x%08X", Pos,MPtr->Key));
@@ -6476,7 +6476,7 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 				}
 				else
 				{ // guess who
-				    wchar_t *llEnd = nullptr;
+					wchar_t *llEnd = nullptr;
 					long long llVal = wcstoll(Val.CPtr(), &llEnd, 10);
 					if (!Val.IsEmpty() && llEnd && !*llEnd)
 					{

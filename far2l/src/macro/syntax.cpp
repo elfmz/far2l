@@ -1556,14 +1556,14 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			int ProcError=0;
 
 			if (strCurrKeyText.At(0) == L'%' &&
-			        (
-			            (IsAlphaNum(strCurrKeyText.At(1)) || strCurrKeyText.At(1) == L'_') ||
-			            (
-			                strCurrKeyText.At(1) == L'%' &&
-			                (IsAlphaNum(strCurrKeyText.At(2)) || strCurrKeyText.At(2)==L'_')
-			            )
-			        )
-			   )
+				(
+					(IsAlphaNum(strCurrKeyText.At(1)) || strCurrKeyText.At(1) == L'_') ||
+					(
+						strCurrKeyText.At(1) == L'%' &&
+						(IsAlphaNum(strCurrKeyText.At(2)) || strCurrKeyText.At(2)==L'_')
+					)
+				)
+			)
 			{
 				BufPtr = oldBufPtr;
 

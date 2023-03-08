@@ -133,10 +133,7 @@ wchar_t Xlator::Transcode(wchar_t chr)
 	return chr;
 }
 
-wchar_t* WINAPI Xlat(wchar_t *Line,
-                     int StartPos,
-                     int EndPos,
-                     DWORD Flags)
+wchar_t* WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags)
 {
 	if (!Line || !*Line)
 		return nullptr;

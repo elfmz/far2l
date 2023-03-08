@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileedit.hpp"
 #include "keyboard.hpp"
 #include "codepage.hpp"
+#include "EditorConfigOrg.hpp"
 #include "lang.hpp"
 #include "macroopcode.hpp"
 #include "keys.hpp"
@@ -1390,6 +1391,24 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 {
 	SudoClientRegion sdc_rgn;
 	ChangePriority ChPriority(ChangePriority::NORMAL);
+	if (Opt.EdOpt.UseEditorConfigOrg)
+	{
+		FARString strFullName;
+		ConvertNameToFull(Name, strFullName);
+		EditorConfigOrg EdCfg;
+		EdCfg.Populate(strFullName.GetMB().c_str());
+		if (EdCfg.CodePageBOM >= 0)
+			m_AddSignature = (EdCfg.CodePageBOM == 0) ? FB_NO : FB_YES;
+		if (EdCfg.CodePage > 0)
+			m_codepage = EdCfg.CodePage;
+		if (EdCfg.EndOfLine)
+			far_wcsncpy(m_editor->GlobalEOL,EdCfg.EndOfLine,ARRAYSIZE(m_editor->GlobalEOL));
+		if (EdCfg.TabSize > 0)
+			m_editor->SetTabSize(EdCfg.TabSize);
+		if (EdCfg.ExpandTabs >= 0)
+			m_editor->SetConvertTabs(EdCfg.ExpandTabs);
+	}
+
 	TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
 	wakeful W;
 	int LastLineCR = 0;
@@ -1398,7 +1417,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 	File EditFile;
 	DWORD FileAttr = apiGetFileAttributes(Name);
 	if ((FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0) || //avoid stuck
-		!EditFile.Open(Name, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
+		!EditFile.Open(Name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 	{
 		SysErrorCode=WINPORT(GetLastError)();
 		if ((SysErrorCode != ERROR_FILE_NOT_FOUND) && (SysErrorCode != ERROR_PATH_NOT_FOUND))

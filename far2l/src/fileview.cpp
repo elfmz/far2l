@@ -306,7 +306,7 @@ int FileViewer::ProcessKey(int Key)
 				FARString strViewFileName;
 				View.GetFileName(strViewFileName);
 				File Edit;
-				if(!Edit.Open(strViewFileName, GENERIC_READ, FILE_SHARE_READ|(Opt.EdOpt.EditOpenedForWrite?FILE_SHARE_WRITE:0), nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
+				if(!Edit.Open(strViewFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN))
 				{
 					Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::EditTitle,Msg::EditCannotOpen,strViewFileName,Msg::Ok);
 					return TRUE;

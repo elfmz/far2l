@@ -3201,16 +3201,16 @@ upd:"Zeichentabelle &automatisch erkennen"
 "&Автовизначення кодової сторінки"
 "С&амавызначэнне кадыроўкі"
 
-EditShareWrite
-"Разрешить редактирование открытых для записи &файлов"
-"Allow editing files ope&ned for writing"
-upd:"Allow editing files opened for &writing"
-upd:"Allow editing files opened for &writing"
-"Írásra m&egnyitott fájlok szerkeszthetők"
-upd:"Allow editing files opened for &writing"
-"Permitir escritura de archivos abiertos para edición"
-"Дозволити редагування відкритих для запису &файлів"
-"Дазволіць змену файлаў, якія адчынены дла запісу"
+EditUseEditorConfigOrg
+"Использовать &файлы настроек .editorconfig"
+"Use .editorconfig setti&ngs files"
+upd:"Use .editorco&nfig settings files"
+upd:"Use .editorco&nfig settings files"
+upd:"Use .editorco&nfig settings files"
+upd:"Use .editorco&nfig settings files"
+upd:"Use .editorco&nfig settings files"
+"Використовувати &файли налаштувань .editorconfig"
+"Выкарыстоўваць &файлы настроек .editorconfig"
 
 EditLockROFileModification
 "Блокировать р&едактирование файлов с атрибутом R/O"

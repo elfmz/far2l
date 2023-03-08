@@ -220,7 +220,7 @@ struct EditorOptions
 	int ShowKeyBar;
 	int ShowTitleBar;
 	int ShowScrollBar;
-	int EditOpenedForWrite;
+	int UseEditorConfigOrg;
 	int SearchSelFound;
 	int SearchRegexp;
 	int SearchPickUpWord;

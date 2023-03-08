@@ -2814,8 +2814,8 @@ static bool editorsetFunc(const TMacroFunction*)
 				Ret=EdOpt.AllowEmptySpaceAfterEof; break;
 			case 15: // ShowScrollBar;
 				Ret=EdOpt.ShowScrollBar; break;
-			case 16: // EditOpenedForWrite;
-				Ret=EdOpt.EditOpenedForWrite; break;
+			case 16: // UseEditorConfigOrg;
+				Ret=EdOpt.UseEditorConfigOrg; break;
 			case 17: // SearchSelFound;
 				Ret=EdOpt.SearchSelFound; break;
 			case 18: // SearchRegexp;
@@ -2864,8 +2864,8 @@ static bool editorsetFunc(const TMacroFunction*)
 					EdOpt.AllowEmptySpaceAfterEof=longState; break;
 				case 15: // ShowScrollBar;
 					EdOpt.ShowScrollBar=longState; break;
-				case 16: // EditOpenedForWrite;
-					EdOpt.EditOpenedForWrite=longState; break;
+				case 16: // UseEditorConfigOrg;
+					EdOpt.UseEditorConfigOrg=longState; break;
 				case 17: // SearchSelFound;
 					EdOpt.SearchSelFound=longState; break;
 				case 18: // SearchRegexp;

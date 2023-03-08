@@ -5,7 +5,7 @@
 #include "PipeIPC.h"
 
 #ifdef __HAIKU__
-  #include <posix/sys/select.h>
+	#include <posix/sys/select.h>
 #endif
 
 static std::string FormatIPCError(const char *msg, unsigned int code)

@@ -1,2 +1,11 @@
 [*]
 indent_style = space
+
+[src/shared/sgml/*]
+indent_size = 2
+
+[src/shared/sgml/sgml.cpp]
+indent_size = 4
+
+[src/shared/mathexpression/*]
+indent_size = 2

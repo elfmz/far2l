@@ -5,7 +5,7 @@
 Editor::Editor(int id, PluginStartupInfo &info, FarStandardFunctions &fsf, Settings *settings)
         : id(id), info(info), fsf(fsf), settings(settings) {
 
-	const auto &autoEnableMasks = settings->fileMasks();
+    const auto &autoEnableMasks = settings->fileMasks();
     if (!autoEnableMasks.empty()) {
         std::wstring fileName;
         size_t fileNameSize = info.EditorControl(ECTL_GETFILENAME, NULL);
@@ -49,7 +49,7 @@ EditorInfo Editor::getInfo() {
 
 bool Editor::getEnabled()
 {
-	return isEnabled;
+    return isEnabled;
 }
 
 void Editor::setEnabled(bool enabled)
@@ -85,7 +85,7 @@ void Editor::debug(const std::string &msg) {
 
 static inline bool IsPrefixed(const std::wstring &str, const std::wstring &prefix)
 {
-	return str.size() > prefix.size() && wmemcmp(str.c_str(), prefix.c_str(), prefix.size()) == 0;
+    return str.size() > prefix.size() && wmemcmp(str.c_str(), prefix.c_str(), prefix.size()) == 0;
 }
 
 void Editor::updateWords() {
@@ -101,11 +101,11 @@ void Editor::updateWords() {
     if (!only_current_line) {
         words.other_lines.clear();
     }
-	std::wstring cur;
-	const auto max_line_delta = settings->maxLineDelta();
-	const auto max_line_length = settings->maxLineLength();
-	const auto max_word_length = settings->maxWordLength();
-	const auto min_prefix_length = settings->minPrefixLength();
+    std::wstring cur;
+    const auto max_line_delta = settings->maxLineDelta();
+    const auto max_line_length = settings->maxLineLength();
+    const auto max_word_length = settings->maxWordLength();
+    const auto min_prefix_length = settings->minPrefixLength();
     for (int i = 0; i < ei.TotalLines; i++) {
         if (i == ei.CurLine || (!only_current_line && std::abs(i - ei.CurLine) <= max_line_delta)) {
             const EditorGetString &string = getString(i);
@@ -180,7 +180,7 @@ void Editor::putSuggestion() {
                 updateWords();
             }
             if (!words.suggestions.empty()) {
-				const wchar_t *suggestion = words.suggestions.front();
+                const wchar_t *suggestion = words.suggestions.front();
                 suggestionLen = (int)wcslen(suggestion);
                 suggestionRow = ei.CurLine;
                 suggestionCol = ei.CurPos;
@@ -222,13 +222,13 @@ State Editor::getState() {
 
 void Editor::toggleSuggestion()
 {
-	auto saved_suggestions = words.suggestions;
-	if (!saved_suggestions.empty()) {
-		saved_suggestions.erase(saved_suggestions.begin());
-	}
+    auto saved_suggestions = words.suggestions;
+    if (!saved_suggestions.empty()) {
+        saved_suggestions.erase(saved_suggestions.begin());
+    }
     declineSuggestion();
     state = DO_PUT;
-	words.suggestions.swap(saved_suggestions);
+    words.suggestions.swap(saved_suggestions);
     info.EditorControl(ECTL_REDRAW, nullptr);
 }
 
@@ -312,7 +312,7 @@ void Editor::declineSuggestion() {
 
     } else if (state == DO_PUT) {
         state = OFF;
-	}
+    }
 }
 
 void Editor::on() {

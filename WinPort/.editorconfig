@@ -1,3 +1,8 @@
-[CMakeLists.txt]
+[wineguts/*]
 indent_style = space
-indent_size = 2
+
+[src/wineguts.h]
+indent_style = space
+
+[WinCompat.h]
+indent_style = space

@@ -75,11 +75,11 @@ target_include_directories(farftp PRIVATE ../WinPort)
 target_include_directories(farftp PRIVATE ../far2l/far2sdk)
 
 set_target_properties(farftp
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/farftp/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-mb")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/farftp/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-mb")
 
 add_custom_command(TARGET farftp POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/farftp")
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/farftp")

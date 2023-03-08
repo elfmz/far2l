@@ -23,15 +23,15 @@ target_include_directories(incsrch PRIVATE ../WinPort)
 target_include_directories(incsrch PRIVATE .)
 
 set_target_properties(incsrch
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/incsrch/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-wide")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/incsrch/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-wide")
 
 
 add_custom_command(TARGET incsrch POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ENG/isrceng.lng "${INSTALL_DIR}/Plugins/incsrch/plug"
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/UTF8/isrcrus.lng "${INSTALL_DIR}/Plugins/incsrch/plug"
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ENG/incsrche.hlf "${INSTALL_DIR}/Plugins/incsrch/plug"
-   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/UTF8/incsrchr.hlf "${INSTALL_DIR}/Plugins/incsrch/plug"
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ENG/isrceng.lng "${INSTALL_DIR}/Plugins/incsrch/plug"
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/UTF8/isrcrus.lng "${INSTALL_DIR}/Plugins/incsrch/plug"
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ENG/incsrche.hlf "${INSTALL_DIR}/Plugins/incsrch/plug"
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/UTF8/incsrchr.hlf "${INSTALL_DIR}/Plugins/incsrch/plug"
 )

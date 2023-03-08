@@ -59,9 +59,9 @@ src/Host/HostRemoteBroker.cpp
 
 
 add_executable (NetRocks-FILE
-	${PROTOCOL_SOURCES}
-	src/Protocol/File/ProtocolFile.cpp
-	src/Host/HostLocal.cpp
+    ${PROTOCOL_SOURCES}
+    src/Protocol/File/ProtocolFile.cpp
+    src/Host/HostLocal.cpp
 )
 
 # get rid of warning: dynamic exception specifications are deprecated in C++11
@@ -70,96 +70,96 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 target_link_libraries(NetRocks-FILE utils)
 target_include_directories(NetRocks-FILE PRIVATE src)
 set_target_properties(NetRocks-FILE
-	PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-	PREFIX ""
-	SUFFIX ".broker")
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+    PREFIX ""
+    SUFFIX ".broker")
 target_compile_options(NetRocks-FILE PUBLIC -DNETROCKS_PROTOCOL)
 
 if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
-	add_executable (NetRocks-SFTP
-		${PROTOCOL_SOURCES}
-		src/Protocol/SSH/SSHConnection.cpp
-		src/Protocol/SSH/ProtocolSFTP.cpp
-		src/Protocol/SSH/ProtocolSCP.cpp
-	)
-	target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
-	target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
-	set_target_properties(NetRocks-SFTP
-		PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-		PREFIX ""
-		SUFFIX ".broker")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
+    add_executable (NetRocks-SFTP
+        ${PROTOCOL_SOURCES}
+        src/Protocol/SSH/SSHConnection.cpp
+        src/Protocol/SSH/ProtocolSFTP.cpp
+        src/Protocol/SSH/ProtocolSCP.cpp
+    )
+    target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
+    target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
+    set_target_properties(NetRocks-SFTP
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
 endif ()
 
 if (LIBSMBCLIENT_FOUND AND ((NOT DEFINED NR_SMB) OR NR_SMB))
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
-	add_executable (NetRocks-SMB
-		${PROTOCOL_SOURCES}
-		src/Protocol/SMB/ProtocolSMB.cpp
-		src/Protocol/SMB/NMBEnum.cpp
-	)
-	target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
-	target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
-	set_target_properties(NetRocks-SMB
-		PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-		PREFIX ""
-		SUFFIX ".broker")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SMB")
+    add_executable (NetRocks-SMB
+        ${PROTOCOL_SOURCES}
+        src/Protocol/SMB/ProtocolSMB.cpp
+        src/Protocol/SMB/NMBEnum.cpp
+    )
+    target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
+    target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
+    set_target_properties(NetRocks-SMB
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
 endif ()
 
 if (LIBNFS_FOUND AND ((NOT DEFINED NR_NFS) OR NR_NFS))
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
-	add_executable (NetRocks-NFS
-		${PROTOCOL_SOURCES}
-		src/Protocol/NFS/ProtocolNFS.cpp
-	)
-	target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
-	target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
-	set_target_properties(NetRocks-NFS
-		PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-		PREFIX ""
-		SUFFIX ".broker")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_NFS")
+    add_executable (NetRocks-NFS
+        ${PROTOCOL_SOURCES}
+        src/Protocol/NFS/ProtocolNFS.cpp
+    )
+    target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
+    target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
+    set_target_properties(NetRocks-NFS
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
 endif ()
 
 
 if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
-	add_executable (NetRocks-WebDAV
-		${PROTOCOL_SOURCES}
-		src/Protocol/WebDAV/ProtocolWebDAV.cpp
-	)
-	target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
-	target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
-	set_target_properties(NetRocks-WebDAV
-		PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-		PREFIX ""
-		SUFFIX ".broker")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_WEBDAV")
+    add_executable (NetRocks-WebDAV
+        ${PROTOCOL_SOURCES}
+        src/Protocol/WebDAV/ProtocolWebDAV.cpp
+    )
+    target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
+    target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
+    set_target_properties(NetRocks-WebDAV
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
 endif ()
 
-	add_executable (NetRocks-FTP
-		${PROTOCOL_SOURCES}
-		src/Protocol/FTP/ProtocolFTP.cpp
-		src/Protocol/FTP/FTPConnection.cpp
-		src/Protocol/FTP/FTPParseMLST.cpp
-		src/Protocol/FTP/FTPParseLIST.cpp
-		src/Protocol/DirectoryEnumCache.cpp
-	)
-	target_link_libraries(NetRocks-FTP utils)
-	target_include_directories(NetRocks-FTP PRIVATE src)
+    add_executable (NetRocks-FTP
+        ${PROTOCOL_SOURCES}
+        src/Protocol/FTP/ProtocolFTP.cpp
+        src/Protocol/FTP/FTPConnection.cpp
+        src/Protocol/FTP/FTPParseMLST.cpp
+        src/Protocol/FTP/FTPParseLIST.cpp
+        src/Protocol/DirectoryEnumCache.cpp
+    )
+    target_link_libraries(NetRocks-FTP utils)
+    target_include_directories(NetRocks-FTP PRIVATE src)
 if (OPENSSL_FOUND AND ((NOT DEFINED NR_OPENSSL) OR NR_OPENSSL))
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
-	target_link_libraries(NetRocks-FTP ${OPENSSL_LIBRARIES})
-	target_include_directories(NetRocks-FTP PRIVATE ${OPENSSL_INCLUDE_DIRS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
+    target_link_libraries(NetRocks-FTP ${OPENSSL_LIBRARIES})
+    target_include_directories(NetRocks-FTP PRIVATE ${OPENSSL_INCLUDE_DIRS})
 endif ()
-	set_target_properties(NetRocks-FTP
-		PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-		PREFIX ""
-		SUFFIX ".broker")
+    set_target_properties(NetRocks-FTP
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")
@@ -175,12 +175,12 @@ target_include_directories(NetRocks PRIVATE ../far2l/far2sdk)
 target_compile_definitions(NetRocks PRIVATE)
 
 set_target_properties(NetRocks
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-wide")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-wide")
 
 add_custom_command(TARGET NetRocks POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
 

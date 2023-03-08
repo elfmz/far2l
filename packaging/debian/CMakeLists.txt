@@ -2,9 +2,9 @@ cmake_minimum_required (VERSION 3.0.2)
 
 find_package(Git QUIET)
 execute_process(COMMAND "${GIT_EXECUTABLE}" status
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        RESULT_VARIABLE GIT_RV
-        )
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    RESULT_VARIABLE GIT_RV
+    )
 
 if(GIT_RV EQUAL "0")
     set(DEB_CONTROLS ${CMAKE_BINARY_DIR}/copyright)

@@ -86,13 +86,13 @@ set(SOURCES
 )
 
 if("${UNRAR}" STREQUAL "lib")
-	set(SOURCES
+    set(SOURCES
         ${SOURCES}
         src/formats/rar/rar.cpp
         src/formats/rar/rarmainstub.cpp
     )
 elseif(UNRAR)
-	set(SOURCES
+    set(SOURCES
         ${SOURCES}
         src/formats/rar/rar.cpp
         src/formats/rar/unrar/scantree.cpp
@@ -180,18 +180,18 @@ target_compile_definitions(multiarc PRIVATE -D_7ZIP_ST -D_7ZIP_PPMD_SUPPPORT)
 target_link_libraries(multiarc utils far2l)
 
 if(NOT UNRAR)
-	message(STATUS "${ColorRed}rar archives support disabled due to UNRAR=${UNRAR}.${ColorNormal}")
+    message(STATUS "${ColorRed}rar archives support disabled due to UNRAR=${UNRAR}.${ColorNormal}")
 
 elseif("${UNRAR}" STREQUAL "lib")
-	message(STATUS "Using system unrar - will need libunrar and unrar tool.")
-	find_package(Unrar REQUIRED)
-	target_include_directories(multiarc PRIVATE ${UNRAR_INCLUDE_DIR})
-	target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
+    message(STATUS "Using system unrar - will need libunrar and unrar tool.")
+    find_package(Unrar REQUIRED)
+    target_include_directories(multiarc PRIVATE ${UNRAR_INCLUDE_DIR})
+    target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
     target_link_libraries(multiarc ${UNRAR_LIBRARIES})
 else()
-	message(STATUS "Using bundled unrar sources")
-	target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
-	target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
+    message(STATUS "Using bundled unrar sources")
+    target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
+    target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
 endif()
 
 target_include_directories(multiarc PRIVATE src)
@@ -212,11 +212,11 @@ if(LibArchive_FOUND)
 endif()
 
 set_target_properties(multiarc
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/multiarc/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-mb")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/multiarc/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-mb")
 
 add_custom_command(TARGET multiarc POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/multiarc")
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/multiarc")

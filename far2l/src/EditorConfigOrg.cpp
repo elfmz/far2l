@@ -87,7 +87,7 @@ void EditorConfigOrg::Populate(const char *edited_file)
 		KeyFileReadHelper kfh(path);
 		if (kfh.IsLoaded()) {
 			fprintf(stderr, "EditorConfigOrg: loaded '%s'\n", path.c_str());
-			if (ParseEditorConfigFile(edited_file + slash_pos, kfh, props)) {
+			if (ParseEditorConfigFile(edited_file + slash_pos + 1, kfh, props)) {
 				break;
 			}
 		}

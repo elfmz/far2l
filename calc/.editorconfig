@@ -5,6 +5,7 @@ indent_style = space
 indent_size = 2
 
 [src/shared/sgml/sgml.cpp]
+indent_style = tab
 indent_size = 4
 
 [src/shared/mathexpression/*]

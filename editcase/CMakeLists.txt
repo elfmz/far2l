@@ -16,13 +16,13 @@ target_include_directories(editcase PRIVATE ../far2l/far2sdk)
 target_include_directories(editcase PRIVATE ../WinPort)
 
 set_target_properties(editcase 
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/editcase/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-wide")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/editcase/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-wide")
 
 
 add_custom_command(TARGET editcase POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/editcase"
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/editcase"
 )

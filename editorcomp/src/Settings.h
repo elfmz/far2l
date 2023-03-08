@@ -5,12 +5,12 @@
 
 struct Settings
 {
-	Settings(const PluginStartupInfo &psi);
+    Settings(const PluginStartupInfo &psi);
 
-	const wchar_t *getMsg(int msgId);
+    const wchar_t *getMsg(int msgId);
 
-	void configurationMenuDialog();
-	void editorMenuDialog(bool &enabled);
+    void configurationMenuDialog();
+    void editorMenuDialog(bool &enabled);
 
     int maxLineDelta() const { return _max_line_delta; }
     int maxLineLength() const { return _max_line_length; }
@@ -21,18 +21,18 @@ struct Settings
 
 
 private:
-	const PluginStartupInfo &_psi;
+    const PluginStartupInfo &_psi;
 
-	int _max_line_delta { 256 };
-	int _max_line_length { 512 };
-	int _max_word_length { 200 };
-	int _min_prefix_length { 2 };
-	bool _auto_enabling = true;
-	std::wstring _file_masks { L"*.c;*.cpp;*.cxx;*.h;*.hpp;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh" };
-	std::wstring _empty;
-	std::string _ini_path;
+    int _max_line_delta { 256 };
+    int _max_line_length { 512 };
+    int _max_word_length { 200 };
+    int _min_prefix_length { 2 };
+    bool _auto_enabling = true;
+    std::wstring _file_masks { L"*.c;*.cpp;*.cxx;*.h;*.hpp;*.s;*.asm;*.pl;*.py;*.js;*.json;*.sh" };
+    std::wstring _empty;
+    std::string _ini_path;
 
-	void sanitizeValues();
+    void sanitizeValues();
 };
 
 #endif // FAR_SETTINGS_H

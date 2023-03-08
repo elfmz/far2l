@@ -96,14 +96,14 @@ target_include_directories(colorer PRIVATE ../WinPort)
 target_include_directories(colorer PRIVATE ../far2l/far2sdk)
 
 set_target_properties(colorer
-  PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/plug"
-    PREFIX ""
-    SUFFIX ".far-plug-wide")
+    PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/colorer/plug"
+        PREFIX ""
+        SUFFIX ".far-plug-wide")
 
 add_custom_command(TARGET colorer POST_BUILD
-   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )
 
 add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")

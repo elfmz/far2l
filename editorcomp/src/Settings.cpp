@@ -14,7 +14,7 @@ static constexpr const char *MAX_WORD_LENGTH_ENTRY = "maxWordLength";
 static constexpr const char *MIN_PREFIX_LENGTH_ENTRY = "minPrefixLength";
 
 Settings::Settings(const PluginStartupInfo &psi)
-	: _psi(psi)
+    : _psi(psi)
 {
     _ini_path = InMyConfig("plugins/editorcomp/config.ini");
 
@@ -27,7 +27,7 @@ Settings::Settings(const PluginStartupInfo &psi)
     _max_word_length = kfh.GetInt(MAX_WORD_LENGTH_ENTRY, _max_word_length);
     _min_prefix_length = kfh.GetInt(MIN_PREFIX_LENGTH_ENTRY, _min_prefix_length);
 
-	sanitizeValues();
+    sanitizeValues();
 }
 
 const wchar_t *Settings::getMsg(int msgId)
@@ -37,19 +37,19 @@ const wchar_t *Settings::getMsg(int msgId)
 
 static void sanitizeValue(int &v, int minimum, int maximum)
 {
-	if (v < minimum) {
-		v = minimum;
-	} else if (v > maximum) {
-		v = maximum;
-	}
+    if (v < minimum) {
+        v = minimum;
+    } else if (v > maximum) {
+        v = maximum;
+    }
 }
 
 void Settings::sanitizeValues()
 {
-	sanitizeValue(_max_word_length, 3, 999);
-	sanitizeValue(_max_line_delta, 0, 99999);
-	sanitizeValue(_max_line_length, _max_word_length, 99999);
-	sanitizeValue(_min_prefix_length, 2, _max_word_length);
+    sanitizeValue(_max_word_length, 3, 999);
+    sanitizeValue(_max_line_delta, 0, 99999);
+    sanitizeValue(_max_line_length, _max_word_length, 99999);
+    sanitizeValue(_min_prefix_length, 2, _max_word_length);
 }
 
 void Settings::configurationMenuDialog()
@@ -76,10 +76,10 @@ void Settings::configurationMenuDialog()
     /*15 */ {DI_BUTTON,    26,      12, 0,       0,     FALSE, {}, 0, 0,    getMsg(M_CANCEL), 0}
     };
 
-	wchar_t str_max_line_delta[32]; swprintf(str_max_line_delta, 31, L"%d", _max_line_delta);
-	wchar_t str_max_line_length[32]; swprintf(str_max_line_length, 31, L"%d", _max_line_length);
-	wchar_t str_max_word_length[32]; swprintf(str_max_word_length, 31, L"%d", _max_word_length);
-	wchar_t str_min_prefix_length[32]; swprintf(str_min_prefix_length, 31, L"%d", _min_prefix_length);
+    wchar_t str_max_line_delta[32]; swprintf(str_max_line_delta, 31, L"%d", _max_line_delta);
+    wchar_t str_max_line_length[32]; swprintf(str_max_line_length, 31, L"%d", _max_line_length);
+    wchar_t str_max_word_length[32]; swprintf(str_max_word_length, 31, L"%d", _max_word_length);
+    wchar_t str_min_prefix_length[32]; swprintf(str_min_prefix_length, 31, L"%d", _min_prefix_length);
 
 
     unsigned int size = sizeof(fdi) / sizeof(fdi[0]);
@@ -101,9 +101,9 @@ void Settings::configurationMenuDialog()
         _max_word_length = wcstol(((const TCHAR *)_psi.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR, 10, 0)), NULL, 0);
         _min_prefix_length = wcstol(((const TCHAR *)_psi.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR, 12, 0)), NULL, 0);
 
-		sanitizeValues();
+        sanitizeValues();
 
-	    KeyFileHelper kfh(_ini_path);
+        KeyFileHelper kfh(_ini_path);
         kfh.SetInt(INI_SECTION, ENABLED_ENTRY, _auto_enabling);
         kfh.SetString(INI_SECTION, FILE_MASKS_ENTRY, _file_masks.c_str());
 

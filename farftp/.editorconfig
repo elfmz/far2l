@@ -1,8 +1,7 @@
-[*]
+[*.def]
 indent_style = space
-
-[*.sh]
-indent_style = tab
+indent_size = 2
 
 [*.hlf]
+indent_style = space
 indent_size = 2

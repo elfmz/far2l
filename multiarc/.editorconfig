@@ -1,11 +1,14 @@
-[src/**]
+[*]
 indent_style = space
 indent_size = 2
 
 [src/formats/ha/ha/*]
-indent_style = space
 indent_size = 4
 
 [src/formats/libarch/*]
 indent_style = tab
+indent_size = 4
+
+[CMakeLists.txt]
+indent_style = space
 indent_size = 4

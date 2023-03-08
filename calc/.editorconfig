@@ -9,3 +9,12 @@ indent_size = 4
 
 [src/shared/mathexpression/*]
 indent_size = 2
+
+[*.csr]
+indent_size = 2
+
+[*.hlf]
+indent_size = 2
+
+[CMakeLists.txt]
+indent_size = 4

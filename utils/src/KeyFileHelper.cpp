@@ -371,6 +371,7 @@ template <class ValuesProviderT>
 	KFEscaping esc, esc_val;
 	std::string line, value;
 	KeyFileValues *values = nullptr;
+	bool reached_named_section = false;
 	for (size_t line_start = 0; line_start < content.size();) {
 		size_t line_end = content.find('\n', line_start);
 		if (line_end == std::string::npos) {
@@ -382,6 +383,7 @@ template <class ValuesProviderT>
 		if (!line.empty()) {
 			if (line.front() == '[') {
 				if (line.back() == ']') {
+					reached_named_section = true;
 					const auto &section = line.substr(1, line.size() - 2);
 					values = values_provider(esc.Decode(section));
 
@@ -391,15 +393,20 @@ template <class ValuesProviderT>
 						__FUNCTION__, line.c_str());
 				}
 
-			} else if (line.front() != ';' && line.front() != '#' && values != nullptr) {
+			} else if (line.front() != ';' && line.front() != '#') {
 				size_t p = line.find('=');
 				if (p != std::string::npos) {
 					value = line.substr(p + 1);
 					StrTrimLeft(value);
 					line.resize(p);
 					StrTrimRight(line);
-					// dedicated escaping for values to be used in single expression with esc
-					(*values)[esc.Decode(line)] = esc_val.Decode(value);
+					if (!values && !reached_named_section) {
+						values = values_provider(std::string());
+					}
+					if (values) {
+						// dedicated escaping for values to be used in single expression with esc
+						(*values)[esc.Decode(line)] = esc_val.Decode(value);
+					}
 				}
 			}
 		}

@@ -101,14 +101,14 @@ int64_t WINAPI FarAtoi64(const wchar_t *s)
 }
 
 void WINAPI FarQsort(void *base, size_t nelem, size_t width,
-                     int (__cdecl *fcmp)(const void *, const void *))
+	int (__cdecl *fcmp)(const void *, const void *))
 {
 	if (base && fcmp)
 		far_qsort(base,nelem,width,fcmp);
 }
 
 void WINAPI FarQsortEx(void *base, size_t nelem, size_t width,
-                       int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
+	int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
 {
 	if (base && fcmp)
 		far_qsortex(base,nelem,width,fcmp,user);
@@ -134,14 +134,14 @@ static void ScanPluginDir();
    Сделано для того, чтобы не дублировать код GetString.
 */
 static int FarInputBoxSynched(
-    const wchar_t *Title,
-    const wchar_t *Prompt,
-    const wchar_t *HistoryName,
-    const wchar_t *SrcText,
-    wchar_t *DestText,
-    int DestLength,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *Title,
+	const wchar_t *Prompt,
+	const wchar_t *HistoryName,
+	const wchar_t *SrcText,
+	wchar_t *DestText,
+	int DestLength,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -154,14 +154,14 @@ static int FarInputBoxSynched(
 }
 
 int WINAPI FarInputBox(
-    const wchar_t *Title,
-    const wchar_t *Prompt,
-    const wchar_t *HistoryName,
-    const wchar_t *SrcText,
-    wchar_t *DestText,
-    int DestLength,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *Title,
+	const wchar_t *Prompt,
+	const wchar_t *HistoryName,
+	const wchar_t *SrcText,
+	wchar_t *DestText,
+	int DestLength,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	return InterThreadCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText, DestText, DestLength, HelpTopic, Flags));
@@ -169,9 +169,9 @@ int WINAPI FarInputBox(
 
 /* Функция вывода помощи */
 BOOL WINAPI FarShowHelpSynched(
-    const wchar_t *ModuleName,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *ModuleName,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -233,9 +233,9 @@ BOOL WINAPI FarShowHelpSynched(
 }
 
 BOOL WINAPI FarShowHelp(
-    const wchar_t *ModuleName,
-    const wchar_t *HelpTopic,
-    DWORD Flags )
+	const wchar_t *ModuleName,
+	const wchar_t *HelpTopic,
+	DWORD Flags )
 {
 	return InterThreadCall<BOOL, FALSE>(std::bind(FarShowHelpSynched, ModuleName, HelpTopic, Flags));
 }
@@ -355,8 +355,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				FarSetColors *Pal=(FarSetColors*)Param;
 
 				if (Pal->Colors &&
-				        Pal->StartIndex >= 0 &&
-				        Pal->StartIndex+Pal->ColorCount <= SIZE_ARRAY_PALETTE)
+					Pal->StartIndex >= 0 &&
+					Pal->StartIndex+Pal->ColorCount <= SIZE_ARRAY_PALETTE)
 				{
 					memmove(Palette+Pal->StartIndex,Pal->Colors,Pal->ColorCount);
 
@@ -871,18 +871,18 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 }
 
 static int FarMenuFnSynched(
-    INT_PTR PluginNumber,
-    int X,
-    int Y,
-    int MaxHeight,
-    DWORD Flags,
-    const wchar_t *Title,
-    const wchar_t *Bottom,
-    const wchar_t *HelpTopic,
-    const int *BreakKeys,
-    int *BreakCode,
-    const FarMenuItem *Item,
-    int ItemsNumber
+	INT_PTR PluginNumber,
+	int X,
+	int Y,
+	int MaxHeight,
+	DWORD Flags,
+	const wchar_t *Title,
+	const wchar_t *Bottom,
+	const wchar_t *HelpTopic,
+	const int *BreakKeys,
+	int *BreakCode,
+	const FarMenuItem *Item,
+	int ItemsNumber
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -1020,8 +1020,8 @@ static int FarMenuFnSynched(
 						{
 							DWORD Flags=BreakKeys[I]>>16;
 							DWORD RealFlags=ReadRec.Event.KeyEvent.dwControlKeyState &
-							                (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|
-							                 LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|SHIFT_PRESSED);
+								(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|
+									LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|SHIFT_PRESSED);
 							DWORD f = 0;
 
 							if (RealFlags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
@@ -1057,18 +1057,18 @@ static int FarMenuFnSynched(
 }
 
 int WINAPI FarMenuFn(
-    INT_PTR PluginNumber,
-    int X,
-    int Y,
-    int MaxHeight,
-    DWORD Flags,
-    const wchar_t *Title,
-    const wchar_t *Bottom,
-    const wchar_t *HelpTopic,
-    const int *BreakKeys,
-    int *BreakCode,
-    const FarMenuItem *Item,
-    int ItemsNumber
+	INT_PTR PluginNumber,
+	int X,
+	int Y,
+	int MaxHeight,
+	DWORD Flags,
+	const wchar_t *Title,
+	const wchar_t *Bottom,
+	const wchar_t *HelpTopic,
+	const int *BreakKeys,
+	int *BreakCode,
+	const FarMenuItem *Item,
+	int ItemsNumber
 )
 {
 	return InterThreadCall<int, -1>(std::bind(FarMenuFnSynched, PluginNumber, X, Y,
@@ -1094,9 +1094,9 @@ LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2
 }
 
 static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
-                            const wchar_t *HelpTopic, FarDialogItem *Item,
-                            unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
-                            FARWINDOWPROC DlgProc, LONG_PTR Param)
+	const wchar_t *HelpTopic, FarDialogItem *Item,
+	unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
+	FARWINDOWPROC DlgProc, LONG_PTR Param)
 {
 	HANDLE hDlg=INVALID_HANDLE_VALUE;
 
@@ -1187,9 +1187,9 @@ static bool FarDialogFreeSynched(HANDLE hDlg)
 /////////
 
 HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
-                            const wchar_t *HelpTopic, FarDialogItem *Item,
-                            unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
-                            FARWINDOWPROC DlgProc, LONG_PTR Param)
+	const wchar_t *HelpTopic, FarDialogItem *Item,
+	unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
+	FARWINDOWPROC DlgProc, LONG_PTR Param)
 {
 	HANDLE out = InterThreadCall<HANDLE, nullptr>(std::bind(FarDialogInitSynched,
 		PluginNumber, X1, Y1, X2, Y2, HelpTopic, Item, ItemsNumber, Reserved, Flags, DlgProc, Param));
@@ -1227,8 +1227,8 @@ const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,FarLangMsgID MsgId)
 }
 
 static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,
-                        const wchar_t * const *Items,int ItemsNumber,
-                        int ButtonsNumber)
+	const wchar_t * const *Items,int ItemsNumber,
+	int ButtonsNumber)
 {
 	if (FrameManager->ManagerIsDown())
 		return -1;
@@ -1313,8 +1313,8 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 }
 
 int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,
-                        const wchar_t * const *Items,int ItemsNumber,
-                        int ButtonsNumber)
+	const wchar_t * const *Items,int ItemsNumber,
+	int ButtonsNumber)
 {
 	return InterThreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
 }
@@ -1672,10 +1672,10 @@ static void PR_FarGetPluginDirListMsg()
 }
 
 int FarGetPluginDirListSynched(INT_PTR PluginNumber,
-                               HANDLE hPlugin,
-                               const wchar_t *Dir,
-                               PluginPanelItem **pPanelItem,
-                               int *pItemsNumber)
+	HANDLE hPlugin,
+	const wchar_t *Dir,
+	PluginPanelItem **pPanelItem,
+	int *pItemsNumber)
 {
 	if (FrameManager->ManagerIsDown() || !Dir || !*Dir || !pItemsNumber || !pPanelItem)
 		return FALSE;
@@ -1833,8 +1833,8 @@ static void ScanPluginDir()
 		PluginPanelItem *CurPanelItem=PanelData+i;
 
 		if ((CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-		        StrCmp(CurPanelItem->FindData.lpwszFileName,L".") &&
-		        !TestParentFolderName(CurPanelItem->FindData.lpwszFileName))
+			StrCmp(CurPanelItem->FindData.lpwszFileName,L".") &&
+			!TestParentFolderName(CurPanelItem->FindData.lpwszFileName))
 		{
 			PluginPanelItem *NewList=(PluginPanelItem *)realloc(PluginDirList,sizeof(*PluginDirList)*(DirListItemsNumber+1));
 
@@ -1927,7 +1927,7 @@ static void ApplyViewerDeleteOnClose(FileViewer *Viewer, const wchar_t *FileName
 }
 
 static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
-                     int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
+	int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
 	if (FrameManager->ManagerIsDown())
 		return FALSE;
@@ -1991,13 +1991,13 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 }
 
 int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
-                     int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
+	int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
 	return InterThreadCall<int, 0>(std::bind(FarViewerSynched, FileName, Title, X1, Y1, X2, Y2, Flags, CodePage));
 }
 
 int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
-    int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
+	int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
 {
 	if (FrameManager->ManagerIsDown())
 		return EEC_OPEN_ERROR;
@@ -2039,9 +2039,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,
-		                                  (CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
-		                                  StartLine,StartChar,Title,
-		                                  X1,Y1,X2,Y2,OpMode);
+			(CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
+			StartLine,StartChar,Title,
+			X1,Y1,X2,Y2,OpMode);
 
 		if (Editor)
 		{
@@ -2079,9 +2079,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor Editor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
-		                  StartLine,StartChar,Title,
-		                  X1,Y1,X2,Y2,
-		                  OpMode);
+			StartLine,StartChar,Title,
+			X1,Y1,X2,Y2,
+			OpMode);
 		Editor.SetFileHolder(TFH);
 		editorExitCode=Editor.GetExitCode();
 
@@ -2118,7 +2118,7 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 }
 
 int WINAPI FarEditor( const wchar_t *FileName, const wchar_t *Title,
-    int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
+	int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
 {
 	return InterThreadCall<int, EEC_OPEN_ERROR>(std::bind(FarEditorSynched,
 		FileName, Title, X1, Y1, X2, Y2, Flags, StartLine, StartChar, CodePage));
@@ -2488,18 +2488,18 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 			RegExpSearch* data=(RegExpSearch*)Param;
 			return re->MatchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
-			                   ,data->Reserved
+				,data->Reserved
 #endif
-			                  );
+				);
 		}
 		case RECTL_SEARCHEX:
 		{
 			RegExpSearch* data=(RegExpSearch*)Param;
 			return re->SearchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
-			                    ,data->Reserved
+				,data->Reserved
 #endif
-			                   );
+				);
 		}
 		case RECTL_BRACKETSCOUNT:
 			return re->GetBracketsCount();

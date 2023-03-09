@@ -530,8 +530,8 @@ bool PluginA::CheckMinFarVersion(bool &bUnloaded)
 		DWORD FVer = (DWORD)es.nResult;
 
 		if (LOWORD(FVer) >  LOWORD(FAR_VERSION) ||
-		        (LOWORD(FVer) == LOWORD(FAR_VERSION) &&
-		         HIWORD(FVer) >  HIWORD(FAR_VERSION)))
+			(LOWORD(FVer) == LOWORD(FAR_VERSION) &&
+				HIWORD(FVer) >  HIWORD(FAR_VERSION)))
 		{
 			ShowMessageAboutIllegalPluginVersion(m_strModuleName,FVer);
 			return false;
@@ -561,21 +561,21 @@ int PluginA::Unload(bool bExitFAR)
 bool PluginA::IsPanelPlugin()
 {
 	return pSetFindList ||
-	       pGetFindData ||
-	       pGetVirtualFindData ||
-	       pSetDirectory ||
-	       pGetFiles ||
-	       pPutFiles ||
-	       pDeleteFiles ||
-	       pMakeDirectory ||
-	       pProcessHostFile ||
-	       pProcessKey ||
-	       pProcessEvent ||
-	       pCompare ||
-	       pGetOpenPluginInfo ||
-	       pFreeFindData ||
-	       pFreeVirtualFindData ||
-	       pClosePlugin;
+		pGetFindData ||
+		pGetVirtualFindData ||
+		pSetDirectory ||
+		pGetFiles ||
+		pPutFiles ||
+		pDeleteFiles ||
+		pMakeDirectory ||
+		pProcessHostFile ||
+		pProcessKey ||
+		pProcessEvent ||
+		pCompare ||
+		pGetOpenPluginInfo ||
+		pFreeFindData ||
+		pFreeVirtualFindData ||
+		pClosePlugin;
 }
 
 HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
@@ -652,10 +652,10 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 //////////////////////////////////
 
 HANDLE PluginA::OpenFilePlugin(
-    const wchar_t *Name,
-    const unsigned char *Data,
-    int DataSize,
-    int OpMode
+	const wchar_t *Name,
+	const unsigned char *Data,
+	int DataSize,
+	int OpMode
 )
 {
 	HANDLE hResult = INVALID_HANDLE_VALUE;
@@ -682,9 +682,9 @@ HANDLE PluginA::OpenFilePlugin(
 
 
 int PluginA::SetFindList(
-    HANDLE hPlugin,
-    const PluginPanelItem *PanelItem,
-    int ItemsNumber
+	HANDLE hPlugin,
+	const PluginPanelItem *PanelItem,
+	int ItemsNumber
 )
 {
 	BOOL bResult = FALSE;
@@ -705,7 +705,7 @@ int PluginA::SetFindList(
 }
 
 int PluginA::ProcessEditorInput(
-    const INPUT_RECORD *D
+	const INPUT_RECORD *D
 )
 {
 	BOOL bResult = FALSE;
@@ -736,8 +736,8 @@ int PluginA::ProcessEditorInput(
 }
 
 int PluginA::ProcessEditorEvent(
-    int Event,
-    PVOID Param
+	int Event,
+	PVOID Param
 )
 {
 	if (Load() && pProcessEditorEvent)
@@ -753,8 +753,8 @@ int PluginA::ProcessEditorEvent(
 }
 
 int PluginA::ProcessViewerEvent(
-    int Event,
-    void *Param
+	int Event,
+	void *Param
 )
 {
 	if (Load() && pProcessViewerEvent)
@@ -770,8 +770,8 @@ int PluginA::ProcessViewerEvent(
 }
 
 int PluginA::ProcessDialogEvent(
-    int Event,
-    void *Param
+	int Event,
+	void *Param
 )
 {
 	BOOL bResult = FALSE;
@@ -789,10 +789,10 @@ int PluginA::ProcessDialogEvent(
 }
 
 int PluginA::GetVirtualFindData(
-    HANDLE hPlugin,
-    PluginPanelItem **pPanelItem,
-    int *pItemsNumber,
-    const wchar_t *Path
+	HANDLE hPlugin,
+	PluginPanelItem **pPanelItem,
+	int *pItemsNumber,
+	const wchar_t *Path
 )
 {
 	BOOL bResult = FALSE;
@@ -821,9 +821,9 @@ int PluginA::GetVirtualFindData(
 
 
 void PluginA::FreeVirtualFindData(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber
 )
 {
 	FreeUnicodePanelItem(PanelItem, ItemsNumber);
@@ -841,12 +841,12 @@ void PluginA::FreeVirtualFindData(
 
 
 int PluginA::GetFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int Move,
-    const wchar_t **DestPath,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int Move,
+	const wchar_t **DestPath,
+	int OpMode
 )
 {
 	int nResult = -1;
@@ -873,11 +873,11 @@ int PluginA::GetFiles(
 
 
 int PluginA::PutFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int Move,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int Move,
+	int OpMode
 )
 {
 	int nResult = -1;
@@ -898,10 +898,10 @@ int PluginA::PutFiles(
 }
 
 int PluginA::DeleteFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int OpMode
 )
 {
 	BOOL bResult = FALSE;
@@ -923,9 +923,9 @@ int PluginA::DeleteFiles(
 
 
 int PluginA::MakeDirectory(
-    HANDLE hPlugin,
-    const wchar_t **Name,
-    int OpMode
+	HANDLE hPlugin,
+	const wchar_t **Name,
+	int OpMode
 )
 {
 	int nResult = -1;
@@ -949,10 +949,10 @@ int PluginA::MakeDirectory(
 
 
 int PluginA::ProcessHostFile(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int OpMode
 )
 {
 	BOOL bResult = FALSE;
@@ -974,9 +974,9 @@ int PluginA::ProcessHostFile(
 
 
 int PluginA::ProcessEvent(
-    HANDLE hPlugin,
-    int Event,
-    PVOID Param
+	HANDLE hPlugin,
+	int Event,
+	PVOID Param
 )
 {
 	BOOL bResult = FALSE;
@@ -1004,10 +1004,10 @@ int PluginA::ProcessEvent(
 
 
 int PluginA::Compare(
-    HANDLE hPlugin,
-    const PluginPanelItem *Item1,
-    const PluginPanelItem *Item2,
-    DWORD Mode
+	HANDLE hPlugin,
+	const PluginPanelItem *Item1,
+	const PluginPanelItem *Item2,
+	DWORD Mode
 )
 {
 	int nResult = -2;
@@ -1032,10 +1032,10 @@ int PluginA::Compare(
 
 
 int PluginA::GetFindData(
-    HANDLE hPlugin,
-    PluginPanelItem **pPanelItem,
-    int *pItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem **pPanelItem,
+	int *pItemsNumber,
+	int OpMode
 )
 {
 	BOOL bResult = FALSE;
@@ -1060,9 +1060,9 @@ int PluginA::GetFindData(
 
 
 void PluginA::FreeFindData(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber
 )
 {
 	FreeUnicodePanelItem(PanelItem, ItemsNumber);
@@ -1078,9 +1078,9 @@ void PluginA::FreeFindData(
 }
 
 int PluginA::ProcessKey(
-    HANDLE hPlugin,
-    int Key,
-    unsigned int dwControlState
+	HANDLE hPlugin,
+	int Key,
+	unsigned int dwControlState
 )
 {
 	BOOL bResult = FALSE;
@@ -1099,7 +1099,7 @@ int PluginA::ProcessKey(
 
 
 void PluginA::ClosePlugin(
-    HANDLE hPlugin
+	HANDLE hPlugin
 )
 {
 	if (pClosePlugin)
@@ -1116,9 +1116,9 @@ void PluginA::ClosePlugin(
 
 
 int PluginA::SetDirectory(
-    HANDLE hPlugin,
-    const wchar_t *Dir,
-    int OpMode
+	HANDLE hPlugin,
+	const wchar_t *Dir,
+	int OpMode
 )
 {
 	BOOL bResult = FALSE;
@@ -1232,8 +1232,8 @@ void PluginA::ConvertOpenPluginInfo(oldfar::OpenPluginInfo &Src, OpenPluginInfo 
 }
 
 void PluginA::GetOpenPluginInfo(
-    HANDLE hPlugin,
-    OpenPluginInfo *pInfo
+	HANDLE hPlugin,
+	OpenPluginInfo *pInfo
 )
 {
 //	m_pManager->m_pCurrentPlugin = this;
@@ -1252,7 +1252,7 @@ void PluginA::GetOpenPluginInfo(
 
 
 int PluginA::Configure(
-    int MenuItem
+	int MenuItem
 )
 {
 	BOOL bResult = FALSE;

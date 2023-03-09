@@ -1153,7 +1153,7 @@ void InterpretEscSeq( void )
 			return;
 
 		if (es_argc == 1 && (es_argv[0] == 0 || // ESC]0;titleST - icon (ignored) &
-		                     es_argv[0] == 2)) { // ESC]2;titleST - window
+				es_argv[0] == 2)) { // ESC]2;titleST - window
 			g_title.swap(os_cmd_arg);
 			os_cmd_arg.clear();
 			ApplyConsoleTitle();
@@ -1342,7 +1342,7 @@ void ParseAndPrintString( HANDLE hDev,
 			else if (suffix2 != 0)
 				state = 1;
 			else if (*s == '[' ||     // CSI Control Sequence Introducer
-			         *s == ']') {     // OSC Operating System Command
+					*s == ']') {     // OSC Operating System Command
 				FlushBuffer();
 				prefix = *s;
 				prefix2 = 0;
@@ -1350,14 +1350,14 @@ void ParseAndPrintString( HANDLE hDev,
 				// Pt_len = 0; *Pt_arg = '\0';
 				state = 3;
 			} else if (*s == 'P' ||   // DCS Device Control String
-			           *s == 'X' ||     // SOS Start Of String
-			           *s == '^' ||     // PM  Privacy Message
-			           *s == '_') {     // APC Application Program Command
+					*s == 'X' ||     // SOS Start Of String
+					*s == '^' ||     // PM  Privacy Message
+					*s == '_') {     // APC Application Program Command
 				os_cmd_arg.clear();
 				// *Pt_arg = '\0'; Pt_len = 0;
 				prefix = *s;
 				state = 6;
-			} else  {
+			} else {
 				switch (*s) {
 					case 'K': PartialLineDown(); break;
 					case 'L': PartialLineUp(); break;

@@ -629,9 +629,7 @@ int FilePanels::ProcessKey(int Key)
 		}
 		case KEY_ALTF7:
 		{
-			{
-				FindFiles FindFiles;
-			}
+			FindFiles::Present();
 			break;
 		}
 		case KEY_CTRLUP:  case KEY_CTRLNUMPAD8:

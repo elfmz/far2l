@@ -371,7 +371,7 @@ int CommandLine::ProcessKey(int Key)
 			Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 			{
 				// TODO: здесь можно добавить проверку, что мы в корне диска и отсутствие файла Tree.Far...
-				FolderTree Tree(strStr,MODALTREE_ACTIVE,TRUE,FALSE);
+				FolderTree::Present(strStr,MODALTREE_ACTIVE,TRUE,FALSE);
 			}
 			CtrlObject->Cp()->RedrawKeyBar();
 

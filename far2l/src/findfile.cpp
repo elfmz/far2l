@@ -3075,3 +3075,8 @@ FindFiles::~FindFiles()
 		delete Filter;
 	}
 }
+
+void FindFiles::Present()
+{
+	FindFiles FF;
+}

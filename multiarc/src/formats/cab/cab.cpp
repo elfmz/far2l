@@ -116,9 +116,9 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
 
   if ( !CAB_IsArchive( NULL, (u1*)&MainHeader, sizeof(MainHeader) ))
   {
-  struct stat s = {0};
-  if (sdc_fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
-    return CloseArcHandle(), FALSE;
+    struct stat s = {0};
+    if (sdc_fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
+      return CloseArcHandle(), FALSE;
   }
 
   ReadSize = (s.st_size > 0x100000) ? 0x100000 : s.st_size ;

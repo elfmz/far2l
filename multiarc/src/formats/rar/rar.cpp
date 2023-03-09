@@ -213,7 +213,7 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
     Info->DictSize=64;
   Info->UnpVer=(HeaderData.UnpVer/10)*256+(HeaderData.UnpVer%10);
   if ((PFCode=RARProcessFile(hArcData,RAR_SKIP,NULL,NULL))!=0) {
-  return (RHCode==ERAR_BAD_DATA) ? GETARC_BROKEN : GETARC_READERROR;
+    return (RHCode==ERAR_BAD_DATA) ? GETARC_BROKEN : GETARC_READERROR;
   }
 
   return GETARC_SUCCESS;

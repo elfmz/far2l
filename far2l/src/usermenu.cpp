@@ -236,6 +236,11 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 	}
 }
 
+void UserMenu::Present(bool ChoiceMenuType)
+{
+	UserMenu Menu(ChoiceMenuType);
+}
+
 UserMenu::UserMenu(bool ChoiceMenuType)
 	: grs(s_cfg_reader)
 {

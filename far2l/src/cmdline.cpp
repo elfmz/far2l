@@ -335,7 +335,7 @@ int CommandLine::ProcessKey(int Key)
 			return TRUE;
 		case KEY_F2:
 		{
-			UserMenu Menu(false);
+			UserMenu::Present(false);
 			return TRUE;
 		}
 		case KEY_ALTF8:

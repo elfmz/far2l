@@ -41,7 +41,7 @@
 #define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
-    WCHAR uc = 0);
+	WCHAR uc = 0);
 
 int FarDispatchAnsiApplicationProtocolCommand(const char *str);
 
@@ -665,7 +665,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			
 			if ((ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') ||
-			    (!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ){
+					(!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ) {
 				return StringFromClipboard();
 			}
 			
@@ -837,8 +837,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
-        _fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-        _leader_pid(-1), _keypad(0)
+		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
+		_leader_pid(-1), _keypad(0)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())

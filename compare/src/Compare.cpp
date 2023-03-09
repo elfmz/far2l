@@ -24,8 +24,8 @@
 #define CheckDisabled(i) (!((int)Info.SendDlgMessage(hDlg,DM_ENABLE,i,-1)))
 #endif
 
-#define INI_LOCATION	InMyConfig("plugins/compare/config.ini")
-#define INI_SECTION		"Settings"
+#define INI_LOCATION  InMyConfig("plugins/compare/config.ini")
+#define INI_SECTION   "Settings"
 
 /****************************************************************************
  * 

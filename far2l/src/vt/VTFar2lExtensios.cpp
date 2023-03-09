@@ -156,9 +156,9 @@ bool VTFar2lExtensios::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	stk_ser.PushNum(MouseEvent.dwMousePosition.X);
 	stk_ser.PushNum(MouseEvent.dwMousePosition.Y);
 	if ( (_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
-	  && (MouseEvent.dwButtonState & 0xff00ff00) == 0
-	  && MouseEvent.dwControlKeyState < 0x100
-	  && MouseEvent.dwEventFlags < 0x100) {
+			&& (MouseEvent.dwButtonState & 0xff00ff00) == 0
+			&& MouseEvent.dwControlKeyState < 0x100
+			&& MouseEvent.dwEventFlags < 0x100) {
 		const uint16_t btn_state_encoded = ((MouseEvent.dwButtonState & 0xff)
 			| ((MouseEvent.dwButtonState >> 8) & 0xff00));
 		stk_ser.PushNum(btn_state_encoded);
@@ -206,10 +206,10 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 
 	StackSerializer stk_ser;
 	if ((_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
-	  && KeyEvent.wRepeatCount <= 1 && KeyEvent.wVirtualScanCode == 0
-	  && ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
-	  && KeyEvent.dwControlKeyState < 0x10000
-	  && KeyEvent.wVirtualKeyCode < 0x100) {
+			&& KeyEvent.wRepeatCount <= 1 && KeyEvent.wVirtualScanCode == 0
+			&& ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
+			&& KeyEvent.dwControlKeyState < 0x10000
+			&& KeyEvent.wVirtualKeyCode < 0x100) {
 		stk_ser.PushNum((uint8_t)KeyEvent.wVirtualKeyCode);
 		stk_ser.PushNum((uint16_t)KeyEvent.dwControlKeyState);
 		stk_ser.PushNum((uint16_t)(uint32_t)KeyEvent.uChar.UnicodeChar);

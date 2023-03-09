@@ -217,10 +217,10 @@ const union cptable *wine_cp_get_table( unsigned int codepage )
             return *mid;
         }
 
-        if (codepage > (*mid)->info.codepage) {	/* key > p: move right */
+        if (codepage > (*mid)->info.codepage) { /* key > p: move right */
             base = mid + 1;
             cnt--;
-        }		/* else move left */
+        } /* else move left */
 
         cnt>>= 1;
     }

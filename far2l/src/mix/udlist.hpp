@@ -80,7 +80,7 @@ class UserDefinedList : private NonCopyable
 		void SetDefaultSeparators();
 		const wchar_t *Skip(const wchar_t *Str, int &Length, int &RealLength, bool &Error);
 		static int __cdecl CmpItems(const UserDefinedListItem **el1,
-		                            const UserDefinedListItem **el2);
+			const UserDefinedListItem **el2);
 
 	public:
 		// по умолчанию разделителем считается ';' и ',', а

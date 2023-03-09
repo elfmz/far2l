@@ -1188,10 +1188,9 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					return FALSE;
 
 			case KEY_F5:
-				m_editor->SetConvertTabs( (m_editor->GetConvertTabs() != EXPAND_NOTABS) ? EXPAND_NOTABS : EXPAND_NEWTABS);
-				m_editor->EnableSaveTabSettings();
+				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
+				m_editor->Show();
 				ChangeEditKeyBar();
-				ShowStatus();
 				return TRUE;
 
 			case KEY_SHIFTF5:
@@ -1200,9 +1199,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				return TRUE;
 
 			case KEY_CTRLF5:
-				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
-				m_editor->Show();
+				m_editor->SetConvertTabs( (m_editor->GetConvertTabs() != EXPAND_NOTABS) ? EXPAND_NOTABS : EXPAND_NEWTABS);
+				m_editor->EnableSaveTabSettings();
 				ChangeEditKeyBar();
+				ShowStatus();
 				return TRUE;
 
 			case KEY_F4:
@@ -2258,9 +2258,9 @@ void FileEditor::SetEditKeyBarStatefulLabels()
 	else
 		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed?Msg::SingleEditF8:Msg::EditF8), 7);
 
-	EditKeyBar.Change(KBL_MAIN, m_editor->GetConvertTabs() ? Msg::EditF5 : Msg::EditF5Spaces, 4);
+	EditKeyBar.Change(KBL_MAIN, m_editor->GetShowWhiteSpace() ? Msg::EditF5Hide : Msg::EditF5, 4);
 
-	EditKeyBar.Change(KBL_CTRL, m_editor->GetShowWhiteSpace() ? Msg::EditCtrlF5Hide : Msg::EditCtrlF5, 4);
+	EditKeyBar.Change(KBL_CTRL, m_editor->GetConvertTabs() ? Msg::EditCtrlF5 : Msg::EditCtrlF5Spaces, 4);
 }
 
 

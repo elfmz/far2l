@@ -19,12 +19,12 @@ BOOL FileExists(const char* Name)
 
 static void mystrlwr(char *p) 
 {
-	for (;*p;++p) *p = tolower(*p);
+  for (;*p;++p) *p = tolower(*p);
 }
 
 static void mystrupr(char *p) 
 {
-	for (;*p;++p) *p = toupper(*p);
+  for (;*p;++p) *p = toupper(*p);
 }
 
 BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
@@ -113,28 +113,28 @@ extern "C" int libarch_main(int numargs, char *args[]);
 
 SHAREDSYMBOL int BuiltinMain(int argc, char * argv[])
 {
-	if (!argc)
-		return -1;
+  if (!argc)
+    return -1;
 
-	int r = -2;
+  int r = -2;
 
-	if (strcmp(argv[0], "7z")==0) {
-		r = sevenz_main(argc, &argv[0]);
+  if (strcmp(argv[0], "7z")==0) {
+    r = sevenz_main(argc, &argv[0]);
 #ifdef HAVE_UNRAR
-	} else if (strcmp(argv[0], "rar")==0) {
-		r = rar_main(argc, &argv[0]);
+  } else if (strcmp(argv[0], "rar")==0) {
+    r = rar_main(argc, &argv[0]);
 #endif
-	} else if (strcmp(argv[0], "7z")==0) {
-		r = sevenz_main(argc, &argv[0]);
-	} else if (strcmp(argv[0], "ha")==0) {
-		r = ha_main(argc, &argv[0]);
+  } else if (strcmp(argv[0], "7z")==0) {
+    r = sevenz_main(argc, &argv[0]);
+  } else if (strcmp(argv[0], "ha")==0) {
+    r = ha_main(argc, &argv[0]);
 #ifdef HAVE_LIBARCHIVE
-	} else if (strcmp(argv[0], "libarch")==0) {
-		r = libarch_main(argc, &argv[0]);
+  } else if (strcmp(argv[0], "libarch")==0) {
+    r = libarch_main(argc, &argv[0]);
 #endif
-	} else		
-		fprintf(stderr, "BuiltinMain: bad target '%s'\n", argv[0]);	
-	return r;
+  } else
+    fprintf(stderr, "BuiltinMain: bad target '%s'\n", argv[0]);
+  return r;
 }
 
 
@@ -245,11 +245,11 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 
   if (*CmdStr.c_str()=='^') {
     LastError = ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), 
-						"BuiltinMain", CmdStr.c_str() + 1, flags);
+      "BuiltinMain", CmdStr.c_str() + 1, flags);
   } else {
     LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
   }
-	
+
   WINPORT(SetLastError)(LastError);
   WINPORT(SetConsoleTitle)(SaveTitle);
   WINPORT(SetConsoleMode)(StdInput,ConsoleMode);
@@ -394,24 +394,24 @@ char *GetCommaWord(char *Src,char *Word,char Separator)
 
 int FindExecuteFile(char *OriginalName,char *DestName,int SizeDest)
 {
-	std::string cmd = "which ";
-	cmd+= OriginalName;
-	FILE *f = popen(cmd.c_str(), "r");
-	if (f==NULL) {
-		perror("FindExecuteFile - popen");
-		return FALSE;
-	}
-	if (!fgets(DestName, SizeDest - 1, f))
-		DestName[0] = 0;
-	else
-		DestName[SizeDest - 1] = 0;
-	pclose(f);
-	
-	char *e = strchr(DestName, '\n');
-	if (e) *e = 0;
-	e = strchr(DestName, '\r');
-	if (e) *e = 0;
-	return DestName[0] ? TRUE : FALSE;
+  std::string cmd = "which ";
+  cmd+= OriginalName;
+  FILE *f = popen(cmd.c_str(), "r");
+  if (f==NULL) {
+    perror("FindExecuteFile - popen");
+    return FALSE;
+  }
+  if (!fgets(DestName, SizeDest - 1, f))
+    DestName[0] = 0;
+  else
+    DestName[SizeDest - 1] = 0;
+  pclose(f);
+
+  char *e = strchr(DestName, '\n');
+  if (e) *e = 0;
+  e = strchr(DestName, '\r');
+  if (e) *e = 0;
+  return DestName[0] ? TRUE : FALSE;
 }
 
 
@@ -604,31 +604,31 @@ std::string &ExpandEnv(std::string &str)
 
 bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize)
 {
-	if (DataSize < 16)
-		return false;
+  if (DataSize < 16)
+    return false;
 
-	if (Data[0] == 0x7f && Data[1] == 'E' && Data[2] == 'L' && Data[3] == 'F')
-		return true;
-
-
-	if (Data[0] == 'M' && Data[1] == 'Z')
-		return true;
-
-	if (Data[0] == 'Z' && Data[1] == 'M')
-		return true;
+  if (Data[0] == 0x7f && Data[1] == 'E' && Data[2] == 'L' && Data[3] == 'F')
+    return true;
 
 
-	if (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)
-		return true;
+  if (Data[0] == 'M' && Data[1] == 'Z')
+    return true;
+
+  if (Data[0] == 'Z' && Data[1] == 'M')
+    return true;
 
 
-	if (Data[0] == 0xfe && Data[1] == 0xed && Data[2] == 0xfa && (Data[3] == 0xce || Data[3] == 0xcf))
-		return true;
+  if (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)
+    return true;
 
 
-	if (Data[3] == 0xfe && Data[2] == 0xed && Data[1] == 0xfa && (Data[0] == 0xce || Data[0] == 0xcf))
-		return true;
+  if (Data[0] == 0xfe && Data[1] == 0xed && Data[2] == 0xfa && (Data[3] == 0xce || Data[3] == 0xcf))
+    return true;
 
-	return false;
+
+  if (Data[3] == 0xfe && Data[2] == 0xed && Data[1] == 0xfa && (Data[0] == 0xce || Data[0] == 0xcf))
+    return true;
+
+  return false;
 }
 

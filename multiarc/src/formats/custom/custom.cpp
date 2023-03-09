@@ -543,7 +543,7 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
     if(OutData == NULL)
       ExitCode = 0;
   }
-//	fprintf(stderr, "OutData: '%s'\n", OutData);
+// fprintf(stderr, "OutData: '%s'\n", OutData);
 
   WINPORT(SetConsoleTitle)(SaveTitle);
   WINPORT(SetConsoleMode)(NULL, ConsoleMode);

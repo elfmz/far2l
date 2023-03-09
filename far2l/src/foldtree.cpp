@@ -49,6 +49,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "exitcode.hpp"
 
+void FolderTree::Present(FARString &strResultFolder,int ModalMode,int IsStandalone,int IsFullScreen)
+{
+	FolderTree Tree(strResultFolder, ModalMode, IsStandalone, IsFullScreen);
+}
+
 FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalone,int IsFullScreen):
 	CMM(MACRO_FINDFOLDER),
 	Tree(nullptr),

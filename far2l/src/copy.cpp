@@ -1463,7 +1463,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			{
 				{
 					FARString strNewFolder2;
-					FolderTree Tree(strNewFolder2,
+					FolderTree::Present(strNewFolder2,
 					                (DlgParam->AltF10==1?MODALTREE_PASSIVE:
 					                 (DlgParam->AltF10==2?MODALTREE_FREE:
 					                  MODALTREE_ACTIVE)),

@@ -62,6 +62,8 @@ class FolderTree:public Frame
 		void SetCoords();
 
 	public:
+		static void Present(FARString &strResultFolder,int ModalMode,int IsStandalone=TRUE,int IsFullScreen=TRUE);
+
 		FolderTree(FARString &strResultFolder,int ModalMode,int IsStandalone=TRUE,int IsFullScreen=TRUE);
 		virtual ~FolderTree();
 

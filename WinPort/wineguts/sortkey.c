@@ -82,7 +82,7 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
                     key_len[0] += 2;
                     if (wch >> 8) key_len[0]++;
                     if (wch & 0xff) key_len[0]++;
-		}
+                }
             }
         }
     }

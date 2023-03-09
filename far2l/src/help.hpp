@@ -174,6 +174,8 @@ class Help:public Frame
 		Help(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
 		virtual ~Help();
 
+		static void Present(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
+
 	public:
 		virtual void Hide();
 		virtual int  ProcessKey(int Key);

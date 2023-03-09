@@ -1243,7 +1243,7 @@ int Viewer::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			Help Hlp(L"Viewer");
+			Help::Present(L"Viewer");
 			return TRUE;
 		}
 		case KEY_CTRLU:

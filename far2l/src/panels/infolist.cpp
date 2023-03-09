@@ -335,7 +335,7 @@ int InfoList::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			Help Hlp(L"InfoPanel");
+			Help::Present(L"InfoPanel");
 		}
 		return TRUE;
 		case KEY_F3:

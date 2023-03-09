@@ -80,7 +80,7 @@ void ShowProcessList()
 		{
 			case KEY_F1:
 			{
-				Help Hlp(L"TaskList");
+				Help::Present(L"TaskList");
 				break;
 			}
 			case KEY_CTRLR:

@@ -1090,7 +1090,7 @@ void Panel::FastFind(int FirstKey)
 					FindEdit.Hide();
 					SaveScr.RestoreArea();
 					{
-						Help Hlp(L"FastFind");
+						Help::Present(L"FastFind");
 					}
 					FindEdit.Show();
 					FastFindShow(FindX,FindY);

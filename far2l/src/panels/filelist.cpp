@@ -4677,7 +4677,7 @@ int FileList::PluginPanelHelp(HANDLE hPlugin)
 
 	fclose(HelpFile);
 	strStartTopic.Format(HelpFormatLink,strPath.CPtr(),L"Contents");
-	Help PanelHelp(strStartTopic);
+	Help::Present(strStartTopic);
 	return TRUE;
 }
 

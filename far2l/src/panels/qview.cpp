@@ -250,7 +250,7 @@ int QuickView::ProcessKey(int Key)
 
 	if (Key == KEY_F1)
 	{
-		Help Hlp(L"QViewPanel");
+		Help::Present(L"QViewPanel");
 		return TRUE;
 	}
 

@@ -111,6 +111,11 @@ static const wchar_t *PluginContents=L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic=L":Help";
 static const wchar_t *HelpContents=L"Contents";
 
+void Help::Present(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
+{
+	Help Hlp(Topic, Mask, Flags);
+}
+
 Help::Help(const wchar_t *Topic, const wchar_t *Mask,DWORD Flags):
 	CMM(MACRO_HELP),
 	ErrorHelp(TRUE),

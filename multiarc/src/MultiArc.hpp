@@ -91,16 +91,16 @@ class ArcPlugins
   private:
     std::vector<PluginItem> PluginsData;
 
-	void AddPluginItem(
-				PLUGINISARCHIVE pIsArchive,
-				PLUGINOPENARCHIVE pOpenArchive,
-				PLUGINGETARCITEM pGetArcItem,
-				PLUGINLOADFORMATMODULE pLoadFormatModule = NULL,
-				PLUGINCLOSEARCHIVE pCloseArchive = NULL,
-				PLUGINGETFORMATNAME pGetFormatName = NULL,
-				PLUGINGETDEFAULTCOMMANDS pGetDefaultCommands = NULL,
-				PLUGINSETFARINFO pSetFarInfo = NULL,
-				PLUGINGETSFXPOS pGetSFXPos = NULL);
+  void AddPluginItem(
+    PLUGINISARCHIVE pIsArchive,
+    PLUGINOPENARCHIVE pOpenArchive,
+    PLUGINGETARCITEM pGetArcItem,
+    PLUGINLOADFORMATMODULE pLoadFormatModule = NULL,
+    PLUGINCLOSEARCHIVE pCloseArchive = NULL,
+    PLUGINGETFORMATNAME pGetFormatName = NULL,
+    PLUGINGETDEFAULTCOMMANDS pGetDefaultCommands = NULL,
+    PLUGINSETFARINFO pSetFarInfo = NULL,
+    PLUGINGETSFXPOS pGetSFXPos = NULL);
   public:
     ArcPlugins(const char *ModuleName);
     ~ArcPlugins();

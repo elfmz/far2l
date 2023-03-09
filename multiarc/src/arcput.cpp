@@ -540,8 +540,8 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     }
     else
     {
-			PanelInfo pi;
-			Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &pi);
+      PanelInfo pi;
+      Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &pi);
 #ifdef _ARC_UNDER_CURSOR_
       if(GetCursorName(DialogItems[PDI_ARCNAMEEDT].Data, pdd.ArcFormat, pdd.DefExt, &pi))
       {
@@ -559,7 +559,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
         {
           char CurDir[NM] = {0};
           if (sdc_getcwd(CurDir, sizeof(CurDir)))
-			ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
+            ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
         }
         else
         {
@@ -717,9 +717,9 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     if (ArcCmd.GetExecCode()==RETEXEC_ARCNOTFOUND)
       continue;
 
-	std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
+    std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
     if (!fullname.empty())
-		ArrayCpyZ(ArcName, fullname.c_str());
+      ArrayCpyZ(ArcName, fullname.c_str());
     break;
   }
 
@@ -804,7 +804,7 @@ void PluginClass::GetGroupName(PluginPanelItem *Items, int Count, char *ArcName)
       //взять имя папки
       char CurDir[NM] = {0};
       if (sdc_getcwd(CurDir, sizeof(CurDir)))
-		strcpy(ArcName, FSF.PointToName(CurDir));
+        strcpy(ArcName, FSF.PointToName(CurDir));
       return;
     }
   strncpy(ArcName, Name, Len+1);

@@ -569,40 +569,40 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type,int Command,char *Dest)
 #if ZIP_LIBARCHIVE
     // Console PKZIP 4.0/Win32 commands
     static const char *Commands[]={
-	/*Extract               */"^libarch X %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Extract without paths */"^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Test                  */"^libarch t %%A {-cs=%%T}",
-	/*Delete                */"^libarch d %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Comment archive       */"",
-	/*Comment files         */"",
-	/*Convert to SFX        */"",
-	/*Lock archive          */"",
-	/*Protect archive       */"",
-	/*Recover archive       */"",
-	/*Add files             */"^libarch a:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Move files            */"^libarch m:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Add files and folders */"^libarch A:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*Move files and folders*/"^libarch M:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-	/*"All files" mask      */""
+      /*Extract               */"^libarch X %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Extract without paths */"^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Test                  */"^libarch t %%A {-cs=%%T}",
+      /*Delete                */"^libarch d %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Comment archive       */"",
+      /*Comment files         */"",
+      /*Convert to SFX        */"",
+      /*Lock archive          */"",
+      /*Protect archive       */"",
+      /*Recover archive       */"",
+      /*Add files             */"^libarch a:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Move files            */"^libarch m:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Add files and folders */"^libarch A:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*Move files and folders*/"^libarch M:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+      /*"All files" mask      */""
     };
 #else
     // Linux zip/unzip 
     static const char *Commands[]={
-    /*Extract               */"unzip -o {-P %%P} %%A %%FMq4096",
-    /*Extract without paths */"unzip -j -o {-P %%P} %%A %%FMq4096",
-    /*Test                  */"unzip -t {-P %%P} %%A",
-    /*Delete                */"zip -d {-P %%P} %%A %%FMq4096",
-    /*Comment archive       */"",
-    /*Comment files         */"",
-    /*Convert to SFX        */"",
-    /*Lock archive          */"",
-    /*Protect archive       */"",
-    /*Recover archive       */"",
-    /*Add files             */"zip {-P %%P} %%A %%Fq4096",
-    /*Move files            */"zip -m {-P %%P} %%A %%Fq4096",
-    /*Add files and folders */"zip -r {-P %%P} %%A %%Fq4096",
-    /*Move files and folders*/"zip -r -m {-P %%P} %%A %%Fq4096",
-    /*"All files" mask      */"*"
+      /*Extract               */"unzip -o {-P %%P} %%A %%FMq4096",
+      /*Extract without paths */"unzip -j -o {-P %%P} %%A %%FMq4096",
+      /*Test                  */"unzip -t {-P %%P} %%A",
+      /*Delete                */"zip -d {-P %%P} %%A %%FMq4096",
+      /*Comment archive       */"",
+      /*Comment files         */"",
+      /*Convert to SFX        */"",
+      /*Lock archive          */"",
+      /*Protect archive       */"",
+      /*Recover archive       */"",
+      /*Add files             */"zip {-P %%P} %%A %%Fq4096",
+      /*Move files            */"zip -m {-P %%P} %%A %%Fq4096",
+      /*Add files and folders */"zip -r {-P %%P} %%A %%Fq4096",
+      /*Move files and folders*/"zip -r -m {-P %%P} %%A %%Fq4096",
+      /*"All files" mask      */"*"
     };
 #endif
     if (Command<(int)(ARRAYSIZE(Commands)))

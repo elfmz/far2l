@@ -930,8 +930,8 @@ int TreeList::ProcessKey(int Key)
 				int Ask=((Key!=KEY_DRAGCOPY && Key!=KEY_DRAGMOVE) || Opt.Confirm.Drag);
 				int Move=(Key==KEY_F6 || Key==KEY_DRAGMOVE);
 				int ToPlugin=AnotherPanel->GetMode()==PLUGIN_PANEL &&
-				             AnotherPanel->IsVisible() &&
-				             !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
+					AnotherPanel->IsVisible() &&
+					!CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
 				int Link=(Key==KEY_ALTF6 && !ToPlugin);
 
 				if (Key==KEY_ALTF6 && !Link) // молча отвалим :-)
@@ -1295,7 +1295,7 @@ int TreeList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	int RetCode;
 
 	if (Opt.ShowPanelScrollbar && MouseX==X2 &&
-	        (MouseEvent->dwButtonState & 1) && !IsDragging())
+		(MouseEvent->dwButtonState & 1) && !IsDragging())
 	{
 		int ScrollY=Y1+1;
 		int Height=Y2-Y1-3;
@@ -1349,10 +1349,10 @@ int TreeList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			return TRUE;
 
 		if (((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
-		        MouseEvent->dwEventFlags==DOUBLE_CLICK) ||
-		        ((MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
-		         !MouseEvent->dwEventFlags) ||
-		        (OldFile!=CurFile && Opt.Tree.AutoChangeFolder && !ModalMode))
+			MouseEvent->dwEventFlags==DOUBLE_CLICK) ||
+			((MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
+				!MouseEvent->dwEventFlags) ||
+			(OldFile!=CurFile && Opt.Tree.AutoChangeFolder && !ModalMode))
 		{
 			ProcessEnter();
 			return TRUE;
@@ -1972,10 +1972,10 @@ int TreeList::MustBeCached(const wchar_t *Root)
 	type=FAR_GetDriveType(Root);
 
 	if (type==DRIVE_UNKNOWN ||
-	        type==DRIVE_NO_ROOT_DIR ||
-	        type==DRIVE_REMOVABLE ||
-	        IsDriveTypeCDROM(type)
-	   )
+		type==DRIVE_NO_ROOT_DIR ||
+		type==DRIVE_REMOVABLE ||
+		IsDriveTypeCDROM(type)
+	)
 	{
 		if (type==DRIVE_REMOVABLE)
 		{

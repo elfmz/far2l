@@ -357,7 +357,7 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 		}
 	}
 
-    if (out.empty()) {
+	if (out.empty()) {
 		struct statfs sfs{};
 		if (sdc_statfs(path.c_str(), &sfs) == 0) {
 #ifdef __APPLE__
@@ -373,12 +373,12 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 		}
 	}
 #else
-    dev_t dev = dev_for_path(path.c_str());
-    if (dev >= 0) {
-        fs_info fsinfo;
-        if (fs_stat_dev(dev, &fsinfo) == B_OK)
-            out = fsinfo.fsh_name;
-    }
+	dev_t dev = dev_for_path(path.c_str());
+	if (dev >= 0) {
+		fs_info fsinfo;
+		if (fs_stat_dev(dev, &fsinfo) == B_OK)
+			out = fsinfo.fsh_name;
+	}
 #endif
 	return out;
 }

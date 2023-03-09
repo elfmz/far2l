@@ -297,7 +297,7 @@ int WINAPI _export ARC_GetArcItem(struct ArcItemInfo *Info)
     char Description[32];
     WINPORT(SetFilePointer)(ArcHandle,OffsetComment,NULL,FILE_BEGIN);
     if (WINPORT(ReadFile)(ArcHandle,Description,32,&ReadSize,NULL))
-	    Info->Description.reset(new std::string(Description, ReadSize));
+      Info->Description.reset(new std::string(Description, ReadSize));
     OffsetComment+=32;
     Info->Comment=1;
   }

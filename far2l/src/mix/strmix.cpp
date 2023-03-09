@@ -874,10 +874,10 @@ enum FFTMODE
 };
 
 FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
-                             int Width,               // заданная ширина
-                             FARString &strDestText,          // приемник
-                             const wchar_t* Break,       // брик, если = nullptr, то принимается '\n'
-                             DWORD Flags)             // один из FFTM_*
+	int Width,               // заданная ширина
+	FARString &strDestText,          // приемник
+	const wchar_t* Break,       // брик, если = nullptr, то принимается '\n'
+	DWORD Flags)             // один из FFTM_*
 {
 	const wchar_t *breakchar;
 	breakchar = Break?Break:L"\n";

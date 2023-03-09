@@ -179,7 +179,7 @@ class FileEditor : public Frame
 		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
 		const wchar_t *GetPluginData() {return strPluginData.CPtr();}
 		bool LoadFromCache(EditorCacheParams *pp);
-		FARString NameInCache();
+		FARString ComposeCacheName();
 		void SaveToCache();
 };
 

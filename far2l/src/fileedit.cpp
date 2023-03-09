@@ -400,7 +400,7 @@ FileEditor::~FileEditor()
 		if (m_editor->EdOpt.SavePos)
 			SaveToCache();
 		else
-			CtrlObject->EditorPosCache->ResetPosition(NameInCache());
+			CtrlObject->EditorPosCache->ResetPosition(ComposeCacheName());
 	}
 
 	BitFlags FEditFlags=m_editor->Flags;
@@ -2848,7 +2848,7 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 	return false;
 }
 
-FARString FileEditor::NameInCache()
+FARString FileEditor::ComposeCacheName()
 {
 	return strPluginData.IsEmpty()
 		? strFullFileName : strPluginData + PointToName(strFullFileName);
@@ -2878,7 +2878,7 @@ void FileEditor::SaveToCache()
 			poscache.Position[3] = cp.SavePos.LeftPos;
 		}
 
-		CtrlObject->EditorPosCache->AddPosition(NameInCache(), poscache);
+		CtrlObject->EditorPosCache->AddPosition(ComposeCacheName(), poscache);
 	}
 }
 

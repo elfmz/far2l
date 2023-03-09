@@ -193,14 +193,14 @@ int TmpPanel::PutDirectoryContents(const TCHAR* Path)
       CurPanelItem->FindData=DirItems[i];
       CurPanelItem->FindData.lpwszFileName = wcsdup(DirItems[i].lpwszFileName);
 #else
-	if ( (PathLen + 1 + strlen(DirItems[i].FindData.cFileName)) < ARRAYSIZE(CurPanelItem->FindData.cFileName) ) {
-	      CurPanelItem->FindData=DirItems[i].FindData;
-	      strncpy(CurPanelItem->FindData.cFileName,Path);
-	      CurPanelItem->FindData.cFileName[PathLen] = 0;
-	      FSF.AddEndSlash(CurPanelItem->FindData.cFileName);
-	      lstrcat(CurPanelItem->FindData.cFileName,DirItems[i].FindData.cFileName);
-	} else
-		strcpy(CurPanelItem->FindData.cFileName, "Oh long Johnson!");
+  if ( (PathLen + 1 + strlen(DirItems[i].FindData.cFileName)) < ARRAYSIZE(CurPanelItem->FindData.cFileName) ) {
+    CurPanelItem->FindData=DirItems[i].FindData;
+    strncpy(CurPanelItem->FindData.cFileName,Path);
+    CurPanelItem->FindData.cFileName[PathLen] = 0;
+    FSF.AddEndSlash(CurPanelItem->FindData.cFileName);
+    lstrcat(CurPanelItem->FindData.cFileName,DirItems[i].FindData.cFileName);
+  } else
+    strcpy(CurPanelItem->FindData.cFileName, "Oh long Johnson!");
 #endif
     }
     Info.FreeDirList(DirItems

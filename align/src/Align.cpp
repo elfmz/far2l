@@ -6,8 +6,8 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/align/config.ini")
-#define INI_SECTION		"Settings"
+#define INI_LOCATION  InMyConfig("plugins/align/config.ini")
+#define INI_SECTION   "Settings"
 
 #ifndef UNICODE
 #define GetCheck(i) DialogItems[i].Selected

@@ -136,14 +136,14 @@ static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UI
 
 	ErrnoSaver ErSr;
 	int dst_length = WINPORT(WideCharToMultiByte)(
-		    CodePage,
-		    0,
-		    lpwszUnicodeString,
-		    nLength,
-		    NULL,
-		    0,
-		    nullptr,
-		    nullptr
+			CodePage,
+			0,
+			lpwszUnicodeString,
+			nLength,
+			NULL,
+			0,
+			nullptr,
+			nullptr
 		);
 	if (dst_length<=0) dst_length = nLength + 1; else ++dst_length;
 	char *lpResult = (char*)malloc(dst_length);
@@ -153,14 +153,14 @@ static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UI
 	if (nLength)
 	{
 		WINPORT(WideCharToMultiByte)(
-		    CodePage,
-		    0,
-		    lpwszUnicodeString,
-		    nLength,
-		    lpResult,
-		    dst_length,
-		    nullptr,
-		    nullptr
+			CodePage,
+			0,
+			lpwszUnicodeString,
+			nLength,
+			lpResult,
+			dst_length,
+			nullptr,
+			nullptr
 		);
 	}
 
@@ -1588,12 +1588,12 @@ void FreeUnicodeDialogItem(FarDialogItem &di)
 void FreeAnsiDialogItem(oldfar::FarDialogItem &diA)
 {
 	if ((diA.Type==oldfar::DI_EDIT || diA.Type==oldfar::DI_FIXEDIT) &&
-	        (diA.Flags&oldfar::DIF_HISTORY ||diA.Flags&oldfar::DIF_MASKEDIT) &&
-	        diA.Param.History)
+			(diA.Flags&oldfar::DIF_HISTORY ||diA.Flags&oldfar::DIF_MASKEDIT) &&
+			diA.Param.History)
 		free((void*)diA.Param.History);
 
 	if ((diA.Type==oldfar::DI_EDIT || diA.Type==oldfar::DI_COMBOBOX) &&
-	        diA.Flags&oldfar::DIF_VAREDIT && diA.Data.Ptr.PtrData)
+			diA.Flags&oldfar::DIF_VAREDIT && diA.Data.Ptr.PtrData)
 		free(diA.Data.Ptr.PtrData);
 
 	memset(&diA,0,sizeof(oldfar::FarDialogItem));
@@ -3670,12 +3670,12 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 						wchar_t res;
 						ErrnoSaver ErSr;
 						WINPORT(MultiByteToWideChar)(
-						    CP_OEMCP,
-						    0,
-						    &pIR->Event.KeyEvent.uChar.AsciiChar,
-						    1,
-						    &res,
-						    1
+							CP_OEMCP,
+							0,
+							&pIR->Event.KeyEvent.uChar.AsciiChar,
+							1,
+							&res,
+							1
 						);
 						pIR->Event.KeyEvent.uChar.UnicodeChar=res;
 					}
@@ -3704,14 +3704,14 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 						char res;
 						ErrnoSaver ErSr;
 						WINPORT(WideCharToMultiByte)(
-						    CP_OEMCP,
-						    0,
-						    &pIR->Event.KeyEvent.uChar.UnicodeChar,
-						    1,
-						    &res,
-						    1,
-						    nullptr,
-						    nullptr
+							CP_OEMCP,
+							0,
+							&pIR->Event.KeyEvent.uChar.UnicodeChar,
+							1,
+							&res,
+							1,
+							nullptr,
+							nullptr
 						);
 						pIR->Event.KeyEvent.uChar.UnicodeChar=res;
 					}
@@ -4067,11 +4067,11 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 }
 
 char* WINAPI XlatA(
-    char *Line,                    // исходная строка
-    int StartPos,                  // начало переконвертирования
-    int EndPos,                    // конец переконвертирования
-    const oldfar::CharTableSet *TableSet, // перекодировочная таблица (может быть nullptr)
-    DWORD Flags)                   // флаги (см. enum XLATMODE)
+	char *Line,                    // исходная строка
+	int StartPos,                  // начало переконвертирования
+	int EndPos,                    // конец переконвертирования
+	const oldfar::CharTableSet *TableSet, // перекодировочная таблица (может быть nullptr)
+	DWORD Flags)                   // флаги (см. enum XLATMODE)
 {
 	FARString strLine(Line);
 	DWORD NewFlags = 0;

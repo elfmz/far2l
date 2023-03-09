@@ -286,7 +286,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[1;2A";
 			if (alt) return "\x1b[1;3A";
 			if (ctrl) return "\x1b[1;5A";
-    		if (keypad == 1) {
+			if (keypad == 1) {
 				return "\x1bOA";
 			}
 //          breaks free pascal ide
@@ -294,7 +294,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 //			if (shift) return "\x1b[2A";
 //			if (alt) return "\x1b[3A";
 //			if (ctrl) return "\x1b[5A";
-    		return "\x1b[A";
+			return "\x1b[A";
 		
 		case VK_DOWN: /*
         Down               \x1bOB
@@ -332,7 +332,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[1;2D";
 			if (alt) return "\x1b[1;3D";
 			if (ctrl) return "\x1b[1;5D";
-    		if (keypad == 1) {
+			if (keypad == 1) {
 				return "\x1bOD";
 			}
 //          breaks free pascal ide
@@ -355,7 +355,7 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 			if (shift) return "\x1b[1;2C";
 			if (alt) return "\x1b[1;3C";
 			if (ctrl) return "\x1b[1;5C";
-    		if (keypad == 1) {
+			if (keypad == 1) {
 				return "\x1bOC";
 			}
 //          breaks free pascal ide

@@ -215,12 +215,12 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 
 			WCHAR HotKey = 0;
 			if (!CtrlObject->Plugins.GetDiskMenuItem(
-			            pPlugin,
-			            PluginItem,
-			            ItemPresent,
-			            HotKey,
-			            strPluginText
-			        ))
+				pPlugin,
+				PluginItem,
+				ItemPresent,
+				HotKey,
+				strPluginText
+			))
 			{
 				Done=true;
 				break;
@@ -720,9 +720,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}
 
 			if (ChDisk.Done() &&
-			        (ChDisk.Modal::GetExitCode() < 0) &&
-			        !strCurDir.IsEmpty() &&
-			        (StrCmpN(strCurDir,L"//",2) ))
+				(ChDisk.Modal::GetExitCode() < 0) &&
+				!strCurDir.IsEmpty() &&
+				(StrCmpN(strCurDir,L"//",2) ))
 			{
 				const wchar_t RootDir[4] = {strCurDir.At(0),L':',GOOD_SLASH,L'\0'};
 
@@ -868,9 +868,9 @@ bool Panel::SetLocation_Directory(const wchar_t *path)
 	apiGetCurrentDirectory(strNewCurDir);
 
 	if ((PanelMode == NORMAL_PANEL) &&
-	        (GetType() == FILE_PANEL) &&
-	        !StrCmpI(strCurDir,strNewCurDir) &&
-	        IsVisible())
+		(GetType() == FILE_PANEL) &&
+		!StrCmpI(strCurDir,strNewCurDir) &&
+		IsVisible())
 	{
 		// А нужно ли делать здесь Update????
 		Update(UPDATE_KEEP_SELECTION);
@@ -1114,9 +1114,9 @@ void Panel::FastFind(int FirstKey)
 				default:
 
 					if ((Key<32 || Key>=65536) && Key!=KEY_BS && Key!=KEY_CTRLY &&
-					        Key!=KEY_CTRLBS && Key!=KEY_ALT && Key!=KEY_SHIFT &&
-					        Key!=KEY_CTRL && Key!=KEY_RALT && Key!=KEY_RCTRL &&
-					        !(Key==KEY_CTRLINS||Key==KEY_CTRLNUMPAD0) && !(Key==KEY_SHIFTINS||Key==KEY_SHIFTNUMPAD0))
+						Key!=KEY_CTRLBS && Key!=KEY_ALT && Key!=KEY_SHIFT &&
+						Key!=KEY_CTRL && Key!=KEY_RALT && Key!=KEY_RCTRL &&
+						!(Key==KEY_CTRLINS||Key==KEY_CTRLNUMPAD0) && !(Key==KEY_SHIFTINS||Key==KEY_SHIFTNUMPAD0))
 					{
 						KeyToProcess=Key;
 						break;
@@ -1128,8 +1128,8 @@ void Panel::FastFind(int FirstKey)
 
 						// уберем двойные '**'
 						if (strName.GetLength() > 1
-						        && strName.At(strName.GetLength()-1) == L'*'
-						        && strName.At(strName.GetLength()-2) == L'*')
+							&& strName.At(strName.GetLength()-1) == L'*'
+							&& strName.At(strName.GetLength()-2) == L'*')
 						{
 							strName.Truncate(strName.GetLength()-1);
 							FindEdit.SetString(strName);
@@ -1259,8 +1259,8 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 	}
 
 	if (!IsVisible() ||
-	        (MouseEvent->dwMousePosition.X<X1 || MouseEvent->dwMousePosition.X>X2 ||
-	         MouseEvent->dwMousePosition.Y<Y1 || MouseEvent->dwMousePosition.Y>Y2))
+		(MouseEvent->dwMousePosition.X<X1 || MouseEvent->dwMousePosition.X>X2 ||
+			MouseEvent->dwMousePosition.Y<Y1 || MouseEvent->dwMousePosition.Y>Y2))
 	{
 		RetCode=FALSE;
 		return TRUE;
@@ -1283,7 +1283,7 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 		}
 
 		if (MouseEvent->dwMousePosition.Y<=Y1 || MouseEvent->dwMousePosition.Y>=Y2 ||
-		        !CtrlObject->Cp()->GetAnotherPanel(SrcDragPanel)->IsVisible())
+			!CtrlObject->Cp()->GetAnotherPanel(SrcDragPanel)->IsVisible())
 		{
 			EndDrag();
 			return TRUE;
@@ -1295,7 +1295,7 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 		if (MouseEvent->dwButtonState & 1)
 		{
 			if ((abs(MouseEvent->dwMousePosition.X-DragX)>15 || SrcDragPanel!=this) &&
-			        !ModalMode)
+				!ModalMode)
 			{
 				if (SrcDragPanel->GetSelCount()==1 && !DragSaveScr)
 				{
@@ -1318,7 +1318,7 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 		return TRUE;
 
 	if ((MouseEvent->dwButtonState & 1) && !MouseEvent->dwEventFlags &&
-	        X2-X1<ScrX)
+		X2-X1<ScrX)
 	{
 		DWORD FileAttr;
 		MoveToMouse(MouseEvent);
@@ -1488,7 +1488,7 @@ int Panel::SetCurPath()
 	if (AnotherPanel->GetType()!=PLUGIN_PANEL)
 	{
 		if (IsAlpha(AnotherPanel->strCurDir.At(0)) && AnotherPanel->strCurDir.At(1)==L':' &&
-		        Upper(AnotherPanel->strCurDir.At(0))!=Upper(strCurDir.At(0)))
+			Upper(AnotherPanel->strCurDir.At(0))!=Upper(strCurDir.At(0)))
 		{
 			// сначала установим переменные окружения для пассивной панели
 			// (без реальной смены пути, чтобы лишний раз пассивный каталог
@@ -1556,7 +1556,7 @@ void Panel::Hide()
 	{
 		if (AnotherPanel->GetFocus())
 			if ((AnotherPanel->GetType()==FILE_PANEL && AnotherPanel->IsFullScreen()) ||
-			        (GetType()==FILE_PANEL && IsFullScreen()))
+				(GetType()==FILE_PANEL && IsFullScreen()))
 				AnotherPanel->Show();
 	}
 }
@@ -2088,7 +2088,7 @@ BOOL Panel::NeedUpdatePanel(Panel *AnotherPanel)
 {
 	/* Обновить, если обновление разрешено и пути совпадают */
 	if ((!Opt.AutoUpdateLimit || static_cast<DWORD>(GetFileCount()) <= Opt.AutoUpdateLimit) &&
-	        !StrCmpI(AnotherPanel->strCurDir,strCurDir))
+		!StrCmpI(AnotherPanel->strCurDir,strCurDir))
 		return TRUE;
 
 	return FALSE;
@@ -2294,7 +2294,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 // Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
 bool Panel::FindPartNameXLat(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
 {
-    if (FindPartName(Name, Next, Direct, ExcludeSets)) {
+	if (FindPartName(Name, Next, Direct, ExcludeSets)) {
 		return true;
 	}
 

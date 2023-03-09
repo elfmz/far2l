@@ -443,8 +443,8 @@ void FileList::PluginDelete()
 
 
 void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
-                              int ItemNumber,int Delete,int Move,DizList *SrcDiz,
-                              DizList *DestDiz)
+	int ItemNumber,int Delete,int Move,DizList *SrcDiz,
+	DizList *DestDiz)
 {
 	_ALGO(CleverSysLog clv(L"FileList::PutDizToPlugin()"));
 	OpenPluginInfo Info;
@@ -454,9 +454,9 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 		DestPanel->strPluginDizName = Info.DescrFiles[0];
 
 	if (((Opt.Diz.UpdateMode==DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
-	        Opt.Diz.UpdateMode==DIZ_UPDATE_ALWAYS) && !DestPanel->strPluginDizName.IsEmpty() &&
-	        (!Info.HostFile || !*Info.HostFile || DestPanel->GetModalMode() ||
-	         apiGetFileAttributes(Info.HostFile)!=INVALID_FILE_ATTRIBUTES))
+		Opt.Diz.UpdateMode==DIZ_UPDATE_ALWAYS) && !DestPanel->strPluginDizName.IsEmpty() &&
+		(!Info.HostFile || !*Info.HostFile || DestPanel->GetModalMode() ||
+			apiGetFileAttributes(Info.HostFile)!=INVALID_FILE_ATTRIBUTES))
 	{
 		CtrlObject->Cp()->LeftPanel->ReadDiz();
 		CtrlObject->Cp()->RightPanel->ReadDiz();
@@ -532,7 +532,7 @@ void FileList::PluginGetFiles(const wchar_t **DestPath,int Move)
 	const int GetCode = CtrlObject->Plugins.GetFiles(hPlugin, ItemList.Data(), ItemList.Count(), Move, DestPath, 0);
 
 	if ((Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
-	        Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS)
+		Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS)
 	{
 		DizList DestDiz;
 		bool DizFound = false;
@@ -662,7 +662,7 @@ void FileList::PluginHostGetFiles()
 	AnotherPanel->GetCurDir(strDestPath);
 
 	if (((!AnotherPanel->IsVisible() || AnotherPanel->GetType()!=FILE_PANEL) &&
-	        !SelFileCount) || strDestPath.IsEmpty())
+		!SelFileCount) || strDestPath.IsEmpty())
 	{
 		strDestPath = PointToName(strSelName);
 		// SVS: А зачем здесь велся поиск точки с начала?
@@ -680,7 +680,7 @@ void FileList::PluginHostGetFiles()
 		HANDLE hCurPlugin;
 
 		if ((hCurPlugin=OpenPluginForFile(strSelName,FileAttr, OFP_EXTRACT))!=INVALID_HANDLE_VALUE &&
-		        hCurPlugin!=(HANDLE)-2)
+			hCurPlugin!=(HANDLE)-2)
 		{
 			PluginPanelItem *ItemList;
 			int ItemNumber;
@@ -1056,7 +1056,7 @@ size_t FileList::PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item
 void FileList::PluginGetColumnTypesAndWidths(FARString& strColumnTypes,FARString& strColumnWidths)
 {
 	ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
-	                   ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
+		ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
 }
 
 void FileList::PluginBeginSelection()

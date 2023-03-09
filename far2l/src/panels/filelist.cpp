@@ -319,7 +319,7 @@ int _cdecl SortList(const void *el1,const void *el2)
 		return SPtr1->Selected>SPtr2->Selected ? -1 : 1;
 
 	if (ListSortGroups && (ListSortMode==BY_NAME || ListSortMode==BY_EXT || ListSortMode==BY_FULLNAME) &&
-	        SPtr1->SortGroup!=SPtr2->SortGroup)
+		SPtr1->SortGroup!=SPtr2->SortGroup)
 		return SPtr1->SortGroup<SPtr2->SortGroup ? -1 : 1;
 
 	if (hSortPlugin)
@@ -553,8 +553,8 @@ int FileList::SendKeyToPlugin(DWORD Key,BOOL Pred)
 	_ALGO(SysLog(L"Key=%ls Pred=%d",_FARKEY_ToName(Key),Pred));
 
 	if (PanelMode==PLUGIN_PANEL &&
-	        (CtrlObject->Macro.IsRecording() == MACROMODE_RECORDING_COMMON || CtrlObject->Macro.IsExecuting() == MACROMODE_EXECUTING_COMMON || CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO)
-	   )
+		(CtrlObject->Macro.IsRecording() == MACROMODE_RECORDING_COMMON || CtrlObject->Macro.IsExecuting() == MACROMODE_EXECUTING_COMMON || CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO)
+	)
 	{
 		int VirtKey,ControlState;
 
@@ -696,7 +696,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					{
 						case 0: // выделить все?
 							for (auto &Item : ListData)
-							  Select(Item, TRUE);
+								Select(Item, TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?
@@ -732,7 +732,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					{
 						case 0: // инвертировать все?
 							for (auto &Item : ListData)
-							  Select(Item, Item->Selected?FALSE:TRUE);
+								Select(Item, Item->Selected?FALSE:TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?
@@ -1210,7 +1210,7 @@ int FileList::ProcessKey(int Key)
 			_ALGO(CleverSysLog clv(L"Ctrl-G"));
 
 			if (PanelMode!=PLUGIN_PANEL ||
-			        CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FAROTHER))
+				CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FAROTHER))
 				if (!ListData.IsEmpty() && ApplyCommand())
 				{
 					// позиционируемся в панели
@@ -1362,7 +1362,7 @@ int FileList::ProcessKey(int Key)
 			return TRUE;
 		}
 		case KEY_F3:
-		case KEY_NUMPAD5:      case KEY_SHIFTNUMPAD5:
+		case KEY_NUMPAD5:        case KEY_SHIFTNUMPAD5:
 		case KEY_ALTF3:
 		case KEY_CTRLSHIFTF3:
 		case KEY_F4:
@@ -1437,8 +1437,8 @@ int FileList::ProcessKey(int Key)
 							// проверим путь к файлу
 							FARString strDir = strFileName;
 							if (CutToSlash(strDir, false)
-							  && !IsLocalRootPath(strDir)
-							  && !apiPathIsDir(strDir))
+								&& !IsLocalRootPath(strDir)
+								&& !apiPathIsDir(strDir))
 							{
 								SetMessageHelp(L"WarnEditorPath");
 
@@ -1457,8 +1457,8 @@ int FileList::ProcessKey(int Key)
 							SetMessageHelp(L"WarnEditorPluginName");
 
 							if (Message(MSG_WARNING,2,Msg::Warning,
-							            Msg::EditNewPlugin1,
-							            Msg::EditNewPath3,Msg::Cancel))
+								Msg::EditNewPlugin1,
+								Msg::EditNewPath3,Msg::Cancel))
 								return FALSE;
 						}
 						else
@@ -1536,7 +1536,7 @@ int FileList::ProcessKey(int Key)
 					{
 						int editorExitCode;
 						int EnableExternal=(((Key==KEY_F4 || Key==KEY_SHIFTF4) && Opt.EdOpt.UseExternalEditor) ||
-						                    (Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
+							(Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
 
 						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
@@ -1593,8 +1593,8 @@ int FileList::ProcessKey(int Key)
 					else
 					{
 						int EnableExternal=((Key==KEY_F3 && Opt.ViOpt.UseExternalViewer) ||
-						                    (Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
-						                   !Opt.strExternalViewer.IsEmpty();
+							(Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
+							!Opt.strExternalViewer.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f3 */
 
 						if (Key==KEY_ALTF3 && ProcessLocalFileTypes(strFileName, FILETYPE_ALTVIEW, !PluginMode))
@@ -1751,7 +1751,7 @@ int FileList::ProcessKey(int Key)
 
 				ASSERT(CurFile<ListData.Count());
 				if (Key!=KEY_SHIFTF5 && ListData.Count()==OldFileCount &&
-				        CurFile==OldCurFile && OldSelection!=ListData[CurFile]->Selected)
+					CurFile==OldCurFile && OldSelection!=ListData[CurFile]->Selected)
 				{
 					Select(ListData[CurFile],OldSelection);
 					Redraw();
@@ -1818,7 +1818,7 @@ int FileList::ProcessKey(int Key)
 					ReturnCurrentFile=TRUE;
 
 				if (PanelMode==PLUGIN_PANEL &&
-				        !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARDELETEFILES))
+					!CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARDELETEFILES))
 					PluginDelete();
 				else
 				{
@@ -2118,11 +2118,11 @@ int FileList::ProcessKey(int Key)
 		default:
 
 			if (((Key>=KEY_ALT_BASE+0x01 && Key<=KEY_ALT_BASE+65535) ||
-			        (Key>=KEY_ALTSHIFT_BASE+0x01 && Key<=KEY_ALTSHIFT_BASE+65535)) &&
-			        (Key&~KEY_ALTSHIFT_BASE)!=KEY_BS && (Key&~KEY_ALTSHIFT_BASE)!=KEY_TAB &&
-			        (Key&~KEY_ALTSHIFT_BASE)!=KEY_ENTER && (Key&~KEY_ALTSHIFT_BASE)!=KEY_ESC &&
-			        !(Key&EXTENDED_KEY_BASE)
-			   )
+				(Key>=KEY_ALTSHIFT_BASE+0x01 && Key<=KEY_ALTSHIFT_BASE+65535)) &&
+				(Key&~KEY_ALTSHIFT_BASE)!=KEY_BS && (Key&~KEY_ALTSHIFT_BASE)!=KEY_TAB &&
+				(Key&~KEY_ALTSHIFT_BASE)!=KEY_ENTER && (Key&~KEY_ALTSHIFT_BASE)!=KEY_ESC &&
+				!(Key&EXTENDED_KEY_BASE)
+			)
 			{
 				//_SVS(SysLog(L">FastFind: Key=%ls",_FARKEY_ToName(Key)));
 				// Скорректирем уже здесь нужные клавиши, т.к. WaitInFastFind
@@ -2262,7 +2262,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		}
 
 		if (EnableExec && SetCurPath() && !SeparateWindow &&
-		        ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode)) //?? is was var!
+			ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode)) //?? is was var!
 		{
 			if (PluginMode)
 				QueueDeleteOnClose(strFileName);
@@ -2292,9 +2292,9 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			HANDLE hOpen=INVALID_HANDLE_VALUE;
 
 			if (EnableAssoc &&
-			        !EnableExec &&     // не запускаем и не в отдельном окне,
-			        !SeparateWindow && // следовательно это Ctrl-PgDn
-			        ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode) )
+				!EnableExec &&     // не запускаем и не в отдельном окне,
+				!SeparateWindow && // следовательно это Ctrl-PgDn
+				ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode) )
 			{
 				if (PluginMode)
 					QueueDeleteOnClose(strFileName);
@@ -2303,7 +2303,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			}
 
 			if (SeparateWindow || (hOpen=OpenFilePlugin(strFileName,TRUE, Type))==INVALID_HANDLE_VALUE ||
-			        hOpen==(HANDLE)-2)
+				hOpen==(HANDLE)-2)
 			{
 				if (EnableExec && hOpen!=(HANDLE)-2)
 //					if (SeparateWindow || Opt.UseRegisteredTypes)
@@ -2392,7 +2392,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 		FARString strInfoFormat=Info.Format;
 		FARString strInfoHostFile=Info.HostFile;
 		CtrlObject->FolderHistory->AddToHistory(strInfoCurDir,1,strInfoFormat,
-		                                        (Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
+			(Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
 		/* $ 25.04.01 DJ
 		   при неудаче SetDirectory не сбрасываем выделение
 		*/
@@ -2518,8 +2518,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 				AddEndSlash(strDirName);
 
 				if (Opt.PgUpChangeDisk &&
-				        (FAR_GetDriveType(strDirName) != DRIVE_REMOTE ||
-				         !CtrlObject->Plugins.FindPlugin(SYSID_NETWORK)))
+					(FAR_GetDriveType(strDirName) != DRIVE_REMOTE ||
+					!CtrlObject->Plugins.FindPlugin(SYSID_NETWORK)))
 				{
 					CtrlObject->Cp()->ActivePanel->ChangeDisk();
 					return TRUE;
@@ -2639,8 +2639,8 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	int RetCode;
 
 	if (IsVisible() && Opt.ShowColumnTitles && !MouseEvent->dwEventFlags &&
-	        MouseEvent->dwMousePosition.Y==Y1+1 &&
-	        MouseEvent->dwMousePosition.X>X1 && MouseEvent->dwMousePosition.X<X1+3)
+		MouseEvent->dwMousePosition.Y==Y1+1 &&
+		MouseEvent->dwMousePosition.X>X1 && MouseEvent->dwMousePosition.X<X1+3)
 	{
 		if (MouseEvent->dwButtonState)
 		{
@@ -2654,7 +2654,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	if (IsVisible() && Opt.ShowPanelScrollbar && MouseX==X2 &&
-	        (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !(MouseEvent->dwEventFlags & MOUSE_MOVED) && !IsDragging())
+		(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !(MouseEvent->dwEventFlags & MOUSE_MOVED) && !IsDragging())
 	{
 		int ScrollY=Y1+1+Opt.ShowColumnTitles;
 
@@ -2712,7 +2712,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return(RetCode);
 
 	if (MouseEvent->dwMousePosition.Y>Y1+Opt.ShowColumnTitles &&
-	        MouseEvent->dwMousePosition.Y<Y2-2*Opt.ShowPanelStatus)
+		MouseEvent->dwMousePosition.Y<Y2-2*Opt.ShowPanelStatus)
 	{
 		SetFocus();
 
@@ -2724,7 +2724,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		CurPtr=ListData[CurFile];
 
 		if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
-		        MouseEvent->dwEventFlags==DOUBLE_CLICK)
+			MouseEvent->dwEventFlags==DOUBLE_CLICK)
 		{
 			if (PanelMode==PLUGIN_PANEL)
 			{
@@ -2867,8 +2867,8 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (Opt.PanelRightClickRule == 1)
 		IsEmpty=((CurColumn-1)*Height > ListData.Count());
 	else if (Opt.PanelRightClickRule == 2 &&
-	         (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
-	         ((CurColumn-1)*Height > ListData.Count()))
+		(MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
+		((CurColumn-1)*Height > ListData.Count()))
 	{
 		CurFile=OldCurFile;
 		IsEmpty=TRUE;
@@ -2898,11 +2898,11 @@ void FileList::SetViewMode(int ViewMode)
 	int ResortRequired=FALSE;
 
 	if (!ListData.IsEmpty() && PanelMode!=PLUGIN_PANEL &&
-	        ((!OldOwner && NewOwner) || 
-	         (!OldGroup && NewGroup) || 
-	         (!OldPhysical && NewPhysical) ||
-	         (!OldNumLink && NewNumLink) ||
-	         (AccessTimeUpdateRequired && NewAccessTime)))
+		((!OldOwner && NewOwner) || 
+			(!OldGroup && NewGroup) || 
+			(!OldPhysical && NewPhysical) ||
+			(!OldNumLink && NewNumLink) ||
+			(AccessTimeUpdateRequired && NewAccessTime)))
 		Update(UPDATE_KEEP_SELECTION);
 
 	if (!OldDiz && NewDiz)
@@ -2941,7 +2941,7 @@ void FileList::SetViewMode(int ViewMode)
 		FARString strColumnTypes,strColumnWidths;
 //    SetScreenPosition();
 		ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
-		                   ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
+			ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
 		ProcessPluginEvent(FE_CHANGEVIEWMODE,(void*)strColumnTypes.CPtr());
 	}
 
@@ -3043,7 +3043,7 @@ long FileList::FindNext(int StartPos, const wchar_t *Name)
 	for (int I = StartPos; I < ListData.Count(); ++I)
 	{
 		if (CmpName(Name, ListData[I]->strName, true)
-		  && !TestParentFolderName(ListData[I]->strName))
+			&& !TestParentFolderName(ListData[I]->strName))
 		{
 			return I;
 		}
@@ -3465,7 +3465,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 				}
 
 				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || Opt.SelectFolders ||
-				        !Selection || RawSelection || Mode==SELECT_INVERTALL || Mode==SELECT_INVERTMASK)
+					!Selection || RawSelection || Mode==SELECT_INVERTALL || Mode==SELECT_INVERTMASK)
 				{
 					Select(CurPtr,Selection);
 					workCount++;
@@ -3487,14 +3487,14 @@ void FileList::UpdateViewPanel()
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 
 	if (!ListData.IsEmpty() && AnotherPanel->IsVisible() &&
-	        AnotherPanel->GetType()==QVIEW_PANEL && SetCurPath())
+		AnotherPanel->GetType()==QVIEW_PANEL && SetCurPath())
 	{
 		QuickView *ViewPanel=(QuickView *)AnotherPanel;
 		ASSERT(CurFile<ListData.Count());
 		FileListItem *CurPtr=ListData[CurFile];
 
 		if (PanelMode!=PLUGIN_PANEL ||
-		        CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE))
+			CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE))
 		{
 			if (TestParentFolderName(CurPtr->strName))
 				ViewPanel->ShowFile(strCurDir,FALSE,nullptr);
@@ -4226,8 +4226,8 @@ void FileList::DescribeFiles()
 		   Для Ctrl-Z ненужно брать предыдущее значение!
 		*/
 		if (!GetString(Msg::DescribeFiles,strMsg,L"DizText",
-		               PrevText ? PrevText:L"",strDizText,
-		               L"FileDiz",FIB_ENABLEEMPTY|(!DizCount?FIB_NOUSELASTHISTORY:0)|FIB_BUTTONS))
+			PrevText ? PrevText:L"",strDizText,
+			L"FileDiz",FIB_ENABLEEMPTY|(!DizCount?FIB_NOUSELASTHISTORY:0)|FIB_BUTTONS))
 			break;
 
 		DizCount++;
@@ -4404,11 +4404,11 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			SelDirCount++;
 
 			if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-			        GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize, PhysicalSize))
-			        ||
-			        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-			         GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount, FileSize,
-			                    PhysicalSize, ClusterSize, 0, Filter, GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
+				GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize, PhysicalSize))
+				||
+				((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
+					GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount, FileSize,
+						PhysicalSize, ClusterSize, 0, Filter, GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 			{
 				SelFileSize -= Item->FileSize;
 				SelFileSize += FileSize;
@@ -4425,12 +4425,12 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	{
 		ASSERT(CurFile<ListData.Count());
 		if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-		        GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
-		        ||
-		        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-		         GetDirInfo(Msg::DirInfoViewTitle,
-		                    TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
-		                    DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
+			GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
+			||
+			((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
+				GetDirInfo(Msg::DirInfoViewTitle,
+					TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
+					DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
 							GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 		{
 			ListData[CurFile]->FileSize = FileSize;
@@ -4541,8 +4541,8 @@ void FileList::ProcessCopyKeys(int Key)
 				|| AnotherFilePanel->CurFile < AnotherFilePanel->ListData.Count());
 
 			if (!AnotherFilePanel->ListData.IsEmpty() &&
-			        (AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->FileAttr & FILE_ATTRIBUTE_DIRECTORY) &&
-			        !TestParentFolderName(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->strName))
+				(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->FileAttr & FILE_ATTRIBUTE_DIRECTORY) &&
+				!TestParentFolderName(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->strName))
 			{
 				AnotherDir=TRUE;
 			}
@@ -4556,7 +4556,7 @@ void FileList::ProcessCopyKeys(int Key)
 				int ToPlugin=FALSE;
 
 				if (AnotherPanel->GetMode()==PLUGIN_PANEL && AnotherPanel->IsVisible() &&
-				        !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES))
+					!CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES))
 				{
 					ToPlugin=2;
 					ShellCopy ShCopy(this,Move,FALSE,FALSE,Ask,ToPlugin,strPluginDestPath);
@@ -4603,8 +4603,8 @@ void FileList::ProcessCopyKeys(int Key)
 		else
 		{
 			int ToPlugin=AnotherPanel->GetMode()==PLUGIN_PANEL &&
-			             AnotherPanel->IsVisible() && Key!=KEY_ALTF6 &&
-			             !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
+				AnotherPanel->IsVisible() && Key!=KEY_ALTF6 &&
+				!CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
 			ShellCopy ShCopy(this,Move,Key==KEY_ALTF6,FALSE,Ask,ToPlugin,nullptr, Drag && AnotherDir);
 
 			if (ToPlugin==1)

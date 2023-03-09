@@ -61,7 +61,7 @@ int UserDefinedListItem::operator<(const UserDefinedListItem &rhs) const
 }
 
 const UserDefinedListItem& UserDefinedListItem::operator=(const
-        UserDefinedListItem &rhs)
+	UserDefinedListItem &rhs)
 {
 	if (this!=&rhs)
 	{
@@ -125,7 +125,7 @@ UserDefinedList::UserDefinedList()
 }
 
 UserDefinedList::UserDefinedList(WORD separator1, WORD separator2,
-                                 DWORD Flags)
+	DWORD Flags)
 {
 	SetParameters(separator1, separator2, Flags);
 }
@@ -139,13 +139,13 @@ void UserDefinedList::SetDefaultSeparators()
 bool UserDefinedList::CheckSeparators() const
 {
 	return !((IsUnQuotes && (Separator1==L'\"' || Separator2==L'\"')) ||
-	         (ProcessBrackets && (Separator1==L'[' || Separator2==L'[' ||
-	                              Separator1==L']' || Separator2==L']'))
-	        );
+		(ProcessBrackets && (Separator1==L'[' || Separator2==L'[' ||
+			Separator1==L']' || Separator2==L']'))
+		);
 }
 
 bool UserDefinedList::SetParameters(WORD separator1, WORD separator2,
-                                    DWORD Flags)
+	DWORD Flags)
 {
 	Free();
 	Separator1=separator1;
@@ -200,7 +200,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 			const wchar_t *CurList=List;
 
 			while (!Error &&
-			        nullptr!=(CurList=Skip(CurList, Length, RealLength, Error)))
+				nullptr!=(CurList=Skip(CurList, Length, RealLength, Error)))
 			{
 				if (Length > 0)
 				{
@@ -316,7 +316,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 }
 
 int __cdecl UserDefinedList::CmpItems(const UserDefinedListItem **el1,
-                                      const UserDefinedListItem **el2)
+	const UserDefinedListItem **el2)
 {
 	if (el1==el2)
 		return 0;

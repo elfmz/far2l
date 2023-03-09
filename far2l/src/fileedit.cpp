@@ -395,8 +395,13 @@ FileEditor::~FileEditor()
 	//AY: флаг оповещающий закрытие редактора.
 	m_bClosing = true;
 
-	if (m_editor->EdOpt.SavePos && CtrlObject)
-		SaveToCache();
+	if (CtrlObject)
+	{
+		if (m_editor->EdOpt.SavePos)
+			SaveToCache();
+		else
+			CtrlObject->EditorPosCache->ResetPosition(NameInCache());
+	}
 
 	BitFlags FEditFlags=m_editor->Flags;
 	int FEditEditorID=m_editor->EditorID;
@@ -1297,14 +1302,17 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				}
 				return TRUE;
 			}
-			case KEY_ALTSHIFTF9:
+			case KEY_F9: case KEY_ALTSHIFTF9:
 			{
 				//     Работа с локальной копией EditorOptions
 				EditorOptions EdOpt;
 				GetEditorOptions(EdOpt);
+				EditorOptions SavedEdOpt = EdOpt;
 				EditorConfig(EdOpt,true); // $ 27.11.2001 DJ - Local в EditorConfig
 				EditKeyBar.Refresh(true); //???? Нужно ли????
 				SetEditorOptions(EdOpt);
+				if (SavedEdOpt.TabSize != EdOpt.TabSize || SavedEdOpt.ExpandTabs != EdOpt.ExpandTabs)
+					m_editor->EnableSaveTabSettings();
 
 				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
 
@@ -2840,11 +2848,16 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 	return false;
 }
 
+FARString FileEditor::NameInCache()
+{
+	return strPluginData.IsEmpty()
+		? strFullFileName : strPluginData + PointToName(strFullFileName);
+}
+
 void FileEditor::SaveToCache()
 {
 	EditorCacheParams cp;
 	m_editor->GetCacheParams(&cp);
-	FARString strCacheName=strPluginData.IsEmpty()?strFullFileName:strPluginData+PointToName(strFullFileName);
 
 	if (!Flags.Check(FFILEEDIT_OPENFAILED))   //????
 	{
@@ -2865,7 +2878,7 @@ void FileEditor::SaveToCache()
 			poscache.Position[3] = cp.SavePos.LeftPos;
 		}
 
-		CtrlObject->EditorPosCache->AddPosition(strCacheName, poscache);
+		CtrlObject->EditorPosCache->AddPosition(NameInCache(), poscache);
 	}
 }
 

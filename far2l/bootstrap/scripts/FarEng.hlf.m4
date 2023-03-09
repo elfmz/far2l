@@ -3078,11 +3078,14 @@ $ #Settings dialog: viewer#
 
     Internal viewer
 
-  #Save file position#      Save and restore positions in the recently
+  #Save file state#         Save and restore positions in the recently
                           viewed files. This option also forces
                           restoring of code page, if the page
                           was manually selected by user, and the file
-                          viewing mode (normal/hex).
+                          viewing mode (normal/hex). Unchecking this
+                          option causes resetting of saved state
+                          for viewed file.
+
 
   #Save bookmarks#          Save and restore bookmarks (current
                           positions) in recently viewed files
@@ -3157,10 +3160,12 @@ $ #Settings dialog: editor#
                           not remove the character under cursor, but
                           this block.
 
-  #Save file position#      Save and restore positions in the recently
+  #Save file state#         Save and restore positions and indentation state in the recently
                           edited files. This option also forces
                           restoring of code page, if the page
-                          was manually selected by user.
+                          was manually selected by user. Unchecking
+                          this option causes resetting of saved state
+                          for edited file.
 
   #Save bookmarks#          Save and restore bookmarks (current
                           positions) in recently edited files

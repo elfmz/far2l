@@ -460,11 +460,11 @@ int FileList::UpdateIfChanged(int UpdateMode)
 			/* $ 24.12.2002 VVM
 			  ! Поменяем логику обновления панелей. */
 			if (// Нормальная панель, на ней установлено уведомление и есть сигнал
-			    (PanelMode==NORMAL_PANEL && ListChange && ListChange->Check()) ||
-			    // Или Нормальная панель, но нет уведомления и мы попросили обновить через UPDATE_FORCE
-			    (PanelMode==NORMAL_PANEL && !ListChange && UpdateMode==UIC_UPDATE_FORCE) ||
-			    // Или плагинная панель и обновляем через UPDATE_FORCE
-			    (PanelMode!=NORMAL_PANEL && UpdateMode==UIC_UPDATE_FORCE)
+				(PanelMode==NORMAL_PANEL && ListChange && ListChange->Check()) ||
+				// Или Нормальная панель, но нет уведомления и мы попросили обновить через UPDATE_FORCE
+				(PanelMode==NORMAL_PANEL && !ListChange && UpdateMode==UIC_UPDATE_FORCE) ||
+				// Или плагинная панель и обновляем через UPDATE_FORCE
+				(PanelMode!=NORMAL_PANEL && UpdateMode==UIC_UPDATE_FORCE)
 			)
 			{
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);

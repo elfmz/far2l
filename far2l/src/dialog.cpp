@@ -2608,7 +2608,7 @@ int Dialog::ProcessKey(int Key)
 			                                           (HelpTopic?(LONG_PTR)HelpTopic:0)),
 			                   strStr).IsEmpty())
 			{
-				Help Hlp(strStr);
+				Help::Present(strStr);
 			}
 
 			return TRUE;
@@ -4503,7 +4503,7 @@ void Dialog::ShowHelp()
 
 	if (HelpTopic && *HelpTopic)
 	{
-		Help Hlp(HelpTopic);
+		Help::Present(HelpTopic);
 	}
 }
 

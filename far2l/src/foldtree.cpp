@@ -199,7 +199,7 @@ int FolderTree::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			Help Hlp(L"FindFolder");
+			Help::Present(L"FindFolder");
 		}
 		break;
 		case KEY_ESC:

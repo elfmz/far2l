@@ -937,7 +937,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 		{
 			case KEY_F1:
 			{
-				Help Hlp(L"Editor");
+				Help::Present(L"Editor");
 				return TRUE;
 			}
 			/* $ 25.04.2001 IS

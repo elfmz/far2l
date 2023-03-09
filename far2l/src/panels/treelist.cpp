@@ -841,7 +841,7 @@ int TreeList::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			Help Hlp(L"TreePanel");
+			Help::Present(L"TreePanel");
 			return TRUE;
 		}
 		case KEY_SHIFTNUMENTER:

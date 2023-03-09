@@ -338,7 +338,7 @@ int FileViewer::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		case KEY_ALTSHIFTF9:
+		case KEY_F9: case KEY_ALTSHIFTF9:
 			// Работа с локальной копией ViewerOptions
 			ViewerOptions ViOpt;
 			ViOpt.TabSize=View.GetTabSize();

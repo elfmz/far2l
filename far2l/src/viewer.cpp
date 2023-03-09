@@ -184,10 +184,13 @@ FARString Viewer::ComposeCacheName()
 
 void Viewer::SavePosCache()
 {
-	if (Opt.ViOpt.SavePos && Opt.OnlyEditorViewerUsed != Options::ONLY_VIEWER_ON_CMDOUT)
-	{
-		FARString strCacheName=ComposeCacheName();
+	if (Opt.OnlyEditorViewerUsed == Options::ONLY_VIEWER_ON_CMDOUT || !CtrlObject)
+		return;
 
+	FARString strCacheName=ComposeCacheName();
+
+	if (Opt.ViOpt.SavePos)
+	{
 		UINT CodePage=0;
 
 		if (CodePageChangedByUser)
@@ -211,6 +214,10 @@ void Viewer::SavePosCache()
 		}
 
 		CtrlObject->ViewerPosCache->AddPosition(strCacheName,poscache);
+	}
+	else
+	{
+		CtrlObject->ViewerPosCache->ResetPosition(strCacheName);
 	}
 }
 

@@ -105,4 +105,5 @@ class FilePositionCache
 
 		void AddPosition(const wchar_t *Name, PosCache& poscache);
 		bool GetPosition(const wchar_t *Name, PosCache& poscache);
+		void ResetPosition(const wchar_t *Name);
 };

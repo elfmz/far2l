@@ -2924,15 +2924,15 @@ ViewConfigInternal
 " Убудаваная праграма прагляду "
 
 ViewConfigSavePos
-"&Сохранять позицию файла"
-"&Save file position"
+"&Сохранять состояние файла"
+"&Save file state"
 "&Ukládat pozici v souboru"
 "Dateipositionen &speichern"
 "&Fájlpozíció mentése"
 "&Zapamiętaj pozycję w pliku"
 "&Guardar posición de archivo"
-"&Зберігати позицію файлу"
-"&Захоўваць пазіцыю файла"
+"&Зберігати стан файлу"
+"&Захоўваць стан файла"
 
 ViewConfigSaveShortPos
 "Сохранять &закладки"
@@ -3158,15 +3158,15 @@ EditConfigAutoIndent
 "Сама&ўцісканне"
 
 EditConfigSavePos
-"&Сохранять позицию файла"
-"&Save file position"
+"&Сохранять состояние файла"
+"&Save file state"
 "&Ukládat pozici v souboru"
 "Dateipositionen &speichern"
 "Fájl&pozíció mentése"
 "&Zapamiętaj pozycję kursora w pliku"
 "&Guardar posición de archivo"
-"&Зберігати позицію файлу"
-"&Захоўваць пазіцыю файла"
+"&Зберігати стан файлу"
+"&Захоўваць стан файла"
 
 EditConfigSaveShortPos
 "Сохранять &закладки"
@@ -6107,15 +6107,16 @@ EditF8
 "ANSI"
 
 EditF9
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Конфиг"
+"Config"
+"Nastav"
+"Konfig"
+"Beáll."
+"Konfig"
+"Config"
+"Конфіг"
+"Налады"
+
 
 EditF10
 "Выход"
@@ -9203,15 +9204,15 @@ ViewF8
 "ANSI"
 
 ViewF9
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Конфиг"
+"Config"
+"Nastav"
+"Konfig"
+"Beáll."
+"Konfig"
+"Config"
+"Конфіг"
+"Налады"
 
 ViewF10
 "Выход"

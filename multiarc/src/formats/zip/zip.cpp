@@ -28,13 +28,13 @@ using namespace oldfar;
 
 static void CPToUTF8( UINT cp, std::string &s )
 {
-	if (!s.empty()) {
-		std::vector<wchar_t> buf((1 + s.size()) * 2 + 1);
-		int r = WINPORT(MultiByteToWideChar)( cp, 0, s.c_str(), -1, &buf[0], buf.size() - 1 );
-		if (r >= 0) {
-			Wide2MB(&buf[0], s);
-		}
-	}
+  if (!s.empty()) {
+    std::vector<wchar_t> buf((1 + s.size()) * 2 + 1);
+    int r = WINPORT(MultiByteToWideChar)( cp, 0, s.c_str(), -1, &buf[0], buf.size() - 1 );
+    if (r >= 0) {
+      Wide2MB(&buf[0], s);
+    }
+  }
 }
 
 #if defined(__BORLANDC__)
@@ -405,7 +405,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
             || ReadSize!=sizeof(BlockHead) )
       return(GETARC_READERROR);
 
-//	fprintf(stderr, "BlockHead.Type=0x%x Length=0x%x\n", BlockHead.Type, BlockHead.Length);
+//  fprintf(stderr, "BlockHead.Type=0x%x Length=0x%x\n", BlockHead.Type, BlockHead.Length);
     if (0xA==LITEND(BlockHead.Type)) // NTFS Header ID
     {
       WINPORT(SetFilePointer)(ArcHandle, 4, NULL, FILE_CURRENT); // Skip the reserved 4 bytes
@@ -458,53 +458,53 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
     }
     else if (0x1==LITEND(BlockHead.Type)) // ZIP64
     {
-     struct ZIP64Descriptor
-     {
+      struct ZIP64Descriptor
+      {
        ULARGE_INTEGER OriginalSize;             //    8 bytes               Original uncompressed file size
        ULARGE_INTEGER CompressedSize;           //    8 bytes               Size of compressed data
        ULARGE_INTEGER RelativeHeaderOffset;     //    8 bytes               Offset of local header record
        DWORD          DiskStartNumber;          //    4 bytes               Number of the disk on which this file starts
-     }
-     ZIP64;
+      }
+      ZIP64;
 
-     if (!WINPORT(ReadFile)(ArcHandle, &ZIP64, std::min(LITEND(BlockHead.Length), (WORD)sizeof(ZIP64)), &ReadSize,NULL)
+      if (!WINPORT(ReadFile)(ArcHandle, &ZIP64, std::min(LITEND(BlockHead.Length), (WORD)sizeof(ZIP64)), &ReadSize,NULL)
              || ReadSize!=LITEND(BlockHead.Length) )
        return(GETARC_READERROR);
-     if (LITEND(BlockHead.Length) == sizeof(ZIP64))
-     {
+      if (LITEND(BlockHead.Length) == sizeof(ZIP64))
+      {
        Info->nFileSize=LITEND(ZIP64.OriginalSize.QuadPart);
        Info->nPhysicalSize=LITEND(ZIP64.CompressedSize.QuadPart);
-     }
-     else if (LITEND(BlockHead.Length) != 8) // if size is 8 - then it contains only RelativeHeaderOffset
-     {
+      }
+      else if (LITEND(BlockHead.Length) != 8) // if size is 8 - then it contains only RelativeHeaderOffset
+      {
        fprintf(stderr, "Unexpected ZIP64 block length %u\n", LITEND(BlockHead.Length));
-     }
+      }
     }
     else if ((0x7075==LITEND(BlockHead.Type) || 0x6375==LITEND(BlockHead.Type)) // Unicode Path Extra Field || Unicode Comment Extra Field
-		&& LITEND(BlockHead.Length) > sizeof(uint8_t) + sizeof(uint32_t))
-	{
-		uint8_t version = 0;
-		uint32_t strcrc = 0;
-		std::vector<char> strbuf(LITEND(BlockHead.Length) - sizeof(uint32_t));
-		if (!WINPORT(ReadFile)(ArcHandle, &version, sizeof(version), &ReadSize, NULL) || ReadSize != sizeof(version) )
-			return(GETARC_READERROR);
-		if (!WINPORT(ReadFile)(ArcHandle, &strcrc, sizeof(strcrc), &ReadSize, NULL) || ReadSize != sizeof(strcrc) )
-			return(GETARC_READERROR);
-		if (!WINPORT(ReadFile)(ArcHandle, strbuf.data(), strbuf.size()-1, &ReadSize, NULL) || ReadSize != strbuf.size()-1 )
-			return(GETARC_READERROR);
-		if (version!=1)
-			fprintf(stderr, "ZIP: Unicode Extra Field 0x%x unknown version %u\n", LITEND(BlockHead.Type), version);
-		
-		if (0x7075==LITEND(BlockHead.Type)) {
-			Info->PathName = strbuf.data();
-#if ZIP_LIBARCHIVE	// if libarchive not used need to pass non-UTF8 codepage to zip/unzip workarounds
-			Info->Codepage = 0;
+      && LITEND(BlockHead.Length) > sizeof(uint8_t) + sizeof(uint32_t))
+    {
+      uint8_t version = 0;
+      uint32_t strcrc = 0;
+      std::vector<char> strbuf(LITEND(BlockHead.Length) - sizeof(uint32_t));
+      if (!WINPORT(ReadFile)(ArcHandle, &version, sizeof(version), &ReadSize, NULL) || ReadSize != sizeof(version) )
+        return(GETARC_READERROR);
+      if (!WINPORT(ReadFile)(ArcHandle, &strcrc, sizeof(strcrc), &ReadSize, NULL) || ReadSize != sizeof(strcrc) )
+        return(GETARC_READERROR);
+      if (!WINPORT(ReadFile)(ArcHandle, strbuf.data(), strbuf.size()-1, &ReadSize, NULL) || ReadSize != strbuf.size()-1 )
+        return(GETARC_READERROR);
+      if (version!=1)
+        fprintf(stderr, "ZIP: Unicode Extra Field 0x%x unknown version %u\n", LITEND(BlockHead.Type), version);
+
+      if (0x7075==LITEND(BlockHead.Type)) {
+        Info->PathName = strbuf.data();
+#if ZIP_LIBARCHIVE // if libarchive not used need to pass non-UTF8 codepage to zip/unzip workarounds
+        Info->Codepage = 0;
 #endif
-		} else {
-			Info->Description.reset(new std::string(strbuf.data()));
-		}
-	}
-	else // Move to extra block end
+      } else {
+        Info->Description.reset(new std::string(strbuf.data()));
+      }
+    }
+    else // Move to extra block end
       WINPORT(SetFilePointer)(ArcHandle, LITEND(BlockHead.Length), NULL, FILE_CURRENT);
   }
   // ZipHeader.AddLen is more reliable than the sum of all LITEND(BlockHead.Length)
@@ -523,7 +523,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
         return(GETARC_READERROR);
       Info->Description->assign(Description, ReadSize);
     }
-	// Skip comment tail
+    // Skip comment tail
     WINPORT(SetFilePointer)(ArcHandle, LITEND(ZipHeader.CommLen) - ReadSize, NULL, FILE_CURRENT);
   }
 

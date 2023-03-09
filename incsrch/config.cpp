@@ -2,8 +2,8 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/incsrch/config.ini")
-#define INI_SECTION		"Settings"
+#define INI_LOCATION  InMyConfig("plugins/incsrch/config.ini")
+#define INI_SECTION   "Settings"
 
 
 static const char sKeyCaseSensitive []=("Case sensitive");

@@ -20,8 +20,8 @@
 #include <utils.h>
 #include <KeyFileHelper.h>
 
-#define INI_LOCATION	InMyConfig("plugins/editcase/config.ini")
-#define INI_SECTION		"Settings"
+#define INI_LOCATION  InMyConfig("plugins/editcase/config.ini")
+#define INI_SECTION   "Settings"
 
 
 // This chars aren't letters

@@ -223,15 +223,15 @@ int WINAPI _export TARGZ_GetArcItem(struct ArcItemInfo *Info)
     {
       switch (ArcType)
       {
-      case BZ_FORMAT: case XZ_FORMAT:
-        Info->nFileSize=FileSize.i64;
-        Info->nPhysicalSize=FileSize.i64;
-        Info->PathName=ZipName;
-        ZipName.clear();
-        return(GETARC_SUCCESS);
+        case BZ_FORMAT: case XZ_FORMAT:
+          Info->nFileSize=FileSize.i64;
+          Info->nPhysicalSize=FileSize.i64;
+          Info->PathName=ZipName;
+          ZipName.clear();
+          return(GETARC_SUCCESS);
 
-      default:
-        return GetArcItemGZIP(Info);
+        default:
+          return GetArcItemGZIP(Info);
       }
     }
     else
@@ -408,7 +408,7 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
     }
 
     DWORD64 TarItemSize = (TAR_hdr.header.typeflag == DIRTYPE) // #348
-    ? 0 : Oct2Size(TAR_hdr.header.size, sizeof(TAR_hdr.header.size));
+      ? 0 : Oct2Size(TAR_hdr.header.size, sizeof(TAR_hdr.header.size));
 
     Info->nFileSize=TarItemSize;
     Info->nPhysicalSize=TarItemSize;

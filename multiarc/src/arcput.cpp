@@ -717,9 +717,9 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,
     if (ArcCmd.GetExecCode()==RETEXEC_ARCNOTFOUND)
       continue;
 
-  std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
+    std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
     if (!fullname.empty())
-    ArrayCpyZ(ArcName, fullname.c_str());
+      ArrayCpyZ(ArcName, fullname.c_str());
     break;
   }
 

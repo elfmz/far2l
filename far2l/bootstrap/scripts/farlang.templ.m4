@@ -6063,15 +6063,15 @@ EditF4
 "Выйсці"
 
 EditF5
-"Tab-ы"
-"Tabs"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-"Tab-і"
-"Tab-ы"
+"ПокПрб"
+"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+"ПокПрб"
+"ПакПрб"
 
 EditF6
 "Просм"
@@ -6151,7 +6151,18 @@ EditF12
 "Екрани"
 "Экраны"
 
-EditF5Spaces
+EditF5Hide
+"СпрПрб"
+"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+"СхвПрб"
+"СхвПрб"
+
+EditCtrlF5Spaces
 "Прбелы"
 "Spaces"
 upd:"Spaces"
@@ -6513,15 +6524,15 @@ EditCtrlF4
 ""
 
 EditCtrlF5
-"ПокПрб"
-"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-"ПокПрб"
-"ПакПрб"
+"Tab-ы"
+"Tabs"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+"Tab-і"
+"Tab-ы"
 
 EditCtrlF6
 ""
@@ -7136,17 +7147,6 @@ le://End of functional keys (Editor)
 ""
 ""
 ""
-
-EditCtrlF5Hide
-"СпрПрб"
-"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-"СхвПрб"
-"СхвПрб"
 
 SingleEditF1
 l:

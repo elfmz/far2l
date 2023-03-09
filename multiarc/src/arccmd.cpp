@@ -33,10 +33,10 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem,int ItemsNumber,
   } else if (ArcName && *ArcName && sudo_client_is_required_for(ArcName, arc_modify)==1) {
       NeedSudo = true;
   } else if (CommandType==CMD_EXTRACT || CommandType==CMD_EXTRACTWITHOUTPATH || CommandType==CMD_TEST) {
-	  if (sudo_client_is_required_for(".", true) == 1)
-		  NeedSudo = true;
+    if (sudo_client_is_required_for(".", true) == 1)
+      NeedSudo = true;
   } else if (sudo_client_is_required_for(".", false) == 1) {
-		  NeedSudo = true;
+      NeedSudo = true;
   }
 
   //char QPassword[NM+5],QTempPath[NM+5];

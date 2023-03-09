@@ -158,8 +158,8 @@ void InfoList::DisplayObject()
 
 	fprintf(stderr, "apiGetVolumeInformation: %ls\n", strCurDir.CPtr());
 	if (apiGetVolumeInformation(strCurDir,&strVolumeName,
-	                            &VolumeNumber,&MaxNameLength,&FileSystemFlags,
-	                            &strFileSystemName))
+		&VolumeNumber,&MaxNameLength,&FileSystemFlags,
+		&strFileSystemName))
 	{
 //		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
 		strTitle=FARString(L" ")+L" ("+strFileSystemName+L") ";
@@ -213,26 +213,26 @@ void InfoList::DisplayObject()
 	PrintText(strTitle);
 
 #ifdef __APPLE__
-        unsigned long long totalram;
-        vm_size_t page_size;
-        unsigned long long freeram;
-        int ret_sc;
+	unsigned long long totalram;
+	vm_size_t page_size;
+	unsigned long long freeram;
+	int ret_sc;
 
-        //ret_sc =  (sysctlbyname("hw.memsize", &totalram, &ulllen, NULL, 0) ? 1 : 0);
-        ret_sc = ( KERN_SUCCESS !=_host_page_size(mach_host_self(), &page_size)  ? 1 : 0);
+	//ret_sc =  (sysctlbyname("hw.memsize", &totalram, &ulllen, NULL, 0) ? 1 : 0);
+	ret_sc = ( KERN_SUCCESS !=_host_page_size(mach_host_self(), &page_size)  ? 1 : 0);
 
-        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        vm_statistics_data_t vmstat;
+	mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+	vm_statistics_data_t vmstat;
 
-        ret_sc += (KERN_SUCCESS != host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) ? 1 : 0);
-        totalram = (vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count) * page_size;
-        freeram  = vmstat.free_count * page_size;
+	ret_sc += (KERN_SUCCESS != host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) ? 1 : 0);
+	totalram = (vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count) * page_size;
+	freeram  = vmstat.free_count * page_size;
 
-        //double total = vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count;
-        //double wired = vmstat.wire_count;
-        //double active = vmstat.active_count;
-        //double inactive = vmstat.inactive_count;
-        //double free = vmstat.free_count;
+	//double total = vmstat.wire_count + vmstat.active_count + vmstat.inactive_count + vmstat.free_count;
+	//double wired = vmstat.wire_count;
+	//double active = vmstat.active_count;
+	//double inactive = vmstat.inactive_count;
+	//double free = vmstat.free_count;
 
 	if (!ret_sc)
 	{
@@ -438,11 +438,11 @@ int InfoList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		DizView->GetPosition(DVX1,DVY1,DVX2,DVY2);
 
 		if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
-		        MouseEvent->dwMousePosition.X > DVX1+1 &&
-		        MouseEvent->dwMousePosition.X < DVX2 - DizView->GetShowScrollbar() - 1 &&
-		        MouseEvent->dwMousePosition.Y > DVY1+1 &&
-		        MouseEvent->dwMousePosition.Y < DVY2-1
-		   )
+			MouseEvent->dwMousePosition.X > DVX1+1 &&
+			MouseEvent->dwMousePosition.X < DVX2 - DizView->GetShowScrollbar() - 1 &&
+			MouseEvent->dwMousePosition.Y > DVY1+1 &&
+			MouseEvent->dwMousePosition.Y < DVY2-1
+		)
 		{
 			ProcessKey(KEY_F3);
 			return TRUE;

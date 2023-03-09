@@ -164,9 +164,9 @@ void FileList::SetFilePanelModes()
 		ModeDlg[MD_CHECKBOX_FILESLOWERCASE].Selected=NewSettings.FileLowerCase;
 		ModeDlg[MD_CHECKBOX_UPPERTOLOWERCASE].Selected=NewSettings.FileUpperToLowerCase;
 		ViewSettingsToText(NewSettings.ColumnType,NewSettings.ColumnWidth,NewSettings.ColumnWidthType,
-		                   NewSettings.ColumnCount,ModeDlg[2].strData,ModeDlg[4].strData);
+			NewSettings.ColumnCount,ModeDlg[2].strData,ModeDlg[4].strData);
 		ViewSettingsToText(NewSettings.StatusColumnType,NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,
-		                   NewSettings.StatusColumnCount,ModeDlg[6].strData,ModeDlg[8].strData);
+			NewSettings.StatusColumnCount,ModeDlg[6].strData,ModeDlg[8].strData);
 		{
 			Dialog Dlg(ModeDlg,ARRAYSIZE(ModeDlg));
 			Dlg.SetPosition(-1,-1,76,17);
@@ -186,9 +186,9 @@ void FileList::SetFilePanelModes()
 		NewSettings.FileLowerCase=ModeDlg[MD_CHECKBOX_FILESLOWERCASE].Selected;
 		NewSettings.FileUpperToLowerCase=ModeDlg[MD_CHECKBOX_UPPERTOLOWERCASE].Selected;
 		TextToViewSettings(ModeDlg[MD_EDITTYPES].strData,ModeDlg[MD_EDITWIDTHS].strData,NewSettings.ColumnType,
-		                   NewSettings.ColumnWidth,NewSettings.ColumnWidthType,NewSettings.ColumnCount);
+			NewSettings.ColumnWidth,NewSettings.ColumnWidthType,NewSettings.ColumnCount);
 		TextToViewSettings(ModeDlg[MD_EDITSTATUSTYPES].strData,ModeDlg[MD_EDITSTATUSWIDTHS].strData,NewSettings.StatusColumnType,
-		                   NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,NewSettings.StatusColumnCount);
+			NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,NewSettings.StatusColumnCount);
 		ViewSettingsArray[ModeNumber]=NewSettings;
 		CtrlObject->Cp()->LeftPanel->SortFileList(TRUE);
 		CtrlObject->Cp()->RightPanel->SortFileList(TRUE);
@@ -222,11 +222,11 @@ void FileList::ReadPanelModes(ConfigReader &cfg_reader)
 
 		if (!strColumnTitles.IsEmpty())
 			TextToViewSettings(strColumnTitles,strColumnWidths,NewSettings.ColumnType,
-			                   NewSettings.ColumnWidth,NewSettings.ColumnWidthType,NewSettings.ColumnCount);
+				NewSettings.ColumnWidth,NewSettings.ColumnWidthType,NewSettings.ColumnCount);
 
 		if (!strStatusColumnTitles.IsEmpty())
 			TextToViewSettings(strStatusColumnTitles,strStatusColumnWidths,NewSettings.StatusColumnType,
-			                   NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,NewSettings.StatusColumnCount);
+				NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,NewSettings.StatusColumnCount);
 
 		NewSettings.FullScreen = cfg_reader.GetInt("FullScreen", 0);
 		NewSettings.AlignExtensions = cfg_reader.GetInt("AlignExtensions", 1);
@@ -249,9 +249,9 @@ void FileList::SavePanelModes(ConfigWriter &cfg_writer)
 
 		PanelViewSettings NewSettings = ViewSettingsArray[VIEW_0+I];
 		ViewSettingsToText(NewSettings.ColumnType,NewSettings.ColumnWidth,NewSettings.ColumnWidthType,
-		                   NewSettings.ColumnCount,strColumnTitles,strColumnWidths);
+			NewSettings.ColumnCount,strColumnTitles,strColumnWidths);
 		ViewSettingsToText(NewSettings.StatusColumnType,NewSettings.StatusColumnWidth,NewSettings.StatusColumnWidthType,
-		                   NewSettings.StatusColumnCount,strStatusColumnTitles,strStatusColumnWidths);
+			NewSettings.StatusColumnCount,strStatusColumnTitles,strStatusColumnWidths);
 
 		cfg_writer.SetString("Columns", strColumnTitles.CPtr());
 		cfg_writer.SetString("ColumnWidths", strColumnWidths.CPtr());

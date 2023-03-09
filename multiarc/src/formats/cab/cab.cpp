@@ -92,8 +92,8 @@ BOOL WINAPI _export CAB_IsArchive(const char *Name,const unsigned char *Data,int
 
 static void CloseArcHandle()
 {
-	sdc_close(ArcHandle);
-	ArcHandle = -1;	
+  sdc_close(ArcHandle);
+  ArcHandle = -1;
 }
 
 BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
@@ -113,25 +113,25 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
   ReadSize = sdc_read(ArcHandle, &MainHeader, sizeof(MainHeader));
   if ( ReadSize != sizeof(MainHeader))
     return CloseArcHandle(), FALSE;
-	
+
   if ( !CAB_IsArchive( NULL, (u1*)&MainHeader, sizeof(MainHeader) ))
   {
-	struct stat s = {0};
-	if (sdc_fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
-		return CloseArcHandle(), FALSE;
-	}
+    struct stat s = {0};
+    if (sdc_fstat(ArcHandle, &s)==-1 || (s.st_mode & S_IFMT)!=S_IFREG) {
+      return CloseArcHandle(), FALSE;
+  }
 
-	ReadSize = (s.st_size > 0x100000) ? 0x100000 : s.st_size ;
+  ReadSize = (s.st_size > 0x100000) ? 0x100000 : s.st_size ;
 
 //todo: replace with sdc_read cuz mmap is not sudo-able
     LPBYTE Data = (LPBYTE)mmap( NULL, ReadSize, PROT_READ, MAP_PRIVATE, ArcHandle, 0);
     if (Data == (LPBYTE)MAP_FAILED)
-		return CloseArcHandle(), FALSE;
-		
+    return CloseArcHandle(), FALSE;
+
     I = CAB_IsArchive( NULL, Data, ReadSize );
     if (I)
       memcpy( &MainHeader, Data + SFXSize, sizeof(MainHeader) );
-	  
+
     munmap( Data, ReadSize );
     if (I == 0)
       return CloseArcHandle(), FALSE;
@@ -149,10 +149,10 @@ BOOL WINAPI _export CAB_OpenArchive(const char *Name,int *Type,bool Silent)
   {
     char *EndPos;
     struct CFFILE FileHeader;
-	ReadSize = sdc_read(ArcHandle, &FileHeader, sizeof(FileHeader));
+    ReadSize = sdc_read(ArcHandle, &FileHeader, sizeof(FileHeader));
     if (ReadSize < 18)
       return CloseArcHandle(), FALSE;
-	  
+
     if (FileHeader.iFolder == 0xFFFD || FileHeader.iFolder == 0xFFFF)
     {
       EndPos = FileHeader.szName;

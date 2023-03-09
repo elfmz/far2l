@@ -166,7 +166,7 @@ FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempP
 		if (!uniq) ++uniq;
 
 		if (WINPORT(GetTempFileName)(strPath, Prefix, uniq, lpwszDest)
-		        && apiGetFileAttributes(lpwszDest) == INVALID_FILE_ATTRIBUTES) break;
+			&& apiGetFileAttributes(lpwszDest) == INVALID_FILE_ATTRIBUTES) break;
 
 		if (++uniq == savePid)
 		{

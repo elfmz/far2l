@@ -223,15 +223,15 @@ int WINAPI _export TARGZ_GetArcItem(struct ArcItemInfo *Info)
     {
       switch (ArcType)
       {
-		  case BZ_FORMAT: case XZ_FORMAT:
-			Info->nFileSize=FileSize.i64;
-			Info->nPhysicalSize=FileSize.i64;
-			Info->PathName=ZipName;
-			ZipName.clear();
-			return(GETARC_SUCCESS);
+        case BZ_FORMAT: case XZ_FORMAT:
+          Info->nFileSize=FileSize.i64;
+          Info->nPhysicalSize=FileSize.i64;
+          Info->PathName=ZipName;
+          ZipName.clear();
+          return(GETARC_SUCCESS);
 
-		  default:
-		    return GetArcItemGZIP(Info);
+        default:
+          return GetArcItemGZIP(Info);
       }
     }
     else
@@ -408,7 +408,7 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
     }
 
     DWORD64 TarItemSize = (TAR_hdr.header.typeflag == DIRTYPE) // #348
-		? 0 : Oct2Size(TAR_hdr.header.size, sizeof(TAR_hdr.header.size));
+      ? 0 : Oct2Size(TAR_hdr.header.size, sizeof(TAR_hdr.header.size));
 
     Info->nFileSize=TarItemSize;
     Info->nPhysicalSize=TarItemSize;
@@ -496,7 +496,7 @@ BOOL WINAPI _export TARGZ_GetFormatName(int Type,char *FormatName,char *DefaultE
     case GZ_FORMAT:
     case Z_FORMAT:
     case BZ_FORMAT:
-	case XZ_FORMAT:
+    case XZ_FORMAT:
       strcpy(FormatName,FmtAndExt[Type][0]);
       strcpy(DefaultExt,FmtAndExt[Type][1]);
       return(TRUE);
@@ -682,7 +682,7 @@ static int IsTarHeader(const BYTE *Data,int DataSize)
 
 static int64_t GetOctal(const char *Str)
 {
-	return strtoll(Str, nullptr, 8);
+  return strtoll(Str, nullptr, 8);
 }
 
 static int64_t Oct2Size (const char *where0, size_t digs0)

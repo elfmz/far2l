@@ -264,13 +264,13 @@ class FileList : public Panel
 		HANDLE OpenPluginForFile(const wchar_t *FileName,DWORD FileAttr, OPENFILEPLUGINTYPE Type);
 		int PreparePanelView(PanelViewSettings *PanelView);
 		int PrepareColumnWidths(unsigned int *ColumnTypes,int *ColumnWidths,
-		                        int *ColumnWidthsTypes,int &ColumnCount,int FullScreen);
+			int *ColumnWidthsTypes,int &ColumnCount,int FullScreen);
 		void PrepareViewSettings(int ViewMode,OpenPluginInfo *PlugInfo);
 
 		void PluginDelete();
 		void PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
-		                    int ItemNumber,int Delete,int Move,DizList *SrcDiz,
-		                    DizList *DestDiz);
+			int ItemNumber,int Delete,int Move,DizList *SrcDiz,
+			DizList *DestDiz);
 		void PluginGetFiles(const wchar_t **DestPath,int Move);
 		void PluginToPluginFiles(int Move);
 		void PluginHostGetFiles();

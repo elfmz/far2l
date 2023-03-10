@@ -42,24 +42,24 @@ struct QueueExecOptions
 
 class FTP
 {
-		friend class FTPCmdBlock;
-		String      SelectFile;
-		BOOL        ResetCache;
-		int         ShowHosts;
-		int         SwitchingToFTP;
-		char        HostsPath[1024];
-		int         StartViewMode;
-		int         RereadRequired;
+		friend class     FTPCmdBlock;
+		String           SelectFile;
+		BOOL             ResetCache;
+		int              ShowHosts;
+		int              SwitchingToFTP;
+		char             HostsPath[1024];
+		int              StartViewMode;
+		int              RereadRequired;
 		FTPCurrentStates CurrentState;
-		char        IncludeMask[MAX_PATH];
-		char        ExcludeMask[MAX_PATH];
-		BOOL        PluginColumnModeSet;
-		int         ActiveColumnMode;
-		BOOL        NeedToSetActiveMode;
-		FTPUrl*     UrlsList, *UrlsTail;
-		int         QuequeSize;
-		overCode    LastMsgCode,
-		       OverrideMsgCode;
+		char             IncludeMask[MAX_PATH];
+		char             ExcludeMask[MAX_PATH];
+		BOOL             PluginColumnModeSet;
+		int              ActiveColumnMode;
+		BOOL             NeedToSetActiveMode;
+		FTPUrl*          UrlsList, *UrlsTail;
+		int              QuequeSize;
+		overCode         LastMsgCode,
+		                 OverrideMsgCode;
 	public:
 		FTPHost     Host;
 		char        PanelTitle[512];
@@ -165,7 +165,7 @@ class FTP
 		void      DeleteFromBackup(void);
 		void      AddToBackup(void);
 
-		LPCSTR  CloseQuery(void);
+		LPCSTR    CloseQuery(void);
 
 		FTPUrl*   UrlItem(int num, FTPUrl* *prev);
 		void      UrlInit(FTPUrl* p);

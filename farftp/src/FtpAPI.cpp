@@ -96,9 +96,8 @@ BOOL FtpFindFirstFile(Connection *hConnect, LPCSTR lpszSearchFile,FTPFileInfo* l
 {
 	Assert(hConnect && "FtpFindFirstFile");
 	String Command;
-	int    AllFiles = StrCmp(lpszSearchFile,"*")==0 ||
-	                  StrCmp(lpszSearchFile,"*.*")==0;
-	int    FromCache = 0;
+	int AllFiles  = StrCmp(lpszSearchFile,"*")==0 || StrCmp(lpszSearchFile,"*.*")==0;
+	int FromCache = 0;
 
 	if(ResetCache && *ResetCache == TRUE)
 	{
@@ -122,11 +121,11 @@ BOOL FtpFindFirstFile(Connection *hConnect, LPCSTR lpszSearchFile,FTPFileInfo* l
 	if(!AllFiles || (FromCache=hConnect->CacheGet()) == 0)
 	{
 		if(AllFiles && !IS_SILENT(FP_LastOpMode) &&
-		        hConnect->CmdVisible &&
-		        hConnect->CurrentState != fcsExpandList)
+				hConnect->CmdVisible &&
+				hConnect->CurrentState != fcsExpandList)
 			hConnect->ConnectMessage(MRequestingFolder,
-			                         hConnect->CurDir.c_str());
-//			                         hConnect->ToOEMDup(hConnect->CurDir.c_str()));
+				hConnect->CurDir.c_str());
+//				hConnect->ToOEMDup(hConnect->CurDir.c_str()));
 
 		int pc = hConnect->ProcessCommand(Command);
 
@@ -136,7 +135,7 @@ BOOL FtpFindFirstFile(Connection *hConnect, LPCSTR lpszSearchFile,FTPFileInfo* l
 			{
 				if(hConnect->code==550)
 				{
-					pc = 1;  //550 No members found.
+					pc = 1; //550 No members found.
 				}
 
 				if(hConnect->code==501&&AllFiles)
@@ -221,7 +220,7 @@ BOOL FtpRemoveDirectory(Connection *hConnect,LPCSTR dir)
 	Assert(hConnect && "FtpRemoveDirectory");
 
 	if(StrCmp(dir,".") == 0 ||
-	        StrCmp(dir,"..") == 0)
+			StrCmp(dir,"..") == 0)
 		return TRUE;
 
 	hConnect->CacheReset();
@@ -239,8 +238,8 @@ BOOL FtpRemoveDirectory(Connection *hConnect,LPCSTR dir)
 
 	//Full dir
 	Command.printf("rmdir \x1%s/%s\x1",
-	               hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
-//	               hConnect->SToOEM(hConnect->CurDir.c_str()).c_str(), dir + (dir[0] == '/'));
+		hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
+//		hConnect->SToOEM(hConnect->CurDir.c_str()).c_str(), dir + (dir[0] == '/'));
 
 	//??FixFTPSlash( Command );
 	if(hConnect->ProcessCommand(Command))
@@ -248,8 +247,8 @@ BOOL FtpRemoveDirectory(Connection *hConnect,LPCSTR dir)
 
 	//Full dir+slash
 	Command.printf("rmdir \"%s/%s/\"",
-	               hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
-//	               hConnect->SToOEM(hConnect->CurDir.c_str()).c_str(), dir + (dir[0] == '/'));
+		hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
+//		hConnect->SToOEM(hConnect->CurDir.c_str()).c_str(), dir + (dir[0] == '/'));
 
 	if(hConnect->ProcessCommand(Command))
 		return TRUE;
@@ -292,7 +291,7 @@ BOOL FtpGetFile(Connection *Connect,LPCSTR lpszRemoteFile,LPCSTR lpszNewFile,BOO
 	PROC(("FtpGetFile","[%s]->[%s] %s %s",lpszRemoteFile,lpszNewFile,Reget?"REGET":"NEW",AsciiMode?"ASCII":"BIN"));
 	String Command,
 	       full_name;
-	int  ExitCode;
+	int    ExitCode;
 	Assert(Connect && "FtpGetFile");
 
 //mode
@@ -341,8 +340,8 @@ BOOL FtpGetFile(Connection *Connect,LPCSTR lpszRemoteFile,LPCSTR lpszNewFile,BOO
 	}
 
 	Command.printf("%s \x1%s\x1 \x1%s\x1",
-	               Reget ? "reget":"get",
-	               lpszRemoteFile, lpszNewFile);
+		Reget ? "reget":"get",
+		lpszRemoteFile, lpszNewFile);
 	ExitCode = Connect->ProcessCommand(Command);
 	Connect->IOCallback = FALSE;
 	return ExitCode;
@@ -379,7 +378,7 @@ BOOL FtpPutFile(Connection *Connect,LPCSTR loc,LPCSTR rem,BOOL Reput,int AsciiMo
 	Connect->CacheReset();
 
 	if((AsciiMode && !Connect->ProcessCommand("ascii")) ||
-	        (!AsciiMode && !Connect->ProcessCommand("bin")))
+		(!AsciiMode && !Connect->ProcessCommand("bin")))
 	{
 		Log(("!Set mode"));
 		return FALSE;
@@ -416,7 +415,7 @@ BOOL FtpPutFile(Connection *Connect,LPCSTR loc,LPCSTR rem,BOOL Reput,int AsciiMo
 	//Append
 	Connect->restart_point = Position;
 	Command.printf("%s \x1%s\x1 \x1%s\x1",
-	               Position ? "appe" : "put", loc, rem);
+		Position ? "appe" : "put", loc, rem);
 	Log(("%s upload", Position ? "Try APPE" : "Use PUT"));
 	ExitCode = Connect->ProcessCommand(Command);
 
@@ -448,7 +447,7 @@ BOOL FtpSystemInfo(Connection *Connect,char *Buffer,int MaxSize)
 
 		if(Connect->ProcessCommand("syst"))
 		{
-			char tmp[ 200 ];  //Do not need to use String. Limit system info by 200 chars.
+			char tmp[ 200 ]; //Do not need to use String. Limit system info by 200 chars.
 			Connect->GetReply((BYTE*)tmp,sizeof(tmp));
 
 			if((ChPtr=strchr(tmp,'\r')) != NULL)
@@ -480,7 +479,7 @@ BOOL FtpSystemInfo(Connection *Connect,char *Buffer,int MaxSize)
 
 			if(Connect->ProcessCommand("site directorymode"))
 			{
-				char tmp[ 200 ];  //Do not need to use String. Limit system info by 200 chars.
+				char tmp[ 200 ]; //Do not need to use String. Limit system info by 200 chars.
 				Connect->GetReply((BYTE*)tmp,sizeof(tmp));
 			}
 		}
@@ -504,7 +503,7 @@ BOOL FtpGetFtpDirectory(Connection *Connect)
 	WORD           idx;
 	//Exec
 	{
-		FP_Screen  _scr;
+		FP_Screen _scr;
 
 		if(!Connect->ProcessCommand("pwd"))
 			return FALSE;
@@ -526,8 +525,8 @@ BOOL FtpGetFtpDirectory(Connection *Connect)
 		char       tmp[ 1024 ];  //There is not way to use String.
 
 		if((tp=dl.GetType(idx)) != NULL &&
-		        tp->PWDParse &&
-		        tp->PWDParse(&si, s.c_str(), tmp, sizeof(tmp)))
+			tp->PWDParse &&
+			tp->PWDParse(&si, s.c_str(), tmp, sizeof(tmp)))
 		{
 			Connect->CurDir = tmp;
 			break;
@@ -607,16 +606,16 @@ void BadFormat(Connection *Connect,LPCSTR Line,BOOL inParce)
 {
 	Connect->AddCmdLine(Line);
 	FtpConnectMessage(Connect, MNone__,
-	                  inParce
-	                  ? "Error parsing files list. Please read \"BugReport_*.txt\" and report to developer."
-	                  : "Can not find listing parser. Please read \"BugReport_*.txt\" and report to developer.",
-	                  -MOk);
+		inParce
+		? "Error parsing files list. Please read \"BugReport_*.txt\" and report to developer."
+		: "Can not find listing parser. Please read \"BugReport_*.txt\" and report to developer.",
+		-MOk);
 }
 
 LPCSTR Parser2Str(WORD sType, FTPDirList* dl/*=NULL*/)
 {
 	BOOL     isNew = dl == NULL;
-	LPCSTR rc;
+	LPCSTR   rc;
 
 	if(sType == FTP_TYPE_DETECT)
 		return "Autodetect";
@@ -653,8 +652,8 @@ WORD FTP::SelectServerType(WORD Type)
 	{
 		FTPType* tp = dl.GetType(n);
 		snprintf(MenuItems[n+2].Text, ARRAYSIZE(MenuItems[0].Text),
-		          "%s %c %s",
-		          tp->TypeName, FAR_VERT_CHAR, tp->TypeDescription);
+			"%s %c %s",
+			tp->TypeName, FAR_VERT_CHAR, tp->TypeDescription);
 	}
 
 	if(Type >= n)
@@ -663,7 +662,7 @@ WORD FTP::SelectServerType(WORD Type)
 		MenuItems[Type+2].Selected = TRUE;
 
 	int rc = FP_Info->Menu(FP_Info->ModuleNumber,-1,-1,0,FMENU_AUTOHIGHLIGHT,
-	                       FP_GetMsg(MTableTitle), NULL,NULL,NULL,NULL,MenuItems,n+2);
+		FP_GetMsg(MTableTitle), NULL,NULL,NULL,NULL,MenuItems,n+2);
 
 	if(rc == -1)
 		return Type;
@@ -716,7 +715,7 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 
 		//Check special skip strings
 		if(StrCmp(Line.c_str(), "Directory ", 10) == 0 &&
-		        strchr(Line.c_str()+10,'[') != NULL)
+				strchr(Line.c_str()+10,'[') != NULL)
 			continue;
 
 		//Set start detect info
@@ -726,12 +725,12 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 		//Use temp buffer
 		Line1 = Line;
 		//Detect
-		WORD     idx;
+		WORD idx;
 		FTPType* tp = dl.GetType(Connect->Host.ServerType);
 
 		if(Connect->Host.ServerType == FTP_TYPE_DETECT ||
-		        Connect->Host.ServerType == FTP_TYPE_INVALID ||
-		        tp == NULL)
+			Connect->Host.ServerType == FTP_TYPE_INVALID ||
+			tp == NULL)
 		{
 			idx = dl.DetectStringType(&si, Line.c_str(), Line.Length());
 
@@ -740,7 +739,7 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 				LogCmd(Message("ParserDETECT: %s->%s [%s]", Parser2Str(Connect->Host.ServerType,&dl), Parser2Str(idx,&dl), Line1.c_str()), ldInt);
 
 				if(Connect->Host.ServerType != FTP_TYPE_DETECT &&
-				        Connect->Host.ServerType != FTP_TYPE_INVALID)
+					Connect->Host.ServerType != FTP_TYPE_INVALID)
 				{
 					LogCmd(Message("ParserIGNORE: [%s]", Line1.c_str()), ldInt);
 					Connect->AddCmdLine(Message("ParserIGNORE: [%s]", Line1.c_str()));
@@ -767,10 +766,10 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 		if(!tp->Parser(&si,p,Line.c_str(),Line.Length()))
 		{
 			LogCmd(Message("ParserFAIL: %s->%s [%s]",
-			               Parser2Str(Connect->Host.ServerType,&dl),
-			               Parser2Str(idx,&dl),
-			               Line1.c_str()),
-			       ldInt);
+				Parser2Str(Connect->Host.ServerType,&dl),
+				Parser2Str(idx,&dl),
+				Line1.c_str()),
+				ldInt);
 			Connect->AddCmdLine(Message("ParserFAIL: (%s) [%s]", Parser2Str(idx,&dl), Line1.c_str()));
 			continue;
 		}
@@ -779,18 +778,18 @@ BOOL ParseDirLine(Connection *Connect,BOOL AllFiles,FTPFileInfo* p)
 		char *CurName = FTP_FILENAME(p);
 
 		if(p->FileType == NET_SKIP ||
-		        !CurName[0] ||
-		        StrCmp(CurName,".") == 0 ||
-		        (!AllFiles && StrCmp(CurName,"..") == 0))
+				!CurName[0] ||
+				StrCmp(CurName,".") == 0 ||
+				(!AllFiles && StrCmp(CurName,"..") == 0))
 			continue;
 
 		//Correct attrs
 		if(p->FileType == NET_DIRECTORY ||
-		        p->FileType == NET_SYM_LINK_TO_DIR)
+				p->FileType == NET_SYM_LINK_TO_DIR)
 			SET_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY);
 
 		if(p->FileType == NET_SYM_LINK_TO_DIR ||
-		        p->FileType == NET_SYM_LINK)
+				p->FileType == NET_SYM_LINK)
 			SET_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_REPARSE_POINT);
 
 		//Convert name text

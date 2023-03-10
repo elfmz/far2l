@@ -17,21 +17,21 @@ fp.name points somewhere within buf.
 */
 
 struct ftpparse {
-  const char *name; /* not necessarily 0-terminated */
-  int namelen;
-  int flagtrycwd; /* 0 if cwd is definitely pointless, 1 otherwise */
-  int flagtryretr; /* 0 if retr is definitely pointless, 1 otherwise */
-  int sizetype;
-  long size; /* number of octets */
-  int mtimetype;
-  time_t mtime; /* modification time */
-  int idtype;
-  const char *id; /* not necessarily 0-terminated */
-  int idlen;
+	const char *name; /* not necessarily 0-terminated */
+	int namelen;
+	int flagtrycwd; /* 0 if cwd is definitely pointless, 1 otherwise */
+	int flagtryretr; /* 0 if retr is definitely pointless, 1 otherwise */
+	int sizetype;
+	long size; /* number of octets */
+	int mtimetype;
+	time_t mtime; /* modification time */
+	int idtype;
+	const char *id; /* not necessarily 0-terminated */
+	int idlen;
 
-  mode_t mode;
-  char owner[0x100];
-  char group[0x100];
+	mode_t mode;
+	char owner[0x100];
+	char group[0x100];
 } ;
 
 #define FTPPARSE_SIZE_UNKNOWN 0

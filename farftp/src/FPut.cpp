@@ -66,7 +66,7 @@ int FTP::_FtpPutFile(LPCSTR lpszLocalFile,LPCSTR lpszNewRemoteFile,BOOL Reput,in
 		Reput = TRUE;
 
 		if(FtpCmdLineAlive(hConnect) &&
-		        FtpKeepAlive(hConnect))
+				FtpKeepAlive(hConnect))
 			continue;
 
 		SaveUsedDirNFile();
@@ -124,7 +124,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 	ci.UploadLowCase   = Opt.UploadLowCase;
 
 	if(Opt.ShowUploadDialog &&
-	        !IS_SILENT(OpMode) && !IS_FLAG(OpMode,OPM_NODIALOG))
+		!IS_SILENT(OpMode) && !IS_FLAG(OpMode,OPM_NODIALOG))
 	{
 		if(!CopyAskDialog(Move,FALSE,&ci))
 			return FALSE;
@@ -161,7 +161,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 		CurName = tmp.c_str();
 		CurTime = il.List[I].FindData.ftLastWriteTime;
 		Log(("PutFiles: list[%d], %d-th, att: %d, crc32:%08X \"%s\"",
-		     il.Count(), I, SrcAttr, il.List[I].CRC32, CurName));
+			il.Count(), I, SrcAttr, il.List[I].CRC32, CurName));
 
 		/* File name may contain relative paths.
 		   Local files use '\' as dir separator, so convert
@@ -218,7 +218,7 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 			if(FtpFindFirstFile(hConnect, DestName.c_str(), &FindData, nullptr))
 			{
 				if(strcmp(PointToName(FTP_FILENAME(&FindData)),
-				           PointToName(DestName.c_str())) == 0)
+						PointToName(DestName.c_str())) == 0)
 					DestAttr = FindData.FindData.dwFileAttributes;
 
 				DestTime = FindData.FindData.ftLastWriteTime;
@@ -291,8 +291,8 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 
 		if(DestAttr != MAX_DWORD)
 		{
-			ci.MsgCode  = AskOverwrite(MUploadTitle, FALSE, &FindData.FindData, &il.List[I].FindData, ci.MsgCode,
-			                           ((CurTime.dwLowDateTime || CurTime.dwHighDateTime) && (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
+			ci.MsgCode = AskOverwrite(MUploadTitle, FALSE, &FindData.FindData, &il.List[I].FindData, ci.MsgCode,
+				((CurTime.dwLowDateTime || CurTime.dwHighDateTime) && (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
 			LastMsgCode = ci.MsgCode;
 
 			switch(ci.MsgCode)
@@ -325,9 +325,9 @@ int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move
 
 //Upload
 		if((rc=_FtpPutFile(FTP_FILENAME(&il.List[I]),
-		                   DestName.c_str(),
-		                   DestAttr == MAX_DWORD ? FALSE : (ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll),
-		                   ci.asciiMode)) == TRUE)
+			DestName.c_str(),
+			DestAttr == MAX_DWORD ? FALSE : (ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll),
+			ci.asciiMode)) == TRUE)
 		{
 			/*! FAR has a bug, so PanelItem stored in internal structure.
 			    Because of this flags PPIF_SELECTED and PPIF_PROCESSDESCR has no effect at all.

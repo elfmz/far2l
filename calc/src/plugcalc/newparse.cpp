@@ -257,7 +257,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 		pnum = pnum->next;
 	}
 
-    // add built-in funcs
+	// add built-in funcs
 	for (i = 0; builtin_funcs[i].f; i++)
 	{
 		switch (builtin_funcs[i].num_args)
@@ -276,7 +276,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 			break;
 		}
 	}
-   
+
 	int max_prior = 0;
 	PSyntax op = Ops;
 	while (op)
@@ -301,8 +301,8 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 
 	// should be lower-case!
 	allUnaryOpTable.add(L"-", &mybase::operator_unary_minus);
-    allUnaryOpTable.add(L"+", &mybase::operator_unary_plus);
-    allUnaryOpTable.add(L"_lnot", &mybase::operator_logical_not);
+	allUnaryOpTable.add(L"+", &mybase::operator_unary_plus);
+	allUnaryOpTable.add(L"_lnot", &mybase::operator_logical_not);
 	allUnaryOpTable.add(L"_not", &builtin_unary_not);
 	
 	if (add_user_ops_and_funcs)
@@ -932,10 +932,10 @@ bool CalcParser::ProcessData(PSgmlEl BaseRc, bool case_sensitive)
 		if (!Base || (Base->getname() && !wcscasecmp(Base->getname(),L"Calc")))
 			break;
 	}
-  
+
 	if (!Base)
-	    return false;
-  
+		return false;
+
 	for (int pass = 1; pass <= 2; pass++)
 	{
 		El = Base->child();
@@ -1161,7 +1161,7 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 		if (!snt->next) break;
 		snt = snt->next;
 	}
-  
+
 	nxt = new SSyntax;
 	nxt->name = name ? new wchar_t[wcslen(name)+1] : NULL;
 	nxt->name_set = name_set ? new wchar_t[wcslen(name_set)+1] : NULL;
@@ -1235,14 +1235,14 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 		if (!case_sensitive)
 			xxx_wcslwr(nxt->mean);
 	}
-  
+
 	//DelSpaces(nxt->mean);
 
 	if (!syntax) 
 		syntax = nxt;
 	else 
 		snt->next = nxt;
-  
+
 	return true;
 }
 
@@ -1259,12 +1259,12 @@ bool CalcParser::SetVar(wchar_t *name, SArg value)
 			fnd = true;
 			break;
 		}
-    
+
 		if (!snt->next) 
 			break;
 		snt = (PVars)snt->next;
 	}
-  
+
 	if (!fnd)
 	{
 		newv = new SVars();
@@ -1275,12 +1275,12 @@ bool CalcParser::SetVar(wchar_t *name, SArg value)
 			Vars = newv;
 		else 
 			snt->next = newv;
-    
+
 		return true;
 	}
-  
+
 	snt->value = value;
-  
+
 	return true;
 }
 
@@ -1669,7 +1669,7 @@ wchar_t *convertToString(const SArg & val, int type_idx, int num_lim, bool appen
 	if (num_lim == 0)
 		num_lim = calc_edit_length;
 	
-    if (type_idx == CALC_CONV_ENTER)
+	if (type_idx == CALC_CONV_ENTER)
 	{
 		val.GetBig().ToString(s, 10, false, num_lim, num_lim, true, CalcParser::delim_decimal);
 		str = _wcsdup(s.c_str());

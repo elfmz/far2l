@@ -2,9 +2,9 @@
 
 enum LanguageID
 {
-  MTitle,
-  MDescription,
-  MOK,
-  MCleanup
+	MTitle,
+	MDescription,
+	MOK,
+	MCleanup
 };
 

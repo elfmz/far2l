@@ -239,7 +239,7 @@ void EditorDialog()
 
 		SArg Res = parser->Parse(Text, props.case_sensitive != 0);
 		free(Text);
-  
+
 		Text = convertToString(Res, i - 1, 0, false, props.pad_zeroes != 0, false, NULL);
 		if (Text)
 		{
@@ -504,7 +504,7 @@ public:
 		SArg res = parser->Parse(Item->PtrData, props.case_sensitive != 0);
 		if (parser->GetError())
 			was_error = true;
-        
+
 		int id = 1;
 		PDialogElem de;
 		for (de = dd->Elem;  de;  de = de->Next, id++)
@@ -560,7 +560,7 @@ public:
 					else
 						str.clear();
 				}
-        
+
 				if (id != param1)
 				{
 					//XXX:
@@ -573,10 +573,10 @@ public:
 				}
 			}
 		}
-        EnableRedraw(true);
+		EnableRedraw(true);
 		return TRUE;
 	}
-  
+
 	virtual CALC_INT_PTR OnKey(int param1, void *param2)
 	{
 		DWORD key = (DWORD)(DWORD_PTR)param2;
@@ -596,7 +596,7 @@ public:
 				Close(CALC_EDIT_ID);
 				return TRUE;
 			}
-  
+
 			SArg res = parser->Parse(str.c_str(), props.case_sensitive != 0);
 
 			wchar_t *pwz = convertToString(res, CALC_CONV_ENTER, props.result_length, false, props.pad_zeroes != 0, false, NULL);
@@ -681,7 +681,7 @@ void ShowUnitsDialog(int no)
 	cur_dlg_items = NULL;
 
 	for (i = 0;  i < dsize; i++)
-  		free((void *)dialog[i].PtrData);
+		free((void *)dialog[i].PtrData);
 	delete [] dialog;
 }
 
@@ -866,7 +866,7 @@ public:
 				
 				curRadio = param1;
 			}
-      
+
 			int loc_Radio = curRadio;
 			if (param1 >= addons_info.radio_id1 && param1 <= addons_info.radio_id2)
 				loc_Radio = param1;
@@ -980,7 +980,7 @@ public:
 					}
 					tmp += L"        ";
 					SetText(CALC_TYPE_ID, tmp);
-		      
+
 					for (unsigned i = 0; i < parser->main_addons_num; i++)
 					{
 						CALC_ERROR error_code = ERR_OK;

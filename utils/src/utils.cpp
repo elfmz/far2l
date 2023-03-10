@@ -48,8 +48,8 @@ void CheckedCloseFD(int &fd)
 
 void CheckedCloseFDPair(int *fd)
 {
-       CheckedCloseFD(fd[0]);
-       CheckedCloseFD(fd[1]);
+	CheckedCloseFD(fd[0]);
+	CheckedCloseFD(fd[1]);
 }
 
 size_t WriteAll(int fd, const void *data, size_t len, size_t chunk)

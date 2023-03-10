@@ -59,8 +59,8 @@ char *XP_StripLine(char *string)
 WORD NET_MonthNo(LPCSTR month)
 {
 	char str[200],
-	     mn[ 50 ],
-	     *b,*e;
+		mn[ 50 ],
+		*b,*e;
 
 	for(WORD n = 0; n < 12; n++)
 	{
@@ -158,8 +158,8 @@ BOOL ConvertEntry(NET_FileEntryInfo* inf, FTPFileInfo* p)
 	st.wMilliseconds = 0;
 
 	if(!CorrectTime(st, inf->date,     &p->FindData.ftLastWriteTime) ||
-	        !CorrectTime(st, inf->cr_date,  &p->FindData.ftCreationTime) ||
-	        !CorrectTime(st, inf->acc_date, &p->FindData.ftLastAccessTime)) {
+			!CorrectTime(st, inf->cr_date,  &p->FindData.ftCreationTime) ||
+			!CorrectTime(st, inf->acc_date, &p->FindData.ftLastAccessTime)) {
 				fprintf(stderr, "-");
 		return FALSE;		
 			}
@@ -266,7 +266,7 @@ WORD WINAPI idPRSDetectString(FTPServerInfo* const Server,char *ListingString, i
 //Correct the same formats
 	//Unix-like WinNT
 	if(Server->ServerType == FTP_TYPE_NT &&
-	        is_unix_start(ListingString,ListingLength,NULL))
+			is_unix_start(ListingString,ListingLength,NULL))
 	{
 		Log(("DETECT: WinNT -> UNIX"));
 		Server->ServerType = FTP_TYPE_UNIX;
@@ -274,7 +274,7 @@ WORD WINAPI idPRSDetectString(FTPServerInfo* const Server,char *ListingString, i
 
 	//Unix-like EPLF
 	if(Server->ServerType == FTP_TYPE_UNIX &&
-	        ListingString[0] == '+')
+			ListingString[0] == '+')
 	{
 		Log(("DETECT: Unix -> EPLF"));
 		Server->ServerType = FTP_TYPE_EPLF;
@@ -291,7 +291,7 @@ WORD WINAPI idPRSDetectString(FTPServerInfo* const Server,char *ListingString, i
 		StrCpy(tmp, ListingString, ListingLength+1);
 
 		if(ListingTypes[n].Detectable &&
-		        ListingTypes[n].Parser(Server,&fi,tmp,ListingLength))
+				ListingTypes[n].Parser(Server,&fi,tmp,ListingLength))
 		{
 			Log(("DETECT: by contents [%s] to %d",ListingString,n));
 			delete[] tmp;

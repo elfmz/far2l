@@ -103,13 +103,14 @@ namespace Storage
 		sdc_stat(key_file.c_str(), &s_key);
 
 		if (sdc_read(fd_stg, &s_recall, sizeof(s_recall)) == sizeof(s_recall)
-		  && s_key.st_mtime == s_recall.st_mtime && s_key.st_size == s_recall.st_size
-		  && s_key.st_dev == s_recall.st_dev && s_key.st_ino == s_recall.st_ino) {
+			&& s_key.st_mtime == s_recall.st_mtime && s_key.st_size == s_recall.st_size
+			&& s_key.st_dev == s_recall.st_dev && s_key.st_ino == s_recall.st_ino)
+		{
 			int fd_data = sdc_open(data_file.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0640);
 			if (fd_data != -1) {
 				out = sdc_fd2fd(fd_stg, fd_data);
 				sdc_close(fd_data);
-			}			
+			}
 		}
 
 		sdc_close(fd_stg);

@@ -137,8 +137,8 @@ BOOL net_parse_vms_dir_entry(char *line, NET_FileEntryInfo* entry_info)
 	e = strchr(line,'-');
 
 	if(!e ||
-	        !NET_IS_DIGIT(*(e-1)) ||
-	        !NET_IS_ALPHA(*(e+1)))
+			!NET_IS_DIGIT(*(e-1)) ||
+			!NET_IS_ALPHA(*(e+1)))
 		return FALSE;
 
 	line = e-2;

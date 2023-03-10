@@ -98,8 +98,8 @@ void WINAPI ReadCfg(void)
 	GCMD("ServerDateFormat", "%*s %04d%02d%02d%02d%02d%02d", fmtDateFormat)
 //Months
 	static const char *Months[12]= { "Jan","Feb","Mar","Apr","May","Jun",
-	                                 "Jul","Aug","Sep","Oct","Nov","Dec"
-	                               };
+		"Jul","Aug","Sep","Oct","Nov","Dec"
+	};
 
 	for(n = 0; n < 12; n++)
 	{
@@ -377,10 +377,10 @@ static LONG_PTR WINAPI CDLG_WndProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Para
 				ColorBk = Param1 - cdlgBK;
 
 			sprintf(str,"%s(%3d 0x%02X %03o)",
-			        Title,
-			        FAR_COLOR(ColorFore,ColorBk),
-			        FAR_COLOR(ColorFore,ColorBk),
-			        FAR_COLOR(ColorFore,ColorBk));
+				Title,
+				FAR_COLOR(ColorFore,ColorBk),
+				FAR_COLOR(ColorFore,ColorBk),
+				FAR_COLOR(ColorFore,ColorBk));
 			//set caption
 			id.PtrLength = static_cast<int>(strlen(str));
 			id.PtrData   = str;
@@ -485,9 +485,9 @@ int WINAPI FP_GetColorDialog(int color,FLngColorDialog* p,LPCSTR Help)
 	DialogItems[ cdlgBK+ColorBk ].Selected     = TRUE;
 	StrCpy(Title,DialogItems[0].Data,ARRAYSIZE(Title));
 	sprintf(str,"(%3d 0x%02X %03o)",
-	        FAR_COLOR(ColorFore,ColorBk),
-	        FAR_COLOR(ColorFore,ColorBk),
-	        FAR_COLOR(ColorFore,ColorBk));
+		FAR_COLOR(ColorFore,ColorBk),
+		FAR_COLOR(ColorFore,ColorBk),
+		FAR_COLOR(ColorFore,ColorBk));
 	StrCat(DialogItems[0].Data,str,512);
 	n = FP_Info->DialogEx(FP_Info->ModuleNumber,-1,-1,39,15,Help,DialogItems,ARRAYSIZE(DialogItems),0,0,CDLG_WndProc,0);
 
@@ -601,9 +601,9 @@ int WINAPI Config(void)
 #define CFG_CANCEL        53
 #define CFG_EXTBTN        54
 	FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
-	int           IdleColor    = Opt.IdleColor,
-	              ProcessColor = Opt.ProcessColor;
-	int           rc;
+	int IdleColor    = Opt.IdleColor,
+		ProcessColor = Opt.ProcessColor;
+	int rc;
 	InitDialogItems(InitItems,DialogItems,ARRAYSIZE(DialogItems));
 	DialogItems[CFG_ADDDISK].Selected = Opt.AddToDisksMenu;
 	sprintf(DialogItems[CFG_DIGIT].Data,"%d",Opt.DisksMenuDigit);

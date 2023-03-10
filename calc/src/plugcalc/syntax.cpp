@@ -43,10 +43,10 @@ SSyntax::~SSyntax()
 }
 
 SVars::SVars()
-{ 
+{
 }
 
 SVars::~SVars()
-{ 
+{
 }
 

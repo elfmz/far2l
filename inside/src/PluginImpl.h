@@ -19,7 +19,7 @@ protected:
 	virtual bool OnGetFindData(FP_SizeItemList &il, int OpMode) = 0;
 	virtual bool OnGetFile(const char *item_file, const char *data_path, uint64_t len) = 0;
 	virtual bool OnPutFile(const char *item_file, const char *data_path) = 0;
-        virtual bool OnDeleteFile(const char *item_file) = 0;
+	virtual bool OnDeleteFile(const char *item_file) = 0;
 
 public:
 	PluginImpl(const char *name);

@@ -149,7 +149,7 @@ void Connection::CheckResume(void)
 	if(Host.AsciiMode)
 	{
 		if(setascii() &&
-		        command("%s 0",Opt.cmdRest) != RPL_ERROR)
+			command("%s 0",Opt.cmdRest) != RPL_ERROR)
 		{
 			if(code == 350)
 				ResumeSupport = TRUE;
@@ -158,7 +158,7 @@ void Connection::CheckResume(void)
 	else
 	{
 		if(setbinary() &&
-		        command("%s 0",Opt.cmdRest) != RPL_ERROR)
+			command("%s 0",Opt.cmdRest) != RPL_ERROR)
 		{
 			if(code == 350)
 				ResumeSupport = TRUE;
@@ -182,7 +182,7 @@ SOCKET Connection::dataconn(void)
 	if(!Host.PassiveMode)
 	{
 		if(!nb_waitstate(&data_peer, ws_accept) ||
-		        (s=scAccept(&data_peer, (struct sockaddr *) &from, &fromlen)) == INVALID_SOCKET)
+			(s=scAccept(&data_peer, (struct sockaddr *) &from, &fromlen)) == INVALID_SOCKET)
 		{
 			scClose(data_peer,-1);
 			return INVALID_SOCKET;
@@ -201,7 +201,7 @@ SOCKET Connection::dataconn(void)
 		}
 
 		if(brk_flag ||
-		        !nb_connect(&data_peer,(sockaddr*)&data_addr,sizeof(data_addr)))
+			!nb_connect(&data_peer,(sockaddr*)&data_addr,sizeof(data_addr)))
 		{
 			scClose(data_peer,-1);
 			return INVALID_SOCKET;
@@ -231,7 +231,7 @@ noport:
 	scClose(data_peer,-1);
 
 	if(brk_flag ||
-	        !scValid(data_peer=socket(AF_INET,SOCK_STREAM,0)))
+		!scValid(data_peer=socket(AF_INET,SOCK_STREAM,0)))
 	{
 		Log(("!socket"));
 
@@ -292,13 +292,13 @@ noport:
 			result = command(Opt.cmdPasv);
 		else
 			result =  command("%s %d,%d,%d,%d,%d,%d",
-			                  Opt.cmdPort,
-			                  data_addr.sin_addr.s_addr&0xff,
-			                  (data_addr.sin_addr.s_addr >> 8) & 0xff,
-			                  (data_addr.sin_addr.s_addr >> 16) & 0xff,
-			                  (data_addr.sin_addr.s_addr >> 24) & 0xff,
-			                  (unsigned char)data_addr.sin_port,
-			                  (unsigned char)(data_addr.sin_port>>8));
+				Opt.cmdPort,
+				data_addr.sin_addr.s_addr&0xff,
+				(data_addr.sin_addr.s_addr >> 8) & 0xff,
+				(data_addr.sin_addr.s_addr >> 16) & 0xff,
+				(data_addr.sin_addr.s_addr >> 24) & 0xff,
+				(unsigned char)data_addr.sin_port,
+				(unsigned char)(data_addr.sin_port>>8));
 
 		if(/*2*/ result == 0 && sendport == -1) //TODO: CHECK: result == ERROR
 		{
@@ -329,7 +329,7 @@ noport:
 #define TOP(a) (a&~0xFF)
 
 			if(sscanf(p, "(%u,%u,%u,%u,%u,%u)", &a1, &a2, &a3, &a4, &p1, &p2) !=6 ||
-			        TOP(a1) || TOP(a2) || TOP(a3) || TOP(a4) || TOP(p1) || TOP(p2))
+				TOP(a1) || TOP(a2) || TOP(a3) || TOP(a4) || TOP(p1) || TOP(p2))
 			{
 				Log(("Bad psv port reply"));
 				return FALSE;
@@ -344,8 +344,8 @@ noport:
 			{
 				char Msg[30];
 				snprintf(Msg, ARRAYSIZE(Msg),
-				          "[%s -> %s]",
-				          inet_ntoa(hisctladdr.sin_addr), inet_ntoa(data_addr.sin_addr));
+					"[%s -> %s]",
+					inet_ntoa(hisctladdr.sin_addr), inet_ntoa(data_addr.sin_addr));
 				ConnectMessage(0,Msg,0);
 			}
 		}

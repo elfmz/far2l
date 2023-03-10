@@ -46,7 +46,7 @@ BOOL net_convert_unix_date(LPSTR& datestr, Time_t& decoded)
 	char *ecol;                   /* Column end */
 	//Expanded format (DDDD-)
 	if(NET_IS_DIGIT(bcol[0]) && NET_IS_DIGIT(bcol[1]) && NET_IS_DIGIT(bcol[2]) && NET_IS_DIGIT(bcol[3]) &&
-	        bcol[4] == '-')
+		bcol[4] == '-')
 	{
 #define CVT( nm, start, end )              bcol[end] = 0;                       \
 	st.nm = atoi(bcol+start);   \
@@ -64,7 +64,7 @@ BOOL net_convert_unix_date(LPSTR& datestr, Time_t& decoded)
 	//Month+day or short format
 	// (ecol must be set to char after decoded part)
 	if(NET_TO_UPPER(bcol[0]) == 'F' &&
-	        NET_IS_SPACE(bcol[1]))
+		NET_IS_SPACE(bcol[1]))
 	{
 		//Short format - ignore month and day
 		ecol = bcol + 2;
@@ -190,11 +190,11 @@ BOOL net_parse_ls_line(char *line, NET_FileEntryInfo* entry_info, BOOL nLinks)
 	if(line[0] == '@' && line[1] == ' ')
 		line = SkipSpace(line+1);
 
-	e    = SkipNSpace(line);
+	e = SkipNSpace(line);
 	CHECK((*e == 0), FALSE)
 	StrCpy(entry_info->FTPOwner+len,
-	       line,
-	       Min((int)ARRAYSIZE(entry_info->FTPOwner) - len, (int)(e-line+1)));
+		line,
+		Min((int)ARRAYSIZE(entry_info->FTPOwner) - len, (int)(e-line+1)));
 //Size
 	line = SkipSpace(e);
 
@@ -316,13 +316,13 @@ BOOL WINAPI idPRParceUnix(const FTPServerInfo* Server, FTPFileInfo* p, char *ent
 					 * it might be a directory
 					 */
 					entry_info.FileType = NET_SYM_LINK;
-					remove_size          = TRUE; /* size is not useful */
+					remove_size         = TRUE; /* size is not useful */
 					int i;
 
 					/* strip off " -> pathname" */
 					for(i = entry_len - 1;
-					        (i > 3) && (!NET_IS_SPACE(entry[i]) || (entry[i-1] != '>') || (entry[i-2] != '-') || (entry[i-3] != ' '));
-					        i--) ; /* null body */
+						(i > 3) && (!NET_IS_SPACE(entry[i]) || (entry[i-1] != '>') || (entry[i-2] != '-') || (entry[i-3] != ' '));
+						i--) ; /* null body */
 
 					if(i > 3)
 					{
@@ -343,7 +343,7 @@ BOOL WINAPI idPRParceUnix(const FTPServerInfo* Server, FTPFileInfo* p, char *ent
 				} /* link */
 
 	if(!net_parse_ls_line(entry, &entry_info, TRUE) &&
-	        !net_parse_ls_line(entry, &entry_info, FALSE))
+			!net_parse_ls_line(entry, &entry_info, FALSE))
 		return FALSE;
 
 	if(remove_size)

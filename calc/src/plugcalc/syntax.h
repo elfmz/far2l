@@ -33,8 +33,8 @@ enum CALC_RADIX
 struct SSyntax
 {
 	wchar_t *name;
-  	wchar_t *name_set;	// XXX:
-  	wchar_t *mean;
+	wchar_t *name_set;	// XXX:
+	wchar_t *mean;
 
 #ifdef USE_CREGEXP	
 	CRegExp *re;
@@ -50,42 +50,22 @@ struct SSyntax
 
 	int flags;
 
-  	SSyntax *next;
-  
-  	SSyntax();
-  	~SSyntax();
+	SSyntax *next;
+
+	SSyntax();
+	~SSyntax();
 };
 
 typedef struct SSyntax *PSyntax;
 
 struct SVars:SSyntax
 {
-  	SArg value;
-  	SVars();
-  	~SVars();
+	SArg value;
+	SVars();
+	~SVars();
 };
 
 typedef struct SVars *PVars;
 
 #endif // of SYNTAX_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -322,7 +322,7 @@ abort:
 	}
 
 	int ocode = code,
-	    oecode = ErrorCode;
+		oecode = ErrorCode;
 	scClose(data_peer, 1);//SD_SEND
 
 	if(!SendAbort(data_peer))

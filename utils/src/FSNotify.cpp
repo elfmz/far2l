@@ -25,9 +25,9 @@
 
 class FSNotify : public IFSNotify
 { // dummy implementation that doesnt watch for changes
-  public:
-    FSNotify(const std::string &pathname, bool watch_subtree, FSNotifyWhat what) {}
-	virtual bool Check() const noexcept { return false; }
+	public:
+		FSNotify(const std::string &pathname, bool watch_subtree, FSNotifyWhat what) {}
+		virtual bool Check() const noexcept { return false; }
 };
 
 #else

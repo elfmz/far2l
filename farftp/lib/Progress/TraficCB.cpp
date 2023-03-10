@@ -29,7 +29,7 @@ void TrafficInformation::FormatLine(int num,LPCSTR line,time_t tm)
 	InfoItem it;
 
 	if(num < 0 || num >= MAX_TRAF_LINES ||
-	        !line || !line[0])
+			!line || !line[0])
 		return;
 
 	for(n = 0; *line && n < MAX_TRAF_WIDTH; line++)
@@ -256,7 +256,7 @@ void TrafficInformation::Init(HANDLE h,int tMsg,int OpMode,FP_SizeItemList* il)
 	if(il)
 		for(int i = 0; i < il->Count(); i++)
 			if(!IS_FLAG(il->List[i].FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY) &&
-			        (il->List[i].CRC32 & 0x80000000) == 0)
+				(il->List[i].CRC32 & 0x80000000) == 0)
 			{
 				TotalFullSize+= (int64_t)il->List[i].FindData.nFileSize;
 				TotalFiles++;
@@ -378,10 +378,10 @@ BOOL TrafficInformation::Callback(int Size)
 	if(!ShowStatus)
 	{
 		snprintf(str,ARRAYSIZE(str),
-		         "{%2.1lf%%} %s: %.26s",
-		         TotalPercent,
-		         FTP_Info->GetMsg(TitleMsg),
-		         FTP_Info->PointToName(SrcFileName));
+			"{%2.1lf%%} %s: %.26s",
+			TotalPercent,
+			FTP_Info->GetMsg(TitleMsg),
+			FTP_Info->PointToName(SrcFileName));
 		FTP_Info->IdleMessage(str,FTP_Info->GetOpt()->ProcessColor);
 		return TRUE;
 	}
@@ -389,11 +389,11 @@ BOOL TrafficInformation::Callback(int Size)
 //Window caption
 	if(FTP_Info->FtpGetRetryCount())
 		snprintf(str,ARRAYSIZE(str),"%d: {%2.1lf%%} %s - Far",
-		         FTP_Info->FtpGetRetryCount(), TotalPercent,
-		         FTP_Info->GetMsg(TitleMsg));
+			FTP_Info->FtpGetRetryCount(), TotalPercent,
+			FTP_Info->GetMsg(TitleMsg));
 	else
 		snprintf(str,ARRAYSIZE(str),"{%2.1lf%%} %s - Far",
-		         TotalPercent,FTP_Info->GetMsg(TitleMsg));
+			TotalPercent,FTP_Info->GetMsg(TitleMsg));
 
 	if(StrCmp(str,ConsoleTitle,-1,TRUE) != 0)
 	{
@@ -423,6 +423,6 @@ BOOL TrafficInformation::Callback(int Size)
 	}
 
 	FTP_Info->FMessage(FMSG_LEFTALIGN, NULL,
-	                   (LPCSTR *)MsgItems, LineCount+1, 0);
+		(LPCSTR *)MsgItems, LineCount+1, 0);
 	return TRUE;
 }

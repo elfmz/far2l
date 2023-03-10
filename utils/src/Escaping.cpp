@@ -102,4 +102,4 @@ void QuoteCmdArgIfNeed(std::wstring &str)
 		QuoteCmdArg(str);
 	}
 }
-	
+

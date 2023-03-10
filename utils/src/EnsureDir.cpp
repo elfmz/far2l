@@ -83,9 +83,10 @@ bool EnsureDir(const char *dir, PrivacyLevel pl)
 	}
 
 	if (uid == 0
-	  || ((s.st_mode & S_IWOTH) != 0)
-	  || ((s.st_mode & S_IWUSR) != 0 && s.st_uid == uid)
-	  || ((s.st_mode & S_IWGRP) != 0 && s.st_gid == getegid())) {
+		|| ((s.st_mode & S_IWOTH) != 0)
+		|| ((s.st_mode & S_IWUSR) != 0 && s.st_uid == uid)
+		|| ((s.st_mode & S_IWGRP) != 0 && s.st_gid == getegid()))
+	{
 		return true;
 	}
 

@@ -80,8 +80,8 @@ void FP_ItemList::Copy(PluginPanelItem *dest,const PluginPanelItem *src,int cn)
 		if(IS_FLAG(src->Flags,PPIF_USERDATA))
 		{
 			DWORD sz = (src->UserData && !IsBadReadPtr((void*)src->UserData,sizeof(DWORD)))
-			           ? (*((DWORD*)src->UserData))
-			           : 0;
+				? (*((DWORD*)src->UserData))
+				: 0;
 
 			if(sz && !IsBadReadPtr((void*)src->UserData,sz))
 			{

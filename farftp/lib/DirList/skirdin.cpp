@@ -16,11 +16,11 @@
 BOOL net_parse_full_date_time(char *datestr, Time_t& decoded)
 {
 	static const char FF[]="FF.FF:FF FF.FF.FFFF",
-	                       ZZ[]="00.00:00 00.00.0000";
+		ZZ[]="00.00:00 00.00.0000";
 	SYSTEMTIME st;
 
 	if(datestr[2] != '.' || datestr[5] != ':' ||
-	        datestr[11] != '.' || datestr[14] != '.')
+			datestr[11] != '.' || datestr[14] != '.')
 		return FALSE;
 
 	WINPORT(GetSystemTime)(&st);
@@ -29,7 +29,7 @@ BOOL net_parse_full_date_time(char *datestr, Time_t& decoded)
 //Ignore FF and 00
 //
 	if(StrCmp(datestr,FF,19) == 0 ||
-	        StrCmp(datestr,ZZ,19) == 0)
+			StrCmp(datestr,ZZ,19) == 0)
 	{
 		decoded = NOT_TIME;
 		return TRUE;
@@ -43,14 +43,14 @@ BOOL net_parse_full_date_time(char *datestr, Time_t& decoded)
 
 //Time
 	if(!TwoDigits(datestr+0,st.wHour) ||
-	        !TwoDigits(datestr+3,st.wMinute) ||
-	        !TwoDigits(datestr+6,st.wSecond))
+			!TwoDigits(datestr+3,st.wMinute) ||
+			!TwoDigits(datestr+6,st.wSecond))
 		return FALSE;
 
 //Date
 	if(!TwoDigits(datestr+ 9,st.wDay) ||
-	        !TwoDigits(datestr+12,st.wMonth) ||
-	        (st.wYear=AtoI(datestr+15,MAX_WORD)) == MAX_WORD)
+			!TwoDigits(datestr+12,st.wMonth) ||
+			(st.wYear=AtoI(datestr+15,MAX_WORD)) == MAX_WORD)
 		return FALSE;
 
 	st.wDayOfWeek  = 0;
@@ -74,9 +74,9 @@ BOOL WINAPI idPRParceSkirdin(const FTPServerInfo* Server, FTPFileInfo* p, char *
 	NET_FileEntryInfo entry_info;
 
 	if(entry_len < 53 || NET_IS_SPACE(entry[53]) ||
-	        !NET_IS_SPACE(entry[19]) ||
-	        !NET_IS_SPACE(entry[40]) ||
-	        !NET_IS_SPACE(entry[52]))
+			!NET_IS_SPACE(entry[19]) ||
+			!NET_IS_SPACE(entry[40]) ||
+			!NET_IS_SPACE(entry[52]))
 		return FALSE;
 
 	entry[19] = 0;
@@ -85,16 +85,16 @@ BOOL WINAPI idPRParceSkirdin(const FTPServerInfo* Server, FTPFileInfo* p, char *
 
 //Time + size
 	if(!net_parse_full_date_time(entry+0,  entry_info.date) ||
-	        !net_parse_full_date_time(entry+21, entry_info.acc_date) ||
-	        (entry_info.size=AtoI(entry+42,(int64_t)-1)) == -1)
+			!net_parse_full_date_time(entry+21, entry_info.acc_date) ||
+			(entry_info.size=AtoI(entry+42,(int64_t)-1)) == -1)
 		return FALSE;
 
 	entry_info.size *= 512;
 
 //Del trailing spaces
 	for(entry_len--;                       //Skips trail zero
-	        NET_IS_SPACE(entry[entry_len]);
-	        entry_len--);
+			NET_IS_SPACE(entry[entry_len]);
+			entry_len--);
 
 	entry[++entry_len] = 0;
 //File name

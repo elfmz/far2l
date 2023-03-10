@@ -373,7 +373,7 @@ NormExit:
 	scClose(data_peer,-1);
 
 	if(getreply(FALSE) == RPL_ERROR ||
-	        (oldtype && !SetType(oldtype)))
+		(oldtype && !SetType(oldtype)))
 	{
 		lostpeer();
 	}
@@ -404,7 +404,7 @@ abort:
 	CurrentState = oState;
 
 	if(!SendAbort(din) ||
-	        (oldtype && !SetType(oldtype)))
+			(oldtype && !SetType(oldtype)))
 		lostpeer();
 	else
 	{

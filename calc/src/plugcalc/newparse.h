@@ -83,7 +83,7 @@ struct SDialogElem
 
 	CalcAddonPart *input, *scale_expr;
 
-	//  PEditObject Edit;
+	// PEditObject Edit;
 	SDialogElem *Next;
 	SDialogElem();
 	~SDialogElem();

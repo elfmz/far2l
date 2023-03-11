@@ -201,7 +201,7 @@ void EditorDialog()
 	}
 
 	EditorGetString EditStr { };
-	EditorInfo EditInfo {  };
+	EditorInfo EditInfo { };
 	EditStr.StringNumber = -1;
 	api->EditorGet(&EditStr, &EditInfo);
 
@@ -218,7 +218,7 @@ void EditorDialog()
 		// selection
 		s = (int)EditStr.SelStart;
 		e = (int)EditStr.SelEnd - 1;
-		EditorSelect EditSel = {  };
+		EditorSelect EditSel = { };
 		EditSel.BlockType = BTYPE_NONE;
 		api->SetSelection(EditSel);
 		After = (int)EditInfo.CurPos >= (s + e)/2;
@@ -252,7 +252,7 @@ void EditorDialog()
 
 			EditStr.StringNumber = -1;
 			api->EditorGet(&EditStr, &EditInfo);
-			EditorSelect EditSel = {  };
+			EditorSelect EditSel = { };
 			EditSel.BlockType = BTYPE_STREAM;
 			EditSel.BlockStartLine = EditInfo.CurLine;
 			EditSel.BlockStartPos  = EditInfo.CurPos - (int)wcslen(Text) - !After;
@@ -366,7 +366,7 @@ void SetUnitsDialogDims()
 		cx_column_width[i] = 0;
 	
 	int oldk = -1, col_textlen = 0;
-	for (d = 1, i = 0, de1 = de;  i < dd->num;  i++,d++, de1 = de1->Next)
+	for (d = 1, i = 0, de1 = de; i < dd->num; i++,d++, de1 = de1->Next)
 	{
 		int k = 5 + (i / j) * (cx - 9) / (dd->num / (j + 1) + 1);
 		if (k != oldk)
@@ -466,12 +466,12 @@ public:
 		GetText(param1, str);
 		int id = 1;
 		PDialogElem de;
-		for (de = dd->Elem;  de;  de = de->Next, id++)
+		for (de = dd->Elem; de; de = de->Next, id++)
 		{
 			if (de->Type)
 			{
 				id++;
-				EditorSelect EditSel = {  };
+				EditorSelect EditSel = { };
 				EditSel.BlockType = BTYPE_STREAM;
 				EditSel.BlockStartLine = -1;
 				EditSel.BlockHeight = 1;
@@ -507,7 +507,7 @@ public:
 
 		int id = 1;
 		PDialogElem de;
-		for (de = dd->Elem;  de;  de = de->Next, id++)
+		for (de = dd->Elem; de; de = de->Next, id++)
 		{
 			if (de->Type) id++;
 			if (id == param1) 
@@ -531,7 +531,7 @@ public:
 		}
 		
 		id = 1;
-		for (de = dd->Elem;  de;  de = de->Next, id++)
+		for (de = dd->Elem; de; de = de->Next, id++)
 		{
 			if (de->Type)
 			{
@@ -654,7 +654,7 @@ void ShowUnitsDialog(int no)
 	// XXX:
 	dialog[0].PtrData = _wcsdup(dd->Name);
 
-	for (d = 1, i = 0, de1 = de;  i < dd->num;  i++,d++, de1 = de1->Next)
+	for (d = 1, i = 0, de1 = de; i < dd->num; i++,d++, de1 = de1->Next)
 	{
 		if (!de1->Type)
 		{
@@ -680,7 +680,7 @@ void ShowUnitsDialog(int no)
 
 	cur_dlg_items = NULL;
 
-	for (i = 0;  i < dsize; i++)
+	for (i = 0; i < dsize; i++)
 		free((void *)dialog[i].PtrData);
 	delete [] dialog;
 }

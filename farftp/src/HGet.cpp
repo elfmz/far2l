@@ -9,11 +9,11 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 	InitDialogItem InitItems[]=
 	{
 		{DI_DOUBLEBOX, 3, 1,72,6, 0,0,0,0, NULL},
-		{DI_TEXT,5, 2,0,0,0,0,0,0,   NULL},
+		{DI_TEXT,5, 2,0,0,0,0,0,0, NULL},
 		{DI_EDIT,5, 3,70, 3,0,0,0,0,NULL},
 		{DI_TEXT,3, 4,3, 4,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP,  1, FMSG(MCopy)},
-		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 0,  FMSG(MCancel)},
+		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 1, FMSG(MCopy)},
+		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MCancel)},
 	};
 	FarDialogItem    DialogItems[ARRAYSIZE(InitItems)];
 	FP_SizeItemList  il;
@@ -47,14 +47,14 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 	if(!ExpandList(PanelItem,ItemsNumber,&il,TRUE))
 		return 0;
 
-	int      OverwriteAll = FALSE,
-	         SkipAll      = FALSE,
-	         Rename       = FALSE;
-	int      n;
-	FTPHost* p;
-	FTPHost  h;
-	char     CheckKey[ sizeof(HostsPath)+1 ];
-	char     DestName[ sizeof(HostsPath)+1 ];
+	int         OverwriteAll = FALSE,
+				SkipAll      = FALSE,
+				Rename       = FALSE;
+	int         n;
+	FTPHost*    p;
+	FTPHost     h;
+	char        CheckKey[ sizeof(HostsPath)+1 ];
+	char        DestName[ sizeof(HostsPath)+1 ];
 
 	if(DestPath.Cmp(".."))
 	{
@@ -139,8 +139,8 @@ int FTP::GetHostFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move
 			//DWORD DestAttr=GetFileAttributes(DestName);
 
 			if(!IS_SILENT(OpMode) &&
-			        !OverwriteAll &&
-			        dest_exists)
+				!OverwriteAll &&
+				dest_exists)
 			{
 				if(SkipAll)
 					continue;

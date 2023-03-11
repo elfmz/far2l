@@ -37,8 +37,8 @@ BOOL FTP::FTPCreateDirectory(LPCSTR dir,int OpMode)
 		if(!isspace(dir[len]))
 		{
 			Command.printf("mkdir \x1%s/%s\x1",
-			               hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
-//			               hConnect->SToOEM(hConnect->CurDir).c_str(), dir + (dir[0] == '/'));
+				hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
+//				hConnect->SToOEM(hConnect->CurDir).c_str(), dir + (dir[0] == '/'));
 
 			if(hConnect->ProcessCommand(Command))
 				break;
@@ -46,8 +46,8 @@ BOOL FTP::FTPCreateDirectory(LPCSTR dir,int OpMode)
 
 		//Try absolute path with end slash
 		Command.printf("mkdir \x1%s/%s/\x1",
-		               hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
-//		               hConnect->SToOEM(hConnect->CurDir).c_str(), dir + (dir[0] == '/'));
+			hConnect->CurDir.c_str(), dir + (dir[0] == '/'));
+//			hConnect->SToOEM(hConnect->CurDir).c_str(), dir + (dir[0] == '/'));
 
 		if(hConnect->ProcessCommand(Command))
 			break;
@@ -60,7 +60,7 @@ BOOL FTP::FTPCreateDirectory(LPCSTR dir,int OpMode)
 	if(!IS_SILENT(OpMode))
 	{
 		int b = Command.Chr('\x1'),
-		    e = Command.Chr('\x1', b+1);
+			e = Command.Chr('\x1', b+1);
 
 		if(b == -1)
 			SelectFile = "";
@@ -85,7 +85,7 @@ int FTP::MakeDirectory(String& Name,int OpMode)
 
 //Edit name
 	if(!IS_SILENT(OpMode) && !IS_FLAG(OpMode,OPM_NODIALOG) &&
-	        !EditDirectory(Name, ShowHosts ? h.HostDescr : NULL, TRUE))
+			!EditDirectory(Name, ShowHosts ? h.HostDescr : NULL, TRUE))
 		return -1;
 
 //Correct name
@@ -96,8 +96,8 @@ int FTP::MakeDirectory(String& Name,int OpMode)
 	if(ShowHosts)
 	{
 		if(Name.Cmp(".")  ||
-		        Name.Cmp("..") ||
-		        FTPHost::CheckHost(HostsPath, Name.c_str()))
+			Name.Cmp("..") ||
+			FTPHost::CheckHost(HostsPath, Name.c_str()))
 		{
 			WINPORT(SetLastError)(ERROR_ALREADY_EXISTS);
 			return FALSE;
@@ -114,19 +114,19 @@ int FTP::MakeDirectory(String& Name,int OpMode)
 	}
 
 //FTP
-	FP_Screen   scr;
+	FP_Screen scr;
 
 	//Create directory
 	do
 	{
 		//Try to create
 		if(hConnect &&
-		        FTPCreateDirectory(Name.c_str(), OpMode))
+				FTPCreateDirectory(Name.c_str(), OpMode))
 			return TRUE;
 
 		//If conection alive - report error
 		if(FtpCmdLineAlive(hConnect) ||
-		        IS_SILENT(OpMode))
+				IS_SILENT(OpMode))
 			return FALSE;
 
 		//Try to reconnect

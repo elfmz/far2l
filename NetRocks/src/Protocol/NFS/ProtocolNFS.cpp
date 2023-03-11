@@ -40,7 +40,7 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 		for (size_t i = 0, j = 0; i <= groups_str.size(); ++i) {
 			if (i == groups_str.size() || !isdigit(groups_str[i])) {
 				const std::string &grp = groups_str.substr(j, i - j);
-				for (size_t k = 0; k < grp.size(); ++i) {
+				for (size_t k = 0; k < grp.size(); ++k) {
 					if (isdigit(grp[k])) {
 						groups.emplace_back(atoi(grp.c_str() + k));
 						break;

@@ -232,13 +232,6 @@ struct Connection
 		BOOL           LoginComplete;
 
 
-
-
-
-
-
-
-
 	protected:
 		void           InternalError(void);
 		void           CloseCmdBuff(void);

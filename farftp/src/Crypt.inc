@@ -52,7 +52,7 @@ void DecryptPassword(BYTE Src[FTP_PWD_LEN],char *_Dest)
 			*Dest = Src[n] ^ XorMask;
 
 			if(*Dest == 0 ||
-			        *Dest == XorMask)
+					*Dest == XorMask)
 				break;
 		}
 

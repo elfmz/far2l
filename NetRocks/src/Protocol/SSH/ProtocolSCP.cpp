@@ -47,7 +47,7 @@ static std::string QuotedArg(const std::string &s)
 	return out;
 }
 
-static void SCPRequestDeleter(ssh_scp  res)
+static void SCPRequestDeleter(ssh_scp res)
 {
 	if (res) {
 		ssh_scp_close(res);
@@ -273,8 +273,8 @@ public:
 				_finished = true;
 				return false;
 			}
-        }
-  	}
+		}
+	}
 
 	std::string FilteredError() const
 	{
@@ -745,7 +745,7 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink)
 	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// |
 	int rc = ssh_scp_init(scp);
 	if (rc != SSH_OK) {
-		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+		throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 	}
 
 	rc = ssh_scp_pull_request(scp);
@@ -771,11 +771,11 @@ mode_t ProtocolSCP::GetMode(const std::string &path, bool follow_symlink)
 		}
 		case SSH_ERROR: {
 			fprintf(stderr, "SSH_ERROR\n");
-			throw ProtocolError("Query mode error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("Query mode error", ssh_get_error(_conn->ssh), rc);
 		}
 	}
 
-	throw ProtocolError("Query mode fault",  ssh_get_error(_conn->ssh), rc);
+	throw ProtocolError("Query mode fault", ssh_get_error(_conn->ssh), rc);
 #endif
 }
 
@@ -794,7 +794,7 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
 	if (rc != SSH_OK) {
-		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+		throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 	}
 
 	rc = ssh_scp_pull_request(scp);
@@ -815,11 +815,11 @@ unsigned long long ProtocolSCP::GetSize(const std::string &path, bool follow_sym
 		}
 		case SSH_ERROR: {
 			fprintf(stderr, "SSH_ERROR\n");
-			throw ProtocolError("Query size error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("Query size error", ssh_get_error(_conn->ssh), rc);
 		}
 	}
 
-	throw ProtocolError("Query size fault",  ssh_get_error(_conn->ssh), rc);
+	throw ProtocolError("Query size fault", ssh_get_error(_conn->ssh), rc);
 #endif
 }
 
@@ -850,7 +850,7 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 	SCPRequest scp (ssh_scp_new(_conn->ssh, SSH_SCP_READ | SSH_SCP_RECURSIVE, path.c_str()));// | SSH_SCP_RECURSIVE
 	int rc = ssh_scp_init(scp);
 	if (rc != SSH_OK) {
-		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+		throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 	}
 
 	rc = ssh_scp_pull_request(scp);
@@ -874,11 +874,11 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 		}
 		case SSH_ERROR: {
 			fprintf(stderr, "SSH_ERROR\n");
-			throw ProtocolError("Query info error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("Query info error", ssh_get_error(_conn->ssh), rc);
 		}
 	}
 
-	throw ProtocolError("Query info fault",  ssh_get_error(_conn->ssh), rc);
+	throw ProtocolError("Query info fault", ssh_get_error(_conn->ssh), rc);
 #endif
 }
 
@@ -914,12 +914,12 @@ void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode)
 	SCPRequest scp(ssh_scp_new(_conn->ssh, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, ExtractFilePath(path).c_str()));//
 	int rc = ssh_scp_init(scp);
 	if (rc != SSH_OK) {
-		throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+		throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 	}
 
 	rc = ssh_scp_push_directory(scp, ExtractFileName(path).c_str(), mode & 0777);
 	if (rc != SSH_OK) {
-		throw ProtocolError("SCP push directory error",  ssh_get_error(_conn->ssh), rc);
+		throw ProtocolError("SCP push directory error", ssh_get_error(_conn->ssh), rc);
 	}
 }
 
@@ -1014,7 +1014,7 @@ public:
 	{
 		int rc = ssh_scp_init(_scp);
 		if (rc != SSH_OK) {
-			throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 		}
 
 		for (;;) {
@@ -1037,7 +1037,7 @@ public:
 				}
 				case SSH_ERROR: {
 					fprintf(stderr, "SSH_ERROR\n");
-					throw ProtocolError("Pull file error",  ssh_get_error(_conn->ssh), rc);
+					throw ProtocolError("Pull file error", ssh_get_error(_conn->ssh), rc);
 				}
 			}
 		}
@@ -1063,7 +1063,7 @@ public:
 		}
 		ssize_t rc = ssh_scp_read(_scp, buf, len);
 		if (rc < 0) {
-			throw ProtocolError("Read file error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("Read file error", ssh_get_error(_conn->ssh), rc);
 
 		} else if ((size_t)rc <= _pending_size) {
 			_pending_size-= (size_t)rc;
@@ -1094,11 +1094,11 @@ public:
 		mode&= 0777;
 		int rc = ssh_scp_init(_scp);
 		if (rc != SSH_OK) {
-			throw ProtocolError("SCP init error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("SCP init error", ssh_get_error(_conn->ssh), rc);
 		}
 		rc = SSH_SCP_PUSH_FILE(_scp, ExtractFileName(path).c_str(), size_hint, mode);
 		if (rc != SSH_OK) {
-			throw ProtocolError("SCP push error",  ssh_get_error(_conn->ssh), rc);
+			throw ProtocolError("SCP push error", ssh_get_error(_conn->ssh), rc);
 		}
 	}
 
@@ -1133,7 +1133,7 @@ public:
 		if (len) {
 			int rc = ssh_scp_write(_scp, buf, len);
 			if (rc != SSH_OK) {
-				throw ProtocolError("SCP write error",  ssh_get_error(_conn->ssh), rc);
+				throw ProtocolError("SCP write error", ssh_get_error(_conn->ssh), rc);
 			}
 		}
 	}

@@ -40,16 +40,16 @@ static std::string smb_username, smb_password, smb_workgroup;
 static void ProtocolSMB_AuthFn(const char *server, const char *share, char *wrkgrp,
 	int wrkgrplen, char *user, int userlen, char *passwd, int passwdlen)
 {
-    (void) server;
-    (void) share;
+	(void) server;
+	(void) share;
 
-    strncpy(wrkgrp, smb_workgroup.c_str(), wrkgrplen - 1);
+	strncpy(wrkgrp, smb_workgroup.c_str(), wrkgrplen - 1);
 	wrkgrp[wrkgrplen - 1] = 0;
 
-    strncpy(user, smb_username.c_str(), userlen - 1);
+	strncpy(user, smb_username.c_str(), userlen - 1);
 	user[userlen - 1] = 0;
 
-    strncpy(passwd, smb_password.c_str(), passwdlen - 1);
+	strncpy(passwd, smb_password.c_str(), passwdlen - 1);
 	passwd[passwdlen - 1] = 0;
 }
 
@@ -71,7 +71,7 @@ ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 //	smbc_setOptionNoAutoAnonymousLogin(_conn->ctx, !password.empty());
 
 	if (smbc_init(&ProtocolSMB_AuthFn, 0) < 0){
-//		smbc_free_context(_conn->ctx,  1);
+//		smbc_free_context(_conn->ctx, 1);
 //		_conn->ctx = nullptr;
 		throw ProtocolError("SMB context init failed", errno);
 	}
@@ -191,14 +191,14 @@ void ProtocolSMB::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	int rc = smbc_mkdir(RootedPath(path).c_str(), mode);
 	if (rc != 0)
-		throw ProtocolError("Create directory error",  errno);
+		throw ProtocolError("Create directory error", errno);
 }
 
 void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_new)
 {
 	int rc = smbc_rename(RootedPath(path_old).c_str(), RootedPath(path_new).c_str());
 	if (rc != 0)
-		throw ProtocolError("Rename error",  errno);
+		throw ProtocolError("Rename error", errno);
 }
 
 
@@ -212,14 +212,14 @@ void ProtocolSMB::SetTimes(const std::string &path, const timespec &access_time,
 
 	int rc = smbc_utimes(RootedPath(path).c_str(), times);
 	if (rc != 0)
-		throw ProtocolError("Set times error",  errno);
+		throw ProtocolError("Set times error", errno);
 }
 
 void ProtocolSMB::SetMode(const std::string &path, mode_t mode)
 {
 	int rc = smbc_chmod(RootedPath(path).c_str(), mode);
 	if (rc != 0)
-		throw ProtocolError("Set mode error",  errno);
+		throw ProtocolError("Set mode error", errno);
 }
 
 void ProtocolSMB::SymlinkCreate(const std::string &link_path, const std::string &link_target)
@@ -399,14 +399,14 @@ public:
 	{
 		_file = smbc_open(protocol->RootedPath(path).c_str(), flags, mode);
 		if (_file == -1)
-			throw ProtocolError("Failed to open file",  errno);
+			throw ProtocolError("Failed to open file", errno);
 
 		if (resume_pos) {
 			off_t rc = smbc_lseek(_file, resume_pos, SEEK_SET);
 			if (rc == (off_t)-1) {
 				smbc_close(_file);
 				_file = -1;
-				throw ProtocolError("Failed to seek file",  errno);
+				throw ProtocolError("Failed to seek file", errno);
 			}
 		}
 	}
@@ -422,7 +422,7 @@ public:
 	{
 		const ssize_t rc = smbc_read(_file, buf, len);
 		if (rc < 0)
-			throw ProtocolError("Read file error",  errno);
+			throw ProtocolError("Read file error", errno);
 		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
 
 		return (size_t)rc;
@@ -433,7 +433,7 @@ public:
 		if (len > 0) for (;;) {
 			const ssize_t rc = smbc_write(_file, buf, len);
 			if (rc <= 0)
-				throw ProtocolError("Write file error",  errno);
+				throw ProtocolError("Write file error", errno);
 			if ((size_t)rc >= len)
 				break;
 

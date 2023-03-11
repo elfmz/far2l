@@ -18,9 +18,9 @@ void SetupFileTimeNDescription(int OpMode,Connection *hConnect,LPCSTR nm,FILETIM
 		return;
 
 	if(IS_FLAG(OpMode,OPM_DESCR) &&
-	        (FileSize=WINPORT(GetFileSize)(SrcFile,NULL)) != 0xFFFFFFFFUL)
+		(FileSize=WINPORT(GetFileSize)(SrcFile,NULL)) != 0xFFFFFFFFUL)
 	{
-		Buf      = (BYTE*)malloc(sizeof(BYTE)*FileSize);
+		Buf = (BYTE*)malloc(sizeof(BYTE)*FileSize);
 		WINPORT(ReadFile)(SrcFile,Buf,FileSize,&FileSize,NULL);
 		DWORD WriteSize = FileSize;//hConnect->ToOEM(Buf,FileSize);
 		WINPORT(SetFilePointer)(SrcFile,0,NULL,FILE_BEGIN);
@@ -42,7 +42,7 @@ int FTP::_FtpGetFile(LPCSTR lpszRemoteFile,LPCSTR lpszNewFile,BOOL Reget,int Asc
 	*/
 	FixLocalSlash((char*)lpszNewFile);   //Hack it to (char*).
 	FtpSetRetryCount(hConnect,0);
-	int   rc;
+	int rc;
 
 	do
 	{
@@ -81,7 +81,7 @@ int FTP::_FtpGetFile(LPCSTR lpszRemoteFile,LPCSTR lpszNewFile,BOOL Reget,int Asc
 		Reget = TRUE;
 
 		if(FtpCmdLineAlive(hConnect) &&
-		        FtpKeepAlive(hConnect))
+				FtpKeepAlive(hConnect))
 			continue;
 
 		SaveUsedDirNFile();
@@ -101,7 +101,7 @@ int FTP::GetFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,Str
 	FP_SizeItemList FilesList;
 	FilesList.Add(PanelItem,ItemsNumber);
 	int rc = GetFilesInterface(FilesList.Items(), FilesList.Count(),
-	                           Move, DestPath, OpMode);
+		Move, DestPath, OpMode);
 	FtpCmdBlock(hConnect, FALSE);
 
 	if(rc == FALSE || rc == -1)
@@ -352,8 +352,8 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 		if(DestAttr != MAX_DWORD)
 		{
 			ci.MsgCode = AskOverwrite(ci.FTPRename ? MRenameTitle : MDownloadTitle, TRUE,
-			                          &FindData.FindData, &CurPanelItem->FindData, ci.MsgCode,
-			                          ((CurTime.dwLowDateTime || CurTime.dwHighDateTime) && (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
+				&FindData.FindData, &CurPanelItem->FindData, ci.MsgCode,
+				((CurTime.dwLowDateTime || CurTime.dwHighDateTime) && (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
 			LastMsgCode = ci.MsgCode;
 
 			switch(ci.MsgCode)
@@ -399,9 +399,9 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 			if(!FtpRenameFile(hConnect,CurName,DestName.c_str()))
 			{
 				FtpConnectMessage(hConnect,
-				                  MErrRename,
-				                  Message("\"%s\" to \"%s\"",CurName,DestName.c_str()),
-				                  -MOk);
+					MErrRename,
+					Message("\"%s\" to \"%s\"",CurName,DestName.c_str()),
+					-MOk);
 				return FALSE;
 			}
 			else
@@ -414,8 +414,8 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem,int ItemsNumber,int
 
 //Do download
 			if((rc=_FtpGetFile(CurName, DestName.c_str(),
-			                   ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
-			                   ci.asciiMode)) == TRUE)
+				ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
+				ci.asciiMode)) == TRUE)
 			{
 				/*! FAR has a bug, so PanelItem stored in internal structure.
 				    Because of this flags PPIF_SELECTED and PPIF_PROCESSDESCR has no effect at all.

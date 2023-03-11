@@ -35,7 +35,7 @@ void OpMakeDirectory::Process()
 {
 	std::string full_path = _base_dir;
 	full_path+= _dir_name;
-	for (size_t i = _base_dir.size();  i <= full_path.size(); ++i) {
+	for (size_t i = _base_dir.size(); i <= full_path.size(); ++i) {
 		if (i == full_path.size() || full_path[i] == '/') {
 			const std::string &component = full_path.substr(0, i);
 			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _base_host.get(), _base_dir,

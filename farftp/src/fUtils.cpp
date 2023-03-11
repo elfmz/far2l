@@ -92,7 +92,7 @@ void FTP::FTP_FixPaths(LPCSTR base, PluginPanelItem *p, int cn, BOOL FromPlugin)
 		char *CurName = FTP_FILENAME(p);
 
 		if(StrCmp(CurName,"..") == 0 ||
-		        StrCmp(CurName,".") == 0)
+				StrCmp(CurName,".") == 0)
 			continue;
 
 		str.printf("%s%c%s", base, '/', CurName);
@@ -114,7 +114,7 @@ int FTP::ExpandList(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL FromPlu
 	int              rc;
 	{
 		FTPConnectionBreakable _brk(hConnect,FALSE);
-		CurrentState  = fcsExpandList;
+		CurrentState = fcsExpandList;
 
 		if(hConnect)
 		{
@@ -133,7 +133,7 @@ int FTP::ExpandList(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL FromPlu
 			hConnect->CurrentState    = olds;
 		}
 
-		CurrentState  = olds;
+		CurrentState = olds;
 	}
 	Log(("ExpandList rc=%d",rc));
 #if defined(__FILELOG__)
@@ -285,7 +285,7 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 		CurName = FTP_FILENAME(&pi[n]);
 
 		if(StrCmp(CurName,"..") == 0 ||
-		        StrCmp(CurName,".") == 0)
+				StrCmp(CurName,".") == 0)
 			continue;
 
 //============
@@ -353,9 +353,9 @@ int FTP::ExpandListINT(PluginPanelItem *pi,int icn,FP_SizeItemList* il,BOOL From
 
 			if(il)
 				str.printf("%sb in %u: %s",
-				           FDigit(digit,il->TotalFullSize,-1),
-				           (int)il->TotalFiles,
-				           CurName);
+					FDigit(digit,il->TotalFullSize,-1),
+					(int)il->TotalFiles,
+					CurName);
 			else
 				str = CurName;
 
@@ -459,10 +459,10 @@ void FTP::CopyNamesToClipboard(void)
 
 	for(CopySize = n = 0; n < pi.SelectedItemsNumber; n++)
 		CopySize += FullName.Length() +
-		            1/* / */ +
-		            static_cast<int>(strlen(FTP_FILENAME(&pi.SelectedItems[n]))) +
-		            2/*quote*/ +
-		            2/* \r\n */;
+			1/* / */ +
+			static_cast<int>(strlen(FTP_FILENAME(&pi.SelectedItems[n]))) +
+			2/*quote*/ +
+			2/* \r\n */;
 
 	if(!CopyData.Alloc(CopySize+2))
 		return;

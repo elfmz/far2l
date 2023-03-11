@@ -5,11 +5,11 @@
 
 BOOL FTP::DoFtpConnect(int blocked)
 {
-	char  hst[FAR_MAX_NAME],
-	   usr[FAR_MAX_NAME],
-	   pwd[FAR_MAX_NAME];
+	char hst[FAR_MAX_NAME],
+		usr[FAR_MAX_NAME],
+		pwd[FAR_MAX_NAME];
 	const char *m;
-	BOOL  askPwd = Host.AskLogin;
+	BOOL askPwd = Host.AskLogin;
 	hConnect = NULL;
 	WINPORT(SetLastError)(ERROR_SUCCESS);
 
@@ -89,7 +89,7 @@ BOOL FTP::DoFtpConnect(int blocked)
 		Log(("!Init"));
 
 		if(!hConnect->LoginComplete &&
-		        Opt.AskLoginFail && hConnect->GetResultCode() == 530)
+			Opt.AskLoginFail && hConnect->GetResultCode() == 530)
 		{
 			Log(("Reask password"));
 			hConnect->Host.ExtCmdView = TRUE;
@@ -149,7 +149,7 @@ int FTP::Connect()
 		}
 
 		if(!DoFtpConnect(cst.Inited ? cst.Blocked : (-1)) ||
-		        !hConnect)
+			!hConnect)
 		{
 			Log(("!Connected"));
 			break;

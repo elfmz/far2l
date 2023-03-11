@@ -32,8 +32,8 @@ SArg::~SArg()
 
 SArg::SArg(const SArg &a)
 {
-	type = a.type;
-	arg  = a.arg;
+	type  = a.type;
+	arg   = a.arg;
 	v_big = a.v_big;
 	empty = a.empty;
 }
@@ -288,7 +288,7 @@ SArg operator| (const SArg & op1, const SArg & op2)
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		{ Big bi = op1.GetInt(); if (bi.BitOr(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+		{ Big bi = op1.GetInt(); if (bi.BitOr(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -309,7 +309,7 @@ SArg operator^ (const SArg & op1, const SArg & op2)
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		{ Big bi = op1.GetInt(); if (bi.BitXor(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+		{ Big bi = op1.GetInt(); if (bi.BitXor(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -330,7 +330,7 @@ SArg operator& (const SArg & op1, const SArg & op2)
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		{	Big bi = op1.GetInt(); if (bi.BitAnd(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+		{	Big bi = op1.GetInt(); if (bi.BitAnd(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -389,17 +389,17 @@ SArg SArg::Ror(const SArg & op) const
 	int sh2 = varsize()*8 - sh;
 	switch(type)
 	{
-	case SA_INT64:  
+	case SA_INT64:
 		return (int64_t)((int64_t)(arg.v_int64>>sh) | (int64_t)(arg.v_int64<<sh2));
 	case SA_UINT64:
 		return (uint64_t)((uint64_t)(arg.v_uint64>>sh) | (uint64_t)(arg.v_uint64<<sh2));
-	case SA_INT: 
+	case SA_INT:
 		return (int)((int)(arg.v_int>>sh) | (int)(arg.v_int<<sh2));
-	case SA_UINT:  
+	case SA_UINT:
 		return (unsigned int)((unsigned int)(arg.v_uint>>sh) | (unsigned int)(arg.v_uint<<sh2));
 	case SA_SHORT:
 		return (short)((short)(arg.v_short>>sh) | (short)(arg.v_short<<sh2));
-	case SA_USHORT: 
+	case SA_USHORT:
 		return (unsigned short)((unsigned short)(arg.v_ushort>>sh) | (unsigned short)(arg.v_ushort<<sh2));
 	case SA_CHAR:
 		return (char)((char)(arg.v_char>>sh) | (char)(arg.v_char<<sh2));
@@ -417,17 +417,17 @@ SArg SArg::Rol(const SArg & op) const
 	int sh2 = varsize()*8 - sh;
 	switch(type)
 	{
-	case SA_INT64:  
+	case SA_INT64:
 		return (int64_t)((int64_t)(arg.v_int64<<sh) | (int64_t)(sh2 ? arg.v_int64>>sh2 : 0));
 	case SA_UINT64:
 		return (uint64_t)((uint64_t)(arg.v_uint64<<sh) | (uint64_t)(sh2 ? arg.v_uint64>>sh2 : 0));
-	case SA_INT: 
+	case SA_INT:
 		return (int)((int)(arg.v_int<<sh) | (int)(sh2 ? arg.v_int>>sh2 : 0));
-	case SA_UINT:  
+	case SA_UINT:
 		return (unsigned int)((unsigned int)(arg.v_uint<<sh) | (unsigned int)(sh2 ? arg.v_uint>>sh2 : 0));
 	case SA_SHORT:
 		return (short)((short)(arg.v_short<<sh) | (short)(sh2 ? arg.v_short>>sh2 : 0));
-	case SA_USHORT: 
+	case SA_USHORT:
 		return (unsigned short)((unsigned short)(arg.v_ushort<<sh) | (unsigned short)(sh2 ? arg.v_ushort>>sh2 : 0));
 	case SA_CHAR:
 		return (char)((char)(arg.v_char<<sh) | (char)(sh2 ? arg.v_char>>sh2 : 0));

@@ -2,7 +2,7 @@
 #define __FAR_PLUGIN_FTP
 
 #include <utils.h>
-#include "fstdlib.h"         //FAR plugin stdlib
+#include "fstdlib.h"     //FAR plugin stdlib
 #include "lib/Plugin.h"  //Plugin
 
 #include "Plugins.h"   //plugins
@@ -58,7 +58,7 @@ extern BOOL     WINAPI FTestFind(LPCSTR nm,FAR_FIND_DATA* ufd = NULL);
 extern BOOL     WINAPI FRealFile(LPCSTR nm,FAR_FIND_DATA* ufd = NULL);
 
 extern int      WINAPI FMessage(unsigned int Flags,LPCSTR HelpTopic,LPCSTR *Items,
-                                int ItemsNumber,int ButtonsNumber);
+	int ItemsNumber,int ButtonsNumber);
 extern int      WINAPI FDialog(int X2,int Y2,LPCSTR HelpTopic,struct FarDialogItem *Item,int ItemsNumber);
 extern int      WINAPI FDialogEx(int X2,int Y2,LPCSTR HelpTopic,struct FarDialogItem *Item,int ItemsNumber, DWORD Flags = 0,FARWINDOWPROC DlgProc = (FARWINDOWPROC)(size_t)-1,LONG_PTR Param = 0);
 

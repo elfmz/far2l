@@ -4,16 +4,16 @@
 
 void SetSocketBlockingEnabled(int fd, bool blocking)
 {
-   if (fd < 0) return;
+	if (fd < 0) return;
 
 #ifdef WIN32
-   unsigned long mode = blocking ? 0 : 1;
-   ioctlsocket(fd, FIONBIO, &mode);
+	unsigned long mode = blocking ? 0 : 1;
+	ioctlsocket(fd, FIONBIO, &mode);
 #else
-   if (blocking)
-     MakeFDBlocking(fd);
-   else
-     MakeFDNonBlocking(fd);
+	if (blocking)
+		MakeFDBlocking(fd);
+	else
+		MakeFDNonBlocking(fd);
 #endif
 }
 

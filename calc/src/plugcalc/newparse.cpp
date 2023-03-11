@@ -33,11 +33,11 @@ void MathOpNameCallback(std::wstring name)
 }
 
 
-PSyntax CalcParser::Consts = NULL;
-PVars CalcParser::Vars   = NULL;
-PSyntax CalcParser::Ops    = NULL;
-PSyntax CalcParser::Functs = NULL;
-PSyntax CalcParser::Addons = NULL;
+PSyntax CalcParser::Consts   = NULL;
+PVars CalcParser::Vars       = NULL;
+PSyntax CalcParser::Ops      = NULL;
+PSyntax CalcParser::Functs   = NULL;
+PSyntax CalcParser::Addons   = NULL;
 PSyntax CalcParser::Numerals = NULL;
 std::vector<CalcAddon> CalcParser::addons;
 unsigned CalcParser::main_addons_num = 0;
@@ -519,10 +519,10 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 		sm_end = sm.e[0];
 #else
 		const wchar_t *sm_b, *sm_e;
-		sm_res = trex_search(tmp->re, curpos, &sm_b, &sm_e) != 0;
+		sm_res   = trex_search(tmp->re, curpos, &sm_b, &sm_e) != 0;
 		sm_begin = (int)(sm_b - curpos);
 		sm_end   = (int)(sm_e - curpos);
-		sm_num = trex_getsubexpcount(tmp->re);
+		sm_num   = trex_getsubexpcount(tmp->re);
 #endif
 
 		if (sm_res && sm_num >= 0 && sm_begin == 0 && sm_end > 0 && (sm_end - sm_begin) > max_match)
@@ -868,9 +868,9 @@ bool CalcParser::InitTables(int rep_fraction_max_start, int rep_fraction_max_per
 {
 	int i;
 	if (Consts)   delete Consts;
-	if (Ops)    delete Ops;
-	if (Functs) delete Functs;
-	if (Addons) delete Addons;
+	if (Ops)      delete Ops;
+	if (Functs)   delete Functs;
+	if (Addons)   delete Addons;
 	if (Numerals) delete Numerals;
 	Consts = Ops = Functs = Addons = Numerals = NULL;
 
@@ -1078,7 +1078,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 			}
 			else if (scale != NULL)
 			{
-				//  check if constant expression is used
+				// check if constant expression is used
 				std::wstring tmpscale = ReplaceDelims(scale);
 				const wchar_t *s = tmpscale.c_str();
 				size_t st = wcsspn(s, L" \t+-");
@@ -1606,11 +1606,11 @@ void print_string(std::wstring & s, SArg val, int radix, int num_lim, bool appen
 	
 	if (radix == CALC_RADIX_EXPONENTIAL)			// decimal-exponential
 		val.GetBig().ToString(s, 10, true, 0, num_lim, true, CalcParser::delim_decimal);
-	else if (radix == CALC_RADIX_REPEATING)		//  repeating decimal (decimal periodic fractions)
+	else if (radix == CALC_RADIX_REPEATING)		// repeating decimal (decimal periodic fractions)
 	{
 		print_repeating_decimal(s, val, num_lim, group_delim);
 	}
-	else if (radix == CALC_RADIX_CONTINUED)		//  repeating decimal (decimal periodic fractions)
+	else if (radix == CALC_RADIX_CONTINUED)		// repeating decimal (decimal periodic fractions)
 	{
 		print_continued_decimal(s, val, num_lim, group_delim);
 	}
@@ -1677,7 +1677,7 @@ wchar_t *convertToString(const SArg & val, int type_idx, int num_lim, bool appen
 	}
 	else if (type_idx == CALC_CONV_UNITS)
 	{
-		static const Big e10[5] =  { Big(L"1e10"),  Big(L"1e20"),  Big(L"1e30"),  Big(L"1e40"),  Big(L"1e50"), };
+		static const Big e10[5]  = { Big(L"1e10"),  Big(L"1e20"),  Big(L"1e30"),  Big(L"1e40"),  Big(L"1e50"), };
 		static const Big e_10[5] = { Big(L"1e-10"), Big(L"1e-20"), Big(L"1e-30"), Big(L"1e-40"), Big(L"1e-50"), };
 
 		Big b = val.GetBig();

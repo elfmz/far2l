@@ -31,7 +31,7 @@ WORD     FTPDirList::DetectDirStringType(FTPServerInfo * const Server,LPCSTR Lis
 
 //------------------------------------------------------------------------
 FTPInterface Interface;
-static BOOL         InterfaceInited = FALSE;
+static BOOL InterfaceInited = FALSE;
 
 //------------------------------------------------------------------------
 HANDLE _cdecl idProcStart(LPCSTR FunctionName,LPCSTR Format,...)
@@ -146,10 +146,10 @@ FTPPluginInterface* WINAPI FTPPluginGetInterface_Notify(void);
 
 struct FTPPluginsInfo
 {
-	DWORD            Magic;
+	DWORD               Magic;
 	FTPPluginInterface* interface;
-	FTPPluginHolder* Holder;
-	LPCSTR         Description;
+	FTPPluginHolder*    Holder;
+	LPCSTR              Description;
 } StdPlugins[] =
 {
 
@@ -197,8 +197,8 @@ FTPPluginHolder* GetPluginHolder(WORD Number)
 
 BOOL PluginAvailable(WORD Number)
 {
-	return Number < ARRAYSIZE(StdPlugins)-1 &&
-	       StdPlugins[Number].Holder;
+	return  Number < ARRAYSIZE(StdPlugins)-1 &&
+			StdPlugins[Number].Holder;
 }
 
 //------------------------------------------------------------------------

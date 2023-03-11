@@ -3164,13 +3164,13 @@ void Viewer::GoTo(int ShowDlg,int64_t Offset, DWORD Flags)
 			if (GoToDlg[RB_HEX].Selected)
 			{
 				PrevMode=1;
-				swscanf(GoToDlg[1].strData,L"%llx",&Offset);
+				Offset = wcstoull(GoToDlg[1].strData, nullptr, 16);
 			}
 
 			if (GoToDlg[RB_DEC].Selected)
 			{
 				PrevMode=2;
-				swscanf(GoToDlg[1].strData,L"%lld",&Offset);
+				Offset = wcstoull(GoToDlg[1].strData, nullptr, 10);
 			}
 		}// ShowDlg
 		else
@@ -3578,18 +3578,18 @@ int Viewer::ViewerControl(int Command,void *Param)
 			   не является панелью информации и быстрого просмотра (т.е.
 			   фактически панелей на экране не видно)
 			*/
-			if (!FrameManager->IsPanelsActive())
-			{
-				/* $ 29.09.2002 IS
-				   без этого не закрывался вьюер, а просили именно это
-				*/
-				FrameManager->DeleteFrame(HostFileViewer);
+			if (FrameManager->IsPanelsActive())
+				return FALSE;
 
-				if (HostFileViewer)
-					HostFileViewer->SetExitCode(0);
+			/* $ 29.09.2002 IS
+			   без этого не закрывался вьюер, а просили именно это
+			*/
+			FrameManager->DeleteFrame(HostFileViewer);
 
-				return TRUE;
-			}
+			if (HostFileViewer)
+				HostFileViewer->SetExitCode(0);
+
+			return TRUE;
 		}
 		/* Функция установки режимов
 		     Param = ViewerSetMode

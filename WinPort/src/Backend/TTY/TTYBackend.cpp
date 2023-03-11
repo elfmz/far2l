@@ -203,7 +203,7 @@ void TTYBackend::ReaderThread()
 
 
 		pthread_t writer_trd = 0;
-		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) == -1) {
+		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) != 0) {
 			break;
 		}
 

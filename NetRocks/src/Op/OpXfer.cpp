@@ -521,9 +521,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 						info.size = actual_size;
 						throw std::runtime_error("Retrieved less data than expected");
 					}
-					if (file_complete >= actual_size) {
-						info.size = file_complete;
-					}
+					info.size = file_complete;
 				}
 
 				indicted = _dst_host.get();

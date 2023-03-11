@@ -18,7 +18,7 @@ void AddWait(time_t tm)
 {
 	for(int n = 0; n < 3; n++)
 		if(FTPPanels[n] && FTPPanels[n]->hConnect &&
-		        FTPPanels[n]->hConnect->IOCallback)
+				FTPPanels[n]->hConnect->IOCallback)
 			FTPPanels[n]->hConnect->TrafficInfo->Waiting(tm);
 }
 
@@ -59,7 +59,7 @@ void WINAPI QuoteStr(char *str)
 
 void WINAPI QuoteStr(String& str)
 {
-	String  buff;
+	String buff;
 
 	if(str.Chr(quotes) == -1)
 		return;
@@ -167,9 +167,9 @@ BOOL WINAPI FTestOpen(LPCSTR nm)
 	HANDLE f;
 	BOOL   rc;
 	f = WINPORT(CreateFile)(MB2Wide(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-	rc = f &&
-	     f != INVALID_HANDLE_VALUE &&
-	     WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
+	rc =    f &&
+			f != INVALID_HANDLE_VALUE &&
+			WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
 	WINPORT(CloseHandle)(f);
 	return rc;
 }
@@ -179,9 +179,9 @@ BOOL WINAPI FRealFile(LPCSTR nm,FAR_FIND_DATA* fd)
 	HANDLE f;
 	BOOL   rc;
 	f = WINPORT(CreateFile)(MB2Wide(nm).c_str(), 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-	rc = f &&
-	     f != INVALID_HANDLE_VALUE &&
-	     WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
+	rc =    f &&
+			f != INVALID_HANDLE_VALUE &&
+			WINPORT(GetFileType)(f) == FILE_TYPE_DISK;
 
 	if(rc && fd)
 	{
@@ -361,11 +361,11 @@ int64_t WINAPI Fsize(HANDLE File)
 
 BOOL WINAPI Fmove(HANDLE file,int64_t restart)
 {
-	LONG lo = (DWORD)(restart & MAX_DWORD),
-	     hi = (DWORD)((restart >> 32) & MAX_DWORD);
+	LONG    lo = (DWORD)(restart & MAX_DWORD),
+			hi = (DWORD)((restart >> 32) & MAX_DWORD);
 
 	if(WINPORT(SetFilePointer)(file,lo,&hi,FILE_BEGIN) == 0xFFFFFFFF &&
-	        WINPORT(GetLastError)() != NO_ERROR)
+			WINPORT(GetLastError)() != NO_ERROR)
 		return FALSE;
 
 	return TRUE;
@@ -391,18 +391,18 @@ BOOL WINAPI Ftrunc(HANDLE h,DWORD move)
 
 HANDLE WINAPI Fopen(LPCSTR nm,LPCSTR mode /*R|W|A[+]*/, DWORD attr)
 {
-	BOOL   rd  = toupper(mode[0]) == 'R';
+	BOOL   rd = toupper(mode[0]) == 'R';
 	HANDLE h;
 
 	if(rd)
 		h = WINPORT(CreateFile)(MB2Wide(nm).c_str(), GENERIC_READ,
-		               FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, attr, NULL);
+			FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, attr, NULL);
 	else
 		h = WINPORT(CreateFile)(MB2Wide(nm).c_str(), GENERIC_WRITE,
-		               FILE_SHARE_READ, NULL, OPEN_ALWAYS, attr, NULL);
+			FILE_SHARE_READ, NULL, OPEN_ALWAYS, attr, NULL);
 
 	if(!h ||
-	        h == INVALID_HANDLE_VALUE)
+			h == INVALID_HANDLE_VALUE)
 		return NULL;
 
 	do
@@ -416,7 +416,7 @@ HANDLE WINAPI Fopen(LPCSTR nm,LPCSTR mode /*R|W|A[+]*/, DWORD attr)
 		}
 
 		if(!rd)
-			WINPORT(SetEndOfFile)(h);  //Ignore SetEndOfFile result in case of use with CON, NUL and others
+			WINPORT(SetEndOfFile)(h); //Ignore SetEndOfFile result in case of use with CON, NUL and others
 
 		return h;
 	}
@@ -446,7 +446,7 @@ void DMessage(LPCSTR str,BOOL full,int color,int y)
 	{
 		StrCpy(err, str, ARRAYSIZE(err));
 		int len = (int)strlen(err),
-		    w   = Min((int)ARRAYSIZE(err)-1, FP_ConWidth()-4);
+			w   = Min((int)ARRAYSIZE(err)-1, FP_ConWidth()-4);
 
 		while(len < w) err[len++] = ' ';
 
@@ -569,7 +569,7 @@ void WINAPI DelEndSlash(String& p,char shash)
 	int len;
 
 	if((len=p.Length()-1) >= 0 &&
-	        p[len] == shash)
+			p[len] == shash)
 		p.SetLength(len);
 }
 
@@ -591,7 +591,7 @@ char* WINAPI TruncStr(char *Str,int MaxLength)
 	int Length;
 
 	if((Length=static_cast<int>(strlen(Str)))>MaxLength)
-      {
+	{
 		if(MaxLength>3)
 		{
 			char *TmpStr=new char[MaxLength+5];
@@ -601,7 +601,7 @@ char* WINAPI TruncStr(char *Str,int MaxLength)
 		}
 		else
 			Str[MaxLength]=0;
-      }
+	}
 
 	return(Str);
 }
@@ -635,7 +635,7 @@ BOOL WINAPI CheckForEsc(BOOL isConnection,BOOL IgnoreSilent)
 		return FALSE;
 
 	rc = !Opt.AskAbort ||
-	     AskYesNo(FMSG(isConnection ? MTerminateConnection : MTerminateOp));
+		AskYesNo(FMSG(isConnection ? MTerminateConnection : MTerminateOp));
 
 	if(rc)
 	{

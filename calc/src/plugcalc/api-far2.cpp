@@ -100,7 +100,7 @@ public:
 	{
 		Info->SendDlgMessage(hdlg, DM_ADDHISTORY, id, (LONG_PTR)str.c_str());
 	}
-	virtual bool  IsChecked(DLGHANDLE hdlg, int id)
+	virtual bool IsChecked(DLGHANDLE hdlg, int id)
 	{
 		return ((int)Info->SendDlgMessage(hdlg, DM_GETCHECK, id, 0) == BSTATE_CHECKED);
 	}

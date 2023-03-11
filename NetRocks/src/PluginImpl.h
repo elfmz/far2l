@@ -18,7 +18,7 @@ class PluginImpl
 	Location _location;
 	bool _allow_remember_location_dir = false;
 
-	SitesConfigLocation  _sites_cfg_location;
+	SitesConfigLocation _sites_cfg_location;
 	std::wstring _standalone_config;
 
 	std::shared_ptr<IHost> _remote;
@@ -28,7 +28,7 @@ class PluginImpl
 	{
 		std::shared_ptr<IHost> remote;
 		Location location;
-		SitesConfigLocation  sites_cfg_location;
+		SitesConfigLocation sites_cfg_location;
 		std::wstring standalone_config;
 	};
 

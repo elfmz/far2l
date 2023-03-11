@@ -27,7 +27,7 @@ BOOL idDeleteCB(PluginPanelItem* p,LPVOID dt)
 	if(IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 	{
 		if(!((DeleteData*)dt)->DeleteAllFolders &&
-		        IS_SILENT(((DeleteData*)dt)->OpMode))
+			IS_SILENT(((DeleteData*)dt)->OpMode))
 		{
 			LPCSTR MsgItems[]=
 			{
@@ -37,8 +37,8 @@ BOOL idDeleteCB(PluginPanelItem* p,LPVOID dt)
 				FP_GetMsg(MDeleteGroupDelete), FP_GetMsg(MDeleteGroupAll), FP_GetMsg(MDeleteGroupCancel)
 			};
 			rres = FMessage(FMSG_WARNING|FMSG_DOWN, NULL,
-			                MsgItems, ARRAYSIZE(MsgItems),
-			                3);
+				MsgItems, ARRAYSIZE(MsgItems),
+				3);
 
 			switch(rres)
 			{
@@ -108,7 +108,8 @@ BOOL idDeleteCB(PluginPanelItem* p,LPVOID dt)
 
 		switch(rres)
 		{
-			/*skip*/     case 0:
+			/*skip*/
+			case 0:
 				Log(("Skip"));
 				return TRUE;
 				/*skip all*/
@@ -133,7 +134,7 @@ int FTP::DeleteFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber,int Op
 
 	if(!hConnect && !ShowHosts) return FALSE;
 
-	if(ItemsNumber == 0)       return FALSE;
+	if(ItemsNumber == 0)        return FALSE;
 
 	//Ask
 	if(!IS_SILENT(OpMode))
@@ -153,7 +154,7 @@ int FTP::DeleteFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber,int Op
 		{
 			String Msg;
 			Msg.printf(ShowHosts ? FP_GetMsg(MDeleteNumberOfHosts) : FP_GetMsg(MDeleteNumberOfFiles) ,
-			           ItemsNumber);
+				ItemsNumber);
 			MsgItems[1] = Msg.c_str();
 			rres = FMessage(FMSG_WARNING|FMSG_DOWN,NULL,MsgItems,ARRAYSIZE(MsgItems),2);
 

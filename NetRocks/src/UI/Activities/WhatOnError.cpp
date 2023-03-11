@@ -22,18 +22,18 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 {
 	int title_lng;
 	switch (wek) {
-		case WEK_DOWNLOAD:  title_lng = MErrorDownloadTitle; break;
-		case WEK_UPLOAD:    title_lng = MErrorUploadTitle; break;
-		case WEK_CROSSLOAD: title_lng = MErrorCrossloadTitle; break;
-		case WEK_QUERYINFO: title_lng = MErrorQueryInfoTitle; break;
-		case WEK_CHECKDIR:  title_lng = MErrorCheckDirTitle; break;
-		case WEK_ENUMDIR:   title_lng = MErrorEnumDirTitle; break;
-		case WEK_MAKEDIR:   title_lng = MErrorMakeDirTitle; break;
-		case WEK_RENAME:    title_lng = MErrorRenameTitle; break;
-		case WEK_REMOVE:    title_lng = MErrorRemoveTitle; break;
-		case WEK_SETTIMES:  title_lng = MErrorSetTimes; break;
-		case WEK_CHMODE:    title_lng = MErrorChangeMode; break;
-		case WEK_SYMLINK_QUERY:     title_lng = MErrorSymlinkQuery; break;
+		case WEK_DOWNLOAD:           title_lng = MErrorDownloadTitle; break;
+		case WEK_UPLOAD:             title_lng = MErrorUploadTitle; break;
+		case WEK_CROSSLOAD:          title_lng = MErrorCrossloadTitle; break;
+		case WEK_QUERYINFO:          title_lng = MErrorQueryInfoTitle; break;
+		case WEK_CHECKDIR:           title_lng = MErrorCheckDirTitle; break;
+		case WEK_ENUMDIR:            title_lng = MErrorEnumDirTitle; break;
+		case WEK_MAKEDIR:            title_lng = MErrorMakeDirTitle; break;
+		case WEK_RENAME:             title_lng = MErrorRenameTitle; break;
+		case WEK_REMOVE:             title_lng = MErrorRemoveTitle; break;
+		case WEK_SETTIMES:           title_lng = MErrorSetTimes; break;
+		case WEK_CHMODE:             title_lng = MErrorChangeMode; break;
+		case WEK_SYMLINK_QUERY:      title_lng = MErrorSymlinkQuery; break;
 		case WEK_SYMLINK_CREATE:     title_lng = MErrorSymlinkCreate; break;
 
 		default:

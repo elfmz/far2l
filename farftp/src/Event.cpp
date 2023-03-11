@@ -15,8 +15,8 @@ int FTP::ProcessEvent(int Event,void *Param)
 	pi.PanelItems = NULL;
 
 	if(Event == FE_BREAK ||
-	        CurrentState == fcsClose ||
-	        CurrentState == fcsConnecting)
+		CurrentState == fcsClose ||
+		CurrentState == fcsConnecting)
 	{
 		Log(("Skip event"));
 		return FALSE;
@@ -55,7 +55,7 @@ int FTP::ProcessEvent(int Event,void *Param)
 				if(ShowHosts)
 				{
 					if((p=FTPHost::Convert(&pi.PanelItems[n])) == NULL ||
-					        !SelectFile.Cmp(PointToName(p->RegKey)))
+							!SelectFile.Cmp(PointToName(p->RegKey)))
 						continue;
 				}
 				else
@@ -110,11 +110,11 @@ int FTP::ProcessEvent(int Event,void *Param)
 	}
 
 //Keep alive
-	if(Event == FE_IDLE          &&
-	        !ShowHosts                &&
-	        FtpCmdLineAlive(hConnect) &&
-	        KeepAlivePeriod           &&
-	        FP_PeriodEnd(KeepAlivePeriod))
+	if(Event == FE_IDLE           &&
+		!ShowHosts                &&
+		FtpCmdLineAlive(hConnect) &&
+		KeepAlivePeriod           &&
+		FP_PeriodEnd(KeepAlivePeriod))
 	{
 		Log(("Keep alive"));
 		FTPCmdBlock blocked(this,TRUE);

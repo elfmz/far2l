@@ -174,7 +174,7 @@ public:
 		_di[_i_compression].ListItems = _di_compression.Get();
 		_di.NextLine();
 
-		if (!scp)  {
+		if (!scp) {
 			_i_use_custom_subsystem = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSFTPCustomSubsystem);
 			_di.NextLine();
 			_i_custom_subsystem = _di.AddAtLine(DI_EDIT, 5,62, 0, "");

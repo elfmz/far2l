@@ -94,9 +94,6 @@ XferOverwriteAction ConfirmOverwrite::Ask(XferOverwriteAction &default_xoa)
 
 	} else if (r == _i_create_diff_name) {
 		out = XOA_CREATE_DIFFERENT_NAME;
-
-	} else if (r == _i_create_diff_name) {
-		out = XOA_CREATE_DIFFERENT_NAME;
 	}
 
 	if (out != XOA_CANCEL && IsCheckedDialogControl(_i_remember)) {

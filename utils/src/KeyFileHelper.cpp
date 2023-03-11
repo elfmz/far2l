@@ -90,6 +90,9 @@ KeyFileValues * FN_NOINLINE KeyFileReadHelper::Sections::Ensure(const std::strin
 {
 	auto ir = _map.emplace(section, KeyFileValues());
 	if (ir.second) {
+		if (_ordered.empty()) {
+			_ordered.reserve(16);
+		}
 		_ordered.emplace_back(ir.first);
 	}
 	return &ir.first->second;

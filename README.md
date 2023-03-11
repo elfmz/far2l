@@ -2,7 +2,7 @@
 
 # far2l [![tag](https://img.shields.io/github/tag/elfmz/far2l.svg)](https://github.com/elfmz/far2l/tags)
 Linux fork of FAR Manager v2 (http://farmanager.com/)   
-Works also on OSX/MacOS and BSD (but later not tested on regular manner)   
+Works also on OSX/MacOS and BSD (but latter not tested on regular manner)   
 BETA VERSION.   
 **Use on your own risk!**
 

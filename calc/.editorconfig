@@ -1,3 +1,6 @@
+[*.rc]
+indent_style = space
+
 [src/shared/sgml/*]
 indent_style = space
 indent_size = 2

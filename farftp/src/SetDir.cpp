@@ -211,7 +211,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 	{
 		//Back from root
 		if(Opt.CloseDots &&
-		        (OldDir[0] == '/' || OldDir[0] == '*') && OldDir[1] == 0)
+			(OldDir[0] == '/' || OldDir[0] == '*') && OldDir[1] == 0)
 		{
 			if(!IS_SILENT(OpMode))
 				BackToHosts();
@@ -272,7 +272,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 		}
 
 		if(!hConnect ||
-		        WINPORT(GetLastError)() == ERROR_CANCELLED)
+			WINPORT(GetLastError)() == ERROR_CANCELLED)
 		{
 			rc = FALSE;
 			break;
@@ -285,7 +285,7 @@ int FTP::SetDirectory(LPCSTR Dir,int OpMode)
 		}
 
 		if(FtpCmdLineAlive(hConnect) &&
-		        FtpKeepAlive(hConnect))
+				FtpKeepAlive(hConnect))
 			continue;
 
 		SaveUsedDirNFile();

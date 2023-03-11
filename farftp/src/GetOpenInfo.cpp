@@ -67,7 +67,7 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 		pi->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	else
 		pi->Flags = OPIF_ADDDOTS | OPIF_USEFILTER | OPIF_USESORTGROUPS | OPIF_USEHIGHLIGHTING |
-		            OPIF_SHOWPRESERVECASE;
+			OPIF_SHOWPRESERVECASE;
 
 	Log(("SetFlags %08X", pi->Flags));
 //---------------- HOST, CURDIR
@@ -80,11 +80,11 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 
 	if(ShowHosts)
 		snprintf(PanelTitle, ARRAYSIZE(PanelTitle),
-		          " FTP: %s ", pi->CurDir);
+			" FTP: %s ", pi->CurDir);
 	else
 		snprintf(PanelTitle, ARRAYSIZE(PanelTitle),
-		          (hConnect&&hConnect->Host.ServerType==FTP_TYPE_MVS)? " FTP: %s@%s/%s ": " FTP: %s@%s%s ",
-		          Host.User, Host.Host, pi->CurDir);
+			(hConnect&&hConnect->Host.ServerType==FTP_TYPE_MVS)? " FTP: %s@%s/%s ": " FTP: %s@%s%s ",
+			Host.User, Host.Host, pi->CurDir);
 
 	if(inside > 1)
 	{
@@ -145,7 +145,7 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 	pi->InfoLinesNumber = 7;
 //---------------- DESCR
 	static char *DescrFiles[32],
-	       DescrFilesString[256];
+		DescrFilesString[256];
 	StrCpy(DescrFilesString, Opt.DescriptionNames, ARRAYSIZE(DescrFilesString));
 	int   DescrFilesNumber = 0;
 	char *NamePtr          = DescrFilesString;
@@ -206,13 +206,13 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 		  1
 		*/
 		ShortcutData.printf("FTP:%s\x1%c%c%c%c%d\x1%s\x1%s\x1%s\x1%c%d\x1%c\x1%c\x1",
-		                    Host.Host,
-		                    Host.AskLogin+3, Host.AsciiMode+3, Host.PassiveMode+3, Host.UseFirewall+3, Host.ServerType,
-		                    Host.HostTable,
-		                    Host.User,
-		                    Host.Password,
-		                    Host.ExtCmdView+3, Host.IOBuffSize,
-		                    '0'+Host.FFDup, '0'+Host.DecodeCmdLine);
+			Host.Host,
+			Host.AskLogin+3, Host.AsciiMode+3, Host.PassiveMode+3, Host.UseFirewall+3, Host.ServerType,
+			Host.HostTable,
+			Host.User,
+			Host.Password,
+			Host.ExtCmdView+3, Host.IOBuffSize,
+			'0'+Host.FFDup, '0'+Host.DecodeCmdLine);
 	}
 
 	pi->ShortcutData = ShortcutData.c_str();
@@ -225,11 +225,11 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 		static char *ColumnTitles[4] = { NULL };
 		static char *ColumnTitles2[4] = { NULL };
 		static char  Mode[ 20 ], ModeSz[20], ModeSz2[20];
-		int      dizLen = 0,
-		         nmLen  = 0,
-		         hLen   = 0,
-		         hstLen = 0;
-		int      n,num;
+		int     dizLen = 0,
+				nmLen  = 0,
+				hLen   = 0,
+				hstLen = 0;
+		int     n,num;
 		FTPHost* p;
 		memset(&PanelModesArray,0,sizeof(PanelModesArray));
 
@@ -371,8 +371,8 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 
 //---------------- RESTORE SCREEN
 	if(CurrentState != fcsExpandList &&
-	        CurrentState != fcsOperation &&
-	        !IS_SILENT(FP_LastOpMode))
+			CurrentState != fcsOperation &&
+			!IS_SILENT(FP_LastOpMode))
 		FP_Screen::FullRestore();
 
 //Back

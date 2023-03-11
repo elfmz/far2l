@@ -125,7 +125,7 @@ int FTP::ProcessShortcutLine(char *Line)
 			m1++;
 
 			if(!m1[0] ||
-			        (*m1 != '0' && *m1 != '1'))
+					(*m1 != '0' && *m1 != '1'))
 				break;
 
 			Host.DecodeCmdLine = *m1 - '0';

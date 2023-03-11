@@ -20,12 +20,12 @@ BOOL InsertHostsCmd(HANDLE h,BOOL full)
 {
 	PanelInfo pi;
 	FTPHost*  p;
-	LPCSTR  m;
+	LPCSTR    m;
 
 	if(!FP_Info->Control(h,FCTL_GETPANELINFO,&pi) ||
-	        !pi.ItemsNumber ||
-	        pi.CurrentItem < 0 || pi.CurrentItem >= pi.ItemsNumber ||
-	        (p=FTPHost::Convert(&pi.PanelItems[pi.CurrentItem])) == NULL)
+			!pi.ItemsNumber ||
+			pi.CurrentItem < 0 || pi.CurrentItem >= pi.ItemsNumber ||
+			(p=FTPHost::Convert(&pi.PanelItems[pi.CurrentItem])) == NULL)
 		return FALSE;
 
 	if(full)
@@ -34,7 +34,7 @@ BOOL InsertHostsCmd(HANDLE h,BOOL full)
 		m = p->Host;
 
 	if(StrCmp(m,"ftp://",6,FALSE) != 0 &&
-	        StrCmp(m,"http://",7,FALSE) != 0)
+			StrCmp(m,"http://",7,FALSE) != 0)
 		FP_Info->Control(h,FCTL_INSERTCMDLINE, (void*)(p->Folder ? "" : "ftp://"));
 
 	return FP_Info->Control(h,FCTL_INSERTCMDLINE,(HANDLE)m);
@@ -57,7 +57,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 			case  VK_DOWN:  //Get info
 
 				if(!FP_Info->Control(this,FCTL_GETPANELSHORTINFO,&pi) &&
-				        !FP_Info->Control(this,FCTL_GETPANELINFO,&pi))
+					!FP_Info->Control(this,FCTL_GETPANELINFO,&pi))
 				{
 					Log(("!GetPanelInfo"));
 					return FALSE;
@@ -65,7 +65,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 
 				//Skip self processing for QView work correctly
 				if(!FP_Info->Control(this, FCTL_GETANOTHERPANELSHORTINFO, &otherPI) ||
-				        (otherPI.PanelType == PTYPE_QVIEWPANEL || otherPI.PanelType == PTYPE_TREEPANEL))
+						(otherPI.PanelType == PTYPE_QVIEWPANEL || otherPI.PanelType == PTYPE_TREEPANEL))
 					return FALSE;
 
 				//Get current
@@ -163,9 +163,9 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 		strings[ 8] = isBackup() ? FMSG(MRemoveFromites) : FMSG(MAddToSites);
 		//
 		FP_MenuEx mnu(strings);
-		int       prev = 0,
-		          sel = (ShowHosts || !hConnect) ? 7 : 2,
-		          file;
+		int     prev = 0,
+				sel = (ShowHosts || !hConnect) ? 7 : 2,
+				file;
 		mnu.Item(0)->isGrayed(TRUE);
 
 		do
@@ -184,7 +184,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 			mnu.Item(sel)->isSelected(TRUE);
 			sel = mnu.Execute(FMSG(MUtilsCaption),FMENU_WRAPMODE,NULL,"FTPUtils");
 			mnu.Item(prev)->isSelected(FALSE);
-			prev                     = sel;
+			prev = sel;
 
 			switch(sel)
 			{
@@ -242,7 +242,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 						break;
 
 					{
-						char str[MAX_PATH];  //Must be static buff because of MkTemp
+						char str[MAX_PATH]; //Must be static buff because of MkTemp
 						FP_FSF->MkTemp(str,"FTP");
 						sdc_mkdir(str, 0777);
 						AddEndSlash(str,'/',ARRAYSIZE(str));
@@ -259,7 +259,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 						}
 						close(file);
 						FP_Info->Viewer(str,Message("%s: %s {%s}",FP_GetMsg(MDirTitle),PanelTitle,str),
-						                0,0,-1,-1,VF_NONMODAL|VF_DELETEONCLOSE);
+							0,0,-1,-1,VF_NONMODAL|VF_DELETEONCLOSE);
 					}
 					return TRUE;
 //Show CMD
@@ -378,7 +378,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 
 		//Switch to FTP
 		if(ShowHosts &&
-		        !IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
+			!IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 		{
 			p = FTPHost::Convert(cur);
 
@@ -395,14 +395,14 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 		if(!ShowHosts && hConnect)
 		{
 			if(StrCmp(FTP_FILENAME(cur), ".") != 0 &&
-			        StrCmp(FTP_FILENAME(cur), "..") != 0)
+					StrCmp(FTP_FILENAME(cur), "..") != 0)
 				if(IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY) ||
-				        IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_REPARSE_POINT))
+					IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_REPARSE_POINT))
 				{
 					if(SetDirectoryFAR(IS_FLAG(cur->FindData.dwFileAttributes,FILE_ATTRIBUTE_REPARSE_POINT)
-					                   ? cur->CustomColumnData[FTP_COL_LINK]
-					                   : FTP_FILENAME(cur),
-					                   0))
+						? cur->CustomColumnData[FTP_COL_LINK]
+						: FTP_FILENAME(cur),
+						0))
 					{
 						FP_Info->Control(this,FCTL_UPDATEPANEL,NULL);
 						struct PanelRedrawInfo RInfo;
@@ -419,8 +419,8 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 // --------------------------------------------------------------------------
 //New entry
 	if(ShowHosts &&
-	        ((ControlState==PKF_SHIFT && Key==VK_F4) ||
-	         (ControlState==PKF_ALT   && Key==VK_F6)))
+		((ControlState==PKF_SHIFT && Key==VK_F4) ||
+			(ControlState==PKF_ALT   && Key==VK_F6)))
 	{
 		Log(("New host"));
 		h.Init();
@@ -439,9 +439,9 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 // --------------------------------------------------------------------------
 //Edit
 	if(ShowHosts &&
-	        ((ControlState==0           && Key==VK_F4) ||
-	         (ControlState==PKF_SHIFT   && Key==VK_F6) ||
-	         (ControlState==PKF_CONTROL && Key=='Z')))
+		((ControlState==0           && Key==VK_F4) ||
+			(ControlState==PKF_SHIFT   && Key==VK_F6) ||
+			(ControlState==PKF_CONTROL && Key=='Z')))
 	{
 		FP_Info->Control(this,FCTL_GETPANELINFO,&pi);
 
@@ -484,8 +484,8 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 // --------------------------------------------------------------------------
 //Copy/Move
 	if(!ShowHosts &&
-	        (ControlState == 0 || ControlState == PKF_SHIFT) &&
-	        Key == VK_F6)
+		(ControlState == 0 || ControlState == PKF_SHIFT) &&
+		Key == VK_F6)
 	{
 		FTP *ftp = OtherPlugin(this);
 		int  rc;
@@ -497,7 +497,7 @@ int FTP::ProcessKey(int Key,unsigned int ControlState)
 		FP_Info->Control(this, FCTL_GETANOTHERPANELINFO, &otherPI);
 
 		if(pi.SelectedItemsNumber > 0 &&
-		        pi.CurrentItem >= 0 && pi.CurrentItem < pi.ItemsNumber)
+			pi.CurrentItem >= 0 && pi.CurrentItem < pi.ItemsNumber)
 		{
 			do
 			{

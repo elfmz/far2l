@@ -94,8 +94,8 @@ LPCSTR FTP::CloseQuery(void)
 int FTP::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
 	PROC(("FTP::GetFindData",NULL))
-	DWORD        b,e;
-	char            *Data[3];
+	DWORD           b,e;
+	char           *Data[3];
 	*pPanelItem   = NULL;
 	*pItemsNumber = 0;
 
@@ -160,8 +160,8 @@ int FTP::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode
 				return FALSE;
 
 			Log(("Item[%d]=[%s] attr=%08X",
-			     il.Count()-1, FTP_FILENAME(il.Item(il.Count()-1)),
-			     il.Item(il.Count()-1)->FindData.dwFileAttributes));
+				il.Count()-1, FTP_FILENAME(il.Item(il.Count()-1)),
+				il.Item(il.Count()-1)->FindData.dwFileAttributes));
 		}
 
 		*pPanelItem   = il.Items();
@@ -218,7 +218,7 @@ Restart:
 				}
 
 				if(FtpCmdLineAlive(hConnect) &&
-				        FtpKeepAlive(hConnect))
+						FtpKeepAlive(hConnect))
 					goto Restart;
 
 				if(SelectFile.Length() && CurrentState != fcsExpandList)
@@ -271,15 +271,16 @@ AskConnect:
 		{
 			if(!NewPanelItem)
 				NewPanelItem = (PluginPanelItem *)malloc((1024+1)*sizeof(PluginPanelItem));
-                        else {
-                                PluginPanelItem *tmp  = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
-                                if ( tmp ) NewPanelItem = tmp;
-                                else {
+			else {
+				PluginPanelItem *tmp = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
+				if ( tmp )
+					NewPanelItem = tmp;
+				else {
 					free(NewPanelItem);
 					NewPanelItem = nullptr;
-				     }
-                             }
-                        if(NewPanelItem == nullptr)
+				}
+			}
+			if(NewPanelItem == nullptr)
 			{
 				/*-*/Log(("GetFindData(file)::!reallocate plugin panels items %d -> %d",*pItemsNumber,*pItemsNumber+1024+1));
 				return FALSE;
@@ -316,7 +317,7 @@ void FTP::FreeFindData(PluginPanelItem *PanelItem,int ItemsNumber)
 
 void FTP::SetBackupMode(void)
 {
-	PanelInfo  pi;
+	PanelInfo pi;
 	FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &pi);
 	ActiveColumnMode = pi.ViewMode;
 }

@@ -86,7 +86,7 @@ int Connection::setpeer(int argc, char *argv[])
 	if(connected)
 	{
 		if(StrCmpI(argv[1], hostname) != 0 ||
-		        port != portnum)
+				port != portnum)
 			disconnect();
 	}
 
@@ -146,8 +146,8 @@ void Connection::put(int argc, char *argv[])
 	}
 
 	cmd = (argv[0][0] == 'a')
-	      ? Opt.cmdAppe                                   //APPEND
-	      : ((sunique) ? Opt.cmdPutUniq : Opt.cmdStor);   //STORE or PUT
+		? Opt.cmdAppe                                   //APPEND
+		: ((sunique) ? Opt.cmdPutUniq : Opt.cmdStor);   //STORE or PUT
 	sendrequest(cmd,argv[1],argv[2]);
 	restart_point = 0;
 }
@@ -473,18 +473,18 @@ void Connection::do_umask(int argc, char *argv[])
 {
 	PROC(("do_umask","%d [%s,%s,%s]",argc,(argc>=1)?argv[0]:"nil",(argc>=2)?argv[1]:"nil",(argc>=3)?argv[2]:"nil"));
 	command(argc == 1 ? "%s %s" : "%s %s %s",
-	        Opt.cmdSite,
-	        Opt.cmdUmask,
-	        argv[1]);
+		Opt.cmdSite,
+		Opt.cmdUmask,
+		argv[1]);
 }
 
 void Connection::idle(int argc, char *argv[])
 {
 	PROC(("idle","%d [%s,%s,%s]",argc,(argc>=1)?argv[0]:"nil",(argc>=2)?argv[1]:"nil",(argc>=3)?argv[2]:"nil"));
 	command(argc == 1 ? "%s %s" : "%s %s %s",
-	        Opt.cmdSite,
-	        Opt.cmdIdle,
-	        argv[1]);
+		Opt.cmdSite,
+		Opt.cmdIdle,
+		argv[1]);
 }
 
 /*
@@ -525,7 +525,7 @@ void Connection::disconnect()
 void Connection::account(int argc,char **argv)
 {
 	PROC(("account","%d [%s,%s,%s]",argc,(argc>=1)?argv[0]:"nil",(argc>=2)?argv[1]:"nil",(argc>=3)?argv[2]:"nil"));
-	String  acct;
+	String acct;
 	const char *ap;
 
 	if(argc > 1)
@@ -673,8 +673,8 @@ void Connection::modtime(int argc, char *argv[])
 	{
 		int yy, mo, day, hour, min, sec;
 		sscanf(reply_string.c_str(),
-		       Opt.fmtDateFormat,
-		       &yy, &mo, &day, &hour, &min, &sec);
+			Opt.fmtDateFormat,
+			&yy, &mo, &day, &hour, &min, &sec);
 	}
 }
 
@@ -694,6 +694,6 @@ void Connection::rmthelp(int argc, char *argv[])
 {
 	PROC(("rmthelp","%d [%s,%s,%s]",argc,(argc>=1)?argv[0]:"nil",(argc>=2)?argv[1]:"nil",(argc>=3)?argv[2]:"nil"));
 	command(argc == 1 ? "%s" : "%s %s",
-	        Opt.cmdHelp,
-	        argv[1]);
+		Opt.cmdHelp,
+		argv[1]);
 }

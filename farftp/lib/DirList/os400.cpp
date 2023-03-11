@@ -15,9 +15,9 @@
 BOOL parse_os400_date_time(LPSTR& line, Time_t& decoded)
 {
 	if(!line[0] ||
-	        line[2] != '/' || line[5] != '/' ||
-	        line[8] != ' ' ||
-	        line[11] != ':' || line[14] != ':')
+			line[2] != '/' || line[5] != '/' ||
+			line[8] != ' ' ||
+			line[11] != ':' || line[14] != ':')
 		return FALSE;
 
 	SYSTEMTIME st;
@@ -54,8 +54,8 @@ BOOL parse_os400_date_time(LPSTR& line, Time_t& decoded)
 	TwoDigits(line+6, st.wSecond);
 
 	if(st.wHour   == MAX_WORD ||
-	        st.wMinute == MAX_WORD ||
-	        st.wSecond == MAX_WORD)
+			st.wMinute == MAX_WORD ||
+			st.wSecond == MAX_WORD)
 		return FALSE;
 
 	line += 8;

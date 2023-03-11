@@ -39,7 +39,7 @@ class CalcAddonPart
 {
 public:
 	CalcAddonPart() 
-	{ 
+	{
 		parser = NULL; 
 	}
 	CalcAddonPart(const CalcAddonPart & p);
@@ -83,7 +83,7 @@ struct SDialogElem
 
 	CalcAddonPart *input, *scale_expr;
 
-	//  PEditObject Edit;
+	// PEditObject Edit;
 	SDialogElem *Next;
 	SDialogElem();
 	~SDialogElem();
@@ -125,15 +125,15 @@ class CalcParser : public MathExpressionBase<SArg>
 	friend class CalcAddonPart;
 
 public:
-  	typedef SArg value_type;
-  
-  	CalcParser();
+	typedef SArg value_type;
+
+	CalcParser();
 	CalcParser(const CalcParser & p);
 
 	~CalcParser();
 
 	static bool InitTables(int rep_fraction_max_start, int rep_fraction_max_period, int cont_fraction_max);
-  	static bool ProcessData(PSgmlEl BaseRc, bool case_sensitive);
+	static bool ProcessData(PSgmlEl BaseRc, bool case_sensitive);
 	static void FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t *lang_name);
 	static bool SetDelims(wchar_t decimal, wchar_t args, wchar_t digit);
 	static bool ProcessAddons();
@@ -146,7 +146,7 @@ public:
 	static void GetFraction(Big b, BigInt *numer, BigInt *denom);
 	static void RoundUp(Big &b);
 
-  	SArg Parse(const wchar_t* str, bool case_sensitive);
+	SArg Parse(const wchar_t* str, bool case_sensitive);
 	
 	CALC_ERROR GetError();
 
@@ -160,7 +160,7 @@ public:
 
 protected:
 
-  	bool parse_number(SArg *value, const wchar_t *curpos, wchar_t **endptr);
+	bool parse_number(SArg *value, const wchar_t *curpos, wchar_t **endptr);
 
 	static bool FillSet(PSgmlEl set, bool case_sensitive);
 	static bool AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_sensitive);

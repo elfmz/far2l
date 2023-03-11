@@ -65,7 +65,7 @@ public:
 	SArg(float var);
 
 	SArg(const Big & var);
-  
+
 	
 
 	bool isempty() const;
@@ -170,24 +170,4 @@ public:
 typedef struct SArg *PArg;
 
 #endif // of SARG_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

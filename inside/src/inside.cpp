@@ -214,14 +214,14 @@ SHAREDSYMBOL int WINAPI _export DeleteFiles(HANDLE hPlugin,struct PluginPanelIte
 
 
 SHAREDSYMBOL int WINAPI _export GetFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
-                   int ItemsNumber,int Move,char *DestPath,int OpMode)
+	int ItemsNumber,int Move,char *DestPath,int OpMode)
 {
 	return ((PluginImpl *)hPlugin)->GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode);
 }
 
 
 SHAREDSYMBOL int WINAPI _export PutFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
-                   int ItemsNumber,int Move,int OpMode)
+	int ItemsNumber,int Move,int OpMode)
 {
 	return ((PluginImpl *)hPlugin)->PutFiles(PanelItem, ItemsNumber, Move, OpMode);
 }
@@ -268,10 +268,10 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 		return 0;
 
 	struct FarDialogItem fdi[] = {
-            {DI_DOUBLEBOX,  3,  1,  70, 5,  0, {}, 0, 0, {}},
-            {DI_TEXT,      -1,  2,  0,  2,  0, {}, 0, 0, {}},
-            {DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}},
-            {DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
+		{DI_DOUBLEBOX,  3,  1,  70, 5,  0, {}, 0, 0, {}},
+		{DI_TEXT,      -1,  2,  0,  2,  0, {}, 0, 0, {}},
+		{DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}},
+		{DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
 	};
 
 	ArrayCpyZ(fdi[0].Data, G.GetMsg(MTitle));

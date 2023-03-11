@@ -147,7 +147,7 @@ NMBEnum::NMBEnum(const std::string &group)
 		}
 		struct timeval tv = {};
 		tv.tv_usec = 100000;
-		if (setsockopt(_sc, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,  sizeof(tv)) < 0) {
+		if (setsockopt(_sc, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
 			perror("NetBiosNSEnum - SO_RCVTIMEO");
 		}
 
@@ -209,7 +209,7 @@ void *NMBEnum::ThreadProc()
 				}
 
 				if (sendto(_sc, &s, sizeof(s.packet), 0, (struct sockaddr *)&sin, sizeof(sin)) <= 0) {
-       					perror("sendto");
+					perror("sendto");
 				}
 			}
 		}

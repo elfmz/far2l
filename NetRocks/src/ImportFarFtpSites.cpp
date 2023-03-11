@@ -6,7 +6,7 @@
 // TODO: remove this code in year >= 2022
 #ifdef WINPORT_REGISTRY
 
-#define FTP_PWD_LEN 150  //max crypted pwd length
+#define FTP_PWD_LEN 150 //max crypted pwd length
 
 bool SplitLocationSpecification(const char *specification,
 	std::string &protocol, std::string &host, unsigned int &port,
@@ -16,7 +16,7 @@ static std::string DecryptPassword(BYTE Src[FTP_PWD_LEN])
 {
 	std::string out;
 	BYTE XorMask = (Src[0]^Src[1]) | 80;
-	int  n;
+	int n;
 	//char *Dest = _Dest;
 	//Log(( "DecryptPassword: %02X %02X %02X %02X %02X %02X",Src[0],Src[1],Src[2],Src[3],Src[4],Src[5] ));
 
@@ -39,8 +39,8 @@ bool ImportFarFtpSites()
 
 	if (WINPORT(RegOpenKeyEx)(HKEY_CURRENT_USER, L"Software/Far2/Plugins/FTP/Hosts", 0, GENERIC_READ, &key) == ERROR_SUCCESS) {
 		TCHAR name[0x100] = {};
-		for (DWORD i = 0;WINPORT(RegEnumKey)(key, i,  name, ARRAYSIZE(name) - 1) == ERROR_SUCCESS; ++i) {
-		        if (wcsncmp(name, L"Item", 4) == 0 && WINPORT(RegOpenKeyEx)(key, name, 0, GENERIC_READ, &host_key) == ERROR_SUCCESS) {
+		for (DWORD i = 0;WINPORT(RegEnumKey)(key, i, name, ARRAYSIZE(name) - 1) == ERROR_SUCCESS; ++i) {
+			if (wcsncmp(name, L"Item", 4) == 0 && WINPORT(RegOpenKeyEx)(key, name, 0, GENERIC_READ, &host_key) == ERROR_SUCCESS) {
 				char host_name[0x1000] = {}, user[0x1000] = {};
 				BYTE password[0x1000] = {};
 				DWORD passive_mode = 1, ask_login = 0;

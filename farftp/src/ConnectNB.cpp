@@ -12,7 +12,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 	fd_set           _excptfds;
 	fd_set           *readfds,*writefds,*excptfds;
 	timeval          timeout;
-	DWORD        tmB,tmE,tm,tmCheck;
+	DWORD            tmB,tmE,tm,tmCheck;
 	int              res;
 	double           tmDiff;
 	BOOL             rc = FALSE;
@@ -86,7 +86,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 		static DWORD idleB;
 
 		if(Opt.WaitIdle && Opt.WaitCounter &&
-		        (!inIdle || CMP_TIME(tmE,idleB) > (1.0 / Opt.WaitCounter)))
+			(!inIdle || CMP_TIME(tmE,idleB) > (1.0 / Opt.WaitCounter)))
 		{
 			WINPORT(Sleep)(Opt.WaitIdle);
 			idleB  = tmE;
@@ -103,7 +103,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 			}
 
 			if(Opt.ShowIdle && hIdle && FP_PeriodEnd(hIdle) &&
-			        (!hStart || FP_PeriodEnd(hStart)))
+				(!hStart || FP_PeriodEnd(hStart)))
 			{
 				if(hStart)
 				{
@@ -113,10 +113,10 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 
 				if(brk_flag)
 					buff.printf("%s (%d%s) ",
-					            FP_GetMsg(MWaiting), (int)tmDiff, FP_GetMsg(MSeconds));
+						FP_GetMsg(MWaiting), (int)tmDiff, FP_GetMsg(MSeconds));
 				else
 					buff.printf("%s (%.1f%s): %2d%% ",
-					            FP_GetMsg(MWaiting), tmDiff, FP_GetMsg(MSeconds), (int)(tmDiff*100/Opt.WaitTimeout)+1);
+						FP_GetMsg(MWaiting), tmDiff, FP_GetMsg(MSeconds), (int)(tmDiff*100/Opt.WaitTimeout)+1);
 
 				WINPORT(SetLastError)(ERROR_SUCCESS);
 				IdleMessage(buff.c_str(),Opt.IdleColor);
@@ -161,7 +161,7 @@ int Connection::nb_waitstate(SOCKET *peer, int state,DWORD tmW)
 			                      (data_peer == INVALID_SOCKET) );                         // Data conn does not exist
 			*/
 			BOOL mayAsk = FtpSetBreakable(this,-1) &&
-			              (CurrentState != fcsProcessFile || CMP_TIME(tmCheck,tmB) > 3);
+				(CurrentState != fcsProcessFile || CMP_TIME(tmCheck,tmB) > 3);
 
 			if(mayAsk)
 			{

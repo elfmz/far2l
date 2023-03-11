@@ -52,7 +52,7 @@ static std::string RefinePath(std::string path, bool ending_slash = false)
 		path.erase(i, 2);
 	}
 
-	if (path.size() >= 2 && path[path.size() - 1] == '.' && path[path.size() - 2] == '/')  {
+	if (path.size() >= 2 && path[path.size() - 1] == '.' && path[path.size() - 2] == '/') {
 		path.resize(path.size() - 2);
 		if (path.empty()) {
 			path = '/';
@@ -527,7 +527,7 @@ std::shared_ptr<IDirectoryEnumer> ProtocolWebDAV::DirectoryEnum(const std::strin
 class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 {
 	std::shared_ptr<DavConnection> _conn;
-	std::string  _path;
+	std::string _path;
 	mode_t _mode;
 	unsigned long long _resume_pos;
 	bool _writing;
@@ -666,7 +666,7 @@ public:
 			ne_add_request_header(_req, "Accept-Ranges", "bytes");
 		}
 
-                if (_writing) {
+		if (_writing) {
 			ne_set_request_body_provider(_req, -1, sWriteCallback, this);
 		} else {
 			ne_add_response_body_reader(_req, ne_accept_always, sReadCallback, this);
@@ -726,7 +726,7 @@ public:
 			_cond.wait(lock);
 		}
 		// for the sake of smooth progress update: wait while buffer will be mostly uploaded
-		while (_buf.size() > len / 8)  {
+		while (_buf.size() > len / 8) {
 			_cond.wait(lock);
 		}
 

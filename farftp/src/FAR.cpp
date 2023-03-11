@@ -27,7 +27,7 @@ char          DialogEditBuffer[ DIALOG_EDIT_SIZE ];
 
 typedef char  FTPDistString[MAX_PATH];
 FTPDistString DiskStrings[ 1+FTP_MAXBACKUPS ];
-LPCSTR      DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
+LPCSTR        DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
 int           DiskMenuNumbers[ 1+FTP_MAXBACKUPS ];
 
 //------------------------------------------------------------------------
@@ -190,7 +190,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfo(const struct PluginStartupInfo *Info)
 	LogCmd("FTP plugin loaded", ldInt);
 }
 
-SHAREDSYMBOL  void WINAPI GetPluginInfo(struct PluginInfo *Info)
+SHAREDSYMBOL void WINAPI GetPluginInfo(struct PluginInfo *Info)
 {
 	LastUsedPlugin = NULL;
 	PROC(("GetPluginInfo","%p",Info))
@@ -203,8 +203,8 @@ SHAREDSYMBOL  void WINAPI GetPluginInfo(struct PluginInfo *Info)
 	snprintf(CfgString,      ARRAYSIZE(CfgString),      "%s", FP_GetMsg(MFtpMenu));
 	FTPHost* p;
 	int      n,
-	  uLen = 0,
-	  hLen = 0;
+	uLen = 0,
+	hLen = 0;
 	char     str[MAX_PATH];
 	FTP*     ftp;
 
@@ -229,8 +229,8 @@ SHAREDSYMBOL  void WINAPI GetPluginInfo(struct PluginInfo *Info)
 		{
 			p = &ftp->Host;
 			snprintf(DiskStrings[1+n], ARRAYSIZE(DiskStrings[0]),
-			          "FTP: %-*s %-*s %s",
-			          uLen, p->User, hLen, p->Host, str);
+				"FTP: %-*s %-*s %s",
+				uLen, p->User, hLen, p->Host, str);
 		}
 		else
 			snprintf(DiskStrings[1+n], ARRAYSIZE(DiskStrings[0]), "FTP: %s", str);
@@ -251,7 +251,7 @@ SHAREDSYMBOL  void WINAPI GetPluginInfo(struct PluginInfo *Info)
 	Info->CommandPrefix             = FTP_CMDPREFIX;
 }
 
-SHAREDSYMBOL  int WINAPI Configure(int ItemNumber)
+SHAREDSYMBOL int WINAPI Configure(int ItemNumber)
 {
 	LastUsedPlugin = NULL;
 	PROC(("Configure","%d",ItemNumber))
@@ -268,7 +268,7 @@ SHAREDSYMBOL  int WINAPI Configure(int ItemNumber)
 	return TRUE;
 }
 
-SHAREDSYMBOL  HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
+SHAREDSYMBOL HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
 {
 	fprintf(stderr, "FARFTP: OpenPlugin\n");
 	LastUsedPlugin = NULL;
@@ -315,7 +315,7 @@ SHAREDSYMBOL  HANDLE WINAPI OpenPlugin(int OpenFrom,INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
-SHAREDSYMBOL  void WINAPI ClosePlugin(HANDLE hPlugin)
+SHAREDSYMBOL void WINAPI ClosePlugin(HANDLE hPlugin)
 {
 	FTP *p = (FTP*)hPlugin;
 	PROC(("ClosePlugin","%p",hPlugin))
@@ -323,48 +323,48 @@ SHAREDSYMBOL  void WINAPI ClosePlugin(HANDLE hPlugin)
 	RemovePlugin(p);
 }
 
-SHAREDSYMBOL  int WINAPI GetFindData(HANDLE hPlugin,struct PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
+SHAREDSYMBOL int WINAPI GetFindData(HANDLE hPlugin,struct PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode)
 {
 	FPOpMode _op(OpMode);
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	int rc = p->GetFindData(pPanelItem,pItemsNumber,OpMode);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  void WINAPI FreeFindData(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber)
+SHAREDSYMBOL void WINAPI FreeFindData(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber)
 {
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	p->FreeFindData(PanelItem,ItemsNumber);
 	p->End();
 }
 
-SHAREDSYMBOL  void WINAPI GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo *Info)
+SHAREDSYMBOL void WINAPI GetOpenPluginInfo(HANDLE hPlugin,struct OpenPluginInfo *Info)
 {
 //	fprintf(stderr, "FARFTP: GetOpenPluginInfoy \n");
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	p->GetOpenPluginInfo(Info);
 	p->End();
 }
 
-SHAREDSYMBOL  int WINAPI SetDirectory(HANDLE hPlugin,LPCSTR Dir,int OpMode)
+SHAREDSYMBOL int WINAPI SetDirectory(HANDLE hPlugin,LPCSTR Dir,int OpMode)
 {
 	fprintf(stderr, "FARFTP: SetDirectory '%s'\n", Dir);
 	FPOpMode _op(OpMode);
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	int rc = p->SetDirectoryFAR(Dir,OpMode);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI GetFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,char *DestPath,int OpMode)
+SHAREDSYMBOL int WINAPI GetFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,char *DestPath,int OpMode)
 {
 	FPOpMode _op(OpMode);
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 
 	if(!p || !DestPath || !DestPath[0])
 		return FALSE;
@@ -376,27 +376,27 @@ SHAREDSYMBOL  int WINAPI GetFiles(HANDLE hPlugin,struct PluginPanelItem *PanelIt
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI PutFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,int OpMode)
+SHAREDSYMBOL int WINAPI PutFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,int OpMode)
 {
 	FPOpMode _op(OpMode);
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	int rc = p->PutFiles(PanelItem,ItemsNumber,Move,OpMode);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI DeleteFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
+SHAREDSYMBOL int WINAPI DeleteFiles(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode)
 {
 	FPOpMode _op(OpMode);
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	int rc = p->DeleteFiles(PanelItem,ItemsNumber,OpMode);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI MakeDirectory(HANDLE hPlugin,char *Name,int OpMode)
+SHAREDSYMBOL int WINAPI MakeDirectory(HANDLE hPlugin,char *Name,int OpMode)
 {
 	fprintf(stderr, "FARFTP: MakeDirectory '%s'\n", Name);
 	FPOpMode _op(OpMode);
@@ -404,32 +404,32 @@ SHAREDSYMBOL  int WINAPI MakeDirectory(HANDLE hPlugin,char *Name,int OpMode)
 	if(!hPlugin)
 		return FALSE;
 
-	FTP*     p = (FTP*)hPlugin;
-	String   s(Name ? Name : "");
+	FTP* p = (FTP*)hPlugin;
+	String s(Name ? Name : "");
 	p->Call();
 	int rc = p->MakeDirectory(s,OpMode);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI ProcessKey(HANDLE hPlugin,int Key,unsigned int ControlState)
+SHAREDSYMBOL int WINAPI ProcessKey(HANDLE hPlugin,int Key,unsigned int ControlState)
 {
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	p->Call();
 	int rc = p->ProcessKey(Key,ControlState);
 	p->End(rc);
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI ProcessEvent(HANDLE hPlugin,int Event,void *Param)
+SHAREDSYMBOL int WINAPI ProcessEvent(HANDLE hPlugin,int Event,void *Param)
 {
-	FTP*     p = (FTP*)hPlugin;
+	FTP* p = (FTP*)hPlugin;
 	LastUsedPlugin = p;
 #if defined(__FILELOG__)
 	static LPCSTR evts[] = { "CHANGEVIEWMODE", "REDRAW", "IDLE", "CLOSE", "BREAK", "COMMAND" };
 	PROC(("FAR.ProcessEvent","%p,%s[%08X]",
-	      hPlugin,
-	      (Event < ARRAYSIZE(evts)) ? evts[Event] : Message("<unk>%d",Event),Param))
+		hPlugin,
+		(Event < ARRAYSIZE(evts)) ? evts[Event] : Message("<unk>%d",Event),Param))
 #endif
 	p->Call();
 	int rc = p->ProcessEvent(Event,Param);
@@ -437,14 +437,14 @@ SHAREDSYMBOL  int WINAPI ProcessEvent(HANDLE hPlugin,int Event,void *Param)
 	return rc;
 }
 
-SHAREDSYMBOL  int WINAPI Compare(HANDLE hPlugin,const PluginPanelItem *i,const PluginPanelItem *i1,unsigned int Mode)
+SHAREDSYMBOL int WINAPI Compare(HANDLE hPlugin,const PluginPanelItem *i,const PluginPanelItem *i1,unsigned int Mode)
 {
 	if(Mode == SM_UNSORTED)
 		return -2;
 
-	FTPHost* p  = FTPHost::Convert(i),
-	         *p1 = FTPHost::Convert(i1);
-	int      n;
+	FTPHost* p = FTPHost::Convert(i),
+		*p1 = FTPHost::Convert(i1);
+	int n;
 
 	if(!i || !i1 || !p || !p1)
 		return -2;

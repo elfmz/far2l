@@ -10,7 +10,7 @@
 
 #define FTPHOST_VERSION_LAST             FTPHOST_DVERSION_SERVERTYPE_CODE
 
-#define FTPHOST_VERSION      Message("1.%d", FTPHOST_VERSION_LAST )
+#define FTPHOST_VERSION                  Message("1.%d", FTPHOST_VERSION_LAST )
 
 #undef PROC
 #undef Log
@@ -94,9 +94,9 @@ BOOL HexToPassword_2740(char *HexStr,char *Password)
 		return FALSE;
 
 	for(n = 0, HexStr+=4;
-	        n < FTP_PWD_LEN &&
-	        *HexStr;
-	        n++, HexStr+=2)
+			n < FTP_PWD_LEN &&
+			*HexStr;
+			n++, HexStr+=2)
 		pwd[n] = HexToNum(HexStr[0])*16 + HexToNum(HexStr[1]);
 
 	pwd[n] = 0;
@@ -141,23 +141,23 @@ BOOL FTPHost::Cmp(FTPHost* p)
 
 BOOL FTPHost::CmpConnected(FTPHost* p)
 {
-	return StrCmp(p->Host,      Host,      -1, FALSE) == 0 &&
-	       StrCmp(p->User,      User,      -1, TRUE)  == 0 &&
-	       StrCmp(p->Password,  Password,  -1, TRUE)  == 0;
+	return  StrCmp(p->Host,      Host,      -1, FALSE) == 0 &&
+			StrCmp(p->User,      User,      -1, TRUE)  == 0 &&
+			StrCmp(p->Password,  Password,  -1, TRUE)  == 0;
 }
 
 void FTPHost::MkUrl(String& str,LPCSTR Path,LPCSTR nm,BOOL sPwd)
 {
 	bool defPara = StrCmp(User,"anonymous") == 0 &&
-	               StrCmp(Password,Opt.DefaultPassword) == 0;
+		StrCmp(Password,Opt.DefaultPassword) == 0;
 
 	if(!defPara && User[0])
 	{
 		if(Password[0])
 			str.printf("ftp://%s:%s@%s",
-			           User,
-			           (sPwd || IS_FLAG(Opt.PwdSecurity,SEC_PLAINPWD)) ? Password : "",
-			           Host);
+				User,
+				(sPwd || IS_FLAG(Opt.PwdSecurity,SEC_PLAINPWD)) ? Password : "",
+				Host);
 		else
 			str.printf("ftp://%s@%s",User,Host);
 	}
@@ -213,13 +213,13 @@ char *FTPHost::MkINIFile(char *DestName,LPCSTR Path,LPCSTR DestPath)
 	bad = TRUE;                           //Do not add `bad` an start
 
 	for(int i = (int)(m - DestName + 1);
-	        i < MAX_PATH-4 && //Until not full Dest
-	        *m1;                   //And source exist
-	        m1++)
+		i < MAX_PATH-4 && //Until not full Dest
+		*m1;                   //And source exist
+		m1++)
 	{
 		//Is bad
 		curBad = ((BYTE)*m1) < ((BYTE)0x20) ||
-		         strchr(Folder ? ":/\\\"\'|><^*?" : ":/\\.@\"\'|><^*?",*m1) != 0;
+			strchr(Folder ? ":/\\\"\'|><^*?" : ":/\\.@\"\'|><^*?",*m1) != 0;
 
 		//Already bad. Add only one.
 		if(curBad)
@@ -295,7 +295,7 @@ BOOL FTPHost::CheckHostFolder(LPCSTR Path,LPCSTR Name)
 {
 	LPCSTR m = MkHost(Path,Name);
 	return FP_CheckRegKey(m) &&
-	       FP_GetRegKey(m,"Folder",0) != 0;
+		FP_GetRegKey(m,"Folder",0) != 0;
 }
 
 char *FindLastBefore(char *str,char ch,char before)
@@ -306,7 +306,7 @@ char *FindLastBefore(char *str,char ch,char before)
 
 	while(true)
 	{
-		m  = strchr(prev,ch);
+		m = strchr(prev,ch);
 
 		if(!m || (m1 && m1 <= m))
 			break;
@@ -321,7 +321,7 @@ BOOL FTPHost::SetHostName(LPCSTR hnm,LPCSTR usr,LPCSTR pwd)
 {
 	PROC(("FTPHost::SetHostName","h:[%s], u:[%s], p:[%s]",hnm,usr,pwd))
 	char *m = (char*)hnm,
-	      *mHost;
+		*mHost;
 
 	if(!hnm || !hnm[0])
 		return FALSE;
@@ -412,7 +412,7 @@ void FTPHost::MakeFreeKey(LPCSTR Hosts)
 	for(n = 0; 1 ; n++)
 	{
 		StrCpy(key, RegKey,                ARRAYSIZE(key));
-		StrCat(key, Message("/Item%d",n), ARRAYSIZE(key));
+		StrCat(key, Message("/Item%d",n),  ARRAYSIZE(key));
 		FP_GetRegKey(key,"HostName",str,NULL,ARRAYSIZE(str));
 
 		if(str[0] == 0)
@@ -506,7 +506,7 @@ BOOL FTPHost::Write(LPCSTR nm)
 	BOOL rc;
 
 	if(oldFmt &&
-	        !WarnOldFormat(this))
+			!WarnOldFormat(this))
 		return FALSE;
 
 	Log(("RegKey=[%s]",RegKey));
@@ -530,31 +530,31 @@ BOOL FTPHost::Write(LPCSTR nm)
 			psw[0] = 0;
 
 		Log(("pwdc: [%s]", psw));
-		rc = FP_SetRegKey(RegKey,"HostName",      HostName) &&
-		     FP_SetRegKey(RegKey,"User",          User) &&
-		     FP_SetRegKey(RegKey,"Password",      psw,ARRAYSIZE(psw)) &&
-		     FP_SetRegKey(RegKey,"Table",         HostTable)      &&
-		     FP_SetRegKey(RegKey,"AskLogin",      AskLogin)      &&
-		     FP_SetRegKey(RegKey,"PassiveMode",   PassiveMode)      &&
-		     FP_SetRegKey(RegKey,"UseFirewall",   UseFirewall)      &&
-		     FP_SetRegKey(RegKey,"AsciiMode",     AsciiMode)      &&
-		     FP_SetRegKey(RegKey,"ExtCmdView",    ExtCmdView)      &&
-		     FP_SetRegKey(RegKey,"ExtList",       ExtList)         &&
-		     FP_SetRegKey(RegKey,"ServerType",    ServerType)      &&
-		     FP_SetRegKey(RegKey,"ListCMD",       ListCMD)         &&
-		     FP_SetRegKey(RegKey,"ProcessCmd",    ProcessCmd)      &&
-		     FP_SetRegKey(RegKey,"CodeCmd",       CodeCmd)         &&
-		     FP_SetRegKey(RegKey,"IOBuffSize",    IOBuffSize)      &&
-		     FP_SetRegKey(RegKey,"FFDup",         FFDup)           &&
-		     FP_SetRegKey(RegKey,"UndupFF",       UndupFF)         &&
-		     FP_SetRegKey(RegKey,"DecodeCmdLine", DecodeCmdLine)   &&
-		     FP_SetRegKey(RegKey,"SendAllo",      SendAllo)        &&
-		     FP_SetRegKey(RegKey,"UseStartSpaces", UseStartSpaces);
+		rc =    FP_SetRegKey(RegKey,"HostName",      HostName) &&
+				FP_SetRegKey(RegKey,"User",          User) &&
+				FP_SetRegKey(RegKey,"Password",      psw,ARRAYSIZE(psw)) &&
+				FP_SetRegKey(RegKey,"Table",         HostTable)      &&
+				FP_SetRegKey(RegKey,"AskLogin",      AskLogin)      &&
+				FP_SetRegKey(RegKey,"PassiveMode",   PassiveMode)      &&
+				FP_SetRegKey(RegKey,"UseFirewall",   UseFirewall)      &&
+				FP_SetRegKey(RegKey,"AsciiMode",     AsciiMode)      &&
+				FP_SetRegKey(RegKey,"ExtCmdView",    ExtCmdView)      &&
+				FP_SetRegKey(RegKey,"ExtList",       ExtList)         &&
+				FP_SetRegKey(RegKey,"ServerType",    ServerType)      &&
+				FP_SetRegKey(RegKey,"ListCMD",       ListCMD)         &&
+				FP_SetRegKey(RegKey,"ProcessCmd",    ProcessCmd)      &&
+				FP_SetRegKey(RegKey,"CodeCmd",       CodeCmd)         &&
+				FP_SetRegKey(RegKey,"IOBuffSize",    IOBuffSize)      &&
+				FP_SetRegKey(RegKey,"FFDup",         FFDup)           &&
+				FP_SetRegKey(RegKey,"UndupFF",       UndupFF)         &&
+				FP_SetRegKey(RegKey,"DecodeCmdLine", DecodeCmdLine)   &&
+				FP_SetRegKey(RegKey,"SendAllo",      SendAllo)        &&
+				FP_SetRegKey(RegKey,"UseStartSpaces", UseStartSpaces);
 	}
 
 	rc = rc &&
-	     FP_SetRegKey(RegKey,"Description", HostDescr) &&
-	     FP_SetRegKey(RegKey,"Folder",      Folder);
+		FP_SetRegKey(RegKey,"Description", HostDescr) &&
+		FP_SetRegKey(RegKey,"Folder",      Folder);
 	return rc;
 }
 //---------------------------------------------------------------------------------
@@ -562,10 +562,10 @@ BOOL FTPHost::Write(LPCSTR nm)
 BOOL FTPHost::ReadINI(LPCSTR nm)
 {
 	PROC(("FTPHost::ReadINI","%s",nm))
-	char   hex[MAX_PATH*2],
-		hst[MAX_PATH],
-	   usr[MAX_PATH],
-	   pwd[MAX_PATH];
+	char    hex[MAX_PATH*2],
+			hst[MAX_PATH],
+			usr[MAX_PATH],
+			pwd[MAX_PATH];
 	HexToPassword_cb DecodeProc = NULL;
 	Init();
 	KeyFileReadSection kfh(nm, "FarFTP");
@@ -615,7 +615,7 @@ BOOL FTPHost::ReadINI(LPCSTR nm)
 	kfh.GetChars(hex, ARRAYSIZE(hex), "Password");
 
 	if(!DecodeProc(hex,pwd) ||
-	        !SetHostName(hst,usr,pwd))
+			!SetHostName(hst,usr,pwd))
 		return FALSE;
 
 	kfh.GetChars(HostDescr,ARRAYSIZE(HostDescr),"Description");

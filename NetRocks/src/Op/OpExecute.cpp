@@ -52,7 +52,7 @@ static void SetSignalHandler(int sugnum, void (*handler)(int))
 	struct sigaction sa = {};
 	sa.sa_handler = handler;
 	sa.sa_flags = SA_RESTART;
-	sigaction(sugnum,  &sa, nullptr);
+	sigaction(sugnum, &sa, nullptr);
 }
 
 SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])

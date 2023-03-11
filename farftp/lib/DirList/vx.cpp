@@ -12,48 +12,48 @@
   May-05-2003  14:20:58
 */
 BOOL parse_vxdos_date_time( LPSTR& line, Time_t& decoded )
-  {
-    if ( !line[0] ||
-         line[3] != '-' || line[6] != '-' ||
-         line[11] != ' ' ||
-         line[15] != ':' || line[18] != ':' )
-      return FALSE;
+{
+	if ( !line[0] ||
+		line[3] != '-' || line[6] != '-' ||
+		line[11] != ' ' ||
+		line[15] != ':' || line[18] != ':' )
+	return FALSE;
 
-    SYSTEMTIME st;
-    WINPORT(GetSystemTime)(&st);
-    st.wMilliseconds = 0;
+	SYSTEMTIME st;
+	WINPORT(GetSystemTime)(&st);
+	st.wMilliseconds = 0;
 
 //mon
-    st.wMonth = NET_MonthNo( line );
-    if ( st.wMonth == MAX_WORD )
-      return FALSE;
-    line += 4;
+	st.wMonth = NET_MonthNo( line );
+	if ( st.wMonth == MAX_WORD )
+		return FALSE;
+	line += 4;
 
 //mday
-    TwoDigits( line, st.wDay );
-    if ( st.wDay == MAX_WORD )
-      return FALSE;
-    line += 3;
+	TwoDigits( line, st.wDay );
+	if ( st.wDay == MAX_WORD )
+		return FALSE;
+	line += 3;
 
 //year
-    line[11] = 0;
-    st.wYear = AtoI( line, MAX_WORD );
-    if ( st.wYear == MAX_WORD )
-      return FALSE;
-    line += 6;
+	line[11] = 0;
+	st.wYear = AtoI( line, MAX_WORD );
+	if ( st.wYear == MAX_WORD )
+		return FALSE;
+	line += 6;
 
 //Time
-    TwoDigits( line+0, st.wHour );
-    TwoDigits( line+3, st.wMinute );
-    TwoDigits( line+6, st.wSecond );
-    if ( st.wHour   == MAX_WORD ||
-         st.wMinute == MAX_WORD ||
-         st.wSecond == MAX_WORD )
-      return FALSE;
+	TwoDigits( line+0, st.wHour );
+	TwoDigits( line+3, st.wMinute );
+	TwoDigits( line+6, st.wSecond );
+	if ( st.wHour   == MAX_WORD ||
+			st.wMinute == MAX_WORD ||
+			st.wSecond == MAX_WORD )
+		return FALSE;
 
-    st.wDayOfWeek = 0;
+	st.wDayOfWeek = 0;
 
- return WINPORT(SystemTimeToFileTime)( &st, decoded );
+	return WINPORT(SystemTimeToFileTime)( &st, decoded );
 }
 
 /*          1         2         3         4         5         6         7
@@ -71,47 +71,48 @@ BOOL parse_vxdos_date_time( LPSTR& line, Time_t& decoded )
 */
 
 static LPCSTR vx_skips[] = {
-  "  size          date  ",
-  "--------       ------  ",
-  NULL };
+	"  size          date  ",
+	"--------       ------  ",
+	NULL };
 
 BOOL WINAPI idPRParceVX_DOS( const FTPServerInfo* Server, FTPFileInfo* p, char *entry, int entry_len )
-  {  NET_FileEntryInfo ei;
+{
+	NET_FileEntryInfo ei;
 
-     if ( entry_len < 36 )
-       return FALSE;
+	if ( entry_len < 36 )
+		return FALSE;
 
-     if ( StartsWith( entry,vx_skips ) ) {
-       p->FileType = NET_SKIP;
-       return TRUE;
-     }
+	if ( StartsWith( entry,vx_skips ) ) {
+		p->FileType = NET_SKIP;
+		return TRUE;
+	}
 
-     char *e;
+	char *e;
 
 //size
-     entry = SkipSpace(entry);
-     e     = SkipNSpace(entry);
-     *e = 0;
-     ei.size = AtoI( entry, (int64_t)-1 );
-     if ( ei.size == (int64_t)-1 )
-       return FALSE;
+	entry = SkipSpace(entry);
+	e     = SkipNSpace(entry);
+	*e = 0;
+	ei.size = AtoI( entry, (int64_t)-1 );
+	if ( ei.size == (int64_t)-1 )
+		return FALSE;
 
 //time
-     entry = SkipSpace( e+1 );
-     e     = SkipNSpace(SkipSpace(SkipNSpace(entry)));
-     if ( !parse_vxdos_date_time(entry,ei.date) )
-       return FALSE;
+	entry = SkipSpace( e+1 );
+	e     = SkipNSpace(SkipSpace(SkipNSpace(entry)));
+	if ( !parse_vxdos_date_time(entry,ei.date) )
+		return FALSE;
 
 //Name
-     entry = SkipSpace( e );
-     StrCpy( ei.FindData.cFileName, entry, ARRAYSIZE(ei.FindData.cFileName) );
-     XP_StripLine( ei.FindData.cFileName );
+	entry = SkipSpace( e );
+	StrCpy( ei.FindData.cFileName, entry, ARRAYSIZE(ei.FindData.cFileName) );
+	XP_StripLine( ei.FindData.cFileName );
 
-     if ( (e=strstr( ei.FindData.cFileName,"<DIR>" )) != NULL ) {
-       ei.FileType = NET_DIRECTORY;
-       *e = '\0';
-       XP_StripLine( ei.FindData.cFileName );
-     }
+	if ( (e=strstr( ei.FindData.cFileName,"<DIR>" )) != NULL ) {
+		ei.FileType = NET_DIRECTORY;
+		*e = '\0';
+		XP_StripLine( ei.FindData.cFileName );
+	}
 
- return ConvertEntry( &ei,p );
+	return ConvertEntry( &ei,p );
 }

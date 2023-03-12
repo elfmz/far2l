@@ -7,12 +7,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
-  #include <sys/mount.h>
+	#include <sys/mount.h>
 #elif !defined(__HAIKU__)
-  #include <sys/statfs.h>
-  #include <sys/ioctl.h>
+	#include <sys/statfs.h>
+	#include <sys/ioctl.h>
 #  if !defined(__CYGWIN__)
-#   include <linux/fs.h>
+#    include <linux/fs.h>
 #  endif
 #endif
 #include <sys/statvfs.h>
@@ -314,7 +314,7 @@ namespace Sudo
 		}
 
 #elif defined(__HAIKU__)
-        // ???
+// ???
 #elif !defined(__CYGWIN__)
 		int fd = open(path.c_str(), O_RDONLY);
 		if (fd != -1) {
@@ -363,7 +363,7 @@ namespace Sudo
 				break;
 #endif
 			case SUDO_CMD_STATVFS:
-                OnSudoDispatch_StatCommon<struct statvfs>(&statvfs, bt);
+				OnSudoDispatch_StatCommon<struct statvfs>(&statvfs, bt);
 				break;
 				
 			case SUDO_CMD_STAT:

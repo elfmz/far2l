@@ -81,7 +81,7 @@ DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int request
 DWORD ConsoleInput::Count(unsigned int requestor_priority)
 {
 	std::unique_lock<std::mutex> lock(_mutex);
-	return  (requestor_priority >= CurrentPriority()) ? (DWORD)_pending.size() : 0;
+	return (requestor_priority >= CurrentPriority()) ? (DWORD)_pending.size() : 0;
 }
 
 DWORD ConsoleInput::Flush(unsigned int requestor_priority)

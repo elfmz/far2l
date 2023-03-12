@@ -7,7 +7,7 @@
 #include "WinPort.h"
 #include "FarTTY.h"
 
-#define CHUNK_SIZE 0x4000  // must be aligned by 0x100 and be less than 0x1000000
+#define CHUNK_SIZE 0x4000 // must be aligned by 0x100 and be less than 0x1000000
 
 /////////////
 

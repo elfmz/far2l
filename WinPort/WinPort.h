@@ -21,7 +21,7 @@ extern "C" {
 	void WinPortHelp();
 	const wchar_t *WinPortBackend();
 
-	///console API
+	//console API
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput));
 	WINPORT_DECL(SetConsoleWindowInfo,BOOL,(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow));
 	WINPORT_DECL(SetConsoleTitle,BOOL,(const WCHAR *title));
@@ -94,7 +94,7 @@ extern "C" {
 	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (BOOL Deferring));
 
 #ifdef WINPORT_REGISTRY
-	///Registry API
+	//registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));
 	WINPORT_DECL(RegCreateKeyEx, LONG, (HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, 
 		REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition));
@@ -128,7 +128,6 @@ extern "C" {
 	WINPORT_DECL(GetDoubleClickTime, DWORD, ());
 
 //files
-
 	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ));
 	WINPORT_DECL(RemoveDirectory, BOOL, ( LPCWSTR lpDirName));
 	WINPORT_DECL(DeleteFile, BOOL, ( LPCWSTR lpFileName));
@@ -138,11 +137,11 @@ extern "C" {
 	WINPORT_DECL(CloseHandle, BOOL, (HANDLE hObject));
 	WINPORT_DECL(MoveFile, BOOL, (LPCWSTR ExistingFileName, LPCWSTR NewFileName ));
 	WINPORT_DECL(MoveFileEx, BOOL, (LPCWSTR ExistingFileName, LPCWSTR NewFileName,DWORD dwFlags));
-	WINPORT_DECL(GetCurrentDirectory, DWORD, (DWORD  nBufferLength, LPWSTR lpBuffer));
+	WINPORT_DECL(GetCurrentDirectory, DWORD, (DWORD nBufferLength, LPWSTR lpBuffer));
 	WINPORT_DECL(SetCurrentDirectory, BOOL, (LPCWSTR lpPathName));
 	WINPORT_DECL(GetFileSizeEx, BOOL, ( HANDLE hFile, PLARGE_INTEGER lpFileSize));
-	WINPORT_DECL(GetFileSize, DWORD, ( HANDLE  hFile, LPDWORD lpFileSizeHigh));
-	WINPORT_DECL(GetFileSize64, DWORD64, ( HANDLE  hFile));
+	WINPORT_DECL(GetFileSize, DWORD, ( HANDLE hFile, LPDWORD lpFileSizeHigh));
+	WINPORT_DECL(GetFileSize64, DWORD64, ( HANDLE hFile));
 	WINPORT_DECL(ReadFile, BOOL, ( HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, 
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped));
 	WINPORT_DECL(WriteFile, BOOL, ( HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, 
@@ -156,7 +155,7 @@ extern "C" {
 	WINPORT_DECL(FileAllocationRequire, BOOL, (HANDLE hFile, DWORD64 RequireFileSize));
 
 	WINPORT_DECL(SetFilePointer, DWORD, ( HANDLE hFile, 
-		LONG lDistanceToMove, PLONG  lpDistanceToMoveHigh, DWORD  dwMoveMethod));
+		LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod));
 	WINPORT_DECL(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime, 
 		LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime));
 	WINPORT_DECL(SetFileTime, BOOL, ( HANDLE hFile, const FILETIME *lpCreationTime, 
@@ -167,7 +166,7 @@ extern "C" {
 
 	WINPORT_DECL(GetFileAttributes, DWORD, (LPCWSTR lpFileName));
 	WINPORT_DECL(SetFileAttributes, DWORD, (LPCWSTR lpFileName, DWORD dwAttributes));
-	
+
 #define FIND_FILE_FLAG_NO_DIRS		0x01
 #define FIND_FILE_FLAG_NO_FILES		0x02
 #define FIND_FILE_FLAG_NO_LINKS		0x04
@@ -175,7 +174,7 @@ extern "C" {
 #define FIND_FILE_FLAG_NO_CUR_UP	0x10 //skip virtual . and ..
 #define FIND_FILE_FLAG_CASE_INSENSITIVE	0x1000 //currently affects only english characters
 #define FIND_FILE_FLAG_NOT_ANNOYING	0x2000 //avoid sudo prompt if can't query some not very important information without it
-	
+
 	WINPORT_DECL(FindFirstFileWithFlags, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags));
 	WINPORT_DECL(FindFirstFile, HANDLE, (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData));
 	WINPORT_DECL(FindNextFile, BOOL, (HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData));
@@ -183,7 +182,7 @@ extern "C" {
 
 	WINPORT_DECL(GetDriveType, UINT, (LPCWSTR lpRootPathName));
 	WINPORT_DECL(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ));
-	WINPORT_DECL(GetFullPathName, DWORD, (LPCTSTR lpFileName,  DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart));
+	WINPORT_DECL(GetFullPathName, DWORD, (LPCTSTR lpFileName, DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart));
 
 	WINPORT_DECL(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ));
 	WINPORT_DECL(EvaluateAttributesA, DWORD,( uint32_t unix_mode, const char *name ));
@@ -200,16 +199,15 @@ extern "C" {
 	WINPORT_DECL(FileTimeToLocalFileTime, BOOL, (const FILETIME *lpFileTime, LPFILETIME lpLocalFileTime));
 	WINPORT_DECL(FileTimeToSystemTime, BOOL, (const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime));
 	WINPORT_DECL(GetSystemTimeAsFileTime, VOID, (FILETIME *lpFileTime));
-	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD   lpFatDate, LPWORD   lpFatTime));
+	WINPORT_DECL(FileTimeToDosDateTime, BOOL, (const FILETIME *lpFileTime, LPWORD lpFatDate, LPWORD lpFatTime));
 	WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETIME ft));
 	WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTime));
 	WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct timespec *ts));
-	
 
-	//String
+	//string
 	WINPORT_DECL(LCMapString, INT, (LCID lcid, DWORD flags, LPCWSTR src, INT srclen, LPWSTR dst, INT dstlen));
-	WINPORT_DECL(CharUpperBuff, DWORD, (LPWSTR lpsz, DWORD  cchLength));
-	WINPORT_DECL(CharLowerBuff, DWORD, (LPWSTR lpsz, DWORD  cchLength));
+	WINPORT_DECL(CharUpperBuff, DWORD, (LPWSTR lpsz, DWORD cchLength));
+	WINPORT_DECL(CharLowerBuff, DWORD, (LPWSTR lpsz, DWORD cchLength));
 	WINPORT_DECL(IsCharLower, BOOL, (WCHAR ch));
 	WINPORT_DECL(IsCharUpper, BOOL, (WCHAR ch));
 	WINPORT_DECL(IsCharAlpha, BOOL, (WCHAR ch));
@@ -240,13 +238,12 @@ extern "C" {
 	WINPORT_DECL(SetClipboardData, PVOID, (UINT format, HANDLE mem));
 
 	// these are simplified analogs for Win32's Global* APIs, that dedicated to reference clipboard data
-	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T len));  // allocates zero-initialized memory
-	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID mem));   // return _exact_ allocation size
+	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T len)); // allocates zero-initialized memory
+	WINPORT_DECL(ClipboardSize, SIZE_T, (PVOID mem));  // return _exact_ allocation size
 
 	// note that like in win32, clipboard data is mostly owned by clipboard so ClipboardFree actually useful
 	// only in case of SetClipboardData's failure.
 	WINPORT_DECL(ClipboardFree, VOID, (PVOID mem));
-
 
 	//keyboard
 	WINPORT_DECL(GetKeyboardLayoutList, int, (int nBuff, HKL *lpList));
@@ -258,7 +255,6 @@ extern "C" {
 	//%s -> %ls, %ws -> %ls
 	SHAREDSYMBOL int vswprintf_ws2ls(wchar_t * ws, size_t len, const wchar_t * format, va_list arg );
 	SHAREDSYMBOL int swprintf_ws2ls (wchar_t* ws, size_t len, const wchar_t* format, ...);
-
 
 	SHAREDSYMBOL void SetPathTranslationPrefix(const wchar_t *prefix);
 

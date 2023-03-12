@@ -374,7 +374,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 	WinPortInitRegistry();
 	WinPortInitWellKnownEnv();
-//  g_winport_con_out->WriteString(L"Hello", 5);
+//	g_winport_con_out->WriteString(L"Hello", 5);
 
 	int result = -1;
 	if (!arg_opts.tty) {

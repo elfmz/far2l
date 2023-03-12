@@ -174,7 +174,7 @@ $p_warn
 static char char_category_names[][3] = { $p_enum_names };
 
 // ansi class names
-static char char_bidi_names[][4] = { $p_bidi_names };
+// UNUSED: static char char_bidi_names[][4] = { $p_bidi_names };
 
 /*
 // unc class names

@@ -2734,7 +2734,6 @@ int Editor::ProcessKey(int Key)
 					// Если находимся в середине блока,
 					// в начале строки, и нажимаем tab, который заменяется
 					// на пробелы, выделение съедет. Это фикс.
-					*/
 					if (Key==KEY_TAB && CurLine->GetConvertTabs() &&
 						BlockStart && BlockStart!=CurLine)
 					{

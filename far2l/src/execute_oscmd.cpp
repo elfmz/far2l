@@ -83,15 +83,16 @@ static bool MatchCommand(const std::string &cmd_line, const char *cmd)
 
 // explode cmdline to argv[] array
 //
-// Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated (such as `...`, $(...), cmd>/dev/null, cmd&)
+// Bash cmdlines cannot be correctly parsed that way because some bash constructions are not space-separated
+// (such as `...`, $(...), cmd>/dev/null, cmd&)
 // echo foo = bar       -> {'echo', 'foo', '=', 'bar'}
 // echo foo=bar         -> {'echo', 'foo=bar'}
 // echo "foo=long bar"  -> {'echo', 'foo=long bar'}
-// echo "a\"b"	          -> {'echo', 'a"b'}
+// echo "a\"b"	        -> {'echo', 'a"b'}
 // echo 'a\\b'          -> {'echo', 'a\\b'}
 // echo "a\\b"          -> {'echo', 'a\b'}
 // echo "a"'!'"b"       -> {'echo', 'a!b'}
-// echo "" '' 	          -> {'echo', '', ''}
+// echo "" '' 	        -> {'echo', '', ''}
 
 bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand)
 {
@@ -153,21 +154,20 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 		return TRUE;
 	}
 
-	/* $ 20.09.2002 SKV
-	  Это отключает возможность выполнять такие команды как:
-	  cd net:server и cd ftp://server/dir
-	  Так как под ту же гребёнку попадают и
-	  cd s&r:, cd make: и т.д., которые к смене
-	  каталога не имеют никакого отношения.
-	*/
+	// $ 20.09.2002 SKV
+	// Это отключает возможность выполнять такие команды как:
+	// cd net:server и cd ftp://server/dir
+	// Так как под ту же гребёнку попадают и
+	// cd s&r:, cd make: и т.д., которые к смене
+	// каталога не имеют никакого отношения.
 	/*
 	if (CtrlObject->Plugins.ProcessCommandLine(ExpandedDir))
 	{
-	  //CmdStr.SetString(L"");
-	  GotoXY(X1,Y1);
-	  FS<<fmt::Expand(X2-X1+1)<<L"";
-	  Show();
-	  return TRUE;
+		//CmdStr.SetString(L"");
+		GotoXY(X1,Y1);
+		FS<<fmt::Expand(X2-X1+1)<<L"";
+		Show();
+		return TRUE;
 	}
 	*/
 

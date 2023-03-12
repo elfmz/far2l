@@ -753,7 +753,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR 
 		case DN_MOUSECLICK:
 
 			if ((Msg==DN_BTNCLICK && Param1 >= ID_HER_NORMALFILE && Param1 <= ID_HER_SELECTEDCURSORMARKING)
-			        || (Msg==DN_MOUSECLICK && Param1==ID_HER_COLOREXAMPLE && ((MOUSE_EVENT_RECORD *)Param2)->dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED))
+				|| (Msg==DN_MOUSECLICK && Param1==ID_HER_COLOREXAMPLE && ((MOUSE_EVENT_RECORD *)Param2)->dwButtonState==FROM_LEFT_1ST_BUTTON_PRESSED))
 			{
 				HighlightDataColor *EditData = (HighlightDataColor *) SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 
@@ -1124,10 +1124,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			FF->SetContinueProcessing(FilterDlg[ID_HER_CONTINUEPROCESSING].Selected!=0);
 			FF->SetTitle(FilterDlg[ID_FF_NAMEEDIT].strData);
 			FF->SetMask(FilterDlg[ID_FF_MATCHMASK].Selected!=0,
-			            FilterDlg[ID_FF_MASKEDIT].strData);
+				FilterDlg[ID_FF_MASKEDIT].strData);
 			FF->SetSize(FilterDlg[ID_FF_MATCHSIZE].Selected!=0,
-			            FilterDlg[ID_FF_SIZEFROMEDIT].strData,
-			            FilterDlg[ID_FF_SIZETOEDIT].strData);
+				FilterDlg[ID_FF_SIZEFROMEDIT].strData,
+				FilterDlg[ID_FF_SIZETOEDIT].strData);
 			bRelative = FilterDlg[ID_FF_DATERELATIVE].Selected!=0;
 
 			FilterDlg[ID_FF_TIMEBEFOREEDIT].strData.ReplaceChar(8, TimeSeparator);
@@ -1136,10 +1136,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			StrToDateTime(FilterDlg[bRelative?ID_FF_DAYSAFTEREDIT:ID_FF_DATEAFTEREDIT].strData,FilterDlg[ID_FF_TIMEAFTEREDIT].strData,DateAfter,DateFormat,DateSeparator,TimeSeparator,bRelative);
 			StrToDateTime(FilterDlg[bRelative?ID_FF_DAYSBEFOREEDIT:ID_FF_DATEBEFOREEDIT].strData,FilterDlg[ID_FF_TIMEBEFOREEDIT].strData,DateBefore,DateFormat,DateSeparator,TimeSeparator,bRelative);
 			FF->SetDate(FilterDlg[ID_FF_MATCHDATE].Selected!=0,
-			            FilterDlg[ID_FF_DATETYPE].ListPos,
-			            DateAfter,
-			            DateBefore,
-			            bRelative);
+				FilterDlg[ID_FF_DATETYPE].ListPos,
+				DateAfter,
+				DateBefore,
+				bRelative);
 			AttrSet=0;
 			AttrClear=0;
 			AttrSet|=(FilterDlg[ID_FF_READONLY].Selected==1?FILE_ATTRIBUTE_READONLY:0);
@@ -1173,8 +1173,8 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			AttrClear|=(FilterDlg[ID_FF_EXECUTABLE].Selected==0?FILE_ATTRIBUTE_EXECUTABLE:0);
 			AttrClear|=(FilterDlg[ID_FF_BROKEN].Selected==0?FILE_ATTRIBUTE_BROKEN:0);
 			FF->SetAttr(FilterDlg[ID_FF_MATCHATTRIBUTES].Selected!=0,
-			            AttrSet,
-			            AttrClear);
+				AttrSet,
+				AttrClear);
 			return true;
 		}
 		else

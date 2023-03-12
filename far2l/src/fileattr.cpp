@@ -98,8 +98,8 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 			Code=SkipMode;
 		else
 			Code=Message(MSG_WARNING|MSG_ERRORTYPE,4,Msg::Error,
-			             Msg::SetAttrTimeCannotFor,Name,Msg::HRetry, //BUGBUG
-			             Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
+				Msg::SetAttrTimeCannotFor,Name,Msg::HRetry, //BUGBUG
+				Msg::HSkip,Msg::HSkipAll,Msg::HCancel);
 
 		switch (Code)
 		{

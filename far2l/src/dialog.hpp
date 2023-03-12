@@ -120,7 +120,7 @@ struct DialogItemEx
 		DWORD_PTR Reserved;
 		int Selected;
 		FarList *ListItems;
-		int  ListPos;
+		int ListPos;
 		CHAR_INFO *VBuf;
 	};
 	FARString strHistory;
@@ -133,7 +133,7 @@ struct DialogItemEx
 
 	WORD ID;
 	BitFlags IFlags;
-	unsigned AutoCount;   // Автоматизация
+	unsigned AutoCount; // Автоматизация
 	DialogItemAutomation* AutoPtr;
 	DWORD_PTR UserData; // ассоциированные данные
 
@@ -246,7 +246,7 @@ struct DialogDataEx
 		const wchar_t *History;
 		const wchar_t *Mask;
 		FarList *ListItems;
-		int  ListPos;
+		int ListPos;
 		CHAR_INFO *VBuf;
 	};
 	DWORD Flags;
@@ -265,21 +265,22 @@ class Dialog: public Frame
 	private:
 		ChangeMacroMode CMM;
 		INT_PTR PluginNumber;       // Номер плагина, для формирования HelpTopic
-		unsigned FocusPos;               // всегда известно какой элемент в фокусе
-		unsigned PrevFocusPos;           // всегда известно какой элемент был в фокусе
+		unsigned FocusPos;          // всегда известно какой элемент в фокусе
+		unsigned PrevFocusPos;      // всегда известно какой элемент был в фокусе
 		int IsEnableRedraw;         // Разрешена перерисовка диалога? ( 0 - разрешена)
 		BitFlags DialogMode;        // Флаги текущего режима диалога
 
-		LONG_PTR DataDialog;        // Данные, специфические для конкретного экземпляра диалога (первоначально здесь параметр, переданный в конструктор)
+		LONG_PTR DataDialog;        // Данные, специфические для конкретного экземпляра диалога
+//                                     (первоначально здесь параметр, переданный в конструктор)
 
 		DialogItemEx **Item; // массив элементов диалога
-		DialogItemEx *pSaveItemEx; // пользовательский массив элементов диалога
+		DialogItemEx *pSaveItemEx;  // пользовательский массив элементов диалога
 
 		unsigned ItemCount;         // количество элементов диалога
 
 		ConsoleTitle *OldTitle;     // предыдущий заголовок
 
-		FARWINDOWPROC RealDlgProc;      // функция обработки диалога
+		FARWINDOWPROC RealDlgProc;  // функция обработки диалога
 
 		// переменные для перемещения диалога
 		int OldX1,OldX2,OldY1,OldY2;
@@ -301,13 +302,12 @@ class Dialog: public Frame
 		void DeleteDialogObjects();
 		int  LenStrItem(int ID, const wchar_t *lpwszStr = nullptr);
 
-		void ShowDialog(unsigned ID=(unsigned)-1);  //    ID=-1 - отрисовать весь диалог
+		void ShowDialog(unsigned ID=(unsigned)-1); // ID=-1 - отрисовать весь диалог
 
 		LONG_PTR CtlColorDlgItem(int ItemPos,int Type,int Focus,int Default,DWORD Flags);
-		/* $ 28.07.2000 SVS
-		   + Изменяет фокус ввода между двумя элементами.
-		     Вынесен отдельно для того, чтобы обработать DMSG_KILLFOCUS & DMSG_SETFOCUS
-		*/
+		// $ 28.07.2000 SVS
+		// + Изменяет фокус ввода между двумя элементами.
+		//   Вынесен отдельно для того, чтобы обработать DMSG_KILLFOCUS & DMSG_SETFOCUS
 		void ChangeFocus2(unsigned SetFocusPos);
 
 		unsigned ChangeFocus(unsigned FocusPos,int Step,int SkipGroup);
@@ -315,7 +315,7 @@ class Dialog: public Frame
 		int SelectFromComboBox(DialogItemEx *CurItem,DlgEdit*EditLine,VMenu *List);
 		int AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName);
 
-		void ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex);  // обработка DIF_USELASTHISTORY
+		void ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex); // обработка DIF_USELASTHISTORY
 
 		int ProcessHighlighting(int Key,unsigned FocusPos,int Translate);
 		int CheckHighlights(WORD Chr,int StartPos=0);
@@ -331,10 +331,9 @@ class Dialog: public Frame
 
 		BOOL SetItemRect(unsigned ID,SMALL_RECT *Rect);
 
-		/* $ 23.06.2001 KM
-		   + Функции программного открытия/закрытия комбобокса и хистори
-		     и получения статуса открытости/закрытости комбобокса и хистори.
-		*/
+		// $ 23.06.2001 KM
+		// + Функции программного открытия/закрытия комбобокса и хистори
+		//   и получения статуса открытости/закрытости комбобокса и хистори.
 		void SetDropDownOpened(int Status) { DropDownOpened=Status; }
 		int GetDropDownOpened() { return DropDownOpened; }
 
@@ -358,9 +357,9 @@ class Dialog: public Frame
 
 	public:
 		Dialog(DialogItemEx *SrcItem, unsigned SrcItemCount,
-		       FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
+			FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
 		Dialog(FarDialogItem *SrcItem, unsigned SrcItemCount,
-		       FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
+			FARWINDOWPROC DlgProc=nullptr,LONG_PTR InitParam=0);
 		virtual ~Dialog();
 
 	public:
@@ -406,7 +405,7 @@ class Dialog: public Frame
 		/* $ Введена для нужд CtrlAltShift OT */
 		virtual int FastHide();
 		virtual void ResizeConsole();
-//    virtual void OnDestroy();
+//		virtual void OnDestroy();
 
 		// For MACRO
 		const DialogItemEx **GetAllItem() {return (const DialogItemEx**)Item;};
@@ -415,9 +414,9 @@ class Dialog: public Frame
 
 
 		int SetAutomation(WORD IDParent,WORD id,
-		                  FarDialogItemFlags UncheckedSet,FarDialogItemFlags UncheckedSkip,
-		                  FarDialogItemFlags CheckedSet,FarDialogItemFlags CheckedSkip,
-		                  FarDialogItemFlags Checked3Set=DIF_NONE,FarDialogItemFlags Checked3Skip=DIF_NONE);
+			FarDialogItemFlags UncheckedSet,FarDialogItemFlags UncheckedSkip,
+			FarDialogItemFlags CheckedSet,FarDialogItemFlags CheckedSkip,
+			FarDialogItemFlags Checked3Set=DIF_NONE,FarDialogItemFlags Checked3Skip=DIF_NONE);
 
 		LONG_PTR WINAPI DlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 

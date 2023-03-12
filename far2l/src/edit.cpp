@@ -226,9 +226,11 @@ void Edit::DisplayObject()
 	CurPos=GetNextCursorPos(CurPos,Value);
 	FastShow();
 
-	// $ 26.07.2000 tran
-	// при DropDownBox курсор выключаем
-	// не знаю даже - попробовал но не очень красиво вышло
+	/*
+		$ 26.07.2000 tran
+		при DropDownBox курсор выключаем
+		не знаю даже - попробовал но не очень красиво вышло
+	*/
 	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
 		::SetCursorType(0,10);
 	else
@@ -342,9 +344,11 @@ void Edit::FastShow()
 	{
 		if (CellCurPos - LeftPos > EditLength - 1)
 		{
-			// tricky left pos shifting to
-			// - avoid LeftPos pointing into middle of full-width char cells pair
-			// - ensure RealLeftPos really shifted in case string starts by some long character
+			/*
+				tricky left pos shifting to
+				- avoid LeftPos pointing into middle of full-width char cells pair
+				- ensure RealLeftPos really shifted in case string starts by some long character
+			*/
 			for (int ShiftBy = 1; ShiftBy <= std::max(TabSize, 2); ++ShiftBy)
 			{
 				RealLeftPos = CellPosToReal(CellCurPos - EditLength + ShiftBy);
@@ -368,10 +372,12 @@ void Edit::FastShow()
 	int CellSelStart=(SelStart==-1) ? -1:RealPosToCell(SelStart);
 	int CellSelEnd=(SelEnd<0) ? -1:RealPosToCell(SelEnd);
 
-	// $ 17.08.2000 KM
-	// Если есть маска, сделаем подготовку строки, то есть
-	// все "постоянные" символы в маске, не являющиеся шаблонными
-	// должны постоянно присутствовать в Str
+	/*
+		$ 17.08.2000 KM
+		Если есть маска, сделаем подготовку строки, то есть
+		все "постоянные" символы в маске, не являющиеся шаблонными
+		должны постоянно присутствовать в Str
+	*/
 	if (Mask && *Mask)
 		RefreshStrByMask();
 
@@ -510,8 +516,10 @@ void Edit::FastShow()
 		}
 	}
 
-	// $ 26.07.2000 tran
-	// при дроп-даун цвета нам не нужны
+	/*
+		$ 26.07.2000 tran
+		при дроп-даун цвета нам не нужны
+	*/
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 		ApplyColor();
 }
@@ -784,8 +792,10 @@ int Edit::ProcessKey(int Key)
 			!(Key==KEY_SHIFTDEL||Key==KEY_SHIFTNUMDEL||Key==KEY_SHIFTDECIMAL) && !Flags.Check(FEDITLINE_EDITORMODE) && Key != KEY_CTRLQ &&
 			!(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)) //Key != KEY_SHIFTINS) //??
 		{
-			// $ 12.11.2002 DJ
-			// зачем рисоваться, если ничего не изменилось?
+			/*
+				$ 12.11.2002 DJ
+				зачем рисоваться, если ничего не изменилось?
+			*/
 			if (SelStart != -1 || SelEnd )
 			{
 				PrevSelStart=SelStart;
@@ -796,9 +806,11 @@ int Edit::ProcessKey(int Key)
 		}
 	}
 
-	// $ 11.09.2000 SVS
-	// если Opt.DlgEULBsClear = 1, то BS в диалогах для UnChanged строки
-	// удаляет такую строку также, как и Del
+	/*
+		$ 11.09.2000 SVS
+		если Opt.DlgEULBsClear = 1, то BS в диалогах для UnChanged строки
+		удаляет такую строку также, как и Del
+	*/
 	if (((Opt.Dialogs.EULBsClear && Key==KEY_BS) || Key==KEY_DEL || Key==KEY_NUMDEL) &&
 			Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize)
 		Key=KEY_CTRLY;
@@ -1788,9 +1800,11 @@ void Edit::SetBinaryString(const wchar_t *Str,int Length)
 			i++;
 		}
 
-		// Здесь необходимо условие (!*Str), т.к. для очистки строки
-		// обычно вводится нечто вроде SetBinaryString("",0)
-		// Т.е. таким образом мы добиваемся "инициализации" строки с маской
+		/*
+			Здесь необходимо условие (!*Str), т.к. для очистки строки
+			обычно вводится нечто вроде SetBinaryString("",0)
+			Т.е. таким образом мы добиваемся "инициализации" строки с маской
+		*/
 		RefreshStrByMask(!*Str);
 	}
 	else
@@ -1893,9 +1907,11 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 			//_SVS(SysLog(L"InsertBinaryString ==> Str='%ls' (Length=%d) Mask='%ls'",Str,Length,Mask+Pos));
 			int StrLen=(MaskLen-Pos>Length)?Length:MaskLen-Pos;
 
-			// $ 15.11.2000 KM
-			// Внесены исправления для правильной работы PasteFromClipboard
-			// в строке с маской
+			/*
+				$ 15.11.2000 KM
+				Внесены исправления для правильной работы PasteFromClipboard
+				в строке с маской
+			*/
 			for (int i=Pos,j=0; j<StrLen+Pos;)
 			{
 				if (CheckCharMask(Mask[i]))
@@ -2314,9 +2330,11 @@ void Edit::SanitizeSelectionRange()
 			++SelEnd;
 	}
 
-	// $ 24.06.2002 SKV
-	// Если начало выделения за концом строки, надо выделение снять.
-	// 17.09.2002 возвращаю обратно. Глюкодром.
+	/*
+		$ 24.06.2002 SKV
+		Если начало выделения за концом строки, надо выделение снять.
+		17.09.2002 возвращаю обратно. Глюкодром.
+	*/
 	if (SelEnd < SelStart && SelEnd != -1)
 	{
 		SelStart = -1;
@@ -2355,9 +2373,11 @@ void Edit::AddSelect(int Start,int End)
 
 void Edit::GetSelection(int &Start,int &End)
 {
-	// $ 17.09.2002 SKV
-	// Мало того, что это нарушение правил OO design'а,
-	// так это еще и источние багов.
+	/*
+		$ 17.09.2002 SKV
+		Мало того, что это нарушение правил OO design'а,
+		так это еще и источние багов.
+	*/
 	/*
 	if (SelEnd>StrSize+1)
 		SelEnd=StrSize+1;
@@ -2513,15 +2533,19 @@ void Edit::ApplyColor()
 		// Получаем начальную позицию
 		int RealStart, Start;
 
-		// Если предыдущая позиция равна текущей, то ничего не вычисляем
-		// и сразу берём ранее вычисленное значение
+		/*
+			Если предыдущая позиция равна текущей, то ничего не вычисляем
+			и сразу берём ранее вычисленное значение
+		*/
 		if (Pos == CurItem.StartPos)
 		{
 			RealStart = TabPos;
 			Start = TabEditorPos;
 		}
-		// Если вычисление идёт первый раз или предыдущая позиция больше текущей,
-		// то производим вычисление с начала строки
+		/*
+			Если вычисление идёт первый раз или предыдущая позиция больше текущей,
+			то производим вычисление с начала строки
+		*/
 		else if (Pos == INT_MIN || CurItem.StartPos < Pos)
 		{
 			RealStart = RealPosToCell(CurItem.StartPos);
@@ -2553,13 +2577,17 @@ void Edit::ApplyColor()
 		int EndPos = CurItem.EndPos;
 		int RealEnd, End;
 
-		// Обрабатываем случай, когда предыдущая позиция равна текущей, то есть
-		// длина раскрашиваемой строкии равна 1
+		/*
+			Обрабатываем случай, когда предыдущая позиция равна текущей, то есть
+			длина раскрашиваемой строкии равна 1
+		*/
 		if (Pos == EndPos)
 		{
-			// Если необходимо делать корректироку относительно табов и единственный
-			// символ строки -- это таб, то делаем расчёт с учтом корректировки,
-			// иначе ничего не вычисялем и берём старые значения
+			/*
+				Если необходимо делать корректироку относительно табов и единственный
+				символ строки -- это таб, то делаем расчёт с учтом корректировки,
+				иначе ничего не вычисялем и берём старые значения
+			*/
 			if (CorrectPos && EndPos < StrSize && Str[EndPos] == L'\t')
 			{
 				RealEnd = RealPosToCell(TabPos, Pos, ++EndPos, nullptr);
@@ -2572,16 +2600,20 @@ void Edit::ApplyColor()
 				End = TabEditorPos;
 			}
 		}
-		// Если предыдущая позиция больше текущей, то производим вычисление
-		// с начала строки (с учётом корректировки относительно табов)
+		/*
+			Если предыдущая позиция больше текущей, то производим вычисление
+			с начала строки (с учётом корректировки относительно табов)
+		*/
 		else if (EndPos < Pos)
 		{
 			RealEnd = RealPosToCell(0, 0, EndPos, &CorrectPos);
 			EndPos += CorrectPos;
 			End = RealEnd-LeftPos;
 		}
-		// Для отптимизации делаем вычисление относительно предыдущей позиции (с учётом
-		// корректировки относительно табов)
+		/*
+			Для отптимизации делаем вычисление относительно предыдущей позиции (с учётом
+			корректировки относительно табов)
+		*/
 		else
 		{
 			RealEnd = RealPosToCell(TabPos, Pos, EndPos, &CorrectPos);
@@ -2656,9 +2688,11 @@ void Edit::Xlat(bool All)
 	*/
 	else
 	{
-		// $ 10.12.2000 IS
-		// Обрабатываем только то слово, на котором стоит курсор, или то слово, что
-		// находится левее позиции курсора на 1 символ
+		/*
+			$ 10.12.2000 IS
+			Обрабатываем только то слово, на котором стоит курсор, или то слово, что
+			находится левее позиции курсора на 1 символ
+		*/
 		int start=CurPos, end, StrSize=StrLength(Str);
 		bool DoXlat=true;
 

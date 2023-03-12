@@ -562,17 +562,21 @@ void FileEditor::Init(
 		}
 	}
 
-	// $ 29.11.2000 SVS
-	// Если файл имеет атрибут ReadOnly или System или Hidden,
-	// И параметр на запрос выставлен, то сначала спросим.
-	// $ 03.12.2000 SVS
-	// System или Hidden - задаются отдельно
-	// $ 15.12.2000 SVS
-	// - Shift-F4, новый файл. Выдает сообщение :-(
+	/*
+		$ 29.11.2000 SVS
+		Если файл имеет атрибут ReadOnly или System или Hidden,
+		И параметр на запрос выставлен, то сначала спросим.
+		$ 03.12.2000 SVS
+		System или Hidden - задаются отдельно
+		$ 15.12.2000 SVS
+		- Shift-F4, новый файл. Выдает сообщение :-(
+	*/
 	DWORD FAttr=apiGetFileAttributes(Name);
 
-	// $ 05.06.2001 IS
-	// + посылаем подальше всех, кто пытается отредактировать каталог
+	/*
+		$ 05.06.2001 IS
+		+ посылаем подальше всех, кто пытается отредактировать каталог
+	*/
 	if (FAttr!=INVALID_FILE_ATTRIBUTES && FAttr&FILE_ATTRIBUTE_DIRECTORY)
 	{
 		Message(MSG_WARNING,1,Msg::EditTitle,Msg::EditCanNotEditDirectory,Msg::Ok);
@@ -587,10 +591,12 @@ void FileEditor::Init(
 			FAttr &
 			(
 				FILE_ATTRIBUTE_READONLY |
-				// Hidden=0x2 System=0x4 - располагаются во 2-м полубайте,
-				// поэтому применяем маску 0110.0000 и
-				// сдвигаем на свое место => 0000.0110 и получаем
-				// те самые нужные атрибуты
+				/*
+					Hidden=0x2 System=0x4 - располагаются во 2-м полубайте,
+					поэтому применяем маску 0110.0000 и
+					сдвигаем на свое место => 0000.0110 и получаем
+					те самые нужные атрибуты
+				*/
 				((m_editor->EdOpt.ReadOnlyLock&0x60)>>4)
 			)
 		)
@@ -608,9 +614,11 @@ void FileEditor::Init(
 	m_editor->SetStartPos(StartLine,StartChar);
 	int UserBreak;
 
-	// $ 06.07.2001 IS
-	// При создании файла с нуля так же посылаем плагинам событие EE_READ, дабы
-	// не нарушать однообразие.
+	/*
+		$ 06.07.2001 IS
+		При создании файла с нуля так же посылаем плагинам событие EE_READ, дабы
+		не нарушать однообразие.
+	*/
 	if (FAttr == INVALID_FILE_ATTRIBUTES)
 		Flags.Set(FFILEEDIT_NEW);
 
@@ -815,11 +823,13 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 		Key=Key == KEY_ENTER?KEY_SHIFTENTER:KEY_SHIFTNUMENTER;
 	}
 
-	// Все сотальные необработанные клавиши пустим далее
-	// $ 28.04.2001 DJ
-	// не передаем KEY_MACRO* плагину - поскольку ReadRec в этом случае
-	// никак не соответствует обрабатываемой клавише, возникают разномастные
-	// глюки
+	/*
+		Все сотальные необработанные клавиши пустим далее
+		$ 28.04.2001 DJ
+		не передаем KEY_MACRO* плагину - поскольку ReadRec в этом случае
+		никак не соответствует обрабатываемой клавише, возникают разномастные
+		глюки
+	*/
 	if (((unsigned int)Key >= KEY_MACRO_BASE && (unsigned int)Key <= KEY_MACRO_ENDBASE) || ((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)) // исключаем MACRO
 	{
 		;
@@ -827,8 +837,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 	switch (Key)
 	{
-		// $ 27.09.2000 SVS
-		// Печать файла/блока с использованием плагина PrintMan
+		/*
+			$ 27.09.2000 SVS
+			Печать файла/блока с использованием плагина PrintMan
+		*/
 		case KEY_ALTF5:
 		{
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
@@ -878,8 +890,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				{
 					long FilePos=m_editor->GetCurPos();
 
-					// $ 01.02.2001 IS
-					// ! Открываем вьюер с указанием длинного имени файла, а не короткого
+					/*
+						$ 01.02.2001 IS
+						! Открываем вьюер с указанием длинного имени файла, а не короткого
+					*/
 					if (ProcessQuitKey(FirstSave,NeedQuestion))
 					{
 						//объект будет в конце удалён в FrameManager
@@ -897,8 +911,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 			break; // отдадим F6 плагинам, если есть запрет на переключение
 		}
-		// $ 10.05.2001 DJ
-		// Alt-F11 - показать view/edit history
+		/*
+			$ 10.05.2001 DJ
+			Alt-F11 - показать view/edit history
+		*/
 		case KEY_ALTF11:
 		{
 			if (GetCanLoseFocus())
@@ -940,8 +956,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				Help::Present(L"Editor");
 				return TRUE;
 			}
-			// $ 25.04.2001 IS
-			// ctrl+f - вставить в строку полное имя редактируемого файла
+			/*
+				$ 25.04.2001 IS
+				ctrl+f - вставить в строку полное имя редактируемого файла
+			*/
 			case KEY_CTRLF:
 			{
 				if (!m_editor->Flags.Check(FEDITOR_LOCKMODE))
@@ -967,8 +985,10 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 				return (TRUE);
 			}
-			// $ 24.08.2000 SVS
-			// + Добавляем реакцию показа бакграунда на клавишу CtrlAltShift
+			/*
+				$ 24.08.2000 SVS
+				+ Добавляем реакцию показа бакграунда на клавишу CtrlAltShift
+			*/
 			case KEY_CTRLO:
 			{
 				if (!Opt.OnlyEditorViewerUsed)
@@ -1354,8 +1374,10 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 
 		if (SaveCode==SAVEFILE_SUCCESS)
 		{
-			// $ 09.02.2002 VVM
-			// + Обновить панели, если писали в текущий каталог
+			/*
+				$ 09.02.2002 VVM
+				+ Обновить панели, если писали в текущий каталог
+			*/
 			if (NeedQuestion)
 			{
 				if (apiGetFileAttributes(strFullFileName)!=INVALID_FILE_ATTRIBUTES)

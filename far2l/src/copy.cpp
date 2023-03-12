@@ -638,9 +638,11 @@ ShellCopy::ShellCopy(
 	DestPanelMode=DestPlugin ? DestPanel->GetMode():NORMAL_PANEL;
 	SrcPanelMode=SrcPanel->GetMode();
 
-	// ***********************************************************************
-	// *** Prepare Dialog Controls
-	// ***********************************************************************
+	/*
+		***********************************************************************
+		*** Prepare Dialog Controls
+		***********************************************************************
+	*/
 	int DLG_HEIGHT=19, DLG_WIDTH=76;
 
 	DialogDataEx CopyDlgData[]=
@@ -917,9 +919,11 @@ ShellCopy::ShellCopy(
 			Ask=TRUE;
 	}
 
-	// ***********************************************************************
-	// *** Вывод и обработка диалога
-	// ***********************************************************************
+	/*
+		***********************************************************************
+		*** Вывод и обработка диалога
+		***********************************************************************
+	*/
 	if (Ask)
 	{
 		FarList ComboList;
@@ -1025,9 +1029,11 @@ ShellCopy::ShellCopy(
 		}
 	}
 
-	// ***********************************************************************
-	// *** Стадия подготовки данных после диалога
-	// ***********************************************************************
+	/*
+		***********************************************************************
+		*** Стадия подготовки данных после диалога
+		***********************************************************************
+	*/
 	Flags.WRITETHROUGH = Flags.COPYACCESSMODE = Flags.COPYXATTR = Flags.SPARSEFILES = Flags.USECOW = false;
 	Flags.SYMLINK = COPY_SYMLINK_ASIS;
 	ReadOnlyDelMode = ReadOnlyOvrMode = OvrMode = SkipMode = SkipDeleteMode = -1;
@@ -1128,10 +1134,12 @@ ShellCopy::ShellCopy(
 	SrcPanel->SaveSelection();
 	// нужно ли показывать время копирования?
 	bool ShowCopyTime=(Opt.CMOpt.CopyTimeRule&COPY_RULE_FILES)!=0;
-	// ***********************************************************************
-	// **** Здесь все подготовительные операции закончены, можно приступать
-	// **** к процессу Copy/Move/Link
-	// ***********************************************************************
+	/*
+		***********************************************************************
+		**** Здесь все подготовительные операции закончены, можно приступать
+		**** к процессу Copy/Move/Link
+		***********************************************************************
+	*/
 	int NeedDizUpdate=FALSE;
 	int NeedUpdateAPanel=FALSE;
 	Flags.UPDATEPPANEL = true;
@@ -1252,10 +1260,12 @@ ShellCopy::ShellCopy(
 		}
 		_LOGCOPYR(else SysLog(L"Error: DestList.Set(CopyDlgValue) return FALSE"));
 	}
-	// ***********************************************************************
-	// *** заключительеая стадия процесса
-	// *** восстанавливаем/дизим/редравим
-	// ***********************************************************************
+	/*
+		***********************************************************************
+		*** заключительеая стадия процесса
+		*** восстанавливаем/дизим/редравим
+		***********************************************************************
+	*/
 
 	if (NeedDizUpdate) // при мультикопировании может быть обрыв, но нам все
 	{                  // равно нужно апдейтить дизы!
@@ -1789,9 +1799,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				SrcPanel->CopyDiz(strSelName,strCopiedName,&DestDiz);
 			}
 
-
-			// Mantis#44 - Потеря данных при копировании ссылок на папки
-			// если каталог (или нужно копировать симлинк) - придется рекурсивно спускаться...
+			/*
+				Mantis#44 - Потеря данных при копировании ссылок на папки
+				если каталог (или нужно копировать симлинк) - придется рекурсивно спускаться...
+			*/
 			if (
 				RPT!=RP_SYMLINKFILE && (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 &&
 				(
@@ -1817,9 +1828,11 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				{
 					if (UseFilter && (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 					{
-						// Просто пропустить каталог недостаточно - если каталог помечен в
-						// фильтре как некопируемый, то следует пропускать и его и всё его
-						// содержимое.
+						/*
+							Просто пропустить каталог недостаточно - если каталог помечен в
+							фильтре как некопируемый, то следует пропускать и его и всё его
+							содержимое.
+						*/
 						if (!Filter->FileInFilter(SrcData))
 						{
 							ScTree.SkipDir();
@@ -1909,8 +1922,10 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 										TreeList::DelTreeName(strFullName);
 								}
 							}
-							// здесь нужны проверка на FSCANTREE_INSIDEJUNCTION, иначе
-							// при мовинге будет удаление файла, что крайне неправильно!
+							/*
+								здесь нужны проверка на FSCANTREE_INSIDEJUNCTION, иначе
+								при мовинге будет удаление файла, что крайне неправильно!
+							*/
 							else if (!ScTree.IsInsideSymlink())
 							{
 								if (DeleteAfterMove(strFullName,SrcData.dwFileAttributes)==COPY_CANCEL)
@@ -2110,8 +2125,10 @@ COPY_CODES ShellCopy::CopySymLink(const wchar_t *ExistingName, const wchar_t *Ne
 		return CreateSymLink(LinkTarget, strNewName.CPtr(), SrcData);
 	}
 
-	// this is a case of smart linking - create symlink that relatively points to _new_ target
-	// by applying to new link relative path from existing symlink to its existing target
+	/*
+		this is a case of smart linking - create symlink that relatively points to _new_ target
+		by applying to new link relative path from existing symlink to its existing target
+	*/
 	FARString strRealName;
 	ConvertNameToReal(ExistingName, strRealName);
 	std::vector<std::string> partsRealName, partsExistingName;
@@ -2291,8 +2308,10 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(
 			FILE_ATTRIBUTE_DIRECTORY
 		)
 		{
-			// Enqueue attributes before creating directory, so even if will fail (like directory exists)
-			// but ignored then still will still try apply them on whole copy process finish successfully
+			/*
+				Enqueue attributes before creating directory, so even if will fail (like directory exists)
+				but ignored then still will still try apply them on whole copy process finish successfully
+			*/
 			EnqueueDirectoryAttributes(SrcData, strDestPath);
 		}
 
@@ -2690,7 +2709,7 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 		_DstFlags|= FILE_FLAG_WRITE_THROUGH;
 
 #ifdef __linux__ //anyway OSX doesn't have O_DIRECT
-		if (SrcData.nFileSize > 32 * USE_PAGE_SIZE)// just empiric
+		if (SrcData.nFileSize > 32 * USE_PAGE_SIZE) // just empiric
 			_DstFlags|= FILE_FLAG_NO_BUFFERING;
 #endif
 	}
@@ -2848,9 +2867,12 @@ void ShellFileTransfer::Do()
 	}
 
 	if (!_DestFile.Close())
-	{	// #1387
-		// if file located on old samba share then in out of space condition
-		// write()-s succeed but close() reports error
+	{
+		/*
+			#1387
+			if file located on old samba share then in out of space condition
+			write()-s succeed but close() reports error
+		*/
 		throw ErrnoSaver();
 	}
 
@@ -2955,8 +2977,11 @@ DWORD ShellFileTransfer::PieceCopy()
 		BytesWritten = PieceWrite(_CopyBuffer.Ptr, WriteSize);
 
 	if (BytesWritten > BytesRead)
-	{	// likely we written bit more due to no_buffering requires aligned io
-		// move backward and correct file size
+	{
+		/*
+			likely we written bit more due to no_buffering requires aligned io
+			move backward and correct file size
+		*/
 		if (!_DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT))
 			throw ErrnoSaver();
 		if (!_DestFile.SetEnd())

@@ -443,7 +443,8 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 		
 		r = -1; 
 	} else {
-		CtrlObject->CmdLine->SetString(L"", TRUE);
+		if (CtrlObject)
+			CtrlObject->CmdLine->SetString(L"", TRUE);
 
 		char cd_prev[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd_prev, MAX_PATH)) {

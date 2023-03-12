@@ -414,14 +414,12 @@ FileEditor::~FileEditor()
 		CtrlObject->Plugins.CurEditor = save;
 	}
 
-	if (m_editor)
-		delete m_editor;
+	delete m_editor;
 
 	m_editor=nullptr;
 	CurrentEditor=nullptr;
 
-	if (EditNamesList)
-		delete EditNamesList;
+	delete EditNamesList;
 }
 
 void FileEditor::Init(

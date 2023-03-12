@@ -1543,7 +1543,7 @@ int Edit::InsertKey(int Key)
 				{
 					int i=MaskLen-1;
 
-					while (!CheckCharMask(Mask[i]) && i>CurPos)
+					while (i>CurPos && !CheckCharMask(Mask[i]))
 						i--;
 
 					for (int j=i; i>CurPos; i--)

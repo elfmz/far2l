@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "plugapi.hpp"
+#include "CachedCreds.hpp"
 
 extern PanelViewSettings ViewSettingsArray[];
 extern size_t SizeViewSettingsArray;
@@ -1289,6 +1290,13 @@ int FileList::ProcessKey(int Key)
 			ProcessEnter(1,Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, true, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
 			return TRUE;
 		}
+
+		case KEY_CTRL | '`':
+		{
+			SetLocation_Directory(CachedHomeDir());
+			return TRUE;
+		}
+
 		case KEY_CTRLBACKSLASH:
 		{
 			_ALGO(CleverSysLog clv(L"Ctrl-/"));

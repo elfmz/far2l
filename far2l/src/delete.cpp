@@ -236,8 +236,10 @@ static DeletionResult ShellDeleteDirectory(int ItemsCount, bool UpdateDiz, Panel
 	if (FileAttr & FILE_ATTRIBUTE_READONLY)
 		apiMakeWritable(strSelName);
 
-	// нефига здесь выделываться, а надо учесть, что удаление
-	// симлинка в корзину чревато потерей оригинала.
+	/*
+		нефига здесь выделываться, а надо учесть, что удаление
+		симлинка в корзину чревато потерей оригинала.
+	*/
 	if (DirSymLink || !Opt_DeleteToRecycleBin || Wipe)
 		return ERemoveDirectory(strSelName, Wipe);
 
@@ -292,7 +294,7 @@ static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
 		FormatDeleteMultipleFilesMsg(strDeleteFilesMsg, SelCount);
 	}
 
-	if (Opt.Confirm.Delete || SelCount > 1)// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
+	if (Opt.Confirm.Delete || SelCount > 1) // || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
 		FarLangMsg TitleMsg = Wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle;
 		/*
@@ -562,8 +564,10 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 
 	if (Wipe || Opt_DeleteToRecycleBin)
 	{
-		// in case its a not a simple deletion - check/sanitize RO files prior any actions,
-		// cuz code that doing such things is not aware about such complications
+		/*
+			in case its a not a simple deletion - check/sanitize RO files prior any actions,
+			cuz code that doing such things is not aware about such complications
+		*/
 		AskDeleteRO.reset(new AskDeleteReadOnly(strFullName, Wipe));
 		if (AskDeleteRO->Choice() != DELETE_YES)
 			return AskDeleteRO->Choice();
@@ -611,8 +615,10 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 		}
 		else if (!Opt_DeleteToRecycleBin)
 		{
-			// first try simple removal, only if it will fail
-			// then fallback to AskDeleteRO and sdc_remove
+			/*
+				first try simple removal, only if it will fail
+				then fallback to AskDeleteRO and sdc_remove
+			*/
 			const std::string &mbFullName = strFullName.GetMB();
 			if (!AskDeleteRO)
 			{

@@ -473,7 +473,7 @@ long DlgEdit::GetObjectColor()
 #if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
-		return 0;// multiEdit->GetObjectColor();
+		return 0; // multiEdit->GetObjectColor();
 	else
 #endif
 		return lineEdit->GetObjectColor();

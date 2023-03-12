@@ -635,10 +635,12 @@ void Dialog::ProcessCenterGroup()
 
 	for (unsigned I=0; I < ItemCount; I++)
 	{
-		// Последовательно объявленные элементы с флагом DIF_CENTERGROUP
-		// и одинаковой вертикальной позицией будут отцентрированы в диалоге.
-		// Их координаты X не важны. Удобно использовать для центрирования
-		// групп кнопок.
+		/*
+			Последовательно объявленные элементы с флагом DIF_CENTERGROUP
+			и одинаковой вертикальной позицией будут отцентрированы в диалоге.
+			Их координаты X не важны. Удобно использовать для центрирования
+			групп кнопок.
+		*/
 		if ((Item[I]->Flags & DIF_CENTERGROUP) &&
 			(I == 0 || (Item[I-1]->Flags & DIF_CENTERGROUP) == 0 || Item[I-1]->Y1 != Item[I]->Y1)
 		)
@@ -754,8 +756,10 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			CurItem->strData=FARString(L"\x2580\x2584 ")+CurItem->strData;
 		}
 
-		// для кнопок не имеющи стиля "Показывает заголовок кнопки без скобок"
-		// добавим энти самые скобки
+		/*
+			для кнопок не имеющи стиля "Показывает заголовок кнопки без скобок"
+			добавим энти самые скобки
+		*/
 		if (Type==DI_BUTTON && !(ItemFlags & DIF_NOBRACKETS))
 		{
 			LPCWSTR Brackets[]={L"[ ", L" ]", L"{ ",L" }"};
@@ -791,8 +795,10 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 		}
 	}
 
-	// Опять про фокус ввода - теперь, если "чудо" забыло выставить
-	// хотя бы один, то ставим на первый подходящий
+	/*
+		Опять про фокус ввода - теперь, если "чудо" забыло выставить
+		хотя бы один, то ставим на первый подходящий
+	*/
 	if (FocusPos == (unsigned)-1)
 	{
 		for (I=0; I < ItemCount; I++) // по всем!!!!
@@ -836,10 +842,12 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			{
 				VMenu *ListPtr=CurItem->ListPtr;
 				ListPtr->SetVDialogItemID(I);
-				// $ 13.09.2000 SVS
-				// + Флаг DIF_LISTNOAMPERSAND. По умолчанию для DI_LISTBOX &
-				//   DI_COMBOBOX выставляется флаг MENU_SHOWAMPERSAND. Этот флаг
-				//   подавляет такое поведение
+				/*
+					$ 13.09.2000 SVS
+					+ Флаг DIF_LISTNOAMPERSAND. По умолчанию для DI_LISTBOX &
+					DI_COMBOBOX выставляется флаг MENU_SHOWAMPERSAND. Этот флаг
+					подавляет такое поведение
+				*/
 				CurItem->IFlags.Set(DLGIIF_LISTREACTIONFOCUS|DLGIIF_LISTREACTIONNOFOCUS); // всегда!
 				ListPtr->ChangeFlags(VMENU_DISABLED, ItemFlags&DIF_DISABLE);
 				ListPtr->ChangeFlags(VMENU_SHOWAMPERSAND, !(ItemFlags&DIF_LISTNOAMPERSAND));
@@ -874,8 +882,10 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 		// "редакторы" - разговор особый...
 		else if (FarIsEdit(Type))
 		{
-			// сбросим флаг DIF_EDITOR для строки ввода, отличной от DI_EDIT,
-			// DI_FIXEDIT и DI_PSWEDIT
+			/*
+				сбросим флаг DIF_EDITOR для строки ввода, отличной от DI_EDIT,
+				DI_FIXEDIT и DI_PSWEDIT
+			*/
 			if (Type != DI_COMBOBOX)
 				if ((ItemFlags&DIF_EDITOR) && Type != DI_EDIT && Type != DI_FIXEDIT && Type != DI_PSWEDIT)
 					ItemFlags&=~DIF_EDITOR;
@@ -923,9 +933,11 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				}
 			}
 
-			// $ 15.10.2000 tran
-			// строка редакторирование должна иметь максимум в 511 символов
-			// выставляем максимальный размер в том случае, если он еще не выставлен
+			/*
+				$ 15.10.2000 tran
+				строка редакторирование должна иметь максимум в 511 символов
+				выставляем максимальный размер в том случае, если он еще не выставлен
+			*/
 
 			//BUGBUG
 			if (DialogEdit->GetMaxLength() == -1)
@@ -955,14 +967,18 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				if (ItemFlags&DIF_HISTORY)
 					ItemFlags&=~DIF_MASKEDIT;
 
-				// если DI_FIXEDIT, то курсор сразу ставится на замену...
-				// ай-ай - было недокументированно :-)
+				/*
+					если DI_FIXEDIT, то курсор сразу ставится на замену...
+					ай-ай - было недокументированно :-)
+				*/
 				DialogEdit->SetMaxLength(CurItem->X2-CurItem->X1+1+(CurItem->X2==CurItem->X1 || !(ItemFlags&DIF_HISTORY)?0:1));
 				DialogEdit->SetOvertypeMode(TRUE);
-				// $ 12.08.2000 KM
-				// Если тип строки ввода DI_FIXEDIT и установлен флаг DIF_MASKEDIT
-				// и непустой параметр CurItem->Mask, то вызываем новую функцию
-				// для установки маски в объект DlgEdit.
+				/*
+					$ 12.08.2000 KM
+					Если тип строки ввода DI_FIXEDIT и установлен флаг DIF_MASKEDIT
+					и непустой параметр CurItem->Mask, то вызываем новую функцию
+					для установки маски в объект DlgEdit.
+				*/
 
 				// Маска не должна быть пустой (строка из пробелов не учитывается)!
 				if ((ItemFlags & DIF_MASKEDIT) && !CurItem->strMask.IsEmpty())
@@ -980,10 +996,12 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			}
 			else
 
-				// "мини-редактор"
-				// Последовательно определенные поля ввода (edit controls),
-				// имеющие этот флаг группируются в редактор с возможностью
-				// вставки и удаления строк
+				/*
+					"мини-редактор"
+					Последовательно определенные поля ввода (edit controls),
+					имеющие этот флаг группируются в редактор с возможностью
+					вставки и удаления строк
+				*/
 				if (!(ItemFlags & DIF_EDITOR) && CurItem->Type != DI_COMBOBOX)
 				{
 					DialogEdit->SetEditBeyondEnd(FALSE);
@@ -995,9 +1013,11 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			if (CurItem->Type == DI_COMBOBOX)
 				DialogEdit->SetClearFlag(1);
 
-			// $ 01.08.2000 SVS
-			// Еже ли стоит флаг DIF_USELASTHISTORY и непустая строка ввода,
-			// то подстанавливаем первое значение из History
+			/*
+				$ 01.08.2000 SVS
+				Еже ли стоит флаг DIF_USELASTHISTORY и непустая строка ввода,
+				то подстанавливаем первое значение из History
+			*/
 			if (CurItem->Type==DI_EDIT &&
 				(ItemFlags&(DIF_HISTORY|DIF_USELASTHISTORY)) == (DIF_HISTORY|DIF_USELASTHISTORY))
 			{
@@ -1007,9 +1027,11 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			if ((ItemFlags&DIF_MANUALADDHISTORY) && !(ItemFlags&DIF_HISTORY))
 				ItemFlags&=~DIF_MANUALADDHISTORY; // сбросим нафиг.
 
-			// $ 18.03.2000 SVS
-			// Если это ComBoBox и данные не установлены, то берем из списка
-			// при условии, что хоть один из пунктов имеет Selected
+			/*
+				$ 18.03.2000 SVS
+				Если это ComBoBox и данные не установлены, то берем из списка
+				при условии, что хоть один из пунктов имеет Selected
+			*/
 
 			if (Type==DI_COMBOBOX && CurItem->strData.IsEmpty() && CurItem->ListItems)
 			{
@@ -1370,8 +1392,10 @@ void Dialog::GetDialogObjectsData()
 					FARString strData;
 					DlgEdit *EditPtr=(DlgEdit *)(CurItem->ObjPtr);
 
-					// подготовим данные
-					// получим данные
+					/*
+						подготовим данные
+						получим данные
+					*/
 					EditPtr->GetString(strData);
 
 					if (ExitCode >=0 &&
@@ -1491,7 +1515,7 @@ LONG_PTR Dialog::CtlColorDlgItem(int ItemPos,int Type,int Focus,int Default,DWOR
 							(DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGHIGHLIGHTBOXTITLE):
 							(DisabledItem?COL_DIALOGDISABLED:COL_DIALOGHIGHLIGHTBOXTITLE)
 						)
-					),// HiText HIBYTE
+					), // HiText HIBYTE
 					MAKEWORD(
 						FarColorToReal(Attr), // Box LOBYTE
 						0
@@ -1788,11 +1812,13 @@ void Dialog::ShowDialog(unsigned ID)
 		DrawItemCount=ID+1;
 	}
 
-	//IFlags.Set(DIMODE_REDRAW)
-	// TODO:
-	// если рисуется контрол и по Z-order`у он пересекается с
-	// другим контролом (по координатам), то для "позднего"
-	// контрола тоже нужна прорисовка.
+	/*
+		IFlags.Set(DIMODE_REDRAW)
+		TODO:
+		если рисуется контрол и по Z-order`у он пересекается с
+		другим контролом (по координатам), то для "позднего"
+		контрола тоже нужна прорисовка.
+	*/
 	{
 		bool CursorVisible=false;
 		DWORD CursorSize=0;
@@ -1816,9 +1842,11 @@ void Dialog::ShowDialog(unsigned ID)
 		if (CurItem->Flags&DIF_HIDDEN)
 			continue;
 
-		// $ 28.07.2000 SVS
-		// Перед прорисовкой каждого элемента посылаем сообщение
-		// посредством функции SendDlgMessage - в ней делается все!
+		/*
+			$ 28.07.2000 SVS
+			Перед прорисовкой каждого элемента посылаем сообщение
+			посредством функции SendDlgMessage - в ней делается все!
+		*/
 		if (!SendDlgMessage((HANDLE)this,DN_DRAWDLGITEM,I,0))
 			continue;
 
@@ -2287,8 +2315,10 @@ int Dialog::ProcessMoveDialog(DWORD Key)
 
 	if (DialogMode.Check(DMODE_DRAGGED)) // если диалог таскается
 	{
-		// TODO: Здесь проверить "уже здесь" и не делать лишних движений
-		// Т.е., если нажали End, то при следующем End ненужно ничего делать! - сравнить координаты !!!
+		/*
+			TODO: Здесь проверить "уже здесь" и не делать лишних движений
+			Т.е., если нажали End, то при следующем End ненужно ничего делать! - сравнить координаты !!!
+		*/
 		int rr=1;
 
 		// При перемещении диалога повторяем поведение "бормандовых" сред.
@@ -2659,8 +2689,10 @@ int Dialog::ProcessKey(int Key)
 	{
 		case KEY_F1:
 
-			// Перед выводом диалога посылаем сообщение в обработчик
-			// и если вернули что надо, то выводим подсказку
+			/*
+				Перед выводом диалога посылаем сообщение в обработчик
+				и если вернули что надо, то выводим подсказку
+			*/
 			if (
 				!Help::MkTopic(
 					PluginNumber,
@@ -2811,9 +2843,11 @@ int Dialog::ProcessKey(int Key)
 			CloseDialog();
 			return TRUE;
 		}
-		// 3-х уровневое состояние
-		// Для чекбокса сюда попадем только в случае, если контрол
-		// имеет флаг DIF_3STATE
+		/*
+			3-х уровневое состояние
+			Для чекбокса сюда попадем только в случае, если контрол
+			имеет флаг DIF_3STATE
+		*/
 		case KEY_ADD:
 		case KEY_SUBTRACT:
 		case KEY_MULTIPLY:
@@ -3099,9 +3133,11 @@ int Dialog::ProcessKey(int Key)
 								{
 									DlgEdit *edt_1=(DlgEdit *)Item[FocusPos+1]->ObjPtr;
 
-									// $ 12.09.2000 SVS
-									// Решаем проблему, если Del нажали в позиции
-									// большей, чем длина строки
+									/*
+										$ 12.09.2000 SVS
+										Решаем проблему, если Del нажали в позиции
+										большей, чем длина строки
+									*/
 									if (CurPos > Length)
 									{
 										strStr.Append(L' ', CurPos - Length);
@@ -3739,9 +3775,11 @@ unsigned Dialog::ProcessRadioButton(unsigned CurRB)
 
 	do
 	{
-		// $ 28.07.2000 SVS
-		// При изменении состояния каждого элемента посылаем сообщение
-		// посредством функции SendDlgMessage - в ней делается все!
+		/*
+			$ 28.07.2000 SVS
+			При изменении состояния каждого элемента посылаем сообщение
+			посредством функции SendDlgMessage - в ней делается все!
+		*/
 		J=Item[I]->Selected;
 		Item[I]->Selected=0;
 
@@ -3757,9 +3795,11 @@ unsigned Dialog::ProcessRadioButton(unsigned CurRB)
 
 	Item[CurRB]->Selected=1;
 
-	// $ 28.07.2000 SVS
-	// При изменении состояния каждого элемента посылаем сообщение
-	// посредством функции SendDlgMessage - в ней делается все!
+	/*
+		$ 28.07.2000 SVS
+		При изменении состояния каждого элемента посылаем сообщение
+		посредством функции SendDlgMessage - в ней делается все!
+	*/
 	if (!SendDlgMessage((HANDLE)this,DN_BTNCLICK,PrevRB,0) ||
 		!SendDlgMessage((HANDLE)this,DN_BTNCLICK,CurRB,1))
 	{
@@ -4373,7 +4413,7 @@ int Dialog::ProcessHighlighting(int Key,unsigned FocusPos,int Translate)
 						break; // сказали не продолжать обработку...
 
 					// ... если предыдущий контрол задизаблен или невидим, тогда выходим.
-					if ((Item[I-1]->Flags&(DIF_DISABLE|DIF_HIDDEN)) ) // и не задисаблен
+					if ((Item[I-1]->Flags&(DIF_DISABLE|DIF_HIDDEN))) // и не задисаблен
 						break;
 
 					I=ChangeFocus(I,-1,FALSE);
@@ -4742,11 +4782,13 @@ LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 		{
 			if (Param1 == 1) // Нужно отрисовать "салазки"?
 			{
-				// $ 03.08.2000 tran
-				// вывод текста в углу может приводить к ошибкам изображения
-				// 1) когда диалог перемещается в угол
-				// 2) когда диалог перемещается из угла
-				// сделал вывод красных палочек по углам */
+				/*
+					$ 03.08.2000 tran
+					вывод текста в углу может приводить к ошибкам изображения
+					1) когда диалог перемещается в угол
+					2) когда диалог перемещается из угла
+					сделал вывод красных палочек по углам
+				*/
 				Text(Dlg->X1,Dlg->Y1,0xCE,L"\\");
 				Text(Dlg->X1,Dlg->Y2,0xCE,L"/");
 				Text(Dlg->X2,Dlg->Y1,0xCE,L"/");
@@ -4946,7 +4988,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				((COORD*)Param2)->Y=Dlg->Y1;
 			}
 
-			int I=Dlg->IsVisible();// && Dlg->DialogMode.Check(DMODE_INITOBJECTS);
+			int I=Dlg->IsVisible(); // && Dlg->DialogMode.Check(DMODE_INITOBJECTS);
 
 			if (I) Dlg->Hide();
 
@@ -5012,10 +5054,12 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			{
 				if (Param1)
 				{
-					// $ 20.04.2002 KM
-					// Залочим прорисовку при прятании диалога, в противном
-					// случае ОТКУДА менеджер узнает, что отрисовывать
-					// объект нельзя!
+					/*
+						$ 20.04.2002 KM
+						Залочим прорисовку при прятании диалога, в противном
+						случае ОТКУДА менеджер узнает, что отрисовывать
+						объект нельзя!
+					*/
 					if (!Dlg->IsVisible())
 					{
 						Dlg->Unlock();
@@ -5153,9 +5197,11 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	int Type=0;
 	size_t Len=0;
 
-	// предварительно проверим...
-	// $ 09.12.2001 DJ
-	// для DM_USER проверять _не_надо_!
+	/*
+		предварительно проверим...
+		$ 09.12.2001 DJ
+		для DM_USER проверять _не_надо_!
+	*/
 	if ((unsigned)Param1 >= Dlg->ItemCount || !Dlg->Item)
 		return 0;
 
@@ -5201,7 +5247,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 					switch (Msg)
 					{
-						case DM_LISTINFO:// Param1=ID Param2=FarListInfo
+						case DM_LISTINFO: // Param1=ID Param2=FarListInfo
 						{
 							return ListBox->GetVMenuInfo((FarListInfo*)Param2);
 						}
@@ -5535,8 +5581,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			}
 			else if (Type == DI_USERCONTROL && CurItem->UCData)
 			{
-				// учтем, что координаты для этого элемента всегда относительные!
-				// и начинаются с 0,0
+				/*
+					учтем, что координаты для этого элемента всегда относительные!
+					и начинаются с 0,0
+				*/
 				COORD Coord=*(COORD*)Param2;
 				Coord.X+=CurItem->X1;
 
@@ -5557,7 +5605,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				{
 					// что-то одно надо убрать :-)
 					MoveCursor(Coord.X+Dlg->X1,Coord.Y+Dlg->Y1); // ???
-					Dlg->ShowDialog(Param1); //???
+					Dlg->ShowDialog(Param1); // ???
 				}
 
 				return TRUE;
@@ -6204,7 +6252,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 				else
 					CurItem->Flags|=DIF_HIDDEN;
 
-				if (Dlg->DialogMode.Check(DMODE_SHOW))// && (PrevFlags&DIF_HIDDEN) != (CurItem->Flags&DIF_HIDDEN))//!(CurItem->Flags&DIF_HIDDEN))
+				if (Dlg->DialogMode.Check(DMODE_SHOW)) // && (PrevFlags&DIF_HIDDEN) != (CurItem->Flags&DIF_HIDDEN))//!(CurItem->Flags&DIF_HIDDEN))
 				{
 					if ((CurItem->Flags&DIF_HIDDEN) && Dlg->FocusPos == (unsigned)Param1)
 					{
@@ -6233,8 +6281,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 				return TRUE;
 			}
-			// $ 09.12.2001 DJ
-			// у DI_PSWEDIT не бывает хистори!
+			/*
+				$ 09.12.2001 DJ
+				у DI_PSWEDIT не бывает хистори!
+			*/
 			else if (Param2 && (Type==DI_COMBOBOX || ((Type==DI_EDIT || Type==DI_FIXEDIT)
 				&& (CurItem->Flags&DIF_HISTORY)))) /* DJ $ */
 			{
@@ -6264,8 +6314,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			return Dlg->SetItemRect((int)Param1,(SMALL_RECT*)Param2);
 		}
 		/*****************************************************************/
-		// $ 31.08.2000 SVS
-		// + переключение/получение состояния Enable/Disable элемента
+		/*
+			$ 31.08.2000 SVS
+			+ переключение/получение состояния Enable/Disable элемента
+		*/
 		case DM_ENABLE:
 		{
 			DWORD PrevFlags=CurItem->Flags;

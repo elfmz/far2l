@@ -107,19 +107,23 @@ Editor::Editor(ScreenObject *pOwner,bool DialogUsed):
 	if (DialogUsed)
 		Flags.Set(FEDITOR_DIALOGMEMOEDIT);
 
-	// $ 26.10.2003 KM
-	// Если установлен глобальный режим поиска 16-ричных кодов, тогда
-	// сконвертируем GlobalSearchString в строку, ибо она содержит строку в
-	// 16-ричном представлении.
+	/*
+		$ 26.10.2003 KM
+		Если установлен глобальный режим поиска 16-ричных кодов, тогда
+		сконвертируем GlobalSearchString в строку, ибо она содержит строку в
+		16-ричном представлении.
+	*/
 	if (GlobalSearchHex)
 		Transform(strLastSearchStr,strGlobalSearchString,L'S');
 	else
 		strLastSearchStr = strGlobalSearchString;
 
 	UnmarkMacroBlock();
-	// $ 12.01.2002 IS
-	// По умолчанию конец строки так или иначе равен \r\n, поэтому нечего
-	// пудрить мозги, пропишем его явно.
+	/*
+		$ 12.01.2002 IS
+		По умолчанию конец строки так или иначе равен \r\n, поэтому нечего
+		пудрить мозги, пропишем его явно.
+	*/
 	wcscpy(GlobalEOL, NATIVE_EOLW);
 	memset(&SavePos,0xff,sizeof(SavePos));
 	InsertString(nullptr, 0);
@@ -276,16 +280,20 @@ void Editor::ShowEditor(int CurLineOnly)
 	int LeftPos,CurPos,Y;
 
 //	_SVS(SysLog(L"Enter to ShowEditor, CurLineOnly=%i",CurLineOnly));
-	// $ 10.08.2000 skv
-	// To make sure that CurEditor is set to required value.
+	/*
+		$ 10.08.2000 skv
+		To make sure that CurEditor is set to required value.
+	*/
 	if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT))
 		CtrlObject->Plugins.CurEditor=HostFileEditor; // this;
 
 	XX2=X2-(EdOpt.ShowScrollBar?1:0);
-	// 17.04.2002 skv
-	// Что б курсор не бегал при Alt-F9 в конце длинного файла.
-	// Если на экране есть свободное место, и есть текст сверху,
-	// перепозиционируем.
+	/*
+		17.04.2002 skv
+		Что б курсор не бегал при Alt-F9 в конце длинного файла.
+		Если на экране есть свободное место, и есть текст сверху,
+		перепозиционируем.
+	*/
 
 	if (!EdOpt.AllowEmptySpaceAfterEof)
 	{
@@ -298,9 +306,11 @@ void Editor::ShowEditor(int CurLineOnly)
 		}
 	}
 
-	// если курсор удруг оказался "за экраном",
-	// подвинем экран под курсор, а не
-	// курсор загоним в экран.
+	/*
+		если курсор удруг оказался "за экраном",
+		подвинем экран под курсор, а не
+		курсор загоним в экран.
+	*/
 
 	while (CalcDistance(TopScreen,CurLine,-1)>=Y2-Y1+1)
 	{
@@ -328,16 +338,20 @@ void Editor::ShowEditor(int CurLineOnly)
 
 	if (!Pasting)
 	{
-		// $ 10.08.2000 skv
-		// Don't send EE_REDRAW while macro is being executed.
-		// Send EE_REDRAW with param=2 if text was just modified.
+		/*
+			$ 10.08.2000 skv
+			Don't send EE_REDRAW while macro is being executed.
+			Send EE_REDRAW with param=2 if text was just modified.
+		*/
 
 		_SYS_EE_REDRAW(CleverSysLog Clev(L"Editor::ShowEditor()"));
 
 		if (!ScrBuf.GetLockCount())
 		{
-			// $ 13.09.2000 skv
-			// EE_REDRAW 1 and 2 replaced.
+			/*
+				$ 13.09.2000 skv
+				EE_REDRAW 1 and 2 replaced.
+			*/
 			if (Flags.Check(FEDITOR_JUSTMODIFIED))
 			{
 				Flags.Clear(FEDITOR_JUSTMODIFIED);
@@ -1234,8 +1248,10 @@ int Editor::ProcessKey(int Key)
 					const wchar_t *Str;
 					int Length;
 					CurLine->GetBinaryString(&Str,nullptr,Length);
-					// $ 12.11.2002 DJ
-					// обеспечим корректную работу Ctrl-Shift-Left за концом строки
+					/*
+						$ 12.11.2002 DJ
+						обеспечим корректную работу Ctrl-Shift-Left за концом строки
+					*/
 					CurPos=CurLine->GetCurPos();
 
 					if (CurPos>Length)
@@ -1544,9 +1560,11 @@ int Editor::ProcessKey(int Key)
 				Pasting--;
 				EmptyInternalClipboard();
 				Clipboard::SetUseInternalClipboardState(OldUseInternalClipboard);
-				// $ 08.02.2001 SKV
-				// всё делалось с pasting'ом, поэтому redraw плагинам не ушел.
-				// сделаем его.
+				/*
+					$ 08.02.2001 SKV
+					всё делалось с pasting'ом, поэтому redraw плагинам не ушел.
+					сделаем его.
+				*/
 				Show();
 			}
 
@@ -1610,8 +1628,10 @@ int Editor::ProcessKey(int Key)
 				if (!CurLine->m_next && CurPos>=CurLine->GetLength() && !BlockStart && !VBlockStart)
 					return TRUE;
 
-				// $ 07.03.2002 IS
-				// Снимем выделение, если блок все равно пустой
+				/*
+					$ 07.03.2002 IS
+					Снимем выделение, если блок все равно пустой
+				*/
 				if (!Pasting)
 					UnmarkEmptyBlock();
 
@@ -2008,12 +2028,16 @@ int Editor::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF7:
 		{
-			// $ 20.09.2000 SVS
-			// При All после нажатия Shift-F7 надобно снова спросить...
-			//ReplaceAll=FALSE;
-			// $ 07.05.2001 IS
-			// Сказано в хелпе "Shift-F7 Продолжить _поиск_"
-			//ReplaceMode=FALSE;
+			/*
+				$ 20.09.2000 SVS
+				При All после нажатия Shift-F7 надобно снова спросить...
+				ReplaceAll=FALSE;
+			*/
+			/*
+				$ 07.05.2001 IS
+				Сказано в хелпе "Shift-F7 Продолжить _поиск_"
+				ReplaceMode=FALSE;
+			*/
 			Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
 			Search(TRUE);
 			return TRUE;
@@ -2141,8 +2165,10 @@ int Editor::ProcessKey(int Key)
 					VBlockSizeX+=Delta;
 				}
 
-				// $ 25.07.2000 tran
-				// остатки бага 22 - подправка при перебега за границу блока
+				/*
+					$ 25.07.2000 tran
+					остатки бага 22 - подправка при перебега за границу блока
+				*/
 				if (VBlockSizeX<0)
 				{
 					VBlockSizeX=-VBlockSizeX;
@@ -2160,10 +2186,12 @@ int Editor::ProcessKey(int Key)
 		case KEY_ALTSHIFTRIGHT:  case KEY_ALTSHIFTNUMPAD6:
 		case KEY_ALTRIGHT:
 		{
-			// $ 23.10.2000 tran
-			// вместо GetCellCurPos надо вызывать GetCurPos -
-			// сравнивать реальную позицию с реальной длиной
-			// а было сравнение видимой позицией с реальной длиной
+			/*
+				$ 23.10.2000 tran
+				вместо GetCellCurPos надо вызывать GetCurPos -
+				сравнивать реальную позицию с реальной длиной
+				а было сравнение видимой позицией с реальной длиной
+			*/
 			if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos()>=CurLine->GetLength())
 				return TRUE;
 
@@ -2195,8 +2223,10 @@ int Editor::ProcessKey(int Key)
 					VBlockSizeX-=Delta;
 				}
 
-				// $ 25.07.2000 tran
-				// остатки бага 22 - подправка при перебега за границу блока
+				/*
+					$ 25.07.2000 tran
+					остатки бага 22 - подправка при перебега за границу блока
+				*/
 				if (VBlockSizeX<0)
 				{
 					VBlockSizeX=-VBlockSizeX;
@@ -2211,8 +2241,10 @@ int Editor::ProcessKey(int Key)
 			//_D(SysLog(L"~~~~~~~~~~~~~~~~ KEY_ALTRIGHT END, VBlockY=%i:%i, VBlockX=%i:%i",VBlockY,VBlockSizeY,VBlockX,VBlockSizeX));
 			return TRUE;
 		}
-		// $ 29.06.2000 IG
-		// + CtrlAltLeft, CtrlAltRight для вертикальный блоков
+		/*
+			$ 29.06.2000 IG
+			+ CtrlAltLeft, CtrlAltRight для вертикальный блоков
+		*/
 		case KEY_CTRLALTLEFT: case KEY_CTRLALTNUMPAD4:
 		{
 			{
@@ -2596,11 +2628,13 @@ int Editor::ProcessKey(int Key)
 						Key==KEY_MULTIPLY || Key==KEY_DIVIDE || Key==KEY_TAB)
 					{
 						DeleteBlock();
-						// $ 19.09.2002 SKV
-						// Однако надо.
-						// Иначе есди при надичии выделения набирать
-						// текст с шифтом флаги не сбросятся и следующий
-						// выделенный блок будет глючный.
+						/*
+							$ 19.09.2002 SKV
+							Однако надо.
+							Иначе есди при надичии выделения набирать
+							текст с шифтом флаги не сбросятся и следующий
+							выделенный блок будет глючный.
+						*/
 						Flags.Clear(FEDITOR_MARKINGVBLOCK|FEDITOR_MARKINGBLOCK);
 						Show();
 					}
@@ -2622,9 +2656,11 @@ int Editor::ProcessKey(int Key)
 					Pasting++;
 					ProcessKey(KEY_LEFT);
 					Pasting--;
-					// $ 24.9.2001 SKV
-					// fix бага с ctrl-left в начале строки
-					// в блоке с переопределённым плагином фоном.
+					/*
+						$ 24.9.2001 SKV
+						fix бага с ctrl-left в начале строки
+						в блоке с переопределённым плагином фоном.
+					*/
 					ShowEditor(FALSE);
 					//if(!Flags.Check(FEDITOR_DIALOGMEMOEDIT)){
 					//CtrlObject->Plugins.CurEditor=HostFileEditor; // this;
@@ -2651,9 +2687,11 @@ int Editor::ProcessKey(int Key)
 						CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
 					}
 
-					// $ 03.02.2001 SKV
-					// А то EEREDRAW_ALL то уходит, а на самом деле
-					// только текущая линия перерисовывается.
+					/*
+						$ 03.02.2001 SKV
+						А то EEREDRAW_ALL то уходит, а на самом деле
+						только текущая линия перерисовывается.
+					*/
 					ShowEditor(0);
 					return TRUE;
 				}
@@ -2738,10 +2776,12 @@ int Editor::ProcessKey(int Key)
 				{
 					int SelStart,SelEnd;
 
-					// $ 17.09.2002 SKV
-					// Если находимся в середине блока,
-					// в начале строки, и нажимаем tab, который заменяется
-					// на пробелы, выделение съедет. Это фикс.
+					/*
+						$ 17.09.2002 SKV
+						Если находимся в середине блока,
+						в начале строки, и нажимаем tab, который заменяется
+						на пробелы, выделение съедет. Это фикс.
+					*/
 					if (Key==KEY_TAB && CurLine->GetConvertTabs() &&
 						BlockStart && BlockStart!=CurLine)
 					{
@@ -3026,8 +3066,10 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 
-	// $ 16.12.2000 OT
-	// CtrlY на последней строке с выделенным вертикальным блоком не снимал выделение
+	/*
+		$ 16.12.2000 OT
+		CtrlY на последней строке с выделенным вертикальным блоком не снимал выделение
+	*/
 	if (VBlockStart && NumLine<VBlockY+VBlockSizeY)
 	{
 		if (NumLine<VBlockY)
@@ -3103,8 +3145,10 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast,int UndoL
 		else
 		{
 			CurLine=DelPtr->m_prev;
-			// $ 04.11.2002 SKV
-			// Вроде как если это произошло, номер текущей строки надо изменить.
+			/*
+				$ 04.11.2002 SKV
+				Вроде как если это произошло, номер текущей строки надо изменить.
+			*/
 			NumLine--;
 		}
 
@@ -3158,11 +3202,13 @@ void Editor::InsertString()
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 
-	// $ 10.08.2000 skv
-	// There is only one return - if new will fail.
-	// In this case things are realy bad.
-	// Move TextChanged to the end of functions
-	// AFTER all modifications are made.
+	/*
+		$ 10.08.2000 skv
+		There is only one return - if new will fail.
+		In this case things are realy bad.
+		Move TextChanged to the end of functions
+		AFTER all modifications are made.
+	*/
 //	TextChanged(1);
 	Edit *NewString;
 	Edit *SrcIndent=nullptr;
@@ -3180,9 +3226,11 @@ void Editor::InsertString()
 	const wchar_t *EndSeq;
 	CurLine->GetBinaryString(&CurLineStr,&EndSeq,Length);
 
-	// $ 13.01.2002 IS
-	// Если не был определен тип конца строки, то считаем что конец строки
-	// у нас равен DOS_EOL_fmt и установим его явно.
+	/*
+		$ 13.01.2002 IS
+		Если не был определен тип конца строки, то считаем что конец строки
+		у нас равен DOS_EOL_fmt и установим его явно.
+	*/
 	if (!*EndSeq)
 		CurLine->SetEOL(*GlobalEOL?GlobalEOL:NATIVE_EOLW);
 
@@ -3658,10 +3706,12 @@ BOOL Editor::Search(int Next)
 				}
 
 				int Skip=FALSE;
-				// $ 24.01.2003 KM
-				// ! По окончании поиска отступим от верха экрана на треть отображаемой высоты.
-				// $ 15.04.2003 VVM
-				// Отступим на четверть и проверим на перекрытие диалогом замены
+				/*
+					$ 24.01.2003 KM
+					! По окончании поиска отступим от верха экрана на треть отображаемой высоты.
+					$ 15.04.2003 VVM
+					Отступим на четверть и проверим на перекрытие диалогом замены
+				*/
 				int FromTop=(ScrY-2)/4;
 
 				if (FromTop<0 || FromTop>=((ScrY-5)/2-2))
@@ -3721,9 +3771,11 @@ BOOL Editor::Search(int Next)
 					{
 						Pasting++;
 
-						// $ 15.08.2000 skv
-						// If Replace FARString doesn't contain control symbols (tab and return),
-						// processed with fast method, otherwise use improved old one.
+						/*
+							$ 15.08.2000 skv
+							If Replace FARString doesn't contain control symbols (tab and return),
+							processed with fast method, otherwise use improved old one.
+						*/
 						if (strReplaceStrCurrent.Contains(L'\t') || strReplaceStrCurrent.Contains(L'\r'))
 						{
 							int SaveOvertypeMode=Flags.Check(FEDITOR_OVERTYPE);
@@ -3747,9 +3799,11 @@ BOOL Editor::Search(int Next)
 									continue;
 								}
 
-								// $ 24.05.2002 SKV
-								// Если реплэйсим на Enter, то overtype не спасёт.
-								// Нужно сначала удалить то, что заменяем.
+								/*
+									$ 24.05.2002 SKV
+									Если реплэйсим на Enter, то overtype не спасёт.
+									Нужно сначала удалить то, что заменяем.
+								*/
 								if (Ch==L'\r')
 								{
 									ProcessKey(KEY_DEL);
@@ -3929,9 +3983,11 @@ void Editor::Paste(const wchar_t *Src)
 
 		BlockStart=CurLine;
 		BlockStartLine=NumLine;
-		// $ 19.05.2001 IS
-		// Решение проблемы непрошеной конвертации табуляции (которая должна быть
-		// добавлена в начало строки при автоотступе) в пробелы.
+		/*
+			$ 19.05.2001 IS
+			Решение проблемы непрошеной конвертации табуляции (которая должна быть
+			добавлена в начало строки при автоотступе) в пробелы.
+		*/
 		int StartPos=CurLine->GetCurPos();
 		int oldAutoIndent=EdOpt.AutoIndent;
 
@@ -4116,8 +4172,10 @@ void Editor::DeleteBlock()
 	{
 		TextChanged(1);
 		int StartSel,EndSel;
-		// $ 17.09.2002 SKV
-		// меняем на Real что б ловить выделение за концом строки.
+		/*
+			$ 17.09.2002 SKV
+			меняем на Real что б ловить выделение за концом строки.
+		*/
 		CurPtr->GetRealSelection(StartSel,EndSel);
 
 		if (EndSel!=-1 && EndSel>CurPtr->GetLength())
@@ -4148,9 +4206,11 @@ void Editor::DeleteBlock()
 		if (StartSel || EndSel)
 			AddUndoData(UNDO_EDIT,CurPtr->GetStringAddr(),CurPtr->GetEOL(),BlockStartLine,CurPtr->GetCurPos(),CurPtr->GetLength());
 
-		// $ 17.09.2002 SKV
-		// опять про выделение за концом строки.
-		// InsertBinaryString добавит trailing space'ов
+		/*
+			$ 17.09.2002 SKV
+			опять про выделение за концом строки.
+			InsertBinaryString добавит trailing space'ов
+		*/
 		if (StartSel>Length)
 		{
 			Length=StartSel;
@@ -4273,10 +4333,12 @@ void Editor::UnmarkBlock()
 
 		if (StartSel==-1)
 		{
-			// $ 24.06.2002 SKV
-			// Если в текущей строки нет выделения,
-			// это еще не значит что мы в конце.
-			// Это может быть только начало :)
+			/*
+				$ 24.06.2002 SKV
+				Если в текущей строки нет выделения,
+				это еще не значит что мы в конце.
+				Это может быть только начало :)
+			*/
 			if (BlockStart->m_next)
 			{
 				BlockStart->m_next->GetSelection(StartSel,EndSel);
@@ -4746,8 +4808,10 @@ void Editor::BlockLeft()
 
 	Edit *CurPtr=BlockStart;
 	int LineNum=BlockStartLine;
-	// $ 14.02.2001 VVM
-	// + При отсутствии блока AltU/AltI сдвигают текущую строчку
+	/*
+		$ 14.02.2001 VVM
+		+ При отсутствии блока AltU/AltI сдвигают текущую строчку
+	*/
 	int MoveLine = 0;
 
 	if (!CurPtr)
@@ -4764,8 +4828,10 @@ void Editor::BlockLeft()
 		int StartSel,EndSel;
 		CurPtr->GetSelection(StartSel,EndSel);
 
-		// $ 14.02.2001 VVM
-		// + Блока нет - сделаем его искусственно
+		/*
+			$ 14.02.2001 VVM
+			+ Блока нет - сделаем его искусственно
+		*/
 		if (MoveLine)
 		{
 			StartSel = 0; EndSel = -1;
@@ -4827,8 +4893,10 @@ void Editor::BlockRight()
 
 	Edit *CurPtr=BlockStart;
 	int LineNum=BlockStartLine;
-	// $ 14.02.2001 VVM
-	// + При отсутствии блока AltU/AltI сдвигают текущую строчку
+	/*
+		$ 14.02.2001 VVM
+		+ При отсутствии блока AltU/AltI сдвигают текущую строчку
+	*/
 	int MoveLine = 0;
 
 	if (!CurPtr)
@@ -4845,8 +4913,10 @@ void Editor::BlockRight()
 		int StartSel,EndSel;
 		CurPtr->GetSelection(StartSel,EndSel);
 
-		// $ 14.02.2001 VVM
-		// + Блока нет - сделаем его искусственно
+		/*
+			$ 14.02.2001 VVM
+			+ Блока нет - сделаем его искусственно
+		*/
 		if (MoveLine)
 		{
 			StartSel = 0; EndSel = -1;
@@ -5114,10 +5184,12 @@ void Editor::VPaste(wchar_t *ClipText)
 						ProcessKey(KEY_END);
 						ProcessKey(KEY_ENTER);
 
-						// $ 19.05.2001 IS
-						// Не вставляем пробелы тогда, когда нас об этом не просят, а
-						// именно - при включенном автоотступе ничего вставлять не нужно,
-						// оно само вставится и в другом месте.
+						/*
+							$ 19.05.2001 IS
+							Не вставляем пробелы тогда, когда нас об этом не просят, а
+							именно - при включенном автоотступе ничего вставлять не нужно,
+							оно само вставится и в другом месте.
+						*/
 						if (!EdOpt.AutoIndent)
 							for (int I=0; I<StartPos; I++)
 								ProcessKey(L' ');
@@ -5361,9 +5433,10 @@ int Editor::EditorControl(int Command,void *Param)
 			}
 			else
 			{
-				// $ 06.08.2002 IS
-				// Проверяем корректность StringLength и вернем FALSE, если оно меньше
-				// нуля.
+				/*
+					$ 06.08.2002 IS
+					Проверяем корректность StringLength и вернем FALSE, если оно меньше нуля.
+				*/
 				int Length=SetString->StringLength;
 
 				if (Length < 0)
@@ -5542,10 +5615,12 @@ int Editor::EditorControl(int Command,void *Param)
 				if (Pos->LeftPos >= 0)
 					CurLine->SetLeftPos(Pos->LeftPos);
 
-				// $ 30.08.2001 IS
-				// Изменение режима нужно выставлять сразу, в противном случае приходят
-				// глюки, т.к. плагинописатель думает, что режим изменен, и ведет себя
-				// соответствующе, в результате чего получает неопределенное поведение.
+				/*
+					$ 30.08.2001 IS
+					Изменение режима нужно выставлять сразу, в противном случае приходят
+					глюки, т.к. плагинописатель думает, что режим изменен, и ведет себя
+					соответствующе, в результате чего получает неопределенное поведение.
+				*/
 				if (Pos->Overtype >= 0)
 				{
 					Flags.Change(FEDITOR_OVERTYPE,Pos->Overtype);
@@ -5815,9 +5890,11 @@ int Editor::EditorControl(int Command,void *Param)
 			ProcessKey((int)(INT_PTR)Param);
 			return TRUE;
 		}
-		// $ 16.02.2001 IS
-		// Изменение некоторых внутренних настроек редактора. Param указывает на
-		// структуру EditorSetParameter
+		/*
+			$ 16.02.2001 IS
+			Изменение некоторых внутренних настроек редактора. Param указывает на
+			структуру EditorSetParameter
+		*/
 		case ECTL_SETPARAM:
 		{
 			if (Param)
@@ -6466,9 +6543,11 @@ void Editor::Xlat()
 		Line=0;
 		CurPtr=BlockStart;
 
-		// $ 25.11.2000 IS
-		// Если нет выделения, то обработаем текущее слово. Слово определяется на
-		// основе специальной группы разделителей.
+		/*
+			$ 25.11.2000 IS
+			Если нет выделения, то обработаем текущее слово. Слово определяется на
+			основе специальной группы разделителей.
+		*/
 		if (CurPtr)
 		{
 			while (CurPtr)
@@ -6494,9 +6573,11 @@ void Editor::Xlat()
 		{
 			wchar_t *Str=CurLine->Str;
 			int start=CurLine->GetCurPos(), end, StrSize=CurLine->GetLength();//StrLength(Str);
-			// $ 10.12.2000 IS
-			// Обрабатываем только то слово, на котором стоит курсор, или то слово,
-			// что находится левее позиции курсора на 1 символ
+			/*
+				$ 10.12.2000 IS
+				Обрабатываем только то слово, на котором стоит курсор, или то слово,
+				что находится левее позиции курсора на 1 символ
+			*/
 			DoXlat=TRUE;
 
 			if (IsWordDiv(Opt.XLat.strWordDivForXlat,Str[start]))
@@ -6635,10 +6716,12 @@ void Editor::SetCursorBeyondEOL(int NewMode)
 		}
 	}
 
-	// $ 16.10.2001 SKV
-	// Если переключились туда сюда этот режим,
-	// то из-за этой штуки возникают нехилые глюки
-	// при выделении вертикальных блоков.
+	/*
+		$ 16.10.2001 SKV
+		Если переключились туда сюда этот режим,
+		то из-за этой штуки возникают нехилые глюки
+		при выделении вертикальных блоков.
+	*/
 	if (EdOpt.CursorBeyondEOL)
 	{
 		MaxRightPos=0;

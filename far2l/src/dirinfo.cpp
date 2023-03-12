@@ -94,8 +94,10 @@ int GetDirInfo(const wchar_t *Title,
 	FAR_FIND_DATA_EX FindData;
 	clock_t StartTime=GetProcessUptimeMSec();
 	SetCursorType(FALSE,0);
-	// $ 20.03.2002 DJ
-	// для . - покажем имя родительского каталога
+	/*
+		$ 20.03.2002 DJ
+		для . - покажем имя родительского каталога
+	*/
 	const wchar_t *ShowDirName = DirName;
 
 	if (DirName[0] == L'.' && !DirName[1])
@@ -193,8 +195,10 @@ int GetDirInfo(const wchar_t *Title,
 
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			// Счётчик каталогов наращиваем только если не включен фильтр,
-			// в противном случае это будем делать в подсчёте количества файлов
+			/*
+				Счётчик каталогов наращиваем только если не включен фильтр,
+				в противном случае это будем делать в подсчёте количества файлов
+			*/
 			if (!(Flags&GETDIRINFO_USEFILTER))
 			{
 				DirCount++;
@@ -203,9 +207,11 @@ int GetDirInfo(const wchar_t *Title,
 			}
 			else
 			{
-				// Если каталог не попадает под фильтр то его надо полностью
-				// пропустить - иначе при включенном подсчёте total
-				// он учтётся (mantis 551)
+				/*
+					Если каталог не попадает под фильтр то его надо полностью
+					пропустить - иначе при включенном подсчёте total
+					он учтётся (mantis 551)
+				*/
 				if (Filter->FileInFilter(FindData))
 				{
 					if (!Opt.OnlyFilesSize)
@@ -217,17 +223,21 @@ int GetDirInfo(const wchar_t *Title,
 		}
 		else
 		{
-			// $ 17.04.2005 KM
-			// Проверка попадания файла в условия фильра
+			/*
+				$ 17.04.2005 KM
+				Проверка попадания файла в условия фильра
+			*/
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
 				if (!Filter->FileInFilter(FindData))
 					continue;
 			}
 
-			// Наращиваем счётчик каталогов при включенном фильтре только тогда,
-			// когда в таком каталоге найден файл, удовлетворяющий условиям
-			// фильтра.
+			/*
+				Наращиваем счётчик каталогов при включенном фильтре только тогда,
+				когда в таком каталоге найден файл, удовлетворяющий условиям
+				фильтра.
+			*/
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
 				strCurDirName = strFullName;

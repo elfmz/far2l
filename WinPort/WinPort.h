@@ -21,7 +21,7 @@ extern "C" {
 	void WinPortHelp();
 	const wchar_t *WinPortBackend();
 
-	//console API
+	///console API
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput));
 	WINPORT_DECL(SetConsoleWindowInfo,BOOL,(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow));
 	WINPORT_DECL(SetConsoleTitle,BOOL,(const WCHAR *title));
@@ -94,7 +94,7 @@ extern "C" {
 	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (BOOL Deferring));
 
 #ifdef WINPORT_REGISTRY
-	//registry API
+	///registry API
 	WINPORT_DECL(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult));
 	WINPORT_DECL(RegCreateKeyEx, LONG, (HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, 
 		REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition));

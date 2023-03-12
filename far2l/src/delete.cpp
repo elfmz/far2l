@@ -295,9 +295,10 @@ static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
 	if (Opt.Confirm.Delete || SelCount > 1)// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
 		FarLangMsg TitleMsg = Wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle;
-		/* $ 05.01.2001 IS
-		   ! Косметика в сообщениях - разные сообщения в зависимости от того,
-		     какие и сколько элементов выделено.
+		/*
+			$ 05.01.2001 IS
+			! Косметика в сообщениях - разные сообщения в зависимости от того,
+			какие и сколько элементов выделено.
 		*/
 		FarLangMsg DelMsg;
 		if (SelCount == 1)

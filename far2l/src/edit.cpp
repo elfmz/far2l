@@ -332,9 +332,11 @@ void Edit::FastShow()
 
 	int CellCurPos=GetCellCurPos();
 
-	// $ 31.07.2001 KM
-	// ! Для комбобокса сделаем отображение строки
-	//   с первой позиции.
+	/*
+		$ 31.07.2001 KM
+		! Для комбобокса сделаем отображение строки
+		с первой позиции.
+	*/
 	int RealLeftPos = -1;
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 	{
@@ -469,9 +471,11 @@ void Edit::FastShow()
 			OutStr.emplace(OutStr.begin() + OutStr.size() - 1, L' ');
 		}
 
-		// $ 24.08.2000 SVS
-		// ! У DropDowList`а выделение по полной программе - на всю видимую длину
-		//   ДАЖЕ ЕСЛИ ПУСТАЯ СТРОКА
+		/*
+			$ 24.08.2000 SVS
+			! У DropDowList`а выделение по полной программе - на всю видимую длину
+			ДАЖЕ ЕСЛИ ПУСТАЯ СТРОКА
+		*/
 		if (CellSelStart>=EditLength /*|| !AllString && CellSelStart>=StrSize*/ ||
 			CellSelEnd<CellSelStart)
 		{
@@ -746,12 +750,14 @@ int Edit::ProcessKey(int Key)
 		Flags.Swap(FEDITLINE_READONLY);
 	}
 
-	// $ 26.07.2000 SVS
-	// Bugs #??
-	//   В строках ввода при выделенном блоке нажимаем BS и вместо
-	//   ожидаемого удаления блока (как в редакторе) получаем:
-	//     - символ перед курсором удален
-	//     - выделение блока снято
+	/*
+		$ 26.07.2000 SVS
+		Bugs #??
+		В строках ввода при выделенном блоке нажимаем BS и вместо
+		ожидаемого удаления блока (как в редакторе) получаем:
+		- символ перед курсором удален
+		- выделение блока снято
+	*/
 	if ((((Key==KEY_BS || Key==KEY_DEL || Key==KEY_NUMDEL) && Flags.Check(FEDITLINE_DELREMOVESBLOCKS)) || Key==KEY_CTRLD) &&
 		!Flags.Check(FEDITLINE_EDITORMODE) && SelStart!=-1 && SelStart<SelEnd)
 	{
@@ -797,9 +803,11 @@ int Edit::ProcessKey(int Key)
 			Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize)
 		Key=KEY_CTRLY;
 
-	// $ 15.09.2000 SVS
-	// Bug - Выделяем кусочек строки -> Shift-Del удяляет всю строку
-	//       Так должно быть только для UnChanged состояния
+	/*
+		$ 15.09.2000 SVS
+		Bug - Выделяем кусочек строки -> Shift-Del удяляет всю строку
+		Так должно быть только для UnChanged состояния
+	*/
 	if ((Key == KEY_SHIFTDEL || Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL) && Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize && SelStart==-1)
 	{
 		SelStart=0;

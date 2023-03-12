@@ -305,9 +305,11 @@ class Dialog: public Frame
 		void ShowDialog(unsigned ID=(unsigned)-1); // ID=-1 - отрисовать весь диалог
 
 		LONG_PTR CtlColorDlgItem(int ItemPos,int Type,int Focus,int Default,DWORD Flags);
-		// $ 28.07.2000 SVS
-		// + Изменяет фокус ввода между двумя элементами.
-		//   Вынесен отдельно для того, чтобы обработать DMSG_KILLFOCUS & DMSG_SETFOCUS
+		/*
+			$ 28.07.2000 SVS
+			+ Изменяет фокус ввода между двумя элементами.
+			Вынесен отдельно для того, чтобы обработать DMSG_KILLFOCUS & DMSG_SETFOCUS
+		*/
 		void ChangeFocus2(unsigned SetFocusPos);
 
 		unsigned ChangeFocus(unsigned FocusPos,int Step,int SkipGroup);
@@ -331,9 +333,11 @@ class Dialog: public Frame
 
 		BOOL SetItemRect(unsigned ID,SMALL_RECT *Rect);
 
-		// $ 23.06.2001 KM
-		// + Функции программного открытия/закрытия комбобокса и хистори
-		//   и получения статуса открытости/закрытости комбобокса и хистори.
+		/*
+			$ 23.06.2001 KM
+			+ Функции программного открытия/закрытия комбобокса и хистори
+			и получения статуса открытости/закрытости комбобокса и хистори.
+		*/
 		void SetDropDownOpened(int Status) { DropDownOpened=Status; }
 		int GetDropDownOpened() { return DropDownOpened; }
 

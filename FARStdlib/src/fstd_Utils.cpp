@@ -29,7 +29,7 @@ LPSTR WINAPI DelLastSlash(char *path, char Slash)
 LPCSTR WINAPI FPath(LPCSTR nm, char Slash)
 {
 	static char str[MAX_PATH];
-	char     *m;
+	char *m;
 	StrCpy(str,nm,sizeof(str));
 	m = strrchr(str,Slash);
 	if(m) *m = 0; else str[0] = 0;
@@ -50,7 +50,7 @@ LPCSTR WINAPI FName(LPCSTR nm, char Slash)
 LPCSTR WINAPI FExtOnly(LPCSTR nm, char Slash)
 {
 	LPCSTR m = strrchr(nm,Slash),
-	       ext;
+		ext;
 
 	if(!m) m = nm;
 
@@ -70,8 +70,8 @@ LPCSTR WINAPI FExtOnly(LPCSTR nm, char Slash)
 */
 LPCSTR WINAPI FCps(char *buff,double val)
 {
-	char     Letter;
-	char     str[50];
+	char Letter;
+	char str[50];
 	LPCSTR _buff = buff;
 
 //1M

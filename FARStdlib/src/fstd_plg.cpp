@@ -3,11 +3,11 @@
 
 #include "fstdlib.h"
 
-PluginStartupInfo*          FP_Info          = NULL;
-FarStandardFunctions*       FP_FSF           = NULL;
-char                       *FP_PluginRootKey = NULL;
+PluginStartupInfo*          FP_Info            = NULL;
+FarStandardFunctions*       FP_FSF             = NULL;
+char                       *FP_PluginRootKey   = NULL;
 char                       *FP_PluginStartPath = NULL;
-int                         FP_LastOpMode    = 0;
+int                         FP_LastOpMode      = 0;
 DWORD                       FP_WinVerDW;
 
 static void _cdecl idAtExit(void)
@@ -22,7 +22,7 @@ static void _cdecl idAtExit(void)
 void WINAPI FP_SetStartupInfo(const PluginStartupInfo *Info,const char *KeyName)
 {
 //Info
-	FP_Info    = new PluginStartupInfo;
+	FP_Info = new PluginStartupInfo;
 	memcpy(FP_Info,Info,sizeof(*Info));
 //FSF
 	FP_FSF = new FarStandardFunctions;

@@ -346,7 +346,7 @@ int main_generator (int argc, char** argv)
 		sprintf (lpFullName, "%s/%s", lpHOutputPath?lpHOutputPath:".", lpHPPFileName);
 
 		dwHeaderCRC32 = 0;
-		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32")  : 0;
+		dwHeaderOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt( lpFullName, "CRC32") : 0;
 
 		lpHPPFileNameTemp = GetTempName(lpFullName);
 
@@ -381,7 +381,7 @@ int main_generator (int argc, char** argv)
 				pLangEntries[i].cNeedUpdate = 0;
 
 				pLangEntries[i].dwCRC32 = 0;
-				pLangEntries[i].dwOldCRC32 = (CheckExists(lpFullName) && key_file)  ? key_file->GetInt ( lpFullName, "CRC32") : 0;
+				pLangEntries[i].dwOldCRC32 = (CheckExists(lpFullName) && key_file) ? key_file->GetInt ( lpFullName, "CRC32") : 0;
 
 				pLangEntries[i].lpLNGFileNameTemp = GetTempName(lpFullName);
 
@@ -445,8 +445,8 @@ int main_generator (int argc, char** argv)
 				if ( bRead )
 				{
 					char *lpLngComments = NULL;
-					char *lpELngComments  = NULL;
-					char *lpSpecificLngComments  = NULL;
+					char *lpELngComments = NULL;
+					char *lpSpecificLngComments = NULL;
 
 					//sprintf (lpString, "\t%s,\r\n", lpMsgID);
 					sprintf (lpString, "DECLARE_FARLANGMSG(%s, %d)\r\n", lpMsgID, nMsgIndex);

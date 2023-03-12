@@ -22,7 +22,7 @@ static void _cdecl MSG_DelBuff(void)
 
 LPCSTR _cdecl Message(LPCSTR patt,...)
 {
-	va_list  a;
+	va_list a;
 	LPCSTR m;
 	va_start(a, patt);
 	m = MessageV(patt,a);

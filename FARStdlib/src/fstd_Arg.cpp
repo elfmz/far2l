@@ -43,8 +43,8 @@ char *WINAPI CTArgGetArg(int num)
 
 char *WINAPI CTArgGet(LPCSTR name)
 {
-	int         cn = StrColCount(name,";"),
-	            n,i,len;
+	int cn = StrColCount(name,";"),
+		n,i,len;
 	LPCSTR m;
 
 	for(n = 1; n < CT_argc && CT_argv[n]; n++)
@@ -54,7 +54,7 @@ char *WINAPI CTArgGet(LPCSTR name)
 				m = StrGetCol(name,i,";");
 
 				if(StrCmp(CT_argv[n]+1,m,len=(int)strlen(m),CT_CaseSensitive) == 0 &&
-				        CT_argv[n][1+len] == '=') return CT_argv[n]+1+len+1;
+					CT_argv[n][1+len] == '=') return CT_argv[n]+1+len+1;
 			}
 
 	return NULL;
@@ -62,8 +62,8 @@ char *WINAPI CTArgGet(LPCSTR name)
 
 BOOL WINAPI CTArgCheck(LPCSTR name)
 {
-	int      cn = StrColCount(name,";"),
-	         n,i;
+	int cn = StrColCount(name,";"),
+		n,i;
 	LPCSTR m;
 
 	for(n = 1; n < CT_argc && CT_argv[n]; n++)

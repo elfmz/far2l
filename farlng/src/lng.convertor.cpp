@@ -202,8 +202,8 @@ int main_convertor (int argc, char** argv)
 	FDScope hHFile(OpenInputFile(argv[2]));
 	if ( !hHFile.Valid() )
 	{
-	        printf ("ERROR: Can't open the header file, exiting.\n");
-	        return 0;
+		printf ("ERROR: Can't open the header file, exiting.\n");
+		return 0;
 	}
 
 	int dwLangs = atol(argv[3]);

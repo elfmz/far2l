@@ -9,7 +9,7 @@ BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize)
 	BOOL     rc = FALSE;
 
 	if(!Data || !DataSize ||
-	        !WINPORT(OpenClipboard)(NULL))
+			!WINPORT(OpenClipboard)(NULL))
 		return FALSE;
 
 	WINPORT(EmptyClipboard)();

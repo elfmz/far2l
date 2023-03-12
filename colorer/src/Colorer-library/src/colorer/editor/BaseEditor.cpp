@@ -34,7 +34,6 @@ BaseEditor::BaseEditor(ParserFactory* parserFactory, LineSource* lineSource)
   currentFileType = nullptr;
 
   breakParse = false;
-  validationProcess = false;
 
   CString def_text = CString("def:Text");
   CString def_syntax = CString("def:Syntax");
@@ -56,7 +55,6 @@ BaseEditor::~BaseEditor()
 {
   textParser->breakParse();
   breakParse = true;
-  while (validationProcess); /// @todo wait until validation is finished
   if (internalRM) {
     delete regionMapper;
   }

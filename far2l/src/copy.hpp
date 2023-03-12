@@ -190,12 +190,12 @@ class ShellCopy
 			FARString &strDest,
 			int KeepPathPos, int Rename);
 
-		int  ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
+		int ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
 			FARString &strDestName,int Append);
 
-		int  DeleteAfterMove(const wchar_t *Name,DWORD Attr);
+		int DeleteAfterMove(const wchar_t *Name,DWORD Attr);
 		void SetDestDizPath(const wchar_t *DestPath);
-		int  AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
+		int AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
 			DWORD DestAttr,int SameName,int Rename,int AskAppend,
 			int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();

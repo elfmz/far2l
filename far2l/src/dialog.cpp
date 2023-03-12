@@ -3923,7 +3923,7 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 	unsigned OrigFocusPos=CurFocusPos;
 //	int FucusPosNeed=-1;
 	// В функцию обработки диалога здесь передаем сообщение,
-	//   что элемент - LostFocus() - теряет фокус ввода.
+	// что элемент - LostFocus() - теряет фокус ввода.
 //	if(DialogMode.Check(DMODE_INITOBJECTS))
 //		FucusPosNeed=DlgProc((HANDLE)this,DN_KILLFOCUS,FocusPos,0);
 //	if(FucusPosNeed != -1 && CanGetFocus(Item[FucusPosNeed].Type))
@@ -3958,7 +3958,7 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 	}
 //	Dialog::FocusPos=FocusPos;
 	// В функцию обработки диалога здесь передаем сообщение,
-	//   что элемент GotFocus() - получил фокус ввода.
+	// что элемент GotFocus() - получил фокус ввода.
 	// Игнорируем возвращаемое функцией диалога значение
 //	if(DialogMode.Check(DMODE_INITOBJECTS))
 //		DlgProc((HANDLE)this,DN_GOTFOCUS,FocusPos,0);

@@ -29,7 +29,7 @@ void SaveConsoleTitle::Text(LPCSTR buff)
 	
 	Log(("TITLE: Set [%s]", buff));
 /*
-  char _buff[ 1024 ];
+	char _buff[ 1024 ];
 	if(FP_WinVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
 		OemToCharBuff(buff, _buff, sizeof(_buff));
@@ -75,8 +75,8 @@ int WINAPI CheckForKeyPressed(WORD *Codes,int NumCodes)
 
 		for(n = 0; n < NumCodes; n++)
 			if(rec.EventType == KEY_EVENT &&
-			        rec.Event.KeyEvent.bKeyDown &&
-			        rec.Event.KeyEvent.wVirtualKeyCode == Codes[n])
+					rec.Event.KeyEvent.bKeyDown &&
+					rec.Event.KeyEvent.wVirtualKeyCode == Codes[n])
 				rc = n+1;
 	}
 

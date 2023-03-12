@@ -6,8 +6,8 @@
 struct PRPeriod
 {
 	DWORD b,e;
-	DWORD     Period;
-	DWORD     LastDiff;
+	DWORD Period;
+	DWORD LastDiff;
 };
 
 /** @brief Create time period.

@@ -13,9 +13,9 @@ const char *_cdecl __WINError(void)
 	if(WinEBuff) LocalFree(WinEBuff);
 
 	if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-	                 NULL,err,
-	                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-	                 (LPTSTR) &WinEBuff,0,NULL) == 0)
+			NULL,err,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR) &WinEBuff,0,NULL) == 0)
 		return "Unknown error";
 
 	char *m;

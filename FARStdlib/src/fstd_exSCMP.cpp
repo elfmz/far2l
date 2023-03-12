@@ -5,7 +5,7 @@
 
 int WINAPI StrCmp(const char *str,const char *str1,int maxlen, BOOL isCaseSens)
 {
-	int  n,diff;
+	int n,diff;
 
 	if(!str) return (str1 == NULL)?0:(-1);
 

@@ -775,7 +775,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-	if ( (s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
+	if ((s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
 	&& sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1
 	&& FS_FLAGS_CONTAIN_IMMUTABLE(um->target_flags)) {
 		if (sdc_fs_flags_set(um->target.c_str(), FS_FLAGS_WITHOUT_IMMUTABLE(um->target_flags)) != -1) {

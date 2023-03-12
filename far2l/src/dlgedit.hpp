@@ -102,11 +102,11 @@ class DlgEdit: public ScreenObject
 		void  SetString(const wchar_t *Str);
 		void  InsertString(const wchar_t *Str);
 		void  SetHiString(const wchar_t *Str);
-		void  GetString(wchar_t *Str, int MaxSize,int Row=-1); // Row==-1 - current line
+		void  GetString(wchar_t *Str, int MaxSize,int Row=-1);    // Row==-1 - current line
 		void  GetString(FARString &strStr,int Row=-1);            // Row==-1 - current line
 		const wchar_t* GetStringAddr();
 
-		void  SetCurPos(int NewCol, int NewRow=-1); // Row==-1 - current line
+		void  SetCurPos(int NewCol, int NewRow=-1);               // Row==-1 - current line
 		int   GetCurPos();
 		int   GetCurRow();
 
@@ -124,7 +124,7 @@ class DlgEdit: public ScreenObject
 
 		void  FastShow();
 		int   GetLeftPos();
-		void  SetLeftPos(int NewPos,int Row=-1); // Row==-1 - current line
+		void  SetLeftPos(int NewPos,int Row=-1);   // Row==-1 - current line
 
 		void  DeleteBlock();
 

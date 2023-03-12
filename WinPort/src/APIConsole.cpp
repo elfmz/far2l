@@ -375,7 +375,7 @@ extern "C" {
 	{
 		if ((CompositeChar & COMPOSITE_CHAR_MARK) == 0) {
 			fprintf(stderr, "%s: invoked for not composite-char 0x%llx\n",
-				__FUNCTION__,  (unsigned long long)CompositeChar);
+				__FUNCTION__, (unsigned long long)CompositeChar);
 			return L"\u2022";
 		}
 
@@ -384,7 +384,7 @@ extern "C" {
 		std::lock_guard<std::mutex> lock(s_composite_chars.mtx);
 		if (id >= (COMP_CHAR)s_composite_chars.id2str.size()) {
 			fprintf(stderr, "%s: out of range composite-char 0x%llx\n",
-				__FUNCTION__,  (unsigned long long)CompositeChar);
+				__FUNCTION__, (unsigned long long)CompositeChar);
 			return L"\u2022";
 		}
 		return s_composite_chars.id2str[id];

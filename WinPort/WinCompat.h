@@ -21,8 +21,8 @@
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 
-#define FOPEN_READ		"rb"
-#define FOPEN_WRITE	"wb"
+#define FOPEN_READ  "rb"
+#define FOPEN_WRITE "wb"
 
 #else
 #ifndef FAR_PYTHON_GEN
@@ -73,10 +73,10 @@ typedef unsigned __int64 uint64_t;
 #define _cdecl
 
 
-#define _UI64_MAX  0xffffffffffffffff
+#define _UI64_MAX    0xffffffffffffffff
 
-#define FOPEN_READ		"r"
-#define FOPEN_WRITE	"w"
+#define FOPEN_READ  "r"
+#define FOPEN_WRITE "w"
 #endif
 
 
@@ -114,14 +114,14 @@ typedef uint64_t ULONG64, *PULONG64;
 typedef INT64 INT_PTR;
 typedef UINT64 UINT_PTR;
 typedef DWORD64 DWORD_PTR;
-typedef LONG64 	LONG_PTR;
-typedef ULONG64 	ULONG_PTR;
+typedef LONG64 LONG_PTR;
+typedef ULONG64 ULONG_PTR;
 #else
 typedef INT INT_PTR;
 typedef UINT UINT_PTR;
 typedef DWORD DWORD_PTR;
-typedef LONG	LONG_PTR;
-typedef ULONG	ULONG_PTR;
+typedef LONG LONG_PTR;
+typedef ULONG ULONG_PTR;
 #endif
 
 typedef const char *LPCSTR;
@@ -158,7 +158,7 @@ typedef ULONGLONG *PULONGLONG;
 
 #define CONST const
 
-typedef int                 BOOL;
+typedef int BOOL;
 typedef UCHAR BOOLEAN;
 typedef BOOL *LPBOOL, *PBOOL;
 
@@ -173,7 +173,7 @@ typedef USHORT LANGID;      // winnt
 
 
 typedef HANDLE HKEY;
-typedef struct _OVERLAPPED	*LPOVERLAPPED;
+typedef struct _OVERLAPPED *LPOVERLAPPED;
 typedef HKEY *PHKEY;
 
 typedef DWORD ACCESS_MASK;
@@ -194,7 +194,7 @@ typedef int HRESULT;
 #define SEVERITY_SUCCESS    0
 #define SEVERITY_ERROR      1
 
-#define FACILITY_ITF                     4
+#define FACILITY_ITF        4
 
 
 #define HRESULT_SEVERITY(hr)  (((hr) >> 31) & 0x1)
@@ -220,16 +220,16 @@ typedef int HRESULT;
 
 
 #ifdef PATH_MAX
-# define MAX_PATH	PATH_MAX
+# define MAX_PATH PATH_MAX
 #else
-# define MAX_PATH	0x1000
+# define MAX_PATH 0x1000
 # warning "PATH_MAX not defined"
 #endif
 
 #ifdef NAME_MAX
-# define MAX_NAME	NAME_MAX
+# define MAX_NAME NAME_MAX
 #else
-# define MAX_NAME	255
+# define MAX_NAME 255
 # warning "NAME_MAX not defined"
 #endif
 
@@ -402,16 +402,16 @@ typedef struct _CHAR_INFO {
 
 #define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
 #define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
-	|| (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
+    || (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
 
 #define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
 #define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))
 #define SET_RGB_FORE(ATTR, RGB)  \
-	((ATTR) = ((ATTR) & 0xffffff000000ffff) | FOREGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 16))
+    ((ATTR) = ((ATTR) & 0xffffff000000ffff) | FOREGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 16))
 #define SET_RGB_BACK(ATTR, RGB)  \
-	((ATTR) = ((ATTR) & 0x000000ffffffffff) | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 40))
+    ((ATTR) = ((ATTR) & 0x000000ffffffffff) | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB)) & 0xffffff) << 40))
 #define SET_RGB_BOTH(ATTR, RGB_FORE, RGB_BACK)  \
-	((ATTR) = ((ATTR) & 0xffff) | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB_FORE)) & 0xffffff) << 16) | ((((DWORD64)(RGB_BACK)) & 0xffffff) << 40) )
+    ((ATTR) = ((ATTR) & 0xffff) | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR | ((((DWORD64)(RGB_FORE)) & 0xffffff) << 16) | ((((DWORD64)(RGB_BACK)) & 0xffffff) << 40) )
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {
     COORD dwSize;
@@ -438,8 +438,8 @@ typedef struct _KEY_EVENT_RECORD {
 } KEY_EVENT_RECORD, *PKEY_EVENT_RECORD;
 
 typedef struct _CALLBACK_EVENT_RECORD {
-	VOID (*Function)(VOID *Context);
-	VOID *Context;
+    VOID (*Function)(VOID *Context);
+    VOID *Context;
 } CALLBACK_EVENT_RECORD, *PCALLBACK_EVENT_RECORD;
 
 //
@@ -560,8 +560,8 @@ typedef struct _INPUT_RECORD {
 #define CP_UTF8                   65001       // UTF-8 translation
 #define CP_UTF16LE                1200        // UTF-16 translation
 #define CP_UTF16BE                1201        // UTF-16 translation
-#define CP_UTF32LE				  61200
-#define CP_UTF32BE				  61201
+#define CP_UTF32LE                61200
+#define CP_UTF32BE                61201
 
 #if (__WCHAR_MAX__ > 0xffff)
 # define CP_WIDE_LE CP_UTF32LE
@@ -576,16 +576,16 @@ typedef struct _INPUT_RECORD {
 #define CSTR_EQUAL                2           // string 1 equal to string 2
 #define CSTR_GREATER_THAN         3           // string 1 greater than string 2
 
-#define WINAPI	
+#define WINAPI
 #define WINAPIV
-#define CALLBACK 
+#define CALLBACK
 #define PASCAL
 
 
 typedef struct _UNICODE_STRING {
-  USHORT Length;
-  USHORT MaximumLength;
-  PWSTR  Buffer;
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR  Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
 
 #define TRUE 1
@@ -603,7 +603,7 @@ typedef struct tagRECT {
     LONG top;
     LONG right;
     LONG bottom;
-} 	RECT;
+} RECT;
 
 
 #define DRIVE_UNKNOWN     0
@@ -942,36 +942,36 @@ typedef void *HMODULE;
 #define FILE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF)
 
 
-#define FILE_SHARE_READ                 0x00000001  
-#define FILE_SHARE_WRITE                0x00000002  
-#define FILE_SHARE_DELETE               0x00000004  
-#define FILE_ATTRIBUTE_READONLY             0x00000001  
-#define FILE_ATTRIBUTE_HIDDEN               0x00000002  
-#define FILE_ATTRIBUTE_SYSTEM               0x00000004  
-#define FILE_ATTRIBUTE_DIRECTORY            0x00000010  
-#define FILE_ATTRIBUTE_ARCHIVE              0x00000020  
-#define FILE_ATTRIBUTE_DEVICE               0x00000040  
-#define FILE_ATTRIBUTE_NORMAL               0x00000080  
-#define FILE_ATTRIBUTE_TEMPORARY            0x00000100  
-#define FILE_ATTRIBUTE_SPARSE_FILE          0x00000200  
-#define FILE_ATTRIBUTE_REPARSE_POINT        0x00000400  
-#define FILE_ATTRIBUTE_COMPRESSED           0x00000800  
-#define FILE_ATTRIBUTE_OFFLINE              0x00001000  
-#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED  0x00002000  
-#define FILE_ATTRIBUTE_ENCRYPTED            0x00004000  
-#define FILE_ATTRIBUTE_INTEGRITY_STREAM     0x00008000  
-#define FILE_ATTRIBUTE_VIRTUAL              0x00010000  
-#define FILE_ATTRIBUTE_NO_SCRUB_DATA        0x00020000  
-#define FILE_ATTRIBUTE_BROKEN               0x00200000  
-#define FILE_ATTRIBUTE_EXECUTABLE           0x00400000  
+#define FILE_SHARE_READ                 0x00000001
+#define FILE_SHARE_WRITE                0x00000002
+#define FILE_SHARE_DELETE               0x00000004
+#define FILE_ATTRIBUTE_READONLY             0x00000001
+#define FILE_ATTRIBUTE_HIDDEN               0x00000002
+#define FILE_ATTRIBUTE_SYSTEM               0x00000004
+#define FILE_ATTRIBUTE_DIRECTORY            0x00000010
+#define FILE_ATTRIBUTE_ARCHIVE              0x00000020
+#define FILE_ATTRIBUTE_DEVICE               0x00000040
+#define FILE_ATTRIBUTE_NORMAL               0x00000080
+#define FILE_ATTRIBUTE_TEMPORARY            0x00000100
+#define FILE_ATTRIBUTE_SPARSE_FILE          0x00000200
+#define FILE_ATTRIBUTE_REPARSE_POINT        0x00000400
+#define FILE_ATTRIBUTE_COMPRESSED           0x00000800
+#define FILE_ATTRIBUTE_OFFLINE              0x00001000
+#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED  0x00002000
+#define FILE_ATTRIBUTE_ENCRYPTED            0x00004000
+#define FILE_ATTRIBUTE_INTEGRITY_STREAM     0x00008000
+#define FILE_ATTRIBUTE_VIRTUAL              0x00010000
+#define FILE_ATTRIBUTE_NO_SCRUB_DATA        0x00020000
+#define FILE_ATTRIBUTE_BROKEN               0x00200000
+#define FILE_ATTRIBUTE_EXECUTABLE           0x00400000
 
-#define FILE_FILE_COMPRESSION               0x00000010  
-#define FILE_SUPPORTS_SPARSE_FILES          0x00000040  
-#define FILE_SUPPORTS_REPARSE_POINTS        0x00000080  
-#define FILE_SUPPORTS_REMOTE_STORAGE        0x00000100  
-#define FILE_SUPPORTS_ENCRYPTION            0x00020000  
+#define FILE_FILE_COMPRESSION               0x00000010
+#define FILE_SUPPORTS_SPARSE_FILES          0x00000040
+#define FILE_SUPPORTS_REPARSE_POINTS        0x00000080
+#define FILE_SUPPORTS_REMOTE_STORAGE        0x00000100
+#define FILE_SUPPORTS_ENCRYPTION            0x00020000
 
- 
+
 #define FILE_FLAG_WRITE_THROUGH         0x80000000
 #define FILE_FLAG_OVERLAPPED            0x40000000
 #define FILE_FLAG_NO_BUFFERING          0x20000000
@@ -1059,7 +1059,7 @@ typedef void *HKL;
 
 #ifdef INITGUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
-   EXTERN_C const GUID name \
+    EXTERN_C const GUID name \
                 = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
 #else
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
@@ -1133,14 +1133,14 @@ typedef void *HKL;
 #define HKEY_PERFORMANCE_NLSTEXT            (( HKEY ) (ULONG_PTR)((LONG)0x80000060) )
 
 
-#define COMPRESSION_FORMAT_NONE          (0x0000)   
-#define COMPRESSION_FORMAT_DEFAULT       (0x0001)   
-#define COMPRESSION_FORMAT_LZNT1         (0x0002)   
-#define COMPRESSION_FORMAT_XPRESS        (0x0003)   
-#define COMPRESSION_FORMAT_XPRESS_HUFF   (0x0004)   
-#define COMPRESSION_ENGINE_STANDARD      (0x0000)   
-#define COMPRESSION_ENGINE_MAXIMUM       (0x0100)   
-#define COMPRESSION_ENGINE_HIBER         (0x0200)   
+#define COMPRESSION_FORMAT_NONE          (0x0000)
+#define COMPRESSION_FORMAT_DEFAULT       (0x0001)
+#define COMPRESSION_FORMAT_LZNT1         (0x0002)
+#define COMPRESSION_FORMAT_XPRESS        (0x0003)
+#define COMPRESSION_FORMAT_XPRESS_HUFF   (0x0004)
+#define COMPRESSION_ENGINE_STANDARD      (0x0000)
+#define COMPRESSION_ENGINE_MAXIMUM       (0x0100)
+#define COMPRESSION_ENGINE_HIBER         (0x0200)
 
 
 #define IO_REPARSE_TAG_SYMLINK                  (0xA000000CL)
@@ -1201,12 +1201,12 @@ typedef struct _cpinfo {
 } CPINFO, *LPCPINFO;
 
 typedef struct _cpinfoex {
-  UINT  MaxCharSize;
-  BYTE  DefaultChar[MAX_DEFAULTCHAR];
-  BYTE  LeadByte[MAX_LEADBYTES];
-  WCHAR UnicodeDefaultChar;
-  UINT  CodePage;
-  TCHAR CodePageName[MAX_NAME];
+    UINT  MaxCharSize;
+    BYTE  DefaultChar[MAX_DEFAULTCHAR];
+    BYTE  LeadByte[MAX_LEADBYTES];
+    WCHAR UnicodeDefaultChar;
+    UINT  CodePage;
+    TCHAR CodePageName[MAX_NAME];
 } CPINFOEX, *LPCPINFOEX;
 
 typedef BOOL (*CODEPAGE_ENUMPROCW)(LPWSTR);
@@ -1229,16 +1229,16 @@ typedef LONG NTSTATUS;
 #define ENABLE_PROCESSED_OUTPUT    0x0001
 #define ENABLE_WRAP_AT_EOL_OUTPUT  0x0002
 
-#define STATUS_WAIT_0                           ((NTSTATUS)0x00000000L) // winnt
+#define STATUS_WAIT_0                    ((NTSTATUS)0x00000000L)    // winnt
 #define STATUS_ABANDONED_WAIT_0          ((NTSTATUS)0x00000080L)    // winnt
 
-#define WAIT_FAILED ((DWORD)0xFFFFFFFF)
-#define WAIT_OBJECT_0       ((STATUS_WAIT_0 ) + 0 )
+#define WAIT_FAILED            ((DWORD)0xFFFFFFFF)
+#define WAIT_OBJECT_0          ((STATUS_WAIT_0 ) + 0 )
 
 #define WAIT_ABANDONED         ((STATUS_ABANDONED_WAIT_0 ) + 0 )
 #define WAIT_ABANDONED_0       ((STATUS_ABANDONED_WAIT_0 ) + 0 )
 
-#define WAIT_IO_COMPLETION                  STATUS_USER_APC
+#define WAIT_IO_COMPLETION               STATUS_USER_APC
 
 #define DELETE                           (0x00010000L)
 #define READ_CONTROL                     (0x00020000L)
@@ -1299,19 +1299,19 @@ typedef LONG NTSTATUS;
 
 #define MAX_COMPUTERNAME_LENGTH 15
 
-#define FILE_NOTIFY_CHANGE_FILE_NAME    0x00000001   
-#define FILE_NOTIFY_CHANGE_DIR_NAME     0x00000002   
-#define FILE_NOTIFY_CHANGE_ATTRIBUTES   0x00000004   
-#define FILE_NOTIFY_CHANGE_SIZE         0x00000008   
-#define FILE_NOTIFY_CHANGE_LAST_WRITE   0x00000010   
-#define FILE_NOTIFY_CHANGE_LAST_ACCESS  0x00000020   
-#define FILE_NOTIFY_CHANGE_CREATION     0x00000040   
-#define FILE_NOTIFY_CHANGE_SECURITY     0x00000100   
-#define FILE_ACTION_ADDED                   0x00000001   
-#define FILE_ACTION_REMOVED                 0x00000002   
-#define FILE_ACTION_MODIFIED                0x00000003   
-#define FILE_ACTION_RENAMED_OLD_NAME        0x00000004   
-#define FILE_ACTION_RENAMED_NEW_NAME        0x00000005 
+#define FILE_NOTIFY_CHANGE_FILE_NAME    0x00000001
+#define FILE_NOTIFY_CHANGE_DIR_NAME     0x00000002
+#define FILE_NOTIFY_CHANGE_ATTRIBUTES   0x00000004
+#define FILE_NOTIFY_CHANGE_SIZE         0x00000008
+#define FILE_NOTIFY_CHANGE_LAST_WRITE   0x00000010
+#define FILE_NOTIFY_CHANGE_LAST_ACCESS  0x00000020
+#define FILE_NOTIFY_CHANGE_CREATION     0x00000040
+#define FILE_NOTIFY_CHANGE_SECURITY     0x00000100
+#define FILE_ACTION_ADDED                   0x00000001
+#define FILE_ACTION_REMOVED                 0x00000002
+#define FILE_ACTION_MODIFIED                0x00000003
+#define FILE_ACTION_RENAMED_OLD_NAME        0x00000004
+#define FILE_ACTION_RENAMED_NEW_NAME        0x00000005
 
 #ifndef MAPVK_VK_TO_VSC
 #define MAPVK_VK_TO_VSC 0
@@ -1463,8 +1463,8 @@ typedef LONG_PTR            LRESULT;
 #define LOCALE_USE_CP_ACP             0x40000000   // use the system ACP
 
 #define MAX_VKEY_CODE 0xffff
-//#define MINSHORT    0x8000      
-#define MAXSHORT    0x7fff      
+//#define MINSHORT    0x8000
+#define MAXSHORT    0x7fff
 #endif
 
 typedef DWORD (*WINPORT_THREAD_START_ROUTINE)(LPVOID lpThreadParameter);
@@ -1488,10 +1488,10 @@ typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Width, CHA
 #define DECLARE_INTERFACE(iface)    struct iface
 #define DECLARE_INTERFACE_(iface, baseiface)    struct iface : public baseiface
 
-#define IS_SOCKET_NONBLOCKING_ERR(err)	((err)==EINPROGRESS || (err)==EWOULDBLOCK) 
+#define IS_SOCKET_NONBLOCKING_ERR(err)    ((err)==EINPROGRESS || (err)==EWOULDBLOCK)
 
-#ifndef SOCKET 
-# define SOCKET		int
+#ifndef SOCKET
+# define SOCKET int
 #endif
 
 #define SOCKET_ERROR -1
@@ -1499,7 +1499,7 @@ typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Width, CHA
 #define _O_BINARY 0
 #define SD_BOTH 2
 
-#define MAKELONG(a, b)      ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
+#define MAKELONG(a, b)        ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
 #define MAKEWPARAM(l, h)      ((WPARAM)(DWORD)MAKELONG(l, h))
 #define MAKELPARAM(l, h)      ((LPARAM)(DWORD)MAKELONG(l, h))
 #define MAKELRESULT(l, h)     ((LRESULT)(DWORD)MAKELONG(l, h))
@@ -1516,4 +1516,4 @@ typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Width, CHA
 # error Cannot define thread_local
 #endif
 
-#define CONSOLE_FKEYS_COUNT	12	// array count for SetConsoleFKeyTitles
+#define CONSOLE_FKEYS_COUNT 12 // array count for SetConsoleFKeyTitles

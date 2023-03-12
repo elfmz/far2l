@@ -1148,7 +1148,7 @@ bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, const ch
 	g_std_out = std_out;
 	g_far2l_tty = far2l_tty;
 
-	auto orig_winch = signal(SIGWINCH,  OnSigWinch);
+	auto orig_winch = signal(SIGWINCH, OnSigWinch);
 	auto orig_tstp = signal(SIGTSTP, OnSigTstp);
 	auto orig_cont = signal(SIGCONT, OnSigCont);
 	auto orig_hup = signal(SIGHUP, (notify_pipe != -1) ? OnSigHup : SIG_DFL); // notify_pipe == -1 means --mortal specified

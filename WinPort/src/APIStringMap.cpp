@@ -189,7 +189,7 @@ INT WINAPI WINPORT(CompareStringEx)(LPCWSTR locale, DWORD flags, LPCWSTR str1, I
 }
 
 WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, 
-		LPCSTR lpString1, int cchCount1,  LPCSTR lpString2, int cchCount2))
+		LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2))
 {
 	if (cchCount1==-1) cchCount1 = lpString1 ? strlen(lpString1) : 0;
 	if (cchCount2==-1) cchCount2 = lpString2 ? strlen(lpString2) : 0;
@@ -197,7 +197,7 @@ WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags,
 	std::vector<WCHAR> wstr2(cchCount2 * 2 + 1);
 	int l1 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString1, cchCount1, &wstr1[0], wstr1.size() - 1 );
 	int l2 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString2, cchCount2, &wstr2[0], wstr2.size() - 1);
-	return WINPORT(CompareString)( Locale, dwCmpFlags,  &wstr1[0], l1, &wstr2[0], l2);
+	return WINPORT(CompareString)( Locale, dwCmpFlags, &wstr1[0], l1, &wstr2[0], l2);
 }
 
 //////////////////////////

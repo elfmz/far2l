@@ -22,12 +22,12 @@ template <class I>
 
 
 const char *utf8index(const char *s, size_t bytes, size_t pos)
-{    
-    for ( ++pos; bytes; ++s, --bytes) {
-        if ((*s & 0xC0) != 0x80) --pos;
-        if (pos == 0) break;
-    }
-    return s;
+{
+	for ( ++pos; bytes; ++s, --bytes) {
+		if ((*s & 0xC0) != 0x80) --pos;
+		if (pos == 0) break;
+	}
+	return s;
 }
 
 size_t utf8_char_len(const char *s, size_t bytes)
@@ -585,7 +585,7 @@ static void ClipRect(SMALL_RECT &rect, const SMALL_RECT &clip, COORD *offset = N
 }
 
 bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle, 
-	const SMALL_RECT *lpClipRectangle,  COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
+	const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	union {
 		SMALL_RECT both[2];

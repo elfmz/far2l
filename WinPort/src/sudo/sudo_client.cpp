@@ -235,7 +235,7 @@ namespace Sudo
 		if (client_mode == SCM_DISABLE)
 			return false;
 
-		ListOfStrings::iterator  i = 
+		ListOfStrings::iterator i = 
 			std::find(g_recent_curdirs.begin(), g_recent_curdirs.end(), str);
 		if (i == g_recent_curdirs.end())
 			return false;
@@ -264,7 +264,7 @@ namespace Sudo
 		if (path[0] != '/' && path[0]) {
 			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			if (!g_curdir_override.empty()) {
-				std::string  str = g_curdir_override;
+				std::string str = g_curdir_override;
 				if (strcmp(path, ".")==0 || strcmp(path, "./")==0) {
 					
 				} else if (strcmp(path, "..")==0 || strcmp(path, "../")==0) {

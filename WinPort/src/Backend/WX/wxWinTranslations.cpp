@@ -87,7 +87,7 @@ WinPortRGB ConsoleBackground2RGB(DWORD64 attributes)
 static int wxKeyCode2WinKeyCode(int code)
 {
 	switch (code) {
-	case WXK_BACK: return  VK_BACK;
+	case WXK_BACK: return VK_BACK;
 	case WXK_TAB: return VK_TAB;
 	case WXK_RETURN: return VK_RETURN;
 	case WXK_ESCAPE: return VK_ESCAPE;

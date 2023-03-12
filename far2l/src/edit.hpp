@@ -214,8 +214,8 @@ class Edit:public ScreenObject
 
 	public:
 
-		DWORD SetCodePage(UINT codepage);  //BUGBUG
-		UINT GetCodePage();  //BUGBUG
+		DWORD SetCodePage(UINT codepage); //BUGBUG
+		UINT GetCodePage(); //BUGBUG
 
 		virtual void  FastShow();
 		virtual int   ProcessKey(int Key);

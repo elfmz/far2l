@@ -346,7 +346,7 @@ HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode
 
 BOOL apiMoveFile(
 	const wchar_t *lpwszExistingFileName, // address of name of the existing file
-	const wchar_t *lpwszNewFileName   // address of new name for the file
+	const wchar_t *lpwszNewFileName       // address of new name for the file
 )
 {
 	BOOL Result = WINPORT(MoveFile)(lpwszExistingFileName, lpwszNewFileName);
@@ -355,8 +355,8 @@ BOOL apiMoveFile(
 
 BOOL apiMoveFileEx(
 	const wchar_t *lpwszExistingFileName, // address of name of the existing file
-	const wchar_t *lpwszNewFileName,   // address of new name for the file
-	DWORD dwFlags   // flag to determine how to move file
+	const wchar_t *lpwszNewFileName,      // address of new name for the file
+	DWORD dwFlags                         // flag to determine how to move file
 )
 {
 	BOOL Result = WINPORT(MoveFileEx)(lpwszExistingFileName, lpwszNewFileName, dwFlags);

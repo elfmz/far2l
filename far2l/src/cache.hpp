@@ -74,7 +74,7 @@ private:
 
 	struct Bounds
 	{
-		UINT64 Ptr = 0;  // must be multiple of AlignSize
+		UINT64 Ptr = 0; // must be multiple of AlignSize
 		UINT64 End = 0;
 	} BufferBounds;
 

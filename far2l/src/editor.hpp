@@ -155,9 +155,11 @@ class Editor:public ScreenObject
 		friend class FileEditor;
 	private:
 
-		// $ 04.11.2003 SKV
-		// на любом выходе если была нажата кнопка выделения,
-		// и она его "сняла" (сделала 0-й ширины), то его надо убрать.
+		/*
+			$ 04.11.2003 SKV
+			на любом выходе если была нажата кнопка выделения,
+			и она его "сняла" (сделала 0-й ширины), то его надо убрать.
+		*/
 		class EditorBlockGuard:public NonCopyable
 		{
 				Editor& ed;
@@ -196,7 +198,7 @@ class Editor:public ScreenObject
 		int   MBlockStartX;
 
 		Edit *BlockStart;
-		int BlockStartLine;
+		int   BlockStartLine;
 		Edit *VBlockStart;
 
 		int VBlockX;

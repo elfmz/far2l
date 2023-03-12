@@ -50,7 +50,7 @@ CString::CString(const byte* stream, size_t size, int def_encoding)
     if (stream[0] == 0x3C && stream[1] == 0x3F) {
       size_t p;
       size_t cps = 0, cpe = 0;
-      for (p = 2; stream[p] != 0x3F && stream[p + 1] != 0x3C && p < 100; p++) {
+      for (p = 2; p < 100 && stream[p] != 0x3F && stream[p + 1] != 0x3C; p++) {
         if (cps && stream[p] == stream[cps - 1]) {
           cpe = p;
           break;
@@ -159,6 +159,10 @@ CString::CString(const w4char* string, size_t s, size_t l)
 
 CString::CString(const wchar* string, size_t s, size_t l)
 {
+  start = s;
+  len = l;
+  encodingIdx = -1;
+
 #if (__WCHAR_MAX__ > 0xffff)
   type = ST_UTF32;
   w4str = (const w4char*)string;
@@ -170,10 +174,6 @@ CString::CString(const wchar* string, size_t s, size_t l)
   if (len == npos)
     for (len = 0; w2str[len + s]; len++);
 #endif
-
-  start = s;
-  len = l;
-  encodingIdx = -1;
 }
 
 CString::CString(const String* cstring, size_t s, size_t l)

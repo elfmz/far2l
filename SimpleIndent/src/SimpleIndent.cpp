@@ -118,7 +118,7 @@ PROCESSEDITORINPUT
           if (egs.StringText[0]=='\t')
             n = 1;
           else
-            while (egs.StringText[n]==' ' && n < ei.TabSize)
+            while (n < ei.TabSize && egs.StringText[n]==' ')
               n++;
           for (int i=0; i<n; i++)
             Info.EditorControl(ECTL_DELETECHAR, NULL);

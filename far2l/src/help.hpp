@@ -96,6 +96,7 @@ class HelpRecord
 		{
 			if (this != &rhs)
 			{
+				free(HelpStr);
 				HelpStr = wcsdup(rhs.HelpStr);
 			}
 
@@ -114,7 +115,7 @@ class HelpRecord
 
 		~HelpRecord()
 		{
-			if (HelpStr) free(HelpStr);
+			free(HelpStr);
 		}
 };
 

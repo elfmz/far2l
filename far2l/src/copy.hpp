@@ -56,8 +56,9 @@ enum COPY_CODES
 enum COPY_SYMLINK
 {
 	COPY_SYMLINK_ASIS = 0,
-	COPY_SYMLINK_SMART = 1,                 // Copy symbolics links content instead of making new links
-	COPY_SYMLINK_ASFILE = 2    // Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	COPY_SYMLINK_SMART = 1,                     // Copy symbolics links content instead of making new links
+	COPY_SYMLINK_ASFILE = 2                     // Copy remote (to this copy operation) symbolics links content,
+//                                                 make relative links for local ones
 };
 
 struct COPY_FLAGS
@@ -181,22 +182,22 @@ class ShellCopy
 
 		COPY_CODES CopyFileTree(const wchar_t *Dest);
 		COPY_CODES ShellCopyOneFile(const wchar_t *Src,
-		                            const FAR_FIND_DATA_EX &SrcData,
-		                            FARString &strDest,
-		                            int KeepPathPos, int Rename);
+			const FAR_FIND_DATA_EX &SrcData,
+			FARString &strDest,
+			int KeepPathPos, int Rename);
 		COPY_CODES ShellCopyOneFileNoRetry(const wchar_t *Src,
-		                            const FAR_FIND_DATA_EX &SrcData,
-		                            FARString &strDest,
-		                            int KeepPathPos, int Rename);
+			const FAR_FIND_DATA_EX &SrcData,
+			FARString &strDest,
+			int KeepPathPos, int Rename);
 
-		int  ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
-		                   FARString &strDestName,int Append);
+		int ShellCopyFile(const wchar_t *SrcName,const FAR_FIND_DATA_EX &SrcData,
+			FARString &strDestName,int Append);
 
-		int  DeleteAfterMove(const wchar_t *Name,DWORD Attr);
+		int DeleteAfterMove(const wchar_t *Name,DWORD Attr);
 		void SetDestDizPath(const wchar_t *DestPath);
-		int  AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
-		                  DWORD DestAttr,int SameName,int Rename,int AskAppend,
-		                  int &Append,FARString &strNewName,int &RetCode);
+		int AskOverwrite(const FAR_FIND_DATA_EX &SrcData,const wchar_t *SrcName,const wchar_t *DestName,
+			DWORD DestAttr,int SameName,int Rename,int AskAppend,
+			int &Append,FARString &strNewName,int &RetCode);
 		bool CalcTotalSize();
 		
 		COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
@@ -204,7 +205,7 @@ class ShellCopy
 
 	public:
 		ShellCopy(Panel *SrcPanel,int Move,int Link,int CurrentOnly,int Ask,
-		          int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir=false);
+			int &ToPlugin, const wchar_t *PluginDestPath, bool ToSubdir=false);
 		~ShellCopy();
 };
 

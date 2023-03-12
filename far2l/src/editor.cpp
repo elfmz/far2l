@@ -1001,15 +1001,17 @@ int Editor::ProcessKey(int Key)
 				ProcessKey(KEY_SHIFTPGDN);
 			}
 
-			// $ 06.02.2002 IS
-			// Принудительно сбросим флаг того, что позиция изменена плагином.
-			//  Для чего:
-			//    при выполнении "ProcessKey(KEY_SHIFTPGDN)" (см. чуть выше)
-			//    позиция плагины (в моем случае - колорер) могут дергать
-			//    ECTL_SETPOSITION, в результате чего выставляется флаг
-			//    FEDITOR_CURPOSCHANGEDBYPLUGIN. А при обработке KEY_SHIFTEND
-			//    выделение в подобном случае начинается с нуля, что сводит на нет
-			//    предыдущее выполнение KEY_SHIFTPGDN.
+			/*
+				$ 06.02.2002 IS
+				Принудительно сбросим флаг того, что позиция изменена плагином.
+				Для чего:
+					при выполнении "ProcessKey(KEY_SHIFTPGDN)" (см. чуть выше)
+					позиция плагины (в моем случае - колорер) могут дергать
+					ECTL_SETPOSITION, в результате чего выставляется флаг
+					FEDITOR_CURPOSCHANGEDBYPLUGIN. А при обработке KEY_SHIFTEND
+					выделение в подобном случае начинается с нуля, что сводит на нет
+					предыдущее выполнение KEY_SHIFTPGDN.
+			*/
 			Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
 
 			if (Key == KEY_CTRLSHIFTEND || Key == KEY_CTRLSHIFTNUMPAD1)
@@ -1525,9 +1527,11 @@ int Editor::ProcessKey(int Key)
 				bool OldUseInternalClipboard=Clipboard::SetUseInternalClipboardState(true);
 				ProcessKey(Key==KEY_CTRLP ? KEY_CTRLINS:KEY_SHIFTDEL);
 
-				// $ 10.04.2001 SVS
-				// ^P/^M - некорректно работали: уловие для CurPos должно быть ">=",
-				//  а не "меньше".
+				/*
+					$ 10.04.2001 SVS
+					^P/^M - некорректно работали: уловие для CurPos должно быть ">=",
+					а не "меньше".
+				*/
 				if (Key==KEY_CTRLM && SelStart!=-1 && SelEnd!=-1)
 				{
 					if (CurPos>=SelEnd)
@@ -2170,10 +2174,12 @@ int Editor::ProcessKey(int Key)
 			Pasting++;
 			{
 				int Delta;
-				// $ 18.07.2000 tran
-				//   встань в начало текста, нажми alt-right, alt-pagedown,
-				//   выделится блок шириной в 1 колонку, нажми еще alt-right
-				//   выделение сбросится
+				/*
+					$ 18.07.2000 tran
+					встань в начало текста, нажми alt-right, alt-pagedown,
+					выделится блок шириной в 1 колонку, нажми еще alt-right
+					выделение сбросится
+				*/
 				int VisPos=CurLine->RealPosToCell(CurPos),
 					NextVisPos=CurLine->RealPosToCell(CurPos+1);
 //				_D(SysLog(L"CurPos=%i, VisPos=%i, NextVisPos=%i",
@@ -2573,9 +2579,11 @@ int Editor::ProcessKey(int Key)
 			{
 				if ((Key==KEY_CTRLDEL || Key==KEY_CTRLNUMDEL || Key==KEY_CTRLDECIMAL || Key==KEY_CTRLT) && CurPos>=CurLine->GetLength())
 				{
-					// $ 08.12.2000 skv
-					// - CTRL-DEL в начале строки при выделенном блоке и
-					//   включенном EditorDelRemovesBlocks
+					/*
+						$ 08.12.2000 skv
+						- CTRL-DEL в начале строки при выделенном блоке и
+						включенном EditorDelRemovesBlocks
+					*/
 					int save=EdOpt.DelRemovesBlocks;
 					EdOpt.DelRemovesBlocks=0;
 					int ret=ProcessKey(KEY_DEL);
@@ -3577,21 +3585,25 @@ BOOL Editor::Search(int Next)
 		Match=0;
 		UserBreak=0;
 		CurPos=CurLine->GetCurPos();
-		// $ 16.10.2000 tran
-		// CurPos увеличивается при следующем поиске
-		// $ 28.11.2000 SVS
-		// "О, это не ощибка - это свойство моей программы" :-)
-		//  Новое поведение стало подконтрольным
-		// $ 21.12.2000 SVS
-		// - В предыдущем исправлении было задано неверное условие для
-		//   правила EditorF7Rules
-		// $ 10.06.2001 IS
-		// - Баг: зачем-то при продолжении _обратного_ поиска прокручивались на шаг
-		//   _вперед_.
+		/*
+			$ 16.10.2000 tran
+			CurPos увеличивается при следующем поиске
+			$ 28.11.2000 SVS
+			"О, это не ощибка - это свойство моей программы" :-)
+			Новое поведение стало подконтрольным
+			$ 21.12.2000 SVS
+			- В предыдущем исправлении было задано неверное условие для
+			правила EditorF7Rules
+			$ 10.06.2001 IS
+			- Баг: зачем-то при продолжении _обратного_ поиска прокручивались на шаг
+			_вперед_.
+		*/
 
-		// $ 09.11.2001 IS
-		// проклятое место, блин.
-		// опять фиксим, т.к. не соответствует заявленному
+		/*
+			$ 09.11.2001 IS
+			проклятое место, блин.
+			опять фиксим, т.к. не соответствует заявленному
+		*/
 		if (!ReverseSearch && (Next || (EdOpt.F7Rules && !ReplaceMode)))
 			CurPos++;
 

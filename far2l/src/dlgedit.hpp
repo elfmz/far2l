@@ -77,7 +77,7 @@ class DlgEdit: public ScreenObject
 		virtual void ShowConsoleTitle();
 		virtual void SetScreenPosition();
 		virtual void ResizeConsole();
-		virtual int64_t  VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
+		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 
 		void  SetDialogParent(DWORD Sets);
 		void  SetDropDownBox(int NewDropDownBox);
@@ -153,7 +153,7 @@ class DlgEdit: public ScreenObject
 		DLGEDITTYPE Type;
 		History* iHistory;
 
-		EditControl   *lineEdit;
+		EditControl *lineEdit;
 #if defined(PROJECT_DI_MEMOEDIT)
 		Editor *multiEdit;
 #endif

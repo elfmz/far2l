@@ -1135,7 +1135,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 					return Pos-2;
 				}
 
-				if (IsCharFullWidth(Str[Pos - 1]) && Pos > 1)
+				if (Pos > 1 && IsCharFullWidth(Str[Pos - 1]))
 					return Pos-2;
 
 				return Pos-1;

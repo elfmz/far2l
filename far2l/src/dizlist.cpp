@@ -73,24 +73,23 @@ DizList::~DizList()
 {
 	Reset();
 
-	if (AnsiBuf)
-		free(AnsiBuf);
+	free(AnsiBuf);
 }
 
 void DizList::Reset()
 {
-	for (int I=0; I<DizCount; I++)
-		if (DizData[I].DizText)
+	if (DizData)
+	{
+		for (int I=0; I<DizCount; I++)
 			free(DizData[I].DizText);
 
-	if (DizData)
 		free(DizData);
+	}
 
 	DizData=nullptr;
 	DizCount=0;
 
-	if (IndexData)
-		free(IndexData);
+	free(IndexData);
 
 	IndexData=nullptr;
 	IndexCount=0;

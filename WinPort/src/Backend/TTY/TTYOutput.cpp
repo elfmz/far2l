@@ -92,7 +92,8 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 		((attr & BACKGROUND_TRUECOLOR) != 0 && (GET_RGB_BACK(xa) != 0 || (xa & BACKGROUND_TRUECOLOR) != 0));
 
 	if ( ((xa & (FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY)) != 0)
-	  || ((_prev_attr & FOREGROUND_TRUECOLOR) != 0 && (attr & FOREGROUND_TRUECOLOR) == 0) ) {
+		|| ((_prev_attr & FOREGROUND_TRUECOLOR) != 0 && (attr & FOREGROUND_TRUECOLOR) == 0) )
+	{
 		_tmp_attrs+= (attr & FOREGROUND_INTENSITY) ? '9' : '3';
 		AppendAnsiColorSuffix<FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE>(_tmp_attrs, attr);
 		if ((attr & FOREGROUND_TRUECOLOR) != 0) {
@@ -101,7 +102,8 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 	}
 
 	if ( ((xa & (BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY)) != 0)
-	  || ((_prev_attr & BACKGROUND_TRUECOLOR) != 0 && (attr & BACKGROUND_TRUECOLOR) == 0) ) {
+		|| ((_prev_attr & BACKGROUND_TRUECOLOR) != 0 && (attr & BACKGROUND_TRUECOLOR) == 0) )
+	{
 		if (attr & BACKGROUND_INTENSITY) {
 			_tmp_attrs+= "10";
 		} else {

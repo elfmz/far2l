@@ -37,13 +37,13 @@ static NSTouchBarItemIdentifier s_tb_customization_identifier = @"com.Far2l.Touc
 
 - (id)init
 {
-    self = [super init];
-    if (self)
-    {
-        self->_intrinsicContentSize = NSMakeSize(0, 0);
-    }
+	self = [super init];
+	if (self)
+	{
+		self->_intrinsicContentSize = NSMakeSize(0, 0);
+	}
 
-    return self;
+	return self;
 }
 
 @end
@@ -102,7 +102,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 	return bar;
 }
 
-- (IBAction) actionKey : (id) sender  {
+- (IBAction) actionKey : (id) sender {
 	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([sender isEqual:buttons[i]])
 	{
 		fprintf(stderr, "actionKey %s%d\n", s_tb_alternate ? "alternate_" : "", i);
@@ -119,7 +119,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 {
 	for (int i = 0; i < CONSOLE_FKEYS_COUNT; ++i) if ([identifier isEqualToString:key_identifiers[i] ])
 	{
-	        NSCustomTouchBarItem *customItem =
+		NSCustomTouchBarItem *customItem =
 			[[NSCustomTouchBarItem alloc] initWithIdentifier:key_identifiers[i]];
 		customItem.view = buttons[i];
 		customItem.visibilityPriority = NSTouchBarItemPriorityHigh;
@@ -154,7 +154,7 @@ TBButton *buttons[CONSOLE_FKEYS_COUNT];
 static Far2lTouchbarDelegate *g_tb_delegate = nullptr;
 static std::string s_titles_normal[CONSOLE_FKEYS_COUNT];
 static const char *s_titles_alternate[CONSOLE_FKEYS_COUNT] {
-	"", "Ins", "Del", "",  "+", "-", "*", "/",  "Home", "End", "PageUp", "PageDown"
+	"", "Ins", "Del", "", "+", "-", "*", "/", "Home", "End", "PageUp", "PageDown"
 };
 
 static void Touchbar_ApplyTitlesNormal()

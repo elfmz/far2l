@@ -44,7 +44,8 @@ template <class T> T *OffsetMatrixPtr(T *p, size_t width, size_t x, size_t y)
 CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &data_pos, SMALL_RECT &screen_rect)
 {
 	if (data_pos.X < 0 || data_pos.Y < 0 || data_size.X < 0 || data_size.Y < 0
-	  || data_pos.X >= data_size.X || data_pos.Y >= data_size.Y) {
+		|| data_pos.X >= data_size.X || data_pos.Y >= data_size.Y)
+	{
 		fprintf(stderr, "InspectCopyArea: bad coordinates, data_size:{%d, %d} data_pos:{%d, %d}\n",
 			data_size.X, data_size.Y, data_pos.X, data_pos.Y);
 		return nullptr;

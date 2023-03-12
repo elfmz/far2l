@@ -46,15 +46,15 @@ class TTYX
 	int _xi_opcode;
 	bool _xi = false;
 	DWORD _xi_leds = INVALID_MODS;
-	std::map<KeySym, std::chrono::time_point<std::chrono::steady_clock>>  _xi_keys;
+	std::map<KeySym, std::chrono::time_point<std::chrono::steady_clock>> _xi_keys;
 
 	// Max time to wait for Xi keydown event if its not yet arrived upon TTY keypress
 	unsigned int _xi_keydown_maxwait_msec = 100; // default value, can be increased on slow connections
-	const unsigned int  _xi_keydown_maxwait_msec_max = 3000; // max value on slow connections
+	const unsigned int _xi_keydown_maxwait_msec_max = 3000; // max value on slow connections
 
 	// Threshold of time since key modifier was pressed after which latch check has to be performed for it
 	unsigned int _xi_modifier_check_trsh_msec = 500; // default value, can be increased on slow connections
-	const unsigned int  _xi_modifier_check_trsh_msec_max = 1000; // max value on slow connections
+	const unsigned int _xi_modifier_check_trsh_msec_max = 1000; // max value on slow connections
 
 	// recently released non-modifier key used in workaround to handle
 	// lagged TTY keypress arrived after Xi release due to slow connection
@@ -446,7 +446,7 @@ public:
 				m.mask = mask.data();
 				XISetMask(m.mask, XI_RawKeyPress);
 				XISetMask(m.mask, XI_RawKeyRelease);
-				int ser = XISelectEvents(_display, _root_window, &m, 1);  /*number of masks*/
+				int ser = XISelectEvents(_display, _root_window, &m, 1); /*number of masks*/
 				if (ser != Success) {
 					_xi = false;
 					fprintf(stderr, "TTYXi: XISelectEvents error %d\n", ser);
@@ -573,8 +573,9 @@ public:
 
 		for (const auto &kf : key_fixup) {
 			if (event.uChar.UnicodeChar == kf.expect_ch && event.wVirtualKeyCode == kf.expect_vk
-			  && (!kf.need_ctrl || (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0)
-			  && (_xi_keys.find(kf.expect_ks) != _xi_keys.end() || kf.expect_ks == _xi_recent_nonmod_keyup)) {
+				&& (!kf.need_ctrl || (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0)
+				&& (_xi_keys.find(kf.expect_ks) != _xi_keys.end() || kf.expect_ks == _xi_recent_nonmod_keyup))
+			{
 				fprintf(stderr, "TTYXi: InspectKeyEvent ch=0x%x cks=0x%x vk: 0x%x -> 0x%x\n",
 					event.uChar.UnicodeChar, event.dwControlKeyState, event.wVirtualKeyCode, kf.actual_vk);
 				event.wVirtualKeyCode = kf.actual_vk;

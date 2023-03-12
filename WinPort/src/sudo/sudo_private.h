@@ -56,7 +56,7 @@ namespace Sudo
 
 		void RecvBuf(void *buf, size_t len);
 		void RecvStr(std::string &str);
-		template <class POD>  void RecvPOD(POD &v) { RecvBuf(&v, sizeof(v)); }
+		template <class POD> void RecvPOD(POD &v) { RecvBuf(&v, sizeof(v)); }
 		int RecvInt();
 		inline int RecvFD() { return _sock.RecvFD(); }
 		inline void RecvErrno() { errno = RecvInt(); }

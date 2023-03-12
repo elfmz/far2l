@@ -275,7 +275,7 @@ template <class STAT_STRUCT>
 		return -1;
 	}
 }
-extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
+extern "C" __attribute__ ((visibility("default"))) int sdc_statfs(const char *path, struct statfs *buf)
 {
 	int saved_errno = errno;
 	ClientReconstructCurDir crcd(path);
@@ -288,7 +288,7 @@ extern "C"  __attribute__ ((visibility("default"))) int sdc_statfs(const char *p
 
 	return r;
 }
-extern "C"  __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf)
+extern "C" __attribute__ ((visibility("default"))) int sdc_statvfs(const char *path, struct statvfs *buf)
 {
 	int saved_errno = errno;
 	ClientReconstructCurDir crcd(path);
@@ -727,7 +727,7 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
 {
-#if defined(__FreeBSD__)  || defined(__CYGWIN__)
+#if defined(__FreeBSD__) || defined(__CYGWIN__)
 		return -1;
 #elif defined(__APPLE__)
 		return flistxattr(fd, namebuf, size, 0);
@@ -738,8 +738,8 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd, const char *name,void *value, size_t size)
 {
-#if defined(__FreeBSD__)  || defined(__CYGWIN__)
-    return -1;
+#if defined(__FreeBSD__) || defined(__CYGWIN__)
+	return -1;
 #elif defined(__APPLE__)
 	return fgetxattr(fd, name, value, size, 0, 0);
 #else
@@ -749,8 +749,8 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd,
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags)
 {
-#if defined(__FreeBSD__)  || defined(__CYGWIN__)
-    return -1;
+#if defined(__FreeBSD__) || defined(__CYGWIN__)
+	return -1;
 #elif defined(__APPLE__)
 	return fsetxattr(fd, name, value, size, 0, flags);
 #else

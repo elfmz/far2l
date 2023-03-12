@@ -105,10 +105,10 @@ static const wchar_t *EOLName(const wchar_t *eol)
 }
 
 LONG_PTR __stdcall hndOpenEditor(
-    HANDLE hDlg,
-    int msg,
-    int param1,
-    LONG_PTR param2
+	HANDLE hDlg,
+	int msg,
+	int param1,
+	LONG_PTR param2
 )
 {
 	if (msg == DN_INITDIALOG)
@@ -189,10 +189,10 @@ enum enumSaveFileAs
 };
 
 LONG_PTR __stdcall hndSaveFileAs(
-    HANDLE hDlg,
-    int msg,
-    int param1,
-    LONG_PTR param2
+	HANDLE hDlg,
+	int msg,
+	int param1,
+	LONG_PTR param2
 )
 {
 	static UINT codepage=0;
@@ -336,17 +336,17 @@ FileEditor::FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int 
 
 
 FileEditor::FileEditor(
-    const wchar_t *Name,
-    UINT codepage,
-    DWORD InitFlags,
-    int StartLine,
-    int StartChar,
-    const wchar_t *Title,
-    int X1,
-    int Y1,
-    int X2,
-    int Y2,
-    int OpenModeExstFile
+	const wchar_t *Name,
+	UINT codepage,
+	DWORD InitFlags,
+	int StartLine,
+	int StartChar,
+	const wchar_t *Title,
+	int X1,
+	int Y1,
+	int X2,
+	int Y2,
+	int OpenModeExstFile
 ) : SaveAsTextFormat(0)
 {
 	Flags.Set(InitFlags);
@@ -425,14 +425,14 @@ FileEditor::~FileEditor()
 }
 
 void FileEditor::Init(
-    const wchar_t *Name,
-    UINT codepage,
-    const wchar_t *Title,
-    DWORD InitFlags,
-    int StartLine,
-    int StartChar,
-    const wchar_t *PluginData,
-    int OpenModeExstFile
+	const wchar_t *Name,
+	UINT codepage,
+	const wchar_t *Title,
+	DWORD InitFlags,
+	int StartLine,
+	int StartChar,
+	const wchar_t *PluginData,
+	int OpenModeExstFile
 )
 {
 	SudoClientRegion sdc_rgn;
@@ -504,22 +504,24 @@ void FileEditor::Init(
 			int MsgCode=0;
 
 			if (!(*FrameManager)[FramePos]->GetCanLoseFocus(TRUE) ||
-			        Opt.Confirm.AllowReedit)
+				Opt.Confirm.AllowReedit)
 			{
 				if (OpenModeExstFile == FEOPMODE_QUERY)
 				{
 					SetMessageHelp(L"EditorReload");
 					MsgCode=Message(0,3,Msg::EditTitle,
-					                strFullFileName,
-					                Msg::AskReload,
-					                Msg::Current,Msg::NewOpen,Msg::Reload);
+						strFullFileName,
+						Msg::AskReload,
+						Msg::Current,Msg::NewOpen,Msg::Reload);
 				}
 				else
 				{
-					MsgCode=(OpenModeExstFile==FEOPMODE_USEEXISTING)?0:
-					        (OpenModeExstFile==FEOPMODE_NEWIFOPEN?1:
-					         (OpenModeExstFile==FEOPMODE_RELOAD?2:-100)
-					        );
+					MsgCode=
+						(OpenModeExstFile==FEOPMODE_USEEXISTING)?0:
+						(
+							OpenModeExstFile==FEOPMODE_NEWIFOPEN?1:
+							(OpenModeExstFile==FEOPMODE_RELOAD?2:-100)
+						);
 				}
 
 				switch (MsgCode)
@@ -536,11 +538,11 @@ void FileEditor::Init(
 						SetExitCode(-2);
 						break;
 					case -100:
-						//FrameManager->DeleteFrame(this);  //???
+						//FrameManager->DeleteFrame(this); //???
 						SetExitCode(XC_EXISTS);
 						return;
 					default:
-						FrameManager->DeleteFrame(this);  //???
+						FrameManager->DeleteFrame(this); //???
 						SetExitCode(MsgCode == -100?XC_EXISTS:XC_QUIT);
 						return;
 				}
@@ -560,21 +562,17 @@ void FileEditor::Init(
 		}
 	}
 
-	/* $ 29.11.2000 SVS
-	   Если файл имеет атрибут ReadOnly или System или Hidden,
-	   И параметр на запрос выставлен, то сначала спросим.
-	*/
-	/* $ 03.12.2000 SVS
-	   System или Hidden - задаются отдельно
-	*/
-	/* $ 15.12.2000 SVS
-	  - Shift-F4, новый файл. Выдает сообщение :-(
-	*/
+	// $ 29.11.2000 SVS
+	// Если файл имеет атрибут ReadOnly или System или Hidden,
+	// И параметр на запрос выставлен, то сначала спросим.
+	// $ 03.12.2000 SVS
+	// System или Hidden - задаются отдельно
+	// $ 15.12.2000 SVS
+	// - Shift-F4, новый файл. Выдает сообщение :-(
 	DWORD FAttr=apiGetFileAttributes(Name);
 
-	/* $ 05.06.2001 IS
-	   + посылаем подальше всех, кто пытается отредактировать каталог
-	*/
+	// $ 05.06.2001 IS
+	// + посылаем подальше всех, кто пытается отредактировать каталог
 	if (FAttr!=INVALID_FILE_ATTRIBUTES && FAttr&FILE_ATTRIBUTE_DIRECTORY)
 	{
 		Message(MSG_WARNING,1,Msg::EditTitle,Msg::EditCanNotEditDirectory,Msg::Ok);
@@ -582,21 +580,24 @@ void FileEditor::Init(
 		return;
 	}
 
-	if ((m_editor->EdOpt.ReadOnlyLock&2) &&
-	        FAttr != INVALID_FILE_ATTRIBUTES &&
-	        (FAttr &
-	         (FILE_ATTRIBUTE_READONLY|
-	          /* Hidden=0x2 System=0x4 - располагаются во 2-м полубайте,
-	             поэтому применяем маску 0110.0000 и
-	             сдвигаем на свое место => 0000.0110 и получаем
-	             те самые нужные атрибуты  */
-	          ((m_editor->EdOpt.ReadOnlyLock&0x60)>>4)
-	         )
-	        )
-	   )
+	if (
+		(m_editor->EdOpt.ReadOnlyLock&2) &&
+		FAttr != INVALID_FILE_ATTRIBUTES &&
+		(
+			FAttr &
+			(
+				FILE_ATTRIBUTE_READONLY |
+				// Hidden=0x2 System=0x4 - располагаются во 2-м полубайте,
+				// поэтому применяем маску 0110.0000 и
+				// сдвигаем на свое место => 0000.0110 и получаем
+				// те самые нужные атрибуты
+				((m_editor->EdOpt.ReadOnlyLock&0x60)>>4)
+			)
+		)
+	)
 	{
 		if (Message(MSG_WARNING,2,Msg::EditTitle,Name,Msg::EditRSH,
-		            Msg::EditROOpen,Msg::Yes,Msg::No))
+			Msg::EditROOpen,Msg::Yes,Msg::No))
 		{
 			ExitCode=XC_OPEN_ERROR;
 			return;
@@ -607,10 +608,9 @@ void FileEditor::Init(
 	m_editor->SetStartPos(StartLine,StartChar);
 	int UserBreak;
 
-	/* $ 06.07.2001 IS
-	   При создании файла с нуля так же посылаем плагинам событие EE_READ, дабы
-	   не нарушать однообразие.
-	*/
+	// $ 06.07.2001 IS
+	// При создании файла с нуля так же посылаем плагинам событие EE_READ, дабы
+	// не нарушать однообразие.
 	if (FAttr == INVALID_FILE_ATTRIBUTES)
 		Flags.Set(FFILEEDIT_NEW);
 
@@ -618,7 +618,7 @@ void FileEditor::Init(
 		Flags.Set(FFILEEDIT_NEW);
 
 	if (Flags.Check(FFILEEDIT_NEW))
-	  m_AddSignature = FB_MAYBE;
+		m_AddSignature = FB_MAYBE;
 
 	if (Flags.Check(FFILEEDIT_LOCKED))
 		m_editor->Flags.Set(FEDITOR_LOCKMODE);
@@ -816,21 +816,19 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 	}
 
 	// Все сотальные необработанные клавиши пустим далее
-	/* $ 28.04.2001 DJ
-	   не передаем KEY_MACRO* плагину - поскольку ReadRec в этом случае
-	   никак не соответствует обрабатываемой клавише, возникают разномастные
-	   глюки
-	*/
+	// $ 28.04.2001 DJ
+	// не передаем KEY_MACRO* плагину - поскольку ReadRec в этом случае
+	// никак не соответствует обрабатываемой клавише, возникают разномастные
+	// глюки
 	if (((unsigned int)Key >= KEY_MACRO_BASE && (unsigned int)Key <= KEY_MACRO_ENDBASE) || ((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)) // исключаем MACRO
 	{
-		; //
+		;
 	}
 
 	switch (Key)
 	{
-			/* $ 27.09.2000 SVS
-			   Печать файла/блока с использованием плагина PrintMan
-			*/
+		// $ 27.09.2000 SVS
+		// Печать файла/блока с использованием плагина PrintMan
 		case KEY_ALTF5:
 		{
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
@@ -852,12 +850,16 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				// возможно здесь она и не нужна!
 				// хотя, раз уж были изменени, то
 				if (m_editor->IsFileChanged() && // в текущем сеансе были изменения?
-				        apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES) // а файл еще существует?
+					apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES) // а файл еще существует?
 				{
-					switch (Message(MSG_WARNING,2,Msg::EditTitle,
-					                Msg::EditSavedChangedNonFile,
-					                Msg::EditSavedChangedNonFile2,
-					                Msg::HYes,Msg::HNo))
+					switch (
+						Message(
+							MSG_WARNING,2,Msg::EditTitle,
+							Msg::EditSavedChangedNonFile,
+							Msg::EditSavedChangedNonFile2,
+							Msg::HYes,Msg::HNo
+						)
+					)
 					{
 						case 0:
 
@@ -876,9 +878,8 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				{
 					long FilePos=m_editor->GetCurPos();
 
-					/* $ 01.02.2001 IS
-					   ! Открываем вьюер с указанием длинного имени файла, а не короткого
-					*/
+					// $ 01.02.2001 IS
+					// ! Открываем вьюер с указанием длинного имени файла, а не короткого
 					if (ProcessQuitKey(FirstSave,NeedQuestion))
 					{
 						//объект будет в конце удалён в FrameManager
@@ -896,9 +897,8 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 			break; // отдадим F6 плагинам, если есть запрет на переключение
 		}
-		/* $ 10.05.2001 DJ
-		   Alt-F11 - показать view/edit history
-		*/
+		// $ 10.05.2001 DJ
+		// Alt-F11 - показать view/edit history
 		case KEY_ALTF11:
 		{
 			if (GetCanLoseFocus())
@@ -929,7 +929,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 	if (ProcessedNext)
 #else
 	if (!CalledFromControl && //CtrlObject->Macro.IsExecuting() || CtrlObject->Macro.IsRecording() || // пусть доходят!
-	        !ProcessEditorInput(FrameManager->GetLastInputRecord()))
+		!ProcessEditorInput(FrameManager->GetLastInputRecord()))
 #endif
 	{
 
@@ -940,9 +940,8 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				Help::Present(L"Editor");
 				return TRUE;
 			}
-			/* $ 25.04.2001 IS
-			     ctrl+f - вставить в строку полное имя редактируемого файла
-			*/
+			// $ 25.04.2001 IS
+			// ctrl+f - вставить в строку полное имя редактируемого файла
 			case KEY_CTRLF:
 			{
 				if (!m_editor->Flags.Check(FEDITOR_LOCKMODE))
@@ -958,7 +957,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					}
 
 					//AddUndoData(CurLine->EditLine.GetStringAddr(),NumLine,
-					//                CurLine->EditLine.GetCurPos(),UNDO_EDIT);
+						//CurLine->EditLine.GetCurPos(),UNDO_EDIT);
 					m_editor->Paste(strFullFileName); //???
 					//if (!EdOpt.PersistentBlocks)
 					m_editor->UnmarkBlock();
@@ -968,14 +967,13 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 
 				return (TRUE);
 			}
-			/* $ 24.08.2000 SVS
-			   + Добавляем реакцию показа бакграунда на клавишу CtrlAltShift
-			*/
+			// $ 24.08.2000 SVS
+			// + Добавляем реакцию показа бакграунда на клавишу CtrlAltShift
 			case KEY_CTRLO:
 			{
 				if (!Opt.OnlyEditorViewerUsed)
 				{
-					m_editor->Hide();  // $ 27.09.2000 skv - To prevent redraw in macro with Ctrl-O
+					m_editor->Hide(); // $ 27.09.2000 skv - To prevent redraw in macro with Ctrl-O
 
 					if (FrameManager->ShowBackground())
 					{
@@ -1043,18 +1041,18 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 							}
 						}
 
-						ConvertNameToFull(strSaveAsName, strFullSaveAsName);  //BUGBUG, не проверяем имя на правильность
+						ConvertNameToFull(strSaveAsName, strFullSaveAsName); //BUGBUG, не проверяем имя на правильность
 						//это не про нас, про нас ниже, все куда страшнее
 						/*FARString strFileNameTemp = strSaveAsName;
 
 						if(!SetFileName(strFileNameTemp))
 						{
-						  WINPORT(SetLastError)(ERROR_INVALID_NAME);
-										Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::EditTitle,strFileNameTemp,Msg::Ok);
-						  if(!NameChanged)
-						    FarChDir(strOldCurDir);
-						  continue;
-						  //return FALSE;
+							WINPORT(SetLastError)(ERROR_INVALID_NAME);
+								Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::EditTitle,strFileNameTemp,Msg::Ok);
+							if(!NameChanged)
+								FarChDir(strOldCurDir);
+							continue;
+							//return FALSE;
 						} */
 
 						if (!NameChanged)
@@ -1070,7 +1068,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 						WINPORT(SetLastError)(SysErrorCode);
 
 						if (Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::EditTitle,Msg::EditCannotSave,
-						            strFileName,Msg::Retry,Msg::Cancel))
+							strFileName,Msg::Retry,Msg::Cancel))
 						{
 							Done=TRUE;
 							break;
@@ -1089,7 +1087,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 							}
 
 							SetFileName(strFullSaveAsName);
-							SetCodePage(codepage);  //
+							SetCodePage(codepage);
 
 							if (!bInPlace)
 							{
@@ -1098,7 +1096,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 								LoadFile(strFullSaveAsName, UserBreak);
 								// TODO: возможно подобный ниже код здесь нужен (copy/paste из FileEditor::Init()). оформить его нужно по иному
 								//if(!Opt.Confirm.Esc && UserBreak && ExitCode==XC_LOADING_INTERRUPTED && FrameManager)
-								//  FrameManager->RefreshFrame();
+								// FrameManager->RefreshFrame();
 							}
 
 							// перерисовывать надо как минимум когда изменилась кодировка или имя файла
@@ -1213,25 +1211,27 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			{
 				int FirstSave=1, NeedQuestion=1;
 
-				if (Key != KEY_SHIFTF10)   // KEY_SHIFTF10 не учитываем!
+				if (Key != KEY_SHIFTF10) // KEY_SHIFTF10 не учитываем!
 				{
 					bool FilePlaced=apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES && !Flags.Check(FFILEEDIT_NEW);
 
 					if (m_editor->IsFileChanged() || // в текущем сеансе были изменения?
-					        FilePlaced) // а сам файл то еще на месте?
+						FilePlaced) // а сам файл то еще на месте?
 					{
 						int Res;
 
 						if (m_editor->IsFileChanged() && FilePlaced)
-							Res=Message(MSG_WARNING,3,Msg::EditTitle,
-							            Msg::EditSavedChangedNonFile,
-							            Msg::EditSavedChangedNonFile2,
-							            Msg::HYes,Msg::HNo,Msg::HCancel);
+							Res=Message(
+								MSG_WARNING,3,Msg::EditTitle,
+								Msg::EditSavedChangedNonFile,
+								Msg::EditSavedChangedNonFile2,
+								Msg::HYes,Msg::HNo,Msg::HCancel);
 						else if (!m_editor->IsFileChanged() && FilePlaced)
-							Res=Message(MSG_WARNING,3,Msg::EditTitle,
-							            Msg::EditSavedChangedNonFile1,
-							            Msg::EditSavedChangedNonFile2,
-						                Msg::HYes,Msg::HNo,Msg::HCancel);
+							Res=Message(
+								MSG_WARNING,3,Msg::EditTitle,
+								Msg::EditSavedChangedNonFile1,
+								Msg::EditSavedChangedNonFile2,
+								Msg::HYes,Msg::HNo,Msg::HCancel);
 						else
 							Res=100;
 
@@ -1304,7 +1304,7 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			}
 			case KEY_F9: case KEY_ALTSHIFTF9:
 			{
-				//     Работа с локальной копией EditorOptions
+				// Работа с локальной копией EditorOptions
 				EditorOptions EdOpt;
 				GetEditorOptions(EdOpt);
 				EditorOptions SavedEdOpt = EdOpt;
@@ -1354,8 +1354,8 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 
 		if (SaveCode==SAVEFILE_SUCCESS)
 		{
-			/* $ 09.02.2002 VVM
-			  + Обновить панели, если писали в текущий каталог */
+			// $ 09.02.2002 VVM
+			// + Обновить панели, если писали в текущий каталог
 			if (NeedQuestion)
 			{
 				if (apiGetFileAttributes(strFullFileName)!=INVALID_FILE_ATTRIBUTES)
@@ -1383,7 +1383,7 @@ int FileEditor::ProcessQuitKey(int FirstSave,BOOL NeedQuestion)
 		WINPORT(SetLastError)(SysErrorCode);
 
 		if (Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::EditTitle,Msg::EditCannotSave,
-		            strFileName,Msg::Retry,Msg::Cancel))
+				strFileName,Msg::Retry,Msg::Cancel))
 			break;
 
 		FirstSave=0;
@@ -1546,7 +1546,7 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 		Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
 	}
 
-	m_editor->SetCodePage(m_codepage);  //BUGBUG
+	m_editor->SetCodePage(m_codepage); //BUGBUG
 
 	if (!IsUnicodeOrUtfCodePage(m_codepage))
 	{
@@ -1604,12 +1604,13 @@ int FileEditor::LoadFile(const wchar_t *Name,int &UserBreak)
 
 		int Offset = StrLength > 3 ? StrLength - 3 : 0;
 
-		if (!LastLineCR &&
-		        (
-		            (CurEOL = wmemchr(Str+Offset,L'\r',StrLength-Offset))  ||
-		            (CurEOL = wmemchr(Str+Offset,L'\n',StrLength-Offset))
-		        )
-		   )
+		if (
+			!LastLineCR &&
+			(
+				(CurEOL = wmemchr(Str+Offset,L'\r',StrLength-Offset)) ||
+				(CurEOL = wmemchr(Str+Offset,L'\n',StrLength-Offset))
+			)
+		)
 		{
 			far_wcsncpy(m_editor->GlobalEOL,CurEOL,ARRAYSIZE(m_editor->GlobalEOL));
 			m_editor->GlobalEOL[ARRAYSIZE(m_editor->GlobalEOL)-1]=0;
@@ -2000,14 +2001,14 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 
 		m_editor->UndoSavePos=m_editor->UndoPos;
 		m_editor->Flags.Clear(FEDITOR_UNDOSAVEPOSLOST);
-//    ConvertNameToFull(Name,FileName, sizeof(FileName));
+		//ConvertNameToFull(Name,FileName, sizeof(FileName));
 		/*
-		    if (ConvertNameToFull(Name,m_editor->FileName, sizeof(m_editor->FileName)) >= sizeof(m_editor->FileName))
-		    {
-		      m_editor->Flags.Set(FEDITOR_OPENFAILED);
-		      RetCode=SAVEFILE_ERROR;
-		      goto end;
-		    }
+			if (ConvertNameToFull(Name,m_editor->FileName, sizeof(m_editor->FileName)) >= sizeof(m_editor->FileName))
+			{
+				m_editor->Flags.Set(FEDITOR_OPENFAILED);
+				RetCode=SAVEFILE_ERROR;
+				goto end;
+			}
 		*/
 		SetCursorType(FALSE,0);
 		TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);
@@ -2080,15 +2081,14 @@ int FileEditor::SaveFile(const wchar_t *Name,int Ask, bool bSaveAs, int TextForm
 	if (m_editor->Flags.Check(FEDITOR_MODIFIED) || NewFile)
 		m_editor->Flags.Set(FEDITOR_WASCHANGED);
 
-	/* Этот кусок раскомметировать в том случае, если народ решит, что
-	   для если файл был залочен и мы его переписали под други именем...
-	   ...то "лочка" должна быть снята.
-	*/
+	// Этот кусок раскомметировать в том случае, если народ решит, что
+	// для если файл был залочен и мы его переписали под други именем...
+	// ...то "лочка" должна быть снята.
 
-//  if(SaveAs)
-//    Flags.Clear(FEDITOR_LOCKMODE);
-	/* 28.12.2001 VVM
-	  ! Проверить на успешную запись */
+//	if(SaveAs)
+//		Flags.Clear(FEDITOR_LOCKMODE);
+	// 28.12.2001 VVM
+	// ! Проверить на успешную запись
 	if (RetCode==SAVEFILE_SUCCESS)
 	{
 		m_editor->TextChanged(0);
@@ -2579,14 +2579,14 @@ int FileEditor::EditorControl(int Command, void *Param)
 		/*
 			Функция установки Keybar Labels
 			Param = nullptr - восстановить, пред. значение
-			Param = -1   - обновить полосу (перерисовать)
+			Param = -1 - обновить полосу (перерисовать)
 			Param = KeyBarTitles
 		*/
 		case ECTL_SETKEYBAR:
 		{
 			KeyBarTitles *Kbt = (KeyBarTitles*)Param;
 
-			if (!Kbt)   //восстановить изначальное
+			if (!Kbt) //восстановить изначальное
 				InitKeyBar();
 			else
 			{
@@ -2681,7 +2681,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 		{
 			if (CtrlObject->Macro.IsRecording() == MACROMODE_RECORDING || CtrlObject->Macro.IsExecuting() == MACROMODE_EXECUTING)
 			{
-//        return FALSE;
+//				return FALSE;
 			}
 
 			if (Param)
@@ -2694,24 +2694,24 @@ int FileEditor::EditorControl(int Command, void *Param)
 					Key=GetInputRecord(rec);
 
 					if ((!rec->EventType || rec->EventType == KEY_EVENT || rec->EventType == FARMACRO_KEY_EVENT) &&
-					        ((Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE) || (Key>=KEY_OP_BASE && Key <=KEY_OP_ENDBASE))) // исключаем MACRO
+							((Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE) || (Key>=KEY_OP_BASE && Key <=KEY_OP_ENDBASE))) // исключаем MACRO
 						ReProcessKey(Key);
 					else
 						break;
 				}
 
-				//if(Key==KEY_CONSOLE_BUFFER_RESIZE) //????
-				//  Show();                          //????
+				//if(Key==KEY_CONSOLE_BUFFER_RESIZE)   //????
+					//Show();                          //????
 #if defined(SYSLOG_KEYMACRO)
 
 				if (rec->EventType == KEY_EVENT)
 				{
 					SysLog(L"ECTL_READINPUT={%ls,{%d,%d,Vk=0x%04X,0x%08X}}",
-					       (rec->EventType == FARMACRO_KEY_EVENT?"FARMACRO_KEY_EVENT":"KEY_EVENT"),
-					       rec->Event.KeyEvent.bKeyDown,
-					       rec->Event.KeyEvent.wRepeatCount,
-					       rec->Event.KeyEvent.wVirtualKeyCode,
-					       rec->Event.KeyEvent.dwControlKeyState);
+						(rec->EventType == FARMACRO_KEY_EVENT?"FARMACRO_KEY_EVENT":"KEY_EVENT"),
+						rec->Event.KeyEvent.bKeyDown,
+						rec->Event.KeyEvent.wRepeatCount,
+						rec->Event.KeyEvent.wVirtualKeyCode,
+						rec->Event.KeyEvent.dwControlKeyState);
 				}
 
 #endif
@@ -2738,11 +2738,11 @@ int FileEditor::EditorControl(int Command, void *Param)
 					if (!rec->EventType || rec->EventType == KEY_EVENT || rec->EventType == FARMACRO_KEY_EVENT)
 					{
 						SysLog(L"ECTL_PROCESSINPUT={%ls,{%d,%d,Vk=0x%04X,0x%08X}}",
-						       (rec->EventType == FARMACRO_KEY_EVENT?"FARMACRO_KEY_EVENT":"KEY_EVENT"),
-						       rec->Event.KeyEvent.bKeyDown,
-						       rec->Event.KeyEvent.wRepeatCount,
-						       rec->Event.KeyEvent.wVirtualKeyCode,
-						       rec->Event.KeyEvent.dwControlKeyState);
+							(rec->EventType == FARMACRO_KEY_EVENT?"FARMACRO_KEY_EVENT":"KEY_EVENT"),
+							rec->Event.KeyEvent.bKeyDown,
+							rec->Event.KeyEvent.wRepeatCount,
+							rec->Event.KeyEvent.wVirtualKeyCode,
+							rec->Event.KeyEvent.dwControlKeyState);
 					}
 
 #endif
@@ -2821,10 +2821,12 @@ bool FileEditor::LoadFromCache(EditorCacheParams *pp)
 		PosCache.Position[3] = pp->SavePos.LeftPos;
 	}
 
-	if (CtrlObject->EditorPosCache->GetPosition(
-	            strCacheName,
-	            PosCache
-	        ))
+	if (
+		CtrlObject->EditorPosCache->GetPosition(
+			strCacheName,
+			PosCache
+		)
+	)
 	{
 		pp->Line=static_cast<int>(PosCache.Param[0]);
 		pp->ScreenLine=static_cast<int>(PosCache.Param[1]);
@@ -2859,7 +2861,7 @@ void FileEditor::SaveToCache()
 	EditorCacheParams cp;
 	m_editor->GetCacheParams(&cp);
 
-	if (!Flags.Check(FFILEEDIT_OPENFAILED))   //????
+	if (!Flags.Check(FFILEEDIT_OPENFAILED)) //????
 	{
 		PosCache poscache{};
 		poscache.Param[0] = cp.Line;

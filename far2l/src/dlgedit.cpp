@@ -98,7 +98,7 @@ DlgEdit::~DlgEdit()
 		delete iHistory;
 	}
 
-	if (lineEdit)  delete lineEdit;
+	if (lineEdit) delete lineEdit;
 
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -424,7 +424,7 @@ void DlgEdit::SetPersistentBlocks(int Mode)
 		lineEdit->SetPersistentBlocks(Mode);
 }
 
-int  DlgEdit::GetPersistentBlocks()
+int DlgEdit::GetPersistentBlocks()
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -446,7 +446,7 @@ void DlgEdit::SetDelRemovesBlocks(int Mode)
 		lineEdit->SetDelRemovesBlocks(Mode);
 }
 
-int  DlgEdit::GetDelRemovesBlocks()
+int DlgEdit::GetDelRemovesBlocks()
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -578,7 +578,7 @@ void DlgEdit::Xlat(bool All)
 		lineEdit->Xlat(All);
 }
 
-int  DlgEdit::GetStrSize(int Row)
+int DlgEdit::GetStrSize(int Row)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 

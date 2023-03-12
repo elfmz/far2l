@@ -73,15 +73,15 @@ static void PR_DrawGetDirInfoMsg()
 }
 
 int GetDirInfo(const wchar_t *Title,
-               const wchar_t *DirName,
-               uint32_t &DirCount,
-               uint32_t &FileCount,
-               uint64_t &FileSize,
-               uint64_t &PhysicalSize,
-               uint32_t &ClusterSize,
-               clock_t MsgWaitTime,
-               FileFilter *Filter,
-               DWORD Flags)
+	const wchar_t *DirName,
+	uint32_t &DirCount,
+	uint32_t &FileCount,
+	uint64_t &FileSize,
+	uint64_t &PhysicalSize,
+	uint32_t &ClusterSize,
+	clock_t MsgWaitTime,
+	FileFilter *Filter,
+	DWORD Flags)
 {
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
@@ -94,9 +94,8 @@ int GetDirInfo(const wchar_t *Title,
 	FAR_FIND_DATA_EX FindData;
 	clock_t StartTime=GetProcessUptimeMSec();
 	SetCursorType(FALSE,0);
-	/* $ 20.03.2002 DJ
-	   для . - покажем имя родительского каталога
-	*/
+	// $ 20.03.2002 DJ
+	// для . - покажем имя родительского каталога
 	const wchar_t *ShowDirName = DirName;
 
 	if (DirName[0] == L'.' && !DirName[1])
@@ -218,9 +217,8 @@ int GetDirInfo(const wchar_t *Title,
 		}
 		else
 		{
-			/* $ 17.04.2005 KM
-			   Проверка попадания файла в условия фильра
-			*/
+			// $ 17.04.2005 KM
+			// Проверка попадания файла в условия фильра
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
 				if (!Filter->FileInFilter(FindData))
@@ -252,7 +250,7 @@ int GetDirInfo(const wchar_t *Title,
 
 
 int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
-                     uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize)
+	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize)
 {
 	PluginPanelItem *PanelItem=nullptr;
 	int ItemsNumber,ExitCode;

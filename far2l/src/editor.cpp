@@ -3652,7 +3652,7 @@ BOOL Editor::Search(int Next)
 			проклятое место, блин.
 			опять фиксим, т.к. не соответствует заявленному
 		*/
-		if (!ReverseSearch && (Next || (EdOpt.F7Rules && !ReplaceMode)))
+		if (!ReverseSearch && Next)
 			CurPos++;
 
 		NewNumLine=NumLine;

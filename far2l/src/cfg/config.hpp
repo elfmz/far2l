@@ -210,7 +210,6 @@ struct EditorOptions
 	int CharCodeBase;
 	int SavePos;
 	int SaveShortPos;
-	int F7Rules; // $ 28.11.2000 SVS - Правило на счет поиска в редакторе
 	int AllowEmptySpaceAfterEof; // $ 21.06.2005 SKV - разрешить показывать пустое пространство после последней строки редактируемого файла.
 	int ReadOnlyLock; // $ 29.11.2000 SVS - лочить файл при открытии в редакторе, если он имеет атрибуты R|S|H
 	int UndoSize; // $ 03.12.2001 IS - размер буфера undo в редакторе

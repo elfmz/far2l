@@ -2239,7 +2239,6 @@ void Dialog::ShowDialog(unsigned ID)
 		// $ 03.06.2001 KM
 		// + При каждой перерисовке диалога, кроме режима перемещения, устанавливаем
 		//   заголовок консоли, в противном случае он не всегда восстанавливался.
-		*/
 		if (!DialogMode.Check(DMODE_KEEPCONSOLETITLE))
 			ConsoleTitle::SetFarTitle(GetDialogTitle());
 	}

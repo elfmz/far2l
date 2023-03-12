@@ -154,12 +154,14 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 		return TRUE;
 	}
 
-	// $ 20.09.2002 SKV
-	// Это отключает возможность выполнять такие команды как:
-	// cd net:server и cd ftp://server/dir
-	// Так как под ту же гребёнку попадают и
-	// cd s&r:, cd make: и т.д., которые к смене
-	// каталога не имеют никакого отношения.
+	/*
+		$ 20.09.2002 SKV
+		Это отключает возможность выполнять такие команды как:
+		cd net:server и cd ftp://server/dir
+		Так как под ту же гребёнку попадают и
+		cd s&r:, cd make: и т.д., которые к смене
+		каталога не имеют никакого отношения.
+	*/
 	/*
 	if (CtrlObject->Plugins.ProcessCommandLine(ExpandedDir))
 	{

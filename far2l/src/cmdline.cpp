@@ -429,10 +429,12 @@ int CommandLine::ProcessKey(int Key)
 				if (SelectType == 6)
 					Panel=CtrlObject->Cp()->GetAnotherPanel(Panel);
 
-				//Type==1 - плагиновый путь
-				//Type==0 - обычный путь
-				//если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
-				//ну а если путь не плагиновый то запускать его точно не надо
+				/*
+					Type==1 - плагиновый путь
+					Type==0 - обычный путь
+					если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
+					ну а если путь не плагиновый то запускать его точно не надо
+				*/
 				if (!Type || !CtrlObject->Plugins.ProcessCommandLine(strStr,Panel))
 				{
 					if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strStr,FALSE))
@@ -673,7 +675,8 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 			{
 				switch (Chr)
 				{
-						/* эти не раелизованы
+						/*
+						эти не раелизованы
 						$E - Escape code (ASCII code 27)
 						$V - Windows XP version number
 						$_ - Carriage return and linefeed

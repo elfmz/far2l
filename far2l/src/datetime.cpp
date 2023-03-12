@@ -147,13 +147,13 @@ static void atime(FARString &strDest, const tm *tmPtr)
 {
 	// Thu Oct 07 12:37:32 1999
 	strDest.Format(L"%ls %ls %02d %02d:%02d:%02d %4d",
-	                      AWeekday[CurLang][!WeekFirst?((tmPtr->tm_wday+6)%7):(!(tmPtr->tm_wday)?6:tmPtr->tm_wday-1)].CPtr(),
-	                      AMonth[CurLang][tmPtr->tm_mon].CPtr(),
-	                      tmPtr->tm_mday,
-	                      tmPtr->tm_hour,
-	                      tmPtr->tm_min,
-	                      tmPtr->tm_sec,
-	                      tmPtr->tm_year+1900);
+		AWeekday[CurLang][!WeekFirst?((tmPtr->tm_wday+6)%7):(!(tmPtr->tm_wday)?6:tmPtr->tm_wday-1)].CPtr(),
+		AMonth[CurLang][tmPtr->tm_mon].CPtr(),
+		tmPtr->tm_mday,
+		tmPtr->tm_hour,
+		tmPtr->tm_min,
+		tmPtr->tm_sec,
+		tmPtr->tm_year+1900);
 }
 
 static void st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
@@ -169,27 +169,27 @@ static void st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
 	{
 		case 0:
 			strDest.Format(L"%02d%lc%02d%lc%4d",
-			                   tmPtr->tm_mon+1,
-			                   DateSeparator,
-			                   tmPtr->tm_mday,
-			                   DateSeparator,
-			                   tmPtr->tm_year+1900);
+				tmPtr->tm_mon+1,
+				DateSeparator,
+				tmPtr->tm_mday,
+				DateSeparator,
+				tmPtr->tm_year+1900);
 			break;
 		case 1:
 			strDest.Format(L"%02d%lc%02d%lc%4d",
-			                   tmPtr->tm_mday,
-			                   DateSeparator,
-			                   tmPtr->tm_mon+1,
-			                   DateSeparator,
-			                   tmPtr->tm_year+1900);
+				tmPtr->tm_mday,
+				DateSeparator,
+				tmPtr->tm_mon+1,
+				DateSeparator,
+				tmPtr->tm_year+1900);
 			break;
 		default:
 			strDest.Format(L"%4d%lc%02d%lc%02d",
-			                   tmPtr->tm_year+1900,
-			                   DateSeparator,
-			                   tmPtr->tm_mon+1,
-			                   DateSeparator,
-			                   tmPtr->tm_mday);
+				tmPtr->tm_year+1900,
+				DateSeparator,
+				tmPtr->tm_mon+1,
+				DateSeparator,
+				tmPtr->tm_mday);
 			break;
 	}
 }
@@ -224,32 +224,32 @@ static int isleap(const int year)
 static int iso8601wknum(const tm *timeptr)
 {
 	/*
-	 * From 1003.2:
-	 *  If the week (Monday to Sunday) containing January 1
-	 *  has four or more days in the new year, then it is week 1;
-	 *  otherwise it is the highest numbered week of the previous
-	 *  year (52 or 53), and the next week is week 1.
-	 *
-	 * ADR: This means if Jan 1 was Monday through Thursday,
-	 *  it was week 1, otherwise week 52 or 53.
-	 *
-	 * XPG4 erroneously included POSIX.2 rationale text in the
-	 * main body of the standard. Thus it requires week 53.
-	 */
+	From 1003.2:
+	If the week (Monday to Sunday) containing January 1
+	has four or more days in the new year, then it is week 1;
+	otherwise it is the highest numbered week of the previous
+	year (52 or 53), and the next week is week 1.
+	
+	ADR: This means if Jan 1 was Monday through Thursday,
+	it was week 1, otherwise week 52 or 53.
+	
+	XPG4 erroneously included POSIX.2 rationale text in the
+	main body of the standard. Thus it requires week 53.
+	*/
 	// get week number, Monday as first day of the week
 	int weeknum=weeknumber(timeptr,1);
 	/*
-	 * With thanks and tip of the hatlo to tml@tik.vtt.fi
-	 *
-	 * What day of the week does January 1 fall on?
-	 * We know that
-	 *  (timeptr->tm_yday - jan1.tm_yday) MOD 7 ==
-	 *      (timeptr->tm_wday - jan1.tm_wday) MOD 7
-	 * and that
-	 *  jan1.tm_yday == 0
-	 * and that
-	 *  timeptr->tm_wday MOD 7 == timeptr->tm_wday
-	 * from which it follows that. . .
+	With thanks and tip of the hatlo to tml@tik.vtt.fi
+	
+	What day of the week does January 1 fall on?
+	We know that
+	(timeptr->tm_yday - jan1.tm_yday) MOD 7 ==
+		(timeptr->tm_wday - jan1.tm_wday) MOD 7
+	and that
+	jan1.tm_yday == 0
+	and that
+	timeptr->tm_wday MOD 7 == timeptr->tm_wday
+	from which it follows that. . .
 	 */
 	int jan1day=timeptr->tm_wday-(timeptr->tm_yday%7);
 
@@ -258,14 +258,14 @@ static int iso8601wknum(const tm *timeptr)
 
 	/*
 	 * If Jan 1 was a Monday through Thursday, it was in
-	 * week 1.  Otherwise it was last year's highest week, which is
+	 * week 1. Otherwise it was last year's highest week, which is
 	 * this year's week 0.
 	 *
 	 * What does that mean?
 	 * If Jan 1 was Monday, the week number is exactly right, it can
-	 *  never be 0.
+	 * never be 0.
 	 * If it was Tuesday through Thursday, the weeknumber is one
-	 *  less than it should be, so we add one.
+	 * less than it should be, so we add one.
 	 * Otherwise, Friday, Saturday or Sunday, the week number is
 	 * OK, but if it is 0, it needs to be 52 or 53.
 	 */
@@ -306,19 +306,19 @@ static int iso8601wknum(const tm *timeptr)
 	if (timeptr->tm_mon==11)
 	{
 		/*
-		 * The last week of the year
-		 * can be in week 1 of next year.
-		 * Sigh.
-		 *
-		 * This can only happen if
-		 *  M   T  W
-		 *  29  30 31
-		 *  30  31
-		 *  31
-		 */
+		The last week of the year
+		can be in week 1 of next year.
+		Sigh.
+		
+		This can only happen if
+		M   T  W
+		29  30 31
+		30  31
+		31
+		*/
 		if ((timeptr->tm_wday==1&&(timeptr->tm_mday>=29&&timeptr->tm_mday<=31))||
-		        (timeptr->tm_wday==2&&(timeptr->tm_mday==30||timeptr->tm_mday==31))||
-		        (timeptr->tm_wday==3&&timeptr->tm_mday==31))
+				(timeptr->tm_wday==2&&(timeptr->tm_mday==30||timeptr->tm_mday==31))||
+				(timeptr->tm_wday==3&&timeptr->tm_mday==31))
 			weeknum=1;
 	}
 
@@ -373,7 +373,7 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 				case L'B':
 					strBuf=Month[CurLang][t->tm_mon];
 					break;
-					//Дата и время в формате WDay Mnt  Day HH:MM:SS yyyy
+					//Дата и время в формате WDay Mnt Day HH:MM:SS yyyy
 					//appropriate date and time representation
 				case L'c':
 					atime(strBuf,t);
@@ -450,11 +450,11 @@ size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t)
 					strBuf.Format(L"%d",t->tm_wday);
 					break;
 					// Две цифры номера недели, где Воскресенье (Sunday)
-					//   является первым днем недели (00 - 53)
+					// является первым днем недели (00 - 53)
 					// week of year, Sunday is first day of week
 				case L'U':
 					// Две цифры номера недели, где Понедельник (Monday)
-					//    является первым днем недели (00 - 53)
+					// является первым днем недели (00 - 53)
 					// week of year, Monday is first day of week
 				case L'W':
 				{
@@ -674,7 +674,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 }
 
 void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeText,int TimeLength,
-                 int Brief,int TextMonth,int FullYear,int DynInit)
+	int Brief,int TextMonth,int FullYear,int DynInit)
 {
 	static int WDateFormat;
 	static wchar_t WDateSeparator,WTimeSeparator,WDecimalSeparator;
@@ -735,7 +735,7 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 		{
 			FARString strFullTime;
 			strFullTime.Format(L"%02d%c%02d%c%02d%c%03d",st.wHour,TimeSeparator,
-			                   st.wMinute,TimeSeparator,st.wSecond,DecimalSeparator,st.wMilliseconds);
+				st.wMinute,TimeSeparator,st.wSecond,DecimalSeparator,st.wMilliseconds);
 			strTimeText.Format(L"%.*ls",TimeLength, strFullTime.CPtr());
 		}
 	}

@@ -102,7 +102,7 @@ void ControlObject::Init()
 	if (Opt.ShowMenuBar)
 		this->TopMenuBar->Show();
 
-//  FPanels->Redraw();
+	//FPanels->Redraw();
 	CmdLine->Show();
 
 	this->MainKeyBar->Refresh(Opt.ShowKeyBar);
@@ -138,8 +138,8 @@ void ControlObject::Init()
 	/*
 		FarChDir(StartCurDir);
 	*/
-//  _SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
-//  _SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
+	//_SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
+	//_SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
 }
 
 void ControlObject::CreateFilePanels()

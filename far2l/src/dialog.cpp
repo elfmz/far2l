@@ -934,11 +934,14 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			DialogEdit->SetPosition(X1+CurItem->X1,Y1+CurItem->Y1,
 				X1+CurItem->X2,Y1+CurItem->Y2);
 
-//      DialogEdit->SetObjectColor(
-//         FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ?
-//             ((ItemFlags&DIF_DISABLE)?COL_WARNDIALOGEDITDISABLED:COL_WARNDIALOGEDIT):
-//             ((ItemFlags&DIF_DISABLE)?COL_DIALOGEDITDISABLED:COL_DIALOGEDIT)),
-//         FarColorToReal((ItemFlags&DIF_DISABLE)?COL_DIALOGEDITDISABLED:COL_DIALOGEDITSELECTED));
+			/*
+			DialogEdit->SetObjectColor(
+				FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ?
+					((ItemFlags&DIF_DISABLE)?COL_WARNDIALOGEDITDISABLED:COL_WARNDIALOGEDIT):
+					((ItemFlags&DIF_DISABLE)?COL_DIALOGEDITDISABLED:COL_DIALOGEDIT)),
+				FarColorToReal((ItemFlags&DIF_DISABLE)?COL_DIALOGEDITDISABLED:COL_DIALOGEDITSELECTED)
+			);
+			*/
 			if (CurItem->Type==DI_PSWEDIT)
 			{
 				DialogEdit->SetPasswordMode(TRUE);
@@ -1380,18 +1383,24 @@ void Dialog::GetDialogObjectsData()
 						AddToEditHistory(strData,CurItem->strHistory);
 					}
 
-					// $ 01.08.2000 SVS
-					// ! В History должно заносится значение (для DIF_EXPAND...) перед
-					//  расширением среды!
+					/*
+						$ 01.08.2000 SVS
+						! В History должно заносится значение (для DIF_EXPAND...) перед
+						расширением среды!
+					*/
 
-					// $ 05.07.2000 SVS $
-					// Проверка - этот элемент предполагает расширение переменных среды?
-					// т.к. функция GetDialogObjectsData() может вызываться самостоятельно
-					// Но надо проверить!
+					/*
+						$ 05.07.2000 SVS $
+						Проверка - этот элемент предполагает расширение переменных среды?
+						т.к. функция GetDialogObjectsData() может вызываться самостоятельно
+						Но надо проверить!
+					*/
 
-					// $ 04.12.2000 SVS
-					// ! Для DI_PSWEDIT и DI_FIXEDIT обработка DIF_EDITEXPAND не нужна
-					// (DI_FIXEDIT допускается для случая если нету маски)
+					/*
+						$ 04.12.2000 SVS
+						! Для DI_PSWEDIT и DI_FIXEDIT обработка DIF_EDITEXPAND не нужна
+						(DI_FIXEDIT допускается для случая если нету маски)
+					*/
 
 					if ((IFlags&DIF_EDITEXPAND) && Type != DI_PSWEDIT && Type != DI_FIXEDIT)
 					{
@@ -2236,9 +2245,11 @@ void Dialog::ShowDialog(unsigned ID)
 	// Включим индикатор перемещения...
 	if (!DialogMode.Check(DMODE_DRAGGED)) // если диалог таскается
 	{
-		// $ 03.06.2001 KM
-		// + При каждой перерисовке диалога, кроме режима перемещения, устанавливаем
-		//   заголовок консоли, в противном случае он не всегда восстанавливался.
+		/*
+			$ 03.06.2001 KM
+			+ При каждой перерисовке диалога, кроме режима перемещения, устанавливаем
+			заголовок консоли, в противном случае он не всегда восстанавливался.
+		*/
 		if (!DialogMode.Check(DMODE_KEEPCONSOLETITLE))
 			ConsoleTitle::SetFarTitle(GetDialogTitle());
 	}
@@ -2248,8 +2259,10 @@ void Dialog::ShowDialog(unsigned ID)
 
 	if (DialogMode.Check(DMODE_DRAGGED))
 	{
-		// - BugZ#813 - DM_RESIZEDIALOG в DN_DRAWDIALOG -> проблема: Ctrl-F5 - отрисовка только полозьев.
-		//   Убираем вызов плагиновго обработчика.
+		/*
+			- BugZ#813 - DM_RESIZEDIALOG в DN_DRAWDIALOG -> проблема: Ctrl-F5 - отрисовка только полозьев.
+			Убираем вызов плагиновго обработчика.
+		*/
 		//DlgProc((HANDLE)this,DN_DRAWDIALOGDONE,1,0);
 		DefDlgProc((HANDLE)this,DN_DRAWDIALOGDONE,1,0);
 	}
@@ -3057,11 +3070,13 @@ int Dialog::ProcessKey(int Key)
 						case KEY_NUMDEL:
 						case KEY_DEL:
 						{
-							// $ 19.07.2000 SVS
-							// ! "...В редакторе команд меню нажмите home shift+end del
-							//   блок не удаляется..."
-							//   DEL у итемов, имеющих DIF_EDITOR, работал без учета
-							//   выделения...
+							/*
+								$ 19.07.2000 SVS
+								! "...В редакторе команд меню нажмите home shift+end del
+								блок не удаляется..."
+								DEL у итемов, имеющих DIF_EDITOR, работал без учета
+								выделения...
+							*/
 							if (FocusPos<ItemCount+1 && (Item[FocusPos+1]->Flags & DIF_EDITOR))
 							{
 								int CurPos=edt->GetCurPos();
@@ -3463,12 +3478,14 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					/* ********************************************************** */
 					if (FarIsEdit(Type))
 					{
-						// $ 15.08.2000 SVS
-						// + Сделаем так, чтобы ткнув мышкой в DropDownList
-						//   список раскрывался сам.
-						// Есть некоторая глюкавость - когда список раскрыт и мы
-						// мышой переваливаем на другой элемент, то список закрывается
-						// но перехода реального на указанный элемент диалога не происходит
+						/*
+							$ 15.08.2000 SVS
+							+ Сделаем так, чтобы ткнув мышкой в DropDownList
+							список раскрывался сам.
+							Есть некоторая глюкавость - когда список раскрыт и мы
+							мышой переваливаем на другой элемент, то список закрывается
+							но перехода реального на указанный элемент диалога не происходит
+						*/
 						int EditX1,EditY1,EditX2,EditY2;
 						DlgEdit *EditLine=(DlgEdit *)(Item[I]->ObjPtr);
 						EditLine->GetPosition(EditX1,EditY1,EditX2,EditY2);
@@ -3493,9 +3510,11 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 						{
 							EditLine->SetClearFlag(0); // а может это делать в самом edit?
 
-							// $ 23.06.2001 KM
-							// ! Оказалось нужно перерисовывать весь диалог иначе
-							//   не снимался признак активности с комбобокса с которго уходим.
+							/*
+								$ 23.06.2001 KM
+								! Оказалось нужно перерисовывать весь диалог иначе
+								не снимался признак активности с комбобокса с которго уходим.
+							*/
 							ShowDialog(); // нужен ли только один контрол или весь диалог?
 							return TRUE;
 						}
@@ -3902,14 +3921,14 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 	CriticalSectionLock Lock(CS);
 	int Type;
 	unsigned OrigFocusPos=CurFocusPos;
-//  int FucusPosNeed=-1;
+//	int FucusPosNeed=-1;
 	// В функцию обработки диалога здесь передаем сообщение,
 	//   что элемент - LostFocus() - теряет фокус ввода.
-//  if(DialogMode.Check(DMODE_INITOBJECTS))
-//    FucusPosNeed=DlgProc((HANDLE)this,DN_KILLFOCUS,FocusPos,0);
-//  if(FucusPosNeed != -1 && CanGetFocus(Item[FucusPosNeed].Type))
-//    FocusPos=FucusPosNeed;
-//  else
+//	if(DialogMode.Check(DMODE_INITOBJECTS))
+//		FucusPosNeed=DlgProc((HANDLE)this,DN_KILLFOCUS,FocusPos,0);
+//	if(FucusPosNeed != -1 && CanGetFocus(Item[FucusPosNeed].Type))
+//		FocusPos=FucusPosNeed;
+//	else
 	{
 		for (;;)
 		{
@@ -3937,12 +3956,12 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 				break;
 		}
 	}
-//  Dialog::FocusPos=FocusPos;
+//	Dialog::FocusPos=FocusPos;
 	// В функцию обработки диалога здесь передаем сообщение,
 	//   что элемент GotFocus() - получил фокус ввода.
 	// Игнорируем возвращаемое функцией диалога значение
-//  if(DialogMode.Check(DMODE_INITOBJECTS))
-//    DlgProc((HANDLE)this,DN_GOTFOCUS,FocusPos,0);
+//	if(DialogMode.Check(DMODE_INITOBJECTS))
+//		DlgProc((HANDLE)this,DN_GOTFOCUS,FocusPos,0);
 	return(CurFocusPos);
 }
 
@@ -4038,7 +4057,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 void Dialog::SelectOnEntry(unsigned Pos,BOOL Selected)
 {
 	//if(!DialogMode.Check(DMODE_SHOW))
-	//   return;
+	//	return;
 	if (FarIsEdit(Item[Pos]->Type) &&
 		(Item[Pos]->Flags&DIF_SELECTONENTRY)
 //		&& PrevFocusPos != -1 && PrevFocusPos != Pos
@@ -4634,21 +4653,24 @@ void Dialog::ResizeConsole()
 
 //void Dialog::OnDestroy()
 //{
-//  /* $ 21.04.2002 KM
-//  //  Эта функция потеряла своё значение при текущем менеджере
-//  //  и системе создания и уничтожения фреймов.
-//  if(DialogMode.Check(DMODE_RESIZED))
-//  {
-//    Frame *BFrame=FrameManager->GetBottomFrame();
-//    if(BFrame)
-//      BFrame->UnlockRefresh();
-//    /* $ 21.04.2002 KM
-//        А вот этот DM_KILLSAVESCREEN здесь только вредит. Удаление
-//        диалога происходит без восстановления ShadowSaveScr и вот
-//        они: "артефакты" непрорисовки.
-//    */
+//	/*
+//	$ 21.04.2002 KM
+//	Эта функция потеряла своё значение при текущем менеджере
+//	и системе создания и уничтожения фреймов.
+//	*/
+//	if(DialogMode.Check(DMODE_RESIZED))
+//	{
+//		Frame *BFrame=FrameManager->GetBottomFrame();
+//		if(BFrame)
+//			BFrame->UnlockRefresh();
+//		/*
+//			$ 21.04.2002 KM
+//			А вот этот DM_KILLSAVESCREEN здесь только вредит. Удаление
+//			диалога происходит без восстановления ShadowSaveScr и вот
+//			они: "артефакты" непрорисовки.
+//		*/
 //		SendDlgMessage((HANDLE)this,DM_KILLSAVESCREEN,0,0);
-//  }
+//	}
 //};
 
 LONG_PTR WINAPI Dialog::DlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
@@ -5077,11 +5099,14 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			return TRUE;
 		}
 		/*****************************************************************/
-		//  Msg=DM_ALLKEYMODE
-		//  Param1 = -1 - получить состояние
-		//         =  0 - выключить
-		//         =  1 - включить
-		//  Ret = состояние
+		/*
+			Msg=DM_ALLKEYMODE
+			Param1
+				=-1 - получить состояние
+				= 0 - выключить
+				= 1 - включить
+			Ret = состояние
+		*/
 		case DM_ALLKEYMODE:
 		{
 			if (Param1 == -1)
@@ -5289,9 +5314,11 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 
 							return 0;
 						}
-						// $ 02.12.2001 KM
-						// + Сообщение для добавления в список строк, с удалением
-						//   уже существующих, т.с. "чистая" установка
+						/*
+							$ 02.12.2001 KM
+							+ Сообщение для добавления в список строк, с удалением
+							уже существующих, т.с. "чистая" установка
+						*/
 						case DM_LISTSET: // Param1=ID Param2=FarList: ItemsNumber=Count, Items=Src
 						{
 							FarList *ListItems=(FarList *)Param2;
@@ -6157,12 +6184,15 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 			return TRUE;
 		}
 		/*****************************************************************/
-		// $ 03.01.2001 SVS
-		// + показать/скрыть элемент
-		// Param2: -1 - получить состояние
-		//          0 - погасить
-		//          1 - показать
-		// Return:  предыдущее состояние
+		/*
+			$ 03.01.2001 SVS
+			+ показать/скрыть элемент
+			Param2:
+				-1 - получить состояние
+				0  - погасить
+				1  - показать
+			Return:  предыдущее состояние
+		*/
 		case DM_SHOWITEM:
 		{
 			DWORD PrevFlags=CurItem->Flags;

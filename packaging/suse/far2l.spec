@@ -2,13 +2,13 @@
 Name:           far2l
 Version:        2.3.1
 Release:        1
-Group:			System / Applications
+Group:          System / Applications
 Summary:        Far manager for Linux
 License:        GPLv2
 URL:            https://github.com/elfmz/far2l.git
 Source0:        %{name}-%{version}.tar.gz
-BuildArch: 		x86_64
-Distribution: 	openSUSE Tumbleweed
+BuildArch:      x86_64
+Distribution:   openSUSE Tumbleweed
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
@@ -17,9 +17,9 @@ BuildRequires:  gawk m4 make
 BuildRequires:  wxWidgets-3_2-devel spdlog-devel fmt-devel libxerces-c-devel libarchive-devel libneon-devel
 BuildRequires:  libnfs-devel libsmbclient-devel libopenssl-devel libssh-devel libuchardet-devel pcre2-devel
 
-AutoReqProv: 	no
-Requires: 		/bin/sh libarchive13 libopenssl1_1 libfmt8 libnfs13 libssh2 libuchardet0 libxerces-c-3_2 libneon27 
-Requires: 		libsmbclient0 libpcre2-32-0 libwx_baseu-suse5_0_0 libwx_gtk2u_core-suse5_0_0 
+AutoReqProv:    no
+Requires:       /bin/sh libarchive13 libopenssl1_1 libfmt8 libnfs13 libssh2 libuchardet0 libxerces-c-3_2 libneon27 
+Requires:       libsmbclient0 libpcre2-32-0 libwx_baseu-suse5_0_0 libwx_gtk2u_core-suse5_0_0 
 
 %description
 Far 2 Linux is enhanced port of the well-known dual-panel console file manager from the Windows world. Despite to the original, 
@@ -37,7 +37,7 @@ Colorer, archiving, and network operations.
 mkdir build
 pushd build
 cmake -DCMAKE_INSTALL_PREFIX:PATH=%{buildroot}%{_prefix} \
-	-DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
+    -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release ..
 make
 popd
 

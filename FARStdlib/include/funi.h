@@ -115,7 +115,7 @@ typedef FKeyBarTitle *PFKeyBarTitle;
 #define FMENU_NORMAL                         FAR_SKIP_STR
 
 //Diffs
-#define FE_CURSTRING    -1      //number of current string in editor
+#define FE_CURSTRING -1 //number of current string in editor
 
 //Console colors
 enum FarConsoleColors
@@ -166,7 +166,7 @@ extern LPCSTR WINAPI FP_GetPluginName(void);
     Usefull tools for define and set arrays of FAR dialog items.
 */
 
-#define FFDI_MASK      0xFFUL
+#define FFDI_MASK 0xFFUL
 
 // ------------------------------------------------------------------------
 #include "fstd_String.h"
@@ -181,7 +181,7 @@ extern int WINAPI FP_Message(unsigned int Flags,LPCSTR HelpTopic,LPCSTR *Items,i
     [fstd_Msg.cpp]
     Wrapers for FAR language API.
 */
-#define FMSG( v )       ((LPCSTR)(INT_PTR)(v))
+#define FMSG( v )      ((LPCSTR)(INT_PTR)(v))
 #define FISMSG(v)      ((v) != NULL && (DWORD_PTR)(v) > FAR_MAX_LANGID)
 #define FGETID( v )    Abs((int)LO_WORD((DWORD)(DWORD_PTR)(v)))
 
@@ -192,7 +192,7 @@ typedef LPCSTR(WINAPI *FP_GetMsgSTR_t)(LPCSTR Msg);
 extern FP_GetMsgINT_t FP_GetMsgINT;
 extern FP_GetMsgSTR_t FP_GetMsgSTR;
 
-inline LPCSTR FP_GetMsg(int MsgId)   { return FP_GetMsgINT(MsgId); }
+inline LPCSTR FP_GetMsg(int MsgId)  { return FP_GetMsgINT(MsgId); }
 inline LPCSTR FP_GetMsg(LPCSTR Msg) { return FP_GetMsgSTR(Msg); }
 #endif
 /**@}*/
@@ -208,16 +208,22 @@ inline LPCSTR FP_GetMsg(LPCSTR Msg) { return FP_GetMsgSTR(Msg); }
 extern int   WINAPI FP_GetRegKey(LPCSTR Key,LPCSTR ValueName,DWORD Default);
 extern BYTE *WINAPI FP_GetRegKey(LPCSTR Key,LPCSTR ValueName,BYTE *ValueData,const BYTE * Default,DWORD DataMaxSize);
 extern char *WINAPI FP_GetRegKey(LPCSTR Key,LPCSTR ValueName,char *ValueData,LPCSTR Default,DWORD DataMaxSize);
-inline int   WINAPI FP_GetRegKey(LPCSTR ValueName,DWORD Default)                                                { return FP_GetRegKey(NULL,ValueName,Default); }
-inline char *WINAPI FP_GetRegKey(LPCSTR ValueName,char *ValueData,LPCSTR Default,DWORD DataSize)              { return FP_GetRegKey(NULL,ValueName,ValueData,Default,DataSize); }
-inline BYTE *WINAPI FP_GetRegKey(LPCSTR ValueName,BYTE *ValueData,const BYTE * Default,DWORD DataSize)               { return FP_GetRegKey(NULL,ValueName,ValueData,Default,DataSize); }
+inline int   WINAPI FP_GetRegKey(LPCSTR ValueName,DWORD Default)
+	{ return FP_GetRegKey(NULL,ValueName,Default); }
+inline char *WINAPI FP_GetRegKey(LPCSTR ValueName,char *ValueData,LPCSTR Default,DWORD DataSize)
+	{ return FP_GetRegKey(NULL,ValueName,ValueData,Default,DataSize); }
+inline BYTE *WINAPI FP_GetRegKey(LPCSTR ValueName,BYTE *ValueData,const BYTE * Default,DWORD DataSize)
+	{ return FP_GetRegKey(NULL,ValueName,ValueData,Default,DataSize); }
 
 extern BOOL  WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,DWORD ValueData);
 extern BOOL  WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,const BYTE * ValueData,DWORD ValueSize);
 extern BOOL  WINAPI FP_SetRegKey(LPCSTR Key,LPCSTR ValueName,LPCSTR ValueData);
-inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,DWORD ValueData)                               { return FP_SetRegKey(NULL,ValueName,ValueData); }
-inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,LPCSTR ValueData)                            { return FP_SetRegKey(NULL,ValueName,ValueData); }
-inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,const BYTE * ValueData,DWORD ValueSize)             { return FP_SetRegKey(NULL,ValueName,ValueData,ValueSize); }
+inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,DWORD ValueData)
+	{ return FP_SetRegKey(NULL,ValueName,ValueData); }
+inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,LPCSTR ValueData)
+	{ return FP_SetRegKey(NULL,ValueName,ValueData); }
+inline BOOL  WINAPI FP_SetRegKey(LPCSTR ValueName,const BYTE * ValueData,DWORD ValueSize)
+	{ return FP_SetRegKey(NULL,ValueName,ValueData,ValueSize); }
 
 extern HKEY  WINAPI FP_CreateRegKey(LPCSTR Key);
 extern HKEY  WINAPI FP_OpenRegKey(LPCSTR Key);
@@ -226,7 +232,7 @@ extern BOOL  WINAPI FP_CheckRegKey(LPCSTR Key);
 extern BOOL  WINAPI FP_DeleteRegKeyFull(LPCSTR Key);     //!!Do not uses FP_PluginRootKey - absolute path from HKCU
 
 extern BOOL  WINAPI FP_DeleteRegKeyAll(HKEY BaseKey, LPCSTR SubKeyName);
-extern BOOL  WINAPI FP_DeleteRegKeyAll(LPCSTR hParentKey,LPCSTR Key);                 // HKCU + hParentKey + Key
+extern BOOL  WINAPI FP_DeleteRegKeyAll(LPCSTR hParentKey,LPCSTR Key);                   // HKCU + hParentKey + Key
 extern BOOL  WINAPI FP_DeleteRegKeyAll(LPCSTR Key);                                     // HKCU + PluginKey + Key
 
 extern HANDLE WINAPI FP_PushKey(LPCSTR Subkey);
@@ -287,7 +293,7 @@ extern int WINAPI FP_ConHeight(void);
 #if !defined(__FP_NOT_FUNCTIONS__)
 extern void     WINAPI FP_SetStartupInfo(const PluginStartupInfo *Info,const char *KeyName);
 extern BOOL     WINAPI FP_PluginStartup(DWORD Reason);
-extern LPCSTR WINAPI FP_GetPluginLogName(void);
+extern LPCSTR   WINAPI FP_GetPluginLogName(void);
 
 extern BOOL     WINAPI FP_InPattern(LPCSTR ListOfPatterns,LPCSTR NameToFitInPattern);
 extern int      WINAPI FP_CheckKeyPressed(int *keys = NULL);
@@ -308,8 +314,8 @@ extern int      WINAPI FP_CheckKeyPressed(int *keys = NULL);
 class FP_Screen
 {
 	public:
-		FP_Screen(void) { Save(); }
-		~FP_Screen()      { Restore(); }
+		FP_Screen(void)  { Save(); }
+		~FP_Screen()     { Restore(); }
 
 		static void WINAPI Save(void);                   //Save console screen, inc save counter
 		static void WINAPI Restore(void);                //Dec save counter, Restore console screen on zero
@@ -327,7 +333,7 @@ class FPOpMode
 {
 		int OpMode;
 	public:
-		FPOpMode(int mode) { OpMode = FP_LastOpMode; FP_LastOpMode = mode; }
+		FPOpMode(int mode)   { OpMode = FP_LastOpMode; FP_LastOpMode = mode; }
 		~FPOpMode()          { FP_LastOpMode = OpMode; }
 };
 #endif
@@ -353,12 +359,12 @@ struct SRect: public SMALL_RECT
 	void Empty(void)                          { Left = Top = Right = Bottom = 0; }
 	void Normalize(void)
 	{
-		if(Top>Bottom)                { Swap(Bottom,Top); Swap(Left,Right); }
+		if(Top>Bottom)                        { Swap(Bottom,Top); Swap(Left,Right); }
 
 		if(Top==Bottom && Left>Right) Swap(Left,Right);
 	}
 
-	operator SMALL_RECT*()                      { return (SMALL_RECT*)this; }
+	operator SMALL_RECT*()                    { return (SMALL_RECT*)this; }
 };
 
 // ------------------------------------------------------------------------
@@ -367,7 +373,7 @@ struct SRect: public SMALL_RECT
 */
 struct SaveConsoleTitle
 {
-		WCHAR      SaveTitle[FAR_MAX_TITLE];
+		WCHAR     SaveTitle[FAR_MAX_TITLE];
 		BOOL      NeedToRestore;
 		int       Usage;
 
@@ -395,7 +401,7 @@ struct SaveLastError
 		DWORD Error;
 
 	public:
-		SaveLastError(void) { Error = WINPORT(GetLastError)(); }
+		SaveLastError(void)   { Error = WINPORT(GetLastError)(); }
 		~SaveLastError()      { WINPORT(SetLastError)(Error); }
 };
 

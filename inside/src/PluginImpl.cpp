@@ -92,9 +92,9 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 		" Inside: %s@%s ", _dir.c_str(), _name.c_str());
 
-	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
-	Info->HostFile = _name.c_str();
-	Info->CurDir   = _dir.c_str();
+	Info->Flags      = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
+	Info->HostFile   = _name.c_str();
+	Info->CurDir     = _dir.c_str();
 	Info->PanelTitle = _panel_title;
 }
 

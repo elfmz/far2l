@@ -163,7 +163,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPlugin(int OpenFrom, INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 
 	if (strncmp((const char *)Item, G.command_prefix.c_str(), G.command_prefix.size()) != 0
-	||  ((const char *)Item)[G.command_prefix.size()] != ':') {
+	|| ((const char *)Item)[G.command_prefix.size()] != ':') {
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -270,8 +270,8 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 	struct FarDialogItem fdi[] = {
 		{DI_DOUBLEBOX,  3,  1,  70, 5,  0, {}, 0, 0, {}},
 		{DI_TEXT,      -1,  2,  0,  2,  0, {}, 0, 0, {}},
-		{DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}},
-		{DI_BUTTON,     0, 4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
+		{DI_BUTTON,     0,  4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}},
+		{DI_BUTTON,     0,  4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
 	};
 
 	ArrayCpyZ(fdi[0].Data, G.GetMsg(MTitle));

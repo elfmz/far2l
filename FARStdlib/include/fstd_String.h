@@ -23,16 +23,16 @@ class String
 		char       *c_str(void)                           const { return str; }
 		int         Length(void)                          const { return len; }
 
-		LPCSTR    Alloc(LPCSTR s,int maxLen = -1);
-		LPCSTR    Alloc(int NewAllocatedSize);
+		LPCSTR      Alloc(LPCSTR s,int maxLen = -1);
+		LPCSTR      Alloc(int NewAllocatedSize);
 		void        SetLength(int ValueLessThenExistingLength);
 		void        Null(void)                                  { SetLength(0); }
 
-		LPCSTR    Set(LPCSTR s,
-		              int StartToAdd_Inclusive,
-		              int EndToAdd_Exclusive /*-1*/);
-		LPCSTR    Set(LPCSTR s)                             { return Alloc(s); }
-		LPCSTR    Set(const String& s)                        { return Alloc(s.c_str()); }
+		LPCSTR      Set(LPCSTR s,
+			int StartToAdd_Inclusive,
+			int EndToAdd_Exclusive /*-1*/);
+		LPCSTR      Set(LPCSTR s)                               { return Alloc(s); }
+		LPCSTR      Set(const String& s)                        { return Alloc(s.c_str()); }
 
 		int         printf(LPCSTR fmt,...);
 		int         vprintf(LPCSTR fmt,va_list list);
@@ -50,22 +50,22 @@ class String
 		void        InsCharPos(int InsertPos,char ch);
 
 		// Rets -1 if not found.
-		int         Chr(char ch,int StartToSearchFrom = 0)     const;   //strchr
-		int         Chr(LPCSTR set,int StartToSearchFrom = 0)const;   //search first char contains in set
-		int         RChr(char ch,int EndToSearchAt = -1)       const;   //strrchr
-		int         Str(LPCSTR ch,int pos = 0)               const;   //strstr
+		int         Chr(char ch,int StartToSearchFrom = 0)      const;   //strchr
+		int         Chr(LPCSTR set,int StartToSearchFrom = 0)   const;   //search first char contains in set
+		int         RChr(char ch,int EndToSearchAt = -1)        const;   //strrchr
+		int         Str(LPCSTR ch,int pos = 0)                  const;   //strstr
 
 		String&     operator=(const String& s);
 		String&     operator=(LPCSTR s);
 
 		//Exact compare
-		BOOL        operator!=(const String& s)         const;
-		BOOL        operator!=(LPCSTR s)              const;
-		BOOL        operator==(const String& s)         const;
-		BOOL        operator==(LPCSTR s)              const;
-		BOOL        Cmp(LPCSTR s,int count = -1, BOOL isCase = FALSE) const;
+		BOOL        operator!=(const String& s)                          const;
+		BOOL        operator!=(LPCSTR s)                                 const;
+		BOOL        operator==(const String& s)                          const;
+		BOOL        operator==(LPCSTR s)                                 const;
+		BOOL        Cmp(LPCSTR s,int count = -1, BOOL isCase = FALSE)    const;
 
-		char        operator[](int num)                 const;
+		char        operator[](int num)                                  const;
 		char        SetChar(int num,char ch);
 
 		void        Trim(char ch = ' ');

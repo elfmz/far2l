@@ -107,7 +107,7 @@ class FileEditor : public Frame
 		virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
 		virtual int GetTypeAndName(FARString &strType, FARString &strName);
 		int EditorControl(int Command,void *Param);
-		void SetCodePage(UINT codepage);  //BUGBUG
+		void SetCodePage(UINT codepage); //BUGBUG
 		BOOL IsFileChanged() const { return m_editor->IsFileChanged(); };
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 		void GetEditorOptions(EditorOptions& EdOpt);
@@ -139,7 +139,7 @@ class FileEditor : public Frame
 		bool BadConversion;
 		UINT m_codepage; //BUGBUG
 		int SaveAsTextFormat;
-		std::shared_ptr<IFileHolder>  FileHolder;
+		std::shared_ptr<IFileHolder> FileHolder;
 
 		virtual void DisplayObject();
 		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);

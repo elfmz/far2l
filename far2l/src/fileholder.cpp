@@ -47,9 +47,8 @@ TempFileHolder::~TempFileHolder()
 void TempFileHolder::OnFileEdited(const wchar_t *FileName)
 {
 	if (TempFileName() == FileName) {
-		/* $ 11.10.2001 IS
-		   Если было произведено сохранение с любым результатом, то не удалять файл
-		*/
+		// $ 11.10.2001 IS
+		// Если было произведено сохранение с любым результатом, то не удалять файл
 		_delete = DONT_DELETE;
 	}
 }

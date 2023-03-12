@@ -155,10 +155,9 @@ class Editor:public ScreenObject
 		friend class FileEditor;
 	private:
 
-		/* $ 04.11.2003 SKV
-		  на любом выходе если была нажата кнопка выделения,
-		  и она его "сняла" (сделала 0-й ширины), то его надо убрать.
-		*/
+		// $ 04.11.2003 SKV
+		// на любом выходе если была нажата кнопка выделения,
+		// и она его "сняла" (сделала 0-й ширины), то его надо убрать.
 		class EditorBlockGuard:public NonCopyable
 		{
 				Editor& ed;
@@ -184,10 +183,9 @@ class Editor:public ScreenObject
 		int LastChangeStrPos;
 		int NumLastLine;
 		int NumLine;
-		/* $ 26.02.2001 IS
-		     Сюда запомним размер табуляции и в дальнейшем будем использовать его,
-		     а не Opt.TabSize
-		*/
+		// $ 26.02.2001 IS
+		// Сюда запомним размер табуляции и в дальнейшем будем использовать его,
+		// а не Opt.TabSize
 		EditorOptions EdOpt;
 
 		int Pasting;
@@ -211,9 +209,8 @@ class Editor:public ScreenObject
 		int XX2; //scrollbar
 
 		FARString strLastSearchStr;
-		/* $ 30.07.2000 KM
-		   Новая переменная для поиска "Whole words"
-		*/
+		// $ 30.07.2000 KM
+		// Новая переменная для поиска "Whole words"
 		int LastSearchCase,LastSearchWholeWords,LastSearchReverse,LastSearchSelFound,LastSearchRegexp;
 
 		UINT m_codepage; //BUGBUG
@@ -313,10 +310,10 @@ class Editor:public ScreenObject
 		void SetCacheParams(EditorCacheParams *pp);
 		void GetCacheParams(EditorCacheParams *pp);
 
-		bool SetCodePage(UINT codepage);  //BUGBUG
-		UINT GetCodePage();  //BUGBUG
+		bool SetCodePage(UINT codepage); //BUGBUG
+		UINT GetCodePage(); //BUGBUG
 
-		int SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat); // преобразование из буфера в список
+		int SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat);   // преобразование из буфера в список
 		int GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat=0);   // преобразование из списка в буфер
 
 		virtual int ProcessKey(int Key);

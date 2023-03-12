@@ -51,7 +51,7 @@
 #define    GenerateConsoleCtrlEvent         WINPORT(GenerateConsoleCtrlEvent)
 #define    GenerateConsoleCtrlEvent         WINPORT(GenerateConsoleCtrlEvent)
 
-//registry API
+///registry API
 #define    RegOpenKeyEx           WINPORT(RegOpenKeyEx)
 #define    RegCreateKeyEx         WINPORT(RegCreateKeyEx)
 #define    RegCloseKey            WINPORT(RegCloseKey)

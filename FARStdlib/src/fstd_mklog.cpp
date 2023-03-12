@@ -21,8 +21,8 @@ BOOL WINAPI LOGInit(void)
 LPCSTR WINAPI FP_GetLogFullFileName(void)
 {
 	static char str[MAX_PATH] = "";
-	LPCSTR  m;
-//	char     *tmp;
+	LPCSTR m;
+//	char *tmp;
 
 	if(!str[0])
 	{

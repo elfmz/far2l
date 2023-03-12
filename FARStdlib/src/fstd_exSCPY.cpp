@@ -5,11 +5,11 @@
 
 char *WINAPI StrCpy(char *dest,LPCSTR src,int dest_sz)
 {
-	if(dest == NULL)    return NULL;
+	if(dest == NULL) return NULL;
 
 	if(dest_sz == 0) return dest;
 
-	if(!src)         { *dest = 0; return dest; }
+	if(!src) { *dest = 0; return dest; }
 
 	if(dest_sz != -1)
 	{

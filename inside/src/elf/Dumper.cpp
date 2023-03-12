@@ -19,7 +19,7 @@ namespace CommandsELF
 			return;
 		}
 
-		if (!Storage::Get(name, cmd, result_file)) {   
+		if (!Storage::Get(name, cmd, result_file)) {
 			Commands::Execute(cmd, name, result_file);
 		}
 	}

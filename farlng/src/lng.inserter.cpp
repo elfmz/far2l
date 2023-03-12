@@ -8,7 +8,7 @@ int main_inserter(int argc, char** argv)
 {
 	if(argc != 4)
 	{
-		const auto NamePtr = strrchr(argv[0],  '/');
+		const auto NamePtr = strrchr(argv[0], '/');
 		std::cout << "Usage:\n" << (NamePtr? NamePtr+1 : argv[0]) << " input_template_file output_template_file new_lng_file" << std::endl;
 		return -1;
 	}

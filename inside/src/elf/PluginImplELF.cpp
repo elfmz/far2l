@@ -6,7 +6,7 @@
 
 
 #define STR_DISASM		"Disassembly"
-#define STR_SECTIONS		"Sections"
+#define STR_SECTIONS	"Sections"
 #define STR_PHDRS		"ProgramHeaders"
 #define STR_TAIL		"TailData"
 

@@ -78,7 +78,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 				r.info+= ']';
 				r.begin = E::C(ph.p_offset);
 				r.length = E::C(ph.p_filesz);
-				tmp =  r.begin + r.length;
+				tmp = r.begin + r.length;
 				if (info.elf_length < tmp) info.elf_length = tmp;
 			}
 		}
@@ -121,7 +121,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 					}
 					r.begin = E::C(sh.sh_offset);
 					r.length = E::C(sh.sh_size);
-					tmp =  r.begin + r.length;
+					tmp = r.begin + r.length;
 					if (info.elf_length < tmp) info.elf_length = tmp;
 				}
 			}

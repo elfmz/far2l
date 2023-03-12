@@ -74,7 +74,7 @@ using namespace oldfar;
 #if !defined(__FP_NOT_FUNCTIONS__)
 struct FMenuItem: public FarMenuItem
 {
-	FMenuItem(LPCSTR txt,bool sel = false,char ch = 0)      { Assign(txt,sel,ch); }
+	FMenuItem(LPCSTR txt,bool sel = false,char ch = 0)        { Assign(txt,sel,ch); }
 	FMenuItem(const FMenuItem& p)                             { Assign(p); }
 	FMenuItem(void)                                           { Assign(); }
 
@@ -92,7 +92,7 @@ struct FMenuItem: public FarMenuItem
 
 struct FMenuItemEx: public FarMenuItemEx
 {
-	FMenuItemEx(LPCSTR txt,bool sel = false,char ch = 0)      { Assign(txt,sel,ch); }
+	FMenuItemEx(LPCSTR txt,bool sel = false,char ch = 0)        { Assign(txt,sel,ch); }
 	FMenuItemEx(const FMenuItemEx& p)                           { Assign(p); }
 	FMenuItemEx(void)                                           { Assign(); }
 
@@ -139,127 +139,98 @@ template <class T> class FP_MenuTyped
 		T    *operator[](int num)       { return Item(num); }
 
 		int Execute(LPCSTR Title,DWORD Type = 0,LPCSTR Footer = NULL,
-		            LPCSTR Help = NULL,
-		            const int *BreakKeys = NULL, int *BreakCode = NULL);
+			LPCSTR Help = NULL,
+			const int *BreakKeys = NULL, int *BreakCode = NULL);
 };
 
-/**/template <class T> FP_MenuTyped<T>::FP_MenuTyped(void)
-/**/
+template <class T> FP_MenuTyped<T>::FP_MenuTyped(void)
 {
-	/**/    List       = NULL;
-	/**/    ItemsCount = 0;
-	/**/    MaxCount   = 0;
-	/**/
+	List       = NULL;
+	ItemsCount = 0;
+	MaxCount   = 0;
+	
 }
-/**/
-/**/template <class T> FP_MenuTyped<T>::FP_MenuTyped(LPCSTR strings[],int SelNum,int CheckNum,char CheckChar)
-/**/
+
+template <class T> FP_MenuTyped<T>::FP_MenuTyped(LPCSTR strings[],int SelNum,int CheckNum,char CheckChar)
 {
 	int n,cn;
-	/**/     T  *it;
-	/**/
-	/**/    List       = NULL;
-	/**/    ItemsCount = 0;
-	/**/    MaxCount   = 0;
+	T  *it;
+	
+	List       = NULL;
+	ItemsCount = 0;
+	MaxCount   = 0;
 
-	/**/
+	if(!strings) return;
 
-	/**/    if(!strings) return;
+	for(cn = n = 0; strings[n]; cn++,n++);
 
-	/**/
+	if(!cn) return;
 
-	/**/    for(cn = n = 0; strings[n]; cn++,n++);
+	Realloc(cn);
 
-	/**/
-
-	/**/    if(!cn) return;
-
-	/**/
-	/**/    Realloc(cn);
-
-	/**/    for(n = 0; n < cn; n++)
+	for(n = 0; n < cn; n++)
 	{
-		/**/      it = Add(T());
-		/**/      it->Assign(strings[n],SelNum == n,CheckNum == n ? CheckChar : 0);
-		/**/
+		it = Add(T());
+		it->Assign(strings[n],SelNum == n,CheckNum == n ? CheckChar : 0);
 	}
-
-	/**/
-
 }
-/**/
-/**/template <class T> BOOL FP_MenuTyped<T>::Realloc(int NewSize)
-/**/
+
+template <class T> BOOL FP_MenuTyped<T>::Realloc(int NewSize)
 {
-	/**/    if(!NewSize)
-		/**/      return FALSE;
+	if(!NewSize)
+		return FALSE;
 
-	/**/
+	if(NewSize < MaxCount)
+		return TRUE;
 
-	/**/    if(NewSize < MaxCount)
-		/**/      return TRUE;
+	MaxCount = NewSize;
 
-	/**/    MaxCount = NewSize;
+	if(!List)
+		List = (T*)malloc(sizeof(T)*MaxCount);
+	else
+		List = (T*)realloc(List,sizeof(T)*MaxCount);
 
-	/**/
+	if(!List)
+		return FALSE;
 
-	/**/    if(!List)
-		/**/      List = (T*)malloc(sizeof(T)*MaxCount);
-	/**/     else
-		/**/      List = (T*)realloc(List,sizeof(T)*MaxCount);
-
-	/**/
-
-	/**/    if(!List)
-		/**/      return FALSE;
-
-	/**/
-	/**/ return TRUE;
-	/**/
+	return TRUE;
 }
-/**/
-/**/template <class T> T *FP_MenuTyped<T>::Add(const T *pi,int icn)
-/**/
-{
-	/**/    if(!Realloc(ItemsCount+icn))
-		/**/      return NULL;
 
-	/**/
-	/**/    T *p = List + ItemsCount;
-	/**/    memmove(p,pi,sizeof(*p)*icn);
-	/**/    ItemsCount += icn;
-	/**/
-	/**/ return p;
-	/**/
-}
-/**/
-/**/template <class T> void FP_MenuTyped<T>::Free(void)
-/**/
+template <class T> T *FP_MenuTyped<T>::Add(const T *pi,int icn)
 {
-	/**/    if(!ItemsCount)
-		/**/      return;
+	if(!Realloc(ItemsCount+icn))
+		return NULL;
 
-	/**/
-	/**/    free(List);
-	/**/    List       = NULL;
-	/**/    ItemsCount = 0;
-	/**/    MaxCount   = 0;
-	/**/
+	T *p = List + ItemsCount;
+	memmove(p,pi,sizeof(*p)*icn);
+	ItemsCount += icn;
+	
+	return p;
 }
-/**/
-/**/template <class T> int FP_MenuTyped<T>::Execute(LPCSTR Title,DWORD Type,
-        /**/                                            LPCSTR Footer,LPCSTR Help,
-        /**/                                            const int *BreakKeys,int *BreakCode)
-/**/
+
+template <class T> void FP_MenuTyped<T>::Free(void)
 {
-	/**/ return FP_Info->Menu(FP_Info->ModuleNumber, -1, -1, 0,
-	                          /**/                       Type | (sizeof(T) != sizeof(FarMenuItem) ? FMENU_USEEXT : 0),
-	                          /**/ (const char *)FP_GetMsg(Title),
-	                          /**/ (const char *)FP_GetMsg(Footer),
-	                          /**/ (const char *)Help,
-	                          /**/                       BreakKeys, BreakCode,
-	                          /**/ (const struct FarMenuItem*)Items(), Count());
-	/**/
+	if(!ItemsCount)
+		return;
+
+	free(List);
+	List       = NULL;
+	ItemsCount = 0;
+	MaxCount   = 0;
+}
+
+template <class T> int FP_MenuTyped<T>::Execute(LPCSTR Title,DWORD Type,
+	LPCSTR Footer,LPCSTR Help,
+	const int *BreakKeys,int *BreakCode)
+{
+	return FP_Info->Menu(FP_Info->ModuleNumber, -1, -1, 0,
+		Type | (sizeof(T) != sizeof(FarMenuItem) ? FMENU_USEEXT : 0),
+		(const char *)FP_GetMsg(Title),
+		(const char *)FP_GetMsg(Footer),
+		(const char *)Help,
+		BreakKeys, BreakCode,
+		(const struct FarMenuItem*)Items(), Count());
+	
 }
 
 typedef FP_MenuTyped<FMenuItem>    FP_Menu;
@@ -309,7 +280,7 @@ struct FP_Dialog
 		LONG_PTR User(int msg,int p=0,LONG_PTR p1=0)  const { return FP_Info->SendDlgMessage(Handle,msg,p,p1); }
 
 		int      SetText(int num, LPCSTR str,int sz = 0) const;
-		LPCSTR GetText(int num)                      const;
+		LPCSTR   GetText(int num)                      const;
 		int      GetText(int num,char *buff,int bSz)   const;
 };
 #endif // !defined(__FP_NOT_FUNCTIONS__)
@@ -323,10 +294,14 @@ struct FP_Dialog
     You MUST use _Alloc or strdup to allocate data space.
     Data CAT NOT BE zero sized.
 */
-inline BOOL   FPIL_ADDEXIST(const PluginPanelItem *p) { return ((p)->Reserved[0] && (p)->Reserved[1]); }
-inline DWORD  FPIL_ADDSIZE(const PluginPanelItem *p)  { return FPIL_ADDEXIST(p) ? (DWORD)(p)->Reserved[0] : 0; }
-inline LPVOID FPIL_ADDDATA(const PluginPanelItem *p)  { return FPIL_ADDEXIST(p) ? ((void*)(p)->Reserved[1]) : NULL; }
-inline void   FPIL_ADDSET(PluginPanelItem *p, DWORD sz, LPVOID dt) { (p)->Reserved[0] = sz; (p)->Reserved[1] = (DWORD_PTR)dt; }
+inline BOOL   FPIL_ADDEXIST(const PluginPanelItem *p)
+	{ return  ((p)->Reserved[0] && (p)->Reserved[1]); }
+inline DWORD  FPIL_ADDSIZE(const PluginPanelItem *p)
+	{ return  FPIL_ADDEXIST(p) ? (DWORD)(p)->Reserved[0] : 0; }
+inline LPVOID FPIL_ADDDATA(const PluginPanelItem *p)
+	{ return  FPIL_ADDEXIST(p) ? ((void*)(p)->Reserved[1]) : NULL; }
+inline void   FPIL_ADDSET(PluginPanelItem *p, DWORD sz, LPVOID dt)
+	{         (p)->Reserved[0] = sz; (p)->Reserved[1] = (DWORD_PTR)dt; }
 
 struct FP_ItemList
 {
@@ -342,7 +317,7 @@ struct FP_ItemList
 
 		PluginPanelItem *Add(const PluginPanelItem *src,int cn);                           ///<Add a `cn` items to list
 		PluginPanelItem *Add(const PluginPanelItem *src)  { return Add(src,1); }
-		void             Clear(void);                                                       //Clear list
+		void             Clear(void);                                                      //Clear list
 
 		PluginPanelItem *Items(void)                      { return List; }
 		int              Count(void)                      { return ItemsCount; }

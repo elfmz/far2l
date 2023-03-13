@@ -140,12 +140,7 @@ static HANDLE OpenPluginWithCmdLine(const char *CmdLine)
   if (CmdLine[Prefix1Len] != ':' || CmdLine[Prefix1Len + 1] == 0)
     return INVALID_HANDLE_VALUE;
 
-  char oldfilename[NM+2];
-  strncpy(oldfilename, &CmdLine[Prefix1Len + 1], sizeof(oldfilename) - 1);
-
-  FSF.Unquote(oldfilename);
-  FSF.ExpandEnvironmentStr(oldfilename, oldfilename, NM);
-  std::string filename = MakeFullName(oldfilename);
+  std::string filename = MakeFullName(&CmdLine[Prefix1Len + 1]);
   if (filename.empty())
     return INVALID_HANDLE_VALUE;
 

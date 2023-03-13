@@ -519,7 +519,7 @@ FARString& FARString::Lower(size_t nStartPos, size_t nLength)
 	return *this;
 }
 
-FARString&  FARString::Upper(size_t nStartPos, size_t nLength)
+FARString& FARString::Upper(size_t nStartPos, size_t nLength)
 {
 	PrepareForModify();
 	WINPORT(CharUpperBuff)(m_pContent->GetData() + nStartPos,

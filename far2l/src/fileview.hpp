@@ -55,24 +55,25 @@ class FileViewer:public Frame
 		FARString strName;
 
 		typedef class Frame inherited;
-		/* $ 17.08.2001 KM
-		  Добавлено для поиска по AltF7. При редактировании найденного файла из
-		  архива для клавиши F2 сделать вызов ShiftF2.
+		/*
+			$ 17.08.2001 KM
+			Добавлено для поиска по AltF7. При редактировании найденного файла из
+			архива для клавиши F2 сделать вызов ShiftF2.
 		*/
 		int SaveToSaveAs;
 		FARString strPluginData;
 
 	public:
 		FileViewer(const wchar_t *Name,int EnableSwitch=FALSE,int DisableHistory=FALSE,
-		           int DisableEdit=FALSE,long ViewStartPos=-1,const wchar_t *PluginData=nullptr,
-		           NamesList *ViewNamesList=nullptr,int ToSaveAs=FALSE,UINT aCodePage=CP_AUTODETECT);
+			int DisableEdit=FALSE,long ViewStartPos=-1,const wchar_t *PluginData=nullptr,
+			NamesList *ViewNamesList=nullptr,int ToSaveAs=FALSE,UINT aCodePage=CP_AUTODETECT);
 		FileViewer(const wchar_t *Name,int EnableSwitch,int DisableHistory,
-		           const wchar_t *Title,int X1,int Y1,int X2,int Y2,UINT aCodePage=CP_AUTODETECT);
+			const wchar_t *Title,int X1,int Y1,int X2,int Y2,UINT aCodePage=CP_AUTODETECT);
 		virtual ~FileViewer();
 
 	public:
 		void Init(const wchar_t *Name,int EnableSwitch,int DisableHistory,
-		          long ViewStartPos,const wchar_t *PluginData,NamesList *ViewNamesList,int ToSaveAs);
+			long ViewStartPos,const wchar_t *PluginData,NamesList *ViewNamesList,int ToSaveAs);
 		virtual void InitKeyBar();
 		virtual int ProcessKey(int Key);
 		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -92,9 +93,10 @@ class FileViewer:public Frame
 		/* $ Введена для нужд CtrlAltShift OT */
 		virtual int FastHide();
 
-		/* $ 17.08.2001 KM
-		  Добавлено для поиска по AltF7. При редактировании найденного файла из
-		  архива для клавиши F2 сделать вызов ShiftF2.
+		/*
+			$ 17.08.2001 KM
+			Добавлено для поиска по AltF7. При редактировании найденного файла из
+			архива для клавиши F2 сделать вызов ShiftF2.
 		*/
 		void SetSaveToSaveAs(int ToSaveAs) { SaveToSaveAs=ToSaveAs; InitKeyBar(); }
 		int  ViewerControl(int Command,void *Param);

@@ -235,8 +235,9 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 						if (AddAsterisk && !FindAnyOfChars(item.Str, "?*."))
 						{
 							Length=StrLength(item.Str);
-							/* $ 18.09.2002 DJ
-							   выделялось на 1 байт меньше, чем надо
+							/*
+								$ 18.09.2002 DJ
+								выделялось на 1 байт меньше, чем надо
 							*/
 							item.Str=static_cast<wchar_t*>(realloc(item.Str, (Length+2)*sizeof(wchar_t)));
 
@@ -277,7 +278,7 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 				while (IsSpace(*End)) ++End; // пропустим мусор
 
 			if (!*End) // Если кроме разделителя ничего больше в строке нет,
-			{         // то считается, что это не разделитель, а простой символ
+			{          // то считается, что это не разделитель, а простой символ
 				item=L" ";
 
 				if (item.Str)

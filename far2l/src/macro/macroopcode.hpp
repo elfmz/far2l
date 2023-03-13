@@ -36,9 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keys.hpp"
 
 /*
-  ВНИМАНИЕ!
-  При добавлении сюда...
-  ... так же то же необходимо добавлять и в syslog.cpp (функция __MCODE_ToName)
+	ВНИМАНИЕ!
+	При добавлении сюда...
+	... так же то же необходимо добавлять и в syslog.cpp (функция __MCODE_ToName)
 
 */
 
@@ -77,8 +77,8 @@ enum MACRO_OP_CODE
 	MCODE_OP_BITNOT,                  // ~a
 
 	// Двуместные операции
-	MCODE_OP_MUL,                     // a *  b
-	MCODE_OP_DIV,                     // a /  b
+	MCODE_OP_MUL,                     // a * b
+	MCODE_OP_DIV,                     // a / b
 
 	MCODE_OP_ADD,                     // a +  b
 	MCODE_OP_SUB,                     // a -  b

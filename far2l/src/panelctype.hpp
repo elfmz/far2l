@@ -59,4 +59,4 @@ enum {
 	PERCENT_WIDTH
 };
 
-#define PANEL_COLUMNCOUNT  20
+#define PANEL_COLUMNCOUNT 20

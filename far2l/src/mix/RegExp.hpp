@@ -241,66 +241,66 @@ private:
 		RegExp& operator=(RegExp&&) = delete;
 
 		/*! Compile regular expression
-		    Generate internal op-codes of expression.
+			Generate internal op-codes of expression.
 
-		    \param src - source of expression
-		    \param options - compile options
+			\param src - source of expression
+			\param options - compile options
 
-		    If compilation fails error code can be obtained with LastError function,
-		    position of error in a expression can be obtained with ErrorPosition function.
-		    See error codes in REError enumeration.
-		    \sa LastError
-		    \sa REError
-		    \sa ErrorPosition
-		    \sa options
+			If compilation fails error code can be obtained with LastError function,
+			position of error in a expression can be obtained with ErrorPosition function.
+			See error codes in REError enumeration.
+			\sa LastError
+			\sa REError
+			\sa ErrorPosition
+			\sa options
 		*/
 		bool Compile(ReStringView src, int options=OP_PERLSTYLE|OP_OPTIMIZE);
 
 		/*! Try to optimize regular expression
-		    Significally speedup Search mode in some cases.
+			Significally speedup Search mode in some cases.
 		*/
 		bool Optimize();
 
 		/*! Try to match string with regular expression
-		    \param text - string to match
-		    \param match - array of SMatch structures that receive brackets positions.
-		    \param matchcount - in/out parameter that indicate number of items in
-		    match array on input, and number of brackets on output.
-		    \param hmatch - storage of named brackets.
-		    \sa SMatch
+			\param text - string to match
+			\param match - array of SMatch structures that receive brackets positions.
+			\param matchcount - in/out parameter that indicate number of items in
+			match array on input, and number of brackets on output.
+			\param hmatch - storage of named brackets.
+			\sa SMatch
 		*/
 		bool Match(ReStringView text, RegExpMatch* match, int& matchcount, MatchHash* hmatch = nullptr) const;
 		/*! Advanced version of match. Can be used for multiple matches
-		    on one string (to imitate /g modifier of perl regexp
+			on one string (to imitate /g modifier of perl regexp
 		*/
 		bool MatchEx(ReStringView text, size_t From, RegExpMatch* match, int& matchcount, MatchHash* hmatch = nullptr) const;
 		/*! Try to find substring that will match regexp.
-		    Parameters and return value are the same as for Match.
-		    It is highly recommended to call Optimize before Search.
+			Parameters and return value are the same as for Match.
+			It is highly recommended to call Optimize before Search.
 		*/
 		bool Search(ReStringView text, RegExpMatch* match, int& matchcount, MatchHash* hmatch = nullptr) const;
 		/*! Advanced version of search. Can be used for multiple searches
-		    on one string (to imitate /g modifier of perl regexp
+			on one string (to imitate /g modifier of perl regexp
 		*/
 		bool SearchEx(ReStringView text, size_t From, RegExpMatch* match, int& matchcount, MatchHash* hmatch = nullptr) const;
 
 		bool Search(ReStringView Str) const;
 
 		/*! Get last error
-		    \return code of the last error
-		    Check REError for explanation
-		    \sa REError
-		    \sa ErrorPosition
+			\return code of the last error
+			Check REError for explanation
+			\sa REError
+			\sa ErrorPosition
 		*/
 		int LastError() const {return errorcode;}
 		/*! Get last error position.
-		    \return position of the last error in the regexp source.
-		    \sa LastError
+			\return position of the last error in the regexp source.
+			\sa LastError
 		*/
 		int ErrorPosition() const { return srcstart + errorpos; }
 		/*! Get number of brackets in expression
-		    \return number of brackets, excluding brackets of type (:expr)
-		    and named brackets.
+			\return number of brackets, excluding brackets of type (:expr)
+			and named brackets.
 		*/
 		int GetBracketsCount() const {return bracketscount;}
 };

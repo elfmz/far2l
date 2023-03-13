@@ -162,7 +162,7 @@ void FolderTree::OnChangeFocus(int focus)
 void FolderTree::ResizeConsole()
 {
 	//if ( TopScreen )
-	//   delete TopScreen;
+		//delete TopScreen;
 	//TopScreen=nullptr;
 	Hide();
 	SetCoords();
@@ -278,13 +278,13 @@ int FolderTree::ProcessKey(int Key)
 			}
 
 			/*
-			      else
-			      {
-			        if((Key&(~KEY_CTRLMASK)) == KEY_ADD)
-			          Key='+';
-			        else if((Key&(~KEY_CTRLMASK)) == KEY_SUBTRACT)
-			          Key='-';
-			      }
+				else
+				{
+					if((Key&(~KEY_CTRLMASK)) == KEY_ADD)
+						Key='+';
+					else if((Key&(~KEY_CTRLMASK)) == KEY_SUBTRACT)
+						Key='-';
+				}
 			*/
 			if (FindEdit->ProcessKey(Key))
 			{

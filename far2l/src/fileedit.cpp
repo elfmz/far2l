@@ -380,15 +380,16 @@ FileEditor::FileEditor(
 	Init(Name,codepage, Title,InitFlags,StartLine,StartChar,L"",OpenModeExstFile);
 }
 
-/* $ 07.05.2001 DJ
-   в деструкторе грохаем EditNamesList, если он был создан, а в SetNamesList()
-   создаем EditNamesList и копируем туда значения
+/*
+	$ 07.05.2001 DJ
+	в деструкторе грохаем EditNamesList, если он был создан, а в SetNamesList()
+	создаем EditNamesList и копируем туда значения
 */
 /*
-  Вызов деструкторов идет так:
-    FileEditor::~FileEditor()
-    Editor::~Editor()
-    ...
+	Вызов деструкторов идет так:
+		FileEditor::~FileEditor()
+		Editor::~Editor()
+		...
 */
 FileEditor::~FileEditor()
 {
@@ -1020,9 +1021,9 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 					else if (!Flags.Check(FFILEEDIT_SAVETOSAVEAS))
 					{
 						FARString strDir = strFullFileName;
-						if (CutToSlash(strDir, false)  // проверим путь к файлу, может его уже снесли...
-						  && !IsLocalRootPath(strDir)  // В корне?
-						  && !apiPathIsDir(strDir))    // каталог существует?
+						if (CutToSlash(strDir, false)    // проверим путь к файлу, может его уже снесли...
+							&& !IsLocalRootPath(strDir)  // В корне?
+							&& !apiPathIsDir(strDir))    // каталог существует?
 						{
 							Flags.Set(FFILEEDIT_SAVETOSAVEAS);
 						}
@@ -2160,8 +2161,9 @@ void FileEditor::SetScreenPosition()
 	}
 }
 
-/* $ 10.05.2001 DJ
-   добавление в view/edit history
+/*
+	$ 10.05.2001 DJ
+	добавление в view/edit history
 */
 
 void FileEditor::OnDestroy()
@@ -2399,8 +2401,10 @@ void FileEditor::ShowStatus()
 		{
 			GotoXY(X2-(Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 16:10),Y1);
 			SetColor(COL_EDITORSTATUS);
-			/* $ 27.02.2001 SVS
-			Показываем в зависимости от базы */
+			/*
+				$ 27.02.2001 SVS
+				Показываем в зависимости от базы
+			*/
 			static const wchar_t *FmtWCharCode[]={L"%05o",L"%5d",L"%04Xh"};
 			mprintf(FmtWCharCode[m_editor->EdOpt.CharCodeBase%ARRAYSIZE(FmtWCharCode)],Str[CurPos]);
 
@@ -2425,9 +2429,10 @@ void FileEditor::ShowStatus()
 		ShowTime(FALSE);
 }
 
-/* $ 13.02.2001
-     Узнаем атрибуты файла и заодно сформируем готовую строку атрибутов для
-     статуса.
+/*
+	$ 13.02.2001
+	Узнаем атрибуты файла и заодно сформируем готовую строку атрибутов для
+	статуса.
 */
 DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 {
@@ -2447,7 +2452,8 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 	return FileAttributes;
 }
 
-/* Return TRUE - панель обовили
+/*
+	Return TRUE - панель обовили
 */
 BOOL FileEditor::UpdateFileList()
 {

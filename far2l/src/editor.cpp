@@ -186,11 +186,11 @@ int Editor::SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat)
 }
 
 /*
-  Editor::Edit2Str - преобразование из списка в буфер с учетом EOL
+	Editor::Edit2Str - преобразование из списка в буфер с учетом EOL
 
-    DestBuf     - куда сохраняем (выделяется динамически!)
-    SizeDestBuf - размер сохранения
-    TextFormat  - тип концовки строк
+		DestBuf     - куда сохраняем (выделяется динамически!)
+		SizeDestBuf - размер сохранения
+		TextFormat  - тип концовки строк
 */
 int Editor::GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat)
 {
@@ -450,12 +450,13 @@ void Editor::ShowEditor(int CurLineOnly)
 }
 
 
-/*$ 10.08.2000 skv
-  Wrapper for Modified.
-  Set JustModified every call to 1
-  to track any text state change.
-  Even if state==0, this can be
-  last UNDO.
+/*
+	$ 10.08.2000 skv
+	Wrapper for Modified.
+	Set JustModified every call to 1
+	to track any text state change.
+	Even if state==0, this can be
+	last UNDO.
 */
 void Editor::TextChanged(int State)
 {
@@ -939,7 +940,7 @@ int Editor::ProcessKey(int Key)
 		case KEY_SHIFTNUMPAD4:   case KEY_SHIFTNUMPAD6:
 		case KEY_SHIFTNUMPAD8:   case KEY_SHIFTNUMPAD2:
 		case KEY_SHIFTNUMPAD7:   case KEY_SHIFTNUMPAD1:
-		case KEY_CTRLSHIFTLEFT:  case KEY_CTRLSHIFTNUMPAD4:  /* 12.11.2002 DJ */
+		case KEY_CTRLSHIFTLEFT:  case KEY_CTRLSHIFTNUMPAD4: /* 12.11.2002 DJ */
 		{
 			_KEYMACRO(CleverSysLog SL(L"Editor::ProcessKey(KEY_SHIFT*)"));
 			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d",__LINE__,SelStart,SelEnd));
@@ -3561,10 +3562,11 @@ void Editor::ScrollUp()
 	CurLine->SetCellCurPos(CurPos);
 }
 
-/* $ 21.01.2001 SVS
-   Диалоги поиска/замены выведен из Editor::Search
-   в отдельную функцию GetSearchReplaceString
-   (файл stddlg.cpp)
+/*
+	$ 21.01.2001 SVS
+	Диалоги поиска/замены выведен из Editor::Search
+	в отдельную функцию GetSearchReplaceString
+	(файл stddlg.cpp)
 */
 BOOL Editor::Search(int Next)
 {
@@ -4360,8 +4362,9 @@ void Editor::UnmarkBlock()
 	Show();
 }
 
-/* $ 07.03.2002 IS
-   Удалить выделение, если оно пустое (выделено ноль символов в ширину)
+/*
+	$ 07.03.2002 IS
+	Удалить выделение, если оно пустое (выделено ноль символов в ширину)
 */
 void Editor::UnmarkEmptyBlock()
 {
@@ -6611,10 +6614,11 @@ void Editor::Xlat()
 }
 /* SVS $ */
 
-/* $ 15.02.2001 IS
-     Манипуляции с табуляцией на уровне всего загруженного файла.
-     Может быть длительной во времени операцией, но тут уж, imho,
-     ничего не поделать.
+/*
+	$ 15.02.2001 IS
+	Манипуляции с табуляцией на уровне всего загруженного файла.
+	Может быть длительной во времени операцией, но тут уж, imho,
+	ничего не поделать.
 */
 //Обновим размер табуляции
 void Editor::SetTabSize(int NewSize)

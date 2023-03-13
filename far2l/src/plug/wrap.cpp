@@ -126,10 +126,11 @@ static wchar_t *AnsiToUnicode(const char *lpszAnsiString, int nMaxLength = -1, U
 
 static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
-	/* $ 06.01.2008 TS
+	/*
+		$ 06.01.2008 TS
 		! Увеличил размер выделяемой под строку памяти на 1 байт для нормальной
-			работы старых плагинов, которые не знали, что надо смотреть на длину,
-			а не на завершающий ноль (например в EditorGetString.StringText).
+		работы старых плагинов, которые не знали, что надо смотреть на длину,
+		а не на завершающий ноль (например в EditorGetString.StringText).
 	*/
 	if (!lpwszUnicodeString || (nLength < 0))
 		return nullptr;
@@ -750,10 +751,11 @@ BOOL AddEndSlashA(char *Path,char TypeSlash)
 
 	if (Path)
 	{
-		/* $ 06.12.2000 IS
-		  ! Теперь функция работает с обоими видами слешей, также происходит
-		    изменение уже существующего конечного слеша на такой, который
-		    встречается чаще.
+		/*
+			$ 06.12.2000 IS
+			! Теперь функция работает с обоими видами слешей, также происходит
+			изменение уже существующего конечного слеша на такой, который
+			встречается чаще.
 		*/
 		char *end=Path+strlen(Path);
 		int Length=(int)(end-Path);
@@ -3380,7 +3382,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 			if (ds&oldfar::FDIS_HISTORYINDIALOGEDITCONTROLS)    ret|=FDIS_HISTORYINDIALOGEDITCONTROLS;
 
-			if (ds&oldfar::FDIS_AUTOCOMPLETEININPUTLINES)    ret|=FDIS_AUTOCOMPLETEININPUTLINES;
+			if (ds&oldfar::FDIS_AUTOCOMPLETEININPUTLINES)       ret|=FDIS_AUTOCOMPLETEININPUTLINES;
 
 			if (ds&oldfar::FDIS_PERSISTENTBLOCKSINEDITCONTROLS) ret|=FDIS_PERSISTENTBLOCKSINEDITCONTROLS;
 
@@ -3634,7 +3636,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 
 			oldfar::EditorConvertText *ect=(oldfar::EditorConvertText*) Param;
 			UINT CodePage=GetEditorCodePageA();
-			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_UTF8 : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ?  CodePage : CP_OEMCP, ect->Text, ect->TextLength);
+			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_UTF8 : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ? CodePage : CP_OEMCP, ect->Text, ect->TextLength);
 			return TRUE;
 		}
 		case oldfar::ECTL_SAVEFILE:
@@ -3917,7 +3919,7 @@ int WINAPI FarViewerControlA(int Command,void* Param)
 
 			if (viW.Options&VOPT_SAVEFILEPOSITION) viA->Options |= oldfar::VOPT_SAVEFILEPOSITION;
 
-			if (viW.Options&VOPT_AUTODETECTCODEPAGE)  viA->Options |= oldfar::VOPT_AUTODETECTTABLE;
+			if (viW.Options&VOPT_AUTODETECTCODEPAGE) viA->Options |= oldfar::VOPT_AUTODETECTTABLE;
 
 			viA->TabSize = viW.TabSize;
 			viA->CurMode.UseDecodeTable = 0;

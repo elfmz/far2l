@@ -142,7 +142,8 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 
 	FARString strDir(CmdLine);
 
-	/* $ 15.11.2001 OT
+	/*
+		$ 15.11.2001 OT
 		Сначала проверяем есть ли такая "обычная" директория.
 		если уж нет, то тогда начинаем думать, что это директория плагинная
 	*/

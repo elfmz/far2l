@@ -205,7 +205,7 @@ void PanelSettings()
 		if (!AutoUpdate)
 			Opt.AutoUpdateLimit = 0;
 
-	//  FrameManager->RefreshFrame();
+	// FrameManager->RefreshFrame();
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->Redraw();
@@ -264,9 +264,10 @@ void InputSettings()
 	}
 }
 
-/* $ 17.12.2001 IS
-   Настройка средней кнопки мыши для панелей. Воткнем пока сюда, потом надо
-   переехать в специальный диалог по программированию мыши.
+/*
+	$ 17.12.2001 IS
+	Настройка средней кнопки мыши для панелей. Воткнем пока сюда, потом надо
+	переехать в специальный диалог по программированию мыши.
 */
 void InterfaceSettings()
 {
@@ -452,7 +453,7 @@ void CmdlineSettings()
 		CtrlObject->CmdLine->SetAutoComplete(Opt.CmdLine.AutoComplete);
 
 		if (Opt.CmdLine.UseShell != oldUseShell || Opt.CmdLine.strShell != oldShell)
-		    VTShell_Shutdown();
+			VTShell_Shutdown();
 	}
 }
 
@@ -646,9 +647,11 @@ void SetFolderInfoFiles()
 {
 	FARString strFolderInfoFiles;
 
-	if (GetString(Msg::SetFolderInfoTitle,Msg::SetFolderInfoNames,L"FolderInfoFiles",
-	              Opt.InfoPanel.strFolderInfoFiles,strFolderInfoFiles,L"OptMenu",FIB_ENABLEEMPTY|FIB_BUTTONS))
-	{
+	if (GetString(
+		Msg::SetFolderInfoTitle,Msg::SetFolderInfoNames,L"FolderInfoFiles",
+		Opt.InfoPanel.strFolderInfoFiles,strFolderInfoFiles,L"OptMenu",FIB_ENABLEEMPTY|FIB_BUTTONS
+		)
+	) {
 		Opt.InfoPanel.strFolderInfoFiles = strFolderInfoFiles;
 
 		if (CtrlObject->Cp()->LeftPanel->GetType() == INFO_PANEL)

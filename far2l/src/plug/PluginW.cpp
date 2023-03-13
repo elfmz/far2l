@@ -607,9 +607,9 @@ bool PluginW::CheckMinFarVersion(bool &bUnloaded)
 
 		DWORD FVer = (DWORD)es.nResult;
 
-		if (LOWORD(FVer) >  LOWORD(FAR_VERSION) ||
+		if (LOWORD(FVer) > LOWORD(FAR_VERSION) ||
 			(LOWORD(FVer) == LOWORD(FAR_VERSION) &&
-				HIWORD(FVer) >  HIWORD(FAR_VERSION)))
+				HIWORD(FVer) > HIWORD(FAR_VERSION)))
 		{
 			ShowMessageAboutIllegalPluginVersion(m_strModuleName,FVer);
 			return false;
@@ -696,34 +696,37 @@ HANDLE PluginW::OpenPlugin(int OpenFrom, INT_PTR Item)
 		EXECUTE_FUNCTION_EX(pOpenPluginW(OpenFrom,Item), es);
 		hResult = es.hResult;
 		//CurPluginItem=nullptr; //BUGBUG
-		/*    CtrlObject->Macro.SetRedrawEditor(TRUE); //BUGBUG
+		/*
+		CtrlObject->Macro.SetRedrawEditor(TRUE); //BUGBUG
 
-		    if ( !es.bUnloaded )
-		    {
+		if ( !es.bUnloaded )
+		{
 
-		      if(OpenFrom == OPEN_EDITOR &&
-		         !CtrlObject->Macro.IsExecuting() &&
-		         CtrlObject->Plugins.CurEditor &&
-		         CtrlObject->Plugins.CurEditor->IsVisible() )
-		      {
-		        CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
-		        CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
-		        CtrlObject->Plugins.CurEditor->Show();
-		      }
-		      if (hInternal!=INVALID_HANDLE_VALUE)
-		      {
-		        PluginHandle *hPlugin=new PluginHandle;
-		        hPlugin->InternalHandle=es.hResult;
-		        hPlugin->PluginNumber=(INT_PTR)this;
-		        return((HANDLE)hPlugin);
-		      }
-		      else
-		        if ( !g_strDirToSet.IsEmpty() )
-		        {
-							CtrlObject->Cp()->ActivePanel->SetCurDir(g_strDirToSet,TRUE);
-		          CtrlObject->Cp()->ActivePanel->Redraw();
-		        }
-		    } */
+			if (
+				OpenFrom == OPEN_EDITOR &&
+				!CtrlObject->Macro.IsExecuting() &&
+				CtrlObject->Plugins.CurEditor &&
+				CtrlObject->Plugins.CurEditor->IsVisible() )
+			{
+				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
+				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
+				CtrlObject->Plugins.CurEditor->Show();
+			}
+			if (hInternal!=INVALID_HANDLE_VALUE)
+			{
+				PluginHandle *hPlugin=new PluginHandle;
+				hPlugin->InternalHandle=es.hResult;
+				hPlugin->PluginNumber=(INT_PTR)this;
+				return((HANDLE)hPlugin);
+			}
+			else
+			if ( !g_strDirToSet.IsEmpty() )
+			{
+				CtrlObject->Cp()->ActivePanel->SetCurDir(g_strDirToSet,TRUE);
+				CtrlObject->Cp()->ActivePanel->Redraw();
+			}
+		}
+		*/
 	}
 
 	delete ChPriority;

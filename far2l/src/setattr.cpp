@@ -640,17 +640,17 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 {
 	FSFileFlags FFFlags(strSelName.GetMB());
 	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
-	  || AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
-		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
+		|| AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
+			FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
 	}
 	if (AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_CHECKED
-	  || AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
-		FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
+		|| AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
+			FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
 	}
 #if defined(__APPLE__) || defined(__FreeBSD__)
 	if (AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_CHECKED
-	  || AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
-		FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
+		|| AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
+			FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
 	}
 #endif
 	FFFlags.Apply(strSelName.GetMB());
@@ -845,7 +845,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					{
 						ConvertDate(FindData.ftUnixAccessTime, AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData, 
 							AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData,12,FALSE,FALSE,2,TRUE);
-						ConvertDate(FindData.ftUnixModificationTime,  AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
+						ConvertDate(FindData.ftUnixModificationTime, AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
 							AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData,12,FALSE,FALSE,2,TRUE);
 						ConvertDate(FindData.ftUnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,
 							AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData,12,FALSE,FALSE,2,TRUE);
@@ -997,7 +997,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			if(SrcPanel)
 			{
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
-				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode,  &FindData);
+				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData);
 			}
 
 			// выставим "неопределенку" или то, что нужно
@@ -1095,9 +1095,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
 					
 					FILETIME UnixAccessTime={},UnixModificationTime={};
-					int SetAccessTime = DlgParam.OAccessTime  && 
+					int SetAccessTime = DlgParam.OAccessTime && 
 						ReadFileTime(0, strSelName, UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-					int SetModifyTime = DlgParam.OModifyTime   && 
+					int SetModifyTime = DlgParam.OModifyTime && 
 						ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 
 					//_SVS(SysLog(L"\n\tSetWriteTime=%d\n\tSetCreationTime=%d\n\tSetLastAccessTime=%d",SetWriteTime,SetCreationTime,SetLastAccessTime));
@@ -1154,14 +1154,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 					DWORD LastTime=0;
 
 					bool SingleFileDone=false;
-					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode,  &FindData):!SingleFileDone) && !Cancel)
+					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData):!SingleFileDone) && !Cancel)
 					{
 						if(!SrcPanel)
 						{
 							SingleFileDone=true;
 						}
 		//_SVS(SysLog(L"SelName='%ls'\n\tFileAttr =0x%08X\n\tSetAttr  =0x%08X\n\tClearAttr=0x%08X\n\tResult   =0x%08X",
-		//    SelName,FileAttr,SetAttr,ClearAttr,((FileAttr|SetAttr)&(~ClearAttr))));
+		//	SelName,FileAttr,SetAttr,ClearAttr,((FileAttr|SetAttr)&(~ClearAttr))));
 						DWORD CurTime=WINPORT(GetTickCount)();
 
 						if (CurTime-LastTime>RedrawTimeout)
@@ -1177,9 +1177,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
 	
 						FILETIME UnixAccessTime = {}, UnixModificationTime = {};
-						int SetAccessTime = DlgParam.OAccessTime  && 
+						int SetAccessTime = DlgParam.OAccessTime && 
 							ReadFileTime(0,strSelName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-						int SetModifyTime = DlgParam.OModifyTime   && 
+						int SetModifyTime = DlgParam.OModifyTime && 
 							ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 
 						RetCode = ESetFileTime(strSelName, SetAccessTime ? &UnixAccessTime : nullptr,
@@ -1241,9 +1241,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, 
 										SkipMode, strFullName, strInitGroup, DlgParam.OSubfoldersState)) break;									
 
-									SetAccessTime=     DlgParam.OAccessTime  && 
+									SetAccessTime= DlgParam.OAccessTime && 
 										ReadFileTime(0,strFullName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-									SetModifyTime=  DlgParam.OModifyTime   && 
+									SetModifyTime= DlgParam.OModifyTime && 
 										ReadFileTime(1,strFullName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 									
 									if (SetAccessTime || SetModifyTime)

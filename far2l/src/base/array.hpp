@@ -5,15 +5,15 @@ array.hpp
 
 Шаблон работы с массивом
 
- TArray<Object> Array;
- // Object должен иметь конструктор по умолчанию и следующие операторы
- //  bool operator==(const Object &) const
- //  bool operator<(const Object &) const
- //  const Object& operator=(const Object &)
+	TArray<Object> Array;
+	// Object должен иметь конструктор по умолчанию и следующие операторы
+	//  bool operator==(const Object &) const
+	//  bool operator<(const Object &) const
+	//  const Object& operator=(const Object &)
 
- TPointerArray<Object> Array;
- Object должен иметь конструктор по умолчанию.
- Класс для тупой но прозрачной работы с массивом понтеров на класс Object
+	TPointerArray<Object> Array;
+	Object должен иметь конструктор по умолчанию.
+	Класс для тупой но прозрачной работы с массивом понтеров на класс Object
 */
 /*
 Copyright (c) 1996 Eugene Roshal

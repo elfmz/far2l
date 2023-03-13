@@ -57,7 +57,8 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	else if (MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) ibut = 3;
 
 	if ( MouseEvent.dwMousePosition.X < 0 || MouseEvent.dwMousePosition.X > SHORT(0xff - '!')
-	  || MouseEvent.dwMousePosition.Y < 0 || MouseEvent.dwMousePosition.Y > SHORT(0xff - '!') ) {
+		|| MouseEvent.dwMousePosition.Y < 0 || MouseEvent.dwMousePosition.Y > SHORT(0xff - '!') )
+	{
 		// mouse out of encodeable region - skip events to avoid misclicks
 		fprintf(stderr, "VTMouse: far away - %d:%d\n", MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y);
 		return true;

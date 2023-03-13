@@ -100,7 +100,7 @@ inline bool IsWordDiv(const wchar_t *WordDiv, wchar_t Chr) noexcept
 inline bool IsWordDivSTNR(const wchar_t *WordDiv, wchar_t Chr) noexcept
 	{ return wcschr(WordDiv, Chr) != nullptr || IsSpace(Chr) || IsEol(Chr); }
 
-//   WordDiv  - набор разделителей слова в кодировке OEM
+// WordDiv  - набор разделителей слова в кодировке OEM
 // возвращает указатель на начало слова
 const wchar_t * CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End,const wchar_t *WordDiv);
 

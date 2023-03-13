@@ -295,10 +295,10 @@ void SafeMMap::Slide(off_t file_offset)
 		const size_t al_new_len = AlignUp(new_len, _pg);
 		const size_t al_len = AlignUp(_len, _pg);
 		if (al_new_len < al_len) {
-			// From documentation:
-			//   If the memory region specified by addr and len overlaps pages of any existing
-			//   mapping(s), then the overlapped part of the existing mapping(s) will be discarded
-			// That means if not whole range remapped - then have to explicitly unmap remainder.
+			//	From documentation:
+			//		If the memory region specified by addr and len overlaps pages of any existing
+			//		mapping(s), then the overlapped part of the existing mapping(s) will be discarded
+			//	That means if not whole range remapped - then have to explicitly unmap remainder.
 			if (munmap((unsigned char *)_view + al_new_len, al_len - al_new_len) == -1) {
 				perror("SafeMMap::Slide: munmap remainder");
 			}

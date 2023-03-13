@@ -179,7 +179,7 @@ class Edit:public ScreenObject
 		std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
 
 	private:
-		virtual void   DisplayObject();
+		virtual void DisplayObject();
 		int    InsertKey(int Key);
 		int    RecurseProcessKey(int Key);
 		void   DeleteBlock();
@@ -222,9 +222,9 @@ class Edit:public ScreenObject
 		virtual int   ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 
-		//   ! Функция установки текущих Color,SelColor и ColorUnChanged!
+		// ! Функция установки текущих Color,SelColor и ColorUnChanged!
 		void  SetObjectColor(int Color,int SelColor=0xf,int ColorUnChanged=COL_DIALOGEDITUNCHANGED);
-		//   + Функция получения текущих Color,SelColor
+		// + Функция получения текущих Color,SelColor
 		long  GetObjectColor() {return MAKELONG(Color,SelColor);}
 		int   GetObjectColorUnChanged() {return ColorUnChanged;}
 

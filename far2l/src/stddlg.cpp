@@ -42,23 +42,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 
 int WINAPI GetSearchReplaceString(
-    int IsReplaceMode,
-    FARString *pSearchStr,
-    FARString *pReplaceStr,
-    const wchar_t *TextHistoryName,
-    const wchar_t *ReplaceHistoryName,
-    int *Case,
-    int *WholeWords,
-    int *Reverse,
-    int *SelectFound,
-    int *Regexp,
-    const wchar_t *HelpTopic)
+	int IsReplaceMode,
+	FARString *pSearchStr,
+	FARString *pReplaceStr,
+	const wchar_t *TextHistoryName,
+	const wchar_t *ReplaceHistoryName,
+	int *Case,
+	int *WholeWords,
+	int *Reverse,
+	int *SelectFound,
+	int *Regexp,
+	const wchar_t *HelpTopic)
 {
 	if (!pSearchStr || (IsReplaceMode && !pReplaceStr))
 		return FALSE;
 
-	static const wchar_t *TextHistoryName0    = L"SearchText",
-	        *ReplaceHistoryName0 = L"ReplaceText";
+	static const wchar_t *TextHistoryName0 = L"SearchText",
+		*ReplaceHistoryName0 = L"ReplaceText";
 	int HeightDialog, DeltaCol1, DeltaCol2, DeltaCol, I;
 
 	if (!TextHistoryName)
@@ -437,34 +437,34 @@ int WINAPI GetSearchReplaceString(
 static LONG_PTR WINAPI GetStringDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
 	/*
-	  if(Msg == DM_KEY)
-	  {
-	//    char KeyText[50];
-	//    KeyToText(Param2,KeyText);
-	//    _D(SysLog(L"%ls (0x%08X) ShiftPressed=%d",KeyText,Param2,ShiftPressed));
-	    if(ShiftPressed && (Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && !CtrlObject->Macro.IsExecuting())
-	    {
-	      DWORD Arr[1];
-	      Arr[0]=Param2 == KEY_ENTER?KEY_SHIFTENTER:KEY_SHIFTNUMENTER;
-	      SendDlgMessage(hDlg,Msg,Param1,(long)Arr);
-	      return TRUE;
-	    }
-	  }
+		if(Msg == DM_KEY)
+		{
+			//char KeyText[50];
+			//KeyToText(Param2,KeyText);
+			//_D(SysLog(L"%ls (0x%08X) ShiftPressed=%d",KeyText,Param2,ShiftPressed));
+			if(ShiftPressed && (Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && !CtrlObject->Macro.IsExecuting())
+			{
+				DWORD Arr[1];
+				Arr[0]=Param2 == KEY_ENTER?KEY_SHIFTENTER:KEY_SHIFTNUMENTER;
+				SendDlgMessage(hDlg,Msg,Param1,(long)Arr);
+				return TRUE;
+			}
+		}
 	*/
 	return DefDlgProc(hDlg,Msg,Param1,Param2);
 }
 
 
 int WINAPI GetString(
-    const wchar_t *Title,
-    const wchar_t *Prompt,
-    const wchar_t *HistoryName,
-    const wchar_t *SrcText,
-    FARString &strDestText,
-    const wchar_t *HelpTopic,
-    DWORD Flags,
-    int *CheckBoxValue,
-    const wchar_t *CheckBoxText
+	const wchar_t *Title,
+	const wchar_t *Prompt,
+	const wchar_t *HistoryName,
+	const wchar_t *SrcText,
+	FARString &strDestText,
+	const wchar_t *HelpTopic,
+	DWORD Flags,
+	int *CheckBoxValue,
+	const wchar_t *CheckBoxText
 )
 {
 	int Substract=5; // дополнительная величина :-)
@@ -568,14 +568,14 @@ int WINAPI GetString(
 }
 
 /*
-  Стандартный диалог ввода пароля.
-  Умеет сам запоминать последнего юзвера и пароль.
+	Стандартный диалог ввода пароля.
+	Умеет сам запоминать последнего юзвера и пароль.
 
-  Name      - сюда будет помещен юзвер (max 256 символов!!!)
-  Password  - сюда будет помещен пароль (max 256 символов!!!)
-  Title     - заголовок диалога (может быть nullptr)
-  HelpTopic - тема помощи (может быть nullptr)
-  Flags     - флаги (GNP_*)
+	Name      - сюда будет помещен юзвер (max 256 символов!!!)
+	Password  - сюда будет помещен пароль (max 256 символов!!!)
+	Title     - заголовок диалога (может быть nullptr)
+	HelpTopic - тема помощи (может быть nullptr)
+	Flags     - флаги (GNP_*)
 */
 int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARString &strPassword,const wchar_t *HelpTopic,DWORD Flags)
 {

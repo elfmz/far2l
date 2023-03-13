@@ -470,8 +470,10 @@ int TreeList::ReadTree()
 	ListData[0]->strName = strRoot;
 	SaveScreen SaveScrTree;
 	UndoGlobalSaveScrPtr UndSaveScr(&SaveScrTree);
-	/* Т.к. мы можем вызвать диалог подтверждения (который не перерисовывает панельки,
-	   а восстанавливает сохраненный образ экрана, то нарисуем чистую панель */
+	/*
+		Т.к. мы можем вызвать диалог подтверждения (который не перерисовывает панельки,
+		а восстанавливает сохраненный образ экрана, то нарисуем чистую панель
+	*/
 	//Redraw();
 	TreeCount=1;
 	int FirstCall=TRUE, AscAbort=FALSE;
@@ -483,7 +485,7 @@ int TreeList::ReadTree()
 	wakeful W;
 	while (ScTree.GetNextName(&fdata,strFullName))
 	{
-//    if(TreeCount > 3)
+//		if(TreeCount > 3)
 		TreeList::MsgReadTree(TreeCount,FirstCall);
 
 		if (CheckForEscSilent())
@@ -570,8 +572,10 @@ void TreeList::SaveTreeFile()
 	File TreeFile;
 	if (!TreeFile.Open(strName,GENERIC_WRITE,FILE_SHARE_READ,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL))
 	{
-		/* $ 16.10.2000 tran
-		   если диск должен кешироваться, то и пытаться не стоит */
+		/*
+			$ 16.10.2000 tran
+			если диск должен кешироваться, то и пытаться не стоит
+		*/
 		if (MustBeCached(strRoot))
 			if (!GetCacheTreeName(strRoot,strName,TRUE) || !TreeFile.Open(strName,GENERIC_WRITE,FILE_SHARE_READ,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL))
 				return;
@@ -700,8 +704,10 @@ void TreeList::PR_MsgReadTree()
 
 int TreeList::MsgReadTree(int TreeCount,int &FirstCall)
 {
-	/* $ 24.09.2001 VVM
-	  ! Писать сообщение о чтении дерева только, если это заняло более 500 мсек. */
+	/*
+		$ 24.09.2001 VVM
+		! Писать сообщение о чтении дерева только, если это заняло более 500 мсек.
+	*/
 	BOOL IsChangeConsole = LastScrX != ScrX || LastScrY != ScrY;
 
 	if (IsChangeConsole)
@@ -974,14 +980,15 @@ int TreeList::ProcessKey(int Key)
 			return TRUE;
 		}
 		/*
-		  Удаление                                   Shift-Del, Shift-F8, F8
+				Удаление                               Shift-Del, Shift-F8, F8
 
-		  Удаление файлов и папок. F8 и Shift-Del удаляют все выбранные
-		 файлы, Shift-F8 - только файл под курсором. Shift-Del всегда удаляет
-		 файлы, не используя Корзину (Recycle Bin). Использование Корзины
-		 командами F8 и Shift-F8 зависит от конфигурации.
+				Удаление файлов и папок. F8 и Shift-Del удаляют все выбранные
+			файлы, Shift-F8 - только файл под курсором. Shift-Del всегда
+			удаляет файлы, не используя Корзину (Recycle Bin).
+			Использование Корзины командами F8 и Shift-F8
+			зависит от конфигурации.
 
-		  Уничтожение файлов и папок                                 Alt-Del
+			Уничтожение файлов и папок                                 Alt-Del
 		*/
 		case KEY_F8:
 		case KEY_SHIFTDEL:
@@ -1963,9 +1970,11 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 	return cmpfunc(Str1, -1, Str2,-1);
 }
 
-/* $ 16.10.2000 tran
- функция, определяющаяя необходимость кеширования
- файла */
+/*
+	$ 16.10.2000 tran
+	функция, определяющаяя необходимость кеширования
+	файла
+*/
 int TreeList::MustBeCached(const wchar_t *Root)
 {
 	UINT type;
@@ -1987,10 +1996,11 @@ int TreeList::MustBeCached(const wchar_t *Root)
 		// кешируются CD, removable и неизвестно что :)
 	}
 
-	/* остались
-	    DRIVE_REMOTE
-	    DRIVE_RAMDISK
-	    DRIVE_FIXED
+	/*
+		остались
+		DRIVE_REMOTE
+		DRIVE_RAMDISK
+		DRIVE_FIXED
 	*/
 	return FALSE;
 }
@@ -2111,18 +2121,18 @@ FARString &TreeList::MkTreeCacheFolderName(const wchar_t *RootDir,FARString &str
 
 
 /*
-  Opt.Tree.LocalDisk
-  Opt.Tree.NetDisk
-  Opt.Tree.NetPath
-  Opt.Tree.RemovableDisk
-  Opt.Tree.CDROM
-  Opt.Tree.SavedTreePath
+	Opt.Tree.LocalDisk
+	Opt.Tree.NetDisk
+	Opt.Tree.NetPath
+	Opt.Tree.RemovableDisk
+	Opt.Tree.CDROM
+	Opt.Tree.SavedTreePath
 
-   локальных дисков - "X.nnnnnnnn.tree"
-   сетевых дисков - "X.nnnnnnnn.tree"
-   сетевых путей - "Server.share.tree"
-   сменных дисков(DRIVE_REMOVABLE) - "Far.nnnnnnnn.tree"
-   сменных дисков(CD) - "Label.nnnnnnnn.tree"
+		локальных дисков - "X.nnnnnnnn.tree"
+		сетевых дисков - "X.nnnnnnnn.tree"
+		сетевых путей - "Server.share.tree"
+		сменных дисков(DRIVE_REMOVABLE) - "Far.nnnnnnnn.tree"
+		сменных дисков(CD) - "Label.nnnnnnnn.tree"
 
 */
 FARString &TreeList::CreateTreeFileName(const wchar_t *Path,FARString &strDest)
@@ -2135,9 +2145,12 @@ FARString &TreeList::CreateTreeFileName(const wchar_t *Path,FARString &strDest)
 	char VolumeName[NM],FileSystemName[NM];
 	DWORD MaxNameLength,FileSystemFlags,VolumeNumber;
 
-	if (!GetVolumeInformation(RootDir,VolumeName,sizeof(VolumeName),&VolumeNumber,
-	                          &MaxNameLength,&FileSystemFlags,
-	                          FileSystemName,sizeof(FileSystemName)))
+	if (!GetVolumeInformation(
+			RootDir,VolumeName,sizeof(VolumeName),&VolumeNumber,
+			&MaxNameLength,&FileSystemFlags,
+			FileSystemName,sizeof(FileSystemName)
+		)
+	)
 		Opt.Tree.SavedTreePath
 #endif
 		return strDest;

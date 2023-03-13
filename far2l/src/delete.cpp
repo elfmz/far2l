@@ -556,9 +556,10 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 	ProcessedItems++;
 	int MsgCode=0;
 	std::unique_ptr<AskDeleteReadOnly> AskDeleteRO;
-	/* have to pretranslate to full path otherwise plain remove()
-	 * below will malfunction if current directory requires sudo
-	 */
+	/*
+		have to pretranslate to full path otherwise plain remove()
+		below will malfunction if current directory requires sudo
+	*/
 	FARString strFullName;
 	ConvertNameToFull(Name, strFullName);
 

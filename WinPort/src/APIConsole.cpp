@@ -206,6 +206,44 @@ extern "C" {
 		return TRUE;
 	}
 
+	WINPORT_DECL(CheckForKeyPress, DWORD, (HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, BOOL KeepKeyEvents, BOOL KeepMouseEvents, BOOL KeepOtherEvents))
+	{
+		std::vector<INPUT_RECORD> backlog;
+		DWORD out = 0;
+		while (g_winport_con_in->WaitForNonEmpty(0)) {
+			INPUT_RECORD rec;
+			if (!g_winport_con_in->Dequeue(&rec, 1)) {
+				break;
+			}
+			if (rec.EventType == KEY_EVENT) {
+				if (rec.Event.KeyEvent.bKeyDown) {
+					for (DWORD i = 0; i < KeyCodesCount; ++i) {
+						if (KeyCodes[i] == rec.Event.KeyEvent.wVirtualKeyCode) {
+							out = i + 1;
+							break;
+						}
+					}
+					if (out) {
+						break;
+					}
+				}
+				if (KeepKeyEvents) {
+					backlog.emplace_back(rec);
+				}
+			} else if (rec.EventType == MOUSE_EVENT) {
+				if (KeepMouseEvents) {
+					backlog.emplace_back(rec);
+				}
+			} else if (KeepOtherEvents && rec.EventType != NOOP_EVENT) {
+				backlog.emplace_back(rec);
+			}
+		}
+		if (!backlog.empty()) {
+			g_winport_con_in->Enqueue(backlog.data(), backlog.size());
+		}
+		return out;
+	}
+
 	WINPORT_DECL(WaitConsoleInput,BOOL,(DWORD dwTimeout))
 	{
 		return g_winport_con_in->WaitForNonEmpty((dwTimeout == INFINITE) ? -1 : dwTimeout) ? TRUE : FALSE;

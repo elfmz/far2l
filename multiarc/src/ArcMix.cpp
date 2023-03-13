@@ -346,22 +346,8 @@ int IsCaseMixed(const char *Str)
 
 int CheckForEsc()
 {
-  int ExitCode=FALSE;
-  while (1)
-  {
-    INPUT_RECORD rec;
-    /*static*/ HANDLE hConInp=NULL;//GetStdHandle(STD_INPUT_HANDLE);
-    DWORD ReadCount;
-    WINPORT(PeekConsoleInput)(hConInp,&rec,1,&ReadCount);
-    if (ReadCount==0)
-      break;
-    WINPORT(ReadConsoleInput)(hConInp,&rec,1,&ReadCount);
-    if (rec.EventType==KEY_EVENT)
-      if (rec.Event.KeyEvent.wVirtualKeyCode==VK_ESCAPE &&
-          rec.Event.KeyEvent.bKeyDown)
-        ExitCode=TRUE;
-  }
-  return ExitCode;
+  WORD KeyCode = VK_ESCAPE;
+  return WINPORT(CheckForKeyPress)(NULL, &KeyCode, 1, FALSE, FALSE, TRUE) != 0;
 }
 
 

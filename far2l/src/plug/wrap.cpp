@@ -995,10 +995,9 @@ void WINAPI FarRecursiveSearchA(const char *InitDir,const char *Mask,oldfar::FRS
 DWORD WINAPI ExpandEnvironmentStrA(const char *src, char *dest, size_t size)
 {
 	FARString strS(src), strD;
-	apiExpandEnvironmentStrings(strS,strD);
-	DWORD len = (DWORD)Min(strD.GetLength(),size-1);
-	strD.GetCharString(dest,len+1);
-	return len;
+	apiExpandEnvironmentStrings(strS, strD);
+	DWORD len = strD.GetCharString(dest, size);
+	return std::min((DWORD)size, len ? len - 1 : 0);
 }
 
 int WINAPI FarViewerA(const char *FileName,const char *Title,int X1,int Y1,int X2,int Y2,DWORD Flags)

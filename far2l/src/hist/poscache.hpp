@@ -49,8 +49,8 @@ const DWORD64 POS_NONE = _UI64_MAX;
 struct PosCache
 {
 /*
-    Param:
-    	Editor:
+	Param:
+		Editor:
 			Param[0] = Line
 			Param[1] = ScreenLine
 			Param[2] = LinePos
@@ -68,8 +68,8 @@ struct PosCache
 	DWORD64 Param[POSCACHE_PARAM_COUNT];
 
 /*
-    Position
-    	Editor:
+	Position
+		Editor:
 			Position[0] = [POSCACHE_BOOKMARK_COUNT] Line
 			Position[1] = [POSCACHE_BOOKMARK_COUNT] Cursor
 			Position[2] = [POSCACHE_BOOKMARK_COUNT] ScreenLine

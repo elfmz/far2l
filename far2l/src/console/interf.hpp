@@ -55,10 +55,11 @@ enum
 
 void ShowTime(int ShowAlways);
 
-/*$ 14.02.2001 SKV
-  Инитить ли палитру default значениями.
-  По умолчанию - да.
-  С 0 используется для ConsoleDetach.
+/*
+	$ 14.02.2001 SKV
+	Инитить ли палитру default значениями.
+	По умолчанию - да.
+	С 0 используется для ConsoleDetach.
 */
 void InitConsole();
 void CloseConsole();

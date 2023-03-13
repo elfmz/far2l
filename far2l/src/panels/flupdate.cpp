@@ -83,9 +83,11 @@ void FileList::Update(int Mode)
 
 				if (PanelMode!=PLUGIN_PANEL)
 					ReadFileNames(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE,Mode & UPDATE_DRAW_MESSAGE,Mode & UPDATE_CAN_BE_ANNOYING);
-				else if ((Info.Flags & OPIF_REALNAMES) ||
-				         CtrlObject->Cp()->GetAnotherPanel(this)->GetMode()==PLUGIN_PANEL ||
-				         !(Mode & UPDATE_SECONDARY))
+				else if (
+					(Info.Flags & OPIF_REALNAMES) ||
+					CtrlObject->Cp()->GetAnotherPanel(this)->GetMode()==PLUGIN_PANEL ||
+					!(Mode & UPDATE_SECONDARY)
+				)
 					UpdatePlugin(Mode & UPDATE_KEEP_SELECTION, Mode & UPDATE_IGNORE_VISIBLE);
 			}
 			ProcessPluginCommand();
@@ -289,7 +291,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 				TotalFileCount++;
 
 			//memcpy(ListData+FileCount,&NewPtr,sizeof(NewPtr));
-//      FileCount++;
+			//FileCount++;
 
 			DWORD CurTime = WINPORT(GetTickCount)();
 			if (CurTime - StartTime > RedrawTimeout)
@@ -433,7 +435,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 		if (!GoToFile(strCurName) && !strNextCurName.IsEmpty())
 			GoToFile(strNextCurName);
 
-	/* $ 13.02.2002 DJ
+	/*
+		$ 13.02.2002 DJ
 		SetTitle() - только если мы текущий фрейм!
 	*/
 	if (CtrlObject->Cp() == FrameManager->GetCurrentFrame())
@@ -442,23 +445,28 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	FarChDir(strSaveDir); //???
 }
 
-/*$ 22.06.2001 SKV
-  Добавлен параметр для вызова после исполнения команды.
+/*
+	$ 22.06.2001 SKV
+	Добавлен параметр для вызова после исполнения команды.
 */
 int FileList::UpdateIfChanged(int UpdateMode)
 {
 	//_SVS(SysLog(L"CurDir='%ls' Opt.AutoUpdateLimit=%d <= FileCount=%d",CurDir,Opt.AutoUpdateLimit,ListData.Count()));
 	if (!Opt.AutoUpdateLimit || DWORD(ListData.Count()) <= Opt.AutoUpdateLimit)
 	{
-		/* $ 19.12.2001 VVM
-		  ! Сменим приоритеты. При Force обновление всегда! */
+		/*
+			$ 19.12.2001 VVM
+			! Сменим приоритеты. При Force обновление всегда!
+		*/
 		if ((IsVisible() && (GetProcessUptimeMSec()-LastUpdateTime>2000)) || (UpdateMode != UIC_UPDATE_NORMAL))
 		{
 			if (UpdateMode == UIC_UPDATE_NORMAL)
 				ProcessPluginEvent(FE_IDLE,nullptr);
 
-			/* $ 24.12.2002 VVM
-			  ! Поменяем логику обновления панелей. */
+			/*
+				$ 24.12.2002 VVM
+				! Поменяем логику обновления панелей.
+			*/
 			if (// Нормальная панель, на ней установлено уведомление и есть сигнал
 				(PanelMode==NORMAL_PANEL && ListChange && ListChange->Check()) ||
 				// Или Нормальная панель, но нет уведомления и мы попросили обновить через UPDATE_FORCE
@@ -710,8 +718,10 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	CurFile = std::min(CurFile,
 		ListData.IsEmpty() ? 0 : ListData.Count() - 1);
 
-	/* $ 25.02.2001 VVM
-	    ! Не считывать повторно список файлов с панели плагина */
+	/*
+		$ 25.02.2001 VVM
+		! Не считывать повторно список файлов с панели плагина
+	*/
 	if (IsColumnDisplayed(DIZ_COLUMN))
 		ReadDiz(PanelData,PluginFileCount,RDF_NO_UPDATE);
 
@@ -764,8 +774,10 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 
 		int GetCode=TRUE;
 
-		/* $ 25.02.2001 VVM
-		    + Обработка флага RDF_NO_UPDATE */
+		/*
+			$ 25.02.2001 VVM
+			+ Обработка флага RDF_NO_UPDATE
+		*/
 		if (!ItemList && !(dwFlags & RDF_NO_UPDATE))
 		{
 			GetCode=CtrlObject->Plugins.GetFindData(hPlugin,&PanelData,&PluginFileCount,0);
@@ -808,8 +820,10 @@ void FileList::ReadDiz(PluginPanelItem *ItemList,int ItemLength,DWORD dwFlags)
 				}
 			}
 
-			/* $ 25.02.2001 VVM
-			    + Обработка флага RDF_NO_UPDATE */
+			/*
+				$ 25.02.2001 VVM
+				+ Обработка флага RDF_NO_UPDATE
+			*/
 			if (!ItemList && !(dwFlags & RDF_NO_UPDATE))
 				CtrlObject->Plugins.FreeFindData(hPlugin,PanelData,PluginFileCount);
 		}

@@ -60,8 +60,8 @@ class Frame: public ScreenObject
 {
 		friend class Manager;
 	private:
-//    Frame **ModalStack;
-//    int  ModalStackCount, ModalStackSize;
+		//Frame **ModalStack;
+		//int ModalStackCount, ModalStackSize;
 		Frame *FrameToBack;
 		Frame *NextModal,*PrevModal;
 		bool RegularIdle = false;
@@ -79,8 +79,8 @@ class Frame: public ScreenObject
 		Frame();
 		virtual ~Frame();
 
-//    virtual int ProcessKey(int Key);
-//    virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+		//virtual int ProcessKey(int Key);
+		//virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
 		virtual int GetCanLoseFocus(int DynamicMode=FALSE) { return(CanLoseFocus); };
 		void SetCanLoseFocus(int Mode) { CanLoseFocus=Mode; };
@@ -112,19 +112,19 @@ class Frame: public ScreenObject
 		/* DJ $ */
 		void Push(Frame* Modalized);
 		Frame *GetTopModal() {return NextModal;};
-//    bool Pop();
-//    Frame *operator[](int Index);
-//    int operator[](Frame *ModalFarame);
-//    int ModalCount() {return ModalStackCount;}
+		//bool Pop();
+		//Frame *operator[](int Index);
+		//int operator[](Frame *ModalFarame);
+		//int ModalCount() {return ModalStackCount;}
 		void DestroyAllModal();
 		void SetDynamicallyBorn(int Born) {DynamicallyBorn=Born;}
 		int GetDynamicallyBorn() {return DynamicallyBorn;};
 		virtual int FastHide();
-//    int IndexOf(Frame *aFrame);
+		//int IndexOf(Frame *aFrame);
 		bool RemoveModal(Frame *aFrame);
 		virtual void ResizeConsole();
 		bool HasSaveScreen();
-//    bool ifFullConsole();
+		//bool ifFullConsole();
 		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0) { return Title; };
 		virtual bool ProcessEvents() {return true;};
 };

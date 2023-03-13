@@ -174,8 +174,8 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 	
 	/*
 	size_t lPath=wcslen(NullToEmpty(stPath)),
-	       lCurrentDir=wcslen(NullToEmpty(stCurrentDir)),
-	       lFullPath=lPath+lCurrentDir;
+		lCurrentDir=wcslen(NullToEmpty(stCurrentDir)),
+		lFullPath=lPath+lCurrentDir;
 
 	if (lFullPath > 0)
 	{
@@ -265,8 +265,8 @@ bool MixToFullPath(LPCWSTR stPath, FARString& strDest, LPCWSTR stCurrentDir)
 
 
 /*
-  Преобразует Src в полный РЕАЛЬНЫЙ путь с учетом reparse point.
-  Note that Src can be partially non-existent.
+	Преобразует Src в полный РЕАЛЬНЫЙ путь с учетом reparse point.
+	Note that Src can be partially non-existent.
 */
 void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 {

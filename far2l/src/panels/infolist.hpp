@@ -38,9 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 //class Viewer;
 
-/* $ 12.10.2001 SKV
-  заврапим Viewer что бы отслеживать рекурсивность вызова
-  методов DizView и случайно не удалить его во время вызова.
+/*
+	$ 12.10.2001 SKV
+	заврапим Viewer что бы отслеживать рекурсивность вызова
+	методов DizView и случайно не удалить его во время вызова.
 */
 class DizViewer: public Viewer
 {

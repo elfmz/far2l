@@ -71,8 +71,8 @@ static int ListPaletteItems[4][13]=
 		COL_DIALOGLISTARROWS,             // Arrow
 		COL_DIALOGLISTARROWSSELECTED,     // Выбранный - Arrow
 		COL_DIALOGLISTARROWSDISABLED,     // Arrow disabled
-		COL_DIALOGLISTGRAY,                        // "серый"
-		COL_DIALOGLISTSELECTEDGRAYTEXT,            // выбранный "серый"
+		COL_DIALOGLISTGRAY,               // "серый"
+		COL_DIALOGLISTSELECTEDGRAYTEXT,   // выбранный "серый"
 	},
 	{ // warn
 		COL_WARNDIALOGLISTTEXT,
@@ -86,8 +86,8 @@ static int ListPaletteItems[4][13]=
 		COL_WARNDIALOGLISTARROWS,                   // Arrow
 		COL_WARNDIALOGLISTARROWSSELECTED,           // Выбранный - Arrow
 		COL_WARNDIALOGLISTARROWSDISABLED,           // Arrow disabled
-		COL_WARNDIALOGLISTGRAY,                    // "серый"
-		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,        // выбранный "серый"
+		COL_WARNDIALOGLISTGRAY,                     // "серый"
+		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,         // выбранный "серый"
 	},
 	// Combobox
 	{ // normal
@@ -102,8 +102,8 @@ static int ListPaletteItems[4][13]=
 		COL_DIALOGCOMBOARROWS,                      // Arrow
 		COL_DIALOGCOMBOARROWSSELECTED,              // Выбранный - Arrow
 		COL_DIALOGCOMBOARROWSDISABLED,              // Arrow disabled
-		COL_DIALOGCOMBOGRAY,                       // "серый"
-		COL_DIALOGCOMBOSELECTEDGRAYTEXT,           // выбранный "серый"
+		COL_DIALOGCOMBOGRAY,                        // "серый"
+		COL_DIALOGCOMBOSELECTEDGRAYTEXT,            // выбранный "серый"
 	},
 	{ // warn
 		COL_WARNDIALOGCOMBOTEXT,
@@ -117,8 +117,8 @@ static int ListPaletteItems[4][13]=
 		COL_WARNDIALOGCOMBOARROWS,                  // Arrow
 		COL_WARNDIALOGCOMBOARROWSSELECTED,          // Выбранный - Arrow
 		COL_WARNDIALOGCOMBOARROWSDISABLED,          // Arrow disabled
-		COL_WARNDIALOGCOMBOGRAY,                   // "серый"
-		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,       // выбранный "серый"
+		COL_WARNDIALOGCOMBOGRAY,                    // "серый"
+		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,        // выбранный "серый"
 	},
 };
 
@@ -282,8 +282,8 @@ void SetColors()
 		COL_MENUARROWS,                             // Arrow
 		COL_MENUARROWSSELECTED,                     // Выбранный - Arrow
 		COL_MENUARROWSDISABLED,
-		COL_MENUGRAYTEXT,                          // "серый"
-		COL_MENUSELECTEDGRAYTEXT,                  // выбранный "серый"
+		COL_MENUGRAYTEXT,                           // "серый"
+		COL_MENUSELECTEDGRAYTEXT,                   // выбранный "серый"
 	};
 	MenuDataEx HMenuItems[]=
 	{

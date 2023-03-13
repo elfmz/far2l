@@ -1,11 +1,12 @@
 #pragma once
 
-/*  TStack.hpp
-    Шаблон работы со стеком (LIFO)
+/*
+	TStack.hpp
+	Шаблон работы со стеком (LIFO)
 
-    TStack<Object> Stack;
-    // Object должен иметь конструктор по умолчанию и оператор
-    // const Object& operator=(const Object &)
+	TStack<Object> Stack;
+	// Object должен иметь конструктор по умолчанию и оператор
+	// const Object& operator=(const Object &)
 */
 /*
 Copyright (c) 2009 Far Group

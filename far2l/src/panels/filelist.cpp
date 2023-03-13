@@ -538,11 +538,12 @@ void FileList::SetFocus()
 {
 	Panel::SetFocus();
 
-	/* $ 07.04.2002 KM
-	  ! Рисуем заголовок консоли фара только тогда, когда
-	    не идёт процесс перерисовки всех фреймов. В данном
-	    случае над панелями висит диалог и незачем выводить
-	    панельный заголовок.
+	/*
+		$ 07.04.2002 KM
+		! Рисуем заголовок консоли фара только тогда, когда
+		не идёт процесс перерисовки всех фреймов. В данном
+		случае над панелями висит диалог и незачем выводить
+		панельный заголовок.
 	*/
 	if (!IsRedrawFramesInProcess)
 		SetTitle();
@@ -907,11 +908,11 @@ int FileList::ProcessKey(int Key)
 				break;
 				// эти спорные, хотя, если Ctrl-F работает, то и эти должны :-)
 				/*
-				      case KEY_CTRLINS:
-				      case KEY_CTRLSHIFTINS:
-				      case KEY_CTRLALTINS:
-				      case KEY_ALTSHIFTINS:
-				        break;
+					case KEY_CTRLINS:
+					case KEY_CTRLSHIFTINS:
+					case KEY_CTRLALTINS:
+					case KEY_ALTSHIFTINS:
+						break;
 				*/
 			default:
 				return FALSE;
@@ -950,9 +951,10 @@ int FileList::ProcessKey(int Key)
 		}
 	}
 
-	/* $ 27.08.2002 SVS
-	    [*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
-	        Shift-PgUp/PgDn.
+	/*
+		$ 27.08.2002 SVS
+		[*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
+		Shift-PgUp/PgDn.
 	*/
 	if (Columns==1 && !CmdLength)
 	{
@@ -1039,7 +1041,7 @@ int FileList::ProcessKey(int Key)
 			Redraw();
 			return TRUE;
 		case KEY_ALTRIGHT:    // Прокрутка длинных имен и описаний
-		case KEY_ALTEND:     // Прокрутка длинных имен и описаний - в конец
+		case KEY_ALTEND:      // Прокрутка длинных имен и описаний - в конец
 			LeftPos=(Key == KEY_ALTEND)?0x7fff:LeftPos+1;
 			Redraw();
 			return TRUE;
@@ -1066,9 +1068,11 @@ int FileList::ProcessKey(int Key)
 //			CopyFiles();
 //			return TRUE;
 
-			/* $ 14.02.2001 VVM
-			  + Ctrl: вставляет имя файла с пассивной панели.
-			  + CtrlAlt: вставляет UNC-имя файла с пассивной панели */
+			/*
+				$ 14.02.2001 VVM
+				+ Ctrl: вставляет имя файла с пассивной панели.
+				+ CtrlAlt: вставляет UNC-имя файла с пассивной панели
+			*/
 		case KEY_CTRL|KEY_SEMICOLON:
 		case KEY_CTRL|KEY_ALT|KEY_SEMICOLON:
 		{
@@ -1145,8 +1149,10 @@ int FileList::ProcessKey(int Key)
 
 							if (Opt.PanelCtrlFRule)
 							{
-								/* $ 13.10.2000 tran
-								  по Ctrl-f имя должно отвечать условиям на панели */
+								/*
+									$ 13.10.2000 tran
+									по Ctrl-f имя должно отвечать условиям на панели
+								*/
 								if (ViewSettings.FileLowerCase && !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 									strFileName.Lower();
 
@@ -1422,15 +1428,16 @@ int FileList::ProcessKey(int Key)
 						if (!dlgOpenEditor(strLastFileName, codepage))
 							return FALSE;
 
-						/*if (!GetString(Msg::EditTitle,
-						               Msg::FileToEdit,
-						               L"NewEdit",
-						               strLastFileName,
-						               strLastFileName,
-						               512, //BUGBUG
-						               L"Editor",
-						               FIB_BUTTONS|FIB_EXPANDENV|FIB_EDITPATH|FIB_ENABLEEMPTY))
-						  return FALSE;*/
+						/*if (!GetString(
+										Msg::EditTitle,
+										Msg::FileToEdit,
+										L"NewEdit",
+										strLastFileName,
+										strLastFileName,
+										512, //BUGBUG
+										L"Editor",
+										FIB_BUTTONS|FIB_EXPANDENV|FIB_EDITPATH|FIB_ENABLEEMPTY))
+							return FALSE;*/
 
 						if (!strLastFileName.IsEmpty())
 						{
@@ -1685,18 +1692,19 @@ int FileList::ProcessKey(int Key)
 							AnotherPanel->Redraw();
 						}
 					}
-//          else
-//            SetTitle();
+//			else
+//				SetTitle();
 				}
 				else if (PanelMode==NORMAL_PANEL)
 					AccessTimeUpdateRequired=TRUE;
 			}
 
-			/* $ 15.07.2000 tran
-			   а тут мы вызываем перерисовку панелей
-			   потому что этот viewer, editor могут нам неверно восстановить
-			   */
-//      CtrlObject->Cp()->Redraw();
+			/*
+				$ 15.07.2000 tran
+				а тут мы вызываем перерисовку панелей
+				потому что этот viewer, editor могут нам неверно восстановить
+			*/
+//			CtrlObject->Cp()->Redraw();
 			return TRUE;
 		}
 		case KEY_F5:
@@ -1792,10 +1800,12 @@ int FileList::ProcessKey(int Key)
 
 					Redraw();
 					Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-					/* $ 07.09.2001 VVM
-					  ! Обновить соседнюю панель с установкой на новый каталог */
-//          AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-//          AnotherPanel->Redraw();
+					/*
+						$ 07.09.2001 VVM
+						! Обновить соседнюю панель с установкой на новый каталог
+					*/
+//					AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+//					AnotherPanel->Redraw();
 
 					if (AnotherPanel->GetType()!=FILE_PANEL)
 					{
@@ -1920,9 +1930,10 @@ int FileList::ProcessKey(int Key)
 			}
 
 			return FALSE;
-			/* $ 25.04.2001 DJ
-			   оптимизация Shift-стрелок для Selected files first: делаем сортировку
-			   один раз
+			/*
+				$ 25.04.2001 DJ
+				оптимизация Shift-стрелок для Selected files first: делаем сортировку
+				один раз
 			*/
 		case KEY_SHIFTHOME:    case KEY_SHIFTNUMPAD7:
 		{
@@ -2215,8 +2226,10 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 				strFullPath = strCurDir;
 				AddEndSlash(strFullPath);
 
-				/* 23.08.2001 VVM
-				  ! SHIFT+ENTER на ".." срабатывает для текущего каталога, а не родительского */
+				/*
+					23.08.2001 VVM
+					! SHIFT+ENTER на ".." срабатывает для текущего каталога, а не родительского
+				*/
 				if (!TestParentFolderName(CurPtr->strName))
 					strFullPath += CurPtr->strName;
 			}
@@ -2394,15 +2407,18 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	{
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		/* $ 16.01.2002 VVM
-		  + Если у плагина нет OPIF_REALNAMES, то история папок не пишется в реестр */
+		/*
+			$ 16.01.2002 VVM
+			+ Если у плагина нет OPIF_REALNAMES, то история папок не пишется в реестр
+		*/
 		FARString strInfoCurDir=Info.CurDir;
 		FARString strInfoFormat=Info.Format;
 		FARString strInfoHostFile=Info.HostFile;
 		CtrlObject->FolderHistory->AddToHistory(strInfoCurDir,1,strInfoFormat,
 			(Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
-		/* $ 25.04.01 DJ
-		   при неудаче SetDirectory не сбрасываем выделение
+		/*
+			$ 25.04.01 DJ
+			при неудаче SetDirectory не сбрасываем выделение
 		*/
 		BOOL SetDirectorySuccess = TRUE;
 
@@ -2495,8 +2511,9 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			UpperFolderTopFile=0;
 			CorrectPosition();
 		}
-		/* $ 26.04.2001 DJ
-		   доделка про несброс выделения при неудаче SetDirectory
+		/*
+			$ 26.04.2001 DJ
+			доделка про несброс выделения при неудаче SetDirectory
 		*/
 		else if (SetDirectorySuccess)
 			CurFile=CurTopFile=0;
@@ -2551,9 +2568,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	}
 
 	strFindDir = PointToName(strCurDir);
-	/* $ 26.04.2001 DJ
-	   проверяем, удалось ли сменить каталог, и обновляем с KEEP_SELECTION,
-	   если не удалось
+	/*
+		$ 26.04.2001 DJ
+		проверяем, удалось ли сменить каталог, и обновляем с KEEP_SELECTION,
+		если не удалось
 	*/
 	int UpdateFlags = 0;
 	BOOL SetDirectorySuccess = TRUE;
@@ -2744,14 +2762,15 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					return TRUE;
 			}
 
-			/*$ 21.02.2001 SKV
-			  Если пришел DOUBLE_CLICK без предшевствующего ему
-			  простого клика, то курсор не перерисовывается.
-			  Перересуем его.
-			  По идее при нормальном DOUBLE_CLICK, будет
-			  двойная перерисовка...
-			  Но мы же вызываем Fast=TRUE...
-			  Вроде всё должно быть ок.
+			/*
+				$ 21.02.2001 SKV
+				Если пришел DOUBLE_CLICK без предшевствующего ему
+				простого клика, то курсор не перерисовывается.
+				Перересуем его.
+				По идее при нормальном DOUBLE_CLICK, будет
+				двойная перерисовка...
+				Но мы же вызываем Fast=TRUE...
+				Вроде всё должно быть ок.
 			*/
 			ShowFileList(TRUE);
 			FlushInputBuffer();
@@ -2760,8 +2779,9 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 		else
 		{
-			/* $ 11.09.2000 SVS
-			   Bug #17: Выделяем при условии, что колонка ПОЛНОСТЬЮ пуста.
+			/*
+				$ 11.09.2000 SVS
+				Bug #17: Выделяем при условии, что колонка ПОЛНОСТЬЮ пуста.
 			*/
 			if ((MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) && !IsEmpty)
 			{
@@ -2833,8 +2853,9 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-/* $ 12.09.2000 SVS
-  + Опциональное поведение для правой клавиши мыши на пустой панели
+/*
+	$ 12.09.2000 SVS
+	+ Опциональное поведение для правой клавиши мыши на пустой панели
 */
 void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
@@ -2859,8 +2880,8 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		Level++;
 	}
 
-//  if (!CurColumn)
-//    CurColumn=1;
+//	if (!CurColumn)
+//		CurColumn=1;
 	int OldCurFile=CurFile;
 	CurFile=CurTopFile+MouseEvent->dwMousePosition.Y-Y1-1-Opt.ShowColumnTitles;
 
@@ -2869,8 +2890,9 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	CorrectPosition();
 
-	/* $ 11.09.2000 SVS
-	   Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
+	/*
+		$ 11.09.2000 SVS
+		Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
 	*/
 	if (Opt.PanelRightClickRule == 1)
 		IsEmpty=((CurColumn-1)*Height > ListData.Count());
@@ -2947,7 +2969,7 @@ void FileList::SetViewMode(int ViewMode)
 	if (PanelMode==PLUGIN_PANEL)
 	{
 		FARString strColumnTypes,strColumnWidths;
-//    SetScreenPosition();
+//	SetScreenPosition();
 		ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
 			ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
 		ProcessPluginEvent(FE_CHANGEVIEWMODE,(void*)strColumnTypes.CPtr());
@@ -3070,7 +3092,7 @@ bool FileList::IsSelected(const wchar_t *Name)
 bool FileList::IsSelected(long idxItem)
 {
 	if (idxItem >= 0 && idxItem < ListData.Count())
-		return (ListData[idxItem]->Selected); //  || (Sel!FileCount && idxItem==CurFile) ???
+		return (ListData[idxItem]->Selected); // || (Sel!FileCount && idxItem==CurFile) ???
 
 	return false;
 }
@@ -3301,11 +3323,12 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	bool bUseFilter = false;
 	FileListItem *CurPtr;
 	static FARString strPrevMask=L"*";
-	/* $ 20.05.2002 IS
-	   При обработке маски, если работаем с именем файла на панели,
-	   берем каждую квадратную скобку в имени при образовании маски в скобки,
-	   чтобы подобные имена захватывались полученной маской - это специфика,
-	   диктуемая CmpName.
+	/*
+		$ 20.05.2002 IS
+		При обработке маски, если работаем с именем файла на панели,
+		берем каждую квадратную скобку в имени при образовании маски в скобки,
+		чтобы подобные имена захватывались полученной маской - это специфика,
+		диктуемая CmpName.
 	*/
 	FARString strMask=L"*", strRawMask;
 	int Selection=0;
@@ -3414,7 +3437,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	SaveSelection();
 
 	if (!bUseFilter && WrapBrackets) // возьмем кв.скобки в скобки, чтобы получить
-	{                               // работоспособную маску
+	{                                // работоспособную маску
 		const wchar_t *src = strRawMask;
 		strMask.Clear();
 
@@ -3438,7 +3461,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	long workCount=0;
 
 	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT)) // Скомпилируем маски файлов и работаем
-	{                                                // дальше в зависимости от успеха компиляции
+	{                                                    // дальше в зависимости от успеха компиляции
 		for (auto &CurPtr : ListData)
 		{
 			int Match=FALSE;
@@ -3743,8 +3766,9 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 		{
 			if (PanelMode!=PLUGIN_PANEL)
 			{
-				/* $ 14.02.2002 IS
-				   ".." в текущем каталоге обработаем как имя текущего каталога
+				/*
+					$ 14.02.2002 IS
+					".." в текущем каталоге обработаем как имя текущего каталога
 				*/
 				if (TestParentFolderName(strQuotedName) )
 				{
@@ -3842,16 +3866,20 @@ FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FAR
 	}
 
 
-	/* $ 29.01.2001 VVM
-	  + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла. */
+	/*
+		$ 29.01.2001 VVM
+		+ По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
+	*/
 	/*if (UNC)
 		ConvertNameToUNC(strFileName);*/
 
 	// $ 20.10.2000 SVS Сделаем фичу Ctrl-F опциональной!
 	if (Opt.PanelCtrlFRule)
 	{
-		/* $ 13.10.2000 tran
-		  по Ctrl-f имя должно отвечать условиям на панели */
+		/*
+			$ 13.10.2000 tran
+			по Ctrl-f имя должно отвечать условиям на панели
+		*/
 		if (ViewSettings.FolderUpperCase)
 		{
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -4230,8 +4258,9 @@ void FileList::DescribeFiles()
 		QuoteSpaceOnly(strQuotedName);
 		strMsg.Append(Msg::EnterDescription).Append(L" ").Append(strQuotedName).Append(L":");
 
-		/* $ 09.08.2000 SVS
-		   Для Ctrl-Z ненужно брать предыдущее значение!
+		/*
+			$ 09.08.2000 SVS
+			Для Ctrl-Z ненужно брать предыдущее значение!
 		*/
 		if (!GetString(Msg::DescribeFiles,strMsg,L"DizText",
 			PrevText ? PrevText:L"",strDizText,
@@ -4263,12 +4292,12 @@ void FileList::DescribeFiles()
 
 	/*if (DizCount>0)
 	{
-	  FlushDiz();
-	  Update(UPDATE_KEEP_SELECTION);
-	  Redraw();
-	  Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-	  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-	  AnotherPanel->Redraw();
+		FlushDiz();
+		Update(UPDATE_KEEP_SELECTION);
+		Redraw();
+		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+		AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+		AnotherPanel->Redraw();
 	}*/
 }
 
@@ -4361,8 +4390,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	uint64_t FileSize,PhysicalSize;
 	DWORD SelDirCount=0;
 
-	/* $ 09.11.2000 OT
-	  F3 на ".." в плагинах
+	/*
+		$ 09.11.2000 OT
+		F3 на ".." в плагинах
 	*/
 	if (PanelMode==PLUGIN_PANEL && !CurFile && TestParentFolderName(ListData[0]->strName))
 	{

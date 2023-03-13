@@ -253,7 +253,7 @@ bool PluginA::SaveToCache()
 	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorEvent, pProcessEditorEvent!=nullptr);
 	kfh.SetUInt(GetSettingsName(), szCache_ProcessViewerEvent, pProcessViewerEvent!=nullptr);
 	kfh.SetUInt(GetSettingsName(), szCache_ProcessDialogEvent, pProcessDialogEvent!=nullptr);
-	kfh.SetUInt(GetSettingsName(),  szCache_Configure, pConfigure!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_Configure, pConfigure!=nullptr);
 	return true;
 }
 
@@ -529,9 +529,9 @@ bool PluginA::CheckMinFarVersion(bool &bUnloaded)
 
 		DWORD FVer = (DWORD)es.nResult;
 
-		if (LOWORD(FVer) >  LOWORD(FAR_VERSION) ||
+		if (LOWORD(FVer) > LOWORD(FAR_VERSION) ||
 			(LOWORD(FVer) == LOWORD(FAR_VERSION) &&
-				HIWORD(FVer) >  HIWORD(FAR_VERSION)))
+				HIWORD(FVer) > HIWORD(FAR_VERSION)))
 		{
 			ShowMessageAboutIllegalPluginVersion(m_strModuleName,FVer);
 			return false;
@@ -602,7 +602,7 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 		es.hResult = INVALID_HANDLE_VALUE;
 		char *ItemA = nullptr;
 
-		if (Item && (OpenFrom == OPEN_COMMANDLINE  || OpenFrom == OPEN_SHORTCUT))
+		if (Item && (OpenFrom == OPEN_COMMANDLINE || OpenFrom == OPEN_SHORTCUT))
 		{
 			ItemA = UnicodeToAnsi((const wchar_t *)Item);
 			Item = (INT_PTR)ItemA;
@@ -614,34 +614,38 @@ HANDLE PluginA::OpenPlugin(int OpenFrom, INT_PTR Item)
 
 		hResult = es.hResult;
 		//CurPluginItem=nullptr; //BUGBUG
-		/*    CtrlObject->Macro.SetRedrawEditor(TRUE); //BUGBUG
+		/*
+		CtrlObject->Macro.SetRedrawEditor(TRUE); //BUGBUG
 
-		    if ( !es.bUnloaded )
-		    {
+		if ( !es.bUnloaded )
+		{
 
-		      if(OpenFrom == OPEN_EDITOR &&
-		         !CtrlObject->Macro.IsExecuting() &&
-		         CtrlObject->Plugins.CurEditor &&
-		         CtrlObject->Plugins.CurEditor->IsVisible() )
-		      {
-		        CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
-		        CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
-		        CtrlObject->Plugins.CurEditor->Show();
-		      }
-		      if (hInternal!=INVALID_HANDLE_VALUE)
-		      {
-		        PluginHandle *hPlugin=new PluginHandle;
-		        hPlugin->InternalHandle=es.hResult;
-		        hPlugin->PluginNumber=(INT_PTR)this;
-		        return((HANDLE)hPlugin);
-		      }
-		      else
-		        if ( !g_strDirToSet.IsEmpty() )
-		        {
-							CtrlObject->Cp()->ActivePanel->SetCurDir(g_strDirToSet,TRUE);
-		          CtrlObject->Cp()->ActivePanel->Redraw();
-		        }
-		    } */
+			if (
+				OpenFrom == OPEN_EDITOR &&
+				!CtrlObject->Macro.IsExecuting() &&
+				CtrlObject->Plugins.CurEditor &&
+				CtrlObject->Plugins.CurEditor->IsVisible()
+			)
+			{
+				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
+				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
+				CtrlObject->Plugins.CurEditor->Show();
+			}
+			if (hInternal!=INVALID_HANDLE_VALUE)
+			{
+				PluginHandle *hPlugin=new PluginHandle;
+				hPlugin->InternalHandle=es.hResult;
+				hPlugin->PluginNumber=(INT_PTR)this;
+				return((HANDLE)hPlugin);
+			}
+			else
+			if ( !g_strDirToSet.IsEmpty() )
+			{
+				CtrlObject->Cp()->ActivePanel->SetCurDir(g_strDirToSet,TRUE);
+				CtrlObject->Cp()->ActivePanel->Redraw();
+			}
+		}
+		*/
 	}
 
 //	delete ChPriority;
@@ -721,7 +725,7 @@ int PluginA::ProcessEditorInput(
 		if (Ptr->EventType==KEY_EVENT)
 		{
 			OemRecord=*D;
-			int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0,  &D->Event.KeyEvent.uChar.UnicodeChar,
+			int r = WINPORT(WideCharToMultiByte)(CP_UTF8, 0, &D->Event.KeyEvent.uChar.UnicodeChar,
 					1, &OemRecord.Event.KeyEvent.uChar.AsciiChar,1, nullptr, nullptr);
 			if (r<0) fprintf(stderr, "PluginA::ProcessEditorInput: convert failed\n");
 			//CharToOemBuff(&D->Event.KeyEvent.uChar.UnicodeChar,&OemRecord.Event.KeyEvent.uChar.AsciiChar,1);

@@ -46,7 +46,7 @@ void MenuBar::DisplayObject()
 	RemoveHighlights(strMsg);
 	int Length=X2-X1+1;
 	FARString strFullMsg;
-    strFullMsg.Format(L"%-*.*ls", Length,Length, strMsg.CPtr());
+	strFullMsg.Format(L"%-*.*ls", Length,Length, strMsg.CPtr());
 	GotoXY(X1,Y1);
 	SetColor(COL_HMENUTEXT);
 	Text(strFullMsg);

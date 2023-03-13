@@ -101,12 +101,12 @@ LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 }
 
 static int ShowMessageSynched(
-    DWORD Flags,
-    int Buttons,
-    const wchar_t *Title,
-    const wchar_t * const *Items,
-    int ItemsNumber,
-    INT_PTR PluginNumber
+	DWORD Flags,
+	int Buttons,
+	const wchar_t *Title,
+	const wchar_t * const *Items,
+	int ItemsNumber,
+	INT_PTR PluginNumber
 )
 {
 	FARString strTempStr;
@@ -480,11 +480,12 @@ static int ShowMessageSynched(
 		free(lpwszTemp);
 	}
 
-	/* $ 13.01.2003 IS
-	   - Принудительно уберем запрет отрисовки экрана, если количество кнопок
-	     в сообщении равно нулю и макрос закончил выполняться. Это необходимо,
-	     чтобы заработал прогресс-бар от плагина, который был запущен при помощи
-	     макроса запретом отрисовки (bugz#533).
+	/*
+		$ 13.01.2003 IS
+		- Принудительно уберем запрет отрисовки экрана, если количество кнопок
+		в сообщении равно нулю и макрос закончил выполняться. Это необходимо,
+		чтобы заработал прогресс-бар от плагина, который был запущен при помощи
+		макроса запретом отрисовки (bugz#533).
 	*/
 	free(Str);
 
@@ -596,24 +597,27 @@ void SetMessageHelp(const wchar_t *Topic)
 	strMsgHelpTopic = Topic;
 }
 
-/* $ 12.03.2002 VVM
-  Новая функция - пользователь попытался прервать операцию.
-  Зададим вопрос.
-  Возвращает:
-   FALSE - продолжить операцию
-   TRUE  - прервать операцию
+/*
+	$ 12.03.2002 VVM
+	Новая функция - пользователь попытался прервать операцию.
+	Зададим вопрос.
+	Возвращает:
+		FALSE - продолжить операцию
+		TRUE  - прервать операцию
 */
 int AbortMessage()
 {
-	int Res = Message(MSG_WARNING|MSG_KILLSAVESCREEN,2,Msg::KeyESCWasPressed,
-	                  ((Opt.Confirm.EscTwiceToInterrupt)?Msg::DoYouWantToStopWork2:Msg::DoYouWantToStopWork),
-	                  Msg::Yes,Msg::No);
+	int Res = Message(
+		MSG_WARNING|MSG_KILLSAVESCREEN,2,Msg::KeyESCWasPressed,
+		((Opt.Confirm.EscTwiceToInterrupt)?Msg::DoYouWantToStopWork2:Msg::DoYouWantToStopWork),
+		Msg::Yes,Msg::No
+	);
 
 	if (Res == -1) // Set "ESC" equal to "NO" button
 		Res = 1;
 
 	if ((Opt.Confirm.EscTwiceToInterrupt && Res) ||
-	        (!Opt.Confirm.EscTwiceToInterrupt && !Res))
+			(!Opt.Confirm.EscTwiceToInterrupt && !Res))
 		return (TRUE);
 	else
 		return (FALSE);

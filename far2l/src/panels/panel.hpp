@@ -176,14 +176,16 @@ class Panel:public ScreenObject
 		virtual void SetFocus();
 		virtual void KillFocus();
 		virtual void Update(int Mode) {};
-		/*$ 22.06.2001 SKV
-		  Параметр для игнорирования времени последнего Update.
-		  Используется для Update после исполнения команды.
+		/*
+			$ 22.06.2001 SKV
+			Параметр для игнорирования времени последнего Update.
+			Используется для Update после исполнения команды.
 		*/
 		virtual int UpdateIfChanged(int UpdateMode) {return 0;};
-		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
-		   что панель невидима
+		/*
+			$ 19.03.2002 DJ
+			UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
+			что панель невидима
 		*/
 		virtual void UpdateIfRequired() {};
 
@@ -266,9 +268,10 @@ class Panel:public ScreenObject
 
 		virtual void IfGoHome(wchar_t Drive) {};
 
-		/* $ 30.04.2001 DJ
-		   функция вызывается для обновления кейбара; если возвращает FALSE,
-		   используется стандартный кейбар
+		/*
+			$ 30.04.2001 DJ
+			функция вызывается для обновления кейбара; если возвращает FALSE,
+			используется стандартный кейбар
 		*/
 		virtual BOOL UpdateKeyBar() { return FALSE; };
 

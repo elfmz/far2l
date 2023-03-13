@@ -366,7 +366,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 			if (HItemToShow == -1)
 			{
 				if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->RightPanel &&
-				        CtrlObject->Cp()->ActivePanel->IsVisible())
+						CtrlObject->Cp()->ActivePanel->IsVisible())
 					HItemToShow = 4;
 				else
 					HItemToShow = 0;
@@ -385,7 +385,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		else
 		{
 			if (CtrlObject->Cp()->ActivePanel==CtrlObject->Cp()->RightPanel &&
-			        CtrlObject->Cp()->ActivePanel->IsVisible())
+				CtrlObject->Cp()->ActivePanel->IsVisible())
 			{
 				MainMenu[0].Selected = 0;
 				MainMenu[4].Selected = 1;
@@ -599,7 +599,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 				case MENU_OPTIONS_DIALOGSETTINGS:   // Dialog settings (police=5)
 					DialogSettings();
 					break;
-				case MENU_OPTIONS_VMENUSETTINGS:    // VMenu settings
+				case MENU_OPTIONS_VMENUSETTINGS:   // VMenu settings
 					VMenuSettings();
 					break;
 				case MENU_OPTIONS_CMDLINESETTINGS:   // Command line settings
@@ -652,7 +652,7 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 
 	int _CurrentFrame=FrameManager->GetCurrentFrame()->GetType();
 	// TODO:Здесь как то нужно изменить, чтобы учесть будущие новые типы полноэкранных фреймов
-	//      или то, что, скажем редактор/вьювер может быть не полноэкранным
+	// или то, что, скажем редактор/вьювер может быть не полноэкранным
 
 	if (!(_CurrentFrame == MODALTYPE_VIEWER || _CurrentFrame == MODALTYPE_EDITOR))
 		CtrlObject->CmdLine->Show();

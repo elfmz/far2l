@@ -95,9 +95,11 @@ bool FileMasksProcessor::IsEmpty() const
 	return Masks.IsEmpty();
 }
 
-/* сравнить имя файла со списком масок
-   Возвращает TRUE в случае успеха.
-   Путь к файлу в FileName НЕ игнорируется */
+/*
+	сравнить имя файла со списком масок
+	Возвращает TRUE в случае успеха.
+	Путь к файлу в FileName НЕ игнорируется
+*/
 bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 {
 	if (re)

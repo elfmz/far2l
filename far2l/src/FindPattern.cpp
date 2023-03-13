@@ -213,13 +213,14 @@ template <class CodePointT>
 		if (_seq.size() > std::numeric_limits<uint16_t>::max()) {
 			ThrowPrintf("too many codepoints");
 		}
-		/** This is a most tricky code here:
-		  * go through just added seq and for each non-heading codepoint assign 'rewind' position
-		  * that specifies where MatchPattern() routine will seek back in pattern seq in case of
-		  * mismatching this particular codepoint while all previous chunks where recently matched.
-		  * Using correct rewind value ensures finding matches in cases like:
-		  * {'ac' IN 'aac'}  {'abc' IN 'ababc'} {'bdbdba' IN 'bdbdbdba'} etc
-		  */
+		/**
+			This is a most tricky code here:
+			go through just added seq and for each non-heading codepoint assign 'rewind' position
+			that specifies where MatchPattern() routine will seek back in pattern seq in case of
+			mismatching this particular codepoint while all previous chunks where recently matched.
+			Using correct rewind value ensures finding matches in cases like:
+			{'ac' IN 'aac'}  {'abc' IN 'ababc'} {'bdbdba' IN 'bdbdbdba'} etc
+		*/
 		for (size_t i = 2; i < _seq.size(); ++i) {
 			for (size_t j = i - 1; j >= 1; --j) {
 				if (SameParts(0, i - j, j)) {
@@ -262,9 +263,10 @@ template <class CodePointT>
 		return !symbol || IsSpace(symbol) || IsEol(symbol) || IsWordDiv(Opt.strWordDiv, symbol);
 	}
 
-	/** Helper function used if FindMatchCaseSpecific found match, its goal is to go back and find starting position
-	  * of matched substring. FindMatchCaseSpecific could do remembering itself, but this would defeat its performance.
-	  */
+	/**
+		Helper function used if FindMatchCaseSpecific found match, its goal is to go back and find starting position
+		of matched substring. FindMatchCaseSpecific could do remembering itself, but this would defeat its performance.
+	*/
 	size_t FN_NOINLINE LookbackMatchedRange(const CodeUnit *data) const noexcept
 	{// go back in pattern elements sequence finding matched length to do next back step until reaching pattern start
 		size_t len = 0;
@@ -282,15 +284,16 @@ template <class CodePointT>
 		return len;
 	}
 
-	/** Actual finder routine. It sequentially goes through data array comparing current element with currently
-	  * selected pattern's codepoint. Note that codepoint may represent more than single codeunit so if such
-	  * codepoint matched then all matched codeunits skipped on data array and pattern iterated to next codepoint.
-	  * In case of mismatch one of two actions could be taken, depending on codepoint position in pattern:
-	  *  - if codepoint is at the head of pattern - then data array iterated forward by single codeunit.
-	  *  - otherwise pattern is 'rewinded' to position pre-calculated during pattern initialization.
-	  * Returns zero if match was not found or count of matched codeunits if match was found and also
-	  * data then adjusted to past-matched substring code unit.
-	  */
+	/**
+		Actual finder routine. It sequentially goes through data array comparing current element with currently
+		selected pattern's codepoint. Note that codepoint may represent more than single codeunit so if such
+		codepoint matched then all matched codeunits skipped on data array and pattern iterated to next codepoint.
+		In case of mismatch one of two actions could be taken, depending on codepoint position in pattern:
+		- if codepoint is at the head of pattern - then data array iterated forward by single codeunit.
+		- otherwise pattern is 'rewinded' to position pre-calculated during pattern initialization.
+		Returns zero if match was not found or count of matched codeunits if match was found and also
+		data then adjusted to past-matched substring code unit.
+	*/
 	template <bool CASE_SENSITIVE>
 		inline size_t FindMatchCaseSpecific(const CodeUnit *&data, const CodeUnit *end) const noexcept
 	{

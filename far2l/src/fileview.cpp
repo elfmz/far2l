@@ -53,9 +53,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "mix.hpp"
 
-FileViewer::FileViewer(const wchar_t *Name,int EnableSwitch,int DisableHistory,
-                       int DisableEdit,long ViewStartPos,const wchar_t *PluginData,
-                       NamesList *ViewNamesList,int ToSaveAs,UINT aCodePage):
+FileViewer::FileViewer(
+		const wchar_t *Name,int EnableSwitch,int DisableHistory,
+		int DisableEdit,long ViewStartPos,const wchar_t *PluginData,
+		NamesList *ViewNamesList,int ToSaveAs,UINT aCodePage
+	):
 	View(false,aCodePage),
 	FullScreen(TRUE),
 	DisableEdit(DisableEdit)
@@ -66,8 +68,10 @@ FileViewer::FileViewer(const wchar_t *Name,int EnableSwitch,int DisableHistory,
 }
 
 
-FileViewer::FileViewer(const wchar_t *Name,int EnableSwitch,int DisableHistory,
-                       const wchar_t *Title, int X1,int Y1,int X2,int Y2,UINT aCodePage): View(false,aCodePage)
+FileViewer::FileViewer(
+		const wchar_t *Name,int EnableSwitch,int DisableHistory,
+		const wchar_t *Title, int X1,int Y1,int X2,int Y2,UINT aCodePage
+	): View(false,aCodePage)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(II variant...)", this));
 	DisableEdit=TRUE;
@@ -103,9 +107,11 @@ FileViewer::FileViewer(const wchar_t *Name,int EnableSwitch,int DisableHistory,
 }
 
 
-void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, ///
-                      long ViewStartPos,const wchar_t *PluginData,
-                      NamesList *ViewNamesList,int ToSaveAs)
+void FileViewer::Init(
+		const wchar_t *name,int EnableSwitch,int disableHistory, ///
+		long ViewStartPos,const wchar_t *PluginData,
+		NamesList *ViewNamesList,int ToSaveAs
+	)
 {
 	RedrawTitle = FALSE;
 	ViewKeyBar.SetOwner(this);
@@ -125,7 +131,7 @@ void FileViewer::Init(const wchar_t *name,int EnableSwitch,int disableHistory, /
 
 	if (!View.OpenFile(strName,TRUE)) // $ 04.07.2000 tran + add TRUE as 'warning' parameter
 	{
-		DisableHistory = TRUE;  // $ 26.03.2002 DJ - при неудаче открытия - не пишем мусор в историю
+		DisableHistory = TRUE; // $ 26.03.2002 DJ - при неудаче открытия - не пишем мусор в историю
 		// FrameManager->DeleteFrame(this); // ЗАЧЕМ? Вьювер то еще не помещен в очередь манагера!
 		ExitCode=FALSE;
 		CtrlObject->Macro.SetMode(OldMacroMode);
@@ -229,9 +235,10 @@ int FileViewer::ProcessKey(int Key)
 	switch (Key)
 	{
 #if 0
-			/* $ 30.05.2003 SVS
-			   Фича :-) Shift-F4 в редакторе/вьювере позволяет открывать другой редактор/вьювер
-			   Пока закомментим
+			/*
+				$ 30.05.2003 SVS
+				Фича :-) Shift-F4 в редакторе/вьювере позволяет открывать другой редактор/вьювер
+				Пока закомментим
 			*/
 		case KEY_SHIFTF4:
 		{
@@ -241,12 +248,15 @@ int FileViewer::ProcessKey(int Key)
 			return TRUE;
 		}
 #endif
-		/* $ 22.07.2000 tran
-		   + выход по ctrl-f10 с установкой курсора на файл */
+		/*
+			$ 22.07.2000 tran
+			+ выход по ctrl-f10 с установкой курсора на файл
+		*/
 		case KEY_CTRLF10:
 		{
 			if (View.GetFileHolder())
-			{  // if viewing observed (typically temporary) file - dont allow this
+			{
+				// if viewing observed (typically temporary) file - dont allow this
 				return TRUE;
 			}
 
@@ -314,13 +324,18 @@ int FileViewer::ProcessKey(int Key)
 				Edit.Close();
 				SetExitCode(0);
 				int64_t FilePos=View.GetFilePos();
-				/* $ 07.07.2006 IS
-				   Тут косяк, замеченный при чтении warnings - FilePos теряет информацию при преобразовании int64_t -> int
-				   Надо бы поправить FileEditor на этот счет.
+				/*
+					$ 07.07.2006 IS
+					Тут косяк, замеченный при чтении warnings - FilePos теряет информацию при преобразовании int64_t -> int
+					Надо бы поправить FileEditor на этот счет.
 				*/
-				FileEditor *ShellEditor = new FileEditor(strViewFileName, cp,
-				        (GetCanLoseFocus()?FFILEEDIT_ENABLEF6:0)|(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),
-						-2, static_cast<int>(FilePos), strPluginData);
+				FileEditor *ShellEditor = new FileEditor(
+					strViewFileName, cp,
+					(GetCanLoseFocus()?FFILEEDIT_ENABLEF6:0) |
+					(SaveToSaveAs?FFILEEDIT_SAVETOSAVEAS:0) |
+					(DisableHistory?FFILEEDIT_DISABLEHISTORY:0),
+					-2, static_cast<int>(FilePos), strPluginData
+				);
 				ShellEditor->SetEnableF6(TRUE);
 				ShellEditor->SetFileHolder(View.GetFileHolder());
 				/* $ 07.05.2001 DJ сохраняем NamesList */
@@ -367,11 +382,12 @@ int FileViewer::ProcessKey(int Key)
 
 			return TRUE;
 		default:
-//      Этот кусок - на будущее (по аналогии с редактором :-)
-//      if (CtrlObject->Macro.IsExecuting() || !View.ProcessViewerInput(&ReadRec))
+		//Этот кусок - на будущее (по аналогии с редактором :-)
+		//if (CtrlObject->Macro.IsExecuting() || !View.ProcessViewerInput(&ReadRec))
 		{
-			/* $ 22.03.2001 SVS
-			   Это помогло от залипания :-)
+			/*
+				$ 22.03.2001 SVS
+				Это помогло от залипания :-)
 			*/
 			if (!CtrlObject->Macro.IsExecuting())
 				ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
@@ -491,15 +507,15 @@ void FileViewer::ShowStatus()
 
 	TruncPathStr(strName, NameLength);
 	strStatus.Format(
-	    L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%",
-	    NameLength,
-	    strName.CPtr(),
-	    View.VM.CodePage,
-	    View.FileSize,
-	    Msg::ViewerStatusCol.CPtr(),
-	    View.LeftPos,
-	    Opt.ViewerEditorClock ? L"":L" ",
-	    (View.LastPage ? 100:ToPercent64(View.FilePos,View.FileSize))
+		L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%",
+		NameLength,
+		strName.CPtr(),
+		View.VM.CodePage,
+		View.FileSize,
+		Msg::ViewerStatusCol.CPtr(),
+		View.LeftPos,
+		Opt.ViewerEditorClock ? L"":L" ",
+		(View.LastPage ? 100:ToPercent64(View.FilePos,View.FileSize))
 	);
 	SetColor(COL_VIEWERSTATUS);
 	GotoXY(X1,Y1);

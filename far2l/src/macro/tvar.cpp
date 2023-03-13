@@ -406,7 +406,7 @@ double TVar::d() const
 const wchar_t *TVar::s() const
 {
 	if (isString())
-		return  str ? str : L"";
+		return str ? str : L"";
 
 	return isInteger()? (::toString(inum)) : (::toString(dnum));
 }
@@ -801,7 +801,7 @@ TVar operator-(const TVar& a, const TVar& b)
 				{
 					switch (checkTypeString(b.str))
 					{
-						case tsStr:   r = a; break; //addStr(::toString(a.inum), b.s());   break;
+						case tsStr:   r = a; break; //addStr(::toString(a.inum), b.s()); break;
 						case tsInt:   r = a.inum - b.i(); break;
 						case tsFloat: r = (double)a.inum - b.d(); break;
 					}
@@ -823,7 +823,7 @@ TVar operator-(const TVar& a, const TVar& b)
 				{
 					switch (checkTypeString(b.str))
 					{
-						case tsStr:   r = a; break; //addStr(::toString(a.dnum), b.s());  break;
+						case tsStr:   r = a; break; //addStr(::toString(a.dnum), b.s()); break;
 						case tsInt:
 						case tsFloat: r = a.dnum - b.d(); break;
 					}

@@ -97,11 +97,12 @@ static void SetDefaultHighlighting()
 		/* 0 */ L"*",
 		/* 1 */ L"*.rar,*.zip,*.[zj],*.[bxg7]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz",
 		/* 2 */ L"*.bak,*.tmp",                                                                                                                                                                                //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ -> может к терапевту? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-		/* $ 25.09.2001  IS
-		    Эта маска для каталогов: обрабатывать все каталоги, кроме тех, что
-		    являются родительскими (их имена - две точки).
+		/*
+			$ 25.09.2001  IS
+			Эта маска для каталогов: обрабатывать все каталоги, кроме тех, что
+			являются родительскими (их имена - две точки).
 		*/
-		/* 3 */ L"*|..", // маска для каталогов
+		/* 3 */ L"*|..",   // маска для каталогов
 		/* 4 */ L"..",     // такие каталоги окрашивать как простые файлы
 	};
 	static struct DefaultData
@@ -113,24 +114,24 @@ static void SetDefaultHighlighting()
 		BYTE CursorColor;
 	}
 	StdHighlightData[]=
-	    { /*
-             Mask                NormalColor
-                          IncludeAttributes
-                       IgnoreMask       CursorColor             */
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_BROKEN, 0x10 | F_LIGHTRED, 0x30 | F_LIGHTRED }, 
-	        /* 0 */{Masks[0], 0, 0x0002, 0x13, 0x38},
-	        /* 1 */{Masks[0], 0, 0x0004, 0x13, 0x38},
-	        /* 2 */{Masks[3], 0, 0x0010, 0x1F, 0x3F},
-	        /* 3 */{Masks[4], 0, 0x0010, 0x00, 0x00},
-	        /* 4 */{L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com",0, 0x0000, 0x1A, 0x3A},
-	        /* 5 */{Masks[1], 0, 0x0000, 0x1D, 0x3D},
-	        /* 6 */{Masks[2], 0, 0x0000, 0x16, 0x36},
-	        // это настройка для каталогов на тех панелях, которые должны раскрашиваться
-	        // без учета масок (например, список хостов в "far navigator")
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0x10 | F_GREEN, 0x30 | F_GREEN }, 
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_WHITE, 0x30 | F_WHITE},
-	        /* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x10 | F_LIGHTGREEN, 0x30 | F_LIGHTGREEN}, 
-	    };
+		{
+//           Mask                NormalColor
+//                        IncludeAttributes
+//                     IgnoreMask       CursorColor
+			/* 7 */{Masks[0], 1, FILE_ATTRIBUTE_BROKEN, 0x10 | F_LIGHTRED, 0x30 | F_LIGHTRED }, 
+			/* 0 */{Masks[0], 0, 0x0002, 0x13, 0x38},
+			/* 1 */{Masks[0], 0, 0x0004, 0x13, 0x38},
+			/* 2 */{Masks[3], 0, 0x0010, 0x1F, 0x3F},
+			/* 3 */{Masks[4], 0, 0x0010, 0x00, 0x00},
+			/* 4 */{L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com",0, 0x0000, 0x1A, 0x3A},
+			/* 5 */{Masks[1], 0, 0x0000, 0x1D, 0x3D},
+			/* 6 */{Masks[2], 0, 0x0000, 0x16, 0x36},
+			// это настройка для каталогов на тех панелях, которые должны раскрашиваться
+			// без учета масок (например, список хостов в "far navigator")
+			/* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0x10 | F_GREEN, 0x30 | F_GREEN }, 
+			/* 7 */{Masks[0], 1, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_WHITE, 0x30 | F_WHITE},
+			/* 7 */{Masks[0], 1, FILE_ATTRIBUTE_EXECUTABLE, 0x10 | F_LIGHTGREEN, 0x30 | F_LIGHTGREEN}, 
+		};
 
 
 	for (size_t I=0; I < ARRAYSIZE(StdHighlightData); I++)
@@ -171,20 +172,26 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 					cfg_reader.GetInt(HLS.DateRelative, 0) != 0);
 	FARString strSizeAbove = cfg_reader.GetString(HLS.SizeAbove, L"");
 	FARString strSizeBelow = cfg_reader.GetString(HLS.SizeBelow, L"");
-	HData->SetSize(cfg_reader.GetInt(HLS.UseSize, 0) != 0,
-	               strSizeAbove, strSizeBelow);
+	HData->SetSize(
+		cfg_reader.GetInt(HLS.UseSize, 0) != 0,
+		strSizeAbove, strSizeBelow
+	);
 
 	if (bSortGroup)
 	{
-		HData->SetAttr(cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
-		               (DWORD)cfg_reader.GetUInt(HLS.AttrSet, 0),
-		               (DWORD)cfg_reader.GetUInt(HLS.AttrClear, FILE_ATTRIBUTE_DIRECTORY));
+		HData->SetAttr(
+			cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
+			(DWORD)cfg_reader.GetUInt(HLS.AttrSet, 0),
+			(DWORD)cfg_reader.GetUInt(HLS.AttrClear, FILE_ATTRIBUTE_DIRECTORY)
+		);
 	}
 	else
 	{
-		HData->SetAttr(cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
-		               (DWORD)cfg_reader.GetUInt(HLS.IncludeAttributes, 0),
-		               (DWORD)cfg_reader.GetUInt(HLS.ExcludeAttributes, 0));
+		HData->SetAttr(
+			cfg_reader.GetInt(HLS.UseAttr, 1) != 0,
+			(DWORD)cfg_reader.GetUInt(HLS.IncludeAttributes, 0),
+			(DWORD)cfg_reader.GetUInt(HLS.ExcludeAttributes, 0)
+		);
 	}
 
 	HData->SetSortGroup(SortGroup);
@@ -324,15 +331,15 @@ static void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcC
 /*
 bool HasTransparent(HighlightDataColor *Colors)
 {
-  for (int j=0; j<2; j++)
-    for (int i=0; i<4; i++)
-      if (Colors->Color[j][i]&0xFF00)
-        return true;
+	for (int j=0; j<2; j++)
+		for (int i=0; i<4; i++)
+			if (Colors->Color[j][i]&0xFF00)
+				return true;
 
-  if (Colors->MarkChar&0x00FF0000)
-    return true;
+	if (Colors->MarkChar&0x00FF0000)
+		return true;
 
-  return false;
+	return false;
 }
 */
 
@@ -597,14 +604,19 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 			switch (Key)
 			{
-					/* $ 07.07.2000 IS
-					  Если нажали ctrl+r, то восстановить значения по умолчанию.
+					/*
+						$ 07.07.2000 IS
+						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
 				case KEY_CTRLR:
 
-					if (Message(MSG_WARNING,2,Msg::HighlightTitle,
-					            Msg::HighlightWarning,Msg::HighlightAskRestore,
-					            Msg::Yes,Msg::Cancel))
+					if (
+						Message(
+							MSG_WARNING,2,Msg::HighlightTitle,
+							Msg::HighlightWarning,Msg::HighlightAskRestore,
+							Msg::Yes,Msg::Cancel
+						)
+					)
 						break;
 
 					{ ConfigWriter(RegColorsHighlight).RemoveSection(); }
@@ -624,9 +636,13 @@ void HighlightFiles::HiEdit(int MenuPos)
 						const wchar_t *Mask;
 						HiData.getItem(RealSelectPos)->GetMask(&Mask);
 
-						if (Message(MSG_WARNING,2,Msg::HighlightTitle,
-						            Msg::HighlightAskDel,Mask,
-						            Msg::Delete,Msg::Cancel))
+						if (
+							Message(
+								MSG_WARNING,2,Msg::HighlightTitle,
+								Msg::HighlightAskDel,Mask,
+								Msg::Delete,Msg::Cancel
+							)
+						)
 							break;
 
 						HiData.deleteItem(RealSelectPos);
@@ -811,7 +827,7 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 {
 	if (bSortGroup)
 	{
-		cfg_writer.SetInt(HLS.UseMask, CurHiData->GetMask(nullptr) ? 1  : 0);
+		cfg_writer.SetInt(HLS.UseMask, CurHiData->GetMask(nullptr) ? 1 : 0);
 	}
 	else
 	{

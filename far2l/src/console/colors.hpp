@@ -13,10 +13,10 @@ colors.hpp
 */
 #else // ELSE FAR_USE_INTERNALS
 /*
-  farcolor.hpp
+	farcolor.hpp
 
-  Colors Index for FAR Manager <%VERSION%>
-  HKCU\Software\Far\Colors\CurrentPalette
+	Colors Index for FAR Manager <%VERSION%>
+	HKCU\Software\Far\Colors\CurrentPalette
 */
 #endif // END FAR_USE_INTERNALS
 
@@ -54,8 +54,8 @@ other possible license with no implications from the above license on them.
 
 #ifdef FAR_USE_INTERNALS
 /*
-  Внимание!
-  Пункт COL_LASTPALETTECOLOR должен быть самым последним!!!!!!
+	Внимание!
+	Пункт COL_LASTPALETTECOLOR должен быть самым последним!!!!!!
 */
 
 #include <WinCompat.h>

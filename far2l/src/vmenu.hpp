@@ -4,10 +4,10 @@
 vmenu.hpp
 
 Обычное вертикальное меню
-  а так же:
-    * список в DI_COMBOBOX
-    * список в DI_LISTBOX
-    * ...
+	а так же:
+		* список в DI_COMBOBOX
+		* список в DI_LISTBOX
+		* ...
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -225,7 +225,7 @@ class VMenu: public Modal
 		int DialogItemID;
 		FARWINDOWPROC VMenuProc;      // функция обработки меню
 
-		ConsoleTitle *OldTitle;     // предыдущий заголовок
+		ConsoleTitle *OldTitle;       // предыдущий заголовок
 
 		CriticalSection CS;
 
@@ -272,13 +272,15 @@ class VMenu: public Modal
 
 	public:
 
-		VMenu(const wchar_t *Title,
-		      MenuDataEx *Data,
-		      int ItemCount,
-		      int MaxHeight=0,
-		      DWORD Flags=0,
-		      FARWINDOWPROC Proc=nullptr,
-		      Dialog *ParentDialog=nullptr);
+		VMenu(
+			const wchar_t *Title,
+			MenuDataEx *Data,
+			int ItemCount,
+			int MaxHeight=0,
+			DWORD Flags=0,
+			FARWINDOWPROC Proc=nullptr,
+			Dialog *ParentDialog=nullptr
+		);
 
 
 		virtual ~VMenu();

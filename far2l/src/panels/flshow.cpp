@@ -124,7 +124,7 @@ void FileList::ShowFileList(int Fast)
 
 	if (Opt.ShowColumnTitles)
 	{
-//    SetScreen(X1+1,Y1+1,X2-1,Y1+1,' ',COL_PANELTEXT);
+//	SetScreen(X1+1,Y1+1,X2-1,Y1+1,' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
 		//GotoXY(X1+1,Y1+1);
 		//FS<<fmt::Expand(X2-X1-1)<<L"";
@@ -308,10 +308,10 @@ void FileList::ShowFileList(int Fast)
 			*PtrOutCharacter++=L'^';
 
 		/*
-		    if(GetNumericSort())
-		      *PtrOutCharacter++=L'#';
-		    if(GetSortGroups())
-		      *PtrOutCharacter++=L'@';
+			if(GetNumericSort())
+				*PtrOutCharacter++=L'#';
+			if(GetSortGroups())
+				*PtrOutCharacter++=L'@';
 		*/
 		/*
 		if(GetCaseSensitiveSort())
@@ -542,8 +542,10 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 		strTotalStr.Format(Msg::ListFreeSize, !strFreeSize.IsEmpty() ? strFreeSize.CPtr():L"???");
 
 	SetColor(COL_PANELTOTALINFO);
-	/* $ 01.08.2001 VVM
-	  + Обрезаем строчку справа, а не слева */
+	/*
+		$ 01.08.2001 VVM
+		+ Обрезаем строчку справа, а не слева
+	*/
 	TruncStrFromEnd(strTotalStr, X2-X1-1);
 	Length=(int)strTotalStr.GetLength();
 	GotoXY(X1+(X2-X1+1-Length)/2,Y2);

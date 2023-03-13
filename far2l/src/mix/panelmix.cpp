@@ -82,7 +82,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 		{
 			// TODO: ???
 			//if(AnotherPanel->NeedUpdatePanel(SrcPanel))
-			//  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+			//	AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 			//else
 			{
 				// Сбросим время обновления панели. Если там есть нотификация - обновится сама.

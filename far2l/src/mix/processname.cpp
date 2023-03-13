@@ -66,9 +66,10 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 	return FALSE;
 }
 
-/* $ 09.10.2000 IS
-    Генерация нового имени по маске
-    (взял из ShellCopy::ShellCopyConvertWildcards)
+/*
+	$ 09.10.2000 IS
+	Генерация нового имени по маске
+	(взял из ShellCopy::ShellCopyConvertWildcards)
 */
 // На основе имени файла (Src) и маски (Dest) генерируем новое имя
 // SelectedFolderNameLength - длина каталога. Например, есть
@@ -183,8 +184,9 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 {
 	for (;;++str)
 	{
-		/* $ 01.05.2001 DJ
-		   используем инлайновые версии
+		/*
+			$ 01.05.2001 DJ
+			используем инлайновые версии
 		*/
 		wchar_t rangec;
 		int match;

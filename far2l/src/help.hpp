@@ -52,8 +52,8 @@ struct StackHelpData
 	int   TopStr;                 // номер верхней видимой строки темы
 	int   CurX,CurY;              // координаты (???)
 
-	FARString strHelpMask;           // значение маски
-	FARString strHelpPath;           // путь к хелпам
+	FARString strHelpMask;          // значение маски
+	FARString strHelpPath;          // путь к хелпам
 	FARString strHelpTopic;         // текущий топик
 	FARString strSelTopic;          // выделенный топик (???)
 

@@ -103,8 +103,10 @@ int WINAPI FarViewerControl(int Command,void *Param);
 BOOL WINAPI FarShowHelp(const wchar_t *ModuleName,
 	const wchar_t *HelpTopic,DWORD Flags);
 
-/* Обертка вокруг GetString для плагинов - с меньшей функциональностью.
-   Сделано для того, чтобы не дублировать код GetString.*/
+/*
+	Обертка вокруг GetString для плагинов - с меньшей функциональностью.
+	Сделано для того, чтобы не дублировать код GetString.
+*/
 
 int WINAPI FarInputBox(const wchar_t *Title,const wchar_t *Prompt,
 	const wchar_t *HistoryName,const wchar_t *SrcText,
@@ -112,14 +114,14 @@ int WINAPI FarInputBox(const wchar_t *Title,const wchar_t *Prompt,
 	const wchar_t *HelpTopic,DWORD Flags);
 /* Функция, которая будет действовать и в редакторе, и в панелях, и... */
 INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param);
-//  Функция расширенного диалога
+// Функция расширенного диалога
 HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
 	const wchar_t *HelpTopic, struct FarDialogItem *Item,
 	unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
 	FARWINDOWPROC Proc, LONG_PTR Param);
 int WINAPI FarDialogRun(HANDLE hDlg);
 void WINAPI FarDialogFree(HANDLE hDlg);
-//  Функция обработки диалога по умолчанию
+// Функция обработки диалога по умолчанию
 LONG_PTR WINAPI FarDefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2);
 // Посылка сообщения диалогу
 LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1, LONG_PTR Param2);

@@ -101,8 +101,8 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 			{
 				// при CP_UTF7 dwFlags должен быть 0, см. MSDN
 				nResultLength = WINPORT(MultiByteToWideChar)( nCodePage,
-				                    (SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS,
-				                    Str, Length, wStr, m_nwStrLength - 1);
+					(SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS,
+					Str, Length, wStr, m_nwStrLength - 1);
 
 				ret = WINPORT(GetLastError)();
 

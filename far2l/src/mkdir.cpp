@@ -175,7 +175,7 @@ void ShellMakeDir(Panel *SrcPanel)
 				int LastError=WINPORT(GetLastError)();
 
 				if (LastError==ERROR_ALREADY_EXISTS ||
-				        LastError==ERROR_INVALID_NAME || LastError == ERROR_DIRECTORY)
+					LastError==ERROR_INVALID_NAME || LastError == ERROR_DIRECTORY)
 				{
 					int ret;
 

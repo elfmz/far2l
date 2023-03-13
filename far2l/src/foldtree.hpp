@@ -48,7 +48,7 @@ class FolderTree:public Frame
 		TreeList *Tree;
 		Edit *FindEdit;
 
-		KeyBar TreeKeyBar;     // кейбар
+		KeyBar TreeKeyBar;    // кейбар
 		int ModalMode;
 		int IsFullScreen;
 		int IsStandalone;

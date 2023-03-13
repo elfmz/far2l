@@ -44,26 +44,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 inline const wchar_t *NullToEmpty(const wchar_t *s) { return s ? s : L""; }
 
 /***********************************************************************************************************
- * This is a FARString - homegrew reference-counted string widely used in this project.
- * This puts some restrictions on how this string may be used:
- *  - Don't write into const pointer returned by CPtr(), doing that may affect data used by irrelevant code.
- *    Use GetBuffer/ReleaseBuffer or simple plain assignment instead.
- *  - Don't modify single FARString instance from different threads without serialization.
- *    Create per-thread copies of FARString and modifying them from that threads is perfectly fine however.
- *  - Avoid excessive copying. While its doesn't copy string content, it performs still slow HW-interlocked
- *    reference counter manipulations, so better use passing-by-reference and std::move where possible.
- */
+	This is a FARString - homegrew reference-counted string widely used in this project.
+	This puts some restrictions on how this string may be used:
+		- Don't write into const pointer returned by CPtr(), doing that may affect data used by irrelevant code.
+		Use GetBuffer/ReleaseBuffer or simple plain assignment instead.
+		- Don't modify single FARString instance from different threads without serialization.
+		Create per-thread copies of FARString and modifying them from that threads is perfectly fine however.
+		- Avoid excessive copying. While its doesn't copy string content, it performs still slow HW-interlocked
+		reference counter manipulations, so better use passing-by-reference and std::move where possible.
+*/
 
 class FARString
 {
-	/* <Content> represents actual content of string that may be shared across different FARStrings
-	 * and it must be trivial cuz there is sEmptyData singletone shared across all empty strings and
-	 * thus it may be accessed during early static objects initialization; using Meyer's singletone
-	 * implementaion for it would cause compiler to include local static strapping code that has some
-	 * runtime overhead. Using trivial class makes possible just to create global static variable that
-	 * will be resided in BSS and thus will have all fields zero-initialized by linker and ready to use
-	 * just upon app loading without using initializing c-tor. This is also main reason why cannot use
-	 * virtual methods, std::atomic<> instead of __atomic_* etc */
+	/*
+		<Content> represents actual content of string that may be shared across different FARStrings
+		and it must be trivial cuz there is sEmptyData singletone shared across all empty strings and
+		thus it may be accessed during early static objects initialization; using Meyer's singletone
+		implementaion for it would cause compiler to include local static strapping code that has some
+		runtime overhead. Using trivial class makes possible just to create global static variable that
+		will be resided in BSS and thus will have all fields zero-initialized by linker and ready to use
+		just upon app loading without using initializing c-tor. This is also main reason why cannot use
+		virtual methods, std::atomic<> instead of __atomic_* etc
+	*/
 
 	class Content
 	{

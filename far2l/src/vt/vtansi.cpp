@@ -144,7 +144,7 @@ jadoxa@yahoo.com.au
      ntdll's LdrLoadDll via CreateRemoteThread;
     restore original attributes on detach (for LoadLibrary/FreeLibrary usage);
     log: remove the quotes around the CreateProcess command line string and
-	  distinguish NULL and "" args;
+      distinguish NULL and "" args;
     attributes (and saved position) are local to each console window;
     exclude entire programs, by not using an extension in ANSICON_EXC;
     hook modules injected via CreateRemoteThread+LoadLibrary;
@@ -235,7 +235,7 @@ static std::string g_title;
 static std::atomic<bool> g_output_disabled{false};
 static std::map<DWORD, std::pair<DWORD, DWORD> > g_orig_palette;
 
-static HANDLE	  hConOut = NULL;		// handle to CONOUT$
+static HANDLE	hConOut = NULL;		// handle to CONOUT$
 
 #define ESC	'\x1B'          // ESCape character
 #define BEL	'\x07'
@@ -243,15 +243,15 @@ static HANDLE	  hConOut = NULL;		// handle to CONOUT$
 #define SI	'\x0F'          // Shift In
 #define ST	'\x9c'
 
-#define MAX_ARG 32		// max number of args in an escape sequence
-static int   state;			// automata state
-static char  prefix;			// escape sequence prefix ( '[', ']' or '(' );
-static char  prefix2;			// secondary prefix ( '?' or '>' );
-static char  suffix;			// escape sequence suffix
-static char  suffix2;			// escape sequence secondary suffix
-static int   es_argc;			// escape sequence args count
-static int   es_argv[MAX_ARG]; 	// escape sequence args
-static std::string os_cmd_arg;	// text parameter for Operating System Command
+#define MAX_ARG 32					// max number of args in an escape sequence
+static int   state;					// automata state
+static char  prefix;				// escape sequence prefix ( '[', ']' or '(' );
+static char  prefix2;				// secondary prefix ( '?' or '>' );
+static char  suffix;				// escape sequence suffix
+static char  suffix2;				// escape sequence secondary suffix
+static int   es_argc;				// escape sequence args count
+static int   es_argv[MAX_ARG]; 		// escape sequence args
+static std::string os_cmd_arg;		// text parameter for Operating System Command
 static int   screen_top = -1;		// initial window top when cleared
 static TCHAR blank_character = L' ';
 
@@ -374,7 +374,7 @@ static void FlushBuffer( void )
 				WINPORT(WriteConsole)( hConOut, b, 1, &nWritten, NULL );
 				if (*b != '\r' && *b != '\b' && *b != '\a') {
 					WINPORT(GetConsoleScreenBufferInfo)( hConOut, &csbi );
-					if (csbi.dwCursorPosition.X == 0  || csbi.dwCursorPosition.X==csbi_before.dwCursorPosition.X)
+					if (csbi.dwCursorPosition.X == 0 || csbi.dwCursorPosition.X==csbi_before.dwCursorPosition.X)
 						fWrapped = TRUE;
 				}
 			} while (++b, --nCharInBuffer);
@@ -394,11 +394,11 @@ static void FlushBuffer( void )
 			
 
 			// To detect wrapping of multiple characters, create a new buffer, write
-			// to the top of it and see if the cursor changes line.  This doesn't
+			// to the top of it and see if the cursor changes line. This doesn't
 			// always work on the normal buffer, since if you're already on the last
 			// line, wrapping scrolls everything up and still leaves you on the last.
 			hConWrap = CreateConsoleScreenBuffer( GENERIC_READ|GENERIC_WRITE, 0, NULL,
-						    CONSOLE_TEXTMODE_BUFFER, NULL );
+						CONSOLE_TEXTMODE_BUFFER, NULL );
 			// Even though the buffer isn't visible, the cursor still shows up.
 			cci.dwSize = 1;
 			cci.bVisible = FALSE;
@@ -446,9 +446,9 @@ void PushBuffer( WCHAR c )
 		} else {
 			LPCWSTR nl = L"\n";
 			if (fWrapped) {
-				// It's wrapped, but was anything more written?  Look at the current
+				// It's wrapped, but was anything more written? Look at the current
 				// row, checking that each character is space in current attributes.
-				// If it's all blank we can drop the newline.  If the cursor isn't
+				// If it's all blank we can drop the newline. If the cursor isn't
 				// already at the margin, then it was spaces or tabs that caused the
 				// wrap, which can be ignored and overwritten.
 				CHAR_INFO blank;
@@ -686,7 +686,7 @@ static void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 
 void InterpretEscSeq( void )
 {
-	int  i;
+	int i;
 	DWORD64 attribut;
 	CONSOLE_SCREEN_BUFFER_INFO Info;
 	CONSOLE_CURSOR_INFO CursInfo;
@@ -698,8 +698,7 @@ void InterpretEscSeq( void )
 
 #define FillBlank( len, Pos )  \
 	WINPORT(FillConsoleOutputCharacter)( hConOut, blank_character, len, Pos, &NumberOfCharsWritten );\
-	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, \
-	                                     &NumberOfCharsWritten )
+	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, &NumberOfCharsWritten )
 
 	if (prefix == '[') {
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
@@ -928,12 +927,12 @@ void InterpretEscSeq( void )
 		case 'P':                 // ESC[#P Delete # characters.
 			if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[P == ESC[1P
 			if (es_argc != 1) return;
-			Rect.Left   = Info.srWindow.Left	= Info.dwCursorPosition.X;  Rect.Left+= es_argv[0];
+			Rect.Left   = Info.srWindow.Left	= Info.dwCursorPosition.X; Rect.Left+= es_argv[0];
 			Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
 			Pos.X	    = Info.dwCursorPosition.X;
 			Pos.Y	    =
-			    Rect.Top    =
-			        Rect.Bottom = Info.dwCursorPosition.Y;
+				Rect.Top    =
+					Rect.Bottom = Info.dwCursorPosition.Y;
 			CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			return;
@@ -945,8 +944,8 @@ void InterpretEscSeq( void )
 			Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
 			Pos.X	    = Info.dwCursorPosition.X + es_argv[0];
 			Pos.Y	    =
-			    Rect.Top    =
-			        Rect.Bottom = Info.dwCursorPosition.Y;
+				Rect.Top    =
+					Rect.Bottom = Info.dwCursorPosition.Y;
 			CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
 			WINPORT(ScrollConsoleScreenBuffer)( hConOut, &Rect, &Info.srWindow, Pos, &CharInfo );
 			return;
@@ -1262,7 +1261,7 @@ static void ReverseIndex()
 
 	SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
 	COORD Pos = {0, (SHORT) (scroll_top + 1) };
-	CHAR_INFO  CharInfo;
+	CHAR_INFO CharInfo;
 	CI_SET_WCATTR(CharInfo, blank_character, info.wAttributes);
 	WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
 }
@@ -1314,9 +1313,10 @@ static void RestoreCursor()
 // the last arguments are processed (no es_argv[] overflow).
 //-----------------------------------------------------------------------------
 
-void ParseAndPrintString( HANDLE hDev,
-                          LPCVOID lpBuffer,
-                          DWORD nNumberOfBytesToWrite)
+void ParseAndPrintString(
+	HANDLE hDev,
+	LPCVOID lpBuffer,
+	DWORD nNumberOfBytesToWrite)
 {
 	DWORD   i;
 	LPCWSTR s;
@@ -1350,9 +1350,9 @@ void ParseAndPrintString( HANDLE hDev,
 				// Pt_len = 0; *Pt_arg = '\0';
 				state = 3;
 			} else if (*s == 'P' ||   // DCS Device Control String
-					*s == 'X' ||     // SOS Start Of String
-					*s == '^' ||     // PM  Privacy Message
-					*s == '_') {     // APC Application Program Command
+					*s == 'X' ||      // SOS Start Of String
+					*s == '^' ||      // PM  Privacy Message
+					*s == '_') {      // APC Application Program Command
 				os_cmd_arg.clear();
 				// *Pt_arg = '\0'; Pt_len = 0;
 				prefix = *s;

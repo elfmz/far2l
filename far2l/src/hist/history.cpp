@@ -89,8 +89,8 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 
 
 /*
-   SaveForbid - принудительно запретить запись добавляемой строки.
-                Используется на панели плагина
+	SaveForbid - принудительно запретить запись добавляемой строки.
+	Используется на панели плагина
 */
 void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, bool SaveForbid)
 {
@@ -471,7 +471,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		/*BUGBUG???
 			if (TypeHistory == HISTORYTYPE_DIALOG)
 			{
-					//  Перед отрисовкой спросим об изменении цветовых атрибутов
+					// Перед отрисовкой спросим об изменении цветовых атрибутов
 					BYTE RealColors[VMENU_COLOR_COUNT];
 					FarListColors ListColors={0};
 					ListColors.ColorCount=VMENU_COLOR_COUNT;

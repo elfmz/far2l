@@ -2,10 +2,10 @@
 vmenu.cpp
 
 Обычное вертикальное меню
-  а так же:
-    * список в DI_COMBOBOX
-    * список в DI_LISTBOX
-    * ...
+	а так же:
+		* список в DI_COMBOBOX
+		* список в DI_LISTBOX
+		* ...
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -60,14 +60,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cmdline.hpp"
 #include "UsedChars.hpp"
 
-VMenu::VMenu(const wchar_t *Title,       // заголовок меню
-             MenuDataEx *Data, // пункты меню
-             int ItemCount,     // количество пунктов меню
-             int MaxHeight,     // максимальная высота
-             DWORD Flags,       // нужен ScrollBar?
-             FARWINDOWPROC Proc,    // обработчик
-             Dialog *ParentDialog
-            ):  // родитель для ListBox
+VMenu::VMenu(
+		const wchar_t *Title,       // заголовок меню
+		MenuDataEx *Data,           // пункты меню
+		int ItemCount,              // количество пунктов меню
+		int MaxHeight,              // максимальная высота
+		DWORD Flags,                // нужен ScrollBar?
+		FARWINDOWPROC Proc,         // обработчик
+		Dialog *ParentDialog
+	): // родитель для ListBox
 	strTitle(Title),
 	SelectPos(-1),
 	TopPos(0),
@@ -1368,10 +1369,11 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-	if ((BoxType!=NO_BOX)?
-	        (MsX>X1 && MsX<X2 && MsY>Y1 && MsY<Y2):
-	        (MsX>=X1 && MsX<=X2 && MsY>=Y1 && MsY<=Y2))
-	{
+	if (
+		(BoxType!=NO_BOX)?
+		(MsX>X1 && MsX<X2 && MsY>Y1 && MsY<Y2):
+		(MsX>=X1 && MsX<=X2 && MsY>=Y1 && MsY<=Y2)
+	) {
 		int MsPos=GetVisualPos(TopPos)+((BoxType!=NO_BOX)?MsY-Y1-1:MsY-Y1);
 
 		MsPos = VisualPosToReal(MsPos);
@@ -1380,29 +1382,30 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		{
 			if (MouseX!=PrevMouseX || MouseY!=PrevMouseY || !MouseEvent->dwEventFlags)
 			{
-				/* TODO:
+				/*
+					TODO:
 
-				   Это заготовка для управления поведением листов "не в стиле меню" - когда текущий
-				   указатель списка (позиция) следит за мышой...
+					Это заготовка для управления поведением листов "не в стиле меню" - когда текущий
+					указатель списка (позиция) следит за мышой...
 
-				        if(!CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags==MOUSE_MOVED ||
-				            CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags!=MOUSE_MOVED)
+						if(!CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags==MOUSE_MOVED ||
+							CheckFlags(VMENU_LISTBOX|VMENU_COMBOBOX) && MouseEvent->dwEventFlags!=MOUSE_MOVED)
 				*/
-				if ((CheckFlags(VMENU_MOUSEREACTION) && MouseEvent->dwEventFlags==MOUSE_MOVED)
-			        ||
-			        (!CheckFlags(VMENU_MOUSEREACTION) && MouseEvent->dwEventFlags!=MOUSE_MOVED)
-			        ||
-			        (MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED))
-				   )
-				{
+				if (
+					(CheckFlags(VMENU_MOUSEREACTION) && MouseEvent->dwEventFlags==MOUSE_MOVED) ||
+					(!CheckFlags(VMENU_MOUSEREACTION) && MouseEvent->dwEventFlags!=MOUSE_MOVED) ||
+					(MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED))
+				) {
 					SetSelectPos(MsPos,1);
 				}
 
 				ShowMenu(true);
 			}
 
-			/* $ 13.10.2001 VVM
-			  + Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании */
+			/*
+				$ 13.10.2001 VVM
+				+ Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании
+			*/
 			if (!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)))
 				SetFlags(VMENU_MOUSEDOWN);
 
@@ -2165,12 +2168,13 @@ void VMenu::AssignHighlights(int Reverse)
 {
 	CriticalSectionLock Lock(CS);
 
-	/* $ 02.12.2001 KM
-	   + Поелику VMENU_SHOWAMPERSAND сбрасывается для корректной
-	     работы ShowMenu сделаем сохранение энтого флага, в противном
-	     случае если в диалоге использовался DI_LISTBOX без флага
-	     DIF_LISTNOAMPERSAND, то амперсанды отображались в списке
-	     только один раз до следующего ShowMenu.
+	/*
+		$ 02.12.2001 KM
+		+ Поелику VMENU_SHOWAMPERSAND сбрасывается для корректной
+		работы ShowMenu сделаем сохранение энтого флага, в противном
+		случае если в диалоге использовался DI_LISTBOX без флага
+		DIF_LISTNOAMPERSAND, то амперсанды отображались в списке
+		только один раз до следующего ShowMenu.
 	*/
 	if (CheckFlags(VMENU_SHOWAMPERSAND))
 		VMOldFlags.Set(VMENU_SHOWAMPERSAND);
@@ -2221,7 +2225,7 @@ void VMenu::AssignHighlights(int Reverse)
 	// This is to resolve problems with assigning hotkeys to items like {"ARC", "ARJ", "RAR"}
 	for (int Attempt = 0; Attempt < 2; ++Attempt)
 	{
-		// TODO:  ЭТОТ цикл нужно уточнить - возможно вылезут артефакты (хотя не уверен)
+		// TODO: ЭТОТ цикл нужно уточнить - возможно вылезут артефакты (хотя не уверен)
 		size_t FailedsCount = 0;
 		for (size_t I = 0; I < ShuffledItem.size(); ++I)
 		{
@@ -2292,7 +2296,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 			SetSelectPos(I,1);
 			ShowMenu(true);
 
-			if ((!ParentDialog  || CheckFlags(VMENU_COMBOBOX)) && ItemCanBeEntered(Item[SelectPos]->Flags))
+			if ((!ParentDialog || CheckFlags(VMENU_COMBOBOX)) && ItemCanBeEntered(Item[SelectPos]->Flags))
 			{
 				Modal::ExitCode = I;
 				EndLoop = TRUE;
@@ -2685,9 +2689,10 @@ int VMenu::GetUserDataSize(int Position)
 	return Item[ItemPos]->UserDataSize;
 }
 
-int VMenu::_SetUserData(MenuItemEx *PItem,
-                        const void *Data,   // Данные
-                        int Size)           // Размер, если =0 то предполагается, что в Data-строка
+int VMenu::_SetUserData(
+	MenuItemEx *PItem,
+	const void *Data,   // Данные
+	int Size)           // Размер, если =0 то предполагается, что в Data-строка
 {
 	if (PItem->UserDataSize > (int)sizeof(PItem->UserData) && PItem->UserData)
 		free(PItem->UserData);
@@ -2733,9 +2738,10 @@ int VMenu::_SetUserData(MenuItemEx *PItem,
 }
 
 // Присовокупить к итему данные.
-int VMenu::SetUserData(LPCVOID Data,   // Данные
-                       int Size,     // Размер, если =0 то предполагается, что в Data-строка
-                       int Position) // номер итема
+int VMenu::SetUserData(
+	LPCVOID Data,   // Данные
+	int Size,       // Размер, если =0 то предполагается, что в Data-строка
+	int Position)   // номер итема
 {
 	CriticalSectionLock Lock(CS);
 
@@ -2877,19 +2883,23 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 
 	if (!SortForDataDWORD) // обычная сортировка
 	{
-		far_qsortex((char *)Item,
-		        ItemCount,
-		        sizeof(*Item),
-		        (qsortex_fn)SortItem,
-		        &Param);
+		far_qsortex(
+			(char *)Item,
+			ItemCount,
+			sizeof(*Item),
+			(qsortex_fn)SortItem,
+			&Param
+		);
 	}
 	else
 	{
-		far_qsortex((char *)Item,
-		        ItemCount,
-		        sizeof(*Item),
-		        (qsortex_fn)SortItemDataDWORD,
-		        &Param);
+		far_qsortex(
+			(char *)Item,
+			ItemCount,
+			sizeof(*Item),
+			(qsortex_fn)SortItemDataDWORD,
+			&Param
+		);
 	}
 
 	// скорректируем SelectPos

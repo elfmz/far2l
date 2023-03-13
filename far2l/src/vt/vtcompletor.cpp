@@ -155,7 +155,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 			perror("VTCompletor: select");
 			break;
 		}
-  		if(rv == 0) { //timeout
+		if(rv == 0) { //timeout
 			fprintf(stderr, "VTCompletor: timeout\n");
 			break;
 		}

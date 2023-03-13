@@ -1720,11 +1720,13 @@ const wchar_t *Edit::GetEOL()
 	return EOL_TYPE_CHARS[EndType];
 }
 
-/* $ 25.07.2000 tran
-   примечание:
-   в этом методе DropDownBox не обрабатывается
-   ибо он вызывается только из SetString и из класса Editor
-   в Dialog он нигде не вызывается*/
+/*
+	$ 25.07.2000 tran
+	примечание:
+	в этом методе DropDownBox не обрабатывается
+	ибо он вызывается только из SetString и из класса Editor
+	в Dialog он нигде не вызывается
+*/
 void Edit::SetBinaryString(const wchar_t *Str,int Length)
 {
 	if (Flags.Check(FEDITLINE_READONLY))
@@ -2112,9 +2114,10 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-/* $ 03.08.2000 KM
-   Немного изменён алгоритм из-за необходимости
-   добавления поиска целых слов.
+/*
+	$ 03.08.2000 KM
+	Немного изменён алгоритм из-за необходимости
+	добавления поиска целых слов.
 */
 int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength)
 {
@@ -2659,8 +2662,9 @@ void Edit::ApplyColor()
 	}
 }
 
-/* $ 24.09.2000 SVS $
-  Функция Xlat - перекодировка по принципу QWERTY <-> ЙЦУКЕН
+/*
+	$ 24.09.2000 SVS $
+	Функция Xlat - перекодировка по принципу QWERTY <-> ЙЦУКЕН
 */
 void Edit::Xlat(bool All)
 {
@@ -2682,9 +2686,10 @@ void Edit::Xlat(bool All)
 		Changed();
 		Show();
 	}
-	/* $ 25.11.2000 IS
-	 Если нет выделения, то обработаем текущее слово. Слово определяется на
-	 основе специальной группы разделителей.
+	/*
+		$ 25.11.2000 IS
+		Если нет выделения, то обработаем текущее слово. Слово определяется на
+		основе специальной группы разделителей.
 	*/
 	else
 	{
@@ -2722,9 +2727,10 @@ void Edit::Xlat(bool All)
 }
 
 
-/* $ 15.11.2000 KM
-   Проверяет: попадает ли символ в разрешённый
-   диапазон символов, пропускаемых маской
+/*
+	$ 15.11.2000 KM
+	Проверяет: попадает ли символ в разрешённый
+	диапазон символов, пропускаемых маской
 */
 int Edit::KeyMatchedMask(int Key)
 {

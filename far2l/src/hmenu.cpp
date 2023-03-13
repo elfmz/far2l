@@ -215,9 +215,11 @@ int HMenu::ProcessKey(int Key)
 		{
 			if (Item[SelectPos].SubMenu)
 			{
-				ProcessSubMenu(Item[SelectPos].SubMenu,Item[SelectPos].SubMenuSize,
-				               Item[SelectPos].SubMenuHelp,ItemX[SelectPos],
-				               Y1+1,VExitCode);
+				ProcessSubMenu(
+					Item[SelectPos].SubMenu,Item[SelectPos].SubMenuSize,
+					Item[SelectPos].SubMenuHelp,ItemX[SelectPos],
+					Y1+1,VExitCode
+				);
 
 				if (VExitCode!=-1)
 				{
@@ -235,7 +237,7 @@ int HMenu::ProcessKey(int Key)
 			Item[SelectPos].Selected=0;
 
 			/* Кусок для "некрайних" меню - прыжок к меню пассивной панели */
-			if (SelectPos  && SelectPos != ItemCount-1)
+			if (SelectPos && SelectPos != ItemCount-1)
 			{
 				if (CtrlObject->Cp()->ActivePanel==CtrlObject->Cp()->RightPanel)
 					SelectPos=0;
@@ -386,9 +388,10 @@ void HMenu::GetExitCode(int &ExitCode,int &VExitCode)
 }
 
 
-void HMenu::ProcessSubMenu(MenuDataEx *Data,int DataCount,
-                           const wchar_t *SubMenuHelp,int X,int Y,int &Position)
-{
+void HMenu::ProcessSubMenu(
+	MenuDataEx *Data,int DataCount,
+	const wchar_t *SubMenuHelp,int X,int Y,int &Position
+) {
 	if (SubMenu)
 		delete SubMenu;
 
@@ -429,10 +432,11 @@ void HMenu::ProcessSubMenu(MenuDataEx *Data,int DataCount,
 		}
 		else
 		{
-			if (Key == KEY_LEFT || Key == KEY_RIGHT ||Key == KEY_TAB ||
-			        Key == KEY_NUMPAD4 || Key == KEY_NUMPAD6 ||
-			        Key == KEY_MSWHEEL_LEFT || Key == KEY_MSWHEEL_RIGHT)
-			{
+			if (
+				Key == KEY_LEFT || Key == KEY_RIGHT ||Key == KEY_TAB ||
+				Key == KEY_NUMPAD4 || Key == KEY_NUMPAD6 ||
+				Key == KEY_MSWHEEL_LEFT || Key == KEY_MSWHEEL_RIGHT
+			) {
 				delete SubMenu;
 				SubMenu=nullptr;
 				ProcessKey(Key);

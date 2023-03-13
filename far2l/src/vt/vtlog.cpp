@@ -204,7 +204,7 @@ namespace VTLog
 
 	static unsigned int g_pause_cnt = 0;
 	
-	void  OnConsoleScroll(PVOID pContext, unsigned int Width, CHAR_INFO *Chars)
+	void OnConsoleScroll(PVOID pContext, unsigned int Width, CHAR_INFO *Chars)
 	{
 		if (g_pause_cnt == 0) {
 			g_lines.Add( ActualLineWidth(Width, Chars), Chars);

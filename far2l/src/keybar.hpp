@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FARString.hpp"
 
 
-//   Группы меток
+// Группы меток
 enum
 {
 	KBL_MAIN=0,
@@ -80,7 +80,7 @@ class KeyBar: public ScreenObject
 
 	public:
 		KeyBar();
-		virtual  ~KeyBar() {}
+		virtual ~KeyBar() {}
 
 	public:
 		void Refresh(bool show, bool force_refresh_fkeys = false);

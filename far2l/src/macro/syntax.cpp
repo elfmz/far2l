@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum TToken
 {
-	tNo, tEnd,  tLet,
+	tNo, tEnd, tLet,
 	tVar, tConst, tStr, tInt, tFunc, tFARVar, tFloat,
 	tPlus, tMinus, tMul, tDiv, tLp, tRp, tComma,
 	tBoolAnd, tBoolOr, tBoolXor,
@@ -354,7 +354,7 @@ static void calcFunc()
 
 					if ( currTok != ((i == nParam-1) ? tRp : tComma) )
 					{
-						if (oParam > 0 &&  currTok != tEnd)  // если опциональные параметры есть и...
+						if (oParam > 0 && currTok != tEnd)  // если опциональные параметры есть и...
 							break;
 
 						if (i == nParam-1)
@@ -865,7 +865,7 @@ static TToken getToken()
 		case L'%':
 			ch = getChar();
 
-			if ((IsAlphaNum(ch) || ch == L'_') || (ch == L'%'  && (IsAlphaNum(*sSrcString) || *sSrcString == L'_')))
+			if ((IsAlphaNum(ch) || ch == L'_') || (ch == L'%' && (IsAlphaNum(*sSrcString) || *sSrcString == L'_')))
 			{
 				getVarName(ch);
 				putBack(ch);
@@ -1426,10 +1426,10 @@ static void printKeyValue(DWORD* k, int& i)
 		SysLog(L"%08X: %08X |   %08X (%ls)", i,k[i],k[i],((DWORD)k[i]<(DWORD)i?L"up":L"down"));
 	}
 	/*
-	  else if ( Code == MCODE_OP_PLAINTEXT )
-	  {
-	    //sprint(ii, L"$text ''");
-	  }
+		else if ( Code == MCODE_OP_PLAINTEXT )
+		{
+			//sprint(ii, L"$text ''");
+		}
 	*/
 	else if (k[i] < KEY_MACRO_BASE || k[i] > KEY_MACRO_ENDBASE)
 	{
@@ -1997,7 +1997,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 						break;
 				}
 
-				if (!exec.del())    // Вообще-то этого быть не должно,  но подстрахуемся
+				if (!exec.del())    // Вообще-то этого быть не должно, но подстрахуемся
 				{
 					if (CurMacro_Buffer )
 					{

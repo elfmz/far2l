@@ -272,8 +272,9 @@ int Help::ReadHelp(const wchar_t *Mask)
 	else
 		strCtrlStartPosChar.Clear();
 
-	/* $ 29.11.2001 DJ
-	   запомним, чего там написано в PluginContents
+	/*
+		$ 29.11.2001 DJ
+		запомним, чего там написано в PluginContents
 	*/
 	if (!GetLangParam(HelpFile,L"PluginContents",&strCurPluginContents, nullptr, nCodePage))
 		strCurPluginContents.Clear();
@@ -454,9 +455,10 @@ m1:
 					continue;
 				}
 
-				/* $<text> в начале строки, определение темы
-				   Определяет не прокручиваемую область помощи
-				   Если идут несколько подряд сразу после строки обозначения темы...
+				/*
+					$<text> в начале строки, определение темы
+					Определяет не прокручиваемую область помощи
+					Если идут несколько подряд сразу после строки обозначения темы...
 				*/
 				if (NearTopicFound)
 				{
@@ -679,7 +681,7 @@ void Help::DisplayObject()
 	if (!TopicFound)
 	{
 		if (!ErrorHelp) // если это убрать, то при несуществующей ссылки
-		{              // с нынешним манагером попадаем в бесконечный цикл.
+		{               // с нынешним манагером попадаем в бесконечный цикл.
 			ErrorHelp=TRUE;
 
 			if (!(StackData.Flags&FHELP_NOSHOWERROR))
@@ -719,9 +721,10 @@ void Help::FastShow()
 
 	CorrectPosition();
 	StackData.strSelTopic.Clear();
-	/* $ 01.09.2000 SVS
-	   Установим по умолчанию текущий цвет отрисовки...
-	   чтобы новая тема начиналась с нормальными атрибутами
+	/*
+		$ 01.09.2000 SVS
+		Установим по умолчанию текущий цвет отрисовки...
+		чтобы новая тема начиналась с нормальными атрибутами
 	*/
 	CurColor=COL_HELPTEXT;
 
@@ -804,8 +807,9 @@ void Help::DrawWindowFrame()
 	FS<<L" "<<strHelpTitleBuf<<L" ";
 }
 
-/* $ 01.09.2000 SVS
-  Учтем символ CtrlColorChar & CurColor
+/*
+	$ 01.09.2000 SVS
+	Учтем символ CtrlColorChar & CurColor
 */
 void Help::OutString(const wchar_t *Str)
 {
@@ -815,12 +819,12 @@ void Help::OutString(const wchar_t *Str)
 
 	while (OutPos<(int)(ARRAYSIZE(OutStr)-10))
 	{
-		if ((Str[0]==L'~' && Str[1]==L'~') ||
-		        (Str[0]==L'#' && Str[1]==L'#') ||
-		        (Str[0]==L'@' && Str[1]==L'@') ||
-		        (!strCtrlColorChar.IsEmpty() && Str[0]==strCtrlColorChar.At(0) && Str[1]==strCtrlColorChar.At(0))
-		   )
-		{
+		if (
+			(Str[0]==L'~' && Str[1]==L'~') ||
+			(Str[0]==L'#' && Str[1]==L'#') ||
+			(Str[0]==L'@' && Str[1]==L'@') ||
+			(!strCtrlColorChar.IsEmpty() && Str[0]==strCtrlColorChar.At(0) && Str[1]==strCtrlColorChar.At(0))
+		) {
 			OutStr[OutPos++]=*Str;
 			Str+=2;
 			continue;
@@ -837,16 +841,17 @@ void Help::OutString(const wchar_t *Str)
 				RealCurY=Y1+StackData.CurY+FixSize+1;
 
 				if (WhereY()==RealCurY && RealCurX>=WhereX() &&
-				        RealCurX<WhereX()+(Str-StartTopic)-1)
+					RealCurX<WhereX()+(Str-StartTopic)-1)
 				{
 					SetColor(COL_HELPSELECTEDTOPIC);
 
 					if (Str[1]==L'@')
 					{
 						StackData.strSelTopic = (Str+2);
-						/* $ 25.08.2000 SVS
-						   учтем, что может быть такой вариант: @@ или \@
-						   этот вариант только для URL!
+						/*
+							$ 25.08.2000 SVS
+							учтем, что может быть такой вариант: @@ или \@
+							этот вариант только для URL!
 						*/
 						size_t pos;
 
@@ -882,8 +887,10 @@ void Help::OutString(const wchar_t *Str)
 					SetColor(CurColor);
 			}
 
-			/* $ 24.09.2001 VVM
-			  ! Обрежем длинные строки при показе. Такое будет только при длинных ссылках... */
+			/*
+				$ 24.09.2001 VVM
+				! Обрежем длинные строки при показе. Такое будет только при длинных ссылках...
+			*/
 			if (static_cast<int>(StrLength(OutStr) + WhereX()) > X2)
 				OutStr[X2 - WhereX()] = 0;
 
@@ -910,9 +917,10 @@ void Help::OutString(const wchar_t *Str)
 
 		if (*Str==L'@')
 		{
-			/* $ 25.08.2000 SVS
-			   учтем, что может быть такой вариант: @@
-			   этот вариант только для URL!
+			/*
+				$ 25.08.2000 SVS
+				учтем, что может быть такой вариант: @@
+				этот вариант только для URL!
 			*/
 			while (*Str)
 				if (*(++Str)==L'@' && *(Str-1)!=L'@')
@@ -979,12 +987,12 @@ int Help::StringLen(const wchar_t *Str)
 
 	while (*Str)
 	{
-		if ((Str[0]==L'~' && Str[1]==L'~') ||
-		        (Str[0]==L'#' && Str[1]==L'#') ||
-		        (Str[0]==L'@' && Str[1]==L'@') ||
-		        (!strCtrlColorChar.IsEmpty() && Str[0]==strCtrlColorChar.At(0) && Str[1]==strCtrlColorChar.At(0))
-		   )
-		{
+		if (
+			(Str[0]==L'~' && Str[1]==L'~') ||
+			(Str[0]==L'#' && Str[1]==L'#') ||
+			(Str[0]==L'@' && Str[1]==L'@') ||
+			(!strCtrlColorChar.IsEmpty() && Str[0]==strCtrlColorChar.At(0) && Str[1]==strCtrlColorChar.At(0))
+		) {
 			Length++;
 			Str+=2;
 			continue;
@@ -992,9 +1000,10 @@ int Help::StringLen(const wchar_t *Str)
 
 		if (*Str==L'@')
 		{
-			/* $ 25.08.2000 SVS
-			   учтем, что может быть такой вариант: @@
-			   этот вариант только для URL!
+			/*
+				$ 25.08.2000 SVS
+				учтем, что может быть такой вариант: @@
+				этот вариант только для URL!
 			*/
 			while (*Str)
 				if (*(++Str)==L'@' && *(Str-1)!=L'@')
@@ -1004,8 +1013,9 @@ int Help::StringLen(const wchar_t *Str)
 			continue;
 		}
 
-		/* $ 01.09.2000 SVS
-		   учтем наше нововведение \XX или \-
+		/*
+			$ 01.09.2000 SVS
+			учтем наше нововведение \XX или \-
 		*/
 		if (*Str == strCtrlColorChar.At(0))
 		{
@@ -1176,8 +1186,10 @@ int Help::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		/* $ 26.07.2001 VVM
-		  + С альтом скролим по 1 */
+		/*
+			$ 26.07.2001 VVM
+			+ С альтом скролим по 1
+		*/
 		case KEY_MSWHEEL_UP:
 		case(KEY_MSWHEEL_UP | KEY_ALT):
 		{
@@ -1259,7 +1271,7 @@ int Help::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF1:
 		{
-			//   не поганим SelTopic, если и так в теме Contents
+			// не поганим SelTopic, если и так в теме Contents
 			if (StrCmpI(StackData.strHelpTopic,HelpContents))
 			{
 				Stack->Push(&StackData);
@@ -1306,7 +1318,7 @@ int Help::ProcessKey(int Key)
 		}
 		case KEY_SHIFTF2:
 		{
-			//   не поганим SelTopic, если и так в PluginContents
+			// не поганим SelTopic, если и так в PluginContents
 			if (StrCmpI(StackData.strHelpTopic,PluginContents))
 			{
 				Stack->Push(&StackData);
@@ -1366,18 +1378,20 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	if (JumpTopic)
 		StackData.strSelTopic = JumpTopic;
 
-	/* $ 14.07.2002 IS
-	     При переходе по ссылкам используем всегда только абсолютные пути,
-	     если это возможно.
+	/*
+		$ 14.07.2002 IS
+		При переходе по ссылкам используем всегда только абсолютные пути,
+		если это возможно.
 	*/
 
 	// Если ссылка на другой файл, путь относительный и есть то, от чего можно
 	// вычислить абсолютный путь, то сделаем это
-	if (StackData.strSelTopic.At(0)==HelpBeginLink
-	        && StackData.strSelTopic.Pos(pos,HelpEndLink,2)
-	        && !IsAbsolutePath(StackData.strSelTopic.CPtr()+1)
-	        && !StackData.strHelpPath.IsEmpty())
-	{
+	if (
+		StackData.strSelTopic.At(0)==HelpBeginLink &&
+		StackData.strSelTopic.Pos(pos,HelpEndLink,2) &&
+		!IsAbsolutePath(StackData.strSelTopic.CPtr()+1) &&
+		!StackData.strHelpPath.IsEmpty()
+	) {
 		FARString strFullPath;
 		strNewTopic.Copy(StackData.strSelTopic.CPtr()+1,pos);
 		strFullPath = StackData.strHelpPath;
@@ -1467,10 +1481,10 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	strNewTopic.ReleaseBuffer();
 
 	//_SVS(SysLog(L"HelpMask=%ls NewTopic=%ls",StackData.HelpMask,NewTopic));
-	if (StackData.strSelTopic.At(0) != L':' &&
-	        (StrCmpI(StackData.strSelTopic,PluginContents) || StrCmpI(StackData.strSelTopic,FoundContents))
-	   )
-	{
+	if (
+		StackData.strSelTopic.At(0) != L':' &&
+		(StrCmpI(StackData.strSelTopic,PluginContents) || StrCmpI(StackData.strSelTopic,FoundContents))
+	) {
 		if (!(StackData.Flags&FHELP_CUSTOMFILE) && wcsrchr(strNewTopic,HelpEndLink))
 		{
 			StackData.strHelpMask.Clear();
@@ -1518,9 +1532,13 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	}
 
 	// ResizeConsole();
-	if (IsNewTopic
-	        || !(StrCmpI(StackData.strSelTopic,PluginContents)||StrCmpI(StackData.strSelTopic,FoundContents)) // Это неприятный костыль :-((
-	   )
+	if (
+		IsNewTopic ||
+		!(
+			StrCmpI(StackData.strSelTopic,PluginContents) || 
+			StrCmpI(StackData.strSelTopic,FoundContents)
+		) // Это неприятный костыль :-((
+	)
 		MoveToReference(1,1);
 
 	//FrameManager->ImmediateHide();
@@ -1582,8 +1600,9 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-	/* $ 15.03.2002 DJ
-	   обработаем щелчок в середине скроллбара
+	/*
+		$ 15.03.2002 DJ
+		обработаем щелчок в середине скроллбара
 	*/
 	if (MouseX == X2)
 	{
@@ -1607,10 +1626,11 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	// DoubliClock - свернуть/развернуть хелп.
-	if (MouseEvent->dwEventFlags==DOUBLE_CLICK &&
-	        (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
-	        MouseEvent->dwMousePosition.Y<Y1+1+FixSize)
-	{
+	if (
+		MouseEvent->dwEventFlags==DOUBLE_CLICK &&
+		(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
+		MouseEvent->dwMousePosition.Y<Y1+1+FixSize
+	) {
 		ProcessKey(KEY_F5);
 		return TRUE;
 	}
@@ -1631,17 +1651,22 @@ int Help::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
-	/* $ 26.11.2001 VVM
-	  + Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании */
-	if (!MouseEvent->dwEventFlags &&
-	        (MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)))
+	/*
+		$ 26.11.2001 VVM
+		+ Запомнить нажатие клавиши мышки и только в этом случае реагировать при отпускании
+	*/
+	if (
+		!MouseEvent->dwEventFlags &&
+		(MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED))
+	)
 		MouseDown = TRUE;
 
-	if (!MouseEvent->dwEventFlags &&
-	        !(MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) &&
-	        MouseDown &&
-	        !StackData.strSelTopic.IsEmpty())
-	{
+	if (
+		!MouseEvent->dwEventFlags &&
+		!(MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) &&
+		MouseDown &&
+		!StackData.strSelTopic.IsEmpty()
+	) {
 		MouseDown = FALSE;
 		ProcessKey(KEY_ENTER);
 	}
@@ -1671,7 +1696,7 @@ int Help::IsReferencePresent()
 
 	const HelpRecord *rec=GetHelpItem(StrPos);
 	wchar_t *OutStr=rec?rec->HelpStr:nullptr;
-	return (OutStr  && wcschr(OutStr,L'@')  && wcschr(OutStr,L'~') );
+	return (OutStr && wcschr(OutStr,L'@') && wcschr(OutStr,L'~') );
 }
 
 const HelpRecord* Help::GetHelpItem(int Pos)
@@ -1707,7 +1732,7 @@ void Help::MoveToReference(int Forward,int CurScreen)
 					StackData.CurY++;
 
 					if (StackData.TopStr+StackData.CurY>=StrCount-FixCount ||
-					        (CurScreen && StackData.CurY>Y2-Y1-2-FixSize))
+							(CurScreen && StackData.CurY>Y2-Y1-2-FixSize))
 						break;
 				}
 			}
@@ -1723,7 +1748,7 @@ void Help::MoveToReference(int Forward,int CurScreen)
 					StackData.CurY--;
 
 					if (StackData.TopStr+StackData.CurY<0 ||
-					        (CurScreen && StackData.CurY<0))
+							(CurScreen && StackData.CurY<0))
 						break;
 				}
 			}
@@ -1868,9 +1893,10 @@ void Help::ReadDocumentsHelp(int TypeIndex)
 	}
 
 	AddTitle(PtrTitle);
-	/* TODO:
-	   1. Поиск (для "документов") не только в каталоге Documets, но
-	      и в плагинах
+	/*
+		TODO:
+		1. Поиск (для "документов") не только в каталоге Documets, но
+		и в плагинах
 	*/
 	int OldStrCount=StrCount;
 
@@ -1952,11 +1978,12 @@ FARString &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString
 					if (!Ptr[1]) // Вона как поперло то...
 						wcscat(lpwszTopic,HelpContents); // ... значит покажем основную тему. //BUGBUG
 
-					/* А вот теперь разгребем...
-					   Формат может быть :
-					     "<FullPath>Topic" или "<FullModuleName>Topic"
-					   Для случая "FullPath" путь ДОЛЖЕН заканчиваться СЛЕШЕМ!
-					   Т.о. мы отличим ЧТО ЭТО - имя модуля или путь!
+					/*
+						А вот теперь разгребем...
+						Формат может быть :
+							"<FullPath>Topic" или "<FullModuleName>Topic"
+						Для случая "FullPath" путь ДОЛЖЕН заканчиваться СЛЕШЕМ!
+						Т.о. мы отличим ЧТО ЭТО - имя модуля или путь!
 					*/
 					Ptr2=Ptr-1;
 
@@ -1969,9 +1996,10 @@ FARString &Help::MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString
 
 					if (*lpwszTopic)
 					{
-						/* $ 21.08.2001 KM
-						  - Неверно создавался топик с учётом нового правила,
-						    в котором путь для топика должен заканчиваться "/".
+						/*
+							$ 21.08.2001 KM
+							- Неверно создавался топик с учётом нового правила,
+							в котором путь для топика должен заканчиваться "/".
 						*/
 						wmemmove(Ptr2+1,Ptr,StrLength(Ptr)+1); //???
 						// А вот ЗДЕСЬ теперь все по правилам Help API!

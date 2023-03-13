@@ -347,7 +347,7 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return FALSE;
 
 	if (MouseEvent->dwMousePosition.X<X1 || MouseEvent->dwMousePosition.X>X2 ||
-	        MouseEvent->dwMousePosition.Y!=Y1)
+			MouseEvent->dwMousePosition.Y!=Y1)
 		return FALSE;
 
 	int KeyWidth=(X2-X1-1)/12;
@@ -370,9 +370,11 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			break;
 	}
 
-	if (rec.Event.MouseEvent.dwMousePosition.X<X1 ||
-	        rec.Event.MouseEvent.dwMousePosition.X>X2 ||
-	        rec.Event.MouseEvent.dwMousePosition.Y!=Y1)
+	if (
+		rec.Event.MouseEvent.dwMousePosition.X<X1 ||
+		rec.Event.MouseEvent.dwMousePosition.X>X2 ||
+		rec.Event.MouseEvent.dwMousePosition.Y!=Y1
+	)
 		return FALSE;
 
 	int NewKey,NewX=MouseEvent->dwMousePosition.X-X1;
@@ -388,9 +390,10 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (Key>11)
 		Key=11;
 
-	if (MouseEvent->dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED) ||
-	        (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED))
-	{
+	if (
+		MouseEvent->dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED) ||
+		(MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)
+	) {
 		if (MouseEvent->dwControlKeyState & SHIFT_PRESSED)
 			Key+=KEY_ALTSHIFTF1;
 		else if (MouseEvent->dwControlKeyState & (RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
@@ -419,10 +422,11 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 void KeyBar::RedrawIfChanged()
 {
-	if (ShiftPressed!=ShiftState ||
-	        CtrlPressed!=CtrlState ||
-	        AltPressed!=AltState)
-	{
+	if (
+		ShiftPressed!=ShiftState ||
+		CtrlPressed!=CtrlState ||
+		AltPressed!=AltState
+	) {
 		//_SVS("KeyBar::RedrawIfChanged()");
 		Redraw();
 	}

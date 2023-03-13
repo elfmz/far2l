@@ -81,13 +81,13 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 }
 
 /*
-  Функция TestFolder возвращает одно состояний тестируемого каталога:
+	Функция TestFolder возвращает одно состояний тестируемого каталога:
 
-    TSTFLD_NOTFOUND   (2) - нет такого
-    TSTFLD_NOTEMPTY   (1) - не пусто
-    TSTFLD_EMPTY      (0) - пусто
-    TSTFLD_NOTACCESS (-1) - нет доступа
-    TSTFLD_ERROR     (-2) - ошибка (кривые параметры или нехватило памяти для выделения промежуточных буферов)
+		TSTFLD_NOTFOUND   (2) - нет такого
+		TSTFLD_NOTEMPTY   (1) - не пусто
+		TSTFLD_EMPTY      (0) - пусто
+		TSTFLD_NOTACCESS (-1) - нет доступа
+		TSTFLD_ERROR     (-2) - ошибка (кривые параметры или нехватило памяти для выделения промежуточных буферов)
 */
 TESTFOLDERCONST TestFolder(const wchar_t *Path)
 {
@@ -142,15 +142,15 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 }
 
 /*
-   Проверка пути или хост-файла на существование
-   Если идет проверка пути (IsHostFile=FALSE), то будет
-   предпринята попытка найти ближайший путь. Результат попытки
-   возвращается в переданном TestPath.
+	Проверка пути или хост-файла на существование
+	Если идет проверка пути (IsHostFile=FALSE), то будет
+	предпринята попытка найти ближайший путь. Результат попытки
+	возвращается в переданном TestPath.
 
-   Return: 0 - бЯда.
-           1 - ОБИ!,
-          -1 - Почти что ОБИ, но ProcessPluginEvent вернул TRUE
-   TestPath может быть пустым, тогда просто исполним ProcessPluginEvent()
+	Return: 0 - бЯда.
+		1  - ОБИ!,
+		-1 - Почти что ОБИ, но ProcessPluginEvent вернул TRUE
+	TestPath может быть пустым, тогда просто исполним ProcessPluginEvent()
 
 */
 int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)

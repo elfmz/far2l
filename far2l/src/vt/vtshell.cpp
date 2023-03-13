@@ -550,7 +550,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 						_vta.EnableOutput();
 					}
 					else if (!_exit_marker.empty()
-					  && strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0) {
+						&& strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0)
+					{
 						_exit_code = atoi(&str[6 + _exit_marker.size()]);
 						_exit_marker.clear();
 //						fprintf(stderr, "_exit_marker=%s _exit_code=%d\n", &str[6], _exit_code);

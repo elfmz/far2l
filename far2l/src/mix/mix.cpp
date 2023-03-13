@@ -76,13 +76,14 @@ int ToPercent64(uint64_t N1, uint64_t N2)
 	return static_cast<int>(N1*100/N2);
 }
 
-/* $ 30.07.2001 IS
-     1. Проверяем правильность параметров.
-     2. Теперь обработка каталогов не зависит от маски файлов
-     3. Маска может быть стандартного фаровского вида (со скобками,
-        перечислением и пр.). Может быть несколько масок файлов, разделенных
-        запятыми или точкой с запятой, можно указывать маски исключения,
-        можно заключать маски в кавычки. Короче, все как и должно быть :-)
+/*
+	$ 30.07.2001 IS
+	1. Проверяем правильность параметров.
+	2. Теперь обработка каталогов не зависит от маски файлов
+	3. Маска может быть стандартного фаровского вида (со скобками,
+	перечислением и пр.). Может быть несколько масок файлов, разделенных
+	запятыми или точкой с запятой, можно указывать маски исключения,
+	можно заключать маски в кавычки. Короче, все как и должно быть :-)
 */
 void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSERFUNC Func,DWORD Flags,void *Param)
 {
@@ -117,11 +118,12 @@ void WINAPI FarRecursiveSearch(const wchar_t *InitDir,const wchar_t *Mask,FRSUSE
 	}
 }
 
-/* $ 14.09.2000 SVS
- + Функция FarMkTemp - получение имени временного файла с полным путем.
-    Dest - приемник результата
-    Template - шаблон по правилам функции mktemp, например "FarTmpXXXXXX"
-    Вернет требуемый размер приемника.
+/*
+	$ 14.09.2000 SVS
+	+ Функция FarMkTemp - получение имени временного файла с полным путем.
+	Dest - приемник результата
+	Template - шаблон по правилам функции mktemp, например "FarTmpXXXXXX"
+	Вернет требуемый размер приемника.
 */
 int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 {
@@ -133,14 +135,13 @@ int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 	return static_cast<int>(strDest.GetLength()+1);
 }
 
-/*
-             v - точка
-   prefXXX X X XXX
-       \ / ^   ^^^\ PID + TID
-        |  \------/
-        |
-        +---------- [0A-Z]
-*/
+//             v - точка
+//   prefXXX X X XXX
+//       \ / ^   ^^^\ PID + TID
+//        |  \------/
+//        |
+//        +---------- [0A-Z]
+
 FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempPath, const wchar_t *UserTempPath)
 {
 	if (!(Prefix && *Prefix))

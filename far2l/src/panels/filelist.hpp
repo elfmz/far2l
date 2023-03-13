@@ -174,9 +174,10 @@ class FileList : public Panel
 		class FileFilter *Filter;
 		DizList Diz;
 		int DizRead;
-		/* $ 09.11.2001 IS
-		     Открывающий и закрывающий символ, которые используются для показа
-		     имени, которое не помещается в панели. По умолчанию - фигурные скобки.
+		/*
+			$ 09.11.2001 IS
+			Открывающий и закрывающий символ, которые используются для показа
+			имени, которое не помещается в панели. По умолчанию - фигурные скобки.
 		*/
 		wchar_t openBracket[2], closeBracket[2];
 
@@ -236,8 +237,9 @@ class FileList : public Panel
 		// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
 		BOOL ChangeDir(const wchar_t *NewDir,BOOL IsUpdated=TRUE);
 		void CountDirSize(DWORD PluginFlags);
-		/* $ 19.03.2002 DJ
-		   IgnoreVisible - обновить, даже если панель невидима
+		/*
+			$ 19.03.2002 DJ
+			IgnoreVisible - обновить, даже если панель невидима
 		*/
 		void ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessage, int CanBeAnnoying);
 		void UpdatePlugin(int KeepSelection, int IgnoreVisible);
@@ -297,15 +299,17 @@ class FileList : public Panel
 		virtual void MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent);
 		virtual void SetFocus();
 		virtual void Update(int Mode);
-		/*$ 22.06.2001 SKV
-		  Параметр для игнорирования времени последнего Update.
-		  Используется для Update после исполнения команды.
+		/*
+			$ 22.06.2001 SKV
+			Параметр для игнорирования времени последнего Update.
+			Используется для Update после исполнения команды.
 		*/
 		virtual int UpdateIfChanged(int UpdateMode);
 
-		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
-		   что панель невидима
+		/*
+			$ 19.03.2002 DJ
+			UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
+			что панель невидима
 		*/
 		virtual void UpdateIfRequired();
 

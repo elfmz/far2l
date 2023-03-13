@@ -102,7 +102,7 @@ static std::string PluginSettingsName(const FARString &strModuleName)
 
 	const size_t FarPathLength = g_strFarPath.GetLength();
 	if (FarPathLength < strModuleName.GetLength()
-	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
+		&& !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
 	{
 		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
 	}
@@ -449,8 +449,10 @@ void PluginManager::LoadPlugins()
 	far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 }
 
-/* $ 01.09.2000 tran
-   Load cache only plugins  - '/co' switch */
+/*
+	$ 01.09.2000 tran
+	Load cache only plugins  - '/co' switch
+*/
 void PluginManager::LoadPluginsFromCache()
 {
 	KeyFileReadHelper kfh(PluginsIni());
@@ -1161,9 +1163,10 @@ struct PluginMenuItemData
 	int nItem;
 };
 
-/* $ 29.05.2001 IS
-   ! При настройке "параметров внешних модулей" закрывать окно с их
-     списком только при нажатии на ESC
+/*
+	$ 29.05.2001 IS
+	! При настройке "параметров внешних модулей" закрывать окно с их
+	списком только при нажатии на ESC
 */
 
 bool PluginManager::CheckIfHotkeyPresent(HotKeyKind Kind)
@@ -1913,9 +1916,10 @@ void PluginManager::ReadUserBackgound(SaveScreen *SaveScr)
 }
 
 
-/* $ 27.09.2000 SVS
-  Функция CallPlugin - найти плагин по ID и запустить
-  в зачаточном состоянии!
+/*
+	$ 27.09.2000 SVS
+	Функция CallPlugin - найти плагин по ID и запустить
+	в зачаточном состоянии!
 */
 int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 {
@@ -1948,7 +1952,8 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 				if (Data && *(const wchar_t *)Data)
 					SetDirectory(hNewPlugin,(const wchar_t *)Data,0);
 
-				/* $ 04.04.2001 SVS
+				/*
+					$ 04.04.2001 SVS
 					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
 					Если что-то не так - раскомментировать!!!
 				*/
@@ -1971,7 +1976,7 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 Plugin *PluginManager::FindPlugin(DWORD SysID)
 {
-	if (SysID  && SysID != 0xFFFFFFFFUl) // не допускается 0 и -1
+	if (SysID && SysID != 0xFFFFFFFFUl) // не допускается 0 и -1
 	{
 		Plugin *PData;
 

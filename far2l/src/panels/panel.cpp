@@ -83,8 +83,9 @@ static Panel *SrcDragPanel;
 static SaveScreen *DragSaveScr=nullptr;
 static FARString strDragName;
 
-/* $ 21.08.2002 IS
-   Класс для хранения пункта плагина в меню выбора дисков
+/*
+	$ 21.08.2002 IS
+	Класс для хранения пункта плагина в меню выбора дисков
 */
 class ChDiskPluginItem
 {
@@ -689,9 +690,9 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					{
 						// Вызываем нужный топик, который передали в CommandsMenu()
 						FarShowHelp(
-						    item->pPlugin->GetModuleName(),
-						    nullptr,
-						    FHELP_SELFHELP|FHELP_NOSHOWERROR|FHELP_USECONTENTS
+							item->pPlugin->GetModuleName(),
+							nullptr,
+							FHELP_SELFHELP|FHELP_NOSHOWERROR|FHELP_USECONTENTS
 						);
 					}
 
@@ -1135,9 +1136,10 @@ void Panel::FastFind(int FirstKey)
 							FindEdit.SetString(strName);
 						}
 
-						/* $ 09.04.2001 SVS
-						   проблемы с быстрым поиском.
-						   Подробнее в 00573.ChangeDirCrash.txt
+						/*
+							$ 09.04.2001 SVS
+							проблемы с быстрым поиском.
+							Подробнее в 00573.ChangeDirCrash.txt
 						*/
 						if (strName.At(0) == L'"')
 						{
@@ -1227,7 +1229,7 @@ void Panel::KillFocus()
 }
 
 
-int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
+int Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 {
 	RetCode=TRUE;
 
@@ -1337,7 +1339,7 @@ int  Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 }
 
 
-int  Panel::IsDragging()
+int Panel::IsDragging()
 {
 	return DragSaveScr!=nullptr;
 }
@@ -1462,21 +1464,24 @@ void Panel::InitCurDir(const wchar_t *CurDir)
 }
 
 
-/* $ 14.06.2001 KM
-   + Добавлена установка переменных окружения, определяющих
-     текущие директории дисков как для активной, так и для
-     пассивной панели. Это необходимо программам запускаемым
-     из FAR.
+/*
+	$ 14.06.2001 KM
+	+ Добавлена установка переменных окружения, определяющих
+	текущие директории дисков как для активной, так и для
+	пассивной панели. Это необходимо программам запускаемым
+	из FAR.
 */
-/* $ 05.10.2001 SVS
-   ! Давайте для начала выставим нужные значения для пассивной панели,
-     а уж потом...
-     А то фигня какая-то получается...
+/*
+	$ 05.10.2001 SVS
+	! Давайте для начала выставим нужные значения для пассивной панели,
+	а уж потом...
+	А то фигня какая-то получается...
 */
-/* $ 14.01.2002 IS
-   ! Убрал установку переменных окружения, потому что она производится
-     в FarChDir, которая теперь используется у нас для установления
-     текущего каталога.
+/*
+	$ 14.01.2002 IS
+	! Убрал установку переменных окружения, потому что она производится
+	в FarChDir, которая теперь используется у нас для установления
+	текущего каталога.
 */
 int Panel::SetCurPath()
 {
@@ -1514,19 +1519,19 @@ int Panel::SetCurPath()
 			else
 				break;
 
-			if (FrameManager && FrameManager->ManagerStarted()) // сначала проверим - а запущен ли менеджер
+			if (FrameManager && FrameManager->ManagerStarted())  // сначала проверим - а запущен ли менеджер
 			{
-				SetCurDir(DefaultPanelInitialDirectory(),TRUE);                    // если запущен - выставим путь который мы точно знаем что существует
+				SetCurDir(DefaultPanelInitialDirectory(),TRUE);  // если запущен - выставим путь который мы точно знаем что существует
 				ChangeDisk();                                    // и вызовем меню выбора дисков
 			}
-			else                                               // оппа...
+			else                                                 // оппа...
 			{
 				FARString strTemp=strCurDir;
-				CutToFolderNameIfFolder(strCurDir);             // подымаемся вверх, для очередной порции ChDir
+				CutToFolderNameIfFolder(strCurDir);              // подымаемся вверх, для очередной порции ChDir
 
 				if (strTemp.GetLength()==strCurDir.GetLength())  // здесь проблема - видимо диск недоступен
 				{
-					SetCurDir(DefaultPanelInitialDirectory(),TRUE);                 // тогда просто сваливаем в каталог, откуда стартанул FAR.
+					SetCurDir(DefaultPanelInitialDirectory(),TRUE);  // тогда просто сваливаем в каталог, откуда стартанул FAR.
 					break;
 				}
 				else
@@ -1572,7 +1577,7 @@ void Panel::Show()
 		CtrlObject->TopMenuBar->Show();
 
 	/* $ 09.05.2001 OT */
-//  SavePrevScreen();
+//	SavePrevScreen();
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 
 	if (AnotherPanel->IsVisible() && !GetModalMode())
@@ -1790,7 +1795,7 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 			strPluginParam = (const wchar_t *)Param2;
 			Result=TRUE;
 			//if(Opt.CPAJHefuayor)
-			//  CtrlObject->Plugins.ProcessCommandLine((char *)PluginParam);
+			//	CtrlObject->Plugins.ProcessCommandLine((char *)PluginParam);
 			break;
 
 		case FCTL_GETPANELINFO:
@@ -2196,7 +2201,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 				switch (CheckShortcutFolder(&strPluginFile,TRUE))
 				{
 					case 0:
-						//              return FALSE;
+						// return FALSE;
 					case -1:
 						return true;
 				}
@@ -2226,7 +2231,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 				switch (CheckShortcutFolder(nullptr,TRUE))
 				{
 					case 0:
-						//              return FALSE;
+						// return FALSE;
 					case -1:
 						return true;
 				}
@@ -2267,17 +2272,17 @@ bool Panel::ExecShortcutFolder(int Pos)
 		switch (CheckShortcutFolder(&strShortcutFolder,FALSE))
 		{
 			case 0:
-				//          return FALSE;
+				// return FALSE;
 			case -1:
 				return true;
 		}
 
-        /*
+		/*
 		if (SrcPanel->GetType()!=FILE_PANEL)
 		{
 			SrcPanel=CtrlObject->Cp()->ChangePanel(SrcPanel,FILE_PANEL,TRUE,TRUE);
 		}
-        */
+		*/
 
 		SrcPanel->SetCurDir(strShortcutFolder,TRUE);
 

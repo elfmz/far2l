@@ -81,9 +81,10 @@ void PluginsStackItem_Dump(const wchar_t *Title,const struct PluginsStackItem *S
 void SaveScreenDumpBuffer(const wchar_t *Title,const CHAR_INFO *Buffer,int X1,int Y1,int X2,int Y2,FILE *fp=nullptr);
 class Manager;
 void ManagerClass_Dump(const wchar_t *Title,const Manager *m=nullptr,FILE *fp=nullptr);
-void GetVolumeInformation_Dump(const wchar_t *Title,LPCWSTR lpRootPathName,LPCWSTR lpVolumeNameBuffer,DWORD nVolumeNameSize,
-                               DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength, DWORD lpFileSystemFlags,
-                               LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,FILE *fp=nullptr);
+void GetVolumeInformation_Dump(
+	const wchar_t *Title,LPCWSTR lpRootPathName,LPCWSTR lpVolumeNameBuffer,DWORD nVolumeNameSize,
+	DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength, DWORD lpFileSystemFlags,
+	LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,FILE *fp=nullptr);
 
 void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &fd,FILE *fp=nullptr);
 
@@ -94,165 +95,165 @@ extern "C"
 #endif
 	void WINAPIV _export FarSysLog(const wchar_t *ModuleName,int Level,char *fmt,...);
 	void WINAPI  _export FarSysLogDump(const wchar_t *ModuleName,DWORD StartAddress,LPBYTE Buf,int SizeBuf);
-	void WINAPI _export FarSysLog_INPUT_RECORD_Dump(const wchar_t *ModuleName,INPUT_RECORD *rec);
+	void WINAPI  _export FarSysLog_INPUT_RECORD_Dump(const wchar_t *ModuleName,INPUT_RECORD *rec);
 #ifdef __cplusplus
 };
 #endif
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG)
-#define ___FILEFUNCLINE___  SysLog(L"[{%s} %s() #%d] ",__FILE__,__FUNCTION__,__LINE__)
+#define ___FILEFUNCLINE___ SysLog(L"[{%s} %s() #%d] ",__FILE__,__FUNCTION__,__LINE__)
 #else
 #define ___FILEFUNCLINE___
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG)
-#define _D(x)  x
+#define _D(x) x
 #else
 #define _D(x)
 #endif
 
 // для "алгоритмов работы" - внимание! лог будет большим!
 #if defined(_DEBUG) && defined(SYSLOG_ALGO)
-#define _ALGO(x)  x
+#define _ALGO(x) x
 #else
 #define _ALGO(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_DIALOG)
-#define _DIALOG(x)  x
+#define _DIALOG(x) x
 #else
 #define _DIALOG(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_MANAGER)
-#define _MANAGER(x)  x
+#define _MANAGER(x) x
 #else
 #define _MANAGER(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_KEYMACRO)
-#define _KEYMACRO(x)  x
+#define _KEYMACRO(x) x
 #else
 #define _KEYMACRO(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_KEYMACRO_PARSE)
-#define _KEYMACRO_PARSE(x)  x
+#define _KEYMACRO_PARSE(x) x
 #else
 #define _KEYMACRO_PARSE(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_ECTL)
-#define _ECTLLOG(x)  x
+#define _ECTLLOG(x) x
 #else
 #define _ECTLLOG(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_EE_REDRAW)
-#define _SYS_EE_REDRAW(x)  x
+#define _SYS_EE_REDRAW(x) x
 #else
 #define _SYS_EE_REDRAW(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_FCTL)
-#define _FCTLLOG(x)  x
+#define _FCTLLOG(x) x
 #else
 #define _FCTLLOG(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_ACTL)
-#define _ACTLLOG(x)  x
+#define _ACTLLOG(x) x
 #else
 #define _ACTLLOG(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_VCTL)
-#define _VCTLLOG(x)  x
+#define _VCTLLOG(x) x
 #else
 #define _VCTLLOG(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_OT)
-#define _OT(x)  x
+#define _OT(x) x
 #else
 #define _OT(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_SVS)
-#define _SVS(x)  x
+#define _SVS(x) x
 #else
 #define _SVS(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_DJ)
-#define _DJ(x)  x
+#define _DJ(x) x
 #else
 #define _DJ(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_WARP)
-#define _WARP(x)  x
+#define _WARP(x) x
 #else
 #define _WARP(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_VVM)
-#define _VVM(x)  x
+#define _VVM(x) x
 #else
 #define _VVM(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_IS)
-#define _IS(x)  x
+#define _IS(x) x
 #else
 #define _IS(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_AT)
-#define _AT(x)  x
+#define _AT(x) x
 #else
 #define _AT(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_tran)
-#define _tran(x)  x
+#define _tran(x) x
 #else
 #define _tran(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_SKV)
-#define _SKV(x)  x
+#define _SKV(x) x
 #else
 #define _SKV(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_KM)
-#define _KM(x)  x
+#define _KM(x) x
 #else
 #define _KM(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_NWZ)
-#define _NWZ(x)  x
+#define _NWZ(x) x
 #else
 #define _NWZ(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_COPYR)
-#define _LOGCOPYR(x)  x
+#define _LOGCOPYR(x) x
 #else
 #define _LOGCOPYR(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_TREX)
-#define _TREX(x)  x
+#define _TREX(x) x
 #else
 #define _TREX(x)
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG_YJH)
-#define _YJH(x)  x
+#define _YJH(x) x
 #else
 #define _YJH(x)
 #endif
@@ -277,7 +278,7 @@ FILE *OpenLogStream(const wchar_t *file);
 #define L_DEBUG2   5
 #define L_DEBUG3   6
 
-class CleverSysLog  // ;-)
+class CleverSysLog // ;-)
 {
 	public:
 		CleverSysLog(const wchar_t *Title=nullptr);

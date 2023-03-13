@@ -83,12 +83,13 @@ template <class TitleT, class ... ItemsT>
 void SetMessageHelp(const wchar_t *Topic);
 void GetMessagePosition(int &X1,int &Y1,int &X2,int &Y2);
 
-/* $ 12.03.2002 VVM
-  Новая функция - пользователь попытался прервать операцию.
-  Зададим вопрос.
-  Возвращает:
-   FALSE - продолжить операцию
-   TRUE  - прервать операцию
+/*
+	$ 12.03.2002 VVM
+	Новая функция - пользователь попытался прервать операцию.
+	Зададим вопрос.
+	Возвращает:
+		FALSE - продолжить операцию
+		TRUE  - прервать операцию
 */
 int AbortMessage();
 

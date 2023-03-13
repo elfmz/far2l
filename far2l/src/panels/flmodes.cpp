@@ -195,8 +195,8 @@ void FileList::SetFilePanelModes()
 		CtrlObject->Cp()->SetScreenPosition();
 		int LeftMode=CtrlObject->Cp()->LeftPanel->GetViewMode();
 		int RightMode=CtrlObject->Cp()->RightPanel->GetViewMode();
-//    CtrlObject->Cp()->LeftPanel->SetViewMode(ModeNumber);
-//    CtrlObject->Cp()->RightPanel->SetViewMode(ModeNumber);
+//	CtrlObject->Cp()->LeftPanel->SetViewMode(ModeNumber);
+//	CtrlObject->Cp()->RightPanel->SetViewMode(ModeNumber);
 		CtrlObject->Cp()->LeftPanel->SetViewMode(LeftMode);
 		CtrlObject->Cp()->RightPanel->SetViewMode(RightMode);
 		CtrlObject->Cp()->LeftPanel->Redraw();

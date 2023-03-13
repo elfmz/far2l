@@ -43,7 +43,7 @@ enum MACRODISABLEONLOAD
 	MDOL_AUTOSTART      = 0x00000001, // дисаблим автостартующие макросы
 };
 
-// области действия макросов (начало исполнения) -  НЕ БОЛЕЕ 0xFF областей!
+// области действия макросов (начало исполнения) - НЕ БОЛЕЕ 0xFF областей!
 enum MACROMODEAREA
 {
 	MACRO_FUNCS                =  -3,
@@ -134,8 +134,8 @@ struct TMacroFunction
 
 	int    BufferSize;               // Размер буфера компилированной последовательности
 	DWORD *Buffer;                   // компилированная последовательность (OpCode) макроса
-	//wchar_t  *Src;                   // оригинальный "текст" макроса
-	//wchar_t  *Description;           // описание макроса
+	//wchar_t  *Src;                 // оригинальный "текст" макроса
+	//wchar_t  *Description;         // описание макроса
 
 	const wchar_t *Syntax;           // Синтаксис функции
 
@@ -145,13 +145,13 @@ struct TMacroFunction
 
 struct MacroRecord
 {
-	DWORD  Flags;         // Флаги макропоследовательности
-	uint32_t    Key;           // Назначенная клавиша
-	int    BufferSize;    // Размер буфера компилированной последовательности
-	DWORD *Buffer;        // компилированная последовательность (OpCode) макроса
+	DWORD  Flags;            // Флаги макропоследовательности
+	uint32_t    Key;         // Назначенная клавиша
+	int    BufferSize;       // Размер буфера компилированной последовательности
+	DWORD *Buffer;           // компилированная последовательность (OpCode) макроса
 	wchar_t  *Src;           // оригинальный "текст" макроса
 	wchar_t  *Description;   // описание макроса
-	DWORD  Reserved[2];   // зарезервировано
+	DWORD  Reserved[2];      // зарезервировано
 };
 
 #define STACKLEVEL      32
@@ -182,10 +182,11 @@ struct MacroPanelSelect {
 	TVar    *Item;
 };
 
-/* $TODO:
-    1. Удалить IndexMode[], Sort()
-    2. Из MacroLIB сделать
-       struct MacroRecord *MacroLIB[MACRO_LAST];
+/*
+	$TODO:
+	1. Удалить IndexMode[], Sort()
+	2. Из MacroLIB сделать
+	struct MacroRecord *MacroLIB[MACRO_LAST];
 */
 class KeyMacro
 {

@@ -42,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileholder.hpp"
 #include "ViewerStrings.hpp"
 
-#define VIEWER_UNDO_COUNT   64
+#define VIEWER_UNDO_COUNT 64
 
 enum {VIEW_UNWRAP=0,VIEW_WRAP=1, VIEW_WORDWRAP=2};
 
@@ -128,7 +128,7 @@ class Viewer:public ScreenObject
 		struct ViewerUndoData UndoData[VIEWER_UNDO_COUNT];
 
 		int LastKeyUndo;
-		int Width,XX2;  // , используется при расчете ширины при скролбаре
+		int Width,XX2; // , используется при расчете ширины при скролбаре
 		int ViewerID;
 		bool OpenFailed;
 		bool bVE_READ_Sent;
@@ -139,7 +139,7 @@ class Viewer:public ScreenObject
 
 		UINT DefCodePage;
 
-		std::shared_ptr<IFileHolder>  FileHolder;
+		std::shared_ptr<IFileHolder> FileHolder;
 
 	private:
 		virtual void DisplayObject();
@@ -150,10 +150,11 @@ class Viewer:public ScreenObject
 		void Up();
 		void ShowHex();
 		void ShowStatus();
-		/* $ 27.04.2001 DJ
-		   функции для рисования скроллбара, для корректировки ширины в
-		   зависимости от наличия скроллбара и для корректировки позиции файла
-		   на границу строки
+		/*
+			$ 27.04.2001 DJ
+			функции для рисования скроллбара, для корректировки ширины в
+			зависимости от наличия скроллбара и для корректировки позиции файла
+			на границу строки
 		*/
 		void DrawScrollbar();
 		void AdjustWidth();

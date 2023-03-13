@@ -150,10 +150,10 @@ void SaveScreen::AppendArea(SaveScreen *NewArea)
 }
 
 void SaveScreen::Resize(int NewX,int NewY, DWORD Corner, bool SyncWithConsole)
-//  Corner definition:
-//  0 --- 1
-//  |     |
-//  2 --- 3
+//	Corner definition:
+//	0 --- 1
+//	|     |
+//	2 --- 3
 {
 	int OWi=X2-X1+1, OHe=Y2-Y1+1, iY=0;
 

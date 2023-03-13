@@ -127,8 +127,9 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 	FARString strFullParamName = L".";
 	strFullParamName += ParamName;
 	int Length=(int)strFullParamName.GetLength();
-	/* $ 29.11.2001 DJ
-	   не поганим позицию в файле; дальше @Contents не читаем
+	/*
+		$ 29.11.2001 DJ
+		не поганим позицию в файле; дальше @Contents не читаем
 	*/
 	BOOL Found = FALSE;
 	long OldPos = ftell(SrcFile);
@@ -224,10 +225,11 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 			{
 				LangMenuItem.strName.Format(L"%.40ls", !strLangDescr.IsEmpty() ? strLangDescr.CPtr():strLangName.CPtr());
 
-				/* $ 01.08.2001 SVS
-				   Не допускаем дубликатов!
-				   Если в каталог с ФАРом положить еще один HLF с одноименным
-				   языком, то... фигня получается при выборе языка.
+				/*
+					$ 01.08.2001 SVS
+					Не допускаем дубликатов!
+					Если в каталог с ФАРом положить еще один HLF с одноименным
+					языком, то... фигня получается при выборе языка.
 				*/
 				if (LangMenu->FindItem(0,LangMenuItem.strName,LIFIND_EXACTMATCH) == -1)
 				{
@@ -252,9 +254,10 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 	return(LangMenu->GetUserDataSize());
 }
 
-/* $ 01.09.2000 SVS
-  + Новый метод, для получения параметров для .Options
-   .Options <KeyName>=<Value>
+/*
+	$ 01.09.2000 SVS
+	+ Новый метод, для получения параметров для .Options
+	.Options <KeyName>=<Value>
 */
 int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage)
 {
@@ -480,7 +483,7 @@ bool Language::Init(const wchar_t *path, bool wide, int expected_max_id)
 			}
 		}
 
-		//   Проведем проверку на количество строк в LNG-файлах
+		// Проведем проверку на количество строк в LNG-файлах
 		if (expected_max_id == -1 || expected_max_id + 1 == new_data->Count()) {
 			_last_error = LERROR_SUCCESS;
 		} else {
@@ -536,14 +539,16 @@ const void *Language::GetMsg(FarLangMsgID id) const
 	fprintf(stderr, "Language::GetMsg(%d) Count=%d _wide=%d _loaded=%d\n",
 			id, _data ? _data->Count() : -1, _wide, _loaded);
 
-	/* $ 26.03.2002 DJ
-	   если менеджер уже в дауне - сообщение не выводим
+	/*
+		$ 26.03.2002 DJ
+		если менеджер уже в дауне - сообщение не выводим
 	*/
 	if (!FrameManager->ManagerIsDown()) {
-		/* $ 03.09.2000 IS
-		   ! Нормальное сообщение об отсутствии строки в языковом файле
-		     (раньше имя файла обрезалось справа и приходилось иногда гадать - в
-		     каком же файле ошибка)
+		/*
+			$ 03.09.2000 IS
+			! Нормальное сообщение об отсутствии строки в языковом файле
+			(раньше имя файла обрезалось справа и приходилось иногда гадать - в
+			каком же файле ошибка)
 		*/
 		/* IS $ */
 		FormatString line1, line2;

@@ -132,9 +132,11 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 	return rc;
 }
 
-/* сравнить имя файла со списком масок
-   Возвращает TRUE в случае успеха.
-   Путь к файлу в FileName НЕ игнорируется */
+/*
+	сравнить имя файла со списком масок
+	Возвращает TRUE в случае успеха.
+	Путь к файлу в FileName НЕ игнорируется
+*/
 bool FileMasksWithExclude::Compare(const wchar_t *FileName) const
 {
 	return (Include.Compare(FileName) && !Exclude.Compare(FileName));

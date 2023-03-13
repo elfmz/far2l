@@ -161,11 +161,11 @@ static FARString ExecuteCommandAndGrabItsOutput(FARString cmd)
 
 
 static int MainProcess(
-    FARString strEditViewArg,
-    FARString strDestName1,
-    FARString strDestName2,
-    int StartLine,
-    int StartChar
+	FARString strEditViewArg,
+	FARString strDestName1,
+	FARString strDestName2,
+	int StartLine,
+	int StartChar
 )
 {
 	InterThreadCallsDispatcherThread itc_dispatcher_thread;
@@ -197,7 +197,7 @@ static int MainProcess(
 				FileEditor *ShellEditor=new FileEditor(strEditViewArg,CP_AUTODETECT,FFILEEDIT_CANNEWFILE|FFILEEDIT_ENABLEF6,StartLine,StartChar);
 				_tran(SysLog(L"make shelleditor %p",ShellEditor));
 
-				if (!ShellEditor->GetExitCode())  // ????????????
+				if (!ShellEditor->GetExitCode()) // ????????????
 				{
 					FrameManager->ExitMainLoop(0);
 				}
@@ -235,7 +235,7 @@ static int MainProcess(
 
 			// воспользуемся тем, что ControlObject::Init() создает панели
 			// юзая Opt.*
-			if (strDestName1.GetLength())  // актиная панель
+			if (strDestName1.GetLength()) // актиная панель
 			{
 				Opt.SetupArgv++;
 				strPath = strDestName1;
@@ -258,7 +258,7 @@ static int MainProcess(
 					Opt.strRightFolder = strPath;
 				}
 
-				if (strDestName2.GetLength())  // пассивная панель
+				if (strDestName2.GetLength()) // пассивная панель
 				{
 					Opt.SetupArgv++;
 					strPath = strDestName2;
@@ -287,13 +287,13 @@ static int MainProcess(
 			CtrlObj.Init();
 
 			// а теперь "провалимся" в каталог или хост-файл (если получится ;-)
-			if (strDestName1.GetLength())  // актиная панель
+			if (strDestName1.GetLength()) // актиная панель
 			{
 				FARString strCurDir;
 				Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 				Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
 
-				if (strDestName2)  // пассивная панель
+				if (strDestName2) // пассивная панель
 				{
 					AnotherPanel->GetCurDir(strCurDir);
 					FarChDir(strCurDir);
@@ -402,8 +402,9 @@ int FarAppMain(int argc, char **argv)
 	FARString DestNames[2];
 	int StartLine=-1,StartChar=-1;
 	int CntDestName=0; // количество параметров-имен каталогов
-	/*$ 18.04.2002 SKV
-	  Попользуем floating point что бы проинициализировался vc-ный fprtl.
+	/*
+		$ 18.04.2002 SKV
+		Попользуем floating point что бы проинициализировался vc-ный fprtl.
 	*/
 	// если под дебагером, то отключаем исключения однозначно,
 	//  иначе - смотря что указал юзвер.
@@ -603,16 +604,16 @@ int FarAppMain(int argc, char **argv)
 	}
 
 
-    std::unique_ptr<KeyFileHelper> KeyboardLayouts;
-    wchar_t *far2l_path = (wchar_t*)g_strFarPath.CPtr();
-    std::string kblo_path = StrPrintf("%lskblayouts.ini", far2l_path);
-    KeyboardLayouts.reset(new KeyFileHelper(kblo_path.c_str()));
+	std::unique_ptr<KeyFileHelper> KeyboardLayouts;
+	wchar_t *far2l_path = (wchar_t*)g_strFarPath.CPtr();
+	std::string kblo_path = StrPrintf("%lskblayouts.ini", far2l_path);
+	KeyboardLayouts.reset(new KeyFileHelper(kblo_path.c_str()));
 
-    const char *lc = setlocale(LC_CTYPE, NULL);
-    char LangCode[3]; LangCode[0] = lc[0]; LangCode[1] = lc[1]; LangCode[2] = 0;
-    
-    KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin");
-    KbLayoutsTrOut = KeyboardLayouts->GetString(LangCode, "Local");
+	const char *lc = setlocale(LC_CTYPE, NULL);
+	char LangCode[3]; LangCode[0] = lc[0]; LangCode[1] = lc[1]; LangCode[2] = 0;
+
+	KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin");
+	KbLayoutsTrOut = KeyboardLayouts->GetString(LangCode, "Local");
 
 
 	//Настройка OEM сортировки. Должна быть после CopyGlobalSettings и перед InitKeysArray!

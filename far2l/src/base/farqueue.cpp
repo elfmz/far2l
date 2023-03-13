@@ -3,17 +3,17 @@ farqueue.cpp
 
 Шаблон работы с очередью
 Использование:
-     FarQueue<int> *q;
-     q=new FarQueue<int>(10);
+	FarQueue<int> *q;
+	q=new FarQueue<int>(10);
 
-     for( int j = 0; j < 5; j++ )
-     {
-       for( int i = 0; i < 5; i++ )
-         q->Put( i );
+	for( int j = 0; j < 5; j++ )
+	{
+		for( int i = 0; i < 5; i++ )
+			q->Put( i );
 
-       while( !q->isEmpty( ) )
-         cout << q->Get( ) << endl;
-     }
+		while( !q->isEmpty( ) )
+			cout << q->Get( ) << endl;
+	}
 */
 /*
 Copyright (c) 1996 Eugene Roshal

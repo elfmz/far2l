@@ -195,7 +195,7 @@ FARString &EscapeSpace(FARString &strStr)
 }
 
 
-wchar_t*  WINAPI QuoteSpaceOnly(wchar_t *Str)
+wchar_t* WINAPI QuoteSpaceOnly(wchar_t *Str)
 {
 	if (wcschr(Str,L' '))
 		InsertQuote(Str);
@@ -284,7 +284,7 @@ FARString& TruncStrFromCenter(FARString &strStr, int MaxLength)
 
 wchar_t* WINAPI TruncPathStr(wchar_t *Str, int MaxLength)
 {
-	//  TODO
+	// TODO
 	return TruncStr(Str, MaxLength);
 }
 
@@ -369,15 +369,16 @@ wchar_t* WINAPI RemoveExternalSpaces(wchar_t *Str)
 	return RemoveTrailingSpaces(RemoveLeadingSpaces(Str));
 }
 
-FARString&  WINAPI RemoveExternalSpaces(FARString &strStr)
+FARString& WINAPI RemoveExternalSpaces(FARString &strStr)
 {
 	return RemoveTrailingSpaces(RemoveLeadingSpaces(strStr));
 }
 
 
-/* $ 02.02.2001 IS
-   Заменяет пробелами непечатные символы в строке. В настоящий момент
-   обрабатываются только cr и lf.
+/*
+	$ 02.02.2001 IS
+	Заменяет пробелами непечатные символы в строке. В настоящий момент
+	обрабатываются только cr и lf.
 */
 FARString& WINAPI RemoveUnprintableCharacters(FARString &strStr)
 {
@@ -430,8 +431,10 @@ FARString& CenterStr(const wchar_t *Src, FARString &strDest, int Length)
 
 	if (SrcLength >= Length)
 	{
-		/* Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
-		   и мы получали обрезанные строки */
+		/*
+			Здесь не надо отнимать 1 от длины, т.к. strlen не учитывает \0
+			и мы получали обрезанные строки
+		*/
 		strDest = std::move(strTempStr);
 		strDest.Truncate(Length);
 	}
@@ -583,8 +586,9 @@ void UnquoteExternal(FARString &strStr)
 }
 
 
-/* FileSizeToStr()
-   Форматирование размера файла в удобочитаемый вид.
+/*
+	FileSizeToStr()
+	Форматирование размера файла в удобочитаемый вид.
 */
 #define MAX_UNITSTR_SIZE 16
 
@@ -873,11 +877,12 @@ enum FFTMODE
 	FFTM_BREAKLONGWORD = 0x00000001,
 };
 
-FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
-	int Width,               // заданная ширина
-	FARString &strDestText,          // приемник
+FARString& WINAPI FarFormatText(
+	const wchar_t *SrcText,     // источник
+	int Width,                  // заданная ширина
+	FARString &strDestText,     // приемник
 	const wchar_t* Break,       // брик, если = nullptr, то принимается '\n'
-	DWORD Flags)             // один из FFTM_*
+	DWORD Flags)                // один из FFTM_*
 {
 	const wchar_t *breakchar;
 	breakchar = Break?Break:L"\n";
@@ -902,8 +907,10 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 	long linelength = Width;
 	int breakcharlen = StrLength(breakchar);
 	int docut = Flags&FFTM_BREAKLONGWORD?1:0;
-	/* Special case for a single-character break as it needs no
-	   additional storage space */
+	/*
+		Special case for a single-character break as it needs no
+		additional storage space
+	*/
 
 	if (breakcharlen == 1 && !docut)
 	{
@@ -1071,13 +1078,13 @@ FARString& WINAPI FarFormatText(const wchar_t *SrcText,     // источник
 }
 
 /*
-  Ptr=CalcWordFromString(Str,I,&Start,&End);
-  far_strncpy(Dest,Ptr,End-Start+1);
-  Dest[End-Start+1]=0;
+	Ptr=CalcWordFromString(Str,I,&Start,&End);
+	far_strncpy(Dest,Ptr,End-Start+1);
+	Dest[End-Start+1]=0;
 
 // Параметры:
 //   WordDiv  - набор разделителей слова в кодировке OEM
-  возвращает указатель на начало слова
+// возвращает указатель на начало слова
 */
 
 const wchar_t * CalcWordFromString(const wchar_t *Str,int CurPos,int *Start,int *End, const wchar_t *WordDiv0)
@@ -1194,8 +1201,9 @@ uint64_t ConvertFileSizeString(const wchar_t *FileSizeStr)
 	return n;
 }
 
-/* $ 21.09.2003 KM
-   Трансформация строки по заданному типу.
+/*
+	$ 21.09.2003 KM
+	Трансформация строки по заданному типу.
 */
 void Transform(FARString &strBuffer,const wchar_t *ConvStr,wchar_t TransformType)
 {

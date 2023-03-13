@@ -94,7 +94,7 @@ const wchar_t *fmtSavedDialogHistory=L"SavedDialogHistory/";
 
 //////////////////////////////////////////////////////////////////////////
 /*
-   Функция, определяющая - "Может ли элемент диалога иметь фокус ввода"
+	Функция, определяющая - "Может ли элемент диалога иметь фокус ввода"
 */
 static inline bool CanGetFocus(int Type)
 {
@@ -472,8 +472,9 @@ void Dialog::Init(FARWINDOWPROC DlgProc,      // Диалоговая проце
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Public, Virtual:
-   Деструктор класса Dialog
+/*
+	Public, Virtual:
+	Деструктор класса Dialog
 */
 Dialog::~Dialog()
 {
@@ -539,7 +540,7 @@ void Dialog::InitDialog()
 	CriticalSectionLock Lock(CS);
 
 	if (!DialogMode.Check(DMODE_INITOBJECTS))    // самодостаточный вариант, когда
-	{                                            //  элементы инициализируются при первом вызове.
+	{                                            // элементы инициализируются при первом вызове.
 		CheckDialogCoord();
 		unsigned InitFocus=InitDialogObjects();
 		int Result=(int)DlgProc((HANDLE)this,DN_INITDIALOG,InitFocus,DataDialog);
@@ -571,9 +572,10 @@ void Dialog::InitDialog()
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Public, Virtual:
-   Расчет значений координат окна диалога и вызов функции
-   ScreenObject::Show() для вывода диалога на экран.
+/*
+	Public, Virtual:
+	Расчет значений координат окна диалога и вызов функции
+	ScreenObject::Show() для вывода диалога на экран.
 */
 void Dialog::Show()
 {
@@ -614,8 +616,9 @@ void Dialog::Hide()
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private, Virtual:
-   Инициализация объектов и вывод диалога на экран.
+/*
+	Private, Virtual:
+	Инициализация объектов и вывод диалога на экран.
 */
 void Dialog::DisplayObject()
 {
@@ -705,15 +708,16 @@ void Dialog::ProcessCenterGroup()
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Public:
-   Инициализация элементов диалога.
+/*
+	Public:
+	Инициализация элементов диалога.
 
-   InitDialogObjects возвращает ID элемента с фокусом ввода
-   Параметр - для выборочной реинициализации элементов. ID = -1 - касаемо всех объектов
+	InitDialogObjects возвращает ID элемента с фокусом ввода
+	Параметр - для выборочной реинициализации элементов. ID = -1 - касаемо всех объектов
 */
 /*
-  TODO: Необходимо применить ProcessRadioButton для исправления
-        кривых рук некоторых плагинописателей (а надо?)
+	TODO: Необходимо применить ProcessRadioButton для исправления
+		кривых рук некоторых плагинописателей (а надо?)
 */
 unsigned Dialog::InitDialogObjects(unsigned ID)
 {
@@ -815,7 +819,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	}
 
 	if (FocusPos == (unsigned)-1) // ну ни хрена себе - нет ни одного
-	{                             //   элемента с возможностью фокуса
+	{                             // элемента с возможностью фокуса
 		FocusPos=0;               // убится, блин
 	}
 
@@ -906,7 +910,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			DlgEdit *DialogEdit=(DlgEdit *)CurItem->ObjPtr;
 			// Mantis#58 - символ-маска с кодом 0х0А - пропадает
 			//DialogEdit->SetDialogParent((Type != DI_COMBOBOX && (ItemFlags & DIF_EDITOR) || (CurItem->Type==DI_PSWEDIT || CurItem->Type==DI_FIXEDIT))?
-			//                            FEDITLINE_PARENT_SINGLELINE:FEDITLINE_PARENT_MULTILINE);
+			//	FEDITLINE_PARENT_SINGLELINE:FEDITLINE_PARENT_MULTILINE);
 			DialogEdit->SetDialogParent(Type == DI_MEMOEDIT?FEDITLINE_PARENT_MULTILINE:FEDITLINE_PARENT_SINGLELINE);
 			DialogEdit->SetReadOnly(0);
 
@@ -1317,8 +1321,9 @@ bool Dialog::ItemHasDropDownArrow(const DialogItemEx *Item)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Получение данных и удаление "редакторов"
+/*
+	Private:
+	Получение данных и удаление "редакторов"
 */
 void Dialog::DeleteDialogObjects()
 {
@@ -1363,9 +1368,10 @@ void Dialog::DeleteDialogObjects()
 
 
 //////////////////////////////////////////////////////////////////////////
-/* Public:
-   Сохраняет значение из полей редактирования.
-   При установленном флаге DIF_HISTORY, сохраняет данные в реестре.
+/*
+	Public:
+		Сохраняет значение из полей редактирования.
+		При установленном флаге DIF_HISTORY, сохраняет данные в реестре.
 */
 void Dialog::GetDialogObjectsData()
 {
@@ -1757,8 +1763,9 @@ LONG_PTR Dialog::CtlColorDlgItem(int ItemPos,int Type,int Focus,int Default,DWOR
 
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Отрисовка элементов диалога на экране.
+/*
+	Private:
+		Отрисовка элементов диалога на экране.
 */
 void Dialog::ShowDialog(unsigned ID)
 {
@@ -2576,9 +2583,10 @@ int64_t Dialog::VMProcess(int OpCode,void *vParam,int64_t iParam)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Public, Virtual:
-   Обработка данных от клавиатуры.
-   Перекрывает BaseInput::ProcessKey.
+/*
+	Public, Virtual:
+		Обработка данных от клавиатуры.
+		Перекрывает BaseInput::ProcessKey.
 */
 int Dialog::ProcessKey(int Key)
 {
@@ -3260,12 +3268,14 @@ void Dialog::ProcessKey(int Key, unsigned ItemPos)
 
 
 //////////////////////////////////////////////////////////////////////////
-/* Public, Virtual:
-   Обработка данных от "мыши".
-   Перекрывает BaseInput::ProcessMouse.
+/*
+	Public, Virtual:
+		Обработка данных от "мыши".
+		Перекрывает BaseInput::ProcessMouse.
 */
-/* $ 18.08.2000 SVS
-   + DN_MOUSECLICK
+/*
+	$ 18.08.2000 SVS
+	+ DN_MOUSECLICK
 */
 int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
@@ -3945,16 +3955,19 @@ int Dialog::Do_ProcessSpace()
 
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Изменяет фокус ввода (воздействие клавишами
-     KEY_TAB, KEY_SHIFTTAB, KEY_UP, KEY_DOWN,
-   а так же Alt-HotKey)
+/*
+	Private:
+	Изменяет фокус ввода (воздействие клавишами
+	KEY_TAB, KEY_SHIFTTAB, KEY_UP, KEY_DOWN,
+	а так же Alt-HotKey)
 */
-/* $ 28.07.2000 SVS
-   Довесок для сообщений DN_KILLFOCUS & DN_SETFOCUS
+/*
+	$ 28.07.2000 SVS
+	Довесок для сообщений DN_KILLFOCUS & DN_SETFOCUS
 */
-/* $ 24.08.2000 SVS
-   Добавка для DI_USERCONTROL
+/*
+	$ 24.08.2000 SVS
+	Добавка для DI_USERCONTROL
 */
 unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 {
@@ -4008,9 +4021,9 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos,int Step,int SkipGroup)
 
 //////////////////////////////////////////////////////////////////////////
 /*
-   Private:
-   Изменяет фокус ввода между двумя элементами.
-   Вынесен отдельно с тем, чтобы обработать DN_KILLFOCUS & DM_SETFOCUS
+	Private:
+	Изменяет фокус ввода между двумя элементами.
+	Вынесен отдельно с тем, чтобы обработать DN_KILLFOCUS & DM_SETFOCUS
 */
 void Dialog::ChangeFocus2(unsigned SetFocusPos)
 {
@@ -4091,8 +4104,8 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 }
 
 /*
-  Функция SelectOnEntry - выделение строки редактирования
-  Обработка флага DIF_SELECTONENTRY
+	Функция SelectOnEntry - выделение строки редактирования
+	Обработка флага DIF_SELECTONENTRY
 */
 void Dialog::SelectOnEntry(unsigned Pos,BOOL Selected)
 {
@@ -4137,8 +4150,9 @@ int Dialog::SetAutomation(WORD IDParent,WORD id,
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Заполняем выпадающий список для ComboBox
+/*
+	Private:
+	Заполняем выпадающий список для ComboBox
 */
 int Dialog::SelectFromComboBox(
 	DialogItemEx *CurItem,
@@ -4282,8 +4296,9 @@ int Dialog::SelectFromComboBox(
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Заполняем выпадающий список из истории
+/*
+	Private:
+	Заполняем выпадающий список из истории
 */
 BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem,
 	DlgEdit *EditLine,
@@ -4328,8 +4343,9 @@ BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem,
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Работа с историей - добавление и reorder списка
+/*
+	Private:
+	Работа с историей - добавление и reorder списка
 */
 int Dialog::AddToEditHistory(const wchar_t *AddStr,const wchar_t *HistoryName)
 {
@@ -4381,8 +4397,9 @@ int Dialog::CheckHighlights(WORD CheckSymbol,int StartPos)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* Private:
-   Если жмакнули Alt-???
+/*
+	Private:
+	Если жмакнули Alt-???
 */
 int Dialog::ProcessHighlighting(int Key,unsigned FocusPos,int Translate)
 {
@@ -4473,7 +4490,7 @@ int Dialog::ProcessHighlighting(int Key,unsigned FocusPos,int Translate)
 
 //////////////////////////////////////////////////////////////////////////
 /*
-   функция подравнивания координат edit классов
+	функция подравнивания координат edit классов
 */
 void Dialog::AdjustEditPos(int dx, int dy)
 {
@@ -4514,8 +4531,8 @@ void Dialog::AdjustEditPos(int dx, int dy)
 
 //////////////////////////////////////////////////////////////////////////
 /*
-   Работа с доп. данными экземпляра диалога
-   Пока простое копирование (присвоение)
+	Работа с доп. данными экземпляра диалога
+	Пока простое копирование (присвоение)
 */
 void Dialog::SetDialogData(LONG_PTR NewDataDialog)
 {
@@ -4523,15 +4540,17 @@ void Dialog::SetDialogData(LONG_PTR NewDataDialog)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* $ 29.06.2007 yjh\
-   При рассчётах времён копирования проще/надёжнее учитывать время ожидания
-   пользовательских ответов в одном месте (здесь).
-   Сброс этой переменной должен осуществляться перед общим началом операции
+/*
+	$ 29.06.2007 yjh\
+	При рассчётах времён копирования проще/надёжнее учитывать время ожидания
+	пользовательских ответов в одном месте (здесь).
+	Сброс этой переменной должен осуществляться перед общим началом операции
 */
 long WaitUserTime;
 
-/* $ 11.08.2000 SVS
-   + Для того, чтобы послать DM_CLOSE нужно переопределить Process
+/*
+	$ 11.08.2000 SVS
+	+ Для того, чтобы послать DM_CLOSE нужно переопределить Process
 */
 static std::atomic<int> s_in_dialog{0};
 
@@ -4589,9 +4608,10 @@ void Dialog::CloseDialog()
 }
 
 
-/* $ 17.05.2001 DJ
-   установка help topic'а и прочие радости, временно перетащенные сюда
-   из Modal
+/*
+	$ 17.05.2001 DJ
+	установка help topic'а и прочие радости, временно перетащенные сюда
+	из Modal
 */
 void Dialog::SetHelp(const wchar_t *Topic)
 {
@@ -4637,8 +4657,9 @@ void Dialog::SetExitCode(int Code)
 }
 
 
-/* $ 19.05.2001 DJ
-   возвращаем наше название для меню по F12
+/*
+	$ 19.05.2001 DJ
+	возвращаем наше название для меню по F12
 */
 int Dialog::GetTypeAndName(FARString &strType, FARString &strName)
 {
@@ -4737,10 +4758,11 @@ LONG_PTR WINAPI Dialog::DlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 }
 
 //////////////////////////////////////////////////////////////////////////
-/* $ 28.07.2000 SVS
-   функция обработки диалога (по умолчанию)
-   Вот именно эта функция и является последним рубежом обработки диалога.
-   Т.е. здесь должна быть ВСЯ обработка ВСЕХ сообщений!!!
+/*
+	$ 28.07.2000 SVS
+	функция обработки диалога (по умолчанию)
+	Вот именно эта функция и является последним рубежом обработки диалога.
+	Т.е. здесь должна быть ВСЯ обработка ВСЕХ сообщений!!!
 */
 LONG_PTR WINAPI DefDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {
@@ -6475,10 +6497,11 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 	return Dlg->CallDlgProc(Msg,Param1,Param2);
 }
 
-/* $ 28.07.2000 SVS
-   Посылка сообщения диалогу
-   Некоторые сообщения эта функция обрабатывает сама, не передавая управление
-   обработчику диалога.
+/*
+	$ 28.07.2000 SVS
+	Посылка сообщения диалогу
+	Некоторые сообщения эта функция обрабатывает сама, не передавая управление
+	обработчику диалога.
 */
 LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 {

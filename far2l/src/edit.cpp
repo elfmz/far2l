@@ -159,7 +159,12 @@ DWORD Edit::SetCodePage(UINT codepage)
 		if (Str && *Str)
 		{
 			//m_codepage = codepage;
-			int length = WINPORT(WideCharToMultiByte)(m_codepage, wc2mbFlags, Str, StrSize, nullptr, 0, nullptr, lpUsedDefaultChar);
+			int length = WINPORT(WideCharToMultiByte)(
+				m_codepage, wc2mbFlags,
+				Str, StrSize,
+				nullptr, 0,
+				nullptr, lpUsedDefaultChar
+			);
 
 			if (UsedDefaultChar)
 				Ret|=SETCP_WC2MBERROR;
@@ -500,7 +505,9 @@ void Edit::FastShow()
 
 			if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 			{
-				FS << fmt::Cells() << fmt::Skip(CellSelStart) << fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data();
+				FS
+					<< fmt::Cells() << fmt::Skip(CellSelStart)
+					<< fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data();
 
 				if (CellSelEnd < EditLength)
 				{
@@ -766,9 +773,18 @@ int Edit::ProcessKey(int Key)
 		- символ перед курсором удален
 		- выделение блока снято
 	*/
-	if ((((Key==KEY_BS || Key==KEY_DEL || Key==KEY_NUMDEL) && Flags.Check(FEDITLINE_DELREMOVESBLOCKS)) || Key==KEY_CTRLD) &&
-		!Flags.Check(FEDITLINE_EDITORMODE) && SelStart!=-1 && SelStart<SelEnd)
-	{
+	if (
+		(
+			(
+				(Key==KEY_BS || Key==KEY_DEL || Key==KEY_NUMDEL) &&
+				Flags.Check(FEDITLINE_DELREMOVESBLOCKS)
+			) ||
+			Key==KEY_CTRLD
+		) &&
+		!Flags.Check(FEDITLINE_EDITORMODE) &&
+		SelStart!=-1 &&
+		SelStart<SelEnd
+	) {
 		DeleteBlock();
 		Show();
 		return TRUE;
@@ -788,9 +804,14 @@ int Edit::ProcessKey(int Key)
 	{
 		Flags.Clear(FEDITLINE_MARKINGBLOCK); // хмм... а это здесь должно быть?
 
-		if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) && !(Key==KEY_CTRLINS || Key==KEY_CTRLNUMPAD0) &&
-			!(Key==KEY_SHIFTDEL||Key==KEY_SHIFTNUMDEL||Key==KEY_SHIFTDECIMAL) && !Flags.Check(FEDITLINE_EDITORMODE) && Key != KEY_CTRLQ &&
-			!(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)) //Key != KEY_SHIFTINS) //??
+		if (
+			!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) &&
+			!(Key==KEY_CTRLINS || Key==KEY_CTRLNUMPAD0) &&
+			!(Key==KEY_SHIFTDEL||Key==KEY_SHIFTNUMDEL||Key==KEY_SHIFTDECIMAL) &&
+			!Flags.Check(FEDITLINE_EDITORMODE) &&
+			Key != KEY_CTRLQ &&
+			!(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)
+		) //Key != KEY_SHIFTINS) //??
 		{
 			/*
 				$ 12.11.2002 DJ
@@ -820,8 +841,11 @@ int Edit::ProcessKey(int Key)
 		Bug - Выделяем кусочек строки -> Shift-Del удяляет всю строку
 		Так должно быть только для UnChanged состояния
 	*/
-	if ((Key == KEY_SHIFTDEL || Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL) && Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize && SelStart==-1)
-	{
+	if (
+		(Key == KEY_SHIFTDEL || Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL) &&
+		Flags.Check(FEDITLINE_CLEARFLAG) &&
+		CurPos>=StrSize && SelStart==-1
+	) {
 		SelStart=0;
 		SelEnd=StrSize;
 	}
@@ -842,12 +866,18 @@ int Edit::ProcessKey(int Key)
 		return TRUE;
 	}
 
-	if (Key!=KEY_NONE && Key!=KEY_IDLE && Key!=KEY_SHIFTINS && Key!=KEY_SHIFTNUMPAD0 && Key!=KEY_CTRLINS &&
-		((unsigned int)Key<KEY_F1 || (unsigned int)Key>KEY_F12) && Key!=KEY_ALT && Key!=KEY_SHIFT &&
-		Key!=KEY_CTRL && Key!=KEY_RALT && Key!=KEY_RCTRL &&
-		(Key<KEY_ALT_BASE || Key > KEY_ALT_BASE+0xFFFF) && // ???? 256 ???
-		!(((unsigned int)Key>=KEY_MACRO_BASE && (unsigned int)Key<=KEY_MACRO_ENDBASE) || ((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)) && Key!=KEY_CTRLQ)
-	{
+	if (
+		Key!=KEY_NONE && Key!=KEY_IDLE &&
+		Key!=KEY_SHIFTINS && Key!=KEY_SHIFTNUMPAD0 &&
+		Key!=KEY_CTRLINS && ((unsigned int)Key<KEY_F1 || (unsigned int)Key>KEY_F12) &&
+		Key!=KEY_ALT && Key!=KEY_SHIFT &&
+		Key!=KEY_CTRL && Key!=KEY_RALT &&
+		Key!=KEY_RCTRL && (Key<KEY_ALT_BASE || Key > KEY_ALT_BASE+0xFFFF) && // ???? 256 ???
+		!(
+			((unsigned int)Key>=KEY_MACRO_BASE && (unsigned int)Key<=KEY_MACRO_ENDBASE) ||
+			((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)
+		) && Key!=KEY_CTRLQ
+	) {
 		Flags.Clear(FEDITLINE_CLEARFLAG);
 		Show();
 	}
@@ -2086,9 +2116,12 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		static int PrevDoubleClick=0;
 		static COORD PrevPosition={0,0};
 
-		if (WINPORT(GetTickCount)()-PrevDoubleClick<=WINPORT(GetDoubleClickTime)() && MouseEvent->dwEventFlags!=MOUSE_MOVED &&
-			PrevPosition.X == MouseEvent->dwMousePosition.X && PrevPosition.Y == MouseEvent->dwMousePosition.Y)
-		{
+		if (
+			WINPORT(GetTickCount)() - PrevDoubleClick <= WINPORT(GetDoubleClickTime)() &&
+			MouseEvent->dwEventFlags != MOUSE_MOVED &&
+			PrevPosition.X == MouseEvent->dwMousePosition.X &&
+			PrevPosition.Y == MouseEvent->dwMousePosition.Y
+		) {
 			Select(0,StrSize);
 			PrevDoubleClick=0;
 			PrevPosition.X=0;
@@ -2119,9 +2152,24 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	Немного изменён алгоритм из-за необходимости
 	добавления поиска целых слов.
 */
-int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength)
-{
-	return SearchString(this->Str,this->StrSize,Str,ReplaceStr,CurPos,Position,Case,WholeWords,Reverse,Regexp,SearchLength,WordDiv());
+int Edit::Search(
+	const FARString& Str,
+	FARString& ReplaceStr,
+	int Position,
+	int Case,
+	int WholeWords,
+	int Reverse,
+	int Regexp,
+	int *SearchLength
+) {
+	return SearchString(
+		this->Str, this->StrSize,
+		Str, ReplaceStr,
+		CurPos, Position,
+		Case, WholeWords,
+		Reverse, Regexp,
+		SearchLength, WordDiv()
+	);
 }
 
 void Edit::InsertTab()
@@ -2754,13 +2802,20 @@ int Edit::KeyMatchedMask(int Key)
 
 int Edit::CheckCharMask(wchar_t Chr)
 {
-	return (Chr==EDMASK_ANY || Chr==EDMASK_DIGIT || Chr==EDMASK_DIGITS || Chr==EDMASK_DSS || Chr==EDMASK_ALPHA || Chr==EDMASK_HEX)?TRUE:FALSE;
+	return (
+		Chr==EDMASK_ANY || Chr==EDMASK_DIGIT ||
+		Chr==EDMASK_DIGITS || Chr==EDMASK_DSS ||
+		Chr==EDMASK_ALPHA || Chr==EDMASK_HEX
+	)?TRUE:FALSE;
 }
 
 void Edit::SetDialogParent(DWORD Sets)
 {
-	if ((Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)) == (FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE) ||
-			!(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)))
+	if (
+		(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)) ==
+			(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE) ||
+		!(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE))
+	)
 		Flags.Clear(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE);
 	else if (Sets&FEDITLINE_PARENT_SINGLELINE)
 	{
@@ -2872,11 +2927,17 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
-EditControl::EditControl(ScreenObject *pOwner,Callback* aCallback,bool bAllocateData,History* iHistory,FarList* iList,DWORD iFlags)
-	: Edit(pOwner,aCallback,bAllocateData),
-	pCustomCompletionList(nullptr), pHistory(iHistory), pList(iList), 
-	Selection(false), SelectionStart(-1), ECFlags(iFlags)
-
+EditControl::EditControl(
+	ScreenObject *pOwner,
+	Callback* aCallback,
+	bool bAllocateData,
+	History* iHistory,
+	FarList* iList,
+	DWORD iFlags
+) : Edit(pOwner,aCallback,bAllocateData), pCustomCompletionList(nullptr),
+	pHistory(iHistory), pList(iList), 
+	Selection(false), SelectionStart(-1),
+	ECFlags(iFlags)
 {
 	ACState=ECFlags.Check(EC_ENABLEAUTOCOMPLETE)!=FALSE;
 }
@@ -2977,13 +3038,19 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 	{
 		ComplMenu.SetFlags(VMENU_WRAPMODE|VMENU_NOTCENTER|VMENU_SHOWAMPERSAND);
 
-		if(!DelBlock && Opt.AutoComplete.AppendCompletion && (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList))
-		{
+		if (
+			!DelBlock &&
+			Opt.AutoComplete.AppendCompletion &&
+			(!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList)
+		) {
 			int SelStart=GetLength();
 
 			// magic
-			if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-			{
+			if (
+				IsSlash(Str[SelStart-1]) &&
+				Str[SelStart-2] == L'"' &&
+				IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2))
+			) {
 				Str[SelStart-2] = Str[SelStart-1];
 				StrSize--;
 				SelStart--;
@@ -3031,8 +3098,12 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 					int MenuKey=InputRecordToKey(&ir);
 
 					// ввод
-					if((MenuKey>=int(L' ') && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
-					{
+					if (
+						(MenuKey>=int(L' ') && MenuKey<=MAX_VKEY_CODE) ||
+						MenuKey==KEY_BS ||
+						MenuKey==KEY_DEL ||
+						MenuKey==KEY_NUMDEL
+					) {
 						FARString strPrev;
 						GetString(strPrev);
 						DeleteBlock();
@@ -3046,15 +3117,24 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 							{
 								PopulateCompletionMenu(ComplMenu, strTemp);
 							}
-							if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
-							{
-								if(MenuKey!=KEY_BS && MenuKey!=KEY_DEL && MenuKey!=KEY_NUMDEL && Opt.AutoComplete.AppendCompletion)
-								{
+							if (
+								ComplMenu.GetItemCount()>1 ||
+								(ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName))
+							) {
+								if (
+									MenuKey!=KEY_BS &&
+									MenuKey!=KEY_DEL &&
+									MenuKey!=KEY_NUMDEL &&
+									Opt.AutoComplete.AppendCompletion
+								) {
 									int SelStart=GetLength();
 
 									// magic
-									if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-									{
+									if (
+										IsSlash(Str[SelStart-1]) &&
+										Str[SelStart-2] == L'"' &&
+										IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2))
+									) {
 										Str[SelStart-2] = Str[SelStart-1];
 										StrSize--;
 										SelStart--;
@@ -3195,8 +3275,12 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 	int Result=0;
 	static int Reenter=0;
 
-	if(ECFlags.Check(EC_ENABLEAUTOCOMPLETE) && *Str && !Reenter && (CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO || Manual))
-	{
+	if (
+		ECFlags.Check(EC_ENABLEAUTOCOMPLETE) &&
+		*Str &&
+		!Reenter &&
+		(CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO || Manual)
+	) {
 		Reenter++;
 		AutoCompleteProcMenu(Result,Manual,DelBlock,BackKey);
 		Reenter--;

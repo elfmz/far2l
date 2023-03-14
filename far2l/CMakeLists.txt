@@ -3,6 +3,8 @@ project(far2l)
 add_subdirectory (bootstrap)
 
 set(SOURCES
+src/farversion.cpp
+
 src/cache.cpp
 src/clipboard.cpp
 src/cmdline.cpp

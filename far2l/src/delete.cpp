@@ -174,8 +174,12 @@ static DeletionResult ShellConfirmDirectoryDeletion(const FARString &strFullName
 	return DELETE_YES;
 }
 
-static DeletionResult ShellDeleteDirectory(int ItemsCount, bool UpdateDiz, Panel *SrcPanel, FARString strSelName, DWORD FileAttr, bool Wipe, int Opt_DeleteToRecycleBin)
-{
+static DeletionResult ShellDeleteDirectory(
+	int ItemsCount, bool UpdateDiz,
+	Panel *SrcPanel, FARString strSelName,
+	DWORD FileAttr, bool Wipe,
+	int Opt_DeleteToRecycleBin
+) {
 	// для symlink`а не нужно подтверждение
 	DeletionResult DR;
 	if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT))
@@ -362,7 +366,15 @@ static ULONG ShellCalcCountOfItemsToDelete(Panel *SrcPanel, bool Wipe)
 				uint32_t CurrentFileCount,CurrentDirCount,ClusterSize;
 				UINT64 FileSize,PhysicalSize;
 
-				if (GetDirInfo(nullptr,strSelName,CurrentDirCount,CurrentFileCount,FileSize,PhysicalSize,ClusterSize,-1,nullptr,0) <= 0)
+				if (
+					GetDirInfo(
+						nullptr, strSelName,
+						CurrentDirCount, CurrentFileCount,
+						FileSize, PhysicalSize,
+						ClusterSize, -1,
+						nullptr,0
+					) <= 0
+				)
 					return (ULONG)-1;
 
 				ItemsCount+= CurrentFileCount + CurrentDirCount + 1;
@@ -445,7 +457,12 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 			if (!NeedSetUpADir)
 				NeedSetUpADir = CheckUpdateAnotherPanel(SrcPanel, strSelName);
 
-			DR = ShellDeleteDirectory(ItemsCount, UpdateDiz, SrcPanel, strSelName, FileAttr, Wipe, Opt_DeleteToRecycleBin);
+			DR = ShellDeleteDirectory(
+				ItemsCount, UpdateDiz,
+				SrcPanel, strSelName,
+				FileAttr, Wipe,
+				Opt_DeleteToRecycleBin
+			);
 			if (DR == DELETE_NO_RECYCLE_BIN)
 				DR = ShellDeleteDirectory(ItemsCount, UpdateDiz, SrcPanel, strSelName, FileAttr, Wipe, FALSE);
 		}
@@ -472,7 +489,11 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 static void PR_ShellDeleteMsg()
 {
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
-	ShellDeleteMsg(static_cast<const wchar_t*>(preRedrawItem.Param.Param1),static_cast<int>(reinterpret_cast<INT_PTR>(preRedrawItem.Param.Param4)),static_cast<int>(preRedrawItem.Param.Param5));
+	ShellDeleteMsg(
+		static_cast<const wchar_t*>(preRedrawItem.Param.Param1),
+		static_cast<int>(reinterpret_cast<INT_PTR>(preRedrawItem.Param.Param4)),
+		static_cast<int>(preRedrawItem.Param.Param5)
+	);
 }
 
 void ShellDeleteMsg(const wchar_t *Name,bool Wipe,int Percent)
@@ -495,7 +516,14 @@ void ShellDeleteMsg(const wchar_t *Name,bool Wipe,int Percent)
 	FARString strOutFileName(Name);
 	TruncPathStr(strOutFileName,static_cast<int>(Width));
 	CenterStr(strOutFileName,strOutFileName,static_cast<int>(Width));
-	Message(0,0,(Wipe?Msg::DeleteWipeTitle:Msg::DeleteTitle),(Percent>=0||!Opt.DelOpt.DelShowTotal)?(Wipe?Msg::DeletingWiping:Msg::Deleting):Msg::ScanningFolder,strOutFileName,strProgress.IsEmpty()?nullptr:strProgress.CPtr());
+	Message(
+		0,
+		0,
+		(Wipe?Msg::DeleteWipeTitle:Msg::DeleteTitle),
+		(Percent>=0||!Opt.DelOpt.DelShowTotal)?(Wipe?Msg::DeletingWiping:Msg::Deleting):Msg::ScanningFolder,
+		strOutFileName,
+		strProgress.IsEmpty()?nullptr:strProgress.CPtr()
+	);
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
 	preRedrawItem.Param.Param1=static_cast<void*>(const_cast<wchar_t*>(Name));
 	preRedrawItem.Param.Param4=(void *)(INT_PTR)Wipe;
@@ -816,9 +844,13 @@ static bool WipeFile(const wchar_t *Name)
 	apiMakeWritable(Name); //apiSetFileAttributes(Name,FILE_ATTRIBUTE_NORMAL);
 	File WipeFile;
 	uint64_t FileSize;
-	if (!WipeFile.Open(Name, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_WRITE_THROUGH|FILE_FLAG_SEQUENTIAL_SCAN)
-		|| !WipeFile.GetSize(FileSize))
-	{
+	if (
+		!WipeFile.Open(
+			Name, GENERIC_WRITE,
+			0, nullptr,
+			OPEN_EXISTING, FILE_FLAG_WRITE_THROUGH|FILE_FLAG_SEQUENTIAL_SCAN
+		) || !WipeFile.GetSize(FileSize)
+	) {
 		return false;
 	}
 
@@ -909,8 +941,12 @@ void DeleteDirTree(const wchar_t *Dir)
 			apiMakeWritable(strFullName);
 //		apiSetFileAttributes(strFullName,FILE_ATTRIBUTE_NORMAL);
 
-		if ( (FindData.dwFileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) == FILE_ATTRIBUTE_DIRECTORY)
-		{
+		if (
+			(
+				FindData.dwFileAttributes &
+				(FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)
+			) == FILE_ATTRIBUTE_DIRECTORY
+		) {
 			if (ScTree.IsDirSearchDone())
 				apiRemoveDirectory(strFullName);
 		}

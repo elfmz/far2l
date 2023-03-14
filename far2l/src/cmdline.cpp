@@ -69,7 +69,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 
 CommandLine::CommandLine():
-	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
+	CmdStr(
+		CtrlObject->Cp(), 0,
+		true, CtrlObject->CmdHistory,
+		0, (Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE
+	),
 	BackgroundScreen(nullptr),
 	LastCmdPartLength(-1),
 	PushDirStackSize(0)
@@ -354,7 +358,10 @@ int CommandLine::ProcessKey(int Key)
 
 				if (SelectType < 3 || SelectType == 7)
 				{
-					ProcessKey(SelectType==7?static_cast<int>(KEY_CTRLALTENTER):(SelectType==1?static_cast<int>(KEY_ENTER):static_cast<int>(KEY_SHIFTENTER)));
+					ProcessKey(
+						SelectType==7?static_cast<int>(KEY_CTRLALTENTER):
+							(SelectType==1?static_cast<int>(KEY_ENTER):static_cast<int>(KEY_SHIFTENTER))
+					);
 					CmdStr.RevertAC();
 				}
 			}
@@ -484,7 +491,11 @@ int CommandLine::ProcessKey(int Key)
 				ActivePanel->SetTitle();
 
 			} else {
-				CmdExecute(strStr, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+				CmdExecute(
+					strStr, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER,
+					false, false,
+					false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER
+				);
 			}
 
 		}

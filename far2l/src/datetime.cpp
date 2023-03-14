@@ -87,8 +87,16 @@ void PrepareStrFTime()
 
 	for (int i=0; i<2; i++)
 	{
-		const wchar_t *months[12] = {L"January", L"February", L"March", L"April", L"May", L"June", L"July", L"August", L"September", L"October", L"November", L"December"};
-		const wchar_t *amonths[12] = {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
+		const wchar_t *months[12] = {
+			L"January",   L"February", L"March",    L"April",
+			L"May",       L"June",     L"July",     L"August",
+			L"September", L"October",  L"November", L"December"
+		};
+		const wchar_t *amonths[12] = {
+			L"Jan", L"Feb", L"Mar", L"Apr",
+			L"May", L"Jun", L"Jul", L"Aug",
+			L"Sep", L"Oct", L"Nov", L"Dec"
+		};
 		for (int j = 0; j<12; ++j) {
 			Month[i][j] = months[j];
 			AMonth[i][j] = amonths[j];
@@ -162,7 +170,10 @@ static void st_time(FARString &strDest,const tm *tmPtr,const wchar_t chr)
 
 	if (chr==L'v')
 	{
-		strDest.Format(L"%2d-%3.3ls-%4d",range(1,tmPtr->tm_mday,31),AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(),tmPtr->tm_year+1900);
+		strDest.Format(
+			L"%2d-%3.3ls-%4d", range(1,tmPtr->tm_mday,31),
+			AMonth[CurLang][range(0, tmPtr->tm_mon,11)].CPtr(), tmPtr->tm_year+1900
+		);
 		strDest.Upper(3,3);
 	}
 	else switch (GetDateFormat())
@@ -597,8 +608,12 @@ void GetFileDateAndTime(const wchar_t *Src,LPWORD Dst,size_t Count,int Separator
 	}
 }
 
-void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int DateFormat, int DateSeparator, int TimeSeparator, bool bRelative)
-{
+void StrToDateTime(
+	const wchar_t *CDate, const wchar_t *CTime,
+	FILETIME &ft, int DateFormat,
+	int DateSeparator, int TimeSeparator,
+	bool bRelative
+) {
 	WORD DateN[3]{}, TimeN[4]{};
 	SYSTEMTIME st{};
 	// Преобразуем введённые пользователем дату и время
@@ -788,7 +803,13 @@ void ConvertDate(const FILETIME &ft,FARString &strDateText, FARString &strTimeTe
 					break;
 			}
 			FormatString Fmt;
-			Fmt<<fmt::FillChar(f1)<<fmt::Expand(w1)<<p1<<DateSeparator<<fmt::FillChar(f2)<<fmt::Expand(w2)<<p2<<DateSeparator<<fmt::FillChar(f3)<<fmt::Expand(w3)<<p3;
+			Fmt
+				<<fmt::FillChar(f1)<<fmt::Expand(w1)
+				<<p1<<DateSeparator
+				<<fmt::FillChar(f2)<<fmt::Expand(w2)
+				<<p2<<DateSeparator
+				<<fmt::FillChar(f3)<<fmt::Expand(w3)
+				<<p3;
 			strDateText=std::move(Fmt.strValue());
 		}
 	}
@@ -817,6 +838,13 @@ void ConvertRelativeDate(const FILETIME &ft,FARString &strDaysText,FARString &st
 	strDaysText=std::move(DaysText.strValue());
 
 	FormatString TimeText;
-	TimeText<<fmt::Expand(2)<<fmt::FillChar(L'0')<<h<<GetTimeSeparator()<<fmt::Expand(2)<<fmt::FillChar(L'0')<<m<<GetTimeSeparator()<<fmt::Expand(2)<<fmt::FillChar(L'0')<<s<<GetDecimalSeparator()<<fmt::Expand(3)<<fmt::FillChar(L'0')<<ms;
+	TimeText
+		<<fmt::Expand(2)<<fmt::FillChar(L'0')
+		<<h<<GetTimeSeparator()
+		<<fmt::Expand(2)<<fmt::FillChar(L'0')
+		<<m<<GetTimeSeparator()
+		<<fmt::Expand(2)<<fmt::FillChar(L'0')
+		<<s<<GetDecimalSeparator()
+		<<fmt::Expand(3)<<fmt::FillChar(L'0')<<ms;
 	strTimeText=std::move(TimeText.strValue());
 }

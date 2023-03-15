@@ -647,19 +647,19 @@ void ConsolePainter::FlushDecorations(unsigned int cx_end)
 
 static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 {
-	unsigned short out = fg;
+	unsigned out = fg;
 	out*= 2;
 	out+= bg;
 	out/= 3;
-	return (out > 0xff) ? 0xff : (unsigned char)out;
+	return (unsigned char)std::min(out, (unsigned)0xff);
 }
 
 static inline unsigned char CalcExtraFadeColor(unsigned char bg, unsigned char fg)
 {
-	unsigned short out = bg;
+	unsigned out = bg;
 	out+= fg;
 	out/= 2;
-	return (out > 0xff) ? 0xff : (unsigned char)out;
+	return (unsigned char)std::min(out, (unsigned)0xff);
 }
 
 // #define DEBUG_FADED_EDGES

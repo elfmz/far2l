@@ -56,9 +56,13 @@ enum COPY_CODES
 enum COPY_SYMLINK
 {
 	COPY_SYMLINK_ASIS = 0,
-	COPY_SYMLINK_SMART = 1,                     // Copy symbolics links content instead of making new links
-	COPY_SYMLINK_ASFILE = 2                     // Copy remote (to this copy operation) symbolics links content,
-//                                                 make relative links for local ones
+
+	// Copy symbolics links content instead of making new links
+	COPY_SYMLINK_SMART = 1,
+
+	// Copy remote (to this copy operation) symbolics links content, make relative links for local ones
+	COPY_SYMLINK_ASFILE = 2
+
 };
 
 struct COPY_FLAGS

@@ -2349,7 +2349,7 @@ void FileEditor::ShowStatus()
 	FARString strLineStr;
 	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
-	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 17:23;
+	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 15:21;
 
 	if (X2 > 80)
 		NameLength += (X2-80);
@@ -2374,7 +2374,7 @@ void FileEditor::ShowStatus()
 	FARString strTabMode;
 	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
 	FormatString FString;
-	FString<<fmt::LeftAlign()<<fmt::Expand(NameLength)<<strLocalTitle<<L' '<<
+	FString<<fmt::Cells()<<fmt::LeftAlign()<<fmt::Expand(NameLength)<<strLocalTitle<<L' '<<
 	(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-':L' ')<<
 	(m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"':L' ')<<

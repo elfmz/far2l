@@ -66,15 +66,23 @@ DlgEdit::DlgEdit(Dialog* pOwner,unsigned Index,DLGEDITTYPE Type):
 			if(pOwner)
 			{
 				DialogItemEx* CurItem=pOwner->Item[Index];
-				if(Opt.Dialogs.AutoComplete && CurItem->Flags&(DIF_HISTORY|DIF_EDITPATH) && !(CurItem->Flags&DIF_DROPDOWNLIST) && !(CurItem->Flags&DIF_NOAUTOCOMPLETE))
-				{
+				if (
+					Opt.Dialogs.AutoComplete &&
+					CurItem->Flags&(DIF_HISTORY|DIF_EDITPATH) &&
+					!(CurItem->Flags&DIF_DROPDOWNLIST) &&
+					!(CurItem->Flags&DIF_NOAUTOCOMPLETE)
+				) {
 					iFlags=EditControl::EC_ENABLEAUTOCOMPLETE;
 				}
 				if(CurItem->Flags&DIF_HISTORY && !CurItem->strHistory.IsEmpty())
 				{
 					FARString strHistory = fmtSavedDialogHistory;
 					strHistory+=CurItem->strHistory;
-					iHistory=new History(HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount, strHistory.GetMB(), &Opt.Dialogs.EditHistory, false);
+					iHistory=new History(
+						HISTORYTYPE_DIALOG, Opt.DialogsHistoryCount,
+						strHistory.GetMB(), &Opt.Dialogs.EditHistory,
+						false
+					);
 				}
 				if(CurItem->Type == DI_COMBOBOX)
 				{

@@ -146,13 +146,16 @@ count for seconds is only 5 bits wide.
 
 struct RecHeader
 {
-  BYTE  HeadId;                // special archive marker = 0x1A or 0xFE
-  BYTE  Type;                  // Compression method or
-                               //  type of record:  0  End of file,
-                               //                   1  Remark,
-                               //                   2  Path,
-                               //                   3  Security envelope,
-                               //                   4  Error correction codes (not implemented in PAK 2.xx)
+  // special archive marker = 0x1A or 0xFE
+  BYTE  HeadId;
+
+  // Compression method or
+  //  type of record:  0  End of file,
+  //                   1  Remark,
+  //                   2  Path,
+  //                   3  Security envelope,
+  //                   4  Error correction codes (not implemented in PAK 2.xx)
+  BYTE  Type;
 };
 
 struct ARCHeader

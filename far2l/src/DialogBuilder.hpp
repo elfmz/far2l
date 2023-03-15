@@ -86,7 +86,11 @@ class DialogBuilder: public DialogBuilderBase<DialogItemEx>
 		virtual DialogItemEx *AddIntEditField(int *Value, int Width);
 
 		// Добавляет выпадающий список с указанными значениями.
-		DialogItemEx *AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
+		DialogItemEx *AddComboBox(
+			int *Value, int Width,
+			DialogBuilderListItem *Items, int ItemCount,
+			DWORD Flags = DIF_NONE
+		);
 
 		// Добавляет выпадающий список с code pages.
 		DialogItemEx *AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);

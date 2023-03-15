@@ -262,7 +262,16 @@ class Edit:public ScreenObject
 		void  InsertString(const wchar_t *Str);
 		void  InsertBinaryString(const wchar_t *Str,int Length);
 
-		int   Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength);
+		int   Search(
+			const FARString& Str,
+			FARString& ReplaceStr,
+			int Position,
+			int Case,
+			int WholeWords,
+			int Reverse,
+			int Regexp,
+			int *SearchLength
+		);
 
 		void  SetClearFlag(int Flag) {Flags.Change(FEDITLINE_CLEARFLAG,Flag);}
 		int   GetClearFlag() {return Flags.Check(FEDITLINE_CLEARFLAG);}
@@ -351,7 +360,14 @@ public:
 		EC_ENABLEFNCOMPLETE=0x2,
 	};
 
-	EditControl(ScreenObject *pOwner=nullptr,Callback* aCallback=nullptr,bool bAllocateData=true,History* iHistory=0,FarList* iList=0,DWORD iFlags=0);
+	EditControl(
+		ScreenObject *pOwner=nullptr,
+		Callback* aCallback=nullptr,
+		bool bAllocateData=true,
+		History* iHistory=0,
+		FarList* iList=0,
+		DWORD iFlags=0
+	);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual void Show();
 	virtual void Changed(bool DelBlock=false);

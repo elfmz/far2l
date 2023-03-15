@@ -69,7 +69,11 @@ static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UIN
 static void PR_DrawGetDirInfoMsg()
 {
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
-	DrawGetDirInfoMsg((const wchar_t*)preRedrawItem.Param.Param1,(const wchar_t *)preRedrawItem.Param.Param2,reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3));
+	DrawGetDirInfoMsg(
+		(const wchar_t*)preRedrawItem.Param.Param1,
+		(const wchar_t *)preRedrawItem.Param.Param2,
+		reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3)
+	);
 }
 
 int GetDirInfo(const wchar_t *Title,

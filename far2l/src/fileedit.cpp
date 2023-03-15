@@ -2349,7 +2349,7 @@ void FileEditor::ShowStatus()
 	FARString strLineStr;
 	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
-	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 15:21;
+	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 14 : 20;
 
 	if (X2 > 80)
 		NameLength += (X2-80);

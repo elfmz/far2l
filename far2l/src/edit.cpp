@@ -91,7 +91,8 @@ public:
 	}
 };
 
-Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData):
+Edit::Edit(ScreenObject *pOwner, Callback* aCallback, bool bAllocateData)
+	:
 	m_next(nullptr),
 	m_prev(nullptr),
 	Str(bAllocateData ? reinterpret_cast<wchar_t*>(malloc(sizeof(wchar_t))) : nullptr),

@@ -89,6 +89,8 @@ displayed. In such case #cursor keys# can be used to scroll text.
     You may press #Alt-F1# or #BS# to go back to a previous help screen and
 #Shift-F1# to view the help contents.
 
+    Press #F7# to search in Help (will show help topics containing the searched text fragment).
+
     Press #Shift-F2# for ~plugins~@Plugins@ help.
 
     #Help# is shown by default in a reduced windows, you can maximize it by
@@ -530,7 +532,7 @@ folder before moving, terminate the name with a backslash.
 
   Show ~menus~@Menus@ bar                                                  #F9#
 
-  Quit FAR2L                                                       #F10#
+  Quit FAR2L                                                      #F10#
 
   Show ~plugin~@Plugins@ commands                                           #F11#
 
@@ -616,6 +618,8 @@ should press #Shift-Enter# on the required drive in the ~drive selection menu~@D
 Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
   Change to the root folder                                   #Ctrl-\\#
+
+  Change to the home directory (\~)                           #Ctrl-`#
 
   Change folder, enter an archive (also a SFX archive)     #Ctrl-[Shift-]PgDn#
 
@@ -1747,6 +1751,9 @@ available:
   Copy the text of the current command to the clipboard        #Ctrl-C#
   without closing the list                                or #Ctrl-Ins#
 
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
+
     To go to the previous or next command directly from the command line, you
 can press #Ctrl-E# or #Ctrl-X# respectively.
 
@@ -1783,6 +1790,9 @@ shortcuts are available:
 
   Open a file in the ~viewer~@Viewer@                                        #F3#
                                                           or #Numpad 5#
+
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
@@ -1823,6 +1833,9 @@ available:
 
   Copy the text of the current history item to the             #Ctrl-C#
   clipboard without closing the list                      or #Ctrl-Ins#
+
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
@@ -1925,6 +1938,8 @@ file. If you create a local menu in the FAR2L folder, it will be used instead of
 the main menu saved in the registry.
 
     To close the menu even if submenus are open use #Shift-F10#.
+
+    Press #Ctrl-Alt-F# to toggle to quick filtering (shows only items containing the typing text).
 
     See also the list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
 
@@ -2519,7 +2534,7 @@ $ #Viewer: control keys#
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
-    #Alt-Shift-F9#       Call ~Viewer settings~@EditorSettings@ dialog
+    #F9,Alt-Shift-F9#    Call ~Viewer settings~@EditorSettings@ dialog
     #Numpad5,F3,F10,Esc# Quit
     #Ctrl-F10#           Position to the current file.
     #F11#                Call "~Plugin commands~@Plugins@" menu
@@ -2705,9 +2720,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
    #F6#                      Switch to ~viewer~@Viewer@
-   #F5#                      Toggle Tab-to-spaces expansion
+   #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
-   #Ctrl-F5#                 Toggle whitespace characters displaying
+   #Ctrl-F5#                 Toggle Tab-to-spaces expansion
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace
@@ -2716,7 +2731,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
+   #F9, Alt-Shift-F9#        Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
    #Ctrl-F10#                Position to the current file

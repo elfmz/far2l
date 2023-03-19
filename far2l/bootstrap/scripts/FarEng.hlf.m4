@@ -532,7 +532,7 @@ folder before moving, terminate the name with a backslash.
 
   Show ~menus~@Menus@ bar                                                  #F9#
 
-  Quit FAR2L                                                      #F10#
+  Quit FAR2L                                                     #F10#
 
   Show ~plugin~@Plugins@ commands                                           #F11#
 
@@ -569,7 +569,7 @@ to the same data.
 
   Display ~commands history~@History@                                    #Alt-F8#
 
-  Toggles the size of the FAR2L console window                  #Alt-F9#
+  Toggles the size of the FAR2L console window                #Alt-F9#
 
     In the windowed mode, toggles between the current size and the maximum
 possible size of a console window. In the fullscreen mode, #Alt-F9# toggles the
@@ -619,7 +619,7 @@ Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
   Change to the root folder                                   #Ctrl-\\#
 
-  Change to the home directory (\~)                           #Ctrl-`#
+  Change to the home directory (~~)                            #Ctrl-`#
 
   Change folder, enter an archive (also a SFX archive)     #Ctrl-[Shift-]PgDn#
 

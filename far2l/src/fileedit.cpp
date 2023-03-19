@@ -609,7 +609,7 @@ void FileEditor::Init(
 		}
 	}
 
-	m_editor->SetPosition(X1,Y1+(Opt.EdOpt.ShowTitleBar?1:0),X2,Y2-(Opt.EdOpt.ShowKeyBar?1:0));
+	m_editor->SetPosition(X1,Y1+(TitleBarVisible?1:0),X2,Y2-(KeyBarVisible?1:0));
 	m_editor->SetStartPos(StartLine,StartChar);
 	int UserBreak;
 
@@ -676,7 +676,7 @@ void FileEditor::Init(
 	EditKeyBar.SetPosition(X1,Y2,X2,Y2);
 	InitKeyBar();
 
-	if (!Opt.EdOpt.ShowKeyBar)
+	if (!KeyBarVisible)
 		EditKeyBar.Hide0();
 
 	MacroMode=MACRO_EDITOR;
@@ -724,7 +724,7 @@ void FileEditor::InitKeyBar()
 	EditKeyBar.ReadRegGroup(L"Editor",Opt.strLanguage);
 	EditKeyBar.SetAllRegGroup();
 	EditKeyBar.Refresh(true);
-	m_editor->SetPosition(X1,Y1+(Opt.EdOpt.ShowTitleBar?1:0),X2,Y2-(Opt.EdOpt.ShowKeyBar?1:0));
+	m_editor->SetPosition(X1,Y1+(TitleBarVisible?1:0),X2,Y2-(KeyBarVisible?1:0));
 	SetKeyBar(&EditKeyBar);
 }
 
@@ -740,14 +740,14 @@ void FileEditor::Show()
 {
 	if (Flags.Check(FFILEEDIT_FULLSCREEN))
 	{
-		if (Opt.EdOpt.ShowKeyBar)
+		if (KeyBarVisible)
 		{
 			EditKeyBar.SetPosition(0,ScrY,ScrX,ScrY);
 			EditKeyBar.Redraw();
 		}
 
-		ScreenObject::SetPosition(0,0,ScrX,ScrY-(Opt.EdOpt.ShowKeyBar?1:0));
-		m_editor->SetPosition(0,(Opt.EdOpt.ShowTitleBar?1:0),ScrX,ScrY-(Opt.EdOpt.ShowKeyBar?1:0));
+		ScreenObject::SetPosition(0,0,ScrX,ScrY-(KeyBarVisible?1:0));
+		m_editor->SetPosition(0,(TitleBarVisible?1:0),ScrX,ScrY-(KeyBarVisible?1:0));
 	}
 
 	ScreenObject::Show();
@@ -1182,20 +1182,18 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 			}
 			case KEY_CTRLB:
 			{
-				Opt.EdOpt.ShowKeyBar=!Opt.EdOpt.ShowKeyBar;
+				KeyBarVisible = !KeyBarVisible;
 
-				if (!Opt.EdOpt.ShowKeyBar)
+				if (!KeyBarVisible)
 					EditKeyBar.Hide0(); // 0 mean - Don't purge saved screen
 
-				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
+				EditKeyBar.Refresh(KeyBarVisible);
 				Show();
-				KeyBarVisible = Opt.EdOpt.ShowKeyBar;
 				return (TRUE);
 			}
 			case KEY_CTRLSHIFTB:
 			{
-				Opt.EdOpt.ShowTitleBar=!Opt.EdOpt.ShowTitleBar;
-				TitleBarVisible = Opt.EdOpt.ShowTitleBar;
+				TitleBarVisible = !TitleBarVisible;
 				Show();
 				return (TRUE);
 			}
@@ -1332,16 +1330,17 @@ int FileEditor::ReProcessKey(int Key,int CalledFromControl)
 				SetEditorOptions(EdOpt);
 				if (SavedEdOpt.TabSize != EdOpt.TabSize || SavedEdOpt.ExpandTabs != EdOpt.ExpandTabs)
 					m_editor->EnableSaveTabSettings();
-
-				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
-
+				EditKeyBar.Refresh(KeyBarVisible);
+				if (!KeyBarVisible)
+					EditKeyBar.Hide0();
+				Show();
 				m_editor->Show();
 				return TRUE;
 			}
 			default:
 			{
 				if (Flags.Check(FFILEEDIT_FULLSCREEN) && CtrlObject->Macro.IsExecuting() == MACROMODE_NOMACRO)
-					EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
+					EditKeyBar.Refresh(KeyBarVisible);
 
 				if (!EditKeyBar.ProcessKey(Key))
 					return(m_editor->ProcessKey(Key));
@@ -2341,7 +2340,7 @@ FARString &FileEditor::GetTitle(FARString &strLocalTitle,int SubLen,int TruncSiz
 
 void FileEditor::ShowStatus()
 {
-	if (m_editor->Locked() || !Opt.EdOpt.ShowTitleBar)
+	if (m_editor->Locked() || !TitleBarVisible)
 		return;
 
 	SetColor(COL_EDITORSTATUS);
@@ -2478,6 +2477,8 @@ BOOL FileEditor::UpdateFileList()
 void FileEditor::GetEditorOptions(EditorOptions& EdOpt)
 {
 	EdOpt = m_editor->EdOpt;
+	EdOpt.ShowTitleBar = TitleBarVisible;
+	EdOpt.ShowKeyBar = KeyBarVisible;
 }
 
 void FileEditor::SetEditorOptions(EditorOptions& EdOpt)
@@ -2495,6 +2496,8 @@ void FileEditor::SetEditorOptions(EditorOptions& EdOpt)
 	m_editor->SetShowScrollBar(EdOpt.ShowScrollBar);
 	m_editor->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 	m_editor->SetSearchPickUpWord(EdOpt.SearchPickUpWord);
+	TitleBarVisible = EdOpt.ShowTitleBar;
+	KeyBarVisible = EdOpt.ShowKeyBar;
 	//m_editor->SetBSLikeDel(EdOpt.BSLikeDel);
 }
 
@@ -2643,7 +2646,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 					}
 				}
 
-				EditKeyBar.Refresh(Opt.EdOpt.ShowKeyBar);
+				EditKeyBar.Refresh(KeyBarVisible);
 			}
 
 			return TRUE;

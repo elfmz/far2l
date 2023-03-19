@@ -2041,7 +2041,6 @@ void Help::InitKeyBar()
 	HelpKeyBar.SetAllGroup(KBL_CTRLALTSHIFT, Msg::HelpCtrlAltShiftF1, 12);
 	// Уберем лишнее с глаз долой
 	HelpKeyBar.Change(KBL_SHIFT,L"",3-1);
-	HelpKeyBar.Change(KBL_MAIN,L"",7-1);
 	HelpKeyBar.Change(KBL_SHIFT,L"",7-1);
 	HelpKeyBar.ReadRegGroup(L"Help",Opt.strLanguage);
 	HelpKeyBar.SetAllRegGroup();

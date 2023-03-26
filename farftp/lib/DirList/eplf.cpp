@@ -20,8 +20,8 @@ BOOL WINAPI idPRParceEPLF(const FTPServerInfo* Server, FTPFileInfo* p, char *ent
 	NET_FileEntryInfo entry_info;
 
 	if(entry[0] != '+' ||
-	        strchr(entry,' ') ||
-	        (tab = strchr(entry, '\t')) == NULL)
+			strchr(entry,' ') ||
+			(tab = strchr(entry, '\t')) == NULL)
 		return FALSE;
 
 	for(begin = &entry[1]; begin < tab; begin = end+1)

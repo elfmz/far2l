@@ -69,7 +69,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 
 CommandLine::CommandLine():
-	CmdStr(CtrlObject->Cp(),0,true,CtrlObject->CmdHistory,0,(Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE),
+	CmdStr(
+		CtrlObject->Cp(), 0,
+		true, CtrlObject->CmdHistory,
+		0, (Opt.CmdLine.AutoComplete?EditControl::EC_ENABLEAUTOCOMPLETE:0)|EditControl::EC_ENABLEFNCOMPLETE
+	),
 	BackgroundScreen(nullptr),
 	LastCmdPartLength(-1),
 	PushDirStackSize(0)
@@ -172,7 +176,7 @@ void CommandLine::ProcessTabCompletion()
 		std::string cmd = strStr.GetMB();
 		VTCompletor vtc;		
 		if (possibilities) {
-			std::vector<std::string>  possibilities;
+			std::vector<std::string> possibilities;
 			if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
 				//fprintf(stderr, "Possibilities: ");
 				CmdStr.ShowCustomCompletionList(possibilities);
@@ -335,7 +339,7 @@ int CommandLine::ProcessKey(int Key)
 			return TRUE;
 		case KEY_F2:
 		{
-			UserMenu Menu(false);
+			UserMenu::Present(false);
 			return TRUE;
 		}
 		case KEY_ALTF8:
@@ -354,7 +358,10 @@ int CommandLine::ProcessKey(int Key)
 
 				if (SelectType < 3 || SelectType == 7)
 				{
-					ProcessKey(SelectType==7?static_cast<int>(KEY_CTRLALTENTER):(SelectType==1?static_cast<int>(KEY_ENTER):static_cast<int>(KEY_SHIFTENTER)));
+					ProcessKey(
+						SelectType==7?static_cast<int>(KEY_CTRLALTENTER):
+							(SelectType==1?static_cast<int>(KEY_ENTER):static_cast<int>(KEY_SHIFTENTER))
+					);
 					CmdStr.RevertAC();
 				}
 			}
@@ -371,7 +378,7 @@ int CommandLine::ProcessKey(int Key)
 			Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
 			{
 				// TODO: здесь можно добавить проверку, что мы в корне диска и отсутствие файла Tree.Far...
-				FolderTree Tree(strStr,MODALTREE_ACTIVE,TRUE,FALSE);
+				FolderTree::Present(strStr,MODALTREE_ACTIVE,TRUE,FALSE);
 			}
 			CtrlObject->Cp()->RedrawKeyBar();
 
@@ -411,11 +418,12 @@ int CommandLine::ProcessKey(int Key)
 			int SelectType=CtrlObject->FolderHistory->Select(Msg::FolderHistoryTitle,L"HistoryFolders",strStr,Type);
 
 			/*
-			   SelectType = 0 - Esc
-			                1 - Enter
-			                2 - Shift-Enter
-			                3 - Ctrl-Enter
-			                6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
+			SelectType =
+				0 - Esc
+				1 - Enter
+				2 - Shift-Enter
+				3 - Ctrl-Enter
+				6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
 			*/
 			if (SelectType == 1 || SelectType == 2 || SelectType == 6)
 			{
@@ -428,10 +436,12 @@ int CommandLine::ProcessKey(int Key)
 				if (SelectType == 6)
 					Panel=CtrlObject->Cp()->GetAnotherPanel(Panel);
 
-				//Type==1 - плагиновый путь
-				//Type==0 - обычный путь
-				//если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
-				//ну а если путь не плагиновый то запускать его точно не надо
+				/*
+					Type==1 - плагиновый путь
+					Type==0 - обычный путь
+					если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
+					ну а если путь не плагиновый то запускать его точно не надо
+				*/
 				if (!Type || !CtrlObject->Plugins.ProcessCommandLine(strStr,Panel))
 				{
 					if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strStr,FALSE))
@@ -481,7 +491,11 @@ int CommandLine::ProcessKey(int Key)
 				ActivePanel->SetTitle();
 
 			} else {
-				CmdExecute(strStr, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, false, false, false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+				CmdExecute(
+					strStr, Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER,
+					false, false,
+					false, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER
+				);
 			}
 
 		}
@@ -501,9 +515,10 @@ int CommandLine::ProcessKey(int Key)
 
 			return TRUE;
 		}
-		/* дополнительные клавиши для выделения в ком строке.
-		   ВНИМАНИЕ!
-		   Для сокращения кода этот кусок должен стоять перед "default"
+		/*
+			дополнительные клавиши для выделения в ком строке.
+			ВНИМАНИЕ!
+			Для сокращения кода этот кусок должен стоять перед "default"
 		*/
 		case KEY_ALTSHIFTLEFT:  case KEY_ALTSHIFTNUMPAD4:
 		case KEY_ALTSHIFTRIGHT: case KEY_ALTSHIFTNUMPAD6:
@@ -512,7 +527,7 @@ int CommandLine::ProcessKey(int Key)
 			Key&=~KEY_ALT;
 		default:
 
-			//   Сбрасываем выделение на некоторых клавишах
+			// Сбрасываем выделение на некоторых клавишах
 			if (!Opt.CmdLine.EditBlock)
 			{
 				static int UnmarkKeys[]=
@@ -592,7 +607,7 @@ void CommandLine::SetString(const wchar_t *Str,BOOL Redraw)
 
 
 void CommandLine::ExecString(const wchar_t *Str, bool SeparateWindow,
-                             bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
+	bool DirectRun, bool WaitForIdle, bool Silent, bool RunAs)
 {
 	CmdStr.DisableAC();
 	SetString(Str);
@@ -671,13 +686,14 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 			{
 				switch (Chr)
 				{
-						/* эти не раелизованы
+						/*
+						эти не раелизованы
 						$E - Escape code (ASCII code 27)
 						$V - Windows XP version number
 						$_ - Carriage return and linefeed
 						$M - Отображение полного имени удаленного диска, связанного с именем текущего диска, или пустой строки, если текущий диск не является сетевым.
 						*/
-					case L'+': // $+  - Отображение нужного числа знаков плюс (+) в зависимости от текущей глубины стека каталогов PUSHD, по одному знаку на каждый сохраненный путь.
+					case L'+': // $+ - Отображение нужного числа знаков плюс (+) в зависимости от текущей глубины стека каталогов PUSHD, по одному знаку на каждый сохраненный путь.
 					{
 						if (PushDirStackSize)
 						{
@@ -763,10 +779,11 @@ void CommandLine::ShowViewEditHistory()
 	int Type;
 	int SelectType=CtrlObject->ViewHistory->Select(Msg::ViewHistoryTitle,L"HistoryViews",strStr,Type);
 	/*
-	   SelectType = 0 - Esc
-	                1 - Enter
-	                2 - Shift-Enter
-	                3 - Ctrl-Enter
+	SelectType =
+		0 - Esc
+		1 - Enter
+		2 - Shift-Enter
+		3 - Ctrl-Enter
 	*/
 
 	if (SelectType == 1 || SelectType == 2)
@@ -870,7 +887,7 @@ void CommandLine::CorrectRealScreenCoord()
 void CommandLine::ResizeConsole()
 {
 	BackgroundScreen->Resize(ScrX+1,ScrY+1,2,FALSE);
-//  this->DisplayObject();
+//	this->DisplayObject();
 }
 
 void CommandLine::RedrawWithoutComboBoxMark()

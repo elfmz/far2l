@@ -39,14 +39,14 @@ void WINAPI FP_FILELog(LPCSTR msg,...)
 		SYSTEMTIME st;
 		WINPORT(GetLocalTime)(&st);
 		fprintf(f,"%4d.%02d.%02d %02d:%02d:%02d:%04d ",
-		        st.wYear, st.wMonth,  st.wDay,
-		        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			st.wYear, st.wMonth,  st.wDay,
+			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
 		if(!stOld.wYear)
 			fprintf(f,"---- ");
 		else
 			fprintf(f,"%04d ",
-			        (st.wSecond-stOld.wSecond)*1000 + (st.wMilliseconds-stOld.wMilliseconds));
+				(st.wSecond-stOld.wSecond)*1000 + (st.wMilliseconds-stOld.wMilliseconds));
 
 		stOld = st;
 

@@ -69,15 +69,15 @@ void main(int argc,char *argv[])
 	if(argc < 2 || CTArgCheck("?"))
 	{
 		printf("USAGE: FTPU <command>\n"
-		       "Where commands are:\n"
-		       " -<H>ash=<text>    - creates password hash\n"
-		       " -<P>wd=<hash>     - decode password from hash\n"
-		       " -<P>wd=hex:<hash> - decode password from FTP file or registry format\n"
-		       "");
+			"Where commands are:\n"
+			" -<H>ash=<text>    - creates password hash\n"
+			" -<P>wd=<hash>     - decode password from hash\n"
+			" -<P>wd=hex:<hash> - decode password from FTP file or registry format\n"
+			"");
 		return;
 	}
 
-	LPCSTR m;
+	LPCSTR   m;
 	BYTE     b[FTP_PWD_LEN];
 	char     str[MAX_PATH];
 

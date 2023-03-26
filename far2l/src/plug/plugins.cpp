@@ -102,7 +102,7 @@ static std::string PluginSettingsName(const FARString &strModuleName)
 
 	const size_t FarPathLength = g_strFarPath.GetLength();
 	if (FarPathLength < strModuleName.GetLength()
-	  && !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
+		&& !StrCmpNI(strModuleName, g_strFarPath, (int)FarPathLength))
 	{
 		Wide2MB(strModuleName.CPtr() + FarPathLength, pathname);
 	}
@@ -187,8 +187,8 @@ bool PluginManager::RemovePlugin(Plugin *pPlugin)
 
 
 bool PluginManager::LoadPlugin(
-    const FARString &strModuleName,
-    bool UncachedLoad
+	const FARString &strModuleName,
+	bool UncachedLoad
 )
 {
 	const PluginType PlType = PluginTypeByExtension(strModuleName);
@@ -449,8 +449,10 @@ void PluginManager::LoadPlugins()
 	far_qsort(PluginsData, PluginsCount, sizeof(*PluginsData), PluginsSort);
 }
 
-/* $ 01.09.2000 tran
-   Load cache only plugins  - '/co' switch */
+/*
+	$ 01.09.2000 tran
+	Load cache only plugins  - '/co' switch
+*/
 void PluginManager::LoadPluginsFromCache()
 {
 	KeyFileReadHelper kfh(PluginsIni());
@@ -477,10 +479,10 @@ int _cdecl PluginsSort(const void *el1,const void *el2)
 }
 
 HANDLE PluginManager::OpenFilePlugin(
-    const wchar_t *Name,
-    int OpMode,
-    OPENFILEPLUGINTYPE Type,
-    Plugin *pDesiredPlugin
+	const wchar_t *Name,
+	int OpMode,
+	OPENFILEPLUGINTYPE Type,
+	Plugin *pDesiredPlugin
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -869,10 +871,10 @@ int PluginManager::ProcessMacroFunc(const wchar_t *Name, const FarMacroValue *Pa
 #endif
 
 int PluginManager::GetFindData(
-    HANDLE hPlugin,
-    PluginPanelItem **pPanelData,
-    int *pItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem **pPanelData,
+	int *pItemsNumber,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -883,9 +885,9 @@ int PluginManager::GetFindData(
 
 
 void PluginManager::FreeFindData(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber
 )
 {
 	PluginHandle *ph = (PluginHandle *)hPlugin;
@@ -894,10 +896,10 @@ void PluginManager::FreeFindData(
 
 
 int PluginManager::GetVirtualFindData(
-    HANDLE hPlugin,
-    PluginPanelItem **pPanelData,
-    int *pItemsNumber,
-    const wchar_t *Path
+	HANDLE hPlugin,
+	PluginPanelItem **pPanelData,
+	int *pItemsNumber,
+	const wchar_t *Path
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -908,9 +910,9 @@ int PluginManager::GetVirtualFindData(
 
 
 void PluginManager::FreeVirtualFindData(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -919,9 +921,9 @@ void PluginManager::FreeVirtualFindData(
 
 
 int PluginManager::SetDirectory(
-    HANDLE hPlugin,
-    const wchar_t *Dir,
-    int OpMode
+	HANDLE hPlugin,
+	const wchar_t *Dir,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -931,11 +933,11 @@ int PluginManager::SetDirectory(
 
 
 int PluginManager::GetFile(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    const wchar_t *DestPath,
-    FARString &strResultName,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	const wchar_t *DestPath,
+	FARString &strResultName,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -987,10 +989,10 @@ int PluginManager::GetFile(
 
 
 int PluginManager::DeleteFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1007,9 +1009,9 @@ int PluginManager::DeleteFiles(
 
 
 int PluginManager::MakeDirectory(
-    HANDLE hPlugin,
-    const wchar_t **Name,
-    int OpMode
+	HANDLE hPlugin,
+	const wchar_t **Name,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1026,10 +1028,10 @@ int PluginManager::MakeDirectory(
 
 
 int PluginManager::ProcessHostFile(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int OpMode
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -1046,12 +1048,12 @@ int PluginManager::ProcessHostFile(
 
 
 int PluginManager::GetFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int Move,
-    const wchar_t **DestPath,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int Move,
+	const wchar_t **DestPath,
+	int OpMode
 )
 {
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1061,11 +1063,11 @@ int PluginManager::GetFiles(
 
 
 int PluginManager::PutFiles(
-    HANDLE hPlugin,
-    PluginPanelItem *PanelItem,
-    int ItemsNumber,
-    int Move,
-    int OpMode
+	HANDLE hPlugin,
+	PluginPanelItem *PanelItem,
+	int ItemsNumber,
+	int Move,
+	int OpMode
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -1081,8 +1083,8 @@ int PluginManager::PutFiles(
 }
 
 void PluginManager::GetOpenPluginInfo(
-    HANDLE hPlugin,
-    OpenPluginInfo *Info
+	HANDLE hPlugin,
+	OpenPluginInfo *Info
 )
 {
 	if (!Info)
@@ -1101,9 +1103,9 @@ void PluginManager::GetOpenPluginInfo(
 
 
 int PluginManager::ProcessKey(
-    HANDLE hPlugin,
-    int Key,
-    unsigned int ControlState
+	HANDLE hPlugin,
+	int Key,
+	unsigned int ControlState
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -1112,9 +1114,9 @@ int PluginManager::ProcessKey(
 
 
 int PluginManager::ProcessEvent(
-    HANDLE hPlugin,
-    int Event,
-    void *Param
+	HANDLE hPlugin,
+	int Event,
+	void *Param
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -1123,10 +1125,10 @@ int PluginManager::ProcessEvent(
 
 
 int PluginManager::Compare(
-    HANDLE hPlugin,
-    const PluginPanelItem *Item1,
-    const PluginPanelItem *Item2,
-    unsigned int Mode
+	HANDLE hPlugin,
+	const PluginPanelItem *Item1,
+	const PluginPanelItem *Item2,
+	unsigned int Mode
 )
 {
 	PluginHandle *ph = (PluginHandle*)hPlugin;
@@ -1161,9 +1163,10 @@ struct PluginMenuItemData
 	int nItem;
 };
 
-/* $ 29.05.2001 IS
-   ! При настройке "параметров внешних модулей" закрывать окно с их
-     списком только при нажатии на ESC
+/*
+	$ 29.05.2001 IS
+	! При настройке "параметров внешних модулей" закрывать окно с их
+	списком только при нажатии на ESC
 */
 
 bool PluginManager::CheckIfHotkeyPresent(HotKeyKind Kind)
@@ -1303,7 +1306,7 @@ void PluginManager::Configure(int StartPos)
 						strPluginModuleName = item->pPlugin->GetModuleName();
 
 						if (!FarShowHelp(strPluginModuleName,L"Config",FHELP_SELFHELP|FHELP_NOSHOWERROR) &&
-						        !FarShowHelp(strPluginModuleName,L"Configure",FHELP_SELFHELP|FHELP_NOSHOWERROR))
+							!FarShowHelp(strPluginModuleName,L"Configure",FHELP_SELFHELP|FHELP_NOSHOWERROR))
 						{
 							FarShowHelp(strPluginModuleName,nullptr,FHELP_SELFHELP|FHELP_NOSHOWERROR);
 						}
@@ -1364,8 +1367,8 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 
 	int MenuItemNumber=0;
 	int Editor = ModalType==MODALTYPE_EDITOR,
-	             Viewer = ModalType==MODALTYPE_VIEWER,
-	                      Dialog = ModalType==MODALTYPE_DIALOG;
+		Viewer = ModalType==MODALTYPE_VIEWER,
+		Dialog = ModalType==MODALTYPE_DIALOG;
 	PluginMenuItemData item;
 	{
 		ChangeMacroMode CMM(MACRO_MENU);
@@ -1408,9 +1411,9 @@ int PluginManager::CommandsMenu(int ModalType,int StartPos,const wchar_t *Histor
 					}
 
 					if ((Editor && !(IFlags & PF_EDITOR)) ||
-					        (Viewer && !(IFlags & PF_VIEWER)) ||
-					        (Dialog && !(IFlags & PF_DIALOG)) ||
-					        (!Editor && !Viewer && !Dialog && (IFlags & PF_DISABLEPANELS)))
+						(Viewer && !(IFlags & PF_VIEWER)) ||
+						(Dialog && !(IFlags & PF_DIALOG)) ||
+						(!Editor && !Viewer && !Dialog && (IFlags & PF_DISABLEPANELS)))
 						continue;
 
 					for (int J=0; ; J++)
@@ -1612,8 +1615,8 @@ void PluginManager::GetPluginHotKey(Plugin *pPlugin, int ItemNumber, HotKeyKind 
 }
 
 bool PluginManager::SetHotKeyDialog(
-    const wchar_t *DlgPluginTitle,		// имя плагина
-    const std::string &SettingName		// ключ, откуда берем значение в state.ini/Settings
+	const wchar_t *DlgPluginTitle,		// имя плагина
+	const std::string &SettingName		// ключ, откуда берем значение в state.ini/Settings
 )
 {
 	KeyFileHelper kfh(PluginsIni());
@@ -1630,11 +1633,11 @@ bool PluginManager::SetHotKeyDialog(
 }
 
 bool PluginManager::GetDiskMenuItem(
-     Plugin *pPlugin,
-     int PluginItem,
-     bool &ItemPresent,
-     wchar_t& PluginHotkey,
-     FARString &strPluginText
+	Plugin *pPlugin,
+	int PluginItem,
+	bool &ItemPresent,
+	wchar_t& PluginHotkey,
+	FARString &strPluginText
 )
 {
 	LoadIfCacheAbsent();
@@ -1913,9 +1916,10 @@ void PluginManager::ReadUserBackgound(SaveScreen *SaveScr)
 }
 
 
-/* $ 27.09.2000 SVS
-  Функция CallPlugin - найти плагин по ID и запустить
-  в зачаточном состоянии!
+/*
+	$ 27.09.2000 SVS
+	Функция CallPlugin - найти плагин по ID и запустить
+	в зачаточном состоянии!
 */
 int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 {
@@ -1930,14 +1934,14 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 			if (OpenFrom & OPEN_FROMMACRO)
 			{
-	            // <????>
+				// <????>
 				;
-            	// </????>
+				// </????>
 			}
 			else
 			{
 				process=OpenFrom == OPEN_PLUGINSMENU || OpenFrom == OPEN_FILEPANEL;
-            }
+			}
 
 			if (hNewPlugin!=INVALID_HANDLE_VALUE && process)
 			{
@@ -1948,7 +1952,8 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 				if (Data && *(const wchar_t *)Data)
 					SetDirectory(hNewPlugin,(const wchar_t *)Data,0);
 
-				/* $ 04.04.2001 SVS
+				/*
+					$ 04.04.2001 SVS
 					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
 					Если что-то не так - раскомментировать!!!
 				*/
@@ -1971,7 +1976,7 @@ int PluginManager::CallPlugin(DWORD SysID,int OpenFrom, void *Data,int *Ret)
 
 Plugin *PluginManager::FindPlugin(DWORD SysID)
 {
-	if (SysID  && SysID != 0xFFFFFFFFUl) // не допускается 0 и -1
+	if (SysID && SysID != 0xFFFFFFFFUl) // не допускается 0 и -1
 	{
 		Plugin *PData;
 

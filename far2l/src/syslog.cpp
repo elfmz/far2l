@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 
 #if !defined(SYSLOG)
-#if defined(SYSLOG_OT)             || \
+#if  defined(SYSLOG_OT)             || \
      defined(SYSLOG_SVS)            || \
      defined(SYSLOG_DJ)             || \
      defined(SYSLOG_WARP)           || \
@@ -101,8 +101,8 @@ static wchar_t *PrintTime(wchar_t *timebuf,size_t size)
 {
 	SYSTEMTIME st;
 	WINPORT(GetLocalTime)(&st);
-//  sprintf(timebuf,"%02d.%02d.%04d %2d:%02d:%02d.%03d",
-//      st.wDay,st.wMonth,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
+	//sprintf(timebuf,"%02d.%02d.%04d %2d:%02d:%02d.%03d",
+		//st.wDay,st.wMonth,st.wYear,st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
 	_snwprintf(timebuf,size,L"%02d:%02d:%02d.%03d",st.wHour,st.wMinute,st.wSecond,st.wMilliseconds);
 	return timebuf;
 }
@@ -156,7 +156,7 @@ void OpenSysLog()
 	LogStream=OpenLogStream(strLogFileName);
 	//if ( !LogStream )
 	//{
-	//    fprintf(stderr,"Can't open log file '%ls'\n",LogFileName);
+		//fprintf(stderr,"Can't open log file '%ls'\n",LogFileName);
 	//}
 #endif
 }
@@ -639,7 +639,7 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(F_MSAVE),
 		DEF_MCODE_(F_MLOAD),
 		DEF_MCODE_(F_MSGBOX),
-		DEF_MCODE_(F_PROMPT),              // S=prompt("Title"[,"Prompt"[,flags[, "Src"[, "History"]]]])
+		DEF_MCODE_(F_PROMPT),                   // S=prompt("Title"[,"Prompt"[,flags[, "Src"[, "History"]]]])
 		DEF_MCODE_(F_NOFUNC),
 		DEF_MCODE_(F_PANEL_FATTR),
 		DEF_MCODE_(F_PANEL_FEXIST),
@@ -653,12 +653,12 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(F_UCASE),
 		DEF_MCODE_(F_WAITKEY),
 		DEF_MCODE_(F_XLAT),
-		DEF_MCODE_(F_BM_ADD),              // N=BM.Add()
-		DEF_MCODE_(F_BM_CLEAR),            // N=BM.Clear()
-		DEF_MCODE_(F_BM_NEXT),             // N=BM.Next()
-		DEF_MCODE_(F_BM_PREV),             // N=BM.Prev()
-		DEF_MCODE_(F_BM_BACK),             // N=BM.Back()
-		DEF_MCODE_(F_BM_STAT),             // N=BM.Stat()
+		DEF_MCODE_(F_BM_ADD),                   // N=BM.Add()
+		DEF_MCODE_(F_BM_CLEAR),                 // N=BM.Clear()
+		DEF_MCODE_(F_BM_NEXT),                  // N=BM.Next()
+		DEF_MCODE_(F_BM_PREV),                  // N=BM.Prev()
+		DEF_MCODE_(F_BM_BACK),                  // N=BM.Back()
+		DEF_MCODE_(F_BM_STAT),                  // N=BM.Stat()
 		DEF_MCODE_(F_BM_GET),
 		DEF_MCODE_(F_BM_DEL),
 		DEF_MCODE_(F_BM_GOTO),                  // N=BM.Goto(n) - переход на закладку с указанным индексом (0 --> текущую)
@@ -747,7 +747,7 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(V_DRVSHOWPOS),
 		DEF_MCODE_(V_EDITORCURLINE),
 		DEF_MCODE_(V_EDITORCURPOS),
-		DEF_MCODE_(V_EDITORREALPOS),      // Editor.RealPos - текущая поз. в редакторе без привязки к размеру табуляции
+		DEF_MCODE_(V_EDITORREALPOS),            // Editor.RealPos - текущая поз. в редакторе без привязки к размеру табуляции
 		DEF_MCODE_(V_EDITORFILENAME),
 		DEF_MCODE_(V_EDITORLINES),
 		DEF_MCODE_(V_EDITORSTATE),
@@ -783,16 +783,16 @@ FARString __MCODE_ToName(int OpCode)
 		DEF_MCODE_(F_EDITOR_POS),
 		DEF_MCODE_(F_TESTFOLDER),
 		DEF_MCODE_(F_PANEL_SELECT),             // V=Panel.Select(panelType,Action[,Mode[,Items]])
-		DEF_MCODE_(V_APANEL_HOSTFILE), // APanel.HostFile
-		DEF_MCODE_(V_PPANEL_HOSTFILE), // PPanel.HostFile
+		DEF_MCODE_(V_APANEL_HOSTFILE),          // APanel.HostFile
+		DEF_MCODE_(V_PPANEL_HOSTFILE),          // PPanel.HostFile
 		DEF_MCODE_(F_PRINT),
 		DEF_MCODE_(F_MMODE),                    // N=MMode(Action[,Value])
 		DEF_MCODE_(V_APANEL_PREFIX),
 		DEF_MCODE_(V_PPANEL_PREFIX),
-		DEF_MCODE_(F_MENU_GETVALUE), //N=Menu.GetValue([N])
+		DEF_MCODE_(F_MENU_GETVALUE),            //N=Menu.GetValue([N])
 		DEF_MCODE_(F_BEEP),                     // N=beep([N])
 		DEF_MCODE_(F_KBDLAYOUT),                // N=kbdLayout([N])
-		DEF_MCODE_(F_WINDOW_SCROLL),               // N=Window.Scroll(Lines[,Axis])
+		DEF_MCODE_(F_WINDOW_SCROLL),            // N=Window.Scroll(Lines[,Axis])
 
 	};
 	FARString Name;
@@ -1002,33 +1002,33 @@ FARString __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *rec)
 #if defined(SYSLOG)
 	FARString Records;
 	Records.Format(
-	    L"MOUSE_EVENT_RECORD: [%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%ls)",
-	    rec->dwMousePosition.X,
-	    rec->dwMousePosition.Y,
-	    rec->dwButtonState,
-	    (rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
-	    (rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
-	    (rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
-	    (rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
-	    (rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
-	    rec->dwControlKeyState,
-	    (rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
-	    (rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
-	    (rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
-	    (rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
-	    (rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
-	    (rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
-	    (rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
-	    (rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
-	    (rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
-	    rec->dwEventFlags,
-	    (rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
-	     (rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
-	      (rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
-	       (rec->dwEventFlags==MOUSE_HWHEELED?L"(HWheel)":L""))))
+		L"MOUSE_EVENT_RECORD: [%d,%d], Btn=0x%08X (%c%c%c%c%c), Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c), Flgs=0x%08X (%ls)",
+		rec->dwMousePosition.X,
+		rec->dwMousePosition.Y,
+		rec->dwButtonState,
+		(rec->dwButtonState&FROM_LEFT_1ST_BUTTON_PRESSED?L'L':L'l'),
+		(rec->dwButtonState&RIGHTMOST_BUTTON_PRESSED?L'R':L'r'),
+		(rec->dwButtonState&FROM_LEFT_2ND_BUTTON_PRESSED?L'2':L' '),
+		(rec->dwButtonState&FROM_LEFT_3RD_BUTTON_PRESSED?L'3':L' '),
+		(rec->dwButtonState&FROM_LEFT_4TH_BUTTON_PRESSED?L'4':L' '),
+		rec->dwControlKeyState,
+		(rec->dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+		(rec->dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+		(rec->dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+		(rec->dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+		(rec->dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+		(rec->dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+		(rec->dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+		(rec->dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+		(rec->dwControlKeyState&SCROLLLOCK_ON?L'S':L's'),
+		rec->dwEventFlags,
+		(rec->dwEventFlags==DOUBLE_CLICK?L"(DblClick)":
+			(rec->dwEventFlags==MOUSE_MOVED?L"(Moved)":
+				(rec->dwEventFlags==MOUSE_WHEELED?L"(Wheel)":
+					(rec->dwEventFlags==MOUSE_HWHEELED?L"(HWheel)":L""))))
 	);
 
-	if (rec->dwEventFlags==MOUSE_WHEELED  || rec->dwEventFlags==MOUSE_HWHEELED)
+	if (rec->dwEventFlags==MOUSE_WHEELED || rec->dwEventFlags==MOUSE_HWHEELED)
 	{
 		FARString tmp;
 		tmp.Format(L" (Delta=%d)",HIWORD(rec->dwButtonState));
@@ -1051,22 +1051,22 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 	{
 		case FOCUS_EVENT:
 			Records.Format(
-			    L"FOCUS_EVENT_RECORD: %ls",
-			    (rec->Event.FocusEvent.bSetFocus?L"TRUE":L"FALSE")
+				L"FOCUS_EVENT_RECORD: %ls",
+				(rec->Event.FocusEvent.bSetFocus?L"TRUE":L"FALSE")
 			);
 			break;
 		case WINDOW_BUFFER_SIZE_EVENT:
 			Records.Format(
-			    L"WINDOW_BUFFER_SIZE_RECORD: Size = [%d, %d]",
-			    rec->Event.WindowBufferSizeEvent.dwSize.X,
-			    rec->Event.WindowBufferSizeEvent.dwSize.Y
+				L"WINDOW_BUFFER_SIZE_RECORD: Size = [%d, %d]",
+				rec->Event.WindowBufferSizeEvent.dwSize.X,
+				rec->Event.WindowBufferSizeEvent.dwSize.Y
 			);
 			break;
 		case MENU_EVENT:
 			Records.Format(
-			    L"MENU_EVENT_RECORD: CommandId = %d (0x%X) ",
-			    rec->Event.MenuEvent.dwCommandId,
-			    rec->Event.MenuEvent.dwCommandId
+				L"MENU_EVENT_RECORD: CommandId = %d (0x%X) ",
+				rec->Event.MenuEvent.dwCommandId,
+				rec->Event.MenuEvent.dwCommandId
 			);
 			break;
 		case FARMACRO_KEY_EVENT:
@@ -1075,26 +1075,26 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 		{
 			WORD AsciiChar = (WORD)(BYTE)rec->Event.KeyEvent.uChar.AsciiChar;
 			Records.Format(
-			    L"%ls: %ls, %d, Vk=%ls, Scan=0x%04X uChar=[U='%c' (0x%04X): A='%C' (0x%02X)] Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c)",
-			    (rec->EventType==KEY_EVENT?L"KEY_EVENT_RECORD":(rec->EventType==FARMACRO_KEY_EVENT?L"FARMACRO_KEY_EVENT":L"(internal, macro)_KEY_EVENT")),
-			    (rec->Event.KeyEvent.bKeyDown?L"Dn":L"Up"),
-			    rec->Event.KeyEvent.wRepeatCount,
-			    _VK_KEY_ToName(rec->Event.KeyEvent.wVirtualKeyCode),
-			    rec->Event.KeyEvent.wVirtualScanCode,
-			    (rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n')?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
-			    rec->Event.KeyEvent.uChar.UnicodeChar,
-			    (AsciiChar && AsciiChar != '\r' && AsciiChar != '\t' && AsciiChar !='\n' ?AsciiChar:' '),
-			    AsciiChar,
-			    rec->Event.KeyEvent.dwControlKeyState,
-			    (rec->Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
-			    (rec->Event.KeyEvent.dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
-			    (rec->Event.KeyEvent.dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
-			    (rec->Event.KeyEvent.dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
-			    (rec->Event.KeyEvent.dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
-			    (rec->Event.KeyEvent.dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
-			    (rec->Event.KeyEvent.dwControlKeyState&SCROLLLOCK_ON?L'S':L's')
+				L"%ls: %ls, %d, Vk=%ls, Scan=0x%04X uChar=[U='%c' (0x%04X): A='%C' (0x%02X)] Ctrl=0x%08X (%c%c%c%c%c - %c%c%c%c)",
+				(rec->EventType==KEY_EVENT?L"KEY_EVENT_RECORD":(rec->EventType==FARMACRO_KEY_EVENT?L"FARMACRO_KEY_EVENT":L"(internal, macro)_KEY_EVENT")),
+				(rec->Event.KeyEvent.bKeyDown?L"Dn":L"Up"),
+				rec->Event.KeyEvent.wRepeatCount,
+				_VK_KEY_ToName(rec->Event.KeyEvent.wVirtualKeyCode),
+				rec->Event.KeyEvent.wVirtualScanCode,
+				(rec->Event.KeyEvent.uChar.UnicodeChar && !(rec->Event.KeyEvent.uChar.UnicodeChar == L'\t' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\r' || rec->Event.KeyEvent.uChar.UnicodeChar == L'\n')?rec->Event.KeyEvent.uChar.UnicodeChar:L' '),
+				rec->Event.KeyEvent.uChar.UnicodeChar,
+				(AsciiChar && AsciiChar != '\r' && AsciiChar != '\t' && AsciiChar !='\n' ?AsciiChar:' '),
+				AsciiChar,
+				rec->Event.KeyEvent.dwControlKeyState,
+				(rec->Event.KeyEvent.dwControlKeyState&LEFT_CTRL_PRESSED?L'C':L'c'),
+				(rec->Event.KeyEvent.dwControlKeyState&LEFT_ALT_PRESSED?L'A':L'a'),
+				(rec->Event.KeyEvent.dwControlKeyState&SHIFT_PRESSED?L'S':L's'),
+				(rec->Event.KeyEvent.dwControlKeyState&RIGHT_ALT_PRESSED?L'A':L'a'),
+				(rec->Event.KeyEvent.dwControlKeyState&RIGHT_CTRL_PRESSED?L'C':L'c'),
+				(rec->Event.KeyEvent.dwControlKeyState&ENHANCED_KEY?L'E':L'e'),
+				(rec->Event.KeyEvent.dwControlKeyState&CAPSLOCK_ON?L'C':L'c'),
+				(rec->Event.KeyEvent.dwControlKeyState&NUMLOCK_ON?L'N':L'n'),
+				(rec->Event.KeyEvent.dwControlKeyState&SCROLLLOCK_ON?L'S':L's')
 			);
 			break;
 		}
@@ -1106,8 +1106,8 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *rec)
 			break;
 		default:
 			Records.Format(
-			    L"??????_EVENT_RECORD: EventType = %d",
-			    rec->EventType
+				L"??????_EVENT_RECORD: EventType = %d",
+				rec->EventType
 			);
 			break;
 	}
@@ -1196,9 +1196,10 @@ FARString __SysLog_LinearDump(LPBYTE Buf,int SizeBuf)
 #endif
 }
 
-void GetVolumeInformation_Dump(const wchar_t *Title,LPCWSTR lpRootPathName,LPCWSTR lpVolumeNameBuffer,DWORD nVolumeNameSize,
-                               DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength, DWORD lpFileSystemFlags,
-                               LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,FILE *fp)
+void GetVolumeInformation_Dump(
+	const wchar_t *Title,LPCWSTR lpRootPathName,LPCWSTR lpVolumeNameBuffer,DWORD nVolumeNameSize,
+	DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength, DWORD lpFileSystemFlags,
+	LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,FILE *fp)
 {
 #if defined(SYSLOG)
 

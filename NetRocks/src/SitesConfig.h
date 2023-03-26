@@ -49,7 +49,7 @@ struct SiteSpecification
 	SiteSpecification() = default;
 	SiteSpecification(const std::string &standalone_config, const std::string &s);
 
-	bool IsValid() const {return  !site.empty(); }
+	bool IsValid() const {return !site.empty(); }
 
 	std::string ToString() const;
 };

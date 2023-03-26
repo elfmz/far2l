@@ -10,25 +10,25 @@ BOOL WINAPI AskSaveList(SaveListInfo* sli)
 	{
 		{DI_DOUBLEBOX, 3, 1,56,14, 0,0,0,0, FMSG(MFLTitle)},
 
-		{DI_TEXT,4, 2,0,0,0,  0,0,0,  FMSG(MFLSaveTo)},
+		{DI_TEXT,4, 2,0,0,0, 0,0,0, FMSG(MFLSaveTo)},
 		{DI_EDIT,4, 3,54, 3,0,(DWORD_PTR)"SaveListHistory",DIF_HISTORY, 0,NULL},
 		{DI_TEXT,1, 4,1, 4,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_RADIOBUTTON,4, 5,0,0,0,0,DIF_GROUP,   0, FMSG(MFLUrls)},
-		{DI_RADIOBUTTON,4, 6,0,0,0,   0,0,0, FMSG(MFLTree)},
-		{DI_RADIOBUTTON,32, 5,0,0,0, 0,0,0,   FMSG(MFLGroups)},
+		{DI_RADIOBUTTON,4, 5,0,0,0,0,DIF_GROUP, 0, FMSG(MFLUrls)},
+		{DI_RADIOBUTTON,4, 6,0,0,0, 0,0,0, FMSG(MFLTree)},
+		{DI_RADIOBUTTON,32, 5,0,0,0, 0,0,0, FMSG(MFLGroups)},
 		{DI_TEXT,1, 7,1, 7,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_CHECKBOX,4, 8,0,0,0,  0,0,0,  FMSG(MFLPrefix)},
-		{DI_CHECKBOX,4, 9,0,0,0,  0,0,0,  FMSG(MFLPass)},
-		{DI_CHECKBOX,4,10,0,0,0,  0,0,0,  FMSG(MFLQuote)},
-		{DI_CHECKBOX,4,11,0,0,0,  0,0,0,  FMSG(MFLSizes)},
+		{DI_CHECKBOX,4, 8,0,0,0, 0,0,0, FMSG(MFLPrefix)},
+		{DI_CHECKBOX,4, 9,0,0,0, 0,0,0, FMSG(MFLPass)},
+		{DI_CHECKBOX,4,10,0,0,0, 0,0,0, FMSG(MFLQuote)},
+		{DI_CHECKBOX,4,11,0,0,0, 0,0,0, FMSG(MFLSizes)},
 
-		{DI_TEXT,28,11,0,0,0,   0,0,0, FMSG(MFLSizeBound)},
+		{DI_TEXT,28,11,0,0,0, 0,0,0, FMSG(MFLSizeBound)},
 		{DI_EDIT,44,11,47,11,0,0,0,0,NULL},
 		{DI_TEXT,1,12,1,12,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_CHECKBOX,32, 8,0,0,0,   0,0,0, FMSG(MFAppendList)},
+		{DI_CHECKBOX,32, 8,0,0,0, 0,0,0, FMSG(MFAppendList)},
 
 		{DI_BUTTON,0,13,0,0,0,0,DIF_CENTERGROUP, 1,FMSG(MFtpSave)},
 	};
@@ -70,34 +70,34 @@ BOOL FTP::CopyAskDialog(BOOL Move, BOOL Download, FTPCopyInfo* ci)
 	{
 		{DI_DOUBLEBOX, 3, 1,72,17, 0,0,0,0, NULL},
 
-		{DI_TEXT,5, 2,0,0,0,  0,0,0,  NULL},
+		{DI_TEXT,5, 2,0,0,0, 0,0,0, NULL},
 		{DI_EDIT,5, 3,70, 3,0, 0,DIF_HISTORY,0,NULL},
 
 		{DI_TEXT,5, 4,0,0,0, 0,0,0, FMSG(MInclude)},
 		{DI_EDIT,5, 5,70, 5,0, 0,DIF_HISTORY,0,FTP_INCHISTORY},
 
-		{DI_TEXT,5, 6,0,0,0, 0,0,0,   FMSG(MExclude)},
+		{DI_TEXT,5, 6,0,0,0, 0,0,0, FMSG(MExclude)},
 		{DI_EDIT,5, 7,70, 7,0,0,DIF_HISTORY,0, FTP_EXCHISTORY},
 
 		{DI_TEXT,3, 8,3, 8,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_CHECKBOX,5, 9,0,0,0,  0,0,0,  FMSG(MDownloadAscii)},
-		{DI_CHECKBOX,5,10,0,0,0,  0,0,0,  FMSG(MDoNotScan)},
-		{DI_CHECKBOX,5,11,0,0,0,  0,0,0,  FMSG(MSelectFromList)},
-		{DI_CHECKBOX,5,12,0,0,0,  0,0,0,  FMSG(MAddQueue)},
-		{DI_CHECKBOX,5,13,0,0,0,  0,0,0,  FMSG(MConfigUploadLowCase)},
-		{DI_CHECKBOX,5,14,0,0,0,  0,0,0,  FMSG(MDownloadOnServer)},
+		{DI_CHECKBOX,5, 9,0,0,0, 0,0,0, FMSG(MDownloadAscii)},
+		{DI_CHECKBOX,5,10,0,0,0, 0,0,0, FMSG(MDoNotScan)},
+		{DI_CHECKBOX,5,11,0,0,0, 0,0,0, FMSG(MSelectFromList)},
+		{DI_CHECKBOX,5,12,0,0,0, 0,0,0, FMSG(MAddQueue)},
+		{DI_CHECKBOX,5,13,0,0,0, 0,0,0, FMSG(MConfigUploadLowCase)},
+		{DI_CHECKBOX,5,14,0,0,0, 0,0,0, FMSG(MDownloadOnServer)},
 
-		{DI_TEXT,40, 9,0,0,0,  0,0,0,  FMSG(MDefOverwrite)},
-		{DI_RADIOBUTTON,41,10,0,0,0,0,DIF_GROUP,  0,  FMSG(MOverAsk)},
-		{DI_RADIOBUTTON,41,11,0,0,0, 0,0,0,   FMSG(MOverOver)},
-		{DI_RADIOBUTTON,41,12,0,0,0, 0,0,0,   FMSG(MOverSkip)},
-		{DI_RADIOBUTTON,41,13,0,0,0, 0,0,0,   FMSG(MOverResume)},
-		{DI_RADIOBUTTON,41,14,0,0,0, 0,0,0,   FMSG(MOverNewer)},
+		{DI_TEXT,40, 9,0,0,0, 0,0,0, FMSG(MDefOverwrite)},
+		{DI_RADIOBUTTON,41,10,0,0,0,0,DIF_GROUP, 0, FMSG(MOverAsk)},
+		{DI_RADIOBUTTON,41,11,0,0,0, 0,0,0, FMSG(MOverOver)},
+		{DI_RADIOBUTTON,41,12,0,0,0, 0,0,0, FMSG(MOverSkip)},
+		{DI_RADIOBUTTON,41,13,0,0,0, 0,0,0, FMSG(MOverResume)},
+		{DI_RADIOBUTTON,41,14,0,0,0, 0,0,0, FMSG(MOverNewer)},
 
 		{DI_TEXT,3,15,3,15,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 1,   NULL},
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MDownloadCancel)},
+		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 1, NULL},
+		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MDownloadCancel)},
 	};
 	enum
 	{
@@ -211,7 +211,7 @@ BOOL FTP::CopyAskDialog(BOOL Move, BOOL Download, FTPCopyInfo* ci)
 		return FALSE;
 
 	if(ci->DestPath.Cmp(FTP_CMDPREFIX,FTP_CMDPREFIX_SIZE) &&
-	        ci->DestPath[FTP_CMDPREFIX_SIZE] == ':')
+			ci->DestPath[FTP_CMDPREFIX_SIZE] == ':')
 		ci->DestPath.Del(0, FTP_CMDPREFIX_SIZE+1);
 
 	//Include
@@ -250,7 +250,7 @@ BOOL FTP::CopyAskDialog(BOOL Move, BOOL Download, FTPCopyInfo* ci)
 	ci->FTPRename       = di[ MID_FTPR   ].Selected;
 
 	//Mode
-	if(di[MID_OVER  ].Selected) ci->MsgCode = ocOverAll;
+	if     (di[MID_OVER  ].Selected) ci->MsgCode = ocOverAll;
 	else if(di[MID_SKIP  ].Selected) ci->MsgCode = ocSkipAll;
 	else if(di[MID_RESUME].Selected) ci->MsgCode = ocResumeAll;
 	else if(di[MID_NEWER ].Selected) ci->MsgCode = ocNewerAll;
@@ -267,7 +267,7 @@ void FTP::SaveURL()
 	Host.MkUrl(str, path.c_str(), NULL, TRUE);
 
 	if(h.SetHostName(str.c_str(),NULL,NULL) &&
-	        GetHost(MSaveFTPTitle,&h,FALSE))
+			GetHost(MSaveFTPTitle,&h,FALSE))
 		h.Write(HostsPath);
 }
 
@@ -276,34 +276,34 @@ void QueryExHostOptions(FTP* ftp,FTPHost* p)
 {
 	InitDialogItem InitItems[]=
 	{
-		{DI_DOUBLEBOX, 3, 1,72,17, 0, 0,0,0,FMSG(MEHTitle)},
-		{DI_CHECKBOX,5, 2,0,0,0,    0,0,0,FMSG(MDupFF)},
-		{DI_CHECKBOX,5, 3,0,0,0,    0,0,0,FMSG(MUndupFF)},
-		{DI_CHECKBOX,5, 4,0,0,0,    0,0,0,FMSG(MEHDecodeCmd)},
-		{DI_CHECKBOX,5, 5,0,0,0,    0,0,0,FMSG(MSendAllo)},
-		{DI_CHECKBOX,5, 6,0,0,0,    0,0,0,FMSG(MUseStartSpaces)},
-		{DI_TEXT,3,15,3,15,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 1,   FMSG(MOk)},
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MCancel)},
+		{DI_DOUBLEBOX, 3, 1,72,17,0,0,0,0,FMSG(MEHTitle)},
+		{DI_CHECKBOX,  5, 2, 0, 0,0,0,0,0,FMSG(MDupFF)},
+		{DI_CHECKBOX,  5, 3, 0, 0,0,0,0,0,FMSG(MUndupFF)},
+		{DI_CHECKBOX,  5, 4, 0, 0,0,0,0,0,FMSG(MEHDecodeCmd)},
+		{DI_CHECKBOX,  5, 5, 0, 0,0,0,0,0,FMSG(MSendAllo)},
+		{DI_CHECKBOX,  5, 6, 0, 0,0,0,0,0,FMSG(MUseStartSpaces)},
+		{DI_TEXT,      3,15, 3,15,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL},
+		{DI_BUTTON,    0,16, 0, 0,0,0,DIF_CENTERGROUP,1,FMSG(MOk)},
+		{DI_BUTTON,    0,16, 0, 0,0,0,DIF_CENTERGROUP,0,FMSG(MCancel)},
 	};
 	enum
 	{
-		dDupFF    = 1,
-		dUndupFF  = 2,
-		dCmdLine  = 3,
-		dSendAllo = 4,
+		dDupFF          = 1,
+		dUndupFF        = 2,
+		dCmdLine        = 3,
+		dSendAllo       = 4,
 		dUseStartSpaces = 5,
 
-		dOk       = 7
+		dOk             = 7
 	};
-	int           rc;
+	int rc;
 	FarDialogItem di[ARRAYSIZE(InitItems)];
 	InitDialogItems(InitItems,di,ARRAYSIZE(di));
 	di[dDupFF].Selected               = p->FFDup;
 	di[dUndupFF].Selected             = p->UndupFF;
 	di[dCmdLine].Selected             = p->DecodeCmdLine;
 	di[dSendAllo].Selected            = p->SendAllo;
-	di[dUseStartSpaces].Selected   = p->UseStartSpaces;
+	di[dUseStartSpaces].Selected      = p->UseStartSpaces;
 
 	do
 	{
@@ -314,7 +314,7 @@ void QueryExHostOptions(FTP* ftp,FTPHost* p)
 
 		if(ftp->LongBeep) FP_PeriodReset(ftp->LongBeep);
 
-		di[rc].Focus    = FALSE;
+		di[rc].Focus = FALSE;
 
 		if(rc != dOk)
 			return;
@@ -327,7 +327,7 @@ void QueryExHostOptions(FTP* ftp,FTPHost* p)
 	p->UndupFF            = di[dUndupFF].Selected;
 	p->DecodeCmdLine      = di[dCmdLine].Selected;
 	p->SendAllo           = di[dSendAllo].Selected;
-	p->UseStartSpaces  = di[dUseStartSpaces].Selected;
+	p->UseStartSpaces     = di[dUseStartSpaces].Selected;
 }
 
 BOOL FTP::GetHost(int title,FTPHost* p,BOOL ToDescription)
@@ -335,42 +335,42 @@ BOOL FTP::GetHost(int title,FTPHost* p,BOOL ToDescription)
 	InitDialogItem InitItems[]=
 	{
 		{DI_DOUBLEBOX, 3, 1,72,17, 0, 0,0,0,NULL},
-		{DI_TEXT,5, 2,0,0,0,    0,0,0,FMSG(MFtpName)},
+		{DI_TEXT,5, 2,0,0,0, 0,0,0,FMSG(MFtpName)},
 		{DI_EDIT,7, 3,70, 3,0, (DWORD_PTR)FTP_HOSTHISTORY,DIF_HISTORY,0,NULL},
 
 		{DI_TEXT,4, 4,4, 4,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_TEXT,5, 5,0,0,0,    0,0,0,FMSG(MUser)},
+		{DI_TEXT,5, 5,0,0,0, 0,0,0,FMSG(MUser)},
 		{DI_EDIT,18, 5,70, 5,0,(DWORD_PTR)FTP_USERHISTORY,DIF_HISTORY,0,NULL },
 
-		{DI_TEXT,5, 6,0,0,0, 0,0,0,   FMSG(MPassword)},
+		{DI_TEXT,5, 6,0,0,0, 0,0,0, FMSG(MPassword)},
 		{DI_PSWEDIT,18, 6,70, 6,0,0,0,0,NULL},
 
-		{DI_TEXT,5, 7,0,0,0, 0,0,0,   FMSG(MHostDescr)},
+		{DI_TEXT,5, 7,0,0,0, 0,0,0, FMSG(MHostDescr)},
 		{DI_EDIT,18, 7,70, 7,0,0,0,0,NULL},
 
 		{DI_TEXT,3, 8,3, 8,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_CHECKBOX,5, 9,0,0,0,  0,0,0,  FMSG(MAskLogin)},
-		{DI_CHECKBOX,5,10,0,0,0,  0,0,0,  FMSG(MAsciiMode)},
-		{DI_CHECKBOX,5,11,0,0,0,  0,0,0,  FMSG(MPassiveMode)},
-		{DI_CHECKBOX,5,12,0,0,0,  0,0,0,  FMSG(MUseFirewall)},
+		{DI_CHECKBOX,5, 9,0,0,0, 0,0,0, FMSG(MAskLogin)},
+		{DI_CHECKBOX,5,10,0,0,0, 0,0,0, FMSG(MAsciiMode)},
+		{DI_CHECKBOX,5,11,0,0,0, 0,0,0, FMSG(MPassiveMode)},
+		{DI_CHECKBOX,5,12,0,0,0, 0,0,0, FMSG(MUseFirewall)},
 
-		{DI_CHECKBOX,5,13,0,0,0,  0,0,0,  FMSG(MDecodeCommands)},
-		{DI_CHECKBOX,40, 9,0,0,0, 0,0,0,   FMSG(MExtWindow)},
-		{DI_CHECKBOX,40,10,0,0,0, 0,0,0,   FMSG(MExtList)},
+		{DI_CHECKBOX,5,13,0,0,0, 0,0,0, FMSG(MDecodeCommands)},
+		{DI_CHECKBOX,40, 9,0,0,0, 0,0,0, FMSG(MExtWindow)},
+		{DI_CHECKBOX,40,10,0,0,0, 0,0,0, FMSG(MExtList)},
 		{DI_EDIT,44,11, 59,11,0,0,0,0,NULL},
-		{DI_TEXT,40,12,0,0,0, 0,0,0,   FMSG(MHostIOSize)},
+		{DI_TEXT,40,12,0,0,0, 0,0,0, FMSG(MHostIOSize)},
 		{DI_EDIT,60,12, 70,12,0,0,0,0,NULL},
 
 		{DI_TEXT,3,14,3,14,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MFtpSelectTable)},
-		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MServerType)},
-		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MExtOpt)},
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP,  1,  FMSG(MFtpSave)},
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP,  0,  FMSG(MFtpConnect)},
-		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MCancel)},
+		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MFtpSelectTable)},
+		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MServerType)},
+		{DI_BUTTON,0,15,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MExtOpt)},
+		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 1, FMSG(MFtpSave)},
+		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MFtpConnect)},
+		{DI_BUTTON,0,16,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MCancel)},
 	};
 #define dHOST    2
 #define dUSER    5
@@ -502,9 +502,9 @@ BOOL FTP::EditDirectory(String& Name,char *Desc,BOOL newDir)
 	InitDialogItem InitItems[]=
 	{
 		{DI_DOUBLEBOX, 3, 1,72,6, 0, 0,0,0,NULL},
-		{DI_TEXT,5, 2,0,0,0, 0,0,0,   FMSG(MMkdirName)},
+		{DI_TEXT,5, 2,0,0,0, 0,0,0, FMSG(MMkdirName)},
 		{DI_EDIT,5, 3,70, 3,0,(DWORD_PTR)FTP_FOLDHISTORY,DIF_HISTORY, 0,},
-		{DI_TEXT,5, 4,0,0,0, 0,0,0,   FMSG(MHostDescr)},
+		{DI_TEXT,5, 4,0,0,0, 0,0,0, FMSG(MHostDescr)},
 		{DI_EDIT,5, 5,70, 5,0,0,0,0,NULL},
 	};
 	InitItems[0].Data = newDir ? FMSG(MMkdirTitle) : FMSG(MChDir);
@@ -594,7 +594,7 @@ void FTP::SelectTable()
 	}
 
 	int ExitCode=FP_Info->Menu(FP_Info->ModuleNumber,-1,-1,0,FMENU_AUTOHIGHLIGHT,
-	                           FP_GetMsg(MTableTitle),NULL,NULL,NULL,NULL,MenuItems,TableNum);
+		FP_GetMsg(MTableTitle),NULL,NULL,NULL,NULL,MenuItems,TableNum);
 
 	if(ExitCode<0)
 		return;
@@ -664,7 +664,7 @@ void FTP::SelectFileTable(char *TableName)
 	}
 
 	int ExitCode=FP_Info->Menu(FP_Info->ModuleNumber,-1,-1,0,FMENU_AUTOHIGHLIGHT,
-	                           FP_GetMsg(MTableTitle),NULL,NULL,NULL,NULL,MenuItems,TableNum);
+		FP_GetMsg(MTableTitle),NULL,NULL,NULL,NULL,MenuItems,TableNum);
 
 	if(ExitCode<0)
 		return;
@@ -697,19 +697,19 @@ void FTP::SetAttributes()
 	InitDialogItem InitItems[]=
 	{
 		{DI_DOUBLEBOX, 3, 1,35,6, 0, 0,0,0,FMSG(MChmodTitle)},
-		{DI_TEXT,6, 2,0,0,0,    0,0,0,FMSG("R  W  X   R  W  X   R  W  X")},
-		{DI_CHECKBOX,5, 3,0,0,0, 0,0,0,   NULL},
-		{DI_CHECKBOX,8, 3,0,0,0,  0,0,0,  NULL},
-		{DI_CHECKBOX,11, 3,0,0,0,  0,0,0,  NULL},
-		{DI_CHECKBOX,15, 3,0,0,0, 0,0,0,   NULL},
-		{DI_CHECKBOX,18, 3,0,0,0,  0,0,0,  NULL},
-		{DI_CHECKBOX,21, 3,0,0,0,  0,0,0,  NULL},
-		{DI_CHECKBOX,25, 3,0,0,0,  0,0,0,  NULL},
-		{DI_CHECKBOX,28, 3,0,0,0, 0,0,0,   NULL},
-		{DI_CHECKBOX,31, 3,0,0,0,  0,0,0,  NULL},
+		{DI_TEXT,6, 2,0,0,0, 0,0,0,FMSG("R  W  X   R  W  X   R  W  X")},
+		{DI_CHECKBOX,5, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,8, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,11, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,15, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,18, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,21, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,25, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,28, 3,0,0,0, 0,0,0, NULL},
+		{DI_CHECKBOX,31, 3,0,0,0, 0,0,0, NULL},
 		{DI_TEXT,3, 4,3, 4,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 1,  FMSG(MOk)},
-		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 0,  FMSG(MCancel)},
+		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 1, FMSG(MOk)},
+		{DI_BUTTON,0, 5,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MCancel)},
 	};
 	FarDialogItem di[ARRAYSIZE(InitItems)];
 	PanelInfo     PInfo;
@@ -754,7 +754,8 @@ void FTP::SetAttributes()
 
 		switch(FtpConnectMessage(hConnect,MCannotChmod,m,-MCopySkip,MCopySkipAll))
 		{
-			/*skip*/     case 0:
+			/*skip*/
+			case 0:
 				break;
 				/*skip all*/
 			case 1:
@@ -772,13 +773,13 @@ BOOL WINAPI GetLoginData(char *User, char *Password, BOOL forceAsk)
 	InitDialogItem InitItems[]=
 	{
 		{DI_DOUBLEBOX, 3, 1,72,8, 0,0,0,0, FMSG(MLoginInfo)},
-		{DI_TEXT,5, 2,0,0,0,  0,0,0,  FMSG(MUserName)},
+		{DI_TEXT,5, 2,0,0,0, 0,0,0, FMSG(MUserName)},
 		{DI_EDIT,5, 3,70, 3,0,(DWORD_PTR)FTP_USERHISTORY,DIF_HISTORY, 0,NULL},
-		{DI_TEXT,5, 4,0,0,0,  0,0,0,  FMSG(MUserPassword)},
+		{DI_TEXT,5, 4,0,0,0, 0,0,0, FMSG(MUserPassword)},
 		{DI_PSWEDIT,5, 5,70, 5,0,0,0,0,NULL},
 		{DI_TEXT,5, 6,5, 6,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0, 7,0,0,0,0,DIF_CENTERGROUP, 1,  FMSG(MOk)},
-		{DI_BUTTON,0, 7,0,0,0,0,DIF_CENTERGROUP, 0,  FMSG(MCancel)},
+		{DI_BUTTON,0, 7,0,0,0,0,DIF_CENTERGROUP, 1, FMSG(MOk)},
+		{DI_BUTTON,0, 7,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MCancel)},
 	};
 
 	if(User[0] && !Password[0])
@@ -809,8 +810,8 @@ BOOL WINAPI GetLoginData(char *User, char *Password, BOOL forceAsk)
 	do
 	{
 		int AskCode = FP_Info->Dialog(FP_Info->ModuleNumber,-1,-1,
-		                              76,10,"FTPConnect",
-		                              di,ARRAYSIZE(di));
+			76,10,"FTPConnect",
+			di,ARRAYSIZE(di));
 
 		//Cancel
 		if(AskCode == -1 || AskCode == 7)

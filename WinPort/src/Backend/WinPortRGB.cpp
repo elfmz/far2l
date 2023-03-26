@@ -115,7 +115,7 @@ static void SavePalette(KeyFileHelper &kfh)
 		snprintf(value, sizeof(value), "#%02X%02X%02X",
 			g_winport_palette.background[i].r, g_winport_palette.background[i].g, g_winport_palette.background[i].b);
 		kfh.SetString("background", name, value);
-    }
+	}
 }
 
 void InitPalette()

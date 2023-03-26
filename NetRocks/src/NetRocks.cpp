@@ -8,7 +8,7 @@
 #include <set>
 #include <sudo.h>
 
-//LPCSTR      DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
+//LPCSTR DiskMenuStrings[ 1+FTP_MAXBACKUPS ];
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
@@ -133,14 +133,14 @@ SHAREDSYMBOL int WINAPI _export DeleteFilesW(HANDLE hPlugin,struct PluginPanelIt
 
 
 SHAREDSYMBOL int WINAPI _export GetFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
-                   int ItemsNumber,int Move, const wchar_t **DestPath,int OpMode)
+	int ItemsNumber,int Move, const wchar_t **DestPath,int OpMode)
 {
 	return ((PluginImpl *)hPlugin)->GetFiles(PanelItem, ItemsNumber, Move, DestPath ? *DestPath : nullptr, OpMode);
 }
 
 
 SHAREDSYMBOL int WINAPI _export PutFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
-                   int ItemsNumber,int Move,const wchar_t *SrcPath, int OpMode)
+	int ItemsNumber,int Move,const wchar_t *SrcPath, int OpMode)
 {
 	return ((PluginImpl *)hPlugin)->PutFiles(PanelItem, ItemsNumber, Move, SrcPath, OpMode);
 }

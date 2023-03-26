@@ -28,9 +28,9 @@ void LogPanelItems(struct PluginPanelItem *pi,int cn)
 		for(int n = 0; n < cn; n++)
 		{
 			Log(("%2d) [%s] attr: %08X (%s)",
-			     n+1, FTP_FILENAME(&pi[n]),
-			     pi[n].FindData.dwFileAttributes, IS_FLAG(pi[n].FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY)?"DIR":"FILE"
-			    ));
+				n+1, FTP_FILENAME(&pi[n]),
+				pi[n].FindData.dwFileAttributes, IS_FLAG(pi[n].FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY)?"DIR":"FILE"
+			));
 		}
 }
 #endif
@@ -49,12 +49,12 @@ FARINProc::FARINProc(LPCSTR nm,LPCSTR s,...)
 	{
 		va_start(ap,s);
 		snprintf(str, ARRAYSIZE(str), "%*c%s(%s) {",
-		          Counter*2,' ', nm, MessageV(s,ap));
+			Counter*2,' ', nm, MessageV(s,ap));
 		va_end(ap);
 	}
 	else
 		snprintf(str, ARRAYSIZE(str), "%*c%s() {",
-		          Counter*2,' ', nm);
+			Counter*2,' ', nm);
 
 	LogCmd(str, ldInt);
 	Counter++;
@@ -96,11 +96,11 @@ char *WINAPI FixFileNameChars(String& fnm,BOOL slashes)
 
 char *WINAPI FixFileNameChars(char *fnm,BOOL slashes)
 {
-	char *m;
-	char *src,
-	     *inv = Opt.InvalidSymbols,
-	      *cor = Opt.CorrectedSymbols;
-	static char buff[MAX_PATH];
+	char        *m;
+	char        *src,
+				*inv = Opt.InvalidSymbols,
+				*cor = Opt.CorrectedSymbols;
+	static char  buff[MAX_PATH];
 
 	if(!inv[0]) return fnm;
 
@@ -258,9 +258,9 @@ char *WINAPI PDigit(char *buff,int64_t val,int sz /*=-1*/)
 char *WINAPI FDigit(char *buff,int64_t val,int sz)
 {
 	static char lbuff[100];
-	char str[MAX_PATH];
-	int  len,n,d;
-	char *s;
+	char        str[MAX_PATH];
+	int         len,n,d;
+	char       *s;
 
 	if(!buff) buff = lbuff;
 
@@ -378,7 +378,7 @@ static HANDLE LogFile = NULL;
 
 void WINAPI LogCmd(LPCSTR src,CMDOutputDir out,DWORD Size)
 {
-	LPCSTR   m;
+	LPCSTR m;
 
 //File opened and fail
 	if(LogFile == INVALID_HANDLE_VALUE)
@@ -413,7 +413,7 @@ void WINAPI LogCmd(LPCSTR src,CMDOutputDir out,DWORD Size)
 
 	//Check limitations
 	if(Opt.CmdLogLimit &&
-	        Fsize(LogFile) >= (int64_t)Opt.CmdLogLimit*1000)
+			Fsize(LogFile) >= (int64_t)Opt.CmdLogLimit*1000)
 		Ftrunc(LogFile,FILE_BEGIN);
 
 //-- USED DATA
@@ -456,9 +456,9 @@ void WINAPI LogCmd(LPCSTR src,CMDOutputDir out,DWORD Size)
 		//Time
 		WINPORT(GetLocalTime)(&st);
 		snprintf(tmstr,ARRAYSIZE(tmstr),
-		          "%4d.%02d.%02d %02d:%02d:%02d:%04d",
-		          st.wYear, st.wMonth,  st.wDay,
-		          st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			"%4d.%02d.%02d %02d:%02d:%02d:%04d",
+			st.wYear, st.wMonth,  st.wDay,
+			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		Fwrite(LogFile,tmstr,static_cast<int>(strlen(tmstr)));
 
 		//Delay
@@ -466,7 +466,7 @@ void WINAPI LogCmd(LPCSTR src,CMDOutputDir out,DWORD Size)
 			sprintf(tmstr," ----");
 		else
 			sprintf(tmstr," %04d",
-			        (st.wSecond-stOld.wSecond)*1000 + (st.wMilliseconds-stOld.wMilliseconds));
+				(st.wSecond-stOld.wSecond)*1000 + (st.wMilliseconds-stOld.wMilliseconds));
 
 		Fwrite(LogFile,tmstr,(int)strlen(tmstr));
 		stOld = st;
@@ -528,7 +528,7 @@ void Connection::InitCmdBuff(void)
 	}
 
 	//Command lines + status command
-	CmdMsg       = (LPCSTR*)malloc(sizeof(LPCSTR)*(cmdSize+NBUTTONSADDON));
+	CmdMsg = (LPCSTR*)malloc(sizeof(LPCSTR)*(cmdSize+NBUTTONSADDON));
 	ResetCmdBuff();
 }
 /*
@@ -595,10 +595,10 @@ void Connection::SetCmdLine(char *dest, LPCSTR src, int sz, int out)
 	char *m;
 
 	if(!Opt._ShowPassword &&
-	        StrCmp(src,Opt.cmdPass,static_cast<int>(strlen(Opt.cmdPass)),TRUE) == 0)
+			StrCmp(src,Opt.cmdPass,static_cast<int>(strlen(Opt.cmdPass)),TRUE) == 0)
 		src = "PASS *hidden*";
 	else if(((BYTE)src[0]) == (BYTE)ffDM &&
-	        (strncmp(src+1,"ABOR",4) == 0 || strncmp(src,"ABOR",4) == 0))
+			(strncmp(src+1,"ABOR",4) == 0 || strncmp(src,"ABOR",4) == 0))
 		src = "<ABORT>";
 
 	if(out != -1)
@@ -711,17 +711,17 @@ static WORD Keys[] = { VK_ESCAPE, 'C', 'R', VK_RETURN };
 
 BOOL Connection::ConnectMessageTimeout(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,int BtnMsg /*= MNone__*/)
 {
-	char              str[MAX_PATH];
-	char              host[MAX_PATH];
-	BOOL              rc,
-	   first = TRUE;
-	DWORD         b,e;
-	double     diff;
-	int               secNum;
+	char            str[MAX_PATH];
+	char            host[MAX_PATH];
+	BOOL            rc,
+					first = TRUE;
+	DWORD           b,e;
+	double          diff;
+	int             secNum;
 
 	if(IS_FLAG(FP_LastOpMode,OPM_FIND) ||
-	        !Opt.RetryTimeout ||
-	        (BtnMsg != -MRetry && BtnMsg != -MRestore))
+			!Opt.RetryTimeout ||
+			(BtnMsg != -MRetry && BtnMsg != -MRestore))
 		return ConnectMessage(Msg, HostName, BtnMsg);
 
 	StrCpy(host, LastHost, ARRAYSIZE(host));
@@ -748,14 +748,14 @@ BOOL Connection::ConnectMessageTimeout(int Msg /*= MNone__*/,LPCSTR HostName /*=
 		{
 			first = FALSE;
 			snprintf(str, ARRAYSIZE(str), "\"%s\" %s %2d%s %s",
-			          HostName,
-			          FP_GetMsg(MAutoRetryText),
-			          Opt.RetryTimeout-secNum,
-			          FP_GetMsg(MSeconds),FP_GetMsg(MRetryText));
+				HostName,
+				FP_GetMsg(MAutoRetryText),
+				Opt.RetryTimeout-secNum,
+				FP_GetMsg(MSeconds),FP_GetMsg(MRetryText));
 			ConnectMessage(Msg,str);
 			snprintf(str, ARRAYSIZE(str), "%s %s %d%s",
-			          FP_GetMsg(Msg),
-			          FP_GetMsg(MAutoRetryText), Opt.RetryTimeout-secNum, FP_GetMsg(MSeconds));
+				FP_GetMsg(Msg),
+				FP_GetMsg(MAutoRetryText), Opt.RetryTimeout-secNum, FP_GetMsg(MSeconds));
 			SaveConsoleTitle::Text(str);
 			secNum++;
 			b = e;
@@ -776,12 +776,12 @@ BOOL Connection::ConnectMessageTimeout(int Msg /*= MNone__*/,LPCSTR HostName /*=
 }
 
 int Connection::ConnectMessage(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,
-                               int btn /*= MNone__*/,int btn1 /*= MNone__*/,int btn2 /*= MNone__*/)
+	int btn /*= MNone__*/,int btn1 /*= MNone__*/,int btn2 /*= MNone__*/)
 {
 	//PROC(( "ConnectMessage", "%d,%s,%d,%d,%d", Msg, HostName, btn, btn1, btn2 ))
 	int               num,n;
 	BOOL              res;
-	LPCSTR          m;
+	LPCSTR            m;
 	BOOL              exCmd;
 
 	if(btn < 0 && Opt.DoNotExpandErrors)
@@ -798,9 +798,9 @@ int Connection::ConnectMessage(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,
 	if(HostName && HostName[0]) SetCmdLine(LastHost, HostName,       ARRAYSIZE(LastHost), -1);
 
 	if(btn == MNone__)
-		if(IS_FLAG(FP_LastOpMode,OPM_FIND)                       ||    //called from find
-		        !CmdVisible                                           ||  //Window disabled
-		        (IS_SILENT(FP_LastOpMode) && !Opt.ShowSilentProgress))    //show silent processing disabled
+		if(IS_FLAG(FP_LastOpMode,OPM_FIND)                          || //called from find
+			!CmdVisible                                             || //Window disabled
+			(IS_SILENT(FP_LastOpMode) && !Opt.ShowSilentProgress))     //show silent processing disabled
 		{
 			if(HostName)
 			{
@@ -811,7 +811,7 @@ int Connection::ConnectMessage(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,
 			return FALSE;
 		}
 
-#define ADD_CMD(v)  do{ Assert( num < (cmdSize+NBUTTONSADDON) ); CmdMsg[num++] = v; }while(0)
+#define ADD_CMD(v) do{ Assert( num < (cmdSize+NBUTTONSADDON) ); CmdMsg[num++] = v; }while(0)
 	//First line
 	num = 0;
 	//Title
@@ -883,7 +883,7 @@ int Connection::ConnectMessage(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,
 	}
 
 	//Buttons
-#define ADD_BTN(v)  do{ ADD_CMD(v); btnAddon++; }while(0)
+#define ADD_BTN(v) do{ ADD_CMD(v); btnAddon++; }while(0)
 	int btnAddon = 0;
 
 	if(btn != MNone__)
@@ -908,11 +908,11 @@ int Connection::ConnectMessage(int Msg /*= MNone__*/,LPCSTR HostName /*= NULL*/,
 	}
 
 	//Message
-	BOOL isErr = (btn != MNone__ || btn < 0) && WINPORT(GetLastError)() != ERROR_SUCCESS,
-	     isWarn = btn != MNone__ && btn < 0;
+	BOOL    isErr = (btn != MNone__ || btn < 0) && WINPORT(GetLastError)() != ERROR_SUCCESS,
+			isWarn = btn != MNone__ && btn < 0;
 	res = FMessage((isErr ? FMSG_ERRORTYPE : 0) | (isWarn ? FMSG_WARNING : 0) | (exCmd ? FMSG_LEFTALIGN : 0),
-	               NULL, CmdMsg, num,
-	               btnAddon);
+		NULL, CmdMsg, num,
+		btnAddon);
 	Log(("CMSG: rc=%d", res));
 	//Del auto-added `cancel`
 	btnAddon -= btn < 0 && btn != -MOk;

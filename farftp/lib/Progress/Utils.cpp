@@ -107,5 +107,5 @@ void StrTTime(char *str,struct tm *tm)
 {
 	Assert(tm != NULL);
 	sprintf(str,"%02d:%02d:%02d",
-	        tm->tm_hour,tm->tm_min,tm->tm_sec);
+		tm->tm_hour,tm->tm_min,tm->tm_sec);
 }

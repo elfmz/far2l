@@ -3,8 +3,8 @@
 
 #include "fstdlib.h"
 
-static int    nSaveCount = 0;
-static HANDLE hScreen   = NULL;
+static int     nSaveCount = 0;
+static HANDLE  hScreen    = NULL;
 static WCHAR   SaveTitle[FAR_MAX_TITLE];
 
 int WINAPI FP_Screen::isSaved(void)

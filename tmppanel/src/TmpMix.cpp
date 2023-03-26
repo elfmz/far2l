@@ -207,21 +207,21 @@ TCHAR* ExpandEnvStrs(const TCHAR* input, StrBuf& output) {
 
 static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NULL, DWORD buf_size = 0)
 {
-	std::wstring path(dir);
-	if (path.empty())
-		return 0;
+  std::wstring path(dir);
+  if (path.empty())
+    return 0;
 
-	if (path[path.size()-1]!=GOOD_SLASH)
-		path+= GOOD_SLASH;
+  if (path[path.size()-1]!=GOOD_SLASH)
+    path+= GOOD_SLASH;
 
-	path+= name;
-	if (GetFileAttributes(path.c_str())==INVALID_FILE_ATTRIBUTES)
-		return 0;
+  path+= name;
+  if (GetFileAttributes(path.c_str())==INVALID_FILE_ATTRIBUTES)
+    return 0;
 
-	if (buf_size >= (path.size() + 1))
-		wcscpy(buffer, path.c_str());
+  if (buf_size >= (path.size() + 1))
+    wcscpy(buffer, path.c_str());
 
-	return path.size() + 1;
+  return path.size() + 1;
 }
 
 
@@ -293,7 +293,7 @@ success:
 
   output.Grow(dwSize);
   if (LookAtPath(final, FileName, output, dwSize)!=dwSize)
-	  fprintf(stderr, "LookAtPath: unexpected size\n");
+    fprintf(stderr, "LookAtPath: unexpected size\n");
 
   return true;
 }

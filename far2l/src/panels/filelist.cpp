@@ -81,6 +81,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "constitle.hpp"
 #include "plugapi.hpp"
+#include "CachedCreds.hpp"
 
 extern PanelViewSettings ViewSettingsArray[];
 extern size_t SizeViewSettingsArray;
@@ -319,7 +320,7 @@ int _cdecl SortList(const void *el1,const void *el2)
 		return SPtr1->Selected>SPtr2->Selected ? -1 : 1;
 
 	if (ListSortGroups && (ListSortMode==BY_NAME || ListSortMode==BY_EXT || ListSortMode==BY_FULLNAME) &&
-	        SPtr1->SortGroup!=SPtr2->SortGroup)
+		SPtr1->SortGroup!=SPtr2->SortGroup)
 		return SPtr1->SortGroup<SPtr2->SortGroup ? -1 : 1;
 
 	if (hSortPlugin)
@@ -537,11 +538,12 @@ void FileList::SetFocus()
 {
 	Panel::SetFocus();
 
-	/* $ 07.04.2002 KM
-	  ! Рисуем заголовок консоли фара только тогда, когда
-	    не идёт процесс перерисовки всех фреймов. В данном
-	    случае над панелями висит диалог и незачем выводить
-	    панельный заголовок.
+	/*
+		$ 07.04.2002 KM
+		! Рисуем заголовок консоли фара только тогда, когда
+		не идёт процесс перерисовки всех фреймов. В данном
+		случае над панелями висит диалог и незачем выводить
+		панельный заголовок.
 	*/
 	if (!IsRedrawFramesInProcess)
 		SetTitle();
@@ -553,8 +555,8 @@ int FileList::SendKeyToPlugin(DWORD Key,BOOL Pred)
 	_ALGO(SysLog(L"Key=%ls Pred=%d",_FARKEY_ToName(Key),Pred));
 
 	if (PanelMode==PLUGIN_PANEL &&
-	        (CtrlObject->Macro.IsRecording() == MACROMODE_RECORDING_COMMON || CtrlObject->Macro.IsExecuting() == MACROMODE_EXECUTING_COMMON || CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO)
-	   )
+		(CtrlObject->Macro.IsRecording() == MACROMODE_RECORDING_COMMON || CtrlObject->Macro.IsExecuting() == MACROMODE_EXECUTING_COMMON || CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO)
+	)
 	{
 		int VirtKey,ControlState;
 
@@ -696,7 +698,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					{
 						case 0: // выделить все?
 							for (auto &Item : ListData)
-							  Select(Item, TRUE);
+								Select(Item, TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?
@@ -732,7 +734,7 @@ int64_t FileList::VMProcess(int OpCode,void *vParam,int64_t iParam)
 					{
 						case 0: // инвертировать все?
 							for (auto &Item : ListData)
-							  Select(Item, Item->Selected?FALSE:TRUE);
+								Select(Item, Item->Selected?FALSE:TRUE);
 							Result=(int64_t)GetRealSelCount();
 							break;
 						case 1: // по индексу?
@@ -906,11 +908,11 @@ int FileList::ProcessKey(int Key)
 				break;
 				// эти спорные, хотя, если Ctrl-F работает, то и эти должны :-)
 				/*
-				      case KEY_CTRLINS:
-				      case KEY_CTRLSHIFTINS:
-				      case KEY_CTRLALTINS:
-				      case KEY_ALTSHIFTINS:
-				        break;
+					case KEY_CTRLINS:
+					case KEY_CTRLSHIFTINS:
+					case KEY_CTRLALTINS:
+					case KEY_ALTSHIFTINS:
+						break;
 				*/
 			default:
 				return FALSE;
@@ -949,9 +951,10 @@ int FileList::ProcessKey(int Key)
 		}
 	}
 
-	/* $ 27.08.2002 SVS
-	    [*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
-	        Shift-PgUp/PgDn.
+	/*
+		$ 27.08.2002 SVS
+		[*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
+		Shift-PgUp/PgDn.
 	*/
 	if (Columns==1 && !CmdLength)
 	{
@@ -1038,7 +1041,7 @@ int FileList::ProcessKey(int Key)
 			Redraw();
 			return TRUE;
 		case KEY_ALTRIGHT:    // Прокрутка длинных имен и описаний
-		case KEY_ALTEND:     // Прокрутка длинных имен и описаний - в конец
+		case KEY_ALTEND:      // Прокрутка длинных имен и описаний - в конец
 			LeftPos=(Key == KEY_ALTEND)?0x7fff:LeftPos+1;
 			Redraw();
 			return TRUE;
@@ -1065,9 +1068,11 @@ int FileList::ProcessKey(int Key)
 //			CopyFiles();
 //			return TRUE;
 
-			/* $ 14.02.2001 VVM
-			  + Ctrl: вставляет имя файла с пассивной панели.
-			  + CtrlAlt: вставляет UNC-имя файла с пассивной панели */
+			/*
+				$ 14.02.2001 VVM
+				+ Ctrl: вставляет имя файла с пассивной панели.
+				+ CtrlAlt: вставляет UNC-имя файла с пассивной панели
+			*/
 		case KEY_CTRL|KEY_SEMICOLON:
 		case KEY_CTRL|KEY_ALT|KEY_SEMICOLON:
 		{
@@ -1144,8 +1149,10 @@ int FileList::ProcessKey(int Key)
 
 							if (Opt.PanelCtrlFRule)
 							{
-								/* $ 13.10.2000 tran
-								  по Ctrl-f имя должно отвечать условиям на панели */
+								/*
+									$ 13.10.2000 tran
+									по Ctrl-f имя должно отвечать условиям на панели
+								*/
 								if (ViewSettings.FileLowerCase && !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 									strFileName.Lower();
 
@@ -1210,7 +1217,7 @@ int FileList::ProcessKey(int Key)
 			_ALGO(CleverSysLog clv(L"Ctrl-G"));
 
 			if (PanelMode!=PLUGIN_PANEL ||
-			        CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FAROTHER))
+				CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FAROTHER))
 				if (!ListData.IsEmpty() && ApplyCommand())
 				{
 					// позиционируемся в панели
@@ -1289,6 +1296,13 @@ int FileList::ProcessKey(int Key)
 			ProcessEnter(1,Key==KEY_SHIFTENTER||Key==KEY_SHIFTNUMENTER, true, Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
 			return TRUE;
 		}
+
+		case KEY_CTRL | '`':
+		{
+			SetLocation_Directory(CachedHomeDir());
+			return TRUE;
+		}
+
 		case KEY_CTRLBACKSLASH:
 		{
 			_ALGO(CleverSysLog clv(L"Ctrl-/"));
@@ -1362,7 +1376,7 @@ int FileList::ProcessKey(int Key)
 			return TRUE;
 		}
 		case KEY_F3:
-		case KEY_NUMPAD5:      case KEY_SHIFTNUMPAD5:
+		case KEY_NUMPAD5:        case KEY_SHIFTNUMPAD5:
 		case KEY_ALTF3:
 		case KEY_CTRLSHIFTF3:
 		case KEY_F4:
@@ -1414,15 +1428,16 @@ int FileList::ProcessKey(int Key)
 						if (!dlgOpenEditor(strLastFileName, codepage))
 							return FALSE;
 
-						/*if (!GetString(Msg::EditTitle,
-						               Msg::FileToEdit,
-						               L"NewEdit",
-						               strLastFileName,
-						               strLastFileName,
-						               512, //BUGBUG
-						               L"Editor",
-						               FIB_BUTTONS|FIB_EXPANDENV|FIB_EDITPATH|FIB_ENABLEEMPTY))
-						  return FALSE;*/
+						/*if (!GetString(
+										Msg::EditTitle,
+										Msg::FileToEdit,
+										L"NewEdit",
+										strLastFileName,
+										strLastFileName,
+										512, //BUGBUG
+										L"Editor",
+										FIB_BUTTONS|FIB_EXPANDENV|FIB_EDITPATH|FIB_ENABLEEMPTY))
+							return FALSE;*/
 
 						if (!strLastFileName.IsEmpty())
 						{
@@ -1437,8 +1452,8 @@ int FileList::ProcessKey(int Key)
 							// проверим путь к файлу
 							FARString strDir = strFileName;
 							if (CutToSlash(strDir, false)
-							  && !IsLocalRootPath(strDir)
-							  && !apiPathIsDir(strDir))
+								&& !IsLocalRootPath(strDir)
+								&& !apiPathIsDir(strDir))
 							{
 								SetMessageHelp(L"WarnEditorPath");
 
@@ -1457,8 +1472,8 @@ int FileList::ProcessKey(int Key)
 							SetMessageHelp(L"WarnEditorPluginName");
 
 							if (Message(MSG_WARNING,2,Msg::Warning,
-							            Msg::EditNewPlugin1,
-							            Msg::EditNewPath3,Msg::Cancel))
+								Msg::EditNewPlugin1,
+								Msg::EditNewPath3,Msg::Cancel))
 								return FALSE;
 						}
 						else
@@ -1536,7 +1551,7 @@ int FileList::ProcessKey(int Key)
 					{
 						int editorExitCode;
 						int EnableExternal=(((Key==KEY_F4 || Key==KEY_SHIFTF4) && Opt.EdOpt.UseExternalEditor) ||
-						                    (Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
+							(Key==KEY_ALTF4 && !Opt.EdOpt.UseExternalEditor)) && !Opt.strExternalEditor.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
 
 						if (Key==KEY_ALTF4 && ProcessLocalFileTypes(strFileName,FILETYPE_ALTEDIT, !PluginMode))
@@ -1593,8 +1608,8 @@ int FileList::ProcessKey(int Key)
 					else
 					{
 						int EnableExternal=((Key==KEY_F3 && Opt.ViOpt.UseExternalViewer) ||
-						                    (Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
-						                   !Opt.strExternalViewer.IsEmpty();
+							(Key==KEY_ALTF3 && !Opt.ViOpt.UseExternalViewer)) &&
+							!Opt.strExternalViewer.IsEmpty();
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f3 */
 
 						if (Key==KEY_ALTF3 && ProcessLocalFileTypes(strFileName, FILETYPE_ALTVIEW, !PluginMode))
@@ -1677,18 +1692,19 @@ int FileList::ProcessKey(int Key)
 							AnotherPanel->Redraw();
 						}
 					}
-//          else
-//            SetTitle();
+//			else
+//				SetTitle();
 				}
 				else if (PanelMode==NORMAL_PANEL)
 					AccessTimeUpdateRequired=TRUE;
 			}
 
-			/* $ 15.07.2000 tran
-			   а тут мы вызываем перерисовку панелей
-			   потому что этот viewer, editor могут нам неверно восстановить
-			   */
-//      CtrlObject->Cp()->Redraw();
+			/*
+				$ 15.07.2000 tran
+				а тут мы вызываем перерисовку панелей
+				потому что этот viewer, editor могут нам неверно восстановить
+			*/
+//			CtrlObject->Cp()->Redraw();
 			return TRUE;
 		}
 		case KEY_F5:
@@ -1751,7 +1767,7 @@ int FileList::ProcessKey(int Key)
 
 				ASSERT(CurFile<ListData.Count());
 				if (Key!=KEY_SHIFTF5 && ListData.Count()==OldFileCount &&
-				        CurFile==OldCurFile && OldSelection!=ListData[CurFile]->Selected)
+					CurFile==OldCurFile && OldSelection!=ListData[CurFile]->Selected)
 				{
 					Select(ListData[CurFile],OldSelection);
 					Redraw();
@@ -1784,10 +1800,12 @@ int FileList::ProcessKey(int Key)
 
 					Redraw();
 					Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-					/* $ 07.09.2001 VVM
-					  ! Обновить соседнюю панель с установкой на новый каталог */
-//          AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-//          AnotherPanel->Redraw();
+					/*
+						$ 07.09.2001 VVM
+						! Обновить соседнюю панель с установкой на новый каталог
+					*/
+//					AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+//					AnotherPanel->Redraw();
 
 					if (AnotherPanel->GetType()!=FILE_PANEL)
 					{
@@ -1818,7 +1836,7 @@ int FileList::ProcessKey(int Key)
 					ReturnCurrentFile=TRUE;
 
 				if (PanelMode==PLUGIN_PANEL &&
-				        !CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARDELETEFILES))
+					!CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARDELETEFILES))
 					PluginDelete();
 				else
 				{
@@ -1912,9 +1930,10 @@ int FileList::ProcessKey(int Key)
 			}
 
 			return FALSE;
-			/* $ 25.04.2001 DJ
-			   оптимизация Shift-стрелок для Selected files first: делаем сортировку
-			   один раз
+			/*
+				$ 25.04.2001 DJ
+				оптимизация Shift-стрелок для Selected files first: делаем сортировку
+				один раз
 			*/
 		case KEY_SHIFTHOME:    case KEY_SHIFTNUMPAD7:
 		{
@@ -2118,11 +2137,11 @@ int FileList::ProcessKey(int Key)
 		default:
 
 			if (((Key>=KEY_ALT_BASE+0x01 && Key<=KEY_ALT_BASE+65535) ||
-			        (Key>=KEY_ALTSHIFT_BASE+0x01 && Key<=KEY_ALTSHIFT_BASE+65535)) &&
-			        (Key&~KEY_ALTSHIFT_BASE)!=KEY_BS && (Key&~KEY_ALTSHIFT_BASE)!=KEY_TAB &&
-			        (Key&~KEY_ALTSHIFT_BASE)!=KEY_ENTER && (Key&~KEY_ALTSHIFT_BASE)!=KEY_ESC &&
-			        !(Key&EXTENDED_KEY_BASE)
-			   )
+				(Key>=KEY_ALTSHIFT_BASE+0x01 && Key<=KEY_ALTSHIFT_BASE+65535)) &&
+				(Key&~KEY_ALTSHIFT_BASE)!=KEY_BS && (Key&~KEY_ALTSHIFT_BASE)!=KEY_TAB &&
+				(Key&~KEY_ALTSHIFT_BASE)!=KEY_ENTER && (Key&~KEY_ALTSHIFT_BASE)!=KEY_ESC &&
+				!(Key&EXTENDED_KEY_BASE)
+			)
 			{
 				//_SVS(SysLog(L">FastFind: Key=%ls",_FARKEY_ToName(Key)));
 				// Скорректирем уже здесь нужные клавиши, т.к. WaitInFastFind
@@ -2207,8 +2226,10 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 				strFullPath = strCurDir;
 				AddEndSlash(strFullPath);
 
-				/* 23.08.2001 VVM
-				  ! SHIFT+ENTER на ".." срабатывает для текущего каталога, а не родительского */
+				/*
+					23.08.2001 VVM
+					! SHIFT+ENTER на ".." срабатывает для текущего каталога, а не родительского
+				*/
 				if (!TestParentFolderName(CurPtr->strName))
 					strFullPath += CurPtr->strName;
 			}
@@ -2262,7 +2283,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 		}
 
 		if (EnableExec && SetCurPath() && !SeparateWindow &&
-		        ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode)) //?? is was var!
+			ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode)) //?? is was var!
 		{
 			if (PluginMode)
 				QueueDeleteOnClose(strFileName);
@@ -2292,9 +2313,9 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			HANDLE hOpen=INVALID_HANDLE_VALUE;
 
 			if (EnableAssoc &&
-			        !EnableExec &&     // не запускаем и не в отдельном окне,
-			        !SeparateWindow && // следовательно это Ctrl-PgDn
-			        ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode) )
+				!EnableExec &&     // не запускаем и не в отдельном окне,
+				!SeparateWindow && // следовательно это Ctrl-PgDn
+				ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode) )
 			{
 				if (PluginMode)
 					QueueDeleteOnClose(strFileName);
@@ -2303,7 +2324,7 @@ void FileList::ProcessEnter(bool EnableExec,bool SeparateWindow,bool EnableAssoc
 			}
 
 			if (SeparateWindow || (hOpen=OpenFilePlugin(strFileName,TRUE, Type))==INVALID_HANDLE_VALUE ||
-			        hOpen==(HANDLE)-2)
+				hOpen==(HANDLE)-2)
 			{
 				if (EnableExec && hOpen!=(HANDLE)-2)
 //					if (SeparateWindow || Opt.UseRegisteredTypes)
@@ -2386,15 +2407,18 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	{
 		OpenPluginInfo Info;
 		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
-		/* $ 16.01.2002 VVM
-		  + Если у плагина нет OPIF_REALNAMES, то история папок не пишется в реестр */
+		/*
+			$ 16.01.2002 VVM
+			+ Если у плагина нет OPIF_REALNAMES, то история папок не пишется в реестр
+		*/
 		FARString strInfoCurDir=Info.CurDir;
 		FARString strInfoFormat=Info.Format;
 		FARString strInfoHostFile=Info.HostFile;
 		CtrlObject->FolderHistory->AddToHistory(strInfoCurDir,1,strInfoFormat,
-		                                        (Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
-		/* $ 25.04.01 DJ
-		   при неудаче SetDirectory не сбрасываем выделение
+			(Info.Flags & OPIF_REALNAMES)?false:(Opt.SavePluginFoldersHistory?false:true));
+		/*
+			$ 25.04.01 DJ
+			при неудаче SetDirectory не сбрасываем выделение
 		*/
 		BOOL SetDirectorySuccess = TRUE;
 
@@ -2487,8 +2511,9 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 			UpperFolderTopFile=0;
 			CorrectPosition();
 		}
-		/* $ 26.04.2001 DJ
-		   доделка про несброс выделения при неудаче SetDirectory
+		/*
+			$ 26.04.2001 DJ
+			доделка про несброс выделения при неудаче SetDirectory
 		*/
 		else if (SetDirectorySuccess)
 			CurFile=CurTopFile=0;
@@ -2518,8 +2543,8 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 				AddEndSlash(strDirName);
 
 				if (Opt.PgUpChangeDisk &&
-				        (FAR_GetDriveType(strDirName) != DRIVE_REMOTE ||
-				         !CtrlObject->Plugins.FindPlugin(SYSID_NETWORK)))
+					(FAR_GetDriveType(strDirName) != DRIVE_REMOTE ||
+					!CtrlObject->Plugins.FindPlugin(SYSID_NETWORK)))
 				{
 					CtrlObject->Cp()->ActivePanel->ChangeDisk();
 					return TRUE;
@@ -2543,9 +2568,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir,BOOL IsUpdated)
 	}
 
 	strFindDir = PointToName(strCurDir);
-	/* $ 26.04.2001 DJ
-	   проверяем, удалось ли сменить каталог, и обновляем с KEEP_SELECTION,
-	   если не удалось
+	/*
+		$ 26.04.2001 DJ
+		проверяем, удалось ли сменить каталог, и обновляем с KEEP_SELECTION,
+		если не удалось
 	*/
 	int UpdateFlags = 0;
 	BOOL SetDirectorySuccess = TRUE;
@@ -2639,8 +2665,8 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	int RetCode;
 
 	if (IsVisible() && Opt.ShowColumnTitles && !MouseEvent->dwEventFlags &&
-	        MouseEvent->dwMousePosition.Y==Y1+1 &&
-	        MouseEvent->dwMousePosition.X>X1 && MouseEvent->dwMousePosition.X<X1+3)
+		MouseEvent->dwMousePosition.Y==Y1+1 &&
+		MouseEvent->dwMousePosition.X>X1 && MouseEvent->dwMousePosition.X<X1+3)
 	{
 		if (MouseEvent->dwButtonState)
 		{
@@ -2654,7 +2680,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	if (IsVisible() && Opt.ShowPanelScrollbar && MouseX==X2 &&
-	        (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !(MouseEvent->dwEventFlags & MOUSE_MOVED) && !IsDragging())
+		(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !(MouseEvent->dwEventFlags & MOUSE_MOVED) && !IsDragging())
 	{
 		int ScrollY=Y1+1+Opt.ShowColumnTitles;
 
@@ -2712,7 +2738,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return(RetCode);
 
 	if (MouseEvent->dwMousePosition.Y>Y1+Opt.ShowColumnTitles &&
-	        MouseEvent->dwMousePosition.Y<Y2-2*Opt.ShowPanelStatus)
+		MouseEvent->dwMousePosition.Y<Y2-2*Opt.ShowPanelStatus)
 	{
 		SetFocus();
 
@@ -2724,7 +2750,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		CurPtr=ListData[CurFile];
 
 		if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) &&
-		        MouseEvent->dwEventFlags==DOUBLE_CLICK)
+			MouseEvent->dwEventFlags==DOUBLE_CLICK)
 		{
 			if (PanelMode==PLUGIN_PANEL)
 			{
@@ -2736,14 +2762,15 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					return TRUE;
 			}
 
-			/*$ 21.02.2001 SKV
-			  Если пришел DOUBLE_CLICK без предшевствующего ему
-			  простого клика, то курсор не перерисовывается.
-			  Перересуем его.
-			  По идее при нормальном DOUBLE_CLICK, будет
-			  двойная перерисовка...
-			  Но мы же вызываем Fast=TRUE...
-			  Вроде всё должно быть ок.
+			/*
+				$ 21.02.2001 SKV
+				Если пришел DOUBLE_CLICK без предшевствующего ему
+				простого клика, то курсор не перерисовывается.
+				Перересуем его.
+				По идее при нормальном DOUBLE_CLICK, будет
+				двойная перерисовка...
+				Но мы же вызываем Fast=TRUE...
+				Вроде всё должно быть ок.
 			*/
 			ShowFileList(TRUE);
 			FlushInputBuffer();
@@ -2752,8 +2779,9 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 		else
 		{
-			/* $ 11.09.2000 SVS
-			   Bug #17: Выделяем при условии, что колонка ПОЛНОСТЬЮ пуста.
+			/*
+				$ 11.09.2000 SVS
+				Bug #17: Выделяем при условии, что колонка ПОЛНОСТЬЮ пуста.
 			*/
 			if ((MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) && !IsEmpty)
 			{
@@ -2825,8 +2853,9 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-/* $ 12.09.2000 SVS
-  + Опциональное поведение для правой клавиши мыши на пустой панели
+/*
+	$ 12.09.2000 SVS
+	+ Опциональное поведение для правой клавиши мыши на пустой панели
 */
 void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
@@ -2851,8 +2880,8 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		Level++;
 	}
 
-//  if (!CurColumn)
-//    CurColumn=1;
+//	if (!CurColumn)
+//		CurColumn=1;
 	int OldCurFile=CurFile;
 	CurFile=CurTopFile+MouseEvent->dwMousePosition.Y-Y1-1-Opt.ShowColumnTitles;
 
@@ -2861,14 +2890,15 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	CorrectPosition();
 
-	/* $ 11.09.2000 SVS
-	   Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
+	/*
+		$ 11.09.2000 SVS
+		Bug #17: Проверим на ПОЛНОСТЬЮ пустую колонку.
 	*/
 	if (Opt.PanelRightClickRule == 1)
 		IsEmpty=((CurColumn-1)*Height > ListData.Count());
 	else if (Opt.PanelRightClickRule == 2 &&
-	         (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
-	         ((CurColumn-1)*Height > ListData.Count()))
+		(MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) &&
+		((CurColumn-1)*Height > ListData.Count()))
 	{
 		CurFile=OldCurFile;
 		IsEmpty=TRUE;
@@ -2898,11 +2928,11 @@ void FileList::SetViewMode(int ViewMode)
 	int ResortRequired=FALSE;
 
 	if (!ListData.IsEmpty() && PanelMode!=PLUGIN_PANEL &&
-	        ((!OldOwner && NewOwner) || 
-	         (!OldGroup && NewGroup) || 
-	         (!OldPhysical && NewPhysical) ||
-	         (!OldNumLink && NewNumLink) ||
-	         (AccessTimeUpdateRequired && NewAccessTime)))
+		((!OldOwner && NewOwner) || 
+			(!OldGroup && NewGroup) || 
+			(!OldPhysical && NewPhysical) ||
+			(!OldNumLink && NewNumLink) ||
+			(AccessTimeUpdateRequired && NewAccessTime)))
 		Update(UPDATE_KEEP_SELECTION);
 
 	if (!OldDiz && NewDiz)
@@ -2939,9 +2969,9 @@ void FileList::SetViewMode(int ViewMode)
 	if (PanelMode==PLUGIN_PANEL)
 	{
 		FARString strColumnTypes,strColumnWidths;
-//    SetScreenPosition();
+//	SetScreenPosition();
 		ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
-		                   ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
+			ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
 		ProcessPluginEvent(FE_CHANGEVIEWMODE,(void*)strColumnTypes.CPtr());
 	}
 
@@ -3043,7 +3073,7 @@ long FileList::FindNext(int StartPos, const wchar_t *Name)
 	for (int I = StartPos; I < ListData.Count(); ++I)
 	{
 		if (CmpName(Name, ListData[I]->strName, true)
-		  && !TestParentFolderName(ListData[I]->strName))
+			&& !TestParentFolderName(ListData[I]->strName))
 		{
 			return I;
 		}
@@ -3062,7 +3092,7 @@ bool FileList::IsSelected(const wchar_t *Name)
 bool FileList::IsSelected(long idxItem)
 {
 	if (idxItem >= 0 && idxItem < ListData.Count())
-		return (ListData[idxItem]->Selected); //  || (Sel!FileCount && idxItem==CurFile) ???
+		return (ListData[idxItem]->Selected); // || (Sel!FileCount && idxItem==CurFile) ???
 
 	return false;
 }
@@ -3293,11 +3323,12 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	bool bUseFilter = false;
 	FileListItem *CurPtr;
 	static FARString strPrevMask=L"*";
-	/* $ 20.05.2002 IS
-	   При обработке маски, если работаем с именем файла на панели,
-	   берем каждую квадратную скобку в имени при образовании маски в скобки,
-	   чтобы подобные имена захватывались полученной маской - это специфика,
-	   диктуемая CmpName.
+	/*
+		$ 20.05.2002 IS
+		При обработке маски, если работаем с именем файла на панели,
+		берем каждую квадратную скобку в имени при образовании маски в скобки,
+		чтобы подобные имена захватывались полученной маской - это специфика,
+		диктуемая CmpName.
 	*/
 	FARString strMask=L"*", strRawMask;
 	int Selection=0;
@@ -3406,7 +3437,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	SaveSelection();
 
 	if (!bUseFilter && WrapBrackets) // возьмем кв.скобки в скобки, чтобы получить
-	{                               // работоспособную маску
+	{                                // работоспособную маску
 		const wchar_t *src = strRawMask;
 		strMask.Clear();
 
@@ -3430,7 +3461,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 	long workCount=0;
 
 	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT)) // Скомпилируем маски файлов и работаем
-	{                                                // дальше в зависимости от успеха компиляции
+	{                                                    // дальше в зависимости от успеха компиляции
 		for (auto &CurPtr : ListData)
 		{
 			int Match=FALSE;
@@ -3465,7 +3496,7 @@ long FileList::SelectFiles(int Mode,const wchar_t *Mask)
 				}
 
 				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || Opt.SelectFolders ||
-				        !Selection || RawSelection || Mode==SELECT_INVERTALL || Mode==SELECT_INVERTMASK)
+					!Selection || RawSelection || Mode==SELECT_INVERTALL || Mode==SELECT_INVERTMASK)
 				{
 					Select(CurPtr,Selection);
 					workCount++;
@@ -3487,14 +3518,14 @@ void FileList::UpdateViewPanel()
 	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
 
 	if (!ListData.IsEmpty() && AnotherPanel->IsVisible() &&
-	        AnotherPanel->GetType()==QVIEW_PANEL && SetCurPath())
+		AnotherPanel->GetType()==QVIEW_PANEL && SetCurPath())
 	{
 		QuickView *ViewPanel=(QuickView *)AnotherPanel;
 		ASSERT(CurFile<ListData.Count());
 		FileListItem *CurPtr=ListData[CurFile];
 
 		if (PanelMode!=PLUGIN_PANEL ||
-		        CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE))
+			CtrlObject->Plugins.UseFarCommand(hPlugin,PLUGIN_FARGETFILE))
 		{
 			if (TestParentFolderName(CurPtr->strName))
 				ViewPanel->ShowFile(strCurDir,FALSE,nullptr);
@@ -3735,8 +3766,9 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 		{
 			if (PanelMode!=PLUGIN_PANEL)
 			{
-				/* $ 14.02.2002 IS
-				   ".." в текущем каталоге обработаем как имя текущего каталога
+				/*
+					$ 14.02.2002 IS
+					".." в текущем каталоге обработаем как имя текущего каталога
 				*/
 				if (TestParentFolderName(strQuotedName) )
 				{
@@ -3834,16 +3866,20 @@ FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FAR
 	}
 
 
-	/* $ 29.01.2001 VVM
-	  + По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла. */
+	/*
+		$ 29.01.2001 VVM
+		+ По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
+	*/
 	/*if (UNC)
 		ConvertNameToUNC(strFileName);*/
 
 	// $ 20.10.2000 SVS Сделаем фичу Ctrl-F опциональной!
 	if (Opt.PanelCtrlFRule)
 	{
-		/* $ 13.10.2000 tran
-		  по Ctrl-f имя должно отвечать условиям на панели */
+		/*
+			$ 13.10.2000 tran
+			по Ctrl-f имя должно отвечать условиям на панели
+		*/
 		if (ViewSettings.FolderUpperCase)
 		{
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY)
@@ -4222,12 +4258,13 @@ void FileList::DescribeFiles()
 		QuoteSpaceOnly(strQuotedName);
 		strMsg.Append(Msg::EnterDescription).Append(L" ").Append(strQuotedName).Append(L":");
 
-		/* $ 09.08.2000 SVS
-		   Для Ctrl-Z ненужно брать предыдущее значение!
+		/*
+			$ 09.08.2000 SVS
+			Для Ctrl-Z ненужно брать предыдущее значение!
 		*/
 		if (!GetString(Msg::DescribeFiles,strMsg,L"DizText",
-		               PrevText ? PrevText:L"",strDizText,
-		               L"FileDiz",FIB_ENABLEEMPTY|(!DizCount?FIB_NOUSELASTHISTORY:0)|FIB_BUTTONS))
+			PrevText ? PrevText:L"",strDizText,
+			L"FileDiz",FIB_ENABLEEMPTY|(!DizCount?FIB_NOUSELASTHISTORY:0)|FIB_BUTTONS))
 			break;
 
 		DizCount++;
@@ -4255,12 +4292,12 @@ void FileList::DescribeFiles()
 
 	/*if (DizCount>0)
 	{
-	  FlushDiz();
-	  Update(UPDATE_KEEP_SELECTION);
-	  Redraw();
-	  Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
-	  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-	  AnotherPanel->Redraw();
+		FlushDiz();
+		Update(UPDATE_KEEP_SELECTION);
+		Redraw();
+		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+		AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+		AnotherPanel->Redraw();
 	}*/
 }
 
@@ -4353,8 +4390,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	uint64_t FileSize,PhysicalSize;
 	DWORD SelDirCount=0;
 
-	/* $ 09.11.2000 OT
-	  F3 на ".." в плагинах
+	/*
+		$ 09.11.2000 OT
+		F3 на ".." в плагинах
 	*/
 	if (PanelMode==PLUGIN_PANEL && !CurFile && TestParentFolderName(ListData[0]->strName))
 	{
@@ -4404,11 +4442,11 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			SelDirCount++;
 
 			if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-			        GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize, PhysicalSize))
-			        ||
-			        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-			         GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount, FileSize,
-			                    PhysicalSize, ClusterSize, 0, Filter, GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
+				GetPluginDirInfo(hPlugin, Item->strName, DirCount, DirFileCount, FileSize, PhysicalSize))
+				||
+				((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
+					GetDirInfo(Msg::DirInfoViewTitle, Item->strName, DirCount, DirFileCount, FileSize,
+						PhysicalSize, ClusterSize, 0, Filter, GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 			{
 				SelFileSize -= Item->FileSize;
 				SelFileSize += FileSize;
@@ -4425,12 +4463,12 @@ void FileList::CountDirSize(DWORD PluginFlags)
 	{
 		ASSERT(CurFile<ListData.Count());
 		if ((PanelMode==PLUGIN_PANEL && !(PluginFlags & OPIF_REALNAMES) &&
-		        GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
-		        ||
-		        ((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
-		         GetDirInfo(Msg::DirInfoViewTitle,
-		                    TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
-		                    DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
+			GetPluginDirInfo(hPlugin,ListData[CurFile]->strName,DirCount,DirFileCount,FileSize,PhysicalSize))
+			||
+			((PanelMode!=PLUGIN_PANEL || (PluginFlags & OPIF_REALNAMES)) &&
+				GetDirInfo(Msg::DirInfoViewTitle,
+					TestParentFolderName(ListData[CurFile]->strName) ? L".":ListData[CurFile]->strName,
+					DirCount,DirFileCount,FileSize,PhysicalSize,ClusterSize,0,Filter,
 							GETDIRINFO_DONTREDRAWFRAME|GETDIRINFO_SCANSYMLINKDEF)==1))
 		{
 			ListData[CurFile]->FileSize = FileSize;
@@ -4541,8 +4579,8 @@ void FileList::ProcessCopyKeys(int Key)
 				|| AnotherFilePanel->CurFile < AnotherFilePanel->ListData.Count());
 
 			if (!AnotherFilePanel->ListData.IsEmpty() &&
-			        (AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->FileAttr & FILE_ATTRIBUTE_DIRECTORY) &&
-			        !TestParentFolderName(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->strName))
+				(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->FileAttr & FILE_ATTRIBUTE_DIRECTORY) &&
+				!TestParentFolderName(AnotherFilePanel->ListData[AnotherFilePanel->CurFile]->strName))
 			{
 				AnotherDir=TRUE;
 			}
@@ -4556,7 +4594,7 @@ void FileList::ProcessCopyKeys(int Key)
 				int ToPlugin=FALSE;
 
 				if (AnotherPanel->GetMode()==PLUGIN_PANEL && AnotherPanel->IsVisible() &&
-				        !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES))
+					!CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES))
 				{
 					ToPlugin=2;
 					ShellCopy ShCopy(this,Move,FALSE,FALSE,Ask,ToPlugin,strPluginDestPath);
@@ -4603,8 +4641,8 @@ void FileList::ProcessCopyKeys(int Key)
 		else
 		{
 			int ToPlugin=AnotherPanel->GetMode()==PLUGIN_PANEL &&
-			             AnotherPanel->IsVisible() && Key!=KEY_ALTF6 &&
-			             !CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
+				AnotherPanel->IsVisible() && Key!=KEY_ALTF6 &&
+				!CtrlObject->Plugins.UseFarCommand(AnotherPanel->GetPluginHandle(),PLUGIN_FARPUTFILES);
 			ShellCopy ShCopy(this,Move,Key==KEY_ALTF6,FALSE,Ask,ToPlugin,nullptr, Drag && AnotherDir);
 
 			if (ToPlugin==1)
@@ -4677,7 +4715,7 @@ int FileList::PluginPanelHelp(HANDLE hPlugin)
 
 	fclose(HelpFile);
 	strStartTopic.Format(HelpFormatLink,strPath.CPtr(),L"Contents");
-	Help PanelHelp(strStartTopic);
+	Help::Present(strStartTopic);
 	return TRUE;
 }
 

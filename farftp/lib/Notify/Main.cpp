@@ -31,17 +31,17 @@ static void WINAPI idNotify(const FTNNotify* p)
 
 	if(p->Starting)
 		fprintf(File,"%s from %s is started\t[ftp://%s%s:%d]->[%s]\n",
-		        p->Upload ? "Upload" : "Download",
-		        p->RestartPoint ? FTP_Info->Message("%64I",p->RestartPoint) : "begining",
-		        p->HostName, p->RemoteFile, (int)p->Port,
-		        p->LocalFile);
+			p->Upload ? "Upload" : "Download",
+			p->RestartPoint ? FTP_Info->Message("%64I",p->RestartPoint) : "begining",
+			p->HostName, p->RemoteFile, (int)p->Port,
+			p->LocalFile);
 	else
 		fprintf(File,"%s started from %llu is %s\t[ftp://%s%s:%d]->[%s]\n",
-		        p->Upload ? "Upload" : "Download",
-		        (long long unsigned int)p->RestartPoint,
-		        p->Success ? "successfully complete" : "fail",
-		        p->HostName, p->RemoteFile, (int)p->Port,
-		        p->LocalFile);
+			p->Upload ? "Upload" : "Download",
+			(long long unsigned int)p->RestartPoint,
+			p->Success ? "successfully complete" : "fail",
+			p->HostName, p->RemoteFile, (int)p->Port,
+			p->LocalFile);
 
 	fflush(File);
 }

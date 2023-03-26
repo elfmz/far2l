@@ -810,16 +810,16 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 			cfg_reader.GetPOD("DateAfter", DateAfter);
 			cfg_reader.GetPOD("DateBefore", DateBefore);
 			NewFilter->SetDate(cfg_reader.GetUInt("UseDate", 0) != 0,
-			                   (DWORD)cfg_reader.GetUInt("DateType", 0),
-			                   DateAfter, DateBefore,
-			                   cfg_reader.GetUInt("RelativeDate", 0) != 0);
+				(DWORD)cfg_reader.GetUInt("DateType", 0),
+				DateAfter, DateBefore,
+				cfg_reader.GetUInt("RelativeDate", 0) != 0);
 			FARString strSizeAbove = cfg_reader.GetString("SizeAboveS", L"");
 			FARString strSizeBelow = cfg_reader.GetString("SizeBelowS", L"");
 			NewFilter->SetSize(cfg_reader.GetUInt("UseSize", 0) != 0,
-			                   strSizeAbove, strSizeBelow);
+				strSizeAbove, strSizeBelow);
 			NewFilter->SetAttr(cfg_reader.GetUInt("UseAttr", 1) != 0,
-			                   (DWORD)cfg_reader.GetUInt("AttrSet", 0),
-			                   (DWORD)cfg_reader.GetUInt("AttrClear", FILE_ATTRIBUTE_DIRECTORY));
+				(DWORD)cfg_reader.GetUInt("AttrSet", 0),
+				(DWORD)cfg_reader.GetUInt("AttrClear", FILE_ATTRIBUTE_DIRECTORY));
 
 			DWORD Flags[FFFT_COUNT]{};
 			cfg_reader.GetPOD("FFlags", Flags);

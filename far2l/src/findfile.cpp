@@ -650,10 +650,12 @@ static void AdvancedDialog()
 			if (Opt.FindOpt.strSearchOutFormatWidth.IsEmpty())
 				Opt.FindOpt.strSearchOutFormatWidth=L"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0";
 
-			TextToViewSettings(Opt.FindOpt.strSearchOutFormat.CPtr(),Opt.FindOpt.strSearchOutFormatWidth.CPtr(),
-                                  Opt.FindOpt.OutColumnTypes,Opt.FindOpt.OutColumnWidths,Opt.FindOpt.OutColumnWidthType,
-                                  Opt.FindOpt.OutColumnCount);
-        }
+			TextToViewSettings(
+				Opt.FindOpt.strSearchOutFormat.CPtr(), Opt.FindOpt.strSearchOutFormatWidth.CPtr(),
+				Opt.FindOpt.OutColumnTypes, Opt.FindOpt.OutColumnWidths,
+				Opt.FindOpt.OutColumnWidthType, Opt.FindOpt.OutColumnCount
+			);
+		}
 
 		Opt.FindOpt.FindAlternateStreams=(AdvancedDlg[AD_CHECKBOX_FINDALTERNATESTREAMS].Selected==BSTATE_CHECKED);
 	}
@@ -885,9 +887,11 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 									SendDlgMessage(hDlg, DM_LISTGETITEM, FAD_COMBOBOX_CP, (LONG_PTR)&CheckItem);
 
 									// Обрабатываем только таблицы символов
-									if (!(CheckItem.Item.Flags & LIF_SEPARATOR)
-									  && SelectedCodePage == (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index) )
-									{
+									if (
+										!(CheckItem.Item.Flags & LIF_SEPARATOR) &&
+										SelectedCodePage ==
+											(UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, FAD_COMBOBOX_CP, Index)
+									) {
 										if (Item.Item.Flags & LIF_CHECKED)
 											CheckItem.Item.Flags &= ~LIF_CHECKED;
 										else
@@ -1676,9 +1680,10 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 							SendDlgMessage(hDlg,DM_SHOWDIALOG,FALSE,0);
 							SendDlgMessage(hDlg,DM_ENABLEREDRAW,FALSE,0);
 							{
-								/* $ 14.08.2002 VVM
-								  ! Пока-что запретим из поиска переключаться в активный редактор.
-								    К сожалению, манагер на это не способен сейчас
+								/*
+									$ 14.08.2002 VVM
+									! Пока-что запретим из поиска переключаться в активный редактор.
+									К сожалению, манагер на это не способен сейчас
 															int FramePos=FrameManager->FindFrameByFile(MODALTYPE_EDITOR,SearchFileName);
 															int SwitchTo=FALSE;
 															if (FramePos!=-1)
@@ -2281,9 +2286,16 @@ static void DoScanTree(HANDLE hDlg, FARString& strRoot)
 					}
 				}
 
-				if (((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strFindStr.IsEmpty()) ||
-				        (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !strFindStr.IsEmpty()))
-				{
+				if (
+					(
+						(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+						strFindStr.IsEmpty()
+					) ||
+					(
+						!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+						!strFindStr.IsEmpty()
+					)
+				) {
 					itd.SetFindMessage(strFullName);
 				}
 
@@ -2344,9 +2356,16 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& Recurs
 
 			if (!UseFilter || Filter->FileInFilter(CurPanelItem->FindData))
 			{
-				if (((CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && strFindStr.IsEmpty()) ||
-				        (!(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !strFindStr.IsEmpty()))
-				{
+				if (
+					(
+						(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+						strFindStr.IsEmpty()
+					) ||
+					(
+						!(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+						!strFindStr.IsEmpty()
+					)
+				) {
 					itd.SetFindMessage(strPluginSearchPath + strCurName);
 				}
 
@@ -2365,12 +2384,16 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int& Recurs
 			PluginPanelItem *CurPanelItem=PanelData+I;
 			FARString strCurName=CurPanelItem->FindData.lpwszFileName;
 
-			if ((CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-			        StrCmp(strCurName,L".") && !TestParentFolderName(strCurName) &&
-			        (!UseFilter || Filter->FileInFilter(CurPanelItem->FindData)) &&
-			        (SearchMode!=FINDAREA_SELECTED || RecurseLevel!=1 ||
-			         CtrlObject->Cp()->ActivePanel->IsSelected(strCurName)))
-			{
+			if (
+				(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+				StrCmp(strCurName,L".") &&
+				!TestParentFolderName(strCurName) &&
+				(!UseFilter || Filter->FileInFilter(CurPanelItem->FindData)) &&
+				(
+					SearchMode!=FINDAREA_SELECTED || RecurseLevel!=1 ||
+					CtrlObject->Cp()->ActivePanel->IsSelected(strCurName)
+				)
+			) {
 				bool SetDirectoryResult=false;
 				{
 					PluginLocker Lock;
@@ -2642,7 +2665,7 @@ static bool FindFilesProcess(Vars& v)
 	}
 
 	Dialog Dlg=Dialog(FindDlg,ARRAYSIZE(FindDlg),FindDlgProc, reinterpret_cast<LONG_PTR>(&v));
-//  pDlg->SetDynamicallyBorn();
+	//pDlg->SetDynamicallyBorn();
 	Dlg.SetHelp(L"FindFileResult");
 	Dlg.SetPosition(-1, -1, DlgWidth, DlgHeight);
 	// Надо бы показать диалог, а то инициализация элементов запаздывает
@@ -2701,7 +2724,7 @@ static bool FindFilesProcess(Vars& v)
 						}
 						// Добавляем только файлы или имена архивов или папки когда просили
 						if (IsArchive || (Opt.FindOpt.FindFolders && !SearchHex) ||
-							    !(FindItem.FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
+							!(FindItem.FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
 						{
 							if (IsArchive)
 							{
@@ -2782,9 +2805,9 @@ static bool FindFilesProcess(Vars& v)
 //						OpenPluginInfo Info;
 //						CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
 						if (SearchMode==FINDAREA_ROOT ||
-							    SearchMode==FINDAREA_ALL ||
-							    SearchMode==FINDAREA_ALL_BUTNETWORK ||
-							    SearchMode==FINDAREA_INPATH)
+								SearchMode==FINDAREA_ALL ||
+								SearchMode==FINDAREA_ALL_BUTNETWORK ||
+								SearchMode==FINDAREA_INPATH)
 							CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin,L"/",0);
 
 						SetPluginDirectory(strFileName,ArcItem.hPlugin,TRUE);
@@ -2817,7 +2840,7 @@ static bool FindFilesProcess(Vars& v)
 						break;
 
 					if (FindPanel->GetType()!=FILE_PANEL &&
-						    CtrlObject->Cp()->GetAnotherPanel(FindPanel)->GetType()==FILE_PANEL)
+							CtrlObject->Cp()->GetAnotherPanel(FindPanel)->GetType()==FILE_PANEL)
 						FindPanel=CtrlObject->Cp()->GetAnotherPanel(FindPanel);
 
 					if ((FindPanel->GetType()!=FILE_PANEL) || (FindPanel->GetMode()!=NORMAL_PANEL))
@@ -3074,4 +3097,9 @@ FindFiles::~FindFiles()
 	{
 		delete Filter;
 	}
+}
+
+void FindFiles::Present()
+{
+	FindFiles FF;
 }

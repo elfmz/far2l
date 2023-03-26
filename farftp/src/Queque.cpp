@@ -39,10 +39,10 @@ BOOL FTP::WarnExecuteQueue(QueueExecOptions* op)
 		{DI_CHECKBOX,5, 6,0,0,0,    0,0,0,FMSG(MQSave)},
 
 		{DI_TEXT,3, 7,3, 7,DIF_BOXCOLOR|DIF_SEPARATOR,0,0,0,NULL },
-		{DI_BUTTON,0, 8,0,0,DIF_CENTERGROUP, 0,0,1,   FMSG(MOk)},
-		{DI_BUTTON,0, 8,0,0,DIF_CENTERGROUP, 0,0,0,   FMSG(MCancel)},
+		{DI_BUTTON,0, 8,0,0,DIF_CENTERGROUP, 0,0,1, FMSG(MOk)},
+		{DI_BUTTON,0, 8,0,0,DIF_CENTERGROUP, 0,0,0, FMSG(MCancel)},
 	};
-	FarDialogItem  DialogItems[ARRAYSIZE(InitItems)];
+	FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
 //Create items
 	InitDialogItems(InitItems,DialogItems,ARRAYSIZE(DialogItems));
 //Set flags
@@ -79,16 +79,16 @@ void FTP::SetupQOpt(QueueExecOptions* op)
 
 LPCSTR FTP::InsertCurrentToQueue(void)
 {
-	PanelInfo   pi, api;
+	PanelInfo pi, api;
 	FP_SizeItemList backup,il;
 	FTPCopyInfo ci;
 
 	if(!FP_Info->Control(this, FCTL_GETPANELINFO, &pi) ||
-	        !FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &api))
+			!FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &api))
 		return FMSG(MErrGetPanelInfo);
 
 	if(pi.SelectedItemsNumber <= 0 ||
-	        (pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
+			(pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
 		return FMSG(MErrNoSelection);
 
 	backup.Add(pi.SelectedItems, pi.SelectedItemsNumber);
@@ -122,7 +122,7 @@ LPCSTR FTP::InsertAnotherToQueue(void)
 		return FMSG(MErrGetPanelInfo);
 
 	if(pi.SelectedItemsNumber <= 0 ||
-	        (pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
+			(pi.SelectedItemsNumber == 1 && !IS_FLAG(pi.SelectedItems[0].Flags,PPIF_SELECTED)))
 		return FMSG(MErrNoSelection);
 
 	if(pi.PanelType != PTYPE_FILEPANEL || pi.Plugin)
@@ -152,7 +152,7 @@ void FTP::InsertToQueue(void)
 	};
 	FP_Menu  mnu(strings);
 	int      sel;
-	LPCSTR err;
+	LPCSTR   err;
 	FTPUrl   tmp;
 
 	do
@@ -202,15 +202,15 @@ void FTP::InsertToQueue(void)
 
 void FTP::QuequeMenu(void)
 {
-	int              n,
-	  num;
-	int              Breaks[] = { VK_DELETE, VK_INSERT, VK_F4, VK_RETURN, 0 },
-	                            BNumber;
-	FarMenuItem     *mi = NULL;
-	FTPUrl*          p,*p1;
-	char             str1[MAX_PATH],
-	   str2[MAX_PATH],
-	   str3[MAX_PATH];
+	int                 n,
+						num;
+	int                 Breaks[] = { VK_DELETE, VK_INSERT, VK_F4, VK_RETURN, 0 },
+						BNumber;
+	FarMenuItem        *mi = NULL;
+	FTPUrl*             p,*p1;
+	char                str1[MAX_PATH],
+						str2[MAX_PATH],
+						str3[MAX_PATH];
 	QueueExecOptions exOp;
 	SetupQOpt(&exOp);
 	num = -1;
@@ -226,11 +226,11 @@ void FTP::QuequeMenu(void)
 			StrCpy(str2, p->DestPath.c_str(),   20);
 			StrCpy(str3, p->FileName.cFileName, 20);
 			snprintf(mi[n].Text, ARRAYSIZE(mi[n].Text),
-			          "%c%c %-20s%c%-20s%c%-20s",
-			          p->Download ? '-' : '<', p->Download ? '>' : '-',
-			          str1, FAR_VERT_CHAR,
-			          str2, FAR_VERT_CHAR,
-			          str3);
+				"%c%c %-20s%c%-20s%c%-20s",
+				p->Download ? '-' : '<', p->Download ? '>' : '-',
+				str1, FAR_VERT_CHAR,
+				str2, FAR_VERT_CHAR,
+				str3);
 
 			if(p->Error[0])
 				mi[n].Checked = TRUE;
@@ -244,13 +244,13 @@ void FTP::QuequeMenu(void)
 		if(num != -1 && num < QuequeSize) mi[num].Selected = TRUE;
 
 		n = FP_Info->Menu(FP_Info->ModuleNumber,-1,-1,0,FMENU_SHOWAMPERSAND,
-		                  title,
-		                  FP_GetMsg(MQMenuFooter),
-		                  "FTPQueue", Breaks, &BNumber, mi, QuequeSize);
+			title,
+			FP_GetMsg(MQMenuFooter),
+			"FTPQueue", Breaks, &BNumber, mi, QuequeSize);
 
 		//key ESC
 		if(BNumber == -1 &&
-		        n == -1)
+				n == -1)
 			goto Done;
 
 		//key Enter
@@ -303,7 +303,7 @@ void FTP::QuequeMenu(void)
 			case 3:
 
 				if(QuequeSize &&
-				        WarnExecuteQueue(&exOp))
+					WarnExecuteQueue(&exOp))
 				{
 					ExecuteQueue(&exOp);
 
@@ -344,7 +344,7 @@ void FTP::AddToQueque(FAR_FIND_DATA* FileName, LPCSTR Path, BOOL Download)
 	String  str;
 	char   *m;
 	int     num;
-	FTPUrl* p = new FTPUrl;
+	FTPUrl* p   = new FTPUrl;
 	memcpy(&p->Host, &Host, sizeof(Host));
 	p->Download = Download;
 	p->Next     = NULL;
@@ -475,7 +475,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 	FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELINFO, &pi);
 
 	if(pi.PanelType != PTYPE_FILEPANEL ||
-	        pi.Plugin)
+			pi.Plugin)
 		DefPath.Null();
 	else
 		DefPath = pi.CurDir;
@@ -492,7 +492,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 		Log(("Queue: Check current host the same"));
 
 		if(!hConnect ||
-		        !Host.CmpConnected(&p->Host))
+			!Host.CmpConnected(&p->Host))
 		{
 			Host = p->Host;
 
@@ -558,7 +558,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 		//DOWNLOAD ------------------------------------------------
 		if(p->Download)
 		{
-			ci.Download  = TRUE;
+			ci.Download = TRUE;
 			ci.SrcPath = p->SrcPath;
 			AddEndSlash(ci.SrcPath, '/');
 			ci.SrcPath.cat(p->FileName.cFileName);
@@ -584,10 +584,10 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 					ffd = fd;
 					ffd.nFileSize = fsz;
 					ffd.nPhysicalSize = 0;
-					ci.MsgCode  = AskOverwrite(MDownloadTitle, TRUE, &fd, &ffd, ci.MsgCode, FALSE);
+					ci.MsgCode = AskOverwrite(MDownloadTitle, TRUE, &fd, &ffd, ci.MsgCode, FALSE);
 				}
 				else
-					ci.MsgCode  = AskOverwrite(MDownloadTitle, TRUE, &fd, NULL, ci.MsgCode, FALSE);
+					ci.MsgCode = AskOverwrite(MDownloadTitle, TRUE, &fd, NULL, ci.MsgCode, FALSE);
 
 				switch(ci.MsgCode)
 				{
@@ -614,14 +614,14 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 			}
 
 			rc = _FtpGetFile(ci.SrcPath.c_str(),
-			                 ci.DestPath.c_str(),
-			                 ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
-			                 ci.asciiMode);
+				ci.DestPath.c_str(),
+				ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
+				ci.asciiMode);
 		}
 		else
 		{
 			//UPLOAD -------------------------------------------------
-			ci.Download  = FALSE;
+			ci.Download = FALSE;
 			ci.SrcPath = p->SrcPath;
 			AddEndSlash(ci.SrcPath, '/');
 			ci.SrcPath.cat(PointToName(p->FileName.cFileName));
@@ -642,7 +642,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 				ffd = fd;
 				ffd.nFileSize = fsz;
 				ffd.nPhysicalSize = 0;
-				ci.MsgCode  = AskOverwrite(MUploadTitle, FALSE, &ffd, &fd, ci.MsgCode, FALSE);
+				ci.MsgCode = AskOverwrite(MUploadTitle, FALSE, &ffd, &fd, ci.MsgCode, FALSE);
 
 				switch(ci.MsgCode)
 				{
@@ -671,15 +671,15 @@ void FTP::ExecuteQueueINT(QueueExecOptions* op)
 			}
 
 			rc = _FtpPutFile(ci.SrcPath.c_str(),
-			                 ci.DestPath.c_str(),
-			                 ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
-			                 ci.asciiMode);
+				ci.DestPath.c_str(),
+				ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll,
+				ci.asciiMode);
 			needUpdate = needUpdate || rc == TRUE;
 		}
 
 //IO completed
 		if(rc == -1 ||
-		        (!rc && WINPORT(GetLastError)() == ERROR_CANCELLED))
+			(!rc && WINPORT(GetLastError)() == ERROR_CANCELLED))
 		{
 			WINPORT(SetLastError)(ERROR_CANCELLED);
 			break;
@@ -713,9 +713,9 @@ Skip:
 
 //Reread files on FTP in case files are uploaded
 	if(!ShowHosts &&
-	        hConnect &&
-	        FtpCmdLineAlive(hConnect) &&
-	        FtpKeepAlive(hConnect))
+		hConnect &&
+		FtpCmdLineAlive(hConnect) &&
+		FtpKeepAlive(hConnect))
 	{
 		if(!op->RestoreState)
 		{

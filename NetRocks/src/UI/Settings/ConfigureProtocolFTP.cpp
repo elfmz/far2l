@@ -64,7 +64,8 @@ class ProtocolOptionsFTP : protected BaseDialog
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
 		if ( msg == DN_INITDIALOG || (msg == DN_BTNCLICK && param1 != -1
-		  && (param1 == _i_explicit_encryption || param1 == _i_passive_mode)) ) {
+			&& (param1 == _i_explicit_encryption || param1 == _i_passive_mode)) )
+		{
 			UpdateEnableds();
 		}
 

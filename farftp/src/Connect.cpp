@@ -416,7 +416,7 @@ void Connection::GetOutput(String& s)
 	}
 
 	while(OutputPos < OutputSize &&
-	        (Output[OutputPos]=='\n' || Output[OutputPos]=='\r'))
+			(Output[OutputPos]=='\n' || Output[OutputPos]=='\r'))
 		OutputPos++;
 
 	if(OutputPos >= OutputSize)
@@ -491,7 +491,7 @@ int Connection::CacheGet()
 
 	for(size_t I=0; I < ARRAYSIZE(ListCache); I++)
 		if(ListCache[I].ListingSize > 0 &&
-		        CurDir.Cmp(ListCache[I].DirName))
+			CurDir.Cmp(ListCache[I].DirName))
 		{
 			ResetOutput();
 			BYTE *NewOutput=(BYTE*)malloc(ListCache[I].ListingSize+1);
@@ -542,7 +542,7 @@ BOOL Connection::GetExitCode()
 	} FtpErrCodes[] =
 	{
 		{ 202, ERROR_CALL_NOT_IMPLEMENTED },
-		{ 421,  ECANCELED},//ERROR_INTERNET_CONNECTION_ABORTED
+		{ 421, ECANCELED},//ERROR_INTERNET_CONNECTION_ABORTED
 		{ 451, 0 },
 		{ 450, ENODATA },//ERROR_IO_INCOMPLETE
 		{ 452, ERROR_DISK_FULL },
@@ -566,7 +566,7 @@ BOOL Connection::GetExitCode()
 	}
 
 	if(code == RPL_ERROR ||
-	        code == RPL_TRANSFERERROR)
+		code == RPL_TRANSFERERROR)
 	{
 		//SetLastError(ErrorCode);
 		return FALSE;

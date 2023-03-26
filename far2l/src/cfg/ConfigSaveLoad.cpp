@@ -321,7 +321,6 @@ public:
 	{false, NSecEditor, "EditorUndoSize", &Opt.EdOpt.UndoSize, 0}, // $ 03.12.2001 IS размер буфера undo в редакторе
 	{false, NSecEditor, "WordDiv", &Opt.strWordDiv, WordDiv0},
 	{false, NSecEditor, "BSLikeDel", &Opt.EdOpt.BSLikeDel, 1},
-	{false, NSecEditor, "EditorF7Rules", &Opt.EdOpt.F7Rules, 1},
 	{false, NSecEditor, "FileSizeLimit", &Opt.EdOpt.FileSizeLimitLo, 0},
 	{false, NSecEditor, "FileSizeLimitHi", &Opt.EdOpt.FileSizeLimitHi, 0},
 	{false, NSecEditor, "CharCodeBase", &Opt.EdOpt.CharCodeBase, 1},
@@ -371,7 +370,7 @@ public:
 	{true,  NSecSystem, "CopyXAttr", &Opt.CMOpt.CopyXAttr, 0},
 	{false, NSecSystem, "CopyAccessMode", &Opt.CMOpt.CopyAccessMode, 1},
 	{true,  NSecSystem, "MultiCopy", &Opt.CMOpt.MultiCopy, 0},
-	{true,  NSecSystem, "CopyTimeRule",  &Opt.CMOpt.CopyTimeRule, 3},
+	{true,  NSecSystem, "CopyTimeRule", &Opt.CMOpt.CopyTimeRule, 3},
 
 	{true,  NSecSystem, "InactivityExit", &Opt.InactivityExit, 0},
 	{true,  NSecSystem, "InactivityExitTime", &Opt.InactivityExitTime, 15},
@@ -398,8 +397,8 @@ public:
 	{false, NSecSystem, "SetAttrFolderRules", &Opt.SetAttrFolderRules, 1},
 	{false, NSecSystem, "MaxPositionCache", &Opt.MaxPositionCache, POSCACHE_MAX_ELEMENTS},
 	{false, NSecSystem, "ConsoleDetachKey", &strKeyNameConsoleDetachKey, L"CtrlAltTab"},
-	{false, NSecSystem, "SilentLoadPlugin",  &Opt.LoadPlug.SilentLoadPlugin, 0},
-	{true,  NSecSystem, "ScanSymlinks",  &Opt.LoadPlug.ScanSymlinks, 1},
+	{false, NSecSystem, "SilentLoadPlugin", &Opt.LoadPlug.SilentLoadPlugin, 0},
+	{true,  NSecSystem, "ScanSymlinks", &Opt.LoadPlug.ScanSymlinks, 1},
 	{true,  NSecSystem, "MultiMakeDir", &Opt.MultiMakeDir, 0},
 	{false, NSecSystem, "MsWheelDelta", &Opt.MsWheelDelta, 1},
 	{false, NSecSystem, "MsWheelDeltaView", &Opt.MsWheelDeltaView, 1},
@@ -569,11 +568,12 @@ static void SanitizeXlat()
 
 static void SanitizePalette()
 {
-	//   Уточняем алгоритм "взятия" палитры.
-	for (size_t I = COL_PRIVATEPOSITION_FOR_DIF165ABOVE - COL_FIRSTPALETTECOLOR + 1;
-	        I < (COL_LASTPALETTECOLOR - COL_FIRSTPALETTECOLOR);
-	        ++I)
-	{
+	// Уточняем алгоритм "взятия" палитры.
+	for (
+		size_t I = COL_PRIVATEPOSITION_FOR_DIF165ABOVE - COL_FIRSTPALETTECOLOR + 1;
+		I < (COL_LASTPALETTECOLOR - COL_FIRSTPALETTECOLOR);
+		++I
+	) {
 		if (!Palette[I])
 		{
 			if (!Palette[COL_PRIVATEPOSITION_FOR_DIF165ABOVE - COL_FIRSTPALETTECOLOR])
@@ -582,9 +582,9 @@ static void SanitizePalette()
 				Palette[I] = BlackPalette[I];
 
 			/*
-			else
-			  в других случаях нифига ничего не делаем, т.к.
-			  есть другие палитры...
+				else
+					в других случаях нифига ничего не делаем, т.к.
+					есть другие палитры...
 			*/
 		}
 	}

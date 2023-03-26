@@ -22,12 +22,12 @@ BOOL Connection::SetType(int type)
 void Connection::reset()
 {
 	fd_set mask;
-	int           nfnd;
+	int nfnd;
 
 	do
 	{
 		FD_ZERO(&mask);
-		FD_SET(cin, &mask);  /*!*/
+		FD_SET(cin, &mask); /*!*/
 		nfnd = empty(&mask,0);
 
 		if(nfnd < 0)
@@ -96,12 +96,12 @@ int Connection::command(const char *fmt, ...)
 #if 0/*?*/
 
 	while(r != RPL_ERROR &&
-	        !brk_flag &&
-	        ((StrCmp(fmt,Opt.cmdPwd)==0 && (reply_string.Chr('\"') == -1) ||
-	          !isdigit(reply_string[0]) ||
-	          !isdigit(reply_string[1]) ||
-	          !isdigit(reply_string[2]) ||
-	          !isspace(reply_string[3]))))
+		!brk_flag &&
+		((StrCmp(fmt,Opt.cmdPwd)==0 && (reply_string.Chr('\"') == -1) ||
+			!isdigit(reply_string[0]) ||
+			!isdigit(reply_string[1]) ||
+			!isdigit(reply_string[2]) ||
+			!isspace(reply_string[3]))))
 	{
 		r = getreply(FALSE);
 	}
@@ -114,10 +114,10 @@ int Connection::command(const char *fmt, ...)
 //--------------------------------------------------------------------------------
 int Connection::getreply(BOOL expecteof, DWORD tm)
 {
-	int   c, n, dig;
-	int   originalcode = 0,
-	      continuation = 0,
-	      pflag        = 0;
+	int c, n, dig;
+	int originalcode = 0,
+		continuation = 0,
+		pflag        = 0;
 	char *pt = pasv;
 
 	if(cin == INVALID_SOCKET)

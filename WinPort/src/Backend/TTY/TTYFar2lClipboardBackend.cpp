@@ -7,7 +7,7 @@
 #include "WinPort.h"
 #include "FarTTY.h"
 
-#define CHUNK_SIZE 0x4000  // must be aligned by 0x100 and be less than 0x1000000
+#define CHUNK_SIZE 0x4000 // must be aligned by 0x100 and be less than 0x1000000
 
 /////////////
 
@@ -127,7 +127,7 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 		return _fallback_backend->OnClipboardOpen();
 	}
 
-	auto no_fallback_open_counter = ++_no_fallback_open_counter;
+	const int no_fallback_open_counter = ++_no_fallback_open_counter;
 	if (no_fallback_open_counter > 1) {
 		if (no_fallback_open_counter > 2) {
 			fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardOpen: no_fallback_open_counter too large (%d)\n", no_fallback_open_counter);

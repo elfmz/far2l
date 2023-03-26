@@ -174,7 +174,7 @@ void OpXfer::Process()
 		}
 	} else {
 		if (_enumer) {
-			if (_on_site_move)  {
+			if (_on_site_move) {
 				std::string path_dst;
 				auto &items = _enumer->Items();
 				for (auto i = items.begin(); i != items.end();) {
@@ -521,9 +521,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 						info.size = actual_size;
 						throw std::runtime_error("Retrieved less data than expected");
 					}
-					if (file_complete >= actual_size) {
-						info.size = file_complete;
-					}
+					info.size = file_complete;
 				}
 
 				indicted = _dst_host.get();
@@ -545,7 +543,7 @@ bool OpXfer::FileCopyLoop(const std::string &path_src, const std::string &path_d
 
 			transfer_msec+= (TimeMSNow() - msec).count();
 			if (transfer_msec > 100) {
-				unsigned long rate_avg = (unsigned long)(( (file_complete - initial_complete) * 1000 ) /  transfer_msec);
+				unsigned long rate_avg = (unsigned long)(( (file_complete - initial_complete) * 1000 ) / transfer_msec);
 				unsigned long bufsize_optimal = (rate_avg / 2);
 				unsigned long bufsize_align = bufsize_optimal % BUFFER_SIZE_GRANULARITY;
 				if (bufsize_align) {
@@ -635,7 +633,7 @@ bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_ds
 		;
 
 	} else if (symlink_target[0] == '/') {
-		if (_entries.find(symlink_target) ==  _entries.end()) {
+		if (_entries.find(symlink_target) == _entries.end()) {
 			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s]\n",
 				path_src.c_str(), orig_symlink_target.c_str());
 			return false;
@@ -675,7 +673,7 @@ bool OpXfer::SymlinkCopy(const std::string &path_src, const std::string &path_ds
 			}
 		}
 
-		if (_entries.find(refined) ==  _entries.end()) {
+		if (_entries.find(refined) == _entries.end()) {
 			fprintf(stderr, "NetRocks: SymlinkCopy dismiss '%s' [%s] refined='%s;\n",
 				path_src.c_str(), orig_symlink_target.c_str(), refined.c_str());
 			return false;

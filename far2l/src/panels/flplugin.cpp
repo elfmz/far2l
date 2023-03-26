@@ -51,7 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ChunkedData.hpp"
 
 /*
-   В стеке ФАРова панель не хранится - только плагиновые!
+	В стеке ФАРова панель не хранится - только плагиновые!
 */
 
 void FileList::PushPlugin(HANDLE hPlugin,const wchar_t *HostFile)
@@ -443,8 +443,8 @@ void FileList::PluginDelete()
 
 
 void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
-                              int ItemNumber,int Delete,int Move,DizList *SrcDiz,
-                              DizList *DestDiz)
+	int ItemNumber,int Delete,int Move,DizList *SrcDiz,
+	DizList *DestDiz)
 {
 	_ALGO(CleverSysLog clv(L"FileList::PutDizToPlugin()"));
 	OpenPluginInfo Info;
@@ -454,9 +454,9 @@ void FileList::PutDizToPlugin(FileList *DestPanel,PluginPanelItem *ItemList,
 		DestPanel->strPluginDizName = Info.DescrFiles[0];
 
 	if (((Opt.Diz.UpdateMode==DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
-	        Opt.Diz.UpdateMode==DIZ_UPDATE_ALWAYS) && !DestPanel->strPluginDizName.IsEmpty() &&
-	        (!Info.HostFile || !*Info.HostFile || DestPanel->GetModalMode() ||
-	         apiGetFileAttributes(Info.HostFile)!=INVALID_FILE_ATTRIBUTES))
+		Opt.Diz.UpdateMode==DIZ_UPDATE_ALWAYS) && !DestPanel->strPluginDizName.IsEmpty() &&
+		(!Info.HostFile || !*Info.HostFile || DestPanel->GetModalMode() ||
+			apiGetFileAttributes(Info.HostFile)!=INVALID_FILE_ATTRIBUTES))
 	{
 		CtrlObject->Cp()->LeftPanel->ReadDiz();
 		CtrlObject->Cp()->RightPanel->ReadDiz();
@@ -532,7 +532,7 @@ void FileList::PluginGetFiles(const wchar_t **DestPath,int Move)
 	const int GetCode = CtrlObject->Plugins.GetFiles(hPlugin, ItemList.Data(), ItemList.Count(), Move, DestPath, 0);
 
 	if ((Opt.Diz.UpdateMode == DIZ_UPDATE_IF_DISPLAYED && IsDizDisplayed()) ||
-	        Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS)
+		Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS)
 	{
 		DizList DestDiz;
 		bool DizFound = false;
@@ -662,7 +662,7 @@ void FileList::PluginHostGetFiles()
 	AnotherPanel->GetCurDir(strDestPath);
 
 	if (((!AnotherPanel->IsVisible() || AnotherPanel->GetType()!=FILE_PANEL) &&
-	        !SelFileCount) || strDestPath.IsEmpty())
+		!SelFileCount) || strDestPath.IsEmpty())
 	{
 		strDestPath = PointToName(strSelName);
 		// SVS: А зачем здесь велся поиск точки с начала?
@@ -680,7 +680,7 @@ void FileList::PluginHostGetFiles()
 		HANDLE hCurPlugin;
 
 		if ((hCurPlugin=OpenPluginForFile(strSelName,FileAttr, OFP_EXTRACT))!=INVALID_HANDLE_VALUE &&
-		        hCurPlugin!=(HANDLE)-2)
+			hCurPlugin!=(HANDLE)-2)
 		{
 			PluginPanelItem *ItemList;
 			int ItemNumber;
@@ -730,20 +730,22 @@ void FileList::PluginPutFilesToNew()
 		TmpPanel.SetPluginMode(hNewPlugin,L"");  // SendOnFocus??? true???
 		TmpPanel.SetModalMode(TRUE);
 		auto PrevFileCount = ListData.Count();
-		/* $ 12.04.2002 IS
-		   Если PluginPutFilesToAnother вернула число, отличное от 2, то нужно
-		   попробовать установить курсор на созданный файл.
+		/*
+			$ 12.04.2002 IS
+			Если PluginPutFilesToAnother вернула число, отличное от 2, то нужно
+			попробовать установить курсор на созданный файл.
 		*/
 		int rc=PluginPutFilesToAnother(FALSE,&TmpPanel);
 
 		if (rc!=2 && ListData.Count() == PrevFileCount + 1)
 		{
 			int LastPos = 0;
-			/* Место, где вычисляются координаты вновь созданного файла
-			   Позиционирование происходит на файл с максимальной датой
-			   создания файла. Посему, если какой-то злобный буратино поимел
-			   в текущем каталоге файло с датой создания поболее текущей,
-			   то корректного позиционирования не произойдет!
+			/*
+				Место, где вычисляются координаты вновь созданного файла
+				Позиционирование происходит на файл с максимальной датой
+				создания файла. Посему, если какой-то злобный буратино поимел
+				в текущем каталоге файло с датой создания поболее текущей,
+				то корректного позиционирования не произойдет!
 			*/
 			FileListItem *PtrListData, *PtrLastPos = nullptr;
 
@@ -770,14 +772,15 @@ void FileList::PluginPutFilesToNew()
 }
 
 
-/* $ 12.04.2002 IS
-     PluginPutFilesToAnother теперь int - возвращает то, что возвращает
-     PutFiles:
-     -1 - прервано пользовтелем
-      0 - неудача
-      1 - удача
-      2 - удача, курсор принудительно установлен на файл и заново его
-          устанавливать не нужно (см. PluginPutFilesToNew)
+/*
+	$ 12.04.2002 IS
+	PluginPutFilesToAnother теперь int - возвращает то, что возвращает
+	PutFiles:
+		-1 - прервано пользовтелем
+		0  - неудача
+		1  - удача
+		2  - удача, курсор принудительно установлен на файл и заново его
+		устанавливать не нужно (см. PluginPutFilesToNew)
 */
 int FileList::PluginPutFilesToAnother(int Move,Panel *AnotherPanel)
 {
@@ -838,7 +841,7 @@ void FileList::GetOpenPluginInfo(OpenPluginInfo *Info)
 
 
 /*
-   Функция для вызова команды "Архивные команды" (Shift-F3)
+	Функция для вызова команды "Архивные команды" (Shift-F3)
 */
 void FileList::ProcessHostFile()
 {
@@ -891,7 +894,7 @@ void FileList::ProcessHostFile()
 						else if (Done == -1)
 							continue;
 						else       // Если ЭТО убрать, то... будем жать ESC до потере пулься
-							break;   //
+							break;
 					}
 				}
 
@@ -917,11 +920,11 @@ void FileList::ProcessHostFile()
 }
 
 /*
-  Обработка одного хост-файла.
-  Return:
-    -1 - Этот файл никаким плагином не поддержан
-     0 - Плагин вернул FALSE
-     1 - Плагин вернул TRUE
+	Обработка одного хост-файла.
+	Return:
+		-1 - Этот файл никаким плагином не поддержан
+		0  - Плагин вернул FALSE
+		1  - Плагин вернул TRUE
 */
 int FileList::ProcessOneHostFile(int Idx)
 {
@@ -1056,7 +1059,7 @@ size_t FileList::PluginGetSelectedPanelItem(int ItemNumber,PluginPanelItem *Item
 void FileList::PluginGetColumnTypesAndWidths(FARString& strColumnTypes,FARString& strColumnWidths)
 {
 	ViewSettingsToText(ViewSettings.ColumnType,ViewSettings.ColumnWidth,ViewSettings.ColumnWidthType,
-	                   ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
+		ViewSettings.ColumnCount,strColumnTypes,strColumnWidths);
 }
 
 void FileList::PluginBeginSelection()

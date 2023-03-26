@@ -24,8 +24,8 @@ FTPUrl* FTP::UrlItem(int num, FTPUrl* *prev)
 	if(prev) *prev = NULL;
 
 	for(p1 = NULL,p = UrlsList;
-	        p && num > 0;
-	        p1 = p, p = p->Next)
+			p && num > 0;
+			p1 = p, p = p->Next)
 		num--;
 
 	if(num == 0)
@@ -55,10 +55,10 @@ void FTP::DeleteUrlItem(FTPUrl* p, FTPUrl* prev)
 //------------------------------------------------------------------------
 BOOL PreFill(FTPUrl* p)
 {
-	char  ch;
+	char ch;
 
 	if(p->SrcPath.Cmp("http://", 6, FALSE) ||
-	        p->SrcPath.Cmp("ftp://",  5, FALSE))
+			p->SrcPath.Cmp("ftp://",  5, FALSE))
 		p->Download = TRUE;
 
 	if(p->Download && p->SrcPath[0] != '/')
@@ -109,22 +109,22 @@ BOOL FTP::EditUrlItem(FTPUrl* p)
 	{
 		{DI_DOUBLEBOX, 3, 1,72,12, 0,0,0,0, FMSG(MUrlItem)},
 
-		{DI_TEXT,5, 2,0,0,0,   0,0,0, FMSG(MCopyFrom)},
+		{DI_TEXT,5, 2,0,0,0, 0,0,0, FMSG(MCopyFrom)},
 		{DI_EDIT,5, 3,70, 3,0,(DWORD_PTR)"FTPUrl" ,DIF_HISTORY,0, NULL},
-		{DI_TEXT,5, 4,0,0,0,  0,0,0,  FMSG(MCopyTo)},
+		{DI_TEXT,5, 4,0,0,0, 0,0,0, FMSG(MCopyTo)},
 		{DI_EDIT,5, 5,70, 5,0,(DWORD_PTR)"FTPUrl",DIF_HISTORY,0, NULL},
-		{DI_TEXT,5, 6,0,0,0,  0,0,0,  FMSG(MFileName)},
+		{DI_TEXT,5, 6,0,0,0, 0,0,0, FMSG(MFileName)},
 		{DI_EDIT,5, 7,70, 7,0, (DWORD_PTR)"FTPFileName",DIF_HISTORY,0,NULL},
 
 		{DI_TEXT,3, 8,3, 8,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
 
-		{DI_CHECKBOX,5, 9,0,0,0,  0,0,0,  FMSG(MUDownlioad)},
+		{DI_CHECKBOX,5, 9,0,0,0, 0,0,0, FMSG(MUDownlioad)},
 
 		{DI_TEXT,3,10,3,10,0,0,DIF_BOXCOLOR|DIF_SEPARATOR,0,NULL },
-		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 0,   FMSG(MUHost)},
-		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 1,   FMSG(MOk)},
-		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP,  0,  FMSG(MCancel)},
-		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP,  0,  FMSG(MUError)},
+		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MUHost)},
+		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 1, FMSG(MOk)},
+		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MCancel)},
+		{DI_BUTTON,0,11,0,0,0,0,DIF_CENTERGROUP, 0, FMSG(MUError)},
 	};
 	FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
 //Create items

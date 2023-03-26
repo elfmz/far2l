@@ -992,7 +992,7 @@ int action=-1;
         }
         br = false;
         for (i = backTrace->s[sv]; i < backTrace->e[sv]; i++){
-          if (Character::toLowerCase(pattern[toParse]) != Character::toLowerCase((*backStr)[i]) || toParse >= end)  {
+          if (toParse >= end || Character::toLowerCase(pattern[toParse]) != Character::toLowerCase((*backStr)[i]))  {
             check_stack(false,&re,&prev,&toParse,&leftenter,&action);
             br = true;
             break;

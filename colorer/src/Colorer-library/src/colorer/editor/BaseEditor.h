@@ -276,7 +276,6 @@ private:
   bool internalRM;
   bool regionCompact;
   bool breakParse;
-  bool validationProcess;
 
   inline int getLastVisibleLine();
   void remapLRS(bool recreate);

@@ -84,7 +84,7 @@ void __cdecl far_qsortex(void *base, size_t num, size_t width,
 #endif
 
 void __cdecl far_qsort(void *base, size_t num, size_t width,
-    int (*__cdecl comp)(const void *, const void *)
+	int (*__cdecl comp)(const void *, const void *)
 )
 {
 	qsort(base, num, width, comp);

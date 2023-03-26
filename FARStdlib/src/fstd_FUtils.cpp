@@ -29,7 +29,7 @@ void SaveConsoleTitle::Text(LPCSTR buff)
 	
 	Log(("TITLE: Set [%s]", buff));
 /*
-  char _buff[ 1024 ];
+	char _buff[ 1024 ];
 	if(FP_WinVer->dwPlatformId != VER_PLATFORM_WIN32_NT)
 	{
 		OemToCharBuff(buff, _buff, sizeof(_buff));
@@ -59,28 +59,8 @@ double SaveConsoleTitle::Changed(void)
 //------------------------------------------------------------------------
 int WINAPI CheckForKeyPressed(WORD *Codes,int NumCodes)
 {
-	//static HANDLE hConInp = CreateFile("CONIN$", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	INPUT_RECORD  rec;
-	DWORD         ReadCount;
-	int           rc = 0;
-	int           n;
-
-	while(1)
-	{
-		WINPORT(PeekConsoleInput)(0,&rec,1,&ReadCount);
-
-		if(ReadCount==0) break;
-
-		WINPORT(ReadConsoleInput)(0,&rec,1,&ReadCount);
-
-		for(n = 0; n < NumCodes; n++)
-			if(rec.EventType == KEY_EVENT &&
-			        rec.Event.KeyEvent.bKeyDown &&
-			        rec.Event.KeyEvent.wVirtualKeyCode == Codes[n])
-				rc = n+1;
-	}
-
-	return rc;
+	WORD KeyCode = VK_ESCAPE;
+	return WINPORT(CheckForKeyPress)(NULL, Codes, NumCodes, FALSE, FALSE, TRUE);
 }
 //------------------------------------------------------------------------
 int WINAPI FP_Color(int tp)

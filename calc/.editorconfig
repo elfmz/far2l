@@ -1,20 +1,26 @@
-[*]
+[*.rc]
 indent_style = space
 
 [src/shared/sgml/*]
+indent_style = space
 indent_size = 2
 
 [src/shared/sgml/sgml.cpp]
+indent_style = tab
 indent_size = 4
 
 [src/shared/mathexpression/*]
+indent_style = space
 indent_size = 2
 
 [*.csr]
+indent_style = space
 indent_size = 2
 
 [*.hlf]
+indent_style = space
 indent_size = 2
 
 [CMakeLists.txt]
+indent_style = space
 indent_size = 4

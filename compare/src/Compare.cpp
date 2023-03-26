@@ -24,8 +24,8 @@
 #define CheckDisabled(i) (!((int)Info.SendDlgMessage(hDlg,DM_ENABLE,i,-1)))
 #endif
 
-#define INI_LOCATION	InMyConfig("plugins/compare/config.ini")
-#define INI_SECTION		"Settings"
+#define INI_LOCATION  InMyConfig("plugins/compare/config.ini")
+#define INI_SECTION   "Settings"
 
 /****************************************************************************
  * 
@@ -498,33 +498,24 @@ static bool CheckForEsc(void)
     return false;
   dwTicks = dwNewTicks;
 
-  INPUT_RECORD rec;
-  DWORD ReadCount;
-  while (PeekConsoleInput(hConInp, &rec, 1, &ReadCount) && ReadCount)
+  WORD EscCode = VK_ESCAPE;
+  if (!WINPORT(CheckForKeyPress)(NULL, &EscCode, 1, FALSE, FALSE, TRUE))
+    return false;
+
+  if ( Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL) & FCS_INTERRUPTOPERATION )
   {
-    ReadConsoleInput(hConInp, &rec, 1, &ReadCount);
-    if ( rec.EventType == KEY_EVENT && rec.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE &&
-         rec.Event.KeyEvent.bKeyDown )
-      // 
-    {
-      if ( Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL) & FCS_INTERRUPTOPERATION )
-      {
-        const TCHAR *MsgItems[] = {
-          GetMsg(MEscTitle),
-          GetMsg(MEscBody),
-          GetMsg(MOK),
-          GetMsg(MCancel)
-        };
-        if ( !Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL,
-                           MsgItems, ARRAYSIZE(MsgItems), 2) )
-          return bBrokenByEsc = true;
-      }
-      else
-        return bBrokenByEsc = true;
-    }
+    const TCHAR *MsgItems[] = {
+      GetMsg(MEscTitle),
+      GetMsg(MEscBody),
+      GetMsg(MOK),
+      GetMsg(MCancel)
+    };
+    if (Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 2) != 0)
+      return false;
   }
 
-  return false;
+  bBrokenByEsc = true;
+  return true;
 }
 
 /****************************************************************************

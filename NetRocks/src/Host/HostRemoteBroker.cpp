@@ -44,7 +44,7 @@ class HostRemoteBroker : protected IPCEndpoint
 
 		_protocol = CreateProtocol(protocol, host, port, username, password, options);
 
-       		if (!_protocol){
+		if (!_protocol){
 			throw std::runtime_error(std::string("Failed to create protocol: ").append(protocol));
 		}
 	}

@@ -61,19 +61,20 @@ class Manager
 		Frame *DeactivatedFrame;// Фрейм, который указывает на предудущий активный фрейм
 		Frame *ExecutedFrame;   // Фрейм, которого вскорости нужно будет поставить на вершину модального сттека
 
-		Frame *CurrentFrame;     // текущий фрейм. Он может нахлодиться как в немодальной очереди, так и в можальном стеке
+		Frame *CurrentFrame;    // текущий фрейм. Он может нахлодиться как в немодальной очереди, так и в можальном стеке
 		// его можно получить с помощью FrameManager->GetCurrentFrame();
 		/*Frame **SemiModalBackFrames;
 		int SemiModalBackFramesCount;
 		int SemiModalBackFramesSize;*/
 
-		/* $ 15.05.2002 SKV
-		  Так как есть полумодалы, что б не было путаницы,
-		  заведём счётчик модальных editor/viewer'ов.
-		  Дёргать его  надо ручками перед вызовом ExecuteModal.
-		  А автоматом нельзя, так как ExecuteModal вызывается
-		  1) не только для настоящих модалов (как это не пародоксально),
-		  2) не только для editor/viewer'ов.
+		/*
+			$ 15.05.2002 SKV
+			Так как есть полумодалы, что б не было путаницы,
+			заведём счётчик модальных editor/viewer'ов.
+			Дёргать его надо ручками перед вызовом ExecuteModal.
+			А автоматом нельзя, так как ExecuteModal вызывается
+			1) не только для настоящих модалов (как это не пародоксально),
+			2) не только для editor/viewer'ов.
 		*/
 		int ModalEVCount;
 		unsigned int RegularIdleWanters = 0;
@@ -92,9 +93,9 @@ class Manager
 		// Она в цикле вызывает себя, пока хотябы один из указателей отличен от nullptr
 		// Функции, "подмастерья начальника" - Commit'a
 		// Иногда вызываются не только из него и из других мест
-		void RefreshCommit();  //
-		void DeactivateCommit(); //
-		void ActivateCommit(); //
+		void RefreshCommit();
+		void DeactivateCommit();
+		void ActivateCommit();
 		void UpdateCommit();   // выполняется тогда, когда нужно заменить один фрейм на другой
 		void InsertCommit();
 		void DeleteCommit();
@@ -142,10 +143,11 @@ class Manager
 		void UnmodalizeFrame(Frame *Unmodalized);
 
 		void CloseAll();
-		/* $ 29.12.2000 IS
-		     Аналог CloseAll, но разрешает продолжение полноценной работы в фаре,
-		     если пользователь продолжил редактировать файл.
-		     Возвращает TRUE, если все закрыли и можно выходить из фара.
+		/*
+			$ 29.12.2000 IS
+			Аналог CloseAll, но разрешает продолжение полноценной работы в фаре,
+			если пользователь продолжил редактировать файл.
+			Возвращает TRUE, если все закрыли и можно выходить из фара.
 		*/
 		BOOL ExitAll();
 		BOOL IsAnyFrameModified(int Activate);
@@ -153,8 +155,9 @@ class Manager
 		int  GetFrameCount() {return(FrameCount);};
 		int  GetFrameCountByType(int Type);
 
-		/*$ 26.06.2001 SKV
-		Для вызова через ACTL_COMMIT
+		/*
+			$ 26.06.2001 SKV
+			Для вызова через ACTL_COMMIT
 		*/
 		BOOL PluginCommit();
 
@@ -188,9 +191,10 @@ class Manager
 		int HaveAnyFrame();
 
 		void ImmediateHide();
-		/* $ 13.04.2002 KM
-		  Для вызова ResizeConsole для всех NextModal у
-		  модального фрейма.
+		/*
+			$ 13.04.2002 KM
+			Для вызова ResizeConsole для всех NextModal у
+			модального фрейма.
 		*/
 		void ResizeAllModal(Frame *ModalFrame);
 
@@ -201,10 +205,11 @@ class Manager
 
 		void InitKeyBar();
 
-		/* $ 15.05.2002 SKV
-		  Так как нужно это в разных местах,
-		  а глобальные счётчики не концептуально,
-		  то лучше это делать тут.
+		/*
+			$ 15.05.2002 SKV
+			Так как нужно это в разных местах,
+			а глобальные счётчики не концептуально,
+			то лучше это делать тут.
 		*/
 		void EnterModalEV() {ModalEVCount++;}
 		void ExitModalEV() {ModalEVCount--;}

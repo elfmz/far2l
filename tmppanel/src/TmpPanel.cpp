@@ -51,7 +51,7 @@ static wchar_t *TmpPanelModule = nullptr;
 
 const wchar_t *GetTmpPanelModule()
 {
-	return TmpPanelModule;
+  return TmpPanelModule;
 }
 
 SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *Info)
@@ -212,7 +212,8 @@ static HANDLE OpenPanelFromOutput (TCHAR *argv WITH_ANSI_PARAM)
     NULL,CREATE_ALWAYS,FILE_FLAG_SEQUENTIAL_SCAN,NULL); //&sa
 
   if (FileHandle!=INVALID_HANDLE_VALUE)
-  {/*
+  {
+    /*
     STARTUPINFO si;
     memset(&si,0,sizeof(si));
     si.cb=sizeof(si);
@@ -223,7 +224,8 @@ static HANDLE OpenPanelFromOutput (TCHAR *argv WITH_ANSI_PARAM)
 
     PROCESS_INFORMATION pi;
     memset(&pi,0,sizeof(pi));
-	*/
+    */
+
     StrBuf workDir(1); //make empty string just in case
 
     if (tempDir)
@@ -249,7 +251,7 @@ static HANDLE OpenPanelFromOutput (TCHAR *argv WITH_ANSI_PARAM)
     TCHAR consoleTitle[255];
     DWORD tlen = GetConsoleTitle(consoleTitle, ARRAYSIZE(consoleTitle));
     SetConsoleTitle(argv);
-	fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
+    fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
 /*
     BOOL Created=CreateProcess(NULL,fullcmd,NULL,NULL,TRUE,0,NULL,workDir,&si,&pi);
 
@@ -408,8 +410,8 @@ static void ReadFileList (TCHAR *filename, int *argc, TCHAR ***argv WITH_ANSI_PA
 
   if(hFile != INVALID_HANDLE_VALUE)
   {
-	  DWORD FileSizeLow = GetFileSize(hFile, NULL);
-	int fd = GetFileDescriptor(hFile);
+    DWORD FileSizeLow = GetFileSize(hFile, NULL);
+    int fd = GetFileDescriptor(hFile);
     if(fd!=-1 && FileSizeLow!=INVALID_FILE_SIZE)
     {
       UINT i;
@@ -475,8 +477,8 @@ void ShowMenuFromList(TCHAR *Name)
 #endif
 
       fmi[i].Separator=!lstrcmp(param,_T("-"));
-			fmi[i].Selected = FALSE;
-			fmi[i].Checked = FALSE;
+      fmi[i].Selected = FALSE;
+      fmi[i].Checked = FALSE;
     }
 //    fmi[0].Selected=TRUE;
 

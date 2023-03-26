@@ -617,7 +617,7 @@ public:
 			_complete = true;
 			throw;
 		}
-  	}
+	}
 };
 
 std::shared_ptr<IDirectoryEnumer> HostRemote::DirectoryEnum(const std::string &path)

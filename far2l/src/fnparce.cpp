@@ -69,12 +69,14 @@ struct TSubstData
 };
 
 
-static int IsReplaceVariable(const wchar_t *str,int *scr = nullptr,
-                             int *end = nullptr,
-                             int *beg_scr_break = nullptr,
-                             int *end_scr_break = nullptr,
-                             int *beg_txt_break = nullptr,
-                             int *end_txt_break = nullptr);
+static int IsReplaceVariable(
+	const wchar_t *str,int *scr = nullptr,
+	int *end = nullptr,
+	int *beg_scr_break = nullptr,
+	int *end_scr_break = nullptr,
+	int *beg_txt_break = nullptr,
+	int *end_txt_break = nullptr
+);
 
 
 static int ReplaceVariables(FARString &strStr,TSubstData *PSubstData);
@@ -149,7 +151,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 	// !& !&~  список файлов разделенных пробелом.
 	if ((!StrCmpN(CurStr,L"!&~",3) && CurStr[3] != L'?') ||
-	        (!StrCmpN(CurStr,L"!&",2) && CurStr[2] != L'?'))
+		(!StrCmpN(CurStr,L"!&",2) && CurStr[2] != L'?'))
 	{
 		FARString strFileNameL;
 		Panel *WPanel=PSubstData->PassivePanel?PSubstData->AnotherPanel:PSubstData->ActivePanel;
@@ -169,9 +171,9 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 			QuoteSpaceOnly(strFileNameL);
 
 // Вот здесь фиг его знает - нужно/ненужно...
-//   если будет нужно - раскомментируем :-)
-//          if(FileAttrL & FILE_ATTRIBUTE_DIRECTORY)
-//            AddEndSlash(FileNameL);
+// если будет нужно - раскомментируем :-)
+//			if(FileAttrL & FILE_ATTRIBUTE_DIRECTORY)
+//				AddEndSlash(FileNameL);
 			// А нужен ли нам пробел в самом начале?
 			if (First)
 				First = FALSE;
@@ -303,7 +305,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		}
 		EscapeSpace(strCurDir);
 
-		strOut +=  strCurDir;
+		strOut += strCurDir;
 		return CurStr;
 	}
 
@@ -313,8 +315,8 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 		int j;
 		int i = IsReplaceVariable(CurStr);
 
-		if (i == -1)  // if bad format string
-		{             // skip 1 char
+		if (i == -1) // if bad format string
+		{            // skip 1 char
 			j = 1;
 		}
 		else
@@ -341,16 +343,17 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr,TSubstData *PSubstDat
 
 
 /*
-  SubstFileName()
-  Преобразование метасимволов ассоциации файлов в реальные значения
+	SubstFileName()
+	Преобразование метасимволов ассоциации файлов в реальные значения
 
 */
-int SubstFileName(FARString &strStr,            // результирующая строка
-                  const wchar_t *Name,           // Длинное имя
-                  FARString *pListName,
-                  FARString *pAnotherListName,
-                  int   IgnoreInput,    // TRUE - не исполнять "!?<title>?<init>!"
-                  const wchar_t *CmdLineDir)     // Каталог исполнения
+int SubstFileName(
+	FARString &strStr,             // результирующая строка
+	const wchar_t *Name,           // Длинное имя
+	FARString *pListName,
+	FARString *pAnotherListName,
+	int IgnoreInput,               // TRUE - не исполнять "!?<title>?<init>!"
+	const wchar_t *CmdLineDir)     // Каталог исполнения
 {
 	if (pListName)
 		pListName->Clear();
@@ -358,17 +361,18 @@ int SubstFileName(FARString &strStr,            // результирующая 
 	if (pAnotherListName)
 		pAnotherListName->Clear();
 
-	/* $ 19.06.2001 SVS
-	  ВНИМАНИЕ! Для альтернативных метасимволов, не основанных на "!",
-	  нужно будет либо убрать эту проверку либо изменить условие (последнее
-	  предпочтительнее!)
+	/*
+		$ 19.06.2001 SVS
+		ВНИМАНИЕ! Для альтернативных метасимволов, не основанных на "!",
+		нужно будет либо убрать эту проверку либо изменить условие (последнее
+		предпочтительнее!)
 	*/
 	if (!wcschr(strStr,L'!'))
 		return FALSE;
 
 	TSubstData SubstData, *PSubstData=&SubstData;
-	PSubstData->Name=Name;                    // Длинное имя
-	PSubstData->pListName=pListName;            // Длинное имя файла-списка
+	PSubstData->Name=Name;                                    // Длинное имя
+	PSubstData->pListName=pListName;                          // Длинное имя файла-списка
 	PSubstData->pAnotherListName=pAnotherListName;            // Длинное имя файла-списка
 	// Если имя текущего каталога не задано...
 	if (CmdLineDir)
@@ -782,18 +786,20 @@ bool Panel::MakeListFile(FARString &strListFileName,const wchar_t *Modifers)
 	return Ret;
 }
 
-static int IsReplaceVariable(const wchar_t *str,
-                             int *scr,
-                             int *end,
-                             int *beg_scr_break,
-                             int *end_scr_break,
-                             int *beg_txt_break,
-                             int *end_txt_break)
+static int IsReplaceVariable(
+	const wchar_t *str,
+	int *scr,
+	int *end,
+	int *beg_scr_break,
+	int *end_scr_break,
+	int *beg_txt_break,
+	int *end_txt_break
+)
 // все очень сложно - посл-иe 4 указателя - это смещения от str
 // начало скобок в строке описания, конец этих скобок, начало скобок в строке начального заполнения, ну и соотв конец.
 // Вообще при простом вызове (который я собираюсь юзать) это выглядит просто:
 // i = IsReplaceVariable(str) - ведь нам надо только проверять семантику скобок и всяких ?!
-// где  i - тот прыжок, который надо совершить, чтоб прыгнуть на конец ! структуры !??!
+// где i - тот прыжок, который надо совершить, чтоб прыгнуть на конец ! структуры !??!
 {
 	const wchar_t *s      = str;
 	const wchar_t *scrtxt = str;

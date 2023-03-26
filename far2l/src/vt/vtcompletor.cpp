@@ -17,9 +17,9 @@
 #include "vtcompletor.h"
 
 static const char *vtc_inputrc = "set completion-query-items 0\n"
-                                 "set page-completions off\n"
-                                 "set colored-stats off\n"
-                                 "set colored-completion-prefix off\n";
+	"set page-completions off\n"
+	"set colored-stats off\n"
+	"set colored-completion-prefix off\n";
 
 
 VTCompletor::VTCompletor()
@@ -155,7 +155,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 			perror("VTCompletor: select");
 			break;
 		}
-  		if(rv == 0) { //timeout
+		if(rv == 0) { //timeout
 			fprintf(stderr, "VTCompletor: timeout\n");
 			break;
 		}

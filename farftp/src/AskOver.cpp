@@ -18,7 +18,7 @@ void MkFileInfo(char *buff,int bsz,LPCSTR title,FAR_FIND_DATA* p)
 		//Time
 		WINPORT(FileTimeToSystemTime)(&p->ftLastWriteTime,&tm);
 		snprintf(str,ARRAYSIZE(str)," %02d.%02d.%04d %02d:%02d:%02d",
-		          tm.wDay, tm.wMonth, tm.wYear, tm.wHour, tm.wMinute, tm.wSecond);
+			tm.wDay, tm.wMonth, tm.wYear, tm.wHour, tm.wMinute, tm.wSecond);
 		StrCat(buff,str,bsz);
 	}
 }

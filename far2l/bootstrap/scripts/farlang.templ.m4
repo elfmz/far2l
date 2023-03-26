@@ -2924,15 +2924,15 @@ ViewConfigInternal
 " Убудаваная праграма прагляду "
 
 ViewConfigSavePos
-"&Сохранять позицию файла"
-"&Save file position"
+"&Сохранять состояние файла"
+"&Save file state"
 "&Ukládat pozici v souboru"
 "Dateipositionen &speichern"
 "&Fájlpozíció mentése"
 "&Zapamiętaj pozycję w pliku"
 "&Guardar posición de archivo"
-"&Зберігати позицію файлу"
-"&Захоўваць пазіцыю файла"
+"&Зберігати стан файлу"
+"&Захоўваць стан файла"
 
 ViewConfigSaveShortPos
 "Сохранять &закладки"
@@ -3158,15 +3158,15 @@ EditConfigAutoIndent
 "Сама&ўцісканне"
 
 EditConfigSavePos
-"&Сохранять позицию файла"
-"&Save file position"
+"&Сохранять состояние файла"
+"&Save file state"
 "&Ukládat pozici v souboru"
 "Dateipositionen &speichern"
 "Fájl&pozíció mentése"
 "&Zapamiętaj pozycję kursora w pliku"
 "&Guardar posición de archivo"
-"&Зберігати позицію файлу"
-"&Захоўваць пазіцыю файла"
+"&Зберігати стан файлу"
+"&Захоўваць стан файла"
 
 EditConfigSaveShortPos
 "Сохранять &закладки"
@@ -6063,15 +6063,15 @@ EditF4
 "Выйсці"
 
 EditF5
-"Tab-ы"
-"Tabs"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-upd:"Tab-s"
-"Tab-і"
-"Tab-ы"
+"ПокПрб"
+"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+upd:"ShwSpc"
+"ПокПрб"
+"ПакПрб"
 
 EditF6
 "Просм"
@@ -6107,15 +6107,16 @@ EditF8
 "ANSI"
 
 EditF9
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Конфиг"
+"Config"
+"Nastav"
+"Konfig"
+"Beáll."
+"Konfig"
+"Config"
+"Конфіг"
+"Налады"
+
 
 EditF10
 "Выход"
@@ -6150,7 +6151,18 @@ EditF12
 "Екрани"
 "Экраны"
 
-EditF5Spaces
+EditF5Hide
+"СпрПрб"
+"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+upd:"HidSpc"
+"СхвПрб"
+"СхвПрб"
+
+EditCtrlF5Spaces
 "Прбелы"
 "Spaces"
 upd:"Spaces"
@@ -6512,15 +6524,15 @@ EditCtrlF4
 ""
 
 EditCtrlF5
-"ПокПрб"
-"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-upd:"ShwSpc"
-"ПокПрб"
-"ПакПрб"
+"Tab-ы"
+"Tabs"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+upd:"Tab-s"
+"Tab-і"
+"Tab-ы"
 
 EditCtrlF6
 ""
@@ -7135,17 +7147,6 @@ le://End of functional keys (Editor)
 ""
 ""
 ""
-
-EditCtrlF5Hide
-"СпрПрб"
-"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-upd:"HidSpc"
-"СхвПрб"
-"СхвПрб"
 
 SingleEditF1
 l:
@@ -9203,15 +9204,15 @@ ViewF8
 "ANSI"
 
 ViewF9
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Конфиг"
+"Config"
+"Nastav"
+"Konfig"
+"Beáll."
+"Konfig"
+"Config"
+"Конфіг"
+"Налады"
 
 ViewF10
 "Выход"

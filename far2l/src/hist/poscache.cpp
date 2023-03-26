@@ -216,3 +216,12 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 	return true;
 }
 
+void FilePositionCache::ResetPosition(const wchar_t *name)
+{
+	std::string section;
+	MakeSectionName(name, section);
+	if (!_kfh) {
+		_kfh.reset(new KeyFileHelper(_kf_path));
+	}
+	_kfh->RemoveSection(section);
+}

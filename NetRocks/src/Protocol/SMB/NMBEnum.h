@@ -28,7 +28,7 @@ class NMBEnum : protected Threaded
 	const bool _any_group;
 
 	Name2IPV4 _results;
-	struct Addr2Info : std::map<uint32_t, Info>  {} _addr2info;
+	struct Addr2Info : std::map<uint32_t, Info> {} _addr2info;
 	std::set<std::string> _groups;
 	time_t _stop_at = 0;
 	int _sc = -1;

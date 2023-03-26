@@ -133,13 +133,13 @@ bool CSgmlEl::parse(std::string &path)
 
 		line = i;
 
-		if (src[i] == '<' || i >= src.size()-1)
+		if (i >= src.size()-1 || src[i] == '<')
 		{
 			while (line > lins)
 			{
 				// linear
 				j = lins;
-				while (iswspace(src[j]) && j < i)
+				while (j < i && iswspace(src[j]))
 					j++;
 				if (j == i) 
 					break; // empty text
@@ -159,7 +159,7 @@ bool CSgmlEl::parse(std::string &path)
 				Child->init();
 				Next  = Child;
 				j = i+1;
-				while (src[i] != '>' && !iswspace(src[i]) && i < src.size()) 
+				while (i < src.size() && src[i] != '>' && !iswspace(src[i])) 
 					i++;
 				// Child->name = new wchar_t[i-j+1];
 				if (i-j > MAXTAG) 
@@ -168,7 +168,7 @@ bool CSgmlEl::parse(std::string &path)
 				Child->name[i-j] = 0;
 				// parameters
 				Child->parnum = 0;
-				while (src[i] != '>' && Child->parnum < MAXPARAMS && i < src.size())
+				while (i < src.size() && src[i] != '>' && Child->parnum < MAXPARAMS)
 				{
 					ls = i;
 					while (ls < src.size() && iswspace(src[ls])) 

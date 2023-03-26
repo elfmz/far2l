@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "datetime.hpp"
 
 int ColumnTypeWidth[]={0, 6, 6, 8, 5, 14, 14, 14, 14, 10, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
- 
+
 static const wchar_t *ColumnSymbol[]={L"N",L"S",L"P",L"D",L"T",L"DM",L"DC",L"DA",L"DE",L"A",L"Z",L"O",L"U",L"LN",L"F",L"G",L"C0",L"C1",L"C2",L"C3",L"C4",L"C5",L"C6",L"C7",L"C8",L"C9",L"C10",L"C11",L"C12",L"C13",L"C14",L"C15",L"C16",L"C17",L"C18",L"C19"};
 
 
@@ -82,7 +82,7 @@ void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir)
 		{
 			// TODO: ???
 			//if(AnotherPanel->NeedUpdatePanel(SrcPanel))
-			//  AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+			//	AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
 			//else
 			{
 				// Сбросим время обновления панели. Если там есть нотификация - обновится сама.
@@ -217,7 +217,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 
 
 void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
-                                  unsigned int *ViewColumnTypes,int *ViewColumnWidths,int *ViewColumnWidthsTypes,int &ColumnCount)
+	unsigned int *ViewColumnTypes,int *ViewColumnWidths,int *ViewColumnWidthsTypes,int &ColumnCount)
 {
 	const wchar_t *TextPtr=ColumnTitles;
 
@@ -379,8 +379,8 @@ void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
 
 
 void ViewSettingsToText(unsigned int *ViewColumnTypes,int *ViewColumnWidths,
-                                  int *ViewColumnWidthsTypes,int ColumnCount,FARString &strColumnTitles,
-                                  FARString &strColumnWidths)
+	int *ViewColumnWidthsTypes,int ColumnCount,FARString &strColumnTitles,
+	FARString &strColumnWidths)
 {
 	strColumnTitles.Clear();
 	strColumnWidths.Clear();

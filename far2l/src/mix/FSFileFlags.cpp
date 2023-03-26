@@ -47,7 +47,7 @@ void FSFileFlags::SetImmutable(bool v)
 	if (v && !FS_FLAGS_CONTAIN_IMMUTABLE(_flags)) {
 		_flags = FS_FLAGS_WITH_IMMUTABLE(_flags);
 
-	}  else if (!v && FS_FLAGS_CONTAIN_IMMUTABLE(_flags)) {
+	} else if (!v && FS_FLAGS_CONTAIN_IMMUTABLE(_flags)) {
 		_flags = FS_FLAGS_WITHOUT_IMMUTABLE(_flags);
 	}
 }

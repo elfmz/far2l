@@ -89,6 +89,8 @@ displayed. In such case #cursor keys# can be used to scroll text.
     You may press #Alt-F1# or #BS# to go back to a previous help screen and
 #Shift-F1# to view the help contents.
 
+    Press #F7# to search in Help (will show help topics containing the searched text fragment).
+
     Press #Shift-F2# for ~plugins~@Plugins@ help.
 
     #Help# is shown by default in a reduced windows, you can maximize it by
@@ -530,7 +532,7 @@ folder before moving, terminate the name with a backslash.
 
   Show ~menus~@Menus@ bar                                                  #F9#
 
-  Quit FAR2L                                                       #F10#
+  Quit FAR2L                                                     #F10#
 
   Show ~plugin~@Plugins@ commands                                           #F11#
 
@@ -567,7 +569,7 @@ to the same data.
 
   Display ~commands history~@History@                                    #Alt-F8#
 
-  Toggles the size of the FAR2L console window                  #Alt-F9#
+  Toggles the size of the FAR2L console window                #Alt-F9#
 
     In the windowed mode, toggles between the current size and the maximum
 possible size of a console window. In the fullscreen mode, #Alt-F9# toggles the
@@ -616,6 +618,8 @@ should press #Shift-Enter# on the required drive in the ~drive selection menu~@D
 Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
   Change to the root folder                                   #Ctrl-\\#
+
+  Change to the home directory (~~)                            #Ctrl-`#
 
   Change folder, enter an archive (also a SFX archive)     #Ctrl-[Shift-]PgDn#
 
@@ -1284,24 +1288,58 @@ In order to keep usual shell experience far2l first launches supported user's sh
 in its own command line.
     #Autocomplete# FAR2L has two independent command line autocompletion mechanisms. First is original FAR's driven-based autocomplete and works
 by default by giving options while you're typing command. Second is driven by bash autocompletion and can be activated by pressing
-SHIFT+double-TAB (quickly press TAB twice while keeping SHIFT pressed).
+#SHIFT+double-TAB# (quickly press TAB twice while keeping SHIFT pressed).
     #'exit' command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
 command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
 In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
-    #Hotkeys and scrolling during running command:# you can use Ctrl+Shift+F3 to open history of output in built-in viewer or
-Ctrl+Shift+F4 to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
+    #Hotkeys and scrolling during running command:# you can use #Ctrl+Shift+F3# to open history of output in built-in viewer or
+#Ctrl+Shift+F4# to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
 built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
-- will hide that viewer. Ctrl+C, Ctrl+Z hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
-it and everything in shell by pressing Ctrl+Alt+C. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
-or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use Ctrl+Alt+Z to put far2l instance to background, releasing terminal but leaving active command execution.
-    #Hotkeys and scrolling when NOT running command:# while Ctrl+Shift+F3/F4 still functioning in such mode you can also use simple F3/F4 to get history
-opened in viewer/editor respecively. Also you can press F8 key to cleanup history and screen. You can switch between panels and terminal by pressing Ctrl+O
+- will hide that viewer. #Ctrl+C, Ctrl+Z# hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
+it and everything in shell by pressing #Ctrl+Alt+C#. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
+or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use #Ctrl+Alt+Z# to put far2l instance to background, releasing terminal but leaving active command execution.
+    #Hotkeys and scrolling when NOT running command:# while #Ctrl+Shift+F3/F4# still functioning in such mode you can also use simple #F3/F4# to get history
+opened in viewer/editor respecively. Also you can press #F8# key to cleanup history and screen. You can switch between panels and terminal by pressing #Ctrl+O#
 or clicking top left corner.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in ~GUI or TTY backends modes~@UIBackends@. While TTY backend may function in usual
 terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
 like live full keyboard keys recognition with with keydown/up reaction. Also 'host' far2l may provide shared clipboard access and desktop notifications.
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
+
+  Previous command                                          #Up, Ctrl-E#
+  Next command                                            #Down, Ctrl-X#
+  Clear command line                                            #Ctrl-Y#
+    (see also ~Keyboard reference of Command line~@CmdLineCmd@)
+
+  Autocomplete (FAR2L mechanisms)                                  #Tab#
+  Autocomplete (bash mechanisms)                         #Shift-Tab-Tab#
+
+  Hide/show both panels                                         #Ctrl-O#
+  Hide/show left panel                                         #Ctrl-F1#
+  Hide/show right panel                                        #Ctrl-F2#
+
+  Insert current file name from the active panel            #Ctrl-Enter#
+  Insert current file name from the passive panel     #Ctrl-Shift-Enter#
+  Insert full file name from the active panel                   #Ctrl-F#
+  Insert full file name from the passive panel                  #Ctrl-;#
+
+  Terminal->Viewer                                   #F3, Ctrl+Shift+F3#
+    (all terminal output history in built-in Viewer - useful for scrolling of long output)
+
+  Terminal->Editor                                   #F4, Ctrl+Shift+F4#
+    (all terminal output history in built-in Editor)
+
+  Cleanup terminal history and screen                               #F8#
+    (! be careful, it clear immediately without any confirmations !)
+
+  Usual signals                                         #Ctrl+C, Ctrl+Z#
+
+  Hard kill everything in shell                             #Ctrl+Alt+C#
+    (not recommended, it may cause corruption or lost of unsaved data)
+
+  Put far2l instance to background                          #Ctrl+Alt+Z#
+    (only if far2l works in TTY backend)
 
 @UIBackends
 $ #UI Backends
@@ -1747,6 +1785,9 @@ available:
   Copy the text of the current command to the clipboard        #Ctrl-C#
   without closing the list                                or #Ctrl-Ins#
 
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
+
     To go to the previous or next command directly from the command line, you
 can press #Ctrl-E# or #Ctrl-X# respectively.
 
@@ -1783,6 +1824,9 @@ shortcuts are available:
 
   Open a file in the ~viewer~@Viewer@                                        #F3#
                                                           or #Numpad 5#
+
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
@@ -1823,6 +1867,9 @@ available:
 
   Copy the text of the current history item to the             #Ctrl-C#
   clipboard without closing the list                      or #Ctrl-Ins#
+
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
@@ -1925,6 +1972,8 @@ file. If you create a local menu in the FAR2L folder, it will be used instead of
 the main menu saved in the registry.
 
     To close the menu even if submenus are open use #Shift-F10#.
+
+    Press #Ctrl-Alt-F# to toggle to quick filtering (shows only items containing the typing text).
 
     See also the list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
 
@@ -2519,7 +2568,7 @@ $ #Viewer: control keys#
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
-    #Alt-Shift-F9#       Call ~Viewer settings~@EditorSettings@ dialog
+    #F9,Alt-Shift-F9#    Call ~Viewer settings~@EditorSettings@ dialog
     #Numpad5,F3,F10,Esc# Quit
     #Ctrl-F10#           Position to the current file.
     #F11#                Call "~Plugin commands~@Plugins@" menu
@@ -2705,9 +2754,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
    #F6#                      Switch to ~viewer~@Viewer@
-   #F5#                      Toggle Tab-to-spaces expansion
+   #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
-   #Ctrl-F5#                 Toggle whitespace characters displaying
+   #Ctrl-F5#                 Toggle Tab-to-spaces expansion
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace
@@ -2716,7 +2765,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
+   #F9, Alt-Shift-F9#        Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
    #Ctrl-F10#                Position to the current file
@@ -3078,11 +3127,14 @@ $ #Settings dialog: viewer#
 
     Internal viewer
 
-  #Save file position#      Save and restore positions in the recently
+  #Save file state#         Save and restore positions in the recently
                           viewed files. This option also forces
                           restoring of code page, if the page
                           was manually selected by user, and the file
-                          viewing mode (normal/hex).
+                          viewing mode (normal/hex). Unchecking this
+                          option causes resetting of saved state
+                          for viewed file.
+
 
   #Save bookmarks#          Save and restore bookmarks (current
                           positions) in recently viewed files
@@ -3157,10 +3209,12 @@ $ #Settings dialog: editor#
                           not remove the character under cursor, but
                           this block.
 
-  #Save file position#      Save and restore positions in the recently
+  #Save file state#         Save and restore positions and indentation state in the recently
                           edited files. This option also forces
                           restoring of code page, if the page
-                          was manually selected by user.
+                          was manually selected by user. Unchecking
+                          this option causes resetting of saved state
+                          for edited file.
 
   #Save bookmarks#          Save and restore bookmarks (current
                           positions) in recently edited files

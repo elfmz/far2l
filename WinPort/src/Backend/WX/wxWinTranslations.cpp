@@ -7,6 +7,10 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
+#if defined (__WXGTK__) && defined (__HASX11__)
+#include <X11/Xlib.h>
+#endif
+
 #if defined(wxHAS_RAW_KEY_CODES)
 # ifdef __WXMAC__
 #  include "Mac/touchbar.h"
@@ -87,7 +91,7 @@ WinPortRGB ConsoleBackground2RGB(DWORD64 attributes)
 static int wxKeyCode2WinKeyCode(int code)
 {
 	switch (code) {
-	case WXK_BACK: return  VK_BACK;
+	case WXK_BACK: return VK_BACK;
 	case WXK_TAB: return VK_TAB;
 	case WXK_RETURN: return VK_RETURN;
 	case WXK_ESCAPE: return VK_ESCAPE;
@@ -410,6 +414,32 @@ static DWORD s_cached_led_state = 0;
 wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker)
 {
 	auto key_code = event.GetKeyCode();
+
+#if defined (__WXGTK__) && defined (__HASX11__)
+	if (key_code == 0) {
+		Display *display;
+		display = XOpenDisplay(NULL);
+		KeySym *keymap;
+		int keysyms_per_keycode;
+		char* keysym;
+		// GetRawKeyFlags() gives us raw x11 hardware key code under wxGTK
+		keymap = XGetKeyboardMapping(display, event.GetRawKeyFlags(), 1, &keysyms_per_keycode);
+		for (int i = 0; i < keysyms_per_keycode; i++) {
+			if (keymap[i] && (keymap[i] != NoSymbol)) {
+				keysym = XKeysymToString(keymap[i]);
+				if (strlen(keysym) == 1) {
+					// char key
+					key_code = toupper(*keysym);
+					break;
+				}
+			}
+		}
+
+		XFree(keymap);
+		XCloseDisplay(display);
+	}
+#endif
+
 #ifdef __linux__
 	// Recent KDEs put into keycode non-latin characters in case of
 	// non-latin input layout configured as first in the list of layouts.

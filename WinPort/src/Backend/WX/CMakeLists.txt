@@ -70,6 +70,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_property (TARGET far2l_gui APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
 endif()
 
+find_package(X11)
+if(X11_FOUND)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HASX11__")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__HASX11__")
+endif()
+
 set_target_properties(far2l_gui
     PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}"

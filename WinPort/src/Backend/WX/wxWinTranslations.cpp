@@ -307,7 +307,7 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
-	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	ir.Event.KeyEvent.dwControlKeyState = 0;
 #ifndef __WXMAC__
@@ -476,7 +476,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.bKeyDown = KeyDown;
 	Event.KeyEvent.wRepeatCount = 1;
 	Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(key_code);
-	Event.KeyEvent.wVirtualScanCode = 0;
+	Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 

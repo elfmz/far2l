@@ -1163,6 +1163,17 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		_last_keydown_enqueued = true;
 	} 
 
+	if (
+		event.ControlDown() &&
+		ir.Event.KeyEvent.wVirtualKeyCode &&
+		((ir.Event.KeyEvent.wVirtualKeyCode < 'A') || (ir.Event.KeyEvent.wVirtualKeyCode > 'Z')) &&
+		(event.GetUnicodeKey() > 127)
+	) {
+		// ctrl+non_latin_letter what do not have menu shortcut, like ctrl+">"
+		g_winport_con_in->Enqueue(&ir, 1);
+		_last_keydown_enqueued = true;
+	}
+
 #ifdef WX_ALT_NONLATIN
 	if (alt_nonlatin_workaround) {
 		OnChar(event);

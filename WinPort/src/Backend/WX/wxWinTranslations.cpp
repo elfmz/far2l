@@ -9,6 +9,7 @@
 
 #if defined (__WXGTK__) && defined (__HASX11__)
 #include <X11/Xlib.h>
+#include <X11/keysym.h>
 #endif
 
 #if defined(wxHAS_RAW_KEY_CODES)
@@ -416,7 +417,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	auto key_code = event.GetKeyCode();
 
 #if defined (__WXGTK__) && defined (__HASX11__)
-	if (key_code == 0) {
+	if (!key_code) {
 		Display *display;
 		display = XOpenDisplay(NULL);
 		KeySym *keymap;
@@ -430,9 +431,23 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 				if (strlen(keysym) == 1) {
 					// char key
 					key_code = toupper(*keysym);
-					break;
+				}
+				switch (keymap[i]) {
+					case XK_minus:        key_code = VK_OEM_MINUS;   break;
+					case XK_equal:        key_code = VK_OEM_PLUS;    break;
+					case XK_bracketleft:  key_code = VK_OEM_4;       break;
+					case XK_bracketright: key_code = VK_OEM_6;       break;
+					case XK_semicolon:    key_code = VK_OEM_1;       break;
+					case XK_apostrophe:   key_code = VK_OEM_7;       break;
+					case XK_grave:        key_code = VK_OEM_3;       break;
+					case XK_backslash:    key_code = VK_OEM_5;       break;
+					case XK_comma:        key_code = VK_OEM_COMMA;   break;
+					case XK_period:       key_code = VK_OEM_PERIOD;  break;
+					case XK_slash:        key_code = VK_OEM_2;       break;
 				}
 			}
+			if (key_code)
+				break;
 		}
 
 		XFree(keymap);

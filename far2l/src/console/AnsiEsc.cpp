@@ -105,8 +105,8 @@ void FontState::ParseSuffixM(const int *args, int argc)
 
 		} else if (a == 38 || a == 48) {
 			// This is technically incorrect, but it's what xterm does, so
-			// that's what we do.  According to T.416 (ISO 8613-6), there is
-			// only one parameter, which is divided into elements.  So where
+			// that's what we do. According to T.416 (ISO 8613-6), there is
+			// only one parameter, which is divided into elements. So where
 			// xterm does "38;2;R;G;B" it should really be "38;2:I:R:G:B" (I is
 			// a colour space identifier).
 			DWORD rgb = (DWORD)-1;
@@ -383,13 +383,13 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 			}
 			if (_parser.suffix == L'C') {
 				for (int i = 0; i < _parser.args[0] || i < 1; ++i, ++processed ) {
-				    if (processed >= skip_len && processed < skip_len + print_len) {
+					if (processed >= skip_len && processed < skip_len + print_len) {
 						Text(L" ", 1);
 					}
 				}
 			} else if (_parser.suffix == L'b') {
 				for (int i = 0; i < _parser.args[0] || i < 1; ++i, ++processed ) {
-				    if (processed >= skip_len && processed < skip_len + print_len) {
+					if (processed >= skip_len && processed < skip_len + print_len) {
 						Text(&_last_char, 1);
 					}
 				}
@@ -404,7 +404,7 @@ void Printer::Print(int skip_len, int print_len, const wchar_t *str)
 			++ch;
 		}
 	}
-    while (processed < skip_len) {
+	while (processed < skip_len) {
 		++processed;
 	}
 	if (processed < skip_len + print_len) {

@@ -9,18 +9,18 @@
 
 // time interval that used for deferred extra refresh after last title update
 // see comment on WinPortPanel::OnTitleChangedSync
-#define TIMER_EXTRA_REFRESH 100   // 0.1 second
+#define TIMER_EXTRA_REFRESH 100      // 0.1 second
 
 // how many timer ticks may pass since last input activity
 // before timer will be stopped until restarted by some activity
-#define TIMER_IDLING_CYCLES 60  // 0.5 second * 60 = 30 seconds
+#define TIMER_IDLING_CYCLES 60       // 0.5 second * 60 = 30 seconds
 
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
 #if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
-    // wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
-    #define WX_ALT_NONLATIN
+	// wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
+	#define WX_ALT_NONLATIN
 #endif
 
 IConsoleOutput *g_winport_con_out = nullptr;
@@ -271,7 +271,7 @@ wxEvtHandler *WinPort_EventHandler()
 bool WinPortApp::OnInit()
 {
 	g_winport_frame = new WinPortFrame(APP_BASENAME);
-//    WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
+//	WinPortFrame *frame = new WinPortFrame( "WinPortApp", wxPoint(50, 50), wxSize(800, 600) );
 	g_winport_frame->Show( true );
 	return true;
 }
@@ -292,7 +292,7 @@ wxBEGIN_EVENT_TABLE(WinPortFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 WinPortFrame::WinPortFrame(const wxString& title)
-        : _shown(false),  _menu_bar(nullptr)
+	: _shown(false),  _menu_bar(nullptr)
 {
 	long style = wxDEFAULT_FRAME_STYLE;
 	if (g_maximize >= 0 && (_win_state.maximized || g_maximize > 0 || g_broadway)) {
@@ -450,9 +450,9 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		SetMenuBar(_menu_bar);
 		
 		//now hide menu bar just like it gets hidden during fullscreen transition
-        //wxAcceleratorTable table(wxCreateAcceleratorTableForMenuBar(_menu_bar);
-        //if (table.IsOk())
-        //    SetAcceleratorTable(table);		
+		//wxAcceleratorTable table(wxCreateAcceleratorTableForMenuBar(_menu_bar);
+		//if (table.IsOk())
+		//	SetAcceleratorTable(table);
 		_menu_bar->Show(false);
 	}
 #endif
@@ -535,7 +535,7 @@ wxEND_EVENT_TABLE()
 
 
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
-        : _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
+	: _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -620,7 +620,7 @@ void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 	if (!alternate) {
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_F1 + index;
 
-	} else switch (index) { // "", "Ins", "Del", "",  "+", "-", "*", "/",  "Home", "End", "PageUp", "PageDown"
+	} else switch (index) { // "", "Ins", "Del", "", "+", "-", "*", "/", "Home", "End", "PageUp", "PageDown"
 		case 0: return;
 		case 1: ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
 		case 2: ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;
@@ -750,7 +750,7 @@ void WinPortPanel::ResetTimerIdling()
 
 static int ProcessAllEvents()
 {
-	wxApp *app  =wxTheApp;
+	wxApp *app =wxTheApp;
 	if (app) {
 		while (app->Pending())
 			app->Dispatch();
@@ -796,10 +796,13 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 			NormalizeArea(area);
 			bool add = true;
 			for (auto &pending : _refresh_rects) {
-/*				if (!(area.Left <= pending.Right && area.Right >= pending.Left &&
-					     area.Top <= pending.Bottom && area.Bottom >= pending.Top )) {
+/*
+				if (!(area.Left <= pending.Right && area.Right >= pending.Left &&
+						area.Top <= pending.Bottom && area.Bottom >= pending.Top ))
+				{
 					continue;
-				}*/
+				}
+*/
 
 				if (area.Left >= pending.Left && area.Right <= pending.Right
 				&& area.Top >= pending.Top && area.Bottom <= pending.Bottom) {
@@ -1152,9 +1155,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-	  || (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
-	  || event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
-	  || (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) )) {
+		|| (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
+		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
+		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
+	{
 		g_winport_con_in->Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
 	} 
@@ -1342,8 +1346,9 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 		mode = 0;
 
 	if ( (event.LeftDown() && !_last_mouse_event.LeftDown())
-	  || (event.MiddleDown() && !_last_mouse_event.MiddleDown())
-	  || (event.RightDown() && !_last_mouse_event.RightDown()) ) {
+		|| (event.MiddleDown() && !_last_mouse_event.MiddleDown())
+		|| (event.RightDown() && !_last_mouse_event.RightDown()) )
+	{
 		_last_mouse_click = pos_char;
 	}
 
@@ -1366,7 +1371,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	}
 	if (event.LeftDown()) _mouse_state|= FROM_LEFT_1ST_BUTTON_PRESSED;
 	else if (event.MiddleDown()) _mouse_state|= FROM_LEFT_2ND_BUTTON_PRESSED;
-	else if (event.RightDown()) _mouse_state|=  RIGHTMOST_BUTTON_PRESSED;
+	else if (event.RightDown()) _mouse_state|= RIGHTMOST_BUTTON_PRESSED;
 	else if (event.LeftUp()) _mouse_state&= ~FROM_LEFT_1ST_BUTTON_PRESSED;
 	else if (event.MiddleUp()) _mouse_state&= ~FROM_LEFT_2ND_BUTTON_PRESSED;
 	else if (event.RightUp()) _mouse_state&= ~RIGHTMOST_BUTTON_PRESSED;
@@ -1531,7 +1536,7 @@ void WinPortPanel::OnConsoleSetTweaksSync( wxCommandEvent& event )
 	EventWithDWORD64 *e = (EventWithDWORD64 *)&event;
 	_exclusive_hotkeys.SetTriggerKeys( (e->cookie & EXCLUSIVE_CTRL_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_CTRL_RIGHT) != 0, (e->cookie & EXCLUSIVE_ALT_LEFT) != 0,
-		(e->cookie & EXCLUSIVE_ALT_RIGHT) != 0,  (e->cookie & EXCLUSIVE_WIN_LEFT) != 0,
+		(e->cookie & EXCLUSIVE_ALT_RIGHT) != 0, (e->cookie & EXCLUSIVE_WIN_LEFT) != 0,
 		(e->cookie & EXCLUSIVE_WIN_RIGHT) != 0);
 
 	_paint_context.SetSharp( (e->cookie & CONSOLE_PAINT_SHARP) != 0);
@@ -1653,7 +1658,7 @@ void WinPortPanel::OnConsoleExit()
 
 void WinPortPanel::CheckPutText2CLip()
 {
-	if (!_text2clip.empty())  {
+	if (!_text2clip.empty()) {
 		if (!WinPortClipboard_IsBusy()) {
 			if (wxTheClipboard->Open()) {
 				std::wstring text2clip; text2clip.swap(_text2clip);

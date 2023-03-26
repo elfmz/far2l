@@ -283,7 +283,7 @@ public:
 		return negative ^ Set;
 	}
 
-	inline void SetBit(wchar_t  chr)
+	inline void SetBit(wchar_t chr)
 	{
 #if (__WCHAR_MAX__ > 0xffff)
 		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT))
@@ -398,9 +398,9 @@ enum REOp
 
 struct REOpCode_data
 {
-	int		op; //movable<int>
+	int	op; //movable<int>
 #ifdef RE_DEBUG
-	int    srcpos;
+	int	srcpos;
 #endif
 
 	struct SBracket
@@ -1536,7 +1536,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 
 						if (min<0)return SetError(errInvalidRange, save + (src - start));
 
-//            i++;
+//						i++;
 						if (src[i]==',')
 						{
 							if (src[i+1]=='}')
@@ -1549,7 +1549,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 								i++;
 								max=GetNum(src,i);
 
-//                i++;
+//								i++;
 								if (max<min)return SetError(errInvalidRange, save + (src - start));
 							}
 						}
@@ -1576,9 +1576,9 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 					case opNotWordBound:
 					{
 						return SetError(errInvalidQuantifiersCombination, i + (src - start));
-//            op->range.op=op->op;
-//            op->op=opRange;
-//            continue;
+//						op->range.op=op->op;
+//						op->op=opRange;
+//						continue;
 					}
 					case opCharAny:
 					case opCharAnyAll:

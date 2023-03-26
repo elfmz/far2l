@@ -73,24 +73,23 @@ DizList::~DizList()
 {
 	Reset();
 
-	if (AnsiBuf)
-		free(AnsiBuf);
+	free(AnsiBuf);
 }
 
 void DizList::Reset()
 {
-	for (int I=0; I<DizCount; I++)
-		if (DizData[I].DizText)
+	if (DizData)
+	{
+		for (int I=0; I<DizCount; I++)
 			free(DizData[I].DizText);
 
-	if (DizData)
 		free(DizData);
+	}
 
 	DizData=nullptr;
 	DizCount=0;
 
-	if (IndexData)
-		free(IndexData);
+	free(IndexData);
 
 	IndexData=nullptr;
 	IndexCount=0;
@@ -492,8 +491,14 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 
 	bool EmptyDiz=true;
 	// Don't use CreationDisposition=CREATE_ALWAYS here - it's kills alternate streams
-	if(DizCount && DizFile.Open(strDizFileName, GENERIC_WRITE, FILE_SHARE_READ, nullptr, FileAttr==INVALID_FILE_ATTRIBUTES?CREATE_NEW:TRUNCATE_EXISTING))
-	{
+	if (
+		DizCount &&
+		DizFile.Open(
+			strDizFileName, GENERIC_WRITE,
+			FILE_SHARE_READ, nullptr,
+			FileAttr==INVALID_FILE_ATTRIBUTES?CREATE_NEW:TRUNCATE_EXISTING
+		)
+	) {
 		UINT CodePage = Opt.Diz.SaveInUTF ? CP_UTF8 : (Opt.Diz.AnsiByDefault ? CP_ACP : CP_OEMCP);
 
 		CachedWrite Cache(DizFile);
@@ -517,7 +522,12 @@ bool DizList::Flush(const wchar_t *Path,const wchar_t *DizName)
 					char* lpDizText = new(std::nothrow) char[Size];
 					if (lpDizText)
 					{
-						int BytesCount=WINPORT(WideCharToMultiByte)(CodePage, 0, DizData[I].DizText, DizData[I].DizLength+1, lpDizText, Size, nullptr, nullptr);
+						int BytesCount=WINPORT(WideCharToMultiByte)(
+							CodePage, 0,
+							DizData[I].DizText, DizData[I].DizLength+1,
+							lpDizText, Size,
+							nullptr, nullptr
+						);
 						if (BytesCount && BytesCount-1)
 						{
 							if(Cache.Write(lpDizText, BytesCount-1))

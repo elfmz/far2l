@@ -60,7 +60,7 @@ bool Location::FromString(const std::string &standalone_config, const std::strin
 
 		server = url.protocol;
 		server+= ':';
-		if (!url.username.empty())  {
+		if (!url.username.empty()) {
 			server+= url.username;
 			server+= '@';
 		}

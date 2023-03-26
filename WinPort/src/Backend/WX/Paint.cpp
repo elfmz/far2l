@@ -10,7 +10,7 @@
 #include <utils.h>
 
 #define COLOR_ATTRIBUTES ( FOREGROUND_INTENSITY | BACKGROUND_INTENSITY | \
-					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |  \
+					FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | \
 					BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE )
 
 #define DYNAMIC_FONTS
@@ -177,7 +177,7 @@ class FontSizeInspector
 
 	public:
 	FontSizeInspector(wxFont& font) 
-		: _bitmap(48, 48,  wxBITMAP_SCREEN_DEPTH),
+		: _bitmap(48, 48, wxBITMAP_SCREEN_DEPTH),
 		_max_width(4), _prev_width(-1), 
 		_max_height(6), _prev_height(-1), 
 		_max_descent(0),
@@ -280,7 +280,7 @@ void ConsolePaintContext::ShowFontDialog()
 uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t wc, unsigned int nx)
 {
 #ifdef DYNAMIC_FONTS
-	const bool cacheable = (size_t((uint32_t)wc) - 1 < _char_fit_cache.checked.size()); //  && wcz[1] == 0
+	const bool cacheable = (size_t((uint32_t)wc) - 1 < _char_fit_cache.checked.size()); // && wcz[1] == 0
 	if (cacheable && _char_fit_cache.checked[ size_t((uint32_t)wc) - 1 ]) {
 		return _char_fit_cache.result[ size_t((uint32_t)wc) - 1 ];
 	}
@@ -303,7 +303,7 @@ uint8_t ConsolePaintContext::CharFitTest(wxPaintDC &dc, wchar_t wc, unsigned int
 		dc.GetTextExtent(_cft_tmp, &w, &h, &d, NULL, &_fonts[font_index]);
 		const unsigned limh = _font_height + std::max(0, int(d) - int(_font_descent));
 		const unsigned limw = _font_width * nx;
-		if  (unsigned(h) <= limh && unsigned(w) <= limw) {
+		if (unsigned(h) <= limh && unsigned(w) <= limw) {
 			break;
 		}
 	}
@@ -647,19 +647,19 @@ void ConsolePainter::FlushDecorations(unsigned int cx_end)
 
 static inline unsigned char CalcFadeColor(unsigned char bg, unsigned char fg)
 {
-	unsigned short out = fg;
+	unsigned out = fg;
 	out*= 2;
 	out+= bg;
 	out/= 3;
-	return (out > 0xff) ? 0xff : (unsigned char)out;
+	return (unsigned char)std::min(out, (unsigned)0xff);
 }
 
 static inline unsigned char CalcExtraFadeColor(unsigned char bg, unsigned char fg)
 {
-	unsigned short out = bg;
+	unsigned out = bg;
 	out+= fg;
 	out/= 2;
-	return (out > 0xff) ? 0xff : (unsigned char)out;
+	return (unsigned char)std::min(out, (unsigned)0xff);
 }
 
 // #define DEBUG_FADED_EDGES
@@ -779,13 +779,14 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		}
 		_start_cx = (unsigned int)-1;
 		_prev_fit_font_index = 0;
-        return;
+		return;
 	}
 
 	uint8_t fit_font_index = _context->CharFitTest(_dc, *wcz, nx);
 	
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
-	  && _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered()) {
+		&& _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered())
+	{
 		_buffer+= wcz;
 		return;
 	}

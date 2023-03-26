@@ -250,7 +250,7 @@ int QuickView::ProcessKey(int Key)
 
 	if (Key == KEY_F1)
 	{
-		Help Hlp(L"QViewPanel");
+		Help::Present(L"QViewPanel");
 		return TRUE;
 	}
 
@@ -370,7 +370,7 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		else if (hDirPlugin)
 		{
 			int ExitCode=GetPluginDirInfo(hDirPlugin,strCurFileName,DirCount,
-			                              FileCount,FileSize,PhysicalSize);
+				FileCount,FileSize,PhysicalSize);
 			if (ExitCode)
 				Directory=4;
 			else
@@ -379,7 +379,7 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 		else
 		{
 			int ExitCode=GetDirInfo(Msg::QuickViewTitle,strCurFileName,DirCount,
-			                        FileCount,FileSize,PhysicalSize,ClusterSize,500,nullptr,
+				FileCount,FileSize,PhysicalSize,ClusterSize,500,nullptr,
 									GETDIRINFO_ENHBREAK|GETDIRINFO_SCANSYMLINKDEF|GETDIRINFO_DONTREDRAWFRAME);
 
 			if (ExitCode==1)

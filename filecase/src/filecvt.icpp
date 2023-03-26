@@ -154,7 +154,7 @@ void CaseConvertion()
 
       if (!GetCheck(18))
       {
-	    KeyFileHelper kfh(INI_LOCATION);
+        KeyFileHelper kfh(INI_LOCATION);
         kfh.SetString(INI_SECTION,("WordDiv"),Opt.WordDiv);
         kfh.SetInt(INI_SECTION,("ConvertMode"),Opt.ConvertMode);
         kfh.SetInt(INI_SECTION,("ConvertModeExt"),Opt.ConvertModeExt);

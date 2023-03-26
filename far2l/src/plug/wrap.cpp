@@ -126,24 +126,25 @@ static wchar_t *AnsiToUnicode(const char *lpszAnsiString, int nMaxLength = -1, U
 
 static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UINT CodePage=CP_UTF8)
 {
-	/* $ 06.01.2008 TS
+	/*
+		$ 06.01.2008 TS
 		! Увеличил размер выделяемой под строку памяти на 1 байт для нормальной
-			работы старых плагинов, которые не знали, что надо смотреть на длину,
-			а не на завершающий ноль (например в EditorGetString.StringText).
+		работы старых плагинов, которые не знали, что надо смотреть на длину,
+		а не на завершающий ноль (например в EditorGetString.StringText).
 	*/
 	if (!lpwszUnicodeString || (nLength < 0))
 		return nullptr;
 
 	ErrnoSaver ErSr;
 	int dst_length = WINPORT(WideCharToMultiByte)(
-		    CodePage,
-		    0,
-		    lpwszUnicodeString,
-		    nLength,
-		    NULL,
-		    0,
-		    nullptr,
-		    nullptr
+			CodePage,
+			0,
+			lpwszUnicodeString,
+			nLength,
+			NULL,
+			0,
+			nullptr,
+			nullptr
 		);
 	if (dst_length<=0) dst_length = nLength + 1; else ++dst_length;
 	char *lpResult = (char*)malloc(dst_length);
@@ -153,14 +154,14 @@ static char *UnicodeToAnsiBin(const wchar_t *lpwszUnicodeString, int nLength, UI
 	if (nLength)
 	{
 		WINPORT(WideCharToMultiByte)(
-		    CodePage,
-		    0,
-		    lpwszUnicodeString,
-		    nLength,
-		    lpResult,
-		    dst_length,
-		    nullptr,
-		    nullptr
+			CodePage,
+			0,
+			lpwszUnicodeString,
+			nLength,
+			lpResult,
+			dst_length,
+			nullptr,
+			nullptr
 		);
 	}
 
@@ -750,10 +751,11 @@ BOOL AddEndSlashA(char *Path,char TypeSlash)
 
 	if (Path)
 	{
-		/* $ 06.12.2000 IS
-		  ! Теперь функция работает с обоими видами слешей, также происходит
-		    изменение уже существующего конечного слеша на такой, который
-		    встречается чаще.
+		/*
+			$ 06.12.2000 IS
+			! Теперь функция работает с обоими видами слешей, также происходит
+			изменение уже существующего конечного слеша на такой, который
+			встречается чаще.
 		*/
 		char *end=Path+strlen(Path);
 		int Length=(int)(end-Path);
@@ -993,10 +995,9 @@ void WINAPI FarRecursiveSearchA(const char *InitDir,const char *Mask,oldfar::FRS
 DWORD WINAPI ExpandEnvironmentStrA(const char *src, char *dest, size_t size)
 {
 	FARString strS(src), strD;
-	apiExpandEnvironmentStrings(strS,strD);
-	DWORD len = (DWORD)Min(strD.GetLength(),size-1);
-	strD.GetCharString(dest,len+1);
-	return len;
+	apiExpandEnvironmentStrings(strS, strD);
+	DWORD len = strD.GetCharString(dest, size);
+	return std::min((DWORD)size, len ? len - 1 : 0);
 }
 
 int WINAPI FarViewerA(const char *FileName,const char *Title,int X1,int Y1,int X2,int Y2,DWORD Flags)
@@ -1588,12 +1589,12 @@ void FreeUnicodeDialogItem(FarDialogItem &di)
 void FreeAnsiDialogItem(oldfar::FarDialogItem &diA)
 {
 	if ((diA.Type==oldfar::DI_EDIT || diA.Type==oldfar::DI_FIXEDIT) &&
-	        (diA.Flags&oldfar::DIF_HISTORY ||diA.Flags&oldfar::DIF_MASKEDIT) &&
-	        diA.Param.History)
+			(diA.Flags&oldfar::DIF_HISTORY ||diA.Flags&oldfar::DIF_MASKEDIT) &&
+			diA.Param.History)
 		free((void*)diA.Param.History);
 
 	if ((diA.Type==oldfar::DI_EDIT || diA.Type==oldfar::DI_COMBOBOX) &&
-	        diA.Flags&oldfar::DIF_VAREDIT && diA.Data.Ptr.PtrData)
+			diA.Flags&oldfar::DIF_VAREDIT && diA.Data.Ptr.PtrData)
 		free(diA.Data.Ptr.PtrData);
 
 	memset(&diA,0,sizeof(oldfar::FarDialogItem));
@@ -3380,7 +3381,7 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber,int Command,void *Param)
 
 			if (ds&oldfar::FDIS_HISTORYINDIALOGEDITCONTROLS)    ret|=FDIS_HISTORYINDIALOGEDITCONTROLS;
 
-			if (ds&oldfar::FDIS_AUTOCOMPLETEININPUTLINES)    ret|=FDIS_AUTOCOMPLETEININPUTLINES;
+			if (ds&oldfar::FDIS_AUTOCOMPLETEININPUTLINES)       ret|=FDIS_AUTOCOMPLETEININPUTLINES;
 
 			if (ds&oldfar::FDIS_PERSISTENTBLOCKSINEDITCONTROLS) ret|=FDIS_PERSISTENTBLOCKSINEDITCONTROLS;
 
@@ -3634,7 +3635,7 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 
 			oldfar::EditorConvertText *ect=(oldfar::EditorConvertText*) Param;
 			UINT CodePage=GetEditorCodePageA();
-			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_UTF8 : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ?  CodePage : CP_OEMCP, ect->Text, ect->TextLength);
+			MultiByteRecode(Command==oldfar::ECTL_OEMTOEDITOR ? CP_UTF8 : CodePage, Command==oldfar::ECTL_OEMTOEDITOR ? CodePage : CP_OEMCP, ect->Text, ect->TextLength);
 			return TRUE;
 		}
 		case oldfar::ECTL_SAVEFILE:
@@ -3670,12 +3671,12 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 						wchar_t res;
 						ErrnoSaver ErSr;
 						WINPORT(MultiByteToWideChar)(
-						    CP_OEMCP,
-						    0,
-						    &pIR->Event.KeyEvent.uChar.AsciiChar,
-						    1,
-						    &res,
-						    1
+							CP_OEMCP,
+							0,
+							&pIR->Event.KeyEvent.uChar.AsciiChar,
+							1,
+							&res,
+							1
 						);
 						pIR->Event.KeyEvent.uChar.UnicodeChar=res;
 					}
@@ -3704,14 +3705,14 @@ int WINAPI FarEditorControlA(int Command,void* Param)
 						char res;
 						ErrnoSaver ErSr;
 						WINPORT(WideCharToMultiByte)(
-						    CP_OEMCP,
-						    0,
-						    &pIR->Event.KeyEvent.uChar.UnicodeChar,
-						    1,
-						    &res,
-						    1,
-						    nullptr,
-						    nullptr
+							CP_OEMCP,
+							0,
+							&pIR->Event.KeyEvent.uChar.UnicodeChar,
+							1,
+							&res,
+							1,
+							nullptr,
+							nullptr
 						);
 						pIR->Event.KeyEvent.uChar.UnicodeChar=res;
 					}
@@ -3917,7 +3918,7 @@ int WINAPI FarViewerControlA(int Command,void* Param)
 
 			if (viW.Options&VOPT_SAVEFILEPOSITION) viA->Options |= oldfar::VOPT_SAVEFILEPOSITION;
 
-			if (viW.Options&VOPT_AUTODETECTCODEPAGE)  viA->Options |= oldfar::VOPT_AUTODETECTTABLE;
+			if (viW.Options&VOPT_AUTODETECTCODEPAGE) viA->Options |= oldfar::VOPT_AUTODETECTTABLE;
 
 			viA->TabSize = viW.TabSize;
 			viA->CurMode.UseDecodeTable = 0;
@@ -4067,11 +4068,11 @@ int WINAPI FarCharTableA(int Command, char *Buffer, int BufferSize)
 }
 
 char* WINAPI XlatA(
-    char *Line,                    // исходная строка
-    int StartPos,                  // начало переконвертирования
-    int EndPos,                    // конец переконвертирования
-    const oldfar::CharTableSet *TableSet, // перекодировочная таблица (может быть nullptr)
-    DWORD Flags)                   // флаги (см. enum XLATMODE)
+	char *Line,                    // исходная строка
+	int StartPos,                  // начало переконвертирования
+	int EndPos,                    // конец переконвертирования
+	const oldfar::CharTableSet *TableSet, // перекодировочная таблица (может быть nullptr)
+	DWORD Flags)                   // флаги (см. enum XLATMODE)
 {
 	FARString strLine(Line);
 	DWORD NewFlags = 0;

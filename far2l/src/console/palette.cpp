@@ -123,7 +123,8 @@ unsigned char DefaultPalette[SIZE_ARRAY_PALETTE]=
 	F_BLACK|B_CYAN,                         // COL_COMMANDLINESELECTED,
 	F_YELLOW|B_BLUE,                        // COL_VIEWERARROWS,
 
-	0,                                      // COL_RESERVED0                   // Служебная позиция: 1 - это есть default color
+	// Служебная позиция: 1 - это есть default color
+	0,                                      // COL_RESERVED0
 
 	F_BLACK|B_LIGHTGRAY,                    // COL_DIALOGLISTSCROLLBAR,
 	F_WHITE|B_CYAN,                         // COL_MENUSCROLLBAR,
@@ -301,7 +302,8 @@ unsigned char BlackPalette[SIZE_ARRAY_PALETTE]=
 	F_BLACK|B_LIGHTGRAY,                    // COL_COMMANDLINESELECTED,
 	F_WHITE|B_BLACK,                        // COL_VIEWERARROWS,
 
-	1,                                      // COL_RESERVED0                   // Служебная позиция: 1 - это есть default color
+	// Служебная позиция: 1 - это есть default color
+	1,                                      // COL_RESERVED0
 
 	F_BLACK|B_LIGHTGRAY,                    // COL_DIALOGLISTSCROLLBAR,
 	F_BLACK|B_LIGHTGRAY,                    // COL_MENUSCROLLBAR,

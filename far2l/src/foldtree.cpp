@@ -49,6 +49,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "exitcode.hpp"
 
+void FolderTree::Present(FARString &strResultFolder,int ModalMode,int IsStandalone,int IsFullScreen)
+{
+	FolderTree Tree(strResultFolder, ModalMode, IsStandalone, IsFullScreen);
+}
+
 FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalone,int IsFullScreen):
 	CMM(MACRO_FINDFOLDER),
 	Tree(nullptr),
@@ -157,7 +162,7 @@ void FolderTree::OnChangeFocus(int focus)
 void FolderTree::ResizeConsole()
 {
 	//if ( TopScreen )
-	//   delete TopScreen;
+		//delete TopScreen;
 	//TopScreen=nullptr;
 	Hide();
 	SetCoords();
@@ -199,7 +204,7 @@ int FolderTree::ProcessKey(int Key)
 	{
 		case KEY_F1:
 		{
-			Help Hlp(L"FindFolder");
+			Help::Present(L"FindFolder");
 		}
 		break;
 		case KEY_ESC:
@@ -273,13 +278,13 @@ int FolderTree::ProcessKey(int Key)
 			}
 
 			/*
-			      else
-			      {
-			        if((Key&(~KEY_CTRLMASK)) == KEY_ADD)
-			          Key='+';
-			        else if((Key&(~KEY_CTRLMASK)) == KEY_SUBTRACT)
-			          Key='-';
-			      }
+				else
+				{
+					if((Key&(~KEY_CTRLMASK)) == KEY_ADD)
+						Key='+';
+					else if((Key&(~KEY_CTRLMASK)) == KEY_SUBTRACT)
+						Key='-';
+				}
 			*/
 			if (FindEdit->ProcessKey(Key))
 			{

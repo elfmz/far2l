@@ -6,7 +6,7 @@
 /************************************
             String
  ************************************/
-String::~String()                  { if(str) { free(str); str = NULL; } }
+String::~String()                { if(str) { free(str); str = NULL; } }
 
 String::String(void)             { BeginSet(); }
 String::String(const String& s)  { BeginSet(s.Length()); Alloc(s.c_str()); }
@@ -203,8 +203,8 @@ int String::RChr(char ch,int pos) const
 		pos = Length()-1;
 
 	for(pos = Max(0,Min(Length(),pos));
-	        pos && str[pos] != ch;
-	        pos--);
+		pos && str[pos] != ch;
+		pos--);
 
 	return pos;
 }
@@ -237,14 +237,14 @@ int String::Chr(LPCSTR ch,int pos) const
 }
 
 int       String::Chr(char ch,int pos)         const { return StrPosChr(c_str(),ch,pos); }
-int       String::Str(LPCSTR s,int pos)      const { return StrPosStr(c_str(),s,pos); }
+int       String::Str(LPCSTR s,int pos)        const { return StrPosStr(c_str(),s,pos); }
 
 String&   String::operator=(const String& s)         { Alloc(s.c_str()); return *this; }
-String&   String::operator=(LPCSTR s)              { Alloc(s); return *this; }
+String&   String::operator=(LPCSTR s)                { Alloc(s); return *this; }
 BOOL      String::operator!=(const String& s)  const { return len != s.len || !Cmp(s.c_str()); }
-BOOL      String::operator!=(LPCSTR s)       const { return !Cmp(s); }
+BOOL      String::operator!=(LPCSTR s)         const { return !Cmp(s); }
 BOOL      String::operator==(const String& s)  const { return len == s.len && Cmp(s.c_str()); }
-BOOL      String::operator==(LPCSTR s)       const { return Cmp(s); }
+BOOL      String::operator==(LPCSTR s)         const { return Cmp(s); }
 char      String::operator[](int num)          const { return (num >= 0 && num <= len && str) ? str[num] : '\0'; }
 
 void String::SetLength(int sz)
@@ -288,7 +288,7 @@ BOOL String::Cmp(LPCSTR s,int count, BOOL isCase) const
 
 void String::LTrim(char ch)
 {
-	int      n;
+	int n;
 
 	if(len == 0) return;
 
@@ -301,7 +301,7 @@ void String::LTrim(char ch)
 
 void String::RTrim(char ch)
 {
-	int      n;
+	int n;
 
 	if(len == 0) return;
 
@@ -311,7 +311,7 @@ void String::RTrim(char ch)
 
 void String::Trim(char ch)
 {
-	int      n;
+	int n;
 
 	if(len == 0) return;
 

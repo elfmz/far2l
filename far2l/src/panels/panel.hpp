@@ -129,11 +129,12 @@ class Panel:public ScreenObject
 		void FastFindShow(int FindX,int FindY);
 		void FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName, FARString &strName);
 		void DragMessage(int X,int Y,int Move);
-		bool SetLocation_Directory(const wchar_t *path);
-		bool SetLocation_Plugin(bool file_plugin, class Plugin *plugin, const wchar_t *path, const wchar_t *host_file, LONG_PTR item);
 		int OnFCtlSetLocation(const FarPanelLocation *location);
 
 	protected:
+		bool SetLocation_Directory(const wchar_t *path);
+		bool SetLocation_Plugin(bool file_plugin, class Plugin *plugin, const wchar_t *path, const wchar_t *host_file, LONG_PTR item);
+
 		void FastFind(int FirstKey);
 		void DrawSeparator(int Y);
 		void ShowScreensCount();
@@ -175,14 +176,16 @@ class Panel:public ScreenObject
 		virtual void SetFocus();
 		virtual void KillFocus();
 		virtual void Update(int Mode) {};
-		/*$ 22.06.2001 SKV
-		  Параметр для игнорирования времени последнего Update.
-		  Используется для Update после исполнения команды.
+		/*
+			$ 22.06.2001 SKV
+			Параметр для игнорирования времени последнего Update.
+			Используется для Update после исполнения команды.
 		*/
 		virtual int UpdateIfChanged(int UpdateMode) {return 0;};
-		/* $ 19.03.2002 DJ
-		   UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
-		   что панель невидима
+		/*
+			$ 19.03.2002 DJ
+			UpdateIfRequired() - обновить, если апдейт был пропущен из-за того,
+			что панель невидима
 		*/
 		virtual void UpdateIfRequired() {};
 
@@ -265,9 +268,10 @@ class Panel:public ScreenObject
 
 		virtual void IfGoHome(wchar_t Drive) {};
 
-		/* $ 30.04.2001 DJ
-		   функция вызывается для обновления кейбара; если возвращает FALSE,
-		   используется стандартный кейбар
+		/*
+			$ 30.04.2001 DJ
+			функция вызывается для обновления кейбара; если возвращает FALSE,
+			используется стандартный кейбар
 		*/
 		virtual BOOL UpdateKeyBar() { return FALSE; };
 

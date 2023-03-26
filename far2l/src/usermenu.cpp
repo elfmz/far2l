@@ -62,9 +62,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(PROJECT_DI_MEMOEDIT)
 /*
-  Идея в следующем.
-  1. Строки в реестре храняться как и раньше, т.к. CommandXXX
-  2. Для DI_MEMOEDIT мы из только преобразовываем в один массив
+	Идея в следующем.
+	1. Строки в реестре храняться как и раньше, т.к. CommandXXX
+	2. Для DI_MEMOEDIT мы из только преобразовываем в один массив
 */
 #endif
 
@@ -234,6 +234,11 @@ void MenuFileToReg(const wchar_t *MenuKey, File& MenuFile, GetFileString& GetStr
 
 		SingleItemMenu=false;
 	}
+}
+
+void UserMenu::Present(bool ChoiceMenuType)
+{
+	UserMenu Menu(ChoiceMenuType);
 }
 
 UserMenu::UserMenu(bool ChoiceMenuType)
@@ -663,7 +668,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 					}
 					break;
 					//case KEY_ALTSHIFTF4:  // редактировать только текущий пункт (если субменю - то все субменю)
-					case KEY_CTRLF4:       // редактировать все меню
+					case KEY_CTRLF4:        // редактировать все меню
 					{
 						(*FrameManager)[0]->Unlock();
 						FARString strMenuFileName;
@@ -720,10 +725,12 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 						return 0; // Закрыть меню
 					}
-					/* $ 28.06.2000 tran
-					выход из пользовательского меню по ShiftF10 из любого уровня
-					вложенности просто задаем ExitCode -1, и возвращаем FALSE -
-					по FALSE оно и выйдет откуда угодно */
+					/*
+						$ 28.06.2000 tran
+						выход из пользовательского меню по ShiftF10 из любого уровня
+						вложенности просто задаем ExitCode -1, и возвращаем FALSE -
+						по FALSE оно и выйдет откуда угодно
+					*/
 					case KEY_SHIFTF10:
 						//UserMenu.SetExitCode(-1);
 						return(EC_CLOSE_MENU);
@@ -748,7 +755,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 		}
 
 		if (ExitCode<0 || ExitCode>=NumLine)
-			return(EC_CLOSE_LEVEL); //  вверх на один уровень
+			return(EC_CLOSE_LEVEL); // вверх на один уровень
 
 		FARString strCurrentKey;
 		strCurrentKey.Format(L"%ls/Item%d",MenuKey,ExitCode);
@@ -817,14 +824,14 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 			if (!((!StrCmpNI(strCommand,L"REM",3) && IsSpaceOrEos(strCommand.At(3))) || !StrCmpNI(strCommand,L"::",2)))
 			{
 				/*
-				  Осталось корректно обработать ситуацию, например:
-				  if exist !#!\!^!.! far:edit < diff -c -p !#!\!^!.! !\!.!
-				  Т.е. сначала "вычислить" кусок "if exist !#!\!^!.!", ну а если
-				  выполнится, то делать дальше.
-				  Или еще пример,
-				  if exist ..\a.bat D:\FAR\170\DIFF.MY\mkdiff.bat !?&Номер патча?!
-				  ЭТО выполняется всегда, т.к. парсинг всей строки идет, а надо
-				  проверить фазу "if exist ..\a.bat", а уж потом делать выводы...
+					Осталось корректно обработать ситуацию, например:
+					if exist !#!\!^!.! far:edit < diff -c -p !#!\!^!.! !\!.!
+					Т.е. сначала "вычислить" кусок "if exist !#!\!^!.!", ну а если
+					выполнится, то делать дальше.
+					Или еще пример,
+					if exist ..\a.bat D:\FAR\170\DIFF.MY\mkdiff.bat !?&Номер патча?!
+					ЭТО выполняется всегда, т.к. парсинг всей строки идет, а надо
+					проверить фазу "if exist ..\a.bat", а уж потом делать выводы...
 				*/
 				{
 					/* $ 01.05.2001 IS Отключим до лучших времен */
@@ -887,7 +894,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t
 
 		CtrlObject->CmdLine->LockUpdatePanel(FALSE);
 
-		if (!strOldCmdLine.IsEmpty())  // восстановим сохраненную командную строку
+		if (!strOldCmdLine.IsEmpty()) // восстановим сохраненную командную строку
 		{
 			CtrlObject->CmdLine->SetString(strOldCmdLine, FrameManager->IsPanelsActive());
 			CtrlObject->CmdLine->SetCurPos(OldCmdLineCurPos, OldCmdLineLeftPos);
@@ -1085,7 +1092,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool
 			while (s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
 			{
 				strBuffer+=strCommand;
-				strBuffer+=L"\n";    //??? "\n\r"
+				strBuffer+=L"\n";        //??? "\n\r"
 				CommandNumber++;
 			}
 

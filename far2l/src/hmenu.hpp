@@ -62,8 +62,10 @@ class HMenu: public Modal
 	private:
 		virtual void DisplayObject();
 		void ShowMenu();
-		void ProcessSubMenu(struct MenuDataEx *Data,int DataCount,const wchar_t *SubMenuHelp,
-		                    int X,int Y,int &Position);
+		void ProcessSubMenu(
+			struct MenuDataEx *Data,int DataCount,const wchar_t *SubMenuHelp,
+			int X,int Y,int &Position
+		);
 		wchar_t GetHighlights(const struct HMenuData *_item);
 		int CheckHighlights(WORD CheckSymbol,int StartPos=0);
 

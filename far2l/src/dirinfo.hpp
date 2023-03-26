@@ -45,9 +45,9 @@ enum GETDIRINFOFLAGS
 };
 
 int GetDirInfo(const wchar_t *Title,const wchar_t *DirName,uint32_t&DirCount,
-               uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize,
-               uint32_t &ClusterSize,clock_t MsgWaitTime, FileFilter *Filter,
-               DWORD Flags=GETDIRINFO_SCANSYMLINKDEF);
+	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize,
+	uint32_t &ClusterSize,clock_t MsgWaitTime, FileFilter *Filter,
+	DWORD Flags=GETDIRINFO_SCANSYMLINKDEF);
 
 int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
-                     uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize);
+	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize);

@@ -26,8 +26,10 @@ TempFileHolder::~TempFileHolder()
 	{
 		std::lock_guard<std::mutex> lock(s_temp_file_holders);
 		s_temp_file_holders.erase(this);
-		// if somehow there'is some another holder for same file then
-		// don't delete it now, let that another delete it on release
+		/*
+			if somehow there'is some another holder for same file then
+			don't delete it now, let that another delete it on release
+		*/
 		for (const auto &another : s_temp_file_holders) {
 			if (another->_temp_file_name == _temp_file_name) {
 				_delete = DONT_DELETE;
@@ -47,8 +49,9 @@ TempFileHolder::~TempFileHolder()
 void TempFileHolder::OnFileEdited(const wchar_t *FileName)
 {
 	if (TempFileName() == FileName) {
-		/* $ 11.10.2001 IS
-		   Если было произведено сохранение с любым результатом, то не удалять файл
+		/*
+			$ 11.10.2001 IS
+			Если было произведено сохранение с любым результатом, то не удалять файл
 		*/
 		_delete = DONT_DELETE;
 	}

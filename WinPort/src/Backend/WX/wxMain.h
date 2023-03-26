@@ -158,7 +158,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 
 public:
-    WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
+	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);
 	virtual ~WinPortPanel();
 	void GetAlignmentGaps(int &horz, int &vert);
 	void OnChar( wxKeyEvent& event );
@@ -182,7 +182,7 @@ struct WinState
 
 class WinPortFrame: public wxFrame
 {
-    wxDECLARE_EVENT_TABLE();
+	wxDECLARE_EVENT_TABLE();
 
 	enum {
 		ID_CTRL_BASE = 1,

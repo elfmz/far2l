@@ -69,19 +69,23 @@ static void DrawGetDirInfoMsg(const wchar_t *Title,const wchar_t *Name,const UIN
 static void PR_DrawGetDirInfoMsg()
 {
 	PreRedrawItem preRedrawItem=PreRedraw.Peek();
-	DrawGetDirInfoMsg((const wchar_t*)preRedrawItem.Param.Param1,(const wchar_t *)preRedrawItem.Param.Param2,reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3));
+	DrawGetDirInfoMsg(
+		(const wchar_t*)preRedrawItem.Param.Param1,
+		(const wchar_t *)preRedrawItem.Param.Param2,
+		reinterpret_cast<const UINT64>(preRedrawItem.Param.Param3)
+	);
 }
 
 int GetDirInfo(const wchar_t *Title,
-               const wchar_t *DirName,
-               uint32_t &DirCount,
-               uint32_t &FileCount,
-               uint64_t &FileSize,
-               uint64_t &PhysicalSize,
-               uint32_t &ClusterSize,
-               clock_t MsgWaitTime,
-               FileFilter *Filter,
-               DWORD Flags)
+	const wchar_t *DirName,
+	uint32_t &DirCount,
+	uint32_t &FileCount,
+	uint64_t &FileSize,
+	uint64_t &PhysicalSize,
+	uint32_t &ClusterSize,
+	clock_t MsgWaitTime,
+	FileFilter *Filter,
+	DWORD Flags)
 {
 	FARString strFullDirName;
 	FARString strFullName, strCurDirName, strLastDirName;
@@ -94,8 +98,9 @@ int GetDirInfo(const wchar_t *Title,
 	FAR_FIND_DATA_EX FindData;
 	clock_t StartTime=GetProcessUptimeMSec();
 	SetCursorType(FALSE,0);
-	/* $ 20.03.2002 DJ
-	   для . - покажем имя родительского каталога
+	/*
+		$ 20.03.2002 DJ
+		для . - покажем имя родительского каталога
 	*/
 	const wchar_t *ShowDirName = DirName;
 
@@ -194,8 +199,10 @@ int GetDirInfo(const wchar_t *Title,
 
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			// Счётчик каталогов наращиваем только если не включен фильтр,
-			// в противном случае это будем делать в подсчёте количества файлов
+			/*
+				Счётчик каталогов наращиваем только если не включен фильтр,
+				в противном случае это будем делать в подсчёте количества файлов
+			*/
 			if (!(Flags&GETDIRINFO_USEFILTER))
 			{
 				DirCount++;
@@ -204,9 +211,11 @@ int GetDirInfo(const wchar_t *Title,
 			}
 			else
 			{
-				// Если каталог не попадает под фильтр то его надо полностью
-				// пропустить - иначе при включенном подсчёте total
-				// он учтётся (mantis 551)
+				/*
+					Если каталог не попадает под фильтр то его надо полностью
+					пропустить - иначе при включенном подсчёте total
+					он учтётся (mantis 551)
+				*/
 				if (Filter->FileInFilter(FindData))
 				{
 					if (!Opt.OnlyFilesSize)
@@ -218,8 +227,9 @@ int GetDirInfo(const wchar_t *Title,
 		}
 		else
 		{
-			/* $ 17.04.2005 KM
-			   Проверка попадания файла в условия фильра
+			/*
+				$ 17.04.2005 KM
+				Проверка попадания файла в условия фильра
 			*/
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
@@ -227,9 +237,11 @@ int GetDirInfo(const wchar_t *Title,
 					continue;
 			}
 
-			// Наращиваем счётчик каталогов при включенном фильтре только тогда,
-			// когда в таком каталоге найден файл, удовлетворяющий условиям
-			// фильтра.
+			/*
+				Наращиваем счётчик каталогов при включенном фильтре только тогда,
+				когда в таком каталоге найден файл, удовлетворяющий условиям
+				фильтра.
+			*/
 			if ((Flags&GETDIRINFO_USEFILTER))
 			{
 				strCurDirName = strFullName;
@@ -252,7 +264,7 @@ int GetDirInfo(const wchar_t *Title,
 
 
 int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
-                     uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize)
+	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize)
 {
 	PluginPanelItem *PanelItem=nullptr;
 	int ItemsNumber,ExitCode;
@@ -273,7 +285,7 @@ int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
 				FileCount++;
 				FileSize+=PanelItem[I].FindData.nFileSize;
 				PhysicalSize+= PanelItem[I].FindData.nPhysicalSize
-					? PanelItem[I].FindData.nPhysicalSize : PanelItem[I].FindData.nPhysicalSize;
+					? PanelItem[I].FindData.nPhysicalSize : PanelItem[I].FindData.nFileSize;
 			}
 		}
 	}

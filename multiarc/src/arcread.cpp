@@ -42,9 +42,9 @@ int PluginClass::PreReadArchive(const char *Name)
 
 static void SanitizeString(std::string &s)
 {
-	while (!s.empty() && !s.back()) {
-		s.pop_back();
-	}
+  while (!s.empty() && !s.back()) {
+    s.pop_back();
+  }
 }
 
 int PluginClass::ReadArchive(const char *Name,int OpMode)
@@ -333,7 +333,7 @@ bool PluginClass::FarLangChanged()
   const char *tmplang = getenv("FARLANG");
 
   if (!tmplang)
-	  tmplang = "English";
+    tmplang = "English";
 
   if (!strcmp(tmplang, farlang))
     return false;

@@ -52,8 +52,8 @@ struct StackHelpData
 	int   TopStr;                 // номер верхней видимой строки темы
 	int   CurX,CurY;              // координаты (???)
 
-	FARString strHelpMask;           // значение маски
-	FARString strHelpPath;           // путь к хелпам
+	FARString strHelpMask;          // значение маски
+	FARString strHelpPath;          // путь к хелпам
 	FARString strHelpTopic;         // текущий топик
 	FARString strSelTopic;          // выделенный топик (???)
 
@@ -96,6 +96,7 @@ class HelpRecord
 		{
 			if (this != &rhs)
 			{
+				free(HelpStr);
 				HelpStr = wcsdup(rhs.HelpStr);
 			}
 
@@ -114,7 +115,7 @@ class HelpRecord
 
 		~HelpRecord()
 		{
-			if (HelpStr) free(HelpStr);
+			free(HelpStr);
 		}
 };
 
@@ -173,6 +174,8 @@ class Help:public Frame
 	public:
 		Help(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
 		virtual ~Help();
+
+		static void Present(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
 
 	public:
 		virtual void Hide();

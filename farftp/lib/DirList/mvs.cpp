@@ -262,8 +262,8 @@ BOOL WINAPI idPRParceMVS(const FTPServerInfo* Server, FTPFileInfo* p, char *entr
 			ei.UnixMode[10]=0;
 
 			if(strncmp(ei.UnixMode,"VSAM",4)==0||
-			        strncmp(ei.UnixMode,"PATH",4)==0||
-			        strncmp(ei.UnixMode,"GDG",3)==0)
+					strncmp(ei.UnixMode,"PATH",4)==0||
+					strncmp(ei.UnixMode,"GDG",3)==0)
 				hidden=TRUE;
 		}
 

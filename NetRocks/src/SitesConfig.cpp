@@ -369,6 +369,7 @@ bool SitesConfigLocation::Export(const std::string &dst_dir, const std::string &
 		}
 
 		std::vector<std::string> children;
+		Enum(children);
 		for (const auto &child : children) {
 			if (!Export(item_fs_path, child, true, mv)) {
 				out = false;

@@ -105,11 +105,12 @@ ScreenObject* ScreenObject::GetOwner()
 
 void ScreenObject::SetPosition(int X1,int Y1,int X2,int Y2)
 {
-	/* $ 13.04.2002 KM
-	  - Раз меняем позицию объекта на экране, то тогда
-	    перед этим восстановим изображение под ним для
-	    предотвращения восстановления ранее сохранённого
-	    изображения в новом месте.
+	/*
+		$ 13.04.2002 KM
+		- Раз меняем позицию объекта на экране, то тогда
+		перед этим восстановим изображение под ним для
+		предотвращения восстановления ранее сохранённого
+		изображения в новом месте.
 	*/
 	if (SaveScr)
 	{
@@ -162,8 +163,10 @@ void ScreenObject::Hide()
 	}
 }
 
-/* $ 15.07.2000 tran
-   add ugly new method */
+/*
+	$ 15.07.2000 tran
+	add ugly new method
+*/
 void ScreenObject::Hide0()
 {
 	Flags.Clear(FSCROBJ_VISIBLE);
@@ -175,16 +178,16 @@ void ScreenObject::Show()
 	if (Locked())
 		return;
 
-//  _tran(SysLog(L"[%p] ScreenObject::Show()",this));
+//	_tran(SysLog(L"[%p] ScreenObject::Show()",this));
 	if (!Flags.Check(FSCROBJ_SETPOSITIONDONE))
 		return;
 
-//  if (Flags.Check(FSCROBJ_ISREDRAWING))
-//    return;
-//  Flags.Set(FSCROBJ_ISREDRAWING);
+//	if (Flags.Check(FSCROBJ_ISREDRAWING))
+//		return;
+//	Flags.Set(FSCROBJ_ISREDRAWING);
 	SavePrevScreen();
 	DisplayObject();
-//  Flags.Clear(FSCROBJ_ISREDRAWING);
+//	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
 

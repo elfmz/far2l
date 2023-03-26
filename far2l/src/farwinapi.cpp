@@ -345,8 +345,8 @@ HANDLE apiCreateFile(const wchar_t* Object, DWORD DesiredAccess, DWORD ShareMode
 }
 
 BOOL apiMoveFile(
-    const wchar_t *lpwszExistingFileName, // address of name of the existing file
-    const wchar_t *lpwszNewFileName   // address of new name for the file
+	const wchar_t *lpwszExistingFileName, // address of name of the existing file
+	const wchar_t *lpwszNewFileName       // address of new name for the file
 )
 {
 	BOOL Result = WINPORT(MoveFile)(lpwszExistingFileName, lpwszNewFileName);
@@ -354,9 +354,9 @@ BOOL apiMoveFile(
 }
 
 BOOL apiMoveFileEx(
-    const wchar_t *lpwszExistingFileName, // address of name of the existing file
-    const wchar_t *lpwszNewFileName,   // address of new name for the file
-    DWORD dwFlags   // flag to determine how to move file
+	const wchar_t *lpwszExistingFileName, // address of name of the existing file
+	const wchar_t *lpwszNewFileName,      // address of new name for the file
+	DWORD dwFlags                         // flag to determine how to move file
 )
 {
 	BOOL Result = WINPORT(MoveFileEx)(lpwszExistingFileName, lpwszNewFileName, dwFlags);
@@ -476,12 +476,12 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 }
 
 BOOL apiGetVolumeInformation(
-    const wchar_t *lpwszRootPathName,
-    FARString *pVolumeName,
-    DWORD64 *lpVolumeSerialNumber,
-    LPDWORD lpMaximumComponentLength,
-    LPDWORD lpFileSystemFlags,
-    FARString *pFileSystemName
+	const wchar_t *lpwszRootPathName,
+	FARString *pVolumeName,
+	DWORD64 *lpVolumeSerialNumber,
+	LPDWORD lpMaximumComponentLength,
+	LPDWORD lpFileSystemFlags,
+	FARString *pFileSystemName
 )
 {
 	struct statvfs svfs = {};
@@ -775,7 +775,7 @@ IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName)
 		}
 	}
 
-	if ( (s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
+	if ((s.st_mode & S_IFMT) == S_IFREG // calling sdc_fs_flags_get on special files useless and may stuck
 	&& sdc_fs_flags_get(um->target.c_str(), &um->target_flags) != -1
 	&& FS_FLAGS_CONTAIN_IMMUTABLE(um->target_flags)) {
 		if (sdc_fs_flags_set(um->target.c_str(), FS_FLAGS_WITHOUT_IMMUTABLE(um->target_flags)) != -1) {

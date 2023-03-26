@@ -166,7 +166,7 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
   if(RHCode!=0) {
       if(RHCode==ERAR_BAD_DATA)
          return GETARC_READERROR;//GETARC_BROKEN;
-      return GETARC_EOF;	  
+      return GETARC_EOF;
   }
 
   Wide2MB(HeaderData.FileNameW, wcsnlen(HeaderData.FileNameW, ARRAYSIZE(HeaderData.FileNameW)), Info->PathName);
@@ -176,19 +176,19 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
   //HeaderData.FileAttr is unreliable - sometimes its a UNIX mode, sometimes Windows attributes
   //so sync with directory attribute in HeaderData.Flags
   if (HeaderData.Flags & RHDF_DIRECTORY) {
-	  Info->dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
-	  switch (Info->dwUnixMode & S_IFMT) {
-		  case S_IFREG: case 0:
-			Info->dwUnixMode&= ~S_IFMT;
-			Info->dwUnixMode|= S_IFDIR;
-	  }
+    Info->dwFileAttributes|= FILE_ATTRIBUTE_DIRECTORY;
+    switch (Info->dwUnixMode & S_IFMT) {
+      case S_IFREG: case 0:
+      Info->dwUnixMode&= ~S_IFMT;
+      Info->dwUnixMode|= S_IFDIR;
+    }
   } else {
-	  Info->dwFileAttributes&= ~FILE_ATTRIBUTE_DIRECTORY;
-	  switch (Info->dwUnixMode & S_IFMT) {
-		  case S_IFDIR: case 0:
-			Info->dwUnixMode&= ~S_IFMT;
-			Info->dwUnixMode|= S_IFREG;
-	  }
+    Info->dwFileAttributes&= ~FILE_ATTRIBUTE_DIRECTORY;
+    switch (Info->dwUnixMode & S_IFMT) {
+      case S_IFDIR: case 0:
+      Info->dwUnixMode&= ~S_IFMT;
+      Info->dwUnixMode|= S_IFREG;
+    }
   }
   
   Info->nFileSize = HeaderData.UnpSizeHigh;
@@ -213,9 +213,9 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
     Info->DictSize=64;
   Info->UnpVer=(HeaderData.UnpVer/10)*256+(HeaderData.UnpVer%10);
   if ((PFCode=RARProcessFile(hArcData,RAR_SKIP,NULL,NULL))!=0) {
-	return (RHCode==ERAR_BAD_DATA) ? GETARC_BROKEN : GETARC_READERROR;
+    return (RHCode==ERAR_BAD_DATA) ? GETARC_BROKEN : GETARC_READERROR;
   }
-	
+
   return GETARC_SUCCESS;
 }
 

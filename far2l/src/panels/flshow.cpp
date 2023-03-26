@@ -124,7 +124,7 @@ void FileList::ShowFileList(int Fast)
 
 	if (Opt.ShowColumnTitles)
 	{
-//    SetScreen(X1+1,Y1+1,X2-1,Y1+1,' ',COL_PANELTEXT);
+//	SetScreen(X1+1,Y1+1,X2-1,Y1+1,' ',COL_PANELTEXT);
 		SetColor(COL_PANELTEXT); //???
 		//GotoXY(X1+1,Y1+1);
 		//FS<<fmt::Expand(X2-X1-1)<<L"";
@@ -190,8 +190,8 @@ void FileList::ShowFileList(int Fast)
 				strTitle = IDMessage;
 
 			if (PanelMode==PLUGIN_PANEL && Info.PanelModesArray &&
-			        ViewMode<Info.PanelModesNumber &&
-			        Info.PanelModesArray[ViewMode].ColumnTitles)
+				ViewMode<Info.PanelModesNumber &&
+				Info.PanelModesArray[ViewMode].ColumnTitles)
 			{
 				const wchar_t *NewTitle=Info.PanelModesArray[ViewMode].ColumnTitles[I];
 
@@ -237,16 +237,16 @@ void FileList::ShowFileList(int Fast)
 	if (Opt.ShowSortMode)
 	{
 		static int SortModes[]={UNSORTED,BY_NAME,BY_EXT,BY_MTIME,BY_CTIME,
-		                        BY_ATIME,BY_CHTIME,BY_SIZE,BY_DIZ,BY_OWNER,
-		                        BY_PHYSICALSIZE,BY_NUMLINKS,
-		                        BY_FULLNAME,BY_CUSTOMDATA
-		                       };
+			BY_ATIME,BY_CHTIME,BY_SIZE,BY_DIZ,BY_OWNER,
+			BY_PHYSICALSIZE,BY_NUMLINKS,
+			BY_FULLNAME,BY_CUSTOMDATA
+		};
 		static FarLangMsg SortStrings[]={Msg::MenuUnsorted,Msg::MenuSortByName,
-		                          Msg::MenuSortByExt,Msg::MenuSortByWrite,Msg::MenuSortByCreation,
-		                          Msg::MenuSortByAccess,Msg::MenuSortByChange,Msg::MenuSortBySize,Msg::MenuSortByDiz,Msg::MenuSortByOwner,
-		                          Msg::MenuSortByPhysicalSize,Msg::MenuSortByNumLinks,
-		                          Msg::MenuSortByFullName,Msg::MenuSortByCustomData
-		                         };
+			Msg::MenuSortByExt,Msg::MenuSortByWrite,Msg::MenuSortByCreation,
+			Msg::MenuSortByAccess,Msg::MenuSortByChange,Msg::MenuSortBySize,Msg::MenuSortByDiz,Msg::MenuSortByOwner,
+			Msg::MenuSortByPhysicalSize,Msg::MenuSortByNumLinks,
+			Msg::MenuSortByFullName,Msg::MenuSortByCustomData
+		};
 
 		for (size_t I=0; I<ARRAYSIZE(SortModes); I++)
 		{
@@ -308,10 +308,10 @@ void FileList::ShowFileList(int Fast)
 			*PtrOutCharacter++=L'^';
 
 		/*
-		    if(GetNumericSort())
-		      *PtrOutCharacter++=L'#';
-		    if(GetSortGroups())
-		      *PtrOutCharacter++=L'@';
+			if(GetNumericSort())
+				*PtrOutCharacter++=L'#';
+			if(GetSortGroups())
+				*PtrOutCharacter++=L'@';
 		*/
 		/*
 		if(GetCaseSensitiveSort())
@@ -415,7 +415,7 @@ void FileList::ShowFileList(int Fast)
 	}
 
 	if ((Opt.ShowPanelTotals || Opt.ShowPanelFree) &&
-	        (Opt.ShowPanelStatus || !SelFileCount))
+		(Opt.ShowPanelStatus || !SelFileCount))
 	{
 		ShowTotalSize(Info);
 	}
@@ -485,7 +485,7 @@ void FileList::ShowSelectedSize()
 		for (int I=0,ColumnPos=X1+1; I<ViewSettings.ColumnCount-1; I++)
 		{
 			if (ViewSettings.ColumnWidth[I]<0 ||
-			        (I==ViewSettings.ColumnCount-2 && ViewSettings.ColumnWidth[I+1]<0))
+				(I==ViewSettings.ColumnCount-2 && ViewSettings.ColumnWidth[I+1]<0))
 				continue;
 
 			ColumnPos+=ViewSettings.ColumnWidth[I];
@@ -542,8 +542,10 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 		strTotalStr.Format(Msg::ListFreeSize, !strFreeSize.IsEmpty() ? strFreeSize.CPtr():L"???");
 
 	SetColor(COL_PANELTOTALINFO);
-	/* $ 01.08.2001 VVM
-	  + Обрезаем строчку справа, а не слева */
+	/*
+		$ 01.08.2001 VVM
+		+ Обрезаем строчку справа, а не слева
+	*/
 	TruncStrFromEnd(strTotalStr, X2-X1-1);
 	Length=(int)strTotalStr.GetLength();
 	GotoXY(X1+(X2-X1+1-Length)/2,Y2);
@@ -603,10 +605,10 @@ int FileList::ConvertName(const wchar_t *SrcName,FARString &strDest,int MaxLengt
 	const wchar_t *DotPtr;
 
 	if (!ShowStatus &&
-	        ((!(FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.AlignExtensions) || ((FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.FolderAlignExtensions))
-	        && SrcVisualLength<=MaxLength &&
-	        (DotPtr=wcsrchr(SrcName,L'.')) && DotPtr!=SrcName &&
-	        (SrcName[0]!=L'.' || SrcName[2]) && !wcschr(DotPtr+1,L' '))
+		((!(FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.AlignExtensions) || ((FileAttr&FILE_ATTRIBUTE_DIRECTORY) && ViewSettings.FolderAlignExtensions))
+		&& SrcVisualLength<=MaxLength &&
+		(DotPtr=wcsrchr(SrcName,L'.')) && DotPtr!=SrcName &&
+		(SrcName[0]!=L'.' || SrcName[2]) && !wcschr(DotPtr+1,L' '))
 	{
 		int DotLength=StrLength(DotPtr+1);
 		int NameLength=DotLength?(int)(DotPtr-SrcName):SrcLength;
@@ -652,20 +654,20 @@ void FileList::PrepareViewSettings(int ViewMode,OpenPluginInfo *PlugInfo)
 	if (PanelMode==PLUGIN_PANEL)
 	{
 		if (Info.PanelModesArray && ViewMode<Info.PanelModesNumber &&
-		        Info.PanelModesArray[ViewMode].ColumnTypes &&
-		        Info.PanelModesArray[ViewMode].ColumnWidths)
+			Info.PanelModesArray[ViewMode].ColumnTypes &&
+			Info.PanelModesArray[ViewMode].ColumnWidths)
 		{
 			TextToViewSettings(Info.PanelModesArray[ViewMode].ColumnTypes,
-			                   Info.PanelModesArray[ViewMode].ColumnWidths,
-			                   ViewSettings.ColumnType,ViewSettings.ColumnWidth,
-			                   ViewSettings.ColumnWidthType,ViewSettings.ColumnCount);
+				Info.PanelModesArray[ViewMode].ColumnWidths,
+				ViewSettings.ColumnType,ViewSettings.ColumnWidth,
+				ViewSettings.ColumnWidthType,ViewSettings.ColumnCount);
 
 			if (Info.PanelModesArray[ViewMode].StatusColumnTypes &&
-			        Info.PanelModesArray[ViewMode].StatusColumnWidths)
+					Info.PanelModesArray[ViewMode].StatusColumnWidths)
 				TextToViewSettings(Info.PanelModesArray[ViewMode].StatusColumnTypes,
-				                   Info.PanelModesArray[ViewMode].StatusColumnWidths,
-				                   ViewSettings.StatusColumnType,ViewSettings.StatusColumnWidth,
-				                   ViewSettings.StatusColumnWidthType,ViewSettings.StatusColumnCount);
+					Info.PanelModesArray[ViewMode].StatusColumnWidths,
+					ViewSettings.StatusColumnType,ViewSettings.StatusColumnWidth,
+					ViewSettings.StatusColumnWidthType,ViewSettings.StatusColumnCount);
 			else if (Info.PanelModesArray[ViewMode].DetailedStatus)
 			{
 				ViewSettings.StatusColumnType[0]=COLUMN_RIGHTALIGN|NAME_COLUMN;
@@ -728,14 +730,14 @@ void FileList::PrepareViewSettings(int ViewMode,OpenPluginInfo *PlugInfo)
 int FileList::PreparePanelView(PanelViewSettings *PanelView)
 {
 	PrepareColumnWidths(PanelView->StatusColumnType,PanelView->StatusColumnWidth,PanelView->StatusColumnWidthType,
-	                    PanelView->StatusColumnCount,PanelView->FullScreen);
+		PanelView->StatusColumnCount,PanelView->FullScreen);
 	return(PrepareColumnWidths(PanelView->ColumnType,PanelView->ColumnWidth,PanelView->ColumnWidthType,
-	                           PanelView->ColumnCount,PanelView->FullScreen));
+		PanelView->ColumnCount,PanelView->FullScreen));
 }
 
 
 int FileList::PrepareColumnWidths(unsigned int *ColumnTypes,int *ColumnWidths,
-                                  int *ColumnWidthsTypes,int &ColumnCount,int FullScreen)
+	int *ColumnWidthsTypes,int &ColumnCount,int FullScreen)
 {
 	int TotalWidth,TotalPercentWidth,TotalPercentCount,ZeroLengthCount,EmptyColumns,I;
 	ZeroLengthCount=EmptyColumns=0;

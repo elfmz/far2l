@@ -30,11 +30,11 @@
 
 const union cptable *wine_cp_get_table( unsigned int codepage );
 /***********************************************************************
- *		get_codepage_table
+ * get_codepage_table
  *
  * Find the table for a given codepage, handling CP_ACP etc. pseudo-codepages
  */
 const union cptable *get_codepage_table( unsigned int codepage )
 {
-	return wine_cp_get_table( codepage );
+    return wine_cp_get_table( codepage );
 }

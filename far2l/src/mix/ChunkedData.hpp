@@ -1,8 +1,9 @@
 #pragma once
 
-/** This class can be used to pack sequence of data chunks into preallocated memory
- *  or (if NULL ptr specified) to estimate size of memory needed for such packing.
- */
+/**
+	This class can be used to pack sequence of data chunks into preallocated memory
+	or (if NULL ptr specified) to estimate size of memory needed for such packing.
+*/
 
 class ChunkedData
 {

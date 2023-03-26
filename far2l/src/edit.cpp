@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
 #include "VT256ColorTable.h"
-#include  <cwctype>
+#include <cwctype>
 
 static int Recurse=0;
 
@@ -159,7 +159,12 @@ DWORD Edit::SetCodePage(UINT codepage)
 		if (Str && *Str)
 		{
 			//m_codepage = codepage;
-			int length = WINPORT(WideCharToMultiByte)(m_codepage, wc2mbFlags, Str, StrSize, nullptr, 0, nullptr, lpUsedDefaultChar);
+			int length = WINPORT(WideCharToMultiByte)(
+				m_codepage, wc2mbFlags,
+				Str, StrSize,
+				nullptr, 0,
+				nullptr, lpUsedDefaultChar
+			);
 
 			if (UsedDefaultChar)
 				Ret|=SETCP_WC2MBERROR;
@@ -215,20 +220,22 @@ void Edit::DisplayObject()
 {
 	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
 	{
-		Flags.Clear(FEDITLINE_CLEARFLAG);  // при дроп-даун нам не нужно никакого unchanged text
+		Flags.Clear(FEDITLINE_CLEARFLAG); // при дроп-даун нам не нужно никакого unchanged text
 		SelStart=0;
 		SelEnd=StrSize; // а также считаем что все выделено -
-		//    надо же отличаться от обычных Edit
+		// надо же отличаться от обычных Edit
 	}
 
-	//   Вычисление нового положения курсора в строке с учётом Mask.
+	// Вычисление нового положения курсора в строке с учётом Mask.
 	int Value=(PrevCurPos>CurPos)?-1:1;
 	CurPos=GetNextCursorPos(CurPos,Value);
 	FastShow();
 
-	/* $ 26.07.2000 tran
-	   при DropDownBox курсор выключаем
-	   не знаю даже - попробовал но не очень красиво вышло */
+	/*
+		$ 26.07.2000 tran
+		при DropDownBox курсор выключаем
+		не знаю даже - попробовал но не очень красиво вышло
+	*/
 	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
 		::SetCursorType(0,10);
 	else
@@ -262,7 +269,7 @@ void Edit::GetCursorType(bool& Visible, DWORD& Size)
 	Size=CursorSize;
 }
 
-//   Вычисление нового положения курсора в строке с учётом Mask.
+// Вычисление нового положения курсора в строке с учётом Mask.
 int Edit::GetNextCursorPos(int Position,int Where)
 {
 	int Result=Position;
@@ -332,18 +339,21 @@ void Edit::FastShow()
 
 	int CellCurPos=GetCellCurPos();
 
-	/* $ 31.07.2001 KM
-	  ! Для комбобокса сделаем отображение строки
-	    с первой позиции.
+	/*
+		$ 31.07.2001 KM
+		! Для комбобокса сделаем отображение строки
+		с первой позиции.
 	*/
 	int RealLeftPos = -1;
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 	{
 		if (CellCurPos - LeftPos > EditLength - 1)
 		{
-			// tricky left pos shifting to
-			// - avoid LeftPos pointing into middle of full-width char cells pair
-			// - ensure RealLeftPos really shifted in case string starts by some long character
+			/*
+				tricky left pos shifting to
+				- avoid LeftPos pointing into middle of full-width char cells pair
+				- ensure RealLeftPos really shifted in case string starts by some long character
+			*/
 			for (int ShiftBy = 1; ShiftBy <= std::max(TabSize, 2); ++ShiftBy)
 			{
 				RealLeftPos = CellPosToReal(CellCurPos - EditLength + ShiftBy);
@@ -367,10 +377,11 @@ void Edit::FastShow()
 	int CellSelStart=(SelStart==-1) ? -1:RealPosToCell(SelStart);
 	int CellSelEnd=(SelEnd<0) ? -1:RealPosToCell(SelEnd);
 
-	/* $ 17.08.2000 KM
-	   Если есть маска, сделаем подготовку строки, то есть
-	   все "постоянные" символы в маске, не являющиеся шаблонными
-	   должны постоянно присутствовать в Str
+	/*
+		$ 17.08.2000 KM
+		Если есть маска, сделаем подготовку строки, то есть
+		все "постоянные" символы в маске, не являющиеся шаблонными
+		должны постоянно присутствовать в Str
 	*/
 	if (Mask && *Mask)
 		RefreshStrByMask();
@@ -471,12 +482,13 @@ void Edit::FastShow()
 			OutStr.emplace(OutStr.begin() + OutStr.size() - 1, L' ');
 		}
 
-		/* $ 24.08.2000 SVS
-		   ! У DropDowList`а выделение по полной программе - на всю видимую длину
-		     ДАЖЕ ЕСЛИ ПУСТАЯ СТРОКА
+		/*
+			$ 24.08.2000 SVS
+			! У DropDowList`а выделение по полной программе - на всю видимую длину
+			ДАЖЕ ЕСЛИ ПУСТАЯ СТРОКА
 		*/
 		if (CellSelStart>=EditLength /*|| !AllString && CellSelStart>=StrSize*/ ||
-		        CellSelEnd<CellSelStart)
+			CellSelEnd<CellSelStart)
 		{
 			if (Flags.Check(FEDITLINE_DROPDOWNBOX))
 			{
@@ -493,7 +505,9 @@ void Edit::FastShow()
 
 			if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 			{
-				FS << fmt::Cells() << fmt::Skip(CellSelStart) << fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data();
+				FS
+					<< fmt::Cells() << fmt::Skip(CellSelStart)
+					<< fmt::Truncate(CellSelEnd - CellSelStart) << OutStr.data();
 
 				if (CellSelEnd < EditLength)
 				{
@@ -509,8 +523,10 @@ void Edit::FastShow()
 		}
 	}
 
-	/* $ 26.07.2000 tran
-	   при дроп-даун цвета нам не нужны */
+	/*
+		$ 26.07.2000 tran
+		при дроп-даун цвета нам не нужны
+	*/
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX))
 		ApplyColor();
 }
@@ -591,7 +607,7 @@ int64_t Edit::VMProcess(int OpCode,void *vParam,int64_t iParam)
 
 			switch (Action)
 			{
-				case 0:  // Get Param
+				case 0: // Get Param
 				{
 					switch (iParam)
 					{
@@ -602,13 +618,13 @@ int64_t Edit::VMProcess(int OpCode,void *vParam,int64_t iParam)
 							return IsSelection()?SelStart+1:0;
 						case 3:  // return LastPos
 							return IsSelection()?SelEnd:0;
-						case 4: // return block type (0=nothing 1=stream, 2=column)
+						case 4:  // return block type (0=nothing 1=stream, 2=column)
 							return IsSelection()?1:0;
 					}
 
 					break;
 				}
-				case 1:  // Set Pos
+				case 1: // Set Pos
 				{
 					if (IsSelection())
 					{
@@ -631,12 +647,12 @@ int64_t Edit::VMProcess(int OpCode,void *vParam,int64_t iParam)
 				{
 					switch (iParam)
 					{
-						case 0:  // selection start
+						case 0: // selection start
 						{
 							MSelStart=GetCurPos();
 							return 1;
 						}
-						case 1:  // selection finish
+						case 1: // selection finish
 						{
 							if (MSelStart != -1)
 							{
@@ -749,16 +765,26 @@ int Edit::ProcessKey(int Key)
 		Flags.Swap(FEDITLINE_READONLY);
 	}
 
-	/* $ 26.07.2000 SVS
-	   Bugs #??
-	     В строках ввода при выделенном блоке нажимаем BS и вместо
-	     ожидаемого удаления блока (как в редакторе) получаем:
-	       - символ перед курсором удален
-	       - выделение блока снято
+	/*
+		$ 26.07.2000 SVS
+		Bugs #??
+		В строках ввода при выделенном блоке нажимаем BS и вместо
+		ожидаемого удаления блока (как в редакторе) получаем:
+		- символ перед курсором удален
+		- выделение блока снято
 	*/
-	if ((((Key==KEY_BS || Key==KEY_DEL || Key==KEY_NUMDEL) && Flags.Check(FEDITLINE_DELREMOVESBLOCKS)) || Key==KEY_CTRLD) &&
-	        !Flags.Check(FEDITLINE_EDITORMODE) && SelStart!=-1 && SelStart<SelEnd)
-	{
+	if (
+		(
+			(
+				(Key==KEY_BS || Key==KEY_DEL || Key==KEY_NUMDEL) &&
+				Flags.Check(FEDITLINE_DELREMOVESBLOCKS)
+			) ||
+			Key==KEY_CTRLD
+		) &&
+		!Flags.Check(FEDITLINE_EDITORMODE) &&
+		SelStart!=-1 &&
+		SelStart<SelEnd
+	) {
 		DeleteBlock();
 		Show();
 		return TRUE;
@@ -768,22 +794,28 @@ int Edit::ProcessKey(int Key)
 
 	// $ 04.07.2000 IG - добавлена проврерка на запуск макроса (00025.edit.cpp.txt)
 	if (!ShiftPressed && (!_Macro_IsExecuting || (IsNavKey(Key) && _Macro_IsExecuting)) &&
-	        !IsShiftKey(Key) && !Recurse &&
-	        Key!=KEY_SHIFT && Key!=KEY_CTRL && Key!=KEY_ALT &&
-	        Key!=KEY_RCTRL && Key!=KEY_RALT && Key!=KEY_NONE &&
-	        Key!=KEY_INS &&
-	        Key!=KEY_KILLFOCUS && Key != KEY_GOTFOCUS &&
-	        ((Key&(~KEY_CTRLMASK)) != KEY_LWIN && (Key&(~KEY_CTRLMASK)) != KEY_RWIN && (Key&(~KEY_CTRLMASK)) != KEY_APPS)
-	   )
+		!IsShiftKey(Key) && !Recurse &&
+		Key!=KEY_SHIFT && Key!=KEY_CTRL && Key!=KEY_ALT &&
+		Key!=KEY_RCTRL && Key!=KEY_RALT && Key!=KEY_NONE &&
+		Key!=KEY_INS &&
+		Key!=KEY_KILLFOCUS && Key != KEY_GOTFOCUS &&
+		((Key&(~KEY_CTRLMASK)) != KEY_LWIN && (Key&(~KEY_CTRLMASK)) != KEY_RWIN && (Key&(~KEY_CTRLMASK)) != KEY_APPS)
+	)
 	{
 		Flags.Clear(FEDITLINE_MARKINGBLOCK); // хмм... а это здесь должно быть?
 
-		if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) && !(Key==KEY_CTRLINS || Key==KEY_CTRLNUMPAD0) &&
-		        !(Key==KEY_SHIFTDEL||Key==KEY_SHIFTNUMDEL||Key==KEY_SHIFTDECIMAL) && !Flags.Check(FEDITLINE_EDITORMODE) && Key != KEY_CTRLQ &&
-		        !(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)) //Key != KEY_SHIFTINS) //??
+		if (
+			!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) &&
+			!(Key==KEY_CTRLINS || Key==KEY_CTRLNUMPAD0) &&
+			!(Key==KEY_SHIFTDEL||Key==KEY_SHIFTNUMDEL||Key==KEY_SHIFTDECIMAL) &&
+			!Flags.Check(FEDITLINE_EDITORMODE) &&
+			Key != KEY_CTRLQ &&
+			!(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)
+		) //Key != KEY_SHIFTINS) //??
 		{
-			/* $ 12.11.2002 DJ
-			   зачем рисоваться, если ничего не изменилось?
+			/*
+				$ 12.11.2002 DJ
+				зачем рисоваться, если ничего не изменилось?
 			*/
 			if (SelStart != -1 || SelEnd )
 			{
@@ -795,27 +827,32 @@ int Edit::ProcessKey(int Key)
 		}
 	}
 
-	/* $ 11.09.2000 SVS
-	   если Opt.DlgEULBsClear = 1, то BS в диалогах для UnChanged строки
-	   удаляет такую строку также, как и Del
+	/*
+		$ 11.09.2000 SVS
+		если Opt.DlgEULBsClear = 1, то BS в диалогах для UnChanged строки
+		удаляет такую строку также, как и Del
 	*/
 	if (((Opt.Dialogs.EULBsClear && Key==KEY_BS) || Key==KEY_DEL || Key==KEY_NUMDEL) &&
-	        Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize)
+			Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize)
 		Key=KEY_CTRLY;
 
-	/* $ 15.09.2000 SVS
-	   Bug - Выделяем кусочек строки -> Shift-Del удяляет всю строку
-	         Так должно быть только для UnChanged состояния
+	/*
+		$ 15.09.2000 SVS
+		Bug - Выделяем кусочек строки -> Shift-Del удяляет всю строку
+		Так должно быть только для UnChanged состояния
 	*/
-	if ((Key == KEY_SHIFTDEL || Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL) && Flags.Check(FEDITLINE_CLEARFLAG) && CurPos>=StrSize && SelStart==-1)
-	{
+	if (
+		(Key == KEY_SHIFTDEL || Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL) &&
+		Flags.Check(FEDITLINE_CLEARFLAG) &&
+		CurPos>=StrSize && SelStart==-1
+	) {
 		SelStart=0;
 		SelEnd=StrSize;
 	}
 
 	if (Flags.Check(FEDITLINE_CLEARFLAG) && ((Key <= 0xFFFF && Key!=KEY_BS) || Key==KEY_CTRLBRACKET ||
-	        Key==KEY_CTRLBACKBRACKET || Key==KEY_CTRLSHIFTBRACKET ||
-	        Key==KEY_CTRLSHIFTBACKBRACKET || Key==KEY_SHIFTENTER || Key==KEY_SHIFTNUMENTER))
+		Key==KEY_CTRLBACKBRACKET || Key==KEY_CTRLSHIFTBRACKET ||
+		Key==KEY_CTRLSHIFTBACKBRACKET || Key==KEY_SHIFTENTER || Key==KEY_SHIFTNUMENTER))
 	{
 		LeftPos=0;
 		SetString(L"");
@@ -829,12 +866,18 @@ int Edit::ProcessKey(int Key)
 		return TRUE;
 	}
 
-	if (Key!=KEY_NONE && Key!=KEY_IDLE && Key!=KEY_SHIFTINS && Key!=KEY_SHIFTNUMPAD0 && Key!=KEY_CTRLINS &&
-	        ((unsigned int)Key<KEY_F1 || (unsigned int)Key>KEY_F12) && Key!=KEY_ALT && Key!=KEY_SHIFT &&
-	        Key!=KEY_CTRL && Key!=KEY_RALT && Key!=KEY_RCTRL &&
-	        (Key<KEY_ALT_BASE || Key > KEY_ALT_BASE+0xFFFF) && // ???? 256 ???
-	        !(((unsigned int)Key>=KEY_MACRO_BASE && (unsigned int)Key<=KEY_MACRO_ENDBASE) || ((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)) && Key!=KEY_CTRLQ)
-	{
+	if (
+		Key!=KEY_NONE && Key!=KEY_IDLE &&
+		Key!=KEY_SHIFTINS && Key!=KEY_SHIFTNUMPAD0 &&
+		Key!=KEY_CTRLINS && ((unsigned int)Key<KEY_F1 || (unsigned int)Key>KEY_F12) &&
+		Key!=KEY_ALT && Key!=KEY_SHIFT &&
+		Key!=KEY_CTRL && Key!=KEY_RALT &&
+		Key!=KEY_RCTRL && (Key<KEY_ALT_BASE || Key > KEY_ALT_BASE+0xFFFF) && // ???? 256 ???
+		!(
+			((unsigned int)Key>=KEY_MACRO_BASE && (unsigned int)Key<=KEY_MACRO_ENDBASE) ||
+			((unsigned int)Key>=KEY_OP_BASE && (unsigned int)Key <=KEY_OP_ENDBASE)
+		) && Key!=KEY_CTRLQ
+	) {
 		Flags.Clear(FEDITLINE_CLEARFLAG);
 		Show();
 	}
@@ -907,10 +950,10 @@ int Edit::ProcessKey(int Key)
 				RecurseProcessKey(KEY_SHIFTLEFT);
 
 			while (CurPos>0 && !(!IsWordDiv(WordDiv(), Str[CurPos]) &&
-			                     IsWordDiv(WordDiv(),Str[CurPos-1]) && !IsSpace(Str[CurPos])))
+				IsWordDiv(WordDiv(),Str[CurPos-1]) && !IsSpace(Str[CurPos])))
 			{
 				if (!IsSpace(Str[CurPos]) && (IsSpace(Str[CurPos-1]) ||
-				                              IsWordDiv(WordDiv(), Str[CurPos-1])))
+						IsWordDiv(WordDiv(), Str[CurPos-1])))
 					break;
 
 				RecurseProcessKey(KEY_SHIFTLEFT);
@@ -927,7 +970,7 @@ int Edit::ProcessKey(int Key)
 			RecurseProcessKey(KEY_SHIFTRIGHT);
 
 			while (CurPos<StrSize && !(IsWordDiv(WordDiv(), Str[CurPos]) &&
-			                           !IsWordDiv(WordDiv(), Str[CurPos-1])))
+				!IsWordDiv(WordDiv(), Str[CurPos-1])))
 			{
 				if (!IsSpace(Str[CurPos]) && (IsSpace(Str[CurPos-1]) || IsWordDiv(WordDiv(), Str[CurPos-1])))
 					break;
@@ -941,7 +984,7 @@ int Edit::ProcessKey(int Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_SHIFTHOME:  case KEY_SHIFTNUMPAD7:
+		case KEY_SHIFTHOME: case KEY_SHIFTNUMPAD7:
 		{
 			Lock();
 
@@ -952,7 +995,7 @@ int Edit::ProcessKey(int Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_SHIFTEND:  case KEY_SHIFTNUMPAD1:
+		case KEY_SHIFTEND: case KEY_SHIFTNUMPAD1:
 		{
 			Lock();
 			int Len = (Mask && *Mask) ? CalcRTrimmedStrSize() : StrSize;
@@ -1114,8 +1157,8 @@ int Edit::ProcessKey(int Key)
 					ptr++;
 
 					if (!CheckCharMask(Mask[ptr]) ||
-					        (IsSpace(Str[ptr]) && !IsSpace(Str[ptr+1])) ||
-					        (IsWordDiv(WordDiv(), Str[ptr])))
+							(IsSpace(Str[ptr]) && !IsSpace(Str[ptr+1])) ||
+							(IsWordDiv(WordDiv(), Str[ptr])))
 						break;
 				}
 
@@ -1288,7 +1331,7 @@ int Edit::ProcessKey(int Key)
 			CurPos = CalcPosBwd();
 
 			while (CurPos>0 && !(!IsWordDiv(WordDiv(), Str[CurPos]) &&
-			                     IsWordDiv(WordDiv(), Str[CurPos-1]) && !IsSpace(Str[CurPos])))
+				IsWordDiv(WordDiv(), Str[CurPos-1]) && !IsSpace(Str[CurPos])))
 			{
 				if (!IsSpace(Str[CurPos]) && IsSpace(Str[CurPos-1]))
 					break;
@@ -1319,7 +1362,7 @@ int Edit::ProcessKey(int Key)
 			}
 
 			while (CurPos<Len/*StrSize*/ && !(IsWordDiv(WordDiv(),Str[CurPos]) &&
-			                                  !IsWordDiv(WordDiv(), Str[CurPos-1])))
+				!IsWordDiv(WordDiv(), Str[CurPos-1])))
 			{
 				if (!IsSpace(Str[CurPos]) && IsSpace(Str[CurPos-1]))
 					break;
@@ -1431,7 +1474,7 @@ int Edit::ProcessKey(int Key)
 			Key = KEY_SPACE;
 		default:
 		{
-//      _D(SysLog(L"Key=0x%08X",Key));
+//			_D(SysLog(L"Key=0x%08X",Key));
 			if (Key==KEY_ENTER || Key>=EXTENDED_KEY_BASE) // KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by >=EXTENDED_KEY_BASE
 				break;
 
@@ -1471,22 +1514,22 @@ int Edit::ProcessCtrlQ()
 
 		if (Key==KEY_CONSOLE_BUFFER_RESIZE)
 		{
-//      int Dis=EditOutDisabled;
-//      EditOutDisabled=0;
+//			int Dis=EditOutDisabled;
+//			EditOutDisabled=0;
 			Show();
-//      EditOutDisabled=Dis;
+//			EditOutDisabled=Dis;
 		}
 	}
 
 	/*
-	  EditOutDisabled++;
-	  if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS))
-	  {
-	    DeleteBlock();
-	  }
-	  else
-	    Flags.Clear(FEDITLINE_CLEARFLAG);
-	  EditOutDisabled--;
+	EditOutDisabled++;
+	if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS))
+	{
+		DeleteBlock();
+	}
+	else
+		Flags.Clear(FEDITLINE_CLEARFLAG);
+	EditOutDisabled--;
 	*/
 	return InsertKey(rec.Event.KeyEvent.uChar.AsciiChar);
 }
@@ -1530,7 +1573,7 @@ int Edit::InsertKey(int Key)
 				{
 					int i=MaskLen-1;
 
-					while (!CheckCharMask(Mask[i]) && i>CurPos)
+					while (i>CurPos && !CheckCharMask(Mask[i]))
 						i--;
 
 					for (int j=i; i>CurPos; i--)
@@ -1664,7 +1707,7 @@ const wchar_t* Edit::GetStringAddr()
 
 
 
-void  Edit::SetHiString(const wchar_t *Str)
+void Edit::SetHiString(const wchar_t *Str)
 {
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
@@ -1707,11 +1750,13 @@ const wchar_t *Edit::GetEOL()
 	return EOL_TYPE_CHARS[EndType];
 }
 
-/* $ 25.07.2000 tran
-   примечание:
-   в этом методе DropDownBox не обрабатывается
-   ибо он вызывается только из SetString и из класса Editor
-   в Dialog он нигде не вызывается */
+/*
+	$ 25.07.2000 tran
+	примечание:
+	в этом методе DropDownBox не обрабатывается
+	ибо он вызывается только из SetString и из класса Editor
+	в Dialog он нигде не вызывается
+*/
 void Edit::SetBinaryString(const wchar_t *Str,int Length)
 {
 	if (Flags.Check(FEDITLINE_READONLY))
@@ -1787,9 +1832,10 @@ void Edit::SetBinaryString(const wchar_t *Str,int Length)
 			i++;
 		}
 
-		/* Здесь необходимо условие (!*Str), т.к. для очистки строки
-		   обычно вводится нечто вроде SetBinaryString("",0)
-		   Т.е. таким образом мы добиваемся "инициализации" строки с маской
+		/*
+			Здесь необходимо условие (!*Str), т.к. для очистки строки
+			обычно вводится нечто вроде SetBinaryString("",0)
+			Т.е. таким образом мы добиваемся "инициализации" строки с маской
 		*/
 		RefreshStrByMask(!*Str);
 	}
@@ -1830,7 +1876,7 @@ void Edit::GetBinaryString(const wchar_t **Str,const wchar_t **EOL,int &Length)
 int Edit::GetSelString(wchar_t *Str, int MaxSize)
 {
 	if (SelStart==-1 || (SelEnd!=-1 && SelEnd<=SelStart) ||
-	        SelStart>=StrSize)
+		SelStart>=StrSize)
 	{
 		*Str=0;
 		return FALSE;
@@ -1850,7 +1896,7 @@ int Edit::GetSelString(wchar_t *Str, int MaxSize)
 int Edit::GetSelString(FARString &strStr)
 {
 	if (SelStart==-1 || (SelEnd!=-1 && SelEnd<=SelStart) ||
-	        SelStart>=StrSize)
+		SelStart>=StrSize)
 	{
 		strStr.Clear();
 		return FALSE;
@@ -1893,9 +1939,10 @@ void Edit::InsertBinaryString(const wchar_t *Str,int Length)
 			//_SVS(SysLog(L"InsertBinaryString ==> Str='%ls' (Length=%d) Mask='%ls'",Str,Length,Mask+Pos));
 			int StrLen=(MaskLen-Pos>Length)?Length:MaskLen-Pos;
 
-			/* $ 15.11.2000 KM
-			   Внесены исправления для правильной работы PasteFromClipboard
-			   в строке с маской
+			/*
+				$ 15.11.2000 KM
+				Внесены исправления для правильной работы PasteFromClipboard
+				в строке с маской
 			*/
 			for (int i=Pos,j=0; j<StrLen+Pos;)
 			{
@@ -2055,7 +2102,7 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return FALSE;
 
 	if (MouseEvent->dwMousePosition.X<X1 || MouseEvent->dwMousePosition.X>X2 ||
-	        MouseEvent->dwMousePosition.Y!=Y1)
+			MouseEvent->dwMousePosition.Y!=Y1)
 		return FALSE;
 
 	//SetClearFlag(0); // пусть едитор сам заботится о снятии клеар-текста?
@@ -2069,9 +2116,12 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		static int PrevDoubleClick=0;
 		static COORD PrevPosition={0,0};
 
-		if (WINPORT(GetTickCount)()-PrevDoubleClick<=WINPORT(GetDoubleClickTime)() && MouseEvent->dwEventFlags!=MOUSE_MOVED &&
-		        PrevPosition.X == MouseEvent->dwMousePosition.X && PrevPosition.Y == MouseEvent->dwMousePosition.Y)
-		{
+		if (
+			WINPORT(GetTickCount)() - PrevDoubleClick <= WINPORT(GetDoubleClickTime)() &&
+			MouseEvent->dwEventFlags != MOUSE_MOVED &&
+			PrevPosition.X == MouseEvent->dwMousePosition.X &&
+			PrevPosition.Y == MouseEvent->dwMousePosition.Y
+		) {
 			Select(0,StrSize);
 			PrevDoubleClick=0;
 			PrevPosition.X=0;
@@ -2097,13 +2147,29 @@ int Edit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 }
 
 
-/* $ 03.08.2000 KM
-   Немного изменён алгоритм из-за необходимости
-   добавления поиска целых слов.
+/*
+	$ 03.08.2000 KM
+	Немного изменён алгоритм из-за необходимости
+	добавления поиска целых слов.
 */
-int Edit::Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength)
-{
-	return SearchString(this->Str,this->StrSize,Str,ReplaceStr,CurPos,Position,Case,WholeWords,Reverse,Regexp,SearchLength,WordDiv());
+int Edit::Search(
+	const FARString& Str,
+	FARString& ReplaceStr,
+	int Position,
+	int Case,
+	int WholeWords,
+	int Reverse,
+	int Regexp,
+	int *SearchLength
+) {
+	return SearchString(
+		this->Str, this->StrSize,
+		Str, ReplaceStr,
+		CurPos, Position,
+		Case, WholeWords,
+		Reverse, Regexp,
+		SearchLength, WordDiv()
+	);
 }
 
 void Edit::InsertTab()
@@ -2315,9 +2381,10 @@ void Edit::SanitizeSelectionRange()
 			++SelEnd;
 	}
 
-	/* $ 24.06.2002 SKV
-	   Если начало выделения за концом строки, надо выделение снять.
-	   17.09.2002 возвращаю обратно. Глюкодром.
+	/*
+		$ 24.06.2002 SKV
+		Если начало выделения за концом строки, надо выделение снять.
+		17.09.2002 возвращаю обратно. Глюкодром.
 	*/
 	if (SelEnd < SelStart && SelEnd != -1)
 	{
@@ -2357,14 +2424,17 @@ void Edit::AddSelect(int Start,int End)
 
 void Edit::GetSelection(int &Start,int &End)
 {
-	/* $ 17.09.2002 SKV
-	  Мало того, что это нарушение правил OO design'а,
-	  так это еще и источние багов.
+	/*
+		$ 17.09.2002 SKV
+		Мало того, что это нарушение правил OO design'а,
+		так это еще и источние багов.
 	*/
-	/*  if (SelEnd>StrSize+1)
-	    SelEnd=StrSize+1;
-	  if (SelStart>StrSize+1)
-	    SelStart=StrSize+1;*/
+	/*
+	if (SelEnd>StrSize+1)
+		SelEnd=StrSize+1;
+	if (SelStart>StrSize+1)
+		SelStart=StrSize+1;
+	*/
 	/* SKV $ */
 	Start=SelStart;
 	End=SelEnd;
@@ -2514,15 +2584,19 @@ void Edit::ApplyColor()
 		// Получаем начальную позицию
 		int RealStart, Start;
 
-		// Если предыдущая позиция равна текущей, то ничего не вычисляем
-		// и сразу берём ранее вычисленное значение
+		/*
+			Если предыдущая позиция равна текущей, то ничего не вычисляем
+			и сразу берём ранее вычисленное значение
+		*/
 		if (Pos == CurItem.StartPos)
 		{
 			RealStart = TabPos;
 			Start = TabEditorPos;
 		}
-		// Если вычисление идёт первый раз или предыдущая позиция больше текущей,
-		// то производим вычисление с начала строки
+		/*
+			Если вычисление идёт первый раз или предыдущая позиция больше текущей,
+			то производим вычисление с начала строки
+		*/
 		else if (Pos == INT_MIN || CurItem.StartPos < Pos)
 		{
 			RealStart = RealPosToCell(CurItem.StartPos);
@@ -2554,13 +2628,17 @@ void Edit::ApplyColor()
 		int EndPos = CurItem.EndPos;
 		int RealEnd, End;
 
-		// Обрабатываем случай, когда предыдущая позиция равна текущей, то есть
-		// длина раскрашиваемой строкии равна 1
+		/*
+			Обрабатываем случай, когда предыдущая позиция равна текущей, то есть
+			длина раскрашиваемой строкии равна 1
+		*/
 		if (Pos == EndPos)
 		{
-			// Если необходимо делать корректироку относительно табов и единственный
-			// символ строки -- это таб, то делаем расчёт с учтом корректировки,
-			// иначе ничего не вычисялем и берём старые значения
+			/*
+				Если необходимо делать корректироку относительно табов и единственный
+				символ строки -- это таб, то делаем расчёт с учтом корректировки,
+				иначе ничего не вычисялем и берём старые значения
+			*/
 			if (CorrectPos && EndPos < StrSize && Str[EndPos] == L'\t')
 			{
 				RealEnd = RealPosToCell(TabPos, Pos, ++EndPos, nullptr);
@@ -2573,16 +2651,20 @@ void Edit::ApplyColor()
 				End = TabEditorPos;
 			}
 		}
-		// Если предыдущая позиция больше текущей, то производим вычисление
-		// с начала строки (с учётом корректировки относительно табов)
+		/*
+			Если предыдущая позиция больше текущей, то производим вычисление
+			с начала строки (с учётом корректировки относительно табов)
+		*/
 		else if (EndPos < Pos)
 		{
 			RealEnd = RealPosToCell(0, 0, EndPos, &CorrectPos);
 			EndPos += CorrectPos;
 			End = RealEnd-LeftPos;
 		}
-		// Для отптимизации делаем вычисление относительно предыдущей позиции (с учётом
-		// корректировки относительно табов)
+		/*
+			Для отптимизации делаем вычисление относительно предыдущей позиции (с учётом
+			корректировки относительно табов)
+		*/
 		else
 		{
 			RealEnd = RealPosToCell(TabPos, Pos, EndPos, &CorrectPos);
@@ -2616,24 +2698,25 @@ void Edit::ApplyColor()
 		if (Length > 0)
 		{
 			ScrBuf.ApplyColor(
-			    Start,
-			    Y1,
-			    Start+Length-1,
-			    Y1,
-			    Attr,
-			    // Не раскрашиваем выделение
-			    SelColor >= COL_FIRSTPALETTECOLOR ? Palette[SelColor-COL_FIRSTPALETTECOLOR] : SelColor
+				Start,
+				Y1,
+				Start+Length-1,
+				Y1,
+				Attr,
+				// Не раскрашиваем выделение
+				SelColor >= COL_FIRSTPALETTECOLOR ? Palette[SelColor-COL_FIRSTPALETTECOLOR] : SelColor
 			);
 		}
 	}
 }
 
-/* $ 24.09.2000 SVS $
-  Функция Xlat - перекодировка по принципу QWERTY <-> ЙЦУКЕН
+/*
+	$ 24.09.2000 SVS $
+	Функция Xlat - перекодировка по принципу QWERTY <-> ЙЦУКЕН
 */
 void Edit::Xlat(bool All)
 {
-	//   Для CmdLine - если нет выделения, преобразуем всю строку
+	// Для CmdLine - если нет выделения, преобразуем всю строку
 	if (All && SelStart == -1 && !SelEnd)
 	{
 		::Xlat(Str,0,StrLength(Str),Opt.XLat.Flags);
@@ -2651,15 +2734,17 @@ void Edit::Xlat(bool All)
 		Changed();
 		Show();
 	}
-	/* $ 25.11.2000 IS
-	 Если нет выделения, то обработаем текущее слово. Слово определяется на
-	 основе специальной группы разделителей.
+	/*
+		$ 25.11.2000 IS
+		Если нет выделения, то обработаем текущее слово. Слово определяется на
+		основе специальной группы разделителей.
 	*/
 	else
 	{
-		/* $ 10.12.2000 IS
-		   Обрабатываем только то слово, на котором стоит курсор, или то слово, что
-		   находится левее позиции курсора на 1 символ
+		/*
+			$ 10.12.2000 IS
+			Обрабатываем только то слово, на котором стоит курсор, или то слово, что
+			находится левее позиции курсора на 1 символ
 		*/
 		int start=CurPos, end, StrSize=StrLength(Str);
 		bool DoXlat=true;
@@ -2690,9 +2775,10 @@ void Edit::Xlat(bool All)
 }
 
 
-/* $ 15.11.2000 KM
-   Проверяет: попадает ли символ в разрешённый
-   диапазон символов, пропускаемых маской
+/*
+	$ 15.11.2000 KM
+	Проверяет: попадает ли символ в разрешённый
+	диапазон символов, пропускаемых маской
 */
 int Edit::KeyMatchedMask(int Key)
 {
@@ -2716,13 +2802,20 @@ int Edit::KeyMatchedMask(int Key)
 
 int Edit::CheckCharMask(wchar_t Chr)
 {
-	return (Chr==EDMASK_ANY || Chr==EDMASK_DIGIT || Chr==EDMASK_DIGITS || Chr==EDMASK_DSS || Chr==EDMASK_ALPHA || Chr==EDMASK_HEX)?TRUE:FALSE;
+	return (
+		Chr==EDMASK_ANY || Chr==EDMASK_DIGIT ||
+		Chr==EDMASK_DIGITS || Chr==EDMASK_DSS ||
+		Chr==EDMASK_ALPHA || Chr==EDMASK_HEX
+	)?TRUE:FALSE;
 }
 
 void Edit::SetDialogParent(DWORD Sets)
 {
-	if ((Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)) == (FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE) ||
-	        !(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)))
+	if (
+		(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE)) ==
+			(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE) ||
+		!(Sets&(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE))
+	)
 		Flags.Clear(FEDITLINE_PARENT_SINGLELINE|FEDITLINE_PARENT_MULTILINE);
 	else if (Sets&FEDITLINE_PARENT_SINGLELINE)
 	{
@@ -2778,10 +2871,10 @@ const wchar_t* __stdcall SystemCPEncoder::GetName()
 }
 
 int __stdcall SystemCPEncoder::Encode(
-    const char *lpString,
-    int nLength,
-    wchar_t *lpwszResult,
-    int nResultLength
+	const char *lpString,
+	int nLength,
+	wchar_t *lpwszResult,
+	int nResultLength
 )
 {
 	int length = MultiByteToWideChar(m_nCodePage, 0, lpString, nLength, nullptr, 0);
@@ -2793,10 +2886,10 @@ int __stdcall SystemCPEncoder::Encode(
 }
 
 int __stdcall SystemCPEncoder::Decode(
-    const wchar_t *lpwszString,
-    int nLength,
-    char *lpResult,
-    int nResultLength
+	const wchar_t *lpwszString,
+	int nLength,
+	char *lpResult,
+	int nResultLength
 )
 {
 	int length = WideCharToMultiByte(m_nCodePage, 0, lpwszString, nLength, nullptr, 0, nullptr, nullptr);
@@ -2808,11 +2901,11 @@ int __stdcall SystemCPEncoder::Decode(
 }
 
 int __stdcall SystemCPEncoder::Transcode(
-    const wchar_t *lpwszString,
-    int nLength,
-    ICPEncoder *pFrom,
-    wchar_t *lpwszResult,
-    int nResultLength
+	const wchar_t *lpwszString,
+	int nLength,
+	ICPEncoder *pFrom,
+	wchar_t *lpwszResult,
+	int nResultLength
 )
 {
 	int length = pFrom->Decode(lpwszString, nLength, nullptr, 0);
@@ -2834,11 +2927,17 @@ int __stdcall SystemCPEncoder::Transcode(
 }
 */
 
-EditControl::EditControl(ScreenObject *pOwner,Callback* aCallback,bool bAllocateData,History* iHistory,FarList* iList,DWORD iFlags)
-	: Edit(pOwner,aCallback,bAllocateData),
-	pCustomCompletionList(nullptr), pHistory(iHistory), pList(iList), 
-	Selection(false), SelectionStart(-1), ECFlags(iFlags)
-
+EditControl::EditControl(
+	ScreenObject *pOwner,
+	Callback* aCallback,
+	bool bAllocateData,
+	History* iHistory,
+	FarList* iList,
+	DWORD iFlags
+) : Edit(pOwner,aCallback,bAllocateData), pCustomCompletionList(nullptr),
+	pHistory(iHistory), pList(iList), 
+	Selection(false), SelectionStart(-1),
+	ECFlags(iFlags)
 {
 	ACState=ECFlags.Check(EC_ENABLEAUTOCOMPLETE)!=FALSE;
 }
@@ -2939,13 +3038,19 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 	{
 		ComplMenu.SetFlags(VMENU_WRAPMODE|VMENU_NOTCENTER|VMENU_SHOWAMPERSAND);
 
-		if(!DelBlock && Opt.AutoComplete.AppendCompletion && (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList))
-		{
+		if (
+			!DelBlock &&
+			Opt.AutoComplete.AppendCompletion &&
+			(!Flags.Check(FEDITLINE_PERSISTENTBLOCKS) || Opt.AutoComplete.ShowList)
+		) {
 			int SelStart=GetLength();
 
 			// magic
-			if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-			{
+			if (
+				IsSlash(Str[SelStart-1]) &&
+				Str[SelStart-2] == L'"' &&
+				IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2))
+			) {
 				Str[SelStart-2] = Str[SelStart-1];
 				StrSize--;
 				SelStart--;
@@ -2993,8 +3098,12 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 					int MenuKey=InputRecordToKey(&ir);
 
 					// ввод
-					if((MenuKey>=int(L' ') && MenuKey<=MAX_VKEY_CODE) || MenuKey==KEY_BS || MenuKey==KEY_DEL || MenuKey==KEY_NUMDEL)
-					{
+					if (
+						(MenuKey>=int(L' ') && MenuKey<=MAX_VKEY_CODE) ||
+						MenuKey==KEY_BS ||
+						MenuKey==KEY_DEL ||
+						MenuKey==KEY_NUMDEL
+					) {
 						FARString strPrev;
 						GetString(strPrev);
 						DeleteBlock();
@@ -3008,15 +3117,24 @@ void EditControl::AutoCompleteProcMenu(int &Result,bool Manual,bool DelBlock,int
 							{
 								PopulateCompletionMenu(ComplMenu, strTemp);
 							}
-							if(ComplMenu.GetItemCount()>1 || (ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName)))
-							{
-								if(MenuKey!=KEY_BS && MenuKey!=KEY_DEL && MenuKey!=KEY_NUMDEL && Opt.AutoComplete.AppendCompletion)
-								{
+							if (
+								ComplMenu.GetItemCount()>1 ||
+								(ComplMenu.GetItemCount()==1 && StrCmpI(strTemp,ComplMenu.GetItemPtr(0)->strName))
+							) {
+								if (
+									MenuKey!=KEY_BS &&
+									MenuKey!=KEY_DEL &&
+									MenuKey!=KEY_NUMDEL &&
+									Opt.AutoComplete.AppendCompletion
+								) {
 									int SelStart=GetLength();
 
 									// magic
-									if(IsSlash(Str[SelStart-1]) && Str[SelStart-2] == L'"' && IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2)))
-									{
+									if (
+										IsSlash(Str[SelStart-1]) &&
+										Str[SelStart-2] == L'"' &&
+										IsSlash(ComplMenu.GetItemPtr(0)->strName.At(SelStart-2))
+									) {
 										Str[SelStart-2] = Str[SelStart-1];
 										StrSize--;
 										SelStart--;
@@ -3157,8 +3275,12 @@ int EditControl::AutoCompleteProc(bool Manual,bool DelBlock,int& BackKey)
 	int Result=0;
 	static int Reenter=0;
 
-	if(ECFlags.Check(EC_ENABLEAUTOCOMPLETE) && *Str && !Reenter && (CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO || Manual))
-	{
+	if (
+		ECFlags.Check(EC_ENABLEAUTOCOMPLETE) &&
+		*Str &&
+		!Reenter &&
+		(CtrlObject->Macro.GetCurRecord(nullptr,nullptr) == MACROMODE_NOMACRO || Manual)
+	) {
 		Reenter++;
 		AutoCompleteProcMenu(Result,Manual,DelBlock,BackKey);
 		Reenter--;

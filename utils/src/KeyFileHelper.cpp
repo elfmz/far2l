@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <assert.h>
+#include <algorithm>
 #include <atomic>
 #include <stdexcept>
 #include <algorithm>
@@ -18,21 +20,19 @@
 // KeyFileHelper to tell KeyFileReadHelper don't load anything
 static char sDontLoadLiteral[] = "][";
 
-// This predicate causes std::map elements to be sorted either in semi-case-insensitive mode,
-// i.e. elements that differ by character case only will be together.
-// Either in fully case-insensitive mode.
-
 bool FN_NOINLINE KeyFileCmp::operator()(const std::string& a, const std::string& b) const
 {
-	int case_sensitive_diff = 0;
 	const char *pa = a.c_str();
 	const char *pb = b.c_str();
 	for (size_t i = 0;; ++i) {
+		if (UNLIKELY(i == a.size() || i == b.size())) {
+			return a.size() < b.size();
+		}
 		auto ca = pa[i];
 		auto cb = pb[i];
 		if (ca != cb) {
-			if (case_sensitive_diff == 0) {
-				case_sensitive_diff = (ca < cb) ? -1 : 1;
+			if (!_case_insensitive) {
+				return ca < cb;
 			}
 			if (ca >= 'a' && ca <= 'z') {
 				ca-= 'a' - 'A';
@@ -44,14 +44,123 @@ bool FN_NOINLINE KeyFileCmp::operator()(const std::string& a, const std::string&
 				return ca < cb;
 			}
 		}
-		if (UNLIKELY(i == a.size() || i == b.size())) {
-			if ((_case_insensitive || case_sensitive_diff == 0) && a.size() != b.size()) {
-				return a.size() < b.size();
-			}
-			return _case_insensitive ? false : (case_sensitive_diff < 0);
+	}
+
+	return false;
+}
+
+static FN_NOINLINE KeyFileValues::const_iterator FindValue(const KeyFileValues *values, const std::string &name)
+{ // stub to avoid excessive inlining
+	return values->find(name);
+}
+
+static FN_NOINLINE KeyFileValues::iterator FindValue(KeyFileValues *values, const std::string &name)
+{ // stub to avoid excessive inlining
+	return values->find(name);
+}
+
+////
+FN_NOINLINE KeyFileReadHelper::Sections::Sections(bool case_insensitive) : _map(KeyFileCmp(case_insensitive))
+{
+}
+
+KeyFileReadHelper::Sections::Map::const_iterator FN_NOINLINE KeyFileReadHelper::Sections::FindInMap(const std::string &name) const
+{ // stub to avoid excessive inlining
+	return _map.find(name);
+}
+
+KeyFileReadHelper::Sections::Map::iterator FN_NOINLINE KeyFileReadHelper::Sections::FindInMap(const std::string &name)
+{ // stub to avoid excessive inlining
+	return _map.find(name);
+}
+
+const KeyFileValues * FN_NOINLINE KeyFileReadHelper::Sections::Find(const std::string &section) const
+{
+	auto it = FindInMap(section);
+	return (it == _map.end()) ? nullptr : &it->second;
+}
+
+KeyFileValues * FN_NOINLINE KeyFileReadHelper::Sections::Find(const std::string &section)
+{
+	auto it = FindInMap(section);
+	return (it == _map.end()) ? nullptr : &it->second;
+}
+
+KeyFileValues * FN_NOINLINE KeyFileReadHelper::Sections::Ensure(const std::string &section)
+{
+	auto ir = _map.emplace(section, KeyFileValues());
+	if (ir.second) {
+		if (_ordered.empty()) {
+			_ordered.reserve(16);
+		}
+		_ordered.emplace_back(ir.first);
+	}
+	return &ir.first->second;
+}
+
+KeyFileReadHelper::Sections::IteratorsVec::iterator FN_NOINLINE KeyFileReadHelper::Sections::FindInVec(Map::iterator it)
+{
+	auto oit = std::find(_ordered.begin(), _ordered.end(), it);
+	assert(oit != _ordered.end());
+	return oit;
+}
+
+bool KeyFileReadHelper::Sections::Remove(const std::string &section)
+{
+	auto it = FindInMap(section);
+	if (it == _map.end()) {
+		return false;
+	}
+
+	auto oit = FindInVec(it);
+	_ordered.erase(oit);
+	_map.erase(it);
+	return true;
+}
+
+size_t KeyFileReadHelper::Sections::RemoveAt(const std::string &section)
+{
+	size_t out = 0;
+	for (auto it = _map.begin(); it != _map.end();) {
+		if (it->first.size() > section.size()
+				&& memcmp(it->first.c_str(), section.c_str(), section.size()) == 0) {
+			auto oit = FindInVec(it);
+			_ordered.erase(oit);
+			it = _map.erase(it);
+			++out;
+
+		} else {
+			++it;
 		}
 	}
+	return out;
+
 }
+
+bool FN_NOINLINE KeyFileReadHelper::Sections::Rename(const std::string &section, const std::string &new_name)
+{
+	auto it = FindInMap(section);
+	if (it == _map.end())
+		return false;
+
+//	if (section == new_name)
+//		return true;
+
+	auto oit = FindInVec(it);
+
+	auto ir = _map.emplace(new_name, KeyFileValues());
+	*oit = ir.first;
+	ir.first->second = std::move(it->second);
+	_map.erase(it);
+	return true;
+}
+
+const KeyFileReadHelper::Sections::IteratorsVec &KeyFileReadHelper::Sections::Enumeration() const
+{
+	return _ordered;
+}
+
+////
 
 class KFEscaping
 {
@@ -168,12 +277,12 @@ KeyFileValues::KeyFileValues(bool case_insensitive)
 
 bool KeyFileValues::HasKey(const std::string &name) const
 {
-	return find(name) != end();
+	return FindValue(this, name) != end();
 }
 
 std::string KeyFileValues::GetString(const std::string &name, const char *def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it != end()) {
 		return it->second;
 	}
@@ -183,7 +292,7 @@ std::string KeyFileValues::GetString(const std::string &name, const char *def) c
 
 std::wstring KeyFileValues::GetString(const std::string &name, const wchar_t *def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it != end()) {
 		return StrMB2Wide(it->second);
 	}
@@ -207,7 +316,7 @@ void KeyFileValues::GetChars(wchar_t *buffer, size_t maxchars, const std::string
 
 int KeyFileValues::GetInt(const std::string &name, int def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
@@ -222,7 +331,7 @@ int KeyFileValues::GetInt(const std::string &name, int def) const
 
 unsigned int KeyFileValues::GetUInt(const std::string &name, unsigned int def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
@@ -237,7 +346,7 @@ unsigned int KeyFileValues::GetUInt(const std::string &name, unsigned int def) c
 
 unsigned long long KeyFileValues::GetULL(const std::string &name, unsigned long long def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it != end()) {
 		const char *sz = it->second.c_str();
 		if (sz[0] == '0' && sz[1] == 'x') {
@@ -274,7 +383,7 @@ static size_t DecodeBytes(unsigned char *out, size_t len, const std::string &str
 
 size_t KeyFileValues::GetBytes(unsigned char *out, size_t len, const std::string &name, const unsigned char *def) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it == end()) {
 		if (def) {
 			memcpy(out, def, len);
@@ -288,7 +397,7 @@ size_t KeyFileValues::GetBytes(unsigned char *out, size_t len, const std::string
 
 bool KeyFileValues::GetBytes(std::vector<unsigned char> &out, const std::string &name) const
 {
-	const auto &it = find(name);
+	const auto &it = FindValue(this, name);
 	if (it == end()) {
 		return false;
 	}
@@ -452,14 +561,14 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 		{
 			if (load_only_section == nullptr || section_name == load_only_section
 					|| (case_insensitive && CaseIgnoreEngStrMatch(section_name, load_only_section))) {
-				return &_kf[section_name];
+				return _kf.Ensure(section_name);
 			}
 
 			// check may be its a nested section name
 			size_t starts_len = StrStartsFrom(section_name, load_only_section);
 			if (starts_len && section_name[starts_len] == '/') {
 				// load also nested sections
-				return &_kf[section_name];
+				return _kf.Ensure(section_name);
 			}
 
 			return nullptr;
@@ -474,9 +583,10 @@ KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *lo
 std::vector<std::string> KeyFileReadHelper::EnumSections() const
 {
 	std::vector<std::string> out;
-	out.reserve(_kf.size());
-	for (const auto &s : _kf) {
-		out.push_back(s.first);
+	const auto &vec = _kf.Enumeration();
+	out.reserve(vec.size());
+	for (const auto &s : vec) {
+		out.push_back(s->first);
 	}
 	return out;
 }
@@ -492,13 +602,13 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 	}
 
 	std::vector<std::string> out;
-	for (const auto &s : _kf) {
-		if (s.first.size() > prefix.size()
-				&& ( (!_case_insensitive && memcmp(s.first.c_str(), prefix.c_str(), prefix.size()) == 0) ||
-					(_case_insensitive && CaseIgnoreEngStrMatch(s.first.c_str(), prefix.c_str(), prefix.size())) )
-				&& (recursed || strchr(s.first.c_str() + prefix.size(), '/') == nullptr))  {
+	for (const auto &s : _kf.Enumeration()) {
+		if (s->first.size() > prefix.size()
+				&& ( (!_case_insensitive && memcmp(s->first.c_str(), prefix.c_str(), prefix.size()) == 0) ||
+					(_case_insensitive && CaseIgnoreEngStrMatch(s->first.c_str(), prefix.c_str(), prefix.size())) )
+				&& (recursed || strchr(s->first.c_str() + prefix.size(), '/') == nullptr))  {
 
-			out.push_back(s.first);
+			out.push_back(s->first);
 		}
 	}
 
@@ -507,46 +617,40 @@ std::vector<std::string> KeyFileReadHelper::EnumSectionsAt(const std::string &pa
 
 std::vector<std::string> KeyFileReadHelper::EnumKeys(const std::string &section) const
 {
-	std::vector<std::string> out;
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.EnumKeys();
+	const auto *values = _kf.Find(section);
+	if (values) {
+		return values->EnumKeys();
 	}
 	return std::vector<std::string>();
 }
 
 size_t KeyFileReadHelper::SectionsCount() const
 {
-	return _kf.size();
+	return _kf.Size();
 }
 
 bool KeyFileReadHelper::HasSection(const std::string &section) const
 {
-	auto it = _kf.find(section);
-	return (it != _kf.end());
+	return _kf.Find(section) != nullptr;
 }
 
 const KeyFileValues *KeyFileReadHelper::GetSectionValues(const std::string &section) const
 {
-	auto it = _kf.find(section);
-	return (it != _kf.end()) ? &it->second : nullptr;
+	return _kf.Find(section);
 }
 
 bool KeyFileReadHelper::HasKey(const std::string &section, const std::string &name) const
 {
-	auto it = _kf.find(section);
-	if (it == _kf.end()) {
-		return false;
-	}
+	const auto *vals = _kf.Find(section);
 
-	return it->second.HasKey(name);
+	return vals && vals->HasKey(name);
 }
 
 std::string KeyFileReadHelper::GetString(const std::string &section, const std::string &name, const char *def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetString(name, def);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetString(name, def);
 	}
 
 	return def ? def : "";
@@ -554,9 +658,9 @@ std::string KeyFileReadHelper::GetString(const std::string &section, const std::
 
 std::wstring KeyFileReadHelper::GetString(const std::string &section, const std::string &name, const wchar_t *def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetString(name, def);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetString(name, def);
 	}
 
 	return def ? def : L"";
@@ -564,9 +668,9 @@ std::wstring KeyFileReadHelper::GetString(const std::string &section, const std:
 
 int KeyFileReadHelper::GetInt(const std::string &section, const std::string &name, int def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetInt(name, def);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetInt(name, def);
 	}
 
 	return def;
@@ -574,9 +678,9 @@ int KeyFileReadHelper::GetInt(const std::string &section, const std::string &nam
 
 unsigned int KeyFileReadHelper::GetUInt(const std::string &section, const std::string &name, unsigned int def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetUInt(name, def);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetUInt(name, def);
 	}
 
 	return def;
@@ -584,9 +688,9 @@ unsigned int KeyFileReadHelper::GetUInt(const std::string &section, const std::s
 
 unsigned long long KeyFileReadHelper::GetULL(const std::string &section, const std::string &name, unsigned long long def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetULL(name, def);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetULL(name, def);
 	}
 
 	return def;
@@ -594,11 +698,12 @@ unsigned long long KeyFileReadHelper::GetULL(const std::string &section, const s
 
 size_t KeyFileReadHelper::GetBytes(unsigned char *buf, size_t len, const std::string &section, const std::string &name, const unsigned char *def) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetBytes(buf, len, name);
+	const auto *vals = _kf.Find(section);
+	if (vals) {
+		return vals->GetBytes(buf, len, name);
+	}
 
-	} else if (def) {
+	if (def) {
 		memcpy(buf, def, len);
 		return len;
 	}
@@ -608,12 +713,8 @@ size_t KeyFileReadHelper::GetBytes(unsigned char *buf, size_t len, const std::st
 
 bool KeyFileReadHelper::GetBytes(std::vector<unsigned char> &out, const std::string &section, const std::string &name) const
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end()) {
-		return it->second.GetBytes(out, name);
-	}
-
-	return false;
+	const auto *vals = _kf.Find(section);
+	return vals && vals->GetBytes(out, name);
 }
 
 
@@ -657,12 +758,12 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 
 		std::string content;
 		KFEscaping esc;
-		for (const auto &si : _kf) {
+		for (const auto &si : _kf.Enumeration()) {
 			content+= '[';
-			content+= esc.EncodeSection(si.first);
+			content+= esc.EncodeSection(si->first);
 			content+= "]\n";
 
-			const auto &kmap = si.second;
+			const auto &kmap = si->second;
 			for (const auto &ki : kmap) {
 				content+= esc.EncodeKey(ki.first);
 				content+= '=';
@@ -710,11 +811,12 @@ bool KeyFileHelper::Save(bool only_if_dirty)
 
 bool KeyFileHelper::RemoveSection(const std::string &section)
 {
-	if (_kf.erase(section) != 0) {
-		_dirty = true;
-		return true;
+	if (!_kf.Remove(section)) {
+		return false;
 	}
-	return false;
+
+	_dirty = true;
+	return true;
 }
 
 size_t KeyFileHelper::RemoveSectionsAt(const std::string &parent_section)
@@ -726,26 +828,19 @@ size_t KeyFileHelper::RemoveSectionsAt(const std::string &parent_section)
 	} else if (!prefix.empty() && prefix.back() != '/') {
 		prefix+= '/';
 	}
-	size_t out = 0;
 
-	for (auto it = _kf.begin(); it != _kf.end();) {
-		if (it->first.size() > prefix.size()
-				&& memcmp(it->first.c_str(), prefix.c_str(), prefix.size()) == 0) {
-			it = _kf.erase(it);
-			_dirty = true;
-			++out;
-
-		} else {
-			++it;
-		}
+	const size_t out = _kf.RemoveAt(prefix);
+	if (out != 0) {
+		_dirty = true;
 	}
+
 	return out;
 }
 
 void KeyFileHelper::RemoveKey(const std::string &section, const std::string &name)
 {
-	auto it = _kf.find(section);
-	if (it != _kf.end() && it->second.erase(name) != 0) {
+	auto *vals = _kf.Find(section);
+	if (vals && vals->erase(name) != 0) {
 		_dirty = true;
 //		if (it->second.empty()) {
 //			_kf.erase(it);
@@ -755,17 +850,17 @@ void KeyFileHelper::RemoveKey(const std::string &section, const std::string &nam
 
 void KeyFileHelper::SetString(const std::string &section, const std::string &name, const std::string &value)
 {
-	auto &s = _kf[section];
+	auto *s = _kf.Ensure(section);
 
-	auto it = s.find(name);
-	if (it != s.end()) {
+	auto it = FindValue(s, name);
+	if (it != s->end()) {
 		if (it->second == value) {
 			return;
 		}
 		it->second = value;
 
 	} else {
-		s.emplace(name, value);
+		s->emplace(name, value);
 	}
 
 	_dirty = true;
@@ -777,17 +872,17 @@ void KeyFileHelper::SetString(const std::string &section, const std::string &nam
 		value = "";
 	}
 
-	auto &s = _kf[section];
+	auto *s = _kf.Ensure(section);
 
-	auto it = s.find(name);
-	if (it != s.end()) {
+	auto it = FindValue(s, name);
+	if (it != s->end()) {
 		if (it->second.compare(value) == 0) {
 			return;
 		}
 		it->second = value;
 
 	} else {
-		s.emplace(name, value);
+		s->emplace(name, value);
 	}
 
 	_dirty = true;
@@ -840,22 +935,23 @@ void KeyFileHelper::SetBytes(const std::string &section,
 
 void KeyFileHelper::RenameSection(const std::string &src, const std::string &dst, bool recursed)
 {
-	auto it = _kf.find(src);
-	if (it != _kf.end()) {
-		auto section_values = it->second;
-		_kf.erase(it);
-		_kf[dst] = section_values;
+	if (src == dst) {
+		return;
+	}
+
+	if (_kf.Rename(src, dst)) {
 		_dirty = true;
 	}
 
 	if (recursed) {
+		std::string subname;
 		const auto &subsections = EnumSectionsAt(src, true);
-		for (auto subsection : subsections) {
-			auto section_values = _kf[subsection];
-			_kf.erase(subsection);
-			subsection.replace(0, src.size(), dst);
-			_kf[subsection] = section_values;
-			_dirty = true;
+		for (const auto &subsection : subsections) {
+			subname = subsection;
+			subname.replace(0, src.size(), dst);
+			if (_kf.Rename(subsection, subname)) {
+				_dirty = true;
+			}
 		}
 	}
 }

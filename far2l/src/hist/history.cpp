@@ -89,8 +89,8 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 
 
 /*
-   SaveForbid - принудительно запретить запись добавляемой строки.
-                Используется на панели плагина
+	SaveForbid - принудительно запретить запись добавляемой строки.
+	Используется на панели плагина
 */
 void History::AddToHistory(const wchar_t *Str, int Type, const wchar_t *Prefix, bool SaveForbid)
 {
@@ -133,7 +133,7 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int T
 			if (EqualType(AddRecord.Type,HistoryItem->Type))
 			{
 				if ((RemoveDups==1 && !StrCmp(AddRecord.strName,HistoryItem->strName)) ||
-				        (RemoveDups==2 && !StrCmpI(AddRecord.strName,HistoryItem->strName)))
+					(RemoveDups==2 && !StrCmpI(AddRecord.strName,HistoryItem->strName)))
 				{
 					AddRecord.Lock=HistoryItem->Lock;
 					HistoryItem=HistoryList.Delete(HistoryItem);
@@ -156,7 +156,7 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int T
 			else
 			{
 				HistoryItem=HistoryList.Next(HistoryItem);
-		    }
+			}
 		}
 	}
 
@@ -471,7 +471,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		/*BUGBUG???
 			if (TypeHistory == HISTORYTYPE_DIALOG)
 			{
-					//  Перед отрисовкой спросим об изменении цветовых атрибутов
+					// Перед отрисовкой спросим об изменении цветовых атрибутов
 					BYTE RealColors[VMENU_COLOR_COUNT];
 					FarListColors ListColors={0};
 					ListColors.ColorCount=VMENU_COLOR_COUNT;
@@ -617,13 +617,13 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_DEL:
 				{
 					if (HistoryMenu.GetItemCount()/* > 1*/ &&
-					        (!Opt.Confirm.HistoryClear ||
-					         (Opt.Confirm.HistoryClear &&
-					          !Message(MSG_WARNING,2,
-					                      ((TypeHistory==HISTORYTYPE_CMD || TypeHistory==HISTORYTYPE_DIALOG ? Msg::HistoryTitle
-					                       : (TypeHistory==HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle))),
-					                  Msg::HistoryClear,
-					                  Msg::Clear,Msg::Cancel))))
+						(!Opt.Confirm.HistoryClear ||
+							(Opt.Confirm.HistoryClear &&
+								!Message(MSG_WARNING,2,
+									((TypeHistory==HISTORYTYPE_CMD || TypeHistory==HISTORYTYPE_DIALOG ? Msg::HistoryTitle
+									: (TypeHistory==HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle))),
+									Msg::HistoryClear,
+									Msg::Clear,Msg::Cancel))))
 					{
 						for (HistoryRecord *HistoryItem=HistoryList.First(); HistoryItem ; HistoryItem=HistoryList.Next(HistoryItem))
 						{

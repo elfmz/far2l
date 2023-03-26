@@ -46,7 +46,9 @@ enum FINDAREA
 
 class FindFiles
 {
-public:
 	FindFiles();
 	~FindFiles();
+
+public:
+	static void Present();
 };

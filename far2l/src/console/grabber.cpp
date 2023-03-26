@@ -119,7 +119,7 @@ void Grabber::CopyGrabbedArea(int Append)
 			{
 				switch (Chr2)
 				{
-					case L'.':  Chr=L'.'; break;
+					case L'.': Chr=L'.'; break;
 					case 0x07: Chr=L'*'; break;
 					case 0x10: Chr=L'>'; break;
 					case 0x11: Chr=L'<'; break;
@@ -219,7 +219,7 @@ void Grabber::DisplayObject()
 	MoveCursor(GArea.CurX,GArea.CurY);
 
 	if (PrevArea.X1!=GArea.X1 || PrevArea.X2!=GArea.X2 ||
-	        PrevArea.Y1!=GArea.Y1 || PrevArea.Y2!=GArea.Y2)
+		PrevArea.Y1!=GArea.Y1 || PrevArea.Y2!=GArea.Y2)
 	{
 		int X1,Y1,X2,Y2;
 		X1=Min(GArea.X1,GArea.X2);
@@ -228,7 +228,7 @@ void Grabber::DisplayObject()
 		Y2=Max(GArea.Y1,GArea.Y2);
 
 		if (X1>Min(PrevArea.X1,PrevArea.X2) || X2<Max(PrevArea.X1,PrevArea.X2) ||
-		        Y1>Min(PrevArea.Y1,PrevArea.Y2) || Y2<Max(PrevArea.Y1,PrevArea.Y2))
+			Y1>Min(PrevArea.Y1,PrevArea.Y2) || Y2<Max(PrevArea.Y1,PrevArea.Y2))
 			SaveScr->RestoreArea(FALSE);
 
 		if (GArea.X1!=-1)
@@ -268,11 +268,12 @@ void Grabber::DisplayObject()
 
 int Grabber::ProcessKey(int Key)
 {
-	/* $ 14.03.2001 SVS
-	  [-] Неправильно воспроизводился макрос в режиме грабления экрана.
-	      При воспроизведении клавиша Home перемещала курсор в координаты
-	      0,0 консоли.
-	  Не было учтено режима выполнения макроса.
+	/*
+		$ 14.03.2001 SVS
+		[-] Неправильно воспроизводился макрос в режиме грабления экрана.
+		При воспроизведении клавиша Home перемещала курсор в координаты
+		0,0 консоли.
+		Не было учтено режима выполнения макроса.
 	*/
 	SetCursorType(TRUE,60);
 
@@ -440,7 +441,7 @@ int Grabber::ProcessKey(int Key)
 int Grabber::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	if (MouseEvent->dwEventFlags==DOUBLE_CLICK ||
-	        (!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)))
+		(!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)))
 	{
 		ProcessKey(KEY_ENTER);
 		return TRUE;

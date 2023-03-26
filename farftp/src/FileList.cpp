@@ -37,13 +37,13 @@ LPCSTR GetOtherPath(char *path)
 	do
 	{
 		if(FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELSHORTINFO, &pi) &&
-		        pi.PanelType == PTYPE_FILEPANEL &&
-		        !pi.Plugin)
+				pi.PanelType == PTYPE_FILEPANEL &&
+				!pi.Plugin)
 			break;
 
 		if(FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELSHORTINFO, &pi) &&
-		        pi.PanelType == PTYPE_FILEPANEL &&
-		        !pi.Plugin)
+				pi.PanelType == PTYPE_FILEPANEL &&
+				!pi.Plugin)
 			break;
 
 		return FMSG(MFLErrGetInfo);
@@ -89,15 +89,15 @@ void FTP::SaveList(FP_SizeItemList* il)
 	int              n;
 	int              level;
 	char             str[1024+2],
-	   BasePath[1024+2],
-	   CurrentUrlPath[1024+2];
+	BasePath[1024+2],
+	CurrentUrlPath[1024+2];
 	CurrentUrlPath[0] = 0;
 	snprintf(BasePath, ARRAYSIZE(BasePath),
-	          "%s%s%s%s",
-	          Opt.sli.AddPrefix ? "ftp://" : "",
-	          Opt.sli.AddPasswordAndUser ? Message("%s:%s@",hConnect->UserName,hConnect->UserPassword) : "",
-	          hConnect->hostname,
-	          hConnect->CurDir.c_str());
+		"%s%s%s%s",
+		Opt.sli.AddPrefix ? "ftp://" : "",
+		Opt.sli.AddPasswordAndUser ? Message("%s:%s@",hConnect->UserName,hConnect->UserPassword) : "",
+		hConnect->hostname,
+		hConnect->CurDir.c_str());
 	AddEndSlash(BasePath,'/',ARRAYSIZE(BasePath));
 
 	if(Opt.sli.ListType == sltTree)
@@ -132,8 +132,8 @@ void FTP::SaveList(FP_SizeItemList* il)
 				FixFTPSlash(str);
 
 				for(m = str,level = 0;
-				        (m=strchr(m,'/')) != NULL;
-				        m++,level++);
+					(m=strchr(m,'/')) != NULL;
+					m++,level++);
 
 				fprintf(f,"%*c", level*2+2, ' ');
 				m = strrchr(str,'/');
@@ -142,7 +142,7 @@ void FTP::SaveList(FP_SizeItemList* il)
 				else m = str;
 
 				fprintf(f,"%c%s",
-				        IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY) ? '/' : ' ', m);
+					IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY) ? '/' : ' ', m);
 
 				if(Opt.sli.Size)
 				{
@@ -190,8 +190,8 @@ void FTP::SaveList(FP_SizeItemList* il)
 					{
 						level = Max(1, Opt.sli.RightBound - 10 - (int)strlen(m) - 1);
 						fprintf(f,"%*c%10llu",
-						        level,' ',
-						        (long long unsigned int)p->FindData.nFileSize);
+							level,' ',
+							(long long unsigned int)p->FindData.nFileSize);
 					}
 
 					fprintf(f,"\n");
@@ -228,7 +228,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 	for(i = n = 0; n < il->Count(); n++)
 	{
 		p = il->Item(n);
-		p->NumberOfLinks        = StrSlashCount(FTP_FILENAME(p));
+		p->NumberOfLinks = StrSlashCount(FTP_FILENAME(p));
 		p->CRC32&= 0x7fffffff;
 		w = Max(w,static_cast<int>(strlen(PointToName(FTP_FILENAME(p)))) + (int)p->NumberOfLinks + 1);
 		cn++;
@@ -238,13 +238,13 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 	w = Min(Max(60,Min(w,MSZ)),FP_ConWidth()-8);
 
 	if(!cn) {
-	    free(mi);
-	    return FALSE;
+		free(mi);
+		return FALSE;
 	}
 
 	//Calc length of size and count digits
 	int szSize = 0,
-	    szCount = 0;
+		szCount = 0;
 
 	for(n = 0; n < cn; n++)
 	{
@@ -326,7 +326,7 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 			p = il->Item(MNUM(mi[n]));
 
 			if( (p->CRC32 & 0x80000000) == 0 &&
-			        !IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
+				!IS_FLAG(p->FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
 			{
 				tsz += p->FindData.nFileSize;
 				tcn++;
@@ -357,9 +357,9 @@ BOOL FTP::ShowFilesList(FP_SizeItemList* il)
 		StrCat(str,")",ARRAYSIZE(str));
 		//Menu
 		n = FP_Info->Menu(FP_Info->ModuleNumber,-1,-1,0,FMENU_SHOWAMPERSAND,
-		                  str,
-		                  FP_GetMsg(FMSG(MListFooter)),
-		                  "FTPFilesList", Breaks, &BNumber, mi,cn);
+			str,
+			FP_GetMsg(FMSG(MListFooter)),
+			"FTPFilesList", Breaks, &BNumber, mi,cn);
 
 		//key ESC
 		if(n == -1)

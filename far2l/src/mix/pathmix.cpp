@@ -94,7 +94,7 @@ bool IsLocalPrefixRootPath(const wchar_t *Path)
 
 bool IsLocalVolumePath(const wchar_t *Path)
 {
-	return HasPathPrefix(Path);//todo  && !_wcsnicmp(&Path[4],L"Volume{",7) && Path[47] == L'}';
+	return HasPathPrefix(Path);//todo && !_wcsnicmp(&Path[4],L"Volume{",7) && Path[47] == L'}';
 }
 
 bool IsLocalVolumeRootPath(const wchar_t *Path)
@@ -198,9 +198,11 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 	return lpwszPath;
 }
 
-//   Аналог PointToName, только для строк типа
-//   "name\" (оканчивается на слеш) возвращает указатель на name, а не на пустую
-//   строку
+/*
+	Аналог PointToName, только для строк типа
+	"name\" (оканчивается на слеш) возвращает указатель на name, а не на пустую
+	строку
+*/
 const wchar_t* WINAPI PointToFolderNameIfFolder(const wchar_t *Path)
 {
 	if (!Path)

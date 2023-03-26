@@ -64,11 +64,12 @@ class Plugin
 
 		bool m_Loaded = false;
 
-		/* $ 21.09.2000 SVS
-		   поле - системный идентификатор плагина
-		   Плагин должен сам задавать, например для
-		   Network      = 0x5774654E (NetW)
-		   PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
+		/*
+			$ 21.09.2000 SVS
+			поле - системный идентификатор плагина
+			Плагин должен сам задавать, например для
+			Network      = 0x5774654E (NetW)
+			PrintManager = 0x6E614D50 (PMan)  SYSID_PRINTMANAGER
 		*/
 		DWORD SysID = 0;
 

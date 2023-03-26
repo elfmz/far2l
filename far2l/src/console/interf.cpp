@@ -97,9 +97,10 @@ void InitConsole()
 
 	SetFarConsoleMode();
 
-	/* $ 09.04.2002 DJ
-	   если размер консольного буфера больше размера окна, выставим
-	   их равными
+	/*
+		$ 09.04.2002 DJ
+		если размер консольного буфера больше размера окна, выставим
+		их равными
 	*/
 	SMALL_RECT WindowRect;
 	Console.GetWindowRect(WindowRect);
@@ -253,10 +254,10 @@ void CheckForPendingCtrlHandleEvent()
 	CtrlHandlerEvent = std::numeric_limits<uint32_t>::max();
 
 	/*
-	    TODO: need handle
-	       CTRL_CLOSE_EVENT
-	       CTRL_LOGOFF_EVENT
-	       CTRL_SHUTDOWN_EVENT
+		TODO: need handle
+			CTRL_CLOSE_EVENT
+			CTRL_LOGOFF_EVENT
+			CTRL_SHUTDOWN_EVENT
 	*/
 	if (CtrlType==CTRL_C_EVENT || CtrlType==CTRL_BREAK_EVENT)
 	{
@@ -299,7 +300,7 @@ void ShowTime(int ShowAlways)
 	}
 
 	if ((!ShowAlways && lasttm.wMinute==tm.wMinute && lasttm.wHour==tm.wHour &&
-	        ScreenClockText[2].Char.UnicodeChar==L':') || ScreenSaverActive)
+		ScreenClockText[2].Char.UnicodeChar==L':') || ScreenSaverActive)
 		return;
 
 	ProcessShowClock++;
@@ -313,7 +314,7 @@ void ShowTime(int ShowAlways)
 	{
 		int ModType=CurFrame->GetType();
 		SetColor(ModType==MODALTYPE_VIEWER?COL_VIEWERCLOCK:
-		         (ModType==MODALTYPE_EDITOR?COL_EDITORCLOCK:COL_CLOCK));
+			(ModType==MODALTYPE_EDITOR?COL_EDITORCLOCK:COL_CLOCK));
 		Text(strClockText);
 		//ScrBuf.Flush();
 	}
@@ -560,15 +561,14 @@ void HiText(const wchar_t *Str,int HiColor,int isVertText)
 	}
 	else
 	{
-		/*
-		   &&      = '&'
-		   &&&     = '&'
-		              ^H
-		   &&&&    = '&&'
-		   &&&&&   = '&&'
-		              ^H
-		   &&&&&&  = '&&&'
-		*/
+		//   &&      = '&'
+		//   &&&     = '&'
+		//              ^H
+		//   &&&&    = '&&'
+		//   &&&&&   = '&&'
+		//              ^H
+		//   &&&&&&  = '&&&'
+
 		wchar_t *ChPtr = strTextStr.GetBuffer() + pos;
 		int I=0;
 		wchar_t *ChPtr2=ChPtr;
@@ -758,7 +758,7 @@ void BoxText(const wchar_t *Str,int IsVert)
 
 
 /*
-   Отрисовка прямоугольника.
+	Отрисовка прямоугольника.
 */
 void Box(int x1,int y1,int x2,int y2,int Color,int Type)
 {
@@ -967,15 +967,14 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 
 	if ((ChPtr=wcschr(Str,L'&')) )
 	{
-		/*
-		   &&      = '&'
-		   &&&     = '&'
-		              ^H
-		   &&&&    = '&&'
-		   &&&&&   = '&&'
-		              ^H
-		   &&&&&&  = '&&&'
-		*/
+		//   &&      = '&'
+		//   &&&     = '&'
+		//              ^H
+		//   &&&&    = '&&'
+		//   &&&&&   = '&&'
+		//              ^H
+		//   &&&&&&  = '&&&'
+
 		int I=0;
 		const wchar_t *ChPtr2=ChPtr;
 
@@ -1135,7 +1134,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 					return Pos-2;
 				}
 
-				if (IsCharFullWidth(Str[Pos - 1]) && Pos > 1)
+				if (Pos > 1 && IsCharFullWidth(Str[Pos - 1]))
 					return Pos-2;
 
 				return Pos-1;
@@ -1173,9 +1172,9 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 bool CheckForInactivityExit()
 {
 	if (Opt.InactivityExit && Opt.InactivityExitTime > 0 &&
-	        GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
-	        FrameManager && FrameManager->GetFrameCount()==1 &&
-	        (!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
+		GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
+		FrameManager && FrameManager->GetFrameCount()==1 &&
+		(!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
 	{
 		FrameManager->ExitMainLoop(FALSE);
 		return true;

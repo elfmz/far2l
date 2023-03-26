@@ -75,9 +75,21 @@ ControlObject::ControlObject():
 	FrameManager = new Manager;
 	//Macro.LoadMacros();
 	ApplyConfig();
-	CmdHistory=new History(HISTORYTYPE_CMD,Opt.HistoryCount,"SavedHistory",&Opt.SaveHistory,false);
-	FolderHistory=new History(HISTORYTYPE_FOLDER,Opt.FoldersHistoryCount,"SavedFolderHistory",&Opt.SaveFoldersHistory,true);
-	ViewHistory=new History(HISTORYTYPE_VIEW,Opt.ViewHistoryCount,"SavedViewHistory",&Opt.SaveViewHistory,true);
+	CmdHistory=new History(
+		HISTORYTYPE_CMD, Opt.HistoryCount,
+		"SavedHistory", &Opt.SaveHistory,
+		false
+	);
+	FolderHistory=new History(
+		HISTORYTYPE_FOLDER, Opt.FoldersHistoryCount,
+		"SavedFolderHistory", &Opt.SaveFoldersHistory,
+		true
+	);
+	ViewHistory=new History(
+		HISTORYTYPE_VIEW, Opt.ViewHistoryCount,
+		"SavedViewHistory", &Opt.SaveViewHistory,
+		true
+	);
 	FolderHistory->SetAddMode(true,2,true);
 	ViewHistory->SetAddMode(true, 1, true);
 }
@@ -102,7 +114,7 @@ void ControlObject::Init()
 	if (Opt.ShowMenuBar)
 		this->TopMenuBar->Show();
 
-//  FPanels->Redraw();
+	//FPanels->Redraw();
 	CmdLine->Show();
 
 	this->MainKeyBar->Refresh(Opt.ShowKeyBar);
@@ -138,8 +150,8 @@ void ControlObject::Init()
 	/*
 		FarChDir(StartCurDir);
 	*/
-//  _SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
-//  _SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
+	//_SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
+	//_SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
 }
 
 void ControlObject::CreateFilePanels()

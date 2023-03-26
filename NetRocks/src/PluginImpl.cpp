@@ -284,7 +284,8 @@ int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 		GetItems gi(false);
 		for (const auto &item : gi) {
 			if ( (item.FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0
-			  && site_w == item.FindData.lpwszFileName) {
+				&& site_w == item.FindData.lpwszFileName)
+			{
 				ri.CurrentItem = ri.TopPanelItem = &item - &gi[0];
 				break;
 			}
@@ -738,7 +739,8 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 			}
 
 			for (const auto &item : gi) if ( (item.FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
-			  && wcscmp(item.FindData.lpwszFileName, L"..") != 0) {
+				&& wcscmp(item.FindData.lpwszFileName, L"..") != 0)
+			{
 				_sites_cfg_location.Transfer(sites_cfg_location, Wide2MB(item.FindData.lpwszFileName), mv);
 
 			} else if ( (item.FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) != 0) {
@@ -787,7 +789,7 @@ bool PluginImpl::ByKey_TryEnterSelectedSite()
 	}
 
 	if ( (gfi->FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) == 0) {
-         //&& wcscmp(gfi->FindData.lpwszFileName, G.GetMsgWide(MCreateSiteConnection)) == 0) {
+		//&& wcscmp(gfi->FindData.lpwszFileName, G.GetMsgWide(MCreateSiteConnection)) == 0) {
 		ByKey_EditSiteConnection(true);
 		return true;
 	}
@@ -939,8 +941,9 @@ void PluginImpl::DismissRemoteHost()
 	g_conn_pool->Put(CurrentConnectionPoolId(), _remote);
 
 	if (_allow_remember_location_dir &&
-	  _location.server_kind == Location::SK_SITE
-	  && G.GetGlobalConfigBool("RememberDirectory", false) ) {
+		_location.server_kind == Location::SK_SITE
+		&& G.GetGlobalConfigBool("RememberDirectory", false))
+	{
 		SiteSpecification site_specification(StrWide2MB(_standalone_config), _location.server);
 		SitesConfig sc(site_specification.sites_cfg_location);
 		sc.SetDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());

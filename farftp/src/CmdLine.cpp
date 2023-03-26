@@ -97,7 +97,7 @@ BOOL FTP::ExecCmdLineHOST(LPCSTR str, BOOL Prefix)
 {
 //Exit
 	if(StrCmpI(str,"EXIT") == 0 ||
-	        StrCmpI(str,"QUIT") == 0)
+		StrCmpI(str,"QUIT") == 0)
 	{
 		CurrentState = fcsClose;
 		FP_Info->Control(this,FCTL_CLOSEPLUGIN,NULL);
@@ -145,7 +145,7 @@ BOOL FTP::DoCommand(LPCSTR str, int type, DWORD flags)
 {
 	FP_Screen _scr;
 	BOOL ext = hConnect->Host.ExtCmdView,
-	     dex = Opt.DoNotExpandErrors;
+		dex = Opt.DoNotExpandErrors;
 	int  rc=0;
 	char *m;
 	hConnect->Host.ExtCmdView = TRUE;
@@ -166,7 +166,7 @@ BOOL FTP::DoCommand(LPCSTR str, int type, DWORD flags)
 				while((rc=hConnect->getreply(0)) == RPL_PRELIM);
 
 			rc = rc == RPL_COMPLETE ||
-			     rc == RPL_OK;
+				rc == RPL_OK;
 			break;
 		case   FCMD_FULL_COMMAND: //Convert string quoting to '\x1'
 
@@ -181,7 +181,7 @@ BOOL FTP::DoCommand(LPCSTR str, int type, DWORD flags)
 	}
 
 	if((rc && IS_FLAG(flags,FCMD_SHOW_MSG)) ||
-	        (!rc && IS_FLAG(flags,FCMD_SHOW_EMSG)))
+			(!rc && IS_FLAG(flags,FCMD_SHOW_EMSG)))
 		hConnect->ConnectMessage(MOk,"",rc ? MOk : (-MOk));
 
 	//Special process of known commands
@@ -313,12 +313,12 @@ BOOL FTP::ExecCmdLine(LPCSTR _str, BOOL WasPrefix)
 
 		//HOSTS state
 		if(ShowHosts &&
-		        ExecCmdLineHOST(buff.c_str(),Prefix))
+				ExecCmdLineHOST(buff.c_str(),Prefix))
 			break;
 
 		//CONNECTED state
 		if(!ShowHosts && hConnect &&
-		        ExecCmdLineFTP(buff.c_str(),Prefix))
+				ExecCmdLineFTP(buff.c_str(),Prefix))
 			break;
 
 		//Unprocessed
@@ -369,8 +369,8 @@ int FTP::ProcessCommandLine(char *CommandLine)
 
 	//Trim at end
 	for(char *m = CommandLine + strlen(CommandLine) - 1;
-	        m >= CommandLine && isspace(*m);
-	        m--)
+			m >= CommandLine && isspace(*m);
+			m--)
 		*m = 0;
 
 	if(!CommandLine[0]) return TRUE;
@@ -386,10 +386,10 @@ int FTP::ProcessCommandLine(char *CommandLine)
 	//Connect
 	FTPUrl            ui;
 	QueueExecOptions  op;
-	char             *UrlName = (CommandLine[ strlen(CommandLine)-1 ] != '/' &&
-	                             strchr(CommandLine,'/') != NULL)
-	                            ? strrchr(CommandLine,'/')
-	                            : NULL;
+	char *UrlName = (CommandLine[ strlen(CommandLine)-1 ] != '/' &&
+			strchr(CommandLine,'/') != NULL)
+		? strrchr(CommandLine,'/')
+		: NULL;
 	Host.Init();
 	UrlInit(&ui);
 	SetupQOpt(&op);
@@ -416,7 +416,7 @@ int FTP::ProcessCommandLine(char *CommandLine)
 			AddToQueque(&ui);
 
 			if(QuequeSize &&
-			        WarnExecuteQueue(&op))
+				WarnExecuteQueue(&op))
 			{
 				ExecuteQueue(&op);
 				return TRUE;

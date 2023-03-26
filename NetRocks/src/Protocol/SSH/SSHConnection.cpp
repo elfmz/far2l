@@ -273,7 +273,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 
 		int rc = ssh_userauth_password(ssh, username.empty() ? nullptr : username.c_str(), password.c_str());
-  		if (rc != SSH_AUTH_SUCCESS)
+		if (rc != SSH_AUTH_SUCCESS)
 			throw ProtocolAuthFailedError();//"Authentication failed", ssh_get_error(ssh), rc);
 	}
 }
@@ -314,7 +314,7 @@ void SSHExecutedCommand::SendSignal(int sig)
 	}
 	int rc = ssh_channel_request_send_signal(_channel, sig_name);
 	if (rc == SSH_ERROR ) {
-		throw ProtocolError("ssh send signal",  ssh_get_error(_conn->ssh));
+		throw ProtocolError("ssh send signal", ssh_get_error(_conn->ssh));
 	}
 }
 
@@ -373,7 +373,7 @@ void SSHExecutedCommand::IOLoop()
 
 	int rc = ssh_channel_request_exec(_channel, cmd.c_str());
 	if (rc != SSH_OK) {
-		throw ProtocolError("ssh execute",  ssh_get_error(_conn->ssh));
+		throw ProtocolError("ssh execute", ssh_get_error(_conn->ssh));
 	}
 
 	MakeFDNonBlocking(fd_in);
@@ -485,11 +485,11 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 	_channel(ssh_channel_new(conn->ssh))
 {
 	if (!_channel)
-		throw ProtocolError("ssh channel",  ssh_get_error(_conn->ssh));
+		throw ProtocolError("ssh channel", ssh_get_error(_conn->ssh));
 
 	int rc = ssh_channel_open_session(_channel);
 	if (rc != SSH_OK) {
-		throw ProtocolError("ssh channel session",  ssh_get_error(_conn->ssh));
+		throw ProtocolError("ssh channel session", ssh_get_error(_conn->ssh));
 	}
 
 	if (pty) {
@@ -500,7 +500,7 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 	}
 
 	if (pipe_cloexec(_kickass) == -1) {
-		throw ProtocolError("pipe",  ssh_get_error(_conn->ssh));
+		throw ProtocolError("pipe", ssh_get_error(_conn->ssh));
 	}
 
 	MakeFDNonBlocking(_kickass[1]);

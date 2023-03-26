@@ -116,7 +116,7 @@ TMacroKeywords MKeywords[] =
 	{2,  L"MacroArea",          MCODE_V_MACROAREA,0},
 
 	{2,  L"ItemCount",          MCODE_V_ITEMCOUNT,0},  // ItemCount - число элементов в текущем объекте
-	{2,  L"CurPos",             MCODE_V_CURPOS,0},    // CurPos - текущий индекс в текущем объекте
+	{2,  L"CurPos",             MCODE_V_CURPOS,0},     // CurPos - текущий индекс в текущем объекте
 	{2,  L"Title",              MCODE_V_TITLE,0},
 	{2,  L"Height",             MCODE_V_HEIGHT,0},
 	{2,  L"Width",              MCODE_V_WIDTH,0},
@@ -1218,8 +1218,8 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						SelPanel->GetFileName(strFileName,SelPanel->GetCurrentPos(),FileAttr);
 						int GetFileCount=SelPanel->GetFileCount();
 						Cond=(!GetFileCount ||
-						      (GetFileCount == 1 && TestParentFolderName(strFileName)))
-						     ?1:0;
+								(GetFileCount == 1 && TestParentFolderName(strFileName)))
+							?1:0;
 					}
 
 					break;
@@ -1477,7 +1477,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 					Panel *SelPanel = CheckCode == MCODE_V_APANEL_DRIVETYPE ? ActivePanel : PassivePanel;
 					Cond=-1;
 
-					if (SelPanel  && SelPanel->GetMode() != PLUGIN_PANEL)
+					if (SelPanel && SelPanel->GetMode() != PLUGIN_PANEL)
 					{
 						SelPanel->GetCurDir(strFileName);
 						UINT DriveType=FAR_GetDriveType(strFileName,nullptr,0);
@@ -1686,7 +1686,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags,DWORD CheckCode,DWORD& Err)
 						Cond=L"";
 
 					if ((CtrlObject->Macro.GetMode()==MACRO_VIEWER || CtrlObject->Macro.GetMode()==MACRO_QVIEWPANEL) &&
-					        CtrlObject->Plugins.CurViewer && CtrlObject->Plugins.CurViewer->IsVisible())
+						CtrlObject->Plugins.CurViewer && CtrlObject->Plugins.CurViewer->IsVisible())
 					{
 						if (CheckCode == MCODE_V_VIEWERFILENAME)
 						{
@@ -1753,10 +1753,10 @@ static bool substrFunc(const TMacroFunction*)
 	*/
 	bool Ret=false;
 
-	TVar VarLength;  VMStack.Pop(VarLength);
+	TVar VarLength; VMStack.Pop(VarLength);
 	int length = VarLength.getInt32();
 	int  start = VMStack.Pop().getInt32();
-	TVar Val;        VMStack.Pop(Val);
+	TVar Val; VMStack.Pop(Val);
 
 	wchar_t *p = (wchar_t *)Val.toString();
 	int length_str = StrLength(p);
@@ -2205,30 +2205,30 @@ static bool beepFunc(const TMacroFunction*)
 		MB_ICONASTERISK = 0x00000040
 			Звук Звездочка
 		MB_ICONEXCLAMATION = 0x00000030
-		    Звук Восклицание
+			Звук Восклицание
 		MB_ICONHAND = 0x00000010
-		    Звук Критическая ошибка
+			Звук Критическая ошибка
 		MB_ICONQUESTION = 0x00000020
-		    Звук Вопрос
+			Звук Вопрос
 		MB_OK = 0x0
-		    Стандартный звук
+			Стандартный звук
 		SIMPLE_BEEP = 0xffffffff
-		    Встроенный динамик
+			Встроенный динамик
 	*/
 	bool Ret=false;//MessageBeep((UINT)Val.i())?true:false;
 
 	/*
 		http://msdn.microsoft.com/en-us/library/dd743680%28VS.85%29.aspx
 		BOOL PlaySound(
-	    	LPCTSTR pszSound,
-	    	HMODULE hmod,
-	    	DWORD fdwSound
+			LPCTSTR pszSound,
+			HMODULE hmod,
+			DWORD fdwSound
 		);
 
 		http://msdn.microsoft.com/en-us/library/dd798676%28VS.85%29.aspx
 		BOOL sndPlaySound(
-	    	LPCTSTR lpszSound,
-	    	UINT fuSound
+			LPCTSTR lpszSound,
+			UINT fuSound
 		);
 	*/
 
@@ -2361,7 +2361,7 @@ static bool environFunc(const TMacroFunction*)
 // V=Panel.Select(panelType,Action[,Mode[,Items]])
 static bool panelselectFunc(const TMacroFunction*)
 {
-	TVar ValItems;  VMStack.Pop(ValItems);
+	TVar ValItems; VMStack.Pop(ValItems);
 	int Mode = VMStack.Pop().getInt32();
 	DWORD Action=(int)VMStack.Pop().getInteger();
 	int typePanel = VMStack.Pop().getInt32();
@@ -2488,16 +2488,16 @@ static bool panelfexistFunc(const TMacroFunction*)
 
 // N=FLock(Nkey,NState)
 /*
-  Nkey:
-     0 - NumLock
-     1 - CapsLock
-     2 - ScrollLock
+	Nkey:
+		0 - NumLock
+		1 - CapsLock
+		2 - ScrollLock
 
-  State:
-    -1 get state
-     0 off
-     1 on
-     2 flip
+	State:
+		-1 get state
+		0  off
+		1  on
+		2  flip
 */
 static bool flockFunc(const TMacroFunction*)
 {
@@ -2618,7 +2618,7 @@ static bool dlggetvalueFunc(const TMacroFunction*)
 						const char *Item->History;
 						const char *Item->Mask;
 						FarList *Item->ListItems;
-						int  Item->ListPos;
+						int Item->ListPos;
 						CHAR_INFO *Item->VBuf;
 						*/
 					}
@@ -2808,8 +2808,8 @@ static bool editorsetFunc(const TMacroFunction*)
 				Ret=EdOpt.SaveShortPos; break;
 			case 12: // char WordDiv[256];
 				Ret=TVar(EdOpt.strWordDiv); break;
-			case 13: // F7Rules;
-				Ret=EdOpt.F7Rules; break;
+			case 13: // F7Rules - obsolete;
+				Ret=0; break;
 			case 14: // AllowEmptySpaceAfterEof;
 				Ret=EdOpt.AllowEmptySpaceAfterEof; break;
 			case 15: // ShowScrollBar;
@@ -2858,8 +2858,8 @@ static bool editorsetFunc(const TMacroFunction*)
 					EdOpt.SaveShortPos=longState; break;
 				case 12: // char WordDiv[256];
 					EdOpt.strWordDiv = _longState.toString(); break;
-				case 13: // F7Rules;
-					EdOpt.F7Rules=longState; break;
+				case 13: // F7Rules - obsolete;
+					/* EdOpt.F7Rules=longState; */ break;
 				case 14: // AllowEmptySpaceAfterEof;
 					EdOpt.AllowEmptySpaceAfterEof=longState; break;
 				case 15: // ShowScrollBar;
@@ -3634,34 +3634,34 @@ static bool chrFunc(const TMacroFunction*)
 // V=Editor.Sel(Action[,Opt])
 static bool editorselFunc(const TMacroFunction*)
 {
-	/*
-	 MCODE_F_EDITOR_SEL
-	  Action: 0 = Get Param
-	              Opt:  0 = return FirstLine
-	                    1 = return FirstPos
-	                    2 = return LastLine
-	                    3 = return LastPos
-	                    4 = return block type (0=nothing 1=stream, 2=column)
-	              return: 0 = failure, 1... request value
 
-	          1 = Set Pos
-	              Opt:  0 = begin block (FirstLine & FirstPos)
-	                    1 = end block (LastLine & LastPos)
-	              return: 0 = failure, 1 = success
+	// MCODE_F_EDITOR_SEL
+	//  Action: 0 = Get Param
+	//              Opt:  0 = return FirstLine
+	//                    1 = return FirstPos
+	//                    2 = return LastLine
+	//                    3 = return LastPos
+	//                    4 = return block type (0=nothing 1=stream, 2=column)
+	//              return: 0 = failure, 1... request value
 
-	          2 = Set Stream Selection Edge
-	              Opt:  0 = selection start
-	                    1 = selection finish
-	              return: 0 = failure, 1 = success
+	//          1 = Set Pos
+	//              Opt:  0 = begin block (FirstLine & FirstPos)
+	//                    1 = end block (LastLine & LastPos)
+	//              return: 0 = failure, 1 = success
 
-	          3 = Set Column Selection Edge
-	              Opt:  0 = selection start
-	                    1 = selection finish
-	              return: 0 = failure, 1 = success
-	          4 = Unmark selected block
-	              Opt: ignore
-	              return 1
-	*/
+	//          2 = Set Stream Selection Edge
+	//              Opt:  0 = selection start
+	//                    1 = selection finish
+	//              return: 0 = failure, 1 = success
+
+	//          3 = Set Column Selection Edge
+	//              Opt:  0 = selection start
+	//                    1 = selection finish
+	//              return: 0 = failure, 1 = success
+	//          4 = Unmark selected block
+	//              Opt: ignore
+	//              return 1
+
 	TVar Ret{tviZero};
 	TVar Opt; VMStack.Pop(Opt);
 	TVar Action; VMStack.Pop(Action);
@@ -3815,9 +3815,11 @@ struct OpenDlgPluginData
 
 			OpenFrom |= Param.isString() ? OPEN_FROMMACROSTRING : 0;
 
-			Ret=CtrlObject->Plugins.CallPlugin((DWORD)SysID.i(),OpenFrom,
-			                                   Param.isString() ? (void*)Param.s() :
-			                                   (void*)(size_t)Param.i());
+			Ret=CtrlObject->Plugins.CallPlugin(
+				(DWORD)SysID.i(),OpenFrom,
+				Param.isString() ? (void*)Param.s() :
+				(void*)(size_t)Param.i()
+			);
 
 			if( Opt.Macro.CallPluginRules )
 				CtrlObject->Macro.PopState();
@@ -3845,8 +3847,8 @@ static bool callpluginFunc(const TMacroFunction*)
 		int ResultCallPlugin=0;
 
 		if (CtrlObject->Plugins.CallPlugin((DWORD)SysID.i(),OpenFrom,
-		                                   Param.isString() ? (void*)Param.s() :
-		                                   (void*)(size_t)Param.i(),&ResultCallPlugin))
+			Param.isString() ? (void*)Param.s() :
+			(void*)(size_t)Param.i(),&ResultCallPlugin))
 			Ret=ResultCallPlugin;
 
 		if( Opt.Macro.CallPluginRules )
@@ -4049,10 +4051,10 @@ int KeyMacro::GetKey()
 			}
 
 			if (Mode==MACRO_EDITOR &&
-			        IsRedrawEditor &&
-			        CtrlObject->Plugins.CurEditor &&
-			        CtrlObject->Plugins.CurEditor->IsVisible() &&
-			        LockScr)
+				IsRedrawEditor &&
+				CtrlObject->Plugins.CurEditor &&
+				CtrlObject->Plugins.CurEditor->IsVisible() &&
+				LockScr)
 			{
 				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
 				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
@@ -4113,7 +4115,8 @@ begin:
 	{
 done:
 
-		/*$ 10.08.2000 skv
+		/*
+			$ 10.08.2000 skv
 			If we are in editor mode, and CurEditor defined,
 			we need to call this events.
 			EE_REDRAW 2 - to notify that text changed.
@@ -4124,10 +4127,10 @@ done:
 			will NOT send this event while screen is locked.
 		*/
 		if (Mode==MACRO_EDITOR &&
-		        IsRedrawEditor &&
-		        CtrlObject->Plugins.CurEditor &&
-		        CtrlObject->Plugins.CurEditor->IsVisible() &&
-		        LockScr)
+			IsRedrawEditor &&
+			CtrlObject->Plugins.CurEditor &&
+			CtrlObject->Plugins.CurEditor->IsVisible() &&
+			LockScr)
 		{
 			CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_CHANGE);
 			CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW,EEREDRAW_ALL);
@@ -4431,15 +4434,15 @@ done:
 
 			goto begin;
 		}
-		/*                               Вместо
-			0: MCODE_OP_COPY                 0:   MCODE_OP_PUSHVAR
-			1: szVarDest                     1:   VarSrc
-			...                              ...
-			N: szVarSrc                      N:   MCODE_OP_SAVE
-			...                            N+1:   VarDest
-			                               N+2:
-			                                 ...
-		*/
+		//                               Вместо
+		//  0: MCODE_OP_COPY                 0:   MCODE_OP_PUSHVAR
+		//  1: szVarDest                     1:   VarSrc
+		//  ...                              ...
+		//  N: szVarSrc                      N:   MCODE_OP_SAVE
+		//  ...                            N+1:   VarDest
+		//                                 N+2:
+		//                                   ...
+		//
 		case MCODE_OP_COPY:       // 0: Copy 1: VarDest 2: VarSrc ==>  %a=%d
 		{
 			GetPlainText(value);
@@ -4553,7 +4556,7 @@ done:
 				goto done;
 			}
 
-			VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() /  tmpVar);
+			VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() / tmpVar);
 			goto begin;
 			// Logical
 		case MCODE_OP_AND:    VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() && tmpVar); goto begin;
@@ -4567,7 +4570,7 @@ done:
 		case MCODE_OP_BITSHL: VMStack.Pop(tmpVar); VMStack.Push(VMStack.Pop() << tmpVar); goto begin;
 		case MCODE_OP_BITNOT: VMStack.Pop(tmpVar); VMStack.Push(~tmpVar); goto begin;
 
-		case MCODE_OP_ADDEQ:                   // a +=  b
+		case MCODE_OP_ADDEQ:                   // a += b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4576,7 +4579,7 @@ done:
 			tmpVarSet->value += tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_SUBEQ:                   // a -=  b
+		case MCODE_OP_SUBEQ:                   // a -= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4585,7 +4588,7 @@ done:
 			tmpVarSet->value -= tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_MULEQ:                   // a *=  b
+		case MCODE_OP_MULEQ:                   // a *= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4594,7 +4597,7 @@ done:
 			tmpVarSet->value *= tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_DIVEQ:                   // a /=  b
+		case MCODE_OP_DIVEQ:                   // a /= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4623,7 +4626,7 @@ done:
 			tmpVarSet->value <<= tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_BITANDEQ:                // a &=  b
+		case MCODE_OP_BITANDEQ:                // a &= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4632,7 +4635,7 @@ done:
 			tmpVarSet->value &= tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_BITXOREQ:                // a ^=  b
+		case MCODE_OP_BITXOREQ:                // a ^= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4641,7 +4644,7 @@ done:
 			tmpVarSet->value ^= tmpVar;
 			goto begin;
 		}
-		case MCODE_OP_BITOREQ:                 // a |=  b
+		case MCODE_OP_BITOREQ:                 // a |= b
 		{
 			GetPlainText(value);
 			TVarTable *t = (value.At(0) == L'%') ? &glbVarTable : Work.locVarTable;
@@ -4690,24 +4693,25 @@ done:
 
 					case 2: // программный вызов макроса, назначенный на кнопкосочетание
 					{
-						/*
-						   Для этого:
-						   а) второй параметр функции установить в 2
-						   б) первым параметром указать строку в формате "Area/Key"
-						      здесь:
-						        "Area" - область, из которой хотим вызвать макрос
-						        "/" - разделитель
-						        "Key" - название клавиши
-						      "Area/" можно не указывать, в этом случае поиск "Key" будет вестись в текущей активной макрообласти,
-						         если в текущей области "Key" не найден, то поиск продолжится в области Common.
-						         Что бы отключить поиск в области Common (ограничится только "этой" областью),
-						         необходимо в качестве "Area" указать точку.
 
-						   Для режима 2 функция вернет
-						     -1 - ошибка
-						     -2 - нет макроса, заданного кпопкосочетанием (или макрос заблокирован)
-						      0 - Ok
-						*/
+						//   Для этого:
+						//   а) второй параметр функции установить в 2
+						//   б) первым параметром указать строку в формате "Area/Key"
+						//      здесь:
+						//        "Area" - область, из которой хотим вызвать макрос
+						//        "/" - разделитель
+						//        "Key" - название клавиши
+						//      "Area/" можно не указывать, в этом случае поиск "Key"
+						//         будет вестись в текущей активной макрообласти,
+						//         если в текущей области "Key" не найден, то поиск продолжится в области Common.
+						//         Что бы отключить поиск в области Common (ограничится только "этой" областью),
+						//         необходимо в качестве "Area" указать точку.
+
+						//   Для режима 2 функция вернет
+						//     -1 - ошибка
+						//     -2 - нет макроса, заданного кпопкосочетанием (или макрос заблокирован)
+						//      0 - Ok
+
 						int _Mode;
 						bool UseCommon=true;
 						FARString strVal=Val.toString();
@@ -4716,7 +4720,7 @@ done:
 						wchar_t *lpwszVal = strVal.GetBuffer();
 						wchar_t *p=wcsrchr(lpwszVal,L'/');
 
-						if (p  && p[1])
+						if (p && p[1])
 						{
 							*p++=0;
 							if ((_Mode = GetSubKey(lpwszVal)) < MACRO_FUNCS)
@@ -4991,10 +4995,9 @@ return_func:
 #if 0
 
 	if (MR==Work.MacroWORK &&
-	        (Work.ExecLIBPos>=MR->BufferSize || Work.ExecLIBPos+1==MR->BufferSize && MR->Buffer[Work.ExecLIBPos]==KEY_NONE) &&
-	        Mode==MACRO_DIALOG
-	   )
-	{
+		(Work.ExecLIBPos>=MR->BufferSize || Work.ExecLIBPos+1==MR->BufferSize && MR->Buffer[Work.ExecLIBPos]==KEY_NONE) &&
+		Mode==MACRO_DIALOG
+	) {
 		RetKey=Key;
 		goto done;
 	}
@@ -5057,9 +5060,9 @@ FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName)
 }
 
 /*
-  после вызова этой функции нужно удалить память!!!
-  функция декомпилит только простые последовательности, т.к.... клавиши
-  в противном случае возвращает Src
+	после вызова этой функции нужно удалить память!!!
+	функция декомпилит только простые последовательности, т.к.... клавиши
+	в противном случае возвращает Src
 */
 wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Src)
 {
@@ -5075,8 +5078,8 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 	if (BufferSize == 1)
 	{
 		if (
-		    (((DWORD)(DWORD_PTR)Buffer)&KEY_MACRO_ENDBASE) >= KEY_MACRO_BASE && (((DWORD)(DWORD_PTR)Buffer)&KEY_MACRO_ENDBASE) <= KEY_MACRO_ENDBASE ||
-		    (((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) >= KEY_OP_BASE && (((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) <= KEY_OP_ENDBASE
+			(((DWORD)(DWORD_PTR)Buffer)&KEY_MACRO_ENDBASE) >= KEY_MACRO_BASE && (((DWORD)(DWORD_PTR)Buffer)&KEY_MACRO_ENDBASE) <= KEY_MACRO_ENDBASE ||
+			(((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) >= KEY_OP_BASE && (((DWORD)(DWORD_PTR)Buffer)&KEY_OP_ENDBASE) <= KEY_OP_ENDBASE
 		)
 		{
 			return Src?wcsdup(Src):nullptr;
@@ -5103,7 +5106,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer,int BufferSize,const wchar_t *Sr
 				(Key&KEY_MACRO_ENDBASE) >= KEY_MACRO_BASE && (Key&KEY_MACRO_ENDBASE) <= KEY_MACRO_ENDBASE ||
 				(Key&KEY_OP_ENDBASE) >= KEY_OP_BASE && (Key&KEY_OP_ENDBASE) <= KEY_OP_ENDBASE ||
 				*/
-			    !KeyToText(Key,strMacroKeyText)
+				!KeyToText(Key,strMacroKeyText)
 			)
 			{
 				return Src?wcsdup(Src):nullptr;
@@ -5131,7 +5134,7 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 	ConfigWriter cfg_writer;
 	for (int I=0; I<MacroLIBCount; I++)
 	{
-		if (!AllSaved  && !(MacroLIB[I].Flags&MFLAGS_NEEDSAVEMACRO))
+		if (!AllSaved && !(MacroLIB[I].Flags&MFLAGS_NEEDSAVEMACRO))
 			continue;
 
 		MkRegKeyName(I, strRegKeyName);
@@ -5254,26 +5257,26 @@ void KeyMacro::SetMacroConst(const wchar_t *ConstName, const TVar Value)
 int KeyMacro::ReadMacroFunction(int ReadMode, FARString& strBuffer)
 {
 	/*
-	 В реестре держать раздел "KeyMacros\Funcs" - библиотека макрофункций, экспортируемых плагинами (ProcessMacroW)
-     Имя подраздела - это имя "функции"
-     Значения у каждого подраздела:
-       Syntax:reg_sz - синтаксис функции (на будущее - в качестве подсказки)
-       Params:reg_dword - количество параметров у функции
-       OParams:reg_dword - необязательные параметры функции
-       Sequence:reg_sz - тело функции
-       Flags:reg_dword - флаги
-       GUID:reg_sz - GUID или путь к плагину в терминах PluginsCache (зависит от Flags)
-       Description:reg_sz - необязательное описание
+		В реестре держать раздел "KeyMacros\Funcs" - библиотека макрофункций, экспортируемых плагинами (ProcessMacroW)
+		Имя подраздела - это имя "функции"
+		Значения у каждого подраздела:
+			Syntax:reg_sz - синтаксис функции (на будущее - в качестве подсказки)
+			Params:reg_dword - количество параметров у функции
+			OParams:reg_dword - необязательные параметры функции
+			Sequence:reg_sz - тело функции
+			Flags:reg_dword - флаги
+			GUID:reg_sz - GUID или путь к плагину в терминах PluginsCache (зависит от Flags)
+			Description:reg_sz - необязательное описание
 
-     Flags - набор битов
-       0: в GUID путь к плагину, как в PluginsCache иначе GUID
-       1: использовать Sequence вместо плагина; оно же будет юзаться, если GUID пуст
-       2: ...
+		Flags - набор битов
+			0: в GUID путь к плагину, как в PluginsCache иначе GUID
+			1: использовать Sequence вместо плагина; оно же будет юзаться, если GUID пуст
+			2: ...
 
 
-     Обращение к такой функции, как к обычной abs, mix, len, etc.
-     Если Plugin не пуст, Sequence игнорируется.
-     Plugin - имя подраздела из ветки PluginsCache
+		Обращение к такой функции, как к обычной abs, mix, len, etc.
+		Если Plugin не пуст, Sequence игнорируется.
+		Plugin - имя подраздела из ветки PluginsCache
 
 	[HKEY_CURRENT_USER\Software\Far2\KeyMacros\Funcs\math.sin]
 	"Syntax"="d=sin(V)"
@@ -5432,9 +5435,10 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 bool KeyMacro::UnregMacroFunction(size_t Index)
 {
 	if (Index == (size_t)-1)
-	{	
+	{
 		fprintf(stderr, "If you see this in output - uncomment code below and check again\n");
-		/*if (AMacroFunction)
+		/*
+		if (AMacroFunction)
 		{
 			TMacroFunction *pTemp;
 			for (size_t I=0; I < CMacroFunction; ++I)
@@ -5455,7 +5459,8 @@ bool KeyMacro::UnregMacroFunction(size_t Index)
 			AllocatedFuncCount=0;
 			free(AMacroFunction);
 			AMacroFunction=nullptr;
-		} */
+		}
+		*/
 	}
 	else if (AMacroFunction && Index < CMacroFunction)
 		AMacroFunction[Index].Code=MCODE_F_NOFUNC;
@@ -5637,10 +5642,10 @@ void KeyMacro::RunStartMacro()
 		DWORD CurFlags;
 
 		if (((CurFlags=MR[I].Flags)&MFLAGS_MODEMASK)==MACRO_SHELL &&
-		        MR[I].BufferSize>0 &&
-		        // исполняем не задисабленные макросы
-		        !(CurFlags&MFLAGS_DISABLEMACRO) &&
-		        (CurFlags&MFLAGS_RUNAFTERFARSTART) && CtrlObject)
+			MR[I].BufferSize>0 &&
+			// исполняем не задисабленные макросы
+			!(CurFlags&MFLAGS_DISABLEMACRO) &&
+			(CurFlags&MFLAGS_RUNAFTERFARSTART) && CtrlObject)
 		{
 			if (CheckAll(MACRO_SHELL,CurFlags))
 				PostNewMacro(MR+I);
@@ -5666,11 +5671,11 @@ void KeyMacro::RunStartMacro()
 		DWORD CurFlags;
 
 		if (((CurFlags=MR[I].Flags)&MFLAGS_MODEMASK)==Mode &&   // этот макрос из этой оперы?
-		        MR[I].BufferSize > 0 &&                             // что-то должно быть
-		        !(CurFlags&MFLAGS_DISABLEMACRO) &&                  // исполняем не задисабленные макросы
-		        (CurFlags&MFLAGS_RUNAFTERFARSTART) &&               // и тока те, что должны стартовать
-		        !(CurFlags&MFLAGS_RUNAFTERFARSTARTED)      // и тем более, которые еще не стартовали
-		   )
+			MR[I].BufferSize > 0 &&                             // что-то должно быть
+			!(CurFlags&MFLAGS_DISABLEMACRO) &&                  // исполняем не задисабленные макросы
+			(CurFlags&MFLAGS_RUNAFTERFARSTART) &&               // и тока те, что должны стартовать
+			!(CurFlags&MFLAGS_RUNAFTERFARSTARTED)               // и тем более, которые еще не стартовали
+		)
 		{
 			if (CheckAll(Mode,CurFlags)) // прежде чем запостить - проверим флаги
 			{
@@ -5749,7 +5754,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		int KeySize=GetRegKeySize("KeyMacros","DlgKeys");
 		char *KeyStr;
 		if(KeySize &&
-			(KeyStr=(char*)malloc(KeySize+1))  &&
+			(KeyStr=(char*)malloc(KeySize+1)) &&
 			GetRegKey("KeyMacros","DlgKeys",KeyStr,"",KeySize)
 		)
 		{
@@ -5784,7 +5789,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		}
 	}
 	else if (Msg == DN_KEY && (((Param2&KEY_END_SKEY) < KEY_END_FKEY) ||
-	                           (((Param2&KEY_END_SKEY) > INTERNAL_KEY_BASE) && (Param2&KEY_END_SKEY) < INTERNAL_KEY_BASE_2)))
+		(((Param2&KEY_END_SKEY) > INTERNAL_KEY_BASE) && (Param2&KEY_END_SKEY) < INTERNAL_KEY_BASE_2)))
 	{
 		//if((Param2&0x00FFFFFF) >= 'A' && (Param2&0x00FFFFFF) <= 'Z' && ShiftPressed)
 		//Param2|=KEY_SHIFT;
@@ -5793,9 +5798,9 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		// <Обработка особых клавиш: F1 & Enter>
 		// Esc & (Enter и предыдущий Enter) - не обрабатываем
 		if (Param2 == KEY_ESC ||
-		        ((Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && (LastKey == KEY_ENTER||LastKey == KEY_NUMENTER)) ||
-		        Param2 == KEY_CTRLDOWN ||
-		        Param2 == KEY_F1)
+			((Param2 == KEY_ENTER||Param2 == KEY_NUMENTER) && (LastKey == KEY_ENTER||LastKey == KEY_NUMENTER)) ||
+			Param2 == KEY_CTRLDOWN ||
+			Param2 == KEY_F1)
 		{
 			return FALSE;
 		}
@@ -5806,8 +5811,8 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg,int Msg,int Param1,LONG
 		// а второй раз - второй раз уже назначение
 		if(Param2 == KEY_F1 && LastKey!=KEY_F1)
 		{
-		  LastKey=KEY_F1;
-		  return FALSE;
+			LastKey=KEY_F1;
+			return FALSE;
 		}
 		*/
 		// Было что-то уже нажато и Enter`ом подтверждаем
@@ -5854,31 +5859,31 @@ M1:
 				FARString strBuf;
 				if ((Mac->Flags&0xFF)==MACRO_COMMON)
 					strBuf.Format((!MacroDlg->RecBufferSize
-					                  ? (DisFlags ? Msg::MacroCommonDeleteAssign : Msg::MacroCommonDeleteKey)
-					                  : Msg::MacroCommonReDefinedKey), strKeyText.CPtr());
+						? (DisFlags ? Msg::MacroCommonDeleteAssign : Msg::MacroCommonDeleteKey)
+						: Msg::MacroCommonReDefinedKey), strKeyText.CPtr());
 				else
 					strBuf.Format((!MacroDlg->RecBufferSize
-					                  ? (DisFlags ? Msg::MacroDeleteAssign : Msg::MacroDeleteKey)
-					                  : Msg::MacroReDefinedKey), strKeyText.CPtr());
+						? (DisFlags ? Msg::MacroDeleteAssign : Msg::MacroDeleteKey)
+						: Msg::MacroReDefinedKey), strKeyText.CPtr());
 
 				// проверим "а не совпадает ли всё?"
 				int Result=0;
 				if (!(!DisFlags &&
-				        Mac->Buffer && MacroDlg->RecBuffer &&
-				        Mac->BufferSize == MacroDlg->RecBufferSize &&
-				        (
-				            (Mac->BufferSize >  1 && !memcmp(Mac->Buffer,MacroDlg->RecBuffer,MacroDlg->RecBufferSize*sizeof(DWORD))) ||
-				            (Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
-				        )
-				   ))
-					Result=Message(MSG_WARNING,2,Msg::Warning,
-					          strBuf,
-					          Msg::MacroSequence,
-					          strBufKey,
-					          (!MacroDlg->RecBufferSize?Msg::MacroDeleteKey2:
-					              (DisFlags?Msg::MacroDisDisabledKey:Msg::MacroReDefinedKey2)),
-					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisOverwrite:Msg::Yes),
-					          (DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisAnotherKey:Msg::No));
+					Mac->Buffer && MacroDlg->RecBuffer &&
+					Mac->BufferSize == MacroDlg->RecBufferSize &&
+					(
+						(Mac->BufferSize >  1 && !memcmp(Mac->Buffer,MacroDlg->RecBuffer,MacroDlg->RecBufferSize*sizeof(DWORD))) ||
+						(Mac->BufferSize == 1 && (DWORD)(DWORD_PTR)Mac->Buffer == (DWORD)(DWORD_PTR)MacroDlg->RecBuffer)
+					)
+				))
+				Result=Message(MSG_WARNING,2,Msg::Warning,
+					strBuf,
+					Msg::MacroSequence,
+					strBufKey,
+					(!MacroDlg->RecBufferSize?Msg::MacroDeleteKey2:
+						(DisFlags?Msg::MacroDisDisabledKey:Msg::MacroReDefinedKey2)),
+					(DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisOverwrite:Msg::Yes),
+					(DisFlags && MacroDlg->RecBufferSize?Msg::MacroDisAnotherKey:Msg::No));
 
 				if (!Result)
 				{
@@ -6112,27 +6117,27 @@ int KeyMacro::GetMacroSettings(uint32_t Key,DWORD &Flags)
 	if (MacroSettingsDlg[MS_CHECKBOX_A_PANEL].Selected)
 	{
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==0?MFLAGS_NOPLUGINPANELS:MFLAGS_NOFILEPANELS);
+			(MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected==0?MFLAGS_NOPLUGINPANELS:MFLAGS_NOFILEPANELS);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==0?MFLAGS_NOFOLDERS:MFLAGS_NOFILES);
+			(MacroSettingsDlg[MS_CHECKBOX_A_FOLDERS].Selected==0?MFLAGS_NOFOLDERS:MFLAGS_NOFILES);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==0?MFLAGS_NOSELECTION:MFLAGS_SELECTION);
+			(MacroSettingsDlg[MS_CHECKBOX_A_SELECTION].Selected==0?MFLAGS_NOSELECTION:MFLAGS_SELECTION);
 	}
 
 	if (MacroSettingsDlg[MS_CHECKBOX_P_PANEL].Selected)
 	{
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==0?MFLAGS_PNOPLUGINPANELS:MFLAGS_PNOFILEPANELS);
+			(MacroSettingsDlg[MS_CHECKBOX_P_PLUGINPANEL].Selected==0?MFLAGS_PNOPLUGINPANELS:MFLAGS_PNOFILEPANELS);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==0?MFLAGS_PNOFOLDERS:MFLAGS_PNOFILES);
+			(MacroSettingsDlg[MS_CHECKBOX_P_FOLDERS].Selected==0?MFLAGS_PNOFOLDERS:MFLAGS_PNOFILES);
 		Flags|=MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==2?0:
-		       (MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==0?MFLAGS_PNOSELECTION:MFLAGS_PSELECTION);
+			(MacroSettingsDlg[MS_CHECKBOX_P_SELECTION].Selected==0?MFLAGS_PNOSELECTION:MFLAGS_PSELECTION);
 	}
 
 	Flags|=MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==2?0:
-	       (MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==0?MFLAGS_NOTEMPTYCOMMANDLINE:MFLAGS_EMPTYCOMMANDLINE);
+		(MacroSettingsDlg[MS_CHECKBOX_CMDLINE].Selected==0?MFLAGS_NOTEMPTYCOMMANDLINE:MFLAGS_EMPTYCOMMANDLINE);
 	Flags|=MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==2?0:
-	       (MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==0?MFLAGS_EDITNOSELECTION:MFLAGS_EDITSELECTION);
+		(MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected==0?MFLAGS_EDITNOSELECTION:MFLAGS_EDITSELECTION);
 	return TRUE;
 }
 
@@ -6372,10 +6377,10 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 				for (Pos=0; Pos < Len; ++Pos, ++MPtr)
 				{
 					if (!((MPtr->Key ^ Key) & ~0xFFFFu) &&
-					        (Upper(static_cast<WCHAR>(MPtr->Key))==Upper(static_cast<WCHAR>(Key))) &&
-					        (MPtr->BufferSize > 0))
+						(Upper(static_cast<WCHAR>(MPtr->Key))==Upper(static_cast<WCHAR>(Key))) &&
+						(MPtr->BufferSize > 0))
 					{
-						//        && (ChechMode == -1 || (MPtr->Flags&MFLAGS_MODEMASK) == ChechMode))
+						// && (ChechMode == -1 || (MPtr->Flags&MFLAGS_MODEMASK) == ChechMode))
 						//_SVS(SysLog(L"GetIndex: Pos=%d MPtr->Key=0x%08X", Pos,MPtr->Key));
 						if (!(MPtr->Flags&MFLAGS_DISABLEMACRO))
 							return Pos+((ChechMode >= 0)?IndexMode[ChechMode][0]:0);
@@ -6476,7 +6481,7 @@ int KeyMacro::GetMacroKeyInfo(bool FromReg,int Mode,int Pos, FARString &strKeyNa
 				}
 				else
 				{ // guess who
-				    wchar_t *llEnd = nullptr;
+					wchar_t *llEnd = nullptr;
 					long long llVal = wcstoll(Val.CPtr(), &llEnd, 10);
 					if (!Val.IsEmpty() && llEnd && !*llEnd)
 					{
@@ -6630,7 +6635,8 @@ BOOL KeyMacro::CheckFileFolder(Panel *CheckPanel,DWORD CurFlags, BOOL IsPassiveP
 
 BOOL KeyMacro::CheckAll(int /*CheckMode*/,DWORD CurFlags)
 {
-	/* $TODO:
+	/*
+		$TODO:
 		Здесь вместо Check*() попробовать заюзать IfCondition()
 		для исключения повторяющегося кода.
 	*/
@@ -6691,9 +6697,11 @@ BOOL KeyMacro::CheckAll(int /*CheckMode*/,DWORD CurFlags)
 }
 
 /*
-  Return: FALSE - если тестируемый MFLAGS_* не установлен или
-                  это не режим исполнения макроса!
-          TRUE  - такой флаг(и) установлен(ы)
+	Return:
+		FALSE - если тестируемый MFLAGS_* не установлен или
+		это не режим исполнения макроса!
+
+		TRUE - такой флаг(и) установлен(ы)
 */
 BOOL KeyMacro::CheckCurMacroFlags(DWORD Flags)
 {
@@ -6706,8 +6714,8 @@ BOOL KeyMacro::CheckCurMacroFlags(DWORD Flags)
 }
 
 /*
-  Return: 0 - не в режиме макро, 1 - Executing, 2 - Executing common, 3 - Recording, 4 - Recording common
-  See MacroRecordAndExecuteType
+	Return: 0 - не в режиме макро, 1 - Executing, 2 - Executing common, 3 - Recording, 4 - Recording common
+	See MacroRecordAndExecuteType
 */
 int KeyMacro::GetCurRecord(MacroRecord* RBuf,int *KeyPos)
 {

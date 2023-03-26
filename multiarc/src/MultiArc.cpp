@@ -5,7 +5,7 @@
 
 SHAREDSYMBOL int WINAPI _export GetMinFarVersion(void)
 {
-	#define MAKEFARVERSION(major,minor) ( ((major)<<16) | (minor))
+  #define MAKEFARVERSION(major,minor) ( ((major)<<16) | (minor))
   return MAKEFARVERSION(2, 1);
 }
 
@@ -51,28 +51,28 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 }
 
 static const char *KnownDocumentTypes[] = {
-	"docx", "docm", "dotx", "dotm",
+  "docx", "docm", "dotx", "dotm",
 
-	"xlsx", "xlsm", "xltx", "xltm", "xlsb", "xlam",
-	"pptx", "pptm", "potx", "potm", "ppam", "ppsx",
+  "xlsx", "xlsm", "xltx", "xltm", "xlsb", "xlam",
+  "pptx", "pptm", "potx", "potm", "ppam", "ppsx",
 
-	"ppsm", "sldx", "sldm", "thmx",
+  "ppsm", "sldx", "sldm", "thmx",
 
-	"odt", "ods", "odp"
+  "odt", "ods", "odp"
 };
 
 static bool IsKnownDocumentType(const char *Name)
 {
-	const char *ext = strrchr(Name, '.');
-	if (ext && ext[1]) {
-		++ext;
-		for (const char *known_type : KnownDocumentTypes) {
-			if (strcasecmp(ext, known_type) == 0) {
-				return true;
-			}
-		}
-	}
-	return false;
+  const char *ext = strrchr(Name, '.');
+  if (ext && ext[1]) {
+    ++ext;
+    for (const char *known_type : KnownDocumentTypes) {
+      if (strcasecmp(ext, known_type) == 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigned char *Data,int DataSize,int OpMode)
@@ -114,21 +114,21 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name,const unsigne
 
 std::string MakeFullName(const char *name)
 {
-	if (name[0]=='/')
-		return name;
-	
-	std::string out;
-	char cd[PATH_MAX];
-	if (getcwd(cd, sizeof(cd))) {
-		if (name[0] == '.' && name[1] == '/') {
-			name += 2;
-		}
-		out = cd;
-		out += '/';
-	}
-	
-	out += name;
-	return out;
+  if (name[0]=='/')
+    return name;
+
+  std::string out;
+  char cd[PATH_MAX];
+  if (getcwd(cd, sizeof(cd))) {
+    if (name[0] == '.' && name[1] == '/') {
+      name += 2;
+    }
+    out = cd;
+    out += '/';
+  }
+
+  out += name;
+  return out;
 }
 
 static HANDLE OpenPluginWithCmdLine(const char *CmdLine)
@@ -140,17 +140,12 @@ static HANDLE OpenPluginWithCmdLine(const char *CmdLine)
   if (CmdLine[Prefix1Len] != ':' || CmdLine[Prefix1Len + 1] == 0)
     return INVALID_HANDLE_VALUE;
 
-  char oldfilename[NM+2];
-  strncpy(oldfilename, &CmdLine[Prefix1Len + 1], sizeof(oldfilename) - 1);
-
-  FSF.Unquote(oldfilename);
-  FSF.ExpandEnvironmentStr(oldfilename, oldfilename, NM);
-  std::string filename = MakeFullName(oldfilename);
+  std::string filename = MakeFullName(&CmdLine[Prefix1Len + 1]);
   if (filename.empty())
     return INVALID_HANDLE_VALUE;
 
   HANDLE h = WINPORT(CreateFile)(StrMB2Wide(filename).c_str(), GENERIC_READ,
-		FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE)
     return INVALID_HANDLE_VALUE;
 
@@ -317,5 +312,5 @@ std::string gMultiArcPluginPath;
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
-	gMultiArcPluginPath = path;
+  gMultiArcPluginPath = path;
 }

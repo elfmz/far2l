@@ -32,8 +32,8 @@ SArg::~SArg()
 
 SArg::SArg(const SArg &a)
 {
-	type = a.type;
-	arg  = a.arg;
+	type  = a.type;
+	arg   = a.arg;
 	v_big = a.v_big;
 	empty = a.empty;
 }
@@ -145,18 +145,18 @@ SArg operator+(const SArg & op1, const SArg & op2)
 		return op1.GetBig() + op2.GetBig();
 	switch(op1.type)
 	{
-    case SA_BIG: return op1.v_big + op2.GetBig();
+	case SA_BIG: return op1.v_big + op2.GetBig();
 
 	case SA_INT64:  return op1.arg.v_int64 + (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int + (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short + (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char + (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 + (uint64_t)op2;
-    case SA_UINT:   return op1.arg.v_uint + (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort + (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte + (unsigned char)op2);
+	case SA_INT:    return op1.arg.v_int + (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short + (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char + (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 + (uint64_t)op2;
+	case SA_UINT:   return op1.arg.v_uint + (unsigned int)op2;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort + (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte + (unsigned char)op2);
 	case SA_DOUBLE: return op1.arg.v_dbl + (double)op2;
-    case SA_FLOAT:  return op1.arg.v_flt + (float)op2;
+	case SA_FLOAT:  return op1.arg.v_flt + (float)op2;
 	}
 	throw ERR_TYPE;
 }
@@ -180,18 +180,18 @@ SArg operator- (const SArg & op1, const SArg & op2)
 		return op1.GetBig() - op2.GetBig();
 	switch(op1.type)
 	{
-    case SA_BIG: return op1.v_big - op2.GetBig();
+	case SA_BIG: return op1.v_big - op2.GetBig();
 
 	case SA_INT64:  return op1.arg.v_int64 - (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int - (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short - (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char - (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 - (uint64_t)op2;
-    case SA_UINT:   return op1.arg.v_uint - (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort - (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte - (unsigned char)op2);
-    case SA_DOUBLE: return op1.arg.v_dbl - (double)op2;
-    case SA_FLOAT:  return op1.arg.v_flt - (float)op2;
+	case SA_INT:    return op1.arg.v_int - (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short - (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char - (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 - (uint64_t)op2;
+	case SA_UINT:   return op1.arg.v_uint - (unsigned int)op2;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort - (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte - (unsigned char)op2);
+	case SA_DOUBLE: return op1.arg.v_dbl - (double)op2;
+	case SA_FLOAT:  return op1.arg.v_flt - (float)op2;
 	}
 	throw ERR_TYPE;
 }
@@ -228,18 +228,18 @@ SArg operator* (const SArg & op1, const SArg & op2)
 		return op1.GetBig() * op2.GetBig();
 	switch(op1.type)
 	{
-    case SA_BIG: return op1.v_big * op2.GetBig();
+	case SA_BIG: return op1.v_big * op2.GetBig();
 
 	case SA_INT64:  return op1.arg.v_int64 * (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int * (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short * (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char * (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 * (uint64_t)op2;
-    case SA_UINT:   return op1.arg.v_uint * (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort * (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte * (unsigned char)op2);
-    case SA_DOUBLE: return op1.arg.v_dbl * (double)op2;
-    case SA_FLOAT:  return op1.arg.v_flt * (float)op2;
+	case SA_INT:    return op1.arg.v_int * (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short * (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char * (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 * (uint64_t)op2;
+	case SA_UINT:   return op1.arg.v_uint * (unsigned int)op2;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort * (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte * (unsigned char)op2);
+	case SA_DOUBLE: return op1.arg.v_dbl * (double)op2;
+	case SA_FLOAT:  return op1.arg.v_flt * (float)op2;
 	}
 	throw ERR_TYPE;
 }
@@ -248,18 +248,18 @@ SArg SArg::operator~() const
 {
 	switch(type)
 	{
-    case SA_INT64:  return ~arg.v_int64;
-    case SA_INT:    return ~arg.v_int;
-    case SA_SHORT:  return (short)~arg.v_short;
-    case SA_CHAR:   return (char)~arg.v_char;
-    case SA_UINT64: return ~arg.v_uint64;
-    case SA_UINT:   return ~arg.v_uint;
-    case SA_USHORT: return (unsigned short)~arg.v_ushort;
-    case SA_BYTE:   return (unsigned char)~arg.v_byte;
-	
+	case SA_INT64:  return ~arg.v_int64;
+	case SA_INT:    return ~arg.v_int;
+	case SA_SHORT:  return (short)~arg.v_short;
+	case SA_CHAR:   return (char)~arg.v_char;
+	case SA_UINT64: return ~arg.v_uint64;
+	case SA_UINT:   return ~arg.v_uint;
+	case SA_USHORT: return (unsigned short)~arg.v_ushort;
+	case SA_BYTE:   return (unsigned char)~arg.v_byte;
+
 	case SA_BIG:
-    case SA_DOUBLE:
-    case SA_FLOAT:
+	case SA_DOUBLE:
+	case SA_FLOAT:
 		 { 
 			BigInt bint;
 			this->GetBig().ToInt(bint); 
@@ -277,18 +277,18 @@ SArg operator| (const SArg & op1, const SArg & op2)
 	switch(op1.type)
 	{
 	case SA_INT64:  return op1.arg.v_int64 | (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int | (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short | (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char | (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 | (uint64_t)op2;
+	case SA_INT:    return op1.arg.v_int | (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short | (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char | (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 | (uint64_t)op2;
 	case SA_UINT:   return op1.arg.v_uint | (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort | (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte | (unsigned char)op2);
-    
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort | (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte | (unsigned char)op2);
+
 	case SA_BIG:
 	case SA_DOUBLE:
-    case SA_FLOAT:
-		{ Big bi = op1.GetInt(); if (bi.BitOr(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+	case SA_FLOAT:
+		{ Big bi = op1.GetInt(); if (bi.BitOr(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -297,19 +297,19 @@ SArg operator^ (const SArg & op1, const SArg & op2)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 ^ (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int ^ (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short ^ (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char ^ (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 ^ (uint64_t)op2;
-    case SA_UINT:   return op1.arg.v_uint ^ (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort ^ (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte ^ (unsigned char)op2);
-    
+	case SA_INT64:  return op1.arg.v_int64 ^ (int64_t)op2;
+	case SA_INT:    return op1.arg.v_int ^ (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short ^ (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char ^ (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 ^ (uint64_t)op2;
+	case SA_UINT:   return op1.arg.v_uint ^ (unsigned int)op2;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort ^ (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte ^ (unsigned char)op2);
+
 	case SA_BIG:
 	case SA_DOUBLE:
-    case SA_FLOAT:
-		{ Big bi = op1.GetInt(); if (bi.BitXor(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+	case SA_FLOAT:
+		{ Big bi = op1.GetInt(); if (bi.BitXor(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -318,19 +318,19 @@ SArg operator& (const SArg & op1, const SArg & op2)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 & (int64_t)op2;
-    case SA_INT:    return op1.arg.v_int & (int)op2;
-    case SA_SHORT:  return short(op1.arg.v_short & (short)op2);
-    case SA_CHAR:   return char(op1.arg.v_char & (char)op2);
-    case SA_UINT64: return op1.arg.v_uint64 & (uint64_t)op2;
-    case SA_UINT:   return op1.arg.v_uint & (unsigned int)op2;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort & (unsigned short)op2);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte & (unsigned char)op2);
-    
+	case SA_INT64:  return op1.arg.v_int64 & (int64_t)op2;
+	case SA_INT:    return op1.arg.v_int & (int)op2;
+	case SA_SHORT:  return short(op1.arg.v_short & (short)op2);
+	case SA_CHAR:   return char(op1.arg.v_char & (char)op2);
+	case SA_UINT64: return op1.arg.v_uint64 & (uint64_t)op2;
+	case SA_UINT:   return op1.arg.v_uint & (unsigned int)op2;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort & (unsigned short)op2);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte & (unsigned char)op2);
+
 	case SA_BIG:
 	case SA_DOUBLE:
-    case SA_FLOAT:
-		{	Big bi = op1.GetInt(); if (bi.BitAnd(op2.GetInt()) != 0) throw ERR_PARAM;  return bi; }
+	case SA_FLOAT:
+		{	Big bi = op1.GetInt(); if (bi.BitAnd(op2.GetInt()) != 0) throw ERR_PARAM; return bi; }
 	}
 	throw ERR_TYPE;
 }
@@ -339,18 +339,18 @@ SArg operator>> (const SArg & op1, int n)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 >> n;
-    case SA_INT:    return op1.arg.v_int >> n;
-    case SA_SHORT:  return short(op1.arg.v_short >> n);
-    case SA_CHAR:   return char(op1.arg.v_char >> n);
-    case SA_UINT64: return op1.arg.v_uint64 >> n;
-    case SA_UINT:   return op1.arg.v_uint >> n;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort >> n);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte >> n);
-    
+	case SA_INT64:  return op1.arg.v_int64 >> n;
+	case SA_INT:    return op1.arg.v_int >> n;
+	case SA_SHORT:  return short(op1.arg.v_short >> n);
+	case SA_CHAR:   return char(op1.arg.v_char >> n);
+	case SA_UINT64: return op1.arg.v_uint64 >> n;
+	case SA_UINT:   return op1.arg.v_uint >> n;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort >> n);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte >> n);
+
 	case SA_BIG:
 	case SA_DOUBLE:
-    case SA_FLOAT:
+	case SA_FLOAT:
 		{ 
 			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcr(n); 
 			Big bi; bi.FromInt(bint); return bi; 
@@ -363,18 +363,18 @@ SArg operator<< (const SArg & op1, int n)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 << n;
-    case SA_INT:    return op1.arg.v_int << n;
-    case SA_SHORT:  return short(op1.arg.v_short << n);
-    case SA_CHAR:   return char(op1.arg.v_char << n);
-    case SA_UINT64: return op1.arg.v_uint64 << n;
-    case SA_UINT:   return op1.arg.v_uint << n;
-    case SA_USHORT: return (unsigned short)(op1.arg.v_ushort << n);
-    case SA_BYTE:   return (unsigned char)(op1.arg.v_byte << n);
-    
+	case SA_INT64:  return op1.arg.v_int64 << n;
+	case SA_INT:    return op1.arg.v_int << n;
+	case SA_SHORT:  return short(op1.arg.v_short << n);
+	case SA_CHAR:   return char(op1.arg.v_char << n);
+	case SA_UINT64: return op1.arg.v_uint64 << n;
+	case SA_UINT:   return op1.arg.v_uint << n;
+	case SA_USHORT: return (unsigned short)(op1.arg.v_ushort << n);
+	case SA_BYTE:   return (unsigned char)(op1.arg.v_byte << n);
+
 	case SA_BIG:
 	case SA_DOUBLE:
-    case SA_FLOAT:
+	case SA_FLOAT:
 		{ 
 			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcl(n); 
 			Big bi; bi.FromUInt(bint); return bi; 
@@ -389,17 +389,17 @@ SArg SArg::Ror(const SArg & op) const
 	int sh2 = varsize()*8 - sh;
 	switch(type)
 	{
-	case SA_INT64:  
+	case SA_INT64:
 		return (int64_t)((int64_t)(arg.v_int64>>sh) | (int64_t)(arg.v_int64<<sh2));
 	case SA_UINT64:
 		return (uint64_t)((uint64_t)(arg.v_uint64>>sh) | (uint64_t)(arg.v_uint64<<sh2));
-	case SA_INT: 
+	case SA_INT:
 		return (int)((int)(arg.v_int>>sh) | (int)(arg.v_int<<sh2));
-	case SA_UINT:  
+	case SA_UINT:
 		return (unsigned int)((unsigned int)(arg.v_uint>>sh) | (unsigned int)(arg.v_uint<<sh2));
 	case SA_SHORT:
 		return (short)((short)(arg.v_short>>sh) | (short)(arg.v_short<<sh2));
-	case SA_USHORT: 
+	case SA_USHORT:
 		return (unsigned short)((unsigned short)(arg.v_ushort>>sh) | (unsigned short)(arg.v_ushort<<sh2));
 	case SA_CHAR:
 		return (char)((char)(arg.v_char>>sh) | (char)(arg.v_char<<sh2));
@@ -417,17 +417,17 @@ SArg SArg::Rol(const SArg & op) const
 	int sh2 = varsize()*8 - sh;
 	switch(type)
 	{
-	case SA_INT64:  
+	case SA_INT64:
 		return (int64_t)((int64_t)(arg.v_int64<<sh) | (int64_t)(sh2 ? arg.v_int64>>sh2 : 0));
 	case SA_UINT64:
 		return (uint64_t)((uint64_t)(arg.v_uint64<<sh) | (uint64_t)(sh2 ? arg.v_uint64>>sh2 : 0));
-	case SA_INT: 
+	case SA_INT:
 		return (int)((int)(arg.v_int<<sh) | (int)(sh2 ? arg.v_int>>sh2 : 0));
-	case SA_UINT:  
+	case SA_UINT:
 		return (unsigned int)((unsigned int)(arg.v_uint<<sh) | (unsigned int)(sh2 ? arg.v_uint>>sh2 : 0));
 	case SA_SHORT:
 		return (short)((short)(arg.v_short<<sh) | (short)(sh2 ? arg.v_short>>sh2 : 0));
-	case SA_USHORT: 
+	case SA_USHORT:
 		return (unsigned short)((unsigned short)(arg.v_ushort<<sh) | (unsigned short)(sh2 ? arg.v_ushort>>sh2 : 0));
 	case SA_CHAR:
 		return (char)((char)(arg.v_char<<sh) | (char)(sh2 ? arg.v_char>>sh2 : 0));
@@ -463,7 +463,7 @@ SArg SArg::operator+= (const SArg & op)
 
 bool operator== (const SArg & op1, const SArg & op2)
 {
-    return op1.GetBig() == op2.GetBig();
+	return op1.GetBig() == op2.GetBig();
 }
 
 bool operator!= (const SArg & op1, const SArg & op2)
@@ -475,10 +475,10 @@ bool operator> (const SArg & op1, const SArg & op2)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 > (int64_t)op2;
-    case SA_UINT64: return op1.arg.v_uint64 > (uint64_t)op2;
-    default:
-      return op1.GetBig() > op2.GetBig();
+	case SA_INT64:  return op1.arg.v_int64 > (int64_t)op2;
+	case SA_UINT64: return op1.arg.v_uint64 > (uint64_t)op2;
+	default:
+		return op1.GetBig() > op2.GetBig();
 	}
 	throw ERR_TYPE;
 }
@@ -487,10 +487,10 @@ bool operator< (const SArg & op1, const SArg & op2)
 {
 	switch(op1.type)
 	{
-    case SA_INT64:  return op1.arg.v_int64 < (int64_t)op2;
-    case SA_UINT64: return op1.arg.v_uint64 < (uint64_t)op2;
-    default:
-      return op1.GetBig() < op2.GetBig();
+	case SA_INT64:  return op1.arg.v_int64 < (int64_t)op2;
+	case SA_UINT64: return op1.arg.v_uint64 < (uint64_t)op2;
+	default:
+		return op1.GetBig() < op2.GetBig();
 	}
 	throw ERR_TYPE;
 }
@@ -501,27 +501,27 @@ SArg::operator int64_t() const
 {
 	switch(type)
 	{
-	case SA_BIG: 
-	{ 
-		BigInt d; 
-		//Big b = v_big; 
-		//b += CalcParser::roundup_value; 
-		//b.ToInt(d); 
-		v_big.ToInt(d); 
+	case SA_BIG:
+	{
+		BigInt d;
+		//Big b = v_big;
+		//b += CalcParser::roundup_value;
+		//b.ToInt(d);
+		v_big.ToInt(d);
 		ttmath::sint res = 0;
-		d.ToInt(res); 
-		return res; 
+		d.ToInt(res);
+		return res;
 	}
 	
 	case SA_INT64:  return arg.v_int64;
-    case SA_INT:    return arg.v_int;
-    case SA_SHORT:  return arg.v_short;
-    case SA_CHAR:   return arg.v_char;
-    case SA_UINT64: return arg.v_uint64;
-    case SA_UINT:   return arg.v_uint;
-    case SA_USHORT: return arg.v_ushort;
-    case SA_BYTE:   return arg.v_byte;
-    case SA_DOUBLE:  return (signed long long int)arg.v_dbl;
+	case SA_INT:    return arg.v_int;
+	case SA_SHORT:  return arg.v_short;
+	case SA_CHAR:   return arg.v_char;
+	case SA_UINT64: return arg.v_uint64;
+	case SA_UINT:   return arg.v_uint;
+	case SA_USHORT: return arg.v_ushort;
+	case SA_BYTE:   return arg.v_byte;
+	case SA_DOUBLE:  return (signed long long int)arg.v_dbl;
 	case SA_FLOAT:  return (signed long long int)arg.v_flt;
 	}
 	throw ERR_ALL;
@@ -529,22 +529,22 @@ SArg::operator int64_t() const
 
 SArg::operator int() const
 {
-  return (int)operator int64_t();
+	return (int)operator int64_t();
 };
 SArg::operator short() const
 {
-  return (short)operator int64_t();
+	return (short)operator int64_t();
 };
 SArg::operator char() const
 {
-  return (char)operator int64_t();
+	return (char)operator int64_t();
 };
 
 SArg::operator uint64_t() const
 {
 	switch(type)
 	{
-    case SA_BIG: {
+	case SA_BIG: {
 		BigInt d;
 		v_big.ToInt(d);
 		ttmath::uint res = 0;
@@ -553,30 +553,30 @@ SArg::operator uint64_t() const
 	}
 
 	case SA_INT64:  return (unsigned long long int)arg.v_int64;
-    case SA_INT:    return (unsigned int)arg.v_int;
-    case SA_SHORT:  return (unsigned int)arg.v_short;
-    case SA_CHAR:   return (unsigned int)arg.v_char;
-    case SA_UINT64: return arg.v_uint64;
-    case SA_UINT:   return arg.v_uint;
-    case SA_USHORT: return arg.v_ushort;
-    case SA_BYTE:   return arg.v_byte;
-    case SA_DOUBLE: return (unsigned long long int)arg.v_dbl;
-    case SA_FLOAT:  return (unsigned long long int)arg.v_flt;
+	case SA_INT:    return (unsigned int)arg.v_int;
+	case SA_SHORT:  return (unsigned int)arg.v_short;
+	case SA_CHAR:   return (unsigned int)arg.v_char;
+	case SA_UINT64: return arg.v_uint64;
+	case SA_UINT:   return arg.v_uint;
+	case SA_USHORT: return arg.v_ushort;
+	case SA_BYTE:   return arg.v_byte;
+	case SA_DOUBLE: return (unsigned long long int)arg.v_dbl;
+	case SA_FLOAT:  return (unsigned long long int)arg.v_flt;
 	}
 	throw ERR_ALL;
 }
 
 SArg::operator unsigned int() const
 {
-  return (unsigned int)operator uint64_t();
+	return (unsigned int)operator uint64_t();
 };
 SArg::operator unsigned short() const
 {
-  return (unsigned short)operator uint64_t();
+	return (unsigned short)operator uint64_t();
 };
 SArg::operator unsigned char() const
 {
-  return (unsigned char)operator uint64_t();
+	return (unsigned char)operator uint64_t();
 };
 
 Big SArg::GetBig() const
@@ -584,18 +584,18 @@ Big SArg::GetBig() const
 	Big big;
 	switch(type)
 	{
-    case SA_BIG: return v_big;
+	case SA_BIG: return v_big;
 	
-    case SA_INT64:  big.FromInt(arg.v_int64);  return big;
+	case SA_INT64:  big.FromInt(arg.v_int64);  return big;
 	case SA_UINT64: big.FromInt(arg.v_uint64);  return big;
-    case SA_INT:    big.FromInt(arg.v_int);  return big;
-    case SA_SHORT:  big.FromInt(arg.v_short);  return big;
-    case SA_CHAR:   big.FromInt(arg.v_char);  return big;
-    case SA_UINT:   big.FromInt(arg.v_uint);  return big;
-    case SA_USHORT: big.FromInt((unsigned int)arg.v_ushort);  return big;
-    case SA_BYTE:   big.FromInt((unsigned int)arg.v_byte);  return big;
-    case SA_DOUBLE: big.FromDouble(arg.v_dbl); return big;
-    case SA_FLOAT:  big.FromDouble(arg.v_flt); return big;
+	case SA_INT:    big.FromInt(arg.v_int);  return big;
+	case SA_SHORT:  big.FromInt(arg.v_short);  return big;
+	case SA_CHAR:   big.FromInt(arg.v_char);  return big;
+	case SA_UINT:   big.FromInt(arg.v_uint);  return big;
+	case SA_USHORT: big.FromInt((unsigned int)arg.v_ushort);  return big;
+	case SA_BYTE:   big.FromInt((unsigned int)arg.v_byte);  return big;
+	case SA_DOUBLE: big.FromDouble(arg.v_dbl); return big;
+	case SA_FLOAT:  big.FromDouble(arg.v_flt); return big;
 	}
 	throw ERR_ALL;
 }
@@ -684,7 +684,7 @@ bool SArg::Print(std::wstring &str, int radix, int num_delim, wchar_t delim_digi
 	case SA_BYTE:
 		data = arg.v_byte;
 		break;
-    
+
 	case SA_INT64:
 		if (arg.v_int64 < 0)
 		{
@@ -719,7 +719,7 @@ bool SArg::Print(std::wstring &str, int radix, int num_delim, wchar_t delim_digi
 		break;
 
 	default: ;
-    }
+	}
 
 	if (sign)
 		str += L"-";
@@ -737,7 +737,7 @@ bool SArg::Print(std::wstring &str, int radix, int num_delim, wchar_t delim_digi
 
 bool SArg::isempty() const
 {
-  return empty;
+	return empty;
 }
 
 int SArg::varsize() const
@@ -796,7 +796,7 @@ EArgType SArg::gettype()
 SArg SArg::_factor(const SArg & op1)
 {
 	if ((int)op1 < 0)
-        throw ERR_PARAM;
+		throw ERR_PARAM;
 	// XXX: only CPU speed limits this...
 	if (op1.GetBig() > Big(10000))
 		throw ERR_FLOW;

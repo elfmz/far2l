@@ -13,7 +13,7 @@ struct FP_ItemList
 		FP_ItemList(BOOL NeedToDelete = TRUE);
 		~FP_ItemList() { Clear(); }
 
-		PluginPanelItem *Add(const PluginPanelItem *src,int cn);                           ///<Add a `cn` items to list
+		PluginPanelItem *Add(const PluginPanelItem *src,int cn);                            ///<Add a `cn` items to list
 		PluginPanelItem *Add(const PluginPanelItem *src)  { return Add(src,1); }
 		void             Clear(void);                                                       //Clear list
 

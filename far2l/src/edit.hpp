@@ -179,7 +179,7 @@ class Edit:public ScreenObject
 		std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
 
 	private:
-		virtual void   DisplayObject();
+		virtual void DisplayObject();
 		int    InsertKey(int Key);
 		int    RecurseProcessKey(int Key);
 		void   DeleteBlock();
@@ -214,17 +214,17 @@ class Edit:public ScreenObject
 
 	public:
 
-		DWORD SetCodePage(UINT codepage);  //BUGBUG
-		UINT GetCodePage();  //BUGBUG
+		DWORD SetCodePage(UINT codepage); //BUGBUG
+		UINT GetCodePage(); //BUGBUG
 
 		virtual void  FastShow();
 		virtual int   ProcessKey(int Key);
 		virtual int   ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
 
-		//   ! Функция установки текущих Color,SelColor и ColorUnChanged!
+		// ! Функция установки текущих Color,SelColor и ColorUnChanged!
 		void  SetObjectColor(int Color,int SelColor=0xf,int ColorUnChanged=COL_DIALOGEDITUNCHANGED);
-		//   + Функция получения текущих Color,SelColor
+		// + Функция получения текущих Color,SelColor
 		long  GetObjectColor() {return MAKELONG(Color,SelColor);}
 		int   GetObjectColorUnChanged() {return ColorUnChanged;}
 
@@ -262,7 +262,16 @@ class Edit:public ScreenObject
 		void  InsertString(const wchar_t *Str);
 		void  InsertBinaryString(const wchar_t *Str,int Length);
 
-		int   Search(const FARString& Str,FARString& ReplaceStr,int Position,int Case,int WholeWords,int Reverse,int Regexp, int *SearchLength);
+		int   Search(
+			const FARString& Str,
+			FARString& ReplaceStr,
+			int Position,
+			int Case,
+			int WholeWords,
+			int Reverse,
+			int Regexp,
+			int *SearchLength
+		);
 
 		void  SetClearFlag(int Flag) {Flags.Change(FEDITLINE_CLEARFLAG,Flag);}
 		int   GetClearFlag() {return Flags.Check(FEDITLINE_CLEARFLAG);}
@@ -351,7 +360,14 @@ public:
 		EC_ENABLEFNCOMPLETE=0x2,
 	};
 
-	EditControl(ScreenObject *pOwner=nullptr,Callback* aCallback=nullptr,bool bAllocateData=true,History* iHistory=0,FarList* iList=0,DWORD iFlags=0);
+	EditControl(
+		ScreenObject *pOwner=nullptr,
+		Callback* aCallback=nullptr,
+		bool bAllocateData=true,
+		History* iHistory=0,
+		FarList* iList=0,
+		DWORD iFlags=0
+	);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual void Show();
 	virtual void Changed(bool DelBlock=false);

@@ -263,8 +263,8 @@ void ComplexOperationProgress::UpdateTime(unsigned long long complete, unsigned 
 	} else if (_prev_ts.count()) {
 		auto speed_delta_time = (now - _prev_ts).count();
 		if (speed_delta_time >= 3000) {
-			_speed_average =  (complete * 1000ll / delta.count());
-			_speed_current =  (complete > _prev_complete) ? complete - _prev_complete : 0;
+			_speed_average = (complete * 1000ll / delta.count());
+			_speed_current = (complete > _prev_complete) ? complete - _prev_complete : 0;
 			_speed_current = (_speed_current * 1000ll / speed_delta_time);
 			if (_speed_rollavg != 0) {
 				if (_speed_rollavg_n < 16 && _speed_current != 0) {

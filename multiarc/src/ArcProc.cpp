@@ -330,8 +330,8 @@ int PluginClass::ProcessKey(int Key,unsigned int ControlState)
       char *Slash=strrchr(CurDir, GOOD_SLASH);
       if (Slash!=NULL)
       {
-		  if (Slash!=CurDir)
-			  *Slash = 0;
+        if (Slash!=CurDir)
+          *Slash = 0;
         //if (Slash!=CurDir && *(Slash-1)==':')
          // Slash[1]=0;
         //else

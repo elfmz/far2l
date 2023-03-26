@@ -69,8 +69,8 @@ FilePanels::FilePanels():
 	_OT(SysLog(L"[%p] FilePanels::FilePanels()", this));
 	MacroMode = MACRO_SHELL;
 	KeyBarVisible = Opt.ShowKeyBar;
-//  SetKeyBar(&MainKeyBar);
-//  _D(SysLog(L"MainKeyBar=0x%p",&MainKeyBar));
+	//SetKeyBar(&MainKeyBar);
+	//_D(SysLog(L"MainKeyBar=0x%p",&MainKeyBar));
 }
 
 static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
@@ -95,7 +95,7 @@ static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 void FilePanels::Init()
 {
 	SetPanelPositions(FileList::IsModeFullScreen(Opt.LeftPanel.ViewMode),
-	                  FileList::IsModeFullScreen(Opt.RightPanel.ViewMode));
+		FileList::IsModeFullScreen(Opt.RightPanel.ViewMode));
 	LeftPanel->SetViewMode(Opt.LeftPanel.ViewMode);
 	RightPanel->SetViewMode(Opt.RightPanel.ViewMode);
 	LeftPanel->SetSortMode(std::min(std::max(Opt.LeftPanel.SortMode, 0), (int)MAX_PANEL_SORT_MODE));
@@ -404,9 +404,9 @@ int FilePanels::ProcessKey(int Key)
 		return TRUE;
 
 	if ((Key==KEY_CTRLLEFT || Key==KEY_CTRLRIGHT || Key==KEY_CTRLNUMPAD4 || Key==KEY_CTRLNUMPAD6
-	        /* || Key==KEY_CTRLUP   || Key==KEY_CTRLDOWN || Key==KEY_CTRLNUMPAD8 || Key==KEY_CTRLNUMPAD2 */) &&
-	        (CtrlObject->CmdLine->GetLength()>0 ||
-	         (!LeftPanel->IsVisible() && !RightPanel->IsVisible())))
+		/* || Key==KEY_CTRLUP || Key==KEY_CTRLDOWN || Key==KEY_CTRLNUMPAD8 || Key==KEY_CTRLNUMPAD2 */) &&
+		(CtrlObject->CmdLine->GetLength()>0 ||
+			(!LeftPanel->IsVisible() && !RightPanel->IsVisible())))
 	{
 		CtrlObject->CmdLine->ProcessKey(Key);
 		return TRUE;
@@ -418,11 +418,11 @@ int FilePanels::ProcessKey(int Key)
 		{
 			if (!LeftPanel->IsVisible() && !RightPanel->IsVisible())
 			{
-				Help Hlp(L"Terminal");
+				Help::Present(L"Terminal");
 			}
 			else if (!ActivePanel->ProcessKey(KEY_F1))
 			{
-				Help Hlp(L"Contents");
+				Help::Present(L"Contents");
 			}
 
 			return TRUE;
@@ -508,15 +508,18 @@ int FilePanels::ProcessKey(int Key)
 				if (!AnotherPanel->ProcessPluginEvent(FE_CLOSE,nullptr))
 				{
 					if (AnotherPanel->GetType()==NewType)
-						/* $ 19.09.2000 IS
-						  Повторное нажатие на ctrl-l|q|t всегда включает файловую панель
+						/*
+							$ 19.09.2000 IS
+							Повторное нажатие на ctrl-l|q|t всегда включает файловую панель
 						*/
 						AnotherPanel=ChangePanel(AnotherPanel,FILE_PANEL,FALSE,FALSE);
 					else
 						AnotherPanel=ChangePanel(AnotherPanel,NewType,FALSE,FALSE);
 
-					/* $ 07.09.2001 VVM
-					  ! При возврате из CTRL+Q, CTRL+L восстановим каталог, если активная панель - дерево. */
+					/*
+						$ 07.09.2001 VVM
+						! При возврате из CTRL+Q, CTRL+L восстановим каталог, если активная панель - дерево.
+					*/
 					if (ActivePanel->GetType() == TREE_PANEL)
 					{
 						FARString strCurDir;
@@ -603,11 +606,12 @@ int FilePanels::ProcessKey(int Key)
 
 			break;
 		}
-		/* $ 08.04.2002 IS
-		   При смене диска установим принудительно текущий каталог на активной
-		   панели, т.к. система не знает ничего о том, что у Фара две панели, и
-		   текущим для системы после смены диска может быть каталог и на пассивной
-		   панели
+		/*
+			$ 08.04.2002 IS
+			При смене диска установим принудительно текущий каталог на активной
+			панели, т.к. система не знает ничего о том, что у Фара две панели, и
+			текущим для системы после смены диска может быть каталог и на пассивной
+			панели
 		*/
 		case KEY_ALTF1:
 		{
@@ -629,9 +633,7 @@ int FilePanels::ProcessKey(int Key)
 		}
 		case KEY_ALTF7:
 		{
-			{
-				FindFiles FindFiles;
-			}
+			FindFiles::Present();
 			break;
 		}
 		case KEY_CTRLUP:  case KEY_CTRLNUMPAD8:
@@ -850,10 +852,23 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	LeftPosition=(Current==LeftPanel);
 	Panel* &LastFilePanel=LeftPosition ? LastLeftFilePanel:LastRightFilePanel;
 	Current->GetPosition(X1,Y1,X2,Y2);
-	ChangePosition=((OldType==FILE_PANEL && NewType!=FILE_PANEL &&
-	                 OldFullScreen) || (NewType==FILE_PANEL &&
-	                                    ((OldFullScreen && !FileList::IsModeFullScreen(OldViewMode)) ||
-	                                     (!OldFullScreen && FileList::IsModeFullScreen(OldViewMode)))));
+	ChangePosition=(
+		(
+			OldType==FILE_PANEL &&
+			NewType!=FILE_PANEL &&
+			OldFullScreen
+		) ||
+		(
+			NewType==FILE_PANEL &&
+			(
+				(
+					OldFullScreen &&
+					!FileList::IsModeFullScreen(OldViewMode)
+				) ||
+				(!OldFullScreen && FileList::IsModeFullScreen(OldViewMode))
+			)
+		)
+	);
 
 	if (!ChangePosition)
 	{
@@ -908,12 +923,12 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 		if (!ChangePosition)
 		{
 			if ((NewPanel->IsFullScreen() && !OldFullScreen) ||
-			        (!NewPanel->IsFullScreen() && OldFullScreen))
+				(!NewPanel->IsFullScreen() && OldFullScreen))
 			{
 				Panel *AnotherPanel=GetAnotherPanel(Current);
 
 				if (SaveScr && AnotherPanel->IsVisible() &&
-				        AnotherPanel->GetType()==FILE_PANEL && AnotherPanel->IsFullScreen())
+						AnotherPanel->GetType()==FILE_PANEL && AnotherPanel->IsFullScreen())
 					SaveScr->Discard();
 
 				delete SaveScr;
@@ -979,7 +994,7 @@ Panel* FilePanels::ChangePanel(Panel *Current,int NewType,int CreateNew,int Forc
 	return(NewPanel);
 }
 
-int  FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
+int FilePanels::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = Msg::ScreensPanels;
 	FARString strFullName;
@@ -1003,29 +1018,33 @@ void FilePanels::OnChangeFocus(int f)
 {
 	_OT(SysLog(L"FilePanels::OnChangeFocus(%i)",f));
 
-	/* $ 20.06.2001 tran
-	   баг с отрисовкой при копировании и удалении
-	   не учитывался LockRefreshCount */
+	/*
+		$ 20.06.2001 tran
+		баг с отрисовкой при копировании и удалении
+		не учитывался LockRefreshCount
+	*/
 	if (f)
 	{
-		/*$ 22.06.2001 SKV
-		  + update панелей при получении фокуса
+		/*
+			$ 22.06.2001 SKV
+			+ update панелей при получении фокуса
 		*/
 		CtrlObject->Cp()->GetAnotherPanel(ActivePanel)->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
 		ActivePanel->UpdateIfChanged(UIC_UPDATE_FORCE_NOTIFICATION);
-		/* $ 13.04.2002 KM
-		  ! ??? Я не понял зачем здесь Redraw, если
-		    Redraw вызывается следом во Frame::OnChangeFocus.
+		/*
+			$ 13.04.2002 KM
+			! ??? Я не понял зачем здесь Redraw, если
+			Redraw вызывается следом во Frame::OnChangeFocus.
 		*/
-//    Redraw();
+		//Redraw();
 		Frame::OnChangeFocus(1);
 	}
 }
 
 void FilePanels::DisplayObject()
 {
-//  if ( !Focus )
-//      return;
+	//if ( !Focus )
+		//return;
 	_OT(SysLog(L"[%p] FilePanels::Redraw() {%d, %d - %d, %d}", this,X1,Y1,X2,Y2));
 	CtrlObject->CmdLine->ShowBackground();
 
@@ -1091,7 +1110,7 @@ void FilePanels::DisplayObject()
 #endif
 }
 
-int  FilePanels::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
+int FilePanels::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	if (!ActivePanel->ProcessMouse(MouseEvent))
 		if (!GetAnotherPanel(ActivePanel)->ProcessMouse(MouseEvent))
@@ -1124,9 +1143,10 @@ int FilePanels::FastHide()
 
 void FilePanels::Refresh()
 {
-	/*$ 31.07.2001 SKV
-	  Вызовем так, а не Frame::OnChangeFocus,
-	  который из этого и позовётся.
+	/*
+		$ 31.07.2001 SKV
+		Вызовем так, а не Frame::OnChangeFocus,
+		который из этого и позовётся.
 	*/
 	//Frame::OnChangeFocus(1);
 	OnChangeFocus(1);
@@ -1157,10 +1177,11 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 		FARString strNameFile = PointToName(FileName);
 		FARString strNameDir = FileName;
 		CutToSlash(strNameDir);
-		/* $ 10.04.2001 IS
-		     Не делаем SetCurDir, если нужный путь уже есть на открытых
-		     панелях, тем самым добиваемся того, что выделение с элементов
-		     панелей не сбрасывается.
+		/*
+			$ 10.04.2001 IS
+			Не делаем SetCurDir, если нужный путь уже есть на открытых
+			панелях, тем самым добиваемся того, что выделение с элементов
+			панелей не сбрасывается.
 		*/
 		BOOL AExist=(ActiveMode==NORMAL_PANEL) && !StrCmp(ADir,strNameDir);
 		BOOL PExist=(PassiveMode==NORMAL_PANEL) && !StrCmp(PDir,strNameDir);
@@ -1180,7 +1201,7 @@ void FilePanels::GoToFile(const wchar_t *FileName)
 }
 
 
-int  FilePanels::GetMacroMode()
+int FilePanels::GetMacroMode()
 {
 	switch (ActivePanel->GetType())
 	{

@@ -115,7 +115,8 @@ void ScreenBuf::AllocBuf(int X,int Y)
 	BufY=Y;
 }
 
-/* Заполнение виртуального буфера значением из консоли.
+/*
+	Заполнение виртуального буфера значением из консоли.
 */
 void ScreenBuf::FillBuf()
 {
@@ -131,7 +132,8 @@ void ScreenBuf::FillBuf()
 	CurY=CursorPosition.Y;
 }
 
-/* Записать Text в виртуальный буфер
+/*
+	Записать Text в виртуальный буфер
 */
 void ScreenBuf::Write(int X,int Y,const CHAR_INFO *Text,int TextLength)
 {
@@ -170,7 +172,8 @@ void ScreenBuf::Write(int X,int Y,const CHAR_INFO *Text,int TextLength)
 }
 
 
-/* Читать блок из виртуального буфера.
+/*
+	Читать блок из виртуального буфера.
 */
 void ScreenBuf::Read(int X1,int Y1,int X2,int Y2,CHAR_INFO *Text,int MaxTextLength)
 {
@@ -183,8 +186,9 @@ void ScreenBuf::Read(int X1,int Y1,int X2,int Y2,CHAR_INFO *Text,int MaxTextLeng
 		memcpy(Text+Idx,Buf+(Y1+I)*BufX+X1,Min((int)sizeof(CHAR_INFO)*Width,(int)MaxTextLength));
 }
 
-/* Изменить значение цветовых атрибутов в соответствии с маской
-   (в основном применяется для "создания" тени)
+/*
+	Изменить значение цветовых атрибутов в соответствии с маской
+	(в основном применяется для "создания" тени)
 */
 void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,DWORD64 ColorMask)
 {
@@ -214,7 +218,8 @@ void ScreenBuf::ApplyColorMask(int X1,int Y1,int X2,int Y2,DWORD64 ColorMask)
 #endif
 }
 
-/* Непосредственное изменение цветовых атрибутов
+/*
+	Непосредственное изменение цветовых атрибутов
 */
 void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color)
 {
@@ -251,7 +256,8 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color)
 	}
 }
 
-/* Непосредственное изменение цветовых атрибутов с заданым цетом исключением
+/*
+	Непосредственное изменение цветовых атрибутов с заданым цетом исключением
 */
 void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color,DWORD64 ExceptColor)
 {
@@ -283,7 +289,8 @@ void ScreenBuf::ApplyColor(int X1,int Y1,int X2,int Y2,DWORD64 Color,DWORD64 Exc
 	}
 }
 
-/* Закрасить прямоугольник символом Ch и цветом Color
+/*
+	Закрасить прямоугольник символом Ch и цветом Color
 */
 void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,DWORD64 Color)
 {
@@ -312,7 +319,8 @@ void ScreenBuf::FillRect(int X1,int Y1,int X2,int Y2,WCHAR Ch,DWORD64 Color)
 #endif
 }
 
-/* "Сбросить" виртуальный буфер на консоль
+/*
+	"Сбросить" виртуальный буфер на консоль
 */
 void ScreenBuf::Flush()
 {
@@ -509,9 +517,10 @@ void ScreenBuf::GetCursorPos(SHORT& X,SHORT& Y)
 
 void ScreenBuf::SetCursorType(bool Visible, DWORD Size)
 {
-	/* $ 09.01.2001 SVS
-	   По наводке ER - в SetCursorType не дергать раньше
-	   времени установку курсора
+	/*
+		$ 09.01.2001 SVS
+		По наводке ER - в SetCursorType не дергать раньше
+		времени установку курсора
 	*/
 	if (CurVisible!=Visible || CurSize!=Size)
 	{
@@ -546,7 +555,7 @@ void ScreenBuf::RestoreElevationChar()
 	}
 }
 
-//  проскроллировать буффер на одну строку вверх.
+// проскроллировать буффер на одну строку вверх.
 void ScreenBuf::Scroll(int Num)
 {
 	CriticalSectionLock Lock(CS);

@@ -110,7 +110,7 @@ template < bool (*PTranslateFN)(std::wstring &s) >
 	std::wstring tmp(str.CPtr(), str.GetLength());
 	if ( !PTranslateFN(tmp))
 		return false;
-		
+
 	str.Copy(tmp.c_str(), tmp.size());
 	return true;
 }

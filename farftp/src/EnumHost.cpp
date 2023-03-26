@@ -38,7 +38,7 @@ BOOL EnumHost::Assign(char *HostsPath)
 BOOL EnumHost::GetNextHost(FTPHost* p)
 {
 	PROC(("EnumHost::GetNextHost",NULL))
-	WCHAR     SubKey[FAR_MAX_REG] = {0};
+	WCHAR    SubKey[FAR_MAX_REG] = {0};
 	DWORD    Size = ARRAYSIZE(SubKey)-1;
 	FILETIME lw;
 

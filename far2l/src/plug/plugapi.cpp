@@ -101,14 +101,14 @@ int64_t WINAPI FarAtoi64(const wchar_t *s)
 }
 
 void WINAPI FarQsort(void *base, size_t nelem, size_t width,
-                     int (__cdecl *fcmp)(const void *, const void *))
+	int (__cdecl *fcmp)(const void *, const void *))
 {
 	if (base && fcmp)
 		far_qsort(base,nelem,width,fcmp);
 }
 
 void WINAPI FarQsortEx(void *base, size_t nelem, size_t width,
-                       int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
+	int (__cdecl *fcmp)(const void *, const void *,void *user),void *user)
 {
 	if (base && fcmp)
 		far_qsortex(base,nelem,width,fcmp,user);
@@ -129,19 +129,20 @@ void WINAPI DeleteBuffer(void *Buffer)
 
 static void ScanPluginDir();
 
-/* $ 07.12.2001 IS
-   Обертка вокруг GetString для плагинов - с меньшей функциональностью.
-   Сделано для того, чтобы не дублировать код GetString.
+/*
+	$ 07.12.2001 IS
+	Обертка вокруг GetString для плагинов - с меньшей функциональностью.
+	Сделано для того, чтобы не дублировать код GetString.
 */
 static int FarInputBoxSynched(
-    const wchar_t *Title,
-    const wchar_t *Prompt,
-    const wchar_t *HistoryName,
-    const wchar_t *SrcText,
-    wchar_t *DestText,
-    int DestLength,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *Title,
+	const wchar_t *Prompt,
+	const wchar_t *HistoryName,
+	const wchar_t *SrcText,
+	wchar_t *DestText,
+	int DestLength,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -154,14 +155,14 @@ static int FarInputBoxSynched(
 }
 
 int WINAPI FarInputBox(
-    const wchar_t *Title,
-    const wchar_t *Prompt,
-    const wchar_t *HistoryName,
-    const wchar_t *SrcText,
-    wchar_t *DestText,
-    int DestLength,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *Title,
+	const wchar_t *Prompt,
+	const wchar_t *HistoryName,
+	const wchar_t *SrcText,
+	wchar_t *DestText,
+	int DestLength,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	return InterThreadCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText, DestText, DestLength, HelpTopic, Flags));
@@ -169,9 +170,9 @@ int WINAPI FarInputBox(
 
 /* Функция вывода помощи */
 BOOL WINAPI FarShowHelpSynched(
-    const wchar_t *ModuleName,
-    const wchar_t *HelpTopic,
-    DWORD Flags
+	const wchar_t *ModuleName,
+	const wchar_t *HelpTopic,
+	DWORD Flags
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -195,9 +196,10 @@ BOOL WINAPI FarShowHelpSynched(
 		{
 			// FHELP_SELFHELP=0 - трактовать первый пар-р как Info.ModuleName
 			//                   и показать топик из хелпа вызвавшего плагина
-			/* $ 17.11.2000 SVS
-			   А значение FHELP_SELFHELP равно чему? Правильно - 0
-			   И фигля здесь удивлятся тому, что функция не работает :-(
+			/*
+				$ 17.11.2000 SVS
+				А значение FHELP_SELFHELP равно чему? Правильно - 0
+				И фигля здесь удивлятся тому, что функция не работает :-(
 			*/
 			if (Flags == FHELP_SELFHELP || (Flags&(FHELP_CUSTOMFILE|FHELP_CUSTOMPATH)))
 			{
@@ -233,15 +235,16 @@ BOOL WINAPI FarShowHelpSynched(
 }
 
 BOOL WINAPI FarShowHelp(
-    const wchar_t *ModuleName,
-    const wchar_t *HelpTopic,
-    DWORD Flags )
+	const wchar_t *ModuleName,
+	const wchar_t *HelpTopic,
+	DWORD Flags )
 {
 	return InterThreadCall<BOOL, FALSE>(std::bind(FarShowHelpSynched, ModuleName, HelpTopic, Flags));
 }
 
-/* $ 05.07.2000 IS
-  Функция, которая будет действовать и в редакторе, и в панелях, и...
+/*
+	$ 05.07.2000 IS
+	Функция, которая будет действовать и в редакторе, и в панелях, и...
 */
 static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, void *Param)
 {
@@ -305,21 +308,23 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return (int)Opt.strWordDiv.GetLength()+1;
 		}
-		/* $ 24.08.2000 SVS
-		   ожидать определенную (или любую) клавишу
-		   (int)Param - внутренний код клавиши, которую ожидаем, или -1
-		   если все равно какую клавишу ждать.
-		   возвращает 0;
+		/*
+			$ 24.08.2000 SVS
+			ожидать определенную (или любую) клавишу
+			(int)Param - внутренний код клавиши, которую ожидаем, или -1
+			если все равно какую клавишу ждать.
+			возвращает 0;
 		*/
 		case ACTL_WAITKEY:
 		{
 			return WaitKey(Param?(DWORD)(DWORD_PTR)Param:(DWORD)-1,0,false);
 		}
-		/* $ 04.12.2000 SVS
-		  ACTL_GETCOLOR - получить определенный цвет по индекс, определенному
-		   в farcolor.hpp
-		  (int)Param - индекс.
-		  Return - значение цвета или -1 если индекс неверен.
+		/*
+			$ 04.12.2000 SVS
+			ACTL_GETCOLOR - получить определенный цвет по индекс, определенному
+			в farcolor.hpp
+			(int)Param - индекс.
+			Return - значение цвета или -1 если индекс неверен.
 		*/
 		case ACTL_GETCOLOR:
 		{
@@ -328,10 +333,11 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return -1;
 		}
-		/* $ 04.12.2000 SVS
-		  ACTL_GETARRAYCOLOR - получить весь массив цветов
-		  Param - указатель на массив или nullptr - чтобы получить размер буфера
-		  Return - размер массива.
+		/*
+			$ 04.12.2000 SVS
+			ACTL_GETARRAYCOLOR - получить весь массив цветов
+			Param - указатель на массив или nullptr - чтобы получить размер буфера
+			Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR:
 		{
@@ -341,12 +347,12 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			return SIZE_ARRAY_PALETTE;
 		}
 		/*
-		  Param=FARColor{
-		    DWORD Flags;
-		    int StartIndex;
-		    int ColorItem;
-		    LPBYTE Colors;
-		  };
+			Param=FARColor{
+				DWORD Flags;
+				int StartIndex;
+				int ColorItem;
+				LPBYTE Colors;
+			};
 		*/
 		case ACTL_SETARRAYCOLOR:
 		{
@@ -355,8 +361,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				FarSetColors *Pal=(FarSetColors*)Param;
 
 				if (Pal->Colors &&
-				        Pal->StartIndex >= 0 &&
-				        Pal->StartIndex+Pal->ColorCount <= SIZE_ARRAY_PALETTE)
+					Pal->StartIndex >= 0 &&
+					Pal->StartIndex+Pal->ColorCount <= SIZE_ARRAY_PALETTE)
 				{
 					memmove(Palette+Pal->StartIndex,Pal->Colors,Pal->ColorCount);
 
@@ -374,45 +380,47 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return FALSE;
 		}
-		/* $ 14.12.2000 SVS
-		  ACTL_EJECTMEDIA - извлечь диск из съемного накопителя
-		  Param - указатель на структуру ActlEjectMedia
-		  Return - TRUE - успешное извлечение, FALSE - ошибка.
+		/*
+			$ 14.12.2000 SVS
+			ACTL_EJECTMEDIA - извлечь диск из съемного накопителя
+			Param - указатель на структуру ActlEjectMedia
+			Return - TRUE - успешное извлечение, FALSE - ошибка.
 		*/
 		case ACTL_EJECTMEDIA:
 		{
 			return FALSE;/*Param?EjectVolume((wchar_t)((ActlEjectMedia*)Param)->Letter,
-			                         ((ActlEjectMedia*)Param)->Flags):FALSE;*/
+							((ActlEjectMedia*)Param)->Flags):FALSE;*/
 			/*
-			      if(Param)
-			      {
-							ActlEjectMedia *aem=(ActlEjectMedia *)Param;
-			        char DiskLetter[4]=" :/";
-			        DiskLetter[0]=(char)aem->Letter;
-			        int DriveType = FAR_GetDriveType(DiskLetter,nullptr,FALSE); // здесь не определяем тип CD
+				if(Param)
+				{
+					ActlEjectMedia *aem=(ActlEjectMedia *)Param;
+					char DiskLetter[4]=" :/";
+					DiskLetter[0]=(char)aem->Letter;
+					int DriveType = FAR_GetDriveType(DiskLetter,nullptr,FALSE); // здесь не определяем тип CD
 
-			        if(DriveType == DRIVE_USBDRIVE && RemoveUSBDrive((char)aem->Letter,aem->Flags))
-			          return TRUE;
-			        if(DriveType == DRIVE_SUBSTITUTE && DelSubstDrive(DiskLetter))
-			          return TRUE;
-			        if(IsDriveTypeCDROM(DriveType) && EjectVolume((char)aem->Letter,aem->Flags))
-			          return TRUE;
+					if(DriveType == DRIVE_USBDRIVE && RemoveUSBDrive((char)aem->Letter,aem->Flags))
+						return TRUE;
+					if(DriveType == DRIVE_SUBSTITUTE && DelSubstDrive(DiskLetter))
+						return TRUE;
+					if(IsDriveTypeCDROM(DriveType) && EjectVolume((char)aem->Letter,aem->Flags))
+						return TRUE;
 
-			      }
-			      return FALSE;
+				}
+				return FALSE;
 			*/
 		}
 		/*
-		    case ACTL_GETMEDIATYPE:
-		    {
-					ActlMediaType *amt=(ActlMediaType *)Param;
-		      char DiskLetter[4]=" :/";
-		      DiskLetter[0]=(amt)?(char)amt->Letter:0;
-		      return FAR_GetDriveType(DiskLetter,nullptr,(amt && !(amt->Flags&MEDIATYPE_NODETECTCDROM)?TRUE:FALSE));
-		    }
+			case ACTL_GETMEDIATYPE:
+			{
+				ActlMediaType *amt=(ActlMediaType *)Param;
+				char DiskLetter[4]=" :/";
+				DiskLetter[0]=(amt)?(char)amt->Letter:0;
+				return FAR_GetDriveType(DiskLetter,nullptr,(amt && !(amt->Flags&MEDIATYPE_NODETECTCDROM)?TRUE:FALSE));
+			}
 		*/
-		/* $ 21.12.2000 SVS
-		   Macro API
+		/*
+			$ 21.12.2000 SVS
+			Macro API
 		*/
 		case ACTL_KEYMACRO:
 		{
@@ -541,11 +549,15 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return FALSE;
 		}
-		/* $ 05.06.2001 tran
-		   новые ACTL_ для работы с фреймами */
+		/*
+			$ 05.06.2001 tran
+			новые ACTL_ для работы с фреймами
+		*/
 		case ACTL_GETWINDOWINFO:
-			/* $ 12.04.2005 AY
-			     thread safe window info */
+			/*
+				$ 12.04.2005 AY
+				thread safe window info
+			*/
 		case ACTL_GETSHORTWINDOWINFO:
 		{
 			if (FrameManager && Param)
@@ -554,8 +566,10 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				WindowInfo *wi=(WindowInfo*)Param;
 				Frame *f;
 
-				/* $ 22.12.2001 VVM
-				  + Если Pos == -1 то берем текущий фрейм */
+				/*
+					$ 22.12.2001 VVM
+					+ Если Pos == -1 то берем текущий фрейм
+				*/
 				if (wi->Pos == -1)
 					f=FrameManager->GetCurrentFrame();
 				else
@@ -626,16 +640,19 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return FALSE;
 		}
-		/*$ 26.06.2001 SKV
-		  Для полноценной работы с ACTL_SETCURRENTWINDOW
-		  (и может еще для чего в будущем)
+		/*
+			$ 26.06.2001 SKV
+			Для полноценной работы с ACTL_SETCURRENTWINDOW
+			(и может еще для чего в будущем)
 		*/
 		case ACTL_COMMIT:
 		{
 			return FrameManager?FrameManager->PluginCommit():FALSE;
 		}
-		/* $ 15.09.2001 tran
-		   пригодится плагинам */
+		/*
+			$ 15.09.2001 tran
+			пригодится плагинам
+		*/
 		case ACTL_GETFARHWND:
 		{
 			return 0;
@@ -659,8 +676,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 			return Options;
 		}
-		/* $ 24.11.2001 IS
-		   Ознакомим с настройками системными, панели, интерфейса, подтверждений
+		/*
+			$ 24.11.2001 IS
+			Ознакомим с настройками системными, панели, интерфейса, подтверждений
 		*/
 		case ACTL_GETSYSTEMSETTINGS:
 		{
@@ -871,18 +889,18 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
 }
 
 static int FarMenuFnSynched(
-    INT_PTR PluginNumber,
-    int X,
-    int Y,
-    int MaxHeight,
-    DWORD Flags,
-    const wchar_t *Title,
-    const wchar_t *Bottom,
-    const wchar_t *HelpTopic,
-    const int *BreakKeys,
-    int *BreakCode,
-    const FarMenuItem *Item,
-    int ItemsNumber
+	INT_PTR PluginNumber,
+	int X,
+	int Y,
+	int MaxHeight,
+	DWORD Flags,
+	const wchar_t *Title,
+	const wchar_t *Bottom,
+	const wchar_t *HelpTopic,
+	const int *BreakKeys,
+	int *BreakCode,
+	const FarMenuItem *Item,
+	int ItemsNumber
 )
 {
 	if (FrameManager->ManagerIsDown())
@@ -1020,8 +1038,8 @@ static int FarMenuFnSynched(
 						{
 							DWORD Flags=BreakKeys[I]>>16;
 							DWORD RealFlags=ReadRec.Event.KeyEvent.dwControlKeyState &
-							                (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|
-							                 LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|SHIFT_PRESSED);
+								(LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|
+									LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|SHIFT_PRESSED);
 							DWORD f = 0;
 
 							if (RealFlags & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
@@ -1039,7 +1057,7 @@ static int FarMenuFnSynched(
 									*BreakCode=I;
 
 								FarMenu.Hide();
-//                  CheckScreenLock();
+//								CheckScreenLock();
 								return FarMenu.GetSelectPos();
 							}
 						}
@@ -1052,23 +1070,23 @@ static int FarMenuFnSynched(
 
 		ExitCode=FarMenu.Modal::GetExitCode();
 	}
-//  CheckScreenLock();
+//	CheckScreenLock();
 	return(ExitCode);
 }
 
 int WINAPI FarMenuFn(
-    INT_PTR PluginNumber,
-    int X,
-    int Y,
-    int MaxHeight,
-    DWORD Flags,
-    const wchar_t *Title,
-    const wchar_t *Bottom,
-    const wchar_t *HelpTopic,
-    const int *BreakKeys,
-    int *BreakCode,
-    const FarMenuItem *Item,
-    int ItemsNumber
+	INT_PTR PluginNumber,
+	int X,
+	int Y,
+	int MaxHeight,
+	DWORD Flags,
+	const wchar_t *Title,
+	const wchar_t *Bottom,
+	const wchar_t *HelpTopic,
+	const int *BreakKeys,
+	int *BreakCode,
+	const FarMenuItem *Item,
+	int ItemsNumber
 )
 {
 	return InterThreadCall<int, -1>(std::bind(FarMenuFnSynched, PluginNumber, X, Y,
@@ -1094,9 +1112,9 @@ LONG_PTR WINAPI FarSendDlgMessage(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2
 }
 
 static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
-                            const wchar_t *HelpTopic, FarDialogItem *Item,
-                            unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
-                            FARWINDOWPROC DlgProc, LONG_PTR Param)
+	const wchar_t *HelpTopic, FarDialogItem *Item,
+	unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
+	FARWINDOWPROC DlgProc, LONG_PTR Param)
 {
 	HANDLE hDlg=INVALID_HANDLE_VALUE;
 
@@ -1141,8 +1159,9 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 			FarDialog->SetRegularIdle(TRUE);
 
 		FarDialog->SetHelp(HelpTopic);
-		/* $ 29.08.2000 SVS
-		   Запомним номер плагина - сейчас в основном для формирования HelpTopic
+		/*
+			$ 29.08.2000 SVS
+			Запомним номер плагина - сейчас в основном для формирования HelpTopic
 		*/
 		FarDialog->SetPluginNumber(PluginNumber);
 	}
@@ -1187,9 +1206,9 @@ static bool FarDialogFreeSynched(HANDLE hDlg)
 /////////
 
 HANDLE WINAPI FarDialogInit(INT_PTR PluginNumber, int X1, int Y1, int X2, int Y2,
-                            const wchar_t *HelpTopic, FarDialogItem *Item,
-                            unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
-                            FARWINDOWPROC DlgProc, LONG_PTR Param)
+	const wchar_t *HelpTopic, FarDialogItem *Item,
+	unsigned int ItemsNumber, DWORD Reserved, DWORD Flags,
+	FARWINDOWPROC DlgProc, LONG_PTR Param)
 {
 	HANDLE out = InterThreadCall<HANDLE, nullptr>(std::bind(FarDialogInitSynched,
 		PluginNumber, X1, Y1, X2, Y2, HelpTopic, Item, ItemsNumber, Reserved, Flags, DlgProc, Param));
@@ -1227,8 +1246,8 @@ const wchar_t* FarGetMsgFn(INT_PTR PluginHandle,FarLangMsgID MsgId)
 }
 
 static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,
-                        const wchar_t * const *Items,int ItemsNumber,
-                        int ButtonsNumber)
+	const wchar_t * const *Items,int ItemsNumber,
+	int ButtonsNumber)
 {
 	if (FrameManager->ManagerIsDown())
 		return -1;
@@ -1260,9 +1279,11 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 			m.Add(Items[i]);
 	}
 
-	/* $ 22.03.2001 tran
-	   ItemsNumber++ -> ++ItemsNumber
-	   тереялся последний элемент */
+	/*
+		$ 22.03.2001 tran
+		ItemsNumber++ -> ++ItemsNumber
+		тереялся последний элемент
+	*/
 	switch (Flags&0x000F0000)
 	{
 		case FMSG_MB_OK:
@@ -1313,8 +1334,8 @@ static int FarMessageFnSynched(INT_PTR PluginNumber,DWORD Flags,const wchar_t *H
 }
 
 int WINAPI FarMessageFn(INT_PTR PluginNumber,DWORD Flags,const wchar_t *HelpTopic,
-                        const wchar_t * const *Items,int ItemsNumber,
-                        int ButtonsNumber)
+	const wchar_t * const *Items,int ItemsNumber,
+	int ButtonsNumber)
 {
 	return InterThreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
 }
@@ -1672,10 +1693,10 @@ static void PR_FarGetPluginDirListMsg()
 }
 
 int FarGetPluginDirListSynched(INT_PTR PluginNumber,
-                               HANDLE hPlugin,
-                               const wchar_t *Dir,
-                               PluginPanelItem **pPanelItem,
-                               int *pItemsNumber)
+	HANDLE hPlugin,
+	const wchar_t *Dir,
+	PluginPanelItem **pPanelItem,
+	int *pItemsNumber)
 {
 	if (FrameManager->ManagerIsDown() || !Dir || !*Dir || !pItemsNumber || !pPanelItem)
 		return FALSE;
@@ -1689,8 +1710,9 @@ int FarGetPluginDirListSynched(INT_PTR PluginNumber,
 		// А не хочет ли плагин посмотреть на текущую панель?
 		if (hPlugin==PANEL_ACTIVE || hPlugin==PANEL_PASSIVE)
 		{
-			/* $ 30.11.2001 DJ
-			   А плагиновая ли это панель?
+			/*
+				$ 30.11.2001 DJ
+				А плагиновая ли это панель?
 			*/
 			HANDLE Handle = ((hPlugin==PANEL_ACTIVE)?CtrlObject->Cp()->ActivePanel:CtrlObject->Cp()->GetAnotherPanel(CtrlObject->Cp()->ActivePanel))->GetPluginHandle();
 
@@ -1760,8 +1782,9 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber, HANDLE hPlugin,
 	return InterThreadCall<int, 0>(std::bind(FarGetPluginDirListSynched, PluginNumber, hPlugin, Dir, pPanelItem, pItemsNumber));
 }
 
-/* $ 30.11.2001 DJ
-   вытащим в функцию общий код для копирования айтема в ScanPluginDir()
+/*
+	$ 30.11.2001 DJ
+	вытащим в функцию общий код для копирования айтема в ScanPluginDir()
 */
 
 static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
@@ -1833,8 +1856,8 @@ static void ScanPluginDir()
 		PluginPanelItem *CurPanelItem=PanelData+i;
 
 		if ((CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-		        StrCmp(CurPanelItem->FindData.lpwszFileName,L".") &&
-		        !TestParentFolderName(CurPanelItem->FindData.lpwszFileName))
+			StrCmp(CurPanelItem->FindData.lpwszFileName,L".") &&
+			!TestParentFolderName(CurPanelItem->FindData.lpwszFileName))
 		{
 			PluginPanelItem *NewList=(PluginPanelItem *)realloc(PluginDirList,sizeof(*PluginDirList)*(DirListItemsNumber+1));
 
@@ -1845,9 +1868,10 @@ static void ScanPluginDir()
 			}
 
 			PluginDirList=NewList;
-			/* $ 30.11.2001 DJ
-					используем общую функцию для копирования FindData (не забываем
-					обработать PPIF_USERDATA)
+			/*
+				$ 30.11.2001 DJ
+				используем общую функцию для копирования FindData (не забываем
+				обработать PPIF_USERDATA)
 			*/
 			CopyPluginDirItem(CurPanelItem);
 			FARString strFileName = CurPanelItem->FindData.lpwszFileName;
@@ -1913,9 +1937,10 @@ void WINAPI FarFreePluginDirList(PluginPanelItem *PanelItem, int ItemsNumber)
 
 static void ApplyViewerDeleteOnClose(FileViewer *Viewer, const wchar_t *FileName, DWORD Flags)
 {
-	/* $ 14.06.2002 IS
-	   Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
-	   приоритет по сравнению с VF_DELETEONCLOSE
+	/*
+		$ 14.06.2002 IS
+		Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+		приоритет по сравнению с VF_DELETEONCLOSE
 	*/
 	if ((Flags & (VF_DELETEONCLOSE | VF_DELETEONLYFILEONCLOSE)) != 0 && FileName && *FileName)
 	{
@@ -1927,7 +1952,7 @@ static void ApplyViewerDeleteOnClose(FileViewer *Viewer, const wchar_t *FileName
 }
 
 static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
-                     int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
+	int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
 	if (FrameManager->ManagerIsDown())
 		return FALSE;
@@ -1952,8 +1977,9 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 		ApplyViewerDeleteOnClose(Viewer, FileName, Flags);
 		Viewer->SetEnableF6((Flags & VF_ENABLE_F6) );
 
-		/* $ 21.05.2002 SKV
-		  Запускаем свой цикл только если не был указан флаг.
+		/*
+			$ 21.05.2002 SKV
+			Запускаем свой цикл только если не был указан флаг.
 		*/
 		if (!(Flags&VF_IMMEDIATERETURN))
 		{
@@ -1991,28 +2017,30 @@ static int FarViewerSynched(const wchar_t *FileName,const wchar_t *Title,
 }
 
 int WINAPI FarViewer(const wchar_t *FileName,const wchar_t *Title,
-                     int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
+	int X1,int Y1,int X2, int Y2,DWORD Flags, UINT CodePage)
 {
 	return InterThreadCall<int, 0>(std::bind(FarViewerSynched, FileName, Title, X1, Y1, X2, Y2, Flags, CodePage));
 }
 
 int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
-    int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
+	int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
 {
 	if (FrameManager->ManagerIsDown())
 		return EEC_OPEN_ERROR;
 
 	ConsoleTitle ct;
-	/* $ 12.07.2000 IS
-	 Проверка флагов редактора (раньше они игнорировались) и открытие
-	 немодального редактора, если есть соответствующий флаг
+	/*
+		$ 12.07.2000 IS
+		Проверка флагов редактора (раньше они игнорировались) и открытие
+		немодального редактора, если есть соответствующий флаг
 	*/
 	int CreateNew = (Flags & EF_CREATENEW)?TRUE:FALSE;
 	int Locked=(Flags & EF_LOCKED)?TRUE:FALSE;
 	int DisableHistory=(Flags & EF_DISABLEHISTORY)?TRUE:FALSE;
-	/* $ 14.06.2002 IS
-	   Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
-	   приоритет по сравнению с EF_DELETEONCLOSE
+	/*
+		$ 14.06.2002 IS
+		Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
+		приоритет по сравнению с EF_DELETEONCLOSE
 	*/
 	std::shared_ptr<TempFileHolder> TFH;
 	if (Flags & (EF_DELETEONCLOSE|EF_DELETEONLYFILEONCLOSE))
@@ -2023,9 +2051,10 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	if ((Flags&EF_OPENMODE_MASK) )
 		OpMode=Flags&EF_OPENMODE_MASK;
 
-	/*$ 15.05.2002 SKV
-	  Запретим вызов немодального редактора, если находимся в модальном
-	  редакторе или вьюере.
+	/*
+		$ 15.05.2002 SKV
+		Запретим вызов немодального редактора, если находимся в модальном
+		редакторе или вьюере.
 	*/
 	if (FrameManager->InModalEV())
 	{
@@ -2039,9 +2068,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor *Editor=new(std::nothrow) FileEditor(FileName,CodePage,
-		                                  (CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
-		                                  StartLine,StartChar,Title,
-		                                  X1,Y1,X2,Y2,OpMode);
+			(CreateNew?FFILEEDIT_CANNEWFILE:0) | FFILEEDIT_ENABLEF6 | (DisableHistory?FFILEEDIT_DISABLEHISTORY:0) | (Locked?FFILEEDIT_LOCKED:0),
+			StartLine,StartChar,Title,
+			X1,Y1,X2,Y2,OpMode);
 
 		if (Editor)
 		{
@@ -2079,9 +2108,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 	{
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileEditor Editor(FileName,CodePage,(CreateNew?FFILEEDIT_CANNEWFILE:0)|(DisableHistory?FFILEEDIT_DISABLEHISTORY:0)|(Locked?FFILEEDIT_LOCKED:0),
-		                  StartLine,StartChar,Title,
-		                  X1,Y1,X2,Y2,
-		                  OpMode);
+			StartLine,StartChar,Title,
+			X1,Y1,X2,Y2,
+			OpMode);
 		Editor.SetFileHolder(TFH);
 		editorExitCode=Editor.GetExitCode();
 
@@ -2093,8 +2122,9 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 			Editor.SetDynamicallyBorn(false);
 			Editor.SetEnableF6((Flags & EF_ENABLE_F6) );
 			Editor.SetPluginTitle(Title);
-			/* $ 15.05.2002 SKV
-			  Зафиксируем вход и выход в/из модального редактора.
+			/*
+				$ 15.05.2002 SKV
+				Зафиксируем вход и выход в/из модального редактора.
 			*/
 			FrameManager->EnterModalEV();
 			FrameManager->ExecuteModal();
@@ -2118,7 +2148,7 @@ int FarEditorSynched( const wchar_t *FileName, const wchar_t *Title,
 }
 
 int WINAPI FarEditor( const wchar_t *FileName, const wchar_t *Title,
-    int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
+	int X1, int Y1, int X2, int Y2, DWORD Flags, int StartLine, int StartChar, UINT CodePage)
 {
 	return InterThreadCall<int, EEC_OPEN_ERROR>(std::bind(FarEditorSynched,
 		FileName, Title, X1, Y1, X2, Y2, Flags, StartLine, StartChar, CodePage));
@@ -2488,18 +2518,18 @@ int WINAPI farRegExpControl(HANDLE hHandle, int Command, LONG_PTR Param)
 			RegExpSearch* data=(RegExpSearch*)Param;
 			return re->MatchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
-			                   ,data->Reserved
+				,data->Reserved
 #endif
-			                  );
+				);
 		}
 		case RECTL_SEARCHEX:
 		{
 			RegExpSearch* data=(RegExpSearch*)Param;
 			return re->SearchEx(ReStringView(data->Text,data->Length),data->Position,data->Match,data->Count
 #ifdef NAMEDBRACKETS
-			                    ,data->Reserved
+				,data->Reserved
 #endif
-			                   );
+				);
 		}
 		case RECTL_BRACKETSCOUNT:
 			return re->GetBracketsCount();

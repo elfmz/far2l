@@ -119,8 +119,8 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force, bool Restoring)
 		TitleModified=true;
 
 		if (StrCmp(strOldFarTitle, strFarTitle) &&
-		        ((CtrlObject->Macro.IsExecuting() && !CtrlObject->Macro.IsDsableOutput()) ||
-		         !CtrlObject->Macro.IsExecuting() || CtrlObject->Macro.IsExecutingLastKey()))
+			((CtrlObject->Macro.IsExecuting() && !CtrlObject->Macro.IsDsableOutput()) ||
+				!CtrlObject->Macro.IsExecuting() || CtrlObject->Macro.IsExecutingLastKey()))
 		{
 			DWORD CurTime=WINPORT(GetTickCount)();
 			if(CurTime-ShowTime>RedrawTimeout || Force)

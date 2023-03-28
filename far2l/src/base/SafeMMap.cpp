@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <dlfcn.h>
 
 #if !defined(__FreeBSD__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
 # include <execinfo.h>
@@ -132,6 +133,17 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 		bt_count = backtrace(bt, bt_count);
 		backtrace_symbols_fd(bt, bt_count, fd);
 #endif
+		fsync(fd);
+		void **stk = (void **)&ctx;
+		for (unsigned int i = 0; i < 0x1000 && ((uintptr_t(&stk[i]) ^ uintptr_t(stk)) < 0x1000); ++i) {
+			Dl_info dli = {0};
+			if (dladdr(stk[i], &dli) && dli.dli_fname) {
+				FDWriteStr(fd, dli.dli_fname);
+				char tail[32];
+				sprintf(tail, " + 0x%x\n", unsigned(uintptr_t(stk[i]) - uintptr_t(dli.dli_fbase)));
+				FDWriteStr(fd, tail);
+			}
+		}
 		fsync(fd);
 	}
 

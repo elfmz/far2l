@@ -10,6 +10,8 @@
 #if defined (__WXGTK__) && defined (__HASX11__)
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+
+#include <X11/XKBlib.h>
 #endif
 
 #if defined(wxHAS_RAW_KEY_CODES)
@@ -418,39 +420,48 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 
 #if defined (__WXGTK__) && defined (__HASX11__)
 	if (!key_code) {
-		Display *display;
-		display = XOpenDisplay(NULL);
-		KeySym *keymap;
-		int keysyms_per_keycode;
-		char* keysym;
-		// GetRawKeyFlags() gives us raw x11 hardware key code under wxGTK
-		keymap = XGetKeyboardMapping(display, event.GetRawKeyFlags(), 1, &keysyms_per_keycode);
-		for (int i = 0; i < keysyms_per_keycode; i++) {
-			if (keymap[i] && (keymap[i] != NoSymbol)) {
-				keysym = XKeysymToString(keymap[i]);
-				if (strlen(keysym) == 1) {
-					// char key
-					key_code = toupper(*keysym);
-				}
-				switch (keymap[i]) {
-					case XK_minus:        key_code = VK_OEM_MINUS;   break;
-					case XK_equal:        key_code = VK_OEM_PLUS;    break;
-					case XK_bracketleft:  key_code = VK_OEM_4;       break;
-					case XK_bracketright: key_code = VK_OEM_6;       break;
-					case XK_semicolon:    key_code = VK_OEM_1;       break;
-					case XK_apostrophe:   key_code = VK_OEM_7;       break;
-					case XK_grave:        key_code = VK_OEM_3;       break;
-					case XK_backslash:    key_code = VK_OEM_5;       break;
-					case XK_comma:        key_code = VK_OEM_COMMA;   break;
-					case XK_period:       key_code = VK_OEM_PERIOD;  break;
-					case XK_slash:        key_code = VK_OEM_2;       break;
-				}
-			}
-			if (key_code)
+		Display *display = XOpenDisplay(NULL);
+		XkbDescPtr xkb = XkbGetMap(display, 0, XkbUseCoreKbd);
+		XkbGetControls(display, XkbGroupsWrapMask, xkb);
+		XkbGetNames(display, XkbGroupNamesMask, xkb);
+
+		// searching for group id of English keyboard layout
+		int group = -1;
+		for (int i = 0; i < xkb->ctrls->num_groups; i++) {
+			char *layout = XGetAtomName(display, xkb->names->groups[i]);
+			if (strstr(layout, "English")) {
+				// English kb layout found, let's use it for translations
+				group = i;
 				break;
+			}
+	        XFree(layout);
 		}
 
-		XFree(keymap);
+		// if English keyboard layout is not found, we should not do anything to avoid wrong translations
+		if (group != -1) {
+
+			KeySym ks = XkbKeycodeToKeysym(display, event.GetRawKeyFlags(), group, 0);
+			char* keysymstr = XKeysymToString(ks);
+
+			if (strlen(keysymstr) == 1) {
+				// char key
+				key_code = toupper(*keysymstr);
+			}
+			switch (ks) {
+				case XK_minus:        key_code = VK_OEM_MINUS;   break;
+				case XK_equal:        key_code = VK_OEM_PLUS;    break;
+				case XK_bracketleft:  key_code = VK_OEM_4;       break;
+				case XK_bracketright: key_code = VK_OEM_6;       break;
+				case XK_semicolon:    key_code = VK_OEM_1;       break;
+				case XK_apostrophe:   key_code = VK_OEM_7;       break;
+				case XK_grave:        key_code = VK_OEM_3;       break;
+				case XK_backslash:    key_code = VK_OEM_5;       break;
+				case XK_comma:        key_code = VK_OEM_COMMA;   break;
+				case XK_period:       key_code = VK_OEM_PERIOD;  break;
+				case XK_slash:        key_code = VK_OEM_2;       break;
+			}
+		}
+        XkbFreeKeyboard(xkb, 0, True);
 		XCloseDisplay(display);
 	}
 #endif

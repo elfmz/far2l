@@ -172,5 +172,5 @@ void EditorConfigOrg::Populate(const char *edited_file)
 
 	fprintf(stderr,
 		"EditorConfigOrg: ExpandTabs=%d TabSize=%d EndOfLine='%ls' TrimTrailingWhitespace=%d InsertFinalNewline=%d CodePage=%d CodePageBOM=%d\n",
-		ExpandTabs, TabSize, EndOfLine, TrimTrailingWhitespace, InsertFinalNewline, CodePage, CodePageBOM);
+		ExpandTabs, TabSize, EndOfLine ? EndOfLine : L"", TrimTrailingWhitespace, InsertFinalNewline, CodePage, CodePageBOM);
 }

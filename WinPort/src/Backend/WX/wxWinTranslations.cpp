@@ -7,6 +7,11 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
+#if defined (__WXGTK__) && defined (__HASX11__)
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#endif
+
 #if defined(wxHAS_RAW_KEY_CODES)
 # ifdef __WXMAC__
 #  include "Mac/touchbar.h"
@@ -302,7 +307,7 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
-	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	ir.Event.KeyEvent.dwControlKeyState = 0;
 #ifndef __WXMAC__
@@ -410,6 +415,46 @@ static DWORD s_cached_led_state = 0;
 wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const KeyTracker &key_tracker)
 {
 	auto key_code = event.GetKeyCode();
+
+#if defined (__WXGTK__) && defined (__HASX11__)
+	if (!key_code) {
+		Display *display;
+		display = XOpenDisplay(NULL);
+		KeySym *keymap;
+		int keysyms_per_keycode;
+		char* keysym;
+		// GetRawKeyFlags() gives us raw x11 hardware key code under wxGTK
+		keymap = XGetKeyboardMapping(display, event.GetRawKeyFlags(), 1, &keysyms_per_keycode);
+		for (int i = 0; i < keysyms_per_keycode; i++) {
+			if (keymap[i] && (keymap[i] != NoSymbol)) {
+				keysym = XKeysymToString(keymap[i]);
+				if (strlen(keysym) == 1) {
+					// char key
+					key_code = toupper(*keysym);
+				}
+				switch (keymap[i]) {
+					case XK_minus:        key_code = VK_OEM_MINUS;   break;
+					case XK_equal:        key_code = VK_OEM_PLUS;    break;
+					case XK_bracketleft:  key_code = VK_OEM_4;       break;
+					case XK_bracketright: key_code = VK_OEM_6;       break;
+					case XK_semicolon:    key_code = VK_OEM_1;       break;
+					case XK_apostrophe:   key_code = VK_OEM_7;       break;
+					case XK_grave:        key_code = VK_OEM_3;       break;
+					case XK_backslash:    key_code = VK_OEM_5;       break;
+					case XK_comma:        key_code = VK_OEM_COMMA;   break;
+					case XK_period:       key_code = VK_OEM_PERIOD;  break;
+					case XK_slash:        key_code = VK_OEM_2;       break;
+				}
+			}
+			if (key_code)
+				break;
+		}
+
+		XFree(keymap);
+		XCloseDisplay(display);
+	}
+#endif
+
 #ifdef __linux__
 	// Recent KDEs put into keycode non-latin characters in case of
 	// non-latin input layout configured as first in the list of layouts.
@@ -431,7 +476,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.bKeyDown = KeyDown;
 	Event.KeyEvent.wRepeatCount = 1;
 	Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(key_code);
-	Event.KeyEvent.wVirtualScanCode = 0;
+	Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 

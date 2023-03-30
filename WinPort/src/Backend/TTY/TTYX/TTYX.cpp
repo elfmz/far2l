@@ -155,7 +155,26 @@ class TTYX
 			if ((cookie->evtype == XI_RawKeyPress || cookie->evtype == XI_RawKeyRelease) && cookie->data) {
 				const XIRawEvent *ev = (const XIRawEvent *)cookie->data;
 				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
-				const KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, 0 /*xkbState.group*/, 0 /*shift level*/);
+
+				XkbDescPtr xkb = XkbGetMap(_display, 0, XkbUseCoreKbd);
+				XkbGetControls(_display, XkbGroupsWrapMask, xkb);
+				XkbGetNames(_display, XkbGroupNamesMask, xkb);
+				// searching for group id of English keyboard layout
+				int group = 0; // use default kb layout if English one is not found
+				for (int i = 0; i < xkb->ctrls->num_groups; i++) {
+					char *layout = XGetAtomName(_display, xkb->names->groups[i]);
+					if (strstr(layout, "English")) {
+						// English kb layout found, let's use it for translations
+						group = i;
+						break;
+					}
+					XFree(layout);
+				}
+
+				KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, group, 0);
+				if (!ks) { ks = XkbKeycodeToKeysym(_display, ev->detail, 0, 0); } // fallback
+
+				XkbFreeKeyboard(xkb, 0, True);
 
 				if (cookie->evtype == XI_RawKeyPress) {
 					_xi_keys[ks] = std::chrono::steady_clock::now();
@@ -524,6 +543,30 @@ public:
 
 	void InspectKeyEvent(KEY_EVENT_RECORD &event)
 	{
+
+		if ((event.uChar.UnicodeChar > 127) && (!event.wVirtualKeyCode)) {
+			for (const auto &xki : _xi_keys) {
+				if (xki.first && !IsXiKeyModifier(xki.first)) {
+					switch (xki.first) {
+						case XK_minus:        event.wVirtualKeyCode = VK_OEM_MINUS;   break;
+						case XK_equal:        event.wVirtualKeyCode = VK_OEM_PLUS;    break;
+						case XK_bracketleft:  event.wVirtualKeyCode = VK_OEM_4;       break;
+						case XK_bracketright: event.wVirtualKeyCode = VK_OEM_6;       break;
+						case XK_semicolon:    event.wVirtualKeyCode = VK_OEM_1;       break;
+						case XK_apostrophe:   event.wVirtualKeyCode = VK_OEM_7;       break;
+						case XK_grave:        event.wVirtualKeyCode = VK_OEM_3;       break;
+						case XK_backslash:    event.wVirtualKeyCode = VK_OEM_5;       break;
+						case XK_comma:        event.wVirtualKeyCode = VK_OEM_COMMA;   break;
+						case XK_period:       event.wVirtualKeyCode = VK_OEM_PERIOD;  break;
+						case XK_slash:        event.wVirtualKeyCode = VK_OEM_2;       break;
+						default:
+							char* kstr = XKeysymToString(xki.first);
+							if (strlen(kstr) == 1) { event.wVirtualKeyCode = toupper(kstr[0]); }
+					}
+				}
+			}
+		}
+
 		auto x_keymods = GetKeyModifiers();
 #ifdef TTYXI
 		if (!_xi) {

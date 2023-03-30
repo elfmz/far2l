@@ -543,6 +543,7 @@ public:
 	void InspectKeyEvent(KEY_EVENT_RECORD &event)
 	{
 
+#ifdef TTYXI
 		if ((event.uChar.UnicodeChar > 127) && (!event.wVirtualKeyCode)) {
 			for (const auto &xki : _xi_keys) {
 				if (xki.first && !IsXiKeyModifier(xki.first)) {
@@ -565,6 +566,7 @@ public:
 				}
 			}
 		}
+#endif
 
 		auto x_keymods = GetKeyModifiers();
 #ifdef TTYXI

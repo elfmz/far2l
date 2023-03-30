@@ -447,17 +447,17 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 			key_code = toupper(*keysymstr);
 		}
 		switch (ks) {
-			case XK_minus:        key_code = VK_OEM_MINUS;   break;
-			case XK_equal:        key_code = VK_OEM_PLUS;    break;
-			case XK_bracketleft:  key_code = VK_OEM_4;       break;
-			case XK_bracketright: key_code = VK_OEM_6;       break;
-			case XK_semicolon:    key_code = VK_OEM_1;       break;
-			case XK_apostrophe:   key_code = VK_OEM_7;       break;
-			case XK_grave:        key_code = VK_OEM_3;       break;
-			case XK_backslash:    key_code = VK_OEM_5;       break;
-			case XK_comma:        key_code = VK_OEM_COMMA;   break;
-			case XK_period:       key_code = VK_OEM_PERIOD;  break;
-			case XK_slash:        key_code = VK_OEM_2;       break;
+			case XK_minus:        key_code = '-';   break;
+			case XK_equal:        key_code = '=';   break;
+			case XK_bracketleft:  key_code = '[';   break;
+			case XK_bracketright: key_code = ']';   break;
+			case XK_semicolon:    key_code = ';';   break;
+			case XK_apostrophe:   key_code = '\'';  break;
+			case XK_grave:        key_code = '`';   break;
+			case XK_backslash:    key_code = '\\';  break;
+			case XK_comma:        key_code = ',';   break;
+			case XK_period:       key_code = '.';   break;
+			case XK_slash:        key_code = '/';   break;
 		}
 	}
 	XkbFreeKeyboard(xkb, 0, True);

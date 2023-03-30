@@ -874,7 +874,7 @@ static void OnFar2lKeyCompact(bool down, StackSerializer &stk_ser)
 		ir.Event.KeyEvent.uChar.UnicodeChar = (wchar_t)(uint32_t)stk_ser.PopU16();
 		ir.Event.KeyEvent.dwControlKeyState = stk_ser.PopU16();
 		ir.Event.KeyEvent.wVirtualKeyCode = stk_ser.PopU8();
-		ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode);
+		ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 		g_winport_con_in->Enqueue(&ir, 1);
 
 	} catch (std::exception &e) {

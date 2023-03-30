@@ -8,8 +8,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
 #ifdef TTYXI
-# include <X11/XKBlib.h>
 # include <X11/extensions/XInput2.h>
 #endif
 

@@ -39,6 +39,7 @@ class TTYX
 	Atom _clipboard_atom;
 	Atom _xsel_data_atom;
 	int _display_fd;
+	int _eng_group_id = 0; // use default kb layout if English one is not found
 
 #ifdef TTYXI
 	const std::chrono::time_point<std::chrono::steady_clock> _never;
@@ -156,25 +157,8 @@ class TTYX
 				const XIRawEvent *ev = (const XIRawEvent *)cookie->data;
 				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
 
-				XkbDescPtr xkb = XkbGetMap(_display, 0, XkbUseCoreKbd);
-				XkbGetControls(_display, XkbGroupsWrapMask, xkb);
-				XkbGetNames(_display, XkbGroupNamesMask, xkb);
-				// searching for group id of English keyboard layout
-				int group = 0; // use default kb layout if English one is not found
-				for (int i = 0; i < xkb->ctrls->num_groups; i++) {
-					char *layout = XGetAtomName(_display, xkb->names->groups[i]);
-					if (strstr(layout, "English")) {
-						// English kb layout found, let's use it for translations
-						group = i;
-						break;
-					}
-					XFree(layout);
-				}
-
-				KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, group, 0);
+				KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, _eng_group_id, 0);
 				if (!ks) { ks = XkbKeycodeToKeysym(_display, ev->detail, 0, 0); } // fallback
-
-				XkbFreeKeyboard(xkb, 0, True);
 
 				if (cookie->evtype == XI_RawKeyPress) {
 					_xi_keys[ks] = std::chrono::steady_clock::now();
@@ -433,6 +417,21 @@ public:
 		_root_window = RootWindow(_display, _screen);
 		auto color = BlackPixel(_display, _screen);
 		_window = XCreateSimpleWindow(_display, _root_window, 0, 0, 1, 1, 0, color, color);
+
+		// searching for group id of English keyboard layout
+		XkbDescPtr xkb = XkbGetMap(_display, 0, XkbUseCoreKbd);
+		XkbGetControls(_display, XkbGroupsWrapMask, xkb);
+		XkbGetNames(_display, XkbGroupNamesMask, xkb);
+		for (int i = 0; i < xkb->ctrls->num_groups; i++) {
+			char *layout = XGetAtomName(_display, xkb->names->groups[i]);
+			if (strstr(layout, "English")) {
+				// English kb layout found, let's use it for translations
+				_eng_group_id = i;
+				break;
+			}
+			XFree(layout);
+		}
+		XkbFreeKeyboard(xkb, 0, True);
 
 #ifdef TTYXI
 		_xi = true;

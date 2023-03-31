@@ -79,6 +79,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad{0};
 	std::atomic<bool> _bracketed_paste_expected{false};
+	std::atomic<bool> _win32_input_mode_expected{false};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::unique_ptr<VTMouse> _mouse;
@@ -386,11 +387,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				return;
 		}
 
-		if (!KeyEvent.bKeyDown)
-			return;
-
 		DWORD dw;
 		const std::string &translated = TranslateKeyEvent(KeyEvent);
+
+		if (!KeyEvent.bKeyDown && !_win32_input_mode_expected)
+			return;
+
 		if (!translated.empty()) {
 			if (_slavename.empty() && KeyEvent.uChar.UnicodeChar) {//pipes fallback
 				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
@@ -487,6 +489,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual void OnBracketedPasteExpectation(bool enabled)
 	{
 		_bracketed_paste_expected = enabled;
+	}
+
+	virtual void OnWin32InputMode(bool enabled)
+	{
+		_win32_input_mode_expected = enabled;
 	}
 
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
@@ -655,39 +662,58 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string TranslateKeyEvent(const KEY_EVENT_RECORD &KeyEvent)
 	{
 		if (KeyEvent.wVirtualKeyCode) {
+
 			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
-			
-			if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK) {
-				//WCM has a setting for that, so probably in some cases backspace should be returned as is
-				char backspace[] = {127, 0};
-				return backspace;
-			}
-			
-			if ((ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') ||
-					(!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ) {
-				return StringFromClipboard();
-			}
-			
-			if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
-				OnCtrlC(alt);
-			} 
-			
-			if (ctrl && !shift && alt && KeyEvent.wVirtualKeyCode=='Z') {
-				WINPORT(ConsoleBackgroundMode)(TRUE);
-				return "";
+
+			if (KeyEvent.bKeyDown) {
+
+				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK) {
+					//WCM has a setting for that, so probably in some cases backspace should be returned as is
+					char backspace[] = {127, 0};
+					return backspace;
+				}
+
+				if ((ctrl && shift && !alt && KeyEvent.wVirtualKeyCode=='V') ||
+						(!ctrl && shift && !alt && KeyEvent.wVirtualKeyCode==VK_INSERT) ) {
+					return StringFromClipboard();
+				}
+
+				if (ctrl && !shift && KeyEvent.wVirtualKeyCode=='C') {
+					OnCtrlC(alt);
+				}
+
+				if (ctrl && !shift && alt && KeyEvent.wVirtualKeyCode=='Z') {
+					WINPORT(ConsoleBackgroundMode)(TRUE);
+					return "";
+				}
+
+				if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
+					OnConsoleLog(CLK_EDIT);
+					return "";
+				}
+
+				if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
+					OnConsoleLog(CLK_VIEW);
+					return "";
+				}
 			}
 
-			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F4) {
-				OnConsoleLog(CLK_EDIT);
-				return "";
-			} 
+			if (_win32_input_mode_expected) {
+				char buffer[64];
+				sprintf(buffer, "\x1B[%i;%i;%i;%i;%i;%i_",
+						KeyEvent.wVirtualKeyCode,
+						KeyEvent.wVirtualScanCode,
+						KeyEvent.uChar.UnicodeChar,
+						KeyEvent.bKeyDown,
+						KeyEvent.dwControlKeyState,
+						KeyEvent.wRepeatCount
+					);
+				return buffer;
+			}
 
-			if (ctrl && shift && KeyEvent.wVirtualKeyCode==VK_F3) {
-				OnConsoleLog(CLK_VIEW);
-				return "";
-			} 
+			if (!KeyEvent.bKeyDown) { return ""; }
 
 			const char *spec = VT_TranslateSpecialKey(
 				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);

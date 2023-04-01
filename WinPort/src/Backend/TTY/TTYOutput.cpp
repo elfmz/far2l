@@ -162,6 +162,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 #endif
 
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
+	Format(ESC "[?9001h"); // win32-input-mode on
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -186,6 +187,7 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[0 q");
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
+		Format(ESC "[?9001l"); // win32-input-mode off
 		TTYBasePalette def_palette;
 		ChangePalette(def_palette);
 		Flush();

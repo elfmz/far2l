@@ -311,9 +311,11 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
-	if (s[0] == '[' && s[l-1] == '_') {
+    const char* underscore_pos = strchr(s, '_');
+	if (s[0] == '[' && underscore_pos) {
 
-		// win32-input-mode sequence
+		// having [ at start and underscore somewhere inside.
+		// trying to parse as win32-input-mode sequence
 
 		INPUT_RECORD ir = {};
 		ir.EventType = KEY_EVENT;
@@ -321,16 +323,21 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
 		sscanf(s, "[%d;%d;%d;%d;%d;%d_", &a, &b, &c, &d, &e, &f);
 
-		ir.Event.KeyEvent.wVirtualKeyCode = a;
-		ir.Event.KeyEvent.wVirtualScanCode = b;
-		ir.Event.KeyEvent.uChar.UnicodeChar = c;
-		ir.Event.KeyEvent.bKeyDown = d;
-		ir.Event.KeyEvent.dwControlKeyState = e;
-		ir.Event.KeyEvent.wRepeatCount = f;
+		if (a && f) {
 
-		_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
+			// parsed ok
 
-		return l;
+			ir.Event.KeyEvent.wVirtualKeyCode = a;
+			ir.Event.KeyEvent.wVirtualScanCode = b;
+			ir.Event.KeyEvent.uChar.UnicodeChar = c;
+			ir.Event.KeyEvent.bKeyDown = d;
+			ir.Event.KeyEvent.dwControlKeyState = e;
+			ir.Event.KeyEvent.wRepeatCount = f;
+
+			_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
+
+			return underscore_pos - s + 1;
+		}
 	}
 
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {

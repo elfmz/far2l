@@ -421,47 +421,63 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 {
 	int key_code = 0;
 	Display *display = XOpenDisplay(NULL);
-	XkbDescPtr xkb = XkbGetMap(display, 0, XkbUseCoreKbd);
+
+	if (!display) {
+		return 0;	
+	}
+
+	char keycodes[] = "evdev";
+	char types[] = "complete";
+	char compat[] = "complete";
+	char symbols[] = "pc+us+inet(evdev)";
+
+	XkbComponentNamesRec component_names = {
+		.keycodes = keycodes,
+		.types = types,
+		.compat = compat,
+		.symbols = symbols
+	};
+
+	XkbDescPtr xkb = XkbGetKeyboardByName(
+		display, XkbUseCoreKbd, &component_names, XkbGBN_AllComponentsMask, XkbGBN_AllComponentsMask, False);
+
+	if (!xkb) {
+		XCloseDisplay(display);
+		return 0;	
+	}
+
 	XkbGetControls(display, XkbGroupsWrapMask, xkb);
 	XkbGetNames(display, XkbGroupNamesMask, xkb);
 
-	// searching for group id of English keyboard layout
-	int group = -1;
-	for (int i = 0; i < xkb->ctrls->num_groups; i++) {
-		char *layout = XGetAtomName(display, xkb->names->groups[i]);
-		if (strstr(layout, "English")) {
-			// English kb layout found, let's use it for translations
-			group = i;
-			break;
-		}
-		XFree(layout);
+	const char *keysymstr = nullptr;
+
+	KeySym ks;
+	unsigned int mods;
+	if (XkbTranslateKeyCode(xkb, keyflags, 0, &mods, &ks)) {
+		keysymstr = XKeysymToString(ks);
 	}
 
-	// if English keyboard layout is not found, we should not do anything to avoid wrong translations
-	if (group != -1) {
-		KeySym ks = XkbKeycodeToKeysym(display, keyflags, group, 0);
-		const char *keysymstr = XKeysymToString(ks);
-
-		if (keysymstr[0] && !keysymstr[1]) {
-			// char key
-			key_code = toupper(*keysymstr);
-		}
-		switch (ks) {
-			case XK_minus:        key_code = '-';   break;
-			case XK_equal:        key_code = '=';   break;
-			case XK_bracketleft:  key_code = '[';   break;
-			case XK_bracketright: key_code = ']';   break;
-			case XK_semicolon:    key_code = ';';   break;
-			case XK_apostrophe:   key_code = '\'';  break;
-			case XK_grave:        key_code = '`';   break;
-			case XK_backslash:    key_code = '\\';  break;
-			case XK_comma:        key_code = ',';   break;
-			case XK_period:       key_code = '.';   break;
-			case XK_slash:        key_code = '/';   break;
-		}
+	if (keysymstr && keysymstr[0] && !keysymstr[1]) {
+		// char key
+		key_code = toupper(*keysymstr);
 	}
+	switch (ks) {
+		case XK_minus:        key_code = '-';   break;
+		case XK_equal:        key_code = '=';   break;
+		case XK_bracketleft:  key_code = '[';   break;
+		case XK_bracketright: key_code = ']';   break;
+		case XK_semicolon:    key_code = ';';   break;
+		case XK_apostrophe:   key_code = '\'';  break;
+		case XK_grave:        key_code = '`';   break;
+		case XK_backslash:    key_code = '\\';  break;
+		case XK_comma:        key_code = ',';   break;
+		case XK_period:       key_code = '.';   break;
+		case XK_slash:        key_code = '/';   break;
+	}
+
 	XkbFreeKeyboard(xkb, 0, True);
 	XCloseDisplay(display);
+	
 	return key_code;
 }
 

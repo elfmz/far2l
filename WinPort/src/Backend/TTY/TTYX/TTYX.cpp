@@ -33,7 +33,7 @@ class TTYX
 	int _screen;
 	Window _root_window;
 	Window _window;
-	XkbDescPtr _xkb_en;
+	XkbDescPtr _xkb_en = nullptr;
 	Atom _targets_atom;
 	Atom _text_atom;
 	Atom _utf8_atom;
@@ -156,6 +156,27 @@ class TTYX
 			if ((cookie->evtype == XI_RawKeyPress || cookie->evtype == XI_RawKeyRelease) && cookie->data) {
 				const XIRawEvent *ev = (const XIRawEvent *)cookie->data;
 				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
+
+				if (!_xkb_en) {
+					char keycodes[] = "evdev";
+					char types[] = "complete";
+					char compat[] = "complete";
+					char symbols[] = "pc+us+inet(evdev)";
+
+					XkbComponentNamesRec component_names = {
+						.keycodes = keycodes,
+						.types = types,
+						.compat = compat,
+						.symbols = symbols
+					};
+
+					_xkb_en = XkbGetKeyboardByName(
+						_display, XkbUseCoreKbd, &component_names,
+						XkbGBN_AllComponentsMask, XkbGBN_AllComponentsMask, False);
+
+					XkbGetControls(_display, XkbGroupsWrapMask, _xkb_en);
+					XkbGetNames(_display, XkbGroupNamesMask, _xkb_en);
+				}
 
 				KeySym ks;
 				unsigned int mods;
@@ -412,23 +433,6 @@ public:
 		_display = XOpenDisplay(0);
 		if (!_display)
 			throw std::runtime_error("Cannot open display");
-
-		char keycodes[] = "evdev";
-		char types[] = "complete";
-		char compat[] = "complete";
-		char symbols[] = "pc+us+inet(evdev)";
-
-		XkbComponentNamesRec component_names = {
-			.keycodes = keycodes,
-			.types = types,
-			.compat = compat,
-			.symbols = symbols
-		};
-
-		XkbDescPtr _xkb_en = XkbGetKeyboardByName(
-			_display, XkbUseCoreKbd, &component_names, XkbGBN_AllComponentsMask, XkbGBN_AllComponentsMask, False);
-		XkbGetControls(_display, XkbGroupsWrapMask, _xkb_en);
-		XkbGetNames(_display, XkbGroupNamesMask, _xkb_en);
 
 		_display_fd = ConnectionNumber(_display);
 		_screen = DefaultScreen(_display);

@@ -449,13 +449,15 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 	XkbGetControls(display, XkbGroupsWrapMask, xkb);
 	XkbGetNames(display, XkbGroupNamesMask, xkb);
 
+	const char *keysymstr = nullptr;
+
 	KeySym ks;
 	unsigned int mods;
-	XkbTranslateKeyCode(xkb, keyflags, 0, &mods, &ks);
+	if (keysymstr = XkbTranslateKeyCode(xkb, keyflags, 0, &mods, &ks)) {
+		XKeysymToString(ks);
+	}
 
-	const char *keysymstr = XKeysymToString(ks);
-
-	if (keysymstr[0] && !keysymstr[1]) {
+	if (keysymstr && keysymstr[0] && !keysymstr[1]) {
 		// char key
 		key_code = toupper(*keysymstr);
 	}

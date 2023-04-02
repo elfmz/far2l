@@ -311,21 +311,23 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
-    const char* underscore_pos = strchr(s, '_');
-	if (s[0] == '[' && underscore_pos) {
+	const char* underscore_pos = strchr(s, '_');
+	if ((underscore_pos - s + 1) > l) { underscore_pos = NULL; }
+
+	if (s[0] == '[' && s[1] != 'M' && underscore_pos) {
 
 		// having [ at start and underscore somewhere inside.
 		// trying to parse as win32-input-mode sequence
-
-		INPUT_RECORD ir = {};
-		ir.EventType = KEY_EVENT;
 
 		int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
 		sscanf(s, "[%d;%d;%d;%d;%d;%d_", &a, &b, &c, &d, &e, &f);
 
 		if (a && f) {
 
-			// parsed ok
+			// successfully parsed some win32 key event
+			
+			INPUT_RECORD ir = {};
+			ir.EventType = KEY_EVENT;
 
 			ir.Event.KeyEvent.wVirtualKeyCode = a;
 			ir.Event.KeyEvent.wVirtualScanCode = b;
@@ -337,6 +339,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 
 			return underscore_pos - s + 1;
+
 		}
 	}
 
@@ -378,7 +381,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		}
 	}
 
-	return (l >= 8) ? TTY_PARSED_BADSEQUENCE : TTY_PARSED_WANTMORE;
+	return (l >= 32) ? TTY_PARSED_BADSEQUENCE : TTY_PARSED_WANTMORE;
 }
 
 size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)

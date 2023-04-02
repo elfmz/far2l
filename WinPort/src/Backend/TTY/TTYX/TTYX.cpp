@@ -179,8 +179,12 @@ class TTYX
 				}
 
 				KeySym ks;
-				unsigned int mods;
-				XkbTranslateKeyCode(_xkb_en, ev->detail, 0, &mods, &ks);
+				if (_xkb_en) {
+					unsigned int mods;
+					XkbTranslateKeyCode(_xkb_en, ev->detail, 0, &mods, &ks);
+				} else {
+					ks = XkbKeycodeToKeysym(_display, ev->detail, 0, 0); // fallback to old method
+				}
 
 				if (cookie->evtype == XI_RawKeyPress) {
 					_xi_keys[ks] = std::chrono::steady_clock::now();
@@ -501,7 +505,7 @@ public:
 
 	~TTYX()
 	{
-		XkbFreeKeyboard(_xkb_en, 0, True);
+		if (_xkb_en) { XkbFreeKeyboard(_xkb_en, 0, True); }
 		XDestroyWindow(_display, _window);
 		XCloseDisplay(_display);
 	}

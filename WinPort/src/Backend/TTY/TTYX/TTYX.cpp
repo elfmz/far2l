@@ -179,10 +179,8 @@ class TTYX
 				}
 
 				KeySym ks;
-				if (_xkb_en) {
-					unsigned int mods;
-					XkbTranslateKeyCode(_xkb_en, ev->detail, 0, &mods, &ks);
-				} else {
+				unsigned int mods;
+				if (!_xkb_en || !XkbTranslateKeyCode(_xkb_en, ev->detail, 0, &mods, &ks)) {
 					ks = XkbKeycodeToKeysym(_display, ev->detail, 0, 0); // fallback to old method
 				}
 

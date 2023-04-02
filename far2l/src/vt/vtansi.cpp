@@ -722,6 +722,11 @@ void InterpretEscSeq( void )
 						g_vt_shell->OnBracketedPasteExpectation(suffix == 'h');
 					break;
 
+				case 9001:
+					if (g_vt_shell)
+						g_vt_shell->OnWin32InputMode(suffix == 'h');
+					break;
+
 				case 1049:
 					g_alternative_screen_buffer.Toggle(suffix == 'h');
 					break;

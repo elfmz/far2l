@@ -33,13 +33,13 @@ class TTYX
 	int _screen;
 	Window _root_window;
 	Window _window;
+	XkbDescPtr _xkb_en;
 	Atom _targets_atom;
 	Atom _text_atom;
 	Atom _utf8_atom;
 	Atom _clipboard_atom;
 	Atom _xsel_data_atom;
 	int _display_fd;
-	int _eng_group_id = 0; // use default kb layout if English one is not found
 
 #ifdef TTYXI
 	const std::chrono::time_point<std::chrono::steady_clock> _never;
@@ -157,8 +157,9 @@ class TTYX
 				const XIRawEvent *ev = (const XIRawEvent *)cookie->data;
 				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
 
-				KeySym ks = XkbKeycodeToKeysym(_display, ev->detail, _eng_group_id, 0);
-				if (!ks) { ks = XkbKeycodeToKeysym(_display, ev->detail, 0, 0); } // fallback
+				KeySym ks;
+				unsigned int mods;
+				XkbTranslateKeyCode(_xkb_en, ev->detail, 0, &mods, &ks);
 
 				if (cookie->evtype == XI_RawKeyPress) {
 					_xi_keys[ks] = std::chrono::steady_clock::now();
@@ -412,26 +413,28 @@ public:
 		if (!_display)
 			throw std::runtime_error("Cannot open display");
 
+		char keycodes[] = "evdev";
+		char types[] = "complete";
+		char compat[] = "complete";
+		char symbols[] = "pc+us+inet(evdev)";
+
+		XkbComponentNamesRec component_names = {
+			.keycodes = keycodes,
+			.types = types,
+			.compat = compat,
+			.symbols = symbols
+		};
+
+		XkbDescPtr _xkb_en = XkbGetKeyboardByName(
+			_display, XkbUseCoreKbd, &component_names, XkbGBN_AllComponentsMask, XkbGBN_AllComponentsMask, False);
+		XkbGetControls(_display, XkbGroupsWrapMask, _xkb_en);
+		XkbGetNames(_display, XkbGroupNamesMask, _xkb_en);
+
 		_display_fd = ConnectionNumber(_display);
 		_screen = DefaultScreen(_display);
 		_root_window = RootWindow(_display, _screen);
 		auto color = BlackPixel(_display, _screen);
 		_window = XCreateSimpleWindow(_display, _root_window, 0, 0, 1, 1, 0, color, color);
-
-		// searching for group id of English keyboard layout
-		XkbDescPtr xkb = XkbGetMap(_display, 0, XkbUseCoreKbd);
-		XkbGetControls(_display, XkbGroupsWrapMask, xkb);
-		XkbGetNames(_display, XkbGroupNamesMask, xkb);
-		for (int i = 0; i < xkb->ctrls->num_groups; i++) {
-			char *layout = XGetAtomName(_display, xkb->names->groups[i]);
-			if (strstr(layout, "English")) {
-				// English kb layout found, let's use it for translations
-				_eng_group_id = i;
-				break;
-			}
-			XFree(layout);
-		}
-		XkbFreeKeyboard(xkb, 0, True);
 
 #ifdef TTYXI
 		_xi = true;
@@ -494,6 +497,7 @@ public:
 
 	~TTYX()
 	{
+		XkbFreeKeyboard(_xkb_en, 0, True);
 		XDestroyWindow(_display, _window);
 		XCloseDisplay(_display);
 	}

@@ -309,30 +309,56 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 	}
 }
 
-size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
+size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, size_t l)
 {
-	if (s[0] == '[' && s[l-1] == '_') {
+	// check for nasty win32-input-mode sequence: as described in
+	// https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md
+	// [Vk;Sc;Uc;Kd;Cs;Rc_
+	// First char assured to be [ by the caller so need to check that it followed
+	// by up to 6 semicolon-separated integer values ended with underscore, keeping
+	// in mind that some values can be omitted or be empty meaning they're set to zero
 
-		// win32-input-mode sequence
+	int args[6] = {0};
+	int args_cnt = 0;
 
-		INPUT_RECORD ir = {};
-		ir.EventType = KEY_EVENT;
+	size_t n;
+	for (size_t i = n = 1;; ++i) {
+		if (i == l) {
+			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
+		}
+		if (s[i] == '_' || s[i] == ';') {
+			if (args_cnt == ARRAYSIZE(args)) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
+			if (i > n) {
+				args[args_cnt] = atoi(&s[n]);
+			}
+			++args_cnt;
+			n = i + 1;
+			if (s[i] == '_') {
+				break;
+			}
 
-		int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
-		sscanf(s, "[%d;%d;%d;%d;%d;%d_", &a, &b, &c, &d, &e, &f);
-
-		ir.Event.KeyEvent.wVirtualKeyCode = a;
-		ir.Event.KeyEvent.wVirtualScanCode = b;
-		ir.Event.KeyEvent.uChar.UnicodeChar = c;
-		ir.Event.KeyEvent.bKeyDown = d;
-		ir.Event.KeyEvent.dwControlKeyState = e;
-		ir.Event.KeyEvent.wRepeatCount = f;
-
-		_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
-
-		return l;
+		} else if (s[i] < '0' && s[i] > '9') {
+			return TTY_PARSED_BADSEQUENCE;
+		}
 	}
 
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.wVirtualKeyCode = args[0];
+	ir.Event.KeyEvent.wVirtualScanCode = args[1];
+	ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+	ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+	ir.Event.KeyEvent.dwControlKeyState = args[4];
+	ir.Event.KeyEvent.wRepeatCount = args[5];
+
+	_ir_pending.emplace_back(ir);
+	return n;
+}
+
+size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
+{
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
 		return 3;
 	}
@@ -363,6 +389,12 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	size_t r = ParseNChars2Key(s, l);
 	if (r != 0)
 		return r;
+
+	if (l > 1 && s[0] == '[') {
+		r = TryParseAsWinTermEscapeSequence(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE)
+			return r;
+	}
 
 	// be well-responsive on panic-escaping
 	for (size_t i = 0; (i + 1) < l; ++i) {

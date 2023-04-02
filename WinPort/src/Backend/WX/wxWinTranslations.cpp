@@ -453,8 +453,8 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 
 	KeySym ks;
 	unsigned int mods;
-	if (keysymstr = XkbTranslateKeyCode(xkb, keyflags, 0, &mods, &ks)) {
-		XKeysymToString(ks);
+	if (XkbTranslateKeyCode(xkb, keyflags, 0, &mods, &ks)) {
+		keysymstr = XKeysymToString(ks);
 	}
 
 	if (keysymstr && keysymstr[0] && !keysymstr[1]) {

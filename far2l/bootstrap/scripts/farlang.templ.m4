@@ -2297,6 +2297,16 @@ ConfigPgUpChangeDisk
 "Використовувати Ctrl-PgUp для в&ибору диска"
 "Ужываць Ctrl-PgUp для в&ыбору дыска"
 
+ConfigSeparateRCtrl
+"Обрабатывать &RCtrl отдельно от Ctrl"
+"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+upd:"Separate the Ctrl and &RCtrl keys"
+
 ConfigWindowTitle
 "Заголовок окна FAR:"
 "FAR window title:"

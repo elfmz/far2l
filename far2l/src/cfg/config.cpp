@@ -289,6 +289,7 @@ void InterfaceSettings()
 		Builder.AddCheckbox(Msg::ConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
 		Builder.AddCheckbox(Msg::ConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 		Builder.AddCheckbox(Msg::ConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
+		Builder.AddCheckbox(Msg::ConfigSeparateRCtrl, &Opt.SeparateRCtrl);
 		
 		
 		const DWORD supported_tweaks = ApplyConsoleTweaks();

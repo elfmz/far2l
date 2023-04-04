@@ -164,10 +164,10 @@ class TTYX
 					char symbols[] = "pc+us+inet(evdev)";
 
 					XkbComponentNamesRec component_names = {
-						.keycodes = keycodes,
-						.types = types,
-						.compat = compat,
-						.symbols = symbols
+						keycodes : keycodes,
+						types : types,
+						compat : compat,
+						symbols : symbols
 					};
 
 					_xkb_en = XkbGetKeyboardByName(

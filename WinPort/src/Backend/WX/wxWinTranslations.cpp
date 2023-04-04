@@ -431,12 +431,11 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 	char compat[] = "complete";
 	char symbols[] = "pc+us+inet(evdev)";
 
-	XkbComponentNamesRec component_names = {
-		.keycodes = keycodes,
-		.types = types,
-		.compat = compat,
-		.symbols = symbols
-	};
+	XkbComponentNamesRec component_names = {0};
+	component_names.keycodes = keycodes;
+	component_names.types = types;
+	component_names.compat = compat;
+	component_names.symbols = symbols;
 
 	XkbDescPtr xkb = XkbGetKeyboardByName(
 		display, XkbUseCoreKbd, &component_names, XkbGBN_AllComponentsMask, XkbGBN_AllComponentsMask, False);

@@ -158,17 +158,17 @@ class TTYX
 				//fprintf(stderr, "TTYXi: !!!!! %d %d\n", cookie->evtype == XI_RawKeyPress, ev->detail);
 
 				if (!_xkb_en) {
+
 					char keycodes[] = "evdev";
 					char types[] = "complete";
 					char compat[] = "complete";
 					char symbols[] = "pc+us+inet(evdev)";
 
-					XkbComponentNamesRec component_names = {
-						.keycodes = keycodes,
-						.types = types,
-						.compat = compat,
-						.symbols = symbols
-					};
+					XkbComponentNamesRec component_names = {0};
+					component_names.keycodes = keycodes;
+					component_names.types = types;
+					component_names.compat = compat;
+					component_names.symbols = symbols;
 
 					_xkb_en = XkbGetKeyboardByName(
 						_display, XkbUseCoreKbd, &component_names,

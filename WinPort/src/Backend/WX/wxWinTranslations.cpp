@@ -432,10 +432,10 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 	char symbols[] = "pc+us+inet(evdev)";
 
 	XkbComponentNamesRec component_names = {
-		.keycodes = keycodes,
-		.types = types,
-		.compat = compat,
-		.symbols = symbols
+		keycodes : keycodes,
+		types : types,
+		compat : compat,
+		symbols : symbols
 	};
 
 	XkbDescPtr xkb = XkbGetKeyboardByName(

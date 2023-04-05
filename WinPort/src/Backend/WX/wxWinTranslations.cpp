@@ -36,13 +36,17 @@
 // RAW_RCTRL is unneeded for macos cuz under macos VK_CONTROL
 // represented by Command keys while VK_RCONTROL - by Control keys
 # else
+//#define GDK_KEY_Alt_L 0xffe9
+//#define GDK_KEY_Alt_R 0xffea
 //#define GDK_KEY_Control_L 0xffe3
 //#define GDK_KEY_Control_R 0xffe4
+//#define GDK_KEY_Shift_L 0xffe1
+//#define GDK_KEY_Shift_R 0xffe2
 #  define RAW_ALTGR    0xffea
 #  define RAW_RCTRL    0xffe4
+#  define RAW_RSHIFT   0xffe2
 # endif
 #endif
-
 
 extern bool g_broadway;
 extern bool g_remote;
@@ -232,10 +236,47 @@ static int wxKeyCode2WinKeyCode(int code)
 	return code;
 }
 
-static int IsEnhancedKey(int code)
+static int wxKeyCode2WinScanCode(int code, int code_raw)
 {
-	return (code==WXK_LEFT || code==WXK_RIGHT || code==WXK_UP || code==WXK_DOWN
-		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP );
+
+	// Left and right Shift keys share the same Virtual Key Code and both have no ENHANCED_KEY flag,
+	// so the only difference between left and right keys is in Scan Code field.
+	// wxKeyCode2WinKeyCode() can not do the job right here, as it receives VK_SHIFT
+	// so have no information left or right one it was.
+
+#if defined (__WXGTK__)
+	if (code_raw == RAW_RSHIFT) return RIGHT_SHIFT_VSC;
+#endif
+
+	// FixMe: detect right Shift on MacOS
+
+	return WINPORT(MapVirtualKey)(wxKeyCode2WinKeyCode(code), MAPVK_VK_TO_VSC);
+}
+
+static int IsEnhancedKey(int code, int code_raw)
+{
+    // As defined in MS docs https://learn.microsoft.com/en-us/windows/console/key-event-record-str
+    // Enhanced keys for the IBM® 101- and 102-key keyboards are the
+    // INS, DEL, HOME, END, PAGE UP, PAGE DOWN,
+    // and direction keys in the clusters to the left of the keypad;
+    // and the divide (/) and ENTER keys in the keypad.
+    //
+    // Wine also reports as enhanced the PrintScreen, WinLeft, WinRight, WinMenu,
+    // NumLock, RightControl and AltGr keys. Let's follow its behavior.
+	if ( code==WXK_LEFT || code==WXK_RIGHT || code==WXK_UP || code==WXK_DOWN
+		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP
+		|| code==WXK_NUMPAD_ENTER || code==WXK_SNAPSHOT || code==WXK_INSERT || code==WXK_DELETE
+		|| code==WXK_WINDOWS_LEFT || code==WXK_WINDOWS_RIGHT || code==WXK_WINDOWS_MENU || code==WXK_NUMPAD_DIVIDE
+		|| code==WXK_NUMLOCK || code==WXK_RAW_CONTROL )
+			return true;
+	
+#if defined (__WXGTK__)
+	if (code_raw == RAW_ALTGR || code_raw == RAW_RCTRL) return true;
+#endif
+
+	// FixMe: detect AltGr (right Option) on MacOS
+
+	return false;
 }
 
 void KeyTracker::OnKeyDown(wxKeyEvent& event, DWORD ticks)
@@ -325,6 +366,13 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
 	g_winport_con_in->Enqueue(&ir, 1);
+
+	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT) {
+		// MapVirtualKey() knows nothing about right Shift. Let's fire right Shift KeyUp just to be sure
+		ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
+
 	return true;
 }
 
@@ -530,7 +578,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.bKeyDown = KeyDown;
 	Event.KeyEvent.wRepeatCount = 1;
 	Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(key_code);
-	Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
+	Event.KeyEvent.wVirtualScanCode = wxKeyCode2WinScanCode(event.GetKeyCode(), event.GetRawKeyCode());
 	Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 	Event.KeyEvent.dwControlKeyState = 0;
 
@@ -540,7 +588,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	}
 #endif
 
-	if (IsEnhancedKey(event.GetKeyCode())) {
+	if (IsEnhancedKey(event.GetKeyCode(), event.GetRawKeyCode())) {
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
 

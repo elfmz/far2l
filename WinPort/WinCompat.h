@@ -1517,3 +1517,8 @@ typedef VOID (*PCONSOLE_SCROLL_CALLBACK)(PVOID pContext, unsigned int Width, CHA
 #endif
 
 #define CONSOLE_FKEYS_COUNT 12 // array count for SetConsoleFKeyTitles
+
+// Virtual Scan Code for right Shift key
+// As described here
+// https://docs.vmware.com/en/VMware-Workstation-Player-for-Windows/17.0/com.vmware.player.win.using.doc/GUID-D2C43B86-32EF-44EA-A2ED-D890483D70BD.html
+#define RIGHT_SHIFT_VSC 54

@@ -48,6 +48,9 @@
 # endif
 #endif
 
+// Virtual Scan Code for right Shift key
+// As described here
+// https://docs.vmware.com/en/VMware-Workstation-Player-for-Windows/17.0/com.vmware.player.win.using.doc/GUID-D2C43B86-32EF-44EA-A2ED-D890483D70BD.html
 #define RIGHT_SHIFT_VSC 54
 
 extern bool g_broadway;
@@ -248,8 +251,6 @@ static int wxKeyCode2WinScanCode(int code, int code_raw)
 
 #if defined (__WXGTK__)
 	if (code_raw == RAW_RSHIFT) return RIGHT_SHIFT_VSC;
-	// As described here
-	// https://docs.vmware.com/en/VMware-Workstation-Player-for-Windows/17.0/com.vmware.player.win.using.doc/GUID-D2C43B86-32EF-44EA-A2ED-D890483D70BD.html
 #endif
 
 	// FixMe: detect right Shift on MacOS

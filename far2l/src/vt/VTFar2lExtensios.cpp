@@ -206,7 +206,7 @@ bool VTFar2lExtensios::OnInputKey(const KEY_EVENT_RECORD &KeyEvent)
 
 	StackSerializer stk_ser;
 	if ((_xfeatures & FARTTY_FEAT_COMPACT_INPUT) != 0
-			&& KeyEvent.wRepeatCount <= 1
+			&& KeyEvent.wRepeatCount <= 1 && KeyEvent.wVirtualScanCode != RIGHT_SHIFT_VSC
 			&& ((uint32_t)KeyEvent.uChar.UnicodeChar) < 0x10000
 			&& KeyEvent.dwControlKeyState < 0x10000
 			&& KeyEvent.wVirtualKeyCode < 0x100) {

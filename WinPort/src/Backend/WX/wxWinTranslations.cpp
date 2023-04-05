@@ -48,6 +48,7 @@
 # endif
 #endif
 
+#define RIGHT_SHIFT_VSC 54
 
 extern bool g_broadway;
 extern bool g_remote;
@@ -246,7 +247,7 @@ static int wxKeyCode2WinScanCode(int code, int code_raw)
 	// so have no information left or right one it was.
 
 #if defined (__WXGTK__)
-	if (code_raw == RAW_RSHIFT) return 54;  // Scan code value for right Shift key
+	if (code_raw == RAW_RSHIFT) return RIGHT_SHIFT_VSC;
 	// As described here
 	// https://docs.vmware.com/en/VMware-Workstation-Player-for-Windows/17.0/com.vmware.player.win.using.doc/GUID-D2C43B86-32EF-44EA-A2ED-D890483D70BD.html
 #endif
@@ -355,7 +356,6 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(keycode);
-	// FixMe: should switch to wxKeyCode2WinScanCode() here, but have no raw key codes here for now
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	ir.Event.KeyEvent.dwControlKeyState = 0;
@@ -370,6 +370,13 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
 	g_winport_con_in->Enqueue(&ir, 1);
+
+	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT) {
+		// MapVirtualKey() knows nothing about right Shift. Let's fire right Shift KeyUp just to be sure
+		ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
+
 	return true;
 }
 

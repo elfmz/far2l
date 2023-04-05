@@ -1277,6 +1277,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
 				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 				ir.Event.KeyEvent.wVirtualKeyCode = irx.Event.KeyEvent.wVirtualKeyCode;
+				ir.Event.KeyEvent.wVirtualScanCode = irx.Event.KeyEvent.wVirtualScanCode;
 				ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
 			}
 		}

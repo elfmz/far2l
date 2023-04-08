@@ -343,7 +343,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	size_t i;
 
 	for (i = 1;; i++) {
-		if (i == l) {
+		if (i >= l) {
 			return LIKELY(l < max_kitty_esc_size) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
 		}
 		if (s[i] == ';') {
@@ -358,23 +358,18 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			break;
 		} else { // digit
 			params[first_count][second_count] = atoi(&s[i]);
-			for (;;i++) { if (!isdigit(s[i]) || (i == l)) break; }
+			for (;;i++) { if (!isdigit(s[i]) || (i >= l)) break; }
 			i--;
 		}
 	}
 
 	// check for correct sequence ending
 	end_found = end_found && (
-			(s[i] == 'u') ||
-			(s[i] == '~') ||
-			(s[i] == 'A') ||
-			(s[i] == 'B') ||
-			(s[i] == 'C') ||
-			(s[i] == 'D') ||
-			(s[i] == 'E') ||
-			(s[i] == 'F') ||
-			(s[i] == 'H') ||
-			(s[i] == 'P') ||
+			(s[i] == 'u') || (s[i] == '~') ||
+			(s[i] == 'A') || (s[i] == 'B') ||
+			(s[i] == 'C') || (s[i] == 'D') ||
+			(s[i] == 'E') || (s[i] == 'F') ||
+			(s[i] == 'H') || (s[i] == 'P') ||
 			(s[i] == 'Q') ||
 			(s[i] == 'R') || // CSI 1 ; modifier {ABCDEFHPQS} // "R" is forgotten in kitty's docs here
 			(s[i] == 'S')
@@ -431,12 +426,12 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 27    : ir.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE; break;
 		case 13    : ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN; break;
 		case 127   : ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK; break;
-		case 2     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
-		case 3     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;
-		case 5     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_PRIOR;
-			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
-		case 6     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
-			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 2     : if (s[i] == '~')   ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
+		case 3     : if (s[i] == '~')   ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;
+		case 5     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_PRIOR;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
+		case 6     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;
@@ -550,10 +545,9 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 
 	ir.Event.KeyEvent.uChar.UnicodeChar = params[0][1] ? params[0][1] : params[0][0];
 	if (
-		(ir.Event.KeyEvent.uChar.UnicodeChar == 1) ||
-		((ir.Event.KeyEvent.uChar.UnicodeChar >= 57358) && (ir.Event.KeyEvent.uChar.UnicodeChar <= 57454)) ||
 		(ir.Event.KeyEvent.uChar.UnicodeChar < 32) ||
-		(ir.Event.KeyEvent.uChar.UnicodeChar == 127)
+		(ir.Event.KeyEvent.uChar.UnicodeChar == 127) ||
+		((ir.Event.KeyEvent.uChar.UnicodeChar >= 57358) && (ir.Event.KeyEvent.uChar.UnicodeChar <= 57454))
 	) {
 		// those are special values, should not be used as unicode char
 		ir.Event.KeyEvent.uChar.UnicodeChar = 0;

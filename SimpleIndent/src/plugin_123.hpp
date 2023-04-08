@@ -11,15 +11,15 @@
 #if 0
 #if defined(__GNUC__)
 EXTERN_C_BEGIN
-  BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
+	BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 EXTERN_C_END
 
 BOOL WINAPI DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 {
-  (void) hDll;
-  (void) dwReason;
-  (void) lpReserved;
-  return TRUE;
+	(void) hDll;
+	(void) dwReason;
+	(void) lpReserved;
+	return TRUE;
 }
 #endif
 #endif

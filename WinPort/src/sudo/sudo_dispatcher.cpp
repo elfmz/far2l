@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	#include <sys/mount.h>
 #elif !defined(__HAIKU__)
 	#include <sys/statfs.h>
@@ -18,7 +18,7 @@
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__DragonFly__)
 # include <sys/xattr.h>
 #endif
 #include <stdexcept>
@@ -280,7 +280,7 @@ namespace Sudo
 	
 	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__DragonFly__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 		std::string path;
 		bt.RecvStr(path);
 		int r = -1;
@@ -307,7 +307,7 @@ namespace Sudo
 		bt.RecvStr(path);
 		bt.RecvPOD(flags);
 		
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 		if (chflags(path.c_str(), flags) == 0) {
 			bt.SendInt(0);
 			return;

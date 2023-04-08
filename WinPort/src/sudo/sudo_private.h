@@ -94,7 +94,7 @@ namespace Sudo
 		~ClientReconstructCurDir();
 	};
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__DragonFly__)
 	int bugaware_ioctl_pint(int fd, unsigned long req, unsigned long *v);
 #endif
 

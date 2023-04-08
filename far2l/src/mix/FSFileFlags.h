@@ -21,13 +21,13 @@ public:
 	bool Append() const;
 	void SetAppend(bool v);
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	bool Hidden() const;
 	void SetHidden(bool v);
 #endif
 };
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 # define FS_FLAGS_CONTAIN_IMMUTABLE(flags) (((flags) & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0)
 # define FS_FLAGS_WITHOUT_IMMUTABLE(flags) ((flags) & (~(UF_IMMUTABLE | SF_IMMUTABLE)))
 # define FS_FLAGS_WITH_IMMUTABLE(flags) ((flags) | (UF_IMMUTABLE))

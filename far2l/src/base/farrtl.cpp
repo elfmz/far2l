@@ -53,7 +53,7 @@ void __cdecl far_qsortex(void *base, size_t num, size_t width,
 	qsort(base, num, width, QSortExAdapter);
 }
 
-#elif defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
 struct QSortExAdapterArg
 {
 	int (*__cdecl comp)(const void *, const void *, void *);

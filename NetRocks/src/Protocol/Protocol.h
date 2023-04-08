@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/types.h>
 #endif
 #include "Erroring.h"

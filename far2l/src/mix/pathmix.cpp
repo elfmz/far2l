@@ -465,8 +465,7 @@ static std::string LookupExecutableInEnvPath(const char *file)
 			out+= '/';
 		}
 		out+= file;
-		struct stat st
-		{};
+		struct stat st{};
 		if (stat(out.c_str(), &st) == 0) {
 			break;
 		}

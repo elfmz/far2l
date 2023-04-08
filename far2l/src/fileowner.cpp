@@ -62,7 +62,7 @@ const char *GroupNameByID(gid_t id)
 
 bool WINAPI GetFileOwner(const wchar_t *Computer, const wchar_t *Name, FARString &strOwner)
 {
-	struct stat s = {};
+	struct stat s{};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
 		const char *sz = OwnerNameByID(s.st_uid);
 		if (sz) {
@@ -76,7 +76,7 @@ bool WINAPI GetFileOwner(const wchar_t *Computer, const wchar_t *Name, FARString
 
 bool WINAPI GetFileGroup(const wchar_t *Computer, const wchar_t *Name, FARString &strGroup)
 {
-	struct stat s = {};
+	struct stat s{};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
 		const char *sz = GroupNameByID(s.st_gid);
 		if (sz) {

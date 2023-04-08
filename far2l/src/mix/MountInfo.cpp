@@ -130,7 +130,7 @@ class ThreadedStatFS : Threaded
 
 	void *ThreadProc()
 	{
-		struct statfs s = {};
+		struct statfs s{};
 		int r = statfs((*_mps)[_mpi].path.c_str(), &s);
 		if (r == 0) {
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_bsize; //f_frsize;

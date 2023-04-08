@@ -472,7 +472,7 @@ BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolum
 		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
 		FARString *pFileSystemName)
 {
-	struct statvfs svfs = {};
+	struct statvfs svfs {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
 	if (sdc_statvfs(path.c_str(), &svfs) != 0) {
 		return FALSE;
@@ -547,8 +547,7 @@ void apiFreeFindData(FAR_FIND_DATA *pData)
 
 BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX &FindData)
 {
-	struct stat s
-	{};
+	struct stat s{};
 	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
 	if (r == -1) {
 		return FALSE;

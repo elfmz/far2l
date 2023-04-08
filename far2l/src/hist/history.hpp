@@ -87,8 +87,7 @@ private:
 	const int *EnableSave;
 	DList<HistoryRecord> HistoryList;
 	HistoryRecord *CurrentItem;
-	struct stat LoadedStat
-	{};
+	struct stat LoadedStat{};
 
 private:
 	void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);

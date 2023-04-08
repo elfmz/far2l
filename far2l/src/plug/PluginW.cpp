@@ -220,8 +220,7 @@ bool PluginW::SaveToCache()
 	KeyFileHelper kfh(PluginsIni());
 	kfh.RemoveSection(GetSettingsName());
 
-	struct stat st
-	{};
+	struct stat st{};
 	const std::string &module = m_strModuleName.GetMB();
 	if (stat(module.c_str(), &st) == -1) {
 		fprintf(stderr, "%s: stat('%s') error %u\n", __FUNCTION__, module.c_str(), errno);

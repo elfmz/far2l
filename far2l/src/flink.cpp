@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int WINAPI GetNumberOfLinks(const wchar_t *Name)
 {
-	struct stat s = {};
+	struct stat s{};
 	if (sdc_stat(Wide2MB(Name).c_str(), &s) != 0)
 		return 1;
 

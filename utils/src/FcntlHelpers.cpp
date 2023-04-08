@@ -47,7 +47,7 @@ void MakeFDNonCloexec(int fd)
 
 void HintFDSequentialAccess(int fd)
 {
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	if (posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL) == -1) {
 		perror("posix_fadvise(POSIX_FADV_SEQUENTIAL)");
 	}

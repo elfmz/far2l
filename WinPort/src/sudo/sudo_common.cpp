@@ -73,7 +73,7 @@ namespace Sudo
 	
 /////////////////////
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__HAIKU__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__DragonFly__) && !defined(__HAIKU__)
 # include <sys/ioctl.h>
 
 	int bugaware_ioctl_pint(int fd, unsigned long req, unsigned long *v)

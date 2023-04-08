@@ -71,7 +71,7 @@ enum SETATTRDLG
 	SA_SEPARATOR2,
 	SA_CHECKBOX_IMMUTABLE,
 	SA_CHECKBOX_APPEND,
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	SA_CHECKBOX_HIDDEN,
 #endif
 	SA_CHECKBOX_SUID,
@@ -140,7 +140,7 @@ AP[]=
 static const int PreserveOriginalIDs[] = {
 	SA_CHECKBOX_IMMUTABLE,
 	SA_CHECKBOX_APPEND,
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
 	SA_CHECKBOX_HIDDEN,
 #endif
 	SA_CHECKBOX_SUID,
@@ -647,7 +647,7 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 		|| AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
 			FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
 	}
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	if (AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_CHECKED
 		|| AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
 			FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
@@ -679,7 +679,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
 		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrImmutable},
 		{DI_CHECKBOX,short(DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAppend},
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 		{DI_CHECKBOX,short(2*DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
@@ -863,7 +863,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 				}
 				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
@@ -964,7 +964,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
 					if (FFFlags.Append())
 						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 					if (FFFlags.Hidden())
 						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif

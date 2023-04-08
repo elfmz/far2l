@@ -36,20 +36,20 @@ endif()
 
 find_package(Git)
 
-#if(GIT_FOUND)
-#    execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tag
-#        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-#        OUTPUT_VARIABLE GIT_TAG
-#        OUTPUT_STRIP_TRAILING_WHITESPACE)
-#endif()
+if(GIT_FOUND)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tag
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        OUTPUT_VARIABLE GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
-#    if(GIT_FOUND)
-#        execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
-#            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-#            OUTPUT_VARIABLE GIT_HASH
-#            OUTPUT_STRIP_TRAILING_WHITESPACE)
-#    endif()
+    if(GIT_FOUND)
+        execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE GIT_HASH
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
     if(NOT "${GIT_HASH}" STREQUAL "")
         message(STATUS "git hash: ${GIT_HASH}")
         set(VERSION_PATCH "${VERSION_PATCH}-${GIT_HASH}")

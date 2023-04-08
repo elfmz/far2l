@@ -43,22 +43,22 @@ static __inline void GetProgress(int nNum, TCHAR *sBuff, int nLen)
 static __inline void GetProgress(int nNum, char *sBuff, int nLength)
 {
 	_asm {
-        mov     eax, nNum
-        mov     edi, sBuff
-        mov     ecx, nLength
-        dec     edi
-        mov     ebx, 10
+		mov     eax, nNum
+		mov     edi, sBuff
+		mov     ecx, nLength
+		dec     edi
+		mov     ebx, 10
 
-Next:   test    eax, eax
-        jz      Fill
-        xor     edx, edx
-        div     ebx
-        add     edx, 48         ; to ascii
-        mov     [edi][ecx], dl
-        loop    Next
-        jmp     short Exit
-Fill:   mov     [edi][ecx], 48  ; fill with '0'
-        loop    Fill
+Next:	test    eax, eax
+		jz      Fill
+		xor     edx, edx
+		div     ebx
+		add     edx, 48         ; to ascii
+		mov     [edi][ecx], dl
+		loop    Next
+		jmp     short Exit
+Fill:	mov     [edi][ecx], 48  ; fill with '0'
+		loop    Fill
 Exit:
 	}
 }

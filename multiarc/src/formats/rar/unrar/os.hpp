@@ -177,7 +177,7 @@
 #define SAVE_LINKS
 #endif
 
-#if defined(__linux) || defined(__FreeBSD__)
+#if defined(__linux) || defined(__FreeBSD__) || defined(__DragonFly__)
 #include <sys/time.h>
 #define USE_LUTIMES
 #endif

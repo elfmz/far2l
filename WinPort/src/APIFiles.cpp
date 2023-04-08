@@ -189,7 +189,7 @@ extern "C"
 
 #ifndef __linux__
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
-#if defined(__FreeBSD__) || defined(__HAIKU__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
 			fcntl(r, O_DIRECT, 1);
 #elif !defined(__CYGWIN__)
 			fcntl(r, F_NOCACHE, 1);
@@ -433,7 +433,7 @@ extern "C"
 		if (fstat(wph->fd, &s) == -1)
 			return FALSE;
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__HAIKU__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
 		int ret = posix_fallocate(wph->fd, 0, (off_t)RequireFileSize);
 		if (ret == 0)
 			return TRUE;
@@ -589,7 +589,7 @@ extern "C"
 				_attr = FILE_ATTRIBUTE_REPARSE_POINT;
 			}
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
 			if (DereferencedStat().st_flags & UF_HIDDEN) { // chflags hidden FILENAME
 				_attr|= FILE_ATTRIBUTE_HIDDEN;
 			}

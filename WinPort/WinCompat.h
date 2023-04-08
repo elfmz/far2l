@@ -72,6 +72,11 @@ typedef unsigned __int64 uint64_t;
 #define _export
 #define _cdecl
 
+#ifndef __DraginFly__
+#define ENODATA 87		/* Attribute not found */
+/* This is the same as the MacOS X definition of UF_HIDDEN. */
+#define UF_HIDDEN	0x00008000	/* file is hidden */
+#endif
 
 #define _UI64_MAX    0xffffffffffffffff
 

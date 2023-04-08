@@ -8,14 +8,14 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 # include <sys/mount.h>
 #elif !defined(__HAIKU__)
 # include <sys/statfs.h>
 #endif
 #include <sys/time.h>
 #include <sys/types.h>
-#ifndef __FreeBSD__
+#if !defined(__FreeBSD__) && !defined(__DragonFly__)
 # include <sys/xattr.h>
 #endif
 #include <map>
@@ -24,7 +24,7 @@
 #include "sudo_private.h"
 #include "sudo.h"
 
-#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
+#if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 # include <sys/ioctl.h>
 # include <linux/fs.h>
 #endif
@@ -727,7 +727,7 @@ extern "C" __attribute__ ((visibility("default"))) char *sdc_getcwd(char *buf, s
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd, char *namebuf, size_t size)
 {
-#if defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 		return -1;
 #elif defined(__APPLE__)
 		return flistxattr(fd, namebuf, size, 0);
@@ -738,7 +738,7 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_flistxattr(int fd
 
 extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd, const char *name,void *value, size_t size)
 {
-#if defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 	return -1;
 #elif defined(__APPLE__)
 	return fgetxattr(fd, name, value, size, 0, 0);
@@ -749,7 +749,7 @@ extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_fgetxattr(int fd,
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags)
 {
-#if defined(__FreeBSD__) || defined(__CYGWIN__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 	return -1;
 #elif defined(__APPLE__)
 	return fsetxattr(fd, name, value, size, 0, flags);
@@ -768,7 +768,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 	*flags = 0;
 	return 0;
 
-#elif defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	struct stat s{};
 	int r = sdc_stat(path, &s);
 	if (r == 0) {
@@ -813,7 +813,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 #else
 	ClientReconstructCurDir crcd(path);
 	int r;
-# if defined(__APPLE__) || defined(__FreeBSD__)
+# if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	r = chflags(path, flags);
 # else
 	int fd = r = open(path, O_RDONLY);

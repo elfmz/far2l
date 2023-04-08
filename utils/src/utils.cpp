@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-#if __FreeBSD__
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <malloc_np.h>
 #elif __APPLE__
 # include <malloc/malloc.h>

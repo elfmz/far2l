@@ -446,8 +446,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 127   : ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK; break;
 		case 2     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
 		case 3     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;
-		case 5     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_PRIOR; break;
-		case 6     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT; break;
+		case 5     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_PRIOR;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 6     : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;
@@ -486,7 +488,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		    	right_ctrl_down = 0;
 				ir.Event.KeyEvent.dwControlKeyState &= ~RIGHT_CTRL_PRESSED;
 		    }
-		    ir.Event.KeyEvent.dwControlKeyState &= ENHANCED_KEY;
+		    ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
 			break;
 		case 57442 : ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 		    if (event_type != KITTY_EVT_KEYUP) {
@@ -508,7 +510,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		    } else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~RIGHT_ALT_PRESSED;
 		    }
-		    ir.Event.KeyEvent.dwControlKeyState &= ENHANCED_KEY;
+		    ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
 			break;
 		case 57441 : ir.Event.KeyEvent.wVirtualKeyCode = VK_SHIFT;
 		    // todo: add LEFT_SHIFT_PRESSED / RIGHT_SHIFT_PRESSED
@@ -535,13 +537,19 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		
 	}
 	switch (s[i]) {
-		case 'A': ir.Event.KeyEvent.wVirtualKeyCode = VK_UP; break;
-		case 'B': ir.Event.KeyEvent.wVirtualKeyCode = VK_DOWN; break;
-		case 'C': ir.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT; break;
-		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT; break;
+		case 'A': ir.Event.KeyEvent.wVirtualKeyCode = VK_UP;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 'B': ir.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 'C': ir.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
-		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME; break;
-		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END; break;
+		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME; 
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
+		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END;
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'P': ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break;
 		case 'Q': ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break;
 		case 'R': ir.Event.KeyEvent.wVirtualKeyCode = VK_F3; break;
@@ -554,6 +562,15 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	ir.Event.KeyEvent.uChar.UnicodeChar = params[0][1] ? params[0][1] : params[0][0];
+	if (
+		(ir.Event.KeyEvent.uChar.UnicodeChar == 1) ||
+		((ir.Event.KeyEvent.uChar.UnicodeChar >= 57358) && (ir.Event.KeyEvent.uChar.UnicodeChar <= 57454)) ||
+		(ir.Event.KeyEvent.uChar.UnicodeChar < 32) ||
+		(ir.Event.KeyEvent.uChar.UnicodeChar == 127)
+	) {
+		// those are special values, should not be used as unicode char
+		ir.Event.KeyEvent.uChar.UnicodeChar = 0;
+	}
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {
 	    // it's weird, but kitty can not give us uppercase utf8 in caps lock mode
 	    // ("text-as-codepoints" mode should solve it, but it is not working for cyrillic chars for unknown reason)

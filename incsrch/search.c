@@ -87,21 +87,18 @@ static void __etShowProgress(int nLine, char *sTitle, int nLineChars)
 static void Help(void)
 {
 	static const DialogTemplateItem DialogTemplate[11] = {
-			{DI_TEXT,   2, 2,  FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("FAR Incremental Search plugin")},
-			{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("Version 2.1")                  },
-			{DI_TEXT,   2, 4,  FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0                                            },
-			{DI_TEXT,   2, 5,  FALSE, DIF_CENTERGROUP,
-             (INT_PTR) _T("copyright (c) 1999-2019, Stanislav V. Mekhanoshin")                                                     },
-			{DI_TEXT,   2, 6,  FALSE, DIF_CENTERGROUP,
-             (INT_PTR) _T("This program comes with ABSOLUTELY NO WARRANTY")                                                        },
-			{DI_TEXT,   2, 7,  FALSE, DIF_CENTERGROUP,
-             (INT_PTR) _T("This is free software, and you are welcome to redistribute it")                                         },
-			{DI_TEXT,   2, 8,  FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("under certain conditions.")    },
-			{DI_TEXT,   2, 9,  FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("http://rampitec.us.to")        },
-			{DI_TEXT,   2, 10, FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0                                            },
-			{DI_TEXT,   2, 11, FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("Press F1 for help")            },
-			{DI_BUTTON, 2, 12, FALSE, DIF_CENTERGROUP,                                (INT_PTR) _T("Ok")                           }
-    };
+		{DI_TEXT,   2, 2,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("FAR Incremental Search plugin")},
+		{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Version 2.1")},
+		{DI_TEXT,   2, 4,  FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0},
+		{DI_TEXT,   2, 5,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("copyright (c) 1999-2019, Stanislav V. Mekhanoshin")},
+		{DI_TEXT,   2, 6,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("This program comes with ABSOLUTELY NO WARRANTY")},
+		{DI_TEXT,   2, 7,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("This is free software, and you are welcome to redistribute it")},
+		{DI_TEXT,   2, 8,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("under certain conditions.")},
+		{DI_TEXT,   2, 9,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("http://rampitec.us.to")},
+		{DI_TEXT,   2, 10, FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0},
+		{DI_TEXT,   2, 11, FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Press F1 for help")},
+		{DI_BUTTON, 2, 12, FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Ok")}
+	};
 	struct FarDialogItem DialogItems[12];
 
 	DialogFromTemplate(NULL, DialogTemplate, DialogItems, sizeof(DialogItems) / sizeof(DialogItems[0]),

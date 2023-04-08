@@ -124,17 +124,17 @@ int __plugin WINAPI EXP_NAME(Configure)(int ItemNumber)
 {
 	struct FarDialogItem DialogItems[11];
 	static DialogTemplateItem DialogTemplate[10] = {
-			{DI_CHECKBOX, 5, 2,  FALSE, DIFT_MSGNUM,                   MCaseSensitive },
-			{DI_CHECKBOX, 5, 3,  FALSE, DIFT_MSGNUM,                   MRestartEOF    },
-			{DI_CHECKBOX, 5, 4,  FALSE, DIFT_MSGNUM,                   MKeepSelection },
-			{DI_CHECKBOX, 5, 5,  FALSE, DIFT_MSGNUM,                   MBeepOnMismatch},
-			{DI_CHECKBOX, 5, 6,  FALSE, DIFT_MSGNUM,                   MUseSelection  },
-			{DI_CHECKBOX, 5, 7,  FALSE, DIFT_MSGNUM,                   MAutoNext      },
-			{DI_CHECKBOX, 5, 8,  FALSE, DIFT_MSGNUM,                   MBSunroll      },
-			{DI_TEXT,     5, 9,  FALSE, DIF_BOXCOLOR | DIF_SEPARATOR,  0              },
-			{DI_BUTTON,   5, 10, FALSE, DIF_CENTERGROUP | DIFT_MSGNUM, MOk            },
-			{DI_BUTTON,   5, 10, FALSE, DIF_CENTERGROUP | DIFT_MSGNUM, MCancel        }
-    };
+		{DI_CHECKBOX, 5, 2,  FALSE, DIFT_MSGNUM,                   MCaseSensitive },
+		{DI_CHECKBOX, 5, 3,  FALSE, DIFT_MSGNUM,                   MRestartEOF    },
+		{DI_CHECKBOX, 5, 4,  FALSE, DIFT_MSGNUM,                   MKeepSelection },
+		{DI_CHECKBOX, 5, 5,  FALSE, DIFT_MSGNUM,                   MBeepOnMismatch},
+		{DI_CHECKBOX, 5, 6,  FALSE, DIFT_MSGNUM,                   MUseSelection  },
+		{DI_CHECKBOX, 5, 7,  FALSE, DIFT_MSGNUM,                   MAutoNext      },
+		{DI_CHECKBOX, 5, 8,  FALSE, DIFT_MSGNUM,                   MBSunroll      },
+		{DI_TEXT,     5, 9,  FALSE, DIF_BOXCOLOR | DIF_SEPARATOR,  0              },
+		{DI_BUTTON,   5, 10, FALSE, DIF_CENTERGROUP | DIFT_MSGNUM, MOk            },
+		{DI_BUTTON,   5, 10, FALSE, DIF_CENTERGROUP | DIFT_MSGNUM, MCancel        }
+	};
 
 	(void)ItemNumber;
 

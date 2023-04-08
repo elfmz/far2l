@@ -36,16 +36,16 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 {
 	struct InitDialogItem InitItems[] = {
-			{DI_DOUBLEBOX, 3, 1, 72, 8, 0, 0, 0,                            0, (TCHAR *)MAlign      },
-			{DI_FIXEDIT,   5, 2, 7,  3, 1, 0, 0,                            0, _T("")               },
-			{DI_TEXT,      9, 2, 0,  0, 0, 0, 0,                            0, (TCHAR *)MRightMargin},
-			{DI_CHECKBOX,  5, 3, 0,  0, 0, 0, 0,                            0, (TCHAR *)MReformat   },
-			{DI_CHECKBOX,  5, 4, 0,  0, 0, 0, 0,                            0, (TCHAR *)MSmartMode  },
-			{DI_CHECKBOX,  5, 5, 0,  0, 0, 0, 0,                            0, (TCHAR *)MJustify    },
-			{DI_TEXT,      5, 6, 0,  0, 0, 0, DIF_BOXCOLOR | DIF_SEPARATOR, 0, _T("")               },
-			{DI_BUTTON,    0, 7, 0,  0, 0, 0, DIF_CENTERGROUP,              1, (TCHAR *)MOk         },
-			{DI_BUTTON,    0, 7, 0,  0, 0, 0, DIF_CENTERGROUP,              0, (TCHAR *)MCancel     }
-    };
+		{DI_DOUBLEBOX, 3, 1, 72, 8, 0, 0, 0,                            0, (TCHAR *)MAlign      },
+		{DI_FIXEDIT,   5, 2, 7,  3, 1, 0, 0,                            0, _T("")               },
+		{DI_TEXT,      9, 2, 0,  0, 0, 0, 0,                            0, (TCHAR *)MRightMargin},
+		{DI_CHECKBOX,  5, 3, 0,  0, 0, 0, 0,                            0, (TCHAR *)MReformat   },
+		{DI_CHECKBOX,  5, 4, 0,  0, 0, 0, 0,                            0, (TCHAR *)MSmartMode  },
+		{DI_CHECKBOX,  5, 5, 0,  0, 0, 0, 0,                            0, (TCHAR *)MJustify    },
+		{DI_TEXT,      5, 6, 0,  0, 0, 0, DIF_BOXCOLOR | DIF_SEPARATOR, 0, _T("")               },
+		{DI_BUTTON,    0, 7, 0,  0, 0, 0, DIF_CENTERGROUP,              1, (TCHAR *)MOk         },
+		{DI_BUTTON,    0, 7, 0,  0, 0, 0, DIF_CENTERGROUP,              0, (TCHAR *)MCancel     }
+	};
 
 	struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
 	InitDialogItems(InitItems, DialogItems, ARRAYSIZE(InitItems));

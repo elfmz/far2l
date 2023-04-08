@@ -1,6 +1,8 @@
 #include "ThreadedWorkQueue.h"
 #include "debug.h"
 #include <unistd.h>
+#include <stdio.h>
+#include <stdexcept>
 
 class ThreadedWorker : public Threaded
 {

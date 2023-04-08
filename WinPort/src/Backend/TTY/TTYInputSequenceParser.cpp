@@ -650,9 +650,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 5;
 	}
 
-	size_t r = 0;
-
-	r = ParseNChars2Key(s, l);
+	size_t r = ParseNChars2Key(s, l);
 	if (r != 0)
 		return r;
 

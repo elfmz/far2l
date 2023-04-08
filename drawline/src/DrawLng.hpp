@@ -1,14 +1,14 @@
 enum
 {
-  MDrawLines,
+	MDrawLines,
 
-  MTitleDouble,
-  MTitleSingle,
+	MTitleDouble,
+	MTitleSingle,
 
-  MHelp,
+	MHelp,
 
-  MDouble,
-  MSingle,
+	MDouble,
+	MSingle,
 
-  MQuit,
+	MQuit,
 };

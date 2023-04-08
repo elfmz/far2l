@@ -37,11 +37,11 @@ class wakeful
 public:
 	wakeful()
 	{
-		//SetThreadExecutionState(ES_SYSTEM_REQUIRED|ES_CONTINUOUS);
+		// SetThreadExecutionState(ES_SYSTEM_REQUIRED|ES_CONTINUOUS);
 	}
 
 	~wakeful()
 	{
-		//SetThreadExecutionState(ES_CONTINUOUS);
+		// SetThreadExecutionState(ES_CONTINUOUS);
 	}
 };

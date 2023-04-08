@@ -36,21 +36,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class PluginSynchro
 {
-	private:
-		struct SynchroData
-		{
-			bool Plugin;
-			INT_PTR ModuleNumber;
-			void* Param;
-		};
-	private:
-		std::recursive_mutex RecursiveMutex;
-		DList<SynchroData> Data;
-	public:
-		PluginSynchro();
-		~PluginSynchro();
-		void Synchro(bool Plugin, INT_PTR ModuleNumber,void* Param);
-		bool Process(void);
+private:
+	struct SynchroData
+	{
+		bool Plugin;
+		INT_PTR ModuleNumber;
+		void *Param;
+	};
+
+private:
+	std::recursive_mutex RecursiveMutex;
+	DList<SynchroData> Data;
+
+public:
+	PluginSynchro();
+	~PluginSynchro();
+	void Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param);
+	bool Process(void);
 };
 
 extern PluginSynchro PluginSynchroManager;

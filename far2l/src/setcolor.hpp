@@ -36,4 +36,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 
 void SetColors();
-int GetColorDialog(WORD& Color,bool bCentered=false,bool bAddTransparent=false);
+int GetColorDialog(WORD &Color, bool bCentered = false, bool bAddTransparent = false);

@@ -32,37 +32,34 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "lang.hpp"
 #include "DialogBuilder.hpp"
 #include "dialog.hpp"
 #include "codepage.hpp"
 
-struct EditFieldBinding: public DialogItemBinding<DialogItemEx>
+struct EditFieldBinding : public DialogItemBinding<DialogItemEx>
 {
 	FARString *TextValue;
 
 	EditFieldBinding(FARString *aTextValue)
-		: TextValue(aTextValue)
-	{
-	}
+		:
+		TextValue(aTextValue)
+	{}
 
-	virtual void SaveValue(DialogItemEx *Item, int RadioGroupIndex)
-	{
-		*TextValue = Item->strData;
-	}
+	virtual void SaveValue(DialogItemEx *Item, int RadioGroupIndex) { *TextValue = Item->strData; }
 };
 
-struct EditFieldIntBinding: public DialogItemBinding<DialogItemEx>
+struct EditFieldIntBinding : public DialogItemBinding<DialogItemEx>
 {
 	int *IntValue;
 	TCHAR Mask[32];
 
 	EditFieldIntBinding(int *aIntValue, int Width)
-		: IntValue(aIntValue)
+		:
+		IntValue(aIntValue)
 	{
 		int MaskWidth = Width < 31 ? Width : 31;
-		for(int i=0; i<MaskWidth; i++)
+		for (int i = 0; i < MaskWidth; i++)
 			Mask[i] = '9';
 		Mask[MaskWidth] = '\0';
 	}
@@ -73,10 +70,7 @@ struct EditFieldIntBinding: public DialogItemBinding<DialogItemEx>
 		*IntValue = wcstoul(Item->strData, &endptr, 10);
 	}
 
-	const TCHAR *GetMask() 
-	{
-		return Mask;
-	}
+	const TCHAR *GetMask() { return Mask; }
 };
 
 /*
@@ -86,20 +80,19 @@ static bool IsEditField(DialogItemEx *Item)
 }
 */
 
-DialogBuilder::DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic):
+DialogBuilder::DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic)
+	:
 	HelpTopic(HelpTopic)
 {
 	AddBorder(GetLangString(TitleMessageId));
 }
 
-DialogBuilder::~DialogBuilder()
-{
-}
+DialogBuilder::~DialogBuilder() {}
 
 void DialogBuilder::InitDialogItem(DialogItemEx *Item, const TCHAR *Text)
 {
 	Item->Clear();
-	Item->ID = DialogItemsCount-1;
+	Item->ID = DialogItemsCount - 1;
 	Item->strData = Text;
 }
 
@@ -128,12 +121,11 @@ DialogItemEx *DialogBuilder::AddEditField(FARString *Value, int Width, const wch
 	DialogItemEx *Item = AddDialogItem(DI_EDIT, *Value);
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
-	if (HistoryID)
-	{
+	if (HistoryID) {
 		Item->strHistory = HistoryID;
-		Item->Flags |= DIF_HISTORY;
+		Item->Flags|= DIF_HISTORY;
 	}
-	Item->Flags |= Flags;
+	Item->Flags|= Flags;
 
 	SetLastItemBinding(new EditFieldBinding(Value));
 	return Item;
@@ -143,33 +135,31 @@ DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width)
 {
 	DialogItemEx *Item = AddDialogItem(DI_FIXEDIT, L"");
 	FormatString ValueText;
-	ValueText<<*Value;
+	ValueText << *Value;
 	Item->strData = ValueText;
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width - 1;
 
 	EditFieldIntBinding *Binding = new EditFieldIntBinding(Value, Width);
 	SetLastItemBinding(Binding);
-	Item->Flags |= DIF_MASKEDIT;
+	Item->Flags|= DIF_MASKEDIT;
 	Item->strMask = Binding->GetMask();
 	return Item;
 }
 
-DialogItemEx *DialogBuilder::AddComboBox(int *Value, int Width,
-										 DialogBuilderListItem *Items, int ItemCount,
-										 DWORD Flags)
+DialogItemEx *
+DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags)
 {
 	DialogItemEx *Item = AddDialogItem(DI_COMBOBOX, L"");
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
-	Item->Flags |= Flags;
+	Item->Flags|= Flags;
 
 	FarListItem *ListItems = new FarListItem[ItemCount];
-	for(int i=0; i<ItemCount; i++)
-	{
-		ListItems [i].Text = Items [i].MessageId;
-		ListItems [i].Flags = (*Value == Items [i].ItemValue) ? LIF_SELECTED : 0;
-		ListItems [i].Reserved [0] = Items [i].ItemValue;
+	for (int i = 0; i < ItemCount; i++) {
+		ListItems[i].Text = Items[i].MessageId;
+		ListItems[i].Flags = (*Value == Items[i].ItemValue) ? LIF_SELECTED : 0;
+		ListItems[i].Reserved[0] = Items[i].ItemValue;
 	}
 	FarList *List = new FarList;
 	List->Items = ListItems;
@@ -186,23 +176,22 @@ DialogItemEx *DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowA
 	DialogItemEx *Item = AddDialogItem(DI_COMBOBOX, L"");
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
-	Item->Flags |= DIF_DROPDOWNLIST|DIF_LISTWRAPMODE|DIF_LISTAUTOHIGHLIGHT;
+	Item->Flags|= DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT;
 	SetLastItemBinding(new CodePageBoxBinding<DialogItemEx>(Value, &CodePageBoxes.back().Value));
 	return Item;
 }
 
-void DialogBuilder::LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels)
+void DialogBuilder::LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags,
+		bool LinkLabels)
 {
-	Parent->Flags |= DIF_AUTOMATION;
+	Parent->Flags|= DIF_AUTOMATION;
 	Parent->AddAutomation(Target->ID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
 	if (!Parent->Selected)
-		Target->Flags |= Flags;
+		Target->Flags|= Flags;
 
-	if (LinkLabels)
-	{
+	if (LinkLabels) {
 		DialogItemBinding<DialogItemEx> *Binding = FindBinding(Target);
-		if (Binding)
-		{
+		if (Binding) {
 			LinkFlagsByID(Parent, Binding->BeforeLabelID, Flags);
 			LinkFlagsByID(Parent, Binding->AfterLabelID, Flags);
 		}
@@ -211,44 +200,38 @@ void DialogBuilder::LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDia
 
 void DialogBuilder::LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags)
 {
-	if (TargetID >= 0)
-	{
+	if (TargetID >= 0) {
 		Parent->AddAutomation(TargetID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
 		if (!Parent->Selected)
-			DialogItems [TargetID].Flags |= Flags;
+			DialogItems[TargetID].Flags|= Flags;
 	}
 }
 
 LONG_PTR WINAPI DialogBuilder::DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	if (Msg == DN_INITDIALOG)
-	{
+	if (Msg == DN_INITDIALOG) {
 		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
-		for (const auto &CB : Builder->CodePageBoxes)
-		{
+		for (const auto &CB : Builder->CodePageBoxes) {
 			FillCodePagesList(hDlg, CB.Index, CB.Value, CB.allowAuto, CB.allowAll);
 		}
-	}
-	else if (Msg == DN_EDITCHANGE)
-	{
+	} else if (Msg == DN_EDITCHANGE) {
 		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
-		for (auto &CB : Builder->CodePageBoxes) if (Param1 == CB.Index)
-		{
-			FarListPos pos{};
-			SendDlgMessage(hDlg, DM_LISTGETCURPOS, CB.Index, (LONG_PTR)&pos);
-			CB.Value = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, CB.Index, pos.SelectPos);
-		}
+		for (auto &CB : Builder->CodePageBoxes)
+			if (Param1 == CB.Index) {
+				FarListPos pos{};
+				SendDlgMessage(hDlg, DM_LISTGETCURPOS, CB.Index, (LONG_PTR)&pos);
+				CB.Value = (UINT)SendDlgMessage(hDlg, DM_LISTGETDATA, CB.Index, pos.SelectPos);
+			}
 	}
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-
 int DialogBuilder::DoShowDialog()
 {
 	Dialog Dlg(DialogItems, DialogItemsCount, DlgProc, (LONG_PTR)this);
 	Dlg.SetHelp(HelpTopic);
-	Dlg.SetPosition(-1, -1, DialogItems [0].X2+4, DialogItems [0].Y2+2);
+	Dlg.SetPosition(-1, -1, DialogItems[0].X2 + 4, DialogItems[0].Y2 + 2);
 	Dlg.Process();
 	return Dlg.GetExitCode();
 }

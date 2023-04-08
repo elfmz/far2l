@@ -47,42 +47,40 @@ enum enumHighlightDataColor
 	HIGHLIGHTCOLOR_UNDERCURSOR,
 	HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR,
 
-	HIGHLIGHTCOLORTYPE_FILE = 0,
+	HIGHLIGHTCOLORTYPE_FILE     = 0,
 	HIGHLIGHTCOLORTYPE_MARKCHAR = 1,
 };
 
 struct HighlightDataColor
 {
-	WORD Color[2][4]; // [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor]; if HIBYTE == 0xFF then transparent
+	WORD Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor]; if HIBYTE == 0xFF then transparent
 	DWORD MarkChar;
 };
 
 class HighlightFiles
 {
-	private:
-		TPointerArray<FileFilterParams> HiData;
-		int FirstCount, UpperCount, LowerCount, LastCount;
-		uint64_t CurrentTime;
+private:
+	TPointerArray<FileFilterParams> HiData;
+	int FirstCount, UpperCount, LowerCount, LastCount;
+	uint64_t CurrentTime;
 
-	private:
-		void InitHighlightFiles();
-		void ClearData();
+private:
+	void InitHighlightFiles();
+	void ClearData();
 
-		int  MenuPosToRealPos(int MenuPos, int **Count, bool Insert=false);
-		void FillMenu(VMenu *HiMenu,int MenuPos);
-		void ProcessGroups();
+	int MenuPosToRealPos(int MenuPos, int **Count, bool Insert = false);
+	void FillMenu(VMenu *HiMenu, int MenuPos);
+	void ProcessGroups();
 
-	public:
-		HighlightFiles();
-		~HighlightFiles();
+public:
+	HighlightFiles();
+	~HighlightFiles();
 
-	public:
-		void UpdateCurrentTime();
-		void GetHiColor(FileListItem **FileItem,int FileCount,bool UseAttrHighlighting=false);
-		int  GetGroup(const FileListItem *fli);
-		void HiEdit(int MenuPos);
+public:
+	void UpdateCurrentTime();
+	void GetHiColor(FileListItem **FileItem, int FileCount, bool UseAttrHighlighting = false);
+	int GetGroup(const FileListItem *fli);
+	void HiEdit(int MenuPos);
 
-		void SaveHiData();
+	void SaveHiData();
 };
-
-

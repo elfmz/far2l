@@ -1,2 +1,2 @@
 #pragma once
-#define EXP_NAME(p) _export p ## W
+#define EXP_NAME(p) _export p##W

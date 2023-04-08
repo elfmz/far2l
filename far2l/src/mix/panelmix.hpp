@@ -35,16 +35,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Panel;
 
-void ShellUpdatePanels(Panel *SrcPanel,BOOL NeedSetUpADir=FALSE);
-bool CheckUpdateAnotherPanel(Panel *SrcPanel,const wchar_t *SelName);
+void ShellUpdatePanels(Panel *SrcPanel, BOOL NeedSetUpADir = FALSE);
+bool CheckUpdateAnotherPanel(Panel *SrcPanel, const wchar_t *SelName);
 
-int _MakePath1(DWORD Key,FARString &strPathName, const wchar_t *Param2);
+int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2);
 
-const FARString FormatStr_Attribute(DWORD FileAttributes, DWORD UnixMode, int Width=-1);
-const FARString FormatStr_DateTime(const FILETIME *FileTime,int ColumnType,DWORD Flags,int Width);
-const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FARString &strName, DWORD FileAttributes,uint8_t ShowFolderSize,int ColumnType,DWORD Flags,int Width);
-void TextToViewSettings(const wchar_t *ColumnTitles,const wchar_t *ColumnWidths,
-						unsigned int *ViewColumnTypes,int *ViewColumnWidths,int *ViewColumnWidthsTypes,int &ColumnCount);
-void ViewSettingsToText(unsigned int *ViewColumnTypes,
-						int *ViewColumnWidths,int *ViewColumnWidthsTypes,int ColumnCount,FARString &strColumnTitles,
-						FARString &strColumnWidths);
+const FARString FormatStr_Attribute(DWORD FileAttributes, DWORD UnixMode, int Width = -1);
+const FARString FormatStr_DateTime(const FILETIME *FileTime, int ColumnType, DWORD Flags, int Width);
+const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FARString &strName,
+		DWORD FileAttributes, uint8_t ShowFolderSize, int ColumnType, DWORD Flags, int Width);
+void TextToViewSettings(const wchar_t *ColumnTitles, const wchar_t *ColumnWidths,
+		unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes, int &ColumnCount);
+void ViewSettingsToText(unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes,
+		int ColumnCount, FARString &strColumnTitles, FARString &strColumnWidths);

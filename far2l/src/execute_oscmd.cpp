@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "rdrwdsk.hpp"
 #include "udlist.hpp"
-//#include "localOEM.hpp"
+// #include "localOEM.hpp"
 #include "manager.hpp"
 #include "interf.hpp"
 #include "message.hpp"
@@ -107,12 +107,12 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 			VTLog::Reset();
 		}
 
-	} else if (ecl[0]=="pushd") {
+	} else if (ecl[0] == "pushd") {
 		if (PushDirStackSize < 10) {
 			++PushDirStackSize;
 		}
 
-	} else if (ecl[0]=="popd") {
+	} else if (ecl[0] == "popd") {
 		if (PushDirStackSize > 0) {
 			--PushDirStackSize;
 		}
@@ -120,10 +120,10 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 	} else if (ecl[0]=="crash" && ecl.size() == 2 && ecl[1]=="far") {
 		*(volatile int *)100 = 200;
 #endif
-	} else if (ecl[0]=="exit") {
-		if (ecl.size() == 2 && ecl[1]=="far") {
+	} else if (ecl[0] == "exit") {
+		if (ecl.size() == 2 && ecl[1] == "far") {
 			FrameManager->ExitMainLoop(FALSE);
-			return true;			
+			return true;
 		}
 		PushDirStackSize = 0;
 	}
@@ -131,14 +131,15 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 	return false;
 }
 
-BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
+BOOL CommandLine::IntChDir(const wchar_t *CmdLine, int ClosePlugin, bool Silent)
 {
 	Panel *SetPanel;
-	SetPanel=CtrlObject->Cp()->ActivePanel;
+	SetPanel = CtrlObject->Cp()->ActivePanel;
 	fprintf(stderr, "CommandLine::IntChDir: %ls\n", CmdLine);
 
-	if (SetPanel->GetType()!=FILE_PANEL && CtrlObject->Cp()->GetAnotherPanel(SetPanel)->GetType()==FILE_PANEL)
-		SetPanel=CtrlObject->Cp()->GetAnotherPanel(SetPanel);
+	if (SetPanel->GetType() != FILE_PANEL
+			&& CtrlObject->Cp()->GetAnotherPanel(SetPanel)->GetType() == FILE_PANEL)
+		SetPanel = CtrlObject->Cp()->GetAnotherPanel(SetPanel);
 
 	FARString strDir(CmdLine);
 
@@ -147,11 +148,10 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 		Сначала проверяем есть ли такая "обычная" директория.
 		если уж нет, то тогда начинаем думать, что это директория плагинная
 	*/
-	DWORD DirAtt=apiGetFileAttributes(strDir);
+	DWORD DirAtt = apiGetFileAttributes(strDir);
 
-	if (DirAtt!=INVALID_FILE_ATTRIBUTES && (DirAtt & FILE_ATTRIBUTE_DIRECTORY) && IsAbsolutePath(strDir))
-	{
-		SetPanel->SetCurDir(strDir,TRUE);
+	if (DirAtt != INVALID_FILE_ATTRIBUTES && (DirAtt & FILE_ATTRIBUTE_DIRECTORY) && IsAbsolutePath(strDir)) {
+		SetPanel->SetCurDir(strDir, TRUE);
 		return TRUE;
 	}
 
@@ -174,23 +174,19 @@ BOOL CommandLine::IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent)
 	}
 	*/
 
-	if (SetPanel->GetType()==FILE_PANEL && SetPanel->GetMode()==PLUGIN_PANEL)
-	{
-		SetPanel->SetCurDir(strDir,ClosePlugin);
+	if (SetPanel->GetType() == FILE_PANEL && SetPanel->GetMode() == PLUGIN_PANEL) {
+		SetPanel->SetCurDir(strDir, ClosePlugin);
 		return TRUE;
 	}
 
-	if (FarChDir(strDir))
-	{
+	if (FarChDir(strDir)) {
 		SetPanel->ChangeDirToCurrent();
 
 		if (!SetPanel->IsVisible())
 			SetPanel->SetTitle();
-	}
-	else
-	{
+	} else {
 		if (!Silent)
-			Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,strDir,Msg::Ok);
+			Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, strDir, Msg::Ok);
 
 		return FALSE;
 	}

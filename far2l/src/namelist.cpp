@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "namelist.hpp"
 #include "pathmix.hpp"
 
@@ -42,56 +41,48 @@ NamesList::NamesList()
 	Init();
 }
 
-NamesList::~NamesList()
-{
-}
+NamesList::~NamesList() {}
 
 void NamesList::AddName(const wchar_t *Name)
 {
-	OneName *pName=Names.Push();
-	pName->Value.strName = Name?Name:L"";
-	CurrentName=pName;
+	OneName *pName = Names.Push();
+	pName->Value.strName = Name ? Name : L"";
+	CurrentName = pName;
 }
-
 
 bool NamesList::GetNextName(FARString &strName)
 {
-	const OneName *pName=Names.Next(CurrentName);
+	const OneName *pName = Names.Next(CurrentName);
 
 	if (!pName)
 		return false;
 
 	strName = pName->Value.strName;
-	CurrentName=pName;
+	CurrentName = pName;
 	return true;
 }
-
 
 bool NamesList::GetPrevName(FARString &strName)
 {
-	const OneName *pName=Names.Prev(CurrentName);
+	const OneName *pName = Names.Prev(CurrentName);
 
 	if (!pName)
 		return false;
 
 	strName = pName->Value.strName;
-	CurrentName=pName;
+	CurrentName = pName;
 	return true;
 }
 
-
 void NamesList::SetCurName(const wchar_t *Name)
 {
-	for (const OneName *pCurName=Names.First(); pCurName; pCurName=Names.Next(pCurName))
-	{
-		if (!StrCmp(Name, pCurName->Value.strName))
-		{
-			CurrentName=pCurName;
+	for (const OneName *pCurName = Names.First(); pCurName; pCurName = Names.Next(pCurName)) {
+		if (!StrCmp(Name, pCurName->Value.strName)) {
+			CurrentName = pCurName;
 			return;
 		}
 	}
 }
-
 
 void NamesList::MoveData(NamesList &Dest)
 {
@@ -101,17 +92,14 @@ void NamesList::MoveData(NamesList &Dest)
 	Init();
 }
 
-
 void NamesList::GetCurDir(FARString &strDir)
 {
 	strDir = strCurrentDir;
 }
 
-
 void NamesList::SetCurDir(const wchar_t *Dir)
 {
-	if (StrCmp(strCurrentDir,Dir) || !TestCurrentDirectory(Dir))
-	{
+	if (StrCmp(strCurrentDir, Dir) || !TestCurrentDirectory(Dir)) {
 		strCurrentDir = Dir;
 		PrepareDiskPath(strCurrentDir);
 	}
@@ -121,5 +109,5 @@ void NamesList::Init()
 {
 	Names.Clear();
 	strCurrentDir.Clear();
-	CurrentName=nullptr;
+	CurrentName = nullptr;
 }

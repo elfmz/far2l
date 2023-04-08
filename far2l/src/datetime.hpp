@@ -41,24 +41,16 @@ int GetDateFormat();
 wchar_t GetDateSeparator();
 wchar_t GetTimeSeparator();
 
-int64_t FileTimeDifference(const FILETIME *a, const FILETIME* b);
+int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b);
 uint64_t FileTimeToUI64(const FILETIME *ft);
 
-void GetFileDateAndTime(const wchar_t *Src,LPWORD Dst,size_t Count,int Separator);
-void StrToDateTime(
-	const wchar_t *CDate, const wchar_t *CTime,
-	FILETIME &ft, int DateFormat,
-	int DateSeparator, int TimeSeparator,
-	bool bRelative=false
-);
-void ConvertDate(
-	const FILETIME &ft, FARString &strDateText,
-	FARString &strTimeText, int TimeLength,
-	int Brief=FALSE, int TextMonth=FALSE,
-	int FullYear=0, int DynInit=FALSE
-);
-void ConvertRelativeDate(const FILETIME &ft,FARString &strDaysText,FARString &strTimeText);
+void GetFileDateAndTime(const wchar_t *Src, LPWORD Dst, size_t Count, int Separator);
+void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int DateFormat,
+		int DateSeparator, int TimeSeparator, bool bRelative = false);
+void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeText, int TimeLength,
+		int Brief = FALSE, int TextMonth = FALSE, int FullYear = 0, int DynInit = FALSE);
+void ConvertRelativeDate(const FILETIME &ft, FARString &strDaysText, FARString &strTimeText);
 
 void PrepareStrFTime();
-size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format,const tm *t);
-size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt=nullptr);
+size_t WINAPI StrFTime(FARString &strDest, const wchar_t *Format, const tm *t);
+size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt = nullptr);

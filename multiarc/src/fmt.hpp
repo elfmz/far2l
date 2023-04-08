@@ -11,17 +11,17 @@
 
 #if !defined(_WIN64)
 #if defined(__BORLANDC__)
-  #pragma option -a2
+#pragma option -a2
 #elif defined(__GNUC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1100)) || defined(__LCC__)
-  #pragma pack(2)
+#pragma pack(2)
 #else
-  #pragma pack(push,2)
-  #if _MSC_VER
-    #ifdef _export
-      #undef _export
-    #endif
-    #define _export
-  #endif
+#pragma pack(push, 2)
+#if _MSC_VER
+#ifdef _export
+#undef _export
+#endif
+#define _export
+#endif
 #endif
 #endif
 
@@ -32,84 +32,83 @@
 
 enum GETARC_CODE
 {
-  GETARC_EOF               =0,
-  GETARC_SUCCESS           =1,
-  GETARC_BROKEN            =2,
-  GETARC_UNEXPEOF          =3,
-  GETARC_READERROR         =4,
+	GETARC_EOF       = 0,
+	GETARC_SUCCESS   = 1,
+	GETARC_BROKEN    = 2,
+	GETARC_UNEXPEOF  = 3,
+	GETARC_READERROR = 4,
 };
 
 struct ArcItemAttributes
 {
-  int Solid{};
-  int Comment{};
-  int Encrypted{};
-  int DictSize{};
-  int UnpVer{};
-  int Chapter{};
-  int Codepage{};
+	int Solid{};
+	int Comment{};
+	int Encrypted{};
+	int DictSize{};
+	int UnpVer{};
+	int Chapter{};
+	int Codepage{};
 
-  DWORD    dwFileAttributes{};
-  DWORD    dwUnixMode{};
-  DWORD    Flags{};
-  DWORD    NumberOfLinks{};
-  DWORD    CRC32{};
+	DWORD dwFileAttributes{};
+	DWORD dwUnixMode{};
+	DWORD Flags{};
+	DWORD NumberOfLinks{};
+	DWORD CRC32{};
 
-  FILETIME ftCreationTime{};
-  FILETIME ftLastAccessTime{};
-  FILETIME ftLastWriteTime{};
-  DWORD64  nPhysicalSize{};
-  DWORD64  nFileSize{};
+	FILETIME ftCreationTime{};
+	FILETIME ftLastAccessTime{};
+	FILETIME ftLastWriteTime{};
+	DWORD64 nPhysicalSize{};
+	DWORD64 nFileSize{};
 
-  // NULL or ptr to statically alloc'ed literal - no need to free
-  const char      *HostOS{};
+	// NULL or ptr to statically alloc'ed literal - no need to free
+	const char *HostOS{};
 
-  // keep rarely used strings in std::unique_ptr to save memory
-  std::unique_ptr<std::string>     Description;
-  std::unique_ptr<std::string>     LinkName;
-  std::unique_ptr<std::string>     Prefix;
+	// keep rarely used strings in std::unique_ptr to save memory
+	std::unique_ptr<std::string> Description;
+	std::unique_ptr<std::string> LinkName;
+	std::unique_ptr<std::string> Prefix;
 };
 
 struct ArcItemInfo : ArcItemAttributes
 {
-  std::string     PathName;
+	std::string PathName;
 };
 
 enum ARCINFO_FLAGS
 {
-  AF_AVPRESENT      =0x00000001,
-  AF_IGNOREERRORS   =0x00000002,
-  AF_HDRENCRYPTED   =0x00000080,
+	AF_AVPRESENT    = 0x00000001,
+	AF_IGNOREERRORS = 0x00000002,
+	AF_HDRENCRYPTED = 0x00000080,
 };
 
 struct ArcInfo
 {
-  int SFXSize;
-  int Volume;
-  int Comment;
-  int Recovery;
-  int Lock;
-  DWORD Flags;
-  DWORD Reserved;
-  int Chapters;
+	int SFXSize;
+	int Volume;
+	int Comment;
+	int Recovery;
+	int Lock;
+	DWORD Flags;
+	DWORD Reserved;
+	int Chapters;
 };
-
 
 #if defined(__BORLANDC__) || defined(_MSC_VER) || defined(__GNUC__) || defined(__WATCOMC__)
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 DWORD WINAPI _export LoadFormatModule(const char *ModuleName);
-void  WINAPI _export SetFarInfo(const struct PluginStartupInfo *Info);
+void WINAPI _export SetFarInfo(const struct PluginStartupInfo *Info);
 
-BOOL  WINAPI _export IsArchive(const char *Name,const unsigned char *Data,int DataSize);
+BOOL WINAPI _export IsArchive(const char *Name, const unsigned char *Data, int DataSize);
 DWORD WINAPI _export GetSFXPos(void);
-BOOL  WINAPI _export OpenArchive(const char *Name,int *TypeArc);
-int   WINAPI _export GetArcItem(struct ArcItemInfo *Info);
-BOOL  WINAPI _export CloseArchive(struct ArcInfo *Info);
-BOOL  WINAPI _export GetFormatName(int TypeArc,char *FormatName,char *DefaultExt);
-BOOL  WINAPI _export GetDefaultCommands(int TypeArc,int Command,char *Dest);
+BOOL WINAPI _export OpenArchive(const char *Name, int *TypeArc);
+int WINAPI _export GetArcItem(struct ArcItemInfo *Info);
+BOOL WINAPI _export CloseArchive(struct ArcInfo *Info);
+BOOL WINAPI _export GetFormatName(int TypeArc, char *FormatName, char *DefaultExt);
+BOOL WINAPI _export GetDefaultCommands(int TypeArc, int Command, char *Dest);
 
 #ifdef __cplusplus
 };
@@ -118,15 +117,14 @@ BOOL  WINAPI _export GetDefaultCommands(int TypeArc,int Command,char *Dest);
 
 #if !defined(_WIN64)
 #if defined(__BORLANDC__)
-  #pragma option -a.
+#pragma option -a.
 #elif defined(__GNUC__) || (defined(__WATCOMC__) && (__WATCOMC__ < 1100)) || defined(__LCC__)
-  #pragma pack()
+#pragma pack()
 #else
-  #pragma pack(pop)
+#pragma pack(pop)
 #endif
 #endif
 
 bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize);
 
-#endif /* __FARFMT_HPP__ */
-
+#endif	/* __FARFMT_HPP__ */

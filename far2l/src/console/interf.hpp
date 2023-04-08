@@ -39,8 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern WCHAR Oem2Unicode[];
 extern WCHAR BoxSymbols[];
 extern COORD CurSize;
-extern SHORT ScrX,ScrY;
-extern SHORT PrevScrX,PrevScrY;
+extern SHORT ScrX, ScrY;
+extern SHORT PrevScrX, PrevScrY;
 extern DWORD InitialConsoleMode;
 
 // типы рамок
@@ -63,62 +63,62 @@ void ShowTime(int ShowAlways);
 */
 void InitConsole();
 void CloseConsole();
-void SetFarConsoleMode(BOOL SetsActiveBuffer=FALSE);
+void SetFarConsoleMode(BOOL SetsActiveBuffer = FALSE);
 void ChangeConsoleMode(int Mode);
 void FlushInputBuffer();
 void ToggleVideoMode();
-void GetVideoMode(COORD& Size);
-void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx=-1, int Sy=-1);
+void GetVideoMode(COORD &Size);
+void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx = -1, int Sy = -1);
 void SaveConsoleWindowRect();
 void RestoreConsoleWindowRect();
 
-void GotoXY(int X,int Y);
+void GotoXY(int X, int Y);
 int WhereX();
 int WhereY();
-void MoveCursor(int X,int Y);
-void GetCursorPos(SHORT& X,SHORT& Y);
+void MoveCursor(int X, int Y);
+void GetCursorPos(SHORT &X, SHORT &Y);
 void SetCursorType(bool Visible, DWORD Size);
 void SetInitialCursorType();
-void GetCursorType(bool& Visible, DWORD& Size);
-void MoveRealCursor(int X,int Y);
-void GetRealCursorPos(SHORT& X,SHORT& Y);
+void GetCursorType(bool &Visible, DWORD &Size);
+void MoveRealCursor(int X, int Y);
+void GetRealCursorPos(SHORT &X, SHORT &Y);
 void ScrollScreen(int Count);
 
 void Text(int X, int Y, int Color, const WCHAR *Str);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
 void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
-void HiText(const WCHAR *Str,int HiColor,int isVertText=0);
+void HiText(const WCHAR *Str, int HiColor, int isVertText = 0);
 void mprintf(const wchar_t *fmt, ...);
 void vmprintf(const wchar_t *fmt, ...);
-void PutText(int X1,int Y1,int X2,int Y2,const void *Src);
-void GetText(int X1,int Y1,int X2,int Y2,void *Dest,int DestSize);
+void PutText(int X1, int Y1, int X2, int Y2, const void *Src);
+void GetText(int X1, int Y1, int X2, int Y2, void *Dest, int DestSize);
 void BoxText(wchar_t Chr);
-void BoxText(const wchar_t *Str,int IsVert=0);
+void BoxText(const wchar_t *Str, int IsVert = 0);
 
-void SetScreen(int X1,int Y1,int X2,int Y2,wchar_t Ch,int Color);
-void MakeShadow(int X1,int Y1,int X2,int Y2);
-void ChangeBlockColor(int X1,int Y1,int X2,int Y2,int Color);
+void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color);
+void MakeShadow(int X1, int Y1, int X2, int Y2);
+void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color);
 void SetColor(int Color, bool ApplyToConsole = false);
 void SetRealColor(DWORD64 wAttributes, bool ApplyToConsole = false);
 DWORD64 GetRealColor();
 void ClearScreen(int Color);
 int GetColor();
 
-void Box(int x1,int y1,int x2,int y2,int Color,int Type);
-void ScrollBar(int X1,int Y1,int Length, unsigned int Current,unsigned int Total);
+void Box(int x1, int y1, int x2, int y2, int Color, int Type);
+void ScrollBar(int X1, int Y1, int Length, unsigned int Current, unsigned int Total);
 bool ScrollBarRequired(UINT Length, UINT64 ItemsCount);
-bool ScrollBarEx(UINT X1,UINT Y1,UINT Length,UINT64 TopItem,UINT64 ItemsCount);
-void DrawLine(int Length,int Type, const wchar_t* UserSep=nullptr);
-#define ShowSeparator(Length,Type) DrawLine(Length,Type)
-#define ShowUserSeparator(Length,Type,UserSep) DrawLine(Length,Type,UserSep)
-WCHAR* MakeSeparator(int Length,WCHAR *DestStr,int Type=1, const wchar_t* UserSep=nullptr);
+bool ScrollBarEx(UINT X1, UINT Y1, UINT Length, UINT64 TopItem, UINT64 ItemsCount);
+void DrawLine(int Length, int Type, const wchar_t *UserSep = nullptr);
+#define ShowSeparator(Length, Type)              DrawLine(Length, Type)
+#define ShowUserSeparator(Length, Type, UserSep) DrawLine(Length, Type, UserSep)
+WCHAR *MakeSeparator(int Length, WCHAR *DestStr, int Type = 1, const wchar_t *UserSep = nullptr);
 
 void InitRecodeOutTable();
 
-int WINAPI TextToCharInfo(const char *Text,WORD Attr, CHAR_INFO *CharInfo, int Length, DWORD Reserved);
+int WINAPI TextToCharInfo(const char *Text, WORD Attr, CHAR_INFO *CharInfo, int Length, DWORD Reserved);
 
-inline void SetVidChar(CHAR_INFO& CI, COMP_CHAR Chr)
+inline void SetVidChar(CHAR_INFO &CI, COMP_CHAR Chr)
 {
 	CI.Char.UnicodeChar = (Chr < L'\x20' || Chr == L'\x7f') ? Oem2Unicode[Chr] : Chr;
 }
@@ -126,8 +126,8 @@ inline void SetVidChar(CHAR_INFO& CI, COMP_CHAR Chr)
 int HiStrCellsCount(const wchar_t *Str);
 int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp);
 int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct);
-FARString& HiText2Str(FARString& strDest, const wchar_t *Str);
-#define RemoveHighlights(Str) RemoveChar(Str,L'&')
+FARString &HiText2Str(FARString &strDest, const wchar_t *Str);
+#define RemoveHighlights(Str) RemoveChar(Str, L'&')
 
 bool CheckForInactivityExit();
 void CheckForPendingCtrlHandleEvent();

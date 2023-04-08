@@ -41,33 +41,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // BUGBUG, delete!
 class OldGetFileString
 {
-	private:
-		FILE *SrcFile;
-		int ReadPos, ReadSize;
+private:
+	FILE *SrcFile;
+	int ReadPos, ReadSize;
 
-		char ReadBuf[8192];
-		wchar_t wReadBuf[8192];
+	char ReadBuf[8192];
+	wchar_t wReadBuf[8192];
 
-		int m_nStrLength;
-		char *Str;
+	int m_nStrLength;
+	char *Str;
 
-		int m_nwStrLength;
-		wchar_t *wStr;
+	int m_nwStrLength;
+	wchar_t *wStr;
 
-		bool SomeDataLost;
-		bool bCrCr;
+	bool SomeDataLost;
+	bool bCrCr;
 
-	private:
-		int GetAnsiString(char **DestStr, int &Length);
-		int GetUnicodeString(wchar_t **DestStr, int &Length, bool bBigEndian);
+private:
+	int GetAnsiString(char **DestStr, int &Length);
+	int GetUnicodeString(wchar_t **DestStr, int &Length, bool bBigEndian);
 
-	public:
-		OldGetFileString(FILE *SrcFile);
-		~OldGetFileString();
+public:
+	OldGetFileString(FILE *SrcFile);
+	~OldGetFileString();
 
-	public:
-		int GetString(wchar_t **DestStr, int nCodePage, int &Length);
-		bool IsConversionValid() { return !SomeDataLost; };
+public:
+	int GetString(wchar_t **DestStr, int nCodePage, int &Length);
+	bool IsConversionValid() { return !SomeDataLost; };
 };
 
 bool DetectFileMagic(FILE *file, UINT &nCodePage);
@@ -83,55 +83,51 @@ public:
 //-----------------------------------------------------------------------------
 struct GetFileStringContext
 {
-	GetFileStringContext(File &SrcFile_) : 
-		SrcFile(SrcFile_),
-		bCrCr(false),
-		SomeDataLost(false),
-		ReadPos(0),
-		ReadSize(0)
-	{
-	}
+	GetFileStringContext(File &SrcFile_)
+		:
+		SrcFile(SrcFile_), bCrCr(false), SomeDataLost(false), ReadPos(0), ReadSize(0)
+	{}
 
 	File &SrcFile;
 	bool bCrCr;
 	bool SomeDataLost;
-	DWORD ReadPos;	
+	DWORD ReadPos;
 	DWORD ReadSize;
 };
 
-
-template <class CHAR_T> class TypedStringReader;
+template <class CHAR_T>
+class TypedStringReader;
 typedef TypedStringReader<char> Char_StringReader;
 typedef TypedStringReader<uint16_t> UTF16_StringReader;
 typedef TypedStringReader<uint32_t> UTF32_StringReader;
 
-
 class GetFileString
 {
 public:
-		GetFileString(File& SrcFile);
-		~GetFileString();
+	GetFileString(File &SrcFile);
+	~GetFileString();
 
-		int PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length);
-		int GetString(LPWSTR* DestStr, UINT nCodePage, int& Length);
-		bool IsConversionValid() { return !context.SomeDataLost; }
+	int PeekString(LPWSTR *DestStr, UINT nCodePage, int &Length);
+	int GetString(LPWSTR *DestStr, UINT nCodePage, int &Length);
+	bool IsConversionValid() { return !context.SomeDataLost; }
 
-	private:
-		GetFileString(const GetFileString&) = delete;
+private:
+	GetFileString(const GetFileString &) = delete;
 
-		GetFileStringContext context;
+	GetFileStringContext context;
 
-		std::unique_ptr<UTF32_StringReader> UTF32Reader;
-		std::unique_ptr<UTF16_StringReader> UTF16Reader;
-		std::unique_ptr<Char_StringReader> CharReader;
+	std::unique_ptr<UTF32_StringReader> UTF32Reader;
+	std::unique_ptr<UTF16_StringReader> UTF16Reader;
+	std::unique_ptr<Char_StringReader> CharReader;
 
-		bool Peek;
-		int LastLength;
-		LPWSTR* LastString;
-		int LastResult;
-		
-		std::wstring Buffer;
+	bool Peek;
+	int LastLength;
+	LPWSTR *LastString;
+	int LastResult;
+
+	std::wstring Buffer;
 };
 
-bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound = nullptr, bool bUseHeuristics = true);
-bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported);
+bool GetFileFormat(File &file, UINT &nCodePage, bool *pSignatureFound = nullptr, bool bUseHeuristics = true);
+bool GetFileFormat2(FARString strFileName, UINT &nCodePage, bool *pSignatureFound, bool bUseHeuristics,
+		bool bCheckIfSupported);

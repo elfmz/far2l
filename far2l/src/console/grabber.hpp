@@ -38,29 +38,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct GrabberArea
 {
-	SHORT X1,Y1,X2,Y2;
-	SHORT CurX,CurY;
+	SHORT X1, Y1, X2, Y2;
+	SHORT CurX, CurY;
 };
 
-class Grabber:Modal
+class Grabber : Modal
 {
-	private:
-		ChangeMacroMode CMM;
-		SaveScreen *SaveScr;
-		GrabberArea PrevArea;
-		GrabberArea GArea;
-		int ResetArea;
+private:
+	ChangeMacroMode CMM;
+	SaveScreen *SaveScr;
+	GrabberArea PrevArea;
+	GrabberArea GArea;
+	int ResetArea;
 
-	private:
-		virtual void DisplayObject();
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		void CopyGrabbedArea(int Append);
-		void Reset();
+private:
+	virtual void DisplayObject();
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	void CopyGrabbedArea(int Append);
+	void Reset();
 
-	public:
-		Grabber();
-		virtual ~Grabber();
+public:
+	Grabber();
+	virtual ~Grabber();
 };
 
 bool RunGraber();

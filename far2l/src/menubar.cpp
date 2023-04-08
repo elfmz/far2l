@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "menubar.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
@@ -41,13 +40,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void MenuBar::DisplayObject()
 {
-	FARString strSpace=L"    ";
-	FARString strMsg=strSpace+Msg::MenuLeftTitle+strSpace+Msg::MenuFilesTitle+strSpace+Msg::MenuCommandsTitle+strSpace+Msg::MenuOptionsTitle+strSpace+Msg::MenuRightTitle;
+	FARString strSpace = L"    ";
+	FARString strMsg = strSpace + Msg::MenuLeftTitle + strSpace + Msg::MenuFilesTitle + strSpace
+			+ Msg::MenuCommandsTitle + strSpace + Msg::MenuOptionsTitle + strSpace + Msg::MenuRightTitle;
 	RemoveHighlights(strMsg);
-	int Length=X2-X1+1;
+	int Length = X2 - X1 + 1;
 	FARString strFullMsg;
-	strFullMsg.Format(L"%-*.*ls", Length,Length, strMsg.CPtr());
-	GotoXY(X1,Y1);
+	strFullMsg.Format(L"%-*.*ls", Length, Length, strMsg.CPtr());
+	GotoXY(X1, Y1);
 	SetColor(COL_HMENUTEXT);
 	Text(strFullMsg);
 }

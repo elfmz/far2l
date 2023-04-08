@@ -37,11 +37,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 #include "FARString.hpp"
 
-
 // Группы меток
 enum
 {
-	KBL_MAIN=0,
+	KBL_MAIN = 0,
 	KBL_SHIFT,
 	KBL_CTRL,
 	KBL_ALT,
@@ -55,66 +54,66 @@ enum
 
 const int KEY_COUNT = 12;
 
-typedef wchar_t KeyBarTitle [16];
-typedef KeyBarTitle KeyBarTitleGroup [KEY_COUNT];
+typedef wchar_t KeyBarTitle[16];
+typedef KeyBarTitle KeyBarTitleGroup[KEY_COUNT];
 
-class KeyBar: public ScreenObject
+class KeyBar : public ScreenObject
 {
-	private:
-		ScreenObject *Owner;
-		KeyBarTitleGroup KeyTitles [KBL_GROUP_COUNT];
-		int KeyCounts [KBL_GROUP_COUNT];
+private:
+	ScreenObject *Owner;
+	KeyBarTitleGroup KeyTitles[KBL_GROUP_COUNT];
+	int KeyCounts[KBL_GROUP_COUNT];
 
-		int AltState,CtrlState,ShiftState;
-		int DisableMask;
+	int AltState, CtrlState, ShiftState;
+	int DisableMask;
 
-		KeyBarTitleGroup RegKeyTitles [KBL_GROUP_COUNT];
-		bool RegReaded;
+	KeyBarTitleGroup RegKeyTitles[KBL_GROUP_COUNT];
+	bool RegReaded;
 
-		FARString strLanguage;
-		FARString strRegGroupName;
+	FARString strLanguage;
+	FARString strRegGroupName;
 
-	private:
-		void RefreshObject(bool render);
-		virtual void DisplayObject();
+private:
+	void RefreshObject(bool render);
+	virtual void DisplayObject();
 
-	public:
-		KeyBar();
-		virtual ~KeyBar() {}
+public:
+	KeyBar();
+	virtual ~KeyBar() {}
 
-	public:
-		void Refresh(bool show, bool force_refresh_fkeys = false);
+public:
+	void Refresh(bool show, bool force_refresh_fkeys = false);
 
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
-		void SetOwner(ScreenObject *Owner);
+	void SetOwner(ScreenObject *Owner);
 
-		void ReadRegGroup(const wchar_t *RegGroup, const wchar_t *Language);
-		void SetRegGroup(int Group);
-		void SetAllRegGroup();
+	void ReadRegGroup(const wchar_t *RegGroup, const wchar_t *Language);
+	void SetRegGroup(int Group);
+	void SetAllRegGroup();
 
-		void SetGroup(int Group,const wchar_t * const *Key,int KeyCount);
-		// Групповая установка идущих подряд строк LNG для указанной группы
-		void SetAllGroup(int Group, FarLangMsg BaseMsg, int Count);
+	void SetGroup(int Group, const wchar_t *const *Key, int KeyCount);
+	// Групповая установка идущих подряд строк LNG для указанной группы
+	void SetAllGroup(int Group, FarLangMsg BaseMsg, int Count);
 
-		void ClearGroup(int Group);
+	void ClearGroup(int Group);
 
-		void Set(const wchar_t * const *Key,int KeyCount)            { SetGroup(KBL_MAIN, Key, KeyCount); }
-		void SetShift(const wchar_t * const *Key,int KeyCount)       { SetGroup(KBL_SHIFT, Key, KeyCount); }
-		void SetAlt(const wchar_t * const *Key,int KeyCount)         { SetGroup(KBL_ALT, Key, KeyCount); }
-		void SetCtrl(const wchar_t * const *Key,int KeyCount)        { SetGroup(KBL_CTRL, Key, KeyCount); }
-		void SetCtrlShift(const wchar_t * const *Key,int KeyCount)   { SetGroup(KBL_CTRLSHIFT, Key, KeyCount); }
-		void SetAltShift(const wchar_t * const *Key,int KeyCount)    { SetGroup(KBL_ALTSHIFT, Key, KeyCount); }
-		void SetCtrlAlt(const wchar_t **Key,int KeyCount)            { SetGroup(KBL_CTRLALT, Key, KeyCount); }
-		void SetCtrlAltShift(const wchar_t **Key,int KeyCount)       { SetGroup(KBL_CTRLALTSHIFT, Key, KeyCount); }
+	void Set(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_MAIN, Key, KeyCount); }
+	void SetShift(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_SHIFT, Key, KeyCount); }
+	void SetAlt(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_ALT, Key, KeyCount); }
+	void SetCtrl(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_CTRL, Key, KeyCount); }
+	void SetCtrlShift(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_CTRLSHIFT, Key, KeyCount); }
+	void SetAltShift(const wchar_t *const *Key, int KeyCount) { SetGroup(KBL_ALTSHIFT, Key, KeyCount); }
+	void SetCtrlAlt(const wchar_t **Key, int KeyCount) { SetGroup(KBL_CTRLALT, Key, KeyCount); }
+	void SetCtrlAltShift(const wchar_t **Key, int KeyCount) { SetGroup(KBL_CTRLALTSHIFT, Key, KeyCount); }
 
-		void SetDisableMask(int Mask);
-		void Change(const wchar_t *NewStr,int Pos)                   { Change(KBL_MAIN, NewStr, Pos); }
+	void SetDisableMask(int Mask);
+	void Change(const wchar_t *NewStr, int Pos) { Change(KBL_MAIN, NewStr, Pos); }
 
-		// Изменение любого Label
-		void Change(int Group,const wchar_t *NewStr,int Pos);
+	// Изменение любого Label
+	void Change(int Group, const wchar_t *NewStr, int Pos);
 
-		void RedrawIfChanged();
-		virtual void ResizeConsole();
+	void RedrawIfChanged();
+	virtual void ResizeConsole();
 };

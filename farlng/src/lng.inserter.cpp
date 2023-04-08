@@ -4,17 +4,18 @@
 #include <list>
 #include <string.h>
 
-int main_inserter(int argc, char** argv)
+int main_inserter(int argc, char **argv)
 {
-	if(argc != 4)
-	{
+	if (argc != 4) {
 		const auto NamePtr = strrchr(argv[0], '/');
-		std::cout << "Usage:\n" << (NamePtr? NamePtr+1 : argv[0]) << " input_template_file output_template_file new_lng_file" << std::endl;
+		std::cout << "Usage:\n"
+					<< (NamePtr ? NamePtr + 1 : argv[0])
+					<< " input_template_file output_template_file new_lng_file" << std::endl;
 		return -1;
 	}
 
 	const std::string InFeedName = argv[1], OutFeedName = argv[2], LngName = argv[3];
-	
+
 	std::ifstream Feed(InFeedName), Lng(LngName);
 
 	std::cout << "Reading " << LngName << std::endl;
@@ -25,11 +26,9 @@ int main_inserter(int argc, char** argv)
 	std::list<std::string> LngLines;
 
 	std::string Buffer;
-	while(!Lng.eof())
-	{
+	while (!Lng.eof()) {
 		std::getline(Lng, Buffer);
-		if(!Buffer.compare(0, 1, "\""))
-		{
+		if (!Buffer.compare(0, 1, "\"")) {
 			LngLines.push_back(Buffer);
 		}
 	}
@@ -38,41 +37,39 @@ int main_inserter(int argc, char** argv)
 
 	std::list<std::string> FeedLines;
 
-	while(!Feed.eof())
-	{
+	while (!Feed.eof()) {
 		getline(Feed, Buffer);
 		FeedLines.push_back(Buffer);
 	}
 
 	size_t ConstsCount = 0;
-	for(auto i = FeedLines.begin(); i != FeedLines.end(); ++i)
-	{
+	for (auto i = FeedLines.begin(); i != FeedLines.end(); ++i) {
 		// assume that all constants starts with 'M'.
-		if(!i->compare(0, 1, "M"))
-		{
+		if (!i->compare(0, 1, "M")) {
 			++ConstsCount;
 		}
 	}
 
-	if(ConstsCount != LngLines.size())
-	{
-		std::cerr << "Error: lines count mismatch: " << InFeedName << " - " << ConstsCount << ", " << LngName << " - " << LngLines.size() << std::endl;
+	if (ConstsCount != LngLines.size()) {
+		std::cerr << "Error: lines count mismatch: " << InFeedName << " - " << ConstsCount << ", " << LngName
+					<< " - " << LngLines.size() << std::endl;
 		return -1;
 	}
 
-	if(FeedLines.back().empty())
-	{
+	if (FeedLines.back().empty()) {
 		FeedLines.pop_back();
 	}
 
 	auto Ptr = FeedLines.begin();
 
-	if(!Ptr->compare(0, 14, "\xef\xbb\xbfm4_include("))
-	{
+	if (!Ptr->compare(0, 14, "\xef\xbb\xbfm4_include(")) {
 		++Ptr;
 	}
 
-#define SKIP_EMPTY_LINES_AND_COMMENTS while(Ptr->empty() || !Ptr->compare(0, 1, "#")) {++Ptr;}
+#define SKIP_EMPTY_LINES_AND_COMMENTS                                                                          \
+	while (Ptr->empty() || !Ptr->compare(0, 1, "#")) {                                                         \
+		++Ptr;                                                                                                 \
+	}
 
 	SKIP_EMPTY_LINES_AND_COMMENTS
 
@@ -92,73 +89,58 @@ int main_inserter(int argc, char** argv)
 	bool Update = false;
 	size_t UpdateIndex = Num;
 
-	for(size_t i = 0; i < Num; ++i, ++Ptr)
-	{
+	for (size_t i = 0; i < Num; ++i, ++Ptr) {
 		SKIP_EMPTY_LINES_AND_COMMENTS
-		if(!Ptr->compare(0, LngName.length(), LngName))
-		{
+		if (!Ptr->compare(0, LngName.length(), LngName)) {
 			Update = true;
 			UpdateIndex = i;
 			break;
 		}
 	}
 
-	if(Update)
-	{
+	if (Update) {
 		std::cout << LngName << " already exist (id == " << UpdateIndex << "). Updating." << std::endl;
-	}
-	else
-	{
+	} else {
 		std::cout << "Inserting new language (id == " << UpdateIndex << ") from " << LngName << std::endl;
 		strStream.clear();
-		strStream << Num+1;
+		strStream << Num + 1;
 		*NumPtr = strStream.str();
 
-		std::string ShortLngName = LngHeader.substr(LngHeader.find(L'=', 0)+1);
+		std::string ShortLngName = LngHeader.substr(LngHeader.find(L'=', 0) + 1);
 		ShortLngName.resize(ShortLngName.find(L','), 0);
 
-		std::string FullLngName = LngHeader.substr(LngHeader.find(L',', 0)+1);
-		FeedLines.insert(Ptr, LngName+" " + ShortLngName + " \"" + FullLngName + "\"");
+		std::string FullLngName = LngHeader.substr(LngHeader.find(L',', 0) + 1);
+		FeedLines.insert(Ptr, LngName + " " + ShortLngName + " \"" + FullLngName + "\"");
 	}
 
-	for(auto i = LngLines.begin(); i != LngLines.end(); ++i)
-	{
+	for (auto i = LngLines.begin(); i != LngLines.end(); ++i) {
 		// assume that all constants start with 'M'.
-		while(Ptr->compare(0, 1, "M"))
-		{
+		while (Ptr->compare(0, 1, "M")) {
 			++Ptr;
 		}
 		++Ptr;
 
-		for(size_t j = 0; j < UpdateIndex || !UpdateIndex; ++j)
-		{
-			while(Ptr != FeedLines.end() && Ptr->compare(0, 1, "\"") && Ptr->compare(0, 5, "upd:\""))
-			{
+		for (size_t j = 0; j < UpdateIndex || !UpdateIndex; ++j) {
+			while (Ptr != FeedLines.end() && Ptr->compare(0, 1, "\"") && Ptr->compare(0, 5, "upd:\"")) {
 				++Ptr;
 			}
-			if(!UpdateIndex)
-			{
+			if (!UpdateIndex) {
 				break;
 			}
 			++Ptr;
 		}
 
-		if(Update)
-		{
-			const char* Str = Ptr->c_str();
+		if (Update) {
+			const char *Str = Ptr->c_str();
 			size_t l = Ptr->length();
-			if(!Ptr->compare(0, 4, "upd:"))
-			{
-				Str += 4;
-				l -= 4;
+			if (!Ptr->compare(0, 4, "upd:")) {
+				Str+= 4;
+				l-= 4;
 			}
-			if(i->compare(0, l, Str))
-			{
+			if (i->compare(0, l, Str)) {
 				*Ptr = *i;
 			}
-		}
-		else
-		{
+		} else {
 			FeedLines.insert(Ptr, *i);
 		}
 	}
@@ -167,8 +149,7 @@ int main_inserter(int argc, char** argv)
 
 	std::ofstream oFeed(OutFeedName);
 
-	for(auto i = FeedLines.begin(); i != FeedLines.end(); ++i)
-	{
+	for (auto i = FeedLines.begin(); i != FeedLines.end(); ++i) {
 		oFeed << *i << L'\n';
 	}
 

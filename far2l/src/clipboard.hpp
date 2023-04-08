@@ -36,21 +36,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 
 int WINAPI CopyToClipboard(const wchar_t *Data);
-wchar_t* PasteFromClipboardEx(int MaxChars = -1);
-wchar_t* WINAPI PasteFromClipboard();
+wchar_t *PasteFromClipboardEx(int MaxChars = -1);
+wchar_t *WINAPI PasteFromClipboard();
 BOOL EmptyInternalClipboard();
 
 class Clipboard
 {
 	static HGLOBAL hInternalClipboard[5];
-	static UINT    uInternalClipboardFormat[5];
+	static UINT uInternalClipboardFormat[5];
 
 	static bool UseInternalClipboard;
 	static bool InternalClipboardOpen;
 
 public:
-
-	static bool SetUseInternalClipboardState(bool State); //Sets UseInternalClipboard to State, and returns previous state
+	static bool SetUseInternalClipboardState(bool State);	// Sets UseInternalClipboard to State, and returns previous state
 	static bool GetUseInternalClipboardState();
 
 	Clipboard() {}

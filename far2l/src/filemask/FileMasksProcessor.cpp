@@ -34,17 +34,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "FileMasksProcessor.hpp"
 #include "processname.hpp"
 #include "StackHeapArray.hpp"
 
-FileMasksProcessor::FileMasksProcessor():
-	BaseFileMask(),
-	re(nullptr),
-	n(0)
-{
-}
+FileMasksProcessor::FileMasksProcessor()
+	:
+	BaseFileMask(), re(nullptr), n(0)
+{}
 
 void FileMasksProcessor::Free()
 {
@@ -64,16 +61,14 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 {
 	Free();
 	// разделителем масок является не только запятая, но и точка с запятой!
-	DWORD flags=ULF_PACKASTERISKS|ULF_PROCESSBRACKETS|ULF_SORT|ULF_UNIQUE;
+	DWORD flags = ULF_PACKASTERISKS | ULF_PROCESSBRACKETS | ULF_SORT | ULF_UNIQUE;
 
-	if (Flags&FMPF_ADDASTERISK)
-		flags|=ULF_ADDASTERISK;
+	if (Flags & FMPF_ADDASTERISK)
+		flags|= ULF_ADDASTERISK;
 
-	if (masks && *masks == L'/')
-	{
-		re.reset(new(std::nothrow) RegExp);
-		if (re && re->Compile(masks, OP_PERLSTYLE|OP_OPTIMIZE))
-		{
+	if (masks && *masks == L'/') {
+		re.reset(new (std::nothrow) RegExp);
+		if (re && re->Compile(masks, OP_PERLSTYLE | OP_OPTIMIZE)) {
 			n = re->GetBracketsCount();
 			return true;
 		}
@@ -81,14 +76,13 @@ bool FileMasksProcessor::Set(const wchar_t *masks, DWORD Flags)
 		return false;
 	}
 
-	Masks.SetParameters(L',',L';',flags);
+	Masks.SetParameters(L',', L';', flags);
 	return Masks.Set(masks);
 }
 
 bool FileMasksProcessor::IsEmpty() const
 {
-	if (re)
-	{
+	if (re) {
 		return !n;
 	}
 
@@ -102,18 +96,16 @@ bool FileMasksProcessor::IsEmpty() const
 */
 bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 {
-	if (re)
-	{
+	if (re) {
 		StackHeapArray<RegExpMatch> m(n);
 		int i = n;
 		return re->Search(ReStringView(FileName), m.Get(), i);
 	}
 
-	const wchar_t *MaskPtr;   // указатель на текущую маску в списке
-	for (size_t MI = 0; nullptr!=(MaskPtr=Masks.Get(MI)); ++MI)
-	{
+	const wchar_t *MaskPtr;		// указатель на текущую маску в списке
+	for (size_t MI = 0; nullptr != (MaskPtr = Masks.Get(MI)); ++MI) {
 		// SkipPath=FALSE, т.к. в CFileMask вызывается PointToName
-		if (CmpName(MaskPtr,FileName, false))
+		if (CmpName(MaskPtr, FileName, false))
 			return true;
 	}
 

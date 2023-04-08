@@ -54,7 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 BOOL WINAPI CtrlHandler(DWORD CtrlType);
 
-static int CurX,CurY;
+static int CurX, CurY;
 static DWORD64 CurColor;
 static volatile DWORD CtrlHandlerEvent = std::numeric_limits<uint32_t>::max();
 
@@ -66,23 +66,23 @@ WCHAR Oem2Unicode[256];
 WCHAR BoxSymbols[64];
 
 COORD CurSize{};
-SHORT ScrX=0,ScrY=0;
-SHORT PrevScrX=-1,PrevScrY=-1;
-DWORD InitialConsoleMode=0;
+SHORT ScrX = 0, ScrY = 0;
+SHORT PrevScrX = -1, PrevScrY = -1;
+DWORD InitialConsoleMode = 0;
 FARString strInitTitle;
 SMALL_RECT InitWindowRect;
 COORD InitialSize;
 
-//static HICON hOldLargeIcon=nullptr, hOldSmallIcon=nullptr;
+// static HICON hOldLargeIcon=nullptr, hOldSmallIcon=nullptr;
 
-const size_t StackBufferSize=0x2000;
+const size_t StackBufferSize = 0x2000;
 
 void InitConsole()
 {
 	InitRecodeOutTable();
 	Console.GetCursorInfo(InitialCursorInfo);
-	Console.SetControlHandler(CtrlHandler,TRUE);
-	Console.GetMode(Console.GetInputHandle(),InitialConsoleMode);
+	Console.SetControlHandler(CtrlHandler, TRUE);
+	Console.GetMode(Console.GetInputHandle(), InitialConsoleMode);
 	Console.GetTitle(strInitTitle);
 	Console.GetWindowRect(InitWindowRect);
 	Console.GetSize(InitialSize);
@@ -93,7 +93,7 @@ void InitConsole()
 
 	// размер клавиатурной очереди = 1024 кода клавиши
 	if (!KeyQueue)
-		KeyQueue=new FarQueue<DWORD>(1024);
+		KeyQueue = new FarQueue<DWORD>(1024);
 
 	SetFarConsoleMode();
 
@@ -107,8 +107,8 @@ void InitConsole()
 
 	COORD InitSize{};
 	GetVideoMode(InitSize);
-	if (WindowRect.Left || WindowRect.Top || WindowRect.Right != InitSize.X-1 || WindowRect.Bottom != InitSize.Y-1)
-	{
+	if (WindowRect.Left || WindowRect.Top || WindowRect.Right != InitSize.X - 1
+			|| WindowRect.Bottom != InitSize.Y - 1) {
 		COORD newSize;
 		newSize.X = WindowRect.Right - WindowRect.Left + 1;
 		newSize.Y = WindowRect.Bottom - WindowRect.Top + 1;
@@ -132,23 +132,19 @@ void CloseConsole()
 	Console.SetSize(InitialSize);
 
 	delete KeyQueue;
-	KeyQueue=nullptr;
+	KeyQueue = nullptr;
 }
-
 
 void SetFarConsoleMode(BOOL SetsActiveBuffer)
 {
-	int Mode=ENABLE_WINDOW_INPUT;
+	int Mode = ENABLE_WINDOW_INPUT;
 
-	if (Opt.Mouse)
-	{
-		//ENABLE_EXTENDED_FLAGS actually disables all the extended flags.
-		Mode|=ENABLE_MOUSE_INPUT|ENABLE_EXTENDED_FLAGS;
-	}
-	else
-	{
-		//если вдруг изменили опцию во время работы фара, то включим то что надо
-		Mode|=InitialConsoleMode&(ENABLE_EXTENDED_FLAGS|ENABLE_QUICK_EDIT_MODE);
+	if (Opt.Mouse) {
+		// ENABLE_EXTENDED_FLAGS actually disables all the extended flags.
+		Mode|= ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS;
+	} else {
+		// если вдруг изменили опцию во время работы фара, то включим то что надо
+		Mode|= InitialConsoleMode & (ENABLE_EXTENDED_FLAGS | ENABLE_QUICK_EDIT_MODE);
 	}
 
 	if (SetsActiveBuffer)
@@ -163,7 +159,7 @@ void ChangeConsoleMode(int Mode)
 	HANDLE hConIn = Console.GetInputHandle();
 	Console.GetMode(hConIn, CurrentConsoleMode);
 
-	if (CurrentConsoleMode!=(DWORD)Mode)
+	if (CurrentConsoleMode != (DWORD)Mode)
 		Console.SetMode(hConIn, Mode);
 }
 
@@ -176,9 +172,8 @@ void RestoreConsoleWindowRect()
 {
 	SMALL_RECT WindowRect;
 	Console.GetWindowRect(WindowRect);
-	if(WindowRect.Right-WindowRect.Left<windowholder_rect.Right-windowholder_rect.Left ||
-		WindowRect.Bottom-WindowRect.Top<windowholder_rect.Bottom-windowholder_rect.Top)
-	{
+	if (WindowRect.Right - WindowRect.Left < windowholder_rect.Right - windowholder_rect.Left
+			|| WindowRect.Bottom - WindowRect.Top < windowholder_rect.Bottom - windowholder_rect.Top) {
 		Console.SetWindowRect(windowholder_rect);
 	}
 }
@@ -186,8 +181,8 @@ void RestoreConsoleWindowRect()
 void FlushInputBuffer()
 {
 	Console.FlushInputBuffer();
-	MouseButtonState=0;
-	MouseEventFlags=0;
+	MouseButtonState = 0;
+	MouseEventFlags = 0;
 }
 
 void ToggleVideoMode()
@@ -199,37 +194,38 @@ void ToggleVideoMode()
 void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx, int Sy)
 {
 	COORD Size;
-	if (Sx==-1 || Sy==-1)
-	{
+	if (Sx == -1 || Sy == -1) {
 		Console.GetSize(Size);
 	}
 	INPUT_RECORD Rec;
-	Rec.EventType=WINDOW_BUFFER_SIZE_EVENT;
-	Rec.Event.WindowBufferSizeEvent.dwSize.X=Sx==-1?Size.X:Sx;
-	Rec.Event.WindowBufferSizeEvent.dwSize.Y=Sy==-1?Size.Y:Sy;
+	Rec.EventType = WINDOW_BUFFER_SIZE_EVENT;
+	Rec.Event.WindowBufferSizeEvent.dwSize.X = Sx == -1 ? Size.X : Sx;
+	Rec.Event.WindowBufferSizeEvent.dwSize.Y = Sy == -1 ? Size.Y : Sy;
 	DWORD Writes;
-	Console.WriteInput(Rec,1,Writes);
+	Console.WriteInput(Rec, 1, Writes);
 }
 
-void GetVideoMode(COORD& Size)
+void GetVideoMode(COORD &Size)
 {
-	//чтоб решить баг винды приводящий к появлению скролов и т.п. после потери фокуса
+	// чтоб решить баг винды приводящий к появлению скролов и т.п. после потери фокуса
 	SaveConsoleWindowRect();
-	Size.X=0;
-	Size.Y=0;
+	Size.X = 0;
+	Size.Y = 0;
 	Console.GetSize(Size);
-	ScrX=Size.X-1;
-	ScrY=Size.Y-1;
-	ASSERT(ScrX>0);
-	ASSERT(ScrY>0);
-	WidthNameForMessage=(ScrX*38)/100+1;
+	ScrX = Size.X - 1;
+	ScrY = Size.Y - 1;
+	ASSERT(ScrX > 0);
+	ASSERT(ScrY > 0);
+	WidthNameForMessage = (ScrX * 38) / 100 + 1;
 
-	if (PrevScrX == -1) PrevScrX=ScrX;
+	if (PrevScrX == -1)
+		PrevScrX = ScrX;
 
-	if (PrevScrY == -1) PrevScrY=ScrY;
+	if (PrevScrY == -1)
+		PrevScrY = ScrY;
 
-	_OT(SysLog(L"ScrX=%d ScrY=%d",ScrX,ScrY));
-	ScrBuf.AllocBuf(Size.X,Size.Y);
+	_OT(SysLog(L"ScrX=%d ScrY=%d", ScrX, ScrY));
+	ScrBuf.AllocBuf(Size.X, Size.Y);
 	_OT(ViewConsoleInfo());
 }
 
@@ -259,18 +255,18 @@ void CheckForPendingCtrlHandleEvent()
 			CTRL_LOGOFF_EVENT
 			CTRL_SHUTDOWN_EVENT
 	*/
-	if (CtrlType==CTRL_C_EVENT || CtrlType==CTRL_BREAK_EVENT)
-	{
-		if (CtrlType==CTRL_BREAK_EVENT)
+	if (CtrlType == CTRL_C_EVENT || CtrlType == CTRL_BREAK_EVENT) {
+		if (CtrlType == CTRL_BREAK_EVENT)
 			WriteInput(KEY_BREAK);
 
-		if (CtrlObject && CtrlObject->Cp())
-		{
-			if (CtrlObject->Cp()->LeftPanel && CtrlObject->Cp()->LeftPanel->GetMode()==PLUGIN_PANEL)
-				CtrlObject->Plugins.ProcessEvent(CtrlObject->Cp()->LeftPanel->GetPluginHandle(),FE_BREAK,(void *)(DWORD_PTR)CtrlType);
+		if (CtrlObject && CtrlObject->Cp()) {
+			if (CtrlObject->Cp()->LeftPanel && CtrlObject->Cp()->LeftPanel->GetMode() == PLUGIN_PANEL)
+				CtrlObject->Plugins.ProcessEvent(CtrlObject->Cp()->LeftPanel->GetPluginHandle(), FE_BREAK,
+						(void *)(DWORD_PTR)CtrlType);
 
-			if (CtrlObject->Cp()->RightPanel && CtrlObject->Cp()->RightPanel->GetMode()==PLUGIN_PANEL)
-				CtrlObject->Plugins.ProcessEvent(CtrlObject->Cp()->RightPanel->GetPluginHandle(),FE_BREAK,(void *)(DWORD_PTR)CtrlType);
+			if (CtrlObject->Cp()->RightPanel && CtrlObject->Cp()->RightPanel->GetMode() == PLUGIN_PANEL)
+				CtrlObject->Plugins.ProcessEvent(CtrlObject->Cp()->RightPanel->GetPluginHandle(), FE_BREAK,
+						(void *)(DWORD_PTR)CtrlType);
 		}
 
 		return;
@@ -283,194 +279,219 @@ void CheckForPendingCtrlHandleEvent()
 	CloseFAR = TRUE;
 }
 
-
 void ShowTime(int ShowAlways)
 {
 	FARString strClockText;
-	static SYSTEMTIME lasttm={0,0,0,0,0,0,0,0};
+	static SYSTEMTIME lasttm = {0, 0, 0, 0, 0, 0, 0, 0};
 	SYSTEMTIME tm;
 	WINPORT(GetLocalTime)(&tm);
 	CHAR_INFO ScreenClockText[5];
-	GetText(ScrX-4,0,ScrX,0,ScreenClockText,sizeof(ScreenClockText));
+	GetText(ScrX - 4, 0, ScrX, 0, ScreenClockText, sizeof(ScreenClockText));
 
-	if (ShowAlways==2)
-	{
-		memset(&lasttm,0,sizeof(lasttm));
+	if (ShowAlways == 2) {
+		memset(&lasttm, 0, sizeof(lasttm));
 		return;
 	}
 
-	if ((!ShowAlways && lasttm.wMinute==tm.wMinute && lasttm.wHour==tm.wHour &&
-		ScreenClockText[2].Char.UnicodeChar==L':') || ScreenSaverActive)
+	if ((!ShowAlways && lasttm.wMinute == tm.wMinute && lasttm.wHour == tm.wHour
+				&& ScreenClockText[2].Char.UnicodeChar == L':')
+			|| ScreenSaverActive)
 		return;
 
 	ProcessShowClock++;
-	lasttm=tm;
-	strClockText.Format(L"%02d:%02d",tm.wHour,tm.wMinute);
-	GotoXY(ScrX-4,0);
+	lasttm = tm;
+	strClockText.Format(L"%02d:%02d", tm.wHour, tm.wMinute);
+	GotoXY(ScrX - 4, 0);
 	// Здесь хрень какая-то получается с ModType - все время не верное значение!
-	Frame *CurFrame=FrameManager->GetCurrentFrame();
+	Frame *CurFrame = FrameManager->GetCurrentFrame();
 
-	if (CurFrame)
-	{
-		int ModType=CurFrame->GetType();
-		SetColor(ModType==MODALTYPE_VIEWER?COL_VIEWERCLOCK:
-			(ModType==MODALTYPE_EDITOR?COL_EDITORCLOCK:COL_CLOCK));
+	if (CurFrame) {
+		int ModType = CurFrame->GetType();
+		SetColor(ModType == MODALTYPE_VIEWER
+						? COL_VIEWERCLOCK
+						: (ModType == MODALTYPE_EDITOR ? COL_EDITORCLOCK : COL_CLOCK));
 		Text(strClockText);
-		//ScrBuf.Flush();
+		// ScrBuf.Flush();
 	}
 
 	ProcessShowClock--;
 }
 
-void GotoXY(int X,int Y)
+void GotoXY(int X, int Y)
 {
-	CurX=X;
-	CurY=Y;
+	CurX = X;
+	CurY = Y;
 }
-
 
 int WhereX()
 {
-	return(CurX);
+	return (CurX);
 }
-
 
 int WhereY()
 {
-	return(CurY);
+	return (CurY);
 }
 
-
-void MoveCursor(int X,int Y)
+void MoveCursor(int X, int Y)
 {
-	ScrBuf.MoveCursor(X,Y);
+	ScrBuf.MoveCursor(X, Y);
 }
 
-
-void GetCursorPos(SHORT& X,SHORT& Y)
+void GetCursorPos(SHORT &X, SHORT &Y)
 {
-	ScrBuf.GetCursorPos(X,Y);
+	ScrBuf.GetCursorPos(X, Y);
 }
-
 
 void SetCursorType(bool Visible, DWORD Size)
 {
 	if (Size == (DWORD)-1 || !Visible)
 		Size = (Opt.CursorSize[0] ? Opt.CursorSize[0] : InitialCursorInfo.dwSize);
 
-	ScrBuf.SetCursorType(Visible,Size);
+	ScrBuf.SetCursorType(Visible, Size);
 }
 
 void SetInitialCursorType()
 {
-	ScrBuf.SetCursorType(InitialCursorInfo.bVisible!=FALSE,InitialCursorInfo.dwSize);
+	ScrBuf.SetCursorType(InitialCursorInfo.bVisible != FALSE, InitialCursorInfo.dwSize);
 }
 
-
-void GetCursorType(bool& Visible, DWORD& Size)
+void GetCursorType(bool &Visible, DWORD &Size)
 {
-	ScrBuf.GetCursorType(Visible,Size);
+	ScrBuf.GetCursorType(Visible, Size);
 }
 
-
-void MoveRealCursor(int X,int Y)
+void MoveRealCursor(int X, int Y)
 {
-	COORD C={(SHORT)X,(SHORT)Y};
+	COORD C = {(SHORT)X, (SHORT)Y};
 	Console.SetCursorPosition(C);
 }
 
-
-void GetRealCursorPos(SHORT& X,SHORT& Y)
+void GetRealCursorPos(SHORT &X, SHORT &Y)
 {
 	COORD CursorPosition;
 	Console.GetCursorPosition(CursorPosition);
-	X=CursorPosition.X;
-	Y=CursorPosition.Y;
+	X = CursorPosition.X;
+	Y = CursorPosition.Y;
 }
 
 void InitRecodeOutTable()
 {
-	for (size_t i=0; i<ARRAYSIZE(Oem2Unicode); i++)
-	{
+	for (size_t i = 0; i < ARRAYSIZE(Oem2Unicode); i++) {
 		char c = static_cast<char>(i);
 		WINPORT(MultiByteToWideChar)(CP_OEMCP, MB_USEGLYPHCHARS, &c, 1, &Oem2Unicode[i], 1);
 	}
 
-	if (Opt.CleanAscii)
-	{
-		for (size_t i=0; i<0x20; i++)
-			Oem2Unicode[i]=L'.';
+	if (Opt.CleanAscii) {
+		for (size_t i = 0; i < 0x20; i++)
+			Oem2Unicode[i] = L'.';
 
-		Oem2Unicode[0x07]=L'*';
-		Oem2Unicode[0x10]=L'>';
-		Oem2Unicode[0x11]=L'<';
-		Oem2Unicode[0x15]=L'$';
-		Oem2Unicode[0x16]=L'-';
-		Oem2Unicode[0x18]=L'|';
-		Oem2Unicode[0x19]=L'V';
-		Oem2Unicode[0x1A]=L'>';
-		Oem2Unicode[0x1B]=L'<';
-		Oem2Unicode[0x1E]=L'X';
-		Oem2Unicode[0x1F]=L'X';
+		Oem2Unicode[0x07] = L'*';
+		Oem2Unicode[0x10] = L'>';
+		Oem2Unicode[0x11] = L'<';
+		Oem2Unicode[0x15] = L'$';
+		Oem2Unicode[0x16] = L'-';
+		Oem2Unicode[0x18] = L'|';
+		Oem2Unicode[0x19] = L'V';
+		Oem2Unicode[0x1A] = L'>';
+		Oem2Unicode[0x1B] = L'<';
+		Oem2Unicode[0x1E] = L'X';
+		Oem2Unicode[0x1F] = L'X';
 
-		Oem2Unicode[0x7F]=L'.';
+		Oem2Unicode[0x7F] = L'.';
 	}
 
-	if (Opt.NoGraphics)
-	{
-		for (int i=0xB3; i<=0xDA; i++)
-		{
-			Oem2Unicode[i]=L'+';
+	if (Opt.NoGraphics) {
+		for (int i = 0xB3; i <= 0xDA; i++) {
+			Oem2Unicode[i] = L'+';
 		}
-		Oem2Unicode[0xB3]=L'|';
-		Oem2Unicode[0xBA]=L'|';
-		Oem2Unicode[0xC4]=L'-';
-		Oem2Unicode[0xCD]=L'=';
+		Oem2Unicode[0xB3] = L'|';
+		Oem2Unicode[0xBA] = L'|';
+		Oem2Unicode[0xC4] = L'-';
+		Oem2Unicode[0xCD] = L'=';
 	}
 
 	{
-		static WCHAR _BoxSymbols[48] =
-		{
-			0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556,
-			0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C, 0x255B, 0x2510,
-			0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F,
-			0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x2567,
-			0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B,
-			0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
+		static WCHAR _BoxSymbols[48] = {
+				0x2591,
+				0x2592,
+				0x2593,
+				0x2502,
+				0x2524,
+				0x2561,
+				0x2562,
+				0x2556,
+				0x2555,
+				0x2563,
+				0x2551,
+				0x2557,
+				0x255D,
+				0x255C,
+				0x255B,
+				0x2510,
+				0x2514,
+				0x2534,
+				0x252C,
+				0x251C,
+				0x2500,
+				0x253C,
+				0x255E,
+				0x255F,
+				0x255A,
+				0x2554,
+				0x2569,
+				0x2566,
+				0x2560,
+				0x2550,
+				0x256C,
+				0x2567,
+				0x2568,
+				0x2564,
+				0x2565,
+				0x2559,
+				0x2558,
+				0x2552,
+				0x2553,
+				0x256B,
+				0x256A,
+				0x2518,
+				0x250C,
+				0x2588,
+				0x2584,
+				0x258C,
+				0x2590,
+				0x2580,
 		};
 		// перед [пере]инициализацией восстановим буфер
-		memcpy(BoxSymbols,(BYTE*)_BoxSymbols,sizeof(_BoxSymbols));
+		memcpy(BoxSymbols, (BYTE *)_BoxSymbols, sizeof(_BoxSymbols));
 
-		if (Opt.NoGraphics)
-		{
-			for (int i=BS_V1; i<=BS_LT_H1V1; i++)
-				BoxSymbols[i]=L'+';
+		if (Opt.NoGraphics) {
+			for (int i = BS_V1; i <= BS_LT_H1V1; i++)
+				BoxSymbols[i] = L'+';
 
-			BoxSymbols[BS_V1]=BoxSymbols[BS_V2]=L'|';
-			BoxSymbols[BS_H1]=L'-';
-			BoxSymbols[BS_H2]=L'=';
+			BoxSymbols[BS_V1] = BoxSymbols[BS_V2] = L'|';
+			BoxSymbols[BS_H1] = L'-';
+			BoxSymbols[BS_H2] = L'=';
 		}
 
-		if (Opt.NoBoxes)
-		{
-			for (int i=BS_V1; i<=BS_LT_H1V1; i++)
-				BoxSymbols[i]=L' ';
+		if (Opt.NoBoxes) {
+			for (int i = BS_V1; i <= BS_LT_H1V1; i++)
+				BoxSymbols[i] = L' ';
 
-			BoxSymbols[BS_V1]=BoxSymbols[BS_V2]=L' ';
-			BoxSymbols[BS_H1]=L' ';
-			BoxSymbols[BS_H2]=L' ';
+			BoxSymbols[BS_V1] = BoxSymbols[BS_V2] = L' ';
+			BoxSymbols[BS_H1] = L' ';
+			BoxSymbols[BS_H2] = L' ';
 		}
 	}
 
 	//_SVS(SysLogDump("Oem2Unicode",0,(LPBYTE)Oem2Unicode,sizeof(Oem2Unicode),nullptr));
 }
 
-
 void Text(int X, int Y, int Color, const WCHAR *Str)
 {
-	CurColor=FarColorToReal(Color);
-	CurX=X;
-	CurY=Y;
+	CurColor = FarColorToReal(Color);
+	CurX = X;
+	CurY = Y;
 	Text(Str);
 }
 
@@ -483,19 +504,17 @@ void Text(const WCHAR *Str, size_t Length)
 		return;
 
 	CHAR_INFO StackBuffer[StackBufferSize];
-	PCHAR_INFO HeapBuffer=nullptr;
-	PCHAR_INFO BufPtr=StackBuffer;
+	PCHAR_INFO HeapBuffer = nullptr;
+	PCHAR_INFO BufPtr = StackBuffer;
 
-	if (Length * 2 >= StackBufferSize)
-	{
-		HeapBuffer=new CHAR_INFO[Length * 2 + 1];
-		BufPtr=HeapBuffer;
+	if (Length * 2 >= StackBufferSize) {
+		HeapBuffer = new CHAR_INFO[Length * 2 + 1];
+		BufPtr = HeapBuffer;
 	}
 
 	int nCells = 0;
 	std::wstring wstr;
-	for (size_t i = 0; i < Length; ++nCells)
-	{
+	for (size_t i = 0; i < Length; ++nCells) {
 		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
 		if (nG > 1) {
 			wstr.assign(&Str[i], nG);
@@ -512,13 +531,11 @@ void Text(const WCHAR *Str, size_t Length)
 	}
 
 	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
-	if(HeapBuffer)
-	{
+	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}
 	CurX+= nCells;
 }
-
 
 void Text(FarLangMsg MsgId)
 {
@@ -527,40 +544,36 @@ void Text(FarLangMsg MsgId)
 
 void VText(const WCHAR *Str)
 {
-	int Length=StrLength(Str);
+	int Length = StrLength(Str);
 
-	if (Length<=0)
+	if (Length <= 0)
 		return;
 
-	int StartCurX=CurX;
-	WCHAR ChrStr[2]={0,0};
+	int StartCurX = CurX;
+	WCHAR ChrStr[2] = {0, 0};
 
-	for (int I=0; I<Length; I++)
-	{
-		GotoXY(CurX,CurY);
-		ChrStr[0]=Str[I];
+	for (int I = 0; I < Length; I++) {
+		GotoXY(CurX, CurY);
+		ChrStr[0] = Str[I];
 		Text(ChrStr);
 		CurY++;
-		CurX=StartCurX;
+		CurX = StartCurX;
 	}
 }
 
-void HiText(const wchar_t *Str,int HiColor,int isVertText)
+void HiText(const wchar_t *Str, int HiColor, int isVertText)
 {
 	FARString strTextStr;
 	int SaveColor;
 	size_t pos;
 	strTextStr = Str;
 
-	if (!strTextStr.Pos(pos,L'&'))
-	{
+	if (!strTextStr.Pos(pos, L'&')) {
 		if (isVertText)
 			VText(strTextStr);
 		else
 			Text(strTextStr);
-	}
-	else
-	{
+	} else {
 		//   &&      = '&'
 		//   &&&     = '&'
 		//              ^H
@@ -570,25 +583,24 @@ void HiText(const wchar_t *Str,int HiColor,int isVertText)
 		//   &&&&&&  = '&&&'
 
 		wchar_t *ChPtr = strTextStr.GetBuffer() + pos;
-		int I=0;
-		wchar_t *ChPtr2=ChPtr;
+		int I = 0;
+		wchar_t *ChPtr2 = ChPtr;
 
 		while (*ChPtr2++ == L'&')
 			++I;
 
-		if (I&1) // нечет?
+		if (I & 1)		// нечет?
 		{
-			*ChPtr=0;
+			*ChPtr = 0;
 
 			if (isVertText)
 				VText(strTextStr);
 			else
-				Text(strTextStr); //BUGBUG BAD!!!
+				Text(strTextStr);	// BUGBUG BAD!!!
 
-			if (ChPtr[1])
-			{
-				wchar_t Chr[]={ChPtr[1],0};
-				SaveColor=CurColor;
+			if (ChPtr[1]) {
+				wchar_t Chr[] = {ChPtr[1], 0};
+				SaveColor = CurColor;
 				SetColor(HiColor);
 
 				if (isVertText)
@@ -597,91 +609,97 @@ void HiText(const wchar_t *Str,int HiColor,int isVertText)
 					Text(Chr);
 
 				SetColor(SaveColor);
-				FARString strText = (ChPtr+1);
+				FARString strText = (ChPtr + 1);
 				strTextStr.ReleaseBuffer();
-				ReplaceStrings(strText,L"&&",L"&",-1);
+				ReplaceStrings(strText, L"&&", L"&", -1);
 
 				if (isVertText)
-					VText(strText.CPtr()+1);
+					VText(strText.CPtr() + 1);
 				else
-					Text(strText.CPtr()+1);
+					Text(strText.CPtr() + 1);
 			}
-		}
-		else
-		{
+		} else {
 			strTextStr.ReleaseBuffer();
-			ReplaceStrings(strTextStr,L"&&",L"&",-1);
+			ReplaceStrings(strTextStr, L"&&", L"&", -1);
 
 			if (isVertText)
 				VText(strTextStr);
 			else
-				Text(strTextStr); //BUGBUG BAD!!!
+				Text(strTextStr);	// BUGBUG BAD!!!
 		}
 	}
 }
 
-
-
-void SetScreen(int X1,int Y1,int X2,int Y2,wchar_t Ch,int Color)
+void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color)
 {
-	if (X1<0) X1=0;
+	if (X1 < 0)
+		X1 = 0;
 
-	if (Y1<0) Y1=0;
+	if (Y1 < 0)
+		Y1 = 0;
 
-	if (X2>ScrX) X2=ScrX;
+	if (X2 > ScrX)
+		X2 = ScrX;
 
-	if (Y2>ScrY) Y2=ScrY;
+	if (Y2 > ScrY)
+		Y2 = ScrY;
 
-	ScrBuf.FillRect(X1,Y1,X2,Y2,Ch,FarColorToReal(Color));
+	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, FarColorToReal(Color));
 }
 
-
-void MakeShadow(int X1,int Y1,int X2,int Y2)
+void MakeShadow(int X1, int Y1, int X2, int Y2)
 {
-	if (X1<0) X1=0;
+	if (X1 < 0)
+		X1 = 0;
 
-	if (Y1<0) Y1=0;
+	if (Y1 < 0)
+		Y1 = 0;
 
-	if (X2>ScrX) X2=ScrX;
+	if (X2 > ScrX)
+		X2 = ScrX;
 
-	if (Y2>ScrY) Y2=ScrY;
+	if (Y2 > ScrY)
+		Y2 = ScrY;
 
-	ScrBuf.ApplyColorMask(X1,Y1,X2,Y2,0xF8);
+	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xF8);
 }
 
-void ChangeBlockColor(int X1,int Y1,int X2,int Y2,int Color)
+void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color)
 {
-	if (X1<0) X1=0;
+	if (X1 < 0)
+		X1 = 0;
 
-	if (Y1<0) Y1=0;
+	if (Y1 < 0)
+		Y1 = 0;
 
-	if (X2>ScrX) X2=ScrX;
+	if (X2 > ScrX)
+		X2 = ScrX;
 
-	if (Y2>ScrY) Y2=ScrY;
+	if (Y2 > ScrY)
+		Y2 = ScrY;
 
-	ScrBuf.ApplyColor(X1,Y1,X2,Y2,FarColorToReal(Color));
+	ScrBuf.ApplyColor(X1, Y1, X2, Y2, FarColorToReal(Color));
 }
 
-void mprintf(const wchar_t *fmt,...)
+void mprintf(const wchar_t *fmt, ...)
 {
 	va_list argptr;
-	va_start(argptr,fmt);
+	va_start(argptr, fmt);
 	wchar_t OutStr[2048];
-	vswprintf(OutStr,ARRAYSIZE(OutStr)-1,fmt,argptr);
+	vswprintf(OutStr, ARRAYSIZE(OutStr) - 1, fmt, argptr);
 	Text(OutStr);
 	va_end(argptr);
 }
 
-void vmprintf(const wchar_t *fmt,...)
+void vmprintf(const wchar_t *fmt, ...)
 {
 	va_list argptr;
-	va_start(argptr,fmt);
+	va_start(argptr, fmt);
 	wchar_t OutStr[2048];
-	vswprintf(OutStr,ARRAYSIZE(OutStr)-1,fmt,argptr);
+	vswprintf(OutStr, ARRAYSIZE(OutStr) - 1, fmt, argptr);
 	VText(OutStr);
 	va_end(argptr);
 }
-
 
 void SetColor(int Color, bool ApplyToConsole)
 {
@@ -706,8 +724,8 @@ DWORD64 GetRealColor()
 
 void ClearScreen(int Color)
 {
-	Color=FarColorToReal(Color);
-	ScrBuf.FillRect(0,0,ScrX,ScrY,L' ',Color);
+	Color = FarColorToReal(Color);
+	ScrBuf.FillRect(0, 0, ScrX, ScrY, L' ', Color);
 	ScrBuf.ResetShadow();
 	ScrBuf.Flush();
 	Console.SetTextAttributes(Color);
@@ -715,40 +733,37 @@ void ClearScreen(int Color)
 
 int GetColor()
 {
-	return(CurColor);
+	return (CurColor);
 }
-
 
 void ScrollScreen(int Count)
 {
 	ScrBuf.Scroll(Count);
-	ScrBuf.FillRect(0,ScrY+1-Count,ScrX,ScrY,L' ',FarColorToReal(COL_COMMANDLINEUSERSCREEN));
+	ScrBuf.FillRect(0, ScrY + 1 - Count, ScrX, ScrY, L' ', FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 }
 
-
-void GetText(int X1,int Y1,int X2,int Y2,void *Dest,int DestSize)
+void GetText(int X1, int Y1, int X2, int Y2, void *Dest, int DestSize)
 {
-	ScrBuf.Read(X1,Y1,X2,Y2,(CHAR_INFO *)Dest,DestSize);
+	ScrBuf.Read(X1, Y1, X2, Y2, (CHAR_INFO *)Dest, DestSize);
 }
 
-void PutText(int X1,int Y1,int X2,int Y2,const void *Src)
+void PutText(int X1, int Y1, int X2, int Y2, const void *Src)
 {
-	int Width=X2-X1+1;
+	int Width = X2 - X1 + 1;
 	int Y;
-	CHAR_INFO *SrcPtr=(CHAR_INFO*)Src;
+	CHAR_INFO *SrcPtr = (CHAR_INFO *)Src;
 
-	for (Y=Y1; Y<=Y2; ++Y,SrcPtr+=Width)
-		ScrBuf.Write(X1,Y,SrcPtr,Width);
+	for (Y = Y1; Y <= Y2; ++Y, SrcPtr+= Width)
+		ScrBuf.Write(X1, Y, SrcPtr, Width);
 }
 
 void BoxText(wchar_t Chr)
 {
-	wchar_t Str[]={Chr,L'\0'};
+	wchar_t Str[] = {Chr, L'\0'};
 	BoxText(Str);
 }
 
-
-void BoxText(const wchar_t *Str,int IsVert)
+void BoxText(const wchar_t *Str, int IsVert)
 {
 	if (IsVert)
 		VText(Str);
@@ -756,108 +771,97 @@ void BoxText(const wchar_t *Str,int IsVert)
 		Text(Str);
 }
 
-
 /*
 	Отрисовка прямоугольника.
 */
-void Box(int x1,int y1,int x2,int y2,int Color,int Type)
+void Box(int x1, int y1, int x2, int y2, int Color, int Type)
 {
-	if (x1>=x2 || y1>=y2)
+	if (x1 >= x2 || y1 >= y2)
 		return;
 
 	SetColor(Color);
-	Type=(Type==DOUBLE_BOX || Type==SHORT_DOUBLE_BOX);
+	Type = (Type == DOUBLE_BOX || Type == SHORT_DOUBLE_BOX);
 
 	WCHAR StackBuffer[StackBufferSize];
-	LPWSTR HeapBuffer=nullptr;
-	LPWSTR BufPtr=StackBuffer;
+	LPWSTR HeapBuffer = nullptr;
+	LPWSTR BufPtr = StackBuffer;
 
-	const size_t height=y2-y1;
-	if(height>StackBufferSize)
-	{
-		HeapBuffer=new WCHAR[height];
-		BufPtr=HeapBuffer;
+	const size_t height = y2 - y1;
+	if (height > StackBufferSize) {
+		HeapBuffer = new WCHAR[height];
+		BufPtr = HeapBuffer;
 	}
-	wmemset(BufPtr, BoxSymbols[Type?BS_V2:BS_V1], height-1);
-	BufPtr[height-1]=0;
-	GotoXY(x1,y1+1);
+	wmemset(BufPtr, BoxSymbols[Type ? BS_V2 : BS_V1], height - 1);
+	BufPtr[height - 1] = 0;
+	GotoXY(x1, y1 + 1);
 	VText(BufPtr);
-	GotoXY(x2,y1+1);
+	GotoXY(x2, y1 + 1);
 	VText(BufPtr);
-	const size_t width=x2-x1+2;
-	if(width>StackBufferSize)
-	{
-		if(width>height)
-		{
-			if(HeapBuffer)
-			{
+	const size_t width = x2 - x1 + 2;
+	if (width > StackBufferSize) {
+		if (width > height) {
+			if (HeapBuffer) {
 				delete[] HeapBuffer;
 			}
-			HeapBuffer=new WCHAR[width];
+			HeapBuffer = new WCHAR[width];
 		}
-		BufPtr=HeapBuffer;
+		BufPtr = HeapBuffer;
 	}
-	BufPtr[0]=BoxSymbols[Type?BS_LT_H2V2:BS_LT_H1V1];
-	wmemset(BufPtr+1, BoxSymbols[Type?BS_H2:BS_H1], width-3);
-	BufPtr[width-2]=BoxSymbols[Type?BS_RT_H2V2:BS_RT_H1V1];
-	BufPtr[width-1]=0;
-	GotoXY(x1,y1);
+	BufPtr[0] = BoxSymbols[Type ? BS_LT_H2V2 : BS_LT_H1V1];
+	wmemset(BufPtr + 1, BoxSymbols[Type ? BS_H2 : BS_H1], width - 3);
+	BufPtr[width - 2] = BoxSymbols[Type ? BS_RT_H2V2 : BS_RT_H1V1];
+	BufPtr[width - 1] = 0;
+	GotoXY(x1, y1);
 	Text(BufPtr);
-	BufPtr[0]=BoxSymbols[Type?BS_LB_H2V2:BS_LB_H1V1];
-	BufPtr[width-2]=BoxSymbols[Type?BS_RB_H2V2:BS_RB_H1V1];
-	GotoXY(x1,y2);
+	BufPtr[0] = BoxSymbols[Type ? BS_LB_H2V2 : BS_LB_H1V1];
+	BufPtr[width - 2] = BoxSymbols[Type ? BS_RB_H2V2 : BS_RB_H1V1];
+	GotoXY(x1, y2);
 	Text(BufPtr);
 
-	if(HeapBuffer)
-	{
+	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}
 }
 
 bool ScrollBarRequired(UINT Length, UINT64 ItemsCount)
 {
-	return Length>2 && ItemsCount && Length<ItemsCount;
+	return Length > 2 && ItemsCount && Length < ItemsCount;
 }
 
-bool ScrollBarEx(UINT X1,UINT Y1,UINT Length,UINT64 TopItem,UINT64 ItemsCount)
+bool ScrollBarEx(UINT X1, UINT Y1, UINT Length, UINT64 TopItem, UINT64 ItemsCount)
 {
-	if (ScrollBarRequired(Length, ItemsCount))
-	{
-		Length-=2;
-		ItemsCount-=2;
-		UINT CaretPos=static_cast<UINT>(Round(Length*TopItem,ItemsCount));
-		UINT CaretLength=Max(1U,static_cast<UINT>(Round(static_cast<UINT64>(Length*Length),ItemsCount)));
+	if (ScrollBarRequired(Length, ItemsCount)) {
+		Length-= 2;
+		ItemsCount-= 2;
+		UINT CaretPos = static_cast<UINT>(Round(Length * TopItem, ItemsCount));
+		UINT CaretLength =
+				Max(1U, static_cast<UINT>(Round(static_cast<UINT64>(Length * Length), ItemsCount)));
 
-		if (!CaretPos && TopItem)
-		{
+		if (!CaretPos && TopItem) {
 			CaretPos++;
-		}
-		else if (CaretPos+CaretLength==Length && TopItem+2+Length<ItemsCount)
-		{
+		} else if (CaretPos + CaretLength == Length && TopItem + 2 + Length < ItemsCount) {
 			CaretPos--;
 		}
 
-		CaretPos=Min(CaretPos,Length-CaretLength);
+		CaretPos = Min(CaretPos, Length - CaretLength);
 		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(Length+3>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+3];
-			BufPtr=HeapBuffer;
+		LPWSTR HeapBuffer = nullptr;
+		LPWSTR BufPtr = StackBuffer;
+		if (Length + 3 >= StackBufferSize) {
+			HeapBuffer = new WCHAR[Length + 3];
+			BufPtr = HeapBuffer;
 		}
-		wmemset(BufPtr+1,BoxSymbols[BS_X_B0],Length);
-		BufPtr[0]=Oem2Unicode[0x1E];
+		wmemset(BufPtr + 1, BoxSymbols[BS_X_B0], Length);
+		BufPtr[0] = Oem2Unicode[0x1E];
 
-		for (size_t i=0; i<CaretLength; i++)
-			BufPtr[CaretPos+1+i]=BoxSymbols[BS_X_B2];
+		for (size_t i = 0; i < CaretLength; i++)
+			BufPtr[CaretPos + 1 + i] = BoxSymbols[BS_X_B2];
 
-		BufPtr[Length+1]=Oem2Unicode[0x1F];
-		BufPtr[Length+2]=0;
-		GotoXY(X1,Y1);
+		BufPtr[Length + 1] = Oem2Unicode[0x1F];
+		BufPtr[Length + 2] = 0;
+		GotoXY(X1, Y1);
 		VText(BufPtr);
-		if(HeapBuffer)
-		{
+		if (HeapBuffer) {
 			delete[] HeapBuffer;
 		}
 		return true;
@@ -866,107 +870,99 @@ bool ScrollBarEx(UINT X1,UINT Y1,UINT Length,UINT64 TopItem,UINT64 ItemsCount)
 	return false;
 }
 
-void ScrollBar(int X1,int Y1,int Length, unsigned int Current, unsigned int Total)
+void ScrollBar(int X1, int Y1, int Length, unsigned int Current, unsigned int Total)
 {
 	int ThumbPos;
 
-	if ((Length-=2)<1)
+	if ((Length-= 2) < 1)
 		return;
 
-	if (Total>0)
-		ThumbPos=Length*Current/Total;
+	if (Total > 0)
+		ThumbPos = Length * Current / Total;
 	else
-		ThumbPos=0;
+		ThumbPos = 0;
 
-	if (ThumbPos>=Length)
-		ThumbPos=Length-1;
+	if (ThumbPos >= Length)
+		ThumbPos = Length - 1;
 
-	GotoXY(X1,Y1);
+	GotoXY(X1, Y1);
 	{
 		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(static_cast<size_t>(Length+3)>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+3];
-			BufPtr=HeapBuffer;
+		LPWSTR HeapBuffer = nullptr;
+		LPWSTR BufPtr = StackBuffer;
+		if (static_cast<size_t>(Length + 3) >= StackBufferSize) {
+			HeapBuffer = new WCHAR[Length + 3];
+			BufPtr = HeapBuffer;
 		}
-		wmemset(BufPtr+1,BoxSymbols[BS_X_B0],Length);
-		BufPtr[ThumbPos+1]=BoxSymbols[BS_X_B2];
-		BufPtr[0]=Oem2Unicode[0x1E];
-		BufPtr[Length+1]=Oem2Unicode[0x1F];
-		BufPtr[Length+2]=0;
+		wmemset(BufPtr + 1, BoxSymbols[BS_X_B0], Length);
+		BufPtr[ThumbPos + 1] = BoxSymbols[BS_X_B2];
+		BufPtr[0] = Oem2Unicode[0x1E];
+		BufPtr[Length + 1] = Oem2Unicode[0x1F];
+		BufPtr[Length + 2] = 0;
 		VText(BufPtr);
-		if(HeapBuffer)
-		{
+		if (HeapBuffer) {
 			delete[] HeapBuffer;
 		}
 	}
 }
 
-void DrawLine(int Length,int Type, const wchar_t* UserSep)
+void DrawLine(int Length, int Type, const wchar_t *UserSep)
 {
-	if (Length>1)
-	{
+	if (Length > 1) {
 		WCHAR StackBuffer[StackBufferSize];
-		LPWSTR HeapBuffer=nullptr;
-		LPWSTR BufPtr=StackBuffer;
-		if(static_cast<size_t>(Length)>=StackBufferSize)
-		{
-			HeapBuffer=new WCHAR[Length+1];
-			BufPtr=HeapBuffer;
+		LPWSTR HeapBuffer = nullptr;
+		LPWSTR BufPtr = StackBuffer;
+		if (static_cast<size_t>(Length) >= StackBufferSize) {
+			HeapBuffer = new WCHAR[Length + 1];
+			BufPtr = HeapBuffer;
 		}
-		MakeSeparator(Length,BufPtr,Type,UserSep);
+		MakeSeparator(Length, BufPtr, Type, UserSep);
 
-		(Type >= 4 && Type <= 7) || (Type >= 10 && Type <= 11)? VText(BufPtr) : Text(BufPtr);
-		if(HeapBuffer)
-		{
+		(Type >= 4 && Type <= 7) || (Type >= 10 && Type <= 11) ? VText(BufPtr) : Text(BufPtr);
+		if (HeapBuffer) {
 			delete[] HeapBuffer;
 		}
 	}
 }
 
 // "Нарисовать" сепаратор в памяти.
-WCHAR* MakeSeparator(int Length,WCHAR *DestStr,int Type, const wchar_t* UserSep)
+WCHAR *MakeSeparator(int Length, WCHAR *DestStr, int Type, const wchar_t *UserSep)
 {
-	wchar_t BoxType[12][3]=
-	{
-		// h-horiz, s-space, v-vert, b-border, 1-one line, 2-two line
-		/* 00 */{L' ',                 L' ',                 BoxSymbols[BS_H1]}, //  -     h1s
-		/* 01 */{BoxSymbols[BS_L_H1V2],BoxSymbols[BS_R_H1V2],BoxSymbols[BS_H1]}, // ||-||  h1b2
-		/* 02 */{BoxSymbols[BS_L_H1V1],BoxSymbols[BS_R_H1V1],BoxSymbols[BS_H1]}, // |-|    h1b1
-		/* 03 */{BoxSymbols[BS_L_H2V2],BoxSymbols[BS_R_H2V2],BoxSymbols[BS_H2]}, // ||=||  h2b2
+	wchar_t BoxType[12][3] = {
+			// h-horiz, s-space, v-vert, b-border, 1-one line, 2-two line
+			/* 00 */ {L' ', L' ', BoxSymbols[BS_H1]},										//  -     h1s
+			/* 01 */ {BoxSymbols[BS_L_H1V2], BoxSymbols[BS_R_H1V2], BoxSymbols[BS_H1]},		// ||-||  h1b2
+			/* 02 */ {BoxSymbols[BS_L_H1V1], BoxSymbols[BS_R_H1V1], BoxSymbols[BS_H1]},		// |-|    h1b1
+			/* 03 */ {BoxSymbols[BS_L_H2V2], BoxSymbols[BS_R_H2V2], BoxSymbols[BS_H2]},		// ||=||  h2b2
 
-		/* 04 */{L' ',                 L' ',                 BoxSymbols[BS_V1]}, //  |     v1s
-		/* 05 */{BoxSymbols[BS_T_H2V1],BoxSymbols[BS_B_H2V1],BoxSymbols[BS_V1]}, // =|=    v1b2
-		/* 06 */{BoxSymbols[BS_T_H1V1],BoxSymbols[BS_B_H1V1],BoxSymbols[BS_V1]}, // -|-    v1b1
-		/* 07 */{BoxSymbols[BS_T_H2V2],BoxSymbols[BS_B_H2V2],BoxSymbols[BS_V2]}, // =||=   v2b2
+			/* 04 */ {L' ', L' ', BoxSymbols[BS_V1]},										//  |     v1s
+			/* 05 */ {BoxSymbols[BS_T_H2V1], BoxSymbols[BS_B_H2V1], BoxSymbols[BS_V1]},		// =|=    v1b2
+			/* 06 */ {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_B_H1V1], BoxSymbols[BS_V1]},		// -|-    v1b1
+			/* 07 */ {BoxSymbols[BS_T_H2V2], BoxSymbols[BS_B_H2V2], BoxSymbols[BS_V2]},		// =||=   v2b2
 
-		/* 08 */{BoxSymbols[BS_H1],    BoxSymbols[BS_H1],    BoxSymbols[BS_H1]}, // -      h1
-		/* 09 */{BoxSymbols[BS_H2],    BoxSymbols[BS_H2],    BoxSymbols[BS_H2]}, // =      h2
-		/* 10 */{BoxSymbols[BS_V1],    BoxSymbols[BS_V1],    BoxSymbols[BS_V1]}, // |      v1
-		/* 11 */{BoxSymbols[BS_V2],    BoxSymbols[BS_V2],    BoxSymbols[BS_V2]}, // ||     v2
+			/* 08 */ {BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1]},				// -      h1
+			/* 09 */ {BoxSymbols[BS_H2], BoxSymbols[BS_H2], BoxSymbols[BS_H2]},				// =      h2
+			/* 10 */ {BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1]},				// |      v1
+			/* 11 */ {BoxSymbols[BS_V2], BoxSymbols[BS_V2], BoxSymbols[BS_V2]},				// ||     v2
 	};
 
-	if (Length>1 && DestStr)
-	{
-		Type%=ARRAYSIZE(BoxType);
-		wmemset(DestStr,BoxType[Type][2],Length);
-		DestStr[0]=BoxType[Type][0];
-		DestStr[Length-1]=BoxType[Type][1];
-		DestStr[Length]=0;
+	if (Length > 1 && DestStr) {
+		Type%= ARRAYSIZE(BoxType);
+		wmemset(DestStr, BoxType[Type][2], Length);
+		DestStr[0] = BoxType[Type][0];
+		DestStr[Length - 1] = BoxType[Type][1];
+		DestStr[Length] = 0;
 	}
 
 	return DestStr;
 }
 
-FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
+FARString &HiText2Str(FARString &strDest, const wchar_t *Str)
 {
 	const wchar_t *ChPtr;
 	strDest = Str;
 
-	if ((ChPtr=wcschr(Str,L'&')) )
-	{
+	if ((ChPtr = wcschr(Str, L'&'))) {
 		//   &&      = '&'
 		//   &&&     = '&'
 		//              ^H
@@ -975,28 +971,25 @@ FARString& HiText2Str(FARString& strDest, const wchar_t *Str)
 		//              ^H
 		//   &&&&&&  = '&&&'
 
-		int I=0;
-		const wchar_t *ChPtr2=ChPtr;
+		int I = 0;
+		const wchar_t *ChPtr2 = ChPtr;
 
 		while (*ChPtr2++ == L'&')
 			++I;
 
-		if (I&1) // нечет?
+		if (I & 1)		// нечет?
 		{
-			strDest.Truncate(ChPtr-Str);
+			strDest.Truncate(ChPtr - Str);
 
-			if (ChPtr[1])
-			{
-				wchar_t Chr[]={ChPtr[1],0};
-				strDest+=Chr;
-				FARString strText = (ChPtr+1);
-				ReplaceStrings(strText,L"&&",L"&",-1);
-				strDest+=strText.CPtr()+1;
+			if (ChPtr[1]) {
+				wchar_t Chr[] = {ChPtr[1], 0};
+				strDest+= Chr;
+				FARString strText = (ChPtr + 1);
+				ReplaceStrings(strText, L"&&", L"&", -1);
+				strDest+= strText.CPtr() + 1;
 			}
-		}
-		else
-		{
-			ReplaceStrings(strDest,L"&&",L"&",-1);
+		} else {
+			ReplaceStrings(strDest, L"&&", L"&", -1);
 		}
 	}
 
@@ -1008,42 +1001,36 @@ int HiStrCellsCount(const wchar_t *Str)
 	/*
 			&&      = '&'
 			&&&     = '&'
-                       ^H
+					   ^H
 			&&&&    = '&&'
 			&&&&&   = '&&'
-                       ^H
+					   ^H
 			&&&&&&  = '&&&'
 	*/
 
-	int Length=0;
-	bool Hi=false;
+	int Length = 0;
+	bool Hi = false;
 
-	if (Str)
-	{
-		while (*Str)
-		{
-			if (*Str == L'&')
-			{
-				int Count=0;
+	if (Str) {
+		while (*Str) {
+			if (*Str == L'&') {
+				int Count = 0;
 
-				while (*Str == L'&')
-				{
+				while (*Str == L'&') {
 					Str++;
 					Count++;
 				}
 
-				if (Count&1) //нечёт?
+				if (Count & 1)		// нечёт?
 				{
 					if (Hi)
-						Length+=+1;
+						Length+= +1;
 					else
-						Hi=true;
+						Hi = true;
 				}
 
-				Length+=Count/2;
-			}
-			else
-			{
+				Length+= Count / 2;
+			} else {
 				if (IsCharFullWidth(*Str))
 					Length+= 2;
 				else if (!IsCharXxxfix(*Str))
@@ -1054,7 +1041,6 @@ int HiStrCellsCount(const wchar_t *Str)
 	}
 
 	return Length;
-
 }
 
 int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp)
@@ -1062,32 +1048,27 @@ int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp)
 	/*
 			&&      = '&'
 			&&&     = '&'
-                       ^H
+					   ^H
 			&&&&    = '&&'
 			&&&&&   = '&&'
-                       ^H
+					   ^H
 			&&&&&&  = '&&&'
 	*/
 
-	if (ShowAmp)
-	{
+	if (ShowAmp) {
 		return Pos;
 	}
 
 	int RealPos = 0;
 	int VisPos = 0;
 
-	if (Str)
-	{
-		while (VisPos < Pos && *Str)
-		{
-			if (*Str == L'&')
-			{
+	if (Str) {
+		while (VisPos < Pos && *Str) {
+			if (*Str == L'&') {
 				Str++;
 				RealPos++;
 
-				if (*Str == L'&' && *(Str+1) == L'&' && *(Str+2) != L'&')
-				{
+				if (*Str == L'&' && *(Str + 1) == L'&' && *(Str + 2) != L'&') {
 					Str++;
 					RealPos++;
 				}
@@ -1110,57 +1091,46 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 	/*
 			&&      = '&'
 			&&&     = '&'
-                       ^H
+					   ^H
 			&&&&    = '&&'
 			&&&&&   = '&&'
-                       ^H
+					   ^H
 			&&&&&&  = '&&&'
 	*/
 
-	if (Str)
-	{
-		if (Direct < 0)
-		{
+	if (Str) {
+		if (Direct < 0) {
 			if (!Pos || Pos == 1)
 				return 0;
 
-			if (Str[Pos-1] != L'&')
-			{
-				if (Str[Pos-2] == L'&')
-				{
-					if (Pos-3 >= 0 && Str[Pos-3] == L'&')
-						return Pos-1;
+			if (Str[Pos - 1] != L'&') {
+				if (Str[Pos - 2] == L'&') {
+					if (Pos - 3 >= 0 && Str[Pos - 3] == L'&')
+						return Pos - 1;
 
-					return Pos-2;
+					return Pos - 2;
 				}
 
 				if (Pos > 1 && IsCharFullWidth(Str[Pos - 1]))
-					return Pos-2;
+					return Pos - 2;
 
-				return Pos-1;
-			}
-			else
-			{
-				if (Pos-3 >= 0 && Str[Pos-3] == L'&')
-					return Pos-3;
+				return Pos - 1;
+			} else {
+				if (Pos - 3 >= 0 && Str[Pos - 3] == L'&')
+					return Pos - 3;
 
-				return Pos-2;
+				return Pos - 2;
 			}
-		}
-		else
-		{
+		} else {
 			if (!Str[Pos])
-				return Pos+1;
+				return Pos + 1;
 
-			if (Str[Pos] == L'&')
-			{
-				if (Str[Pos+1] == L'&' && Str[Pos+2] == L'&')
-					return Pos+3;
+			if (Str[Pos] == L'&') {
+				if (Str[Pos + 1] == L'&' && Str[Pos + 2] == L'&')
+					return Pos + 3;
 
-				return Pos+2;
-			}
-			else
-			{
+				return Pos + 2;
+			} else {
 				return IsCharFullWidth(*Str) ? Pos + 2 : Pos + 1;
 			}
 		}
@@ -1171,11 +1141,10 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 
 bool CheckForInactivityExit()
 {
-	if (Opt.InactivityExit && Opt.InactivityExitTime > 0 &&
-		GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime*60000 &&
-		FrameManager && FrameManager->GetFrameCount()==1 &&
-		(!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks()))
-	{
+	if (Opt.InactivityExit && Opt.InactivityExitTime > 0
+			&& GetProcessUptimeMSec() - StartIdleTime > Opt.InactivityExitTime * 60000 && FrameManager
+			&& FrameManager->GetFrameCount() == 1
+			&& (!CtrlObject || !CtrlObject->Plugins.HasBackgroundTasks())) {
 		FrameManager->ExitMainLoop(FALSE);
 		return true;
 	}

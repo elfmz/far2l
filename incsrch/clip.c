@@ -19,60 +19,64 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 void PasteSearchText(void)
 {
-    TCHAR *p;
-    size_t len=0,i;
-    TCHAR pData[MAX_STR];
+	TCHAR *p;
+	size_t len = 0, i;
+	TCHAR pData[MAX_STR];
 
-    pData[0] = 0;
-    if( !OpenClipboard(NULL) )return;
+	pData[0] = 0;
+	if (!OpenClipboard(NULL))
+		return;
 #if defined(WINPORT_DIRECT)
-    p = GetClipboardData(CF_UNICODETEXT);
-    len=_tstrnlen(p, MAX_STR);
-    memcpy(pData, p, len * sizeof(pData[0]));
+	p = GetClipboardData(CF_UNICODETEXT);
+	len = _tstrnlen(p, MAX_STR);
+	memcpy(pData, p, len * sizeof(pData[0]));
 #else
-    for( nFmt=0; (nFmt=EnumClipboardFormats(nFmt))!=0; ){
-        switch( nFmt ){
-        case CF_TEXT:
-            p=GetClipboardData(CF_TEXT);
-            if( p ){
-                len=_tstrnlen(p,MAX_STR);
-                CharToOemBuff(p,pData,len);
-                goto Ok;
-            }
-            continue;
-        case CF_OEMTEXT:
-            p=GetClipboardData(CF_OEMTEXT);
-            if( p ){
-OEM:            len=_tstrnlen(p,MAX_STR);
-                memcpy(pData, p, len * sizeof(pData[0]));
-                goto Ok;
-            }
-            continue;
-        case CF_UNICODETEXT:
-            p=GetClipboardData(CF_UNICODETEXT);
-            if( p ){
-                WideCharToMultiByte(CP_OEMCP,WC_COMPOSITECHECK,(LPCWSTR)p,-1,pData,MAX_STR,NULL,NULL);
-                len=_tstrnlen(pData,MAX_STR);
-                goto Ok;
-            }
-            continue;
-        }
-    }
-    p=GetClipboardData(CF_OEMTEXT);
-    if( p )goto OEM;
+	for (nFmt = 0; (nFmt = EnumClipboardFormats(nFmt)) != 0;) {
+		switch (nFmt) {
+			case CF_TEXT:
+				p = GetClipboardData(CF_TEXT);
+				if (p) {
+					len = _tstrnlen(p, MAX_STR);
+					CharToOemBuff(p, pData, len);
+					goto Ok;
+				}
+				continue;
+			case CF_OEMTEXT:
+				p = GetClipboardData(CF_OEMTEXT);
+				if (p) {
+				OEM:
+					len = _tstrnlen(p, MAX_STR);
+					memcpy(pData, p, len * sizeof(pData[0]));
+					goto Ok;
+				}
+				continue;
+			case CF_UNICODETEXT:
+				p = GetClipboardData(CF_UNICODETEXT);
+				if (p) {
+					WideCharToMultiByte(CP_OEMCP, WC_COMPOSITECHECK, (LPCWSTR)p, -1, pData, MAX_STR, NULL,
+							NULL);
+					len = _tstrnlen(pData, MAX_STR);
+					goto Ok;
+				}
+				continue;
+		}
+	}
+	p = GetClipboardData(CF_OEMTEXT);
+	if (p)
+		goto OEM;
 #endif
-    CloseClipboard();
-    for( i=0; i<len; i++ ){
-        if( nEvents==PREVIEW_EVENTS ){
+	CloseClipboard();
+	for (i = 0; i < len; i++) {
+		if (nEvents == PREVIEW_EVENTS) {
 #if defined(WINPORT_DIRECT)
-            putwchar('\007');
+			putwchar('\007');
 #else
-            MessageBeep((UINT)-1);
+			MessageBeep((UINT)-1);
 #endif
-            break;
-        }
-        aEvents[nEvents].Flags=(unsigned char)(i?KC_CHAR|KC_FAILKILL:KC_CHAR);
-        aEvents[nEvents].AsciiChar=pData[i];
-        nEvents++;
-    }
+			break;
+		}
+		aEvents[nEvents].Flags = (unsigned char)(i ? KC_CHAR | KC_FAILKILL : KC_CHAR);
+		aEvents[nEvents].AsciiChar = pData[i];
+		nEvents++;
+	}
 }

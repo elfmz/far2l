@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "manager.hpp"
 #include "keys.hpp"
 #include "rdrwdsk.hpp"
@@ -43,37 +42,33 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "config.hpp"
 
-RedrawDesktop::RedrawDesktop(BOOL IsHidden):
+RedrawDesktop::RedrawDesktop(BOOL IsHidden)
+	:
 	LeftVisible(CtrlObject->Cp()->LeftPanel->IsVisible()),
 	RightVisible(CtrlObject->Cp()->RightPanel->IsVisible()),
-	ClockVisible(Opt.Clock!=0)
+	ClockVisible(Opt.Clock != 0)
 {
 	CtrlObject->CmdLine->ShowBackground();
 	CtrlObject->CmdLine->Show();
 
-	if (IsHidden)
-	{
+	if (IsHidden) {
 		CtrlObject->Cp()->LeftPanel->CloseFile();
 		CtrlObject->Cp()->RightPanel->CloseFile();
 
 		// ВНИМАНИЕ! КОСТЫЛЬ!
 		// соблюдем очередность, в зависимости от!
-		if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->LeftPanel)
-		{
+		if (CtrlObject->Cp()->ActivePanel == CtrlObject->Cp()->LeftPanel) {
 			CtrlObject->Cp()->LeftPanel->Hide();
 			CtrlObject->Cp()->RightPanel->Hide();
-		}
-		else
-		{
+		} else {
 			CtrlObject->Cp()->RightPanel->Hide();
 			CtrlObject->Cp()->LeftPanel->Hide();
 		}
-		Opt.Clock=FALSE;
+		Opt.Clock = FALSE;
 		CtrlObject->MainKeyBar->Hide();
 		CtrlObject->TopMenuBar->Hide();
 	}
 }
-
 
 RedrawDesktop::~RedrawDesktop()
 {
@@ -82,22 +77,22 @@ RedrawDesktop::~RedrawDesktop()
 
 	CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
-	Opt.Clock=ClockVisible;
+	Opt.Clock = ClockVisible;
 
 	if (Opt.ShowMenuBar)
 		CtrlObject->TopMenuBar->Show();
 
-	int RightType=CtrlObject->Cp()->RightPanel->GetType();
+	int RightType = CtrlObject->Cp()->RightPanel->GetType();
 
-	if (RightVisible && RightType!=QVIEW_PANEL)
-		//CtrlObject->Cp()->RightPanel->Show();
+	if (RightVisible && RightType != QVIEW_PANEL)
+		// CtrlObject->Cp()->RightPanel->Show();
 		CtrlObject->Cp()->RightPanel->SetVisible(TRUE);
 
 	if (LeftVisible)
 		// CtrlObject->Cp()->LeftPanel->Show();
 		CtrlObject->Cp()->LeftPanel->SetVisible(TRUE);
 
-	if (RightVisible && RightType==QVIEW_PANEL)
+	if (RightVisible && RightType == QVIEW_PANEL)
 		// CtrlObject->Cp()->RightPanel->Show();
 		CtrlObject->Cp()->RightPanel->SetVisible(TRUE);
 

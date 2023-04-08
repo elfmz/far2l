@@ -43,145 +43,157 @@ class NamesList;
 // коды возврата Editor::SaveFile()
 enum
 {
-	SAVEFILE_ERROR   = 0,         // пытались сохранять, не получилось
-	SAVEFILE_SUCCESS = 1,         // либо успешно сохранили, либо сохранять было не надо
-	SAVEFILE_CANCEL  = 2          // сохранение отменено, редактор не закрывать
+	SAVEFILE_ERROR   = 0,		// пытались сохранять, не получилось
+	SAVEFILE_SUCCESS = 1,		// либо успешно сохранили, либо сохранять было не надо
+	SAVEFILE_CANCEL  = 2		// сохранение отменено, редактор не закрывать
 };
 
 // как открывать
 enum FEOPMODEEXISTFILE
 {
-	FEOPMODE_QUERY        =0x00000000,
-	FEOPMODE_NEWIFOPEN    =0x10000000,
-	FEOPMODE_USEEXISTING  =0x20000000,
-	FEOPMODE_BREAKIFOPEN  =0x30000000,
-	FEOPMODE_RELOAD       =0x40000000,
+	FEOPMODE_QUERY       = 0x00000000,
+	FEOPMODE_NEWIFOPEN   = 0x10000000,
+	FEOPMODE_USEEXISTING = 0x20000000,
+	FEOPMODE_BREAKIFOPEN = 0x30000000,
+	FEOPMODE_RELOAD      = 0x40000000,
 };
 
 enum FFILEEDIT_FLAGS
 {
-	FFILEEDIT_NEW                   = 0x00010000,  // Этот файл СОВЕРШЕННО! новый или его успели стереть! Нету такого и все тут.
-	FFILEEDIT_REDRAWTITLE           = 0x00020000,  // Нужно редравить заголовок?
-	FFILEEDIT_FULLSCREEN            = 0x00040000,  // Полноэкранный режим?
-	FFILEEDIT_DISABLEHISTORY        = 0x00080000,  // Запретить запись в историю?
-	FFILEEDIT_ENABLEF6              = 0x00100000,  // Переключаться во вьювер можно?
-	FFILEEDIT_SAVETOSAVEAS          = 0x00200000,  // $ 17.08.2001 KM  Добавлено для поиска по AltF7.
+	FFILEEDIT_NEW = 0x00010000,					// Этот файл СОВЕРШЕННО! новый или его успели стереть! Нету такого и все тут.
+	FFILEEDIT_REDRAWTITLE    = 0x00020000,		// Нужно редравить заголовок?
+	FFILEEDIT_FULLSCREEN     = 0x00040000,		// Полноэкранный режим?
+	FFILEEDIT_DISABLEHISTORY = 0x00080000,		// Запретить запись в историю?
+	FFILEEDIT_ENABLEF6       = 0x00100000,		// Переключаться во вьювер можно?
+	FFILEEDIT_SAVETOSAVEAS   = 0x00200000,		// $ 17.08.2001 KM  Добавлено для поиска по AltF7.
 	//   При редактировании найденного файла из архива для
 	//   клавиши F2 сделать вызов ShiftF2.
-	FFILEEDIT_SAVEWQUESTIONS        = 0x00400000,  // сохранить без вопросов
-	FFILEEDIT_LOCKED                = 0x00800000,  // заблокировать?
-	FFILEEDIT_OPENFAILED            = 0x01000000,  // файл открыть не удалось
-	FFILEEDIT_CANNEWFILE            = 0x10000000,  // допускается новый файл?
-	FFILEEDIT_SERVICEREGION         = 0x20000000,  // используется сервисная область
+	FFILEEDIT_SAVEWQUESTIONS = 0x00400000,		// сохранить без вопросов
+	FFILEEDIT_LOCKED         = 0x00800000,		// заблокировать?
+	FFILEEDIT_OPENFAILED     = 0x01000000,		// файл открыть не удалось
+	FFILEEDIT_CANNEWFILE     = 0x10000000,		// допускается новый файл?
+	FFILEEDIT_SERVICEREGION  = 0x20000000,		// используется сервисная область
 	FFILEEDIT_CODEPAGECHANGEDBYUSER = 0x40000000,
 };
 
-
 class FileEditor : public Frame
 {
-		public:
-		struct BaseContentWriter
-		{
-			void EncodeAndWrite(UINT codepage, const wchar_t *Str, size_t Length);
-			virtual void Write(const void *Data, size_t Length) = 0;
-
-		private:
-			std::string _tmpstr;
-			std::vector<char> _tmpcvec;
-		};
-
-		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine=-1,int StartChar=-1,const wchar_t *PluginData=nullptr,int OpenModeExstFile=FEOPMODE_QUERY);
-		FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags,int StartLine,int StartChar,const wchar_t *Title,int X1,int Y1,int X2,int Y2,int OpenModeExstFile=FEOPMODE_QUERY);
-		virtual ~FileEditor();
-
-		void ShowStatus();
-		void SetLockEditor(BOOL LockMode);
-		bool IsFullScreen() {return Flags.Check(FFILEEDIT_FULLSCREEN)!=FALSE;}
-		void SetNamesList(NamesList *Names);
-		void SetEnableF6(int AEnableF6) { Flags.Change(FFILEEDIT_ENABLEF6,AEnableF6); InitKeyBar(); }
-		void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer;}
-
-		// Добавлено для поиска по AltF7. При редактировании найденного файла из
-		// архива для клавиши F2 сделать вызов ShiftF2.
-		void SetSaveToSaveAs(int ToSaveAs) { Flags.Change(FFILEEDIT_SAVETOSAVEAS,ToSaveAs); InitKeyBar(); }
-		virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
-		virtual int GetTypeAndName(FARString &strType, FARString &strName);
-		int EditorControl(int Command,void *Param);
-		void SetCodePage(UINT codepage); //BUGBUG
-		BOOL IsFileChanged() const { return m_editor->IsFileChanged(); };
-		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
-		void GetEditorOptions(EditorOptions& EdOpt);
-		void SetEditorOptions(EditorOptions& EdOpt);
-		void CodepageChangedByUser() {Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);};
-		virtual void Show();
-		void SetPluginTitle(const wchar_t *PluginTitle);
-		static const FileEditor *CurrentEditor;
+public:
+	struct BaseContentWriter
+	{
+		void EncodeAndWrite(UINT codepage, const wchar_t *Str, size_t Length);
+		virtual void Write(const void *Data, size_t Length) = 0;
 
 	private:
-		Editor *m_editor;
-		KeyBar EditKeyBar;
-		NamesList *EditNamesList;
-		bool F4KeyOnly;
-		FARString strFileName;
-		FARString strFullFileName;
-		FARString strStartDir;
-		FARString strTitle;
-		FARString strPluginTitle;
-		FARString strPluginData;
-		FARString strLoadedFileName;
-		FAR_FIND_DATA_EX FileInfo;
-		wchar_t AttrStr[4]; // 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
-		IUnmakeWritablePtr FileUnmakeWritable;
-		DWORD SysErrorCode;
-		bool m_bClosing; // 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
-		bool bEE_READ_Sent;
-		FemaleBool m_AddSignature;
-		bool BadConversion;
-		UINT m_codepage; //BUGBUG
-		int SaveAsTextFormat;
-		std::shared_ptr<IFileHolder> FileHolder;
+		std::string _tmpstr;
+		std::vector<char> _tmpcvec;
+	};
 
-		virtual void DisplayObject();
-		int  ProcessQuitKey(int FirstSave,BOOL NeedQuestion=TRUE);
-		BOOL UpdateFileList();
-		bool DecideAboutSignature();
-		int ReProcessKey(int Key,int CalledFromControl=TRUE);
-		bool AskOverwrite(const FARString& FileName);
-		void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine, int StartChar, const wchar_t *PluginData, int OpenModeExstFile);
-		virtual void InitKeyBar();
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		virtual void ShowConsoleTitle();
-		virtual void OnChangeFocus(int focus);
-		virtual void SetScreenPosition();
-		virtual const wchar_t *GetTypeName() {return L"[FileEdit]";};
-		virtual int GetType() { return MODALTYPE_EDITOR; }
-		virtual void OnDestroy();
-		virtual int GetCanLoseFocus(int DynamicMode=FALSE);
-		virtual int FastHide(); // для нужд CtrlAltShift
-		// возвращает признак того, является ли файл временным
-		// используется для принятия решения переходить в каталог по CtrlF10
-		BOOL isTemporary();
-		virtual void ResizeConsole();
-		int LoadFile(const wchar_t *Name, int &UserBreak);
-		//TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
+	FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int StartLine = -1, int StartChar = -1,
+			const wchar_t *PluginData = nullptr, int OpenModeExstFile = FEOPMODE_QUERY);
+	FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
+			const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile = FEOPMODE_QUERY);
+	virtual ~FileEditor();
 
-		void SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat, UINT codepage, bool AddSignature, int Phase);
-		int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8, bool AddSignature=false);
-		void SetTitle(const wchar_t *Title);
-		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
-		BOOL SetFileName(const wchar_t *NewFileName);
-		int ProcessEditorInput(INPUT_RECORD *Rec);
-		void SetEditKeyBarStatefulLabels();
-		void ChangeEditKeyBar();
-		void ChooseTabSizeMenu();
-		DWORD EditorGetFileAttributes(const wchar_t *Name);
-		void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
-		const wchar_t *GetPluginData() {return strPluginData.CPtr();}
-		bool LoadFromCache(EditorCacheParams *pp);
-		FARString ComposeCacheName();
-		void SaveToCache();
+	void ShowStatus();
+	void SetLockEditor(BOOL LockMode);
+	bool IsFullScreen() { return Flags.Check(FFILEEDIT_FULLSCREEN) != FALSE; }
+	void SetNamesList(NamesList *Names);
+	void SetEnableF6(int AEnableF6)
+	{
+		Flags.Change(FFILEEDIT_ENABLEF6, AEnableF6);
+		InitKeyBar();
+	}
+	void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer; }
+
+	// Добавлено для поиска по AltF7. При редактировании найденного файла из
+	// архива для клавиши F2 сделать вызов ShiftF2.
+	void SetSaveToSaveAs(int ToSaveAs)
+	{
+		Flags.Change(FFILEEDIT_SAVETOSAVEAS, ToSaveAs);
+		InitKeyBar();
+	}
+	virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
+	virtual int GetTypeAndName(FARString &strType, FARString &strName);
+	int EditorControl(int Command, void *Param);
+	void SetCodePage(UINT codepage);	// BUGBUG
+	BOOL IsFileChanged() const { return m_editor->IsFileChanged(); };
+	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	void GetEditorOptions(EditorOptions &EdOpt);
+	void SetEditorOptions(EditorOptions &EdOpt);
+	void CodepageChangedByUser() { Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER); };
+	virtual void Show();
+	void SetPluginTitle(const wchar_t *PluginTitle);
+	static const FileEditor *CurrentEditor;
+
+private:
+	Editor *m_editor;
+	KeyBar EditKeyBar;
+	NamesList *EditNamesList;
+	bool F4KeyOnly;
+	FARString strFileName;
+	FARString strFullFileName;
+	FARString strStartDir;
+	FARString strTitle;
+	FARString strPluginTitle;
+	FARString strPluginData;
+	FARString strLoadedFileName;
+	FAR_FIND_DATA_EX FileInfo;
+	wchar_t AttrStr[4];		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
+	IUnmakeWritablePtr FileUnmakeWritable;
+	DWORD SysErrorCode;
+	bool m_bClosing;	// 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
+	bool bEE_READ_Sent;
+	FemaleBool m_AddSignature;
+	bool BadConversion;
+	UINT m_codepage;	// BUGBUG
+	int SaveAsTextFormat;
+	std::shared_ptr<IFileHolder> FileHolder;
+
+	virtual void DisplayObject();
+	int ProcessQuitKey(int FirstSave, BOOL NeedQuestion = TRUE);
+	BOOL UpdateFileList();
+	bool DecideAboutSignature();
+	int ReProcessKey(int Key, int CalledFromControl = TRUE);
+	bool AskOverwrite(const FARString &FileName);
+	void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine,
+			int StartChar, const wchar_t *PluginData, int OpenModeExstFile);
+	virtual void InitKeyBar();
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual void ShowConsoleTitle();
+	virtual void OnChangeFocus(int focus);
+	virtual void SetScreenPosition();
+	virtual const wchar_t *GetTypeName() { return L"[FileEdit]"; };
+	virtual int GetType() { return MODALTYPE_EDITOR; }
+	virtual void OnDestroy();
+	virtual int GetCanLoseFocus(int DynamicMode = FALSE);
+	virtual int FastHide();		// для нужд CtrlAltShift
+	// возвращает признак того, является ли файл временным
+	// используется для принятия решения переходить в каталог по CtrlF10
+	BOOL isTemporary();
+	virtual void ResizeConsole();
+	int LoadFile(const wchar_t *Name, int &UserBreak);
+	// TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
+
+	void SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat,
+			UINT codepage, bool AddSignature, int Phase);
+	int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8,
+			bool AddSignature = false);
+	void SetTitle(const wchar_t *Title);
+	virtual FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0);
+	BOOL SetFileName(const wchar_t *NewFileName);
+	int ProcessEditorInput(INPUT_RECORD *Rec);
+	void SetEditKeyBarStatefulLabels();
+	void ChangeEditKeyBar();
+	void ChooseTabSizeMenu();
+	DWORD EditorGetFileAttributes(const wchar_t *Name);
+	void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
+	const wchar_t *GetPluginData() { return strPluginData.CPtr(); }
+	bool LoadFromCache(EditorCacheParams *pp);
+	FARString ComposeCacheName();
+	void SaveToCache();
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void ModalEditConsoleHistory(bool scroll_to_end);//erases file internally 
+void ModalEditConsoleHistory(bool scroll_to_end);	// erases file internally

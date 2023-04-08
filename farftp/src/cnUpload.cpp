@@ -8,38 +8,37 @@
 void Connection::sendrequest(char *cmd, char *local, char *remote)
 {
 	//??SaveConsoleTitle _title;
-	sendrequestINT(cmd,local,remote);
-	IdleMessage(NULL,0);
+	sendrequestINT(cmd, local, remote);
+	IdleMessage(NULL, 0);
 }
 
 void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 {
-	PROC(("sendrequestINT","%s,%s,%s",cmd,local,remote))
+	PROC(("sendrequestINT", "%s,%s,%s", cmd, local, remote))
 
-	if(type == TYPE_A)
-		restart_point=0;
+	if (type == TYPE_A)
+		restart_point = 0;
 
-	//WIN32_FIND_DATA   ffi;
-	FHandle           fin;
-	SOCKET            dout = 0;
-	LONG              hi;
-	FTPCurrentStates  oState = CurrentState;
-	BOOL              oldBrk = FtpSetBreakable(this, -1);
-	int64_t           fsz;
-	FTNNotify         ni;
-	ni.Upload       = TRUE;
-	ni.Starting     = TRUE;
-	ni.Success      = TRUE;
+	// WIN32_FIND_DATA   ffi;
+	FHandle fin;
+	SOCKET dout = 0;
+	LONG hi;
+	FTPCurrentStates oState = CurrentState;
+	BOOL oldBrk = FtpSetBreakable(this, -1);
+	int64_t fsz;
+	FTNNotify ni;
+	ni.Upload = TRUE;
+	ni.Starting = TRUE;
+	ni.Success = TRUE;
 	ni.RestartPoint = restart_point;
-	ni.Port         = ntohs(portnum);
-	ni.Password[0] = 0; //StrCpy( ni.Password, UserPassword, ARRAYSIZE(ni.Password));
+	ni.Port = ntohs(portnum);
+	ni.Password[0] = 0;		// StrCpy( ni.Password, UserPassword, ARRAYSIZE(ni.Password));
 	StrCpy(ni.User, UserName, ARRAYSIZE(ni.User));
 	StrCpy(ni.HostName, hostname, ARRAYSIZE(ni.HostName));
 	StrCpy(ni.LocalFile, local, ARRAYSIZE(ni.LocalFile));
 	StrCpy(ni.RemoteFile, remote, ARRAYSIZE(ni.RemoteFile));
 
-	if(proxy)
-	{
+	if (proxy) {
 		proxtrans(cmd, local, remote);
 		return;
 	}
@@ -48,30 +47,28 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 	if (sdc_stat(local, &s)) {
 		ErrorCode = errno;
 		SysError = TRUE;
-		return;		
+		return;
 	}
-	
-	if((s.st_mode & S_IFMT)==S_IFDIR )
-	{
+
+	if ((s.st_mode & S_IFMT) == S_IFDIR) {
 		ErrorCode = ERROR_DIRECTORY;
 		SysError = TRUE;
-		Log(("local is directory [%s]",local));
+		Log(("local is directory [%s]", local));
 
-		if(!ConnectMessage(MNotPlainFile,local,-MRetry))
+		if (!ConnectMessage(MNotPlainFile, local, -MRetry))
 			ErrorCode = ERROR_CANCELLED;
 
 		return;
 	}
 
-	fin.Handle = Fopen(local,"r");
+	fin.Handle = Fopen(local, "r");
 
-	if(!fin.Handle)
-	{
+	if (!fin.Handle) {
 		ErrorCode = errno;
 		Log(("!open local"));
 		SysError = TRUE;
 
-		if(!ConnectMessage(MErrorOpenFile,local,-MRetry))
+		if (!ConnectMessage(MErrorOpenFile, local, -MRetry))
 			ErrorCode = ERROR_CANCELLED;
 
 		return;
@@ -79,235 +76,210 @@ void Connection::sendrequestINT(char *cmd, char *local, char *remote)
 
 	fsz = s.st_size;
 
-	if(restart_point && fsz == restart_point)
-	{
+	if (restart_point && fsz == restart_point) {
 		AddCmdLine(FMSG(MFileComplete));
 		ErrorCode = ERROR_SUCCESS;
 		return;
 	}
 
-	if(!initconn())
-	{
+	if (!initconn()) {
 		Log(("!initconn"));
 		return;
 	}
 
-	if(Host.SendAllo)
-	{
-		if(cmd[0] != Opt.cmdAppe[0])
-		{
+	if (Host.SendAllo) {
+		if (cmd[0] != Opt.cmdAppe[0]) {
 			Log(("ALLO %" PRId64, fsz));
 
-			if(command("%s %" PRId64, Opt.cmdAllo, fsz) != RPL_COMPLETE)
-			{
+			if (command("%s %" PRId64, Opt.cmdAllo, fsz) != RPL_COMPLETE) {
 				Log(("!allo"));
 				return;
 			}
 		}
 	}
 
-	if(restart_point)
-	{
-		if(!ResumeSupport && cmd[0] != Opt.cmdAppe[0])
-		{
+	if (restart_point) {
+		if (!ResumeSupport && cmd[0] != Opt.cmdAppe[0]) {
 			AddCmdLine(FMSG(MResumeRestart));
 			restart_point = 0;
-		}
-		else
-		{
-			Log(("restart_point %I64u",restart_point));
+		} else {
+			Log(("restart_point %I64u", restart_point));
 
-			if(!Fmove(fin.Handle, restart_point))
-			{
+			if (!Fmove(fin.Handle, restart_point)) {
 				SysError = TRUE;
 				ErrorCode = WINPORT(GetLastError)();
-				Log(("!setfilepointer(%I64u)",restart_point));
+				Log(("!setfilepointer(%I64u)", restart_point));
 
-				if(!ConnectMessage(MErrorPosition,local,-MRetry))
+				if (!ConnectMessage(MErrorPosition, local, -MRetry))
 					ErrorCode = ERROR_CANCELLED;
 
 				return;
 			}
 
-			if(cmd[0] != Opt.cmdAppe[0] &&
-			        command("%s %I64u",Opt.cmdRest,restart_point) != RPL_CONTINUE)
+			if (cmd[0] != Opt.cmdAppe[0] && command("%s %I64u", Opt.cmdRest, restart_point) != RPL_CONTINUE)
 				return;
 
 			TrafficInfo->Resume(restart_point);
 		}
 	}
 
-	if(Host.PassiveMode)
-	{
+	if (Host.PassiveMode) {
 		Log(("pasv"));
 		dout = dataconn();
 
-		if(dout == INVALID_SOCKET)
+		if (dout == INVALID_SOCKET)
 			goto abort;
 	}
 
-	if(remote)
-	{
-		Log(("Upload remote [%s]",remote));
+	if (remote) {
+		Log(("Upload remote [%s]", remote));
 
-		if(command("%s %s", cmd, remote) != RPL_PRELIM)
-		{
+		if (command("%s %s", cmd, remote) != RPL_PRELIM) {
 			return;
 		}
-	}
-	else
-	{
+	} else {
 		Log(("!remote"));
 
-		if(command("%s", cmd) != RPL_PRELIM)
-		{
+		if (command("%s", cmd) != RPL_PRELIM) {
 			return;
 		}
 	}
 
-	if(!Host.PassiveMode)
-	{
+	if (!Host.PassiveMode) {
 		dout = dataconn();
 
-		if(dout == INVALID_SOCKET) goto abort;
+		if (dout == INVALID_SOCKET)
+			goto abort;
 	}
 
-	switch(type)
-	{
+	switch (type) {
 		case TYPE_I:
 		case TYPE_L:
 		case TYPE_A:
 
-			if(fsz != 0)
-			{
+			if (fsz != 0) {
 				unsigned rsz = Host.IOBuffSize;
 
-				if(rsz < fsz && (rsz & 511) && rsz > 512) rsz &= ~511;
+				if (rsz < fsz && (rsz & 511) && rsz > 512)
+					rsz&= ~511;
 
 				{
 					unsigned int osz = 0;
 					socklen_t sz = sizeof(osz);
 
-					if(getsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char*)&osz, &sz)!=0)
-						osz = 8*1024; // default - 8K
+					if (getsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char *)&osz, &sz) != 0)
+						osz = 8 * 1024;		// default - 8K
 
-					if(rsz >= osz && fsz >= osz)
-					{
-						if(rsz > 1024*1024) rsz = 1024*1024;  // 1M
+					if (rsz >= osz && fsz >= osz) {
+						if (rsz > 1024 * 1024)
+							rsz = 1024 * 1024;	// 1M
 
 						osz = rsz;
 
-						if(fsz < osz) osz = (unsigned)fsz;
+						if (fsz < osz)
+							osz = (unsigned)fsz;
 
 						++osz;
-						setsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char*)&osz, sizeof(osz));
+						setsockopt(dout, SOL_SOCKET, SO_SNDBUF, (char *)&osz, sizeof(osz));
 					}
 				}
 
-				if(rsz >= fsz || rsz > 64*1024)       // 64K (start winsize)
+				if (rsz >= fsz || rsz > 64 * 1024)		// 64K (start winsize)
 				{
 					BOOL one = TRUE;
-					setsockopt(dout, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(one));
+					setsockopt(dout, IPPROTO_TCP, TCP_NODELAY, (char *)&one, sizeof(one));
 				}
 
-				if(PluginAvailable(PLUGIN_NOTIFY)) FTPNotify().Notify(&ni);
+				if (PluginAvailable(PLUGIN_NOTIFY))
+					FTPNotify().Notify(&ni);
 
-				Log(("Uploading %s->%s from %I64u",local,remote,restart_point));
-				FTPConnectionBreakable _brk(this,FALSE);
+				Log(("Uploading %s->%s from %I64u", local, remote, restart_point));
+				FTPConnectionBreakable _brk(this, FALSE);
 				CurrentState = fcsProcessFile;
 				//-------- READ
 				DWORD ind = 0;
-				DWORD b,e;
+				DWORD b, e;
 				GET_TIME(b);
 
-				while(true)
-				{
+				while (true) {
 					hi = 0;
-					Log(("read %d",rsz));
+					Log(("read %d", rsz));
 
-					if(!WINPORT(ReadFile)(fin.Handle,IOBuff,rsz,(LPDWORD)&hi,NULL))
-					{
+					if (!WINPORT(ReadFile)(fin.Handle, IOBuff, rsz, (LPDWORD)&hi, NULL)) {
 						SysError = TRUE;
 						ErrorCode = WINPORT(GetLastError)();
 						Log(("pf: !read buff"));
 						goto abort;
 					}
 
-					if(hi == 0)
-					{
+					if (hi == 0) {
 						ErrorCode = WINPORT(GetLastError)();
 						SysError = ErrorCode != ERROR_SUCCESS;
 						break;
 					}
 
 					//-------- SEND
-					LONG  d;
+					LONG d;
 					char *bufp;
 					Log(("doSend"));
 
-					for(bufp = IOBuff; hi > 0; hi -= d, bufp += d)
-					{
-						Log(("ndsend %d",hi));
+					for (bufp = IOBuff; hi > 0; hi-= d, bufp+= d) {
+						Log(("ndsend %d", hi));
 
-						if((d=(LONG)nb_send(&dout, bufp,(int)hi, 0)) <= 0)
-						{
-							Log(("pf(%d,%s): !send %d!=%d",code,GetSocketErrorSTR(),d,hi));
+						if ((d = (LONG)nb_send(&dout, bufp, (int)hi, 0)) <= 0) {
+							Log(("pf(%d,%s): !send %d!=%d", code, GetSocketErrorSTR(), d, hi));
 							code = RPL_TRANSFERERROR;
 							goto abort;
 						}
 
-						Log(("sent %d",d));
-						ind += d;
+						Log(("sent %d", d));
+						ind+= d;
 						GET_TIME(e);
 
-						if(CMP_TIME(e,b) >= 0.5)
-						{
+						if (CMP_TIME(e, b) >= 0.5) {
 							b = e;
 							d = ind;
 							ind = 0;
 
-							if(IOCallback && !TrafficInfo->Callback((int)d))
-							{
-								Log(("pf(%d,%s): canceled",code,GetSocketErrorSTR()));
+							if (IOCallback && !TrafficInfo->Callback((int)d)) {
+								Log(("pf(%d,%s): canceled", code, GetSocketErrorSTR()));
 								ErrorCode = ERROR_CANCELLED;
 								goto abort;
 							}
 						}
-					}//-- SEND
+					}	//-- SEND
 
 					Log(("sended"));
-					//Sleep(1);
-				}//-- READ
+					// Sleep(1);
+				}	//-- READ
 
-				if(IOCallback) TrafficInfo->Callback(0);
+				if (IOCallback)
+					TrafficInfo->Callback(0);
 
 				Log(("done"));
-			} /*fsz != 0*/
+			}	/*fsz != 0*/
 
 			break;
-		default: break; // TYPE_E, TYPE_NONE
-	}/*SWITCH*/
+		default:
+			break;	// TYPE_E, TYPE_NONE
+	}				/*SWITCH*/
 
-//NormExit
+					// NormExit
 	FtpSetBreakable(this, oldBrk);
 	CurrentState = oState;
 
-	if(data_peer != INVALID_SOCKET)
-	{
-		scClose(data_peer,1);
+	if (data_peer != INVALID_SOCKET) {
+		scClose(data_peer, 1);
 
-		if(getreply(0) > RPL_COMPLETE)
-		{
+		if (getreply(0) > RPL_COMPLETE) {
 			ErrorCode = ERROR_WRITE_FAULT;
 		}
-	}
-	else
+	} else
 		getreply(0);
 
-	if(PluginAvailable(PLUGIN_NOTIFY))
-	{
+	if (PluginAvailable(PLUGIN_NOTIFY)) {
 		ni.Starting = FALSE;
-		ni.Success  = TRUE;
+		ni.Success = TRUE;
 		FTPNotify().Notify(&ni);
 	}
 
@@ -316,32 +288,26 @@ abort:
 	FtpSetBreakable(this, oldBrk);
 	CurrentState = oState;
 
-	if(!cpend)
-	{
+	if (!cpend) {
 		Log(("!!!cpend"));
 	}
 
-	int ocode = code,
-		oecode = ErrorCode;
-	scClose(data_peer, 1);//SD_SEND
+	int ocode = code, oecode = ErrorCode;
+	scClose(data_peer, 1);	// SD_SEND
 
-	if(!SendAbort(data_peer))
-	{
+	if (!SendAbort(data_peer)) {
 		Log(("!send abort"));
 		lostpeer();
-	}
-	else
-	{
+	} else {
 		setascii();
 		ProcessCommand("pwd");
-		code      = ocode;
+		code = ocode;
 		ErrorCode = oecode;
 	}
 
-	if(PluginAvailable(PLUGIN_NOTIFY))
-	{
+	if (PluginAvailable(PLUGIN_NOTIFY)) {
 		ni.Starting = FALSE;
-		ni.Success  = FALSE;
+		ni.Success = FALSE;
 		FTPNotify().Notify(&ni);
 	}
 }

@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "foldtree.hpp"
 #include "keyboard.hpp"
 #include "keys.hpp"
@@ -49,12 +48,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "exitcode.hpp"
 
-void FolderTree::Present(FARString &strResultFolder,int ModalMode,int IsStandalone,int IsFullScreen)
+void FolderTree::Present(FARString &strResultFolder, int ModalMode, int IsStandalone, int IsFullScreen)
 {
 	FolderTree Tree(strResultFolder, ModalMode, IsStandalone, IsFullScreen);
 }
 
-FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalone,int IsFullScreen):
+FolderTree::FolderTree(FARString &strResultFolder, int iModalMode, int IsStandalone, int IsFullScreen)
+	:
 	CMM(MACRO_FINDFOLDER),
 	Tree(nullptr),
 	FindEdit(nullptr),
@@ -66,15 +66,14 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 	SetRestoreScreenMode(TRUE);
 	if (ModalMode != MODALTREE_FREE)
 		strResultFolder.Clear();
-	KeyBarVisible = TRUE;  // Заставим обновлятся кейбар
-	//TopScreen=new SaveScreen;
+	KeyBarVisible = TRUE;	// Заставим обновлятся кейбар
+	// TopScreen=new SaveScreen;
 	SetCoords();
 
-	if ((Tree=new(std::nothrow) TreeList(FALSE)))
-	{
+	if ((Tree = new (std::nothrow) TreeList(FALSE))) {
 		strLastName.Clear();
 		Tree->SetModalMode(ModalMode);
-		Tree->SetPosition(X1,Y1,X2,Y2);
+		Tree->SetPosition(X1, Y1, X2, Y2);
 
 		if (ModalMode == MODALTREE_FREE)
 			Tree->SetRootDir(strResultFolder);
@@ -83,10 +82,8 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 		Tree->Update(0);
 
 		// если было прерывание в процессе сканирования и это было дерево копира...
-		if (Tree->GetExitCode())
-		{
-			if (!(FindEdit=new(std::nothrow) Edit))
-			{
+		if (Tree->GetExitCode()) {
+			if (!(FindEdit = new (std::nothrow) Edit)) {
 				SetExitCode(XC_OPEN_ERROR);
 				return;
 			}
@@ -94,34 +91,32 @@ FolderTree::FolderTree(FARString &strResultFolder,int iModalMode,int IsStandalon
 			FindEdit->SetEditBeyondEnd(FALSE);
 			FindEdit->SetPersistentBlocks(Opt.Dialogs.EditBlock);
 			InitKeyBar();
-			FrameManager->ExecuteModal(this); //OT
+			FrameManager->ExecuteModal(this);	// OT
 		}
 
 		strResultFolder = strNewFolder;
-	}
-	else
-	{
+	} else {
 		SetExitCode(XC_OPEN_ERROR);
 	}
 }
 
 FolderTree::~FolderTree()
 {
-	//if ( TopScreen )    delete TopScreen;
-	if (FindEdit)     delete FindEdit;
+	// if ( TopScreen )    delete TopScreen;
+	if (FindEdit)
+		delete FindEdit;
 
-	if (Tree)         delete Tree;
+	if (Tree)
+		delete Tree;
 }
-
 
 void FolderTree::DisplayObject()
 {
-	//if(!TopScreen) TopScreen=new SaveScreen;
-	if (ModalMode == MODALTREE_FREE)
-	{
+	// if(!TopScreen) TopScreen=new SaveScreen;
+	if (ModalMode == MODALTREE_FREE) {
 		FARString strSelFolder;
 		Tree->GetCurDir(strSelFolder);
-		//Tree->Update(UPDATE_KEEP_SELECTION);
+		// Tree->Update(UPDATE_KEEP_SELECTION);
 		Tree->Update(0);
 		Tree->GoToFile(strSelFolder);
 	}
@@ -130,26 +125,22 @@ void FolderTree::DisplayObject()
 	Shadow();
 	DrawEdit();
 
-	if (!IsFullScreen)
-	{
-		TreeKeyBar.SetPosition(0,ScrY,ScrX,ScrY);
+	if (!IsFullScreen) {
+		TreeKeyBar.SetPosition(0, ScrY, ScrX, ScrY);
 		TreeKeyBar.Refresh(true);
-	}
-	else
+	} else
 		TreeKeyBar.Refresh(false);
 }
-
 
 void FolderTree::SetCoords()
 {
 	if (IsFullScreen)
-		SetPosition(0,0,ScrX,ScrY);
-	else
-	{
+		SetPosition(0, 0, ScrX, ScrY);
+	else {
 		if (IsStandalone)
-			SetPosition(4,2,ScrX-4,ScrY-4);
+			SetPosition(4, 2, ScrX - 4, ScrY - 4);
 		else
-			SetPosition(ScrX/3,2,ScrX-7,ScrY-5);
+			SetPosition(ScrX / 3, 2, ScrX - 7, ScrY - 5);
 	}
 }
 
@@ -161,13 +152,13 @@ void FolderTree::OnChangeFocus(int focus)
 
 void FolderTree::ResizeConsole()
 {
-	//if ( TopScreen )
-		//delete TopScreen;
-	//TopScreen=nullptr;
+	// if ( TopScreen )
+	// delete TopScreen;
+	// TopScreen=nullptr;
 	Hide();
 	SetCoords();
-	Tree->SetPosition(X1,Y1,X2,Y2);
-	//ReadHelp(StackData.HelpMask);
+	Tree->SetPosition(X1, Y1, X2, Y2);
+	// ReadHelp(StackData.HelpMask);
 	FrameManager->ImmediateHide();
 	FrameManager->RefreshFrame();
 }
@@ -186,7 +177,6 @@ int FolderTree::FastHide()
 	return Opt.AllCtrlAltShiftRule & CASR_DIALOG;
 }
 
-
 int FolderTree::GetTypeAndName(FARString &strType, FARString &strName)
 {
 	strType = Msg::FolderTreeType;
@@ -194,19 +184,15 @@ int FolderTree::GetTypeAndName(FARString &strType, FARString &strName)
 	return MODALTYPE_FINDFOLDER;
 }
 
-
 int FolderTree::ProcessKey(int Key)
 {
-	if (Key>=KEY_ALT_BASE+0x01 && Key<=KEY_ALT_BASE+255)
-		Key=Lower(Key-KEY_ALT_BASE);
+	if (Key >= KEY_ALT_BASE + 0x01 && Key <= KEY_ALT_BASE + 255)
+		Key = Lower(Key - KEY_ALT_BASE);
 
-	switch (Key)
-	{
-		case KEY_F1:
-		{
+	switch (Key) {
+		case KEY_F1: {
 			Help::Present(L"FindFolder");
-		}
-		break;
+		} break;
 		case KEY_ESC:
 		case KEY_F10:
 			FrameManager->DeleteFrame();
@@ -216,20 +202,17 @@ int FolderTree::ProcessKey(int Key)
 		case KEY_ENTER:
 			Tree->GetCurDir(strNewFolder);
 
-			if (apiGetFileAttributes(strNewFolder)!=INVALID_FILE_ATTRIBUTES)
-			{
+			if (apiGetFileAttributes(strNewFolder) != INVALID_FILE_ATTRIBUTES) {
 				FrameManager->DeleteFrame();
 				SetExitCode(XC_MODIFIED);
-			}
-			else
-			{
+			} else {
 				Tree->ProcessKey(KEY_ENTER);
 				DrawEdit();
 			}
 
 			break;
 		case KEY_F5:
-			IsFullScreen=!IsFullScreen;
+			IsFullScreen = !IsFullScreen;
 			ResizeConsole();
 			return TRUE;
 		case KEY_CTRLR:
@@ -240,14 +223,13 @@ int FolderTree::ProcessKey(int Key)
 		case KEY_CTRLNUMENTER:
 		case KEY_CTRLSHIFTNUMENTER:
 		case KEY_CTRLENTER:
-		case KEY_CTRLSHIFTENTER:
-		{
+		case KEY_CTRLSHIFTENTER: {
 			FARString strName;
 			FindEdit->GetString(strName);
-			Tree->FindPartName(strName,TRUE,Key==KEY_CTRLSHIFTENTER||Key == KEY_CTRLSHIFTNUMENTER?-1:1,1);
+			Tree->FindPartName(strName, TRUE,
+					Key == KEY_CTRLSHIFTENTER || Key == KEY_CTRLSHIFTNUMENTER ? -1 : 1, 1);
 			DrawEdit();
-		}
-		break;
+		} break;
 		case KEY_UP:
 		case KEY_NUMPAD8:
 		case KEY_DOWN:
@@ -261,16 +243,16 @@ int FolderTree::ProcessKey(int Key)
 		case KEY_END:
 		case KEY_NUMPAD1:
 		case KEY_MSWHEEL_UP:
-		case(KEY_MSWHEEL_UP | KEY_ALT):
+		case (KEY_MSWHEEL_UP | KEY_ALT):
 		case KEY_MSWHEEL_DOWN:
-		case(KEY_MSWHEEL_DOWN | KEY_ALT):
+		case (KEY_MSWHEEL_DOWN | KEY_ALT):
 			FindEdit->SetString(L"");
 			Tree->ProcessKey(Key);
 			DrawEdit();
 			break;
 		default:
 
-			if (Key == KEY_ADD || Key == KEY_SUBTRACT) // OFM: Gray+/Gray- navigation
+			if (Key == KEY_ADD || Key == KEY_SUBTRACT)		// OFM: Gray+/Gray- navigation
 			{
 				Tree->ProcessKey(Key);
 				DrawEdit();
@@ -286,15 +268,13 @@ int FolderTree::ProcessKey(int Key)
 						Key='-';
 				}
 			*/
-			if (FindEdit->ProcessKey(Key))
-			{
+			if (FindEdit->ProcessKey(Key)) {
 				FARString strName;
 				FindEdit->GetString(strName);
 
-				if (Tree->FindPartName(strName,FALSE,1,1))
+				if (Tree->FindPartName(strName, FALSE, 1, 1))
 					strLastName = strName;
-				else
-				{
+				else {
 					FindEdit->SetString(strLastName);
 					strName = strLastName;
 				}
@@ -308,35 +288,35 @@ int FolderTree::ProcessKey(int Key)
 	return TRUE;
 }
 
-
 int FolderTree::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	if (TreeKeyBar.ProcessMouse(MouseEvent))
 		return TRUE;
 
-	if (MouseEvent->dwEventFlags==DOUBLE_CLICK)
-	{
+	if (MouseEvent->dwEventFlags == DOUBLE_CLICK) {
 		ProcessKey(KEY_ENTER);
 		return TRUE;
 	}
 
-	int MsX=MouseEvent->dwMousePosition.X;
-	int MsY=MouseEvent->dwMousePosition.Y;
+	int MsX = MouseEvent->dwMousePosition.X;
+	int MsY = MouseEvent->dwMousePosition.Y;
 
-	if ((MsX<X1 || MsY<Y1 || MsX>X2 || MsY>Y2) && MouseEventFlags != MOUSE_MOVED)
-	{
-		if (!(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && (PrevMouseButtonState&FROM_LEFT_1ST_BUTTON_PRESSED) && (Opt.Dialogs.MouseButton&DMOUSEBUTTON_LEFT))
+	if ((MsX < X1 || MsY < Y1 || MsX > X2 || MsY > Y2) && MouseEventFlags != MOUSE_MOVED) {
+		if (!(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+				&& (PrevMouseButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+				&& (Opt.Dialogs.MouseButton & DMOUSEBUTTON_LEFT))
 			ProcessKey(KEY_ESC);
-		else if (!(MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) && (PrevMouseButtonState&RIGHTMOST_BUTTON_PRESSED) && (Opt.Dialogs.MouseButton&DMOUSEBUTTON_RIGHT))
+		else if (!(MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)
+				&& (PrevMouseButtonState & RIGHTMOST_BUTTON_PRESSED)
+				&& (Opt.Dialogs.MouseButton & DMOUSEBUTTON_RIGHT))
 			ProcessKey(KEY_ENTER);
 
 		return TRUE;
 	}
 
-	if (MsY == Y2-2)
+	if (MsY == Y2 - 2)
 		FindEdit->ProcessMouse(MouseEvent);
-	else
-	{
+	else {
 		if (!Tree->ProcessMouse(MouseEvent))
 			SetExitCode(XC_MODIFIED);
 		else
@@ -346,35 +326,32 @@ int FolderTree::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	return TRUE;
 }
 
-
 void FolderTree::DrawEdit()
 {
-	int FindY=Y2-2;
-	const wchar_t *SearchTxt=Msg::FoldTreeSearch;
-	GotoXY(X1+1,FindY);
+	int FindY = Y2 - 2;
+	const wchar_t *SearchTxt = Msg::FoldTreeSearch;
+	GotoXY(X1 + 1, FindY);
 	SetColor(COL_PANELTEXT);
-	FS<<SearchTxt<<L"  ";
-	FindEdit->SetPosition(X1+StrLength(SearchTxt)+2,FindY,Min(X2-1,X1+25),FindY);
+	FS << SearchTxt << L"  ";
+	FindEdit->SetPosition(X1 + StrLength(SearchTxt) + 2, FindY, Min(X2 - 1, X1 + 25), FindY);
 	FindEdit->SetObjectColor(COL_DIALOGEDIT);
 	FindEdit->Show();
 
-	if (WhereX()<X2)
-	{
+	if (WhereX() < X2) {
 		SetColor(COL_PANELTEXT);
 		FS << fmt::Cells() << fmt::Expand(X2 - WhereX()) << L"";
 	}
 }
 
-
 void FolderTree::InitKeyBar()
 {
-	static const wchar_t *FTreeKeysLabel[]={L"",L"",L"",L"",L"",L"",L"",L"",L"",L"",L"",L""};
-	TreeKeyBar.Set(FTreeKeysLabel,ARRAYSIZE(FTreeKeysLabel));
-	TreeKeyBar.SetAlt(FTreeKeysLabel,ARRAYSIZE(FTreeKeysLabel));
-	TreeKeyBar.Change(KBL_MAIN,Msg::KBFolderTreeF1,1-1);
-	TreeKeyBar.Change(KBL_MAIN,Msg::KBFolderTreeF2,2-1);
-	TreeKeyBar.Change(KBL_MAIN,Msg::KBFolderTreeF5,5-1);
-	TreeKeyBar.Change(KBL_MAIN,Msg::KBFolderTreeF10,10-1);
-	TreeKeyBar.Change(KBL_ALT,Msg::KBFolderTreeAltF9,9-1);
+	static const wchar_t *FTreeKeysLabel[] = {L"", L"", L"", L"", L"", L"", L"", L"", L"", L"", L"", L""};
+	TreeKeyBar.Set(FTreeKeysLabel, ARRAYSIZE(FTreeKeysLabel));
+	TreeKeyBar.SetAlt(FTreeKeysLabel, ARRAYSIZE(FTreeKeysLabel));
+	TreeKeyBar.Change(KBL_MAIN, Msg::KBFolderTreeF1, 1 - 1);
+	TreeKeyBar.Change(KBL_MAIN, Msg::KBFolderTreeF2, 2 - 1);
+	TreeKeyBar.Change(KBL_MAIN, Msg::KBFolderTreeF5, 5 - 1);
+	TreeKeyBar.Change(KBL_MAIN, Msg::KBFolderTreeF10, 10 - 1);
+	TreeKeyBar.Change(KBL_ALT, Msg::KBFolderTreeAltF9, 9 - 1);
 	SetKeyBar(&TreeKeyBar);
 }

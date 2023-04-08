@@ -1,0 +1,90 @@
+
+ColumnLimit:  110
+IndentWidth:  4
+TabWidth:     4
+Language:     Cpp
+Standard:     Latest
+SortIncludes: false
+
+AccessModifierOffset:              -4
+AlignAfterOpenBracket:             DontAlign
+AlignConsecutiveAssignments:         false
+AlignConsecutiveDeclarations:      false
+AlignConsecutiveBitFields:         true
+AlignConsecutiveMacros:            true
+AllowAllArgumentsOnNextLine:       false
+AllowShortFunctionsOnASingleLine:  Inline
+AllowShortLambdasOnASingleLine:    Empty
+AlwaysBreakTemplateDeclarations:   Yes
+AlignTrailingComments:             true
+BinPackArguments: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth:           8
+IndentCaseLabels:                  true
+
+BreakBeforeBraces:       Custom
+BraceWrapping:
+  AfterClass:            true
+  AfterControlStatement: false
+  AfterEnum:             true
+  AfterFunction:         true
+  AfterNamespace:        true
+  AfterObjCDeclaration:  true
+  AfterStruct:           true
+  AfterUnion:            true
+  AfterExternBlock:      false
+  BeforeCatch:           false
+  BeforeElse:            false
+  IndentBraces:          false
+  SplitEmptyFunction:    false
+  SplitEmptyRecord:      false
+  SplitEmptyNamespace:   false
+
+
+FixNamespaceComments:             true
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+#PenaltyBreakAssignment: 10000
+PenaltyBreakBeforeFirstCallParameter: 10000
+#PenaltyBreakComment: 1000
+PenaltyBreakFirstLessLess: 16
+#PenaltyBreakOpenParenthesis: 1000
+#PenaltyBreakString: 1000
+#PenaltyBreakTemplateDeclaration: 1000
+#PenaltyExcessCharacter: 1000
+PenaltyIndentedWhitespace: 16
+PenaltyReturnTypeOnItsOwnLine: 96
+
+
+PointerAlignment:                 Right
+ReferenceAlignment:               Pointer
+
+SpaceAfterCStyleCast:             false
+SpacesInCStyleCastParentheses:    false
+
+SpaceAfterLogicalNot:             false
+SpaceBeforeParens:                ControlStatements
+SpaceInEmptyParentheses:          false
+
+# needs a separate setting for namespace
+SpacesBeforeTrailingComments:     4
+SpacesInAngles:                   false
+SpacesInParentheses:              false
+SpacesInSquareBrackets:           false
+
+#OperandAlignmentStyle:            DontAlign
+AlignOperands:                     DontAlign
+#BinPackParameters: true
+
+BreakBeforeBinaryOperators:        NonAssignment
+PackConstructorInitializers:       NextLine
+
+AlignArrayOfStructures:            Left
+
+############ Options added for far2l, see https://github.com/elfmz/llvm-project
+UseTab:                              ForContinuationAndIndentationAndComments
+AlignByTab:                          true
+BreakConstructorInitializers:        AfterColonSeparated
+SpaceBeforeAssignmentOperators:      OnlyTrivial
+AlignConsecutiveMembersAssignments:  true
+AllowLongTrailingComments:           true

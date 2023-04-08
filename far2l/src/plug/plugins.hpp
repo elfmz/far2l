@@ -46,7 +46,6 @@ extern const char *FmtDiskMenuStringD;
 extern const char *FmtPluginMenuStringD;
 extern const char *FmtPluginConfigStringD;
 
-
 class SaveScreen;
 class FileEditor;
 class Viewer;
@@ -56,8 +55,8 @@ struct FileListItem;
 
 enum
 {
-	SYSID_PRINTMANAGER      =0x6E614D50,
-	SYSID_NETWORK           =0x5774654E,
+	SYSID_PRINTMANAGER = 0x6E614D50,
+	SYSID_NETWORK      = 0x5774654E,
 };
 
 enum
@@ -73,72 +72,61 @@ enum
 // флаги для поля Plugin.WorkFlags
 enum PLUGINITEMWORKFLAGS
 {
-	PIWF_CACHED        = 0x00000001, // кешируется
-	PIWF_PRELOADED     = 0x00000002, //
-	PIWF_DONTLOADAGAIN = 0x00000004, // не загружать плагин снова, ставится в
-	// результате проверки требуемой версии фара
+	PIWF_CACHED        = 0x00000001,	// кешируется
+	PIWF_PRELOADED     = 0x00000002,	//
+	PIWF_DONTLOADAGAIN = 0x00000004,	// не загружать плагин снова, ставится в
+										// результате проверки требуемой версии фара
 };
 
 // флаги для поля Plugin.FuncFlags - активности функций
 enum PLUGINITEMCALLFUNCFLAGS
 {
-	PICFF_LOADED               = 0x00000001, // DLL загружен ;-)
-	PICFF_SETSTARTUPINFO       = 0x00000002, //
-	PICFF_OPENPLUGIN           = 0x00000004, //
-	PICFF_OPENFILEPLUGIN       = 0x00000008, //
-	PICFF_CLOSEPLUGIN          = 0x00000010, //
-	PICFF_GETPLUGININFO        = 0x00000020, //
-	PICFF_GETOPENPLUGININFO    = 0x00000040, //
-	PICFF_GETFINDDATA          = 0x00000080, //
-	PICFF_FREEFINDDATA         = 0x00000100, //
-	PICFF_GETVIRTUALFINDDATA   = 0x00000200, //
-	PICFF_FREEVIRTUALFINDDATA  = 0x00000400, //
-	PICFF_SETDIRECTORY         = 0x00000800, //
-	PICFF_GETFILES             = 0x00001000, //
-	PICFF_PUTFILES             = 0x00002000, //
-	PICFF_DELETEFILES          = 0x00004000, //
-	PICFF_MAKEDIRECTORY        = 0x00008000, //
-	PICFF_PROCESSHOSTFILE      = 0x00010000, //
-	PICFF_SETFINDLIST          = 0x00020000, //
-	PICFF_CONFIGURE            = 0x00040000, //
-	PICFF_EXITFAR              = 0x00080000, //
-	PICFF_PROCESSKEY           = 0x00100000, //
-	PICFF_PROCESSEVENT         = 0x00200000, //
-	PICFF_PROCESSEDITOREVENT   = 0x00400000, //
-	PICFF_COMPARE              = 0x00800000, //
-	PICFF_PROCESSEDITORINPUT   = 0x01000000, //
-	PICFF_MINFARVERSION        = 0x02000000, //
-	PICFF_PROCESSVIEWEREVENT   = 0x04000000, //
-	PICFF_PROCESSDIALOGEVENT   = 0x08000000, //
-	PICFF_PROCESSSYNCHROEVENT  = 0x10000000, //
+	PICFF_LOADED              = 0x00000001,		// DLL загружен ;-)
+	PICFF_SETSTARTUPINFO      = 0x00000002,		//
+	PICFF_OPENPLUGIN          = 0x00000004,		//
+	PICFF_OPENFILEPLUGIN      = 0x00000008,		//
+	PICFF_CLOSEPLUGIN         = 0x00000010,		//
+	PICFF_GETPLUGININFO       = 0x00000020,		//
+	PICFF_GETOPENPLUGININFO   = 0x00000040,		//
+	PICFF_GETFINDDATA         = 0x00000080,		//
+	PICFF_FREEFINDDATA        = 0x00000100,		//
+	PICFF_GETVIRTUALFINDDATA  = 0x00000200,		//
+	PICFF_FREEVIRTUALFINDDATA = 0x00000400,		//
+	PICFF_SETDIRECTORY        = 0x00000800,		//
+	PICFF_GETFILES            = 0x00001000,		//
+	PICFF_PUTFILES            = 0x00002000,		//
+	PICFF_DELETEFILES         = 0x00004000,		//
+	PICFF_MAKEDIRECTORY       = 0x00008000,		//
+	PICFF_PROCESSHOSTFILE     = 0x00010000,		//
+	PICFF_SETFINDLIST         = 0x00020000,		//
+	PICFF_CONFIGURE           = 0x00040000,		//
+	PICFF_EXITFAR             = 0x00080000,		//
+	PICFF_PROCESSKEY          = 0x00100000,		//
+	PICFF_PROCESSEVENT        = 0x00200000,		//
+	PICFF_PROCESSEDITOREVENT  = 0x00400000,		//
+	PICFF_COMPARE             = 0x00800000,		//
+	PICFF_PROCESSEDITORINPUT  = 0x01000000,		//
+	PICFF_MINFARVERSION       = 0x02000000,		//
+	PICFF_PROCESSVIEWEREVENT  = 0x04000000,		//
+	PICFF_PROCESSDIALOGEVENT  = 0x08000000,		//
+	PICFF_PROCESSSYNCHROEVENT = 0x10000000,		//
 #if defined(PROCPLUGINMACROFUNC)
-	PICFF_PROCESSMACROFUNC     = 0x20000000, //
+	PICFF_PROCESSMACROFUNC = 0x20000000,		//
 #endif
 	// PICFF_PANELPLUGIN - первая попытка определиться с понятием "это панель"
-	PICFF_PANELPLUGIN          = PICFF_OPENFILEPLUGIN|
-	PICFF_GETFINDDATA|
-	PICFF_FREEFINDDATA|
-	PICFF_GETVIRTUALFINDDATA|
-	PICFF_FREEVIRTUALFINDDATA|
-	PICFF_SETDIRECTORY|
-	PICFF_GETFILES|
-	PICFF_PUTFILES|
-	PICFF_DELETEFILES|
-	PICFF_MAKEDIRECTORY|
-	PICFF_PROCESSHOSTFILE|
-	PICFF_SETFINDLIST|
-	PICFF_PROCESSKEY|
-	PICFF_PROCESSEVENT|
-	PICFF_COMPARE|
-	PICFF_GETOPENPLUGININFO,
+	PICFF_PANELPLUGIN = PICFF_OPENFILEPLUGIN | PICFF_GETFINDDATA | PICFF_FREEFINDDATA
+			| PICFF_GETVIRTUALFINDDATA | PICFF_FREEVIRTUALFINDDATA | PICFF_SETDIRECTORY | PICFF_GETFILES
+			| PICFF_PUTFILES | PICFF_DELETEFILES | PICFF_MAKEDIRECTORY | PICFF_PROCESSHOSTFILE
+			| PICFF_SETFINDLIST | PICFF_PROCESSKEY | PICFF_PROCESSEVENT | PICFF_COMPARE
+			| PICFF_GETOPENPLUGININFO,
 };
 
 // флаги для поля PluginManager.Flags
 enum PLUGINSETFLAGS
 {
-	PSIF_ENTERTOOPENPLUGIN        = 0x00000001, // ввалились в плагин OpenPlugin
-	PSIF_DIALOG                   = 0x00000002, // была бадяга с диалогом
-	PSIF_PLUGINSLOADDED           = 0x80000000, // плагины загружены
+	PSIF_ENTERTOOPENPLUGIN = 0x00000001,	// ввалились в плагин OpenPlugin
+	PSIF_DIALOG            = 0x00000002,	// была бадяга с диалогом
+	PSIF_PLUGINSLOADDED    = 0x80000000,	// плагины загружены
 };
 
 enum OPENFILEPLUGINTYPE
@@ -161,133 +149,138 @@ struct PluginHandle
 
 class PluginManager
 {
-	private:
+private:
+	Plugin **PluginsData;
+	int PluginsCount;
+	struct BackgroundTasks : std::map<std::wstring, unsigned int>, std::mutex
+	{
+	} BgTasks;
 
-		Plugin **PluginsData;
-		int PluginsCount;
-		struct BackgroundTasks : std::map<std::wstring, unsigned int>, std::mutex {} BgTasks;
+public:
+	enum HotKeyKind
+	{
+		HKK_CONFIG,
+		HKK_MENU,
+		HKK_DRIVEMENU
+	};
 
-	public:
-		enum HotKeyKind
-		{
-			HKK_CONFIG,
-			HKK_MENU,
-			HKK_DRIVEMENU
-		};
+	BitFlags Flags;		// флаги манагера плагинов
 
-		BitFlags Flags;        // флаги манагера плагинов
+	Plugin *CurPluginItem;
 
-		Plugin *CurPluginItem;
+	FileEditor *CurEditor;
+	Viewer *CurViewer;	// 27.09.2000 SVS: Указатель на текущий Viewer
 
-		FileEditor *CurEditor;
-		Viewer *CurViewer;     // 27.09.2000 SVS: Указатель на текущий Viewer
+private:
+	void LoadIfCacheAbsent();
+	void ReadUserBackgound(SaveScreen *SaveScr);
 
-	private:
-		void LoadIfCacheAbsent();
-		void ReadUserBackgound(SaveScreen *SaveScr);
+	void GetPluginHotKey(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind, FARString &strHotKey);
 
-		void GetPluginHotKey(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind, FARString &strHotKey);
+	bool TestPluginInfo(Plugin *Item, PluginInfo *Info);
+	bool TestOpenPluginInfo(Plugin *Item, OpenPluginInfo *Info);
 
-		bool TestPluginInfo(Plugin *Item,PluginInfo *Info);
-		bool TestOpenPluginInfo(Plugin *Item,OpenPluginInfo *Info);
+	bool CheckIfHotkeyPresent(HotKeyKind Kind);
 
-		bool CheckIfHotkeyPresent(HotKeyKind Kind);
+	bool LoadPlugin(const FARString &strModuleName, bool LoadUncached);
 
-		bool LoadPlugin(const FARString &strModuleName, bool LoadUncached);
+	bool AddPlugin(Plugin *pPlugin);
+	bool RemovePlugin(Plugin *pPlugin);
 
-		bool AddPlugin(Plugin *pPlugin);
-		bool RemovePlugin(Plugin *pPlugin);
+	void LoadPluginsFromCache();
 
-		void LoadPluginsFromCache();
+	void SetFlags(DWORD NewFlags) { Flags.Set(NewFlags); }
+	void SkipFlags(DWORD NewFlags) { Flags.Clear(NewFlags); }
 
-		void SetFlags(DWORD NewFlags) { Flags.Set(NewFlags); }
-		void SkipFlags(DWORD NewFlags) { Flags.Clear(NewFlags); }
+public:
+	PluginManager();
+	~PluginManager();
 
-	public:
+public:
+	bool CacheForget(const wchar_t *lpwszModuleName);
+	bool LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem);
 
-		PluginManager();
-		~PluginManager();
+	int UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove = false);
+	int UnloadPluginExternal(const wchar_t *lpwszModuleName);
 
-	public:
+	void LoadPlugins();
 
-		bool CacheForget(const wchar_t *lpwszModuleName);
-		bool LoadPluginExternal(const wchar_t *lpwszModuleName, bool LoadToMem);
+	Plugin *GetPlugin(const wchar_t *lpwszModuleName);
+	Plugin *GetPlugin(int PluginNumber);
 
-		int UnloadPlugin(Plugin *pPlugin, DWORD dwException, bool bRemove = false);
-		int UnloadPluginExternal(const wchar_t *lpwszModuleName);
+	int GetPluginsCount() { return PluginsCount; }
 
-		void LoadPlugins();
+	BOOL IsPluginsLoaded() { return Flags.Check(PSIF_PLUGINSLOADDED); }
 
-		Plugin *GetPlugin(const wchar_t *lpwszModuleName);
-		Plugin *GetPlugin(int PluginNumber);
+	BOOL CheckFlags(DWORD NewFlags) { return Flags.Check(NewFlags); }
 
-		int GetPluginsCount() { return PluginsCount; }
+	void Configure(int StartPos = 0);
+	void ConfigureCurrent(Plugin *pPlugin, int INum);
+	int CommandsMenu(int ModalType, int StartPos, const wchar_t *HistoryName = nullptr);
+	bool GetDiskMenuItem(Plugin *pPlugin, int PluginItem, bool &ItemPresent, wchar_t &PluginHotkey,
+			FARString &strPluginText);
 
-		BOOL IsPluginsLoaded() { return Flags.Check(PSIF_PLUGINSLOADDED); }
+	int UseFarCommand(HANDLE hPlugin, int CommandType);
+	void ReloadLanguage();
+	void DiscardCache();
+	int ProcessCommandLine(const wchar_t *Command, Panel *Target = nullptr);
 
-		BOOL CheckFlags(DWORD NewFlags) { return Flags.Check(NewFlags); }
+	bool SetHotKeyDialog(const wchar_t *DlgPluginTitle, const std::string &SettingName);
+	std::string GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind);
 
-		void Configure(int StartPos=0);
-		void ConfigureCurrent(Plugin *pPlugin,int INum);
-		int CommandsMenu(int ModalType,int StartPos,const wchar_t *HistoryName=nullptr);
-		bool GetDiskMenuItem(Plugin *pPlugin,int PluginItem,bool &ItemPresent, wchar_t& PluginHotkey, FARString &strPluginText);
+	// $ .09.2000 SVS - Функция CallPlugin - найти плагин по ID и запустить OpenFrom = OPEN_*
+	int CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret = nullptr);
+	Plugin *FindPlugin(DWORD SysID);
 
-		int UseFarCommand(HANDLE hPlugin,int CommandType);
-		void ReloadLanguage();
-		void DiscardCache();
-		int ProcessCommandLine(const wchar_t *Command,Panel *Target=nullptr);
+	// api functions
 
-		bool SetHotKeyDialog(const wchar_t *DlgPluginTitle, const std::string &SettingName);
-		std::string GetHotKeySettingName(Plugin *pPlugin, int ItemNumber, HotKeyKind Kind);
+public:
+	Plugin *Analyse(const AnalyseData *pData);
 
-		// $ .09.2000 SVS - Функция CallPlugin - найти плагин по ID и запустить OpenFrom = OPEN_*
-		int CallPlugin(DWORD SysID,int OpenFrom, void *Data, int *Ret=nullptr);
-		Plugin *FindPlugin(DWORD SysID);
-
-//api functions
-
-	public:
-
-		Plugin *Analyse(const AnalyseData *pData);
-
-		HANDLE OpenPlugin(Plugin *pPlugin,int OpenFrom,INT_PTR Item);
-		HANDLE OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPLUGINTYPE Type, Plugin *pDesiredPlugin = nullptr);
-		HANDLE OpenFindListPlugin(const PluginPanelItem *PanelItem,int ItemsNumber);
-		HANDLE GetRealPluginHandle(HANDLE hPlugin);
-		FARString GetPluginModuleName(HANDLE hPlugin);
-		void ClosePlugin(HANDLE hPlugin); // decreases refcnt and actually closes plugin if refcnt reached zero
-		void RetainPlugin(HANDLE hPlugin); // increments refcnt
-		void GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info);
-		int GetFindData(HANDLE hPlugin,PluginPanelItem **pPanelItem,int *pItemsNumber,int Silent);
-		void FreeFindData(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber);
-		int GetVirtualFindData(HANDLE hPlugin,PluginPanelItem **pPanelItem,int *pItemsNumber,const wchar_t *Path);
-		void FreeVirtualFindData(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber);
-		int SetDirectory(HANDLE hPlugin,const wchar_t *Dir,int OpMode);
-		int GetFile(HANDLE hPlugin,PluginPanelItem *PanelItem,const wchar_t *DestPath,FARString &strResultName,int OpMode);
-		int GetFiles(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int Move,const wchar_t **DestPath,int OpMode);
-		int PutFiles(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int Move,int OpMode);
-		int DeleteFiles(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
-		int MakeDirectory(HANDLE hPlugin,const wchar_t **Name,int OpMode);
-		int ProcessHostFile(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int OpMode);
-		int ProcessKey(HANDLE hPlugin,int Key,unsigned int ControlState);
-		int ProcessEvent(HANDLE hPlugin,int Event,void *Param);
-		int Compare(HANDLE hPlugin,const PluginPanelItem *Item1,const PluginPanelItem *Item2,unsigned int Mode);
-		int ProcessEditorInput(INPUT_RECORD *Rec);
-		int ProcessEditorEvent(int Event,void *Param);
-		int ProcessViewerEvent(int Event,void *Param);
-		int ProcessDialogEvent(int Event,void *Param);
+	HANDLE OpenPlugin(Plugin *pPlugin, int OpenFrom, INT_PTR Item);
+	HANDLE OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPLUGINTYPE Type,
+			Plugin *pDesiredPlugin = nullptr);
+	HANDLE OpenFindListPlugin(const PluginPanelItem *PanelItem, int ItemsNumber);
+	HANDLE GetRealPluginHandle(HANDLE hPlugin);
+	FARString GetPluginModuleName(HANDLE hPlugin);
+	void ClosePlugin(HANDLE hPlugin);	// decreases refcnt and actually closes plugin if refcnt reached zero
+	void RetainPlugin(HANDLE hPlugin);	// increments refcnt
+	void GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info);
+	int GetFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, int Silent);
+	void FreeFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
+	int
+	GetVirtualFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, const wchar_t *Path);
+	void FreeVirtualFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
+	int SetDirectory(HANDLE hPlugin, const wchar_t *Dir, int OpMode);
+	int GetFile(HANDLE hPlugin, PluginPanelItem *PanelItem, const wchar_t *DestPath, FARString &strResultName,
+			int OpMode);
+	int GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
+			const wchar_t **DestPath, int OpMode);
+	int PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode);
+	int DeleteFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
+	int MakeDirectory(HANDLE hPlugin, const wchar_t **Name, int OpMode);
+	int ProcessHostFile(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
+	int ProcessKey(HANDLE hPlugin, int Key, unsigned int ControlState);
+	int ProcessEvent(HANDLE hPlugin, int Event, void *Param);
+	int
+	Compare(HANDLE hPlugin, const PluginPanelItem *Item1, const PluginPanelItem *Item2, unsigned int Mode);
+	int ProcessEditorInput(INPUT_RECORD *Rec);
+	int ProcessEditorEvent(int Event, void *Param);
+	int ProcessViewerEvent(int Event, void *Param);
+	int ProcessDialogEvent(int Event, void *Param);
 #if defined(PROCPLUGINMACROFUNC)
-		int ProcessMacroFunc(const wchar_t *Name, const FarMacroValue *Params, int nParams, FarMacroValue **Results, int *nResults);
+	int ProcessMacroFunc(const wchar_t *Name, const FarMacroValue *Params, int nParams,
+			FarMacroValue **Results, int *nResults);
 #endif
-		void GetCustomData(FileListItem *ListItem);
-		bool MayExitFar();
+	void GetCustomData(FileListItem *ListItem);
+	bool MayExitFar();
 
-		void BackroundTaskStarted(const wchar_t *Info);
-		void BackroundTaskFinished(const wchar_t *Info);
-		bool HasBackgroundTasks();
-		std::map<std::wstring, unsigned int> BackgroundTasks();
+	void BackroundTaskStarted(const wchar_t *Info);
+	void BackroundTaskFinished(const wchar_t *Info);
+	bool HasBackgroundTasks();
+	std::map<std::wstring, unsigned int> BackgroundTasks();
 
-		friend class Plugin;
+	friend class Plugin;
 };
 
 const char *PluginsIni();

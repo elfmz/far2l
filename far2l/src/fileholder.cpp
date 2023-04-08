@@ -8,14 +8,13 @@
 #include "farwinapi.hpp"
 #include "fileholder.hpp"
 
-
 static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 {
 } s_temp_file_holders;
 
 TempFileHolder::TempFileHolder(const FARString &temp_file_name, bool delete_parent_dir)
-	: _temp_file_name(temp_file_name),
-	_delete(delete_parent_dir ? DELETE_FILE_AND_PARENT_DIR : DELETE_FILE)
+	:
+	_temp_file_name(temp_file_name), _delete(delete_parent_dir ? DELETE_FILE_AND_PARENT_DIR : DELETE_FILE)
 {
 	std::lock_guard<std::mutex> lock(s_temp_file_holders);
 	s_temp_file_holders.insert(this);
@@ -60,14 +59,16 @@ void TempFileHolder::OnFileEdited(const wchar_t *FileName)
 ///////////////////////////////////////////////////////////////////////
 
 TempFileUploadHolder::TempFileUploadHolder(const FARString &temp_file_name, bool delete_parent_dir)
-	: TempFileHolder(temp_file_name, delete_parent_dir)
+	:
+	TempFileHolder(temp_file_name, delete_parent_dir)
 {
 	GetCurrentTimestamp();
 }
 
 void TempFileUploadHolder::GetCurrentTimestamp()
 {
-	struct stat s{};
+	struct stat s
+	{};
 	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0) {
 		_mtim = s.st_mtim;
 	}
@@ -76,7 +77,8 @@ void TempFileUploadHolder::GetCurrentTimestamp()
 void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 {
 	if (TempFileName() != FileName) {
-		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", TempFileName().CPtr(), FileName);
+		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", TempFileName().CPtr(),
+				FileName);
 		return;
 	}
 
@@ -89,10 +91,10 @@ void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 
 void TempFileUploadHolder::UploadIfTimestampChanged()
 {
-	struct stat s{};
+	struct stat s
+	{};
 	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0
-	 && (_mtim.tv_sec != s.st_mtim.tv_sec || _mtim.tv_nsec != s.st_mtim.tv_nsec))
-	{
+			&& (_mtim.tv_sec != s.st_mtim.tv_sec || _mtim.tv_nsec != s.st_mtim.tv_nsec)) {
 		if (UploadTempFile()) {
 			_mtim = s.st_mtim;
 		}

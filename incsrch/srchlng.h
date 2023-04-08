@@ -19,26 +19,26 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 enum
 {
-  MIncSearch,
+	MIncSearch,
 
-  MOk,
-  MCancel,
+	MOk,
+	MCancel,
 
-  MSearchForward,
-  MSearchBackward,
-  MFindNext,
-  MFindPrevious,
-  MSetup,
+	MSearchForward,
+	MSearchBackward,
+	MFindNext,
+	MFindPrevious,
+	MSetup,
 
-  MCaseSensitive,
-  MKeepSelection,
-  MBeepOnMismatch,
-  MRestartEOF,
-  MUseSelection,
-  MAutoNext,
-  MBSunroll,
+	MCaseSensitive,
+	MKeepSelection,
+	MBeepOnMismatch,
+	MRestartEOF,
+	MUseSelection,
+	MAutoNext,
+	MBSunroll,
 
-  MEOF,
-  MBOF,
-  MNotFound
+	MEOF,
+	MBOF,
+	MNotFound
 };

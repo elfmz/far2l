@@ -35,11 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class ChangePriority
 {
-	public:
-		enum Priority {
-			IDLE,
-			NORMAL
-		};
-		ChangePriority(Priority NewPriority);
-		~ChangePriority();
+public:
+	enum Priority
+	{
+		IDLE,
+		NORMAL
+	};
+	ChangePriority(Priority NewPriority);
+	~ChangePriority();
 };

@@ -16,7 +16,7 @@ NetPresenz (Mac).
 NetWare.
 MSDOS.
 
-Definitely not covered: 
+Definitely not covered:
 Long VMS filenames, with information split across two lines.
 NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 */
@@ -28,30 +28,41 @@ NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 #include <fcntl.h>
 #include "FTPParseLIST.h"
 
-static long totai(long year,long month,long mday)
+static long totai(long year, long month, long mday)
 {
 	long result;
-	if (month >= 2) month -= 2;
-	else { month += 10; --year; }
+	if (month >= 2)
+		month-= 2;
+	else {
+		month+= 10;
+		--year;
+	}
 	result = (mday - 1) * 10 + 5 + 306 * month;
-	result /= 10;
-	if (result == 365) { year -= 3; result = 1460; }
-	else result += 365 * (year % 4);
-	year /= 4;
-	result += 1461 * (year % 25);
-	year /= 25;
-	if (result == 36524) { year -= 3; result = 146096; }
-	else { result += 36524 * (year % 4); }
-	year /= 4;
-	result += 146097 * (year - 5);
-	result += 11017;
+	result/= 10;
+	if (result == 365) {
+		year-= 3;
+		result = 1460;
+	} else
+		result+= 365 * (year % 4);
+	year/= 4;
+	result+= 1461 * (year % 25);
+	year/= 25;
+	if (result == 36524) {
+		year-= 3;
+		result = 146096;
+	} else {
+		result+= 36524 * (year % 4);
+	}
+	year/= 4;
+	result+= 146097 * (year - 5);
+	result+= 11017;
 	return result * 86400;
 }
 
-static time_t base; /* time() value on this OS at the beginning of 1970 TAI */
-static long now; /* current time */
+static time_t base;			/* time() value on this OS at the beginning of 1970 TAI */
+static long now;			/* current time */
 static int flagnowready = 0;
-static long currentyear; /* approximation to current year */
+static long currentyear;	/* approximation to current year */
 
 static void initnow(void)
 {
@@ -65,29 +76,45 @@ static void initnow(void)
 
 	base = 0;
 	t = gmtime(&base);
-	base = -(totai(t->tm_year + 1900,t->tm_mon,t->tm_mday) + t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
+	base = -(
+			totai(t->tm_year + 1900, t->tm_mon, t->tm_mday) + t->tm_hour * 3600 + t->tm_min * 60 + t->tm_sec);
 	/* assumes the right time_t, counting seconds. */
 	/* base may be slightly off if time_t counts non-leap seconds. */
 
-	now = time((time_t *) 0) - base;
+	now = time((time_t *)0) - base;
 
 	day = now / 86400;
-	if ((now % 86400) < 0) --day;
-	day -= 11017;
+	if ((now % 86400) < 0)
+		--day;
+	day-= 11017;
 	year = 5 + day / 146097;
 	day = day % 146097;
-	if (day < 0) { day += 146097; --year; }
-	year *= 4;
-	if (day == 146096) { year += 3; day = 36524; }
-	else { year += day / 36524; day %= 36524; }
-	year *= 25;
-	year += day / 1461;
-	day %= 1461;
-	year *= 4;
-	if (day == 1460) { year += 3; day = 365; }
-	else { year += day / 365; day %= 365; }
-	day *= 10;
-	if ((day + 5) / 306 >= 10) ++year;
+	if (day < 0) {
+		day+= 146097;
+		--year;
+	}
+	year*= 4;
+	if (day == 146096) {
+		year+= 3;
+		day = 36524;
+	} else {
+		year+= day / 36524;
+		day%= 36524;
+	}
+	year*= 25;
+	year+= day / 1461;
+	day%= 1461;
+	year*= 4;
+	if (day == 1460) {
+		year+= 3;
+		day = 365;
+	} else {
+		year+= day / 365;
+		day%= 365;
+	}
+	day*= 10;
+	if ((day + 5) / 306 >= 10)
+		++year;
 	currentyear = year;
 	flagnowready = 1;
 }
@@ -96,39 +123,42 @@ static void initnow(void)
 /* So we have to guess the year. */
 /* Apparently NetWare uses ``twelve months'' instead of ``six months''; ugh. */
 /* Some versions of ls also fail to show the year for future dates. */
-static long guesstai(long month,long mday)
+static long guesstai(long month, long mday)
 {
 	long year;
 	long t;
 
 	initnow();
 
-	for (year = currentyear - 1;year < currentyear + 100;++year) {
-	t = totai(year,month,mday);
-	if (now - t < 350 * 86400)
-		return t;
+	for (year = currentyear - 1; year < currentyear + 100; ++year) {
+		t = totai(year, month, mday);
+		if (now - t < 350 * 86400)
+			return t;
 	}
 	return 0;
 }
 
 static int check(const char *buf, const char *monthname)
 {
-	if ((buf[0] != monthname[0]) && (buf[0] != monthname[0] - 32)) return 0;
-	if ((buf[1] != monthname[1]) && (buf[1] != monthname[1] - 32)) return 0;
-	if ((buf[2] != monthname[2]) && (buf[2] != monthname[2] - 32)) return 0;
+	if ((buf[0] != monthname[0]) && (buf[0] != monthname[0] - 32))
+		return 0;
+	if ((buf[1] != monthname[1]) && (buf[1] != monthname[1] - 32))
+		return 0;
+	if ((buf[2] != monthname[2]) && (buf[2] != monthname[2] - 32))
+		return 0;
 	return 1;
 }
 
-static const char *months[12] = {
-	"jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"
-} ;
+static const char *months[12] = {"jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov",
+		"dec"};
 
 static int getmonth(const char *buf, int len)
 {
 	int i;
 	if (len == 3)
-		for (i = 0;i < 12;++i)
-			if (check(buf,months[i])) return i;
+		for (i = 0; i < 12; ++i)
+			if (check(buf, months[i]))
+				return i;
 	return -1;
 }
 
@@ -165,40 +195,41 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 	fp->id = 0;
 	fp->idlen = 0;
 
-	if (len < 2) /* an empty name in EPLF, with no info, could be 2 chars */
+	if (len < 2)	/* an empty name in EPLF, with no info, could be 2 chars */
 		return 0;
 
-	switch(*buf) {
+	switch (*buf) {
 		/* see http://pobox.com/~djb/proto/eplf.txt */
 		/* "+i8388621.29609,m824255902,/,\tdev" */
 		/* "+i8388621.44468,m839956783,r,s10376,\tRFCEPLF" */
 		case '+':
 			i = 1;
-			for (j = 1;j < len;++j) {
+			for (j = 1; j < len; ++j) {
 				if (buf[j] == 9) {
 					fp->name = buf + j + 1;
 					fp->namelen = len - j - 1;
-					fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
+					fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH
+							| S_IXOTH;
 					return 1;
 				}
 				if (buf[j] == ',') {
-					switch(buf[i]) {
+					switch (buf[i]) {
 						case '/':
 							fp->flagtrycwd = 1;
-							fp->mode|= S_IFDIR; 
+							fp->mode|= S_IFDIR;
 							break;
 						case 'r':
 							fp->flagtryretr = 1;
-							fp->mode|= S_IFREG; 
+							fp->mode|= S_IFREG;
 							break;
 						case 's':
 							fp->sizetype = FTPPARSE_SIZE_BINARY;
-							fp->size = getlong(buf + i + 1,j - i - 1);
+							fp->size = getlong(buf + i + 1, j - i - 1);
 							break;
 						case 'm':
 							fp->mtimetype = FTPPARSE_MTIME_LOCAL;
 							initnow();
-							fp->mtime = base + getlong(buf + i + 1,j - i - 1);
+							fp->mtime = base + getlong(buf + i + 1, j - i - 1);
 							break;
 						case 'i':
 							fp->idtype = FTPPARSE_ID_FULL;
@@ -234,30 +265,48 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 		case 's':
 		case '-':
 
-			if (*buf == 'd') { fp->flagtrycwd = 1; fp->mode|= S_IFDIR; }
-			if (*buf == '-') { fp->flagtryretr = 1; fp->mode|= S_IFREG; }
-			if (*buf == 'l') { fp->flagtrycwd = fp->flagtryretr = 1; fp->mode|= S_IFLNK; }
+			if (*buf == 'd') {
+				fp->flagtrycwd = 1;
+				fp->mode|= S_IFDIR;
+			}
+			if (*buf == '-') {
+				fp->flagtryretr = 1;
+				fp->mode|= S_IFREG;
+			}
+			if (*buf == 'l') {
+				fp->flagtrycwd = fp->flagtryretr = 1;
+				fp->mode|= S_IFLNK;
+			}
 
 			state = 1;
 			i = 0;
-			for (j = 1;j < len;++j)
+			for (j = 1; j < len; ++j)
 				if ((buf[j] == ' ') && (buf[j - 1] != ' ')) {
-					switch(state) {
+					switch (state) {
 						case 1: /* hadling perm */
-							if (len > 1 && buf[1] != '-') fp->mode|= S_IRUSR;
-							if (len > 2 && buf[2] != '-') fp->mode|= S_IWUSR;
-							if (len > 3 && buf[3] != '-') fp->mode|= S_IXUSR;
-							if (len > 4 && buf[4] != '-') fp->mode|= S_IRGRP;
-							if (len > 5 && buf[5] != '-') fp->mode|= S_IWGRP;
-							if (len > 6 && buf[6] != '-') fp->mode|= S_IXGRP;
-							if (len > 7 && buf[7] != '-') fp->mode|= S_IROTH;
-							if (len > 8 && buf[8] != '-') fp->mode|= S_IWOTH;
-							if (len > 9 && buf[9] != '-') fp->mode|= S_IXOTH;
+							if (len > 1 && buf[1] != '-')
+								fp->mode|= S_IRUSR;
+							if (len > 2 && buf[2] != '-')
+								fp->mode|= S_IWUSR;
+							if (len > 3 && buf[3] != '-')
+								fp->mode|= S_IXUSR;
+							if (len > 4 && buf[4] != '-')
+								fp->mode|= S_IRGRP;
+							if (len > 5 && buf[5] != '-')
+								fp->mode|= S_IWGRP;
+							if (len > 6 && buf[6] != '-')
+								fp->mode|= S_IXGRP;
+							if (len > 7 && buf[7] != '-')
+								fp->mode|= S_IROTH;
+							if (len > 8 && buf[8] != '-')
+								fp->mode|= S_IWOTH;
+							if (len > 9 && buf[9] != '-')
+								fp->mode|= S_IXOTH;
 							state = 2;
 							break;
-						case 2: /* skipping nlink */
+						case 2:										/* skipping nlink */
 							state = 3;
-							if ((j - i == 6) && (buf[i] == 'f')) /* for NetPresenz */
+							if ((j - i == 6) && (buf[i] == 'f'))	/* for NetPresenz */
 								state = 4;
 							break;
 						case 3: /* getting owner */
@@ -270,43 +319,41 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 							for (k = i; k < len && k - i != sizeof(fp->group) - 1 && buf[k] != ' '; ++k) {
 								fp->group[k - i] = buf[k];
 							}
-							size = getlong(buf + i,j - i);
+							size = getlong(buf + i, j - i);
 							state = 5;
 							break;
 						case 5: /* searching for month, otherwise getting tentative size */
-							month = getmonth(buf + i,j - i);
+							month = getmonth(buf + i, j - i);
 							if (month >= 0) {
 								fp->group[0] = 0;
 								state = 6;
 							} else
-								size = getlong(buf + i,j - i);
+								size = getlong(buf + i, j - i);
 							break;
 						case 6: /* have size and month */
-							mday = getlong(buf + i,j - i);
+							mday = getlong(buf + i, j - i);
 							state = 7;
 							break;
 						case 7: /* have size, month, mday */
 							if ((j - i == 4) && (buf[i + 1] == ':')) {
-								hour = getlong(buf + i,1);
-								minute = getlong(buf + i + 2,2);
+								hour = getlong(buf + i, 1);
+								minute = getlong(buf + i + 2, 2);
 								fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
 								initnow();
-								fp->mtime = base + guesstai(month,mday) + hour * 3600 + minute * 60;
+								fp->mtime = base + guesstai(month, mday) + hour * 3600 + minute * 60;
 
 							} else if ((j - i == 5) && (buf[i + 2] == ':')) {
-								hour = getlong(buf + i,2);
-								minute = getlong(buf + i + 3,2);
+								hour = getlong(buf + i, 2);
+								minute = getlong(buf + i + 3, 2);
 								fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
 								initnow();
-									fp->mtime = base + guesstai(month,mday) + hour * 3600 + minute * 60;
-							}
-							else if (j - i >= 4) {
-								year = getlong(buf + i,j - i);
+								fp->mtime = base + guesstai(month, mday) + hour * 3600 + minute * 60;
+							} else if (j - i >= 4) {
+								year = getlong(buf + i, j - i);
 								fp->mtimetype = FTPPARSE_MTIME_REMOTEDAY;
 								initnow();
-								fp->mtime = base + totai(year,month,mday);
-							}
-							else
+								fp->mtime = base + totai(year, month, mday);
+							} else
 								return 0;
 							fp->name = buf + j + 1;
 							fp->namelen = len - j - 1;
@@ -316,7 +363,8 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 							break;
 					}
 					i = j + 1;
-					while ((i < len) && (buf[i] == ' ')) ++i;
+					while ((i < len) && (buf[i] == ' '))
+						++i;
 				}
 
 			if (state != 8)
@@ -326,7 +374,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 			fp->sizetype = FTPPARSE_SIZE_BINARY;
 
 			if (*buf == 'l')
-				for (i = 0;i + 3 < fp->namelen;++i)
+				for (i = 0; i + 3 < fp->namelen; ++i)
 					if (fp->name[i] == ' ')
 						if (fp->name[i + 1] == '-')
 							if (fp->name[i + 2] == '>')
@@ -341,8 +389,8 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 					if (fp->name[0] == ' ')
 						if (fp->name[1] == ' ')
 							if (fp->name[2] == ' ') {
-								fp->name += 3;
-								fp->namelen -= 3;
+								fp->name+= 3;
+								fp->namelen-= 3;
 							}
 			return 1;
 	}
@@ -352,7 +400,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 	/* "CORE.DIR;1          1  8-SEP-1996 16:09 [SYSTEM] (RWE,RWE,RE,RE)" */
 	/* and non-MutliNet VMS: */
 	/* "CII-MANUAL.TEX;1  213/216  29-JAN-1996 03:33:12  [ANONYMOU,ANONYMOUS]   (RWED,RWED,,)" */
-	for (i = 0;i < len;++i)
+	for (i = 0; i < len; ++i)
 		if (buf[i] == ';')
 			break;
 	if (i < len) {
@@ -363,42 +411,69 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 				if (buf[i - 3] == 'D')
 					if (buf[i - 2] == 'I')
 						if (buf[i - 1] == 'R') {
-							fp->namelen -= 4;
+							fp->namelen-= 4;
 							fp->flagtrycwd = 1;
-							fp->mode|= S_IFDIR; 
+							fp->mode|= S_IFDIR;
 						}
 		if (!fp->flagtrycwd) {
 			fp->flagtryretr = 1;
-			fp->mode|= S_IFREG; 
+			fp->mode|= S_IFREG;
 		}
-		while (buf[i] != ' ') if (++i == len) return 0;
-		while (buf[i] == ' ') if (++i == len) return 0;
-		while (buf[i] != ' ') if (++i == len) return 0;
-		while (buf[i] == ' ') if (++i == len) return 0;
+		while (buf[i] != ' ')
+			if (++i == len)
+				return 0;
+		while (buf[i] == ' ')
+			if (++i == len)
+				return 0;
+		while (buf[i] != ' ')
+			if (++i == len)
+				return 0;
+		while (buf[i] == ' ')
+			if (++i == len)
+				return 0;
 		j = i;
-		while (buf[j] != '-') if (++j == len) return 0;
-		mday = getlong(buf + i,j - i);
-		while (buf[j] == '-') if (++j == len) return 0;
+		while (buf[j] != '-')
+			if (++j == len)
+				return 0;
+		mday = getlong(buf + i, j - i);
+		while (buf[j] == '-')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != '-') if (++j == len) return 0;
-		month = getmonth(buf + i,j - i);
-		if (month < 0) return 0;
-		while (buf[j] == '-') if (++j == len) return 0;
+		while (buf[j] != '-')
+			if (++j == len)
+				return 0;
+		month = getmonth(buf + i, j - i);
+		if (month < 0)
+			return 0;
+		while (buf[j] == '-')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != ' ') if (++j == len) return 0;
-		year = getlong(buf + i,j - i);
-		while (buf[j] == ' ') if (++j == len) return 0;
+		while (buf[j] != ' ')
+			if (++j == len)
+				return 0;
+		year = getlong(buf + i, j - i);
+		while (buf[j] == ' ')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != ':') if (++j == len) return 0;
-		hour = getlong(buf + i,j - i);
-		while (buf[j] == ':') if (++j == len) return 0;
+		while (buf[j] != ':')
+			if (++j == len)
+				return 0;
+		hour = getlong(buf + i, j - i);
+		while (buf[j] == ':')
+			if (++j == len)
+				return 0;
 		i = j;
-		while ((buf[j] != ':') && (buf[j] != ' ')) if (++j == len) return 0;
-		minute = getlong(buf + i,j - i);
+		while ((buf[j] != ':') && (buf[j] != ' '))
+			if (++j == len)
+				return 0;
+		minute = getlong(buf + i, j - i);
 
 		fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
 		initnow();
-		fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
+		fp->mtime = base + totai(year, month, mday) + hour * 3600 + minute * 60;
 
 		fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
 		return 1;
@@ -411,53 +486,89 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 	if ((*buf >= '0') && (*buf <= '9')) {
 		i = 0;
 		j = 0;
-		while (buf[j] != '-') if (++j == len) return 0;
-		month = getlong(buf + i,j - i) - 1;
-		while (buf[j] == '-') if (++j == len) return 0;
+		while (buf[j] != '-')
+			if (++j == len)
+				return 0;
+		month = getlong(buf + i, j - i) - 1;
+		while (buf[j] == '-')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != '-') if (++j == len) return 0;
-		mday = getlong(buf + i,j - i);
-		while (buf[j] == '-') if (++j == len) return 0;
+		while (buf[j] != '-')
+			if (++j == len)
+				return 0;
+		mday = getlong(buf + i, j - i);
+		while (buf[j] == '-')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != ' ') if (++j == len) return 0;
-		year = getlong(buf + i,j - i);
-		if (year < 50) year += 2000;
-		if (year < 1000) year += 1900;
-		while (buf[j] == ' ') if (++j == len) return 0;
+		while (buf[j] != ' ')
+			if (++j == len)
+				return 0;
+		year = getlong(buf + i, j - i);
+		if (year < 50)
+			year+= 2000;
+		if (year < 1000)
+			year+= 1900;
+		while (buf[j] == ' ')
+			if (++j == len)
+				return 0;
 		i = j;
-		while (buf[j] != ':') if (++j == len) return 0;
-		hour = getlong(buf + i,j - i);
-		while (buf[j] == ':') if (++j == len) return 0;
+		while (buf[j] != ':')
+			if (++j == len)
+				return 0;
+		hour = getlong(buf + i, j - i);
+		while (buf[j] == ':')
+			if (++j == len)
+				return 0;
 		i = j;
-		while ((buf[j] != 'A') && (buf[j] != 'P')) if (++j == len) return 0;
-		minute = getlong(buf + i,j - i);
-		if (hour == 12) hour = 0;
-		if (buf[j] == 'A') if (++j == len) return 0;
-		if (buf[j] == 'P') { hour += 12; if (++j == len) return 0; }
-		if (buf[j] == 'M') if (++j == len) return 0;
+		while ((buf[j] != 'A') && (buf[j] != 'P'))
+			if (++j == len)
+				return 0;
+		minute = getlong(buf + i, j - i);
+		if (hour == 12)
+			hour = 0;
+		if (buf[j] == 'A')
+			if (++j == len)
+				return 0;
+		if (buf[j] == 'P') {
+			hour+= 12;
+			if (++j == len)
+				return 0;
+		}
+		if (buf[j] == 'M')
+			if (++j == len)
+				return 0;
 
-		while (buf[j] == ' ') if (++j == len) return 0;
+		while (buf[j] == ' ')
+			if (++j == len)
+				return 0;
 		if (buf[j] == '<') {
 			fp->flagtrycwd = 1;
-			fp->mode|= S_IFDIR; 
-			while (buf[j] != ' ') if (++j == len) return 0;
-		}
-		else {
+			fp->mode|= S_IFDIR;
+			while (buf[j] != ' ')
+				if (++j == len)
+					return 0;
+		} else {
 			i = j;
-			while (buf[j] != ' ') if (++j == len) return 0;
-			fp->size = getlong(buf + i,j - i);
+			while (buf[j] != ' ')
+				if (++j == len)
+					return 0;
+			fp->size = getlong(buf + i, j - i);
 			fp->sizetype = FTPPARSE_SIZE_BINARY;
 			fp->flagtryretr = 1;
-			fp->mode|= S_IFREG; 
+			fp->mode|= S_IFREG;
 		}
-		while (buf[j] == ' ') if (++j == len) return 0;
+		while (buf[j] == ' ')
+			if (++j == len)
+				return 0;
 
 		fp->name = buf + j;
 		fp->namelen = len - j;
 
 		fp->mtimetype = FTPPARSE_MTIME_REMOTEMINUTE;
 		initnow();
-		fp->mtime = base + totai(year,month,mday) + hour * 3600 + minute * 60;
+		fp->mtime = base + totai(year, month, mday) + hour * 3600 + minute * 60;
 
 		fp->mode|= S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
 		return 1;

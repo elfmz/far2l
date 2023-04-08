@@ -53,112 +53,112 @@ enum DLGEDITTYPE
 
 class Dialog;
 
-class DlgEdit: public ScreenObject
+class DlgEdit : public ScreenObject
 {
-	public:
-		// for CtrlEnd
-		FARString strLastStr;
-		int LastPartLength;
+public:
+	// for CtrlEnd
+	FARString strLastStr;
+	int LastPartLength;
 
-		BitFlags& Flags();
+	BitFlags &Flags();
 
-		DlgEdit(Dialog* pOwner,unsigned Index,DLGEDITTYPE Type);
-		virtual ~DlgEdit();
+	DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type);
+	virtual ~DlgEdit();
 
-		virtual int  ProcessKey(int Key);
-		virtual int  ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
-		virtual void Show();
-		virtual void SetPosition(int X1,int Y1,int X2,int Y2);
-		virtual void GetPosition(int& X1,int& Y1,int& X2,int& Y2);
+	virtual void Show();
+	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
+	virtual void GetPosition(int &X1, int &Y1, int &X2, int &Y2);
 
-		virtual void Hide();
-		virtual void Hide0();
-		virtual void ShowConsoleTitle();
-		virtual void SetScreenPosition();
-		virtual void ResizeConsole();
-		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
+	virtual void Hide();
+	virtual void Hide0();
+	virtual void ShowConsoleTitle();
+	virtual void SetScreenPosition();
+	virtual void ResizeConsole();
+	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
-		void  SetDialogParent(DWORD Sets);
-		void  SetDropDownBox(int NewDropDownBox);
-		void  SetPasswordMode(int Mode);
+	void SetDialogParent(DWORD Sets);
+	void SetDropDownBox(int NewDropDownBox);
+	void SetPasswordMode(int Mode);
 
-		int   GetMaxLength();
-		void  SetMaxLength(int Length);
-		int   GetLength();
-		int   GetStrSize(int Row=-1);
+	int GetMaxLength();
+	void SetMaxLength(int Length);
+	int GetLength();
+	int GetStrSize(int Row = -1);
 
-		void  SetInputMask(const wchar_t *InputMask);
-		const wchar_t* GetInputMask();
+	void SetInputMask(const wchar_t *InputMask);
+	const wchar_t *GetInputMask();
 
-		void  SetOvertypeMode(int Mode);
-		int   GetOvertypeMode();
+	void SetOvertypeMode(int Mode);
+	int GetOvertypeMode();
 
-		void  SetEditBeyondEnd(int Mode);
+	void SetEditBeyondEnd(int Mode);
 
-		void  SetClearFlag(int Flag);
-		int   GetClearFlag();
+	void SetClearFlag(int Flag);
+	int GetClearFlag();
 
-		void  SetString(const wchar_t *Str);
-		void  InsertString(const wchar_t *Str);
-		void  SetHiString(const wchar_t *Str);
-		void  GetString(wchar_t *Str, int MaxSize,int Row=-1);    // Row==-1 - current line
-		void  GetString(FARString &strStr,int Row=-1);            // Row==-1 - current line
-		const wchar_t* GetStringAddr();
+	void SetString(const wchar_t *Str);
+	void InsertString(const wchar_t *Str);
+	void SetHiString(const wchar_t *Str);
+	void GetString(wchar_t *Str, int MaxSize, int Row = -1);	// Row==-1 - current line
+	void GetString(FARString &strStr, int Row = -1);			// Row==-1 - current line
+	const wchar_t *GetStringAddr();
 
-		void  SetCurPos(int NewCol, int NewRow=-1);               // Row==-1 - current line
-		int   GetCurPos();
-		int   GetCurRow();
+	void SetCurPos(int NewCol, int NewRow = -1);	// Row==-1 - current line
+	int GetCurPos();
+	int GetCurRow();
 
-		int   GetCellCurPos();
-		void  SetCellCurPos(int NewPos);
+	int GetCellCurPos();
+	void SetCellCurPos(int NewPos);
 
-		void  SetPersistentBlocks(int Mode);
-		int   GetPersistentBlocks();
-		void  SetDelRemovesBlocks(int NewMode);
-		int   GetDelRemovesBlocks();
+	void SetPersistentBlocks(int Mode);
+	int GetPersistentBlocks();
+	void SetDelRemovesBlocks(int NewMode);
+	int GetDelRemovesBlocks();
 
-		void  SetObjectColor(int Color,int SelColor=0xf,int ColorUnChanged=COL_DIALOGEDITUNCHANGED);
-		long  GetObjectColor();
-		int   GetObjectColorUnChanged();
+	void SetObjectColor(int Color, int SelColor = 0xf, int ColorUnChanged = COL_DIALOGEDITUNCHANGED);
+	long GetObjectColor();
+	int GetObjectColorUnChanged();
 
-		void  FastShow();
-		int   GetLeftPos();
-		void  SetLeftPos(int NewPos,int Row=-1);   // Row==-1 - current line
+	void FastShow();
+	int GetLeftPos();
+	void SetLeftPos(int NewPos, int Row = -1);	// Row==-1 - current line
 
-		void  DeleteBlock();
+	void DeleteBlock();
 
-		void  Select(int Start,int End);           // TODO: не учтено для multiline!
-		void  GetSelection(int &Start,int &End);   // TODO: не учтено для multiline!
+	void Select(int Start, int End);			// TODO: не учтено для multiline!
+	void GetSelection(int &Start, int &End);	// TODO: не учтено для multiline!
 
-		void Xlat(bool All=false);
+	void Xlat(bool All = false);
 
-		void SetCursorType(bool Visible, DWORD Size);
-		void GetCursorType(bool& Visible, DWORD& Size);
+	void SetCursorType(bool Visible, DWORD Size);
+	void GetCursorType(bool &Visible, DWORD &Size);
 
-		int  GetReadOnly();
-		void SetReadOnly(int NewReadOnly);
+	int GetReadOnly();
+	void SetReadOnly(int NewReadOnly);
 
-		void SetCallbackState(bool Enable){lineEdit->SetCallbackState(Enable);}
-		void AutoComplete(bool Manual,bool DelBlock){return lineEdit->AutoComplete(Manual,DelBlock);}
-		void EnableAC(){return lineEdit->EnableAC();}
-		void DisableAC(){return lineEdit->DisableAC();}
-		void RevertAC(){return lineEdit->RevertAC();}
+	void SetCallbackState(bool Enable) { lineEdit->SetCallbackState(Enable); }
+	void AutoComplete(bool Manual, bool DelBlock) { return lineEdit->AutoComplete(Manual, DelBlock); }
+	void EnableAC() { return lineEdit->EnableAC(); }
+	void DisableAC() { return lineEdit->DisableAC(); }
+	void RevertAC() { return lineEdit->RevertAC(); }
 
-		bool HistoryGetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend=false);
+	bool HistoryGetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend = false);
 
-	private:
-		Dialog* m_Dialog;
-		unsigned m_Index;
-		DLGEDITTYPE Type;
-		History* iHistory;
+private:
+	Dialog *m_Dialog;
+	unsigned m_Index;
+	DLGEDITTYPE Type;
+	History *iHistory;
 
-		EditControl *lineEdit;
+	EditControl *lineEdit;
 #if defined(PROJECT_DI_MEMOEDIT)
-		Editor *multiEdit;
+	Editor *multiEdit;
 #endif
 
-		virtual void DisplayObject();
-		static void EditChange(void* aParam);
-		void DoEditChange();
+	virtual void DisplayObject();
+	static void EditChange(void *aParam);
+	void DoEditChange();
 };

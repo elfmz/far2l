@@ -47,23 +47,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(__APPLE__) and !defined(__FreeBSD__) && !defined(__DragonFly__)
 #include <malloc.h>
 #endif
-#endif //__GNUC__
+#endif	//__GNUC__
 
 #include <search.h>
-//#include <share.h>
-
+// #include <share.h>
 
 #ifdef __GNUC__
 #define WINVER       0x0601
 #define _WIN32_WINNT 0x0601
 #define _WIN32_IE    0x0601
-#endif // __GNUC__
-
+#endif	// __GNUC__
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #if 0
-#define WIN32_NO_STATUS //exclude ntstatus.h macros from winnt.h
+#define WIN32_NO_STATUS		// exclude ntstatus.h macros from winnt.h
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <winioctl.h>
@@ -87,7 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cfgmgr32.h>
 #include <ntddscsi.h>
 #include <virtdisk.h>
-#endif // _MSC_VER
+#endif	// _MSC_VER
 
 #ifdef __GNUC__
 #define __NTDDK_H
@@ -97,59 +95,67 @@ struct _ADAPTER_OBJECT;
 typedef struct _ADAPTER_OBJECT ADAPTER_OBJECT,*PADAPTER_OBJECT;
 #include <ddk/ntddscsi.h>
 #include <ntdef.h>
-#endif // __GNUC__
+#endif	// __GNUC__
 #endif
 #include <WinCompat.h>
 #include <WinPort.h>
 #include <sudo.h>
 #include <utils.h>
 
-
 #ifdef __GNUC__
-#define _abs64 llabs
+#define _abs64    llabs
 #define _wcstoi64 wcstoll
-#endif // __GNUC__
+#endif	// __GNUC__
 
 /*#ifdef __GNUC__
 #define __try
 #define __except(a) if(false)
 #endif*/ // __GNUC__
 
-
-enum FemaleBool{
-	FB_NO = 0,
-	FB_YES = 1,
+enum FemaleBool
+{
+	FB_NO    = 0,
+	FB_YES   = 1,
 	FB_MAYBE = 42
 };
 
 template <class T>
-inline const T&Min(const T &a, const T &b) { return a<b?a:b; }
+inline const T &Min(const T &a, const T &b)
+{
+	return a < b ? a : b;
+}
 
 template <class T>
-inline const T&Max(const T &a, const T &b) { return a>b?a:b; }
+inline const T &Max(const T &a, const T &b)
+{
+	return a > b ? a : b;
+}
 
 template <class T>
-inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
+inline const T Round(const T &a, const T &b)
+{
+	return a / b + (a % b * 2 > b ? 1 : 0);
+}
 
-#define IsPtr(x) ((DWORD_PTR)x>(DWORD_PTR)0xfff)// && (DWORD_PTR)x<(((DWORD_PTR)-1)>>1))
+#define IsPtr(x) ((DWORD_PTR)x > (DWORD_PTR)0xfff)		// && (DWORD_PTR)x<(((DWORD_PTR)-1)>>1))
 
-#define SIGN_UTF16LE    0xFEFF
-#define SIGN_UTF16BE	0xFFFE
-#define SIGN_UTF32LE    0x0000FEFF
-#define SIGN_UTF32BE	0xFFFE0000
-#define SIGN_UTF8       0xBFBBEF
+#define SIGN_UTF16LE 0xFEFF
+#define SIGN_UTF16BE 0xFFFE
+#define SIGN_UTF32LE 0x0000FEFF
+#define SIGN_UTF32BE 0xFFFE0000
+#define SIGN_UTF8    0xBFBBEF
 
 #if (__WCHAR_MAX__ > 0xffff)
-# define SIGN_WIDE_LE	SIGN_UTF32LE
-# define SIGN_WIDE_BE	SIGN_UTF32BE
+#define SIGN_WIDE_LE SIGN_UTF32LE
+#define SIGN_WIDE_BE SIGN_UTF32BE
 #else
-# define SIGN_WIDE_LE	SIGN_UTF16LE
-# define SIGN_WIDE_BE	SIGN_UTF16BE
+#define SIGN_WIDE_LE SIGN_UTF16LE
+#define SIGN_WIDE_BE SIGN_UTF16BE
 #endif
 
-//#if !defined(__FreeBSD__) && ((defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600))
-// #define nullptr NULL
-//#endif
+// #if !defined(__FreeBSD__) && ((defined(__GNUC__)) || (defined(_MSC_VER) && _MSC_VER<1600))
+//  #define nullptr NULL
+// #endif
 
 #include "farrtl.hpp"
 #include "FARString.hpp"
@@ -161,16 +167,19 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 #include "farwinapi.hpp"
 #include "cvtname.hpp"
 
-//#define WINPORT(N) N
+// #define WINPORT(N) N
 
 #ifdef _DEBUG
-#define SELF_TEST(code) \
-	namespace { \
-		struct SelfTest { \
-			SelfTest() { \
-				code; \
-			} \
-		} _SelfTest; \
+#define SELF_TEST(code)                                                                                        \
+	namespace                                                                                                  \
+	{                                                                                                          \
+	struct SelfTest                                                                                            \
+	{                                                                                                          \
+		SelfTest()                                                                                             \
+		{                                                                                                      \
+			code;                                                                                              \
+		}                                                                                                      \
+	} _SelfTest;                                                                                               \
 	}
 #else
 #define SELF_TEST(code)
@@ -178,4 +187,3 @@ inline const T Round(const T &a, const T &b) { return a/b+(a%b*2>b?1:0); }
 
 #include <string>
 #include <vector>
-

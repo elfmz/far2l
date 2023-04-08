@@ -1,10 +1,9 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
-FTP *FTP::Backups[ FTP_MAXBACKUPS ] = { 0 };
-int  FTP::BackupCount = 0;
+FTP *FTP::Backups[FTP_MAXBACKUPS] = {0};
+int FTP::BackupCount = 0;
 
 FTP::FTP()
 {
@@ -25,30 +24,29 @@ FTP::FTP()
 	LastMsgCode = ocNone;
 	*PanelTitle = 0;
 	LongBeep = NULL;
-	KeepAlivePeriod = Opt.KeepAlive ? FP_PeriodCreate(Opt.KeepAlive*1000) : NULL;
+	KeepAlivePeriod = Opt.KeepAlive ? FP_PeriodCreate(Opt.KeepAlive * 1000) : NULL;
 	hConnect = NULL;
 	CallLevel = 0;
 
 	Host.Init();
 	memset(HostsPath, 0, sizeof(HostsPath));
-	FP_GetRegKey("LastHostsPath",HostsPath,NULL,ARRAYSIZE(HostsPath));
+	FP_GetRegKey("LastHostsPath", HostsPath, NULL, ARRAYSIZE(HostsPath));
 
 	PanelInfo pi;
-	FP_Info->Control(INVALID_HANDLE_VALUE,FCTL_GETPANELINFO,&pi);
+	FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &pi);
 	StartViewMode = pi.ViewMode;
 }
 
 FTP::~FTP()
 {
-	if(hConnect)
-	{
+	if (hConnect) {
 		delete hConnect;
 		hConnect = NULL;
 	}
 
 	FP_PeriodDestroy(KeepAlivePeriod);
 	LongBeepEnd(TRUE);
-	FP_Info->Control(this,FCTL_SETVIEWMODE,&StartViewMode);
+	FP_Info->Control(this, FCTL_SETVIEWMODE, &StartViewMode);
 	DeleteFromBackup();
 	ClearQueue();
 }
@@ -57,35 +55,34 @@ void FTP::Call(void)
 {
 	LastUsedPlugin = this;
 
-	if(CallLevel == 0)
+	if (CallLevel == 0)
 		LongBeepCreate();
 
 	CallLevel++;
 }
 void FTP::End(int rc)
 {
-	if(rc != -156)
-	{
-		Log(("rc=%d",rc));
+	if (rc != -156) {
+		Log(("rc=%d", rc));
 	}
 
 	ShowMemInfo();
 
-	if(!CallLevel) return;
+	if (!CallLevel)
+		return;
 
 	CallLevel--;
 
-	if(!CallLevel)
-	{
+	if (!CallLevel) {
 		LongBeepEnd();
 
-		if(KeepAlivePeriod)
+		if (KeepAlivePeriod)
 			FP_PeriodReset(KeepAlivePeriod);
 	}
 }
 LPCSTR FTP::CloseQuery(void)
 {
-	if(UrlsList != NULL)
+	if (UrlsList != NULL)
 		return FMSG("Process queque is not empty");
 
 	return NULL;
@@ -93,226 +90,203 @@ LPCSTR FTP::CloseQuery(void)
 
 int FTP::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
-	PROC(("FTP::GetFindData",NULL))
-	DWORD           b,e;
-	char           *Data[3];
-	*pPanelItem   = NULL;
+	PROC(("FTP::GetFindData", NULL))
+	DWORD b, e;
+	char *Data[3];
+	*pPanelItem = NULL;
 	*pItemsNumber = 0;
 
-//Hosts
-	if(ShowHosts)
-	{
-		EnumHost        Enum(HostsPath);
+	// Hosts
+	if (ShowHosts) {
+		EnumHost Enum(HostsPath);
 		FP_SizeItemList il(FALSE);
 		PluginPanelItem tmp;
-		FTPHost         h;
+		FTPHost h;
 
-		if(!IS_SILENT(OpMode))
-		{
+		if (!IS_SILENT(OpMode)) {
 			memset(&tmp, 0, sizeof(tmp));
-			strcpy(tmp.FindData.cFileName,"..");
+			strcpy(tmp.FindData.cFileName, "..");
 			tmp.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
-			if(!IS_SILENT(OpMode))
-			{
-				tmp.Description               = (char *)"..";
-				tmp.CustomColumnNumber        = 3;
-				tmp.CustomColumnData          = Data;
-				tmp.CustomColumnData[0]       = (char *)"..";
-				tmp.CustomColumnData[1]       = (char *)"..";
-				tmp.CustomColumnData[2]       = (char *)"..";
+			if (!IS_SILENT(OpMode)) {
+				tmp.Description = (char *)"..";
+				tmp.CustomColumnNumber = 3;
+				tmp.CustomColumnData = Data;
+				tmp.CustomColumnData[0] = (char *)"..";
+				tmp.CustomColumnData[1] = (char *)"..";
+				tmp.CustomColumnData[2] = (char *)"..";
 			}
 
-			if(!il.Add(&tmp))
+			if (!il.Add(&tmp))
 				return FALSE;
 		}
 
-		while(true)
-		{
-			if(!Enum.GetNextHost(&h))
+		while (true) {
+			if (!Enum.GetNextHost(&h))
 				break;
 
-			if(!h.Read(NULL))
+			if (!h.Read(NULL))
 				continue;
 
 			memset(&tmp, 0, sizeof(tmp));
 			/* Panel item MUST have name the save as file saved to disk
 			   in case you want to copy between panels work.
 			*/
-			h.MkINIFile(tmp.FindData.cFileName,NULL,"");
-			tmp.FindData.ftLastWriteTime  = h.LastWrite;
+			h.MkINIFile(tmp.FindData.cFileName, NULL, "");
+			tmp.FindData.ftLastWriteTime = h.LastWrite;
 			tmp.FindData.dwFileAttributes = h.Folder ? FILE_ATTRIBUTE_DIRECTORY : 0;
-			tmp.Flags                     = PPIF_USERDATA;
-			tmp.FindData.nPhysicalSize    = FTP_HOSTID;
-			tmp.UserData                  = (DWORD_PTR)&h;
+			tmp.Flags = PPIF_USERDATA;
+			tmp.FindData.nPhysicalSize = FTP_HOSTID;
+			tmp.UserData = (DWORD_PTR)&h;
 
-			if(!IS_SILENT(OpMode))
-			{
-				tmp.Description               = h.HostDescr;
-				tmp.CustomColumnNumber        = 3;
-				tmp.CustomColumnData          = Data;
-				tmp.CustomColumnData[0]       = h.Host;  //C0
-				tmp.CustomColumnData[1]       = h.Home;  //C1
-				tmp.CustomColumnData[2]       = h.User;  //C2
+			if (!IS_SILENT(OpMode)) {
+				tmp.Description = h.HostDescr;
+				tmp.CustomColumnNumber = 3;
+				tmp.CustomColumnData = Data;
+				tmp.CustomColumnData[0] = h.Host;	// C0
+				tmp.CustomColumnData[1] = h.Home;	// C1
+				tmp.CustomColumnData[2] = h.User;	// C2
 			}
 
-			if(!il.Add(&tmp))
+			if (!il.Add(&tmp))
 				return FALSE;
 
-			Log(("Item[%d]=[%s] attr=%08X",
-				il.Count()-1, FTP_FILENAME(il.Item(il.Count()-1)),
-				il.Item(il.Count()-1)->FindData.dwFileAttributes));
+			Log(("Item[%d]=[%s] attr=%08X", il.Count() - 1, FTP_FILENAME(il.Item(il.Count() - 1)),
+					il.Item(il.Count() - 1)->FindData.dwFileAttributes));
 		}
 
-		*pPanelItem   = il.Items();
+		*pPanelItem = il.Items();
 		*pItemsNumber = il.Count();
 		return TRUE;
 	}
 
-//FTP
+	// FTP
 	FP_Screen _scr;
 	FTPFileInfo FileInfo;
 
-	if(!hConnect)
-	{
+	if (!hConnect) {
 		goto AskConnect;
 	}
 
 Restart:
 
-	if(!FtpFindFirstFile(hConnect, "*", &FileInfo, &ResetCache))
-	{
-		if(WINPORT(GetLastError)() == ERROR_NO_MORE_FILES)
-		{
+	if (!FtpFindFirstFile(hConnect, "*", &FileInfo, &ResetCache)) {
+		if (WINPORT(GetLastError)() == ERROR_NO_MORE_FILES) {
 			*pItemsNumber = 0;
 			return TRUE;
 		}
 
-		if(SwitchingToFTP && WINPORT(GetLastError)() == ERROR_CANCELLED)
-		{
+		if (SwitchingToFTP && WINPORT(GetLastError)() == ERROR_CANCELLED) {
 			;
-		}
-		else
-		{
-			if(CurrentState == fcsExpandList)
-			{
-				FreeFindData(*pPanelItem,*pItemsNumber);
-				*pPanelItem   = NULL;
+		} else {
+			if (CurrentState == fcsExpandList) {
+				FreeFindData(*pPanelItem, *pItemsNumber);
+				*pPanelItem = NULL;
 				*pItemsNumber = 0;
 				return FALSE;
 			}
 
-//Query reconnect
-			do
-			{
-				if(!hConnect)
+			// Query reconnect
+			do {
+				if (!hConnect)
 					break;
 
-				if(WINPORT(GetLastError)() == ERROR_CANCELLED)
+				if (WINPORT(GetLastError)() == ERROR_CANCELLED)
 					break;
 
-				if(!hConnect->ConnectMessageTimeout(MConnectionLost,Host.HostName,-MRestore))
-				{
+				if (!hConnect->ConnectMessageTimeout(MConnectionLost, Host.HostName, -MRestore)) {
 					Log(("WaitMessage cancelled"));
 					break;
 				}
 
-				if(FtpCmdLineAlive(hConnect) &&
-						FtpKeepAlive(hConnect))
+				if (FtpCmdLineAlive(hConnect) && FtpKeepAlive(hConnect))
 					goto Restart;
 
-				if(SelectFile.Length() && CurrentState != fcsExpandList)
+				if (SelectFile.Length() && CurrentState != fcsExpandList)
 					SaveUsedDirNFile();
 
-AskConnect:
+			AskConnect:
 
-				if(Connect())
+				if (Connect())
 					goto Restart;
 				else
 					break;
-			}
-			while(true);
+			} while (true);
 		}
 
-		if(!ShowHosts)
+		if (!ShowHosts)
 			BackToHosts();
 
 		FreeFindData(*pPanelItem, *pItemsNumber);
-		return GetFindData(pPanelItem,pItemsNumber,OpMode);
+		return GetFindData(pPanelItem, pItemsNumber, OpMode);
 	}
 
 	GET_TIME(b);
 
-	do
-	{
-		if(Opt.ShowIdle)
-		{
-			char str[ 200 ];
+	do {
+		if (Opt.ShowIdle) {
+			char str[200];
 			GET_TIME(e);
 
-			if(CMP_TIME(e,b) > 0.5)
-			{
-				snprintf(str,ARRAYSIZE(str),"%s%d", FP_GetMsg(MReaded), *pItemsNumber);
+			if (CMP_TIME(e, b) > 0.5) {
+				snprintf(str, ARRAYSIZE(str), "%s%d", FP_GetMsg(MReaded), *pItemsNumber);
 				WINPORT(SetLastError)(ERROR_SUCCESS);
-				IdleMessage(str,Opt.ProcessColor);
+				IdleMessage(str, Opt.ProcessColor);
 				b = e;
 
-				if(CheckForEsc(FALSE))
-				{
+				if (CheckForEsc(FALSE)) {
 					WINPORT(SetLastError)(ERROR_CANCELLED);
 					return FALSE;
 				}
 			}
 		}
 
-		PluginPanelItem *NewPanelItem=*pPanelItem;
+		PluginPanelItem *NewPanelItem = *pPanelItem;
 
-		if((*pItemsNumber % 1024) == 0)
-		{
-			if(!NewPanelItem)
-				NewPanelItem = (PluginPanelItem *)malloc((1024+1)*sizeof(PluginPanelItem));
+		if ((*pItemsNumber % 1024) == 0) {
+			if (!NewPanelItem)
+				NewPanelItem = (PluginPanelItem *)malloc((1024 + 1) * sizeof(PluginPanelItem));
 			else {
-				PluginPanelItem *tmp = (PluginPanelItem *)realloc(NewPanelItem,(*pItemsNumber+1024+1)*sizeof(PluginPanelItem));
-				if ( tmp )
+				PluginPanelItem *tmp = (PluginPanelItem *)realloc(NewPanelItem,
+						(*pItemsNumber + 1024 + 1) * sizeof(PluginPanelItem));
+				if (tmp)
 					NewPanelItem = tmp;
 				else {
 					free(NewPanelItem);
 					NewPanelItem = nullptr;
 				}
 			}
-			if(NewPanelItem == nullptr)
-			{
-				/*-*/Log(("GetFindData(file)::!reallocate plugin panels items %d -> %d",*pItemsNumber,*pItemsNumber+1024+1));
+			if (NewPanelItem == nullptr) {
+				/*-*/ Log(("GetFindData(file)::!reallocate plugin panels items %d -> %d", *pItemsNumber,
+						*pItemsNumber + 1024 + 1));
 				return FALSE;
 			}
 
-			*pPanelItem=NewPanelItem;
+			*pPanelItem = NewPanelItem;
 		}
 
 		PluginPanelItem *CurItem = &NewPanelItem[*pItemsNumber];
 		memset(CurItem, 0, sizeof(PluginPanelItem));
 		CurItem->FindData = FileInfo.FindData;
 
-		if(!IS_SILENT(OpMode))
-		{
-			CurItem->CustomColumnNumber             = FTP_COL_MAX;
-			CurItem->Owner                          = FileInfo.FTPOwner[0] ? strdup(FileInfo.FTPOwner) : NULL;
-			CurItem->CustomColumnData               = (LPSTR*)malloc(sizeof(LPSTR*)*FTP_COL_MAX);
+		if (!IS_SILENT(OpMode)) {
+			CurItem->CustomColumnNumber = FTP_COL_MAX;
+			CurItem->Owner = FileInfo.FTPOwner[0] ? strdup(FileInfo.FTPOwner) : NULL;
+			CurItem->CustomColumnData = (LPSTR *)malloc(sizeof(LPSTR *) * FTP_COL_MAX);
 			CurItem->CustomColumnData[FTP_COL_MODE] = strdup(FileInfo.UnixMode);
 			CurItem->CustomColumnData[FTP_COL_LINK] = strdup(FileInfo.Link);
-//			hConnect->ToOEM(CurItem->CustomColumnData[FTP_COL_LINK]);
+			//			hConnect->ToOEM(CurItem->CustomColumnData[FTP_COL_LINK]);
 		}
 
 		(*pItemsNumber)++;
-	}
-	while(FtpFindNextFile(hConnect,&FileInfo));
+	} while (FtpFindNextFile(hConnect, &FileInfo));
 
 	return TRUE;
 }
 
-void FTP::FreeFindData(PluginPanelItem *PanelItem,int ItemsNumber)
+void FTP::FreeFindData(PluginPanelItem *PanelItem, int ItemsNumber)
 {
-	FP_SizeItemList::Free(PanelItem,ItemsNumber);
+	FP_SizeItemList::Free(PanelItem, ItemsNumber);
 }
 
 void FTP::SetBackupMode(void)
@@ -325,13 +299,13 @@ void FTP::SetBackupMode(void)
 void FTP::SetActiveMode(void)
 {
 	NeedToSetActiveMode = TRUE;
-	CurrentState        = fcsNormal;
+	CurrentState = fcsNormal;
 }
 
 BOOL FTP::isBackup(void)
 {
-	for(int n = 0; n < FTP::BackupCount; n++)
-		if(FTP::Backups[n] == this)
+	for (int n = 0; n < FTP::BackupCount; n++)
+		if (FTP::Backups[n] == this)
 			return TRUE;
 
 	return FALSE;
@@ -339,19 +313,18 @@ BOOL FTP::isBackup(void)
 
 void FTP::DeleteFromBackup(void)
 {
-	for(int n = 0; n < FTP::BackupCount; n++)
-		if(FTP::Backups[n] == this)
-		{
-			memmove(&FTP::Backups[n], &FTP::Backups[n+1], (FTP::BackupCount-n)*sizeof(FTP*));
+	for (int n = 0; n < FTP::BackupCount; n++)
+		if (FTP::Backups[n] == this) {
+			memmove(&FTP::Backups[n], &FTP::Backups[n + 1], (FTP::BackupCount - n) * sizeof(FTP *));
 			FTP::BackupCount--;
 		}
 }
 
 void FTP::AddToBackup(void)
 {
-	if(!Opt.UseBackups)
+	if (!Opt.UseBackups)
 		return;
 
-	if(!isBackup())
-		FTP::Backups[ FTP::BackupCount++ ] = this;
+	if (!isBackup())
+		FTP::Backups[FTP::BackupCount++] = this;
 }

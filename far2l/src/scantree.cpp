@@ -34,23 +34,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "scantree.hpp"
 #include "syslog.hpp"
 #include "config.hpp"
 #include "pathmix.hpp"
 #include "processname.hpp"
 
-ScanTree::ScanTree(int RetUpDir,int Recurse, int ScanJunction)
+ScanTree::ScanTree(int RetUpDir, int Recurse, int ScanJunction)
 {
 	Flags.Change(FSCANTREE_RETUPDIR, RetUpDir);
 	Flags.Change(FSCANTREE_RECUR, Recurse);
-	Flags.Change(FSCANTREE_SCANSYMLINK, (ScanJunction==-1?Opt.ScanJunction:ScanJunction));
+	Flags.Change(FSCANTREE_SCANSYMLINK, (ScanJunction == -1 ? Opt.ScanJunction : ScanJunction));
 }
 
-void ScanTree::SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD NewScanFlags)
+void ScanTree::SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags)
 {
-	Flags.Flags = (Flags.Flags&0x0000FFFF) | (NewScanFlags&0xFFFF0000);
+	Flags.Flags = (Flags.Flags & 0x0000FFFF) | (NewScanFlags & 0xFFFF0000);
 	strFindPath = *Path ? Path : L".";
 	strFindMask = wcscmp(Mask, L"*") ? Mask : L"";
 	ScanDirStack.clear();
@@ -67,19 +66,19 @@ void ScanTree::SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD 
 
 void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
 {
-	if ( (fdata->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) == 0 || !Flags.Check(FSCANTREE_RECUR))
+	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0 || !Flags.Check(FSCANTREE_RECUR))
 		return;
 
-	if ( (fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 && !Flags.Check(FSCANTREE_SCANSYMLINK))
+	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 && !Flags.Check(FSCANTREE_SCANSYMLINK))
 		return;
 
-	const bool InsideSymlink = (fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) != 0 || IsInsideSymlink();
+	const bool InsideSymlink =
+			(fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 || IsInsideSymlink();
 
 	ScanDirStack.emplace_back();
 	strFindPath.append(fdata->strFileName.CPtr(), fdata->strFileName.GetLength());
 
-	if (fdata->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
-	{
+	if (fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
 		ConvertNameToReal(strFindPath.c_str(), ScanDirStack.back().RealPath);
 
 		// check if converted path points to same location is already scanned or to parent path of already scanned location
@@ -96,20 +95,16 @@ void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
 			if (ScanDirStack.rend() == ++it)
 				break;
 			const auto &IthPath = it->RealPath;
-			if ( (it->UnixDevice == fdata->UnixDevice && it->UnixNode == fdata->UnixNode)
-				||
-				(IthPath.Begins(RealPath) &&
-				(IthPath.GetLength() == RealPath.GetLength()
-					|| IthPath.At(RealPath.GetLength()) == GOOD_SLASH
-						|| RealPath.GetLength() == 1))
-				) { // recursion! revert state changes made so far and bail out
+			if ((it->UnixDevice == fdata->UnixDevice && it->UnixNode == fdata->UnixNode)
+					|| (IthPath.Begins(RealPath)
+							&& (IthPath.GetLength() == RealPath.GetLength() || IthPath.At(RealPath.GetLength()) == GOOD_SLASH
+									|| RealPath.GetLength() == 1))) {	// recursion! revert state changes made so far and bail out
 				ScanDirStack.pop_back();
 				strFindPath.resize(strFindPath.size() - fdata->strFileName.GetLength());
 				return;
 			}
 		}
-	}
-	else
+	} else
 		ScanDirStack.back().RealPath = strFindPath;
 
 	ScanDirStack.back().UnixDevice = fdata->UnixDevice;
@@ -125,23 +120,26 @@ void ScanTree::StartEnumSubdir()
 		strFindPath+= L'/';
 
 	DWORD WinPortFindFlags = 0;
-	if (Flags.Check(FSCANTREE_NOLINKS)) WinPortFindFlags|= FIND_FILE_FLAG_NO_LINKS;
-	if (Flags.Check(FSCANTREE_NOFILES)) WinPortFindFlags|= FIND_FILE_FLAG_NO_FILES;
-	if (Flags.Check(FSCANTREE_NODEVICES)) WinPortFindFlags|= FIND_FILE_FLAG_NO_DEVICES;
-	if (Flags.Check(FSCANTREE_CASE_INSENSITIVE)) WinPortFindFlags|= FIND_FILE_FLAG_CASE_INSENSITIVE;
+	if (Flags.Check(FSCANTREE_NOLINKS))
+		WinPortFindFlags|= FIND_FILE_FLAG_NO_LINKS;
+	if (Flags.Check(FSCANTREE_NOFILES))
+		WinPortFindFlags|= FIND_FILE_FLAG_NO_FILES;
+	if (Flags.Check(FSCANTREE_NODEVICES))
+		WinPortFindFlags|= FIND_FILE_FLAG_NO_DEVICES;
+	if (Flags.Check(FSCANTREE_CASE_INSENSITIVE))
+		WinPortFindFlags|= FIND_FILE_FLAG_CASE_INSENSITIVE;
 
-	strFindPath+= L'*'; // append temporary asterisk
+	strFindPath+= L'*';		// append temporary asterisk
 
 	ScanDirStack.back().Enumer.reset(
-		new FindFile(strFindPath.c_str(), Flags.Check(FSCANTREE_SCANSYMLINK), WinPortFindFlags));
+			new FindFile(strFindPath.c_str(), Flags.Check(FSCANTREE_SCANSYMLINK), WinPortFindFlags));
 
-	strFindPath.pop_back(); // strip asterisk
+	strFindPath.pop_back();		// strip asterisk
 }
 
 void ScanTree::LeaveSubdir()
 {
-	if (!ScanDirStack.empty())
-	{
+	if (!ScanDirStack.empty()) {
 		ScanDirStack.pop_back();
 		size_t p = strFindPath.rfind('/', strFindPath.size() - 2);
 		if (p != std::string::npos) {
@@ -154,21 +152,19 @@ void ScanTree::LeaveSubdir()
 
 bool ScanTree::ScanDir::GetNext(FAR_FIND_DATA_EX *fdata, bool FilesFirst)
 {
-	if (Enumer) for (;;)
-	{
-		if (!Enumer->Get(*fdata))
-		{
-			Enumer.reset();
-			break;
+	if (Enumer)
+		for (;;) {
+			if (!Enumer->Get(*fdata)) {
+				Enumer.reset();
+				break;
+			}
+			if (!FilesFirst || (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+				return true;
+
+			Postponed.emplace_back(std::move(*fdata));
 		}
-		if (!FilesFirst || (fdata->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) == 0)
-			return true;
 
-		Postponed.emplace_back(std::move(*fdata));
-	}
-
-	if (!Postponed.empty())
-	{
+	if (!Postponed.empty()) {
 		*fdata = std::move(Postponed.front());
 		Postponed.pop_front();
 		return true;
@@ -181,15 +177,12 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName)
 {
 	Flags.Clear(FSCANTREE_SECONDDIRNAME);
 
-	for (;;)
-	{
+	for (;;) {
 		if (ScanDirStack.empty())
 			return false;
 
-		if (!ScanDirStack.back().GetNext(fdata, Flags.Check(FSCANTREE_FILESFIRST)))
-		{
-			if (!Flags.Check(FSCANTREE_RETUPDIR) || ScanDirStack.size() == 1)
-			{
+		if (!ScanDirStack.back().GetNext(fdata, Flags.Check(FSCANTREE_FILESFIRST))) {
+			if (!Flags.Check(FSCANTREE_RETUPDIR) || ScanDirStack.size() == 1) {
 				LeaveSubdir();
 				continue;
 			}
@@ -203,8 +196,7 @@ bool ScanTree::GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName)
 		}
 
 		const bool Matched = strFindMask.empty() || CmpName(strFindMask.c_str(), fdata->strFileName, false);
-		if (Matched)
-		{
+		if (Matched) {
 			strFullName = strFindPath;
 			strFullName+= fdata->strFileName;
 		}

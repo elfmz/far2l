@@ -1,54 +1,52 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
-cmd cmdtabdata[] =
-{
-	/*00*/{ "account",    1,  1, 0 },  //  [...]
-	/*01*/{ "append",     1,  1, 2 },  //  <local> [<remote>]
-	/*02*/{ "ascii",      1,  1, 0 },  //
-	/*03*/{ "binary",     1,  1, 0 },  //
-	/*04*/{ "bye",        0,  0, 0 },  //
-	/*05*/{ "cd",         1,  1, 1 },  //  <path>
-	/*06*/{ "cdup",       1,  1, 0 },  //
-	/*07*/{ "chmod",      1,  1, 2 },  //  <file> <mode>
-	/*08*/{ "close",      1,  1, 0 },  //
-	/*09*/{ "delete",     1,  1, 1 },  //  <file>
-	/*10*/{ "dir",        1,  1, 0 },  //  [<path>]
-	/*11*/{ "disconnect", 1,  1, 0 },  //
-	/*12*/{ "get",        1,  1, 1 },  //  <remote> [<local>]
-	/*13*/{ "idle",       1,  1, 1 },  //  <time>
-	/*14*/{ "image",      1,  1, 0 },  //
-	/*15*/{ "ls",         1,  1, 0 },  //  [<path>]
-	/*16*/{ "mkdir",      1,  1, 1 },  //  <dir>
-	/*17*/{ "modtime",    1,  1, 1 },  //  <file> (get last modification time)
-	/*18*/{ "newer",      1,  1, 1 },  //  <remote> [<local>] (get files only if new)
-	/*19*/{ "nlist",      1,  1, 0 },  //  [<path>]
-	/*20*/{ "open",       0,  1, 1 },  //  <site> [<port> [<user> [<pwd>]]]
-	/*21*/{ "proxy",      0,  1, 1 },  //  <command> [<cmd params>] (exec cmd into proxy mode; tempror switch to proxy if not yet)
-	/*22*/{ "sendport",   0,  0, 0 },  //
-	/*23*/{ "put",        1,  1, 1 },  //  <local> [<remote>]
-	/*24*/{ "pwd",        1,  1, 0 },  //
-	/*25*/{ "quit",       0,  0, 0 },  //
-	/*26*/{ "quote",      1,  1, 1 },  //  <command> [...]
-	/*27*/{ "recv",       1,  1, 1 },  //  <remote> [<local>]
-	/*28*/{ "reget",      1,  1, 1 },  //  <remote> [<local>]
-	/*29*/{ "rstatus",    1,  1, 0 },  //  [<command>]
-	/*30*/{ "rhelp",      1,  1, 0 },  //  [<command>]
-	/*31*/{ "rename",     1,  1, 2 },  //  <old name> <new name>
-	/*32*/{ "reset",      1,  1, 0 },  //  (read one server reply string)
-	/*33*/{ "restart",    1,  1, 1 },  //  <restart point> (set internal restart offset)
-	/*34*/{ "rmdir",      1,  1, 1 },  //  <dirname>
-	/*35*/{ "runique",    0,  1, 0 },  //  (set internal `runique` flag)
-	/*36*/{ "send",       1,  1, 1 },  //  <local> [<remote>]
-	/*37*/{ "site",       1,  1, 1 },  //  <command> [...]
-	/*38*/{ "size",       1,  1, 1 },  //  <file>
-	/*39*/{ "system",     1,  1, 0 },  //  (exec SYST command)
-	/*40*/{ "sunique",    0,  1, 0 },  //  (set internal `sunique` flag)
-	/*41*/{ "user",       1,  1, 1 },  //  <user> [<pwd>] [<account command>]
-	/*42*/{ "umask",      1,  1, 1 },  //  <umask>
-	{ 0 },
+cmd cmdtabdata[] = {
+		/*00*/ {"account", 1, 1, 0},		//  [...]
+		/*01*/ {"append", 1, 1, 2},			//  <local> [<remote>]
+		/*02*/ {"ascii", 1, 1, 0},			//
+		/*03*/ {"binary", 1, 1, 0},			//
+		/*04*/ {"bye", 0, 0, 0},			//
+		/*05*/ {"cd", 1, 1, 1},				//  <path>
+		/*06*/ {"cdup", 1, 1, 0},			//
+		/*07*/ {"chmod", 1, 1, 2},			//  <file> <mode>
+		/*08*/ {"close", 1, 1, 0},			//
+		/*09*/ {"delete", 1, 1, 1},			//  <file>
+		/*10*/ {"dir", 1, 1, 0},			//  [<path>]
+		/*11*/ {"disconnect", 1, 1, 0},		//
+		/*12*/ {"get", 1, 1, 1},			//  <remote> [<local>]
+		/*13*/ {"idle", 1, 1, 1},			//  <time>
+		/*14*/ {"image", 1, 1, 0},			//
+		/*15*/ {"ls", 1, 1, 0},				//  [<path>]
+		/*16*/ {"mkdir", 1, 1, 1},			//  <dir>
+		/*17*/ {"modtime", 1, 1, 1},		//  <file> (get last modification time)
+		/*18*/ {"newer", 1, 1, 1},			//  <remote> [<local>] (get files only if new)
+		/*19*/ {"nlist", 1, 1, 0},			//  [<path>]
+		/*20*/ {"open", 0, 1, 1},			//  <site> [<port> [<user> [<pwd>]]]
+		/*21*/ {"proxy", 0, 1, 1},			//  <command> [<cmd params>] (exec cmd into proxy mode; tempror switch to proxy if not yet)
+		/*22*/ {"sendport", 0, 0, 0},		//
+		/*23*/ {"put", 1, 1, 1},			//  <local> [<remote>]
+		/*24*/ {"pwd", 1, 1, 0},			//
+		/*25*/ {"quit", 0, 0, 0},			//
+		/*26*/ {"quote", 1, 1, 1},			//  <command> [...]
+		/*27*/ {"recv", 1, 1, 1},			//  <remote> [<local>]
+		/*28*/ {"reget", 1, 1, 1},			//  <remote> [<local>]
+		/*29*/ {"rstatus", 1, 1, 0},		//  [<command>]
+		/*30*/ {"rhelp", 1, 1, 0},			//  [<command>]
+		/*31*/ {"rename", 1, 1, 2},			//  <old name> <new name>
+		/*32*/ {"reset", 1, 1, 0},			//  (read one server reply string)
+		/*33*/ {"restart", 1, 1, 1},		//  <restart point> (set internal restart offset)
+		/*34*/ {"rmdir", 1, 1, 1},			//  <dirname>
+		/*35*/ {"runique", 0, 1, 0},		//  (set internal `runique` flag)
+		/*36*/ {"send", 1, 1, 1},			//  <local> [<remote>]
+		/*37*/ {"site", 1, 1, 1},			//  <command> [...]
+		/*38*/ {"size", 1, 1, 1},			//  <file>
+		/*39*/ {"system", 1, 1, 0},			//  (exec SYST command)
+		/*40*/ {"sunique", 0, 1, 0},		//  (set internal `sunique` flag)
+		/*41*/ {"user", 1, 1, 1},			//  <user> [<pwd>] [<account command>]
+		/*42*/ {"umask", 1, 1, 1},			//  <umask>
+		{0},
 };
 
 Connection::Connection()
@@ -58,7 +56,8 @@ Connection::Connection()
 	CmdBuff = NULL;
 	RplBuff = NULL;
 	CmdMsg = NULL;
-	cmdCount = 0;;
+	cmdCount = 0;
+	;
 	*LastHost = 0;
 	*LastMsg = 0;
 	IOBuff = NULL;
@@ -83,15 +82,15 @@ Connection::Connection()
 	altarg = NULL;
 
 	stru = 0;
-	*bytename=0;
-	bytesize=0;
+	*bytename = 0;
+	bytesize = 0;
 
 	stringbase = NULL;
 	argbase = NULL;
 	margc = 0;
 	cpend = 0;
 	mflag = 0;
-	memset(ListCache,0,sizeof(ListCache));
+	memset(ListCache, 0, sizeof(ListCache));
 	ListCachePos = 0;
 	*UserName = 0;
 	*UserPassword = 0;
@@ -117,21 +116,20 @@ Connection::Connection()
 	IOCallback = FALSE;
 	LoginComplete = FALSE;
 
-
-	SocketError      = INVALID_SOCKET;
-	sendport         = -1;
-	cmd_peer         = INVALID_SOCKET;
-	data_peer        = INVALID_SOCKET;
+	SocketError = INVALID_SOCKET;
+	sendport = -1;
+	cmd_peer = INVALID_SOCKET;
+	data_peer = INVALID_SOCKET;
 	LastUsedTableNum = 1;
-	TrafficInfo      = new FTPProgress;
-	CurrentState     = fcsNormal;
-	Breakable        = TRUE;
-	Host.ServerType  = FTP_TYPE_DETECT;
+	TrafficInfo = new FTPProgress;
+	CurrentState = fcsNormal;
+	Breakable = TRUE;
+	Host.ServerType = FTP_TYPE_DETECT;
 }
 
 Connection::~Connection()
 {
-	PROC(("Connection::~Connection","%p",this))
+	PROC(("Connection::~Connection", "%p", this))
 	int LastError = WINPORT(GetLastError)();
 	ResetOutput();
 	CacheReset();
@@ -142,106 +140,105 @@ Connection::~Connection()
 	CloseCmdBuff();
 }
 
-void Connection::ExecCmdTab(struct cmd *c,int argc,char *argv[])
+void Connection::ExecCmdTab(struct cmd *c, int argc, char *argv[])
 {
-	PROC(("ExecCmdTab","%d [%s,%s,%s]",argc,(argc>=1)?argv[0]:"nil",(argc>=2)?argv[1]:"nil",(argc>=3)?argv[2]:"nil"));
+	PROC(("ExecCmdTab", "%d [%s,%s,%s]", argc, (argc >= 1) ? argv[0] : "nil", (argc >= 2) ? argv[1] : "nil",
+			(argc >= 3) ? argv[2] : "nil"));
 
-	for(size_t I=0; I < ARRAYSIZE(cmdtabdata); I++)
-		if(c==&cmdtabdata[I])
-		{
-			switch(I)
-			{
-				case  0:
-					account(argc,argv);
+	for (size_t I = 0; I < ARRAYSIZE(cmdtabdata); I++)
+		if (c == &cmdtabdata[I]) {
+			switch (I) {
+				case 0:
+					account(argc, argv);
 					break;
-				case  1:
+				case 1:
 
-//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
+					//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
 
-					put(argc,argv);
+					put(argc, argv);
 					break;
-				case  2:
+				case 2:
 					setascii();
 					break;
-				case  3:
+				case 3:
 					setbinary();
 					break;
-				case  4:
+				case 4:
 					quit();
 					break;
-				case  5:
-//					argv[1] = FromOEMDup(argv[1]);
-					cd(argc,argv);
+				case 5:
+					//					argv[1] = FromOEMDup(argv[1]);
+					cd(argc, argv);
 					break;
-				case  6:
+				case 6:
 					cdup();
 					break;
-				case  7:
-					do_chmod(argc,argv);
+				case 7:
+					do_chmod(argc, argv);
 					break;
-				case  8:
+				case 8:
 					disconnect();
 					break;
-				case  9:
-//					argv[1] = FromOEMDup(argv[1]);
-					deleteFile(argc,argv);
+				case 9:
+					//					argv[1] = FromOEMDup(argv[1]);
+					deleteFile(argc, argv);
 					break;
 				case 10:
 
-//					if(argc > 1)
-//						argv[1] = FromOEMDup(argv[1]);
+					//					if(argc > 1)
+					//						argv[1] = FromOEMDup(argv[1]);
 
-					ls(argc,argv);
+					ls(argc, argv);
 					break;
 				case 11:
 					disconnect();
 					break;
 				case 12:
-//					argv[1] = FromOEMDup(argv[1]);
-					get(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					get(argc, argv);
 					break;
 				case 13:
-					idle(argc,argv);
+					idle(argc, argv);
 					break;
 				case 14:
 					setbinary();
 					break;
 				case 15:
 
-//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
+					//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
 
-					ls(argc,argv);
+					ls(argc, argv);
 					break;
 				case 16:
-//					argv[1] = FromOEMDup(argv[1]);
-					makedir(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					makedir(argc, argv);
 					break;
 				case 17:
-					modtime(argc,argv);
+					modtime(argc, argv);
 					break;
 				case 18:
-					newer(argc,argv);
+					newer(argc, argv);
 					break;
 				case 19:
 
-//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
+					//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
 
-					ls(argc,argv);
+					ls(argc, argv);
 					break;
 				case 20:
-					setpeer(argc,argv);
+					setpeer(argc, argv);
 					break;
 				case 21:
-					doproxy(argc,argv);
+					doproxy(argc, argv);
 					break;
 				case 22:
 					setport();
 					break;
 				case 23:
 
-//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
+					//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
 
-					put(argc,argv);
+					put(argc, argv);
 					break;
 				case 24:
 					pwd();
@@ -250,55 +247,55 @@ void Connection::ExecCmdTab(struct cmd *c,int argc,char *argv[])
 					quit();
 					break;
 				case 26:
-					quote(argc,argv);
+					quote(argc, argv);
 					break;
 				case 27:
-//					argv[1] = FromOEMDup(argv[1]);
-					get(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					get(argc, argv);
 					break;
 				case 28:
-//					argv[1] = FromOEMDup(argv[1]);
-					reget(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					reget(argc, argv);
 					break;
 				case 29:
-					rmtstatus(argc,argv);
+					rmtstatus(argc, argv);
 					break;
 				case 30:
-					rmthelp(argc,argv);
+					rmthelp(argc, argv);
 					break;
 				case 31:
 
-//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
+					//					if(argc>1) argv[1] = FromOEMDup(argv[1]);
 
-//					if(argc>2) argv[2] = FromOEMDup(argv[2],1);
+					//					if(argc>2) argv[2] = FromOEMDup(argv[2],1);
 
-					renamefile(argc,argv);
+					renamefile(argc, argv);
 					break;
 				case 32:
 					reset();
 					break;
 				case 33:
-					restart(argc,argv);
+					restart(argc, argv);
 					break;
 				case 34:
-//					argv[1] = FromOEMDup(argv[1]);
-					removedir(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					removedir(argc, argv);
 					break;
 				case 35:
 					setrunique();
 					break;
 				case 36:
 
-//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
+					//					if(argc>2) argv[2] = FromOEMDup(argv[2]);
 
-					put(argc,argv);
+					put(argc, argv);
 					break;
 				case 37:
-					site(argc,argv);
+					site(argc, argv);
 					break;
 				case 38:
-//					argv[1] = FromOEMDup(argv[1]);
-					sizecmd(argc,argv);
+					//					argv[1] = FromOEMDup(argv[1]);
+					sizecmd(argc, argv);
 					break;
 				case 39:
 					syst();
@@ -307,10 +304,10 @@ void Connection::ExecCmdTab(struct cmd *c,int argc,char *argv[])
 					setsunique();
 					break;
 				case 41:
-					user(argc,argv);
+					user(argc, argv);
 					break;
 				case 42:
-					do_umask(argc,argv);
+					do_umask(argc, argv);
 					break;
 			}
 
@@ -348,93 +345,89 @@ char *Connection::ToOEMDup(LPCSTR str,int num)
 	return nm[num].c_str();
 }
 */
-void Connection::GetState(ConnectionState* p)
+void Connection::GetState(ConnectionState *p)
 {
-	p->Inited     = TRUE;
-	p->Blocked    = CmdVisible;
+	p->Inited = TRUE;
+	p->Blocked = CmdVisible;
 	p->RetryCount = RetryCount;
-	p->TableNum   = TableNum;
-	p->Passive    = Host.PassiveMode;
-	p->Object     = TrafficInfo->Object;
+	p->TableNum = TableNum;
+	p->Passive = Host.PassiveMode;
+	p->Object = TrafficInfo->Object;
 	TrafficInfo->Object = NULL;
 }
 
-void Connection::SetState(ConnectionState* p)
+void Connection::SetState(ConnectionState *p)
 {
-	if(!p->Inited)
+	if (!p->Inited)
 		return;
 
-	CmdVisible           = p->Blocked;
-	RetryCount           = p->RetryCount;
-	TableNum             = p->TableNum;
-	Host.PassiveMode     = p->Passive;
-	TrafficInfo->Object  = p->Object;
+	CmdVisible = p->Blocked;
+	RetryCount = p->RetryCount;
+	TableNum = p->TableNum;
+	Host.PassiveMode = p->Passive;
+	TrafficInfo->Object = p->Object;
 	TrafficInfo->SetConnection(this);
 }
 
-void Connection::InitData(FTPHost* p,int blocked /*=TRUE,FALSE,-1*/)
+void Connection::InitData(FTPHost *p, int blocked /*=TRUE,FALSE,-1*/)
 {
-	Host       = *p;
-	Host.Size  = sizeof(Host);
+	Host = *p;
+	Host.Size = sizeof(Host);
 	CmdVisible = TRUE;
 
-	if(blocked != -1)
+	if (blocked != -1)
 		CmdVisible = blocked == FALSE;
 }
 
-void Connection::AddOutput(BYTE *Data,int Size)
+void Connection::AddOutput(BYTE *Data, int Size)
 {
-	if(Size==0) return;
+	if (Size == 0)
+		return;
 
-	BYTE *NewOutput=(BYTE*)realloc(Output,OutputSize+Size+1);
+	BYTE *NewOutput = (BYTE *)realloc(Output, OutputSize + Size + 1);
 
-	if(NewOutput==NULL)
-	{
-		/*-*/Log(("!allocate output buffer %d",OutputSize+Size+1));
+	if (NewOutput == NULL) {
+		/*-*/ Log(("!allocate output buffer %d", OutputSize + Size + 1));
 		return;
 	}
 
-	Output=NewOutput;
-	memcpy(Output+OutputSize,Data,Size);
-	OutputSize+=Size;
+	Output = NewOutput;
+	memcpy(Output + OutputSize, Data, Size);
+	OutputSize+= Size;
 }
 
-void Connection::GetOutput(String& s)
+void Connection::GetOutput(String &s)
 {
 	s.SetLength(0);
 
-	if(OutputPos == 0)
-	{
-		if(Opt.LogOutput)
-		{
-			LogCmd(Message("--LISTING--(Current table: %d Last used: %d)--",TableNum,LastUsedTableNum), ldInt);
+	if (OutputPos == 0) {
+		if (Opt.LogOutput) {
+			LogCmd(Message("--LISTING--(Current table: %d Last used: %d)--", TableNum, LastUsedTableNum),
+					ldInt);
 			LogCmd((LPCSTR)Output, ldRaw, OutputSize);
 			LogCmd("--LISTING--", ldInt);
 		}
 
-		//ToOEM( Output,OutputSize );
+		// ToOEM( Output,OutputSize );
 	}
 
-	while(OutputPos < OutputSize &&
-			(Output[OutputPos]=='\n' || Output[OutputPos]=='\r'))
+	while (OutputPos < OutputSize && (Output[OutputPos] == '\n' || Output[OutputPos] == '\r'))
 		OutputPos++;
 
-	if(OutputPos >= OutputSize)
+	if (OutputPos >= OutputSize)
 		return;
 
-	while(OutputPos < OutputSize)
-	{
+	while (OutputPos < OutputSize) {
 		BOOL eol = Output[OutputPos] == '\n' || Output[OutputPos] == '\r';
 
-		if(eol)
-		{
-			while(OutputPos < OutputSize && strchr("\n\r",Output[OutputPos]) != NULL)
+		if (eol) {
+			while (OutputPos < OutputSize && strchr("\n\r", Output[OutputPos]) != NULL)
 				OutputPos++;
 
-			if(Host.ServerType != FTP_TYPE_VMS)
+			if (Host.ServerType != FTP_TYPE_VMS)
 				break;
 
-			if(Output[OutputPos] != ' ')
+			if (Output[OutputPos] != ' ')
 				break;
 		}
 
@@ -444,43 +437,38 @@ void Connection::GetOutput(String& s)
 
 void Connection::ResetOutput()
 {
-	if(Output)
+	if (Output)
 		free(Output);
 
-	Output=NULL;
-	OutputSize=0;
-	OutputPos=0;
+	Output = NULL;
+	OutputSize = 0;
+	OutputPos = 0;
 }
-
 
 void Connection::CacheReset()
 {
-	for(size_t I=0; I<ARRAYSIZE(ListCache); I++)
-	{
-		if(ListCache[I].Listing)
+	for (size_t I = 0; I < ARRAYSIZE(ListCache); I++) {
+		if (ListCache[I].Listing)
 			free(ListCache[I].Listing);
 
-		ListCache[I].Listing=NULL;
-		ListCache[I].ListingSize=0;
+		ListCache[I].Listing = NULL;
+		ListCache[I].ListingSize = 0;
 	}
 
-	ListCachePos=0;
+	ListCachePos = 0;
 }
-
 
 int Connection::CacheGet()
 {
-	if(DirFile[0])
-	{
-		HANDLE f = Fopen(DirFile,"r");
+	if (DirFile[0]) {
+		HANDLE f = Fopen(DirFile, "r");
 
-		if(f)
-		{
+		if (f) {
 			ResetOutput();
 			OutputSize = (DWORD)Fsize(f);
-			Output     = (BYTE*)malloc(OutputSize+1);
+			Output = (BYTE *)malloc(OutputSize + 1);
 
-			if(!Output)
+			if (!Output)
 				return FALSE;
 
 			Fread(f, Output, OutputSize);
@@ -489,19 +477,17 @@ int Connection::CacheGet()
 		}
 	}
 
-	for(size_t I=0; I < ARRAYSIZE(ListCache); I++)
-		if(ListCache[I].ListingSize > 0 &&
-			CurDir.Cmp(ListCache[I].DirName))
-		{
+	for (size_t I = 0; I < ARRAYSIZE(ListCache); I++)
+		if (ListCache[I].ListingSize > 0 && CurDir.Cmp(ListCache[I].DirName)) {
 			ResetOutput();
-			BYTE *NewOutput=(BYTE*)malloc(ListCache[I].ListingSize+1);
+			BYTE *NewOutput = (BYTE *)malloc(ListCache[I].ListingSize + 1);
 
-			if(NewOutput==NULL)
+			if (NewOutput == NULL)
 				return FALSE;
 
-			Output     = NewOutput;
+			Output = NewOutput;
 			OutputSize = ListCache[I].ListingSize;
-			memcpy(Output,ListCache[I].Listing,OutputSize);
+			memcpy(Output, ListCache[I].Listing, OutputSize);
 			Output[OutputSize] = 0;
 			return TRUE;
 		}
@@ -509,16 +495,15 @@ int Connection::CacheGet()
 	return FALSE;
 }
 
-
 void Connection::CacheAdd()
 {
-	if(ListCache[ListCachePos].Listing)
+	if (ListCache[ListCachePos].Listing)
 		free(ListCache[ListCachePos].Listing);
 
 	ListCache[ListCachePos].ListingSize = 0;
-	ListCache[ListCachePos].Listing     = (char*)malloc(OutputSize+1);
+	ListCache[ListCachePos].Listing = (char *)malloc(OutputSize + 1);
 
-	if(ListCache[ListCachePos].Listing ==NULL)
+	if (ListCache[ListCachePos].Listing == NULL)
 		return;
 
 	ListCache[ListCachePos].ListingSize = OutputSize;
@@ -527,55 +512,40 @@ void Connection::CacheAdd()
 	StrCpy(ListCache[ListCachePos].DirName, CurDir.c_str(), ARRAYSIZE(ListCache[ListCachePos].DirName));
 	ListCachePos++;
 
-	if(ListCachePos >= (int)(ARRAYSIZE(ListCache)))
-		ListCachePos=0;
+	if (ListCachePos >= (int)(ARRAYSIZE(ListCache)))
+		ListCachePos = 0;
 }
 
 /* Returns if error happen
-*/
+ */
 BOOL Connection::GetExitCode()
 {
 	static struct
 	{
 		int Code;
 		int WCode;
-	} FtpErrCodes[] =
-	{
-		{ 202, ERROR_CALL_NOT_IMPLEMENTED },
-		{ 421, ECANCELED},//ERROR_INTERNET_CONNECTION_ABORTED
-		{ 451, 0 },
-		{ 450, ENODATA },//ERROR_IO_INCOMPLETE
-		{ 452, ERROR_DISK_FULL },
-		{ 500, EBADMSG },//ERROR_BAD_COMMAND
-		{ 501, EBADMSG },//ERROR_BAD_COMMAND
-		{ 502, ERROR_CALL_NOT_IMPLEMENTED },
-		{ 503, EBADMSG },//ERROR_BAD_COMMAND
-		{ 504, ERROR_CALL_NOT_IMPLEMENTED },
-		{ 530, EPERM },
-		{ 532, EACCES },
-		{ 550, EACCES },
-		{ 551, 0 },
-		{ 552, ERROR_DISK_FULL },
-		{ 553, 0 }
-	};
+	} FtpErrCodes[] = {
+			{202, ERROR_CALL_NOT_IMPLEMENTED}, {421, ECANCELED},	// ERROR_INTERNET_CONNECTION_ABORTED
+			{451, 0}, {450, ENODATA},								// ERROR_IO_INCOMPLETE
+			{452, ERROR_DISK_FULL}, {500, EBADMSG},					// ERROR_BAD_COMMAND
+			{501, EBADMSG},											// ERROR_BAD_COMMAND
+			{502, ERROR_CALL_NOT_IMPLEMENTED}, {503, EBADMSG},		// ERROR_BAD_COMMAND
+			{504, ERROR_CALL_NOT_IMPLEMENTED}, {530, EPERM}, {532, EACCES}, {550, EACCES}, {551, 0},
+			{552, ERROR_DISK_FULL}, {553, 0}};
 
-	if(ErrorCode != ERROR_SUCCESS)
-	{
+	if (ErrorCode != ERROR_SUCCESS) {
 		WINPORT(SetLastError)(ErrorCode);
 		return FALSE;
 	}
 
-	if(code == RPL_ERROR ||
-		code == RPL_TRANSFERERROR)
-	{
-		//SetLastError(ErrorCode);
+	if (code == RPL_ERROR || code == RPL_TRANSFERERROR) {
+		// SetLastError(ErrorCode);
 		return FALSE;
 	}
 
-	for(size_t I=0; I < ARRAYSIZE(FtpErrCodes); I++)
-		if(FtpErrCodes[I].Code == code)
-		{
-			if(FtpErrCodes[I].WCode)
+	for (size_t I = 0; I < ARRAYSIZE(FtpErrCodes); I++)
+		if (FtpErrCodes[I].Code == code) {
+			if (FtpErrCodes[I].WCode)
 				WINPORT(SetLastError)(FtpErrCodes[I].WCode);
 
 			return FALSE;
@@ -590,27 +560,23 @@ int encode_UTF8(WCHAR *ws, int wsz, char *utf8s, int sz)
 	char *s;
 	s = utf8s;
 
-	while(iw<wsz && *ws && i<sz)
-	{
-		if(*ws <= 0x007F)                   /* 1 octet */
+	while (iw < wsz && *ws && i < sz) {
+		if (*ws <= 0x007F)	/* 1 octet */
 		{
 			*s++ = (char)*ws;
 			i++;
-		}
-		else if(*ws <= 0x07FF)              /* 2 octets */
+		} else if (*ws <= 0x07FF)	/* 2 octets */
 		{
 			*s++ = 0xC0 | ((*ws >> 6) & 0x1F);
 			*s++ = 0x80 | (*ws & 0x3F);
-			i+=2;
-		}
-		else if(*ws <= 0xFFFF)              /* 3 octets */
+			i+= 2;
+		} else if (*ws <= 0xFFFF)	/* 3 octets */
 		{
 			*s++ = 0xE0 | ((*ws >> 12) & 0x0F);
 			*s++ = 0x80 | ((*ws >> 6) & 0x3F);
 			*s++ = 0x80 | (*ws & 0x3F);
-			i+=3;
-		}
-		else                                /* >= 4 octets -- not fit in UCS-2 */
+			i+= 3;
+		} else	/* >= 4 octets -- not fit in UCS-2 */
 		{
 			*s++ = '_';
 			i++;
@@ -622,8 +588,7 @@ int encode_UTF8(WCHAR *ws, int wsz, char *utf8s, int sz)
 
 	iw = i;
 
-	while(iw < sz)
-	{
+	while (iw < sz) {
 		*s++ = 0;
 		iw++;
 	}
@@ -650,7 +615,7 @@ int encode_UTF8(WCHAR *ws, int wsz, char *utf8s, int sz)
 	int ret = sz;
 
 	if(TabNum == 2 ||
-	        TabNum > 3 && FP_Info->CharTable(TabNum-4,(char*)&TableSet,sizeof(TableSet)) == -1)
+			TabNum > 3 && FP_Info->CharTable(TabNum-4,(char*)&TableSet,sizeof(TableSet)) == -1)
 	{
 		LogCmd(Message("Not working decode table %d used !!",TabNum), ldInt);
 		TabNum = 1;
@@ -692,12 +657,12 @@ int decode_UTF8(unsigned char *utf8s, int sz, WCHAR *ws, int wsz)
 	{
 		if(!(*utf8s & 0x80))
 		{
-			*wc = *utf8s++;                       // 1 octet 
+			*wc = *utf8s++;                       // 1 octet
 			i++;
 		}
 		else if((*utf8s & 0xE0) == 0xC0)        // 2 octets
 		{
-			*wc = (*utf8s++ & 0x1F) << 6;       // 1st 
+			*wc = (*utf8s++ & 0x1F) << 6;       // 1st
 			i++;
 
 			if((*utf8s & 0xC0) == 0x80)
@@ -720,15 +685,15 @@ int decode_UTF8(unsigned char *utf8s, int sz, WCHAR *ws, int wsz)
 
 				if((*utf8s & 0xC0) == 0x80)
 				{
-					*wc |= *utf8s++ & 0x3F;       // 3d 
+					*wc |= *utf8s++ & 0x3F;       // 3d
 					i++;
 				}
 				else
-					*wc = *utf8s % 26 + 'a';      // bad UTF-8 
+					*wc = *utf8s % 26 + 'a';      // bad UTF-8
 			}
-			else *wc = *utf8s % 26 + 'a';       // bad UTF-8 
+			else *wc = *utf8s % 26 + 'a';       // bad UTF-8
 		}
-		else if((*utf8s * 0xF0) == 0xF0)       // >= 4 octets -- not fit in UCS-2 
+		else if((*utf8s * 0xF0) == 0xF0)       // >= 4 octets -- not fit in UCS-2
 		{
 			++utf8s;
 			i++;

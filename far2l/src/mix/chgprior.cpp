@@ -35,11 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "chgprior.hpp"
 
-ChangePriority::ChangePriority(Priority NewPriority)
-{
-}
+ChangePriority::ChangePriority(Priority NewPriority) {}
 
-
-ChangePriority::~ChangePriority()
-{
-}
+ChangePriority::~ChangePriority() {}

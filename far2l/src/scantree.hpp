@@ -34,7 +34,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "bitflags.hpp"
 #include "array.hpp"
 #include <sys/types.h>
@@ -45,70 +44,67 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 #include "FARString.hpp"
 
-
 enum
 {
 	// FSCANTREE_RETUPDIR causes GetNextName() to return every directory twice:
 	// 1. when scanning its parent directory 2. after directory scan is finished
-	FSCANTREE_RETUPDIR         = FRS_RETUPDIR,
-	FSCANTREE_RECUR            = FRS_RECUR, // enable recursive scan
-	FSCANTREE_SCANSYMLINK      = FRS_SCANSYMLINK, // enable scanning symlinks
+	FSCANTREE_RETUPDIR    = FRS_RETUPDIR,
+	FSCANTREE_RECUR       = FRS_RECUR,			// enable recursive scan
+	FSCANTREE_SCANSYMLINK = FRS_SCANSYMLINK,	// enable scanning symlinks
 
 	// в младшем слове старшие 8 бита служебные!
-	FSCANTREE_SECONDDIRNAME    = 0x00004000, // set when FSCANTREE_RETUPDIR is enabled and directory scan is finished
+	FSCANTREE_SECONDDIRNAME = 0x00004000,		// set when FSCANTREE_RETUPDIR is enabled and directory scan is finished
 
 	// здесь те флаги, которые могут выставляться в 3-м параметре SetFindPath()
-	FSCANTREE_FILESFIRST       = 0x00010000, // Сканирование каталга за два прохода. Сначала файлы, затем каталоги
-	FSCANTREE_NOFILES          = 0x00020000, // Don't return files
-	FSCANTREE_NODEVICES        = 0x00040000, // Don't return devices
-	FSCANTREE_NOLINKS          = 0x00080000, // Don't return symlinks
-	FSCANTREE_CASE_INSENSITIVE = 0x00100000 // Currently affects only english characters
+	FSCANTREE_FILESFIRST = 0x00010000,			// Сканирование каталга за два прохода. Сначала файлы, затем каталоги
+	FSCANTREE_NOFILES          = 0x00020000,	// Don't return files
+	FSCANTREE_NODEVICES        = 0x00040000,	// Don't return devices
+	FSCANTREE_NOLINKS          = 0x00080000,	// Don't return symlinks
+	FSCANTREE_CASE_INSENSITIVE = 0x00100000		// Currently affects only english characters
 };
 
 class ScannedINodes
 {
-	std::set< std::pair<uint64_t, uint64_t> > _s;
+	std::set<std::pair<uint64_t, uint64_t>> _s;
 
 public:
-	inline bool Put(uint64_t d, uint64_t ino)
-	{
-		return _s.emplace(ino, d).second;
-	}
+	inline bool Put(uint64_t d, uint64_t ino) { return _s.emplace(ino, d).second; }
 };
 
 class ScanTree
 {
-		BitFlags Flags;
-		std::wstring strFindPath;
-		std::wstring strFindMask;
+	BitFlags Flags;
+	std::wstring strFindPath;
+	std::wstring strFindMask;
 
-		struct ScanDir
-		{
-			std::unique_ptr<FindFile> Enumer;
-			std::list<FAR_FIND_DATA_EX> Postponed;
-			FARString RealPath;
-			uint64_t UnixDevice{};
-			uint64_t UnixNode{};
-			bool InsideSymlink = false;
+	struct ScanDir
+	{
+		std::unique_ptr<FindFile> Enumer;
+		std::list<FAR_FIND_DATA_EX> Postponed;
+		FARString RealPath;
+		uint64_t UnixDevice{};
+		uint64_t UnixNode{};
+		bool InsideSymlink = false;
 
-			bool GetNext(FAR_FIND_DATA_EX *fdata, bool FilesFirst);
-		};
-		std::list<ScanDir> ScanDirStack;
+		bool GetNext(FAR_FIND_DATA_EX *fdata, bool FilesFirst);
+	};
+	std::list<ScanDir> ScanDirStack;
 
-		void CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata);
-		void StartEnumSubdir();
-		void LeaveSubdir();
+	void CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata);
+	void StartEnumSubdir();
+	void LeaveSubdir();
 
-	public:
-		ScanTree(int RetUpDir, int Recurse = 1, int ScanJunction = -1);
+public:
+	ScanTree(int RetUpDir, int Recurse = 1, int ScanJunction = -1);
 
-		// 3-й параметр - флаги из старшего слова
-		void SetFindPath(const wchar_t *Path,const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST);
-		bool GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName);
+	// 3-й параметр - флаги из старшего слова
+	void
+	SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST);
+	bool GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName);
 
-		void SkipDir();
+	void SkipDir();
 
-		bool IsDirSearchDone() const { return Flags.Check(FSCANTREE_SECONDDIRNAME); };
-		bool IsInsideSymlink() const { return !ScanDirStack.empty() && ScanDirStack.back().InsideSymlink;};
-		bool IsSymlinksScanEnabled() const { return Flags.Check(FSCANTREE_SCANSYMLINK); }
+	bool IsDirSearchDone() const { return Flags.Check(FSCANTREE_SECONDDIRNAME); };
+	bool IsInsideSymlink() const { return !ScanDirStack.empty() && ScanDirStack.back().InsideSymlink; };
+	bool IsSymlinksScanEnabled() const { return Flags.Check(FSCANTREE_SCANSYMLINK); }
 };

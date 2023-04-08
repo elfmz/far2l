@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "qview.hpp"
 #include "macroopcode.hpp"
 #include "lang.hpp"
@@ -55,19 +54,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int LastWrapMode = -1;
 static int LastWrapType = -1;
 
-QuickView::QuickView():
-	QView(nullptr),
-	Directory(0),
-	PrevMacroMode(-1)
+QuickView::QuickView()
+	:
+	QView(nullptr), Directory(0), PrevMacroMode(-1)
 {
-	Type=QVIEW_PANEL;
-	if (LastWrapMode < 0)
-	{
+	Type = QVIEW_PANEL;
+	if (LastWrapMode < 0) {
 		LastWrapMode = Opt.ViOpt.ViewerIsWrap;
 		LastWrapType = Opt.ViOpt.ViewerWrap;
 	}
 }
-
 
 QuickView::~QuickView()
 {
@@ -75,13 +71,12 @@ QuickView::~QuickView()
 	SetMacroMode(TRUE);
 }
 
-
-FARString &QuickView::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
+FARString &QuickView::GetTitle(FARString &strTitle, int SubLen, int TruncSize)
 {
-	strTitle=L" ";
-	strTitle+=Msg::QuickViewTitle;
-	strTitle+=L" ";
-	TruncStr(strTitle,X2-X1-3);
+	strTitle = L" ";
+	strTitle+= Msg::QuickViewTitle;
+	strTitle+= L" ";
+	TruncStr(strTitle, X2 - X1 - 3);
 	return strTitle;
 }
 
@@ -97,41 +92,38 @@ void QuickView::DisplayObject()
 		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
 
 	if (QView)
-		QView->SetPosition(X1+1,Y1+1,X2-1,Y2-3);
+		QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
 
-	Box(X1,Y1,X2,Y2,COL_PANELBOX,DOUBLE_BOX);
-	SetScreen(X1+1,Y1+1,X2-1,Y2-1,L' ',COL_PANELTEXT);
-	SetColor(Focus ? COL_PANELSELECTEDTITLE:COL_PANELTITLE);
+	Box(X1, Y1, X2, Y2, COL_PANELBOX, DOUBLE_BOX);
+	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', COL_PANELTEXT);
+	SetColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 	GetTitle(strTitle);
 
-	if (!strTitle.IsEmpty())
-	{
-		GotoXY(X1+(X2-X1+1-(int)strTitle.GetLength())/2,Y1);
+	if (!strTitle.IsEmpty()) {
+		GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, Y1);
 		Text(strTitle);
 	}
 
-	DrawSeparator(Y2-2);
+	DrawSeparator(Y2 - 2);
 	SetColor(COL_PANELTEXT);
-	GotoXY(X1+1,Y2-1);
+	GotoXY(X1 + 1, Y2 - 1);
 	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
 
-	if (!strCurFileType.IsEmpty())
-	{
-		FARString strTypeText=L" ";
-		strTypeText+=strCurFileType;
-		strTypeText+=L" ";
-		TruncStr(strTypeText,X2-X1-1);
+	if (!strCurFileType.IsEmpty()) {
+		FARString strTypeText = L" ";
+		strTypeText+= strCurFileType;
+		strTypeText+= L" ";
+		TruncStr(strTypeText, X2 - X1 - 1);
 		SetColor(COL_PANELSELECTEDINFO);
-		GotoXY(X1+(X2-X1+1-(int)strTypeText.GetLength())/2,Y2-2);
+		GotoXY(X1 + (X2 - X1 + 1 - (int)strTypeText.GetLength()) / 2, Y2 - 2);
 		Text(strTypeText);
 	}
 
-	if (Directory)
-	{
+	if (Directory) {
 		FormatString FString;
-		FString<<Msg::QuickViewFolder<<L" \""<<strCurFileName<<L"\"";
+		FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
 		SetColor(COL_PANELTEXT);
-		GotoXY(X1+2,Y1+2);
+		GotoXY(X1 + 2, Y1 + 2);
 		PrintText(FString);
 
 		/*if ((apiGetFileAttributes(strCurFileName)&FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT)
@@ -166,70 +158,65 @@ void QuickView::DisplayObject()
 			}
 		}*/
 
-		if (Directory==1 || Directory==4)
-		{
-			GotoXY(X1+2,Y1+4);
+		if (Directory == 1 || Directory == 4) {
+			GotoXY(X1 + 2, Y1 + 4);
 			PrintText(Msg::QuickViewContains);
-			GotoXY(X1+2,Y1+6);
+			GotoXY(X1 + 2, Y1 + 6);
 			PrintText(Msg::QuickViewFolders);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString<<DirCount;
+			FString << DirCount;
 			PrintText(FString);
 			SetColor(COL_PANELTEXT);
-			GotoXY(X1+2,Y1+7);
+			GotoXY(X1 + 2, Y1 + 7);
 			PrintText(Msg::QuickViewFiles);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString<<FileCount;
+			FString << FileCount;
 			PrintText(FString);
 			SetColor(COL_PANELTEXT);
-			GotoXY(X1+2,Y1+8);
+			GotoXY(X1 + 2, Y1 + 8);
 			PrintText(Msg::QuickViewBytes);
 			SetColor(COL_PANELINFOTEXT);
 			FARString strSize;
-			InsertCommas(FileSize,strSize);
+			InsertCommas(FileSize, strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
-			GotoXY(X1+2,Y1+9);
+			GotoXY(X1 + 2, Y1 + 9);
 			PrintText(Msg::QuickViewPhysical);
 			SetColor(COL_PANELINFOTEXT);
-			InsertCommas(PhysicalSize,strSize);
+			InsertCommas(PhysicalSize, strSize);
 			PrintText(strSize);
 			SetColor(COL_PANELTEXT);
-			GotoXY(X1+2,Y1+10);
+			GotoXY(X1 + 2, Y1 + 10);
 			PrintText(Msg::QuickViewRatio);
 			SetColor(COL_PANELINFOTEXT);
 			FString.Clear();
-			FString<<ToPercent64(PhysicalSize,FileSize)<<L"%";
+			FString << ToPercent64(PhysicalSize, FileSize) << L"%";
 			PrintText(FString);
 
-			if (Directory==1 && ClusterSize)
-			{
+			if (Directory == 1 && ClusterSize) {
 				SetColor(COL_PANELTEXT);
-				GotoXY(X1+2,Y1+12);
+				GotoXY(X1 + 2, Y1 + 12);
 				PrintText(Msg::QuickViewCluster);
 				SetColor(COL_PANELINFOTEXT);
 				FARString strSize;
-				InsertCommas(ClusterSize,strSize);
+				InsertCommas(ClusterSize, strSize);
 				PrintText(strSize);
 			}
 		}
-	}
-	else if (QView)
+	} else if (QView)
 		QView->Show();
 
 	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
-
-int64_t QuickView::VMProcess(int OpCode,void *vParam,int64_t iParam)
+int64_t QuickView::VMProcess(int OpCode, void *vParam, int64_t iParam)
 {
 	if (!Directory && QView)
-		return QView->VMProcess(OpCode,vParam,iParam);
+		return QView->VMProcess(OpCode, vParam, iParam);
 
-	switch (OpCode)
-	{
+	switch (OpCode) {
 		case MCODE_C_EMPTY:
 			return 1;
 	}
@@ -242,57 +229,50 @@ int QuickView::ProcessKey(int Key)
 	if (!IsVisible())
 		return FALSE;
 
-	if (Key>=KEY_RCTRL0 && Key<=KEY_RCTRL9)
-	{
-		ExecShortcutFolder(Key-KEY_RCTRL0);
+	if (Key >= KEY_RCTRL0 && Key <= KEY_RCTRL9) {
+		ExecShortcutFolder(Key - KEY_RCTRL0);
 		return TRUE;
 	}
 
-	if (Key == KEY_F1)
-	{
+	if (Key == KEY_F1) {
 		Help::Present(L"QViewPanel");
 		return TRUE;
 	}
 
-	if (Key==KEY_F3 || Key==KEY_NUMPAD5 || Key == KEY_SHIFTNUMPAD5)
-	{
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	if (Key == KEY_F3 || Key == KEY_NUMPAD5 || Key == KEY_SHIFTNUMPAD5) {
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-		if (AnotherPanel->GetType()==FILE_PANEL)
+		if (AnotherPanel->GetType() == FILE_PANEL)
 			AnotherPanel->ProcessKey(KEY_F3);
 
 		return TRUE;
 	}
 
-	if (Key==KEY_ADD || Key==KEY_SUBTRACT)
-	{
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	if (Key == KEY_ADD || Key == KEY_SUBTRACT) {
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-		if (AnotherPanel->GetType()==FILE_PANEL)
-			AnotherPanel->ProcessKey(Key==KEY_ADD?KEY_DOWN:KEY_UP);
+		if (AnotherPanel->GetType() == FILE_PANEL)
+			AnotherPanel->ProcessKey(Key == KEY_ADD ? KEY_DOWN : KEY_UP);
 
 		return TRUE;
 	}
 
-	if (QView && !Directory && Key>=256)
-	{
+	if (QView && !Directory && Key >= 256) {
 		int ret = QView->ProcessKey(Key);
 
-		if (Key == KEY_F4 || Key == KEY_F8 || Key == KEY_F2 || Key == KEY_SHIFTF2)
-		{
+		if (Key == KEY_F4 || Key == KEY_F8 || Key == KEY_F2 || Key == KEY_SHIFTF2) {
 			DynamicUpdateKeyBar();
 			CtrlObject->MainKeyBar->Redraw();
 		}
 
-		if (Key == KEY_F7 || Key == KEY_SHIFTF7)
-		{
-			//int64_t Pos;
-			//int Length;
-			//DWORD Flags;
-			//QView->GetSelectedParam(Pos,Length,Flags);
+		if (Key == KEY_F7 || Key == KEY_SHIFTF7) {
+			// int64_t Pos;
+			// int Length;
+			// DWORD Flags;
+			// QView->GetSelectedParam(Pos,Length,Flags);
 			Redraw();
 			CtrlObject->Cp()->GetAnotherPanel(this)->Redraw();
-			//QView->SelectText(Pos,Length,Flags|1);
+			// QView->SelectText(Pos,Length,Flags|1);
 		}
 
 		return ret;
@@ -301,7 +281,6 @@ int QuickView::ProcessKey(int Key)
 	return FALSE;
 }
 
-
 int QuickView::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	int RetCode;
@@ -309,13 +288,13 @@ int QuickView::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (!IsVisible())
 		return FALSE;
 
-	if (Panel::PanelProcessMouse(MouseEvent,RetCode))
-		return(RetCode);
+	if (Panel::PanelProcessMouse(MouseEvent, RetCode))
+		return (RetCode);
 
 	SetFocus();
 
 	if (QView && !Directory)
-		return(QView->ProcessMouse(MouseEvent));
+		return (QView->ProcessMouse(MouseEvent));
 
 	return FALSE;
 }
@@ -331,17 +310,16 @@ void QuickView::Update(int Mode)
 	Redraw();
 }
 
-void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
+void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin)
 {
-	DWORD FileAttr=0;
+	DWORD FileAttr = 0;
 	CloseFile();
-	QView=nullptr;
+	QView = nullptr;
 
 	if (!IsVisible())
 		return;
 
-	if (!FileName)
-	{
+	if (!FileName) {
 		ProcessingPluginCommand++;
 		Show();
 		ProcessingPluginCommand--;
@@ -350,60 +328,51 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 
 	if (!hDirPlugin) {
 		FileAttr = apiGetFileAttributes(FileName);
-		if (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr&FILE_ATTRIBUTE_DEVICE)!=0)  //avoid stuck
+		if (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DEVICE) != 0)		// avoid stuck
 			return;
 	}
 
-	bool SameFile=!StrCmp(strCurFileName,FileName);
+	bool SameFile = !StrCmp(strCurFileName, FileName);
 	strCurFileName = FileName;
-//	size_t pos;
+	//	size_t pos;
 
-	if (hDirPlugin || (FileAttr!=INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
-	{
-		// 
+	if (hDirPlugin || (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DIRECTORY))) {
+		//
 		strCurFileType.Clear();
 
-		if (SameFile && !hDirPlugin)
-		{
-			Directory=1;
-		}
-		else if (hDirPlugin)
-		{
-			int ExitCode=GetPluginDirInfo(hDirPlugin,strCurFileName,DirCount,
-				FileCount,FileSize,PhysicalSize);
+		if (SameFile && !hDirPlugin) {
+			Directory = 1;
+		} else if (hDirPlugin) {
+			int ExitCode =
+					GetPluginDirInfo(hDirPlugin, strCurFileName, DirCount, FileCount, FileSize, PhysicalSize);
 			if (ExitCode)
-				Directory=4;
+				Directory = 4;
 			else
-				Directory=3;
-		}
-		else
-		{
-			int ExitCode=GetDirInfo(Msg::QuickViewTitle,strCurFileName,DirCount,
-				FileCount,FileSize,PhysicalSize,ClusterSize,500,nullptr,
-									GETDIRINFO_ENHBREAK|GETDIRINFO_SCANSYMLINKDEF|GETDIRINFO_DONTREDRAWFRAME);
+				Directory = 3;
+		} else {
+			int ExitCode = GetDirInfo(Msg::QuickViewTitle, strCurFileName, DirCount, FileCount, FileSize,
+					PhysicalSize, ClusterSize, 500, nullptr,
+					GETDIRINFO_ENHBREAK | GETDIRINFO_SCANSYMLINKDEF | GETDIRINFO_DONTREDRAWFRAME);
 
-			if (ExitCode==1)
-				Directory=1;
-			else if (ExitCode==-1)
-				Directory=2;
+			if (ExitCode == 1)
+				Directory = 1;
+			else if (ExitCode == -1)
+				Directory = 2;
 			else
-				Directory=3;
+				Directory = 3;
 		}
-	}
-	else
-	{
-		if (!strCurFileName.IsEmpty())
-		{
-			QView=new Viewer(true);
+	} else {
+		if (!strCurFileName.IsEmpty()) {
+			QView = new Viewer(true);
 			QView->SetRestoreScreenMode(FALSE);
-			QView->SetPosition(X1+1,Y1+1,X2-1,Y2-3);
+			QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
 			QView->SetStatusMode(0);
 			QView->EnableHideCursor(0);
 			OldWrapMode = QView->GetWrapMode();
 			OldWrapType = QView->GetWrapType();
 			QView->SetWrapMode(LastWrapMode);
 			QView->SetWrapType(LastWrapType);
-			QView->OpenFile(strCurFileName,FALSE);
+			QView->OpenFile(strCurFileName, FALSE);
 		}
 	}
 
@@ -412,70 +381,61 @@ void QuickView::ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin)
 
 	Redraw();
 
-	if (CtrlObject->Cp()->ActivePanel == this)
-	{
+	if (CtrlObject->Cp()->ActivePanel == this) {
 		DynamicUpdateKeyBar();
 		CtrlObject->MainKeyBar->Redraw();
 	}
 }
 
-
 void QuickView::CloseFile()
 {
-	if (QView)
-	{
-		LastWrapMode=QView->GetWrapMode();
-		LastWrapType=QView->GetWrapType();
+	if (QView) {
+		LastWrapMode = QView->GetWrapMode();
+		LastWrapType = QView->GetWrapType();
 		QView->SetWrapMode(OldWrapMode);
 		QView->SetWrapType(OldWrapType);
 		delete QView;
-		QView=nullptr;
+		QView = nullptr;
 	}
 
 	strCurFileType.Clear();
 	QViewDelTempName();
-	Directory=0;
+	Directory = 0;
 }
-
 
 void QuickView::QViewDelTempName()
 {
-	if (!strTempName.IsEmpty())
-	{
-		if (QView)
-		{
-			LastWrapMode=QView->GetWrapMode();
-			LastWrapType=QView->GetWrapType();
+	if (!strTempName.IsEmpty()) {
+		if (QView) {
+			LastWrapMode = QView->GetWrapMode();
+			LastWrapType = QView->GetWrapType();
 			QView->SetWrapMode(OldWrapMode);
 			QView->SetWrapType(OldWrapType);
 			delete QView;
-			QView=nullptr;
+			QView = nullptr;
 		}
 
 		apiSetFileAttributes(strTempName, FILE_ATTRIBUTE_ARCHIVE);
-		apiDeleteFile(strTempName);  //BUGBUG
+		apiDeleteFile(strTempName);		// BUGBUG
 		CutToSlash(strTempName);
 		apiRemoveDirectory(strTempName);
 		strTempName.Clear();
 	}
 }
 
-
 void QuickView::PrintText(const wchar_t *Str)
 {
-	if (WhereY()>Y2-3 || WhereX()>X2-2)
+	if (WhereY() > Y2 - 3 || WhereX() > X2 - 2)
 		return;
 
 	FS << fmt::Cells() << fmt::Truncate(X2 - 2 - WhereX() + 1) << Str;
 }
 
-
 int QuickView::UpdateIfChanged(int UpdateMode)
 {
-	if (IsVisible() && !strCurFileName.IsEmpty() && Directory==2)
-	{
+	if (IsVisible() && !strCurFileName.IsEmpty() && Directory == 2) {
 		FARString strViewName = strCurFileName;
-		ShowFile(strViewName, !strTempName.IsEmpty() ,nullptr);
+		ShowFile(strViewName, !strTempName.IsEmpty(), nullptr);
 		return TRUE;
 	}
 
@@ -484,23 +444,19 @@ int QuickView::UpdateIfChanged(int UpdateMode)
 
 void QuickView::SetTitle()
 {
-	if (GetFocus())
-	{
+	if (GetFocus()) {
 		FARString strTitleDir(L"{");
 
-		if (!strCurFileName.IsEmpty())
-		{
-			strTitleDir += strCurFileName;
-			strTitleDir += L" - QuickView";
-		}
-		else
-		{
+		if (!strCurFileName.IsEmpty()) {
+			strTitleDir+= strCurFileName;
+			strTitleDir+= L" - QuickView";
+		} else {
 			FARString strCmdText;
 			CtrlObject->CmdLine->GetString(strCmdText);
-			strTitleDir += strCmdText;
+			strTitleDir+= strCmdText;
 		}
 
-		strTitleDir += L"}";
+		strTitleDir+= L"}";
 
 		ConsoleTitle::SetFarTitle(strTitleDir);
 	}
@@ -527,13 +483,12 @@ void QuickView::SetMacroMode(int Restore)
 	if (PrevMacroMode == -1)
 		PrevMacroMode = CtrlObject->Macro.GetMode();
 
-	CtrlObject->Macro.SetMode(Restore ? PrevMacroMode:MACRO_QVIEWPANEL);
+	CtrlObject->Macro.SetMode(Restore ? PrevMacroMode : MACRO_QVIEWPANEL);
 }
 
 int QuickView::GetCurName(FARString &strName)
 {
-	if (!strCurFileName.IsEmpty())
-	{
+	if (!strCurFileName.IsEmpty()) {
 		strName = strCurFileName;
 		return (TRUE);
 	}
@@ -560,43 +515,38 @@ void QuickView::DynamicUpdateKeyBar()
 {
 	KeyBar *KB = CtrlObject->MainKeyBar;
 
-	if (Directory || !QView)
-	{
-		KB->Change(Msg::F2, 2-1);
-		KB->Change(L"", 4-1);
-		KB->Change(L"", 8-1);
-		KB->Change(KBL_SHIFT, L"", 2-1);
-		KB->Change(KBL_SHIFT, L"", 8-1);
-		KB->Change(KBL_ALT, Msg::AltF8, 8-1);  // 
-	}
-	else
-	{
+	if (Directory || !QView) {
+		KB->Change(Msg::F2, 2 - 1);
+		KB->Change(L"", 4 - 1);
+		KB->Change(L"", 8 - 1);
+		KB->Change(KBL_SHIFT, L"", 2 - 1);
+		KB->Change(KBL_SHIFT, L"", 8 - 1);
+		KB->Change(KBL_ALT, Msg::AltF8, 8 - 1);		//
+	} else {
 		if (QView->GetHexMode())
-			KB->Change(Msg::ViewF4Text, 4-1);
+			KB->Change(Msg::ViewF4Text, 4 - 1);
 		else
-			KB->Change(Msg::QViewF4, 4-1);
+			KB->Change(Msg::QViewF4, 4 - 1);
 
 		if (QView->GetCodePage() != WINPORT(GetOEMCP)())
-			KB->Change(Msg::ViewF8DOS, 8-1);
+			KB->Change(Msg::ViewF8DOS, 8 - 1);
 		else
-			KB->Change(Msg::QViewF8, 8-1);
+			KB->Change(Msg::QViewF8, 8 - 1);
 
-		if (!QView->GetWrapMode())
-		{
+		if (!QView->GetWrapMode()) {
 			if (QView->GetWrapType())
-				KB->Change(Msg::ViewShiftF2, 2-1);
+				KB->Change(Msg::ViewShiftF2, 2 - 1);
 			else
-				KB->Change(Msg::ViewF2, 2-1);
-		}
-		else
-			KB->Change(Msg::ViewF2Unwrap, 2-1);
+				KB->Change(Msg::ViewF2, 2 - 1);
+		} else
+			KB->Change(Msg::ViewF2Unwrap, 2 - 1);
 
 		if (QView->GetWrapType())
-			KB->Change(KBL_SHIFT, Msg::ViewF2, 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewF2, 2 - 1);
 		else
-			KB->Change(KBL_SHIFT, Msg::ViewShiftF2, 2-1);
+			KB->Change(KBL_SHIFT, Msg::ViewShiftF2, 2 - 1);
 	}
 
-	KB->ReadRegGroup(L"QView",Opt.strLanguage);
+	KB->ReadRegGroup(L"QView", Opt.strLanguage);
 	KB->SetAllRegGroup();
 }

@@ -38,7 +38,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 #include "FARString.hpp"
 
-
 enum
 {
 	FCMDOBJ_LOCKUPDATEPANEL = 0x00010000,
@@ -48,84 +47,81 @@ struct PushPopRecord
 {
 	FARString strName;
 
-	const PushPopRecord& operator=(const PushPopRecord &rhs) {strName=rhs.strName; return *this;}
+	const PushPopRecord &operator=(const PushPopRecord &rhs)
+	{
+		strName = rhs.strName;
+		return *this;
+	}
 };
 
-
-class CommandLine:public ScreenObject
+class CommandLine : public ScreenObject
 {
-	private:
-		EditControl CmdStr;
-		SaveScreen *BackgroundScreen;
-		FARString strCurDir;
-		FARString strLastCmdStr;
-		FARString strLastCompletionCmdStr;
-		int LastCmdPartLength;
-		int PushDirStackSize;
+private:
+	EditControl CmdStr;
+	SaveScreen *BackgroundScreen;
+	FARString strCurDir;
+	FARString strLastCmdStr;
+	FARString strLastCompletionCmdStr;
+	int LastCmdPartLength;
+	int PushDirStackSize;
 
-	private:
-		virtual void DisplayObject();
-		int CmdExecute(
-			const wchar_t *CmdLine, bool SeparateWindow,
-			bool DirectRun, bool WaitForIdle = false,
-			bool Silent = false, bool RunAs = false
-		);
-		void GetPrompt(FARString &strDestStr);
-		BOOL IntChDir(const wchar_t *CmdLine,int ClosePlugin,bool Silent=false);
-		bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
-		void ProcessTabCompletion();
-		void DrawComboBoxMark(wchar_t MarkChar);
+private:
+	virtual void DisplayObject();
+	int CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle = false,
+			bool Silent = false, bool RunAs = false);
+	void GetPrompt(FARString &strDestStr);
+	BOOL IntChDir(const wchar_t *CmdLine, int ClosePlugin, bool Silent = false);
+	bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
+	void ProcessTabCompletion();
+	void DrawComboBoxMark(wchar_t MarkChar);
 
-	public:
-		CommandLine();
-		virtual ~CommandLine();
+public:
+	CommandLine();
+	virtual ~CommandLine();
 
-	public:
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
+public:
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
-		virtual void ResizeConsole();
+	virtual void ResizeConsole();
 
-		std::string GetConsoleLog(bool colored);
-		int GetCurDir(FARString &strCurDir);
-		BOOL SetCurDir(const wchar_t *CurDir);
+	std::string GetConsoleLog(bool colored);
+	int GetCurDir(FARString &strCurDir);
+	BOOL SetCurDir(const wchar_t *CurDir);
 
-		void GetString(FARString &strStr) { CmdStr.GetString(strStr); };
-		int GetLength() { return CmdStr.GetLength(); };
-		void SetString(const wchar_t *Str,BOOL Redraw=TRUE);
-		void InsertString(const wchar_t *Str);
+	void GetString(FARString &strStr) { CmdStr.GetString(strStr); };
+	int GetLength() { return CmdStr.GetLength(); };
+	void SetString(const wchar_t *Str, BOOL Redraw = TRUE);
+	void InsertString(const wchar_t *Str);
 
-		void ExecString(
-			const wchar_t *Str, bool SeparateWindow = false,
-			bool DirectRun = false, bool WaitForIdle = false,
-			bool Silent = false, bool RunAs = false
-		);
+	void ExecString(const wchar_t *Str, bool SeparateWindow = false, bool DirectRun = false,
+			bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
 
-		void ShowViewEditHistory();
+	void ShowViewEditHistory();
 
-		void SetCurPos(int Pos, int LeftPos=0);
-		int GetCurPos() { return CmdStr.GetCurPos(); };
-		int GetLeftPos() { return CmdStr.GetLeftPos(); };
+	void SetCurPos(int Pos, int LeftPos = 0);
+	int GetCurPos() { return CmdStr.GetCurPos(); };
+	int GetLeftPos() { return CmdStr.GetLeftPos(); };
 
-		void SetPersistentBlocks(int Mode);
-		void SetDelRemovesBlocks(int Mode);
-		void SetAutoComplete(int Mode);
-		void SetWaitKeypress(int Mode);
+	void SetPersistentBlocks(int Mode);
+	void SetDelRemovesBlocks(int Mode);
+	void SetAutoComplete(int Mode);
+	void SetWaitKeypress(int Mode);
 
-		void GetSelString(FARString &strStr) { CmdStr.GetSelString(strStr); };
-		void GetSelection(int &Start,int &End) { CmdStr.GetSelection(Start,End); };
-		void Select(int Start, int End) { CmdStr.Select(Start,End); };
+	void GetSelString(FARString &strStr) { CmdStr.GetSelString(strStr); };
+	void GetSelection(int &Start, int &End) { CmdStr.GetSelection(Start, End); };
+	void Select(int Start, int End) { CmdStr.Select(Start, End); };
 
-		void SaveBackground(int X1,int Y1,int X2,int Y2);
-		void SaveBackground();
-		void ShowBackground();
-		void CorrectRealScreenCoord();
-		void LockUpdatePanel(int Mode) {Flags.Change(FCMDOBJ_LOCKUPDATEPANEL,Mode);};
+	void SaveBackground(int X1, int Y1, int X2, int Y2);
+	void SaveBackground();
+	void ShowBackground();
+	void CorrectRealScreenCoord();
+	void LockUpdatePanel(int Mode) { Flags.Change(FCMDOBJ_LOCKUPDATEPANEL, Mode); };
 
-		void EnableAC(){return CmdStr.EnableAC();}
-		void DisableAC(){return CmdStr.DisableAC();}
-		void RevertAC(){return CmdStr.RevertAC();}
+	void EnableAC() { return CmdStr.EnableAC(); }
+	void DisableAC() { return CmdStr.DisableAC(); }
+	void RevertAC() { return CmdStr.RevertAC(); }
 
-		void RedrawWithoutComboBoxMark();
+	void RedrawWithoutComboBoxMark();
 };

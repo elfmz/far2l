@@ -55,62 +55,65 @@ struct PreRedrawItem
 
 class TPreRedrawFunc
 {
-	private:
-		unsigned int Total;
+private:
+	unsigned int Total;
 
-		struct OneItem
-		{
-			PreRedrawItem Item;
-			OneItem *Next;
+	struct OneItem
+	{
+		PreRedrawItem Item;
+		OneItem *Next;
 
-			OneItem(struct PreRedrawItem NewItem,OneItem *NextItem) : Item(NewItem), Next(NextItem) {}
-		};
+		OneItem(struct PreRedrawItem NewItem, OneItem *NextItem)
+			:
+			Item(NewItem), Next(NextItem)
+		{}
+	};
 
-		struct OneItem *Top, *current;
+	struct OneItem *Top, *current;
 
-	public:
-		static struct PreRedrawItem errorStack;
+public:
+	static struct PreRedrawItem errorStack;
 
-	public:
-		TPreRedrawFunc() : Total(0), Top(nullptr) {}
-		~TPreRedrawFunc() { Free(); }
+public:
+	TPreRedrawFunc()
+		:
+		Total(0), Top(nullptr)
+	{}
+	~TPreRedrawFunc() { Free(); }
 
-	public:
-		// вернуть количество элементов на стеке
-		unsigned int Size() const { return Total; }
+public:
+	// вернуть количество элементов на стеке
+	unsigned int Size() const { return Total; }
 
-		// взять элемент со стека
-		PreRedrawItem Pop();
+	// взять элемент со стека
+	PreRedrawItem Pop();
 
-		// взять элемент со стека без изменения стека
-		PreRedrawItem Peek();
+	// взять элемент со стека без изменения стека
+	PreRedrawItem Peek();
 
-		// положить элемент на стек
-		PreRedrawItem Push(const PreRedrawItem &Source);
-		PreRedrawItem Push(PREREDRAWFUNC Func,PreRedrawParamStruct *Param=nullptr);
+	// положить элемент на стек
+	PreRedrawItem Push(const PreRedrawItem &Source);
+	PreRedrawItem Push(PREREDRAWFUNC Func, PreRedrawParamStruct *Param = nullptr);
 
-		PreRedrawItem SetParam(const PreRedrawParamStruct &Param);
+	PreRedrawItem SetParam(const PreRedrawParamStruct &Param);
 
-		// очистить стек
-		void Free();
+	// очистить стек
+	void Free();
 
-		bool isEmpty() const {return !Total;}
+	bool isEmpty() const { return !Total; }
 
+private:
+	// TPreRedrawFunc& operator=(const TPreRedrawFunc&){return *this;};    /* чтобы не генерировалось */
+	// TPreRedrawFunc(const TPreRedrawFunc&){};                            /* по умолчанию            */
 
-	private:
-		//TPreRedrawFunc& operator=(const TPreRedrawFunc&){return *this;};    /* чтобы не генерировалось */
-		//TPreRedrawFunc(const TPreRedrawFunc&){};                            /* по умолчанию            */
-
-		//PREREDRAWFUNC Set(PREREDRAWFUNC fn);
-
+	// PREREDRAWFUNC Set(PREREDRAWFUNC fn);
 };
 
 extern TPreRedrawFunc PreRedraw;
 
-
 class TPreRedrawFuncGuard
 {
-	public:
-		TPreRedrawFuncGuard(PREREDRAWFUNC Func);
-		~TPreRedrawFuncGuard();
+public:
+	TPreRedrawFuncGuard(PREREDRAWFUNC Func);
+	~TPreRedrawFuncGuard();
 };

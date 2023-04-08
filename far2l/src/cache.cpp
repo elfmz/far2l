@@ -39,9 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PSEUDOFILE_FULLREAD_LIMIT 0x1000000
 #define PSEUDOFILE_FULLREAD_BLOCK 0x1000
 
-BufferedFileView::BufferedFileView()
-{
-}
+BufferedFileView::BufferedFileView() {}
 
 BufferedFileView::~BufferedFileView()
 {
@@ -103,12 +101,12 @@ void BufferedFileView::SetPointer(INT64 Ptr, int Whence)
 		case SEEK_CUR:
 			Ptr+= CurPtr;
 			CurPtr = (Ptr > 0) ? Ptr : 0;
-		break;
+			break;
 
 		case SEEK_END:
 			Ptr+= FileSize;
 			CurPtr = (Ptr > 0) ? Ptr : 0;
-		break;
+			break;
 	}
 }
 
@@ -168,9 +166,9 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 	}
 
 	Bounds NewBufferBounds;
-	if (Ptr < LastPtr) { // backward buffering
+	if (Ptr < LastPtr) {	// backward buffering
 		CalcBufferBounds(NewBufferBounds, Ptr, Size, AheadCount, BehindCount);
-	} else { // forward buffering
+	} else {				// forward buffering
 		CalcBufferBounds(NewBufferBounds, Ptr, Size, BehindCount, AheadCount);
 	}
 
@@ -198,9 +196,8 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 	UINT64 IntersectEnd = std::min(NewBufferBounds.End, BufferBounds.End);
 
 	if (IntersectPtr < IntersectEnd) {
-		memmove(&NewBuffer[IntersectPtr - NewBufferBounds.Ptr],
-			&Buffer[IntersectPtr - BufferBounds.Ptr],
-			CheckedCast<size_t>(IntersectEnd - IntersectPtr));
+		memmove(&NewBuffer[IntersectPtr - NewBufferBounds.Ptr], &Buffer[IntersectPtr - BufferBounds.Ptr],
+				CheckedCast<size_t>(IntersectEnd - IntersectPtr));
 		if (IntersectPtr > NewBufferBounds.Ptr) {
 			DWORD NeedDirectReadSize = CheckedCast<DWORD>(IntersectPtr - NewBufferBounds.Ptr);
 			DWORD DirectReadSize = DirectReadAt(NewBufferBounds.Ptr, NewBuffer, NeedDirectReadSize);
@@ -211,8 +208,8 @@ LPBYTE BufferedFileView::ViewBytesAt(UINT64 Ptr, DWORD &Size)
 
 		if (NewBufferBounds.End > IntersectEnd) {
 			DWORD NeedDirectReadSize = CheckedCast<DWORD>(NewBufferBounds.End - IntersectEnd);
-			DWORD DirectReadSize = DirectReadAt(IntersectEnd,
-				&NewBuffer[IntersectEnd - NewBufferBounds.Ptr], NeedDirectReadSize);
+			DWORD DirectReadSize = DirectReadAt(IntersectEnd, &NewBuffer[IntersectEnd - NewBufferBounds.Ptr],
+					NeedDirectReadSize);
 			NewBufferBounds.End = IntersectEnd + DirectReadSize;
 		}
 
@@ -253,18 +250,18 @@ LPBYTE BufferedFileView::AllocBuffer(size_t Size)
 	return (LPBYTE)ptr;
 }
 
-void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter)
+void BufferedFileView::CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter,
+		DWORD CountRighter)
 {
 	bi.Ptr = AlignDown(Ptr, AlignSize);
 	if (bi.Ptr > AheadCount * AlignSize) {
 		bi.Ptr-= CountLefter * AlignSize;
 	} else {
-		bi.Ptr= 0;
+		bi.Ptr = 0;
 	}
 
 	bi.End = AlignUp(Ptr + DataSize + CountRighter * AlignSize, AlignSize);
 }
-
 
 DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 {
@@ -275,60 +272,49 @@ DWORD BufferedFileView::DirectReadAt(UINT64 Ptr, LPVOID Data, DWORD DataSize)
 	if (r <= 0)
 		return 0;
 
-//	fprintf(stderr, "BufferedFileView::DirectReadAt: [%lx ... %lx)\n", (unsigned long)Ptr, (unsigned long)(Ptr + DataSize));
+	//	fprintf(stderr, "BufferedFileView::DirectReadAt: [%lx ... %lx)\n", (unsigned long)Ptr, (unsigned long)(Ptr + DataSize));
 
 	return CheckedCast<DWORD>(r);
 }
 
 /////////////
 
-CachedWrite::CachedWrite(File& file):
-	Buffer(reinterpret_cast<LPBYTE>(malloc(BufferSize))),
-	file(file),
-	FreeSize(BufferSize),
-	Flushed(false)
-{
-}
+CachedWrite::CachedWrite(File &file)
+	:
+	Buffer(reinterpret_cast<LPBYTE>(malloc(BufferSize))), file(file), FreeSize(BufferSize), Flushed(false)
+{}
 
 CachedWrite::~CachedWrite()
 {
 	Flush();
 
-	if (Buffer)
-	{
+	if (Buffer) {
 		free(Buffer);
 	}
 }
 
 bool CachedWrite::Write(LPCVOID Data, DWORD DataSize)
 {
-	bool Result=false;
-	bool SuccessFlush=true;
+	bool Result = false;
+	bool SuccessFlush = true;
 
-	if (Buffer)
-	{
-		if (DataSize>FreeSize)
-		{
-			SuccessFlush=Flush();
+	if (Buffer) {
+		if (DataSize > FreeSize) {
+			SuccessFlush = Flush();
 		}
 
-		if(SuccessFlush)
-		{
-			if (DataSize>FreeSize)
-			{
-				DWORD WrittenSize=0;
+		if (SuccessFlush) {
+			if (DataSize > FreeSize) {
+				DWORD WrittenSize = 0;
 
-				if (file.Write(Data, DataSize,&WrittenSize) && DataSize==WrittenSize)
-				{
-					Result=true;
+				if (file.Write(Data, DataSize, &WrittenSize) && DataSize == WrittenSize) {
+					Result = true;
 				}
-			}
-			else
-			{
-				memcpy(&Buffer[BufferSize-FreeSize],Data,DataSize);
-				FreeSize-=DataSize;
-				Flushed=false;
-				Result=true;
+			} else {
+				memcpy(&Buffer[BufferSize - FreeSize], Data, DataSize);
+				FreeSize-= DataSize;
+				Flushed = false;
+				Result = true;
 			}
 		}
 	}
@@ -337,16 +323,14 @@ bool CachedWrite::Write(LPCVOID Data, DWORD DataSize)
 
 bool CachedWrite::Flush()
 {
-	if (Buffer)
-	{
-		if (!Flushed)
-		{
-			DWORD WrittenSize=0;
+	if (Buffer) {
+		if (!Flushed) {
+			DWORD WrittenSize = 0;
 
-			if (file.Write(Buffer, BufferSize-FreeSize, &WrittenSize, nullptr) && BufferSize-FreeSize==WrittenSize)
-			{
-				Flushed=true;
-				FreeSize=BufferSize;
+			if (file.Write(Buffer, BufferSize - FreeSize, &WrittenSize, nullptr)
+					&& BufferSize - FreeSize == WrittenSize) {
+				Flushed = true;
+				FreeSize = BufferSize;
 			}
 		}
 	}

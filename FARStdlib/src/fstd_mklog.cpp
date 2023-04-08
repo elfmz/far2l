@@ -1,19 +1,19 @@
 #include <all_far.h>
 
-
 #include "fstdlib.h"
 
-//DATA
+// DATA
 
 BOOL WINAPI LOGInit(void)
 {
 	static BOOL inited = FALSE;
 
-	if(inited) return FALSE;
+	if (inited)
+		return FALSE;
 
-	inited=TRUE;
+	inited = TRUE;
 #if defined(__QNX__)
-	setbuf(stdout,NULL);
+	setbuf(stdout, NULL);
 #endif
 	return TRUE;
 }
@@ -22,26 +22,25 @@ LPCSTR WINAPI FP_GetLogFullFileName(void)
 {
 	static char str[MAX_PATH] = "";
 	LPCSTR m;
-//	char *tmp;
+	//	char *tmp;
 
-	if(!str[0])
-	{
+	if (!str[0]) {
 		m = FP_GetPluginLogName();
 
-		if(!m || !m[0])
+		if (!m || !m[0])
 			return "";
 
-//		str[ GetModuleFileName(FP_HModule,str,sizeof(str))] = 0;
+		//		str[ GetModuleFileName(FP_HModule,str,sizeof(str))] = 0;
 		strcpy(str, "/var/log/");
-//		tmp = strrchr(str,'/');
+		//		tmp = strrchr(str,'/');
 
-//		if(tmp)
-//		{
-//			tmp[1] = 0;
-			strcat(str,m);
-//		}
-//		else
-//			strcpy(str,m);
+		//		if(tmp)
+		//		{
+		//			tmp[1] = 0;
+		strcat(str, m);
+		//		}
+		//		else
+		//			strcpy(str,m);
 	}
 
 	return str;

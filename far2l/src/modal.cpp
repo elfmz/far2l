@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "modal.hpp"
 #include "keys.hpp"
 #include "help.hpp"
@@ -42,21 +41,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keyboard.hpp"
 #include "InterThreadCall.hpp"
 
-Modal::Modal():
-	ReadKey(-1),
-	WriteKey(-1),
-	ExitCode(-1),
-	EndLoop(0)
-{
-}
-
+Modal::Modal()
+	:
+	ReadKey(-1), WriteKey(-1), ExitCode(-1), EndLoop(0)
+{}
 
 void Modal::Process()
 {
 	Show();
 
-	while (!Done())
-	{
+	while (!Done()) {
 		ReadInput();
 		ProcessInput();
 		DispatchInterThreadCalls();
@@ -65,88 +59,73 @@ void Modal::Process()
 	GetDialogObjectsData();
 }
 
-
 int Modal::ReadInput(INPUT_RECORD *GetReadRec)
 {
 	if (GetReadRec)
-		memset(GetReadRec,0,sizeof(INPUT_RECORD));
+		memset(GetReadRec, 0, sizeof(INPUT_RECORD));
 
-	if (WriteKey>=0)
-	{
-		ReadKey=WriteKey;
-		WriteKey=-1;
-	}
-	else
-	{
-		ReadKey=GetInputRecord(&ReadRec);
+	if (WriteKey >= 0) {
+		ReadKey = WriteKey;
+		WriteKey = -1;
+	} else {
+		ReadKey = GetInputRecord(&ReadRec);
 
-		if (GetReadRec)
-		{
-			*GetReadRec=ReadRec;
+		if (GetReadRec) {
+			*GetReadRec = ReadRec;
 		}
 	}
 
-	if (ReadKey == KEY_CONSOLE_BUFFER_RESIZE)
-	{
+	if (ReadKey == KEY_CONSOLE_BUFFER_RESIZE) {
 		LockScreen LckScr;
 		Hide();
 		Show();
 	}
 
-	if (CloseFARMenu)
-	{
+	if (CloseFARMenu) {
 		SetExitCode(-1);
 	}
 
-	return(ReadKey);
+	return (ReadKey);
 }
-
 
 void Modal::WriteInput(int Key)
 {
-	WriteKey=Key;
+	WriteKey = Key;
 }
-
 
 void Modal::ProcessInput()
 {
-	if (ReadRec.EventType==MOUSE_EVENT)
+	if (ReadRec.EventType == MOUSE_EVENT)
 		ProcessMouse(&ReadRec.Event.MouseEvent);
 	else
 		ProcessKey(ReadKey);
 }
 
-
 int Modal::Done()
 {
-	return(EndLoop);
+	return (EndLoop);
 }
-
 
 void Modal::ClearDone()
 {
-	EndLoop=0;
+	EndLoop = 0;
 }
-
 
 int Modal::GetExitCode()
 {
-	return(ExitCode);
+	return (ExitCode);
 }
-
 
 void Modal::SetExitCode(int Code)
 {
-	ExitCode=Code;
-	EndLoop=TRUE;
+	ExitCode = Code;
+	EndLoop = TRUE;
 }
-
 
 void Modal::SetHelp(const wchar_t *Topic)
 {
 	strHelpTopic = Topic;
 }
-
 
 void Modal::ShowHelp()
 {

@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "processname.hpp"
 #include "strmix.hpp"
 #include "pathmix.hpp"
@@ -42,23 +41,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // обработать имя файла: сравнить с маской, масками, сгенерировать по маске
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags)
 {
-	bool skippath = (flags&PN_SKIPPATH)!=0;
+	bool skippath = (flags & PN_SKIPPATH) != 0;
 
-	flags &= ~PN_SKIPPATH;
+	flags&= ~PN_SKIPPATH;
 
 	if (flags == PN_CMPNAME)
 		return CmpName(param1, param2, skippath);
 
-	if (flags == PN_CMPNAMELIST)
-	{
+	if (flags == PN_CMPNAMELIST) {
 		CFileMask Masks;
-		return Masks.Set(param1,FMF_SILENT) && Masks.Compare(skippath ? PointToName(param2):param2);
+		return Masks.Set(param1, FMF_SILENT) && Masks.Compare(skippath ? PointToName(param2) : param2);
 	}
 
-	if (flags&PN_GENERATENAME)
-	{
+	if (flags & PN_GENERATENAME) {
 		FARString strResult = param2;
-		int nResult = ConvertWildcards(param1, strResult, (flags&0xFFFF)|(skippath?PN_SKIPPATH:0));
+		int nResult = ConvertWildcards(param1, strResult, (flags & 0xFFFF) | (skippath ? PN_SKIPPATH : 0));
 		far_wcsncpy(param2, strResult, size);
 		return nResult;
 	}
@@ -80,19 +77,17 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 {
 	FARString strPartAfterFolderName;
 	FARString strSrc = SrcName;
-	wchar_t *DestName = strDest.GetBuffer(strDest.GetLength()+strSrc.GetLength()+1);  //???
-	wchar_t *DestNamePtr = (wchar_t*)PointToName(DestName);
+	wchar_t *DestName = strDest.GetBuffer(strDest.GetLength() + strSrc.GetLength() + 1);	//???
+	wchar_t *DestNamePtr = (wchar_t *)PointToName(DestName);
 	FARString strWildName = DestNamePtr;
 
-	if (!wcschr(strWildName, L'*') && !wcschr(strWildName, L'?'))
-	{
-		//strDest.ReleaseBuffer (); не надо так как строка не поменялась
+	if (!wcschr(strWildName, L'*') && !wcschr(strWildName, L'?')) {
+		// strDest.ReleaseBuffer (); не надо так как строка не поменялась
 		return FALSE;
 	}
 
-	if (SelectedFolderNameLength)
-	{
-		strPartAfterFolderName = ((const wchar_t *)strSrc+SelectedFolderNameLength);
+	if (SelectedFolderNameLength) {
+		strPartAfterFolderName = ((const wchar_t *)strSrc + SelectedFolderNameLength);
 		strSrc.Truncate(SelectedFolderNameLength);
 	}
 
@@ -100,78 +95,72 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 
 	const wchar_t *SrcNamePtr = PointToName(Src);
 
-	int BeforeNameLength = DestNamePtr==DestName ? (int)(SrcNamePtr-Src) : 0;
+	int BeforeNameLength = DestNamePtr == DestName ? (int)(SrcNamePtr - Src) : 0;
 
-	wchar_t *PartBeforeName = (wchar_t*)malloc((BeforeNameLength+1)*sizeof(wchar_t));
+	wchar_t *PartBeforeName = (wchar_t *)malloc((BeforeNameLength + 1) * sizeof(wchar_t));
 
-	far_wcsncpy(PartBeforeName, Src, BeforeNameLength+1);
+	far_wcsncpy(PartBeforeName, Src, BeforeNameLength + 1);
 
 	const wchar_t *SrcNameDot = wcsrchr(SrcNamePtr, L'.');
 
 	const wchar_t *CurWildPtr = strWildName;
 
-	while (*CurWildPtr)
-	{
-		switch (*CurWildPtr)
-		{
+	while (*CurWildPtr) {
+		switch (*CurWildPtr) {
 			case L'?':
 				CurWildPtr++;
 
 				if (*SrcNamePtr)
-					*(DestNamePtr++)=*(SrcNamePtr++);
+					*(DestNamePtr++) = *(SrcNamePtr++);
 
 				break;
 			case L'*':
 				CurWildPtr++;
 
-				while (*SrcNamePtr)
-				{
-					if (*CurWildPtr==L'.' && SrcNameDot && !wcschr(CurWildPtr+1,L'.'))
-					{
-						if (SrcNamePtr==SrcNameDot)
+				while (*SrcNamePtr) {
+					if (*CurWildPtr == L'.' && SrcNameDot && !wcschr(CurWildPtr + 1, L'.')) {
+						if (SrcNamePtr == SrcNameDot)
 							break;
-					}
-					else if (*SrcNamePtr==*CurWildPtr)
-					{
+					} else if (*SrcNamePtr == *CurWildPtr) {
 						break;
 					}
 
-					*(DestNamePtr++)=*(SrcNamePtr++);
+					*(DestNamePtr++) = *(SrcNamePtr++);
 				}
 
 				break;
 			case L'.':
 				CurWildPtr++;
-				*(DestNamePtr++)=L'.';
+				*(DestNamePtr++) = L'.';
 
 				if (FindAnyOfChars(CurWildPtr, "*?"))
 					while (*SrcNamePtr)
-						if (*(SrcNamePtr++)==L'.')
+						if (*(SrcNamePtr++) == L'.')
 							break;
 
 				break;
 			default:
-				*(DestNamePtr++)=*(CurWildPtr++);
+				*(DestNamePtr++) = *(CurWildPtr++);
 
-				if (*SrcNamePtr && *SrcNamePtr!=L'.')
+				if (*SrcNamePtr && *SrcNamePtr != L'.')
 					SrcNamePtr++;
 
 				break;
 		}
 	}
 
-	*DestNamePtr=0;
+	*DestNamePtr = 0;
 
-	if (DestNamePtr!=DestName && *(DestNamePtr-1)==L'.')
-		*(DestNamePtr-1)=0;
+	if (DestNamePtr != DestName && *(DestNamePtr - 1) == L'.')
+		*(DestNamePtr - 1) = 0;
 
 	strDest.ReleaseBuffer();
 
 	if (*PartBeforeName)
-		strDest = PartBeforeName+strDest;
+		strDest = PartBeforeName + strDest;
 
 	if (SelectedFolderNameLength)
-		strDest += strPartAfterFolderName; //BUGBUG???, was src in 1.7x
+		strDest+= strPartAfterFolderName;	// BUGBUG???, was src in 1.7x
 
 	free(PartBeforeName);
 	return TRUE;
@@ -182,8 +171,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 // IS: после CmpName_Body)
 static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 {
-	for (;;++str)
-	{
+	for (;; ++str) {
 		/*
 			$ 01.05.2001 DJ
 			используем инлайновые версии
@@ -193,8 +181,7 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 		wchar_t stringc = *str;
 		wchar_t patternc = *pattern++;
 
-		switch (patternc)
-		{
+		switch (patternc) {
 			case 0:
 				return !stringc;
 
@@ -210,48 +197,41 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 				if (!*pattern)
 					return true;
 
-				if (!FindAnyOfChars(pattern, "*?["))
-				{
+				if (!FindAnyOfChars(pattern, "*?[")) {
 					const size_t pattern_len = wcslen(pattern);
 					const size_t str_len = wcslen(str);
 					return (str_len >= pattern_len
-						&& wmemcmp(pattern, str + str_len - pattern_len, pattern_len) == 0);
+							&& wmemcmp(pattern, str + str_len - pattern_len, pattern_len) == 0);
 				}
 
-				do
-				{
+				do {
 					if (CmpName_Body(pattern, str))
 						return true;
-				}
-				while (*str++);
+				} while (*str++);
 
 				return false;
 
 			case L'[':
 
-				if (!wcschr(pattern, L']'))
-				{
+				if (!wcschr(pattern, L']')) {
 					if (patternc != stringc)
 						return false;
 
 					break;
 				}
 
-				if (*pattern && *(pattern+1) == L']')
-				{
-					if (*pattern!=*str)
+				if (*pattern && *(pattern + 1) == L']') {
+					if (*pattern != *str)
 						return false;
 
-					pattern+=2;
+					pattern+= 2;
 					break;
 				}
 
 				match = 0;
 				stringc = Upper(stringc);
-				while ((rangec = *pattern++) != 0)
-				{
-					if (rangec == L']')
-					{
+				while ((rangec = *pattern++) != 0) {
+					if (rangec == L']') {
 						if (match)
 							break;
 						else
@@ -261,12 +241,10 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 					if (match)
 						continue;
 
-					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']')
-					{
+					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']') {
 						match = (stringc <= Upper(*pattern) && Upper(*(pattern - 2)) <= stringc);
 						pattern++;
-					}
-					else
+					} else
 						match = (stringc == Upper(rangec));
 				}
 

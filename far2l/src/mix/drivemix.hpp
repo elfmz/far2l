@@ -43,20 +43,20 @@ enum
 	// DRIVE_CDROM              = 5,
 	// DRIVE_RAMDISK            = 6,
 
-	DRIVE_SUBSTITUTE            =15,
-	DRIVE_REMOTE_NOT_CONNECTED  =16,
-	DRIVE_CD_RW                 =18,
-	DRIVE_CD_RWDVD              =19,
-	DRIVE_DVD_ROM               =20,
-	DRIVE_DVD_RW                =21,
-	DRIVE_DVD_RAM               =22,
-	DRIVE_BD_ROM                =23,
-	DRIVE_BD_RW					=24,
-	DRIVE_HDDVD_ROM				=25,
-	DRIVE_HDDVD_RW				=26,
-	DRIVE_USBDRIVE              =40,
-	DRIVE_VIRTUAL               =41,
-	DRIVE_NOT_INIT              =255,
+	DRIVE_SUBSTITUTE           = 15,
+	DRIVE_REMOTE_NOT_CONNECTED = 16,
+	DRIVE_CD_RW                = 18,
+	DRIVE_CD_RWDVD             = 19,
+	DRIVE_DVD_ROM              = 20,
+	DRIVE_DVD_RW               = 21,
+	DRIVE_DVD_RAM              = 22,
+	DRIVE_BD_ROM               = 23,
+	DRIVE_BD_RW                = 24,
+	DRIVE_HDDVD_ROM            = 25,
+	DRIVE_HDDVD_RW             = 26,
+	DRIVE_USBDRIVE             = 40,
+	DRIVE_VIRTUAL              = 41,
+	DRIVE_NOT_INIT             = 255,
 };
 
 enum CHECKEDPROPS_TYPE
@@ -65,4 +65,4 @@ enum CHECKEDPROPS_TYPE
 	CHECKEDPROPS_ISDST_ENCRYPTION,
 };
 
-int CheckDisksProps(const wchar_t *SrcPath,const wchar_t *DestPath,int CheckedType);
+int CheckDisksProps(const wchar_t *SrcPath, const wchar_t *DestPath, int CheckedType);

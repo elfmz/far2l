@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "dirmix.hpp"
 #include "cvtname.hpp"
 #include "message.hpp"
@@ -49,29 +48,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "delete.hpp"
 #include <atomic>
 
-
 BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 {
 	if (!NewDir || !*NewDir)
 		return FALSE;
 
-	BOOL rc=FALSE;
+	BOOL rc = FALSE;
 	FARString strCurDir;
 
 	{
-		if (ChangeDir)
-		{
-			if (*NewDir=='/') {
+		if (ChangeDir) {
+			if (*NewDir == '/') {
 				strCurDir = NewDir;
-				rc = apiSetCurrentDirectory(strCurDir); // здесь берем корень
+				rc = apiSetCurrentDirectory(strCurDir);		// здесь берем корень
 			} else {
 				apiGetCurrentDirectory(strCurDir);
-				ConvertNameToFull(NewDir,strCurDir);
-				PrepareDiskPath(strCurDir,false); // TRUE ???
-				rc = apiSetCurrentDirectory(strCurDir);				
+				ConvertNameToFull(NewDir, strCurDir);
+				PrepareDiskPath(strCurDir, false);	// TRUE ???
+				rc = apiSetCurrentDirectory(strCurDir);
 			}
-			if (!rc)
-			{
+			if (!rc) {
 				fprintf(stderr, "FarChDir: FAILED - '%ls'\n", NewDir);
 			}
 		}
@@ -91,7 +87,7 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 */
 TESTFOLDERCONST TestFolder(const wchar_t *Path)
 {
-	if (!(Path && *Path)) // проверка на вшивость
+	if (!(Path && *Path))	// проверка на вшивость
 		return TSTFLD_ERROR;
 
 	std::string mbPath;
@@ -99,39 +95,42 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 	while (mbPath.size() > 1 && mbPath.back() == '/')
 		mbPath.resize(mbPath.size() - 1);
 
-	struct stat s{};
+	struct stat s
+	{};
 	int r = sdc_stat(mbPath.c_str(), &s);
-	if (r == -1)
-	{
+	if (r == -1) {
 		if (errno == EPERM || errno == EACCES)
 			return TSTFLD_NOTACCESS;
 
 		return TSTFLD_NOTFOUND;
 	}
 
-	if (!S_ISDIR(s.st_mode)) // not directories are always empty
+	if (!S_ISDIR(s.st_mode))	// not directories are always empty
 		return TSTFLD_EMPTY;
 
 	DIR *d = sdc_opendir(mbPath.c_str());
-	if (!d) switch (errno)
-	{
-		case EPERM: case EACCES:
-			return TSTFLD_NOTACCESS;
+	if (!d)
+		switch (errno) {
+			case EPERM:
+			case EACCES:
+				return TSTFLD_NOTACCESS;
 
-		case ENOMEM: case EMFILE: case ENFILE: case EBADF:
-			return TSTFLD_ERROR;
+			case ENOMEM:
+			case EMFILE:
+			case ENFILE:
+			case EBADF:
+				return TSTFLD_ERROR;
 
-		default:
-			return TSTFLD_EMPTY;
-	}
+			default:
+				return TSTFLD_EMPTY;
+		}
 
 	TESTFOLDERCONST out = TSTFLD_EMPTY;
-	for (;;)
-	{
+	for (;;) {
 		struct dirent *de = sdc_readdir(d);
-		if (!de) break;
-		if (strcmp(de->d_name, ".") && strcmp(de->d_name, ".."))
-		{
+		if (!de)
+			break;
+		if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
 			out = TSTFLD_NOTEMPTY;
 			break;
 		}
@@ -153,48 +152,43 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 	TestPath может быть пустым, тогда просто исполним ProcessPluginEvent()
 
 */
-int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
+int CheckShortcutFolder(FARString *pTestPath, int IsHostFile, BOOL Silent)
 {
-	if (pTestPath && !pTestPath->IsEmpty() && apiGetFileAttributes(*pTestPath) == INVALID_FILE_ATTRIBUTES)
-	{
-		int FoundPath=0;
+	if (pTestPath && !pTestPath->IsEmpty() && apiGetFileAttributes(*pTestPath) == INVALID_FILE_ATTRIBUTES) {
+		int FoundPath = 0;
 		FARString strTarget = *pTestPath;
-		TruncPathStr(strTarget, ScrX-16);
+		TruncPathStr(strTarget, ScrX - 16);
 
-		if (IsHostFile)
-		{
+		if (IsHostFile) {
 			WINPORT(SetLastError)(ERROR_FILE_NOT_FOUND);
 
 			if (!Silent)
 				Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, strTarget, Msg::Ok);
-		}
-		else // попытка найти!
+		} else		// попытка найти!
 		{
 			WINPORT(SetLastError)(ERROR_PATH_NOT_FOUND);
 
-			if (Silent || !Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, strTarget, Msg::NeedNearPath, Msg::HYes,Msg::HNo))
-			{
+			if (Silent
+					|| !Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, strTarget, Msg::NeedNearPath,
+							Msg::HYes, Msg::HNo)) {
 				FARString strTestPathTemp = *pTestPath;
 
-				for (;;)
-				{
-					if (!CutToSlash(strTestPathTemp,true))
+				for (;;) {
+					if (!CutToSlash(strTestPathTemp, true))
 						break;
 
-					if (apiGetFileAttributes(strTestPathTemp) != INVALID_FILE_ATTRIBUTES)
-					{
-						int ChkFld=TestFolder(strTestPathTemp);
+					if (apiGetFileAttributes(strTestPathTemp) != INVALID_FILE_ATTRIBUTES) {
+						int ChkFld = TestFolder(strTestPathTemp);
 
-						if (ChkFld > TSTFLD_ERROR && ChkFld < TSTFLD_NOTFOUND)
-						{
-							if (!(pTestPath->At(0) == GOOD_SLASH && pTestPath->At(1) == GOOD_SLASH && !strTestPathTemp.At(1)))
-							{
+						if (ChkFld > TSTFLD_ERROR && ChkFld < TSTFLD_NOTFOUND) {
+							if (!(pTestPath->At(0) == GOOD_SLASH && pTestPath->At(1) == GOOD_SLASH
+										&& !strTestPathTemp.At(1))) {
 								*pTestPath = strTestPathTemp;
 
-								if (pTestPath->GetLength() == 2) // для случая "C:", иначе попадем в текущий каталог диска C:
+								if (pTestPath->GetLength() == 2)	// для случая "C:", иначе попадем в текущий каталог диска C:
 									AddEndSlash(*pTestPath);
 
-								FoundPath=1;
+								FoundPath = 1;
 							}
 
 							break;
@@ -208,7 +202,7 @@ int CheckShortcutFolder(FARString *pTestPath,int IsHostFile, BOOL Silent)
 			return 0;
 	}
 
-	if (CtrlObject->Cp()->ActivePanel->ProcessPluginEvent(FE_CLOSE,nullptr))
+	if (CtrlObject->Cp()->ActivePanel->ProcessPluginEvent(FE_CLOSE, nullptr))
 		return -1;
 
 	return 1;
@@ -219,10 +213,8 @@ void CreatePath(FARString &strPath)
 	wchar_t *ChPtr = strPath.GetBuffer();
 	bool bEnd = false;
 
-	for (;;)
-	{
-		if (!*ChPtr || IsSlash(*ChPtr))
-		{
+	for (;;) {
+		if (!*ChPtr || IsSlash(*ChPtr)) {
 			if (*ChPtr)
 				*ChPtr = 0;
 			else
@@ -245,7 +237,7 @@ void CreatePath(FARString &strPath)
 
 std::string GetHelperPathName(const char *name)
 {
- 	std::string out = g_strFarPath.GetMB();
+	std::string out = g_strFarPath.GetMB();
 	if (!out.empty() && out.back() != GOOD_SLASH) {
 		out+= GOOD_SLASH;
 	}
@@ -272,7 +264,6 @@ std::string GetMyScriptQuoted(const char *name)
 	return out;
 }
 
-
 void PrepareTemporaryOpenPath(FARString &Path)
 {
 	Path = InMyTemp("open");
@@ -286,15 +277,17 @@ void PrepareTemporaryOpenPath(FARString &Path)
 	time_t now = time(nullptr);
 	while (scan_tree.GetNextName(&found_data, found_name)) {
 		struct timespec ts_mod = {}, ts_change = {};
-		WINPORT(FileTimeToLocalFileTime)(&found_data.ftUnixModificationTime, &found_data.ftUnixModificationTime);
-		WINPORT(FileTimeToLocalFileTime)(&found_data.ftUnixStatusChangeTime, &found_data.ftUnixStatusChangeTime);
+		WINPORT(FileTimeToLocalFileTime)
+		(&found_data.ftUnixModificationTime, &found_data.ftUnixModificationTime);
+		WINPORT(FileTimeToLocalFileTime)
+		(&found_data.ftUnixStatusChangeTime, &found_data.ftUnixStatusChangeTime);
 		WINPORT(FileTime_Win32ToUnix)(&found_data.ftUnixModificationTime, &ts_mod);
 		WINPORT(FileTime_Win32ToUnix)(&found_data.ftUnixStatusChangeTime, &ts_change);
 		time_t delta = std::min(now - ts_mod.tv_sec, now - ts_change.tv_sec);
-		if (delta > 60) {//one minute ought be enouht to open anything (c)
+		if (delta > 60) {	// one minute ought be enouht to open anything (c)
 			outdated.push_back(found_name);
-			fprintf(stderr, "PrepareTemporaryOpenPath: delta=%llu for '%ls'\n",
-				(unsigned long long)delta, found_name.CPtr());
+			fprintf(stderr, "PrepareTemporaryOpenPath: delta=%llu for '%ls'\n", (unsigned long long)delta,
+					found_name.CPtr());
 		}
 	};
 
@@ -302,14 +295,14 @@ void PrepareTemporaryOpenPath(FARString &Path)
 		DeleteDirTree(p.CPtr());
 	}
 	apiCreateDirectory(Path, nullptr);
-	
-	static std::atomic<unsigned short>	s_counter{0};
-	char tmp[64]; sprintf(tmp, "%c%u_%u", GOOD_SLASH, (unsigned int)getpid(), (unsigned int)++s_counter);
-	
+
+	static std::atomic<unsigned short> s_counter{0};
+	char tmp[64];
+	sprintf(tmp, "%c%u_%u", GOOD_SLASH, (unsigned int)getpid(), (unsigned int)++s_counter);
+
 	Path+= tmp;
 	apiCreateDirectory(Path, nullptr);
 }
-
 
 FARString DefaultPanelInitialDirectory()
 {
@@ -320,7 +313,7 @@ FARString DefaultPanelInitialDirectory()
 	} else {
 		out = g_strFarPath;
 	}
-	
+
 	DeleteEndSlash(out);
 	return out;
 }

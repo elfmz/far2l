@@ -1,6 +1,5 @@
 #include <all_far.h>
 
-
 #include "fstdlib.h"
 
 static AbortProc CTAbortProc = NULL;
@@ -14,8 +13,7 @@ AbortProc WINAPI AtExit(AbortProc p)
 
 void WINAPI CallAtExit(void)
 {
-	if(CTAbortProc)
-	{
+	if (CTAbortProc) {
 		CTAbortProc();
 		CTAbortProc = NULL;
 	}

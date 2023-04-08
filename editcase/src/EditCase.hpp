@@ -5,11 +5,11 @@ static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
 
 // Menu item numbers
-#define CCLower     0
-#define CCTitle     1
-#define CCUpper     2
-#define CCToggle    3
-#define CCCyclic    4
+#define CCLower  0
+#define CCTitle  1
+#define CCUpper  2
+#define CCToggle 3
+#define CCCyclic 4
 
 const TCHAR *GetMsg(int MsgId);
 

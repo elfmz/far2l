@@ -38,22 +38,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern const wchar_t EXCLUDEMASKSEPARATOR;
 
-class FileMasksWithExclude:public BaseFileMask
+class FileMasksWithExclude : public BaseFileMask
 {
-	private:
-		void Free();
-		static const wchar_t *FindExcludeChar(const wchar_t *masks);
+private:
+	void Free();
+	static const wchar_t *FindExcludeChar(const wchar_t *masks);
 
-	public:
-		FileMasksWithExclude();
-		virtual ~FileMasksWithExclude() {}
+public:
+	FileMasksWithExclude();
+	virtual ~FileMasksWithExclude() {}
 
-	public:
-		virtual bool Set(const wchar_t *Masks, DWORD Flags);
-		virtual bool Compare(const wchar_t *Name) const;
-		virtual bool IsEmpty() const;
-		static bool IsExcludeMask(const wchar_t *masks);
+public:
+	virtual bool Set(const wchar_t *Masks, DWORD Flags);
+	virtual bool Compare(const wchar_t *Name) const;
+	virtual bool IsEmpty() const;
+	static bool IsExcludeMask(const wchar_t *masks);
 
-	private:
-		FileMasksProcessor Include, Exclude;
+private:
+	FileMasksProcessor Include, Exclude;
 };

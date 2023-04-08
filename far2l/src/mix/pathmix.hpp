@@ -39,23 +39,24 @@ const size_t cVolumeGuidLen = 48;
 
 class NTPath
 {
-		FARString Str;
-	public:
-		NTPath(LPCWSTR Src);
+	FARString Str;
 
-		operator LPCWSTR() const
-		{
-			return Str;
-		}
+public:
+	NTPath(LPCWSTR Src);
 
-		const FARString Get() const
-		{
-			return Str;
-		}
+	operator LPCWSTR() const { return Str; }
+
+	const FARString Get() const { return Str; }
 };
 
-inline int IsSlash(wchar_t x) { return x==GOOD_SLASH; }
-inline int IsSlashA(char x) { return x==GOOD_SLASH; }
+inline int IsSlash(wchar_t x)
+{
+	return x == GOOD_SLASH;
+}
+inline int IsSlashA(char x)
+{
+	return x == GOOD_SLASH;
+}
 
 bool IsNetworkPath(const wchar_t *Path);
 bool IsNetworkServerPath(const wchar_t *Path);
@@ -76,21 +77,21 @@ bool CutToSlash(std::wstring &strStr, bool bInclude = false);
 
 FARString &CutToFolderNameIfFolder(FARString &strPath);
 
-const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath);
-const wchar_t* PointToName(FARString &strPath);
-const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
-const wchar_t* WINAPI PointToFolderNameIfFolder(const wchar_t *lpwszPath);
-const wchar_t* PointToExt(const wchar_t *lpwszPath);
-const wchar_t* PointToExt(FARString& strPath);
-const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr);
+const wchar_t *WINAPI PointToName(const wchar_t *lpwszPath);
+const wchar_t *PointToName(FARString &strPath);
+const wchar_t *PointToName(const wchar_t *lpwszPath, const wchar_t *lpwszEndPtr);
+const wchar_t *WINAPI PointToFolderNameIfFolder(const wchar_t *lpwszPath);
+const wchar_t *PointToExt(const wchar_t *lpwszPath);
+const wchar_t *PointToExt(FARString &strPath);
+const wchar_t *PointToExt(const wchar_t *lpwszPath, const wchar_t *lpwszEndPtr);
 
 void AddEndSlash(FARString &strPath);
 void AddEndSlash(std::wstring &strPath);
 BOOL WINAPI AddEndSlash(wchar_t *Path);
 
-bool DeleteEndSlash(wchar_t* Path, bool AllEndSlash = false);
-BOOL DeleteEndSlash(std::wstring &strPath,bool AllEndSlash = false);
-BOOL DeleteEndSlash(FARString &strPath,bool AllEndSlash = false);
+bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash = false);
+BOOL DeleteEndSlash(std::wstring &strPath, bool AllEndSlash = false);
+BOOL DeleteEndSlash(FARString &strPath, bool AllEndSlash = false);
 
 const wchar_t *FirstSlash(const wchar_t *String);
 const wchar_t *LastSlash(const wchar_t *String);
@@ -104,11 +105,11 @@ bool TestCurrentDirectory(const wchar_t *TestDir);
 FARString ExtractFileName(const FARString &Path);
 FARString ExtractFilePath(const FARString &Path);
 
-template < bool (*PTranslateFN)(std::wstring &s) > 
-	static bool TranslateFarString(FARString &str)
+template <bool (*PTranslateFN)(std::wstring &s)>
+static bool TranslateFarString(FARString &str)
 {
 	std::wstring tmp(str.CPtr(), str.GetLength());
-	if ( !PTranslateFN(tmp))
+	if (!PTranslateFN(tmp))
 		return false;
 
 	str.Copy(tmp.c_str(), tmp.size());

@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum enumFileFilterFlagsType
 {
-	FFFT_FIRST = 0, //обязан быть первым
+	FFFT_FIRST = 0,		// обязан быть первым
 
 	FFFT_LEFTPANEL = FFFT_FIRST,
 	FFFT_RIGHTPANEL,
@@ -54,7 +54,7 @@ enum enumFileFilterFlagsType
 	FFFT_SELECT,
 	FFFT_CUSTOM,
 
-	FFFT_COUNT, //обязан быть последним
+	FFFT_COUNT,		// обязан быть последним
 };
 
 enum enumFileFilterFlags
@@ -67,110 +67,107 @@ enum enumFileFilterFlags
 
 enum enumFDateType
 {
-	FDATE_MODIFIED=0,
+	FDATE_MODIFIED = 0,
 	FDATE_CREATED,
 	FDATE_OPENED,
 	FDATE_CHANGED,
 
-	FDATE_COUNT, // всегда последний !!!
+	FDATE_COUNT,	// всегда последний !!!
 };
 
 /// NB: const-qualified methods can be invoked in multithreaded-parallel manner,
 /// so they really must be const (i.e. dont modify any mutable fields inside etc)
 class FileFilterParams
 {
-	private:
+private:
+	FARString m_strTitle;
 
-		FARString m_strTitle;
+	struct
+	{
+		bool Used;
+		FARString strMask;
+		CFileMask FilterMask;	// Хранилище скомпилированной маски.
+	} FMask;
 
-		struct
-		{
-			bool Used;
-			FARString strMask;
-			CFileMask FilterMask; // Хранилище скомпилированной маски.
-		} FMask;
+	struct
+	{
+		bool Used;
+		enumFDateType DateType;
+		ULARGE_INTEGER DateAfter;
+		ULARGE_INTEGER DateBefore;
+		bool bRelative;
+	} FDate;
 
-		struct
-		{
-			bool Used;
-			enumFDateType DateType;
-			ULARGE_INTEGER DateAfter;
-			ULARGE_INTEGER DateBefore;
-			bool bRelative;
-		} FDate;
+	struct
+	{
+		uint64_t SizeAboveReal;						// Здесь всегда будет размер в байтах
+		uint64_t SizeBelowReal;						// Здесь всегда будет размер в байтах
+		wchar_t SizeAbove[FILEFILTER_SIZE_SIZE];	// Здесь всегда будет размер как его ввёл юзер
+		wchar_t SizeBelow[FILEFILTER_SIZE_SIZE];	// Здесь всегда будет размер как его ввёл юзер
+		bool Used;
+	} FSize;
 
-		struct
-		{
-			uint64_t SizeAboveReal; // Здесь всегда будет размер в байтах
-			uint64_t SizeBelowReal; // Здесь всегда будет размер в байтах
-			wchar_t SizeAbove[FILEFILTER_SIZE_SIZE]; // Здесь всегда будет размер как его ввёл юзер
-			wchar_t SizeBelow[FILEFILTER_SIZE_SIZE]; // Здесь всегда будет размер как его ввёл юзер
-			bool Used;
-		} FSize;
+	struct
+	{
+		bool Used;
+		DWORD AttrSet;
+		DWORD AttrClear;
+	} FAttr;
 
-		struct
-		{
-			bool Used;
-			DWORD AttrSet;
-			DWORD AttrClear;
-		} FAttr;
+	struct
+	{
+		HighlightDataColor Colors;
+		int SortGroup;
+		bool bContinueProcessing;
+	} FHighlight;
 
-		struct
-		{
-			HighlightDataColor Colors;
-			int SortGroup;
-			bool bContinueProcessing;
-		} FHighlight;
+	DWORD FFlags[FFFT_COUNT];
 
-		DWORD FFlags[FFFT_COUNT];
+	bool FileInFilterImpl(const FARString &strFileName, DWORD dwFileAttributes, uint64_t nFileSize,
+			const FILETIME &CreationTime, const FILETIME &AccessTime, const FILETIME &WriteTime,
+			const FILETIME &ChangeTime, uint64_t CurrentTime) const;
 
-		bool FileInFilterImpl(
-			const FARString &strFileName,
-			DWORD dwFileAttributes,
-			uint64_t nFileSize,
-			const FILETIME &CreationTime,
-			const FILETIME &AccessTime,
-			const FILETIME &WriteTime,
-			const FILETIME &ChangeTime,
-			uint64_t CurrentTime) const;
-	public:
+public:
+	FileFilterParams();
 
-		FileFilterParams();
+	const FileFilterParams &operator=(const FileFilterParams &FF);
 
-		const FileFilterParams &operator=(const FileFilterParams &FF);
+	void SetTitle(const wchar_t *Title);
+	void SetMask(bool Used, const wchar_t *Mask);
+	void SetDate(bool Used, DWORD DateType, FILETIME DateAfter, FILETIME DateBefore, bool bRelative);
+	void SetSize(bool Used, const wchar_t *SizeAbove, const wchar_t *SizeBelow);
+	void SetAttr(bool Used, DWORD AttrSet, DWORD AttrClear);
+	void SetColors(HighlightDataColor *Colors);
+	void SetSortGroup(int SortGroup) { FHighlight.SortGroup = SortGroup; }
+	void SetContinueProcessing(bool bContinueProcessing)
+	{
+		FHighlight.bContinueProcessing = bContinueProcessing;
+	}
+	void SetFlags(enumFileFilterFlagsType FType, DWORD Flags) { FFlags[FType] = Flags; }
+	void ClearAllFlags() { memset(FFlags, 0, sizeof(FFlags)); }
 
-		void SetTitle(const wchar_t *Title);
-		void SetMask(bool Used, const wchar_t *Mask);
-		void SetDate(bool Used, DWORD DateType, FILETIME DateAfter, FILETIME DateBefore, bool bRelative);
-		void SetSize(bool Used, const wchar_t *SizeAbove, const wchar_t *SizeBelow);
-		void SetAttr(bool Used, DWORD AttrSet, DWORD AttrClear);
-		void SetColors(HighlightDataColor *Colors);
-		void SetSortGroup(int SortGroup) { FHighlight.SortGroup = SortGroup; }
-		void SetContinueProcessing(bool bContinueProcessing) { FHighlight.bContinueProcessing = bContinueProcessing; }
-		void SetFlags(enumFileFilterFlagsType FType, DWORD Flags) { FFlags[FType] = Flags; }
-		void ClearAllFlags() { memset(FFlags,0,sizeof(FFlags)); }
+	const wchar_t *GetTitle() const;
+	bool GetMask(const wchar_t **Mask) const;
+	bool GetDate(DWORD *DateType, FILETIME *DateAfter, FILETIME *DateBefore, bool *bRelative) const;
+	bool GetSize(const wchar_t **SizeAbove, const wchar_t **SizeBelow) const;
+	bool GetAttr(DWORD *AttrSet, DWORD *AttrClear) const;
+	void GetColors(HighlightDataColor *Colors) const;
+	wchar_t GetMarkChar() const;
+	int GetSortGroup() const { return FHighlight.SortGroup; }
+	bool GetContinueProcessing() const { return FHighlight.bContinueProcessing; }
+	DWORD GetFlags(enumFileFilterFlagsType FType) const { return FFlags[FType]; }
 
-		const wchar_t *GetTitle() const;
-		bool  GetMask(const wchar_t **Mask) const;
-		bool  GetDate(DWORD *DateType, FILETIME *DateAfter, FILETIME *DateBefore, bool *bRelative) const;
-		bool  GetSize(const wchar_t **SizeAbove, const wchar_t **SizeBelow) const;
-		bool  GetAttr(DWORD *AttrSet, DWORD *AttrClear) const;
-		void  GetColors(HighlightDataColor *Colors) const;
-		wchar_t   GetMarkChar() const;
-		int   GetSortGroup() const { return FHighlight.SortGroup; }
-		bool  GetContinueProcessing() const { return FHighlight.bContinueProcessing; }
-		DWORD GetFlags(enumFileFilterFlagsType FType) const { return FFlags[FType]; }
-
-		// Данный метод вызывается "снаружи" и служит для определения:
-		// попадает ли файл fd под условие установленного фильтра.
-		// Возвращает true  - попадает;
-		//            false - не попадает.
-		bool FileInFilter(const FileListItem& fli, uint64_t CurrentTime) const;
-		bool FileInFilter(const FAR_FIND_DATA_EX& fde, uint64_t CurrentTime) const;
-		bool FileInFilter(const FAR_FIND_DATA& fd, uint64_t CurrentTime) const;
+	// Данный метод вызывается "снаружи" и служит для определения:
+	// попадает ли файл fd под условие установленного фильтра.
+	// Возвращает true  - попадает;
+	//            false - не попадает.
+	bool FileInFilter(const FileListItem &fli, uint64_t CurrentTime) const;
+	bool FileInFilter(const FAR_FIND_DATA_EX &fde, uint64_t CurrentTime) const;
+	bool FileInFilter(const FAR_FIND_DATA &fd, uint64_t CurrentTime) const;
 };
 
-bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig=false);
+bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig = false);
 
-//Централизованная функция для создания строк меню различных фильтров.
-void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType=false, int Hotkey=0, bool bPanelType=false, const wchar_t *FMask=nullptr, const wchar_t *Title=nullptr);
+// Централизованная функция для создания строк меню различных фильтров.
+void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType = false, int Hotkey = 0,
+		bool bPanelType = false, const wchar_t *FMask = nullptr, const wchar_t *Title = nullptr);

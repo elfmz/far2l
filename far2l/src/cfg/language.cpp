@@ -50,69 +50,65 @@ static const wchar_t LangFileMask[] = L"*.lng";
 
 Language Lang;
 
-static FILE* TryOpenLangFile(const wchar_t *Path,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
+static FILE *TryOpenLangFile(const wchar_t *Path, const wchar_t *Mask, const wchar_t *Language,
+		FARString &strFileName, UINT &nCodePage, BOOL StrongLang, FARString *pstrLangName)
 {
 	strFileName.Clear();
-	FILE *LangFile=nullptr;
+	FILE *LangFile = nullptr;
 	FARString strEngFileName;
 	FARString strLangName;
 	FAR_FIND_DATA_EX FindData;
-	ScanTree ScTree(FALSE,FALSE);
-	ScTree.SetFindPath(Path,Mask);
+	ScanTree ScTree(FALSE, FALSE);
+	ScTree.SetFindPath(Path, Mask);
 
-	while (ScTree.GetNextName(&FindData, strFileName))
-	{
+	while (ScTree.GetNextName(&FindData, strFileName)) {
 		if (!Language)
 			break;
 
-		if (!(LangFile=fopen(strFileName.GetMB().c_str(), "rb")))
-		{
+		if (!(LangFile = fopen(strFileName.GetMB().c_str(), "rb"))) {
 			fprintf(stderr, "OpenLangFile opfailed: %ls\n", strFileName.CPtr());
 
 			strFileName.Clear();
-		}
-		else
-		{
+		} else {
 			DetectFileMagic(LangFile, nCodePage);
 
-			if (GetLangParam(LangFile,L"Language",&strLangName,nullptr, nCodePage) && !StrCmpI(strLangName,Language))
+			if (GetLangParam(LangFile, L"Language", &strLangName, nullptr, nCodePage)
+					&& !StrCmpI(strLangName, Language))
 				break;
 
 			fclose(LangFile);
-			LangFile=nullptr;
+			LangFile = nullptr;
 
-			if (StrongLang)
-			{
+			if (StrongLang) {
 				strFileName.Clear();
 				strEngFileName.Clear();
 				break;
 			}
 
-			if (!StrCmpI(strLangName,L"English"))
+			if (!StrCmpI(strLangName, L"English"))
 				strEngFileName = std::move(strFileName);
 		}
 	}
 
-	if (!LangFile)
-	{
+	if (!LangFile) {
 		if (!strEngFileName.IsEmpty())
 			strFileName = std::move(strEngFileName);
 
-		if (!strFileName.IsEmpty())
-		{
-			LangFile=fopen(Wide2MB(strFileName).c_str(), FOPEN_READ);
+		if (!strFileName.IsEmpty()) {
+			LangFile = fopen(Wide2MB(strFileName).c_str(), FOPEN_READ);
 
 			if (pstrLangName)
-				*pstrLangName=std::move(strLangName);
+				*pstrLangName = std::move(strLangName);
 		}
 	}
 
-	return(LangFile);
+	return (LangFile);
 }
 
-FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang,FARString *pstrLangName)
+FILE *OpenLangFile(FARString strPath, const wchar_t *Mask, const wchar_t *Language, FARString &strFileName,
+		UINT &nCodePage, BOOL StrongLang, FARString *pstrLangName)
 {
-	FILE* out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
+	FILE *out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
 	if (!out) {
 		if (TranslateFarString<TranslateInstallPath_Lib2Share>(strPath)) {
 			out = TryOpenLangFile(strPath, Mask, Language, strFileName, nCodePage, StrongLang, pstrLangName);
@@ -121,12 +117,13 @@ FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language
 	return out;
 }
 
-int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FARString *strParam2, UINT nCodePage)
+int GetLangParam(FILE *SrcFile, const wchar_t *ParamName, FARString *strParam1, FARString *strParam2,
+		UINT nCodePage)
 {
 	wchar_t ReadStr[1024];
 	FARString strFullParamName = L".";
-	strFullParamName += ParamName;
-	int Length=(int)strFullParamName.GetLength();
+	strFullParamName+= ParamName;
+	int Length = (int)strFullParamName.GetLength();
 	/*
 		$ 29.11.2001 DJ
 		не поганим позицию в файле; дальше @Contents не читаем
@@ -136,27 +133,22 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 
 	StringReader SR;
 
-	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage))
-	{
-		if (!StrCmpNI(ReadStr,strFullParamName,Length))
-		{
-			wchar_t *Ptr=wcschr(ReadStr,L'=');
+	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage)) {
+		if (!StrCmpNI(ReadStr, strFullParamName, Length)) {
+			wchar_t *Ptr = wcschr(ReadStr, L'=');
 
-			if (Ptr)
-			{
-				*strParam1 = Ptr+1;
+			if (Ptr) {
+				*strParam1 = Ptr + 1;
 
 				if (strParam2)
 					strParam2->Clear();
 
 				size_t pos;
 
-				if (strParam1->Pos(pos,L','))
-				{
-					if (strParam2)
-					{
+				if (strParam1->Pos(pos, L',')) {
+					if (strParam2) {
 						*strParam2 = *strParam1;
-						strParam2->LShift(pos+1);
+						strParam2->LShift(pos + 1);
 						RemoveTrailingSpaces(*strParam2);
 					}
 
@@ -167,63 +159,59 @@ int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FA
 				Found = TRUE;
 				break;
 			}
-		}
-		else if (!StrCmpNI(ReadStr, L"@Contents", 9))
+		} else if (!StrCmpNI(ReadStr, L"@Contents", 9))
 			break;
 	}
 
-	fseek(SrcFile,OldPos,SEEK_SET);
-	return(Found);
+	fseek(SrcFile, OldPos, SEEK_SET);
+	return (Found);
 }
 
-int Select(int HelpLanguage,VMenu **MenuPtr)
+int Select(int HelpLanguage, VMenu **MenuPtr)
 {
-	const wchar_t *Title,*Mask;
+	const wchar_t *Title, *Mask;
 	FARString *strDest;
 
-	if (HelpLanguage)
-	{
-		Title=Msg::HelpLangTitle;
-		Mask=HelpFileMask;
-		strDest=&Opt.strHelpLanguage;
-	}
-	else
-	{
-		Title=Msg::LangTitle;
-		Mask=LangFileMask;
-		strDest=&Opt.strLanguage;
+	if (HelpLanguage) {
+		Title = Msg::HelpLangTitle;
+		Mask = HelpFileMask;
+		strDest = &Opt.strHelpLanguage;
+	} else {
+		Title = Msg::LangTitle;
+		Mask = LangFileMask;
+		strDest = &Opt.strLanguage;
 	}
 
 	MenuItemEx LangMenuItem;
 	LangMenuItem.Clear();
-	VMenu *LangMenu=new VMenu(Title,nullptr,0,ScrY-4);
-	*MenuPtr=LangMenu;
+	VMenu *LangMenu = new VMenu(Title, nullptr, 0, ScrY - 4);
+	*MenuPtr = LangMenu;
 	LangMenu->SetFlags(VMENU_WRAPMODE);
-	LangMenu->SetPosition(ScrX/2-8+5*HelpLanguage,ScrY/2-4+2*HelpLanguage,0,0);
+	LangMenu->SetPosition(ScrX / 2 - 8 + 5 * HelpLanguage, ScrY / 2 - 4 + 2 * HelpLanguage, 0, 0);
 	FARString strFullName;
 	FAR_FIND_DATA_EX FindData;
-	ScanTree ScTree(FALSE,FALSE);
+	ScanTree ScTree(FALSE, FALSE);
 	ScTree.SetFindPath(g_strFarPath, Mask);
 
-	while (ScTree.GetNextName(&FindData,strFullName))
-	{
-		FILE *LangFile=fopen(Wide2MB(strFullName).c_str(), FOPEN_READ);
+	while (ScTree.GetNextName(&FindData, strFullName)) {
+		FILE *LangFile = fopen(Wide2MB(strFullName).c_str(), FOPEN_READ);
 
 		if (!LangFile)
 			continue;
 
-		UINT nCodePage=CP_UTF8;
+		UINT nCodePage = CP_UTF8;
 		DetectFileMagic(LangFile, nCodePage);
 		FARString strLangName, strLangDescr;
 
-		if (GetLangParam(LangFile,L"Language",&strLangName,&strLangDescr,nCodePage))
-		{
+		if (GetLangParam(LangFile, L"Language", &strLangName, &strLangDescr, nCodePage)) {
 			FARString strEntryName;
 
-			if (!HelpLanguage || (!GetLangParam(LangFile,L"PluginContents",&strEntryName,nullptr,nCodePage) &&
-				!GetLangParam(LangFile,L"DocumentContents",&strEntryName,nullptr,nCodePage)))
-			{
-				LangMenuItem.strName.Format(L"%.40ls", !strLangDescr.IsEmpty() ? strLangDescr.CPtr():strLangName.CPtr());
+			if (!HelpLanguage
+					|| (!GetLangParam(LangFile, L"PluginContents", &strEntryName, nullptr, nCodePage)
+							&& !GetLangParam(LangFile, L"DocumentContents", &strEntryName, nullptr,
+									nCodePage))) {
+				LangMenuItem.strName.Format(L"%.40ls",
+						!strLangDescr.IsEmpty() ? strLangDescr.CPtr() : strLangName.CPtr());
 
 				/*
 					$ 01.08.2001 SVS
@@ -231,10 +219,9 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 					Если в каталог с ФАРом положить еще один HLF с одноименным
 					языком, то... фигня получается при выборе языка.
 				*/
-				if (LangMenu->FindItem(0,LangMenuItem.strName,LIFIND_EXACTMATCH) == -1)
-				{
-					LangMenuItem.SetSelect(!StrCmpI(*strDest,strLangName));
-					LangMenu->SetUserData(strLangName.CPtr(),0,LangMenu->AddItem(&LangMenuItem));
+				if (LangMenu->FindItem(0, LangMenuItem.strName, LIFIND_EXACTMATCH) == -1) {
+					LangMenuItem.SetSelect(!StrCmpI(*strDest, strLangName));
+					LangMenu->SetUserData(strLangName.CPtr(), 0, LangMenu->AddItem(&LangMenuItem));
 				}
 			}
 		}
@@ -245,13 +232,13 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 	LangMenu->AssignHighlights(FALSE);
 	LangMenu->Process();
 
-	if (LangMenu->Modal::GetExitCode()<0)
+	if (LangMenu->Modal::GetExitCode() < 0)
 		return FALSE;
 
-	wchar_t *lpwszDest = strDest->GetBuffer(LangMenu->GetUserDataSize()/sizeof(wchar_t)+1);
+	wchar_t *lpwszDest = strDest->GetBuffer(LangMenu->GetUserDataSize() / sizeof(wchar_t) + 1);
 	LangMenu->GetUserData(lpwszDest, LangMenu->GetUserDataSize());
 	strDest->ReleaseBuffer();
-	return(LangMenu->GetUserDataSize());
+	return (LangMenu->GetUserDataSize());
 }
 
 /*
@@ -259,42 +246,37 @@ int Select(int HelpLanguage,VMenu **MenuPtr)
 	+ Новый метод, для получения параметров для .Options
 	.Options <KeyName>=<Value>
 */
-int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage)
+int GetOptionsParam(FILE *SrcFile, const wchar_t *KeyName, FARString &strValue, UINT nCodePage)
 {
 	wchar_t ReadStr[1024];
 	FARString strFullParamName;
-	int Length=StrLength(L".Options");
-	long CurFilePos=ftell(SrcFile);
+	int Length = StrLength(L".Options");
+	long CurFilePos = ftell(SrcFile);
 
 	StringReader SR;
-	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage) )
-	{
-		if (!StrCmpNI(ReadStr,L".Options",Length))
-		{
-			strFullParamName = RemoveExternalSpaces(ReadStr+Length);
+	while (SR.Read(SrcFile, ReadStr, 1024, nCodePage)) {
+		if (!StrCmpNI(ReadStr, L".Options", Length)) {
+			strFullParamName = RemoveExternalSpaces(ReadStr + Length);
 			size_t pos;
 
-			if (strFullParamName.RPos(pos,L'='))
-			{
+			if (strFullParamName.RPos(pos, L'=')) {
 				strValue = strFullParamName;
-				strValue.LShift(pos+1);
+				strValue.LShift(pos + 1);
 				RemoveExternalSpaces(strValue);
 				strFullParamName.Truncate(pos);
 				RemoveExternalSpaces(strFullParamName);
 
-				if (!StrCmpI(strFullParamName,KeyName))
-				{
-					fseek(SrcFile,CurFilePos,SEEK_SET);
+				if (!StrCmpI(strFullParamName, KeyName)) {
+					fseek(SrcFile, CurFilePos, SEEK_SET);
 					return TRUE;
 				}
 			}
 		}
 	}
 
-	fseek(SrcFile,CurFilePos,SEEK_SET);
+	fseek(SrcFile, CurFilePos, SEEK_SET);
 	return FALSE;
 }
-
 
 ///////////////////////////////////////
 
@@ -330,13 +312,13 @@ public:
 	}
 
 	template <class CharT>
-		inline int AddChars(const CharT *chars, size_t cnt)
+	inline int AddChars(const CharT *chars, size_t cnt)
 	{
 		return Add(chars, cnt * sizeof(CharT));
 	}
 
 	template <class StrT>
-		inline int AddStr(const StrT &str)
+	inline int AddStr(const StrT &str)
 	{
 		return AddChars(str.c_str(), str.size() + 1);
 	}
@@ -350,10 +332,7 @@ public:
 		return (ID < _data.size()) ? _data[ID] : nullptr;
 	}
 
-	inline int Count() const
-	{
-		return _data.size();
-	}
+	inline int Count() const { return _data.size(); }
 };
 
 ///
@@ -441,19 +420,19 @@ static wchar_t *RefineLangString(wchar_t *str, size_t &len)
 	return str;
 }
 
-
 bool Language::Init(const wchar_t *path, bool wide, int expected_max_id)
 {
-	//fprintf(stderr, "Language::Init(%ls, %u, %d)\n", path, wide, expected_max_id);
+	// fprintf(stderr, "Language::Init(%ls, %u, %d)\n", path, wide, expected_max_id);
 	if (_loaded && _data && _data->Count())
 		return true;
 
 	ErrnoSaver gle;
 	UINT codepage = CP_UTF8;
-	//fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
+	// fprintf(stderr, "Opt.strLanguage=%ls\n", Opt.strLanguage.CPtr());
 	FARString lang_name = Opt.strLanguage;
 
-	FILE *lang_file = OpenLangFile(path, LangFileMask, Opt.strLanguage, _message_file, codepage, FALSE, &lang_name);
+	FILE *lang_file =
+			OpenLangFile(path, LangFileMask, Opt.strLanguage, _message_file, codepage, FALSE, &lang_name);
 
 	if (!lang_file) {
 		_last_error = LERROR_FILE_NOT_FOUND;
@@ -487,7 +466,8 @@ bool Language::Init(const wchar_t *path, bool wide, int expected_max_id)
 		if (expected_max_id == -1 || expected_max_id + 1 == new_data->Count()) {
 			_last_error = LERROR_SUCCESS;
 		} else {
-			fprintf(stderr, "%s: count expected=%d but actual=%d\n", __FUNCTION__, expected_max_id + 1, new_data->Count());
+			fprintf(stderr, "%s: count expected=%d but actual=%d\n", __FUNCTION__, expected_max_id + 1,
+					new_data->Count());
 		}
 
 	} catch (std::exception &e) {
@@ -508,18 +488,13 @@ bool Language::Init(const wchar_t *path, bool wide, int expected_max_id)
 	return true;
 }
 
-Language::Language()
-{
-}
+Language::Language() {}
 
-Language::~Language()
-{
-}
+Language::~Language() {}
 
 void Language::Close()
 {
-	if (this != &Lang)
-	{
+	if (this != &Lang) {
 		_data.reset();
 		_wide = true;
 	}
@@ -536,8 +511,8 @@ const void *Language::GetMsg(FarLangMsgID id) const
 		}
 	}
 
-	fprintf(stderr, "Language::GetMsg(%d) Count=%d _wide=%d _loaded=%d\n",
-			id, _data ? _data->Count() : -1, _wide, _loaded);
+	fprintf(stderr, "Language::GetMsg(%d) Count=%d _wide=%d _loaded=%d\n", id, _data ? _data->Count() : -1,
+			_wide, _loaded);
 
 	/*
 		$ 26.03.2002 DJ
@@ -571,7 +546,7 @@ const wchar_t *Language::GetMsgWide(FarLangMsgID id) const
 	return (const wchar_t *)GetMsg(id);
 }
 
-const char* Language::GetMsgMB(FarLangMsgID id) const
+const char *Language::GetMsgMB(FarLangMsgID id) const
 {
 	if (_wide) {
 		fprintf(stderr, "Language::GetMsgMB(%d): but language is WIDE\n", id);
@@ -608,7 +583,6 @@ FarLangMsgID Language::InternMsg(const char *str)
 	MB2Wide(str, len, tmp);
 	return _data->AddStr(tmp);
 }
-
 
 //////////
 const wchar_t *FarLangMsg::GetMsg(FarLangMsgID id)

@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-#define SIZE_ARRAY_PALETTE	147
+#define SIZE_ARRAY_PALETTE 147
 
 extern unsigned char DefaultPalette[SIZE_ARRAY_PALETTE];
 extern unsigned char Palette[SIZE_ARRAY_PALETTE];

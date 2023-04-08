@@ -37,12 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class RedrawDesktop
 {
-	private:
-		int LeftVisible;
-		int RightVisible;
-		bool ClockVisible;
+private:
+	int LeftVisible;
+	int RightVisible;
+	bool ClockVisible;
 
-	public:
-		RedrawDesktop(BOOL IsHidden=FALSE);
-		~RedrawDesktop();
+public:
+	RedrawDesktop(BOOL IsHidden = FALSE);
+	~RedrawDesktop();
 };

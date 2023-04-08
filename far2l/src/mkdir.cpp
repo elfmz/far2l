@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "mkdir.hpp"
 #include "lang.hpp"
 #include "filepanels.hpp"
@@ -61,47 +60,42 @@ enum
 	MKDIR_CANCEL,
 };
 
-LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+LONG_PTR WINAPI MkDirDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	switch (Msg)
-	{
-		case DN_CLOSE:
-		{
-			if (Param1==MKDIR_OK)
-			{
-				FARString strDirName=reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,MKDIR_EDIT,0));
-				Opt.MultiMakeDir=(SendDlgMessage(hDlg,DM_GETCHECK,MKDIR_CHECKBOX,0)==BSTATE_CHECKED);
+	switch (Msg) {
+		case DN_CLOSE: {
+			if (Param1 == MKDIR_OK) {
+				FARString strDirName =
+						reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, MKDIR_EDIT, 0));
+				Opt.MultiMakeDir = (SendDlgMessage(hDlg, DM_GETCHECK, MKDIR_CHECKBOX, 0) == BSTATE_CHECKED);
 
 				// это по поводу создания одиночного каталога, который
 				// начинается с пробела! Чтобы ручками не заключать
 				// такой каталог в кавычки
-				if (Opt.MultiMakeDir && !strDirName.ContainsAnyOf(";,\""))
-				{
+				if (Opt.MultiMakeDir && !strDirName.ContainsAnyOf(";,\"")) {
 					QuoteSpaceOnly(strDirName);
 				}
 
 				// нужно создать только ОДИН каталог
-				if (!Opt.MultiMakeDir)
-				{
+				if (!Opt.MultiMakeDir) {
 					// уберем все лишние кавычки
 					Unquote(strDirName);
 					// возьмем в кавычки, т.к. могут быть разделители
 					InsertQuote(strDirName);
 				}
 
-				UserDefinedList* pDirList=reinterpret_cast<UserDefinedList*>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
+				UserDefinedList *pDirList =
+						reinterpret_cast<UserDefinedList *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 
-				if (!pDirList->Set(strDirName))
-				{
-					Message(MSG_WARNING,1,Msg::Warning,Msg::IncorrectDirList,Msg::Ok);
+				if (!pDirList->Set(strDirName)) {
+					Message(MSG_WARNING, 1, Msg::Warning, Msg::IncorrectDirList, Msg::Ok);
 					return FALSE;
 				}
 			}
-		}
-		break;
+		} break;
 	}
 
-	return DefDlgProc(hDlg,Msg,Param1,Param2);
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
 void ShellMakeDir(Panel *SrcPanel)
@@ -109,55 +103,48 @@ void ShellMakeDir(Panel *SrcPanel)
 	FARString strDirName;
 	FARString strOriginalDirName;
 	wchar_t *lpwszDirName;
-	UserDefinedList DirList(0,0,ULF_UNIQUE);
-	DialogDataEx MkDirDlgData[]=
-	{
-		{DI_DOUBLEBOX,3,1,72,8,{},0,Msg::MakeFolderTitle},
-		{DI_TEXT,     5,2, 0,2,{},0,Msg::CreateFolder},
-		{DI_EDIT,     5,3,70,3,{(DWORD_PTR)L"NewFolder"},DIF_FOCUS|DIF_EDITEXPAND|DIF_HISTORY|DIF_USELASTHISTORY|DIF_EDITPATH,L""},
-		{DI_TEXT,     0,4, 0,4,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX, 5,5, 0,5,{(DWORD_PTR)Opt.MultiMakeDir},0,Msg::MultiMakeDir},
-		{DI_TEXT,     0,6, 0,6,{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,   0,7, 0,7,{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::Ok},
-		{DI_BUTTON,   0,7, 0,7,{},DIF_CENTERGROUP,Msg::Cancel}
-	};
-	MakeDialogItemsEx(MkDirDlgData,MkDirDlg);
-	Dialog Dlg(MkDirDlg,ARRAYSIZE(MkDirDlg),MkDirDlgProc,reinterpret_cast<LONG_PTR>(&DirList));
-	Dlg.SetPosition(-1,-1,76,10);
+	UserDefinedList DirList(0, 0, ULF_UNIQUE);
+	DialogDataEx MkDirDlgData[] = {
+			{DI_DOUBLEBOX, 3, 1, 72, 8, {},                            0,                             Msg::MakeFolderTitle},
+			{DI_TEXT,      5, 2, 0,  2, {},                            0,                             Msg::CreateFolder   },
+			{DI_EDIT,      5, 3, 70, 3, {(DWORD_PTR)L"NewFolder"},
+             DIF_FOCUS | DIF_EDITEXPAND | DIF_HISTORY | DIF_USELASTHISTORY | DIF_EDITPATH,            L""                 },
+			{DI_TEXT,      0, 4, 0,  4, {},                            DIF_SEPARATOR,                 L""                 },
+			{DI_CHECKBOX,  5, 5, 0,  5, {(DWORD_PTR)Opt.MultiMakeDir}, 0,                             Msg::MultiMakeDir   },
+			{DI_TEXT,      0, 6, 0,  6, {},                            DIF_SEPARATOR,                 L""                 },
+			{DI_BUTTON,    0, 7, 0,  7, {},                            DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok             },
+			{DI_BUTTON,    0, 7, 0,  7, {},                            DIF_CENTERGROUP,               Msg::Cancel         }
+    };
+	MakeDialogItemsEx(MkDirDlgData, MkDirDlg);
+	Dialog Dlg(MkDirDlg, ARRAYSIZE(MkDirDlg), MkDirDlgProc, reinterpret_cast<LONG_PTR>(&DirList));
+	Dlg.SetPosition(-1, -1, 76, 10);
 	Dlg.SetHelp(L"MakeFolder");
 	Dlg.SetId(MakeFolderId);
 	Dlg.Process();
 
-	if (Dlg.GetExitCode()==MKDIR_OK)
-	{
-		strDirName=MkDirDlg[MKDIR_EDIT].strData;
+	if (Dlg.GetExitCode() == MKDIR_OK) {
+		strDirName = MkDirDlg[MKDIR_EDIT].strData;
 		const wchar_t *OneDir;
 
-		for (size_t DI = 0; nullptr!=(OneDir=DirList.Get(DI)); ++DI)
-		{
+		for (size_t DI = 0; nullptr != (OneDir = DirList.Get(DI)); ++DI) {
 			strDirName = OneDir;
 			strOriginalDirName = strDirName;
 
-			//Unquote(DirName);
-			DeleteEndSlash(strDirName,true);
+			// Unquote(DirName);
+			DeleteEndSlash(strDirName, true);
 			lpwszDirName = strDirName.GetBuffer();
 			bool bSuccess = false;
 
-			if(HasPathPrefix(lpwszDirName))
-			{
-				lpwszDirName += 4;
+			if (HasPathPrefix(lpwszDirName)) {
+				lpwszDirName+= 4;
 			}
-			for (wchar_t *ChPtr=lpwszDirName; *ChPtr; ChPtr++)
-			{
-				if (IsSlash(*ChPtr))
-				{
+			for (wchar_t *ChPtr = lpwszDirName; *ChPtr; ChPtr++) {
+				if (IsSlash(*ChPtr)) {
 					WCHAR Ch = ChPtr[1];
 					ChPtr[1] = 0;
 
-					if (*lpwszDirName &&
-						(apiGetFileAttributes(lpwszDirName) == INVALID_FILE_ATTRIBUTES) &&
-						apiCreateDirectory(lpwszDirName,nullptr))
-					{
+					if (*lpwszDirName && (apiGetFileAttributes(lpwszDirName) == INVALID_FILE_ATTRIBUTES)
+							&& apiCreateDirectory(lpwszDirName, nullptr)) {
 						TreeList::AddTreeName(lpwszDirName);
 						bSuccess = true;
 					}
@@ -168,47 +155,45 @@ void ShellMakeDir(Panel *SrcPanel)
 
 			strDirName.ReleaseBuffer();
 			BOOL bSuccess2;
-			bool bSkip=false;
+			bool bSkip = false;
 
-			while (!(bSuccess2=apiCreateDirectory(strDirName,nullptr)))
-			{
-				int LastError=WINPORT(GetLastError)();
+			while (!(bSuccess2 = apiCreateDirectory(strDirName, nullptr))) {
+				int LastError = WINPORT(GetLastError)();
 
-				if (LastError==ERROR_ALREADY_EXISTS ||
-					LastError==ERROR_INVALID_NAME || LastError == ERROR_DIRECTORY)
-				{
+				if (LastError == ERROR_ALREADY_EXISTS || LastError == ERROR_INVALID_NAME
+						|| LastError == ERROR_DIRECTORY) {
 					int ret;
 
 					if (DirList.IsLastElement(DI))
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,1,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Cancel);
+						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateFolder,
+								strOriginalDirName, Msg::Cancel);
 					else
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Ok,Msg::Skip);
+						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, Msg::CannotCreateFolder,
+								strOriginalDirName, Msg::Ok, Msg::Skip);
 
-					bSkip = ret==1;
+					bSkip = ret == 1;
 
 					if (bSuccess || bSkip)
 						break;
 					else
 						return;
-				}
-				else
-				{
+				} else {
 					int ret;
 
-					if (DirList.IsLastElement(DI))
-					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,2,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Retry,Msg::Cancel);
-					}
-					else
-					{
-						ret=Message(MSG_WARNING|MSG_ERRORTYPE,3,Msg::Error,Msg::CannotCreateFolder,strOriginalDirName,Msg::Retry,Msg::Skip,Msg::Cancel);
-						bSkip = ret==1;
+					if (DirList.IsLastElement(DI)) {
+						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, Msg::CannotCreateFolder,
+								strOriginalDirName, Msg::Retry, Msg::Cancel);
+					} else {
+						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 3, Msg::Error, Msg::CannotCreateFolder,
+								strOriginalDirName, Msg::Retry, Msg::Skip, Msg::Cancel);
+						bSkip = ret == 1;
 					}
 
-					if (ret)
-					{
-						if (bSuccess || bSkip) break;
-						else return;
+					if (ret) {
+						if (bSuccess || bSkip)
+							break;
+						else
+							return;
 					}
 				}
 			}
@@ -221,27 +206,24 @@ void ShellMakeDir(Panel *SrcPanel)
 
 		SrcPanel->Update(UPDATE_KEEP_SELECTION);
 
-		if (!strDirName.IsEmpty())
-		{
+		if (!strDirName.IsEmpty()) {
 			size_t pos;
 
-			if (FindSlash(pos,strDirName))
+			if (FindSlash(pos, strDirName))
 				strDirName.Truncate(pos);
 
-			if (!SrcPanel->GoToFile(strDirName) && strDirName.At(strDirName.GetLength()-1)==L'.')
-			{
-				strDirName.Truncate(strDirName.GetLength()-1);
+			if (!SrcPanel->GoToFile(strDirName) && strDirName.At(strDirName.GetLength() - 1) == L'.') {
+				strDirName.Truncate(strDirName.GetLength() - 1);
 				SrcPanel->GoToFile(strDirName);
 			}
 		}
 
 		SrcPanel->Redraw();
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(SrcPanel);
-		int AnotherType=AnotherPanel->GetType();
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(SrcPanel);
+		int AnotherType = AnotherPanel->GetType();
 
-		if (AnotherPanel->NeedUpdatePanel(SrcPanel) || AnotherType==QVIEW_PANEL)
-		{
-			AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+		if (AnotherPanel->NeedUpdatePanel(SrcPanel) || AnotherType == QVIEW_PANEL) {
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
 			AnotherPanel->Redraw();
 		}
 	}

@@ -40,28 +40,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CallBackStack;
 
-#define HelpBeginLink L'<'
-#define HelpEndLink L'>'
+#define HelpBeginLink  L'<'
+#define HelpEndLink    L'>'
 #define HelpFormatLink L"<%ls/>%ls"
 
-#define HELPMODE_CLICKOUTSIDE  0x20000000 // было нажатие мыши вне хелпа?
+#define HELPMODE_CLICKOUTSIDE 0x20000000	// было нажатие мыши вне хелпа?
 
 struct StackHelpData
 {
-	DWORD Flags;                  // флаги
-	int   TopStr;                 // номер верхней видимой строки темы
-	int   CurX,CurY;              // координаты (???)
+	DWORD Flags;				// флаги
+	int TopStr;					// номер верхней видимой строки темы
+	int CurX, CurY;				// координаты (???)
 
-	FARString strHelpMask;          // значение маски
-	FARString strHelpPath;          // путь к хелпам
-	FARString strHelpTopic;         // текущий топик
-	FARString strSelTopic;          // выделенный топик (???)
+	FARString strHelpMask;		// значение маски
+	FARString strHelpPath;		// путь к хелпам
+	FARString strHelpTopic;		// текущий топик
+	FARString strSelTopic;		// выделенный топик (???)
 
 	void Clear()
 	{
-		Flags=0;
-		TopStr=0;
-		CurX=CurY=0;
+		Flags = 0;
+		TopStr = 0;
+		CurX = CurY = 0;
 		strHelpMask.Clear();
 		strHelpPath.Clear();
 		strHelpTopic.Clear();
@@ -71,129 +71,120 @@ struct StackHelpData
 
 enum HELPDOCUMENTSHELPTYPE
 {
-	HIDX_PLUGINS,                 // Индекс плагинов
-	HIDX_DOCUMS,                  // Индекс документов
+	HIDX_PLUGINS,		// Индекс плагинов
+	HIDX_DOCUMS,		// Индекс документов
 };
 
 enum
 {
-	FHELPOBJ_ERRCANNOTOPENHELP  = 0x80000000,
+	FHELPOBJ_ERRCANNOTOPENHELP = 0x80000000,
 };
 
 class HelpRecord
 {
-	public:
-		wchar_t *HelpStr;
+public:
+	wchar_t *HelpStr;
 
-		HelpRecord(const wchar_t *HStr=nullptr)
-		{
-			HelpStr = nullptr;
-			if (HStr )
-				HelpStr = wcsdup(HStr);
-		};
+	HelpRecord(const wchar_t *HStr = nullptr)
+	{
+		HelpStr = nullptr;
+		if (HStr)
+			HelpStr = wcsdup(HStr);
+	};
 
-		const HelpRecord& operator=(const HelpRecord &rhs)
-		{
-			if (this != &rhs)
-			{
-				free(HelpStr);
-				HelpStr = wcsdup(rhs.HelpStr);
-			}
-
-			return *this;
-		};
-
-		bool operator==(const HelpRecord &rhs) const
-		{
-			return !StrCmpI(HelpStr,rhs.HelpStr);
-		};
-
-		int operator<(const HelpRecord &rhs) const
-		{
-			return StrCmpI(HelpStr,rhs.HelpStr) < 0;
-		};
-
-		~HelpRecord()
-		{
+	const HelpRecord &operator=(const HelpRecord &rhs)
+	{
+		if (this != &rhs) {
 			free(HelpStr);
+			HelpStr = wcsdup(rhs.HelpStr);
 		}
+
+		return *this;
+	};
+
+	bool operator==(const HelpRecord &rhs) const { return !StrCmpI(HelpStr, rhs.HelpStr); };
+
+	int operator<(const HelpRecord &rhs) const { return StrCmpI(HelpStr, rhs.HelpStr) < 0; };
+
+	~HelpRecord() { free(HelpStr); }
 };
 
-class Help:public Frame
+class Help : public Frame
 {
-	private:
-		ChangeMacroMode CMM;
-		BOOL  ErrorHelp;            // TRUE - ошибка! Например - нет такого топика
-		SaveScreen *TopScreen;      // область сохранения под хелпом
-		KeyBar      HelpKeyBar;     // кейбар
-		CallBackStack *Stack;       // стек возврата
-		FARString  strFullHelpPathName;
+private:
+	ChangeMacroMode CMM;
+	BOOL ErrorHelp;			// TRUE - ошибка! Например - нет такого топика
+	SaveScreen *TopScreen;	// область сохранения под хелпом
+	KeyBar HelpKeyBar;		// кейбар
+	CallBackStack *Stack;	// стек возврата
+	FARString strFullHelpPathName;
 
-		StackHelpData StackData;
-		TArray<HelpRecord> HelpList; // "хелп" в памяти.
+	StackHelpData StackData;
+	TArray<HelpRecord> HelpList;	// "хелп" в памяти.
 
-		int   StrCount;             // количество строк в теме
-		int   FixCount;             // количество строк непрокручиваемой области
-		int   FixSize;              // Размер непрокручиваемой области
-		int   TopicFound;           // TRUE - топик найден
-		int   IsNewTopic;           // это новый топик?
-		int   MouseDown;
+	int StrCount;					// количество строк в теме
+	int FixCount;					// количество строк непрокручиваемой области
+	int FixSize;					// Размер непрокручиваемой области
+	int TopicFound;					// TRUE - топик найден
+	int IsNewTopic;					// это новый топик?
+	int MouseDown;
 
-		FARString strCtrlColorChar;    // CtrlColorChar - опция! для спецсимвола-
-		//   символа - для атрибутов
-		int   CurColor;             // CurColor - текущий цвет отрисовки
-		int   CtrlTabSize;          // CtrlTabSize - опция! размер табуляции
+	FARString strCtrlColorChar;		// CtrlColorChar - опция! для спецсимвола-
+	//   символа - для атрибутов
+	int CurColor;						// CurColor - текущий цвет отрисовки
+	int CtrlTabSize;					// CtrlTabSize - опция! размер табуляции
 
-		FARString strCurPluginContents; // помним PluginContents (для отображения в заголовке)
+	FARString strCurPluginContents;		// помним PluginContents (для отображения в заголовке)
 
-		DWORD LastStartPos;
-		DWORD StartPos;
+	DWORD LastStartPos;
+	DWORD StartPos;
 
-		FARString strCtrlStartPosChar;
+	FARString strCtrlStartPosChar;
 
-		FARString strLastSearchStr;
-		int LastSearchCase = 0, LastSearchWholeWords = 0, LastSearchRegexp = 0;
-	private:
-		virtual void DisplayObject();
-		int  ReadHelp(const wchar_t *Mask=nullptr);
-		void AddLine(const wchar_t *Line);
-		void AddTitle(const wchar_t *Title);
-		void HighlightsCorrection(FARString &strStr);
-		void FastShow();
-		void DrawWindowFrame();
-		void OutString(const wchar_t *Str);
-		int  StringLen(const wchar_t *Str);
-		void CorrectPosition();
-		int  IsReferencePresent();
-		void MoveToReference(int Forward,int CurScreen);
-		void ReadDocumentsHelp(int TypeIndex);
-		void Search(FILE *HelpFile,uintptr_t nCodePage);
-		int  JumpTopic(const wchar_t *JumpTopic=nullptr);
-		const HelpRecord* GetHelpItem(int Pos);
+	FARString strLastSearchStr;
+	int LastSearchCase = 0, LastSearchWholeWords = 0, LastSearchRegexp = 0;
 
-	public:
-		Help(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
-		virtual ~Help();
+private:
+	virtual void DisplayObject();
+	int ReadHelp(const wchar_t *Mask = nullptr);
+	void AddLine(const wchar_t *Line);
+	void AddTitle(const wchar_t *Title);
+	void HighlightsCorrection(FARString &strStr);
+	void FastShow();
+	void DrawWindowFrame();
+	void OutString(const wchar_t *Str);
+	int StringLen(const wchar_t *Str);
+	void CorrectPosition();
+	int IsReferencePresent();
+	void MoveToReference(int Forward, int CurScreen);
+	void ReadDocumentsHelp(int TypeIndex);
+	void Search(FILE *HelpFile, uintptr_t nCodePage);
+	int JumpTopic(const wchar_t *JumpTopic = nullptr);
+	const HelpRecord *GetHelpItem(int Pos);
 
-		static void Present(const wchar_t *Topic,const wchar_t *Mask=nullptr,DWORD Flags=0);
+public:
+	Help(const wchar_t *Topic, const wchar_t *Mask = nullptr, DWORD Flags = 0);
+	virtual ~Help();
 
-	public:
-		virtual void Hide();
-		virtual int  ProcessKey(int Key);
-		virtual int  ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		virtual void InitKeyBar();
-		BOOL GetError() {return ErrorHelp;}
-		virtual void SetScreenPosition();
-		virtual void OnChangeFocus(int focus); // вызывается при смене фокуса
-		virtual void ResizeConsole();
+	static void Present(const wchar_t *Topic, const wchar_t *Mask = nullptr, DWORD Flags = 0);
 
-		virtual int  FastHide(); // Введена для нужд CtrlAltShift
+public:
+	virtual void Hide();
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual void InitKeyBar();
+	BOOL GetError() { return ErrorHelp; }
+	virtual void SetScreenPosition();
+	virtual void OnChangeFocus(int focus);	// вызывается при смене фокуса
+	virtual void ResizeConsole();
 
-		virtual const wchar_t *GetTypeName() {return L"[Help]";}
-		virtual int GetTypeAndName(FARString &strType, FARString &strName);
-		virtual int GetType() { return MODALTYPE_HELP; }
+	virtual int FastHide();		// Введена для нужд CtrlAltShift
 
-		virtual int64_t VMProcess(int OpCode,void *vParam,int64_t iParam);
+	virtual const wchar_t *GetTypeName() { return L"[Help]"; }
+	virtual int GetTypeAndName(FARString &strType, FARString &strName);
+	virtual int GetType() { return MODALTYPE_HELP; }
 
-		static FARString &MkTopic(INT_PTR PluginNumber,const wchar_t *HelpTopic,FARString &strTopic);
+	virtual int64_t VMProcess(int OpCode, void *vParam, int64_t iParam);
+
+	static FARString &MkTopic(INT_PTR PluginNumber, const wchar_t *HelpTopic, FARString &strTopic);
 };

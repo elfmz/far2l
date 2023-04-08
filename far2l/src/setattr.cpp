@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "lang.hpp"
 #include "dialog.hpp"
 #include "chgprior.hpp"
@@ -115,48 +114,32 @@ static const struct MODEPAIR
 {
 	SETATTRDLG Item;
 	mode_t Mode;
-}
-AP[]=
-{
-	{SA_CHECKBOX_USER_READ, S_IRUSR },
-	{SA_CHECKBOX_USER_WRITE, S_IWUSR },
-	{SA_CHECKBOX_USER_EXECUTE, S_IXUSR },
-	{SA_CHECKBOX_GROUP_READ, S_IRGRP },
-	{SA_CHECKBOX_GROUP_WRITE, S_IWGRP },
-	{SA_CHECKBOX_GROUP_EXECUTE, S_IXGRP },
-	{SA_CHECKBOX_OTHER_READ, S_IROTH },
-	{SA_CHECKBOX_OTHER_WRITE, S_IWOTH },
-	{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH },
-	{SA_CHECKBOX_SUID, S_ISUID },
-	{SA_CHECKBOX_SGID, S_ISGID },
-	{SA_CHECKBOX_STICKY, S_ISVTX }
+} AP[] = {
+		{SA_CHECKBOX_USER_READ,     S_IRUSR},
+        {SA_CHECKBOX_USER_WRITE,    S_IWUSR},
+		{SA_CHECKBOX_USER_EXECUTE,  S_IXUSR},
+        {SA_CHECKBOX_GROUP_READ,    S_IRGRP},
+		{SA_CHECKBOX_GROUP_WRITE,   S_IWGRP},
+        {SA_CHECKBOX_GROUP_EXECUTE, S_IXGRP},
+		{SA_CHECKBOX_OTHER_READ,    S_IROTH},
+        {SA_CHECKBOX_OTHER_WRITE,   S_IWOTH},
+		{SA_CHECKBOX_OTHER_EXECUTE, S_IXOTH},
+        {SA_CHECKBOX_SUID,          S_ISUID},
+        {SA_CHECKBOX_SGID,          S_ISGID},
+		{SA_CHECKBOX_STICKY,        S_ISVTX}
 };
 
-#define EDITABLE_MODES  (S_IXOTH | S_IWOTH | S_IROTH \
-						| S_IXGRP | S_IWGRP | S_IRGRP \
-						| S_IXUSR | S_IWUSR | S_IRUSR \
-						| S_ISUID | S_ISGID | S_ISVTX)
+#define EDITABLE_MODES                                                                                         \
+	(S_IXOTH | S_IWOTH | S_IROTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR | S_ISUID         \
+			| S_ISGID | S_ISVTX)
 
-static const int PreserveOriginalIDs[] = {
-	SA_CHECKBOX_IMMUTABLE,
-	SA_CHECKBOX_APPEND,
-#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
-	SA_CHECKBOX_HIDDEN,
+static const int PreserveOriginalIDs[] = {SA_CHECKBOX_IMMUTABLE, SA_CHECKBOX_APPEND,
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+		SA_CHECKBOX_HIDDEN,
 #endif
-	SA_CHECKBOX_SUID,
-	SA_CHECKBOX_SGID,
-	SA_CHECKBOX_STICKY,
-	SA_CHECKBOX_USER_READ,
-	SA_CHECKBOX_USER_WRITE,
-	SA_CHECKBOX_USER_EXECUTE,
-	SA_CHECKBOX_GROUP_READ,
-	SA_CHECKBOX_GROUP_WRITE,
-	SA_CHECKBOX_GROUP_EXECUTE,
-	SA_CHECKBOX_OTHER_READ,
-	SA_CHECKBOX_OTHER_WRITE,
-	SA_CHECKBOX_OTHER_EXECUTE
-};
-
+		SA_CHECKBOX_SUID, SA_CHECKBOX_SGID, SA_CHECKBOX_STICKY, SA_CHECKBOX_USER_READ, SA_CHECKBOX_USER_WRITE,
+		SA_CHECKBOX_USER_EXECUTE, SA_CHECKBOX_GROUP_READ, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_EXECUTE,
+		SA_CHECKBOX_OTHER_READ, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_EXECUTE};
 
 enum DIALOGMODE
 {
@@ -182,107 +165,103 @@ struct SetAttrDlgParam
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
 };
 
-#define DM_SETATTR (DM_USER+1)
+#define DM_SETATTR (DM_USER + 1)
 
 static int DialogID2PreservedOriginalIndex(int id)
 {
-	for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-	{
+	for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 		if (PreserveOriginalIDs[i] == id)
 			return i;
 	}
 	return -1;
 }
 
-static void BlankEditIfChanged(HANDLE hDlg,int EditControl, FARString &Remembered, bool &Changed)
+static void BlankEditIfChanged(HANDLE hDlg, int EditControl, FARString &Remembered, bool &Changed)
 {
 	LPCWSTR Actual = reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, EditControl, 0));
-	if(!Changed) 
-		Changed = StrCmp(Actual, Remembered)!=0;
-	
+	if (!Changed)
+		Changed = StrCmp(Actual, Remembered) != 0;
+
 	Remembered = Actual;
-	
-	if(!Changed)
+
+	if (!Changed)
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, EditControl, reinterpret_cast<LONG_PTR>(L""));
 }
 
-LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	SetAttrDlgParam *DlgParam=reinterpret_cast<SetAttrDlgParam*>(SendDlgMessage(hDlg,DM_GETDLGDATA,0,0));
+	SetAttrDlgParam *DlgParam =
+			reinterpret_cast<SetAttrDlgParam *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 	int OrigIdx;
 
-	switch (Msg)
-	{
+	switch (Msg) {
 		case DN_BTNCLICK:
 			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
-			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS)
-			{
-				if (OrigIdx != -1)
-				{
+			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS) {
+				if (OrigIdx != -1) {
 					DlgParam->OriginalCBAttr[OrigIdx] = static_cast<int>(Param2);
 					DlgParam->OriginalCBAttr2[OrigIdx] = 0;
 				}
-				int FocusPos=static_cast<int>(SendDlgMessage(hDlg,DM_GETFOCUS,0,0));
-				FARCHECKEDSTATE SubfoldersState=static_cast<FARCHECKEDSTATE>(SendDlgMessage(hDlg,DM_GETCHECK,SA_CHECKBOX_SUBFOLDERS,0));
-
+				int FocusPos = static_cast<int>(SendDlgMessage(hDlg, DM_GETFOCUS, 0, 0));
+				FARCHECKEDSTATE SubfoldersState = static_cast<FARCHECKEDSTATE>(
+						SendDlgMessage(hDlg, DM_GETCHECK, SA_CHECKBOX_SUBFOLDERS, 0));
 
 				{
 					// если снимаем атрибуты для SubFolders
 					// этот кусок всегда работает если есть хотя бы одна папка
 					// иначе SA_CHECKBOX_SUBFOLDERS недоступен и всегда снят.
-					if (FocusPos == SA_CHECKBOX_SUBFOLDERS)
-					{
-						if (DlgParam->DialogMode==MODE_FOLDER) // каталог однозначно!
+					if (FocusPos == SA_CHECKBOX_SUBFOLDERS) {
+						if (DlgParam->DialogMode == MODE_FOLDER)					// каталог однозначно!
 						{
-							if (DlgParam->OSubfoldersState != SubfoldersState) // Состояние изменилось?
+							if (DlgParam->OSubfoldersState != SubfoldersState)		// Состояние изменилось?
 							{
 								// установили?
-								if (SubfoldersState != BSTATE_UNCHECKED)
-								{
-									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-									{
+								if (SubfoldersState != BSTATE_UNCHECKED) {
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
-										if (DlgParam->OriginalCBAttr2[i] == -1)
-										{
-											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], BSTATE_3STATE);
+										if (DlgParam->OriginalCBAttr2[i] == -1) {
+											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+													BSTATE_3STATE);
 										}
 									}
-									
-									BlankEditIfChanged(hDlg, SA_EDIT_OWNER, DlgParam->strOwner, DlgParam->OwnerChanged);
-									BlankEditIfChanged(hDlg, SA_EDIT_GROUP, DlgParam->strGroup, DlgParam->GroupChanged);
+
+									BlankEditIfChanged(hDlg, SA_EDIT_OWNER, DlgParam->strOwner,
+											DlgParam->OwnerChanged);
+									BlankEditIfChanged(hDlg, SA_EDIT_GROUP, DlgParam->strGroup,
+											DlgParam->GroupChanged);
 								}
 								// сняли?
-								else
-								{
-									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-									{
+								else {
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], FALSE);
-										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], DlgParam->OriginalCBAttr[i]);
+										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+												DlgParam->OriginalCBAttr[i]);
 									}
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER, 
-										reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP, 
-										reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 
-
-								if (Opt.SetAttrFolderRules)
-								{
+								if (Opt.SetAttrFolderRules) {
 									FAR_FIND_DATA_EX FindData;
 
-									if (apiGetFindDataEx(DlgParam->strSelName, FindData))
-									{
-										const SETATTRDLG Items[] = { SA_TEXT_LAST_ACCESS, SA_TEXT_LAST_MODIFICATION, SA_TEXT_LAST_CHANGE };
-										bool* ParamTimes[]={&DlgParam->OAccessTime, &DlgParam->OModifyTime, &DlgParam->OStatusChangeTime};
-										const PFILETIME FDTimes[]={&FindData.ftUnixAccessTime, 
-														&FindData.ftUnixModificationTime, &FindData.ftUnixStatusChangeTime};
+									if (apiGetFindDataEx(DlgParam->strSelName, FindData)) {
+										const SETATTRDLG Items[] = {SA_TEXT_LAST_ACCESS,
+												SA_TEXT_LAST_MODIFICATION, SA_TEXT_LAST_CHANGE};
+										bool *ParamTimes[] = {&DlgParam->OAccessTime, &DlgParam->OModifyTime,
+												&DlgParam->OStatusChangeTime};
+										const PFILETIME FDTimes[] = {&FindData.ftUnixAccessTime,
+												&FindData.ftUnixModificationTime,
+												&FindData.ftUnixStatusChangeTime};
 
-										for (size_t i=0; i<ARRAYSIZE(Items); i++)
-										{
-											if (!*ParamTimes[i])
-											{
-												SendDlgMessage(hDlg,DM_SETATTR,Items[i],(SubfoldersState != BSTATE_UNCHECKED)?0:(LONG_PTR)FDTimes[i]);
-												*ParamTimes[i]=false;
+										for (size_t i = 0; i < ARRAYSIZE(Items); i++) {
+											if (!*ParamTimes[i]) {
+												SendDlgMessage(hDlg, DM_SETATTR, Items[i],
+														(SubfoldersState != BSTATE_UNCHECKED)
+																? 0
+																: (LONG_PTR)FDTimes[i]);
+												*ParamTimes[i] = false;
 											}
 										}
 									}
@@ -290,170 +269,151 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 							}
 						}
 						// много объектов
-						else
-						{
+						else {
 							// Состояние изменилось?
-							if (DlgParam->OSubfoldersState!=SubfoldersState)
-							{
+							if (DlgParam->OSubfoldersState != SubfoldersState) {
 								// установили?
-								if (SubfoldersState != BSTATE_UNCHECKED)
-								{
-									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-									{
-										if (DlgParam->OriginalCBAttr2[i] == -1)
-										{
+								if (SubfoldersState != BSTATE_UNCHECKED) {
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
+										if (DlgParam->OriginalCBAttr2[i] == -1) {
 											SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
-											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i], BSTATE_3STATE);
+											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+													BSTATE_3STATE);
 										}
 									}
-									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(L""));
-									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_GROUP,reinterpret_cast<LONG_PTR>(L""));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+											reinterpret_cast<LONG_PTR>(L""));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+											reinterpret_cast<LONG_PTR>(L""));
 								}
 								// сняли?
-								else
-								{
-									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-									{
+								else {
+									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i],
-											((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
+												((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
 										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
-											DlgParam->OriginalCBAttr[i]);
+												DlgParam->OriginalCBAttr[i]);
 									}
-									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_OWNER,reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
-									SendDlgMessage(hDlg,DM_SETTEXTPTR,SA_EDIT_GROUP,reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 							}
 						}
 
-						DlgParam->OSubfoldersState=SubfoldersState;
+						DlgParam->OSubfoldersState = SubfoldersState;
 					}
 				}
 
 				return TRUE;
 			}
 			// Set Original? / Set All? / Clear All?
-			else if (Param1 == SA_BUTTON_ORIGINAL)
-			{
+			else if (Param1 == SA_BUTTON_ORIGINAL) {
 				FAR_FIND_DATA_EX FindData;
 
-				if (apiGetFindDataEx(DlgParam->strSelName, FindData))
-				{
-					SendDlgMessage(hDlg,DM_SETATTR,SA_TEXT_LAST_ACCESS,(LONG_PTR)&FindData.ftUnixAccessTime);
-					SendDlgMessage(hDlg,DM_SETATTR,SA_TEXT_LAST_MODIFICATION,(LONG_PTR)&FindData.ftUnixModificationTime);
-					SendDlgMessage(hDlg,DM_SETATTR,SA_TEXT_LAST_CHANGE,(LONG_PTR)&FindData.ftUnixStatusChangeTime);
-					DlgParam->OAccessTime=DlgParam->OModifyTime=DlgParam->OStatusChangeTime=false;
+				if (apiGetFindDataEx(DlgParam->strSelName, FindData)) {
+					SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_ACCESS,
+							(LONG_PTR)&FindData.ftUnixAccessTime);
+					SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_MODIFICATION,
+							(LONG_PTR)&FindData.ftUnixModificationTime);
+					SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_CHANGE,
+							(LONG_PTR)&FindData.ftUnixStatusChangeTime);
+					DlgParam->OAccessTime = DlgParam->OModifyTime = DlgParam->OStatusChangeTime = false;
 				}
 
-				SendDlgMessage(hDlg,DM_SETFOCUS,SA_FIXEDIT_LAST_ACCESS_DATE,0);
+				SendDlgMessage(hDlg, DM_SETFOCUS, SA_FIXEDIT_LAST_ACCESS_DATE, 0);
 				return TRUE;
-			}
-			else if (Param1 == SA_BUTTON_CURRENT || Param1 == SA_BUTTON_BLANK)
-			{
+			} else if (Param1 == SA_BUTTON_CURRENT || Param1 == SA_BUTTON_BLANK) {
 				LONG_PTR Value = 0;
 				FILETIME CurrentTime;
-				if(Param1 == SA_BUTTON_CURRENT)
-				{
+				if (Param1 == SA_BUTTON_CURRENT) {
 					WINPORT(GetSystemTimeAsFileTime)(&CurrentTime);
 					Value = reinterpret_cast<LONG_PTR>(&CurrentTime);
 				}
 				SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_ACCESS, Value);
 				SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_MODIFICATION, Value);
-				//SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_CHANGE, Value);
-				DlgParam->OAccessTime=DlgParam->OModifyTime=DlgParam->OStatusChangeTime=true;
-				SendDlgMessage(hDlg,DM_SETFOCUS,SA_FIXEDIT_LAST_ACCESS_DATE,0);
+				// SendDlgMessage(hDlg, DM_SETATTR, SA_TEXT_LAST_CHANGE, Value);
+				DlgParam->OAccessTime = DlgParam->OModifyTime = DlgParam->OStatusChangeTime = true;
+				SendDlgMessage(hDlg, DM_SETFOCUS, SA_FIXEDIT_LAST_ACCESS_DATE, 0);
 				return TRUE;
 			}
 
 			break;
-		case DN_MOUSECLICK:
-		{
+		case DN_MOUSECLICK: {
 			//_SVS(SysLog(L"Msg=DN_MOUSECLICK Param1=%d Param2=%d",Param1,Param2));
-			if (Param1>=SA_TEXT_LAST_ACCESS && Param1<=SA_FIXEDIT_LAST_CHANGE_TIME)
-			{
-				if (reinterpret_cast<MOUSE_EVENT_RECORD*>(Param2)->dwEventFlags==DOUBLE_CLICK)
-				{
+			if (Param1 >= SA_TEXT_LAST_ACCESS && Param1 <= SA_FIXEDIT_LAST_CHANGE_TIME) {
+				if (reinterpret_cast<MOUSE_EVENT_RECORD *>(Param2)->dwEventFlags == DOUBLE_CLICK) {
 					// Дадим Менеджеру диалогов "попотеть"
-					DefDlgProc(hDlg,Msg,Param1,Param2);
-					SendDlgMessage(hDlg,DM_SETATTR,Param1,-1);
+					DefDlgProc(hDlg, Msg, Param1, Param2);
+					SendDlgMessage(hDlg, DM_SETATTR, Param1, -1);
 				}
 
-				if (Param1 == SA_TEXT_LAST_ACCESS || Param1 == SA_TEXT_LAST_MODIFICATION || Param1 == SA_TEXT_LAST_CHANGE)
-				{
+				if (Param1 == SA_TEXT_LAST_ACCESS || Param1 == SA_TEXT_LAST_MODIFICATION
+						|| Param1 == SA_TEXT_LAST_CHANGE) {
 					Param1++;
 				}
 
-				SendDlgMessage(hDlg,DM_SETFOCUS,Param1,0);
+				SendDlgMessage(hDlg, DM_SETFOCUS, Param1, 0);
 			}
-		}
-		break;
-		case DN_EDITCHANGE:
-		{
-			switch (Param1)
-			{				
+		} break;
+		case DN_EDITCHANGE: {
+			switch (Param1) {
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 				case SA_FIXEDIT_LAST_ACCESS_TIME:
-					DlgParam->OAccessTime=true;
+					DlgParam->OAccessTime = true;
 					break;
 				case SA_FIXEDIT_LAST_MODIFICATION_DATE:
 				case SA_FIXEDIT_LAST_MODIFICATION_TIME:
-					DlgParam->OModifyTime=true;
+					DlgParam->OModifyTime = true;
 					break;
 				case SA_FIXEDIT_LAST_CHANGE_DATE:
 				case SA_FIXEDIT_LAST_CHANGE_TIME:
-					DlgParam->OStatusChangeTime=true;
+					DlgParam->OStatusChangeTime = true;
 					break;
 			}
 
 			break;
 		}
 
-		case DN_GOTFOCUS:
-			{
-				if(Param1 == SA_FIXEDIT_LAST_ACCESS_DATE || Param1 == SA_FIXEDIT_LAST_MODIFICATION_DATE || Param1 == SA_FIXEDIT_LAST_CHANGE_DATE)
-				{
-					if(GetDateFormat()==2)
-					{
-						if(reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, Param1, 0))[0] == L' ')
-						{
-							COORD Pos;
-							SendDlgMessage(hDlg, DM_GETCURSORPOS, Param1, (LONG_PTR)&Pos);
-							if(Pos.X ==0)
-							{
-								Pos.X=1;
-								SendDlgMessage(hDlg, DM_SETCURSORPOS, Param1, (LONG_PTR)&Pos);
-							}
+		case DN_GOTFOCUS: {
+			if (Param1 == SA_FIXEDIT_LAST_ACCESS_DATE || Param1 == SA_FIXEDIT_LAST_MODIFICATION_DATE
+					|| Param1 == SA_FIXEDIT_LAST_CHANGE_DATE) {
+				if (GetDateFormat() == 2) {
+					if (reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, Param1, 0))[0]
+							== L' ') {
+						COORD Pos;
+						SendDlgMessage(hDlg, DM_GETCURSORPOS, Param1, (LONG_PTR)&Pos);
+						if (Pos.X == 0) {
+							Pos.X = 1;
+							SendDlgMessage(hDlg, DM_SETCURSORPOS, Param1, (LONG_PTR)&Pos);
 						}
 					}
 				}
 			}
-			break;
+		} break;
 
-		case DM_SETATTR:
-		{
-			FARString strDate,strTime;
+		case DM_SETATTR: {
+			FARString strDate, strTime;
 
-			if (Param2) // Set?
+			if (Param2)		// Set?
 			{
 				FILETIME ft;
 
-				if (Param2==-1)
-				{
+				if (Param2 == -1) {
 					WINPORT(GetSystemTimeAsFileTime)(&ft);
-				}
-				else
-				{
-					ft=*reinterpret_cast<PFILETIME>(Param2);
+				} else {
+					ft = *reinterpret_cast<PFILETIME>(Param2);
 				}
 
-				ConvertDate(ft,strDate,strTime,12,FALSE,FALSE,2,TRUE);
+				ConvertDate(ft, strDate, strTime, 12, FALSE, FALSE, 2, TRUE);
 			}
 
 			// Глянем на место, где был клик
-			int Set1=-1;
-			int Set2=Param1;
+			int Set1 = -1;
+			int Set2 = Param1;
 
-			switch (Param1)
-			{
+			switch (Param1) {
 				case SA_TEXT_LAST_ACCESS:
 					Set1 = SA_FIXEDIT_LAST_ACCESS_DATE;
 					Set2 = SA_FIXEDIT_LAST_ACCESS_TIME;
@@ -469,7 +429,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					Set2 = SA_FIXEDIT_LAST_CHANGE_TIME;
 					DlgParam->OStatusChangeTime = true;
 					break;
-					
+
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 				case SA_FIXEDIT_LAST_MODIFICATION_DATE:
 				case SA_FIXEDIT_LAST_CHANGE_DATE:
@@ -478,100 +438,93 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
 					break;
 			}
 
-			if (Set1!=-1)
-			{
-				SendDlgMessage(hDlg,DM_SETTEXTPTR,Set1,(LONG_PTR)strDate.CPtr());
+			if (Set1 != -1) {
+				SendDlgMessage(hDlg, DM_SETTEXTPTR, Set1, (LONG_PTR)strDate.CPtr());
 			}
 
-			if (Set2!=-1)
-			{
-				SendDlgMessage(hDlg,DM_SETTEXTPTR,Set2,(LONG_PTR)strTime.CPtr());
+			if (Set2 != -1) {
+				SendDlgMessage(hDlg, DM_SETTEXTPTR, Set2, (LONG_PTR)strTime.CPtr());
 			}
 
 			return TRUE;
 		}
 	}
 
-	return DefDlgProc(hDlg,Msg,Param1,Param2);
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
 void ShellSetFileAttributesMsg(const wchar_t *Name)
 {
-	static int Width=54;
+	static int Width = 54;
 	int WidthTemp;
 
 	if (Name && *Name)
-		WidthTemp=Max(StrLength(Name),54);
+		WidthTemp = Max(StrLength(Name), 54);
 	else
-		Width=WidthTemp=54;
+		Width = WidthTemp = 54;
 
-	WidthTemp=Min(WidthTemp,WidthNameForMessage);
-	Width=Max(Width,WidthTemp);
-	FARString strOutFileName=Name;
-	TruncPathStr(strOutFileName,Width);
-	CenterStr(strOutFileName,strOutFileName,Width+4);
-	Message(0,0,Msg::SetAttrTitle,Msg::SetAttrSetting,strOutFileName);
-	PreRedrawItem preRedrawItem=PreRedraw.Peek();
-	preRedrawItem.Param.Param1=Name;
+	WidthTemp = Min(WidthTemp, WidthNameForMessage);
+	Width = Max(Width, WidthTemp);
+	FARString strOutFileName = Name;
+	TruncPathStr(strOutFileName, Width);
+	CenterStr(strOutFileName, strOutFileName, Width + 4);
+	Message(0, 0, Msg::SetAttrTitle, Msg::SetAttrSetting, strOutFileName);
+	PreRedrawItem preRedrawItem = PreRedraw.Peek();
+	preRedrawItem.Param.Param1 = Name;
 	PreRedraw.SetParam(preRedrawItem.Param);
 }
 
-bool ReadFileTime(int Type,const wchar_t *Name,FILETIME& FileTime,const wchar_t *OSrcDate,const wchar_t *OSrcTime)
+bool ReadFileTime(int Type, const wchar_t *Name, FILETIME &FileTime, const wchar_t *OSrcDate,
+		const wchar_t *OSrcTime)
 {
-	bool Result=false;
-	FAR_FIND_DATA_EX ffd={};
+	bool Result = false;
+	FAR_FIND_DATA_EX ffd = {};
 
-	if (apiGetFindDataEx(Name, ffd))
-	{
-		LPFILETIME Times[]={&ffd.ftLastWriteTime, &ffd.ftCreationTime, &ffd.ftLastAccessTime, &ffd.ftChangeTime};
-		LPFILETIME OriginalFileTime=Times[Type];
-		FILETIME oft={};
-		if(WINPORT(FileTimeToLocalFileTime)(OriginalFileTime,&oft))
-		{
-			SYSTEMTIME ost={};
-			if(WINPORT(FileTimeToSystemTime)(&oft,&ost))
-			{
-				WORD DateN[3]={};
-				GetFileDateAndTime(OSrcDate,DateN,ARRAYSIZE(DateN),GetDateSeparator());
-				WORD TimeN[4]={};
-				GetFileDateAndTime(OSrcTime,TimeN,ARRAYSIZE(TimeN),GetTimeSeparator());
-				SYSTEMTIME st={};
+	if (apiGetFindDataEx(Name, ffd)) {
+		LPFILETIME Times[] = {&ffd.ftLastWriteTime, &ffd.ftCreationTime, &ffd.ftLastAccessTime,
+				&ffd.ftChangeTime};
+		LPFILETIME OriginalFileTime = Times[Type];
+		FILETIME oft = {};
+		if (WINPORT(FileTimeToLocalFileTime)(OriginalFileTime, &oft)) {
+			SYSTEMTIME ost = {};
+			if (WINPORT(FileTimeToSystemTime)(&oft, &ost)) {
+				WORD DateN[3] = {};
+				GetFileDateAndTime(OSrcDate, DateN, ARRAYSIZE(DateN), GetDateSeparator());
+				WORD TimeN[4] = {};
+				GetFileDateAndTime(OSrcTime, TimeN, ARRAYSIZE(TimeN), GetTimeSeparator());
+				SYSTEMTIME st = {};
 
-				switch (GetDateFormat())
-				{
+				switch (GetDateFormat()) {
 					case 0:
-						st.wMonth=DateN[0]!=(WORD)-1?DateN[0]:ost.wMonth;
-						st.wDay  =DateN[1]!=(WORD)-1?DateN[1]:ost.wDay;
-						st.wYear =DateN[2]!=(WORD)-1?DateN[2]:ost.wYear;
+						st.wMonth = DateN[0] != (WORD)-1 ? DateN[0] : ost.wMonth;
+						st.wDay = DateN[1] != (WORD)-1 ? DateN[1] : ost.wDay;
+						st.wYear = DateN[2] != (WORD)-1 ? DateN[2] : ost.wYear;
 						break;
 					case 1:
-						st.wDay  =DateN[0]!=(WORD)-1?DateN[0]:ost.wDay;
-						st.wMonth=DateN[1]!=(WORD)-1?DateN[1]:ost.wMonth;
-						st.wYear =DateN[2]!=(WORD)-1?DateN[2]:ost.wYear;
+						st.wDay = DateN[0] != (WORD)-1 ? DateN[0] : ost.wDay;
+						st.wMonth = DateN[1] != (WORD)-1 ? DateN[1] : ost.wMonth;
+						st.wYear = DateN[2] != (WORD)-1 ? DateN[2] : ost.wYear;
 						break;
 					default:
-						st.wYear =DateN[0]!=(WORD)-1?DateN[0]:ost.wYear;
-						st.wMonth=DateN[1]!=(WORD)-1?DateN[1]:ost.wMonth;
-						st.wDay  =DateN[2]!=(WORD)-1?DateN[2]:ost.wDay;
+						st.wYear = DateN[0] != (WORD)-1 ? DateN[0] : ost.wYear;
+						st.wMonth = DateN[1] != (WORD)-1 ? DateN[1] : ost.wMonth;
+						st.wDay = DateN[2] != (WORD)-1 ? DateN[2] : ost.wDay;
 						break;
 				}
 
-				st.wHour         = TimeN[0]!=(WORD)-1? (TimeN[0]):ost.wHour;
-				st.wMinute       = TimeN[1]!=(WORD)-1? (TimeN[1]):ost.wMinute;
-				st.wSecond       = TimeN[2]!=(WORD)-1? (TimeN[2]):ost.wSecond;
-				st.wMilliseconds = TimeN[3]!=(WORD)-1? (TimeN[3]):ost.wMilliseconds;
+				st.wHour = TimeN[0] != (WORD)-1 ? (TimeN[0]) : ost.wHour;
+				st.wMinute = TimeN[1] != (WORD)-1 ? (TimeN[1]) : ost.wMinute;
+				st.wSecond = TimeN[2] != (WORD)-1 ? (TimeN[2]) : ost.wSecond;
+				st.wMilliseconds = TimeN[3] != (WORD)-1 ? (TimeN[3]) : ost.wMilliseconds;
 
-				if (st.wYear<100)
-				{
+				if (st.wYear < 100) {
 					st.wYear = static_cast<WORD>(ConvertYearToFull(st.wYear));
 				}
 
-				FILETIME lft={};
-				if (WINPORT(SystemTimeToFileTime)(&st,&lft))
-				{
-					if(WINPORT(LocalFileTimeToFileTime)(&lft,&FileTime))
-					{
-						Result=WINPORT(CompareFileTime)(&FileTime,OriginalFileTime)!=0;
+				FILETIME lft = {};
+				if (WINPORT(SystemTimeToFileTime)(&st, &lft)) {
+					if (WINPORT(LocalFileTimeToFileTime)(&lft, &FileTime)) {
+						Result = WINPORT(CompareFileTime)(&FileTime, OriginalFileTime) != 0;
 					}
 				}
 			}
@@ -582,8 +535,8 @@ bool ReadFileTime(int Type,const wchar_t *Name,FILETIME& FileTime,const wchar_t 
 
 void PR_ShellSetFileAttributesMsg()
 {
-	PreRedrawItem preRedrawItem=PreRedraw.Peek();
-	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t*>(preRedrawItem.Param.Param1));
+	PreRedrawItem preRedrawItem = PreRedraw.Peek();
+	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t *>(preRedrawItem.Param.Param1));
 }
 
 static void BriefInfo(const FARString &strSelName)
@@ -599,7 +552,7 @@ static void BriefInfo(const FARString &strSelName)
 
 	if (lines.empty())
 		return;
-		
+
 	Messager m(Msg::SetAttrBriefInfo);
 	for (const auto &l : lines)
 		m.Add(l.c_str());
@@ -607,14 +560,15 @@ static void BriefInfo(const FARString &strSelName)
 	m.Show(0, 1);
 }
 
-static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(const wchar_t *,const wchar_t *, FARString &),
-	FARString strComputerName, FARString strSelName)
+static bool CheckFileOwnerGroup(DialogItemEx &EditItem,
+		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &), FARString strComputerName,
+		FARString strSelName)
 {
 	FARString strCur;
 	bool out = true;
 	GetFN(strComputerName, strSelName, strCur);
 	if (EditItem.strData.IsEmpty()) {
-		EditItem.strData = strCur;		
+		EditItem.strData = strCur;
 	} else if (!EditItem.strData.Equal(0, strCur)) {
 		EditItem.strData = Msg::SetAttrOwnerMultiple;
 		out = false;
@@ -622,14 +576,15 @@ static bool CheckFileOwnerGroup(DialogItemEx &EditItem, bool (WINAPI *GetFN)(con
 	return out;
 }
 
-static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode), 
-	int &SkipMode, const FARString &strSelName, const FARString &strInit, bool force = false) 
+static bool
+ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode),
+		int &SkipMode, const FARString &strSelName, const FARString &strInit, bool force = false)
 {
 	if (!EditItem.strData.IsEmpty() && (force || StrCmp(strInit, EditItem.strData))) {
 		int Result = ESetFN(strSelName, EditItem.strData, SkipMode);
-		if(Result == SETATTR_RET_SKIPALL) {
+		if (Result == SETATTR_RET_SKIPALL) {
 			SkipMode = SETATTR_RET_SKIP;
-		} else if(Result == SETATTR_RET_ERROR) {
+		} else if (Result == SETATTR_RET_ERROR) {
 			return false;
 		}
 	}
@@ -640,118 +595,114 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 {
 	FSFileFlags FFFlags(strSelName.GetMB());
 	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
-		|| AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
-			FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
+			|| AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
 	}
 	if (AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_CHECKED
-		|| AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
-			FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
+			|| AttrDlg[SA_CHECKBOX_APPEND].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetAppend(AttrDlg[SA_CHECKBOX_APPEND].Selected != BSTATE_UNCHECKED);
 	}
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	if (AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_CHECKED
-		|| AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
-			FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
+			|| AttrDlg[SA_CHECKBOX_HIDDEN].Selected == BSTATE_UNCHECKED) {
+		FFFlags.SetHidden(AttrDlg[SA_CHECKBOX_HIDDEN].Selected != BSTATE_UNCHECKED);
 	}
 #endif
 	FFFlags.Apply(strSelName.GetMB());
 }
 
-bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
+bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 {
 	std::vector<FARString> SelectedNames;
 
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX=70,DlgY=24;
+	short DlgX = 70, DlgY = 24;
 
-	DialogDataEx AttrDlgData[]=
-	{
-		{DI_DOUBLEBOX,3,1,short(DlgX-4),short(DlgY-2),{},0,Msg::SetAttrTitle},
-		{DI_TEXT,-1,2,0,2,{},0,Msg::SetAttrFor},
-		{DI_TEXT,-1,3,0,3,{},DIF_SHOWAMPERSAND,L""},
-		{DI_TEXT,3,4,0,4,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,5,5,17,5,{},0,Msg::SetAttrOwner},
-		{DI_EDIT,18,5,short(DlgX-6),5,{},0,L""},
-		{DI_TEXT,5,6,17,6,{},0,Msg::SetAttrGroup},
-		{DI_EDIT,18,6,short(DlgX-6),6,{},0,L""},
+	DialogDataEx AttrDlgData[] = {
+		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0,                                Msg::SetAttrTitle             },
+		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0,                                Msg::SetAttrFor               },
+		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND,                L""                           },
+		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR,                    L""                           },
+		{DI_TEXT,      5,                   5,               17,               5,               {}, 0,                                Msg::SetAttrOwner             },
+		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, 0,                                L""                           },
+		{DI_TEXT,      5,                   6,               17,               6,               {}, 0,                                Msg::SetAttrGroup             },
+		{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0,                                L""                           },
 
-		{DI_TEXT,3,7,0,7,{},DIF_SEPARATOR,L""},
-		{DI_CHECKBOX,5,8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,short(DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAppend},
+		{DI_TEXT,      3,                   7,               0,                7,               {}, DIF_SEPARATOR,                    L""                           },
+		{DI_CHECKBOX,  5,                   8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrImmutable         },
+		{DI_CHECKBOX,  short(DlgX / 3),     8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrAppend            },
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,short(2*DlgX/3),8,0,8,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrHidden            },
 #endif
 
-		{DI_CHECKBOX,5,9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,short(DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,short(2*DlgX/3),9,0,9,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrSUID              },
+		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrSGID              },
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrSticky            },
 
-		{DI_TEXT,5,10,0,10,{},0,Msg::SetAttrAccessUser},
-		{DI_TEXT,short(DlgX/3),10,0,10,{},0,Msg::SetAttrAccessGroup},
-		{DI_TEXT,short(2*DlgX/3),10,0,10,{},0,Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,5,11,0,11,{},DIF_FOCUS|DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_CHECKBOX,5,12,0,12,{},DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_CHECKBOX,5,13,0,13,{},DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_CHECKBOX,short(DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessGroupRead},
-		{DI_CHECKBOX,short(DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessGroupWrite},
-		{DI_CHECKBOX,short(DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_CHECKBOX,short(2*DlgX/3),11,0,11,{},DIF_3STATE, Msg::SetAttrAccessOtherRead},
-		{DI_CHECKBOX,short(2*DlgX/3),12,0,12,{},DIF_3STATE, Msg::SetAttrAccessOtherWrite},
-		{DI_CHECKBOX,short(2*DlgX/3),13,0,13,{},DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+		{DI_TEXT,      5,                   10,              0,                10,              {}, 0,                                Msg::SetAttrAccessUser        },
+		{DI_TEXT,      short(DlgX / 3),     10,              0,                10,              {}, 0,                                Msg::SetAttrAccessGroup       },
+		{DI_TEXT,      short(2 * DlgX / 3), 10,              0,                10,              {}, 0,                                Msg::SetAttrAccessOther       },
+		{DI_CHECKBOX,  5,                   11,              0,                11,              {}, DIF_FOCUS | DIF_3STATE,           Msg::SetAttrAccessUserRead    },
+		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_3STATE,                       Msg::SetAttrAccessUserWrite   },
+		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE,                       Msg::SetAttrAccessUserExecute },
+		{DI_CHECKBOX,  short(DlgX / 3),     11,              0,                11,              {}, DIF_3STATE,                       Msg::SetAttrAccessGroupRead   },
+		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE,                       Msg::SetAttrAccessGroupWrite  },
+		{DI_CHECKBOX,  short(DlgX / 3),     13,              0,                13,              {}, DIF_3STATE,                       Msg::SetAttrAccessGroupExecute},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 11,              0,                11,              {}, DIF_3STATE,                       Msg::SetAttrAccessOtherRead   },
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 12,              0,                12,              {}, DIF_3STATE,                       Msg::SetAttrAccessOtherWrite  },
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 13,              0,                13,              {}, DIF_3STATE,                       Msg::SetAttrAccessOtherExecute},
 
-		{DI_TEXT,3,14,0,14,{},DIF_SEPARATOR,L""},
-		{DI_TEXT,short(DlgX-29),15,0,15,{},0,L""},
-		{DI_TEXT,    5,16,0,16,{},0, Msg::SetAttrAccessTime},
-		{DI_FIXEDIT,short(DlgX-29),16,short(DlgX-19),16,{},DIF_MASKEDIT,L""},
-		{DI_FIXEDIT,short(DlgX-17),16,short(DlgX-6),16,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,17,0,17,{},0, Msg::SetAttrModificationTime},
-		{DI_FIXEDIT,short(DlgX-29),17,short(DlgX-19),17,{},DIF_MASKEDIT,L""},
-		{DI_FIXEDIT,short(DlgX-17),17,short(DlgX-6),17,{},DIF_MASKEDIT,L""},
-		{DI_TEXT,    5,18,0,18,{},0, Msg::SetAttrStatusChangeTime},
-		{DI_FIXEDIT,short(DlgX-29),18,short(DlgX-19),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_FIXEDIT,short(DlgX-17),18,short(DlgX-6),18,{},DIF_MASKEDIT|DIF_READONLY,L""},
-		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrOriginal},
-		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrCurrent},
-		{DI_BUTTON,0,19,0,19,{},DIF_CENTERGROUP|DIF_BTNNOCLOSE,Msg::SetAttrBlank},
-		{DI_TEXT,3,20,0,20,{},DIF_SEPARATOR|DIF_HIDDEN,L""},
-		{DI_CHECKBOX,5,21,0,21,{},DIF_DISABLE|DIF_HIDDEN,Msg::SetAttrSubfolders},
-		{DI_TEXT,3,short(DlgY-4),0,short(DlgY-4),{},DIF_SEPARATOR,L""},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_DEFAULT|DIF_CENTERGROUP,Msg::SetAttrSet},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP|DIF_DISABLE,Msg::SetAttrBriefInfo},
-		{DI_BUTTON,0,short(DlgY-3),0,short(DlgY-3),{},DIF_CENTERGROUP,Msg::Cancel}
+		{DI_TEXT,      3,                   14,              0,                14,              {}, DIF_SEPARATOR,                    L""                           },
+		{DI_TEXT,      short(DlgX - 29),    15,              0,                15,              {}, 0,                                L""                           },
+		{DI_TEXT,      5,                   16,              0,                16,              {}, 0,                                Msg::SetAttrAccessTime        },
+		{DI_FIXEDIT,   short(DlgX - 29),    16,              short(DlgX - 19), 16,              {}, DIF_MASKEDIT,                     L""                           },
+		{DI_FIXEDIT,   short(DlgX - 17),    16,              short(DlgX - 6),  16,              {}, DIF_MASKEDIT,                     L""                           },
+		{DI_TEXT,      5,                   17,              0,                17,              {}, 0,                                Msg::SetAttrModificationTime  },
+		{DI_FIXEDIT,   short(DlgX - 29),    17,              short(DlgX - 19), 17,              {}, DIF_MASKEDIT,                     L""                           },
+		{DI_FIXEDIT,   short(DlgX - 17),    17,              short(DlgX - 6),  17,              {}, DIF_MASKEDIT,                     L""                           },
+		{DI_TEXT,      5,                   18,              0,                18,              {}, 0,                                Msg::SetAttrStatusChangeTime  },
+		{DI_FIXEDIT,   short(DlgX - 29),    18,              short(DlgX - 19), 18,              {}, DIF_MASKEDIT | DIF_READONLY,      L""                           },
+		{DI_FIXEDIT,   short(DlgX - 17),    18,              short(DlgX - 6),  18,              {}, DIF_MASKEDIT | DIF_READONLY,      L""                           },
+		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal          },
+		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent           },
+		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank             },
+		{DI_TEXT,      3,                   20,              0,                20,              {}, DIF_SEPARATOR | DIF_HIDDEN,       L""                           },
+		{DI_CHECKBOX,  5,                   21,              0,                21,              {}, DIF_DISABLE | DIF_HIDDEN,         Msg::SetAttrSubfolders        },
+		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, DIF_SEPARATOR,                    L""                           },
+		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP,
+         Msg::SetAttrSet                                                                                                                                            },
+		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_CENTERGROUP | DIF_DISABLE,
+         Msg::SetAttrBriefInfo                                                                                                                                      },
+		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_CENTERGROUP,                  Msg::Cancel                   }
 	};
-	MakeDialogItemsEx(AttrDlgData,AttrDlg);
+	MakeDialogItemsEx(AttrDlgData, AttrDlg);
 	SetAttrDlgParam DlgParam{};
-	int SelCount=SrcPanel?SrcPanel->GetSelCount():1;
+	int SelCount = SrcPanel ? SrcPanel->GetSelCount() : 1;
 
-	if (!SelCount)
-	{
+	if (!SelCount) {
 		return false;
 	}
 
-	if(SelCount==1)
-	{
-		AttrDlg[SA_BUTTON_BRIEFINFO].Flags&=~DIF_DISABLE;
+	if (SelCount == 1) {
+		AttrDlg[SA_BUTTON_BRIEFINFO].Flags&= ~DIF_DISABLE;
 	}
 
-	if (SrcPanel && SrcPanel->GetMode()==PLUGIN_PANEL)
-	{
+	if (SrcPanel && SrcPanel->GetMode() == PLUGIN_PANEL) {
 		OpenPluginInfo Info;
-		HANDLE hPlugin=SrcPanel->GetPluginHandle();
+		HANDLE hPlugin = SrcPanel->GetPluginHandle();
 
-		if (hPlugin == INVALID_HANDLE_VALUE)
-		{
+		if (hPlugin == INVALID_HANDLE_VALUE) {
 			return false;
 		}
 
-		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
 
-		if (!(Info.Flags & OPIF_REALNAMES))
-		{
-			AttrDlg[SA_BUTTON_SET].Flags|=DIF_DISABLE;
-			AttrDlg[SA_BUTTON_BRIEFINFO].Flags|=DIF_DISABLE;
-			DlgParam.Plugin=true;
+		if (!(Info.Flags & OPIF_REALNAMES)) {
+			AttrDlg[SA_BUTTON_SET].Flags|= DIF_DISABLE;
+			AttrDlg[SA_BUTTON_BRIEFINFO].Flags|= DIF_DISABLE;
+			DlgParam.Plugin = true;
 		}
 	}
 
@@ -759,150 +710,146 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		DWORD FileAttr = INVALID_FILE_ATTRIBUTES, FileMode = 0;
 		FARString strSelName;
 		FAR_FIND_DATA_EX FindData;
-		if(SrcPanel)
-		{
-			SrcPanel->GetSelName(nullptr,FileAttr, FileMode);
-			SrcPanel->GetSelName(&strSelName,FileAttr, FileMode,&FindData);
-/*			if (!FileMode) {
-				FAR_FIND_DATA_EX FindData2;
-				if (apiGetFindDataEx(strSelName, FindData2) && FindData2.dwUnixMode) {
-					FindData = FindData2;
-					FileAttr = FindData.dwFileAttributes;
-					FileMode = FindData.dwUnixMode;
-				}
-			}*/
-		}
-		else
-		{
-			strSelName=Object;
+		if (SrcPanel) {
+			SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
+			SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData);
+			/*			if (!FileMode) {
+							FAR_FIND_DATA_EX FindData2;
+							if (apiGetFindDataEx(strSelName, FindData2) && FindData2.dwUnixMode) {
+								FindData = FindData2;
+								FileAttr = FindData.dwFileAttributes;
+								FileMode = FindData.dwUnixMode;
+							}
+						}*/
+		} else {
+			strSelName = Object;
 			apiGetFindDataEx(Object, FindData);
-			FileAttr=FindData.dwFileAttributes;
-			FileMode=FindData.dwUnixMode;
+			FileAttr = FindData.dwFileAttributes;
+			FileMode = FindData.dwUnixMode;
 		}
 
 		fprintf(stderr, "FileMode=%u\n", FileMode);
 
-		if (SelCount==1 && TestParentFolderName(strSelName))
+		if (SelCount == 1 && TestParentFolderName(strSelName))
 			return false;
 
-		wchar_t DateSeparator=GetDateSeparator();
-		wchar_t TimeSeparator=GetTimeSeparator();
-		wchar_t DecimalSeparator=GetDecimalSeparator();
-		LPCWSTR FmtMask1=L"99%c99%c99%c999",FmtMask2=L"99%c99%c99999",FmtMask3=L"99999%c99%c99";
+		wchar_t DateSeparator = GetDateSeparator();
+		wchar_t TimeSeparator = GetTimeSeparator();
+		wchar_t DecimalSeparator = GetDecimalSeparator();
+		LPCWSTR FmtMask1 = L"99%c99%c99%c999", FmtMask2 = L"99%c99%c99999", FmtMask3 = L"99999%c99%c99";
 		FARString strDMask, strTMask;
-		strTMask.Format(FmtMask1,TimeSeparator,TimeSeparator,DecimalSeparator);
+		strTMask.Format(FmtMask1, TimeSeparator, TimeSeparator, DecimalSeparator);
 
-		switch (GetDateFormat())
-		{
+		switch (GetDateFormat()) {
 			case 0:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle1,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
-				strDMask.Format(FmtMask2,DateSeparator,DateSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle1, DateSeparator,
+						DateSeparator, TimeSeparator, TimeSeparator, DecimalSeparator);
+				strDMask.Format(FmtMask2, DateSeparator, DateSeparator);
 				break;
 			case 1:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle2,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
-				strDMask.Format(FmtMask2,DateSeparator,DateSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle2, DateSeparator,
+						DateSeparator, TimeSeparator, TimeSeparator, DecimalSeparator);
+				strDMask.Format(FmtMask2, DateSeparator, DateSeparator);
 				break;
 			default:
-				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle3,DateSeparator,DateSeparator,TimeSeparator,TimeSeparator,DecimalSeparator);
-				strDMask.Format(FmtMask3,DateSeparator,DateSeparator);
+				AttrDlg[SA_TEXT_TITLEDATE].strData.Format(Msg::SetAttrTimeTitle3, DateSeparator,
+						DateSeparator, TimeSeparator, TimeSeparator, DecimalSeparator);
+				strDMask.Format(FmtMask3, DateSeparator, DateSeparator);
 				break;
 		}
 
-		AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strMask = 
-			AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strMask = AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strMask = strDMask;
-			
-		AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strMask = 
-			AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strMask = AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strMask = strTMask;
-		bool FolderPresent=false,LinkPresent=false;
+		AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strMask = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strMask =
+				AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strMask = strDMask;
+
+		AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strMask = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strMask =
+				AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strMask = strTMask;
+		bool FolderPresent = false, LinkPresent = false;
 		FARString strLinkName;
 
-		if (SelCount==1)
-		{
+		if (SelCount == 1) {
 			FSFileFlags FFFlags(strSelName.GetMB());
 
-			if (FileAttr&FILE_ATTRIBUTE_DIRECTORY)
-			{
-				if (!DlgParam.Plugin)
-				{
-					FileAttr=apiGetFileAttributes(strSelName);
+			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
+				if (!DlgParam.Plugin) {
+					FileAttr = apiGetFileAttributes(strSelName);
 				}
 
 				//_SVS(SysLog(L"SelName=%ls  FileAttr=0x%08X",SelName,FileAttr));
-				AttrDlg[SA_SEPARATOR4].Flags&=~DIF_HIDDEN;
-				AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&=~(DIF_DISABLE|DIF_HIDDEN);
-				AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected=Opt.SetAttrFolderRules?BSTATE_UNCHECKED:BSTATE_CHECKED;
-				AttrDlg[SA_DOUBLEBOX].Y2+=2;
-				for(int i=SA_SEPARATOR5;i<=SA_BUTTON_CANCEL;i++)
-				{
-					AttrDlg[i].Y1+=2;
-					AttrDlg[i].Y2+=2;
+				AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
+				AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);
+				AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected =
+						Opt.SetAttrFolderRules ? BSTATE_UNCHECKED : BSTATE_CHECKED;
+				AttrDlg[SA_DOUBLEBOX].Y2+= 2;
+				for (int i = SA_SEPARATOR5; i <= SA_BUTTON_CANCEL; i++) {
+					AttrDlg[i].Y1+= 2;
+					AttrDlg[i].Y2+= 2;
 				}
-				DlgY+=2;
+				DlgY+= 2;
 
-				if (Opt.SetAttrFolderRules)
-				{
-					if (DlgParam.Plugin || apiGetFindDataEx(strSelName, FindData))
-					{
-						ConvertDate(FindData.ftUnixAccessTime, AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData, 
-							AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData,12,FALSE,FALSE,2,TRUE);
-						ConvertDate(FindData.ftUnixModificationTime, AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
-							AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData,12,FALSE,FALSE,2,TRUE);
-						ConvertDate(FindData.ftUnixStatusChangeTime,AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,
-							AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData,12,FALSE,FALSE,2,TRUE);
+				if (Opt.SetAttrFolderRules) {
+					if (DlgParam.Plugin || apiGetFindDataEx(strSelName, FindData)) {
+						ConvertDate(FindData.ftUnixAccessTime, AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,
+								AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData, 12, FALSE, FALSE, 2, TRUE);
+						ConvertDate(FindData.ftUnixModificationTime,
+								AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
+								AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData, 12, FALSE, FALSE, 2,
+								TRUE);
+						ConvertDate(FindData.ftUnixStatusChangeTime,
+								AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData,
+								AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData, 12, FALSE, FALSE, 2, TRUE);
 					}
 				}
 
-				FolderPresent=TRUE;
+				FolderPresent = TRUE;
 			}
 
-			if ((FileAttr != INVALID_FILE_ATTRIBUTES) && ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) == 0 || Opt.SetAttrFolderRules))
-			{
-				for (size_t i=0; i<ARRAYSIZE(AP); i++)
-				{
-					AttrDlg[AP[i].Item].Selected = (FileMode&AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+			if ((FileAttr != INVALID_FILE_ATTRIBUTES)
+					&& ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) == 0 || Opt.SetAttrFolderRules)) {
+				for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+					AttrDlg[AP[i].Item].Selected =
+							(FileMode & AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
-				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected =
+						FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
 
-			for (auto i : PreserveOriginalIDs)
-			{
-				AttrDlg[i].Flags&=~DIF_3STATE;
+			for (auto i : PreserveOriginalIDs) {
+				AttrDlg[i].Flags&= ~DIF_3STATE;
 			}
 
 			AttrDlg[SA_TEXT_NAME].strData = strSelName;
-			TruncStr(AttrDlg[SA_TEXT_NAME].strData,DlgX-10);
+			TruncStr(AttrDlg[SA_TEXT_NAME].strData, DlgX - 10);
 
-			const SETATTRDLG Dates[]={SA_FIXEDIT_LAST_ACCESS_DATE, SA_FIXEDIT_LAST_MODIFICATION_DATE, SA_FIXEDIT_LAST_CHANGE_DATE};
-			const SETATTRDLG Times[]={SA_FIXEDIT_LAST_ACCESS_TIME, SA_FIXEDIT_LAST_MODIFICATION_TIME, SA_FIXEDIT_LAST_CHANGE_TIME};
-			const PFILETIME TimeValues[]={&FindData.ftUnixAccessTime, &FindData.ftUnixModificationTime, &FindData.ftUnixStatusChangeTime};
+			const SETATTRDLG Dates[] = {SA_FIXEDIT_LAST_ACCESS_DATE, SA_FIXEDIT_LAST_MODIFICATION_DATE,
+					SA_FIXEDIT_LAST_CHANGE_DATE};
+			const SETATTRDLG Times[] = {SA_FIXEDIT_LAST_ACCESS_TIME, SA_FIXEDIT_LAST_MODIFICATION_TIME,
+					SA_FIXEDIT_LAST_CHANGE_TIME};
+			const PFILETIME TimeValues[] = {&FindData.ftUnixAccessTime, &FindData.ftUnixModificationTime,
+					&FindData.ftUnixStatusChangeTime};
 
-			if (DlgParam.Plugin || (!DlgParam.Plugin&&apiGetFindDataEx(strSelName, FindData)))
-			{
-				for (size_t i=0; i<ARRAYSIZE(Dates); i++)
-				{
-					ConvertDate(*TimeValues[i],AttrDlg[Dates[i]].strData,AttrDlg[Times[i]].strData,12,FALSE,FALSE,2,TRUE);
+			if (DlgParam.Plugin || (!DlgParam.Plugin && apiGetFindDataEx(strSelName, FindData))) {
+				for (size_t i = 0; i < ARRAYSIZE(Dates); i++) {
+					ConvertDate(*TimeValues[i], AttrDlg[Dates[i]].strData, AttrDlg[Times[i]].strData, 12,
+							FALSE, FALSE, 2, TRUE);
 				}
 			}
 
 			FARString strComputerName;
-			if(SrcPanel)
-			{
+			if (SrcPanel) {
 				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 			}
 
-			GetFileOwner(strComputerName,strSelName,AttrDlg[SA_EDIT_OWNER].strData);
-			GetFileGroup(strComputerName,strSelName,AttrDlg[SA_EDIT_GROUP].strData);
-		}// end of if (SelCount==1)
-		else
-		{
-			for (size_t i=0; i<ARRAYSIZE(AP); i++)
-			{
-				AttrDlg[AP[i].Item].Selected=BSTATE_3STATE;
+			GetFileOwner(strComputerName, strSelName, AttrDlg[SA_EDIT_OWNER].strData);
+			GetFileGroup(strComputerName, strSelName, AttrDlg[SA_EDIT_GROUP].strData);
+		}		// end of if (SelCount==1)
+		else {
+			for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+				AttrDlg[AP[i].Item].Selected = BSTATE_3STATE;
 			}
 
 			AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData.Clear();
@@ -911,54 +858,50 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData.Clear();
-			AttrDlg[SA_BUTTON_ORIGINAL].Flags|=DIF_DISABLE;
+			AttrDlg[SA_BUTTON_ORIGINAL].Flags|= DIF_DISABLE;
 			AttrDlg[SA_TEXT_NAME].strData = Msg::SetAttrSelectedObjects;
 
-			for (auto i : PreserveOriginalIDs)
-			{
-				AttrDlg[i].Selected=BSTATE_UNCHECKED;
+			for (auto i : PreserveOriginalIDs) {
+				AttrDlg[i].Selected = BSTATE_UNCHECKED;
 			}
 
 			// проверка - есть ли среди выделенных - каталоги?
 			// так же проверка на атрибуты
-			if(SrcPanel)
-			{
+			if (SrcPanel) {
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 			}
-			FolderPresent=false;
+			FolderPresent = false;
 
-			if(SrcPanel)
-			{
+			if (SrcPanel) {
 				FARString strComputerName;
 				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 
 				bool CheckOwner = true, CheckGroup = true;
-				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData))
-				{
-					if (!FolderPresent&&(FileAttr&FILE_ATTRIBUTE_DIRECTORY))
-					{
-						FolderPresent=true;
-						AttrDlg[SA_SEPARATOR4].Flags&=~DIF_HIDDEN;
-						AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&=~(DIF_DISABLE|DIF_HIDDEN);
-						AttrDlg[SA_DOUBLEBOX].Y2+=2;
-						for(int i=SA_SEPARATOR5;i<=SA_BUTTON_CANCEL;i++)
-						{
-							AttrDlg[i].Y1+=2;
-							AttrDlg[i].Y2+=2;
+				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData)) {
+					if (!FolderPresent && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
+						FolderPresent = true;
+						AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
+						AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);
+						AttrDlg[SA_DOUBLEBOX].Y2+= 2;
+						for (int i = SA_SEPARATOR5; i <= SA_BUTTON_CANCEL; i++) {
+							AttrDlg[i].Y1+= 2;
+							AttrDlg[i].Y2+= 2;
 						}
-						DlgY+=2;
+						DlgY+= 2;
 					}
 
-					for (size_t i=0; i<ARRAYSIZE(AP); i++)
-					{
-						if (FileMode & AP[i].Mode)
-						{
+					for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+						if (FileMode & AP[i].Mode) {
 							AttrDlg[AP[i].Item].Selected++;
 						}
 					}
-					if(CheckOwner) CheckFileOwnerGroup(AttrDlg[SA_EDIT_OWNER], GetFileOwner, strComputerName, strSelName);
-					if(CheckGroup) CheckFileOwnerGroup(AttrDlg[SA_EDIT_GROUP], GetFileGroup, strComputerName, strSelName);
+					if (CheckOwner)
+						CheckFileOwnerGroup(AttrDlg[SA_EDIT_OWNER], GetFileOwner, strComputerName,
+								strSelName);
+					if (CheckGroup)
+						CheckFileOwnerGroup(AttrDlg[SA_EDIT_GROUP], GetFileGroup, strComputerName,
+								strSelName);
 					FSFileFlags FFFlags(strSelName.GetMB());
 					if (FFFlags.Immutable())
 						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
@@ -969,57 +912,47 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif
 				}
-			}
-			else
-			{
+			} else {
 				// BUGBUG, copy-paste
-				if (!FolderPresent&&(FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))
-				{
-					FolderPresent=true;
-					AttrDlg[SA_SEPARATOR4].Flags&=~DIF_HIDDEN;
-					AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&=~(DIF_DISABLE|DIF_HIDDEN);
-					AttrDlg[SA_DOUBLEBOX].Y2+=2;
-					for(int i=SA_SEPARATOR5;i<=SA_BUTTON_CANCEL;i++)
-					{
-						AttrDlg[i].Y1+=2;
-						AttrDlg[i].Y2+=2;
+				if (!FolderPresent && (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+					FolderPresent = true;
+					AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
+					AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);
+					AttrDlg[SA_DOUBLEBOX].Y2+= 2;
+					for (int i = SA_SEPARATOR5; i <= SA_BUTTON_CANCEL; i++) {
+						AttrDlg[i].Y1+= 2;
+						AttrDlg[i].Y2+= 2;
 					}
-					DlgY+=2;
+					DlgY+= 2;
 				}
-				for (size_t i=0; i<ARRAYSIZE(AP); i++)
-				{
-					if (FindData.dwUnixMode & AP[i].Mode)
-					{
+				for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+					if (FindData.dwUnixMode & AP[i].Mode) {
 						AttrDlg[AP[i].Item].Selected++;
 					}
 				}
 			}
-			if(SrcPanel)
-			{
+			if (SrcPanel) {
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 				SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData);
 			}
 
 			// выставим "неопределенку" или то, что нужно
-			for (auto i : PreserveOriginalIDs)
-			{
+			for (auto i : PreserveOriginalIDs) {
 				// снимаем 3-state, если "есть все или нет ничего"
 				// за исключением случая, если есть Фолдер среди объектов
-				if ((!AttrDlg[i].Selected || AttrDlg[i].Selected >= SelCount) && !FolderPresent)
-				{
-					AttrDlg[i].Flags&=~DIF_3STATE;
+				if ((!AttrDlg[i].Selected || AttrDlg[i].Selected >= SelCount) && !FolderPresent) {
+					AttrDlg[i].Flags&= ~DIF_3STATE;
 				}
 
 				AttrDlg[i].Selected = (AttrDlg[i].Selected >= SelCount)
-					? BST_CHECKED
-					: (!AttrDlg[i].Selected ? BSTATE_UNCHECKED : BSTATE_3STATE);
+						? BST_CHECKED
+						: (!AttrDlg[i].Selected ? BSTATE_UNCHECKED : BSTATE_3STATE);
 			}
 		}
 
 		// поведение для каталогов как у 1.65?
-		if (FolderPresent && !Opt.SetAttrFolderRules)
-		{
-			AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected=BSTATE_CHECKED;
+		if (FolderPresent && !Opt.SetAttrFolderRules) {
+			AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected = BSTATE_CHECKED;
 			AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData.Clear();
@@ -1027,16 +960,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData.Clear();
 			AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData.Clear();
 
-			for (auto i : PreserveOriginalIDs)
-			{
-				AttrDlg[i].Selected=BSTATE_3STATE;
-				AttrDlg[i].Flags|=DIF_3STATE;
+			for (auto i : PreserveOriginalIDs) {
+				AttrDlg[i].Selected = BSTATE_3STATE;
+				AttrDlg[i].Flags|= DIF_3STATE;
 			}
 		}
 
 		// запомним состояние переключателей.
-		for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i)
-		{
+		for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 			DlgParam.OriginalCBAttr[i] = AttrDlg[i].Selected;
 			DlgParam.OriginalCBAttr2[i] = -1;
 			DlgParam.OriginalCBFlag[i] = AttrDlg[i].Flags;
@@ -1046,96 +977,93 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 		DlgParam.strGroup = AttrDlg[SA_EDIT_GROUP].strData;
 		FARString strInitOwner = DlgParam.strOwner, strInitGroup = DlgParam.strGroup;
 
-		DlgParam.DialogMode=((SelCount==1&&!(FileAttr&FILE_ATTRIBUTE_DIRECTORY))?MODE_FILE:(SelCount==1?MODE_FOLDER:MODE_MULTIPLE));
-		DlgParam.strSelName=strSelName;
-		DlgParam.OSubfoldersState=static_cast<FARCHECKEDSTATE>(AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected);
+		DlgParam.DialogMode = ((SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
+						? MODE_FILE
+						: (SelCount == 1 ? MODE_FOLDER : MODE_MULTIPLE));
+		DlgParam.strSelName = strSelName;
+		DlgParam.OSubfoldersState = static_cast<FARCHECKEDSTATE>(AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected);
 
-		Dialog Dlg(AttrDlg,ARRAYSIZE(AttrDlgData),SetAttrDlgProc,(LONG_PTR)&DlgParam);
-		Dlg.SetHelp(L"FileAttrDlg");                 //  ^ - это одиночный диалог!
+		Dialog Dlg(AttrDlg, ARRAYSIZE(AttrDlgData), SetAttrDlgProc, (LONG_PTR)&DlgParam);
+		Dlg.SetHelp(L"FileAttrDlg");	//  ^ - это одиночный диалог!
 		Dlg.SetId(FileAttrDlgId);
 
-		if (LinkPresent)
-		{
+		if (LinkPresent) {
 			DlgY++;
 		}
 
-		Dlg.SetPosition(-1,-1,DlgX,DlgY);
+		Dlg.SetPosition(-1, -1, DlgX, DlgY);
 		Dlg.Process();
 
-		switch(Dlg.GetExitCode())
-		{
-		case SA_BUTTON_SET:
-			{
-				const size_t Times[]={SA_FIXEDIT_LAST_ACCESS_TIME, SA_FIXEDIT_LAST_MODIFICATION_TIME, SA_FIXEDIT_LAST_CHANGE_TIME};
+		switch (Dlg.GetExitCode()) {
+			case SA_BUTTON_SET: {
+				const size_t Times[] = {SA_FIXEDIT_LAST_ACCESS_TIME, SA_FIXEDIT_LAST_MODIFICATION_TIME,
+						SA_FIXEDIT_LAST_CHANGE_TIME};
 
-				for (size_t i=0; i<ARRAYSIZE(Times); i++)
-				{
-					LPWSTR TimePtr=AttrDlg[Times[i]].strData.GetBuffer();
-					TimePtr[8]=GetTimeSeparator();
+				for (size_t i = 0; i < ARRAYSIZE(Times); i++) {
+					LPWSTR TimePtr = AttrDlg[Times[i]].strData.GetBuffer();
+					TimePtr[8] = GetTimeSeparator();
 					AttrDlg[Times[i]].strData.ReleaseBuffer(AttrDlg[Times[i]].strData.GetLength());
 				}
 
 				TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellSetFileAttributesMsg);
-				ShellSetFileAttributesMsg(SelCount==1?strSelName.CPtr():nullptr);
-				int SkipMode=-1;
+				ShellSetFileAttributesMsg(SelCount == 1 ? strSelName.CPtr() : nullptr);
+				int SkipMode = -1;
 
-				if (SelCount==1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
-				{
+				if (SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 					DWORD NewMode = 0;
 
-					for (size_t i=0; i<ARRAYSIZE(AP); i++)
-					{
-						if (AttrDlg[AP[i].Item].Selected)
-						{
+					for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+						if (AttrDlg[AP[i].Item].Selected) {
 							NewMode|= AP[i].Mode;
 						}
 					}
 
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode, strSelName, strInitOwner)) break;
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
-					
-					FILETIME UnixAccessTime={},UnixModificationTime={};
-					int SetAccessTime = DlgParam.OAccessTime && 
-						ReadFileTime(0, strSelName, UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-					int SetModifyTime = DlgParam.OModifyTime && 
-						ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode,
+								strSelName, strInitOwner))
+						break;
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode,
+								strSelName, strInitGroup))
+						break;
+
+					FILETIME UnixAccessTime = {}, UnixModificationTime = {};
+					int SetAccessTime = DlgParam.OAccessTime
+							&& ReadFileTime(0, strSelName, UnixAccessTime,
+									AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,
+									AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
+					int SetModifyTime = DlgParam.OModifyTime
+							&& ReadFileTime(1, strSelName, UnixModificationTime,
+									AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
+									AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 
 					//_SVS(SysLog(L"\n\tSetWriteTime=%d\n\tSetCreationTime=%d\n\tSetLastAccessTime=%d",SetWriteTime,SetCreationTime,SetLastAccessTime));
 
-					if (SetAccessTime || SetModifyTime)
-					{
-						if(ESetFileTime(strSelName, SetAccessTime? &UnixAccessTime : nullptr,
-							SetModifyTime ? &UnixModificationTime : nullptr, FileAttr, SkipMode)==SETATTR_RET_SKIPALL)
-						{
-							SkipMode=SETATTR_RET_SKIP;
+					if (SetAccessTime || SetModifyTime) {
+						if (ESetFileTime(strSelName, SetAccessTime ? &UnixAccessTime : nullptr,
+									SetModifyTime ? &UnixModificationTime : nullptr, FileAttr, SkipMode)
+								== SETATTR_RET_SKIPALL) {
+							SkipMode = SETATTR_RET_SKIP;
 						}
 					}
 
-					if ((FileMode & EDITABLE_MODES) != (NewMode & EDITABLE_MODES))
-					{
-						if (ESetFileMode(strSelName, NewMode, SkipMode)==SETATTR_RET_SKIPALL)
-						{
-							SkipMode=SETATTR_RET_SKIP;
+					if ((FileMode & EDITABLE_MODES) != (NewMode & EDITABLE_MODES)) {
+						if (ESetFileMode(strSelName, NewMode, SkipMode) == SETATTR_RET_SKIPALL) {
+							SkipMode = SETATTR_RET_SKIP;
 						}
 					}
 
 					ApplyFSFileFlags(AttrDlg, strSelName);
 				}
 				/* Multi *********************************************************** */
-				else
-				{
-					int RetCode=1;
+				else {
+					int RetCode = 1;
 					ConsoleTitle SetAttrTitle(Msg::SetAttrTitle);
-					if(SrcPanel)
-					{
+					if (SrcPanel) {
 						CtrlObject->Cp()->GetAnotherPanel(SrcPanel)->CloseFile();
 					}
 					DWORD SetMode = 0, ClearMode = 0;
 
-					for (size_t i=0; i<ARRAYSIZE(AP); i++)
-					{
-						switch (AttrDlg[AP[i].Item].Selected)
-						{
+					for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
+						switch (AttrDlg[AP[i].Item].Selected) {
 							case BSTATE_CHECKED:
 								SetMode|= AP[i].Mode;
 								break;
@@ -1145,141 +1073,144 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						}
 					}
 
-					if(SrcPanel)
-					{
+					if (SrcPanel) {
 						SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 					}
 					wakeful W;
-					bool Cancel=false;
-					DWORD LastTime=0;
+					bool Cancel = false;
+					DWORD LastTime = 0;
 
-					bool SingleFileDone=false;
-					while ((SrcPanel?SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData):!SingleFileDone) && !Cancel)
-					{
-						if(!SrcPanel)
-						{
-							SingleFileDone=true;
+					bool SingleFileDone = false;
+					while ((SrcPanel ? SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData)
+										: !SingleFileDone)
+							&& !Cancel) {
+						if (!SrcPanel) {
+							SingleFileDone = true;
 						}
-		//_SVS(SysLog(L"SelName='%ls'\n\tFileAttr =0x%08X\n\tSetAttr  =0x%08X\n\tClearAttr=0x%08X\n\tResult   =0x%08X",
-		//	SelName,FileAttr,SetAttr,ClearAttr,((FileAttr|SetAttr)&(~ClearAttr))));
-						DWORD CurTime=WINPORT(GetTickCount)();
+						//_SVS(SysLog(L"SelName='%ls'\n\tFileAttr =0x%08X\n\tSetAttr  =0x%08X\n\tClearAttr=0x%08X\n\tResult   =0x%08X",
+						//	SelName,FileAttr,SetAttr,ClearAttr,((FileAttr|SetAttr)&(~ClearAttr))));
+						DWORD CurTime = WINPORT(GetTickCount)();
 
-						if (CurTime-LastTime>RedrawTimeout)
-						{
-							LastTime=CurTime;
+						if (CurTime - LastTime > RedrawTimeout) {
+							LastTime = CurTime;
 							ShellSetFileAttributesMsg(strSelName);
 
 							if (CheckForEsc())
 								break;
 						}
 
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode, strSelName, strInitOwner)) break;
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode, strSelName, strInitGroup)) break;
-	
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode,
+									strSelName, strInitOwner))
+							break;
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode,
+									strSelName, strInitGroup))
+							break;
+
 						FILETIME UnixAccessTime = {}, UnixModificationTime = {};
-						int SetAccessTime = DlgParam.OAccessTime && 
-							ReadFileTime(0,strSelName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-						int SetModifyTime = DlgParam.OModifyTime && 
-							ReadFileTime(1,strSelName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
+						int SetAccessTime = DlgParam.OAccessTime
+								&& ReadFileTime(0, strSelName, UnixAccessTime,
+										AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,
+										AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
+						int SetModifyTime = DlgParam.OModifyTime
+								&& ReadFileTime(1, strSelName, UnixModificationTime,
+										AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
+										AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 
 						RetCode = ESetFileTime(strSelName, SetAccessTime ? &UnixAccessTime : nullptr,
-							SetModifyTime ? &UnixModificationTime : nullptr, FileAttr,SkipMode);
+								SetModifyTime ? &UnixModificationTime : nullptr, FileAttr, SkipMode);
 
 						if (RetCode == SETATTR_RET_ERROR)
 							break;
 						else if (RetCode == SETATTR_RET_SKIP)
 							continue;
-						else if (RetCode == SETATTR_RET_SKIPALL)
-						{
-							SkipMode=SETATTR_RET_SKIP;
+						else if (RetCode == SETATTR_RET_SKIPALL) {
+							SkipMode = SETATTR_RET_SKIP;
 							continue;
 						}
 
-						if(FileAttr!=INVALID_FILE_ATTRIBUTES)
-						{
-							if (((FileMode|SetMode)&~ClearMode) != FileMode)
-							{
+						if (FileAttr != INVALID_FILE_ATTRIBUTES) {
+							if (((FileMode | SetMode) & ~ClearMode) != FileMode) {
 
-								RetCode = ESetFileMode(strSelName,((FileMode|SetMode)&(~ClearMode)),SkipMode);
+								RetCode = ESetFileMode(strSelName, ((FileMode | SetMode) & (~ClearMode)),
+										SkipMode);
 
 								if (RetCode == SETATTR_RET_ERROR)
 									break;
 								else if (RetCode == SETATTR_RET_SKIP)
 									continue;
-								else if (RetCode == SETATTR_RET_SKIPALL)
-								{
-									SkipMode=SETATTR_RET_SKIP;
+								else if (RetCode == SETATTR_RET_SKIPALL) {
+									SkipMode = SETATTR_RET_SKIP;
 									continue;
 								}
 							}
 
-							if ((FileAttr & FILE_ATTRIBUTE_DIRECTORY) && AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected)
-							{
+							if ((FileAttr & FILE_ATTRIBUTE_DIRECTORY)
+									&& AttrDlg[SA_CHECKBOX_SUBFOLDERS].Selected) {
 								ScanTree ScTree(FALSE);
-								ScTree.SetFindPath(strSelName,L"*");
-								DWORD LastTime=WINPORT(GetTickCount)();
+								ScTree.SetFindPath(strSelName, L"*");
+								DWORD LastTime = WINPORT(GetTickCount)();
 								FARString strFullName;
 
-								while (ScTree.GetNextName(&FindData,strFullName))
-								{
-									DWORD CurTime=WINPORT(GetTickCount)();
+								while (ScTree.GetNextName(&FindData, strFullName)) {
+									DWORD CurTime = WINPORT(GetTickCount)();
 
-									if (CurTime-LastTime>RedrawTimeout)
-									{
-										LastTime=CurTime;
+									if (CurTime - LastTime > RedrawTimeout) {
+										LastTime = CurTime;
 										ShellSetFileAttributesMsg(strFullName);
 
-										if (CheckForEsc())
-										{
-											Cancel=true;
+										if (CheckForEsc()) {
+											Cancel = true;
 											break;
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, 
-										SkipMode, strFullName, strInitOwner, DlgParam.OSubfoldersState)) break;
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, 
-										SkipMode, strFullName, strInitGroup, DlgParam.OSubfoldersState)) break;									
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner,
+												SkipMode, strFullName, strInitOwner,
+												DlgParam.OSubfoldersState))
+										break;
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup,
+												SkipMode, strFullName, strInitGroup,
+												DlgParam.OSubfoldersState))
+										break;
 
-									SetAccessTime= DlgParam.OAccessTime && 
-										ReadFileTime(0,strFullName,UnixAccessTime,AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
-									SetModifyTime= DlgParam.OModifyTime && 
-										ReadFileTime(1,strFullName,UnixModificationTime,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
-									
-									if (SetAccessTime || SetModifyTime)
-									{
-										RetCode = ESetFileTime(strFullName, SetAccessTime ? &UnixAccessTime : nullptr,
-											SetModifyTime ? &UnixModificationTime : nullptr, FindData.dwFileAttributes,SkipMode);
+									SetAccessTime = DlgParam.OAccessTime
+											&& ReadFileTime(0, strFullName, UnixAccessTime,
+													AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData,
+													AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData);
+									SetModifyTime = DlgParam.OModifyTime
+											&& ReadFileTime(1, strFullName, UnixModificationTime,
+													AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData,
+													AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData);
 
-										if (RetCode == SETATTR_RET_ERROR)
-										{
-											Cancel=true;
+									if (SetAccessTime || SetModifyTime) {
+										RetCode = ESetFileTime(strFullName,
+												SetAccessTime ? &UnixAccessTime : nullptr,
+												SetModifyTime ? &UnixModificationTime : nullptr,
+												FindData.dwFileAttributes, SkipMode);
+
+										if (RetCode == SETATTR_RET_ERROR) {
+											Cancel = true;
 											break;
-										}
-										else if (RetCode == SETATTR_RET_SKIP)
+										} else if (RetCode == SETATTR_RET_SKIP)
 											continue;
-										else if (RetCode == SETATTR_RET_SKIPALL)
-										{
-											SkipMode=SETATTR_RET_SKIP;
+										else if (RetCode == SETATTR_RET_SKIPALL) {
+											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
 									}
 
-									if (((FindData.dwUnixMode|SetMode)&(~ClearMode)) !=
-													FindData.dwUnixMode)
-									{
-										RetCode = ESetFileMode(strFullName,(FindData.dwUnixMode|SetMode)&(~ClearMode),SkipMode);
+									if (((FindData.dwUnixMode | SetMode) & (~ClearMode))
+											!= FindData.dwUnixMode) {
+										RetCode = ESetFileMode(strFullName,
+												(FindData.dwUnixMode | SetMode) & (~ClearMode), SkipMode);
 
-										if (RetCode == SETATTR_RET_ERROR)
-										{
-											Cancel=true;
+										if (RetCode == SETATTR_RET_ERROR) {
+											Cancel = true;
 											break;
-										}
-										else if (RetCode == SETATTR_RET_SKIP)
+										} else if (RetCode == SETATTR_RET_SKIP)
 											continue;
-										else if (RetCode == SETATTR_RET_SKIPALL)
-										{
-											SkipMode=SETATTR_RET_SKIP;
+										else if (RetCode == SETATTR_RET_SKIPALL) {
+											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
 										ApplyFSFileFlags(AttrDlg, strFullName);
@@ -1289,26 +1220,22 @@ bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object)
 						}
 						ApplyFSFileFlags(AttrDlg, strSelName);
 
-					} // END: while (SrcPanel->GetSelNameCompat(...))
+					}	// END: while (SrcPanel->GetSelNameCompat(...))
 				}
-			}
-			break;
-		case SA_BUTTON_BRIEFINFO:
-			{
+			} break;
+			case SA_BUTTON_BRIEFINFO: {
 				BriefInfo(strSelName);
-			}
-			break;
-		default:
-			return false;
+			} break;
+			default:
+				return false;
 		}
 	}
 
-	if(SrcPanel)
-	{
+	if (SrcPanel) {
 		SrcPanel->SaveSelection();
 		SrcPanel->Update(UPDATE_KEEP_SELECTION);
 		SrcPanel->ClearSelection();
-		CtrlObject->Cp()->GetAnotherPanel(SrcPanel)->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
+		CtrlObject->Cp()->GetAnotherPanel(SrcPanel)->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
 	}
 	CtrlObject->Cp()->Redraw();
 	return true;

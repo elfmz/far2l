@@ -45,15 +45,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct FAR_FIND_DATA_EX
 {
-	union {
+	union
+	{
 		FILETIME ftCreationTime;
 		FILETIME ftUnixStatusChangeTime;
 	};
-	union {
+	union
+	{
 		FILETIME ftLastAccessTime;
 		FILETIME ftUnixAccessTime;
 	};
-	union {
+	union
+	{
 		FILETIME ftLastWriteTime;
 		FILETIME ftUnixModificationTime;
 	};
@@ -74,10 +77,10 @@ struct FAR_FIND_DATA_EX
 
 	void Clear()
 	{
-		memset(&ftCreationTime,0,sizeof(ftCreationTime));
-		memset(&ftLastAccessTime,0,sizeof(ftLastAccessTime));
-		memset(&ftLastWriteTime,0,sizeof(ftLastWriteTime));
-		memset(&ftChangeTime,0,sizeof(ftChangeTime));
+		memset(&ftCreationTime, 0, sizeof(ftCreationTime));
+		memset(&ftLastAccessTime, 0, sizeof(ftLastAccessTime));
+		memset(&ftLastWriteTime, 0, sizeof(ftLastWriteTime));
+		memset(&ftChangeTime, 0, sizeof(ftChangeTime));
 		UnixOwner = 0;
 		UnixGroup = 0;
 		UnixDevice = 0;
@@ -91,36 +94,36 @@ struct FAR_FIND_DATA_EX
 		strFileName.Clear();
 	}
 
-/*	FAR_FIND_DATA_EX& operator=(const FAR_FIND_DATA_EX &ffdexCopy)
-	{
-		if (this != &ffdexCopy)
+	/*	FAR_FIND_DATA_EX& operator=(const FAR_FIND_DATA_EX &ffdexCopy)
 		{
-			ftCreationTime = ffdexCopy.ftCreationTime;
-			ftLastAccessTime = ffdexCopy.ftLastAccessTime;
-			ftLastWriteTime = ffdexCopy.ftLastWriteTime;
-			ftChangeTime = ffdexCopy.ftChangeTime;
-			UnixDevice = ffdexCopy.UnixDevice;
-			UnixOwner = ffdexCopy.UnixOwner;
-			UnixGroup = ffdexCopy.UnixGroup;
-			UnixNode = ffdexCopy.UnixNode;
-			nPhysicalSize = ffdexCopy.nPhysicalSize;
-			nFileSize = ffdexCopy.nFileSize;
-			dwFileAttributes = ffdexCopy.dwFileAttributes;
-			dwUnixMode = ffdexCopy.dwUnixMode;
-			nHardLinks = ffdexCopy.nHardLinks;;
-			strFileName = ffdexCopy.strFileName;
-		}
+			if (this != &ffdexCopy)
+			{
+				ftCreationTime = ffdexCopy.ftCreationTime;
+				ftLastAccessTime = ffdexCopy.ftLastAccessTime;
+				ftLastWriteTime = ffdexCopy.ftLastWriteTime;
+				ftChangeTime = ffdexCopy.ftChangeTime;
+				UnixDevice = ffdexCopy.UnixDevice;
+				UnixOwner = ffdexCopy.UnixOwner;
+				UnixGroup = ffdexCopy.UnixGroup;
+				UnixNode = ffdexCopy.UnixNode;
+				nPhysicalSize = ffdexCopy.nPhysicalSize;
+				nFileSize = ffdexCopy.nFileSize;
+				dwFileAttributes = ffdexCopy.dwFileAttributes;
+				dwUnixMode = ffdexCopy.dwUnixMode;
+				nHardLinks = ffdexCopy.nHardLinks;;
+				strFileName = ffdexCopy.strFileName;
+			}
 
-		return *this;
-	}*/
+			return *this;
+		}*/
 };
 
-class FindFile: private NonCopyable
+class FindFile : private NonCopyable
 {
 public:
-	FindFile(LPCWSTR Object, bool ScanSymLink = true, DWORD WinPortFindFlags = FIND_FILE_FLAG_NO_CUR_UP); //FIND_FILE_FLAG_NO_CUR_UP is enforced
+	FindFile(LPCWSTR Object, bool ScanSymLink = true, DWORD WinPortFindFlags = FIND_FILE_FLAG_NO_CUR_UP);	// FIND_FILE_FLAG_NO_CUR_UP is enforced
 	~FindFile();
-	bool Get(FAR_FIND_DATA_EX& FindData);
+	bool Get(FAR_FIND_DATA_EX &FindData);
 
 private:
 	HANDLE Handle;
@@ -128,22 +131,28 @@ private:
 	int err;
 };
 
-typedef std::map<std::string, std::vector<char> > FileExtendedAttributes;
+typedef std::map<std::string, std::vector<char>> FileExtendedAttributes;
 
-class File: private NonCopyable
+class File : private NonCopyable
 {
 public:
 	File();
 	~File();
-	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, const DWORD *UnixMode, DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes=0, HANDLE hTemplateFile=nullptr, bool ForceElevation=false);
-	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead, LPOVERLAPPED Overlapped = nullptr);
-	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten, LPOVERLAPPED Overlapped = nullptr);
+	bool Open(LPCWSTR Object, DWORD dwDesiredAccess, DWORD dwShareMode, const DWORD *UnixMode,
+			DWORD dwCreationDistribution, DWORD dwFlagsAndAttributes = 0, HANDLE hTemplateFile = nullptr,
+			bool ForceElevation = false);
+	bool Read(LPVOID Buffer, DWORD NumberOfBytesToRead, LPDWORD NumberOfBytesRead,
+			LPOVERLAPPED Overlapped = nullptr);
+	bool Write(LPCVOID Buffer, DWORD NumberOfBytesToWrite, LPDWORD NumberOfBytesWritten,
+			LPOVERLAPPED Overlapped = nullptr);
 	bool SetPointer(INT64 DistanceToMove, PINT64 NewFilePointer, DWORD MoveMethod);
-	bool GetPointer(INT64& Pointer){return SetPointer(0, &Pointer, FILE_CURRENT);}
+	bool GetPointer(INT64 &Pointer) { return SetPointer(0, &Pointer, FILE_CURRENT); }
 	bool SetEnd();
-	bool GetTime(LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
-	bool SetTime(const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
-	bool GetSize(UINT64& Size);
+	bool GetTime(LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime,
+			LPFILETIME ChangeTime);
+	bool SetTime(const FILETIME *CreationTime, const FILETIME *LastAccessTime, const FILETIME *LastWriteTime,
+			const FILETIME *ChangeTime);
+	bool GetSize(UINT64 &Size);
 	void AllocationHint(UINT64 Size);
 	bool AllocationRequire(UINT64 Size);
 	bool FlushBuffers();
@@ -152,7 +161,7 @@ public:
 	FemaleBool SetFileExtendedAttributes(const FileExtendedAttributes &xattr);
 	bool Close();
 	bool Eof();
-	bool Opened() const {return Handle != INVALID_HANDLE_VALUE;}
+	bool Opened() const { return Handle != INVALID_HANDLE_VALUE; }
 	int Descriptor();
 
 private:
@@ -161,118 +170,59 @@ private:
 
 bool apiIsDevNull(const wchar_t *Src);
 
-bool apiGetEnvironmentVariable(
-	const char *lpszName,
-	FARString &strBuffer
-);
-bool apiGetEnvironmentVariable(
-	const wchar_t *lpwszName,
-	FARString &strBuffer
-);
+bool apiGetEnvironmentVariable(const char *lpszName, FARString &strBuffer);
+bool apiGetEnvironmentVariable(const wchar_t *lpwszName, FARString &strBuffer);
 
-DWORD apiGetCurrentDirectory(
-	FARString &strCurDir
-);
+DWORD apiGetCurrentDirectory(FARString &strCurDir);
 
-void apiGetTempPath(
-	FARString &strBuffer
-);
+void apiGetTempPath(FARString &strBuffer);
 
-bool apiExpandEnvironmentStrings(
-	const wchar_t *src,
-	FARString &strDest
-);
+bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest);
 
-BOOL apiGetVolumeInformation(
-	const wchar_t *lpwszRootPathName,
-	FARString *pVolumeName,
-	DWORD64 *lpVolumeSerialNumber,
-	LPDWORD lpMaximumComponentLength,
-	LPDWORD lpFileSystemFlags,
-	FARString *pFileSystemName
-);
+BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolumeName,
+		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
+		FARString *pFileSystemName);
 
-void apiFindDataToDataEx(
-	const FAR_FIND_DATA *pSrc,
-	FAR_FIND_DATA_EX *pDest);
+void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest);
 
-void apiFindDataExToData(
-	const FAR_FIND_DATA_EX *pSrc,
-	FAR_FIND_DATA *pDest
-);
+void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest);
 
-void apiFreeFindData(
-	FAR_FIND_DATA *pData
+void apiFreeFindData(FAR_FIND_DATA *pData);
+
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX &FindData);
+
+BOOL apiGetFindDataEx(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX &FindData, DWORD WinPortFindFlags = 0);
+
+bool apiGetFileSizeEx(HANDLE hFile, UINT64 &Size);
+
+// junk
+
+BOOL apiDeleteFile(const wchar_t *lpwszFileName);
+
+BOOL apiRemoveDirectory(const wchar_t *DirName);
+
+HANDLE apiCreateFile(const wchar_t *Object, DWORD DesiredAccess, DWORD ShareMode, const DWORD *UnixMode,
+		DWORD CreationDistribution, DWORD FlagsAndAttributes = 0, HANDLE TemplateFile = nullptr,
+		bool ForceElevation = false);
+
+BOOL apiMoveFile(const wchar_t *lpwszExistingFileName,		// address of name of the existing file
+		const wchar_t *lpwszNewFileName						// address of new name for the file
 );
 
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX& FindData);
-
-BOOL apiGetFindDataEx(
-	const wchar_t *lpwszFileName,
-	FAR_FIND_DATA_EX& FindData,
-	DWORD WinPortFindFlags = 0);
-
-bool apiGetFileSizeEx(
-	HANDLE hFile,
-	UINT64 &Size);
-
-//junk
-
-BOOL apiDeleteFile(
-	const wchar_t *lpwszFileName
+BOOL apiMoveFileEx(const wchar_t *lpwszExistingFileName,	// address of name of the existing file
+		const wchar_t *lpwszNewFileName,					// address of new name for the file
+		DWORD dwFlags										// flag to determine how to move file
 );
 
-BOOL apiRemoveDirectory(
-	const wchar_t *DirName
-);
+int apiGetFileTypeByName(const wchar_t *Name);
 
-HANDLE apiCreateFile(
-	const wchar_t* Object,
-	DWORD DesiredAccess,
-	DWORD ShareMode,
-	const DWORD *UnixMode,
-	DWORD CreationDistribution,
-	DWORD FlagsAndAttributes=0,
-	HANDLE TemplateFile=nullptr,
-	bool ForceElevation = false
-);
+BOOL apiGetDiskSize(const wchar_t *Path, uint64_t *TotalSize, uint64_t *TotalFree, uint64_t *UserFree);
 
-BOOL apiMoveFile(
-	const wchar_t *lpwszExistingFileName, // address of name of the existing file
-	const wchar_t *lpwszNewFileName       // address of new name for the file
-);
+BOOL apiCreateDirectory(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
-BOOL apiMoveFileEx(
-	const wchar_t *lpwszExistingFileName, // address of name of the existing file
-	const wchar_t *lpwszNewFileName,      // address of new name for the file
-	DWORD dwFlags                         // flag to determine how to move file
-);
+DWORD apiGetFileAttributes(LPCWSTR lpFileName);
 
-int apiGetFileTypeByName(
-	const wchar_t *Name
-);
-
-BOOL apiGetDiskSize(
-	const wchar_t *Path,
-	uint64_t*TotalSize,
-	uint64_t *TotalFree,
-	uint64_t *UserFree
-);
-
-BOOL apiCreateDirectory(
-	LPCWSTR lpPathName,
-	LPSECURITY_ATTRIBUTES lpSecurityAttributes
-);
-
-DWORD apiGetFileAttributes(
-	LPCWSTR lpFileName
-);
-
-BOOL apiSetFileAttributes(
-	LPCWSTR lpFileName,
-	DWORD dwFileAttributes
-);
-
+BOOL apiSetFileAttributes(LPCWSTR lpFileName, DWORD dwFileAttributes);
 
 bool apiPathExists(LPCWSTR lpPathName);
 bool apiPathIsDir(LPCWSTR lpPathName);
@@ -280,11 +230,11 @@ bool apiPathIsFile(LPCWSTR lpPathName);
 
 struct IUnmakeWritable
 {
-	virtual ~IUnmakeWritable() {} 
+	virtual ~IUnmakeWritable() {}
 	virtual void Unmake() = 0;
 };
 
-typedef std::unique_ptr<IUnmakeWritable>	IUnmakeWritablePtr;
+typedef std::unique_ptr<IUnmakeWritable> IUnmakeWritablePtr;
 
 IUnmakeWritablePtr apiMakeWritable(LPCWSTR lpFileName);
 
@@ -293,11 +243,11 @@ class TemporaryMakeWritable
 	IUnmakeWritablePtr _unmake;
 
 public:
-	inline TemporaryMakeWritable(LPCWSTR lpFileName) 
-		: _unmake(apiMakeWritable(lpFileName))
-	{
-	}
-	
+	inline TemporaryMakeWritable(LPCWSTR lpFileName)
+		:
+		_unmake(apiMakeWritable(lpFileName))
+	{}
+
 	inline ~TemporaryMakeWritable()
 	{
 		if (_unmake)
@@ -307,32 +257,20 @@ public:
 
 void InitCurrentDirectory();
 
-BOOL apiSetCurrentDirectory(
-	LPCWSTR lpPathName,
-	bool Validate = true
-);
+BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate = true);
 
 // for elevation only, dont' use outside.
-bool CreateSymbolicLinkInternal(LPCWSTR Object,LPCWSTR Target, DWORD dwFlags);
+bool CreateSymbolicLinkInternal(LPCWSTR Object, LPCWSTR Target, DWORD dwFlags);
 
-bool apiCreateSymbolicLink(
-	LPCWSTR lpSymlinkFileName,
-	LPCWSTR lpTargetFileName,
-	DWORD dwFlags
-);
+bool apiCreateSymbolicLink(LPCWSTR lpSymlinkFileName, LPCWSTR lpTargetFileName, DWORD dwFlags);
 
-BOOL apiCreateHardLink(
-	LPCWSTR lpFileName,
-	LPCWSTR lpExistingFileName,
-	LPSECURITY_ATTRIBUTES lpSecurityAttributes
-);
+BOOL apiCreateHardLink(LPCWSTR lpFileName, LPCWSTR lpExistingFileName,
+		LPSECURITY_ATTRIBUTES lpSecurityAttributes);
 
-bool apiGetFinalPathNameByHandle(
-	HANDLE hFile,
-	FARString& FinalFilePath
-);
+bool apiGetFinalPathNameByHandle(HANDLE hFile, FARString &FinalFilePath);
 
 // internal, dont' use outside.
-bool GetFileTimeEx(HANDLE Object, LPFILETIME CreationTime, LPFILETIME LastAccessTime, LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
-bool SetFileTimeEx(HANDLE Object, const FILETIME* CreationTime, const FILETIME* LastAccessTime, const FILETIME* LastWriteTime, const FILETIME* ChangeTime);
-
+bool GetFileTimeEx(HANDLE Object, LPFILETIME CreationTime, LPFILETIME LastAccessTime,
+		LPFILETIME LastWriteTime, LPFILETIME ChangeTime);
+bool SetFileTimeEx(HANDLE Object, const FILETIME *CreationTime, const FILETIME *LastAccessTime,
+		const FILETIME *LastWriteTime, const FILETIME *ChangeTime);

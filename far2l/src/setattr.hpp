@@ -37,4 +37,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Panel;
 
-bool ShellSetFileAttributes(Panel *SrcPanel,LPCWSTR Object=nullptr);
+bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object = nullptr);

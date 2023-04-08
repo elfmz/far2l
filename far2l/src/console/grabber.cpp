@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "grabber.hpp"
 #include "keyboard.hpp"
 #include "colors.hpp"
@@ -46,160 +45,173 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "clipboard.hpp"
 #include "config.hpp"
 
-Grabber::Grabber() :
+Grabber::Grabber()
+	:
 	CMM(MACRO_OTHER)
 {
 	LockCurrentFrame LCF;
 	LCF.RefreshOnUnlock();
-	SaveScr=new SaveScreen;
-	memset(&GArea,0,sizeof(GArea));
-	memset(&PrevArea,0,sizeof(PrevArea));
-	bool Visible=false;
-	DWORD Size=0;
-	GetCursorType(Visible,Size);
+	SaveScr = new SaveScreen;
+	memset(&GArea, 0, sizeof(GArea));
+	memset(&PrevArea, 0, sizeof(PrevArea));
+	bool Visible = false;
+	DWORD Size = 0;
+	GetCursorType(Visible, Size);
 
 	if (Visible)
-		GetCursorPos(GArea.CurX,GArea.CurY);
-	else
-	{
-		GArea.CurX=0;
-		GArea.CurY=0;
+		GetCursorPos(GArea.CurX, GArea.CurY);
+	else {
+		GArea.CurX = 0;
+		GArea.CurY = 0;
 	}
 
-	GArea.X1=-1;
-	SetCursorType(TRUE,60);
-	PrevArea=GArea;
-	ResetArea=TRUE;
+	GArea.X1 = -1;
+	SetCursorType(TRUE, 60);
+	PrevArea = GArea;
+	ResetArea = TRUE;
 	DisplayObject();
 	Process();
 	delete SaveScr;
 }
 
-
-Grabber::~Grabber()
-{
-}
-
+Grabber::~Grabber() {}
 
 void Grabber::CopyGrabbedArea(int Append)
 {
 	if (GArea.X1 < 0)
 		return;
 
-	int X1,Y1,X2,Y2;
-	X1=Min(GArea.X1,GArea.X2);
-	X2=Max(GArea.X1,GArea.X2);
-	Y1=Min(GArea.Y1,GArea.Y2);
-	Y2=Max(GArea.Y1,GArea.Y2);
-	int GWidth=X2-X1+1,GHeight=Y2-Y1+1;
-	int BufSize=(GWidth+3)*GHeight;
-	CHAR_INFO *CharBuf=new CHAR_INFO[BufSize], *PtrCharBuf;
-	wchar_t *CopyBuf=(wchar_t *)malloc(BufSize*sizeof(wchar_t)), *PtrCopyBuf;
+	int X1, Y1, X2, Y2;
+	X1 = Min(GArea.X1, GArea.X2);
+	X2 = Max(GArea.X1, GArea.X2);
+	Y1 = Min(GArea.Y1, GArea.Y2);
+	Y2 = Max(GArea.Y1, GArea.Y2);
+	int GWidth = X2 - X1 + 1, GHeight = Y2 - Y1 + 1;
+	int BufSize = (GWidth + 3) * GHeight;
+	CHAR_INFO *CharBuf = new CHAR_INFO[BufSize], *PtrCharBuf;
+	wchar_t *CopyBuf = (wchar_t *)malloc(BufSize * sizeof(wchar_t)), *PtrCopyBuf;
 	WORD Chr;
-	GetText(X1,Y1,X2,Y2,CharBuf,BufSize*sizeof(CHAR_INFO));
-	*CopyBuf=0;
-	PtrCharBuf=CharBuf;
-	PtrCopyBuf=CopyBuf;
+	GetText(X1, Y1, X2, Y2, CharBuf, BufSize * sizeof(CHAR_INFO));
+	*CopyBuf = 0;
+	PtrCharBuf = CharBuf;
+	PtrCopyBuf = CopyBuf;
 
-	for (int I=0; I<GHeight; I++)
-	{
-		if (I>0)
-		{
-			*PtrCopyBuf++=L'\r';
-			*PtrCopyBuf++=L'\n';
-			*PtrCopyBuf=0;
+	for (int I = 0; I < GHeight; I++) {
+		if (I > 0) {
+			*PtrCopyBuf++ = L'\r';
+			*PtrCopyBuf++ = L'\n';
+			*PtrCopyBuf = 0;
 		}
 
-		for (int J=0; J<GWidth; J++, ++PtrCharBuf)
-		{
+		for (int J = 0; J < GWidth; J++, ++PtrCharBuf) {
 			WORD Chr2 = PtrCharBuf->Char.UnicodeChar;
-			Chr=PtrCharBuf->Char.UnicodeChar;
+			Chr = PtrCharBuf->Char.UnicodeChar;
 
-			if (Opt.CleanAscii)
-			{
-				switch (Chr2)
-				{
-					case L'.': Chr=L'.'; break;
-					case 0x07: Chr=L'*'; break;
-					case 0x10: Chr=L'>'; break;
-					case 0x11: Chr=L'<'; break;
+			if (Opt.CleanAscii) {
+				switch (Chr2) {
+					case L'.':
+						Chr = L'.';
+						break;
+					case 0x07:
+						Chr = L'*';
+						break;
+					case 0x10:
+						Chr = L'>';
+						break;
+					case 0x11:
+						Chr = L'<';
+						break;
 					case 0x18:
-					case 0x19: Chr=L'|'; break;
+					case 0x19:
+						Chr = L'|';
+						break;
 					case 0x1E:
-					case 0x1F: Chr=L'X'; break;
-					case 0xFF: Chr=L' '; break;
+					case 0x1F:
+						Chr = L'X';
+						break;
+					case 0xFF:
+						Chr = L' ';
+						break;
 					default:
 
 						if (Chr2 < 0x20)
-							Chr=L'.';
+							Chr = L'.';
 						else if (Chr2 < 0x100)
-							Chr=Chr2;
+							Chr = Chr2;
 
 						break;
 				}
 			}
 
-			if (Opt.NoGraphics && Chr2 >=0xB3 && Chr2 <= 0xDA)
-			{
-				switch (Chr2)
-				{
+			if (Opt.NoGraphics && Chr2 >= 0xB3 && Chr2 <= 0xDA) {
+				switch (Chr2) {
 					case 0xB3:
-					case 0xBA: Chr=L'|'; break;
-					case 0xC4: Chr=L'-'; break;
-					case 0xCD: Chr=L'='; break;
-					default:   Chr=L'+'; break;
+					case 0xBA:
+						Chr = L'|';
+						break;
+					case 0xC4:
+						Chr = L'-';
+						break;
+					case 0xCD:
+						Chr = L'=';
+						break;
+					default:
+						Chr = L'+';
+						break;
 				}
 			}
 
-			if (Opt.NoBoxes && Chr2 >=0xB3 && Chr2 <= 0xDA)
-			{
-				switch (Chr2)
-				{
+			if (Opt.NoBoxes && Chr2 >= 0xB3 && Chr2 <= 0xDA) {
+				switch (Chr2) {
 					case 0xB3:
-					case 0xBA: Chr=L' '; break;
-					case 0xC4: Chr=L' '; break;
-					case 0xCD: Chr=L' '; break;
-					default:   Chr=L' '; break;
+					case 0xBA:
+						Chr = L' ';
+						break;
+					case 0xC4:
+						Chr = L' ';
+						break;
+					case 0xCD:
+						Chr = L' ';
+						break;
+					default:
+						Chr = L' ';
+						break;
 				}
 			}
 
-			*PtrCopyBuf++=Chr;
-			*PtrCopyBuf=0;
+			*PtrCopyBuf++ = Chr;
+			*PtrCopyBuf = 0;
 		}
 
-		for (int K=StrLength(CopyBuf)-1; K>=0 && CopyBuf[K]==L' '; K--)
-			CopyBuf[K]=0;
+		for (int K = StrLength(CopyBuf) - 1; K >= 0 && CopyBuf[K] == L' '; K--)
+			CopyBuf[K] = 0;
 
-		PtrCopyBuf=CopyBuf+StrLength(CopyBuf);
+		PtrCopyBuf = CopyBuf + StrLength(CopyBuf);
 	}
 
 	Clipboard clip;
 
-	if (clip.Open())
-	{
-		if (Append)
-		{
-			wchar_t *AppendBuf=clip.Paste();
-			int add=0;
+	if (clip.Open()) {
+		if (Append) {
+			wchar_t *AppendBuf = clip.Paste();
+			int add = 0;
 
-			if (AppendBuf)
-			{
-				size_t DataSize=StrLength(AppendBuf);
+			if (AppendBuf) {
+				size_t DataSize = StrLength(AppendBuf);
 
-				if (AppendBuf[DataSize-1]!=L'\n')
-				{
-					add=2;
+				if (AppendBuf[DataSize - 1] != L'\n') {
+					add = 2;
 				}
 
-				AppendBuf=(wchar_t *)realloc(AppendBuf,(DataSize+BufSize+add)*sizeof(wchar_t));
-				wmemcpy(AppendBuf+DataSize+add,CopyBuf,BufSize);
+				AppendBuf = (wchar_t *)realloc(AppendBuf, (DataSize + BufSize + add) * sizeof(wchar_t));
+				wmemcpy(AppendBuf + DataSize + add, CopyBuf, BufSize);
 
 				if (add) {
-					wmemcpy(AppendBuf+DataSize, NATIVE_EOLW, wcslen(NATIVE_EOLW));
+					wmemcpy(AppendBuf + DataSize, NATIVE_EOLW, wcslen(NATIVE_EOLW));
 				}
 
 				free(CopyBuf);
-				CopyBuf=AppendBuf;
+				CopyBuf = AppendBuf;
 			}
 		}
 
@@ -213,58 +225,52 @@ void Grabber::CopyGrabbedArea(int Append)
 	delete[] CharBuf;
 }
 
-
 void Grabber::DisplayObject()
 {
-	MoveCursor(GArea.CurX,GArea.CurY);
+	MoveCursor(GArea.CurX, GArea.CurY);
 
-	if (PrevArea.X1!=GArea.X1 || PrevArea.X2!=GArea.X2 ||
-		PrevArea.Y1!=GArea.Y1 || PrevArea.Y2!=GArea.Y2)
-	{
-		int X1,Y1,X2,Y2;
-		X1=Min(GArea.X1,GArea.X2);
-		X2=Max(GArea.X1,GArea.X2);
-		Y1=Min(GArea.Y1,GArea.Y2);
-		Y2=Max(GArea.Y1,GArea.Y2);
+	if (PrevArea.X1 != GArea.X1 || PrevArea.X2 != GArea.X2 || PrevArea.Y1 != GArea.Y1
+			|| PrevArea.Y2 != GArea.Y2) {
+		int X1, Y1, X2, Y2;
+		X1 = Min(GArea.X1, GArea.X2);
+		X2 = Max(GArea.X1, GArea.X2);
+		Y1 = Min(GArea.Y1, GArea.Y2);
+		Y2 = Max(GArea.Y1, GArea.Y2);
 
-		if (X1>Min(PrevArea.X1,PrevArea.X2) || X2<Max(PrevArea.X1,PrevArea.X2) ||
-			Y1>Min(PrevArea.Y1,PrevArea.Y2) || Y2<Max(PrevArea.Y1,PrevArea.Y2))
+		if (X1 > Min(PrevArea.X1, PrevArea.X2) || X2 < Max(PrevArea.X1, PrevArea.X2)
+				|| Y1 > Min(PrevArea.Y1, PrevArea.Y2) || Y2 < Max(PrevArea.Y1, PrevArea.Y2))
 			SaveScr->RestoreArea(FALSE);
 
-		if (GArea.X1!=-1)
-		{
-			CHAR_INFO *CharBuf=new CHAR_INFO[(X2-X1+1)*(Y2-Y1+1)];
-			CHAR_INFO *PrevBuf=SaveScr->GetBufferAddress();
-			GetText(X1,Y1,X2,Y2,CharBuf,sizeof(CHAR_INFO)*(X2-X1+1)*(Y2-Y1+1));
+		if (GArea.X1 != -1) {
+			CHAR_INFO *CharBuf = new CHAR_INFO[(X2 - X1 + 1) * (Y2 - Y1 + 1)];
+			CHAR_INFO *PrevBuf = SaveScr->GetBufferAddress();
+			GetText(X1, Y1, X2, Y2, CharBuf, sizeof(CHAR_INFO) * (X2 - X1 + 1) * (Y2 - Y1 + 1));
 
-			for (int X=X1; X<=X2; X++)
-				for (int Y=Y1; Y<=Y2; Y++)
-				{
+			for (int X = X1; X <= X2; X++)
+				for (int Y = Y1; Y <= Y2; Y++) {
 					int NewColor;
 
-					if ((PrevBuf[X+Y*(ScrX+1)].Attributes & B_LIGHTGRAY)==B_LIGHTGRAY)
-						NewColor=B_BLACK|F_LIGHTGRAY;
+					if ((PrevBuf[X + Y * (ScrX + 1)].Attributes & B_LIGHTGRAY) == B_LIGHTGRAY)
+						NewColor = B_BLACK | F_LIGHTGRAY;
 					else
-						NewColor=B_LIGHTGRAY|F_BLACK;
+						NewColor = B_LIGHTGRAY | F_BLACK;
 
-					int Pos=(X-X1)+(Y-Y1)*(X2-X1+1);
-					CharBuf[Pos].Attributes=(CharBuf[Pos].Attributes & ~0xff) | NewColor;
+					int Pos = (X - X1) + (Y - Y1) * (X2 - X1 + 1);
+					CharBuf[Pos].Attributes = (CharBuf[Pos].Attributes & ~0xff) | NewColor;
 				}
 
-			PutText(X1,Y1,X2,Y2,CharBuf);
+			PutText(X1, Y1, X2, Y2, CharBuf);
 			delete[] CharBuf;
 		}
 
-		if (GArea.X1==-2)
-		{
+		if (GArea.X1 == -2) {
 			SaveScr->RestoreArea(FALSE);
-			GArea.X1=GArea.X2;
+			GArea.X1 = GArea.X2;
 		}
 
-		PrevArea=GArea;
+		PrevArea = GArea;
 	}
 }
-
 
 int Grabber::ProcessKey(int Key)
 {
@@ -275,161 +281,193 @@ int Grabber::ProcessKey(int Key)
 		0,0 консоли.
 		Не было учтено режима выполнения макроса.
 	*/
-	SetCursorType(TRUE,60);
+	SetCursorType(TRUE, 60);
 
-	if (CtrlObject->Macro.IsExecuting())
-	{
-		if ((Key&KEY_SHIFT) && Key!=KEY_NONE && ResetArea)
+	if (CtrlObject->Macro.IsExecuting()) {
+		if ((Key & KEY_SHIFT) && Key != KEY_NONE && ResetArea)
 			Reset();
-		else if (Key!=KEY_IDLE && Key!=KEY_NONE && !(Key&KEY_SHIFT))
-			ResetArea=TRUE;
-	}
-	else
-	{
-		if ((ShiftPressed || Key!=KEY_SHIFT) && (Key&KEY_SHIFT) && Key!=KEY_NONE && ResetArea)
+		else if (Key != KEY_IDLE && Key != KEY_NONE && !(Key & KEY_SHIFT))
+			ResetArea = TRUE;
+	} else {
+		if ((ShiftPressed || Key != KEY_SHIFT) && (Key & KEY_SHIFT) && Key != KEY_NONE && ResetArea)
 			Reset();
-		else if (Key!=KEY_IDLE && Key!=KEY_NONE && Key!=KEY_SHIFT && !ShiftPressed && !(Key&KEY_SHIFT))
-			ResetArea=TRUE;
+		else if (Key != KEY_IDLE && Key != KEY_NONE && Key != KEY_SHIFT && !ShiftPressed
+				&& !(Key & KEY_SHIFT))
+			ResetArea = TRUE;
 	}
 
-	switch (Key)
-	{
+	switch (Key) {
 		case KEY_CTRLU:
 			Reset();
-			GArea.X1=-2;
+			GArea.X1 = -2;
 			break;
 		case KEY_ESC:
 			SetExitCode(0);
 			break;
 		case KEY_NUMENTER:
 		case KEY_ENTER:
-		case KEY_CTRLINS:   case KEY_CTRLNUMPAD0:
+		case KEY_CTRLINS:
+		case KEY_CTRLNUMPAD0:
 		case KEY_CTRLADD:
 			CopyGrabbedArea(Key == KEY_CTRLADD);
 			SetExitCode(1);
 			break;
-		case KEY_LEFT:      case KEY_NUMPAD4:   case L'4':
+		case KEY_LEFT:
+		case KEY_NUMPAD4:
+		case L'4':
 
-			if (GArea.CurX>0)
+			if (GArea.CurX > 0)
 				GArea.CurX--;
 
 			break;
-		case KEY_RIGHT:     case KEY_NUMPAD6:   case L'6':
+		case KEY_RIGHT:
+		case KEY_NUMPAD6:
+		case L'6':
 
-			if (GArea.CurX<ScrX)
+			if (GArea.CurX < ScrX)
 				GArea.CurX++;
 
 			break;
-		case KEY_UP:        case KEY_NUMPAD8:   case L'8':
+		case KEY_UP:
+		case KEY_NUMPAD8:
+		case L'8':
 
-			if (GArea.CurY>0)
+			if (GArea.CurY > 0)
 				GArea.CurY--;
 
 			break;
-		case KEY_DOWN:      case KEY_NUMPAD2:   case L'2':
+		case KEY_DOWN:
+		case KEY_NUMPAD2:
+		case L'2':
 
-			if (GArea.CurY<ScrY)
+			if (GArea.CurY < ScrY)
 				GArea.CurY++;
 
 			break;
-		case KEY_HOME:      case KEY_NUMPAD7:   case L'7':
-			GArea.CurX=0;
+		case KEY_HOME:
+		case KEY_NUMPAD7:
+		case L'7':
+			GArea.CurX = 0;
 			break;
-		case KEY_END:       case KEY_NUMPAD1:   case L'1':
-			GArea.CurX=ScrX;
+		case KEY_END:
+		case KEY_NUMPAD1:
+		case L'1':
+			GArea.CurX = ScrX;
 			break;
-		case KEY_PGUP:      case KEY_NUMPAD9:   case L'9':
-			GArea.CurY=0;
+		case KEY_PGUP:
+		case KEY_NUMPAD9:
+		case L'9':
+			GArea.CurY = 0;
 			break;
-		case KEY_PGDN:      case KEY_NUMPAD3:   case L'3':
-			GArea.CurY=ScrY;
+		case KEY_PGDN:
+		case KEY_NUMPAD3:
+		case L'3':
+			GArea.CurY = ScrY;
 			break;
-		case KEY_CTRLHOME:  case KEY_CTRLNUMPAD7:
-			GArea.CurX=GArea.CurY=0;
+		case KEY_CTRLHOME:
+		case KEY_CTRLNUMPAD7:
+			GArea.CurX = GArea.CurY = 0;
 			break;
-		case KEY_CTRLEND:   case KEY_CTRLNUMPAD1:
-			GArea.CurX=ScrX;
-			GArea.CurY=ScrY;
+		case KEY_CTRLEND:
+		case KEY_CTRLNUMPAD1:
+			GArea.CurX = ScrX;
+			GArea.CurY = ScrY;
 			break;
-		case KEY_CTRLLEFT:      case KEY_CTRLNUMPAD4:
-		case KEY_CTRLSHIFTLEFT: case KEY_CTRLSHIFTNUMPAD4:
+		case KEY_CTRLLEFT:
+		case KEY_CTRLNUMPAD4:
+		case KEY_CTRLSHIFTLEFT:
+		case KEY_CTRLSHIFTNUMPAD4:
 
-			if ((GArea.CurX-=10)<0)
-				GArea.CurX=0;
+			if ((GArea.CurX-= 10) < 0)
+				GArea.CurX = 0;
 
 			if (Key == KEY_CTRLSHIFTLEFT || Key == KEY_CTRLSHIFTNUMPAD4)
-				GArea.X1=GArea.CurX;
+				GArea.X1 = GArea.CurX;
 
 			break;
-		case KEY_CTRLRIGHT:      case KEY_CTRLNUMPAD6:
-		case KEY_CTRLSHIFTRIGHT: case KEY_CTRLSHIFTNUMPAD6:
+		case KEY_CTRLRIGHT:
+		case KEY_CTRLNUMPAD6:
+		case KEY_CTRLSHIFTRIGHT:
+		case KEY_CTRLSHIFTNUMPAD6:
 
-			if ((GArea.CurX+=10)>ScrX)
-				GArea.CurX=ScrX;
+			if ((GArea.CurX+= 10) > ScrX)
+				GArea.CurX = ScrX;
 
 			if (Key == KEY_CTRLSHIFTRIGHT || Key == KEY_CTRLSHIFTNUMPAD6)
-				GArea.X1=GArea.CurX;
+				GArea.X1 = GArea.CurX;
 
 			break;
-		case KEY_CTRLUP:        case KEY_CTRLNUMPAD8:
-		case KEY_CTRLSHIFTUP:   case KEY_CTRLSHIFTNUMPAD8:
+		case KEY_CTRLUP:
+		case KEY_CTRLNUMPAD8:
+		case KEY_CTRLSHIFTUP:
+		case KEY_CTRLSHIFTNUMPAD8:
 
-			if ((GArea.CurY-=5)<0)
-				GArea.CurY=0;
+			if ((GArea.CurY-= 5) < 0)
+				GArea.CurY = 0;
 
 			if (Key == KEY_CTRLSHIFTUP || Key == KEY_CTRLSHIFTNUMPAD8)
-				GArea.Y1=GArea.CurY;
+				GArea.Y1 = GArea.CurY;
 
 			break;
-		case KEY_CTRLDOWN:      case KEY_CTRLNUMPAD2:
-		case KEY_CTRLSHIFTDOWN: case KEY_CTRLSHIFTNUMPAD2:
+		case KEY_CTRLDOWN:
+		case KEY_CTRLNUMPAD2:
+		case KEY_CTRLSHIFTDOWN:
+		case KEY_CTRLSHIFTNUMPAD2:
 
-			if ((GArea.CurY+=5)>ScrY)
-				GArea.CurY=ScrY;
+			if ((GArea.CurY+= 5) > ScrY)
+				GArea.CurY = ScrY;
 
 			if (Key == KEY_CTRLSHIFTDOWN || Key == KEY_CTRLSHIFTNUMPAD8)
-				GArea.Y1=GArea.CurY;
+				GArea.Y1 = GArea.CurY;
 
 			break;
-		case KEY_SHIFTLEFT:  case KEY_SHIFTNUMPAD4:
+		case KEY_SHIFTLEFT:
+		case KEY_SHIFTNUMPAD4:
 
-			if (GArea.X1>0)
+			if (GArea.X1 > 0)
 				GArea.X1--;
 
-			GArea.CurX=GArea.X1;
+			GArea.CurX = GArea.X1;
 			break;
-		case KEY_SHIFTRIGHT: case KEY_SHIFTNUMPAD6:
+		case KEY_SHIFTRIGHT:
+		case KEY_SHIFTNUMPAD6:
 
-			if (GArea.X1<ScrX)
+			if (GArea.X1 < ScrX)
 				GArea.X1++;
 
-			GArea.CurX=GArea.X1;
+			GArea.CurX = GArea.X1;
 			break;
-		case KEY_SHIFTUP:    case KEY_SHIFTNUMPAD8:
+		case KEY_SHIFTUP:
+		case KEY_SHIFTNUMPAD8:
 
-			if (GArea.Y1>0)
+			if (GArea.Y1 > 0)
 				GArea.Y1--;
 
-			GArea.CurY=GArea.Y1;
+			GArea.CurY = GArea.Y1;
 			break;
-		case KEY_SHIFTDOWN:  case KEY_SHIFTNUMPAD2:
+		case KEY_SHIFTDOWN:
+		case KEY_SHIFTNUMPAD2:
 
-			if (GArea.Y1<ScrY)
+			if (GArea.Y1 < ScrY)
 				GArea.Y1++;
 
-			GArea.CurY=GArea.Y1;
+			GArea.CurY = GArea.Y1;
 			break;
-		case KEY_SHIFTHOME:  case KEY_SHIFTNUMPAD7:
-			GArea.CurX=GArea.X1=0;
+		case KEY_SHIFTHOME:
+		case KEY_SHIFTNUMPAD7:
+			GArea.CurX = GArea.X1 = 0;
 			break;
-		case KEY_SHIFTEND:   case KEY_SHIFTNUMPAD1:
-			GArea.CurX=GArea.X1=ScrX;
+		case KEY_SHIFTEND:
+		case KEY_SHIFTNUMPAD1:
+			GArea.CurX = GArea.X1 = ScrX;
 			break;
-		case KEY_SHIFTPGUP:  case KEY_SHIFTNUMPAD9:
-			GArea.CurY=GArea.Y1=0;
+		case KEY_SHIFTPGUP:
+		case KEY_SHIFTNUMPAD9:
+			GArea.CurY = GArea.Y1 = 0;
 			break;
-		case KEY_SHIFTPGDN:  case KEY_SHIFTNUMPAD3:
-			GArea.CurY=GArea.Y1=ScrY;
+		case KEY_SHIFTPGDN:
+		case KEY_SHIFTNUMPAD3:
+			GArea.CurY = GArea.Y1 = ScrY;
 			break;
 	}
 
@@ -437,61 +475,56 @@ int Grabber::ProcessKey(int Key)
 	return TRUE;
 }
 
-
 int Grabber::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
-	if (MouseEvent->dwEventFlags==DOUBLE_CLICK ||
-		(!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED)))
-	{
+	if (MouseEvent->dwEventFlags == DOUBLE_CLICK
+			|| (!MouseEvent->dwEventFlags && (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED))) {
 		ProcessKey(KEY_ENTER);
 		return TRUE;
 	}
 
-	if (MouseButtonState!=FROM_LEFT_1ST_BUTTON_PRESSED)
+	if (MouseButtonState != FROM_LEFT_1ST_BUTTON_PRESSED)
 		return FALSE;
 
-	GArea.CurX=Min(Max(static_cast<SHORT>(0),MouseX),ScrX);
-	GArea.CurY=Min(Max(static_cast<SHORT>(0),MouseY),ScrY);
+	GArea.CurX = Min(Max(static_cast<SHORT>(0), MouseX), ScrX);
+	GArea.CurY = Min(Max(static_cast<SHORT>(0), MouseY), ScrY);
 
 	if (!MouseEvent->dwEventFlags)
-		ResetArea=TRUE;
-	else if (MouseEvent->dwEventFlags==MOUSE_MOVED)
-	{
-		if (ResetArea)
-		{
-			GArea.X2=GArea.CurX;
-			GArea.Y2=GArea.CurY;
-			ResetArea=FALSE;
+		ResetArea = TRUE;
+	else if (MouseEvent->dwEventFlags == MOUSE_MOVED) {
+		if (ResetArea) {
+			GArea.X2 = GArea.CurX;
+			GArea.Y2 = GArea.CurY;
+			ResetArea = FALSE;
 		}
 
-		GArea.X1=GArea.CurX;
-		GArea.Y1=GArea.CurY;
+		GArea.X1 = GArea.CurX;
+		GArea.Y1 = GArea.CurY;
 	}
 
-	//VerticalBlock=MouseEvent->dwControlKeyState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
+	// VerticalBlock=MouseEvent->dwControlKeyState&(LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED);
 	DisplayObject();
 	return TRUE;
 }
 
 void Grabber::Reset()
 {
-	GArea.X1=GArea.X2=GArea.CurX;
-	GArea.Y1=GArea.Y2=GArea.CurY;
-	ResetArea=FALSE;
-	//DisplayObject();
+	GArea.X1 = GArea.X2 = GArea.CurX;
+	GArea.Y1 = GArea.Y2 = GArea.CurY;
+	ResetArea = FALSE;
+	// DisplayObject();
 }
 
 bool RunGraber()
 {
-	static bool InGrabber=false;
+	static bool InGrabber = false;
 
-	if (!InGrabber)
-	{
-		InGrabber=true;
-		WaitInMainLoop=FALSE;
+	if (!InGrabber) {
+		InGrabber = true;
+		WaitInMainLoop = FALSE;
 		FlushInputBuffer();
 		Grabber Grabber;
-		InGrabber=false;
+		InGrabber = false;
 		return true;
 	}
 

@@ -48,8 +48,8 @@ enum enumHISTORYTYPE
 
 struct HistoryRecord
 {
-	bool   Lock;
-	int    Type;
+	bool Lock;
+	int Type;
 	FARString strName;
 	FILETIME Timestamp;
 
@@ -58,18 +58,17 @@ struct HistoryRecord
 		Lock = false;
 		Type = 0;
 		strName.Clear();
-		Timestamp.dwLowDateTime=0;
-		Timestamp.dwHighDateTime=0;
+		Timestamp.dwLowDateTime = 0;
+		Timestamp.dwHighDateTime = 0;
 	}
 
-	const HistoryRecord& operator=(const HistoryRecord &rhs)
+	const HistoryRecord &operator=(const HistoryRecord &rhs)
 	{
-		if (this != &rhs)
-		{
+		if (this != &rhs) {
 			strName = rhs.strName;
 			Type = rhs.Type;
 			Lock = rhs.Lock;
-			Timestamp.dwLowDateTime  = rhs.Timestamp.dwLowDateTime;
+			Timestamp.dwLowDateTime = rhs.Timestamp.dwLowDateTime;
 			Timestamp.dwHighDateTime = rhs.Timestamp.dwHighDateTime;
 		}
 
@@ -79,40 +78,44 @@ struct HistoryRecord
 
 class History
 {
-	private:
-		std::string strRegKey;
-		bool EnableAdd, KeepSelectedPos, SaveType;
-		int RemoveDups;
-		enumHISTORYTYPE TypeHistory;
-		size_t HistoryCount;
-		const int *EnableSave;
-		DList<HistoryRecord> HistoryList;
-		HistoryRecord *CurrentItem;
-		struct stat LoadedStat{};
+private:
+	std::string strRegKey;
+	bool EnableAdd, KeepSelectedPos, SaveType;
+	int RemoveDups;
+	enumHISTORYTYPE TypeHistory;
+	size_t HistoryCount;
+	const int *EnableSave;
+	DList<HistoryRecord> HistoryList;
+	HistoryRecord *CurrentItem;
+	struct stat LoadedStat
+	{};
 
-	private:
-		void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);
-		bool EqualType(int Type1, int Type2);
-		const wchar_t *GetTitle(int Type);
-		int ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type, Dialog *Dlg);
-		bool ReadHistory(bool bOnlyLines=false);
-		bool SaveHistory();
-		void SyncChanges();
+private:
+	void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);
+	bool EqualType(int Type1, int Type2);
+	const wchar_t *GetTitle(int Type);
+	int ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type,
+			Dialog *Dlg);
+	bool ReadHistory(bool bOnlyLines = false);
+	bool SaveHistory();
+	void SyncChanges();
 
-	public:
-		History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const std::string &RegKey, const int *EnableSave, bool SaveType);
-		~History();
+public:
+	History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const std::string &RegKey,
+			const int *EnableSave, bool SaveType);
+	~History();
 
-	public:
-		void AddToHistory(const wchar_t *Str, int Type=0, const wchar_t *Prefix=nullptr, bool SaveForbid=false);
-		static bool ReadLastItem(const char *RegKey, FARString &strStr);
-		int  Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type);
-		int  Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr);
-		void GetPrev(FARString &strStr);
-		void GetNext(FARString &strStr);
-		bool GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend=false);
-		bool GetAllSimilar(VMenu &HistoryMenu,const wchar_t *Str);
-		bool DeleteMatching(FARString &strStr);
-		void SetAddMode(bool EnableAdd, int RemoveDups, bool KeepSelectedPos);
-		void ResetPosition() { CurrentItem = nullptr; }
+public:
+	void
+	AddToHistory(const wchar_t *Str, int Type = 0, const wchar_t *Prefix = nullptr, bool SaveForbid = false);
+	static bool ReadLastItem(const char *RegKey, FARString &strStr);
+	int Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type);
+	int Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr);
+	void GetPrev(FARString &strStr);
+	void GetNext(FARString &strStr);
+	bool GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend = false);
+	bool GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str);
+	bool DeleteMatching(FARString &strStr);
+	void SetAddMode(bool EnableAdd, int RemoveDups, bool KeepSelectedPos);
+	void ResetPosition() { CurrentItem = nullptr; }
 };

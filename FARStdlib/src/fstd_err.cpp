@@ -1,12 +1,11 @@
 #include <all_far.h>
 
-
 #include "fstdlib.h"
 
 const char *_cdecl __WINError(void)
 {
 	return "Unknown error";
-	#if 0
+#if 0
 	static char *WinEBuff = NULL;
 	DWORD err = WINPORT(GetLastError)();
 
@@ -26,5 +25,5 @@ const char *_cdecl __WINError(void)
 
 	CharToOem(WinEBuff, WinEBuff);
 	return WinEBuff;
-	#endif
+#endif
 }

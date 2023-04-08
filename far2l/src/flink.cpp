@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "copy.hpp"
 #include "flink.hpp"
 #include "cddrv.hpp"
@@ -49,17 +48,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int WINAPI GetNumberOfLinks(const wchar_t *Name)
 {
 	struct stat s = {};
-	if (sdc_stat(Wide2MB(Name).c_str(), &s)!=0)
+	if (sdc_stat(Wide2MB(Name).c_str(), &s) != 0)
 		return 1;
-		
+
 	return (s.st_nlink > 0) ? s.st_nlink : 1;
 }
 
-static std::string SymName(const wchar_t *ExistingName,const wchar_t *NewName)
+static std::string SymName(const wchar_t *ExistingName, const wchar_t *NewName)
 {
 	fprintf(stderr, "SymTarget('%ls', '%ls')\n", ExistingName, NewName);
 	std::string out(Wide2MB(NewName));
-	if (!out.empty() && out[out.size()-1]==GOOD_SLASH) {
+	if (!out.empty() && out[out.size() - 1] == GOOD_SLASH) {
 		const wchar_t *slash = wcsrchr(ExistingName, GOOD_SLASH);
 		out+= Wide2MB(slash ? slash + 1 : ExistingName);
 	}
@@ -68,68 +67,67 @@ static std::string SymName(const wchar_t *ExistingName,const wchar_t *NewName)
 
 static std::string SymSubject(const wchar_t *ExistingName)
 {
-	if (*ExistingName==GOOD_SLASH)
+	if (*ExistingName == GOOD_SLASH)
 		return Wide2MB(ExistingName);
-//todo: use ConvertNameToReal
-	if (ExistingName[0]=='.' && ExistingName[1]==GOOD_SLASH)
+	// todo: use ConvertNameToReal
+	if (ExistingName[0] == '.' && ExistingName[1] == GOOD_SLASH)
 		ExistingName+= 2;
 
 	FARString path;
 	apiGetCurrentDirectory(path);
 	AddEndSlash(path);
 	path+= ExistingName;
-	
+
 	return Wide2MB(path.CPtr());
 }
 
-int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName)
+int WINAPI MkHardLink(const wchar_t *ExistingName, const wchar_t *NewName)
 {
-	int r = sdc_link( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
-	if (r!=0) {
+	int r = sdc_link(SymSubject(ExistingName).c_str(), SymName(ExistingName, NewName).c_str());
+	if (r != 0) {
 		return 0;
 	}
-	
+
 	return 1;
 }
 
-int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg)
+int WINAPI
+MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg)
 {
-	int r = sdc_symlink( SymSubject(ExistingName).c_str() , SymName(ExistingName, NewName).c_str() );
-	if (r!=0) {
+	int r = sdc_symlink(SymSubject(ExistingName).c_str(), SymName(ExistingName, NewName).c_str());
+	if (r != 0) {
 		if (CanShowMsg) {
-			Message(MSG_WARNING,1,Msg::Error,Msg::CopyCannotCreateJunctionToFile,NewName, Msg::Ok);
+			Message(MSG_WARNING, 1, Msg::Error, Msg::CopyCannotCreateJunctionToFile, NewName, Msg::Ok);
 		}
-		
+
 		return 0;
 	}
-	
+
 	return 1;
 }
 
 int WINAPI FarMkLink(const wchar_t *ExistingName, const wchar_t *NewName, DWORD Flags)
 {
-	int Result=0;
+	int Result = 0;
 
-	if (ExistingName && *ExistingName && NewName && *NewName)
-	{
-		int Op=Flags&0xFFFF;
+	if (ExistingName && *ExistingName && NewName && *NewName) {
+		int Op = Flags & 0xFFFF;
 
-		switch (Op)
-		{
+		switch (Op) {
 			case FLINK_HARDLINK:
-				Result=MkHardLink(ExistingName, NewName);
+				Result = MkHardLink(ExistingName, NewName);
 				break;
 			case FLINK_JUNCTION:
 			case FLINK_VOLMOUNT:
 			case FLINK_SYMLINKFILE:
 			case FLINK_SYMLINKDIR:
-				ReparsePointTypes LinkType=RP_JUNCTION;
+				ReparsePointTypes LinkType = RP_JUNCTION;
 
-				Result=MkSymLink(ExistingName, NewName,LinkType,(Flags&FLINK_SHOWERRMSG) != 0);
+				Result = MkSymLink(ExistingName, NewName, LinkType, (Flags & FLINK_SHOWERRMSG) != 0);
 		}
 	}
 
-	if (Result && !(Flags&FLINK_DONOTUPDATEPANEL))
+	if (Result && !(Flags & FLINK_DONOTUPDATEPANEL))
 		ShellUpdatePanels(nullptr, FALSE);
 
 	return Result;

@@ -38,8 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 template <class ID, const char *(*UNCACHED_LOOKUP)(ID)>
 class CachedFileLookupT
 {
-	struct Cache : std::map<ID, FARString> {} _cache;
-	
+	struct Cache : std::map<ID, FARString>
+	{
+	} _cache;
+
 public:
 	const FARString &Lookup(ID id)
 	{
@@ -62,9 +64,8 @@ const char *GroupNameByID(gid_t id);
 typedef CachedFileLookupT<uid_t, &OwnerNameByID> CachedFileOwnerLookup;
 typedef CachedFileLookupT<gid_t, &GroupNameByID> CachedFileGroupLookup;
 
-
-bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner);
-bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup);
+bool WINAPI GetFileOwner(const wchar_t *Computer, const wchar_t *Name, FARString &strOwner);
+bool WINAPI GetFileGroup(const wchar_t *Computer, const wchar_t *Name, FARString &strGroup);
 
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner);
 bool SetGroup(LPCWSTR Object, LPCWSTR Group);

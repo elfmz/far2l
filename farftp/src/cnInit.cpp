@@ -1,30 +1,28 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
 BOOL Connection::Init(LPCSTR Host, LPCSTR Port, LPCSTR User, LPCSTR Password)
 {
 	FP_Screen _scr;
-	PROC(("Connection::Init","[%s] [%s] [%s]",Host,User,Password))
+	PROC(("Connection::Init", "[%s] [%s] [%s]", Host, User, Password))
 	//_fmode        = _O_BINARY; // This causes an error somewhere.
 	SocketError = INVALID_SOCKET;
 	WINPORT(SetLastError)(ERROR_SUCCESS);
 	/* Set up defaults for FTP. */
 	type = TYPE_A;
 	strcpy(bytename, "8"), bytesize = 8;
-	cpend = 0;  /* no pending replies */
-	proxy = 0;      /* proxy not active */
+	cpend = 0;	/* no pending replies */
+	proxy = 0;	/* proxy not active */
 	ResetCmdBuff();
 	char *argv[5];
-	argv[0] = (char*)"open";
-	argv[1] = (char*)Host;
-	argv[2] = (char*)Port;
-	argv[3] = (char*)User;
-	argv[4] = (char*)Password;
+	argv[0] = (char *)"open";
+	argv[1] = (char *)Host;
+	argv[2] = (char *)Port;
+	argv[3] = (char *)User;
+	argv[4] = (char *)Password;
 
-	if(!setpeer(5, argv))
-	{
+	if (!setpeer(5, argv)) {
 		Log(("!setpeer"));
 		return FALSE;
 	}
@@ -38,106 +36,99 @@ BOOL Connection::hookup(char *host, int port)
 {
 	FP_Screen _scr;
 	struct hostent *he;
-	SOCKET   sock = INVALID_SOCKET;
-	socklen_t      len = sizeof(myctladdr);
-	Log(("Connecting: [%s]:%d",host,port));
+	SOCKET sock = INVALID_SOCKET;
+	socklen_t len = sizeof(myctladdr);
+	Log(("Connecting: [%s]:%d", host, port));
 	hostname[0] = 0;
 	memset(&hisctladdr, 0, sizeof(hisctladdr));
-	memset(&myctladdr,  0, sizeof(myctladdr));
+	memset(&myctladdr, 0, sizeof(myctladdr));
 	hisctladdr.sin_port = port;
-	ConnectMessage(MResolving,host);
+	ConnectMessage(MResolving, host);
 	hisctladdr.sin_addr.s_addr = inet_addr(host);
 
-	do
-	{
-//Server addr
-		if(hisctladdr.sin_addr.s_addr != INADDR_NONE)
-		{
+	do {
+		// Server addr
+		if (hisctladdr.sin_addr.s_addr != INADDR_NONE) {
 			hisctladdr.sin_family = AF_INET;
-		}
-		else if((he=gethostbyname(host)) != NULL)
-		{
-			memmove(&hisctladdr.sin_addr,he->h_addr,he->h_length);
+		} else if ((he = gethostbyname(host)) != NULL) {
+			memmove(&hisctladdr.sin_addr, he->h_addr, he->h_length);
 			hisctladdr.sin_family = he->h_addrtype;
+		} else {
+			break;
 		}
-		else {
-			break;			
-		}
 
-//Sock
-		if(!scValid(sock=scCreate(hisctladdr.sin_family))) break;
-
-//Connect
-		ConnectMessage(MWaitingForConnect,NULL);
-
-		if(!nb_connect(&sock,(sockaddr*)&hisctladdr,sizeof(hisctladdr)))
+		// Sock
+		if (!scValid(sock = scCreate(hisctladdr.sin_family)))
 			break;
 
-//Local addr
-	
-		if(getsockname(sock,(sockaddr*)&myctladdr,&len) != 0)
+		// Connect
+		ConnectMessage(MWaitingForConnect, NULL);
+
+		if (!nb_connect(&sock, (sockaddr *)&hisctladdr, sizeof(hisctladdr)))
 			break;
 
-//Read startup message from server
+		// Local addr
+
+		if (getsockname(sock, (sockaddr *)&myctladdr, &len) != 0)
+			break;
+
+		// Read startup message from server
 		cin = cout = sock;
 		StrCpy(hostname, host, ARRAYSIZE(hostname));
 		portnum = port;
-		
-		ConnectMessage(MWaitingForResponse,NULL);
+
+		ConnectMessage(MWaitingForResponse, NULL);
 		int repl = getreply(0);
 
-		if(repl > RPL_COMPLETE || repl == RPL_ERROR) break;
+		if (repl > RPL_COMPLETE || repl == RPL_ERROR)
+			break;
 
-//OK
-		Log(("Connected: %d",sock));
+		// OK
+		Log(("Connected: %d", sock));
 		cmd_peer = sock;
 		return TRUE;
-	}
-	while(0);
+	} while (0);
 
-//ERROR
+	// ERROR
 	Log(("!connect"));
 	scClose(sock);
-	cin      = 0;
-	cout     = 0;
-	code     = -1;
+	cin = 0;
+	cout = 0;
+	code = -1;
 	cmd_peer = INVALID_SOCKET;
-	portnum  = 0;
+	portnum = 0;
 	return FALSE;
 }
 
 //--------------------------------------------------------------------------------
 int Connection::login(void)
 {
-	//char *acct=NULL;
-	//int   aflag = 0;
-	int   n;
+	// char *acct=NULL;
+	// int   aflag = 0;
+	int n;
 	ConnectMessage(MSendingName);
 	n = command("%s %s", Opt.cmdUser, *UserName ? UserName : "anonymous");
 
-	if(n == RPL_CONTINUE)
-	{
+	if (n == RPL_CONTINUE) {
 		ConnectMessage(MPasswordName);
-		n = command("%s %s",Opt.cmdPass, *UserPassword ? UserPassword : Opt.DefaultPassword);
+		n = command("%s %s", Opt.cmdPass, *UserPassword ? UserPassword : Opt.DefaultPassword);
 	}
 
-	if(n == RPL_CONTINUE)
-	{
-		//aflag++;
-		//acct = "";
-		n = command("%s %s",Opt.cmdAcct,""/*acct*/);
+	if (n == RPL_CONTINUE) {
+		// aflag++;
+		// acct = "";
+		n = command("%s %s", Opt.cmdAcct, "" /*acct*/);
 	}
 
-	if(n != RPL_COMPLETE)
-	{
-		WINPORT(SetLastError)(EPERM);//ERROR_INTERNET_LOGIN_FAILURE);
+	if (n != RPL_COMPLETE) {
+		WINPORT(SetLastError)(EPERM);	// ERROR_INTERNET_LOGIN_FAILURE);
 		return 0;
 	}
 
 	LoginComplete = TRUE;
 	/*
 	  if (!aflag && acct != NULL)
-	    command( "%s %s",Opt.cmdAcct,acct );
+		command( "%s %s",Opt.cmdAcct,acct );
 	*/
 	return 1;
 }
@@ -146,21 +137,14 @@ void Connection::CheckResume(void)
 {
 	int oldcode = code;
 
-	if(Host.AsciiMode)
-	{
-		if(setascii() &&
-			command("%s 0",Opt.cmdRest) != RPL_ERROR)
-		{
-			if(code == 350)
+	if (Host.AsciiMode) {
+		if (setascii() && command("%s 0", Opt.cmdRest) != RPL_ERROR) {
+			if (code == 350)
 				ResumeSupport = TRUE;
 		}
-	}
-	else
-	{
-		if(setbinary() &&
-			command("%s 0",Opt.cmdRest) != RPL_ERROR)
-		{
-			if(code == 350)
+	} else {
+		if (setbinary() && command("%s 0", Opt.cmdRest) != RPL_ERROR) {
+			if (code == 350)
 				ResumeSupport = TRUE;
 		}
 	}
@@ -173,37 +157,30 @@ SOCKET Connection::dataconn(void)
 {
 	PROC(("dataconn", NULL))
 	struct sockaddr_in from;
-	socklen_t                fromlen = sizeof(from);
-	SOCKET             s;
+	socklen_t fromlen = sizeof(from);
+	SOCKET s;
 
-	if(brk_flag)
+	if (brk_flag)
 		return INVALID_SOCKET;
 
-	if(!Host.PassiveMode)
-	{
-		if(!nb_waitstate(&data_peer, ws_accept) ||
-			(s=scAccept(&data_peer, (struct sockaddr *) &from, &fromlen)) == INVALID_SOCKET)
-		{
-			scClose(data_peer,-1);
+	if (!Host.PassiveMode) {
+		if (!nb_waitstate(&data_peer, ws_accept)
+				|| (s = scAccept(&data_peer, (struct sockaddr *)&from, &fromlen)) == INVALID_SOCKET) {
+			scClose(data_peer, -1);
 			return INVALID_SOCKET;
 		}
 
-		Log(("SOCK: accepted data %d -> %d",data_peer,s));
+		Log(("SOCK: accepted data %d -> %d", data_peer, s));
 		close(data_peer);
 		data_peer = s;
-	}
-	else
-	{
-		if(data_peer == INVALID_SOCKET)
-		{
+	} else {
+		if (data_peer == INVALID_SOCKET) {
 			InternalError();
 			return INVALID_SOCKET;
 		}
 
-		if(brk_flag ||
-			!nb_connect(&data_peer,(sockaddr*)&data_addr,sizeof(data_addr)))
-		{
-			scClose(data_peer,-1);
+		if (brk_flag || !nb_connect(&data_peer, (sockaddr *)&data_addr, sizeof(data_addr))) {
+			scClose(data_peer, -1);
 			return INVALID_SOCKET;
 		}
 	}
@@ -225,142 +202,125 @@ BOOL Connection::initconn()
 noport:
 	data_addr = myctladdr;
 
-	if(sendport)
+	if (sendport)
 		data_addr.sin_port = 0; /* let system pick one */
 
-	scClose(data_peer,-1);
+	scClose(data_peer, -1);
 
-	if(brk_flag ||
-		!scValid(data_peer=socket(AF_INET,SOCK_STREAM,0)))
-	{
+	if (brk_flag || !scValid(data_peer = socket(AF_INET, SOCK_STREAM, 0))) {
 		Log(("!socket"));
 
-		if(tmpno)
+		if (tmpno)
 			sendport = 1;
 
 		ErrorCode = errno;
 		return FALSE;
 	}
 
-	Log(("SOCK: created data %d",data_peer));
+	Log(("SOCK: created data %d", data_peer));
 	/* $ VVM  Switch socket to nonblocking mode */
 	SetSocketBlockingEnabled(data_peer, false);
 
 	/* VVM $ */
-	if(!sendport)
-		if(setsockopt(data_peer, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
-		{
+	if (!sendport)
+		if (setsockopt(data_peer, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 			Log(("!setsockopt (reuse address)"));
 			ErrorCode = errno;
 			goto bad;
 		}
 
-	if(!Host.PassiveMode || !sendport)
-	{
-		if(bind(data_peer, (struct sockaddr *)&data_addr, sizeof(data_addr)) < 0)
-		{
+	if (!Host.PassiveMode || !sendport) {
+		if (bind(data_peer, (struct sockaddr *)&data_addr, sizeof(data_addr)) < 0) {
 			Log(("!bind"));
 			ErrorCode = errno;
 			goto bad;
 		}
-/*
-		if(setsockopt(data_peer, SOL_SOCKET, SO_DEBUG, (char*)&on, sizeof(on)) < 0)
-		{
-			Log(("!setsockopt SO_DEBUG (ignored)"));
-		}*/
+		/*
+				if(setsockopt(data_peer, SOL_SOCKET, SO_DEBUG, (char*)&on, sizeof(on)) < 0)
+				{
+					Log(("!setsockopt SO_DEBUG (ignored)"));
+				}*/
 
 		len = sizeof(data_addr);
 
-		if(getsockname(data_peer, (struct sockaddr *)&data_addr, &len) < 0)
-		{
+		if (getsockname(data_peer, (struct sockaddr *)&data_addr, &len) < 0) {
 			Log(("!getsockname"));
 			ErrorCode = errno;
 			goto bad;
 		}
 
-		if(listen(data_peer, 1) < 0)
-		{
+		if (listen(data_peer, 1) < 0) {
 			Log(("!listen"));
 			ErrorCode = errno;
 			goto bad;
 		}
 	}
 
-	if(sendport)
-	{
-		if(Host.PassiveMode)
+	if (sendport) {
+		if (Host.PassiveMode)
 			result = command(Opt.cmdPasv);
 		else
-			result =  command("%s %d,%d,%d,%d,%d,%d",
-				Opt.cmdPort,
-				data_addr.sin_addr.s_addr&0xff,
-				(data_addr.sin_addr.s_addr >> 8) & 0xff,
-				(data_addr.sin_addr.s_addr >> 16) & 0xff,
-				(data_addr.sin_addr.s_addr >> 24) & 0xff,
-				(unsigned char)data_addr.sin_port,
-				(unsigned char)(data_addr.sin_port>>8));
+			result = command("%s %d,%d,%d,%d,%d,%d", Opt.cmdPort, data_addr.sin_addr.s_addr & 0xff,
+					(data_addr.sin_addr.s_addr >> 8) & 0xff, (data_addr.sin_addr.s_addr >> 16) & 0xff,
+					(data_addr.sin_addr.s_addr >> 24) & 0xff, (unsigned char)data_addr.sin_port,
+					(unsigned char)(data_addr.sin_port >> 8));
 
-		if(/*2*/ result == 0 && sendport == -1) //TODO: CHECK: result == ERROR
+		if (/*2*/ result == 0 && sendport == -1)	// TODO: CHECK: result == ERROR
 		{
 			sendport = 0;
 			tmpno = 1;
 			goto noport;
 		}
 
-		if(result != RPL_COMPLETE)
-		{
+		if (result != RPL_COMPLETE) {
 			Log(("!Complete"));
 			goto bad;
 		}
 
-		if(Host.PassiveMode)
-		{
-			char LastReply2[100];  //Not need to use String - PORT string is small.
+		if (Host.PassiveMode) {
+			char LastReply2[100];	// Not need to use String - PORT string is small.
 			char *p;
-			GetReply((BYTE*)LastReply2, sizeof(LastReply2));
+			GetReply((BYTE *)LastReply2, sizeof(LastReply2));
 
-			if(code != 227 || (p=strchr(LastReply2,'('))==NULL)
-			{
+			if (code != 227 || (p = strchr(LastReply2, '(')) == NULL) {
 				Log(("!Pasv port reply"));
 				return FALSE;
 			}
 
 			unsigned a1, a2, a3, a4, p1, p2;
-#define TOP(a) (a&~0xFF)
+#define TOP(a) (a & ~0xFF)
 
-			if(sscanf(p, "(%u,%u,%u,%u,%u,%u)", &a1, &a2, &a3, &a4, &p1, &p2) !=6 ||
-				TOP(a1) || TOP(a2) || TOP(a3) || TOP(a4) || TOP(p1) || TOP(p2))
-			{
+			if (sscanf(p, "(%u,%u,%u,%u,%u,%u)", &a1, &a2, &a3, &a4, &p1, &p2) != 6 || TOP(a1) || TOP(a2)
+					|| TOP(a3) || TOP(a4) || TOP(p1) || TOP(p2)) {
 				Log(("Bad psv port reply"));
 				return FALSE;
 			}
 
-			data_addr.sin_addr.s_addr = (a4<<24) | (a3<<16) | (a2<<8) | a1;
-			data_addr.sin_port        = (p2<<8) | p1;
+			data_addr.sin_addr.s_addr = (a4 << 24) | (a3 << 16) | (a2 << 8) | a1;
+			data_addr.sin_port = (p2 << 8) | p1;
 
-			if(!data_addr.sin_addr.s_addr || data_addr.sin_addr.s_addr == INADDR_ANY) return 1;
+			if (!data_addr.sin_addr.s_addr || data_addr.sin_addr.s_addr == INADDR_ANY)
+				return 1;
 
-			if(data_addr.sin_addr.s_addr != hisctladdr.sin_addr.s_addr)
-			{
+			if (data_addr.sin_addr.s_addr != hisctladdr.sin_addr.s_addr) {
 				char Msg[30];
-				snprintf(Msg, ARRAYSIZE(Msg),
-					"[%s -> %s]",
-					inet_ntoa(hisctladdr.sin_addr), inet_ntoa(data_addr.sin_addr));
-				ConnectMessage(0,Msg,0);
+				snprintf(Msg, ARRAYSIZE(Msg), "[%s -> %s]", inet_ntoa(hisctladdr.sin_addr),
+						inet_ntoa(data_addr.sin_addr));
+				ConnectMessage(0, Msg, 0);
 			}
 		}
 
 		return TRUE;
 	}
 
-	if(tmpno)
+	if (tmpno)
 		sendport = 1;
 
 	return TRUE;
 bad:
-	scClose(data_peer,-1);
+	scClose(data_peer, -1);
 
-	if(tmpno)
+	if (tmpno)
 		sendport = 1;
 
 	return FALSE;

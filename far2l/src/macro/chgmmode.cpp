@@ -36,13 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "chgmmode.hpp"
 #include "ctrlobj.hpp"
 
-ChangeMacroMode::ChangeMacroMode(int NewMode) :
-	PrevMacroMode( CtrlObject ? CtrlObject->Macro.GetMode() : MACRO_SHELL)
+ChangeMacroMode::ChangeMacroMode(int NewMode)
+	:
+	PrevMacroMode(CtrlObject ? CtrlObject->Macro.GetMode() : MACRO_SHELL)
 {
 	if (CtrlObject)
 		CtrlObject->Macro.SetMode(NewMode);
 }
-
 
 ChangeMacroMode::~ChangeMacroMode()
 {

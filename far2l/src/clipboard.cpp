@@ -41,12 +41,12 @@ static const wchar_t FAR_VerticalBlock_Unicode[] = L"FAR_VerticalBlock_Unicode";
 /* ------------------------------------------------------------ */
 // CF_OEMTEXT CF_TEXT CF_UNICODETEXT CF_HDROP
 HGLOBAL Clipboard::hInternalClipboard[5] = {0};
-UINT    Clipboard::uInternalClipboardFormat[5] = {0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF};
+UINT Clipboard::uInternalClipboardFormat[5] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
 
 bool Clipboard::UseInternalClipboard = false;
 bool Clipboard::InternalClipboardOpen = false;
 
-//Sets UseInternalClipboard to State, and returns previous state
+// Sets UseInternalClipboard to State, and returns previous state
 bool Clipboard::SetUseInternalClipboardState(bool State)
 {
 	bool OldState = UseInternalClipboard;
@@ -61,10 +61,8 @@ bool Clipboard::GetUseInternalClipboardState()
 
 UINT Clipboard::RegisterFormat(LPCWSTR lpszFormat)
 {
-	if (UseInternalClipboard)
-	{
-		if (!StrCmp(lpszFormat,FAR_VerticalBlock_Unicode))
-		{
+	if (UseInternalClipboard) {
+		if (!StrCmp(lpszFormat, FAR_VerticalBlock_Unicode)) {
 			return 0xFEB1;
 		}
 
@@ -74,30 +72,25 @@ UINT Clipboard::RegisterFormat(LPCWSTR lpszFormat)
 	return WINPORT(RegisterClipboardFormat)(lpszFormat);
 }
 
-
 BOOL Clipboard::Open()
 {
-	if (UseInternalClipboard)
-	{
-		if (!InternalClipboardOpen)
-		{
-			InternalClipboardOpen=true;
+	if (UseInternalClipboard) {
+		if (!InternalClipboardOpen) {
+			InternalClipboardOpen = true;
 			return TRUE;
 		}
 
 		return FALSE;
 	}
 
-	return WINPORT(OpenClipboard)(NULL);//Console.GetWindow());
+	return WINPORT(OpenClipboard)(NULL);	// Console.GetWindow());
 }
 
 BOOL Clipboard::Close()
 {
-	if (UseInternalClipboard)
-	{
-		if (InternalClipboardOpen)
-		{
-			InternalClipboardOpen=false;
+	if (UseInternalClipboard) {
+		if (InternalClipboardOpen) {
+			InternalClipboardOpen = false;
 			return TRUE;
 		}
 
@@ -109,17 +102,13 @@ BOOL Clipboard::Close()
 
 BOOL Clipboard::Empty()
 {
-	if (UseInternalClipboard)
-	{
-		if (InternalClipboardOpen)
-		{
-			for (size_t I=0; I < ARRAYSIZE(hInternalClipboard); ++I)
-			{
-				if (hInternalClipboard[I])
-				{
+	if (UseInternalClipboard) {
+		if (InternalClipboardOpen) {
+			for (size_t I = 0; I < ARRAYSIZE(hInternalClipboard); ++I) {
+				if (hInternalClipboard[I]) {
 					WINPORT(ClipboardFree)(hInternalClipboard[I]);
-					hInternalClipboard[I]=0;
-					uInternalClipboardFormat[I]=0xFFFF;
+					hInternalClipboard[I] = 0;
+					uInternalClipboardFormat[I] = 0xFFFF;
 				}
 			}
 
@@ -134,56 +123,45 @@ BOOL Clipboard::Empty()
 
 HANDLE Clipboard::GetData(UINT uFormat)
 {
-	if (UseInternalClipboard)
-	{
-		if (InternalClipboardOpen && uFormat != 0xFFFF)
-		{
-			for (size_t I=0; I < ARRAYSIZE(hInternalClipboard); ++I)
-			{
-				if (uInternalClipboardFormat[I] == uFormat)
-				{
+	if (UseInternalClipboard) {
+		if (InternalClipboardOpen && uFormat != 0xFFFF) {
+			for (size_t I = 0; I < ARRAYSIZE(hInternalClipboard); ++I) {
+				if (uInternalClipboardFormat[I] == uFormat) {
 					return hInternalClipboard[I];
 				}
 			}
 		}
 
-		return (HANDLE)nullptr;
+		return (HANDLE) nullptr;
 	}
 
 	return WINPORT(GetClipboardData)(uFormat);
 }
 
-HANDLE Clipboard::SetData(UINT uFormat,HANDLE hMem)
+HANDLE Clipboard::SetData(UINT uFormat, HANDLE hMem)
 {
-	if (UseInternalClipboard)
-	{
-		if (InternalClipboardOpen)
-		{
-			for (size_t I=0; I < ARRAYSIZE(hInternalClipboard); ++I)
-			{
-				if (!hInternalClipboard[I])
-				{
-					hInternalClipboard[I]=hMem;
-					uInternalClipboardFormat[I]=uFormat;
+	if (UseInternalClipboard) {
+		if (InternalClipboardOpen) {
+			for (size_t I = 0; I < ARRAYSIZE(hInternalClipboard); ++I) {
+				if (!hInternalClipboard[I]) {
+					hInternalClipboard[I] = hMem;
+					uInternalClipboardFormat[I] = uFormat;
 					return hMem;
 				}
 			}
 		}
 
-		return (HANDLE)nullptr;
+		return (HANDLE) nullptr;
 	}
 
-	return WINPORT(SetClipboardData)(uFormat,hMem);
+	return WINPORT(SetClipboardData)(uFormat, hMem);
 }
 
 bool Clipboard::IsFormatAvailable(UINT Format)
 {
-	if (UseInternalClipboard)
-	{
-		for (size_t I=0; I < ARRAYSIZE(hInternalClipboard); ++I)
-		{
-			if (uInternalClipboardFormat[I] != 0xFFFF && uInternalClipboardFormat[I]==Format)
-			{
+	if (UseInternalClipboard) {
+		for (size_t I = 0; I < ARRAYSIZE(hInternalClipboard); ++I) {
+			if (uInternalClipboardFormat[I] != 0xFFFF && uInternalClipboardFormat[I] == Format) {
 				return true;
 			}
 		}
@@ -224,8 +202,7 @@ bool Clipboard::AddData(UINT FormatType, const void *Data, size_t Size)
 		return false;
 
 	memcpy(CData, Data, Size);
-	if (!SetData(FormatType, (HANDLE)CData))
-	{
+	if (!SetData(FormatType, (HANDLE)CData)) {
 		WINPORT(ClipboardFree)(CData);
 		return false;
 	}
@@ -242,15 +219,14 @@ wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
 	if (!ClipData)
 		return nullptr;
 
-	size_t CharsCount = wcsnlen((const wchar_t *)ClipData,
-		WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
+	size_t CharsCount =
+			wcsnlen((const wchar_t *)ClipData, WINPORT(ClipboardSize)(ClipData) / sizeof(wchar_t));
 
 	if (MaxChars >= 0 && CharsCount < (size_t)MaxChars)
 		CharsCount = (size_t)MaxChars;
 
 	wchar_t *ClipText = (wchar_t *)malloc((CharsCount + 1) * sizeof(wchar_t));
-	if (ClipText)
-	{
+	if (ClipText) {
 		wmemcpy(ClipText, (const wchar_t *)ClipData, CharsCount);
 		ClipText[CharsCount] = 0;
 	}
@@ -303,7 +279,7 @@ wchar_t *PasteFromClipboardEx(int MaxChars)
 	return ClipText;
 }
 
-wchar_t * WINAPI PasteFromClipboard()
+wchar_t *WINAPI PasteFromClipboard()
 {
 	return PasteFromClipboardEx();
 }

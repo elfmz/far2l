@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrobj.hpp"
 #include "FARString.hpp"
 
-
 class KeyBar;
 
 // ПРОСЬБА НЕ ЗАБЫВАТЬ СИНХРОНИЗИРОВАТЬ ИЗМЕНЕНИЯ
@@ -45,7 +44,7 @@ class KeyBar;
 enum
 {
 	MODALTYPE_VIRTUAL,
-	MODALTYPE_PANELS=1,
+	MODALTYPE_PANELS = 1,
 	MODALTYPE_VIEWER,
 	MODALTYPE_EDITOR,
 	MODALTYPE_DIALOG,
@@ -56,75 +55,76 @@ enum
 	MODALTYPE_USER,
 };
 
-class Frame: public ScreenObject
+class Frame : public ScreenObject
 {
-		friend class Manager;
-	private:
-		//Frame **ModalStack;
-		//int ModalStackCount, ModalStackSize;
-		Frame *FrameToBack;
-		Frame *NextModal,*PrevModal;
-		bool RegularIdle = false;
+	friend class Manager;
 
-	protected:
-		int  DynamicallyBorn;
-		int  CanLoseFocus;
-		int  ExitCode;
-		int  KeyBarVisible;
-		int  TitleBarVisible;
-		KeyBar *FrameKeyBar;
-		int MacroMode;
+private:
+	// Frame **ModalStack;
+	// int ModalStackCount, ModalStackSize;
+	Frame *FrameToBack;
+	Frame *NextModal, *PrevModal;
+	bool RegularIdle = false;
 
-	public:
-		Frame();
-		virtual ~Frame();
+protected:
+	int DynamicallyBorn;
+	int CanLoseFocus;
+	int ExitCode;
+	int KeyBarVisible;
+	int TitleBarVisible;
+	KeyBar *FrameKeyBar;
+	int MacroMode;
 
-		//virtual int ProcessKey(int Key);
-		//virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+public:
+	Frame();
+	virtual ~Frame();
 
-		virtual int GetCanLoseFocus(int DynamicMode=FALSE) { return(CanLoseFocus); };
-		void SetCanLoseFocus(int Mode) { CanLoseFocus=Mode; };
-		void SetRegularIdle(bool enabled);
-		int  GetExitCode() { return ExitCode; };
-		virtual void SetExitCode(int Code) { ExitCode=Code; };
+	// virtual int ProcessKey(int Key);
+	// virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
-		virtual BOOL IsFileModified() const { return FALSE; };
+	virtual int GetCanLoseFocus(int DynamicMode = FALSE) { return (CanLoseFocus); };
+	void SetCanLoseFocus(int Mode) { CanLoseFocus = Mode; };
+	void SetRegularIdle(bool enabled);
+	int GetExitCode() { return ExitCode; };
+	virtual void SetExitCode(int Code) { ExitCode = Code; };
 
-		virtual const wchar_t *GetTypeName() {return L"[FarModal]";};
-		virtual int GetTypeAndName(FARString &strType, FARString &strName) {return(MODALTYPE_VIRTUAL);};
-		virtual int GetType() { return MODALTYPE_VIRTUAL; }
+	virtual BOOL IsFileModified() const { return FALSE; };
 
-		virtual void OnDestroy();  // вызывается перед уничтожением окна
-		virtual void OnCreate() {};   // вызывается перед созданием окна
-		virtual void OnChangeFocus(int focus); // вызывается при смене фокуса
-		virtual void Refresh() {OnChangeFocus(1);};  // Просто перерисоваться :)
+	virtual const wchar_t *GetTypeName() { return L"[FarModal]"; };
+	virtual int GetTypeAndName(FARString &strType, FARString &strName) { return (MODALTYPE_VIRTUAL); };
+	virtual int GetType() { return MODALTYPE_VIRTUAL; }
 
-		virtual void InitKeyBar() {}
-		void SetKeyBar(KeyBar *FrameKeyBar);
-		void UpdateKeyBar();
-		virtual void RedrawKeyBar() { Frame::UpdateKeyBar(); };
+	virtual void OnDestroy();						// вызывается перед уничтожением окна
+	virtual void OnCreate(){};						// вызывается перед созданием окна
+	virtual void OnChangeFocus(int focus);			// вызывается при смене фокуса
+	virtual void Refresh() { OnChangeFocus(1); };	// Просто перерисоваться :)
 
-		int IsTitleBarVisible() const {return TitleBarVisible;};
+	virtual void InitKeyBar() {}
+	void SetKeyBar(KeyBar *FrameKeyBar);
+	void UpdateKeyBar();
+	virtual void RedrawKeyBar() { Frame::UpdateKeyBar(); };
 
-		/* $ 12.05.2001 DJ */
-		int IsTopFrame();
-		virtual int GetMacroMode() { return MacroMode; }
-		/* DJ $ */
-		void Push(Frame* Modalized);
-		Frame *GetTopModal() {return NextModal;};
-		//bool Pop();
-		//Frame *operator[](int Index);
-		//int operator[](Frame *ModalFarame);
-		//int ModalCount() {return ModalStackCount;}
-		void DestroyAllModal();
-		void SetDynamicallyBorn(int Born) {DynamicallyBorn=Born;}
-		int GetDynamicallyBorn() {return DynamicallyBorn;};
-		virtual int FastHide();
-		//int IndexOf(Frame *aFrame);
-		bool RemoveModal(Frame *aFrame);
-		virtual void ResizeConsole();
-		bool HasSaveScreen();
-		//bool ifFullConsole();
-		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0) { return Title; };
-		virtual bool ProcessEvents() {return true;};
+	int IsTitleBarVisible() const { return TitleBarVisible; };
+
+	/* $ 12.05.2001 DJ */
+	int IsTopFrame();
+	virtual int GetMacroMode() { return MacroMode; }
+	/* DJ $ */
+	void Push(Frame *Modalized);
+	Frame *GetTopModal() { return NextModal; };
+	// bool Pop();
+	// Frame *operator[](int Index);
+	// int operator[](Frame *ModalFarame);
+	// int ModalCount() {return ModalStackCount;}
+	void DestroyAllModal();
+	void SetDynamicallyBorn(int Born) { DynamicallyBorn = Born; }
+	int GetDynamicallyBorn() { return DynamicallyBorn; };
+	virtual int FastHide();
+	// int IndexOf(Frame *aFrame);
+	bool RemoveModal(Frame *aFrame);
+	virtual void ResizeConsole();
+	bool HasSaveScreen();
+	// bool ifFullConsole();
+	virtual FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0) { return Title; };
+	virtual bool ProcessEvents() { return true; };
 };

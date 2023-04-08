@@ -40,17 +40,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "message.hpp"
 #include "pathmix.hpp"
 
-CFileMask::CFileMask():
+CFileMask::CFileMask()
+	:
 	FileMask(nullptr)
-{
-}
+{}
 
 void CFileMask::Free()
 {
 	if (FileMask)
 		delete FileMask;
 
-	FileMask=nullptr;
+	FileMask = nullptr;
 }
 
 /*
@@ -63,42 +63,38 @@ void CFileMask::Free()
 bool CFileMask::Set(const wchar_t *Masks, DWORD Flags)
 {
 	Free();
-	bool Result=false;
-	int Silent=Flags & FMF_SILENT;
-	DWORD flags=0;
+	bool Result = false;
+	int Silent = Flags & FMF_SILENT;
+	DWORD flags = 0;
 
 	if (Flags & FMF_ADDASTERISK)
-		flags|=FMPF_ADDASTERISK;
+		flags|= FMPF_ADDASTERISK;
 
-	if (Masks && *Masks)
-	{
-		if (FileMasksWithExclude::IsExcludeMask(Masks))
-		{
-			if (!(Flags&FMF_FORBIDEXCLUDE))
-				FileMask=new FileMasksWithExclude;
-		}
-		else
-		{
-			FileMask=new FileMasksProcessor;
+	if (Masks && *Masks) {
+		if (FileMasksWithExclude::IsExcludeMask(Masks)) {
+			if (!(Flags & FMF_FORBIDEXCLUDE))
+				FileMask = new FileMasksWithExclude;
+		} else {
+			FileMask = new FileMasksProcessor;
 		}
 
 		if (FileMask)
-			Result=FileMask->Set(Masks, flags);
+			Result = FileMask->Set(Masks, flags);
 
 		if (!Result)
 			Free();
 	}
 
 	if (!Silent && !Result)
-		Message(MSG_WARNING,1,Msg::Warning,Msg::IncorrectMask, Msg::Ok);
+		Message(MSG_WARNING, 1, Msg::Warning, Msg::IncorrectMask, Msg::Ok);
 
 	return Result;
 }
 
 // Возвращает TRUE, если список масок пустой
-bool CFileMask::IsEmpty()const
+bool CFileMask::IsEmpty() const
 {
-	return FileMask?FileMask->IsEmpty():true;
+	return FileMask ? FileMask->IsEmpty() : true;
 }
 
 /*
@@ -108,5 +104,5 @@ bool CFileMask::IsEmpty()const
 */
 bool CFileMask::Compare(const wchar_t *FileName) const
 {
-	return FileMask?FileMask->Compare(PointToName(FileName)):false;
+	return FileMask ? FileMask->Compare(PointToName(FileName)) : false;
 }

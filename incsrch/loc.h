@@ -23,27 +23,24 @@ extern "C" {
 
 extern char aUpcaseTable[256];
 
-extern void SetSubstringPatternL(const TCHAR* sPattern);
+extern void SetSubstringPatternL(const TCHAR *sPattern);
 extern TCHAR *SubStringL(const TCHAR *text, size_t N);
-extern void SetSubstringPatternR(const TCHAR* sPattern);
+extern void SetSubstringPatternR(const TCHAR *sPattern);
 extern TCHAR *SubStringR(const TCHAR *text, size_t N);
 
 extern void InitUpcaseTable(int nTableNum, BOOL bAnsiMode);
-extern void UpperCase(TCHAR* sDest, const TCHAR* sSrc, size_t nLen);
+extern void UpperCase(TCHAR *sDest, const TCHAR *sSrc, size_t nLen);
 #ifdef __WATCOMC__
-# pragma aux UpperCase \
-        parm [edi] [esi] [ecx]\
-        modify exact [eax ebx ecx edi esi]\
-        =\
-        "jecxz   Exit"\
-        "dec     esi"\
-        "dec     edi"\
-        "lea     ebx, aUpcaseTable"\
-"Next:   mov     al,  [esi][ecx]"\
-        "xlat"\
-        "mov     [edi][ecx], al"\
-        "loop    Next"\
-"Exit:"
+#pragma aux UpperCase parm[edi][esi][ecx] modify exact[eax ebx ecx edi esi] =                                  \
+				"jecxz   Exit"                                                                                 \
+				"dec     esi"                                                                                  \
+				"dec     edi"                                                                                  \
+				"lea     ebx, aUpcaseTable"                                                                    \
+				"Next:   mov     al,  [esi][ecx]"                                                              \
+				"xlat"                                                                                         \
+				"mov     [edi][ecx], al"                                                                       \
+				"loop    Next"                                                                                 \
+				"Exit:"
 #endif
 
 #ifdef __cplusplus

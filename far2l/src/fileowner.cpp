@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "fileowner.hpp"
 #include "pathmix.hpp"
 #include "DList.hpp"
@@ -58,29 +57,27 @@ const char *GroupNameByID(gid_t id)
 		perror("GroupNameByID");
 		return NULL;
 	}
-	return gr->gr_name;	
+	return gr->gr_name;
 }
 
-
-
-bool WINAPI GetFileOwner(const wchar_t *Computer,const wchar_t *Name, FARString &strOwner)
+bool WINAPI GetFileOwner(const wchar_t *Computer, const wchar_t *Name, FARString &strOwner)
 {
 	struct stat s = {};
-	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
+	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
 		const char *sz = OwnerNameByID(s.st_uid);
 		if (sz) {
 			strOwner = sz;
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
-bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString &strGroup)
+bool WINAPI GetFileGroup(const wchar_t *Computer, const wchar_t *Name, FARString &strGroup)
 {
 	struct stat s = {};
-	if (sdc_stat(Wide2MB(Name).c_str(), &s)==0) {
+	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
 		const char *sz = GroupNameByID(s.st_gid);
 		if (sz) {
 			strGroup = sz;
@@ -92,14 +89,14 @@ bool WINAPI GetFileGroup(const wchar_t *Computer,const wchar_t *Name, FARString 
 }
 
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
-{		
+{
 	struct passwd *p = getpwnam(Wide2MB(Owner).c_str());
-	if ( p) {
-		if (sdc_chown(Wide2MB(Object).c_str(), p->pw_uid, -1)==0)
+	if (p) {
+		if (sdc_chown(Wide2MB(Object).c_str(), p->pw_uid, -1) == 0)
 			return true;
 	} else
 		perror("getpwnam");
-		
+
 	return false;
 }
 
@@ -107,12 +104,10 @@ bool SetGroup(LPCWSTR Object, LPCWSTR Group)
 {
 	struct group *g = getgrnam(Wide2MB(Group).c_str());
 	if (g) {
-		if (sdc_chown(Wide2MB(Object).c_str(), -1, g->gr_gid)==0)
+		if (sdc_chown(Wide2MB(Object).c_str(), -1, g->gr_gid) == 0)
 			return true;
 	} else
 		perror("getgrnam");
-		
+
 	return false;
 }
-
-

@@ -40,10 +40,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigSaveLoad.hpp"
 
 FilePositionCache::FilePositionCache(FilePositionCacheKind kind)
-	: _kind(kind),
-	_kf_path(InMyConfig( (kind == FPCK_VIEWER) ? "history/viewer.pos" : "history/editor.pos"))
-{
-}
+	:
+	_kind(kind), _kf_path(InMyConfig((kind == FPCK_VIEWER) ? "history/viewer.pos" : "history/editor.pos"))
+{}
 
 FilePositionCache::~FilePositionCache()
 {
@@ -55,12 +54,10 @@ void FilePositionCache::ApplyElementsLimit()
 	AssertConfigLoaded();
 	int MaxPositionCache = Opt.MaxPositionCache;
 
-	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16)
-	{
+	if ((int)_kfh->SectionsCount() > MaxPositionCache + MaxPositionCache / 4 + 16) {
 		std::vector<std::string> sections = _kfh->EnumSections();
-		std::sort(sections.begin(), sections.end(),
-			[&](const std::string &a, const std::string &b) -> bool {
-			return _kfh->GetULL(a, "TS", 0) <  _kfh->GetULL(b, "TS", 0);
+		std::sort(sections.begin(), sections.end(), [&](const std::string &a, const std::string &b) -> bool {
+			return _kfh->GetULL(a, "TS", 0) < _kfh->GetULL(b, "TS", 0);
 		});
 
 		int cnt = (int)sections.size() - MaxPositionCache;
@@ -78,10 +75,8 @@ void FilePositionCache::CheckForSave()
 	// If save is disabled then keep _kfh - it will serve as in memory
 	// storage for our instance lifetime or until user will enable saving.
 
-	if (_kfh &&
-			((_kind == FPCK_VIEWER && Opt.ViOpt.SavePos)
-			|| (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos) ) )
- 	{
+	if (_kfh
+			&& ((_kind == FPCK_VIEWER && Opt.ViOpt.SavePos) || (_kind == FPCK_EDITOR && Opt.EdOpt.SavePos))) {
 		if (_kfh->Save()) {
 			_kfh.reset();
 		}
@@ -126,7 +121,7 @@ static size_t PositionCountToSave(const DWORD64 *position)
 	return 0;
 }
 
-void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
+void FilePositionCache::AddPosition(const wchar_t *name, PosCache &poscache)
 {
 	if (!_kfh) {
 		_kfh.reset(new KeyFileHelper(_kf_path));
@@ -140,14 +135,13 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 
 	size_t save_count = ParamCountToSave(poscache.Param);
 	if (save_count) {
-		_kfh->SetBytes(section, "Par",
-			(unsigned char *)&poscache.Param[0],
+		_kfh->SetBytes(section, "Par", (unsigned char *)&poscache.Param[0],
 				save_count * sizeof(poscache.Param[0]));
 
 	} else {
 		have_some_to_save = false;
 		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
-			if (PositionCountToSave(poscache.Position[i]) ){
+			if (PositionCountToSave(poscache.Position[i])) {
 				have_some_to_save = true;
 				break;
 			}
@@ -163,8 +157,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 			sprintf(key, "Pos%u", i);
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
-				_kfh->SetBytes(section, key,
-					(unsigned char *)poscache.Position[i],
+				_kfh->SetBytes(section, key, (unsigned char *)poscache.Position[i],
 						save_count * sizeof(poscache.Position[i][0]));
 			} else {
 				_kfh->RemoveKey(section, key);
@@ -180,7 +173,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache& poscache)
 	CheckForSave();
 }
 
-bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
+bool FilePositionCache::GetPosition(const wchar_t *name, PosCache &poscache)
 {
 	std::string section;
 	MakeSectionName(name, section);
@@ -204,14 +197,14 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache& poscache)
 	memset(&poscache.Param[0], 0, sizeof(poscache.Param));
 	values->GetBytes((unsigned char *)&poscache.Param[0], sizeof(poscache.Param), "Par");
 
-	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) if (poscache.Position[i]) {
-		memset(poscache.Position[i], 0xff,
-			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
-		char key[64];
-		sprintf(key, "Pos%u", i);
-		values->GetBytes((unsigned char *)poscache.Position[i],
-			sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT, key);
-	}
+	for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i)
+		if (poscache.Position[i]) {
+			memset(poscache.Position[i], 0xff, sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
+			char key[64];
+			sprintf(key, "Pos%u", i);
+			values->GetBytes((unsigned char *)poscache.Position[i],
+					sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT, key);
+		}
 
 	return true;
 }

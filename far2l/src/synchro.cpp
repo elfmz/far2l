@@ -31,69 +31,60 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "synchro.hpp"
 #include "plclass.hpp"
 #include <farplug-wide.h>
 
-
 PluginSynchro PluginSynchroManager;
 
-PluginSynchro::PluginSynchro()
-{
-}
+PluginSynchro::PluginSynchro() {}
 
-PluginSynchro::~PluginSynchro()
-{
-}
+PluginSynchro::~PluginSynchro() {}
 
-void PluginSynchro::Synchro(bool Plugin, INT_PTR ModuleNumber,void* Param)
+void PluginSynchro::Synchro(bool Plugin, INT_PTR ModuleNumber, void *Param)
 {
 	RecursiveMutex.lock();
-	SynchroData* item=Data.Push();
-	item->Plugin=Plugin;
-	item->ModuleNumber=ModuleNumber;
-	item->Param=Param;
+	SynchroData *item = Data.Push();
+	item->Plugin = Plugin;
+	item->ModuleNumber = ModuleNumber;
+	item->Param = Param;
 	RecursiveMutex.unlock();
 }
 
 bool PluginSynchro::Process(void)
 {
-	bool res=false;
+	bool res = false;
 
-	bool process=false; bool plugin=false; INT_PTR module=0; void* param=nullptr;
+	bool process = false;
+	bool plugin = false;
+	INT_PTR module = 0;
+	void *param = nullptr;
 
 	RecursiveMutex.lock();
-	SynchroData* item=Data.First();
+	SynchroData *item = Data.First();
 
-	if (item)
-	{
-		process=true;
-		plugin=item->Plugin;
-		module=item->ModuleNumber;
-		param=item->Param;
+	if (item) {
+		process = true;
+		plugin = item->Plugin;
+		module = item->ModuleNumber;
+		param = item->Param;
 		Data.Delete(item);
 	}
 
 	RecursiveMutex.unlock();
 
-	if (process)
-		{
-			if(plugin)
-			{
-				Plugin* pPlugin=(Plugin*)module;
+	if (process) {
+		if (plugin) {
+			Plugin *pPlugin = (Plugin *)module;
 
-				if (pPlugin)
-				{
-					pPlugin->ProcessSynchroEvent(SE_COMMONSYNCHRO,param);
-					res=true;
-				}
+			if (pPlugin) {
+				pPlugin->ProcessSynchroEvent(SE_COMMONSYNCHRO, param);
+				res = true;
 			}
-			else
-			{
-				res=true;
-			}
+		} else {
+			res = true;
 		}
+	}
 
 	return res;
 }

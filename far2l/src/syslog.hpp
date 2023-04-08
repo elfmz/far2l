@@ -35,10 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FARString.hpp"
 
-
 void SysLog(int l);
-void SysLog(const wchar_t *fmt,...);
-void SysLog(int l,const wchar_t *fmt,...); ///
+void SysLog(const wchar_t *fmt, ...);
+void SysLog(int l, const wchar_t *fmt, ...);	///
 void SysLogLastError();
 void ShowHeap();
 void CheckHeap(int NumLine);
@@ -71,38 +70,40 @@ FARString __INPUT_RECORD_Dump(INPUT_RECORD *Rec);
 #define _INPUT_RECORD_Dump(K) __INPUT_RECORD_Dump(K).CPtr()
 FARString __MOUSE_EVENT_RECORD_Dump(MOUSE_EVENT_RECORD *Rec);
 #define _MOUSE_EVENT_RECORD_Dump(K) __MOUSE_EVENT_RECORD_Dump(K).CPtr()
-FARString __SysLog_LinearDump(LPBYTE Buf,int SizeBuf);
-#define _SysLog_LinearDump(B,S) __SysLog_LinearDump((B),(S)).CPtr()
+FARString __SysLog_LinearDump(LPBYTE Buf, int SizeBuf);
+#define _SysLog_LinearDump(B, S) __SysLog_LinearDump((B), (S)).CPtr()
 
-void GetOpenPluginInfo_Dump(const wchar_t *Title,const struct OpenPluginInfo *Info,FILE *fp);
-void INPUT_RECORD_DumpBuffer(FILE *fp=nullptr);
-void PanelViewSettings_Dump(const wchar_t *Title,const struct PanelViewSettings &ViewSettings,FILE *fp=nullptr);
-void PluginsStackItem_Dump(const wchar_t *Title,const struct PluginsStackItem *StackItems,int ItemNumber,FILE *fp=nullptr);
-void SaveScreenDumpBuffer(const wchar_t *Title,const CHAR_INFO *Buffer,int X1,int Y1,int X2,int Y2,FILE *fp=nullptr);
+void GetOpenPluginInfo_Dump(const wchar_t *Title, const struct OpenPluginInfo *Info, FILE *fp);
+void INPUT_RECORD_DumpBuffer(FILE *fp = nullptr);
+void PanelViewSettings_Dump(const wchar_t *Title, const struct PanelViewSettings &ViewSettings,
+		FILE *fp = nullptr);
+void PluginsStackItem_Dump(const wchar_t *Title, const struct PluginsStackItem *StackItems, int ItemNumber,
+		FILE *fp = nullptr);
+void SaveScreenDumpBuffer(const wchar_t *Title, const CHAR_INFO *Buffer, int X1, int Y1, int X2, int Y2,
+		FILE *fp = nullptr);
 class Manager;
-void ManagerClass_Dump(const wchar_t *Title,const Manager *m=nullptr,FILE *fp=nullptr);
-void GetVolumeInformation_Dump(
-	const wchar_t *Title,LPCWSTR lpRootPathName,LPCWSTR lpVolumeNameBuffer,DWORD nVolumeNameSize,
-	DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength, DWORD lpFileSystemFlags,
-	LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,FILE *fp=nullptr);
+void ManagerClass_Dump(const wchar_t *Title, const Manager *m = nullptr, FILE *fp = nullptr);
+void GetVolumeInformation_Dump(const wchar_t *Title, LPCWSTR lpRootPathName, LPCWSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize, DWORD lpVolumeSerialNumber, DWORD lpMaximumComponentLength,
+		DWORD lpFileSystemFlags, LPCWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize,
+		FILE *fp = nullptr);
 
-void WIN32_FIND_DATA_Dump(const wchar_t *Title,const WIN32_FIND_DATA &fd,FILE *fp=nullptr);
+void WIN32_FIND_DATA_Dump(const wchar_t *Title, const WIN32_FIND_DATA &fd, FILE *fp = nullptr);
 
 #if defined(SYSLOG_FARSYSLOG)
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-	void WINAPIV _export FarSysLog(const wchar_t *ModuleName,int Level,char *fmt,...);
-	void WINAPI  _export FarSysLogDump(const wchar_t *ModuleName,DWORD StartAddress,LPBYTE Buf,int SizeBuf);
-	void WINAPI  _export FarSysLog_INPUT_RECORD_Dump(const wchar_t *ModuleName,INPUT_RECORD *rec);
+void WINAPIV _export FarSysLog(const wchar_t *ModuleName, int Level, char *fmt, ...);
+void WINAPI _export FarSysLogDump(const wchar_t *ModuleName, DWORD StartAddress, LPBYTE Buf, int SizeBuf);
+void WINAPI _export FarSysLog_INPUT_RECORD_Dump(const wchar_t *ModuleName, INPUT_RECORD *rec);
 #ifdef __cplusplus
 };
 #endif
 #endif
 
 #if defined(_DEBUG) && defined(SYSLOG)
-#define ___FILEFUNCLINE___ SysLog(L"[{%s} %s() #%d] ",__FILE__,__FUNCTION__,__LINE__)
+#define ___FILEFUNCLINE___ SysLog(L"[{%s} %s() #%d] ", __FILE__, __FUNCTION__, __LINE__)
 #else
 #define ___FILEFUNCLINE___
 #endif
@@ -264,24 +265,24 @@ void CloseSysLog();
 struct TUserLog
 {
 	FILE *Stream;
-	int   Level;
+	int Level;
 };
 
-void SysLogDump(const wchar_t *Title,DWORD StartAddress,LPBYTE Buf,int SizeBuf,FILE *fp=nullptr);
+void SysLogDump(const wchar_t *Title, DWORD StartAddress, LPBYTE Buf, int SizeBuf, FILE *fp = nullptr);
 
 FILE *OpenLogStream(const wchar_t *file);
 
-#define L_ERR      1
-#define L_WARNING  2
-#define L_INFO     3
-#define L_DEBUG1   4
-#define L_DEBUG2   5
-#define L_DEBUG3   6
+#define L_ERR     1
+#define L_WARNING 2
+#define L_INFO    3
+#define L_DEBUG1  4
+#define L_DEBUG2  5
+#define L_DEBUG3  6
 
-class CleverSysLog // ;-)
+class CleverSysLog	// ;-)
 {
-	public:
-		CleverSysLog(const wchar_t *Title=nullptr);
-		CleverSysLog(int Line,const wchar_t *Title);
-		~CleverSysLog();
+public:
+	CleverSysLog(const wchar_t *Title = nullptr);
+	CleverSysLog(int Line, const wchar_t *Title);
+	~CleverSysLog();
 };

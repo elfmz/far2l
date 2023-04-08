@@ -36,100 +36,97 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "array.hpp"
 #include "noncopyable.hpp"
 
 enum UDL_FLAGS
 {
-	ULF_ADDASTERISK    =0x00000001, // добавлять '*' к концу элемента списка, если он не содержит '?', '*' и '.'
-	ULF_PACKASTERISKS  =0x00000002, // вместо "***" в список помещать просто "*"
-	ULF_PROCESSBRACKETS=0x00000004, // учитывать квадратные скобки при анализе строки инициализации
-	ULF_UNIQUE         =0x00000010, // убирать дублирующиеся элементы
-	ULF_SORT           =0x00000020, // отсортировать (с учетом регистра)
-	ULF_NOTTRIM        =0x00000040, // не удалять пробелы
-	ULF_NOTUNQUOTES    =0x00000080, // не раскавычивать
-	ULF_ACCOUNTEMPTYLINE=0x00000100, // учитывать пустые "строки"
+	ULF_ADDASTERISK     = 0x00000001,		// добавлять '*' к концу элемента списка, если он не содержит '?', '*' и '.'
+	ULF_PACKASTERISKS   = 0x00000002,		// вместо "***" в список помещать просто "*"
+	ULF_PROCESSBRACKETS = 0x00000004,		// учитывать квадратные скобки при анализе строки инициализации
+	ULF_UNIQUE          = 0x00000010,		// убирать дублирующиеся элементы
+	ULF_SORT            = 0x00000020,		// отсортировать (с учетом регистра)
+	ULF_NOTTRIM          = 0x00000040,		// не удалять пробелы
+	ULF_NOTUNQUOTES      = 0x00000080,		// не раскавычивать
+	ULF_ACCOUNTEMPTYLINE = 0x00000100,		// учитывать пустые "строки"
 };
-
 
 class UserDefinedListItem
 {
-	public:
-		size_t index;
-		wchar_t *Str;
-		UserDefinedListItem():index(0), Str(nullptr) {}
-		bool operator==(const UserDefinedListItem &rhs) const;
-		int operator<(const UserDefinedListItem &rhs) const;
-		const UserDefinedListItem& operator=(const UserDefinedListItem &rhs);
-		const UserDefinedListItem& operator=(const wchar_t *rhs);
-		wchar_t *set(const wchar_t *Src, size_t size);
-		~UserDefinedListItem();
+public:
+	size_t index;
+	wchar_t *Str;
+	UserDefinedListItem()
+		:
+		index(0), Str(nullptr)
+	{}
+	bool operator==(const UserDefinedListItem &rhs) const;
+	int operator<(const UserDefinedListItem &rhs) const;
+	const UserDefinedListItem &operator=(const UserDefinedListItem &rhs);
+	const UserDefinedListItem &operator=(const wchar_t *rhs);
+	wchar_t *set(const wchar_t *Src, size_t size);
+	~UserDefinedListItem();
 };
 
 class UserDefinedList : private NonCopyable
 {
-	private:
-		TArray<UserDefinedListItem> Array;
-		WORD Separator1, Separator2;
-		bool ProcessBrackets, AddAsterisk, PackAsterisks, Unique, Sort, IsTrim, IsUnQuotes;
-		bool AccountEmptyLine;
+private:
+	TArray<UserDefinedListItem> Array;
+	WORD Separator1, Separator2;
+	bool ProcessBrackets, AddAsterisk, PackAsterisks, Unique, Sort, IsTrim, IsUnQuotes;
+	bool AccountEmptyLine;
 
-	private:
-		bool CheckSeparators() const; // проверка разделителей на корректность
-		void SetDefaultSeparators();
-		const wchar_t *Skip(const wchar_t *Str, int &Length, int &RealLength, bool &Error);
-		static int __cdecl CmpItems(const UserDefinedListItem **el1,
-			const UserDefinedListItem **el2);
+private:
+	bool CheckSeparators() const;	// проверка разделителей на корректность
+	void SetDefaultSeparators();
+	const wchar_t *Skip(const wchar_t *Str, int &Length, int &RealLength, bool &Error);
+	static int __cdecl CmpItems(const UserDefinedListItem **el1, const UserDefinedListItem **el2);
 
-	public:
-		// по умолчанию разделителем считается ';' и ',', а
-		// ProcessBrackets=AddAsterisk=PackAsterisks=false
-		// Unique=Sort=false
-		UserDefinedList();
+public:
+	// по умолчанию разделителем считается ';' и ',', а
+	// ProcessBrackets=AddAsterisk=PackAsterisks=false
+	// Unique=Sort=false
+	UserDefinedList();
 
-		// Явно указываются разделители. См. описание SetParameters
-		UserDefinedList(WORD separator1, WORD separator2, DWORD Flags);
-		~UserDefinedList() { Free(); }
+	// Явно указываются разделители. См. описание SetParameters
+	UserDefinedList(WORD separator1, WORD separator2, DWORD Flags);
+	~UserDefinedList() { Free(); }
 
-	public:
-		// Сменить символы-разделитель и разрешить или запретить обработку
-		// квадратных скобок.
-		// Если один из Separator* равен 0x00, то он игнорируется при компиляции
-		// (т.е. в Set)
-		// Если оба разделителя равны 0x00, то восстанавливаются разделители по
-		// умолчанию (';' & ',').
-		// Если AddAsterisk равно true, то к концу элемента списка будет
-		// добавляться '*', если этот элемент не содержит '?', '*' и '.'
-		// Возвращает false, если один из разделителей является кавычкой или
-		// включена обработка скобок и один из разделителей является квадратной
-		// скобкой.
-		bool SetParameters(WORD Separator1, WORD Separator2, DWORD Flags);
+public:
+	// Сменить символы-разделитель и разрешить или запретить обработку
+	// квадратных скобок.
+	// Если один из Separator* равен 0x00, то он игнорируется при компиляции
+	// (т.е. в Set)
+	// Если оба разделителя равны 0x00, то восстанавливаются разделители по
+	// умолчанию (';' & ',').
+	// Если AddAsterisk равно true, то к концу элемента списка будет
+	// добавляться '*', если этот элемент не содержит '?', '*' и '.'
+	// Возвращает false, если один из разделителей является кавычкой или
+	// включена обработка скобок и один из разделителей является квадратной
+	// скобкой.
+	bool SetParameters(WORD Separator1, WORD Separator2, DWORD Flags);
 
-		// Инициализирует список. Принимает список, разделенный разделителями.
-		// Возвращает false при неудаче.
-		// Фича: если List==nullptr, то происходит освобождение занятой ранее памяти
-		bool Set(const wchar_t *List, bool AddToList=false);
+	// Инициализирует список. Принимает список, разделенный разделителями.
+	// Возвращает false при неудаче.
+	// Фича: если List==nullptr, то происходит освобождение занятой ранее памяти
+	bool Set(const wchar_t *List, bool AddToList = false);
 
-		// Добавление к уже существующему списку
-		// Фича: если NewItem==nullptr, то происходит освобождение занятой ранее
-		// памяти
-		bool AddItem(const wchar_t *NewItem)
-		{
-			return Set(NewItem,true);
-		}
+	// Добавление к уже существующему списку
+	// Фича: если NewItem==nullptr, то происходит освобождение занятой ранее
+	// памяти
+	bool AddItem(const wchar_t *NewItem) { return Set(NewItem, true); }
 
-		// Выдает указатель на очередной элемент списка или nullptr
-		const wchar_t *Get(size_t Index) const;
+	// Выдает указатель на очередной элемент списка или nullptr
+	const wchar_t *Get(size_t Index) const;
 
-		// Освободить память
-		void Free();
+	// Освободить память
+	void Free();
 
-		// true, если элементов в списке нет
-		bool IsEmpty() const;
+	// true, если элементов в списке нет
+	bool IsEmpty() const;
 
-		inline bool IsLastElement(size_t Index) const { return Index + 1 == Array.getSize(); }
+	inline bool IsLastElement(size_t Index) const { return Index + 1 == Array.getSize(); }
 
-		// Вернуть количество элементов в списке
-		inline size_t GetTotal() const { return Array.getSize(); }
+	// Вернуть количество элементов в списке
+	inline size_t GetTotal() const { return Array.getSize(); }
 };

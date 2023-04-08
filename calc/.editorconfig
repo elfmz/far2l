@@ -17,10 +17,6 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
-[*.hlf]
-indent_style = space
-indent_size = 2
-
 [CMakeLists.txt]
 indent_style = space
 indent_size = 4

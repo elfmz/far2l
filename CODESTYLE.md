@@ -97,15 +97,15 @@ if (i == 10
 In case you're changing existing code - follow existing naming conventions as you see them in that code. Otherwise:   
 Use CamelCase for name of enums, namespaces, classes, structures, functions and methods   
 Use snake_case for all variables, however:   
-	+ Private and protected class's fields - prefix by '_'   
-	+ Static variables - prefix by 's_'   
-	+ Global nonstatic variables - prefix by 'g_'   
+&nbsp;&nbsp; Private and protected class's fields - prefix by '\_'   
+&nbsp;&nbsp; Static variables - prefix by 's\_'   
+&nbsp;&nbsp; Global nonstatic variables - prefix by 'g\_'   
 Use UPPER_CASE_WITH_UNDERSCORES for macroses, values of enum-s.   
 Additionally values of enums must be prefixes with a abbreviation of corresponding enum's name.   
 Templates:   
-	+ For template arguments that represent type name - use CamelCaseT (camel case with T suffix).   
-	+ For template arguments that typed constant value - use UPPER_CASE_WITH_UNDERSCORES_T.   
-	+ If template function represents 'internal' implementation for some nearby non-templated functions - you may add T suffix for its name to clearly denote this.   
+&nbsp;&nbsp; For template arguments that represent type name - use CamelCaseT (camel case with T suffix).   
+&nbsp;&nbsp; For template arguments that typed constant value - use UPPER_CASE_WITH_UNDERSCORES_T.   
+&nbsp;&nbsp; If template function represents 'internal' implementation for some nearby non-templated functions - you may add T suffix for its name to clearly denote this.   
 ``` Examples:
 enum SomeEnum
 {

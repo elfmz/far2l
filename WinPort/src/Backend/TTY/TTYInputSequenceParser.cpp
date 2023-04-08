@@ -552,7 +552,8 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	if (
 		(ir.Event.KeyEvent.uChar.UnicodeChar < 32) ||
 		(ir.Event.KeyEvent.uChar.UnicodeChar == 127) ||
-		((ir.Event.KeyEvent.uChar.UnicodeChar >= 57358) && (ir.Event.KeyEvent.uChar.UnicodeChar <= 57454))
+		((ir.Event.KeyEvent.uChar.UnicodeChar >= 57358) && (ir.Event.KeyEvent.uChar.UnicodeChar <= 57454)) ||
+		!(WCHAR_IS_VALID(ir.Event.KeyEvent.uChar.UnicodeChar))
 	) {
 		// those are special values, should not be used as unicode char
 		ir.Event.KeyEvent.uChar.UnicodeChar = 0;

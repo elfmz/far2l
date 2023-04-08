@@ -371,7 +371,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			(s[i] == 'E') || (s[i] == 'F') ||
 			(s[i] == 'H') || (s[i] == 'P') ||
 			(s[i] == 'Q') ||
-			(s[i] == 'R') || // CSI 1 ; modifier {ABCDEFHPQS} // "R" is forgotten in kitty's docs here
+			(s[i] == 'R') || // "R" is still vaild here in old kitty versions
 			(s[i] == 'S')
 		);
 
@@ -424,7 +424,12 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case '/'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_2; break;
 		case 9     : ir.Event.KeyEvent.wVirtualKeyCode = VK_TAB; break;
 		case 27    : ir.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE; break;
-		case 13    : ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN; break;
+		case 13    : if (s[i] == '~') {
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_F3;
+			} else {
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+			}
+			break;
 		case 127   : ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK; break;
 		case 2     : if (s[i] == '~')   ir.Event.KeyEvent.wVirtualKeyCode = VK_INSERT; break;
 		case 3     : if (s[i] == '~')   ir.Event.KeyEvent.wVirtualKeyCode = VK_DELETE; break;

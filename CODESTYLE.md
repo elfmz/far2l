@@ -1,19 +1,19 @@
 # Indentation and alignment:
-Code block indentation and alignment of hyphenated continuations - tabs.
-Alignment of trailing comments - also tabs.
-All other alignment in the middle of text line (if need) - spaces.
+Code block indentation and alignment of hyphenated continuations - tabs.   
+Alignment of trailing comments - also tabs.   
+All other alignment in the middle of text line (if need) - spaces.   
 
 # Line length limit:
-110 characters, buts its a soft limit, i.e. prefer better readability more than fiting limit.
-Trailing comments are not affected by this limit at all.
+110 characters, buts its a soft limit, i.e. prefer better readability more than fiting limit.   
+Trailing comments are not affected by this limit at all.   
 
 # Code braces:
-Use direct (same line) braces for class-es/struct-s/union-s, functions, namespaces
-Use egyptian braces for if-s, loop-s, try..catch-es, lambda-s
-In case of if..elseif.. with long complex code within block - use empty line to accent end of code block.
-In case code-block-start operator has short own condition and has as child single another code-block-starter, you may put that secondary operator at same line as first one and use single indentation for its code block.
-In case of very short inlined class methods - you may write method definition's code block as single line.
-In all other cases put any nested operator and its code block starting from separate line and with its own indentation level.
+Use direct (same line) braces for class-es/struct-s/union-s, functions, namespaces   
+Use egyptian braces for if-s, loop-s, try..catch-es, lambda-s   
+In case of if..elseif.. with long complex code within block - use empty line to accent end of code block.   
+In case code-block-start operator has short own condition and has as child single another code-block-starter, you may put that secondary operator at same line as first one and use single indentation for its code block.   
+In case of very short inlined class methods - you may write method definition's code block as single line.   
+In all other cases put any nested operator and its code block starting from separate line and with its own indentation level.   
 ``` Examples:
 namespace Foo
 {
@@ -77,18 +77,18 @@ if (i == 10
 ```
 
 # Naming:
-In case you're changing existing code - follow existing naming conventions as you see them in that code. Otherwise:
-Use CamelCase for name of enums, namespaces, classes, structures, functions and methods
-Use snake_case for all variables, however:
-	Private and protected class's fields - prefix by '_'
-	Static variables - prefix by 's_'
-	Global nonstatic variables - prefix by 'g_'
-Use UPPER_CASE_WITH_UNDERSCORES for macroses, values of enum-s.
-Additionally values of enums must be prefixes with a abbreviation of corresponding enum's name.
-Templates:
-	For template arguments that represent type name - use CamelCaseT (camel case with T suffix).
-	For template arguments that typed constant value - use UPPER_CASE_WITH_UNDERSCORES_T.
-	If template function represents 'internal' implementation for some nearby non-templated functions - you may add T suffix for its name to clearly denote this.
+In case you're changing existing code - follow existing naming conventions as you see them in that code. Otherwise:   
+Use CamelCase for name of enums, namespaces, classes, structures, functions and methods   
+Use snake_case for all variables, however:   
+	Private and protected class's fields - prefix by '_'   
+	Static variables - prefix by 's_'   
+	Global nonstatic variables - prefix by 'g_'   
+Use UPPER_CASE_WITH_UNDERSCORES for macroses, values of enum-s.   
+Additionally values of enums must be prefixes with a abbreviation of corresponding enum's name.   
+Templates:   
+	For template arguments that represent type name - use CamelCaseT (camel case with T suffix).   
+	For template arguments that typed constant value - use UPPER_CASE_WITH_UNDERSCORES_T.   
+	If template function represents 'internal' implementation for some nearby non-templated functions - you may add T suffix for its name to clearly denote this.   
 ``` Examples:
 enum SomeEnum
 {

@@ -187,9 +187,9 @@ TTYOutput::~TTYOutput()
 		if (!_kernel_tty) {
 			Format(ESC "[0 q");
 		}
+		Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
 		Format(ESC "[?9001l"); // win32-input-mode off
-		Format(ESC "[=0;1u"); // kovidgoyal's kitty mode off
 		TTYBasePalette def_palette;
 		ChangePalette(def_palette);
 		Flush();

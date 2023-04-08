@@ -349,16 +349,22 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		if (s[i] == ';') {
 			second_count = 0;
 			first_count++;
-			if (first_count >= first_limit) { return TTY_PARSED_BADSEQUENCE; }
+			if (first_count >= first_limit) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
 		} else if (s[i] == ':') {
 			second_count++;
-			if (second_count >= second_limit) { return TTY_PARSED_BADSEQUENCE; }
+			if (second_count >= second_limit) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
 		} else if (!isdigit(s[i])) {
 		    end_found = true;
 			break;
 		} else { // digit
 			params[first_count][second_count] = atoi(&s[i]);
-			for (;;i++) { if (!isdigit(s[i]) || (i >= l)) break; }
+			while (i < l && isdigit(s[i])) {
+				++i;
+			}
 			i--;
 		}
 	}

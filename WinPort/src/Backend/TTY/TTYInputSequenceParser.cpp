@@ -404,10 +404,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	int base_char = params[0][2] ? params[0][2] : params[0][0];
-	if (base_char < 255 && isalpha(base_char)) {
+	if (base_char <= UCHAR_MAX && isalpha(base_char)) {
 		ir.Event.KeyEvent.wVirtualKeyCode = (base_char - 'a') + 0x41;
 	}
-	if (base_char < 255 && isdigit(base_char)) {
+	if (base_char <= UCHAR_MAX && isdigit(base_char)) {
 		ir.Event.KeyEvent.wVirtualKeyCode = (base_char - '0') + 0x30;
 	}
 	switch (base_char) {

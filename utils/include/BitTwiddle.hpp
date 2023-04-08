@@ -8,6 +8,8 @@
 # include <endian.h>  // __BYTE_ORDER
 #endif
 
+#include <cstdint>
+
 template <class POD_T>
 	inline void ZeroFill(POD_T &dst)
 {

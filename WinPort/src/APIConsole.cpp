@@ -1,6 +1,7 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <stdexcept>
 
 #include "WinPort.h"
 #include "Backend.h"

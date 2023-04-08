@@ -179,8 +179,7 @@ bool PluginManager::LoadPlugin(const FARString &strModuleName, bool UncachedLoad
 	if (PlType == NOT_PLUGIN)
 		return false;
 
-	struct stat st
-	{};
+	struct stat st{};
 	if (stat(strModuleName.GetMB().c_str(), &st) == -1) {
 		fprintf(stderr, "%s: stat error %u for '%ls'\n", __FUNCTION__, errno, strModuleName.CPtr());
 		return false;

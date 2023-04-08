@@ -67,7 +67,7 @@ static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
 int CheckDisksProps(const wchar_t *SrcPath, const wchar_t *DestPath, int CheckedType)
 {
 	if (CheckedType == CHECKEDPROPS_ISSAMEDISK) {
-		struct stat s_src = {}, s_dest = {};
+		struct stat s_src{}, s_dest{};
 		int r = StatForPathOrItsParent(SrcPath, s_src);
 		if (r == -1) {
 			fprintf(stderr, "CheckDisksProps: stat errno=%u for src='%ls'\n", errno, SrcPath);

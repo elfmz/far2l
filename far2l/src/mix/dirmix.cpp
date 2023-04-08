@@ -95,8 +95,7 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 	while (mbPath.size() > 1 && mbPath.back() == '/')
 		mbPath.resize(mbPath.size() - 1);
 
-	struct stat s
-	{};
+	struct stat s{};
 	int r = sdc_stat(mbPath.c_str(), &s);
 	if (r == -1) {
 		if (errno == EPERM || errno == EACCES)
@@ -276,7 +275,7 @@ void PrepareTemporaryOpenPath(FARString &Path)
 	FARString found_name;
 	time_t now = time(nullptr);
 	while (scan_tree.GetNextName(&found_data, found_name)) {
-		struct timespec ts_mod = {}, ts_change = {};
+		struct timespec ts_mod{}, ts_change{};
 		WINPORT(FileTimeToLocalFileTime)
 		(&found_data.ftUnixModificationTime, &found_data.ftUnixModificationTime);
 		WINPORT(FileTimeToLocalFileTime)

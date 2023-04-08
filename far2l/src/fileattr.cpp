@@ -82,7 +82,7 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 		return SETATTR_RET_OK;
 
 	const std::string &mb_name = Wide2MB(Name);
-	struct stat s = {};
+	struct stat s{};
 	if (sdc_stat(mb_name.c_str(), &s) != 0)
 		memset(&s, 0, sizeof(s));
 

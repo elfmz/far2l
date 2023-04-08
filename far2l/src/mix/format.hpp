@@ -37,10 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace fmt
 {
-struct Cells
-{};		// makes modifiers operate in screen cells but not characters
-struct Chars
-{};		// makes modifiers operate in characters but not screen cells
+struct Cells{};		// makes modifiers operate in screen cells but not characters
+struct Chars{};		// makes modifiers operate in characters but not screen cells
 
 class Skip
 {
@@ -87,11 +85,9 @@ public:
 	WCHAR GetValue() const { return Value; }
 };
 
-class LeftAlign
-{};
+class LeftAlign{};
 
-class RightAlign
-{};
+class RightAlign{};
 
 enum AlignType
 {

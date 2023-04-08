@@ -121,7 +121,7 @@ void BufferedFileView::Close()
 
 void BufferedFileView::ActualizeFileSize()
 {
-	struct stat s = {};
+	struct stat s{};
 	if (FD != -1 && !PseudoFile && sdc_fstat(FD, &s) == 0 && FileSize != (UINT64)s.st_size) {
 		Clear();
 		FileSize = s.st_size;

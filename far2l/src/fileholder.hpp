@@ -38,8 +38,7 @@ public:
 
 class TempFileUploadHolder : public TempFileHolder
 {
-	struct timespec _mtim
-	{};
+	struct timespec _mtim{};
 
 	void GetCurrentTimestamp();
 	virtual void OnFileEdited(const wchar_t *FileName);

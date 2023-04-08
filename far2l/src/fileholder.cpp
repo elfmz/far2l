@@ -67,8 +67,7 @@ TempFileUploadHolder::TempFileUploadHolder(const FARString &temp_file_name, bool
 
 void TempFileUploadHolder::GetCurrentTimestamp()
 {
-	struct stat s
-	{};
+	struct stat s{};
 	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0) {
 		_mtim = s.st_mtim;
 	}
@@ -91,8 +90,7 @@ void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 
 void TempFileUploadHolder::UploadIfTimestampChanged()
 {
-	struct stat s
-	{};
+	struct stat s{};
 	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0
 			&& (_mtim.tv_sec != s.st_mtim.tv_sec || _mtim.tv_nsec != s.st_mtim.tv_nsec)) {
 		if (UploadTempFile()) {

@@ -394,9 +394,9 @@ void VMenuSettings()
 {
 	DialogBuilderListItem CAListItems[]=
 	{
-		{ Msg::ConfigVMenuClickCancel, VMENUCLICK_CANCEL },  // Cancel menu
-		{ Msg::ConfigVMenuClickApply,  VMENUCLICK_APPLY  },  // Execute selected item
-		{ Msg::ConfigVMenuClickIgnore, VMENUCLICK_IGNORE },  // Do nothing
+		{ Msg::ConfigVMenuClickCancel, VMENUCLICK_CANCEL },
+		{ Msg::ConfigVMenuClickApply,  VMENUCLICK_APPLY  },
+		{ Msg::ConfigVMenuClickIgnore, VMENUCLICK_IGNORE },
 	};
 
 	DialogBuilder Builder(Msg::ConfigVMenuTitle, L"VMenuSettings");

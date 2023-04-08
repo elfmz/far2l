@@ -273,8 +273,6 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuPluginCommands,0,KEY_F11},
 		{Msg::MenuWindowsList,0,KEY_F12},
 		{Msg::MenuProcessList,0,KEY_CTRLW}
-		//,
-		//{Msg::MenuHotPlugList,0,0}
 	};
 	MenuDataEx OptionsMenu[]=
 	{
@@ -289,7 +287,6 @@ void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuVMenuSettings,0,0},
 		{Msg::MenuCmdlineSettings,0,0},
 		{Msg::MenuAutoCompleteSettings,0,0},
-//		{Msg::MenuInfoPanelSettings,0,0},
 		{L"",LIF_SEPARATOR,0},
 		{Msg::MenuConfirmation,0,0},
 		{Msg::MenuFilePanelModes,0,0},

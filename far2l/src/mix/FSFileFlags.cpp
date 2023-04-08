@@ -8,6 +8,11 @@
 
 #include "FSFileFlags.h"
 
+#ifndef __DraginFly__
+/* This is the same as the MacOS X definition of UF_HIDDEN. */
+#define UF_HIDDEN      0x00008000      /* file is hidden */
+#endif
+
 FSFileFlags::FSFileFlags(const std::string &path)
 {
 	if (sdc_fs_flags_get(path.c_str(), &_flags) == 0) {

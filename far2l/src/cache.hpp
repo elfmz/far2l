@@ -38,7 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class BufferedFileView
 {
-	BufferedFileView(const BufferedFileView&) = delete;
+	BufferedFileView(const BufferedFileView &) = delete;
+
 public:
 	BufferedFileView();
 	~BufferedFileView();
@@ -52,7 +53,11 @@ public:
 
 	void SetPointer(INT64 Ptr, int Whence = SEEK_SET);
 	inline void GetPointer(INT64 &Ptr) const { Ptr = CurPtr; }
-	inline bool GetSize(UINT64& Size) const { Size = FileSize; return Opened(); };
+	inline bool GetSize(UINT64 &Size) const
+	{
+		Size = FileSize;
+		return Opened();
+	};
 	inline bool Eof() const { return CurPtr >= FileSize; }
 
 	void Clear();
@@ -62,25 +67,24 @@ public:
 	LPBYTE ViewBytesSlide(DWORD &Size);
 	LPBYTE ViewBytesAt(UINT64 Ptr, DWORD &Size);
 
-
 private:
 	enum
 	{
-		AlignSize = 0x1000, // must be power of 2
-		AheadCount = 0x10,
-		BehindCount = 0x1,
+		AlignSize     = 0x1000,		// must be power of 2
+		AheadCount    = 0x10,
+		BehindCount   = 0x1,
 		CapacityStock = 0x4
 	};
 
 	struct Bounds
 	{
-		UINT64 Ptr = 0; // must be multiple of AlignSize
+		UINT64 Ptr = 0;		// must be multiple of AlignSize
 		UINT64 End = 0;
 	} BufferBounds;
 
 	int FD = -1;
 
-	LPBYTE Buffer = nullptr;
+	LPBYTE Buffer    = nullptr;
 	DWORD BufferSize = 0;
 	UINT64 CurPtr = 0, LastPtr = 0;
 	UINT64 FileSize = 0;
@@ -91,24 +95,23 @@ private:
 	LPBYTE AllocBuffer(size_t Size);
 
 	void CalcBufferBounds(Bounds &bi, UINT64 Ptr, DWORD DataSize, DWORD CountLefter, DWORD CountRighter);
-
-
 };
-
 
 class CachedWrite
 {
 public:
-	CachedWrite(File& file);
+	CachedWrite(File &file);
 	~CachedWrite();
 	bool Write(LPCVOID Data, DWORD DataSize);
 	bool Flush();
 
 private:
 	LPBYTE Buffer;
-	File& file;
-	enum {BufferSize=0x10000};
+	File &file;
+	enum
+	{
+		BufferSize = 0x10000
+	};
 	DWORD FreeSize;
 	bool Flushed;
-
 };

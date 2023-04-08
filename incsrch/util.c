@@ -20,36 +20,36 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #if !defined(WINPORT_DIRECT)
 
 #if !defined(__WATCOMC__) && (defined(__386__) || defined(_WIN32) || defined(__NT__))
-void memmovel( void* dest, void* src, size_t count )
+void memmovel(void *dest, void *src, size_t count)
 {
-    _asm{
+	_asm {
         mov edi, dest
         mov esi, src
         mov ecx, count
         cld
         rep movsb
-    }
+	}
 }
 #endif
 
 #if !defined(__WATCOMC__) && (defined(__386__) || defined(_WIN32) || defined(__NT__))
-void zeromem(void* pMem, size_t nLength)
+void zeromem(void *pMem, size_t nLength)
 {
-    _asm{
+	_asm {
         mov edi, pMem
         mov ecx, nLength
         cld
         xor eax, eax
         rep stosb
-    }
+	}
 }
 #endif
 
 #ifndef __WATCOMC__
-size_t utoar(unsigned int nNum, char* sBuff, size_t nBuffLen)
+size_t utoar(unsigned int nNum, char *sBuff, size_t nBuffLen)
 // returning index to first byte
 {
-    _asm{
+	_asm {
         mov     eax, nNum
         mov     edi, sBuff
         mov     ecx, nBuffLen
@@ -69,14 +69,14 @@ Next:   xor     edx, edx
         jz      Exit
         jmp     short Next
 Exit:   mov     eax, ecx
-    }
+	}
 }
 #endif
 
 #ifndef __WATCOMC__
-size_t sstrnlen( const char* sString, size_t count )
+size_t sstrnlen(const char *sString, size_t count)
 {
-     _asm{
+	_asm {
         mov    edi, sString
         mov    ecx, count
         cld
@@ -87,45 +87,47 @@ size_t sstrnlen( const char* sString, size_t count )
         inc    ecx
 Len:    sub    edx, ecx
         mov    eax, edx
-    }
+	}
 }
 #endif
 
-BOOL WaitInput(BOOL Infinite) {
-    return WaitForSingleObject(hInputHandle, Infinite ? INFINITE : 0) == WAIT_OBJECT_0;
+BOOL WaitInput(BOOL Infinite)
+{
+	return WaitForSingleObject(hInputHandle, Infinite ? INFINITE : 0) == WAIT_OBJECT_0;
 }
-#else // WINPORT_DIRECT
-size_t utoar(unsigned int nNum, TCHAR* sBuff, size_t nBuffLen)
+#else	// WINPORT_DIRECT
+size_t utoar(unsigned int nNum, TCHAR *sBuff, size_t nBuffLen)
 // returning index to first byte
 {
-    apiSnprintf(sBuff, nBuffLen, _T("%*ud"), nBuffLen - 1, nNum);
-    sBuff[nBuffLen - 1] = 0;
-    size_t pos = 0;
-    for ( ; pos < nBuffLen; ++pos)
-        if (sBuff[pos] != _T(' '))
-            break;
-    return pos;
+	apiSnprintf(sBuff, nBuffLen, _T("%*ud"), nBuffLen - 1, nNum);
+	sBuff[nBuffLen - 1] = 0;
+	size_t pos = 0;
+	for (; pos < nBuffLen; ++pos)
+		if (sBuff[pos] != _T(' '))
+			break;
+	return pos;
 }
 
-size_t lstrnlen( const TCHAR* str, size_t count )
+size_t lstrnlen(const TCHAR *str, size_t count)
 {
-    size_t i = 0;
-    for (i = 0; i < count; i++)
-        if (!str[i])
-            break;
-    return i;
+	size_t i = 0;
+	for (i = 0; i < count; i++)
+		if (!str[i])
+			break;
+	return i;
 }
 
-BOOL WaitInput(BOOL Infinite) {
-    INPUT_RECORD rec;
-    DWORD ReadCount;
+BOOL WaitInput(BOOL Infinite)
+{
+	INPUT_RECORD rec;
+	DWORD ReadCount;
 
-    do {
-        WINPORT(PeekConsoleInput)(NULL, &rec, 1, &ReadCount);
-        if (Infinite)
-            WINPORT(Sleep(20));
-    } while (Infinite && ReadCount == 0);
+	do {
+		WINPORT(PeekConsoleInput)(NULL, &rec, 1, &ReadCount);
+		if (Infinite)
+			WINPORT(Sleep(20));
+	} while (Infinite && ReadCount == 0);
 
-    return ReadCount != 0;
+	return ReadCount != 0;
 }
-#endif // WINPORT_DIRECT
+#endif	// WINPORT_DIRECT

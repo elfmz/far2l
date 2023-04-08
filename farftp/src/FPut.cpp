@@ -1,24 +1,25 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
-void SetupFileTimeNDescription(int OpMode,Connection *hConnect,LPCSTR nm)
+void SetupFileTimeNDescription(int OpMode, Connection *hConnect, LPCSTR nm)
 {
-	if(!IS_FLAG(OpMode,OPM_DESCR)) return;
+	if (!IS_FLAG(OpMode, OPM_DESCR))
+		return;
 
-	FILE *SrcFile=fopen(nm,"r+b");
+	FILE *SrcFile = fopen(nm, "r+b");
 
-	if(!SrcFile) return;
+	if (!SrcFile)
+		return;
 
-	int   FileSize = (int)Fsize(SrcFile);
-	BYTE *Buf      = (BYTE*)malloc(sizeof(BYTE)*FileSize*3+1);
-	size_t ReadSize = fread(Buf,1,FileSize,SrcFile);
-	size_t WriteSize = ReadSize;//hConnect->FromOEM(Buf,ReadSize,sizeof(BYTE)*FileSize*3+1);
+	int FileSize = (int)Fsize(SrcFile);
+	BYTE *Buf = (BYTE *)malloc(sizeof(BYTE) * FileSize * 3 + 1);
+	size_t ReadSize = fread(Buf, 1, FileSize, SrcFile);
+	size_t WriteSize = ReadSize;	// hConnect->FromOEM(Buf,ReadSize,sizeof(BYTE)*FileSize*3+1);
 	fflush(SrcFile);
-	fseek(SrcFile,0,SEEK_SET);
+	fseek(SrcFile, 0, SEEK_SET);
 	fflush(SrcFile);
-	fwrite(Buf,1,WriteSize,SrcFile);
+	fwrite(Buf, 1, WriteSize, SrcFile);
 	fflush(SrcFile);
 	fclose(SrcFile);
 	free(Buf);
@@ -26,66 +27,62 @@ void SetupFileTimeNDescription(int OpMode,Connection *hConnect,LPCSTR nm)
 
 /****************************************
    PROCEDURES
-     FTP::GetFiles
+	 FTP::GetFiles
  ****************************************/
-int FTP::_FtpPutFile(LPCSTR lpszLocalFile,LPCSTR lpszNewRemoteFile,BOOL Reput,int AsciiMode)
+int FTP::_FtpPutFile(LPCSTR lpszLocalFile, LPCSTR lpszNewRemoteFile, BOOL Reput, int AsciiMode)
 {
-	PROC(("FTP::_FtpPutFile", "\"%s\",\"%s\",%d,%d", lpszLocalFile,lpszNewRemoteFile,Reput,AsciiMode))
+	PROC(("FTP::_FtpPutFile", "\"%s\",\"%s\",%d,%d", lpszLocalFile, lpszNewRemoteFile, Reput, AsciiMode))
 	int rc;
-	FtpSetRetryCount(hConnect,0);
+	FtpSetRetryCount(hConnect, 0);
 
-	do
-	{
+	do {
 		WINPORT(SetLastError)(ERROR_SUCCESS);
 
-		if(!hConnect)
+		if (!hConnect)
 			return FALSE;
 
-		if((rc=FtpPutFile(hConnect,lpszLocalFile,lpszNewRemoteFile,Reput,AsciiMode)) != FALSE)
+		if ((rc = FtpPutFile(hConnect, lpszLocalFile, lpszNewRemoteFile, Reput, AsciiMode)) != FALSE)
 			return rc;
 
-		if(WINPORT(GetLastError)() == ERROR_CANCELLED)
-		{
-			Log(("GetFileCancelled: op:%d",IS_SILENT(FP_LastOpMode)));
+		if (WINPORT(GetLastError)() == ERROR_CANCELLED) {
+			Log(("GetFileCancelled: op:%d", IS_SILENT(FP_LastOpMode)));
 			return IS_SILENT(FP_LastOpMode) ? (-1) : FALSE;
 		}
 
-		if(hConnect->SysErr())
+		if (hConnect->SysErr())
 			return IS_SILENT(FP_LastOpMode) ? (-1) : FALSE;
 
 		int num = FtpGetRetryCount(hConnect);
 
-		if(Opt.RetryCount > 0 && num >= Opt.RetryCount)
+		if (Opt.RetryCount > 0 && num >= Opt.RetryCount)
 			return FALSE;
 
-		FtpSetRetryCount(hConnect,num+1);
+		FtpSetRetryCount(hConnect, num + 1);
 
-		if(!hConnect->ConnectMessageTimeout(MCannotUpload,lpszNewRemoteFile,-MRetry))
+		if (!hConnect->ConnectMessageTimeout(MCannotUpload, lpszNewRemoteFile, -MRetry))
 			return FALSE;
 
 		Reput = TRUE;
 
-		if(FtpCmdLineAlive(hConnect) &&
-				FtpKeepAlive(hConnect))
+		if (FtpCmdLineAlive(hConnect) && FtpKeepAlive(hConnect))
 			continue;
 
 		SaveUsedDirNFile();
 
-		if(!Connect())
+		if (!Connect())
 			return FALSE;
-	}
-	while(true);
+	} while (true);
 }
 
-int FTP::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,int OpMode)
+int FTP::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {
-	PROC(("PutFiles",NULL))
+	PROC(("PutFiles", NULL))
 	int rc;
-	LogPanelItems(PanelItem,ItemsNumber);
-	rc = PutFilesINT(PanelItem,ItemsNumber,Move,OpMode);
+	LogPanelItems(PanelItem, ItemsNumber);
+	rc = PutFilesINT(PanelItem, ItemsNumber, Move, OpMode);
 	FtpCmdBlock(hConnect, FALSE);
 
-	if(rc == FALSE || rc == -1)
+	if (rc == FALSE || rc == -1)
 		LongBeepEnd(TRUE);
 
 	IncludeMask[0] = 0;
@@ -94,302 +91,279 @@ int FTP::PutFiles(struct PluginPanelItem *PanelItem,int ItemsNumber,int Move,int
 	return rc;
 }
 
-int FTP::PutFilesINT(struct PluginPanelItem *PanelItem,int ItemsNumber, int Move,int OpMode)
+int FTP::PutFilesINT(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {
-	FP_Screen         _scr;
-	FTPCopyInfo       ci;
-	FP_SizeItemList   il;
-	String            DestName;
-	char             *CurName;
-	FILETIME          CurTime;
-	DWORD             DestAttr;
-	FILETIME          DestTime;
-	FTPFileInfo       FindData;
-	int               mTitle;
-	DWORD             SrcAttr;
-	int               rc;
+	FP_Screen _scr;
+	FTPCopyInfo ci;
+	FP_SizeItemList il;
+	String DestName;
+	char *CurName;
+	FILETIME CurTime;
+	DWORD DestAttr;
+	FILETIME DestTime;
+	FTPFileInfo FindData;
+	int mTitle;
+	DWORD SrcAttr;
+	int rc;
 
-	if(!ItemsNumber) return 0;
+	if (!ItemsNumber)
+		return 0;
 
-	if(ShowHosts)    return PutHostsFiles(PanelItem,ItemsNumber,Move,OpMode);
+	if (ShowHosts)
+		return PutHostsFiles(PanelItem, ItemsNumber, Move, OpMode);
 
-	if(!hConnect)    return 0;
+	if (!hConnect)
+		return 0;
 
 	FtpGetCurrentDirectory(hConnect, ci.DestPath);
-	ci.asciiMode       = Host.AsciiMode;
-	ci.AddToQueque     = FALSE;
-	ci.MsgCode         = IS_FLAG(OpMode,OPM_FIND) ? ocOverAll : OverrideMsgCode;
+	ci.asciiMode = Host.AsciiMode;
+	ci.AddToQueque = FALSE;
+	ci.MsgCode = IS_FLAG(OpMode, OPM_FIND) ? ocOverAll : OverrideMsgCode;
 	ci.ShowProcessList = FALSE;
-	ci.Download        = FALSE;
-	ci.UploadLowCase   = Opt.UploadLowCase;
+	ci.Download = FALSE;
+	ci.UploadLowCase = Opt.UploadLowCase;
 
-	if(Opt.ShowUploadDialog &&
-		!IS_SILENT(OpMode) && !IS_FLAG(OpMode,OPM_NODIALOG))
-	{
-		if(!CopyAskDialog(Move,FALSE,&ci))
+	if (Opt.ShowUploadDialog && !IS_SILENT(OpMode) && !IS_FLAG(OpMode, OPM_NODIALOG)) {
+		if (!CopyAskDialog(Move, FALSE, &ci))
 			return FALSE;
 
 		LastMsgCode = ci.MsgCode;
 	}
 
-	if(hConnect->Host.ServerType!=FTP_TYPE_MVS)
-		AddEndSlash(ci.DestPath,'/');
+	if (hConnect->Host.ServerType != FTP_TYPE_MVS)
+		AddEndSlash(ci.DestPath, '/');
 
-	if(!ExpandList(PanelItem,ItemsNumber,&il,FALSE))
+	if (!ExpandList(PanelItem, ItemsNumber, &il, FALSE))
 		return FALSE;
 
-	if(ci.ShowProcessList && !ShowFilesList(&il))
+	if (ci.ShowProcessList && !ShowFilesList(&il))
 		return FALSE;
 
-	if(ci.AddToQueque)
-	{
-		Log(("Files added to queue [%d]",il.Count()));
-		ListToQueque(&il,&ci);
+	if (ci.AddToQueque) {
+		Log(("Files added to queue [%d]", il.Count()));
+		ListToQueque(&il, &ci);
 		return TRUE;
 	}
 
-	if(LongBeep)
+	if (LongBeep)
 		FP_PeriodReset(LongBeep);
 
 	hConnect->TrafficInfo->Init(hConnect, MStatusUpload, OpMode, &il);
 
-	for(int I = 0; I < il.Count(); I++)
-	{
+	for (int I = 0; I < il.Count(); I++) {
 		String tmp;
 		SrcAttr = il.List[I].FindData.dwFileAttributes;
-		tmp     = FTP_FILENAME(&il.List[I]);
+		tmp = FTP_FILENAME(&il.List[I]);
 		CurName = tmp.c_str();
 		CurTime = il.List[I].FindData.ftLastWriteTime;
-		Log(("PutFiles: list[%d], %d-th, att: %d, crc32:%08X \"%s\"",
-			il.Count(), I, SrcAttr, il.List[I].CRC32, CurName));
+		Log(("PutFiles: list[%d], %d-th, att: %d, crc32:%08X \"%s\"", il.Count(), I, SrcAttr,
+				il.List[I].CRC32, CurName));
 
 		/* File name may contain relative paths.
 		   Local files use '\' as dir separator, so convert
 		   it to '/' for remote side, BUT only in case relative paths.
 		*/
-		if(IsAbsolutePath(CurName))
+		if (IsAbsolutePath(CurName))
 			CurName = PointToName(CurName);
 
 		FixFTPSlash(tmp);
 
-		//Skip deselected files
-		if(il.List[I].CRC32 & 0x80000000)
-		{
+		// Skip deselected files
+		if (il.List[I].CRC32 & 0x80000000) {
 			Log(("PutFiles: skip delselected \"%s\"", CurName));
 			continue;
 		}
 
-/*		if(ci.UploadLowCase && !IS_FLAG(SrcAttr,FILE_ATTRIBUTE_DIRECTORY))
-		{
-			char *Name = PointToName(CurName);
-			//if ( !IsCaseMixed(Name))
-			LocalLower(Name);
-		}*/
+		/*		if(ci.UploadLowCase && !IS_FLAG(SrcAttr,FILE_ATTRIBUTE_DIRECTORY))
+				{
+					char *Name = PointToName(CurName);
+					//if ( !IsCaseMixed(Name))
+					LocalLower(Name);
+				}*/
 
-		if(hConnect->Host.ServerType!=FTP_TYPE_MVS)
+		if (hConnect->Host.ServerType != FTP_TYPE_MVS)
 			DestName.printf("%s%s", ci.DestPath.c_str(), CurName);
-		else
-		{
-			DestName=CurName;
-			//if(DestName.Length()>8)DestName.SetLength(8);
+		else {
+			DestName = CurName;
+			// if(DestName.Length()>8)DestName.SetLength(8);
 		}
 
-		if(IS_FLAG(SrcAttr,FILE_ATTRIBUTE_DIRECTORY))
-		{
-			if(FTPCreateDirectory(CurName,OpMode))
-				if(I < ItemsNumber && Opt.UpdateDescriptions)
-					PanelItem[I].Flags|=PPIF_PROCESSDESCR;
+		if (IS_FLAG(SrcAttr, FILE_ATTRIBUTE_DIRECTORY)) {
+			if (FTPCreateDirectory(CurName, OpMode))
+				if (I < ItemsNumber && Opt.UpdateDescriptions)
+					PanelItem[I].Flags|= PPIF_PROCESSDESCR;
 
 			continue;
 		}
 
 		DestAttr = MAX_DWORD;
-		DestTime.dwLowDateTime = 0; // Local files are considered newer by default
-		DestTime.dwHighDateTime = 0; // Local files are considered newer by default
+		DestTime.dwLowDateTime = 0;		// Local files are considered newer by default
+		DestTime.dwHighDateTime = 0;	// Local files are considered newer by default
 		memset(&FindData.FindData, 0, sizeof(FindData.FindData));
 		int64_t sz;
-		//Check file exist
-		FtpSetRetryCount(hConnect,0);
+		// Check file exist
+		FtpSetRetryCount(hConnect, 0);
 
-		do
-		{
+		do {
 			WINPORT(SetLastError)(ERROR_SUCCESS);
 
-			if(FtpFindFirstFile(hConnect, DestName.c_str(), &FindData, nullptr))
-			{
-				if(strcmp(PointToName(FTP_FILENAME(&FindData)),
-						PointToName(DestName.c_str())) == 0)
+			if (FtpFindFirstFile(hConnect, DestName.c_str(), &FindData, nullptr)) {
+				if (strcmp(PointToName(FTP_FILENAME(&FindData)), PointToName(DestName.c_str())) == 0)
 					DestAttr = FindData.FindData.dwFileAttributes;
 
 				DestTime = FindData.FindData.ftLastWriteTime;
 				break;
-			}
-			else if(!FtpCmdLineAlive(hConnect))
-			{
+			} else if (!FtpCmdLineAlive(hConnect)) {
 				;
-			}
-			else if((sz=FtpFileSize(hConnect,DestName.c_str())) != -1)
-			{
+			} else if ((sz = FtpFileSize(hConnect, DestName.c_str())) != -1) {
 				FindData.FindData = il.List[I].FindData;
 				FindData.FindData.nFileSize = sz;
 				FindData.FindData.nPhysicalSize = 0;
 				DestAttr = 0;
-				//Can't find file date using FTP commands - leave the default value
-				//DestTime = ;
+				// Can't find file date using FTP commands - leave the default value
+				// DestTime = ;
 				break;
-			}
-			else if(!FtpCmdLineAlive(hConnect))
-			{
+			} else if (!FtpCmdLineAlive(hConnect)) {
 				;
-			}
-			else
+			} else
 				break;
 
 			Log(("Conn lost!"));
 
-			if(!hConnect)
-			{
+			if (!hConnect) {
 				BackToHosts();
 				Invalidate();
 				return FALSE;
 			}
 
-			if(WINPORT(GetLastError)() == ERROR_CANCELLED)
+			if (WINPORT(GetLastError)() == ERROR_CANCELLED)
 				return IS_SILENT(FP_LastOpMode) ? (-1) : FALSE;
 
 			int num = FtpGetRetryCount(hConnect);
 
-			if(Opt.RetryCount > 0 && num >= Opt.RetryCount)
+			if (Opt.RetryCount > 0 && num >= Opt.RetryCount)
 				return FALSE;
 
-			FtpSetRetryCount(hConnect,num+1);
+			FtpSetRetryCount(hConnect, num + 1);
 
-			if(!hConnect->ConnectMessageTimeout(MCannotUpload,DestName.c_str(),-MRetry))
+			if (!hConnect->ConnectMessageTimeout(MCannotUpload, DestName.c_str(), -MRetry))
 				return FALSE;
 
 			SaveUsedDirNFile();
 
-			if(!Connect())
+			if (!Connect())
 				return FALSE;
-		}
-		while(true);
+		} while (true);
 
-		//Init transfer
+		// Init transfer
 		hConnect->TrafficInfo->InitFile(&il.List[I], FTP_FILENAME(&il.List[I]), DestName.c_str());
 
-		//Ask over
-		switch(ci.MsgCode)
-		{
-			case      ocOver:
-			case      ocSkip:
-			case    ocResume:
-			case     ocNewer:
+		// Ask over
+		switch (ci.MsgCode) {
+			case ocOver:
+			case ocSkip:
+			case ocResume:
+			case ocNewer:
 				ci.MsgCode = ocNone;
 				break;
-			default: break;
+			default:
+				break;
 		}
 
-		if(DestAttr != MAX_DWORD)
-		{
-			ci.MsgCode = AskOverwrite(MUploadTitle, FALSE, &FindData.FindData, &il.List[I].FindData, ci.MsgCode,
-				((CurTime.dwLowDateTime || CurTime.dwHighDateTime) && (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
+		if (DestAttr != MAX_DWORD) {
+			ci.MsgCode = AskOverwrite(MUploadTitle, FALSE, &FindData.FindData, &il.List[I].FindData,
+					ci.MsgCode,
+					((CurTime.dwLowDateTime || CurTime.dwHighDateTime)
+							&& (DestTime.dwLowDateTime || DestTime.dwHighDateTime)));
 			LastMsgCode = ci.MsgCode;
 
-			switch(ci.MsgCode)
-			{
-				case   ocOverAll:
-				case      ocOver:
+			switch (ci.MsgCode) {
+				case ocOverAll:
+				case ocOver:
 					break;
-				case      ocSkip:
-				case   ocSkipAll:
+				case ocSkip:
+				case ocSkipAll:
 					hConnect->TrafficInfo->Skip();
 					continue;
-				case    ocResume:
+				case ocResume:
 				case ocResumeAll:
 					break;
-				case     ocNewer:
-				case  ocNewerAll:
+				case ocNewer:
+				case ocNewerAll:
 
-					if(WINPORT(CompareFileTime)(&CurTime, &DestTime) <= 0)
-					{
+					if (WINPORT(CompareFileTime)(&CurTime, &DestTime) <= 0) {
 						hConnect->TrafficInfo->Skip();
 						continue;
 					}
 
 					break;
-				case    ocCancel:
+				case ocCancel:
 					return -1;
-				default: break;
+				default:
+					break;
 			}
 		}
 
-//Upload
-		if((rc=_FtpPutFile(FTP_FILENAME(&il.List[I]),
-			DestName.c_str(),
-			DestAttr == MAX_DWORD ? FALSE : (ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll),
-			ci.asciiMode)) == TRUE)
-		{
+		// Upload
+		if ((rc = _FtpPutFile(FTP_FILENAME(&il.List[I]), DestName.c_str(),
+						DestAttr == MAX_DWORD ? FALSE : (ci.MsgCode == ocResume || ci.MsgCode == ocResumeAll),
+						ci.asciiMode))
+				== TRUE) {
 			/*! FAR has a bug, so PanelItem stored in internal structure.
-			    Because of this flags PPIF_SELECTED and PPIF_PROCESSDESCR has no effect at all.
+				Because of this flags PPIF_SELECTED and PPIF_PROCESSDESCR has no effect at all.
 
-			      if ( I < ItemsNumber ) {
-			        CLR_FLAG( PanelItem[I].Flags,PPIF_SELECTED );
-			        if (Opt.UpdateDescriptions) SET_FLAG( PanelItem[I].Flags,PPIF_PROCESSDESCR );
-			      }
+				  if ( I < ItemsNumber ) {
+					CLR_FLAG( PanelItem[I].Flags,PPIF_SELECTED );
+					if (Opt.UpdateDescriptions) SET_FLAG( PanelItem[I].Flags,PPIF_PROCESSDESCR );
+				  }
 			*/
-			//Process description
-			SetupFileTimeNDescription(OpMode,hConnect,CurName);
+			// Process description
+			SetupFileTimeNDescription(OpMode, hConnect, CurName);
 
-			//Move source
-			if(Move)
-			{
-				//todo SetFileAttributes(CurName,0);
+			// Move source
+			if (Move) {
+				// todo SetFileAttributes(CurName,0);
 				remove(CurName);
 			}
 
 			mTitle = MOk;
-		}
-		else
+		} else
 
-//Cancelled
-			if(rc == -1 || WINPORT(GetLastError)() == ERROR_CANCELLED)
+			// Cancelled
+			if (rc == -1 || WINPORT(GetLastError)() == ERROR_CANCELLED)
 				return rc;
-			else
-			{
-//Error uploading
+			else {
+				// Error uploading
 				mTitle = MCannotUpload;
 			}
 
-//Process current file finished
-		//All OK
-		if(mTitle == MOk || mTitle == MNone__)
+		// Process current file finished
+		// All OK
+		if (mTitle == MOk || mTitle == MNone__)
 			continue;
 
-		//Connection lost
-		if(!hConnect)
-		{
+		// Connection lost
+		if (!hConnect) {
 			BackToHosts();
 			Invalidate();
 		}
 
-		//Return error
+		// Return error
 		return FALSE;
 	}
 
-	if(Move)
-		for(int I=il.Count()-1; I>=0; I--)
-		{
-			if(CheckForEsc(FALSE))
+	if (Move)
+		for (int I = il.Count() - 1; I >= 0; I--) {
+			if (CheckForEsc(FALSE))
 				return -1;
 
-			if(IS_FLAG(il.List[I].FindData.dwFileAttributes,FILE_ATTRIBUTE_DIRECTORY))
-				if(rmdir(FTP_FILENAME(&il.List[I]))==0)
-					if(I < ItemsNumber)
-					{
-						PanelItem[I].Flags&=~PPIF_SELECTED;
+			if (IS_FLAG(il.List[I].FindData.dwFileAttributes, FILE_ATTRIBUTE_DIRECTORY))
+				if (rmdir(FTP_FILENAME(&il.List[I])) == 0)
+					if (I < ItemsNumber) {
+						PanelItem[I].Flags&= ~PPIF_SELECTED;
 
-						if(Opt.UpdateDescriptions)
-							PanelItem[I].Flags|=PPIF_PROCESSDESCR;
+						if (Opt.UpdateDescriptions)
+							PanelItem[I].Flags|= PPIF_PROCESSDESCR;
 					}
 		}
 

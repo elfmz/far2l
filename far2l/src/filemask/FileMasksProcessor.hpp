@@ -35,30 +35,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "BaseFileMask.hpp"
-#include  "udlist.hpp"
-#include  "RegExp.hpp"
+#include "udlist.hpp"
+#include "RegExp.hpp"
 
 enum FMP_FLAGS
 {
-	FMPF_ADDASTERISK = 0x00000001 // Добавлять '*', если маска не содержит
-	// ни одного из следующих
-	// символов: '*', '?', '.'
+	FMPF_ADDASTERISK = 0x00000001		// Добавлять '*', если маска не содержит
+										// ни одного из следующих
+										// символов: '*', '?', '.'
 };
 
 class FileMasksProcessor : public BaseFileMask
 {
-	public:
-		FileMasksProcessor();
-		virtual ~FileMasksProcessor() { Free(); }
+public:
+	FileMasksProcessor();
+	virtual ~FileMasksProcessor() { Free(); }
 
-	public:
-		virtual bool Set(const wchar_t *Masks, DWORD Flags);
-		virtual bool Compare(const wchar_t *Name) const;
-		virtual bool IsEmpty() const;
-		void Free();
+public:
+	virtual bool Set(const wchar_t *Masks, DWORD Flags);
+	virtual bool Compare(const wchar_t *Name) const;
+	virtual bool IsEmpty() const;
+	void Free();
 
-	private:
-		UserDefinedList Masks; // список масок файлов
-		std::unique_ptr<RegExp> re;
-		int n = 0;
+private:
+	UserDefinedList Masks;	// список масок файлов
+	std::unique_ptr<RegExp> re;
+	int n = 0;
 };

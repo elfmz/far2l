@@ -43,20 +43,18 @@ enum FM_FLAGS
 	FMF_ADDASTERISK   = 0x00000004
 };
 
-
 class CFileMask : private NonCopyable
 {
-	private:
-		BaseFileMask *FileMask;
+private:
+	BaseFileMask *FileMask;
 
-	public:
-		CFileMask();
-		~CFileMask() { Free(); }
+public:
+	CFileMask();
+	~CFileMask() { Free(); }
 
-	public:
-		bool Set(const wchar_t *Masks, DWORD Flags);
-		bool Compare(const wchar_t *Name)const;
-		bool IsEmpty()const;
-		void Free();
-
+public:
+	bool Set(const wchar_t *Masks, DWORD Flags);
+	bool Compare(const wchar_t *Name) const;
+	bool IsEmpty() const;
+	void Free();
 };

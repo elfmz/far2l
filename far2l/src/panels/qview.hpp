@@ -39,50 +39,50 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class Viewer;
 
-class QuickView:public Panel
+class QuickView : public Panel
 {
-	private:
-		Viewer *QView;
+private:
+	Viewer *QView;
 
-		FARString strCurFileName;
-		FARString strCurFileType;
-		FARString strTempName;
+	FARString strCurFileName;
+	FARString strCurFileType;
+	FARString strTempName;
 
-		CriticalSection CS;
+	CriticalSection CS;
 
-		int Directory;
-		int PrevMacroMode;
-		uint32_t DirCount,FileCount,ClusterSize;
-		uint64_t FileSize,PhysicalSize;
-		int OldWrapMode;
-		int OldWrapType;
+	int Directory;
+	int PrevMacroMode;
+	uint32_t DirCount, FileCount, ClusterSize;
+	uint64_t FileSize, PhysicalSize;
+	int OldWrapMode;
+	int OldWrapType;
 
-	private:
-		virtual void DisplayObject();
-		void PrintText(const wchar_t *Str);
+private:
+	virtual void DisplayObject();
+	void PrintText(const wchar_t *Str);
 
-		void SetMacroMode(int Restore = FALSE);
+	void SetMacroMode(int Restore = FALSE);
 
-		void DynamicUpdateKeyBar();
+	void DynamicUpdateKeyBar();
 
-	public:
-		QuickView();
-		virtual ~QuickView();
+public:
+	QuickView();
+	virtual ~QuickView();
 
-	public:
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
-		virtual void Update(int Mode);
-		void ShowFile(const wchar_t *FileName,int TempFile,HANDLE hDirPlugin);
-		virtual void CloseFile();
-		virtual void QViewDelTempName();
+public:
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual void Update(int Mode);
+	void ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin);
+	virtual void CloseFile();
+	virtual void QViewDelTempName();
 
-		virtual int UpdateIfChanged(int UpdateMode);
-		virtual void SetTitle();
-		virtual FARString &GetTitle(FARString &Title,int SubLen=-1,int TruncSize=0);
-		virtual void SetFocus();
-		virtual void KillFocus();
-		virtual BOOL UpdateKeyBar();
-		virtual int GetCurName(FARString &strName);
+	virtual int UpdateIfChanged(int UpdateMode);
+	virtual void SetTitle();
+	virtual FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0);
+	virtual void SetFocus();
+	virtual void KillFocus();
+	virtual BOOL UpdateKeyBar();
+	virtual int GetCurName(FARString &strName);
 };

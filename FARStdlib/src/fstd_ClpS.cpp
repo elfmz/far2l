@@ -1,28 +1,22 @@
 #include <all_far.h>
 
-
 #include "fstdlib.h"
 
 BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize)
 {
-	void    *CData;
-	BOOL     rc = FALSE;
+	void *CData;
+	BOOL rc = FALSE;
 
-	if(!Data || !DataSize ||
-			!WINPORT(OpenClipboard)(NULL))
+	if (!Data || !DataSize || !WINPORT(OpenClipboard)(NULL))
 		return FALSE;
 
 	WINPORT(EmptyClipboard)();
 
-	if((CData=WINPORT(ClipboardAlloc)(DataSize+1))!=NULL)
-	{
-		memcpy(CData,Data,DataSize+1);
-		if (WINPORT(SetClipboardData)(CF_TEXT, CData))
-		{
+	if ((CData = WINPORT(ClipboardAlloc)(DataSize + 1)) != NULL) {
+		memcpy(CData, Data, DataSize + 1);
+		if (WINPORT(SetClipboardData)(CF_TEXT, CData)) {
 			rc = TRUE;
-		}
-		else
-		{
+		} else {
 			WINPORT(ClipboardFree)(CData);
 		}
 	}
@@ -32,18 +26,18 @@ BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize)
 	return rc;
 }
 
-BOOL WINAPI FP_GetFromClipboard(LPVOID& Data, SIZE_T& DataSize)
+BOOL WINAPI FP_GetFromClipboard(LPVOID &Data, SIZE_T &DataSize)
 {
-	void    *CData;
-	BOOL     rc = FALSE;
-	Data     = NULL;
+	void *CData;
+	BOOL rc = FALSE;
+	Data = NULL;
 
-	if(!WINPORT(OpenClipboard)(NULL)) return FALSE;
+	if (!WINPORT(OpenClipboard)(NULL))
+		return FALSE;
 
 	CData = WINPORT(GetClipboardData)(CF_TEXT);
 
-	if (CData)
-	{
+	if (CData) {
 		Data = strdup((char *)CData);
 		rc = TRUE;
 	}

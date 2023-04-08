@@ -44,35 +44,35 @@ struct DizRecord
 
 class DizList
 {
-	private:
-		FARString strDizFileName;
-		DizRecord *DizData;
-		int DizCount;
-		int *IndexData;
-		int IndexCount;
-		bool Modified;
-		bool NeedRebuild;
-		UINT OrigCodePage;
-		char *AnsiBuf;
+private:
+	FARString strDizFileName;
+	DizRecord *DizData;
+	int DizCount;
+	int *IndexData;
+	int IndexCount;
+	bool Modified;
+	bool NeedRebuild;
+	UINT OrigCodePage;
+	char *AnsiBuf;
 
-	private:
-		int GetDizPos(const wchar_t *Name, int *TextPos);
-		int GetDizPosEx(const wchar_t *Name, int *TextPos);
-		bool AddRecord(const wchar_t *DizText);
-		void BuildIndex();
+private:
+	int GetDizPos(const wchar_t *Name, int *TextPos);
+	int GetDizPosEx(const wchar_t *Name, int *TextPos);
+	bool AddRecord(const wchar_t *DizText);
+	void BuildIndex();
 
-	public:
-		DizList();
-		~DizList();
+public:
+	DizList();
+	~DizList();
 
-	public:
-		void Read(const wchar_t *Path, const wchar_t *DizName=nullptr);
-		void Reset();
-		const wchar_t *GetDizTextAddr(const wchar_t *Name, const int64_t FileSize);
-		bool DeleteDiz(const wchar_t *Name);
-		bool Flush(const wchar_t *Path, const wchar_t *DizName=nullptr);
-		bool AddDizText(const wchar_t *Name, const wchar_t *DizText);
-		bool CopyDiz(const wchar_t *Name, const wchar_t *DestName, DizList *DestDiz);
-		void GetDizName(FARString &strDizName);
-		static void PR_ReadingMsg();
+public:
+	void Read(const wchar_t *Path, const wchar_t *DizName = nullptr);
+	void Reset();
+	const wchar_t *GetDizTextAddr(const wchar_t *Name, const int64_t FileSize);
+	bool DeleteDiz(const wchar_t *Name);
+	bool Flush(const wchar_t *Path, const wchar_t *DizName = nullptr);
+	bool AddDizText(const wchar_t *Name, const wchar_t *DizText);
+	bool CopyDiz(const wchar_t *Name, const wchar_t *DestName, DizList *DestDiz);
+	void GetDizName(FARString &strDizName);
+	static void PR_ReadingMsg();
 };

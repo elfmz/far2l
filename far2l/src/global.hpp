@@ -49,8 +49,8 @@ extern std::string KbLayoutsTrOut;
 
 extern FARString strGlobalSearchString;
 extern int GlobalSearchCase;
-extern int GlobalSearchWholeWords; // значение "Whole words" для поиска
-extern int GlobalSearchHex; // значение "Search for hex" для поиска
+extern int GlobalSearchWholeWords;	// значение "Whole words" для поиска
+extern int GlobalSearchHex;			// значение "Search for hex" для поиска
 
 extern int GlobalSearchReverse;
 
@@ -88,9 +88,9 @@ extern int _localLastError;
 extern unsigned int g_umask;
 
 extern int KeepUserScreen;
-extern FARString g_strDirToSet; //RAVE!!!
+extern FARString g_strDirToSet;		// RAVE!!!
 
-extern int Macro_DskShowPosType; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
+extern int Macro_DskShowPosType;	// для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
 
 // Macro Const
 extern const wchar_t constMsX[];

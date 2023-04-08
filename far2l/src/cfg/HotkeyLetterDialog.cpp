@@ -13,13 +13,12 @@ bool HotkeyLetterDialog(const wchar_t *Title, const wchar_t *Object, wchar_t &Le
 	¦ _                                                      ¦
 	L========================================================-
 	*/
-	DialogDataEx HkDlgData[]=
-	{
-		{DI_DOUBLEBOX,3,1,60,4,{},0,Title},
-		{DI_TEXT,5,2,0,2,{},0,Msg::HelpHotKey},
-		{DI_FIXEDIT,5,3,5,3,{},DIF_FOCUS|DIF_DEFAULT,L""},
-		{DI_TEXT,8,3,58,3,{},0,Object}
-	};
+	DialogDataEx HkDlgData[] = {
+			{DI_DOUBLEBOX, 3, 1, 60, 4, {}, 0,                       Title          },
+			{DI_TEXT,      5, 2, 0,  2, {}, 0,                       Msg::HelpHotKey},
+			{DI_FIXEDIT,   5, 3, 5,  3, {}, DIF_FOCUS | DIF_DEFAULT, L""            },
+			{DI_TEXT,      8, 3, 58, 3, {}, 0,                       Object         }
+    };
 	MakeDialogItemsEx(HkDlgData, HkDlg);
 	if (Letter) {
 		HkDlg[2].strData = Letter;
@@ -27,7 +26,7 @@ bool HotkeyLetterDialog(const wchar_t *Title, const wchar_t *Object, wchar_t &Le
 
 	{
 		Dialog Dlg(HkDlg, ARRAYSIZE(HkDlg));
-		Dlg.SetPosition(-1,-1,64,6);
+		Dlg.SetPosition(-1, -1, 64, 6);
 		Dlg.Process();
 		int ExitCode = Dlg.GetExitCode();
 		if (ExitCode != 2)

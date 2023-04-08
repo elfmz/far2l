@@ -1,47 +1,42 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
-//2008/10/14 12:42
-BOOL net_parse_mvs_date_time(LPCSTR datestr, Time_t& decoded, BOOL useTime = FALSE)
+// 2008/10/14 12:42
+BOOL net_parse_mvs_date_time(LPCSTR datestr, Time_t &decoded, BOOL useTime = FALSE)
 {
-	if(datestr[4] != '/' || datestr[7] != '/')
+	if (datestr[4] != '/' || datestr[7] != '/')
 		return FALSE;
 
 	SYSTEMTIME st;
 	WINPORT(GetSystemTime)(&st);
 	st.wMilliseconds = st.wSecond = st.wMinute = st.wHour = 0;
 
-	if(useTime)
-	{
-		if(datestr[13] != ':')
+	if (useTime) {
+		if (datestr[13] != ':')
 			return FALSE;
 
-		int year,month,day,hour,minute;
-		sscanf(datestr,"%4d/%2d/%2d %2d:%2d",&year,&month,&day,&hour,&minute);
-		st.wYear=year;
-		st.wMonth=month;
-		st.wDay=day;
-		st.wHour=hour;
-		st.wMinute=minute;
-	}
-	else
-	{
-		int year,month,day;
-		sscanf(datestr,"%4d/%2d/%2d",&year,&month,&day);
-		st.wYear=year;
-		st.wMonth=month;
-		st.wDay=day;
+		int year, month, day, hour, minute;
+		sscanf(datestr, "%4d/%2d/%2d %2d:%2d", &year, &month, &day, &hour, &minute);
+		st.wYear = year;
+		st.wMonth = month;
+		st.wDay = day;
+		st.wHour = hour;
+		st.wMinute = minute;
+	} else {
+		int year, month, day;
+		sscanf(datestr, "%4d/%2d/%2d", &year, &month, &day);
+		st.wYear = year;
+		st.wMonth = month;
+		st.wDay = day;
 	}
 
 	return WINPORT(SystemTimeToFileTime)(&st, decoded);
 }
 
-
 /*
 DIR DATASETMODE
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
   Volume Unit    Referred Ext Used Recfm Lrecl BlkSz Dsorg Dsname
   Z18WR1 3390   **NONE**    1    1  FB     133  1330  PS  HCD.MSGLOG
@@ -61,13 +56,13 @@ DIR DATASETMODE
   Z18WR1 3390   2008/11/26  1   30  VBA    133  1632  PS  OU3.FF.EXPLIST
   Z18WR1 3390   2008/11/26  1    1  FB      80   800  PS  SPFTEMP2.CNTL
   Z18WR2 3390   2008/11/26  1    1  FBA    121  3146  PS  SPFTEMP2.LIST
-                                                     VSAM
-                                                      PO
-                                                      PS
-                                                     PATH
-                                                     GDG
+													 VSAM
+													  PO
+													  PS
+													 PATH
+													 GDG
 DIR DIRECTORYMODE
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
   Volume Unit    Referred Ext Used Recfm Lrecl BlkSz Dsorg Dsname
   Pseudo Directory                                        IN
@@ -80,7 +75,7 @@ DIR DIRECTORYMODE
   250 List completed successfully.
 
 PO F
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
    Name     VV.MM   Created       Changed      Size  Init   Mod   Id
   ADDUSER   01.01 2008/10/14 2008/10/14 12:42    15    12    15 IBMUSER
@@ -106,7 +101,7 @@ PO F
   CSQOPROF
 
 PO U
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
    Name      Size   TTR   Alias-of AC --------- Attributes --------- Amode Rmode
   DYNPRGA   005128 000209          01 FO                              24    24
@@ -124,7 +119,7 @@ PO U
 */
 /*
 JES responce
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
   FTPMOL0   JOB07136  OUTPUT    4 Spool Files
 
@@ -133,7 +128,7 @@ JES responce
 
 /*
 UNIX like
-            1         2         3         4         5         6         7
+			1         2         3         4         5         6         7
   01234567890123456789012345678901234567890123456789012345678901234567890123456789
   drwxr-xr-x   2 IBMUSER  OMVSGRP    16384 May 26  2006 IBM
   drwxr-xr-x   2 IBMUSER  OMVSGRP     8192 May 17  2006 X11
@@ -153,204 +148,206 @@ UNIX like
 
 */
 
-BOOL net_convert_unix_date(LPSTR& datestr, Time_t& decoded);
+BOOL net_convert_unix_date(LPSTR &datestr, Time_t &decoded);
 
-BOOL WINAPI idPRParceMVS(const FTPServerInfo* Server, FTPFileInfo* p, char *entry, int entry_len)
+BOOL WINAPI idPRParceMVS(const FTPServerInfo *Server, FTPFileInfo *p, char *entry, int entry_len)
 {
 	NET_FileEntryInfo ei;
 	BOOL needDot = FALSE;
 	BOOL hidden = FALSE;
-	memset(&ei,0,sizeof(ei));
+	memset(&ei, 0, sizeof(ei));
 
-	if(strncmp(entry,"Volume Unit    Referred Ext Used Recfm Lrecl BlkSz Dsorg Dsname",63)==0) return FALSE;
+	if (strncmp(entry, "Volume Unit    Referred Ext Used Recfm Lrecl BlkSz Dsorg Dsname", 63) == 0)
+		return FALSE;
 
-	if(strncmp(entry," Name     VV.MM   Created       Changed      Size  Init   Mod   Id",66)==0) return FALSE;
+	if (strncmp(entry, " Name     VV.MM   Created       Changed      Size  Init   Mod   Id", 66) == 0)
+		return FALSE;
 
-	if(strncmp(entry," Name      Size   TTR   Alias-of AC --------- Attributes --------- Amode Rmode",78)==0) return FALSE;
+	if (strncmp(entry, " Name      Size   TTR   Alias-of AC --------- Attributes --------- Amode Rmode", 78)
+			== 0)
+		return FALSE;
 
-	if(strncmp(entry,"No jobs found on Held queue",27)==0) return FALSE;
+	if (strncmp(entry, "No jobs found on Held queue", 27) == 0)
+		return FALSE;
 
-	if(strlen(entry)>51&&(strncmp(entry+51," PO ",4)==0))
+	if (strlen(entry) > 51 && (strncmp(entry + 51, " PO ", 4) == 0))
 		ei.FileType = NET_DIRECTORY;
-	else if(strncmp(entry,"Pseudo Directory",16)==0)
-	{
+	else if (strncmp(entry, "Pseudo Directory", 16) == 0) {
 		ei.FileType = NET_DIRECTORY;
-//      ei.FileType = NET_SYM_LINK_TO_DIR;
+		//      ei.FileType = NET_SYM_LINK_TO_DIR;
 		needDot = TRUE;
-	}
-	else if(strncmp(entry,"User catalog connector",22)==0)
-	{
+	} else if (strncmp(entry, "User catalog connector", 22) == 0) {
 		ei.FileType = NET_DIRECTORY;
 		hidden = TRUE;
-		strcpy(ei.UnixMode,"VSAM");
-//      ei.FileType = NET_SYM_LINK_TO_DIR;
+		strcpy(ei.UnixMode, "VSAM");
+		//      ei.FileType = NET_SYM_LINK_TO_DIR;
 		needDot = TRUE;
-	}
-	else if(strncmp(entry+7,"Error determining attributes",28)==0||
-	        strncmp(entry+7,"Not Mounted",11)==0)
-	{
-		strcpy(ei.UnixMode,"-offline-");
+	} else if (strncmp(entry + 7, "Error determining attributes", 28) == 0
+			|| strncmp(entry + 7, "Not Mounted", 11) == 0) {
+		strcpy(ei.UnixMode, "-offline-");
 		hidden = TRUE;
 	}
 
 #define BYTES_PER_TRACK_3380 47476
 #define BYTES_PER_TRACK_3390 56664
 
-	if(entry_len>8&&entry[6]!=' '&&entry[8]!=' '&&!needDot) // UNIX like
+	if (entry_len > 8 && entry[6] != ' ' && entry[8] != ' ' && !needDot)	// UNIX like
 	{
-		memcpy(ei.UnixMode,entry,10);
-		ei.UnixMode[10]=0;
+		memcpy(ei.UnixMode, entry, 10);
+		ei.UnixMode[10] = 0;
 
-		if((entry[0]|0x20)=='d')
+		if ((entry[0] | 0x20) == 'd')
 			ei.FileType = NET_DIRECTORY;
 
-		if((entry[0]|0x20)=='l')
+		if ((entry[0] | 0x20) == 'l')
 			ei.FileType = NET_SYM_LINK;
 
-		if(entry[39])
-		{
+		if (entry[39]) {
 			int sz;
-			sscanf(entry+33,"%d",&sz);
-			ei.size=sz;
+			sscanf(entry + 33, "%d", &sz);
+			ei.size = sz;
 		}
 
-		char* pdata = entry + 41;
+		char *pdata = entry + 41;
 		net_convert_unix_date(pdata, ei.date);
 
-		if(entry[15]!=' ')
-		{
-			memcpy(ei.FTPOwner,entry+15,8+1+8);
-			ei.FTPOwner[8+1+8]=0;
+		if (entry[15] != ' ') {
+			memcpy(ei.FTPOwner, entry + 15, 8 + 1 + 8);
+			ei.FTPOwner[8 + 1 + 8] = 0;
 		}
 
-		entry += 54;
-		entry_len-=54;
-		char* s = strstr(entry," -> ");
+		entry+= 54;
+		entry_len-= 54;
+		char *s = strstr(entry, " -> ");
 
-		if(s)
-		{
-			*s=0;
+		if (s) {
+			*s = 0;
 
-			if(s[4]) sscanf(s+4,"%s",ei.Link);
+			if (s[4])
+				sscanf(s + 4, "%s", ei.Link);
 		}
-	}
-	else if(entry_len>56&&entry[56]!=' ')
-	{
+	} else if (entry_len > 56 && entry[56] != ' ') {
 		int usedTrk, lrecl, blkSize, type;
-		usedTrk=lrecl=blkSize=type=0;
+		usedTrk = lrecl = blkSize = type = 0;
 
-		if(entry[7]!=' ') sscanf(entry+7,"%d",&type);
+		if (entry[7] != ' ')
+			sscanf(entry + 7, "%d", &type);
 
-		if(entry[31]!=' ') sscanf(entry+27,"%d",&usedTrk);
+		if (entry[31] != ' ')
+			sscanf(entry + 27, "%d", &usedTrk);
 
-		if(entry[43]!=' ') sscanf(entry+39,"%d",&lrecl);
+		if (entry[43] != ' ')
+			sscanf(entry + 39, "%d", &lrecl);
 
-		if(entry[49]!=' ') sscanf(entry+45,"%d",&blkSize);
+		if (entry[49] != ' ')
+			sscanf(entry + 45, "%d", &blkSize);
 
-		if(type==3380) ei.size = usedTrk * BYTES_PER_TRACK_3380;
+		if (type == 3380)
+			ei.size = usedTrk * BYTES_PER_TRACK_3380;
 
-		if(type==3390) ei.size = usedTrk * BYTES_PER_TRACK_3390;
+		if (type == 3390)
+			ei.size = usedTrk * BYTES_PER_TRACK_3390;
 
 		net_parse_mvs_date_time(entry + 14, ei.acc_date);
 
-		if(!needDot) sscanf(entry,"%s",ei.FTPOwner);
+		if (!needDot)
+			sscanf(entry, "%s", ei.FTPOwner);
 
-		if(entry[52]!=' ')
-		{
-			memcpy(ei.UnixMode,entry+51,5);
-			memcpy(ei.UnixMode+5,entry+33,5);
-			ei.UnixMode[10]=0;
+		if (entry[52] != ' ') {
+			memcpy(ei.UnixMode, entry + 51, 5);
+			memcpy(ei.UnixMode + 5, entry + 33, 5);
+			ei.UnixMode[10] = 0;
 
-			if(strncmp(ei.UnixMode,"VSAM",4)==0||
-					strncmp(ei.UnixMode,"PATH",4)==0||
-					strncmp(ei.UnixMode,"GDG",3)==0)
-				hidden=TRUE;
+			if (strncmp(ei.UnixMode, "VSAM", 4) == 0 || strncmp(ei.UnixMode, "PATH", 4) == 0
+					|| strncmp(ei.UnixMode, "GDG", 3) == 0)
+				hidden = TRUE;
 		}
 
-		entry += 56;
-		entry_len-=56;
-	}
-	else if(entry_len>8) // PO
+		entry+= 56;
+		entry_len-= 56;
+	} else if (entry_len > 8)		// PO
 	{
-		if(entry_len>62)
-		{
-			if(entry[15]==' ') // PO F
+		if (entry_len > 62) {
+			if (entry[15] == ' ')		// PO F
 			{
 				net_parse_mvs_date_time(entry + 27, ei.date, TRUE);
 				net_parse_mvs_date_time(entry + 16, ei.cr_date);
 				int sz;
-				sscanf(entry+44,"%d",&sz);
-				ei.size=sz;
-				sscanf(entry+62,"%s",ei.FTPOwner);
-			}
-			else if(entry[19]!=' ') // PO U
+				sscanf(entry + 44, "%d", &sz);
+				ei.size = sz;
+				sscanf(entry + 62, "%s", ei.FTPOwner);
+			} else if (entry[19] != ' ')	// PO U
 			{
 				UINT sz;
-				sscanf(entry+10,"%X",&sz);
-				ei.size=sz;
+				sscanf(entry + 10, "%X", &sz);
+				ei.size = sz;
 
-				if(entry[24]!=' ')
-					sscanf(entry+24,"%s",ei.Link);
-			}
-			else               // JES
+				if (entry[24] != ' ')
+					sscanf(entry + 24, "%s", ei.Link);
+			} else		// JES
 			{
 				UINT sz;
-				sscanf(entry+30,"%X",&sz);
-				ei.size=sz;
-				entry+=10;
+				sscanf(entry + 30, "%X", &sz);
+				ei.size = sz;
+				entry+= 10;
 			}
 		}
 
-		entry[8]=0;
+		entry[8] = 0;
 	}
 
-//Name
+	// Name
 	entry = SkipSpace(entry);
 
-	if(*entry=='\'') entry++;
+	if (*entry == '\'')
+		entry++;
 
 	StrCpy(ei.FindData.cFileName, entry, ARRAYSIZE(ei.FindData.cFileName));
 	size_t le = strlen(ei.FindData.cFileName);
 
-	if(le&&ei.FindData.cFileName[le-1]=='\'')ei.FindData.cFileName[le-1]=0;
+	if (le && ei.FindData.cFileName[le - 1] == '\'')
+		ei.FindData.cFileName[le - 1] = 0;
 
-	//e=strchr(ei.FindData.cFileName,'.');
-	//if(e) { *(e+1)=0; ei.FileType = NET_DIRECTORY; }
-	if(needDot) strcat(ei.FindData.cFileName, ".");
+	// e=strchr(ei.FindData.cFileName,'.');
+	// if(e) { *(e+1)=0; ei.FileType = NET_DIRECTORY; }
+	if (needDot)
+		strcat(ei.FindData.cFileName, ".");
 
 	XP_StripLine(ei.FindData.cFileName);
 
-	if(hidden) ei.FindData.dwFileAttributes|=FILE_ATTRIBUTE_HIDDEN;
+	if (hidden)
+		ei.FindData.dwFileAttributes|= FILE_ATTRIBUTE_HIDDEN;
 
-//     if(ei.FileType == NET_SYM_LINK_TO_DIR )
-//      strcpy(ei.Link,ei.FindData.cFileName);
-	return ConvertEntry(&ei,p);
+	//     if(ei.FileType == NET_SYM_LINK_TO_DIR )
+	//      strcpy(ei.Link,ei.FindData.cFileName);
+	return ConvertEntry(&ei, p);
 }
 
-BOOL WINAPI idDirParceMVS(const FTPServerInfo* Server, LPCSTR Line, char *CurDir, size_t CurDirSize)
+BOOL WINAPI idDirParceMVS(const FTPServerInfo *Server, LPCSTR Line, char *CurDir, size_t CurDirSize)
 {
 	// 01234
 	// 250 "'xxxx.yyy.'"
-	Line+=5;
+	Line+= 5;
 
-	if(*Line=='\'')
-	{
+	if (*Line == '\'') {
 		Line++;
-		strcpy(CurDir,Line);
-		char* Ptr=CurDir;
+		strcpy(CurDir, Line);
+		char *Ptr = CurDir;
 
-		while(!isspace(*Ptr))
+		while (!isspace(*Ptr))
 			Ptr++;
 
-		if(Ptr > CurDir+1)
+		if (Ptr > CurDir + 1)
 			Ptr--;
 
-		*Ptr=0;
+		*Ptr = 0;
 		size_t le = strlen(CurDir);
 
-		if(le&&CurDir[le-1]=='\'')CurDir[le-1]=0;
+		if (le && CurDir[le - 1] == '\'')
+			CurDir[le - 1] = 0;
 
-		if(CurDir[0]==0)strcpy(CurDir,"*");
+		if (CurDir[0] == 0)
+			strcpy(CurDir, "*");
 
 		return TRUE;
 	}

@@ -37,17 +37,16 @@ class FileFilter;
 
 enum GETDIRINFOFLAGS
 {
-	GETDIRINFO_ENHBREAK           =0x00000001,
-	GETDIRINFO_DONTREDRAWFRAME    =0x00000002,
-	GETDIRINFO_SCANSYMLINK        =0x00000004,
-	GETDIRINFO_SCANSYMLINKDEF     =0x00000008,
-	GETDIRINFO_USEFILTER          =0x00000010,
+	GETDIRINFO_ENHBREAK        = 0x00000001,
+	GETDIRINFO_DONTREDRAWFRAME = 0x00000002,
+	GETDIRINFO_SCANSYMLINK     = 0x00000004,
+	GETDIRINFO_SCANSYMLINKDEF  = 0x00000008,
+	GETDIRINFO_USEFILTER       = 0x00000010,
 };
 
-int GetDirInfo(const wchar_t *Title,const wchar_t *DirName,uint32_t&DirCount,
-	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize,
-	uint32_t &ClusterSize,clock_t MsgWaitTime, FileFilter *Filter,
-	DWORD Flags=GETDIRINFO_SCANSYMLINKDEF);
+int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
+		uint64_t &FileSize, uint64_t &PhysicalSize, uint32_t &ClusterSize, clock_t MsgWaitTime,
+		FileFilter *Filter, DWORD Flags = GETDIRINFO_SCANSYMLINKDEF);
 
-int GetPluginDirInfo(HANDLE hPlugin,const wchar_t *DirName, uint32_t &DirCount,
-	uint32_t &FileCount,uint64_t &FileSize, uint64_t &PhysicalSize);
+int GetPluginDirInfo(HANDLE hPlugin, const wchar_t *DirName, uint32_t &DirCount, uint32_t &FileCount,
+		uint64_t &FileSize, uint64_t &PhysicalSize);

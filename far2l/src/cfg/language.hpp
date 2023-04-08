@@ -59,8 +59,8 @@ public:
 	const wchar_t *GetMsgWide(FarLangMsgID id) const;
 	const char *GetMsgMB(FarLangMsgID id) const;
 
-	inline bool IsLanguageLoaded() const {return _loaded;}
-	inline LanguageErrors LastError() const {return _last_error;}
+	inline bool IsLanguageLoaded() const { return _loaded; }
+	inline LanguageErrors LastError() const { return _last_error; }
 
 	FarLangMsgID InternMsg(const wchar_t *Str);
 	FarLangMsgID InternMsg(const char *Str);
@@ -69,8 +69,8 @@ private:
 	std::unique_ptr<LanguageData> _data;
 	FARString _message_file;
 	LanguageErrors _last_error = LERROR_SUCCESS;
-	bool _loaded = false;
-	bool _wide = true;
+	bool _loaded               = false;
+	bool _wide                 = true;
 
 	const void *GetMsg(FarLangMsgID id) const;
 };
@@ -79,7 +79,9 @@ extern Language Lang;
 
 class VMenu;
 
-FILE* OpenLangFile(FARString strPath,const wchar_t *Mask,const wchar_t *Language, FARString &strFileName, UINT &nCodePage, BOOL StrongLang=FALSE,FARString *pstrLangName=nullptr);
-int GetLangParam(FILE *SrcFile,const wchar_t *ParamName,FARString *strParam1, FARString *strParam2, UINT nCodePage);
-int GetOptionsParam(FILE *SrcFile,const wchar_t *KeyName,FARString &strValue, UINT nCodePage);
-int Select(int HelpLanguage,VMenu **MenuPtr);
+FILE *OpenLangFile(FARString strPath, const wchar_t *Mask, const wchar_t *Language, FARString &strFileName,
+		UINT &nCodePage, BOOL StrongLang = FALSE, FARString *pstrLangName = nullptr);
+int GetLangParam(FILE *SrcFile, const wchar_t *ParamName, FARString *strParam1, FARString *strParam2,
+		UINT nCodePage);
+int GetOptionsParam(FILE *SrcFile, const wchar_t *KeyName, FARString &strValue, UINT nCodePage);
+int Select(int HelpLanguage, VMenu **MenuPtr);

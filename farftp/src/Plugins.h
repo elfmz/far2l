@@ -3,39 +3,34 @@
 
 //------------------------------------------------------------------------
 /* Number in array of interfaces [Plugin.cpp]
-*/
-#define PLUGIN_PROGRESS  0
-#define PLUGIN_DIRLIST   1
-#define PLUGIN_NOTIFY    2
+ */
+#define PLUGIN_PROGRESS 0
+#define PLUGIN_DIRLIST  1
+#define PLUGIN_NOTIFY   2
 
 //------------------------------------------------------------------------
 struct FTPPluginHolder
 {
-	FTPPluginInterface* Interface;
+	FTPPluginInterface *Interface;
 
-	virtual BOOL Assign(FTPPluginInterface* Interface);
+	virtual BOOL Assign(FTPPluginInterface *Interface);
 	virtual void Destroy(void);
 	virtual ~FTPPluginHolder() = default;
 };
 
-extern BOOL             InitPlugins(void);
-extern void             FreePlugins(void);
-extern FTPPluginHolder* GetPluginHolder(WORD Number);
-extern BOOL             PluginAvailable(WORD Number);
+extern BOOL InitPlugins(void);
+extern void FreePlugins(void);
+extern FTPPluginHolder *GetPluginHolder(WORD Number);
+extern BOOL PluginAvailable(WORD Number);
 
 //------------------------------------------------------------------------
-template <class Cl, WORD Index> struct FTPPlugin
+template <class Cl, WORD Index>
+struct FTPPlugin
 {
-	FTPPluginHolder* Holder;
+	FTPPluginHolder *Holder;
 
-	FTPPlugin(void)
-	{
-		Holder = GetPluginHolder(Index);
-	}
-	virtual ~FTPPlugin()
-	{
-		Holder = NULL;
-	}
+	FTPPlugin(void) { Holder = GetPluginHolder(Index); }
+	virtual ~FTPPlugin() { Holder = NULL; }
 
 	Cl Interface(void)
 	{
@@ -45,18 +40,14 @@ template <class Cl, WORD Index> struct FTPPlugin
 	}
 };
 //------------------------------------------------------------------------
-struct FTPProgress : public FTPPlugin<ProgressInterface*,PLUGIN_PROGRESS>
+struct FTPProgress : public FTPPlugin<ProgressInterface *, PLUGIN_PROGRESS>
 {
 	HANDLE Object;
 
-	FTPProgress(void)
-	{
-		Object = NULL;
-	}
+	FTPProgress(void) { Object = NULL; }
 	~FTPProgress()
 	{
-		if(Object)
-		{
+		if (Object) {
 			Interface()->DestroyObject(Object);
 			Object = NULL;
 		}
@@ -65,30 +56,30 @@ struct FTPProgress : public FTPPlugin<ProgressInterface*,PLUGIN_PROGRESS>
 	void Resume(LPCSTR LocalFileName);
 	void Resume(int64_t size);
 	BOOL Callback(int Size);
-	void Init(HANDLE Connection,int tMsg,int OpMode,FP_SizeItemList* il);
+	void Init(HANDLE Connection, int tMsg, int OpMode, FP_SizeItemList *il);
 	void InitFile(int64_t sz, LPCSTR SrcName, LPCSTR DestName);
 	void InitFile(PluginPanelItem *pi, LPCSTR SrcName, LPCSTR DestName);
-	void InitFile(FAR_FIND_DATA* pi, LPCSTR SrcName, LPCSTR DestName);
+	void InitFile(FAR_FIND_DATA *pi, LPCSTR SrcName, LPCSTR DestName);
 	void Skip(void);
 	void Waiting(time_t paused);
 	void SetConnection(HANDLE Connection);
 };
 
 //------------------------------------------------------------------------
-struct FTPDirList : public FTPPlugin<DirListInterface*,PLUGIN_DIRLIST>
+struct FTPDirList : public FTPPlugin<DirListInterface *, PLUGIN_DIRLIST>
 {
 
-	WORD     DetectStringType(FTPServerInfo* const Server,char *ListingString, int ListingLength);
-	WORD     DetectDirStringType(FTPServerInfo* const Server,LPCSTR ListingString);
-	WORD     GetNumberOfSupportedTypes(void);
-	FTPType* GetType(WORD Index);
+	WORD DetectStringType(FTPServerInfo *const Server, char *ListingString, int ListingLength);
+	WORD DetectDirStringType(FTPServerInfo *const Server, LPCSTR ListingString);
+	WORD GetNumberOfSupportedTypes(void);
+	FTPType *GetType(WORD Index);
 };
 
 //------------------------------------------------------------------------
-struct FTPNotify : public FTPPlugin<NotifyInterface*,PLUGIN_NOTIFY>
+struct FTPNotify : public FTPPlugin<NotifyInterface *, PLUGIN_NOTIFY>
 {
 
-	void     Notify(const FTNNotify* p);
+	void Notify(const FTNNotify *p);
 };
 
 #endif

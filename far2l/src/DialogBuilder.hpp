@@ -48,62 +48,58 @@ struct DialogItemEx;
 Поддерживает automation (изменение флагов одного элемента в зависимости от состояния
 другого). Реализуется при помощи метода LinkFlags().
 */
-class DialogBuilder: public DialogBuilderBase<DialogItemEx>
+class DialogBuilder : public DialogBuilderBase<DialogItemEx>
 {
-	private:
-		static LONG_PTR WINAPI DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
+private:
+	static LONG_PTR WINAPI DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 
-		struct CodePageBox
-		{
-			int Index;
-			UINT Value;
-			bool allowAuto;
-			bool allowAll;
-		};
-		std::list<CodePageBox> CodePageBoxes; // must be list to keep pointers valid
+	struct CodePageBox
+	{
+		int Index;
+		UINT Value;
+		bool allowAuto;
+		bool allowAll;
+	};
+	std::list<CodePageBox> CodePageBoxes;	// must be list to keep pointers valid
 
-		const wchar_t *HelpTopic;
+	const wchar_t *HelpTopic;
 
-		void LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags);
+	void LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags);
 
-	protected:
-		virtual void InitDialogItem(DialogItemEx *Item, const TCHAR *Text);
-		virtual int TextWidth(const DialogItemEx &Item);
-		virtual const TCHAR *GetLangString(FarLangMsg MessageID);
-		virtual int DoShowDialog();
+protected:
+	virtual void InitDialogItem(DialogItemEx *Item, const TCHAR *Text);
+	virtual int TextWidth(const DialogItemEx &Item);
+	virtual const TCHAR *GetLangString(FarLangMsg MessageID);
+	virtual int DoShowDialog();
 
-		virtual DialogItemBinding<DialogItemEx> *CreateCheckBoxBinding(BOOL *Value, int Mask);
-		virtual DialogItemBinding<DialogItemEx> *CreateRadioButtonBinding(int *Value);
+	virtual DialogItemBinding<DialogItemEx> *CreateCheckBoxBinding(BOOL *Value, int Mask);
+	virtual DialogItemBinding<DialogItemEx> *CreateRadioButtonBinding(int *Value);
 
-	public:
-		DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic);
-		~DialogBuilder();
+public:
+	DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic);
+	~DialogBuilder();
 
-		// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
-		DialogItemEx *AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
+	// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
+	DialogItemEx *
+	AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
 
-		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-		virtual DialogItemEx *AddIntEditField(int *Value, int Width);
+	// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
+	virtual DialogItemEx *AddIntEditField(int *Value, int Width);
 
-		// Добавляет выпадающий список с указанными значениями.
-		DialogItemEx *AddComboBox(
-			int *Value, int Width,
-			DialogBuilderListItem *Items, int ItemCount,
-			DWORD Flags = DIF_NONE
-		);
+	// Добавляет выпадающий список с указанными значениями.
+	DialogItemEx *
+	AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
 
-		// Добавляет выпадающий список с code pages.
-		DialogItemEx *AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
+	// Добавляет выпадающий список с code pages.
+	DialogItemEx *AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
 
-		// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
-		// false, устанавливает флаги Flags у элемента Target; когда равно true -
-		// сбрасывает флаги.
-		// Если LinkLabels установлено в true, то текстовые элементы, добавленные к элементу Target
-		// методами AddTextBefore и AddTextAfter, также связываются с элементом Parent.
-		void LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels=true);
+	// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
+	// false, устанавливает флаги Flags у элемента Target; когда равно true -
+	// сбрасывает флаги.
+	// Если LinkLabels установлено в true, то текстовые элементы, добавленные к элементу Target
+	// методами AddTextBefore и AddTextAfter, также связываются с элементом Parent.
+	void
+	LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels = true);
 
-		void AddOKCancel()
-		{
-			DialogBuilderBase<DialogItemEx>::AddOKCancel(Msg::Ok, Msg::Cancel);
-		}
+	void AddOKCancel() { DialogBuilderBase<DialogItemEx>::AddOKCancel(Msg::Ok, Msg::Cancel); }
 };

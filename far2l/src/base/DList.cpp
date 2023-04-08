@@ -33,89 +33,91 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "DList.hpp"
 
-CDList::CDList():
+CDList::CDList()
+	:
 	count(0)
 {
-	root.next=&root;
-	root.prev=&root;
+	root.next = &root;
+	root.prev = &root;
 }
 
 void CDList::Clear()
 {
-	Node *f=root.next;
+	Node *f = root.next;
 
-	while (f!=&root)
-	{
-		Node *f1=f;
-		f=f->next;
+	while (f != &root) {
+		Node *f1 = f;
+		f = f->next;
 		DeleteNode(f1);
 	}
 
-	count=0;
-	root.next=&root;
-	root.prev=&root;
+	count = 0;
+	root.next = &root;
+	root.prev = &root;
 }
 void CDList::CSwap(CDList &l)
 {
-	Node *pr=root.prev;
-	root.next->prev=&l.root;
-	pr->next=&l.root;
-	pr=l.root.prev;
-	l.root.next->prev=&root;
-	pr->next=&root;
-	size_t tcount=count;
-	Node troot=root;
-	count=l.count;
-	root=l.root;
-	l.count=tcount;
-	l.root=troot;
+	Node *pr = root.prev;
+	root.next->prev = &l.root;
+	pr->next = &l.root;
+	pr = l.root.prev;
+	l.root.next->prev = &root;
+	pr->next = &root;
+	size_t tcount = count;
+	Node troot = root;
+	count = l.count;
+	root = l.root;
+	l.count = tcount;
+	l.root = troot;
 }
 void *CDList::CInsertBefore(void *b, void *item)
 {
-	Node *Before=b ? (Node*)((BYTE*)b-sizeof(Node)) : &root;
-	Node *node=AllocNode(item);
-	node->prev=Before->prev;
-	node->next=Before;
-	Before->prev->next=node;
-	Before->prev=node;
+	Node *Before = b ? (Node *)((BYTE *)b - sizeof(Node)) : &root;
+	Node *node = AllocNode(item);
+	node->prev = Before->prev;
+	node->next = Before;
+	Before->prev->next = node;
+	Before->prev = node;
 	++count;
-	return ((BYTE*)node)+sizeof(Node);
+	return ((BYTE *)node) + sizeof(Node);
 }
 void *CDList::CInsertAfter(void *a, void *item)
 {
-	Node *After=a ? (Node*)((BYTE*)a-sizeof(Node)) : &root;
-	return CInsertBefore((BYTE*)After->next+sizeof(Node), item);
+	Node *After = a ? (Node *)((BYTE *)a - sizeof(Node)) : &root;
+	return CInsertBefore((BYTE *)After->next + sizeof(Node), item);
 }
 void CDList::CMoveBefore(void *b, void *item)
 {
-	if (!item) return;
-	if (item == b) return;
-	Node *Before=b ? (Node*)((BYTE*)b-sizeof(Node)) : &root;
-	Node *node=(Node*)((BYTE*)item-sizeof(Node));
+	if (!item)
+		return;
+	if (item == b)
+		return;
+	Node *Before = b ? (Node *)((BYTE *)b - sizeof(Node)) : &root;
+	Node *node = (Node *)((BYTE *)item - sizeof(Node));
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
-	node->prev=Before->prev;
-	node->next=Before;
-	Before->prev->next=node;
-	Before->prev=node;
+	node->prev = Before->prev;
+	node->next = Before;
+	Before->prev->next = node;
+	Before->prev = node;
 }
 void CDList::CMoveAfter(void *a, void *item)
 {
-	if (item == a) return;
-	Node *After=a ? (Node*)((BYTE*)a-sizeof(Node)) : &root;
-	CMoveBefore((BYTE*)After->next+sizeof(Node), item);
+	if (item == a)
+		return;
+	Node *After = a ? (Node *)((BYTE *)a - sizeof(Node)) : &root;
+	CMoveBefore((BYTE *)After->next + sizeof(Node), item);
 }
 void *CDList::CDelete(void *item)
 {
-	Node *node=(Node*)((BYTE*)item-sizeof(Node));
-	Node *pr=node->prev;
-	Node *nx=node->next;
-	pr->next=nx;
-	nx->prev=pr;
+	Node *node = (Node *)((BYTE *)item - sizeof(Node));
+	Node *pr = node->prev;
+	Node *nx = node->next;
+	pr->next = nx;
+	nx->prev = pr;
 	--count;
 	DeleteNode(node);
-	return pr==&root ? nullptr : ((BYTE*)pr)+sizeof(Node);
+	return pr == &root ? nullptr : ((BYTE *)pr) + sizeof(Node);
 }

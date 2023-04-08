@@ -38,9 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class console
 {
 	DWORD _StickyControlKeyState = 0;
-	bool _StickySkipKeyUp = 0;
+	bool _StickySkipKeyUp        = 0;
 
-	bool InspectStickyKeyEvent(INPUT_RECORD& ir);
+	bool InspectStickyKeyEvent(INPUT_RECORD &ir);
 
 public:
 	bool Allocate();
@@ -50,13 +50,13 @@ public:
 	HANDLE GetOutputHandle();
 	HANDLE GetErrorHandle();
 
-	bool GetSize(COORD& Size);
+	bool GetSize(COORD &Size);
 	bool SetSize(COORD Size);
 
-	bool GetWindowRect(SMALL_RECT& ConsoleWindow);
-	bool SetWindowRect(const SMALL_RECT& ConsoleWindow);
+	bool GetWindowRect(SMALL_RECT &ConsoleWindow);
+	bool SetWindowRect(const SMALL_RECT &ConsoleWindow);
 
-	bool GetWorkingRect(SMALL_RECT& WorkingRect);
+	bool GetWorkingRect(SMALL_RECT &WorkingRect);
 
 	bool GetTitle(FARString &strTitle);
 	bool SetTitle(LPCWSTR Title);
@@ -69,30 +69,30 @@ public:
 
 	bool SetControlHandler(PHANDLER_ROUTINE HandlerRoutine, bool Add);
 
-	bool GetMode(HANDLE ConsoleHandle, DWORD& Mode);
+	bool GetMode(HANDLE ConsoleHandle, DWORD &Mode);
 	bool SetMode(HANDLE ConsoleHandle, DWORD Mode);
 
-	bool PeekInput(INPUT_RECORD& Buffer);
-	bool ReadInput(INPUT_RECORD& Buffer);
-	bool WriteInput(INPUT_RECORD& Buffer, DWORD Length, DWORD& NumberOfEventsWritten);
-	bool ReadOutput(CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& ReadRegion);
-	bool WriteOutput(const CHAR_INFO& Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT& WriteRegion);
+	bool PeekInput(INPUT_RECORD &Buffer);
+	bool ReadInput(INPUT_RECORD &Buffer);
+	bool WriteInput(INPUT_RECORD &Buffer, DWORD Length, DWORD &NumberOfEventsWritten);
+	bool ReadOutput(CHAR_INFO &Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT &ReadRegion);
+	bool WriteOutput(const CHAR_INFO &Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT &WriteRegion);
 	bool Write(LPCWSTR Buffer, DWORD NumberOfCharsToWrite);
 
-	bool GetTextAttributes(WORD& Attributes);
+	bool GetTextAttributes(WORD &Attributes);
 	bool SetTextAttributes(WORD Attributes);
 
-	bool GetCursorInfo(CONSOLE_CURSOR_INFO& ConsoleCursorInfo);
-	bool SetCursorInfo(const CONSOLE_CURSOR_INFO& ConsoleCursorInfo);
+	bool GetCursorInfo(CONSOLE_CURSOR_INFO &ConsoleCursorInfo);
+	bool SetCursorInfo(const CONSOLE_CURSOR_INFO &ConsoleCursorInfo);
 
-	bool GetCursorPosition(COORD& Position);
+	bool GetCursorPosition(COORD &Position);
 	bool SetCursorPosition(COORD Position);
 
 	bool FlushInputBuffer();
 
-	bool GetNumberOfInputEvents(DWORD& NumberOfEvents);
+	bool GetNumberOfInputEvents(DWORD &NumberOfEvents);
 
-	bool GetDisplayMode(DWORD& Mode);
+	bool GetDisplayMode(DWORD &Mode);
 
 	COORD GetLargestWindowSize();
 
@@ -100,7 +100,7 @@ public:
 
 	bool ClearExtraRegions(WORD Color);
 
-	bool ScrollWindow(int Lines,int Columns=0);
+	bool ScrollWindow(int Lines, int Columns = 0);
 
 	bool ScrollScreenBuffer(int Lines);
 

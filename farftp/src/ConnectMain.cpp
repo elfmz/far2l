@@ -1,12 +1,10 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
 void Connection::lostpeer()
 {
-	if(connected)
-	{
+	if (connected) {
 		AbortAllRequest(FALSE);
 		cout = 0;
 		connected = 0;
@@ -14,8 +12,7 @@ void Connection::lostpeer()
 
 	pswitch(1);
 
-	if(connected)
-	{
+	if (connected) {
 		AbortAllRequest(FALSE);
 		cout = 0;
 		connected = 0;
@@ -30,18 +27,16 @@ void Connection::lostpeer()
  */
 int Connection::ProcessCommand(LPCSTR LineToProcess)
 {
-	PROC(("ProcessCommand","%s",LineToProcess))
+	PROC(("ProcessCommand", "%s", LineToProcess))
 	struct cmd *c;
 	BOOL rc = FALSE;
 
-	do
-	{
+	do {
 		ResetOutput();
 		line = LineToProcess;
 		makeargv();
 
-		if(margc == 0)
-		{
+		if (margc == 0) {
 			Log(("!margc"));
 			WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
 			break;
@@ -49,41 +44,36 @@ int Connection::ProcessCommand(LPCSTR LineToProcess)
 
 		c = getcmd(margv[0]);
 
-		if(c == (cmd*)-1 || c == 0)
-		{
+		if (c == (cmd *)-1 || c == 0) {
 			Log(("!cmd"));
 			WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
 			break;
 		}
 
-		if(margc < c->c_args+1)
-		{
+		if (margc < c->c_args + 1) {
 			Log(("No enough parameters"));
 			WINPORT(SetLastError)(ERROR_INVALID_PARAMETER);
 			break;
 		}
 
-		if(c->c_conn && !connected)
-		{
-			Log(("!connected: conn %d iscon: %d",c->c_conn,connected));
+		if (c->c_conn && !connected) {
+			Log(("!connected: conn %d iscon: %d", c->c_conn, connected));
 			WINPORT(SetLastError)(EPIPE);
 			break;
 		}
 
-		brk_flag  = FALSE;
-		code      = 0;
+		brk_flag = FALSE;
+		code = 0;
 		ErrorCode = 0;
-		SysError  = FALSE;
+		SysError = FALSE;
 		ExecCmdTab(c, margc, margv);
 		rc = GetExitCode();
-	}
-	while(0);
+	} while (0);
 
 	brk_flag = FALSE;
-	Log(("rc=%d",rc));
+	Log(("rc=%d", rc));
 	return rc;
 }
-
 
 struct cmd *Connection::getcmd(char *name)
 {
@@ -95,26 +85,23 @@ struct cmd *Connection::getcmd(char *name)
 	nmatches = 0;
 	found = 0;
 
-	for(c = cmdtabdata; (p = c->c_name)!=NULL; c++)
-	{
-		for(q = name; *q == *p++; q++)
-			if(*q == 0)             /* exact match? */
+	for (c = cmdtabdata; (p = c->c_name) != NULL; c++) {
+		for (q = name; *q == *p++; q++)
+			if (*q == 0)	/* exact match? */
 				return (c);
 
-		if(!*q)                         /* the name was a prefix */
+		if (!*q)	/* the name was a prefix */
 		{
-			if(q - name > longest)
-			{
+			if (q - name > longest) {
 				longest = (int)(q - name);
 				nmatches = 1;
 				found = c;
-			}
-			else if(q - name == longest)
+			} else if (q - name == longest)
 				nmatches++;
 		}
 	}
 
-	if(nmatches > 1)
+	if (nmatches > 1)
 		return (struct cmd *)-1;
 
 	return found;
@@ -124,18 +111,17 @@ struct cmd *Connection::getcmd(char *name)
  * Slice a string up into argc/argv.
  */
 
-
 void Connection::makeargv()
 {
 	const char **argp;
 	margc = 0;
 	argp = (const char **)margv;
-	stringbase = line.c_str();  /* scan from first of buffer */
-	argbuf.Alloc(line.Length()+100);
-	argbase = argbuf.c_str();           /* store from first of buffer */
+	stringbase = line.c_str();	/* scan from first of buffer */
+	argbuf.Alloc(line.Length() + 100);
+	argbase = argbuf.c_str();	/* store from first of buffer */
 	slrflag = 0;
 
-	while((*argp++ = slurpstring())!=0)
+	while ((*argp++ = slurpstring()) != 0)
 		margc++;
 }
 
@@ -149,11 +135,11 @@ const char *Connection::slurpstring()
 	int got_one = 0;
 	char *sb = stringbase;
 	char *ap = argbase;
-	char *tmp = argbase;            /* will return this if token found */
+	char *tmp = argbase;			/* will return this if token found */
 
-	if(*sb == '!' || *sb == '$')    /* recognize ! as a token for shell */
+	if (*sb == '!' || *sb == '$')	/* recognize ! as a token for shell */
 	{
-		switch(slrflag)         /* and $ as token for macro invoke */
+		switch (slrflag)			/* and $ as token for macro invoke */
 		{
 			case 0:
 				slrflag++;
@@ -171,8 +157,7 @@ const char *Connection::slurpstring()
 
 S0:
 
-	switch(*sb)
-	{
+	switch (*sb) {
 		case '\0':
 			goto OUT1;
 		case ' ':
@@ -181,8 +166,7 @@ S0:
 			goto S0;
 		default:
 
-			switch(slrflag)
-			{
+			switch (slrflag) {
 				case 0:
 					slrflag++;
 					break;
@@ -199,28 +183,26 @@ S0:
 
 S1:
 
-	switch(*sb)
-	{
+	switch (*sb) {
 		case ' ':
 		case '\t':
 		case '\0':
-			goto OUT1;      /* end of token */
+			goto OUT1;	/* end of token */
 		case '\\':
 			sb++;
-			goto S2;  /* slurp next character */
+			goto S2;	/* slurp next character */
 		case '\x1':
 			sb++;
-			goto S3;  /* slurp quoted string */
+			goto S3;		/* slurp quoted string */
 		default:
-			*ap++ = *sb++;  /* add character to token */
+			*ap++ = *sb++;	/* add character to token */
 			got_one = 1;
 			goto S1;
 	}
 
 S2:
 
-	switch(*sb)
-	{
+	switch (*sb) {
 		case '\0':
 			goto OUT1;
 		default:
@@ -231,8 +213,7 @@ S2:
 
 S3:
 
-	switch(*sb)
-	{
+	switch (*sb) {
 		case '\0':
 			goto OUT1;
 		case '\x1':
@@ -246,29 +227,27 @@ S3:
 
 OUT1:
 
-	if(got_one)
+	if (got_one)
 		*ap++ = '\0';
 
-	argbase = ap;                   /* update storage pointer */
-	stringbase = sb;                /* update scan pointer */
+	argbase = ap;		/* update storage pointer */
+	stringbase = sb;	/* update scan pointer */
 
-	if(got_one)
-	{
-		return(tmp);
+	if (got_one) {
+		return (tmp);
 	}
 
-	switch(slrflag)
-	{
+	switch (slrflag) {
 		case 0:
 			slrflag++;
 			break;
 		case 1:
 			slrflag++;
-			altarg = (char *) 0;
+			altarg = (char *)0;
 			break;
 		default:
 			break;
 	}
 
-	return((char *)0);
+	return ((char *)0);
 }

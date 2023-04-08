@@ -54,18 +54,18 @@ enum EolType
 	FEOL_NOTEPAD
 };
 
-OldGetFileString::OldGetFileString(FILE *SrcFile):
+OldGetFileString::OldGetFileString(FILE *SrcFile)
+	:
 	SrcFile(SrcFile),
 	ReadPos(0),
 	ReadSize(0),
 	m_nStrLength(DELTA),
-	Str(reinterpret_cast<char*>(malloc(m_nStrLength))),
+	Str(reinterpret_cast<char *>(malloc(m_nStrLength))),
 	m_nwStrLength(DELTA),
-	wStr(reinterpret_cast<wchar_t*>(malloc(m_nwStrLength * sizeof(wchar_t)))),
+	wStr(reinterpret_cast<wchar_t *>(malloc(m_nwStrLength * sizeof(wchar_t)))),
 	SomeDataLost(false),
 	bCrCr(false)
-{
-}
+{}
 
 OldGetFileString::~OldGetFileString()
 {
@@ -76,7 +76,6 @@ OldGetFileString::~OldGetFileString()
 		free(wStr);
 }
 
-
 int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 {
 	int nExitCode;
@@ -85,54 +84,47 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 		nExitCode = GetUnicodeString(DestStr, Length, false);
 	else if (nCodePage == CP_WIDE_BE)
 		nExitCode = GetUnicodeString(DestStr, Length, true);
-	else
-	{
+	else {
 		char *Str;
 		nExitCode = GetAnsiString(&Str, Length);
 
-		if (nExitCode == 1)
-		{
+		if (nExitCode == 1) {
 			DWORD ret = ERROR_SUCCESS;
 			int nResultLength = 0;
 			bool bGet = false;
 			*wStr = L'\0';
 
-			if (!SomeDataLost)
-			{
+			if (!SomeDataLost) {
 				// при CP_UTF7 dwFlags должен быть 0, см. MSDN
-				nResultLength = WINPORT(MultiByteToWideChar)( nCodePage,
-					(SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS,
-					Str, Length, wStr, m_nwStrLength - 1);
+				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage,
+						(SomeDataLost || nCodePage == CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS, Str, Length, wStr,
+						m_nwStrLength - 1);
 
 				ret = WINPORT(GetLastError)();
 
-				if (ERROR_NO_UNICODE_TRANSLATION == ret)
-				{
+				if (ERROR_NO_UNICODE_TRANSLATION == ret) {
 					SomeDataLost = true;
-					if (!nResultLength)
-					{
+					if (!nResultLength) {
 						bGet = true;
 					}
 				}
-			}
-			else
+			} else
 				bGet = true;
 
-			if (bGet)
-			{
-				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, wStr, m_nwStrLength - 1);
+			if (bGet) {
+				nResultLength =
+						WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, wStr, m_nwStrLength - 1);
 
 				if (!nResultLength)
 					ret = WINPORT(GetLastError)();
 			}
 
-			if (ERROR_INSUFFICIENT_BUFFER == ret)
-			{
+			if (ERROR_INSUFFICIENT_BUFFER == ret) {
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, nullptr, 0);
 				free(wStr);
-				wStr = (wchar_t*)malloc((nResultLength + 1) * sizeof(wchar_t));
+				wStr = (wchar_t *)malloc((nResultLength + 1) * sizeof(wchar_t));
 				*wStr = L'\0';
-				m_nwStrLength = nResultLength+1;
+				m_nwStrLength = nResultLength + 1;
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, wStr, nResultLength);
 			}
 
@@ -157,22 +149,16 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 
 	// Обработка ситуации, когда у нас пришёл двойной \r\r, а потом не было \n.
 	// В этом случаем считаем \r\r двумя MAC окончаниями строк.
-	if (bCrCr)
-	{
+	if (bCrCr) {
 		*Str = '\r';
 		CurLength = 1;
 		bCrCr = false;
-	}
-	else
-	{
-		while (1)
-		{
-			if (ReadPos >= ReadSize)
-			{
-				if (!(ReadSize = (int)fread(ReadBuf, 1, sizeof(ReadBuf), SrcFile)))
-				{
+	} else {
+		while (1) {
+			if (ReadPos >= ReadSize) {
+				if (!(ReadSize = (int)fread(ReadBuf, 1, sizeof(ReadBuf), SrcFile))) {
 					if (!CurLength)
-						ExitCode=0;
+						ExitCode = 0;
 
 					break;
 				}
@@ -181,17 +167,14 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 				ReadBufPtr = ReadBuf;
 			}
 
-			if (Eol == FEOL_NONE)
-			{
+			if (Eol == FEOL_NONE) {
 				// UNIX
 				if (*ReadBufPtr == '\n')
 					Eol = FEOL_UNIX;
 				// MAC / Windows? / Notepad?
 				else if (*ReadBufPtr == '\r')
 					Eol = FEOL_MAC;
-			}
-			else if (Eol == FEOL_MAC)
-			{
+			} else if (Eol == FEOL_MAC) {
 				// Windows
 				if (*ReadBufPtr == '\n')
 					Eol = FEOL_WINDOWS;
@@ -200,36 +183,31 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 					Eol = FEOL_MAC2;
 				else
 					break;
-			}
-			else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX)
+			} else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX)
 				break;
-			else if (Eol == FEOL_MAC2)
-			{
+			else if (Eol == FEOL_MAC2) {
 				// Notepad
 				if (*ReadBufPtr == '\n')
 					Eol = FEOL_NOTEPAD;
-				else
-				{
+				else {
 					// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 					--CurLength;
 					bCrCr = true;
 					break;
 				}
-			}
-			else
+			} else
 				break;
 
 			ReadPos++;
 
-			if (CurLength >= m_nStrLength - 1)
-			{
+			if (CurLength >= m_nStrLength - 1) {
 				char *NewStr = (char *)realloc(Str, m_nStrLength + (DELTA << x));
 
 				if (!NewStr)
 					return (-1);
 
 				Str = NewStr;
-				m_nStrLength += DELTA << x;
+				m_nStrLength+= DELTA << x;
 				x++;
 			}
 
@@ -254,22 +232,16 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 
 	// Обработка ситуации, когда у нас пришёл двойной \r\r, а потом не было \n.
 	// В этом случаем считаем \r\r двумя MAC окончаниями строк.
-	if (bCrCr)
-	{
+	if (bCrCr) {
 		*wStr = L'\r';
 		CurLength = 1;
 		bCrCr = false;
-	}
-	else
-	{
-		while (1)
-		{
-			if (ReadPos >= ReadSize)
-			{
-				if (!(ReadSize = (int)fread(wReadBuf, 1, sizeof(wReadBuf), SrcFile)))
-				{
+	} else {
+		while (1) {
+			if (ReadPos >= ReadSize) {
+				if (!(ReadSize = (int)fread(wReadBuf, 1, sizeof(wReadBuf), SrcFile))) {
 					if (!CurLength)
-						ExitCode=0;
+						ExitCode = 0;
 
 					break;
 				}
@@ -281,17 +253,14 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 				ReadBufPtr = wReadBuf;
 			}
 
-			if (Eol == FEOL_NONE)
-			{
+			if (Eol == FEOL_NONE) {
 				// UNIX
 				if (*ReadBufPtr == L'\n')
 					Eol = FEOL_UNIX;
 				// MAC / Windows? / Notepad?
 				else if (*ReadBufPtr == L'\r')
 					Eol = FEOL_MAC;
-			}
-			else if (Eol == FEOL_MAC)
-			{
+			} else if (Eol == FEOL_MAC) {
 				// Windows
 				if (*ReadBufPtr == L'\n')
 					Eol = FEOL_WINDOWS;
@@ -300,36 +269,31 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 					Eol = FEOL_MAC2;
 				else
 					break;
-			}
-			else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX)
+			} else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX)
 				break;
-			else if (Eol == FEOL_MAC2)
-			{
+			else if (Eol == FEOL_MAC2) {
 				// Notepad
 				if (*ReadBufPtr == L'\n')
 					Eol = FEOL_NOTEPAD;
-				else
-				{
+				else {
 					// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 					--CurLength;
 					bCrCr = true;
 					break;
 				}
-			}
-			else
+			} else
 				break;
 
-			ReadPos += sizeof(wchar_t);
+			ReadPos+= sizeof(wchar_t);
 
-			if (CurLength >= m_nwStrLength - 1)
-			{
+			if (CurLength >= m_nwStrLength - 1) {
 				wchar_t *NewStr = (wchar_t *)realloc(wStr, (m_nwStrLength + (DELTA << x)) * sizeof(wchar_t));
 
 				if (!NewStr)
 					return (-1);
 
 				wStr = NewStr;
-				m_nwStrLength += DELTA << x;
+				m_nwStrLength+= DELTA << x;
 				x++;
 			}
 
@@ -344,32 +308,26 @@ int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBig
 	return (ExitCode);
 }
 
-static bool IsTextUTF8(const LPBYTE Buffer,size_t Length)
+static bool IsTextUTF8(const LPBYTE Buffer, size_t Length)
 {
-	bool Ascii=true;
-	UINT Octets=0;
+	bool Ascii = true;
+	UINT Octets = 0;
 
-	for (size_t i=0; i<Length; i++)
-	{
-		BYTE c=Buffer[i];
+	for (size_t i = 0; i < Length; i++) {
+		BYTE c = Buffer[i];
 
-		if (c&0x80)
-			Ascii=false;
+		if (c & 0x80)
+			Ascii = false;
 
-		if (Octets)
-		{
-			if ((c&0xC0)!=0x80)
+		if (Octets) {
+			if ((c & 0xC0) != 0x80)
 				return false;
 
 			Octets--;
-		}
-		else
-		{
-			if (c&0x80)
-			{
-				while (c&0x80)
-				{
-					c<<=1;
+		} else {
+			if (c & 0x80) {
+				while (c & 0x80) {
+					c<<= 1;
 					Octets++;
 				}
 
@@ -381,7 +339,7 @@ static bool IsTextUTF8(const LPBYTE Buffer,size_t Length)
 		}
 	}
 
-	return (Octets>0||Ascii)?false:true;
+	return (Octets > 0 || Ascii) ? false : true;
 }
 
 bool DetectFileMagic(FILE *file, UINT &nCodePage)
@@ -389,30 +347,25 @@ bool DetectFileMagic(FILE *file, UINT &nCodePage)
 	uint32_t dwHeading = 0;
 	size_t n = fread(&dwHeading, 1, 4, file);
 
-	if (n == 4 && dwHeading == SIGN_UTF32LE)
-	{
+	if (n == 4 && dwHeading == SIGN_UTF32LE) {
 		nCodePage = CP_UTF32LE;
 		return true;
 	}
-	if (n == 4 && dwHeading == SIGN_UTF32BE)
-	{
+	if (n == 4 && dwHeading == SIGN_UTF32BE) {
 		nCodePage = CP_UTF32BE;
 		return true;
 	}
-	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16LE)
-	{
+	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16LE) {
 		nCodePage = CP_UTF16LE;
 		fseek(file, -(off_t)(n - 2), SEEK_CUR);
 		return true;
 	}
-	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16BE)
-	{
+	if (n >= 2 && LOWORD(dwHeading) == SIGN_UTF16BE) {
 		nCodePage = CP_UTF16BE;
 		fseek(file, -(off_t)(n - 2), SEEK_CUR);
 		return true;
 	}
-	if (n >= 3 && (dwHeading & 0x00FFFFFF) == SIGN_UTF8)
-	{
+	if (n >= 3 && (dwHeading & 0x00FFFFFF) == SIGN_UTF8) {
 		nCodePage = CP_UTF8;
 		fseek(file, -(off_t)(n - 3), SEEK_CUR);
 		return true;
@@ -429,15 +382,11 @@ wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, 
 	if (!nDestLength)
 		return nullptr;
 
-	if (nCodePage == CP_WIDE_LE || nCodePage == CP_WIDE_BE)
-	{
-		if (nCodePage == CP_WIDE_BE)
-		{
+	if (nCodePage == CP_WIDE_LE || nCodePage == CP_WIDE_BE) {
+		if (nCodePage == CP_WIDE_BE) {
 			size_t nLength;
-			for (nLength = 0; nLength + 1 < nDestLength; ++nLength)
-			{
-				if (feof(file))
-				{
+			for (nLength = 0; nLength + 1 < nDestLength; ++nLength) {
+				if (feof(file)) {
 					if (!nLength)
 						return nullptr;
 
@@ -449,17 +398,15 @@ wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, 
 			}
 			lpwszDest[nLength] = 0;
 
-		}
-		else if (!fgetws(lpwszDest, nDestLength, file))
-		{
+		} else if (!fgetws(lpwszDest, nDestLength, file)) {
 			return nullptr;
 		}
 
 		return lpwszDest;
 	}
 
-	if (_tmp.size() < (nDestLength+1) * 4) //UTF-8, up to 4 bytes per char support
-		_tmp.resize((nDestLength+1) * 4);
+	if (_tmp.size() < (nDestLength + 1) * 4)	// UTF-8, up to 4 bytes per char support
+		_tmp.resize((nDestLength + 1) * 4);
 
 	if (!fgets(_tmp.data(), _tmp.size(), file))
 		return nullptr;
@@ -475,11 +422,10 @@ wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, 
 	return lpwszDest;
 }
 
-
 //-----------------------------------------------------------------------------
 
 template <class CHAR_T>
-	class TypedStringReader
+class TypedStringReader
 {
 	CHAR_T ReadBuf[8192];
 	std::vector<CHAR_T> Str;
@@ -487,12 +433,12 @@ template <class CHAR_T>
 	GetFileStringContext &context;
 
 public:
-	TypedStringReader(GetFileStringContext& context_) : 
+	TypedStringReader(GetFileStringContext &context_)
+		:
 		Str(DELTA), context(context_)
-	{
-	}
+	{}
 
-	int GetString(CHAR_T **DestStr, int& Length, bool be = false)
+	int GetString(CHAR_T **DestStr, int &Length, bool be = false)
 	{
 		int CurLength = 0;
 		int ExitCode = 1;
@@ -503,27 +449,22 @@ public:
 			cr<<= (sizeof(CHAR_T) - 1) * 8;
 			lf<<= (sizeof(CHAR_T) - 1) * 8;
 		}
-		
-		CHAR_T *ReadBufPtr = context.ReadPos < context.ReadSize ? &ReadBuf[context.ReadPos/sizeof(CHAR_T)] : nullptr;
+
+		CHAR_T *ReadBufPtr =
+				context.ReadPos < context.ReadSize ? &ReadBuf[context.ReadPos / sizeof(CHAR_T)] : nullptr;
 
 		// Обработка ситуации, когда у нас пришёл двойной \r\r, а потом не было \n.
 		// В этом случаем считаем \r\r двумя MAC окончаниями строк.
-		if (context.bCrCr)
-		{
+		if (context.bCrCr) {
 			Str[0] = cr;
 			CurLength = 1;
 			context.bCrCr = false;
-		}
-		else
-		{
-			for(;;)
-			{
-				if (context.ReadPos >= context.ReadSize)
-				{
-					if (!(context.SrcFile.Read(ReadBuf, sizeof(ReadBuf), &context.ReadSize) && context.ReadSize))
-					{
-						if (!CurLength)
-						{
+		} else {
+			for (;;) {
+				if (context.ReadPos >= context.ReadSize) {
+					if (!(context.SrcFile.Read(ReadBuf, sizeof(ReadBuf), &context.ReadSize)
+								&& context.ReadSize)) {
+						if (!CurLength) {
 							ExitCode = 0;
 						}
 						break;
@@ -532,62 +473,43 @@ public:
 					context.ReadPos = 0;
 					ReadBufPtr = ReadBuf;
 				}
-				if (Eol == FEOL_NONE)
-				{
+				if (Eol == FEOL_NONE) {
 					// UNIX
-					if (*ReadBufPtr == lf)
-					{
+					if (*ReadBufPtr == lf) {
 						Eol = FEOL_UNIX;
 					}
 					// MAC / Windows? / Notepad?
-					else if (*ReadBufPtr == cr)
-					{
+					else if (*ReadBufPtr == cr) {
 						Eol = FEOL_MAC;
 					}
-				}
-				else if (Eol == FEOL_MAC)
-				{
+				} else if (Eol == FEOL_MAC) {
 					// Windows
-					if (*ReadBufPtr == lf)
-					{
+					if (*ReadBufPtr == lf) {
 						Eol = FEOL_WINDOWS;
 					}
 					// Notepad?
-					else if (*ReadBufPtr == cr)
-					{
+					else if (*ReadBufPtr == cr) {
 						Eol = FEOL_MAC2;
-					}
-					else
-					{
+					} else {
 						break;
 					}
-				}
-				else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX)
-				{
+				} else if (Eol == FEOL_WINDOWS || Eol == FEOL_UNIX) {
 					break;
-				}
-				else if (Eol == FEOL_MAC2)
-				{
+				} else if (Eol == FEOL_MAC2) {
 					// Notepad
-					if (*ReadBufPtr == lf)
-					{
+					if (*ReadBufPtr == lf) {
 						Eol = FEOL_NOTEPAD;
-					}
-					else
-					{
+					} else {
 						// Пришёл \r\r, а \n не пришёл, поэтому считаем \r\r двумя MAC окончаниями строк
 						CurLength--;
 						context.bCrCr = true;
 						break;
 					}
-				}
-				else
-				{
+				} else {
 					break;
 				}
-				context.ReadPos += sizeof(CHAR_T);
-				if ( (CurLength + 1) >= (int)Str.size())
-				{
+				context.ReadPos+= sizeof(CHAR_T);
+				if ((CurLength + 1) >= (int)Str.size()) {
 					Str.resize(Str.size() + (DELTA << x));
 					x++;
 				}
@@ -602,34 +524,22 @@ public:
 	}
 };
 
-
-
 //////
-GetFileString::GetFileString(File& SrcFile):
-	context(SrcFile), 
-	Peek(false),
-	LastLength(0),
-	LastString(nullptr),
-	LastResult(0), 
-	Buffer(128, L'\0')
-{
-}
+GetFileString::GetFileString(File &SrcFile)
+	:
+	context(SrcFile), Peek(false), LastLength(0), LastString(nullptr), LastResult(0), Buffer(128, L'\0')
+{}
 
-GetFileString::~GetFileString()
-{
-}
+GetFileString::~GetFileString() {}
 
-int GetFileString::PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length)
+int GetFileString::PeekString(LPWSTR *DestStr, UINT nCodePage, int &Length)
 {
-	if(!Peek)
-	{
+	if (!Peek) {
 		LastResult = GetString(DestStr, nCodePage, Length);
 		Peek = true;
 		LastString = DestStr;
 		LastLength = Length;
-	}
-	else
-	{
+	} else {
 		DestStr = LastString;
 		Length = LastLength;
 	}
@@ -638,10 +548,9 @@ int GetFileString::PeekString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 
 static wchar_t s_wchnul = 0;
 
-int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
+int GetFileString::GetString(LPWSTR *DestStr, UINT nCodePage, int &Length)
 {
-	if(Peek)
-	{
+	if (Peek) {
 		Peek = false;
 		DestStr = LastString;
 		Length = LastLength;
@@ -649,9 +558,8 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	}
 
 	int nExitCode;
-	if (nCodePage == CP_UTF32LE || nCodePage == CP_UTF32BE)
-	{
-		if (sizeof(wchar_t)!=4)
+	if (nCodePage == CP_UTF32LE || nCodePage == CP_UTF32BE) {
+		if (sizeof(wchar_t) != 4)
 			return 0;
 
 		if (!UTF32Reader)
@@ -664,16 +572,14 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 		return nExitCode;
 	}
 
-
 	char *Str;
-	if (nCodePage == CP_UTF16LE || nCodePage == CP_UTF16BE)
-	{
+	if (nCodePage == CP_UTF16LE || nCodePage == CP_UTF16BE) {
 		if (!UTF16Reader)
 			UTF16Reader.reset(new UTF16_StringReader(context));
 
 		uint16_t *u16 = NULL;
 		nExitCode = UTF16Reader->GetString(&u16, Length, nCodePage == CP_UTF16BE);
-		if (sizeof(wchar_t)==2) {
+		if (sizeof(wchar_t) == 2) {
 			*DestStr = (LPWSTR)u16;
 			if (nExitCode && nCodePage == CP_UTF32BE)
 				RevBytes(*DestStr, Length);
@@ -681,71 +587,58 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 		}
 		Str = (char *)u16;
 		Length*= 2;
-	}
-	else
-	{
+	} else {
 		if (!CharReader)
 			CharReader.reset(new Char_StringReader(context));
 		nExitCode = CharReader->GetString(&Str, Length);
 	}
 
-
 	if (nExitCode != 1)
 		return nExitCode;
 
-	if (nCodePage == CP_UTF8)
-	{
+	if (nCodePage == CP_UTF8) {
 		MB2Wide(Str, Length, Buffer);
 		Length = Buffer.size();
-	}
-	else
-	{
+	} else {
 		DWORD Result = ERROR_SUCCESS;
 		int nResultLength = 0;
 		bool bGet = false;
-			
+
 		Buffer[0] = L'\0';
 
-		if (!context.SomeDataLost)
-		{
+		if (!context.SomeDataLost) {
 			// при CP_UTF7 dwFlags должен быть 0, см. MSDN
-			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 
-				(context.SomeDataLost || nCodePage==CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS, 
-				Str, Length, &Buffer[0], Buffer.size()-1);
+			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage,
+					(context.SomeDataLost || nCodePage == CP_UTF7) ? 0 : MB_ERR_INVALID_CHARS, Str, Length,
+					&Buffer[0], Buffer.size() - 1);
 
 			Result = WINPORT(GetLastError)();
-			if (Result == ERROR_NO_UNICODE_TRANSLATION)
-			{
+			if (Result == ERROR_NO_UNICODE_TRANSLATION) {
 				context.SomeDataLost = true;
-				if (!nResultLength)
-				{
+				if (!nResultLength) {
 					bGet = true;
 				}
 			}
-		}
-		else
-		{
+		} else {
 			bGet = true;
 		}
-		
-		if (bGet)
-		{
-			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, &Buffer[0], Buffer.size()-1);
-			if (!nResultLength)
-			{
+
+		if (bGet) {
+			nResultLength =
+					WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, &Buffer[0], Buffer.size() - 1);
+			if (!nResultLength) {
 				Result = WINPORT(GetLastError)();
 			}
 		}
-		if (Result == ERROR_INSUFFICIENT_BUFFER)
-		{
+		if (Result == ERROR_INSUFFICIENT_BUFFER) {
 			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, nullptr, 0);
 			if (nResultLength >= (int)Buffer.size())
 				Buffer.resize(nResultLength + 128);
 			Buffer[0] = 0;
-			nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, &Buffer[0], Buffer.size()-1);
+			nResultLength =
+					WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, &Buffer[0], Buffer.size() - 1);
 		}
-		if (nResultLength)
-		{
+		if (nResultLength) {
 			Buffer[nResultLength] = L'\0';
 		}
 		Length = nResultLength;
@@ -756,41 +649,35 @@ int GetFileString::GetString(LPWSTR* DestStr, UINT nCodePage, int& Length)
 	return 1;
 }
 
-static bool GetFileFormatBySignature(File& file, UINT& nCodePage)
+static bool GetFileFormatBySignature(File &file, UINT &nCodePage)
 {
 	DWORD dwTemp = 0;
 	DWORD Readed = 0;
-	if (!file.Read(&dwTemp, sizeof(dwTemp), &Readed))
-	{
+	if (!file.Read(&dwTemp, sizeof(dwTemp), &Readed)) {
 		fprintf(stderr, "%s: read error %u\n", __FUNCTION__, WINPORT(GetLastError)());
 		return false;
 	}
-	if (Readed>=4 && dwTemp == SIGN_UTF32LE)
-	{
+	if (Readed >= 4 && dwTemp == SIGN_UTF32LE) {
 		nCodePage = CP_UTF32LE;
 		file.SetPointer(4, nullptr, FILE_BEGIN);
 		return true;
 	}
-	if (Readed>=4 && dwTemp == SIGN_UTF32BE)
-	{
+	if (Readed >= 4 && dwTemp == SIGN_UTF32BE) {
 		nCodePage = CP_UTF32BE;
 		file.SetPointer(4, nullptr, FILE_BEGIN);
 		return true;
 	}
-	if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16LE)
-	{
+	if (Readed >= 2 && LOWORD(dwTemp) == SIGN_UTF16LE) {
 		nCodePage = CP_UTF16LE;
 		file.SetPointer(2, nullptr, FILE_BEGIN);
 		return true;
 	}
-	if (Readed>=2 && LOWORD(dwTemp) == SIGN_UTF16BE)
-	{
+	if (Readed >= 2 && LOWORD(dwTemp) == SIGN_UTF16BE) {
 		nCodePage = CP_UTF16BE;
 		file.SetPointer(2, nullptr, FILE_BEGIN);
 		return true;
 	}
-	if (Readed>=3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8)
-	{
+	if (Readed >= 3 && (dwTemp & 0x00FFFFFF) == SIGN_UTF8) {
 		nCodePage = CP_UTF8;
 		file.SetPointer(3, nullptr, FILE_BEGIN);
 		return true;
@@ -801,13 +688,13 @@ static bool GetFileFormatBySignature(File& file, UINT& nCodePage)
 }
 
 template <class T>
-	size_t EstimateEncodingValidity(bool rev, const void *buf, size_t size)
+size_t EstimateEncodingValidity(bool rev, const void *buf, size_t size)
 {
 	/// if text in given codepage contains only valid unicode characters then
 	/// return count of well-known control characters widely used in texts
 	/// like '\r' '\n' '\t' ' '
 	const size_t count = size / sizeof(T);
-	if (count * sizeof(T) != size) { // expecting aligned size
+	if (count * sizeof(T) != size) {	// expecting aligned size
 		return 0;
 	}
 	const T *data = (const T *)buf;
@@ -817,20 +704,20 @@ template <class T>
 		if (v == (T)'\r' || v == (T)'\n' || v == (T)'\t' || v == (T)' ') {
 			++out;
 		}
-		if (!WCHAR_IS_VALID(v)) { // may be try to transcode?
+		if (!WCHAR_IS_VALID(v)) {	// may be try to transcode?
 			return 0;
 		}
 	}
-	if (out < count / 32) { // too few controls for normal text
+	if (out < count / 32) {		// too few controls for normal text
 		return 0;
 	}
 	return out;
 }
 
-static bool GetFileFormatByHeuristics(File& file, UINT& nCodePage)
+static bool GetFileFormatByHeuristics(File &file, UINT &nCodePage)
 {
 	file.SetPointer(0, nullptr, FILE_BEGIN);
-	BYTE Buffer[0x8000]; // Must be aligned by 32 bits
+	BYTE Buffer[0x8000];	// Must be aligned by 32 bits
 	DWORD ReadSize = 0;
 	bool ReadResult = file.Read(Buffer, sizeof(Buffer), &ReadSize);
 	file.SetPointer(0, nullptr, FILE_BEGIN);
@@ -841,41 +728,35 @@ static bool GetFileFormatByHeuristics(File& file, UINT& nCodePage)
 	const auto Val16BE = EstimateEncodingValidity<uint16_t>(true, Buffer, ReadSize);
 	const auto Val32LE = EstimateEncodingValidity<uint32_t>(false, Buffer, ReadSize);
 	const auto Val32BE = EstimateEncodingValidity<uint32_t>(true, Buffer, ReadSize);
-	if (Val16LE > Val16BE && Val16LE > Val32LE && Val16LE > Val32BE)
-	{
+	if (Val16LE > Val16BE && Val16LE > Val32LE && Val16LE > Val32BE) {
 		nCodePage = CP_UTF16LE;
 		return true;
 	}
-	if (Val16BE > Val16LE && Val16BE > Val32LE && Val16BE > Val32BE)
-	{
+	if (Val16BE > Val16LE && Val16BE > Val32LE && Val16BE > Val32BE) {
 		nCodePage = CP_UTF16BE;
 		return true;
 	}
-	if (Val32LE > Val16BE && Val32LE > Val16LE && Val32LE > Val32BE)
-	{
+	if (Val32LE > Val16BE && Val32LE > Val16LE && Val32LE > Val32BE) {
 		nCodePage = CP_UTF32LE;
 		return true;
 	}
-	if (Val32BE > Val16BE && Val32BE > Val16LE && Val32BE > Val32LE)
-	{
+	if (Val32BE > Val16BE && Val32BE > Val16LE && Val32BE > Val32LE) {
 		nCodePage = CP_UTF32BE;
 		return true;
 	}
-	if (IsTextUTF8(Buffer, ReadSize))
-	{
+	if (IsTextUTF8(Buffer, ReadSize)) {
 		nCodePage = CP_UTF8;
 		return true;
 	}
 	const int cp = DetectCodePage(reinterpret_cast<LPCSTR>(Buffer), ReadSize);
-	if (cp != -1)
-	{
+	if (cp != -1) {
 		nCodePage = cp;
 		return true;
 	}
 	return false;
 }
 
-bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics)
+bool GetFileFormat(File &file, UINT &nCodePage, bool *pSignatureFound, bool bUseHeuristics)
 {
 	const bool bSignatureFound = GetFileFormatBySignature(file, nCodePage);
 
@@ -891,10 +772,12 @@ bool GetFileFormat(File& file, UINT& nCodePage, bool* pSignatureFound, bool bUse
 	return GetFileFormatByHeuristics(file, nCodePage);
 }
 
-bool GetFileFormat2(FARString strFileName, UINT& nCodePage, bool* pSignatureFound, bool bUseHeuristics, bool bCheckIfSupported)
+bool GetFileFormat2(FARString strFileName, UINT &nCodePage, bool *pSignatureFound, bool bUseHeuristics,
+		bool bCheckIfSupported)
 {
 	File f;
-	if (!f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL))
+	if (!f.Open(strFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+				FILE_ATTRIBUTE_NORMAL))
 		return false;
 
 	UINT detectedCodePage = nCodePage;

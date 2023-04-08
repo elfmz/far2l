@@ -35,4 +35,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-void ShellOptions(int LastCommand,MOUSE_EVENT_RECORD *MouseEvent);
+void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent);

@@ -37,28 +37,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class UserMenu
 {
-		// Режимы показа меню (Menu mode)
-		enum MENUMODE
-		{
-			MM_LOCAL, // Локальное меню
-			MM_FAR, // Меню из каталога ФАРа
-			MM_MAIN, // Главное меню
-		};
-		ConfigReaderScope grs;
+	// Режимы показа меню (Menu mode)
+	enum MENUMODE
+	{
+		MM_LOCAL,		// Локальное меню
+		MM_FAR,			// Меню из каталога ФАРа
+		MM_MAIN,		// Главное меню
+	};
+	ConfigReaderScope grs;
 
-		MENUMODE MenuMode;
-		bool MenuModified;
-		bool MenuNeedRefresh;
+	MENUMODE MenuMode;
+	bool MenuModified;
+	bool MenuNeedRefresh;
 
-		void ProcessUserMenu(bool ChoiceMenuType);
-		int DeleteMenuRecord(const wchar_t *MenuKey,int DeletePos);
-		bool EditMenu(const wchar_t *MenuKey,int EditPos,int TotalRecords,bool Create);
-		int ProcessSingleMenu(const wchar_t *MenuKey,int MenuPos,const wchar_t *MenuRootKey,const wchar_t *Title=nullptr);
-		bool MoveMenuItem(const wchar_t *MenuKey,int Pos,int NewPos);
+	void ProcessUserMenu(bool ChoiceMenuType);
+	int DeleteMenuRecord(const wchar_t *MenuKey, int DeletePos);
+	bool EditMenu(const wchar_t *MenuKey, int EditPos, int TotalRecords, bool Create);
+	int ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar_t *MenuRootKey,
+			const wchar_t *Title = nullptr);
+	bool MoveMenuItem(const wchar_t *MenuKey, int Pos, int NewPos);
 
-	public:
-		UserMenu(bool ChoiceMenuType); //	true - выбор типа меню (основное или локальное), false - зависит от наличия FarMenu.Ini в текущем каталоге
-		~UserMenu();
+public:
+	UserMenu(bool ChoiceMenuType);	//	true - выбор типа меню (основное или локальное), false - зависит от наличия FarMenu.Ini в текущем каталоге
+	~UserMenu();
 
-		static void Present(bool ChoiceMenuType);
+	static void Present(bool ChoiceMenuType);
 };

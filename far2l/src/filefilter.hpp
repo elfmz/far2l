@@ -44,39 +44,38 @@ class Panel;
 // почему FileInFilter вернул true или false
 enum enumFileInFilterType
 {
-	FIFT_NOTINTFILTER = 0,   // файловый объект не попал ни в один из фильтров
-	FIFT_INCLUDE,            // файловый объект попал в Include
-	FIFT_EXCLUDE,            // файловый объект попал в Exclude
+	FIFT_NOTINTFILTER = 0,		// файловый объект не попал ни в один из фильтров
+	FIFT_INCLUDE,				// файловый объект попал в Include
+	FIFT_EXCLUDE,				// файловый объект попал в Exclude
 };
-
 
 class FileFilter
 {
-	private:
-		Panel *m_HostPanel;
-		FAR_FILE_FILTER_TYPE m_FilterType;
-		uint64_t CurrentTime;
+private:
+	Panel *m_HostPanel;
+	FAR_FILE_FILTER_TYPE m_FilterType;
+	uint64_t CurrentTime;
 
-		Panel *GetHostPanel();
-		int  ParseAndAddMasks(wchar_t **ExtPtr,const wchar_t *FileName,DWORD FileAttr,int& ExtCount,int Check);
-		void ProcessSelection(VMenu *FilterList);
-		enumFileFilterFlagsType GetFFFT();
-		int  GetCheck(FileFilterParams *FFP);
-		static void SwapPanelFlags(FileFilterParams *CurFilterData);
+	Panel *GetHostPanel();
+	int ParseAndAddMasks(wchar_t **ExtPtr, const wchar_t *FileName, DWORD FileAttr, int &ExtCount, int Check);
+	void ProcessSelection(VMenu *FilterList);
+	enumFileFilterFlagsType GetFFFT();
+	int GetCheck(FileFilterParams *FFP);
+	static void SwapPanelFlags(FileFilterParams *CurFilterData);
 
-	public:
-		FileFilter(Panel *HostPanel, FAR_FILE_FILTER_TYPE FilterType);
-		~FileFilter();
+public:
+	FileFilter(Panel *HostPanel, FAR_FILE_FILTER_TYPE FilterType);
+	~FileFilter();
 
-		bool FilterEdit();
-		void UpdateCurrentTime();
-		bool FileInFilter(const FileListItem& fli,enumFileInFilterType *foundType=nullptr);
-		bool FileInFilter(const FAR_FIND_DATA_EX& fde,enumFileInFilterType *foundType=nullptr);
-		bool FileInFilter(const FAR_FIND_DATA& fd,enumFileInFilterType *foundType=nullptr);
-		bool IsEnabledOnPanel();
+	bool FilterEdit();
+	void UpdateCurrentTime();
+	bool FileInFilter(const FileListItem &fli, enumFileInFilterType *foundType = nullptr);
+	bool FileInFilter(const FAR_FIND_DATA_EX &fde, enumFileInFilterType *foundType = nullptr);
+	bool FileInFilter(const FAR_FIND_DATA &fd, enumFileInFilterType *foundType = nullptr);
+	bool IsEnabledOnPanel();
 
-		static void InitFilter(ConfigReader &cfg_reader);
-		static void CloseFilter();
-		static void SwapFilter();
-		static void SaveFilters(ConfigWriter &cfg_writer);
+	static void InitFilter(ConfigReader &cfg_reader);
+	static void CloseFilter();
+	static void SwapFilter();
+	static void SaveFilters(ConfigWriter &cfg_writer);
 };

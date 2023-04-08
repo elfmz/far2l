@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "lockscrn.hpp"
 #include "frame.hpp"
 #include "manager.hpp"
@@ -43,29 +42,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 UndoGlobalSaveScrPtr::UndoGlobalSaveScrPtr(SaveScreen *SaveScr)
 {
-	GlobalSaveScrPtr=SaveScr;
+	GlobalSaveScrPtr = SaveScr;
 }
 
 UndoGlobalSaveScrPtr::~UndoGlobalSaveScrPtr()
 {
-	GlobalSaveScrPtr=nullptr;
+	GlobalSaveScrPtr = nullptr;
 }
 
-
-RefreshFrameManager::RefreshFrameManager(int OScrX,int OScrY, int MsgWaitTime, BOOL DontRedrawFrame):
-	OScrX(OScrX),
-	OScrY(OScrY),
-	MsgWaitTime(MsgWaitTime),
-	DontRedrawFrame(DontRedrawFrame)
-{
-}
+RefreshFrameManager::RefreshFrameManager(int OScrX, int OScrY, int MsgWaitTime, BOOL DontRedrawFrame)
+	:
+	OScrX(OScrX), OScrY(OScrY), MsgWaitTime(MsgWaitTime), DontRedrawFrame(DontRedrawFrame)
+{}
 
 RefreshFrameManager::~RefreshFrameManager()
 {
 	if (DontRedrawFrame || !FrameManager || !FrameManager->ManagerStarted())
 		return;
-	else if (OScrX != ScrX || OScrY != ScrY || MsgWaitTime!=-1)
-	{
+	else if (OScrX != ScrX || OScrY != ScrY || MsgWaitTime != -1) {
 		LockScreen LckScr;
 		FrameManager->ResizeAllFrame();
 		FrameManager->GetCurrentFrame()->Show();

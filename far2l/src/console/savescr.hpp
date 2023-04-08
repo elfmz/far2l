@@ -37,33 +37,34 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class SaveScreen
 {
-		friend class Grabber;
-	private:
-		PCHAR_INFO ScreenBuf;
-		SHORT CurPosX,CurPosY;
-		bool CurVisible;
-		DWORD CurSize;
-		int X1,Y1,X2,Y2;
+	friend class Grabber;
 
-		void CleanupBuffer(PCHAR_INFO Buffer, size_t BufSize);
-		int ScreenBufCharCount();
-		void CharCopy(PCHAR_INFO ToBuffer,PCHAR_INFO FromBuffer,int Count);
-		CHAR_INFO* GetBufferAddress() {return ScreenBuf;};
+private:
+	PCHAR_INFO ScreenBuf;
+	SHORT CurPosX, CurPosY;
+	bool CurVisible;
+	DWORD CurSize;
+	int X1, Y1, X2, Y2;
 
-	public:
-		SaveScreen();
-		SaveScreen(int X1,int Y1,int X2,int Y2);
-		~SaveScreen();
+	void CleanupBuffer(PCHAR_INFO Buffer, size_t BufSize);
+	int ScreenBufCharCount();
+	void CharCopy(PCHAR_INFO ToBuffer, PCHAR_INFO FromBuffer, int Count);
+	CHAR_INFO *GetBufferAddress() { return ScreenBuf; };
 
-	public:
-		void CorrectRealScreenCoord();
-		void SaveArea(int X1,int Y1,int X2,int Y2);
-		void SaveArea();
-		void RestoreArea(int RestoreCursor=TRUE);
-		void Discard();
-		void AppendArea(SaveScreen *NewArea);
-		/*$ 18.05.2001 OT */
-		void Resize(int ScrX,int ScrY,DWORD Corner, bool SyncWithConsole);
+public:
+	SaveScreen();
+	SaveScreen(int X1, int Y1, int X2, int Y2);
+	~SaveScreen();
 
-		void DumpBuffer(const wchar_t *Title);
+public:
+	void CorrectRealScreenCoord();
+	void SaveArea(int X1, int Y1, int X2, int Y2);
+	void SaveArea();
+	void RestoreArea(int RestoreCursor = TRUE);
+	void Discard();
+	void AppendArea(SaveScreen *NewArea);
+	/*$ 18.05.2001 OT */
+	void Resize(int ScrX, int ScrY, DWORD Corner, bool SyncWithConsole);
+
+	void DumpBuffer(const wchar_t *Title);
 };

@@ -34,14 +34,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "FileMasksWithExclude.hpp"
 
-const wchar_t EXCLUDEMASKSEPARATOR=L'|';
+const wchar_t EXCLUDEMASKSEPARATOR = L'|';
 
-FileMasksWithExclude::FileMasksWithExclude():BaseFileMask()
-{
-}
+FileMasksWithExclude::FileMasksWithExclude()
+	:
+	BaseFileMask()
+{}
 
 void FileMasksWithExclude::Free()
 {
@@ -51,30 +51,23 @@ void FileMasksWithExclude::Free()
 
 bool FileMasksWithExclude::IsExcludeMask(const wchar_t *masks)
 {
-	return FindExcludeChar(masks)!=nullptr;
+	return FindExcludeChar(masks) != nullptr;
 }
 
 const wchar_t *FileMasksWithExclude::FindExcludeChar(const wchar_t *masks)
 {
-	if (masks)
-	{
-		for (bool regexp=false; *masks; masks++)
-		{
-			if (!regexp)
-			{
+	if (masks) {
+		for (bool regexp = false; *masks; masks++) {
+			if (!regexp) {
 				if (*masks == EXCLUDEMASKSEPARATOR)
 					return masks;
 				if (*masks == L'/')
 					regexp = true;
-			}
-			else
-			{
-				if (*masks == L'\\')
-				{
-					if (*(++masks) == 0) // skip the next char
+			} else {
+				if (*masks == L'\\') {
+					if (*(++masks) == 0)	// skip the next char
 						break;
-				}
-				else if (*masks == L'/')
+				} else if (*masks == L'/')
 					regexp = false;
 			}
 		}
@@ -93,33 +86,31 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 {
 	Free();
 
-	if (nullptr==masks || !*masks) return FALSE;
+	if (nullptr == masks || !*masks)
+		return FALSE;
 
-	size_t len=StrLength(masks)+1;
-	bool rc=false;
-	wchar_t *MasksStr=(wchar_t *) malloc(len*sizeof(wchar_t));
+	size_t len = StrLength(masks) + 1;
+	bool rc = false;
+	wchar_t *MasksStr = (wchar_t *)malloc(len * sizeof(wchar_t));
 
-	if (MasksStr)
-	{
-		rc=true;
+	if (MasksStr) {
+		rc = true;
 		wcscpy(MasksStr, masks);
-		wchar_t *pExclude = (wchar_t *) FindExcludeChar(MasksStr);
+		wchar_t *pExclude = (wchar_t *)FindExcludeChar(MasksStr);
 
-		if (pExclude)
-		{
-			*pExclude=0;
+		if (pExclude) {
+			*pExclude = 0;
 			++pExclude;
 
-			if (*pExclude!=L'/' && wcschr(pExclude, EXCLUDEMASKSEPARATOR))
-				rc=FALSE;
+			if (*pExclude != L'/' && wcschr(pExclude, EXCLUDEMASKSEPARATOR))
+				rc = FALSE;
 		}
 
-		if (rc)
-		{
-			rc = Include.Set(*MasksStr?MasksStr:L"*",(Flags&FMPF_ADDASTERISK)?FMPF_ADDASTERISK:0);
+		if (rc) {
+			rc = Include.Set(*MasksStr ? MasksStr : L"*", (Flags & FMPF_ADDASTERISK) ? FMPF_ADDASTERISK : 0);
 
 			if (rc)
-				rc=Exclude.Set(pExclude, 0);
+				rc = Exclude.Set(pExclude, 0);
 		}
 	}
 

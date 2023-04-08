@@ -1,6 +1,5 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
 /*          1         2         3         4         5         6         7
@@ -26,82 +25,84 @@
   d [RWCEAFMS]          0                        512 Apr 06 04:12 aviso
   -[RWCEMFA]  1 lipinl1       253 Apr 11 00:20 jednicka.asm
 */
-BOOL WINAPI idPRParceNETWARE(const FTPServerInfo* Server, FTPFileInfo* p, char *entry, int entry_len)
+BOOL WINAPI idPRParceNETWARE(const FTPServerInfo *Server, FTPFileInfo *p, char *entry, int entry_len)
 {
 	NET_FileEntryInfo entry_info;
-	BOOL              remove_size = FALSE;
-	char             *m;
+	BOOL remove_size = FALSE;
+	char *m;
 
-	if(entry_len < 43) return FALSE;
+	if (entry_len < 43)
+		return FALSE;
 
-//Dir
-	if(NET_TO_UPPER(*entry) == 'D')
-	{
+	// Dir
+	if (NET_TO_UPPER(*entry) == 'D') {
 		entry_info.FileType = NET_DIRECTORY;
-		remove_size          = TRUE; /* size is not useful */
-	}
-	else
+		remove_size = TRUE; /* size is not useful */
+	} else
 
-//File
-		if(NET_TO_UPPER(*entry) == '-')
-		{
-			//Plain file
-		}
-		else
-//unk
+		// File
+		if (NET_TO_UPPER(*entry) == '-') {
+			// Plain file
+		} else
+			// unk
 			return FALSE;
 
-//Attrs
+	// Attrs
 	entry++;
 
-	if(NET_IS_SPACE(*entry)) entry++;
+	if (NET_IS_SPACE(*entry))
+		entry++;
 
-	if(*entry != '[') return FALSE;
+	if (*entry != '[')
+		return FALSE;
 
-	m = SkipNX(entry,']');
+	m = SkipNX(entry, ']');
 
-	if(*m != ']') return FALSE;
+	if (*m != ']')
+		return FALSE;
 
-	entry = m+1;
+	entry = m + 1;
 	entry_info.FindData.dwFileAttributes = 0;
-//Owner
+	// Owner
 	entry = SkipSpace(entry);
 	m = SkipNSpace(entry);
-	StrCpy(entry_info.FTPOwner, entry, (int)(m-entry+1));
+	StrCpy(entry_info.FTPOwner, entry, (int)(m - entry + 1));
 	entry = SkipSpace(m);
 
-	if(!NET_IS_DIGIT(*entry))
-	{
+	if (!NET_IS_DIGIT(*entry)) {
 		m = SkipNSpace(entry);
-		StrCpy(entry_info.FTPOwner, entry, (int)(m-entry+1));
+		StrCpy(entry_info.FTPOwner, entry, (int)(m - entry + 1));
 		entry = SkipSpace(m);
 	}
 
-//Size
+	// Size
 	m = SkipDigit(entry);
 
-	if(m[0] != ' ') return FALSE;
+	if (m[0] != ' ')
+		return FALSE;
 
 	*m = 0;
 	entry_info.size = AtoI(entry, (int64_t)-1);
 	*m = ' ';
 
-	if(entry_info.size == -1) return FALSE;
+	if (entry_info.size == -1)
+		return FALSE;
 
 	entry = SkipSpace(m);
 
-//Date
-	if(!net_convert_unix_date(entry, entry_info.date))
+	// Date
+	if (!net_convert_unix_date(entry, entry_info.date))
 		return FALSE;
 
 	entry = SkipSpace(entry);
-//FileName
+	// FileName
 	StrCpy(entry_info.FindData.cFileName, entry, ARRAYSIZE(entry_info.FindData.cFileName));
 
-	if(!entry_info.FindData.cFileName[0])
+	if (!entry_info.FindData.cFileName[0])
 		return FALSE;
 
-	if(remove_size) entry_info.size = 0;
+	if (remove_size)
+		entry_info.size = 0;
 
-	return ConvertEntry(&entry_info,p);
+	return ConvertEntry(&entry_info, p);
 }

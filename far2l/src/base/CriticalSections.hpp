@@ -39,31 +39,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CriticalSection
 {
-	private:
-		std::shared_ptr<std::recursive_mutex> _mutex;
+private:
+	std::shared_ptr<std::recursive_mutex> _mutex;
 
 public:
-	CriticalSection() : _mutex(std::make_shared<std::recursive_mutex>())
-	{
-	}
+	CriticalSection()
+		:
+		_mutex(std::make_shared<std::recursive_mutex>())
+	{}
 
-	public:
+public:
 #if 1
-		void Enter() { _mutex->lock(); }
-		void Leave() { _mutex->unlock(); }
+	void Enter() { _mutex->lock(); }
+	void Leave() { _mutex->unlock(); }
 #else
-		void Enter() { if (!_mutex->try_lock()) { fprintf(stderr, "CriticalSection:%p - locking by %p\n", this, pthread_self()); _mutex->lock(); } fprintf(stderr, "CriticalSection:%p - locked by %p\n", this, pthread_self()); }
-		void Leave() { fprintf(stderr, "CriticalSection:%p - unlocked by %p\n", this, pthread_self()); _mutex->unlock(); }
+	void Enter()
+	{
+		if (!_mutex->try_lock()) {
+			fprintf(stderr, "CriticalSection:%p - locking by %p\n", this, pthread_self());
+			_mutex->lock();
+		}
+		fprintf(stderr, "CriticalSection:%p - locked by %p\n", this, pthread_self());
+	}
+	void Leave()
+	{
+		fprintf(stderr, "CriticalSection:%p - unlocked by %p\n", this, pthread_self());
+		_mutex->unlock();
+	}
 #endif
 };
 
-class CriticalSectionLock:public NonCopyable
+class CriticalSectionLock : public NonCopyable
 {
-	private:
-		CriticalSection &_object;
+private:
+	CriticalSection &_object;
 
-	public:
-		CriticalSectionLock(CriticalSection &object): _object(object) { _object.Enter(); }
-		~CriticalSectionLock() { _object.Leave(); }
+public:
+	CriticalSectionLock(CriticalSection &object)
+		:
+		_object(object)
+	{
+		_object.Enter();
+	}
+	~CriticalSectionLock() { _object.Leave(); }
 };
-

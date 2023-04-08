@@ -46,21 +46,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bootstrap/farversion.inc"
 
 // идет процесс назначения клавиши в макросе?
-BOOL IsProcessAssignMacroKey=FALSE;
+BOOL IsProcessAssignMacroKey = FALSE;
 
 // идет процесс "вьювер/редактор" во время поиска файлов?
-BOOL IsProcessVE_FindFile=FALSE;
+BOOL IsProcessVE_FindFile = FALSE;
 
 // Идёт процесс перерисовки всех фреймов
-BOOL IsRedrawFramesInProcess=FALSE;
+BOOL IsRedrawFramesInProcess = FALSE;
 
 // идет процесс быстрого поиска в панелях?
-int WaitInFastFind=FALSE;
+int WaitInFastFind = FALSE;
 
 // мы крутимся в основном цикле?
-int WaitInMainLoop=FALSE;
+int WaitInMainLoop = FALSE;
 
-clock_t StartIdleTime=0;
+clock_t StartIdleTime = 0;
 
 unsigned int g_umask = 0;
 
@@ -71,51 +71,51 @@ std::string KbLayoutsTrIn;
 std::string KbLayoutsTrOut;
 
 FARString strGlobalSearchString;
-int GlobalSearchCase=FALSE;
-int GlobalSearchWholeWords=FALSE; // значение "Whole words" для поиска
-int GlobalSearchHex=FALSE;        // значение "Search for hex" для поиска
-int GlobalSearchReverse=FALSE;
+int GlobalSearchCase = FALSE;
+int GlobalSearchWholeWords = FALSE;		// значение "Whole words" для поиска
+int GlobalSearchHex = FALSE;			// значение "Search for hex" для поиска
+int GlobalSearchReverse = FALSE;
 
-int ScreenSaverActive=FALSE;
+int ScreenSaverActive = FALSE;
 
-int CloseFAR=FALSE,CloseFARMenu=FALSE;
+int CloseFAR = FALSE, CloseFARMenu = FALSE;
 
-int DisablePluginsOutput=FALSE;
+int DisablePluginsOutput = FALSE;
 
-int WidthNameForMessage=0;
+int WidthNameForMessage = 0;
 
-BOOL ProcessShowClock=FALSE;
+BOOL ProcessShowClock = FALSE;
 
-const wchar_t *HelpFileMask=L"*.hlf";
-const wchar_t *HelpFormatLinkModule=L"<%ls>%ls";
+const wchar_t *HelpFileMask = L"*.hlf";
+const wchar_t *HelpFormatLinkModule = L"<%ls>%ls";
 
 #if defined(SYSLOG)
-BOOL StartSysLog=0;
-long CallNewDelete=0;
-long CallMallocFree=0;
+BOOL StartSysLog = 0;
+long CallNewDelete = 0;
+long CallMallocFree = 0;
 #endif
 
 class SaveScreen;
-SaveScreen *GlobalSaveScrPtr=nullptr;
+SaveScreen *GlobalSaveScrPtr = nullptr;
 
-int CriticalInternalError=FALSE;
+int CriticalInternalError = FALSE;
 
-int _localLastError=0;
+int _localLastError = 0;
 
 int KeepUserScreen;
 FARString g_strDirToSet;
 
-int Macro_DskShowPosType=0; // для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
+int Macro_DskShowPosType = 0;	// для какой панели вызывали меню выбора дисков (0 - ничерта не вызывали, 1 - левая (AltF1), 2 - правая (AltF2))
 
 // Macro Const
-const wchar_t constMsX[]=L"MsX";
-const wchar_t constMsY[]=L"MsY";
-const wchar_t constMsButton[]=L"MsButton";
-const wchar_t constMsCtrlState[]=L"MsCtrlState";
-const wchar_t constMsEventFlags[]=L"MsEventFlags";
-const wchar_t constRCounter[]=L"RCounter";
+const wchar_t constMsX[] = L"MsX";
+const wchar_t constMsY[] = L"MsY";
+const wchar_t constMsButton[] = L"MsButton";
+const wchar_t constMsCtrlState[] = L"MsCtrlState";
+const wchar_t constMsEventFlags[] = L"MsEventFlags";
+const wchar_t constRCounter[] = L"RCounter";
 
-DWORD RedrawTimeout=200;
+DWORD RedrawTimeout = 200;
 
 FormatScreen FS;
 

@@ -36,12 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Работа с ассоциациями файлов
 enum
 {
-	FILETYPE_EXEC,       // Enter
-	FILETYPE_ALTEXEC,    // Ctrl-PgDn
-	FILETYPE_VIEW,       // F3
-	FILETYPE_ALTVIEW,    // Alt-F3
-	FILETYPE_EDIT,       // F4
-	FILETYPE_ALTEDIT     // Alt-F4
+	FILETYPE_EXEC,			// Enter
+	FILETYPE_ALTEXEC,		// Ctrl-PgDn
+	FILETYPE_VIEW,			// F3
+	FILETYPE_ALTVIEW,		// Alt-F3
+	FILETYPE_EDIT,			// F4
+	FILETYPE_ALTEDIT		// Alt-F4
 };
 
 void ProcessGlobalFileTypes(const wchar_t *Name, bool RunAs, bool CanAddHistory);

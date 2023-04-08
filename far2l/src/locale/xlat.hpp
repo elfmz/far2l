@@ -48,11 +48,12 @@ class Xlator
 	} _after_latin, _after_local, _after_other;
 
 	size_t _min_len_table{0};
-	enum {
+	enum
+	{
 		UNKNOWN,
 		LATIN,
 		LOCAL,
-	} _cur_lang {UNKNOWN};
+	} _cur_lang{UNKNOWN};
 
 	void InitFromValues(KeyFileValues &kfv);
 
@@ -62,5 +63,4 @@ public:
 	wchar_t Transcode(wchar_t chr);
 };
 
-wchar_t* WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags);
-
+wchar_t *WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags);

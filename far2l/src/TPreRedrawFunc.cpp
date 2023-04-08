@@ -31,9 +31,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "headers.hpp"
-
 
 #include "TPreRedrawFunc.hpp"
 
@@ -43,13 +41,12 @@ PreRedrawItem TPreRedrawFunc::errorStack{};
 
 PreRedrawItem TPreRedrawFunc::Pop()
 {
-	if (Top)
-	{
+	if (Top) {
 		--Total;
-		PreRedrawItem Destination=Top->Item;
-		current=Top->Next;
+		PreRedrawItem Destination = Top->Item;
+		current = Top->Next;
 		delete Top;
-		Top=current;
+		Top = current;
 		return Destination;
 	}
 
@@ -66,9 +63,8 @@ PreRedrawItem TPreRedrawFunc::Peek()
 
 PreRedrawItem TPreRedrawFunc::SetParam(const PreRedrawParamStruct &Param)
 {
-	if (Top)
-	{
-		Top->Item.Param=Param;
+	if (Top) {
+		Top->Item.Param = Param;
 		return Top->Item;
 	}
 
@@ -77,11 +73,10 @@ PreRedrawItem TPreRedrawFunc::SetParam(const PreRedrawParamStruct &Param)
 
 PreRedrawItem TPreRedrawFunc::Push(const PreRedrawItem &Source)
 {
-	current=new(std::nothrow) OneItem(Source,Top);
+	current = new (std::nothrow) OneItem(Source, Top);
 
-	if (current)
-	{
-		Top=current;
+	if (current) {
+		Top = current;
 		++Total;
 		return Top->Item;
 	}
@@ -89,31 +84,29 @@ PreRedrawItem TPreRedrawFunc::Push(const PreRedrawItem &Source)
 	return TPreRedrawFunc::errorStack;
 }
 
-PreRedrawItem TPreRedrawFunc::Push(PREREDRAWFUNC Func,PreRedrawParamStruct *Param)
+PreRedrawItem TPreRedrawFunc::Push(PREREDRAWFUNC Func, PreRedrawParamStruct *Param)
 {
 	PreRedrawItem Source;
-	Source.PreRedrawFunc=Func;
+	Source.PreRedrawFunc = Func;
 
 	if (Param)
-		Source.Param=*Param;
+		Source.Param = *Param;
 	else
-		memset(&Source.Param,0,sizeof(PreRedrawParamStruct));
+		memset(&Source.Param, 0, sizeof(PreRedrawParamStruct));
 
 	return Push(Source);
 }
 
 void TPreRedrawFunc::Free()
 {
-	while (Top)
-	{
-		current=Top->Next;
+	while (Top) {
+		current = Top->Next;
 		delete Top;
-		Top=current;
+		Top = current;
 	}
 
-	Total=0;
+	Total = 0;
 }
-
 
 TPreRedrawFuncGuard::TPreRedrawFuncGuard(PREREDRAWFUNC Func)
 {

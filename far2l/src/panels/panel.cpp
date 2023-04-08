@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "panel.hpp"
 #include "macroopcode.hpp"
 #include "keyboard.hpp"
@@ -78,9 +77,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "xlat.hpp"
 #include <StackHeapArray.hpp>
 
-static int DragX,DragY,DragMove;
+static int DragX, DragY, DragMove;
 static Panel *SrcDragPanel;
-static SaveScreen *DragSaveScr=nullptr;
+static SaveScreen *DragSaveScr = nullptr;
 static FARString strDragName;
 
 /*
@@ -89,32 +88,39 @@ static FARString strDragName;
 */
 class ChDiskPluginItem
 {
-	public:
-		MenuItemEx Item;
-		WCHAR HotKey;
+public:
+	MenuItemEx Item;
+	WCHAR HotKey;
 
-		ChDiskPluginItem() { Clear(); }
-		~ChDiskPluginItem() {}
+	ChDiskPluginItem() { Clear(); }
+	~ChDiskPluginItem() {}
 
-		void Clear() { HotKey = 0; Item.Clear(); }
-		bool operator==(const ChDiskPluginItem &rhs) const { return HotKey==rhs.HotKey && !StrCmpI(Item.strName,rhs.Item.strName) && Item.UserData==rhs.Item.UserData; }
-		int operator<(const ChDiskPluginItem &rhs) const {return StrCmpI(Item.strName,rhs.Item.strName)<0;}
-		const ChDiskPluginItem& operator=(const ChDiskPluginItem &rhs);
+	void Clear()
+	{
+		HotKey = 0;
+		Item.Clear();
+	}
+	bool operator==(const ChDiskPluginItem &rhs) const
+	{
+		return HotKey == rhs.HotKey && !StrCmpI(Item.strName, rhs.Item.strName)
+				&& Item.UserData == rhs.Item.UserData;
+	}
+	int operator<(const ChDiskPluginItem &rhs) const { return StrCmpI(Item.strName, rhs.Item.strName) < 0; }
+	const ChDiskPluginItem &operator=(const ChDiskPluginItem &rhs);
 };
 
-const ChDiskPluginItem& ChDiskPluginItem::operator=(const ChDiskPluginItem &rhs)
+const ChDiskPluginItem &ChDiskPluginItem::operator=(const ChDiskPluginItem &rhs)
 {
-	if (this != &rhs)
-	{
-		Item=rhs.Item;
-		HotKey=rhs.HotKey;
+	if (this != &rhs) {
+		Item = rhs.Item;
+		HotKey = rhs.HotKey;
 	}
 
 	return *this;
 }
 
-
-Panel::Panel():
+Panel::Panel()
+	:
 	Focus(0),
 	EnableUpdate(TRUE),
 	PanelMode(NORMAL_PANEL),
@@ -127,10 +133,9 @@ Panel::Panel():
 	ProcessingPluginCommand(0)
 {
 	_OT(SysLog(L"[%p] Panel::Panel()", this));
-	SrcDragPanel=nullptr;
-	DragX=DragY=-1;
+	SrcDragPanel = nullptr;
+	DragX = DragY = -1;
 };
-
 
 Panel::~Panel()
 {
@@ -138,38 +143,32 @@ Panel::~Panel()
 	EndDrag();
 }
 
-
 void Panel::SetViewMode(int ViewMode)
 {
-	PrevViewMode=ViewMode;
-	Panel::ViewMode=ViewMode;
+	PrevViewMode = ViewMode;
+	Panel::ViewMode = ViewMode;
 };
-
 
 void Panel::ChangeDirToCurrent()
 {
 	FARString strNewDir;
 	apiGetCurrentDirectory(strNewDir);
-	SetCurDir(strNewDir,TRUE);
+	SetCurDir(strNewDir, TRUE);
 }
-
 
 void Panel::ChangeDisk()
 {
-	int Pos=0,FirstCall=TRUE;
+	int Pos = 0, FirstCall = TRUE;
 
-	if (!strCurDir.IsEmpty() && strCurDir.At(1)==L':')
-	{
-		Pos=Upper(strCurDir.At(0))-L'A';
+	if (!strCurDir.IsEmpty() && strCurDir.At(1) == L':') {
+		Pos = Upper(strCurDir.At(0)) - L'A';
 	}
 
-	while (Pos!=-1)
-	{
-		Pos=ChangeDiskMenu(Pos,FirstCall);
-		FirstCall=FALSE;
+	while (Pos != -1) {
+		Pos = ChangeDiskMenu(Pos, FirstCall);
+		FirstCall = FALSE;
 	}
 }
-
 
 struct PanelMenuItem
 {
@@ -184,9 +183,10 @@ struct PanelMenuItem
 
 	Plugin *pPlugin = nullptr;
 
-	INT_PTR nItem = -1; // plugin item or shortcut index
+	INT_PTR nItem = -1;		// plugin item or shortcut index
 
-	struct {
+	struct
+	{
 		wchar_t path[0x1000];
 		int id;
 	} location;
@@ -197,33 +197,24 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 	TArray<ChDiskPluginItem> MPItems;
 	ChDiskPluginItem OneItem;
 	// Список дополнительных хоткеев, для случая, когда плагинов, добавляющих пункт в меню, больше 9.
-	int PluginItem, PluginNumber = 0; // IS: счетчики - плагинов и пунктов плагина
-	bool ItemPresent,Done=false;
+	int PluginItem, PluginNumber = 0;	// IS: счетчики - плагинов и пунктов плагина
+	bool ItemPresent, Done = false;
 	FARString strMenuText;
 	FARString strPluginText;
 
-	while (!Done)
-	{
-		for (PluginItem=0;; ++PluginItem)
-		{
-			if (PluginNumber >= CtrlObject->Plugins.GetPluginsCount())
-			{
-				Done=true;
+	while (!Done) {
+		for (PluginItem = 0;; ++PluginItem) {
+			if (PluginNumber >= CtrlObject->Plugins.GetPluginsCount()) {
+				Done = true;
 				break;
 			}
 
 			Plugin *pPlugin = CtrlObject->Plugins.GetPlugin(PluginNumber);
 
 			WCHAR HotKey = 0;
-			if (!CtrlObject->Plugins.GetDiskMenuItem(
-				pPlugin,
-				PluginItem,
-				ItemPresent,
-				HotKey,
-				strPluginText
-			))
-			{
-				Done=true;
+			if (!CtrlObject->Plugins.GetDiskMenuItem(pPlugin, PluginItem, ItemPresent, HotKey,
+						strPluginText)) {
+				Done = true;
 				break;
 			}
 
@@ -232,8 +223,7 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 
 			strMenuText = strPluginText;
 
-			if (!strMenuText.IsEmpty())
-			{
+			if (!strMenuText.IsEmpty()) {
 				OneItem.Clear();
 				PanelMenuItem *item = new PanelMenuItem;
 				item->kind = PanelMenuItem::PLUGIN;
@@ -241,14 +231,13 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 				item->nItem = PluginItem;
 
 				OneItem.Item.strName = strMenuText;
-				OneItem.Item.UserDataSize=sizeof(PanelMenuItem);
-				OneItem.Item.UserData=(char*)item;
-				OneItem.HotKey=HotKey;
+				OneItem.Item.UserDataSize = sizeof(PanelMenuItem);
+				OneItem.Item.UserData = (char *)item;
+				OneItem.HotKey = HotKey;
 				ChDiskPluginItem *pResult = MPItems.addItem(OneItem);
 
-				if (pResult)
-				{
-					pResult->Item.UserData = (char*)item; //BUGBUG, это фантастика просто. Исправить!!!! связано с работой TArray
+				if (pResult) {
+					pResult->Item.UserData = (char *)item;	// BUGBUG, это фантастика просто. Исправить!!!! связано с работой TArray
 					pResult->Item.UserDataSize = sizeof(PanelMenuItem);
 				}
 
@@ -260,34 +249,34 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 				}
 				*/
 			}
-		} // END: for (PluginItem=0;;++PluginItem)
+		}	// END: for (PluginItem=0;;++PluginItem)
 
 		++PluginNumber;
 	}
 
 	MPItems.Sort();
-	MPItems.Pack(); // выкинем дубли
-	size_t PluginMenuItemsCount=MPItems.getSize();
+	MPItems.Pack();		// выкинем дубли
+	size_t PluginMenuItemsCount = MPItems.getSize();
 
-	if (PluginMenuItemsCount)
-	{
+	if (PluginMenuItemsCount) {
 		MenuItemEx ChDiskItem;
 
 		ChDiskItem.Clear();
 		ChDiskItem.strName = Msg::PluginsTitle;
-		ChDiskItem.Flags|=LIF_SEPARATOR;
-		ChDiskItem.UserDataSize=0;
+		ChDiskItem.Flags|= LIF_SEPARATOR;
+		ChDiskItem.UserDataSize = 0;
 		ChDisk.AddItem(&ChDiskItem);
-		ChDiskItem.Flags&=~LIF_SEPARATOR;
+		ChDiskItem.Flags&= ~LIF_SEPARATOR;
 
-		for (size_t I=0; I < PluginMenuItemsCount; ++I)
-		{
+		for (size_t I = 0; I < PluginMenuItemsCount; ++I) {
 			MPItems.getItem(I)->Item.SetSelect(ChDisk.GetItemCount() == Pos);
-			const wchar_t HotKeyStr[]={MPItems.getItem(I)->HotKey?L'&':L' ',MPItems.getItem(I)->HotKey?MPItems.getItem(I)->HotKey:L' ',L' ',MPItems.getItem(I)->HotKey?L' ':L'\0',L'\0'};
+			const wchar_t HotKeyStr[] = {MPItems.getItem(I)->HotKey ? L'&' : L' ',
+					MPItems.getItem(I)->HotKey ? MPItems.getItem(I)->HotKey : L' ', L' ',
+					MPItems.getItem(I)->HotKey ? L' ' : L'\0', L'\0'};
 			MPItems.getItem(I)->Item.strName = FARString(HotKeyStr) + MPItems.getItem(I)->Item.strName;
 			ChDisk.AddItem(&MPItems.getItem(I)->Item);
 
-			delete(PanelMenuItem*)MPItems.getItem(I)->Item.UserData;  //ммда...
+			delete (PanelMenuItem *)MPItems.getItem(I)->Item.UserData;	// ммда...
 		}
 	}
 }
@@ -295,87 +284,80 @@ static void AddPluginItems(VMenu &ChDisk, int Pos)
 static void ConfigureChangeDriveMode()
 {
 	DialogBuilder Builder(Msg::ChangeDriveConfigure, L"ChangeLocationConfig");
-//	Builder.AddCheckbox(Msg::ChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
-//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
-//	Builder.AddCheckbox(Msg::ChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
-//	Builder.AddCheckbox(Msg::ChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowDiskType, &Opt.ChangeDriveMode, DRIVE_SHOW_TYPE);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkName, &Opt.ChangeDriveMode, DRIVE_SHOW_NETNAME);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowLabel, &Opt.ChangeDriveMode, DRIVE_SHOW_LABEL);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowFileSystem, &Opt.ChangeDriveMode, DRIVE_SHOW_FILESYSTEM);
 
-//	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
+	//	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 
-//	DialogItemEx *ShowSize = Builder.AddCheckbox(Msg::ChangeDriveShowSize, &ShowSizeAny);
-//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
-//	ShowSizeFloat->Indent(3);
-//	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
+	//	DialogItemEx *ShowSize = Builder.AddCheckbox(Msg::ChangeDriveShowSize, &ShowSizeAny);
+	//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
+	//	ShowSizeFloat->Indent(3);
+	//	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	auto *ShowMountsItem = Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
+	auto *ShowMountsItem =
+			Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
 
-	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions,28);
+	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions, 28);
 	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
 	Builder.AddTextBefore(EditItem, Msg::ChangeDriveExceptions);
 
-	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn2,28);
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn2, 28);
 	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
 	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn2);
 
-	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn3,28);
+	EditItem = Builder.AddEditField(&Opt.ChangeDriveColumn3, 28);
 	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
 	Builder.AddTextBefore(EditItem, Msg::ChangeDriveColumn3);
 
 	Builder.AddCheckbox(Msg::ChangeDriveShowShortcuts, &Opt.ChangeDriveMode, DRIVE_SHOW_BOOKMARKS);
 	Builder.AddCheckbox(Msg::ChangeDriveShowPlugins, &Opt.ChangeDriveMode, DRIVE_SHOW_PLUGINS);
-//	Builder.AddCheckbox(Msg::ChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
-//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowCD, &Opt.ChangeDriveMode, DRIVE_SHOW_CDROM);
+	//	Builder.AddCheckbox(Msg::ChangeDriveShowNetworkDrive, &Opt.ChangeDriveMode, DRIVE_SHOW_REMOTE);
 
 	Builder.AddOKCancel();
-	if (Builder.ShowDialog())
-	{
-//		if (ShowSizeAny)
-//		{
-//			bool ShowSizeFloat = (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE_FLOAT) ? true : false;
-//			if (ShowSizeFloat)
-//				Opt.ChangeDriveMode &= ~DRIVE_SHOW_SIZE;
-//			else
-//				Opt.ChangeDriveMode |= DRIVE_SHOW_SIZE;
-//		}
-//		else
-//			Opt.ChangeDriveMode &= ~(DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
+	if (Builder.ShowDialog()) {
+		//		if (ShowSizeAny)
+		//		{
+		//			bool ShowSizeFloat = (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE_FLOAT) ? true : false;
+		//			if (ShowSizeFloat)
+		//				Opt.ChangeDriveMode &= ~DRIVE_SHOW_SIZE;
+		//			else
+		//				Opt.ChangeDriveMode |= DRIVE_SHOW_SIZE;
+		//		}
+		//		else
+		//			Opt.ChangeDriveMode &= ~(DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 	}
 }
 
-
-LONG_PTR WINAPI ChDiskDlgProc(HANDLE hDlg,int Msg,int Param1,LONG_PTR Param2)
+LONG_PTR WINAPI ChDiskDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	switch (Msg)
-	{
-		case DN_CTLCOLORDLGITEM:
-		{
-			if (Param1 == 1) // BUGBUG, magic number
+	switch (Msg) {
+		case DN_CTLCOLORDLGITEM: {
+			if (Param1 == 1)	// BUGBUG, magic number
 			{
-				int Color=FarColorToReal(COL_WARNDIALOGTEXT);
-				return ((Param2&0xFF00FF00)|(Color<<16)|Color);
+				int Color = FarColorToReal(COL_WARNDIALOGTEXT);
+				return ((Param2 & 0xFF00FF00) | (Color << 16) | Color);
 			}
-		}
-		break;
+		} break;
 	}
-	return DefDlgProc(hDlg,Msg,Param1,Param2);
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
 static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 {
 	Bookmarks b;
-	for (int SCPos = 0, AddedCount = 0;; ++SCPos)
-	{
+	for (int SCPos = 0, AddedCount = 0;; ++SCPos) {
 		FARString Folder, Plugin, PluginFile, ShortcutPath;
-		if (b.Get(SCPos, &Folder, &Plugin, &PluginFile, nullptr))
-		{
+		if (b.Get(SCPos, &Folder, &Plugin, &PluginFile, nullptr)) {
 			MenuItemEx ChDiskItem;
 
-			if (!AddedCount++)
-			{
+			if (!AddedCount++) {
 				ChDiskItem.Clear();
 				ChDiskItem.strName = Msg::BookmarksTitle;
 				ChDiskItem.Flags|= LIF_SEPARATOR;
-				ChDiskItem.UserDataSize=0;
+				ChDiskItem.UserDataSize = 0;
 				ChDisk.AddItem(&ChDiskItem);
 				ChDiskItem.Flags&= ~LIF_SEPARATOR;
 			}
@@ -383,14 +365,12 @@ static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 			ChDiskItem.Clear();
 			ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
 
-			if (!PluginFile.IsEmpty())
-			{
+			if (!PluginFile.IsEmpty()) {
 				ShortcutPath+= PluginFile;
 				ShortcutPath+= L"/";
 			}
 			ShortcutPath+= Folder;
-			if (ShortcutPath.IsEmpty())
-			{
+			if (ShortcutPath.IsEmpty()) {
 				ShortcutPath = L"@";
 				ShortcutPath+= Plugin;
 			}
@@ -406,25 +386,26 @@ static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 			item.kind = PanelMenuItem::SHORTCUT;
 			item.nItem = SCPos;
 			ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
-		}
-		else if (SCPos > 10)
-		{
+		} else if (SCPos > 10) {
 			break;
 		}
 	}
 }
 
-int Panel::ChangeDiskMenu(int Pos,int FirstCall)
+int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 {
 	/*Events.DeviceArivalEvent.Reset();
 	Events.DeviceRemoveEvent.Reset();
 	Events.MediaArivalEvent.Reset();
 	Events.MediaRemoveEvent.Reset();*/
-	class Guard_Macro_DskShowPosType  //фигня какая-то
+	class Guard_Macro_DskShowPosType	// фигня какая-то
 	{
-		public:
-			Guard_Macro_DskShowPosType(Panel *curPanel) {Macro_DskShowPosType=(curPanel==CtrlObject->Cp()->LeftPanel)?1:2;};
-			~Guard_Macro_DskShowPosType() {Macro_DskShowPosType=0;};
+	public:
+		Guard_Macro_DskShowPosType(Panel *curPanel)
+		{
+			Macro_DskShowPosType = (curPanel == CtrlObject->Cp()->LeftPanel) ? 1 : 2;
+		};
+		~Guard_Macro_DskShowPosType() { Macro_DskShowPosType = 0; };
 	};
 	Guard_Macro_DskShowPosType _guard_Macro_DskShowPosType(this);
 	MenuItemEx ChDiskItem;
@@ -435,15 +416,14 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 	auto another_panel = CtrlObject->Cp()->GetAnotherPanel(this);
 	another_panel->GetCurDirPluginAware(another_curdir);
-	if (another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
-	{
+	if (another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE) {
 		another_curdir.Insert(0, L"{");
 		another_curdir.Append(L"}");
 	}
 
-	PanelMenuItem Item, *mitem=0;
-	{ // эта скобка надо, см. M#605
-		VMenu ChDisk(Msg::ChangeDriveTitle,nullptr,0,ScrY-Y1-3);
+	PanelMenuItem Item, *mitem = 0;
+	{	// эта скобка надо, см. M#605
+		VMenu ChDisk(Msg::ChangeDriveTitle, nullptr, 0, ScrY - Y1 - 3);
 		ChDisk.SetBottomTitle(Msg::ChangeDriveMenuFooter);
 		ChDisk.SetFlags(VMENU_NOTCENTER);
 
@@ -456,7 +436,7 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 		for (const auto &m : mounts) {
 			ChDiskItem.Clear();
 
-			if (m.path == L"-" ) {
+			if (m.path == L"-") {
 				ChDiskItem.strName = m.col3;
 				ChDiskItem.Flags|= LIF_SEPARATOR;
 				ChDisk.AddItem(&ChDiskItem);
@@ -464,15 +444,16 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 			} else {
 				ChDiskItem.SetSelect(ChDisk.GetItemCount() == Pos);
-				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : L' ', m.hotkey ? L' ' : 0, 0};
+				const wchar_t HotKeyStr[] = {m.hotkey ? L'&' : L' ', m.hotkey ? m.hotkey : L' ',
+						m.hotkey ? L' ' : 0, 0};
 				ChDiskItem.strName = HotKeyStr;
 				ChDiskItem.strName+= FixedSizeStr(m.path, std::min(mounts.max_path, (size_t)48), true, false);
-				if (mounts.max_col2)
-				{
+				if (mounts.max_col2) {
 					ChDiskItem.strName+= L' ';
 					ChDiskItem.strName+= BoxSymbols[BS_V1];
 					ChDiskItem.strName+= L' ';
-					ChDiskItem.strName+= FixedSizeStr(m.col2, std::min(mounts.max_col2, (size_t)24), false, true);
+					ChDiskItem.strName+=
+							FixedSizeStr(m.col2, std::min(mounts.max_col2, (size_t)24), false, true);
 				}
 				ChDiskItem.strName+= L' ';
 				ChDiskItem.strName+= BoxSymbols[BS_V1];
@@ -483,49 +464,44 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 				wcsncpy(item.location.path, m.path.CPtr(), ARRAYSIZE(item.location.path) - 1);
 				item.location.id = m.id;
 				if (item.location.path[0] == L'{' && another_curdir == item.location.path
-				 && another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE)
-				{
+						&& another_panel->GetPluginHandle() != INVALID_HANDLE_VALUE) {
 					item.kind = PanelMenuItem::PLUGIN;
 					item.pPlugin = nullptr;
-				}
-				else
+				} else
 					item.kind = m.unmountable ? PanelMenuItem::MOUNTPOINT : PanelMenuItem::DIRECTORY;
 
 				ChDisk.SetUserData(&item, sizeof(item), ChDisk.AddItem(&ChDiskItem));
 			}
 		}
 
-		if (Opt.ChangeDriveMode & DRIVE_SHOW_BOOKMARKS)
-		{
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_BOOKMARKS) {
 			AddBookmarkItems(ChDisk, Pos);
 		}
 
-		if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS)
-		{
+		if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS) {
 			AddPluginItems(ChDisk, Pos);
 		}
 
 		Pos = 0;
 
-		int X=X1+5;
+		int X = X1 + 5;
 
-		if ((this == CtrlObject->Cp()->RightPanel) && IsFullScreen() && (X2-X1 > 40))
-			X = (X2-X1+1)/2+5;
+		if ((this == CtrlObject->Cp()->RightPanel) && IsFullScreen() && (X2 - X1 > 40))
+			X = (X2 - X1 + 1) / 2 + 5;
 
 		int Y = (ScrY + 1 - (ChDisk.GetItemCount() + 5)) / 2;
 
 		if (Y < 1)
-			Y=1;
+			Y = 1;
 
-		ChDisk.SetPosition(X,Y,0,0);
+		ChDisk.SetPosition(X, Y, 0, 0);
 
 		if (Y < 3)
 			ChDisk.SetBoxType(SHORT_DOUBLE_BOX);
 
 		ChDisk.Show();
 
-		while (!ChDisk.Done())
-		{
+		while (!ChDisk.Done()) {
 			int Key;
 			/*if(Events.DeviceArivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
 			{
@@ -533,73 +509,57 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 			}
 			else*/
 			{
-				{ //очередная фигня
+				{	// очередная фигня
 					ChangeMacroMode MacroMode(MACRO_DISKS);
-					Key=ChDisk.ReadInput();
+					Key = ChDisk.ReadInput();
 				}
 			}
-			int SelPos=ChDisk.GetSelectPos();
-			PanelMenuItem *item = (PanelMenuItem*)ChDisk.GetUserData(nullptr,0);
+			int SelPos = ChDisk.GetSelectPos();
+			PanelMenuItem *item = (PanelMenuItem *)ChDisk.GetUserData(nullptr, 0);
 
-			switch (Key)
-			{
+			switch (Key) {
 				// Shift-Enter в меню выбора дисков вызывает проводник для данного диска
 				case KEY_SHIFTNUMENTER:
-				case KEY_SHIFTENTER:
-				{
-					if (item && !item->pPlugin)
-					{
-						Execute(item->location.path,TRUE,TRUE);
+				case KEY_SHIFTENTER: {
+					if (item && !item->pPlugin) {
+						Execute(item->location.path, TRUE, TRUE);
 					}
-				}
-				break;
+				} break;
 				case KEY_CTRLPGUP:
-				case KEY_CTRLNUMPAD9:
-				{
+				case KEY_CTRLNUMPAD9: {
 					if (Opt.PgUpChangeDisk)
 						return -1;
-				}
-				break;
+				} break;
 				case KEY_INS:
-				case KEY_NUMPAD0:
-				{
-//					if (item && item->kind == PanelMenuItem::SHORTCUT)
-//					{
-//						SaveShortcutFolder(item->nItem);
-//					}
-//					else
+				case KEY_NUMPAD0: {
+					//					if (item && item->kind == PanelMenuItem::SHORTCUT)
+					//					{
+					//						SaveShortcutFolder(item->nItem);
+					//					}
+					//					else
 					{
 						ShowBookmarksMenu();
 					}
 					return SelPos;
-				}
-				break;
+				} break;
 				case KEY_CTRLA:
-				case KEY_F4:
-				{
-					if (item)
-					{
-						if (item->kind == PanelMenuItem::PLUGIN)
-						{
-							if (item->pPlugin)
-							{
+				case KEY_F4: {
+					if (item) {
+						if (item->kind == PanelMenuItem::PLUGIN) {
+							if (item->pPlugin) {
 								FARString strName = ChDisk.GetItemPtr(SelPos)->strName.SubStr(3);
 								RemoveExternalSpaces(strName);
 
 								if (CtrlObject->Plugins.SetHotKeyDialog(strName,
-									CtrlObject->Plugins.GetHotKeySettingName(item->pPlugin, item->nItem, PluginManager::HKK_DRIVEMENU)))
-								{
+											CtrlObject->Plugins.GetHotKeySettingName(item->pPlugin,
+													item->nItem, PluginManager::HKK_DRIVEMENU))) {
 									return SelPos;
 								}
 							}
-						}
-						else if (item->kind == PanelMenuItem::SHORTCUT)
-						{
+						} else if (item->kind == PanelMenuItem::SHORTCUT) {
 							ShowBookmarksMenu(item->nItem);
 							return SelPos;
-						}
-						else
-						{
+						} else {
 							Mounts::EditHotkey(item->location.path, item->location.id);
 							return SelPos;
 						}
@@ -611,97 +571,86 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 
 				case KEY_SHIFTNUMDEL:
 				case KEY_SHIFTDECIMAL:
-				case KEY_SHIFTDEL:
-				{
-					if (item) switch (item->kind)
-					{
-						case PanelMenuItem::MOUNTPOINT: {
-							FARString path(item->location.path);
-							Mounts::Unmount(path,
-								Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL || Key == KEY_SHIFTDEL);
-							return SelPos;
-						}
-						
-						case PanelMenuItem::SHORTCUT: {
-							Bookmarks().Clear(item->nItem);
-							return SelPos;
-						}
+				case KEY_SHIFTDEL: {
+					if (item)
+						switch (item->kind) {
+							case PanelMenuItem::MOUNTPOINT: {
+								FARString path(item->location.path);
+								Mounts::Unmount(path,
+										Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL
+												|| Key == KEY_SHIFTDEL);
+								return SelPos;
+							}
 
-						default: ;
-					}
-				}
-				break;
+							case PanelMenuItem::SHORTCUT: {
+								Bookmarks().Clear(item->nItem);
+								return SelPos;
+							}
+
+							default:;
+						}
+				} break;
 				case KEY_CTRL1:
 				case KEY_RCTRL1:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_TYPE;
-					return SelPos ;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_TYPE;
+					return SelPos;
 				case KEY_CTRL2:
 				case KEY_RCTRL2:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_NETNAME;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_NETNAME;
 					return SelPos;
 				case KEY_CTRL3:
 				case KEY_RCTRL3:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_LABEL;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_LABEL;
 					return SelPos;
 				case KEY_CTRL4:
 				case KEY_RCTRL4:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_FILESYSTEM;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_FILESYSTEM;
 					return SelPos;
 				case KEY_CTRL5:
-				case KEY_RCTRL5:
-				{
-					if (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE)
-					{
-						Opt.ChangeDriveMode ^= DRIVE_SHOW_SIZE;
-						Opt.ChangeDriveMode |= DRIVE_SHOW_SIZE_FLOAT;
-					}
-					else
-					{
+				case KEY_RCTRL5: {
+					if (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE) {
+						Opt.ChangeDriveMode^= DRIVE_SHOW_SIZE;
+						Opt.ChangeDriveMode|= DRIVE_SHOW_SIZE_FLOAT;
+					} else {
 						if (Opt.ChangeDriveMode & DRIVE_SHOW_SIZE_FLOAT)
-							Opt.ChangeDriveMode ^= DRIVE_SHOW_SIZE_FLOAT;
+							Opt.ChangeDriveMode^= DRIVE_SHOW_SIZE_FLOAT;
 						else
-							Opt.ChangeDriveMode ^= DRIVE_SHOW_SIZE;
+							Opt.ChangeDriveMode^= DRIVE_SHOW_SIZE;
 					}
 
 					return SelPos;
 				}
 				case KEY_CTRL6:
 				case KEY_RCTRL6:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_MOUNTS;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_MOUNTS;
 					return SelPos;
 				case KEY_CTRL7:
 				case KEY_RCTRL7:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_PLUGINS;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_PLUGINS;
 					return SelPos;
 				case KEY_CTRL8:
 				case KEY_RCTRL8:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_BOOKMARKS;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_BOOKMARKS;
 					return SelPos;
 				case KEY_CTRL9:
 				case KEY_RCTRL9:
-					Opt.ChangeDriveMode ^= DRIVE_SHOW_REMOTE;
+					Opt.ChangeDriveMode^= DRIVE_SHOW_REMOTE;
 					return SelPos;
 				case KEY_F9:
 					ConfigureChangeDriveMode();
 					return SelPos;
-				case KEY_SHIFTF1:
-				{
-					if (item && item->pPlugin)
-					{
+				case KEY_SHIFTF1: {
+					if (item && item->pPlugin) {
 						// Вызываем нужный топик, который передали в CommandsMenu()
-						FarShowHelp(
-							item->pPlugin->GetModuleName(),
-							nullptr,
-							FHELP_SELFHELP|FHELP_NOSHOWERROR|FHELP_USECONTENTS
-						);
+						FarShowHelp(item->pPlugin->GetModuleName(), nullptr,
+								FHELP_SELFHELP | FHELP_NOSHOWERROR | FHELP_USECONTENTS);
 					}
 
 					break;
 				}
 				case KEY_ALTSHIFTF9:
 
-					if (Opt.ChangeDriveMode&DRIVE_SHOW_PLUGINS)
-					{
+					if (Opt.ChangeDriveMode & DRIVE_SHOW_PLUGINS) {
 						ChDisk.Hide();
 						CtrlObject->Plugins.Configure();
 					}
@@ -720,33 +669,27 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 					break;
 			}
 
-			if (ChDisk.Done() &&
-				(ChDisk.Modal::GetExitCode() < 0) &&
-				!strCurDir.IsEmpty() &&
-				(StrCmpN(strCurDir,L"//",2) ))
-			{
-				const wchar_t RootDir[4] = {strCurDir.At(0),L':',GOOD_SLASH,L'\0'};
+			if (ChDisk.Done() && (ChDisk.Modal::GetExitCode() < 0) && !strCurDir.IsEmpty()
+					&& (StrCmpN(strCurDir, L"//", 2))) {
+				const wchar_t RootDir[4] = {strCurDir.At(0), L':', GOOD_SLASH, L'\0'};
 
 				if (FAR_GetDriveType(RootDir) == DRIVE_NO_ROOT_DIR)
 					ChDisk.ClearDone();
 			}
-		} // while (!Done)
+		}	// while (!Done)
 
-		if (ChDisk.Modal::GetExitCode()<0)
+		if (ChDisk.Modal::GetExitCode() < 0)
 			return -1;
 
-		mitem=(PanelMenuItem*)ChDisk.GetUserData(nullptr,0);
+		mitem = (PanelMenuItem *)ChDisk.GetUserData(nullptr, 0);
 
-		if (mitem)
-		{
-			Item=*mitem;
-			mitem=&Item;
+		if (mitem) {
+			Item = *mitem;
+			mitem = &Item;
 		}
-	} // эта скобка надо, см. M#605
+	}	// эта скобка надо, см. M#605
 
-	
-
-	if (ProcessPluginEvent(FE_CLOSE,nullptr))
+	if (ProcessPluginEvent(FE_CLOSE, nullptr))
 		return -1;
 
 	ScrBuf.Flush();
@@ -754,13 +697,12 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 	PeekInputRecord(&rec);
 
 	if (!mitem)
-		return -1; //???
+		return -1;	//???
 
-	if (mitem->kind == PanelMenuItem::PLUGIN)
-	{
-//		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
+	if (mitem->kind == PanelMenuItem::PLUGIN) {
+		//		fprintf(stderr, "pPlugin=%p nItem=0x%lx\n", mitem->pPlugin, (unsigned long)mitem->nItem);
 		LONG_PTR nItem = mitem->nItem;
-		//if (nItem == (LONG_PTR)-1)
+		// if (nItem == (LONG_PTR)-1)
 		//	nItem = (LONG_PTR)mitem->root;
 
 		if (mitem->pPlugin == nullptr) {
@@ -780,60 +722,49 @@ int Panel::ChangeDiskMenu(int Pos,int FirstCall)
 						hostFile = opi.HostFile;
 
 					SetLocation_Plugin(!hostFile.empty(), pPlugin, curDir.c_str(),
-						hostFile.empty() ? nullptr : hostFile.c_str(), 0);
+							hostFile.empty() ? nullptr : hostFile.c_str(), 0);
 				}
 			}
 
 		} else {
 			SetLocation_Plugin(false, mitem->pPlugin, nullptr, nullptr, nItem);
 		}
-	}
-	else if (mitem->kind == PanelMenuItem::SHORTCUT)
-	{
+	} else if (mitem->kind == PanelMenuItem::SHORTCUT) {
 		ExecShortcutFolder(mitem->nItem);
-	}
-	else if (mitem->kind == PanelMenuItem::MOUNTPOINT || mitem->kind == PanelMenuItem::DIRECTORY)
-	{
+	} else if (mitem->kind == PanelMenuItem::MOUNTPOINT || mitem->kind == PanelMenuItem::DIRECTORY) {
 		SetLocation_Directory(mitem->location.path);
 	}
 
 	return -1;
 }
 
-bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *path, const wchar_t *host_file, LONG_PTR item)
+bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *path,
+		const wchar_t *host_file, LONG_PTR item)
 {
 	HANDLE hPlugin;
 
-	if (file_plugin)
-	{
-		hPlugin = CtrlObject->Plugins.OpenFilePlugin(host_file, 0, OFP_ALTERNATIVE, plugin);//OFP_NORMAL
-	}
-	else
-	{
-		hPlugin = CtrlObject->Plugins.OpenPlugin( plugin, OPEN_DISKMENU, item); //nItem
+	if (file_plugin) {
+		hPlugin = CtrlObject->Plugins.OpenFilePlugin(host_file, 0, OFP_ALTERNATIVE, plugin);	// OFP_NORMAL
+	} else {
+		hPlugin = CtrlObject->Plugins.OpenPlugin(plugin, OPEN_DISKMENU, item);					// nItem
 	}
 
-	if (hPlugin == INVALID_HANDLE_VALUE)
-	{
-		fprintf(stderr,
-			"SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED plugin open\n",
-				file_plugin, plugin, path, host_file, (long long)item);
+	if (hPlugin == INVALID_HANDLE_VALUE) {
+		fprintf(stderr, "SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED plugin open\n", file_plugin,
+				plugin, path, host_file, (long long)item);
 		return false;
 	}
 
 	int Focus = GetFocus();
-	Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this,FILE_PANEL,TRUE,TRUE);
-	NewPanel->SetPluginMode(hPlugin,L"",Focus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
+	Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this, FILE_PANEL, TRUE, TRUE);
+	NewPanel->SetPluginMode(hPlugin, L"", Focus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
 
-	if (path)
-	{
+	if (path) {
 		NewPanel->Update(0);
 		NewPanel->Show();
 		CtrlObject->Plugins.SetDirectory(hPlugin, L"/", 0);
-		if (!CtrlObject->Plugins.SetDirectory(hPlugin, path, 0))
-		{
-			fprintf(stderr,
-				"SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED set directory\n",
+		if (!CtrlObject->Plugins.SetDirectory(hPlugin, path, 0)) {
+			fprintf(stderr, "SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED set directory\n",
 					file_plugin, plugin, path, host_file, (long long)item);
 		}
 	}
@@ -841,8 +772,7 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 	NewPanel->Update(0);
 	NewPanel->Show();
 
-	if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL)
-	{
+	if (!Focus && CtrlObject->Cp()->GetAnotherPanel(this)->GetType() == INFO_PANEL) {
 		CtrlObject->Cp()->GetAnotherPanel(this)->UpdateKeyBar();
 	}
 
@@ -851,10 +781,8 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 
 bool Panel::SetLocation_Directory(const wchar_t *path)
 {
-	if (!FarChDir(path))
-	{
-		if (CtrlObject->Plugins.ProcessCommandLine(path))
-		{
+	if (!FarChDir(path)) {
+		if (CtrlObject->Plugins.ProcessCommandLine(path)) {
 			fprintf(stderr, "SetLocation_Directory('%ls') PLUGIN\n", path);
 			return true;
 		}
@@ -868,19 +796,14 @@ bool Panel::SetLocation_Directory(const wchar_t *path)
 	FARString strNewCurDir;
 	apiGetCurrentDirectory(strNewCurDir);
 
-	if ((PanelMode == NORMAL_PANEL) &&
-		(GetType() == FILE_PANEL) &&
-		!StrCmpI(strCurDir,strNewCurDir) &&
-		IsVisible())
-	{
+	if ((PanelMode == NORMAL_PANEL) && (GetType() == FILE_PANEL) && !StrCmpI(strCurDir, strNewCurDir)
+			&& IsVisible()) {
 		// А нужно ли делать здесь Update????
 		Update(UPDATE_KEEP_SELECTION);
-	}
-	else
-	{
-		int Focus=GetFocus();
-		Panel *NewPanel=CtrlObject->Cp()->ChangePanel(this, FILE_PANEL, TRUE, FALSE);
-		NewPanel->SetCurDir(strNewCurDir,TRUE);
+	} else {
+		int Focus = GetFocus();
+		Panel *NewPanel = CtrlObject->Cp()->ChangePanel(this, FILE_PANEL, TRUE, FALSE);
+		NewPanel->SetCurDir(strNewCurDir, TRUE);
 		NewPanel->Show();
 
 		if (Focus || !CtrlObject->Cp()->GetAnotherPanel(this)->IsVisible())
@@ -895,51 +818,46 @@ bool Panel::SetLocation_Directory(const wchar_t *path)
 
 int Panel::OnFCtlSetLocation(const FarPanelLocation *location)
 {
-	if (!location->PluginName)
-	{
+	if (!location->PluginName) {
 		return SetLocation_Directory(location->Path);
 	}
 
 	auto pPlugin = CtrlObject->Plugins.GetPlugin(location->PluginName);
-	if (!pPlugin)
-	{
+	if (!pPlugin) {
 		fprintf(stderr, "OnFCtlSetLocation: wrong plugin='%ls'", location->PluginName);
 		return 0;
 	}
 
-	if (location->HostFile)
-	{
+	if (location->HostFile) {
 		return SetLocation_Plugin(true, pPlugin, location->Path, location->HostFile, 0);
 	}
 
 	return SetLocation_Plugin(false, pPlugin, location->Path, nullptr, location->Item);
 }
 
-void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &strLastName,FARString &strName)
+void Panel::FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &strLastName,
+		FARString &strName)
 {
-	wchar_t *Ptr=(wchar_t *)malloc((StrLength(Src)+StrLength(FindEdit->GetStringAddr())+32)*sizeof(wchar_t));
+	wchar_t *Ptr =
+			(wchar_t *)malloc((StrLength(Src) + StrLength(FindEdit->GetStringAddr()) + 32) * sizeof(wchar_t));
 
-	if (Ptr)
-	{
-		wcscpy(Ptr,FindEdit->GetStringAddr());
-		wchar_t *EndPtr=Ptr+StrLength(Ptr);
-		wcscat(Ptr,Src);
+	if (Ptr) {
+		wcscpy(Ptr, FindEdit->GetStringAddr());
+		wchar_t *EndPtr = Ptr + StrLength(Ptr);
+		wcscat(Ptr, Src);
 		Unquote(EndPtr);
-		EndPtr=Ptr+StrLength(Ptr);
-//		DWORD Key;
+		EndPtr = Ptr + StrLength(Ptr);
+		//		DWORD Key;
 
-		for (;;)
-		{
-			if (EndPtr == Ptr)
-			{
-//				Key=KEY_NONE;
+		for (;;) {
+			if (EndPtr == Ptr) {
+				//				Key=KEY_NONE;
 				break;
 			}
 
-			if (FindPartNameXLat(Ptr,FALSE,1,1))
-			{
-//				Key=*(EndPtr-1);
-				*EndPtr=0;
+			if (FindPartNameXLat(Ptr, FALSE, 1, 1)) {
+				//				Key=*(EndPtr-1);
+				*EndPtr = 0;
 				FindEdit->SetString(Ptr);
 				strLastName = Ptr;
 				strName = Ptr;
@@ -947,37 +865,37 @@ void Panel::FastFindProcessName(Edit *FindEdit,const wchar_t *Src,FARString &str
 				break;
 			}
 
-			*--EndPtr=0;
+			*--EndPtr = 0;
 		}
 
 		free(Ptr);
 	}
 }
 
-int64_t Panel::VMProcess(int OpCode,void *vParam,int64_t iParam)
+int64_t Panel::VMProcess(int OpCode, void *vParam, int64_t iParam)
 {
 	return 0;
 }
 
 // корректировка букв
-static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec,DWORD Key)
+static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec, DWORD Key)
 {
-	if ((Key&KEY_ALT))// && Key!=(KEY_ALT|0x3C))
+	if ((Key & KEY_ALT))	// && Key!=(KEY_ALT|0x3C))
 	{
-		if ((Key& KEY_SHIFT))
-		{
+		if ((Key & KEY_SHIFT)) {
 			switch (Key)
-				// исключения (перекодированные в keyboard.cpp)
-				case KEY_ALT+KEY_SHIFT+'`':
-				case KEY_ALT+KEY_SHIFT+'_':
-				case KEY_ALT+KEY_SHIFT+'=':
-					return Key;
+			// исключения (перекодированные в keyboard.cpp)
+			case KEY_ALT + KEY_SHIFT + '`':
+			case KEY_ALT + KEY_SHIFT + '_':
+			case KEY_ALT + KEY_SHIFT + '=':
+				return Key;
 		}
 		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout>>> %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
-		if (rec->Event.KeyEvent.uChar.UnicodeChar && WCHAR(Key&KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar) //???
-			Key=(Key&0xFFF10000)|rec->Event.KeyEvent.uChar.UnicodeChar;   //???
+		if (rec->Event.KeyEvent.uChar.UnicodeChar
+				&& WCHAR(Key & KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar)		//???
+			Key = (Key & 0xFFF10000) | rec->Event.KeyEvent.uChar.UnicodeChar;			//???
 
-		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout<<< %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
+																						// // _SVS(SysLog(L"_CorrectFastFindKbdLayout<<< %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
 	}
 
 	return Key;
@@ -988,151 +906,130 @@ void Panel::FastFind(int FirstKey)
 	// // _SVS(CleverSysLog Clev(L"Panel::FastFind"));
 	INPUT_RECORD rec;
 	FARString strLastName, strName;
-	int Key,KeyToProcess=0;
+	int Key, KeyToProcess = 0;
 	WaitInFastFind++;
 	{
-		int FindX=Min(X1+9,ScrX-22);
-		int FindY=Min(Y2,ScrY-2);
+		int FindX = Min(X1 + 9, ScrX - 22);
+		int FindY = Min(Y2, ScrY - 2);
 		ChangeMacroMode MacroMode(MACRO_SEARCH);
-		SaveScreen SaveScr(FindX,FindY,FindX+21,FindY+2);
-		FastFindShow(FindX,FindY);
+		SaveScreen SaveScr(FindX, FindY, FindX + 21, FindY + 2);
+		FastFindShow(FindX, FindY);
 		Edit FindEdit;
-		FindEdit.SetPosition(FindX+2,FindY+1,FindX+19,FindY+1);
+		FindEdit.SetPosition(FindX + 2, FindY + 1, FindX + 19, FindY + 1);
 		FindEdit.SetEditBeyondEnd(FALSE);
 		FindEdit.SetObjectColor(COL_DIALOGEDIT);
 		FindEdit.Show();
 
-		while (!KeyToProcess)
-		{
-			if (FirstKey)
-			{
-				FirstKey=_CorrectFastFindKbdLayout(FrameManager->GetLastInputRecord(),FirstKey);
+		while (!KeyToProcess) {
+			if (FirstKey) {
+				FirstKey = _CorrectFastFindKbdLayout(FrameManager->GetLastInputRecord(), FirstKey);
 				// // _SVS(SysLog(L"Panel::FastFind  FirstKey=%ls  %ls",_FARKEY_ToName(FirstKey),_INPUT_RECORD_Dump(FrameManager->GetLastInputRecord())));
 				// // _SVS(SysLog(L"if (FirstKey)"));
-				Key=FirstKey;
-			}
-			else
-			{
+				Key = FirstKey;
+			} else {
 				// // _SVS(SysLog(L"else if (FirstKey)"));
-				Key=GetInputRecord(&rec);
+				Key = GetInputRecord(&rec);
 
-				if (rec.EventType==MOUSE_EVENT)
-				{
+				if (rec.EventType == MOUSE_EVENT) {
 					if (!(rec.Event.MouseEvent.dwButtonState & 3))
 						continue;
 					else
-						Key=KEY_ESC;
-				}
-				else if (!rec.EventType || rec.EventType==KEY_EVENT || rec.EventType==FARMACRO_KEY_EVENT)
-				{
+						Key = KEY_ESC;
+				} else if (!rec.EventType || rec.EventType == KEY_EVENT
+						|| rec.EventType == FARMACRO_KEY_EVENT) {
 					// для вставки воспользуемся макродвижком...
-					if (Key==KEY_CTRLV || Key==KEY_SHIFTINS || Key==KEY_SHIFTNUMPAD0)
-					{
-						wchar_t *ClipText=PasteFromClipboard();
+					if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0) {
+						wchar_t *ClipText = PasteFromClipboard();
 
-						if (ClipText)
-						{
-							if (*ClipText)
-							{
-								FastFindProcessName(&FindEdit,ClipText,strLastName,strName);
-								FastFindShow(FindX,FindY);
+						if (ClipText) {
+							if (*ClipText) {
+								FastFindProcessName(&FindEdit, ClipText, strLastName, strName);
+								FastFindShow(FindX, FindY);
 							}
 
 							free(ClipText);
 						}
 
 						continue;
-					}
-					else if (Key == KEY_OP_XLAT)
-					{
+					} else if (Key == KEY_OP_XLAT) {
 						FARString strTempName;
 						FindEdit.Xlat();
 						FindEdit.GetString(strTempName);
 						FindEdit.SetString(L"");
-						FastFindProcessName(&FindEdit,strTempName,strLastName,strName);
-						FastFindShow(FindX,FindY);
+						FastFindProcessName(&FindEdit, strTempName, strLastName, strName);
+						FastFindShow(FindX, FindY);
 						continue;
-					}
-					else if (Key == KEY_OP_PLAINTEXT)
-					{
+					} else if (Key == KEY_OP_PLAINTEXT) {
 						FARString strTempName;
 						FindEdit.ProcessKey(Key);
 						FindEdit.GetString(strTempName);
 						FindEdit.SetString(L"");
-						FastFindProcessName(&FindEdit,strTempName,strLastName,strName);
-						FastFindShow(FindX,FindY);
+						FastFindProcessName(&FindEdit, strTempName, strLastName, strName);
+						FastFindShow(FindX, FindY);
 						continue;
-					}
-					else
-						Key=_CorrectFastFindKbdLayout(&rec,Key);
+					} else
+						Key = _CorrectFastFindKbdLayout(&rec, Key);
 				}
 			}
 
-			if (Key==KEY_ESC || Key==KEY_F10)
-			{
-				KeyToProcess=KEY_NONE;
+			if (Key == KEY_ESC || Key == KEY_F10) {
+				KeyToProcess = KEY_NONE;
 				break;
 			}
 
 			// // _SVS(if (!FirstKey) SysLog(L"Panel::FastFind  Key=%ls  %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(&rec)));
-			if (Key>=KEY_ALT_BASE+0x01 && Key<=KEY_ALT_BASE+65535)
-				Key=Lower(static_cast<WCHAR>(Key-KEY_ALT_BASE));
+			if (Key >= KEY_ALT_BASE + 0x01 && Key <= KEY_ALT_BASE + 65535)
+				Key = Lower(static_cast<WCHAR>(Key - KEY_ALT_BASE));
 
-			if (Key>=KEY_ALTSHIFT_BASE+0x01 && Key<=KEY_ALTSHIFT_BASE+65535)
-				Key=Lower(static_cast<WCHAR>(Key-KEY_ALTSHIFT_BASE));
+			if (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535)
+				Key = Lower(static_cast<WCHAR>(Key - KEY_ALTSHIFT_BASE));
 
-			if (Key==KEY_MULTIPLY)
-				Key=L'*';
+			if (Key == KEY_MULTIPLY)
+				Key = L'*';
 
-			switch (Key)
-			{
-				case KEY_F1:
-				{
+			switch (Key) {
+				case KEY_F1: {
 					FindEdit.Hide();
 					SaveScr.RestoreArea();
 					{
 						Help::Present(L"FastFind");
 					}
 					FindEdit.Show();
-					FastFindShow(FindX,FindY);
+					FastFindShow(FindX, FindY);
 					break;
 				}
 				case KEY_CTRLNUMENTER:
 				case KEY_CTRLENTER:
-					FindPartNameXLat(strName,TRUE,1,1);
+					FindPartNameXLat(strName, TRUE, 1, 1);
 					FindEdit.Show();
-					FastFindShow(FindX,FindY);
+					FastFindShow(FindX, FindY);
 					break;
 				case KEY_CTRLSHIFTNUMENTER:
 				case KEY_CTRLSHIFTENTER:
-					FindPartNameXLat(strName,TRUE,-1,1);
+					FindPartNameXLat(strName, TRUE, -1, 1);
 					FindEdit.Show();
-					FastFindShow(FindX,FindY);
+					FastFindShow(FindX, FindY);
 					break;
 				case KEY_NONE:
 				case KEY_IDLE:
 					break;
 				default:
 
-					if ((Key<32 || Key>=65536) && Key!=KEY_BS && Key!=KEY_CTRLY &&
-						Key!=KEY_CTRLBS && Key!=KEY_ALT && Key!=KEY_SHIFT &&
-						Key!=KEY_CTRL && Key!=KEY_RALT && Key!=KEY_RCTRL &&
-						!(Key==KEY_CTRLINS||Key==KEY_CTRLNUMPAD0) && !(Key==KEY_SHIFTINS||Key==KEY_SHIFTNUMPAD0))
-					{
-						KeyToProcess=Key;
+					if ((Key < 32 || Key >= 65536) && Key != KEY_BS && Key != KEY_CTRLY && Key != KEY_CTRLBS
+							&& Key != KEY_ALT && Key != KEY_SHIFT && Key != KEY_CTRL && Key != KEY_RALT
+							&& Key != KEY_RCTRL && !(Key == KEY_CTRLINS || Key == KEY_CTRLNUMPAD0)
+							&& !(Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0)) {
+						KeyToProcess = Key;
 						break;
 					}
 
-					if (FindEdit.ProcessKey(Key))
-					{
+					if (FindEdit.ProcessKey(Key)) {
 						FindEdit.GetString(strName);
 
 						// уберем двойные '**'
-						if (strName.GetLength() > 1
-							&& strName.At(strName.GetLength()-1) == L'*'
-							&& strName.At(strName.GetLength()-2) == L'*')
-						{
-							strName.Truncate(strName.GetLength()-1);
+						if (strName.GetLength() > 1 && strName.At(strName.GetLength() - 1) == L'*'
+								&& strName.At(strName.GetLength() - 2) == L'*') {
+							strName.Truncate(strName.GetLength() - 1);
 							FindEdit.SetString(strName);
 						}
 
@@ -1141,22 +1038,18 @@ void Panel::FastFind(int FirstKey)
 							проблемы с быстрым поиском.
 							Подробнее в 00573.ChangeDirCrash.txt
 						*/
-						if (strName.At(0) == L'"')
-						{
+						if (strName.At(0) == L'"') {
 							strName.LShift(1);
 							FindEdit.SetString(strName);
 						}
 
-						if (FindPartNameXLat(strName,FALSE,1,1))
-						{
+						if (FindPartNameXLat(strName, FALSE, 1, 1)) {
 							strLastName = strName;
-						}
-						else
-						{
-							if (CtrlObject->Macro.IsExecuting())// && CtrlObject->Macro.GetLevelState() > 0) // если вставка макросом...
+						} else {
+							if (CtrlObject->Macro.IsExecuting())	// && CtrlObject->Macro.GetLevelState() > 0) // если вставка макросом...
 							{
-								//CtrlObject->Macro.DropProcess(); // ... то дропнем макропроцесс
-								//CtrlObject->Macro.PopState();
+								// CtrlObject->Macro.DropProcess(); // ... то дропнем макропроцесс
+								// CtrlObject->Macro.PopState();
 								;
 							}
 
@@ -1165,153 +1058,130 @@ void Panel::FastFind(int FirstKey)
 						}
 
 						FindEdit.Show();
-						FastFindShow(FindX,FindY);
+						FastFindShow(FindX, FindY);
 					}
 
 					break;
 			}
 
-			FirstKey=0;
+			FirstKey = 0;
 		}
 	}
 	WaitInFastFind--;
 	Show();
 	CtrlObject->MainKeyBar->Redraw();
 	ScrBuf.Flush();
-	Panel *ActivePanel=CtrlObject->Cp()->ActivePanel;
+	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
 
-	if ((KeyToProcess==KEY_ENTER||KeyToProcess==KEY_NUMENTER) && ActivePanel->GetType()==TREE_PANEL)
+	if ((KeyToProcess == KEY_ENTER || KeyToProcess == KEY_NUMENTER) && ActivePanel->GetType() == TREE_PANEL)
 		((TreeList *)ActivePanel)->ProcessEnter();
 	else
 		CtrlObject->Cp()->ProcessKey(KeyToProcess);
 }
 
-
-void Panel::FastFindShow(int FindX,int FindY)
+void Panel::FastFindShow(int FindX, int FindY)
 {
 	SetColor(COL_DIALOGTEXT);
-	GotoXY(FindX+1,FindY+1);
+	GotoXY(FindX + 1, FindY + 1);
 	Text(L" ");
-	GotoXY(FindX+20,FindY+1);
+	GotoXY(FindX + 20, FindY + 1);
 	Text(L" ");
-	Box(FindX,FindY,FindX+21,FindY+2,COL_DIALOGBOX,DOUBLE_BOX);
-	GotoXY(FindX+7,FindY);
+	Box(FindX, FindY, FindX + 21, FindY + 2, COL_DIALOGBOX, DOUBLE_BOX);
+	GotoXY(FindX + 7, FindY);
 	SetColor(COL_DIALOGBOXTITLE);
 	Text(Msg::SearchFileTitle);
 }
 
-
 void Panel::SetFocus()
 {
-	if (CtrlObject->Cp()->ActivePanel!=this)
-	{
+	if (CtrlObject->Cp()->ActivePanel != this) {
 		CtrlObject->Cp()->ActivePanel->KillFocus();
-		CtrlObject->Cp()->ActivePanel=this;
+		CtrlObject->Cp()->ActivePanel = this;
 	}
 
-	ProcessPluginEvent(FE_GOTFOCUS,nullptr);
+	ProcessPluginEvent(FE_GOTFOCUS, nullptr);
 
-	if (!GetFocus())
-	{
+	if (!GetFocus()) {
 		CtrlObject->Cp()->RedrawKeyBar();
-		Focus=TRUE;
+		Focus = TRUE;
 		Redraw();
 		FarChDir(strCurDir);
 	}
 }
 
-
 void Panel::KillFocus()
 {
-	Focus=FALSE;
-	ProcessPluginEvent(FE_KILLFOCUS,nullptr);
+	Focus = FALSE;
+	ProcessPluginEvent(FE_KILLFOCUS, nullptr);
 	Redraw();
 }
 
-
-int Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
+int Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent, int &RetCode)
 {
-	RetCode=TRUE;
+	RetCode = TRUE;
 
-	if (!ModalMode && !MouseEvent->dwMousePosition.Y)
-	{
-		if (MouseEvent->dwMousePosition.X==ScrX)
-		{
-			if (Opt.ScreenSaver && !(MouseEvent->dwButtonState & 3))
-			{
+	if (!ModalMode && !MouseEvent->dwMousePosition.Y) {
+		if (MouseEvent->dwMousePosition.X == ScrX) {
+			if (Opt.ScreenSaver && !(MouseEvent->dwButtonState & 3)) {
 				EndDrag();
 				ScreenSaver(TRUE);
 				return TRUE;
 			}
-		}
-		else
-		{
-			if ((MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags)
-			{
+		} else {
+			if ((MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
 				EndDrag();
 
 				if (!MouseEvent->dwMousePosition.X)
 					CtrlObject->Cp()->ProcessKey(KEY_CTRLO);
 				else
-					ShellOptions(0,MouseEvent);
+					ShellOptions(0, MouseEvent);
 
 				return TRUE;
 			}
 		}
 	}
 
-	if (!IsVisible() ||
-		(MouseEvent->dwMousePosition.X<X1 || MouseEvent->dwMousePosition.X>X2 ||
-			MouseEvent->dwMousePosition.Y<Y1 || MouseEvent->dwMousePosition.Y>Y2))
-	{
-		RetCode=FALSE;
+	if (!IsVisible()
+			|| (MouseEvent->dwMousePosition.X < X1 || MouseEvent->dwMousePosition.X > X2
+					|| MouseEvent->dwMousePosition.Y < Y1 || MouseEvent->dwMousePosition.Y > Y2)) {
+		RetCode = FALSE;
 		return TRUE;
 	}
 
-	if (DragX!=-1)
-	{
-		if (!(MouseEvent->dwButtonState & 3))
-		{
+	if (DragX != -1) {
+		if (!(MouseEvent->dwButtonState & 3)) {
 			EndDrag();
 
-			if (!MouseEvent->dwEventFlags && SrcDragPanel!=this)
-			{
+			if (!MouseEvent->dwEventFlags && SrcDragPanel != this) {
 				MoveToMouse(MouseEvent);
 				Redraw();
-				SrcDragPanel->ProcessKey(DragMove ? KEY_DRAGMOVE:KEY_DRAGCOPY);
+				SrcDragPanel->ProcessKey(DragMove ? KEY_DRAGMOVE : KEY_DRAGCOPY);
 			}
 
 			return TRUE;
 		}
 
-		if (MouseEvent->dwMousePosition.Y<=Y1 || MouseEvent->dwMousePosition.Y>=Y2 ||
-			!CtrlObject->Cp()->GetAnotherPanel(SrcDragPanel)->IsVisible())
-		{
+		if (MouseEvent->dwMousePosition.Y <= Y1 || MouseEvent->dwMousePosition.Y >= Y2
+				|| !CtrlObject->Cp()->GetAnotherPanel(SrcDragPanel)->IsVisible()) {
 			EndDrag();
 			return TRUE;
 		}
 
 		if ((MouseEvent->dwButtonState & 2) && !MouseEvent->dwEventFlags)
-			DragMove=!DragMove;
+			DragMove = !DragMove;
 
-		if (MouseEvent->dwButtonState & 1)
-		{
-			if ((abs(MouseEvent->dwMousePosition.X-DragX)>15 || SrcDragPanel!=this) &&
-				!ModalMode)
-			{
-				if (SrcDragPanel->GetSelCount()==1 && !DragSaveScr)
-				{
+		if (MouseEvent->dwButtonState & 1) {
+			if ((abs(MouseEvent->dwMousePosition.X - DragX) > 15 || SrcDragPanel != this) && !ModalMode) {
+				if (SrcDragPanel->GetSelCount() == 1 && !DragSaveScr) {
 					SrcDragPanel->GoToFile(strDragName);
 					SrcDragPanel->Show();
 				}
 
-				DragMessage(MouseEvent->dwMousePosition.X,MouseEvent->dwMousePosition.Y,DragMove);
+				DragMessage(MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y, DragMove);
 				return TRUE;
-			}
-			else
-			{
+			} else {
 				delete DragSaveScr;
-				DragSaveScr=nullptr;
+				DragSaveScr = nullptr;
 			}
 		}
 	}
@@ -1319,59 +1189,51 @@ int Panel::PanelProcessMouse(MOUSE_EVENT_RECORD *MouseEvent,int &RetCode)
 	if (!(MouseEvent->dwButtonState & 3))
 		return TRUE;
 
-	if ((MouseEvent->dwButtonState & 1) && !MouseEvent->dwEventFlags &&
-		X2-X1<ScrX)
-	{
+	if ((MouseEvent->dwButtonState & 1) && !MouseEvent->dwEventFlags && X2 - X1 < ScrX) {
 		DWORD FileAttr;
 		MoveToMouse(MouseEvent);
-		GetSelNameCompat(nullptr,FileAttr);
+		GetSelNameCompat(nullptr, FileAttr);
 
-		if (GetSelNameCompat(&strDragName,FileAttr) && !TestParentFolderName(strDragName))
-		{
-			SrcDragPanel=this;
-			DragX=MouseEvent->dwMousePosition.X;
-			DragY=MouseEvent->dwMousePosition.Y;
-			DragMove=ShiftPressed;
+		if (GetSelNameCompat(&strDragName, FileAttr) && !TestParentFolderName(strDragName)) {
+			SrcDragPanel = this;
+			DragX = MouseEvent->dwMousePosition.X;
+			DragY = MouseEvent->dwMousePosition.Y;
+			DragMove = ShiftPressed;
 		}
 	}
 
 	return FALSE;
 }
 
-
 int Panel::IsDragging()
 {
-	return DragSaveScr!=nullptr;
+	return DragSaveScr != nullptr;
 }
-
 
 void Panel::EndDrag()
 {
 	delete DragSaveScr;
-	DragSaveScr=nullptr;
-	DragX=DragY=-1;
+	DragSaveScr = nullptr;
+	DragX = DragY = -1;
 }
 
-
-void Panel::DragMessage(int X,int Y,int Move)
+void Panel::DragMessage(int X, int Y, int Move)
 {
 	FARString strDragMsg, strSelName;
-	int SelCount,MsgX,Length;
+	int SelCount, MsgX, Length;
 
-	if (!(SelCount=SrcDragPanel->GetSelCount()))
+	if (!(SelCount = SrcDragPanel->GetSelCount()))
 		return;
 
-	if (SelCount==1)
-	{
+	if (SelCount == 1) {
 		FARString strCvtName;
 		DWORD FileAttr;
-		SrcDragPanel->GetSelNameCompat(nullptr,FileAttr);
-		SrcDragPanel->GetSelNameCompat(&strSelName,FileAttr);
+		SrcDragPanel->GetSelNameCompat(nullptr, FileAttr);
+		SrcDragPanel->GetSelNameCompat(&strSelName, FileAttr);
 		strCvtName = PointToName(strSelName);
 		EscapeSpace(strCvtName);
 		strSelName = strCvtName;
-	}
-	else
+	} else
 		strSelName.Format(Msg::DragFiles, SelCount);
 
 	if (Move)
@@ -1379,90 +1241,75 @@ void Panel::DragMessage(int X,int Y,int Move)
 	else
 		strDragMsg.Format(Msg::DragCopy, strSelName.CPtr());
 
-	if ((Length=(int)strDragMsg.GetLength())+X>ScrX)
-	{
-		MsgX=ScrX-Length;
+	if ((Length = (int)strDragMsg.GetLength()) + X > ScrX) {
+		MsgX = ScrX - Length;
 
-		if (MsgX<0)
-		{
-			MsgX=0;
-			TruncStrFromEnd(strDragMsg,ScrX);
-			Length=(int)strDragMsg.GetLength();
+		if (MsgX < 0) {
+			MsgX = 0;
+			TruncStrFromEnd(strDragMsg, ScrX);
+			Length = (int)strDragMsg.GetLength();
 		}
-	}
-	else
-		MsgX=X;
+	} else
+		MsgX = X;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	delete DragSaveScr;
-	DragSaveScr=new SaveScreen(MsgX,Y,MsgX+Length-1,Y);
-	GotoXY(MsgX,Y);
+	DragSaveScr = new SaveScreen(MsgX, Y, MsgX + Length - 1, Y);
+	GotoXY(MsgX, Y);
 	SetColor(COL_PANELDRAGTEXT);
 	Text(strDragMsg);
 }
 
-
-
 int Panel::GetCurDir(FARString &strCurDir)
 {
-	strCurDir = Panel::strCurDir; // TODO: ОПАСНО!!!
+	strCurDir = Panel::strCurDir;	// TODO: ОПАСНО!!!
 	return (int)strCurDir.GetLength();
 }
 
 int Panel::GetCurDirPluginAware(FARString &strCurDir)
 {
-	if (PanelMode==PLUGIN_PANEL)
-	{
-		HANDLE hPlugin=GetPluginHandle();
-//		PluginHandle *ph = (PluginHandle*)hPlugin;
+	if (PanelMode == PLUGIN_PANEL) {
+		HANDLE hPlugin = GetPluginHandle();
+		//		PluginHandle *ph = (PluginHandle*)hPlugin;
 		OpenPluginInfo Info;
-		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
 
 		strCurDir.Clear();
 
-		if (Info.HostFile && *Info.HostFile)
-		{
-			strCurDir += Info.HostFile;
-			strCurDir += L"/";
+		if (Info.HostFile && *Info.HostFile) {
+			strCurDir+= Info.HostFile;
+			strCurDir+= L"/";
 		}
 
-		strCurDir += Info.CurDir;
-	}
-	else
-	{
+		strCurDir+= Info.CurDir;
+	} else {
 		strCurDir = Panel::strCurDir;
 	}
 
 	return (int)strCurDir.GetLength();
 }
 
-
-
-BOOL Panel::SetCurDir(const wchar_t *CurDir,int ClosePlugin)
+BOOL Panel::SetCurDir(const wchar_t *CurDir, int ClosePlugin)
 {
-	if (StrCmpI(strCurDir,CurDir) || !TestCurrentDirectory(CurDir))
-	{
+	if (StrCmpI(strCurDir, CurDir) || !TestCurrentDirectory(CurDir)) {
 		strCurDir = CurDir;
 
-		if (PanelMode!=PLUGIN_PANEL)
+		if (PanelMode != PLUGIN_PANEL)
 			PrepareDiskPath(strCurDir);
 	}
 
 	return TRUE;
 }
 
-
 void Panel::InitCurDir(const wchar_t *CurDir)
 {
-	if (StrCmpI(strCurDir,CurDir) || !TestCurrentDirectory(CurDir))
-	{
+	if (StrCmpI(strCurDir, CurDir) || !TestCurrentDirectory(CurDir)) {
 		strCurDir = CurDir;
 
-		if (PanelMode!=PLUGIN_PANEL)
+		if (PanelMode != PLUGIN_PANEL)
 			PrepareDiskPath(strCurDir);
 	}
 }
-
 
 /*
 	$ 14.06.2001 KM
@@ -1485,60 +1332,49 @@ void Panel::InitCurDir(const wchar_t *CurDir)
 */
 int Panel::SetCurPath()
 {
-	if (GetMode()==PLUGIN_PANEL)
+	if (GetMode() == PLUGIN_PANEL)
 		return TRUE;
 
-	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-	if (AnotherPanel->GetType()!=PLUGIN_PANEL)
-	{
-		if (IsAlpha(AnotherPanel->strCurDir.At(0)) && AnotherPanel->strCurDir.At(1)==L':' &&
-			Upper(AnotherPanel->strCurDir.At(0))!=Upper(strCurDir.At(0)))
-		{
+	if (AnotherPanel->GetType() != PLUGIN_PANEL) {
+		if (IsAlpha(AnotherPanel->strCurDir.At(0)) && AnotherPanel->strCurDir.At(1) == L':'
+				&& Upper(AnotherPanel->strCurDir.At(0)) != Upper(strCurDir.At(0))) {
 			// сначала установим переменные окружения для пассивной панели
 			// (без реальной смены пути, чтобы лишний раз пассивный каталог
 			// не перечитывать)
-			FarChDir(AnotherPanel->strCurDir,FALSE);
+			FarChDir(AnotherPanel->strCurDir, FALSE);
 		}
 	}
 
-	if (!FarChDir(strCurDir))
-	{
-		while (!FarChDir(strCurDir))
-		{
-			int Result=TestFolder(strCurDir);
+	if (!FarChDir(strCurDir)) {
+		while (!FarChDir(strCurDir)) {
+			int Result = TestFolder(strCurDir);
 
-			if (Result == TSTFLD_NOTFOUND)
-			{
-				if (CheckShortcutFolder(&strCurDir,FALSE,TRUE) && FarChDir(strCurDir))
-				{
-					SetCurDir(strCurDir,TRUE);
+			if (Result == TSTFLD_NOTFOUND) {
+				if (CheckShortcutFolder(&strCurDir, FALSE, TRUE) && FarChDir(strCurDir)) {
+					SetCurDir(strCurDir, TRUE);
 					return TRUE;
 				}
-			}
-			else
+			} else
 				break;
 
-			if (FrameManager && FrameManager->ManagerStarted())  // сначала проверим - а запущен ли менеджер
+			if (FrameManager && FrameManager->ManagerStarted())		// сначала проверим - а запущен ли менеджер
 			{
-				SetCurDir(DefaultPanelInitialDirectory(),TRUE);  // если запущен - выставим путь который мы точно знаем что существует
-				ChangeDisk();                                    // и вызовем меню выбора дисков
-			}
-			else                                                 // оппа...
+				SetCurDir(DefaultPanelInitialDirectory(), TRUE);	// если запущен - выставим путь который мы точно знаем что существует
+				ChangeDisk();										// и вызовем меню выбора дисков
+			} else													// оппа...
 			{
-				FARString strTemp=strCurDir;
-				CutToFolderNameIfFolder(strCurDir);              // подымаемся вверх, для очередной порции ChDir
+				FARString strTemp = strCurDir;
+				CutToFolderNameIfFolder(strCurDir);						// подымаемся вверх, для очередной порции ChDir
 
-				if (strTemp.GetLength()==strCurDir.GetLength())  // здесь проблема - видимо диск недоступен
+				if (strTemp.GetLength() == strCurDir.GetLength())		// здесь проблема - видимо диск недоступен
 				{
-					SetCurDir(DefaultPanelInitialDirectory(),TRUE);  // тогда просто сваливаем в каталог, откуда стартанул FAR.
+					SetCurDir(DefaultPanelInitialDirectory(), TRUE);	// тогда просто сваливаем в каталог, откуда стартанул FAR.
 					break;
-				}
-				else
-				{
-					if (FarChDir(strCurDir))
-					{
-						SetCurDir(strCurDir,TRUE);
+				} else {
+					if (FarChDir(strCurDir)) {
+						SetCurDir(strCurDir, TRUE);
 						break;
 					}
 				}
@@ -1551,21 +1387,18 @@ int Panel::SetCurPath()
 	return TRUE;
 }
 
-
 void Panel::Hide()
 {
 	ScreenObject::Hide();
-	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-	if (AnotherPanel->IsVisible())
-	{
+	if (AnotherPanel->IsVisible()) {
 		if (AnotherPanel->GetFocus())
-			if ((AnotherPanel->GetType()==FILE_PANEL && AnotherPanel->IsFullScreen()) ||
-				(GetType()==FILE_PANEL && IsFullScreen()))
+			if ((AnotherPanel->GetType() == FILE_PANEL && AnotherPanel->IsFullScreen())
+					|| (GetType() == FILE_PANEL && IsFullScreen()))
 				AnotherPanel->Show();
 	}
 }
-
 
 void Panel::Show()
 {
@@ -1577,26 +1410,21 @@ void Panel::Show()
 		CtrlObject->TopMenuBar->Show();
 
 	/* $ 09.05.2001 OT */
-//	SavePrevScreen();
-	Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	//	SavePrevScreen();
+	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-	if (AnotherPanel->IsVisible() && !GetModalMode())
-	{
-		if (SaveScr)
-		{
+	if (AnotherPanel->IsVisible() && !GetModalMode()) {
+		if (SaveScr) {
 			SaveScr->AppendArea(AnotherPanel->SaveScr);
 		}
 
-		if (AnotherPanel->GetFocus())
-		{
-			if (AnotherPanel->IsFullScreen())
-			{
+		if (AnotherPanel->GetFocus()) {
+			if (AnotherPanel->IsFullScreen()) {
 				SetVisible(TRUE);
 				return;
 			}
 
-			if (GetType()==FILE_PANEL && IsFullScreen())
-			{
+			if (GetType() == FILE_PANEL && IsFullScreen()) {
 				ScreenObject::Show();
 				AnotherPanel->Show();
 				return;
@@ -1608,64 +1436,53 @@ void Panel::Show()
 	ShowScreensCount();
 }
 
-
 void Panel::DrawSeparator(int Y)
 {
-	if (Y<Y2)
-	{
+	if (Y < Y2) {
 		SetColor(COL_PANELBOX);
-		GotoXY(X1,Y);
-		ShowSeparator(X2-X1+1,1);
+		GotoXY(X1, Y);
+		ShowSeparator(X2 - X1 + 1, 1);
 	}
 }
 
-
 void Panel::ShowScreensCount()
 {
-	if (Opt.ShowScreensNumber && !X1)
-	{
+	if (Opt.ShowScreensNumber && !X1) {
 		int Viewers = FrameManager->GetFrameCountByType(MODALTYPE_VIEWER);
 		int Editors = FrameManager->GetFrameCountByType(MODALTYPE_EDITOR);
 		int Dialogs = FrameManager->GetFrameCountByType(MODALTYPE_DIALOG);
 		bool HasPluginsTasks = CtrlObject->Plugins.HasBackgroundTasks();
 
-		if (Viewers > 0 || Editors > 0 || Dialogs > 0 || HasPluginsTasks)
-		{
+		if (Viewers > 0 || Editors > 0 || Dialogs > 0 || HasPluginsTasks) {
 			FARString strScreensText;
 
 			char Prefix = '[';
-			if (Viewers > 0)
-			{
+			if (Viewers > 0) {
 				strScreensText.Format(L"%cV%d", Prefix, Viewers);
 				Prefix = ' ';
 			}
 
-			if (Editors > 0)
-			{
+			if (Editors > 0) {
 				strScreensText.AppendFormat(L"%cE%d", Prefix, Editors);
 				Prefix = ' ';
 			}
 
-			if (Dialogs > 0)
-			{
+			if (Dialogs > 0) {
 				strScreensText.AppendFormat(L"%cD%d", Prefix, Dialogs);
 				Prefix = ' ';
 			}
 
-			if (HasPluginsTasks)
-			{
+			if (HasPluginsTasks) {
 				const auto &Tasks = CtrlObject->Plugins.BackgroundTasks();
-				for (const auto &It : Tasks)
-				{
+				for (const auto &It : Tasks) {
 					strScreensText.AppendFormat(L"%c%ls%u", Prefix, It.first.c_str(), It.second);
 					Prefix = ' ';
 				}
 			}
 
-			if (Prefix != '[')
-			{
-				strScreensText += L"]";
-				GotoXY(Opt.ShowColumnTitles ? X1:X1+2,Y1);
+			if (Prefix != '[') {
+				strScreensText+= L"]";
+				GotoXY(Opt.ShowColumnTitles ? X1 : X1 + 2, Y1);
 				SetColor(COL_PANELSCREENSNUMBER);
 				Text(strScreensText);
 			}
@@ -1673,215 +1490,196 @@ void Panel::ShowScreensCount()
 	}
 }
 
-
 void Panel::SetTitle()
 {
-	if (GetFocus())
-	{
+	if (GetFocus()) {
 		FARString strTitleDir(L"{");
 
-		if (!strCurDir.IsEmpty())
-		{
-			strTitleDir += strCurDir;
-		}
-		else
-		{
+		if (!strCurDir.IsEmpty()) {
+			strTitleDir+= strCurDir;
+		} else {
 			FARString strCmdText;
 			CtrlObject->CmdLine->GetCurDir(strCmdText);
-			strTitleDir += strCmdText;
+			strTitleDir+= strCmdText;
 		}
 
-		strTitleDir += L"}";
+		strTitleDir+= L"}";
 
 		ConsoleTitle::SetFarTitle(strTitleDir);
 	}
 }
 
-FARString &Panel::GetTitle(FARString &strTitle,int SubLen,int TruncSize)
+FARString &Panel::GetTitle(FARString &strTitle, int SubLen, int TruncSize)
 {
 	FARString strTitleDir;
-	bool truncTitle = (SubLen==-1 || TruncSize==0)?false:true;
+	bool truncTitle = (SubLen == -1 || TruncSize == 0) ? false : true;
 
-	if (PanelMode==PLUGIN_PANEL)
-	{
+	if (PanelMode == PLUGIN_PANEL) {
 		OpenPluginInfo Info;
 		GetOpenPluginInfo(&Info);
 		strTitleDir = Info.PanelTitle;
 		RemoveExternalSpaces(strTitleDir);
 		if (truncTitle)
-			TruncStr(strTitleDir,SubLen-TruncSize);
-	}
-	else
-	{
+			TruncStr(strTitleDir, SubLen - TruncSize);
+	} else {
 		strTitleDir = strCurDir;
 
 		if (truncTitle)
-			TruncPathStr(strTitleDir,SubLen-TruncSize);
+			TruncPathStr(strTitleDir, SubLen - TruncSize);
 	}
 
-	strTitle = L" "+strTitleDir+L" ";
+	strTitle = L" " + strTitleDir + L" ";
 	return strTitle;
 }
 
-int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
+int Panel::SetPluginCommand(int Command, int Param1, LONG_PTR Param2)
 {
 	_ALGO(CleverSysLog clv(L"Panel::SetPluginCommand"));
-	_ALGO(SysLog(L"(Command=%ls, Param1=[%d/0x%08X], Param2=[%d/0x%08X])",_FCTL_ToName(Command),(int)Param1,Param1,(int)Param2,Param2));
-	int Result=FALSE;
+	_ALGO(SysLog(L"(Command=%ls, Param1=[%d/0x%08X], Param2=[%d/0x%08X])", _FCTL_ToName(Command), (int)Param1,
+			Param1, (int)Param2, Param2));
+	int Result = FALSE;
 	ProcessingPluginCommand++;
-	FilePanels *FPanels=CtrlObject->Cp();
-	PluginCommand=Command;
+	FilePanels *FPanels = CtrlObject->Cp();
+	PluginCommand = Command;
 
-	switch (Command)
-	{
+	switch (Command) {
 		case FCTL_SETVIEWMODE:
-			Result=FPanels->ChangePanelViewMode(this,Param1,FPanels->IsTopFrame());
+			Result = FPanels->ChangePanelViewMode(this, Param1, FPanels->IsTopFrame());
 			break;
 
-		case FCTL_SETSORTMODE:
-		{
-			int Mode=Param1;
+		case FCTL_SETSORTMODE: {
+			int Mode = Param1;
 
-			if ((Mode>SM_DEFAULT) && (Mode<=SM_CHTIME))
-			{
-				SetSortMode(--Mode); // Уменьшим на 1 из-за SM_DEFAULT
-				Result=TRUE;
+			if ((Mode > SM_DEFAULT) && (Mode <= SM_CHTIME)) {
+				SetSortMode(--Mode);	// Уменьшим на 1 из-за SM_DEFAULT
+				Result = TRUE;
 			}
 			break;
 		}
 
-		case FCTL_SETNUMERICSORT:
-		{
+		case FCTL_SETNUMERICSORT: {
 			ChangeNumericSort(Param1);
-			Result=TRUE;
+			Result = TRUE;
 			break;
 		}
 
-		case FCTL_SETCASESENSITIVESORT:
-		{
+		case FCTL_SETCASESENSITIVESORT: {
 			ChangeCaseSensitiveSort(Param1);
-			Result=TRUE;
+			Result = TRUE;
 			break;
 		}
 
-		case FCTL_GETPANELPLUGINHANDLE:
-		{
-			*(HANDLE *)Param2 = (GetPluginHandle() != INVALID_HANDLE_VALUE) ? CtrlObject->Plugins.GetRealPluginHandle(GetPluginHandle()) : INVALID_HANDLE_VALUE;
-			Result=TRUE;
+		case FCTL_GETPANELPLUGINHANDLE: {
+			*(HANDLE *)Param2 = (GetPluginHandle() != INVALID_HANDLE_VALUE)
+					? CtrlObject->Plugins.GetRealPluginHandle(GetPluginHandle())
+					: INVALID_HANDLE_VALUE;
+			Result = TRUE;
 			break;
 		}
 
-		case FCTL_SETPANELLOCATION:
-		{
+		case FCTL_SETPANELLOCATION: {
 			Result = OnFCtlSetLocation((const FarPanelLocation *)Param2);
 			break;
 		}
 
-		case FCTL_SETSORTORDER:
-		{
-			ChangeSortOrder(Param1?-1:1);
-			Result=TRUE;
+		case FCTL_SETSORTORDER: {
+			ChangeSortOrder(Param1 ? -1 : 1);
+			Result = TRUE;
 			break;
 		}
 
-		case FCTL_SETDIRECTORIESFIRST:
-		{
+		case FCTL_SETDIRECTORIESFIRST: {
 			ChangeDirectoriesFirst(Param1);
-			Result=TRUE;
+			Result = TRUE;
 			break;
 		}
 
 		case FCTL_CLOSEPLUGIN:
 			strPluginParam = (const wchar_t *)Param2;
-			Result=TRUE;
-			//if(Opt.CPAJHefuayor)
+			Result = TRUE;
+			// if(Opt.CPAJHefuayor)
 			//	CtrlObject->Plugins.ProcessCommandLine((char *)PluginParam);
 			break;
 
-		case FCTL_GETPANELINFO:
-		{
+		case FCTL_GETPANELINFO: {
 			if (!Param2)
 				break;
 
-			PanelInfo *Info=(PanelInfo *)Param2;
-			memset(Info,0,sizeof(*Info));
+			PanelInfo *Info = (PanelInfo *)Param2;
+			memset(Info, 0, sizeof(*Info));
 			UpdateIfRequired();
 
-			switch (GetType())
-			{
+			switch (GetType()) {
 				case FILE_PANEL:
-					Info->PanelType=PTYPE_FILEPANEL;
+					Info->PanelType = PTYPE_FILEPANEL;
 					break;
 				case TREE_PANEL:
-					Info->PanelType=PTYPE_TREEPANEL;
+					Info->PanelType = PTYPE_TREEPANEL;
 					break;
 				case QVIEW_PANEL:
-					Info->PanelType=PTYPE_QVIEWPANEL;
+					Info->PanelType = PTYPE_QVIEWPANEL;
 					break;
 				case INFO_PANEL:
-					Info->PanelType=PTYPE_INFOPANEL;
+					Info->PanelType = PTYPE_INFOPANEL;
 					break;
 			}
 
-			Info->Plugin=(GetMode()==PLUGIN_PANEL);
-			int X1,Y1,X2,Y2;
-			GetPosition(X1,Y1,X2,Y2);
-			Info->PanelRect.left=X1;
-			Info->PanelRect.top=Y1;
-			Info->PanelRect.right=X2;
-			Info->PanelRect.bottom=Y2;
-			Info->Visible=IsVisible();
-			Info->Focus=GetFocus();
-			Info->ViewMode=GetViewMode();
-			Info->SortMode=SM_UNSORTED-UNSORTED+GetSortMode();
+			Info->Plugin = (GetMode() == PLUGIN_PANEL);
+			int X1, Y1, X2, Y2;
+			GetPosition(X1, Y1, X2, Y2);
+			Info->PanelRect.left = X1;
+			Info->PanelRect.top = Y1;
+			Info->PanelRect.right = X2;
+			Info->PanelRect.bottom = Y2;
+			Info->Visible = IsVisible();
+			Info->Focus = GetFocus();
+			Info->ViewMode = GetViewMode();
+			Info->SortMode = SM_UNSORTED - UNSORTED + GetSortMode();
 			{
 				static struct
 				{
 					int *Opt;
 					DWORD Flags;
-				} PFLAGS[]=
-				{
-					{&Opt.ShowHidden,PFLAGS_SHOWHIDDEN},
-					{&Opt.Highlight,PFLAGS_HIGHLIGHT},
+				} PFLAGS[] = {
+						{&Opt.ShowHidden, PFLAGS_SHOWHIDDEN},
+						{&Opt.Highlight,  PFLAGS_HIGHLIGHT },
 				};
-				DWORD Flags=0;
+				DWORD Flags = 0;
 
-				for (size_t I=0; I < ARRAYSIZE(PFLAGS); ++I)
-					if (*(PFLAGS[I].Opt) )
-						Flags|=PFLAGS[I].Flags;
+				for (size_t I = 0; I < ARRAYSIZE(PFLAGS); ++I)
+					if (*(PFLAGS[I].Opt))
+						Flags|= PFLAGS[I].Flags;
 
-				Flags|=GetSortOrder()<0?PFLAGS_REVERSESORTORDER:0;
-				Flags|=GetSortGroups()?PFLAGS_USESORTGROUPS:0;
-				Flags|=GetSelectedFirstMode()?PFLAGS_SELECTEDFIRST:0;
-				Flags|=GetDirectoriesFirst()?PFLAGS_DIRECTORIESFIRST:0;
-				Flags|=GetNumericSort()?PFLAGS_NUMERICSORT:0;
-				Flags|=GetCaseSensitiveSort()?PFLAGS_CASESENSITIVESORT:0;
+				Flags|= GetSortOrder() < 0 ? PFLAGS_REVERSESORTORDER : 0;
+				Flags|= GetSortGroups() ? PFLAGS_USESORTGROUPS : 0;
+				Flags|= GetSelectedFirstMode() ? PFLAGS_SELECTEDFIRST : 0;
+				Flags|= GetDirectoriesFirst() ? PFLAGS_DIRECTORIESFIRST : 0;
+				Flags|= GetNumericSort() ? PFLAGS_NUMERICSORT : 0;
+				Flags|= GetCaseSensitiveSort() ? PFLAGS_CASESENSITIVESORT : 0;
 
 				if (CtrlObject->Cp()->LeftPanel == this)
-					Flags|=PFLAGS_PANELLEFT;
+					Flags|= PFLAGS_PANELLEFT;
 
-				Info->Flags=Flags;
+				Info->Flags = Flags;
 			}
 
-			if (GetType()==FILE_PANEL)
-			{
-				FileList *DestFilePanel=(FileList *)this;
-				static int Reenter=0;
+			if (GetType() == FILE_PANEL) {
+				FileList *DestFilePanel = (FileList *)this;
+				static int Reenter = 0;
 
-				if (!Reenter && Info->Plugin)
-				{
+				if (!Reenter && Info->Plugin) {
 					Reenter++;
 					OpenPluginInfo PInfo;
 					DestFilePanel->GetOpenPluginInfo(&PInfo);
 
 					if (PInfo.Flags & OPIF_REALNAMES)
-						Info->Flags |= PFLAGS_REALNAMES;
+						Info->Flags|= PFLAGS_REALNAMES;
 
 					if (!(PInfo.Flags & OPIF_USEHIGHLIGHTING))
-						Info->Flags &= ~PFLAGS_HIGHLIGHT;
+						Info->Flags&= ~PFLAGS_HIGHLIGHT;
 
 					if (PInfo.Flags & OPIF_USECRC32)
-						Info->Flags |= PFLAGS_USECRC32;
+						Info->Flags|= PFLAGS_USECRC32;
 
 					Reenter--;
 				}
@@ -1889,44 +1687,40 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 				DestFilePanel->PluginGetPanelInfo(*Info);
 			}
 
-			if (!Info->Plugin) // $ 12.12.2001 DJ - на неплагиновой панели - всегда реальные имена
-				Info->Flags |= PFLAGS_REALNAMES;
+			if (!Info->Plugin)	// $ 12.12.2001 DJ - на неплагиновой панели - всегда реальные имена
+				Info->Flags|= PFLAGS_REALNAMES;
 
-			Result=TRUE;
+			Result = TRUE;
 			break;
 		}
 
 		case FCTL_GETPANELHOSTFILE:
 		case FCTL_GETPANELFORMAT:
-		case FCTL_GETPANELDIR:
-		{
+		case FCTL_GETPANELDIR: {
 			FARString strTemp;
 
 			if (Command == FCTL_GETPANELDIR)
 				GetCurDir(strTemp);
 
-			if (GetType()==FILE_PANEL)
-			{
-				FileList *DestFilePanel=(FileList *)this;
-				static int Reenter=0;
+			if (GetType() == FILE_PANEL) {
+				FileList *DestFilePanel = (FileList *)this;
+				static int Reenter = 0;
 
-				if (!Reenter && GetMode()==PLUGIN_PANEL)
-				{
+				if (!Reenter && GetMode() == PLUGIN_PANEL) {
 					Reenter++;
 
 					OpenPluginInfo PInfo;
 					DestFilePanel->GetOpenPluginInfo(&PInfo);
 
-					switch (Command)
-					{
+					switch (Command) {
 						case FCTL_GETPANELHOSTFILE:
-							strTemp=PInfo.HostFile;
+							strTemp = PInfo.HostFile;
 							break;
 						case FCTL_GETPANELFORMAT:
-							strTemp=PInfo.Format;
+							strTemp = PInfo.Format;
 							break;
 						case FCTL_GETPANELDIR:
-							strTemp=PInfo.CurDir;
+							strTemp = PInfo.CurDir;
 							break;
 					}
 
@@ -1934,154 +1728,131 @@ int Panel::SetPluginCommand(int Command,int Param1,LONG_PTR Param2)
 				}
 			}
 
-			if (Param1&&Param2)
-				far_wcsncpy((wchar_t*)Param2,strTemp,Param1);
+			if (Param1 && Param2)
+				far_wcsncpy((wchar_t *)Param2, strTemp, Param1);
 
-			Result=(int)strTemp.GetLength()+1;
+			Result = (int)strTemp.GetLength() + 1;
 			break;
 		}
 
 		case FCTL_GETCOLUMNTYPES:
 		case FCTL_GETCOLUMNWIDTHS:
 
-			if (GetType()==FILE_PANEL)
-			{
-				FARString strColumnTypes,strColumnWidths;
-				((FileList *)this)->PluginGetColumnTypesAndWidths(strColumnTypes,strColumnWidths);
+			if (GetType() == FILE_PANEL) {
+				FARString strColumnTypes, strColumnWidths;
+				((FileList *)this)->PluginGetColumnTypesAndWidths(strColumnTypes, strColumnWidths);
 
-				if (Command==FCTL_GETCOLUMNTYPES)
-				{
-					if (Param1&&Param2)
-						far_wcsncpy((wchar_t*)Param2,strColumnTypes,Param1);
+				if (Command == FCTL_GETCOLUMNTYPES) {
+					if (Param1 && Param2)
+						far_wcsncpy((wchar_t *)Param2, strColumnTypes, Param1);
 
-					Result=(int)strColumnTypes.GetLength()+1;
-				}
-				else
-				{
-					if (Param1&&Param2)
-						far_wcsncpy((wchar_t*)Param2,strColumnWidths,Param1);
+					Result = (int)strColumnTypes.GetLength() + 1;
+				} else {
+					if (Param1 && Param2)
+						far_wcsncpy((wchar_t *)Param2, strColumnWidths, Param1);
 
-					Result=(int)strColumnWidths.GetLength()+1;
+					Result = (int)strColumnWidths.GetLength() + 1;
 				}
 			}
 			break;
 
-		case FCTL_GETPANELITEM:
-		{
-			Result=(int)((FileList*)this)->PluginGetPanelItem(Param1,(PluginPanelItem*)Param2);
+		case FCTL_GETPANELITEM: {
+			Result = (int)((FileList *)this)->PluginGetPanelItem(Param1, (PluginPanelItem *)Param2);
 			break;
 		}
 
-		case FCTL_GETSELECTEDPANELITEM:
-		{
-			Result=(int)((FileList*)this)->PluginGetSelectedPanelItem(Param1,(PluginPanelItem*)Param2);
+		case FCTL_GETSELECTEDPANELITEM: {
+			Result = (int)((FileList *)this)->PluginGetSelectedPanelItem(Param1, (PluginPanelItem *)Param2);
 			break;
 		}
 
-		case FCTL_GETCURRENTPANELITEM:
-		{
+		case FCTL_GETCURRENTPANELITEM: {
 			PanelInfo Info;
-			FileList *DestPanel = ((FileList*)this);
+			FileList *DestPanel = ((FileList *)this);
 			DestPanel->PluginGetPanelInfo(Info);
-			Result = (int)DestPanel->PluginGetPanelItem(Info.CurrentItem,(PluginPanelItem*)Param2);
+			Result = (int)DestPanel->PluginGetPanelItem(Info.CurrentItem, (PluginPanelItem *)Param2);
 			break;
 		}
 
-		case FCTL_BEGINSELECTION:
-		{
-			if (GetType()==FILE_PANEL)
-			{
+		case FCTL_BEGINSELECTION: {
+			if (GetType() == FILE_PANEL) {
 				((FileList *)this)->PluginBeginSelection();
-				Result=TRUE;
+				Result = TRUE;
 			}
 			break;
 		}
 
-		case FCTL_SETSELECTION:
-		{
-			if (GetType()==FILE_PANEL)
-			{
-				((FileList *)this)->PluginSetSelection(Param1,Param2?true:false);
-				Result=TRUE;
+		case FCTL_SETSELECTION: {
+			if (GetType() == FILE_PANEL) {
+				((FileList *)this)->PluginSetSelection(Param1, Param2 ? true : false);
+				Result = TRUE;
 			}
 			break;
 		}
 
-		case FCTL_CLEARSELECTION:
-		{
-			if (GetType()==FILE_PANEL)
-			{
-				reinterpret_cast<FileList*>(this)->PluginClearSelection(Param1);
-				Result=TRUE;
+		case FCTL_CLEARSELECTION: {
+			if (GetType() == FILE_PANEL) {
+				reinterpret_cast<FileList *>(this)->PluginClearSelection(Param1);
+				Result = TRUE;
 			}
 			break;
 		}
 
-		case FCTL_ENDSELECTION:
-		{
-			if (GetType()==FILE_PANEL)
-			{
+		case FCTL_ENDSELECTION: {
+			if (GetType() == FILE_PANEL) {
 				((FileList *)this)->PluginEndSelection();
-				Result=TRUE;
+				Result = TRUE;
 			}
 			break;
 		}
 
 		case FCTL_UPDATEPANEL:
-			Update(Param1?UPDATE_KEEP_SELECTION:0);
+			Update(Param1 ? UPDATE_KEEP_SELECTION : 0);
 
 			if (GetType() == QVIEW_PANEL)
 				CtrlObject->Cp()->GetAnotherPanel(this)->UpdateViewPanel();
 
-			Result=TRUE;
+			Result = TRUE;
 			break;
 
-		case FCTL_REDRAWPANEL:
-		{
-			PanelRedrawInfo *Info=(PanelRedrawInfo *)Param2;
+		case FCTL_REDRAWPANEL: {
+			PanelRedrawInfo *Info = (PanelRedrawInfo *)Param2;
 
-			if (Info)
-			{
-				CurFile=Info->CurrentItem;
-				CurTopFile=Info->TopPanelItem;
+			if (Info) {
+				CurFile = Info->CurrentItem;
+				CurTopFile = Info->TopPanelItem;
 			}
 
 			// $ 12.05.2001 DJ перерисовываемся только в том случае, если мы - текущий фрейм
 			if (FPanels->IsTopFrame())
 				Redraw();
 
-			Result=TRUE;
+			Result = TRUE;
 			break;
 		}
 
-		case FCTL_SETPANELDIR:
-		{
-			if (Param2)
-			{
-				Result = SetCurDir((const wchar_t *)Param2,TRUE);
+		case FCTL_SETPANELDIR: {
+			if (Param2) {
+				Result = SetCurDir((const wchar_t *)Param2, TRUE);
 				// restore current directory to active panel path
-				Panel* ActivePanel = CtrlObject->Cp()->ActivePanel;
-				if (Result && this != ActivePanel)
-				{
+				Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
+				if (Result && this != ActivePanel) {
 					ActivePanel->SetCurPath();
 				}
 			}
 			break;
 		}
-
 	}
 
 	ProcessingPluginCommand--;
 	return Result;
 }
 
-
 int Panel::GetCurName(FARString &strName)
 {
 	strName.Clear();
 	return FALSE;
 }
-
 
 int Panel::GetCurBaseName(FARString &strName)
 {
@@ -2092,31 +1863,27 @@ int Panel::GetCurBaseName(FARString &strName)
 BOOL Panel::NeedUpdatePanel(Panel *AnotherPanel)
 {
 	/* Обновить, если обновление разрешено и пути совпадают */
-	if ((!Opt.AutoUpdateLimit || static_cast<DWORD>(GetFileCount()) <= Opt.AutoUpdateLimit) &&
-		!StrCmpI(AnotherPanel->strCurDir,strCurDir))
+	if ((!Opt.AutoUpdateLimit || static_cast<DWORD>(GetFileCount()) <= Opt.AutoUpdateLimit)
+			&& !StrCmpI(AnotherPanel->strCurDir, strCurDir))
 		return TRUE;
 
 	return FALSE;
 }
 
-
 bool Panel::SaveShortcutFolder(int Pos)
 {
-	FARString strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
+	FARString strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
 
-	if (PanelMode==PLUGIN_PANEL)
-	{
-		HANDLE hPlugin=GetPluginHandle();
-		PluginHandle *ph = (PluginHandle*)hPlugin;
+	if (PanelMode == PLUGIN_PANEL) {
+		HANDLE hPlugin = GetPluginHandle();
+		PluginHandle *ph = (PluginHandle *)hPlugin;
 		strPluginModule = ph->pPlugin->GetModuleName();
 		OpenPluginInfo Info;
-		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin,&Info);
+		CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
 		strPluginFile = Info.HostFile;
 		strShortcutFolder = Info.CurDir;
 		strPluginData = Info.ShortcutData;
-	}
-	else
-	{
+	} else {
 		strPluginModule.Clear();
 		strPluginFile.Clear();
 		strPluginData.Clear();
@@ -2169,37 +1936,31 @@ int Panel::ProcessShortcutFolder(int Key,BOOL ProcTreePanel)
 
 bool Panel::ExecShortcutFolder(int Pos)
 {
-	FARString strShortcutFolder,strPluginModule,strPluginFile,strPluginData;
+	FARString strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
 
-	if (Bookmarks().Get(Pos,&strShortcutFolder,&strPluginModule,&strPluginFile,&strPluginData))
-	{
-		Panel *SrcPanel=this;
-		Panel *AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(this);
+	if (Bookmarks().Get(Pos, &strShortcutFolder, &strPluginModule, &strPluginFile, &strPluginData)) {
+		Panel *SrcPanel = this;
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-		switch (GetType())
-		{
+		switch (GetType()) {
 			case TREE_PANEL:
-				if (AnotherPanel->GetType()==FILE_PANEL)
-					SrcPanel=AnotherPanel;
+				if (AnotherPanel->GetType() == FILE_PANEL)
+					SrcPanel = AnotherPanel;
 				break;
 
 			case QVIEW_PANEL:
-			case INFO_PANEL:
-			{
-				if (AnotherPanel->GetType()==FILE_PANEL)
-					SrcPanel=AnotherPanel;
+			case INFO_PANEL: {
+				if (AnotherPanel->GetType() == FILE_PANEL)
+					SrcPanel = AnotherPanel;
 				break;
 			}
 		}
 
-		int CheckFullScreen=SrcPanel->IsFullScreen();
+		int CheckFullScreen = SrcPanel->IsFullScreen();
 
-		if (!strPluginModule.IsEmpty())
-		{
-			if (!strPluginFile.IsEmpty())
-			{
-				switch (CheckShortcutFolder(&strPluginFile,TRUE))
-				{
+		if (!strPluginModule.IsEmpty()) {
+			if (!strPluginFile.IsEmpty()) {
+				switch (CheckShortcutFolder(&strPluginFile, TRUE)) {
 					case 0:
 						// return FALSE;
 					case -1:
@@ -2210,51 +1971,47 @@ bool Panel::ExecShortcutFolder(int Pos)
 				FARString strRealDir;
 				strRealDir = strPluginFile;
 
-				if (CutToSlash(strRealDir))
-				{
-					SrcPanel->SetCurDir(strRealDir,TRUE);
+				if (CutToSlash(strRealDir)) {
+					SrcPanel->SetCurDir(strRealDir, TRUE);
 					SrcPanel->GoToFile(PointToName(strPluginFile));
 
 					SrcPanel->ClearAllItem();
 				}
 
 				if (SrcPanel->GetType() == FILE_PANEL)
-					((FileList*)SrcPanel)->OpenFilePlugin(strPluginFile,FALSE, OFP_SHORTCUT); //???
+					((FileList *)SrcPanel)->OpenFilePlugin(strPluginFile, FALSE, OFP_SHORTCUT);		//???
 
 				if (!strShortcutFolder.IsEmpty())
-						SrcPanel->SetCurDir(strShortcutFolder,FALSE);
+					SrcPanel->SetCurDir(strShortcutFolder, FALSE);
 
 				SrcPanel->Show();
-			}
-			else
-			{
-				switch (CheckShortcutFolder(nullptr,TRUE))
-				{
+			} else {
+				switch (CheckShortcutFolder(nullptr, TRUE)) {
 					case 0:
 						// return FALSE;
 					case -1:
 						return true;
 				}
 
-				for (int I=0; I<CtrlObject->Plugins.GetPluginsCount(); I++)
-				{
+				for (int I = 0; I < CtrlObject->Plugins.GetPluginsCount(); I++) {
 					Plugin *pPlugin = CtrlObject->Plugins.GetPlugin(I);
 
-					if (!StrCmpI(pPlugin->GetModuleName(),strPluginModule))
-					{
-						if (pPlugin->HasOpenPlugin())
-						{
-							HANDLE hNewPlugin=CtrlObject->Plugins.OpenPlugin(pPlugin,OPEN_SHORTCUT,(INT_PTR)strPluginData.CPtr());
+					if (!StrCmpI(pPlugin->GetModuleName(), strPluginModule)) {
+						if (pPlugin->HasOpenPlugin()) {
+							HANDLE hNewPlugin = CtrlObject->Plugins.OpenPlugin(pPlugin, OPEN_SHORTCUT,
+									(INT_PTR)strPluginData.CPtr());
 
-							if (hNewPlugin!=INVALID_HANDLE_VALUE)
-							{
-								int CurFocus=SrcPanel->GetFocus();
+							if (hNewPlugin != INVALID_HANDLE_VALUE) {
+								int CurFocus = SrcPanel->GetFocus();
 
-								Panel *NewPanel=CtrlObject->Cp()->ChangePanel(SrcPanel,FILE_PANEL,TRUE,TRUE);
-								NewPanel->SetPluginMode(hNewPlugin,L"",CurFocus || !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
+								Panel *NewPanel =
+										CtrlObject->Cp()->ChangePanel(SrcPanel, FILE_PANEL, TRUE, TRUE);
+								NewPanel->SetPluginMode(hNewPlugin, L"",
+										CurFocus
+												|| !CtrlObject->Cp()->GetAnotherPanel(NewPanel)->IsVisible());
 
 								if (!strShortcutFolder.IsEmpty())
-									CtrlObject->Plugins.SetDirectory(hNewPlugin,strShortcutFolder,0);
+									CtrlObject->Plugins.SetDirectory(hNewPlugin, strShortcutFolder, 0);
 
 								NewPanel->Update(0);
 								NewPanel->Show();
@@ -2269,8 +2026,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 			return true;
 		}
 
-		switch (CheckShortcutFolder(&strShortcutFolder,FALSE))
-		{
+		switch (CheckShortcutFolder(&strShortcutFolder, FALSE)) {
 			case 0:
 				// return FALSE;
 			case -1:
@@ -2284,9 +2040,9 @@ bool Panel::ExecShortcutFolder(int Pos)
 		}
 		*/
 
-		SrcPanel->SetCurDir(strShortcutFolder,TRUE);
+		SrcPanel->SetCurDir(strShortcutFolder, TRUE);
 
-		if (CheckFullScreen!=SrcPanel->IsFullScreen())
+		if (CheckFullScreen != SrcPanel->IsFullScreen())
 			CtrlObject->Cp()->GetAnotherPanel(SrcPanel)->Show();
 
 		SrcPanel->Redraw();
@@ -2295,9 +2051,8 @@ bool Panel::ExecShortcutFolder(int Pos)
 	return false;
 }
 
-
 // Just as FindPartName(), but with retry support through keyboard layout translation, specially for FastFind
-bool Panel::FindPartNameXLat(const wchar_t *Name,int Next,int Direct,int ExcludeSets)
+bool Panel::FindPartNameXLat(const wchar_t *Name, int Next, int Direct, int ExcludeSets)
 {
 	if (FindPartName(Name, Next, Direct, ExcludeSets)) {
 		return true;
@@ -2323,4 +2078,3 @@ bool Panel::FindPartNameXLat(const wchar_t *Name,int Next,int Direct,int Exclude
 	}
 	return true;
 }
-

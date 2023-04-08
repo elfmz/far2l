@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "ctrlobj.hpp"
 #include "lang.hpp"
 #include "language.hpp"
@@ -55,7 +54,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ControlObject *CtrlObject;
 
-ControlObject::ControlObject():
+ControlObject::ControlObject()
+	:
 	FPanels(0),
 	CmdLine(0),
 	CmdHistory(0),
@@ -68,53 +68,42 @@ ControlObject::ControlObject():
 	EditorPosCache(0)
 {
 	_OT(SysLog(L"[%p] ControlObject::ControlObject()", this));
-	CtrlObject=this;
+	CtrlObject = this;
 	HiFiles = new HighlightFiles;
 	ViewerPosCache = new FilePositionCache(FPCK_VIEWER);
 	EditorPosCache = new FilePositionCache(FPCK_EDITOR);
 	FrameManager = new Manager;
-	//Macro.LoadMacros();
+	// Macro.LoadMacros();
 	ApplyConfig();
-	CmdHistory=new History(
-		HISTORYTYPE_CMD, Opt.HistoryCount,
-		"SavedHistory", &Opt.SaveHistory,
-		false
-	);
-	FolderHistory=new History(
-		HISTORYTYPE_FOLDER, Opt.FoldersHistoryCount,
-		"SavedFolderHistory", &Opt.SaveFoldersHistory,
-		true
-	);
-	ViewHistory=new History(
-		HISTORYTYPE_VIEW, Opt.ViewHistoryCount,
-		"SavedViewHistory", &Opt.SaveViewHistory,
-		true
-	);
-	FolderHistory->SetAddMode(true,2,true);
+	CmdHistory = new History(HISTORYTYPE_CMD, Opt.HistoryCount, "SavedHistory", &Opt.SaveHistory, false);
+	FolderHistory = new History(HISTORYTYPE_FOLDER, Opt.FoldersHistoryCount, "SavedFolderHistory",
+			&Opt.SaveFoldersHistory, true);
+	ViewHistory = new History(HISTORYTYPE_VIEW, Opt.ViewHistoryCount, "SavedViewHistory",
+			&Opt.SaveViewHistory, true);
+	FolderHistory->SetAddMode(true, 2, true);
 	ViewHistory->SetAddMode(true, 1, true);
 }
-
 
 void ControlObject::Init()
 {
 	TreeList::ClearCache(0);
 	SetColor(COL_COMMANDLINEUSERSCREEN);
-	GotoXY(0,ScrY-3);
+	GotoXY(0, ScrY - 3);
 	ShowStartupBanner();
-	GotoXY(0,ScrY-2);
-	MoveCursor(0,ScrY-1);
-	FPanels=new FilePanels();
-	CmdLine=new CommandLine();
-	CmdLine->SaveBackground(0,0,ScrX,ScrY);
-	this->MainKeyBar=&(FPanels->MainKeyBar);
-	this->TopMenuBar=&(FPanels->TopMenuBar);
+	GotoXY(0, ScrY - 2);
+	MoveCursor(0, ScrY - 1);
+	FPanels = new FilePanels();
+	CmdLine = new CommandLine();
+	CmdLine->SaveBackground(0, 0, ScrX, ScrY);
+	this->MainKeyBar = &(FPanels->MainKeyBar);
+	this->TopMenuBar = &(FPanels->TopMenuBar);
 	FPanels->Init();
 	FPanels->SetScreenPosition();
 
 	if (Opt.ShowMenuBar)
 		this->TopMenuBar->Show();
 
-	//FPanels->Redraw();
+	// FPanels->Redraw();
 	CmdLine->Show();
 
 	this->MainKeyBar->Refresh(Opt.ShowKeyBar);
@@ -125,8 +114,7 @@ void ControlObject::Init()
 	Cp()->LeftPanel->Update(0);
 	Cp()->RightPanel->Update(0);
 
-	if (Opt.AutoSaveSetup)
-	{
+	if (Opt.AutoSaveSetup) {
 		Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
 		Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
 	}
@@ -146,17 +134,17 @@ void ControlObject::Init()
 
 	auto *CurFrame = FrameManager->GetCurrentFrame();
 	if (LIKELY(CurFrame))
-		CurFrame->Show(); // otherwise panels displayed empty on start sometimes
-	/*
-		FarChDir(StartCurDir);
-	*/
-	//_SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
-	//_SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
+		CurFrame->Show();	// otherwise panels displayed empty on start sometimes
+							/*
+								FarChDir(StartCurDir);
+							*/
+							//_SVS(SysLog(L"ActivePanel->GetCurDir='%ls'",StartCurDir));
+							//_SVS(char PPP[NM];Cp()->GetAnotherPanel(Cp()->ActivePanel)->GetCurDir(PPP);SysLog(L"AnotherPanel->GetCurDir='%ls'",PPP));
 }
 
 void ControlObject::CreateFilePanels()
 {
-	FPanels=new FilePanels();
+	FPanels = new FilePanels();
 }
 
 ControlObject::~ControlObject()
@@ -166,13 +154,11 @@ ControlObject::~ControlObject()
 
 	_OT(SysLog(L"[%p] ControlObject::~ControlObject()", this));
 
-	if (Cp()&&Cp()->ActivePanel)
-	{
+	if (Cp() && Cp()->ActivePanel) {
 		if (Opt.AutoSaveSetup)
 			SaveConfig(0);
 
-		if (Cp()->ActivePanel->GetMode()!=PLUGIN_PANEL)
-		{
+		if (Cp()->ActivePanel->GetMode() != PLUGIN_PANEL) {
 			FARString strCurDir;
 			Cp()->ActivePanel->GetCurDir(strCurDir);
 			FolderHistory->AddToHistory(strCurDir);
@@ -180,7 +166,7 @@ ControlObject::~ControlObject()
 	}
 
 	FrameManager->CloseAll();
-	FPanels=nullptr;
+	FPanels = nullptr;
 	FileFilter::CloseFilter();
 	delete CmdHistory;
 	delete FolderHistory;
@@ -194,9 +180,8 @@ ControlObject::~ControlObject()
 	delete FrameManager;
 	TreeList::FlushCache();
 	Lang.Close();
-	CtrlObject=nullptr;
+	CtrlObject = nullptr;
 }
-
 
 void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 {
@@ -231,7 +216,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 			Console.SetCursorPosition(CursorPosition);
 		}
 
-		Console.SetTextAttributes(F_YELLOW|B_BLACK);
+		Console.SetTextAttributes(F_YELLOW | B_BLACK);
 		Console.Write(EmergencyMsg, wcslen(EmergencyMsg));
 		CursorPosition.Y++;
 		Console.SetCursorPosition(CursorPosition);
@@ -258,13 +243,13 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		const int FreeSpace = Size.Y - CursorPosition.Y - 1;
 		const int LineCount = 4 + Lines.size();
 
-		if (FreeSpace<LineCount)
-			ScrollScreen(LineCount-FreeSpace);
+		if (FreeSpace < LineCount)
+			ScrollScreen(LineCount - FreeSpace);
 
 		const auto SavedColor = GetColor();
 		for (size_t i = 0; i < Lines.size(); ++i) {
 			if (i >= ConsoleHintsIndex) {
-				SetColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);//COL_HELPBOXTITLE
+				SetColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);		// COL_HELPBOXTITLE
 			}
 			if (!Lines[i].IsEmpty()) {
 				GotoXY(0, ScrY - (Lines.size() - i + 2));
@@ -273,10 +258,9 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		}
 		SetRealColor(SavedColor);
 	}
-
 }
 
-FilePanels* ControlObject::Cp()
+FilePanels *ControlObject::Cp()
 {
 	return FPanels;
 }

@@ -42,30 +42,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct TMacroKeywords
 {
-	int Type;              // Тип: 0=Area, 1=Flags, 2=Condition
-	const wchar_t *Name;   // Наименование
-	DWORD Value;           // Значение
+	int Type;				// Тип: 0=Area, 1=Flags, 2=Condition
+	const wchar_t *Name;	// Наименование
+	DWORD Value;			// Значение
 	DWORD Reserved;
 };
 
 // в plugin.hpp это FARMACROPARSEERRORCODE
 enum errParseCode
 {
-	err_Success = 0,
-	err_Unrecognized_keyword = 1,
-	err_Unrecognized_function = 2,
-	err_Func_Param = 3,
-	err_Not_expected_ELSE = 4,
-	err_Not_expected_END = 5,
-	err_Unexpected_EOS = 6,
-	err_Expected_Token = 7,
-	err_Bad_Hex_Control_Char = 8,
-	err_Bad_Control_Char = 9,
-	err_Var_Expected = 10,
-	err_Expr_Expected = 11,
-	err_ZeroLengthMacro = 12,
-	err_IntParserError = 13,
-	err_Continue_Outside_The_Loop=14,
+	err_Success                   = 0,
+	err_Unrecognized_keyword      = 1,
+	err_Unrecognized_function     = 2,
+	err_Func_Param                = 3,
+	err_Not_expected_ELSE         = 4,
+	err_Not_expected_END          = 5,
+	err_Unexpected_EOS            = 6,
+	err_Expected_Token            = 7,
+	err_Bad_Hex_Control_Char      = 8,
+	err_Bad_Control_Char          = 9,
+	err_Var_Expected              = 10,
+	err_Expr_Expected             = 11,
+	err_ZeroLengthMacro           = 12,
+	err_IntParserError            = 13,
+	err_Continue_Outside_The_Loop = 14,
 };
 
 extern int MKeywordsSize;
@@ -74,7 +74,7 @@ extern int MKeywordsFlagsSize;
 extern struct TMacroKeywords MKeywordsFlags[];
 
 int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wchar_t *BufPtr);
-BOOL __getMacroParseError(DWORD* ErrCode, COORD* ErrPos, FARString *ErrSrc);
-BOOL __getMacroParseError(FARString* Err1, FARString* Err2, FARString* Err3, FARString* Err4);
-int  __getMacroErrorCode(int *nErr=nullptr);
-void  __setMacroErrorCode(int ErrCode);
+BOOL __getMacroParseError(DWORD *ErrCode, COORD *ErrPos, FARString *ErrSrc);
+BOOL __getMacroParseError(FARString *Err1, FARString *Err2, FARString *Err3, FARString *Err4);
+int __getMacroErrorCode(int *nErr = nullptr);
+void __setMacroErrorCode(int ErrCode);

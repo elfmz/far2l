@@ -41,87 +41,85 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 template <class Object>
 class TStack : private NonCopyable
 {
-	private:
-		struct OneItem
-		{
-			Object  Item;
-			OneItem *Next;
-		};
+private:
+	struct OneItem
+	{
+		Object Item;
+		OneItem *Next;
+	};
 
-		struct OneItem *Top;
+	struct OneItem *Top;
 
-		DWORD Size;
+	DWORD Size;
 
-	public:
-		TStack():Top(nullptr), Size(0) {};
-		~TStack() { Free(); }
+public:
+	TStack()
+		:
+		Top(nullptr), Size(0){};
+	~TStack() { Free(); }
 
-	public:
-		// вернуть количество элементов на стеке
-		DWORD size() const { return Size; }
+public:
+	// вернуть количество элементов на стеке
+	DWORD size() const { return Size; }
 
-		// возвращает TRUE, если список пуст
-		bool empty() const { return !Size; }
+	// возвращает TRUE, если список пуст
+	bool empty() const { return !Size; }
 
-		// взять элемент со стека
-		// при удаче вернется адрес Destination, иначе - nullptr
-		Object *Pop(Object &Destination)
-		{
-			if (Top)
-			{
-				--Size;
-				Destination=Top->Item;
-				struct OneItem *Temp=Top->Next;
-				delete Top;
-				Top=Temp;
-				return &Destination;
-			}
-
-			return nullptr;
+	// взять элемент со стека
+	// при удаче вернется адрес Destination, иначе - nullptr
+	Object *Pop(Object &Destination)
+	{
+		if (Top) {
+			--Size;
+			Destination = Top->Item;
+			struct OneItem *Temp = Top->Next;
+			delete Top;
+			Top = Temp;
+			return &Destination;
 		}
 
-		// взять элемент со стека без изменения стека
-		// при удаче вернется адрес Destination, иначе - nullptr
-		Object *Peek(/*Object &Destination*/)
-		{
-			if (Top)
-			{
-				//Destination=Top->Item;
-				//return &Destination;
-				return &Top->Item;
-			}
+		return nullptr;
+	}
 
-			return nullptr;
+	// взять элемент со стека без изменения стека
+	// при удаче вернется адрес Destination, иначе - nullptr
+	Object *Peek(/*Object &Destination*/)
+	{
+		if (Top) {
+			// Destination=Top->Item;
+			// return &Destination;
+			return &Top->Item;
 		}
 
-		// положить элемент на стек
-		// при удаче вернется адрес элемента на стеке, иначе - nullptr
-		Object *Push(const Object &Source)
-		{
-			struct OneItem *Temp=new(std::nothrow) OneItem;
+		return nullptr;
+	}
 
-			if (Temp)
-			{
-				Temp->Next=Top;
-				Temp->Item=Source;
-				Top=Temp;
-				++Size;
-				return &Top->Item;
-			}
+	// положить элемент на стек
+	// при удаче вернется адрес элемента на стеке, иначе - nullptr
+	Object *Push(const Object &Source)
+	{
+		struct OneItem *Temp = new (std::nothrow) OneItem;
 
-			return nullptr;
+		if (Temp) {
+			Temp->Next = Top;
+			Temp->Item = Source;
+			Top = Temp;
+			++Size;
+			return &Top->Item;
 		}
 
-		// очистить стек
-		void Free()
-		{
-			while (Top)
-			{
-				struct OneItem *Temp=Top->Next;
-				delete Top;
-				Top=Temp;
-			}
+		return nullptr;
+	}
 
-			Size=0;
+	// очистить стек
+	void Free()
+	{
+		while (Top) {
+			struct OneItem *Temp = Top->Next;
+			delete Top;
+			Top = Temp;
 		}
+
+		Size = 0;
+	}
 };

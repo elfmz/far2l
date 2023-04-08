@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "constitle.hpp"
 #include "lang.hpp"
 #include "interf.hpp"
@@ -69,7 +68,7 @@ void ConsoleTitle::Set(const wchar_t *fmt, ...)
 	wchar_t msg[2048];
 	va_list argptr;
 	va_start(argptr, fmt);
-	vswprintf(msg, ARRAYSIZE(msg)-1, fmt, argptr);
+	vswprintf(msg, ARRAYSIZE(msg) - 1, fmt, argptr);
 	va_end(argptr);
 	SetFarTitle(msg);
 }
@@ -82,11 +81,10 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force, bool Restoring)
 	static FARString strPlatform(FAR_PLATFORM);
 	FARString strOldFarTitle, strFarState;
 
-	if (Title)
-	{
+	if (Title) {
 		Console.GetTitle(strOldFarTitle);
 
-		strFarState=Title;
+		strFarState = Title;
 		strFarState.Truncate(0x100);
 		if (Restoring) {
 			strFarTitle = strFarState;
@@ -98,48 +96,44 @@ void ConsoleTitle::SetFarTitle(const wchar_t *Title, bool Force, bool Restoring)
 				%Backend  - gui
 				%Admin    - Msg::FarTitleAddonsAdmin
 			*/
-			strFarTitle=Opt.strWindowTitle;
-			ReplaceStrings(strFarTitle,L"%Ver",strVer,-1);
-			ReplaceStrings(strFarTitle,L"%Platform", strPlatform, -1);
-			ReplaceStrings(strFarTitle,L"%Backend", WinPortBackend(), -1);
-			ReplaceStrings(strFarTitle,L"%Admin",Opt.IsUserAdmin?Msg::FarTitleAddonsAdmin:L"",-1);
+			strFarTitle = Opt.strWindowTitle;
+			ReplaceStrings(strFarTitle, L"%Ver", strVer, -1);
+			ReplaceStrings(strFarTitle, L"%Platform", strPlatform, -1);
+			ReplaceStrings(strFarTitle, L"%Backend", WinPortBackend(), -1);
+			ReplaceStrings(strFarTitle, L"%Admin", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"", -1);
 
 			FARString hn, un;
 			apiGetEnvironmentVariable("HOSTNAME", hn);
 			apiGetEnvironmentVariable("USER", un);
-			ReplaceStrings(strFarTitle,L"%Host",hn,-1);
-			ReplaceStrings(strFarTitle,L"%User",un,-1);
+			ReplaceStrings(strFarTitle, L"%Host", hn, -1);
+			ReplaceStrings(strFarTitle, L"%User", un, -1);
 
 			// сделаем эту замену последней во избежание случайных совпадений
 			// подстрок из strFarState с другими переменными
-			ReplaceStrings(strFarTitle,L"%State",strFarState,-1);
+			ReplaceStrings(strFarTitle, L"%State", strFarState, -1);
 
 			RemoveExternalSpaces(strFarTitle);
 		}
-		TitleModified=true;
+		TitleModified = true;
 
-		if (StrCmp(strOldFarTitle, strFarTitle) &&
-			((CtrlObject->Macro.IsExecuting() && !CtrlObject->Macro.IsDsableOutput()) ||
-				!CtrlObject->Macro.IsExecuting() || CtrlObject->Macro.IsExecutingLastKey()))
-		{
-			DWORD CurTime=WINPORT(GetTickCount)();
-			if(CurTime-ShowTime>RedrawTimeout || Force)
-			{
-				ShowTime=CurTime;
+		if (StrCmp(strOldFarTitle, strFarTitle)
+				&& ((CtrlObject->Macro.IsExecuting() && !CtrlObject->Macro.IsDsableOutput())
+						|| !CtrlObject->Macro.IsExecuting() || CtrlObject->Macro.IsExecutingLastKey())) {
+			DWORD CurTime = WINPORT(GetTickCount)();
+			if (CurTime - ShowTime > RedrawTimeout || Force) {
+				ShowTime = CurTime;
 				Console.SetTitle(strFarTitle);
-				TitleModified=true;
+				TitleModified = true;
 			}
 		}
-	}
-	else
-	{
+	} else {
 		/*
 			Title=nullptr для случая, когда нужно выставить пред.заголовок
 			SetFarTitle(nullptr) - это не для всех!
 			Этот вызов имеет право делать только макро-движок!
 		*/
 		Console.SetTitle(strFarTitle);
-		TitleModified=false;
+		TitleModified = false;
 		//_SVS(SysLog(L"  (nullptr)FarTitle='%s'",FarTitle));
 	}
 }

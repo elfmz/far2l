@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "lockscrn.hpp"
 #include "scrbuf.hpp"
 
@@ -41,7 +40,6 @@ LockScreen::LockScreen()
 {
 	ScrBuf.Lock();
 }
-
 
 LockScreen::~LockScreen()
 {

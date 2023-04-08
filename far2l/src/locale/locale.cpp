@@ -35,12 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "locale.hpp"
 
-const wchar_t DOS_EOL_fmt[]  = L"\r\n";
+const wchar_t DOS_EOL_fmt[] = L"\r\n";
 const wchar_t UNIX_EOL_fmt[] = L"\n";
-const wchar_t MAC_EOL_fmt[]  = L"\r";
-const wchar_t WIN_EOL_fmt[]  = L"\r\r\n";
+const wchar_t MAC_EOL_fmt[] = L"\r";
+const wchar_t WIN_EOL_fmt[] = L"\r\r\n";
 
-const wchar_t * __cdecl StrStrI(const wchar_t *str1, const wchar_t *str2)
+const wchar_t *__cdecl StrStrI(const wchar_t *str1, const wchar_t *str2)
 {
 	const wchar_t *cp = str1;
 	const wchar_t *s1, *s2;
@@ -48,13 +48,11 @@ const wchar_t * __cdecl StrStrI(const wchar_t *str1, const wchar_t *str2)
 	if (!*str2)
 		return str1;
 
-	while (*cp)
-	{
+	while (*cp) {
 		s1 = cp;
 		s2 = str2;
 
-		while (*s1 && *s2 && !(Lower(*s1)-Lower(*s2)))
-		{
+		while (*s1 && *s2 && !(Lower(*s1) - Lower(*s2))) {
 			s1++;
 			s2++;
 		}
@@ -68,7 +66,7 @@ const wchar_t * __cdecl StrStrI(const wchar_t *str1, const wchar_t *str2)
 	return nullptr;
 }
 
-const wchar_t * __cdecl StrStr(const wchar_t *str1, const wchar_t *str2)
+const wchar_t *__cdecl StrStr(const wchar_t *str1, const wchar_t *str2)
 {
 	const wchar_t *cp = str1;
 	const wchar_t *s1, *s2;
@@ -76,13 +74,11 @@ const wchar_t * __cdecl StrStr(const wchar_t *str1, const wchar_t *str2)
 	if (!*str2)
 		return str1;
 
-	while (*cp)
-	{
+	while (*cp) {
 		s1 = cp;
 		s2 = str2;
 
-		while (*s1 && *s2 && !(*s1 - *s2))
-		{
+		while (*s1 && *s2 && !(*s1 - *s2)) {
 			s1++;
 			s2++;
 		}
@@ -96,7 +92,7 @@ const wchar_t * __cdecl StrStr(const wchar_t *str1, const wchar_t *str2)
 	return nullptr;
 }
 
-const wchar_t * __cdecl RevStrStrI(const wchar_t *str1, const wchar_t *str2)
+const wchar_t *__cdecl RevStrStrI(const wchar_t *str1, const wchar_t *str2)
 {
 	int len1 = StrLength(str1);
 	int len2 = StrLength(str2);
@@ -107,16 +103,14 @@ const wchar_t * __cdecl RevStrStrI(const wchar_t *str1, const wchar_t *str2)
 	if (!*str2)
 		return &str1[len1];
 
-	const wchar_t *cp = &str1[len1-len2];
+	const wchar_t *cp = &str1[len1 - len2];
 	const wchar_t *s1, *s2;
 
-	while (cp >= str1)
-	{
+	while (cp >= str1) {
 		s1 = cp;
 		s2 = str2;
 
-		while (*s1 && *s2 && !(Lower(*s1)-Lower(*s2)))
-		{
+		while (*s1 && *s2 && !(Lower(*s1) - Lower(*s2))) {
 			s1++;
 			s2++;
 		}
@@ -130,7 +124,7 @@ const wchar_t * __cdecl RevStrStrI(const wchar_t *str1, const wchar_t *str2)
 	return nullptr;
 }
 
-const wchar_t * __cdecl RevStrStr(const wchar_t *str1, const wchar_t *str2)
+const wchar_t *__cdecl RevStrStr(const wchar_t *str1, const wchar_t *str2)
 {
 	int len1 = StrLength(str1);
 	int len2 = StrLength(str2);
@@ -141,16 +135,14 @@ const wchar_t * __cdecl RevStrStr(const wchar_t *str1, const wchar_t *str2)
 	if (!*str2)
 		return &str1[len1];
 
-	const wchar_t *cp = &str1[len1-len2];
+	const wchar_t *cp = &str1[len1 - len2];
 	const wchar_t *s1, *s2;
 
-	while (cp >= str1)
-	{
+	while (cp >= str1) {
 		s1 = cp;
 		s2 = str2;
 
-		while (*s1 && *s2 && !(*s1 - *s2))
-		{
+		while (*s1 && *s2 && !(*s1 - *s2)) {
 			s1++;
 			s2++;
 		}
@@ -168,18 +160,14 @@ int NumStrCmp(const wchar_t *s1, size_t n1, const wchar_t *s2, size_t n2, bool I
 {
 	size_t l1 = 0;
 	size_t l2 = 0;
-	while (l1 < n1 && l2 < n2 && *s1 && *s2)
-	{
-		if (iswdigit(*s1) && iswdigit(*s2))
-		{
+	while (l1 < n1 && l2 < n2 && *s1 && *s2) {
+		if (iswdigit(*s1) && iswdigit(*s2)) {
 			// skip leading zeroes
-			while (l1 < n1 && *s1 == L'0')
-			{
+			while (l1 < n1 && *s1 == L'0') {
 				s1++;
 				l1++;
 			}
-			while (l2 < n2 && *s2 == L'0')
-			{
+			while (l2 < n2 && *s2 == L'0') {
 				s2++;
 				l2++;
 			}
@@ -190,45 +178,42 @@ int NumStrCmp(const wchar_t *s1, size_t n1, const wchar_t *s2, size_t n2, bool I
 
 			// compare numbers
 			int res = 0;
-			while (l1 < n1 && l2 < n2 && iswdigit(*s1) && iswdigit(*s2))
-			{
+			while (l1 < n1 && l2 < n2 && iswdigit(*s1) && iswdigit(*s2)) {
 				if (!res && *s1 != *s2)
 					res = *s1 < *s2 ? -1 : 1;
 
-				s1++; s2++;
-				l1++; l2++;
+				s1++;
+				s2++;
+				l1++;
+				l2++;
 			}
-			if ((l1 == n1 || !iswdigit(*s1)) && (l2 == n2 || !iswdigit(*s2)))
-			{
+			if ((l1 == n1 || !iswdigit(*s1)) && (l2 == n2 || !iswdigit(*s2))) {
 				if (res)
 					return res;
-			}
-			else if (l1 == n1 || !iswdigit(*s1))
+			} else if (l1 == n1 || !iswdigit(*s1))
 				return -1;
 			else if (l2 == n2 || !iswdigit(*s2))
 				return 1;
-		}
-		else
-		{
+		} else {
 			int res = IgnoreCase ? StrCmpNI(s1, s2, 1) : StrCmpN(s1, s2, 1);
 			if (res)
 				return res;
 
-			s1++; s2++;
-			l1++; l2++;
+			s1++;
+			s2++;
+			l1++;
+			l2++;
 		}
 	}
 
-	if ((l1 == n1 || !*s1) && (l2 == n2 || !*s2))
-	{
+	if ((l1 == n1 || !*s1) && (l2 == n2 || !*s2)) {
 		if (l1 < l2)
 			return -1;
 		else if (l1 == l2)
 			return 0;
 		else
 			return 1;
-	}
-	else if (l1 == n1 || !*s1)
+	} else if (l1 == n1 || !*s1)
 		return -1;
 	else if (l2 == n2 || !*s2)
 		return 1;
@@ -238,28 +223,23 @@ int NumStrCmp(const wchar_t *s1, size_t n1, const wchar_t *s2, size_t n2, bool I
 }
 
 SELF_TEST(
-	assert(!NumStrCmp(L"", -1, L"", -1, false));
-	assert(NumStrCmp(L"", -1, L"a", -1, false) < 0);
-	assert(!NumStrCmp(L"a", -1, L"a", -1, false));
+		assert(!NumStrCmp(L"", -1, L"", -1, false)); assert(NumStrCmp(L"", -1, L"a", -1, false) < 0);
+		assert(!NumStrCmp(L"a", -1, L"a", -1, false));
 
-	assert(NumStrCmp(L"0", -1, L"1", -1, false) < 0);
-	assert(NumStrCmp(L"0", -1, L"00", -1, false) < 0);
-	assert(NumStrCmp(L"1", -1, L"00", -1, false) > 0);
-	assert(NumStrCmp(L"10", -1, L"1", -1, false) > 0);
-	assert(NumStrCmp(L"10", -1, L"2", -1, false) > 0);
-	assert(NumStrCmp(L"10", -1, L"0100", -1, false) < 0);
-	assert(NumStrCmp(L"1", -1, L"001", -1, false) < 0);
+		assert(NumStrCmp(L"0", -1, L"1", -1, false) < 0); assert(NumStrCmp(L"0", -1, L"00", -1, false) < 0);
+		assert(NumStrCmp(L"1", -1, L"00", -1, false) > 0); assert(NumStrCmp(L"10", -1, L"1", -1, false) > 0);
+		assert(NumStrCmp(L"10", -1, L"2", -1, false) > 0);
+		assert(NumStrCmp(L"10", -1, L"0100", -1, false) < 0);
+		assert(NumStrCmp(L"1", -1, L"001", -1, false) < 0);
 
-	assert(NumStrCmp(L"10a", -1, L"2b", -1, false) > 0);
-	assert(NumStrCmp(L"10a", -1, L"0100b", -1, false) < 0);
-	assert(NumStrCmp(L"a1a", -1, L"a001a", -1, false) < 0);
-	assert(!NumStrCmp(L"a1b2c", -1, L"a1b2c", -1, false));
-	assert(NumStrCmp(L"a01b2c", -1, L"a1b002c", -1, false) < 0);
-	assert(NumStrCmp(L"a01b3c", -1, L"a1b002", -1, false) > 0);
+		assert(NumStrCmp(L"10a", -1, L"2b", -1, false) > 0);
+		assert(NumStrCmp(L"10a", -1, L"0100b", -1, false) < 0);
+		assert(NumStrCmp(L"a1a", -1, L"a001a", -1, false) < 0);
+		assert(!NumStrCmp(L"a1b2c", -1, L"a1b2c", -1, false));
+		assert(NumStrCmp(L"a01b2c", -1, L"a1b002c", -1, false) < 0);
+		assert(NumStrCmp(L"a01b3c", -1, L"a1b002", -1, false) > 0);
 
-	assert(NumStrCmp(L"10", 2, L"0100", 2, false) > 0);
-	assert(!NumStrCmp(L"01", 2, L"0100", 2, false));
+		assert(NumStrCmp(L"10", 2, L"0100", 2, false) > 0); assert(!NumStrCmp(L"01", 2, L"0100", 2, false));
 
-	assert(NumStrCmp(L"A1", -1, L"a2", -1, false) > 0);
-	assert(NumStrCmp(L"A1", -1, L"a2", -1, true) < 0);
-)
+		assert(NumStrCmp(L"A1", -1, L"a2", -1, false) > 0);
+		assert(NumStrCmp(L"A1", -1, L"a2", -1, true) < 0);)

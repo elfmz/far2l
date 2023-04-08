@@ -39,13 +39,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class BaseFileMask : private NonCopyable
 {
-	public:
-		BaseFileMask() {}
-		virtual ~BaseFileMask() {}
+public:
+	BaseFileMask() {}
+	virtual ~BaseFileMask() {}
 
-	public:
-		virtual bool Set(const wchar_t *Masks, DWORD Flags)=0;
-		virtual bool Compare(const wchar_t *Name) const =0;
-		virtual bool IsEmpty() const { return true; }
-
+public:
+	virtual bool Set(const wchar_t *Masks, DWORD Flags) = 0;
+	virtual bool Compare(const wchar_t *Name) const     = 0;
+	virtual bool IsEmpty() const { return true; }
 };

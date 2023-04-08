@@ -10,18 +10,13 @@
 #include <errno.h>
 #include <dlfcn.h>
 
-Plugin::Plugin(PluginManager *owner,
-		const FARString &strModuleName,
-		const std::string &settingsName,
+Plugin::Plugin(PluginManager *owner, const FARString &strModuleName, const std::string &settingsName,
 		const std::string &moduleID)
 	:
-	m_owner(owner),
-	m_strModuleName(strModuleName),
-	m_strSettingsName(settingsName),
-	m_strModuleID(moduleID)
+	m_owner(owner), m_strModuleName(strModuleName), m_strSettingsName(settingsName), m_strModuleID(moduleID)
 {
 	strRootKey = Opt.strRegRoot;
-	strRootKey += L"/Plugins";
+	strRootKey+= L"/Plugins";
 }
 
 Plugin::~Plugin()
@@ -51,21 +46,18 @@ bool Plugin::OpenModule()
 
 	FARString strModulePath = m_strModuleName.Clone();
 	CutToSlash(strModulePath);
-	if (sdc_chdir(strModulePath.GetMB().c_str()) == -1 )
+	if (sdc_chdir(strModulePath.GetMB().c_str()) == -1)
 		fprintf(stderr, "Error %d chdir for plugin '%ls'\n", errno, m_strModuleName.CPtr());
 
 	const std::string &mbPath = m_strModuleName.GetMB();
-	m_hModule = dlopen(mbPath.c_str(), RTLD_LOCAL|RTLD_LAZY);
+	m_hModule = dlopen(mbPath.c_str(), RTLD_LOCAL | RTLD_LAZY);
 
-	if (m_hModule)
-	{
+	if (m_hModule) {
 		void (*pPluginModuleOpen)(const char *path);
 		GetModuleFN(pPluginModuleOpen, "PluginModuleOpen");
 		if (pPluginModuleOpen)
 			pPluginModuleOpen(mbPath.c_str());
-	}
-	else
-	{
+	} else {
 		std::wstring strerr;
 		const char *dle = dlerror();
 		if (dle) {
@@ -76,11 +68,12 @@ bool Plugin::OpenModule()
 
 		// avoid recurring and even recursive error message
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
-		if (!Opt.LoadPlug.SilentLoadPlugin) //убрать в PluginSet
+		if (!Opt.LoadPlug.SilentLoadPlugin)		// убрать в PluginSet
 		{
 			SetMessageHelp(L"ErrLoadPlugin module");
 			//|MSG_ERRORTYPE
-			Message(MSG_WARNING, 1, Msg::Error, strerr.c_str(), Msg::PlgLoadPluginError, m_strModuleName, Msg::Ok);
+			Message(MSG_WARNING, 1, Msg::Error, strerr.c_str(), Msg::PlgLoadPluginError, m_strModuleName,
+					Msg::Ok);
 		}
 	}
 
@@ -93,10 +86,8 @@ bool Plugin::OpenModule()
 
 void Plugin::CloseModule()
 {
-	if (m_hModule)
-	{
+	if (m_hModule) {
 		dlclose(m_hModule);
 		m_hModule = nullptr;
 	}
 }
-

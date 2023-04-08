@@ -84,50 +84,43 @@ struct EditorUndoData
 	int Length;
 	wchar_t *Str;
 
-	EditorUndoData()
-	{
-		memset(this, 0, sizeof(*this));
-	}
+	EditorUndoData() { memset(this, 0, sizeof(*this)); }
 	~EditorUndoData()
 	{
-		if (Str)
-		{
+		if (Str) {
 			delete[] Str;
 		}
 	}
-	void SetData(int Type,const wchar_t *Str,const wchar_t *Eol,int StrNum,int StrPos,int Length=-1)
+	void SetData(int Type, const wchar_t *Str, const wchar_t *Eol, int StrNum, int StrPos, int Length = -1)
 	{
 		if (Length == -1 && Str)
-			Length=(int)StrLength(Str);
+			Length = (int)StrLength(Str);
 
-		this->Type=Type;
-		this->StrPos=StrPos;
-		this->StrNum=StrNum;
-		this->Length=Length;
-		far_wcsncpy(EOL,Eol?Eol:L"",ARRAYSIZE(EOL)-1);
+		this->Type = Type;
+		this->StrPos = StrPos;
+		this->StrNum = StrNum;
+		this->Length = Length;
+		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
 
-		if (this->Str)
-		{
+		if (this->Str) {
 			delete[] this->Str;
 		}
 
-		if (Str)
-		{
-			this->Str=new wchar_t[Length+1];
+		if (Str) {
+			this->Str = new wchar_t[Length + 1];
 
 			if (this->Str)
-				wmemmove(this->Str,Str,Length);
-		}
-		else
-			this->Str=nullptr;
+				wmemmove(this->Str, Str, Length);
+		} else
+			this->Str = nullptr;
 	}
 };
 
 // Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITOR
 {
-	FEDITOR_MODIFIED              = 0x00000200,
-	FEDITOR_JUSTMODIFIED          = 0x00000400,   // 10.08.2000 skv: need to send EE_REDRAW 2.
+	FEDITOR_MODIFIED     = 0x00000200,
+	FEDITOR_JUSTMODIFIED = 0x00000400,		// 10.08.2000 skv: need to send EE_REDRAW 2.
 	// set to 1 by TextChanged, no matter what
 	// is value of State.
 	FEDITOR_MARKINGBLOCK          = 0x00000800,
@@ -136,291 +129,296 @@ enum FLAGS_CLASS_EDITOR
 	FEDITOR_OVERTYPE              = 0x00004000,
 	FEDITOR_NEWUNDO               = 0x00010000,
 	FEDITOR_UNDOSAVEPOSLOST       = 0x00020000,
-	FEDITOR_DISABLEUNDO           = 0x00040000,   // возможно процесс Undo уже идет?
+	FEDITOR_DISABLEUNDO           = 0x00040000,		// возможно процесс Undo уже идет?
 	FEDITOR_LOCKMODE              = 0x00080000,
-	FEDITOR_CURPOSCHANGEDBYPLUGIN = 0x00100000,   // TRUE, если позиция в редакторе была изменена
+	FEDITOR_CURPOSCHANGEDBYPLUGIN = 0x00100000,		// TRUE, если позиция в редакторе была изменена
 	// плагином (ECTL_SETPOSITION)
-	FEDITOR_ISRESIZEDCONSOLE      = 0x00800000,
-	FEDITOR_PROCESSCTRLQ          = 0x02000000,   // нажата Ctrl-Q и идет процесс вставки кода символа
-	FEDITOR_DIALOGMEMOEDIT        = 0x80000000,   // Editor используется в диалоге в качестве DI_MEMOEDIT
+	FEDITOR_ISRESIZEDCONSOLE = 0x00800000,
+	FEDITOR_PROCESSCTRLQ     = 0x02000000,		// нажата Ctrl-Q и идет процесс вставки кода символа
+	FEDITOR_DIALOGMEMOEDIT   = 0x80000000,		// Editor используется в диалоге в качестве DI_MEMOEDIT
 };
 
 class Edit;
 
-
-
-class Editor:public ScreenObject
+class Editor : public ScreenObject
 {
-		friend class DlgEdit;
-		friend class FileEditor;
-	private:
+	friend class DlgEdit;
+	friend class FileEditor;
 
-		/*
-			$ 04.11.2003 SKV
-			на любом выходе если была нажата кнопка выделения,
-			и она его "сняла" (сделала 0-й ширины), то его надо убрать.
-		*/
-		class EditorBlockGuard:public NonCopyable
+private:
+	/*
+		$ 04.11.2003 SKV
+		на любом выходе если была нажата кнопка выделения,
+		и она его "сняла" (сделала 0-й ширины), то его надо убрать.
+	*/
+	class EditorBlockGuard : public NonCopyable
+	{
+		Editor &ed;
+		void (Editor::*method)();
+		bool needCheckUnmark;
+
+	public:
+		void SetNeedCheckUnmark(bool State) { needCheckUnmark = State; }
+		EditorBlockGuard(Editor &ed, void (Editor::*method)())
+			:
+			ed(ed), method(method), needCheckUnmark(false)
+		{}
+		~EditorBlockGuard()
 		{
-				Editor& ed;
-				void (Editor::*method)();
-				bool needCheckUnmark;
-			public:
-				void SetNeedCheckUnmark(bool State) {needCheckUnmark=State;}
-				EditorBlockGuard(Editor& ed,void (Editor::*method)()):ed(ed),method(method),needCheckUnmark(false)
-				{
-				}
-				~EditorBlockGuard()
-				{
-					if (needCheckUnmark)(ed.*method)();
-				}
-		};
+			if (needCheckUnmark)
+				(ed.*method)();
+		}
+	};
 
+	DList<EditorUndoData> UndoData;
+	EditorUndoData *UndoPos;
+	EditorUndoData *UndoSavePos;
+	int UndoSkipLevel;
 
-		DList<EditorUndoData> UndoData;
-		EditorUndoData *UndoPos;
-		EditorUndoData *UndoSavePos;
-		int UndoSkipLevel;
+	int LastChangeStrPos;
+	int NumLastLine;
+	int NumLine;
+	/*
+		$ 26.02.2001 IS
+		Сюда запомним размер табуляции и в дальнейшем будем использовать его,
+		а не Opt.TabSize
+	*/
+	EditorOptions EdOpt;
 
-		int LastChangeStrPos;
-		int NumLastLine;
-		int NumLine;
-		/*
-			$ 26.02.2001 IS
-			Сюда запомним размер табуляции и в дальнейшем будем использовать его,
-			а не Opt.TabSize
-		*/
-		EditorOptions EdOpt;
+	int Pasting;
+	wchar_t GlobalEOL[10];
 
-		int Pasting;
-		wchar_t GlobalEOL[10];
+	// работа с блоками из макросов (MCODE_F_EDITOR_SEL)
+	Edit *MBlockStart;
+	int MBlockStartX;
 
-		// работа с блоками из макросов (MCODE_F_EDITOR_SEL)
-		Edit *MBlockStart;
-		int   MBlockStartX;
+	Edit *BlockStart;
+	int BlockStartLine;
+	Edit *VBlockStart;
 
-		Edit *BlockStart;
-		int   BlockStartLine;
-		Edit *VBlockStart;
+	int VBlockX;
+	int VBlockSizeX;
+	int VBlockY;
+	int VBlockSizeY;
 
-		int VBlockX;
-		int VBlockSizeX;
-		int VBlockY;
-		int VBlockSizeY;
+	int MaxRightPos;
 
-		int MaxRightPos;
+	int XX2;	// scrollbar
 
-		int XX2; //scrollbar
+	FARString strLastSearchStr;
+	/*
+		$ 30.07.2000 KM
+		Новая переменная для поиска "Whole words"
+	*/
+	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
 
-		FARString strLastSearchStr;
-		/*
-			$ 30.07.2000 KM
-			Новая переменная для поиска "Whole words"
-		*/
-		int LastSearchCase,LastSearchWholeWords,LastSearchReverse,LastSearchSelFound,LastSearchRegexp;
+	UINT m_codepage;	// BUGBUG
 
-		UINT m_codepage; //BUGBUG
+	int StartLine;
+	int StartChar;
 
-		int StartLine;
-		int StartChar;
+	InternalEditorBookMark SavePos;
 
-		InternalEditorBookMark SavePos;
+	InternalEditorStackBookMark *StackPos;
+	BOOL NewStackPos;
 
-		InternalEditorStackBookMark *StackPos;
-		BOOL NewStackPos;
+	int EditorID;
 
-		int EditorID;
+	FileEditor *HostFileEditor;
+	Edit *TopList;
+	Edit *EndList;
+	Edit *TopScreen;
+	Edit *CurLine;
+	Edit *LastGetLine;
+	int LastGetLineNumber;
+	bool SaveTabSettings;
 
-		FileEditor *HostFileEditor;
-		Edit *TopList;
-		Edit *EndList;
-		Edit *TopScreen;
-		Edit *CurLine;
-		Edit *LastGetLine;
-		int LastGetLineNumber;
-		bool SaveTabSettings;
+private:
+	virtual void DisplayObject();
+	void ShowEditor(int CurLineOnly);
+	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
+	void InsertString();
+	void Up();
+	void Down();
+	void ScrollDown();
+	void ScrollUp();
+	BOOL Search(int Next);
 
-	private:
-		virtual void DisplayObject();
-		void ShowEditor(int CurLineOnly);
-		void DeleteString(Edit *DelPtr,int LineNumber,int DeleteLast,int UndoLine);
-		void InsertString();
-		void Up();
-		void Down();
-		void ScrollDown();
-		void ScrollUp();
-		BOOL Search(int Next);
+	void GoToLine(int Line);
+	void GoToPosition();
 
-		void GoToLine(int Line);
-		void GoToPosition();
+	void TextChanged(int State);
 
-		void TextChanged(int State);
+	int CalcDistance(Edit *From, Edit *To, int MaxDist);
+	void Paste(const wchar_t *Src = nullptr);
+	void Copy(int Append);
+	void DeleteBlock();
+	void UnmarkBlock();
+	void UnmarkEmptyBlock();
+	void UnmarkMacroBlock();
 
-		int  CalcDistance(Edit *From, Edit *To,int MaxDist);
-		void Paste(const wchar_t *Src=nullptr);
-		void Copy(int Append);
-		void DeleteBlock();
-		void UnmarkBlock();
-		void UnmarkEmptyBlock();
-		void UnmarkMacroBlock();
+	void ProcessPasteEvent();
 
-		void ProcessPasteEvent();
+	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
+			int StrPos = 0, int Length = -1);
+	void Undo(int redo);
+	void SelectAll();
+	// void SetStringsTable();
+	void BlockLeft();
+	void BlockRight();
+	void DeleteVBlock();
+	void VCopy(int Append);
+	void VPaste(wchar_t *ClipText);
+	void VBlockShift(int Left);
+	Edit *GetStringByNumber(int DestLine);
+	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent);
 
-		void AddUndoData(int Type,const wchar_t *Str=nullptr,const wchar_t *Eol=nullptr,int StrNum=0,int StrPos=0,int Length=-1);
-		void Undo(int redo);
-		void SelectAll();
-		//void SetStringsTable();
-		void BlockLeft();
-		void BlockRight();
-		void DeleteVBlock();
-		void VCopy(int Append);
-		void VPaste(wchar_t *ClipText);
-		void VBlockShift(int Left);
-		Edit* GetStringByNumber(int DestLine);
-		static void EditorShowMsg(const wchar_t *Title,const wchar_t *Msg, const wchar_t* Name,int Percent);
+	int SetBookmark(DWORD Pos);
+	int GotoBookmark(DWORD Pos);
 
-		int SetBookmark(DWORD Pos);
-		int GotoBookmark(DWORD Pos);
+	int ClearStackBookmarks();
+	int DeleteStackBookmark(InternalEditorStackBookMark *sb_delete);
+	int RestoreStackBookmark();
+	int AddStackBookmark(BOOL blNewPos = TRUE);
+	InternalEditorStackBookMark *PointerToFirstStackBookmark(int *piCount = nullptr);
+	InternalEditorStackBookMark *PointerToLastStackBookmark(int *piCount = nullptr);
+	InternalEditorStackBookMark *PointerToStackBookmark(int iIdx);
+	int BackStackBookmark();
+	int PrevStackBookmark();
+	int NextStackBookmark();
+	int LastStackBookmark();
+	int GotoStackBookmark(int iIdx);
+	int PushStackBookMark();
+	int PopStackBookMark();
+	int CurrentStackBookmarkIdx();
+	int GetStackBookmark(int iIdx, EditorBookMarks *Param);
+	int GetStackBookmarks(EditorBookMarks *Param);
 
-		int ClearStackBookmarks();
-		int DeleteStackBookmark(InternalEditorStackBookMark *sb_delete);
-		int RestoreStackBookmark();
-		int AddStackBookmark(BOOL blNewPos=TRUE);
-		InternalEditorStackBookMark* PointerToFirstStackBookmark(int *piCount=nullptr);
-		InternalEditorStackBookMark* PointerToLastStackBookmark(int *piCount=nullptr);
-		InternalEditorStackBookMark* PointerToStackBookmark(int iIdx);
-		int BackStackBookmark();
-		int PrevStackBookmark();
-		int NextStackBookmark();
-		int LastStackBookmark();
-		int GotoStackBookmark(int iIdx);
-		int PushStackBookMark();
-		int PopStackBookMark();
-		int CurrentStackBookmarkIdx();
-		int GetStackBookmark(int iIdx,EditorBookMarks *Param);
-		int GetStackBookmarks(EditorBookMarks *Param);
+	int BlockStart2NumLine(int *Pos);
+	int BlockEnd2NumLine(int *Pos);
+	bool CheckLine(Edit *line);
+	wchar_t *Block2Text(wchar_t *ptrInitData);
+	wchar_t *VBlock2Text(wchar_t *ptrInitData);
 
-		int BlockStart2NumLine(int *Pos);
-		int BlockEnd2NumLine(int *Pos);
-		bool CheckLine(Edit* line);
-		wchar_t *Block2Text(wchar_t *ptrInitData);
-		wchar_t *VBlock2Text(wchar_t *ptrInitData);
+public:
+	Editor(ScreenObject *pOwner = nullptr, bool DialogUsed = false);
+	virtual ~Editor();
 
-	public:
-		Editor(ScreenObject *pOwner=nullptr,bool DialogUsed=false);
-		virtual ~Editor();
+public:
+	void EnableSaveTabSettings();
+	void SetCacheParams(EditorCacheParams *pp);
+	void GetCacheParams(EditorCacheParams *pp);
 
-	public:
+	bool SetCodePage(UINT codepage);											// BUGBUG
+	UINT GetCodePage();															// BUGBUG
 
-		void EnableSaveTabSettings();
-		void SetCacheParams(EditorCacheParams *pp);
-		void GetCacheParams(EditorCacheParams *pp);
+	int SetRawData(const wchar_t *SrcBuf, int SizeSrcBuf, int TextFormat);		// преобразование из буфера в список
+	int GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat = 0);	// преобразование из списка в буфер
 
-		bool SetCodePage(UINT codepage); //BUGBUG
-		UINT GetCodePage(); //BUGBUG
+	virtual int ProcessKey(int Key);
+	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
-		int SetRawData(const wchar_t *SrcBuf,int SizeSrcBuf,int TextFormat);   // преобразование из буфера в список
-		int GetRawData(wchar_t **DestBuf,int& SizeDestBuf,int TextFormat=0);   // преобразование из списка в буфер
+	void KeepInitParameters();
+	void SetStartPos(int LineNum, int CharNum);
+	BOOL IsFileModified() const;
+	BOOL IsFileChanged() const;
+	void SetTitle(const wchar_t *Title);
+	long GetCurPos();
+	int EditorControl(int Command, void *Param);
+	void SetHostFileEditor(FileEditor *Editor) { HostFileEditor = Editor; };
+	static void SetReplaceMode(int Mode);
+	FileEditor *GetHostFileEditor() { return HostFileEditor; };
+	void PrepareResizedConsole() { Flags.Set(FEDITOR_ISRESIZEDCONSOLE); }
 
-		virtual int ProcessKey(int Key);
-		virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-		virtual int64_t VMProcess(int OpCode,void *vParam=nullptr,int64_t iParam=0);
+	void SetTabSize(int NewSize);
+	int GetTabSize() const { return EdOpt.TabSize; }
 
-		void KeepInitParameters();
-		void SetStartPos(int LineNum,int CharNum);
-		BOOL IsFileModified() const;
-		BOOL IsFileChanged() const;
-		void SetTitle(const wchar_t *Title);
-		long GetCurPos();
-		int EditorControl(int Command,void *Param);
-		void SetHostFileEditor(FileEditor *Editor) {HostFileEditor=Editor;};
-		static void SetReplaceMode(int Mode);
-		FileEditor *GetHostFileEditor() {return HostFileEditor;};
-		void PrepareResizedConsole() {Flags.Set(FEDITOR_ISRESIZEDCONSOLE);}
+	void SetConvertTabs(int NewMode);
+	int GetConvertTabs() const { return EdOpt.ExpandTabs; }
 
-		void SetTabSize(int NewSize);
-		int  GetTabSize() const {return EdOpt.TabSize; }
+	void SetDelRemovesBlocks(int NewMode);
+	int GetDelRemovesBlocks() const { return EdOpt.DelRemovesBlocks; }
 
-		void SetConvertTabs(int NewMode);
-		int  GetConvertTabs() const {return EdOpt.ExpandTabs; }
+	void SetPersistentBlocks(int NewMode);
+	int GetPersistentBlocks() const { return EdOpt.PersistentBlocks; }
 
-		void SetDelRemovesBlocks(int NewMode);
-		int  GetDelRemovesBlocks() const {return EdOpt.DelRemovesBlocks; }
+	void SetAutoIndent(int NewMode) { EdOpt.AutoIndent = NewMode; }
+	int GetAutoIndent() const { return EdOpt.AutoIndent; }
 
-		void SetPersistentBlocks(int NewMode);
-		int  GetPersistentBlocks() const {return EdOpt.PersistentBlocks; }
+	void SetAutoDetectCodePage(int NewMode) { EdOpt.AutoDetectCodePage = NewMode; }
+	int GetAutoDetectCodePage() const { return EdOpt.AutoDetectCodePage; }
 
-		void SetAutoIndent(int NewMode) { EdOpt.AutoIndent=NewMode; }
-		int  GetAutoIndent() const {return EdOpt.AutoIndent; }
+	void SetCursorBeyondEOL(int NewMode);
+	int GetCursorBeyondEOL() const { return EdOpt.CursorBeyondEOL; }
 
-		void SetAutoDetectCodePage(int NewMode) { EdOpt.AutoDetectCodePage=NewMode; }
-		int  GetAutoDetectCodePage() const {return EdOpt.AutoDetectCodePage; }
+	void SetBSLikeDel(int NewMode) { EdOpt.BSLikeDel = NewMode; }
+	int GetBSLikeDel() const { return EdOpt.BSLikeDel; }
 
-		void SetCursorBeyondEOL(int NewMode);
-		int  GetCursorBeyondEOL() const {return EdOpt.CursorBeyondEOL; }
+	void SetCharCodeBase(int NewMode) { EdOpt.CharCodeBase = NewMode % 3; }
+	int GetCharCodeBase() const { return EdOpt.CharCodeBase; }
 
-		void SetBSLikeDel(int NewMode) { EdOpt.BSLikeDel=NewMode; }
-		int  GetBSLikeDel() const {return EdOpt.BSLikeDel; }
+	void SetReadOnlyLock(int NewMode) { EdOpt.ReadOnlyLock = NewMode & 3; }
+	int GetReadOnlyLock() const { return EdOpt.ReadOnlyLock; }
 
-		void SetCharCodeBase(int NewMode) { EdOpt.CharCodeBase=NewMode%3; }
-		int  GetCharCodeBase() const {return EdOpt.CharCodeBase; }
+	void SetShowScrollBar(int NewMode) { EdOpt.ShowScrollBar = NewMode; }
 
-		void SetReadOnlyLock(int NewMode)  { EdOpt.ReadOnlyLock=NewMode&3; }
-		int  GetReadOnlyLock() const {return EdOpt.ReadOnlyLock; }
+	void SetSearchPickUpWord(int NewMode) { EdOpt.SearchPickUpWord = NewMode; }
 
-		void SetShowScrollBar(int NewMode) {EdOpt.ShowScrollBar=NewMode;}
+	void SetWordDiv(const wchar_t *WordDiv) { EdOpt.strWordDiv = WordDiv; }
+	const wchar_t *GetWordDiv() { return EdOpt.strWordDiv; }
 
-		void SetSearchPickUpWord(int NewMode) {EdOpt.SearchPickUpWord=NewMode;}
+	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
+	void SetShowWhiteSpace(int NewMode);
 
-		void SetWordDiv(const wchar_t *WordDiv) { EdOpt.strWordDiv = WordDiv; }
-		const wchar_t *GetWordDiv() { return EdOpt.strWordDiv; }
+	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
-		int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
-		void SetShowWhiteSpace(int NewMode);
+	// передавайте в качестве значения параметра "-1" для параметра,
+	// который не нужно менять
+	void SetSavePosMode(int SavePos, int SaveShortPos);
 
-		void GetSavePosMode(int &SavePos, int &SaveShortPos);
+	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-		// передавайте в качестве значения параметра "-1" для параметра,
-		// который не нужно менять
-		void SetSavePosMode(int SavePos, int SaveShortPos);
+	int GetLineCurPos();
+	void BeginVBlockMarking();
+	void AdjustVBlock(int PrevX);
 
-		void GetRowCol(const wchar_t *argv,int *row,int *col);
+	void Xlat();
+	static void PR_EditorShowMsg();
 
-		int  GetLineCurPos();
-		void BeginVBlockMarking();
-		void AdjustVBlock(int PrevX);
+	void FreeAllocatedData(bool FreeUndo = true);
 
-		void Xlat();
-		static void PR_EditorShowMsg();
+	Edit *CreateString(const wchar_t *lpwszStr, int nLength);
+	Edit *
+	InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter = nullptr, int AfterLineNumber = -1);
 
-		void FreeAllocatedData(bool FreeUndo=true);
+	void SetDialogParent(DWORD Sets);
+	void SetReadOnly(int NewReadOnly) { Flags.Change(FEDITOR_LOCKMODE, NewReadOnly); };
+	int GetReadOnly() { return Flags.Check(FEDITOR_LOCKMODE); };
+	void SetOvertypeMode(int Mode);
+	int GetOvertypeMode();
+	void SetEditBeyondEnd(int Mode);
+	void SetClearFlag(int Flag);
+	int GetClearFlag();
 
-		Edit *CreateString(const wchar_t *lpwszStr, int nLength);
-		Edit *InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter = nullptr, int AfterLineNumber=-1);
-
-		void SetDialogParent(DWORD Sets);
-		void SetReadOnly(int NewReadOnly) {Flags.Change(FEDITOR_LOCKMODE,NewReadOnly);};
-		int  GetReadOnly() {return Flags.Check(FEDITOR_LOCKMODE);};
-		void SetOvertypeMode(int Mode);
-		int  GetOvertypeMode();
-		void SetEditBeyondEnd(int Mode);
-		void SetClearFlag(int Flag);
-		int  GetClearFlag();
-
-		int  GetCurCol();
-		int  GetCurRow() {return NumLine;}
-		void SetCurPos(int NewCol, int NewRow=-1);
-		void SetCursorType(bool Visible, DWORD Size);
-		void GetCursorType(bool& Visible, DWORD& Size);
-		void SetObjectColor(int Color,int SelColor,int ColorUnChanged);
-		void DrawScrollbar();
+	int GetCurCol();
+	int GetCurRow() { return NumLine; }
+	void SetCurPos(int NewCol, int NewRow = -1);
+	void SetCursorType(bool Visible, DWORD Size);
+	void GetCursorType(bool &Visible, DWORD &Size);
+	void SetObjectColor(int Color, int SelColor, int ColorUnChanged);
+	void DrawScrollbar();
 };
 
-#define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE) do { \
-	VALUE = ( (DWORD(CP) & 0xffff) | ((DWORD(EXPAND_TABS) & 0xff) << 16) | ((DWORD(TAB_SIZE) & 0xff) << 24) ); \
+#define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE)                                            \
+	do {                                                                                                       \
+		VALUE = ((DWORD(CP) & 0xffff) | ((DWORD(EXPAND_TABS) & 0xff) << 16)                                    \
+				| ((DWORD(TAB_SIZE) & 0xff) << 24));                                                           \
 	} while (0)
 
-#define POSCACHE_EDIT_PARAM4_UNPACK(VALUE, CP, EXPAND_TABS, TAB_SIZE) do { \
-	CP = (((VALUE) & 0xffff) == 0xffff) ? -1 : ((VALUE) & 0xffff); \
-	EXPAND_TABS = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 16) & 0xff; \
-	TAB_SIZE = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 24) & 0xff; } while (0)
+#define POSCACHE_EDIT_PARAM4_UNPACK(VALUE, CP, EXPAND_TABS, TAB_SIZE)                                          \
+	do {                                                                                                       \
+		CP = (((VALUE)&0xffff) == 0xffff) ? -1 : ((VALUE)&0xffff);                                             \
+		EXPAND_TABS = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 16) & 0xff;                                    \
+		TAB_SIZE = ((VALUE) == 0xffffffff) ? 0 : ((VALUE) >> 24) & 0xff;                                       \
+	} while (0)

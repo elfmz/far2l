@@ -2,9 +2,7 @@
 #include "headers.hpp"
 #include "filelist.hpp"
 
-ListDataVec::ListDataVec()
-{
-}
+ListDataVec::ListDataVec() {}
 
 ListDataVec::~ListDataVec()
 {
@@ -13,9 +11,8 @@ ListDataVec::~ListDataVec()
 
 void ListDataVec::Clear()
 {
-	for (auto &pItem : *this)
-	{
-		delete pItem; //!!! see ~FileListItem
+	for (auto &pItem : *this) {
+		delete pItem;	//!!! see ~FileListItem
 	}
 	clear();
 	shrink_to_fit();
@@ -55,7 +52,7 @@ FileListItem *ListDataVec::AddParentPoint()
 	return item;
 }
 
-FileListItem *ListDataVec::AddParentPoint(const FILETIME* Times, FARString Owner, FARString Group)
+FileListItem *ListDataVec::AddParentPoint(const FILETIME *Times, FARString Owner, FARString Group)
 {
 	FileListItem *item = AddParentPoint();
 	if (item) {
@@ -71,15 +68,12 @@ FileListItem *ListDataVec::AddParentPoint(const FILETIME* Times, FARString Owner
 
 ////////////////////////////////////////////////////////////////////////////
 
-FileListItem::FileListItem()
-{
-}
+FileListItem::FileListItem() {}
 
 FileListItem::~FileListItem()
 {
-	if (CustomColumnNumber>0 && CustomColumnData)
-	{
-		for (int J=0; J < CustomColumnNumber; J++)
+	if (CustomColumnNumber > 0 && CustomColumnData) {
+		for (int J = 0; J < CustomColumnNumber; J++)
 			delete[] CustomColumnData[J];
 
 		delete[] CustomColumnData;
@@ -92,12 +86,9 @@ FileListItem::~FileListItem()
 		delete[] DizText;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 
-PluginPanelItemVec::PluginPanelItemVec()
-{
-}
+PluginPanelItemVec::PluginPanelItemVec() {}
 
 PluginPanelItemVec::~PluginPanelItemVec()
 {

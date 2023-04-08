@@ -41,8 +41,8 @@ enum SETATTR_RET_CODES
 	SETATTR_RET_SKIPALL,
 };
 
-int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode=-1);
-int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime,FILETIME *ModifyTime, DWORD FileAttr,int SkipMode=-1);
-int ESetFileOwner(LPCWSTR Name,LPCWSTR Owner,int SkipMode=-1);
-int ESetFileGroup(LPCWSTR Name,LPCWSTR Group,int SkipMode=-1);//todo
-
+int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode = -1);
+int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime, DWORD FileAttr,
+		int SkipMode = -1);
+int ESetFileOwner(LPCWSTR Name, LPCWSTR Owner, int SkipMode = -1);
+int ESetFileGroup(LPCWSTR Name, LPCWSTR Group, int SkipMode = -1);	// todo

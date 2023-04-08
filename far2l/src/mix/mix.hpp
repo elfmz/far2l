@@ -36,24 +36,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinCompat.h>
 #include "FARString.hpp"
 
-int ToPercent(uint32_t N1,uint32_t N2);
-int ToPercent64(uint64_t N1,uint64_t N2);
+int ToPercent(uint32_t N1, uint32_t N2);
+int ToPercent64(uint64_t N1, uint64_t N2);
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-	typedef int (WINAPI *FRSUSERFUNC)(const FAR_FIND_DATA *FData,const wchar_t *FullName,void *param);
-	void WINAPI FarRecursiveSearch(const wchar_t *initdir,const wchar_t *mask,FRSUSERFUNC func,DWORD flags,void *param);
+typedef int(WINAPI *FRSUSERFUNC)(const FAR_FIND_DATA *FData, const wchar_t *FullName, void *param);
+void WINAPI
+FarRecursiveSearch(const wchar_t *initdir, const wchar_t *mask, FRSUSERFUNC func, DWORD flags, void *param);
 
-	int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix);
+int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix);
 
 #ifdef __cplusplus
 };
 #endif
 
-FARString& FarMkTempEx(FARString &strDest, const wchar_t *Prefix=nullptr, BOOL WithTempPath=TRUE, const wchar_t *UserTempPath=nullptr);
+FARString &FarMkTempEx(FARString &strDest, const wchar_t *Prefix = nullptr, BOOL WithTempPath = TRUE,
+		const wchar_t *UserTempPath = nullptr);
 void DisplayNotification(const wchar_t *action, const char *object);
 void DisplayNotification(const char *action, const char *object);
 void DisplayNotification(const wchar_t *action, const wchar_t *object);

@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "plist.hpp"
 #include "keys.hpp"
 #include "help.hpp"
@@ -114,5 +113,3 @@ void ShowProcessList()
 	}
 #endif
 }
-
-

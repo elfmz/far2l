@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "drivemix.hpp"
 #include "config.hpp"
 #include "cddrv.hpp"
@@ -57,39 +56,36 @@ static int StatForPathOrItsParent(const wchar_t *path, struct stat &s)
 		if (r == 0 || mb.size() < 2)
 			return r;
 
-		size_t slash = mb.rfind(GOOD_SLASH);		
-		if (slash==std::string::npos || slash==0)
+		size_t slash = mb.rfind(GOOD_SLASH);
+		if (slash == std::string::npos || slash == 0)
 			return -1;
-		
+
 		mb.resize(slash);
 	}
 }
 
-int CheckDisksProps(const wchar_t *SrcPath,const wchar_t *DestPath,int CheckedType)
+int CheckDisksProps(const wchar_t *SrcPath, const wchar_t *DestPath, int CheckedType)
 {
-	if (CheckedType == CHECKEDPROPS_ISSAMEDISK)
-	{
+	if (CheckedType == CHECKEDPROPS_ISSAMEDISK) {
 		struct stat s_src = {}, s_dest = {};
 		int r = StatForPathOrItsParent(SrcPath, s_src);
-		if (r==-1) {
+		if (r == -1) {
 			fprintf(stderr, "CheckDisksProps: stat errno=%u for src='%ls'\n", errno, SrcPath);
 			return false;
 		}
-				
+
 		r = StatForPathOrItsParent(DestPath, s_dest);
-		if (r==-1) {
+		if (r == -1) {
 			fprintf(stderr, "CheckDisksProps: stat errno=%u for dest='%ls'\n", errno, DestPath);
 			return false;
 		}
 
-		return (s_src.st_dev==s_dest.st_dev) ? TRUE : FALSE;
+		return (s_src.st_dev == s_dest.st_dev) ? TRUE : FALSE;
 	}
 
-	if (CheckedType == CHECKEDPROPS_ISDST_ENCRYPTION)
-	{
+	if (CheckedType == CHECKEDPROPS_ISDST_ENCRYPTION) {
 		return FALSE;
 	}
 
 	return TRUE;
 }
-

@@ -28,7 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "plugins.hpp"
 #include "plugapi.hpp"
 #include "lang.hpp"
@@ -123,35 +122,33 @@ static const char NFMP_Analyse[] = "AnalyseW";
 static const char NFMP_GetCustomData[] = "GetCustomDataW";
 static const char NFMP_FreeCustomData[] = "FreeCustomDataW";
 
-
 static void CheckScreenLock()
 {
-	if (ScrBuf.GetLockCount() > 0 && !CtrlObject->Macro.PeekKey())
-	{
+	if (ScrBuf.GetLockCount() > 0 && !CtrlObject->Macro.PeekKey()) {
 		ScrBuf.SetLockCount(0);
 		ScrBuf.Flush();
 	}
 }
 
-static size_t WINAPI FarKeyToName(int Key,wchar_t *KeyText,size_t Size)
+static size_t WINAPI FarKeyToName(int Key, wchar_t *KeyText, size_t Size)
 {
 	FARString strKT;
 
-	if (!KeyToText(Key,strKT))
+	if (!KeyToText(Key, strKT))
 		return 0;
 
 	size_t len = strKT.GetLength();
 
-	if (Size && KeyText)
-	{
-		if (Size <= len) len = Size-1;
+	if (Size && KeyText) {
+		if (Size <= len)
+			len = Size - 1;
 
 		wmemcpy(KeyText, strKT.CPtr(), len);
 		KeyText[len] = 0;
-	}
-	else if (KeyText) *KeyText = 0;
+	} else if (KeyText)
+		*KeyText = 0;
 
-	return (len+1);
+	return (len + 1);
 }
 
 int WINAPI KeyNameToKeyW(const wchar_t *Name)
@@ -160,17 +157,15 @@ int WINAPI KeyNameToKeyW(const wchar_t *Name)
 	return (int)KeyNameToKey(strN);
 }
 
-PluginW::PluginW(PluginManager *owner, const FARString &strModuleName,
-					const std::string &settingsName, const std::string &moduleID)
+PluginW::PluginW(PluginManager *owner, const FARString &strModuleName, const std::string &settingsName,
+		const std::string &moduleID)
 	:
 	Plugin(owner, strModuleName, settingsName, moduleID)
 {
 	ClearExports();
 }
 
-PluginW::~PluginW()
-{
-}
+PluginW::~PluginW() {}
 
 bool PluginW::LoadFromCache()
 {
@@ -179,11 +174,11 @@ bool PluginW::LoadFromCache()
 	if (!kfh.SectionLoaded())
 		return false;
 
-	//PF_PRELOAD plugin, skip cache
+	// PF_PRELOAD plugin, skip cache
 	if (kfh.GetInt(szCache_Preload) != 0)
 		return Load();
 
-	//одинаковые ли бинарники?
+	// одинаковые ли бинарники?
 	if (kfh.GetString("ID") != m_strModuleID)
 		return false;
 
@@ -202,7 +197,7 @@ bool PluginW::LoadFromCache()
 	pConfigureW = (PLUGINCONFIGUREW)(INT_PTR)kfh.GetUInt(szCache_Configure, 0);
 	pAnalyseW = (PLUGINANALYSEW)(INT_PTR)kfh.GetUInt(szCache_Analyse, 0);
 	pGetCustomDataW = (PLUGINGETCUSTOMDATAW)(INT_PTR)kfh.GetUInt(szCache_GetCustomData, 0);
-	WorkFlags.Set(PIWF_CACHED); //too much "cached" flags
+	WorkFlags.Set(PIWF_CACHED);		// too much "cached" flags
 
 	if (kfh.GetInt(szCache_Preopen) != 0)
 		OpenModule();
@@ -212,34 +207,24 @@ bool PluginW::LoadFromCache()
 
 bool PluginW::SaveToCache()
 {
-	if (!pGetPluginInfoW &&
-		!pOpenPluginW &&
-		!pOpenFilePluginW &&
-		!pSetFindListW &&
-		!pProcessEditorInputW &&
-		!pProcessEditorEventW &&
-		!pProcessViewerEventW &&
-		!pProcessDialogEventW &&
-		!pProcessSynchroEventW &&
+	if (!pGetPluginInfoW && !pOpenPluginW && !pOpenFilePluginW && !pSetFindListW && !pProcessEditorInputW
+			&& !pProcessEditorEventW && !pProcessViewerEventW && !pProcessDialogEventW
+			&& !pProcessSynchroEventW &&
 #if defined(PROCPLUGINMACROFUNC)
-		!pProcessMacroFuncW &&
+			!pProcessMacroFuncW &&
 #endif
-		!pAnalyseW &&
-		!pGetCustomDataW
-	   )
-	{
+			!pAnalyseW && !pGetCustomDataW) {
 		return false;
 	}
 
 	KeyFileHelper kfh(PluginsIni());
 	kfh.RemoveSection(GetSettingsName());
 
-	struct stat st{};
+	struct stat st
+	{};
 	const std::string &module = m_strModuleName.GetMB();
-	if (stat(module.c_str(), &st) == -1)
-	{
-		fprintf(stderr, "%s: stat('%s') error %u\n",
-			__FUNCTION__, module.c_str(), errno);
+	if (stat(module.c_str(), &st) == -1) {
+		fprintf(stderr, "%s: stat('%s') error %u\n", __FUNCTION__, module.c_str(), errno);
 		return false;
 	}
 
@@ -247,12 +232,11 @@ bool PluginW::SaveToCache()
 
 	PluginInfo Info{};
 	GetPluginInfo(&Info);
-	SysID = Info.SysID; //LAME!!!
+	SysID = Info.SysID;		// LAME!!!
 
 	kfh.SetInt(GetSettingsName(), szCache_Preopen, ((Info.Flags & PF_PREOPEN) != 0));
 
-	if ((Info.Flags & PF_PRELOAD) != 0)
-	{
+	if ((Info.Flags & PF_PRELOAD) != 0) {
 		kfh.SetInt(GetSettingsName(), szCache_Preload, 1);
 		WorkFlags.Change(PIWF_PRELOADED, TRUE);
 		return true;
@@ -261,24 +245,17 @@ bool PluginW::SaveToCache()
 
 	kfh.SetString(GetSettingsName(), "ID", m_strModuleID.c_str());
 
-	for (int i = 0; i < Info.DiskMenuStringsNumber; i++)
-	{
-		kfh.SetString(GetSettingsName(),
-			StrPrintf(FmtDiskMenuStringD, i).c_str(),
-				Info.DiskMenuStrings[i]);
+	for (int i = 0; i < Info.DiskMenuStringsNumber; i++) {
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtDiskMenuStringD, i).c_str(), Info.DiskMenuStrings[i]);
 	}
 
-	for (int i = 0; i < Info.PluginMenuStringsNumber; i++)
-	{
-		kfh.SetString(GetSettingsName(),
-			StrPrintf(FmtPluginMenuStringD, i).c_str(),
+	for (int i = 0; i < Info.PluginMenuStringsNumber; i++) {
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginMenuStringD, i).c_str(),
 				Info.PluginMenuStrings[i]);
 	}
 
-	for (int i = 0; i < Info.PluginConfigStringsNumber; i++)
-	{
-		kfh.SetString(GetSettingsName(),
-			StrPrintf(FmtPluginConfigStringD, i).c_str(),
+	for (int i = 0; i < Info.PluginConfigStringsNumber; i++) {
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginConfigStringD, i).c_str(),
 				Info.PluginConfigStrings[i]);
 	}
 
@@ -286,20 +263,20 @@ bool PluginW::SaveToCache()
 	kfh.SetUInt(GetSettingsName(), "Flags", Info.Flags);
 
 	kfh.SetUInt(GetSettingsName(), szCache_SysID, SysID);
-	kfh.SetUInt(GetSettingsName(), szCache_OpenPlugin, pOpenPluginW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_OpenFilePlugin, pOpenFilePluginW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_SetFindList, pSetFindListW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorInput, pProcessEditorInputW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorEvent, pProcessEditorEventW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessViewerEvent, pProcessViewerEventW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessDialogEvent, pProcessDialogEventW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessSynchroEvent, pProcessSynchroEventW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_OpenPlugin, pOpenPluginW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_OpenFilePlugin, pOpenFilePluginW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_SetFindList, pSetFindListW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorInput, pProcessEditorInputW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessEditorEvent, pProcessEditorEventW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessViewerEvent, pProcessViewerEventW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessDialogEvent, pProcessDialogEventW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessSynchroEvent, pProcessSynchroEventW != nullptr);
 #if defined(PROCPLUGINMACROFUNC)
-	kfh.SetUInt(GetSettingsName(), szCache_ProcessMacroFunc, pProcessMacroFuncW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_ProcessMacroFunc, pProcessMacroFuncW != nullptr);
 #endif
-	kfh.SetUInt(GetSettingsName(), szCache_Configure, pConfigureW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_Analyse, pAnalyseW!=nullptr);
-	kfh.SetUInt(GetSettingsName(), szCache_GetCustomData, pGetCustomDataW!=nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_Configure, pConfigureW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_Analyse, pAnalyseW != nullptr);
+	kfh.SetUInt(GetSettingsName(), szCache_GetCustomData, pGetCustomDataW != nullptr);
 
 	return true;
 }
@@ -346,19 +323,18 @@ bool PluginW::Load()
 #if defined(PROCPLUGINMACROFUNC)
 	GetModuleFN(pProcessMacroFuncW, NFMP_ProcessMacroFunc);
 #endif
-	GetModuleFN(pMinFarVersionW,NFMP_GetMinFarVersion);
+	GetModuleFN(pMinFarVersionW, NFMP_GetMinFarVersion);
 	GetModuleFN(pAnalyseW, NFMP_Analyse);
 	GetModuleFN(pGetCustomDataW, NFMP_GetCustomData);
 	GetModuleFN(pFreeCustomDataW, NFMP_FreeCustomData);
 
 	bool bUnloaded = false;
 
-	if (!CheckMinFarVersion(bUnloaded) || !SetStartupInfo(bUnloaded))
-	{
+	if (!CheckMinFarVersion(bUnloaded) || !SetStartupInfo(bUnloaded)) {
 		if (!bUnloaded)
 			Unload();
 
-		//чтоб не пытаться загрузить опять а то ошибка будет постоянно показываться.
+		// чтоб не пытаться загрузить опять а то ошибка будет постоянно показываться.
 		WorkFlags.Set(PIWF_DONTLOADAGAIN);
 
 		return false;
@@ -374,9 +350,11 @@ static int WINAPI farExecuteW(const wchar_t *CmdStr, unsigned int flags)
 	return farExecuteA(Wide2MB(CmdStr).c_str(), flags);
 }
 
-static int WINAPI farExecuteLibraryW(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int flags)
+static int WINAPI
+farExecuteLibraryW(const wchar_t *Library, const wchar_t *Symbol, const wchar_t *CmdStr, unsigned int flags)
 {
-	return farExecuteLibraryA(Wide2MB(Library).c_str(), Wide2MB(Symbol).c_str(), Wide2MB(CmdStr).c_str(), flags);
+	return farExecuteLibraryA(Wide2MB(Library).c_str(), Wide2MB(Symbol).c_str(), Wide2MB(CmdStr).c_str(),
+			flags);
 }
 
 static void farDisplayNotificationW(const wchar_t *action, const wchar_t *object)
@@ -402,7 +380,8 @@ static size_t WINAPI farStrCellsCount(const wchar_t *Str, size_t CharsCount)
 	return StrCellsCount(Str, CharsCount);
 }
 
-static size_t WINAPI farStrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
+static size_t WINAPI
+farStrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
 {
 	return StrSizeOfCells(Str, CharsCount, *CellsCount, RoundUp != FALSE);
 }
@@ -413,19 +392,18 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 	static FarStandardFunctions StandardFunctions{};
 
 	// заполняем структуру StandardFunctions один раз!!!
-	if (!StandardFunctions.StructSize)
-	{
-		StandardFunctions.StructSize=sizeof(StandardFunctions);
-		StandardFunctions.snprintf=swprintf;
-		StandardFunctions.BoxSymbols=BoxSymbols;
-		StandardFunctions.sscanf=swscanf;
-		StandardFunctions.qsort=FarQsort;
-		StandardFunctions.qsortex=FarQsortEx;
-		StandardFunctions.atoi=FarAtoi;
-		StandardFunctions.atoi64=FarAtoi64;
-		StandardFunctions.itoa=FarItoa;
-		StandardFunctions.itoa64=FarItoa64;
-		StandardFunctions.bsearch=FarBsearch;
+	if (!StandardFunctions.StructSize) {
+		StandardFunctions.StructSize = sizeof(StandardFunctions);
+		StandardFunctions.snprintf = swprintf;
+		StandardFunctions.BoxSymbols = BoxSymbols;
+		StandardFunctions.sscanf = swscanf;
+		StandardFunctions.qsort = FarQsort;
+		StandardFunctions.qsortex = FarQsortEx;
+		StandardFunctions.atoi = FarAtoi;
+		StandardFunctions.atoi64 = FarAtoi64;
+		StandardFunctions.itoa = FarItoa;
+		StandardFunctions.itoa64 = FarItoa64;
+		StandardFunctions.bsearch = FarBsearch;
 		StandardFunctions.LIsLower = farIsLower;
 		StandardFunctions.LIsUpper = farIsUpper;
 		StandardFunctions.LIsAlpha = farIsAlpha;
@@ -438,32 +416,32 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.LStrlwr = farStrLower;
 		StandardFunctions.LStricmp = farStrCmpI;
 		StandardFunctions.LStrnicmp = farStrCmpNI;
-		StandardFunctions.Unquote=Unquote;
-		StandardFunctions.LTrim=RemoveLeadingSpaces;
-		StandardFunctions.RTrim=RemoveTrailingSpaces;
-		StandardFunctions.Trim=RemoveExternalSpaces;
-		StandardFunctions.TruncStr=TruncStr;
-		StandardFunctions.TruncPathStr=TruncPathStr;
-		StandardFunctions.QuoteSpaceOnly=QuoteSpaceOnly;
-		StandardFunctions.PointToName=PointToName;
-		StandardFunctions.GetPathRoot=farGetPathRoot;
-		StandardFunctions.AddEndSlash=AddEndSlash;
-		StandardFunctions.CopyToClipboard=CopyToClipboard;
-		StandardFunctions.PasteFromClipboard=PasteFromClipboard;
-		StandardFunctions.FarKeyToName=FarKeyToName;
-		StandardFunctions.FarNameToKey=KeyNameToKeyW;
-		StandardFunctions.FarInputRecordToKey=InputRecordToKey;
-		StandardFunctions.XLat=Xlat;
-		StandardFunctions.GetFileOwner=farGetFileOwner;
-		StandardFunctions.GetNumberOfLinks=GetNumberOfLinks;
-		StandardFunctions.FarRecursiveSearch=FarRecursiveSearch;
-		StandardFunctions.MkTemp=FarMkTemp;
-		StandardFunctions.DeleteBuffer=DeleteBuffer;
-		StandardFunctions.ProcessName=ProcessName;
-		StandardFunctions.MkLink=FarMkLink;
-		StandardFunctions.ConvertPath=farConvertPath;
-		StandardFunctions.GetReparsePointInfo=farGetReparsePointInfo;
-		StandardFunctions.GetCurrentDirectory=farGetCurrentDirectory;
+		StandardFunctions.Unquote = Unquote;
+		StandardFunctions.LTrim = RemoveLeadingSpaces;
+		StandardFunctions.RTrim = RemoveTrailingSpaces;
+		StandardFunctions.Trim = RemoveExternalSpaces;
+		StandardFunctions.TruncStr = TruncStr;
+		StandardFunctions.TruncPathStr = TruncPathStr;
+		StandardFunctions.QuoteSpaceOnly = QuoteSpaceOnly;
+		StandardFunctions.PointToName = PointToName;
+		StandardFunctions.GetPathRoot = farGetPathRoot;
+		StandardFunctions.AddEndSlash = AddEndSlash;
+		StandardFunctions.CopyToClipboard = CopyToClipboard;
+		StandardFunctions.PasteFromClipboard = PasteFromClipboard;
+		StandardFunctions.FarKeyToName = FarKeyToName;
+		StandardFunctions.FarNameToKey = KeyNameToKeyW;
+		StandardFunctions.FarInputRecordToKey = InputRecordToKey;
+		StandardFunctions.XLat = Xlat;
+		StandardFunctions.GetFileOwner = farGetFileOwner;
+		StandardFunctions.GetNumberOfLinks = GetNumberOfLinks;
+		StandardFunctions.FarRecursiveSearch = FarRecursiveSearch;
+		StandardFunctions.MkTemp = FarMkTemp;
+		StandardFunctions.DeleteBuffer = DeleteBuffer;
+		StandardFunctions.ProcessName = ProcessName;
+		StandardFunctions.MkLink = FarMkLink;
+		StandardFunctions.ConvertPath = farConvertPath;
+		StandardFunctions.GetReparsePointInfo = farGetReparsePointInfo;
+		StandardFunctions.GetCurrentDirectory = farGetCurrentDirectory;
 		StandardFunctions.Execute = farExecuteW;
 		StandardFunctions.ExecuteLibrary = farExecuteLibraryW;
 		StandardFunctions.DisplayNotification = farDisplayNotificationW;
@@ -473,54 +451,51 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.StrSizeOfCells = farStrSizeOfCells;
 	}
 
-	if (!StartupInfo.StructSize)
-	{
-		StartupInfo.StructSize=sizeof(StartupInfo);
-		StartupInfo.Menu=FarMenuFn;
-		StartupInfo.GetMsg=FarGetMsgFn;
-		StartupInfo.Message=FarMessageFn;
-		StartupInfo.Control=FarControl;
-		StartupInfo.SaveScreen=FarSaveScreen;
-		StartupInfo.RestoreScreen=FarRestoreScreen;
-		StartupInfo.GetDirList=FarGetDirList;
-		StartupInfo.GetPluginDirList=FarGetPluginDirList;
-		StartupInfo.FreeDirList=FarFreeDirList;
-		StartupInfo.FreePluginDirList=FarFreePluginDirList;
-		StartupInfo.Viewer=FarViewer;
-		StartupInfo.Editor=FarEditor;
-		StartupInfo.CmpName=FarCmpName;
-		StartupInfo.Text=FarText;
-		StartupInfo.EditorControl=FarEditorControl;
-		StartupInfo.ViewerControl=FarViewerControl;
-		StartupInfo.ShowHelp=FarShowHelp;
-		StartupInfo.AdvControl=FarAdvControl;
-		StartupInfo.DialogInit=FarDialogInit;
-		StartupInfo.DialogRun=FarDialogRun;
-		StartupInfo.DialogFree=FarDialogFree;
-		StartupInfo.SendDlgMessage=FarSendDlgMessage;
-		StartupInfo.DefDlgProc=FarDefDlgProc;
-		StartupInfo.InputBox=FarInputBox;
-		StartupInfo.PluginsControl=farPluginsControl;
-		StartupInfo.FileFilterControl=farFileFilterControl;
-		StartupInfo.RegExpControl=farRegExpControl;
+	if (!StartupInfo.StructSize) {
+		StartupInfo.StructSize = sizeof(StartupInfo);
+		StartupInfo.Menu = FarMenuFn;
+		StartupInfo.GetMsg = FarGetMsgFn;
+		StartupInfo.Message = FarMessageFn;
+		StartupInfo.Control = FarControl;
+		StartupInfo.SaveScreen = FarSaveScreen;
+		StartupInfo.RestoreScreen = FarRestoreScreen;
+		StartupInfo.GetDirList = FarGetDirList;
+		StartupInfo.GetPluginDirList = FarGetPluginDirList;
+		StartupInfo.FreeDirList = FarFreeDirList;
+		StartupInfo.FreePluginDirList = FarFreePluginDirList;
+		StartupInfo.Viewer = FarViewer;
+		StartupInfo.Editor = FarEditor;
+		StartupInfo.CmpName = FarCmpName;
+		StartupInfo.Text = FarText;
+		StartupInfo.EditorControl = FarEditorControl;
+		StartupInfo.ViewerControl = FarViewerControl;
+		StartupInfo.ShowHelp = FarShowHelp;
+		StartupInfo.AdvControl = FarAdvControl;
+		StartupInfo.DialogInit = FarDialogInit;
+		StartupInfo.DialogRun = FarDialogRun;
+		StartupInfo.DialogFree = FarDialogFree;
+		StartupInfo.SendDlgMessage = FarSendDlgMessage;
+		StartupInfo.DefDlgProc = FarDefDlgProc;
+		StartupInfo.InputBox = FarInputBox;
+		StartupInfo.PluginsControl = farPluginsControl;
+		StartupInfo.FileFilterControl = farFileFilterControl;
+		StartupInfo.RegExpControl = farRegExpControl;
 	}
 
-	*PSI=StartupInfo;
-	*FSF=StandardFunctions;
-	PSI->FSF=FSF;
-	PSI->RootKey=nullptr;
-	PSI->ModuleNumber=(INT_PTR)pPlugin;
+	*PSI = StartupInfo;
+	*FSF = StandardFunctions;
+	PSI->FSF = FSF;
+	PSI->RootKey = nullptr;
+	PSI->ModuleNumber = (INT_PTR)pPlugin;
 
-	if (pPlugin)
-	{
+	if (pPlugin) {
 		PSI->ModuleName = pPlugin->GetModuleName().CPtr();
 	}
 }
 
-
 struct ExecuteStruct
 {
-	int id; //function id
+	int id;		// function id
 	union
 	{
 		INT_PTR nResult;
@@ -538,27 +513,24 @@ struct ExecuteStruct
 	bool bUnloaded;
 };
 
-
-#define EXECUTE_FUNCTION(function, es) \
-	{ \
-		es.nResult = 0; \
-		es.nDefaultResult = 0; \
-		es.bUnloaded = false; \
-		function; \
+#define EXECUTE_FUNCTION(function, es)                                                                         \
+	{                                                                                                          \
+		es.nResult = 0;                                                                                        \
+		es.nDefaultResult = 0;                                                                                 \
+		es.bUnloaded = false;                                                                                  \
+		function;                                                                                              \
 	}
 
-
-#define EXECUTE_FUNCTION_EX(function, es) \
-	{ \
-		es.bUnloaded = false; \
-		es.nResult = 0; \
-			es.nResult = (INT_PTR)function; \
+#define EXECUTE_FUNCTION_EX(function, es)                                                                      \
+	{                                                                                                          \
+		es.bUnloaded = false;                                                                                  \
+		es.nResult = 0;                                                                                        \
+		es.nResult = (INT_PTR)function;                                                                        \
 	}
 
 bool PluginW::SetStartupInfo(bool &bUnloaded)
 {
-	if (pSetStartupInfoW)
-	{
+	if (pSetStartupInfoW) {
 		PluginStartupInfo _info;
 		FarStandardFunctions _fsf;
 		CreatePluginStartupInfo(this, &_info, &_fsf);
@@ -568,8 +540,7 @@ bool PluginW::SetStartupInfo(bool &bUnloaded)
 		es.id = EXCEPT_SETSTARTUPINFO;
 		EXECUTE_FUNCTION(pSetStartupInfoW(&_info), es);
 
-		if (es.bUnloaded)
-		{
+		if (es.bUnloaded) {
 			bUnloaded = true;
 			return false;
 		}
@@ -578,40 +549,33 @@ bool PluginW::SetStartupInfo(bool &bUnloaded)
 	return true;
 }
 
-static void ShowMessageAboutIllegalPluginVersion(const wchar_t* plg,int required)
+static void ShowMessageAboutIllegalPluginVersion(const wchar_t *plg, int required)
 {
 	FARString strMsg1, strMsg2;
 	FARString strPlgName;
-	strMsg1.Format(Msg::PlgRequired,
-		(WORD)(HIWORD(required)),(WORD)(LOWORD(required)));
-	strMsg2.Format(Msg::PlgRequired2,
-		(WORD)(HIWORD(FAR_VERSION)),(WORD)(LOWORD(FAR_VERSION)));
-	Message(MSG_WARNING,1,Msg::Error,Msg::PlgBadVers,plg,strMsg1,strMsg2,Msg::Ok);
+	strMsg1.Format(Msg::PlgRequired, (WORD)(HIWORD(required)), (WORD)(LOWORD(required)));
+	strMsg2.Format(Msg::PlgRequired2, (WORD)(HIWORD(FAR_VERSION)), (WORD)(LOWORD(FAR_VERSION)));
+	Message(MSG_WARNING, 1, Msg::Error, Msg::PlgBadVers, plg, strMsg1, strMsg2, Msg::Ok);
 }
-
 
 bool PluginW::CheckMinFarVersion(bool &bUnloaded)
 {
-	if (pMinFarVersionW)
-	{
+	if (pMinFarVersionW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_MINFARVERSION;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pMinFarVersionW(), es);
 
-		if (es.bUnloaded)
-		{
+		if (es.bUnloaded) {
 			bUnloaded = true;
 			return false;
 		}
 
 		DWORD FVer = (DWORD)es.nResult;
 
-		if (LOWORD(FVer) > LOWORD(FAR_VERSION) ||
-			(LOWORD(FVer) == LOWORD(FAR_VERSION) &&
-				HIWORD(FVer) > HIWORD(FAR_VERSION)))
-		{
-			ShowMessageAboutIllegalPluginVersion(m_strModuleName,FVer);
+		if (LOWORD(FVer) > LOWORD(FAR_VERSION)
+				|| (LOWORD(FVer) == LOWORD(FAR_VERSION) && HIWORD(FVer) > HIWORD(FAR_VERSION))) {
+			ShowMessageAboutIllegalPluginVersion(m_strModuleName, FVer);
 			return false;
 		}
 	}
@@ -632,34 +596,21 @@ int PluginW::Unload(bool bExitFAR)
 	CloseModule();
 
 	m_Loaded = false;
-	FuncFlags.Clear(PICFF_LOADED); //??
+	FuncFlags.Clear(PICFF_LOADED);	//??
 	return nResult;
 }
 
 bool PluginW::IsPanelPlugin()
 {
-	return pSetFindListW ||
-		pGetFindDataW ||
-		pGetVirtualFindDataW ||
-		pSetDirectoryW ||
-		pGetFilesW ||
-		pPutFilesW ||
-		pDeleteFilesW ||
-		pMakeDirectoryW ||
-		pProcessHostFileW ||
-		pProcessKeyW ||
-		pProcessEventW ||
-		pCompareW ||
-		pGetOpenPluginInfoW ||
-		pFreeFindDataW ||
-		pFreeVirtualFindDataW ||
-		pClosePluginW;
+	return pSetFindListW || pGetFindDataW || pGetVirtualFindDataW || pSetDirectoryW || pGetFilesW
+			|| pPutFilesW || pDeleteFilesW || pMakeDirectoryW || pProcessHostFileW || pProcessKeyW
+			|| pProcessEventW || pCompareW || pGetOpenPluginInfoW || pFreeFindDataW || pFreeVirtualFindDataW
+			|| pClosePluginW;
 }
 
 int PluginW::Analyse(const AnalyseData *pData)
 {
-	if (Load() && pAnalyseW)
-	{
+	if (Load() && pAnalyseW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_ANALYSE;
 		es.bDefaultResult = FALSE;
@@ -675,27 +626,26 @@ HANDLE PluginW::OpenPlugin(int OpenFrom, INT_PTR Item)
 {
 	ChangePriority *ChPriority = new ChangePriority(ChangePriority::NORMAL);
 
-	CheckScreenLock(); //??
+	CheckScreenLock();	//??
 
 	{
-//		FARString strCurDir;
-//		CtrlObject->CmdLine->GetCurDir(strCurDir);
-//		FarChDir(strCurDir);
+		//		FARString strCurDir;
+		//		CtrlObject->CmdLine->GetCurDir(strCurDir);
+		//		FarChDir(strCurDir);
 		g_strDirToSet.Clear();
 	}
 
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenPluginW)
-	{
-		//CurPluginItem=this; //BUGBUG
+	if (Load() && pOpenPluginW) {
+		// CurPluginItem=this; //BUGBUG
 		ExecuteStruct es;
 		es.id = EXCEPT_OPENPLUGIN;
 		es.hDefaultResult = INVALID_HANDLE_VALUE;
 		es.hResult = INVALID_HANDLE_VALUE;
-		EXECUTE_FUNCTION_EX(pOpenPluginW(OpenFrom,Item), es);
+		EXECUTE_FUNCTION_EX(pOpenPluginW(OpenFrom, Item), es);
 		hResult = es.hResult;
-		//CurPluginItem=nullptr; //BUGBUG
+		// CurPluginItem=nullptr; //BUGBUG
 		/*
 		CtrlObject->Macro.SetRedrawEditor(TRUE); //BUGBUG
 
@@ -736,17 +686,11 @@ HANDLE PluginW::OpenPlugin(int OpenFrom, INT_PTR Item)
 
 //////////////////////////////////
 
-HANDLE PluginW::OpenFilePlugin(
-	const wchar_t *Name,
-	const unsigned char *Data,
-	int DataSize,
-	int OpMode
-)
+HANDLE PluginW::OpenFilePlugin(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)
 {
 	HANDLE hResult = INVALID_HANDLE_VALUE;
 
-	if (Load() && pOpenFilePluginW)
-	{
+	if (Load() && pOpenFilePluginW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_OPENFILEPLUGIN;
 		es.hDefaultResult = INVALID_HANDLE_VALUE;
@@ -757,17 +701,11 @@ HANDLE PluginW::OpenFilePlugin(
 	return hResult;
 }
 
-
-int PluginW::SetFindList(
-	HANDLE hPlugin,
-	const PluginPanelItem *PanelItem,
-	int ItemsNumber
-)
+int PluginW::SetFindList(HANDLE hPlugin, const PluginPanelItem *PanelItem, int ItemsNumber)
 {
 	BOOL bResult = FALSE;
 
-	if (pSetFindListW)
-	{
+	if (pSetFindListW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_SETFINDLIST;
 		es.bDefaultResult = FALSE;
@@ -778,17 +716,14 @@ int PluginW::SetFindList(
 	return bResult;
 }
 
-int PluginW::ProcessEditorInput(
-	const INPUT_RECORD *D
-)
+int PluginW::ProcessEditorInput(const INPUT_RECORD *D)
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessEditorInputW)
-	{
+	if (Load() && pProcessEditorInputW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITORINPUT;
-		es.bDefaultResult = TRUE; //(TRUE) treat the result as a completed request on exception!
+		es.bDefaultResult = TRUE;	//(TRUE) treat the result as a completed request on exception!
 		EXECUTE_FUNCTION_EX(pProcessEditorInputW(D), es);
 		bResult = es.bResult;
 	}
@@ -796,49 +731,37 @@ int PluginW::ProcessEditorInput(
 	return bResult;
 }
 
-int PluginW::ProcessEditorEvent(
-	int Event,
-	PVOID Param
-)
+int PluginW::ProcessEditorEvent(int Event, PVOID Param)
 {
-	if (Load() && pProcessEditorEventW)
-	{
+	if (Load() && pProcessEditorEventW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEDITOREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessEditorEventW(Event, Param), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 
-	return 0; //oops!
+	return 0;	// oops!
 }
 
-int PluginW::ProcessViewerEvent(
-	int Event,
-	void *Param
-)
+int PluginW::ProcessViewerEvent(int Event, void *Param)
 {
-	if (Load() && pProcessViewerEventW)
-	{
+	if (Load() && pProcessViewerEventW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSVIEWEREVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessViewerEventW(Event, Param), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 
-	return 0; //oops, again!
+	return 0;	// oops, again!
 }
 
-int PluginW::ProcessDialogEvent(
-	int Event,
-	void *Param
-)
+int PluginW::ProcessDialogEvent(int Event, void *Param)
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pProcessDialogEventW)
-	{
+	if (Load() && pProcessDialogEventW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSDIALOGEVENT;
 		es.bDefaultResult = FALSE;
@@ -849,40 +772,30 @@ int PluginW::ProcessDialogEvent(
 	return bResult;
 }
 
-int PluginW::ProcessSynchroEvent(
-	int Event,
-	void *Param
-)
+int PluginW::ProcessSynchroEvent(int Event, void *Param)
 {
-	if (Load() && pProcessSynchroEventW)
-	{
+	if (Load() && pProcessSynchroEventW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSSYNCHROEVENT;
 		es.nDefaultResult = 0;
 		EXECUTE_FUNCTION_EX(pProcessSynchroEventW(Event, Param), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 
-	return 0; //oops, again!
+	return 0;	// oops, again!
 }
 
 #if defined(PROCPLUGINMACROFUNC)
-int PluginW::ProcessMacroFunc(
-	const wchar_t *Name,
-	const FarMacroValue *Params,
-	int nParams,
-	FarMacroValue **Results,
-	int *nResults
-)
+int PluginW::ProcessMacroFunc(const wchar_t *Name, const FarMacroValue *Params, int nParams,
+		FarMacroValue **Results, int *nResults)
 {
 	int nResult = 0;
 
-	if (Load() && pProcessMacroFuncW)
-	{
+	if (Load() && pProcessMacroFuncW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSMACROFUNC;
 		es.nDefaultResult = 0;
-		EXECUTE_FUNCTION_EX(pProcessMacroFuncW(Name,Params,nParams,Results,nResults), es);
+		EXECUTE_FUNCTION_EX(pProcessMacroFuncW(Name, Params, nParams, Results, nResults), es);
 		nResult = (int)es.nResult;
 	}
 
@@ -890,17 +803,12 @@ int PluginW::ProcessMacroFunc(
 }
 #endif
 
-int PluginW::GetVirtualFindData(
-	HANDLE hPlugin,
-	PluginPanelItem **pPanelItem,
-	int *pItemsNumber,
-	const wchar_t *Path
-)
+int PluginW::GetVirtualFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber,
+		const wchar_t *Path)
 {
 	BOOL bResult = FALSE;
 
-	if (pGetVirtualFindDataW)
-	{
+	if (pGetVirtualFindDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETVIRTUALFINDDATA;
 		es.bDefaultResult = FALSE;
@@ -911,37 +819,22 @@ int PluginW::GetVirtualFindData(
 	return bResult;
 }
 
-
-void PluginW::FreeVirtualFindData(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber
-)
+void PluginW::FreeVirtualFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber)
 {
-	if (pFreeVirtualFindDataW)
-	{
+	if (pFreeVirtualFindDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEVIRTUALFINDDATA;
 		EXECUTE_FUNCTION(pFreeVirtualFindDataW(hPlugin, PanelItem, ItemsNumber), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 }
 
-
-
-int PluginW::GetFiles(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber,
-	int Move,
-	const wchar_t **DestPath,
-	int OpMode
-)
+int PluginW::GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
+		const wchar_t **DestPath, int OpMode)
 {
 	int nResult = -1;
 
-	if (pGetFilesW)
-	{
+	if (pGetFilesW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFILES;
 		es.nDefaultResult = -1;
@@ -952,42 +845,29 @@ int PluginW::GetFiles(
 	return nResult;
 }
 
-
-int PluginW::PutFiles(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber,
-	int Move,
-	int OpMode
-)
+int PluginW::PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode)
 {
 	int nResult = -1;
 
-	if (pPutFilesW)
-	{
+	if (pPutFilesW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PUTFILES;
 		es.nDefaultResult = -1;
 		static FARString strCurrentDirectory;
 		apiGetCurrentDirectory(strCurrentDirectory);
-		EXECUTE_FUNCTION_EX(pPutFilesW(hPlugin, PanelItem, ItemsNumber, Move, strCurrentDirectory, OpMode), es);
+		EXECUTE_FUNCTION_EX(pPutFilesW(hPlugin, PanelItem, ItemsNumber, Move, strCurrentDirectory, OpMode),
+				es);
 		nResult = (int)es.nResult;
 	}
 
 	return nResult;
 }
 
-int PluginW::DeleteFiles(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber,
-	int OpMode
-)
+int PluginW::DeleteFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
 	BOOL bResult = FALSE;
 
-	if (pDeleteFilesW)
-	{
+	if (pDeleteFilesW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_DELETEFILES;
 		es.bDefaultResult = FALSE;
@@ -998,17 +878,11 @@ int PluginW::DeleteFiles(
 	return bResult;
 }
 
-
-int PluginW::MakeDirectory(
-	HANDLE hPlugin,
-	const wchar_t **Name,
-	int OpMode
-)
+int PluginW::MakeDirectory(HANDLE hPlugin, const wchar_t **Name, int OpMode)
 {
 	int nResult = -1;
 
-	if (pMakeDirectoryW)
-	{
+	if (pMakeDirectoryW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_MAKEDIRECTORY;
 		es.nDefaultResult = -1;
@@ -1019,18 +893,11 @@ int PluginW::MakeDirectory(
 	return nResult;
 }
 
-
-int PluginW::ProcessHostFile(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber,
-	int OpMode
-)
+int PluginW::ProcessHostFile(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessHostFileW)
-	{
+	if (pProcessHostFileW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSHOSTFILE;
 		es.bDefaultResult = FALSE;
@@ -1041,17 +908,11 @@ int PluginW::ProcessHostFile(
 	return bResult;
 }
 
-
-int PluginW::ProcessEvent(
-	HANDLE hPlugin,
-	int Event,
-	PVOID Param
-)
+int PluginW::ProcessEvent(HANDLE hPlugin, int Event, PVOID Param)
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessEventW)
-	{
+	if (pProcessEventW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSEVENT;
 		es.bDefaultResult = FALSE;
@@ -1062,18 +923,11 @@ int PluginW::ProcessEvent(
 	return bResult;
 }
 
-
-int PluginW::Compare(
-	HANDLE hPlugin,
-	const PluginPanelItem *Item1,
-	const PluginPanelItem *Item2,
-	DWORD Mode
-)
+int PluginW::Compare(HANDLE hPlugin, const PluginPanelItem *Item1, const PluginPanelItem *Item2, DWORD Mode)
 {
 	int nResult = -2;
 
-	if (pCompareW)
-	{
+	if (pCompareW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_COMPARE;
 		es.nDefaultResult = -2;
@@ -1084,18 +938,11 @@ int PluginW::Compare(
 	return nResult;
 }
 
-
-int PluginW::GetFindData(
-	HANDLE hPlugin,
-	PluginPanelItem **pPanelItem,
-	int *pItemsNumber,
-	int OpMode
-)
+int PluginW::GetFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
 	BOOL bResult = FALSE;
 
-	if (pGetFindDataW)
-	{
+	if (pGetFindDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETFINDDATA;
 		es.bDefaultResult = FALSE;
@@ -1106,35 +953,24 @@ int PluginW::GetFindData(
 	return bResult;
 }
 
-
-void PluginW::FreeFindData(
-	HANDLE hPlugin,
-	PluginPanelItem *PanelItem,
-	int ItemsNumber
-)
+void PluginW::FreeFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber)
 {
-	if (pFreeFindDataW)
-	{
+	if (pFreeFindDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_FREEFINDDATA;
 		EXECUTE_FUNCTION(pFreeFindDataW(hPlugin, PanelItem, ItemsNumber), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 }
 
-int PluginW::ProcessKey(
-	HANDLE hPlugin,
-	int Key,
-	unsigned int dwControlState
-)
+int PluginW::ProcessKey(HANDLE hPlugin, int Key, unsigned int dwControlState)
 {
 	BOOL bResult = FALSE;
 
-	if (pProcessKeyW)
-	{
+	if (pProcessKeyW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_PROCESSKEY;
-		es.bDefaultResult = TRUE; // do not pass this key to far on exception
+		es.bDefaultResult = TRUE;	// do not pass this key to far on exception
 		EXECUTE_FUNCTION_EX(pProcessKeyW(hPlugin, Key, dwControlState), es);
 		bResult = es.bResult;
 	}
@@ -1142,33 +978,23 @@ int PluginW::ProcessKey(
 	return bResult;
 }
 
-
-void PluginW::ClosePlugin(
-	HANDLE hPlugin
-)
+void PluginW::ClosePlugin(HANDLE hPlugin)
 {
-	if (pClosePluginW)
-	{
+	if (pClosePluginW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_CLOSEPLUGIN;
 		EXECUTE_FUNCTION(pClosePluginW(hPlugin), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 
-//	m_pManager->m_pCurrentPlugin = (Plugin*)-1;
+	//	m_pManager->m_pCurrentPlugin = (Plugin*)-1;
 }
 
-
-int PluginW::SetDirectory(
-	HANDLE hPlugin,
-	const wchar_t *Dir,
-	int OpMode
-)
+int PluginW::SetDirectory(HANDLE hPlugin, const wchar_t *Dir, int OpMode)
 {
 	BOOL bResult = FALSE;
 
-	if (pSetDirectoryW)
-	{
+	if (pSetDirectoryW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_SETDIRECTORY;
 		es.bDefaultResult = FALSE;
@@ -1179,33 +1005,24 @@ int PluginW::SetDirectory(
 	return bResult;
 }
 
-
-void PluginW::GetOpenPluginInfo(
-	HANDLE hPlugin,
-	OpenPluginInfo *pInfo
-)
+void PluginW::GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *pInfo)
 {
-//	m_pManager->m_pCurrentPlugin = this;
+	//	m_pManager->m_pCurrentPlugin = this;
 	pInfo->StructSize = sizeof(OpenPluginInfo);
 
-	if (pGetOpenPluginInfoW)
-	{
+	if (pGetOpenPluginInfoW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETOPENPLUGININFO;
 		EXECUTE_FUNCTION(pGetOpenPluginInfoW(hPlugin, pInfo), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 }
 
-
-int PluginW::Configure(
-	int MenuItem
-)
+int PluginW::Configure(int MenuItem)
 {
 	BOOL bResult = FALSE;
 
-	if (Load() && pConfigureW)
-	{
+	if (Load() && pConfigureW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_CONFIGURE;
 		es.bDefaultResult = FALSE;
@@ -1216,13 +1033,11 @@ int PluginW::Configure(
 	return bResult;
 }
 
-
 bool PluginW::GetPluginInfo(PluginInfo *pi)
 {
 	memset(pi, 0, sizeof(PluginInfo));
 
-	if (pGetPluginInfoW)
-	{
+	if (pGetPluginInfoW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETPLUGININFO;
 		EXECUTE_FUNCTION(pGetPluginInfoW(pi), es);
@@ -1236,8 +1051,7 @@ bool PluginW::GetPluginInfo(PluginInfo *pi)
 
 int PluginW::GetCustomData(const wchar_t *FilePath, wchar_t **CustomData)
 {
-	if (Load() && pGetCustomDataW)
-	{
+	if (Load() && pGetCustomDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_GETCUSTOMDATA;
 		es.bDefaultResult = 0;
@@ -1251,19 +1065,17 @@ int PluginW::GetCustomData(const wchar_t *FilePath, wchar_t **CustomData)
 
 void PluginW::FreeCustomData(wchar_t *CustomData)
 {
-	if (Load() && pFreeCustomDataW)
-	{
+	if (Load() && pFreeCustomDataW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_FREECUSTOMDATA;
 		EXECUTE_FUNCTION(pFreeCustomDataW(CustomData), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 }
 
 bool PluginW::MayExitFAR()
 {
-	if (pMayExitFARW)
-	{
+	if (pMayExitFARW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_MAYEXITFAR;
 		es.bDefaultResult = 1;
@@ -1276,12 +1088,11 @@ bool PluginW::MayExitFAR()
 
 void PluginW::ExitFAR()
 {
-	if (pExitFARW)
-	{
+	if (pExitFARW) {
 		ExecuteStruct es;
 		es.id = EXCEPT_EXITFAR;
 		EXECUTE_FUNCTION(pExitFARW(), es);
-		(void)es; // supress 'set but not used' warning
+		(void)es;	// supress 'set but not used' warning
 	}
 }
 
@@ -1323,4 +1134,3 @@ void PluginW::ClearExports()
 	pGetCustomDataW = nullptr;
 	pFreeCustomDataW = nullptr;
 }
-

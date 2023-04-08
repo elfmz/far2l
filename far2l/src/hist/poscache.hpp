@@ -38,48 +38,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const DWORD64 POS_NONE = _UI64_MAX;
 
 // Максимальное количество элементов в кэше
-#define POSCACHE_MAX_ELEMENTS     2048
+#define POSCACHE_MAX_ELEMENTS 2048
 
 // Количество закладок в редакторе/вьювере на одну позицию
-#define POSCACHE_BOOKMARK_COUNT   10
+#define POSCACHE_BOOKMARK_COUNT 10
 
-#define POSCACHE_PARAM_COUNT      5
-#define POSCACHE_POSITION_COUNT   4
+#define POSCACHE_PARAM_COUNT    5
+#define POSCACHE_POSITION_COUNT 4
 
 struct PosCache
 {
-/*
-	Param:
-		Editor:
-			Param[0] = Line
-			Param[1] = ScreenLine
-			Param[2] = LinePos
-			Param[3] = LeftPos
-			Param[4]:bits{0..15}  = CodePage or 0
-			Param[4]:bits{16..23} = TabSize
-			Param[4]:bits{24..31} = ExpandTabs
-		Viewer:
-			Param[0] = FilePos
-			Param[1] = LeftPos
-			Param[2] = Hex?
-			Param[3] = 0
-			Param[4] = CodePage
-*/
+	/*
+		Param:
+			Editor:
+				Param[0] = Line
+				Param[1] = ScreenLine
+				Param[2] = LinePos
+				Param[3] = LeftPos
+				Param[4]:bits{0..15}  = CodePage or 0
+				Param[4]:bits{16..23} = TabSize
+				Param[4]:bits{24..31} = ExpandTabs
+			Viewer:
+				Param[0] = FilePos
+				Param[1] = LeftPos
+				Param[2] = Hex?
+				Param[3] = 0
+				Param[4] = CodePage
+	*/
 	DWORD64 Param[POSCACHE_PARAM_COUNT];
 
-/*
-	Position
-		Editor:
-			Position[0] = [POSCACHE_BOOKMARK_COUNT] Line
-			Position[1] = [POSCACHE_BOOKMARK_COUNT] Cursor
-			Position[2] = [POSCACHE_BOOKMARK_COUNT] ScreenLine
-			Position[3] = [POSCACHE_BOOKMARK_COUNT] LeftPos
-		Viewer:
-			Position[0] = [POSCACHE_BOOKMARK_COUNT] SavePosAddr
-			Position[1] = [POSCACHE_BOOKMARK_COUNT] SavePosLeft
-			Position[2] = [POSCACHE_BOOKMARK_COUNT] 0
-			Position[3] = [POSCACHE_BOOKMARK_COUNT] 0
-*/
+	/*
+		Position
+			Editor:
+				Position[0] = [POSCACHE_BOOKMARK_COUNT] Line
+				Position[1] = [POSCACHE_BOOKMARK_COUNT] Cursor
+				Position[2] = [POSCACHE_BOOKMARK_COUNT] ScreenLine
+				Position[3] = [POSCACHE_BOOKMARK_COUNT] LeftPos
+			Viewer:
+				Position[0] = [POSCACHE_BOOKMARK_COUNT] SavePosAddr
+				Position[1] = [POSCACHE_BOOKMARK_COUNT] SavePosLeft
+				Position[2] = [POSCACHE_BOOKMARK_COUNT] 0
+				Position[3] = [POSCACHE_BOOKMARK_COUNT] 0
+	*/
 	DWORD64 *Position[POSCACHE_POSITION_COUNT];
 };
 
@@ -91,19 +91,19 @@ enum FilePositionCacheKind
 
 class FilePositionCache
 {
-	private:
-		FilePositionCacheKind _kind;
-		std::string _kf_path;
-		std::unique_ptr<KeyFileHelper> _kfh;
+private:
+	FilePositionCacheKind _kind;
+	std::string _kf_path;
+	std::unique_ptr<KeyFileHelper> _kfh;
 
-		void ApplyElementsLimit();
-		void CheckForSave();
+	void ApplyElementsLimit();
+	void CheckForSave();
 
-	public:
-		FilePositionCache(FilePositionCacheKind kind);
-		~FilePositionCache();
+public:
+	FilePositionCache(FilePositionCacheKind kind);
+	~FilePositionCache();
 
-		void AddPosition(const wchar_t *Name, PosCache& poscache);
-		bool GetPosition(const wchar_t *Name, PosCache& poscache);
-		void ResetPosition(const wchar_t *Name);
+	void AddPosition(const wchar_t *Name, PosCache &poscache);
+	bool GetPosition(const wchar_t *Name, PosCache &poscache);
+	void ResetPosition(const wchar_t *Name);
 };

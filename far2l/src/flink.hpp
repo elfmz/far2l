@@ -37,16 +37,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum ReparsePointTypes
 {
-	RP_EXACTCOPY,   // для копирования/переноса ссылок, копия существующего
-	RP_HARDLINK,    // жёсткая ссылка
-	RP_JUNCTION,    // связь
-	RP_VOLMOUNT,    // монтированный том
-	RP_SYMLINK,     // ссылка, NT>=6
-	RP_SYMLINKFILE, // файл-ссылка, NT>=6
-	RP_SYMLINKDIR,  // каталог-ссылка, NT>=6
+	RP_EXACTCOPY,		// для копирования/переноса ссылок, копия существующего
+	RP_HARDLINK,		// жёсткая ссылка
+	RP_JUNCTION,		// связь
+	RP_VOLMOUNT,		// монтированный том
+	RP_SYMLINK,			// ссылка, NT>=6
+	RP_SYMLINKFILE,		// файл-ссылка, NT>=6
+	RP_SYMLINKDIR,		// каталог-ссылка, NT>=6
 };
 
 int WINAPI GetNumberOfLinks(const wchar_t *Name);
-int WINAPI MkHardLink(const wchar_t *ExistingName,const wchar_t *NewName);
-int WINAPI MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg);
+int WINAPI MkHardLink(const wchar_t *ExistingName, const wchar_t *NewName);
+int WINAPI
+MkSymLink(const wchar_t *ExistingName, const wchar_t *NewName, ReparsePointTypes LinkType, bool CanShowMsg);
 int WINAPI FarMkLink(const wchar_t *ExistingName, const wchar_t *NewName, DWORD Flags);

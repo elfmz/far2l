@@ -33,54 +33,51 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include "DList.hpp"
 #include <farplug-wide.h>
 #include "FARString.hpp"
 
 class NamesList
 {
-	private:
-		struct FileName2
+private:
+	struct FileName2
+	{
+		FARString strName;
+	};
+
+	struct OneName
+	{
+		struct FileName2 Value;
+
+		OneName() {}
+		// для перекрывающихся объектов поведение как у xstrncpy!
+		const OneName &operator=(struct FileName2 &rhs)
 		{
-			FARString strName;
-		};
+			Value.strName = rhs.strName;
+			return *this;
+		}
+	};
 
-		struct OneName
-		{
-			struct FileName2 Value;
+	typedef DList<OneName> StrList;
 
-			OneName()
-			{
-			}
-			// для перекрывающихся объектов поведение как у xstrncpy!
-			const OneName& operator=(struct FileName2 &rhs)
-			{
-				Value.strName = rhs.strName;
-				return *this;
-			}
-		};
+	StrList Names;
+	const OneName *CurrentName;
 
-		typedef DList<OneName> StrList;
+	FARString strCurrentDir;
 
-		StrList Names;
-		const OneName *CurrentName;
+private:
+	void Init();
 
-		FARString strCurrentDir;
+public:
+	NamesList();
+	~NamesList();
 
-	private:
-		void Init();
-
-	public:
-		NamesList();
-		~NamesList();
-
-	public:
-		void AddName(const wchar_t *Name);
-		bool GetNextName(FARString &strName);
-		bool GetPrevName(FARString &strName);
-		void SetCurName(const wchar_t *Name);
-		void MoveData(NamesList &Dest);
-		void GetCurDir(FARString &strDir);
-		void SetCurDir(const wchar_t *Dir);
+public:
+	void AddName(const wchar_t *Name);
+	bool GetNextName(FARString &strName);
+	bool GetPrevName(FARString &strName);
+	void SetCurName(const wchar_t *Name);
+	void MoveData(NamesList &Dest);
+	void GetCurDir(FARString &strDir);
+	void SetCurDir(const wchar_t *Dir);
 };

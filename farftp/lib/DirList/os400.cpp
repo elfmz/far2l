@@ -1,6 +1,5 @@
 #include <all_far.h>
 
-
 #include "Int.h"
 
 /*          1         2         3         4         5         6         7
@@ -12,53 +11,48 @@
   07/05/06 06:08:14
   07/05/06 06:08:14
 */
-BOOL parse_os400_date_time(LPSTR& line, Time_t& decoded)
+BOOL parse_os400_date_time(LPSTR &line, Time_t &decoded)
 {
-	if(!line[0] ||
-			line[2] != '/' || line[5] != '/' ||
-			line[8] != ' ' ||
-			line[11] != ':' || line[14] != ':')
+	if (!line[0] || line[2] != '/' || line[5] != '/' || line[8] != ' ' || line[11] != ':' || line[14] != ':')
 		return FALSE;
 
 	SYSTEMTIME st;
 	WINPORT(GetSystemTime)(&st);
 	st.wMilliseconds = 0;
-//mon
+	// mon
 	TwoDigits(line, st.wMonth);
 
-	if(st.wMonth == MAX_WORD)
+	if (st.wMonth == MAX_WORD)
 		return FALSE;
 
-	line += 3;
-//mday
+	line+= 3;
+	// mday
 	TwoDigits(line, st.wDay);
 
-	if(st.wDay == MAX_WORD)
+	if (st.wDay == MAX_WORD)
 		return FALSE;
 
-	line += 3;
-//year
+	line+= 3;
+	// year
 	TwoDigits(line, st.wYear);
 
-	if(st.wYear == MAX_WORD)
+	if (st.wYear == MAX_WORD)
 		return FALSE;
 
-	if(st.wYear < 50)
-		st.wYear += 100;
+	if (st.wYear < 50)
+		st.wYear+= 100;
 
-	st.wYear += 1900;
-	line += 3;
-//Time
-	TwoDigits(line+0, st.wHour);
-	TwoDigits(line+3, st.wMinute);
-	TwoDigits(line+6, st.wSecond);
+	st.wYear+= 1900;
+	line+= 3;
+	// Time
+	TwoDigits(line + 0, st.wHour);
+	TwoDigits(line + 3, st.wMinute);
+	TwoDigits(line + 6, st.wSecond);
 
-	if(st.wHour   == MAX_WORD ||
-			st.wMinute == MAX_WORD ||
-			st.wSecond == MAX_WORD)
+	if (st.wHour == MAX_WORD || st.wMinute == MAX_WORD || st.wSecond == MAX_WORD)
 		return FALSE;
 
-	line += 8;
+	line+= 8;
 	st.wDayOfWeek = 0;
 	return WINPORT(SystemTimeToFileTime)(&st, decoded);
 }
@@ -87,63 +81,59 @@ QSYS            12288 07/07/06 23:24:53 *DIR       tmp/
 MUELLERJ      1282232 01/18/06 11:40:23 *STMF      PARCELST.TXT
 MUELLERJ           58 01/03/06 11:29:17 *STMF      UNTITLED.TXT
 */
-BOOL net_parse_ls_line(char *line, NET_FileEntryInfo* entry_info)
+BOOL net_parse_ls_line(char *line, NET_FileEntryInfo *entry_info)
 {
 	char *e;
-	int   len;
+	int len;
 	static Time_t savedate;
-//Owner
+	// Owner
 	e = SkipNSpace(line);
 	CHECK((*e == 0), FALSE)
-	len = Min((int)ARRAYSIZE(entry_info->FTPOwner)-1, (int)(e-line));
-	StrCpy(entry_info->FTPOwner, line, len+1);
+	len = Min((int)ARRAYSIZE(entry_info->FTPOwner) - 1, (int)(e - line));
+	StrCpy(entry_info->FTPOwner, line, len + 1);
 	line = SkipSpace(e);
 
-	if(line[0] != '*')
-	{
-		//Size
+	if (line[0] != '*') {
+		// Size
 		e = SkipNSpace(line);
 		CHECK((*e == 0), FALSE)
 		*e = 0;
 		entry_info->size = AtoI(line, (int64_t)-1);
 		*e = ' ';
 		CHECK((entry_info->size == (int64_t)-1), FALSE)
-		//Date
+		// Date
 		line = SkipSpace(e);
-		CHECK((!parse_os400_date_time(line,entry_info->date)), FALSE)
-		//save date of *FILE for *MEM members
+		CHECK((!parse_os400_date_time(line, entry_info->date)), FALSE)
+		// save date of *FILE for *MEM members
 		savedate = entry_info->date;
 		line = SkipSpace(line);
 		CHECK((*line == 0), FALSE)
-	}
-	else
-	{
+	} else {
 		entry_info->size = 0;
 		entry_info->date = savedate;
 	}
 
 	line = SkipNSpace(line);
-//File name
+	// File name
 	line = SkipSpace(line);
 	CHECK((*line == 0), FALSE)
 	StrCpy(entry_info->FindData.cFileName, line, ARRAYSIZE(entry_info->FindData.cFileName));
 	len = static_cast<int>(strlen(entry_info->FindData.cFileName));
 
-	if(entry_info->FindData.cFileName[len-1] == '/')
-	{
-		entry_info->FindData.cFileName[len-1] = 0;
+	if (entry_info->FindData.cFileName[len - 1] == '/') {
+		entry_info->FindData.cFileName[len - 1] = 0;
 		entry_info->FileType = NET_DIRECTORY;
 	}
 
 	return TRUE;
 }
 
-BOOL WINAPI idPRParceOS400(const FTPServerInfo* Server, FTPFileInfo* p, char *entry, int entry_len)
+BOOL WINAPI idPRParceOS400(const FTPServerInfo *Server, FTPFileInfo *p, char *entry, int entry_len)
 {
 	NET_FileEntryInfo entry_info;
 
-	if(!net_parse_ls_line(entry, &entry_info))
+	if (!net_parse_ls_line(entry, &entry_info))
 		return FALSE;
 
-	return ConvertEntry(&entry_info,p);
+	return ConvertEntry(&entry_info, p);
 }

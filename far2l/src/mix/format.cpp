@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "format.hpp"
 #include "interf.hpp"
 
@@ -65,15 +64,11 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 		}
 	}
 
-	if (_Truncate != static_cast<size_t>(-1))
-	{
-		if (_Cells)
-		{
+	if (_Truncate != static_cast<size_t>(-1)) {
+		if (_Cells) {
 			size_t ng = _Truncate;
 			Length = StrSizeOfCells(Data, Length, ng, false);
-		}
-		else if (Length > _Truncate)
-		{
+		} else if (Length > _Truncate) {
 			Length = _Truncate;
 		}
 	}
@@ -82,8 +77,7 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 
 	const size_t Count = _Cells ? OutStr.CellsCount() : OutStr.GetLength();
 
-	if (_Expand > Count)
-	{
+	if (_Expand > Count) {
 		if (_Align == fmt::A_RIGHT)
 			OutStr.Insert(0, _FillChar, _Expand - Count);
 		else
@@ -94,100 +88,99 @@ void BaseFormat::Put(LPCWSTR Data, size_t Length)
 	Reset();
 }
 
-BaseFormat& BaseFormat::operator<<(WCHAR Value)
+BaseFormat &BaseFormat::operator<<(WCHAR Value)
 {
-	Put(&Value,1);
+	Put(&Value, 1);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(INT64 Value)
+BaseFormat &BaseFormat::operator<<(INT64 Value)
 {
 	WCHAR Buffer[32];
 	//_i64tow(Value,Buffer,10);
 	swprintf(Buffer, 32, L"%lli", Value);
-	Put(Buffer,StrLength(Buffer));
+	Put(Buffer, StrLength(Buffer));
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(UINT64 Value)
+BaseFormat &BaseFormat::operator<<(UINT64 Value)
 {
 	WCHAR Buffer[32];
 	//_ui64tow(Value,Buffer,10);
 	swprintf(Buffer, 32, L"%llu", Value);
-	Put(Buffer,StrLength(Buffer));
+	Put(Buffer, StrLength(Buffer));
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(LPCWSTR Data)
+BaseFormat &BaseFormat::operator<<(LPCWSTR Data)
 {
-	Data=NullToEmpty(Data);
-	Put(Data,StrLength(Data));
+	Data = NullToEmpty(Data);
+	Put(Data, StrLength(Data));
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(FARString& String)
+BaseFormat &BaseFormat::operator<<(FARString &String)
 {
-	Put(String,String.GetLength());
+	Put(String, String.GetLength());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Chars&)
+BaseFormat &BaseFormat::operator<<(const fmt::Chars &)
 {
 	SetCells(false);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Cells&)
+BaseFormat &BaseFormat::operator<<(const fmt::Cells &)
 {
 	SetCells(true);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Skip& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::Skip &Manipulator)
 {
 	SetSkip(Manipulator.GetValue());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Expand& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::Expand &Manipulator)
 {
 	SetExpand(Manipulator.GetValue());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Truncate& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::Truncate &Manipulator)
 {
 	SetTruncate(Manipulator.GetValue());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::Size& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::Size &Manipulator)
 {
 	SetTruncate(Manipulator.GetValue());
 	SetExpand(Manipulator.GetValue());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::FillChar& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::FillChar &Manipulator)
 {
 	SetFillChar(Manipulator.GetValue());
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::LeftAlign& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::LeftAlign &Manipulator)
 {
 	SetAlign(fmt::A_LEFT);
 	return *this;
 }
 
-BaseFormat& BaseFormat::operator<<(const fmt::RightAlign& Manipulator)
+BaseFormat &BaseFormat::operator<<(const fmt::RightAlign &Manipulator)
 {
 	SetAlign(fmt::A_RIGHT);
 	return *this;
 }
 
-void FormatScreen::Commit(const FARString& Data)
+void FormatScreen::Commit(const FARString &Data)
 {
 	Text(Data);
 }
-

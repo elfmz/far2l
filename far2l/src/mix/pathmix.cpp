@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "panel.hpp"
@@ -42,12 +41,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 NTPath::NTPath(LPCWSTR Src)
 {
-	if (Src&&*Src)
-	{
-		Str=Src;
-		if (!HasPathPrefix(Src) && *Src!='/')
-		{
-			ConvertNameToFull(Str,Str);
+	if (Src && *Src) {
+		Str = Src;
+		if (!HasPathPrefix(Src) && *Src != '/') {
+			ConvertNameToFull(Str, Str);
 		}
 	}
 }
@@ -69,7 +66,7 @@ bool IsNetworkServerPath(const wchar_t *Path)
 
 bool IsLocalPath(const wchar_t *Path)
 {
-	return (Path && Path[0] == L'/'); // && Path[1] != L'/'
+	return (Path && Path[0] == L'/');	// && Path[1] != L'/'
 }
 
 bool IsLocalRootPath(const wchar_t *Path)
@@ -94,7 +91,7 @@ bool IsLocalPrefixRootPath(const wchar_t *Path)
 
 bool IsLocalVolumePath(const wchar_t *Path)
 {
-	return HasPathPrefix(Path);//todo && !_wcsnicmp(&Path[4],L"Volume{",7) && Path[47] == L'}';
+	return HasPathPrefix(Path);		// todo && !_wcsnicmp(&Path[4],L"Volume{",7) && Path[47] == L'}';
 }
 
 bool IsLocalVolumeRootPath(const wchar_t *Path)
@@ -113,23 +110,23 @@ bool PathCanHoldRegularFile(const wchar_t *Path)
 	const wchar_t *p = FirstSlash(Path + offset);
 
 	/* server || server\ */
-	if (!p || !*(p+1))
+	if (!p || !*(p + 1))
 		return false;
 
 	return true;
 }
 
-bool IsPluginPrefixPath(const wchar_t *Path) //Max:
+bool IsPluginPrefixPath(const wchar_t *Path)	// Max:
 {
 	if (Path[0] == GOOD_SLASH)
 		return false;
 
-	const wchar_t* pC = wcschr(Path, L':');
+	const wchar_t *pC = wcschr(Path, L':');
 
 	if (!pC)
 		return false;
 
-	const wchar_t* pS = FirstSlash(Path);
+	const wchar_t *pS = FirstSlash(Path);
 
 	if (pS && pS < pC)
 		return false;
@@ -151,43 +148,38 @@ bool TestCurrentDirectory(const wchar_t *TestDir)
 {
 	FARString strCurDir;
 
-	if (apiGetCurrentDirectory(strCurDir) && !StrCmp(strCurDir,TestDir))
+	if (apiGetCurrentDirectory(strCurDir) && !StrCmp(strCurDir, TestDir))
 		return true;
 
 	return false;
 }
 
-const wchar_t* WINAPI PointToName(const wchar_t *lpwszPath)
+const wchar_t *WINAPI PointToName(const wchar_t *lpwszPath)
 {
-	return PointToName(lpwszPath,nullptr);
+	return PointToName(lpwszPath, nullptr);
 }
 
-const wchar_t* PointToName(FARString& strPath)
+const wchar_t *PointToName(FARString &strPath)
 {
-	const wchar_t *lpwszPath=strPath.CPtr();
-	const wchar_t *lpwszEndPtr=lpwszPath+strPath.GetLength();
-	return PointToName(lpwszPath,lpwszEndPtr);
+	const wchar_t *lpwszPath = strPath.CPtr();
+	const wchar_t *lpwszEndPtr = lpwszPath + strPath.GetLength();
+	return PointToName(lpwszPath, lpwszEndPtr);
 }
 
-const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
+const wchar_t *PointToName(const wchar_t *lpwszPath, const wchar_t *lpwszEndPtr)
 {
 	if (!lpwszPath)
 		return nullptr;
 
-	if (lpwszEndPtr)
-	{
-		for (const wchar_t *lpwszScanPtr = lpwszEndPtr; lpwszScanPtr != lpwszPath;)
-		{
+	if (lpwszEndPtr) {
+		for (const wchar_t *lpwszScanPtr = lpwszEndPtr; lpwszScanPtr != lpwszPath;) {
 			--lpwszScanPtr;
 			if (IsSlash(*lpwszScanPtr))
 				return lpwszScanPtr + 1;
 		}
-	}
-	else
-	{
+	} else {
 		const wchar_t *lpwszLastSlashPtr = nullptr;
-		for (const wchar_t *lpwszScanPtr = lpwszPath; *lpwszScanPtr; ++lpwszScanPtr)
-		{
+		for (const wchar_t *lpwszScanPtr = lpwszPath; *lpwszScanPtr; ++lpwszScanPtr) {
 			if (IsSlash(*lpwszScanPtr))
 				lpwszLastSlashPtr = lpwszScanPtr;
 		}
@@ -203,55 +195,52 @@ const wchar_t* PointToName(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
 	"name\" (оканчивается на слеш) возвращает указатель на name, а не на пустую
 	строку
 */
-const wchar_t* WINAPI PointToFolderNameIfFolder(const wchar_t *Path)
+const wchar_t *WINAPI PointToFolderNameIfFolder(const wchar_t *Path)
 {
 	if (!Path)
 		return nullptr;
 
-	const wchar_t *NamePtr=Path, *prevNamePtr=Path;
+	const wchar_t *NamePtr = Path, *prevNamePtr = Path;
 
-	while (*Path)
-	{
-		if (IsSlash(*Path))
-		{
-			prevNamePtr=NamePtr;
-			NamePtr=Path+1;
+	while (*Path) {
+		if (IsSlash(*Path)) {
+			prevNamePtr = NamePtr;
+			NamePtr = Path + 1;
 		}
 
 		++Path;
 	}
 
-	return ((*NamePtr)?NamePtr:prevNamePtr);
+	return ((*NamePtr) ? NamePtr : prevNamePtr);
 }
 
-const wchar_t* PointToExt(const wchar_t *lpwszPath)
+const wchar_t *PointToExt(const wchar_t *lpwszPath)
 {
 	if (!lpwszPath)
 		return nullptr;
 
 	const wchar_t *lpwszEndPtr = lpwszPath;
 
-	while (*lpwszEndPtr) lpwszEndPtr++;
+	while (*lpwszEndPtr)
+		lpwszEndPtr++;
 
-	return PointToExt(lpwszPath,lpwszEndPtr);
+	return PointToExt(lpwszPath, lpwszEndPtr);
 }
 
-const wchar_t* PointToExt(FARString& strPath)
+const wchar_t *PointToExt(FARString &strPath)
 {
 	return PointToExt(strPath.CPtr(), strPath.CEnd());
 }
 
-const wchar_t* PointToExt(const wchar_t *lpwszPath,const wchar_t *lpwszEndPtr)
+const wchar_t *PointToExt(const wchar_t *lpwszPath, const wchar_t *lpwszEndPtr)
 {
 	if (!lpwszPath || !lpwszEndPtr)
 		return nullptr;
 
 	const wchar_t *lpwszExtPtr = lpwszEndPtr;
 
-	while (lpwszExtPtr != lpwszPath)
-	{
-		if (*lpwszExtPtr==L'.')
-		{
+	while (lpwszExtPtr != lpwszPath) {
+		if (*lpwszExtPtr == L'.') {
 			return lpwszExtPtr;
 		}
 
@@ -292,8 +281,7 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 	bool Ret = false;
 	size_t len = StrLength(Path);
 
-	while (len && IsSlash(Path[--len]))
-	{
+	while (len && IsSlash(Path[--len])) {
 		Ret = true;
 		Path[len] = L'\0';
 
@@ -320,10 +308,10 @@ BOOL DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 {
 	size_t LenToSlash = strPath.GetLength();
 
-	while (LenToSlash != 0 && IsSlash(strPath.At(LenToSlash - 1)))
-	{
+	while (LenToSlash != 0 && IsSlash(strPath.At(LenToSlash - 1))) {
 		--LenToSlash;
-		if (!AllEndSlash) break;
+		if (!AllEndSlash)
+			break;
 	}
 
 	if (LenToSlash == strPath.GetLength())
@@ -337,12 +325,11 @@ bool CutToSlash(FARString &strStr, bool bInclude)
 {
 	size_t pos;
 
-	if (FindLastSlash(pos,strStr))
-	{
+	if (FindLastSlash(pos, strStr)) {
 		if (bInclude)
 			strStr.Truncate(pos);
 		else
-			strStr.Truncate(pos+1);
+			strStr.Truncate(pos + 1);
 
 		return true;
 	}
@@ -363,23 +350,21 @@ bool CutToSlash(std::wstring &strStr, bool bInclude)
 FARString &CutToFolderNameIfFolder(FARString &strPath)
 {
 	wchar_t *lpwszPath = strPath.GetBuffer();
-	wchar_t *lpwszNamePtr=lpwszPath, *lpwszprevNamePtr=lpwszPath;
+	wchar_t *lpwszNamePtr = lpwszPath, *lpwszprevNamePtr = lpwszPath;
 
-	while (*lpwszPath)
-	{
-		if (IsSlash(*lpwszPath))
-		{
-			lpwszprevNamePtr=lpwszNamePtr;
-			lpwszNamePtr=lpwszPath+1;
+	while (*lpwszPath) {
+		if (IsSlash(*lpwszPath)) {
+			lpwszprevNamePtr = lpwszNamePtr;
+			lpwszNamePtr = lpwszPath + 1;
 		}
 
 		++lpwszPath;
 	}
 
 	if (*lpwszNamePtr)
-		*lpwszNamePtr=0;
+		*lpwszNamePtr = 0;
 	else
-		*lpwszprevNamePtr=0;
+		*lpwszprevNamePtr = 0;
 
 	strPath.ReleaseBuffer();
 	return strPath;
@@ -387,12 +372,10 @@ FARString &CutToFolderNameIfFolder(FARString &strPath)
 
 const wchar_t *FirstSlash(const wchar_t *String)
 {
-	do
-	{
+	do {
 		if (IsSlash(*String))
 			return String;
-	}
-	while (*String++);
+	} while (*String++);
 
 	return nullptr;
 }
@@ -404,18 +387,16 @@ const wchar_t *LastSlash(const wchar_t *String)
 	while (*String++)
 		;
 
-	while (--String!=Start && !IsSlash(*String))
+	while (--String != Start && !IsSlash(*String))
 		;
 
-	return IsSlash(*String)?String:nullptr;
+	return IsSlash(*String) ? String : nullptr;
 }
 
 bool FindSlash(size_t &Pos, const FARString &Str, size_t StartPos)
 {
-	for (size_t p = StartPos; p < Str.GetLength(); p++)
-	{
-		if (IsSlash(Str[p]))
-		{
+	for (size_t p = StartPos; p < Str.GetLength(); p++) {
+		if (IsSlash(Str[p])) {
 			Pos = p;
 			return true;
 		}
@@ -426,10 +407,8 @@ bool FindSlash(size_t &Pos, const FARString &Str, size_t StartPos)
 
 bool FindLastSlash(size_t &Pos, const FARString &Str)
 {
-	for (size_t p = Str.GetLength(); p > 0; p--)
-	{
-		if (IsSlash(Str[p - 1]))
-		{
+	for (size_t p = Str.GetLength(); p > 0; p--) {
+		if (IsSlash(Str[p - 1])) {
 			Pos = p - 1;
 			return true;
 		}
@@ -473,7 +452,7 @@ static std::string LookupExecutableInEnvPath(const char *file)
 	apiGetEnvironmentVariable("PATH", str_path);
 	const std::string &mb_path = str_path.GetMB();
 
-	for (const char *s = mb_path.c_str(); *s; ){
+	for (const char *s = mb_path.c_str(); *s;) {
 		const char *p = strchr(s, ':');
 
 		if (p != NULL) {
@@ -486,12 +465,14 @@ static std::string LookupExecutableInEnvPath(const char *file)
 			out+= '/';
 		}
 		out+= file;
-		struct stat st{};
+		struct stat st
+		{};
 		if (stat(out.c_str(), &st) == 0) {
 			break;
 		}
 		out.clear();
-		if (p == NULL) break;
+		if (p == NULL)
+			break;
 		s = p + 1;
 	}
 

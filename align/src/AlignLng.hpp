@@ -1,10 +1,10 @@
 enum
 {
-  MOk,
-  MCancel,
-  MAlign,
-  MRightMargin,
-  MReformat,
-  MSmartMode,
-  MJustify
+	MOk,
+	MCancel,
+	MAlign,
+	MRightMargin,
+	MReformat,
+	MSmartMode,
+	MJustify
 };

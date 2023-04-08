@@ -6,13 +6,11 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include <stdexcept>
 #include <utils.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
-#ifdef __DragonFly__
-#include <cstring>
-#endif
 
 #include "sudo_askpass_ipc.h"
 #include "sudo_private.h"

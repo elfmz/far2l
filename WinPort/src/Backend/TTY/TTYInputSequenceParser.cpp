@@ -652,17 +652,16 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 
 	size_t r = 0;
 
-	// try kitty first
+	r = ParseNChars2Key(s, l);
+	if (r != 0)
+		return r;
+
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsKittyEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
 		}
 	}	
-
-	r = ParseNChars2Key(s, l);
-	if (r != 0)
-		return r;
 
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsWinTermEscapeSequence(s, l);

@@ -23,11 +23,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 void memmovel(void *dest, void *src, size_t count)
 {
 	_asm {
-        mov edi, dest
-        mov esi, src
-        mov ecx, count
-        cld
-        rep movsb
+		mov edi, dest
+		mov esi, src
+		mov ecx, count
+		cld
+		rep movsb
 	}
 }
 #endif
@@ -36,11 +36,11 @@ void memmovel(void *dest, void *src, size_t count)
 void zeromem(void *pMem, size_t nLength)
 {
 	_asm {
-        mov edi, pMem
-        mov ecx, nLength
-        cld
-        xor eax, eax
-        rep stosb
+		mov edi, pMem
+		mov ecx, nLength
+		cld
+		xor eax, eax
+		rep stosb
 	}
 }
 #endif
@@ -50,25 +50,25 @@ size_t utoar(unsigned int nNum, char *sBuff, size_t nBuffLen)
 // returning index to first byte
 {
 	_asm {
-        mov     eax, nNum
-        mov     edi, sBuff
-        mov     ecx, nBuffLen
-        dec     edi
-        mov     ebx, 10
+		mov     eax, nNum
+		mov     edi, sBuff
+		mov     ecx, nBuffLen
+		dec     edi
+		mov     ebx, 10
 
-        mov     byte ptr [edi][ecx], 0  ; terminating null
-        dec     ecx
+		mov     byte ptr [edi][ecx], 0  ; terminating null
+		dec     ecx
 
-Next:   xor     edx, edx
-        div     ebx
-        add     edx, 48                 ; to ascii
-        mov     byte ptr [edi][ecx], dl
-        dec     ecx
-        jz      Exit
-        test    eax, eax
-        jz      Exit
-        jmp     short Next
-Exit:   mov     eax, ecx
+Next:	xor     edx, edx
+		div     ebx
+		add     edx, 48                 ; to ascii
+		mov     byte ptr [edi][ecx], dl
+		dec     ecx
+		jz      Exit
+		test    eax, eax
+		jz      Exit
+		jmp     short Next
+Exit:	mov     eax, ecx
 	}
 }
 #endif
@@ -77,16 +77,16 @@ Exit:   mov     eax, ecx
 size_t sstrnlen(const char *sString, size_t count)
 {
 	_asm {
-        mov    edi, sString
-        mov    ecx, count
-        cld
-        mov    edx, ecx
-        xor    eax, eax
-        repne  scasb
-        jnz    Len
-        inc    ecx
-Len:    sub    edx, ecx
-        mov    eax, edx
+		mov    edi, sString
+		mov    ecx, count
+		cld
+		mov    edx, ecx
+		xor    eax, eax
+		repne  scasb
+		jnz    Len
+		inc    ecx
+Len:	sub    edx, ecx
+		mov    eax, edx
 	}
 }
 #endif

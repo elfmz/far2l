@@ -45,19 +45,19 @@ void UpperCase(char *sDest, const char *sSrc, size_t nLength)
 {
 	/* while(nLength--)sDest[nLength]=aUpcaseTable[sSrc[nLenhth]]; */
 	_asm {
-        mov     ecx, nLength
-        jecxz   Exit
-        mov     esi, sSrc
-        mov     edi, sDest
+		mov     ecx, nLength
+		jecxz   Exit
+		mov     esi, sSrc
+		mov     edi, sDest
 
-        dec     esi
-        dec     edi
+		dec     esi
+		dec     edi
 
-        mov     ebx, offset aUpcaseTable
-Next:   mov     al,  [esi][ecx]
-        xlat
-        mov     [edi][ecx], al
-        loop    Next
+		mov     ebx, offset aUpcaseTable
+Next:	mov     al,  [esi][ecx]
+		xlat
+		mov     [edi][ecx], al
+		loop    Next
 Exit:
 	}
 }
@@ -82,9 +82,9 @@ static __inline char ToUpper(char cByte)
 {
 	/* return aUpcaseTable[(unsigned char)cByte]; */
 	_asm {
-        movzx   eax, cByte
-        mov     ebx, offset aUpcaseTable
-        xlat
+		movzx   eax, cByte
+		mov     ebx, offset aUpcaseTable
+		xlat
 	}
 }
 #else

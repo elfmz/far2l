@@ -5,19 +5,31 @@ All other alignment in the middle of text line (if need) - spaces.
 
 ## Spaces and ellipses:
 ``` Examples:
+// No space between ellipse and function name, no space in empty arguments list:
 void FunctionWithoutArgs();
+
+// Spaces between arguments, but no spaces between ellipse and contained argument:
 void ConstFunctionWithArgs(int i, std::string s) const;
-if (condition1 && condition2) {
+
+// Spaces between expression elements and after if, no spaces between ellipse and contained stuff:
+if (condition1 && (condition2 || condition3)) {
 }
+
+// Space between try and opening brace, spaces around catch:
 try {
 } catch (std::exception &) {
 }
-int i {};
-i = 1;
-i+= 2;
-void *p_i = (void *)&i;
-int &ref_i = i;
-int ternary_result = (complex && condition) ? 1 : 2;
+int arr[] = {1, 2, 3};      // - space both sides of equal sign here
+int i{};                    // - no space between variable and list initializer's brace
+i = arr[1];                 // - simple assignment - space surrounds both sides of equal sign
+i+= arr[2];                 // - incremental assignment - space only on the right
+void *ptr_i = (void *)&i;   // - pointer: space between target type and asterisk
+int &ref_i = i;             // - reference: space between target type and amperans
+
+// Complex ternary expressions should have ellipses to segregate things:
+int ternary_result1 = simple_condition ? 1 : 2;
+int ternary_result2 = (complex && condition) ? 1 : 2;
+int ternary_result3 = simple_condition ? ((complex && condition) ? 1 : 2) : ((complex && condition) ? 3 : 4);
 ```
 
 ## Line length limit:

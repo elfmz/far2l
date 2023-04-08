@@ -43,11 +43,11 @@ extern void zeromem(void *ptr, size_t nLen);
 static __inline void setmem(void *pMem, int b, size_t nLength)
 {
 	_asm {
-        mov edi, pMem
-        mov ecx, nLength
-        mov eax, b
-        cld
-        rep stosb
+		mov edi, pMem
+		mov ecx, nLength
+		mov eax, b
+		cld
+		rep stosb
 	}
 }
 #define memcpy(d, s, l) memmovel((d), (s), (l))

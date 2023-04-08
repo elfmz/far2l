@@ -5814,10 +5814,10 @@ DWORD KeyMacro::AssignMacroKey()
 	  +--------------------------+
 	*/
 	DialogDataEx MacroAssignDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1, 30, 4, {}, 0,                       Msg::DefineMacroTitle},
-			{DI_TEXT,      -1, 2, 0,  2, {}, 0,                       Msg::DefineMacro     },
-			{DI_COMBOBOX,  5,  3, 28, 3, {}, DIF_FOCUS | DIF_DEFAULT, L""                  }
-    };
+		{DI_DOUBLEBOX, 3,  1, 30, 4, {}, 0,                       Msg::DefineMacroTitle},
+		{DI_TEXT,      -1, 2, 0,  2, {}, 0,                       Msg::DefineMacro     },
+		{DI_COMBOBOX,  5,  3, 28, 3, {}, DIF_FOCUS | DIF_DEFAULT, L""                  }
+	};
 	MakeDialogItemsEx(MacroAssignDlgData, MacroAssignDlg);
 	DlgParam Param = {this, 0, StartMode, 0};
 	//_SVS(SysLog(L"StartMode=%d",StartMode));
@@ -5935,28 +5935,28 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 
 	*/
 	DialogDataEx MacroSettingsDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1,  69, 17, {},  0,                             L""                                    },
-            {DI_TEXT,      5,  2,  0,  2,  {},  0,                             Msg::MacroSequence                     },
-			{DI_EDIT,      5,  3,  67, 3,  {},  DIF_FOCUS,                     L""                                    },
-            {DI_TEXT,      3,  4,  0,  4,  {},  DIF_SEPARATOR,                 L""                                    },
-			{DI_CHECKBOX,  5,  5,  0,  5,  {},  0,                             Msg::MacroSettingsEnableOutput         },
-			{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsRunAfterStart        },
-			{DI_TEXT,      3,  7,  0,  7,  {},  DIF_SEPARATOR,                 L""                                    },
-			{DI_CHECKBOX,  5,  8,  0,  8,  {},  0,                             Msg::MacroSettingsActivePanel          },
-			{DI_CHECKBOX,  7,  9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
-			{DI_CHECKBOX,  7,  10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
-			{DI_CHECKBOX,  7,  11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
-			{DI_CHECKBOX,  37, 8,  0,  8,  {},  0,                             Msg::MacroSettingsPassivePanel         },
-			{DI_CHECKBOX,  39, 9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
-			{DI_CHECKBOX,  39, 10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
-			{DI_CHECKBOX,  39, 11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
-			{DI_TEXT,      3,  12, 0,  12, {},  DIF_SEPARATOR,                 L""                                    },
-			{DI_CHECKBOX,  5,  13, 0,  13, {2}, DIF_3STATE,                    Msg::MacroSettingsCommandLine          },
-			{DI_CHECKBOX,  5,  14, 0,  14, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
-			{DI_TEXT,      3,  15, 0,  15, {},  DIF_SEPARATOR,                 L""                                    },
-			{DI_BUTTON,    0,  16, 0,  16, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
-			{DI_BUTTON,    0,  16, 0,  16, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
-    };
+		{DI_DOUBLEBOX, 3,  1,  69, 17, {},  0,                             L""                                    },
+		{DI_TEXT,      5,  2,  0,  2,  {},  0,                             Msg::MacroSequence                     },
+		{DI_EDIT,      5,  3,  67, 3,  {},  DIF_FOCUS,                     L""                                    },
+		{DI_TEXT,      3,  4,  0,  4,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  5,  0,  5,  {},  0,                             Msg::MacroSettingsEnableOutput         },
+		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsRunAfterStart        },
+		{DI_TEXT,      3,  7,  0,  7,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  8,  0,  8,  {},  0,                             Msg::MacroSettingsActivePanel          },
+		{DI_CHECKBOX,  7,  9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
+		{DI_CHECKBOX,  7,  10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
+		{DI_CHECKBOX,  7,  11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
+		{DI_CHECKBOX,  37, 8,  0,  8,  {},  0,                             Msg::MacroSettingsPassivePanel         },
+		{DI_CHECKBOX,  39, 9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
+		{DI_CHECKBOX,  39, 10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
+		{DI_CHECKBOX,  39, 11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
+		{DI_TEXT,      3,  12, 0,  12, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  13, 0,  13, {2}, DIF_3STATE,                    Msg::MacroSettingsCommandLine          },
+		{DI_CHECKBOX,  5,  14, 0,  14, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
+		{DI_TEXT,      3,  15, 0,  15, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_BUTTON,    0,  16, 0,  16, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
+		{DI_BUTTON,    0,  16, 0,  16, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
+	};
 	MakeDialogItemsEx(MacroSettingsDlgData, MacroSettingsDlg);
 	FARString strKeyText;
 	KeyToText(Key, strKeyText);

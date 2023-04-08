@@ -632,33 +632,29 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	int DLG_HEIGHT = 19, DLG_WIDTH = 76;
 
 	DialogDataEx CopyDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1,  (SHORT)(DLG_WIDTH - 4), (SHORT)(DLG_HEIGHT - 2), {},                                              0,                                                         Msg::CopyDlgTitle                           },
-			{DI_TEXT,      5,  2,  0,                      2,                       {},                                              0,                                                         (Link ? Msg::CMLTargetIN : Msg::CMLTargetTO)},
-			{DI_EDIT,      5,  3,  70,                     3,                       {reinterpret_cast<DWORD_PTR>(L"Copy")},
-             DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_USELASTHISTORY | DIF_EDITPATH,                                                                                                      L""                                         },
-			{DI_TEXT,      3,  4,  0,                      4,                       {},                                              DIF_SEPARATOR,                                             L""                                         },
-            {DI_TEXT,      5,  5,  0,                      5,                       {},                                              0,                                                         Msg::CopyIfFileExist                        },
-			{DI_COMBOBOX,  29, 5,  70,                     5,                       {},                                              DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""                                         },
-			{DI_CHECKBOX,  5,  6,  0,                      6,                       {},                                              0,                                                         Msg::CopyMultiActions                       },
-			{DI_CHECKBOX,  5,  7,  0,                      7,                       {},                                              0,                                                         Msg::CopyAccessMode                         },
-			{DI_CHECKBOX,  5,  8,  0,                      8,                       {},                                              0,                                                         Msg::CopyXAttr                              },
-			{DI_CHECKBOX,  5,  9,  0,                      9,                       {},                                              0,                                                         Msg::CopyWriteThrough                       },
-			{DI_CHECKBOX,  5,  10, 0,                      10,                      {},                                              0,                                                         Msg::CopySparseFiles                        },
-			{DI_CHECKBOX,  5,  11, 0,                      11,                      {},                                              0,                                                         Msg::CopyUseCOW                             },
-			{DI_TEXT,      5,  12, 0,                      12,                      {},                                              0,                                                         Msg::CopySymLinkText                        },
-			{DI_COMBOBOX,  29, 12, 70,                     12,                      {},                                              DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""                                         },
-			{DI_TEXT,      3,  13, 0,                      13,                      {},                                              DIF_SEPARATOR,                                             L""                                         },
-			{DI_CHECKBOX,  5,  14, 0,                      14,                      {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION,
-             Msg::CopyUseFilter                                                                                                                                                                                                             },
-			{DI_TEXT,      3,  15, 0,                      15,                      {},                                              DIF_SEPARATOR,                                             L""                                         },
-			{DI_BUTTON,    0,  16, 0,                      16,                      {},                                              DIF_DEFAULT | DIF_CENTERGROUP,                             Msg::CopyDlgCopy                            },
-			{DI_BUTTON,    0,  16, 0,                      16,                      {},                                              DIF_CENTERGROUP | DIF_BTNNOCLOSE,                          Msg::CopyDlgTree                            },
-			{DI_BUTTON,    0,  16, 0,                      16,                      {},
-             DIF_CENTERGROUP | DIF_BTNNOCLOSE | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE),
-             Msg::CopySetFilter                                                                                                                                                                                                             },
-			{DI_BUTTON,    0,  16, 0,                      16,                      {},                                              DIF_CENTERGROUP,                                           Msg::CopyDlgCancel                          },
-			{DI_TEXT,      5,  2,  0,                      2,                       {},                                              DIF_SHOWAMPERSAND,                                         L""                                         }
-    };
+		{DI_DOUBLEBOX, 3,  1,  (SHORT)(DLG_WIDTH - 4), (SHORT)(DLG_HEIGHT - 2), {}, 0, Msg::CopyDlgTitle},
+		{DI_TEXT,      5,  2,  0,  2,  {}, 0, (Link ? Msg::CMLTargetIN : Msg::CMLTargetTO)},
+		{DI_EDIT,      5,  3,  70, 3,  {reinterpret_cast<DWORD_PTR>(L"Copy")}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_USELASTHISTORY | DIF_EDITPATH, L""},
+		{DI_TEXT,      3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5,  5,  0,  5,  {}, 0, Msg::CopyIfFileExist},
+		{DI_COMBOBOX,  29, 5,  70, 5,  {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+		{DI_CHECKBOX,  5,  6,  0,  6,  {}, 0, Msg::CopyMultiActions},
+		{DI_CHECKBOX,  5,  7,  0,  7,  {}, 0, Msg::CopyAccessMode},
+		{DI_CHECKBOX,  5,  8,  0,  8,  {}, 0, Msg::CopyXAttr},
+		{DI_CHECKBOX,  5,  9,  0,  9,  {}, 0, Msg::CopyWriteThrough},
+		{DI_CHECKBOX,  5,  10, 0,  10, {}, 0, Msg::CopySparseFiles},
+		{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::CopyUseCOW},
+		{DI_TEXT,      5,  12, 0,  12, {}, 0, Msg::CopySymLinkText},
+		{DI_COMBOBOX,  29, 12, 70, 12, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+		{DI_TEXT,      3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5,  14, 0,  14, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::CopyUseFilter},
+		{DI_TEXT,      3,  15, 0,  15, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0,  16, 0,  16, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::CopyDlgCopy},
+		{DI_BUTTON,    0,  16, 0,  16, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::CopyDlgTree},
+		{DI_BUTTON,    0,  16, 0,  16, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::CopySetFilter},
+		{DI_BUTTON,    0,  16, 0,  16, {}, DIF_CENTERGROUP, Msg::CopyDlgCancel                          },
+		{DI_TEXT,      5,  2,  0,  2,  {}, DIF_SHOWAMPERSAND, L""}
+	};
 	MakeDialogItemsEx(CopyDlgData, CopyDlg);
 	CopyDlg[ID_SC_MULTITARGET].Selected = Opt.CMOpt.MultiCopy;
 	CopyDlg[ID_SC_WRITETHROUGH].Selected = Opt.CMOpt.WriteThrough;
@@ -2940,23 +2936,21 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 		WARN_DLG_WIDTH  = 72,
 	};
 	DialogDataEx WarnCopyDlgData[] = {
-			{DI_DOUBLEBOX, 3, 1,  WARN_DLG_WIDTH - 4, WARN_DLG_HEIGHT - 2, {}, 0,                                                              Msg::Warning           },
-			{DI_TEXT,      5, 2,  WARN_DLG_WIDTH - 6, 2,                   {}, DIF_CENTERTEXT,                                                 Msg::CopyFileExist     },
-			{DI_EDIT,      5, 3,  WARN_DLG_WIDTH - 6, 3,                   {}, DIF_READONLY,                                                   (wchar_t *)DestName    },
-			{DI_TEXT,      3, 4,  0,                  4,                   {}, DIF_SEPARATOR,                                                  L""                    },
-			{DI_BUTTON,    5, 5,  WARN_DLG_WIDTH - 6, 5,                   {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS,                                L""                    },
-			{DI_BUTTON,    5, 6,  WARN_DLG_WIDTH - 6, 6,                   {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS,                                L""                    },
-			{DI_TEXT,      3, 7,  0,                  7,                   {}, DIF_SEPARATOR,                                                  L""                    },
-			{DI_CHECKBOX,  5, 8,  0,                  8,                   {}, DIF_FOCUS,                                                      Msg::CopyRememberChoice},
-			{DI_TEXT,      3, 9,  0,                  9,                   {}, DIF_SEPARATOR,                                                  L""                    },
-
-			{DI_BUTTON,    0, 10, 0,                  10,                  {}, DIF_DEFAULT | DIF_CENTERGROUP,                                  Msg::CopyOverwrite     },
-			{DI_BUTTON,    0, 10, 0,                  10,                  {}, DIF_CENTERGROUP,                                                Msg::CopySkipOvr       },
-			{DI_BUTTON,    0, 10, 0,                  10,                  {}, DIF_CENTERGROUP,                                                Msg::CopyRename        },
-			{DI_BUTTON,    0, 10, 0,                  10,                  {}, DIF_CENTERGROUP | (AskAppend ? 0 : (DIF_DISABLE | DIF_HIDDEN)),
-             Msg::CopyAppend                                                                                                                                          },
-			{DI_BUTTON,    0, 10, 0,                  10,                  {}, DIF_CENTERGROUP,                                                Msg::CopyCancelOvr     }
-    };
+		{DI_DOUBLEBOX, 3, 1,  WARN_DLG_WIDTH - 4, WARN_DLG_HEIGHT - 2, {}, 0, Msg::Warning},
+		{DI_TEXT,      5, 2,  WARN_DLG_WIDTH - 6, 2,  {}, DIF_CENTERTEXT, Msg::CopyFileExist},
+		{DI_EDIT,      5, 3,  WARN_DLG_WIDTH - 6, 3,  {}, DIF_READONLY, (wchar_t *)DestName},
+		{DI_TEXT,      3, 4,  0,                  4,  {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    5, 5,  WARN_DLG_WIDTH - 6, 5,  {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, L""},
+		{DI_BUTTON,    5, 6,  WARN_DLG_WIDTH - 6, 6,  {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, L""},
+		{DI_TEXT,      3, 7,  0,                  7,  {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5, 8,  0,                  8,  {}, DIF_FOCUS, Msg::CopyRememberChoice},
+		{DI_TEXT,      3, 9,  0,                  9,  {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 10, 0,                  10, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::CopyOverwrite},
+		{DI_BUTTON,    0, 10, 0,                  10, {}, DIF_CENTERGROUP, Msg::CopySkipOvr},
+		{DI_BUTTON,    0, 10, 0,                  10, {}, DIF_CENTERGROUP, Msg::CopyRename},
+		{DI_BUTTON,    0, 10, 0,                  10, {}, DIF_CENTERGROUP | (AskAppend ? 0 : (DIF_DISABLE | DIF_HIDDEN)), Msg::CopyAppend},
+		{DI_BUTTON,    0, 10, 0,                  10, {}, DIF_CENTERGROUP,Msg::CopyCancelOvr}
+	};
 	FAR_FIND_DATA_EX DestData;
 	DestData.Clear();
 	int DestDataFilled = FALSE;

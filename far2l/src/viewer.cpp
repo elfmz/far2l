@@ -2337,22 +2337,21 @@ void Viewer::Search(int Next, int FirstChar)
 	const wchar_t *TextHistoryName = L"SearchText";
 	const wchar_t *HexMask = L"HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH ";
 	DialogDataEx SearchDlgData[] = {
-			{DI_DOUBLEBOX,   3,  1,  72, 11, {0},                          0,                                            Msg::ViewSearchTitle     },
-			{DI_TEXT,        5,  2,  0,  2,  {0},                          0,                                            Msg::ViewSearchFor       },
-			{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)TextHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,
-             L""                                                                                                                                  },
-			{DI_FIXEDIT,     5,  3,  70, 3,  {(DWORD_PTR)HexMask},         DIF_MASKEDIT,                                 L""                      },
-			{DI_TEXT,        3,  4,  0,  4,  {0},                          DIF_SEPARATOR,                                L""                      },
-			{DI_RADIOBUTTON, 5,  5,  0,  5,  {1},                          DIF_GROUP,                                    Msg::ViewSearchForText   },
-			{DI_RADIOBUTTON, 5,  6,  0,  6,  {0},                          0,                                            Msg::ViewSearchForHex    },
-			{DI_CHECKBOX,    40, 5,  0,  5,  {0},                          0,                                            Msg::ViewSearchCase      },
-			{DI_CHECKBOX,    40, 6,  0,  6,  {0},                          0,                                            Msg::ViewSearchWholeWords},
-			{DI_CHECKBOX,    40, 7,  0,  7,  {0},                          0,                                            Msg::ViewSearchReverse   },
-			{DI_CHECKBOX,    40, 8,  0,  8,  {0},                          DIF_DISABLE,                                  Msg::ViewSearchRegexp    },
-			{DI_TEXT,        3,  9,  0,  9,  {0},                          DIF_SEPARATOR,                                L""                      },
-			{DI_BUTTON,      0,  10, 0,  10, {0},                          DIF_DEFAULT | DIF_CENTERGROUP,                Msg::ViewSearchSearch    },
-			{DI_BUTTON,      0,  10, 0,  10, {0},                          DIF_CENTERGROUP,                              Msg::ViewSearchCancel    }
-    };
+		{DI_DOUBLEBOX,   3,  1,  72, 11, {0}, 0, Msg::ViewSearchTitle},
+		{DI_TEXT,        5,  2,  0,  2,  {0}, 0, Msg::ViewSearchFor},
+		{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)TextHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY, L""},
+		{DI_FIXEDIT,     5,  3,  70, 3,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
+		{DI_TEXT,        3,  4,  0,  4,  {0}, DIF_SEPARATOR, L""},
+		{DI_RADIOBUTTON, 5,  5,  0,  5,  {1}, DIF_GROUP, Msg::ViewSearchForText},
+		{DI_RADIOBUTTON, 5,  6,  0,  6,  {0}, 0, Msg::ViewSearchForHex},
+		{DI_CHECKBOX,    40, 5,  0,  5,  {0}, 0, Msg::ViewSearchCase},
+		{DI_CHECKBOX,    40, 6,  0,  6,  {0}, 0, Msg::ViewSearchWholeWords},
+		{DI_CHECKBOX,    40, 7,  0,  7,  {0}, 0, Msg::ViewSearchReverse},
+		{DI_CHECKBOX,    40, 8,  0,  8,  {0}, DIF_DISABLE, Msg::ViewSearchRegexp},
+		{DI_TEXT,        3,  9,  0,  9,  {0}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,      0,  10, 0,  10, {0}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::ViewSearchSearch},
+		{DI_BUTTON,      0,  10, 0,  10, {0}, DIF_CENTERGROUP, Msg::ViewSearchCancel}
+	};
 	MakeDialogItemsEx(SearchDlgData, SearchDlg);
 	FARString strSearchStr;
 	FARString strMsgStr;
@@ -2919,14 +2918,13 @@ void Viewer::GoTo(int ShowDlg, int64_t Offset, DWORD Flags)
 	int64_t Relative = 0;
 	const wchar_t *LineHistoryName = L"ViewerOffset";
 	DialogDataEx GoToDlgData[] = {
-			{DI_DOUBLEBOX,   3, 1, 31, 7, {0},                          0,             Msg::ViewerGoTo },
-			{DI_EDIT,        5, 2, 29, 2, {(DWORD_PTR)LineHistoryName},
-             DIF_FOCUS | DIF_DEFAULT | DIF_HISTORY | DIF_USELASTHISTORY,               L""             },
-			{DI_TEXT,        3, 3, 0,  3, {0},                          DIF_SEPARATOR, L""             },
-			{DI_RADIOBUTTON, 5, 4, 0,  4, {0},                          DIF_GROUP,     Msg::GoToPercent},
-			{DI_RADIOBUTTON, 5, 5, 0,  5, {0},                          0,             Msg::GoToHex    },
-			{DI_RADIOBUTTON, 5, 6, 0,  6, {0},                          0,             Msg::GoToDecimal}
-    };
+		{DI_DOUBLEBOX,   3, 1, 31, 7, {0}, 0,Msg::ViewerGoTo },
+		{DI_EDIT,        5, 2, 29, 2, {(DWORD_PTR)LineHistoryName}, DIF_FOCUS | DIF_DEFAULT | DIF_HISTORY | DIF_USELASTHISTORY, L""},
+		{DI_TEXT,        3, 3, 0,  3, {0}, DIF_SEPARATOR, L""},
+		{DI_RADIOBUTTON, 5, 4, 0,  4, {0}, DIF_GROUP,     Msg::GoToPercent},
+		{DI_RADIOBUTTON, 5, 5, 0,  5, {0}, 0, Msg::GoToHex    },
+		{DI_RADIOBUTTON, 5, 6, 0,  6, {0}, 0, Msg::GoToDecimal}
+	};
 	MakeDialogItemsEx(GoToDlgData, GoToDlg);
 	static int PrevMode = 0;
 	GoToDlg[3].Selected = GoToDlg[4].Selected = GoToDlg[5].Selected = 0;

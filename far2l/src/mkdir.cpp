@@ -105,16 +105,15 @@ void ShellMakeDir(Panel *SrcPanel)
 	wchar_t *lpwszDirName;
 	UserDefinedList DirList(0, 0, ULF_UNIQUE);
 	DialogDataEx MkDirDlgData[] = {
-			{DI_DOUBLEBOX, 3, 1, 72, 8, {},                            0,                             Msg::MakeFolderTitle},
-			{DI_TEXT,      5, 2, 0,  2, {},                            0,                             Msg::CreateFolder   },
-			{DI_EDIT,      5, 3, 70, 3, {(DWORD_PTR)L"NewFolder"},
-             DIF_FOCUS | DIF_EDITEXPAND | DIF_HISTORY | DIF_USELASTHISTORY | DIF_EDITPATH,            L""                 },
-			{DI_TEXT,      0, 4, 0,  4, {},                            DIF_SEPARATOR,                 L""                 },
-			{DI_CHECKBOX,  5, 5, 0,  5, {(DWORD_PTR)Opt.MultiMakeDir}, 0,                             Msg::MultiMakeDir   },
-			{DI_TEXT,      0, 6, 0,  6, {},                            DIF_SEPARATOR,                 L""                 },
-			{DI_BUTTON,    0, 7, 0,  7, {},                            DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok             },
-			{DI_BUTTON,    0, 7, 0,  7, {},                            DIF_CENTERGROUP,               Msg::Cancel         }
-    };
+		{DI_DOUBLEBOX, 3, 1, 72, 8, {}, 0, Msg::MakeFolderTitle},
+		{DI_TEXT,      5, 2, 0,  2, {}, 0, Msg::CreateFolder },
+		{DI_EDIT,      5, 3, 70, 3, {(DWORD_PTR)L"NewFolder"}, DIF_FOCUS | DIF_EDITEXPAND | DIF_HISTORY | DIF_USELASTHISTORY | DIF_EDITPATH, L""},
+		{DI_TEXT,      0, 4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5, 5, 0,  5, {(DWORD_PTR)Opt.MultiMakeDir}, 0, Msg::MultiMakeDir},
+		{DI_TEXT,      0, 6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
+	};
 	MakeDialogItemsEx(MkDirDlgData, MkDirDlg);
 	Dialog Dlg(MkDirDlg, ARRAYSIZE(MkDirDlg), MkDirDlgProc, reinterpret_cast<LONG_PTR>(&DirList));
 	Dlg.SetPosition(-1, -1, 76, 10);

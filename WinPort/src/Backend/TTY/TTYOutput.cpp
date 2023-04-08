@@ -163,6 +163,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty)
 
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
 	Format(ESC "[?9001h"); // win32-input-mode on
+	Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -186,6 +187,7 @@ TTYOutput::~TTYOutput()
 		if (!_kernel_tty) {
 			Format(ESC "[0 q");
 		}
+		Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
 		Format(ESC "[?9001l"); // win32-input-mode off
 		TTYBasePalette def_palette;

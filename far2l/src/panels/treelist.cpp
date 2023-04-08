@@ -1758,9 +1758,9 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 {
 	typedef int(__cdecl * CMPFUNC)(const wchar_t *, int, const wchar_t *, int);
 	static CMPFUNC funcs[2][2] = {
-			{StrCmpNN,   StrCmpNNI  },
-            {NumStrCmpN, NumStrCmpNI}
-    };
+		{StrCmpNN,   StrCmpNNI  },
+		{NumStrCmpN, NumStrCmpNI}
+	};
 	CMPFUNC cmpfunc = funcs[Numeric ? 1 : 0][CaseSensitive ? 0 : 1];
 
 	if (*Str1 == GOOD_SLASH && *Str2 == GOOD_SLASH) {

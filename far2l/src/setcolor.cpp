@@ -56,262 +56,258 @@ static VMenu *MenuToRedraw1 = nullptr, *MenuToRedraw2 = nullptr, *MenuToRedraw3 
 // 0,1 - dialog,warn List
 // 2,3 - dialog,warn Combobox
 static int ListPaletteItems[4][13] = {
-		// Listbox
-		{
-				// normal
-				COL_DIALOGLISTTEXT, COL_DIALOGLISTHIGHLIGHT, COL_DIALOGLISTSELECTEDTEXT,
-				COL_DIALOGLISTSELECTEDHIGHLIGHT, COL_DIALOGLISTDISABLED, COL_DIALOGLISTBOX,
-				COL_DIALOGLISTTITLE, COL_DIALOGLISTSCROLLBAR,
-				COL_DIALOGLISTARROWS,				// Arrow
-				COL_DIALOGLISTARROWSSELECTED,		// Выбранный - Arrow
-				COL_DIALOGLISTARROWSDISABLED,		// Arrow disabled
-				COL_DIALOGLISTGRAY,					// "серый"
-				COL_DIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
-		},
-		{
-				// warn
-				COL_WARNDIALOGLISTTEXT, COL_WARNDIALOGLISTHIGHLIGHT, COL_WARNDIALOGLISTSELECTEDTEXT,
-				COL_WARNDIALOGLISTSELECTEDHIGHLIGHT, COL_WARNDIALOGLISTDISABLED, COL_WARNDIALOGLISTBOX,
-				COL_WARNDIALOGLISTTITLE, COL_WARNDIALOGLISTSCROLLBAR,
-				COL_WARNDIALOGLISTARROWS,				// Arrow
-				COL_WARNDIALOGLISTARROWSSELECTED,		// Выбранный - Arrow
-				COL_WARNDIALOGLISTARROWSDISABLED,		// Arrow disabled
-				COL_WARNDIALOGLISTGRAY,					// "серый"
-				COL_WARNDIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
-		},
-		// Combobox
-		{
-				// normal
-				COL_DIALOGCOMBOTEXT, COL_DIALOGCOMBOHIGHLIGHT, COL_DIALOGCOMBOSELECTEDTEXT,
-				COL_DIALOGCOMBOSELECTEDHIGHLIGHT, COL_DIALOGCOMBODISABLED, COL_DIALOGCOMBOBOX,
-				COL_DIALOGCOMBOTITLE, COL_DIALOGCOMBOSCROLLBAR,
-				COL_DIALOGCOMBOARROWS,				// Arrow
-				COL_DIALOGCOMBOARROWSSELECTED,		// Выбранный - Arrow
-				COL_DIALOGCOMBOARROWSDISABLED,		// Arrow disabled
-				COL_DIALOGCOMBOGRAY,				// "серый"
-				COL_DIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
-		},
-		{
-				// warn
-				COL_WARNDIALOGCOMBOTEXT, COL_WARNDIALOGCOMBOHIGHLIGHT, COL_WARNDIALOGCOMBOSELECTEDTEXT,
-				COL_WARNDIALOGCOMBOSELECTEDHIGHLIGHT, COL_WARNDIALOGCOMBODISABLED, COL_WARNDIALOGCOMBOBOX,
-				COL_WARNDIALOGCOMBOTITLE, COL_WARNDIALOGCOMBOSCROLLBAR,
-				COL_WARNDIALOGCOMBOARROWS,				// Arrow
-				COL_WARNDIALOGCOMBOARROWSSELECTED,		// Выбранный - Arrow
-				COL_WARNDIALOGCOMBOARROWSDISABLED,		// Arrow disabled
-				COL_WARNDIALOGCOMBOGRAY,				// "серый"
-				COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
-		},
+	// Listbox
+	{
+		// normal
+		COL_DIALOGLISTTEXT, COL_DIALOGLISTHIGHLIGHT, COL_DIALOGLISTSELECTEDTEXT,
+		COL_DIALOGLISTSELECTEDHIGHLIGHT, COL_DIALOGLISTDISABLED, COL_DIALOGLISTBOX,
+		COL_DIALOGLISTTITLE, COL_DIALOGLISTSCROLLBAR,
+		COL_DIALOGLISTARROWS,				// Arrow
+		COL_DIALOGLISTARROWSSELECTED,		// Выбранный - Arrow
+		COL_DIALOGLISTARROWSDISABLED,		// Arrow disabled
+		COL_DIALOGLISTGRAY,					// "серый"
+		COL_DIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+	},
+	{
+		// warn
+		COL_WARNDIALOGLISTTEXT, COL_WARNDIALOGLISTHIGHLIGHT, COL_WARNDIALOGLISTSELECTEDTEXT,
+		COL_WARNDIALOGLISTSELECTEDHIGHLIGHT, COL_WARNDIALOGLISTDISABLED, COL_WARNDIALOGLISTBOX,
+		COL_WARNDIALOGLISTTITLE, COL_WARNDIALOGLISTSCROLLBAR,
+		COL_WARNDIALOGLISTARROWS,				// Arrow
+		COL_WARNDIALOGLISTARROWSSELECTED,		// Выбранный - Arrow
+		COL_WARNDIALOGLISTARROWSDISABLED,		// Arrow disabled
+		COL_WARNDIALOGLISTGRAY,					// "серый"
+		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+	},
+	// Combobox
+	{
+		// normal
+		COL_DIALOGCOMBOTEXT, COL_DIALOGCOMBOHIGHLIGHT, COL_DIALOGCOMBOSELECTEDTEXT,
+		COL_DIALOGCOMBOSELECTEDHIGHLIGHT, COL_DIALOGCOMBODISABLED, COL_DIALOGCOMBOBOX,
+		COL_DIALOGCOMBOTITLE, COL_DIALOGCOMBOSCROLLBAR,
+		COL_DIALOGCOMBOARROWS,				// Arrow
+		COL_DIALOGCOMBOARROWSSELECTED,		// Выбранный - Arrow
+		COL_DIALOGCOMBOARROWSDISABLED,		// Arrow disabled
+		COL_DIALOGCOMBOGRAY,				// "серый"
+		COL_DIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
+	},
+	{
+		// warn
+		COL_WARNDIALOGCOMBOTEXT, COL_WARNDIALOGCOMBOHIGHLIGHT, COL_WARNDIALOGCOMBOSELECTEDTEXT,
+		COL_WARNDIALOGCOMBOSELECTEDHIGHLIGHT, COL_WARNDIALOGCOMBODISABLED, COL_WARNDIALOGCOMBOBOX,
+		COL_WARNDIALOGCOMBOTITLE, COL_WARNDIALOGCOMBOSCROLLBAR,
+		COL_WARNDIALOGCOMBOARROWS,				// Arrow
+		COL_WARNDIALOGCOMBOARROWSSELECTED,		// Выбранный - Arrow
+		COL_WARNDIALOGCOMBOARROWSDISABLED,		// Arrow disabled
+		COL_WARNDIALOGCOMBOGRAY,				// "серый"
+		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
+	},
 };
 
 void SetColors()
 {
 	MenuDataEx Groups[] = {
-			{(const wchar_t *)Msg::SetColorPanel,       LIF_SELECTED,  0},
-			{(const wchar_t *)Msg::SetColorDialog,      0,             0},
-			{(const wchar_t *)Msg::SetColorWarning,     0,             0},
-			{(const wchar_t *)Msg::SetColorMenu,        0,             0},
-			{(const wchar_t *)Msg::SetColorHMenu,       0,             0},
-			{(const wchar_t *)Msg::SetColorKeyBar,      0,             0},
-			{(const wchar_t *)Msg::SetColorCommandLine, 0,             0},
-			{(const wchar_t *)Msg::SetColorClock,       0,             0},
-			{(const wchar_t *)Msg::SetColorViewer,      0,             0},
-			{(const wchar_t *)Msg::SetColorEditor,      0,             0},
-			{(const wchar_t *)Msg::SetColorHelp,        0,             0},
-			{L"",                                       LIF_SEPARATOR, 0},
-			{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
-			{(const wchar_t *)Msg::SetBW,               0,             0}
-    };
+		{(const wchar_t *)Msg::SetColorPanel,       LIF_SELECTED,  0},
+		{(const wchar_t *)Msg::SetColorDialog,      0,             0},
+		{(const wchar_t *)Msg::SetColorWarning,     0,             0},
+		{(const wchar_t *)Msg::SetColorMenu,        0,             0},
+		{(const wchar_t *)Msg::SetColorHMenu,       0,             0},
+		{(const wchar_t *)Msg::SetColorKeyBar,      0,             0},
+		{(const wchar_t *)Msg::SetColorCommandLine, 0,             0},
+		{(const wchar_t *)Msg::SetColorClock,       0,             0},
+		{(const wchar_t *)Msg::SetColorViewer,      0,             0},
+		{(const wchar_t *)Msg::SetColorEditor,      0,             0},
+		{(const wchar_t *)Msg::SetColorHelp,        0,             0},
+		{L"",                                       LIF_SEPARATOR, 0},
+		{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
+		{(const wchar_t *)Msg::SetBW,               0,             0}
+	};
 	MenuDataEx PanelItems[] = {
-			{(const wchar_t *)Msg::SetColorPanelNormal,          LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorPanelSelected,        0,            0},
-			{(const wchar_t *)Msg::SetColorPanelHighlightedInfo, 0,            0},
-			{(const wchar_t *)Msg::SetColorPanelDragging,        0,            0},
-			{(const wchar_t *)Msg::SetColorPanelBox,             0,            0},
-			{(const wchar_t *)Msg::SetColorPanelNormalCursor,    0,            0},
-			{(const wchar_t *)Msg::SetColorPanelSelectedCursor,  0,            0},
-			{(const wchar_t *)Msg::SetColorPanelNormalTitle,     0,            0},
-			{(const wchar_t *)Msg::SetColorPanelSelectedTitle,   0,            0},
-			{(const wchar_t *)Msg::SetColorPanelColumnTitle,     0,            0},
-			{(const wchar_t *)Msg::SetColorPanelTotalInfo,       0,            0},
-			{(const wchar_t *)Msg::SetColorPanelSelectedInfo,    0,            0},
-			{(const wchar_t *)Msg::SetColorPanelScrollbar,       0,            0},
-			{(const wchar_t *)Msg::SetColorPanelScreensNumber,   0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorPanelNormal,          LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorPanelSelected,        0,            0},
+		{(const wchar_t *)Msg::SetColorPanelHighlightedInfo, 0,            0},
+		{(const wchar_t *)Msg::SetColorPanelDragging,        0,            0},
+		{(const wchar_t *)Msg::SetColorPanelBox,             0,            0},
+		{(const wchar_t *)Msg::SetColorPanelNormalCursor,    0,            0},
+		{(const wchar_t *)Msg::SetColorPanelSelectedCursor,  0,            0},
+		{(const wchar_t *)Msg::SetColorPanelNormalTitle,     0,            0},
+		{(const wchar_t *)Msg::SetColorPanelSelectedTitle,   0,            0},
+		{(const wchar_t *)Msg::SetColorPanelColumnTitle,     0,            0},
+		{(const wchar_t *)Msg::SetColorPanelTotalInfo,       0,            0},
+		{(const wchar_t *)Msg::SetColorPanelSelectedInfo,    0,            0},
+		{(const wchar_t *)Msg::SetColorPanelScrollbar,       0,            0},
+		{(const wchar_t *)Msg::SetColorPanelScreensNumber,   0,            0}
+	};
 	int PanelPaletteItems[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELINFOTEXT, COL_PANELDRAGTEXT,
 			COL_PANELBOX, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR, COL_PANELTITLE, COL_PANELSELECTEDTITLE,
 			COL_PANELCOLUMNTITLE, COL_PANELTOTALINFO, COL_PANELSELECTEDINFO, COL_PANELSCROLLBAR,
 			COL_PANELSCREENSNUMBER};
 	MenuDataEx DialogItems[] = {
-			{(const wchar_t *)Msg::SetColorDialogNormal,                           LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorDialogHighlighted,                      0,            0},
-			{(const wchar_t *)Msg::SetColorDialogDisabled,                         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogBox,                              0,            0},
-			{(const wchar_t *)Msg::SetColorDialogBoxTitle,                         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedBoxTitle,              0,            0},
-			{(const wchar_t *)Msg::SetColorDialogTextInput,                        0,            0},
-			{(const wchar_t *)Msg::SetColorDialogUnchangedTextInput,               0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedTextInput,                0,            0},
-			{(const wchar_t *)Msg::SetColorDialogEditDisabled,                     0,            0},
-			{(const wchar_t *)Msg::SetColorDialogButtons,                          0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedButtons,                  0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedButtons,               0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedButtons,       0,            0},
-			{(const wchar_t *)Msg::SetColorDialogDefaultButton,                    0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
-			{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
-			{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorDialogNormal,                           LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorDialogHighlighted,                      0,            0},
+		{(const wchar_t *)Msg::SetColorDialogDisabled,                         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogBox,                              0,            0},
+		{(const wchar_t *)Msg::SetColorDialogBoxTitle,                         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedBoxTitle,              0,            0},
+		{(const wchar_t *)Msg::SetColorDialogTextInput,                        0,            0},
+		{(const wchar_t *)Msg::SetColorDialogUnchangedTextInput,               0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedTextInput,                0,            0},
+		{(const wchar_t *)Msg::SetColorDialogEditDisabled,                     0,            0},
+		{(const wchar_t *)Msg::SetColorDialogButtons,                          0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedButtons,                  0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedButtons,               0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedButtons,       0,            0},
+		{(const wchar_t *)Msg::SetColorDialogDefaultButton,                    0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
+		{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
+		{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
+	};
 	int DialogPaletteItems[] = {
-			COL_DIALOGTEXT,
-			COL_DIALOGHIGHLIGHTTEXT,
-			COL_DIALOGDISABLED,
-			COL_DIALOGBOX,
-			COL_DIALOGBOXTITLE,
-			COL_DIALOGHIGHLIGHTBOXTITLE,
-			COL_DIALOGEDIT,
-			COL_DIALOGEDITUNCHANGED,
-			COL_DIALOGEDITSELECTED,
-			COL_DIALOGEDITDISABLED,
-			COL_DIALOGBUTTON,
-			COL_DIALOGSELECTEDBUTTON,
-			COL_DIALOGHIGHLIGHTBUTTON,
-			COL_DIALOGHIGHLIGHTSELECTEDBUTTON,
-			COL_DIALOGDEFAULTBUTTON,
-			COL_DIALOGSELECTEDDEFAULTBUTTON,
-			COL_DIALOGHIGHLIGHTDEFAULTBUTTON,
-			COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
-			0,
-			2,
+		COL_DIALOGTEXT,
+		COL_DIALOGHIGHLIGHTTEXT,
+		COL_DIALOGDISABLED,
+		COL_DIALOGBOX,
+		COL_DIALOGBOXTITLE,
+		COL_DIALOGHIGHLIGHTBOXTITLE,
+		COL_DIALOGEDIT,
+		COL_DIALOGEDITUNCHANGED,
+		COL_DIALOGEDITSELECTED,
+		COL_DIALOGEDITDISABLED,
+		COL_DIALOGBUTTON,
+		COL_DIALOGSELECTEDBUTTON,
+		COL_DIALOGHIGHLIGHTBUTTON,
+		COL_DIALOGHIGHLIGHTSELECTEDBUTTON,
+		COL_DIALOGDEFAULTBUTTON,
+		COL_DIALOGSELECTEDDEFAULTBUTTON,
+		COL_DIALOGHIGHLIGHTDEFAULTBUTTON,
+		COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+		0,
+		2,
 	};
 	MenuDataEx WarnDialogItems[] = {
-			{(const wchar_t *)Msg::SetColorDialogNormal,                           LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorDialogHighlighted,                      0,            0},
-			{(const wchar_t *)Msg::SetColorDialogDisabled,                         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogBox,                              0,            0},
-			{(const wchar_t *)Msg::SetColorDialogBoxTitle,                         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedBoxTitle,              0,            0},
-			{(const wchar_t *)Msg::SetColorDialogTextInput,                        0,            0},
-			{(const wchar_t *)Msg::SetColorDialogUnchangedTextInput,               0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedTextInput,                0,            0},
-			{(const wchar_t *)Msg::SetColorDialogEditDisabled,                     0,            0},
-			{(const wchar_t *)Msg::SetColorDialogButtons,                          0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedButtons,                  0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedButtons,               0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedButtons,       0,            0},
-			{(const wchar_t *)Msg::SetColorDialogDefaultButton,                    0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
-			{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
-			{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
-			{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
-			{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorDialogNormal,                           LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorDialogHighlighted,                      0,            0},
+		{(const wchar_t *)Msg::SetColorDialogDisabled,                         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogBox,                              0,            0},
+		{(const wchar_t *)Msg::SetColorDialogBoxTitle,                         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedBoxTitle,              0,            0},
+		{(const wchar_t *)Msg::SetColorDialogTextInput,                        0,            0},
+		{(const wchar_t *)Msg::SetColorDialogUnchangedTextInput,               0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedTextInput,                0,            0},
+		{(const wchar_t *)Msg::SetColorDialogEditDisabled,                     0,            0},
+		{(const wchar_t *)Msg::SetColorDialogButtons,                          0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedButtons,                  0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedButtons,               0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedButtons,       0,            0},
+		{(const wchar_t *)Msg::SetColorDialogDefaultButton,                    0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
+		{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
+		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
+		{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
+		{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
+	};
 	int WarnDialogPaletteItems[] = {
-			COL_WARNDIALOGTEXT,
-			COL_WARNDIALOGHIGHLIGHTTEXT,
-			COL_WARNDIALOGDISABLED,
-			COL_WARNDIALOGBOX,
-			COL_WARNDIALOGBOXTITLE,
-			COL_WARNDIALOGHIGHLIGHTBOXTITLE,
-			COL_WARNDIALOGEDIT,
-			COL_WARNDIALOGEDITUNCHANGED,
-			COL_WARNDIALOGEDITSELECTED,
-			COL_WARNDIALOGEDITDISABLED,
-			COL_WARNDIALOGBUTTON,
-			COL_WARNDIALOGSELECTEDBUTTON,
-			COL_WARNDIALOGHIGHLIGHTBUTTON,
-			COL_WARNDIALOGHIGHLIGHTSELECTEDBUTTON,
-			COL_WARNDIALOGDEFAULTBUTTON,
-			COL_WARNDIALOGSELECTEDDEFAULTBUTTON,
-			COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON,
-			COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
-			1,
-			3,
+		COL_WARNDIALOGTEXT,
+		COL_WARNDIALOGHIGHLIGHTTEXT,
+		COL_WARNDIALOGDISABLED,
+		COL_WARNDIALOGBOX,
+		COL_WARNDIALOGBOXTITLE,
+		COL_WARNDIALOGHIGHLIGHTBOXTITLE,
+		COL_WARNDIALOGEDIT,
+		COL_WARNDIALOGEDITUNCHANGED,
+		COL_WARNDIALOGEDITSELECTED,
+		COL_WARNDIALOGEDITDISABLED,
+		COL_WARNDIALOGBUTTON,
+		COL_WARNDIALOGSELECTEDBUTTON,
+		COL_WARNDIALOGHIGHLIGHTBUTTON,
+		COL_WARNDIALOGHIGHLIGHTSELECTEDBUTTON,
+		COL_WARNDIALOGDEFAULTBUTTON,
+		COL_WARNDIALOGSELECTEDDEFAULTBUTTON,
+		COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON,
+		COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+		1,
+		3,
 	};
 	MenuDataEx MenuItems[] = {
-			{(const wchar_t *)Msg::SetColorMenuNormal,              LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorMenuSelected,            0,            0},
-			{(const wchar_t *)Msg::SetColorMenuHighlighted,         0,            0},
-			{(const wchar_t *)Msg::SetColorMenuSelectedHighlighted, 0,            0},
-			{(const wchar_t *)Msg::SetColorMenuDisabled,            0,            0},
-            {(const wchar_t *)Msg::SetColorMenuBox,                 0,            0},
-			{(const wchar_t *)Msg::SetColorMenuTitle,               0,            0},
-			{(const wchar_t *)Msg::SetColorMenuScrollBar,           0,            0},
-			{(const wchar_t *)Msg::SetColorMenuArrows,              0,            0},
-			{(const wchar_t *)Msg::SetColorMenuArrowsSelected,      0,            0},
-			{(const wchar_t *)Msg::SetColorMenuArrowsDisabled,      0,            0},
-			{(const wchar_t *)Msg::SetColorMenuGrayed,              0,            0},
-			{(const wchar_t *)Msg::SetColorMenuSelectedGrayed,      0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorMenuNormal,              LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorMenuSelected,            0,            0},
+		{(const wchar_t *)Msg::SetColorMenuHighlighted,         0,            0},
+		{(const wchar_t *)Msg::SetColorMenuSelectedHighlighted, 0,            0},
+		{(const wchar_t *)Msg::SetColorMenuDisabled,            0,            0},
+		{(const wchar_t *)Msg::SetColorMenuBox,                 0,            0},
+		{(const wchar_t *)Msg::SetColorMenuTitle,               0,            0},
+		{(const wchar_t *)Msg::SetColorMenuScrollBar,           0,            0},
+		{(const wchar_t *)Msg::SetColorMenuArrows,              0,            0},
+		{(const wchar_t *)Msg::SetColorMenuArrowsSelected,      0,            0},
+		{(const wchar_t *)Msg::SetColorMenuArrowsDisabled,      0,            0},
+		{(const wchar_t *)Msg::SetColorMenuGrayed,              0,            0},
+		{(const wchar_t *)Msg::SetColorMenuSelectedGrayed,      0,            0}
+	};
 	int MenuPaletteItems[] = {
-			COL_MENUTEXT, COL_MENUSELECTEDTEXT, COL_MENUHIGHLIGHT, COL_MENUSELECTEDHIGHLIGHT,
-			COL_MENUDISABLEDTEXT, COL_MENUBOX, COL_MENUTITLE, COL_MENUSCROLLBAR,
-			COL_MENUARROWS,					// Arrow
-			COL_MENUARROWSSELECTED,			// Выбранный - Arrow
-			COL_MENUARROWSDISABLED,
-			COL_MENUGRAYTEXT,				// "серый"
-			COL_MENUSELECTEDGRAYTEXT,		// выбранный "серый"
+		COL_MENUTEXT, COL_MENUSELECTEDTEXT, COL_MENUHIGHLIGHT, COL_MENUSELECTEDHIGHLIGHT,
+		COL_MENUDISABLEDTEXT, COL_MENUBOX, COL_MENUTITLE, COL_MENUSCROLLBAR,
+		COL_MENUARROWS,					// Arrow
+		COL_MENUARROWSSELECTED,			// Выбранный - Arrow
+		COL_MENUARROWSDISABLED,
+		COL_MENUGRAYTEXT,				// "серый"
+		COL_MENUSELECTEDGRAYTEXT,		// выбранный "серый"
 	};
 	MenuDataEx HMenuItems[] = {
-			{(const wchar_t *)Msg::SetColorHMenuNormal,              LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorHMenuSelected,            0,            0},
-			{(const wchar_t *)Msg::SetColorHMenuHighlighted,         0,            0},
-			{(const wchar_t *)Msg::SetColorHMenuSelectedHighlighted, 0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorHMenuNormal,              LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorHMenuSelected,            0,            0},
+		{(const wchar_t *)Msg::SetColorHMenuHighlighted,         0,            0},
+		{(const wchar_t *)Msg::SetColorHMenuSelectedHighlighted, 0,            0}
+	};
 	int HMenuPaletteItems[] = {COL_HMENUTEXT, COL_HMENUSELECTEDTEXT, COL_HMENUHIGHLIGHT,
 			COL_HMENUSELECTEDHIGHLIGHT};
 	MenuDataEx KeyBarItems[] = {
-			{(const wchar_t *)Msg::SetColorKeyBarNumbers,    LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorKeyBarNames,      0,            0},
-			{(const wchar_t *)Msg::SetColorKeyBarBackground, 0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorKeyBarNumbers,    LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorKeyBarNames,      0,            0},
+		{(const wchar_t *)Msg::SetColorKeyBarBackground, 0,            0}
+	};
 	int KeyBarPaletteItems[] = {COL_KEYBARNUM, COL_KEYBARTEXT, COL_KEYBARBACKGROUND};
 	MenuDataEx CommandLineItems[] = {
-			{(const wchar_t *)Msg::SetColorCommandLineNormal,     LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorCommandLineSelected,   0,            0},
-			{(const wchar_t *)Msg::SetColorCommandLinePrefix,     0,            0},
-			{(const wchar_t *)Msg::SetColorCommandLineUserScreen, 0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorCommandLineNormal,     LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorCommandLineSelected,   0,            0},
+		{(const wchar_t *)Msg::SetColorCommandLinePrefix,     0,            0},
+		{(const wchar_t *)Msg::SetColorCommandLineUserScreen, 0,            0}
+	};
 	int CommandLinePaletteItems[] = {COL_COMMANDLINE, COL_COMMANDLINESELECTED, COL_COMMANDLINEPREFIX,
 			COL_COMMANDLINEUSERSCREEN};
 	MenuDataEx ClockItems[] = {
-			{(const wchar_t *)Msg::SetColorClockNormal,       LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorClockNormalEditor, 0,            0},
-			{(const wchar_t *)Msg::SetColorClockNormalViewer, 0,            0}
-    };
-	int ClockPaletteItems[] = {
-			COL_CLOCK,
-			COL_EDITORCLOCK,
-			COL_VIEWERCLOCK,
+		{(const wchar_t *)Msg::SetColorClockNormal,       LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorClockNormalEditor, 0,            0},
+		{(const wchar_t *)Msg::SetColorClockNormalViewer, 0,            0}
 	};
+	int ClockPaletteItems[] = { COL_CLOCK, COL_EDITORCLOCK, COL_VIEWERCLOCK };
 	MenuDataEx ViewerItems[] = {
-			{(const wchar_t *)Msg::SetColorViewerNormal,    LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorViewerSelected,  0,            0},
-			{(const wchar_t *)Msg::SetColorViewerStatus,    0,            0},
-			{(const wchar_t *)Msg::SetColorViewerArrows,    0,            0},
-			{(const wchar_t *)Msg::SetColorViewerScrollbar, 0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorViewerNormal,    LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorViewerSelected,  0,            0},
+		{(const wchar_t *)Msg::SetColorViewerStatus,    0,            0},
+		{(const wchar_t *)Msg::SetColorViewerArrows,    0,            0},
+		{(const wchar_t *)Msg::SetColorViewerScrollbar, 0,            0}
+	};
 	int ViewerPaletteItems[] = {COL_VIEWERTEXT, COL_VIEWERSELECTEDTEXT, COL_VIEWERSTATUS, COL_VIEWERARROWS,
 			COL_VIEWERSCROLLBAR};
 	MenuDataEx EditorItems[] = {
-			{(const wchar_t *)Msg::SetColorEditorNormal,    LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorEditorSelected,  0,            0},
-			{(const wchar_t *)Msg::SetColorEditorStatus,    0,            0},
-			{(const wchar_t *)Msg::SetColorEditorScrollbar, 0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorEditorNormal,    LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorEditorSelected,  0,            0},
+		{(const wchar_t *)Msg::SetColorEditorStatus,    0,            0},
+		{(const wchar_t *)Msg::SetColorEditorScrollbar, 0,            0}
+	};
 	int EditorPaletteItems[] = {COL_EDITORTEXT, COL_EDITORSELECTEDTEXT, COL_EDITORSTATUS,
 			COL_EDITORSCROLLBAR};
 	MenuDataEx HelpItems[] = {
-			{(const wchar_t *)Msg::SetColorHelpNormal,            LIF_SELECTED, 0},
-			{(const wchar_t *)Msg::SetColorHelpHighlighted,       0,            0},
-			{(const wchar_t *)Msg::SetColorHelpReference,         0,            0},
-			{(const wchar_t *)Msg::SetColorHelpSelectedReference, 0,            0},
-			{(const wchar_t *)Msg::SetColorHelpBox,               0,            0},
-            {(const wchar_t *)Msg::SetColorHelpBoxTitle,          0,            0},
-			{(const wchar_t *)Msg::SetColorHelpScrollbar,         0,            0}
-    };
+		{(const wchar_t *)Msg::SetColorHelpNormal,            LIF_SELECTED, 0},
+		{(const wchar_t *)Msg::SetColorHelpHighlighted,       0,            0},
+		{(const wchar_t *)Msg::SetColorHelpReference,         0,            0},
+		{(const wchar_t *)Msg::SetColorHelpSelectedReference, 0,            0},
+		{(const wchar_t *)Msg::SetColorHelpBox,               0,            0},
+		{(const wchar_t *)Msg::SetColorHelpBoxTitle,          0,            0},
+		{(const wchar_t *)Msg::SetColorHelpScrollbar,         0,            0}
+	};
 	int HelpPaletteItems[] = {COL_HELPTEXT, COL_HELPHIGHLIGHTTEXT, COL_HELPTOPIC, COL_HELPSELECTEDTOPIC,
 			COL_HELPBOX, COL_HELPBOXTITLE, COL_HELPSCROLLBAR};
 	{
@@ -386,20 +382,20 @@ void SetColors()
 static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int TypeSub)
 {
 	MenuDataEx ListItems[] = {
-			{Msg::SetColorDialogListText,              LIF_SELECTED, 0},
-            {Msg::SetColorDialogListHighLight,         0,            0},
-			{Msg::SetColorDialogListSelectedText,      0,            0},
-            {Msg::SetColorDialogListSelectedHighLight, 0,            0},
-			{Msg::SetColorDialogListDisabled,          0,            0},
-            {Msg::SetColorDialogListBox,               0,            0},
-			{Msg::SetColorDialogListTitle,             0,            0},
-            {Msg::SetColorDialogListScrollBar,         0,            0},
-			{Msg::SetColorDialogListArrows,            0,            0},
-            {Msg::SetColorDialogListArrowsSelected,    0,            0},
-			{Msg::SetColorDialogListArrowsDisabled,    0,            0},
-            {Msg::SetColorDialogListGrayed,            0,            0},
-			{Msg::SetColorDialogSelectedListGrayed,    0,            0}
-    };
+		{Msg::SetColorDialogListText,              LIF_SELECTED, 0},
+		{Msg::SetColorDialogListHighLight,         0,            0},
+		{Msg::SetColorDialogListSelectedText,      0,            0},
+		{Msg::SetColorDialogListSelectedHighLight, 0,            0},
+		{Msg::SetColorDialogListDisabled,          0,            0},
+		{Msg::SetColorDialogListBox,               0,            0},
+		{Msg::SetColorDialogListTitle,             0,            0},
+		{Msg::SetColorDialogListScrollBar,         0,            0},
+		{Msg::SetColorDialogListArrows,            0,            0},
+		{Msg::SetColorDialogListArrowsSelected,    0,            0},
+		{Msg::SetColorDialogListArrowsDisabled,    0,            0},
+		{Msg::SetColorDialogListGrayed,            0,            0},
+		{Msg::SetColorDialogSelectedListGrayed,    0,            0}
+	};
 
 	int ItemsCode;
 	VMenu ItemsMenu(Msg::SetColorItemsTitle, Items, Size, 0);
@@ -565,84 +561,49 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 int GetColorDialog(WORD &Color, bool bCentered, bool bAddTransparent)
 {
 	DialogDataEx ColorDlgData[] = {
-			/*   0 */ {DI_DOUBLEBOX, 3, 1, 35, 13, {}, 0, Msg::SetColorTitle},
-			/*   1 */ {DI_SINGLEBOX, 5, 2, 18, 7, {}, 0, Msg::SetColorForeground},
-			/*   2 */
-			{DI_RADIOBUTTON, 6, 3, 0, 3, {},
-					F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   3 */ {DI_RADIOBUTTON, 6, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   4 */
-			{DI_RADIOBUTTON, 6, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   5 */
-			{DI_RADIOBUTTON, 6, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   6 */
-			{DI_RADIOBUTTON, 9, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   7 */
-			{DI_RADIOBUTTON, 9, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   8 */
-			{DI_RADIOBUTTON, 9, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*   9 */
-			{DI_RADIOBUTTON, 9, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  10 */
-			{DI_RADIOBUTTON, 12, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  11 */
-			{DI_RADIOBUTTON, 12, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  12 */
-			{DI_RADIOBUTTON, 12, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  13 */
-			{DI_RADIOBUTTON, 12, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  14 */
-			{DI_RADIOBUTTON, 15, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  15 */
-			{DI_RADIOBUTTON, 15, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  16 */
-			{DI_RADIOBUTTON, 15, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  17 */
-			{DI_RADIOBUTTON, 15, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  18 */ {DI_SINGLEBOX, 20, 2, 33, 7, {}, 0, Msg::SetColorBackground},
-			/*  19 */
-			{DI_RADIOBUTTON, 21, 3, 0, 3, {},
-					F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  20 */ {DI_RADIOBUTTON, 21, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  21 */
-			{DI_RADIOBUTTON, 21, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  22 */
-			{DI_RADIOBUTTON, 21, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  23 */
-			{DI_RADIOBUTTON, 24, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  24 */
-			{DI_RADIOBUTTON, 24, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  25 */
-			{DI_RADIOBUTTON, 24, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  26 */
-			{DI_RADIOBUTTON, 24, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  27 */
-			{DI_RADIOBUTTON, 27, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  28 */
-			{DI_RADIOBUTTON, 27, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  29 */
-			{DI_RADIOBUTTON, 27, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  30 */
-			{DI_RADIOBUTTON, 27, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  31 */
-			{DI_RADIOBUTTON, 30, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  32 */
-			{DI_RADIOBUTTON, 30, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  33 */
-			{DI_RADIOBUTTON, 30, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-			/*  34 */
-			{DI_RADIOBUTTON, 30, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-
-			/*  35 */ {DI_CHECKBOX, 5, 10, 0, 10, {}, 0, Msg::SetColorForeTransparent},
-			/*  36 */ {DI_CHECKBOX, 22, 10, 0, 10, {}, 0, Msg::SetColorBackTransparent},
-
-			/*  37 */ {DI_TEXT, 5, 8, 33, 8, {}, DIF_SETCOLOR, Msg::SetColorSample},
-			/*  38 */ {DI_TEXT, 5, 9, 33, 9, {}, DIF_SETCOLOR, Msg::SetColorSample},
-			/*  39 */ {DI_TEXT, 5, 10, 33, 10, {}, DIF_SETCOLOR, Msg::SetColorSample},
-			/*  40 */ {DI_TEXT, 0, 11, 0, 11, {}, DIF_SEPARATOR, L""},
-			/*  41 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
-			/*  42 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_CENTERGROUP, Msg::SetColorCancel}
-
+		/*   0 */ {DI_DOUBLEBOX, 3, 1, 35, 13, {}, 0, Msg::SetColorTitle},
+		/*   1 */ {DI_SINGLEBOX, 5, 2, 18, 7, {}, 0, Msg::SetColorForeground},
+		/*   2 */ {DI_RADIOBUTTON, 6, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   3 */ {DI_RADIOBUTTON, 6, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   4 */ {DI_RADIOBUTTON, 6, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   5 */ {DI_RADIOBUTTON, 6, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   6 */ {DI_RADIOBUTTON, 9, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   7 */ {DI_RADIOBUTTON, 9, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   8 */ {DI_RADIOBUTTON, 9, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   9 */ {DI_RADIOBUTTON, 9, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  10 */ {DI_RADIOBUTTON, 12, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  11 */ {DI_RADIOBUTTON, 12, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  12 */ {DI_RADIOBUTTON, 12, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  13 */ {DI_RADIOBUTTON, 12, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  14 */ {DI_RADIOBUTTON, 15, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  15 */ {DI_RADIOBUTTON, 15, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  16 */ {DI_RADIOBUTTON, 15, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  17 */ {DI_RADIOBUTTON, 15, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  18 */ {DI_SINGLEBOX, 20, 2, 33, 7, {}, 0, Msg::SetColorBackground},
+		/*  19 */ {DI_RADIOBUTTON, 21, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  20 */ {DI_RADIOBUTTON, 21, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  21 */ {DI_RADIOBUTTON, 21, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  22 */ {DI_RADIOBUTTON, 21, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  23 */ {DI_RADIOBUTTON, 24, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  24 */ {DI_RADIOBUTTON, 24, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  25 */ {DI_RADIOBUTTON, 24, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  26 */ {DI_RADIOBUTTON, 24, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  27 */ {DI_RADIOBUTTON, 27, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  28 */ {DI_RADIOBUTTON, 27, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  29 */ {DI_RADIOBUTTON, 27, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  30 */ {DI_RADIOBUTTON, 27, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  31 */ {DI_RADIOBUTTON, 30, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  32 */ {DI_RADIOBUTTON, 30, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  33 */ {DI_RADIOBUTTON, 30, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  34 */ {DI_RADIOBUTTON, 30, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  35 */ {DI_CHECKBOX, 5, 10, 0, 10, {}, 0, Msg::SetColorForeTransparent},
+		/*  36 */ {DI_CHECKBOX, 22, 10, 0, 10, {}, 0, Msg::SetColorBackTransparent},
+		/*  37 */ {DI_TEXT, 5, 8, 33, 8, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  38 */ {DI_TEXT, 5, 9, 33, 9, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  39 */ {DI_TEXT, 5, 10, 33, 10, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  40 */ {DI_TEXT, 0, 11, 0, 11, {}, DIF_SEPARATOR, L""},
+		/*  41 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
+		/*  42 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_CENTERGROUP, Msg::SetColorCancel}
 	};
 	MakeDialogItemsEx(ColorDlgData, ColorDlg);
 	int ExitCode;

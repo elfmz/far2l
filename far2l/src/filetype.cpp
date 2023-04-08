@@ -483,7 +483,7 @@ static bool EditTypeRecord(int EditPos, int TotalRecords, bool NewRec)
 			{DI_TEXT,      3, DlgY - 4, 0,        DlgY - 4, {},                    DIF_SEPARATOR,                 L""                  },
 			{DI_BUTTON,    0, DlgY - 3, 0,        DlgY - 3, {},                    DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok              },
 			{DI_BUTTON,    0, DlgY - 3, 0,        DlgY - 3, {},                    DIF_CENTERGROUP,               Msg::Cancel          }
-    };
+	};
 	MakeDialogItemsEx(EditDlgData, EditDlg);
 
 	if (!NewRec) {

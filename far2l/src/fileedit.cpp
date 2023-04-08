@@ -128,17 +128,16 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 {
 	const wchar_t *HistoryName = L"NewEdit";
 	DialogDataEx EditDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1, 72, 8, {},                       0,                                                           Msg::EditTitle          },
-			{DI_TEXT,      5,  2, 0,  2, {},                       0,                                                           Msg::EditOpenCreateLabel},
-			{DI_EDIT,      5,  3, 70, 3, {(DWORD_PTR)HistoryName},
-             DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH,                                                           L""                     },
-			{DI_TEXT,      3,  4, 0,  4, {},                       DIF_SEPARATOR,                                               L""                     },
-            {DI_TEXT,      5,  5, 0,  5, {},                       0,                                                           Msg::EditCodePage       },
-			{DI_COMBOBOX,  25, 5, 70, 5, {},                       DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""                     },
-			{DI_TEXT,      3,  6, 0,  6, {},                       DIF_SEPARATOR,                                               L""                     },
-			{DI_BUTTON,    0,  7, 0,  7, {},                       DIF_DEFAULT | DIF_CENTERGROUP,                               Msg::Ok                 },
-			{DI_BUTTON,    0,  7, 0,  7, {},                       DIF_CENTERGROUP,                                             Msg::Cancel             }
-    };
+		{DI_DOUBLEBOX, 3,  1, 72, 8, {}, 0, Msg::EditTitle},
+		{DI_TEXT,      5,  2, 0,  2, {}, 0, Msg::EditOpenCreateLabel},
+		{DI_EDIT,      5,  3, 70, 3, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
+		{DI_TEXT,      3,  4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5,  5, 0,  5, {}, 0, Msg::EditCodePage},
+		{DI_COMBOBOX,  25, 5, 70, 5, {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
+		{DI_TEXT,      3,  6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
+	};
 	MakeDialogItemsEx(EditDlgData, EditDlg);
 	EditDlg[ID_OE_FILENAME].strData = strFileName;
 	Dialog Dlg(EditDlg, ARRAYSIZE(EditDlg), (FARWINDOWPROC)hndOpenEditor, (LONG_PTR)&codepage);
@@ -238,24 +237,23 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage, bool
 {
 	const wchar_t *HistoryName = L"NewEdit";
 	DialogDataEx EditDlgData[] = {
-			{DI_DOUBLEBOX,   3,  1,  72, 15, {},                       0,                                                           Msg::EditTitle            },
-			{DI_TEXT,        5,  2,  0,  2,  {},                       0,                                                           Msg::EditSaveAs           },
-			{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)HistoryName},
-             DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH,                                                               L""                       },
-			{DI_TEXT,        3,  4,  0,  4,  {},                       DIF_SEPARATOR,                                               L""                       },
-            {DI_TEXT,        5,  5,  0,  5,  {},                       0,                                                           Msg::EditCodePage         },
-			{DI_COMBOBOX,    25, 5,  70, 5,  {},                       DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""                       },
-			{DI_CHECKBOX,    5,  6,  0,  6,  {AddSignature},           DIF_DISABLE,                                                 Msg::EditAddSignature     },
-			{DI_TEXT,        3,  7,  0,  7,  {},                       DIF_SEPARATOR,                                               L""                       },
-			{DI_TEXT,        5,  8,  0,  8,  {},                       0,                                                           Msg::EditSaveAsFormatTitle},
-			{DI_RADIOBUTTON, 5,  9,  0,  9,  {},                       DIF_GROUP,                                                   Msg::EditSaveOriginal     },
-			{DI_RADIOBUTTON, 5,  10, 0,  10, {},                       0,                                                           Msg::EditSaveDOS          },
-			{DI_RADIOBUTTON, 5,  11, 0,  11, {},                       0,                                                           Msg::EditSaveUnix         },
-			{DI_RADIOBUTTON, 5,  12, 0,  12, {},                       0,                                                           Msg::EditSaveMac          },
-			{DI_TEXT,        3,  13, 0,  13, {},                       DIF_SEPARATOR,                                               L""                       },
-			{DI_BUTTON,      0,  14, 0,  14, {},                       DIF_DEFAULT | DIF_CENTERGROUP,                               Msg::Ok                   },
-			{DI_BUTTON,      0,  14, 0,  14, {},                       DIF_CENTERGROUP,                                             Msg::Cancel               }
-    };
+		{DI_DOUBLEBOX,   3,  1,  72, 15, {}, 0, Msg::EditTitle},
+		{DI_TEXT,        5,  2,  0,  2,  {}, 0, Msg::EditSaveAs},
+		{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
+		{DI_TEXT,        3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        5,  5,  0,  5,  {}, 0, Msg::EditCodePage},
+		{DI_COMBOBOX,    25, 5,  70, 5,  {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
+		{DI_CHECKBOX,    5,  6,  0,  6,  {AddSignature}, DIF_DISABLE, Msg::EditAddSignature},
+		{DI_TEXT,        3,  7,  0,  7,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        5,  8,  0,  8,  {}, 0, Msg::EditSaveAsFormatTitle},
+		{DI_RADIOBUTTON, 5,  9,  0,  9,  {}, DIF_GROUP, Msg::EditSaveOriginal},
+		{DI_RADIOBUTTON, 5,  10, 0,  10, {}, 0, Msg::EditSaveDOS},
+		{DI_RADIOBUTTON, 5,  11, 0,  11, {}, 0, Msg::EditSaveUnix},
+		{DI_RADIOBUTTON, 5,  12, 0,  12, {}, 0, Msg::EditSaveMac},
+		{DI_TEXT,        3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_CENTERGROUP, Msg::Cancel}
+	};
 	MakeDialogItemsEx(EditDlgData, EditDlg);
 	EditDlg[ID_SF_FILENAME].strData =
 			(/*Flags.Check(FFILEEDIT_SAVETOSAVEAS)?strFullFileName:strFileName*/ strFileName);

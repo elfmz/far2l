@@ -539,9 +539,7 @@ int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b)
 
 uint64_t FileTimeToUI64(const FILETIME *ft)
 {
-	ULARGE_INTEGER A = {
-			{ft->dwLowDateTime, ft->dwHighDateTime}
-    };
+	ULARGE_INTEGER A = { {ft->dwLowDateTime, ft->dwHighDateTime} };
 	return A.QuadPart;
 }
 
@@ -763,9 +761,7 @@ void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeT
 
 void ConvertRelativeDate(const FILETIME &ft, FARString &strDaysText, FARString &strTimeText)
 {
-	ULARGE_INTEGER time = {
-			{ft.dwLowDateTime, ft.dwHighDateTime}
-    };
+	ULARGE_INTEGER time = { {ft.dwLowDateTime, ft.dwHighDateTime}};
 
 	UINT64 ms = (time.QuadPart/= 10000) % 1000;
 	UINT64 s = (time.QuadPart/= 1000) % 60;

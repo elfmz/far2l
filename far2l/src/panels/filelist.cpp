@@ -3074,13 +3074,13 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CFileMask FileMask;		// Класс для работы с масками
 	const wchar_t *HistoryName = L"Masks";
 	DialogDataEx SelectDlgData[] = {
-			{DI_DOUBLEBOX, 3, 1, 51, 5, {},                       0,                             L""              },
-			{DI_EDIT,      5, 2, 49, 2, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY,       L""              },
-			{DI_TEXT,      0, 3, 0,  3, {},                       DIF_SEPARATOR,                 L""              },
-			{DI_BUTTON,    0, 4, 0,  4, {},                       DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok          },
-			{DI_BUTTON,    0, 4, 0,  4, {},                       DIF_CENTERGROUP,               Msg::SelectFilter},
-			{DI_BUTTON,    0, 4, 0,  4, {},                       DIF_CENTERGROUP,               Msg::Cancel      }
-    };
+		{DI_DOUBLEBOX, 3, 1, 51, 5, {}, 0, L""},
+		{DI_EDIT,      5, 2, 49, 2, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY, L""},
+		{DI_TEXT,      0, 3, 0,  3, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_CENTERGROUP, Msg::SelectFilter},
+		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_CENTERGROUP, Msg::Cancel}
+	};
 	MakeDialogItemsEx(SelectDlgData, SelectDlg);
 	FileFilter Filter(this, FFT_SELECT);
 	bool bUseFilter = false;
@@ -3683,27 +3683,27 @@ void FileList::EditFilter()
 void FileList::SelectSortMode()
 {
 	MenuDataEx SortMenu[] = {
-			{Msg::MenuSortByName,           LIF_SELECTED,  KEY_CTRLF3  },
-            {Msg::MenuSortByExt,            0,             KEY_CTRLF4  },
-			{Msg::MenuSortByWrite,          0,             KEY_CTRLF5  },
-            {Msg::MenuSortBySize,           0,             KEY_CTRLF6  },
-			{Msg::MenuUnsorted,             0,             KEY_CTRLF7  },
-            {Msg::MenuSortByCreation,       0,             KEY_CTRLF8  },
-			{Msg::MenuSortByAccess,         0,             KEY_CTRLF9  },
-            {Msg::MenuSortByChange,         0,             0           },
-			{Msg::MenuSortByDiz,            0,             KEY_CTRLF10 },
-            {Msg::MenuSortByOwner,          0,             KEY_CTRLF11 },
-			{Msg::MenuSortByPhysicalSize,   0,             0           },
-            {Msg::MenuSortByNumLinks,       0,             0           },
-			{Msg::MenuSortByFullName,       0,             0           },
-            {Msg::MenuSortByCustomData,     0,             0           },
-            {L"",                           LIF_SEPARATOR, 0           },
-			{Msg::MenuSortUseNumeric,       0,             0           },
-            {Msg::MenuSortUseCaseSensitive, 0,             0           },
-			{Msg::MenuSortUseGroups,        0,             KEY_SHIFTF11},
-            {Msg::MenuSortSelectedFirst,    0,             KEY_SHIFTF12},
-			{Msg::MenuSortDirectoriesFirst, 0,             0           }
-    };
+		{Msg::MenuSortByName,           LIF_SELECTED,  KEY_CTRLF3  },
+		{Msg::MenuSortByExt,            0,             KEY_CTRLF4  },
+		{Msg::MenuSortByWrite,          0,             KEY_CTRLF5  },
+		{Msg::MenuSortBySize,           0,             KEY_CTRLF6  },
+		{Msg::MenuUnsorted,             0,             KEY_CTRLF7  },
+		{Msg::MenuSortByCreation,       0,             KEY_CTRLF8  },
+		{Msg::MenuSortByAccess,         0,             KEY_CTRLF9  },
+		{Msg::MenuSortByChange,         0,             0           },
+		{Msg::MenuSortByDiz,            0,             KEY_CTRLF10 },
+		{Msg::MenuSortByOwner,          0,             KEY_CTRLF11 },
+		{Msg::MenuSortByPhysicalSize,   0,             0           },
+		{Msg::MenuSortByNumLinks,       0,             0           },
+		{Msg::MenuSortByFullName,       0,             0           },
+		{Msg::MenuSortByCustomData,     0,             0           },
+		{L"",                           LIF_SEPARATOR, 0           },
+		{Msg::MenuSortUseNumeric,       0,             0           },
+		{Msg::MenuSortUseCaseSensitive, 0,             0           },
+		{Msg::MenuSortUseGroups,        0,             KEY_SHIFTF11},
+		{Msg::MenuSortSelectedFirst,    0,             KEY_SHIFTF12},
+		{Msg::MenuSortDirectoriesFirst, 0,             0           }
+	};
 	static int SortModes[] = {BY_NAME, BY_EXT, BY_MTIME, BY_SIZE, UNSORTED, BY_CTIME, BY_ATIME, BY_CHTIME,
 			BY_DIZ, BY_OWNER, BY_PHYSICALSIZE, BY_NUMLINKS, BY_FULLNAME, BY_CUSTOMDATA};
 

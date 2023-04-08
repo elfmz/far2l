@@ -689,13 +689,13 @@ static void EditCodePageName()
 		return;
 	CodePageName.LShift(BoxPosition + 2);
 	DialogDataEx EditDialogData[] = {
-			{DI_DOUBLEBOX, 3, 1, 50, 5, {},                           0,                             Msg::GetCodePageEditCodePageName },
-			{DI_EDIT,      5, 2, 48, 2, {(DWORD_PTR)L"CodePageName"}, DIF_FOCUS | DIF_HISTORY,       CodePageName                     },
-			{DI_TEXT,      0, 3, 0,  3, {},                           DIF_SEPARATOR,                 L""                              },
-			{DI_BUTTON,    0, 4, 0,  3, {},                           DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                          },
-			{DI_BUTTON,    0, 4, 0,  3, {},                           DIF_CENTERGROUP,               Msg::Cancel                      },
-			{DI_BUTTON,    0, 4, 0,  3, {},                           DIF_CENTERGROUP,               Msg::GetCodePageResetCodePageName}
-    };
+		{DI_DOUBLEBOX, 3, 1, 50, 5, {}, 0, Msg::GetCodePageEditCodePageName },
+		{DI_EDIT,      5, 2, 48, 2, {(DWORD_PTR)L"CodePageName"}, DIF_FOCUS | DIF_HISTORY, CodePageName},
+		{DI_TEXT,      0, 3, 0,  3, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 4, 0,  3, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 4, 0,  3, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 4, 0,  3, {}, DIF_CENTERGROUP, Msg::GetCodePageResetCodePageName}
+	};
 	MakeDialogItemsEx(EditDialogData, EditDialog);
 	Dialog Dlg(EditDialog, ARRAYSIZE(EditDialog), EditDialogProc);
 	Dlg.SetPosition(-1, -1, 54, 7);

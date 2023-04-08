@@ -630,19 +630,19 @@ static LONG_PTR WINAPI AdvancedDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 static void AdvancedDialog()
 {
 	DialogDataEx AdvancedDlgData[] = {
-			{DI_DOUBLEBOX, 3, 1,  52, 12, {},                                 0,                             Msg::FindFileAdvancedTitle         },
-			{DI_TEXT,      5, 2,  0,  2,  {},                                 0,                             Msg::FindFileSearchFirst           },
-			{DI_EDIT,      5, 3,  50, 3,  {},                                 0,                             Opt.FindOpt.strSearchInFirstSize   },
-			{DI_CHECKBOX,  5, 4,  0,  4,  {Opt.FindOpt.FindAlternateStreams}, 0,                             Msg::FindAlternateStreams          },
-			{DI_TEXT,      3, 5,  0,  5,  {},                                 DIF_SEPARATOR,                 L""                                },
-			{DI_TEXT,      5, 6,  0,  6,  {},                                 0,                             Msg::FindAlternateModeTypes        },
-			{DI_EDIT,      5, 7,  35, 7,  {},                                 0,                             Opt.FindOpt.strSearchOutFormat     },
-			{DI_TEXT,      5, 8,  0,  8,  {},                                 0,                             Msg::FindAlternateModeWidths       },
-			{DI_EDIT,      5, 9,  35, 9,  {},                                 0,                             Opt.FindOpt.strSearchOutFormatWidth},
-			{DI_TEXT,      3, 10, 0,  10, {},                                 DIF_SEPARATOR,                 L""                                },
-			{DI_BUTTON,    0, 11, 0,  11, {},                                 DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                            },
-			{DI_BUTTON,    0, 11, 0,  11, {},                                 DIF_CENTERGROUP,               Msg::Cancel                        }
-    };
+		{DI_DOUBLEBOX, 3, 1,  52, 12, {}, 0, Msg::FindFileAdvancedTitle},
+		{DI_TEXT,      5, 2,  0,  2,  {}, 0, Msg::FindFileSearchFirst},
+		{DI_EDIT,      5, 3,  50, 3,  {}, 0, Opt.FindOpt.strSearchInFirstSize},
+		{DI_CHECKBOX,  5, 4,  0,  4,  {Opt.FindOpt.FindAlternateStreams}, 0, Msg::FindAlternateStreams},
+		{DI_TEXT,      3, 5,  0,  5,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5, 6,  0,  6,  {}, 0, Msg::FindAlternateModeTypes},
+		{DI_EDIT,      5, 7,  35, 7,  {}, 0, Opt.FindOpt.strSearchOutFormat},
+		{DI_TEXT,      5, 8,  0,  8,  {}, 0, Msg::FindAlternateModeWidths},
+		{DI_EDIT,      5, 9,  35, 9,  {}, 0, Opt.FindOpt.strSearchOutFormatWidth},
+		{DI_TEXT,      3, 10, 0,  10, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 11, 0,  11, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 11, 0,  11, {}, DIF_CENTERGROUP, Msg::Cancel}
+	};
 	MakeDialogItemsEx(AdvancedDlgData, AdvancedDlg);
 	Dialog Dlg(AdvancedDlg, ARRAYSIZE(AdvancedDlg), AdvancedDlgProc);
 	Dlg.SetHelp(L"FindFileAdvanced");
@@ -2430,29 +2430,19 @@ static bool FindFilesProcess(Vars &v)
 	int DlgWidth = ScrX + 1 - 2;
 	int DlgHeight = ScrY + 1 - 2;
 	DialogDataEx FindDlgData[] = {
-			{DI_DOUBLEBOX, 3,                     1,                      (short)(DlgWidth - 4),                               (short)(DlgHeight - 2), {}, DIF_SHOWAMPERSAND,
-             strTitle                                                                                                                                                                                                 },
-			{DI_LISTBOX,   4,                     2,                      (short)(DlgWidth - 5),                               (short)(DlgHeight - 7), {}, DIF_LISTNOBOX | DIF_DISABLE,
-             L""                                                                                                                                                                                                      },
-			{DI_TEXT,      0,                     (short)(DlgHeight - 6), 0,                                                   (short)(DlgHeight - 6), {}, DIF_SEPARATOR2,                          L""               },
-			{DI_TEXT,      5,                     (short)(DlgHeight - 5), (short)(DlgWidth - (strFindStr.IsEmpty() ? 6 : 12)),
-             (short)(DlgHeight - 5),                                                                                                                   {}, DIF_SHOWAMPERSAND,                       strSearchStr      },
-			{DI_TEXT,      (short)(DlgWidth - 9), (short)(DlgHeight - 5), (short)(DlgWidth - 6),
-             (short)(DlgHeight - 5),                                                                                                                   {}, (strFindStr.IsEmpty() ? DIF_HIDDEN : 0), L""               },
-			{DI_TEXT,      0,                     (short)(DlgHeight - 4), 0,                                                   (short)(DlgHeight - 4), {}, DIF_SEPARATOR,                           L""               },
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {},
-             DIF_FOCUS | DIF_DEFAULT | DIF_CENTERGROUP,                                                                                                                                             Msg::FindNewSearch},
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {},
-             DIF_CENTERGROUP | DIF_DISABLE,                                                                                                                                                         Msg::FindGoTo     },
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {},
-             DIF_CENTERGROUP | DIF_DISABLE,                                                                                                                                                         Msg::FindView     },
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {},
-             DIF_CENTERGROUP | DIF_DISABLE,                                                                                                                                                         Msg::FindEdit     },
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {},
-             DIF_CENTERGROUP | DIF_DISABLE,                                                                                                                                                         Msg::FindPanel    },
-			{DI_BUTTON,    0,                     (short)(DlgHeight - 3), 0,                                                   (short)(DlgHeight - 3), {}, DIF_CENTERGROUP,
-             Msg::FindStop                                                                                                                                                                                            }
-    };
+		{DI_DOUBLEBOX, 3, 1, (short)(DlgWidth - 4), (short)(DlgHeight - 2), {}, DIF_SHOWAMPERSAND, strTitle},
+		{DI_LISTBOX,   4, 2, (short)(DlgWidth - 5), (short)(DlgHeight - 7), {}, DIF_LISTNOBOX | DIF_DISABLE, L""},
+		{DI_TEXT,      0, (short)(DlgHeight - 6), 0, (short)(DlgHeight - 6), {}, DIF_SEPARATOR2,L""},
+		{DI_TEXT,      5, (short)(DlgHeight - 5), (short)(DlgWidth - (strFindStr.IsEmpty() ? 6 : 12)), (short)(DlgHeight - 5),{}, DIF_SHOWAMPERSAND, strSearchStr},
+		{DI_TEXT, (short)(DlgWidth - 9), (short)(DlgHeight - 5), (short)(DlgWidth - 6), (short)(DlgHeight - 5),{}, (strFindStr.IsEmpty() ? DIF_HIDDEN : 0), L""},
+		{DI_TEXT,      0, (short)(DlgHeight - 4), 0, (short)(DlgHeight - 4), {}, DIF_SEPARATOR,L""},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_FOCUS | DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindNewSearch},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP | DIF_DISABLE,Msg::FindGoTo},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP | DIF_DISABLE,Msg::FindView},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP | DIF_DISABLE,Msg::FindEdit},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP | DIF_DISABLE,Msg::FindPanel},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP, Msg::FindStop}
+	};
 	MakeDialogItemsEx(FindDlgData, FindDlg);
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 
@@ -2717,38 +2707,34 @@ FindFiles::FindFiles()
 		const wchar_t VSeparator[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 				BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
 		struct DialogDataEx FindAskDlgData[] = {
-				{DI_DOUBLEBOX, 3,  1,  74, 18, {},                                              0,                                      Msg::FindFileTitle     },
-				{DI_TEXT,      5,  2,  0,  2,  {},                                              0,                                      Msg::FindFileMasks     },
-				{DI_EDIT,      5,  3,  72, 3,  {(DWORD_PTR)MasksHistoryName},
-                 DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,                                                                          L""                    },
-				{DI_TEXT,      3,  4,  0,  4,  {},                                              DIF_SEPARATOR,                          L""                    },
-                {DI_TEXT,      5,  5,  0,  5,  {},                                              0,                                      L""                    },
-				{DI_EDIT,      5,  6,  72, 6,  {(DWORD_PTR)TextHistoryName},                    DIF_HISTORY,                            L""                    },
-				{DI_FIXEDIT,   5,  6,  72, 6,  {(DWORD_PTR)HexMask},                            DIF_MASKEDIT,                           L""                    },
-				{DI_TEXT,      5,  7,  0,  7,  {},                                              0,                                      L""                    },
-				{DI_COMBOBOX,  5,  8,  72, 8,  {},                                              DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""                    },
-				{DI_TEXT,      3,  9,  0,  9,  {},                                              DIF_SEPARATOR,                          L""                    },
-				{DI_CHECKBOX,  5,  10, 0,  10, {},                                              0,                                      Msg::FindFileCase      },
-				{DI_CHECKBOX,  5,  11, 0,  11, {},                                              0,                                      Msg::FindFileWholeWords},
-				{DI_CHECKBOX,  5,  12, 0,  12, {},                                              0,                                      Msg::SearchForHex      },
-				{DI_CHECKBOX,  40, 10, 0,  10, {},                                              0,                                      Msg::FindArchives      },
-				{DI_CHECKBOX,  40, 11, 0,  11, {},                                              0,                                      Msg::FindFolders       },
-				{DI_CHECKBOX,  40, 12, 0,  12, {},                                              0,                                      Msg::FindSymLinks      },
-				{DI_TEXT,      3,  13, 0,  13, {},                                              DIF_SEPARATOR,                          L""                    },
-				{DI_VTEXT,     38, 9,  0,  9,  {},                                              DIF_BOXCOLOR,                           VSeparator             },
-				{DI_TEXT,      5,  14, 0,  14, {},                                              0,                                      Msg::SearchWhere       },
-				{DI_COMBOBOX,  5,  15, 36, 15, {},                                              DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""                    },
-				{DI_CHECKBOX,  40, 15, 0,  15, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION,
-                 Msg::FindUseFilter                                                                                                                            },
-				{DI_TEXT,      3,  16, 0,  16, {},                                              DIF_SEPARATOR,                          L""                    },
-				{DI_BUTTON,    0,  17, 0,  17, {},                                              DIF_DEFAULT | DIF_CENTERGROUP,          Msg::FindFileFind      },
-				{DI_BUTTON,    0,  17, 0,  17, {},                                              DIF_CENTERGROUP,                        Msg::FindFileDrive     },
-				{DI_BUTTON,    0,  17, 0,  17, {},
-                 DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE),
-                 Msg::FindFileSetFilter                                                                                                                        },
-				{DI_BUTTON,    0,  17, 0,  17, {},                                              DIF_CENTERGROUP,                        Msg::FindFileAdvanced  },
-				{DI_BUTTON,    0,  17, 0,  17, {},                                              DIF_CENTERGROUP,                        Msg::Cancel            }
-        };
+				{DI_DOUBLEBOX, 3,  1,  74, 18, {}, 0, Msg::FindFileTitle},
+				{DI_TEXT,      5,  2,  0,  2,  {}, 0, Msg::FindFileMasks},
+				{DI_EDIT,      5,  3,  72, 3,  {(DWORD_PTR)MasksHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,L""},
+				{DI_TEXT,      3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
+				{DI_TEXT,      5,  5,  0,  5,  {}, 0, L""},
+				{DI_EDIT,      5,  6,  72, 6,  {(DWORD_PTR)TextHistoryName}, DIF_HISTORY, L""},
+				{DI_FIXEDIT,   5,  6,  72, 6,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
+				{DI_TEXT,      5,  7,  0,  7,  {}, 0, L""},
+				{DI_COMBOBOX,  5,  8,  72, 8,  {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+				{DI_TEXT,      3,  9,  0,  9,  {}, DIF_SEPARATOR, L""},
+				{DI_CHECKBOX,  5,  10, 0,  10, {}, 0, Msg::FindFileCase},
+				{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::FindFileWholeWords},
+				{DI_CHECKBOX,  5,  12, 0,  12, {}, 0, Msg::SearchForHex},
+				{DI_CHECKBOX,  40, 10, 0,  10, {}, 0, Msg::FindArchives},
+				{DI_CHECKBOX,  40, 11, 0,  11, {}, 0, Msg::FindFolders},
+				{DI_CHECKBOX,  40, 12, 0,  12, {}, 0, Msg::FindSymLinks},
+				{DI_TEXT,      3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+				{DI_VTEXT,     38, 9,  0,  9,  {}, DIF_BOXCOLOR, VSeparator},
+				{DI_TEXT,      5,  14, 0,  14, {}, 0, Msg::SearchWhere},
+				{DI_COMBOBOX,  5,  15, 36, 15, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+				{DI_CHECKBOX,  40, 15, 0,  15, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::FindUseFilter},
+				{DI_TEXT,      3,  16, 0,  16, {}, DIF_SEPARATOR, L""},
+				{DI_BUTTON,    0,  17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindFileFind},
+				{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileDrive},
+				{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::FindFileSetFilter},
+				{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileAdvanced },
+				{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::Cancel}
+		};
 		MakeDialogItemsEx(FindAskDlgData, FindAskDlg);
 
 		if (strFindStr.IsEmpty())

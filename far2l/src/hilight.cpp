@@ -467,11 +467,11 @@ void HighlightFiles::FillMenu(VMenu *HiMenu, int MenuPos)
 {
 	MenuItemEx HiMenuItem;
 	const int Count[4][2] = {
-			{0,                                    FirstCount                                      },
-            {FirstCount,                           FirstCount + UpperCount                         },
-			{FirstCount + UpperCount,              FirstCount + UpperCount + LowerCount            },
-			{FirstCount + UpperCount + LowerCount, FirstCount + UpperCount + LowerCount + LastCount}
-    };
+		{0,                                    FirstCount                                      },
+		{FirstCount,                           FirstCount + UpperCount                         },
+		{FirstCount + UpperCount,              FirstCount + UpperCount + LowerCount            },
+		{FirstCount + UpperCount + LowerCount, FirstCount + UpperCount + LowerCount + LastCount}
+	};
 	HiMenu->DeleteItems();
 	HiMenuItem.Clear();
 
@@ -801,11 +801,11 @@ void HighlightFiles::SaveHiData()
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
 	const char *GroupNames[4] = {fmtFirstGroup, fmtUpperGroup, fmtLowerGroup, fmtLastGroup};
 	const int Count[4][2] = {
-			{0,                                    FirstCount                                      },
-            {FirstCount,                           FirstCount + UpperCount                         },
-			{FirstCount + UpperCount,              FirstCount + UpperCount + LowerCount            },
-			{FirstCount + UpperCount + LowerCount, FirstCount + UpperCount + LowerCount + LastCount}
-    };
+		{0,                                    FirstCount                                      },
+		{FirstCount,                           FirstCount + UpperCount                         },
+		{FirstCount + UpperCount,              FirstCount + UpperCount + LowerCount            },
+		{FirstCount + UpperCount + LowerCount, FirstCount + UpperCount + LowerCount + LastCount}
+	};
 
 	ConfigWriter cfg_writer;
 	for (int j = 0; j < 4; j++) {

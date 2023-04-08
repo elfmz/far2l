@@ -377,7 +377,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	// check for correct sequence ending
-	end_found = end_found & (
+	end_found = end_found && (
 			(s[i] == 'u') ||
 			(s[i] == '~') ||
 			(s[i] == 'A') ||

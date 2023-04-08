@@ -8,7 +8,7 @@
 
 #include "FSFileFlags.h"
 
-#ifndef __DraginFly__
+#ifdef __DragonFly__
 /* This is the same as the MacOS X definition of UF_HIDDEN. */
 #define UF_HIDDEN      0x00008000      /* file is hidden */
 #endif

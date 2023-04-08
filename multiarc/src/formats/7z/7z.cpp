@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <utils.h>
 #include <string.h>
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__DragonFly__)
 # include <malloc.h>
 #endif
 #include <stddef.h>

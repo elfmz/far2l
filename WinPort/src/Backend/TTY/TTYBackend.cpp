@@ -9,7 +9,7 @@
 # include <termios.h>
 # include <linux/kd.h>
 # include <linux/keyboard.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/ioctl.h>
 # include <sys/kbio.h>
 #endif
@@ -1033,7 +1033,7 @@ DWORD TTYBackend::QueryControlKeys()
 	}
 #endif
 
-#if defined(__FreeBSD__) || defined(__linux__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__linux__)
 	unsigned long int leds = 0;
 	if (ioctl(_stdin, KDGETLED, &leds) == 0) {
 		if (leds & 1) {

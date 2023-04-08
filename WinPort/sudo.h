@@ -4,7 +4,7 @@
 #include <sys/statvfs.h>
 #ifdef __APPLE__
 	#include <sys/mount.h>
-#elif !defined(__FreeBSD__) && !defined(__HAIKU__)
+#elif !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 	#include <sys/statfs.h>
 #endif
 #include <dirent.h>

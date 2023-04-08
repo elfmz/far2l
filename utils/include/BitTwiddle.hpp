@@ -2,7 +2,7 @@
 
 #ifdef __APPLE__
 # include <machine/endian.h>  // __BYTE_ORDER
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/endian.h>  // __BYTE_ORDER
 #else
 # include <endian.h>  // __BYTE_ORDER

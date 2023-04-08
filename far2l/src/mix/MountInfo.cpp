@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
-# if defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+# if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
 #  include <sys/param.h>
 #  include <sys/ucred.h>
 # endif
@@ -268,7 +268,7 @@ MountInfo::MountInfo(bool for_location_menu)
 		}
 	}
 
-#elif defined(__APPLE__) || defined(__FreeBSD__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 
 	int r = getfsstat(nullptr, 0, MNT_NOWAIT);
 	if (r > 0) {

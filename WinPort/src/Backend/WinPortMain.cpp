@@ -8,7 +8,7 @@
 # include <termios.h>
 # include <linux/kd.h>
 # include <linux/keyboard.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
 # include <sys/ioctl.h>
 # include <sys/kbio.h>
 #endif
@@ -300,7 +300,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 	InitPalette();
 
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;
 	if (ioctl(0, KDGETLED, &leds) == 0) {
 		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc

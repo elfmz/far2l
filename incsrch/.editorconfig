@@ -1,6 +1,2 @@
 [*.rc]
 indent_style = space
-
-[makefile*]
-indent_style = space
-indent_size = 2

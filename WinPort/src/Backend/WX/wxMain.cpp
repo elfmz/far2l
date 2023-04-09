@@ -1219,7 +1219,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 	// that discourages users and also me
 	if (!was_pressed) {
 		const DWORD ts = WINPORT(GetTickCount)();
-		if (ts >= _focused_ts && ts - _focused_ts < 100) {
+		if (ts >= _focused_ts && ts - _focused_ts < 200) {
 			fprintf(stderr, " SKIP_UNPAIRED (%u msec)\n", ts - _focused_ts);
 			event.Skip();
 			return;

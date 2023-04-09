@@ -443,6 +443,9 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
 		case 6     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
+		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break;
+		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break;
+		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break;
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;

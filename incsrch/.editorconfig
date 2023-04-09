@@ -4,6 +4,3 @@ indent_style = space
 [makefile*]
 indent_style = space
 indent_size = 2
-
-[CMakeLists.txt]
-indent_style = space

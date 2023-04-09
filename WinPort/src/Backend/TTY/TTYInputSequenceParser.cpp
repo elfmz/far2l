@@ -632,6 +632,188 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, size_t l)
+{
+    size_t len = 0;
+    while (1) {
+    	if (len >= l) return TTY_PARSED_WANTMORE;
+		if (s[len] == 7) break;
+		len++;
+    }
+    len++;
+
+	unsigned int flags = 0;
+	unsigned int flags_length = 0;
+	sscanf(s + 8, "%i%n", &flags, &flags_length); // 8 is a fixed length of "]1337;d;"
+
+	wchar_t uni_char = 0;
+    unsigned char bytes[4] = {0};
+    int num_bytes = 0;
+    int i;
+    for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
+	    if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
+	    if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
+        sscanf(s + i, "%2hhx", &bytes[num_bytes]);
+        num_bytes++;
+    }
+
+    if (num_bytes == 1) {
+        uni_char = bytes[0];
+    } else if (num_bytes == 2) {
+        uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+    } else if (num_bytes == 3) {
+        uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+    } else if (num_bytes == 4) {
+        uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
+    }
+
+	unsigned int keycode = 0;
+	sscanf(s + i + 1, "%i", &keycode);
+
+	unsigned int vkc = 0;
+
+	switch (keycode) {
+		case 0x00: vkc = 0x41; break; // A
+		case 0x01: vkc = 0x53; break; // S
+		case 0x02: vkc = 0x44; break; // D
+		case 0x03: vkc = 0x46; break; // F
+		case 0x04: vkc = 0x48; break; // H
+		case 0x05: vkc = 0x47; break; // G
+		case 0x06: vkc = 0x5A; break; // Z
+		case 0x07: vkc = 0x58; break; // X
+		case 0x08: vkc = 0x43; break; // C
+		case 0x09: vkc = 0x56; break; // V
+		case 0x0B: vkc = 0x42; break; // B
+		case 0x0C: vkc = 0x51; break; // Q
+		case 0x0D: vkc = 0x57; break; // W
+		case 0x0E: vkc = 0x45; break; // E
+		case 0x0F: vkc = 0x52; break; // R
+		case 0x10: vkc = 0x59; break; // Y
+		case 0x11: vkc = 0x54; break; // T
+		case 0x12: vkc = 0x31; break; // 1
+		case 0x13: vkc = 0x32; break; // 2
+		case 0x14: vkc = 0x33; break; // 3
+		case 0x15: vkc = 0x34; break; // 4
+		case 0x16: vkc = 0x36; break; // 6
+		case 0x17: vkc = 0x35; break; // 5
+		case 0x18: vkc = VK_OEM_PLUS; break; // =
+		case 0x19: vkc = 0x39; break; // 9
+		case 0x1A: vkc = 0x37; break; // 7
+		case 0x1B: vkc = VK_OEM_MINUS; break; // -
+		case 0x1C: vkc = 0x38; break; // 8
+		case 0x1D: vkc = 0x30; break; // 0
+		case 0x1E: vkc = VK_OEM_6; break; // ]
+		case 0x1F: vkc = 0x4F; break; // O
+		case 0x20: vkc = 0x55; break; // U
+		case 0x21: vkc = VK_OEM_4; break; // [
+		case 0x22: vkc = 0x49; break; // I
+		case 0x23: vkc = 0x50; break; // P
+		case 0x25: vkc = 0x4C; break; // L
+		case 0x26: vkc = 0x4A; break; // J
+		case 0x27: vkc = VK_OEM_7; break; // '
+		case 0x28: vkc = 0x4B; break; // K
+		case 0x29: vkc = VK_OEM_1; break; // ;
+		case 0x2A: vkc = VK_OEM_5; break; // Back Slash
+		case 0x2B: vkc = VK_OEM_COMMA; break; // ,
+		case 0x2C: vkc = VK_OEM_2; break; // Slash
+		case 0x2D: vkc = 0x4E; break; // N
+		case 0x2E: vkc = 0x4D; break; // M
+		case 0x2F: vkc = VK_OEM_PERIOD; break; // .
+		case 0x32: vkc = VK_OEM_3; break; // `
+		case 0x41: vkc = VK_DECIMAL; break; // .
+		case 0x43: vkc = VK_MULTIPLY; break; // *
+		case 0x45: vkc = VK_ADD; break; // +
+		//case 0x47: vkc = ; break; // keypad "clear"
+		case 0x4B: vkc = VK_DIVIDE; break; // /
+		case 0x4C: vkc = VK_RETURN; break; // Enter // todo: set enhanced key flag
+		case 0x4E: vkc = VK_SUBTRACT; break; // -
+		//case 0x51: vkc = ; break; // keypad "equals"
+		case 0x52: vkc = 0x60; break; // 0
+		case 0x53: vkc = 0x61; break; // 1
+		case 0x54: vkc = 0x62; break; // 2
+		case 0x55: vkc = 0x63; break; // 3
+		case 0x56: vkc = 0x64; break; // 4
+		case 0x57: vkc = 0x65; break; // 5
+		case 0x58: vkc = 0x66; break; // 6
+		case 0x59: vkc = 0x67; break; // 7
+		case 0x5B: vkc = 0x68; break; // 8
+		case 0x5C: vkc = 0x69; break; // 9
+
+		case 0x24: vkc = VK_RETURN; break; // Enter
+		case 0x30: vkc = VK_TAB; break; // Tab
+		case 0x31: vkc = VK_SPACE; break; // Space
+		case 0x33: vkc = VK_DELETE; break; // Del
+		case 0x35: vkc = VK_ESCAPE; break; // Esc
+		case 0x37: vkc = VK_LWIN; break; // Command // fixme: mapping Command to Left Win (Super), it it ok?
+		case 0x38: vkc = VK_SHIFT; break; // Shift
+		case 0x39: vkc = VK_CAPITAL; break; // CapsLock
+		case 0x3A: vkc = VK_MENU; break; // Option
+		case 0x3B: vkc = VK_CONTROL; break; // Control
+		case 0x3C: vkc = VK_SHIFT; break; // RightShift // todo: set special scan code
+		case 0x3D: vkc = VK_MENU; break; // RightOption // todo: set enhanced key flag
+		case 0x3E: vkc = VK_CONTROL; break; // RightControl // todo: set enhanced key flag
+		//case 0x3F: vkc = ; break; // Function
+		//case 0x40: vkc = ; break; // F17
+		//case 0x48: vkc = ; break; // VolumeUp
+		//case 0x49: vkc = ; break; // VolumeDown
+		//case 0x4A: vkc = ; break; // Mute
+		//case 0x4F: vkc = ; break; // F18
+		//case 0x50: vkc = ; break; // F19
+		//case 0x5A: vkc = ; break; // F20
+		case 0x60: vkc = VK_F5; break; // F5
+		case 0x61: vkc = VK_F6; break; // F6
+		case 0x62: vkc = VK_F7; break; // F7
+		case 0x63: vkc = VK_F3; break; // F3
+		case 0x64: vkc = VK_F8; break; // F8
+		case 0x65: vkc = VK_F9; break; // F9
+		case 0x67: vkc = VK_F11; break; // F11
+		//case 0x69: vkc = ; break; // F13
+		//case 0x6A: vkc = ; break; // F16
+		//case 0x6B: vkc = ; break; // F14
+		case 0x6D: vkc = VK_F10; break; // F10
+		case 0x6F: vkc = VK_F12; break; // F12
+		//case 0x71: vkc = ; break; // F15
+		//case 0x72: vkc = ; break; // Help
+		case 0x73: vkc = VK_HOME; break; // Home
+		case 0x74: vkc = VK_PRIOR; break; // PageUp
+		//case 0x75: vkc = ; break; // ForwardDelete
+		case 0x76: vkc = VK_F4; break; // F4
+		case 0x77: vkc = VK_END; break; // End
+		case 0x78: vkc = VK_F2; break; // F2
+		case 0x79: vkc = VK_NEXT; break; // PageDown
+		case 0x7A: vkc = VK_F1; break; // F1
+		case 0x7B: vkc = VK_LEFT; break; // Left
+		case 0x7C: vkc = VK_RIGHT; break; // Right
+		case 0x7D: vkc = VK_DOWN; break; // Down
+		case 0x7E: vkc = VK_UP; break; // Up
+	}
+	
+	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
+
+	flags -= 1;
+	unsigned int flags_win = 0;
+
+	if (flags & 1) { flags_win |= SHIFT_PRESSED; } // todo: LEFT_SHIFT_PRESSED
+	if (flags & 2) { flags_win |= SHIFT_PRESSED; } // todo: RIGHT_SHIFT_PRESSED
+	if (flags & 4) { flags_win |= LEFT_ALT_PRESSED; }
+	if (flags & 8) { flags_win |= RIGHT_ALT_PRESSED; }
+	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; }
+	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; }
+
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.wVirtualKeyCode = vkc;
+	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
+	ir.Event.KeyEvent.bKeyDown = (s[6] == 'd' ? TRUE : FALSE);
+	ir.Event.KeyEvent.dwControlKeyState = flags_win;
+	ir.Event.KeyEvent.wRepeatCount = 1;
+
+	_ir_pending.emplace_back(ir);
+
+	return len;
+}
+
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
 
@@ -662,7 +844,18 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 5;
 	}
 
-	size_t r = ParseNChars2Key(s, l);
+	size_t r = 0;
+
+	if (l > 1 && s[0] == ']' && s[1] == '1' && s[2] == '3' && s[3] == '3' && s[4] == '7' && s[5] == ';') {
+		if (s[6] == 'd' || s[6] == 'u') {
+			r = TryParseAsiTerm2EscapeSequence(s, l);
+			if (r != TTY_PARSED_BADSEQUENCE) {
+				return r;
+			}
+		}
+	}
+	
+	r = ParseNChars2Key(s, l);
 	if (r != 0)
 		return r;
 

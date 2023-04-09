@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <algorithm>
+#include <stdexcept>
 #include <utils.h>
 #include <ScopeHelpers.h>
 #include <StringConfig.h>

@@ -1,4 +1,5 @@
 #include <utils.h>
+#include <stdexcept>
 #include <TimeUtils.h>
 #include "SimpleOperationProgress.h"
 #include "Confirm.h"

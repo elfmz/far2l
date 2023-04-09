@@ -1212,6 +1212,20 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		return;
 	}
 
+#ifdef __WXOSX__
+	// Workaround for #1580:
+	// if focus switch happened due to hotkey pressed then MacOS
+	// sends us keyup events for keys that were used for that hotkey
+	// that discourages users and also me
+	if (!was_pressed) {
+		const DWORD ts = WINPORT(GetTickCount)();
+		if (ts >= _focused_ts && ts - _focused_ts < 200) {
+			fprintf(stderr, " SKIP_UNPAIRED (%u msec)\n", ts - _focused_ts);
+			event.Skip();
+			return;
+		}
+	}
+#endif
 	fprintf(stderr, was_pressed ? "\n" : " UNPAIRED\n");
 
 #ifndef __WXOSX__ //on OSX some keyups come without corresponding keydowns
@@ -1574,7 +1588,7 @@ DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 
 bool WinPortPanel::OnConsoleIsActive()
 {
-	return _has_focus;
+	return _focused_ts != 0;
 }
 
 static std::string GetNotifySH()
@@ -1684,14 +1698,16 @@ void WinPortPanel::CheckPutText2CLip()
 
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 {
-	_has_focus = true;
+	//fprintf(stderr, "OnSetFocus\n");
+	const DWORD ts = WINPORT(GetTickCount)();
+	_focused_ts = ts ? ts : 1;
 	ResetTimerIdling();
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
-	_has_focus = false;
+	_focused_ts = 0;
 	ResetInputState();
 }
 

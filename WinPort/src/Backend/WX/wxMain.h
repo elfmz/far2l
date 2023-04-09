@@ -84,7 +84,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	wxMouseEvent _last_mouse_event;
 	std::wstring _text2clip;
 	ExclusiveHotkeys _exclusive_hotkeys;
-	std::atomic<bool> _has_focus{true};
+	std::atomic<DWORD> _focused_ts{1};
 	MOUSE_EVENT_RECORD _prev_mouse_event{};
 	DWORD _prev_mouse_event_ts{0};
 

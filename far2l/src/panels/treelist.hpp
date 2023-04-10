@@ -142,8 +142,8 @@ public:
 	virtual void MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual bool FindPartName(const wchar_t *Name, int Next, int Direct = 1, int ExcludeSets = 0);
 
-	virtual int GoToFile(long idxItem);
-	virtual int GoToFile(const wchar_t *Name, BOOL OnlyPartName = FALSE);
+	virtual bool GoToFile(long idxItem);
+	virtual bool GoToFile(const wchar_t *Name, BOOL OnlyPartName = FALSE);
 	virtual long FindFile(const wchar_t *Name, BOOL OnlyPartName = FALSE);
 
 	void ProcessEnter();

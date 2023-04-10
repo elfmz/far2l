@@ -2080,6 +2080,61 @@ void FileList::Select(FileListItem *SelPtr, bool Selection)
 	}
 }
 
+void FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_file)
+{
+	OpenPluginInfo orig_plugin_info = {sizeof(OpenPluginInfo), 0};
+	FARString orig_plugin_name, orig_dir, orig_sel_name;
+	GetCurDirPluginAware(orig_dir);
+
+	if (CurFile < ListData.Count()) {
+		orig_sel_name = ListData[CurFile]->strName;
+	}
+
+	HANDLE orig_plugin_handle = GetPluginHandle();
+	if (orig_plugin_handle != INVALID_HANDLE_VALUE) {
+		orig_plugin_name = CtrlObject->Plugins.GetPluginModuleName(orig_plugin_handle);
+		CtrlObject->Plugins.GetOpenPluginInfo(orig_plugin_handle, &orig_plugin_info);
+	}
+
+	const auto check_fullscreen = IsFullScreen();
+	//"this" может быть удалён в ChangeDir
+	if (!ChangeDir(dir)) {
+//		Message(MSG_WARNING, 1, Msg::ErrorPathNotFound, dir, Msg::Ok);
+		return;
+	}
+
+	Panel *active_panel = CtrlObject->Cp()->ActivePanel;
+
+	bool not_found = false;
+	if (select_file && *select_file) {
+		not_found = (!active_panel->GoToFile(select_file, TRUE));
+	}
+	active_panel->Show();
+
+	if (not_found) {
+		int r = Message(MSG_WARNING, 2, Msg::ErrorFileNotFound, select_file, Msg::Ok, Msg::Cancel);
+		if (r != 0)
+		{ // Cancel means go back
+			fprintf(stderr, "Going back to '%ls' @ '%ls'\n", orig_dir.CPtr(), orig_plugin_name.CPtr());
+			if (!orig_plugin_name.IsEmpty()) {
+				auto plugin = CtrlObject->Plugins.GetPlugin(orig_plugin_name);
+				const wchar_t *host_file = (orig_plugin_info.HostFile && *orig_plugin_info.HostFile)
+					? orig_plugin_info.HostFile : nullptr;
+				SetLocation_Plugin(host_file != nullptr, plugin,
+					orig_plugin_info.CurDir ? orig_plugin_info.CurDir : L"", host_file, 0);
+
+			} else {
+				ProcessEnter_ChangeDir(orig_dir, PointToName(orig_sel_name));
+			}
+			active_panel = CtrlObject->Cp()->ActivePanel;
+		}
+	}
+
+	if (check_fullscreen != active_panel->IsFullScreen()) {
+		CtrlObject->Cp()->GetAnotherPanel(active_panel)->Show();
+	}
+}
+
 void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAssoc, bool RunAs,
 		OPENFILEPLUGINTYPE Type)
 {
@@ -2094,6 +2149,19 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 
 	CurPtr = ListData[CurFile];
 	strFileName = CurPtr->strName;
+
+	if (PanelMode != PLUGIN_PANEL
+			&& Type == OFP_ALTERNATIVE
+			&& (CurPtr->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+		FARString DestPathName;
+		ConvertNameToReal(CurPtr->strName, DestPathName);
+		FARString DestPath = DestPathName;
+		if (DestPath != L"/") {
+			CutToSlash(DestPath);
+		}
+		ProcessEnter_ChangeDir(DestPath, PointToName(DestPathName));
+		return;
+	}
 
 	if (CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 		BOOL IsRealName = FALSE;
@@ -2125,18 +2193,8 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 			EscapeSpace(strFullPath);
 			Execute(strFullPath, SeparateWindow, true);
 		} else {
-			int CheckFullScreen = IsFullScreen();
-
-			ChangeDir(CurPtr->strName);
-
-			//"this" может быть удалён в ChangeDir
-			Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
-
-			if (CheckFullScreen != ActivePanel->IsFullScreen()) {
-				CtrlObject->Cp()->GetAnotherPanel(ActivePanel)->Show();
-			}
-
-			ActivePanel->Show();
+			//"this" может быть удалён в ProcessEnter_GoToDir
+			ProcessEnter_ChangeDir(CurPtr->strName);
 		}
 	} else {
 		bool PluginMode =
@@ -2822,18 +2880,18 @@ void FileList::ChangeDirectoriesFirst(int Mode)
 	Show();
 }
 
-int FileList::GoToFile(long idxItem)
+bool FileList::GoToFile(long idxItem)
 {
 	if (idxItem >= 0 && idxItem < ListData.Count()) {
 		CurFile = idxItem;
 		CorrectPosition();
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
-int FileList::GoToFile(const wchar_t *Name, BOOL OnlyPartName)
+bool FileList::GoToFile(const wchar_t *Name, BOOL OnlyPartName)
 {
 	return GoToFile(FindFile(Name, OnlyPartName));
 }

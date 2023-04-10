@@ -313,7 +313,7 @@ bool right_ctrl_down = 0;
 
 size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size_t l)
 {
-    // kovidgoyal's kitty keyboard protocol (progressive enhancement flags 15) support
+	// kovidgoyal's kitty keyboard protocol (progressive enhancement flags 15) support
 	// CSI [ XXX : XXX : XXX ; XXX : XXX [u~ABCDEFHPQRS]
 	// some parts sometimes ommitted, see docs
 	// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
@@ -322,14 +322,14 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 
 	// todo: add more keys. all needed by far2l seem to be here, but kitty supports much more
 
-    #define KITTY_MOD_SHIFT    1
-    #define KITTY_MOD_ALT      2
-    #define KITTY_MOD_CONTROL  4
-    #define KITTY_MOD_CAPSLOCK 64
-    #define KITTY_MOD_NUMLOCK  128
-    #define KITTY_EVT_KEYUP    3
+	#define KITTY_MOD_SHIFT    1
+	#define KITTY_MOD_ALT      2
+	#define KITTY_MOD_CONTROL  4
+	#define KITTY_MOD_CAPSLOCK 64
+	#define KITTY_MOD_NUMLOCK  128
+	#define KITTY_EVT_KEYUP    3
 
-    /** 32 is enough without "text-as-code points" mode, but should be increased if this mode is enabled */
+	/** 32 is enough without "text-as-code points" mode, but should be increased if this mode is enabled */
 	const int max_kitty_esc_size = 32;
 
 	/** first_limit should be set to 3 if "text-as-code points" mode is on */
@@ -358,7 +358,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 				return TTY_PARSED_BADSEQUENCE;
 			}
 		} else if (!isdigit(s[i])) {
-		    end_found = true;
+			end_found = true;
 			break;
 		} else { // digit
 			params[first_count][second_count] = atoi(&s[i]);
@@ -386,10 +386,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	/*
-	fprintf(stderr, "%i %i %i %i %i \n", params[0][0], params[0][1], params[0][2], params[0][3], params[0][4]);
-	fprintf(stderr, "%i %i %i %i %i \n", params[1][0], params[1][1], params[1][2], params[1][3], params[1][4]);
-	fprintf(stderr, "%i %i %i %i %i \n", params[2][0], params[2][1], params[2][2], params[2][3], params[2][4]);
-	fprintf(stderr, "%i %i\n", first_count, second_count);
+	fprintf(stderr, "%s \n", s);
+	fprintf(stderr, "%i %i %i \n", params[0][0], params[0][1], params[0][2]);
+	fprintf(stderr, "%i %i %i \n", params[1][0], params[1][1], params[1][2]);
+	fprintf(stderr, "%i %i\n\n", first_count, second_count);
 	*/
 
 	int event_type = params[1][1];
@@ -399,12 +399,14 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	ir.EventType = KEY_EVENT;
 
 	if (modif_state) {
-	    modif_state -= 1;
+		modif_state -= 1;
 
 		if (modif_state & KITTY_MOD_SHIFT)    { ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED; }
 		if (modif_state & KITTY_MOD_ALT)      { ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; }
 		if (modif_state & KITTY_MOD_CONTROL)  { ir.Event.KeyEvent.dwControlKeyState |=
-			right_ctrl_down ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED; }
+			right_ctrl_down ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED; } else {
+			right_ctrl_down = 0;
+		}
 		if (modif_state & KITTY_MOD_CAPSLOCK) { ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON; }
 		if (modif_state & KITTY_MOD_NUMLOCK)  { ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON; }
 	}
@@ -443,6 +445,9 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
 		case 6     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
+		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break;
+		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break;
+		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break;
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;
@@ -451,12 +456,13 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 21    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F10; break;
 		case 23    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F11; break;
 		case 24    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F12; break;
+		case 32    : ir.Event.KeyEvent.wVirtualKeyCode = VK_SPACE; break;
 		case 57399 : case 57425 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD0; break;
 		case 57400 : case 57424 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD1; break;
 		case 57401 : case 57420 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD2; break;
 		case 57402 : case 57422 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD3; break;
 		case 57403 : case 57417 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD4; break;
-		case 57404 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
+		case 57404 : case 57427 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
 		case 57405 : case 57418 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD6; break;
 		case 57406 : case 57423 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD7; break;
 		case 57407 : case 57419 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD8; break;
@@ -474,54 +480,54 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 57363 : ir.Event.KeyEvent.wVirtualKeyCode = VK_APPS; break;
 
 		case 57448 : ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
-		    if (event_type != KITTY_EVT_KEYUP) {
-		    	right_ctrl_down = 1;
+			if (event_type != KITTY_EVT_KEYUP) {
+				right_ctrl_down = 1;
 				ir.Event.KeyEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
-		    } else {
-		    	right_ctrl_down = 0;
+			} else {
+				right_ctrl_down = 0;
 				ir.Event.KeyEvent.dwControlKeyState &= ~RIGHT_CTRL_PRESSED;
-		    }
-		    ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+			}
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
 			break;
 		case 57442 : ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
-		    if (event_type != KITTY_EVT_KEYUP) {
+			if (event_type != KITTY_EVT_KEYUP) {
 				ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-		    } else {
+			} else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~LEFT_CTRL_PRESSED;
-		    }
+			}
 			break;
 		case 57443 : ir.Event.KeyEvent.wVirtualKeyCode = VK_MENU;
-		    if (event_type != KITTY_EVT_KEYUP) {
+			if (event_type != KITTY_EVT_KEYUP) {
 				ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-		    } else {
+			} else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~LEFT_ALT_PRESSED;
-		    }
+			}
 			break;
 		case 57449 : ir.Event.KeyEvent.wVirtualKeyCode = VK_MENU;
-		    if (event_type != KITTY_EVT_KEYUP) {
+			if (event_type != KITTY_EVT_KEYUP) {
 				ir.Event.KeyEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-		    } else {
+			} else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~RIGHT_ALT_PRESSED;
-		    }
-		    ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
+			}
+			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY;
 			break;
 		case 57441 : ir.Event.KeyEvent.wVirtualKeyCode = VK_SHIFT;
-		    // todo: add LEFT_SHIFT_PRESSED / RIGHT_SHIFT_PRESSED
-		    // see https://github.com/microsoft/terminal/issues/337
-		    if (event_type != KITTY_EVT_KEYUP) {
+			// todo: add LEFT_SHIFT_PRESSED / RIGHT_SHIFT_PRESSED
+			// see https://github.com/microsoft/terminal/issues/337
+			if (event_type != KITTY_EVT_KEYUP) {
 				ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-		    } else {
+			} else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~SHIFT_PRESSED;
-		    }
+			}
 			break;
 		case 57447 : ir.Event.KeyEvent.wVirtualKeyCode = VK_SHIFT;
-		    // todo: add LEFT_SHIFT_PRESSED / RIGHT_SHIFT_PRESSED
-		    // see https://github.com/microsoft/terminal/issues/337
-		    if (event_type != KITTY_EVT_KEYUP) {
+			// todo: add LEFT_SHIFT_PRESSED / RIGHT_SHIFT_PRESSED
+			// see https://github.com/microsoft/terminal/issues/337
+			if (event_type != KITTY_EVT_KEYUP) {
 				ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-		    } else {
+			} else {
 				ir.Event.KeyEvent.dwControlKeyState &= ~SHIFT_PRESSED;
-		    }
+			}
 			ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC;
 			break;
 
@@ -564,9 +570,13 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		// those are special values, should not be used as unicode char
 		ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	}
+	if (ir.Event.KeyEvent.uChar.UnicodeChar && !ir.Event.KeyEvent.wVirtualKeyCode) {
+		// Fixes non-latin chars under WezTerm
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
+	}
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {
-	    // it's weird, but kitty can not give us uppercase utf8 in caps lock mode
-	    // ("text-as-codepoints" mode should solve it, but it is not working for cyrillic chars for unknown reason)
+		// it's weird, but kitty can not give us uppercase utf8 in caps lock mode
+		// ("text-as-codepoints" mode should solve it, but it is not working for cyrillic chars for unknown reason)
 		ir.Event.KeyEvent.uChar.UnicodeChar = towupper(ir.Event.KeyEvent.uChar.UnicodeChar);
 	}
 

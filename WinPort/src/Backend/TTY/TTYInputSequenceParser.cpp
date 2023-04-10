@@ -866,7 +866,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 
 		if (s[6] == 'u' && vkc > 0x31 && vkc < 0x39) {
 			// iterm generates only keyup events in such cases
-			// lets emulate keyup also
+			// lets emulate keydown also
 			INPUT_RECORD ir = {};
 			ir.EventType = KEY_EVENT;
 			ir.Event.KeyEvent.wVirtualKeyCode = vkc;

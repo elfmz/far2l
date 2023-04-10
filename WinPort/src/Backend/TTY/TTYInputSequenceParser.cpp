@@ -619,7 +619,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 				break;
 			}
 
-		} else if (s[i] < '0' && s[i] > '9') {
+		} else if (s[i] < '0' || s[i] > '9') {
 			return TTY_PARSED_BADSEQUENCE;
 		}
 	}

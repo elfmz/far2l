@@ -834,7 +834,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		//case 0x72: vkc = ; break; // Help
 		case 0x73: vkc = VK_HOME; break; // Home
 		case 0x74: vkc = VK_PRIOR; break; // PageUp
-		//case 0x75: vkc = ; break; // ForwardDelete
+		case 0x75: vkc = VK_BACK; break; // ForwardDelete
 		case 0x76: vkc = VK_F4; break; // F4
 		case 0x77: vkc = VK_END; break; // End
 		case 0x78: vkc = VK_F2; break; // F2

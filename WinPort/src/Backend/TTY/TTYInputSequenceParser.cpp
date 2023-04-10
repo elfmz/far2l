@@ -800,7 +800,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x24: vkc = VK_RETURN; break; // Enter
 		case 0x30: vkc = VK_TAB; break; // Tab
 		case 0x31: vkc = VK_SPACE; break; // Space
-		case 0x33: vkc = VK_DELETE; break; // Del
+		case 0x33: vkc = VK_BACK; break; // Del https://discussions.apple.com/thread/4072343?answerId=18799493022#18799493022
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
 		case 0x37: vkc = VK_LWIN; break; // Command // fixme: mapping Command to Left Win (Super), it it ok?
 		case 0x38: vkc = VK_SHIFT; break; // Shift
@@ -834,7 +834,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		//case 0x72: vkc = ; break; // Help
 		case 0x73: vkc = VK_HOME; break; // Home
 		case 0x74: vkc = VK_PRIOR; break; // PageUp
-		case 0x75: vkc = VK_BACK; break; // ForwardDelete
+		case 0x75: vkc = VK_DELETE; break; // ForwardDelete https://discussions.apple.com/thread/4072343?answerId=18799493022#18799493022
 		case 0x76: vkc = VK_F4; break; // F4
 		case 0x77: vkc = VK_END; break; // End
 		case 0x78: vkc = VK_F2; break; // F2

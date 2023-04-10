@@ -62,6 +62,8 @@ enum SETATTRDLG
 	SA_TEXT_LABEL,
 	SA_TEXT_NAME,
 	SA_SEPARATOR1,
+	SA_TEXT_INFO,
+	SA_EDIT_INFO,
 	SA_TEXT_OWNER,
 	SA_EDIT_OWNER,
 	SA_TEXT_GROUP,
@@ -106,7 +108,6 @@ enum SETATTRDLG
 	SA_CHECKBOX_SUBFOLDERS,
 	SA_SEPARATOR5,
 	SA_BUTTON_SET,
-	SA_BUTTON_BRIEFINFO,
 	SA_BUTTON_CANCEL
 };
 
@@ -539,7 +540,7 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t *>(preRedrawItem.Param.Param1));
 }
 
-static void BriefInfo(const FARString &strSelName)
+static std::wstring BriefInfo(const FARString &strSelName)
 {
 	std::vector<std::wstring> lines;
 
@@ -547,17 +548,22 @@ static void BriefInfo(const FARString &strSelName)
 	cmd+= EscapeCmdStr(Wide2MB(strSelName.CPtr()));
 	cmd+= '\"';
 
-	if (!POpen(lines, cmd.c_str()))
-		return;
+	std::wstring out;
 
-	if (lines.empty())
-		return;
-
-	Messager m(Msg::SetAttrBriefInfo);
-	for (const auto &l : lines)
-		m.Add(l.c_str());
-	m.Add(Msg::HOk);
-	m.Show(0, 1);
+	if (POpen(lines, cmd.c_str())) {
+		for (const auto &line : lines) {
+			out = line;
+			size_t p = out.find(':');
+			if (p != std::string::npos) {
+				out.erase(0, p + 1);
+			}
+			StrTrim(out);
+			if (p != std::string::npos && !out.empty()) {
+				break;
+			}
+		}
+	}
+	return out;
 }
 
 static bool CheckFileOwnerGroup(DialogItemEx &EditItem,
@@ -618,61 +624,62 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX = 70, DlgY = 24;
+	short DlgX = 70, DlgY = 25;
 
 	DialogDataEx AttrDlgData[] = {
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,      5,                   5,               17,               5,               {}, 0, Msg::SetAttrOwner},
-		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, 0, L""},
-		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrGroup},
+		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_HIDDEN, Msg::SetAttrBriefInfo},
+		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_READONLY | DIF_HIDDEN, L""},
+		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
 		{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
+		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrGroup},
+		{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
 
-		{DI_TEXT,      3,                   7,               0,                7,               {}, DIF_SEPARATOR, L""},
-		{DI_CHECKBOX,  5,                   8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  short(DlgX / 3),     8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAppend},
+		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 8,               0,                8,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  5,                   10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,  short(DlgX / 3),     10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,      5,                   10,              0,                10,              {}, 0, Msg::SetAttrAccessUser},
-		{DI_TEXT,      short(DlgX / 3),     10,              0,                10,              {}, 0, Msg::SetAttrAccessGroup},
-		{DI_TEXT,      short(2 * DlgX / 3), 10,              0,                10,              {}, 0, Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,  5,                   11,              0,                11,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_CHECKBOX,  short(DlgX / 3),     11,              0,                11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
-		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
-		{DI_CHECKBOX,  short(DlgX / 3),     13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 11,              0,                11,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+		{DI_TEXT,      5,                   11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_TEXT,      short(DlgX / 3),     11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_TEXT,      short(2 * DlgX / 3), 11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
+		{DI_CHECKBOX,  5,                   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
+		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_CHECKBOX,  short(DlgX / 3),     13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_CHECKBOX,  short(DlgX / 3),     14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
-		{DI_TEXT,      3,                   14,              0,                14,              {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,      short(DlgX - 29),    15,              0,                15,              {}, 0, L""},
-		{DI_TEXT,      5,                   16,              0,                16,              {}, 0, Msg::SetAttrAccessTime},
-		{DI_FIXEDIT,   short(DlgX - 29),    16,              short(DlgX - 19), 16,              {}, DIF_MASKEDIT, L""},
-		{DI_FIXEDIT,   short(DlgX - 17),    16,              short(DlgX - 6),  16,              {}, DIF_MASKEDIT, L""},
-		{DI_TEXT,      5,                   17,              0,                17,              {}, 0, Msg::SetAttrModificationTime},
+		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},
+		{DI_TEXT,      5,                   17,              0,                17,              {}, 0, Msg::SetAttrAccessTime},
 		{DI_FIXEDIT,   short(DlgX - 29),    17,              short(DlgX - 19), 17,              {}, DIF_MASKEDIT, L""},
 		{DI_FIXEDIT,   short(DlgX - 17),    17,              short(DlgX - 6),  17,              {}, DIF_MASKEDIT, L""},
-		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrStatusChangeTime},
-		{DI_FIXEDIT,   short(DlgX - 29),    18,              short(DlgX - 19), 18,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
-		{DI_FIXEDIT,   short(DlgX - 17),    18,              short(DlgX - 6),  18,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
-		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
-		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
-		{DI_BUTTON,    0,                   19,              0,                19,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank},
-		{DI_TEXT,      3,                   20,              0,                20,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
-		{DI_CHECKBOX,  5,                   21,              0,                21,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
+		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrModificationTime},
+		{DI_FIXEDIT,   short(DlgX - 29),    18,              short(DlgX - 19), 18,              {}, DIF_MASKEDIT, L""},
+		{DI_FIXEDIT,   short(DlgX - 17),    18,              short(DlgX - 6),  18,              {}, DIF_MASKEDIT, L""},
+		{DI_TEXT,      5,                   19,              0,                19,              {}, 0, Msg::SetAttrStatusChangeTime},
+		{DI_FIXEDIT,   short(DlgX - 29),    19,              short(DlgX - 19), 19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_FIXEDIT,   short(DlgX - 17),    19,              short(DlgX - 6),  19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
+		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
+		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank},
+		{DI_TEXT,      3,                   21,              0,                21,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
+		{DI_CHECKBOX,  5,                   22,              0,                22,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
 		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, DIF_SEPARATOR, L""},
 		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetAttrSet},
-		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_CENTERGROUP | DIF_DISABLE, Msg::SetAttrBriefInfo},
 		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_CENTERGROUP,  Msg::Cancel}
 	};
 	MakeDialogItemsEx(AttrDlgData, AttrDlg);
@@ -681,10 +688,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 	if (!SelCount) {
 		return false;
-	}
-
-	if (SelCount == 1) {
-		AttrDlg[SA_BUTTON_BRIEFINFO].Flags&= ~DIF_DISABLE;
 	}
 
 	if (SrcPanel && SrcPanel->GetMode() == PLUGIN_PANEL) {
@@ -699,7 +702,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		if (!(Info.Flags & OPIF_REALNAMES)) {
 			AttrDlg[SA_BUTTON_SET].Flags|= DIF_DISABLE;
-			AttrDlg[SA_BUTTON_BRIEFINFO].Flags|= DIF_DISABLE;
+			//AttrDlg[SA_BUTTON_BRIEFINFO].Flags|= DIF_DISABLE;
 			DlgParam.Plugin = true;
 		}
 	}
@@ -766,6 +769,18 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		if (SelCount == 1) {
 			FSFileFlags FFFlags(strSelName.GetMB());
+
+			AttrDlg[SA_TEXT_INFO].Flags&= ~DIF_HIDDEN;
+			AttrDlg[SA_EDIT_INFO].Flags&= ~DIF_HIDDEN;
+
+			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
+				AttrDlg[SA_TEXT_INFO].strData = Msg::SetAttrLinkDest;
+				FARString strLinkDest;
+				ConvertNameToReal(strSelName, strLinkDest);
+				AttrDlg[SA_EDIT_INFO].strData = strLinkDest;
+			} else {
+				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
+			}
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 				if (!DlgParam.Plugin) {
@@ -1220,9 +1235,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 					}	// END: while (SrcPanel->GetSelNameCompat(...))
 				}
-			} break;
-			case SA_BUTTON_BRIEFINFO: {
-				BriefInfo(strSelName);
 			} break;
 			default:
 				return false;

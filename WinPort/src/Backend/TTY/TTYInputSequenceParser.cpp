@@ -456,7 +456,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 21    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F10; break;
 		case 23    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F11; break;
 		case 24    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F12; break;
-		case 32    : ir.Event.KeyEvent.wVirtualKeyCode = VK_SPACE; break;
+		case 32    : ir.Event.KeyEvent.wVirtualKeyCode = VK_SPACE; break;		
 		case 57399 : case 57425 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD0; break;
 		case 57400 : case 57424 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD1; break;
 		case 57401 : case 57420 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD2; break;
@@ -639,38 +639,38 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 
 size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, size_t l)
 {
-    size_t len = 0;
-    while (1) {
-    	if (len >= l) return TTY_PARSED_WANTMORE;
+	size_t len = 0;
+	while (1) {
+		if (len >= l) return TTY_PARSED_WANTMORE;
 		if (s[len] == 7) break;
 		len++;
-    }
-    len++;
+	}
+	len++;
 
 	unsigned int flags = 0;
 	unsigned int flags_length = 0;
 	sscanf(s + 8, "%i%n", &flags, &flags_length); // 8 is a fixed length of "]1337;d;"
 
 	wchar_t uni_char = 0;
-    unsigned char bytes[4] = {0};
-    int num_bytes = 0;
-    int i;
-    for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
-	    if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
-	    if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
-        sscanf(s + i, "%2hhx", &bytes[num_bytes]);
-        num_bytes++;
-    }
+	unsigned char bytes[4] = {0};
+	int num_bytes = 0;
+	int i;
+	for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
+		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
+		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
+		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
+		num_bytes++;
+	}
 
-    if (num_bytes == 1) {
-        uni_char = bytes[0];
-    } else if (num_bytes == 2) {
-        uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
-    } else if (num_bytes == 3) {
-        uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
-    } else if (num_bytes == 4) {
-        uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
-    }
+	if (num_bytes == 1) {
+		uni_char = bytes[0];
+	} else if (num_bytes == 2) {
+		uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+	} else if (num_bytes == 3) {
+		uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+	} else if (num_bytes == 4) {
+		uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
+	}
 
 	unsigned int keycode = 0;
 	sscanf(s + i + 1, "%i", &keycode);

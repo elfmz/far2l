@@ -404,7 +404,9 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		if (modif_state & KITTY_MOD_SHIFT)    { ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED; }
 		if (modif_state & KITTY_MOD_ALT)      { ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; }
 		if (modif_state & KITTY_MOD_CONTROL)  { ir.Event.KeyEvent.dwControlKeyState |=
-			right_ctrl_down ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED; }
+			right_ctrl_down ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED; } else {
+			right_ctrl_down = 0;
+		}
 		if (modif_state & KITTY_MOD_CAPSLOCK) { ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON; }
 		if (modif_state & KITTY_MOD_NUMLOCK)  { ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON; }
 	}

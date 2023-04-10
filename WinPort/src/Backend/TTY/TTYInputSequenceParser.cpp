@@ -916,6 +916,12 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
 
+	fprintf(stderr, "Parsing: ");
+	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
+		fprintf(stderr, "%c", s[i]);
+	}
+	fprintf(stderr, "\n");
+
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
 		return 3;
 	}
@@ -946,12 +952,10 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	size_t r = 0;
 
 	if (l > 1 && s[0] == ']' && s[1] == '1' && s[2] == '3' && s[3] == '3' && s[4] == '7' && s[5] == ';') {
-//		if (s[6] == 'd' || s[6] == 'u') {
-			r = TryParseAsiTerm2EscapeSequence(s, l);
-			if (r != TTY_PARSED_BADSEQUENCE) {
-				return r;
-			}
-//		}
+		r = TryParseAsiTerm2EscapeSequence(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE) {
+			return r;
+		}
 	}
 	
 	r = ParseNChars2Key(s, l);

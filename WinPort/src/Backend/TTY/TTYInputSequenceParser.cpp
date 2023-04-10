@@ -848,12 +848,17 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	
 	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
 
+	bool has_ctrl = 0;
 	if (flags & 1) { flags_win |= SHIFT_PRESSED; } // todo: LEFT_SHIFT_PRESSED
 	if (flags & 2) { flags_win |= SHIFT_PRESSED; } // todo: RIGHT_SHIFT_PRESSED
 	if (flags & 4) { flags_win |= LEFT_ALT_PRESSED; }
 	if (flags & 8) { flags_win |= RIGHT_ALT_PRESSED; }
-	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; }
-	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; }
+	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; has_ctrl = 1; }
+	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; has_ctrl = 1; }
+	if (has_ctrl && vkc >= 0x30 && vkc <= 0x39) {
+		// special handling of Ctrl+numbers
+		uni_char = vkc - 0x30 + '0';
+	}
 
 	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
 	if (keycode == 0x3E) flags_win |= ENHANCED_KEY; // RightControl

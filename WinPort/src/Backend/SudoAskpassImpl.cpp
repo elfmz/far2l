@@ -225,7 +225,7 @@ public:
 	bool Loop()
 	{
 		for (;;) {
-			if (g_winport_con_in->WaitForNonEmpty(700, _cip)) {
+			if (g_winport_con_in->WaitForNonEmptyWithTimeout(700, _cip)) {
 				DispatchInput();
 
 			} else if (_password_expected) {

@@ -47,7 +47,9 @@ WINPORT_DECL(GetKeyboardLayoutList, int, (int nBuff, HKL *lpList))
 
 WINPORT_DECL(MapVirtualKey, UINT, (UINT uCode, UINT uMapType))
 {
-	if (uMapType == MAPVK_VK_TO_VSC) { return vk_to_vsc[uCode]; }
+	if (uMapType == MAPVK_VK_TO_VSC && uCode < ARRAYSIZE(vk_to_vsc)) {
+		return vk_to_vsc[uCode];
+	}
 
 	fprintf(stderr, "MapVirtualKey(0x%x, 0x%x)\n", uCode, uMapType);
 	return 0;

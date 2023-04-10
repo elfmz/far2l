@@ -642,11 +642,11 @@ int flags_track = 0;
 size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, size_t l)
 {
 	fprintf(stderr, "iTerm2 parsing: ");
-    for (size_t i = 0; i < l && s[i] != '\0'; i++) {
+	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
-    }
+	}
 	fprintf(stderr, "\n");
-    	
+
 	size_t len = 0;
 	while (1) {
 		if (len >= l) return TTY_PARSED_WANTMORE;
@@ -848,6 +848,10 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	
 	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
 
+	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
+	if (keycode == 0x3E) flags_win |= ENHANCED_KEY; // RightControl
+	if (keycode == 0x4C) flags_win |= ENHANCED_KEY; // Numpad Enter
+
 	bool has_ctrl = 0;
 	if (flags & 1) { flags_win |= SHIFT_PRESSED; } // todo: LEFT_SHIFT_PRESSED
 	if (flags & 2) { flags_win |= SHIFT_PRESSED; } // todo: RIGHT_SHIFT_PRESSED
@@ -855,14 +859,27 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	if (flags & 8) { flags_win |= RIGHT_ALT_PRESSED; }
 	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; has_ctrl = 1; }
 	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; has_ctrl = 1; }
+
 	if (has_ctrl && vkc >= 0x30 && vkc <= 0x39) {
 		// special handling of Ctrl+numbers
 		uni_char = vkc - 0x30 + '0';
-	}
 
-	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
-	if (keycode == 0x3E) flags_win |= ENHANCED_KEY; // RightControl
-	if (keycode == 0x4C) flags_win |= ENHANCED_KEY; // Numpad Enter
+		if (s[6] == 'u' && vkc > 0x31 && vkc < 0x39) {
+			// iterm generates only keyup events in such cases
+			// lets emulate keyup also
+			INPUT_RECORD ir = {};
+			ir.EventType = KEY_EVENT;
+			ir.Event.KeyEvent.wVirtualKeyCode = vkc;
+			ir.Event.KeyEvent.wVirtualScanCode = 
+				WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
+			ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
+			ir.Event.KeyEvent.bKeyDown = TRUE;
+			ir.Event.KeyEvent.dwControlKeyState = flags_win;
+			ir.Event.KeyEvent.wRepeatCount = 1;
+			if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
+			_ir_pending.emplace_back(ir);
+		}
+	}
 
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
@@ -873,9 +890,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	ir.Event.KeyEvent.bKeyDown = (s[6] == 'd' ? TRUE : FALSE);
 	ir.Event.KeyEvent.dwControlKeyState = flags_win;
 	ir.Event.KeyEvent.wRepeatCount = 1;
-
 	if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
-
 	_ir_pending.emplace_back(ir);
 
 	flags_track = flags;

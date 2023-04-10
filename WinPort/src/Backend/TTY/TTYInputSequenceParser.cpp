@@ -637,8 +637,16 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+int flags_track = 0;
+
 size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, size_t l)
 {
+	fprintf(stderr, "iTerm2 parsing: ");
+    for (size_t i = 0; i < l && s[i] != '\0'; i++) {
+		fprintf(stderr, "%c", s[i]);
+    }
+	fprintf(stderr, "\n");
+    	
 	size_t len = 0;
 	while (1) {
 		if (len >= l) return TTY_PARSED_WANTMORE;
@@ -647,11 +655,54 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	}
 	len++;
 
-	if (s[6] == 'f') { return len; } // flags change event unsupported for now, ignoring
-
 	unsigned int flags = 0;
 	unsigned int flags_length = 0;
 	sscanf(s + 8, "%i%n", &flags, &flags_length); // 8 is a fixed length of "]1337;d;"
+
+	flags -= 1;
+	unsigned int flags_win = 0;
+
+	// Flags changed event: esc ] 1337 ; f ; flags ^G
+	if (s[6] == 'f') {
+		
+		bool go = false;
+		int vkc, vsc, kd, cks = 0;
+
+		if ((flags  & 1) && !(flags_track & 1)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED; }
+		if (!(flags & 1) &&  (flags_track & 1)) { go = 1; vkc = VK_SHIFT; kd = 0; }
+		if ((flags  & 2) && !(flags_track & 2)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED;
+			vsc = RIGHT_SHIFT_VSC; }
+		if (!(flags & 2) &&  (flags_track & 2)) { go = 1; vkc = VK_SHIFT; kd = 0; vsc = RIGHT_SHIFT_VSC; }
+
+		if ((flags  & 4) && !(flags_track & 4)) { go = 1; vkc = VK_MENU; kd = 1; cks |= LEFT_ALT_PRESSED; }
+		if (!(flags & 4) &&  (flags_track & 4)) { go = 1; vkc = VK_MENU; kd = 0; }
+		if ((flags  & 8) && !(flags_track & 8)) { go = 1; vkc = VK_MENU; kd = 1; cks |= RIGHT_ALT_PRESSED;
+			cks |= ENHANCED_KEY; }
+		if (!(flags & 8) &&  (flags_track & 8)) { go = 1; vkc = VK_MENU; kd = 0; cks |= ENHANCED_KEY; }
+
+		if ((flags  & 16) && !(flags_track & 16)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= LEFT_CTRL_PRESSED; }
+		if (!(flags & 16) &&  (flags_track & 16)) { go = 1; vkc = VK_CONTROL; kd = 0; }
+		if ((flags  & 32) && !(flags_track & 32)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
+			cks |= ENHANCED_KEY; }
+		if (!(flags & 32) &&  (flags_track & 32)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
+
+		if (go) {
+			INPUT_RECORD ir = {0};
+			ir.EventType = KEY_EVENT;
+			ir.Event.KeyEvent.wVirtualKeyCode = vkc;
+			ir.Event.KeyEvent.wVirtualScanCode = vsc ? vsc :
+				WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
+			ir.Event.KeyEvent.bKeyDown = kd;
+			ir.Event.KeyEvent.dwControlKeyState = cks;
+			ir.Event.KeyEvent.wRepeatCount = 1;
+
+			_ir_pending.emplace_back(ir);
+		}
+
+		flags_track = flags;
+		return len;
+	}
+
 
 	wchar_t uni_char = 0;
 	unsigned char bytes[4] = {0};
@@ -732,7 +783,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x45: vkc = VK_ADD; break; // +
 		//case 0x47: vkc = ; break; // keypad "clear"
 		case 0x4B: vkc = VK_DIVIDE; break; // /
-		case 0x4C: vkc = VK_RETURN; break; // Enter // todo: set enhanced key flag
+		case 0x4C: vkc = VK_RETURN; break; // Enter
 		case 0x4E: vkc = VK_SUBTRACT; break; // -
 		//case 0x51: vkc = ; break; // keypad "equals"
 		case 0x52: vkc = 0x60; break; // 0
@@ -756,9 +807,9 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x39: vkc = VK_CAPITAL; break; // CapsLock
 		case 0x3A: vkc = VK_MENU; break; // Option
 		case 0x3B: vkc = VK_CONTROL; break; // Control
-		case 0x3C: vkc = VK_SHIFT; break; // RightShift // todo: set special scan code
-		case 0x3D: vkc = VK_MENU; break; // RightOption // todo: set enhanced key flag
-		case 0x3E: vkc = VK_CONTROL; break; // RightControl // todo: set enhanced key flag
+		case 0x3C: vkc = VK_SHIFT; break; // RightShift
+		case 0x3D: vkc = VK_MENU; break; // RightOption
+		case 0x3E: vkc = VK_CONTROL; break; // RightControl
 		//case 0x3F: vkc = ; break; // Function
 		//case 0x40: vkc = ; break; // F17
 		//case 0x48: vkc = ; break; // VolumeUp
@@ -797,9 +848,6 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	
 	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
 
-	flags -= 1;
-	unsigned int flags_win = 0;
-
 	if (flags & 1) { flags_win |= SHIFT_PRESSED; } // todo: LEFT_SHIFT_PRESSED
 	if (flags & 2) { flags_win |= SHIFT_PRESSED; } // todo: RIGHT_SHIFT_PRESSED
 	if (flags & 4) { flags_win |= LEFT_ALT_PRESSED; }
@@ -807,17 +855,25 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; }
 	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; }
 
+	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
+	if (keycode == 0x3E) flags_win |= ENHANCED_KEY; // RightControl
+	if (keycode == 0x4C) flags_win |= ENHANCED_KEY; // Numpad Enter
+
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wVirtualKeyCode = vkc;
-	ir.Event.KeyEvent.wVirtualScanCode = 0;
+	ir.Event.KeyEvent.wVirtualScanCode = 
+		WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
 	ir.Event.KeyEvent.bKeyDown = (s[6] == 'd' ? TRUE : FALSE);
 	ir.Event.KeyEvent.dwControlKeyState = flags_win;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 
+	if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
+
 	_ir_pending.emplace_back(ir);
 
+	flags_track = flags;
 	return len;
 }
 

@@ -647,6 +647,8 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	}
 	len++;
 
+	if (s[6] == 'f') { return len; } // flags change event unsupported for now, ignoring
+
 	unsigned int flags = 0;
 	unsigned int flags_length = 0;
 	sscanf(s + 8, "%i%n", &flags, &flags_length); // 8 is a fixed length of "]1337;d;"
@@ -852,12 +854,12 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	size_t r = 0;
 
 	if (l > 1 && s[0] == ']' && s[1] == '1' && s[2] == '3' && s[3] == '3' && s[4] == '7' && s[5] == ';') {
-		if (s[6] == 'd' || s[6] == 'u') {
+//		if (s[6] == 'd' || s[6] == 'u') {
 			r = TryParseAsiTerm2EscapeSequence(s, l);
 			if (r != TTY_PARSED_BADSEQUENCE) {
 				return r;
 			}
-		}
+//		}
 	}
 	
 	r = ParseNChars2Key(s, l);

@@ -41,7 +41,7 @@ extern "C" {
 					PrintLine(FOREGROUND_BLUE | FOREGROUND_GREEN, 5, "");
 
 					INPUT_RECORD ir;
-					if (g_winport_con_in->WaitForNonEmpty(1000, cip)
+					if (g_winport_con_in->WaitForNonEmptyWithTimeout(1000, cip)
 					 && g_winport_con_in->Dequeue(&ir, 1, cip)) {
 						if (i >= KEYPRESS_IGNORE_SECONDS && ir.EventType == KEY_EVENT) {
 							break;

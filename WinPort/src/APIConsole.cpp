@@ -211,7 +211,7 @@ extern "C" {
 	{
 		std::vector<INPUT_RECORD> backlog;
 		DWORD out = 0;
-		while (g_winport_con_in->WaitForNonEmpty(0)) {
+		while (g_winport_con_in->WaitForNonEmptyWithTimeout(0)) {
 			INPUT_RECORD rec;
 			if (!g_winport_con_in->Dequeue(&rec, 1)) {
 				break;
@@ -247,7 +247,11 @@ extern "C" {
 
 	WINPORT_DECL(WaitConsoleInput,BOOL,(DWORD dwTimeout))
 	{
-		return g_winport_con_in->WaitForNonEmpty((dwTimeout == INFINITE) ? -1 : dwTimeout) ? TRUE : FALSE;
+		if (dwTimeout == INFINITE) {
+			g_winport_con_in->WaitForNonEmpty();
+			return TRUE;
+		}
+		return g_winport_con_in->WaitForNonEmptyWithTimeout(dwTimeout) ? TRUE : FALSE;
 	}
 
 	WINPORT_DECL(WriteConsoleInput,BOOL,(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten))

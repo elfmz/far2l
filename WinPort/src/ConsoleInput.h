@@ -23,7 +23,8 @@ public:
 	virtual DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0);
 	virtual DWORD Count(unsigned int requestor_priority = 0);
 	virtual DWORD Flush(unsigned int requestor_priority = 0);
-	virtual bool WaitForNonEmpty(unsigned int timeout_msec = (unsigned int)-1, unsigned int requestor_priority = 0);
+	virtual void WaitForNonEmpty(unsigned int requestor_priority = 0);
+	virtual bool WaitForNonEmptyWithTimeout(unsigned int timeout_msec, unsigned int requestor_priority = 0);
 
 	virtual unsigned int RaiseRequestorPriority();
 	virtual void LowerRequestorPriority(unsigned int released_priority);

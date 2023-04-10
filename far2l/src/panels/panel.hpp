@@ -191,8 +191,7 @@ public:
 
 	virtual int GetSelCount() { return 0; };
 	virtual int GetRealSelCount() { return 0; };
-	virtual int
-	GetSelName(FARString *strName, DWORD &FileAttr, DWORD &FileMode, FAR_FIND_DATA_EX *fd = nullptr)
+	virtual int GetSelName(FARString *strName, DWORD &FileAttr, DWORD &FileMode, FAR_FIND_DATA_EX *fd = nullptr)
 	{
 		return FALSE;
 	};
@@ -235,8 +234,8 @@ public:
 	};
 	bool FindPartNameXLat(const wchar_t *Name, int Next, int Direct = 1, int ExcludeSets = 0);
 
-	virtual int GoToFile(long idxItem) { return TRUE; };
-	virtual int GoToFile(const wchar_t *Name, BOOL OnlyPartName = FALSE) { return TRUE; };
+	virtual bool GoToFile(long idxItem) { return TRUE; };
+	virtual bool GoToFile(const wchar_t *Name, BOOL OnlyPartName = FALSE) { return TRUE; };
 	virtual long FindFile(const wchar_t *Name, BOOL OnlyPartName = FALSE) { return -1; };
 
 	virtual bool IsSelected(const wchar_t *Name) { return false; };

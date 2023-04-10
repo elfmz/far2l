@@ -1683,18 +1683,18 @@ void TreeList::UpdateViewPanel()
 	}
 }
 
-int TreeList::GoToFile(long idxItem)
+bool TreeList::GoToFile(long idxItem)
 {
 	if ((DWORD)idxItem < (DWORD)TreeCount) {
 		CurFile = idxItem;
 		CorrectPosition();
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
-int TreeList::GoToFile(const wchar_t *Name, BOOL OnlyPartName)
+bool TreeList::GoToFile(const wchar_t *Name, BOOL OnlyPartName)
 {
 	return GoToFile(FindFile(Name, OnlyPartName));
 }

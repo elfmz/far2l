@@ -15673,15 +15673,26 @@ upd:"RRRRR%cMM%cDD gg%cmm%css%cms"
 "ГГГГГ%cММ%cДД чч%cмм%cсс%cмс"
 
 SetAttrBriefInfo
-"&Краткое описание"
-"Brief &info"
-upd:"Brief &info"
-upd:"Brief &info"
-upd:"Brief &info"
-upd:"Brief &info"
-upd:"Brief &info"
-upd:"Системні &властивості"
-"&Каротае апісанне"
+"&Описание:"
+"&Info:"
+upd:"&Info:"
+upd:"&Info:"
+upd:"&Info:"
+upd:"&Info:"
+upd:"&Info:"
+"&Опис:"
+"&Апісанне:"
+
+SetAttrLinkDest
+"&Ссылка:"
+"&Symlink:"
+upd:"&Symlink:"
+upd:"&Symlink:"
+upd:"&Symlink:"
+upd:"&Symlink:"
+upd:"&Symlink:"
+"По&силання:"
+"&Спасылка:"
 
 SetAttrSetting
 l:

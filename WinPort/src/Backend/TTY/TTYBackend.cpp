@@ -31,6 +31,8 @@
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
+long _iterm2_cmd_ts = 0;
+
 static void OnSigHup(int signo);
 
 static bool IsEnhancedKey(WORD code)

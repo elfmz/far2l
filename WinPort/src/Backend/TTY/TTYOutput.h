@@ -6,6 +6,8 @@
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
 
+extern long _iterm2_cmd_ts;
+
 struct TTYBasePalette
 {
 	TTYBasePalette();

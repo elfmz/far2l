@@ -4,6 +4,8 @@
 #include <map>
 #include <StackSerializer.h>
 
+extern long _iterm2_cmd_ts;
+
 struct TTYInputKey
 {
 	WORD vk;

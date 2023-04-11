@@ -365,7 +365,7 @@ void TTYBackend::WriterThread()
 			}
 
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
-				tty_out.CheckIterm2Hack();
+				tty_out.CheckiTerm2Hack();
 			}
 
 			tty_out.Flush();

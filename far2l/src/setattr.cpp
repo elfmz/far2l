@@ -632,7 +632,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_HIDDEN, Msg::SetAttrBriefInfo},
-		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_READONLY | DIF_HIDDEN, L""},
+		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY | DIF_HIDDEN, L""},
 		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
 		{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
 		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrGroup},
@@ -640,19 +640,19 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
 		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAppend},
+		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_CHECKBOX,  5,                   10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  short(DlgX / 3),     10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 10,              0,                10,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  5,                   10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,  short(DlgX / 3),     10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  short(2 * DlgX / 3), 10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
 		{DI_TEXT,      5,                   11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
 		{DI_TEXT,      short(DlgX / 3),     11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
 		{DI_TEXT,      short(2 * DlgX / 3), 11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
 		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
 		{DI_CHECKBOX,  5,                   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
 		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},

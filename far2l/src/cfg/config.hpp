@@ -160,9 +160,8 @@ struct Confirmation
 	*/
 	int AllowReedit;
 	int HistoryClear;
-	int RemoveSUBST;
+	int ClearVT;
 	int RemoveHotPlug;
-	int DetachVHD;
 };
 
 struct DizOptions

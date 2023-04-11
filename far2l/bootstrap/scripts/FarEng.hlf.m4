@@ -1389,7 +1389,7 @@ following operations:
 
     - ~unmounting~@DisconnectDrive@ from the Location menu;
 
-    - disconnect SUBST-disks from the Location menu;
+    - clear terminal screen and history by pressing F8;
 
     - removal of USB storage devices from the Location menu;
 

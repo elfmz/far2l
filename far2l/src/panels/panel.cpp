@@ -576,9 +576,13 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 						switch (item->kind) {
 							case PanelMenuItem::MOUNTPOINT: {
 								FARString path(item->location.path);
-								Mounts::Unmount(path,
-										Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL
-												|| Key == KEY_SHIFTDEL);
+								if (!Opt.Confirm.RemoveHotPlug || Message(MSG_WARNING, 2,
+									Msg::ChangeHotPlugDisconnectDriveTitle, Msg::ChangeHotPlugDisconnectDriveQuestion,
+									path, Msg::Ok, Msg::Cancel) == 0) {
+									Mounts::Unmount(path,
+											Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL
+													|| Key == KEY_SHIFTDEL);
+								}
 								return SelPos;
 							}
 

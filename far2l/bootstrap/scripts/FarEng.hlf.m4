@@ -2731,10 +2731,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
   Block operations
 
    #Shift-Cursor keys#       Select block
-   #Ctrl-Shift-Cursor keys#  Select block
-   #Alt-gray cursor keys#    Select vertical block
-   #Alt-Shift-Cursor keys#   Select vertical block
-   #Ctrl-Alt-gray keys#      Select vertical block
+   #Ctrl-Shift-Cursor keys#  Select block by words
+   #Alt-Cursor keys#         Select vertical block
+   #Alt-Shift-Cursor keys#   Select vertical block (use NumLock cursor keys)
    #Ctrl-A#                  Select all text
    #Ctrl-U#                  Deselect block
    #Shift-Ins, Ctrl-V#       Paste block from clipboard

@@ -343,12 +343,6 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
-	if (_iterm2_cmd_ts && (time(NULL) - _iterm2_cmd_ts) >= 2) {
-		_iterm2_cmd_ts = 0;
-		const char it2on[] = "\x1b[?1337h";
-		WriteReally(it2on, sizeof(it2on));
-	}
-
 	FinalizeSameChars();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());
@@ -515,4 +509,17 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 	base64_encode(request, (const unsigned char *)clip_data.data(), clip_data.size());
 	request+= '\a';
 	Write(request.c_str(), request.size());
+}
+
+void TTYOutput::CheckIterm2Hack() {
+	if (_iterm2_cmd_state) {
+		_iterm2_cmd_state = 0;
+		const char it2off[] = "\x1b[?1337l";
+		WriteReally(it2off, sizeof(it2off));
+	}
+	if (!_iterm2_cmd_state && _iterm2_cmd_ts && (time(NULL) - _iterm2_cmd_ts) >= 2) {
+		_iterm2_cmd_ts = 0;
+		const char it2on[] = "\x1b[?1337h";
+		WriteReally(it2on, sizeof(it2on));
+	}
 }

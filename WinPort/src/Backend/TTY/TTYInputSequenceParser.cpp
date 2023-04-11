@@ -810,6 +810,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x33: vkc = VK_BACK; break; // Del https://discussions.apple.com/thread/4072343?answerId=18799493022#18799493022
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
 		case 0x37: vkc = VK_LWIN; // Command
+		    _iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 			break;
 		case 0x38: vkc = VK_SHIFT; break; // Shift

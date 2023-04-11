@@ -621,7 +621,8 @@ Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
   Change to the home directory (~~)                            #Ctrl-`#
 
-  Change folder, enter an archive (also a SFX archive)     #Ctrl-[Shift-]PgDn#
+  Change folder, enter an archive (also a SFX archive),    #Ctrl-[Shift-]PgDn#
+   for symlink jump to its original location
 
     If the cursor points to a directory, pressing #Ctrl-PgDn# changes to that
 directory. If the cursor points to a file, then, depending on the file type,
@@ -2752,11 +2753,11 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F2#                      Save file
    #Shift-F2#                ~Save file as...~@FileSaveAs@
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
-   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
-   #F6#                      Switch to ~viewer~@Viewer@
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
    #Ctrl-F5#                 Toggle Tab-to-spaces expansion
+   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
+   #F6#                      Switch to ~viewer~@Viewer@
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace

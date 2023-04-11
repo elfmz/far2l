@@ -73,5 +73,5 @@ public:
 	void SendFar2lInterract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
 
-	void CheckIterm2Hack();
+	void CheckiTerm2Hack();
 };

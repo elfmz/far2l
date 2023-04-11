@@ -511,7 +511,7 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 	Write(request.c_str(), request.size());
 }
 
-void TTYOutput::CheckIterm2Hack() {
+void TTYOutput::CheckiTerm2Hack() {
 	if (_iterm2_cmd_state) {
 		_iterm2_cmd_state = 0;
 		const char it2off[] = "\x1b[?1337l";

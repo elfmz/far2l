@@ -676,9 +676,11 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 
 		if ((flags  & 4) && !(flags_track & 4)) { go = 1; vkc = VK_MENU; kd = 1; cks |= LEFT_ALT_PRESSED; }
 		if (!(flags & 4) &&  (flags_track & 4)) { go = 1; vkc = VK_MENU; kd = 0; }
+		/*
 		if ((flags  & 8) && !(flags_track & 8)) { go = 1; vkc = VK_MENU; kd = 1; cks |= RIGHT_ALT_PRESSED;
 			cks |= ENHANCED_KEY; }
 		if (!(flags & 8) &&  (flags_track & 8)) { go = 1; vkc = VK_MENU; kd = 0; cks |= ENHANCED_KEY; }
+		*/
 
 		if ((flags  & 16) && !(flags_track & 16)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= LEFT_CTRL_PRESSED; }
 		if (!(flags & 16) &&  (flags_track & 16)) { go = 1; vkc = VK_CONTROL; kd = 0; }
@@ -686,10 +688,10 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 			cks |= ENHANCED_KEY; }
 		if (!(flags & 32) &&  (flags_track & 32)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
-		// map right Command to right Control
-		if ((flags  & 128) && !(flags_track & 128)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
+		// map right Option to right Control
+		if ((flags  & 8) && !(flags_track & 8)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
-		if (!(flags & 128) &&  (flags_track & 128)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
+		if (!(flags & 8) &&  (flags_track & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		if (go) {
 			INPUT_RECORD ir = {0};
@@ -807,21 +809,13 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x31: vkc = VK_SPACE; break; // Space
 		case 0x33: vkc = VK_BACK; break; // Del https://discussions.apple.com/thread/4072343?answerId=18799493022#18799493022
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
-		case 0x37: // Command
-			if (flags & 128) {
-				// map right Command to right Control
-				vkc = VK_CONTROL;
-			} else {
-				// map left Command to left Win (Super) key
-				vkc = VK_LWIN;
-			}
-			break;
+		case 0x37: vkc = VK_LWIN; break;// Command
 		case 0x38: vkc = VK_SHIFT; break; // Shift
 		case 0x39: vkc = VK_CAPITAL; break; // CapsLock
 		case 0x3A: vkc = VK_MENU; break; // Option
 		case 0x3B: vkc = VK_CONTROL; break; // Control
 		case 0x3C: vkc = VK_SHIFT; break; // RightShift
-		case 0x3D: vkc = VK_MENU; break; // RightOption
+		case 0x3D: vkc = VK_CONTROL; break; // RightOption // map right Option to right Control
 		case 0x3E: vkc = VK_CONTROL; break; // RightControl
 		//case 0x3F: vkc = ; break; // Function
 		//case 0x40: vkc = ; break; // F17
@@ -869,12 +863,12 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	if (flags & 1) { flags_win |= SHIFT_PRESSED; } // todo: LEFT_SHIFT_PRESSED
 	if (flags & 2) { flags_win |= SHIFT_PRESSED; } // todo: RIGHT_SHIFT_PRESSED
 	if (flags & 4) { flags_win |= LEFT_ALT_PRESSED; }
-	if (flags & 8) { flags_win |= RIGHT_ALT_PRESSED; }
+	// if (flags & 8) { flags_win |= RIGHT_ALT_PRESSED; }
 	if (flags & 16) { flags_win |= LEFT_CTRL_PRESSED; has_ctrl = 1; }
 	if (flags & 32) { flags_win |= RIGHT_CTRL_PRESSED; has_ctrl = 1; }
 
-	// map right Command to right Control
-	if (flags & 128) { flags_win |= RIGHT_CTRL_PRESSED; }
+	// map right Option to right Control
+	if (flags & 8) { flags_win |= RIGHT_CTRL_PRESSED; }
 
 	if (has_ctrl && vkc >= 0x30 && vkc <= 0x39) {
 		// special handling of Ctrl+numbers

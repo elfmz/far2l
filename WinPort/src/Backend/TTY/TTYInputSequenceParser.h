@@ -5,6 +5,7 @@
 #include <StackSerializer.h>
 
 extern long _iterm2_cmd_ts;
+extern bool _iterm2_cmd_state;
 
 struct TTYInputKey
 {

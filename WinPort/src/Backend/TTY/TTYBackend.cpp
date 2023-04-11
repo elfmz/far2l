@@ -32,6 +32,7 @@ static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
 long _iterm2_cmd_ts = 0;
+bool _iterm2_cmd_state = 0;
 
 static void OnSigHup(int signo);
 
@@ -361,6 +362,10 @@ void TTYBackend::WriterThread()
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
+			}
+
+			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
+				tty_out.CheckIterm2Hack();
 			}
 
 			tty_out.Flush();

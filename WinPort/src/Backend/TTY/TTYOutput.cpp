@@ -343,6 +343,12 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
+	if (_iterm2_cmd_ts && (time(NULL) - _iterm2_cmd_ts) >= 2) {
+		_iterm2_cmd_ts = 0;
+		const char it2on[] = "\x1b[?1337h";
+		WriteReally(it2on, sizeof(it2on));
+	}
+
 	FinalizeSameChars();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());

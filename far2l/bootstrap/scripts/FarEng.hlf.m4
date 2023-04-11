@@ -621,7 +621,8 @@ Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
   Change to the home directory (~~)                            #Ctrl-`#
 
-  Change folder, enter an archive (also a SFX archive)     #Ctrl-[Shift-]PgDn#
+  Change folder, enter an archive (also a SFX archive),    #Ctrl-[Shift-]PgDn#
+   for symlink jump to its original location
 
     If the cursor points to a directory, pressing #Ctrl-PgDn# changes to that
 directory. If the cursor points to a file, then, depending on the file type,
@@ -1388,7 +1389,7 @@ following operations:
 
     - ~unmounting~@DisconnectDrive@ from the Location menu;
 
-    - disconnect SUBST-disks from the Location menu;
+    - clear terminal screen and history by pressing F8;
 
     - removal of USB storage devices from the Location menu;
 
@@ -2730,10 +2731,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
   Block operations
 
    #Shift-Cursor keys#       Select block
-   #Ctrl-Shift-Cursor keys#  Select block
-   #Alt-gray cursor keys#    Select vertical block
-   #Alt-Shift-Cursor keys#   Select vertical block
-   #Ctrl-Alt-gray keys#      Select vertical block
+   #Ctrl-Shift-Cursor keys#  Select block by words
+   #Alt-Cursor keys#         Select vertical block
+   #Alt-Shift-Cursor keys#   Select vertical block (use NumLock cursor keys)
    #Ctrl-A#                  Select all text
    #Ctrl-U#                  Deselect block
    #Shift-Ins, Ctrl-V#       Paste block from clipboard
@@ -2752,11 +2752,11 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F2#                      Save file
    #Shift-F2#                ~Save file as...~@FileSaveAs@
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
-   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
-   #F6#                      Switch to ~viewer~@Viewer@
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
    #Ctrl-F5#                 Toggle Tab-to-spaces expansion
+   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
+   #F6#                      Switch to ~viewer~@Viewer@
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace

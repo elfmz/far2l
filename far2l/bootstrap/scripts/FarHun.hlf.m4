@@ -85,6 +85,8 @@ ebben az esetben a #kurzorvezérlő billentyűkkel# görgethetjük a szöveget.
     Az #Alt-F1# vagy a #BackSpace# segítségével léphetünk visszafelé a bejárt
 súgóoldalakon, #Shift-F1#-re pedig a súgó tartalma jelenik meg.
 
+    Press #F7# to search in Help (will show help topics containing the searched text fragment).
+
     A #Shift-F2# a ~pluginek~@Plugins@ súgóját hívja meg.
 
     A #súgó# alapértelmezés szerint csökkentett méretű ablakban jelenik meg,
@@ -627,7 +629,10 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
 
   Belépés a gyökérmappába                                     #Ctrl-\\#
 
-  Belépés mappába vagy tömörített fájlba (SFX-be is)       #Ctrl-PgDn#
+  Change to the home directory (~~)                            #Ctrl-`#
+
+  Belépés mappába vagy tömörített fájlba (SFX-be is),      #Ctrl-PgDn#
+   for symlink jump to its original location
 
     Ha a kurzor mappán áll, a #Ctrl-PgDn# beléptet a mappába. Ha a
     kurzor fájlon áll, a fájl típusához ~társított parancsot~@FileAssoc@ hajtja
@@ -1594,6 +1599,9 @@ $ #Parancs előzmények#
   A kiválasztott parancsot a vágólapra másolja,                #Ctrl-C#
     a lista legördítve marad                            vagy #Ctrl-Ins#
 
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
+
     Ha az előző vagy a következő parancsot közvetlenül a
   parancssorból szeretnénk meghívni, használjuk a #Ctrl-E# vagy
   a #Ctrl-X# billentyűket.
@@ -1636,6 +1644,9 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
   Fájl megnyitása a ~nézőkében~@Viewer@                                      #F3#
                                                         vagy #Numpad 5#
 
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
+
     A lista fájljainak megnyitását a kurzorvezérlőkön és az #Enteren#
   kívül elvégezhetjük közvetlenül a kiemelt betűjelükkel is.
 
@@ -1677,6 +1688,9 @@ $ #Előzmények: mappa előzmények#
 
   A kiválasztott mappa nevét a vágólapra másolja,              #Ctrl-C#
   a lista legördítve marad                              vagy #Ctrl-Ins#
+
+  Toggle to quick filtering                                #Ctrl-Alt-F#
+  (shows only items containing the typing text)
 
     A lista mappáinak megnyitására a kurzorvezérlőkön és az #Enteren#
   kívül használatjuk a kiemelt betűjelüket is.
@@ -2274,7 +2288,7 @@ segítségével)
     #Alt-F8#             ~Ugrás~@ViewerGotoPos@ a jelenlegi
 szövegpozícióból másik pozícióba
     #Alt-F9#             Átváltja a FAR konzolablak méretét (video)
-    #Alt-Shift-F9#       Meghívja a
+    #F9,Alt-Shift-F9#    Meghívja a
 ~nézőke beállítások~@ViewerSettings@ párbeszédablakot
     #Numpad5,F3,F10,Esc# Kilépés
     #Ctrl-F10#           Megállapítja a megnézett fájl helyét
@@ -2449,9 +2463,8 @@ kijelölt szöveget is törölheti, a
 
    #Shift-Kurzorbill.#       Blokk kijelölése
    #Ctrl-Shift-Kurzorbill.#  Blokk kijelölése
-   #Alt-Szürke kurzorbill.#  Függőleges blokk kijelölése
-   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése
-   #Ctrl-Alt-Szürke bill.#   Függőleges blokk kijelölése
+   #Alt-Kurzorbill.#   Függőleges blokk kijelölése
+   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése (NumLock Kurzorbill)
    #Ctrl-A#                  Az egész szöveg kijelölése
    #Ctrl-U#                  Leveszi a blokk kijelölését
    #Shift-Ins, Ctrl-V#       Blokk beillesztése a vágólapról
@@ -2472,6 +2485,9 @@ kurzorpozícióba (csak maradó blokk módban)
    #F2#                      Fájl mentése
    #Shift-F2#                ~Fájl mentése másként~@FileSaveAs@
    #Shift-F4#                ~Új fájl~@FileOpenCreate@ szerkesztése
+   #F5#                      Toggle whitespace characters displaying
+   #Shift-F5#                Change Tab character width
+   #Ctrl-F5#                 Toggle Tab-to-spaces expansion
    #Alt-F5#                  ^<wrap>Fájl vagy kijelölt blokk nyomtatása
 (a Nyomtatásvezérlő pluginnel)
    #F6#                      ~Nézőke~@Viewer@ módba kapcsol
@@ -2483,7 +2499,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #Shift-F8#                Kódlap kiválasztása
    #Alt-F8#                  ~Ugrás~@EditorGotoPos@ megadott sorra és oszlopra
    #Alt-F9#                  A FAR konzolablak méretének átváltása
-   #Alt-Shift-F9#            A ~szerkesztő beállítások~@EditorSettings@
+   #F9,Alt-Shift-F9#         A ~szerkesztő beállítások~@EditorSettings@
 párbeszédablakot jeleníti meg
    #F10, Esc#                Kilépés
    #Shift-F10#               Mentés és kilépés

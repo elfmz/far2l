@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 #include "ctrlobj.hpp"
 #include "manager.hpp"
+#include "message.hpp"
 #include "history.hpp"
 #include "filepanels.hpp"
 #include "panel.hpp"
@@ -233,15 +234,18 @@ int CommandLine::ProcessKey(int Key)
 	}
 
 	if (Key == KEY_F8) {
-		ClearScreen(COL_COMMANDLINEUSERSCREEN);
-		SaveBackground();
-		VTLog::Reset();
-		ShowBackground();
-		Redraw();
-		//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
-		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
+		if (!Opt.Confirm.ClearVT || Message(MSG_WARNING, 2,
+				Msg::ClearTerminalTitle, Msg::ClearTerminalQuestion, Msg::Ok, Msg::Cancel) == 0) {
+			ClearScreen(COL_COMMANDLINEUSERSCREEN);
+			SaveBackground();
+			VTLog::Reset();
+			ShowBackground();
+			Redraw();
+			//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
+			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
 
-		//		CmdExecute(L"reset", true, false, true, false, false, false);
+			//		CmdExecute(L"reset", true, false, true, false, false, false);
+		}
 		return TRUE;
 	}
 

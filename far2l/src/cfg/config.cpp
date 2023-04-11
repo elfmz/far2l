@@ -475,10 +475,9 @@ void SetConfirmations()
 	Builder.AddCheckbox(Msg::SetConfirmRO, &Opt.Confirm.RO);
 	Builder.AddCheckbox(Msg::SetConfirmDelete, &Opt.Confirm.Delete);
 	Builder.AddCheckbox(Msg::SetConfirmDeleteFolders, &Opt.Confirm.DeleteFolder);
+	Builder.AddCheckbox(Msg::SetConfirmClearVT, &Opt.Confirm.ClearVT);
 	Builder.AddCheckbox(Msg::SetConfirmEsc, &Opt.Confirm.Esc);
 	Builder.AddCheckbox(Msg::SetConfirmRemoveConnection, &Opt.Confirm.RemoveConnection);
-	Builder.AddCheckbox(Msg::SetConfirmRemoveSUBST, &Opt.Confirm.RemoveSUBST);
-	Builder.AddCheckbox(Msg::SetConfirmDetachVHD, &Opt.Confirm.DetachVHD);
 	Builder.AddCheckbox(Msg::SetConfirmRemoveHotPlug, &Opt.Confirm.RemoveHotPlug);
 	Builder.AddCheckbox(Msg::SetConfirmAllowReedit, &Opt.Confirm.AllowReedit);
 	Builder.AddCheckbox(Msg::SetConfirmHistoryClear, &Opt.Confirm.HistoryClear);

@@ -2463,9 +2463,8 @@ kijelölt szöveget is törölheti, a
 
    #Shift-Kurzorbill.#       Blokk kijelölése
    #Ctrl-Shift-Kurzorbill.#  Blokk kijelölése
-   #Alt-Szürke kurzorbill.#  Függőleges blokk kijelölése
-   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése
-   #Ctrl-Alt-Szürke bill.#   Függőleges blokk kijelölése
+   #Alt-Kurzorbill.#   Függőleges blokk kijelölése
+   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése (NumLock Kurzorbill)
    #Ctrl-A#                  Az egész szöveg kijelölése
    #Ctrl-U#                  Leveszi a blokk kijelölését
    #Shift-Ins, Ctrl-V#       Blokk beillesztése a vágólapról

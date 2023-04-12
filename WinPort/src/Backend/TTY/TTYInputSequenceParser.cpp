@@ -694,8 +694,8 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		if (!(flags & 8) &&  (flags_track & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// iTerm2 cmd+v workaround
-		if ((flags  & 64) && !(flags_track & 64)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); }
-		if ((flags  & 128) && !(flags_track & 128)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); }
+		if ((flags  & 64) && !(flags_track & 64)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); fprintf(stderr, "*0\n"); }
+		if ((flags  & 128) && !(flags_track & 128)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); fprintf(stderr, "*0\n"); }
 
 		if (go) {
 			INPUT_RECORD ir = {0};
@@ -815,6 +815,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
 		case 0x37: vkc = VK_LWIN; // Command
 			// iTerm2 cmd+v workaround
+			fprintf(stderr, "*0\n");
 			_iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 			break;

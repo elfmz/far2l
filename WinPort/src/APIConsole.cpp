@@ -207,7 +207,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(CheckForKeyPress, DWORD, (HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, BOOL KeepKeyEvents, BOOL KeepMouseEvents, BOOL KeepOtherEvents))
+	WINPORT_DECL(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags))
 	{
 		std::vector<INPUT_RECORD> backlog;
 		DWORD out = 0;
@@ -226,14 +226,17 @@ extern "C" {
 						break;
 					}
 				}
-				if (i == KeyCodesCount && KeepKeyEvents) {
+				if (i == KeyCodesCount && (Flags & CFKP_KEEP_UNMATCHED_KEY_EVENTS) != 0) {
+					backlog.emplace_back(rec);
+				}
+				if (i != KeyCodesCount && (Flags & CFKP_KEEP_MATCHED_KEY_EVENTS) != 0) {
 					backlog.emplace_back(rec);
 				}
 			} else if (rec.EventType == MOUSE_EVENT) {
-				if (KeepMouseEvents) {
+				if ((Flags & CFKP_KEEP_MOUSE_EVENTS) != 0) {
 					backlog.emplace_back(rec);
 				}
-			} else if (KeepOtherEvents && rec.EventType != NOOP_EVENT) {
+			} else if ((Flags & CFKP_KEEP_OTHER_EVENTS) != 0) {
 				backlog.emplace_back(rec);
 			}
 		}

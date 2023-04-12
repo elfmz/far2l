@@ -641,11 +641,13 @@ int flags_track = 0;
 
 size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, size_t l)
 {
+    /*
 	fprintf(stderr, "iTerm2 parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
 	}
 	fprintf(stderr, "\n");
+	*/
 
 	size_t len = 0;
 	while (1) {
@@ -920,12 +922,13 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
-
+    /*
 	fprintf(stderr, "Parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
 	}
 	fprintf(stderr, "\n");
+	*/
 
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
 		return 3;

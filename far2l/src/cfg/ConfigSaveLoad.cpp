@@ -246,6 +246,7 @@ public:
 	{true,  NSecCmdline, "EditBlock", &Opt.CmdLine.EditBlock, 0},
 	{true,  NSecCmdline, "AutoComplete", &Opt.CmdLine.AutoComplete, 1},
 	{true,  NSecCmdline, "WaitKeypress", &Opt.CmdLine.WaitKeypress, 1},
+	{true,  NSecCmdline, "VTLogLimit", &Opt.CmdLine.VTLogLimit, 5000},
 
 	{true,  NSecInterface, "Mouse", &Opt.Mouse, 1},
 	{false, NSecInterface, "UseVk_oem_x", &Opt.UseVk_oem_x, 1},

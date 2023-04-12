@@ -53,9 +53,13 @@ extern "C" {
 	WINPORT_DECL(WriteConsoleInput,BOOL,(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten));
 
 	// Checks if any of specified keys pressed
-	// Optionally preserves other input events
+	// Optionally preserves specified classes of input events
 	// return one plus array index of pressed key or zero if no one of specified keys is pressed
-	WINPORT_DECL(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, BOOL KeepKeyEvents, BOOL KeepMouseEvents, BOOL KeepOtherEvents));
+#define CFKP_KEEP_MATCHED_KEY_EVENTS    0x001
+#define CFKP_KEEP_UNMATCHED_KEY_EVENTS  0x002
+#define CFKP_KEEP_MOUSE_EVENTS          0x004
+#define CFKP_KEEP_OTHER_EVENTS          0x100
+	WINPORT_DECL(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags));
 	
 	WINPORT_DECL(SetConsoleDisplayMode,BOOL,(DWORD ModeFlags));
 	WINPORT_DECL(GetConsoleDisplayMode,BOOL,(LPDWORD lpModeFlags));

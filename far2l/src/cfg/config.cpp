@@ -436,6 +436,9 @@ void CmdlineSettings()
 	Builder.AddCheckbox(Msg::ConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(Msg::ConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
 
+	DialogItemEx *LimitEdit = Builder.AddIntEditField(&Opt.CmdLine.VTLogLimit, 6);
+	Builder.AddTextBefore(LimitEdit, Msg::ConfigCmdlineVTLogLimit);
+
 	Builder.AddText(Msg::ConfigCmdlineWaitKeypress);
 	Builder.AddComboBox((int *)&Opt.CmdLine.WaitKeypress, 40, CMWListItems, ARRAYSIZE(CMWListItems),
 			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);

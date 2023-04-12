@@ -1,4 +1,5 @@
 #include <time.h>
+#include <errno.h>
 #include "WinCompat.h"
 #include "WinPort.h"
 #ifdef __APPLE__
@@ -374,6 +375,7 @@ WINPORT_DECL(DosDateTimeToFileTime, BOOL, ( WORD fatdate, WORD fattime, LPFILETI
 }
 
 
+static unsigned s_time_failmask = 0;
 
 WINPORT_DECL(GetTickCount, DWORD, ())
 {
@@ -383,14 +385,39 @@ WINPORT_DECL(GetTickCount, DWORD, ())
 	static mach_timebase_info_data_t g_timebase_info;
 	if (g_timebase_info.denom == 0)
 		mach_timebase_info(&g_timebase_info);
-	return mach_absolute_time()*g_timebase_info.numer/g_timebase_info.denom/1000000u;
+	return mach_absolute_time() * g_timebase_info.numer / g_timebase_info.denom / 1000000u;
 #else
-	struct timespec spec;
-	clock_gettime(CLOCK_REALTIME, &spec);
-	DWORD rv = spec.tv_sec;
-	rv*= 1000;
-	rv+= (DWORD)(spec.tv_nsec / 1000000);
-	return rv;
+
+#if defined(CLOCK_MONOTONIC_COARSE) || defined(CLOCK_REALTIME_COARSE)
+	if (LIKELY((s_time_failmask & 1) == 0)) {
+		struct timespec spec{};
+# ifdef CLOCK_MONOTONIC_COARSE
+		if (LIKELY(clock_gettime(CLOCK_MONOTONIC_COARSE, &spec) == 0)) {
+# else
+		if (LIKELY(clock_gettime(CLOCK_REALTIME_COARSE, &spec) == 0)) {
+# endif
+			DWORD rv = spec.tv_sec;
+			rv*= 1000;
+			rv+= (DWORD)(spec.tv_nsec / 1000000);
+			return rv;
+		}
+		fprintf(stderr, "%s: clock_gettime error %u\n", __FUNCTION__, errno);
+		s_time_failmask|= 1;
+	}
+#endif
+	if (LIKELY((s_time_failmask & 2) == 0)) {
+		struct timeval tv{};
+		if (LIKELY(gettimeofday(&tv, NULL) == 0)) {
+			DWORD rv = tv.tv_sec;
+			rv*= 1000;
+			rv+= (DWORD)(tv.tv_usec / 1000);
+			return rv;
+		}
+		fprintf(stderr, "%s: gettimeofday error %u\n", __FUNCTION__, errno);
+		s_time_failmask|= 2;
+	}
+
+	return DWORD(time(NULL) * 1000);
 #endif
 }
 

@@ -323,7 +323,7 @@ int IsCaseMixed(const char *Str)
 int CheckForEsc()
 {
 	WORD KeyCode = VK_ESCAPE;
-	return WINPORT(CheckForKeyPress)(NULL, &KeyCode, 1, FALSE, FALSE, TRUE) != 0;
+	return WINPORT(CheckForKeyPress)(NULL, &KeyCode, 1, CFKP_KEEP_OTHER_EVENTS) != 0;
 }
 
 char *GetCommaWord(char *Src, char *Word, char Separator)

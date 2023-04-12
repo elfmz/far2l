@@ -465,7 +465,7 @@ static bool CheckForEsc(void)
 	dwTicks = dwNewTicks;
 
 	WORD EscCode = VK_ESCAPE;
-	if (!WINPORT(CheckForKeyPress)(NULL, &EscCode, 1, FALSE, FALSE, TRUE))
+	if (!WINPORT(CheckForKeyPress)(NULL, &EscCode, 1, CFKP_KEEP_OTHER_EVENTS))
 		return false;
 
 	if (Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL) & FCS_INTERRUPTOPERATION) {

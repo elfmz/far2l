@@ -666,7 +666,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	if (s[6] == 'f') {
 		
 		bool go = false;
-		int vkc, vsc, kd, cks = 0;
+		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
 		if ((flags  & 1) && !(flags_track & 1)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED; }
 		if (!(flags & 1) &&  (flags_track & 1)) { go = 1; vkc = VK_SHIFT; kd = 0; }
@@ -698,8 +698,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 				((flags  & 128) && !(flags_track & 128))) {
 			fprintf(stderr, "*0 %i %i %i %i\n", go, kd, vkc, cks);
 			go = 1;
-			kd = 0;
-			vkc = VK_ESCAPE;
+			vkc = VK_UNASSIGNED;
 			_iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 		}

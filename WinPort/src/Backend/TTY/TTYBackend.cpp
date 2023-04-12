@@ -298,6 +298,7 @@ void TTYBackend::ReaderLoop()
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
 				fprintf(stderr, "*1\n");
 				std::unique_lock<std::mutex> lock(_async_mutex);
+				_ae.flags.output = true;
 				_async_cond.notify_all();
 				fprintf(stderr, "*2\n");
 			}

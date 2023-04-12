@@ -693,6 +693,10 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 			cks |= ENHANCED_KEY; }
 		if (!(flags & 8) &&  (flags_track & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
+	    // iTerm2 cmd+v workaround
+		if ((flags  & 64) && !(flags_track & 64)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); }
+		if ((flags  & 128) && !(flags_track & 128)) { _iterm2_cmd_state = 1; _iterm2_cmd_ts = time(NULL); }
+
 		if (go) {
 			INPUT_RECORD ir = {0};
 			ir.EventType = KEY_EVENT;
@@ -810,6 +814,7 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x33: vkc = VK_BACK; break; // Del https://discussions.apple.com/thread/4072343?answerId=18799493022#18799493022
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
 		case 0x37: vkc = VK_LWIN; // Command
+		    // iTerm2 cmd+v workaround
 		    _iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 			break;

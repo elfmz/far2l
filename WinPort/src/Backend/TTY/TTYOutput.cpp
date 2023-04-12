@@ -511,6 +511,7 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 	Write(request.c_str(), request.size());
 }
 
+// iTerm2 cmd+v workaround
 void TTYOutput::CheckiTerm2Hack() {
 	if (_iterm2_cmd_state) {
 		_iterm2_cmd_state = 0;

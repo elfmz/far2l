@@ -296,11 +296,9 @@ void TTYBackend::ReaderLoop()
 
 			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
-				fprintf(stderr, "*1\n");
 				std::unique_lock<std::mutex> lock(_async_mutex);
 				_ae.flags.output = true;
 				_async_cond.notify_all();
-				fprintf(stderr, "*2\n");
 			}
 		}
 
@@ -375,7 +373,6 @@ void TTYBackend::WriterThread()
 
 			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
-				fprintf(stderr, "*3\n");
 				tty_out.CheckiTerm2Hack();
 			}
 

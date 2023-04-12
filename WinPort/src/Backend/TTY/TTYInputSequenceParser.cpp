@@ -696,9 +696,6 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		// iTerm2 cmd+v workaround
 		if (((flags  & 64) && !(flags_track & 64)) ||
 				((flags  & 128) && !(flags_track & 128))) {
-			fprintf(stderr, "*0 %i %i %i %i\n", go, kd, vkc, cks);
-			go = 1;
-			vkc = VK_UNASSIGNED;
 			_iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 		}
@@ -821,7 +818,6 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 		case 0x35: vkc = VK_ESCAPE; break; // Esc
 		case 0x37: vkc = VK_LWIN; // Command
 			// iTerm2 cmd+v workaround
-			fprintf(stderr, "*0\n");
 			_iterm2_cmd_state = 1;
 			_iterm2_cmd_ts = time(NULL);
 			break;

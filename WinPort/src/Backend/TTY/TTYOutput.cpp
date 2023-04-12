@@ -514,11 +514,13 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 // iTerm2 cmd+v workaround
 void TTYOutput::CheckiTerm2Hack() {
 	if (_iterm2_cmd_state) {
+		fprintf(stderr, "*4\n");
 		_iterm2_cmd_state = 0;
 		const char it2off[] = "\x1b[?1337l";
 		WriteReally(it2off, sizeof(it2off));
 	}
 	if (!_iterm2_cmd_state && _iterm2_cmd_ts && (time(NULL) - _iterm2_cmd_ts) >= 2) {
+		fprintf(stderr, "*5\n");
 		_iterm2_cmd_ts = 0;
 		const char it2on[] = "\x1b[?1337h";
 		WriteReally(it2on, sizeof(it2on));

@@ -294,9 +294,10 @@ void TTYBackend::ReaderLoop()
 			//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
 			tty_in->OnInput(buf, (size_t)rd);
 
+			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
-				TTYOutput tty_out(_stdout, _far2l_tty);
-				tty_out.CheckiTerm2Hack();
+				std::unique_lock<std::mutex> lock(_async_mutex);
+				_async_cond.notify_all();
 			}
 		}
 
@@ -367,6 +368,11 @@ void TTYBackend::WriterThread()
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
+			}
+
+			// iTerm2 cmd+v workaround
+			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
+				tty_out.CheckiTerm2Hack();
 			}
 
 			tty_out.Flush();

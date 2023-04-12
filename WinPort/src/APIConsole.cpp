@@ -217,18 +217,16 @@ extern "C" {
 				break;
 			}
 			if (rec.EventType == KEY_EVENT) {
-				if (rec.Event.KeyEvent.bKeyDown) {
-					for (DWORD i = 0; i < KeyCodesCount; ++i) {
-						if (KeyCodes[i] == rec.Event.KeyEvent.wVirtualKeyCode) {
+				DWORD i;
+				for (i = 0; i != KeyCodesCount; ++i) {
+					if (KeyCodes[i] == rec.Event.KeyEvent.wVirtualKeyCode) {
+						if (rec.Event.KeyEvent.bKeyDown && out == 0) {
 							out = i + 1;
-							break;
 						}
-					}
-					if (out) {
 						break;
 					}
 				}
-				if (KeepKeyEvents) {
+				if (i == KeyCodesCount && KeepKeyEvents) {
 					backlog.emplace_back(rec);
 				}
 			} else if (rec.EventType == MOUSE_EVENT) {

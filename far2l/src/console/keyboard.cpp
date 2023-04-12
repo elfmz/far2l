@@ -1438,10 +1438,20 @@ int ConfirmAbortOp()
 */
 int CheckForEsc()
 {
-	if (CheckForEscSilent())
-		return (ConfirmAbortOp());
-	else
+	if (!CheckForEscSilent())
 		return FALSE;
+
+	if (!Opt.Confirm.Esc)
+		return TRUE;
+
+	INPUT_RECORD rec;
+	// purge all pending input events to avoid closing confirmation dialog by second Esc thats very annoying
+	while (PeekInputRecord(&rec)) {
+		GetInputRecord(&rec);
+		fprintf(stderr, "%s: purged type %u\n", __FUNCTION__, rec.EventType);
+	}
+
+	return AbortMessage();
 }
 
 /*

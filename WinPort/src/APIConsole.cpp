@@ -207,7 +207,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(CheckForKeyPress, DWORD, (HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, BOOL KeepKeyEvents, BOOL KeepMouseEvents, BOOL KeepOtherEvents))
+	WINPORT_DECL(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags))
 	{
 		std::vector<INPUT_RECORD> backlog;
 		DWORD out = 0;
@@ -217,25 +217,26 @@ extern "C" {
 				break;
 			}
 			if (rec.EventType == KEY_EVENT) {
-				if (rec.Event.KeyEvent.bKeyDown) {
-					for (DWORD i = 0; i < KeyCodesCount; ++i) {
-						if (KeyCodes[i] == rec.Event.KeyEvent.wVirtualKeyCode) {
+				DWORD i;
+				for (i = 0; i != KeyCodesCount; ++i) {
+					if (KeyCodes[i] == rec.Event.KeyEvent.wVirtualKeyCode) {
+						if (rec.Event.KeyEvent.bKeyDown && out == 0) {
 							out = i + 1;
-							break;
 						}
-					}
-					if (out) {
 						break;
 					}
 				}
-				if (KeepKeyEvents) {
+				if (i == KeyCodesCount && (Flags & CFKP_KEEP_UNMATCHED_KEY_EVENTS) != 0) {
+					backlog.emplace_back(rec);
+				}
+				if (i != KeyCodesCount && (Flags & CFKP_KEEP_MATCHED_KEY_EVENTS) != 0) {
 					backlog.emplace_back(rec);
 				}
 			} else if (rec.EventType == MOUSE_EVENT) {
-				if (KeepMouseEvents) {
+				if ((Flags & CFKP_KEEP_MOUSE_EVENTS) != 0) {
 					backlog.emplace_back(rec);
 				}
-			} else if (KeepOtherEvents && rec.EventType != NOOP_EVENT) {
+			} else if ((Flags & CFKP_KEEP_OTHER_EVENTS) != 0) {
 				backlog.emplace_back(rec);
 			}
 		}

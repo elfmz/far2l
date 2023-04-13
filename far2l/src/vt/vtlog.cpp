@@ -5,6 +5,7 @@
 #include <vector>
 #include <deque>
 #include <fcntl.h>
+#include "config.hpp"
 #include <WideMB.h>
 
 #include "vtlog.h"
@@ -126,18 +127,6 @@ namespace VTLog
 		std::mutex _mutex;
 		std::deque<std::string> _memories;
 		
-		enum {
-			LIMIT_NOT_IMPORTANT	= 1000,
-			LIMIT_IMPORTANT = 5000
-		};
-		
-		void RemoveAllExcept(size_t leave_count)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			while (_memories.size() > leave_count )
-				_memories.pop_front();
-		}
-
 		std::string _transform_line;
 
 	public:
@@ -158,18 +147,13 @@ namespace VTLog
 			_memories.emplace_back();
 			_memories.back().swap(_transform_line);
 
-			while (_memories.size() >= LIMIT_IMPORTANT) {
+			while (!_memories.empty() && _memories.size() >= (size_t)Opt.CmdLine.VTLogLimit) {
 				auto &front = _memories.front();
 				if (_transform_line.size() < front.size()) {
 					_memories.front().swap(_transform_line);
 				}
 				_memories.pop_front();
 			}
-		}
-		
-		void OnNotImportant()
-		{
-			RemoveAllExcept(LIMIT_NOT_IMPORTANT);
 		}
 		
 		void DumpToFile(int fd, DumpState &ds, bool colored)
@@ -196,7 +180,6 @@ namespace VTLog
 		
 		void Reset()
 		{
-			RemoveAllExcept(0);
 		}
 
 		
@@ -225,7 +208,6 @@ namespace VTLog
 	
 	void Start()
 	{
-		g_lines.OnNotImportant();
 		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
 	}
 

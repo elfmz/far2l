@@ -1364,7 +1364,6 @@ $ #Термінал
     (all terminal output history in built-in Editor)
 
   Cleanup terminal history and screen                               #F8#
-    (! be careful, it clear immediately without any confirmations !)
 
   Usual signals                                         #Ctrl+C, Ctrl+Z#
 

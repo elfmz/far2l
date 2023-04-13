@@ -649,6 +649,9 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	fprintf(stderr, "\n");
 	*/
 
+	// protocol spec:
+	// https://gitlab.com/gnachman/iterm2/-/issues/7440#note_129307021
+
 	size_t len = 0;
 	while (1) {
 		if (len >= l) return TTY_PARSED_WANTMORE;
@@ -745,6 +748,9 @@ size_t TTYInputSequenceParser::TryParseAsiTerm2EscapeSequence(const char *s, siz
 	sscanf(s + i + 1, "%i", &keycode);
 
 	unsigned int vkc = 0;
+
+	// MacOS key codes:
+	// https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.6.sdk/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h
 
 	switch (keycode) {
 		case 0x00: vkc = 0x41; break; // A

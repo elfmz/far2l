@@ -31,6 +31,9 @@
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
 
+long _iterm2_cmd_ts = 0;
+bool _iterm2_cmd_state = 0;
+
 static void OnSigHup(int signo);
 
 static bool IsEnhancedKey(WORD code)
@@ -290,6 +293,13 @@ void TTYBackend::ReaderLoop()
 			}
 			//fprintf(stderr, "ReaderThread: CHAR 0x%x\n", (unsigned char)c);
 			tty_in->OnInput(buf, (size_t)rd);
+
+			// iTerm2 cmd+v workaround
+			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
+				std::unique_lock<std::mutex> lock(_async_mutex);
+				_ae.flags.output = true;
+				_async_cond.notify_all();
+			}
 		}
 
 		if (FD_ISSET(_stdin, &fde)) {
@@ -359,6 +369,11 @@ void TTYBackend::WriterThread()
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
+			}
+
+			// iTerm2 cmd+v workaround
+			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
+				tty_out.CheckiTerm2Hack();
 			}
 
 			tty_out.Flush();

@@ -6,6 +6,9 @@
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
 
+extern long _iterm2_cmd_ts;
+extern bool _iterm2_cmd_state;
+
 struct TTYBasePalette
 {
 	TTYBasePalette();
@@ -69,4 +72,6 @@ public:
 
 	void SendFar2lInterract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
+
+	void CheckiTerm2Hack();
 };

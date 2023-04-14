@@ -4,6 +4,9 @@
 #include <map>
 #include <StackSerializer.h>
 
+extern long _iterm2_cmd_ts;
+extern bool _iterm2_cmd_state;
+
 struct TTYInputKey
 {
 	WORD vk;
@@ -112,6 +115,7 @@ class TTYInputSequenceParser
 	void ParseMouse(char action, char col, char raw);
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
+	size_t TryParseAsiTerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
 	size_t ParseEscapeSequence(const char *s, size_t l);
 	void OnBracketedPaste(bool start);

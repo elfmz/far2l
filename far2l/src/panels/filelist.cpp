@@ -2026,10 +2026,24 @@ int FileList::ProcessKey(int Key)
 			NewActivePanel->Show();
 		}
 			return TRUE;
-		case KEY_CTRLPGDN:
-		case KEY_CTRLNUMPAD3:
+
 		case KEY_CTRLSHIFTPGDN:
 		case KEY_CTRLSHIFTNUMPAD3:
+			if (CurFile < ListData.Count() && PanelMode != PLUGIN_PANEL
+				&& (ListData[CurFile]->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+				FARString DestPathName;
+				ConvertNameToReal(ListData[CurFile]->strName, DestPathName);
+				FARString DestPath = DestPathName;
+				if (DestPath != L"/") {
+					CutToSlash(DestPath);
+				}
+				ProcessEnter_ChangeDir(DestPath, PointToName(DestPathName));
+				return TRUE;
+			}
+			// fall through
+
+		case KEY_CTRLPGDN:
+		case KEY_CTRLNUMPAD3:
 			ProcessEnter(0, 0, !(Key & KEY_SHIFT), false, OFP_ALTERNATIVE);
 			return TRUE;
 		default:
@@ -2149,19 +2163,6 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 
 	CurPtr = ListData[CurFile];
 	strFileName = CurPtr->strName;
-
-	if (PanelMode != PLUGIN_PANEL
-			&& Type == OFP_ALTERNATIVE
-			&& (CurPtr->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-		FARString DestPathName;
-		ConvertNameToReal(CurPtr->strName, DestPathName);
-		FARString DestPath = DestPathName;
-		if (DestPath != L"/") {
-			CutToSlash(DestPath);
-		}
-		ProcessEnter_ChangeDir(DestPath, PointToName(DestPathName));
-		return;
-	}
 
 	if (CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 		BOOL IsRealName = FALSE;

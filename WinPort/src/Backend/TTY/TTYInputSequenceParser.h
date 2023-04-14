@@ -100,6 +100,8 @@ class TTYInputSequenceParser
 	StackSerializer _tmp_stk_ser;
 	DWORD _extra_control_keys = 0;
 	std::vector<INPUT_RECORD> _ir_pending;
+	bool _kitty_right_ctrl_down = false;
+	int _iterm_last_flags = 0;
 
 	void AssertNoConflicts();
 
@@ -115,7 +117,7 @@ class TTYInputSequenceParser
 	void ParseMouse(char action, char col, char raw);
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
-	size_t TryParseAsiTerm2EscapeSequence(const char *s, size_t l);
+	size_t TryParseAsITerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
 	size_t ParseEscapeSequence(const char *s, size_t l);
 	void OnBracketedPaste(bool start);

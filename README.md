@@ -152,7 +152,7 @@ export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
  * OR if you prefer to use brew packages, then:
 ```sh
 brew bundle -v
-export PKG_CONFIG_PATH="PKG_CONFIG_PATH:$(brew --prefix)/opt/openssl/lib/pkgconfig"
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(brew --prefix)/opt/openssl/lib/pkgconfig"
 ```
  * After dependencies installed - you can build far2l:
 _with make:_

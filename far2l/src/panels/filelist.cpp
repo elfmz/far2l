@@ -2027,27 +2027,23 @@ int FileList::ProcessKey(int Key)
 		}
 			return TRUE;
 
+		case KEY_CTRLSHIFTPGUP:
+		case KEY_CTRLSHIFTNUMPAD9:
+			RevertSymlinkTraverse();
+			return TRUE;
+
 		case KEY_CTRLSHIFTPGDN:
 		case KEY_CTRLSHIFTNUMPAD3:
-			if (CurFile < ListData.Count() && PanelMode != PLUGIN_PANEL
-				&& (ListData[CurFile]->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-				FARString DestPathName;
-				ConvertNameToReal(ListData[CurFile]->strName, DestPathName);
-				FARString DestPath = DestPathName;
-				if (DestPath != L"/") {
-					CutToSlash(DestPath);
-				}
-				ProcessEnter_ChangeDir(DestPath, PointToName(DestPathName));
+			if (TrySymlinkTraverse())
 				return TRUE;
-			}
 			// fall through
 
 		case KEY_CTRLPGDN:
 		case KEY_CTRLNUMPAD3:
 			ProcessEnter(0, 0, !(Key & KEY_SHIFT), false, OFP_ALTERNATIVE);
 			return TRUE;
-		default:
 
+		default:
 			if (((Key >= KEY_ALT_BASE + 0x01 && Key <= KEY_ALT_BASE + 65535)
 						|| (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535))
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_BS && (Key & ~KEY_ALTSHIFT_BASE) != KEY_TAB
@@ -2078,6 +2074,43 @@ int FileList::ProcessKey(int Key)
 	return FALSE;
 }
 
+bool FileList::TrySymlinkTraverse()
+{
+	if (CurFile >= ListData.Count() || PanelMode == PLUGIN_PANEL
+			|| (ListData[CurFile]->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) == 0) {
+		return false;
+	}
+
+	FARString symlink_pathname = ListData[CurFile]->strName;
+	ConvertNameToFull(symlink_pathname);
+	FARString dest_pathname;
+	ConvertNameToReal(symlink_pathname, dest_pathname);
+	FARString dest_path = dest_pathname;
+	if (dest_path != L"/") {
+		CutToSlash(dest_path);
+	}
+
+	if (ProcessEnter_ChangeDir(dest_path, PointToName(dest_pathname))) {
+		_symlinks_backlog.emplace_back(symlink_pathname);
+	}
+	return true;
+}
+
+void FileList::RevertSymlinkTraverse()
+{
+	if (_symlinks_backlog.empty()) {
+		fprintf(stderr, "%s: symlinks backlog is empty\n", __FUNCTION__);
+		return;
+	}
+
+	FARString symlink_path = _symlinks_backlog.back();
+	CutToSlash(symlink_path);
+	if (!ProcessEnter_ChangeDir(symlink_path, PointToName(_symlinks_backlog.back()))) {
+		fprintf(stderr, "%s: failed to revert to '%ls'\n", __FUNCTION__, _symlinks_backlog.back().CPtr());
+	}
+	_symlinks_backlog.pop_back();
+}
+
 void FileList::Select(FileListItem *SelPtr, bool Selection)
 {
 	if (!TestParentFolderName(SelPtr->strName) && SelPtr->Selected != Selection) {
@@ -2094,7 +2127,7 @@ void FileList::Select(FileListItem *SelPtr, bool Selection)
 	}
 }
 
-void FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_file)
+bool FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_file)
 {
 	OpenPluginInfo orig_plugin_info = {sizeof(OpenPluginInfo), 0};
 	FARString orig_plugin_name, orig_dir, orig_sel_name;
@@ -2114,7 +2147,7 @@ void FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_
 	//"this" может быть удалён в ChangeDir
 	if (!ChangeDir(dir)) {
 //		Message(MSG_WARNING, 1, Msg::ErrorPathNotFound, dir, Msg::Ok);
-		return;
+		return false;
 	}
 
 	Panel *active_panel = CtrlObject->Cp()->ActivePanel;
@@ -2125,6 +2158,7 @@ void FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_
 	}
 	active_panel->Show();
 
+	bool dir_changed = true;
 	if (not_found) {
 		int r = Message(MSG_WARNING, 2, Msg::ErrorFileNotFound, select_file, Msg::Ok, Msg::Cancel);
 		if (r != 0)
@@ -2137,16 +2171,19 @@ void FileList::ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_
 				SetLocation_Plugin(host_file != nullptr, plugin,
 					orig_plugin_info.CurDir ? orig_plugin_info.CurDir : L"", host_file, 0);
 
-			} else {
-				ProcessEnter_ChangeDir(orig_dir, PointToName(orig_sel_name));
+			} else if (!ProcessEnter_ChangeDir(orig_dir, PointToName(orig_sel_name))) {
+				fprintf(stderr, "%s: failed to cd to '%ls'\n", __FUNCTION__, orig_sel_name.CPtr());
 			}
 			active_panel = CtrlObject->Cp()->ActivePanel;
+			dir_changed = false;
 		}
 	}
 
 	if (check_fullscreen != active_panel->IsFullScreen()) {
 		CtrlObject->Cp()->GetAnotherPanel(active_panel)->Show();
 	}
+
+	return dir_changed;
 }
 
 void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAssoc, bool RunAs,

@@ -388,14 +388,6 @@ endif()
 
 if (NOT DEFINED MULTIARC OR MULTIARC)
     message(STATUS "MULTIARC plugin enabled")
-    # workaround for brew's/macports' libarchive
-    if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
-        set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
-        set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
-    elseif(EXISTS "/opt/local/lib/libarchive.dylib")
-        set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
-    endif()
-
     find_package(LibArchive)
     if(NOT LibArchive_FOUND)
         message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
@@ -416,17 +408,6 @@ endif()
 
 if (NOT DEFINED NETROCKS OR NETROCKS)
     message(STATUS "NETROCKS plugin enabled")
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        # workaround for brew/macports vs system openssl conflicts
-        if(IS_DIRECTORY "/usr/local/opt/openssl@1.1/include" AND IS_DIRECTORY "/usr/local/opt/openssl@1.1/lib")
-            set(OPENSSL_LIBRARIES "/usr/local/opt/openssl@1.1/lib/libcrypto.dylib;/usr/local/opt/openssl@1.1/lib/libssl.dylib")
-            set(OPENSSL_INCLUDE_DIRS "/usr/local/opt/openssl@1.1/include")
-        elseif(EXISTS "/opt/local/lib/libssl.dylib" AND IS_DIRECTORY "/opt/local/include/openssl")
-            set(OPENSSL_LIBRARIES "/opt/local//lib/libcrypto.dylib;/opt/local/lib/libssl.dylib")
-            set(OPENSSL_INCLUDE_DIRS "/opt/local/include")
-        endif()
-    endif()
-
     find_package(OpenSSL)
     if(OPENSSL_FOUND)
         message(STATUS "OpenSSL found -> enjoy FTPS support in NetRocks")

@@ -191,6 +191,7 @@ private:
 	uint64_t FreeDiskSize;
 	clock_t LastUpdateTime;
 	int Height, Columns;
+	std::vector<FARString> _symlinks_backlog;
 
 	int ColumnsInGlobal;
 
@@ -228,7 +229,7 @@ private:
 	long SelectFiles(int Mode, const wchar_t *Mask = nullptr);
 	void ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAssoc = true, bool RunAs = false,
 			OPENFILEPLUGINTYPE Type = OFP_NORMAL);
-	void ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_file = nullptr);
+	bool ProcessEnter_ChangeDir(const wchar_t *dir, const wchar_t *select_file = nullptr);
 	// ChangeDir возвращает FALSE, eсли не смогла выставить заданный путь
 	BOOL ChangeDir(const wchar_t *NewDir, BOOL IsUpdated = TRUE);
 	void CountDirSize(DWORD PluginFlags);
@@ -278,6 +279,8 @@ private:
 	void ProcessCopyKeys(int Key);
 	void ReadSortGroups(bool UpdateFilterCurrentTime = true);
 	int ProcessOneHostFile(int Idx);
+	bool TrySymlinkTraverse();
+	void RevertSymlinkTraverse();
 
 protected:
 	virtual void ClearAllItem();

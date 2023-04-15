@@ -70,7 +70,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CPACK_DMG_BACKGROUND_IMAGE ${PROJECT_SOURCE_DIR}/packaging/osx/Background.png)
     set(CPACK_PACKAGE_ICON ${PROJECT_SOURCE_DIR}/far2l/DE/Far.icns)
 
-    configure_file(${PROJECT_SOURCE_DIR}/packaging/osx/Setup.scpt ${CMAKE_BINARY_DIR}/packaging/osx/Setup.scpt)
+    configure_file(${PROJECT_SOURCE_DIR}/packaging/osx/Setup.scpt.in ${CMAKE_BINARY_DIR}/packaging/osx/Setup.scpt)
 else ()
     set(CPACK_COMPONENTS_ALL base desktop system)
     SET(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})

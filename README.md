@@ -147,10 +147,12 @@ cd far2l
  * Install needed dependencies with MacPorts:
 ``` sh
 sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt spdlog uchardet neon
+export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
 ```
  * OR if you prefer to use brew packages, then:
 ```sh
 brew bundle -v
+export PKG_CONFIG_PATH="PKG_CONFIG_PATH:$(brew --prefix)/opt/openssl/lib/pkgconfig"
 ```
  * After dependencies installed - you can build far2l:
 _with make:_

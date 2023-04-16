@@ -2084,14 +2084,16 @@ bool FileList::TrySymlinkTraverse()
 	}
 
 	FARString symlink_pathname = ListData[CurFile]->strName;
-	ConvertNameToFull(symlink_pathname);
 	FARString dest_pathname;
-	ConvertNameToReal(symlink_pathname, dest_pathname);
+	if (!ReadSymlink(symlink_pathname, dest_pathname)) {
+		return false;
+	}
+	ConvertNameToFull(symlink_pathname);
+	ConvertNameToFull(dest_pathname);
 	FARString dest_path = dest_pathname;
 	if (dest_path != L"/") {
 		CutToSlash(dest_path);
 	}
-
 	if (ProcessEnter_ChangeDir(dest_path, PointToName(dest_pathname))) {
 		while (_symlinks_backlog.size() > SYMLINKS_BACKLOG_LIMIT) {
 			_symlinks_backlog.pop_front();

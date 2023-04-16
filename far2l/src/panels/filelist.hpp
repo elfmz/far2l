@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FSNotify.h"
 #include <memory>
 #include <vector>
+#include <deque>
 
 struct FileListItem
 {
@@ -191,7 +192,7 @@ private:
 	uint64_t FreeDiskSize;
 	clock_t LastUpdateTime;
 	int Height, Columns;
-	std::vector<FARString> _symlinks_backlog;
+	std::deque<std::string> _symlinks_backlog;
 
 	int ColumnsInGlobal;
 

@@ -92,6 +92,8 @@ static int ListSortMode, ListSortOrder, ListSortGroups, ListSelectedFirst, ListD
 static int ListPanelMode, ListNumericSort, ListCaseSensitiveSort;
 static HANDLE hSortPlugin;
 
+#define SYMLINKS_BACKLOG_LIMIT 128	// hardcoded for now, until smbd will want to change this..
+
 enum SELECT_MODES
 {
 	SELECT_INVERT     = 0,
@@ -2091,7 +2093,10 @@ bool FileList::TrySymlinkTraverse()
 	}
 
 	if (ProcessEnter_ChangeDir(dest_path, PointToName(dest_pathname))) {
-		_symlinks_backlog.emplace_back(symlink_pathname);
+		while (_symlinks_backlog.size() > SYMLINKS_BACKLOG_LIMIT) {
+			_symlinks_backlog.erase(_symlinks_backlog.begin());
+		}
+		_symlinks_backlog.emplace_back(symlink_pathname.GetMB());
 	}
 	return true;
 }
@@ -2104,9 +2109,10 @@ void FileList::RevertSymlinkTraverse()
 	}
 
 	FARString symlink_path = _symlinks_backlog.back();
+	FARString symlink_name = PointToName(symlink_path);
 	CutToSlash(symlink_path);
-	if (!ProcessEnter_ChangeDir(symlink_path, PointToName(_symlinks_backlog.back()))) {
-		fprintf(stderr, "%s: failed to revert to '%ls'\n", __FUNCTION__, _symlinks_backlog.back().CPtr());
+	if (!ProcessEnter_ChangeDir(symlink_path, symlink_name)) {
+		fprintf(stderr, "%s: failed to revert to '%s'\n", __FUNCTION__, _symlinks_backlog.back().c_str());
 	}
 	_symlinks_backlog.pop_back();
 }

@@ -457,6 +457,10 @@ drwxr-xr-x    3 root     root          1024 Sep 25  2021 lib
 lrwxrwxrwx    1 root     root             3 Sep 24  2021 lib32 -> lib
 lrwxrwxrwx    1 root     root            11 Sep 24  2021 linuxrc -> bin/busybox
 drwx------    2 root     root         12288 Sep 25  2021 lost+found
+
+devices - major&minor instead  of size:
+brw-------    1 root     root      179,   0 Jan  1  1970 mmcblk0
+crw-------    1 root     root        3, 144 Jan  1  1970 ttyy0
 */
 		for (;;) {
 			size_t p = _cmd.output.find_first_of("\r\n");
@@ -489,6 +493,15 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 			const std::string &str_size = ExtractStringHead(line);
 			if (line.empty())
 				continue;
+
+			bool size_is_not_size = false;
+			if (!str_size.empty() && str_size.back() == ',') {
+				// block/char device, size is major, followed by minor
+				ExtractStringHead(line); // really dont care
+				if (line.empty())
+					continue;
+				size_is_not_size = true;
+			}
 
 			const std::string &str_month = ExtractStringHead(line);
 
@@ -557,7 +570,7 @@ drwx------    2 root     root         12288 Sep 25  2021 lost+found
 				= file_info.modification_time.tv_sec
 					= file_info.access_time.tv_sec = mktime(&t);
 
-			file_info.size = atol(str_size.c_str());
+			file_info.size = size_is_not_size ? 0 : atoll(str_size.c_str());
 
 			owner = str_owner;
 			group = str_group;

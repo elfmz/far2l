@@ -2094,7 +2094,7 @@ bool FileList::TrySymlinkTraverse()
 
 	if (ProcessEnter_ChangeDir(dest_path, PointToName(dest_pathname))) {
 		while (_symlinks_backlog.size() > SYMLINKS_BACKLOG_LIMIT) {
-			_symlinks_backlog.erase(_symlinks_backlog.begin());
+			_symlinks_backlog.pop_front();
 		}
 		_symlinks_backlog.emplace_back(symlink_pathname.GetMB());
 	}

@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "drivemix.hpp"
 #include "strmix.hpp"
+#include <errno.h>
 #include <set>
 
 #define IsDot(str) (str == L'.')
@@ -294,6 +295,20 @@ void ConvertNameToReal(const wchar_t *Src, FARString &strDest)
 		}
 	}
 	strDest = Src;
+}
+
+bool ReadSymlink(const wchar_t *lnk, FARString &dest)
+{
+	char buf[PATH_MAX + 1];
+	const auto &lnk_mb = Wide2MB(lnk);
+	ssize_t r = sdc_readlink(lnk_mb.c_str(), buf, sizeof(buf) - 1);
+	if (r < 0 || r >= (ssize_t)sizeof(buf)) {
+		fprintf(stderr, "%s(%ls): error %u\n", __FUNCTION__, lnk, errno);
+		return false;
+	}
+	buf[r] = 0;
+	dest = buf;
+	return true;
 }
 
 // Косметические преобразования строки пути.

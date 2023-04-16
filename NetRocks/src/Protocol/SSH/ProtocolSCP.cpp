@@ -633,29 +633,23 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 		fprintf(stderr, "ProtocolSCP::ProtocolSCP: <stat .> result %d -> fallback to ls\n", rc);
 	}
 
-	bool busybox = false;
-	bool applets_list = false;
-	if (cmd.Execute("readlink /bin/sh") == 0) {
-		if (cmd.Output().find("busybox") != std::string::npos && cmd.Execute("busybox") == 0) {
-			fprintf(stderr, "ProtocolSCP: BusyBox detected\n");
-			busybox = true;
-		}
-	} else {
-		int busybox_return_code = cmd.Execute("busybox 2>&1");
-		if (busybox_return_code == 0 || // busybox found and returns list of available applets OR
-			// busybox found and returns "busybox: applet not found"
-			(busybox_return_code == 127 && cmd.Output().find("applet not found") != std::string::npos))
-		{
+	int busybox_return_code = -1;
+	switch (cmd.Execute("readlink /bin/sh")) {
+		case 0:
+			if (cmd.Output().find("busybox") == std::string::npos) {
+				break;
+			}
+			// else: fallthrough
+		default:
 			// readlink not exists or /bin/sh not exists and also busybox exists?
 			// Its enough arguments to assume that ls will be handled by busybox.
-			fprintf(stderr, "ProtocolSCP: BusyBox assumed\n");
-			busybox = true;
-			applets_list = (busybox_return_code == 0);
-		}
+			busybox_return_code = cmd.Execute("busybox 2>&1");
 	}
 
-	if (busybox) {
-		if (applets_list) {
+	if (busybox_return_code == 0 ||
+		(busybox_return_code == 127 && cmd.Output().find("applet not found") != std::string::npos)) {
+		if (busybox_return_code == 0) {
+			// busybox found and returned list of available applets
 			// some busybox systems may miss very usual things, analyze busybox command output
 			// where it printed lit of supported commands
 			std::vector<std::string> words;
@@ -668,7 +662,7 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 				fprintf(stderr, "ProtocolSCP: '%s' unsupported\n", _quirks.rm_dir);
 				_quirks.rm_dir = "rm -f -d";
 			}
-		} else {
+		} else { // busybox found but returned "busybox: applet not found"
 			// some routers have rmdir, but have no unlink (and also no applets list from busybox w/o args)
 			std::string probe_command = "ls /bin/"; probe_command += _quirks.rm_file;
 			if (cmd.Execute(probe_command.c_str()) != 0) {
@@ -678,6 +672,8 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 		}
 
 		_quirks.ls_supports_dash_f = false;
+		fprintf(stderr, "ProtocolSCP: BusyBox detected, rc=%d rmd='%s' rmf='%s'\n",
+			busybox_return_code, _quirks.rm_dir, _quirks.rm_file);
 	}
 }
 

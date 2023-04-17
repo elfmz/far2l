@@ -455,7 +455,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	// So workaround needed for Alt+letters quick search to work
 	if (!keycode && (flags  & 4)) { // No key code and left Option is pressed? (right Option is mapped to right Control)
 	    // read unicode char value from "ignoring-modifiers-except-shift"
-		size_t i2 = ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
+		ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
 		vkc = VK_UNASSIGNED;
 	}
 

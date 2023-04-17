@@ -43,6 +43,7 @@ void MacDockIcon::OnMenuNewInstance(wxCommandEvent& )
 			execl(fn_psz, fn_psz, nullptr);
 			fprintf(stderr, "%s: execl error %d\n", __FUNCTION__, errno);
 		}
+		_exit(0);
 		exit(0);
 
 	} else if (pid != -1) {

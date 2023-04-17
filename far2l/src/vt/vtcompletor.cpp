@@ -81,6 +81,7 @@ bool VTCompletor::EnsureStarted()
 		CheckedCloseFDPair(pipe_out);
 		execlp("bash", "bash", "--noprofile", "-i",  NULL);
 		perror("execlp");
+		_exit(0);
 		exit(0);
 	}
 

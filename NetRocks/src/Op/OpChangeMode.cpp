@@ -79,7 +79,7 @@ void OpChangeMode::ChangeModeOfPath(const std::string &path, mode_t prev_mode)
 				}
 			}
 			if (new_mode != prev_mode) {
-				_base_host->SetMode(path.c_str(), new_mode);
+				_base_host->SetMode(path.c_str(), new_mode & 07777);
 			}
 
 //			fprintf(stderr, "%o -> %o '%s'\n", prev_mode, new_mode, path.c_str());

@@ -332,6 +332,31 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
+{
+	unsigned char bytes[4] = {0};
+	int num_bytes = 0;
+	size_t i;
+	for (i = 0;; i += 2) {
+		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
+		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
+		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
+		num_bytes++;
+	}
+
+	if (num_bytes == 1) {
+		*uni_char = bytes[0];
+	} else if (num_bytes == 2) {
+		*uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+	} else if (num_bytes == 3) {
+		*uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+	} else if (num_bytes == 4) {
+		*uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
+	}
+
+	return i;
+}
+
 size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, size_t l)
 {
     /*
@@ -417,30 +442,19 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		return len;
 	}
 
-
-	wchar_t uni_char = 0;
-	unsigned char bytes[4] = {0};
-	int num_bytes = 0;
-	int i;
-	for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
-		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
-		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
-		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
-		num_bytes++;
-	}
-
-	if (num_bytes == 1) {
-		uni_char = bytes[0];
-	} else if (num_bytes == 2) {
-		uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
-	} else if (num_bytes == 3) {
-		uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
-	} else if (num_bytes == 4) {
-		uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
-	}
+	wchar_t uni_char;
+	size_t i = ReadUTF8InHex(s + 8 + flags_length + 1, &uni_char); // 8 is a fixed length of "]1337;d;"
 
 	unsigned int keycode = 0;
-	sscanf(s + i + 1, "%i", &keycode);
+	unsigned int keycode_length = 0;
+	sscanf(s + 8 + flags_length + 1 + i + 1, "%i%n", &keycode, &keycode_length);
+
+	// On MacOS, characters from the third level layout are entered while Option is pressed.
+	// So workaround needed for Alt+letters quick search to work
+	if (!keycode && (flags  & 4)) { // No key code and left Option is pressed? (right Option is mapped to right Control)
+	    // read unicode char value from "ignoring-modifiers-except-shift"
+		size_t i2 = ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
+	}
 
 	unsigned int vkc = 0;
 

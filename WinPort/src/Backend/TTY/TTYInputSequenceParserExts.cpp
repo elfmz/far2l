@@ -449,14 +449,15 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	unsigned int keycode_length = 0;
 	sscanf(s + 8 + flags_length + 1 + i + 1, "%i%n", &keycode, &keycode_length);
 
+	unsigned int vkc = 0;
+
 	// On MacOS, characters from the third level layout are entered while Option is pressed.
 	// So workaround needed for Alt+letters quick search to work
 	if (!keycode && (flags  & 4)) { // No key code and left Option is pressed? (right Option is mapped to right Control)
 	    // read unicode char value from "ignoring-modifiers-except-shift"
 		size_t i2 = ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
+		vkc = VK_UNASSIGNED;
 	}
-
-	unsigned int vkc = 0;
 
 	// MacOS key codes:
 	// https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.6.sdk/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h

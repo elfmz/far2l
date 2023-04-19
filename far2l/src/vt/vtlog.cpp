@@ -180,6 +180,8 @@ namespace VTLog
 		
 		void Reset()
 		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			_memories.clear();
 		}
 
 		

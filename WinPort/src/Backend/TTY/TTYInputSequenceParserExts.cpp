@@ -332,6 +332,31 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
+{
+	unsigned char bytes[4] = {0};
+	int num_bytes = 0;
+	size_t i;
+	for (i = 0;; i += 2) {
+		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
+		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
+		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
+		num_bytes++;
+	}
+
+	if (num_bytes == 1) {
+		*uni_char = bytes[0];
+	} else if (num_bytes == 2) {
+		*uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+	} else if (num_bytes == 3) {
+		*uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+	} else if (num_bytes == 4) {
+		*uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
+	}
+
+	return i;
+}
+
 size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, size_t l)
 {
     /*
@@ -369,28 +394,38 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
 		if ((flags  & 1) && !(_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED; }
+		if ((flags  & 1) &&  (_iterm_last_flags & 1)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 1) &&  (_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 0; }
+
 		if ((flags  & 2) && !(_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED;
 			vsc = RIGHT_SHIFT_VSC; }
+		if ((flags  & 2) &&  (_iterm_last_flags & 2)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 2) &&  (_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 0; vsc = RIGHT_SHIFT_VSC; }
 
 		if ((flags  & 4) && !(_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 1; cks |= LEFT_ALT_PRESSED; }
+		if ((flags  & 4) &&  (_iterm_last_flags & 4)) { cks |= LEFT_ALT_PRESSED; }
 		if (!(flags & 4) &&  (_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 0; }
+
 		/*
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 1; cks |= RIGHT_ALT_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_ALT_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 0; cks |= ENHANCED_KEY; }
 		*/
 
 		if ((flags  & 16) && !(_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= LEFT_CTRL_PRESSED; }
+		if ((flags  & 16) &&  (_iterm_last_flags & 16)) { cks |= LEFT_CTRL_PRESSED; }
 		if (!(flags & 16) &&  (_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 0; }
+
 		if ((flags  & 32) && !(_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 32) &&  (_iterm_last_flags & 32)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 32) &&  (_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// map right Option to right Control
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// iTerm2 cmd+v workaround
@@ -417,32 +452,22 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		return len;
 	}
 
-
-	wchar_t uni_char = 0;
-	unsigned char bytes[4] = {0};
-	int num_bytes = 0;
-	int i;
-	for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
-		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
-		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
-		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
-		num_bytes++;
-	}
-
-	if (num_bytes == 1) {
-		uni_char = bytes[0];
-	} else if (num_bytes == 2) {
-		uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
-	} else if (num_bytes == 3) {
-		uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
-	} else if (num_bytes == 4) {
-		uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
-	}
+	wchar_t uni_char;
+	size_t i = ReadUTF8InHex(s + 8 + flags_length + 1, &uni_char); // 8 is a fixed length of "]1337;d;"
 
 	unsigned int keycode = 0;
-	sscanf(s + i + 1, "%i", &keycode);
+	unsigned int keycode_length = 0;
+	sscanf(s + 8 + flags_length + 1 + i + 1, "%i%n", &keycode, &keycode_length);
 
 	unsigned int vkc = 0;
+
+	// On MacOS, characters from the third level layout are entered while Option is pressed.
+	// So workaround needed for Alt+letters quick search to work
+	if (flags  & 4) { // Left Option is pressed? (right Option is mapped to right Control)
+	    // read unicode char value from "ignoring-modifiers-except-shift"
+		ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
+		vkc = VK_UNASSIGNED;
+	}
 
 	// MacOS key codes:
 	// https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.6.sdk/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h

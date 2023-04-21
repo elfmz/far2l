@@ -394,28 +394,38 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
 		if ((flags  & 1) && !(_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED; }
+		if ((flags  & 1) &&  (_iterm_last_flags & 1)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 1) &&  (_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 0; }
+
 		if ((flags  & 2) && !(_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED;
 			vsc = RIGHT_SHIFT_VSC; }
+		if ((flags  & 2) &&  (_iterm_last_flags & 2)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 2) &&  (_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 0; vsc = RIGHT_SHIFT_VSC; }
 
 		if ((flags  & 4) && !(_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 1; cks |= LEFT_ALT_PRESSED; }
+		if ((flags  & 4) &&  (_iterm_last_flags & 4)) { cks |= LEFT_ALT_PRESSED; }
 		if (!(flags & 4) &&  (_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 0; }
+
 		/*
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 1; cks |= RIGHT_ALT_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_ALT_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 0; cks |= ENHANCED_KEY; }
 		*/
 
 		if ((flags  & 16) && !(_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= LEFT_CTRL_PRESSED; }
+		if ((flags  & 16) &&  (_iterm_last_flags & 16)) { cks |= LEFT_CTRL_PRESSED; }
 		if (!(flags & 16) &&  (_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 0; }
+
 		if ((flags  & 32) && !(_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 32) &&  (_iterm_last_flags & 32)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 32) &&  (_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// map right Option to right Control
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// iTerm2 cmd+v workaround

@@ -359,13 +359,13 @@ size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
 
 size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, size_t l)
 {
-
+    /*
 	fprintf(stderr, "iTerm2 parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
 	}
 	fprintf(stderr, "\n");
-
+	*/
 
 	// protocol spec:
 	// https://gitlab.com/gnachman/iterm2/-/issues/7440#note_129307021
@@ -383,8 +383,6 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	unsigned int flags = 0;
 	unsigned int flags_length = 0;
 	sscanf(s + 8, "%i%n", &flags, &flags_length); // 8 is a fixed length of "]1337;d;"
-
-	fprintf(stderr, "flags: %i\n", flags);
 
 	flags -= 1;
 	unsigned int flags_win = 0;
@@ -437,12 +435,8 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			ir.Event.KeyEvent.dwControlKeyState = cks;
 			ir.Event.KeyEvent.wRepeatCount = 1;
 
-			fprintf(stderr, "emplace_1: %i\n", ir.Event.KeyEvent.wVirtualKeyCode);
-
 			_ir_pending.emplace_back(ir);
 		}
-
-		fprintf(stderr, "flags_only: %i\n", flags);
 
 		_iterm_last_flags = flags;
 		return len;
@@ -451,23 +445,18 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	wchar_t uni_char;
 	size_t i = ReadUTF8InHex(s + 8 + flags_length + 1, &uni_char); // 8 is a fixed length of "]1337;d;"
 
-	fprintf(stderr, "uni_char_1: %i\n", uni_char);
-
 	unsigned int keycode = 0;
 	unsigned int keycode_length = 0;
 	sscanf(s + 8 + flags_length + 1 + i + 1, "%i%n", &keycode, &keycode_length);
-
-	fprintf(stderr, "keycode: %i\n", keycode);
 
 	unsigned int vkc = 0;
 
 	// On MacOS, characters from the third level layout are entered while Option is pressed.
 	// So workaround needed for Alt+letters quick search to work
-	if (flags & 4) { // Left Option is pressed? (right Option is mapped to right Control)
+	if (flags  & 4) { // Left Option is pressed? (right Option is mapped to right Control)
 	    // read unicode char value from "ignoring-modifiers-except-shift"
 		ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
-		//vkc = VK_UNASSIGNED;
-		fprintf(stderr, "uni_char_2: %i\n", uni_char);
+		vkc = VK_UNASSIGNED;
 	}
 
 	// MacOS key codes:
@@ -627,9 +616,6 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			ir.Event.KeyEvent.dwControlKeyState = flags_win;
 			ir.Event.KeyEvent.wRepeatCount = 1;
 			if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
-
-			fprintf(stderr, "emplace_2: %i %i\n", ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.uChar.UnicodeChar);
-
 			_ir_pending.emplace_back(ir);
 		}
 	}
@@ -644,9 +630,6 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	ir.Event.KeyEvent.dwControlKeyState = flags_win;
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
-
-	fprintf(stderr, "emplace_3: %i %i\n", ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.uChar.UnicodeChar);
-	
 	_ir_pending.emplace_back(ir);
 
 	_iterm_last_flags = flags;

@@ -258,7 +258,8 @@ enum LanguageID
 	MWebDAVProxyPassword,
 
 	MConfirmChangeModeTitle,
-	MConfirmChangeModeText,
+	MConfirmChangeModeTextOne,
+	MConfirmChangeModeTextMany,
 	MRecurseSubdirs,
 	MModeUser,
 	MModeGroup,

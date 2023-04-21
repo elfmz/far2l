@@ -25,7 +25,7 @@ class ConfirmChangeMode : protected BaseDialog
 	void StateFromModes(int ctl, bool recurse, mode_t mode_all, mode_t mode_any, mode_t bit);
 	void StateToModes(int ctl, mode_t &mode_set, mode_t &mode_clear, mode_t bit);
 public:
-	ConfirmChangeMode(const std::string &site_dir, bool may_recurse, mode_t mode_all, mode_t mode_any);
+	ConfirmChangeMode(int selected_count, const std::string &display_path, bool may_recurse, mode_t mode_all, mode_t mode_any);
 
 	bool Ask(bool &recurse, mode_t &mode_set, mode_t &mode_clear);
 };

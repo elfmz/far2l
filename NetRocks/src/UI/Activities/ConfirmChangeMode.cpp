@@ -49,15 +49,19 @@ void ConfirmChangeMode::StateToModes(int ctl, mode_t &mode_set, mode_t &mode_cle
 	}
 }
 
-ConfirmChangeMode::ConfirmChangeMode(const std::string &site_dir, bool may_recurse, mode_t mode_all, mode_t mode_any)
+ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, bool may_recurse, mode_t mode_all, mode_t mode_any)
 {
 	_di.SetBoxTitleItem(MConfirmChangeModeTitle);
 
 	_di.SetLine(2);
-	_di.AddAtLine(DI_TEXT, 5,62, 0, MConfirmChangeModeText);
+	std::string text = G.GetMsgMB( (selected_count > 1) ? MConfirmChangeModeTextMany : MConfirmChangeModeTextOne);
+	if (selected_count > 1) {
+		text = StrPrintf(text.c_str(), selected_count);
+	}
+	_di.AddAtLine(DI_TEXT, 5,62, 0, text.c_str());
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,62, 0, site_dir.c_str());
+	_di.AddAtLine(DI_TEXT, 5,62, 0, display_path.c_str());
 
 	if (may_recurse) {
 		_di.NextLine();

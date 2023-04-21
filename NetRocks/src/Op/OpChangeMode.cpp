@@ -1,4 +1,5 @@
 #include "OpChangeMode.h"
+#include <utils.h>
 #include "../UI/Activities/ConfirmChangeMode.h"
 #include "../UI/Activities/SimpleOperationProgress.h"
 
@@ -22,8 +23,15 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 		mode_all&= items[i].FindData.dwUnixMode;
 		mode_any|= (items[i].FindData.dwUnixMode & 07777);
 	}
+	std::string display_path = base_dir;
+	if (items_count == 1) {
+		if (!display_path.empty() && display_path.back() != '/') {
+			display_path+= '/';
+		}
+		Wide2MB(items->FindData.lpwszFileName, display_path, true);
+	}
 
-	if (!ConfirmChangeMode(base_dir, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
+	if (!ConfirmChangeMode(items_count, display_path, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
 		throw AbortError();
 	}
 
@@ -79,7 +87,7 @@ void OpChangeMode::ChangeModeOfPath(const std::string &path, mode_t prev_mode)
 				}
 			}
 			if (new_mode != prev_mode) {
-				_base_host->SetMode(path.c_str(), new_mode);
+				_base_host->SetMode(path.c_str(), new_mode & 07777);
 			}
 
 //			fprintf(stderr, "%o -> %o '%s'\n", prev_mode, new_mode, path.c_str());

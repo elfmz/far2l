@@ -632,17 +632,22 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
   Change to the home directory (~~)                            #Ctrl-`#
 
   Belépés mappába vagy tömörített fájlba (SFX-be is),      #Ctrl-PgDn#
-   for symlink jump to its original location
 
     Ha a kurzor mappán áll, a #Ctrl-PgDn# beléptet a mappába. Ha a
     kurzor fájlon áll, a fájl típusához ~társított parancsot~@FileAssoc@ hajtja
     végre, vagy belép a tömörítettbe.
+
+  For symlink jump to target symlink                         #Ctrl-Shift-PgDn#
+   (for others files a la #Ctrl-PgDn#)
 
   Visszalépés a szülőmappába                               #Ctrl-PgUp#
 
     Ha a "Kezelőfelület beállítások" ~A Ctrl-PgUp meghajtót vált~@InterfSettings@
     opcióját engedélyeztük, a meghajtók gyökerében a #Ctrl-PgUp#
     lenyomása a hálózati plugint hívja meg, vagy a ~Meghajtók~@DriveDlg@ menüt.
+
+  Revert to symlink                                          #Ctrl-Shift-PgUp#
+   (only if before was jump by #Ctrl-Shift-PgDn# to target symlink)
 
   Gyorsbillentyűt rendel az aktuális mappához       #Ctrl-Shift-0...9#
 

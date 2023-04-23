@@ -1,7 +1,0 @@
-{
-    "files.associations": {},
-    "python.pythonPath": "/devel/bin/farg/Plugins/python/plug/python/bin/python",
-    "python.analysis.extraPaths": [
-        "/devel/bin/farg/Plugins/python",
-    ]
-}

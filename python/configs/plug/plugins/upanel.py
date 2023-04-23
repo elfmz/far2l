@@ -19,7 +19,7 @@ class Screen:
 
 class Plugin(PluginVFS):
     label = "Python upanel"
-    openFrom = ["DISKMENU"]
+    openFrom = ["PLUGINSMENU", "DISKMENU"]
 
     def OpenPlugin(self, OpenFrom):
         self.Root = "PythonPanel"
@@ -39,8 +39,10 @@ class Plugin(PluginVFS):
         Info.HostFile = self.ffi.NULL
         Info.CurDir = self.s2f(self.Root)
         Info.Format = self.s2f(self.label)
+        Info.PanelTitle = self.s2f(self.label)
 
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
+        log.debug("VFS.GetFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
         PanelItem = self.ffi.cast('struct PluginPanelItem **', PanelItem)
         ItemsNumber = self.ffi.cast('int *', ItemsNumber)
         n = len(self.Items)

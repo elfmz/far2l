@@ -311,7 +311,7 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
-    /*
+	/*
 	fprintf(stderr, "Parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);

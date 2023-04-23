@@ -26,9 +26,9 @@ static FARSTANDARDFUNCTIONS FSF;
 // #define PYPLUGIN_THREADED
 // #define PYPLUGIN_MEASURE_STARTUP
 
+#ifdef PYPLUGIN_DEBUGLOG
 static void python_log(const char *function, unsigned int line, const char *format, ...)
 {
-#ifdef PYPLUGIN_DEBUGLOG
     va_list args;
     char *xformat = (char *)alloca(strlen(format) + strlen(function) + 64);
     sprintf(xformat, "[PYTHON %lu]: %s@%u%s%s",
@@ -49,10 +49,12 @@ static void python_log(const char *function, unsigned int line, const char *form
     if (stream != stderr) {
         fclose(stream);
     }
-#endif
 }
 
 #define PYTHON_LOG(args...)  python_log(__FUNCTION__, __LINE__, args)
+#else
+#define PYTHON_LOG(args...)
+#endif
 
 #define PYTHON_VOID() \
     if (pyresult != NULL) { \
@@ -102,8 +104,7 @@ protected:
     {
         std::string syspath = "import sys";
         syspath += "\nsys.path.insert(1, '" + pluginPath + "')";
-        PYTHON_LOG("syspath=%s\n", syspath.c_str());
-
+        syspath += "\nsys.path.insert(1, '" + pluginPath + "/plugins')";
         PyRun_SimpleString(syspath.c_str());
 
         PyObject *pName;
@@ -140,17 +141,23 @@ public:
 
         std::wstring progname;
         StrMB2Wide(pluginPath, progname);
-        progname+= L"/python/bin/python";
+        progname += L"/python/bin/python";
+
+        PYTHON_LOG("pluginpath: %s, python library used:%s, progname: %ls\n", pluginPath.c_str(), PYTHON_LIBRARY, progname.c_str());
 
         soPythonInterpreter = dlopen(PYTHON_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
         if( !soPythonInterpreter ){
             PYTHON_LOG("error %u from dlopen('%s')\n", errno, PYTHON_LIBRARY);
             return;
         }
+
+
         Py_SetProgramName((wchar_t *)progname.c_str());
         Py_Initialize();
-        PyEval_InitThreads();
-        TranslateInstallPath_Lib2Share(pluginPath);
+        //PyEval_InitThreads();
+
+        //TranslateInstallPath_Lib2Share(pluginPath);
+
 #ifdef PYPLUGIN_THREADED
         if (!StartThread()) {
             PYTHON_LOG("StartThread failed, fallback to synchronous initialization\n");

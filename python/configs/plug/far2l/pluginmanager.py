@@ -8,7 +8,6 @@ import logging.config
 
 USERHOME = os.path.expanduser('~/.config/far2l/plugins/python')
 
-sys.path.insert(1, USERHOME)
 logging.basicConfig(level=logging.INFO)
 
 def setup():
@@ -24,7 +23,7 @@ setup()
 log = logging.getLogger(__name__)
 log.debug('%s start' % ('*'*20))
 log.debug('sys.path={0}'.format(sys.path))
-log.debug('cwd={0}'.format(os.getcwd()))
+log.debug('userhome={0}'.format(USERHOME))
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -91,14 +90,14 @@ class PluginManager:
 
             class Nop:
                 def __getattr__(self, name):
-                    log.debug("Nop."+name)
+                    log.debug("Nop.__getattr__({})".format(name))
                     return self
 
                 def __call__(self, *args):
-                    log.debug("Nop({0})".format(args))
+                    log.debug("Nop.__call__({0})".format(args))
                     return None
 
-            v = Nop
+            v = Nop()
             log.error("unhandled pluginGet{0}".format(hPlugin))
         return v
 
@@ -114,15 +113,47 @@ class PluginManager:
             ffic.OPEN_FILEPANEL: "FILEPANEL",
         }
         name = id2name[OpenFrom]
-        log.debug("pluginGetFrom({0}, {1})".format(OpenFrom, Item))
+        log.debug("pluginGetFrom({0} ({1}), {2})".format(OpenFrom, name, Item))
         for plugin in self.plugins:
             openFrom = plugin.Plugin.openFrom
-            log.debug("pluginGetFrom({0}, {1} : {2})".format(name in openFrom, Item, plugin.Plugin.name))
+            log.debug("pluginGetFrom(openok={0}, no={1} : {2})".format(name in openFrom, Item, plugin.Plugin.name))
             if name in openFrom:
                 if not Item:
                     return plugin
                 Item -= 1
         return None
+
+    def Message(self, lines):
+        _MsgItems = [
+            self.s2f('Python'),
+            self.s2f(''),
+        ]
+        for line in lines:
+            _MsgItems.append(
+                self.s2f(line)
+            )
+        _MsgItems.extend([
+            self.s2f(""),
+            self.s2f("\x01"),
+            self.s2f("&Ok"),
+        ])
+        #log.debug('_msgItems: %s', _MsgItems)
+        MsgItems = self.ffi.new("wchar_t *[]", _MsgItems)
+        self.info.Message(
+            self.info.ModuleNumber,                             # GUID
+            self.ffic.FMSG_WARNING|self.ffic.FMSG_LEFTALIGN,    # Flags
+            self.s2f("Contents"),                               # HelpTopic
+            MsgItems,                                           # Items
+            len(MsgItems),                                      # ItemsNumber
+            1                                                   # ButtonsNumber
+        )
+
+    # manager API
+    def ExitFAR(self):
+        log.debug("ExitFAR()")
+
+    def GetMinFarVersion(self):
+        log.debug("GetMinFarVersion()")
 
     def GetPluginInfo(self, Info):
         # log.debug("GetPluginInfo({0:08X})".format(Info))
@@ -151,77 +182,6 @@ class PluginManager:
         Info.PluginConfigStringsNumber = len(self._ConfigItems)
         Info.CommandPrefix = ffi.new("wchar_t []", "py")
 
-    def ClosePlugin(self, hPlugin):
-        log.debug("ClosePlugin %08X" % hPlugin)
-        plugin = self.openplugins.get(hPlugin, None)
-        if plugin is not None:
-            plugin.Close()
-            del self.openplugins[hPlugin]
-
-    def Compare(self, hPlugin, PanelItem1, PanelItem2, Mode):
-        log.debug("Compare({0}, {1}, {2}, {3})".format(hPlugin, PanelItem1, PanelItem2, Mode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.Compare(PanelItem1, PanelItem2, Mode)
-
-    def Configure(self, ItemNumber):
-        log.debug("Configure({0})".format(ItemNumber))
-        for plugin in self.plugins:
-            if plugin.Plugin.Configure is not None:
-                if ItemNumber == 0:
-                    plugin = plugin.Plugin(self, self.Info, ffi, ffic)
-                    plugin.Configure()
-                    return
-                ItemNumber -= 1
-
-    def DeleteFiles(self, hPlugin, PanelItem, ItemsNumber, OpMode):
-        log.debug("DeleteFiles({0}, {1}, {2}, {3})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.DeleteFiles(PanelItem, ItemsNumber, OpMode)
-
-    def ExitFAR(self):
-        log.debug("ExitFAR()")
-
-    def FreeFindData(self, hPlugin, PanelItem, ItemsNumber):
-        log.debug("FreeFindData({0}, {1}, {2})".format(hPlugin, PanelItem, ItemsNumber))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.FreeFindData(PanelItem, ItemsNumber)
-
-    def FreeVirtualFindData(self, hPlugin, PanelItem, ItemsNumber):
-        log.debug("FreeVirtualData({0}, {1}, {2})".format(hPlugin, PanelItem, ItemsNumber))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.FreeVirtualFindData(PanelItem, ItemsNumber)
-
-    def GetFiles(self, hPlugin, PanelItem, ItemsNumber, Move, DestPath, OpMode):
-        log.debug("GetFiles({0}, {1}, {2}, {3}, {4}, {5})".format(hPlugin, PanelItem, ItemsNumber, Move, DestPath, OpMode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode)
-
-    def GetFindData(self, hPlugin, PanelItem, ItemsNumber, OpMode):
-        log.debug("GetFindData({0}, {1}, {2}, {3})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.GetFindData(PanelItem, ItemsNumber, OpMode)
-
-    def GetMinFarVersion(self):
-        log.debug("GetMinFarVersion()")
-
-    def GetOpenPluginInfo(self, hPlugin, OpenInfo):
-        log.debug("GetOpenPluginInfo({0}, {1},)".format(hPlugin, OpenInfo))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.GetOpenPluginInfo(OpenInfo)
-
-    def GetVirtualFindData(self, hPlugin, PanelItem, ItemsNumber, Path):
-        log.debug("GetVirtualFindData({0}, {1}, {2}, {3})".format(hPlugin, PanelItem, ItemsNumber, Path))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.GetVirtualFindData(PanelItem, ItemsNumber, Path)
-
-    def MakeDirectory(self, hPlugin, Name, OpMode):
-        log.debug("MakeDirectory({0}, {1}, {2})".format(hPlugin, Name, OpMode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.MakeDirectory(Name, OpMode)
-
-    def OpenFilePlugin(self, Name, Data, DataSize, OpMode):
-        log.debug("OpenFilePlugin({0}, {1}, {2}, {3})".format(Name, Data, DataSize, OpMode))
-
     def OpenPlugin(self, OpenFrom, Item):
         log.debug("OpenPlugin({0}, {1})".format(OpenFrom, Item))
         if OpenFrom == ffic.OPEN_COMMANDLINE:
@@ -234,18 +194,28 @@ class PluginManager:
                     self.pluginRemove(linesplit[1])
                 else:
                     log.debug("missing plugin name in py:unload <plugin name>")
+                    self.Message([
+                        "Usage is:",
+                        "py:unload <plugin name>",
+                    ])
             elif linesplit[0] == "load":
                 if len(linesplit) > 1:
                     self.pluginInstall(linesplit[1])
                 else:
                     log.debug("missing plugin name in py:load <plugin name>")
+                    self.Message([
+                        "Usage is:",
+                        "py:load <plugin name>",
+                    ])
             else:
                 for plugin in self.plugins:
-                    log.debug("{0} | {1}".format(plugin.Plugin.name, plugin.Plugin.label))
                     if plugin.Plugin.HandleCommandLine(linesplit[0]) is True:
                         plugin = plugin.Plugin(self, self.Info, ffi, ffic)
                         plugin.CommandLine(line)
-                        break
+                        return
+                msg = "no plugin handler for command: {}".format(line)
+                log.debug(msg)
+                self.Message([msg])
             return
         plugin = self.pluginGetFrom(OpenFrom, Item)
         if plugin is not None:
@@ -258,6 +228,16 @@ class PluginManager:
             rc = None
         return rc
 
+    def ClosePlugin(self, hPlugin):
+        #log.debug("ClosePlugin %08X" % hPlugin)
+        plugin = self.openplugins.get(hPlugin, None)
+        if plugin is not None:
+            plugin.Close()
+            del self.openplugins[hPlugin]
+
+    def OpenFilePlugin(self, Name, Data, DataSize, OpMode):
+        log.debug("OpenFilePlugin({0}, {1}, {2}, {3})".format(Name, Data, DataSize, OpMode))
+
     def ProcessDialogEvent(self, Event, Param):
         # log.debug("ProcessDialogEvent({0}, {1}))".format(Event, Param))
         pass
@@ -267,22 +247,8 @@ class PluginManager:
         pass
 
     def ProcessEditorInput(self, Rec):
-        log.debug("ProcessEditorInput({0})".format(Rec))
-
-    def ProcessEvent(self, hPlugin, Event, Param):
-        # log.debug("ProcessEvent({0}, {1}, {2})".format(hPlugin, Event, Param))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.ProcessEvent(Event, Param)
-
-    def ProcessHostFile(self, hPlugin, PanelItem, ItemsNumber, OpMode):
-        log.debug("ProcessHostFile({0}, {1}, {2}, {3})".format(hPlugin, PanelItem, ItemsNumber, OpMode))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.ProcessHostFile(PanelItem, ItemsNumber, OpMode)
-
-    def ProcessKey(self, hPlugin, Key, ControlState):
-        log.debug("ProcessKey({0}, {1}, {2})".format(hPlugin, Key, ControlState))
-        plugin = self.pluginGet(hPlugin)
-        return plugin.ProcessKey(Key, ControlState)
+        #log.debug("ProcessEditorInput({0})".format(Rec))
+        pass
 
     def ProcessSynchroEvent(self, Event, Param):
         # log.debug("ProcessSynchroEvent({0}, {1})".format(Event, Param))
@@ -292,17 +258,76 @@ class PluginManager:
         # log.debug("ProcessViewerEvent({0}, {1})".format(Event, Param))
         pass
 
+    # common plugin functions
+    def GetOpenPluginInfo(self, hPlugin, OpenInfo):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.GetOpenPluginInfo(OpenInfo)
+
+    def Configure(self, ItemNumber):
+        log.debug("Configure({0})".format(ItemNumber))
+        for plugin in self.plugins:
+            if plugin.Plugin.Configure is not None:
+                if ItemNumber == 0:
+                    plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+                    plugin.Configure()
+                    return
+                ItemNumber -= 1
+
+    def ProcessEvent(self, hPlugin, Event, Param):
+        # log.debug("ProcessEvent({0}, {1}, {2})".format(hPlugin, Event, Param))
+        plugin = self.pluginGet(hPlugin)
+        return plugin.ProcessEvent(Event, Param)
+
+    def ProcessKey(self, hPlugin, Key, ControlState):
+        # log.debug("ProcessKey({0}, {1}, {2})".format(hPlugin, Key, ControlState))
+        plugin = self.pluginGet(hPlugin)
+        return plugin.ProcessKey(Key, ControlState)
+
+    # VFS functions
+    def Compare(self, hPlugin, PanelItem1, PanelItem2, Mode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.Compare(PanelItem1, PanelItem2, Mode)
+
+    def DeleteFiles(self, hPlugin, PanelItem, ItemsNumber, OpMode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.DeleteFiles(PanelItem, ItemsNumber, OpMode)
+
+    def FreeFindData(self, hPlugin, PanelItem, ItemsNumber):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.FreeFindData(PanelItem, ItemsNumber)
+
+    def FreeVirtualFindData(self, hPlugin, PanelItem, ItemsNumber):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.FreeVirtualFindData(PanelItem, ItemsNumber)
+
+    def GetFiles(self, hPlugin, PanelItem, ItemsNumber, Move, DestPath, OpMode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode)
+
+    def GetFindData(self, hPlugin, PanelItem, ItemsNumber, OpMode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.GetFindData(PanelItem, ItemsNumber, OpMode)
+
+    def GetVirtualFindData(self, hPlugin, PanelItem, ItemsNumber, Path):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.GetVirtualFindData(PanelItem, ItemsNumber, Path)
+
+    def MakeDirectory(self, hPlugin, Name, OpMode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.MakeDirectory(Name, OpMode)
+
+    def ProcessHostFile(self, hPlugin, PanelItem, ItemsNumber, OpMode):
+        plugin = self.pluginGet(hPlugin)
+        return plugin.ProcessHostFile(PanelItem, ItemsNumber, OpMode)
+
     def PutFiles(self, hPlugin, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
-        log.debug("PutFiles({0}, {1}, {2}, {3}, {4}, {5})".format(hPlugin, PanelItem, ItemsNumber, Move, SrcPath, OpMode))
         plugin = self.pluginGet(hPlugin)
         return plugin.PutFiles(PanelItem, ItemsNumber, Move, SrcPath, OpMode)
 
     def SetDirectory(self, hPlugin, Dir, OpMode):
-        log.debug("SetDirectory({0}, {1}, {2})".format(hPlugin, Dir, OpMode))
         plugin = self.pluginGet(hPlugin)
         return plugin.SetDirectory(Dir, OpMode)
 
     def SetFindList(self, hPlugin, PanelItem, ItemsNumber):
-        log.debug("SetFindList({0}, {1}, {2})".format(hPlugin, PanelItem, ItemsNumber))
         plugin = self.pluginGet(hPlugin)
         return plugin.SetFindList(PanelItem, ItemsNumber)

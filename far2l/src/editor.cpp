@@ -3696,7 +3696,7 @@ void Editor::Paste(const wchar_t *Src)
 				{							// сработал автоотступ
 											// учтём, что заменять табы на пробелы при вставке не надо
 
-					int oldTabsMode = GetConvertTabs();
+					int OldTabsMode = GetConvertTabs();
 					SetConvertTabs(0);
 
 					// ProcessKey(UseDecodeTable?TableSet.DecodeTable[(unsigned)ClipText[I]]:ClipText[I]); //BUGBUG
@@ -3707,7 +3707,7 @@ void Editor::Paste(const wchar_t *Src)
 					if (StartPos)
 						StartPos--;
 
-					SetConvertTabs(oldTabsMode);
+					SetConvertTabs(OldTabsMode);
 				}
 
 				int Pos = I;

@@ -275,7 +275,7 @@ public:
 	{true,  NSecInterface, "CopyShowTotal", &Opt.CMOpt.CopyShowTotal, 1},
 	{true,  NSecInterface, "DelShowTotal", &Opt.DelOpt.DelShowTotal, 0},
 	{true,  NSecInterface, "WindowTitle", &Opt.strWindowTitle, L"%State - FAR2L %Ver %Backend %User@%Host"}, // %Platform 
-	{true,  NSecInterfaceCompletion, "Exceptions", &Opt.AutoComplete.Exceptions, L"git*reset*--hard;*://*:*@*"},
+	{true,  NSecInterfaceCompletion, "Exceptions", &Opt.AutoComplete.Exceptions, L"git*reset*--hard;*://*:*@*;\" *\""},
 	{true,  NSecInterfaceCompletion, "ShowList", &Opt.AutoComplete.ShowList, 1},
 	{true,  NSecInterfaceCompletion, "ModalList", &Opt.AutoComplete.ModalList, 0},
 	{true,  NSecInterfaceCompletion, "Append", &Opt.AutoComplete.AppendCompletion, 0},

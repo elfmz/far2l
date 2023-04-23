@@ -128,7 +128,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 9     : ir.Event.KeyEvent.wVirtualKeyCode = VK_TAB; break;
 		case 27    : ir.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE; break;
 		case 13    : if (s[i] == '~') {
-				ir.Event.KeyEvent.wVirtualKeyCode = VK_F3;
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_F3; // workaround for wezterm's #3473
 			} else {
 				ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
 			}
@@ -140,9 +140,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
 		case 6     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
-		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break;
-		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break;
-		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break;
+		case 8     : if (s[i] == 'u') ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK; break; // workaround for wezterm's #3594
+		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break; // workaround for wezterm's #3473
+		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break; // workaround for wezterm's #3473
+		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break; // workaround for wezterm's #3473
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;
@@ -157,7 +158,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 57401 : case 57420 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD2; break;
 		case 57402 : case 57422 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD3; break;
 		case 57403 : case 57417 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD4; break;
-		case 57404 : case 57427 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
+		case 57404 : case 57427 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break; // "case 57427" is workaround for wezterm's #3478
 		case 57405 : case 57418 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD6; break;
 		case 57406 : case 57423 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD7; break;
 		case 57407 : case 57419 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD8; break;
@@ -266,7 +267,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	}
 	if (ir.Event.KeyEvent.uChar.UnicodeChar && !ir.Event.KeyEvent.wVirtualKeyCode) {
-		// Fixes non-latin chars under WezTerm
+		// Fixes non-latin chars under WezTerm (workaround for wezterm's #3479)
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 	}
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {

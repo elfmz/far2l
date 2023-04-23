@@ -255,14 +255,14 @@ static int wxKeyCode2WinScanCode(int code, int code_raw)
 
 static int IsEnhancedKey(int code, int code_raw)
 {
-    // As defined in MS docs https://learn.microsoft.com/en-us/windows/console/key-event-record-str
-    // Enhanced keys for the IBM® 101- and 102-key keyboards are the
-    // INS, DEL, HOME, END, PAGE UP, PAGE DOWN,
-    // and direction keys in the clusters to the left of the keypad;
-    // and the divide (/) and ENTER keys in the keypad.
-    //
-    // Wine also reports as enhanced the PrintScreen, WinLeft, WinRight, WinMenu,
-    // NumLock, RightControl and AltGr keys. Let's follow its behavior.
+	// As defined in MS docs https://learn.microsoft.com/en-us/windows/console/key-event-record-str
+	// Enhanced keys for the IBM® 101- and 102-key keyboards are the
+	// INS, DEL, HOME, END, PAGE UP, PAGE DOWN,
+	// and direction keys in the clusters to the left of the keypad;
+	// and the divide (/) and ENTER keys in the keypad.
+	//
+	// Wine also reports as enhanced the PrintScreen, WinLeft, WinRight, WinMenu,
+	// NumLock, RightControl and AltGr keys. Let's follow its behavior.
 	if ( code==WXK_LEFT || code==WXK_RIGHT || code==WXK_UP || code==WXK_DOWN
 		|| code==WXK_HOME || code==WXK_END || code==WXK_PAGEDOWN || code==WXK_PAGEUP
 		|| code==WXK_NUMPAD_ENTER || code==WXK_SNAPSHOT || code==WXK_INSERT || code==WXK_DELETE

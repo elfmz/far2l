@@ -128,7 +128,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 9     : ir.Event.KeyEvent.wVirtualKeyCode = VK_TAB; break;
 		case 27    : ir.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE; break;
 		case 13    : if (s[i] == '~') {
-				ir.Event.KeyEvent.wVirtualKeyCode = VK_F3;
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_F3; // workaround for wezterm's #3473
 			} else {
 				ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
 			}
@@ -140,9 +140,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
 		case 6     : if (s[i] == '~') { ir.Event.KeyEvent.wVirtualKeyCode = VK_NEXT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; } break;
-		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break;
-		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break;
-		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break;
+		case 8     : if (s[i] == 'u') ir.Event.KeyEvent.wVirtualKeyCode = VK_BACK; break; // workaround for wezterm's #3594
+		case 11    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F1; break; // workaround for wezterm's #3473
+		case 12    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F2; break; // workaround for wezterm's #3473
+		case 14    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F4; break; // workaround for wezterm's #3473
 		case 15    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F5; break;
 		case 17    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F6; break;
 		case 18    : if (s[i] == '~') ir.Event.KeyEvent.wVirtualKeyCode = VK_F7; break;
@@ -157,7 +158,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 57401 : case 57420 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD2; break;
 		case 57402 : case 57422 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD3; break;
 		case 57403 : case 57417 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD4; break;
-		case 57404 : case 57427 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
+		case 57404 : case 57427 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break; // "case 57427" is workaround for wezterm's #3478
 		case 57405 : case 57418 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD6; break;
 		case 57406 : case 57423 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD7; break;
 		case 57407 : case 57419 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD8; break;
@@ -266,7 +267,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	}
 	if (ir.Event.KeyEvent.uChar.UnicodeChar && !ir.Event.KeyEvent.wVirtualKeyCode) {
-		// Fixes non-latin chars under WezTerm
+		// Fixes non-latin chars under WezTerm (workaround for wezterm's #3479)
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
 	}
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {
@@ -332,9 +333,34 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
+{
+	unsigned char bytes[4] = {0};
+	int num_bytes = 0;
+	size_t i;
+	for (i = 0;; i += 2) {
+		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
+		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
+		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
+		num_bytes++;
+	}
+
+	if (num_bytes == 1) {
+		*uni_char = bytes[0];
+	} else if (num_bytes == 2) {
+		*uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+	} else if (num_bytes == 3) {
+		*uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+	} else if (num_bytes == 4) {
+		*uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
+	}
+
+	return i;
+}
+
 size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, size_t l)
 {
-    /*
+	/*
 	fprintf(stderr, "iTerm2 parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
@@ -369,28 +395,38 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
 		if ((flags  & 1) && !(_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED; }
+		if ((flags  & 1) &&  (_iterm_last_flags & 1)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 1) &&  (_iterm_last_flags & 1)) { go = 1; vkc = VK_SHIFT; kd = 0; }
+
 		if ((flags  & 2) && !(_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 1; cks |= SHIFT_PRESSED;
 			vsc = RIGHT_SHIFT_VSC; }
+		if ((flags  & 2) &&  (_iterm_last_flags & 2)) { cks |= SHIFT_PRESSED; }
 		if (!(flags & 2) &&  (_iterm_last_flags & 2)) { go = 1; vkc = VK_SHIFT; kd = 0; vsc = RIGHT_SHIFT_VSC; }
 
 		if ((flags  & 4) && !(_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 1; cks |= LEFT_ALT_PRESSED; }
+		if ((flags  & 4) &&  (_iterm_last_flags & 4)) { cks |= LEFT_ALT_PRESSED; }
 		if (!(flags & 4) &&  (_iterm_last_flags & 4)) { go = 1; vkc = VK_MENU; kd = 0; }
+
 		/*
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 1; cks |= RIGHT_ALT_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_ALT_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_MENU; kd = 0; cks |= ENHANCED_KEY; }
 		*/
 
 		if ((flags  & 16) && !(_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= LEFT_CTRL_PRESSED; }
+		if ((flags  & 16) &&  (_iterm_last_flags & 16)) { cks |= LEFT_CTRL_PRESSED; }
 		if (!(flags & 16) &&  (_iterm_last_flags & 16)) { go = 1; vkc = VK_CONTROL; kd = 0; }
+
 		if ((flags  & 32) && !(_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 32) &&  (_iterm_last_flags & 32)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 32) &&  (_iterm_last_flags & 32)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// map right Option to right Control
 		if ((flags  & 8) && !(_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 1; cks |= RIGHT_CTRL_PRESSED;
 			cks |= ENHANCED_KEY; }
+		if ((flags  & 8) &&  (_iterm_last_flags & 8)) { cks |= RIGHT_CTRL_PRESSED; }
 		if (!(flags & 8) &&  (_iterm_last_flags & 8)) { go = 1; vkc = VK_CONTROL; kd = 0; cks |= ENHANCED_KEY; }
 
 		// iTerm2 cmd+v workaround
@@ -417,32 +453,22 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		return len;
 	}
 
-
-	wchar_t uni_char = 0;
-	unsigned char bytes[4] = {0};
-	int num_bytes = 0;
-	int i;
-	for (i = (8 + flags_length + 1);; i += 2) {   // 8 is a fixed length of "]1337;d;"
-		if (!isdigit(s[i]) && (s[i] < 'a' || s[i] > 'f')) break;
-		if (!isdigit(s[i + 1]) && (s[i + 1] < 'a' || s[i + 1] > 'f')) break;
-		sscanf(s + i, "%2hhx", &bytes[num_bytes]);
-		num_bytes++;
-	}
-
-	if (num_bytes == 1) {
-		uni_char = bytes[0];
-	} else if (num_bytes == 2) {
-		uni_char = ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
-	} else if (num_bytes == 3) {
-		uni_char = ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
-	} else if (num_bytes == 4) {
-		uni_char = ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
-	}
+	wchar_t uni_char;
+	size_t i = ReadUTF8InHex(s + 8 + flags_length + 1, &uni_char); // 8 is a fixed length of "]1337;d;"
 
 	unsigned int keycode = 0;
-	sscanf(s + i + 1, "%i", &keycode);
+	unsigned int keycode_length = 0;
+	sscanf(s + 8 + flags_length + 1 + i + 1, "%i%n", &keycode, &keycode_length);
 
 	unsigned int vkc = 0;
+
+	// On MacOS, characters from the third level layout are entered while Option is pressed.
+	// So workaround needed for Alt+letters quick search to work
+	if (flags  & 4) { // Left Option is pressed? (right Option is mapped to right Control)
+		// read unicode char value from "ignoring-modifiers-except-shift"
+		ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
+		vkc = VK_UNASSIGNED;
+	}
 
 	// MacOS key codes:
 	// https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.6.sdk/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h

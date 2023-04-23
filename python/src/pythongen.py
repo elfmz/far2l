@@ -42,7 +42,19 @@ for s in re.findall("'.+'", data):
 data = data.replace("#line", "//#line")
 data = data.replace("#pragma", "//#pragma")
 
+with open(target, 'wt') as fp:
+    fp.write('''
+''')
+    fp.write('''\
+data = """\\
+''')
+    fp.write(data)
+    fp.write('''\
+"""
+''')
+    fp.write('''\
+import cffi
 ffi = cffi.FFI()
-ffi.set_source('far2lcffi', None)
 ffi.cdef(data, packed=True)
-ffi.compile(verbose=True)
+del data
+''')

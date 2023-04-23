@@ -359,7 +359,7 @@ size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
 
 size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, size_t l)
 {
-    /*
+	/*
 	fprintf(stderr, "iTerm2 parsing: ");
 	for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 		fprintf(stderr, "%c", s[i]);
@@ -464,7 +464,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	// On MacOS, characters from the third level layout are entered while Option is pressed.
 	// So workaround needed for Alt+letters quick search to work
 	if (flags  & 4) { // Left Option is pressed? (right Option is mapped to right Control)
-	    // read unicode char value from "ignoring-modifiers-except-shift"
+		// read unicode char value from "ignoring-modifiers-except-shift"
 		ReadUTF8InHex(s + 8 + flags_length + 1 + i + 1 + keycode_length + 1, &uni_char);
 		vkc = VK_UNASSIGNED;
 	}

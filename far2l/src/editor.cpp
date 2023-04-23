@@ -3694,6 +3694,11 @@ void Editor::Paste(const wchar_t *Src)
 			} else {
 				if (EdOpt.AutoIndent)		// первый символ вставим так, чтобы
 				{							// сработал автоотступ
+											// учтём, что заменять табы на пробелы при вставке не надо
+
+					int OldTabsMode = GetConvertTabs();
+					SetConvertTabs(0);
+
 					// ProcessKey(UseDecodeTable?TableSet.DecodeTable[(unsigned)ClipText[I]]:ClipText[I]); //BUGBUG
 					ProcessKey(ClipText[I]);	// BUGBUG
 					I++;
@@ -3701,6 +3706,8 @@ void Editor::Paste(const wchar_t *Src)
 
 					if (StartPos)
 						StartPos--;
+
+					SetConvertTabs(OldTabsMode);
 				}
 
 				int Pos = I;

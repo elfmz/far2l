@@ -617,12 +617,11 @@ shows the selected directory. To show a root directory in the Explorer, you
 should press #Shift-Enter# on the required drive in the ~drive selection menu~@DriveDlg@.
 Pressing #Shift-Enter# on "#..#" opens the current directory in the Explorer.
 
-  Change to the root folder                                   #Ctrl-\\#
+  Change to the root folder                                           #Ctrl-\\#
 
-  Change to the home directory (~~)                            #Ctrl-`#
+  Change to the home directory (~~)                                    #Ctrl-`#
 
   Change folder, enter an archive (also a SFX archive),    #Ctrl-[Shift-]PgDn#
-   for symlink jump to its original location
 
     If the cursor points to a directory, pressing #Ctrl-PgDn# changes to that
 directory. If the cursor points to a file, then, depending on the file type,
@@ -630,11 +629,17 @@ an ~associated command~@FileAssoc@ is executed or the archive is opened.
     #Ctrl-Shift-PgDn# always opens the archive, regardless of the associated
 command configuration.
 
-  Change to the parent folder                              #Ctrl-PgUp#
+  For symlink jump to target symlink                         #Ctrl-Shift-PgDn#
+   (for others files a la #Ctrl-PgDn#)
+
+  Change to the parent folder                                      #Ctrl-PgUp#
 
     If the option "~Use Ctrl-PgUp to change drive~@InterfSettings@" is enabled,
 pressing #Ctrl-PgUp# in the root directory switches to the network plugin or
 shows the ~drive selection menu~@DriveDlg@.
+
+  Revert to symlink                                          #Ctrl-Shift-PgUp#
+   (only if before was jump by #Ctrl-Shift-PgDn# to target symlink)
 
   Create bookmark to the current folder              #Ctrl-Shift-0..9#
 

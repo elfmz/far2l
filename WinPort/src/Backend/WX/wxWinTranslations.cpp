@@ -1,4 +1,5 @@
 #include "wxWinTranslations.h"
+#include "wxConsoleInputShim.h"
 #include "KeyFileHelper.h"
 #include "utils.h"
 #include "WinPort.h"
@@ -365,12 +366,12 @@ bool KeyTracker::CheckForSuddenModifierUp(wxKeyCode keycode)
 		ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 		ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
-	g_winport_con_in->Enqueue(&ir, 1);
+	wxConsoleInputShim::Enqueue(&ir, 1);
 
 	if (ir.Event.KeyEvent.wVirtualKeyCode == VK_SHIFT) {
 		// MapVirtualKey() knows nothing about right Shift. Let's fire right Shift KeyUp just to be sure
 		ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC;
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 	}
 
 	return true;
@@ -405,11 +406,11 @@ void KeyTracker::ForceAllUp()
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_CONTROL;
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		}
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 #ifndef __WXMAC__
 		if (ir.Event.KeyEvent.wVirtualKeyCode == VK_CONTROL && _right_control) {
 			ir.Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
-			g_winport_con_in->Enqueue(&ir, 1);
+			wxConsoleInputShim::Enqueue(&ir, 1);
 		}
 #endif
 	}

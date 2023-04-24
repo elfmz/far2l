@@ -1155,12 +1155,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-#if !defined(__WXOSX__) && defined(WX_ALT_NONLATIN)
-		// workaround for https://github.com/elfmz/far2l/issues/1625
-		|| (dwMods & (LEFT_ALT_PRESSED)) != 0
-#else
 		|| (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
-#endif
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{

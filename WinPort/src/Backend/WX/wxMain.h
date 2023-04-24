@@ -5,6 +5,7 @@
 
 #include "Backend.h"
 #include "wxWinTranslations.h"
+#include "wxConsoleInputShim.h"
 #include "CallInMain.h"
 #include "PathHelpers.h"
 #include "Paint.h"

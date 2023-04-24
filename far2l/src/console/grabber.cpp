@@ -256,7 +256,8 @@ void Grabber::DisplayObject()
 						NewColor = B_LIGHTGRAY | F_BLACK;
 
 					int Pos = (X - X1) + (Y - Y1) * (X2 - X1 + 1);
-					CharBuf[Pos].Attributes = (CharBuf[Pos].Attributes & ~0xff) | NewColor;
+					CharBuf[Pos].Attributes = ((CharBuf[Pos].Attributes & ~0xff) | NewColor)
+						& (~(FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR));
 				}
 
 			PutText(X1, Y1, X2, Y2, CharBuf);

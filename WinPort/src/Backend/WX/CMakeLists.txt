@@ -18,6 +18,7 @@ set(SOURCES
     wxClipboardBackend.cpp
     ExclusiveHotkeys.cpp
     wxWinTranslations.cpp
+    wxConsoleInputShim.cpp
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -135,7 +135,7 @@ bool IsKeyHighlighted(const wchar_t *Str, int Key, int Translate, int AmpPos)
 	wchar_t UpperStrKey = Upper(Str[AmpPos]);
 
 	if (Key < 0xFFFF) {
-		return UpperStrKey == Upper(Key) || (Translate && KeyToKeyLayoutCompare(Key, UpperStrKey));
+		return UpperStrKey == Upper(Key) || (Translate && KeyToKeyLayoutCompare(Upper(Key), UpperStrKey));
 	}
 
 	if (Key & KEY_ALT) {

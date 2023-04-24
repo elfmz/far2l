@@ -1,4 +1,4 @@
-# include "wxMain.h"
+#include "wxMain.h"
 
 #define AREAS_REDUCTION
 
@@ -426,7 +426,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		char str[128];
 		
 		wxMenu *menu = new wxMenu;
-		for (char c = 'A'; c<='Z'; ++c) {
+		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Ctrl + %c\tCtrl+%c", c, c);
 			menu->Append(ID_CTRL_BASE + (c - 'A'), wxString(str));
 		}
@@ -494,13 +494,17 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 		fprintf(stderr, "OnAccelerator: bad ID=%u\n", event.GetId());
 		return;
 	}
-	
-	fprintf(stderr, "OnAccelerator: ID=%u ControlKeyState=0x%x Key=0x%x '%c'\n", 
-		event.GetId(), ir.Event.KeyEvent.dwControlKeyState, ir.Event.KeyEvent.wVirtualKeyCode, ir.Event.KeyEvent.wVirtualKeyCode );
-		
-	g_winport_con_in->Enqueue(&ir, 1);
-	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_winport_con_in->Enqueue(&ir, 1);
+
+	bool dup = wxConsoleInputShim::IsKeyDowned(ir.Event.KeyEvent.wVirtualKeyCode);
+	fprintf(stderr, "OnAccelerator: ID=%u ControlKeyState=0x%x Key=0x%x '%c'%s\n",
+		event.GetId(), ir.Event.KeyEvent.dwControlKeyState, ir.Event.KeyEvent.wVirtualKeyCode,
+		ir.Event.KeyEvent.wVirtualKeyCode, dup ? " DUP" : "");
+
+	if (!dup) {
+		wxConsoleInputShim::Enqueue(&ir, 1);
+		ir.Event.KeyEvent.bKeyDown = FALSE;
+		wxConsoleInputShim::Enqueue(&ir, 1);
+	}
 }
 
 ////////////////////////////////////////// panel
@@ -646,9 +650,9 @@ void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 		index + 1, ir.Event.KeyEvent.dwControlKeyState);
 
 	ir.Event.KeyEvent.bKeyDown = TRUE;
-	g_winport_con_in->Enqueue(&ir, 1);
+	wxConsoleInputShim::Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
-	g_winport_con_in->Enqueue(&ir, 1);
+	wxConsoleInputShim::Enqueue(&ir, 1);
 
 }
 
@@ -680,7 +684,7 @@ void WinPortPanel::SetConsoleSizeFromWindow()
 			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 			ir.Event.WindowBufferSizeEvent.dwSize.X = width;
 			ir.Event.WindowBufferSizeEvent.dwSize.Y = height;
-			g_winport_con_in->Enqueue(&ir, 1);
+			wxConsoleInputShim::Enqueue(&ir, 1);
 		}
 	}
 }
@@ -1046,7 +1050,7 @@ void WinPortPanel::OnConsoleOutputTitleChanged()
 	INPUT_RECORD ir{CALLBACK_EVENT};
 	ir.Event.CallbackEvent.Function = TitleChangeCallback;
 	ir.Event.CallbackEvent.Context = this;
-	g_winport_con_in->Enqueue(&ir, 1);
+	wxConsoleInputShim::Enqueue(&ir, 1);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1159,23 +1163,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
-	} 
 
-	if (
+	} else if (
 		event.ControlDown() &&
 		ir.Event.KeyEvent.wVirtualKeyCode &&
 		((ir.Event.KeyEvent.wVirtualKeyCode < 'A') || (ir.Event.KeyEvent.wVirtualKeyCode > 'Z')) &&
 		(event.GetUnicodeKey() > 127)
 	) {
 		// ctrl+non_latin_letter what do not have menu shortcut, like ctrl+">"
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
-	}
 
+	}
 #ifdef WX_ALT_NONLATIN
-	if (alt_nonlatin_workaround) {
+	else if (alt_nonlatin_workaround) {
 		OnChar(event);
 	}
 #endif
@@ -1249,11 +1252,11 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 #ifdef __WXOSX__ //on OSX some keyups come without corresponding keydowns
 		if (!was_pressed) {
 			ir.Event.KeyEvent.bKeyDown = FALSE;
-			g_winport_con_in->Enqueue(&ir, 1);
+			wxConsoleInputShim::Enqueue(&ir, 1);
 			ir.Event.KeyEvent.bKeyDown = TRUE;
 		}
 #endif
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 	}
 	if (_key_tracker.CheckForSuddenModifiersUp()) {
 		_exclusive_hotkeys.Reset();
@@ -1298,10 +1301,10 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 		
 	}
 	//event.Skip();
@@ -1447,7 +1450,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	 || memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
 		memcpy(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event));
 		_prev_mouse_event_ts = now;
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 	}
 }
 
@@ -1540,7 +1543,7 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 		ir.EventType = MOUSE_EVENT;
 		ir.Event.MouseEvent.dwButtonState = _mouse_state;
 		ir.Event.MouseEvent.dwMousePosition = pos_char;
-		g_winport_con_in->Enqueue(&ir, 1);
+		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_mouse_event.SetEventType(wxEVT_LEFT_DOWN);
 		_last_mouse_event.SetLeftDown(true);
 		fprintf(stderr, "OnConsoleAdhocQuickEditSync: lbutton pressed, %u\n", _last_mouse_event.LeftIsDown());

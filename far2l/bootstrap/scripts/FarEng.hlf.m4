@@ -1313,6 +1313,8 @@ like live full keyboard keys recognition with with keydown/up reaction. Also 'ho
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
 
+  Select screen fragment & immediately to clipboard  MouseDown..Drag..Up
+
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
   Clear command line                                            #Ctrl-Y#

@@ -1344,6 +1344,8 @@ $ #Термінал
 клієнта, запущеного всередині терміналу far2l, що працює в режимі GUI на хості клієнта. Або, що набагато простіше, використовуючи плагін із можливістю
 запуску команд на віддаленому SSH сервері. Прикладом такого плагіна є NetRocks, а точніше протоколи, що підтримуються ним SFTP/SCP.
 
+  Select screen fragment & immediately to clipboard  MouseDown..Drag..Up
+
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
   Clear command line                                            #Ctrl-Y#

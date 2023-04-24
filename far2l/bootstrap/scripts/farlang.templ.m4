@@ -5901,6 +5901,18 @@ upd:" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log.    "
 " Ctrl+Shift+MouseScrollUp - автозавершення перегляду лога терміналу.      "
 " Ctrl+Shift+MouseScrollUp - які аўтазавяршае прагляд лога тэрмінала.      "
 
+VTStartTipNoCmdMouseSelect
+l:
+" MouseDown...Drag...Up - выделение фрагмента экрана и сразу в буфер обмена"
+" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
+
 VTStartTipPendCmdTitle
 l:
 "В процессе исполнения команды:                                            "

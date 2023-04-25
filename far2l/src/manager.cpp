@@ -786,7 +786,7 @@ int Manager::ProcessKey(DWORD Key)
 		switch (Key) {
 			case KEY_ALT | KEY_NUMPAD0:
 			case KEY_ALTINS: {
-				RunGraber();
+				Grabber::Run();
 				return TRUE;
 			}
 			case KEY_CONSOLE_BUFFER_RESIZE:

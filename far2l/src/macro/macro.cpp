@@ -4126,7 +4126,7 @@ begin:
 			goto begin;
 		}
 		case KEY_ALTINS: {
-			if (RunGraber())
+			if (Grabber::Run())
 				return KEY_NONE;
 
 			break;

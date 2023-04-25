@@ -5901,18 +5901,6 @@ upd:" Ctrl+Shift+MouseScrollUp - open autoclosing viewer with terminal log.    "
 " Ctrl+Shift+MouseScrollUp - автозавершення перегляду лога терміналу.      "
 " Ctrl+Shift+MouseScrollUp - які аўтазавяршае прагляд лога тэрмінала.      "
 
-VTStartTipNoCmdMouseSelect
-l:
-" MouseDown...Drag...Up - выделение фрагмента экрана и сразу в буфер обмена"
-" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-upd:" MouseDown...Drag...Up - select screen fragment & immediately to clipboard"
-
 VTStartTipPendCmdTitle
 l:
 "В процессе исполнения команды:                                            "
@@ -5972,6 +5960,19 @@ upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
 upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
 " Ctrl+Shift+MouseScrollUp - перегляд лога, що завершується автоматично.   "
 " Ctrl+Shift+MouseScrollUp - прагляд лога, які завяршаецца аўтаматычна.    "
+
+VTStartTipMouseSelect
+l:
+"Выделенный мышью текст автоматически копируется в буфер обмена"
+"Text selected with mouse automatically copied to clipboard"
+upd:"Text selected with mouse automatically copied to clipboard"
+upd:"Text selected with mouse automatically copied to clipboard"
+upd:"Text selected with mouse automatically copied to clipboard"
+upd:"Text selected with mouse automatically copied to clipboard"
+upd:"Text selected with mouse automatically copied to clipboard"
+"Виділений мишею текст автоматично копіюється у буфер обміну"
+"Вылучаны мышшу тэкст аўтаматычна капіюецца ў буфер абмену"
+
 
 BookmarkBottom
 "Редактирование: Del,Ins,F4,Shift+Вверх,Shift+Вниз"

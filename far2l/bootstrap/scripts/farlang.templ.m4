@@ -5963,15 +5963,15 @@ upd:" Ctrl+Shift+MouseScrollUp - autoclosing console log viewer.               "
 
 VTStartTipMouseSelect
 l:
-"Выделенный мышью текст автоматически копируется в буфер обмена"
-"Text selected with mouse automatically copied to clipboard"
-upd:"Text selected with mouse automatically copied to clipboard"
-upd:"Text selected with mouse automatically copied to clipboard"
-upd:"Text selected with mouse automatically copied to clipboard"
-upd:"Text selected with mouse automatically copied to clipboard"
-upd:"Text selected with mouse automatically copied to clipboard"
-"Виділений мишею текст автоматично копіюється у буфер обміну"
-"Вылучаны мышшу тэкст аўтаматычна капіюецца ў буфер абмену"
+"Выделенный мышью текст автоматически копируется в буфер обмена            "
+"Text selected with mouse automatically copied to clipboard                "
+upd:"Text selected with mouse automatically copied to clipboard                "
+upd:"Text selected with mouse automatically copied to clipboard                "
+upd:"Text selected with mouse automatically copied to clipboard                "
+upd:"Text selected with mouse automatically copied to clipboard                "
+upd:"Text selected with mouse automatically copied to clipboard                "
+"Виділений мишею текст автоматично копіюється у буфер обміну               "
+"Вылучаны мышшу тэкст аўтаматычна капіюецца ў буфер абмену                 "
 
 
 BookmarkBottom

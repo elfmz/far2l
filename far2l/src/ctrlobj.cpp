@@ -232,6 +232,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		Lines.emplace_back(Msg::VTStartTipNoCmdShiftTAB);
 		Lines.emplace_back(Msg::VTStartTipNoCmdFn);
 		Lines.emplace_back(Msg::VTStartTipNoCmdMouse);
+		Lines.emplace_back(Msg::VTStartTipNoCmdMouseSelect);
 		Lines.emplace_back(Msg::VTStartTipPendCmdTitle);
 		Lines.emplace_back(Msg::VTStartTipPendCmdFn);
 		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltC);

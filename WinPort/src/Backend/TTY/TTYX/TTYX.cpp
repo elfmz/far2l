@@ -602,6 +602,7 @@ public:
 			{XK_Escape, 0, '\x1b', false, VK_ESCAPE},
 			{XK_BackSpace, 'H', 0, true, VK_BACK},
 			{'2', VK_SPACE, ' ', true, '2'},
+			{XK_grave, VK_SPACE, ' ', true, VK_OEM_3},
 			{'3', 0, '\x1b', true, '3'},
 			{XK_bracketleft, 0, '\x1b', true, VK_OEM_4},
 			{XK_slash, '7', 0, true, VK_DIVIDE},
@@ -611,8 +612,13 @@ public:
 			{'m', VK_RETURN, 0, true, 'M'},
 			// Ctrl+1/6/7/9/0 seems don't need fixup
 		};
-
 		WaitForNonModifierXiKeydown();
+#if 0 /* change to 1 to see pressed XK_* codes */
+		for (const auto &xik : _xi_keys) {
+			fprintf(stderr, "!!! TTYXi: xik=0x%lx vk=0x%x ch=0x%x\n",
+				xik.first, event.wVirtualKeyCode, event.uChar.UnicodeChar);
+		}
+#endif
 
 		if (event.wVirtualKeyCode == VK_RETURN
 				&& _xi_keys.find(XK_KP_Enter) == _xi_keys.end()

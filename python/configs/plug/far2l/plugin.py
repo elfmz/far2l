@@ -65,7 +65,7 @@ class PluginVFS(PluginBase):
         return -2
 
     def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
-        log.debug("VFS.GetFiles({0}, {1}, {2}, {3}, {4}".format(
+        log.debug("VFS.GetFiles({0}, {1}, {2}, {3}, {4})".format(
             PanelItem,
             ItemsNumber,
             Move,
@@ -76,7 +76,7 @@ class PluginVFS(PluginBase):
         return 0
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
-        log.debug("VFS.PutFiles({0}, {1}, {2}, {3}, {4}".format(
+        log.debug("VFS.PutFiles({0}, {1}, {2}, {3}, {4})".format(
             PanelItem,
             ItemsNumber,
             Move,

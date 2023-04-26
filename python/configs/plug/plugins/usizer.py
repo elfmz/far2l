@@ -21,16 +21,17 @@ class Plugin(PluginBase):
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:
-                log.debug('INITDIALOG')
                 try:
                     dlg.SetText(dlg.ID_vapath, "vapath initial")
                     dlg.SetText(dlg.ID_vbpath, "vbpath initial")
                     dlg.Disable(dlg.ID_vbpath)
                     dlg.SetCheck(dlg.ID_vallow, 1)
                     dlg.SetFocus(dlg.ID_vseconds)
+                    # override value from constructor
+                    dlg.SetCheck(dlg.ID_vr1, self.ffic.BSTATE_CHECKED)
+                    dlg.SetCheck(dlg.ID_vc3, self.ffic.BSTATE_CHECKED)
                 except:
                     log.exception('bang')
-                log.debug('/INITDIALOG')
             elif Msg == self.ffic.DN_BTNCLICK:
                 pass
             elif Msg == self.ffic.DN_KEY:
@@ -75,21 +76,19 @@ class Plugin(PluginBase):
                 #MEMOEDIT("vmemo", 40, 5, 512),
                 HLine(),
                 HSizer(
-                    RADIOBUTTON('vp1', "p1", True, flags=self.ffic.DIF_GROUP),
-                    RADIOBUTTON('vp2', "p2"),
-                    RADIOBUTTON('vp3', "p3"),
+                    RADIOBUTTON('vr1', "p1", flags=self.ffic.DIF_GROUP),
+                    RADIOBUTTON('vr2', "p2"),
+                    RADIOBUTTON('vr3', "p3", self.ffic.BSTATE_CHECKED),
                 ),
-                HSizer(
-                    RADIOBUTTON('vr1', "r1", True, flags=self.ffic.DIF_GROUP),
-                    RADIOBUTTON('vr2', "r2"),
-                    RADIOBUTTON('vr3', "r3"),
+                VSizer(
+                    CHECKBOX('vc1', "c1"),
+                    CHECKBOX('vc2', "c2"),
+                    CHECKBOX('vc3', "c3", self.ffic.BSTATE_CHECKED),
                 ),
                 HSizer(
                     LISTBOX("vlist", 1, "element A", "element B", "element C", "element D"),
                     Spacer(),
                     COMBOBOX("vcombo", 2, "element A", "element B", "element C", "element D"),
-                    Spacer(),
-                    COMBOBOX("vcombo1", 3, "element A", "element B", "element C", "element D"),
                 ),
                 HLine(),
                 HSizer(
@@ -101,4 +100,35 @@ class Plugin(PluginBase):
         dlg = b.build(-1, -1)
 
         res = self.info.DialogRun(dlg.hDlg)
+        log.debug('''\
+ok={} \
+a path=[{}] \
+b path=[{}] \
+allow={} \
+pass=[{}] \
+seconds=[{}] \
+radio1={} \
+radio2={} \
+radio3={} \
+checkbox1={} \
+checkbox2={} \
+checkbox3={} \
+vlist={} \
+vcombo={} \
+'''.format(
+    res == dlg.ID_vok,
+    dlg.GetText(dlg.ID_vapath),
+    dlg.GetText(dlg.ID_vbpath),
+    dlg.GetCheck(dlg.ID_vallow),
+    dlg.GetText(dlg.ID_vuserpass),
+    dlg.GetText(dlg.ID_vseconds),
+    dlg.GetCheck(dlg.ID_vr1),
+    dlg.GetCheck(dlg.ID_vr2),
+    dlg.GetCheck(dlg.ID_vr3),
+    dlg.GetCheck(dlg.ID_vc1),
+    dlg.GetCheck(dlg.ID_vc2),
+    dlg.GetCheck(dlg.ID_vc3),
+    dlg.GetCurPos(dlg.ID_vlist),
+    dlg.GetCurPos(dlg.ID_vcombo),
+))
         self.info.DialogFree(dlg.hDlg)

@@ -50,7 +50,7 @@ class TEXT(Element):
             self.pos[0] + w + 1,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
+            {'Selected': 0},
             0,
             0,
             dlg.s2f(self.text),
@@ -148,7 +148,7 @@ class BUTTON(Element):
 class CHECKBOX(Element):
     dit = "DI_CHECKBOX"
 
-    def __init__(self, varname, text, checked=False):
+    def __init__(self, varname, text, checked=0):
         super().__init__(varname)
         self.text = text
         self.checked = checked
@@ -165,7 +165,7 @@ class CHECKBOX(Element):
             self.pos[0] + w,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
+            {'Selected': self.checked},
             0,
             0,
             dlg.s2f(self.text),
@@ -176,7 +176,7 @@ class CHECKBOX(Element):
 class RADIOBUTTON(Element):
     dit = "DI_RADIOBUTTON"
 
-    def __init__(self, varname, text, selected=False, flags=0):
+    def __init__(self, varname, text, selected=0, flags=0):
         super().__init__(varname)
         self.text = text
         self.selected = selected
@@ -194,7 +194,7 @@ class RADIOBUTTON(Element):
             self.pos[0] + w,
             self.pos[1] + h - 1,
             0,
-            {'Selected':0},
+            {'Selected': self.selected},
             self.flags,
             0,
             dlg.s2f(self.text),

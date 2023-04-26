@@ -1,4 +1,4 @@
 from .pluginmanager import PluginManager
 
 
-pluginmanager = PluginManager()
+_pluginmanager = PluginManager()

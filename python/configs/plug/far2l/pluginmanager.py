@@ -52,7 +52,9 @@ class PluginManager:
 
     def SetStartupInfo(self, Info):
         log.debug("SetStartupInfo({0:08X})".format(Info))
-        self.Info = ffi.cast("struct PluginStartupInfo *", Info)
+        self.info = ffi.cast("struct PluginStartupInfo *", Info)
+        self.ffi = ffi
+        self.ffic = ffic
 
     def pluginRemove(self, name):
         log.debug("remove plugin: {0}".format(name))
@@ -76,6 +78,7 @@ class PluginManager:
         cls = getattr(plugin, 'Plugin', None)
         if type(cls) == type(PluginBase) and issubclass(cls, PluginBase):
             # inject plugin name
+            cls.USERHOME = USERHOME
             cls.name = name
             self.plugins.append(plugin)
             for i in range(len(self.plugins)):
@@ -123,6 +126,12 @@ class PluginManager:
                 Item -= 1
         return None
 
+    def s2f(self, s):
+        return self.ffi.new("wchar_t []", s)
+
+    def f2s(self, s):
+        return self.ffi.string(self.ffi.cast("wchar_t *", s))
+
     def Message(self, lines):
         _MsgItems = [
             self.s2f('Python'),
@@ -157,7 +166,7 @@ class PluginManager:
 
     def GetPluginInfo(self, Info):
         # log.debug("GetPluginInfo({0:08X})".format(Info))
-        Info = ffi.cast("struct PluginInfo *", Info)
+        Info = self.ffi.cast("struct PluginInfo *", Info)
         self._DiskItems = []
         self._MenuItems = []
         self._ConfigItems = []
@@ -165,27 +174,27 @@ class PluginManager:
         for plugin in self.plugins:
             openFrom = plugin.Plugin.openFrom
             if "DISKMENU" in openFrom:
-                self._DiskItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
+                self._DiskItems.append(self.s2f(plugin.Plugin.label))
             if "PLUGINSMENU" in openFrom:
-                self._MenuItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
+                self._MenuItems.append(self.s2f(plugin.Plugin.label))
             if plugin.Plugin.Configure is not None:
-                self._ConfigItems.append(ffi.new("wchar_t []", plugin.Plugin.label))
-        self.DiskItems = ffi.new("wchar_t *[]", self._DiskItems)
-        self.MenuItems = ffi.new("wchar_t *[]", self._MenuItems)
-        self.ConfigItems = ffi.new("wchar_t *[]", self._ConfigItems)
-        Info.Flags = ffic.PF_EDITOR | ffic.PF_VIEWER | ffic.PF_DIALOG
+                self._ConfigItems.append(self.s2f(plugin.Plugin.label))
+        self.DiskItems = self.ffi.new("wchar_t *[]", self._DiskItems)
+        self.MenuItems = self.ffi.new("wchar_t *[]", self._MenuItems)
+        self.ConfigItems = self.ffi.new("wchar_t *[]", self._ConfigItems)
+        Info.Flags = self.ffic.PF_EDITOR | self.ffic.PF_VIEWER | self.ffic.PF_DIALOG
         Info.DiskMenuStrings = self.DiskItems
         Info.DiskMenuStringsNumber = len(self._DiskItems)
         Info.PluginMenuStrings = self.MenuItems
         Info.PluginMenuStringsNumber = len(self._MenuItems)
         Info.PluginConfigStrings = self.ConfigItems
         Info.PluginConfigStringsNumber = len(self._ConfigItems)
-        Info.CommandPrefix = ffi.new("wchar_t []", "py")
+        Info.CommandPrefix = self.s2f("py")
 
     def OpenPlugin(self, OpenFrom, Item):
         log.debug("OpenPlugin({0}, {1})".format(OpenFrom, Item))
-        if OpenFrom == ffic.OPEN_COMMANDLINE:
-            line = ffi.string(ffi.cast("wchar_t *", Item))
+        if OpenFrom == self.ffic.OPEN_COMMANDLINE:
+            line = self.f2s(Item)
             log.debug("cmd:{0}".format(line))
             line = line.lstrip()
             linesplit = line.split(' ', 1)
@@ -210,7 +219,7 @@ class PluginManager:
             else:
                 for plugin in self.plugins:
                     if plugin.Plugin.HandleCommandLine(linesplit[0]) is True:
-                        plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+                        plugin = plugin.Plugin(self, self.info, ffi, ffic)
                         plugin.CommandLine(line)
                         return
                 msg = "no plugin handler for command: {}".format(line)
@@ -219,7 +228,7 @@ class PluginManager:
             return
         plugin = self.pluginGetFrom(OpenFrom, Item)
         if plugin is not None:
-            plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+            plugin = plugin.Plugin(self, self.info, ffi, ffic)
             rc = plugin.OpenPlugin(OpenFrom)
             if rc not in (-1, None):
                 rc = id(plugin)
@@ -268,7 +277,7 @@ class PluginManager:
         for plugin in self.plugins:
             if plugin.Plugin.Configure is not None:
                 if ItemNumber == 0:
-                    plugin = plugin.Plugin(self, self.Info, ffi, ffic)
+                    plugin = plugin.Plugin(self, self.info, ffi, ffic)
                     plugin.Configure()
                     return
                 ItemNumber -= 1

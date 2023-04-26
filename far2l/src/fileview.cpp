@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "strmix.hpp"
 #include "mix.hpp"
+#include "fileholder.hpp"
 
 FileViewer::FileViewer(const wchar_t *Name, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
@@ -502,35 +503,35 @@ void FileViewer::OnChangeFocus(int focus)
 	CtrlObject->Plugins.ProcessViewerEvent(focus ? VE_GOTFOCUS : VE_KILLFOCUS, &FCurViewerID);
 }
 
-static void ModalViewFileInternal(const std::string &pathname, int DisableHistory, int DisableEdit,
-		bool scroll_to_end, bool autoclose, UINT codepage)
+void ModalViewFile(const std::string &pathname)
 {
-	FileViewer Viewer(StrMB2Wide(pathname).c_str(), FALSE, DisableHistory, DisableEdit, -1, nullptr, nullptr,
-			FALSE, codepage);
+	FileViewer Viewer(StrMB2Wide(pathname).c_str(),
+		FALSE, FALSE, FALSE, -1, nullptr, nullptr, FALSE, CP_AUTODETECT);
 	Viewer.SetDynamicallyBorn(false);
-	if (scroll_to_end)
-		Viewer.ProcessKey(KEY_END);
-	if (autoclose)
-		Viewer.SetAutoClose(true);
-	FrameManager->EnterModalEV();
-	FrameManager->ExecuteModal();
-	FrameManager->ExitModalEV();
+	FrameManager->ExecuteModalEV();
 	const int r = Viewer.GetExitCode();
 	if (r != 0)
 		fprintf(stderr, "%s: viewer error %d for '%s'\n", __FUNCTION__, r, pathname.c_str());
 }
 
-void ModalViewFile(const std::string &pathname, bool scroll_to_end)
+void ViewConsoleHistory(bool modal, bool autoclose)
 {
-	ModalViewFileInternal(pathname, FALSE, FALSE, scroll_to_end, false, CP_AUTODETECT);
-}
-
-void ModalViewConsoleHistory(bool scroll_to_end, bool autoclose)
-{
-	const std::string &histfile = CtrlObject->CmdLine->GetConsoleLog(true);
-	if (histfile.empty())
+	FARString histfile(CtrlObject->CmdLine->GetConsoleLog(true));
+	if (histfile.IsEmpty())
 		return;
 
-	ModalViewFileInternal(histfile, TRUE, TRUE, scroll_to_end, autoclose, CP_UTF8);
-	unlink(histfile.c_str());
+	std::shared_ptr<TempFileHolder> tfh(std::make_shared<TempFileHolder>(histfile, false));
+
+	FileViewer *Viewer = new (std::nothrow) FileViewer(histfile,
+		!modal, TRUE, TRUE, -1, nullptr, nullptr, FALSE, CP_UTF8);
+	Viewer->SetFileHolder(tfh);
+	Viewer->SetDynamicallyBorn(!modal);
+	Viewer->ProcessKey(KEY_END); // scroll to the end
+	if (autoclose)
+		Viewer->SetAutoClose(true);
+	if (modal)
+		FrameManager->ExecuteModalEV();
+	const int r = Viewer->GetExitCode();
+	if (!r || modal)
+		delete Viewer;
 }

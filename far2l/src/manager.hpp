@@ -204,15 +204,8 @@ public:
 
 	void InitKeyBar();
 
-	/*
-		$ 15.05.2002 SKV
-		Так как нужно это в разных местах,
-		а глобальные счётчики не концептуально,
-		то лучше это делать тут.
-	*/
-	void EnterModalEV() { ModalEVCount++; }
-	void ExitModalEV() { ModalEVCount--; }
-	BOOL InModalEV() { return ModalEVCount; }
+	void ExecuteModalEV();
+	BOOL InModalEV() const { return ModalEVCount != 0; }
 
 	void ResizeAllFrame();
 

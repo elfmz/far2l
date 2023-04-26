@@ -639,9 +639,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 									nullptr);
 							delete OldTitle;
 							ShellEditor.SetDynamicallyBorn(false);
-							FrameManager->EnterModalEV();
-							FrameManager->ExecuteModal();
-							FrameManager->ExitModalEV();
+							FrameManager->ExecuteModalEV();
 
 							if (!ShellEditor.IsFileChanged()
 									|| (!MenuFile.Open(strMenuFileName, GENERIC_READ, FILE_SHARE_READ,

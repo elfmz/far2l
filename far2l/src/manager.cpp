@@ -1597,6 +1597,19 @@ Frame *Manager::GetTopModal()
 	return f;
 }
 
+/*
+	$ 15.05.2002 SKV
+	Так как нужно это в разных местах,
+	а глобальные счётчики не концептуально,
+	то лучше это делать тут.
+*/
+void Manager::ExecuteModalEV()
+{
+	++ModalEVCount;
+	ExecuteModal();
+	--ModalEVCount;
+}
+
 /////////
 
 LockFrame::LockFrame(Frame *frame)

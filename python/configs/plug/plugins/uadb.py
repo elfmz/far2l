@@ -3,6 +3,7 @@ import stat
 import re
 import logging
 from datetime import datetime
+import configparser
 
 from far2l.plugin import PluginVFS
 from far2l.fardialogbuilder import (
@@ -49,6 +50,53 @@ HOURSPERDAY        =24
 EPOCHWEEKDAY       =1  #/* Jan 1, 1601 was Monday */
 DAYSPERWEEK        =7
 MONSPERYEAR        =12
+
+class Config:
+    def __init__(self, home):
+        self.inipath = os.path.join(home, 'adb.ini')
+        self.config = configparser.ConfigParser()
+        self.config['adb'] = {
+            'box': 'default',
+            'rexec': 'False',
+        }
+        self.load()
+
+    def load(self):
+        try:
+            self._load()
+        except:
+            log.exception('load config')
+
+    def _load(self):
+        if os.path.isfile(self.inipath):
+            with open(self.inipath, "rt") as fp:
+                self.config.read_file(fp)
+
+    def save(self):
+        try:
+            self._save()
+        except:
+            log.exception('save config')
+
+    def _save(self):
+        with open(self.inipath, "wt") as fp:
+            self.config.write(fp)
+
+    @property
+    def box(self):
+        return self.config.get('adb', 'box')
+
+    @box.setter
+    def box(self, value):
+        self.config.set('adb', 'box', value)
+
+    @property
+    def rexec(self):
+        return self.config.getboolean('adb', 'rexec')
+
+    @rexec.setter
+    def rexec(self, value):
+        self.config.set('adb', 'rexec', str(value))
 
 
 class Entry:
@@ -203,19 +251,20 @@ class Shell:
                 r'(?P<name>.*)',
         }
     }
-    def __init__(self, dev):
-        box = None
-        for name in (
-            'toybox',
-            'busybox',
-            'toolbox',
-        ):
-            line = dev.shell('which '+name).strip()
-            if line:
-                box = name
-                break
-        else:
-            raise IOError(2, 'unknown shell')
+    def __init__(self, config, dev):
+        box = config.box
+        if box == 'default':
+            for name in (
+                'toybox',
+                'busybox',
+                'toolbox',
+            ):
+                line = dev.shell('which '+name).strip()
+                if line:
+                    box = name
+                    break
+            else:
+                raise IOError(2, 'unknown shell')
         self.box = self.boxes[box]
         self.file_re = re.compile(self.box['file_re'])
 
@@ -262,6 +311,10 @@ class Shell:
 class Plugin(PluginVFS):
     label = "Python ADB"
     openFrom = ["PLUGINSMENU", "DISKMENU"]
+
+    def __init__(self, parent, info, ffi, ffic):
+        super().__init__(parent, info, ffi, ffic)
+        self.config = Config(self.USERHOME)
 
     def OpenPlugin(self, OpenFrom):
         self.names = []
@@ -423,6 +476,82 @@ class Plugin(PluginVFS):
         #log.debug('confirm={}'.format(rc))
         return rc
 
+    @staticmethod
+    def HandleCommandLine(line):
+        return line in ('uadb',)
+
+    def CommandLine(self, line):
+        sline = line.split()
+        if len(sline) == 2 and sline[1] == 'config':
+            self.Configure()
+        else:
+            self.Message(['Unknown command line:', line])
+
+    def Configure(self):
+        @self.ffi.callback("FARWINDOWPROC")
+        def DialogProc(hDlg, Msg, Param1, Param2):
+            if Msg == self.ffic.DN_INITDIALOG:
+                try:
+                    dlgid = {
+                        'default': dlg.ID_default,
+                        'busybox': dlg.ID_busybox,
+                        'toybox': dlg.ID_toybox,
+                        'toolbox': dlg.ID_toolbox,
+                    }[self.config.box]
+                    dlg.SetCheck(dlgid, self.ffic.BSTATE_CHECKED)
+                    dlg.SetCheck(dlg.ID_rexec, self.ffic.BSTATE_CHECKED if self.config.rexec else 0)
+                except:
+                    log.exception('bang')
+            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        b = DialogBuilder(
+            self,
+            DialogProc,
+            "ADB Config",
+            "adb config",
+            0,
+            VSizer(
+                HSizer(
+                    VSizer(
+                        TEXT("Shell:"),
+                        RADIOBUTTON('default', "default", flags=self.ffic.DIF_GROUP),
+                        RADIOBUTTON('busybox', "busybox"),
+                        RADIOBUTTON('toybox', "toybox"),
+                        RADIOBUTTON('toolbox', "toolbox"),
+                    ),
+                    Spacer(),
+                    HSizer(
+                        CHECKBOX('rexec', "Allow remote execute"),
+                    ),
+                ),
+                HLine(),
+                HSizer(
+                    BUTTON('OK', "OK", True, flags=self.ffic.DIF_CENTERGROUP),
+                    BUTTON('CANCEL', "Cancel", flags=self.ffic.DIF_CENTERGROUP),
+                ),
+            ),
+        )
+        dlg = b.build(-1, -1)
+
+        res = self.info.DialogRun(dlg.hDlg)
+        if res == dlg.ID_OK:
+            box = 0
+            for n, did in (
+                (0, dlg.ID_default),
+                (1, dlg.ID_busybox),
+                (2, dlg.ID_toybox),
+                (3, dlg.ID_toolbox),
+            ):
+                box |= n if dlg.GetCheck(did) else 0
+            self.config.box = {
+                0: 'default',
+                1: 'busybox',
+                2: 'toybox',
+                3: 'toolbox',
+            }[box]
+            self.config.rexec = True if dlg.GetCheck(dlg.ID_rexec) else False
+            self.config.save()
+
     def GetOpenPluginInfo(self, OpenInfo):
         Info = self.ffi.cast("struct OpenPluginInfo *", OpenInfo)
         Info.Flags = (
@@ -475,7 +604,7 @@ class Plugin(PluginVFS):
                 return False
         else:
             try:
-                shell = Shell(self.device)
+                shell = Shell(self.config, self.device)
                 result = shell.list(self.device, self.devicepath)
                 self.addResult(result)
             except AdbError as ex:
@@ -760,8 +889,18 @@ class Plugin(PluginVFS):
 
         return True
 
+    def Execute(self):
+        pass
+
     def ProcessKey(self, Key, ControlState):
         #log.debug("ProcessKey({0}, {1})".format(Key, ControlState))
+        if ControlState == self.ffic.PKF_CONTROL:
+            log.debug("ProcessKey(0x{:x}, {})".format(Key, ControlState))
+        if (
+            Key == self.ffic.KEY_CTRLQ-self.ffic.KEY_CTRL
+            and ControlState == self.ffic.PKF_CONTROL
+        ):
+            return True
         if (
             False and
             Key == self.ffic.KEY_CTRLA-self.ffic.KEY_CTRL
@@ -769,5 +908,13 @@ class Plugin(PluginVFS):
         ):
             log.debug("ProcessKey: CTRL+A")
             #self.EditAttributes()
+            return True
+        if (
+            Key == self.ffic.KEY_ENTER
+            and ControlState == self.ffic.PKF_CONTROL
+            and self.config.rexec
+        ):
+            log.debug("ProcessKey: CTRL+ENTER")
+            self.Execute()
             return True
         return False

@@ -196,4 +196,4 @@ private:
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void ModalEditConsoleHistory(bool scroll_to_end, bool allow_switch_screen);	// erases file internally
+void EditConsoleHistory(bool modal);

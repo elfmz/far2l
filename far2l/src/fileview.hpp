@@ -116,5 +116,5 @@ public:
 	void SetAutoClose(bool AC) { AutoClose = AC; }
 };
 
-void ModalViewFile(const std::string &pathname, bool scroll_to_end);
-void ModalViewConsoleHistory(bool scroll_to_end, bool autoclose = false);
+void ModalViewFile(const std::string &pathname);
+void ViewConsoleHistory(bool modal, bool autoclose);

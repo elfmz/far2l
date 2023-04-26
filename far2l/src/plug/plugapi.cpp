@@ -1804,9 +1804,7 @@ static int FarViewerSynched(const wchar_t *FileName, const wchar_t *Title, int X
 		FileViewer Viewer(FileName, FALSE, DisableHistory, Title, X1, Y1, X2, Y2, CodePage);
 		/* $ 28.05.2001 По умолчанию Вьюер, поэтому нужно здесь признак выставиль явно */
 		Viewer.SetDynamicallyBorn(false);
-		FrameManager->EnterModalEV();
-		FrameManager->ExecuteModal();
-		FrameManager->ExitModalEV();
+		FrameManager->ExecuteModalEV();
 
 		ApplyViewerDeleteOnClose(&Viewer, FileName, Flags);
 
@@ -1921,9 +1919,7 @@ int FarEditorSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int 
 				$ 15.05.2002 SKV
 				Зафиксируем вход и выход в/из модального редактора.
 			*/
-			FrameManager->EnterModalEV();
-			FrameManager->ExecuteModal();
-			FrameManager->ExitModalEV();
+			FrameManager->ExecuteModalEV();
 			ExitCode = Editor.GetExitCode();
 
 			if (ExitCode) {

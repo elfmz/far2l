@@ -2694,20 +2694,22 @@ bool FileEditor::AskOverwrite(const FARString &FileName)
 	return result;
 }
 
-void ModalEditConsoleHistory(bool scroll_to_end, bool allow_switch_screen)
+void EditConsoleHistory(bool modal)
 {
-	const std::string &histfile = CtrlObject->CmdLine->GetConsoleLog(false);
-	if (histfile.empty())
+	FARString histfile(CtrlObject->CmdLine->GetConsoleLog(false));
+	if (histfile.IsEmpty())
 		return;
 
+	std::shared_ptr<TempFileHolder> tfh(std::make_shared<TempFileHolder>(histfile, false));
+
 	DWORD EditorFlags = FFILEEDIT_DISABLEHISTORY | FFILEEDIT_NEW | FFILEEDIT_SAVETOSAVEAS;
-	if (allow_switch_screen)
+	if (!modal)
 		EditorFlags|= FFILEEDIT_ENABLEF6;
 
-	FileEditor *ShellEditor = new (std::nothrow) FileEditor(StrMB2Wide(histfile).c_str(),
-			CP_UTF8, EditorFlags, scroll_to_end ? std::numeric_limits<int>::max() : 0);
-	unlink(histfile.c_str());
+	FileEditor *ShellEditor = new (std::nothrow) FileEditor(
+		histfile, CP_UTF8, EditorFlags, std::numeric_limits<int>::max());
 	if (ShellEditor) {
+		ShellEditor->SetFileHolder(tfh);
 		DWORD editorExitCode = ShellEditor->GetExitCode();
 		if (editorExitCode != XC_LOADING_INTERRUPTED && editorExitCode != XC_OPEN_ERROR) {
 			FrameManager->ExecuteModal();

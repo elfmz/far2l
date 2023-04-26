@@ -70,6 +70,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wrap.cpp"
 #include <KeyFileHelper.h>
 
+#include "farversion.h"
+
 static const char *szCache_Preload = "Preload";
 static const char *szCache_Preopen = "Preopen";
 static const char *szCache_SysID = "SysID";

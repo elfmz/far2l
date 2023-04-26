@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	$ 07.12.2000 SVS
 	+ Версия берется из файла farversion.inc
 */
-#include "bootstrap/farversion.inc"
+#include "farversion.h"
 
 // идет процесс назначения клавиши в макросе?
 BOOL IsProcessAssignMacroKey = FALSE;

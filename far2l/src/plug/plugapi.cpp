@@ -72,6 +72,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "InterThreadCall.hpp"
 
+#include "farversion.h"
+
 wchar_t *WINAPI FarItoa(int value, wchar_t *string, int radix)
 {
 	if (string)

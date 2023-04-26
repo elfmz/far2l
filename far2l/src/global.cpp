@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	$ 29.06.2000 tran
 	берем char *CopyRight из inc файла
 */
-#include "bootstrap/copyright.inc"
+//#include "copyright.h"
 
 /*
 	$ 07.12.2000 SVS

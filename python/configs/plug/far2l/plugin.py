@@ -7,6 +7,7 @@ class PluginBase:
     name = ""
     number = 0
     # public
+    USERHOME = "" # ~/.config/far2l/plugins/python
     label = ""
     #openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
     openFrom = []

@@ -52,7 +52,7 @@ MONSPERYEAR        =12
 
 
 class Entry:
-    def __init__(self, perms=None, links=1, uid=0, gid=0, size=None,
+    def __init__(self, dirname=None, perms=None, links=1, uid=0, gid=0, size=None,
                  date_time=None, date=None, name=None):
         """initialize file"""
         self.mode = 0
@@ -65,11 +65,12 @@ class Entry:
         self.name = name
         self.date = date
 
-        self.dirname = ''
+        self.dirname = dirname
         self.link_target = None
-        self.filepath = None
+        self.filepath = os.path.join(self.dirname, self.name)
+        self.perms2mode()
 
-    def update(self, dirname):
+    def update(self, box):
         """update object fields"""
         month_num = {'Jan': 1,
                      'Feb': 2,
@@ -83,7 +84,6 @@ class Entry:
                      'Oct': 10,
                      'Nov': 11,
                      'Dec': 12}
-        self.dirname = dirname
         if self.date_time:
             date = self.date_time.split()
             date = '%s-%02d-%s %s' % (date[1],
@@ -92,7 +92,7 @@ class Entry:
                                       date[2])
             date = datetime.strptime(date, '%d-%m-%Y %H:%M:%S')
         else:
-            date = datetime.strptime(self.date, '%Y-%m-%d %H:%M')
+            date = datetime.strptime(self.date, box['date_re'])
 
         self.date = date
         self.date_time = date.strftime('%Y-%m-%d %H:%M')
@@ -102,8 +102,6 @@ class Entry:
         if type == 'l' and ' -> ' in self.name:
             self._correct_link()
 
-        self.filepath = os.path.join(self.dirname, self.name)
-        self.perms2mode()
 
     def perms2mode(self):
         perms = self.perms[1:]
@@ -148,6 +146,7 @@ class Entry:
             self.link_target = target
         else:
             self.link_target = os.path.abspath(os.path.join(self.dirname, target))
+        self.filepath = os.path.join(self.dirname, self.name)
 
     def mk_link_relative(self):
         """Convert links to relative"""
@@ -160,48 +159,57 @@ class Entry:
         template = ('{mode:4o} {perms} {links:>4} {uid:<8} {gid:<8} {size:>8} {date} {name}')
         return template.format(**self.__dict__)
 
+
 class Shell:
     boxes = {
         'busybox': {
-            'ls': 'busybox ls -anel {}',
-            'rls': 'busybox ls -Ranel {}',
-            'file_re': r'^(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
-                        r'(?P<links>\d+)\s'
-                        r'(?P<uid>\d+)\s+'
-                        r'(?P<gid>\d+)\s+'
-                        r'(?P<size>\d+)\s[A-Z,a-z]{3}\s'
-                        r'(?P<date_time>[A-Z,a-z]{3}\s+'
-                        r'\d+\s\d{2}:\d{2}:\d{2}\s+\d{4})\s'
-                        r'(?P<name>.*)'
+            'ls': 'busybox ls -anL --full-time {}',
+            'rls': 'busybox ls -Ranl {}',
+            'date_re': '%Y-%m-%d %H:%M:%S %z',
+            'file_re':
+                r'^'
+                r'(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
+                r'(?P<links>\d+)\s'
+                r'(?P<uid>\d+)\s+'
+                r'(?P<gid>\d+)\s+'
+                r'(?P<size>\d+)\s'
+                r'(?P<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}\s\+\d{4})\s'
+                r'(?P<name>.*)',
         },
         'toolbox': {
-            'ls': 'ls -anl {}',
-            'rls': 'ls -Ranl {}',
-            'file_re': r'^(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
-                        r'(?P<links>\d+)\s'
-                        r'(?P<uid>\d+)\s+'
-                        r'(?P<gid>\d+)\s+'
-                        r'(?P<size>\d+)?\s'
-                        r'(?P<date>\d{4}-\d{2}-\d{2}\s'
-                        r'\d{2}:\d{2})\s'
-                        r'(?P<name>.*)'
+            'ls': 'toolbox ls -anl {}',
+            'rls': 'toolbox ls -Ranl {}',
+            'date_re': '%Y-%m-%d %H:%M',
+            'file_re':
+                r'^(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
+                r'(?P<links>\d+)\s'
+                r'(?P<uid>\d+)\s+'
+                r'(?P<gid>\d+)\s+'
+                r'(?P<size>\d+)?\s'
+                r'(?P<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s'
+                r'(?P<name>.*)',
         },
         'toybox': {
-            'ls': 'toybox ls -anl {}',
+            'ls': 'toybox ls -anLc {}',
             'rls':  'toybox ls -Ranl {}',
-            'file_re': r'^(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
-                        r'(?P<links>\d+)\s+'
-                        r'(?P<uid>\d+)\s+'
-                        r'(?P<gid>\d+)\s+'
-                        r'(?P<size>\d+)?\s'
-                        r'(?P<date>\d{4}-\d{2}-\d{2}\s'
-                        r'\d{2}:\d{2})\s'
-                        r'(?P<name>.*)'
+            'date_re': '%Y-%m-%d %H:%M',
+            'file_re':
+                r'^(?P<perms>[-bcdlps][-rwxsStT]{9})\s+'
+                r'(?P<links>\d+)\s+'
+                r'(?P<uid>\d+)\s+'
+                r'(?P<gid>\d+)\s+'
+                r'(?P<size>\d+)?\s'
+                r'(?P<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s'
+                r'(?P<name>.*)',
         }
     }
     def __init__(self, dev):
         box = None
-        for name in ('busybox', 'toolbox', 'toybox'):
+        for name in (
+            'toybox',
+            'busybox',
+            'toolbox',
+        ):
             line = dev.shell('which '+name).strip()
             if line:
                 box = name
@@ -224,9 +232,10 @@ class Shell:
                 continue
             rm = self.file_re.match(line)
             if not rm:
+                log.debug('ignored entry in ({}): {}'.format(top, line))
                 continue
-            entry = Entry(**rm.groupdict())
-            entry.update(top)
+            entry = Entry(top, **rm.groupdict())
+            entry.update(self.box)
             if entry.perms[0] == 'l':
                 self.listfix(dev, entry, entry.link_target)
             result.append(entry)
@@ -753,4 +762,12 @@ class Plugin(PluginVFS):
 
     def ProcessKey(self, Key, ControlState):
         #log.debug("ProcessKey({0}, {1})".format(Key, ControlState))
-        return 0
+        if (
+            False and
+            Key == self.ffic.KEY_CTRLA-self.ffic.KEY_CTRL
+            and ControlState == self.ffic.PKF_CONTROL
+        ):
+            log.debug("ProcessKey: CTRL+A")
+            #self.EditAttributes()
+            return True
+        return False

@@ -21,7 +21,7 @@
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
 
-// #define PYPLUGIN_DEBUGLOG "/tmp/far2.py.log"
+//#define PYPLUGIN_DEBUGLOG "/tmp/far2.py.log"
 // #define PYPLUGIN_DEBUGLOG "" /* to stderr */
 // #define PYPLUGIN_THREADED
 // #define PYPLUGIN_MEASURE_STARTUP
@@ -141,8 +141,12 @@ public:
         }
 
         std::wstring progname;
+#ifdef VIRTUAL_PYTHON
+        StrMB2Wide(VIRTUAL_PYTHON, progname);
+#else
         StrMB2Wide(pluginPath, progname);
         progname += L"/python/bin/python";
+#endif
 
         PYTHON_LOG("pluginpath: %s, python library used:%s, progname: %ls\n", pluginPath.c_str(), PYTHON_LIBRARY, progname.c_str());
 

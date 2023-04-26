@@ -3,6 +3,8 @@
 extern const uint32_t FAR_VERSION;
 extern const char *FAR_BUILD;
 
+extern const char *Copyright;
+
 #if defined(__x86_64__)
 #define FAR_PLATFORM "x64"
 #elif defined(__ppc64__)

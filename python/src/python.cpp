@@ -105,6 +105,7 @@ protected:
         std::string syspath = "import sys";
         syspath += "\nsys.path.insert(1, '" + pluginPath + "')";
         syspath += "\nsys.path.insert(1, '" + pluginPath + "/plugins')";
+
         PyRun_SimpleString(syspath.c_str());
 
         PyObject *pName;
@@ -118,7 +119,7 @@ protected:
             return nullptr;
         }
 
-        pyPluginManager = PyObject_GetAttrString(pyPluginModule, "pluginmanager");
+        pyPluginManager = PyObject_GetAttrString(pyPluginModule, "_pluginmanager");
         if (pyPluginManager == NULL) {
             PYTHON_LOG("Failed to load \"far2l.pluginmanager\"\n");
             Py_DECREF(pyPluginModule);
@@ -139,22 +140,16 @@ public:
             pluginPath.resize(pos);
         }
 
-        std::wstring progname;
-        StrMB2Wide(pluginPath, progname);
-        progname += L"/python/bin/python";
-
-        PYTHON_LOG("pluginpath: %s, python library used:%s, progname: %ls\n", pluginPath.c_str(), PYTHON_LIBRARY, progname.c_str());
+        std::wstring progname = VIRTUAL_PYTHON_PATH;
 
         soPythonInterpreter = dlopen(PYTHON_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
         if( !soPythonInterpreter ){
             PYTHON_LOG("error %u from dlopen('%s')\n", errno, PYTHON_LIBRARY);
             return;
         }
-
-
         Py_SetProgramName((wchar_t *)progname.c_str());
         Py_Initialize();
-        //PyEval_InitThreads();
+        PyEval_InitThreads();
 
         //TranslateInstallPath_Lib2Share(pluginPath);
 
@@ -383,6 +378,8 @@ XPORT(int, MakeDirectory)(HANDLE hPlugin,const wchar_t **Name,int OpMode) {
     PYTHON_INT(0)
     return result;
 }
+#if 0
+// in far2l only one plugin is allowed at time
 XPORT(HANDLE, OpenFilePlugin)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode) {
     PYTHON_LOG("OpMode=%d Name='%ls'\n", OpMode, Name);
     HANDLE result = INVALID_HANDLE_VALUE;
@@ -390,6 +387,7 @@ XPORT(HANDLE, OpenFilePlugin)(const wchar_t *Name,const unsigned char *Data,int 
     PYTHON_HANDLE(INVALID_HANDLE_VALUE)
     return result;
 }
+#endif
 XPORT(int, ProcessDialogEvent)(int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
     int result = 0;

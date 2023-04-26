@@ -140,7 +140,11 @@ public:
             pluginPath.resize(pos);
         }
 
-        std::wstring progname = VIRTUAL_PYTHON_PATH;
+        std::wstring progname;
+        StrMB2Wide(pluginPath, progname);
+        progname += L"/python/bin/python";
+
+        PYTHON_LOG("pluginpath: %s, python library used:%s, progname: %ls\n", pluginPath.c_str(), PYTHON_LIBRARY, progname.c_str());
 
         soPythonInterpreter = dlopen(PYTHON_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
         if( !soPythonInterpreter ){

@@ -219,17 +219,17 @@ int CommandLine::ProcessKey(int Key)
 		strLastCompletionCmdStr.Clear();
 
 	if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT)) {
-		ModalViewConsoleHistory(true, true);
+		ViewConsoleHistory(false, true);
 		return TRUE;
 	}
 
 	if (Key == KEY_CTRLSHIFTF3 || Key == KEY_F3) {
-		ModalViewConsoleHistory(true);
+		ViewConsoleHistory(false, false);
 		return TRUE;
 	}
 
 	if (Key == KEY_CTRLSHIFTF4 || Key == KEY_F4) {
-		ModalEditConsoleHistory(true, true);
+		EditConsoleHistory(false);
 		return TRUE;
 	}
 

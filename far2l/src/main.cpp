@@ -680,7 +680,7 @@ int FarDispatchAnsiApplicationProtocolCommand(const char *str)
 	std::string command(str, space - str);
 	std::string argument(UnescapeUnprintable(space + 1));
 	if (command.find("v") == 0) {
-		ModalViewFile(argument, false);
+		ModalViewFile(argument);
 		r = 0;
 	} else if (command.find("e") == 0) {
 		int StartLine = 0, StartChar = 0;

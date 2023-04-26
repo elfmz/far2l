@@ -2,7 +2,19 @@ project(far2l)
 
 add_subdirectory (bootstrap)
 
+set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
+file(WRITE "${BOOTSTRAP}/farversion.cpp" "#include \"headers.hpp\"\n")
+string(ASCII ${VERSION_MAJOR} ASCII_MAJOR)
+string(HEX ${ASCII_MAJOR} HEX_MAJOR)
+string(ASCII ${VERSION_MINOR} ASCII_MINOR)
+string(HEX ${ASCII_MINOR} HEX_MINOR)
+file(APPEND "${BOOTSTRAP}/farversion.cpp"
+    "uint32_t FAR_VERSION __attribute__((used)) = 0x00${HEX_MAJOR}00${HEX_MINOR};\n")
+file(APPEND "${BOOTSTRAP}/farversion.cpp"
+    "const char *FAR_BUILD __attribute__((used)) = \"${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\";\n")
+
 set(SOURCES
+${BOOTSTRAP}/farversion.cpp
 src/cache.cpp
 src/clipboard.cpp
 src/cmdline.cpp

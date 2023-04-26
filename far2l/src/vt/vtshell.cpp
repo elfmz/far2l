@@ -437,7 +437,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		SetFarConsoleMode(TRUE);
 		if (kind == CLK_EDIT)
-			ModalEditConsoleHistory(true);
+			ModalEditConsoleHistory(true, false);
 		else
 			ModalViewConsoleHistory(true, kind == CLK_VIEW_AUTOCLOSE);
 

@@ -229,7 +229,7 @@ int CommandLine::ProcessKey(int Key)
 	}
 
 	if (Key == KEY_CTRLSHIFTF4 || Key == KEY_F4) {
-		ModalEditConsoleHistory(true);
+		ModalEditConsoleHistory(true, true);
 		return TRUE;
 	}
 

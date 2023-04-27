@@ -191,7 +191,6 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 
 	char Xor = 17;
 	std::string tmp_mb;
-	//for (const char *p = FAR_BUILD; *p; ++p) {
 	for (const char *p = Copyright; *p; ++p) {
 		//const char c = (*p & 0x7f) ^ Xor;
 		//Xor^= c;

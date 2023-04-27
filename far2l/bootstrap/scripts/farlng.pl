@@ -1,5 +1,6 @@
-#!/usr/bin/env perl
+#!/usr/bin/env -S perl -I.
 use strict;
+use far2l;
 
 my $feed_file = shift;
 die "Usage: farlng.pl .../farlang.templ [.../output/directory]" if !defined($feed_file);
@@ -9,6 +10,7 @@ if (!defined($out_dir) || $out_dir eq '') {
 	$out_dir = '.' ;
 } else {
 	mkdir($out_dir);
+	chdir($out_dir);
 }
 
 
@@ -77,11 +79,7 @@ for my $lang (@langs) {
 	close($lang);
 }
 
-if (!AreSameFiles($tmp, $hpp_file)) {
-	print "Updating $hpp_file\n";
-	system("cp -f $tmp $hpp_file");
-}
-unlink($tmp);
+far2l::UpdateFromTmp($tmp, $hpp_file);
 
 #############################################
 
@@ -161,30 +159,4 @@ sub TrimLeft
 	}
 
 	return substr($s, $i);
-}
-
-## TODO: Move to dedicated .pm file
-sub AreSameFiles
-{
-	my ($path1, $path2) = (@_);
-	my ($f1, $f2);
-	return undef if !open ($f1, '<', $path1);
-	if (!open($f2, '<', $path2)) {
-		close($f1);
-		return undef;
-	}
-	my $out = 1;
-	for (;;) {
-		my $s1 = <$f1>;
-		my $s2 = <$f2>;
-		last if !defined($s1) && !defined($s2);
-		if (!defined($s1) || !defined($s2) || $s1 ne $s2) {
-			$out = undef;
-			last;
-		}
-	}
-
-	close($f1);
-	close($f2);
-	return $out;
 }

@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 3.0.2)
 
+# copyright.inc and farversion.inc are not used any more,
+# files with relevant constants are generated in far2l/CMakeLists.txt now
+
 add_custom_target(bootstrap 
     DEPENDS copyright.inc farversion.inc farlang.templ lang.inc
 )

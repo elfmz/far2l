@@ -33,17 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-/*
-	$ 29.06.2000 tran
-	берем char *CopyRight из inc файла
-*/
-#include "bootstrap/copyright.inc"
-
-/*
-	$ 07.12.2000 SVS
-	+ Версия берется из файла farversion.inc
-*/
-#include "bootstrap/farversion.inc"
+#include "farversion.h"
 
 // идет процесс назначения клавиши в макросе?
 BOOL IsProcessAssignMacroKey = FALSE;

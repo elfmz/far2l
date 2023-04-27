@@ -33,16 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-/*
-	$ 29.06.2000 tran
-	берем char *CopyRight из inc файла
-*/
-//#include "copyright.h"
-
-/*
-	$ 07.12.2000 SVS
-	+ Версия берется из файла farversion.inc
-*/
 #include "farversion.h"
 
 // идет процесс назначения клавиши в макросе?

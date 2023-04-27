@@ -608,7 +608,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 		*/
 		if (Console.PeekInput(*rec)) {
 			// cheat for flock
-			if (rec->EventType == KEY_EVENT && !rec->Event.KeyEvent.wVirtualScanCode
+			if (rec->EventType == KEY_EVENT
 					&& (rec->Event.KeyEvent.wVirtualKeyCode == VK_NUMLOCK
 							|| rec->Event.KeyEvent.wVirtualKeyCode == VK_CAPITAL
 							|| rec->Event.KeyEvent.wVirtualKeyCode == VK_SCROLL)) {

@@ -73,7 +73,6 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param) {
 
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
     if (ir->EventType == KEY_EVENT && (ir->Event.KeyEvent.dwControlKeyState & RELEVANT_MODIFIERS) == 0
-        && ir->Event.KeyEvent.wVirtualScanCode == 0
         && !ir->Event.KeyEvent.bKeyDown
         && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
         return 0;
@@ -96,7 +95,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
     } else if (ir->EventType == KEY_EVENT) { // Is regular key event?
         DWORD relevant_modifiers = (ir->Event.KeyEvent.dwControlKeyState & RELEVANT_MODIFIERS);
 
-        if (ir->Event.KeyEvent.bKeyDown && ir->Event.KeyEvent.wVirtualScanCode == 0) {
+        if (ir->Event.KeyEvent.bKeyDown) {
             // Tab or Shift+Tab ?
             if (ir->Event.KeyEvent.wVirtualKeyCode == VK_TAB && editor->getState() == DO_ACTION) {
                 switch (relevant_modifiers) {
@@ -129,7 +128,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir) {
         }
 
         // Is character-typing key event?
-        if (!ir->Event.KeyEvent.bKeyDown && ir->Event.KeyEvent.wVirtualScanCode == 0
+        if (!ir->Event.KeyEvent.bKeyDown
             && (relevant_modifiers == 0 || relevant_modifiers == SHIFT_PRESSED)
             && ir->Event.KeyEvent.wVirtualKeyCode != VK_TAB && ir->Event.KeyEvent.wVirtualKeyCode != VK_BACK
             && ir->Event.KeyEvent.wVirtualKeyCode != VK_ESCAPE && ir->Event.KeyEvent.wVirtualKeyCode != VK_DELETE

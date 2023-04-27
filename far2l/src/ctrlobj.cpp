@@ -189,7 +189,6 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 {
 	std::vector<FARString> Lines;
 
-	char Xor = 17;
 	std::string tmp_mb;
 	for (const char *p = Copyright; *p; ++p) {
 		//const char c = (*p & 0x7f) ^ Xor;

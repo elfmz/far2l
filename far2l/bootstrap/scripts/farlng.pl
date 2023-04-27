@@ -15,7 +15,8 @@ if (!defined($out_dir) || $out_dir eq '') {
 my $feed;
 open($feed, '<', $feed_file) or die "$feed_file: $!";
 
-my $hpp_file = Unquote(FeedExpression(1));
+my $hpp_file_orig = Unquote(FeedExpression(1));
+my $hpp_file = "lang.tmp";
 my $langs_count = FeedExpression(1);
 die "No languages in $feed_file" if $langs_count <= 0;
 die "No HPP file in $feed_file" if $hpp_file eq '';
@@ -76,6 +77,10 @@ for my $lang (@langs) {
 	close($lang);
 }
 
+if (!(-e $hpp_file_orig) || (`diff $hpp_file_orig $hpp_file`)) {
+    system("cp -f $hpp_file $hpp_file_orig");
+    system("rm -f $hpp_file");
+}
 
 #############################################
 

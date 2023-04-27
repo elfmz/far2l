@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include <stdarg.h>
 
+#include "farversion.h"
+
 bool ConsoleTitle::TitleModified = false;
 DWORD ConsoleTitle::ShowTime = 0;
 

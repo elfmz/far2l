@@ -452,45 +452,49 @@ else()
         " COMPONENT system)
 endif()
 
-if (DEFINED PYTHON AND PYTHON)
-    find_package(PythonLibs 3.0)
-
-    if(PYTHONLIBS_FOUND)
-        find_program (PYTHON3 NAMES python3)
-        if(PYTHON3)
-            message(STATUS "PYTHON plugin enabled")
-            add_subdirectory (python)
-        else()
-            message(WARNING "${ColorRed}PYTHON plugin disabled due to missing python3 ${ColorNormal}")
-        endif ()
-    else()
-        message(WARNING "${ColorRed}PYTHON plugin disabled due to Python libraries not found${ColorNormal}")
-    endif()
-
-    install(CODE "
-        execute_process(COMMAND echo Python: preparing virtual environment)
-        " COMPONENT system)
-    install(CODE "
-        execute_process(COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python)
-        " COMPONENT system)
-    install(CODE "
-        execute_process(COMMAND echo Python: installing packages)
-        " COMPONENT system)
-    install(CODE "
-        execute_process(COMMAND ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python/bin/python -m pip install cffi debugpy)
-        " COMPONENT system)
-
+if (DEFINED VIRTUAL_PYTHON)
+    message(STATUS "PYTHON plugin with interpreter from virtualenv enabled")
+    add_subdirectory (python)
     # Copy this explicitly cuz generic copier command excludes 'far2l'
     install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/far2l"
         DESTINATION "share/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
         COMPONENT base FILES_MATCHING
         PATTERN "*")
-
 else()
-    message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
-    install(CODE "
-        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide)
-        " COMPONENT system)
+    if (DEFINED PYTHON AND PYTHON)
+        find_package(Python3 COMPONENTS Interpreter Development)
+
+        if(Python3_FOUND AND Python3_Development_FOUND)
+            message(STATUS "PYTHON plugin enabled")
+            add_subdirectory (python)
+            install(CODE "
+                execute_process(COMMAND echo Python: preparing virtual environment)
+                " COMPONENT system)
+            install(CODE "
+                execute_process(COMMAND ${PYTHON3} -m venv --system-site-packages ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python)
+                " COMPONENT system)
+            install(CODE "
+                execute_process(COMMAND echo Python: installing packages)
+                " COMPONENT system)
+            install(CODE "
+                execute_process(COMMAND ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python/bin/python -m pip install cffi debugpy)
+                " COMPONENT system)
+
+            # Copy this explicitly cuz generic copier command excludes 'far2l'
+            install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/far2l"
+                DESTINATION "share/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
+                COMPONENT base FILES_MATCHING
+                PATTERN "*")
+        else()
+            message(WARNING "${ColorRed}PYTHON plugin disabled due to missing python3 environment${ColorNormal}")
+        endif ()
+
+    else()
+        message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
+        install(CODE "
+            execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide)
+            " COMPONENT system)
+    endif()
 endif()
 
 if (NOT DEFINED SIMPLEINDENT OR SIMPLEINDENT)

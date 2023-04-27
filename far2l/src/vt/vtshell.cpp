@@ -65,7 +65,7 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 # define DbgPrintEscaped(i, s, l) 
 #endif
 
-int VTShell_Leader(const char *shell, const char *pty);
+int VTShell_Leader(char *const shell_argv[], const char *pty);
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
@@ -90,28 +90,45 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	unsigned int _exit_code;
 	bool _allow_osc_clipset{false};
 
+	static const char *GetSystemShell()
+	{
+		const char *env_shell = getenv("SHELL");
+		if (!env_shell || !*env_shell) {
+			return "/bin/sh";
+		}
+
+		const char *slash = strrchr(env_shell, '/');
+		// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
+		if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
+		 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
+		 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
+			return "bash";
+		}
+
+		return env_shell;
+	}
+
 	int ExecLeaderProcess()
 	{
 		std::string home = GetMyHome();
 
 		std::string far2l_exename = g_strFarModuleName.GetMB();
 
-		std::string force_shell = Wide2MB(Opt.CmdLine.strShell);
-		const char *shell = Opt.CmdLine.UseShell ? force_shell.c_str() : nullptr;
-
-		if (!shell || !*shell) {
-			shell = getenv("SHELL");
-			if (!shell) {
-				shell = "/bin/sh";
-			}
-			const char *slash = strrchr(shell, '/');
-			// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
-			if (strcmp(slash ? slash + 1 : shell, "fish") == 0
-			 || strcmp(slash ? slash + 1 : shell, "csh") == 0
-			 || strcmp(slash ? slash + 1 : shell, "tcsh") == 0 ) {
-				shell = "bash";
-			}
+		Environment::ExplodeCommandLine shell_exploded;
+		if (Opt.CmdLine.UseShell) {
+			shell_exploded.Parse(Opt.CmdLine.strShell.GetMB());
 		}
+
+		if (shell_exploded.empty() || shell_exploded.front().empty()) {
+			shell_exploded.Parse(GetSystemShell());
+			shell_exploded.emplace_back("-i");
+		}
+
+		std::vector<char *> shell_argv;
+		for (const auto &arg : shell_exploded) {
+			shell_argv.emplace_back((char *)arg.c_str());
+		}
+		shell_argv.emplace_back(nullptr);
 
 		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
 		// to avoid shell history pollution by far2l's intermediate script execution commands
@@ -184,9 +201,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			CheckedCloseFD(_pipes_fallback_out);
 		}
 
-		r = VTShell_Leader(shell, _slavename.c_str());
+		r = VTShell_Leader(shell_argv.data(), _slavename.c_str());
 		fprintf(stderr, "%s: VTShell_Leader('%s', '%s') returned %d errno %u\n",
-			__FUNCTION__, shell, _slavename.c_str(), r, errno);
+			__FUNCTION__, shell_argv[0], _slavename.c_str(), r, errno);
 
 		int err = errno;
 		_exit(err);

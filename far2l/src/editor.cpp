@@ -2526,40 +2526,66 @@ int Editor::ProcessKey(int Key)
 
 				CurPos = CurLine->GetCurPos();
 
-				if (Key < 0x10000 && CurPos > 0 && !Length) {
+				if (Key < 0x10000 && CurPos > Length) {
+
+					// detect space alignment by search for lines starting with space
 					Edit *PrevLine = CurLine->m_prev;
-
-					while (PrevLine && !PrevLine->GetLength())
-						PrevLine = PrevLine->m_prev;
-
-					if (PrevLine) {
-						int TabPos = CurLine->GetCellCurPos();
-						CurLine->SetCurPos(0);
-						const wchar_t *PrevStr = nullptr;
-						int PrevLength = 0;
-						PrevLine->GetBinaryString(&PrevStr, nullptr, PrevLength);
-
-						for (int I = 0; I < PrevLength && IsSpace(PrevStr[I]); I++) {
-							int NewTabPos = CurLine->GetCellCurPos();
-
-							if (NewTabPos == TabPos)
-								break;
-
-							if (NewTabPos > TabPos) {
-								CurLine->ProcessKey(KEY_BS);
-
-								while (CurLine->GetCellCurPos() < TabPos)
-									CurLine->ProcessKey(' ');
-
+					bool SpaceAligned = false;
+					while (PrevLine) {
+						if (PrevLine->GetLength()) {
+							const wchar_t *PrevStr = L"\x00";
+							int TmpLength;
+							PrevLine->GetBinaryString(&PrevStr, nullptr, TmpLength);
+							if (PrevStr[0] == ' ') {
+								SpaceAligned = true;
 								break;
 							}
+							if (PrevStr[0] == '\t') {
+								break;
+							}
+						}
+						PrevLine = PrevLine->m_prev;
+					}
 
-							if (NewTabPos < TabPos)
-								CurLine->ProcessKey(PrevStr[I]);
+					// detect if there are any non-space chars in the current line
+					bool NonSpaceFound = false;
+					for (int I = 0; I < Length; I++) {
+						if (!IsSpace(Str[I])) {
+							NonSpaceFound = true;
+							break;
+						}
+					}
+						
+					int TabPos = CurLine->GetCellCurPos();
+					CurLine->SetCurPos(Length);
+
+					for (int I = Length; I < CurPos; I++) {
+
+						int NewTabPos = CurLine->GetCellCurPos();
+
+						if (NewTabPos == TabPos)
+							break;
+
+						if (NewTabPos > TabPos) {
+							CurLine->ProcessKey(KEY_BS);
+
+							while (CurLine->GetCellCurPos() < TabPos)
+								CurLine->ProcessKey(' ');
+
+							break;
 						}
 
-						CurLine->SetCellCurPos(TabPos);
+						if (NewTabPos < TabPos)
+							CurLine->ProcessKey(
+								SpaceAligned ||
+								NonSpaceFound ||
+								GetConvertTabs() ||
+								((I + 1 == CurPos) && (TabPos % EdOpt.TabSize))
+									? ' ' : '\t'
+							);
 					}
+
+					CurLine->SetCellCurPos(TabPos);
 				}
 
 				if (!SkipCheckUndo) {

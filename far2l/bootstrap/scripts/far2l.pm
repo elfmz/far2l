@@ -1,4 +1,5 @@
 package far2l;
+use strict;
 
 sub UpdateFromTmp
 {

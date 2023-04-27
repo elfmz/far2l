@@ -2537,8 +2537,10 @@ int Editor::ProcessKey(int Key)
 							int TmpLength;
 							PrevLine->GetBinaryString(&PrevStr, nullptr, TmpLength);
 							if (PrevStr[0] == ' ') {
-								fprintf(stderr, "space-alignment found\n");
 								SpaceAligned = true;
+								break;
+							}
+							if (PrevStr[0] == '\t') {
 								break;
 							}
 						}
@@ -2549,7 +2551,6 @@ int Editor::ProcessKey(int Key)
 					bool NonSpaceFound = false;
 					for (int I = 0; I < Length; I++) {
 						if (!IsSpace(Str[I])) {
-							fprintf(stderr, "non-space char found\n");
 							NonSpaceFound = true;
 							break;
 						}

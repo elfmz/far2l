@@ -2552,7 +2552,7 @@ int Editor::ProcessKey(int Key)
 							if (NewTabPos < TabPos)
 								CurLine->ProcessKey(GetConvertTabs() || (I + 1 == CurPos) ? ' ' : '\t');
 						}
-						
+
 						CurLine->SetCellCurPos(TabPos);
 					//}
 				}

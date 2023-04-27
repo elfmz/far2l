@@ -43,13 +43,14 @@ add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
 
 add_custom_command(OUTPUT "${BOOTSTRAP}/lang.inc"
     COMMAND "${SCRIPTS}/farlng.pl" "${BOOTSTRAP}/farlang.templ" "${BOOTSTRAP}"
-    WORKING_DIRECTORY "${BOOTSTRAP}"
+    WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS "${BOOTSTRAP}/farlang.templ"
     COMMENT generating languages
 )
 
 add_custom_command(TARGET bootstrap PRE_BUILD
     COMMAND "${SCRIPTS}/farver.pl" "${BOOTSTRAP}/farversion.inc" "${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}" "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}"
+    WORKING_DIRECTORY "${SCRIPTS}"
     COMMENT generating version information
 )
 

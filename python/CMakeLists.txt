@@ -9,9 +9,8 @@ ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
 if (DEFINED VIRTUAL_PYTHON)
     message(STATUS "VIRTUAL env interpreter=${VIRTUAL_PYTHON}")
     message(STATUS "VIRTUAL env interpreter version=${VIRTUAL_PYTHON_VERSION}")
+    # for finding adequate python package
     set(Python3_EXECUTABLE ${VIRTUAL_PYTHON})
-else()
-    set(VIRTUAL_PYTHON_VERSION 0)
 endif()
 
 find_package(Python3 COMPONENTS Interpreter Development)        # find Python interpreter and library
@@ -41,7 +40,12 @@ if (DEFINED VIRTUAL_PYTHON)
     target_compile_definitions(python PRIVATE
         -DVIRTUAL_PYTHON="${VIRTUAL_PYTHON}"
     )
+    set(Python_EXECUTABLE ${VIRTUAL_PYTHON})
+else()
+    set(VIRTUAL_PYTHON_VERSION 0)
+    set(Python_EXECUTABLE ${Python3_EXECUTABLE})
 endif()
+
 
 target_include_directories(python PRIVATE .)
 target_include_directories(python PRIVATE ../WinPort)
@@ -76,5 +80,5 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
     DEPENDS ../WinPort/windows.h
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${VIRTUAL_PYTHON_VERSION}" "${Python3_EXECUTABLE}" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${VIRTUAL_PYTHON_VERSION}" "${Python_EXECUTABLE}" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
 )

@@ -2550,7 +2550,10 @@ int Editor::ProcessKey(int Key)
 							}
 
 							if (NewTabPos < TabPos)
-								CurLine->ProcessKey(GetConvertTabs() || (I + 1 == CurPos) ? ' ' : '\t');
+								CurLine->ProcessKey(
+									GetConvertTabs() || ((I + 1 == CurPos) && (TabPos % EdOpt.TabSize))
+										? ' ' : '\t'
+								);
 						}
 
 						CurLine->SetCellCurPos(TabPos);

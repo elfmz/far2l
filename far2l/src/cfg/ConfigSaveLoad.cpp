@@ -241,7 +241,7 @@ public:
 	{true,  NSecCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat, 0},
 	{true,  NSecCmdline, "PromptFormat", &Opt.CmdLine.strPromptFormat, L"$p$# "},
 	{true,  NSecCmdline, "UseShell", &Opt.CmdLine.UseShell, 0},
-	{true,  NSecCmdline, "Shell", &Opt.CmdLine.strShell, L"/bin/bash"},
+	{true,  NSecCmdline, "ShellCmd", &Opt.CmdLine.strShell, L"bash -i"},
 	{true,  NSecCmdline, "DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks, 1},
 	{true,  NSecCmdline, "EditBlock", &Opt.CmdLine.EditBlock, 0},
 	{true,  NSecCmdline, "AutoComplete", &Opt.CmdLine.AutoComplete, 1},

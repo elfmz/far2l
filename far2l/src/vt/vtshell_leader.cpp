@@ -36,18 +36,23 @@ static void SetupSignalHandlers(bool propogation)
 
 ////////////
 
-static int VTShell_ExecShell(const char *shell)
+static int VTShell_ExecShell(char *const shell_argv[])
 {
-	int r = (*shell == '/')
-		? execl(shell, shell, "-i", NULL)
-		: execlp(shell, shell, "-i", NULL);
-	fprintf(stderr, "%s: execl('%s') returned %d errno %u\n",
-		__FUNCTION__, shell, r, errno);
+	if (!shell_argv || !*shell_argv) {
+		fprintf(stderr, "Shell command is empty\n");
+		return -1;
+	}
+
+	int r = (shell_argv[0][0] == '/')
+		? execv(shell_argv[0], shell_argv)
+		: execvp(shell_argv[0], shell_argv);
+	fprintf(stderr, "%s: exec('%s') returned %d errno %u\n",
+		__FUNCTION__, shell_argv[0], r, errno);
 	return -1;
 }
 
 
-int VTShell_Leader(const char *shell, const char *pty)
+int VTShell_Leader(char *const shell_argv[], const char *pty)
 {
 	pid_t parent_grp = getpgid(getpid());
 	if (setsid() == -1) {
@@ -77,5 +82,5 @@ int VTShell_Leader(const char *shell, const char *pty)
 		}
 	}
 
-	return VTShell_ExecShell(shell);
+	return VTShell_ExecShell(shell_argv);
 }

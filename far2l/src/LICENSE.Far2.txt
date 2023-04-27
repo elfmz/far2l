@@ -7,7 +7,7 @@ array.hpp BaseFileMask.hpp bitflags.hpp cache.cpp cache.hpp cddrv.cpp cddrv.hpp
 CFileMask.cpp CFileMask.hpp chgmmode.cpp chgmmode.hpp chgprior.cpp chgprior.hpp 
 clipboard.cpp clipboard.hpp cmdline.cpp cmdline.hpp codepage.cpp codepage.hpp 
 colors.hpp config.cpp config.hpp console.cpp console.hpp constitle.cpp 
-constitle.hpp copy.cpp copy.hpp copyright.inc.m4 CriticalSections.hpp ctrlobj.cpp 
+constitle.hpp copy.cpp copy.hpp CriticalSections.hpp ctrlobj.cpp 
 ctrlobj.hpp cvtname.cpp cvtname.hpp datetime.cpp datetime.hpp delete.cpp 
 delete.hpp dialog.cpp dialog.hpp dirinfo.cpp dirinfo.hpp dirmix.cpp dirmix.hpp 
 dizlist.cpp dizlist.hpp DlgBuilder.cpp DlgBuilder.hpp dlgedit.cpp dlgedit.hpp 
@@ -16,7 +16,7 @@ edit.hpp editor.cpp editor.hpp eject.cpp eject.hpp elevation.cpp elevation.hpp
 execute.cpp execute.hpp exitcode.hpp Far.exe.manifest.m4 far.rc.m4 
 DialogBuilder.hpp FarEng.hlf.m4 farexcpt.cpp farexcpt.hpp FarHun.hlf.m4 
 farlang.templ.m4 farqueue.cpp farqueue.hpp farrtl.cpp farrtl.hpp FarRus.hlf.m4 
-farversion.inc.m4 farversion.m4 farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 
+farwinapi.cpp farwinapi.hpp BookmarksLegacy.cpp 
 BookmarksMenu.cpp File_id.diz.m4 fileattr.cpp fileattr.hpp fileedit.cpp fileedit.hpp 
 filefilter.cpp filefilter.hpp filefilterparams.cpp filefilterparams.hpp 
 filelist.cpp filelist.hpp FileMasksProcessor.cpp FileMasksProcessor.hpp 

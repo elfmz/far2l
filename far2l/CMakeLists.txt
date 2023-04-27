@@ -2,39 +2,8 @@ project(far2l)
 
 add_subdirectory (bootstrap)
 
-function(int_to_hex NUMBER HEX_STRING)
-    set(HEX_DIGITS "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "A" "B" "C" "D" "E" "F")
-    set(RESULT "")
-    while(NOT ${NUMBER} EQUAL 0)
-        math(EXPR DIGIT_INDEX "${NUMBER} % 16")
-        math(EXPR NUMBER "${NUMBER} / 16")
-        list(GET HEX_DIGITS ${DIGIT_INDEX} DIGIT)
-        set(RESULT "${DIGIT}${RESULT}")
-    endwhile()
-
-    string(LENGTH "${RESULT}" RESULT_LENGTH)
-    while(RESULT_LENGTH LESS 4)
-        set(RESULT "0${RESULT}")
-        string(LENGTH "${RESULT}" RESULT_LENGTH)
-    endwhile()
-
-    set(${HEX_STRING} "${RESULT}" PARENT_SCOPE)
-endfunction()
-
-set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
-file(WRITE "${BOOTSTRAP}/farversion.cpp" "#include \"headers.hpp\"\n")
-int_to_hex(${VERSION_MAJOR} HEX_MAJOR)
-int_to_hex(${VERSION_MINOR} HEX_MINOR)
-file(APPEND "${BOOTSTRAP}/farversion.cpp"
-    "uint32_t FAR_VERSION __attribute__((used)) = 0x${HEX_MAJOR}${HEX_MINOR};\n")
-file(APPEND "${BOOTSTRAP}/farversion.cpp"
-    "const char *FAR_BUILD __attribute__((used)) = \"${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\";\n")
-string(TIMESTAMP CURRENT_YEAR "%Y")
-file(APPEND "${BOOTSTRAP}/farversion.cpp"
-    "const char *Copyright __attribute__((used)) = \"FAR2L, version ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}\\nCopyright (C) 1996-2000 Eugene Roshal, Copyright (C) 2000-2016 Far Group, Copyright (C) 2016-${CURRENT_YEAR} Far People\";\n")
-
 set(SOURCES
-${BOOTSTRAP}/farversion.cpp
+src/farversion.cpp
 src/cache.cpp
 src/clipboard.cpp
 src/cmdline.cpp

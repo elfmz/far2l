@@ -1,10 +1,7 @@
 cmake_minimum_required (VERSION 3.0.2)
 
-# copyright.inc and farversion.inc are not used any more,
-# files with relevant constants are generated in far2l/CMakeLists.txt now
-
 add_custom_target(bootstrap 
-    DEPENDS copyright.inc farversion.inc farlang.templ lang.inc
+    DEPENDS farlang.templ lang.inc
 )
 
 message(STATUS "generating headers and languages")
@@ -20,8 +17,6 @@ endif ()
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 set(DEPENDENCIES
-    "${SCRIPTS}/copyright.inc.m4"
-    "${SCRIPTS}/farversion.m4"
     "${SCRIPTS}/tools.m4"
     "${SCRIPTS}/farlang.templ.m4"
 )
@@ -39,20 +34,6 @@ set(LNGFILES
     "${BOOTSTRAP}/FarUkr.lng"
 )
 
-add_custom_command(OUTPUT "${BOOTSTRAP}/copyright.inc"
-    COMMAND ${M4} "${SCRIPTS}/copyright.inc.m4" | ${GAWK} -f "${SCRIPTS}/enc.awk" > "${BOOTSTRAP}/copyright.inc"
-    WORKING_DIRECTORY "${SCRIPTS}"
-    DEPENDS ${DEPENDENCIES}
-    COMMENT generating header
-)
-
-add_custom_command(OUTPUT "${BOOTSTRAP}/farversion.inc"
-    COMMAND ${M4} "${SCRIPTS}/farversion.inc.m4" > "${BOOTSTRAP}/farversion.inc"
-    WORKING_DIRECTORY "${SCRIPTS}"
-    DEPENDS ${DEPENDENCIES}
-    COMMENT generating header
-)
-
 add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
     COMMAND ${M4} "${SCRIPTS}/farlang.templ.m4" > "${BOOTSTRAP}/farlang.templ"
     WORKING_DIRECTORY "${SCRIPTS}"
@@ -67,6 +48,10 @@ add_custom_command(OUTPUT "${BOOTSTRAP}/lang.inc"
     COMMENT generating languages
 )
 
+add_custom_command(TARGET bootstrap PRE_BUILD
+    COMMAND "${SCRIPTS}/farver.pl" "${BOOTSTRAP}/farversion.inc" "${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}" "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}"
+    COMMENT generating version information
+)
 
 add_custom_command(TARGET bootstrap
     COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"

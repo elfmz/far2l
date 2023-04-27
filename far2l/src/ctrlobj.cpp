@@ -52,6 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "console.hpp"
 
+#include "farversion.h"
+
 ControlObject *CtrlObject;
 
 ControlObject::ControlObject()
@@ -190,8 +192,9 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 	char Xor = 17;
 	std::string tmp_mb;
 	for (const char *p = Copyright; *p; ++p) {
-		const char c = (*p & 0x7f) ^ Xor;
-		Xor^= c;
+		//const char c = (*p & 0x7f) ^ Xor;
+		//Xor^= c;
+		const char c = *p;
 		if (c == '\n') {
 			Lines.emplace_back(tmp_mb);
 			tmp_mb.clear();

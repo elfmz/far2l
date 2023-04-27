@@ -65,6 +65,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <KeyFileHelper.h>
 #include <crc64.h>
 
+#include "farversion.h"
+
 const char *FmtDiskMenuStringD = "DiskMenuString%d";
 const char *FmtPluginMenuStringD = "PluginMenuString%d";
 const char *FmtPluginConfigStringD = "PluginConfigString%d";

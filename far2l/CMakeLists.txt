@@ -29,14 +29,12 @@ file(APPEND "${BOOTSTRAP}/farversion.cpp"
     "uint32_t FAR_VERSION __attribute__((used)) = 0x${HEX_MAJOR}${HEX_MINOR};\n")
 file(APPEND "${BOOTSTRAP}/farversion.cpp"
     "const char *FAR_BUILD __attribute__((used)) = \"${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\";\n")
-
 string(TIMESTAMP CURRENT_YEAR "%Y")
-file(WRITE "${BOOTSTRAP}/copyright.cpp"
+file(APPEND "${BOOTSTRAP}/farversion.cpp"
     "const char *Copyright __attribute__((used)) = \"FAR2L, version ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_PROCESSOR}\\nCopyright (C) 1996-2000 Eugene Roshal, Copyright (C) 2000-2016 Far Group, Copyright (C) 2016-${CURRENT_YEAR} Far People\";\n")
 
 set(SOURCES
 ${BOOTSTRAP}/farversion.cpp
-${BOOTSTRAP}/copyright.cpp
 src/cache.cpp
 src/clipboard.cpp
 src/cmdline.cpp

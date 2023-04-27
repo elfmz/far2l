@@ -2526,20 +2526,15 @@ int Editor::ProcessKey(int Key)
 
 				CurPos = CurLine->GetCurPos();
 
-				if (Key < 0x10000 && CurPos > 0 && !Length) {
-					Edit *PrevLine = CurLine->m_prev;
+				if (Key < 0x10000 && CurPos > Length) {
 
-					while (PrevLine && !PrevLine->GetLength())
-						PrevLine = PrevLine->m_prev;
-
-					if (PrevLine) {
+					//if (PrevLine) {
+						
 						int TabPos = CurLine->GetCellCurPos();
-						CurLine->SetCurPos(0);
-						const wchar_t *PrevStr = nullptr;
-						int PrevLength = 0;
-						PrevLine->GetBinaryString(&PrevStr, nullptr, PrevLength);
+						CurLine->SetCurPos(Length);
 
-						for (int I = 0; I < PrevLength && IsSpace(PrevStr[I]); I++) {
+						for (int I = Length; I < CurPos; I++) {
+
 							int NewTabPos = CurLine->GetCellCurPos();
 
 							if (NewTabPos == TabPos)
@@ -2555,11 +2550,11 @@ int Editor::ProcessKey(int Key)
 							}
 
 							if (NewTabPos < TabPos)
-								CurLine->ProcessKey(PrevStr[I]);
+								CurLine->ProcessKey(GetConvertTabs() || (I + 1 == CurPos) ? ' ' : '\t');
 						}
-
+						
 						CurLine->SetCellCurPos(TabPos);
-					}
+					//}
 				}
 
 				if (!SkipCheckUndo) {

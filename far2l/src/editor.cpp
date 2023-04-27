@@ -2522,6 +2522,14 @@ int Editor::ProcessKey(int Key)
 
 				int Length, CurPos;
 
+				if (!SkipCheckUndo) {
+					CurLine->GetBinaryString(&Str, nullptr, Length);
+					CurPos = CurLine->GetCurPos();
+					CmpStr = new wchar_t[Length + 1];
+					wmemcpy(CmpStr, Str, Length);
+					CmpStr[Length] = 0;
+				}
+
 				CurLine->GetBinaryString(&Str, nullptr, Length);
 
 				CurPos = CurLine->GetCurPos();
@@ -2586,14 +2594,6 @@ int Editor::ProcessKey(int Key)
 					}
 
 					CurLine->SetCellCurPos(TabPos);
-				}
-
-				if (!SkipCheckUndo) {
-					CurLine->GetBinaryString(&Str, nullptr, Length);
-					CurPos = CurLine->GetCurPos();
-					CmpStr = new wchar_t[Length + 1];
-					wmemcpy(CmpStr, Str, Length);
-					CmpStr[Length] = 0;
 				}
 
 				int LeftPos = CurLine->GetLeftPos();

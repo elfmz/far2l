@@ -47,7 +47,7 @@ class TEXT(Element):
             getattr(dlg.ffic, self.dit),
             self.pos[0],
             self.pos[1],
-            self.pos[0] + w + 1,
+            self.pos[0] + w - 1,
             self.pos[1] + h - 1,
             0,
             {'Selected': 0},
@@ -69,7 +69,7 @@ class EDIT(Element):
         self.mask = None
 
     def get_best_size(self):
-        return (self.width + 2, self.height)
+        return (self.width+1, self.height)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -154,7 +154,8 @@ class CHECKBOX(Element):
         self.checked = checked
 
     def get_best_size(self):
-        return (4 + len(self.text), 1)
+        # [?] text
+        return (1 + 1 + 1 + 1 + len(self.text), 1)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -183,7 +184,8 @@ class RADIOBUTTON(Element):
         self.flags = flags
 
     def get_best_size(self):
-        return (4 + len(self.text), 1)
+        # (?) text
+        return (1 + 1 + 1 + 1 + len(self.text), 1)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -209,13 +211,13 @@ class COMBOBOX(Element):
         super().__init__(varname)
         self.selected = selected
         self.items = items
-        self.maxlen = 1+max([len(s) for s in self.items])
+        self.maxlen = max([len(s) for s in self.items])
         self.flist = None
         self.fitems = None
         self.s2f = None
 
     def get_best_size(self):
-        return (self.maxlen, 1)
+        return (2 + self.maxlen, 1)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -241,7 +243,7 @@ class COMBOBOX(Element):
             getattr(dlg.ffic, self.dit),
             self.pos[0],
             self.pos[1],
-            self.pos[0] + w - 1,
+            self.pos[0] + w - 2,
             self.pos[1] + h - 1,
             0,
             param,
@@ -259,13 +261,13 @@ class LISTBOX(Element):
         super().__init__(varname)
         self.selected = selected
         self.items = items
-        self.maxlen = 4+max([len(s) for s in self.items])
+        self.maxlen = max([len(s) for s in self.items])
         self.flist = None
         self.fitems = None
         self.s2f = None
 
     def get_best_size(self):
-        return (self.maxlen, len(self.items))
+        return (4 + self.maxlen, len(self.items))
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -353,7 +355,7 @@ class HLine(Element):
 
 
 class HSizer(sizer.HSizer):
-    def __init__(self, *controls, border=(0, 0, 0, 0), center=False):
+    def __init__(self, *controls, border=(0, 0, 1, 0), center=False):
         super().__init__()
         self.controls = controls
         self.center = center
@@ -386,7 +388,7 @@ class VSizer(sizer.VSizer):
 
 
 class DialogBuilder(sizer.HSizer):
-    def __init__(self, plugin, dialogProc, title, helptopic, flags, contents, border=(1, 1, 1, 1)):
+    def __init__(self, plugin, dialogProc, title, helptopic, flags, contents, border=(2, 1, 2, 1)):
         super().__init__(border)
         self.plugin = plugin
         self.dialogProc = dialogProc
@@ -403,7 +405,7 @@ class DialogBuilder(sizer.HSizer):
         dlg = Dialog(self.plugin)
 
         w, h = self.get_best_size()
-        w = max(w + 1, len(self.title) + 4)
+        w = max(w + 1, len(self.title) + 2)
 
         dlg.width = w
         dlg.height = h

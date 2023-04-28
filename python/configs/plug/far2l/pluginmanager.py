@@ -11,12 +11,14 @@ USERHOME = os.path.expanduser('~/.config/far2l/plugins/python')
 logging.basicConfig(level=logging.INFO)
 
 def setup():
-    fname = os.path.join(USERHOME, 'logger.ini')
-    if os.path.isfile(fname):
-        with open(fname, "rt") as fp:
-            ini = configparser.ConfigParser()
-            ini.read_file(fp)
-            logging.config.fileConfig(ini)
+    if os.path.isdir(USERHOME):
+        sys.path.insert(3, USERHOME)
+        fname = os.path.join(USERHOME, 'logger.ini')
+        if os.path.isfile(fname):
+            with open(fname, "rt") as fp:
+                ini = configparser.ConfigParser()
+                ini.read_file(fp)
+                logging.config.fileConfig(ini)
 
 setup()
 

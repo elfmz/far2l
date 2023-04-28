@@ -191,14 +191,11 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 
 	std::string tmp_mb;
 	for (const char *p = Copyright; *p; ++p) {
-		//const char c = (*p & 0x7f) ^ Xor;
-		//Xor^= c;
-		const char c = *p;
-		if (c == '\n') {
+		if (*p == '\n') {
 			Lines.emplace_back(tmp_mb);
 			tmp_mb.clear();
 		} else {
-			tmp_mb+= c;
+			tmp_mb+= *p;
 		}
 	}
 	if (!tmp_mb.empty()) {

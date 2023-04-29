@@ -353,17 +353,20 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 //	tcgetattr(std_out, &g_ts_tstp);
 
-	std::unique_ptr<TTYRawMode> tty_raw_mode(new TTYRawMode(std_in, std_out));
-	if (!strchr(arg_opts.nodetect, 'f')) {
-//		tty_raw_mode.reset(new TTYRawMode(std_out));
-		if (tty_raw_mode->Applied()) {
-			arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
-			if (arg_opts.far2l_tty) {
-				arg_opts.tty = true;
-			}
+	std::unique_ptr<TTYRawMode> tty_raw_mode;
+	if (!arg_opts.notty) {
+		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
+		if (!strchr(arg_opts.nodetect, 'f')) {
+	//		tty_raw_mode.reset(new TTYRawMode(std_out));
+			if (tty_raw_mode->Applied()) {
+				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
+				if (arg_opts.far2l_tty) {
+					arg_opts.tty = true;
+				}
 
-		} else {
-			arg_opts.notty = true;
+			} else {
+				arg_opts.notty = true;
+			}
 		}
 	}
 

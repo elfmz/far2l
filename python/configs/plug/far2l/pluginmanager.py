@@ -191,7 +191,8 @@ class PluginManager:
         Info.PluginMenuStringsNumber = len(self._MenuItems)
         Info.PluginConfigStrings = self.ConfigItems
         Info.PluginConfigStringsNumber = len(self._ConfigItems)
-        Info.CommandPrefix = self.s2f("py")
+        self._commandprefix= self.s2f("py")
+        Info.CommandPrefix = self._commandprefix
 
     def OpenPlugin(self, OpenFrom, Item):
         log.debug("OpenPlugin({0}, {1})".format(OpenFrom, Item))

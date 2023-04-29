@@ -274,7 +274,8 @@ class Shell:
                 continue
             rm = self.file_re.match(line)
             if not rm:
-                log.debug('ignored entry in ({}): {}'.format(top, line))
+                if line.split()[0] != 'total':
+                    log.debug('ignored entry in ({}): {}'.format(top, line))
                 continue
             entry = Entry(top, **rm.groupdict())
             entry.update(self.box)
@@ -525,6 +526,19 @@ class Plugin(PluginVFS):
             self.config.save()
 
     def GetOpenPluginInfo(self, OpenInfo):
+        if self.device is not None:
+            title = "adb://{}{}".format(self.device.serial, self.devicepath)
+        else:
+            title = self.label
+        #
+        # WARNING WARNING - dangerous pointers and lifetime of a variable in python
+        # anything passed as a pointer must be kept in local python variables
+        # otherwise gc/cffi will delete them and miracles will happen
+        #
+        self._curdir = self.s2f(self.devicepath)
+        self._title = self.s2f(title)
+        self._label = self.s2f(self.label)
+
         Info = self.ffi.cast("struct OpenPluginInfo *", OpenInfo)
         Info.Flags = (
             self.ffic.OPIF_USEFILTER
@@ -534,13 +548,9 @@ class Plugin(PluginVFS):
             |self.ffic.OPIF_SHOWNAMESONLY
         )
         Info.HostFile = self.ffi.NULL
-        Info.CurDir = self.s2f(self.devicepath)
-        if self.device is not None:
-            title = "adb://{}{}".format(self.device.serial, self.devicepath)
-        else:
-            title = self.label
-        Info.Format = self.s2f(self.label)
-        Info.PanelTitle = self.s2f(" *"+title+"* ")
+        Info.CurDir = self._curdir
+        Info.Format = self._label
+        Info.PanelTitle = self._title
         #const struct InfoPanelLine *InfoLines;
         #int                   InfoLinesNumber;
         #const wchar_t * const   *DescrFiles;
@@ -551,7 +561,7 @@ class Plugin(PluginVFS):
         #Info.StartSortMode = self.ffic.SM_NAME
         #Info.StartSortOrder = 0
         #const struct KeyBarTitles *KeyBar;
-        Info.ShortcutData = self.s2f('py:adb cd '+title)
+        #Info.ShortcutData = self.s2f('py:adb cd '+title)
 
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
         #super().GetFindData(PanelItem, ItemsNumber, OpMode)

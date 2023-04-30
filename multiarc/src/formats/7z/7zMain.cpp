@@ -1,9 +1,14 @@
 /* 7zMain.c - Test application for 7z Decoder
 2019-02-02 : Igor Pavlov : Public domain */
 
-
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+
+#include <windows.h>
+#include <utimens_compat.h>
 
 #include "C/CpuArch.h"
 
@@ -23,7 +28,6 @@
 #include <errno.h>
 #endif
 #endif
-
 
 #define kInputBufSize ((size_t)1 << 18)
 
@@ -373,7 +377,7 @@ static void PrintLF()
   Print("\n");
 }
 
-static void PrintError(char *s)
+static void PrintError(const char *s)
 {
   Print("\nERROR: ");
   Print(s);
@@ -398,7 +402,7 @@ static void GetAttribString(UInt32 wa, BoolInt isDir, char *s)
 
 // #define NUM_PARENTS_MAX 128
 
-int sevenz_main(int numargs, char *args[])
+extern "C" int sevenz_main(int numargs, char *args[])
 {
   ISzAlloc allocImp;
   ISzAlloc allocTempImp;
@@ -644,7 +648,6 @@ int sevenz_main(int numargs, char *args[])
             break;
           }
 
-          #ifdef USE_WINDOWS_FILE
           {
             FILETIME mtime, ctime;
             FILETIME *mtimePtr = NULL;
@@ -665,9 +668,17 @@ int sevenz_main(int numargs, char *args[])
               ctimePtr = &ctime;
             }
             if (mtimePtr || ctimePtr)
+            {
+#ifdef USE_WINDOWS_FILE
               SetFileTime(outFile.handle, ctimePtr, NULL, mtimePtr);
+#elif defined(ELFMZ_WINPORT)
+              struct timespec ts[2] = {0};
+              WINPORT(FileTime_Win32ToUnix)(mtimePtr ? mtimePtr : ctimePtr, &ts[0]);
+              WINPORT(FileTime_Win32ToUnix)(ctimePtr ? ctimePtr : mtimePtr, &ts[1]);
+              futimens(outFile.fd, ts);
+#endif
+            }
           }
-          #endif
           
           if (File_Close(&outFile))
           {

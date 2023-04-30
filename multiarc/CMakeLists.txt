@@ -20,7 +20,7 @@ set(SOURCES
     src/formats/lzh/lzh.cpp
 
         src/formats/7z/7z.cpp
-        src/formats/7z/7zMain.c
+        src/formats/7z/7zMain.cpp
         src/formats/7z/C/Lzma86Dec.c
         src/formats/7z/C/7zDec.c
         src/formats/7z/C/Ppmd7Dec.c

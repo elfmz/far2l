@@ -65,7 +65,7 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 
 struct ITTYInputSpecialSequenceHandler
 {
-	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event) = 0;
+	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event, char using_extension) = 0;
 	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;
 	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
 	virtual void OnInputBroken() = 0;
@@ -102,6 +102,7 @@ class TTYInputSequenceParser
 	std::vector<INPUT_RECORD> _ir_pending;
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
+	char _using_extension = 0;
 
 	void AssertNoConflicts();
 
@@ -131,4 +132,5 @@ public:
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 
 	size_t Parse(const char *s, size_t l, bool idle_expired); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
+	char UsingExtension() const { return _using_extension; };
 };

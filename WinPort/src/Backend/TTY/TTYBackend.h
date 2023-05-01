@@ -54,11 +54,12 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void ReaderThread();
 	void ReaderLoop();
 	void WriterThread();
-
+	void UpdateBackendIdentification();
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
 	ITTYXGluePtr _ttyx;
+	char _using_extension = 0;
 
 	COORD _largest_window_size{};
 	std::atomic<bool> _largest_window_size_ready{false};
@@ -133,7 +134,7 @@ protected:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 
 	// ITTYInputSpecialSequenceHandler
-	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);
+	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event, char using_extension);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();

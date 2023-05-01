@@ -282,6 +282,11 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 
 	_ir_pending.emplace_back(ir);
 
+	if (!_using_extension) {
+		fprintf(stderr, "TTYInputSequenceParser: using Kitty extension\n");
+		_using_extension = 'k';
+	}
+
 	return i+1;
 }
 
@@ -330,6 +335,10 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	ir.Event.KeyEvent.wRepeatCount = args[5];
 
 	_ir_pending.emplace_back(ir);
+	if (!_using_extension) {
+		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
+		_using_extension = 'w';
+	}
 	return n;
 }
 
@@ -643,6 +652,10 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	if (keycode == 0x3C) ir.Event.KeyEvent.wVirtualScanCode = RIGHT_SHIFT_VSC; // RightShift
 	_ir_pending.emplace_back(ir);
 
+	if (!_using_extension) {
+		fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
+		_using_extension = 'a';
+	}
 	_iterm_last_flags = flags;
 	return len;
 }

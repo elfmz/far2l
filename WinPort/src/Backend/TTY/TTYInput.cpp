@@ -20,7 +20,7 @@ void TTYInput::PostCharEvent(wchar_t ch)
 	ir.Event.KeyEvent.uChar.UnicodeChar = ch;
 
 	if (_handler) {
-		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+		_handler->OnInspectKeyEvent(ir.Event.KeyEvent, 	_parser.UsingExtension());
 	}
 
 	g_winport_con_in->Enqueue(&ir, 1);
@@ -65,7 +65,7 @@ void TTYInput::OnBufUpdated(bool idle)
 				ir.Event.KeyEvent.wRepeatCount = 1;
 				ir.Event.KeyEvent.uChar.UnicodeChar = 0x1b;
 				ir.Event.KeyEvent.bKeyDown = TRUE;
-				_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+				_handler->OnInspectKeyEvent(ir.Event.KeyEvent, 	_parser.UsingExtension());
 				if (ir.Event.KeyEvent.wVirtualKeyCode != 0 && ir.Event.KeyEvent.wVirtualKeyCode != VK_UNASSIGNED) {
 					g_winport_con_in->Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;

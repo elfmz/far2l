@@ -169,6 +169,20 @@ bool TTYBackend::Startup()
 	return true;
 }
 
+void TTYBackend::UpdateBackendIdentification()
+{
+	if (_far2l_tty) {
+		g_winport_backend = L"TTY|F";
+
+	} else if (_ttyx) {
+		g_winport_backend = _using_extension
+			? L"TTY|X+" : ( _ttyx->HasXi() ? L"TTY|Xi" : L"TTY|X" );
+
+	} else {
+		g_winport_backend = _using_extension ? L"TTY|+" : L"TTY";
+	}
+}
+
 void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
@@ -177,7 +191,6 @@ void TTYBackend::ReaderThread()
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
 		if (_far2l_tty) {
-			g_winport_backend = L"TTY|F";
 			if (!prev_far2l_tty) {
 				IFar2lInterractor *interractor = this;
 				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
@@ -188,14 +201,13 @@ void TTYBackend::ReaderThread()
 				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi"));
 			}
 			if (_ttyx) {
-				g_winport_backend = _ttyx->HasXi() ? L"TTY|Xi" : L"TTY|X";
 				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
 
 			} else {
-				g_winport_backend = L"TTY";
 				ChooseSimpleClipboardBackend();
 			}
 		}
+		UpdateBackendIdentification();
 		prev_far2l_tty = _far2l_tty;
 
 		{
@@ -927,14 +939,20 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 	}
 }
 
-void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
+void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event, char using_extension)
 {
-	if (_ttyx) {
+	if (using_extension != _using_extension) {
+		_using_extension = using_extension;
+		UpdateBackendIdentification();
+	}
+
+	if (_ttyx && !using_extension) {
 		_ttyx->InspectKeyEvent(event);
 
 	} else {
 		event.dwControlKeyState|= QueryControlKeys();
 	}
+
 	if (!event.wVirtualKeyCode) {
 		if (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
 			event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);

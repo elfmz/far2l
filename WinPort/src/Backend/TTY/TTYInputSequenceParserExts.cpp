@@ -458,6 +458,10 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			_ir_pending.emplace_back(ir);
 		}
 
+		if (!_using_extension) {
+			fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
+			_using_extension = 'a';
+		}
 		_iterm_last_flags = flags;
 		return len;
 	}

@@ -1079,12 +1079,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		&& event.GetTimestamp()
 		&& _key_tracker.LastKeydown().GetKeyCode() == event.GetKeyCode()
 		&& _key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()
-#ifdef __APPLE__
-		// in macos under certain stars superposition all events get same timestamps (#325)
+		// in macos and wslg under certain stars superposition all events get same timestamps (#325)
 		// however vise-verse problem also can be observed, where some keystrokes get duplicated
 		// last time: catalina in hackintosh, Ctrl+O works buggy
 		&& now - _key_tracker.LastKeydownTicks() < 50 // so enforce extra check actual real time interval
-#endif
 		;
 
 	if (event.GetSkipped() || keystroke_doubled) {

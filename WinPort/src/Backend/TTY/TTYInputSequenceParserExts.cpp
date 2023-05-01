@@ -285,6 +285,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using Kitty extension\n");
 		_using_extension = 'k';
+		_handler->OnUsingExtension(_using_extension);
 	}
 
 	return i+1;
@@ -338,6 +339,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
 		_using_extension = 'w';
+		_handler->OnUsingExtension(_using_extension);
 	}
 	return n;
 }
@@ -461,6 +463,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		if (!_using_extension) {
 			fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
 			_using_extension = 'a';
+			_handler->OnUsingExtension(_using_extension);
 		}
 		_iterm_last_flags = flags;
 		return len;
@@ -659,6 +662,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
 		_using_extension = 'a';
+		_handler->OnUsingExtension(_using_extension);
 	}
 	_iterm_last_flags = flags;
 	return len;

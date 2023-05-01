@@ -251,6 +251,7 @@ void TTYBackend::ReaderThread()
 		} catch (const std::exception &e) {
 			fprintf(stderr, "ReaderLoop: %s <%d>\n", e.what(), errno);
 		}
+		OnUsingExtension(0);
 
 		OnInputBroken();
 
@@ -962,14 +963,17 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 	}
 }
 
-void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event, char using_extension)
+void TTYBackend::OnUsingExtension(char extension)
 {
-	if (using_extension != _using_extension) {
-		_using_extension = using_extension;
+	if (_using_extension != extension) {
+		_using_extension = extension;
 		UpdateBackendIdentification();
 	}
+}
 
-	if (_ttyx && !using_extension) {
+void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
+{
+	if (_ttyx && !_using_extension) {
 		_ttyx->InspectKeyEvent(event);
 
 	} else {

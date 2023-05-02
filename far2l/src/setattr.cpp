@@ -776,7 +776,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				AttrDlg[SA_TEXT_INFO].strData = Msg::SetAttrLinkDest;
 				FARString strLinkDest;
-				ConvertNameToReal(strSelName, strLinkDest);
+				ReadSymlink(strSelName, strLinkDest);
 				AttrDlg[SA_EDIT_INFO].strData = strLinkDest;
 			} else {
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);

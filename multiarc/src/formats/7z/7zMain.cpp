@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <string>
+#include <map>
 
 #include <windows.h>
 #include <utimens_compat.h>
@@ -474,6 +476,12 @@ extern "C" int sevenz_main(int numargs, char *args[])
   CrcGenerateTable();
     
   SzArEx_Init(&db);
+  struct TimeInfo
+  {
+     FILETIME mtime, ctime;
+     bool has_mtime{false}, has_ctime{false};
+  };
+  std::map<std::string, TimeInfo> dir2ti;
     
   if (res == SZ_OK)
   {
@@ -625,11 +633,37 @@ extern "C" int sevenz_main(int numargs, char *args[])
               else
                 destPath = name + j + 1;
             }
+
+          TimeInfo ti;
+
+          if (SzBitWithVals_Check(&db.MTime, i))
+          {
+            const CNtfsFileTime *t = &db.MTime.Vals[i];
+            ti.mtime.dwLowDateTime = (DWORD)(t->Low);
+            ti.mtime.dwHighDateTime = (DWORD)(t->High);
+            ti.has_mtime = true;
+          }
+          if (SzBitWithVals_Check(&db.CTime, i))
+          {
+            const CNtfsFileTime *t = &db.CTime.Vals[i];
+            ti.ctime.dwLowDateTime = (DWORD)(t->Low);
+            ti.ctime.dwHighDateTime = (DWORD)(t->High);
+            ti.has_ctime = true;
+          }
     
           if (isDir)
           {
             MyCreateDir(destPath);
             PrintLF();
+            if (ti.has_mtime || ti.has_ctime)
+            {
+              CBuf buf;
+              Buf_Init(&buf);
+              RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM));
+              std::string utf8_path((const char *)buf.data);
+              Buf_Free(&buf, &g_Alloc);
+              dir2ti[utf8_path] = ti;
+            }
             continue;
           }
           else if (OutFile_OpenUtf16(&outFile, destPath))
@@ -648,36 +682,16 @@ extern "C" int sevenz_main(int numargs, char *args[])
             break;
           }
 
+          if (ti.has_mtime || ti.has_ctime)
           {
-            FILETIME mtime, ctime;
-            FILETIME *mtimePtr = NULL;
-            FILETIME *ctimePtr = NULL;
-
-            if (SzBitWithVals_Check(&db.MTime, i))
-            {
-              const CNtfsFileTime *t = &db.MTime.Vals[i];
-              mtime.dwLowDateTime = (DWORD)(t->Low);
-              mtime.dwHighDateTime = (DWORD)(t->High);
-              mtimePtr = &mtime;
-            }
-            if (SzBitWithVals_Check(&db.CTime, i))
-            {
-              const CNtfsFileTime *t = &db.CTime.Vals[i];
-              ctime.dwLowDateTime = (DWORD)(t->Low);
-              ctime.dwHighDateTime = (DWORD)(t->High);
-              ctimePtr = &ctime;
-            }
-            if (mtimePtr || ctimePtr)
-            {
 #ifdef USE_WINDOWS_FILE
-              SetFileTime(outFile.handle, ctimePtr, NULL, mtimePtr);
+            SetFileTime(outFile.handle, ti.has_ctime ? &ti.ctime : &ti.mtime, NULL, ti.has_mtime ? &ti.mtime : &ti.ctime);
 #elif defined(ELFMZ_WINPORT)
-              struct timespec ts[2] = {0};
-              WINPORT(FileTime_Win32ToUnix)(mtimePtr ? mtimePtr : ctimePtr, &ts[0]);
-              WINPORT(FileTime_Win32ToUnix)(ctimePtr ? ctimePtr : mtimePtr, &ts[1]);
-              futimens(outFile.fd, ts);
+            struct timespec ts[2] = {0};
+            WINPORT(FileTime_Win32ToUnix)(ti.has_mtime ? &ti.mtime : &ti.ctime, &ts[0]);
+            WINPORT(FileTime_Win32ToUnix)(ti.has_ctime ? &ti.ctime : &ti.mtime, &ts[1]);
+            futimens(outFile.fd, ts);
 #endif
-            }
           }
           
           if (File_Close(&outFile))
@@ -710,6 +724,15 @@ extern "C" int sevenz_main(int numargs, char *args[])
   ISzAlloc_Free(&allocImp, lookStream.buf);
 
   File_Close(&archiveStream.file);
+  for (auto i = dir2ti.rbegin(); i != dir2ti.rend(); ++i) {
+#if defined(ELFMZ_WINPORT)
+        struct timespec ts[2] = {0};
+        WINPORT(FileTime_Win32ToUnix)(i->second.has_mtime ? &i->second.mtime : &i->second.ctime, &ts[0]);
+        WINPORT(FileTime_Win32ToUnix)(i->second.has_ctime ? &i->second.ctime : &i->second.mtime, &ts[1]);
+        utimens(i->first.c_str(), ts);
+#endif
+  }
+
   
   if (res == SZ_OK)
   {

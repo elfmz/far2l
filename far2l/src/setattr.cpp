@@ -62,7 +62,7 @@ enum SETATTRDLG
 	SA_TEXT_LABEL,
 	SA_TEXT_NAME,
 	SA_SEPARATOR1,
-	SA_TEXT_INFO,
+	SA_TXTBTN_INFO,
 	SA_EDIT_INFO,
 	SA_TEXT_OWNER,
 	SA_EDIT_OWNER,
@@ -164,6 +164,7 @@ struct SetAttrDlgParam
 	DWORD OriginalCBFlag[ARRAYSIZE(PreserveOriginalIDs)];
 	FARCHECKEDSTATE OSubfoldersState;
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
+	unsigned char SymLinkInfoCycle = 0;
 };
 
 #define DM_SETATTR (DM_USER + 1)
@@ -188,6 +189,33 @@ static void BlankEditIfChanged(HANDLE hDlg, int EditControl, FARString &Remember
 	if (!Changed)
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, EditControl, reinterpret_cast<LONG_PTR>(L""));
 }
+
+static std::wstring BriefInfo(const FARString &strSelName)
+{
+	std::vector<std::wstring> lines;
+
+	std::string cmd = "file \"";
+	cmd+= EscapeCmdStr(Wide2MB(strSelName.CPtr()));
+	cmd+= '\"';
+
+	std::wstring out;
+
+	if (POpen(lines, cmd.c_str())) {
+		for (const auto &line : lines) {
+			out = line;
+			size_t p = out.find(':');
+			if (p != std::string::npos) {
+				out.erase(0, p + 1);
+			}
+			StrTrim(out);
+			if (p != std::string::npos && !out.empty()) {
+				break;
+			}
+		}
+	}
+	return out;
+}
+
 
 LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
@@ -309,8 +337,27 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 				return TRUE;
 			}
+			else if (Param1 == SA_TXTBTN_INFO) {
+				FARString strText;
+				switch (DlgParam->SymLinkInfoCycle++) {
+					case 0:
+						ConvertNameToReal(DlgParam->strSelName, strText);
+						break;
+
+					case 1:
+						ConvertNameToReal(DlgParam->strSelName, strText);
+						strText = BriefInfo(strText);
+						break;
+
+					default:
+						ReadSymlink(DlgParam->strSelName, strText);
+						DlgParam->SymLinkInfoCycle = 0;
+				}
+				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_INFO, reinterpret_cast<LONG_PTR>(strText.CPtr()));
+				return TRUE;
+
 			// Set Original? / Set All? / Clear All?
-			else if (Param1 == SA_BUTTON_ORIGINAL) {
+			} else if (Param1 == SA_BUTTON_ORIGINAL) {
 				FAR_FIND_DATA_EX FindData;
 
 				if (apiGetFindDataEx(DlgParam->strSelName, FindData)) {
@@ -540,32 +587,6 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t *>(preRedrawItem.Param.Param1));
 }
 
-static std::wstring BriefInfo(const FARString &strSelName)
-{
-	std::vector<std::wstring> lines;
-
-	std::string cmd = "file \"";
-	cmd+= EscapeCmdStr(Wide2MB(strSelName.CPtr()));
-	cmd+= '\"';
-
-	std::wstring out;
-
-	if (POpen(lines, cmd.c_str())) {
-		for (const auto &line : lines) {
-			out = line;
-			size_t p = out.find(':');
-			if (p != std::string::npos) {
-				out.erase(0, p + 1);
-			}
-			StrTrim(out);
-			if (p != std::string::npos && !out.empty()) {
-				break;
-			}
-		}
-	}
-	return out;
-}
-
 static bool CheckFileOwnerGroup(DialogItemEx &EditItem,
 		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &), FARString strComputerName,
 		FARString strSelName)
@@ -626,6 +647,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	short DlgX = 70, DlgY = 25;
 
+	int SelCount = SrcPanel ? SrcPanel->GetSelCount() : 1;
+
+	if (!SelCount) {
+		return false;
+	}
+
 	DialogDataEx AttrDlgData[] = {
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
@@ -684,11 +711,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	};
 	MakeDialogItemsEx(AttrDlgData, AttrDlg);
 	SetAttrDlgParam DlgParam{};
-	int SelCount = SrcPanel ? SrcPanel->GetSelCount() : 1;
-
-	if (!SelCount) {
-		return false;
-	}
 
 	if (SrcPanel && SrcPanel->GetMode() == PLUGIN_PANEL) {
 		OpenPluginInfo Info;
@@ -770,14 +792,16 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		if (SelCount == 1) {
 			FSFileFlags FFFlags(strSelName.GetMB());
 
-			AttrDlg[SA_TEXT_INFO].Flags&= ~DIF_HIDDEN;
+			AttrDlg[SA_TXTBTN_INFO].Flags&= ~DIF_HIDDEN;
 			AttrDlg[SA_EDIT_INFO].Flags&= ~DIF_HIDDEN;
 
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
-				AttrDlg[SA_TEXT_INFO].strData = Msg::SetAttrLinkDest;
+				AttrDlg[SA_TXTBTN_INFO].Type = DI_BUTTON;
+				AttrDlg[SA_TXTBTN_INFO].strData = Msg::SetAttrLinkDest;
 				FARString strLinkDest;
 				ReadSymlink(strSelName, strLinkDest);
 				AttrDlg[SA_EDIT_INFO].strData = strLinkDest;
+
 			} else {
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
 			}

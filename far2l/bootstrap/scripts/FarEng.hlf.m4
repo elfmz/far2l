@@ -1313,7 +1313,7 @@ like live full keyboard keys recognition with with keydown/up reaction. Also 'ho
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
 
-  Select screen fragment & immediately to clipboard  MouseDown..Drag..Up
+  Text selected with mouse automatically copied to clipboard
 
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
@@ -1805,6 +1805,8 @@ use the highlighted shortcut letters.
 respective option in the ~system settings dialog~@SystemSettings@.
 
     Locked history items will not be deleted when the history is cleared.
+
+    For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
 @HistoryViews
 $ #History: file view and edit#
@@ -2425,7 +2427,13 @@ feature is disabled while a macro is being recorded or executed.
   This option allows to set the default FAR2L command ~line prompt~@CommandPrompt@.
 
 @AutoCompleteSettings
-$ #Settings dialog: AutoComplete#
+$ #Settings dialog: AutoComplete & History#
+  #Exceptions wildcards# also affect which commands are stored in far2l history.
+  For example, adding " *"  (mandatory in quotes) excludes from adding in history
+  commands that start with a space (similar to the bash $HISTCONTROL=ignorespace).
+  Info: in far2l history work like bash $HISTCONTROL
+   with options ignoredups (lines which match the previous line are not saved)
+   и erasedups (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
 $ #Настройка информационной панели#

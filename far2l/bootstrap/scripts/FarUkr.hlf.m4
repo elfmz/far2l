@@ -1344,7 +1344,7 @@ $ #Термінал
 клієнта, запущеного всередині терміналу far2l, що працює в режимі GUI на хості клієнта. Або, що набагато простіше, використовуючи плагін із можливістю
 запуску команд на віддаленому SSH сервері. Прикладом такого плагіна є NetRocks, а точніше протоколи, що підтримуються ним SFTP/SCP.
 
-  Select screen fragment & immediately to clipboard  MouseDown..Drag..Up
+  Виділений мишею текст автоматично копіюється у буфер обміну
 
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
@@ -1828,6 +1828,8 @@ $ #Історія команд#
 опцію з ~діалогу системних параметрів~@SystemSettings@.
 
  Зазначені пункти не видалятимуться при очищенні історії.
+
+ For automatic exclusion from history, see ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
 @HistoryViews
 $ #Історія перегляду та редагування#
@@ -2458,7 +2460,13 @@ $ #Налаштування командного рядка#
 Ця опція дозволяє змінити ~формат запрошення~@CommandPrompt@ командного рядка.
 
 @AutoCompleteSettings
-$ #Налаштування автозавершення#
+$ #Налаштування автозавершення та історії#
+  #Шаблони &винятковий# also affect which commands are stored in far2l history.
+  For example, adding " *"  (mandatory in quotes) excludes from adding in history
+  commands that start with a space (similar to the bash $HISTCONTROL=ignorespace).
+  Info: in far2l history work like bash $HISTCONTROL
+   with options ignoredups (lines which match the previous line are not saved)
+   и erasedups (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
 $ #Налаштування інформаційної панелі#

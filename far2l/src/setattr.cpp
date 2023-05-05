@@ -165,6 +165,7 @@ struct SetAttrDlgParam
 	FARCHECKEDSTATE OSubfoldersState;
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
 	unsigned char SymLinkInfoCycle = 0;
+	FARString SymlinkButtonTitles[3];
 };
 
 #define DM_SETATTR (DM_USER + 1)
@@ -339,6 +340,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			}
 			else if (Param1 == SA_TXTBTN_INFO) {
 				FARString strText;
+				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_TXTBTN_INFO,
+					reinterpret_cast<LONG_PTR>(DlgParam->SymlinkButtonTitles[DlgParam->SymLinkInfoCycle].CPtr()));
+
 				switch (DlgParam->SymLinkInfoCycle++) {
 					case 0:
 						ConvertNameToReal(DlgParam->strSelName, strText);
@@ -796,8 +800,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			AttrDlg[SA_EDIT_INFO].Flags&= ~DIF_HIDDEN;
 
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
+				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
+				DlgParam.SymlinkButtonTitles[1] = Msg::SetAttrSymlinkObjectInfo;
+				DlgParam.SymlinkButtonTitles[2] = Msg::SetAttrSymlinkContent;
+
 				AttrDlg[SA_TXTBTN_INFO].Type = DI_BUTTON;
-				AttrDlg[SA_TXTBTN_INFO].strData = Msg::SetAttrLinkDest;
+				AttrDlg[SA_TXTBTN_INFO].strData = DlgParam.SymlinkButtonTitles[2];
 				FARString strLinkDest;
 				ReadSymlink(strSelName, strLinkDest);
 				AttrDlg[SA_EDIT_INFO].strData = strLinkDest;

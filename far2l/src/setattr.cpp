@@ -195,7 +195,7 @@ static std::wstring BriefInfo(const FARString &strSelName)
 {
 	std::vector<std::wstring> lines;
 
-	std::string cmd = "file \"";
+	std::string cmd = "file -- \"";
 	cmd+= EscapeCmdStr(Wide2MB(strSelName.CPtr()));
 	cmd+= '\"';
 

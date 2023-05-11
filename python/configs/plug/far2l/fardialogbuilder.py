@@ -34,8 +34,8 @@ class Spacer(Element):
 class TEXT(Element):
     dit = "DI_TEXT"
 
-    def __init__(self, text):
-        super().__init__()
+    def __init__(self, text, varname=None):
+        super().__init__(varname)
         self.text = text
 
     def get_best_size(self):

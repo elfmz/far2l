@@ -50,7 +50,7 @@ echo "$FILEMIME" >> "$2"
 FILEMIMEALT=""
 
 if command -v exiftool >/dev/null 2>&1; then
-	FILEMIMEALT="$(exiftool "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'Content Type' | sed -n -e 's/^.\{0,100\}: \(.\{1,100\}\);[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1; charset=\2/p')"
+	FILEMIMEALT="$(exiftool -- "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'Content Type' | sed -n -e 's/^.\{0,100\}: \(.\{1,100\}\);[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1; charset=\2/p')"
 fi
 
 echo ": $FILEMIMEALT" >> "$2"
@@ -60,7 +60,7 @@ echo ": $FILECHARSET" >> "$2"
 FILECHARSETALT=""
 
 if command -v exiftool >/dev/null 2>&1; then
-	FILECHARSETALT="$(exiftool "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'charset=' | sed -n -e 's/^.\{0,100\}: .\{1,100\};[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1/p')"
+	FILECHARSETALT="$(exiftool -- "$1" | head -n 90 | head -c 2048 | grep -v -e '^File ' | grep -e 'charset=' | sed -n -e 's/^.\{0,100\}: .\{1,100\};[ ]\{0,10\}charset=\([a-zA-Z0-9\-]\{1,20\}\).\{0,30\}$/\1/p')"
 fi
 
 echo ": $FILECHARSETALT" >> "$2"
@@ -107,7 +107,7 @@ if [[ "$FILE" == *": "*"archive"* ]] \
 		|| [[ "$FILE" == *": "*"lzop"* ]] \
 		|| [[ "$FILE" == *": "*"zstd"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -145,18 +145,18 @@ if [[ "$FILE" == *": "*"archive"* ]] \
 		echo "" >>"$2" 2>&1
 		echo "------------" >>"$2" 2>&1
 		if command -v rpm >/dev/null 2>&1; then
-			rpm -q --info -p "$1" >>"$2" 2>&1
+			rpm -q --info -p -- "$1" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 			echo "------------" >>"$2" 2>&1
 			echo "Listing RPM package contents" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 			echo "------------" >>"$2" 2>&1
-			rpm -q -v --list -p "$1" >>"$2" 2>&1
+			rpm -q -v --list -p -- "$1" >>"$2" 2>&1
 			echo "------------" >>"$2" 2>&1
 			echo "Show RPM package (pre|post)[un]?install scripts" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 			echo "------------" >>"$2" 2>&1
-			rpm -q --scripts -p "$1" >>"$2" 2>&1
+			rpm -q --scripts -p -- "$1" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 		else
 			echo "Install <rpm> to see information" >>"$2" 2>&1
@@ -212,7 +212,7 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	|| [[ "$FILE" == *": "*"ELF"*"bit"* ]] \
 	|| [[ "$FILE" == *": "*"ELF"*"object"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -232,7 +232,7 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	echo "" >>"$2" 2>&1
 	echo "------------" >>"$2" 2>&1
 	if command -v ldd >/dev/null 2>&1; then
-		ldd "$1" >>"$2" 2>&1
+		ldd -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <ldd> utility to see more information" >>"$2" 2>&1
 	fi
@@ -241,7 +241,7 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	echo "" >>"$2" 2>&1
 	echo "------------" >>"$2" 2>&1
 	if command -v readelf >/dev/null 2>&1; then
-		readelf -n --version-info --dyn-syms "$1" >>"$2" 2>&1
+		readelf -n --version-info --dyn-syms -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <readelf> utility to see more information" >>"$2" 2>&1
 	fi
@@ -254,7 +254,7 @@ if [[ "$FILE" == *": "*"PE"*"executable"* ]] \
 	|| [[ "$FILE" == *": "*"DOS executable"* ]] \
 	|| [[ "$FILE" == *": "*"boot"*"executable"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -277,7 +277,7 @@ fi
 if [[ "$FILE" == *": "*"PGP"*"key public"* ]] \
 	|| [[ "$FILE" == *": "*"GPG"*"key public"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -338,10 +338,10 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 
 	elif command -v timg >/dev/null 2>&1; then
 		VPRETTY="yes"
-		timg "$1" >>"$2" 2>&1
+		timg -- "$1" >>"$2" 2>&1
 		echo "Image is viewed by timg in "${TCOLUMNS}"x"${TLINES}" symbols sized area, no colors" >>"$2" 2>&1
 		clear
-		timg "$1" && read -n1 -r -p "" >>"$2" 2>&1
+		timg -- "$1" && read -n1 -r -p "" >>"$2" 2>&1
 		clear
 
 	else
@@ -370,10 +370,10 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 		&& [[ "$VJP2A" == "no" ]]; then
 		if command -v asciiart >/dev/null 2>&1; then
 			VASCIIART="yes"
-			# asciiart -c "$1" >>"$2" 2>&1
-			asciiart "$1" >>"$2" 2>&1
+			# asciiart -c -- "$1" >>"$2" 2>&1
+			asciiart -- "$1" >>"$2" 2>&1
 			echo "Image is viewed by asciiart in "${TCOLUMNS}"x"${TLINES}" symbols sized area" >>"$2" 2>&1
-			asciiart --color "$1" && read -n1 -r -p "" >>"$2" 2>&1
+			asciiart --color -- "$1" && read -n1 -r -p "" >>"$2" 2>&1
 			clear
 		else
 			echo "Install <asciiart> to see picture" >>"$2" 2>&1
@@ -381,7 +381,7 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 	fi
 	echo "------------" >>"$2" 2>&1
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -395,7 +395,7 @@ if [[ "$FILE" == *": Audio file"* ]] \
 	|| [[ "$FILE" == *": Ogg data"* ]] \
 	|| [[ "$FILEMIME" == *": audio/"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" >>"$2" 2>&1
+		exiftool -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
@@ -409,7 +409,7 @@ if [[ "$FILE" == *": RIFF"*" data"* ]] \
 	|| [[ "$FILE" == *": "*"MP4"* ]] \
 	|| [[ "$FILEMIME" == *": video/"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" >>"$2" 2>&1
+		exiftool -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
@@ -419,7 +419,7 @@ fi
 
 if [[ "$FILE" == *": BitTorrent file"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" >>"$2" 2>&1
+		exiftool -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
 	fi
@@ -433,7 +433,7 @@ if [[ "$FILE" == *": HTML document"* ]] \
 	|| [[ "$FILEMIME" == *": application/xhtml+xml;"*"charset="* ]] \
 	|| [[ "$FILEMIMEALT" == *": application/xhtml+xml;"*"charset="* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -463,7 +463,7 @@ if [[ "$FILE" == *": HTML document"* ]] \
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		if command -v iconv >/dev/null 2>&1; then
-			iconv $FROMENC -t utf-8 "$1" | pandoc -f html -t markdown -- >>"$2" 2>&1
+			iconv $FROMENC -t utf-8 -- "$1" | pandoc -f html -t markdown -- >>"$2" 2>&1
 		else
 			pandoc -f html -t markdown -- "$1" >>"$2" 2>&1
 		fi
@@ -477,7 +477,7 @@ fi
 
 if [[ "$FILE" == *": OpenDocument Text"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -497,7 +497,7 @@ fi
 
 if [[ "$FILE" == *": EPUB document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -517,7 +517,7 @@ fi
 
 if [[ "$FILE" == *": DjVu"*"document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -528,7 +528,7 @@ fi
 
 if [[ "$FILE" == *": Mobipocket E-book"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -540,7 +540,7 @@ fi
 # if [[ "$FILE" == *": "*"FictionBook2 ebook"* ]]; then
 if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode "*"text, with very long lines"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -570,7 +570,7 @@ if [[ "$FILE" == *": XML 1.0 document, UTF-8 Unicode "*"text, with very long lin
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
 		if command -v iconv >/dev/null 2>&1; then
-			iconv $FROMENC -t utf-8 "$1" | pandoc -f fb2 -t markdown -- >>"$2" 2>&1
+			iconv $FROMENC -t utf-8 -- "$1" | pandoc -f fb2 -t markdown -- >>"$2" 2>&1
 		else
 			pandoc -f fb2 -t markdown -- "$1" >>"$2" 2>&1
 		fi
@@ -584,7 +584,7 @@ fi
 
 if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -594,7 +594,7 @@ if [[ "$FILE" == *": Microsoft Word 2007+"* ]]; then
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pandoc >/dev/null 2>&1; then
-		# pandoc "$1" >>"$2" 2>&1
+		# pandoc -- "$1" >>"$2" 2>&1
 		pandoc -f docx -t markdown -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <pandoc> to see document" >>"$2" 2>&1
@@ -606,7 +606,7 @@ fi
 if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]] \
 	|| [[ "$FILE" == *": Composite Document File V2 Document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -616,7 +616,7 @@ if [[ "$FILE" == *": Composite Document File"*"Microsoft Office Word"* ]] \
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v catdoc >/dev/null 2>&1; then
-		catdoc "$1" >>"$2" 2>&1
+		catdoc -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <catdoc> to see document" >>"$2" 2>&1
 	fi
@@ -626,7 +626,7 @@ fi
 
 if [[ "$FILE" == *": Composite Document File"*"Microsoft PowerPoint"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -636,7 +636,7 @@ if [[ "$FILE" == *": Composite Document File"*"Microsoft PowerPoint"* ]]; then
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v catppt >/dev/null 2>&1; then
-		catppt "$1" >>"$2" 2>&1
+		catppt -- "$1" >>"$2" 2>&1
 	else
 		echo "Install <catppt> to see document" >>"$2" 2>&1
 	fi
@@ -646,7 +646,7 @@ fi
 
 if [[ "$FILE" == *": PDF document"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -656,7 +656,7 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if command -v pdftotext >/dev/null 2>&1; then
-		pdftotext -enc UTF-8 "$1" - >>"$2" 2>>"$2"
+		pdftotext -enc UTF-8 -- "$1" - >>"$2" 2>>"$2"
 	else
 		echo "Install <pdftotext> to see document" >>"$2" 2>&1
 	fi
@@ -666,7 +666,7 @@ fi
 
 if [[ "$FILE" == *": unified diff output"* ]]; then
 	if command -v colordiff >/dev/null 2>&1; then
-		cat "$1" | colordiff --color=yes >>"$2" 2>&1
+		cat -- "$1" | colordiff --color=yes >>"$2" 2>&1
 	else
 		echo "Install <colordiff> to see colored diff" >>"$2" 2>&1
 	fi
@@ -694,7 +694,7 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 		|| [[ "$FILE" == *": "*" shell"*" text"* ]] \
 		|| [[ "$FILE" == *": "*" script"*" text"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -702,7 +702,7 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c "$1" | awk '{print $1}' )
+	FILESIZE=$( wc -c -- "$1" | awk '{print $1}' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024
@@ -725,17 +725,17 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
 	if [[ $FILESIZE -le $SIZELIMIT ]]; then
-		cat "$1" >>"$2" 2>&1
+		cat -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
-		head -c $HALFLIMIT "$1" >>"$2" 2>&1
+		head -c $HALFLIMIT -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 		if [[ $RESTLIMIT -gt 0 ]]; then
 			# count of dots is DOTCOUNT
 			echo ">8::::::::8<" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
-			tail -c $HALFLIMIT "$1" >>"$2" 2>&1
+			tail -c $HALFLIMIT -- "$1" >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 		fi
 	fi
@@ -761,7 +761,7 @@ fi
 
 if [[ "$FILE" == *": symbolic link"* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -769,7 +769,7 @@ if [[ "$FILE" == *": symbolic link"* ]]; then
 	echo "------------" >>"$2" 2>&1
 	echo "" >>"$2" 2>&1
 	if command -v ls >/dev/null 2>&1; then
-		ls -la "$1" >>"$2" 2>&1
+		ls -la -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <ls> to see listing" >>"$2" 2>&1
@@ -780,7 +780,7 @@ fi
 
 if [[ "$FILE" == *": "* ]]; then
 	if command -v exiftool >/dev/null 2>&1; then
-		exiftool "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
+		exiftool -- "$1" | head -n 90 | head -c 2048 >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
 		echo "Install <exiftool> to see information" >>"$2" 2>&1
@@ -791,7 +791,7 @@ if [[ "$FILE" == *": "* ]]; then
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c "$1" | awk '{print $1}' )
+	FILESIZE=$( wc -c -- "$1" | awk '{print $1}' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024
@@ -815,16 +815,16 @@ if [[ "$FILE" == *": "* ]]; then
 	echo "----bof----" >>"$2" 2>&1
 	if command -v hexdump >/dev/null 2>&1; then
 		if [[ $FILESIZE -le $SIZELIMIT ]]; then
-			cat "$1" | hexdump -C >>"$2" 2>&1
+			cat -- "$1" | hexdump -C >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 		else
-			head -c $HALFLIMIT "$1" | hexdump -C >>"$2" 2>&1
+			head -c $HALFLIMIT -- "$1" | hexdump -C >>"$2" 2>&1
 			echo "" >>"$2" 2>&1
 			if [[ $RESTLIMIT -gt 0 ]]; then
 				# count of dots is DOTCOUNT
 				echo ">8::::::::8<" >>"$2" 2>&1
 				echo "" >>"$2" 2>&1
-				tail -c $HALFLIMIT "$1" | hexdump -C >>"$2" 2>&1
+				tail -c $HALFLIMIT -- "$1" | hexdump -C >>"$2" 2>&1
 				echo "" >>"$2" 2>&1
 			fi
 		fi

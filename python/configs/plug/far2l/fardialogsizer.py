@@ -7,8 +7,7 @@ class Orientation:
 
 
 class Window:
-    def __init__(self, label="", pos=(0, 0), size=(0, 0)):
-        self.label = label
+    def __init__(self, pos=(0, 0), size=(0, 0)):
         self.pos = pos
         self.size = size
 
@@ -17,7 +16,7 @@ class Window:
         self.size = (w, h)
 
     def get_best_size(self):
-        return (len(self.label), 1)
+        raise NotImplementedError("Window.get_best_size")
 
 
 class Box:

@@ -6,26 +6,29 @@ import configparser
 import logging
 import logging.config
 
-USERHOME = os.path.expanduser('~/.config/far2l/plugins/python')
+USERHOME = os.path.expanduser("~/.config/far2l/plugins/python")
 
 logging.basicConfig(level=logging.INFO)
+
 
 def setup():
     if os.path.isdir(USERHOME):
         sys.path.insert(3, USERHOME)
-        fname = os.path.join(USERHOME, 'logger.ini')
+        fname = os.path.join(USERHOME, "logger.ini")
         if os.path.isfile(fname):
             with open(fname, "rt") as fp:
                 ini = configparser.ConfigParser()
                 ini.read_file(fp)
                 logging.config.fileConfig(ini)
 
+
 setup()
 
 log = logging.getLogger(__name__)
-log.debug('%s start' % ('*'*20))
-log.debug('sys.path={0}'.format(sys.path))
-log.debug('userhome={0}'.format(USERHOME))
+log.debug("%s start" % ("*" * 20))
+log.debug("sys.path={0}".format(sys.path))
+log.debug("userhome={0}".format(USERHOME))
+
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -33,6 +36,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         return
 
     log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
 
 sys.excepthook = handle_exception
 
@@ -43,7 +47,9 @@ from .plugin import PluginBase
 #     py:unload <registered python module name>
 
 from .far2lcffi import ffi
+
 ffic = ffi.dlopen(None)
+
 
 class PluginManager:
     Info = None
@@ -75,9 +81,9 @@ class PluginManager:
             if self.plugins[i].Plugin.name == name:
                 log.error("install plugin: {0} - allready installed".format(name))
                 return
-        #plugin = __import__(name, globals(), locals(), [], 0)
+        # plugin = __import__(name, globals(), locals(), [], 0)
         plugin = __import__(name)
-        cls = getattr(plugin, 'Plugin', None)
+        cls = getattr(plugin, "Plugin", None)
         if type(cls) == type(PluginBase) and issubclass(cls, PluginBase):
             # inject plugin name
             cls.USERHOME = USERHOME
@@ -121,7 +127,11 @@ class PluginManager:
         log.debug("pluginGetFrom({0} ({1}), {2})".format(OpenFrom, name, Item))
         for plugin in self.plugins:
             openFrom = plugin.Plugin.openFrom
-            log.debug("pluginGetFrom(openok={0}, no={1} : {2})".format(name in openFrom, Item, plugin.Plugin.name))
+            log.debug(
+                "pluginGetFrom(openok={0}, no={1} : {2})".format(
+                    name in openFrom, Item, plugin.Plugin.name
+                )
+            )
             if name in openFrom:
                 if not Item:
                     return plugin
@@ -136,27 +146,27 @@ class PluginManager:
 
     def Message(self, lines):
         _MsgItems = [
-            self.s2f('Python'),
-            self.s2f(''),
+            self.s2f("Python"),
+            self.s2f(""),
         ]
         for line in lines:
-            _MsgItems.append(
-                self.s2f(line)
-            )
-        _MsgItems.extend([
-            self.s2f(""),
-            self.s2f("\x01"),
-            self.s2f("&Ok"),
-        ])
-        #log.debug('_msgItems: %s', _MsgItems)
+            _MsgItems.append(self.s2f(line))
+        _MsgItems.extend(
+            [
+                self.s2f(""),
+                self.s2f("\x01"),
+                self.s2f("&Ok"),
+            ]
+        )
+        # log.debug('_msgItems: %s', _MsgItems)
         MsgItems = self.ffi.new("wchar_t *[]", _MsgItems)
         self.info.Message(
-            self.info.ModuleNumber,                             # GUID
-            self.ffic.FMSG_WARNING|self.ffic.FMSG_LEFTALIGN,    # Flags
-            self.s2f("Contents"),                               # HelpTopic
-            MsgItems,                                           # Items
-            len(MsgItems),                                      # ItemsNumber
-            1                                                   # ButtonsNumber
+            self.info.ModuleNumber,  # GUID
+            self.ffic.FMSG_WARNING | self.ffic.FMSG_LEFTALIGN,  # Flags
+            self.s2f("Contents"),  # HelpTopic
+            MsgItems,  # Items
+            len(MsgItems),  # ItemsNumber
+            1,  # ButtonsNumber
         )
 
     # manager API
@@ -191,7 +201,7 @@ class PluginManager:
         Info.PluginMenuStringsNumber = len(self._MenuItems)
         Info.PluginConfigStrings = self.ConfigItems
         Info.PluginConfigStringsNumber = len(self._ConfigItems)
-        self._commandprefix= self.s2f("py")
+        self._commandprefix = self.s2f("py")
         Info.CommandPrefix = self._commandprefix
 
     def OpenPlugin(self, OpenFrom, Item):
@@ -200,25 +210,29 @@ class PluginManager:
             line = self.f2s(Item)
             log.debug("cmd:{0}".format(line))
             line = line.lstrip()
-            linesplit = line.split(' ', 1)
+            linesplit = line.split(" ", 1)
             if linesplit[0] == "unload":
                 if len(linesplit) > 1:
                     self.pluginRemove(linesplit[1])
                 else:
                     log.debug("missing plugin name in py:unload <plugin name>")
-                    self.Message([
-                        "Usage is:",
-                        "py:unload <plugin name>",
-                    ])
+                    self.Message(
+                        [
+                            "Usage is:",
+                            "py:unload <plugin name>",
+                        ]
+                    )
             elif linesplit[0] == "load":
                 if len(linesplit) > 1:
                     self.pluginInstall(linesplit[1])
                 else:
                     log.debug("missing plugin name in py:load <plugin name>")
-                    self.Message([
-                        "Usage is:",
-                        "py:load <plugin name>",
-                    ])
+                    self.Message(
+                        [
+                            "Usage is:",
+                            "py:load <plugin name>",
+                        ]
+                    )
             else:
                 for plugin in self.plugins:
                     if plugin.Plugin.HandleCommandLine(linesplit[0]) is True:
@@ -241,14 +255,16 @@ class PluginManager:
         return rc
 
     def ClosePlugin(self, hPlugin):
-        #log.debug("ClosePlugin %08X" % hPlugin)
+        # log.debug("ClosePlugin %08X" % hPlugin)
         plugin = self.openplugins.get(hPlugin, None)
         if plugin is not None:
             plugin.Close()
             del self.openplugins[hPlugin]
 
     def OpenFilePlugin(self, Name, Data, DataSize, OpMode):
-        log.debug("OpenFilePlugin({0}, {1}, {2}, {3})".format(Name, Data, DataSize, OpMode))
+        log.debug(
+            "OpenFilePlugin({0}, {1}, {2}, {3})".format(Name, Data, DataSize, OpMode)
+        )
 
     def ProcessDialogEvent(self, Event, Param):
         # log.debug("ProcessDialogEvent({0}, {1}))".format(Event, Param))
@@ -259,7 +275,7 @@ class PluginManager:
         pass
 
     def ProcessEditorInput(self, Rec):
-        #log.debug("ProcessEditorInput({0})".format(Rec))
+        # log.debug("ProcessEditorInput({0})".format(Rec))
         pass
 
     def ProcessSynchroEvent(self, Event, Param):

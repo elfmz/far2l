@@ -2,23 +2,24 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class PluginBase:
     # private
     name = ""
     number = 0
     # public
-    USERHOME = "" # ~/.config/far2l/plugins/python
+    USERHOME = ""  # ~/.config/far2l/plugins/python
     label = ""
-    #openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
+    # openFrom = ["DISKMENU", "PLUGINSMENU", "FINDLIST", "SHORTCUT", "COMMANDLINE", "EDITOR", "VIEWER", "FILEPANEL"]
     openFrom = []
-    Configure = None # override with method when configuration dialog is needed
+    Configure = None  # override with method when configuration dialog is needed
 
     def __init__(self, parent, info, ffi, ffic):
         self.parent = parent
         self.info = info
         self.ffi = ffi
         self.ffic = ffic
-        self.hplugin = self.ffi.cast('void *', id(self))
+        self.hplugin = self.ffi.cast("void *", id(self))
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)
@@ -41,21 +42,24 @@ class PluginBase:
         log.debug("Plugin.GetOpenPluginInfo({}) #{}".format(OpenInfo, self.label))
 
     def ProcessKey(self, Key, ControlState):
-        #log.debug("VFS.ProcessKey({0}, {1})".format(Key, ControlState))
+        # log.debug("VFS.ProcessKey({0}, {1})".format(Key, ControlState))
         return 0
 
 
 class PluginVFS(PluginBase):
-
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
-        log.debug("VFS.GetFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
+        log.debug(
+            "VFS.GetFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode)
+        )
         return 0
 
     def FreeFindData(self, PanelItem, ItemsNumber):
         log.debug("VFS.FreeFindData({0}, {1})".format(PanelItem, ItemsNumber))
 
     def GetVirtualFindData(self, PanelItem, ItemsNumber, Path):
-        log.debug("VFS.GetVirtualFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, Path))
+        log.debug(
+            "VFS.GetVirtualFindData({0}, {1}, {2})".format(PanelItem, ItemsNumber, Path)
+        )
         return 0
 
     def FreeVirtualFindData(self, PanelItem, ItemsNumber):
@@ -66,23 +70,25 @@ class PluginVFS(PluginBase):
         return -2
 
     def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
-        log.debug("VFS.GetFiles({0}, {1}, {2}, {3}, {4})".format(
-            PanelItem,
-            ItemsNumber,
-            Move,
-            DestPath,
-            OpMode,
+        log.debug(
+            "VFS.GetFiles({0}, {1}, {2}, {3}, {4})".format(
+                PanelItem,
+                ItemsNumber,
+                Move,
+                DestPath,
+                OpMode,
             )
         )
         return 0
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
-        log.debug("VFS.PutFiles({0}, {1}, {2}, {3}, {4})".format(
-            PanelItem,
-            ItemsNumber,
-            Move,
-            SrcPath,
-            OpMode,
+        log.debug(
+            "VFS.PutFiles({0}, {1}, {2}, {3}, {4})".format(
+                PanelItem,
+                ItemsNumber,
+                Move,
+                SrcPath,
+                OpMode,
             )
         )
         return 0
@@ -96,7 +102,9 @@ class PluginVFS(PluginBase):
         return 0
 
     def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
-        log.debug("VFS.DeleteFiles({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
+        log.debug(
+            "VFS.DeleteFiles({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode)
+        )
         return 0
 
     def SetFindList(self, PanelItem, ItemsNumber):
@@ -108,5 +116,7 @@ class PluginVFS(PluginBase):
         return 0
 
     def ProcessHostFile(self, PanelItem, ItemsNumber, OpMode):
-        log.debug("VFS.ProcessHostFile({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode))
+        log.debug(
+            "VFS.ProcessHostFile({0}, {1}, {2})".format(PanelItem, ItemsNumber, OpMode)
+        )
         return 0

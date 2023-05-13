@@ -1,3 +1,9 @@
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
 class Dialog:
     def __init__(self, plugin):
         self.info = plugin.info
@@ -9,8 +15,17 @@ class Dialog:
         self.width = 0
         self.height = 0
         self.dialogItems = []
+        # self.id2item = {}
         self.fdi = None
         self.hDlg = None
+
+    def Close(self, exitcode):
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_CLOSE, exitcode, 0)
+
+    def EnableRedraw(self, on):
+        self.info.SendDlgMessage(
+            self.hDlg, self.ffic.DM_ENABLEREDRAW, 1 if on else 0, 0
+        )
 
     def RedrawDialog(self):
         self.info.SendDlgMessage(self.hDlg, self.ffic.DM_REDRAW, 0, 0)
@@ -22,10 +37,10 @@ class Dialog:
         self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETDLGDATA, 0, Data)
 
     def GetDlgItemData(self, ID):
-        return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETITEMDATA, 0, 0)
+        return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETITEMDATA, ID, 0)
 
     def SetDlgItemData(self, ID, Data):
-        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETITEMDATA, 0, Data)
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETITEMDATA, ID, Data)
 
     def GetFocus(self, hDlg):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETFOCUS, 0, 0)
@@ -42,13 +57,20 @@ class Dialog:
     def IsEnable(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_ENABLE, ID, -1)
 
+    def GetTextLength(self, ID):
+        return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETTEXTPTR, ID, 0)
+
     def GetText(self, ID):
         sptr = self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCONSTTEXTPTR, ID, 0)
         return self.f2s(sptr)
 
     def SetText(self, ID, Str):
         sptr = self.s2f(Str)
-        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETTEXTPTR, ID, self.ffi.cast('LONG_PTR', sptr))
+        # preserve item.data ?
+        # self.id2item[ID][1] = sptr
+        self.info.SendDlgMessage(
+            self.hDlg, self.ffic.DM_SETTEXTPTR, ID, self.ffi.cast("LONG_PTR", sptr)
+        )
 
     def GetCheck(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCHECK, ID, 0)
@@ -65,14 +87,14 @@ class Dialog:
     def GetCurPos(self, ID):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTGETCURPOS, ID, 0)
 
-    #def SetCurPos(self, ID, NewPos):
+    # def SetCurPos(self, ID, NewPos):
     #    struct FarListPos LPos={NewPos, -1}
     #    self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTSETCURPOS, ID, (LONG_PTR)&LPos)
 
     def ClearList(self, ID):
         self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTDELETE, ID, 0)
 
-    #def DeleteItem(self, ID, Index):
+    # def DeleteItem(self, ID, Index):
     #    struct FarListDelete FLDItem={Index, 1}
     #    self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTDELETE, ID, (LONG_PTR)&FLDItem)
 
@@ -85,6 +107,6 @@ class Dialog:
     def GetItemData(self, ID, Index):
         return self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTGETDATA, ID, Index)
 
-    #def SetItemStrAsData(self, ID, Index, Str):
+    # def SetItemStrAsData(self, ID, Index, Str):
     #    struct FarListItemData FLID{Index, 0, Str, 0}
     #    self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTSETDATA, ID, (LONG_PTR)&FLID)

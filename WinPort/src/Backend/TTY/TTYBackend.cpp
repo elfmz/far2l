@@ -79,10 +79,11 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
+	_ext_clipboard(ext_clipboard),
 	_nodetect(nodetect),
 	_far2l_tty(far2l_tty),
 	_esc_expiration(esc_expiration),
@@ -214,7 +215,7 @@ void TTYBackend::ReaderThread()
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
 		if (_far2l_tty) {
-			if (!prev_far2l_tty) {
+			if (!prev_far2l_tty && !_ext_clipboard) {
 				IFar2lInterractor *interractor = this;
 				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
 			}
@@ -224,7 +225,9 @@ void TTYBackend::ReaderThread()
 				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi"));
 			}
 			if (_ttyx) {
-				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
+				if (!_ext_clipboard) {
+					_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
+				}
 
 			} else {
 				ChooseSimpleClipboardBackend();
@@ -834,6 +837,10 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 
 void TTYBackend::ChooseSimpleClipboardBackend()
 {
+	if (_ext_clipboard) {
+		return;
+	}
+
 	if (_osc52clip_set) {
 		IOSC52Interractor *interractor = this;
 		_clipboard_backend_setter.Set<OSC52ClipboardBackend>(interractor);
@@ -1197,9 +1204,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(full_exe_path, std_in, std_out, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;

@@ -5,6 +5,7 @@
 #include <wx/display.h>
 #include <wx/clipbrd.h>
 #include <utils.h>
+#include <dlfcn.h>
 
 // #698: Mac: Copying to clipboard stopped working in wx 3.1 (not 100% sure about exact version).
 // The fix is submitted, supposedly, into 3.2: https://github.com/wxWidgets/wxWidgets/pull/1623/files
@@ -109,6 +110,28 @@ void wxClipboardBackend::OnClipboardClose()
 		fprintf(stderr, "CloseClipboard without data\n");
 	}
 	wxTheClipboard->Flush();
+/*
+#if defined(__WXGTK__) && defined(__WXGTK3__) && !wxCHECK_VERSION(3, 1, 4)
+	typedef void *(*gtk_clipboard_get_t)(uintptr_t);
+	typedef void (*gtk_clipboard_set_can_store_t)(void *, void *, uint32_t);
+	typedef void (*gtk_clipboard_store_t)(void *);
+
+	static gtk_clipboard_get_t s_gtk_clipboard_get =
+		(gtk_clipboard_get_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_get");
+	static gtk_clipboard_set_can_store_t s_gtk_clipboard_set_can_store =
+		(gtk_clipboard_set_can_store_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_set_can_store");
+	static gtk_clipboard_store_t s_gtk_clipboard_store =
+		(gtk_clipboard_store_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_store");
+
+	if (s_gtk_clipboard_get && s_gtk_clipboard_set_can_store && s_gtk_clipboard_store) {
+		void *gcb = s_gtk_clipboard_get(69); // GDK_SELECTION_CLIPBOARD
+		if (gcb) {
+			s_gtk_clipboard_set_can_store(gcb, nullptr, 0);
+			s_gtk_clipboard_store(gcb);
+		}
+	}
+#endif
+*/
 	wxTheClipboard->Close();
 }
 

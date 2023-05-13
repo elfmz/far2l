@@ -30,6 +30,7 @@ src/Backend/WinPortMain.cpp
 src/Backend/WinPortRGB.cpp
 src/Backend/SudoAskpassImpl.cpp
 src/Backend/FSClipboardBackend.cpp
+src/Backend/ExtClipboardBackend.cpp
 src/Backend/TTY/TTYBackend.cpp
 src/Backend/TTY/TTYRevive.cpp
 src/Backend/TTY/TTYInput.cpp

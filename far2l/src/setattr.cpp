@@ -151,13 +151,13 @@ enum DIALOGMODE
 
 struct SetAttrDlgParam
 {
-	bool Plugin;
-	DWORD FileSystemFlags;
+	bool Plugin = false;
+	DWORD FileSystemFlags = 0;
 	DIALOGMODE DialogMode;
 	FARString strSelName;
 	FARString strOwner;
 	FARString strGroup;
-	bool OwnerChanged, GroupChanged;
+	bool OwnerChanged = false, GroupChanged = false;
 	// значения CheckBox`ов на момент старта диалога
 	int OriginalCBAttr[ARRAYSIZE(PreserveOriginalIDs)];
 	int OriginalCBAttr2[ARRAYSIZE(PreserveOriginalIDs)];

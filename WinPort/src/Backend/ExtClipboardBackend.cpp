@@ -2,6 +2,8 @@
 #include "WinPort.h"
 #include <utils.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 #include <UtfConvert.hpp>
 
 ExtClipboardBackend::ExtClipboardBackend(const char *exec)
@@ -16,17 +18,6 @@ ExtClipboardBackend::~ExtClipboardBackend()
 {
 }
 
-bool ExtClipboardBackend::RunSimpleCommand(const char *arg)
-{
-	std::string cmd = _exec;
-	cmd+= ' ';
-	cmd+= arg;
-
-	std::string result;
-	POpen(result, cmd.c_str());
-	return atoi(result.c_str()) > 0;
-}
-
 bool ExtClipboardBackend::OnClipboardOpen()
 {
 	return true;
@@ -38,7 +29,13 @@ void ExtClipboardBackend::OnClipboardClose()
 
 void ExtClipboardBackend::OnClipboardEmpty()
 {
-	RunSimpleCommand("empty");
+	std::string cmd = _exec;
+	cmd+= " empty";
+
+	int r = system(cmd.c_str());
+	if (r != 0) {
+		fprintf(stderr, "%s: r=%d for %s\n", __FUNCTION__, r, cmd.c_str());
+	}
 }
 
 bool ExtClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
@@ -56,6 +53,7 @@ void *ExtClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	FILE *f = popen(cmd.c_str(), "w");
 	if (!f) {
+		fprintf(stderr, "%s: err=%d for %s\n", __FUNCTION__, errno, cmd.c_str());
 		return data;
 	}
 
@@ -81,6 +79,7 @@ void *ExtClipboardBackend::OnClipboardGetData(UINT format)
 
 	FILE *f = popen(cmd.c_str(), "r");
 	if (!f) {
+		fprintf(stderr, "%s: err=%d for %s\n", __FUNCTION__, errno, cmd.c_str());
 		return nullptr;
 	}
 
@@ -94,6 +93,7 @@ void *ExtClipboardBackend::OnClipboardGetData(UINT format)
 		}
 		if (n < sizeof(buf)) break;
 	}
+	pclose(f);
 
 	void *out;
 	if (format == CF_UNICODETEXT) {

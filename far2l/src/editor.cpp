@@ -2524,7 +2524,7 @@ int Editor::ProcessKey(int Key)
 
 				if (!SkipCheckUndo) {
 					CurLine->GetBinaryString(&Str, nullptr, Length);
-					CurPos = CurLine->GetCurPos();
+					//CurPos = CurLine->GetCurPos();
 					CmpStr = new wchar_t[Length + 1];
 					wmemcpy(CmpStr, Str, Length);
 					CmpStr[Length] = 0;

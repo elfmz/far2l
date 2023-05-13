@@ -7,8 +7,6 @@ class ExtClipboardBackend : public IClipboardBackend
 {
 	std::string _exec;
 
-	bool RunSimpleCommand(const char *arg);
-
 public:
 	ExtClipboardBackend(const char *exec);
 	virtual ~ExtClipboardBackend();

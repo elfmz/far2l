@@ -120,3 +120,6 @@ FARString LookupExecutable(const char *file);
 
 bool PathHasParentPrefix(const FARString &Path);
 void EnsurePathHasParentPrefix(FARString &Path);
+
+bool ArePathesAtSameDevice(const FARString &path1, const FARString &path2);
+FARString EscapeDevicePath(FARString path);

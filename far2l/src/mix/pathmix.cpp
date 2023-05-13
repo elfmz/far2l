@@ -510,3 +510,36 @@ void EnsurePathHasParentPrefix(FARString &Path)
 		Path.Insert(0, L"./");
 	}
 }
+
+static dev_t GetDeviceId(const std::string &path)
+{
+	struct stat st{};
+	if (stat(path.c_str(), &st) == 0) {
+		return st.st_dev;
+	}
+	const size_t slash = path.rfind('/');
+	if (slash != 0 && slash != std::string::npos) {
+		return GetDeviceId(path.substr(0, slash));
+	}
+	return 0;
+}
+
+bool ArePathesAtSameDevice(const FARString &path1, const FARString &path2)
+{
+	return GetDeviceId(path1.GetMB()) == GetDeviceId(path2.GetMB());
+}
+
+FARString EscapeDevicePath(FARString path)
+{
+	const dev_t dev = GetDeviceId(path.GetMB());
+	while (path.GetLength() > 1 && CutToSlash(path, true)) {
+		const dev_t xdev = GetDeviceId(path.GetMB());
+		if (dev != xdev) {
+			break;
+		}
+	}
+	if (path.GetLength() == 0) {
+		path = L"/";
+	}
+	return path;
+}

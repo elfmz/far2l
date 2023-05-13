@@ -164,6 +164,7 @@ private:
 	void FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &strLastName, FARString &strName);
 	void DragMessage(int X, int Y, int Move);
 	int OnFCtlSetLocation(const FarPanelLocation *location);
+	static void sUnmountPath(FARString path, bool forced);
 
 protected:
 	bool SetLocation_Directory(const wchar_t *path);
@@ -227,6 +228,7 @@ public:
 	*/
 	virtual void UpdateIfRequired(){};
 
+	virtual void CreateChangeNotification(int CheckTree){};
 	virtual void CloseChangeNotification(){};
 	virtual bool FindPartName(const wchar_t *Name, int Next, int Direct = 1, int ExcludeSets = 0)
 	{

@@ -239,5 +239,6 @@ struct WinPortMainBackendArg
 	int *result;
 	IConsoleOutput *winport_con_out;
 	IConsoleInput *winport_con_in;
+	bool ext_clipboard;
 };
 

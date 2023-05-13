@@ -131,7 +131,10 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	g_wx_palette = g_winport_palette;
 
 	ClipboardBackendSetter clipboard_backend_setter;
-	clipboard_backend_setter.Set<wxClipboardBackend>();
+	if (!a->ext_clipboard) {
+		clipboard_backend_setter.Set<wxClipboardBackend>();
+	}
+
 	if (a->app_main && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(a->argc, a->argv, a->app_main);
 		if (UNLIKELY(!g_winport_app_thread) || UNLIKELY(!g_winport_app_thread->Prepare())) {

@@ -673,22 +673,19 @@ BOOL apiSetFileAttributes(LPCWSTR lpFileName, DWORD dwFileAttributes)
 
 bool apiPathExists(LPCWSTR lpPathName)
 {
-	struct stat s
-	{};
+	struct stat s {};
 	return sdc_lstat(Wide2MB(lpPathName).c_str(), &s) == 0;
 }
 
 bool apiPathIsDir(LPCWSTR lpPathName)
 {
-	struct stat s
-	{};
+	struct stat s {};
 	return sdc_stat(Wide2MB(lpPathName).c_str(), &s) == 0 && S_ISDIR(s.st_mode);
 }
 
 bool apiPathIsFile(LPCWSTR lpPathName)
 {
-	struct stat s
-	{};
+	struct stat s {};
 	return sdc_stat(Wide2MB(lpPathName).c_str(), &s) == 0 && S_ISREG(s.st_mode);
 }
 

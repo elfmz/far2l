@@ -575,14 +575,8 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 					if (item)
 						switch (item->kind) {
 							case PanelMenuItem::MOUNTPOINT: {
-								FARString path(item->location.path);
-								if (!Opt.Confirm.RemoveHotPlug || Message(MSG_WARNING, 2,
-									Msg::ChangeHotPlugDisconnectDriveTitle, Msg::ChangeHotPlugDisconnectDriveQuestion,
-									path, Msg::Ok, Msg::Cancel) == 0) {
-									Mounts::Unmount(path,
-											Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL
-													|| Key == KEY_SHIFTDEL);
-								}
+								sUnmountPath(item->location.path,
+									Key == KEY_SHIFTNUMDEL || Key == KEY_SHIFTDECIMAL || Key == KEY_SHIFTDEL);
 								return SelPos;
 							}
 
@@ -740,6 +734,51 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 	}
 
 	return -1;
+}
+
+void Panel::sUnmountPath(FARString path, bool forced)
+{
+	if (Opt.Confirm.RemoveHotPlug && Message(MSG_WARNING, 2,
+			Msg::ChangeHotPlugDisconnectDriveTitle, Msg::ChangeHotPlugDisconnectDriveQuestion,
+			path, Msg::Ok, Msg::Cancel) != 0) {
+		return;
+	}
+
+	FARString dir;
+	bool left_notify_closed = false, right_notify_closed = false;
+
+	if (CtrlObject->Cp()->LeftPanel && CtrlObject->Cp()->LeftPanel->PanelMode == NORMAL_PANEL) {
+		CtrlObject->Cp()->LeftPanel->GetCurDirPluginAware(dir);
+		if (ArePathesAtSameDevice(path, dir)) {
+			CtrlObject->Cp()->LeftPanel->CloseChangeNotification();
+			left_notify_closed = true;
+		}
+	}
+
+	if (CtrlObject->Cp()->RightPanel && CtrlObject->Cp()->RightPanel->PanelMode == NORMAL_PANEL) {
+		CtrlObject->Cp()->RightPanel->GetCurDirPluginAware(dir);
+		if (ArePathesAtSameDevice(path, dir)) {
+			CtrlObject->Cp()->RightPanel->CloseChangeNotification();
+			right_notify_closed = true;
+		}
+	}
+
+	apiGetCurrentDirectory(dir);
+	if (ArePathesAtSameDevice(path, dir)) {
+		FarChDir(EscapeDevicePath(dir));
+	}
+
+	if (Mounts::Unmount(path, forced)) {
+		return;
+	}
+
+	FarChDir(dir);
+	if (left_notify_closed) {
+		CtrlObject->Cp()->LeftPanel->CreateChangeNotification(FALSE);
+	}
+	if (right_notify_closed) {
+		CtrlObject->Cp()->RightPanel->CreateChangeNotification(FALSE);
+	}
 }
 
 bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *path,

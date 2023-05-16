@@ -16,7 +16,8 @@ if [ "$VIRTUAL_PYTHON" == "0" ]; then
         mkdir -p "$DST/python"
         $PYTHON -m venv --system-site-packages "$DST/python"
         "$DST/python/bin/python" -m pip install --upgrade pip || true
-        "$DST/python/bin/python" -m pip install --ignore-installed cffi debugpy pcpp adbutils
+        "$DST/python/bin/python" -m pip install --ignore-installed debugpy pcpp adbutils
+        "$DST/python/bin/python" -m pip install --force-reinstall --no-binary :all: cffi
         $PREPROCESSOR "$SRC/python/src/consts.gen" | sh > "${DST}/incpy/consts.h"
         echo "1" > "$DST/python/.prepared"
     fi

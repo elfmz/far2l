@@ -256,6 +256,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 				(unsigned long long)NextPosition.QuadPart, (unsigned long long)FileSize.QuadPart);
 		return (GETARC_UNEXPEOF);
 	}
+
 	if (bTruncated) {
 		if (!WINPORT(ReadFile)(ArcHandle, &ZipHd1, sizeof(ZipHd1), &ReadSize, NULL))
 			return (GETARC_READERROR);
@@ -400,10 +401,10 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 						|| ReadSize != sizeof(AttrHead))
 					return (GETARC_READERROR);
 
-				if (1 != LITEND(AttrHead.Tag))	// File times attribute tag
+				if (1 != LITEND(AttrHead.Tag)) {	// File times attribute tag
 					// Move to attribute end
 					WINPORT(SetFilePointer)(ArcHandle, LITEND(AttrHead.Length), NULL, FILE_CURRENT);
-				else {	// Read file times
+				} else {	// Read file times
 					struct TimesAttribute
 					{
 						FILETIME Modification;
@@ -437,8 +438,9 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 
 			if (!WINPORT(ReadFile)(ArcHandle, &ZIP64, std::min(LITEND(BlockHead.Length), (WORD)sizeof(ZIP64)),
 						&ReadSize, NULL)
-					|| ReadSize != LITEND(BlockHead.Length))
+					|| ReadSize != LITEND(BlockHead.Length)) {
 				return (GETARC_READERROR);
+			}
 			if (LITEND(BlockHead.Length) == sizeof(ZIP64)) {
 				Info->nFileSize = LITEND(ZIP64.OriginalSize.QuadPart);
 				Info->nPhysicalSize = LITEND(ZIP64.CompressedSize.QuadPart);
@@ -489,7 +491,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 			if (!WINPORT(ReadFile)(ArcHandle, Description, SizeToRead, &ReadSize, NULL)
 					|| ReadSize != SizeToRead)
 				return (GETARC_READERROR);
-			Info->Description->assign(Description, ReadSize);
+			Info->Description.reset(new std::string(Description, ReadSize));
 		}
 		// Skip comment tail
 		WINPORT(SetFilePointer)(ArcHandle, LITEND(ZipHeader.CommLen) - ReadSize, NULL, FILE_CURRENT);

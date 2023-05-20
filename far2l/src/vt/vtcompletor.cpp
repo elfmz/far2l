@@ -126,7 +126,7 @@ bool VTCompletor::EnsureStarted()
 				_exit(5);
 				exit(5);
 			}
-			execlp("bash", "bash", "--noprofile", "-i",  NULL);
+			execlp("bash", "bash", "--noprofile", "-i", NULL);
 			perror("VTCompletor: execlp");
 			_exit(6);
 			exit(6);
@@ -173,7 +173,7 @@ bool VTCompletor::EnsureStarted()
 			CheckedCloseFDPair(pipe_in);
 			CheckedCloseFDPair(pipe_out);
 			setsid();
-			execlp("bash", "bash", "--noprofile", "-i",  NULL);
+			execlp("bash", "bash", "--noprofile", "-i", NULL);
 			perror("execlp");
 			_exit(0);
 			exit(0);
@@ -362,7 +362,7 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 	reply.erase(0, p + eval_cmd.size());
 
 	if (StrEndsBy(reply, eval_cmd.c_str())) {
-		reply.resize(reply.size()  - eval_cmd.size());
+		reply.resize(reply.size() - eval_cmd.size());
 	}
 
 	for (;;) {

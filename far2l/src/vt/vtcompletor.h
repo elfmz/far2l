@@ -8,6 +8,7 @@ class VTCompletor
 	std::string _vtc_inputrc;
 	int _pipe_stdin, _pipe_stdout;
 	pid_t _pid;
+	bool _pty_used;
 
 	void Stop();
 	bool EnsureStarted();

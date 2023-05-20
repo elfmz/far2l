@@ -53,7 +53,7 @@ bool VTCompletor::EnsureStarted()
 	if (_pid!=-1)
 		return true;
 
-    while (!_pty_used) {
+	while (!_pty_used) {
 		int l_ptyMaster = -1,
 			rc = -1;
 		l_ptyMaster = posix_openpt(O_RDWR);
@@ -97,10 +97,10 @@ bool VTCompletor::EnsureStarted()
 				_exit(1);
 				exit(1);
 			}
-	        std::cin.sync();
-	        std::cout.flush();
-	        std::cerr.flush();
-	        std::clog.flush();
+			std::cin.sync();
+			std::cout.flush();
+			std::cerr.flush();
+			std::clog.flush();
 			rc = dup2(l_ptySlave, STDIN_FILENO);
 			if (rc < 0) {
 				perror( "VTCompletor: dup2(stdin)");
@@ -163,10 +163,10 @@ bool VTCompletor::EnsureStarted()
 		MakeFDCloexec(pipe_out[1]);
 
 		if (_pid==0) {
-	        std::cin.sync();
-	        std::cout.flush();
-	        std::cerr.flush();
-	        std::clog.flush();
+			std::cin.sync();
+			std::cout.flush();
+			std::cerr.flush();
+			std::clog.flush();
 			dup2(pipe_in[0], STDIN_FILENO);
 			dup2(pipe_out[1], STDOUT_FILENO);
 			dup2(pipe_out[1], STDERR_FILENO);
@@ -242,7 +242,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	reply.clear();
 	fd_set fds;
 	struct timeval tv;
-    bool skip_echo = true;
+	bool skip_echo = true;
 	for (;;) {
 		FD_ZERO(&fds);
 		FD_SET(_pipe_stdout, &fds);

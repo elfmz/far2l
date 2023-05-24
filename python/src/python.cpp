@@ -87,6 +87,51 @@ static void python_log(const char *function, unsigned int line, const char *form
 
 
 
+static PyObject *
+far2l_CheckForInput(PyObject *self, PyObject *args)
+{
+    DWORD dwTimeout = INFINITE;
+    if (!PyArg_ParseTuple(args, "I", &dwTimeout))
+        return NULL;
+
+    if (WINPORT(WaitConsoleInput)(dwTimeout))
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+static PyObject *
+far2l_CheckForEscape(PyObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    WORD EscCode = VK_ESCAPE;
+    if (WINPORT(CheckForKeyPress)(NULL, &EscCode, 1, CFKP_KEEP_OTHER_EVENTS))
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+static PyMethodDef Far2lcMethods[] = {
+    {"CheckForInput",  far2l_CheckForInput, METH_VARARGS, "CheckForInput"},
+    {"CheckForEscape",  far2l_CheckForEscape, METH_VARARGS, "CheckForEscape"},
+    {NULL, NULL, 0, NULL}        /* Sentinel */
+};
+
+static struct PyModuleDef far2lcmodule = {
+    PyModuleDef_HEAD_INIT,
+    "far2lc",   /* name of module */
+    NULL, /* module documentation, may be NULL */
+    -1,       /* size of per-interpreter state of the module,
+                 or -1 if the module keeps state in global variables. */
+    Far2lcMethods
+};
+
+PyMODINIT_FUNC
+PyInit_far2lc(void)
+{
+    return PyModule_Create(&far2lcmodule);
+}
+
 #ifdef PYPLUGIN_THREADED
 class PythonHolder : Threaded
 #else
@@ -155,6 +200,7 @@ public:
             PYTHON_LOG("error %u from dlopen('%s')\n", errno, PYTHON_LIBRARY);
             return;
         }
+        PyImport_AppendInittab("far2lc", PyInit_far2lc);
         Py_SetProgramName((wchar_t *)progname.c_str());
         Py_Initialize();
         PyEval_InitThreads();

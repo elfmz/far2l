@@ -377,7 +377,7 @@ class DialogBuilder(sizer.HSizer):
             dlg.fdi,
             len(dlg.fdi),
             0,
-            0,
+            self.flags,
             self.dialogProc,
             0,
         )

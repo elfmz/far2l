@@ -91,7 +91,7 @@ static PyObject *
 far2l_CheckForInput(PyObject *self, PyObject *args)
 {
     DWORD dwTimeout = INFINITE;
-    if (!PyArg_ParseTuple(args, "I", &dwTimeout))
+    if (!PyArg_ParseTuple(args, "|k", &dwTimeout))
         return NULL;
 
     if (WINPORT(WaitConsoleInput)(dwTimeout))

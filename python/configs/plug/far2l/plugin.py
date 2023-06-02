@@ -42,8 +42,16 @@ class PluginBase:
         log.debug("Plugin.GetOpenPluginInfo({}) #{}".format(OpenInfo, self.label))
 
     def ProcessKey(self, Key, ControlState):
-        # log.debug("VFS.ProcessKey({0}, {1})".format(Key, ControlState))
+        # log.debug("Plugin.ProcessKey({0}, {1})".format(Key, ControlState))
         return 0
+
+    def MayExitFAR(self):
+        # log.debug("Plugin.MayExitFAR()")
+        return True
+
+    def ExitFAR(self):
+        #log.debug("Plugin.ExitFAR()")
+        pass
 
 
 class PluginVFS(PluginBase):

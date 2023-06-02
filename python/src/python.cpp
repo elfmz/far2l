@@ -62,6 +62,7 @@ static void python_log(const char *function, unsigned int line, const char *form
     }
 
 #define PYTHON_HANDLE(default) \
+    HANDLE result = default; \
     if (pyresult != NULL) { \
         if( PyLong_Check(pyresult) ) { \
             result = (HANDLE)PyLong_AsLong(pyresult); \
@@ -74,6 +75,7 @@ static void python_log(const char *function, unsigned int line, const char *form
     }
 
 #define PYTHON_INT(default) \
+    int result = default; \
     if (pyresult != NULL) { \
         if( PyLong_Check(pyresult) ) { \
             result = PyLong_AsLong(pyresult); \
@@ -347,7 +349,6 @@ XPORT(void, GetPluginInfo)(struct PluginInfo *Info)
 XPORT(HANDLE, OpenPlugin)(int OpenFrom,INT_PTR Item)
 {
     PYTHON_LOG("OpenFrom=%d Item=%d\n", OpenFrom, Item);
-    HANDLE result = INVALID_HANDLE_VALUE;
     PyObject *pyresult = g_python_holder->vcall("OpenPlugin", 2, OpenFrom, Item);
     PYTHON_HANDLE(INVALID_HANDLE_VALUE)
     return result;
@@ -361,21 +362,18 @@ XPORT(void, ClosePlugin)(HANDLE hPlugin) {
 
 XPORT(int, Compare)(HANDLE hPlugin,const PluginPanelItem *Item1,const PluginPanelItem *Item2,unsigned int Mode) {
     PYTHON_LOG("Mode=%d\n", Mode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("Compare", 4, hPlugin, Item1, Item2, Mode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, Configure)(int ItemNumber) {
     PYTHON_LOG("ItemNumber=%d\n", ItemNumber);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("Configure", 1, ItemNumber);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, DeleteFiles)(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode) {
     PYTHON_LOG("ItemsNumber=%d OpMode=%d\n", ItemsNumber, OpMode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("DeleteFiles", 4, hPlugin, PanelItem, ItemsNumber, OpMode);
     PYTHON_INT(0)
     return result;
@@ -399,14 +397,12 @@ XPORT(void, FreeVirtualFindData)(HANDLE hPlugin,PluginPanelItem *PanelItem,int I
 }
 XPORT(int, GetFiles)(HANDLE hPlugin,PluginPanelItem *PanelItem,int ItemsNumber,int Move,const wchar_t **DestPath,int OpMode) {
     PYTHON_LOG("ItemsNumber=%d Move=%d OpMode=%d\n", ItemsNumber, Move, OpMode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("GetFiles", 6, hPlugin, PanelItem, ItemsNumber, Move, DestPath, OpMode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, GetFindData)(HANDLE hPlugin,PluginPanelItem **pPanelItem,int *pItemsNumber,int OpMode) {
     PYTHON_LOG("OpMode=%d\n", OpMode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("GetFindData", 4, hPlugin, pPanelItem, pItemsNumber, OpMode);
     PYTHON_INT(0)
     return result;
@@ -420,99 +416,114 @@ XPORT(void, GetOpenPluginInfo)(HANDLE hPlugin, OpenPluginInfo *Info) {
 }
 XPORT(int, GetVirtualFindData)(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, const wchar_t *Path) {
     PYTHON_LOG("\n");
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("GetVirtualFindData", 4, hPlugin, pPanelItem, pItemsNumber, Path);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, MakeDirectory)(HANDLE hPlugin,const wchar_t **Name,int OpMode) {
     PYTHON_LOG("OpMode=%d\n", OpMode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("MakeDirectory", 3, hPlugin, Name, OpMode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(HANDLE, OpenFilePlugin)(const wchar_t *Name,const unsigned char *Data,int DataSize,int OpMode) {
     PYTHON_LOG("OpMode=%d Name='%ls'\n", OpMode, Name);
-    HANDLE result = INVALID_HANDLE_VALUE;
     PyObject *pyresult = g_python_holder->vcall("OpenFilePlugin", 4, Name, Data, DataSize, OpMode);
     PYTHON_HANDLE(INVALID_HANDLE_VALUE)
     return result;
 }
 XPORT(int, ProcessDialogEvent)(int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessDialogEvent", 2, Event, Param);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessEditorEvent)(int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessEditorEvent", 2, Event, Param);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessEditorInput)(const INPUT_RECORD *Rec) {
     PYTHON_LOG("\n");
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessEditorInput", 1, Rec);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessEvent)(HANDLE hPlugin,int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessEvent", 3, hPlugin, Event, Param);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessHostFile)(HANDLE hPlugin,struct PluginPanelItem *PanelItem,int ItemsNumber,int OpMode) {
     PYTHON_LOG("ItemsNumber=%d OpMode=%d\n", ItemsNumber, OpMode);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessHostFile", 4, hPlugin, PanelItem, ItemsNumber, OpMode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessKey)(HANDLE hPlugin,int Key,unsigned int ControlState) {
     PYTHON_LOG("Key=%d ControlState=0x%x\n", Key, ControlState);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessKey", 3, hPlugin, Key, ControlState);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessSynchroEvent)(int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessSynchroEvent", 2, Event, Param);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, ProcessViewerEvent)(int Event,void *Param) {
     PYTHON_LOG("Event=%d\n", Event);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("ProcessViewerEvent", 2, Event, Param);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, PutFiles)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,const wchar_t *SrcPath, int OpMode) {
     PYTHON_LOG("ItemsNumber=%d Move=%d OpMode=%d SrcPath='%ls'\n", ItemsNumber, Move, OpMode, SrcPath);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("PutFiles", 6, hPlugin, PanelItem, ItemsNumber, Move, SrcPath, OpMode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, SetDirectory)(HANDLE hPlugin,const wchar_t *Dir,int OpMode) {
     PYTHON_LOG("OpMode=%d Dir='%ls'\n", OpMode, Dir);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("SetDirectory", 3, hPlugin, Dir, OpMode);
     PYTHON_INT(0)
     return result;
 }
 XPORT(int, SetFindList)(HANDLE hPlugin,const PluginPanelItem *PanelItem,int ItemsNumber) {
     PYTHON_LOG("ItemsNumber=%d\n", ItemsNumber);
-    int result = 0;
     PyObject *pyresult = g_python_holder->vcall("SetFindList", 3, hPlugin, PanelItem, ItemsNumber);
     PYTHON_INT(0)
     return result;
 }
+XPORT(int, MayExitFAR)(void)
+{
+    PYTHON_LOG("\n");
+    PyObject *pyresult = g_python_holder->vcall("MayExitFAR", 0);
+    PYTHON_INT(1)
+    return result;
+}
+#if 0
+XPORT(int, Analyse)(const AnalyseData *pData)
+{
+    PYTHON_LOG("\n");
+    PyObject *pyresult = g_python_holder->vcall("Analyse", 1, pData);
+    PYTHON_INT(0)
+    return result;
+}
+XPORT(int, GetCustomData)(const wchar_t *FilePath, wchar_t **CustomData)
+{
+    PYTHON_LOG("FilePath=%ls\n", FilePath);
+    PyObject *pyresult = g_python_holder->vcall("GetCustomData", 2, FilePath, CustomData);
+    PYTHON_INT(0)
+    return result;
+}
+XPORT(void, FreeCustomData)(wchar_t *CustomData)
+{
+    PYTHON_LOG("\n");
+    PyObject *pyresult = g_python_holder->vcall("FreeCustomData", 1, CustomData);
+    PYTHON_VOID()
+}
+#endif

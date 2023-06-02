@@ -515,14 +515,13 @@ class Plugin(PluginVFS):
                         RADIOBUTTON("toybox", "toybox"),
                         RADIOBUTTON("toolbox", "toolbox"),
                     ),
-                    Spacer(),
                     HSizer(
                         CHECKBOX("rexec", "Allow remote execute"),
                     ),
                 ),
                 HLine(),
                 HSizer(
-                    BUTTON("OK", "OK", True, flags=self.ffic.DIF_CENTERGROUP),
+                    BUTTON("OK", "OK", default=True, flags=self.ffic.DIF_CENTERGROUP),
                     BUTTON("CANCEL", "Cancel", flags=self.ffic.DIF_CENTERGROUP),
                 ),
             ),
@@ -750,7 +749,7 @@ class Plugin(PluginVFS):
         if ItemsNumber == 0 or Move:
             return False
         if self.device is None:
-            self.Message(["PetFiles allowed only inside device."])
+            self.Message(["PutFiles allowed only inside device."])
             return True
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         spath = self.f2s(SrcPath)

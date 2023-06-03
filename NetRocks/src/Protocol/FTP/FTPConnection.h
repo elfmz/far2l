@@ -54,6 +54,8 @@ struct OpenSSLContext
 private:
 	SSL_CTX *_ctx;
 	SSL_SESSION *_session = nullptr;
+
+	static int sNewClientSessionCB(SSL *ssl, SSL_SESSION *session);
 };
 
 struct TLSTransport : public BaseTransport
@@ -121,6 +123,7 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 public:
 	FTPConnection(bool implicit_encryption, const std::string &host, unsigned int port, const std::string &options);
 	virtual ~FTPConnection();
+	void EnsureDataConnectionProtection();
 
 	const StringConfig &ProtocolOptions() const { return _protocol_options; }
 

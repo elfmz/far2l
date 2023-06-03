@@ -1,6 +1,8 @@
 import logging
+import time
 import ctypes as ct
 from far2l.plugin import PluginBase
+import far2lc
 
 import debugpy
 
@@ -63,20 +65,33 @@ Reserved[5]: {}
     def Info(self):
         # debugpy.breakpoint()
         txt = self.getEditorInfo()
-        open("/tmp/uinfo", "wt").write(txt)
+        #open("/tmp/uinfo", "wt").write(txt)
+        log.debug('self.info.Editor')
         self.info.Editor(
             "/tmp/uinfo",
             "uinfo",
             #            0, 0, -1, -1,
             0,
             0,
+            50,
             25,
-            25,
-            self.ffic.EF_NONMODAL,
+            self.ffic.EF_NONMODAL|self.ffic.EF_DELETEONCLOSE|self.ffic.EF_IMMEDIATERETURN,
             0,
             0,
             0xFFFFFFFF,  # =-1=self.ffic.CP_AUTODETECT
         )
+        log.debug('/self.info.Editor')
+        try:
+            for i in range(20):
+                #pending = far2lc.CheckForInput(500)
+                pending = False
+                isesc = far2lc.CheckForEscape()
+                log.debug('i={} pending={} escape={}'.format(i, pending, isesc))
+                if isesc:
+                    break
+                time.sleep(1)
+        except:
+            log.exception('CheckForKeyPressed failure')
         # self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, txt)
 
     def OpenPlugin(self, OpenFrom):

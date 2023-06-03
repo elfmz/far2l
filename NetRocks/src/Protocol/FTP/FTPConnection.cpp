@@ -192,7 +192,9 @@ OpenSSLContext::OpenSSLContext(const StringConfig &protocol_options)
 
 OpenSSLContext::~OpenSSLContext()
 {
-	SSL_SESSION_free(_session);
+	if (_session) {
+		SSL_SESSION_free(_session);
+	}
 	SSL_CTX_free(_ctx);
 }
 
@@ -207,6 +209,7 @@ SSL *OpenSSLContext::NewSSL(int sock)
 
 	if (_session) {
 		SSL_set_session(ssl, _session);
+		_session = NULL; // "TLS 1.3 does strongly encourage single-use of resumption ticket"
 	}
 
 	if (SSL_set_fd(ssl, sock) != 1) {

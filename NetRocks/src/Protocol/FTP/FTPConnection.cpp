@@ -141,6 +141,16 @@ static int SSLStartup()
 	return out;
 }
 
+int OpenSSLContext::sNewClientSessionCB(SSL *ssl, SSL_SESSION *session)
+{
+	OpenSSLContext *ctx = (OpenSSLContext *)SSL_get_app_data(ssl);
+	if (ctx != NULL && ctx->_session == NULL && session != NULL) {
+		SSL_SESSION_up_ref(session);
+		ctx->_session = session;
+	}
+	return 0;
+}
+
 OpenSSLContext::OpenSSLContext(const StringConfig &protocol_options)
 {
 	static int s_ssl_startup = SSLStartup();
@@ -175,7 +185,9 @@ OpenSSLContext::OpenSSLContext(const StringConfig &protocol_options)
 			;
 	}
 
-	SSL_CTX_set_session_cache_mode(_ctx, SSL_SESS_CACHE_CLIENT);
+	SSL_CTX_set_session_cache_mode(_ctx,
+		SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE | SSL_SESS_CACHE_NO_AUTO_CLEAR);
+	SSL_CTX_sess_set_new_cb(_ctx, sNewClientSessionCB);
 }
 
 OpenSSLContext::~OpenSSLContext()
@@ -190,6 +202,9 @@ SSL *OpenSSLContext::NewSSL(int sock)
 	if (!ssl) {
 		throw std::runtime_error(StrPrintf("SSL_new() errno=%d", errno));
 	}
+
+	SSL_set_app_data(ssl, this);
+
 	if (_session) {
 		SSL_set_session(ssl, _session);
 	}
@@ -205,9 +220,11 @@ SSL *OpenSSLContext::NewSSL(int sock)
 		throw std::runtime_error(StrPrintf("SSL_connect() errno=%d", errno));
 	}
 
-	if (!_session) {
-		_session = SSL_get1_session(ssl);
-	}
+//  Doesn't work since TLS1.3 that requires storing session from sNewClientSessionCB
+//  for correct TLS session reuse functionality
+//	if (!_session) {
+//		_session = SSL_get1_session(ssl);
+//	}
 
 	return ssl;
 }
@@ -625,13 +642,18 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 }
 
 
-std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd, unsigned long long rest)
+void FTPConnection::EnsureDataConnectionProtection()
 {
 #ifdef HAVE_OPENSSL
 	if (_openssl_ctx && !_data_encryption_enabled) {
 		_data_encryption_enabled = EnableDataConnectionProtection();
 	}
 #endif
+}
+
+std::shared_ptr<BaseTransport> FTPConnection::DataCommand(const std::string &cmd, unsigned long long rest)
+{
+	EnsureDataConnectionProtection();
 	std::shared_ptr<BaseTransport> data_transport;
 	if (_protocol_options.GetInt("Passive", 1) == 1) {
 		DataCommand_PASV(data_transport, cmd, rest);

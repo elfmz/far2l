@@ -62,6 +62,8 @@ class Spacer(Element):
     def get_best_size(self):
         return (self.width, self.height)
 
+    def makeItem(self, dlg):
+        pass
 
 class TEXT(Element):
     dit = "DI_TEXT"
@@ -377,7 +379,7 @@ class DialogBuilder(sizer.HSizer):
             dlg.fdi,
             len(dlg.fdi),
             0,
-            0,
+            self.flags,
             self.dialogProc,
             0,
         )

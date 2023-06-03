@@ -172,6 +172,8 @@ class PluginManager:
     # manager API
     def ExitFAR(self):
         log.debug("ExitFAR()")
+        for hplugin, plugin in self.openplugins.items():
+            plugin.ExitFAR()
 
     def GetMinFarVersion(self):
         log.debug("GetMinFarVersion()")
@@ -359,3 +361,24 @@ class PluginManager:
     def SetFindList(self, hPlugin, PanelItem, ItemsNumber):
         plugin = self.pluginGet(hPlugin)
         return plugin.SetFindList(PanelItem, ItemsNumber)
+
+    def MayExitFAR(self):
+        #log.debug("MayExitFAR(): %s", self.openplugins.items())
+        for hplugin, plugin in self.openplugins.items():
+            log.debug(plugin.label)
+            if not plugin.MayExitFAR():
+                return 0
+        return 1
+
+    # not exposed from CPython
+    def Analyse(self, pData):
+        #pData = AnalyseData
+        return 0
+
+    # not exposed from CPython
+    def GetCustomData(self, FilePath, CustomData):
+        return 0
+
+    # not exposed from CPython
+    def FreeCustomData(self, CustomData):
+        pass

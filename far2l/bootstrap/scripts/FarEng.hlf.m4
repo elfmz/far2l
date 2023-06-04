@@ -2064,26 +2064,14 @@ $ #Special symbols#
     The following special symbols can be used in ~associated commands~@FileAssoc@,
 ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@:
 
-    #!!#       '!' character
-    #!#        Long file name without extension
-    #!~~#       Short file name without extension
-    #!`#       Long extension without file name (ext)
-    #!`~~#      Short extension without file name (ext)
-    #!.!#      Long file name with extension
-    #!-!#      Short file name with extension
-    #!+!#      Similar to !-! but if a long file name was lost
-             after performing the command, FAR2L will restore it
-    #!@@!#      Name of file with selected file names list
-    #!$!#      Name of file with selected short file names list
-    #!&#       List of selected files
-    #!&~~#      List of selected short file names
-    #!:#       Current drive in the format "C:"
-             For remote folders - "\\\\server\\share"
-    #!\\#       Current path
-    #!/#       Short name of the current path
-    #!=\\#      Current path considering ~symbolic links~@HardSymLink@.
-    #!=/#      Short name of the current path considering
-             ~symbolic links~@HardSymLink@.
+    #!!#          '!' character
+    #!#           File name without extension
+    #!`#          Extension without file name (ext)
+    #!.!#         File name with extension
+    #!@@!# or #!$!#  Name of file with selected file names list
+    #!&#          List of selected files
+    #!/#  or #!\\#   Current path
+    #!=/# or #!=\\#  Current path considering ~symbolic links~@HardSymLink@.
 
     #!?<title>?<init>!#
              This symbol is replaced by user input, when

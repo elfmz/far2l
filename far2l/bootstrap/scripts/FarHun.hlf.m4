@@ -1887,27 +1887,16 @@ $ #Különleges szimbólumok#
 ~Parancs végrehajtása~@ApplyCmd@ menüben a következő különleges szimbólumokat
 használhatjuk:
 
-    #!!#       "!" karakter
-    #!#        Hosszú fájlnév, kiterjesztés nélkül
-    #!~~#       Rövid fájlnév, kiterjesztés nélkül
-    #!`#       Hosszú kiterjesztés fájlnév nélkül (ext)
-    #!`~~#      Rövid kiterjesztés fájlnév nélkül (ext)
-    #!.!#      Hosszú fájlnév, kiterjesztéssel
-    #!-!#      Rövid fájlnév, kiterjesztéssel
-    #!+!#      ^<wrap>Hasonló a !-!-hoz, de ha a hosszú fájlnév elveszett
-a parancs végrehajtása után, a FAR visszaállítja
-    #!@@!#      A fájl neve, a kijelölt fájlnevek listájával
-    #!$!#      A fájl neve, a kijelölt rövid fájlnevek listájával
-    #!&#       A kijelölt fájlok listája
-    #!&~~#      A kijelölt rövid fájlnevek listája
-    #!:#       Az aktuális meghajtó, "C:" formátumban, távoli mappáknál
-"\\\\server\\share"
-    #!\\#       Az aktuális elérési útvonal
-    #!/#       Az aktuális elérési út rövid neve
-    #!=\\#      Az aktuális elérési út, a ~szimbolikus linkeket~@HardSymLink@
+    #!!#            "!" karakter
+    #!#             Fájlnév, kiterjesztés nélkül
+    #!`#            Kiterjesztés fájlnév nélkül (ext)
+    #!.!#           Fájlnév, kiterjesztéssel
+    #!@@!# vagy #!$!#  A fájl neve, a kijelölt fájlnevek listájával
+    #!&#            A kijelölt fájlok listája
+    #!/#  vagy #!\\#   Az aktuális elérési útvonal
+    #!=/# vagy #!=\\#  Az aktuális elérési út, a ~szimbolikus linkeket~@HardSymLink@
 is figyelembe véve.
-    #!=/#      Az aktuális elérési út rövid neve,
-a ~szimbolikus linkeket~@HardSymLink@ is figyelembe véve.
+
     #!?<név>?<alapérték>!#   A parancs végrehajtásakor e szimbólum helyén
 egy felhasználói beviteli ablak jelenik meg. A <név> a beviteli mező neve, az
 <alapérték> pedig a szerkesztőmezőbe eredetileg kerülő karaktersor.

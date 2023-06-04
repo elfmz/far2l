@@ -385,6 +385,10 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	if (TypeHistory == HISTORYTYPE_DIALOG && HistoryList.Empty())
 		return 0;
 
+	SYSTEMTIME NowST{};
+	WINPORT(GetLocalTime)(&NowST);
+	bool ShowTimes = false;
+
 	while (!Done) {
 		bool IsUpdate = false;
 		HistoryMenu.DeleteItems();
@@ -399,6 +403,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						: HistoryList.Next(HistoryItem)) {
 			FARString strRecord = HistoryItem->strName;
 			strRecord.Clear();
+			FILETIME LocalFT{};
+			if (ShowTimes && WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &LocalFT)) {
+				SYSTEMTIME LocalST{};
+				if (WINPORT(FileTimeToSystemTime(&LocalFT, &LocalST))) {
+					if (NowST.wYear != LocalST.wYear) {
+						strRecord.AppendFormat(L"%04u-", LocalST.wYear);
+					}
+					if (NowST.wYear != LocalST.wYear || NowST.wMonth != LocalST.wMonth) {
+						strRecord.AppendFormat(L"%02u-", LocalST.wMonth);
+					}
+					if (NowST.wYear != LocalST.wYear
+							|| NowST.wMonth != LocalST.wMonth || NowST.wDay != LocalST.wDay) {
+						strRecord.AppendFormat(L"%02u ", LocalST.wDay);
+					}
+
+					strRecord.AppendFormat(L"%02u:%02u.%02u %lc ",
+						LocalST.wHour, LocalST.wMinute, LocalST.wSecond, BoxSymbols[BS_V1]);
+				}
+			}
 
 			if (TypeHistory == HISTORYTYPE_VIEW) {
 				strRecord+= GetTitle(HistoryItem->Type);
@@ -414,8 +437,6 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				strRecord += дату и время
 			*/
 			strRecord+= HistoryItem->strName;
-			;
-
 			if (TypeHistory != HISTORYTYPE_DIALOG)
 				ReplaceStrings(strRecord, L"&", L"&&", -1);
 
@@ -621,6 +642,13 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						IsUpdate = true;
 					}
 
+					break;
+				}
+				case KEY_CTRLT: {
+					ShowTimes = !ShowTimes;
+					HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+						HistoryMenu.SetUpdateRequired(TRUE);
+					IsUpdate = true;
 					break;
 				}
 				default:

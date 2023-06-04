@@ -138,16 +138,18 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 	}
 
 	// !& !&~  список файлов разделенных пробелом.
-	if ((!StrCmpN(CurStr, L"!&~", 3) && CurStr[3] != L'?')
-			|| (!StrCmpN(CurStr, L"!&", 2) && CurStr[2] != L'?')) {
+	if (/*remove as windows legacy (!StrCmpN(CurStr, L"!&~", 3) && CurStr[3] != L'?')
+			||*/
+		 (!StrCmpN(CurStr, L"!&", 2) && CurStr[2] != L'?')) {
 		FARString strFileNameL;
 		Panel *WPanel = PSubstData->PassivePanel ? PSubstData->AnotherPanel : PSubstData->ActivePanel;
 		DWORD FileAttrL;
 		int CntSkip = 2;
 
+		/*remove as windows legacy
 		if (CurStr[2] == L'~') {
 			CntSkip++;
-		}
+		}*/
 
 		WPanel->GetSelNameCompat(nullptr, FileAttrL);
 		int First = TRUE;
@@ -216,6 +218,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 		}
 	}
 
+	/* Remove !-!, !+!, !: as windows legacy
 	// !-!      Короткое имя файла с расширением
 	if (!StrCmpN(CurStr, L"!-!", 3) && CurStr[3] != L'?') {
 		FARString filename;
@@ -253,11 +256,13 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 		CurStr+= 2;
 		return CurStr;
 	}
+	*/
 
 	// !\       Текущий путь
 	// !/       Короткое имя текущего пути
 	// Ниже идет совмещение кода для разбора как !\ так и !/
-	if (!StrCmpN(CurStr, L"!/", 2) || !StrCmpN(CurStr, L"!=/", 3))		//! StrCmpN(CurStr,L"!\\",2) || !StrCmpN(CurStr,L"!=\\",3) ||
+	if (!StrCmpN(CurStr, L"!/", 2) || !StrCmpN(CurStr, L"!=/", 3)
+		|| !StrCmpN(CurStr,L"!\\",2) || !StrCmpN(CurStr,L"!=\\",3))
 	{
 		FARString strCurDir;
 		int RealPath = CurStr[1] == L'=' ? 1 : 0;

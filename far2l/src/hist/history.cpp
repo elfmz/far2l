@@ -66,6 +66,7 @@ History::History(enumHISTORYTYPE TypeHistory, size_t HistoryCount, const std::st
 	EnableSave(EnableSave),
 	CurrentItem(nullptr)
 {
+	ASSERT(unsigned(TypeHistory) < ARRAYSIZE(Opt.HistoryShowTimes));
 	if (*EnableSave)
 		ReadHistory();
 }
@@ -385,9 +386,9 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	if (TypeHistory == HISTORYTYPE_DIALOG && HistoryList.Empty())
 		return 0;
 
-	SYSTEMTIME NowST{};
+	FILETIME ItemFT{};
+	SYSTEMTIME NowST{}, ItemST{}, PrevST{};
 	WINPORT(GetLocalTime)(&NowST);
-	bool ShowTimes = false;
 
 	while (!Done) {
 		bool IsUpdate = false;
@@ -403,24 +404,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						: HistoryList.Next(HistoryItem)) {
 			FARString strRecord = HistoryItem->strName;
 			strRecord.Clear();
-			FILETIME LocalFT{};
-			if (ShowTimes && WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &LocalFT)) {
-				SYSTEMTIME LocalST{};
-				if (WINPORT(FileTimeToSystemTime(&LocalFT, &LocalST))) {
-					if (NowST.wYear != LocalST.wYear) {
-						strRecord.AppendFormat(L"%04u-", LocalST.wYear);
-					}
-					if (NowST.wYear != LocalST.wYear || NowST.wMonth != LocalST.wMonth) {
-						strRecord.AppendFormat(L"%02u-", LocalST.wMonth);
-					}
-					if (NowST.wYear != LocalST.wYear
-							|| NowST.wMonth != LocalST.wMonth || NowST.wDay != LocalST.wDay) {
-						strRecord.AppendFormat(L"%02u ", LocalST.wDay);
-					}
+			if (Opt.HistoryShowTimes[TypeHistory] != 2
+					&& WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &ItemFT)
+					&& WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST))) {
 
-					strRecord.AppendFormat(L"%02u:%02u.%02u %lc ",
-						LocalST.wHour, LocalST.wMinute, LocalST.wSecond, BoxSymbols[BS_V1]);
+				if (PrevST.wYear != ItemST.wYear || PrevST.wMonth != ItemST.wMonth || PrevST.wDay != ItemST.wDay) {
+					MenuItemEx DateSeparator;
+					DateSeparator.strName.Format(L"%04u-%02u-%02u",
+						(unsigned)ItemST.wYear, (unsigned)ItemST.wMonth, (unsigned)ItemST.wDay);
+					DateSeparator.Flags|= LIF_SEPARATOR;
+					HistoryMenu.AddItem(&DateSeparator);
 				}
+
+				if (Opt.HistoryShowTimes[TypeHistory] == 1) {
+					strRecord.AppendFormat(L"%02u:%02u.%02u %lc ",
+						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute,
+						(unsigned)ItemST.wSecond, BoxSymbols[BS_V1]);
+				}
+
+				PrevST = ItemST;
 			}
 
 			if (TypeHistory == HISTORYTYPE_VIEW) {
@@ -645,9 +647,11 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					break;
 				}
 				case KEY_CTRLT: {
-					ShowTimes = !ShowTimes;
+					if (++Opt.HistoryShowTimes[TypeHistory] == 3) {
+						Opt.HistoryShowTimes[TypeHistory] = 0;
+					}
 					HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
-						HistoryMenu.SetUpdateRequired(TRUE);
+					HistoryMenu.SetUpdateRequired(TRUE);
 					IsUpdate = true;
 					break;
 				}

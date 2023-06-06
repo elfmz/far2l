@@ -107,8 +107,7 @@ struct MenuItemEx
 	};
 
 	short AmpPos;	// Позиция автоназначенной подсветки
-	short Len[2];	// размеры 2-х частей
-	short Idx2;		// начало 2-й части
+	int PrefixLen;	// Length of 'grayed' unimportant prefix
 
 	int ShowPos;
 
@@ -152,9 +151,7 @@ struct MenuItemEx
 		UserDataSize = 0;
 		UserData = nullptr;
 		AmpPos = 0;
-		Len[0] = 0;
-		Len[1] = 0;
-		Idx2 = 0;
+		PrefixLen = 0;
 		ShowPos = 0;
 	}
 
@@ -170,9 +167,7 @@ struct MenuItemEx
 			UserDataSize = 0;
 			UserData = nullptr;
 			AmpPos = srcMenu.AmpPos;
-			Len[0] = srcMenu.Len[0];
-			Len[1] = srcMenu.Len[1];
-			Idx2 = srcMenu.Idx2;
+			PrefixLen = srcMenu.PrefixLen;
 			ShowPos = srcMenu.ShowPos;
 		}
 

@@ -713,6 +713,12 @@ void Help::DrawWindowFrame()
 	TruncStrFromEnd(strHelpTitleBuf, X2 - X1 - 3);
 	GotoXY(X1 + (X2 - X1 + 1 - (int)strHelpTitleBuf.GetLength() - 2) / 2, Y1);
 	FS << L" " << strHelpTitleBuf << L" ";
+
+	// Bottom notification about BETA & windows legacy
+	strHelpTitleBuf = L"(FAR2L Beta: some topics are not quite relevant and contain Windows legacy)";
+	TruncStrFromEnd(strHelpTitleBuf, X2 - X1 - 3);
+	GotoXY(X1 + (X2 - X1 + 1 - (int)strHelpTitleBuf.GetLength() - 2) / 2, Y2);
+	FS << L" " << strHelpTitleBuf << L" ";
 }
 
 /*

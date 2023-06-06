@@ -458,6 +458,8 @@ struct Options
 	int FoldersHistoryCount;
 	int DialogsHistoryCount;
 
+	BYTE HistoryShowTimes[8];
+
 	FindFileOptions FindOpt;
 
 	int LeftHeightDecrement;

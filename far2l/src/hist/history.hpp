@@ -40,7 +40,7 @@ class VMenu;
 
 enum enumHISTORYTYPE
 {
-	HISTORYTYPE_CMD,
+	HISTORYTYPE_CMD = 0,
 	HISTORYTYPE_FOLDER,
 	HISTORYTYPE_VIEW,
 	HISTORYTYPE_DIALOG
@@ -105,8 +105,7 @@ public:
 	~History();
 
 public:
-	void
-	AddToHistory(const wchar_t *Str, int Type = 0, const wchar_t *Prefix = nullptr, bool SaveForbid = false);
+	void AddToHistory(const wchar_t *Str, int Type = 0, const wchar_t *Prefix = nullptr, bool SaveForbid = false);
 	static bool ReadLastItem(const char *RegKey, FARString &strStr);
 	int Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type);
 	int Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr);

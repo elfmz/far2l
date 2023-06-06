@@ -655,6 +655,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
 					HistoryMenu.SetUpdateRequired(TRUE);
 					IsUpdate = true;
+					CurrentItem = CurrentRecord;
 					break;
 				}
 				default:

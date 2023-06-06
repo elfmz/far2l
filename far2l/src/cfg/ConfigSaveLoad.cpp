@@ -545,8 +545,6 @@ public:
 	{true,  NSecVMenu, "HistShowTimes", ARRAYSIZE(Opt.HistoryShowTimes), Opt.HistoryShowTimes, nullptr},
 };
 
-//(bool save, const char *section, const char *key, WORD size, BYTE *data_bin, const BYTE *def_bin)};
-
 ///////////////////////////////////////////////////////////////////////////////////////
 
 static void SanitizeXlat()

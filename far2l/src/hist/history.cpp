@@ -403,6 +403,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						? HistoryList.Prev(HistoryItem)
 						: HistoryList.Next(HistoryItem)) {
 			FARString strRecord = HistoryItem->strName;
+			int StrPrefixLen = 0;
 			strRecord.Clear();
 			if (Opt.HistoryShowTimes[TypeHistory] != 2
 					&& WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &ItemFT)
@@ -420,8 +421,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					strRecord.AppendFormat(L"%02u:%02u.%02u %lc ",
 						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute,
 						(unsigned)ItemST.wSecond, BoxSymbols[BS_V1]);
+					StrPrefixLen = strRecord.GetLength();
 				}
-
 				PrevST = ItemST;
 			}
 
@@ -445,6 +446,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			MenuItem.Clear();
 			MenuItem.strName = strRecord;
 			MenuItem.SetCheck(HistoryItem->Lock ? 1 : 0);
+			MenuItem.PrefixLen = StrPrefixLen;
 
 			if (!SetUpMenuPos)
 				MenuItem.SetSelect(

@@ -433,9 +433,7 @@ int VMenu::AddItem(const MenuItemEx *NewItem, int PosAdd)
 	_SetUserData(Item[PosAdd], NewItem->UserData, NewItem->UserDataSize);
 	// Item[PosAdd]->AmpPos = NewItem->AmpPos;
 	Item[PosAdd]->AmpPos = -1;
-	Item[PosAdd]->Len[0] = NewItem->Len[0];
-	Item[PosAdd]->Len[1] = NewItem->Len[1];
-	Item[PosAdd]->Idx2 = NewItem->Idx2;
+	Item[PosAdd]->PrefixLen = NewItem->PrefixLen;
 	// Item[PosAdd]->ShowPos = NewItem->ShowPos;
 	Item[PosAdd]->ShowPos = 0;
 
@@ -2012,8 +2010,9 @@ void VMenu::AssignHighlights(int Reverse)
 	for (size_t I = 0; I < ShuffledItem.size();) {
 		MenuItemEx *ItemI = ShuffledItem[I];
 		wchar_t Ch = 0;
-		int ShowPos = HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-		const wchar_t *Name = ItemI->strName.CPtr() + ShowPos;
+		const int ScanPos = std::max(ItemI->PrefixLen,
+			HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND)));
+		const wchar_t *Name = ItemI->strName.CPtr() + ScanPos;
 		ItemI->AmpPos = -1;
 		// TODO: проверка на LIF_HIDDEN
 		const wchar_t *ChPtr = wcschr(Name, L'&');
@@ -2030,7 +2029,7 @@ void VMenu::AssignHighlights(int Reverse)
 		}
 
 		if (Ch && Used.Set(Ch)) {
-			ItemI->AmpPos = static_cast<short>(ChPtr - Name) + static_cast<short>(ShowPos);
+			ItemI->AmpPos = static_cast<short>(ChPtr - Name) + static_cast<short>(ScanPos);
 			ShuffledItem.erase(ShuffledItem.begin() + I);
 		} else
 			++I;
@@ -2044,8 +2043,9 @@ void VMenu::AssignHighlights(int Reverse)
 		size_t FailedsCount = 0;
 		for (size_t I = 0; I < ShuffledItem.size(); ++I) {
 			MenuItemEx *ItemI = ShuffledItem[I];
-			int ShowPos = HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-			const wchar_t *Name = ItemI->strName.CPtr() + ShowPos;
+			const int ScanPos = std::max(ItemI->PrefixLen,
+				HiFindRealPos(ItemI->strName, ItemI->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND)));
+			const wchar_t *Name = ItemI->strName.CPtr() + ScanPos;
 			const wchar_t *ChPtr = wcschr(Name, L'&');
 
 			if (!ChPtr || CheckFlags(VMENU_SHOWAMPERSAND)) {
@@ -2055,7 +2055,7 @@ void VMenu::AssignHighlights(int Reverse)
 					wchar_t Ch = Name[J];
 
 					if ((Ch == L'&' || IsAlpha(Ch) || (Ch >= L'0' && Ch <= L'9')) && Used.Set(Ch)) {
-						ItemI->AmpPos = J + ShowPos;
+						ItemI->AmpPos = J + ScanPos;
 						break;
 					}
 				}

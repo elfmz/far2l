@@ -395,7 +395,6 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
 		HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
-
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem =
 						TypeHistory == HISTORYTYPE_DIALOG ? HistoryList.Last() : HistoryList.First();
@@ -418,9 +417,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				}
 
 				if (Opt.HistoryShowTimes[TypeHistory] == 1) {
-					strRecord.AppendFormat(L"%02u:%02u.%02u %lc ",
-						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute,
-						(unsigned)ItemST.wSecond, BoxSymbols[BS_V1]);
+					strRecord.AppendFormat(L"%02u:%02u.%02u ",
+						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
 					StrPrefixLen = strRecord.GetLength();
 				}
 				PrevST = ItemST;
@@ -448,9 +446,12 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			MenuItem.SetCheck(HistoryItem->Lock ? 1 : 0);
 			MenuItem.PrefixLen = StrPrefixLen;
 
-			if (!SetUpMenuPos)
-				MenuItem.SetSelect(
-						CurrentItem == HistoryItem || (!CurrentItem && HistoryItem == HistoryList.Last()));
+			if (CurrentItem == HistoryItem || (!CurrentItem && HistoryItem == HistoryList.Last())) {
+				MenuItem.SetSelect(true);
+				if (SetUpMenuPos) {
+					Pos.SelectPos = HistoryMenu.GetItemCount();
+				}
+			}
 
 			// NB: here is really should be used sizeof(HistoryItem), not sizeof(*HistoryItem)
 			// cuz sizeof(void *) has special meaning in SetUserData!
@@ -469,8 +470,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			HistoryMenu.SetPosition(-1, -1, 0, 0);
 
 		if (SetUpMenuPos) {
-			Pos.SelectPos =
-					Pos.SelectPos < (int)HistoryList.Count() ? Pos.SelectPos : (int)HistoryList.Count() - 1;
+			Pos.SelectPos = Min(Pos.SelectPos, HistoryMenu.GetItemCount() - 1);
 			Pos.TopPos = Min(Pos.TopPos, HistoryMenu.GetItemCount() - Height);
 			HistoryMenu.SetSelectPos(&Pos);
 			SetUpMenuPos = false;
@@ -587,9 +587,9 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_NUMPAD0: {
 					if (HistoryMenu.GetItemCount() /* > 1*/) {
 						CurrentItem = CurrentRecord;
-						CurrentItem->Lock = CurrentItem->Lock ? false : true;
+						CurrentItem->Lock = !CurrentItem->Lock;
 						HistoryMenu.Hide();
-						ResetPosition();
+//						ResetPosition();
 						SaveHistory();
 						HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
 						HistoryMenu.SetUpdateRequired(TRUE);
@@ -604,8 +604,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					if (HistoryMenu.GetItemCount() /* > 1*/) {
 						if (!CurrentRecord->Lock) {
 							HistoryMenu.Hide();
-							HistoryList.Delete(CurrentRecord);
-							ResetPosition();
+							CurrentItem = HistoryList.Delete(CurrentRecord);
+							//ResetPosition();
 							SaveHistory();
 							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
 							HistoryMenu.SetUpdateRequired(TRUE);
@@ -655,6 +655,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
 					HistoryMenu.SetUpdateRequired(TRUE);
 					IsUpdate = true;
+					SetUpMenuPos = true;
 					CurrentItem = CurrentRecord;
 					break;
 				}

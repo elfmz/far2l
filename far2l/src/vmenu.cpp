@@ -1803,35 +1803,17 @@ void VMenu::ShowMenu(bool IsParent)
 				else
 					GotoXY(X1, Y);
 
-				if ((Item[I]->Flags & LIF_SELECTED))
-					SetColor(VMenu::Colors
-									[Item[I]->Flags & LIF_GRAYED ? VMenuColorSelGrayed : VMenuColorSelected]);
-				else
-					SetColor(VMenu::Colors[Item[I]->Flags & LIF_DISABLE
-									? VMenuColorDisabled
-									: (Item[I]->Flags & LIF_GRAYED ? VMenuColorGrayed : VMenuColorText)]);
+				FARString strMenuLine, strMenuPrefix;
 
-				FARString strMenuLine;
-				wchar_t CheckMark = L' ';
-
-				if (Item[I]->Flags & LIF_CHECKED) {
-					if (!(Item[I]->Flags & 0x0000FFFF))
-						CheckMark = 0x221A;
-					else
-						CheckMark = static_cast<wchar_t>(Item[I]->Flags & 0x0000FFFF);
-				}
-
-				strMenuLine.Append(CheckMark);
-				strMenuLine.Append(L' ');	// left scroller (<<) placeholder
 				int ShowPos =
 						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
 				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
-				int strMItemPtrLen;
+				const int strMItemPtrLen = CheckFlags(VMENU_SHOWAMPERSAND)
+					? static_cast<int>(strMItemPtr.CellsCount())
+					: HiStrCellsCount(strMItemPtr);
 
-				if (CheckFlags(VMENU_SHOWAMPERSAND))
-					strMItemPtrLen = static_cast<int>(strMItemPtr.CellsCount());
-				else
-					strMItemPtrLen = HiStrCellsCount(strMItemPtr);
+				const int strMItemPtrPrefixLen =
+					std::min(std::max(Item[I]->PrefixLen - ShowPos, 0), strMItemPtrLen);
 
 				// fit menu FARString into available space
 				if (strMItemPtrLen > MaxLineWidth)
@@ -1851,12 +1833,32 @@ void VMenu::ShowMenu(bool IsParent)
 					}
 				}
 
-				strMenuLine.Append(strMItemPtr);
+				wchar_t CheckMark[2] = {L' ', 0}; // checkmark placeholder
+				if (Item[I]->Flags & LIF_CHECKED) {
+					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF) ? Item[I]->Flags & 0xFFFF : 0x221A);
+				}
 
+				int Col;
+				if ((Item[I]->Flags & LIF_SELECTED))
+					Col = Colors[Item[I]->Flags & LIF_GRAYED ? VMenuColorSelGrayed : VMenuColorSelected];
+				else
+					Col = Colors[Item[I]->Flags & LIF_DISABLE
+							? VMenuColorDisabled
+							: (Item[I]->Flags & LIF_GRAYED ? VMenuColorGrayed : VMenuColorText)];
+
+				SetColor(Col);
+				Text(CheckMark);
 				// табуляции меняем только при показе!!!
 				// для сохранение оригинальной строки!!!
 				ReplaceTabsBySpaces(strMenuLine, 1);
-				int Col;
+				if (strMItemPtrPrefixLen) {
+					SetColor(VMenu::Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorSelGrayed : VMenuColorGrayed]);
+					FARString strPrefix(strMItemPtr, std::min(strMItemPtrPrefixLen, MaxLineWidth));
+					Text(strPrefix);
+					strMItemPtr.Remove(0, strPrefix.GetLength());
+					SetColor(Col);
+				}
+				strMenuLine.Append(strMItemPtr);
 
 				if (!(Item[I]->Flags & LIF_DISABLE)) {
 					if (Item[I]->Flags & LIF_SELECTED)

@@ -249,8 +249,13 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 		if (ItemCanHaveFocus(Item[Pos]->Flags))
 			break;
 
-		if (Pass)
+		if (Pos == 0) {
+			TopPos = 0;
+		}
+
+		if (Pass) {
 			return SelectPos;
+		}
 
 		Pos+= Direct;
 
@@ -1430,7 +1435,7 @@ void VMenu::Show()
 			bool HasSubMenus = ItemSubMenusCount > 0;
 
 			if (X1 == -1) {
-				X1 = (ScrX - MaxLength - 4 - (HasSubMenus ? 2 : 0)) / 2;
+				X1 = (ScrX - MaxLength - 3 - (HasSubMenus ? 2 : 0)) / 2;
 				AutoCenter = true;
 			}
 
@@ -1438,12 +1443,12 @@ void VMenu::Show()
 				X1 = 2;
 
 			if (X2 <= 0)
-				X2 = X1 + MaxLength + 4 + (HasSubMenus ? 2 : 0);
+				X2 = X1 + MaxLength + 3 + (HasSubMenus ? 2 : 0);
 
 			if (!AutoCenter
-					&& X2 > ScrX - 4 + 2 * (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX)) {
-				X1+= ScrX - 4 - X2;
-				X2 = ScrX - 4;
+					&& X2 > ScrX - 3 + 2 * (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX)) {
+				X1+= ScrX - 3 - X2;
+				X2 = ScrX - 3;
 
 				if (X1 < 2) {
 					X1 = 2;
@@ -1527,6 +1532,11 @@ void VMenu::DisplayObject()
 			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
 	}
 
+	ShowMenu(true, true);
+}
+
+void VMenu::DrawEdges()
+{
 	if (!CheckFlags(VMENU_DISABLEDRAWBACKGROUND) && !CheckFlags(VMENU_LISTBOX)) {
 		if (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX) {
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
@@ -1552,11 +1562,6 @@ void VMenu::DisplayObject()
 
 		// SetFlags(VMENU_DISABLEDRAWBACKGROUND);
 	}
-
-//	if (!CheckFlags(VMENU_LISTBOX))
-//		DrawTitles();
-
-	ShowMenu(true, true);
 }
 
 void VMenu::DrawTitles()
@@ -1568,9 +1573,11 @@ void VMenu::DrawTitles()
 
 	FARString strDisplayTitle = strTitle;
 	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount) {
-		strDisplayTitle+= L' ';
-		strDisplayTitle+= BoxSymbols[BS_H1];
-		strDisplayTitle+= L' ';
+		if (!strDisplayTitle.IsEmpty()) {
+			strDisplayTitle+= L' ';
+			strDisplayTitle+= BoxSymbols[BS_H1];
+			strDisplayTitle+= L' ';
+		}
 		strDisplayTitle+= Item[WrappedSeparatorIndex]->strName;
 	}
 
@@ -1610,7 +1617,7 @@ void VMenu::DrawTitles()
 	}
 }
 
-void VMenu::ShowMenu(bool IsParent, bool ForceTitleRedraw)
+void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 {
 	CriticalSectionLock Lock(CS);
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1739,6 +1746,11 @@ void VMenu::ShowMenu(bool IsParent, bool ForceTitleRedraw)
 		if ((Item[I]->Flags & LIF_SEPARATOR) != 0 && ItemIsVisible(Item[I]->Flags))
 			WrappedSeparatorIndex = I;
 	}
+
+	if (ForceFrameRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) {
+		DrawEdges();
+	}
+
 
 	for (int Y = Y1 + ((BoxType != NO_BOX) ? 1 : 0), I = TopPos;
 			Y < ((BoxType != NO_BOX) ? Y2 : Y2 + 1); Y++, I++) {
@@ -1944,7 +1956,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceTitleRedraw)
 			ScrollBarEx(X2, Y1, Y2 - Y1 + 1, VisualTopPos, GetShowItemCount());
 	}
 
-	if ( (ForceTitleRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) && !CheckFlags(VMENU_LISTBOX)) {
+	if ( (ForceFrameRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) && !CheckFlags(VMENU_LISTBOX)) {
 		DrawTitles();
 	}
 }

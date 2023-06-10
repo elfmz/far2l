@@ -1730,8 +1730,13 @@ void Dialog::ShowDialog(unsigned ID)
 					TruncStrFromEnd(strStr, CW - 2);	// 5 ???
 					LenText = LenStrItem(I, strStr);
 
-					if (LenText < CW - 2) {
+					if (LenText < CW - 2 && !strStr.Begins(L' ') ) {
 						strStr.Insert(0, L' ');
+						LenText = LenStrItem(I, strStr);
+					}
+
+					if (LenText < CW - 2 && !strStr.Ends(L' ') ) { // пробел после текста заголовка и рамкой
+						strStr.Append(L' ');
 						LenText = LenStrItem(I, strStr);
 					}
 

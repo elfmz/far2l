@@ -266,7 +266,8 @@ private:
 
 private:
 	virtual void DisplayObject();
-	void ShowMenu(bool IsParent, bool ForceTitleRedraw);
+	void ShowMenu(bool IsParent, bool ForceFrameRedraw);
+	void DrawEdges();
 	void DrawTitles();
 	int GetItemPosition(int Position);
 	static int _SetUserData(MenuItemEx *PItem, const void *Data, int Size);

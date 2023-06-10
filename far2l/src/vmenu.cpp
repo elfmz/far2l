@@ -1735,7 +1735,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceTitleRedraw)
 
 	auto PrevWrappedSeparatorIndex = WrappedSeparatorIndex;
 	WrappedSeparatorIndex = -1;
-	for (int I = 0; I <= TopPos && I < ItemCount; ++I) {
+	for (int I = 0; I < TopPos && I < ItemCount; ++I) {
 		if ((Item[I]->Flags & LIF_SEPARATOR) != 0 && ItemIsVisible(Item[I]->Flags))
 			WrappedSeparatorIndex = I;
 	}

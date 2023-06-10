@@ -89,6 +89,7 @@ VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 	ClearFlags(VMENU_SHOWAMPERSAND | VMENU_MOUSEDOWN);
 	GetCursorType(PrevCursorVisible, PrevCursorSize);
 	bRightBtnPressed = false;
+	WrappedSeparatorIndex = -1;
 
 	// инициализируем перед тем, как добавлять айтема
 	UpdateMaxLengthFromTitles();
@@ -748,7 +749,7 @@ int64_t VMenu::VMProcess(int OpCode, void *vParam, int64_t iParam)
 					if (Res) {
 						SetSelectPos(I, 1);
 
-						ShowMenu(true);
+						ShowMenu(true, false);
 
 						return GetVisualPos(SelectPos) + 1;
 					}
@@ -925,7 +926,7 @@ int VMenu::ProcessKey(int Key)
 		case KEY_CTRLPGUP:
 		case KEY_CTRLNUMPAD9: {
 			SetSelectPos(0, 1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_END:
@@ -935,7 +936,7 @@ int VMenu::ProcessKey(int Key)
 		case KEY_CTRLPGDN:
 		case KEY_CTRLNUMPAD3: {
 			SetSelectPos(ItemCount - 1, -1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_PGUP:
@@ -948,7 +949,7 @@ int VMenu::ProcessKey(int Key)
 				p = 0;
 
 			SetSelectPos(p, 1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_PGDN:
@@ -962,7 +963,7 @@ int VMenu::ProcessKey(int Key)
 				p = ItemCount - 1;
 
 			SetSelectPos(p, -1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_ALTHOME:
@@ -986,7 +987,7 @@ int VMenu::ProcessKey(int Key)
 				}
 			}
 
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_ALTLEFT:
@@ -1005,7 +1006,7 @@ int VMenu::ProcessKey(int Key)
 					NeedRedraw = true;
 
 			if (NeedRedraw)
-				ShowMenu(true);
+				ShowMenu(true, false);
 
 			break;
 		}
@@ -1015,7 +1016,7 @@ int VMenu::ProcessKey(int Key)
 		case KEY_NUMPAD6 | KEY_ALT | KEY_SHIFT: {
 			if (ShiftItemShowPos(SelectPos,
 						(Key == KEY_ALTSHIFTLEFT || Key == (KEY_NUMPAD4 | KEY_ALT | KEY_SHIFT)) ? -1 : 1))
-				ShowMenu(true);
+				ShowMenu(true, false);
 
 			break;
 		}
@@ -1025,7 +1026,7 @@ int VMenu::ProcessKey(int Key)
 		case KEY_UP:
 		case KEY_NUMPAD8: {
 			SetSelectPos(SelectPos - 1, -1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_MSWHEEL_DOWN:	// $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
@@ -1034,7 +1035,7 @@ int VMenu::ProcessKey(int Key)
 		case KEY_DOWN:
 		case KEY_NUMPAD2: {
 			SetSelectPos(SelectPos + 1, 1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 			break;
 		}
 		case KEY_CTRLALTF: {
@@ -1125,7 +1126,7 @@ int VMenu::ProcessKey(int Key)
 			if (ParentDialog
 					&& SendDlgMessage((HANDLE)ParentDialog, DN_LISTHOTKEY, DialogItemID, SelectPos)) {
 				UpdateItemFlags(OldSelectPos, Item[OldSelectPos]->Flags | LIF_SELECTED);
-				ShowMenu(true);
+				ShowMenu(true, false);
 				EndLoop = FALSE;
 				break;
 			}
@@ -1189,7 +1190,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				if (SelectPos >= 0 && GetVisualPos(SelectPos))
 					ProcessKey(KEY_UP);
 
-				ShowMenu(true);
+				ShowMenu(true, false);
 			}
 
 			return TRUE;
@@ -1201,7 +1202,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				if (SelectPos >= 0 && GetVisualPos(SelectPos) != GetShowItemCount() - 1)
 					ProcessKey(KEY_DOWN);
 
-				ShowMenu(true);
+				ShowMenu(true, false);
 			}
 
 			return TRUE;
@@ -1227,7 +1228,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 				SetSelectPos(VisualPosToReal(MsPos), Delta);
 
-				ShowMenu(true);
+				ShowMenu(true, false);
 			}
 
 			return TRUE;
@@ -1275,7 +1276,7 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					SetSelectPos(MsPos, 1);
 				}
 
-				ShowMenu(true);
+				ShowMenu(true, false);
 			}
 
 			/*
@@ -1552,10 +1553,10 @@ void VMenu::DisplayObject()
 		// SetFlags(VMENU_DISABLEDRAWBACKGROUND);
 	}
 
-	if (!CheckFlags(VMENU_LISTBOX))
-		DrawTitles();
+//	if (!CheckFlags(VMENU_LISTBOX))
+//		DrawTitles();
 
-	ShowMenu(true);
+	ShowMenu(true, true);
 }
 
 void VMenu::DrawTitles()
@@ -1565,9 +1566,15 @@ void VMenu::DrawTitles()
 	int MaxTitleLength = X2 - X1 - 2;
 	int WidthTitle;
 
-	if (!strTitle.IsEmpty() || bFilterEnabled) {
-		FARString strDisplayTitle = strTitle;
+	FARString strDisplayTitle = strTitle;
+	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount) {
+		strDisplayTitle+= L' ';
+		strDisplayTitle+= BoxSymbols[BS_H1];
+		strDisplayTitle+= L' ';
+		strDisplayTitle+= Item[WrappedSeparatorIndex]->strName;
+	}
 
+	if (!strDisplayTitle.IsEmpty() || bFilterEnabled) {
 		if (bFilterEnabled) {
 			if (bFilterLocked || strFilter.IsEmpty())
 				strDisplayTitle+= L" ";
@@ -1603,7 +1610,7 @@ void VMenu::DrawTitles()
 	}
 }
 
-void VMenu::ShowMenu(bool IsParent)
+void VMenu::ShowMenu(bool IsParent, bool ForceTitleRedraw)
 {
 	CriticalSectionLock Lock(CS);
 	ChangePriority ChPriority(ChangePriority::NORMAL);
@@ -1630,7 +1637,7 @@ void VMenu::ShowMenu(bool IsParent)
 	if (BoxType != NO_BOX)
 		MaxLineWidth-= 2;	// frame
 
-	MaxLineWidth-= 2;		// check mark + left horz. scroll
+	MaxLineWidth-= 1;		// check mark
 
 	if (!CheckFlags(VMENU_COMBOBOX | VMENU_LISTBOX) && HasSubMenus)
 		MaxLineWidth-= 2;	// sub menu arrow
@@ -1669,7 +1676,7 @@ void VMenu::ShowMenu(bool IsParent)
 		if (BoxType != NO_BOX)
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
-		DrawTitles();
+//		DrawTitles();
 	}
 
 	wchar_t BoxChar[2] = {0};
@@ -1726,8 +1733,15 @@ void VMenu::ShowMenu(bool IsParent)
 
 	FARString strTmpStr;
 
-	for (int Y = Y1 + ((BoxType != NO_BOX) ? 1 : 0), I = TopPos; Y < ((BoxType != NO_BOX) ? Y2 : Y2 + 1);
-			Y++, I++) {
+	auto PrevWrappedSeparatorIndex = WrappedSeparatorIndex;
+	WrappedSeparatorIndex = -1;
+	for (int I = 0; I <= TopPos && I < ItemCount; ++I) {
+		if ((Item[I]->Flags & LIF_SEPARATOR) != 0 && ItemIsVisible(Item[I]->Flags))
+			WrappedSeparatorIndex = I;
+	}
+
+	for (int Y = Y1 + ((BoxType != NO_BOX) ? 1 : 0), I = TopPos;
+			Y < ((BoxType != NO_BOX) ? Y2 : Y2 + 1); Y++, I++) {
 		GotoXY(X1, Y);
 
 		if (I < ItemCount) {
@@ -1762,22 +1776,24 @@ void VMenu::ShowMenu(bool IsParent)
 								Correction = 1;
 
 							if (NextItem == BoxSymbols[BS_V1])
-								Ptr[J - Correction + (BoxType == NO_BOX ? 1 : 2)] = BoxSymbols[BS_C_H1V1];
+								Ptr[J - Correction + (BoxType == NO_BOX ? 0 : 1)] = BoxSymbols[BS_C_H1V1];
 							else
-								Ptr[J - Correction + (BoxType == NO_BOX ? 1 : 2)] = BoxSymbols[BS_B_H1V1];
+								Ptr[J - Correction + (BoxType == NO_BOX ? 0 : 1)] = BoxSymbols[BS_B_H1V1];
 						} else if (NextItem == BoxSymbols[BS_V1]) {
 							int Correction = 0;
 
 							if (!CheckFlags(VMENU_SHOWAMPERSAND) && wmemchr(Item[I + 1]->strName, L'&', J))
 								Correction = 1;
 
-							Ptr[J - Correction + (BoxType == NO_BOX ? 1 : 2)] = BoxSymbols[BS_T_H1V1];
+							Ptr[J - Correction + (BoxType == NO_BOX ? 0 : 1)] = BoxSymbols[BS_T_H1V1];
 						}
 					}
 				}
 
 				SetColor(Colors[VMenuColorSeparator]);
-				BoxText(TmpStr, FALSE);
+
+				strTmpStr.ReleaseBuffer();
+				BoxText(strTmpStr, FALSE);
 
 				if (!Item[I]->strName.IsEmpty()) {
 					int ItemWidth = (int)Item[I]->strName.GetLength();
@@ -1789,7 +1805,6 @@ void VMenu::ShowMenu(bool IsParent)
 					FS << L" " << fmt::LeftAlign() << fmt::Size(ItemWidth) << Item[I]->strName << L" ";
 				}
 
-				strTmpStr.ReleaseBuffer();
 			} else {
 				if (BoxType != NO_BOX) {
 					SetColor(Colors[VMenuColorBox]);
@@ -1898,7 +1913,7 @@ void VMenu::ShowMenu(bool IsParent)
 				}
 
 				if (strMItemPtrLen > MaxLineWidth) {
-					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + 2 + MaxLineWidth, Y);
+					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + 1 + MaxLineWidth, Y);
 					BoxText(L'\xbb');	// '>>'
 				}
 			}
@@ -1927,6 +1942,10 @@ void VMenu::ShowMenu(bool IsParent)
 			ScrollBarEx(X2, Y1 + 1, Y2 - Y1 - 1, VisualTopPos, GetShowItemCount());
 		else
 			ScrollBarEx(X2, Y1, Y2 - Y1 + 1, VisualTopPos, GetShowItemCount());
+	}
+
+	if ( (ForceTitleRedraw || PrevWrappedSeparatorIndex != WrappedSeparatorIndex) && !CheckFlags(VMENU_LISTBOX)) {
+		DrawTitles();
 	}
 }
 
@@ -2102,7 +2121,7 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 				&& ((!Type && CurItem->AccelKey && Key == CurItem->AccelKey)
 						|| (Type && IsKeyHighlighted(CurItem->strName, Key, Translate, CurItem->AmpPos)))) {
 			SetSelectPos(I, 1);
-			ShowMenu(true);
+			ShowMenu(true, false);
 
 			if ((!ParentDialog || CheckFlags(VMENU_COMBOBOX)) && ItemCanBeEntered(Item[SelectPos]->Flags)) {
 				Modal::ExitCode = I;

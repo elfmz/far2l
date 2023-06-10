@@ -262,10 +262,11 @@ private:
 
 	int MaxLineWidth;
 	bool bRightBtnPressed;
+	int WrappedSeparatorIndex;
 
 private:
 	virtual void DisplayObject();
-	void ShowMenu(bool IsParent = false);
+	void ShowMenu(bool IsParent, bool ForceTitleRedraw);
 	void DrawTitles();
 	int GetItemPosition(int Position);
 	static int _SetUserData(MenuItemEx *PItem, const void *Data, int Size);
@@ -295,7 +296,7 @@ public:
 
 	virtual ~VMenu();
 
-	void FastShow() { ShowMenu(); }
+	void FastShow() { ShowMenu(false, false); }
 	virtual void Show();
 	virtual void Hide();
 	void ResetCursor();

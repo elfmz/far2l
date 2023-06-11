@@ -1402,7 +1402,14 @@ int Viewer::ProcessKey(int Key)
 					break;
 			}
 
-			VM.CodePage = VM.CodePage == WINPORT(GetOEMCP)() ? WINPORT(GetACP)() : WINPORT(GetOEMCP)();
+			//VM.CodePage = VM.CodePage == WINPORT(GetOEMCP)() ? WINPORT(GetACP)() : WINPORT(GetOEMCP)();
+			if (VM.CodePage == CP_UTF8)
+				VM.CodePage = WINPORT(GetACP)();
+			else if (VM.CodePage == WINPORT(GetACP)() )
+				VM.CodePage = WINPORT(GetOEMCP)();
+			else // if (VM.CodePage == WINPORT(GetOEMCP)() )
+				VM.CodePage = VM.Hex ? WINPORT(GetACP)() : CP_UTF8; // STUB - для hex UTF8/UTF32 сейчас не работает
+
 			ChangeViewKeyBar();
 			Show();
 			//			LastSelPos=FilePos;
@@ -2176,10 +2183,12 @@ void Viewer::ChangeViewKeyBar()
 		else
 			ViewKeyBar->Change(Msg::ViewF4, 3);
 
-		if (VM.CodePage != WINPORT(GetOEMCP)())
+		if (VM.CodePage == CP_UTF8)
+			ViewKeyBar->Change(Msg::ViewF8, 7);
+		else if (VM.CodePage == WINPORT(GetACP)())
 			ViewKeyBar->Change(Msg::ViewF8DOS, 7);
 		else
-			ViewKeyBar->Change(Msg::ViewF8, 7);
+			ViewKeyBar->Change(VM.Hex ? Msg::ViewF8 : Msg::ViewF8UTF8, 7); // STUB - для hex UTF8/UTF32 сейчас не работает
 
 		if (VM.Processed)
 			ViewKeyBar->Change(Msg::ViewF5Raw, 4);

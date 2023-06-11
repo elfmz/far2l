@@ -2277,7 +2277,7 @@ segítségével)
     #F7#                 ~Keresés~@ViewerSearch@
     #Shift-F7, Szóköz#   Tovább keres
     #Alt-F7#             Tovább keres, de visszafelé
-    #F8#                 OEM/ANSI kódlap váltó
+    #F8#                 ~ANSI/OEM~@CodePagesSet@/UTF8 kódlap váltó
     #Shift-F8#           Kódlap kiválasztása
     #Alt-F8#             ~Ugrás~@ViewerGotoPos@ a jelenlegi
 szövegpozícióból másik pozícióba
@@ -2489,7 +2489,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #Ctrl-F7#                 ~Keresés és csere~@EditorSearch@
    #Shift-F7#                Keresés és csere folytatása
    #Alt-F7#                  Keresés és csere folytatása, visszafelé
-   #F8#                      OEM/ANSI kódlap váltó
+   #F8#                      ~ANSI/OEM~@CodePagesSet@/UTF8 kódlap váltó
    #Shift-F8#                Kódlap kiválasztása
    #Alt-F8#                  ~Ugrás~@EditorGotoPos@ megadott sorra és oszlopra
    #Alt-F9#                  A FAR konzolablak méretének átváltása
@@ -2652,6 +2652,12 @@ szerkesztő másik példányával) a szerkesztés közben megváltoztatta a fáj
 megnyitott példány aktuális állapota írja felül és a külső program által
 végrehajtott összes módosítás elvész.
 
+
+@CodePagesSet
+$ #ANSI and OEM codepage setting
+  Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
+  #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
+  or, if its absence, by environment variable #LC_CTYPE#
 
 @DriveDlg
 $ #Meghajtóváltás (Meghajtók menü)#

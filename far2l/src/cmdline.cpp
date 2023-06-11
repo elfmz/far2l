@@ -205,6 +205,30 @@ std::string CommandLine::GetConsoleLog(bool colored)
 	return histfile;
 }
 
+void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir)
+{
+	if (SelectType == 2)
+		CtrlObject->FolderHistory->SetAddMode(false, 2, true);
+
+	// пусть плагин сам прыгает... ;-)
+	Panel *Panel = CtrlObject->Cp()->ActivePanel;
+
+	if (SelectType == 6)
+		Panel = CtrlObject->Cp()->GetAnotherPanel(Panel);
+
+	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel)) {
+		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strDir, FALSE)) {
+			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
+			// restore current directory to active panel path
+			if (SelectType == 6) {
+				CtrlObject->Cp()->ActivePanel->SetCurPath();
+			}
+			Panel->Redraw();
+			CtrlObject->FolderHistory->SetAddMode(true, 2, true);
+		}
+	}
+}
+
 int CommandLine::ProcessKey(int Key)
 {
 	const wchar_t *PStr;
@@ -335,7 +359,15 @@ int CommandLine::ProcessKey(int Key)
 			// $ 19.09.2000 SVS - При выборе из History (по Alt-F8) плагин не получал управление!
 			int SelectType = CtrlObject->CmdHistory->Select(Msg::HistoryTitle, L"History", strStr, Type);
 			// BUGBUG, magic numbers
-			if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {
+			if (SelectType == 8) {
+				size_t p = 0;
+				if (strStr.Pos(p, L'\n')) {
+					ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p));
+					strStr.Remove(0, p + 1);
+					SetString(strStr);
+				}
+
+			} else if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {
 				if (SelectType < 3 || SelectType == 7) {
 					CmdStr.DisableAC();
 				}
@@ -404,32 +436,7 @@ int CommandLine::ProcessKey(int Key)
 				6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
 			*/
 			if (SelectType == 1 || SelectType == 2 || SelectType == 6) {
-				if (SelectType == 2)
-					CtrlObject->FolderHistory->SetAddMode(false, 2, true);
-
-				// пусть плагин сам прыгает... ;-)
-				Panel *Panel = CtrlObject->Cp()->ActivePanel;
-
-				if (SelectType == 6)
-					Panel = CtrlObject->Cp()->GetAnotherPanel(Panel);
-
-				/*
-					Type==1 - плагиновый путь
-					Type==0 - обычный путь
-					если путь плагиновый то сначала попробуем запустить его (а вдруг там префикс)
-					ну а если путь не плагиновый то запускать его точно не надо
-				*/
-				if (!Type || !CtrlObject->Plugins.ProcessCommandLine(strStr, Panel)) {
-					if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strStr, FALSE)) {
-						Panel->SetCurDir(strStr, Type ? FALSE : TRUE);
-						// restore current directory to active panel path
-						if (SelectType == 6) {
-							CtrlObject->Cp()->ActivePanel->SetCurPath();
-						}
-						Panel->Redraw();
-						CtrlObject->FolderHistory->SetAddMode(true, 2, true);
-					}
-				}
+				ChangeDirFromHistory(Type == 1, SelectType, strStr);
 			} else if (SelectType == 3)
 				SetString(strStr);
 		}
@@ -450,14 +457,16 @@ int CommandLine::ProcessKey(int Key)
 
 			ActivePanel->SetCurPath();
 
-			if (!(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE))
-				CtrlObject->CmdHistory->AddToHistory(strStr);
+			FARString strCurDirFromPanel;
+			ActivePanel->GetCurDirPluginAware(strCurDirFromPanel);
+
+			if (!(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE)) {
+				CtrlObject->CmdHistory->AddToHistoryExtra(strStr, strCurDirFromPanel);
+			}
 
 			// ProcessOSAliases(strStr);
 
 			if (ActivePanel->ProcessPluginEvent(FE_COMMAND, (void *)strStr.CPtr())) {
-				FARString strCurDirFromPanel;
-				ActivePanel->GetCurDirPluginAware(strCurDirFromPanel);
 				strCurDir = strCurDirFromPanel;
 				Show();
 				ActivePanel->SetTitle();

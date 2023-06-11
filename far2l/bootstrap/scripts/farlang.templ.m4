@@ -25208,6 +25208,28 @@ upd:"Other panel"
 "Інш. панель"
 "Іншая панэль"
 
+CommandDirectory
+"Каталог"
+"Directory"
+"Adresář"
+"Verzeichnis"
+"Mappa"
+"Katalog"
+"Directorio"
+"Каталог"
+"Каталог"
+
+CommandDirectoryRunUp
+"Подготовить"
+"Run-up"
+upd:"Run-up"
+upd:"Run-up"
+upd:"Run-up"
+upd:"Run-up"
+upd:"Run-up"
+"Підготувати"
+"Падрыхтаваць"
+
 #Must be the last
 NewFileName
 l:

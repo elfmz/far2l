@@ -48,32 +48,11 @@ enum enumHISTORYTYPE
 
 struct HistoryRecord
 {
-	bool Lock;
-	int Type;
+	int Type = 0;
+	bool Lock = false;
 	FARString strName;
-	FILETIME Timestamp;
-
-	HistoryRecord()
-	{
-		Lock = false;
-		Type = 0;
-		strName.Clear();
-		Timestamp.dwLowDateTime = 0;
-		Timestamp.dwHighDateTime = 0;
-	}
-
-	const HistoryRecord &operator=(const HistoryRecord &rhs)
-	{
-		if (this != &rhs) {
-			strName = rhs.strName;
-			Type = rhs.Type;
-			Lock = rhs.Lock;
-			Timestamp.dwLowDateTime = rhs.Timestamp.dwLowDateTime;
-			Timestamp.dwHighDateTime = rhs.Timestamp.dwHighDateTime;
-		}
-
-		return *this;
-	}
+	FARString strExtra;
+	FILETIME Timestamp{};
 };
 
 class History
@@ -90,7 +69,7 @@ private:
 	struct stat LoadedStat{};
 
 private:
-	void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Prefix, int Type);
+	void AddToHistoryLocal(const wchar_t *Str, const wchar_t *Extra, const wchar_t *Prefix, int Type);
 	bool EqualType(int Type1, int Type2);
 	const wchar_t *GetTitle(int Type);
 	int ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type,
@@ -105,6 +84,7 @@ public:
 	~History();
 
 public:
+	void AddToHistoryExtra(const wchar_t *Str, const wchar_t *Extra, int Type = 0, const wchar_t *Prefix = nullptr, bool SaveForbid = false);
 	void AddToHistory(const wchar_t *Str, int Type = 0, const wchar_t *Prefix = nullptr, bool SaveForbid = false);
 	static bool ReadLastItem(const char *RegKey, FARString &strStr);
 	int Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &strStr, int &Type);

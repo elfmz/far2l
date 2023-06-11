@@ -6120,15 +6120,15 @@ EditF7
 "Пошук"
 
 EditF8
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 "Latin 2"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 
 EditF9
 "Конфиг"
@@ -6199,15 +6199,27 @@ upd:"Spaces"
 
 EditF8DOS
 le:// don't count this - it's a F8 another text
-"OEM"
-"OEM"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
 "CP-1250"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+
+EditF8UTF8
+le:// don't count this - it's a F8 another text
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
 
 ViewF5Processed
 le:// don't count this - it's a F5 another text
@@ -7252,15 +7264,15 @@ SingleEditF7
 "Пошук"
 
 SingleEditF8
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 "Latin 2"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 
 SingleEditF9
 ""
@@ -7308,15 +7320,27 @@ SingleEditF12
 
 SingleEditF8DOS
 le:// don't count this - it's a F8 another text
-"OEM"
-"OEM"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
 "CP 1250"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+
+SingleEditF8UTF8
+le:// don't count this - it's a F8 another text
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
 
 SingleEditShiftF1
 l:
@@ -9217,15 +9241,15 @@ ViewF7
 "Пошук"
 
 ViewF8
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 "Latin 2"
-"ANSI"
-"ANSI"
-"ANSI"
+"->ANSI"
+"->ANSI"
+"->ANSI"
 
 ViewF9
 "Конфиг"
@@ -9295,15 +9319,26 @@ l:// this is another text for F4
 "Тэкст"
 
 ViewF8DOS
-"OEM"
-"OEM"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+"->OEM"
 "CP 1250"
-"OEM"
-"OEM"
-"OEM"
+"->OEM"
+"->OEM"
+"->OEM"
+
+ViewF8UTF8
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
+"->UTF8"
 
 ViewShiftF1
 l:

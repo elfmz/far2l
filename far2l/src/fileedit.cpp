@@ -1170,7 +1170,13 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 			case KEY_SHIFTF8: {
 				UINT codepage;
 				if (Key == KEY_F8) {
-					codepage = (m_codepage == WINPORT(GetACP)() ? WINPORT(GetOEMCP)() : WINPORT(GetACP)());
+					//codepage = (m_codepage == WINPORT(GetACP)() ? WINPORT(GetOEMCP)() : WINPORT(GetACP)());
+					if (m_codepage == CP_UTF8)
+						codepage = WINPORT(GetACP)();
+					else if (m_codepage == WINPORT(GetACP)() )
+						codepage = WINPORT(GetOEMCP)();
+					else // if (m_codepage == WINPORT(GetOEMCP)() )
+						codepage = CP_UTF8;
 				} else {
 					codepage = SelectCodePage(m_codepage, false, true, false, true);
 					if (codepage == CP_AUTODETECT) {
@@ -1196,6 +1202,7 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 						} else {
 							SetCodePage(codepage);
 						}
+						Show(); // need to force redraw after F8 UTF8<->ANSI/OEM
 						ChangeEditKeyBar();
 					} else
 						Message(0, 1, Msg::EditTitle, L"Save file before changing this codepage", Msg::HOk,
@@ -2078,10 +2085,12 @@ void FileEditor::SetTitle(const wchar_t *Title)
 
 void FileEditor::SetEditKeyBarStatefulLabels()
 {
-	if (m_codepage != WINPORT(GetOEMCP)())
+	if (m_codepage == CP_UTF8)
+		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed ? Msg::SingleEditF8 : Msg::EditF8), 7);
+	else if (m_codepage == WINPORT(GetACP)())
 		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed ? Msg::SingleEditF8DOS : Msg::EditF8DOS), 7);
 	else
-		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed ? Msg::SingleEditF8 : Msg::EditF8), 7);
+		EditKeyBar.Change(KBL_MAIN, (Opt.OnlyEditorViewerUsed ? Msg::SingleEditF8UTF8 : Msg::EditF8UTF8), 7);
 
 	EditKeyBar.Change(KBL_MAIN, m_editor->GetShowWhiteSpace() ? Msg::EditF5Hide : Msg::EditF5, 4);
 

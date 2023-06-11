@@ -74,6 +74,7 @@ private:
 	bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
 	void ProcessTabCompletion();
 	void DrawComboBoxMark(wchar_t MarkChar);
+	void ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir);
 
 public:
 	CommandLine();

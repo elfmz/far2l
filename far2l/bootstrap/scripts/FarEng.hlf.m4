@@ -2567,7 +2567,7 @@ $ #Viewer: control keys#
     #F7#                 ~Search~@ViewerSearch@
     #Shift-F7, Space#    Continue search
     #Alt-F7#             Continue search in "reverse" mode
-    #F8#                 Toggle OEM/ANSI code page
+    #F8#                 Toggle ~ANSI/OEM~@CodePagesSet@/UTF8 code page
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
@@ -2763,7 +2763,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace
    #Alt-F7#                  Continue search/replace in "reverse" mode
-   #F8#                      Toggle OEM/ANSI code page
+   #F8#                      Toggle ~ANSI/OEM~@CodePagesSet@/UTF8 code page
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window
@@ -2932,7 +2932,7 @@ $ #Code pages menu#
 
     #Automatic detection# - Far tries to autodetect the codepage of the text;
 
-    #System# - main 8-bit system codepages - ANSI and OEM;
+    #System# - main 8-bit system codepages - ~ANSI and OEM~@CodePagesSet@;
 
     #Unicode# - Unicode codepages;
 
@@ -2949,6 +2949,12 @@ codepage back. Клавиша #F4# позволяет изменять отоб�
 изменено имя помечаются символом #*# перед именем).
 
     Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
+
+@CodePagesSet
+$ #ANSI and OEM codepage setting
+  Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
+  #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
+  or, if its absence, by environment variable #LC_CTYPE#
 
 @EditCodePageNameDlg
 $ #Изменение имени кодовой страницы#

@@ -1435,7 +1435,7 @@ void VMenu::Show()
 			bool HasSubMenus = ItemSubMenusCount > 0;
 
 			if (X1 == -1) {
-				X1 = (ScrX - MaxLength - 3 - (HasSubMenus ? 2 : 0)) / 2;
+				X1 = (ScrX - MaxLength - 3 - (HasSubMenus ? 1 : 0)) / 2;
 				AutoCenter = true;
 			}
 
@@ -1443,7 +1443,7 @@ void VMenu::Show()
 				X1 = 2;
 
 			if (X2 <= 0)
-				X2 = X1 + MaxLength + 3 + (HasSubMenus ? 2 : 0);
+				X2 = X1 + MaxLength + 3 + (HasSubMenus ? 1 : 0);
 
 			if (!AutoCenter
 					&& X2 > ScrX - 3 + 2 * (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX)) {
@@ -1647,7 +1647,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 	MaxLineWidth-= 1;		// check mark
 
 	if (!CheckFlags(VMENU_COMBOBOX | VMENU_LISTBOX) && HasSubMenus)
-		MaxLineWidth-= 2;	// sub menu arrow
+		MaxLineWidth-= 1;	// sub menu arrow
 
 	if ((CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR) || Opt.ShowMenuScrollbar) && BoxType == NO_BOX
 			&& ScrollBarRequired(Y2 - Y1 + 1, GetShowItemCount()))
@@ -1909,7 +1909,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				}
 
 				if (Item[I]->Flags & MIF_SUBMENU) {
-					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + 2 + MaxLineWidth + (HasRightScroll ? 1 : 0) + 1,
+					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + MaxLineWidth + (HasRightScroll ? 1 : 0) + 1,
 							Y);
 					BoxText(L'\x25BA');		// sub menu arrow
 				}

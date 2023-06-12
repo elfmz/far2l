@@ -2593,9 +2593,11 @@ $ #Програма перегляду: клавіші керування#
  #F2# Перенесення рядків (увімкнено, вимкнено)
  #Shift-F2# Вид перенесення рядків (за літерами, за словами)
  #F4# Переключити текстовий/16-річний режим
+     (hex mode does not support UTF-8 and other multibyte code pages
+      and switches the view to a single-byte code page)
  #F5# Переключити сирий/оброблений режим
  #Alt-F5# Друк файлу (використовується плагін
- "Print Manager".
+ "Print Manager").
  #F6# Перейти в ~редактор~@Editor@
  #F7# ~Пошук~@ViewerSearch@
  #Shift-F7, Space# Продовжити пошук
@@ -2995,7 +2997,7 @@ $ #Меню вибору кодової сторінки#
 Діалог ~Зміна імені кодової сторінки~@EditCodePageNameDlg@
 
 @CodePagesSet
-$ #ANSI and OEM codepage setting
+$ #ANSI and OEM codepage setting#
   Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
   #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
   or, if its absence, by environment variable #LC_CTYPE#

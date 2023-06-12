@@ -2271,6 +2271,8 @@ nincs bekapcsolva és a sorok túlnyúlnak a kép méretén)
     #F2#                 Sortörés be/ki
     #Shift-F2#           Betűtörés/szótörés átkapcsoló
     #F4#                 Szöveg/hexa mód átkapcsoló
+     (hex mode does not support UTF-8 and other multibyte code pages
+      and switches the view to a single-byte code page)
     #F6#                 Átvált ~szerkesztésre~@Editor@
     #Alt-F5#             ^<wrap>Fájl nyomtatása (a Nyomtatóvezérlő plugin
 segítségével)
@@ -2654,7 +2656,7 @@ végrehajtott összes módosítás elvész.
 
 
 @CodePagesSet
-$ #ANSI and OEM codepage setting
+$ #ANSI and OEM codepage setting#
   Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
   #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
   or, if its absence, by environment variable #LC_CTYPE#

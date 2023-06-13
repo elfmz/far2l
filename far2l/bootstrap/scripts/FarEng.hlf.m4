@@ -2560,6 +2560,8 @@ $ #Viewer: control keys#
     #F2#                 Toggle line wrap/unwrap
     #Shift-F2#           Toggle wrap type (letters/words)
     #F4#                 Toggle text/hex mode
+     (hex mode does not support UTF-8 and other multibyte code pages
+      and switches the view to a single-byte code page)
     #F5#                 Toggle raw/processed mode
     #F6#                 Switch to ~editor~@Editor@
     #Alt-F5#             Print the file
@@ -2951,7 +2953,7 @@ codepage back. Клавиша #F4# позволяет изменять отоб�
     Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
 
 @CodePagesSet
-$ #ANSI and OEM codepage setting
+$ #ANSI and OEM codepage setting#
   Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
   #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
   or, if its absence, by environment variable #LC_CTYPE#

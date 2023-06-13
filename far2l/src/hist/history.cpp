@@ -590,14 +590,26 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					break;
 				}
 				case KEY_F3:
-					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty()) {
-						if (Message(0, 2, Msg::CommandDirectory,
-								CurrentRecord->strExtra, Msg::Ok, Msg::CommandDirectoryRunUp) == 1) {
-							strStr = CurrentRecord->strExtra;
-							strStr+= L'\n';
-							strStr+= CurrentRecord->strName;
-							Type = CurrentRecord->Type;
-							return 8;
+					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord) {
+						FARString strCmd = CurrentRecord->strName;
+						FARString strDir = CurrentRecord->strExtra;
+						TruncStrFromCenter(strCmd, std::max(ScrX - 32, 32));
+						TruncStrFromCenter(strDir, std::max(ScrX - 32, 32));
+						strCmd.Insert(0, Msg::HistoryCommandLine);
+						strDir.Insert(0, Msg::HistoryCommandDir);
+						switch (Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
+								Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp)) {
+							case 1:
+								strStr = CurrentRecord->strExtra;
+								Type = CurrentRecord->Type;
+								return 8;
+
+							case 2:
+								strStr = CurrentRecord->strExtra;
+								strStr+= L'\n';
+								strStr+= CurrentRecord->strName;
+								Type = CurrentRecord->Type;
+								return 8;
 						}
 						break;
 					} // else fall through

@@ -365,6 +365,8 @@ int CommandLine::ProcessKey(int Key)
 					ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p));
 					strStr.Remove(0, p + 1);
 					SetString(strStr);
+				} else {
+					ChangeDirFromHistory(Type == 1, 1, strStr);
 				}
 
 			} else if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {

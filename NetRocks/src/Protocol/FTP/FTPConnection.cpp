@@ -143,11 +143,15 @@ static int SSLStartup()
 
 int OpenSSLContext::sNewClientSessionCB(SSL *ssl, SSL_SESSION *session)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	OpenSSLContext *ctx = (OpenSSLContext *)SSL_get_app_data(ssl);
 	if (ctx != NULL && ctx->_session == NULL && session != NULL) {
 		SSL_SESSION_up_ref(session);
 		ctx->_session = session;
 	}
+#else
+	ABORT();
+#endif
 	return 0;
 }
 
@@ -185,9 +189,13 @@ OpenSSLContext::OpenSSLContext(const StringConfig &protocol_options)
 			;
 	}
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	SSL_CTX_sess_set_new_cb(_ctx, sNewClientSessionCB);
 	SSL_CTX_set_session_cache_mode(_ctx,
 		SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_INTERNAL_STORE | SSL_SESS_CACHE_NO_AUTO_CLEAR);
-	SSL_CTX_sess_set_new_cb(_ctx, sNewClientSessionCB);
+#else
+	SSL_CTX_set_session_cache_mode(_ctx, SSL_SESS_CACHE_CLIENT | SSL_SESS_CACHE_NO_AUTO_CLEAR);
+#endif
 }
 
 OpenSSLContext::~OpenSSLContext()
@@ -205,12 +213,19 @@ SSL *OpenSSLContext::NewSSL(int sock)
 		throw std::runtime_error(StrPrintf("SSL_new() errno=%d", errno));
 	}
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	SSL_set_app_data(ssl, this);
 
 	if (_session) {
 		SSL_set_session(ssl, _session);
 		_session = NULL; // "TLS 1.3 does strongly encourage single-use of resumption ticket"
 	}
+
+#else
+	if (_session) {
+		SSL_set_session(ssl, _session);
+	}
+#endif
 
 	if (SSL_set_fd(ssl, sock) != 1) {
 		SSL_free(ssl);
@@ -223,11 +238,15 @@ SSL *OpenSSLContext::NewSSL(int sock)
 		throw std::runtime_error(StrPrintf("SSL_connect() errno=%d", errno));
 	}
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 //  Doesn't work since TLS1.3 that requires storing session from sNewClientSessionCB
-//  for correct TLS session reuse functionality
-//	if (!_session) {
-//		_session = SSL_get1_session(ssl);
-//	}
+//  for correct TLS session reuse functionality, however old OpenSSL doesn't have
+//  SSL_SESSION_up_ref that makes it incompatible with TLS1.3 servers that require
+//  session reuse.
+	if (!_session) {
+		_session = SSL_get1_session(ssl);
+	}
+#endif
 
 	return ssl;
 }

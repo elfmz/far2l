@@ -733,6 +733,7 @@ void CommandLine::ShowViewEditHistory()
 		1 - Enter
 		2 - Shift-Enter
 		3 - Ctrl-Enter
+		9 - Ctrl-F10 - jump in panel to directory & file
 	*/
 
 	if (SelectType == 1 || SelectType == 2) {
@@ -782,8 +783,11 @@ void CommandLine::ShowViewEditHistory()
 		}
 
 		CtrlObject->ViewHistory->SetAddMode(true, 1, true);
-	} else if (SelectType == 3)		// скинуть из истории в ком.строку?
+	}
+	else if (SelectType == 3)		// скинуть из истории в ком.строку?
 		SetString(strStr);
+	else if (SelectType == 9)		// goto in panel to directory & file
+		CtrlObject->Cp()->GoToFile(strStr);
 }
 
 void CommandLine::SaveBackground(int X1, int Y1, int X2, int Y2)

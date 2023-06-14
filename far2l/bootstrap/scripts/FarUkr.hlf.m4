@@ -1815,6 +1815,15 @@ $ #Історія команд#
  Копіювати вміст поточної позиції історії #Ctrl-C#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
+ Toggle history view:                                         #Ctrl-T#
+            * with date lines (as in far3)
+            * with date lines + time column
+            * plain history (as in far2)
+
+ Show additional information                                      #F3#
+
+ Quick jump in panel to directory of command                #Ctrl-F10#
+
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
 
@@ -1852,6 +1861,13 @@ $ #Історія перегляду та редагування#
 
  Копіювати вміст поточної позиції історії #Ctrl-C#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
+
+ Toggle history view:                                         #Ctrl-T#
+            * with date lines (as in far3)
+            * with date lines + time column
+            * plain history (as in far2)
+
+ Quick jump in panel to directory and file                  #Ctrl-F10#
 
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
@@ -1898,6 +1914,13 @@ $ #Історія зміни папок#
 
  Копіювати вміст поточної позиції історії #Ctrl-C#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
+
+ Toggle history view:                                         #Ctrl-T#
+            * with date lines (as in far3)
+            * with date lines + time column
+            * plain history (as in far2)
+
+ Quick jump in panel to directory (here #Enter# analog)       #Ctrl-F10#
 
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)

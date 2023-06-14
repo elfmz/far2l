@@ -15077,15 +15077,15 @@ EditControlHistoryFooterNoDel
 "Up/Down,Enter,Esc"
 
 HistoryFooter
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
 
 SearchFileTitle
 l:

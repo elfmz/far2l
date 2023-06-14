@@ -399,6 +399,8 @@ int History::Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strS
    5 - F4
    6 - Ctrl-Shift-Enter
    7 - Ctrl-Alt-Enter
+   8 - F3 / Ctr-F10 (command history): GoTo Dir / Run-up
+   9 - Ctrl-F10 (view/edit history): jump in panel to directory & file
 */
 int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &HistoryMenu, int Height, int &Type,
 		Dialog *Dlg)
@@ -597,19 +599,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						TruncStrFromCenter(strDir, std::max(ScrX - 32, 32));
 						strCmd.Insert(0, Msg::HistoryCommandLine);
 						strDir.Insert(0, Msg::HistoryCommandDir);
-						switch (Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
-								Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp)) {
-							case 1:
-								strStr = CurrentRecord->strExtra;
-								Type = CurrentRecord->Type;
-								return 8;
+						if ( CurrentRecord->strExtra.IsEmpty() ) // STUB for old records
+							Message(MSG_LEFTALIGN, 1, Msg::HistoryCommandTitle, strCmd,
+									L"--- Directory --- No Information ---",
+									Msg::HistoryCommandClose);
+						else {
+							switch (Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
+									Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp)) {
+								case 1:
+									strStr = CurrentRecord->strExtra;
+									Type = CurrentRecord->Type;
+									return 8;
 
-							case 2:
-								strStr = CurrentRecord->strExtra;
-								strStr+= L'\n';
-								strStr+= CurrentRecord->strName;
-								Type = CurrentRecord->Type;
-								return 8;
+								case 2:
+									strStr = CurrentRecord->strExtra;
+									strStr+= L'\n';
+									strStr+= CurrentRecord->strName;
+									Type = CurrentRecord->Type;
+									return 8;
+							}
 						}
 						break;
 					} // else fall through
@@ -709,6 +717,22 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					IsUpdate = true;
 					SetUpMenuPos = true;
 					CurrentItem = CurrentRecord;
+					break;
+				}
+			case KEY_CTRLF10: {
+					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty() ) {
+						strStr = CurrentRecord->strExtra;
+						Type = CurrentRecord->Type;
+						return 8; // for command is equivalent to Go To Directory
+					}
+					if (TypeHistory == HISTORYTYPE_VIEW && CurrentRecord) {
+						strStr = CurrentRecord->strName;
+						return 9; // for files: Go To Directory & postion to file
+					}
+					if (TypeHistory == HISTORYTYPE_FOLDER && CurrentRecord) {
+						strStr = CurrentRecord->strName;
+						return 1; // for directory is equialent to ENTER
+					}
 					break;
 				}
 

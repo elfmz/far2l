@@ -84,7 +84,7 @@ public:
 	AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
 
 	// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-	virtual DialogItemEx *AddIntEditField(int *Value, int Width);
+	virtual DialogItemEx *AddIntEditField(int *Value, int Width, int Flags = 0);
 
 	// Добавляет выпадающий список с указанными значениями.
 	DialogItemEx *

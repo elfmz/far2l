@@ -552,7 +552,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
 # setup some symlinks and remove deprecated stuff from previous installation
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2l_askpass)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2l_sudoapp)
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink far2l ${PROJECT_BINARY_DIR}/far2ledit)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2ledit)
 install(FILES "${PROJECT_BINARY_DIR}/far2l_askpass" DESTINATION "lib/far2l" COMPONENT system)
 install(FILES "${PROJECT_BINARY_DIR}/far2l_sudoapp" DESTINATION "lib/far2l" COMPONENT system)
 install(FILES "${PROJECT_BINARY_DIR}/far2ledit" DESTINATION "bin" COMPONENT base)

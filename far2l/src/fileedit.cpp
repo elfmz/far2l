@@ -730,6 +730,13 @@ int FileEditor::ProcessKey(int Key)
 
 int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 {
+	EditorConfigOrg EdCfg;	// need for get EditorConfigOrg data for this file
+	if( Opt.EdOpt.UseEditorConfigOrg ) {
+		FARString strFullName;
+		ConvertNameToFull(strLoadedFileName, strFullName);
+		EdCfg.Populate(strFullName.GetMB().c_str());
+	}
+
 	SudoClientRegion sdc_rgn;
 	if (Key != KEY_F4 && Key != KEY_IDLE)
 		F4KeyOnly = false;
@@ -1100,11 +1107,38 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				return TRUE;
 
 			case KEY_SHIFTF5:
+				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.TabSize > 0) {
+					FARString strTmp;
+					strTmp.Format(L"In .editorconfig \"indent_size\" set to \"%d\"", EdCfg.TabSize);
+					Message(MSG_WARNING, 1, L"Editor && .editorconfig - tabsize",
+							L"File located in (sub)directory with .editorconfig",
+							strTmp,
+							L"In this case user by Shift-F5 can not change tabsize",
+							L"",
+							L"You can disable .editorconfig processing globally",
+							L"in main menu->Options->Editor settings",
+							Msg::Ok);
+					return TRUE;
+				}
 				ChooseTabSizeMenu();
 				ShowStatus();
 				return TRUE;
 
 			case KEY_CTRLF5:
+				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.ExpandTabs >= 0) {
+					FARString strTmp;
+					strTmp.Format(L"In .editorconfig \"indent_style\" set to \"%s\"",
+									EdCfg.ExpandTabs==EXPAND_NOTABS ? "tab" : EdCfg.ExpandTabs==EXPAND_NEWTABS ? "space" : "????" );
+					Message(MSG_WARNING, 1, L"Editor && .editorconfig - indent_style",
+							L"File located in (sub)directory with .editorconfig",
+							strTmp,
+							L"In this case user by Ctrl-F5 can not change indent_style",
+							L"",
+							L"You can disable .editorconfig processing globally",
+							L"in main menu->Options->Editor settings",
+							Msg::Ok);
+					return TRUE;
+				}
 				m_editor->SetConvertTabs(
 						(m_editor->GetConvertTabs() != EXPAND_NOTABS) ? EXPAND_NOTABS : EXPAND_NEWTABS);
 				m_editor->EnableSaveTabSettings();
@@ -1168,6 +1202,19 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 			}
 			case KEY_F8:
 			case KEY_SHIFTF8: {
+				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.CodePage > 0) {
+					FARString strTmp;
+					strTmp.Format(L"In .editorconfig \"charset\" set to \"%d\"", EdCfg.CodePage);
+					Message(MSG_WARNING, 1, L"Editor && .editorconfig - codepage",
+							L"File located in (sub)directory with .editorconfig",
+							strTmp,
+							L"In this case user by F8 or Shift-F8 can not change codepage",
+							L"",
+							L"You can disable .editorconfig processing globally",
+							L"in main menu->Options->Editor settings",
+							Msg::Ok);
+					return TRUE;
+				}
 				UINT codepage;
 				if (Key == KEY_F8) {
 					//codepage = (m_codepage == WINPORT(GetACP)() ? WINPORT(GetOEMCP)() : WINPORT(GetACP)());
@@ -1216,7 +1263,10 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				EditorOptions EdOpt;
 				GetEditorOptions(EdOpt);
 				EditorOptions SavedEdOpt = EdOpt;
-				EditorConfig(EdOpt, true);	// $ 27.11.2001 DJ - Local в EditorConfig
+				//EditorConfig(EdOpt, true);	// $ 27.11.2001 DJ - Local в EditorConfig
+				EditorConfig(EdOpt, true,	// $ 27.11.2001 DJ - Local в EditorConfig
+					Opt.EdOpt.UseEditorConfigOrg ? EdCfg.ExpandTabs : -1,
+					Opt.EdOpt.UseEditorConfigOrg ? EdCfg.TabSize : -1);
 				EditKeyBar.Refresh(true);	//???? Нужно ли????
 				SetEditorOptions(EdOpt);
 				if (SavedEdOpt.TabSize != EdOpt.TabSize || SavedEdOpt.ExpandTabs != EdOpt.ExpandTabs)

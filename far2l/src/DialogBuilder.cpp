@@ -131,7 +131,7 @@ DialogItemEx *DialogBuilder::AddEditField(FARString *Value, int Width, const wch
 	return Item;
 }
 
-DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width)
+DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
 {
 	DialogItemEx *Item = AddDialogItem(DI_FIXEDIT, L"");
 	FormatString ValueText;
@@ -142,6 +142,7 @@ DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width)
 
 	EditFieldIntBinding *Binding = new EditFieldIntBinding(Value, Width);
 	SetLastItemBinding(Binding);
+	Item->Flags|= Flags;
 	Item->Flags|= DIF_MASKEDIT;
 	Item->strMask = Binding->GetMask();
 	return Item;

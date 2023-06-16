@@ -579,7 +579,7 @@ void ViewerConfig(ViewerOptions &ViOpt, bool Local)
 	}
 }
 
-void EditorConfig(EditorOptions &EdOpt, bool Local)
+void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int EdCfg_TabSize)
 {
 	DialogBuilder Builder(Msg::EditConfigTitle, L"EditorSettings");
 	if (!Local) {
@@ -596,13 +596,15 @@ void EditorConfig(EditorOptions &EdOpt, bool Local)
 		{Msg::EditConfigConvertAllTabsToSpaces, EXPAND_ALLTABS}
 	};
 	Builder.AddComboBox(&EdOpt.ExpandTabs, 64, ExpandTabsItems, 3,
-			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE
+			| (Local && EdCfg_ExpandTabs >= 0 ? DIF_DISABLE : 0) );
 
 	Builder.StartColumns();
 	Builder.AddCheckbox(Msg::EditConfigPersistentBlocks, &EdOpt.PersistentBlocks);
 	DialogItemEx *SavePos = Builder.AddCheckbox(Msg::EditConfigSavePos, &EdOpt.SavePos);
 	Builder.AddCheckbox(Msg::EditConfigAutoIndent, &EdOpt.AutoIndent);
-	DialogItemEx *TabSize = Builder.AddIntEditField(&EdOpt.TabSize, 3);
+	DialogItemEx *TabSize = Builder.AddIntEditField(&EdOpt.TabSize, 3,
+		(Local && EdCfg_TabSize > 0 ? DIF_DISABLE : 0) );
 	Builder.AddTextAfter(TabSize, Msg::EditConfigTabSize);
 	Builder.AddCheckbox(Msg::EditShowWhiteSpace, &EdOpt.ShowWhiteSpace);
 	Builder.AddCheckbox(Msg::EditShowKeyBar, &EdOpt.ShowKeyBar);

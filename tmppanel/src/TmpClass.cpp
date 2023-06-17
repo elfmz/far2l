@@ -859,8 +859,10 @@ void TmpPanel::ProcessPanelSwitchMenu()
 	const TCHAR *txt = GetMsg(MSwitchMenuTxt);
 #ifdef UNICODE
 	wchar_t tmpstr[COMMONPANELSNUMBER][128];
-#endif
+	static const TCHAR fmt1[] = _T("&%c. %ls %d");
+#else
 	static const TCHAR fmt1[] = _T("&%c. %s %d");
+#endif
 	for (unsigned int i = 0; i < COMMONPANELSNUMBER; ++i) {
 #ifndef UNICODE
 #define _OUT fmi[i].Text

@@ -105,8 +105,8 @@ static void print_help(const char *self)
 			"      View the specified file.\n"
 			" -v - command line\n"
 			"      Executes given command line and opens viewer with its output.\n"
-			" -e[<line>[:<pos>]] <filename>\n"
-			"      Edit the specified file with optional cursor position specification.\n"
+			" -e[<line>[:<pos>]] [filename]\n"
+			"      Edit the specified file with optional cursor position specification or empty new file.\n"
 			" -e[<line>[:<pos>]] - command line\n"
 			"      Executes given command line and opens editor with its output.\n"
 			"\n",
@@ -416,13 +416,13 @@ int FarAppMain(int argc, char **argv)
 		unsetenv("FARADMINMODE");
 	}
 
-	// run by symlinc in editor mode
+	// run by symlink in editor mode
 	if (strstr(argv[0], "far2ledit") != NULL) {
 		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
 		if (argc > 1) {
 			strEditViewArg = argv[argc - 1];	// use last argument
 		} else {
-			strEditViewArg = "NewFile.txt";
+			strEditViewArg = "";
 		}
 	}
 
@@ -479,6 +479,11 @@ int FarAppMain(int argc, char **argv)
 							I++;
 						}
 					}
+					else { // -e without filename => new file to editor
+						Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
+						strEditViewArg = "";
+					}
+
 
 					break;
 				case L'V':
@@ -611,6 +616,11 @@ int FarAppMain(int argc, char **argv)
 	initMacroVarTable(1);
 
 	CheckForImportLegacyShortcuts();
+
+	// (!!!) temporary STUB because now Editor can not input filename "", see: fileedit.cpp -> FileEditor::Init()
+	// default Editor file name for new empty file
+	if ( Opt.OnlyEditorViewerUsed == Options::ONLY_EDITOR && strEditViewArg.IsEmpty() )
+		strEditViewArg = Msg::NewFileName;
 
 	int Result = MainProcess(strEditViewArg, DestNames[0], DestNames[1], StartLine, StartChar);
 

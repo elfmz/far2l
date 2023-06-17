@@ -1865,7 +1865,7 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
 
-  1. ^<wrap>List refresh operation (Ctrl-R) can take a considerable amount
+  1. ^<wrap>List refresh operation (#Ctrl-R#) can take a considerable amount
 of time if a file was located on a currently unavailable remote resource.
 
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
@@ -1915,7 +1915,7 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
 
-  1. ^<wrap>List refresh operation (Ctrl-R) can take a considerable amount
+  1. ^<wrap>List refresh operation (#Ctrl-R#) can take a considerable amount
 of time if a folder was located on a currently unavailable remote resource.
 
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
@@ -3223,16 +3223,19 @@ $ #Settings dialog: editor#
 
     Internal editor
 
-  #Do not expand tabs#      Do not convert tabs to spaces while
+  #Expand tabs#             (unchanged if file located in (sub)directory
+                          with .editorconfig file contains "indent_style")
+
+  - #Do not expand tabs#    Do not convert tabs to spaces while
                           editing the document.
 
-  #Expand newly entered#    While editing the document, convert each
-  #tabs to spaces#          newly entered #Tab# into the appropriate
+  - #Expand newly entered#  While editing the document, convert each
+    #tabs to spaces#        newly entered #Tab# into the appropriate
                           number of spaces. Other tabs won't be
                           converted.
 
-  #Expand all tabs to#      Upon opening the document, all tabs in
-  #spaces#                  the document will be automatically
+  - #Expand all tabs to#    Upon opening the document, all tabs in
+    #spaces#                the document will be automatically
                           converted to spaces.
 
   #Persistent blocks#       Do not remove block selection after
@@ -3260,7 +3263,9 @@ $ #Settings dialog: editor#
   #Cursor beyond#           Allow moving cursor beyond the end of line.
   #end of line#
 
-  #Tab size#                Number of spaces in a tab character.
+  #Tab size#                Number of spaces in a tab character
+                          (unchanged if file located in (sub)directory
+                          with .editorconfig file contains "indent_size").
 
   #Show scrollbar#          Show scrollbar.
 
@@ -3268,15 +3273,8 @@ $ #Settings dialog: editor#
                           поиска будет подставляться слово, на
                           котором стоит курсор.
 
-  #Auto detect#             ~Auto detect~@CodePage@ the code page of
-  #code page#               the file being edited.
-
-  #Edit files opened#       Allows to edit files that are opened
-  #for writing#             by other programs for writing. This mode
-                          is handy to edit a file opened for a long
-                          time, but it could be dangerous, if a file
-                          is being modified at the same time as
-                          editing.
+  #Use .editorconfig#       Processing .editorconfig parameters
+  #settings files#          (see https://editorconfig.org for details)
 
   #Lock editing of#         When a file with the Read-only attribute
   #read-only files#         is opened for editing, the editor also
@@ -3287,11 +3285,11 @@ $ #Settings dialog: editor#
   #read-only files#         is opened for editing, a warning message
                           will be shown.
 
-  #Use ANSI code page#      Use ANSI code page for editing files,
-  #by default#              instead of OEM.
+  #Auto detect#             ~Auto detect~@CodePage@ the code page of
+  #code page#               the file being edited.
 
-  #Use ANSI code page#      Use ANSI code page when creating new files,
-  #when creating new files# instead of OEM.
+  #Choose default#          Code page for new files,
+  #code page#               ususally UTF-8.
 
     If the external editor is assigned to #F4# key, it will be executed only if
 ~associated~@FileAssoc@ editor for the current file type is not defined.
@@ -3777,7 +3775,7 @@ fragmentation if it or original file will be overwritten in the future.
     #With symlink# combobox allows to chose from any of three possible ways of handling
 symlinks during copying:
     - Either all symlinks will be copied as is.
-    - Either far2l will check each symlink target to find out if it refers 'outer' file 
+    - Either far2l will check each symlink target to find out if it refers 'outer' file
 or some file also being copied. In first case link will be copied as file, in second
 it will be copied as symlink with possible adjusted destination, so it will refer copied
 target file.

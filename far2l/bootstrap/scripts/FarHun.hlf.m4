@@ -1680,7 +1680,7 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
 
   Megjegyzések:
 
-     1. A lista frissítése (Ctrl-R) hosszú időt vehet igénybe, ha
+     1. A lista frissítése (#Ctrl-R#) hosszú időt vehet igénybe, ha
         jelenleg nem elérhető távoli helyeket kell vizsgálnia.
 
      2. A zárolt előzményelemek nem törlődnek az előzménylista
@@ -1732,7 +1732,7 @@ $ #Előzmények: mappa előzmények#
 
   Megjegyzések:
 
-    1. A lista frissítése (Ctrl-R) hosszú időt vehet igénybe, ha
+    1. A lista frissítése (#Ctrl-R#) hosszú időt vehet igénybe, ha
        pillanatnyilag nem elérhető távoli helyeket kell vizsgálnia.
 
     2. A zárolt előzményelemek nem törlődnek az előzménylista
@@ -2938,15 +2938,15 @@ paneljei kikapcsolódjanak, kezdjük a parancssort #@@# karakterrel.
 
     Tabulátorból szóközök:
 
-    #Ne helyettesítse a#    A tabulátorokat nem konvertálja szóközzé
-    #tabulátorokat#         a szerkesztés során.
+    - #Ne helyettesítse a#  A tabulátorokat nem konvertálja szóközzé
+      #tabulátorokat#       a szerkesztés során.
 
-    #Újonnan beírt tabu-#   Szövegszerkesztés közben minden beírt
-    #látorokból szóközök#   ^<wrap>#Tab# karaktert megfelelő számú szóközzel
+    - #Újonnan beírt tabu-# Szövegszerkesztés közben minden beírt
+      #látorokból szóközök# ^<wrap>#Tab# karaktert megfelelő számú szóközzel
 helyettesít, de a korábbi tabulátorokat nem konvertálja.
 
-    #Minden tabulátorból#   A szöveg megnyitásakor automatikusan
-    #szóközök#              minden tabulátort szóközzé alakít.
+    - #Minden tabulátorból# A szöveg megnyitásakor automatikusan
+      #szóközök#            minden tabulátort szóközzé alakít.
 
 
   #Maradó blokkok#          ^<wrap>Nem veszi le a blokkokról a kijelölést,
@@ -2975,6 +2975,9 @@ elhelyezett könyvjelzőinket.
   #Gördítősáv mutatva#      ^<wrap>Az oldalsó gördítősáv megjelenítése a
 a belső szerkesztőben.
 
+
+  #Use .editorconfig#       Processing .editorconfig parameters
+  #settings files#          (see https://editorconfig.org for details)
 
   #Írásra megnyitott fáj-#  Lehetővé teszi a más programokban írásra
   #lok szerkeszthetők#      ^<wrap>megnyitott fájlok szerkesztését. Ez a

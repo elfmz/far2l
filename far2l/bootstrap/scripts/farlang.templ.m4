@@ -25274,6 +25274,106 @@ upd:"&Run-up"
 "&Підготувати"
 "&Падрыхтаваць"
 
+
+EditorConfigOrgConflict
+"Редактор и .editorconfig"
+"Editor and .editorconfig"
+upd:"Editor and .editorconfig"
+upd:"Editor and .editorconfig"
+upd:"Editor and .editorconfig"
+upd:"Editor and .editorconfig"
+upd:"Editor and .editorconfig"
+"Редактор та .editorconfig"
+"Рэдактар і .editorconfig"
+
+EditorConfigOrgFile
+"Файл расположен в (под)директории с .editorconfig"
+"File located in (sub)directory with .editorconfig"
+upd:"File located in (sub)directory with .editorconfig"
+upd:"File located in (sub)directory with .editorconfig"
+upd:"File located in (sub)directory with .editorconfig"
+upd:"File located in (sub)directory with .editorconfig"
+upd:"File located in (sub)directory with .editorconfig"
+"Файл розташований у (під)директорії з .editorconfig"
+"Файл размешчаны ў (пад)дырэкторыі з .editorconfig"
+
+EditorConfigOrgDisable
+"Использование .editorconfig можно отключить\nв меню->Параметры->Настройки редактора"
+"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+upd:"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+upd:"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+upd:"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+upd:"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+upd:"You can disable .editorconfig processing globally\nin main menu->Options->Editor settings"
+"Використання .editorconfig можна вимкнути\nв меню->Параметри->Налаштування редактора"
+"Выкарыстанне .editorconfig можна адключыць\nу меню->Параметры->Налады рэдактара"
+
+EditorConfigOrgValueOfIndentSize
+"В .editorconfig 'indent_size' установлен '%d'"
+"In .editorconfig 'indent_size' set to '%d'"
+upd:"In .editorconfig 'indent_size' set to '%d'"
+upd:"In .editorconfig 'indent_size' set to '%d'"
+upd:"In .editorconfig 'indent_size' set to '%d'"
+upd:"In .editorconfig 'indent_size' set to '%d'"
+upd:"In .editorconfig 'indent_size' set to '%d'"
+"У .editorconfig 'indent_size' встановлено '%d'"
+"У .editorconfig 'indent_size' усталяваны '%d'"
+
+EditorConfigOrgValueOfIndentStyle
+"В .editorconfig 'indent_style' установлен '%s'"
+"In .editorconfig 'indent_style' set to '%s'"
+upd:"In .editorconfig 'indent_style' set to '%s'"
+upd:"In .editorconfig 'indent_style' set to '%s'"
+upd:"In .editorconfig 'indent_style' set to '%s'"
+upd:"In .editorconfig 'indent_style' set to '%s'"
+upd:"In .editorconfig 'indent_style' set to '%s'"
+"У .editorconfig 'indent_style' встановлено '%s'"
+"У .editorconfig 'indent_style' усталяваны '%s'"
+
+EditorConfigOrgValueOfCharset
+"В .editorconfig 'charset' установлен '%d'"
+"In .editorconfig 'charset' set to '%d'"
+upd:"In .editorconfig 'charset' set to '%d'"
+upd:"In .editorconfig 'charset' set to '%d'"
+upd:"In .editorconfig 'charset' set to '%d'"
+upd:"In .editorconfig 'charset' set to '%d'"
+upd:"In .editorconfig 'charset' set to '%d'"
+"У .editorconfig 'charset' встановлено '%d'"
+"У .editorconfig 'charset' усталяваны '%d'"
+
+EditorConfigOrgProblemIndentSize
+"В этом случае пользователь не может изменить размер таба по Shift-F5"
+"In this case user can't change tab size by Shift-F5"
+upd:"In this case user can't change tab size by Shift-F5"
+upd:"In this case user can't change tab size by Shift-F5"
+upd:"In this case user can't change tab size by Shift-F5"
+upd:"In this case user can't change tab size by Shift-F5"
+upd:"In this case user can't change tab size by Shift-F5"
+"У цьому випадку користувач не може змінити розмір таба Shift-F5"
+"У гэтым выпадку карыстач не можа змяніць памер таба па Shift-F5"
+
+EditorConfigOrgProblemIndentStyle
+"В этом случае пользователь не может изменить стиль таба по Ctrl-F5"
+"In this case user can't change tab style by Ctrl-F5"
+upd:"In this case user can't change tab style by Ctrl-F5"
+upd:"In this case user can't change tab style by Ctrl-F5"
+upd:"In this case user can't change tab style by Ctrl-F5"
+upd:"In this case user can't change tab style by Ctrl-F5"
+upd:"In this case user can't change tab style by Ctrl-F5"
+"У цьому випадку користувач не може змінити стиль таба за Ctrl-F5"
+"У гэтым выпадку карыстач не можа змяніць стыль таба па Ctrl-F5"
+
+EditorConfigOrgProblemCharset
+"В этом случае пользователь не может изменить кодировку по F8 or Shift-F8"
+"In this case user can't change codepage by F8 or Shift-F8"
+upd:"In this case user can't change codepage by F8 or Shift-F8"
+upd:"In this case user can't change codepage by F8 or Shift-F8"
+upd:"In this case user can't change codepage by F8 or Shift-F8"
+upd:"In this case user can't change codepage by F8 or Shift-F8"
+upd:"In this case user can't change codepage by F8 or Shift-F8"
+"У цьому випадку користувач не може змінити кодування F8 або Shift-F8"
+"У гэтым выпадку карыстач не можа змяніць кадоўку па F8 or Shift-F8"
+
 #Must be the last
 NewFileName
 l:

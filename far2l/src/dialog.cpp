@@ -3585,11 +3585,11 @@ int Dialog::Do_ProcessTab(int Next)
 	unsigned I;
 
 	if (ItemCount > 1) {
-		// Здесь с фокусом ОООЧЕНЬ ТУМАННО!!!
-		if (Item[FocusPos]->Flags & DIF_EDITOR) {
+		// Must check for DI_EDIT since DIF_EDITOR and DIF_LISTNOAMPERSAND are equal
+		if (Item[FocusPos]->Type==DI_EDIT && (Item[FocusPos]->Flags & DIF_EDITOR)) {
 			I = FocusPos;
 
-			while (Item[I]->Flags & DIF_EDITOR)
+			while (Item[I]->Type==DI_EDIT && (Item[I]->Flags & DIF_EDITOR))
 				I = ChangeFocus(I, Next ? 1 : -1, TRUE);
 		} else {
 			I = ChangeFocus(FocusPos, Next ? 1 : -1, TRUE);

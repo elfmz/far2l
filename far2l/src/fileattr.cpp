@@ -52,7 +52,7 @@ int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
 
 		int Code;
 
-		if (SkipMode != -1)
+		if (SkipMode != SETATTR_RET_UNKNOWN)
 			Code = SkipMode;
 		else
 			Code = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, Msg::SetAttrCannotFor, Name,
@@ -98,7 +98,7 @@ int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime
 
 		int Code;
 
-		if (SkipMode != -1)
+		if (SkipMode != SETATTR_RET_UNKNOWN)
 			Code = SkipMode;
 		else
 			Code = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, Msg::SetAttrTimeCannotFor, Name,
@@ -126,7 +126,7 @@ int ESetFileOwner(LPCWSTR Name, LPCWSTR Owner, int SkipMode)
 	int Ret = SETATTR_RET_OK;
 	while (!SetOwner(Name, Owner)) {
 		int Code;
-		if (SkipMode != -1)
+		if (SkipMode != SETATTR_RET_UNKNOWN)
 			Code = SkipMode;
 		else
 			Code = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, Msg::SetAttrOwnerCannotFor, Name,
@@ -152,7 +152,7 @@ int ESetFileGroup(LPCWSTR Name, LPCWSTR Group, int SkipMode)
 	int Ret = SETATTR_RET_OK;
 	while (!SetGroup(Name, Group)) {
 		int Code;
-		if (SkipMode != -1)
+		if (SkipMode != SETATTR_RET_UNKNOWN)
 			Code = SkipMode;
 		else
 			Code = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, Msg::SetAttrGroupCannotFor, Name,

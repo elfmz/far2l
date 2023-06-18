@@ -728,6 +728,19 @@ int FileEditor::ProcessKey(int Key)
 	return ReProcessKey(Key, FALSE);
 }
 
+static void EditorConfigOrgConflictMessage(const FARString &value, const struct FarLangMsg &problem)
+{
+	FARString disable_line1, disable_line2;
+	disable_line1 = Msg::EditorConfigOrgDisable;
+	size_t p;
+	if (disable_line1.Pos(p, '\n')) {
+		disable_line2 = disable_line1.SubStr(p + 1);
+		disable_line1.Truncate(p);
+	}
+	Message(MSG_WARNING, 1, Msg::EditorConfigOrgConflict,
+		Msg::EditorConfigOrgFile, value, problem, L"", disable_line1, disable_line2, Msg::Ok);
+}
+
 int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 {
 	EditorConfigOrg EdCfg;	// need for get EditorConfigOrg data for this file
@@ -1108,16 +1121,8 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 
 			case KEY_SHIFTF5:
 				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.TabSize > 0) {
-					FARString strTmp;
-					strTmp.Format(L"In .editorconfig \"indent_size\" set to \"%d\"", EdCfg.TabSize);
-					Message(MSG_WARNING, 1, L"Editor && .editorconfig - tabsize",
-							L"File located in (sub)directory with .editorconfig",
-							strTmp,
-							L"In this case user by Shift-F5 can not change tabsize",
-							L"",
-							L"You can disable .editorconfig processing globally",
-							L"in main menu->Options->Editor settings",
-							Msg::Ok);
+					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentSize, EdCfg.TabSize);
+					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemIndentSize);
 					return TRUE;
 				}
 				ChooseTabSizeMenu();
@@ -1126,17 +1131,9 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 
 			case KEY_CTRLF5:
 				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.ExpandTabs >= 0) {
-					FARString strTmp;
-					strTmp.Format(L"In .editorconfig \"indent_style\" set to \"%s\"",
-									EdCfg.ExpandTabs==EXPAND_NOTABS ? "tab" : EdCfg.ExpandTabs==EXPAND_NEWTABS ? "space" : "????" );
-					Message(MSG_WARNING, 1, L"Editor && .editorconfig - indent_style",
-							L"File located in (sub)directory with .editorconfig",
-							strTmp,
-							L"In this case user by Ctrl-F5 can not change indent_style",
-							L"",
-							L"You can disable .editorconfig processing globally",
-							L"in main menu->Options->Editor settings",
-							Msg::Ok);
+					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentStyle,
+						EdCfg.ExpandTabs==EXPAND_NOTABS ? "tab" : EdCfg.ExpandTabs==EXPAND_NEWTABS ? "space" : "????" );
+					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemIndentStyle);
 					return TRUE;
 				}
 				m_editor->SetConvertTabs(
@@ -1204,15 +1201,8 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 			case KEY_SHIFTF8: {
 				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.CodePage > 0) {
 					FARString strTmp;
-					strTmp.Format(L"In .editorconfig \"charset\" set to \"%d\"", EdCfg.CodePage);
-					Message(MSG_WARNING, 1, L"Editor && .editorconfig - codepage",
-							L"File located in (sub)directory with .editorconfig",
-							strTmp,
-							L"In this case user by F8 or Shift-F8 can not change codepage",
-							L"",
-							L"You can disable .editorconfig processing globally",
-							L"in main menu->Options->Editor settings",
-							Msg::Ok);
+					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, EdCfg.CodePage);
+					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemCharset);
 					return TRUE;
 				}
 				UINT codepage;

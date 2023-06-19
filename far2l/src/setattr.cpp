@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
+#include <fstream>
+#include <algorithm>
+
 #include "lang.hpp"
 #include "dialog.hpp"
 #include "chgprior.hpp"
@@ -65,9 +68,9 @@ enum SETATTRDLG
 	SA_TXTBTN_INFO,
 	SA_EDIT_INFO,
 	SA_TEXT_OWNER,
-	SA_EDIT_OWNER,
+	SA_COMBO_OWNER,
 	SA_TEXT_GROUP,
-	SA_EDIT_GROUP,
+	SA_COMBO_GROUP,
 
 	SA_SEPARATOR2,
 	SA_CHECKBOX_IMMUTABLE,
@@ -255,9 +258,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 										}
 									}
 
-									BlankEditIfChanged(hDlg, SA_EDIT_OWNER, DlgParam->strOwner,
+									BlankEditIfChanged(hDlg, SA_COMBO_OWNER, DlgParam->strOwner,
 											DlgParam->OwnerChanged);
-									BlankEditIfChanged(hDlg, SA_EDIT_GROUP, DlgParam->strGroup,
+									BlankEditIfChanged(hDlg, SA_COMBO_GROUP, DlgParam->strGroup,
 											DlgParam->GroupChanged);
 								}
 								// сняли?
@@ -267,9 +270,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
 												DlgParam->OriginalCBAttr[i]);
 									}
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
 											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP,
 											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 
@@ -311,9 +314,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 													BSTATE_3STATE);
 										}
 									}
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
 											reinterpret_cast<LONG_PTR>(L""));
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP,
 											reinterpret_cast<LONG_PTR>(L""));
 								}
 								// сняли?
@@ -324,9 +327,9 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
 												DlgParam->OriginalCBAttr[i]);
 									}
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_OWNER,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
 											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
-									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_GROUP,
+									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP,
 											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 							}
@@ -591,31 +594,31 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t *>(preRedrawItem.Param.Param1));
 }
 
-static bool CheckFileOwnerGroup(DialogItemEx &EditItem,
-		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &), FARString strComputerName,
+static void CheckFileOwnerGroup(DialogItemEx &ComboItem,
+		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &),
+		FARString strComputerName,
 		FARString strSelName)
 {
 	FARString strCur;
-	bool out = true;
 	GetFN(strComputerName, strSelName, strCur);
-	if (EditItem.strData.IsEmpty()) {
-		EditItem.strData = strCur;
-	} else if (!EditItem.strData.Equal(0, strCur)) {
-		EditItem.strData = Msg::SetAttrOwnerMultiple;
-		out = false;
+	if (ComboItem.strData.IsEmpty()) {
+		ComboItem.strData = strCur;
 	}
-	return out;
+	else if (ComboItem.strData != strCur) {
+		ComboItem.strData = Msg::SetAttrOwnerMultiple;
+	}
 }
 
-static bool
-ApplyFileOwnerGroupIfChanged(DialogItemEx &EditItem, int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode),
+static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &ComboItem,
+		int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode),
 		int &SkipMode, const FARString &strSelName, const FARString &strInit, bool force = false)
 {
-	if (!EditItem.strData.IsEmpty() && (force || StrCmp(strInit, EditItem.strData))) {
-		int Result = ESetFN(strSelName, EditItem.strData, SkipMode);
+	if (!ComboItem.strData.IsEmpty() && (force || StrCmp(strInit, ComboItem.strData))) {
+		int Result = ESetFN(strSelName, ComboItem.strData, SkipMode);
 		if (Result == SETATTR_RET_SKIPALL) {
 			SkipMode = SETATTR_RET_SKIP;
-		} else if (Result == SETATTR_RET_ERROR) {
+		}
+		else if (Result == SETATTR_RET_ERROR) {
 			return false;
 		}
 	}
@@ -642,6 +645,50 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 	FFFlags.Apply(strSelName.GetMB());
 }
 
+class ListFromFile {
+	std::vector<FarListItem> Items;
+	FarList List;
+	void Append(const wchar_t *s) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = wcsdup(s);
+	}
+public:
+	ListFromFile(const char *filename, int SelCount);
+	~ListFromFile() {
+		for (auto& item : Items)
+			free((void*)item.Text);
+	}
+	FarList *GetFarList() {
+		return &List;
+	}
+	static bool Cmp(const FarListItem& a, const FarListItem& b) {
+		return 0 > StrCmp(a.Text, b.Text);
+	}
+};
+
+ListFromFile::ListFromFile(const char *filename, int SelCount)
+{
+	Items.reserve(64);
+	if (SelCount >= 2)
+		Append(Msg::SetAttrOwnerMultiple);
+
+	std::ifstream is;
+	is.open(filename);
+	if (is.is_open()) {
+		std::string str;
+		while (getline(is,str), !str.empty()) {
+			auto pos = str.find(':');
+			if (pos != std::string::npos)
+				str.resize(pos);
+			Append(FARString(str).CPtr());
+		}
+		std::sort(Items.begin()+(SelCount<2 ? 0:1), Items.end(), Cmp);
+	}
+	List.ItemsNumber = Items.size();
+	List.Items = Items.data();
+}
+
 bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 {
 	std::vector<FARString> SelectedNames;
@@ -665,9 +712,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_HIDDEN, Msg::SetAttrBriefInfo},
 		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY | DIF_HIDDEN, L""},
 		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
-		{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
+		//{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
+		{DI_COMBOBOX,  18,                  6,               short(DlgX-6),    6,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrGroup},
-		{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
+		//{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
+		{DI_COMBOBOX,  18,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 
 		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
 		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
@@ -715,6 +764,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	};
 	MakeDialogItemsEx(AttrDlgData, AttrDlg);
 	SetAttrDlgParam DlgParam{};
+
+	ListFromFile Owners("/etc/passwd", SelCount);
+	ListFromFile Groups("/etc/group", SelCount);
+	AttrDlg[SA_COMBO_OWNER].ListItems = Owners.GetFarList();
+	AttrDlg[SA_COMBO_GROUP].ListItems = Groups.GetFarList();
 
 	if (SrcPanel && SrcPanel->GetMode() == PLUGIN_PANEL) {
 		OpenPluginInfo Info;
@@ -889,8 +943,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 			}
 
-			GetFileOwner(strComputerName, strSelName, AttrDlg[SA_EDIT_OWNER].strData);
-			GetFileGroup(strComputerName, strSelName, AttrDlg[SA_EDIT_GROUP].strData);
+			GetFileOwner(strComputerName, strSelName, AttrDlg[SA_COMBO_OWNER].strData);
+			GetFileGroup(strComputerName, strSelName, AttrDlg[SA_COMBO_GROUP].strData);
 		}		// end of if (SelCount==1)
 		else {
 			for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
@@ -922,7 +976,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				FARString strCurDir;
 				SrcPanel->GetCurDir(strCurDir);
 
-				bool CheckOwner = true, CheckGroup = true;
 				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData)) {
 					if (!FolderPresent && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 						FolderPresent = true;
@@ -941,12 +994,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 							AttrDlg[AP[i].Item].Selected++;
 						}
 					}
-					if (CheckOwner)
-						CheckFileOwnerGroup(AttrDlg[SA_EDIT_OWNER], GetFileOwner, strComputerName,
-								strSelName);
-					if (CheckGroup)
-						CheckFileOwnerGroup(AttrDlg[SA_EDIT_GROUP], GetFileGroup, strComputerName,
-								strSelName);
+					CheckFileOwnerGroup(AttrDlg[SA_COMBO_OWNER], GetFileOwner, strComputerName, strSelName);
+					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
 					FSFileFlags FFFlags(strSelName.GetMB());
 					if (FFFlags.Immutable())
 						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
@@ -1018,8 +1067,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			DlgParam.OriginalCBFlag[i] = AttrDlg[i].Flags;
 		}
 
-		DlgParam.strOwner = AttrDlg[SA_EDIT_OWNER].strData;
-		DlgParam.strGroup = AttrDlg[SA_EDIT_GROUP].strData;
+		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;
+		DlgParam.strGroup = AttrDlg[SA_COMBO_GROUP].strData;
 		FARString strInitOwner = DlgParam.strOwner, strInitGroup = DlgParam.strGroup;
 
 		DlgParam.DialogMode = ((SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
@@ -1052,7 +1101,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 				TPreRedrawFuncGuard preRedrawFuncGuard(PR_ShellSetFileAttributesMsg);
 				ShellSetFileAttributesMsg(SelCount == 1 ? strSelName.CPtr() : nullptr);
-				int SkipMode = -1;
+				int SkipMode = SETATTR_RET_UNKNOWN;
 
 				if (SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 					DWORD NewMode = 0;
@@ -1063,10 +1112,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 					}
 
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode,
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
 								strSelName, strInitOwner))
 						break;
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode,
+					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
 								strSelName, strInitGroup))
 						break;
 
@@ -1144,10 +1193,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 								break;
 						}
 
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner, SkipMode,
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
 									strSelName, strInitOwner))
 							break;
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup, SkipMode,
+						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
 									strSelName, strInitGroup))
 							break;
 
@@ -1209,11 +1258,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_OWNER], ESetFileOwner,
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileOwner,
 												SkipMode, strFullName, strInitOwner,
 												DlgParam.OSubfoldersState))
 										break;
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_EDIT_GROUP], ESetFileGroup,
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup,
 												SkipMode, strFullName, strInitGroup,
 												DlgParam.OSubfoldersState))
 										break;

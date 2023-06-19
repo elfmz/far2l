@@ -2978,7 +2978,7 @@ codepage back. Клавиша #F4# позволяет изменять отоб�
 @CodePagesSet
 $ #ANSI and OEM codepage setting#
   Switchable by #F8# and #Shift-F8# OEM and ANSI code pages are defined based on the file
-  #~~/.config/far2l/cp# (firts line is #OEM#, second is #ANSI#)
+  #~~/.config/far2l/cp# (first line is #OEM#, second is #ANSI#)
   or, if its absence, by environment variable #LC_CTYPE#
 
 @EditCodePageNameDlg

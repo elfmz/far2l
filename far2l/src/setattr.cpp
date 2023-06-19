@@ -673,15 +673,23 @@ ListFromFile::ListFromFile(const char *filename, int SelCount)
 	if (SelCount >= 2)
 		Append(Msg::SetAttrOwnerMultiple);
 
+	// may be rewrite to obtain by getpwent() & getgrent() ???
+	// now direct reading from /etc/passwd or /etc/group
 	std::ifstream is;
 	is.open(filename);
 	if (is.is_open()) {
 		std::string str;
 		while (getline(is,str), !str.empty()) {
-			auto pos = str.find(':');
+			// remove comment (starting with '#') from string
+			auto pos = str.find('#');
 			if (pos != std::string::npos)
 				str.resize(pos);
-			Append(FARString(str).CPtr());
+			// ':' need be in string
+			pos = str.find(':');
+			if (pos != std::string::npos) {
+				str.resize(pos);
+				Append(FARString(str).CPtr()); // name always before first ':'
+			}
 		}
 		std::sort(Items.begin()+(SelCount<2 ? 0:1), Items.end(), Cmp);
 	}

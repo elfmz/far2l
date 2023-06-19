@@ -35,14 +35,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum SETATTR_RET_CODES
 {
-	SETATTR_RET_ERROR,
+	SETATTR_RET_UNKNOWN = -1,
+	SETATTR_RET_ERROR   = 0,
 	SETATTR_RET_OK,
 	SETATTR_RET_SKIP,
 	SETATTR_RET_SKIPALL,
 };
 
-int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode = -1);
+int ESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode = SETATTR_RET_UNKNOWN);
 int ESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime, DWORD FileAttr,
-		int SkipMode = -1);
-int ESetFileOwner(LPCWSTR Name, LPCWSTR Owner, int SkipMode = -1);
-int ESetFileGroup(LPCWSTR Name, LPCWSTR Group, int SkipMode = -1);	// todo
+		int SkipMode = SETATTR_RET_UNKNOWN);
+int ESetFileOwner(LPCWSTR Name, LPCWSTR Owner, int SkipMode = SETATTR_RET_UNKNOWN);
+int ESetFileGroup(LPCWSTR Name, LPCWSTR Group, int SkipMode = SETATTR_RET_UNKNOWN);	// todo

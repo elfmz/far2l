@@ -1471,16 +1471,16 @@ int FileList::ProcessKey(int Key)
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f4 */
 
 						if (Key == KEY_ALTF4
-								&& ProcessLocalFileTypes(strFileName, FILETYPE_ALTEDIT, !PluginMode))
+								&& ProcessLocalFileTypes(strFileName, FILETYPE_ALTEDIT, !PluginMode, strCurDir))
 							Processed = TRUE;
 
 						else if (Key == KEY_F4
-								&& ProcessLocalFileTypes(strFileName, FILETYPE_EDIT, !PluginMode))
+								&& ProcessLocalFileTypes(strFileName, FILETYPE_EDIT, !PluginMode, strCurDir))
 							Processed = TRUE;
 
 						if (!Processed || Key == KEY_CTRLSHIFTF4) {
 							if (EnableExternal) {
-								ProcessExternal(Opt.strExternalEditor, strFileName, !PluginMode);
+								ProcessExternal(Opt.strExternalEditor, strFileName, !PluginMode, strCurDir);
 								Processed = TRUE;
 							} else {
 								FileEditor *ShellEditor = PluginMode
@@ -1526,16 +1526,16 @@ int FileList::ProcessKey(int Key)
 						/* $ 02.08.2001 IS обработаем ассоциации для alt-f3 */
 
 						if (Key == KEY_ALTF3
-								&& ProcessLocalFileTypes(strFileName, FILETYPE_ALTVIEW, !PluginMode))
+								&& ProcessLocalFileTypes(strFileName, FILETYPE_ALTVIEW, !PluginMode, strCurDir))
 							Processed = TRUE;
 
 						else if (Key == KEY_F3
-								&& ProcessLocalFileTypes(strFileName, FILETYPE_VIEW, !PluginMode))
+								&& ProcessLocalFileTypes(strFileName, FILETYPE_VIEW, !PluginMode, strCurDir))
 							Processed = TRUE;
 
 						if (!Processed || Key == KEY_CTRLSHIFTF3) {
 							if (EnableExternal) {
-								ProcessExternal(Opt.strExternalViewer, strFileName, !PluginMode);
+								ProcessExternal(Opt.strExternalViewer, strFileName, !PluginMode, strCurDir);
 								Processed = TRUE;
 							} else {
 								NamesList ViewList;
@@ -2266,7 +2266,7 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 		}
 
 		if (EnableExec && SetCurPath() && !SeparateWindow
-				&& ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode))		//?? is was var!
+				&& ProcessLocalFileTypes(strFileName, FILETYPE_EXEC, !PluginMode, strCurDir))		//?? is was var!
 		{
 			if (PluginMode)
 				QueueDeleteOnClose(strFileName);
@@ -2281,7 +2281,8 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 			EnsurePathHasParentPrefix(strFileName);
 
 			if (!(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTPANEL) && !PluginMode)	// AN
-				CtrlObject->CmdHistory->AddToHistory(strFileName);
+				//CtrlObject->CmdHistory->AddToHistory(strFileName);
+				CtrlObject->CmdHistory->AddToHistoryExtra(strFileName, strCurDir);
 
 			CtrlObject->CmdLine->ExecString(strFileName, SeparateWindow, true, false, false, RunAs);
 
@@ -2293,7 +2294,7 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 
 			if (EnableAssoc && !EnableExec &&		// не запускаем и не в отдельном окне,
 					!SeparateWindow &&				// следовательно это Ctrl-PgDn
-					ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode)) {
+					ProcessLocalFileTypes(strFileName, FILETYPE_ALTEXEC, !PluginMode, strCurDir)) {
 				if (PluginMode)
 					QueueDeleteOnClose(strFileName);
 
@@ -2306,7 +2307,7 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 				//					if (SeparateWindow || Opt.UseRegisteredTypes)
 				{
 					SetCurPath();	// OpenFilePlugin can change current path
-					ProcessGlobalFileTypes(strFileName, RunAs, !PluginMode);
+					ProcessGlobalFileTypes(strFileName, RunAs, !PluginMode, strCurDir);
 				}
 
 				if (PluginMode)

@@ -120,7 +120,7 @@ static int GetDescriptionWidth(ConfigReader &cfg_reader, const wchar_t *Name = n
 	- Убрал непонятный мне запрет на использование маски файлов типа "*.*"
 	(был когда-то, вроде, такой баг-репорт)
 */
-bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
+bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory, FARString &strCurDir)
 {
 	ConfigReader cfg_reader;
 	// RenumKeyRecord(FTS.Associations,FTS.TypeFmt,FTS.Type0);
@@ -250,7 +250,8 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 				strCommand.LShift(1);
 			} else if (CanAddHistory && !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTFARASS))		// AN
 			{
-				CtrlObject->CmdHistory->AddToHistory(strCommand);
+				//CtrlObject->CmdHistory->AddToHistory(strCommand);
+				CtrlObject->CmdHistory->AddToHistoryExtra(strCommand,strCurDir);
 			}
 
 			// ProcessOSAliases(strCommand);
@@ -293,21 +294,22 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory)
 	return true;
 }
 
-void ProcessGlobalFileTypes(const wchar_t *Name, bool RunAs, bool CanAddHistory)
+void ProcessGlobalFileTypes(const wchar_t *Name, bool RunAs, bool CanAddHistory, FARString &strCurDir)
 {
 	FARString strName(Name);
 	EscapeSpace(strName);
 	CtrlObject->CmdLine->ExecString(strName, true, true, false, false, RunAs);
 
 	if (CanAddHistory && !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTWINASS)) {
-		CtrlObject->CmdHistory->AddToHistory(strName);
+		//CtrlObject->CmdHistory->AddToHistory(strName);
+		CtrlObject->CmdHistory->AddToHistoryExtra(strName,strCurDir);
 	}
 }
 
 /*
 	Используется для запуска внешнего редактора и вьювера
 */
-void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHistory)
+void ProcessExternal(const wchar_t *Command, const wchar_t *Name, bool CanAddHistory, FARString &strCurDir)
 {
 	FARString strListName, strAnotherListName;
 	FARString strFullName;

@@ -165,6 +165,11 @@ bool VMenu::ItemIsVisible(DWORD Flags)
 	return !(Flags & (LIF_HIDDEN));
 }
 
+bool VMenu::ItemIsSeparator(DWORD Flags)
+{
+	return !!(Flags & (LIF_SEPARATOR));
+}
+
 bool VMenu::UpdateRequired()
 {
 	CriticalSectionLock Lock(CS);
@@ -611,8 +616,9 @@ void VMenu::FilterStringUpdated(bool bLonger)
 	if (bLonger) {
 		// строка фильтра увеличилась
 		for (int i = 0; i < ItemCount; i++) {
-			if (ItemIsVisible(Item[i]->Flags) && !StrStrI(Item[i]->strName, strFilter)) {
+			if (ItemIsVisible(Item[i]->Flags) && !ItemIsSeparator(Item[i]->Flags) && !StrStrI(Item[i]->strName, strFilter)) {
 				Item[i]->Flags|= LIF_HIDDEN;
+				Item[i]->FilteredOut = true;
 				ItemHiddenCount++;
 				if (SelectPos == i) {
 					Item[i]->Flags&= ~LIF_SELECTED;
@@ -623,10 +629,37 @@ void VMenu::FilterStringUpdated(bool bLonger)
 	} else {
 		// строка фильтра сократилась
 		for (int i = 0; i < ItemCount; i++) {
-			if (!ItemIsVisible(Item[i]->Flags) && StrStrI(Item[i]->strName, strFilter)) {
+			if (Item[i]->FilteredOut && !ItemIsSeparator(Item[i]->Flags) && StrStrI(Item[i]->strName, strFilter)) {
 				Item[i]->Flags&= ~LIF_HIDDEN;
+				Item[i]->FilteredOut = false;
 				ItemHiddenCount--;
 			}
+		}
+	}
+
+	// hide all separators that dont precede any visible menu items
+	for (int i = 0; i < ItemCount; i++) {
+		if (ItemIsSeparator(Item[i]->Flags)) {
+			bool PrecedesVisibleItems = false;
+			int j;
+			for (j = i + 1; j < ItemCount && !ItemIsSeparator(Item[j]->Flags); ++j) {
+				if (ItemIsVisible(Item[j]->Flags)) {
+					PrecedesVisibleItems = true;
+					break;
+				}
+			}
+			if (!PrecedesVisibleItems) {
+				if (ItemIsVisible(Item[i]->Flags)) {
+					Item[i]->Flags|= LIF_HIDDEN;
+					Item[i]->FilteredOut = true;
+					ItemHiddenCount++;
+				}
+			} else if (!ItemIsVisible(Item[i]->Flags)) {
+				Item[i]->Flags&= ~LIF_HIDDEN;
+				Item[i]->FilteredOut = false;
+				ItemHiddenCount--;
+			}
+			i = j - 1; // loop will ++
 		}
 	}
 

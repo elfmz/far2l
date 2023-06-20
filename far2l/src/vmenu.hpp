@@ -95,21 +95,20 @@ class SaveScreen;
 struct MenuItemEx
 {
 	DWORD Flags;	// Флаги пункта
-
+	DWORD AccelKey;
 	FARString strName;
 
-	DWORD AccelKey;
-	int UserDataSize;				// Размер пользовательских данных
 	union							// Пользовательские данные:
 	{
 		char *UserData;				// - указатель!
 		char Str4[sizeof(char *)];	// - strlen(строка)+1 <= sizeof(char*)
 	};
 
-	short AmpPos;	// Позиция автоназначенной подсветки
+	int UserDataSize;				// Размер пользовательских данных
 	int PrefixLen;	// Length of 'grayed' unimportant prefix
-
 	int ShowPos;
+	short AmpPos;	// Позиция автоназначенной подсветки
+	bool FilteredOut;
 
 	DWORD SetCheck(int Value)
 	{
@@ -146,8 +145,9 @@ struct MenuItemEx
 	void Clear()
 	{
 		Flags = 0;
-		strName.Clear();
 		AccelKey = 0;
+		strName.Clear();
+		FilteredOut = false;
 		UserDataSize = 0;
 		UserData = nullptr;
 		AmpPos = 0;
@@ -279,6 +279,7 @@ private:
 	bool ItemCanHaveFocus(DWORD Flags);
 	bool ItemCanBeEntered(DWORD Flags);
 	bool ItemIsVisible(DWORD Flags);
+	bool ItemIsSeparator(DWORD Flags);
 	void UpdateMaxLengthFromTitles();
 	void UpdateMaxLength(int Length);
 	void UpdateItemFlags(int Pos, DWORD NewFlags);

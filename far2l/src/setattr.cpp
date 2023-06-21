@@ -676,6 +676,7 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups,int SelCount)
 
 	if (!bGroups) { // usernames
 		struct passwd *pw;
+		setpwent();
 		while ((pw = getpwent()) != NULL) {
 			Append(FARString(pw->pw_name).CPtr());
 		}
@@ -683,6 +684,7 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups,int SelCount)
 	}
 	else { // groups
 		struct group *gr;
+		setgrent();
 		while ((gr = getgrent()) != NULL) {
 			Append(FARString(gr->gr_name).CPtr());
 		}

@@ -33,8 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-#include <fstream>
-#include <algorithm>
+#include <algorithm>	// for std::sort()
+#include <pwd.h>		// for getpwent()
+#include <grp.h>		// for getgrent()
 
 #include "lang.hpp"
 #include "dialog.hpp"
@@ -645,7 +646,7 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
 	FFFlags.Apply(strSelName.GetMB());
 }
 
-class ListFromFile {
+class ListPwGrEnt {
 	std::vector<FarListItem> Items;
 	FarList List;
 	void Append(const wchar_t *s) {
@@ -654,8 +655,8 @@ class ListFromFile {
 		Items.back().Text = wcsdup(s);
 	}
 public:
-	ListFromFile(const char *filename, int SelCount);
-	~ListFromFile() {
+	ListPwGrEnt(bool bGroups,int SelCount);
+	~ListPwGrEnt() {
 		for (auto& item : Items)
 			free((void*)item.Text);
 	}
@@ -667,32 +668,32 @@ public:
 	}
 };
 
-ListFromFile::ListFromFile(const char *filename, int SelCount)
+ListPwGrEnt::ListPwGrEnt(bool bGroups,int SelCount)
 {
-	Items.reserve(64);
+	Items.reserve(128);
 	if (SelCount >= 2)
 		Append(Msg::SetAttrOwnerMultiple);
 
-	// may be rewrite to obtain by getpwent() & getgrent() ???
-	// now direct reading from /etc/passwd or /etc/group
-	std::ifstream is;
-	is.open(filename);
-	if (is.is_open()) {
-		std::string str;
-		while (getline(is,str), !str.empty()) {
-			// remove comment (starting with '#') from string
-			auto pos = str.find('#');
-			if (pos != std::string::npos)
-				str.resize(pos);
-			// ':' need be in string
-			pos = str.find(':');
-			if (pos != std::string::npos) {
-				str.resize(pos);
-				Append(FARString(str).CPtr()); // name always before first ':'
-			}
+	if (!bGroups) { // usernames
+		struct passwd *pw;
+		setpwent();
+		while ((pw = getpwent()) != NULL) {
+			Append(FARString(pw->pw_name).CPtr());
 		}
-		std::sort(Items.begin()+(SelCount<2 ? 0:1), Items.end(), Cmp);
+		endpwent();
 	}
+	else { // groups
+		struct group *gr;
+		setgrent();
+		while ((gr = getgrent()) != NULL) {
+			Append(FARString(gr->gr_name).CPtr());
+		}
+		endgrent();
+	}
+
+	if( Items.size() > 1 )
+		std::sort(Items.begin()+(SelCount<2 ? 0:1), Items.end(), Cmp);
+
 	List.ItemsNumber = Items.size();
 	List.Items = Items.data();
 }
@@ -773,8 +774,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	MakeDialogItemsEx(AttrDlgData, AttrDlg);
 	SetAttrDlgParam DlgParam{};
 
-	ListFromFile Owners("/etc/passwd", SelCount);
-	ListFromFile Groups("/etc/group", SelCount);
+	ListPwGrEnt Owners(FALSE, SelCount);
+	ListPwGrEnt Groups(TRUE, SelCount);
 	AttrDlg[SA_COMBO_OWNER].ListItems = Owners.GetFarList();
 	AttrDlg[SA_COMBO_GROUP].ListItems = Groups.GetFarList();
 

@@ -600,8 +600,9 @@ void VMenu::SetCheck(int Check, int Position)
 
 void VMenu::RestoreFilteredItems()
 {
-	for (int i = 0; i < ItemCount; i++) {
+	for (int i = 0; i < ItemCount; i++) if (Item[i]->FilteredOut) {
 		Item[i]->Flags&= ~LIF_HIDDEN;
+		Item[i]->FilteredOut = false;
 	}
 
 	ItemHiddenCount = 0;
@@ -654,7 +655,7 @@ void VMenu::FilterStringUpdated(bool bLonger)
 					Item[i]->FilteredOut = true;
 					ItemHiddenCount++;
 				}
-			} else if (!ItemIsVisible(Item[i]->Flags)) {
+			} else if (Item[i]->FilteredOut) {
 				Item[i]->Flags&= ~LIF_HIDDEN;
 				Item[i]->FilteredOut = false;
 				ItemHiddenCount--;
@@ -889,7 +890,6 @@ int VMenu::ProcessKey(int Key)
 
 	if (Key == KEY_OP_PLAINTEXT) {
 		const wchar_t *str = eStackAsString();
-
 		if (!*str)
 			return FALSE;
 
@@ -899,7 +899,6 @@ int VMenu::ProcessKey(int Key)
 				RestoreFilteredItems();
 			else
 				FilterStringUpdated(true);
-
 			DisplayObject();
 
 			return TRUE;
@@ -1617,13 +1616,13 @@ void VMenu::DrawTitles()
 	if (!strDisplayTitle.IsEmpty() || bFilterEnabled) {
 		if (bFilterEnabled) {
 			if (bFilterLocked || strFilter.IsEmpty())
-				strDisplayTitle+= L" ";
+				strDisplayTitle+= L' ';
 			else
 				strDisplayTitle.Clear();
 
-			strDisplayTitle+= bFilterLocked ? L"<" : L"[";
+			strDisplayTitle+= bFilterLocked ? L'<' : L'[';
 			strDisplayTitle+= strFilter;
-			strDisplayTitle+= bFilterLocked ? L">" : L"]";
+			strDisplayTitle+= bFilterLocked ? L'>' : L']';
 		}
 
 		WidthTitle = (int)strDisplayTitle.GetLength();
@@ -1737,9 +1736,6 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 			break;
 	}
 
-	if (GetShowItemCount() <= 0)
-		return;
-
 	if (CheckFlags(VMENU_AUTOHIGHLIGHT | VMENU_REVERSEHIGHLIGHT))
 		AssignHighlights(CheckFlags(VMENU_REVERSEHIGHLIGHT));
 
@@ -1784,8 +1780,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 		DrawEdges();
 	}
 
-
-	for (int Y = Y1 + ((BoxType != NO_BOX) ? 1 : 0), I = TopPos;
+	if (GetShowItemCount() > 0) for (int Y = Y1 + ((BoxType != NO_BOX) ? 1 : 0), I = TopPos;
 			Y < ((BoxType != NO_BOX) ? Y2 : Y2 + 1); Y++, I++) {
 		GotoXY(X1, Y);
 

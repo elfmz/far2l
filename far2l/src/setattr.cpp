@@ -655,7 +655,7 @@ class ListPwGrEnt {
 		Items.back().Text = wcsdup(s);
 	}
 public:
-	ListPwGrEnt(bool bGroups,int SelCount);
+	ListPwGrEnt(bool bGroups, int SelCount);
 	~ListPwGrEnt() {
 		for (auto& item : Items)
 			free((void*)item.Text);
@@ -668,7 +668,7 @@ public:
 	}
 };
 
-ListPwGrEnt::ListPwGrEnt(bool bGroups,int SelCount)
+ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 {
 	Items.reserve(128);
 	if (SelCount >= 2)
@@ -774,8 +774,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	MakeDialogItemsEx(AttrDlgData, AttrDlg);
 	SetAttrDlgParam DlgParam{};
 
-	ListPwGrEnt Owners(FALSE, SelCount);
-	ListPwGrEnt Groups(TRUE, SelCount);
+	ListPwGrEnt Owners(false, SelCount);
+	ListPwGrEnt Groups(true, SelCount);
 	AttrDlg[SA_COMBO_OWNER].ListItems = Owners.GetFarList();
 	AttrDlg[SA_COMBO_GROUP].ListItems = Groups.GetFarList();
 

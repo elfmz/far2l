@@ -369,11 +369,11 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 	for (;;) {
 		p = reply.find('\n');
 		if (p == std::string::npos ) break;
-		std::string possibility = reply.substr(0, p);
-		StrTrim(possibility, " \r");
-		if (!possibility.empty()) {
-			QuoteCmdArgIfNeed(possibility);
-			possibilities.emplace_back(possibility);
+		possibilities.emplace_back(reply.substr(0, p));
+		StrTrim(possibilities.back(), " \r");
+		QuoteCmdArgIfNeed(possibilities.back());
+		if (possibilities.back().empty()) {
+			possibilities.pop_back();
 		}
 		reply.erase(0, p + 1);
 	}

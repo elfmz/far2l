@@ -22,10 +22,13 @@ static const ssize_t VeryLongTerminalLine = 0x1000;
 
 static const char *vtc_inputrc = "set completion-query-items 0\n"
 	"set completion-display-width 0\n"
+	"set colored-stats off\n"
+	"set colored-completion-prefix off\n"
 	"set page-completions off\n"
 	"set colored-stats off\n"
 	"set colored-completion-prefix off\n";
 
+std::string VTSanitizeHistcontrol();
 
 VTCompletor::VTCompletor()
 	: _vtc_inputrc(InMyTemp("vtc_inputrc")),
@@ -51,8 +54,10 @@ VTCompletor::~VTCompletor()
 
 bool VTCompletor::EnsureStarted()
 {
-	if (_pid!=-1)
+	if (_pid != -1)
 		return true;
+
+	const std::string &hc_override = VTSanitizeHistcontrol();
 
 	while (!_pty_used) {
 		int l_ptyMaster = -1,
@@ -121,6 +126,9 @@ bool VTCompletor::EnsureStarted()
 				exit(4);
 			}
 			CheckedCloseFD(l_ptySlave);
+			if (!hc_override.empty()) {
+				setenv("HISTCONTROL", hc_override.c_str(), 1);
+			}
 			rc = setsid();
 			if (rc < 0) {
 				perror( "VTCompletor: setsid()");
@@ -173,6 +181,9 @@ bool VTCompletor::EnsureStarted()
 			dup2(pipe_out[1], STDERR_FILENO);
 			CheckedCloseFDPair(pipe_in);
 			CheckedCloseFDPair(pipe_out);
+			if (!hc_override.empty()) {
+				setenv("HISTCONTROL", hc_override.c_str(), 1);
+			}
 			setsid();
 			execlp("bash", "bash", "--noprofile", "-i", NULL);
 			perror("execlp");
@@ -279,12 +290,11 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	Stop();
 
 	const std::string &vtc_log = InMyTemp("vtc.log");
-
 	FILE *f = fopen(vtc_log.c_str(), "w");
 	if (f) {
 		fwrite(cmd.c_str(), cmd.size(), 1, f);
 		fwrite(tabs, strlen(tabs), 1, f);
-		fwrite("\n", 1, 1, f);
+		fwrite("\n---\n", 5, 1, f);
 		fwrite(reply.c_str(), reply.size(), 1, f);
 		fclose(f);
 	}
@@ -294,9 +304,13 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		reply.erase(0, p + begin.size());
 	}
 	for (;;) {
-		 p = reply.find('\a');
-		 if (p == std::string::npos) break;
-		 reply.erase(p, 1);
+		p = reply.rfind('\a');
+		if (p == std::string::npos) break;
+		reply.erase(p, 1);
+		if (p >= cmd.size() && reply.substr(p - cmd.size(), cmd.size()) == cmd) {
+			reply.erase(0, p - cmd.size());
+			break;
+		}
 	}
 
 	return true;

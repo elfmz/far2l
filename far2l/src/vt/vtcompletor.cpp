@@ -21,6 +21,7 @@
 static const ssize_t VeryLongTerminalLine = 0x1000;
 
 static const char *vtc_inputrc = "set completion-query-items 0\n"
+	"set completion-display-width 0\n"
 	"set page-completions off\n"
 	"set colored-stats off\n"
 	"set colored-completion-prefix off\n";
@@ -366,10 +367,13 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 	}
 
 	for (;;) {
-		p = reply.find_first_of("\n\t ");
-		if (p==std::string::npos ) break;
-		if (p > 0) {
-			possibilities.emplace_back(reply.substr(0, p));
+		p = reply.find('\n');
+		if (p == std::string::npos ) break;
+		std::string possibility = reply.substr(0, p);
+		StrTrim(possibility, " \r");
+		if (!possibility.empty()) {
+			QuoteCmdArgIfNeed(possibility);
+			possibilities.emplace_back(possibility);
 		}
 		reply.erase(0, p + 1);
 	}

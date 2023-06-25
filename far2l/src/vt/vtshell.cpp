@@ -67,6 +67,21 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 
 int VTShell_Leader(char *const shell_argv[], const char *pty);
 
+std::string VTSanitizeHistcontrol()
+{
+	std::string hc_override;
+	const char *hc = getenv("HISTCONTROL");
+	if (!hc || (!strstr(hc, "ignorespace") && !strstr(hc, "ignoreboth"))) {
+		hc_override = "ignorespace";
+		if (hc && *hc) {
+			hc_override+= ':';
+			hc_override+= hc;
+		}
+		fprintf(stderr, "Override HISTCONTROL='%s'\n", hc_override.c_str());
+	}
+	return hc_override;
+}
+
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	VTAnsi _vta;
@@ -132,16 +147,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
 		// to avoid shell history pollution by far2l's intermediate script execution commands
-		std::string hc_override;
-		const char *hc = getenv("HISTCONTROL");
-		if (!hc || (!strstr(hc, "ignorespace") && !strstr(hc, "ignoreboth"))) {
-			hc_override = "ignorespace";
-			if (hc && *hc) {
-				hc_override+= ':';
-				hc_override+= hc;
-			}
-			fprintf(stderr, "Override HISTCONTROL='%s'\n", hc_override.c_str());
-		}
+		const std::string &hc_override = VTSanitizeHistcontrol();
 
 		const BYTE col = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
 		char colorfgbg[32];

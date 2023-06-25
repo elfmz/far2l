@@ -224,7 +224,7 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	if (!EnsureStarted())
 		return false;
 
-	std::string begin = "true jkJHYvgT"; // most unique string in Universe
+	std::string begin = " true jkJHYvgT"; // most unique string in Universe
 	std::string done = "K2Ld8Gfg"; // another most unique string in Universe
 	AvoidMarkerCollision(done, cmd);  // if it still not enough unique
 	AvoidMarkerCollision(begin, cmd);  // if it still not enough unique

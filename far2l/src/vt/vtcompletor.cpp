@@ -385,7 +385,6 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 		if (p == std::string::npos ) break;
 		possibilities.emplace_back(reply.substr(0, p));
 		StrTrim(possibilities.back(), " \r");
-		QuoteCmdArgIfNeed(possibilities.back());
 		if (possibilities.back().empty()) {
 			possibilities.pop_back();
 		}
@@ -397,10 +396,12 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 	}
 
 	std::sort(possibilities.begin(), possibilities.end());
+
 	const size_t last_a_slash_pos = last_a.rfind('/');
 	const size_t args_orig_begin_slash_pos = cmd.find('/', args.back().orig_begin);
 
 	for (auto &possibility : possibilities) {
+		QuoteCmdArgIfNeed(possibility);
 		if (!whole_next_arg && StrStartsFrom(possibility, last_a.c_str())) {
 			possibility.insert(0, cmd.substr(0, args.back().orig_begin));
 

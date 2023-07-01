@@ -386,8 +386,10 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 	if (x == 1) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
-		} else {
+		} else if (_far2l_tty) { // many other terminals support this too, but not all (see #1725)
 			Format(ESC "[%dH", y);
+		} else {
+			Format(ESC "[%d;H", y);
 		}
 	} else {
 		Format(ESC "[%d;%dH", y, x);

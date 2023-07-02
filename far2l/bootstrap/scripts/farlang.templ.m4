@@ -15011,15 +15011,15 @@ upd:"Show ne&twork drive parameters"
 "Адлюстроўваць налады се&ткавых дыскаў"
 
 ChangeDriveMenuFooter
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
-"Ins,Del,Shift-Del,F4,F9"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
+"Ins,Del,Shift-Del,F4,F9,Ctrl-Alt-F"
 
 ChangeDriveExceptions
 "Исключения:    "
@@ -15077,15 +15077,15 @@ EditControlHistoryFooterNoDel
 "Up/Down,Enter,Esc"
 
 HistoryFooter
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
-"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
+"Up/Down,Enter,Esc,Shift-Del,Del,Ins,Ctrl-C,Ctrl-T,Ctrl-F10,Ctrl-Alt-F"
 
 SearchFileTitle
 l:
@@ -17746,15 +17746,15 @@ LocalMenuTitle
 "Мясцовае меню"
 
 MainMenuBottomTitle
-"Редактирование: Del,Ins,F4,Ctrl-F4"
-"Edit: Del,Ins,F4,Ctrl-F4"
-"Edit: Del,Ins,F4,Ctrl-F4"
-"Bearb.: Entf,Einf,F4,Ctrl-F4"
-"Szerk.: Del,Ins,F4,Ctrl-F4"
-"Edycja: Del,Ins,F4,Ctrl-F4"
-"Editar: Del,Ins,F4"
-"Редагування: Del,Ins,F4,Ctrl-F4"
-"Змена: Del,Ins,F4,Ctrl-F4"
+"Редактирование: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Edit: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Edit: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Bearb.: Entf,Einf,F4,Ctrl-F4,Ctrl-Alt-F"
+"Szerk.: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Edycja: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Editar: Del,Ins,F4,Ctrl-Alt-F"
+"Редагування: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
+"Змена: Del,Ins,F4,Ctrl-F4,Ctrl-Alt-F"
 
 AskDeleteMenuItem
 "Вы хотите удалить пункт меню"

@@ -76,6 +76,9 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	fprintf(stderr, "Compiled for libssh %u.%u.%u ssh_version returned '%s'\n",
 		LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO, ssh_version(0));
 
+	if (protocol_options.GetInt("IgnoreTimeModeErrors", 0)) {
+		ignore_time_mode_errors = true;
+	}
 
 	const std::string &hostkeys = protocol_options.GetString("HostKeys");
 	if (!hostkeys.empty()) {

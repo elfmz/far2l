@@ -970,7 +970,7 @@ void ProtocolSCP::SetMode(const std::string &path, mode_t mode)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
-	if (rc != 0) {
+	if (rc != 0 && !_conn->ignore_time_mode_errors) {
 		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
 }

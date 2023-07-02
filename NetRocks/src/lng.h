@@ -221,6 +221,7 @@ enum LanguageID
 	MSFTPMaxWriteBlockSize,
 	MSFTPTCPNodelay,
 	MSFTPTCPQuickAck,
+	MSFTPIgnoreTimeAndModeErrors,
 	MSFTPConnectRetries,
 	MSFTPConnectTimeout,
 	MSFTPAllowedHostkeys,

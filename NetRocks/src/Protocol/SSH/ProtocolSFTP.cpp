@@ -311,7 +311,7 @@ void ProtocolSFTP::SetTimes(const std::string &path, const timespec &access_time
 	times[1].tv_usec = suseconds_t(modification_time.tv_nsec / 1000);
 
 	int rc = sftp_utimes(_conn->sftp, path.c_str(), times);
-	if (rc != 0)
+	if (rc != 0 && !_conn->ignore_time_mode_errors)
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 
@@ -320,7 +320,7 @@ void ProtocolSFTP::SetMode(const std::string &path, mode_t mode)
 	_conn->executed_command.reset();
 
 	int rc = sftp_chmod(_conn->sftp, path.c_str(), mode);
-	if (rc != 0)
+	if (rc != 0 && !_conn->ignore_time_mode_errors)
 		throw ProtocolError(ssh_get_error(_conn->ssh), rc);
 }
 

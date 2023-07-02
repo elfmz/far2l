@@ -22,6 +22,7 @@
 | OpenSSH config files: [COMBOBOX Config file              ] |  (Default), (None), ...
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
+| [ ] Ignore file time and mode update errors                |
 |------------------------------------------------------------|
 |             [  OK    ]        [        Cancel       ]      |
  ============================================================
@@ -37,8 +38,9 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_allowed_hostkeys = -1;
-	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	int _i_openssh_configs = -1;
+	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
+	int _i_ignore_time_and_mode_errors = -1;
 	std::string _openssh_configs;
 	std::wstring _openssh_configs_initial;
 
@@ -212,6 +214,9 @@ public:
 		_i_tcp_quickack = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPQuickAck);
 
 		_di.NextLine();
+		_i_ignore_time_and_mode_errors = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPIgnoreTimeAndModeErrors);
+
+		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,61, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 		_di.NextLine();
@@ -267,6 +272,7 @@ public:
 
 		SetCheckedDialogControl(_i_tcp_nodelay, sc.GetInt("TcpNoDelay", 1) != 0);
 		SetCheckedDialogControl(_i_tcp_quickack, sc.GetInt("TcpQuickAck", 0) != 0);
+		SetCheckedDialogControl(_i_ignore_time_and_mode_errors, sc.GetInt("IgnoreTimeModeErrors", 0) != 0);
 //		SetCheckedDialogControl(_i_use_openssh_configs, sc.GetInt("UseOpenSSHConfigs", 0) != 0);
 
 		LongLongToDialogControl(_i_connect_retries, std::max((int)1, sc.GetInt("ConnectRetries", 2)));
@@ -305,6 +311,7 @@ public:
 			}
 			sc.SetInt("TcpNoDelay", IsCheckedDialogControl(_i_tcp_nodelay) ? 1 : 0);
 			sc.SetInt("TcpQuickAck", IsCheckedDialogControl(_i_tcp_quickack) ? 1 : 0);
+			sc.SetInt("IgnoreTimeModeErrors", IsCheckedDialogControl(_i_ignore_time_and_mode_errors) ? 1 : 0);
 //			sc.SetInt("UseOpenSSHConfigs", IsCheckedDialogControl(_i_use_openssh_configs) ? 1 : 0);
 
 			sc.SetInt("ConnectRetries", std::max((int)1, (int)LongLongFromDialogControl(_i_connect_retries)));

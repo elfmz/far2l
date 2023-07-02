@@ -218,6 +218,7 @@
 "Max &write block size, bytes:"
 "Enable &TCP_NODELAY option"
 "Enable TCP_&QUICKACK option"
+"Ignore time and mode &errors"
 "Automatically retr&y connect, times:"
 "Connection t&imeout, seconds:"
 "Allowed host &keys:"

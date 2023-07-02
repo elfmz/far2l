@@ -205,7 +205,7 @@ std::string CommandLine::GetConsoleLog(bool colored)
 	return histfile;
 }
 
-void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir)
+void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir, FARString strFile)
 {
 	if (SelectType == 2)
 		CtrlObject->FolderHistory->SetAddMode(false, 2, true);
@@ -219,6 +219,9 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel)) {
 		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strDir, FALSE)) {
 			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
+			//fprintf(stderr, "=== ChangeDirFromHistory():\n  strDir=\"%ls\"\n  strFile=\"%ls\"\n", strDir.CPtr(), strFile.CPtr());
+			if ( !strFile.IsEmpty() && !strFile.Contains(L'/') ) // only local file, not in another directory
+				Panel->GoToFile(strFile);
 			// restore current directory to active panel path
 			if (SelectType == 6) {
 				CtrlObject->Cp()->ActivePanel->SetCurPath();
@@ -360,11 +363,18 @@ int CommandLine::ProcessKey(int Key)
 			int SelectType = CtrlObject->CmdHistory->Select(Msg::HistoryTitle, L"History", strStr, Type);
 			// BUGBUG, magic numbers
 			if (SelectType == 8) {
-				size_t p = 0;
-				if (strStr.Pos(p, L'\n')) {
-					ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p));
-					strStr.Remove(0, p + 1);
-					SetString(strStr);
+				size_t p1 = 0;
+				size_t p2 = 0;
+				//fprintf(stderr, "=== Alt-F8: strStr=\"%ls\"\n", strStr.CPtr());
+				if (strStr.Pos(p1, L'\n')) {
+					strStr.Pos(p2, L'\n', p1 + 1);
+					//fprintf(stderr, "=== Alt-F8: p1=%lu p2=%lu\n", p1, p2);
+					ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p1),
+						strStr.SubStr(p1 + 1, p2 > 0 ? p2 - p1 - 1 : -1) );
+					if( p2 > 0 ) {
+						strStr.Remove(0, p2 + 1);
+						SetString(strStr);
+					}
 				} else {
 					ChangeDirFromHistory(Type == 1, 1, strStr);
 				}

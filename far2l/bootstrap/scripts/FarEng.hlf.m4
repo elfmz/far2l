@@ -3029,6 +3029,9 @@ plugins).
 
     #Ctrl-R# allows to refresh the disk selection menu.
 
+    #Ctrl-Alt-F# to toggle to quick filtering
+(shows only items containing the typing text).
+
     #Alt-Shift-F9# allows you to ~configure plugins~@PluginsConfig@ (it works only if
 display of plugin items is enabled).
 

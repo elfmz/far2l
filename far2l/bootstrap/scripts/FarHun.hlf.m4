@@ -2743,6 +2743,9 @@ pluginnel emulált fájlrendszereknél nem).
 
     A #Ctrl-R# frissíti a Meghajtók menü tartalmát.
 
+    #Ctrl-Alt-F# to toggle to quick filtering
+(shows only items containing the typing text).
+
     Ha a #CD meghajtó típusa# mód engedélyezve van (#Ctrl-8#), a FAR
 igyekszik felismerni az összes rendszerbe csatlakozó CD meghajtó
 típusát. A felismert típusok: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW és

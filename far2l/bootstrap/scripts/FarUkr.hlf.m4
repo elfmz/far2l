@@ -3071,6 +3071,9 @@ $ #Меню переходу#
 
  #Ctrl-R# дозволяє оновити меню переходу.
 
+ #Ctrl-Alt-F# to toggle to quick filtering
+(shows only items containing the typing text).
+
  #Alt-Shift-F9# дозволяє ~налаштувати параметри~@PluginsConfig@ зовнішніх, що підключаються
 модулів (працює, якщо увімкнено показ імен модулів, що підключаються).
 

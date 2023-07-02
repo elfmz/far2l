@@ -604,17 +604,30 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 									L"--- Directory --- No Information ---",
 									Msg::HistoryCommandClose);
 						else {
-							switch (Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
-									Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp)) {
-								case 1:
+							int i = Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
+									Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp);
+							switch (i) {
+								case 1: // ToDir
+								case 2: // Run-up
+									bool b1, b2;
+									size_t p1 = 0, p2 = 0;
+									// directory
 									strStr = CurrentRecord->strExtra;
-									Type = CurrentRecord->Type;
-									return 8;
-
-								case 2:
-									strStr = CurrentRecord->strExtra;
+									// try get filename from command
 									strStr+= L'\n';
-									strStr+= CurrentRecord->strName;
+									b1 = CurrentRecord->strName.Pos(p1, L"./"); // not need ./ from start of command filename
+									b2 = CurrentRecord->strName.Pos(p2, L' '); // assume that in command filename end by first space
+									if( b1 || b2 )
+										strStr+= CurrentRecord->strName.SubStr(
+											!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
+											b2 && p2>0 ? p2 : -1);
+									else
+										strStr+= CurrentRecord->strName; // all command has not ./ and spaces
+									if (i==2) { // Run-up
+										// command to command line
+										strStr+= L'\n';
+										strStr+= CurrentRecord->strName;
+									}
 									Type = CurrentRecord->Type;
 									return 8;
 							}
@@ -721,7 +734,20 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				}
 			case KEY_CTRLF10: {
 					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty() ) {
+						bool b1, b2;
+						size_t p1 = 0, p2 = 0;
+						// directory
 						strStr = CurrentRecord->strExtra;
+						// try get filename from command
+						strStr+= L'\n';
+						b1 = CurrentRecord->strName.Pos(p1, L"./"); // not need ./ from start of command filename
+						b2 = CurrentRecord->strName.Pos(p2, L' '); // assume that in command filename end by first space
+						if( b1 || b2 )
+							strStr+= CurrentRecord->strName.SubStr(
+								!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
+								b2 && p2>0 ? p2 : -1);
+						else
+							strStr+= CurrentRecord->strName; // all command has not ./ and spaces
 						Type = CurrentRecord->Type;
 						return 8; // for command is equivalent to Go To Directory
 					}

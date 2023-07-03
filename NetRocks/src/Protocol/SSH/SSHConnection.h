@@ -7,6 +7,7 @@
 #include <StringConfig.h>
 #include <libssh/libssh.h>
 #include <libssh/ssh2.h>
+#include "../FileStatsOverride.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +71,6 @@ public:
 	void KeepAlive();
 };
 
-
 struct SSHConnection
 {
 	std::shared_ptr<SSHExecutedCommand> executed_command;
@@ -78,6 +78,7 @@ struct SSHConnection
 
 	SSHSession ssh;
 	bool ignore_time_mode_errors = false;
+	FileStatsOverride file_stats_override;
 
 	SSHConnection(const SSHConnection&) = delete;
 

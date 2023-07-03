@@ -350,11 +350,6 @@ void OpXfer::Transfer()
 						? XOA_OVERWRITE : XOA_ASK;
 				}
 
-				std::string prefix = "/tmp/far2l";
-				if (e.first.size() >= prefix.size() && e.first.compare(0, prefix.size(), prefix) == 0) {
-					xoa = XOA_OVERWRITE;
-				}
-
 				if (xoa == XOA_ASK) {
 					xoa = ConfirmOverwrite(_kind, _direction, path_dst, e.second.modification_time, e.second.size,
 								existing_file_info.modification_time, existing_file_info.size).Ask(_default_xoa);

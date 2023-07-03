@@ -1615,7 +1615,8 @@ void VMenu::DrawTitles()
 
 	if (!strDisplayTitle.IsEmpty() || bFilterEnabled) {
 		if (bFilterEnabled) {
-			if (bFilterLocked || strFilter.IsEmpty())
+			if (bFilterLocked || strFilter.IsEmpty()
+				|| (int)strDisplayTitle.GetLength() + 3 + (int)strFilter.GetLength() < MaxTitleLength )
 				strDisplayTitle+= L' ';
 			else
 				strDisplayTitle.Clear();

@@ -961,8 +961,9 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 	}
 
 	if (rc != 0) {
-		fprintf(stderr, "%s(%s) error %d\n", __FUNCTION__, path.c_str(), rc);
+		fprintf(stderr, "%s(%s) ignored error %d\n", __FUNCTION__, path.c_str(), rc);
 		//throw ProtocolError(sc.FilteredError().c_str(), rc);
+		_conn->file_stats_override.OverrideTimes(path, access_time, modification_time);
 	}
 }
 
@@ -970,8 +971,12 @@ void ProtocolSCP::SetMode(const std::string &path, mode_t mode)
 {
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
-	if (rc != 0 && !_conn->ignore_time_mode_errors) {
-		throw ProtocolError(sc.FilteredError().c_str(), rc);
+	if (rc != 0) {
+		if (!_conn->ignore_time_mode_errors)
+			throw ProtocolError(sc.FilteredError().c_str(), rc);
+
+		fprintf(stderr, "%s(%s) ignored error %d\n", __FUNCTION__, path.c_str(), rc);
+		_conn->file_stats_override.OverrideMode(path, mode);
 	}
 }
 

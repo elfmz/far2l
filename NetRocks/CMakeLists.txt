@@ -83,6 +83,7 @@ if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
         src/Protocol/SSH/SSHConnection.cpp
         src/Protocol/SSH/ProtocolSFTP.cpp
         src/Protocol/SSH/ProtocolSCP.cpp
+        src/Protocol/FileStatsOverride.cpp
     )
     target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
     target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})

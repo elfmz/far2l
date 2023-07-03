@@ -30,7 +30,7 @@ wchar_t *__cdecl far_wcsncpy(wchar_t *dest, const wchar_t *src, size_t DestSize)
 	return tmpsrc;
 }
 
-#if defined(__MUSL__)
+#if defined(__MUSL__) || defined(__ANDROID__)
 struct QSortExAdapterArg
 {
 	int (*__cdecl comp)(const void *, const void *, void *);

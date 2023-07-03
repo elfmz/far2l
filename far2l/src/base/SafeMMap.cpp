@@ -7,7 +7,7 @@
 #include <time.h>
 #include <dlfcn.h>
 
-#if !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+#if !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) && !defined(__ANDROID__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
 # include <execinfo.h>
 # define HAS_BACKTRACE
 #endif

@@ -1827,6 +1827,8 @@ $ #Історія команд#
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
 
+ Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+
  Для переходу до попередньої або наступної команди безпосередньо з
 командного рядка, можна використовувати клавіші #Ctrl-E# або #Ctrl-X#
 відповідно.
@@ -1871,6 +1873,8 @@ $ #Історія перегляду та редагування#
 
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
+
+ Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
 
 Відкрити файл у ~редакторі~@Editor@ #F4#
 
@@ -1924,6 +1928,8 @@ $ #Історія зміни папок#
 
  Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
+
+ Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
 
  Також можна використовувати підсвічені літери, щоб вибрати пункт у списку історії.
 

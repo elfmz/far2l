@@ -1804,6 +1804,8 @@ available:
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
 
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+
     To go to the previous or next command directly from the command line, you
 can press #Ctrl-E# or #Ctrl-X# respectively.
 
@@ -1852,6 +1854,8 @@ shortcuts are available:
 
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
+
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
@@ -1902,6 +1906,8 @@ available:
 
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
+
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
 
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.

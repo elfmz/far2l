@@ -1616,6 +1616,8 @@ $ #Parancs előzmények#
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
 
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+
     Ha az előző vagy a következő parancsot közvetlenül a
   parancssorból szeretnénk meghívni, használjuk a #Ctrl-E# vagy
   a #Ctrl-X# billentyűket.
@@ -1668,6 +1670,8 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
 
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+
     A lista fájljainak megnyitását a kurzorvezérlőkön és az #Enteren#
   kívül elvégezhetjük közvetlenül a kiemelt betűjelükkel is.
 
@@ -1719,6 +1723,8 @@ $ #Előzmények: mappa előzmények#
 
   Toggle to quick filtering                                #Ctrl-Alt-F#
   (shows only items containing the typing text)
+
+  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
 
     A lista mappáinak megnyitására a kurzorvezérlőkön és az #Enteren#
   kívül használatjuk a kiemelt betűjelüket is.

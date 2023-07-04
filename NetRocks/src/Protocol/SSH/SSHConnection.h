@@ -77,8 +77,7 @@ struct SSHConnection
 	std::map<std::string, std::string> env_set {{"TERM", "xterm"}};
 
 	SSHSession ssh;
-	bool ignore_time_mode_errors = false;
-	FileStatsOverride file_stats_override;
+	std::unique_ptr<FileStatsOverride> file_stats_override;
 
 	SSHConnection(const SSHConnection&) = delete;
 

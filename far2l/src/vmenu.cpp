@@ -1615,9 +1615,15 @@ void VMenu::DrawTitles()
 
 	if (!strDisplayTitle.IsEmpty() || bFilterEnabled) {
 		if (bFilterEnabled) {
+			WidthTitle = (int)strDisplayTitle.GetLength();
+			int WidthFilter = (int)strFilter.GetLength();
 			if (bFilterLocked || strFilter.IsEmpty()
-				|| (int)strDisplayTitle.GetLength() + 3 + (int)strFilter.GetLength() < MaxTitleLength )
+				|| WidthTitle + WidthFilter + 3 < MaxTitleLength )
 				strDisplayTitle+= L' ';
+			else if (7 + WidthFilter + 3 < MaxTitleLength ) {
+				strDisplayTitle.Truncate(MaxTitleLength - 3 - WidthFilter - 6);
+				strDisplayTitle+= L"... ";
+			}
 			else
 				strDisplayTitle.Clear();
 

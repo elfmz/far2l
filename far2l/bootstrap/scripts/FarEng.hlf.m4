@@ -2968,6 +2968,9 @@ $ #Code pages menu#
     The menu has two modes: full mode with visible #Other# section and brief
 mode with hidden #Other# section. The modes can be switched by pressing #Ctrl-H#.
 
+    Use #Ctrl-Alt-F# to toggle to quick filtering
+(shows only items containing the typing text).
+
     #Ins# keypress moves codepage from #Other# to #Favorites#, #Del# moves the
 codepage back. Клавиша #F4# позволяет изменять отображаемые
 имена для #любимых# и #прочих# кодовых страниц (кодовые страницы для которых было

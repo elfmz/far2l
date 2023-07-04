@@ -213,12 +213,10 @@ mode_t ProtocolSFTP::GetMode(const std::string &path, bool follow_symlink)
 #endif
 
 	_conn->executed_command.reset();
-	const auto *ovrst = _conn->file_stats_override.Lookup(path);
-	if (ovrst && ovrst->mode)
-		return ovrst->mode;
-
 	SFTPAttributes attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
-	return SFTPModeFromAttributes(attributes);
+	mode_t mode = SFTPModeFromAttributes(attributes);
+	GetModeWithFileStatsOverride(_conn->file_stats_override, mode, path);
+	return mode;
 }
 
 unsigned long long ProtocolSFTP::GetSize(const std::string &path, bool follow_symlink)
@@ -246,18 +244,7 @@ void ProtocolSFTP::GetInformation(FileInformation &file_info, const std::string 
 	SFTPAttributes attributes(SFTPGetAttributes(_conn->sftp, path, follow_symlink));
 	SftpFileInfoFromAttributes(file_info, attributes);
 
-	const auto *ovrst = _conn->file_stats_override.Lookup(path);
-	if (ovrst) {
-		if (ovrst->mode) {
-			file_info.mode = ovrst->mode;
-		}
-		if (ovrst->access_time.tv_sec) {
-			file_info.access_time = ovrst->access_time;
-		}
-		if (ovrst->modification_time.tv_sec) {
-			file_info.modification_time = ovrst->modification_time;
-		}
-	}
+	GetInformationWithFileStatsOverride(_conn->file_stats_override, file_info, path);
 }
 
 void ProtocolSFTP::FileDelete(const std::string &path)
@@ -382,11 +369,10 @@ class SFTPDirectoryEnumer : public IDirectoryEnumer
 {
 	std::shared_ptr<SFTPConnection> _conn;
 	SFTPDir _dir;
-	std::string _path;
 
 public:
 	SFTPDirectoryEnumer(std::shared_ptr<SFTPConnection> &conn, const std::string &path)
-		: _conn(conn), _dir(sftp_opendir(conn->sftp, path.c_str())), _path(path)
+		: _conn(conn), _dir(sftp_opendir(conn->sftp, path.c_str()))
 	{
 		if (!_dir)
 			throw ProtocolError(ssh_get_error(_conn->ssh));
@@ -416,20 +402,6 @@ public:
 				group = attributes->group ? attributes->group : "";
 
 				SftpFileInfoFromAttributes(file_info, attributes);
-
-				const auto *ovrst = _conn->file_stats_override.Lookup(_path, name);
-				if (ovrst) {
-					if (ovrst->mode) {
-						file_info.mode = ovrst->mode;
-					}
-					if (ovrst->access_time.tv_sec) {
-						file_info.access_time = ovrst->access_time;
-					}
-					if (ovrst->modification_time.tv_sec) {
-						file_info.modification_time = ovrst->modification_time;
-					}
-				}
-
 				return true;
 			}
 		}
@@ -440,7 +412,13 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSFTP::DirectoryEnum(const std::string 
 {
 	_conn->executed_command.reset();
 
-	return std::make_shared<SFTPDirectoryEnumer>(_conn, path);
+	std::shared_ptr<IDirectoryEnumer> enumer = std::make_shared<SFTPDirectoryEnumer>(_conn, path);
+
+	if (_conn->file_stats_override.NonEmpty()) {
+		enumer = std::make_shared<DirectoryEnumerWithFileStatsOverride>(_conn->file_stats_override, enumer, path);
+	}
+
+	return enumer;
 }
 
 class SFTPFileIO

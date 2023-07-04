@@ -38,7 +38,7 @@ void FileStatsOverride::OverrideMode(const std::string &path, mode_t mode)
 	_path2ovrst[path].mode = mode;
 }
 
-const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path)
+const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path) const
 {
 	if (!path.empty() && path.back() == '/')
 		return Lookup(path.substr(0, path.size() - 1));
@@ -50,7 +50,7 @@ const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::st
 	return (it != _path2ovrst.end()) ? &it->second : nullptr;
 }
 
-const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path, const std::string &name)
+const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path, const std::string &name) const
 {
 	std::string full_path = path;
 	if (!name.empty() && !full_path.empty() && full_path.back() != '/' && name.front() != '/') {
@@ -58,4 +58,70 @@ const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::st
 	}
 	full_path+= name;
 	return Lookup(full_path);
+}
+
+///////////////
+
+DirectoryEnumerWithFileStatsOverride::DirectoryEnumerWithFileStatsOverride(
+		const FileStatsOverride &file_stats_override,
+		std::shared_ptr<IDirectoryEnumer> enumer,
+		const std::string &path)
+	:
+	_file_stats_override(file_stats_override),
+	_enumer(enumer),
+	_path(path)
+{
+}
+
+DirectoryEnumerWithFileStatsOverride::~DirectoryEnumerWithFileStatsOverride()
+{
+}
+
+bool DirectoryEnumerWithFileStatsOverride::Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+{
+	if (!_enumer->Enum(name, owner, group, file_info)) {
+		return false;
+	}
+
+	const auto *ovrst = _file_stats_override.Lookup(_path, name);
+	if (ovrst) {
+		if (ovrst->mode) {
+			file_info.mode = ovrst->mode;
+		}
+		if (ovrst->access_time.tv_sec) {
+			file_info.access_time = ovrst->access_time;
+		}
+		if (ovrst->modification_time.tv_sec) {
+			file_info.modification_time = ovrst->modification_time;
+		}
+	}
+
+	return true;
+}
+
+
+void GetInformationWithFileStatsOverride(const FileStatsOverride &file_stats_override,
+	FileInformation &file_info, const std::string &path)
+{
+	const auto *ovrst = file_stats_override.Lookup(path);
+	if (ovrst) {
+		if (ovrst->mode) {
+			file_info.mode = ovrst->mode;
+		}
+		if (ovrst->access_time.tv_sec) {
+			file_info.access_time = ovrst->access_time;
+		}
+		if (ovrst->modification_time.tv_sec) {
+			file_info.modification_time = ovrst->modification_time;
+		}
+	}
+}
+
+void GetModeWithFileStatsOverride(const FileStatsOverride &file_stats_override,
+	mode_t &mode, const std::string &path)
+{
+	const auto *ovrst = file_stats_override.Lookup(path);
+	if (ovrst && ovrst->mode) {
+		mode = ovrst->mode;
+	}
 }

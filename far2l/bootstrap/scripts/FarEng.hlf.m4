@@ -239,8 +239,22 @@ $ #Keyboard reference#
 
  ~Mouse: wheel support~@MsWheel@
 
+ ~Menu control commands~@MenuCmd@
+
  ~Miscellaneous~@MiscCmd@
 
+@MenuCmd
+$ #Menu control commands#
+ #Common menu and drop-down list commands#
+
+  Filter menu or list items                               #Ctrl-Alt-F#
+   (shows only items containing the typing text)
+  Lock filter                                             #Ctrl+Alt+L#
+
+  Horizontal scroll long line    #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+   (work only with non-numpad)
+
+  See also the list of ~macro keys~@KeyMacroMenuList@, available in the menus.
 
 @PanelCmd
 $ #Panel control commands  #
@@ -401,6 +415,7 @@ are ignored. The following example shows how the files are sorted:
     11.txt                       5.txt
     88.txt                       88.txt
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @FastFind
 $ #Fast find in panels#
@@ -874,8 +889,10 @@ in filenames and in editor).
     #Shift-F9#    - settings of the selected plugin.
     #Alt-Shift-F9# - open ~"Plugins configuration"~@PluginsConfig@ menu.
 
-    See also ~Plugins support~@Plugins@.
-
+    See also:
+ 
+    ~Plugins support~@Plugins@.
+    Common ~menu~@MenuCmd@ keyboard commands.
 
 @PluginsConfig
 $ #Plugins configuration#
@@ -898,6 +915,7 @@ the corresponding plugin is written for Far 1.7x and it does not support all
 possibilities available in Far 2 (these are, in particular, Unicode characters
 in filenames and in editor).
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @PluginsReviews
 $ #Overview of plugin capabilities#
@@ -1139,6 +1157,7 @@ respectively. These menus include the following items:
 
    #Location#             Change current location.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @FilesMenu
 $ #Menus: files menu#
@@ -1183,6 +1202,7 @@ $ #Menus: files menu#
    Some commands from this menu are also described in the
 ~File management and service commands~@FuncCmd@ topic.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CmdMenu
 $ #Menus: commands menu#
@@ -1237,6 +1257,7 @@ $ #Menus: commands menu#
 
    #Hotplug devices list# Show ~hotplug devices list~@HotPlugList@.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @OptMenu
 $ #Menus: options menu#
@@ -1286,6 +1307,7 @@ $ #Menus: options menu#
    #Save setup#            Save current configuration, colors and
                          screen layout.
 
+   See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @Terminal
 $ #Terminal
@@ -1418,6 +1440,7 @@ search path. Personal plugins will not be loaded, if the switches /p or /co are 
 @ChoosePluginMenu
 $ #Plugin selection menu#
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @MakeFolder
 $ #Make folder#
@@ -1801,11 +1824,6 @@ available:
 
   Quick jump in panel to directory of command                #Ctrl-F10#
 
-  Toggle to quick filtering                                #Ctrl-Alt-F#
-  (shows only items containing the typing text)
-
-  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
-
     To go to the previous or next command directly from the command line, you
 can press #Ctrl-E# or #Ctrl-X# respectively.
 
@@ -1818,6 +1836,8 @@ respective option in the ~system settings dialog~@SystemSettings@.
     Locked history items will not be deleted when the history is cleared.
 
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @HistoryViews
 $ #History: file view and edit#
@@ -1852,11 +1872,6 @@ shortcuts are available:
 
   Quick jump in panel to directory and file                  #Ctrl-F10#
 
-  Toggle to quick filtering                                #Ctrl-Alt-F#
-  (shows only items containing the typing text)
-
-  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
-
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
 
@@ -1873,6 +1888,8 @@ respective option in the ~system settings dialog~@SystemSettings@.
 of time if a file was located on a currently unavailable remote resource.
 
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @HistoryFolders
 $ #History: folders#
@@ -1904,11 +1921,6 @@ available:
 
   Quick jump in panel to directory (here #Enter# analog)       #Ctrl-F10#
 
-  Toggle to quick filtering                                #Ctrl-Alt-F#
-  (shows only items containing the typing text)
-
-  Horizontal scroll long line     #Alt-Left,Alt-Right,Alt-Home,Alt-End#
-
     For choosing a history item, besides the cursor control keys and #Enter#,
 you can use the highlighted shortcut letters.
 
@@ -1926,22 +1938,11 @@ of time if a folder was located on a currently unavailable remote resource.
 
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
+
 @TaskList
 $ #Task list#
-    The task list displays active tasks. Each line of the list contains a task
-window title.
-
-    From the task list you may switch to the task window, or kill the task with
-the #Del# key. Be careful when killing a task. It stops the task immediately,
-and any unsaved information will be lost, so it should be used only when really
-necessary, for example to interrupt a program which does not respond.
-
-    The task list may be called either from ~Commands menu~@CmdMenu@ or using
-#Ctrl-W#. The keyboard shortcut #Ctrl-W# can also be used in the viewer or the
-editor.
-
-    #Ctrl-R# allows to refresh the task list.
-
+    The task list displays active tasks by using #htop# (if available).
 
 @HotPlugList
 $ #Hotplug devices list#
@@ -1954,6 +1955,7 @@ notification will be displayed when it is safe to remove the device.
 
     #Ctrl-R# allows to refresh the list of connected devices.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CompFolders
 $ #Compare folders#
@@ -2011,9 +2013,10 @@ the main menu saved in the registry.
 
     To close the menu even if submenus are open use #Shift-F10#.
 
-    Press #Ctrl-Alt-F# to toggle to quick filtering (shows only items containing the typing text).
-
-    See also the list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
+    See also:
+ 
+    The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
+    Common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssoc
 $ #File associations #
@@ -2042,6 +2045,8 @@ desired association from the menu.
     If no execute command is associated with file and
 #Use Windows registered types# option in ~System settings~@SystemSettings@
 is on, FAR2L tries to use Windows association to execute this file type;
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 
 @FileAssocModify
@@ -2974,15 +2979,14 @@ $ #Code pages menu#
     The menu has two modes: full mode with visible #Other# section and brief
 mode with hidden #Other# section. The modes can be switched by pressing #Ctrl-H#.
 
-    Use #Ctrl-Alt-F# to toggle to quick filtering
-(shows only items containing the typing text).
-
     #Ins# keypress moves codepage from #Other# to #Favorites#, #Del# moves the
 codepage back. Клавиша #F4# позволяет изменять отображаемые
 имена для #любимых# и #прочих# кодовых страниц (кодовые страницы для которых было
 изменено имя помечаются символом #*# перед именем).
 
     Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @CodePagesSet
 $ #ANSI and OEM codepage setting#
@@ -3038,9 +3042,6 @@ plugins).
 
     #Ctrl-R# allows to refresh the disk selection menu.
 
-    #Ctrl-Alt-F# to toggle to quick filtering
-(shows only items containing the typing text).
-
     #Alt-Shift-F9# allows you to ~configure plugins~@PluginsConfig@ (it works only if
 display of plugin items is enabled).
 
@@ -3063,7 +3064,10 @@ character like $HOME, and shell commands substitution, i.e. $(/path/to/some/scri
 will invoke that script.sh and its output will be embedded into content of this file
 during processing. This allows to implement custom dynamic locations list composing.
 
-   See also the list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
+    See also:
+ 
+    The list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
+    Common ~menu~@MenuCmd@ keyboard commands.
 
 
 @DisconnectDrive
@@ -3113,6 +3117,8 @@ combinations are available:
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 
 @HighlightEdit
@@ -3405,6 +3411,8 @@ used to view, set, edit and delete bookmarks on different shortcuts.
     When you are editing a bookmark (#F4#), you cannot create a bookmark to a
 plugin panel.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
+
 @FiltersMenu
 $ #Filters menu#
     Using the #Filters menu# you can define a set of file types with user
@@ -3463,6 +3471,7 @@ mode letter in the upper left corner of the panel.
      - ~Copying, moving, renaming and creating links~@CopyFiles@;
      - ~Find file~@FindFile@.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @FileDiz
 $ #File descriptions#
@@ -3622,6 +3631,7 @@ and "Show files in lowercase" options off. All these settings only change
 the method of displaying files, when processing files FAR2L always uses the
 real case.
 
+  See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @SortGroups
 $ #Sort groups#
@@ -3963,6 +3973,7 @@ screens.
 upper left corner. This may be disabled by using ~Panel settings~@PanelSettings@
 dialog.
 
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @ApplyCmd
 $ #Apply command#

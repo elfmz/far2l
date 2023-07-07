@@ -9,6 +9,7 @@
 #include <string>
 #include <map>
 
+#include <utils.h>
 #include <windows.h>
 #include <utimens_compat.h>
 
@@ -402,6 +403,8 @@ static void GetAttribString(UInt32 wa, BoolInt isDir, char *s)
 }
 
 
+std::string MakeDefault7ZName(const char *path);
+
 // #define NUM_PARENTS_MAX 128
 
 extern "C" int sevenz_main(int numargs, char *args[])
@@ -482,12 +485,14 @@ extern "C" int sevenz_main(int numargs, char *args[])
      bool has_mtime{false}, has_ctime{false};
   };
   std::map<std::string, TimeInfo> dir2ti;
-    
+
   if (res == SZ_OK)
   {
     res = SzArEx_Open(&db, &lookStream.vt, &allocImp, &allocTempImp);
   }
-  
+
+  const auto &def_name = StrMB2Wide(MakeDefault7ZName(args[2]));
+
   if (res == SZ_OK)
   {
     char *command = args[1];
@@ -526,20 +531,27 @@ extern "C" int sevenz_main(int numargs, char *args[])
           continue;
         len = SzArEx_GetFileNameUtf16(&db, i, NULL);
         // len = SzArEx_GetFullNameLen(&db, i);
+        if (len == 0)
+          len = def_name.size() + 32;
 
-        if (len > tempSize)
+        if (len > 0)
         {
-          SzFree(NULL, temp);
-          tempSize = len;
-          temp = (UInt16 *)SzAlloc(NULL, tempSize * sizeof(temp[0]));
-          if (!temp)
+          if (len > tempSize)
           {
-            res = SZ_ERROR_MEM;
-            break;
+            SzFree(NULL, temp);
+            tempSize = len;
+            temp = (UInt16 *)SzAlloc(NULL, tempSize * sizeof(temp[0]));
+            if (!temp)
+            {
+              res = SZ_ERROR_MEM;
+              break;
+            }
           }
+          len = SzArEx_GetFileNameUtf16(&db, i, temp);
+          if (len == 0 && !def_name.empty())
+            for (size_t n = 0; n <= def_name.size() && n < tempSize; ++n)
+              temp[n] = def_name.c_str()[n];
         }
-
-        SzArEx_GetFileNameUtf16(&db, i, temp);
         /*
         if (SzArEx_GetFullNameUtf16_Back(&db, i, temp + len) != temp)
         {

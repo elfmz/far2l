@@ -2507,6 +2507,8 @@ kurzorpozícióba (csak maradó blokk módban)
 kurzorpozícióba (csak maradó blokk módban)
    #Alt-U#                   Blokk eltolása balra
    #Alt-I#                   Blokk eltolása jobbra
+   #Shift-Tab#               Shift block left by Tab (or indent size if expand tabs is configured)
+   #Tab#                     Shift block right by Tab (or indent size if expand tabs is configured)
 
   Egyéb műveletek
 

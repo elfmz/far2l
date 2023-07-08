@@ -70,5 +70,6 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 ### Added following dialog messages:
 * `DM_GETCOLOR` - retrieves current color attributes of selected dialog item
 * `DM_SETCOLOR` - changes current color attributes of selected dialog item
+* `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
 * `ECTL_ADDTRUECOLOR` - applies coloring to editor like ECTL_ADDCOLOR does but allows to specify 24 RGB color using EditorTrueColor structure.
 * `ECTL_GETTRUECOLOR` - retrieves coloring of editor like ECTL_GETCOLOR does but gets 24 RGB color using EditorTrueColor structure.

@@ -15477,6 +15477,17 @@ SetAttrSymlink
 "Посилання:"
 "Спасылак:"
 
+SetAttrSymlinkFailed
+"Ошибка изменения символической ссылки"
+"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+"Ошибка зміни символічних посилань"
+"Шыбка змены сімвалічных спасылак"
+
 SetAttrVolMount
 "Том:"
 "Volume:"

@@ -169,6 +169,7 @@ struct SetAttrDlgParam
 	FARCHECKEDSTATE OSubfoldersState;
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
 	unsigned char SymLinkInfoCycle = 0;
+	FARString SymLink;
 	FARString SymlinkButtonTitles[3];
 };
 
@@ -230,6 +231,11 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 	switch (Msg) {
 		case DN_BTNCLICK:
+			if (DlgParam->SymLinkInfoCycle == 0) {
+				DlgParam->SymLink = reinterpret_cast<LPCWSTR>
+					(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
+			}
+
 			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
 			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS) {
 				if (OrigIdx != -1) {
@@ -348,17 +354,20 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					reinterpret_cast<LONG_PTR>(DlgParam->SymlinkButtonTitles[DlgParam->SymLinkInfoCycle].CPtr()));
 
 				switch (DlgParam->SymLinkInfoCycle++) {
-					case 0:
-						ConvertNameToReal(DlgParam->strSelName, strText);
-						break;
+					case 0: {
+							ConvertNameToReal(DlgParam->SymLink, strText);
+							SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
+						} break;
 
 					case 1:
-						ConvertNameToReal(DlgParam->strSelName, strText);
+						ConvertNameToReal(DlgParam->SymLink, strText);
 						strText = BriefInfo(strText);
+						SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
 						break;
 
 					default:
-						ReadSymlink(DlgParam->strSelName, strText);
+						strText = DlgParam->SymLink;
+						SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 0);
 						DlgParam->SymLinkInfoCycle = 0;
 				}
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_INFO, reinterpret_cast<LONG_PTR>(strText.CPtr()));
@@ -719,7 +728,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_HIDDEN, Msg::SetAttrBriefInfo},
-		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY | DIF_HIDDEN, L""},
+		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_HIDDEN, L""}, //DIF_READONLY | 
 		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
 		//{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
 		{DI_COMBOBOX,  18,                  6,               short(DlgX-6),    6,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
@@ -818,7 +827,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			FileMode = FindData.dwUnixMode;
 		}
 
-		fprintf(stderr, "FileMode=%u\n", FileMode);
+//		fprintf(stderr, "FileMode=%u\n", FileMode);
 
 		if (SelCount == 1 && TestParentFolderName(strSelName))
 			return false;
@@ -869,13 +878,13 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 				AttrDlg[SA_TXTBTN_INFO].Type = DI_BUTTON;
 				AttrDlg[SA_TXTBTN_INFO].strData = DlgParam.SymlinkButtonTitles[2];
-				FARString strLinkDest;
-				ReadSymlink(strSelName, strLinkDest);
-				AttrDlg[SA_EDIT_INFO].strData = strLinkDest;
+				ReadSymlink(strSelName, DlgParam.SymLink);
+				AttrDlg[SA_EDIT_INFO].strData = DlgParam.SymLink;
 
 			} else {
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
 			}
+
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 				if (!DlgParam.Plugin) {
@@ -1112,6 +1121,18 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				ShellSetFileAttributesMsg(SelCount == 1 ? strSelName.CPtr() : nullptr);
 				int SkipMode = SETATTR_RET_UNKNOWN;
 
+				if (SelCount == 1 && (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+					FARString OldSymLink;
+					ReadSymlink(strSelName, OldSymLink);
+					if (DlgParam.SymLink != OldSymLink) {
+						fprintf(stderr, "Symlink change: '%ls' -> '%ls'\n",
+							OldSymLink.CPtr(), DlgParam.SymLink.CPtr());
+						sdc_unlink(strSelName.GetMB().c_str());
+						int r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
+						Message(MSG_WARNING | MSG_ERRORTYPE, 1,
+							Msg::Error, Msg::SetAttrSymlinkFailed, strSelName, Msg::Ok);
+					}
+				}
 				if (SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 					DWORD NewMode = 0;
 

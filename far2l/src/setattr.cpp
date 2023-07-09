@@ -230,12 +230,14 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 	int OrigIdx;
 
 	switch (Msg) {
-		case DN_BTNCLICK:
+			case DN_CLOSE:
 			if (DlgParam->SymLinkInfoCycle == 0) {
 				DlgParam->SymLink = reinterpret_cast<LPCWSTR>
 					(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
 			}
+			break;
 
+			case DN_BTNCLICK:
 			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
 			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS) {
 				if (OrigIdx != -1) {
@@ -355,6 +357,8 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 				switch (DlgParam->SymLinkInfoCycle++) {
 					case 0: {
+							DlgParam->SymLink = reinterpret_cast<LPCWSTR>
+								(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
 							ConvertNameToReal(DlgParam->SymLink, strText);
 							SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
 						} break;
@@ -1129,8 +1133,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 							OldSymLink.CPtr(), DlgParam.SymLink.CPtr());
 						sdc_unlink(strSelName.GetMB().c_str());
 						int r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
-						Message(MSG_WARNING | MSG_ERRORTYPE, 1,
-							Msg::Error, Msg::SetAttrSymlinkFailed, strSelName, Msg::Ok);
+						if (r != 0) {
+							Message(MSG_WARNING | MSG_ERRORTYPE, 1,
+								Msg::Error, Msg::SetAttrSymlinkFailed, strSelName, Msg::Ok);
+						}
 					}
 				}
 				if (SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {

@@ -866,7 +866,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strMask = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strMask =
 				AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strMask = strTMask;
-		bool FolderPresent = false, LinkPresent = false;
+		bool FolderPresent = false;//, LinkPresent = false;
+		int  FolderCount = 0, Link2FileCount = 0, Link2DirCount = 0;
 		FARString strLinkName;
 
 		if (SelCount == 1) {
@@ -986,10 +987,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 			// проверка - есть ли среди выделенных - каталоги?
 			// так же проверка на атрибуты
+			// так же подсчет числа каталогов и symlinks
 			if (SrcPanel) {
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 			}
 			FolderPresent = false;
+			FolderCount = 0; Link2FileCount = 0; Link2DirCount = 0;
 
 			if (SrcPanel) {
 				FARString strComputerName;
@@ -997,17 +1000,25 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 
 				while (SrcPanel->GetSelName(&strSelName, FileAttr, FileMode, &FindData)) {
-					if (!FolderPresent && (FileAttr & FILE_ATTRIBUTE_DIRECTORY)) {
-						FolderPresent = true;
-						AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
-						AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);
-						AttrDlg[SA_DOUBLEBOX].Y2+= 2;
-						for (int i = SA_SEPARATOR5; i <= SA_BUTTON_CANCEL; i++) {
-							AttrDlg[i].Y1+= 2;
-							AttrDlg[i].Y2+= 2;
+					if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
+						if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT)
+							Link2DirCount++;
+						else
+							FolderCount++;
+						if (!FolderPresent) {
+							FolderPresent = true;
+							AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
+							AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);
+							AttrDlg[SA_DOUBLEBOX].Y2+= 2;
+							for (int i = SA_SEPARATOR5; i <= SA_BUTTON_CANCEL; i++) {
+								AttrDlg[i].Y1+= 2;
+								AttrDlg[i].Y2+= 2;
+							}
+							DlgY+= 2;
 						}
-						DlgY+= 2;
 					}
+					else if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT)
+						Link2FileCount++;
 
 					for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
 						if (FileMode & AP[i].Mode) {
@@ -1064,9 +1075,23 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			}
 
 			{
-				FARString strTmp;
-				strTmp.Format(L"selected %d %s",
-					SelCount, FolderPresent ? "directories and/or files" : "files");
+				FARString strTmp, strSep=L"";
+				if (FolderCount>0 || Link2FileCount>0 || Link2DirCount>0) {
+					unsigned tmpFiles = SelCount-FolderCount-Link2FileCount-Link2DirCount;
+					strTmp.Format(L"selected %d items (", SelCount);
+					if (FolderCount>0)
+					{ strTmp.AppendFormat(L"dirs: %d", FolderCount); strSep=L", "; }
+					if (tmpFiles>0)
+					{ strTmp.AppendFormat(L"%lsfiles: %d", strSep.CPtr(), tmpFiles); strSep=L", "; }
+					if (Link2DirCount>0)
+					{ strTmp.AppendFormat(L"%lssymlinks to dirs: %d", strSep.CPtr(), Link2DirCount); strSep=L", "; }
+					if (Link2FileCount>0)
+						strTmp.AppendFormat(L"%lssymlinks to files: %d", strSep.CPtr(), Link2FileCount);
+					strTmp.Append(L')');
+				}
+				else
+					strTmp.Format(L"selected %d %s",
+						SelCount, FolderPresent ? "directories and/or files" : "files");
 				AttrDlg[SA_EDIT_INFO].strData = strTmp;
 			}
 
@@ -1109,9 +1134,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		Dlg.SetHelp(L"FileAttrDlg");	//  ^ - это одиночный диалог!
 		Dlg.SetId(FileAttrDlgId);
 
-		if (LinkPresent) {
+		/*if (LinkPresent) {
 			DlgY++;
-		}
+		}*/
 
 		Dlg.SetPosition(-1, -1, DlgX, DlgY);
 		Dlg.Process();

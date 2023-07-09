@@ -731,8 +731,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_HIDDEN, Msg::SetAttrBriefInfo},
-		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_HIDDEN, L""}, //DIF_READONLY | 
+		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_FOCUS, Msg::SetAttrBriefInfo}, // if symlink in will Button & need first focus here
+		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY, L""}, // not readonly only if symlink
 		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
 		//{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
 		{DI_COMBOBOX,  18,                  6,               short(DlgX-6),    6,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
@@ -872,9 +872,6 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		if (SelCount == 1) {
 			FSFileFlags FFFlags(strSelName.GetMB());
 
-			AttrDlg[SA_TXTBTN_INFO].Flags&= ~DIF_HIDDEN;
-			AttrDlg[SA_EDIT_INFO].Flags&= ~DIF_HIDDEN;
-
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
 				DlgParam.SymlinkButtonTitles[1] = Msg::SetAttrSymlinkObjectInfo;
@@ -884,6 +881,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				AttrDlg[SA_TXTBTN_INFO].strData = DlgParam.SymlinkButtonTitles[2];
 				ReadSymlink(strSelName, DlgParam.SymLink);
 				AttrDlg[SA_EDIT_INFO].strData = DlgParam.SymLink;
+				AttrDlg[SA_EDIT_INFO].Flags &= ~DIF_READONLY; // not readonly only if symlink
 
 			} else {
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
@@ -1064,6 +1062,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						? BST_CHECKED
 						: (!AttrDlg[i].Selected ? BSTATE_UNCHECKED : BSTATE_3STATE);
 			}
+
+			{
+				FARString strTmp;
+				strTmp.Format(L"selected %d %s",
+					SelCount, FolderPresent ? "directories and/or files" : "files");
+				AttrDlg[SA_EDIT_INFO].strData = strTmp;
+			}
+
 		}
 
 		// поведение для каталогов как у 1.65?

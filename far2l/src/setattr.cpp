@@ -1160,13 +1160,25 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					FARString OldSymLink;
 					ReadSymlink(strSelName, OldSymLink);
 					if (DlgParam.SymLink != OldSymLink) {
-						fprintf(stderr, "Symlink change: '%ls' -> '%ls'\n",
-							OldSymLink.CPtr(), DlgParam.SymLink.CPtr());
-						sdc_unlink(strSelName.GetMB().c_str());
-						int r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
-						if (r != 0) {
-							Message(MSG_WARNING | MSG_ERRORTYPE, 1,
-								Msg::Error, Msg::SetAttrSymlinkFailed, strSelName, Msg::Ok);
+						int r = 1;
+						FARString strTmp1, strTmp2, strTmp3;
+						if ( !apiPathExists(DlgParam.SymLink) ) {
+							strTmp1.Format(L"For symlink '%ls'", strSelName.CPtr());
+							strTmp2.Format(L"new target '%ls' does not exist", DlgParam.SymLink.CPtr());
+							strTmp3.Format(L"(current target '%ls')", OldSymLink.CPtr());
+							r = Message(MSG_WARNING, 2,
+								Msg::Error, strTmp1, strTmp2, strTmp3, L" ", L"Skip or change symlink target anyway?",
+								Msg::HSkip, L"&Change");
+						}
+						if( r == 1 ) {
+							fprintf(stderr, "Symlink change: '%ls' -> '%ls'\n",
+								OldSymLink.CPtr(), DlgParam.SymLink.CPtr());
+							sdc_unlink(strSelName.GetMB().c_str());
+							r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
+							if (r != 0) {
+								Message(MSG_WARNING | MSG_ERRORTYPE, 1,
+									Msg::Error, Msg::SetAttrSymlinkFailed, strSelName, Msg::Ok);
+							}
 						}
 					}
 				}

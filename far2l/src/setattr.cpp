@@ -1075,23 +1075,18 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			}
 
 			{
-				FARString strTmp, strSep=L"";
-				if (FolderCount>0 || Link2FileCount>0 || Link2DirCount>0) {
-					unsigned tmpFiles = SelCount-FolderCount-Link2FileCount-Link2DirCount;
-					strTmp.Format(L"selected %d items (", SelCount);
-					if (FolderCount>0)
-					{ strTmp.AppendFormat(L"dirs: %d", FolderCount); strSep=L", "; }
-					if (tmpFiles>0)
-					{ strTmp.AppendFormat(L"%lsfiles: %d", strSep.CPtr(), tmpFiles); strSep=L", "; }
-					if (Link2DirCount>0)
-					{ strTmp.AppendFormat(L"%lssymlinks to dirs: %d", strSep.CPtr(), Link2DirCount); strSep=L", "; }
-					if (Link2FileCount>0)
-						strTmp.AppendFormat(L"%lssymlinks to files: %d", strSep.CPtr(), Link2FileCount);
-					strTmp.Append(L')');
-				}
-				else
-					strTmp.Format(L"selected %d %s",
-						SelCount, FolderPresent ? "directories and/or files" : "files");
+				FARString strTmp, strSep=L" (";
+				int FilesCount = SelCount-FolderCount-Link2FileCount-Link2DirCount;
+				strTmp.Format(Msg::SetAttrInfoSelAll, SelCount);
+				if (FolderCount>0)
+				{ strTmp.AppendFormat(Msg::SetAttrInfoSelDirs, strSep.CPtr(), FolderCount); strSep=L", "; }
+				if (FilesCount>0)
+				{ strTmp.AppendFormat(Msg::SetAttrInfoSelFiles, strSep.CPtr(), FilesCount); strSep=L", "; }
+				if (Link2DirCount>0)
+				{ strTmp.AppendFormat(Msg::SetAttrInfoSelSymDirs, strSep.CPtr(), Link2DirCount); strSep=L", "; }
+				if (Link2FileCount>0)
+					strTmp.AppendFormat(Msg::SetAttrInfoSelSymFiles, strSep.CPtr(), Link2FileCount);
+				strTmp.Append(L')');
 				AttrDlg[SA_EDIT_INFO].strData = strTmp;
 			}
 
@@ -1161,14 +1156,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					ReadSymlink(strSelName, OldSymLink);
 					if (DlgParam.SymLink != OldSymLink) {
 						int r = 1;
-						FARString strTmp1, strTmp2, strTmp3;
 						if ( !apiPathExists(DlgParam.SymLink) ) {
-							strTmp1.Format(L"For symlink '%ls'", strSelName.CPtr());
-							strTmp2.Format(L"new target '%ls' does not exist", DlgParam.SymLink.CPtr());
-							strTmp3.Format(L"(current target '%ls')", OldSymLink.CPtr());
+							FARString strTmp1, strTmp2, strTmp3;
+							strTmp1.Format(Msg::SetAttrSymlinkWarn1, strSelName.CPtr());
+							strTmp2.Format(Msg::SetAttrSymlinkWarn2, DlgParam.SymLink.CPtr());
+							strTmp3.Format(Msg::SetAttrSymlinkWarn3, OldSymLink.CPtr());
 							r = Message(MSG_WARNING, 2,
-								Msg::Error, strTmp1, strTmp2, strTmp3, L" ", L"Skip or change symlink target anyway?",
-								Msg::HSkip, L"&Change");
+								Msg::Error, strTmp1, strTmp2, strTmp3, L" ", Msg::SetAttrSymlinkWarn4,
+								Msg::HSkip, Msg::HChange);
 						}
 						if( r == 1 ) {
 							fprintf(stderr, "Symlink change: '%ls' -> '%ls'\n",

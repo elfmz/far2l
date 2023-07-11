@@ -254,9 +254,10 @@ $ #Menu control commands#
 
   Filter menu or list items                               #Ctrl-Alt-F#
    (shows only items containing the typing text)
+
   Lock filter                                             #Ctrl+Alt+L#
 
-  Horizontal scroll long line    #Alt-Left,Alt-Right,Alt-Home,Alt-End#
+  Horizontally scroll long item  #Alt-Left#,#Alt-Right#,#Alt-Home#,#Alt-End#
    (work only with non-numpad)
 
   See also the list of ~macro keys~@KeyMacroMenuList@, available in the menus.

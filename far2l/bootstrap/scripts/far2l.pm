@@ -6,7 +6,8 @@ sub UpdateFromTmp
 	my ($tmp, $path) = (@_);
 	if (!AreSameFiles($tmp, $path)) {
 		print "Updating $path\n";
-		system("cp -f $tmp $path");
+		my @args = ("cp", "-f", $tmp, $path);
+		system(@args);
 	}
 	unlink("$tmp");
 }

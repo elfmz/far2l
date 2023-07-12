@@ -217,6 +217,17 @@ Remove
 "Видалити"
 "Выдаліць"
 
+Change
+"Изменить"
+"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+
 HCancel
 l:
 "&Отмена"
@@ -316,6 +327,17 @@ HSplit
 "Dividir"
 "Роз&ділити"
 "Па&дзяліць"
+
+HChange
+"&Изменить"
+"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
 
 Warning
 l:
@@ -15466,6 +15488,61 @@ SetAttrJunction
 "Зв'язок:"
 "Сувязь:"
 
+SetAttrInfoSelAll
+"выбрано %d элементов"
+"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+
+SetAttrInfoSelDirs
+"%lsкаталогов: %d"
+"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+
+SetAttrInfoSelFiles
+"%lsфайлов: %d"
+"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+
+SetAttrInfoSelSymDirs
+"%lsсимлинков на каталоги: %d"
+"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+
+SetAttrInfoSelSymFiles
+"%lsсимлинков на файлы: %d"
+"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+
 SetAttrSymlink
 "Ссылка:"
 "Symlink:"
@@ -15476,6 +15553,50 @@ SetAttrSymlink
 "Enlace:"
 "Посилання:"
 "Спасылак:"
+
+SetAttrSymlinkWarn1
+"Для симлинка '%ls'"
+"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+
+SetAttrSymlinkWarn2
+"нового объекта '%ls' не существует"
+"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+
+SetAttrSymlinkWarn3
+"(текущий объект '%ls')"
+"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+
+SetAttrSymlinkWarn4
+"Пропустить или все-равно изменить объект симлинка?"
+"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
 
 SetAttrSymlinkFailed
 "Ошибка изменения символической ссылки"

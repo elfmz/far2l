@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileedit.hpp"
 #include "keyboard.hpp"
 #include "codepage.hpp"
-#include "EditorConfigOrg.hpp"
 #include "lang.hpp"
 #include "macroopcode.hpp"
 #include "keys.hpp"
@@ -743,13 +742,6 @@ static void EditorConfigOrgConflictMessage(const FARString &value, const struct 
 
 int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 {
-	EditorConfigOrg EdCfg;	// need for get EditorConfigOrg data for this file
-	if( Opt.EdOpt.UseEditorConfigOrg ) {
-		FARString strFullName;
-		ConvertNameToFull(strLoadedFileName, strFullName);
-		EdCfg.Populate(strFullName.GetMB().c_str());
-	}
-
 	SudoClientRegion sdc_rgn;
 	if (Key != KEY_F4 && Key != KEY_IDLE)
 		F4KeyOnly = false;
@@ -1120,8 +1112,8 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				return TRUE;
 
 			case KEY_SHIFTF5:
-				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.TabSize > 0) {
-					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentSize, EdCfg.TabSize);
+				if (EdCfg && EdCfg->TabSize > 0) {
+					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentSize, EdCfg->TabSize);
 					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemIndentSize);
 					return TRUE;
 				}
@@ -1130,9 +1122,9 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				return TRUE;
 
 			case KEY_CTRLF5:
-				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.ExpandTabs >= 0) {
+				if (EdCfg && EdCfg->ExpandTabs >= 0) {
 					FARString strTmp; strTmp.Format(Msg::EditorConfigOrgValueOfIndentStyle,
-						EdCfg.ExpandTabs==EXPAND_NOTABS ? "tab" : EdCfg.ExpandTabs==EXPAND_NEWTABS ? "space" : "????" );
+						EdCfg->ExpandTabs==EXPAND_NOTABS ? "tab" : EdCfg->ExpandTabs==EXPAND_NEWTABS ? "space" : "????" );
 					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemIndentStyle);
 					return TRUE;
 				}
@@ -1199,9 +1191,9 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 			}
 			case KEY_F8:
 			case KEY_SHIFTF8: {
-				if (Opt.EdOpt.UseEditorConfigOrg && EdCfg.CodePage > 0) {
+				if (EdCfg && EdCfg->CodePage > 0) {
 					FARString strTmp;
-					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, EdCfg.CodePage);
+					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, EdCfg->CodePage);
 					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemCharset);
 					return TRUE;
 				}
@@ -1255,8 +1247,8 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				EditorOptions SavedEdOpt = EdOpt;
 				//EditorConfig(EdOpt, true);	// $ 27.11.2001 DJ - Local в EditorConfig
 				EditorConfig(EdOpt, true,	// $ 27.11.2001 DJ - Local в EditorConfig
-					Opt.EdOpt.UseEditorConfigOrg ? EdCfg.ExpandTabs : -1,
-					Opt.EdOpt.UseEditorConfigOrg ? EdCfg.TabSize : -1);
+					EdCfg ? EdCfg->ExpandTabs : -1,
+					EdCfg ? EdCfg->TabSize : -1);
 				EditKeyBar.Refresh(true);	//???? Нужно ли????
 				SetEditorOptions(EdOpt);
 				if (SavedEdOpt.TabSize != EdOpt.TabSize || SavedEdOpt.ExpandTabs != EdOpt.ExpandTabs)
@@ -1342,18 +1334,20 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 	if (Opt.EdOpt.UseEditorConfigOrg) {
 		FARString strFullName;
 		ConvertNameToFull(Name, strFullName);
-		EditorConfigOrg EdCfg;
-		EdCfg.Populate(strFullName.GetMB().c_str());
-		if (EdCfg.CodePageBOM >= 0)
-			m_AddSignature = (EdCfg.CodePageBOM == 0) ? FB_NO : FB_YES;
-		if (EdCfg.CodePage > 0)
-			m_codepage = EdCfg.CodePage;
-		if (EdCfg.EndOfLine)
-			far_wcsncpy(m_editor->GlobalEOL, EdCfg.EndOfLine, ARRAYSIZE(m_editor->GlobalEOL));
-		if (EdCfg.TabSize > 0)
-			m_editor->SetTabSize(EdCfg.TabSize);
-		if (EdCfg.ExpandTabs >= 0)
-			m_editor->SetConvertTabs(EdCfg.ExpandTabs);
+		EdCfg.reset(new EditorConfigOrg);
+		EdCfg->Populate(strFullName.GetMB().c_str());
+		if (EdCfg->CodePageBOM >= 0)
+			m_AddSignature = (EdCfg->CodePageBOM == 0) ? FB_NO : FB_YES;
+		if (EdCfg->CodePage > 0)
+			m_codepage = EdCfg->CodePage;
+		if (EdCfg->EndOfLine)
+			far_wcsncpy(m_editor->GlobalEOL, EdCfg->EndOfLine, ARRAYSIZE(m_editor->GlobalEOL));
+		if (EdCfg->TabSize > 0)
+			m_editor->SetTabSize(EdCfg->TabSize);
+		if (EdCfg->ExpandTabs >= 0)
+			m_editor->SetConvertTabs(EdCfg->ExpandTabs);
+	} else {
+		EdCfg.reset();
 	}
 
 	TPreRedrawFuncGuard preRedrawFuncGuard(Editor::PR_EditorShowMsg);

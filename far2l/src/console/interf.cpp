@@ -701,9 +701,17 @@ void vmprintf(const wchar_t *fmt, ...)
 	va_end(argptr);
 }
 
-void SetColor(int Color, bool ApplyToConsole)
+void SetColor(DWORD64 Color, bool ApplyToConsole)
 {
-	CurColor = FarColorToReal(Color);
+	CurColor = FarColorToReal(Color & 0xffff);
+	if (Color & 0xffffff0000000000) {
+		CurColor|= BACKGROUND_TRUECOLOR;
+		CurColor|= (Color & 0xffffff0000000000);
+	}
+	if (Color & 0x000000ffffff0000) {
+		CurColor|= FOREGROUND_TRUECOLOR;
+		CurColor|= (Color & 0x000000ffffff0000);
+	}
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}

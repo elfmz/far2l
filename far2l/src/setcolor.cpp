@@ -500,9 +500,9 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 
 	SMALL_RECT DlgRect{};
 	SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&DlgRect);
+	SMALL_RECT ItemRect{};
 
 	for (int ID = 2; ID <= 17; ++ID) {
-		SMALL_RECT ItemRect{};
 		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect)) {
 			ItemRect.Left+= DlgRect.Left;
 			ItemRect.Right+= DlgRect.Left;
@@ -535,28 +535,29 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 		}
 	}
 
-	SMALL_RECT ItemRect{};
-	if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, 42, (LONG_PTR)&ItemRect)) {
-		ItemRect.Left+= DlgRect.Left;
-		ItemRect.Right+= DlgRect.Left;
-		ItemRect.Top+= DlgRect.Top;
-		ItemRect.Bottom+= DlgRect.Top;
+	for (int ID = 42; ID <= 43; ++ID) {
+		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect)) {
+			ItemRect.Left+= DlgRect.Left;
+			ItemRect.Right+= DlgRect.Left;
+			ItemRect.Top+= DlgRect.Top;
+			ItemRect.Bottom+= DlgRect.Top;
 
-		const DWORD64 ForeRGBMask = ColorDialogForeRGBMask();
-		const DWORD64 BackRGBMask = ColorDialogBackRGBMask();
-		CHAR_INFO ci{};
-		SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
-		WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
-		ci.Attributes&= ~(0xffffffffffff0000 | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR);
-		if (ForeRGBMask) {
-			ci.Attributes|= FOREGROUND_TRUECOLOR | ForeRGBMask;
+			const DWORD64 ForeRGBMask = ColorDialogForeRGBMask();
+			const DWORD64 BackRGBMask = ColorDialogBackRGBMask();
+			CHAR_INFO ci{};
+			SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
+			WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
+			ci.Attributes&= ~(0xffffffffffff0000 | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR);
+			if (ForeRGBMask) {
+				ci.Attributes|= FOREGROUND_TRUECOLOR | ForeRGBMask;
+			}
+			if (BackRGBMask) {
+				ci.Attributes|= BACKGROUND_TRUECOLOR | BackRGBMask;
+			}
+			DWORD NumberOfAttrsWritten{};
+			WINPORT(FillConsoleOutputAttribute) (0, ci.Attributes,
+				ItemRect.Right - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
 		}
-		if (BackRGBMask) {
-			ci.Attributes|= BACKGROUND_TRUECOLOR | BackRGBMask;
-		}
-		DWORD NumberOfAttrsWritten{};
-		WINPORT(FillConsoleOutputAttribute) (0, ci.Attributes,
-			ItemRect.Right + 1 - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
 	}
 }
 
@@ -696,7 +697,7 @@ static bool GetColorDialogInner(bool bForFileFilter, DWORD64 &Color, bool bCente
 	}
 
 	for (size_t i = 41; i <= 43; i++) {
-		ColorDlg[i].Flags = (ColorDlg[i].Flags & ~DIF_COLORMASK) | Color;
+		ColorDlg[i].Flags = (ColorDlg[i].Flags & ~DIF_COLORMASK) | (Color & 0xffff);
 	}
 
 	if (bForFileFilter) {

@@ -377,11 +377,11 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 			FILE_ATTRIBUTE_TEMPORARY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_OFFLINE,
 			FILE_ATTRIBUTE_VIRTUAL, FILE_ATTRIBUTE_EXECUTABLE, FILE_ATTRIBUTE_BROKEN,
 			FILE_ATTRIBUTE_DEVICE_CHAR, FILE_ATTRIBUTE_DEVICE_BLOCK, FILE_ATTRIBUTE_DEVICE_FIFO, FILE_ATTRIBUTE_DEVICE_SOCK};
-	const wchar_t Format1a[] = L"%-21.21ls %lc %-30.30ls %-2.2ls %lc %ls";
-	const wchar_t Format1b[] = L"%-22.22ls %lc %-30.30ls %-2.2ls %lc %ls";
-	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-30.30ls %-2.2ls %lc %ls";
-	const wchar_t Format1d[] = L"   %-18.18ls %lc %-30.30ls %-2.2ls %lc %ls";
-	const wchar_t Format2[] = L"%-3.3ls %lc %-30.30ls %-3.3ls %lc %ls";
+	const wchar_t Format1a[] = L"%-21.21ls %lc %-38.38ls %-2.2ls %lc %ls";
+	const wchar_t Format1b[] = L"%-22.22ls %lc %-38.38ls %-2.2ls %lc %ls";
+	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
+	const wchar_t Format1d[] = L"   %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
+	const wchar_t Format2[] = L"%-3.3ls %lc %-38.38ls %-3.3ls %lc %ls";
 	const wchar_t DownArrow = 0x2193;
 	const wchar_t *Name, *Mask;
 	wchar_t MarkChar[] = L"\" \"";
@@ -450,13 +450,12 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 		if (!Hotkey && !bPanelType) {
 			strDest.Format(wcschr(Name, L'&') ? Format1b : Format1a, Name, BoxSymbols[BS_V1], Attr, SizeDate,
 					BoxSymbols[BS_V1], UseMask ? Mask : L"");
+		} else if (Hotkey) {
+			strDest.Format(Format1c,
+				Hotkey, Name, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1], UseMask ? Mask : L"");
 		} else {
-			if (Hotkey)
-				strDest.Format(Format1c, Hotkey, Name, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
-						UseMask ? Mask : L"");
-			else
-				strDest.Format(Format1d, Name, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
-						UseMask ? Mask : L"");
+			strDest.Format(Format1d,
+				Name, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1], UseMask ? Mask : L"");
 		}
 	}
 

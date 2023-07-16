@@ -24801,15 +24801,15 @@ FileFilterAttr
 "Атр&ыбуты"
 
 FileFilterAttrR
-"&Только для чтения"
+"&Только чтение"
 "&Read only"
 "Jen pro čt&ení"
 "Sch&reibschutz"
 "&Csak olvasható"
 "&Do odczytu"
 "Sólo Lectu&ra"
-"&Тільки для читання"
-"&Толькі для чытання"
+"&Тільки читання"
+"&Толькі чытанне"
 
 FileFilterAttrA
 "&Архивный"
@@ -24911,15 +24911,15 @@ FileFilterAttrT
 "&Часовы"
 
 FileFilterAttrReparse
-"Симво&л. ссылка"
+"Симв. ссы&лка"
 "Symbolic lin&k"
-"Sybolický li&nk"
-"Symbolischer Lin&k"
-"S&zimbolikus link"
-"Link &symboliczny"
-"Enlace simbólic&o"
-"Симво&л. посилання"
-"Сімва&лічны спасылак"
+"Sybol. li&nk"
+"Symbol. Lin&k"
+"S&zimb. link"
+"Link &symbol."
+"Enlace simból."
+"Симв. поси&лання"
+"Сімв. спасы&лак"
 
 FileFilterAttrOffline
 "Автономны&й"
@@ -24964,6 +24964,50 @@ upd:"&Broken"
 upd:"&Broken"
 "Несправний"
 "Няспраўны"
+
+FileFilterAttrDevChar
+"Симв.устройство"
+"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+"Симв.пристрій"
+"Сімв.прылада"
+
+FileFilterAttrDevBlock
+"Блоч.устройство"
+"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+"Блок.пристрій"
+"Блоч.прылада"
+
+FileFilterAttrDevFIFO
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+
+FileFilterAttrDevSock
+"Сокет"
+"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+"Сокет"
+"Сокет"
 
 FileFilterReset
 "Очистит&ь"

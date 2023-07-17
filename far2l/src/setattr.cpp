@@ -884,7 +884,16 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				AttrDlg[SA_EDIT_INFO].strData = DlgParam.SymLink;
 				AttrDlg[SA_EDIT_INFO].Flags &= ~DIF_READONLY; // not readonly only if symlink
 
-			} else {
+			}
+			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_CHAR)
+				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevChar;
+			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_BLOCK)
+				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevBlock;
+			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_FIFO)
+				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevFIFO;
+			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_SOCK)
+				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevSock;
+			else {
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
 			}
 

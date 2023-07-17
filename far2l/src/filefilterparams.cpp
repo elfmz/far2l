@@ -551,17 +551,24 @@ enum enumFileFilterConfig
 	ID_FF_MAKETRANSPARENT,
 };
 
-void HighlightDlgUpdateUserControl(CHAR_INFO *VBufColorExample, HighlightDataColor &Colors)
+static void HighlightDlgUpdateUserControl(CHAR_INFO *VBufColorExample, HighlightDataColor &Colors)
 {
 	const wchar_t *ptr;
-	DWORD Color;
+	DWORD64 Color;
 	const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
 
 	for (int j = 0; j < 4; j++) {
-		Color = (DWORD)(Colors.Color[HIGHLIGHTCOLORTYPE_FILE][j] & 0x00FF);
-
-		if (!Color)
+		Color = (Colors.Color[HIGHLIGHTCOLORTYPE_FILE][j] & 0xFFFFFFFFFFFF00FF);
+		if (Color) {
+			if (Color & 0x000000FFFFFF0000) {
+				Color|= FOREGROUND_TRUECOLOR;
+			}
+			if (Color & 0xFFFFFF0000000000) {
+				Color|= BACKGROUND_TRUECOLOR;
+			}
+		} else {
 			Color = FarColorToReal(FarColor[j]);
+		}
 
 		if (Colors.MarkChar & 0x0000FFFF)
 			ptr = Msg::HighlightExample2;
@@ -570,7 +577,7 @@ void HighlightDlgUpdateUserControl(CHAR_INFO *VBufColorExample, HighlightDataCol
 
 		for (int k = 0; k < 15; k++) {
 			VBufColorExample[15 * j + k].Char.UnicodeChar = ptr[k];
-			VBufColorExample[15 * j + k].Attributes = (WORD)Color;
+			VBufColorExample[15 * j + k].Attributes = Color;
 		}
 
 		if (Colors.MarkChar & 0x0000FFFF) {

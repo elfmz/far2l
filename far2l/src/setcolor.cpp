@@ -487,6 +487,32 @@ static DWORD64 ColorDialogBackRGBMask()
 	return (ReverseColorBytes((DWORD64)wcstoul(ColorDialogBackRGB, nullptr, 16))) << 40;
 }
 
+static void GetColorDlgProc_EnsureColorsAreInverted(SHORT x, SHORT y)
+{
+	CHAR_INFO ci{};
+	SMALL_RECT Rect = {x, y, x, y};
+	WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
+	if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
+		return;	// this cell is already tweaked during prev paint
+
+	DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
+
+	InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
+
+	InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
+
+	if (ci.Attributes & FOREGROUND_TRUECOLOR) {
+		SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+	}
+
+	if (ci.Attributes & BACKGROUND_TRUECOLOR) {
+		SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
+	}
+
+	DWORD NumberOfAttrsWritten{};
+	WINPORT(FillConsoleOutputAttribute) (0, InvColors, 1, COORD{x, y}, &NumberOfAttrsWritten);
+}
+
 static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 {
 	UpdateRGBFromDialog(hDlg);
@@ -508,30 +534,11 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 			ItemRect.Right+= DlgRect.Left;
 			ItemRect.Top+= DlgRect.Top;
 			ItemRect.Bottom+= DlgRect.Top;
-
-			CHAR_INFO ci{};
-			SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
-			WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
-			if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
-				continue;	// this cell is already tweaked during prev paint
-
-			DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
-
-			InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
-
-			InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
-
-			if (ci.Attributes & FOREGROUND_TRUECOLOR) {
-				SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+			for (auto x = ItemRect.Left; x <= ItemRect.Right; ++x) {
+				for (auto y = ItemRect.Top; y <= ItemRect.Top; ++y) {
+					GetColorDlgProc_EnsureColorsAreInverted(x, y);
+				}
 			}
-
-			if (ci.Attributes & BACKGROUND_TRUECOLOR) {
-				SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
-			}
-
-			DWORD NumberOfAttrsWritten{};
-			WINPORT(FillConsoleOutputAttribute) (0, InvColors,
-				ItemRect.Right - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
 		}
 	}
 
@@ -556,7 +563,7 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 			}
 			DWORD NumberOfAttrsWritten{};
 			WINPORT(FillConsoleOutputAttribute) (0, ci.Attributes,
-				ItemRect.Right - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
+				ItemRect.Right + 1 - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
 		}
 	}
 }

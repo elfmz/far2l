@@ -182,13 +182,14 @@ $ #Особенности FAR2L - начало работы#
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
 (клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
 
-    - Wez's Terminal Emulator (Linux, FreeBSD, macOS, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
+    - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
 (клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
+[в macOS в wezterm поддержка режима kitty не работает]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
 (клавиши через iTerm2 "raw keyboard" protocol, для взаимодействия с клипбордом включить OSC 52)
 
-    - Windows Terminal (в win11 стоит из коробки, в win10 надо ставить)
+    - Windows Terminal [в win11 стоит из коробки, в win10 надо ставить]
 (клавиши через win32-input-mode, для взаимодействия с клипбордом включить OSC 52)
 
     - putty4far2l (Windows ssh-клиент): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
@@ -206,6 +207,7 @@ $ #Особенности FAR2L - начало работы#
     - при запуске ключ #-u# позволяет указать путь к произвольному расположению настроек (если не задан параметр #-u#, то используется каталог из переменной окружения #FARSETTINGS# и только при её отсутствии каталог по умолчанию)
     - некоторые файлы настроек (могут отсутствовать): 
         - #settings/config.ini# - основной конфиг
+        - #settings/colors.ini# - ~раскраска файлов и групп сортировки~@Highlight@ (настраиваются через F9->Команды->Раскраска файлов и группы сортировки)
         - #settings/key_macros.ini# - ~клавиатурные макрокоманды~@KeyMacro@
         - #settings/user_menu.ini# - ~меню пользователя~@UserMenu@ (настраиваются через F9->Команды->Меню пользователя; формат отличается от FarMenu.ini из windows-версий)
         - #settings/associations.ini# - ассоциации файлов (настраиваются через F9->Команды->Ассоциации файлов)

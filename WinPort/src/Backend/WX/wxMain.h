@@ -92,6 +92,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	wxTimer* _periodic_timer{nullptr};
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
+	wxSize _initial_size{};
+	unsigned char _force_size_on_paint_state{0};
 	bool _extra_refresh{false};
 	bool _last_keydown_enqueued{false};
 	bool _app_entry_started{false};
@@ -112,6 +114,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void SetConsoleSizeFromWindow();
 	void CheckForResizePending();
 	void CheckPutText2CLip();
+	void SetInitialSize();
 	void OnInitialized( wxCommandEvent& event );
 	void OnTimerPeriodic(wxTimerEvent& event);	
 	void OnWindowMovedSync( wxCommandEvent& event );
@@ -211,6 +214,6 @@ public:
 	WinPortFrame(const wxString& title);
 	virtual ~WinPortFrame();
 
-	void OnInitialized();
+	void SetInitialSize();
 	void SaveWindowState();
 };

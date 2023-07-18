@@ -733,10 +733,6 @@ extern "C" {
 		s+= WINPORT_REG_DIV_VALUE;
 		s+= Wide2MB(lpValueName);
 		//fprintf(stderr, "RegSetValue type=%u cbData=%u\n", dwType, cbData);
-		if (dwType==REG_DWORD && cbData==8)
-		{
-			*(volatile int*)100 = 200;
-		}
 		std::ofstream os;
 		os.open(s.c_str());
 		Wide2MB(lpValueName, s);

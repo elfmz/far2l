@@ -3281,8 +3281,7 @@ jelenik meg);
     Ha az oszloptípusok leírójában több fájlnévoszlop szerepel, a fájlpanel
 többoszlopos formában jelenik meg.
 
-    Az attribútumok betűjeleinek jelentése:
-
+    Az Windows attribútumok betűjeleinek jelentése:
        #R#         - Read only (Csak olvasható)
        #S#         - System (Rendszer)
        #H#         - Hidden (Rejtett)
@@ -3295,6 +3294,22 @@ Titkosított)
        #I#         - Nem (tartalom)indexelt
        #O#         - Offline
        #V#         - Virtuális
+
+    Unix file types:
+       #B#         - Broken
+       #d#         - Directory
+       #c#         - Character device
+       #b#         - Block device
+       #p#         - FIFO (named Pipe)
+       #s#         - Socket
+       #l#         - Symbolic Link
+       #-#         - Regular file
+    Unix file permissions (in each triad for owner, group, other users):
+       #r# or #-#    - readable or not
+       #w# or #-#    - writable or not
+       #x# or #-#    - executable or not
+       #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
+       #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
     Az attribútumok megjelenítési sorrendje: RSHALCTIOV. A "Ritkított"
 attribútum csak fájlokra vonatkozhat és az "L" helyén jelenik meg. A

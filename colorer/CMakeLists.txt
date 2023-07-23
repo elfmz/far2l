@@ -32,7 +32,7 @@ add_library(colorer MODULE ${SOURCES})
 FIND_PACKAGE(Spdlog)
 if(NOT Spdlog_FOUND)
     message(STATUS "${ColorRed}Building Colorer without logging as SpdLog library is not found${ColorNormal}")
-    add_compile_definitions(NOSPDLOG)
+    add_definitions(-DNOSPDLOG)
 endif()
 
 FIND_PACKAGE(XercesC REQUIRED)

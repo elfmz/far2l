@@ -28,6 +28,9 @@ public:
   void debug(const char* message, const std::string& value) {}
   void debug(const char* message, const char* value1, const char* value2) {}
   void debug(const char* message, int value1, int value2, const char* value3) {}
+  void debug(const std::string& message, int arg1, int arg2) {}
+  void debug(const std::string& message, int arg1, int arg2, int arg3) {}
+  void debug(const std::string& message, const char* arg1, const char* arg2, const char* arg3) {}
 
   void error(const char* message) {}
   void error(const char* message, const char* value) {}

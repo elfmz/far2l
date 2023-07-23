@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "editor.hpp"
 #include "keybar.hpp"
 #include "fileholder.hpp"
+#include "EditorConfigOrg.hpp"
 
 class NamesList;
 
@@ -149,6 +150,7 @@ private:
 	UINT m_codepage;	// BUGBUG
 	int SaveAsTextFormat;
 	std::shared_ptr<IFileHolder> FileHolder;
+	std::unique_ptr<EditorConfigOrg> EdCfg;
 
 	virtual void DisplayObject();
 	int ProcessQuitKey(int FirstSave, BOOL NeedQuestion = TRUE);

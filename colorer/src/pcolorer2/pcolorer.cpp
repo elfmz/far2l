@@ -8,10 +8,13 @@
 #include"tools.h"
 #include"FarEditorSet.h"
 #include <utils.h>
+
+#ifdef USESPDLOG
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
 std::shared_ptr<spdlog::logger> logger;
+#endif
 
 XERCES_CPP_NAMESPACE_USE
 
@@ -68,7 +71,11 @@ SHAREDSYMBOL void PluginModuleOpen(const char *path)
       int pos = module.lastIndexOf('/');
       pos = module.lastIndexOf('/',pos);
       PluginPath=new StringBuffer(SString(module, 0, pos));
+#ifdef USESPDLOG
       logger = spdlog::stderr_logger_mt("far2l-colorer");
+#else
+      DummyLogger logger;
+#endif
 }
 
 StringBuffer *GetConfigPath(const SString &sub)

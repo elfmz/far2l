@@ -871,24 +871,25 @@ void ProtocolSCP::GetInformation(FileInformation &file_info, const std::string &
 			file_info.mode|= (rc == SSH_SCP_REQUEST_NEWFILE) ? S_IFREG : S_IFDIR;
 			file_info.access_time = file_info.modification_time = file_info.status_change_time = _now;
 			ssh_scp_deny_request(scp, "sorry");
-			return;
-		}
-		case SSH_SCP_REQUEST_ENDDIR: {
-			fprintf(stderr, "SSH_SCP_REQUEST_ENDDIR\n");
 			break;
 		}
-		case SSH_SCP_REQUEST_EOF: {
-			fprintf(stderr, "SSH_SCP_REQUEST_EOF\n");
-			break;
-		}
-		case SSH_ERROR: {
-			fprintf(stderr, "SSH_ERROR\n");
-			throw ProtocolError("Query info error", ssh_get_error(_conn->ssh), rc);
-		}
-	}
 
-	throw ProtocolError("Query info fault", ssh_get_error(_conn->ssh), rc);
+		case SSH_SCP_REQUEST_ENDDIR:
+			throw ProtocolError("Query info ENDDIR", ssh_get_error(_conn->ssh), rc);
+
+		case SSH_SCP_REQUEST_EOF:
+			throw ProtocolError("Query info EOF", ssh_get_error(_conn->ssh), rc);
+
+		case SSH_ERROR:
+			throw ProtocolError("Query info error", ssh_get_error(_conn->ssh), rc);
+
+		default:
+			throw ProtocolError("Query info fault", ssh_get_error(_conn->ssh), rc);
+	}
 #endif
+
+	if (_conn->file_stats_override)
+		_conn->file_stats_override->FilterFileInformation(path, file_info);
 }
 
 void ProtocolSCP::FileDelete(const std::string &path)
@@ -898,6 +899,8 @@ void ProtocolSCP::FileDelete(const std::string &path)
 	if (rc != 0) {
 		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
+	if (_conn->file_stats_override)
+		_conn->file_stats_override->Cleanup(path);
 }
 
 void ProtocolSCP::DirectoryDelete(const std::string &path)
@@ -907,6 +910,8 @@ void ProtocolSCP::DirectoryDelete(const std::string &path)
 	if (rc != 0) {
 		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
+	if (_conn->file_stats_override)
+		_conn->file_stats_override->Cleanup(path);
 }
 
 void ProtocolSCP::DirectoryCreate(const std::string &path, mode_t mode)
@@ -939,6 +944,8 @@ void ProtocolSCP::Rename(const std::string &path_old, const std::string &path_ne
 	if (rc != 0) {
 		throw ProtocolError(sc.FilteredError().c_str(), rc);
 	}
+	if (_conn->file_stats_override)
+		_conn->file_stats_override->Rename(path_old, path_new);
 }
 
 void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
@@ -963,7 +970,8 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 	if (rc != 0) {
 		fprintf(stderr, "%s(%s) ignored error %d\n", __FUNCTION__, path.c_str(), rc);
 		//throw ProtocolError(sc.FilteredError().c_str(), rc);
-		_conn->file_stats_override.OverrideTimes(path, access_time, modification_time);
+		if (_conn->file_stats_override)
+			_conn->file_stats_override->OverrideTimes(path, access_time, modification_time);
 	}
 }
 
@@ -972,11 +980,11 @@ void ProtocolSCP::SetMode(const std::string &path, mode_t mode)
 	SimpleCommand sc(_conn);
 	int rc = sc.Execute("chmod %o %s", mode, QuotedArg(path).c_str());
 	if (rc != 0) {
-		if (!_conn->ignore_time_mode_errors)
+		if (!_conn->file_stats_override)
 			throw ProtocolError(sc.FilteredError().c_str(), rc);
 
 		fprintf(stderr, "%s(%s) ignored error %d\n", __FUNCTION__, path.c_str(), rc);
-		_conn->file_stats_override.OverrideMode(path, mode);
+		_conn->file_stats_override->OverrideMode(path, mode);
 	}
 }
 
@@ -1008,11 +1016,18 @@ std::shared_ptr<IDirectoryEnumer> ProtocolSCP::DirectoryEnum(const std::string &
 {
 	_conn->executed_command.reset();
 
+	std::shared_ptr<IDirectoryEnumer> enumer;
 	if (_quirks.use_ls) {
-		return std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, DEM_LIST, 1, &path, _now);
+		enumer = std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, DEM_LIST, 1, &path, _now);
+	} else {
+		enumer = std::make_shared<SCPDirectoryEnumer_stat>(_conn, DEM_LIST, 1, &path);
 	}
 
-	return std::make_shared<SCPDirectoryEnumer_stat>(_conn, DEM_LIST, 1, &path);
+	if (_conn->file_stats_override && _conn->file_stats_override->NonEmpty()) {
+		enumer = std::make_shared<DirectoryEnumerWithFileStatsOverride>(*_conn->file_stats_override, enumer, path);
+	}
+
+	return enumer;
 }
 
 class SCPFileReader : public IFileReader

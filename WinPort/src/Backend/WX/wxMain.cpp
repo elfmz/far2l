@@ -102,6 +102,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		return false;
 	}
 
+	g_wx_norgb = a->norgb;
 	g_winport_con_out = a->winport_con_out;
 	g_winport_con_in = a->winport_con_in;
 
@@ -356,7 +357,7 @@ WinPortFrame::~WinPortFrame()
 	g_winport_frame = nullptr;
 }
 
-void WinPortFrame::OnInitialized()
+void WinPortFrame::SetInitialSize()
 {
 	if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
 		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
@@ -578,16 +579,20 @@ void WinPortPanel::SetClientCharSize(int cw, int ch)
 	_frame->SetClientSize(cw*_paint_context.FontWidth(), ch*_paint_context.FontHeight());
 }
 
+void WinPortPanel::SetInitialSize()
+{
+	_frame->SetInitialSize();
+
+	int w, h;
+	GetClientSize(&w, &h);
+	fprintf(stderr, "SetInitialSize: client size = %u x %u\n", w, h);
+	SetConsoleSizeFromWindow();
+}
+
 void WinPortPanel::OnInitialized( wxCommandEvent& event )
 {
-	int w, h;
-
-	_frame->OnInitialized();
-
-	GetClientSize(&w, &h);
-	fprintf(stderr, "OnInitialized: client size = %u x %u\n", w, h);
-	SetConsoleSizeFromWindow();
-
+	SetInitialSize();
+	_initial_size = _frame->GetSize();
 	if (g_winport_app_thread) {
 #ifdef __APPLE__
 		Touchbar_Register(this);
@@ -615,7 +620,7 @@ bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
 
 BYTE WinPortPanel::OnConsoleGetColorPalette()
 {
-	return 24;
+	return g_wx_norgb ? 4 : 24;
 }
 
 void WinPortPanel::OnTouchbarKey(bool alternate, int index)
@@ -767,6 +772,16 @@ static int ProcessAllEvents()
 
 void WinPortPanel::OnIdle( wxIdleEvent& event )
 {
+	if (_force_size_on_paint_state == 1) {
+		_force_size_on_paint_state = 2;
+		const auto &cur_size = _frame->GetSize();
+		if (_initial_size != cur_size) {
+			fprintf(stderr, "Re-enforce _initial_size={%d:%d} cuz cur_size={%d:%d}\n",
+				_initial_size.GetWidth(), _initial_size.GetHeight(), cur_size.GetWidth(), cur_size.GetHeight());
+			SetInitialSize();
+		}
+	}
+
 	// first finalize any still pending repaints
 	wxCommandEvent cmd_evnt;
 	OnRefreshSync(cmd_evnt);
@@ -1328,7 +1343,9 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 	}
 	else
 		_paint_context.OnPaint();
-	
+	if (_force_size_on_paint_state == 0) {
+		_force_size_on_paint_state = 1;
+	}
 }
 
 void WinPortPanel::OnEraseBackground( wxEraseEvent& event )

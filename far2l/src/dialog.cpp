@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "history.hpp"
 #include "InterThreadCall.hpp"
+#include <VT256ColorTable.h>
 #include <cwctype>
 #include <atomic>
 
@@ -419,6 +420,7 @@ void Dialog::Init(FARWINDOWPROC DlgProc,	// Диалоговая процеду�
 	DialogMode.Set(DMODE_ISCANMOVE);
 	SetDropDownOpened(FALSE);
 	IsEnableRedraw = 0;
+	InCtlColorDlgItem = 0;
 	FocusPos = (unsigned)-1;
 	PrevFocusPos = (unsigned)-1;
 
@@ -1367,10 +1369,15 @@ void Dialog::GetDialogObjectsData()
 }
 
 // Функция формирования и запроса цветов.
-LONG_PTR Dialog::CtlColorDlgItem(int ItemPos, int Type, int Focus, int Default, DWORD Flags)
+DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem)
 {
 	CriticalSectionLock Lock(CS);
-	BOOL DisabledItem = Flags & DIF_DISABLE ? TRUE : FALSE;
+	const int Type = CurItem->Type;
+	const int Focus = CurItem->Focus;
+	const int Default = CurItem->DefaultButton;
+	const DWORD Flags = CurItem->Flags;
+
+	const bool DisabledItem = (Flags & DIF_DISABLE) != 0;
 	DWORD Attr = 0;
 
 	switch (Type) {
@@ -1589,8 +1596,22 @@ LONG_PTR Dialog::CtlColorDlgItem(int ItemPos, int Type, int Focus, int Default, 
 		}
 	}
 
-	return DlgProc((HANDLE)this, DN_CTLCOLORDLGITEM, ItemPos, Attr);
+	++InCtlColorDlgItem;
+	DWORD out = DlgProc((HANDLE)this, DN_CTLCOLORDLGITEM, ItemPos, Attr);
+	--InCtlColorDlgItem;
+	return out;
 }
+
+static void SetColorNormal(DWORD Attr, const std::unique_ptr<DialogItemTrueColors> &TrueColors)
+{
+	ComposeAndSetColor(Attr & 0xff, TrueColors ? &TrueColors->Normal : nullptr);
+}
+
+static void SetColorFrame(DWORD Attr, const std::unique_ptr<DialogItemTrueColors> &TrueColors)
+{
+	ComposeAndSetColor(LOBYTE(HIWORD(Attr)), TrueColors ? &TrueColors->Frame : nullptr);
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -1695,8 +1716,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 		short CW = CX2 - CX1 + 1;
 		short CH = CY2 - CY1 + 1;
-		Attr = (DWORD)CtlColorDlgItem(I, CurItem->Type, CurItem->Focus, CurItem->DefaultButton,
-				CurItem->Flags);
+		Attr = CtlColorDlgItem(I, CurItem);
 #if 0
 
 		// TODO: прежде чем эту строку применять... нужно проверить _ВСЕ_ диалоги на предмет X2, Y2. !!!
@@ -1712,7 +1732,7 @@ void Dialog::ShowDialog(unsigned ID)
 			case DI_DOUBLEBOX: {
 				BOOL IsDrawTitle = TRUE;
 				GotoXY(X1 + CX1, Y1 + CY1);
-				SetColor(LOBYTE(HIWORD(Attr)));
+				SetColorFrame(Attr, CurItem->TrueColors);
 
 				if (CY1 == CY2) {
 					DrawLine(CX2 - CX1 + 1, CurItem->Type == DI_SINGLEBOX ? 8 : 9);		//???
@@ -1745,11 +1765,13 @@ void Dialog::ShowDialog(unsigned ID)
 					if ((CurItem->Flags & DIF_LEFTTEXT) && X1 + CX1 + 1 < X)
 						X = X1 + CX1 + 1;
 
-					SetColor(Attr & 0xFF);
+					SetColorNormal(Attr, CurItem->TrueColors);
 					GotoXY(X, Y1 + CY1);
 
 					if (CurItem->Flags & DIF_SHOWAMPERSAND)
 						Text(strStr);
+					else if (CurItem->TrueColors)
+						HiText(strStr, ComposeColor(HIBYTE(LOWORD(Attr)), &CurItem->TrueColors->Hilighted));
 					else
 						HiText(strStr, HIBYTE(LOWORD(Attr)));
 				}
@@ -1792,7 +1814,7 @@ void Dialog::ShowDialog(unsigned ID)
 						&& !(CurItem->Flags & (DIF_SEPARATORUSER | DIF_SEPARATOR | DIF_SEPARATOR2))) {		// половинчатое решение
 
 					int CntChr = CX2 - CX1 + 1;
-					SetColor(Attr & 0xFF);
+					SetColorNormal(Attr, CurItem->TrueColors);
 					GotoXY(X1 + X, Y1 + Y);
 
 					if (X1 + X + CntChr - 1 > X2)
@@ -1805,7 +1827,7 @@ void Dialog::ShowDialog(unsigned ID)
 				}
 
 				if (CurItem->Flags & (DIF_SEPARATORUSER | DIF_SEPARATOR | DIF_SEPARATOR2)) {
-					SetColor(LOBYTE(HIWORD(Attr)));
+					SetColorFrame(Attr, CurItem->TrueColors);
 					GotoXY(X1
 									+ ((CurItem->Flags & DIF_SEPARATORUSER)
 													? X
@@ -1820,7 +1842,7 @@ void Dialog::ShowDialog(unsigned ID)
 							CurItem->strMask);
 				}
 
-				SetColor(Attr & 0xFF);
+				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + X, Y1 + Y);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND) {
@@ -1869,7 +1891,7 @@ void Dialog::ShowDialog(unsigned ID)
 						&& !(CurItem->Flags & (DIF_SEPARATORUSER | DIF_SEPARATOR | DIF_SEPARATOR2))) {		// половинчатое решение
 
 					int CntChr = CY2 - CY1 + 1;
-					SetColor(Attr & 0xFF);
+					SetColorNormal(Attr, CurItem->TrueColors);
 					GotoXY(X1 + X, Y1 + Y);
 
 					if (Y1 + Y + CntChr - 1 > Y2)
@@ -1881,7 +1903,7 @@ void Dialog::ShowDialog(unsigned ID)
 #if defined(VTEXT_ADN_SEPARATORS)
 
 				if (CurItem->Flags & (DIF_SEPARATORUSER | DIF_SEPARATOR | DIF_SEPARATOR2)) {
-					SetColor(LOBYTE(HIWORD(Attr)));
+					SetColorFrame(Attr, CurItem->TrueColors);
 					GotoXY(X1 + X,
 							Y1
 									+ ((CurItem->Flags & DIF_SEPARATORUSER)
@@ -1897,7 +1919,7 @@ void Dialog::ShowDialog(unsigned ID)
 				}
 
 #endif
-				SetColor(Attr & 0xFF);
+				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + X, Y1 + Y);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
@@ -1910,7 +1932,7 @@ void Dialog::ShowDialog(unsigned ID)
 			/* ***************************************************************** */
 			case DI_CHECKBOX:
 			case DI_RADIOBUTTON: {
-				SetColor(Attr & 0xFF);
+				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
 				if (CurItem->Type == DI_CHECKBOX) {
@@ -1963,7 +1985,7 @@ void Dialog::ShowDialog(unsigned ID)
 			/* ***************************************************************** */
 			case DI_BUTTON: {
 				strStr = CurItem->strData;
-				SetColor(Attr & 0xFF);
+				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
 				if (CurItem->Flags & DIF_SHOWAMPERSAND)
@@ -5860,8 +5882,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 
 		case DM_GETCOLOR: {
-			*(DWORD *)Param2 = (DWORD)Dlg->CtlColorDlgItem(Param1, CurItem->Type, CurItem->Focus,
-					CurItem->DefaultButton, CurItem->Flags);
+			*(DWORD *)Param2 = (DWORD)Dlg->CtlColorDlgItem(Param1, CurItem);
 			*(DWORD *)Param2|= (CurItem->Flags & DIF_SETCOLOR);
 			return TRUE;
 		}
@@ -5870,12 +5891,55 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			CurItem->Flags&= ~(DIF_SETCOLOR | DIF_COLORMASK);
 			CurItem->Flags|= Param2 & (DIF_SETCOLOR | DIF_COLORMASK);
 
-			if (Dlg->DialogMode.Check(DMODE_SHOW))		//???
-			{
+			if (Dlg->DialogMode.Check(DMODE_SHOW)) {		//???
 				Dlg->ShowDialog(Param1);
 				ScrBuf.Flush();
 			}
 
+			return TRUE;
+		}
+
+		case DM_GETTRUECOLOR: {
+			if (!CurItem->TrueColors) {
+				memset((DialogItemTrueColors *)Param2, 0, sizeof(DialogItemTrueColors));
+			} else {
+				*(DialogItemTrueColors *)Param2 = *CurItem->TrueColors;
+			}
+			return TRUE;
+		}
+
+		case DM_SETTRUECOLOR: {
+			if (!CurItem->TrueColors) {
+				CurItem->TrueColors.reset(new DialogItemTrueColors);
+			}
+			*CurItem->TrueColors = *(const DialogItemTrueColors *)Param2;
+			if (Dlg->InCtlColorDlgItem == 0 && Dlg->DialogMode.Check(DMODE_SHOW)) {		//???
+				Dlg->ShowDialog(Param1);
+				ScrBuf.Flush();
+			}
+			return TRUE;
+		}
+
+		case DM_SETREADONLY: {
+			if (Param2) {
+				CurItem->Flags|= DIF_READONLY;
+			} else {
+				CurItem->Flags&= ~DIF_READONLY;
+			}
+			if (FarIsEdit(Type)) {
+				DlgEdit *CurItemEdit = (DlgEdit *)CurItem->ObjPtr;
+				if (CurItemEdit) {
+					CurItemEdit->SetReadOnly(Param2 ? 1 : 0);
+				}
+			} else {
+				fprintf(stderr,
+					"%s: DM_SETREADONLY invoked for non-edit item %u\n",
+					__FUNCTION__, Param1);
+			}
+			if (Dlg->DialogMode.Check(DMODE_SHOW)) {		//???
+				Dlg->ShowDialog(Param1);
+				ScrBuf.Flush();
+			}
 			return TRUE;
 		}
 

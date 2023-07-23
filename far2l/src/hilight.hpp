@@ -53,7 +53,9 @@ enum enumHighlightDataColor
 
 struct HighlightDataColor
 {
-	WORD Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor]; if HIBYTE == 0xFF then transparent
+	DWORD64 Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor];
+							// if HIBYTE == 0xFF then transparent
+							// nonzero upper 3 bytes meaning foreground RGB, nonzero lower 3 bytes meaning background RGB
 	DWORD MarkChar;
 };
 
@@ -84,3 +86,5 @@ public:
 
 	void SaveHiData();
 };
+
+const HighlightDataColor *PooledHighlightDataColor(const HighlightDataColor &Color);

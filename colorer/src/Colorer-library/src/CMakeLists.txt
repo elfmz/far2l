@@ -173,25 +173,26 @@ endif ()
 
 add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
 
-FIND_PACKAGE(Spdlog REQUIRED)
 FIND_PACKAGE(XercesC REQUIRED)
-
 
 target_include_directories(colorer_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${SPDLOG_INCLUDE_DIR}
     PUBLIC ${XERCESC_INCLUDE_DIR}
-    )
+)
+
+target_compile_definitions(colorer_lib PRIVATE
+    ${COLORER_DEF}
+    ${SPDLOG_DEFINES}
+    __unix__
+)
+
+if(USESPDLOG)
+    target_include_directories(colorer_lib PUBLIC ${SPDLOG_INCLUDE_DIR})
+endif()
 
 target_link_libraries(colorer_lib
     PUBLIC ${XERCESC_LIBRARIES}
     ${THREAD_LIBS}
-    )
-
-target_compile_definitions(colorer_lib PRIVATE
-    ${SPDLOG_DEFINES}
-    ${COLORER_DEF}
-    __unix__
 )
 
 #set_target_properties(colorer_lib PROPERTIES

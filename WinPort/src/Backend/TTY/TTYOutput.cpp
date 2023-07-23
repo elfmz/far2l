@@ -66,6 +66,9 @@ template <DWORD64 R, DWORD64 G, DWORD64 B>
 
 void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 {
+	if (_norgb) {
+		attr&= ~(FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR);
+	}
 	const DWORD64 xa = _prev_attr_valid ? attr ^ _prev_attr : (DWORD64)-1;
 	if (xa == 0) {
 		return;
@@ -137,7 +140,10 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 		_tmp_attrs+= (attr & COMMON_LVB_REVERSE_VIDEO) ? "7;" : "27;";
 	}
 
-	assert(!_tmp_attrs.empty() && _tmp_attrs.back() == ';');
+	if (_tmp_attrs.back() != ';') {
+		return;
+	}
+
 	_tmp_attrs.back() = 'm';
 	_prev_attr = attr;
 	_prev_attr_valid = true;
@@ -147,9 +153,9 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out, bool far2l_tty)
+TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 	:
-	_out(out), _far2l_tty(far2l_tty), _kernel_tty(false)
+	_out(out), _far2l_tty(far2l_tty), _norgb(norgb), _kernel_tty(false)
 {
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;

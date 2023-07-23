@@ -1,5 +1,9 @@
 #include "FileStatsOverride.h"
 
+FileStatsOverride::~FileStatsOverride()
+{
+}
+
 void FileStatsOverride::Cleanup(const std::string &path)
 {
 	if (!path.empty() && path.back() == '/')
@@ -38,7 +42,7 @@ void FileStatsOverride::OverrideMode(const std::string &path, mode_t mode)
 	_path2ovrst[path].mode = mode;
 }
 
-const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path)
+const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path) const
 {
 	if (!path.empty() && path.back() == '/')
 		return Lookup(path.substr(0, path.size() - 1));
@@ -50,12 +54,59 @@ const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::st
 	return (it != _path2ovrst.end()) ? &it->second : nullptr;
 }
 
-const FileStatsOverride::OverridenStats *FileStatsOverride::Lookup(const std::string &path, const std::string &name)
+void FileStatsOverride::FilterFileInformation(const std::string &path, FileInformation &file_info) const
 {
-	std::string full_path = path;
-	if (!name.empty() && !full_path.empty() && full_path.back() != '/' && name.front() != '/') {
-		full_path+= '/';
+	const auto *ovrst = Lookup(path);
+	if (ovrst) {
+		if (ovrst->mode) {
+			file_info.mode = ovrst->mode;
+		}
+		if (ovrst->access_time.tv_sec) {
+			file_info.access_time = ovrst->access_time;
+		}
+		if (ovrst->modification_time.tv_sec) {
+			file_info.modification_time = ovrst->modification_time;
+		}
 	}
-	full_path+= name;
-	return Lookup(full_path);
+}
+
+void FileStatsOverride::FilterFileMode(const std::string &path, mode_t &mode) const
+{
+	const auto *ovrst = Lookup(path);
+	if (ovrst && ovrst->mode) {
+		mode = ovrst->mode;
+	}
+}
+
+///////////////
+
+DirectoryEnumerWithFileStatsOverride::DirectoryEnumerWithFileStatsOverride(
+		const FileStatsOverride &file_stats_override,
+		std::shared_ptr<IDirectoryEnumer> enumer,
+		const std::string &path)
+	:
+	_file_stats_override(file_stats_override),
+	_enumer(enumer),
+	_path(path)
+{
+
+	if (!_path.empty() && _path.back() != '/') {
+		_path+= '/';
+	}
+	_path_len = _path.size();
+}
+
+DirectoryEnumerWithFileStatsOverride::~DirectoryEnumerWithFileStatsOverride()
+{
+}
+
+bool DirectoryEnumerWithFileStatsOverride::Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
+{
+	if (!_enumer->Enum(name, owner, group, file_info)) {
+		return false;
+	}
+
+	_path.replace(_path_len, _path.size() - _path_len, name);
+	_file_stats_override.FilterFileInformation(_path, file_info);
+	return true;
 }

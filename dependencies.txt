@@ -3,7 +3,6 @@ libx11-dev
 libxi-dev
 
 libuchardet-dev
-libspdlog-dev
 libxerces-c-dev
 
 libarchive-dev

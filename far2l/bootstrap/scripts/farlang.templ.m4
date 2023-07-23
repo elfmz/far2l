@@ -217,6 +217,17 @@ Remove
 "Видалити"
 "Выдаліць"
 
+Change
+"Изменить"
+"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+upd:"Change"
+
 HCancel
 l:
 "&Отмена"
@@ -316,6 +327,17 @@ HSplit
 "Dividir"
 "Роз&ділити"
 "Па&дзяліць"
+
+HChange
+"&Изменить"
+"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
+upd:"C&hange"
 
 Warning
 l:
@@ -12089,26 +12111,26 @@ upd:"Other"
 "Іншыя"
 
 GetCodePageBottomTitle
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
-"Strg-H, Entf, Einf, F4"
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
-"Ctrl-H, Del, Ins, F4"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Strg-H, Entf, Einf, F4, Strg-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, Ins, F4, Ctrl-Alt-F"
 
 GetCodePageBottomShortTitle
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
-"Strg-H, Entf, F4"
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
-"Ctrl-H, Del, F4"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Strg-H, Entf, F4, Strg-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
+"Ctrl-H, Del, F4, Ctrl-Alt-F"
 
 GetCodePageEditCodePageName
 "Изменить имя кодовой страницы"
@@ -15466,6 +15488,61 @@ SetAttrJunction
 "Зв'язок:"
 "Сувязь:"
 
+SetAttrInfoSelAll
+"выбрано %d элементов"
+"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+upd:"selected %d items"
+
+SetAttrInfoSelDirs
+"%lsкаталогов: %d"
+"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+upd:"%lsdirs: %d"
+
+SetAttrInfoSelFiles
+"%lsфайлов: %d"
+"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+upd:"%lsfiles: %d"
+
+SetAttrInfoSelSymDirs
+"%lsсимлинков на каталоги: %d"
+"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+upd:"%lssymlinks to dirs: %d"
+
+SetAttrInfoSelSymFiles
+"%lsсимлинков на файлы: %d"
+"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+upd:"%lssymlinks to files: %d"
+
 SetAttrSymlink
 "Ссылка:"
 "Symlink:"
@@ -15476,6 +15553,61 @@ SetAttrSymlink
 "Enlace:"
 "Посилання:"
 "Спасылак:"
+
+SetAttrSymlinkWarn1
+"Для симлинка '%ls'"
+"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+upd:"For symlink '%ls'"
+
+SetAttrSymlinkWarn2
+"нового объекта '%ls' не существует"
+"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+upd:"new target '%ls' does not exist"
+
+SetAttrSymlinkWarn3
+"(текущий объект '%ls')"
+"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+upd:"(current target '%ls')"
+
+SetAttrSymlinkWarn4
+"Пропустить или все-равно изменить объект симлинка?"
+"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+upd:"Skip or change symlink target anyway?"
+
+SetAttrSymlinkFailed
+"Ошибка изменения символической ссылки"
+"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+upd:"Error changing symbolic link"
+"Ошибка зміни символічних посилань"
+"Шыбка змены сімвалічных спасылак"
 
 SetAttrVolMount
 "Том:"
@@ -24669,15 +24801,15 @@ FileFilterAttr
 "Атр&ыбуты"
 
 FileFilterAttrR
-"&Только для чтения"
+"&Только чтение"
 "&Read only"
 "Jen pro čt&ení"
 "Sch&reibschutz"
 "&Csak olvasható"
 "&Do odczytu"
 "Sólo Lectu&ra"
-"&Тільки для читання"
-"&Толькі для чытання"
+"&Тільки читання"
+"&Толькі чытанне"
 
 FileFilterAttrA
 "&Архивный"
@@ -24779,15 +24911,15 @@ FileFilterAttrT
 "&Часовы"
 
 FileFilterAttrReparse
-"Симво&л. ссылка"
+"Симв. ссы&лка"
 "Symbolic lin&k"
-"Sybolický li&nk"
-"Symbolischer Lin&k"
-"S&zimbolikus link"
-"Link &symboliczny"
-"Enlace simbólic&o"
-"Симво&л. посилання"
-"Сімва&лічны спасылак"
+"Sybol. li&nk"
+"Symbol. Lin&k"
+"S&zimb. link"
+"Link &symbol."
+"Enlace simból."
+"Симв. поси&лання"
+"Сімв. спасы&лак"
 
 FileFilterAttrOffline
 "Автономны&й"
@@ -24832,6 +24964,50 @@ upd:"&Broken"
 upd:"&Broken"
 "Несправний"
 "Няспраўны"
+
+FileFilterAttrDevChar
+"Симв.устройство"
+"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+upd:"Char device"
+"Симв.пристрій"
+"Сімв.прылада"
+
+FileFilterAttrDevBlock
+"Блоч.устройство"
+"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+upd:"Block device"
+"Блок.пристрій"
+"Блоч.прылада"
+
+FileFilterAttrDevFIFO
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+"FIFO"
+
+FileFilterAttrDevSock
+"Сокет"
+"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+upd:"Socket"
+"Сокет"
+"Сокет"
 
 FileFilterReset
 "Очистит&ь"

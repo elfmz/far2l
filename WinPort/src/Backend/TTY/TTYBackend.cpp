@@ -79,11 +79,12 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
 	_ext_clipboard(ext_clipboard),
+	_norgb(norgb),
 	_nodetect(nodetect),
 	_far2l_tty(far2l_tty),
 	_esc_expiration(esc_expiration),
@@ -367,7 +368,7 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
-		TTYOutput tty_out(_stdout, _far2l_tty);
+		TTYOutput tty_out(_stdout, _far2l_tty, _norgb);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -718,6 +719,10 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 
 BYTE TTYBackend::OnConsoleGetColorPalette()
 {
+	if (_norgb) {
+		return 4;
+	}
+
 	if (_far2l_tty) try {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(FARTTY_INTERRACT_GET_COLOR_PALETTE);
@@ -1204,9 +1209,9 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;

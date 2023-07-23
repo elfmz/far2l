@@ -53,7 +53,7 @@ extern bool g_broadway;
 extern bool g_remote;
 
 WinPortPalette g_wx_palette;
-
+bool g_wx_norgb = false;
 
 static const WinPortRGB &InternalConsoleForeground2RGB(USHORT attributes)
 {
@@ -67,12 +67,14 @@ static const WinPortRGB &InternalConsoleBackground2RGB(USHORT attributes)
 
 WinPortRGB ConsoleForeground2RGB(DWORD64 attributes)
 {
-	if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == FOREGROUND_TRUECOLOR) {
-		return GET_RGB_FORE(attributes);
-	}
+	if (!g_wx_norgb) {
+		if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == FOREGROUND_TRUECOLOR) {
+			return GET_RGB_FORE(attributes);
+		}
 
-	if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
-		return GET_RGB_BACK(attributes);
+		if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
+			return GET_RGB_BACK(attributes);
+		}
 	}
 
 	return (attributes & COMMON_LVB_REVERSE_VIDEO)
@@ -82,12 +84,14 @@ WinPortRGB ConsoleForeground2RGB(DWORD64 attributes)
 
 WinPortRGB ConsoleBackground2RGB(DWORD64 attributes)
 {
-	if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == BACKGROUND_TRUECOLOR) {
-		return GET_RGB_BACK(attributes);
-	}
+	if (!g_wx_norgb) {
+		if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == BACKGROUND_TRUECOLOR) {
+			return GET_RGB_BACK(attributes);
+		}
 
-	if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
-		return GET_RGB_FORE(attributes);
+		if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
+			return GET_RGB_FORE(attributes);
+		}
 	}
 
 	return (attributes & COMMON_LVB_REVERSE_VIDEO)

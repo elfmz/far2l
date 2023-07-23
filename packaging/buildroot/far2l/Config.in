@@ -40,7 +40,6 @@ config BR2_PACKAGE_FAR2L_COLORER
 	bool "Colorer plugin"
 	default y
 	select BR2_PACKAGE_XERCES
-	select BR2_PACKAGE_SPDLOG
 	help
 	  Text editor syntax coloring plugin.
 

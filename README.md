@@ -31,7 +31,6 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * libx11-dev (optional - needed for X11 extension that provides better UX for TTY backend wherever X11 is available)
 * libxi-dev (optional - needed for X11/Xi extension that provides best UX for TTY backend wherever X11 Xi extension is available)
 * libxerces-c-dev
-* libspdlog-dev
 * libuchardet-dev
 * libssh-dev (needed for NetRocks/SFTP)
 * libssl-dev (needed for NetRocks/FTPS)
@@ -47,7 +46,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libspdlog-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
 ```
 
 On Debian unstable/sid:
@@ -146,7 +145,7 @@ cd far2l
 ```
  * Install needed dependencies with MacPorts:
 ``` sh
-sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt spdlog uchardet neon
+sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt uchardet neon
 export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
 ```
  * OR if you prefer to use brew packages, then:
@@ -177,7 +176,7 @@ After .dmg successfully created, you may install it by running `open ...path/to/
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
 ```
-emerge -avn dev-libs/xerces-c app-i18n/uchardet dev-util/cmake dev-libs/spdlog
+emerge -avn dev-libs/xerces-c app-i18n/uchardet dev-util/cmake
 ```
 If you want to build far2l with wxGTK support also install it:
 ```

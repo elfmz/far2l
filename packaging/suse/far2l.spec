@@ -31,7 +31,7 @@ BuildRequires:	update-desktop-files
 BuildRequires:  wxGTK-devel >= 3.1
 BuildRequires: 	xerces-c-devel neon-devel openssl-devel uchardet-devel
 %endif
-BuildRequires:  spdlog-devel fmt-devel libarchive-devel
+BuildRequires:  fmt-devel libarchive-devel
 BuildRequires:  libnfs-devel libsmbclient-devel libssh-devel pcre-devel
 BuildRequires:  python-rpm-macros
 BuildRequires:  python3-devel python3-cffi python3-pip

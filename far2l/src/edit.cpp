@@ -57,7 +57,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
-#include "VT256ColorTable.h"
 #include <cwctype>
 
 static int Recurse = 0;
@@ -2280,13 +2279,6 @@ void Edit::ApplyColor()
 			continue;
 
 		DWORD64 Attr = CurItem.Color;
-		if (CurItem.TrueFore.Flags & 1) {
-			SET_RGB_FORE(Attr, COMPOSE_RGB(CurItem.TrueFore.R, CurItem.TrueFore.G, CurItem.TrueFore.B));
-		}
-		if (CurItem.TrueBack.Flags & 1) {
-			SET_RGB_BACK(Attr, COMPOSE_RGB(CurItem.TrueBack.R, CurItem.TrueBack.G, CurItem.TrueBack.B));
-		}
-
 		int Length = CurItem.EndPos - CurItem.StartPos + 1;
 
 		if (CurItem.StartPos + Length >= StrSize)

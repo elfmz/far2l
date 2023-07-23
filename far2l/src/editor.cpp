@@ -5389,8 +5389,7 @@ int Editor::EditorControl(int Command, void *Param)
 
 				if (Command == ECTL_ADDTRUECOLOR) {
 					const EditorTrueColor *tcol = (EditorTrueColor *)Param;
-					newcol.TrueFore = tcol->TrueFore;
-					newcol.TrueBack = tcol->TrueBack;
+					FarTrueColorToAttributes(newcol.Color, tcol->TrueColor);
 				}
 				CurPtr->AddColor(&newcol);
 				return TRUE;
@@ -5419,11 +5418,10 @@ int Editor::EditorControl(int Command, void *Param)
 
 				col->StartPos = curcol.StartPos - X1;
 				col->EndPos = curcol.EndPos - X1;
-				col->Color = curcol.Color;
+				col->Color = curcol.Color & 0xffff;
 				if (Command == ECTL_GETTRUECOLOR) {
 					EditorTrueColor *tcol = (EditorTrueColor *)Param;
-					tcol->TrueFore = curcol.TrueFore;
-					tcol->TrueBack = curcol.TrueBack;
+					FarTrueColorFromAttributes(tcol->TrueColor, curcol.Color);
 				}
 				_ECTLLOG(SysLog(L"EditorColor{"));
 				_ECTLLOG(SysLog(L"  StringNumber=%d", col->StringNumber));

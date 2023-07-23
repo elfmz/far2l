@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "frame.hpp"
 #include <farplug-wide.h>
+#include <memory>
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
 #include "bitflags.hpp"
@@ -125,6 +126,7 @@ struct DialogItemEx
 	};
 	FARString strHistory;
 	FARString strMask;
+	std::unique_ptr<DialogItemTrueColors> TrueColors;
 	DWORD Flags;
 	int DefaultButton;
 
@@ -147,6 +149,7 @@ struct DialogItemEx
 
 	void Clear()
 	{
+		TrueColors.reset();
 		Type = 0;
 		X1 = 0;
 		Y1 = 0;
@@ -267,6 +270,7 @@ private:
 	unsigned FocusPos;			// всегда известно какой элемент в фокусе
 	unsigned PrevFocusPos;		// всегда известно какой элемент был в фокусе
 	int IsEnableRedraw;			// Разрешена перерисовка диалога? ( 0 - разрешена)
+	int InCtlColorDlgItem;
 	BitFlags DialogMode;		// Флаги текущего режима диалога
 
 	LONG_PTR DataDialog;		// Данные, специфические для конкретного экземпляра диалога
@@ -303,7 +307,7 @@ private:
 
 	void ShowDialog(unsigned ID = (unsigned)-1);	// ID=-1 - отрисовать весь диалог
 
-	LONG_PTR CtlColorDlgItem(int ItemPos, int Type, int Focus, int Default, DWORD Flags);
+	DWORD CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem);
 	/*
 		$ 28.07.2000 SVS
 		+ Изменяет фокус ввода между двумя элементами.

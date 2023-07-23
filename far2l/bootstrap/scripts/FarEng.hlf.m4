@@ -3571,8 +3571,7 @@ characters, delimited with commas. Allowed column types are:
     If the column types description contains more than one file name column,
 the file panel will be displayed in multicolumn form.
 
-    File attributes have the following indications:
-
+    Windows file attributes have the following indications:
        #R#         - Read only
        #S#         - System
        #H#         - Hidden
@@ -3584,6 +3583,22 @@ the file panel will be displayed in multicolumn form.
        #I#         - Not content indexed
        #O#         - Offline
        #V#         - Virtual
+
+    Unix file types:
+       #B#         - Broken
+       #d#         - Directory
+       #c#         - Character device
+       #b#         - Block device
+       #p#         - FIFO (named Pipe)
+       #s#         - Socket
+       #l#         - Symbolic Link
+       #-#         - Regular file
+    Unix file permissions (in each triad for owner, group, other users):
+       #r# or #-#    - readable or not
+       #w# or #-#    - writable or not
+       #x# or #-#    - executable or not
+       #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
+       #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
     The attributes are displayed in the following order - RSHALCTIOV. The
 "Sparse" attribute applies only to files and is shown instead of 'L'. The

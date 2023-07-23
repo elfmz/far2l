@@ -26,7 +26,7 @@
       #endif
     #endif
   #elif defined(__GNUC__)
-    #if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4)
+    #if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ > 8)
       #define USE_INTEL_AES
       #ifndef __AES__
         #define ATTRIB_AES __attribute__((__target__("aes")))

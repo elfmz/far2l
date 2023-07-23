@@ -19,6 +19,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
 	bool _ext_clipboard;
+	bool _norgb;
 	const char *_nodetect = "";
 	bool _far2l_tty = false;
 	bool _osc52clip_set = false;
@@ -144,7 +145,7 @@ protected:
 	DWORD QueryControlKeys();
 
 public:
-	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

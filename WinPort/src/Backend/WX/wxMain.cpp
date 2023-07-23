@@ -102,6 +102,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		return false;
 	}
 
+	g_wx_norgb = a->norgb;
 	g_winport_con_out = a->winport_con_out;
 	g_winport_con_in = a->winport_con_in;
 
@@ -619,7 +620,7 @@ bool WinPortPanel::OnConsoleSetFKeyTitles(const char **titles)
 
 BYTE WinPortPanel::OnConsoleGetColorPalette()
 {
-	return 24;
+	return g_wx_norgb ? 4 : 24;
 }
 
 void WinPortPanel::OnTouchbarKey(bool alternate, int index)

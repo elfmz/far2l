@@ -27,13 +27,33 @@ set(SOURCES
     src/pcolorer2/tools.cpp
 )
 
-add_library(colorer MODULE ${SOURCES})
 
-FIND_PACKAGE(Spdlog)
-if(NOT Spdlog_FOUND)
-    message(STATUS "${ColorRed}Building Colorer without logging as SpdLog library is not found${ColorNormal}")
-    add_definitions(-DNOSPDLOG)
+if (USESPDLOG)
+    FIND_PACKAGE(Spdlog REQUIRED)
+    set (SPDLOG_DEFINES
+        USESPDLOG
+        SPDLOG_DISABLE_TID_CACHING
+        SPDLOG_NO_THREAD_ID
+        SPDLOG_NO_TLS
+    )
+
+    if (NOT EXISTS "${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled")
+        if (fmt_FOUND)
+            set (SPDLOG_DEFINES
+                ${SPDLOG_DEFINES}
+                SPDLOG_FMT_EXTERNAL=ON
+            )
+            message("SPDLOG: using with SPDLOG_FMT_EXTERNAL cuz FMT installed but ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled is missing")
+        else()
+            message("SPDLOG: using without forced SPDLOG_FMT_EXTERNAL cuz FMT NOT installed")
+        endif()
+    else()
+        message("SPDLOG: using without forced SPDLOG_FMT_EXTERNAL cuz ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled exists")
+    endif()
 endif()
+
+
+add_library(colorer MODULE ${SOURCES})
 
 FIND_PACKAGE(XercesC REQUIRED)
 
@@ -55,17 +75,13 @@ else()
     set(fmt_LIBRARY_OPTIONAL "")
 endif()
 
-if(Spdlog_FOUND)
-target_include_directories(colorer
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
-    PUBLIC ${SPDLOG_INCLUDE_DIR}
-    PUBLIC ${XERCESC_INCLUDE_DIR}
-    )
-else()
 target_include_directories(colorer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
     PUBLIC ${XERCESC_INCLUDE_DIR}
     )
+
+if(USESPDLOG)
+    target_include_directories(colorer PUBLIC ${SPDLOG_INCLUDE_DIR})
 endif()
 
 target_link_libraries(colorer
@@ -76,37 +92,13 @@ target_link_libraries(colorer
     far2l
     )
 
-if(Spdlog_FOUND)
-  set (SPDLOG_DEFINES
-      SPDLOG_DISABLE_TID_CACHING
-      SPDLOG_NO_THREAD_ID
-      SPDLOG_NO_TLS
-  )
+target_compile_definitions(colorer PUBLIC
+    _UNICODE
+    UNICODE
+    __unix__
+    ${SPDLOG_DEFINES}
+)
 
-  if (NOT EXISTS "${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled")
-    if (fmt_FOUND)
-      set (SPDLOG_DEFINES
-          ${SPDLOG_DEFINES}
-          SPDLOG_FMT_EXTERNAL=ON
-      )
-      message("Forcing SPDLOG_FMT_EXTERNAL cuz FMT installed and missing ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled")
-    else()
-      message("NOT forcing SPDLOG_FMT_EXTERNAL cuz FMT NOT installed")
-    endif()
-  endif()
-  target_compile_definitions(colorer PUBLIC
-      _UNICODE
-      UNICODE
-      __unix__
-      ${SPDLOG_DEFINES}
-  )
-else()
-  target_compile_definitions(colorer PUBLIC
-      _UNICODE
-      UNICODE
-      __unix__
-  )
-endif()
 
 target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
 target_include_directories(colorer PRIVATE src/pcolorer2)

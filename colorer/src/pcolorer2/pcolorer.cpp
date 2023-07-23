@@ -9,7 +9,7 @@
 #include"FarEditorSet.h"
 #include <utils.h>
 
-#ifndef NOSPDLOG
+#ifdef USESPDLOG
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
 
@@ -71,7 +71,7 @@ SHAREDSYMBOL void PluginModuleOpen(const char *path)
       int pos = module.lastIndexOf('/');
       pos = module.lastIndexOf('/',pos);
       PluginPath=new StringBuffer(SString(module, 0, pos));
-#ifndef NOSPDLOG
+#ifdef USESPDLOG
       logger = spdlog::stderr_logger_mt("far2l-colorer");
 #else
       DummyLogger logger;

@@ -5,7 +5,7 @@
 typedef unsigned char byte;
 
 #include <memory>
-#ifndef NOSPDLOG
+#ifdef USESPDLOG
 #include <spdlog/spdlog.h>
 #endif
 #include <colorer/common/Features.h>
@@ -16,7 +16,7 @@ typedef unsigned char byte;
 typedef std::unique_ptr<String> UString;
 typedef std::unique_ptr<SString> USString;
 
-#ifndef NOSPDLOG
+#ifdef USESPDLOG
 extern std::shared_ptr<spdlog::logger> logger;
 #else
 class DummyLogger {

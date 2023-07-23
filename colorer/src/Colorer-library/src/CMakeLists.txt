@@ -174,6 +174,11 @@ endif ()
 add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
 
 FIND_PACKAGE(Spdlog REQUIRED)
+if(NOT Spdlog_FOUND)
+    message(STATUS "${ColorRed}Building Colorer without logging as SpdLog library is not found${ColorNormal}")
+    add_compile_definitions(NOSPDLOG)
+endif()
+
 FIND_PACKAGE(XercesC REQUIRED)
 
 

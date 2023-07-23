@@ -29,7 +29,12 @@ set(SOURCES
 
 add_library(colorer MODULE ${SOURCES})
 
-FIND_PACKAGE(Spdlog REQUIRED)
+FIND_PACKAGE(Spdlog)
+if(NOT Spdlog_FOUND)
+    message(STATUS "${ColorRed}Building Colorer without logging as SpdLog library is not found${ColorNormal}")
+    add_compile_definitions(NOSPDLOG)
+endif()
+
 FIND_PACKAGE(XercesC REQUIRED)
 
 # sometimes libstd requires linking to libfmt, sometimes not

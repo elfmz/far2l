@@ -1,4 +1,5 @@
 #include <colorer/parsers/KeywordList.h>
+#include <stdlib.h>
 
 KeywordList::KeywordList()
 {

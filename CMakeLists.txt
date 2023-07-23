@@ -92,8 +92,8 @@ if (NOT DEFINED UNRAR)
     set(UNRAR "bundled")
 endif()
 
-if (NOT DEFINED SPDLOG)
-    set(SPDLOG "NO")
+if (NOT DEFINED USESPDLOG)
+    set(USESPDLOG "NO")
 endif()
 
 # EACP disabled by default for now as FAR's GetCodePageInfo rejects all multibyte charsets due to BUGBUG.

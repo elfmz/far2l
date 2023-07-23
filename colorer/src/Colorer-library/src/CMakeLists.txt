@@ -173,44 +173,27 @@ endif ()
 
 add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
 
-FIND_PACKAGE(Spdlog)
-if(NOT Spdlog_FOUND)
-    message(STATUS "${ColorRed}Building Colorer without logging as SpdLog library is not found${ColorNormal}")
-    add_definitions(-DNOSPDLOG)
-endif()
-
 FIND_PACKAGE(XercesC REQUIRED)
 
-if(Spdlog_FOUND)
-  target_include_directories(colorer_lib
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${SPDLOG_INCLUDE_DIR}
-    PUBLIC ${XERCESC_INCLUDE_DIR}
-    )
-else()
-  target_include_directories(colorer_lib
+target_include_directories(colorer_lib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${XERCESC_INCLUDE_DIR}
-    )
+)
+
+target_compile_definitions(colorer_lib PRIVATE
+    ${COLORER_DEF}
+    ${SPDLOG_DEFINES}
+    __unix__
+)
+
+if(USESPDLOG)
+    target_include_directories(colorer_lib PUBLIC ${SPDLOG_INCLUDE_DIR})
 endif()
 
 target_link_libraries(colorer_lib
     PUBLIC ${XERCESC_LIBRARIES}
     ${THREAD_LIBS}
-    )
-
-if(Spdlog_FOUND)
-  target_compile_definitions(colorer_lib PRIVATE
-    ${SPDLOG_DEFINES}
-    ${COLORER_DEF}
-    __unix__
-   )
-else()
-  target_compile_definitions(colorer_lib PRIVATE
-    ${COLORER_DEF}
-    __unix__
-   )
-endif()
+)
 
 #set_target_properties(colorer_lib PROPERTIES
 #    CXX_STANDARD 17

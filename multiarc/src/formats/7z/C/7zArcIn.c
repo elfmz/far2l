@@ -1723,6 +1723,9 @@ SRes SzArEx_Extract(
 
 size_t SzArEx_GetFileNameUtf16(const CSzArEx *p, size_t fileIndex, UInt16 *dest)
 {
+  if (!p->FileNameOffsets)
+    return 0;
+
   size_t offs = p->FileNameOffsets[fileIndex];
   size_t len = p->FileNameOffsets[fileIndex + 1] - offs;
   if (dest != 0)

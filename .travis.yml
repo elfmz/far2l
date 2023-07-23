@@ -18,7 +18,6 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libxerces-c-dev
-            - libspdlog-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -44,7 +43,6 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libxerces-c-dev
-            - libspdlog-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -71,7 +69,6 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libxerces-c-dev
-            - libspdlog-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -98,7 +95,6 @@ matrix:
             - cmake
             - libwxgtk3.0-dev
             - libxerces-c-dev
-            - libspdlog-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev

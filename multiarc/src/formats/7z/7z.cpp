@@ -51,6 +51,23 @@ static ISzAlloc g_alloc_imp = { SzAlloc, SzFree };
 
 #define SzArEx_GetFilePackedSize(p, i) ((p)->db.PackPositions ? (p)->db.PackPositions[(i) + 1] - (p)->db.PackPositions[i] : 0)
 
+std::string MakeDefault7ZName(const char *path)
+{
+  const char *name_begin = strrchr(path, '/');
+  if (name_begin)
+    ++name_begin;
+  else
+    name_begin = path;
+  const char *name_end = strrchr(name_begin, '.');
+  std::string out;
+  if (name_end)
+    out.assign(name_begin, name_end - name_begin);
+  else
+    out.assign(name_begin);
+  return out;
+}
+
+
 class Traverser
 {
   CSzArEx _db;
@@ -63,12 +80,15 @@ class Traverser
   size_t _temp_size;
   unsigned int _index;
   bool _opened, _valid;
+  std::string _default_name;
 
 public:
   Traverser(const char *path) : _temp(nullptr), _temp_size(0), _index(0), _opened(false), _valid(false)
   {
     if (InFile_Open(&_file_stream.file, path))
       return;
+
+    _default_name = MakeDefault7ZName(path);
     _opened = true;
 
     _alloc_imp.Alloc = SzAlloc;
@@ -123,25 +143,28 @@ public:
 
     unsigned is_dir = SzArEx_IsDir(&_db, _index);
     size_t len = SzArEx_GetFileNameUtf16(&_db, _index, NULL);
-    if (len > _temp_size)
+    if (len > 0)
     {
-      SzFree(NULL, _temp);
-      _temp_size = len + 16;
-      _temp = (UInt16 *)SzAlloc(NULL, _temp_size * sizeof(_temp[0]));
-      if (!_temp) {
-        _temp_size = 0;
-        return GETARC_READERROR;
+      if (len > _temp_size)
+      {
+        SzFree(NULL, _temp);
+        _temp_size = len + 16;
+        _temp = (UInt16 *)SzAlloc(NULL, _temp_size * sizeof(_temp[0]));
+        if (!_temp) {
+          _temp_size = 0;
+          return GETARC_READERROR;
+        }
       }
+      SzArEx_GetFileNameUtf16(&_db, _index, _temp);
+      _tmp_str.clear();
+      _tmp_str.reserve(len);
+      for (size_t i = 0; i < len; ++i) {
+        _tmp_str+= (wchar_t)(uint16_t)_temp[i];
+      }
+      StrWide2MB(_tmp_str, Info->PathName);
     }
-
-    SzArEx_GetFileNameUtf16(&_db, _index, _temp);
-    _tmp_str.clear();
-    _tmp_str.reserve(len);
-    for (size_t i = 0; i < len; ++i) {
-      _tmp_str+= (wchar_t)(uint16_t)_temp[i];
-    }
-    const std::string &name = StrWide2MB(_tmp_str);
-
+    else
+      Info->PathName = _default_name;
 
     DWORD attribs = SzBitWithVals_Check(&_db.Attribs, _index) ? _db.Attribs.Vals[_index] : 0;
     DWORD crc32 = SzBitWithVals_Check(&_db.CRCs, _index) ? _db.CRCs.Vals[_index] : 0;
@@ -159,7 +182,6 @@ public:
     ++_index;
 
     attribs&=~ (FILE_ATTRIBUTE_BROKEN | FILE_ATTRIBUTE_EXECUTABLE);
-    Info->PathName = name;
     Info->dwFileAttributes = attribs;
     Info->dwUnixMode = is_dir ? 0755 : 0644;
     Info->nFileSize = file_size;
@@ -274,3 +296,4 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
   }
   return(FALSE);
 }
+

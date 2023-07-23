@@ -24,14 +24,16 @@ template <class CHAR_T>
 {
 	DWORD rv = 0;
 	switch (unix_mode & S_IFMT) {
-		case S_IFCHR: rv = FILE_ATTRIBUTE_DEVICE; break;
 		case S_IFDIR: rv = FILE_ATTRIBUTE_DIRECTORY; break;
 		case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
 #ifndef _WIN32
 		case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
-		case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE; break;
+		case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE_SOCK; break;
 #endif
-		default: rv = FILE_ATTRIBUTE_DEVICE;
+		case S_IFCHR: rv = FILE_ATTRIBUTE_DEVICE_CHAR; break;
+		case S_IFBLK: rv = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
+		case S_IFIFO: rv = FILE_ATTRIBUTE_DEVICE_FIFO; break;
+		default: rv = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
 	}
 
 	if (*name == '.')

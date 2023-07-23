@@ -348,6 +348,11 @@ enum FarMessagesProc
 	DM_GETCOLOR,
 	DM_SETCOLOR,
 
+	DM_SETREADONLY,
+
+	DM_GETTRUECOLOR,	// Param1 - Item ID, Param2 - DialogItemTrueColors *
+	DM_SETTRUECOLOR,	// Param1 - Item ID, Param2 - const DialogItemTrueColors *
+
 
 	DN_FIRST=0x1000,
 	DN_BTNCLICK,
@@ -1348,6 +1353,28 @@ struct FarSetColors
 	LPBYTE Colors;
 };
 
+struct FarTrueColor
+{
+	unsigned char R;
+	unsigned char G;
+	unsigned char B;
+	unsigned char Flags; // bit one - 'active' flag, others - ignored and must be set to zero
+};
+
+struct FarTrueColorForeAndBack
+{
+	struct FarTrueColor Fore;
+	struct FarTrueColor Back;
+};
+
+struct DialogItemTrueColors
+{
+	struct FarTrueColorForeAndBack Normal;
+	struct FarTrueColorForeAndBack Hilighted;
+	struct FarTrueColorForeAndBack Frame;
+	struct FarTrueColorForeAndBack Reserved;
+};
+
 enum WINDOWINFO_TYPE
 {
 #ifdef FAR_USE_INTERNALS
@@ -1765,19 +1792,10 @@ struct EditorColor
 	int Color;
 };
 
-struct FarTrueColor
-{
-	unsigned char R;
-	unsigned char G;
-	unsigned char B;
-	unsigned char Flags; // bit one - 'active' flag, others - ignored and must be set to zero
-};
-
 struct EditorTrueColor
 {
 	struct EditorColor Base;
-	struct FarTrueColor TrueFore;
-	struct FarTrueColor TrueBack;
+	struct FarTrueColorForeAndBack TrueColor;
 };
 
 struct EditorSaveFile

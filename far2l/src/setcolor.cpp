@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
+#include <wchar.h>
 
 #include "setcolor.hpp"
 #include "keys.hpp"
@@ -462,8 +463,70 @@ void GetColor(int PaletteIndex)
 	}
 }
 
+//////////////////////////////////////
+static wchar_t ColorDialogForeRGB[16], ColorDialogBackRGB[16];
+
+static void UpdateRGBFromDialog(HANDLE hDlg)
+{
+	SendDlgMessage(hDlg, DM_GETTEXTPTR, 36, (LONG_PTR)ColorDialogForeRGB);
+	SendDlgMessage(hDlg, DM_GETTEXTPTR, 38, (LONG_PTR)ColorDialogBackRGB);
+}
+
+static DWORD ReverseColorBytes(DWORD Color)
+{
+	return (Color & 0x00ff00) | ((Color >> 16) & 0xff) | ((Color & 0xff) << 16);
+}
+
+static DWORD ColorDialogForeRGBValue()
+{
+	return ReverseColorBytes(((DWORD)wcstoul(ColorDialogForeRGB, nullptr, 16)));
+}
+
+static DWORD ColorDialogBackRGBValue()
+{
+	return (ReverseColorBytes((DWORD)wcstoul(ColorDialogBackRGB, nullptr, 16)));
+}
+
+static DWORD64 ColorDialogForeRGBMask()
+{
+	return DWORD64(ColorDialogForeRGBValue()) << 16;
+}
+
+static DWORD64 ColorDialogBackRGBMask()
+{
+	return DWORD64(ColorDialogBackRGBValue()) << 40;
+}
+
+static void GetColorDlgProc_EnsureColorsAreInverted(SHORT x, SHORT y)
+{
+	CHAR_INFO ci{};
+	SMALL_RECT Rect = {x, y, x, y};
+	WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
+	if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
+		return;	// this cell is already tweaked during prev paint
+
+	DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
+
+	InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
+
+	InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
+
+	if (ci.Attributes & FOREGROUND_TRUECOLOR) {
+		SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+	}
+
+	if (ci.Attributes & BACKGROUND_TRUECOLOR) {
+		SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
+	}
+
+	DWORD NumberOfAttrsWritten{};
+	WINPORT(FillConsoleOutputAttribute) (0, InvColors, 1, COORD{x, y}, &NumberOfAttrsWritten);
+}
+
 static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 {
+	UpdateRGBFromDialog(hDlg);
+
 	// Trick to fix #1392:
 	// For foreground-colored boxes invert Fg&Bg colors and add COMMON_LVB_REVERSE_VIDEO attribute
 	// this will put real colors on them if mapping of colors is different for Fg and Bg indexes
@@ -473,57 +536,48 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 
 	SMALL_RECT DlgRect{};
 	SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&DlgRect);
+	SMALL_RECT ItemRect{};
 
 	for (int ID = 2; ID <= 17; ++ID) {
-		SMALL_RECT ItemRect{};
 		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect)) {
 			ItemRect.Left+= DlgRect.Left;
 			ItemRect.Right+= DlgRect.Left;
 			ItemRect.Top+= DlgRect.Top;
 			ItemRect.Bottom+= DlgRect.Top;
-
-			CHAR_INFO ci{};
-			SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
-			WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
-			if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
-				continue;	// this cell is already tweaked during prev paint
-
-			DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
-
-			InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
-
-			InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
-
-			if (ci.Attributes & FOREGROUND_TRUECOLOR) {
-				SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+			for (auto x = ItemRect.Left; x <= ItemRect.Right; ++x) {
+				for (auto y = ItemRect.Top; y <= ItemRect.Top; ++y) {
+					GetColorDlgProc_EnsureColorsAreInverted(x, y);
+				}
 			}
-
-			if (ci.Attributes & BACKGROUND_TRUECOLOR) {
-				SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
-			}
-
-			DWORD NumberOfAttrsWritten{};
-			WINPORT(FillConsoleOutputAttribute)
-			(0, InvColors, ItemRect.Right - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top},
-					&NumberOfAttrsWritten);
 		}
 	}
+}
+
+static LONG_PTR GetColorDlgProc_CtlColorDlgItem(HANDLE hDlg, int ID, LONG_PTR DefaultColor, bool UseTrueColor)
+{
+	if (UseTrueColor) {
+		DialogItemTrueColors ditc{};
+		FarTrueColorFromRGB(ditc.Normal.Fore, ColorDialogForeRGBValue());
+		FarTrueColorFromRGB(ditc.Normal.Back, ColorDialogBackRGBValue());
+		SendDlgMessage(hDlg, DM_SETTRUECOLOR, ID, (LONG_PTR)&ditc);
+	}
+
+	int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+	return (DefaultColor & 0xFFFFFF00U) | ((*CurColor) & 0xFF);
 }
 
 static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch (Msg) {
 		case DN_CTLCOLORDLGITEM:
-
-			if (Param1 >= 37 && Param1 <= 39) {
-				int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-				return (Param2 & 0xFFFFFF00U) | ((*CurColor) & 0xFF);
+			if (Param1 >= 41 && Param1 <= 43) {
+				return GetColorDlgProc_CtlColorDlgItem(hDlg, Param1, Param2, Param1 >= 42);
 			}
-
 			break;
+
 		case DN_BTNCLICK:
 
-			if (Param1 >= 2 && Param1 <= 34) {
+			if ( (Param1 >= 2 && Param1 <= 17) || (Param1 >= 19 && Param1 <= 34)) {
 				int NewColor;
 				int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 				FarDialogItem *DlgItem =
@@ -535,7 +589,7 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 				{
 					NewColor&= ~0x0F;
 					NewColor|= (DlgItem->Flags & B_MASK) >> 4;
-				} else if (Param1 >= 19)	// Back
+				} else // if (Param1 >= 19) // Back 
 				{
 					NewColor&= ~0xF0;
 					NewColor|= DlgItem->Flags & B_MASK;
@@ -547,69 +601,91 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 				free(DlgItem);
 				return TRUE;
 			}
-
 			break;
 
 		case DN_DRAWDIALOGDONE:
 			GetColorDlgProc_OnDrawn(hDlg);
+			break;
+
+		case DN_EDITCHANGE:
+			if (Param1 == 36 || Param1 == 38) {
+				GetColorDlgProc_OnDrawn(hDlg);
+			}
+			break;
+
+		case DN_CLOSE:
+			UpdateRGBFromDialog(hDlg);
 			break;
 	}
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-int GetColorDialog(WORD &Color, bool bCentered, bool bAddTransparent)
+static bool GetColorDialogInner(bool bForFileFilter, DWORD64 &Color, bool bCentered)
 {
+	const wchar_t *HexMask = L"HHHHHH";
+	swprintf(ColorDialogForeRGB, ARRAYSIZE(ColorDialogForeRGB), L"%06X", ReverseColorBytes((Color >> 16) & 0xffffff));
+	swprintf(ColorDialogBackRGB, ARRAYSIZE(ColorDialogBackRGB), L"%06X", ReverseColorBytes((Color >> 40) & 0xffffff));
+
 	DialogDataEx ColorDlgData[] = {
-		/*   0 */ {DI_DOUBLEBOX, 3, 1, 35, 13, {}, 0, Msg::SetColorTitle},
-		/*   1 */ {DI_SINGLEBOX, 5, 2, 18, 7, {}, 0, Msg::SetColorForeground},
-		/*   2 */ {DI_RADIOBUTTON, 6, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   3 */ {DI_RADIOBUTTON, 6, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   4 */ {DI_RADIOBUTTON, 6, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   5 */ {DI_RADIOBUTTON, 6, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   6 */ {DI_RADIOBUTTON, 9, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   7 */ {DI_RADIOBUTTON, 9, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   8 */ {DI_RADIOBUTTON, 9, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   9 */ {DI_RADIOBUTTON, 9, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  10 */ {DI_RADIOBUTTON, 12, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  11 */ {DI_RADIOBUTTON, 12, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  12 */ {DI_RADIOBUTTON, 12, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  13 */ {DI_RADIOBUTTON, 12, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  14 */ {DI_RADIOBUTTON, 15, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  15 */ {DI_RADIOBUTTON, 15, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  16 */ {DI_RADIOBUTTON, 15, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  17 */ {DI_RADIOBUTTON, 15, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  18 */ {DI_SINGLEBOX, 20, 2, 33, 7, {}, 0, Msg::SetColorBackground},
-		/*  19 */ {DI_RADIOBUTTON, 21, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  20 */ {DI_RADIOBUTTON, 21, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  21 */ {DI_RADIOBUTTON, 21, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  22 */ {DI_RADIOBUTTON, 21, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  23 */ {DI_RADIOBUTTON, 24, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  24 */ {DI_RADIOBUTTON, 24, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  25 */ {DI_RADIOBUTTON, 24, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  26 */ {DI_RADIOBUTTON, 24, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  27 */ {DI_RADIOBUTTON, 27, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  28 */ {DI_RADIOBUTTON, 27, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  29 */ {DI_RADIOBUTTON, 27, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  30 */ {DI_RADIOBUTTON, 27, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  31 */ {DI_RADIOBUTTON, 30, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  32 */ {DI_RADIOBUTTON, 30, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  33 */ {DI_RADIOBUTTON, 30, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  34 */ {DI_RADIOBUTTON, 30, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  35 */ {DI_CHECKBOX, 5, 10, 0, 10, {}, 0, Msg::SetColorForeTransparent},
-		/*  36 */ {DI_CHECKBOX, 22, 10, 0, 10, {}, 0, Msg::SetColorBackTransparent},
-		/*  37 */ {DI_TEXT, 5, 8, 33, 8, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  38 */ {DI_TEXT, 5, 9, 33, 9, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  39 */ {DI_TEXT, 5, 10, 33, 10, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  40 */ {DI_TEXT, 0, 11, 0, 11, {}, DIF_SEPARATOR, L""},
-		/*  41 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
-		/*  42 */ {DI_BUTTON, 0, 12, 0, 12, {}, DIF_CENTERGROUP, Msg::SetColorCancel}
+		/*   0 */ {DI_DOUBLEBOX, 3, 1, 39, 14, {}, 0, Msg::SetColorTitle},
+
+		/*   1 */ {DI_SINGLEBOX, 5, 2, 20, 7, {}, 0, Msg::SetColorForeground},
+		/*   2 */ {DI_RADIOBUTTON, 7, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   3 */ {DI_RADIOBUTTON, 7, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   4 */ {DI_RADIOBUTTON, 7, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   5 */ {DI_RADIOBUTTON, 7, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   6 */ {DI_RADIOBUTTON, 10, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   7 */ {DI_RADIOBUTTON, 10, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   8 */ {DI_RADIOBUTTON, 10, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*   9 */ {DI_RADIOBUTTON, 10, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  10 */ {DI_RADIOBUTTON, 13, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  11 */ {DI_RADIOBUTTON, 13, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  12 */ {DI_RADIOBUTTON, 13, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  13 */ {DI_RADIOBUTTON, 13, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  14 */ {DI_RADIOBUTTON, 16, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  15 */ {DI_RADIOBUTTON, 16, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  16 */ {DI_RADIOBUTTON, 16, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  17 */ {DI_RADIOBUTTON, 16, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+
+		/*  18 */ {DI_SINGLEBOX, 22, 2, 37, 7, {}, 0, Msg::SetColorBackground},
+		/*  19 */ {DI_RADIOBUTTON, 24, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  20 */ {DI_RADIOBUTTON, 24, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  21 */ {DI_RADIOBUTTON, 24, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  22 */ {DI_RADIOBUTTON, 24, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  23 */ {DI_RADIOBUTTON, 27, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  24 */ {DI_RADIOBUTTON, 27, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  25 */ {DI_RADIOBUTTON, 27, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  26 */ {DI_RADIOBUTTON, 27, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  27 */ {DI_RADIOBUTTON, 30, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  28 */ {DI_RADIOBUTTON, 30, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  29 */ {DI_RADIOBUTTON, 30, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  30 */ {DI_RADIOBUTTON, 30, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  31 */ {DI_RADIOBUTTON, 33, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  32 */ {DI_RADIOBUTTON, 33, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  33 */ {DI_RADIOBUTTON, 33, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		/*  34 */ {DI_RADIOBUTTON, 33, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+
+		/*  35 */ {DI_TEXT,         7,   7,  11, 7,  {}, DIF_HIDDEN, L"RGB#:"},
+		/*  36 */ {DI_FIXEDIT,     13,   7,  18, 7,  {(DWORD_PTR)HexMask}, DIF_HIDDEN | DIF_MASKEDIT, ColorDialogForeRGB},
+		/*  37 */ {DI_TEXT,        24,   7,  28, 7,  {}, DIF_HIDDEN, L"RGB#:"},
+		/*  38 */ {DI_FIXEDIT,     30,   7,  35, 7,  {(DWORD_PTR)HexMask}, DIF_HIDDEN | DIF_MASKEDIT, ColorDialogBackRGB},
+
+		/*  39 */ {DI_CHECKBOX,  5, 9, 0, 9, {}, DIF_HIDDEN, Msg::SetColorForeTransparent},
+		/*  40 */ {DI_CHECKBOX, 22, 9, 0, 9, {}, DIF_HIDDEN, Msg::SetColorBackTransparent},
+
+		/*  41 */ {DI_TEXT,   5,   9, 37,  9, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  42 */ {DI_TEXT,   5,  10, 37, 10, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  43 */ {DI_TEXT,   5,  11, 37, 11, {}, DIF_SETCOLOR, Msg::SetColorSample},
+		/*  44 */ {DI_TEXT,   0,  12,  0, 12, {}, DIF_SEPARATOR, L""},
+		/*  45 */ {DI_BUTTON, 0,  13,  0, 13, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
+		/*  46 */ {DI_BUTTON, 0,  13,  0, 13, {}, DIF_CENTERGROUP, Msg::SetColorCancel},
 	};
 	MakeDialogItemsEx(ColorDlgData, ColorDlg);
 	int ExitCode;
 	WORD CurColor = Color;
 
-	for (size_t i = 2; i < 18; i++) {
+	for (size_t i = 2; i <= 17; i++) {
 		if (static_cast<WORD>((ColorDlg[i].Flags & B_MASK) >> 4) == (Color & F_MASK)) {
 			ColorDlg[i].Selected = 1;
 			ColorDlg[i].Focus = TRUE;
@@ -617,83 +693,77 @@ int GetColorDialog(WORD &Color, bool bCentered, bool bAddTransparent)
 		}
 	}
 
-	for (size_t i = 19; i < 35; i++) {
+	for (size_t i = 19; i <= 34; i++) {
 		if (static_cast<WORD>(ColorDlg[i].Flags & B_MASK) == (Color & B_MASK)) {
 			ColorDlg[i].Selected = 1;
 			break;
 		}
 	}
 
-	for (size_t i = 37; i < 40; i++) {
-		ColorDlg[i].Flags = (ColorDlg[i].Flags & ~DIF_COLORMASK) | Color;
+	for (size_t i = 41; i <= 43; i++) {
+		ColorDlg[i].Flags = (ColorDlg[i].Flags & ~DIF_COLORMASK) | (Color & 0xffff);
 	}
 
-	if (bAddTransparent) {
-		ColorDlg[0].Y2++;
-
-		for (size_t i = 37; i <= 42; i++) {
-			ColorDlg[i].Y1+= 3;
-			ColorDlg[i].Y2+= 3;
-		}
-
-		ColorDlg[0].X2+= 4;
+	if (bForFileFilter) {
 		ColorDlg[0].Y2+= 2;
-		ColorDlg[1].X2+= 2;
-		ColorDlg[1].Y2+= 2;
-		ColorDlg[18].X1+= 2;
-		ColorDlg[18].X2+= 4;
-		ColorDlg[18].Y2+= 2;
+		ColorDlg[1].Y2++;
+		ColorDlg[18].Y2++;
 
-		for (size_t i = 2; i <= 17; i++) {
-			ColorDlg[i].X1+= 1;
-			ColorDlg[i].Y1+= 1;
-			ColorDlg[i].Y2+= 1;
+		for (size_t i = 35; i <= 40; ++i) {
+			ColorDlg[i].Flags&= ~DIF_HIDDEN;
 		}
-
-		for (size_t i = 19; i <= 34; i++) {
-			ColorDlg[i].X1+= 3;
-			ColorDlg[i].Y1+= 1;
-			ColorDlg[i].Y2+= 1;
+		for (size_t i = 41; i <= 46; i++) {
+			ColorDlg[i].Y1+= 2;
+			ColorDlg[i].Y2+= 2;
 		}
-
-		for (size_t i = 37; i <= 39; i++) {
-			ColorDlg[i].X2+= 4;
-		}
-
-		ColorDlg[35].Selected = (Color & 0x0F00 ? 1 : 0);
-		ColorDlg[36].Selected = (Color & 0xF000 ? 1 : 0);
-	} else {
-		ColorDlg[35].Flags|= DIF_HIDDEN;
-		ColorDlg[36].Flags|= DIF_HIDDEN;
+		ColorDlg[39].Selected = (Color & 0x0F00 ? 1 : 0);
+		ColorDlg[40].Selected = (Color & 0xF000 ? 1 : 0);
 	}
 
 	{
 		Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&CurColor);
 
 		if (bCentered)
-			Dlg.SetPosition(-1, -1, 39 + (bAddTransparent ? 4 : 0), 15 + (bAddTransparent ? 3 : 0));
+			Dlg.SetPosition(-1, -1, 39 + 4, 15 + (bForFileFilter ? 3 : 2));
 		else
-			Dlg.SetPosition(37, 2, 75 + (bAddTransparent ? 4 : 0), 16 + (bAddTransparent ? 3 : 0));
+			Dlg.SetPosition(37, 2, 75 + 4, 16 + (bForFileFilter ? 3 : 2));
 
 		Dlg.Process();
 		ExitCode = Dlg.GetExitCode();
 	}
 
-	if (ExitCode == 41) {
-		Color = CurColor;
+	if (ExitCode == 45) {
+		Color = CurColor & 0xffff;
 
-		if (ColorDlg[35].Selected)
+		if (ColorDlg[39].Selected)
 			Color|= 0x0F00;
 		else
 			Color&= 0xF0FF;
 
-		if (ColorDlg[36].Selected)
+		if (ColorDlg[40].Selected)
 			Color|= 0xF000;
 		else
 			Color&= 0x0FFF;
 
-		return TRUE;
+		Color|= ColorDialogForeRGBMask();
+		Color|= ColorDialogBackRGBMask();
+
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
+
+bool GetColorDialogForFileFilter(DWORD64 &Color)
+{
+	return GetColorDialogInner(true, Color, true);
+}
+
+bool GetColorDialog(WORD &Color, bool bCentered)
+{
+	DWORD64 ColorRGB = Color;
+	bool out = GetColorDialogInner(false, ColorRGB, bCentered);
+	Color = ColorRGB & 0xffff;
+	return out;
+}
+

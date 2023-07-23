@@ -70,7 +70,7 @@ struct FileListItem
 
 	DWORD_PTR UserData{};
 
-	HighlightDataColor Colors{};	// 5 DWORDs
+	const HighlightDataColor *ColorsPtr = nullptr;
 
 	DWORD NumberOfLinks{};
 	DWORD UserFlags{};
@@ -221,7 +221,7 @@ private:
 	void ShowFileList(int Fast);
 	void ShowList(int ShowStatus, int StartColumn);
 	void SetShowColor(int Position, int ColorType = HIGHLIGHTCOLORTYPE_FILE);
-	int GetShowColor(int Position, int ColorType);
+	DWORD64 GetShowColor(int Position, int ColorType);
 	void ShowSelectedSize();
 	void ShowTotalSize(OpenPluginInfo &Info);
 	int ConvertName(const wchar_t *SrcName, FARString &strDest, int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr);

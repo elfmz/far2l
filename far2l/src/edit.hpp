@@ -66,10 +66,7 @@ struct ColorItem
 {
 	int StartPos;
 	int EndPos;
-	int Color;
-	FarTrueColor TrueFore;
-	FarTrueColor TrueBack;
-	bool TrueColorDefined;
+	DWORD64 Color;
 };
 
 enum SetCPFlags

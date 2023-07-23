@@ -626,11 +626,11 @@ int FarEditor::editorEvent(int event, void *param)
     bool vertCrossDone = false;
 
     if (drawSyntax){
-			for (; l1; l1 = l1->next){
-				if (l1->special){
-					continue;
-				}
-				if (l1->start == l1->end){
+            for (; l1; l1 = l1->next){
+                if (l1->special){
+                    continue;
+                }
+                if (l1->start == l1->end){
           continue;
         }
         if (l1->start > ei.LeftPos+ei.WindowSizeX){
@@ -1310,28 +1310,28 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
     ec.Base.StringNumber = lno;
     ec.Base.StartPos = s;
     ec.Base.EndPos = e-1;
-	if (col.fg || col.bk) {
-      ec.TrueFore.R = ((col.fg >> 16) & 0xFF);
-      ec.TrueFore.G = ((col.fg >> 8) & 0xFF);
-      ec.TrueFore.B = ((col.fg) & 0xFF);
-      ec.TrueFore.Flags = 1;
-      ec.TrueBack.R = ((col.bk >> 16) & 0xFF);
-      ec.TrueBack.G = ((col.bk >> 8) & 0xFF);
-      ec.TrueBack.B = ((col.bk) & 0xFF);
-      ec.TrueBack.Flags = 1;
+    if (col.fg || col.bk) {
+      ec.TrueColor.Fore.R = ((col.fg >> 16) & 0xFF);
+      ec.TrueColor.Fore.G = ((col.fg >> 8) & 0xFF);
+      ec.TrueColor.Fore.B = ((col.fg) & 0xFF);
+      ec.TrueColor.Fore.Flags = 1;
+      ec.TrueColor.Back.R = ((col.bk >> 16) & 0xFF);
+      ec.TrueColor.Back.G = ((col.bk >> 8) & 0xFF);
+      ec.TrueColor.Back.B = ((col.bk) & 0xFF);
+      ec.TrueColor.Back.Flags = 1;
 
-      if (ec.TrueFore.R > 0x10) ec.Base.Color|= FOREGROUND_RED;
-      if (ec.TrueFore.G > 0x10) ec.Base.Color|= FOREGROUND_GREEN;
-      if (ec.TrueFore.B > 0x10) ec.Base.Color|= FOREGROUND_BLUE;
+      if (ec.TrueColor.Fore.R > 0x10) ec.Base.Color|= FOREGROUND_RED;
+      if (ec.TrueColor.Fore.G > 0x10) ec.Base.Color|= FOREGROUND_GREEN;
+      if (ec.TrueColor.Fore.B > 0x10) ec.Base.Color|= FOREGROUND_BLUE;
 
-      if (ec.TrueBack.R > 0x10) ec.Base.Color|= BACKGROUND_RED;
-      if (ec.TrueBack.G > 0x10) ec.Base.Color|= BACKGROUND_GREEN;
-      if (ec.TrueBack.B > 0x10) ec.Base.Color|= BACKGROUND_BLUE;
+      if (ec.TrueColor.Back.R > 0x10) ec.Base.Color|= BACKGROUND_RED;
+      if (ec.TrueColor.Back.G > 0x10) ec.Base.Color|= BACKGROUND_GREEN;
+      if (ec.TrueColor.Back.B > 0x10) ec.Base.Color|= BACKGROUND_BLUE;
 
-      if (ec.TrueFore.R > 0x80 || ec.TrueFore.G > 0x80 || ec.TrueFore.B > 0x80) {
+      if (ec.TrueColor.Fore.R > 0x80 || ec.TrueColor.Fore.G > 0x80 || ec.TrueColor.Fore.B > 0x80) {
         ec.Base.Color = FOREGROUND_INTENSITY;
       }
-      if (ec.Base.Color == 0 || ec.TrueBack.R > 0x80 || ec.TrueBack.G > 0x80 || ec.TrueBack.B > 0x80) {
+      if (ec.Base.Color == 0 || ec.TrueColor.Back.R > 0x80 || ec.TrueColor.Back.G > 0x80 || ec.TrueColor.Back.B > 0x80) {
         ec.Base.Color = BACKGROUND_INTENSITY;
       }
       if (col.style & AI_STYLE_UNDERLINE) {
@@ -1340,7 +1340,7 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
       if (col.style & AI_STYLE_STRIKEOUT) {
         ec.Base.Color|= COMMON_LVB_STRIKEOUT;
       }
-	}
+    }
 
 #if 0
     CLR_TRACE("FarEditor", "line:%d, %d-%d, color:%x", lno, s, e, col);
@@ -1375,7 +1375,7 @@ void FarEditor::addAnnotation(int lno, int s, int e, AnnotationInfo &ai)
   ea.EndPos = e-1;
   memcpy(ea.annotation_raw, ai.raw, sizeof(ai.raw));
   info->EditorControl(ECTL_ADDANNOTATION, &ea);*/
-} 	
+}
 
 const wchar_t *FarEditor::GetMsg(int msg)
 {

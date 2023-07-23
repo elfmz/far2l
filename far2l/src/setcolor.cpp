@@ -472,19 +472,29 @@ static void UpdateRGBFromDialog(HANDLE hDlg)
 	SendDlgMessage(hDlg, DM_GETTEXTPTR, 38, (LONG_PTR)ColorDialogBackRGB);
 }
 
-static DWORD64 ReverseColorBytes(DWORD64 Color)
+static DWORD ReverseColorBytes(DWORD Color)
 {
 	return (Color & 0x00ff00) | ((Color >> 16) & 0xff) | ((Color & 0xff) << 16);
 }
 
+static DWORD ColorDialogForeRGBValue()
+{
+	return ReverseColorBytes(((DWORD)wcstoul(ColorDialogForeRGB, nullptr, 16)));
+}
+
+static DWORD ColorDialogBackRGBValue()
+{
+	return (ReverseColorBytes((DWORD)wcstoul(ColorDialogBackRGB, nullptr, 16)));
+}
+
 static DWORD64 ColorDialogForeRGBMask()
 {
-	return ReverseColorBytes(((DWORD64)wcstoul(ColorDialogForeRGB, nullptr, 16))) << 16;
+	return DWORD64(ColorDialogForeRGBValue()) << 16;
 }
 
 static DWORD64 ColorDialogBackRGBMask()
 {
-	return (ReverseColorBytes((DWORD64)wcstoul(ColorDialogBackRGB, nullptr, 16))) << 40;
+	return DWORD64(ColorDialogBackRGBValue()) << 40;
 }
 
 static void GetColorDlgProc_EnsureColorsAreInverted(SHORT x, SHORT y)
@@ -541,31 +551,19 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 			}
 		}
 	}
+}
 
-	for (int ID = 42; ID <= 43; ++ID) {
-		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect)) {
-			ItemRect.Left+= DlgRect.Left;
-			ItemRect.Right+= DlgRect.Left;
-			ItemRect.Top+= DlgRect.Top;
-			ItemRect.Bottom+= DlgRect.Top;
-
-			const DWORD64 ForeRGBMask = ColorDialogForeRGBMask();
-			const DWORD64 BackRGBMask = ColorDialogBackRGBMask();
-			CHAR_INFO ci{};
-			SMALL_RECT Rect = {ItemRect.Left, ItemRect.Top, ItemRect.Left, ItemRect.Top};
-			WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
-			ci.Attributes&= ~(0xffffffffffff0000 | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR);
-			if (ForeRGBMask) {
-				ci.Attributes|= FOREGROUND_TRUECOLOR | ForeRGBMask;
-			}
-			if (BackRGBMask) {
-				ci.Attributes|= BACKGROUND_TRUECOLOR | BackRGBMask;
-			}
-			DWORD NumberOfAttrsWritten{};
-			WINPORT(FillConsoleOutputAttribute) (0, ci.Attributes,
-				ItemRect.Right + 1 - ItemRect.Left, COORD{ItemRect.Left, ItemRect.Top}, &NumberOfAttrsWritten);
-		}
+static LONG_PTR GetColorDlgProc_CtlColorDlgItem(HANDLE hDlg, int ID, LONG_PTR DefaultColor, bool UseTrueColor)
+{
+	if (UseTrueColor) {
+		DialogItemTrueColors ditc{};
+		FarTrueColorFromRGB(ditc.Normal.Fore, ColorDialogForeRGBValue());
+		FarTrueColorFromRGB(ditc.Normal.Back, ColorDialogBackRGBValue());
+		SendDlgMessage(hDlg, DM_SETTRUECOLOR, ID, (LONG_PTR)&ditc);
 	}
+
+	int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+	return (DefaultColor & 0xFFFFFF00U) | ((*CurColor) & 0xFF);
 }
 
 static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
@@ -573,8 +571,7 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 	switch (Msg) {
 		case DN_CTLCOLORDLGITEM:
 			if (Param1 >= 41 && Param1 <= 43) {
-				int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-				return (Param2 & 0xFFFFFF00U) | ((*CurColor) & 0xFF);
+				return GetColorDlgProc_CtlColorDlgItem(hDlg, Param1, Param2, Param1 >= 42);
 			}
 			break;
 

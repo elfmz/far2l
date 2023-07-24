@@ -454,7 +454,8 @@ void InfoList::PrintInfo(const wchar_t *str)
 	if (WhereY() > Y2 - 1)
 		return;
 
-	int SaveColor = GetColor(), MaxLength = X2 - WhereX() - 2;
+	const auto SaveColor = GetColor();
+	int MaxLength = X2 - WhereX() - 2;
 
 	if (MaxLength < 0)
 		MaxLength = 0;

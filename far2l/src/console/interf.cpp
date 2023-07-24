@@ -786,7 +786,7 @@ void ClearScreen(int Color)
 	Console.SetTextAttributes(Color);
 }
 
-int GetColor()
+DWORD64 GetColor()
 {
 	return (CurColor);
 }

@@ -109,7 +109,7 @@ void ComposeAndSetColor(WORD BaseColor, const FarTrueColorForeAndBack *TFB, bool
 void SetRealColor(DWORD64 wAttributes, bool ApplyToConsole = false);
 DWORD64 GetRealColor();
 void ClearScreen(int Color);
-DWORD64 GetColor();
+int GetColor();
 
 void Box(int x1, int y1, int x2, int y2, int Color, int Type);
 void ScrollBar(int X1, int Y1, int Length, unsigned int Current, unsigned int Total);

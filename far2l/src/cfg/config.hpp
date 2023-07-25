@@ -611,6 +611,8 @@ struct Options
 
 	bool IsUserAdmin;
 	FARString strWindowTitle;
+
+	bool IsFirstStart;
 };
 
 extern Options Opt;

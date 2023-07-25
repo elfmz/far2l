@@ -7,7 +7,7 @@ use strict;
 my $major = shift;
 my $minor = shift;
 my $patch = shift;
-my $full_version_no_braces = "$major.$minor.$patch Linux x86_64";
+my $full_version = "$major.$minor.$patch Linux x86_64";
 
 # Получаем текущий год
 my $current_year = (localtime)[5] + 1900;
@@ -20,7 +20,7 @@ while (my $line = <STDIN>) {
         $first_line = 0;
         next if $line =~ /m4_include\(`farversion\.m4'\)m4_dnl/;
     }
-    $line =~ s/FULLVERSIONNOBRACES/$full_version_no_braces/g;
+    $line =~ s/FULLVERSIONNOBRACES/$full_version/g;
     $line =~ s/MAJOR/$major/g;
     $line =~ s/MINOR/$minor/g;
     $line =~ s/PATCH/$patch/g;

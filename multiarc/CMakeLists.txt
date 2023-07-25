@@ -148,12 +148,10 @@ elseif(UNRAR)
     )
 endif()
 
-if(PCRE_FOUND)
-    set(SOURCES
-        ${SOURCES}
-        src/formats/custom/custom.cpp
-    )
-endif()
+set(SOURCES
+    ${SOURCES}
+    src/formats/custom/custom.cpp
+)
 
 if(LibArchive_FOUND)
     set(SOURCES
@@ -203,6 +201,8 @@ if(PCRE_FOUND)
     target_compile_definitions(multiarc PRIVATE -DHAVE_PCRE)
     target_link_libraries(multiarc ${PCRE_LDFLAGS} ${PCRE_LIBRARIES})
     target_include_directories(multiarc PRIVATE ${PCRE_INCLUDE_DIRS})
+else()
+    add_compile_definitions(NOPCRE)
 endif()
 
 if(LibArchive_FOUND)

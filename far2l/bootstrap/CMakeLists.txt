@@ -16,10 +16,6 @@ endif ()
 
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
-set(DEPENDENCIES
-    "${SCRIPTS}/tools.m4"
-    "${SCRIPTS}/farlang.templ.m4"
-)
 
 set(HLFFILES
     "${BOOTSTRAP}/FarEng.hlf"
@@ -35,7 +31,7 @@ set(LNGFILES
 )
 
 add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
-    COMMAND ${M4} "${SCRIPTS}/farlang.templ.m4" > "${BOOTSTRAP}/farlang.templ"
+    COMMAND cat "${SCRIPTS}/farlang.templ.m4" | perl -I. "${SCRIPTS}/far2l_m4.pl" "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/farlang.templ"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating language template
@@ -55,25 +51,26 @@ add_custom_command(TARGET bootstrap PRE_BUILD
 )
 
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarEng.hlf.m4" | perl ${SCRIPTS}/far2l_m4.pl "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/FarEng.hlf"
+
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help eng
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarRus.hlf.m4" | perl ${SCRIPTS}/far2l_m4.pl "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/FarRus.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help rus
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarHun.hlf.m4" | perl ${SCRIPTS}/far2l_m4.pl "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/FarHun.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help hun
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarUkr.hlf.m4" | perl ${SCRIPTS}/far2l_m4.pl "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/FarUkr.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help ukr

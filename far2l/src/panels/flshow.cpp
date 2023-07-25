@@ -917,7 +917,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							if (ListData[ListPos]->ColorsPtr->MarkChar && Opt.Highlight && Width > 1) {
 								Width--;
 								OutCharacter[0] = (wchar_t)(ListData[ListPos]->ColorsPtr->MarkChar & 0xffff);
-								int OldColor = GetColor();
+								const auto OldColor = GetColor();
 
 								if (!ShowStatus)
 									SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKCHAR);

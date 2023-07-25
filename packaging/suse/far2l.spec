@@ -21,7 +21,7 @@ Distribution: 	openSUSE Tumbleweed
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  pkgconfig
-BuildRequires:  gawk make
+BuildRequires:  make
 %if %{defined suse_version}
 BuildRequires: 	wxGTK3-3_2-devel 
 BuildRequires: 	libxerces-c-devel libneon-devel libopenssl-devel libuchardet-devel

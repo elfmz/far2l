@@ -170,7 +170,7 @@ and in #terminal settings must be allowed OSC 52#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
 
 
- #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for pure terminal version FAR2L TTY#
+ #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
     - Internal terminal in FAR2L-GUI (Linux, macOS, *BSD),
 see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
 (keys and clipboard by FAR2L TTY extensions support)

@@ -24,7 +24,7 @@ using namespace oldfar;
 #include "fmt.hpp"
 #include <errno.h>
 
-#ifndef NOPCRE
+#ifdef HAVE_PCRE
 #include "pcre++.h"
 using namespace PCRE;
 #endif
@@ -70,7 +70,7 @@ static void FillFormat(const KeyFileValues *Values);
 static void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft);
 static int StringToInt(const char *str);
 static int64_t StringToInt64(const char *str);
-#ifndef NOPCRE
+#ifdef HAVE_PCRE
 static void ParseListingItemRegExp(Match match, struct ArcItemInfo *Info, SYSTEMTIME &stModification,
 		SYSTEMTIME &stCreation, SYSTEMTIME &stAccess);
 #endif
@@ -529,7 +529,7 @@ int WINAPI _export CUSTOM_GetArcItem(struct ArcItemInfo *Info)
 	WINPORT(GetSystemTime)(&syst);
 
 	while (GetString(Str, sizeof(Str))) {
-#ifndef NOPCRE
+#ifdef HAVE_PCRE
 		RegExp re;
 
 		if (!StartText.empty()) {
@@ -814,7 +814,7 @@ static int StringToIntHex(const char *str)
 	return i;
 }
 
-#ifndef NOPCRE
+#ifdef HAVE_PCRE
 static void ParseListingItemRegExp(Match match, struct ArcItemInfo *Info, SYSTEMTIME &stModification,
 		SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {

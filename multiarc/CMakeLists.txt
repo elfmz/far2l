@@ -201,8 +201,6 @@ if(PCRE_FOUND)
     target_compile_definitions(multiarc PRIVATE -DHAVE_PCRE)
     target_link_libraries(multiarc ${PCRE_LDFLAGS} ${PCRE_LIBRARIES})
     target_include_directories(multiarc PRIVATE ${PCRE_INCLUDE_DIRS})
-else()
-    add_compile_definitions(NOPCRE)
 endif()
 
 if(LibArchive_FOUND)

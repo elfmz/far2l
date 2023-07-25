@@ -266,7 +266,7 @@ public:
 	{true,  NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
 
-	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
+	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 1}, // by unxed: enable by default
 	{true,  NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
 
 	{false, NSecInterface, "ShowTimeoutDelFiles", &Opt.ShowTimeoutDelFiles, 50},

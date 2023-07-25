@@ -17,7 +17,6 @@ endif ()
 set(BOOTSTRAP "${PROJECT_BINARY_DIR}/bootstrap")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 set(DEPENDENCIES
-    "${SCRIPTS}/tools.m4"
     "${SCRIPTS}/farlang.templ.m4"
 )
 
@@ -55,25 +54,25 @@ add_custom_command(TARGET bootstrap PRE_BUILD
 )
 
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarEng.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarEng.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help eng
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarRus.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarRus.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help rus
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarHun.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarHun.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help hun
 )
 add_custom_command(TARGET bootstrap
-    COMMAND ${GAWK} -f "${SCRIPTS}/mkhlf.awk" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
+    COMMAND perl -I. "${SCRIPTS}/mkhlf.pl" "${SCRIPTS}/FarUkr.hlf.m4" | ${M4} > "${BOOTSTRAP}/FarUkr.hlf"
     WORKING_DIRECTORY "${SCRIPTS}"
     DEPENDS ${DEPENDENCIES}
     COMMENT generating help ukr

@@ -1,3 +1,5 @@
+m4_define(`get_date', `m4_esyscmd(date "+%d/%m/%Y")')dnl
+m4_define(`DATE', get_date)dnl
 m4_define(BLD_YEAR,m4_substr(DATE,6,4))m4_dnl
 m4_define(BLD_MONTH,m4_substr(DATE,3,2))m4_dnl
 m4_define(BLD_DAY,m4_substr(DATE,0,2))m4_dnl

@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SafeMMap.hpp"
 #include "ConfigRW.hpp"
 #include "ConfigSaveLoad.hpp"
+#include "help.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -313,6 +314,8 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			}
 
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
+			if( Opt.IsFirstStart )
+				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 			FrameManager->EnterMainLoop();
 		}
 
@@ -787,6 +790,11 @@ int _cdecl main(int argc, char *argv[])
 	setlocale(LC_ALL, "");	// otherwise non-latin keys missing with XIM input method
 
 	SetupFarPath(argc, argv);
+
+	{	// if CONFIG_INI is not present => first start & opt for show Help "FAR2L features - Getting Started"
+		struct stat stat_buf;
+		Opt.IsFirstStart = stat( InMyConfig(CONFIG_INI).c_str(), &stat_buf ) == -1;
+	}
 
 	SafeMMap::SignalHandlerRegistrar smm_shr;
 

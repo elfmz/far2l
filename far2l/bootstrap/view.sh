@@ -702,7 +702,7 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c -- "$1" | awk '{print $1}' )
+	FILESIZE=$( wc -c -- "$1" | perl -lane 'print $F[0]' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024
@@ -791,7 +791,7 @@ if [[ "$FILE" == *": "* ]]; then
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c -- "$1" | awk '{print $1}' )
+	FILESIZE=$( wc -c -- "$1" | perl -lane 'print $F[0]' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024

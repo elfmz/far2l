@@ -25,28 +25,27 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 ## Contributing, Hacking
 #### Required dependencies
 
-* gawk
-* m4
-* libwxgtk3.0-gtk3-dev (in new distributives - libwxgtk3.2-dev, in old distributives - libwxgtk3.0-dev)  (needed for GUI backend, not needed with -DUSEWX=no)
+* libwxgtk3.0-gtk3-dev (or libwxgtk3.2-dev in newer distributions, or libwxgtk3.0-dev in older ones, optional - needed for GUI backend, not needed with -DUSEWX=no)
 * libx11-dev (optional - needed for X11 extension that provides better UX for TTY backend wherever X11 is available)
 * libxi-dev (optional - needed for X11/Xi extension that provides best UX for TTY backend wherever X11 Xi extension is available)
-* libxerces-c-dev
-* libuchardet-dev
-* libssh-dev (needed for NetRocks/SFTP)
-* libssl-dev (needed for NetRocks/FTPS)
-* libsmbclient-dev (needed for NetRocks/SMB)
-* libnfs-dev (needed for NetRocks/NFS)
-* libneon27-dev (or later, needed for NetRocks/WebDAV)
-* libarchive-dev (needed for better archives support in multiarc)
-* libunrar-dev (optionally needed for RAR archives support in multiarc - see UNRAR command line option)
-* libpcre3-dev (or in older distributives - libpcre2-dev) (needed for custom archives support in multiarc)
+* libxerces-c-dev (optional - needed for Colorer plugin, not needed with -DCOLORER=no)
+* libuchardet-dev (optional - needed for auto charset detection, not needed with -DUSEUCD=no)
+* libssh-dev (optional - needed for NetRocks/SFTP)
+* libssl-dev (optional - needed for NetRocks/FTPS)
+* libsmbclient-dev (optional - needed for NetRocks/SMB)
+* libnfs-dev (optional - needed for NetRocks/NFS)
+* libneon27-dev (or later, optional - needed for NetRocks/WebDAV)
+* libarchive-dev (optional - needed for better archives support in multiarc)
+* libunrar-dev (optional - needed for RAR archives support in multiarc, see UNRAR command line option)
+* libpcre3-dev (or libpcre2-dev in older distributions, optional - needed for custom archives support in multiarc)
 * cmake ( >= 3.2.2 )
+* pkg-config
 * g++
 * git (needed for downloading source code)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install gawk m4 libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake g++ git
+apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
 On Debian unstable/sid:
@@ -64,7 +63,7 @@ debuild
 # cd .. and install your self built far2l*.deb
 ```
 
-In older distributives: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
+In older distributions: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
  * Clone current master `git clone https://github.com/elfmz/far2l`
@@ -145,7 +144,7 @@ cd far2l
 ```
  * Install needed dependencies with MacPorts:
 ``` sh
-sudo port install cmake gawk pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt uchardet neon
+sudo port install cmake pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt uchardet neon
 export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
 ```
  * OR if you prefer to use brew packages, then:

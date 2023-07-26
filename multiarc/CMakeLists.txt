@@ -148,12 +148,10 @@ elseif(UNRAR)
     )
 endif()
 
-if(PCRE_FOUND)
-    set(SOURCES
-        ${SOURCES}
-        src/formats/custom/custom.cpp
-    )
-endif()
+set(SOURCES
+    ${SOURCES}
+    src/formats/custom/custom.cpp
+)
 
 if(LibArchive_FOUND)
     set(SOURCES

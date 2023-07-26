@@ -127,7 +127,6 @@ $ # FAR: что это такое#
 
 @Far2lGettingStarted
 $ #Особенности FAR2L - начало работы#
-
     FAR2L - Linux порт FAR Manager v2 (см.: ~Что такое FAR2L~@About@)
     FAR2L официальный сайт: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 

@@ -24,8 +24,10 @@ using namespace oldfar;
 #include "fmt.hpp"
 #include <errno.h>
 
+#ifdef HAVE_PCRE
 #include "pcre++.h"
 using namespace PCRE;
+#endif
 
 #if defined(__BORLANDC__)
 #pragma option -a1
@@ -68,8 +70,10 @@ static void FillFormat(const KeyFileValues *Values);
 static void MakeFiletime(SYSTEMTIME st, SYSTEMTIME syst, LPFILETIME pft);
 static int StringToInt(const char *str);
 static int64_t StringToInt64(const char *str);
+#ifdef HAVE_PCRE
 static void ParseListingItemRegExp(Match match, struct ArcItemInfo *Info, SYSTEMTIME &stModification,
 		SYSTEMTIME &stCreation, SYSTEMTIME &stAccess);
+#endif
 static void ParseListingItemPlain(const char *CurFormat, const char *CurStr, struct ArcItemInfo *Info,
 		SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess);
 
@@ -525,6 +529,7 @@ int WINAPI _export CUSTOM_GetArcItem(struct ArcItemInfo *Info)
 	WINPORT(GetSystemTime)(&syst);
 
 	while (GetString(Str, sizeof(Str))) {
+#ifdef HAVE_PCRE
 		RegExp re;
 
 		if (!StartText.empty()) {
@@ -571,6 +576,7 @@ int WINAPI _export CUSTOM_GetArcItem(struct ArcItemInfo *Info)
 			if (Match match = re.match(Str))
 				ParseListingItemRegExp(match, Info, stModification, stCreation, stAccess);
 		} else
+#endif
 			ParseListingItemPlain(CurFormatNode->Str(), Str, Info, stModification, stCreation, stAccess);
 
 		CurFormatNode = CurFormatNode->Next();
@@ -808,6 +814,7 @@ static int StringToIntHex(const char *str)
 	return i;
 }
 
+#ifdef HAVE_PCRE
 static void ParseListingItemRegExp(Match match, struct ArcItemInfo *Info, SYSTEMTIME &stModification,
 		SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)
 {
@@ -903,6 +910,7 @@ static void ParseListingItemRegExp(Match match, struct ArcItemInfo *Info, SYSTEM
 
 	Info->CRC32 = StringToIntHex(match["CRC"]);
 }
+#endif
 
 static void ParseListingItemPlain(const char *CurFormat, const char *CurStr, struct ArcItemInfo *Info,
 		SYSTEMTIME &stModification, SYSTEMTIME &stCreation, SYSTEMTIME &stAccess)

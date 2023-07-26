@@ -1,5 +1,4 @@
 brew "cmake"
-brew "gawk"
 brew "libarchive"
 brew "libnfs"
 brew "libssh"

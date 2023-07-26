@@ -7,6 +7,8 @@ m4_include(`farversion.m4')m4_dnl
 $^#File and archive manager#
 `$^#'FULLVERSIONNOBRACES`#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
+   ~FAR2L features - Getting Started~@Far2lGettingStarted@
+
    ~Help file index~@Index@
    ~How to use help~@Help@
 
@@ -117,7 +119,116 @@ transforms your commands into the corresponding external archiver calls.
   - Original FAR Manager official site
     ~http://www.farmanager.com~@http://www.farmanager.com@
 
+  ~FAR2L features - Getting Started~@Far2lGettingStarted@
 
+@Far2lGettingStarted
+$ #FAR2L features - Getting Started#
+
+    FAR2L is Linux port FAR Manager v2 (see ~About FAR2L~@About@)
+    FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
+
+
+ #UI Backends#
+    FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
+        - #GUI#: uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
+        - #TTYXi#: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of keyboard modifiers), almost perfect UX;
+        - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
+    If you have FAR2L-GUI installed, than when you run FAR2L it will try to use GUI mode.
+    To force run in terminal mode use #--tty# in command line: #far2l --tty# or #far2l --tty --ee# (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
+
+
+ #Keyboards shortcuts exclusively capturing by desktop environment#
+    Some keyboards shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively uses in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboards shortcuts in the environment settings.
+    Terminal emulators also often do not pass some of the key combinations to applications, or do not distinguish between pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
+
+
+ #FAR2L in Wayland#
+    For adequate working in Wayland it helps to start FAR2L in mode xWayland by set an environment variable #GDK_BACKEND=x11#:
+    - running from console: #GDK_BACKEND=x11 far2l#;
+    - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
+
+
+ #Paste feature in terminals#
+    The keyboard shortcuts #terminal paste# (terminal simulates keyboard input) and #FAR2L paste# (FAR2L itself does paste) are different. Note that paste keyboard shortcut in different terminals is different (and may overlap the standard FAR2L's paste #Shift-Ins# or #Ctrl-V#).
+    In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's paste uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal paste uses #system clipboard#.
+
+
+ #Changing font for FAR2L GUI#
+    - Menu(#F9#)->Options->Interface settings->[ Change font ]
+
+
+ #Access to remote FAR2L#
+    When the session is terminated, remote FAR2L does not die, but it remains to wait for reconnection (the behavior changes by ~command line switches~@CmdLine@ #--immortal# and #--mortal#), and during the next time FAR2L runs, it will find the previous instance and try to reconnect.
+    To transfer extended keyboard shortcuts and the clipboard to the remote FAR2L, you must initiate a connection from clients that can do this (see below).
+
+
+ #Full-function work with the system clipboard in a plain terminal version FAR2L TTY#
+    To interact with the system clipboard, you must not forget to enable #OSC 52# in both the #FAR2L settings#
+(option OSC 52 show in Menu(#F9#)->Options->Interface settings only when all other options for clipboard access are not available;
+you can run #far2l --tty --nodetect# to not use others options),
+and in #terminal settings must be allowed OSC 52#
+(by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
+
+
+ #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
+    - Internal terminal in FAR2L-GUI (Linux, macOS, *BSD),
+see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
+(keys and clipboard by FAR2L TTY extensions support)
+
+    - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
+(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
+
+    - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
+(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
+[in macOS in wezterm the kitty keyboard protocol support not working]
+
+    - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
+(keys by iTerm2 "raw keyboard" protocol, for clipboard need turn on OSC 52)
+
+    - Windows Terminal
+(keys by win32-input-mode, for clipboard need turn on OSC 52, has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+
+    - putty4far2l (Windows ssh-клиент): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+(keys and clipboard by FAR2L TTY extensions support)
+
+    - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
+(keys and clipboard by FAR2L TTY extensions support)
+
+    - putty-nd (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
+(keys and clipboard by FAR2L TTY extensions support)
+
+
+ #Location of FAR2L settings and history#
+    - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l#
+    - command line switch #-u# (or #$FARSETTINGS# environment variable) allows to specify arbitrary settings location:
+        #-u <path>#: in #path/.config/# (if path or $FARSETTINGS is full path)
+        #-u <identity>#: in #~~/.config/far2l/custom/identity/# or in #$XDG_CONFIG_HOME/far2l/custom/identity/#
+    - some settings files (may be missing):
+        - #settings/config.ini# - general config
+        - #settings/colors.ini# - ~files highlighting and sort groups~@Highlight@
+        - #settings/key_macros.ini# - ~keyboard macro commands~@KeyMacro@
+        - #settings/user_menu.ini# - ~user menu~@UserMenu@ (the format is different from windows versions FarMenu.ini)
+        - #settings/associations.ini# - ~file associations~@FileAssoc@
+        - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9
+        - #favorites# - additional items in ~location menu~@DriveDlg@ by Alt-F1/F2
+        - #cp# - forced setting of OEM and ANSI encodings (see ~ANSI and OEM codepage setting~@CodePagesSet@)
+        - #plugins# - plugins
+            - #plugins/state.ini# - plugins cache
+            - #plugins/NetRocks/sites.cfg# - NetRocks sites
+            - #plugins/multiarc/custom.ini# - customization by extend command line archivers
+        - #clipboard# - bash-script (must be chmod +x) for workaround to access to clipboard if other FAR2L tools do not work
+
+
+    See also:
+    ~About FAR2L~@About@
+    ~License~@License@
+
+    ~Help file index~@Index@
+    ~How to use help~@Help@
+
+    ~UI backends~@UIBackends@
+    ~Command line switches~@CmdLine@ or #far2l --help#
+    ~ANSI and OEM codepage setting~@CodePagesSet@
 
 @License
 $ # FAR2L: License#

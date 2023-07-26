@@ -81,11 +81,11 @@ ArcPlugins::ArcPlugins(const char *ModuleName)
 			LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
 #endif
 
-#ifdef HAVE_PCRE
+//#ifdef HAVE_PCRE
 	AddPluginItem(CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule,
 			CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo,
 			CUSTOM_GetSFXPos);
-#endif
+//#endif
 
 #ifdef HAVE_LIBARCHIVE
 	// must be last cuz recognizes essentially most of above formats, but not handles them full-featurable

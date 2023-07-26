@@ -123,7 +123,6 @@ transforms your commands into the corresponding external archiver calls.
 
 @Far2lGettingStarted
 $ #FAR2L features - Getting Started#
-
     FAR2L is Linux port FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
@@ -133,24 +132,24 @@ $ #FAR2L features - Getting Started#
         - #GUI#: uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
         - #TTYXi#: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of keyboard modifiers), almost perfect UX;
         - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
-    If you have FAR2L-GUI installed, than when you run FAR2L it will try to use GUI mode.
+    If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
     To force run in terminal mode use #--tty# in command line: #far2l --tty# or #far2l --tty --ee# (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
- #Keyboards shortcuts exclusively capturing by desktop environment#
-    Some keyboards shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively uses in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboards shortcuts in the environment settings.
-    Terminal emulators also often do not pass some of the key combinations to applications, or do not distinguish between pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
+ #Keyboard shortcuts are exclusively captured by desktop environment#
+    Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings.
+    Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
 
 
  #FAR2L in Wayland#
-    For adequate working in Wayland it helps to start FAR2L in mode xWayland by set an environment variable #GDK_BACKEND=x11#:
+    For adequate work in Wayland it helps to start FAR2L in mode xWayland by setting the environment variable #GDK_BACKEND=x11#:
     - running from console: #GDK_BACKEND=x11 far2l#;
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
 
 
- #Paste feature in terminals#
-    The keyboard shortcuts #terminal paste# (terminal simulates keyboard input) and #FAR2L paste# (FAR2L itself does paste) are different. Note that paste keyboard shortcut in different terminals is different (and may overlap the standard FAR2L's paste #Shift-Ins# or #Ctrl-V#).
-    In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's paste uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal paste uses #system clipboard#.
+ #Pasting feature in terminals#
+    The keyboard shortcut of the #terminal pasting# (terminal simulates keyboard input) and #FAR2L pasting# (FAR2L itself does paste) are different. Note that pasting keyboard shortcut in different terminals is various (and may overlap the standard FAR2L's pasting #Shift-Ins# or #Ctrl-V#).
+    In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
 
 
  #Changing font for FAR2L GUI#
@@ -158,15 +157,15 @@ $ #FAR2L features - Getting Started#
 
 
  #Access to remote FAR2L#
-    When the session is terminated, remote FAR2L does not die, but it remains to wait for reconnection (the behavior changes by ~command line switches~@CmdLine@ #--immortal# and #--mortal#), and during the next time FAR2L runs, it will find the previous instance and try to reconnect.
-    To transfer extended keyboard shortcuts and the clipboard to the remote FAR2L, you must initiate a connection from clients that can do this (see below).
+    When the session is terminated, remote FAR2L does not die, but it remains to wait for reconnection (the behavior changed by ~command line switches~@CmdLine@ #--immortal# and #--mortal#), and the next time FAR2L runs, it will find the previous instance and try to reconnect.
+    To transfer extended keyboard shortcuts and the clipboard to the remote FAR2L, you must initiate the connection from clients that can do this (see list below).
 
 
  #Full-function work with the system clipboard in a plain terminal version FAR2L TTY#
     To interact with the system clipboard, you must not forget to enable #OSC 52# in both the #FAR2L settings#
-(option OSC 52 show in Menu(#F9#)->Options->Interface settings only when all other options for clipboard access are not available;
-you can run #far2l --tty --nodetect# to not use others options),
-and in #terminal settings must be allowed OSC 52#
+(option OSC 52 in Menu(#F9#)->Options->Interface settings are only shown when all other options for clipboard access are unavailable;
+you can run #far2l --tty --nodetect# to force not use others options),
+and in #terminal settings OSC 52 must be allowed#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
 
 
@@ -188,13 +187,13 @@ see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command 
     - Windows Terminal
 (keys by win32-input-mode, for clipboard need turn on OSC 52, has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-клиент): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+    - putty4far2l (Windows ssh-client): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
 (keys and clipboard by FAR2L TTY extensions support)
 
-    - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
+    - cyd01's KiTTY (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
 (keys and clipboard by FAR2L TTY extensions support)
 
-    - putty-nd (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
+    - putty-nd (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (keys and clipboard by FAR2L TTY extensions support)
 
 

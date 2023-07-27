@@ -939,9 +939,6 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr, str
 	} OptionalPart = OP_OUTSIDE;
 	int IsChapter = 0;
 
-	fprintf(stderr, "CurFormat: %s\n", CurFormat);
-	fprintf(stderr, "CurStr: %s\n", CurStr);
-
 	for (; *CurStr && *CurFormat; CurFormat++, CurStr++) {
 		if (OptionalPart == OP_SKIP) {
 			if (*CurFormat == ')')

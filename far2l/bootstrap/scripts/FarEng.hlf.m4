@@ -198,7 +198,7 @@ see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command 
 
 
  #Location of FAR2L settings and history#
-    - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l#
+    - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l/#
     - command line switch #-u# (or #$FARSETTINGS# environment variable) allows to specify arbitrary settings location:
         #-u <path>#: in #path/.config/# (if path or $FARSETTINGS is full path)
         #-u <identity>#: in #~~/.config/far2l/custom/identity/# or in #$XDG_CONFIG_HOME/far2l/custom/identity/#

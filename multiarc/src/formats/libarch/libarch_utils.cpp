@@ -109,9 +109,10 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *
 		// already tried this: LibArchCall(archive_read_support_format_raw, _arc);
 		r = LibArchCall(archive_read_open1, _arc);
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
+			const std::string &error_str = StrPrintf(
+				"error %d (%s) opening archive '%s'", r, archive_error_string(_arc), name);
 			EnsureClosed();
-			throw std::runtime_error(StrPrintf("error %d (%s) opening archive '%s'",
-				r, archive_error_string(_arc), name));
+			throw std::runtime_error(error_str);
 		}
 
 		_ae = NextHeader();

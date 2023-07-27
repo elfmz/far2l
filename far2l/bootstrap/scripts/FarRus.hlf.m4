@@ -202,7 +202,7 @@ $ #Особенности FAR2L - начало работы#
 
 
  #Расположение персональных настроек FAR2L и истории#
-    - по умолчанию FAR2L работает с настройками хранящимися в #~~/.config/far2l# или в #$XDG_CONFIG_HOME/far2l#
+    - по умолчанию FAR2L работает с настройками хранящимися в #~~/.config/far2l/# или в #$XDG_CONFIG_HOME/far2l/#
     - при запуске ключ #-u# (или переменная окружения #$FARSETTINGS#) позволяет указать путь к произвольному расположению настроек:
         #-u <path># - в #path/.config/# (если path или $FARSETTINGS является полным путем)
         #-u <identity># - в #~~/.config/far2l/custom/identity/# или в #$XDG_CONFIG_HOME/far2l/custom/identity/#

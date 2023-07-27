@@ -575,9 +575,25 @@ int WINAPI _export CUSTOM_GetArcItem(struct ArcItemInfo *Info)
 		if (re.compile(CurFormatNode->Str())) {
 			if (Match match = re.match(Str))
 				ParseListingItemRegExp(match, Info, stModification, stCreation, stAccess);
-		} else
+		} else {
 #endif
+			if (!StartText.empty()) {
+				if (StartText == Str) {
+					StartText.clear();
+				}
+				continue;
+			}
+
+			if (!EndText.empty()) {
+				if (EndText == Str) {
+					break;
+				}
+			}
+
 			ParseListingItemPlain(CurFormatNode->Str(), Str, Info, stModification, stCreation, stAccess);
+#ifdef HAVE_PCRE
+		}
+#endif
 
 		CurFormatNode = CurFormatNode->Next();
 		if (!CurFormatNode || !CurFormatNode->Next()) {
@@ -922,6 +938,9 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr, str
 		OP_SKIP
 	} OptionalPart = OP_OUTSIDE;
 	int IsChapter = 0;
+
+	fprintf(stderr, "CurFormat: %s\n", CurFormat);
+	fprintf(stderr, "CurStr: %s\n", CurStr);
 
 	for (; *CurStr && *CurFormat; CurFormat++, CurStr++) {
 		if (OptionalPart == OP_SKIP) {

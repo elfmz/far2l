@@ -93,6 +93,7 @@ súgóoldalakon, #Shift-F1#-re pedig a súgó tartalma jelenik meg.
 amit az #F5# #(Nagyít)# funkcióbillentyűvel maximalizálhatunk. Az #F5# újbóli
 lenyomása az előző méretre állítja vissza a súgó ablakát.
 
+   #Ctrl-Alt-Shift#   Temporarily hide help window (as long as these keys are held down).
 
 @About
 $ # FAR: a programról#
@@ -2313,7 +2314,7 @@ segítségével)
     #F7#                 ~Keresés~@ViewerSearch@
     #Shift-F7, Szóköz#   Tovább keres
     #Alt-F7#             Tovább keres, de visszafelé
-    #F8#                 ~ANSI/OEM~@CodePagesSet@/UTF8 kódlap váltó
+    #F8#                 UTF8/~ANSI/OEM~@CodePagesSet@ kódlap váltó
     #Shift-F8#           Kódlap kiválasztása
     #Alt-F8#             ~Ugrás~@ViewerGotoPos@ a jelenlegi
 szövegpozícióból másik pozícióba
@@ -2451,7 +2452,7 @@ szerkesztőben jelenleg is nyitva van,
 "~a szerkesztett fájl újbóli megnyitása~@EditorReload@" ablakban választhatunk
 a lehetőségek közül.
 
-    3. ^<wrap>Az új fájl létrehozásakor alapértelmezés szerint a Windows
+    3. ^<wrap>Az új fájl létrehozásakor alapértelmezés szerint a UTF-8
 kódlapját kapja, de ez az opció a ~szerkesztő beállítások~@EditorSettings@
 menüben kikapcsolható.
 
@@ -2528,7 +2529,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #Ctrl-F7#                 ~Keresés és csere~@EditorSearch@
    #Shift-F7#                Keresés és csere folytatása
    #Alt-F7#                  Keresés és csere folytatása, visszafelé
-   #F8#                      ~ANSI/OEM~@CodePagesSet@/UTF8 kódlap váltó
+   #F8#                      UTF8/~ANSI/OEM~@CodePagesSet@ kódlap váltó
    #Shift-F8#                Kódlap kiválasztása
    #Alt-F8#                  ~Ugrás~@EditorGotoPos@ megadott sorra és oszlopra
    #Alt-F9#                  A FAR konzolablak méretének átváltása

@@ -99,6 +99,7 @@ displayed. In such case #cursor keys# can be used to scroll text.
 pressing #F5# "#Zoom#", pressing #F5# again will restore the window to the
 previous size.
 
+   #Ctrl-Alt-Shift#   Temporarily hide help window (as long as these keys are held down).
 
 @About
 $ # FAR2L: about#
@@ -2714,7 +2715,7 @@ $ #Viewer: control keys#
     #F7#                 ~Search~@ViewerSearch@
     #Shift-F7, Space#    Continue search
     #Alt-F7#             Continue search in "reverse" mode
-    #F8#                 Toggle ~ANSI/OEM~@CodePagesSet@/UTF8 code page
+    #F8#                 Toggle UTF8/~ANSI/OEM~@CodePagesSet@ code page
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
@@ -2843,7 +2844,7 @@ will be shown.
     2. ^<wrap>When trying to reload a file already opened in the editor the
 "~reloading a file~@EditorReload@" warning message will be shown.
 
-    3. ^<wrap>The WIN encoding is used by default when creating new files, this
+    3. ^<wrap>The UTF-8 encoding is used by default when creating new files, this
 behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
 
   #Control keys#
@@ -2912,7 +2913,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-F7#                 ~Replace~@EditorSearch@
    #Shift-F7#                Continue search/replace
    #Alt-F7#                  Continue search/replace in "reverse" mode
-   #F8#                      Toggle ~ANSI/OEM~@CodePagesSet@/UTF8 code page
+   #F8#                      Toggle UTF8/~ANSI/OEM~@CodePagesSet@ code page
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window

@@ -2892,10 +2892,10 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-D#                  Delete block
    #Ctrl-P#                  ^<wrap>Copy block to current cursor position (in persistent blocks mode only)
    #Ctrl-M#                  ^<wrap>Move block to current cursor position (in persistent blocks mode only)
-   #Alt-U#                   Shift block left by 1 space
-   #Alt-I#                   Shift block right by 1 space
-   #Shift-Tab#               Shift block left by Tab (or by indent size if expand tabs is configured)
-   #Tab#                     Shift block right by Tab (or by indent size if expand tabs is configured)
+   #Alt-U#                   Shift block left
+   #Alt-I#                   Shift block right
+   #Shift-Tab#               Shift block left by Tab or by indent size (processed by SimpleIndent plugin)
+   #Tab#                     Shift block right by Tab or by indent size (processed by SimpleIndent plugin)
 
   Other operations
 

@@ -66,15 +66,15 @@ PROCESSEDITORINPUT
 		INITSIZE(ei);
 		Info.EditorControl(ECTL_GETINFO, &ei);
 
+		if (ei.BlockType != BTYPE_STREAM )		// working only if not vertical block selection
+			return 0;
+
 		{
 			struct EditorGetString egs;
 			INITSIZE(egs);
-			egs.StringNumber = -1;
+			egs.StringNumber = ei.BlockStartLine;
 			Info.EditorControl(ECTL_GETSTRING, &egs);
-
-			if (ei.BlockType != BTYPE_STREAM ||		// Ignore block selection
-					egs.SelStart != 0 ||			// Only activate if selection starts on a line start
-					ei.CurPos != 0)					// Only activate if the cursor is at the line start
+			if (egs.SelEnd != -1)	// working only if 1st line of selection up to line end
 				return 0;
 		}
 
@@ -104,6 +104,18 @@ PROCESSEDITORINPUT
 			Info.EditorControl(ECTL_GETSTRING, &egs);
 			if (egs.SelStart == -1 || egs.SelStart == egs.SelEnd)
 				break;		// Stop when reaching the end of the text selection
+
+			if (egs.SelEnd != -1)	// if selection in line not up to end we force selection block up to line end
+			{						//   because if selection not up to end the tab replace selected text in last line
+				struct EditorSelect es;
+				INITSIZE(es);
+				es.BlockType = ei.BlockType;
+				es.BlockStartLine = ei.BlockStartLine;
+				es.BlockStartPos = 0;
+				es.BlockWidth = 0;
+				es.BlockHeight = line - ei.BlockStartLine + 1;
+				Info.EditorControl(ECTL_SELECT, &es);
+			}
 
 			if (!rev)		// Indent
 			{

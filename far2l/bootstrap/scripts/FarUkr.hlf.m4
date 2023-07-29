@@ -2823,8 +2823,9 @@ $ #Редактор#
  #Ctrl-M# ^<wrap>Перенести блок на поточну позицію курсора (тільки в режимі постійних блоків, Буфер Обміну не змінюється)
  #Alt-U# Зсунути блок ліворуч
  #Alt-I# Зсунути блок праворуч
- #Shift-Tab# Shift block left by Tab (or indent size if expand tabs is configured)
- #Tab#       Shift block right by Tab (or indent size if expand tabs is configured)
+ #Shift-Tab# Shift block left by Tab or by indent size (processed by SimpleIndent plugin)
+ #Tab#       Shift block right by Tab or by indent size (processed by SimpleIndent plugin)
+
 
  Інші операції
 

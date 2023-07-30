@@ -43,8 +43,6 @@
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
 	WCHAR uc = 0);
 
-int FarDispatchAnsiApplicationProtocolCommand(const char *str);
-
 #if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 {

@@ -142,8 +142,8 @@ $ #FAR2L features - Getting Started#
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
 
 
- #FAR2L in Wayland (fix clipboard and/or some keys processing in FAR2L-GUI/TTYX)#
-    For adequate work in Wayland it helps to start FAR2L in mode xWayland by setting the environment variable #GDK_BACKEND=x11#, because FAR2L (GUI and TTYX modes) uses X11 features to work with the clipboard and get extended keyboard shortcuts that may not be fully compatible in plain Wayland:
+ #FAR2L within Wayland or within WSL+WSLg (fix clipboard and/or some keys processing in FAR2L-GUI/TTYX)#
+    For adequate work in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#, because FAR2L (GUI and TTYX modes) uses X11 features to work with the clipboard and get extended keyboard shortcuts that may not be fully compatible in plain Wayland:
     - running from console: #GDK_BACKEND=x11 far2l#;
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
 

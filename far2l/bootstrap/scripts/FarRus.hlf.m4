@@ -180,19 +180,19 @@ $ #Особенности FAR2L - начало работы#
 (клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
+(клавиши через kovidgoyal's kitty keyboard protocol; для взаимодействия с клипбордом включить OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
-[в macOS в wezterm поддержка режима kitty не работает]
+(клавиши в Linux, FreeBSD через kovidgoyal's kitty keyboard protocol; клавиши в Windows через win32-input-mode, который включен по умолчанию; для взаимодействия с клипбордом включить OSC 52)
+[в macOS и в Windows в wezterm поддержка режима kitty не работает]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(клавиши через iTerm2 "raw keyboard" protocol, для взаимодействия с клипбордом включить OSC 52)
+(клавиши через iTerm2 "raw keyboard" protocol; для взаимодействия с клипбордом включить OSC 52)
 
     - Windows Terminal [в win11 стоит из коробки, в win10 надо ставить]
-(клавиши через win32-input-mode, для взаимодействия с клипбордом включить OSC 52, присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52; присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-клиент): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+    - putty4far2l (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@

@@ -176,19 +176,19 @@ see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command 
 (keys and clipboard by FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
+(keys by kovidgoyal's kitty keyboard protocol; for clipboard need turn on OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
-[in macOS in wezterm the kitty keyboard protocol support not working]
+(keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; keys in Windows by win32-input-mode which enable by default; for clipboard need turn on OSC 52)
+[in macOS & in Windows in wezterm the kitty keyboard protocol support not working]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(keys by iTerm2 "raw keyboard" protocol, for clipboard need turn on OSC 52)
+(keys by iTerm2 "raw keyboard" protocol; for clipboard need turn on OSC 52)
 
     - Windows Terminal
-(keys by win32-input-mode, for clipboard need turn on OSC 52, has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-client): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+    - putty4far2l (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (keys and clipboard by FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@

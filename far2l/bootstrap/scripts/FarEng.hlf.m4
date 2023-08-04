@@ -148,13 +148,13 @@ $ #FAR2L features - Getting Started#
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
 
 
+ #Changing font for FAR2L-GUI#
+    - Menu(#F9#)->Options->Interface settings->[ Change font ]
+
+
  #Pasting feature in terminals#
     The keyboard shortcut of the #terminal pasting# (terminal simulates keyboard input) and #FAR2L pasting# (FAR2L itself does paste) are different. Note that pasting keyboard shortcut in different terminals is various (and may overlap the standard FAR2L's pasting #Shift-Ins# or #Ctrl-V#).
     In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
-
-
- #Changing font for FAR2L-GUI#
-    - Menu(#F9#)->Options->Interface settings->[ Change font ]
 
 
  #Access to remote FAR2L#
@@ -162,11 +162,19 @@ $ #FAR2L features - Getting Started#
     To transfer extended keyboard shortcuts and the clipboard to the remote FAR2L, you must initiate the connection from clients that can do this (see list below).
 
 
+ #Special options for configuring FAR2L running in terminal emulators#
+    - Menu(#F9#)->Options->Interface settings->#Use OSC52 to set clipboard data#
+(shown in the menu only if FAR2L run in TTY/TTYX mode and all other options for clipboard access are unavailable).
+You can run #far2l --tty --nodetect# to force not use others clipboard options.
+    - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
+(shown in the menu only if FAR2L run in TTY/TTYX mode) allows far2l to adjust terminal palette colors.
+If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
+
+
  #Full-function work with the system clipboard in a plain terminal version FAR2L TTY#
     To interact with the system clipboard, you must not forget to enable #OSC 52# in both the #FAR2L settings#
-(option OSC 52 in Menu(#F9#)->Options->Interface settings are only shown when all other options for clipboard access are unavailable;
-you can run #far2l --tty --nodetect# to force not use others options),
-and in #terminal settings OSC 52 must be allowed#
+(see details above),
+and in #terminal settings# option #OSC 52 must be allowed#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).
 
 
@@ -176,19 +184,19 @@ see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command 
 (keys and clipboard by FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
+(keys by kovidgoyal's kitty keyboard protocol; for clipboard need turn on OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(keys by kovidgoyal's kitty keyboard protocol, for clipboard need turn on OSC 52)
-[in macOS in wezterm the kitty keyboard protocol support not working]
+(keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; keys in Windows by win32-input-mode which enable by default; for clipboard need turn on OSC 52)
+[in macOS & in Windows in wezterm the kitty keyboard protocol support not working]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(keys by iTerm2 "raw keyboard" protocol, for clipboard need turn on OSC 52)
+(keys by iTerm2 "raw keyboard" protocol; for clipboard need turn on OSC 52)
 
     - Windows Terminal
-(keys by win32-input-mode, for clipboard need turn on OSC 52, has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-client): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+    - putty4far2l (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (keys and clipboard by FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@

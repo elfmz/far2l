@@ -152,13 +152,13 @@ $ #Особенности FAR2L - начало работы#
     - внутри ярлыка #/usr/share/applications/far2l.desktop# заменить #Exec=far2l# на #Exec=env GDK_BACKEND=x11 far2l#
 
 
+ #Изменение шрифта для FAR2L-GUI#
+    - Меню(#F9#)->Параметры->Настройки интерфейса->[ Выбрать шрифт ]
+
+
  #Особенность вставки в терминалах#
     Есть комбинация #вставки терминала# (терминал имитирует ввод с клавиатуры) и есть #вставка самого фара# (сам FAR2L делает paste). При этом комбинация вставки терминала в разных терминалах разная (и может перекрывать стандартные клавиши вставки FAR2L #Shift-Ins# или #Ctrl-V#).
     В версии без TTYX (и без включенной поддержки OSC 52 как в FAR2L, так и в терминале) вставка самого фара использует его #внутренний буфер# (т.к. FAR2L не получает доступ к системному буферу обмена), а вставка терминала - #системный буфер обмена#.
-
-
- #Изменение шрифта для FAR2L-GUI#
-    - Меню(#F9#)->Параметры->Настройки интерфейса->[ Выбрать шрифт ]
 
 
  #Дистанционный доступ к FAR2L на удаленном компьютере#
@@ -166,11 +166,19 @@ $ #Особенности FAR2L - начало работы#
     Для передачи на запущенный на удалённом компьютере FAR2L расширенных сочетаний клавиш и буфера обмена необходимо инициировать соединение из умеющих это клиентов (см. список ниже).
 
 
+ #Специальные возможности конфигурирования FAR2L, запущенного в эмуляторах терминалов#
+    - Меню(#F9#)->Параметры->Настройки интерфейса->#Исп. OSC52 для записи в буфер обмена#
+(видна в меню только если FAR2L запущен в режиме TTY/TTYX и все остальные варианты поддержки клипборда недоступны).
+Вы можете запустить #far2l --tty --nodetect# для принудительного не использования других вариантов взаимодействия с буфером обмена.
+    - Меню(#F9#)->Параметры->Настройки интерфейса->#Исп. свою палитру базовых цветов#
+(видна в в меню только если FAR2L запущен в режиме TTY/TTYX) позволяет far2l настраивать цвета палитры терминала.
+Если Ваш терминал не поддерживает последовательности OSC4 выключение данной опции позволяет избежать появления в терминале артефактов после выхода из far2l.
+
+
  #Полноценная работа с буфером обмена в чистой терминальной версии FAR2L TTY#
     Для взаимодействия с буфером обмена необходимо не забыть включить #OSC 52# как в #настройках FAR2L#
-(опция OSC 52 видна в Меню(#F9#)->Параметры->Настройки интерфейса, только когда все остальные варианты поддержки клипборда недоступны;
-так что если не видна, надо запустить #far2l --tty --nodetect#),
-так и в #настройках терминалов необходимо разрешить OSC 52#
+(см. подробности выше),
+так и в #настройках терминалов# необходимо #разрешить OSC 52#
 (по умолчанию OSC 52 отключен в части терминалов из соображений безопасности; OSC 52 в куче терминалов реализован только для режима copy, а paste из терминала идёт через т.н. bracketed paste mode).
 
 
@@ -180,19 +188,19 @@ $ #Особенности FAR2L - начало работы#
 (клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
+(клавиши через kovidgoyal's kitty keyboard protocol; для взаимодействия с клипбордом включить OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(клавиши через kovidgoyal's kitty keyboard protocol, для взаимодействия с клипбордом включить OSC 52)
-[в macOS в wezterm поддержка режима kitty не работает]
+(клавиши в Linux, FreeBSD через kovidgoyal's kitty keyboard protocol; клавиши в Windows через win32-input-mode, который включен по умолчанию; для взаимодействия с клипбордом включить OSC 52)
+[в macOS и в Windows в wezterm поддержка режима kitty не работает]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(клавиши через iTerm2 "raw keyboard" protocol, для взаимодействия с клипбордом включить OSC 52)
+(клавиши через iTerm2 "raw keyboard" protocol; для взаимодействия с клипбордом включить OSC 52)
 
     - Windows Terminal [в win11 стоит из коробки, в win10 надо ставить]
-(клавиши через win32-input-mode, для взаимодействия с клипбордом включить OSC 52, присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52; присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-клиент): ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@ & ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@
+    - putty4far2l (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@

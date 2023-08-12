@@ -27,6 +27,8 @@ namespace oldfar
 		FMSG_ALLINONE            = 0x00000020,
 		FMSG_COLOURS             = 0x00000040,
 
+		FMSG_DISPLAYNOTIFY       = 0x00000080,
+
 		FMSG_MB_OK               = 0x00010000,
 		FMSG_MB_OKCANCEL         = 0x00020000,
 		FMSG_MB_ABORTRETRYIGNORE = 0x00030000,

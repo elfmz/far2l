@@ -462,7 +462,7 @@ void CopyProgress::SetProgress(bool TotalProgress, UINT64 CompletedSize, UINT64 
 }
 // CopyProgress end
 
-CopyProgress *CP;
+static CopyProgress *CP = nullptr;
 
 /*
 	$ 25.05.2002 IS
@@ -581,6 +581,10 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	:
 	RPT(RP_EXACTCOPY)
 {
+	Flags.ErrorMessageFlags = MSG_WARNING | MSG_ERRORTYPE;
+	if (Opt.NotifOpt.OnFileOperation) {
+		Flags.ErrorMessageFlags|= MSG_DISPLAYNOTIFY;
+	}
 	Filter = nullptr;
 	DestList.SetParameters(0, 0, ULF_UNIQUE);
 	CopyDlgParam CDP{};
@@ -2161,7 +2165,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 					TreeList::RenTreeName(strSrcFullName, strDestFullName);
 					return (SameName ? COPY_NEXT : COPY_SUCCESS_MOVE);
 				} else {
-					int MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 3, Msg::Error,
+					int MsgCode = Message(Flags.ErrorMessageFlags, 3, Msg::Error,
 							Msg::CopyCannotRenameFolder, Src, Msg::CopyRetry, Msg::CopyIgnore,
 							Msg::CopyCancel);
 
@@ -2189,7 +2193,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 				&& (SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY))
 						== FILE_ATTRIBUTE_DIRECTORY) {
 			while (!apiCreateDirectory(strDestPath, nullptr)) {
-				int MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 3, Msg::Error, Msg::CopyCannotCreateFolder,
+				int MsgCode = Message(Flags.ErrorMessageFlags, 3, Msg::Error, Msg::CopyCannotCreateFolder,
 						strDestPath, Msg::CopyRetry, Msg::CopySkip, Msg::CopyCancel);
 
 				if (MsgCode)
@@ -2347,7 +2351,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 		if (SkipMode != -1)
 			MsgCode = SkipMode;
 		else {
-			MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, MsgMCannot, strMsg1,
+			MsgCode = Message(Flags.ErrorMessageFlags, 4, Msg::Error, MsgMCannot, strMsg1,
 					Msg::CannotCopyTo, strMsg2, Msg::CopyRetry, Msg::CopySkip, Msg::CopySkipAll,
 					Msg::CopyCancel);
 		}
@@ -2423,7 +2427,7 @@ int ShellCopy::DeleteAfterMove(const wchar_t *Name, DWORD Attr)
 		if (SkipDeleteMode != -1)
 			MsgCode = SkipDeleteMode;
 		else
-			MsgCode = Message(MSG_WARNING | MSG_ERRORTYPE, 4, Msg::Error, Msg::CannotDeleteFile, Name,
+			MsgCode = Message(Flags.ErrorMessageFlags, 4, Msg::Error, Msg::CannotDeleteFile, Name,
 					Msg::DeleteRetry, Msg::DeleteSkip, Msg::DeleteSkipAll, Msg::DeleteCancel);
 
 		switch (MsgCode) {
@@ -2638,7 +2642,7 @@ void ShellFileTransfer::RetryCancel(const wchar_t *Text, const wchar_t *Object)
 	ErrnoSaver ErSr;
 	_Stopwatch = 0;		// UI messes timings
 	const int MsgCode =
-			Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, Text, Object, Msg::Retry, Msg::Cancel);
+			Message(_Flags.ErrorMessageFlags, 2, Msg::Error, Text, Object, Msg::Retry, Msg::Cancel);
 
 	PR_ShellCopyMsg();
 

@@ -79,6 +79,7 @@ struct COPY_FLAGS
 	bool COPYLASTTIME   : 1;		// При копировании в несколько каталогов устанавливается для последнего.
 	bool UPDATEPPANEL   : 1;		// необходимо обновить пассивную панель
 	COPY_SYMLINK SYMLINK : 2;
+	DWORD ErrorMessageFlags;		//  MSG_WARNING | MSG_ERRORTYPE [| MSG_DISPLAYNOTIFY if Opt.NotifOpt.OnFileOperation ]
 };
 
 class ShellCopyFileExtendedAttributes

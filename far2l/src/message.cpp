@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "palette.hpp"
 #include "config.hpp"
+#include "mix.hpp"
 #include "InterThreadCall.hpp"
 
 static int MessageX1, MessageY1, MessageX2, MessageY2;
@@ -150,6 +151,13 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 
 	// теперь обработаем MSG_ERRORTYPE
 	DWORD CountErrorLine = 0;
+
+	if ((Flags & MSG_DISPLAYNOTIFY) != 0) {
+		FARString strTitle(APP_BASENAME);
+		if (Title && *Title)
+			strTitle = Title;
+		DisplayNotification(strTitle.CPtr(), ItemsNumber ? Items[0] : L"???");
+	}
 
 	if ((Flags & MSG_ERRORTYPE) && ErrorSets) {
 		// подсчет количества строк во врапенном сообщении

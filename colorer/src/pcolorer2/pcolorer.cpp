@@ -14,6 +14,8 @@
 #include <spdlog/sinks/stdout_sinks.h>
 
 std::shared_ptr<spdlog::logger> logger;
+#else
+std::shared_ptr<DummyLogger> logger;
 #endif
 
 XERCES_CPP_NAMESPACE_USE
@@ -74,7 +76,7 @@ SHAREDSYMBOL void PluginModuleOpen(const char *path)
 #ifdef USESPDLOG
       logger = spdlog::stderr_logger_mt("far2l-colorer");
 #else
-      DummyLogger logger;
+      logger = std::make_shared<DummyLogger>();
 #endif
 }
 

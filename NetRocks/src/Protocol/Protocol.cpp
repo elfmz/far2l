@@ -13,24 +13,24 @@ void ConfigureProtocolFile(std::string &options);
 
 static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
-	{ "sftp", "NetRocks-SFTP", 22, true, true, ConfigureProtocolSFTP},
-	{ "scp", "NetRocks-SFTP", 22, true, true, ConfigureProtocolSCP},
+	{ "sftp", "NetRocks-SFTP", 22, true, true, true, ConfigureProtocolSFTP},
+	{ "scp", "NetRocks-SFTP", 22, true, true, true, ConfigureProtocolSCP},
 #endif
-	{ "ftp", "NetRocks-FTP", 21, true, true, ConfigureProtocolFTP},
+	{ "ftp", "NetRocks-FTP", 21, true, true, true, ConfigureProtocolFTP},
 #ifdef HAVE_OPENSSL
-	{ "ftps", "NetRocks-FTP", 990, true, true, ConfigureProtocolFTPS},
+	{ "ftps", "NetRocks-FTP", 990, true, true, true, ConfigureProtocolFTPS},
 #endif
 #ifdef HAVE_SMB
-	{ "smb", "NetRocks-SMB", -1, false, true, ConfigureProtocolSMB},
+	{ "smb", "NetRocks-SMB", -1, false, true, false, ConfigureProtocolSMB},
 #endif
 #ifdef HAVE_NFS
-	{ "nfs", "NetRocks-NFS", -1, false, false, ConfigureProtocolNFS},
+	{ "nfs", "NetRocks-NFS", -1, false, false, false, ConfigureProtocolNFS},
 #endif
 #ifdef HAVE_WEBDAV
-	{ "dav", "NetRocks-WebDAV", 80, true, true, ConfigureProtocolWebDAV},
-	{ "davs", "NetRocks-WebDAV", 443, true, true, ConfigureProtocolWebDAVs},
+	{ "dav", "NetRocks-WebDAV", 80, true, true, true, ConfigureProtocolWebDAV},
+	{ "davs", "NetRocks-WebDAV", 443, true, true, true, ConfigureProtocolWebDAVs},
 #endif
-	{ "file", "NetRocks-FILE", 0, false, true, ConfigureProtocolFile},
+	{ "file", "NetRocks-FILE", 0, false, true, false, ConfigureProtocolFile},
 	{ }
 };
 

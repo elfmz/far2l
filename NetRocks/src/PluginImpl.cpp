@@ -414,6 +414,14 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
 	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
+	if (_remote) {
+		IHost::Identity identity;
+		_remote->GetIdentity(identity);
+		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
+		if (pi && pi->inaccurate_timestamps) {
+			Info->Flags|= OPIF_COMPAREFATTIME;
+		}
+	}
 	Info->HostFile = _standalone_config.empty() ? NULL : _standalone_config.c_str();
 	Info->CurDir = _cur_dir;
 	Info->Format = _format;

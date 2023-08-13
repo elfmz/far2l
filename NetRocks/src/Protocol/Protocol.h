@@ -105,6 +105,7 @@ struct ProtocolInfo
 	int default_port; // -1 if port cannot be represented/changed
 	bool require_server; // false if protocol can be instantiated with empty server
 	bool support_creds; // false if protocol doesnt support username:password authentification
+	bool inaccurate_timestamps; // true if should use OPIF_COMPAREFATTIME flag when opened file in such protocol
 	void (*Configure)(std::string &options);
 };
 

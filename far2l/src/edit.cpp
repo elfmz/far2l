@@ -1454,9 +1454,10 @@ int Edit::InsertKey(int Key)
 					return FALSE;
 
 				Str = NewStr;
-				swprintf(&Str[StrSize], CurPos + 2, L"%*ls", CurPos - StrSize, L"");
-				// memset(Str+StrSize,' ',CurPos-StrSize);Str[CurPos+1]=0;
+				wmemset(&Str[StrSize], L' ', CurPos - StrSize);
+				Str[CurPos + 1] = 0;
 				StrSize = CurPos + 1;
+
 			} else if (!Flags.Check(FEDITLINE_OVERTYPE))
 				StrSize++;
 
@@ -1782,8 +1783,8 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 					return;
 
 				this->Str = NewStr;
-				swprintf(&this->Str[StrSize], CurPos + 1, L"%*ls", CurPos - StrSize, L"");
-				// memset(this->Str+StrSize,' ',CurPos-StrSize);this->Str[CurPos+1]=0;
+				wmemset(&this->Str[StrSize], L' ', CurPos - StrSize);
+				this->Str[CurPos + 1] = 0;
 				StrSize = CurPos;
 			}
 

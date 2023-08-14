@@ -259,7 +259,7 @@ void HighlightFiles::ClearData()
 static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR,
 		COL_PANELSELECTEDCURSOR};
 
-static const HighlightDataColor DefaultStartingColors =
+const HighlightDataColor DefaultStartingColors =
 	{
 		{0xFF00, 0xFF00, 0xFF00, 0xFF00, // Color[0]
 		0xFF00, 0xFF00, 0xFF00, 0xFF00}, // Color[1]

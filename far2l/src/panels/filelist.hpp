@@ -45,6 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <deque>
 
+extern const HighlightDataColor DefaultStartingColors;
+
 struct FileListItem
 {
 	FileListItem(const FileListItem &)            = delete;
@@ -70,7 +72,7 @@ struct FileListItem
 
 	DWORD_PTR UserData{};
 
-	const HighlightDataColor *ColorsPtr = nullptr;
+	const HighlightDataColor *ColorsPtr = &DefaultStartingColors;
 
 	DWORD NumberOfLinks{};
 	DWORD UserFlags{};

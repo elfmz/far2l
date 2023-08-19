@@ -37,7 +37,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * libneon27-dev (or later, optional - needed for NetRocks/WebDAV)
 * libarchive-dev (optional - needed for better archives support in multiarc)
 * libunrar-dev (optional - needed for RAR archives support in multiarc, see UNRAR command line option)
-* libpcre3-dev (or libpcre2-dev in older distributions, optional - needed for custom archives support in multiarc)
+* libpcre3-dev (or libpcre2-dev in older distributions, optional - needed for advanced custom archive formats support in multiarc)
 * cmake ( >= 3.2.2 )
 * pkg-config
 * g++

@@ -3179,12 +3179,13 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CFileMask FileMask;		// Класс для работы с масками
 	const wchar_t *HistoryName = L"Masks";
 	DialogDataEx SelectDlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, 51, 5, {}, 0, L""},
+		{DI_DOUBLEBOX, 3, 1, 51, 6, {}, 0, L""},
 		{DI_EDIT,      5, 2, 49, 2, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY, L""},
-		{DI_TEXT,      0, 3, 0,  3, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_CENTERGROUP, Msg::SelectFilter},
-		{DI_BUTTON,    0, 4, 0,  4, {}, DIF_CENTERGROUP, Msg::Cancel}
+		{DI_CHECKBOX,  5, 3, 49, 3, {(DWORD_PTR)Opt.SelectFolders}, 0, Msg::SelectFolders},
+		{DI_TEXT,      0, 4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_CENTERGROUP, Msg::SelectFilter},
+		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
 	MakeDialogItemsEx(SelectDlgData, SelectDlg);
 	FileFilter Filter(this, FFT_SELECT);
@@ -3247,26 +3248,28 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 
 				if (Mode == SELECT_ADD)
 					SelectDlg[0].strData = Msg::SelectTitle;
-				else
+				else {
 					SelectDlg[0].strData = Msg::UnselectTitle;
+					SelectDlg[2].Flags |= DIF_DISABLE; // Not need for Unselect, because it process all secelted items
+				}
 
 				{
 					Dialog Dlg(SelectDlg, ARRAYSIZE(SelectDlg));
 					Dlg.SetHelp(L"SelectFiles");
-					Dlg.SetPosition(-1, -1, 55, 7);
+					Dlg.SetPosition(-1, -1, 55, 8);
 
 					for (;;) {
 						Dlg.ClearDone();
 						Dlg.Process();
 
-						if (Dlg.GetExitCode() == 4 && Filter.FilterEdit()) {
+						if (Dlg.GetExitCode() == 5 && Filter.FilterEdit()) {
 							// Рефреш текущему времени для фильтра сразу после выхода из диалога
 							Filter.UpdateCurrentTime();
 							bUseFilter = true;
 							break;
 						}
 
-						if (Dlg.GetExitCode() != 3)
+						if (Dlg.GetExitCode() != 4)
 							return 0;
 
 						strMask = SelectDlg[1].strData;
@@ -3340,7 +3343,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 						break;
 				}
 
-				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || Opt.SelectFolders
+				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || SelectDlg[2].Selected == BSTATE_CHECKED //Opt.SelectFolders
 						|| !Selection || RawSelection || Mode == SELECT_INVERTALL
 						|| Mode == SELECT_INVERTMASK) {
 					Select(CurPtr, Selection);

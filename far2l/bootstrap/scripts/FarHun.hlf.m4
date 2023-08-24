@@ -1630,8 +1630,8 @@ $ #Parancs előzmények#
     a lista legördítve marad                            vagy #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Show additional information                                      #F3#
@@ -1682,8 +1682,8 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
                                                         vagy #Numpad 5#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Quick jump in panel to directory and file                  #Ctrl-F10#
@@ -1732,8 +1732,8 @@ $ #Előzmények: mappa előzmények#
   a lista legördítve marad                              vagy #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Quick jump in panel to directory (here #Enter# analog)       #Ctrl-F10#

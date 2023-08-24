@@ -1842,8 +1842,8 @@ $ #Історія команд#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
  Toggle history view:                                         #Ctrl-T#
-            * with date lines (as in far3)
             * with date lines + time column
+            * with date lines (as in far3)
             * plain history (as in far2)
 
  Show additional information                                      #F3#
@@ -1888,8 +1888,8 @@ $ #Історія перегляду та редагування#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
  Toggle history view:                                         #Ctrl-T#
-            * with date lines (as in far3)
             * with date lines + time column
+            * with date lines (as in far3)
             * plain history (as in far2)
 
  Quick jump in panel to directory and file                  #Ctrl-F10#
@@ -1940,8 +1940,8 @@ $ #Історія зміни папок#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
  Toggle history view:                                         #Ctrl-T#
-            * with date lines (as in far3)
             * with date lines + time column
+            * with date lines (as in far3)
             * plain history (as in far2)
 
  Quick jump in panel to directory (here #Enter# analog)       #Ctrl-F10#

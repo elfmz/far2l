@@ -447,7 +447,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					HistoryMenu.AddItem(&DateSeparator);
 				}
 
-				if (Opt.HistoryShowTimes[TypeHistory] == 1) {
+				if (Opt.HistoryShowTimes[TypeHistory] == 0) {
 					strRecord.AppendFormat(L"%02u:%02u.%02u ",
 						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
 					StrPrefixLen = strRecord.GetLength();

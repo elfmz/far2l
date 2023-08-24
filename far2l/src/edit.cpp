@@ -779,6 +779,7 @@ int Edit::ProcessKey(int Key)
 	if (Key != KEY_NONE && Key != KEY_IDLE && Key != KEY_SHIFTINS && Key != KEY_SHIFTNUMPAD0 && Key != KEY_CTRLINS
 			&& ((unsigned int)Key < KEY_F1 || (unsigned int)Key > KEY_F12) && Key != KEY_ALT && Key != KEY_SHIFT
 			&& Key != KEY_CTRL && Key != KEY_RALT && Key != KEY_RCTRL && (Key < KEY_ALT_BASE || Key > KEY_ALT_BASE + 0xFFFF)
+			&& !( Key & (KEY_ALT | KEY_RALT) )
 			&&		// ???? 256 ???
 			!(((unsigned int)Key >= KEY_MACRO_BASE && (unsigned int)Key <= KEY_MACRO_ENDBASE)
 					|| ((unsigned int)Key >= KEY_OP_BASE && (unsigned int)Key <= KEY_OP_ENDBASE))

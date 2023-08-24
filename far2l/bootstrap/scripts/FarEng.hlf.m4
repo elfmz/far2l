@@ -1936,8 +1936,8 @@ available:
   without closing the list                                or #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Show additional information                                      #F3#
@@ -1986,8 +1986,8 @@ shortcuts are available:
                                                           or #Numpad 5#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Quick jump in panel to directory and file                  #Ctrl-F10#
@@ -2035,8 +2035,8 @@ available:
   clipboard without closing the list                      or #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines (as in far3)
              * with date lines + time column
+             * with date lines (as in far3)
              * plain history (as in far2)
 
   Quick jump in panel to directory (here #Enter# analog)       #Ctrl-F10#

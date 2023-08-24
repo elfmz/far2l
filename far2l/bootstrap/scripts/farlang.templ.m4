@@ -8969,6 +8969,17 @@ SelectTitle
 "Позначити"
 "Адзначыць"
 
+SelectFolders
+"Пометка &папок"
+"Select fol&ders"
+"Vybírat a&dresáře"
+"&Ordner auswählen"
+"A ma&ppák is kijelölhetők"
+"Zaznaczaj katalo&gi"
+"Seleccionar &directorios"
+"Позначка &тек"
+"Адзнака ката&логаў"
+
 SelectFilter
 "&Фильтр"
 "&Filter"

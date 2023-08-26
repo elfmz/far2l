@@ -43,7 +43,7 @@ NTPath::NTPath(LPCWSTR Src)
 {
 	if (Src && *Src) {
 		Str = Src;
-		if (!HasPathPrefix(Src) && *Src != '/') {
+		if (!HasPathPrefix(Src) && *Src != GOOD_SLASH) {
 			ConvertNameToFull(Str, Str);
 		}
 	}
@@ -66,12 +66,12 @@ bool IsNetworkServerPath(const wchar_t *Path)
 
 bool IsLocalPath(const wchar_t *Path)
 {
-	return (Path && Path[0] == L'/');	// && Path[1] != L'/'
+	return (Path && Path[0] == LGOOD_SLASH);	// && Path[1] != L'/'
 }
 
 bool IsLocalRootPath(const wchar_t *Path)
 {
-	return (Path && Path[0] == L'/' && !Path[1]);
+	return (Path && Path[0] == LGOOD_SLASH && !Path[1]);
 }
 
 bool HasPathPrefix(const wchar_t *Path)
@@ -441,7 +441,7 @@ FARString ExtractFilePath(const FARString &Path)
 
 bool IsRootPath(const FARString &Path)
 {
-	return Path == L"/";
+	return Path == WGOOD_SLASH;
 }
 
 static std::string LookupExecutableInEnvPath(const char *file)
@@ -461,8 +461,8 @@ static std::string LookupExecutableInEnvPath(const char *file)
 			out.assign(s);
 		}
 
-		if (out.empty() || out[out.size() - 1] != '/') {
-			out+= '/';
+		if (out.empty() || out[out.size() - 1] != GOOD_SLASH) {
+			out+= GOOD_SLASH;
 		}
 		out+= file;
 		struct stat st{};
@@ -517,7 +517,7 @@ static dev_t GetDeviceId(const std::string &path)
 	if (stat(path.c_str(), &st) == 0) {
 		return st.st_dev;
 	}
-	const size_t slash = path.rfind('/');
+	const size_t slash = path.rfind(GOOD_SLASH);
 	if (slash != 0 && slash != std::string::npos) {
 		return GetDeviceId(path.substr(0, slash));
 	}
@@ -539,7 +539,7 @@ FARString EscapeDevicePath(FARString path)
 		}
 	}
 	if (path.GetLength() == 0) {
-		path = L"/";
+		path = WGOOD_SLASH;
 	}
 	return path;
 }

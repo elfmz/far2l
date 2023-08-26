@@ -374,8 +374,7 @@ int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &s
 	VMenu HistoryMenu(Title, nullptr, 0, Height);
 	HistoryMenu.SetFlags(VMENU_SHOWAMPERSAND | VMENU_WRAPMODE);
 
-	if (HelpTopic)
-		HistoryMenu.SetHelp(HelpTopic);
+	HistoryMenu.SetHelp(HelpTopic ? HelpTopic : L"HistoryCmd");	
 
 	HistoryMenu.SetPosition(-1, -1, 0, 0);
 	HistoryMenu.AssignHighlights(TRUE);
@@ -385,6 +384,7 @@ int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &s
 int History::Select(VMenu &HistoryMenu, int Height, Dialog *Dlg, FARString &strStr)
 {
 	int Type = 0;
+	HistoryMenu.SetHelp(L"HistoryCmd");
 	return ProcessMenu(strStr, nullptr, HistoryMenu, Height, Type, Dlg);
 }
 

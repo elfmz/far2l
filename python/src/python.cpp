@@ -445,7 +445,16 @@ XPORT(int, ProcessEditorEvent)(int Event,void *Param) {
     return result;
 }
 XPORT(int, ProcessEditorInput)(const INPUT_RECORD *Rec) {
-    PYTHON_LOG("\n");
+    PYTHON_LOG("keydown=%d vkey=%08X cstate=%08X ra=%d la=%d rc=%d lc=%d sh=%d\n",
+        Rec->Event.KeyEvent.bKeyDown,
+        Rec->Event.KeyEvent.wVirtualKeyCode,
+        Rec->Event.KeyEvent.dwControlKeyState,
+        (Rec->Event.KeyEvent.dwControlKeyState & RIGHT_ALT_PRESSED) != 0,
+        (Rec->Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED) != 0,
+        (Rec->Event.KeyEvent.dwControlKeyState & RIGHT_CTRL_PRESSED) != 0,
+        (Rec->Event.KeyEvent.dwControlKeyState & LEFT_CTRL_PRESSED) != 0,
+        (Rec->Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) != 0
+    );
     PyObject *pyresult = g_python_holder->vcall("ProcessEditorInput", 1, Rec);
     PYTHON_INT(0)
     return result;

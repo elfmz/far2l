@@ -715,7 +715,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 				strNewDir.Truncate(pos);
 
 				if (!pos || strNewDir.At(pos - 1) == L':')
-					strNewDir+= L"/";
+					strNewDir+= WGOOD_SLASH;
 
 				FarChDir(strNewDir);
 			}
@@ -1697,7 +1697,7 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 				FARString strFullName;
 				ScanTree ScTree(TRUE, TRUE, Flags.SYMLINK == COPY_SYMLINK_ASFILE);
 				strSubName = strSelName;
-				strSubName+= L"/";
+				strSubName+= WGOOD_SLASH;
 
 				if (DestAttr == INVALID_FILE_ATTRIBUTES)
 					KeepPathPos = (int)strSubName.GetLength();
@@ -1980,7 +1980,7 @@ ShellCopy::CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, cons
 	guarantees that its target is within copied tree, so link will be valid
 	*/
 	if (Flags.SYMLINK != COPY_SYMLINK_SMART
-			|| (LinkTarget[0] != '/' && !InSameDirectory(ExistingName, NewName))
+			|| (LinkTarget[0] != GOOD_SLASH && !InSameDirectory(ExistingName, NewName))
 			|| ((SrcData.dwFileAttributes & FILE_ATTRIBUTE_BROKEN) != 0
 					&& !IsSymlinkTargetAlsoCopied(ExistingName))) {
 		FARString strNewName;
@@ -2012,7 +2012,7 @@ ShellCopy::CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, cons
 	for (size_t i = common_anchestors_count; i < partsRealName.size(); ++i) {
 		relative_target+= partsRealName[i];
 		if (i + 1 < partsRealName.size()) {
-			relative_target+= '/';
+			relative_target+= GOOD_SLASH;
 		}
 	}
 	if (relative_target.empty()) {
@@ -2049,7 +2049,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 
 	FARString strDestPath = strDest;
 	const wchar_t *NamePtr = PointToName(strDestPath);
-	DWORD DestAttr = (strDestPath == L"/" || !*NamePtr || TestParentFolderName(NamePtr))
+	DWORD DestAttr = (strDestPath == WGOOD_SLASH || !*NamePtr || TestParentFolderName(NamePtr))
 			? FILE_ATTRIBUTE_DIRECTORY
 			: INVALID_FILE_ATTRIBUTES;
 
@@ -2090,7 +2090,7 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 			int Length = (int)strDestPath.GetLength();
 
 			if (!IsSlash(strDestPath.At(Length - 1)) && strDestPath.At(Length - 1) != L':')
-				strDestPath+= L"/";
+				strDestPath+= WGOOD_SLASH;
 
 			const wchar_t *PathPtr = Src + KeepPathPos;
 

@@ -58,7 +58,7 @@ BOOL FarChDir(const wchar_t *NewDir, BOOL ChangeDir)
 
 	{
 		if (ChangeDir) {
-			if (*NewDir == '/') {
+			if (*NewDir == GOOD_SLASH) {
 				strCurDir = NewDir;
 				rc = apiSetCurrentDirectory(strCurDir);		// здесь берем корень
 			} else {
@@ -92,7 +92,7 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 
 	std::string mbPath;
 	Wide2MB(Path, mbPath);
-	while (mbPath.size() > 1 && mbPath.back() == '/')
+	while (mbPath.size() > 1 && mbPath.back() == GOOD_SLASH)
 		mbPath.resize(mbPath.size() - 1);
 
 	struct stat s{};

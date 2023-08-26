@@ -1607,6 +1607,25 @@ operációs rendszerek használják.
 engedélyezhetünk egy-egy szűrőfeltételt, a #Reset# gomb pedig minden
 szűrőfeltételt töröl.
 
+@HistoryCmd
+$ #Common history list commands#
+
+  Clear the commands history                                      #Del#
+
+  Delete the current history item                           #Shift-Del#
+
+  Lock/unlock a history item                                      #Ins#
+   (locked item is not deleted by #Del# or #Shift-Del#)
+
+  Copy the text of the current command to the clipboard        #Ctrl-C#
+  without closing the list                                or #Ctrl-Ins#
+
+  Toggle history view:                                         #Ctrl-T#
+             * with date lines + time column
+             * with date lines (as in far3)
+             * plain history (as in far2)
+
+  See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @History
 $ #Parancs előzmények#
@@ -1654,6 +1673,7 @@ $ #Parancs előzmények#
   vagy törlése esetén sem.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryViews
 $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
@@ -1707,6 +1727,7 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
         módosulása vagy törlése esetén sem.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryFolders
 $ #Előzmények: mappa előzmények#
@@ -1757,6 +1778,7 @@ $ #Előzmények: mappa előzmények#
        módosulása vagy törlése esetén sem.
 
    See also: common ~menu~@MenuCmd@ keyboard commands.
+             common ~history~@HistoryCmd@ keyboard commands.
 
 @TaskList
 $ #Futó programok#

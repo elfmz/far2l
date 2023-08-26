@@ -1911,9 +1911,28 @@ rule sets.
     To quickly disable one or several conditions, uncheck the corresponding
 checkboxes. The #Reset# button will clear all of the filter conditions.
 
+@HistoryCmd
+$ #Common history list commands#
+
+  Clear the commands history                                      #Del#
+
+  Delete the current history item                           #Shift-Del#
+
+  Lock/unlock a history item                                      #Ins#
+   (locked item is not deleted by #Del# or #Shift-Del#)
+
+  Copy the text of the current command to the clipboard        #Ctrl-C#
+  without closing the list                                or #Ctrl-Ins#
+
+  Toggle history view:                                         #Ctrl-T#
+             * with date lines + time column
+             * with date lines (as in far3)
+             * plain history (as in far2)
+
+  See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @History
-$ #History #
+$ #History#
     The commands history shows the list of previously executed commands.
 Besides the cursor control keys, the following keyboard shortcuts are
 available:
@@ -1928,9 +1947,9 @@ available:
 
   Clear the commands history                                      #Del#
 
-  Lock/unlock a history item                                      #Ins#
-
   Delete the current history item                           #Shift-Del#
+
+  Lock/unlock a history item                                      #Ins#
 
   Copy the text of the current command to the clipboard        #Ctrl-C#
   without closing the list                                or #Ctrl-Ins#
@@ -1958,6 +1977,7 @@ respective option in the ~system settings dialog~@SystemSettings@.
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryViews
 $ #History: file view and edit#
@@ -1973,7 +1993,7 @@ shortcuts are available:
 
   Delete the current history item                           #Shift-Del#
 
-  Установить/снять пометку блокировки пункт истории               #Ins#
+  Lock/unlock a history item                                      #Ins#
 
   Refresh list and remove non-existing entries                 #Ctrl-R#
 
@@ -2010,6 +2030,7 @@ of time if a file was located on a currently unavailable remote resource.
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryFolders
 $ #History: folders#
@@ -2027,7 +2048,7 @@ available:
 
   Delete the current history item                           #Shift-Del#
 
-  Установить/снять пометку блокировки пункт истории               #Ins#
+  Lock/unlock a history item                                      #Ins#
 
   Refresh list and remove non-existing entries                 #Ctrl-R#
 
@@ -2059,6 +2080,7 @@ of time if a folder was located on a currently unavailable remote resource.
   2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @TaskList
 $ #Task list#

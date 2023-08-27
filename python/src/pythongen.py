@@ -43,10 +43,39 @@ data = data.replace("#line", "//#line")
 data = data.replace("#pragma", "//#pragma")
 
 with open(target, 'wt') as fp:
-    fp.write('''
-''')
     fp.write('''\
 data = """\\
+''')
+    fp.write('''\
+#define RIGHT_ALT_PRESSED     0x0001 // the right alt key is pressed.
+#define LEFT_ALT_PRESSED      0x0002 // the left alt key is pressed.
+#define RIGHT_CTRL_PRESSED    0x0004 // the right ctrl key is pressed.
+#define LEFT_CTRL_PRESSED     0x0008 // the left ctrl key is pressed.
+#define SHIFT_PRESSED         0x0010 // the shift key is pressed.
+#define NUMLOCK_ON            0x0020 // the numlock light is on.
+#define SCROLLLOCK_ON         0x0040 // the scrolllock light is on.
+#define CAPSLOCK_ON           0x0080 // the capslock light is on.
+#define ENHANCED_KEY          0x0100 // the key is enhanced.
+
+#define FROM_LEFT_1ST_BUTTON_PRESSED    0x0001
+#define RIGHTMOST_BUTTON_PRESSED        0x0002
+#define FROM_LEFT_2ND_BUTTON_PRESSED    0x0004
+#define FROM_LEFT_3RD_BUTTON_PRESSED    0x0008
+#define FROM_LEFT_4TH_BUTTON_PRESSED    0x0010
+
+#define MOUSE_MOVED   0x0001
+#define DOUBLE_CLICK  0x0002
+#define MOUSE_WHEELED 0x0004
+#define MOUSE_HWHEELED 0x0008
+
+#define KEY_EVENT         0x0001 // Event contains key event record
+#define MOUSE_EVENT       0x0002 // Event contains mouse event record
+#define WINDOW_BUFFER_SIZE_EVENT 0x0004 // Event contains window change event record
+#define MENU_EVENT 0x0008 // Event contains menu event record
+#define FOCUS_EVENT 0x0010 // event contains focus change
+#define BRACKETED_PASTE_EVENT 0x0020 // event contains bracketed paste state change
+#define CALLBACK_EVENT 0x0040 // callback to be invoked when its record dequeued, its translated into NOOP_EVENT when invoked
+#define NOOP_EVENT 0x0080 // nothing interesting, typically injected to kick events dispatcher
 ''')
     fp.write(data)
     fp.write('''\
@@ -55,6 +84,18 @@ data = """\\
     fp.write('''\
 import cffi
 ffi = cffi.FFI()
-ffi.cdef(data, packed=True)
-del data
+packed = False
+while True:
+    i = data.find('//#pragma pack')
+    if i < 0:
+        ffi.cdef(data, packed=packed)
+        break
+    ndata = data[:i]
+    ffi.cdef(ndata, packed=packed)
+    data = data[i:]
+    i = data.find(')')
+    s = data[:i+1]
+    packed = s.find('()') < 0
+    data = data[i+1:]
+del packed, data, i, ndata, s
 ''')

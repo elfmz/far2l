@@ -415,7 +415,7 @@ BOOL apiSetCurrentDirectory(LPCWSTR lpPathName, bool Validate)
 {
 	// correct path to our standard
 	FARString strDir = lpPathName;
-	if (lpPathName[0] != '/' || lpPathName[1] != 0)
+	if (lpPathName[0] != GOOD_SLASH || lpPathName[1] != 0)
 		DeleteEndSlash(strDir);
 	// LPCWSTR CD=strDir;
 	//	int Offset=HasPathPrefix(CD)?4:0;

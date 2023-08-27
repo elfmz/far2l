@@ -1819,6 +1819,26 @@ $ #Фільтр#
  Для швидкого вимкнення однієї або декількох умов фільтра вимкніть
 відповідні опції. Клавіша Очистити скине всі умови фільтра.
 
+@HistoryCmd
+$ #Common history list commands#
+
+  Clear the commands history                                      #Del#
+
+  Delete the current history item                           #Shift-Del#
+
+  Lock/unlock a history item                                      #Ins#
+   (locked item is not deleted by #Del# or #Shift-Del#)
+
+  Copy the text of the current command to the clipboard        #Ctrl-C#
+  without closing the list                                or #Ctrl-Ins#
+
+  Toggle history view:                                         #Ctrl-T#
+             * with date lines + time column
+             * with date lines (as in far3)
+             * plain history (as in far2)
+
+  See also: common ~menu~@MenuCmd@ keyboard commands.
+
 @History
 $ #Історія команд#
 Історія команд показує список раніше виконаних команд. Окрім клавіш
@@ -1834,9 +1854,9 @@ $ #Історія команд#
 
  Очистити історію команд #Del#
 
- Встановити/зняти позначку блокування пункт історії #Ins#
-
  Очистити поточний пункт історії #Shift-Del#
+
+ Встановити/зняти позначку блокування пункт історії #Ins#
 
  Копіювати вміст поточної позиції історії #Ctrl-C#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
@@ -1864,6 +1884,7 @@ $ #Історія команд#
  For automatic exclusion from history, see ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryViews
 $ #Історія перегляду та редагування#
@@ -1916,6 +1937,7 @@ $ #Історія перегляду та редагування#
  2. ^<wrap>Зазначені пункти не видалятимуться під час очищення або оновлення історії.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @HistoryFolders
 $ #Історія зміни папок#
@@ -1962,6 +1984,7 @@ $ #Історія зміни папок#
  2. ^<wrap>Зазначені пункти не видалятимуться під час очищення або оновлення історії.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
+              common ~history~@HistoryCmd@ keyboard commands.
 
 @TaskList
 $ #Список задач#

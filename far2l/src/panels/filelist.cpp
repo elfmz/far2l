@@ -1266,7 +1266,7 @@ int FileList::ProcessKey(int Key)
 			}
 
 			if (NeedChangeDir)
-				ChangeDir(L"/");
+				ChangeDir(WGOOD_SLASH);
 
 			CtrlObject->Cp()->ActivePanel->Show();
 			return TRUE;
@@ -1429,7 +1429,7 @@ int FileList::ProcessKey(int Key)
 						return TRUE;
 
 					apiCreateDirectory(strTempDir, nullptr);
-					strTempName = strTempDir + L"/" + PointToName(strFileName);
+					strTempName = strTempDir + WGOOD_SLASH + PointToName(strFileName);
 
 					if (Key == KEY_SHIFTF4) {
 						int Pos = FindFile(strFileName);
@@ -2091,7 +2091,7 @@ bool FileList::TrySymlinkTraverse()
 	ConvertNameToFull(symlink_pathname);
 	ConvertNameToFull(dest_pathname);
 	FARString dest_path = dest_pathname;
-	if (dest_path != L"/") {
+	if (dest_path != WGOOD_SLASH) {
 		CutToSlash(dest_path);
 	}
 	if (ProcessEnter_ChangeDir(dest_path, PointToName(dest_pathname))) {
@@ -2537,7 +2537,7 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 			// to get out to valid dir at any upper level
 			int r;
 			if (PanelMode != PLUGIN_PANEL && strSetDir == L".." && !strCurDir.IsEmpty()
-					&& strCurDir != L"/") {
+					&& strCurDir != WGOOD_SLASH) {
 				r = Message(MSG_WARNING | MSG_ERRORTYPE, 3, Msg::Error, (dot2Present ? L".." : strSetDir),
 						Msg::Ignore, Msg::HRetry, Msg::GetOut);
 				if (r == 2) {

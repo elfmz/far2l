@@ -220,7 +220,7 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strDir, FALSE)) {
 			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
 			//fprintf(stderr, "=== ChangeDirFromHistory():\n  strDir=\"%ls\"\n  strFile=\"%ls\"\n", strDir.CPtr(), strFile.CPtr());
-			if ( !strFile.IsEmpty() && !strFile.Contains(L'/') ) // only local file, not in another directory
+			if ( !strFile.IsEmpty() && !strFile.Contains(LGOOD_SLASH) ) // only local file, not in another directory
 				Panel->GoToFile(strFile);
 			// restore current directory to active panel path
 			if (SelectType == 6) {

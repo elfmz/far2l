@@ -53,6 +53,35 @@ class PluginBase:
         #log.debug("Plugin.ExitFAR()")
         pass
 
+    @staticmethod
+    def OpenFilePlugin(parent, info, ffi, ffic, Name, Data, DataSize, OpMode):
+        return False
+
+    @staticmethod
+    def ProcessDialogEvent(parent, info, ffi, ffic, Event, Param):
+        # log.debug("Plugin.ProcessDialogEvent({0}, {1})".format(Event, Param))
+        return 0
+
+    @staticmethod
+    def ProcessEditorEvent(parent, info, ffi, ffic, Event, Param):
+        # log.debug("Plugin.ProcessEditorEvent({0}, {1})".format(Event, Param))
+        return 0
+
+    @staticmethod
+    def ProcessEditorInput(parent, info, ffi, ffic, Rec):
+        # log.debug("Plugin.ProcessEditorInput({0})".format(Rec))
+        return 0
+
+    @staticmethod
+    def ProcessSynchroEvent(parent, info, ffi, ffic, Event, Param):
+        # log.debug("Plugin.ProcessSynchroEvent({0}, {1})".format(Event, Param))
+        return 0
+
+    @staticmethod
+    def ProcessViewerEvent(parent, info, ffi, ffic, Event, Param):
+        # log.debug("Plugin.ProcessViewerEvent({0}, {1})".format(Event, Param))
+        return 0
+
 
 class PluginVFS(PluginBase):
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):

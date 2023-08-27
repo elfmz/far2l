@@ -267,26 +267,49 @@ class PluginManager:
         log.debug(
             "OpenFilePlugin({0}, {1}, {2}, {3})".format(Name, Data, DataSize, OpMode)
         )
+        rc = None
+        for plugin in self.plugins:
+            plugin = plugin.Plugin.OpenFilePlugin(self, self.info, ffi, ffic, Name, Data, DataSize, OpMode)
+            if plugin is not False:
+                rc = id(plugin)
+                self.openplugins[rc] = plugin
+                break
+        return rc
 
     def ProcessDialogEvent(self, Event, Param):
-        # log.debug("ProcessDialogEvent({0}, {1}))".format(Event, Param))
-        pass
+        for plugin in self.plugins:
+            rc = plugin.Plugin.ProcessDialogEvent(self, self.info, ffi, ffic, Event, Param)
+            if rc:
+                return rc
+        return 0
 
     def ProcessEditorEvent(self, Event, Param):
-        # log.debug("ProcessEditorEvent({0}, {1})".format(Event, Param))
-        pass
+        for plugin in self.plugins:
+            rc = plugin.Plugin.ProcessEditorEvent(self, self.info, ffi, ffic, Event, Param)
+            if rc:
+                return rc
+        return 0
 
     def ProcessEditorInput(self, Rec):
-        # log.debug("ProcessEditorInput({0})".format(Rec))
-        pass
+        for plugin in self.plugins:
+            rc = plugin.Plugin.ProcessEditorInput(self, self.info, ffi, ffic, Rec)
+            if rc:
+                return rc
+        return 0
 
     def ProcessSynchroEvent(self, Event, Param):
-        # log.debug("ProcessSynchroEvent({0}, {1})".format(Event, Param))
-        pass
+        for plugin in self.plugins:
+            rc = plugin.Plugin.ProcessSynchroEvent(self, self.info, ffi, ffic, Event, Param)
+            if rc:
+                return rc
+        return 0
 
     def ProcessViewerEvent(self, Event, Param):
-        # log.debug("ProcessViewerEvent({0}, {1})".format(Event, Param))
-        pass
+        for plugin in self.plugins:
+            rc = plugin.Plugin.ProcessViewerEvent(self, self.info, ffi, ffic, Event, Param)
+            if rc:
+                return rc
+        return 0
 
     # common plugin functions
     def GetOpenPluginInfo(self, hPlugin, OpenInfo):

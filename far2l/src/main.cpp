@@ -690,7 +690,7 @@ static void SetCustomSettings(const char *arg)
 	if (arg[0] == '/') {
 		refined = arg;
 
-	} else if (arg[0] == '.' && arg[1] == '/') {
+	} else if (arg[0] == '.' && arg[1] == GOOD_SLASH) {
 		char cwdbuf[MAX_PATH + 1] = {'.', 0};
 		const char *cwd = getcwd(cwdbuf, MAX_PATH);
 		if (cwd) {
@@ -702,8 +702,8 @@ static void SetCustomSettings(const char *arg)
 		refined = arg;
 	}
 
-	while (!refined.empty() && refined.back() == '/') {
-		refined.resize(refined.size() - 1);
+	while (!refined.empty() && refined.back() == GOOD_SLASH) {
+		refined.pop_back(); // refined.resize(refined.size() - 1);
 	}
 
 	fprintf(stderr, "%s: '%s'\n", __FUNCTION__, refined.c_str());

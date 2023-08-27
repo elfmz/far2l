@@ -48,7 +48,7 @@ namespace Mounts
 
 	static int GenerateIdFromPath(const FARString &path)
 	{
-		if (path == L"/")
+		if (path == WGOOD_SLASH)
 			return ID_ROOT;
 
 		const std::string &path_mb = path.GetMB();
@@ -72,7 +72,7 @@ namespace Mounts
 		AddFavorites(has_rootfs);
 
 		if (!has_rootfs) {
-			emplace(begin(), Entry(L"/", Msg::MountsRoot, false, ID_ROOT));
+			emplace(begin(), Entry(WGOOD_SLASH, Msg::MountsRoot, false, ID_ROOT));
 		}
 
 		emplace(begin(), Entry( GetMyHome(), Msg::MountsHome, false, ID_HOME));
@@ -216,7 +216,7 @@ namespace Mounts
 			ExpandMountpointInfo(mp, e.col2);
 			ExpandMountpointInfo(mp, e.col3);
 			
-			if (e.path == L"/") {
+			if (e.path == WGOOD_SLASH) {
 				has_rootfs = true;
 			} else {
 				e.unmountable = true;
@@ -265,7 +265,7 @@ namespace Mounts
 							}
 						}
 						e.id = GenerateIdFromPath(e.path);
-						if (e.path == L"/") {
+						if (e.path == WGOOD_SLASH) {
 							has_rootfs = true;
 
 						} else if (*e.path.CPtr() == L'/') {

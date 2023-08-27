@@ -47,16 +47,16 @@ void FilesSuggestor::Suggest(const std::string &filter, std::vector<Suggestion> 
 {
 	std::string dir_path, name_prefix;
 
-	size_t last_slash = filter.rfind('/');
+	size_t last_slash = filter.rfind(GOOD_SLASH);
 	if (last_slash != std::string::npos) {
 		name_prefix = filter.substr(last_slash + 1);
 		if (last_slash > 0) {
 			dir_path = filter.substr(0, last_slash);
-			if (dir_path[0] != '/') {
+			if (dir_path[0] != GOOD_SLASH) {
 				dir_path.insert(0, "./");
 			}
 		} else {
-			dir_path = '/';
+			dir_path = GOOD_SLASH;
 		}
 
 	} else {
@@ -118,7 +118,7 @@ void *FilesSuggestor::ThreadProc()
 		try {
 			std::string stat_path = _dir_path;
 			if (!stat_path.empty() && stat_path.back() != GOOD_SLASH) {
-				stat_path+= '/';
+				stat_path+= GOOD_SLASH;
 			}
 			size_t stat_path_len = stat_path.size();
 			for (;;) {

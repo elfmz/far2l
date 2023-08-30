@@ -9,6 +9,7 @@
 #include "ProtocolFTP.h"
 #include "FTPParseMLST.h"
 #include "FTPParseLIST.h"
+#include "../ProtocolInitCommand.h"
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
@@ -23,6 +24,7 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 	_conn(std::make_shared<FTPConnection>( (strcasecmp(protocol.c_str(), "ftps") == 0), host, port, options)),
 	_dir_enum_cache(10)
 {
+	ProtocolInitCommand(host, port, username, password, _conn->ProtocolOptions());
 	_conn->EnsureDataConnectionProtection();
 
 	_str.assign("USER ").append(username);

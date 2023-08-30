@@ -21,6 +21,7 @@
 #include <Threaded.h>
 #include "../Protocol.h"
 #include "SSHConnection.h"
+#include "../ProtocolInitCommand.h"
 
 
 void SSHSessionDeleter(ssh_session res)
@@ -75,6 +76,8 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 
 	fprintf(stderr, "Compiled for libssh %u.%u.%u ssh_version returned '%s'\n",
 		LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO, ssh_version(0));
+
+	ProtocolInitCommand(host, port, username, password, protocol_options);
 
 	if (protocol_options.GetInt("IgnoreTimeModeErrors", 0)) {
 		file_stats_override.reset(new FileStatsOverride);

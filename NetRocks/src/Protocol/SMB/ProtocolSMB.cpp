@@ -11,6 +11,7 @@
 
 #include "ProtocolSMB.h"
 #include "NMBEnum.h"
+#include "../ProtocolInitCommand.h"
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
@@ -58,6 +59,8 @@ ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 	: _host(host), _protocol_options(options)
 {
+	ProtocolInitCommand(host, port, username, password, _protocol_options);
+
 //	_conn->ctx = create_smbctx();
 //	if (!_conn->ctx)
 //		throw ProtocolError("SMB context create failed");

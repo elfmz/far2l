@@ -25,8 +25,10 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 	std::string _password;
 	std::string _options;
 	unsigned int _codepage{0};
+	int _timeadjust{0};
 	std::string _codepage_str;
 	std::wstring _codepage_wstr;
+	timespec _ts_2_remote{};
 
 	bool _busy = false;
 	bool _cloning = false;
@@ -38,6 +40,9 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 
 	const std::string &CodepageLocal2Remote(const std::string &str);
 	void CodepageRemote2Local(std::string &str);
+
+	const timespec &TimespecLocal2Remote(const timespec &ts);
+	void TimespecRemote2Local(timespec &ts);
 
 protected:
 	void BusySet();

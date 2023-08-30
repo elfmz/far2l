@@ -362,7 +362,11 @@ long long BaseDialog::LongLongFromDialogControl(int ctl)
 {
 	std::string str;
 	TextFromDialogControl(ctl, str);
-	return atoll(str.c_str());
+	const char *p = str.c_str();
+	while (*p == ' ') {
+		++p;
+	}
+	return atoll(p);
 }
 
 void BaseDialog::SetEnabledDialogControl(int ctl, bool en)

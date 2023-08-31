@@ -12,7 +12,6 @@
 #include <os_call.hpp>
 
 #include "ProtocolWebDAV.h"
-#include "../ProtocolInitCommand.h"
 #include <neon/ne_auth.h>
 #include <neon/ne_basic.h>
 #include <neon/ne_props.h>
@@ -310,7 +309,7 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 	EnsureInitNEON();
 
 	StringConfig protocol_options(options);
-	ProtocolInitCommand(host, port, username, password, protocol_options);
+	_init_deinit_cmd.reset(ProtocolInitDeinitCmd::Make("dav", host, port, username, password, protocol_options));
 
 	_useragent = protocol_options.GetString("UserAgent");
 	_known_server_identity = protocol_options.GetString("ServerIdentity");

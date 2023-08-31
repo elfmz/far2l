@@ -72,7 +72,7 @@ class ExtraSiteSettings : protected BaseDialog
 {
 	int _i_ok = -1, _i_cancel = -1;
 	int _i_keepalive = -1, _i_codepage = -1, _i_timeadjust = -1;
-	int _i_command = -1, _i_extra = -1, _i_command_time_limit = -1;
+	int _i_command = -1, _i_command_deinit = -1, _i_extra = -1, _i_command_time_limit = -1;
 	FarListWrapper _di_codepages;
 
 public:
@@ -100,14 +100,14 @@ public:
 
 		char sz[32];
 
-		_di.AddAtLine(DI_TEXT, 5,56, 0, MTimeAdjust);
-		itoa(sc.GetInt("TimeAdjust", 0), sz, 10);
-		_i_timeadjust = _di.AddAtLine(DI_FIXEDIT, 57,62, DIF_MASKEDIT, sz, "#99999");
-
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,56, 0, MKeepAlive);
 		itoa(std::min(0, sc.GetInt("KeepAlive", 0)), sz, 10);
 		_i_keepalive = _di.AddAtLine(DI_FIXEDIT, 57,62, DIF_MASKEDIT, sz, "999999");
+
+		_di.AddAtLine(DI_TEXT, 5,56, 0, MTimeAdjust);
+		itoa(sc.GetInt("TimeAdjust", 0), sz, 10);
+		_i_timeadjust = _di.AddAtLine(DI_FIXEDIT, 57,62, DIF_MASKEDIT, sz, "#99999");
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,37, 0, MCodepage);
@@ -118,6 +118,11 @@ public:
 		_di.AddAtLine(DI_TEXT, 5,62, 0, MSFileCommand);
 		_di.NextLine();
 		_i_command = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,62, 0, MSFileCommandDeinit);
+		_di.NextLine();
+		_i_command_deinit = _di.AddAtLine(DI_EDIT, 5,62, 0, "");
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,62, 0, MSFileExtra);
@@ -146,6 +151,7 @@ public:
 		SetDefaultDialogControl(_i_ok);
 
 		TextToDialogControl(_i_command, sc.GetString("Command"));
+		TextToDialogControl(_i_command_deinit, sc.GetString("CommandDeinit"));
 		TextToDialogControl(_i_extra, sc.GetString("Extra"));
 
 		LongLongToDialogControl(_i_command_time_limit, std::max(3, sc.GetInt("CommandTimeLimit", 30)));
@@ -153,6 +159,8 @@ public:
 			std::string str;
 			TextFromDialogControl(_i_command, str);
 			sc.SetString("Command", str);
+			TextFromDialogControl(_i_command_deinit, str);
+			sc.SetString("CommandDeinit", str);
 			TextFromDialogControl(_i_extra, str);
 			sc.SetString("Extra", str);
 			sc.SetInt("CommandTimeLimit", std::max(3, (int)LongLongFromDialogControl(_i_command_time_limit)));

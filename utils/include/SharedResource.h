@@ -10,20 +10,20 @@ class SharedResource
 
 		SharedResource(const SharedResource&) = delete;
 
-		void GenerateModifyId();
-		bool Lock(int op, int timeout);
+		void GenerateModifyId() noexcept;
+		bool Lock(int op, int timeout) noexcept;
 
 	public:
-		SharedResource(const char *group, uint64_t id);
+		SharedResource(const char *group, uint64_t id) noexcept;
 		~SharedResource();
 
-		bool LockRead(int timeout = -1);
-		bool LockWrite(int timeout = -1);
+		bool LockRead(int timeout = -1) noexcept;
+		bool LockWrite(int timeout = -1) noexcept;
 
-		void UnlockRead();
-		void UnlockWrite();
+		void UnlockRead() noexcept;
+		void UnlockWrite() noexcept;
 
-		bool IsModified();
+		bool IsModified() noexcept;
 
 		struct LockerState
 		{

@@ -1785,7 +1785,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 
 				this->Str = NewStr;
 				wmemset(&this->Str[StrSize], L' ', CurPos - StrSize);
-				this->Str[CurPos + 1] = 0;
+				this->Str[CurPos] = 0;
 				StrSize = CurPos;
 			}
 

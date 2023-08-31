@@ -6,7 +6,6 @@
 #include "ProtocolNFS.h"
 #include <StringConfig.h>
 #include <utils.h>
-#include "../ProtocolInitCommand.h"
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
@@ -24,7 +23,7 @@ ProtocolNFS::ProtocolNFS(const std::string &host, unsigned int port,
 	_host(host)
 {
 	StringConfig protocol_options(options);
-	ProtocolInitCommand(host, port, username, password, protocol_options);
+	_init_deinit_cmd.reset(ProtocolInitDeinitCmd::Make("nfs", host, port, username, password, protocol_options));
 
 	_nfs->ctx = nfs_init_context();
 	if (!_nfs->ctx) {

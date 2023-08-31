@@ -232,6 +232,7 @@
 
 "File Protocol options"
 "Command to e&xecute on connect:"
+"Command to execute on &disconnect:"
 "Extra &string passed to command:"
 "Limit command execution time, seconds:"
 "Extra environment variables available for command process:"

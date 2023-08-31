@@ -8,6 +8,7 @@
 #include <libssh/libssh.h>
 #include <libssh/ssh2.h>
 #include "../FileStatsOverride.h"
+#include "../ProtocolInitDeinitCmd.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +74,7 @@ public:
 
 struct SSHConnection
 {
+	std::unique_ptr<ProtocolInitDeinitCmd> _init_deinit_cmd;
 	std::shared_ptr<SSHExecutedCommand> executed_command;
 	std::map<std::string, std::string> env_set {{"TERM", "xterm"}};
 

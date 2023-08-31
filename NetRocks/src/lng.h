@@ -235,6 +235,7 @@ enum LanguageID
 
 	MSFileOptionsTitle,
 	MSFileCommand,
+	MSFileCommandDeinit,
 	MSFileExtra,
 	MSFileCommandTimeLimit,
 	MSFileCommandVarsHint,

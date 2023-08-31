@@ -55,7 +55,7 @@ src/Protocol/Protocol.cpp
 set(PROTOCOL_SOURCES
 src/Erroring.cpp
 src/Host/HostRemoteBroker.cpp
-src/Protocol/ProtocolInitCommand.cpp
+src/Protocol/ProtocolInitDeinitCmd.cpp
 )
 
 

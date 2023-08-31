@@ -1,7 +1,6 @@
 #include <string.h>
 #include <StringConfig.h>
 #include "ProtocolFile.h"
-#include "../ProtocolInitCommand.h"
 
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
@@ -14,7 +13,7 @@ ProtocolFile::ProtocolFile(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 {
 	StringConfig protocol_options(options);
-	ProtocolInitCommand(host, port, username, password, protocol_options);
+	_init_deinit_cmd.reset(ProtocolInitDeinitCmd::Make("file", host, port, username, password, protocol_options));
 }
 
 ProtocolFile::~ProtocolFile()

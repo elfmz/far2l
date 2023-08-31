@@ -5,6 +5,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <utils.h>
@@ -48,7 +49,7 @@ void ProtocolInitCommand(const std::string &host, unsigned int port,
 		char input_buf[0x1000] = {}; // must be greater than 0x100!
 		size_t input_buf_len = 0;
 		bool done = false;
-		for (;;) {		
+		for (;;) {
 			fd_set fdr, fde;
 			FD_ZERO(&fdr);
 			FD_ZERO(&fde);

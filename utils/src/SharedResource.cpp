@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
-SharedResource::SharedResource(const char *group, uint64_t id) :
+SharedResource::SharedResource(const char *group, uint64_t id) noexcept :
 	_modify_id(0),
 	_modify_counter(0),
 	_fd(-1)
@@ -32,7 +32,7 @@ SharedResource::~SharedResource()
 		close(_fd);
 }
 
-void SharedResource::GenerateModifyId()
+void SharedResource::GenerateModifyId() noexcept
 {
 	++_modify_counter;
 	_modify_id = (uint64_t)(((uintptr_t)this) & 0xffff000) << 12;
@@ -42,7 +42,7 @@ void SharedResource::GenerateModifyId()
 	_modify_id+= _modify_counter;
 }
 
-bool SharedResource::Lock(int op, int timeout)
+bool SharedResource::Lock(int op, int timeout) noexcept
 {
 	if (_fd == -1)
 		return false;
@@ -77,17 +77,17 @@ bool SharedResource::Lock(int op, int timeout)
 	return out;
 }
 
-bool SharedResource::LockRead(int timeout)
+bool SharedResource::LockRead(int timeout) noexcept
 {
 	return Lock(LOCK_SH, timeout);
 }
 
-bool SharedResource::LockWrite(int timeout)
+bool SharedResource::LockWrite(int timeout) noexcept
 {
 	return Lock(LOCK_EX, timeout);
 }
 
-void SharedResource::UnlockRead()
+void SharedResource::UnlockRead() noexcept
 {
 	if (_fd != -1) {
 		if (pread(_fd, &_modify_id, sizeof(_modify_id), 0) != sizeof(_modify_id)) {
@@ -98,7 +98,7 @@ void SharedResource::UnlockRead()
 	}
 }
 
-void SharedResource::UnlockWrite()
+void SharedResource::UnlockWrite() noexcept
 {
 	if (_fd != -1) {
 		GenerateModifyId();
@@ -110,7 +110,7 @@ void SharedResource::UnlockWrite()
 	}
 }
 
-bool SharedResource::IsModified()
+bool SharedResource::IsModified() noexcept
 {
 	if (_fd == -1)
 		return false;

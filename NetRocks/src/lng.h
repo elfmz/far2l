@@ -44,7 +44,9 @@ enum LanguageID
 	MDirectory,
 	MKeepAlive,
 	MCodepage,
+	MTimeAdjust,
 	MDisplayName,
+	MExtraOptions,
 	MProtocolOptions,
 	MSave,
 	MConnect,
@@ -233,6 +235,7 @@ enum LanguageID
 
 	MSFileOptionsTitle,
 	MSFileCommand,
+	MSFileCommandDeinit,
 	MSFileExtra,
 	MSFileCommandTimeLimit,
 	MSFileCommandVarsHint,

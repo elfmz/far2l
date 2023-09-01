@@ -95,7 +95,6 @@ struct IProtocol
 		{ throw ProtocolUnsupportedError(""); }
 };
 
-
 #define FILENAME_ENUMERABLE(PSZ) ((PSZ)[0] != 0 && ((PSZ)[0] != '.' || ((PSZ)[1] != 0 && ((PSZ)[1] != '.' || (PSZ)[2] != 0)) ))
 
 struct ProtocolInfo

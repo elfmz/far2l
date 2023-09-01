@@ -73,12 +73,13 @@ $^#Copyright (C) 2019 elfmz#
 $^#Contents
 $^#Site connection editor#
 
- This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like #hostname and port# to connect to, #login mode# and #username and password# if needed. To prevent connection from disconnect-due-to-idle - set non-zero #keepalive# period. Also by clicking on #Protocol options# button you can modify some protocol-specific settings.
+ This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like #hostname and port# to connect to, #login mode# and #username and password# if needed.
+Also by clicking on #Extra options# button you can modify some ~extra site settings~@ExtraSiteSettings@.
+Also by clicking on #Protocol options# button you can modify some protocol-specific settings.
  ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
  ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
- ~FILE:// protocol specific options~@ProtocolOptionsFile@
 
  ~Contents~@Contents@
 
@@ -158,14 +159,18 @@ $^#SFTP:// protocol specific options#
 
  ~Contents~@Contents@
 
-@ProtocolOptionsFile
+@ExtraSiteSettings
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
-$^#FILE:// protocol specific options#
+$^#Extra site settings#
 
- This dialog allows you to modify "file://" protocol specific settings. Since file:// is not actual protocol, but just a plain filesystem, accessed via NetRocks infrastructure, there're no usual connectivity settings. However its possible to execute specific command when opening "file://" connection site, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host ($HOST), port ($PORT), username ($USER), password ($PASSWORD) and additional extra string configured in this dialog ($EXTRA). In this dialog its also possible to defined amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised).
+ This dialog allows you to modify some extra (not frequently used) site settings:
+  To prevent connection from disconnect-due-to-idle - set non-zero #keepalive# period.
+  Apply remote files timestamps adjustement.
+  Change #codepage# being used by server.
+  Its possible to #execute specific command# when opening or closing site connection, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host (#$HOST#), port (#$PORT#), username (#$USER#), password (#$PASSWORD#) and additional extra string configured in this dialog (#$EXTRA#). In this dialog its also possible to define amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised). Special environment variable #$SINGULAR# equals to 1 in case command being executed on a connection that is singular to specified protocol/user/host/port across all NetRocks instances, so you may use this to initialize/cleanup shared things. In case your init/cleanup have to exchange some data - save it into file indicated by $STORAGE environment variable, and then don't forget to delete this file from cleanup script running in singular context.
 
  ~Contents~@Contents@
 

@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include "../Protocol.h"
+#include "../ProtocolInitDeinitCmd.h"
 
 extern "C" {
 #include <nfsc/libnfs.h>
@@ -34,6 +35,7 @@ private:
 
 class ProtocolNFS : public IProtocol
 {
+	std::unique_ptr<ProtocolInitDeinitCmd> _init_deinit_cmd;
 	std::shared_ptr<NFSConnection> _nfs;
 	std::string _host, _mount;
 

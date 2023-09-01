@@ -45,7 +45,7 @@ class ProtocolInitDeinitCmdImpl : public ProtocolInitDeinitCmd
 
 		const std::string &extra = _protocol_options.GetString("Extra");
 		const std::string &stg = InMyCache(
-			StrPrintf("nrstg-%llx", (unsigned long long)_lock_id).c_str());
+			StrPrintf("nrstg/%llx", (unsigned long long)_lock_id).c_str());
 
 		int child_stdout[2] = {-1, -1};
 		if (pipe(child_stdout) < 0) {

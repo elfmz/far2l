@@ -44,6 +44,8 @@ class ProtocolInitDeinitCmdImpl : public ProtocolInitDeinitCmd
 		}
 
 		const std::string &extra = _protocol_options.GetString("Extra");
+		const std::string &stg = InMyCache(
+			StrPrintf("nrstg-%llx", (unsigned long long)_lock_id).c_str());
 
 		int child_stdout[2] = {-1, -1};
 		if (pipe(child_stdout) < 0) {
@@ -63,6 +65,7 @@ class ProtocolInitDeinitCmdImpl : public ProtocolInitDeinitCmd
 			setenv("PASSWORD", _password.c_str(), 1);
 			setenv("EXTRA", extra.c_str(), 1);
 			setenv("SINGULAR", singular ? "1" : "0", 1);
+			setenv("STORAGE", stg.c_str(), 1);
 
 			execlp("sh", "sh", "-c", cmd.c_str(), nullptr);
 			int err = errno ? errno : -1;

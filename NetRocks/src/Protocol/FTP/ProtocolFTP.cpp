@@ -23,6 +23,7 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 	_conn(std::make_shared<FTPConnection>( (strcasecmp(protocol.c_str(), "ftps") == 0), host, port, options)),
 	_dir_enum_cache(10)
 {
+	_init_deinit_cmd.reset(ProtocolInitDeinitCmd::Make("ftp", host, port, username, password, _conn->ProtocolOptions()));
 	_conn->EnsureDataConnectionProtection();
 
 	_str.assign("USER ").append(username);

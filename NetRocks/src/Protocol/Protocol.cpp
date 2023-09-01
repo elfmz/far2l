@@ -30,7 +30,7 @@ static ProtocolInfo s_protocols[] = {
 	{ "dav", "NetRocks-WebDAV", 80, true, true, true, ConfigureProtocolWebDAV},
 	{ "davs", "NetRocks-WebDAV", 443, true, true, true, ConfigureProtocolWebDAVs},
 #endif
-	{ "file", "NetRocks-FILE", 0, false, true, false, ConfigureProtocolFile},
+	{ "file", "NetRocks-FILE", 0, false, true, false, nullptr},
 	{ }
 };
 

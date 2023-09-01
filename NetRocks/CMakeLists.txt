@@ -18,7 +18,7 @@ src/Host/HostRemote.cpp
 src/UI/DialogUtils.cpp
 src/UI/Settings/ConfigurePlugin.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
-src/UI/Settings/ConfigureProtocolFile.cpp
+src/UI/Settings/ExtraSiteSettings.cpp
 src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
 src/UI/Settings/ConfigureProtocolFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
@@ -55,6 +55,7 @@ src/Protocol/Protocol.cpp
 set(PROTOCOL_SOURCES
 src/Erroring.cpp
 src/Host/HostRemoteBroker.cpp
+src/Protocol/ProtocolInitDeinitCmd.cpp
 )
 
 

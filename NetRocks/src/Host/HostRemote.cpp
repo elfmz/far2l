@@ -105,6 +105,31 @@ void HostRemote::CodepageRemote2Local(std::string &str)
 	UtfConvertStd(_codepage_wstr.c_str(), uc_len, str, false);
 }
 
+static void TimespecAdjust(timespec &ts, int adjust)
+{
+	if (ts.tv_sec == 0) {
+		; // dont adjust zero timestamps
+
+	} else if (adjust > 0) {
+		ts.tv_sec+= adjust;
+
+	} else if (adjust < 0) {
+		ts.tv_sec-= -adjust;
+	}
+}
+
+const timespec &HostRemote::TimespecLocal2Remote(const timespec &ts)
+{
+	_ts_2_remote = ts;
+	TimespecAdjust(_ts_2_remote, -_timeadjust);
+	return _ts_2_remote;
+}
+
+void HostRemote::TimespecRemote2Local(timespec &ts)
+{
+	TimespecAdjust(ts, _timeadjust);
+}
+
 
 std::shared_ptr<IHost> HostRemote::Clone()
 {
@@ -221,6 +246,7 @@ void HostRemote::ReInitialize()
 
 	StringConfig sc_options(_options);
 	_codepage = sc_options.GetInt("CodePage", CP_UTF8);
+	_timeadjust = sc_options.GetInt("TimeAdjust", 0);
 
 	char keep_alive_arg[32];
 	sprintf(keep_alive_arg, "%d", sc_options.GetInt("KeepAlive", 0));
@@ -482,6 +508,9 @@ void HostRemote::GetInformation(FileInformation &file_info, const std::string &p
 	SendPOD(follow_symlink);
 	RecvReply(IPC_GET_INFORMATION);
 	RecvPOD(file_info);
+	TimespecRemote2Local(file_info.access_time);
+	TimespecRemote2Local(file_info.modification_time);
+	TimespecRemote2Local(file_info.status_change_time);
 }
 
 void HostRemote::FileDelete(const std::string &path)
@@ -529,8 +558,8 @@ void HostRemote::SetTimes(const std::string &path, const timespec &access_time, 
 
 	SendCommand(IPC_SET_TIMES);
 	SendString(CodepageLocal2Remote(path));
-	SendPOD(access_time);
-	SendPOD(modification_time);
+	SendPOD(TimespecLocal2Remote(access_time));
+	SendPOD(TimespecLocal2Remote(modification_time));
 	RecvReply(IPC_SET_TIMES);
 }
 
@@ -611,6 +640,9 @@ public:
 			_conn->CodepageRemote2Local(name);
 			_conn->CodepageRemote2Local(owner);
 			_conn->CodepageRemote2Local(group);
+			_conn->TimespecRemote2Local(file_info.access_time);
+			_conn->TimespecRemote2Local(file_info.modification_time);
+			_conn->TimespecRemote2Local(file_info.status_change_time);
 			return true;
 
 		} catch (...) {

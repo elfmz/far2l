@@ -137,7 +137,7 @@ public:
 		_di.AddAtLine(DI_TEXT, 5,62, 0, MSFileCommandVarsHint);
 
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,62, 0, "$HOST $PORT $USER $PASSWORD $EXTRA"); //$DIRECTORY
+		_di.AddAtLine(DI_TEXT, 5,62, 0, "$HOST $PORT $USER $PASSWORD $EXTRA $SINGULAR $STORAGE"); //$DIRECTORY
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,61, DIF_BOXCOLOR | DIF_SEPARATOR);

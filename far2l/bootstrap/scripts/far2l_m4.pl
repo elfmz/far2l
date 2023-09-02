@@ -7,7 +7,8 @@ use strict;
 my $major = shift;
 my $minor = shift;
 my $patch = shift;
-my $full_version = "$major.$minor.$patch Linux x86_64";
+my $arch = shift;
+my $full_version = "$major.$minor.$patch $arch";
 
 # Получаем текущий год
 my $current_year = (localtime)[5] + 1900;

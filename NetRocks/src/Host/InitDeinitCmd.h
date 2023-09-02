@@ -2,10 +2,10 @@
 #include <string>
 #include "StringConfig.h"
 
-struct ProtocolInitDeinitCmd
+struct InitDeinitCmd
 {
-	static ProtocolInitDeinitCmd *Make(const char *proto, const std::string &host, unsigned int port,
+	static InitDeinitCmd *sMake(const std::string &proto, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const StringConfig &protocol_options);
 
-	virtual ~ProtocolInitDeinitCmd();
+	virtual ~InitDeinitCmd();
 };

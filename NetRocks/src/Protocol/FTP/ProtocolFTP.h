@@ -5,13 +5,11 @@
 #include <list>
 #include <StringConfig.h>
 #include "../Protocol.h"
-#include "../ProtocolInitDeinitCmd.h"
 #include "../DirectoryEnumCache.h"
 #include "FTPConnection.h"
 
 class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<ProtocolFTP>
 {
-	std::unique_ptr<ProtocolInitDeinitCmd> _init_deinit_cmd;
 	std::shared_ptr<FTPConnection> _conn;
 	DirectoryEnumCache _dir_enum_cache;
 

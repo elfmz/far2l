@@ -2,6 +2,7 @@
 #include <vector>
 #include <mutex>
 #include <utils.h>
+#include <time.h>
 #include <windows.h>
 #include <StringConfig.h>
 #include "SiteConnectionEditor.h"
@@ -149,6 +150,8 @@ bool SiteConnectionEditor::Save()
 			return false;
 	}
 
+	EnsureTimeStamp();
+
 	SitesConfig sc(_sites_cfg_location);
 	sc.SetProtocol(_display_name, _protocol);
 	sc.SetHost(_display_name, _host);
@@ -163,6 +166,17 @@ bool SiteConnectionEditor::Save()
 		sc.RemoveSite(_initial_display_name);
 	}
 	return true;
+}
+
+void SiteConnectionEditor::EnsureTimeStamp()
+{
+	StringConfig sc(_protocol_options);
+	unsigned long long ts = sc.GetHexULL("TS");
+	if (!ts) {
+		ts = time(NULL);
+		sc.SetHexULL("TS", ts);
+		_protocol_options = sc.Serialize();
+	}
 }
 
 bool SiteConnectionEditor::Edit()

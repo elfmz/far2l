@@ -142,7 +142,6 @@ public:
 		_di.AddAtLine(DI_TEXT, 4,61, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 		_di.NextLine();
-
 		_i_ok = _di.AddAtLine(DI_BUTTON, 7,29, DIF_CENTERGROUP, MOK);
 		_i_cancel = _di.AddAtLine(DI_BUTTON, 38,58, DIF_CENTERGROUP, MCancel);
 
@@ -173,7 +172,6 @@ public:
 					sc.SetInt("CodePage", s_codepages[cp_index].id);
 				}
 			}
-
 			options = sc.Serialize();
 		}
 	}

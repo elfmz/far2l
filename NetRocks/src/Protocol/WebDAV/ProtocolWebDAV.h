@@ -6,7 +6,6 @@
 #include <neon/ne_session.h>
 #include <neon/ne_request.h>
 #include "../Protocol.h"
-#include "../ProtocolInitDeinitCmd.h"
 
 struct DavConnection
 {
@@ -27,7 +26,6 @@ private:
 
 class ProtocolWebDAV : public IProtocol
 {
-	std::unique_ptr<ProtocolInitDeinitCmd> _init_deinit_cmd;
 	std::shared_ptr<DavConnection> _conn;
 	std::string _useragent;
 	std::string _username, _password;

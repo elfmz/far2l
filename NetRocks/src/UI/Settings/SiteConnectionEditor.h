@@ -40,6 +40,7 @@ class SiteConnectionEditor : protected BaseDialog
 
 	void Load();
 	bool Save();
+	void EnsureTimeStamp();
 
 public:
 	SiteConnectionEditor(const SitesConfigLocation &sites_cfg_location, const std::string &display_name);

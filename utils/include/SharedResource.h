@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <vector>
 
 
 class SharedResource
@@ -14,6 +15,9 @@ class SharedResource
 		bool Lock(int op, int timeout) noexcept;
 
 	public:
+		static bool sEnum(const char *group, std::vector<uint64_t> &ids) noexcept;
+		static bool sCleanup(const char *group, uint64_t id) noexcept;
+
 		SharedResource(const char *group, uint64_t id) noexcept;
 		~SharedResource();
 
@@ -27,6 +31,11 @@ class SharedResource
 
 		struct LockerState
 		{
+			inline bool Locked() const
+			{
+				return _locked;
+			}
+
 		protected:
 			SharedResource &_s;
 			bool _locked;
@@ -37,22 +46,33 @@ class SharedResource
 		struct Writer : LockerState
 		{
 			Writer(SharedResource &s, int timeout = -1) : LockerState(s, s.LockWrite(timeout)) { }
-
 			~Writer()
 			{
-				if (_locked)
+				EnsureUnlocked();
+			}
+
+			void EnsureUnlocked()
+			{
+				if (_locked) {
 					_s.UnlockWrite();
+					_locked = false;
+				}
 			}
 		};
 
 		struct Reader : LockerState
 		{
 			Reader(SharedResource &s, int timeout = -1) : LockerState(s, s.LockRead(timeout)) { }
-
 			~Reader()
 			{
-				if (_locked)
+				EnsureUnlocked();
+			}
+			void EnsureUnlocked()
+			{
+				if (_locked) {
 					_s.UnlockRead();
+					_locked = false;
+				}
 			}
 		};
 };

@@ -13,27 +13,63 @@
 #include <SharedResource.h>
 #include <memory>
 #include "../Erroring.h"
-#include "ProtocolInitDeinitCmd.h"
+#include "InitDeinitCmd.h"
 
+#define NRLOCK_PRIVATE	"nrlock/prv"
 #define NRLOCK_GROUP	"nrlock"
 
-ProtocolInitDeinitCmd::~ProtocolInitDeinitCmd()
+//////////////////////////////////////////////////////////////
+
+InitDeinitCmd::~InitDeinitCmd()
 {
 }
 
-class ProtocolInitDeinitCmdImpl : public ProtocolInitDeinitCmd
+class InitDeinitCmdImpl : public InitDeinitCmd
 {
+	struct Cleanup
+	{
+		~Cleanup()
+		{
+			// cleanup ALL unused private locks, not only own
+			// this is to avoid cache dir pollution by dangling lock files
+			std::vector<uint64_t> ids;
+			SharedResource::sEnum(NRLOCK_PRIVATE, ids);
+			for (const auto &id : ids) {
+				SharedResource sr_group(NRLOCK_GROUP, GroupLockID(id));
+				SharedResource::Writer srw_group(sr_group, 0);
+				if (srw_group.Locked()) {
+					SharedResource sr_id(NRLOCK_PRIVATE, id);
+					if (sr_id.LockWrite(0)) {
+						sr_id.UnlockWrite();
+						SharedResource::sCleanup(NRLOCK_PRIVATE, id);
+					}
+				}
+			}
+		}
+	} _cleanup; // its first field to be destroyed last, after all SharedResource fields released
+
 	StringConfig _protocol_options;
 	uint64_t _lock_id;
-	SharedResource _sr_local, _sr_global;
-	std::unique_ptr<SharedResource::Reader> _sr_global_rlock;
+	SharedResource _sr_group;
+	std::unique_ptr<SharedResource> _sr_private; // created only after _sr_group locked
+	std::unique_ptr<SharedResource::Reader> _sr_private_rlock;
 	std::string _host, _username, _password;
 	char _port_sz[32];
 
-	static uint64_t CalcLockID(const char *proto, const std::string &host, unsigned int port, const std::string &username)
+	static uint64_t CalcLockID(const std::string &proto, const std::string &host, unsigned int port,
+		const std::string &username, const StringConfig &protocol_options)
 	{
-		const std::string &nrlock_id_std = StrPrintf("%s:%s@%s:%u", proto, username.c_str(), host.c_str(), port);
-		return crc64(0, (const unsigned char *)nrlock_id_std.data(), nrlock_id_std.size());
+		// derive lock id from connection's host specification, credentials and creation timestamp (if any)
+		const std::string &nrlock_id_str = StrPrintf("%llx %s:%s@%s:%x",
+			protocol_options.GetHexULL("TS"), proto.c_str(), username.c_str(), host.c_str(), port);
+		return crc64(0, (const unsigned char *)nrlock_id_str.data(), nrlock_id_str.size());
+	}
+
+	static uint64_t GroupLockID(uint64_t lock_id)
+	{
+		// more bits makes more uncleanable 'group' lock files
+		// however less 'group' lock files causing more probability of unrelated connections to block each other
+		return lock_id & 0xff; // up to 256 group locks is reasonable amount
 	}
 
 	void Run(const char *cmd_name, bool singular)
@@ -134,58 +170,57 @@ class ProtocolInitDeinitCmdImpl : public ProtocolInitDeinitCmd
 		}
 	}
 
-	bool IsSingular() noexcept
+	bool PrivateMayTakeWriteLock() noexcept
 	{
-		if (!_sr_global.LockWrite(0))
+		if (!_sr_private->LockWrite(0))
 			return false;
 
-		_sr_global.UnlockWrite();
+		_sr_private->UnlockWrite();
 		return true;
 	}
 
 public:
-	ProtocolInitDeinitCmdImpl(const char *proto, const std::string &host, unsigned int port,
+	InitDeinitCmdImpl(const std::string &proto, const std::string &host, unsigned int port,
 			const std::string &username, const std::string &password, const StringConfig &protocol_options)
 		:
 		_protocol_options(protocol_options),
-		_lock_id(CalcLockID(proto, host, port, username)),
-		_sr_local(NRLOCK_GROUP, _lock_id & (~(uint64_t)1)),
-		_sr_global(NRLOCK_GROUP, _lock_id & (uint64_t)1),
+		_lock_id(CalcLockID(proto, host, port, username, protocol_options)),
+		_sr_group(NRLOCK_GROUP, GroupLockID(_lock_id)),
 		_host(host),
 		_username(username),
 		_password(password)
 	{
+		fprintf(stderr, "InitDeinitCmdImpl(%s:%s@%s:%u): _lock_id=%llx\n",
+			proto.c_str(), username.c_str(), host.c_str(), port, (unsigned long long)_lock_id);
 		snprintf(_port_sz, sizeof(_port_sz) - 1, "%d", port);
-		SharedResource::Writer srl_w(_sr_local);
-		const bool singular = IsSingular();
-		_sr_global_rlock.reset(new SharedResource::Reader(_sr_global));
-		Run("Command", singular);
+		SharedResource::Writer srw(_sr_group);
+		_sr_private.reset(new SharedResource(NRLOCK_PRIVATE, _lock_id));
+		Run("Command", PrivateMayTakeWriteLock());
+		_sr_private_rlock.reset(new SharedResource::Reader(*_sr_private));
 	}
 
-	virtual ~ProtocolInitDeinitCmdImpl()
+	virtual ~InitDeinitCmdImpl()
 	{
-		SharedResource::Writer srl_w(_sr_local);
-		_sr_global_rlock.reset(new SharedResource::Reader(_sr_global));
-		const bool singular = IsSingular();
-
 		try {
-			Run("CommandDeinit", singular);
-
+			SharedResource::Writer srw(_sr_group);
+			_sr_private_rlock.reset();
+			Run("CommandDeinit", PrivateMayTakeWriteLock());
+			_sr_private.reset();
 		} catch (std::exception &e) {
-			fprintf(stderr, "~ProtocolInitDeinitCmdImpl: '%s'\n", e.what());
+			fprintf(stderr, "~InitDeinitCmdImpl: '%s'\n", e.what());
 
 		} catch (...) {
-			fprintf(stderr, "~ProtocolInitDeinitCmdImpl: ???\n");
+			fprintf(stderr, "~InitDeinitCmdImpl: ???\n");
 		}
 	}
 };
 
-ProtocolInitDeinitCmd *ProtocolInitDeinitCmd::Make(const char *proto, const std::string &host, unsigned int port,
+InitDeinitCmd *InitDeinitCmd::sMake(const std::string &proto, const std::string &host, unsigned int port,
 		const std::string &username, const std::string &password, const StringConfig &protocol_options)
 {
 	if (protocol_options.GetString("Command").empty()
 			&& protocol_options.GetString("CommandDeinit").empty()) {
 		return nullptr;
 	}
-	return new ProtocolInitDeinitCmdImpl(proto, host, port, username, password, protocol_options);
+	return new InitDeinitCmdImpl(proto, host, port, username, password, protocol_options);
 }

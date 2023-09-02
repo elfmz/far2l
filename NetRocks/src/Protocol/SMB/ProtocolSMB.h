@@ -4,11 +4,9 @@
 #include <map>
 #include <StringConfig.h>
 #include "../Protocol.h"
-#include "../ProtocolInitDeinitCmd.h"
 
 class ProtocolSMB : public IProtocol, public std::enable_shared_from_this<ProtocolSMB>
 {
-	std::unique_ptr<ProtocolInitDeinitCmd> _init_deinit_cmd;
 	std::string _host;
 
 public:

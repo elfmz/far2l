@@ -283,6 +283,7 @@ struct CommandLineOptions
 	int EditBlock;
 	int DelRemovesBlocks;
 	int AutoComplete;
+	int Splitter;
 	int UsePromptFormat;
 	int UseShell;
 	int WaitKeypress;

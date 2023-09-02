@@ -2542,6 +2542,17 @@ upd:"AutoComplete"
 "&Автозавершення"
 "С&амазавяршэнне"
 
+ConfigCmdlineSplitter
+"&Разделитель"
+"&Splitter"
+upd:"Splitter"
+upd:"Splitter"
+upd:"Splitter"
+upd:"Splitter"
+"&Splitter"
+"&Роздільник"
+"&Падзельнік"
+
 ConfigCmdlineVTLogLimit
 "Максимум строк в &логе вывода:"
 "Maximum terminal &log lines:"

@@ -181,11 +181,13 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 
 	content+= "cd ~\n"; // avoid locking arbitrary directory
-	content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
-	content+= "printf '\\033_push-attr\\007\\033_set-blank=-\\007\\033[32m\\033[K\\033_pop-attr\\007\\012'\n";
-	content+= "else\n";
-	content+= "printf '\\033_push-attr\\007\\033_set-blank=~\\007\\033[33m\\033[K\\033_pop-attr\\007\\012'\n";
-	content+= "fi\n";
+	if (Opt.CmdLine.Splitter) {
+		content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
+		content+= "printf '\\033_push-attr\\007\\033_set-blank=-\\007\\033[32m\\033[K\\033_pop-attr\\007\\012'\n";
+		content+= "else\n";
+		content+= "printf '\\033_push-attr\\007\\033_set-blank=~\\007\\033[33m\\033[K\\033_pop-attr\\007\\012'\n";
+		content+= "fi\n";
+	}
 	unlink(_pwd_file.c_str());
 	_fd = open(_cmd_script.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
 	if (_fd.Valid()) {

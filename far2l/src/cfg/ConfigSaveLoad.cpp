@@ -245,6 +245,7 @@ public:
 	{true,  NSecCmdline, "DelRemovesBlocks", &Opt.CmdLine.DelRemovesBlocks, 1},
 	{true,  NSecCmdline, "EditBlock", &Opt.CmdLine.EditBlock, 0},
 	{true,  NSecCmdline, "AutoComplete", &Opt.CmdLine.AutoComplete, 1},
+	{true,  NSecCmdline, "Splitter", &Opt.CmdLine.Splitter, 1},
 	{true,  NSecCmdline, "WaitKeypress", &Opt.CmdLine.WaitKeypress, 1},
 	{true,  NSecCmdline, "VTLogLimit", &Opt.CmdLine.VTLogLimit, 5000},
 

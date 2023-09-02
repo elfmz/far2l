@@ -225,7 +225,7 @@ void HostRemote::OnBroken()
 void HostRemote::ReInitialize()
 {
 	OnBroken();
-
+	_aborted = false;
 	AssertNotBusy();
 
 	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
@@ -279,7 +279,7 @@ void HostRemote::ReInitialize()
 
 	} else if (pid != -1) {
 		_init_deinit_cmd.reset(InitDeinitCmd::sMake(_identity.protocol,
-			_identity.host, _identity.port, _identity.username, _password, sc_options));
+			_identity.host, _identity.port, _identity.username, _password, sc_options, _aborted));
 		waitpid(pid, 0, 0);
 	} else {
 		perror("fork");
@@ -422,6 +422,7 @@ bool HostRemote::OnServerIdentityChanged(const std::string &new_identity)
 
 void HostRemote::Abort()
 {
+	_aborted = true;
 	pid_t peer = _peer.exchange(0);
 	AbortReceiving();
 	if (peer != 0) {

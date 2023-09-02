@@ -18,7 +18,7 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 	friend class HostRemoteFileIO;
 
 	std::mutex _mutex; // to protect internal fields
-
+	std::atomic<bool> _aborted{false};
 	std::unique_ptr<InitDeinitCmd> _init_deinit_cmd;
 	SiteSpecification _site_specification;
 

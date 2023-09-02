@@ -11,6 +11,7 @@
 #include <utils.h>
 #include <crc64.h>
 #include <SharedResource.h>
+#include <atomic>
 #include <memory>
 #include "../Erroring.h"
 #include "InitDeinitCmd.h"
@@ -19,7 +20,6 @@
 #define NRLOCK_GROUP	"nrlock"
 
 //////////////////////////////////////////////////////////////
-
 InitDeinitCmd::~InitDeinitCmd()
 {
 }
@@ -55,6 +55,7 @@ class InitDeinitCmdImpl : public InitDeinitCmd
 	std::unique_ptr<SharedResource::Reader> _sr_private_rlock;
 	std::string _host, _username, _password;
 	char _port_sz[32];
+	std::atomic<bool> &_aborted;
 
 	static uint64_t CalcLockID(const std::string &proto, const std::string &host, unsigned int port,
 		const std::string &username, const StringConfig &protocol_options)
@@ -77,6 +78,10 @@ class InitDeinitCmdImpl : public InitDeinitCmd
 		const std::string &cmd = _protocol_options.GetString(cmd_name);
 		if (cmd.empty()) {
 			return;
+		}
+
+		if (_aborted) {
+			throw AbortError();
 		}
 
 		const std::string &extra = _protocol_options.GetString("Extra");
@@ -127,7 +132,7 @@ class InitDeinitCmdImpl : public InitDeinitCmd
 				break;
 			}
 
-			struct timeval tv = {time_limit - time_now, 0};
+			struct timeval tv = {std::min((time_t)1, time_limit - time_now), 0};
 			int sv = select(child_stdout[0] + 1, &fdr, nullptr, &fde, &tv);
 			if (sv < 0) {
 				if (errno == EAGAIN || errno == EINTR)
@@ -155,12 +160,18 @@ class InitDeinitCmdImpl : public InitDeinitCmd
 				done = true;
 				break;
 			}
+			if (_aborted) {
+				break;
+			}
 		}
 
 		int status = -1;
 		if (!done) {
 			kill(pid, 9);
 			waitpid(pid, &status, 0);
+			if (_aborted) {
+				throw AbortError();
+			}
 			throw ProtocolError("Timeout", std::string(input_buf, input_buf_len).c_str(), ETIMEDOUT);
 		}
 
@@ -181,14 +192,16 @@ class InitDeinitCmdImpl : public InitDeinitCmd
 
 public:
 	InitDeinitCmdImpl(const std::string &proto, const std::string &host, unsigned int port,
-			const std::string &username, const std::string &password, const StringConfig &protocol_options)
+			const std::string &username, const std::string &password,
+			const StringConfig &protocol_options, std::atomic<bool> &aborted)
 		:
 		_protocol_options(protocol_options),
 		_lock_id(CalcLockID(proto, host, port, username, protocol_options)),
 		_sr_group(NRLOCK_GROUP, GroupLockID(_lock_id)),
 		_host(host),
 		_username(username),
-		_password(password)
+		_password(password),
+		_aborted(aborted)
 	{
 		fprintf(stderr, "InitDeinitCmdImpl(%s:%s@%s:%u): _lock_id=%llx\n",
 			proto.c_str(), username.c_str(), host.c_str(), port, (unsigned long long)_lock_id);
@@ -213,14 +226,19 @@ public:
 			fprintf(stderr, "~InitDeinitCmdImpl: ???\n");
 		}
 	}
+
+	virtual void Abort()
+	{
+		_aborted = true;
+	}
 };
 
 InitDeinitCmd *InitDeinitCmd::sMake(const std::string &proto, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const StringConfig &protocol_options)
+		const std::string &username, const std::string &password, const StringConfig &protocol_options, std::atomic<bool> &aborted)
 {
 	if (protocol_options.GetString("Command").empty()
 			&& protocol_options.GetString("CommandDeinit").empty()) {
 		return nullptr;
 	}
-	return new InitDeinitCmdImpl(proto, host, port, username, password, protocol_options);
+	return new InitDeinitCmdImpl(proto, host, port, username, password, protocol_options, aborted);
 }

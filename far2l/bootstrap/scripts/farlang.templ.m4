@@ -25338,7 +25338,7 @@ upd:"&Block attempt"
 upd:"&Block attempt"
 upd:"&Block attempt"
 "&Заблокувати"
-upd!:"&Заблакаваць"
+"&Заблакаваць"
 
 TerminalClipboardAccessTemporaryRemote
 "&Удаленный буфер"

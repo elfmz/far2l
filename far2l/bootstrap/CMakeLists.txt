@@ -33,7 +33,7 @@ set(LNGFILES
 add_custom_command(OUTPUT "${BOOTSTRAP}/farlang.templ"
     COMMAND cat "${SCRIPTS}/farlang.templ.m4" | perl -I. "${SCRIPTS}/far2l_m4.pl" "${VERSION_MAJOR}" "${VERSION_MINOR}" "${VERSION_PATCH}" > "${BOOTSTRAP}/farlang.templ"
     WORKING_DIRECTORY "${SCRIPTS}"
-    DEPENDS ${DEPENDENCIES}
+    DEPENDS ${DEPENDENCIES} "${SCRIPTS}/farlang.templ.m4" "${SCRIPTS}/far2l_m4.pl"
     COMMENT generating language template
 )
 

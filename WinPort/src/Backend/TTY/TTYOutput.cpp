@@ -157,6 +157,8 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 	:
 	_out(out), _far2l_tty(far2l_tty), _norgb(norgb), _kernel_tty(false)
 {
+	const char *env = getenv("TERM");
+	_screen_tty = (env && strncmp(env, "screen", 6) == 0); // TERM=screen.xterm-256color
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;
 	if (ioctl(out, KDGETLED, &leds) == 0) {
@@ -258,9 +260,9 @@ void TTYOutput::FinalizeSameChars()
 
 	// When have queued enough count of same characters:
 	// - Use repeat last char sequence when (#925 #929) terminal is far2l that definately supports it
-	// - Under other terminals and if repeated char is space - use erase chars + move cursor forward
+	// - Under other terminals except screen and if repeated char is space - use erase chars + move cursor forward
 	// - Otherwise just output copies of repeated char sequence
-	if (_same_chars.count <= 5
+	if (_screen_tty || _same_chars.count <= 5
 			|| (!_far2l_tty && (_same_chars.wch != L' ' || _same_chars.count <= 8))) {
 
 		// output plain <count> copies of repeated char sequence

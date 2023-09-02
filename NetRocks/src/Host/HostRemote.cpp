@@ -219,6 +219,7 @@ void HostRemote::OnBroken()
 {
 	IPCEndpoint::SetFD(-1, -1);
 	_peer = 0;
+	_init_deinit_cmd.reset();
 }
 
 void HostRemote::ReInitialize()
@@ -277,6 +278,8 @@ void HostRemote::ReInitialize()
 		exit(0);
 
 	} else if (pid != -1) {
+		_init_deinit_cmd.reset(InitDeinitCmd::sMake(_identity.protocol,
+			_identity.host, _identity.port, _identity.username, _password, sc_options));
 		waitpid(pid, 0, 0);
 	} else {
 		perror("fork");

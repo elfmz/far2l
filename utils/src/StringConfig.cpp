@@ -48,6 +48,10 @@ static std::string StringUnescape(const std::string &str)
 	return out;
 }
 
+StringConfig::StringConfig()
+{
+}
+
 StringConfig::StringConfig(const std::string &serialized_str)
 {
 	std::string s;
@@ -65,6 +69,10 @@ StringConfig::StringConfig(const std::string &serialized_str)
 	}
 }
 
+StringConfig::~StringConfig()
+{
+}
+
 std::string StringConfig::Serialize() const
 {
 	std::string out;
@@ -79,19 +87,30 @@ std::string StringConfig::Serialize() const
 
 int StringConfig::GetInt(const char *name, int def) const
 {
-	auto it = _entries.find(name);
+	const auto &it = _entries.find(name);
 	return (it != _entries.end()) ? atoi(it->second.c_str()) : def;
+}
+
+unsigned long long StringConfig::GetHexULL(const char *name, unsigned long long def) const
+{
+	const auto &it = _entries.find(name);
+	return (it != _entries.end()) ? strtoull(it->second.c_str(), nullptr, 16) : def;
 }
 
 std::string StringConfig::GetString(const char *name, const char *def) const
 {
-	auto it = _entries.find(name);
+	const auto &it = _entries.find(name);
 	return (it != _entries.end()) ? it->second : def;
 }
 
 void StringConfig::SetInt(const char *name, int val)
 {
 	_entries[name] = StrPrintf("%d", val);
+}
+
+void StringConfig::SetHexULL(const char *name, unsigned long long val)
+{
+	_entries[name] = StrPrintf("%llx", val);
 }
 
 void StringConfig::SetString(const char *name, const std::string &val)

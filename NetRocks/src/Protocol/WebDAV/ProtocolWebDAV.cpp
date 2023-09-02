@@ -309,8 +309,6 @@ ProtocolWebDAV::ProtocolWebDAV(const char *scheme, const std::string &host, unsi
 	EnsureInitNEON();
 
 	StringConfig protocol_options(options);
-	_init_deinit_cmd.reset(ProtocolInitDeinitCmd::Make("dav", host, port, username, password, protocol_options));
-
 	_useragent = protocol_options.GetString("UserAgent");
 	_known_server_identity = protocol_options.GetString("ServerIdentity");
 

@@ -128,3 +128,19 @@ unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
 	return out;
 }
 
+bool IsHexaDecimalNumberStr(const char *str)
+{
+	if (!*str) {
+		return false;
+	}
+
+	for (;*str; ++str) {
+		if (*str < '0' && *str > '9'
+				&& *str < 'a' && *str > 'f'
+				&& *str < 'A' && *str > 'F') {
+			return false;
+		}
+	}
+
+	return true;
+}

@@ -8,6 +8,7 @@
 #include "Host.h"
 #include "IPC.h"
 #include "FileInformation.h"
+#include "InitDeinitCmd.h"
 
 #include "../SitesConfig.h"
 
@@ -18,6 +19,7 @@ class HostRemote : protected IPCEndpoint, public std::enable_shared_from_this<Ho
 
 	std::mutex _mutex; // to protect internal fields
 
+	std::unique_ptr<InitDeinitCmd> _init_deinit_cmd;
 	SiteSpecification _site_specification;
 
 	Identity _identity;

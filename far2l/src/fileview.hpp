@@ -63,8 +63,10 @@ private:
 	int SaveToSaveAs;
 	FARString strPluginData;
 	FileHolderPtr UngreppedFH;
+	int64_t UngreppedPos{0};
 
 	void GrepFilter();
+	void GrepFilterDismiss();
 
 public:
 	FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch = FALSE, int DisableHistory = FALSE,

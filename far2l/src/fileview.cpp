@@ -305,10 +305,7 @@ int FileViewer::ProcessKey(int Key)
 
 		case KEY_ESC:
 			if (UngreppedFH) {
-				View.OpenFile(UngreppedFH, TRUE);
-				UngreppedFH.reset();
-				View.SetFilePos(0);
-				Show();
+				GrepFilterDismiss();
 				return TRUE;
 			}
 		case KEY_F10:
@@ -427,16 +424,26 @@ void FileViewer::GrepFilter()
 {
 	if (!UngreppedFH) {
 		UngreppedFH = View.GetFileHolder();
+		UngreppedPos = View.GetFilePos();
 	}
 	auto NewFH = GrepFile(UngreppedFH);
 	if (!NewFH || !View.OpenFile(NewFH, TRUE)) {
-		View.OpenFile(UngreppedFH, TRUE);
-		UngreppedFH.reset();
+		GrepFilterDismiss();
+		return;
 	}
 
 	View.SetFilePos(0);
 	Show();
 }
+
+void FileViewer::GrepFilterDismiss()
+{
+	View.OpenFile(UngreppedFH, TRUE);
+	View.SetFilePos(UngreppedPos);
+	UngreppedFH.reset();
+	Show();
+}
+
 
 int FileViewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {

@@ -304,6 +304,13 @@ int FileViewer::ProcessKey(int Key)
 				return TRUE;
 
 		case KEY_ESC:
+			if (UngreppedFH) {
+				View.OpenFile(UngreppedFH, TRUE);
+				UngreppedFH.reset();
+				View.SetFilePos(0);
+				Show();
+				return TRUE;
+			}
 		case KEY_F10:
 			FrameManager->DeleteFrame();
 			return TRUE;

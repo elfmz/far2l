@@ -129,7 +129,6 @@ private:
 	Editor *m_editor;
 	KeyBar EditKeyBar;
 	NamesList *EditNamesList;
-	bool F4KeyOnly;
 	FARString strFileName;
 	FARString strFullFileName;
 	FARString strStartDir;
@@ -140,13 +139,14 @@ private:
 	FAR_FIND_DATA_EX FileInfo;
 	wchar_t AttrStr[4];		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
 	IUnmakeWritablePtr FileUnmakeWritable;
-	DWORD SysErrorCode;
-	bool m_bClosing;	// 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
-	bool bEE_READ_Sent;
-	FemaleBool m_AddSignature;
-	bool BadConversion;
-	UINT m_codepage;	// BUGBUG
-	int SaveAsTextFormat;
+	DWORD SysErrorCode{false};
+	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
+	bool bEE_READ_Sent{false};
+	FemaleBool m_AddSignature{FB_NO};
+	bool F4KeyOnly{false};
+	bool BadConversion{false};
+	UINT m_codepage{0};	// BUGBUG
+	int SaveAsTextFormat{0};
 	FileHolderPtr FHP;
 	std::unique_ptr<EditorConfigOrg> EdCfg;
 

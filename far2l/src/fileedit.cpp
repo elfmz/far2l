@@ -408,12 +408,12 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	bEE_READ_Sent = false;
 	m_AddSignature = FB_NO;
 	m_editor = new Editor;
-	__smartlock.Set(m_editor);
 
 	if (!m_editor) {
 		ExitCode = XC_OPEN_ERROR;
 		return;
 	}
+	__smartlock.Set(m_editor);
 
 	FHP = NewFileHolder;
 	m_codepage = codepage;
@@ -485,7 +485,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 						return;
 					default:
 						FrameManager->DeleteFrame(this);	//???
-						SetExitCode(MsgCode == -100 ? XC_EXISTS : XC_QUIT);
+						SetExitCode(XC_QUIT);
 						return;
 				}
 			} else {

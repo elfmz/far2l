@@ -95,7 +95,6 @@ private:
 
 	ViewerStrings Strings;
 
-	FARString strFileName;
 	FARString strFullFileName;
 
 	BufferedFileView ViewFile;
@@ -143,7 +142,7 @@ private:
 
 	UINT DefCodePage;
 
-	std::shared_ptr<IFileHolder> FileHolder;
+	FileHolderPtr FHP;
 
 private:
 	virtual void DisplayObject();
@@ -188,7 +187,7 @@ public:
 	virtual ~Viewer();
 
 public:
-	int OpenFile(const wchar_t *Name, int warning);
+	int OpenFile(FileHolderPtr NewFileHolder, int warning);
 	void SetViewKeyBar(KeyBar *ViewKeyBar);
 
 	virtual int ProcessKey(int Key);
@@ -210,8 +209,7 @@ public:
 	void SetTitle(const wchar_t *Title);
 	FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0);
 
-	void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer; }
-	std::shared_ptr<IFileHolder> &GetFileHolder() { return FileHolder; }
+	FileHolderPtr &GetFileHolder() { return FHP; }
 
 	void SetFilePos(int64_t Pos);	// $ 18.07.2000 tran - change 'long' to 'unsigned long'
 	int64_t GetFilePos() const { return FilePos; };

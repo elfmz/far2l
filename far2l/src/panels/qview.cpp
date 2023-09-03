@@ -372,7 +372,7 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 			OldWrapType = QView->GetWrapType();
 			QView->SetWrapMode(LastWrapMode);
 			QView->SetWrapType(LastWrapType);
-			QView->OpenFile(strCurFileName, FALSE);
+			QView->OpenFile(std::make_shared<FileHolder>(strCurFileName), FALSE);
 		}
 	}
 

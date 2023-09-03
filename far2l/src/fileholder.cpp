@@ -12,9 +12,35 @@ static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 {
 } s_temp_file_holders;
 
+///////////
+
+FileHolder::FileHolder(const FARString &file_path_name, bool temporary)
+	: _file_path_name(file_path_name), _temporary(temporary)
+{
+}
+
+FileHolder::~FileHolder()
+{
+}
+
+void FileHolder::OnFileEdited(const wchar_t *FileName)
+{
+}
+
+void FileHolder::CheckForChanges()
+{
+}
+
+FileHolderPtr FileHolder::ParentFileHolder()
+{
+	return FileHolderPtr();
+}
+
+////////////
+
 TempFileHolder::TempFileHolder(const FARString &temp_file_name, bool delete_parent_dir)
 	:
-	_temp_file_name(temp_file_name), _delete(delete_parent_dir ? DELETE_FILE_AND_PARENT_DIR : DELETE_FILE)
+	FileHolder(temp_file_name, true), _delete(delete_parent_dir ? DELETE_FILE_AND_PARENT_DIR : DELETE_FILE)
 {
 	std::lock_guard<std::mutex> lock(s_temp_file_holders);
 	s_temp_file_holders.insert(this);
@@ -30,24 +56,24 @@ TempFileHolder::~TempFileHolder()
 			don't delete it now, let that another delete it on release
 		*/
 		for (const auto &another : s_temp_file_holders) {
-			if (another->_temp_file_name == _temp_file_name) {
+			if (another->_file_path_name == _file_path_name) {
 				_delete = DONT_DELETE;
 			}
 		}
 	}
 
 	if (_delete == DELETE_FILE) {
-		apiMakeWritable(_temp_file_name);
-		apiDeleteFile(_temp_file_name);
+		apiMakeWritable(_file_path_name);
+		apiDeleteFile(_file_path_name);
 
 	} else if (_delete == DELETE_FILE_AND_PARENT_DIR) {
-		DeleteFileWithFolder(_temp_file_name);
+		DeleteFileWithFolder(_file_path_name);
 	}
 }
 
 void TempFileHolder::OnFileEdited(const wchar_t *FileName)
 {
-	if (TempFileName() == FileName) {
+	if (_file_path_name == FileName) {
 		/*
 			$ 11.10.2001 IS
 			Если было произведено сохранение с любым результатом, то не удалять файл
@@ -65,18 +91,22 @@ TempFileUploadHolder::TempFileUploadHolder(const FARString &temp_file_name, bool
 	GetCurrentTimestamp();
 }
 
+TempFileUploadHolder::~TempFileUploadHolder()
+{
+}
+
 void TempFileUploadHolder::GetCurrentTimestamp()
 {
 	struct stat s{};
-	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0) {
+	if (sdc_stat(_file_path_name.GetMB().c_str(), &s) == 0) {
 		_mtim = s.st_mtim;
 	}
 }
 
 void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 {
-	if (TempFileName() != FileName) {
-		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", TempFileName().CPtr(),
+	if (_file_path_name != FileName) {
+		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", _file_path_name.CPtr(),
 				FileName);
 		return;
 	}
@@ -88,10 +118,10 @@ void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 	// dont invoke TempFileHolder::OnFileEdited as uploadedable files deleted even if edited
 }
 
-void TempFileUploadHolder::UploadIfTimestampChanged()
+void TempFileUploadHolder::CheckForChanges()
 {
 	struct stat s{};
-	if (sdc_stat(TempFileName().GetMB().c_str(), &s) == 0
+	if (sdc_stat(_file_path_name.GetMB().c_str(), &s) == 0
 			&& (_mtim.tv_sec != s.st_mtim.tv_sec || _mtim.tv_nsec != s.st_mtim.tv_nsec)) {
 		if (UploadTempFile()) {
 			_mtim = s.st_mtim;

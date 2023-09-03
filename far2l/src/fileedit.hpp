@@ -90,9 +90,9 @@ public:
 		std::vector<char> _tmpcvec;
 	};
 
-	FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int StartLine = -1, int StartChar = -1,
+	FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine = -1, int StartChar = -1,
 			const wchar_t *PluginData = nullptr, int OpenModeExstFile = FEOPMODE_QUERY);
-	FileEditor(const wchar_t *Name, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
+	FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 			const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile = FEOPMODE_QUERY);
 	virtual ~FileEditor();
 
@@ -105,8 +105,6 @@ public:
 		Flags.Change(FFILEEDIT_ENABLEF6, AEnableF6);
 		InitKeyBar();
 	}
-	void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { FileHolder = Observer; }
-
 	// Добавлено для поиска по AltF7. При редактировании найденного файла из
 	// архива для клавиши F2 сделать вызов ShiftF2.
 	void SetSaveToSaveAs(int ToSaveAs)
@@ -149,7 +147,7 @@ private:
 	bool BadConversion;
 	UINT m_codepage;	// BUGBUG
 	int SaveAsTextFormat;
-	std::shared_ptr<IFileHolder> FileHolder;
+	FileHolderPtr FHP;
 	std::unique_ptr<EditorConfigOrg> EdCfg;
 
 	virtual void DisplayObject();
@@ -158,7 +156,7 @@ private:
 	bool DecideAboutSignature();
 	int ReProcessKey(int Key, int CalledFromControl = TRUE);
 	bool AskOverwrite(const FARString &FileName);
-	void Init(const wchar_t *Name, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine,
+	void Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine,
 			int StartChar, const wchar_t *PluginData, int OpenModeExstFile);
 	virtual void InitKeyBar();
 	virtual int ProcessKey(int Key);

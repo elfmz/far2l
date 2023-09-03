@@ -186,8 +186,8 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 			if (Opt.OnlyEditorViewerUsed == Options::ONLY_EDITOR
 					|| Opt.OnlyEditorViewerUsed == Options::ONLY_EDITOR_ON_CMDOUT) {
-				FileEditor *ShellEditor = new FileEditor(strEditViewArg, CP_AUTODETECT,
-						FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6, StartLine, StartChar);
+				FileEditor *ShellEditor = new FileEditor(std::make_shared<FileHolder>(strEditViewArg),
+						CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6, StartLine, StartChar);
 				_tran(SysLog(L"make shelleditor %p", ShellEditor));
 
 				if (!ShellEditor->GetExitCode())	// ????????????
@@ -195,7 +195,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					FrameManager->ExitMainLoop(0);
 				}
 			} else {
-				FileViewer *ShellViewer = new FileViewer(strEditViewArg, FALSE);
+				FileViewer *ShellViewer = new FileViewer(std::make_shared<FileHolder>(strEditViewArg), FALSE);
 
 				if (!ShellViewer->GetExitCode()) {
 					FrameManager->ExitMainLoop(0);

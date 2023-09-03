@@ -2870,10 +2870,11 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 						break;
 				}
 
-				FileViewer Viewer(ViewName, FALSE, FALSE, TRUE, -1, nullptr, nullptr, FALSE);
+				FileViewer Viewer(
+    				// а этот трюк не даст пользователю сменить текущий каталог по CtrlF10 и этим ввести в заблуждение копир: TODODODO
+                    std::make_shared<FileHolder>(ViewName, true),
+                    FALSE, FALSE, TRUE, -1, nullptr, nullptr, FALSE);
 				Viewer.SetDynamicallyBorn(FALSE);
-				// а этот трюк не даст пользователю сменить текущий каталог по CtrlF10 и этим ввести в заблуждение копир:
-				Viewer.SetFileHolder(std::make_shared<DummyFileHolder>());
 				FrameManager->ExecuteModalEV();
 				FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 			}

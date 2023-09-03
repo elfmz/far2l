@@ -69,6 +69,7 @@ src/execute_oscmd.cpp
 src/ViewerStrings.cpp
 src/ViewerPrinter.cpp
 src/fileholder.cpp
+src/GreppedFileHolder.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp

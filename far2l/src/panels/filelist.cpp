@@ -770,7 +770,7 @@ class FileList_TempFileHolder : public TempFileUploadHolder
 		FARString strSaveDir;
 		apiGetCurrentDirectory(strSaveDir);
 
-		FARString strPath = TempFileName();
+		FARString strPath = _file_path_name;
 
 		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES) {
 			FARString strFindName;
@@ -1343,7 +1343,8 @@ int FileList::ProcessKey(int Key)
 				FARString strInfoCurDir = Info.CurDir;
 				bool PluginMode = PanelMode == PLUGIN_PANEL
 						&& !CtrlObject->Plugins.UseFarCommand(hPlugin, PLUGIN_FARGETFILE);
-				std::shared_ptr<FileList_TempFileHolder> TFH;
+				FileHolderPtr FHP; // std::shared_ptr<FileList_TempFileHolder>
+				std::shared_ptr<FileList_TempFileHolder> TFHP;
 
 				if (PluginMode) {
 					if (Info.Flags & OPIF_REALNAMES)
@@ -1455,11 +1456,14 @@ int FileList::ProcessKey(int Key)
 						}
 					}
 
-					// TFH will upload edited file when user will press F2 and will delete it whenever it will not be needed
-					TFH = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
+					// TFHP will upload edited file when user will press F2 and will delete it whenever it will not be needed
+					TFHP = std::make_shared<FileList_TempFileHolder>(strTempName, hPlugin);
+					FHP = TFHP;
+				} else if (!strFileName.IsEmpty()) {
+					FHP = std::make_shared<FileHolder>(strFileName);
 				}
 
-				if (!strFileName.IsEmpty()) {
+				if (FHP) {
 					BOOL Processed = FALSE;
 
 					if (Edit) {
@@ -1484,16 +1488,15 @@ int FileList::ProcessKey(int Key)
 								Processed = TRUE;
 							} else {
 								FileEditor *ShellEditor = PluginMode
-										? new (std::nothrow) FileEditor(strFileName, codepage,
+										? new (std::nothrow) FileEditor(FHP, codepage,
 												(Key == KEY_SHIFTF4 ? FFILEEDIT_CANNEWFILE : 0)
 														| FFILEEDIT_ENABLEF6 | FFILEEDIT_DISABLEHISTORY,
 												-1, -1, strPluginData)
-										: new (std::nothrow) FileEditor(strFileName, codepage,
+										: new (std::nothrow) FileEditor(FHP, codepage,
 												(Key == KEY_SHIFTF4 ? FFILEEDIT_CANNEWFILE : 0)
 														| FFILEEDIT_ENABLEF6);
 
 								if (ShellEditor) {
-									ShellEditor->SetFileHolder(TFH);
 									editorExitCode = ShellEditor->GetExitCode();
 
 									if (editorExitCode == XC_LOADING_INTERRUPTED
@@ -1550,15 +1553,11 @@ int FileList::ProcessKey(int Key)
 									ViewList.SetCurName(strFileName);
 								}
 
-								FileViewer *ShellViewer = new (std::nothrow) FileViewer(strFileName, TRUE,
-										PluginMode, FALSE, -1, strPluginData, &ViewList);
+								FileViewer *ShellViewer = new (std::nothrow) FileViewer(
+										FHP, TRUE, PluginMode, FALSE, -1, strPluginData, &ViewList);
 
-								if (ShellViewer) {
-									if (!ShellViewer->GetExitCode()) {
-										delete ShellViewer;
-									} else if (PluginMode) {
-										ShellViewer->SetFileHolder(TFH);
-									}
+								if (ShellViewer && !ShellViewer->GetExitCode()) {
+									delete ShellViewer;
 								}
 
 								Modaling = FALSE;
@@ -1570,10 +1569,10 @@ int FileList::ProcessKey(int Key)
 					}
 				}
 
-				if (Edit && TFH)	// upload file manually in case external editor was used
+				if (Edit && TFHP)	// upload file manually in case external editor was used
 				{
-					TFH->UploadIfTimestampChanged();
-					if (TFH->PutCode != -1) {
+					TFHP->CheckForChanges();
+					if (TFHP->PutCode != -1) {
 						SetPluginModified();
 					} else {
 						RefreshedPanel = FALSE;

@@ -1254,11 +1254,11 @@ class FindDlg_TempFileHolder : public TempFileUploadHolder
 		//		FARString strTempName = FileName;
 
 		bool out = false;
-		if (FileList::FileNameToPluginItem(TempFileName(), &PanelItem)) {
+		if (FileList::FileNameToPluginItem(GetPathName(), &PanelItem)) {
 			out = (CtrlObject->Plugins.PutFiles(ArcItem.hPlugin, &PanelItem, 1, FALSE, OPM_EDIT) != 0);
 
 			if (!out) {
-				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, TempFileName(),
+				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotSaveFile, Msg::TextSavedToTemp, GetPathName(),
 						Msg::Ok);
 			}
 		}
@@ -1588,8 +1588,8 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 							SendDlgMessage(hDlg, DM_SHOWDIALOG, FALSE, 0);
 							SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 							{
-								FileViewer ShellViewer(strSearchFileName, FALSE, FALSE, FALSE, -1, nullptr,
-										(FindItem.ArcIndex != LIST_INDEX_NONE)
+								FileViewer ShellViewer(std::make_shared<FileHolder>(strSearchFileName),
+										FALSE, FALSE, FALSE, -1, nullptr, (FindItem.ArcIndex != LIST_INDEX_NONE)
 												? nullptr
 												: (Opt.FindOpt.CollectFiles ? &ViewList : nullptr));
 								ShellViewer.SetDynamicallyBorn(FALSE);
@@ -1664,22 +1664,20 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 															else
 								*/
 								{
-									std::shared_ptr<FindDlg_TempFileHolder> TFH;
-									FileEditor ShellEditor(strSearchFileName, CP_AUTODETECT, 0);
-									ShellEditor.SetDynamicallyBorn(FALSE);
-									ShellEditor.SetEnableF6(TRUE);
-
-									// FindFileArcIndex нельзя здесь использовать
-									// Он может быть уже другой.
+									FileHolderPtr TFH;
 									if (FindItem.ArcIndex != LIST_INDEX_NONE) {
 										TFH = std::make_shared<FindDlg_TempFileHolder>(strSearchFileName,
 												FindItem.ArcIndex, FindItem.FindData);
-										ShellEditor.SetFileHolder(TFH);
+									} else {
+										TFH = std::make_shared<FileHolder>(strSearchFileName);
 									}
+									FileEditor ShellEditor(TFH, CP_AUTODETECT, 0);
+									ShellEditor.SetDynamicallyBorn(FALSE);
+									ShellEditor.SetEnableF6(TRUE);
+									// FindFileArcIndex нельзя здесь использовать
+									// Он может быть уже другой.
 									FrameManager->ExecuteModalEV();
-									if (TFH) {
-										TFH->UploadIfTimestampChanged();
-									}
+									TFH->CheckForChanges();
 									// заставляем рефрешиться экран
 									FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);
 								}

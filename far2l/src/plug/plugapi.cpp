@@ -1749,19 +1749,20 @@ void WINAPI FarFreePluginDirList(PluginPanelItem *PanelItem, int ItemsNumber)
 	free(PanelItem);
 }
 
-static void ApplyViewerDeleteOnClose(FileViewer *Viewer, const wchar_t *FileName, DWORD Flags)
+static FileHolderPtr ViewerFileHolderPtr(const wchar_t *FileName, DWORD Flags)
 {
 	/*
 		$ 14.06.2002 IS
 		Обработка VF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
 		приоритет по сравнению с VF_DELETEONCLOSE
 	*/
+	FARString strFullFileName;
+	ConvertNameToFull(FileName, strFullFileName);
 	if ((Flags & (VF_DELETEONCLOSE | VF_DELETEONLYFILEONCLOSE)) != 0 && FileName && *FileName) {
-		FARString strFullFileName;
-		ConvertNameToFull(FileName, strFullFileName);
-		Viewer->SetFileHolder(
-				std::make_shared<TempFileHolder>(strFullFileName, (Flags & VF_DELETEONCLOSE) != 0));
+		return std::make_shared<TempFileHolder>(strFullFileName, (Flags & VF_DELETEONCLOSE) != 0);
 	}
+
+	return std::make_shared<FileHolder>(strFullFileName);
 }
 
 static int FarViewerSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int Y1, int X2, int Y2,
@@ -1781,12 +1782,11 @@ static int FarViewerSynched(const wchar_t *FileName, const wchar_t *Title, int X
 	if (Flags & VF_NONMODAL) {
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
 		FileViewer *Viewer = new (std::nothrow)
-				FileViewer(FileName, TRUE, DisableHistory, Title, X1, Y1, X2, Y2, CodePage);
+				FileViewer(ViewerFileHolderPtr(FileName, Flags), TRUE, DisableHistory, Title, X1, Y1, X2, Y2, CodePage);
 
 		if (!Viewer)
 			return FALSE;
 
-		ApplyViewerDeleteOnClose(Viewer, FileName, Flags);
 		Viewer->SetEnableF6((Flags & VF_ENABLE_F6));
 
 		/*
@@ -1803,12 +1803,10 @@ static int FarViewerSynched(const wchar_t *FileName, const wchar_t *Title, int X
 		}
 	} else {
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileViewer Viewer(FileName, FALSE, DisableHistory, Title, X1, Y1, X2, Y2, CodePage);
+		FileViewer Viewer(ViewerFileHolderPtr(FileName, Flags), FALSE, DisableHistory, Title, X1, Y1, X2, Y2, CodePage);
 		/* $ 28.05.2001 По умолчанию Вьюер, поэтому нужно здесь признак выставиль явно */
 		Viewer.SetDynamicallyBorn(false);
 		FrameManager->ExecuteModalEV();
-
-		ApplyViewerDeleteOnClose(&Viewer, FileName, Flags);
 
 		Viewer.SetEnableF6((Flags & VF_ENABLE_F6));
 
@@ -1847,9 +1845,11 @@ int FarEditorSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int 
 		Обработка EF_DELETEONLYFILEONCLOSE - этот флаг имеет более низкий
 		приоритет по сравнению с EF_DELETEONCLOSE
 	*/
-	std::shared_ptr<TempFileHolder> TFH;
+	std::shared_ptr<FileHolder> TFH;
 	if (Flags & (EF_DELETEONCLOSE | EF_DELETEONLYFILEONCLOSE))
 		TFH = std::make_shared<TempFileHolder>(FileName, (Flags & EF_DELETEONCLOSE) != 0);
+	else
+		TFH = std::make_shared<FileHolder>(FileName);
 
 	int OpMode = FEOPMODE_QUERY;
 
@@ -1870,14 +1870,13 @@ int FarEditorSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int 
 
 	if (Flags & EF_NONMODAL) {
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor *Editor = new (std::nothrow) FileEditor(FileName, CodePage,
+		FileEditor *Editor = new (std::nothrow) FileEditor(TFH, CodePage,
 				(CreateNew ? FFILEEDIT_CANNEWFILE : 0) | FFILEEDIT_ENABLEF6
 						| (DisableHistory ? FFILEEDIT_DISABLEHISTORY : 0) | (Locked ? FFILEEDIT_LOCKED : 0),
 				StartLine, StartChar, Title, X1, Y1, X2, Y2, OpMode);
 
 		if (Editor) {
 			editorExitCode = Editor->GetExitCode();
-			Editor->SetFileHolder(TFH);
 
 			// добавочка - проверка кода возврата (почему возникает XC_OPEN_ERROR - см. код FileEditor::Init())
 			if (editorExitCode == XC_OPEN_ERROR || editorExitCode == XC_LOADING_INTERRUPTED) {
@@ -1903,11 +1902,10 @@ int FarEditorSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int 
 		}
 	} else {
 		/* 09.09.2001 IS ! Добавим имя файла в историю, если потребуется */
-		FileEditor Editor(FileName, CodePage,
+		FileEditor Editor(TFH, CodePage,
 				(CreateNew ? FFILEEDIT_CANNEWFILE : 0) | (DisableHistory ? FFILEEDIT_DISABLEHISTORY : 0)
 						| (Locked ? FFILEEDIT_LOCKED : 0),
 				StartLine, StartChar, Title, X1, Y1, X2, Y2, OpMode);
-		Editor.SetFileHolder(TFH);
 		editorExitCode = Editor.GetExitCode();
 
 		// выполним предпроверку (ошибки разные могут быть)

@@ -9431,15 +9431,15 @@ ViewShiftF4
 ""
 
 ViewShiftF5
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
 
 ViewShiftF6
 ""
@@ -25571,6 +25571,61 @@ upd:"In this case user can't change codepage by F8 or Shift-F8"
 upd:"In this case user can't change codepage by F8 or Shift-F8"
 "У цьому випадку користувач не може змінити кодування F8 або Shift-F8"
 "У гэтым выпадку карыстач не можа змяніць кадоўку па F8 or Shift-F8"
+
+ConfigGrepFilterTitle
+"Grep-фильтр"
+"Filter with grep"
+upd:"Filter with grep"
+upd:"Filter with grep"
+upd:"Filter with grep"
+upd:"Filter with grep"
+upd:"Filter with grep"
+upd:"Grep-фильтр"
+upd:"Grep-фильтр"
+
+ConfigGrepFilterCaseSensitive
+"&Чувствительность к регистру"
+"&Case sensitive"
+upd:"&Case sensitive"
+upd:"&Case sensitive"
+upd:"&Case sensitive"
+upd:"&Case sensitive"
+upd:"&Case sensitive"
+upd:"&Чувствительность к регистру"
+upd:"&Чувствительность к регистру"
+
+ConfigGrepFilterExclPattern
+"&Искл.Образец:"
+"&Excl.Pattern:"
+upd:"&Excl.Pattern:"
+upd:"&Excl.Pattern:"
+upd:"&Excl.Pattern:"
+upd:"&Excl.Pattern:"
+upd:"&Excl.Pattern:"
+upd:"&Искл.Образец:"
+upd:"&Искл.Образец:"
+
+ConfigGrepFilterPattern
+"&Образец:     "
+"&Pattern:     "
+upd:"&Pattern:     "
+upd:"&Pattern:     "
+upd:"&Pattern:     "
+upd:"&Pattern:     "
+upd:"&Pattern:     "
+upd:"&Образец:     "
+upd:"&Образец:     "
+
+ConfigGrepFilterContext
+"&Контекст (строк):"
+"&Context (lines):"
+upd:"&Context (lines):"
+upd:"&Context (lines):"
+upd:"&Context (lines):"
+upd:"&Context (lines):"
+upd:"&Context (lines):"
+upd:"&Контекст (строк):"
+upd:"&Контекст (строк):"
 
 #Must be the last
 NewFileName

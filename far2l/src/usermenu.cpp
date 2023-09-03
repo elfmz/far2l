@@ -635,8 +635,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 						{
 							ConsoleTitle *OldTitle = new ConsoleTitle;
 							FARString strFileName = strMenuFileName;
-							FileEditor ShellEditor(strFileName, CP_WIDE_LE, FFILEEDIT_DISABLEHISTORY, -1, -1,
-									nullptr);
+							FileEditor ShellEditor(std::make_shared<FileHolder>(strFileName),
+									CP_WIDE_LE, FFILEEDIT_DISABLEHISTORY, -1, -1, nullptr);
 							delete OldTitle;
 							ShellEditor.SetDynamicallyBorn(false);
 							FrameManager->ExecuteModalEV();

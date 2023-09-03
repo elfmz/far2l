@@ -62,17 +62,21 @@ private:
 	*/
 	int SaveToSaveAs;
 	FARString strPluginData;
+	FileHolderPtr UngreppedFH;
+
+	void GrepFilter();
 
 public:
-	FileViewer(const wchar_t *Name, int EnableSwitch = FALSE, int DisableHistory = FALSE,
+	FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch = FALSE, int DisableHistory = FALSE,
 			int DisableEdit = FALSE, long ViewStartPos = -1, const wchar_t *PluginData = nullptr,
 			NamesList *ViewNamesList = nullptr, int ToSaveAs = FALSE, UINT aCodePage = CP_AUTODETECT);
-	FileViewer(const wchar_t *Name, int EnableSwitch, int DisableHistory, const wchar_t *Title, int X1,
+	FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, const wchar_t *Title, int X1,
 			int Y1, int X2, int Y2, UINT aCodePage = CP_AUTODETECT);
+
 	virtual ~FileViewer();
 
 public:
-	void Init(const wchar_t *Name, int EnableSwitch, int DisableHistory, long ViewStartPos,
+	void Init(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, long ViewStartPos,
 			const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs);
 	virtual void InitKeyBar();
 	virtual int ProcessKey(int Key);
@@ -91,7 +95,6 @@ public:
 		DisableEdit = !AEnable;
 		InitKeyBar();
 	}
-	void SetFileHolder(std::shared_ptr<IFileHolder> Observer) { View.SetFileHolder(Observer); }
 	void SetPluginData(const wchar_t *PluginData) { strPluginData = PluginData; }
 
 	/* $ Введена для нужд CtrlAltShift OT */

@@ -755,7 +755,7 @@ void CommandLine::ShowViewEditHistory()
 		switch (Type) {
 			case 0:		// вьювер
 			{
-				new FileViewer(strStr, TRUE);
+				new FileViewer(std::make_shared<FileHolder>(strStr), TRUE);
 				break;
 			}
 			case 1:		// обычное открытие в редакторе
@@ -763,7 +763,7 @@ void CommandLine::ShowViewEditHistory()
 			{
 				// пусть файл создается
 				FileEditor *FEdit =
-						new FileEditor(strStr, CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+						new FileEditor(std::make_shared<FileHolder>(strStr), CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
 
 				if (Type == 4)
 					FEdit->SetLockEditor(TRUE);

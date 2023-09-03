@@ -3617,7 +3617,9 @@ int Dialog::Do_ProcessTab(int Next)
 			I = ChangeFocus(FocusPos, Next ? 1 : -1, TRUE);
 
 			if (!Next)
-				while (I > 0 && (Item[I]->Flags & DIF_EDITOR) && (Item[I - 1]->Flags & DIF_EDITOR)
+				while (I > 0
+						&& Item[I]->Type == DI_EDIT && Item[I - 1]->Type == DI_EDIT
+						&& (Item[I]->Flags & DIF_EDITOR) && (Item[I - 1]->Flags & DIF_EDITOR)
 						&& !((DlgEdit *)Item[I]->ObjPtr)->GetLength())
 					I--;
 		}

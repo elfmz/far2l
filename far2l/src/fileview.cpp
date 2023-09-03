@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "mix.hpp"
 #include "fileholder.hpp"
-#include "GreppedFileHolder.hpp"
+#include "GrepFile.hpp"
 
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
@@ -421,8 +421,8 @@ void FileViewer::GrepFilter()
 	if (!UngreppedFH) {
 		UngreppedFH = View.GetFileHolder();
 	}
-	auto NewFH = std::make_shared<GreppedFileHolder>(UngreppedFH);
-	if (!NewFH->Grep() || !View.OpenFile(NewFH, TRUE)) {
+	auto NewFH = GrepFile(UngreppedFH);
+	if (!NewFH || !View.OpenFile(NewFH, TRUE)) {
 		View.OpenFile(UngreppedFH, TRUE);
 		UngreppedFH.reset();
 	}

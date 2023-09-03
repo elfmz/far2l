@@ -1,29 +1,11 @@
 #include "headers.hpp"
 #include "mix.hpp"
-#include "GreppedFileHolder.hpp"
+#include "pathmix.hpp"
+#include "GrepFile.hpp"
 #include "dialog.hpp"
 #include "DialogBuilder.hpp"
 
-GreppedFileHolder::GreppedFileHolder(FileHolderPtr &parent)
-	:
-	FileHolder(parent->GetPathName()),
-	_parent(parent)
-{
-}
-
-GreppedFileHolder::~GreppedFileHolder()
-{
-	if (_grepped) {
-		unlink(GetPathName().GetMB().c_str());
-	}
-}
-
-FileHolderPtr GreppedFileHolder::ParentFileHolder()
-{
-	return _parent;
-}
-
-bool GreppedFileHolder::Grep()
+FileHolderPtr GrepFile(FileHolderPtr src)
 {
 	DialogBuilder Builder(Msg::ConfigGrepFilterTitle, L"GrepFilter");
 	static int CaseSensitive = 0;
@@ -45,17 +27,22 @@ bool GreppedFileHolder::Grep()
 
 	Builder.AddOKCancel();
 	if (!Builder.ShowDialog()) {
-		return false;
+		return FileHolderPtr();
 	}
 
 	FARString new_file_path_name;
-	if (!FarMkTempEx(new_file_path_name, L"view")) {
-		fprintf(stderr, "GreppedFileHolder: mktemp failed\n");
-		return false;
+	if (!FarMkTempEx(new_file_path_name, L"grep")) {
+		fprintf(stderr, "GrepFile: mktemp failed\n");
+		return FileHolderPtr();
 	}
+	apiCreateDirectory(new_file_path_name, nullptr);
+
+	new_file_path_name+= L'/';
+	new_file_path_name+= PointToName(src->GetPathName());
+
 	std::string cmd_pattern = Pattern.GetMB();
 	std::string cmd_excl_pattern = ExclPattern.GetMB();
-	std::string cmd_in_file = _parent->GetPathName().GetMB();
+	std::string cmd_in_file = src->GetPathName().GetMB();
 	std::string cmd_new_file = new_file_path_name.GetMB();
 
 	QuoteCmdArgIfNeed(cmd_pattern);
@@ -88,15 +75,11 @@ bool GreppedFileHolder::Grep()
 	cmd+= '>';
 	cmd+= cmd_new_file;
 
-	_grepped = true;
-
-	fprintf(stderr, "GreppedFileHolder: '%s'\n", cmd.c_str());
+	fprintf(stderr, "GrepFile: '%s'\n", cmd.c_str());
 	const int r = system(cmd.c_str());
 	if (r != 0) {
-		fprintf(stderr, "GreppedFileHolder: cmd returned %d\n", r);
+		fprintf(stderr, "GrepFile: cmd returned %d\n", r);
 	}
-	_file_path_name = new_file_path_name;
 
-	return true;
+	return std::make_shared<TempFileHolder>(new_file_path_name, true);
 }
-

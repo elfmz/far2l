@@ -7,32 +7,35 @@
 
 FileHolderPtr GrepFile(FileHolderPtr src)
 {
-	DialogBuilder Builder(Msg::ConfigGrepFilterTitle, L"GrepFilter");
-	static int CaseSensitive = 0;
-	static int Context = 0;
-	static FARString Pattern, ExclPattern;
+	DialogBuilder dlg_builder(Msg::ConfigGrepFilterTitle, L"GrepFilter");
+	static int s_case_sensitive = 0;
+	static int s_context = 0;
+	static FARString s_pattern, s_exclude_pattern;
 
-	DialogItemEx *PatternEdit = Builder.AddEditField(&Pattern, 30, L"GrepPattern",
-		DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY | DIF_NOAUTOCOMPLETE);
-	Builder.AddTextBefore(PatternEdit, Msg::ConfigGrepFilterPattern);
+	DialogItemEx *pattern_edit = dlg_builder.AddEditField(&s_pattern, 30, L"GrepPattern", DIF_FOCUS | DIF_HISTORY);
+	dlg_builder.AddTextBefore(pattern_edit, Msg::ConfigGrepFilterPattern);
 
-	DialogItemEx *ExclPatternEdit = Builder.AddEditField(&ExclPattern, 30, L"GrepExclPattern",
-		DIF_HISTORY | DIF_USELASTHISTORY | DIF_NOAUTOCOMPLETE);
-	Builder.AddTextBefore(ExclPatternEdit, Msg::ConfigGrepFilterExclPattern);
+	DialogItemEx *exclude_pattern_edit = dlg_builder.AddEditField(&s_exclude_pattern, 30, L"GrepExclPattern", DIF_HISTORY);
+	dlg_builder.AddTextBefore(exclude_pattern_edit, Msg::ConfigGrepFilterExclPattern);
 
-	DialogItemEx *ContextEdit = Builder.AddIntEditField(&Context, 3);
-	Builder.AddTextBefore(ContextEdit, Msg::ConfigGrepFilterContext);
+	DialogItemEx *context_edit = dlg_builder.AddIntEditField(&s_context, 3);
+	dlg_builder.AddTextBefore(context_edit, Msg::ConfigGrepFilterContext);
 
-	Builder.AddCheckbox(Msg::ConfigGrepFilterCaseSensitive, &CaseSensitive);
+	dlg_builder.AddCheckbox(Msg::ConfigGrepFilterCaseSensitive, &s_case_sensitive);
 
-	Builder.AddOKCancel();
-	if (!Builder.ShowDialog()) {
+	dlg_builder.AddOKCancel();
+	if (!dlg_builder.ShowDialog()) {
+		return FileHolderPtr();
+	}
+
+	if (s_pattern.IsEmpty() && s_exclude_pattern.IsEmpty()) {
+		fprintf(stderr, "%s: empty patterns\n", __FUNCTION__);
 		return FileHolderPtr();
 	}
 
 	FARString new_file_path_name;
 	if (!FarMkTempEx(new_file_path_name, L"grep")) {
-		fprintf(stderr, "GrepFile: mktemp failed\n");
+		fprintf(stderr, "%s: mktemp failed\n", __FUNCTION__);
 		return FileHolderPtr();
 	}
 	apiCreateDirectory(new_file_path_name, nullptr);
@@ -40,8 +43,8 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	new_file_path_name+= L'/';
 	new_file_path_name+= PointToName(src->GetPathName());
 
-	std::string cmd_pattern = Pattern.GetMB();
-	std::string cmd_excl_pattern = ExclPattern.GetMB();
+	std::string cmd_pattern = s_pattern.GetMB();
+	std::string cmd_excl_pattern = s_exclude_pattern.GetMB();
 	std::string cmd_in_file = src->GetPathName().GetMB();
 	std::string cmd_new_file = new_file_path_name.GetMB();
 
@@ -50,10 +53,14 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	QuoteCmdArgIfNeed(cmd_in_file);
 	QuoteCmdArgIfNeed(cmd_new_file);
 
+	if (cmd_pattern.empty()) {
+		cmd_pattern = "''"; // otherwise grep expects input from stdin and stucks
+	}
+
 	std::string cmd = "grep ";
-	if (!ExclPattern.IsEmpty()) {
+	if (!s_exclude_pattern.IsEmpty()) {
 		cmd+= "-v ";
-		if (!CaseSensitive) {
+		if (!s_case_sensitive) {
 			cmd+= "-i ";
 		}
 		cmd+= cmd_excl_pattern;
@@ -61,24 +68,24 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 		cmd+= cmd_in_file;
 		cmd+= " | grep ";
 	}
-	if (!CaseSensitive) {
+	if (!s_case_sensitive) {
 		cmd+= "-i ";
 	}
-	if (Context > 0) {
-		cmd+= StrPrintf("-A %d -B %d ", Context, Context);
+	if (s_context > 0) {
+		cmd+= StrPrintf("-A %d -B %d ", s_context, s_context);
 	}
 	cmd+= cmd_pattern;
-	if (ExclPattern.IsEmpty()) {
+	if (s_exclude_pattern.IsEmpty()) {
 		cmd+= ' ';
 		cmd+= cmd_in_file;
 	}
 	cmd+= '>';
 	cmd+= cmd_new_file;
 
-	fprintf(stderr, "GrepFile: '%s'\n", cmd.c_str());
+	fprintf(stderr, "%s: '%s'\n", __FUNCTION__, cmd.c_str());
 	const int r = system(cmd.c_str());
 	if (r != 0) {
-		fprintf(stderr, "GrepFile: cmd returned %d\n", r);
+		fprintf(stderr, "%s: cmd returned %d\n", __FUNCTION__, r);
 	}
 
 	return std::make_shared<TempFileHolder>(new_file_path_name, true);

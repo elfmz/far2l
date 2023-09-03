@@ -223,6 +223,11 @@ int FileViewer::ProcessKey(int Key)
 	if (Key != KEY_F3 && Key != KEY_IDLE)
 		F3KeyOnly = false;
 
+	if (Key == KEY_ESC && UngreppedFH) {
+		GrepFilterDismiss();
+		return TRUE;
+	}
+
 	switch (Key) {
 #if 0
 			/*
@@ -299,15 +304,10 @@ int FileViewer::ProcessKey(int Key)
 		case KEY_F3:
 		case KEY_NUMPAD5:
 		case KEY_SHIFTNUMPAD5:
-
 			if (F3KeyOnly)
 				return TRUE;
 
 		case KEY_ESC:
-			if (UngreppedFH) {
-				GrepFilterDismiss();
-				return TRUE;
-			}
 		case KEY_F10:
 			FrameManager->DeleteFrame();
 			return TRUE;

@@ -135,9 +135,9 @@ bool IsHexaDecimalNumberStr(const char *str)
 	}
 
 	for (;*str; ++str) {
-		if (*str < '0' && *str > '9'
-				&& *str < 'a' && *str > 'f'
-				&& *str < 'A' && *str > 'F') {
+		if ((*str < '0' || *str > '9')
+				&& (*str < 'a' || *str > 'f')
+				&& (*str < 'A' || *str > 'F')) {
 			return false;
 		}
 	}

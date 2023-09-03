@@ -1757,9 +1757,11 @@ static FileHolderPtr ViewerFileHolderPtr(const wchar_t *FileName, DWORD Flags)
 		приоритет по сравнению с VF_DELETEONCLOSE
 	*/
 	FARString strFullFileName;
-	ConvertNameToFull(FileName, strFullFileName);
-	if ((Flags & (VF_DELETEONCLOSE | VF_DELETEONLYFILEONCLOSE)) != 0 && FileName && *FileName) {
-		return std::make_shared<TempFileHolder>(strFullFileName, (Flags & VF_DELETEONCLOSE) != 0);
+	if (FileName && *FileName) {
+		ConvertNameToFull(FileName, strFullFileName);
+		if ((Flags & (VF_DELETEONCLOSE | VF_DELETEONLYFILEONCLOSE)) != 0) {
+			return std::make_shared<TempFileHolder>(strFullFileName, (Flags & VF_DELETEONCLOSE) != 0);
+		}
 	}
 
 	return std::make_shared<FileHolder>(strFullFileName);

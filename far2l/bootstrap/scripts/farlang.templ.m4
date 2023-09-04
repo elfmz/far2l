@@ -9431,15 +9431,15 @@ ViewShiftF4
 ""
 
 ViewShiftF5
-"Grep"
-"Grep"
-"Grep"
-"Grep"
-"Grep"
-"Grep"
-"Grep"
-"Grep"
-"Grep"
+""
+""
+""
+""
+""
+""
+""
+""
+""
 
 ViewShiftF6
 ""
@@ -9721,15 +9721,15 @@ ViewCtrlF6
 ""
 
 ViewCtrlF7
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
+"Grep"
 
 ViewCtrlF8
 ""

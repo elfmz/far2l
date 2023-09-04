@@ -31,11 +31,6 @@ void FileHolder::CheckForChanges()
 {
 }
 
-FileHolderPtr FileHolder::ParentFileHolder()
-{
-	return FileHolderPtr();
-}
-
 ////////////
 
 TempFileHolder::TempFileHolder(const FARString &temp_file_name, bool delete_parent_dir)
@@ -106,8 +101,7 @@ void TempFileUploadHolder::GetCurrentTimestamp()
 void TempFileUploadHolder::OnFileEdited(const wchar_t *FileName)
 {
 	if (_file_path_name != FileName) {
-		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", _file_path_name.CPtr(),
-				FileName);
+		fprintf(stderr, "TempFileUploadHolder::OnFileEdited: '%ls' != '%ls'\n", _file_path_name.CPtr(), FileName);
 		return;
 	}
 

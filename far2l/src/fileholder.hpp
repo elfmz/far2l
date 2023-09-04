@@ -19,7 +19,6 @@ public:
 	const FARString &GetPathName() const { return _file_path_name; };
 
 	virtual void OnFileEdited(const wchar_t *FileName);
-	virtual FileHolderPtr ParentFileHolder();
 	virtual void CheckForChanges();
 };
 

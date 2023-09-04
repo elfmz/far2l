@@ -244,16 +244,7 @@ int FileViewer::ProcessKey(int Key)
 		}
 #endif
 		case KEY_CTRLF7: {
-			if (View.GetFileHolder()) {
-				// if viewing observed (typically temporary) file - dont allow this
-				return TRUE;
-			}
-
-			SaveScreen Sc;
-			FARString strFileName;
-			View.GetFileName(strFileName);
-			CtrlObject->Cp()->GoToFile(strFileName);
-			RedrawTitle = TRUE;
+			GrepFilter();
 			return (TRUE);
 		}
 		/*
@@ -350,10 +341,6 @@ int FileViewer::ProcessKey(int Key)
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_VIEWER, 0);		// printman
 
-			return TRUE;
-		}
-		case KEY_SHIFTF5: { // TODO
-			GrepFilter();
 			return TRUE;
 		}
 		case KEY_F9:

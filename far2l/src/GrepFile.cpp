@@ -8,9 +8,10 @@
 FileHolderPtr GrepFile(FileHolderPtr src)
 {
 	DialogBuilder dlg_builder(Msg::ConfigGrepFilterTitle, L"GrepFilter");
-	static int s_case_sensitive = 0;
 	static int s_context = 0;
 	static FARString s_pattern, s_exclude_pattern;
+	static int s_case_sensitive = 0;
+	static int s_whole_words = 0;
 
 	DialogItemEx *pattern_edit = dlg_builder.AddEditField(&s_pattern, 30, L"GrepPattern", DIF_FOCUS | DIF_HISTORY);
 	dlg_builder.AddTextBefore(pattern_edit, Msg::ConfigGrepFilterPattern);
@@ -22,6 +23,8 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	dlg_builder.AddTextBefore(context_edit, Msg::ConfigGrepFilterContext);
 
 	dlg_builder.AddCheckbox(Msg::ConfigGrepFilterCaseSensitive, &s_case_sensitive);
+	dlg_builder.AddCheckbox(Msg::ConfigGrepFilterWholeWords, &s_whole_words);
+
 
 	dlg_builder.AddOKCancel();
 	if (!dlg_builder.ShowDialog()) {
@@ -63,6 +66,9 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 		if (!s_case_sensitive) {
 			cmd+= "-i ";
 		}
+		if (s_whole_words) {
+			cmd+= "-w ";
+		}
 		cmd+= cmd_excl_pattern;
 		cmd+= ' ';
 		cmd+= cmd_in_file;
@@ -70,6 +76,9 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	}
 	if (!s_case_sensitive) {
 		cmd+= "-i ";
+	}
+	if (s_whole_words) {
+		cmd+= "-w ";
 	}
 	if (s_context > 0) {
 		cmd+= StrPrintf("-A %d -B %d ", s_context, s_context);

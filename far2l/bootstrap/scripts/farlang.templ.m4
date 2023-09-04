@@ -25580,8 +25580,8 @@ upd:"Filter with grep"
 upd:"Filter with grep"
 upd:"Filter with grep"
 upd:"Filter with grep"
-upd:"Grep-фільтр"
-upd:"Grep-фільтр"
+"Grep-фільтр"
+"Grep-фільтр"
 
 ConfigGrepFilterCaseSensitive
 "&Чувствительность к регистру"
@@ -25591,8 +25591,19 @@ upd:"&Case sensitive"
 upd:"&Case sensitive"
 upd:"&Case sensitive"
 upd:"&Case sensitive"
-upd:"Чутливість до &регістру"
-upd:"Адчувальнасць да &рэгістра"
+"Чутливість до &регістру"
+"Адчувальнасць да &рэгістра"
+
+ConfigGrepFilterWholeWords
+"Только &целые слова"
+"&Whole words"
+upd:"&Whole words"
+upd:"&Whole words"
+upd:"&Whole words"
+upd:"&Whole words"
+upd:"&Whole words"
+"Тільки &цілі слова"
+"Толькі по&ўныя словы"
 
 ConfigGrepFilterExclPattern
 "&Искл.Образец:"
@@ -25602,8 +25613,8 @@ upd:"&Excl.Pattern:"
 upd:"&Excl.Pattern:"
 upd:"&Excl.Pattern:"
 upd:"&Excl.Pattern:"
-upd:"&Викл.Зразок: "
-upd:"&Выкл.Узор:   "
+"&Викл.Зразок: "
+"&Выкл.Узор:   "
 
 ConfigGrepFilterPattern
 "&Образец:     "
@@ -25613,8 +25624,8 @@ upd:"&Pattern:     "
 upd:"&Pattern:     "
 upd:"&Pattern:     "
 upd:"&Pattern:     "
-upd:"&Зразок:      "
-upd:"&Узор:        "
+"&Зразок:      "
+"&Узор:        "
 
 ConfigGrepFilterContext
 "&Контекст (строк):"
@@ -25624,8 +25635,8 @@ upd:"Context (&lines):"
 upd:"Context (&lines):"
 upd:"Context (&lines):"
 upd:"Context (&lines):"
-upd:"&Контекст (рядків):"
-upd:"&Кантэкст (радкоў):"
+"&Контекст (рядків):"
+"&Кантэкст (радкоў):"
 
 #Must be the last
 NewFileName

@@ -2745,6 +2745,7 @@ $ #Viewer: control keys#
     #F7#                 ~Search~@ViewerSearch@
     #Shift-F7, Space#    Continue search
     #Alt-F7#             Continue search in "reverse" mode
+    #Ctrl-F7#            ~Grep filter~@GrepFilter@
     #F8#                 Toggle UTF8/~ANSI/OEM~@CodePagesSet@ code page
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
@@ -2800,6 +2801,13 @@ $ #Viewer: control keys#
     6. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
        Alt while keeping PgUp/PgDn will continue scrolling with selected speed boost.
        Speed boost dismissed by releasing all keys for long time or pressing any other key.
+
+@GrepFilter
+    Here user may temporarily filter currently viewed file content using #UNIX grep# tool pattern matching.
+    You may specify pattern to match (or several patterns separated by #\|# - as in usual grep) and/or
+pattern that will be excluded from output.
+    Optionally its possible to see specified #lines amount before or after matched region#, as well as
+use #case sensitive# matching or match #whole words# instead of plain substring.
 
 @ViewerGotoPos
 $ #Viewer: go to specified position#

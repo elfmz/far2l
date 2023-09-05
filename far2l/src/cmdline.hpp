@@ -73,6 +73,7 @@ private:
 	BOOL IntChDir(const wchar_t *CmdLine, int ClosePlugin, bool Silent = false);
 	bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
 	void ProcessTabCompletion();
+	bool ProcessFarCommands(const wchar_t *CmdLine);
 	void DrawComboBoxMark(wchar_t MarkChar);
 	void ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir, FARString strFile=L"");
 

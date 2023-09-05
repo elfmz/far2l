@@ -2661,6 +2661,7 @@ $ #Програма перегляду: клавіші керування#
  #F7# ~Пошук~@ViewerSearch@
  #Shift-F7, Space# Продовжити пошук
  #Alt-F7# Продовжити пошук у зворотному напрямку
+ #Ctrl-F7# ~Grep фiльтр~@GrepFilter@
  #F8# Перемикання UTF8/~ANSI/OEM~@CodePagesSet@ кодової сторінки
  #Shift-F8# Вибір кодової сторінки
  #Alt-F8# ~Змінити поточну позицію~@ViewerGotoPos@
@@ -2722,6 +2723,13 @@ $ #Програма перегляду: клавіші керування#
  відпускання кнопки Alt при збереженні натиснутою PgUp/PgDn продовжить скролінг
 із обраною швидкістю. Швидкість скролінгу скидається у звичайне значення
  при відпусканні всіх кнопок на тривалий час або натискання будь-якої іншої кнопки.
+
+@GrepFilter
+    Here user may temporarily filter currently viewed file content using #UNIX grep# tool pattern matching.
+    You may specify pattern to match (or several patterns separated by #\|# - as in usual grep) and/or
+pattern that will be excluded from output.
+    Optionally its possible to see specified #lines amount before or after matched region#, as well as
+use #case sensitive# matching or match #whole words# instead of plain substring.
 
 @ViewerGotoPos
 $ #Програма перегляду: змінити поточну позицію#

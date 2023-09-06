@@ -58,11 +58,16 @@ src/Erroring.cpp
 src/Host/HostRemoteBroker.cpp
 )
 
-
 add_executable (NetRocks-FILE
     ${PROTOCOL_SOURCES}
     src/Protocol/File/ProtocolFile.cpp
     src/Host/HostLocal.cpp
+)
+
+add_executable (NetRocks-FISH
+    ${PROTOCOL_SOURCES}
+    src/Protocol/FISH/ProtocolFISH.cpp
+    src/Protocol/FISH/FISHClient.cpp
 )
 
 # get rid of warning: dynamic exception specifications are deprecated in C++11
@@ -76,6 +81,16 @@ set_target_properties(NetRocks-FILE
     PREFIX ""
     SUFFIX ".broker")
 target_compile_options(NetRocks-FILE PUBLIC -DNETROCKS_PROTOCOL)
+
+target_link_libraries(NetRocks-FISH utils)
+target_include_directories(NetRocks-FISH PRIVATE src)
+set_target_properties(NetRocks-FISH
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+    PREFIX ""
+    SUFFIX ".broker")
+target_compile_options(NetRocks-FISH PUBLIC -DNETROCKS_PROTOCOL)
+
 
 if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")

@@ -997,7 +997,14 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		}
 
 		AboutList.SetPosition(-1, -1, 0, 0);
-		AboutList.Process();
+		//AboutList.Process();
+		AboutList.Show();
+		while (!AboutList.Done()) {
+			int Key = AboutList.ReadInput();
+			if (Key == L' ' || Key == KEY_ENTER || Key == KEY_NUMENTER)		// исключаем пробел и ENTER
+				continue;
+			AboutList.ProcessInput();
+		}
 
 		return true;
 	}

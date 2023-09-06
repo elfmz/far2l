@@ -940,7 +940,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		{
 			AboutList.AddItem(&ais);
 
-			fs.Format(L"Plugin %2d: ",  i+1);
+			fs.Format(L"Plugin %2d | ",  i+1);
 
 			Plugin *pPlugin = CtrlObject->Plugins.GetPlugin(i);
 			if(pPlugin == nullptr) {
@@ -948,12 +948,13 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 				AboutList.AddItem(fs);
 				continue;
 			}
-			fs.Append( pPlugin->GetModuleName() );
-			AboutList.AddItem(fs);
+			fs2 = fs;
+			fs2.Append( pPlugin->GetModuleName() );
+			AboutList.AddItem(fs2);
 
-			fs = L"   Settings Name: ";
-			fs.Append(pPlugin->GetSettingsName());
-			AboutList.AddItem(fs);
+			fs2 = fs + L"Settings Name: ";
+			fs2.Append(pPlugin->GetSettingsName());
+			AboutList.AddItem(fs2);
 
 			int IFlags;
 			FARString CommandPrefix = L"";
@@ -972,31 +973,27 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 				}
 			}
 
-			fs = L"  ";
-			fs.AppendFormat(L" %s Cached  ", pPlugin->CheckWorkFlags(PIWF_CACHED) ? "[x]" : "[ ]");
-			AboutList.AddItem(fs);
+			fs2 = fs;
+			fs2.AppendFormat(L"%s Cached  ", pPlugin->CheckWorkFlags(PIWF_CACHED) ? "[x]" : "[ ]");
+			AboutList.AddItem(fs2);
 
 			if (IFlags >= 0) {
-				fs = L"   F11:";
-				fs.AppendFormat(L" %s Panel  ", IFlags & PF_DISABLEPANELS ? "[ ]" : "[x]");
-				fs.AppendFormat(L" %s Dialog  ", IFlags & PF_DIALOG ? "[x]" : "[ ]");
-				fs.AppendFormat(L" %s Viewer  ", IFlags & PF_VIEWER ? "[x]" : "[ ]");
-				fs.AppendFormat(L" %s Editor  ", IFlags & PF_EDITOR ? "[x]" : "[ ]");
-				AboutList.AddItem(fs);
+				fs2 = fs + L"F11:";
+				fs2.AppendFormat(L" %s Panel  ", IFlags & PF_DISABLEPANELS ? "[ ]" : "[x]");
+				fs2.AppendFormat(L" %s Dialog  ", IFlags & PF_DIALOG ? "[x]" : "[ ]");
+				fs2.AppendFormat(L" %s Viewer  ", IFlags & PF_VIEWER ? "[x]" : "[ ]");
+				fs2.AppendFormat(L" %s Editor  ", IFlags & PF_EDITOR ? "[x]" : "[ ]");
+				AboutList.AddItem(fs2);
 			}
-			fs = L"  ";
-			fs.AppendFormat(L" %s EditorInput  ", pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
-			AboutList.AddItem(fs);
+			fs2 = fs;
+			fs2.AppendFormat(L"%s EditorInput  ", pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
+			AboutList.AddItem(fs2);
 
 			if ( !CommandPrefix.IsEmpty() ) {
-				fs = L"   CommandPrefix: " + CommandPrefix;
-				AboutList.AddItem(fs);
+				fs2 = fs + L"CommandPrefix: " + CommandPrefix;
+				AboutList.AddItem(fs2);
 			}
 			
-			/*for (const auto& i: *Global->CtrlObject->Plugins)
-			{
-				std::wcout << i->Title() << L", version "sv << version_to_string(i->version()) << L'\n';
-			}*/
 		}
 
 		AboutList.SetPosition(-1, -1, 0, 0);

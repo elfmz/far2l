@@ -880,6 +880,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		int npl;
 
 		VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
+		ListAbout.SetFlags(VMENU_SHOWAMPERSAND);
 		//ListAbout.SetFlags(VMENU_WRAPMODE);
 		//ListAbout.ClearFlags(VMENU_MOUSEDOWN);
 		//ListAbout.SetHelp(L"FarAbout");

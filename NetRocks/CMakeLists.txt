@@ -68,6 +68,7 @@ add_executable (NetRocks-FISH
     ${PROTOCOL_SOURCES}
     src/Protocol/FISH/ProtocolFISH.cpp
     src/Protocol/FISH/FISHClient.cpp
+    src/Protocol/FISH/FISHParseLS.cpp
 )
 
 # get rid of warning: dynamic exception specifications are deprecated in C++11

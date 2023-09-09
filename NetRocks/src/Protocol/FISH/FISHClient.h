@@ -24,25 +24,11 @@ enum OutputType
 
 struct WaitResult
 {
-    int error_code;
-    int index;
+    int error_code{0};
+    int index{-1};
     OutputType output_type;
     std::string stdout_data;
     std::string stderr_data;
-};
-
-struct FileInfo
-{
-    int permissions;
-    std::string owner;
-    std::string group;
-    long size;
-//    std::filesystem::file_time_type modified_time;
-//    std::filesystem::path path;
-//    std::filesystem::path symlink_path;
-    std::string path;
-    std::string symlink_path;
-    bool is_directory;
 };
 
 class FISHClient
@@ -52,10 +38,11 @@ class FISHClient
     pid_t _pid{(pid_t)-1};
 
 public:
+	FISHClient();
     virtual ~FISHClient();
 
 	bool OpenApp(const char *app, const char *arg);
-	WaitResult WaitFor(const std::vector<std::string>& commands, const std::vector<std::string>& expectedStrings);
-	std::vector<FileInfo> ParseLs(const std::string& buffer);
+	WaitResult SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies);
+	WaitResult SendHelperAndWaitReply(const char *helper, const std::vector<std::string> &expected_replies);
 };
 

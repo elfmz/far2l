@@ -1,0 +1,105 @@
+#RETR $FISH_FILENAME $FISH_START_OFFSET
+LC_TIME=C
+export LC_TIME
+fish_get_perl ()
+{
+FILENAME=$1
+OFFSET=$2
+perl -e '
+use strict;
+use POSIX;
+use Fcntl;
+my $filename = $ARGV[0];
+my $pos = $ARGV[1];
+my $content;
+my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = lstat("$filename");
+my $n;
+if (open IFILE,$filename) {
+    if ($size<$pos) {
+        printf("0\n");
+    } else {
+        $size-=$pos;
+        printf("$size\n");
+    }
+    printf("### 100\n");
+    seek (IFILE, $pos, 0);
+    while ($n = read(IFILE,$content,$blksize)!= 0) {
+        print $content;
+    }
+    close IFILE;
+    printf("### 200\n");
+} else {
+    printf("### 500\n");
+}
+exit 0
+' "${FILENAME}" $OFFSET
+}
+
+fish_get_tail ()
+{
+FILENAME=$1
+OFFSET=$2
+LC_TIME=C
+export LC_TIME
+if dd if="${FILENAME}" of=/dev/null bs=1 count=1 2>/dev/null ; then
+    file_size=`ls -ln "${FILENAME}" 2>/dev/null | (
+       read p l u g s r
+       echo $s
+    )`
+    if [ $OFFSET -gt 0 ]; then
+        file_size=`expr $file_size - $OFFSET`
+        OFFSET=`expr $OFFSET + 1`
+    fi
+    if [ $file_size -gt 0 ]; then
+        echo $file_size
+    else
+        echo 0
+    fi
+    echo "### 100"
+    if [ $OFFSET -gt 0 ]; then
+        tail -c +${OFFSET} "${FILENAME}"
+    else
+        cat "${FILENAME}"
+    fi
+    echo "### 200"
+else
+    echo "### 500"
+fi
+}
+
+fish_get_dd ()
+{
+FILENAME=$1
+OFFSET=$2
+LC_TIME=C
+export LC_TIME
+if dd if="${FILENAME}" of=/dev/null bs=1 count=1 2>/dev/null ; then
+    file_size=`ls -ln "${FILENAME}" 2>/dev/null | (
+       read p l u g s r
+       echo $s
+    )`
+    file_size=`expr $file_size - $OFFSET`
+    if [ $file_size -gt 0 ]; then
+        echo $file_size
+    else
+        echo 0
+    fi
+    echo "### 100"
+    if [ $OFFSET -gt 0 ]; then
+        dd skip=$OFFSET ibs=1 if="${FILENAME}" 2>/dev/null
+    else
+        cat "${FILENAME}"
+    fi
+    echo "### 200"
+else
+    echo "### 500"
+fi
+}
+
+if [ -n "${FISH_HAVE_PERL}" ]; then
+    fish_get_perl "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+elif [ -n "${FISH_HAVE_TAIL}" ]; then
+    fish_get_tail "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+else
+    fish_get_dd "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+fi

@@ -1,0 +1,6 @@
+#RENAME $FISH_FILEFROM $FISH_FILETO
+if mv "/${FISH_FILEFROM}" "/${FISH_FILETO}" 2>/dev/null; then
+   echo "### 000"
+else
+   echo "### 500"
+fi

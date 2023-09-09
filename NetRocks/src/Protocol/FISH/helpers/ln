@@ -1,0 +1,8 @@
+#SYMLINK $FISH_FILEFROM $FISH_FILETO
+FILEFROM="${FISH_FILEFROM}"
+FILETO="/${FISH_FILETO}"
+if ln -s "${FILEFROM}" "${FILETO}" 2>/dev/null; then
+   echo "### 000"
+else
+   echo "### 500"
+fi

@@ -1,0 +1,16 @@
+#APPE $FISH_FILESIZE $FISH_FILENAME
+FILENAME="/${FISH_FILENAME}"
+echo "### 001"
+{
+    bss=4096
+    bsl=4095
+    if [ $FISH_FILESIZE -lt $bss ]; then
+        bss=1;
+        bsl=0;
+    fi
+    while [ $FISH_FILESIZE -gt 0 ]; do
+        cnt=`expr \\( $FISH_FILESIZE + $bsl \\) / $bss`
+        n=`dd bs=$bss count=$cnt | tee -a "${FILENAME}" | wc -c`
+        FISH_FILESIZE=`expr $FISH_FILESIZE - $n`
+    done
+}; echo "### 200"

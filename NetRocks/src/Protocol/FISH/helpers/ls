@@ -1,0 +1,170 @@
+#LIST /${FISH_DIR}
+LC_TIME=C
+export LC_TIME
+perl_res="1"
+fish_list_lsq ()
+{
+FISH_DIR="$1"
+ls -Qlan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+while read p l u g s m d y n; do
+    echo "P$p $u.$g"
+    echo "S$s"
+    echo "d$m $d $y"
+    echo ":$n"
+    echo
+done
+)
+
+ls -Qlan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+while read p l u g a i m d y n; do
+    echo "P$p $u.$g"
+    echo "E$a$i"
+    echo "d$m $d $y"
+    echo ":$n"
+    echo
+done
+)
+echo '### 200'
+}
+
+fish_list_sed ()
+{
+FISH_DIR="$1"
+ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+while read p l u g s rec; do
+    if [ -n "$g" ]; then
+        if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
+            filename=`echo "$rec"| sed 's/[^[:space:]]\+ \+[^[:space:]]\+ \+[^[:space:]]\+ //'`
+            filedate=`echo "$rec"| sed 's/\([^[:space:]]\+ \+[^[:space:]]\+ \+[^[:space:]]\+\) .*/\1/'`
+        else
+            filename=`echo "$rec"| sed 's/[^[:space:]]\+ \+[^[:space:]]\+ //'`
+            filedate=`echo "$rec"| sed 's/\([^[:space:]]\+ \+[^[:space:]]\+\) .*/\1/'`
+        fi
+        pfile=\"`echo "$filename" | sed -e 's#^\(.*\) -> \(.*\)#\1" -> "\2#'`\"
+        echo "P$p $u.$g"
+        echo "S$s"
+        if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
+            echo "d$filedate"
+        else
+            echo "D$filedate"
+        fi
+        echo ":$pfile"
+        echo
+    fi
+done
+)
+ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+while read p l u g a i rec; do
+    if [ -n "$g" ]; then
+        if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
+            filename=`echo "$rec"| sed 's/[^[:space:]]\+ \+[^[:space:]]\+ \+[^[:space:]]\+ //'`
+            filedate=`echo "$rec"| sed 's/\([^[:space:]]\+ \+[^[:space:]]\+ \+[^[:space:]]\+\) .*/\1/'`
+        else
+            filename=`echo "$rec"| sed 's/[^[:space:]]\+ \+[^[:space:]]\+ //'`
+            filedate=`echo "$rec"| sed 's/\([^[:space:]]\+ \+[^[:space:]]\+\) .*/\1/'`
+        fi
+        pfile=\"`echo "$filename" | sed -e 's#^\(.*\) -> \(.*\)#\1" -> "\2#'`\"
+        echo "P$p $u.$g"
+        echo "E$a$i"
+        if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
+            echo "d$filedate"
+        else
+            echo "D$filedate"
+        fi
+        echo ":$pfile"
+        echo
+    fi
+done
+)
+echo '### 200'
+}
+
+fish_list_poor_ls ()
+{
+FISH_DIR="$1"
+ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+while read p l u g s m d y n n2 n3; do
+    if [ -n "$g" ]; then
+        if [ "$m" = "0" ]; then
+            s=$d; m=$y; d=$n; y=$n2; n=$n3
+        else
+            n=$n" "$n2" "$n3
+        fi
+        echo "P$p $u $g"
+        echo "S$s"
+        echo "d$m $d $y"
+        echo ":"$n
+        echo
+    fi
+done
+)
+ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+while read p l u g a i m d y n n2 n3; do
+    if [ -n "$g" ]; then
+        if [ "$a" = "0" ]; then
+            a=$m; i=$d; m=$y; d=$n; y=$n2; n=$n3
+        else
+            n=$n" "$n2" "$n3
+        fi
+        echo "P$p $u $g"
+        echo "E$a$i"
+        echo "d$m $d $y"
+        echo ":"$n
+        echo
+    fi
+done
+)
+echo '### 200'
+}
+
+fish_list_perl ()
+{
+FISH_DIR=$1
+perl -e '
+use strict;
+use POSIX;
+use Fcntl;
+use POSIX ":fcntl_h"; #S_ISLNK was here until 5.6
+import Fcntl ":mode" unless defined &S_ISLNK; #and is now here
+my $dirname = $ARGV[0];
+if (opendir (DIR, $dirname)) {
+while((my $filename = readdir (DIR))){
+    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = lstat("$dirname/$filename");
+    my $mloctime= strftime("%m-%d-%Y %H:%M", localtime $mtime);
+    my $strutils_shell_escape_regex = s/([;<>\*\|`&\$!#\(\)\[\]\{\}:'\''"\ \\])/\\$1/g;
+    my $e_filename = $filename;
+    $e_filename =~ $strutils_shell_escape_regex;
+    if (S_ISLNK ($mode)) {
+        my $linkname = readlink ("$dirname/$filename");
+        $linkname =~ $strutils_shell_escape_regex;
+        printf("R%o %o $uid.$gid\nS$size\nd$mloctime\n:\"%s\" -> \"%s\"\n\n", S_IMODE($mode), S_IFMT($mode), $e_filename, $linkname);
+    } elsif (S_ISCHR ($mode) || S_ISBLK ($mode)) {
+        my $minor = $rdev % 256;
+        my $major = int( $rdev / 256 );
+        printf("R%o %o $uid.$gid\nE$major,$minor\nd$mloctime\n:\"%s\"\n\n", S_IMODE($mode), S_IFMT($mode), $e_filename);
+    } else {
+        printf("R%o %o $uid.$gid\nS$size\nd$mloctime\n:\"%s\"\n\n", S_IMODE($mode), S_IFMT($mode), $e_filename);
+    }
+}
+    printf("### 200\n");
+    closedir(DIR);
+} else {
+    printf("### 500\n");
+}
+exit 0
+' "/${FISH_DIR}"
+perl_res=$?
+}
+
+if [ -n "${FISH_HAVE_PERL}" ]; then
+    fish_list_perl "/${FISH_FILENAME}"
+fi
+if [ "${perl_res}" != "0" ]; then
+    if [ -n "${FISH_HAVE_LSQ}" ]; then
+        fish_list_lsq "/${FISH_FILENAME}"
+    elif [ -n "${FISH_HAVE_SED}" ]; then
+        fish_list_sed "/${FISH_FILENAME}"
+    else
+        fish_list_poor_ls "/${FISH_FILENAME}"
+    fi
+fi

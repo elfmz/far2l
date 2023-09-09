@@ -32,12 +32,6 @@ private:
 class ProtocolFISH : public IProtocol
 {
 	std::shared_ptr<FISHConnection> _fish;
-	std::string _host, _mount;
-
-	std::string RootedPath(const std::string &path);
-	void RootedPathToMounted(std::string &path);
-
-	std::string MountedRootedPath(const std::string &path);
 
 public:
 

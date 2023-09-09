@@ -1,0 +1,3 @@
+#ISEXISTS $FISH_FILENAME
+ls -l "/${FISH_FILENAME}" >/dev/null 2>/dev/null
+echo '### '$?

@@ -1,0 +1,44 @@
+LC_TIME=C
+export LC_TIME
+#FISH_HAVE_HEAD         1
+#FISH_HAVE_SED          2
+#FISH_HAVE_AWK          4
+#FISH_HAVE_PERL         8
+#FISH_HAVE_LSQ         16
+#FISH_HAVE_DATE_MDYT   32
+#FISH_HAVE_TAIL        64
+res=0
+if `echo yes| head -c 1 > /dev/null 2>&1` ; then
+    res=`expr $res + 1`
+fi
+if `echo 1 | sed 's/1/2/' >/dev/null 2>&1` ; then
+    res=`expr $res + 2`
+fi
+if `echo 1| awk '{print}' > /dev/null 2>&1` ; then
+    res=`expr $res + 4`
+fi
+if `perl -v > /dev/null 2>&1` ; then
+    res=`expr $res + 8`
+fi
+if `ls -Q / >/dev/null 2>&1` ; then
+    res=`expr $res + 16`
+fi
+dat=`ls -lan / 2>/dev/null | head -n 3 | (
+    while read p l u g s rec; do
+      if [ -n "$g" ]; then
+        if [ -n "$l" ]; then
+          echo "$rec"
+        fi
+      fi
+    done
+)`
+dat=`echo $dat | cut -c1 2>/dev/null`
+r=`echo "0123456789"| grep "$dat"`
+if [ -z "$r" ]; then
+    res=`expr $res + 32`
+fi
+if `echo yes| tail -c +1 - > /dev/null 2>&1` ; then
+    res=`expr $res + 64`
+fi
+echo $res
+echo "### 200"

@@ -1,11 +1,17 @@
 #include "FISHClient.h"
+#include <fstream>
 #include <utils.h>
+#include <os_call.hpp>
 
 static void ForkSafePrint(const char *str)
 {
 	if (write(STDOUT_FILENO, str, strlen(str)) <= 0) {
 		perror("write");
 	}
+}
+
+FISHClient::FISHClient()
+{
 }
 
 bool FISHClient::OpenApp(const char *app, const char *arg)
@@ -79,16 +85,33 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 	return true;
 }
 
-WaitResult FISHClient::WaitFor(const std::vector<std::string>& commands, const std::vector<std::string>& expectedStrings)
+WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<std::string> &expected_replies)
+{
+	std::ifstream helper_ifs;
+	helper_ifs.open(helper);
+	std::string send_str, tmp_str;
+	if (!helper_ifs.is_open() ) {
+		fprintf(stderr, "Can't open helper '%s'\n", helper);
+		WaitResult result;
+		result.error_code = -1;
+		return result;
+	}
+
+	while (std::getline(helper_ifs, tmp_str)) {
+		send_str+= tmp_str;
+		send_str+= '\n';
+	}
+
+	return SendAndWaitReply(send_str, expected_replies);
+}
+
+WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies)
 {
 	WaitResult result;
-	result.error_code = 0;
 
-	for (const auto& command : commands) {
-		if (write(_master_fd, command.c_str(), command.length()) < 0) {
-			result.error_code = errno;
-			return result;
-		}
+	if (WriteAll(_master_fd, send_str.c_str(), send_str.length()) != send_str.length()) {
+		result.error_code = errno ? errno : -1;
+		return result;
 	}
 
 	struct pollfd fds[2];
@@ -97,112 +120,50 @@ WaitResult FISHClient::WaitFor(const std::vector<std::string>& commands, const s
 	fds[1].fd = _stderr_pipe[0];
 	fds[1].events = POLLIN;
 
-	std::string stdout_buffer, stderr_buffer;
+	while (os_call_int(poll, &fds[0], (nfds_t)2, -1) >= 0) {
+		char buffer[2048];
 
-	while (true) {
-		int ret = poll(fds, 2, -1);
-		if (ret > 0) {
-			char buffer[2048];
-
-			if (fds[0].revents & POLLIN) {
-				int n = read(_master_fd, buffer, sizeof(buffer));
-				if (n > 0) {
-					stdout_buffer.append(buffer, n);
-					//std::cout << "Debug (stdout): " << buffer << std::endl;  // ***
-				}
+		if (fds[0].revents & POLLIN) {
+			int n = read(_master_fd, buffer, sizeof(buffer));
+			if (n > 0) {
+				result.stdout_data.append(buffer, n);
+				//std::cout << "Debug (stdout): " << buffer << std::endl;  // ***
 			}
-
-			if (fds[1].revents & POLLIN) {
-				int n = read(_stderr_pipe[0], buffer, sizeof(buffer));
-				if (n > 0) {
-					stderr_buffer.append(buffer, n);
-					//std::cout << "Debug (stderr): " << buffer << std::endl;  // ***
-				}
-			}
-
-			for (size_t i = 0; i < expectedStrings.size(); ++i) {
-				if (stdout_buffer.find(expectedStrings[i]) != std::string::npos) {
-					result.index = i;
-					result.output_type = STDOUT;
-					result.stdout_data = stdout_buffer;
-					result.stderr_data = stderr_buffer;
-					return result;
-				}
-
-				if (stderr_buffer.find(expectedStrings[i]) != std::string::npos) {
-					result.index = i;
-					result.output_type = STDERR;
-					result.stdout_data = stdout_buffer;
-					result.stderr_data = stderr_buffer;
-					return result;
-				}
-			}
-		} else if (ret < 0) {
-			result.error_code = errno;
-			result.stdout_data = stdout_buffer;
-			result.stderr_data = stderr_buffer;
-			return result;
+			fds[0].revents &= ~POLLIN;
 		}
-	}
-}
 
-std::vector<FileInfo> FISHClient::ParseLs(const std::string& buffer)
-{
-	std::vector<FileInfo> files;
-	std::istringstream stream(buffer);
-	std::string line;
-	FileInfo fileInfo = {0};
+		if (fds[1].revents & POLLIN) {
+			int n = read(_stderr_pipe[0], buffer, sizeof(buffer));
+			if (n > 0) {
+				result.stderr_data.append(buffer, n);
+				//std::cout << "Debug (stderr): " << buffer << std::endl;  // ***
+			}
+			fds[1].revents &= ~POLLIN;
+		}
 
-	while (std::getline(stream, line)) {
-		if (line.empty()) continue;
-
-		char type = line[0];
-		std::string data = line.substr(1);
-
-		// убираем \r (откуда он там берется вообще?)
-		data.erase(std::remove(data.begin(), data.end(), '\r'), data.end());
-
-		switch (type) {
-			case ':': {
-
-				if (!fileInfo.path.empty()) {
-					files.push_back(fileInfo);
-				}
-				fileInfo = FileInfo();
-					
-				// Парсинг имени файла и пути символической ссылки
-				size_t arrow_pos = data.find(" -> ");
-				if (arrow_pos != std::string::npos) {
-					fileInfo.path = data.substr(0, arrow_pos);
-					fileInfo.symlink_path = data.substr(arrow_pos + 4);
-				} else {
-					fileInfo.path = data;
-				}
-
-				break;
+		for (result.index = 0; result.index != (int)expected_replies.size(); ++result.index) {
+			if (result.stdout_data.find(expected_replies[result.index]) != std::string::npos) {
+				result.output_type = STDOUT;
+				return result;
 			}
 
-			case 'S':
-				fileInfo.size = std::stol(data);
-				break;
-
-			// ... другие case ...
-
-			default:
-				break;
+			if (result.stderr_data.find(expected_replies[result.index]) != std::string::npos) {
+				result.output_type = STDERR;
+				return result;
+			}
 		}
 	}
 
-	if (!fileInfo.path.empty()) {
-		files.push_back(fileInfo);
-	}
-
-	return files;
+	result.error_code = errno ? errno : -2;
+	return result;
 }
 
 FISHClient::~FISHClient()
 {
-   if (_pid > 0) {
+	// Закрыть файловые дескрипторы
+	CheckedCloseFD(_master_fd);
+	CheckedCloseFD(_stderr_pipe[0]);
+	if (_pid != (pid_t)-1) {
 		// Проверяем, завершен ли дочерний процесс
 		int status;
 		if (waitpid(_pid, &status, WNOHANG) == 0) {
@@ -212,9 +173,5 @@ FISHClient::~FISHClient()
 		}
 		std::cout << "Child exited with status " << status << '\n';
 	}
-
-	// Закрыть файловые дескрипторы
-	CheckedCloseFD(_master_fd);
-	CheckedCloseFD(_stderr_pipe[0]);
 }
 

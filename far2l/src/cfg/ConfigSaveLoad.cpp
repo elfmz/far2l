@@ -227,6 +227,57 @@ public:
 		}
 	}
 
+	void GetMaxLengthSectKeys(size_t &len_sections, size_t &len_keys, size_t &len_sections_keys) const
+	{
+		size_t tmp1, tmp2;
+		tmp1 = strlen(_section);
+		if (tmp1 > len_sections )
+			len_sections = tmp1;
+		tmp2 = strlen(_key);
+		if (tmp2 > len_keys )
+			len_keys = tmp2;
+		tmp1 += 1 + tmp2;
+		if (tmp1 > len_sections_keys )
+			len_sections_keys = tmp1;
+	}
+
+	void MenuListAppend(VMenu &vm,
+					size_t len_sections, size_t len_keys, size_t len_sections_keys,
+					bool all, bool align_dot) const
+	{
+		//MenuItemEx mi;
+		FARString fsn, fs;
+		if (align_dot)
+		 fsn.Format(L"%*s.%-*s", len_sections, _section, len_keys, _key);
+		else {
+			fs.Format(L"%s.%s", _section, _key);
+			fsn.Format(L"%-*ls", len_sections_keys, fs.CPtr());
+		}
+		switch (_type)
+		{
+			case T_BOOL:
+				fs.Format(L"%s %ls |  bool|%s", (*_value.b == _default.b ? " " : "*"), fsn.CPtr(), (_value.b ? "true" : "false"));
+				break;
+			case T_INT:
+				fs.Format(L"%s %ls |   int|%d = 0x%x", (*_value.i == _default.i ? " " : "*"), fsn.CPtr(), *_value.i, *_value.i);
+				break;
+			case T_DWORD:
+				fs.Format(L"%s %ls | dword|%u = 0x%x", (*_value.dw == _default.dw ? " " : "*"), fsn.CPtr(), *_value.dw, *_value.dw);
+				break;
+			case T_STR:
+				fs.Format(L"%s %ls |string|%ls", (*_value.str == _default.str ? " " : "*"), fsn.CPtr(), _value.str->CPtr());
+				break;
+			case T_BIN:
+				fs.Format(L"%s %ls |binary|(binary has length %u bytes)",
+					(_default.bin == nullptr || _value.bin == nullptr ? "?"
+						: ( memcmp(_value.bin, _default.bin, _bin_size) == 0 ? " " : "*")),
+					fsn.CPtr(), _bin_size );
+				break;
+		}
+		if (all || fs.At(0)!=L' ')
+			vm.AddItem(fs);
+	}
+
 } s_opt_serializers[] =
 {
 	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
@@ -742,3 +793,51 @@ void SaveConfig(int Ask)
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
+void AdvancedConfig()
+{
+	size_t len_sections = 0, len_keys = 0, len_sections_keys = 0;
+	bool all = true, align_dot = false;
+	VMenu ListConfig(L"far:config",nullptr,0,ScrY-4);
+	//ListConfig.SetFlags(VMENU_WRAPMODE);
+	//ListConfig.ClearFlags(VMENU_MOUSEDOWN);
+	//ListConfig.SetHelp(L"FarConfig");
+
+	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - toogle align names");
+
+	MenuItemEx mis;
+	mis.Flags = LIF_SEPARATOR;
+
+	for (const auto &opt_ser : s_opt_serializers)
+		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
+	for (const auto &opt_ser : s_opt_serializers)
+		opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, all, align_dot);
+
+	ListConfig.SetPosition(-1, -1, 0, 0);
+	//ListConfig.Process();
+	ListConfig.Show();
+	while (!ListConfig.Done()) {
+		int Key = ListConfig.ReadInput();
+		if (Key == KEY_ENTER || Key == KEY_NUMENTER)		// исключаем ENTER
+			continue;
+		if (Key == KEY_CTRLH ) {
+			all = !all;
+			ListConfig.DeleteItems();
+			for (const auto &opt_ser : s_opt_serializers)
+				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, all, align_dot);
+			ListConfig.SetPosition(-1, -1, 0, 0);
+			ListConfig.Show();
+		}
+		if (Key == KEY_CTRLA ) {
+			align_dot = !align_dot;
+			int sel_pos = ListConfig.GetSelectPos();
+			ListConfig.DeleteItems();
+			for (const auto &opt_ser : s_opt_serializers) {
+				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, all, align_dot);
+			}
+			ListConfig.SetSelectPos(sel_pos,0);
+			ListConfig.FastShow();
+		}
+		ListConfig.ProcessInput();
+	}
+
+}

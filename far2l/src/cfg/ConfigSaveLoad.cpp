@@ -802,7 +802,7 @@ void AdvancedConfig()
 	//ListConfig.ClearFlags(VMENU_MOUSEDOWN);
 	//ListConfig.SetHelp(L"FarConfig");
 
-	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - toogle align names");
+	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 
 	MenuItemEx mis;
 	mis.Flags = LIF_SEPARATOR;

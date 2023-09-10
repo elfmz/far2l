@@ -97,9 +97,9 @@ fi
 }
 
 if [ -n "${FISH_HAVE_PERL}" ]; then
-    fish_get_perl "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+    fish_get_perl "${FISH_FILENAME}" ${FISH_START_OFFSET}
 elif [ -n "${FISH_HAVE_TAIL}" ]; then
-    fish_get_tail "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+    fish_get_tail "${FISH_FILENAME}" ${FISH_START_OFFSET}
 else
-    fish_get_dd "/${FISH_FILENAME}" ${FISH_START_OFFSET}
+    fish_get_dd "${FISH_FILENAME}" ${FISH_START_OFFSET}
 fi

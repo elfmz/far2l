@@ -1,5 +1,5 @@
 #CHOWN $FISH_FILEOWNER:$FISH_FILEGROUP $FISH_FILENAME
-if chown ${FISH_FILEOWNER}:${FISH_FILEGROUP} "/${FISH_FILENAME}" ; then
+if chown ${FISH_FILEOWNER}:${FISH_FILEGROUP} "${FISH_FILENAME}" ; then
     echo "### 000"
 else
     echo "### 500"

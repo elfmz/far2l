@@ -24,8 +24,9 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 	:
 	_fish(std::make_shared<FISHClient>())
+//	_dir_enum_cache(10)
 {
-	fprintf(stderr, "*2\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 
 	StringConfig protocol_options(options);
 	// ---------------------------------------------
@@ -68,18 +69,12 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 
     fprintf(stderr, "*** CONNECTED\n");
 
-	int info = 0;
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0) {
-		info = atoi(wr.stdout_data.c_str());
+		_info = atoi(wr.stdout_data.c_str());
 	}
-	_fish->SetSubstitution("${FISH_HAVE_HEAD}", (info & 1) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_SED}", (info & 2) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_AWK}", (info & 4) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_PERL}", (info & 8) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_LSQ}", (info & 16) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_DATE_MDYT}", (info & 32) ? "1" : "");
-	_fish->SetSubstitution("${FISH_HAVE_TAIL}", (info & 64) ? "1" : "");
+	SetDefaultSubstitutions();
+
 
 	// если мы сюда добрались, значит, уже залогинены
 	// fixme: таймайт? ***
@@ -88,29 +83,58 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 
 ProtocolFISH::~ProtocolFISH()
 {
-	fprintf(stderr, "*3\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
+}
+
+void ProtocolFISH::SetDefaultSubstitutions()
+{
+	_fish->SetSubstitution("${FISH_HAVE_HEAD}", (_info & 1) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_SED}", (_info & 2) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_AWK}", (_info & 4) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_PERL}", (_info & 8) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_LSQ}", (_info & 16) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_DATE_MDYT}", (_info & 32) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_TAIL}", (_info & 64) ? "1" : "");
+
+	_fish->SetSubstitution("${FISH_LS_ARGS}", "H"); // follow_symlink by default
 }
 
 mode_t ProtocolFISH::GetMode(const std::string &path, bool follow_symlink)
 {
-	fprintf(stderr, "*8\n");
-
-	return 0;
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
+	FileInformation file_info;
+	GetInformation(file_info, path, follow_symlink);
+	return file_info.mode;
 }
 
 unsigned long long ProtocolFISH::GetSize(const std::string &path, bool follow_symlink)
 {
-	return 0;
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
+	FileInformation file_info;
+	GetInformation(file_info, path, follow_symlink);
+	return file_info.size;
 }
 
 void ProtocolFISH::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
-	fprintf(stderr, "*10\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
+	try {
+		_fish->SetSubstitution("${FISH_HAVE_PERL}", ""); // perl always follows symlink and doesnt know about 'd'
+		_fish->SetSubstitution("${FISH_LS_ARGS}", follow_symlink ? "Hd" : "d");
+		auto enumer = DirectoryEnum(path);
+		std::string name, owner, group;
+		enumer->Enum(name, owner, group, file_info);
+
+	} catch (...) {
+		SetDefaultSubstitutions();
+		throw;
+	}
+	SetDefaultSubstitutions();
 }
 
 void ProtocolFISH::FileDelete(const std::string &path)
 {
-	fprintf(stderr, "*11\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	//int rc = fish_unlink(_fish->ctx, MountedRootedPath(path).c_str());
 	//if (rc != 0)
 	//	throw ProtocolError("Delete file error", rc);
@@ -118,7 +142,7 @@ void ProtocolFISH::FileDelete(const std::string &path)
 
 void ProtocolFISH::DirectoryDelete(const std::string &path)
 {
-	fprintf(stderr, "*12\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	//int rc = fish_rmdir(_fish->ctx, MountedRootedPath(path).c_str());
 	//if (rc != 0)
 	//	throw ProtocolError("Delete directory error", rc);
@@ -126,7 +150,7 @@ void ProtocolFISH::DirectoryDelete(const std::string &path)
 
 void ProtocolFISH::DirectoryCreate(const std::string &path, mode_t mode)
 {
-	fprintf(stderr, "*13\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	//int rc = fish_mkdir(_fish->ctx, MountedRootedPath(path).c_str());//, mode);
 	//if (rc != 0)
 	//	throw ProtocolError("Create directory error", rc);
@@ -134,7 +158,7 @@ void ProtocolFISH::DirectoryCreate(const std::string &path, mode_t mode)
 
 void ProtocolFISH::Rename(const std::string &path_old, const std::string &path_new)
 {
-	fprintf(stderr, "*14\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	//int rc = fish_rename(_fish->ctx, MountedRootedPath(path_old).c_str(), MountedRootedPath(path_new).c_str());
 	//if (rc != 0)
 	//	throw ProtocolError("Rename error", rc);
@@ -143,7 +167,7 @@ void ProtocolFISH::Rename(const std::string &path_old, const std::string &path_n
 
 void ProtocolFISH::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
-	fprintf(stderr, "*15\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	/*
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
@@ -159,7 +183,7 @@ void ProtocolFISH::SetTimes(const std::string &path, const timespec &access_time
 
 void ProtocolFISH::SetMode(const std::string &path, mode_t mode)
 {
-	fprintf(stderr, "*16\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	/*
 	int rc = fish_chmod(_fish->ctx, MountedRootedPath(path).c_str(), mode);
 	if (rc != 0)
@@ -169,7 +193,7 @@ void ProtocolFISH::SetMode(const std::string &path, mode_t mode)
 
 void ProtocolFISH::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
-	fprintf(stderr, "*17\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	/*
 	int rc = fish_symlink(_fish->ctx, MountedRootedPath(link_target).c_str(), MountedRootedPath(link_path).c_str());
 	if (rc != 0)
@@ -179,7 +203,7 @@ void ProtocolFISH::SymlinkCreate(const std::string &link_path, const std::string
 
 void ProtocolFISH::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
-	fprintf(stderr, "*18\n");
+	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
 	/*
 	char buf[0x1001] = {};
 	int rc = fish_readlink(_fish->ctx, MountedRootedPath(link_path).c_str(), buf, sizeof(buf) - 1);
@@ -249,7 +273,20 @@ public:
 
 std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string &path)
 {
-	fprintf(stderr, "ProtocolFISH::DirectoryEnum: path='%s'\n", path.c_str());
+/*	std::shared_ptr<IDirectoryEnumer> enumer = _dir_enum_cache.GetCachedDirectoryEnumer(path);
+	if (enumer) {
+		if (g_netrocks_verbosity > 0) {
+			fprintf(stderr, "Cached enum '%s'\n", path.c_str());
+		}
+	} else {
+		fprintf(stderr, "Uncached enum '%s'\n", path.c_str());
+		enumer = std::shared_ptr<IDirectoryEnumer>(new FISHDirectoryEnumer(_fish, path));
+		enumer = _dir_enum_cache.GetCachingWrapperDirectoryEnumer(path, enumer);
+	}
+
+	return enumer;
+*/
+	fprintf(stderr, "Enum '%s'\n", path.c_str());
 	return std::shared_ptr<IDirectoryEnumer>(new FISHDirectoryEnumer(_fish, path));
 }
 

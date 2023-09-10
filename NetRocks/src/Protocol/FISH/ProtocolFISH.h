@@ -10,6 +10,10 @@
 class ProtocolFISH : public IProtocol
 {
 	std::shared_ptr<FISHClient> _fish;
+	//DirectoryEnumCache _dir_enum_cache;
+	unsigned int _info;
+
+	void SetDefaultSubstitutions();
 
 public:
 

@@ -204,3 +204,7 @@ add_custom_command(TARGET NetRocks POST_BUILD
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
 
+add_custom_command(TARGET NetRocks POST_BUILD
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/FISH
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/FISH "${INSTALL_DIR}/Plugins/NetRocks/plug/FISH")
+

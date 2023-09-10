@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <ctime>
 #include <chrono>
+#include <map>
 #include <filesystem>
 
 #include <poll.h>
@@ -37,7 +38,7 @@ class FISHClient
     int _master_fd{(pid_t)-1};
     int _stderr_pipe[2]{-1, -1};
     pid_t _pid{(pid_t)-1};
-	std::vector<std::pair<std::string, std::string> > _substs;
+	std::map<std::string, std::string> _substs;
 
 	void ApplySubstitutions(std::string &str);
 

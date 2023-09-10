@@ -1,11 +1,11 @@
-#LIST /${FISH_DIR}
+#LIST ${FISH_DIR}
 LC_TIME=C
 export LC_TIME
 perl_res="1"
 fish_list_lsq ()
 {
 FISH_DIR="$1"
-ls -Qlan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+ls -Qlan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
 while read p l u g s m d y n; do
     echo "P$p $u.$g"
     echo "S$s"
@@ -15,7 +15,7 @@ while read p l u g s m d y n; do
 done
 )
 
-ls -Qlan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+ls -Qlan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
 while read p l u g a i m d y n; do
     echo "P$p $u.$g"
     echo "E$a$i"
@@ -30,7 +30,7 @@ echo '### 200'
 fish_list_sed ()
 {
 FISH_DIR="$1"
-ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+ls -lan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
 while read p l u g s rec; do
     if [ -n "$g" ]; then
         if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
@@ -53,7 +53,7 @@ while read p l u g s rec; do
     fi
 done
 )
-ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+ls -lan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
 while read p l u g a i rec; do
     if [ -n "$g" ]; then
         if [ -n "$FISH_HAVE_DATE_MDYT" ]; then
@@ -82,7 +82,7 @@ echo '### 200'
 fish_list_poor_ls ()
 {
 FISH_DIR="$1"
-ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
+ls -lan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[^cbt]' | (
 while read p l u g s m d y n n2 n3; do
     if [ -n "$g" ]; then
         if [ "$m" = "0" ]; then
@@ -98,7 +98,7 @@ while read p l u g s m d y n n2 n3; do
     fi
 done
 )
-ls -lan "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
+ls -lan${FISH_LS_ARGS} "${FISH_DIR}" 2>/dev/null | grep '^[cb]' | (
 while read p l u g a i m d y n n2 n3; do
     if [ -n "$g" ]; then
         if [ "$a" = "0" ]; then
@@ -152,19 +152,19 @@ while((my $filename = readdir (DIR))){
     printf("### 500\n");
 }
 exit 0
-' "/${FISH_DIR}"
+' "${FISH_DIR}"
 perl_res=$?
 }
 
 if [ -n "${FISH_HAVE_PERL}" ]; then
-    fish_list_perl "/${FISH_FILENAME}"
+    fish_list_perl "${FISH_FILENAME}"
 fi
 if [ "${perl_res}" != "0" ]; then
     if [ -n "${FISH_HAVE_LSQ}" ]; then
-        fish_list_lsq "/${FISH_FILENAME}"
+        fish_list_lsq "${FISH_FILENAME}"
     elif [ -n "${FISH_HAVE_SED}" ]; then
-        fish_list_sed "/${FISH_FILENAME}"
+        fish_list_sed "${FISH_FILENAME}"
     else
-        fish_list_poor_ls "/${FISH_FILENAME}"
+        fish_list_poor_ls "${FISH_FILENAME}"
     fi
 fi

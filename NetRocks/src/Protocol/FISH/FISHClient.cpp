@@ -33,16 +33,7 @@ FISHClient::~FISHClient()
 
 void FISHClient::SetSubstitution(const char *key, const std::string &value)
 {
-	for (auto &s : _substs) {
-		if (s.first == key) {
-			s.second = value;
-			return;
-		}
-	}
-
-	_substs.emplace_back();
-	_substs.back().first = key;
-	_substs.back().second = value;
+	_substs[key] = value;
 }
 
 void FISHClient::ApplySubstitutions(std::string &str)

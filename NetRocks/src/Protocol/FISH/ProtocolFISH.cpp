@@ -23,7 +23,7 @@ std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std
 ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 	:
-	_fish(std::make_shared<FISHConnection>())
+	_fish(std::make_shared<FISHClient>())
 {
 	fprintf(stderr, "*2\n");
 
@@ -32,8 +32,6 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 
     fprintf(stderr, "*** CONNECTING\n");
 
-    _fish->sc = new FISHClient();
-
 	fprintf(stderr, "*** host from config: %s\n", host.c_str());
 	fprintf(stderr, "*** port from config: %i\n", port);
 	fprintf(stderr, "*** username from config: %s\n", username.c_str());
@@ -41,7 +39,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 
 	fprintf(stderr, "*** login string from config: %s\n", (username + "@" + host).c_str());
 
-	if (!_fish->sc->OpenApp("ssh", (username + "@" + host).c_str())) {
+	if (!_fish->OpenApp("ssh", (username + "@" + host).c_str())) {
 	    printf("err 1\n");
     }
 
@@ -58,30 +56,30 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     	"Permission denied, please try again."
     */
 
-    auto wr = _fish->sc->SendAndWaitReply("", results);
+    auto wr = _fish->SendAndWaitReply("", results);
     while (wr.index) {
 	    if (wr.index == 1) {
-		    wr = _fish->sc->SendAndWaitReply(password + "\n", results);
+		    wr = _fish->SendAndWaitReply(password + "\n", results);
 	    }
 	    if (wr.index == 2) {
-		    wr = _fish->sc->SendHelperAndWaitReply("FISH/yes\n", results);
+		    wr = _fish->SendHelperAndWaitReply("FISH/yes\n", results);
 	    }
 	}
 
     fprintf(stderr, "*** CONNECTED\n");
 
 	int info = 0;
-	wr = _fish->sc->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
+	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0) {
 		info = atoi(wr.stdout_data.c_str());
 	}
-	_fish->sc->SetSubstitution("${FISH_HAVE_HEAD}", (info & 1) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_SED}", (info & 2) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_AWK}", (info & 4) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_PERL}", (info & 8) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_LSQ}", (info & 16) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_DATE_MDYT}", (info & 32) ? "1" : "");
-	_fish->sc->SetSubstitution("${FISH_HAVE_TAIL}", (info & 64) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_HEAD}", (info & 1) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_SED}", (info & 2) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_AWK}", (info & 4) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_PERL}", (info & 8) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_LSQ}", (info & 16) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_DATE_MDYT}", (info & 32) ? "1" : "");
+	_fish->SetSubstitution("${FISH_HAVE_TAIL}", (info & 64) ? "1" : "");
 
 	// если мы сюда добрались, значит, уже залогинены
 	// fixme: таймайт? ***
@@ -197,15 +195,15 @@ private:
     std::vector<FileInfo> _files;
     size_t _index = 0;
 
-	std::shared_ptr<FISHConnection> _fish;
+	std::shared_ptr<FISHClient> _fish;
 
 public:
-	FISHDirectoryEnumer(std::shared_ptr<FISHConnection> &fish, const std::string &path)
+	FISHDirectoryEnumer(std::shared_ptr<FISHClient> &fish, const std::string &path)
 		: _fish(fish)
 	{
 		fprintf(stderr, "*19 path='%s'\n", path.c_str());
-		_fish->sc->SetSubstitution("${FISH_FILENAME}", path);
-	    const auto &wr = _fish->sc->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
+		_fish->SetSubstitution("${FISH_FILENAME}", path);
+	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
 
 		FISHParseLS(_files, wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
 
@@ -258,11 +256,10 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string 
 
 class FISHFileIO : public IFileReader, public IFileWriter
 {
-	std::shared_ptr<FISHConnection> _fish;
-	struct fishfh *_file = nullptr;
+	std::shared_ptr<FISHClient> _fish;
 
 public:
-	FISHFileIO(std::shared_ptr<FISHConnection> &fish, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+	FISHFileIO(std::shared_ptr<FISHClient> &fish, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
 		: _fish(fish)
 	{
 		fprintf(stderr, "TRying to open path: '%s'\n", path.c_str());
@@ -273,8 +270,7 @@ public:
 		
 		int rc = 0; // ***
 
-		if (rc != 0 || _file == nullptr) {
-			_file = nullptr;
+		if (rc != 0) {
 			throw ProtocolError("Failed to open file", rc);
 		}
 		if (resume_pos) {
@@ -283,7 +279,6 @@ public:
 			int rc = 0; // ***
 			if (rc < 0) {
 				//fish_close(_fish->ctx, _file);
-				_file = nullptr;
 				throw ProtocolError("Failed to seek file", rc);
 			}
 		}
@@ -292,9 +287,6 @@ public:
 	virtual ~FISHFileIO()
 	{
 		fprintf(stderr, "*20\n");
-		if (_file != nullptr) {
-			//fish_close(_fish->ctx, _file);
-		}
 	}
 
 	virtual size_t Read(void *buf, size_t len)

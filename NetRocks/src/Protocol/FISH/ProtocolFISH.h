@@ -7,30 +7,9 @@
 
 #include "FISHClient.h"
 
-struct FISHConnection
-{
-	std::map<std::string, std::set<std::string> > srv2exports;
-	//struct fish_context *ctx = nullptr;
-	std::string mounted_path;
-
-    FISHClient* sc;
-
-	FISHConnection() = default;
-
-	~FISHConnection()
-	{
-		//if (ctx != nullptr) {
-			//fish_destroy_context(ctx);
-		//}
-	}
-
-private:
-	FISHConnection(const FISHConnection &) = delete;
-};
-
 class ProtocolFISH : public IProtocol
 {
-	std::shared_ptr<FISHConnection> _fish;
+	std::shared_ptr<FISHClient> _fish;
 
 public:
 

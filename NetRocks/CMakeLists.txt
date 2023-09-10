@@ -69,6 +69,7 @@ add_executable (NetRocks-FISH
     src/Protocol/FISH/ProtocolFISH.cpp
     src/Protocol/FISH/FISHClient.cpp
     src/Protocol/FISH/FISHParseLS.cpp
+    src/Protocol/ShellParseUtils.cpp
 )
 
 # get rid of warning: dynamic exception specifications are deprecated in C++11
@@ -101,6 +102,7 @@ if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
         src/Protocol/SSH/ProtocolSFTP.cpp
         src/Protocol/SSH/ProtocolSCP.cpp
         src/Protocol/FileStatsOverride.cpp
+        src/Protocol/ShellParseUtils.cpp
     )
     target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
     target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})

@@ -13,7 +13,6 @@ struct FISHConnection
 	//struct fish_context *ctx = nullptr;
 	std::string mounted_path;
 
-    WaitResult wr;
     FISHClient* sc;
 
 	FISHConnection() = default;

@@ -21,6 +21,7 @@
 #include <Threaded.h>
 #include "ProtocolSCP.h"
 #include "SSHConnection.h"
+#include "../ShellParseUtils.h"
 #include "../../Op/Utils/ExecCommandFIFO.hpp"
 
 #define QUERY_BY_CMD
@@ -389,42 +390,6 @@ class SCPDirectoryEnumer_ls : public SCPDirectoryEnumer
 {
 	struct timespec _now;
 
-	static unsigned int Char2FileType(char c)
-	{
-		switch (c) {
-			case 'l':
-				return S_IFLNK;
-
-			case 'd':
-				return S_IFDIR;
-
-			case 'c':
-				return S_IFCHR;
-
-			case 'b':
-				return S_IFBLK;
-
-			case 'p':
-				return S_IFIFO;
-
-			case 's':
-				return S_IFSOCK;
-
-			case 'f':
-			default:
-				return S_IFREG;
-		}
-	}
-
-	static unsigned int Triplet2FileMode(const char *c)
-	{
-		unsigned int out = 0;
-		if (c[0] == 'r') out|= 4;
-		if (c[1] == 'w') out|= 2;
-		if (c[2] == 'x' || c[1] == 's' || c[1] == 't') out|= 1;
-		return out;
-	}
-
 	static std::string ExtractStringHead(std::string &line)
 	{
 		std::string out;
@@ -516,26 +481,11 @@ crw-------    1 root     root        3, 144 Jan  1  1970 ttyy0
 			if (line.empty())
 				continue;
 
-			file_info.mode = 0;
-			if (str_mode.size() >= 1) {
-				file_info.mode = Char2FileType(str_mode[0]);
-				if (file_info.mode == S_IFLNK) {
-					size_t p = line.find(" -> ");
-					if (p != std::string::npos)
-						line.resize(p);
-				}
-			}
-
-			if (str_mode.size() >= 4) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 1) << 6;
-			}
-
-			if (str_mode.size() >= 7) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 4) << 3;
-			}
-
-			if (str_mode.size() >= 10) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 7);
+			file_info.mode = ShellParseUtils::Str2Mode(str_mode.c_str(), str_mode.size());
+			if (S_ISLNK(file_info.mode)) {
+				size_t p = line.find(" -> ");
+				if (p != std::string::npos)
+					line.resize(p);
 			}
 
 			const time_t now = _now.tv_sec;

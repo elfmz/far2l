@@ -58,18 +58,30 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     	"Permission denied, please try again."
     */
 
-    _fish->wr = _fish->sc->SendAndWaitReply("", results);
-    while (_fish->wr.index) {
-	    if (_fish->wr.index == 1) {
-		    _fish->wr = _fish->sc->SendAndWaitReply(password + "\n", results);
+    auto wr = _fish->sc->SendAndWaitReply("", results);
+    while (wr.index) {
+	    if (wr.index == 1) {
+		    wr = _fish->sc->SendAndWaitReply(password + "\n", results);
 	    }
-	    if (_fish->wr.index == 2) {
-		    _fish->wr = _fish->sc->SendHelperAndWaitReply("FISH/yes\n", results);
+	    if (wr.index == 2) {
+		    wr = _fish->sc->SendHelperAndWaitReply("FISH/yes\n", results);
 	    }
-		
 	}
 
     fprintf(stderr, "*** CONNECTED\n");
+
+	int info = 0;
+	wr = _fish->sc->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
+	if (wr.index == 0) {
+		info = atoi(wr.stdout_data.c_str());
+	}
+	_fish->sc->SetSubstitution("${FISH_HAVE_HEAD}", (info & 1) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_SED}", (info & 2) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_AWK}", (info & 4) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_PERL}", (info & 8) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_LSQ}", (info & 16) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_DATE_MDYT}", (info & 32) ? "1" : "");
+	_fish->sc->SetSubstitution("${FISH_HAVE_TAIL}", (info & 64) ? "1" : "");
 
 	// если мы сюда добрались, значит, уже залогинены
 	// fixme: таймайт? ***
@@ -191,11 +203,11 @@ public:
 	FISHDirectoryEnumer(std::shared_ptr<FISHConnection> &fish, const std::string &path)
 		: _fish(fish)
 	{
-		fprintf(stderr, "*19\n");
+		fprintf(stderr, "*19 path='%s'\n", path.c_str());
+		_fish->sc->SetSubstitution("${FISH_FILENAME}", path);
+	    const auto &wr = _fish->sc->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
 
-	    _fish->wr = _fish->sc->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
-
-		FISHParseLS(_files, _fish->wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
+		FISHParseLS(_files, wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
 
         fprintf(stderr, "*** LIST READ\n");
 
@@ -204,13 +216,20 @@ public:
 
     virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
 	{
+		while (_index < _files.size() && !FILENAME_ENUMERABLE(_files[_index].path)) {
+			++_index;
+		}
         if (_index >= _files.size()) {
             return false;
         }
-
-        const auto& file = _files[_index++];
-        
+        const auto &file = _files[_index++];
         name = file.path;
+        if (S_ISLNK(file.mode)) {
+			size_t p = name.rfind(" -> ");
+			if (p != std::string::npos) {
+				name.resize(p);
+			}
+		}
 
         fprintf(stderr, "*** %s\n", name.c_str());
 
@@ -222,12 +241,7 @@ public:
         //file_info.modification_time = std::chrono::time_point_cast<std::chrono::nanoseconds>(fileInfo.modified_time);
         file_info.status_change_time = {}; // Заполните это поле, если у вас есть информация
         file_info.size = file.size;
-        file_info.mode = file.permissions;
-
-        if (file.is_directory) {
-	        fprintf(stderr, "*** ENUM MID 30\n");
-            file_info.mode |= S_IFDIR;
-        }
+        file_info.mode = file.mode;
 
         fprintf(stderr, "*** ENUM END\n");
 

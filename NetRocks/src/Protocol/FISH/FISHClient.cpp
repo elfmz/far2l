@@ -14,6 +14,51 @@ FISHClient::FISHClient()
 {
 }
 
+FISHClient::~FISHClient()
+{
+	// Закрыть файловые дескрипторы
+	CheckedCloseFD(_master_fd);
+	CheckedCloseFD(_stderr_pipe[0]);
+	if (_pid != (pid_t)-1) {
+		// Проверяем, завершен ли дочерний процесс
+		int status;
+		if (waitpid(_pid, &status, WNOHANG) == 0) {
+			// Если нет, отправляем сигнал для завершения
+			kill(_pid, SIGTERM);
+			waitpid(_pid, &status, 0); // Ожидаем завершения
+		}
+		std::cout << "Child exited with status " << status << '\n';
+	}
+}
+
+void FISHClient::SetSubstitution(const char *key, const std::string &value)
+{
+	for (auto &s : _substs) {
+		if (s.first == key) {
+			s.second = value;
+			return;
+		}
+	}
+
+	_substs.emplace_back();
+	_substs.back().first = key;
+	_substs.back().second = value;
+}
+
+void FISHClient::ApplySubstitutions(std::string &str)
+{
+	for (const auto &s : _substs) {
+		for (size_t ofs = 0;;) {
+			size_t p = str.find(s.first, ofs);
+			if (p == std::string::npos) {
+				break;
+			}
+			str.replace(p, s.first.size(), s.second);
+			ofs = p + s.second.size();
+		}
+	}
+}
+
 bool FISHClient::OpenApp(const char *app, const char *arg)
 {
 	if (pipe(_stderr_pipe) < 0) {
@@ -98,6 +143,7 @@ WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vec
 	}
 
 	while (std::getline(helper_ifs, tmp_str)) {
+		ApplySubstitutions(tmp_str);
 		send_str+= tmp_str;
 		send_str+= '\n';
 	}
@@ -105,13 +151,30 @@ WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vec
 	return SendAndWaitReply(send_str, expected_replies);
 }
 
+static void SanitizeEOL(std::string &s, size_t ofs)
+{
+	for (;;) {
+		size_t p = s.find('\r', ofs);
+		if (p == std::string::npos) {
+			break;
+		}
+		if (p + 1 < s.size() && s[p + 1] == '\n') {
+			s.erase(p, 1);
+			ofs = p;
+		} else {
+			s[p] = '\n';
+			ofs = p + 1;
+		}
+	}
+}
+
 WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies)
 {
-	WaitResult result;
+	 WaitResult wr;
 
 	if (WriteAll(_master_fd, send_str.c_str(), send_str.length()) != send_str.length()) {
-		result.error_code = errno ? errno : -1;
-		return result;
+		wr.error_code = errno ? errno : -1;
+		return wr;
 	}
 
 	struct pollfd fds[2];
@@ -126,7 +189,8 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 		if (fds[0].revents & POLLIN) {
 			int n = read(_master_fd, buffer, sizeof(buffer));
 			if (n > 0) {
-				result.stdout_data.append(buffer, n);
+				wr.stdout_data.append(buffer, n);
+				SanitizeEOL(wr.stdout_data, wr.stdout_data.size() - n);
 				//std::cout << "Debug (stdout): " << buffer << std::endl;  // ***
 			}
 			fds[0].revents &= ~POLLIN;
@@ -135,43 +199,26 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 		if (fds[1].revents & POLLIN) {
 			int n = read(_stderr_pipe[0], buffer, sizeof(buffer));
 			if (n > 0) {
-				result.stderr_data.append(buffer, n);
+				wr.stderr_data.append(buffer, n);
+				SanitizeEOL(wr.stderr_data, wr.stderr_data.size() - n);
 				//std::cout << "Debug (stderr): " << buffer << std::endl;  // ***
 			}
 			fds[1].revents &= ~POLLIN;
 		}
 
-		for (result.index = 0; result.index != (int)expected_replies.size(); ++result.index) {
-			if (result.stdout_data.find(expected_replies[result.index]) != std::string::npos) {
-				result.output_type = STDOUT;
-				return result;
+		for (wr.index = 0; wr.index != (int)expected_replies.size(); ++wr.index) {
+			if (wr.stdout_data.find(expected_replies[wr.index]) != std::string::npos) {
+				wr.output_type = STDOUT;
+				return wr;
 			}
 
-			if (result.stderr_data.find(expected_replies[result.index]) != std::string::npos) {
-				result.output_type = STDERR;
-				return result;
+			if (wr.stderr_data.find(expected_replies[wr.index]) != std::string::npos) {
+				wr.output_type = STDERR;
+				return wr;
 			}
 		}
 	}
 
-	result.error_code = errno ? errno : -2;
-	return result;
+	wr.error_code = errno ? errno : -2;
+	return wr;
 }
-
-FISHClient::~FISHClient()
-{
-	// Закрыть файловые дескрипторы
-	CheckedCloseFD(_master_fd);
-	CheckedCloseFD(_stderr_pipe[0]);
-	if (_pid != (pid_t)-1) {
-		// Проверяем, завершен ли дочерний процесс
-		int status;
-		if (waitpid(_pid, &status, WNOHANG) == 0) {
-			// Если нет, отправляем сигнал для завершения
-			kill(_pid, SIGTERM);
-			waitpid(_pid, &status, 0); // Ожидаем завершения
-		}
-		std::cout << "Child exited with status " << status << '\n';
-	}
-}
-

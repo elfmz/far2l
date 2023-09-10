@@ -25,7 +25,7 @@ static void FISHParseLSPermissions(FileInfo &fi, const char *line, size_t line_l
 
 static void FISHParseLSLine(std::vector<FileInfo> &files, const char *line, size_t line_len)
 {
-fprintf(stderr, "FISHLS: '%*s'\n", (int)line_len, line);
+fprintf(stderr, "FISHLS: '%.*s'\n", (int)line_len, line);
 	switch (*line) {
 		case ':':
 			files.back().path.assign(line + 1, line_len - 1);

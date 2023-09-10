@@ -253,8 +253,6 @@ public:
 			}
 		}
 
-        fprintf(stderr, "*** %s\n", name.c_str());
-
         owner = file.owner;
         group = file.group;
 
@@ -264,8 +262,6 @@ public:
         file_info.status_change_time = {}; // Заполните это поле, если у вас есть информация
         file_info.size = file.size;
         file_info.mode = file.mode;
-
-        fprintf(stderr, "*** ENUM END\n");
 
         return true;
     }

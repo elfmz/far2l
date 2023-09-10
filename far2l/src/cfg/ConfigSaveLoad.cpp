@@ -298,7 +298,7 @@ public:
 				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", _default.i, _default.i).CPtr()
 				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", _default.dw, _default.dw).CPtr()
 				: ( _type == T_STR ? _default.str
-				: ( _type == T_BIN ? fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr()
+				: ( _type == T_BIN ? ( _default.bin == nullptr ? L"(no default value set)" : fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr() )
 				: L"???"	) ) ) ) )
 				),
 			fs.Format(L"  Current value: %ls",

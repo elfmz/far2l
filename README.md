@@ -220,7 +220,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * putty-nd, one more putty fork with extensions support: https://sourceforge.net/p/putty-nd/
  * Turbo Vision, TUI framework supporting far2l terminal extensions: https://github.com/magiblot/tvision
  * turbo, text editor supporting far2l terminal extensions: https://github.com/magiblot/turbo
- * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2l-deb/blob/master/far2l_import.pl
+ * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2l-deb/blob/master/misc/far2l_import.pl
 
 ## Notes on porting and FAR Plugin API changes
  * See HACKING.md

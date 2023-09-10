@@ -47,7 +47,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     // везде ли "$ " признак успешного залогина? проверить на dd wrt
 
     // Мы таки залогинены, спрашивают пароль, ключ незнакомый?
-    std::vector<std::string> results = {"$ ", "password: ", "This key is not known by any other names"};
+    std::vector<const char *> results = {"$ ", "# ", "password: ", "This key is not known by any other names", "Are you sure"};
 
     /*
     // это ещё от sftp враппер код
@@ -58,12 +58,12 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     */
 
     auto wr = _fish->SendAndWaitReply("", results);
-    while (wr.index) {
-	    if (wr.index == 1) {
-		    wr = _fish->SendAndWaitReply(password + "\n", results);
-	    }
+    while (wr.index != 0 && wr.index != 1) {
 	    if (wr.index == 2) {
-		    wr = _fish->SendHelperAndWaitReply("FISH/yes\n", results);
+		    wr = _fish->SendAndWaitReply(password + "\r", results);
+	    }
+	    if (wr.index == 3 || wr.index == 4) {
+		    wr = _fish->SendAndWaitReply("yes\r", results);
 	    }
 	}
 

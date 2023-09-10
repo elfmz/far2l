@@ -27,7 +27,7 @@ FISHClient::~FISHClient()
 			kill(_pid, SIGTERM);
 			waitpid(_pid, &status, 0); // Ожидаем завершения
 		}
-		std::cout << "Child exited with status " << status << '\n';
+		std::cerr << "Child exited with status " << status << '\n';
 	}
 }
 
@@ -121,7 +121,7 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 	return true;
 }
 
-WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<std::string> &expected_replies)
+WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<const char *> &expected_replies)
 {
 	std::ifstream helper_ifs;
 	helper_ifs.open(helper);
@@ -136,27 +136,10 @@ WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vec
 	while (std::getline(helper_ifs, tmp_str)) {
 		ApplySubstitutions(tmp_str);
 		send_str+= tmp_str;
-		send_str+= '\n';
+		send_str+= '\r';
 	}
 
 	return SendAndWaitReply(send_str, expected_replies);
-}
-
-static void SanitizeEOL(std::string &s, size_t ofs)
-{
-	for (;;) {
-		size_t p = s.find('\r', ofs);
-		if (p == std::string::npos) {
-			break;
-		}
-		if (p + 1 < s.size() && s[p + 1] == '\n') {
-			s.erase(p, 1);
-			ofs = p;
-		} else {
-			s[p] = '\n';
-			ofs = p + 1;
-		}
-	}
 }
 
 ssize_t FISHClient::ReadStdout(void *buffer, size_t len)
@@ -164,7 +147,79 @@ ssize_t FISHClient::ReadStdout(void *buffer, size_t len)
 	return os_call_ssize(read, _master_fd, (void *)buffer, len);
 }
 
-WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies)
+static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected_replies, struct pollfd &fd, enum OutputType output_type)
+{
+	if (!(fd.revents & POLLIN)) {
+		return false;
+	}
+	fd.revents&= ~POLLIN;
+	std::string &data = (output_type == STDERR) ? wr.stderr_data : wr.stdout_data;
+
+	char buffer[2048];
+	ssize_t n = read(fd.fd, buffer, sizeof(buffer));
+	if (n <= 0) {
+		fprintf(stderr, "%s: read error %d\n", __FUNCTION__, errno);
+		return false;
+	}
+
+#if 0 // 1 for debug output
+	std::string dbgstr(buffer, n);
+	for  (size_t i = dbgstr.size(); i--; ) {
+		if (dbgstr[i] < 32) {
+			dbgstr.replace(i, 1, StrPrintf("{%02x}", (unsigned char)dbgstr[i]));
+		}
+	}
+	std::cerr << ((output_type == STDERR) ? "STDERR: " : "STDOUT: ") << dbgstr << std::endl;
+#endif
+
+	// tricky code below here to convert lineendings until found any expected reply match and
+	// DONT convert lineendings after match cause it may be heading part of file data being got
+	size_t line_start_pos = data.rfind('\n');
+	if (line_start_pos != std::string::npos) {
+		++line_start_pos;
+	} else {
+		line_start_pos = 0;
+	}
+	data.append(buffer, n);
+
+	do { // loop line by line, converting CR to LF until found matching line
+		size_t line_end_pos = data.find_first_of("\r\n", line_start_pos);
+		if (line_end_pos == std::string::npos) {
+			line_end_pos = data.size();
+
+		} else if (data[line_end_pos] == '\r') {
+			if (line_end_pos + 1 < data.size() && data[line_end_pos + 1] == '\n') {
+				data.erase(line_end_pos, 1);
+			} else {
+				data[line_end_pos] = '\n';
+			}
+		}
+		// capture line to check against expected replies including bounding LFs if any
+		if (line_start_pos) {
+			--line_start_pos;
+		}
+		const auto &line = data.substr(line_start_pos, std::min(line_end_pos + 1, data.size()) - line_start_pos);
+
+//		std::cerr << "Line '" << line << "' " << line_start_pos << " .. " << line_end_pos<< std::endl;
+		for (wr.index = 0; wr.index != expected_replies.size(); ++wr.index) {
+			const size_t pos = line.find(expected_replies[wr.index]);
+			if (pos != std::string::npos) {
+//				std::cerr << "Matched '" << expected_reply << "' " << std::endl;
+				wr.pos = pos + line_start_pos;
+				wr.output_type = output_type;
+				return true;
+			}
+//			std::cerr << "NOT Matched '" << expected_reply << "' " << std::endl;
+		}
+
+		line_start_pos = line_end_pos + 1;
+
+	} while (line_start_pos < data.size());
+
+	return false;
+}
+
+WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies)
 {
 	WaitResult wr;
 
@@ -180,40 +235,9 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 	fds[1].events = POLLIN;
 
 	while (os_call_int(poll, &fds[0], (nfds_t)2, -1) >= 0) {
-		char buffer[2048];
-
-		if (fds[0].revents & POLLIN) {
-			int n = read(_master_fd, buffer, sizeof(buffer));
-			if (n > 0) {
-				wr.stdout_data.append(buffer, n);
-				SanitizeEOL(wr.stdout_data, wr.stdout_data.size() - n);
-				//std::cout << "Debug (stdout): " << buffer << std::endl;  // ***
-			}
-			fds[0].revents &= ~POLLIN;
-		}
-
-		if (fds[1].revents & POLLIN) {
-			int n = read(_stderr_pipe[0], buffer, sizeof(buffer));
-			if (n > 0) {
-				wr.stderr_data.append(buffer, n);
-				SanitizeEOL(wr.stderr_data, wr.stderr_data.size() - n);
-				//std::cout << "Debug (stderr): " << buffer << std::endl;  // ***
-			}
-			fds[1].revents &= ~POLLIN;
-		}
-
-		for (wr.index = 0; wr.index != (int)expected_replies.size(); ++wr.index) {
-			wr.pos = wr.stdout_data.find(expected_replies[wr.index]);
-			if (wr.pos != std::string::npos) {
-				wr.output_type = STDOUT;
-				return wr;
-			}
-
-			wr.pos = wr.stderr_data.find(expected_replies[wr.index]);
-			if (wr.pos != std::string::npos) {
-				wr.output_type = STDERR;
-				return wr;
-			}
+		if (RecvPollFD(wr, expected_replies, fds[0], STDOUT)
+		 || RecvPollFD(wr, expected_replies, fds[1], STDERR)) {
+			return wr;
 		}
 	}
 

@@ -840,9 +840,6 @@ void AdvancedConfig()
 
 	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 
-	MenuItemEx mis;
-	mis.Flags = LIF_SEPARATOR;
-
 	for (const auto &opt_ser : s_opt_serializers)
 		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
 	for (const auto &opt_ser : s_opt_serializers)

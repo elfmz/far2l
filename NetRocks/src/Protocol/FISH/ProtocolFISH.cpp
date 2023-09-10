@@ -68,6 +68,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	}
 
     fprintf(stderr, "*** CONNECTED\n");
+	_fish->SendAndWaitReply("export PS1=; echo '###'FISH'###'\n", {"###FISH###\n"});
 
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0) {
@@ -287,52 +288,65 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string 
 }
 
 
-class FISHFileIO : public IFileReader, public IFileWriter
+class FISHFileReader : public IFileReader
 {
 	std::shared_ptr<FISHClient> _fish;
+	std::string _buffer;
+	uint64_t _remain{0};
+	bool _failed{false};
 
 public:
-	FISHFileIO(std::shared_ptr<FISHClient> &fish, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
+	FISHFileReader(std::shared_ptr<FISHClient> &fish, const std::string &path, unsigned long long resume_pos)
 		: _fish(fish)
 	{
-		fprintf(stderr, "TRying to open path: '%s'\n", path.c_str());
-
-		//int rc = (flags & O_CREAT)
-			//? fish_creat(_fish->ctx, path.c_str(), mode & (~O_CREAT), &_file)
-			//: fish_open(_fish->ctx, path.c_str(), flags, &_file);
-		
-		int rc = 0; // ***
-
-		if (rc != 0) {
-			throw ProtocolError("Failed to open file", rc);
+		_fish->SetSubstitution("${FISH_START_OFFSET}", StrPrintf("%llu", resume_pos));
+	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/get", {"\n### 100\n", "\n### 500\n"});
+		if (wr.index != 0) {
+			throw ProtocolError("get file error");
 		}
-		if (resume_pos) {
-			//uint64_t current_offset = resume_pos;
-			//int rc = fish_lseek(_fish->ctx, _file, resume_pos, SEEK_SET, &current_offset);
-			int rc = 0; // ***
-			if (rc < 0) {
-				//fish_close(_fish->ctx, _file);
-				throw ProtocolError("Failed to seek file", rc);
-			}
-		}
+		size_t pos_of_str_remain = wr.pos;
+		if (pos_of_str_remain) do {
+			--pos_of_str_remain;
+		} while (pos_of_str_remain && wr.stdout_data[pos_of_str_remain] != '\n');
+		_remain = (uint64_t)strtoull(wr.stdout_data.c_str() + pos_of_str_remain + 1, nullptr, 10);
+		_buffer = wr.stdout_data.substr(wr.pos + 9);
 	}
 
-	virtual ~FISHFileIO()
+	virtual ~FISHFileReader()
 	{
-		fprintf(stderr, "*20\n");
+		try {
+			while (_remain && !_failed) {
+				char tmp[0x1000];
+				Read(tmp, sizeof(tmp));
+			}
+		} catch (...) {
+		}
 	}
 
 	virtual size_t Read(void *buf, size_t len)
 	{
-		fprintf(stderr, "*21\n");
+		if ((uint64_t)len > _remain) {
+			len = (size_t)_remain;
+		}
+		size_t piece = std::min(len, _buffer.size());
+		if (piece) {
+			memcpy(buf, _buffer.c_str(), piece);
+			_buffer.erase(0, piece);
+			_remain-= (uint64_t)piece;
+		}
 
-		//const auto rc = fish_read(_fish->ctx, _file, len, (char *)buf);
-		int rc = 0; // ***
-		if (rc < 0)
-			throw ProtocolError("Read file error", errno);
-		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
+		while (piece < len) {
+			ssize_t r = _fish->ReadStdout((unsigned char *)buf + piece, len - piece);
+			if (r <= 0) {
+				abort();
+				_failed = true;
+				throw ProtocolError("get file error");
+			}
+			piece+= (size_t)r;
+			_remain-= (uint64_t)r;
+		}
 
-		return (size_t)rc;
+		return piece;
 	}
 
 	virtual void Write(const void *buf, size_t len)
@@ -363,11 +377,11 @@ public:
 std::shared_ptr<IFileReader> ProtocolFISH::FileGet(const std::string &path, unsigned long long resume_pos)
 {
 	fprintf(stderr, "*24\n");
-	return std::make_shared<FISHFileIO>(_fish, path, O_RDONLY, 0, resume_pos);
+	return std::make_shared<FISHFileReader>(_fish, path, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolFISH::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
 	fprintf(stderr, "*25\n");
-	return std::make_shared<FISHFileIO>(_fish, path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
+	return std::shared_ptr<IFileWriter>();
 }

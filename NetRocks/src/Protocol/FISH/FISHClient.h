@@ -28,6 +28,7 @@ struct WaitResult
 {
     int error_code{0};
     int index{-1};
+	size_t pos{std::string::npos};
     OutputType output_type{STDBAD};
     std::string stdout_data;
     std::string stderr_data;
@@ -48,6 +49,9 @@ public:
 
 	bool OpenApp(const char *app, const char *arg);
 	void SetSubstitution(const char *key, const std::string &value);
+
+	ssize_t ReadStdout(void *buffer, size_t len);
+
 	WaitResult SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies);
 	WaitResult SendHelperAndWaitReply(const char *helper, const std::vector<std::string> &expected_replies);
 };

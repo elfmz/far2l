@@ -27,7 +27,6 @@ if (open IFILE,$filename) {
         print $content;
     }
     close IFILE;
-    printf("### 200\n");
 } else {
     printf("### 500\n");
 }
@@ -61,7 +60,6 @@ if dd if="${FILENAME}" of=/dev/null bs=1 count=1 2>/dev/null ; then
     else
         cat "${FILENAME}"
     fi
-    echo "### 200"
 else
     echo "### 500"
 fi
@@ -90,7 +88,6 @@ if dd if="${FILENAME}" of=/dev/null bs=1 count=1 2>/dev/null ; then
     else
         cat "${FILENAME}"
     fi
-    echo "### 200"
 else
     echo "### 500"
 fi

@@ -74,8 +74,8 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 			_exit(-1);
 		}
 
-		// Отключаем эхо
-		term.c_lflag &= ~ECHO;
+		// disable echo, CR/LF translation and other nasty things
+		cfmakeraw(&term);
 
 		// Применяем новые атрибуты
 		if (tcsetattr(STDIN_FILENO, TCSANOW, &term) == -1) {
@@ -159,9 +159,14 @@ static void SanitizeEOL(std::string &s, size_t ofs)
 	}
 }
 
+ssize_t FISHClient::ReadStdout(void *buffer, size_t len)
+{
+	return os_call_ssize(read, _master_fd, (void *)buffer, len);
+}
+
 WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<std::string> &expected_replies)
 {
-	 WaitResult wr;
+	WaitResult wr;
 
 	if (WriteAll(_master_fd, send_str.c_str(), send_str.length()) != send_str.length()) {
 		wr.error_code = errno ? errno : -1;
@@ -198,12 +203,14 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 		}
 
 		for (wr.index = 0; wr.index != (int)expected_replies.size(); ++wr.index) {
-			if (wr.stdout_data.find(expected_replies[wr.index]) != std::string::npos) {
+			wr.pos = wr.stdout_data.find(expected_replies[wr.index]);
+			if (wr.pos != std::string::npos) {
 				wr.output_type = STDOUT;
 				return wr;
 			}
 
-			if (wr.stderr_data.find(expected_replies[wr.index]) != std::string::npos) {
+			wr.pos = wr.stderr_data.find(expected_replies[wr.index]);
+			if (wr.pos != std::string::npos) {
 				wr.output_type = STDERR;
 				return wr;
 			}

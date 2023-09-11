@@ -68,7 +68,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	}
 
     fprintf(stderr, "*** CONNECTED\n");
-	_fish->SendAndWaitReply("export PS1=; echo '###'FISH'###'\n", {"###FISH###\n"});
+	_fish->SendAndWaitReply("export PS1=; echo '###'FISH'###'\r", {"###FISH###\n"});
 
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0) {

@@ -525,7 +525,9 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIO
     PATTERN "far2l_gui.so"
     PATTERN "far2l_ttyx.broker"
     PATTERN "plug/*.far-plug-*"
-    PATTERN "plug/*.broker")
+    PATTERN "plug/*.broker"
+    PATTERN "NetRocks/plug/FISH/*"
+)
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
     PATTERN "${EXECUTABLE_NAME}" EXCLUDE
@@ -534,7 +536,9 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
     PATTERN "*.far-plug-*" EXCLUDE
     PATTERN "*.broker" EXCLUDE
     PATTERN "python/plug/python" EXCLUDE
-    PATTERN "*")
+    PATTERN "NetRocks/plug/FISH" EXCLUDE
+    PATTERN "*"
+)
 
 # setup some symlinks and remove deprecated stuff from previous installation
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ../../bin/far2l ${PROJECT_BINARY_DIR}/far2l/far2l_askpass)

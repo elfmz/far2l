@@ -33,7 +33,13 @@ FISHClient::~FISHClient()
 
 void FISHClient::SetSubstitution(const char *key, const std::string &value)
 {
-	_substs[key] = value;
+	std::string &subs_value = _substs[key];
+	subs_value = value;
+	for (size_t i = subs_value.size(); i--; ) {
+		if (subs_value[i] == '"' || subs_value[i] == '\\') {
+			subs_value.insert(i, 1, '\\');
+		}
+	}
 }
 
 void FISHClient::ApplySubstitutions(std::string &str)
@@ -49,6 +55,13 @@ void FISHClient::ApplySubstitutions(std::string &str)
 		}
 	}
 }
+
+/*
+int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
+MakeFDCloexec(fd_term);
+if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
+}
+*/
 
 bool FISHClient::OpenApp(const char *app, const char *arg)
 {

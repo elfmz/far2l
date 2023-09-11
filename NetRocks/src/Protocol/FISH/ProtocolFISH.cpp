@@ -68,12 +68,21 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	}
 
     fprintf(stderr, "*** CONNECTED\n");
-	_fish->SendAndWaitReply("export PS1=; echo '###'FISH'###'\r", {"###FISH###\n"});
+	_fish->SendAndWaitReply(
+		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###'FISH'###'\r",
+		{"###FISH###\n"}
+	);
 
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0) {
-		_info = atoi(wr.stdout_data.c_str());
+		size_t ofs;
+		for (ofs = 0; ofs < wr.stdout_data.size() && !isdigit(wr.stdout_data[ofs]);) {
+			++ofs;
+		}
+		_info = atoi(wr.stdout_data.c_str() + ofs);
+		_info&= ~8; // disable PERL for now
 	}
+	fprintf(stderr, "*** info=%u\n", _info);
 	SetDefaultSubstitutions();
 
 
@@ -219,14 +228,16 @@ class FISHDirectoryEnumer : public IDirectoryEnumer {
 private:
     std::vector<FileInfo> _files;
     size_t _index = 0;
+	bool _unquote{false};
 
 	std::shared_ptr<FISHClient> _fish;
 
 public:
-	FISHDirectoryEnumer(std::shared_ptr<FISHClient> &fish, const std::string &path)
+	FISHDirectoryEnumer(std::shared_ptr<FISHClient> &fish, const std::string &path, unsigned int info)
 		: _fish(fish)
 	{
 		fprintf(stderr, "*19 path='%s'\n", path.c_str());
+		_unquote = (info & (2 | 8 | 16)) != 0;
 		_fish->SetSubstitution("${FISH_FILENAME}", path);
 	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
 
@@ -239,30 +250,35 @@ public:
 
     virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
 	{
-		while (_index < _files.size() && !FILENAME_ENUMERABLE(_files[_index].path)) {
-			++_index;
-		}
-        if (_index >= _files.size()) {
-            return false;
-        }
-        const auto &file = _files[_index++];
-        name = file.path;
-        if (S_ISLNK(file.mode)) {
-			size_t p = name.rfind(" -> ");
-			if (p != std::string::npos) {
-				name.resize(p);
+		const FileInfo *file;
+		do {
+	        if (_index >= _files.size()) {
+				return false;
+	        }
+			file = &_files[_index++];
+			name = file->path;
+			if (S_ISLNK(file->mode)) {
+				size_t p = name.rfind(" -> ");
+				if (p != std::string::npos) {
+					name.resize(p);
+				}
 			}
-		}
+			if (_unquote && name.size() > 2 && name.front() == '\"' && name.back() == '\"') {
+				name.pop_back();
+				name.erase(0, 1);
+			}
 
-        owner = file.owner;
-        group = file.group;
+		} while (!FILENAME_ENUMERABLE(name));
+
+        owner = file->owner;
+        group = file->group;
 
         file_info.access_time = {}; // Заполните это поле, если у вас есть информация
         // fixme: это не собирается
         //file_info.modification_time = std::chrono::time_point_cast<std::chrono::nanoseconds>(fileInfo.modified_time);
         file_info.status_change_time = {}; // Заполните это поле, если у вас есть информация
-        file_info.size = file.size;
-        file_info.mode = file.mode;
+        file_info.size = file->size;
+        file_info.mode = file->mode;
 
         return true;
     }
@@ -284,7 +300,7 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string 
 	return enumer;
 */
 	fprintf(stderr, "Enum '%s'\n", path.c_str());
-	return std::shared_ptr<IDirectoryEnumer>(new FISHDirectoryEnumer(_fish, path));
+	return std::shared_ptr<IDirectoryEnumer>(new FISHDirectoryEnumer(_fish, path, _info));
 }
 
 

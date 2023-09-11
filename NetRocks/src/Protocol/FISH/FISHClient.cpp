@@ -269,7 +269,7 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 		if (r == 0) {
 			if (_pid != (pid_t)-1) {
 				int status = 0;
-				if (waitpid(_pid, &status, WNOHANG) == 0) {
+				if (waitpid(_pid, &status, WNOHANG) == _pid) {
 					_pid = (pid_t)-1;
 					throw ProtocolError("client app exited unexpectedly", status);
 				}

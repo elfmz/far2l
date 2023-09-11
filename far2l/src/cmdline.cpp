@@ -855,6 +855,192 @@ void CommandLine::RedrawWithoutComboBoxMark()
 	DrawComboBoxMark(L' ');
 }
 
+void FarAbout(PluginManager &Plugins)
+{
+	FARString fs, fs2;
+	int npl;
+
+	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
+	ListAbout.SetFlags(VMENU_SHOWAMPERSAND);
+	//ListAbout.SetFlags(VMENU_WRAPMODE);
+	//ListAbout.ClearFlags(VMENU_MOUSEDOWN);
+	//ListAbout.SetHelp(L"FarAbout");
+	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering");
+
+	MenuItemEx mis;
+	mis.Flags = LIF_SEPARATOR;
+
+	fs.Format(L"FAR2L Version:  %s", FAR_BUILD);
+	ListAbout.AddItem(fs);
+	fs.Format(L"      Platform: %s", FAR_PLATFORM);
+	ListAbout.AddItem(fs);
+	fs.Format(L"      Backend:  %ls", WinPortBackend());
+	ListAbout.AddItem(fs);
+	fs.Format(L"      Admin:    %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
+	ListAbout.AddItem(fs);
+	apiGetEnvironmentVariable("HOSTNAME", fs2);
+	fs = L"      Host:     " + fs2;
+	ListAbout.AddItem(fs);
+	apiGetEnvironmentVariable("USER", fs2);
+	fs = L"      User:     " + fs2;
+	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
+
+	//apiGetEnvironmentVariable("FARLANG", fs2);
+	fs = L" Main language: " + Opt.strLanguage;
+	ListAbout.AddItem(fs);
+
+	fs = L" Help language: " + Opt.strHelpLanguage;
+	ListAbout.AddItem(fs);
+
+	//apiGetEnvironmentVariable("FARPID", fs2);
+	//fs = L"           PID: " + fs2;
+	fs.Format(L"           PID: %lu", (unsigned long)getpid());
+	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
+
+	//apiGetEnvironmentVariable("FARHOME", fs2);
+	fs = L"   Far directory: \"" + g_strFarPath.GetMB() + L"\"";
+	ListAbout.AddItem(fs);
+
+	fs.Format(L"Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
+	ListAbout.AddItem(fs);
+
+	fs.Format(L" Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
+	ListAbout.AddItem(fs);
+
+	fs.Format(L"  Temp directory: \"%s\"", InMyTemp("").c_str() );
+	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
+
+	npl = Plugins.GetPluginsCount();
+	fs.Format(L"Number of plugins: %d", npl);
+	ListAbout.AddItem(fs);
+
+	for(int i = 0; i < npl; i++)
+	{
+		ListAbout.AddItem(&mis);
+
+		fs.Format(L"Plugin#%02d | ",  i+1);
+
+		Plugin *pPlugin = Plugins.GetPlugin(i);
+		if(pPlugin == nullptr) {
+			fs.Append(L"!!! ERROR get plugin");
+			ListAbout.AddItem(fs);
+			continue;
+		}
+		fs2 = fs;
+		fs2.Append( pPlugin->GetModuleName() );
+		ListAbout.AddItem(fs2);
+
+		fs2 = fs + L"Settings Name: ";
+		fs2.Append(pPlugin->GetSettingsName());
+		ListAbout.AddItem(fs2);
+
+		int iFlags;
+		PluginInfo pInfo{};
+		KeyFileReadHelper kfh(PluginsIni());
+		FARString fsCommandPrefix = L"";
+		FARString fsDiskMenuStrings = L"";
+		FARString fsPluginMenuStrings = L"";
+		FARString fsPluginConfigStrings = L"";
+
+		if (pPlugin->CheckWorkFlags(PIWF_CACHED)) {
+			iFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags", 0);
+			fsCommandPrefix = kfh.GetString(pPlugin->GetSettingsName(), "CommandPrefix", L"");
+			for (int j = 0; ; j++) {
+				const auto &key_name = StrPrintf("DiskMenuString%d", j);
+				/*if (!kfh.HasKey(key_name))
+					break;*/
+				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
+				if( fs2.IsEmpty() )
+					break;
+				fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+			}
+			for (int j = 0; ; j++) {
+				const auto &key_name = StrPrintf("PluginMenuString%d", j);
+				/*if (!kfh.HasKey(key_name))
+					break;*/
+				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
+				if( fs2.IsEmpty() )
+					break;
+				fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+			}
+			for (int j = 0; ; j++) {
+				const auto &key_name = StrPrintf("PluginConfigString%d", j);
+				/*if (!kfh.HasKey(key_name))
+					break;*/
+				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
+				if( fs2.IsEmpty() )
+					break;
+				fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+			}
+		}
+		else {
+			if (pPlugin->GetPluginInfo(&pInfo)) {
+				iFlags = pInfo.Flags;
+				fsCommandPrefix = pInfo.CommandPrefix;
+				for (int j = 0; j < pInfo.DiskMenuStringsNumber; j++)
+					fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.DiskMenuStrings[j]);
+				for (int j = 0; j < pInfo.PluginMenuStringsNumber; j++)
+					fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginMenuStrings[j]);
+				for (int j = 0; j < pInfo.PluginConfigStringsNumber; j++)
+					fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginConfigStrings[j]);
+			}
+			else
+				iFlags = -1;
+		}
+
+		fs2 = fs + L"    ";
+		fs2.AppendFormat(L" %s Cached ", pPlugin->CheckWorkFlags(PIWF_CACHED) ? "[x]" : "[ ]");
+		fs2.AppendFormat(L" %s Loaded ", pPlugin->GetFuncFlags() & PICFF_LOADED ? "[x]" : "[ ]");
+		ListAbout.AddItem(fs2);
+
+		if (iFlags >= 0) {
+			fs2 = fs + L"F11:";
+			fs2.AppendFormat(L" %s Panel  ", iFlags & PF_DISABLEPANELS ? "[ ]" : "[x]");
+			fs2.AppendFormat(L" %s Dialog ", iFlags & PF_DIALOG ? "[x]" : "[ ]");
+			fs2.AppendFormat(L" %s Viewer ", iFlags & PF_VIEWER ? "[x]" : "[ ]");
+			fs2.AppendFormat(L" %s Editor ", iFlags & PF_EDITOR ? "[x]" : "[ ]");
+			ListAbout.AddItem(fs2);
+		}
+		fs2 = fs + L"    ";
+		fs2.AppendFormat(L" %s EditorInput ", pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
+		ListAbout.AddItem(fs2);
+
+		if ( !fsDiskMenuStrings.IsEmpty() ) {
+			fs2 = fs + L"    DiskMenuStrings:" + fsDiskMenuStrings;
+			ListAbout.AddItem(fs2);
+		}
+		if ( !fsPluginMenuStrings.IsEmpty() ) {
+			fs2 = fs + L"  PluginMenuStrings:" + fsPluginMenuStrings;
+			ListAbout.AddItem(fs2);
+		}
+		if ( !fsPluginConfigStrings.IsEmpty() ) {
+			fs2 = fs + L"PluginConfigStrings:" + fsPluginConfigStrings;
+			ListAbout.AddItem(fs2);
+		}
+		if ( !fsCommandPrefix.IsEmpty() ) {
+			fs2.Format(L"%ls      CommandPrefix: \"%ls\"", fs.CPtr(), fsCommandPrefix.CPtr());
+			ListAbout.AddItem(fs2);
+		}
+		
+	}
+
+	ListAbout.SetPosition(-1, -1, 0, 0);
+	//ListAbout.Process();
+	ListAbout.Show();
+	while (!ListAbout.Done()) {
+		int Key = ListAbout.ReadInput();
+		if (Key == KEY_ENTER || Key == KEY_NUMENTER)		// исключаем ENTER
+			continue;
+		ListAbout.ProcessInput();
+	}
+}
+
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 {
 	std::wstring strCommand(CmdLine);
@@ -870,145 +1056,15 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			return false;
 	}
 
-	/*if (strCommand.compare(p, std::string::npos, L"far:config") == 0) {
+	if (strCommand.compare(p, std::string::npos, L"far:config") == 0) {
+		AdvancedConfig();
 		return true;
-	}*/
+	}
 
 	if (strCommand.compare(p, std::string::npos, L"far:about") == 0) {
-		FARString fs, fs2;
-		int npl;
-
-		VMenu AboutList(L"far:about",nullptr,0,ScrY-4);
-		AboutList.SetFlags(VMENU_WRAPMODE);
-		//AboutList.SetHelp(L"FarAbout");
-		//AboutList.DeleteItems();
-		AboutList.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering");
-
-		MenuItemEx ais;
-		ais.Flags = LIF_SEPARATOR;
-
-		fs.Format(L"FAR2L Version:  %s", FAR_BUILD);
-		AboutList.AddItem(fs);
-		fs.Format(L"      Platform: %s", FAR_PLATFORM);
-		AboutList.AddItem(fs);
-		fs.Format(L"      Backend:  %ls", WinPortBackend());
-		AboutList.AddItem(fs);
-		fs.Format(L"      Admin:    %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
-		AboutList.AddItem(fs);
-		apiGetEnvironmentVariable("HOSTNAME", fs2);
-		fs = L"      Host:     " + fs2;
-		AboutList.AddItem(fs);
-		apiGetEnvironmentVariable("USER", fs2);
-		fs = L"      User:     " + fs2;
-		AboutList.AddItem(fs);
-
-		AboutList.AddItem(L"");
-
-		//apiGetEnvironmentVariable("FARLANG", fs2);
-		fs = L" Main language: " + Opt.strLanguage;
-		AboutList.AddItem(fs);
-
-		fs = L" Help language: " + Opt.strHelpLanguage;
-		AboutList.AddItem(fs);
-
-		apiGetEnvironmentVariable("FARPID", fs2);
-		fs = L"           PID: " + fs2;
-		AboutList.AddItem(fs);
-
-		AboutList.AddItem(L"");
-
-		apiGetEnvironmentVariable("FARHOME", fs2);
-		fs = L"   Far directory: \"" + fs2 + L"\"";
-		AboutList.AddItem(fs);
-
-		fs.Format(L"Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
-		AboutList.AddItem(fs);
-
-		fs.Format(L" Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
-		AboutList.AddItem(fs);
-
-		fs.Format(L"  Temp directory: \"%s\"", InMyTemp("").c_str() );
-		AboutList.AddItem(fs);
-
-		AboutList.AddItem(L"");
-
-		npl = CtrlObject->Plugins.GetPluginsCount();
-		fs.Format(L"Number of plugins: %d", npl);
-		AboutList.AddItem(fs);
-
-		for(int i = 0; i < npl; i++)
-		{
-			AboutList.AddItem(&ais);
-
-			fs.Format(L"Plugin %2d | ",  i+1);
-
-			Plugin *pPlugin = CtrlObject->Plugins.GetPlugin(i);
-			if(pPlugin == nullptr) {
-				fs.Append(L"!!! ERROR get plugin");
-				AboutList.AddItem(fs);
-				continue;
-			}
-			fs2 = fs;
-			fs2.Append( pPlugin->GetModuleName() );
-			AboutList.AddItem(fs2);
-
-			fs2 = fs + L"Settings Name: ";
-			fs2.Append(pPlugin->GetSettingsName());
-			AboutList.AddItem(fs2);
-
-			int IFlags;
-			FARString CommandPrefix = L"";
-			PluginInfo pInfo{};
-			KeyFileReadHelper kfh(PluginsIni());
-
-			if (pPlugin->CheckWorkFlags(PIWF_CACHED)) {
-				IFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags", 0);
-				CommandPrefix = kfh.GetString(pPlugin->GetSettingsName(), "CommandPrefix", "");
-			}
-			else {
-				IFlags = -1;
-				if (pPlugin->GetPluginInfo(&pInfo)) {
-					IFlags = pInfo.Flags;
-					CommandPrefix = pInfo.CommandPrefix;
-				}
-			}
-
-			fs2 = fs;
-			fs2.AppendFormat(L"%s Cached  ", pPlugin->CheckWorkFlags(PIWF_CACHED) ? "[x]" : "[ ]");
-			AboutList.AddItem(fs2);
-
-			if (IFlags >= 0) {
-				fs2 = fs + L"F11:";
-				fs2.AppendFormat(L" %s Panel  ", IFlags & PF_DISABLEPANELS ? "[ ]" : "[x]");
-				fs2.AppendFormat(L" %s Dialog  ", IFlags & PF_DIALOG ? "[x]" : "[ ]");
-				fs2.AppendFormat(L" %s Viewer  ", IFlags & PF_VIEWER ? "[x]" : "[ ]");
-				fs2.AppendFormat(L" %s Editor  ", IFlags & PF_EDITOR ? "[x]" : "[ ]");
-				AboutList.AddItem(fs2);
-			}
-			fs2 = fs;
-			fs2.AppendFormat(L"%s EditorInput  ", pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
-			AboutList.AddItem(fs2);
-
-			if ( !CommandPrefix.IsEmpty() ) {
-				fs2 = fs + L"CommandPrefix: " + CommandPrefix;
-				AboutList.AddItem(fs2);
-			}
-			
-		}
-
-		AboutList.SetPosition(-1, -1, 0, 0);
-		//AboutList.Process();
-		AboutList.Show();
-		while (!AboutList.Done()) {
-			int Key = AboutList.ReadInput();
-			if (Key == L' ' || Key == KEY_ENTER || Key == KEY_NUMENTER)		// исключаем пробел и ENTER
-				continue;
-			AboutList.ProcessInput();
-		}
-
+		FarAbout(CtrlObject->Plugins);
 		return true;
 	}
 
 	return false;
-
 }

@@ -11,11 +11,31 @@
 #include <fstream>
 #include <cstdlib> // для getenv
 
+#define FISH_HAVE_HEAD         1
+#define FISH_HAVE_SED          2
+#define FISH_HAVE_AWK          4
+#define FISH_HAVE_PERL         8
+#define FISH_HAVE_LSQ         16
+#define FISH_HAVE_DATE_MDYT   32
+#define FISH_HAVE_TAIL        64
+
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options)
 {
 	fprintf(stderr, "*1\n");
 	return std::make_shared<ProtocolFISH>(host, port, username, password, options);
+}
+
+static uint64_t GetIntegerBeforeStatusReplyLine(const std::string &data, size_t pos)
+{
+	size_t prev_line_start = pos;
+	if (prev_line_start) do {
+		--prev_line_start;
+	} while (prev_line_start && data[prev_line_start] != '\n');
+	if (data[prev_line_start] == '\n') {
+		++prev_line_start;
+	}
+	return (uint64_t)strtoull(data.c_str() + prev_line_start, nullptr, 10);
 }
 
 ////////////////////////////
@@ -38,9 +58,14 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	fprintf(stderr, "*** username from config: %s\n", username.c_str());
 	fprintf(stderr, "*** password from config: %s\n", password.c_str());
 
-	fprintf(stderr, "*** login string from config: %s\n", (username + "@" + host).c_str());
+	std::string ssh_arg = host;
+	if (!username.empty()) {
+		ssh_arg.insert(0, 1, '@');
+		ssh_arg.insert(0, username);
+	}
+	fprintf(stderr, "*** login string from config: %s\n", ssh_arg.c_str());
 
-	if (!_fish->OpenApp("ssh", (username + "@" + host).c_str())) {
+	if (!_fish->OpenApp("ssh", ssh_arg.c_str())) {
 	    printf("err 1\n");
     }
 
@@ -69,26 +94,19 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 
     fprintf(stderr, "*** CONNECTED\n");
 	_fish->SendAndWaitReply(
-		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###'FISH'###'\r",
+		"bind 'set enable-bracketed-paste off';export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###'FISH'###'\r",
 		{"###FISH###\n"}
 	);
 
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
-	if (wr.index == 0) {
-		size_t ofs;
-		for (ofs = 0; ofs < wr.stdout_data.size() && !isdigit(wr.stdout_data[ofs]);) {
-			++ofs;
-		}
-		_info = atoi(wr.stdout_data.c_str() + ofs);
-		_info&= ~8; // disable PERL for now
+	if (wr.index == 0 && wr.pos > 2) {
+		_info = (unsigned int)GetIntegerBeforeStatusReplyLine(wr.stdout_data, wr.pos);
 	}
 	fprintf(stderr, "*** info=%u\n", _info);
 	SetDefaultSubstitutions();
 
-
 	// если мы сюда добрались, значит, уже залогинены
 	// fixme: таймайт? ***
-
 }
 
 ProtocolFISH::~ProtocolFISH()
@@ -303,7 +321,6 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string 
 	return std::shared_ptr<IDirectoryEnumer>(new FISHDirectoryEnumer(_fish, path, _info));
 }
 
-
 class FISHFileReader : public IFileReader
 {
 	std::shared_ptr<FISHClient> _fish;
@@ -320,12 +337,9 @@ public:
 		if (wr.index != 0) {
 			throw ProtocolError("get file error");
 		}
-		size_t pos_of_str_remain = wr.pos;
-		if (pos_of_str_remain) do {
-			--pos_of_str_remain;
-		} while (pos_of_str_remain && wr.stdout_data[pos_of_str_remain] != '\n');
-		_remain = (uint64_t)strtoull(wr.stdout_data.c_str() + pos_of_str_remain + 1, nullptr, 10);
+		_remain = GetIntegerBeforeStatusReplyLine(wr.stdout_data, wr.pos);
 		_buffer = wr.stdout_data.substr(wr.pos + 9);
+		fprintf(stderr, "FISHFileReader: will read %llu bytes\n", (unsigned long long)_remain);
 	}
 
 	virtual ~FISHFileReader()

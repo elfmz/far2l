@@ -26,12 +26,11 @@ enum OutputType
 
 struct WaitResult
 {
-    int error_code{0};
-    OutputType output_type{STDBAD};
-    size_t index{(size_t)-1};
-	size_t pos{std::string::npos};
     std::string stdout_data;
     std::string stderr_data;
+    size_t index{(size_t)-1};
+	size_t pos{std::string::npos};
+    OutputType output_type{STDBAD};
 };
 
 class FISHClient

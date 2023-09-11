@@ -2,6 +2,30 @@
 #include <fstream>
 #include <utils.h>
 #include <os_call.hpp>
+#include "../../Erroring.h"
+
+// uncomment line below to enable debug output of all terminal traffic
+//#define FISH_DEBUG(INFO, STR, LEN) FishDebugStr(INFO, STR, LEN);
+
+#ifdef FISH_DEBUG
+static void FishDebugStr(const char *info, const char *str, size_t len)
+{
+	std::string tmp;
+	for (size_t i = 0; i <= len; ++i) {
+		if (i < len && (unsigned char)str[i] < 32) {
+			tmp+= StrPrintf("{%02x}", (unsigned char)str[i]);
+		} else {
+			tmp+= str[i];
+		}
+		if (i == len || str[i] == '\r' || str[i] == '\n') {
+			std::cerr << info << ": " << tmp << std::endl;
+			tmp.clear();
+		}
+	}
+}
+#else
+# define FISH_DEBUG(INFO, STR, LEN) ;
+#endif
 
 static void ForkSafePrint(const char *str)
 {
@@ -138,14 +162,12 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 
 WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<const char *> &expected_replies)
 {
+	FISH_DEBUG("HELPER", helper, strlen(helper));
 	std::ifstream helper_ifs;
 	helper_ifs.open(helper);
 	std::string send_str, tmp_str;
 	if (!helper_ifs.is_open() ) {
-		fprintf(stderr, "Can't open helper '%s'\n", helper);
-		WaitResult result;
-		result.error_code = -1;
-		return result;
+		throw ProtocolError("can't open helper", helper, errno);
 	}
 
 	while (std::getline(helper_ifs, tmp_str)) {
@@ -167,25 +189,16 @@ static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected
 	if (!(fd.revents & POLLIN)) {
 		return false;
 	}
-	fd.revents&= ~POLLIN;
-	std::string &data = (output_type == STDERR) ? wr.stderr_data : wr.stdout_data;
 
 	char buffer[2048];
-	ssize_t n = read(fd.fd, buffer, sizeof(buffer));
+	ssize_t n = os_call_ssize(read, fd.fd, (void *)buffer, sizeof(buffer));
 	if (n <= 0) {
-		fprintf(stderr, "%s: read error %d\n", __FUNCTION__, errno);
-		return false;
+		throw ProtocolError("error reading pty", (output_type == STDERR) ? "stderr" : "stdout", errno);
 	}
 
-#if 0 // 1 for debug output
-	std::string dbgstr(buffer, n);
-	for  (size_t i = dbgstr.size(); i--; ) {
-		if (dbgstr[i] < 32) {
-			dbgstr.replace(i, 1, StrPrintf("{%02x}", (unsigned char)dbgstr[i]));
-		}
-	}
-	std::cerr << ((output_type == STDERR) ? "STDERR: " : "STDOUT: ") << dbgstr << std::endl;
-#endif
+	std::string &data = (output_type == STDERR) ? wr.stderr_data : wr.stdout_data;
+
+	FISH_DEBUG((output_type == STDERR) ? "STDERR" : "STDOUT", buffer, n);
 
 	// tricky code below here to convert lineendings until found any expected reply match and
 	// DONT convert lineendings after match cause it may be heading part of file data being got
@@ -236,26 +249,35 @@ static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected
 
 WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies)
 {
-	WaitResult wr;
+	//FISH_DEBUG("SEND", send_str.c_str(), send_str.size());
 
 	if (WriteAll(_master_fd, send_str.c_str(), send_str.length()) != send_str.length()) {
-		wr.error_code = errno ? errno : -1;
-		return wr;
+		throw ProtocolError("error writing pty", errno);
 	}
 
-	struct pollfd fds[2];
-	fds[0].fd = _master_fd;
-	fds[0].events = POLLIN;
-	fds[1].fd = _stderr_pipe[0];
-	fds[1].events = POLLIN;
+	WaitResult wr;
+	for (;;) {
+		struct pollfd fds[2]{};
+		fds[0].fd = _master_fd;
+		fds[0].events = POLLIN;
+		fds[1].fd = _stderr_pipe[0];
+		fds[1].events = POLLIN;
+		const int r = os_call_int(poll, &fds[0], (nfds_t)2, 10000);
+		if (r < 0) {
+			throw ProtocolError("error polling pty", errno);
+		}
+		if (r == 0) {
+			if (_pid != (pid_t)-1) {
+				int status = 0;
+				if (waitpid(_pid, &status, WNOHANG) == 0) {
+					_pid = (pid_t)-1;
+					throw ProtocolError("client app exited unexpectedly", status);
+				}
+			}
 
-	while (os_call_int(poll, &fds[0], (nfds_t)2, -1) >= 0) {
-		if (RecvPollFD(wr, expected_replies, fds[0], STDOUT)
-		 || RecvPollFD(wr, expected_replies, fds[1], STDERR)) {
+		} else if (RecvPollFD(wr, expected_replies, fds[0], STDOUT)
+				|| RecvPollFD(wr, expected_replies, fds[1], STDERR)) {
 			return wr;
 		}
 	}
-
-	wr.error_code = errno ? errno : -2;
-	return wr;
 }

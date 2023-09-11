@@ -65,10 +65,15 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 	}
 
 	if (_pid == 0) {
+		CheckedCloseFD(_stderr_pipe[0]); // close read end
+		dup2(_stderr_pipe[1], STDERR_FILENO); // redirect stderr to the pipe
+		CheckedCloseFD(_stderr_pipe[1]); // close write end, as it's now duplicated
+
+		setenv("TERM", "xterm-mono", 1);
 		// Child process
 		// ***
 		// Получаем текущие атрибуты терминала
-		struct termios term;
+		struct termios term{};
 		if (tcgetattr(STDIN_FILENO, &term) == -1) {
 			ForkSafePrint("tcgetattr failed\n");
 			_exit(-1);
@@ -84,9 +89,6 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 		}
 		// ***
 
-		CheckedCloseFD(_stderr_pipe[0]); // close read end
-		dup2(_stderr_pipe[1], STDERR_FILENO); // redirect stderr to the pipe
-		CheckedCloseFD(_stderr_pipe[1]); // close write end, as it's now duplicated
 		execlp(app, app, arg, (char*) nullptr);
 		ForkSafePrint("execlp failed\n");
 		_exit(-1);

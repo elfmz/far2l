@@ -227,6 +227,92 @@ public:
 		}
 	}
 
+	void GetMaxLengthSectKeys(size_t &len_sections, size_t &len_keys, size_t &len_sections_keys) const
+	{
+		size_t tmp1, tmp2;
+		tmp1 = strlen(_section);
+		if (tmp1 > len_sections )
+			len_sections = tmp1;
+		tmp2 = strlen(_key);
+		if (tmp2 > len_keys )
+			len_keys = tmp2;
+		tmp1 += 1 + tmp2;
+		if (tmp1 > len_sections_keys )
+			len_sections_keys = tmp1;
+	}
+
+	void MenuListAppend(VMenu &vm,
+					size_t len_sections, size_t len_keys, size_t len_sections_keys,
+					bool bHideUnchanged, bool bAlignDot) const
+	{
+		MenuItemEx mi;
+		FARString fsn;
+		if (bAlignDot)
+		 fsn.Format(L"%*s.%-*s", len_sections, _section, len_keys, _key);
+		else {
+			mi.strName.Format(L"%s.%s", _section, _key);
+			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
+		}
+		switch (_type)
+		{
+			case T_BOOL:
+				mi.strName.Format(L"%s %ls |  bool|%s", (*_value.b == _default.b ? " " : "*"), fsn.CPtr(), (_value.b ? "true" : "false"));
+				break;
+			case T_INT:
+				mi.strName.Format(L"%s %ls |   int|%d = 0x%x", (*_value.i == _default.i ? " " : "*"), fsn.CPtr(), *_value.i, *_value.i);
+				break;
+			case T_DWORD:
+				mi.strName.Format(L"%s %ls | dword|%u = 0x%x", (*_value.dw == _default.dw ? " " : "*"), fsn.CPtr(), *_value.dw, *_value.dw);
+				break;
+			case T_STR:
+				mi.strName.Format(L"%s %ls |string|%ls", (*_value.str == _default.str ? " " : "*"), fsn.CPtr(), _value.str->CPtr());
+				break;
+			case T_BIN:
+				mi.strName.Format(L"%s %ls |binary|(binary has length %u bytes)",
+					(_default.bin == nullptr || _value.bin == nullptr ? "?"
+						: ( memcmp(_value.bin, _default.bin, _bin_size) == 0 ? " " : "*")),
+					fsn.CPtr(), _bin_size );
+				break;
+		}
+		if (bHideUnchanged && mi.strName.At(0)==L' ')
+			mi.Flags |= LIF_HIDDEN;
+		vm.AddItem(&mi);
+	}
+
+	void Msg(const wchar_t *title) const
+	{
+		FARString fs, fs2;
+		Message(MSG_LEFTALIGN, 1, fs.Format(L"%ls - %s.%s", title, _section, _key),
+			fs.Format(L"        Section: %s", _section),
+			fs.Format(L"            Key: %s", _key),
+			fs.Format(L" to config file: %s", (_save ? "saved" : "never")),
+			fs.Format(L"           Type: %s",
+				( _type == T_BOOL ? "bool"
+				: ( _type == T_INT ?  "int"
+				: ( _type == T_DWORD ? "dword"
+				: ( _type == T_STR ? "string"
+				: ( _type == T_BIN ? "binary"
+				: "???") ) ) ) ) ),
+			fs.Format(L"  Default value: %ls",
+				( _type == T_BOOL ? (_default.b ? L"true" : L"false")
+				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", _default.i, _default.i).CPtr()
+				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", _default.dw, _default.dw).CPtr()
+				: ( _type == T_STR ? _default.str
+				: ( _type == T_BIN ? ( _default.bin == nullptr ? L"(no default value set)" : fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr() )
+				: L"???"	) ) ) ) )
+				),
+			fs.Format(L"  Current value: %ls",
+				( _type == T_BOOL ? (*_value.b ? L"true" : L"false")
+				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", *_value.i, *_value.i).CPtr()
+				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", *_value.dw, *_value.dw).CPtr()
+				: ( _type == T_STR ? _value.str->CPtr()
+				: ( _type == T_BIN ? fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr()
+				: L"???" ) ) ) ) )
+				),
+			Msg::Ok);
+
+	}
+
 } s_opt_serializers[] =
 {
 	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
@@ -742,3 +828,54 @@ void SaveConfig(int Ask)
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
+void AdvancedConfig()
+{
+	size_t len_sections = 0, len_keys = 0, len_sections_keys = 0;
+	bool bHideUnchanged = false, bAlignDot = false;
+	VMenu ListConfig(L"far:config",nullptr,0,ScrY-4);
+	ListConfig.SetFlags(VMENU_SHOWAMPERSAND);
+	//ListConfig.SetFlags(VMENU_WRAPMODE);
+	//ListConfig.ClearFlags(VMENU_MOUSEDOWN);
+	//ListConfig.SetHelp(L"FarConfig");
+
+	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
+
+	for (const auto &opt_ser : s_opt_serializers)
+		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
+	for (const auto &opt_ser : s_opt_serializers)
+		opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
+
+	ListConfig.SetPosition(-1, -1, 0, 0);
+	//ListConfig.Process();
+	ListConfig.Show();
+	while (!ListConfig.Done()) {
+		int Key = ListConfig.ReadInput();
+		switch (Key) {
+			case KEY_ENTER:
+			case KEY_NUMENTER: {
+				int i = ListConfig.GetSelectPos();
+				if (i>=0)
+					s_opt_serializers[i].Msg(L"far:config");
+				}
+				continue;
+			case KEY_CTRLH:
+				bHideUnchanged = !bHideUnchanged;
+				break;
+			case KEY_CTRLA:
+				bAlignDot = !bAlignDot;
+				break;
+			default:
+				ListConfig.ProcessInput();
+				continue;
+		}
+
+		// regenerate items in loop only if not was contunue
+		int sel_pos = ListConfig.GetSelectPos();
+		ListConfig.DeleteItems();
+		for (const auto &opt_ser : s_opt_serializers)
+			opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
+		ListConfig.SetSelectPos(sel_pos,0);
+		ListConfig.SetPosition(-1, -1, 0, 0);
+		ListConfig.Show();
+	}
+}

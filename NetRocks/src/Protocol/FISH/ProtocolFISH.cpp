@@ -270,12 +270,11 @@ public:
 	FISHDirectoryEnumer(std::shared_ptr<FISHClient> &fish, const std::string &path, unsigned int info)
 		: _fish(fish)
 	{
-		fprintf(stderr, "*19 path='%s'\n", path.c_str());
-		_unquote = (info & (2 | 8 | 16)) != 0;
+		_unquote = (info & (FISH_HAVE_SED | FISH_HAVE_PERL | FISH_HAVE_LSQ)) != 0;
 		_fish->SetSubstitution("${FISH_FILENAME}", path);
 	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"### 200\n", "### 500\n"}); // fish command end
 		if (wr.index == 0) {
-			FISHParseLS(_files, wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
+			FISHParseLS(_files, wr.stdout_data);
 		} else {
 			throw ProtocolError("dir query error");
 		}

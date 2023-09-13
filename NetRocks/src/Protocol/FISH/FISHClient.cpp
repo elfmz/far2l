@@ -300,7 +300,7 @@ void FISHClient::Resynchronize()
 {
 	fprintf(stderr, "!!! FISHClient::Resynchronize !!!\n");
 	for (int i = 0; i < 3; ++i) {
-		const auto &req = StrPrintf("\recho ':::'FISH':::'RESYNCHRONIZE-%llu':::'\r", _resync_id);
+		const auto &req = StrPrintf("\recho ':::'FISH':::'RESYNCHRONIZE-%llu':::'\n", _resync_id);
 		const auto &rep = StrPrintf(":::FISH:::RESYNCHRONIZE-%llu:::\n", _resync_id);
 		SendAndWaitReply(req, {rep.c_str()});
 		++_resync_id;

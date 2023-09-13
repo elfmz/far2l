@@ -85,10 +85,10 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     auto wr = _fish->SendAndWaitReply("", login_replies);
     while (wr.index != 0 && wr.index != 1) {
 	    if (wr.index == 2) {
-		    wr = _fish->SendAndWaitReply(password + "\r", login_replies);
+		    wr = _fish->SendAndWaitReply(password + "\n", login_replies);
 	    }
 	    if (wr.index == 3 || wr.index == 4) {
-		    wr = _fish->SendAndWaitReply("yes\r", login_replies);
+		    wr = _fish->SendAndWaitReply("yes\n", login_replies);
 	    }
 	    if (wr.index == 5) {
 		    throw ProtocolAuthFailedError();
@@ -97,7 +97,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     fprintf(stderr, "*** FISH CONNECTED\n");
 
 	wr = _fish->SendAndWaitReply(
-		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###':$0:FISH:'###'\r",
+		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###':$0:FISH:'###'\n",
 		{":FISH:###\n"}
 	);
 	size_t p = wr.stdout_data.rfind("###:", wr.pos);
@@ -109,7 +109,7 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	if (_shell.find("bash") != std::string::npos) {
 		// prevent bash from flooding with bracketed paste ESC-sequences
 		_fish->SendAndWaitReply(
-			"bind 'set enable-bracketed-paste off'; echo '###':FISH:'###'\r",
+			"bind 'set enable-bracketed-paste off'; echo '###':FISH:'###'\n",
 			{"###:FISH:###\n"}
 		);
 	}

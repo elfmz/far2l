@@ -273,9 +273,12 @@ public:
 		fprintf(stderr, "*19 path='%s'\n", path.c_str());
 		_unquote = (info & (2 | 8 | 16)) != 0;
 		_fish->SetSubstitution("${FISH_FILENAME}", path);
-	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"\n### "}); // fish command end
-
-		FISHParseLS(_files, wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
+	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"### 200\n", "### 500\n"}); // fish command end
+		if (wr.index == 0) {
+			FISHParseLS(_files, wr.stdout_data); // path не передаётся тут никак в ls, fixme ***
+		} else {
+			throw ProtocolError("dir query error");
+		}
 
         fprintf(stderr, "*** LIST READ\n");
 

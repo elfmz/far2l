@@ -285,7 +285,7 @@ WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vec
 	while (std::getline(helper_ifs, tmp_str)) {
 		ApplySubstitutions(tmp_str);
 		send_str+= tmp_str;
-		send_str+= '\r';
+		send_str+= '\n';
 	}
 
 	return SendAndWaitReplyInner(send_str, expected_replies);

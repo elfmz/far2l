@@ -39,8 +39,11 @@ class FISHClient
     int _stderr_pipe[2]{-1, -1};
     pid_t _pid{(pid_t)-1};
 	std::map<std::string, std::string> _substs;
+	unsigned long long _resync_id;
 
 	void ApplySubstitutions(std::string &str);
+
+	WaitResult SendAndWaitReplyInner(const std::string &send_str, const std::vector<const char *> &expected_replies);
 
 public:
 	FISHClient();
@@ -49,9 +52,10 @@ public:
 	bool OpenApp(const char *app, const char *arg);
 	void SetSubstitution(const char *key, const std::string &value);
 
-	ssize_t ReadStdout(void *buffer, size_t len);
-
 	WaitResult SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies);
 	WaitResult SendHelperAndWaitReply(const char *helper, const std::vector<const char *> &expected_replies);
-};
 
+	ssize_t ReadStdout(void *buffer, size_t len);
+
+	void Resynchronize();
+};

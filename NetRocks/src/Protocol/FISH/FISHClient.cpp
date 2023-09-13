@@ -1,31 +1,31 @@
 #include "FISHClient.h"
 #include <fstream>
 #include <utils.h>
+#include <time.h>
 #include <os_call.hpp>
 #include "../../Erroring.h"
 
-// uncomment line below to enable debug output of all terminal traffic
-//#define FISH_DEBUG(INFO, STR, LEN) FishDebugStr(INFO, STR, LEN);
-
-#ifdef FISH_DEBUG
+// use 'export NETROCKS_VERBOSE=1' or '..=2' to see protocol dumps from FishDebugStr
 static void FishDebugStr(const char *info, const char *str, size_t len)
 {
 	std::string tmp;
 	for (size_t i = 0; i <= len; ++i) {
-		if (i < len && (unsigned char)str[i] < 32) {
+		if (i == len) {
+			; // nothing
+		} else if ((unsigned char)str[i] < 32) {
 			tmp+= StrPrintf("{%02x}", (unsigned char)str[i]);
+			if (str[i] == '\r' && i + 1 < len && str[i + 1] == '\n') {
+				continue;
+			}
 		} else {
 			tmp+= str[i];
 		}
-		if (i == len || str[i] == '\r' || str[i] == '\n') {
+		if (!tmp.empty() && (i == len || str[i] == '\r' || str[i] == '\n')) {
 			std::cerr << info << ": " << tmp << std::endl;
 			tmp.clear();
 		}
 	}
 }
-#else
-# define FISH_DEBUG(INFO, STR, LEN) ;
-#endif
 
 static void ForkSafePrint(const char *str)
 {
@@ -35,6 +35,8 @@ static void ForkSafePrint(const char *str)
 }
 
 FISHClient::FISHClient()
+	:
+	_resync_id(((unsigned long long)time(NULL)) ^ (((unsigned long long)getpid()) << 48))
 {
 }
 
@@ -160,37 +162,13 @@ bool FISHClient::OpenApp(const char *app, const char *arg)
 	return true;
 }
 
-WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<const char *> &expected_replies)
-{
-	FISH_DEBUG("HELPER", helper, strlen(helper));
-	std::ifstream helper_ifs;
-	helper_ifs.open(helper);
-	std::string send_str, tmp_str;
-	if (!helper_ifs.is_open() ) {
-		throw ProtocolError("can't open helper", helper, errno);
-	}
-
-	while (std::getline(helper_ifs, tmp_str)) {
-		ApplySubstitutions(tmp_str);
-		send_str+= tmp_str;
-		send_str+= '\r';
-	}
-
-	return SendAndWaitReply(send_str, expected_replies);
-}
-
-ssize_t FISHClient::ReadStdout(void *buffer, size_t len)
-{
-	return os_call_ssize(read, _master_fd, (void *)buffer, len);
-}
-
 static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected_replies, struct pollfd &fd, enum OutputType output_type)
 {
 	if (!(fd.revents & POLLIN)) {
 		return false;
 	}
 
-	char buffer[2048];
+	char buffer[3072];
 	ssize_t n = os_call_ssize(read, fd.fd, (void *)buffer, sizeof(buffer));
 	if (n <= 0) {
 		throw ProtocolError("error reading pty", (output_type == STDERR) ? "stderr" : "stdout", errno);
@@ -198,7 +176,9 @@ static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected
 
 	std::string &data = (output_type == STDERR) ? wr.stderr_data : wr.stdout_data;
 
-	FISH_DEBUG((output_type == STDERR) ? "STDERR" : "STDOUT", buffer, n);
+	if (g_netrocks_verbosity > 0) {
+		FishDebugStr((output_type == STDERR) ? "STDERR" : "STDOUT", buffer, n);
+	}
 
 	// tricky code below here to convert lineendings until found any expected reply match and
 	// DONT convert lineendings after match cause it may be heading part of file data being got
@@ -247,10 +227,8 @@ static bool RecvPollFD(WaitResult &wr, const std::vector<const char *> &expected
 	return false;
 }
 
-WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies)
+WaitResult FISHClient::SendAndWaitReplyInner(const std::string &send_str, const std::vector<const char *> &expected_replies)
 {
-	//FISH_DEBUG("SEND", send_str.c_str(), send_str.size());
-
 	if (WriteAll(_master_fd, send_str.c_str(), send_str.length()) != send_str.length()) {
 		throw ProtocolError("error writing pty", errno);
 	}
@@ -279,5 +257,52 @@ WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::
 				|| RecvPollFD(wr, expected_replies, fds[1], STDERR)) {
 			return wr;
 		}
+	}
+}
+
+WaitResult FISHClient::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies)
+{
+	if (g_netrocks_verbosity > 0) {
+		FishDebugStr("SEND", send_str.c_str(), send_str.size());
+	}
+
+	return SendAndWaitReplyInner(send_str, expected_replies);
+}
+
+WaitResult FISHClient::SendHelperAndWaitReply(const char *helper, const std::vector<const char *> &expected_replies)
+{
+	if (g_netrocks_verbosity > 0) {
+		FishDebugStr("HELPER", helper, strlen(helper));
+	}
+
+	std::ifstream helper_ifs;
+	helper_ifs.open(helper);
+	std::string send_str, tmp_str;
+	if (!helper_ifs.is_open() ) {
+		throw ProtocolError("can't open helper", helper, errno);
+	}
+
+	while (std::getline(helper_ifs, tmp_str)) {
+		ApplySubstitutions(tmp_str);
+		send_str+= tmp_str;
+		send_str+= '\r';
+	}
+
+	return SendAndWaitReplyInner(send_str, expected_replies);
+}
+
+ssize_t FISHClient::ReadStdout(void *buffer, size_t len)
+{
+	return os_call_ssize(read, _master_fd, (void *)buffer, len);
+}
+
+void FISHClient::Resynchronize()
+{
+	fprintf(stderr, "!!! FISHClient::Resynchronize !!!\n");
+	for (int i = 0; i < 3; ++i) {
+		const auto &req = StrPrintf("\recho ':::'FISH':::'RESYNCHRONIZE-%llu':::'\r", _resync_id);
+		const auto &rep = StrPrintf(":::FISH:::RESYNCHRONIZE-%llu:::\n", _resync_id);
+		SendAndWaitReply(req, {rep.c_str()});
+		++_resync_id;
 	}
 }

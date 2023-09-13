@@ -46,24 +46,25 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 	_fish(std::make_shared<FISHClient>())
 //	_dir_enum_cache(10)
 {
-	fprintf(stderr, "*** ProtocolFISH::%s\n", __FUNCTION__);
-
 	StringConfig protocol_options(options);
 	// ---------------------------------------------
 
-    fprintf(stderr, "*** CONNECTING\n");
-
-	fprintf(stderr, "*** host from config: %s\n", host.c_str());
-	fprintf(stderr, "*** port from config: %i\n", port);
-	fprintf(stderr, "*** username from config: %s\n", username.c_str());
-	fprintf(stderr, "*** password from config: %s\n", password.c_str());
+	if (g_netrocks_verbosity > 0) {
+		fprintf(stderr, "*** host from config: %s\n", host.c_str());
+		fprintf(stderr, "*** port from config: %i\n", port);
+		fprintf(stderr, "*** username from config: %s\n", username.c_str());
+		if (g_netrocks_verbosity > 1) {
+			fprintf(stderr, "*** password from config: %s\n", password.c_str());
+		}
+	}
 
 	std::string ssh_arg = host;
 	if (!username.empty()) {
 		ssh_arg.insert(0, 1, '@');
 		ssh_arg.insert(0, username);
 	}
-	fprintf(stderr, "*** login string from config: %s\n", ssh_arg.c_str());
+
+    fprintf(stderr, "*** FISH CONNECT: %s\n", ssh_arg.c_str());
 
 	if (!_fish->OpenApp("ssh", ssh_arg.c_str())) {
 	    printf("err 1\n");
@@ -72,37 +73,52 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
     // везде ли "$ " признак успешного залогина? проверить на dd wrt
 
     // Мы таки залогинены, спрашивают пароль, ключ незнакомый?
-    std::vector<const char *> results = {"$ ", "# ", "password: ", "This key is not known by any other names", "Are you sure"};
+    std::vector<const char *> login_replies {
+		"$ ",
+		"# ",
+		"password: ",
+		"This key is not known by any other names",
+		"Are you sure",
+		"Permission denied"
+	};
 
-    /*
-    // это ещё от sftp враппер код
-    // todo: сделать обработку сообщения о неправильном пароле (просто выходить из проги пока)
-    if (sc->WaitFor("Connected to", {
-		"assword:",
-    	"Permission denied, please try again."
-    */
-
-    auto wr = _fish->SendAndWaitReply("", results);
+    auto wr = _fish->SendAndWaitReply("", login_replies);
     while (wr.index != 0 && wr.index != 1) {
 	    if (wr.index == 2) {
-		    wr = _fish->SendAndWaitReply(password + "\r", results);
+		    wr = _fish->SendAndWaitReply(password + "\r", login_replies);
 	    }
 	    if (wr.index == 3 || wr.index == 4) {
-		    wr = _fish->SendAndWaitReply("yes\r", results);
+		    wr = _fish->SendAndWaitReply("yes\r", login_replies);
+	    }
+	    if (wr.index == 5) {
+		    throw ProtocolAuthFailedError();
 	    }
 	}
+    fprintf(stderr, "*** FISH CONNECTED\n");
 
-    fprintf(stderr, "*** CONNECTED\n");
-	_fish->SendAndWaitReply(
-		"bind 'set enable-bracketed-paste off';export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###'FISH'###'\r",
-		{"###FISH###\n"}
+	wr = _fish->SendAndWaitReply(
+		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###':$0:FISH:'###'\r",
+		{":FISH:###\n"}
 	);
+	size_t p = wr.stdout_data.rfind("###:", wr.pos);
+	if (p != std::string::npos) {
+		_shell = wr.stdout_data.substr(p + 4, wr.pos - p - 4);
+	}
+	fprintf(stderr, "*** FISH SHELL: '%s'\n", _shell.c_str());
+
+	if (_shell.find("bash") != std::string::npos) {
+		// prevent bash from flooding with bracketed paste ESC-sequences
+		_fish->SendAndWaitReply(
+			"bind 'set enable-bracketed-paste off'; echo '###':FISH:'###'\r",
+			{"###:FISH:###\n"}
+		);
+	}
 
 	wr = _fish->SendHelperAndWaitReply("FISH/info", {"\n### 200", "\n### "});
 	if (wr.index == 0 && wr.pos > 2) {
 		_info = (unsigned int)GetIntegerBeforeStatusReplyLine(wr.stdout_data, wr.pos);
 	}
-	fprintf(stderr, "*** info=%u\n", _info);
+	fprintf(stderr, "*** FISH INFO: %u\n", _info);
 	SetDefaultSubstitutions();
 
 	// если мы сюда добрались, значит, уже залогинены
@@ -344,11 +360,16 @@ public:
 
 	virtual ~FISHFileReader()
 	{
-		try {
+		try { // there is no cancellation for now, so have to fetch all unread yet data
 			while (_remain && !_failed) {
 				char tmp[0x1000];
 				Read(tmp, sizeof(tmp));
 			}
+		} catch (...) {
+		}
+
+		if (_failed) try { // best effort...
+			_fish->Resynchronize();
 		} catch (...) {
 		}
 	}
@@ -368,7 +389,6 @@ public:
 		while (piece < len) {
 			ssize_t r = _fish->ReadStdout((unsigned char *)buf + piece, len - piece);
 			if (r <= 0) {
-				abort();
 				_failed = true;
 				throw ProtocolError("get file error");
 			}
@@ -377,29 +397,6 @@ public:
 		}
 
 		return piece;
-	}
-
-	virtual void Write(const void *buf, size_t len)
-	{
-		fprintf(stderr, "*22\n");
-
-		if (len > 0) for (;;) {
-			int rc = 0; // ***
-			//const auto rc = fish_write(_fish->ctx, _file, len, (char *)buf);
-			if (rc <= 0)
-				throw ProtocolError("Write file error", errno);
-			if ((size_t)rc >= len)
-				break;
-
-			len-= (size_t)rc;
-			buf = (const char *)buf + rc;
-		}
-	}
-
-	virtual void WriteComplete()
-	{
-		fprintf(stderr, "*23\n");
-		// what?
 	}
 };
 

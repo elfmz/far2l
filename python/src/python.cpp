@@ -118,7 +118,7 @@ bool init_python(std::string program_name)
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
 
-	//config.utf8_mode = 1;
+    //config.utf8_mode = 1;
     config.parse_argv = 0;
     config.install_signal_handlers = 0;
     config.use_environment = 0;
@@ -151,15 +151,15 @@ PYTHON_LOG("call Py_InitializeFromConfig\n");
 #endif
 
     PyConfig_Clear(&config);
-	return true;
+    return true;
 
 done:
     PyConfig_Clear(&config);
     return false;
 #else
     PyImport_AppendInittab("farl2c", PyInit_far2lc);
-	Py_SetProgramName((wchar_t *)program_name.c_str());
-	return true;
+    Py_SetProgramName((wchar_t *)program_name.c_str());
+    return true;
 #endif
 }
 

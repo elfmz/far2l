@@ -84,18 +84,21 @@ data = """\\
     fp.write('''\
 import cffi
 ffi = cffi.FFI()
-packed = False
+pack = None
 while True:
     i = data.find('//#pragma pack')
     if i < 0:
-        ffi.cdef(data, packed=packed)
+        ffi.cdef(data, pack=pack)
         break
     ndata = data[:i]
-    ffi.cdef(ndata, packed=packed)
+    ffi.cdef(ndata, pack=pack)
     data = data[i:]
     i = data.find(')')
     s = data[:i+1]
-    packed = s.find('()') < 0
+    if s.find('()') > 0:
+        pack = None
+    else:
+        pack = 2
     data = data[i+1:]
-del packed, data, i, ndata, s
+del pack, data, i, ndata, s
 ''')

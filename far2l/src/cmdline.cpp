@@ -870,48 +870,60 @@ void FarAbout(PluginManager &Plugins)
 	MenuItemEx mis;
 	mis.Flags = LIF_SEPARATOR;
 
-	fs.Format(L"FAR2L Version:  %s", FAR_BUILD);
+	fs.Format(L"    FAR2L Version: %s", FAR_BUILD);
 	ListAbout.AddItem(fs);
-	fs.Format(L"      Platform: %s", FAR_PLATFORM);
+	fs.Format(L"         Platform: %s", FAR_PLATFORM);
 	ListAbout.AddItem(fs);
-	fs.Format(L"      Backend:  %ls", WinPortBackend());
+	fs.Format(L"          Backend: %ls", WinPortBackend());
 	ListAbout.AddItem(fs);
-	fs.Format(L"      Admin:    %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
+	fs.Format(L"            Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
 	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
 	apiGetEnvironmentVariable("HOSTNAME", fs2);
-	fs = L"      Host:     " + fs2;
+	fs =      L"             Host: " + fs2;
 	ListAbout.AddItem(fs);
 	apiGetEnvironmentVariable("USER", fs2);
-	fs = L"      User:     " + fs2;
+	fs =      L"             User: " + fs2;
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 
 	//apiGetEnvironmentVariable("FARLANG", fs2);
-	fs = L" Main language: " + Opt.strLanguage;
+	fs =      L"    Main language: " + Opt.strLanguage;
 	ListAbout.AddItem(fs);
 
-	fs = L" Help language: " + Opt.strHelpLanguage;
+	fs =      L"    Help language: " + Opt.strHelpLanguage;
 	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
 
 	//apiGetEnvironmentVariable("FARPID", fs2);
 	//fs = L"           PID: " + fs2;
-	fs.Format(L"           PID: %lu", (unsigned long)getpid());
+	fs.Format(L"              PID: %lu", (unsigned long)getpid());
+	ListAbout.AddItem(fs);
+
+	ListAbout.AddItem(L"");
+
+	fs.Format(L"     OEM codepage: %u", WINPORT(GetOEMCP)() );
+	ListAbout.AddItem(fs);
+
+	fs.Format(L"    ANSI codepage: %u", WINPORT(GetACP)() );
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 
 	//apiGetEnvironmentVariable("FARHOME", fs2);
-	fs = L"   Far directory: \"" + g_strFarPath.GetMB() + L"\"";
+	fs =      L"    Far directory: \"" + g_strFarPath.GetMB() + L"\"";
 	ListAbout.AddItem(fs);
 
-	fs.Format(L"Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
+	fs.Format(L" Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
 	ListAbout.AddItem(fs);
 
-	fs.Format(L" Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
+	fs.Format(L"  Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
 	ListAbout.AddItem(fs);
 
-	fs.Format(L"  Temp directory: \"%s\"", InMyTemp("").c_str() );
+	fs.Format(L"   Temp directory: \"%s\"", InMyTemp("").c_str() );
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
@@ -932,6 +944,7 @@ void FarAbout(PluginManager &Plugins)
 			ListAbout.AddItem(fs);
 			continue;
 		}
+		//fs.AppendFormat(L"%ls | ", PointToName(pPlugin->GetModuleName()));
 		fs2 = fs;
 		fs2.Append( pPlugin->GetModuleName() );
 		ListAbout.AddItem(fs2);

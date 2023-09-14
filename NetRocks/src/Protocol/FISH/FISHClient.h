@@ -20,24 +20,24 @@
 enum OutputType
 {
 	STDBAD = 0,
-    STDOUT,
-    STDERR
+	STDOUT,
+	STDERR
 };
 
 struct WaitResult
 {
-    std::string stdout_data;
-    std::string stderr_data;
-    size_t index{(size_t)-1};
+	std::string stdout_data;
+	std::string stderr_data;
+	size_t index{(size_t)-1};
 	size_t pos{std::string::npos};
-    OutputType output_type{STDBAD};
+	OutputType output_type{STDBAD};
 };
 
 class FISHClient
 {
-    int _master_fd{(pid_t)-1};
-    int _stderr_pipe[2]{-1, -1};
-    pid_t _pid{(pid_t)-1};
+	int _master_fd{(pid_t)-1};
+	int _stderr_pipe[2]{-1, -1};
+	pid_t _pid{(pid_t)-1};
 	std::map<std::string, std::string> _substs;
 	unsigned long long _resync_id;
 
@@ -47,7 +47,7 @@ class FISHClient
 
 public:
 	FISHClient();
-    virtual ~FISHClient();
+	virtual ~FISHClient();
 
 	bool OpenApp(const char *app, const char *arg);
 	void SetSubstitution(const char *key, const std::string &value);

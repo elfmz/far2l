@@ -64,37 +64,41 @@ ProtocolFISH::ProtocolFISH(const std::string &host, unsigned int port,
 		ssh_arg.insert(0, username);
 	}
 
-    fprintf(stderr, "*** FISH CONNECT: %s\n", ssh_arg.c_str());
+	fprintf(stderr, "*** FISH CONNECT: %s\n", ssh_arg.c_str());
 
 	if (!_fish->OpenApp("ssh", ssh_arg.c_str())) {
-	    printf("err 1\n");
-    }
+		printf("err 1\n");
+	}
 
-    // везде ли "$ " признак успешного залогина? проверить на dd wrt
+	// везде ли "$ " признак успешного залогина? проверить на dd wrt
 
-    // Мы таки залогинены, спрашивают пароль, ключ незнакомый?
-    std::vector<const char *> login_replies {
+	// Мы таки залогинены, спрашивают пароль, ключ незнакомый?
+	std::vector<const char *> login_replies {
 		"$ ",
 		"# ",
+		"> ",
+		"% ",
 		"password: ",
+		"Enter passphrase for key",
+
 		"This key is not known by any other names",
 		"Are you sure",
 		"Permission denied"
 	};
 
-    auto wr = _fish->SendAndWaitReply("", login_replies);
-    while (wr.index != 0 && wr.index != 1) {
-	    if (wr.index == 2) {
-		    wr = _fish->SendAndWaitReply(password + "\n", login_replies);
-	    }
-	    if (wr.index == 3 || wr.index == 4) {
-		    wr = _fish->SendAndWaitReply("yes\n", login_replies);
-	    }
-	    if (wr.index == 5) {
-		    throw ProtocolAuthFailedError();
-	    }
+	auto wr = _fish->SendAndWaitReply("", login_replies);
+	while (wr.index > 3) {
+		if (wr.index == 4 || wr.index == 5) {
+			wr = _fish->SendAndWaitReply(password + "\n", login_replies);
+		}
+		if (wr.index == 6 || wr.index == 7) {
+			wr = _fish->SendAndWaitReply("yes\n", login_replies);
+		}
+		if (wr.index == 8) {
+			throw ProtocolAuthFailedError();
+		}
 	}
-    fprintf(stderr, "*** FISH CONNECTED\n");
+	fprintf(stderr, "*** FISH CONNECTED\n");
 
 	wr = _fish->SendAndWaitReply(
 		"export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;echo '###':$0:FISH:'###'\n",
@@ -260,8 +264,8 @@ void ProtocolFISH::SymlinkQuery(const std::string &link_path, std::string &link_
 
 class FISHDirectoryEnumer : public IDirectoryEnumer {
 private:
-    std::vector<FileInfo> _files;
-    size_t _index = 0;
+	std::vector<FileInfo> _files;
+	size_t _index = 0;
 	bool _unquote{false};
 
 	std::shared_ptr<FISHClient> _fish;
@@ -272,25 +276,25 @@ public:
 	{
 		_unquote = (info & (FISH_HAVE_SED | FISH_HAVE_PERL | FISH_HAVE_LSQ)) != 0;
 		_fish->SetSubstitution("${FISH_FILENAME}", path);
-	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"### 200\n", "### 500\n"}); // fish command end
+		const auto &wr = _fish->SendHelperAndWaitReply("FISH/ls", {"### 200\n", "### 500\n"}); // fish command end
 		if (wr.index == 0) {
 			FISHParseLS(_files, wr.stdout_data);
 		} else {
 			throw ProtocolError("dir query error");
 		}
 
-        fprintf(stderr, "*** LIST READ\n");
+		fprintf(stderr, "*** LIST READ\n");
 
-        //files = fetchDirectoryContents(path);
-    }
+		//files = fetchDirectoryContents(path);
+	}
 
-    virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
+	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) override
 	{
 		const FileInfo *file;
 		do {
-	        if (_index >= _files.size()) {
+			if (_index >= _files.size()) {
 				return false;
-	        }
+			}
 			file = &_files[_index++];
 			name = file->path;
 			if (S_ISLNK(file->mode)) {
@@ -306,18 +310,18 @@ public:
 
 		} while (!FILENAME_ENUMERABLE(name));
 
-        owner = file->owner;
-        group = file->group;
+		owner = file->owner;
+		group = file->group;
 
-        file_info.access_time = {}; // Заполните это поле, если у вас есть информация
-        // fixme: это не собирается
-        //file_info.modification_time = std::chrono::time_point_cast<std::chrono::nanoseconds>(fileInfo.modified_time);
-        file_info.status_change_time = {}; // Заполните это поле, если у вас есть информация
-        file_info.size = file->size;
-        file_info.mode = file->mode;
+		file_info.access_time = {}; // Заполните это поле, если у вас есть информация
+		// fixme: это не собирается
+		//file_info.modification_time = std::chrono::time_point_cast<std::chrono::nanoseconds>(fileInfo.modified_time);
+		file_info.status_change_time = {}; // Заполните это поле, если у вас есть информация
+		file_info.size = file->size;
+		file_info.mode = file->mode;
 
-        return true;
-    }
+		return true;
+	}
 };
 
 std::shared_ptr<IDirectoryEnumer> ProtocolFISH::DirectoryEnum(const std::string &path)
@@ -351,7 +355,7 @@ public:
 		: _fish(fish)
 	{
 		_fish->SetSubstitution("${FISH_START_OFFSET}", StrPrintf("%llu", resume_pos));
-	    const auto &wr = _fish->SendHelperAndWaitReply("FISH/get", {"\n### 100\n", "\n### 500\n"});
+		const auto &wr = _fish->SendHelperAndWaitReply("FISH/get", {"\n### 100\n", "\n### 500\n"});
 		if (wr.index != 0) {
 			throw ProtocolError("get file error");
 		}

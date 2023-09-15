@@ -1604,7 +1604,7 @@ void VMenu::DrawTitles()
 	int WidthTitle;
 
 	FARString strDisplayTitle = strTitle;
-	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount) {
+	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount && !Item[WrappedSeparatorIndex]->strName.IsEmpty()) {
 		if (!strDisplayTitle.IsEmpty()) {
 			strDisplayTitle+= L' ';
 			strDisplayTitle+= BoxSymbols[BS_H1];

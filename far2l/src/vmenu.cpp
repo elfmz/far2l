@@ -1722,7 +1722,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 		if (BoxType != NO_BOX)
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
-//		DrawTitles();
+		DrawTitles();
 	}
 
 	wchar_t BoxChar[2] = {0};

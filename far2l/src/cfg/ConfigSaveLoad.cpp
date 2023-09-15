@@ -832,7 +832,9 @@ void AdvancedConfig()
 {
 	size_t len_sections = 0, len_keys = 0, len_sections_keys = 0;
 	bool bHideUnchanged = false, bAlignDot = false;
-	VMenu ListConfig(L"far:config",nullptr,0,ScrY-4);
+	FARString title = L"far:config";
+
+	VMenu ListConfig(title + (bHideUnchanged ? L" *" : L""),nullptr,0,ScrY-4);
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
 	//ListConfig.ClearFlags(VMENU_MOUSEDOWN);
@@ -855,11 +857,12 @@ void AdvancedConfig()
 			case KEY_NUMENTER: {
 				int i = ListConfig.GetSelectPos();
 				if (i>=0)
-					s_opt_serializers[i].Msg(L"far:config");
+					s_opt_serializers[i].Msg(title);
 				}
 				continue;
 			case KEY_CTRLH:
 				bHideUnchanged = !bHideUnchanged;
+				ListConfig.SetTitle(title + (bHideUnchanged ? L" *" : L""));
 				break;
 			case KEY_CTRLA:
 				bAlignDot = !bAlignDot;

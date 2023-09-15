@@ -934,17 +934,19 @@ void FarAbout(PluginManager &Plugins)
 
 	for(int i = 0; i < npl; i++)
 	{
-		ListAbout.AddItem(&mis);
-
 		fs.Format(L"Plugin#%02d | ",  i+1);
+		mis.strName = fs;
 
 		Plugin *pPlugin = Plugins.GetPlugin(i);
 		if(pPlugin == nullptr) {
+			ListAbout.AddItem(&mis);
 			fs.Append(L"!!! ERROR get plugin");
 			ListAbout.AddItem(fs);
 			continue;
 		}
 		//fs.AppendFormat(L"%ls | ", PointToName(pPlugin->GetModuleName()));
+		mis.strName = fs + PointToName(pPlugin->GetModuleName());
+		ListAbout.AddItem(&mis);
 		fs2 = fs;
 		fs2.Append( pPlugin->GetModuleName() );
 		ListAbout.AddItem(fs2);

@@ -1604,7 +1604,7 @@ void VMenu::DrawTitles()
 	int WidthTitle;
 
 	FARString strDisplayTitle = strTitle;
-	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount) {
+	if (WrappedSeparatorIndex >= 0 && WrappedSeparatorIndex < ItemCount && !Item[WrappedSeparatorIndex]->strName.IsEmpty()) {
 		if (!strDisplayTitle.IsEmpty()) {
 			strDisplayTitle+= L' ';
 			strDisplayTitle+= BoxSymbols[BS_H1];
@@ -1722,7 +1722,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 		if (BoxType != NO_BOX)
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
-//		DrawTitles();
+		DrawTitles();
 	}
 
 	wchar_t BoxChar[2] = {0};

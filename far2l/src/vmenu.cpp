@@ -1330,12 +1330,12 @@ int VMenu::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 							& (FROM_LEFT_1ST_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED))
 					&& CheckFlags(VMENU_MOUSEDOWN)) {
 				ClearFlags(VMENU_MOUSEDOWN);
-				if (CheckFlags(VMENU_BYSINGLEMOUSECLICK_ONLYSELECT))
+				if (CheckFlags(VMENU_IGNORE_SINGLECLICK))
 					SetSelectPos(MsPos, 1);
 				else
 					ProcessKey(KEY_ENTER);
 			}
-			if (MouseEvent->dwEventFlags==DOUBLE_CLICK) // need if VMENU_BYSINGLEMOUSECLICK_ONLYSELECT disable ENTER by click
+			if (MouseEvent->dwEventFlags==DOUBLE_CLICK) // need if VMENU_IGNORE_SINGLECLICK disable ENTER by click
 					ProcessKey(KEY_ENTER);
 		}
 

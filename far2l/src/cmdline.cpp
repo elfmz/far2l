@@ -861,7 +861,7 @@ void FarAbout(PluginManager &Plugins)
 	int npl;
 
 	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
-	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_BYSINGLEMOUSECLICK_ONLYSELECT);
+	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
 	//ListAbout.SetHelp(L"FarAbout");

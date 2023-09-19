@@ -835,7 +835,7 @@ void AdvancedConfig()
 	FARString title = L"far:config";
 
 	VMenu ListConfig(title + (bHideUnchanged ? L" *" : L""),nullptr,0,ScrY-4);
-	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_BYSINGLEMOUSECLICK_ONLYSELECT);
+	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
 	//ListConfig.SetHelp(L"FarConfig");

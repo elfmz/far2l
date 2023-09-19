@@ -861,9 +861,9 @@ void FarAbout(PluginManager &Plugins)
 	int npl;
 
 	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
-	ListAbout.SetFlags(VMENU_SHOWAMPERSAND);
+	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
+	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
-	//ListAbout.ClearFlags(VMENU_MOUSEDOWN);
 	//ListAbout.SetHelp(L"FarAbout");
 	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering");
 
@@ -1046,14 +1046,13 @@ void FarAbout(PluginManager &Plugins)
 	}
 
 	ListAbout.SetPosition(-1, -1, 0, 0);
-	//ListAbout.Process();
-	ListAbout.Show();
-	while (!ListAbout.Done()) {
-		int Key = ListAbout.ReadInput();
-		if (Key == KEY_ENTER || Key == KEY_NUMENTER)		// исключаем ENTER
-			continue;
-		ListAbout.ProcessInput();
-	}
+	int iListExitCode = 0;
+	do {
+		ListAbout.Process();
+		iListExitCode = ListAbout.GetExitCode();
+		if (iListExitCode>=0)
+			ListAbout.ClearDone(); // no close after select item by ENTER or mouse click
+	} while(iListExitCode>=0);
 }
 
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)

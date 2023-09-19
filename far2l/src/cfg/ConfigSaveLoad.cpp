@@ -835,9 +835,9 @@ void AdvancedConfig()
 	FARString title = L"far:config";
 
 	VMenu ListConfig(title + (bHideUnchanged ? L" *" : L""),nullptr,0,ScrY-4);
-	ListConfig.SetFlags(VMENU_SHOWAMPERSAND);
+	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
+	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
-	//ListConfig.ClearFlags(VMENU_MOUSEDOWN);
 	//ListConfig.SetHelp(L"FarConfig");
 
 	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
@@ -850,35 +850,36 @@ void AdvancedConfig()
 	ListConfig.SetPosition(-1, -1, 0, 0);
 	//ListConfig.Process();
 	ListConfig.Show();
-	while (!ListConfig.Done()) {
-		int Key = ListConfig.ReadInput();
-		switch (Key) {
-			case KEY_ENTER:
-			case KEY_NUMENTER: {
-				int i = ListConfig.GetSelectPos();
-				if (i>=0)
-					s_opt_serializers[i].Msg(title);
-				}
-				continue;
-			case KEY_CTRLH:
-				bHideUnchanged = !bHideUnchanged;
-				ListConfig.SetTitle(title + (bHideUnchanged ? L" *" : L""));
-				break;
-			case KEY_CTRLA:
-				bAlignDot = !bAlignDot;
-				break;
-			default:
-				ListConfig.ProcessInput();
-				continue;
-		}
+	int iListExitCode = 0;
+	do {
+		while (!ListConfig.Done()) {
+			int Key = ListConfig.ReadInput();
+			switch (Key) {
+				case KEY_CTRLH:
+					bHideUnchanged = !bHideUnchanged;
+					ListConfig.SetTitle(title + (bHideUnchanged ? L" *" : L""));
+					break;
+				case KEY_CTRLA:
+					bAlignDot = !bAlignDot;
+					break;
+				default:
+					ListConfig.ProcessInput();
+					continue;
+			}
 
-		// regenerate items in loop only if not was contunue
-		int sel_pos = ListConfig.GetSelectPos();
-		ListConfig.DeleteItems();
-		for (const auto &opt_ser : s_opt_serializers)
-			opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
-		ListConfig.SetSelectPos(sel_pos,0);
-		ListConfig.SetPosition(-1, -1, 0, 0);
-		ListConfig.Show();
-	}
+			// regenerate items in loop only if not was contunue
+			int sel_pos = ListConfig.GetSelectPos();
+			ListConfig.DeleteItems();
+			for (const auto &opt_ser : s_opt_serializers)
+				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
+			ListConfig.SetSelectPos(sel_pos,0);
+			ListConfig.SetPosition(-1, -1, 0, 0);
+			ListConfig.Show();
+		}
+		iListExitCode = ListConfig.GetExitCode();
+		if (iListExitCode>=0) {
+			ListConfig.ClearDone(); // no close after select item by ENTER or mouse click
+			s_opt_serializers[iListExitCode].Msg(title);
+		}
+	} while(iListExitCode>=0);
 }

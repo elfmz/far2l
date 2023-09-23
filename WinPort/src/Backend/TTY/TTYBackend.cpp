@@ -1173,14 +1173,14 @@ static void OnSigTstp(int signo)
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, false);
 
-	tcgetattr(g_std_out, &g_ts_cont);
+	os_call_int(tcgetattr, g_std_out, &g_ts_cont);
 	raise(SIGSTOP);
 }
 
 
 static void OnSigCont(int signo)
 {
-	tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont );
+	os_call_int(tcsetattr, g_std_out, TCSADRAIN, (const struct termios*)&g_ts_cont);
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, true);
 

@@ -519,6 +519,8 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 #undef _OPARG
 #undef _CONST
 	{
+	if (!Name) 
+		return INVALID_HANDLE_VALUE;
 #ifndef UNICODE
 #define PNAME_ARG Name
 #define pName     Name

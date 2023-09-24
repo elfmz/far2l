@@ -243,11 +243,11 @@ public:
 
 	void MenuListAppend(VMenu &vm,
 					size_t len_sections, size_t len_keys, size_t len_sections_keys,
-					bool bHideUnchanged, bool bAlignDot) const
+					bool hide_unchanged, bool align_dot) const
 	{
 		MenuItemEx mi;
 		FARString fsn;
-		if (bAlignDot)
+		if (align_dot)
 		 fsn.Format(L"%*s.%-*s", len_sections, _section, len_keys, _key);
 		else {
 			mi.strName.Format(L"%s.%s", _section, _key);
@@ -256,7 +256,7 @@ public:
 		switch (_type)
 		{
 			case T_BOOL:
-				mi.strName.Format(L"%s %ls |  bool|%s", (*_value.b == _default.b ? " " : "*"), fsn.CPtr(), (_value.b ? "true" : "false"));
+				mi.strName.Format(L"%s %ls |  bool|%s", (*_value.b == _default.b ? " " : "*"), fsn.CPtr(), (*_value.b ? "true" : "false"));
 				break;
 			case T_INT:
 				mi.strName.Format(L"%s %ls |   int|%d = 0x%x", (*_value.i == _default.i ? " " : "*"), fsn.CPtr(), *_value.i, *_value.i);
@@ -274,7 +274,7 @@ public:
 					fsn.CPtr(), _bin_size );
 				break;
 		}
-		if (bHideUnchanged && mi.strName.At(0)==L' ')
+		if (hide_unchanged && mi.strName.At(0)==L' ')
 			mi.Flags |= LIF_HIDDEN;
 		vm.AddItem(&mi);
 	}
@@ -828,13 +828,23 @@ void SaveConfig(int Ask)
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }
 
+
+static FARString AdvancedConfigTitle(bool hide_unchanged)
+{
+	FARString title = L"far:config";
+	if (hide_unchanged) {
+		title+= L" *";
+	}
+	return title;
+}
+
 void AdvancedConfig()
 {
 	size_t len_sections = 0, len_keys = 0, len_sections_keys = 0;
-	bool bHideUnchanged = false, bAlignDot = false;
+	bool hide_unchanged = false, align_dot = false;
 	FARString title = L"far:config";
 
-	VMenu ListConfig(title + (bHideUnchanged ? L" *" : L""),nullptr,0,ScrY-4);
+	VMenu ListConfig(AdvancedConfigTitle(hide_unchanged), nullptr, 0, ScrY-4);
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
@@ -845,7 +855,7 @@ void AdvancedConfig()
 	for (const auto &opt_ser : s_opt_serializers)
 		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
 	for (const auto &opt_ser : s_opt_serializers)
-		opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
+		opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, hide_unchanged, align_dot);
 
 	ListConfig.SetPosition(-1, -1, 0, 0);
 	//ListConfig.Process();
@@ -856,11 +866,11 @@ void AdvancedConfig()
 			int Key = ListConfig.ReadInput();
 			switch (Key) {
 				case KEY_CTRLH:
-					bHideUnchanged = !bHideUnchanged;
-					ListConfig.SetTitle(title + (bHideUnchanged ? L" *" : L""));
+					hide_unchanged = !hide_unchanged;
+					ListConfig.SetTitle(AdvancedConfigTitle(hide_unchanged));
 					break;
 				case KEY_CTRLA:
-					bAlignDot = !bAlignDot;
+					align_dot = !align_dot;
 					break;
 				default:
 					ListConfig.ProcessInput();
@@ -871,7 +881,7 @@ void AdvancedConfig()
 			int sel_pos = ListConfig.GetSelectPos();
 			ListConfig.DeleteItems();
 			for (const auto &opt_ser : s_opt_serializers)
-				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, bHideUnchanged, bAlignDot);
+				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, hide_unchanged, align_dot);
 			ListConfig.SetSelectPos(sel_pos,0);
 			ListConfig.SetPosition(-1, -1, 0, 0);
 			ListConfig.Show();

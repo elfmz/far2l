@@ -505,7 +505,6 @@ Messager &FN_NOINLINE Messager::AddFormatV(const wchar_t *fmt, va_list args)
 
 Messager &FN_NOINLINE Messager::Add(FarLangMsg v)
 {
-	Wide2MB(v.CPtr());
 	return Add(v.CPtr());
 }
 

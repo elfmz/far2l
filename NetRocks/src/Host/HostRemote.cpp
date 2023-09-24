@@ -252,16 +252,23 @@ void HostRemote::ReInitialize()
 	char keep_alive_arg[32];
 	sprintf(keep_alive_arg, "%d", sc_options.GetInt("KeepAlive", 0));
 
-	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s'\n",
-		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w);
+	std::string work_path = broker_path;
+	TranslateInstallPath_Lib2Share(work_path);
+
+	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s' in '%s'\n",
+		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, work_path.c_str());
 	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
+
 	pid_t pid = fork();
 	if (pid == 0) {
 		// avoid holding arbitrary dir for broker's whole runtime
-		if (chdir(broker_path.c_str()) == -1) {
-			fprintf(stderr, "chdir '%s' error %u\n", broker_path.c_str(), errno);
-			if (chdir("/tmp") == -1) {
-				fprintf(stderr, "chdir '/tmp' error %u\n", errno);
+		if (chdir(work_path.c_str()) == -1) {
+			fprintf(stderr, "chdir '%s' error %u\n", work_path.c_str(), errno);
+			if (chdir(broker_path.c_str()) == -1) {
+				fprintf(stderr, "chdir '%s' error %u\n", broker_path.c_str(), errno);
+				if (chdir("/tmp") == -1) {
+					fprintf(stderr, "chdir '/tmp' error %u\n", errno);
+				}
 			}
 		}
 		if (use_tsocks) {

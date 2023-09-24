@@ -73,4 +73,3 @@ void AbortBackgroundTask(unsigned long id)
 	if ( it != g_background_tasks.end())
 		it->second->Abort();
 }
-

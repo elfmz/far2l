@@ -40,6 +40,7 @@ set(SOURCES
     src/IntStrConv.cpp
     src/EnsureDir.cpp
     src/RandomString.cpp
+    src/MakePTYAndFork.cpp
 )
 
 add_library (utils STATIC ${SOURCES})

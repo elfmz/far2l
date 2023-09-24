@@ -310,6 +310,9 @@ void OpXfer::Transfer()
 
 		if (S_ISLNK(e.second.mode)) {
 			if (existing || SymlinkCopy(e.first, path_dst)) {
+				if (_kind == XK_MOVE && !existing) {
+					FileDelete(e.first);
+				}
 				ProgressStateUpdate psu(_state);
 				_state.stats.count_complete++;
 				continue;
@@ -400,12 +403,7 @@ void OpXfer::Transfer()
 			if (FileCopyLoop(e.first, path_dst, e.second)) {
 				CopyAttributes(path_dst, e.second);
 				if (_kind == XK_MOVE) {
-					WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), e.first,
-						[&] () mutable
-						{
-							_base_host->FileDelete(e.first);
-						}
-					);
+					FileDelete(e.first);
 				}
 			}
 		}
@@ -432,6 +430,16 @@ void OpXfer::Transfer()
 			}
 		}
 	}
+}
+
+void OpXfer::FileDelete(const std::string &path)
+{
+	WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), path,
+		[&] () mutable
+		{
+			_base_host->FileDelete(path);
+		}
+	);
 }
 
 void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &info)

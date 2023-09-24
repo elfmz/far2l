@@ -61,6 +61,9 @@ struct Messager : protected std::vector<const wchar_t *>
 
 	~Messager();
 
+	Messager &AddFormatV(const wchar_t *fmt, va_list args);
+	Messager &AddFormat(FarLangMsg fmt, ...);
+	Messager &AddFormat(const wchar_t *fmt, ...);
 	Messager &Add(FarLangMsg v);
 	Messager &Add(const wchar_t *v);
 	inline Messager &Add() { return *this; }

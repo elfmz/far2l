@@ -227,6 +227,63 @@ public:
 		}
 	}
 
+	//  0 - is default
+	//  1 - not default
+	// -1 - error or has not default
+	int IsNotDefault() const
+	{
+		switch (_type)
+		{
+			case T_BOOL:
+				return (*_value.b != _default.b);
+			case T_INT:
+				return (*_value.i != _default.i);
+			case T_DWORD:
+				return (*_value.dw != _default.dw);
+			case T_STR:
+				return (*_value.str != _default.str);
+			case T_BIN:
+				return (_default.bin == nullptr || _value.bin == nullptr ? -1
+						: ( memcmp(_value.bin, _default.bin, _bin_size) == 0 ? 0 : 1 ));
+			default:
+				return -1; // can not process unknown type
+		}
+	}
+
+	// 0 - was default, not changed
+	// 1 - changed to default
+	// -1 - error or has not default
+	int ToDefault() const
+	{
+		switch (_type)
+		{
+			case T_BOOL:
+				if (*_value.b == _default.b)
+					return 0;
+				*_value.b = _default.b;
+				return 1;
+			case T_INT:
+				if (*_value.i == _default.i)
+					return 0;
+				*_value.i = _default.i;
+				return 1;
+			case T_DWORD:
+				if (*_value.dw == _default.dw)
+					return 0;
+				*_value.dw = _default.dw;
+				return 1;
+			case T_STR:
+				if (*_value.str == _default.str)
+					return 0;
+				*_value.str = _default.str;
+				return 1;
+			case T_BIN:
+				return -1; // can not process binary
+			default:
+				return -1; // can not process unknown type
+		}
+	}
+
 	void GetMaxLengthSectKeys(size_t &len_sections, size_t &len_keys, size_t &len_sections_keys) const
 	{
 		size_t tmp1, tmp2;
@@ -243,7 +300,8 @@ public:
 
 	void MenuListAppend(VMenu &vm,
 					size_t len_sections, size_t len_keys, size_t len_sections_keys,
-					bool hide_unchanged, bool align_dot) const
+					bool hide_unchanged, bool align_dot,
+					int update_id = -1) const
 	{
 		MenuItemEx mi;
 		FARString fsn;
@@ -273,16 +331,25 @@ public:
 						: ( memcmp(_value.bin, _default.bin, _bin_size) == 0 ? " " : "*")),
 					fsn.CPtr(), _bin_size );
 				break;
+			default:
+				mi.strName.Format(L"? %ls |unknown type ???", fsn.CPtr());
 		}
-		if (hide_unchanged && mi.strName.At(0)==L' ')
-			mi.Flags |= LIF_HIDDEN;
-		vm.AddItem(&mi);
+		if (update_id < 0) {
+			if (hide_unchanged && mi.strName.At(0)==L' ') // no hide after change item to default value
+				mi.Flags |= LIF_HIDDEN;
+			vm.AddItem(&mi);
+		}
+		else {
+			vm.DeleteItem(update_id);
+			vm.AddItem(&mi, update_id);
+			vm.SetSelectPos(update_id, 0);
+		}
 	}
 
-	void Msg(const wchar_t *title) const
+	int Msg(const wchar_t *title) const
 	{
 		FARString fs, fs2;
-		Message(MSG_LEFTALIGN, 1, fs.Format(L"%ls - %s.%s", title, _section, _key),
+		return Message(MSG_LEFTALIGN, 2, fs.Format(L"%ls - %s.%s", title, _section, _key),
 			fs.Format(L"        Section: %s", _section),
 			fs.Format(L"            Key: %s", _key),
 			fs.Format(L" to config file: %s", (_save ? "saved" : "never")),
@@ -309,8 +376,14 @@ public:
 				: ( _type == T_BIN ? fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr()
 				: L"???" ) ) ) ) )
 				),
-			Msg::Ok);
-
+			L"",
+			L"Note: some panel parameters after update/reset",
+			L"      not applied immediatly in FAR2L",
+			L"      and need relaunch feature",
+			L"      or may be need save config & restart FAR2L",
+			Msg::Ok,
+			IsNotDefault()==1 ? L"Reset to default" : Msg::Cancel
+			);
 	}
 
 } s_opt_serializers[] =
@@ -829,7 +902,7 @@ void SaveConfig(int Ask)
 }
 
 
-static FARString AdvancedConfigTitle(bool hide_unchanged)
+static FARString AdvancedConfigTitle(bool hide_unchanged = false)
 {
 	FARString title = L"far:config";
 	if (hide_unchanged) {
@@ -842,7 +915,7 @@ void AdvancedConfig()
 {
 	size_t len_sections = 0, len_keys = 0, len_sections_keys = 0;
 	bool hide_unchanged = false, align_dot = false;
-	FARString title = L"far:config";
+	int sel_pos = 0;
 
 	VMenu ListConfig(AdvancedConfigTitle(hide_unchanged), nullptr, 0, ScrY-4);
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
@@ -850,7 +923,7 @@ void AdvancedConfig()
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
 	//ListConfig.SetHelp(L"FarConfig");
 
-	ListConfig.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
+	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - details, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 
 	for (const auto &opt_ser : s_opt_serializers)
 		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
@@ -860,7 +933,6 @@ void AdvancedConfig()
 	ListConfig.SetPosition(-1, -1, 0, 0);
 	//ListConfig.Process();
 	ListConfig.Show();
-	int iListExitCode = 0;
 	do {
 		while (!ListConfig.Done()) {
 			int Key = ListConfig.ReadInput();
@@ -872,13 +944,25 @@ void AdvancedConfig()
 				case KEY_CTRLA:
 					align_dot = !align_dot;
 					break;
+				case KEY_NUMDEL:
+				case KEY_DEL:
+					sel_pos = ListConfig.GetSelectPos();
+					if (sel_pos>=0 && s_opt_serializers[sel_pos].ToDefault()==1) {
+						s_opt_serializers[sel_pos].MenuListAppend(
+							ListConfig,
+							len_sections, len_keys, len_sections_keys,
+							hide_unchanged, align_dot,
+							sel_pos);
+						ListConfig.FastShow();
+					}
+					continue;
 				default:
 					ListConfig.ProcessInput();
 					continue;
 			}
 
 			// regenerate items in loop only if not was contunue
-			int sel_pos = ListConfig.GetSelectPos();
+			sel_pos = ListConfig.GetSelectPos();
 			ListConfig.DeleteItems();
 			for (const auto &opt_ser : s_opt_serializers)
 				opt_ser.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, hide_unchanged, align_dot);
@@ -886,10 +970,19 @@ void AdvancedConfig()
 			ListConfig.SetPosition(-1, -1, 0, 0);
 			ListConfig.Show();
 		}
-		iListExitCode = ListConfig.GetExitCode();
-		if (iListExitCode>=0) {
-			ListConfig.ClearDone(); // no close after select item by ENTER or mouse click
-			s_opt_serializers[iListExitCode].Msg(title);
+
+		sel_pos = ListConfig.GetExitCode();
+		if (sel_pos < 0) // exit from loop by ESC or F10 or click outside vmenu
+			break;
+		ListConfig.ClearDone(); // no close after select item by ENTER or dbl mouse click
+		if ( s_opt_serializers[sel_pos].Msg(AdvancedConfigTitle())==1
+				&& s_opt_serializers[sel_pos].ToDefault()==1 ) {
+			s_opt_serializers[sel_pos].MenuListAppend(
+				ListConfig,
+				len_sections, len_keys, len_sections_keys,
+				hide_unchanged, align_dot,
+				sel_pos);
+			ListConfig.FastShow();
 		}
-	} while(iListExitCode>=0);
+	} while(1);
 }

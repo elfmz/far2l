@@ -463,7 +463,7 @@ void FARString::Reserve(size_t DesiredCapacity)
 	}
 }
 
-static void FARStringFmt(FARString &str, bool append, const wchar_t *format, va_list argptr)
+void FARStringFmtV(FARString &str, bool append, const wchar_t *format, va_list argptr)
 {
 	const size_t StartSize = 0x200;		// 512 bytes ought to be enough for mosts
 	const size_t MaxSize = 0x1000000;	// 16 megs ought to be enough for anybody
@@ -497,7 +497,7 @@ FARString& FARString::Format(const wchar_t * format, ...)
 {
 	va_list argptr;
 	va_start(argptr, format);
-	FARStringFmt(*this, false, format, argptr);
+	FARStringFmtV(*this, false, format, argptr);
 	va_end(argptr);
 	return *this;
 }
@@ -506,7 +506,7 @@ FARString& FARString::AppendFormat(const wchar_t * format, ...)
 {
 	va_list argptr;
 	va_start(argptr, format);
-	FARStringFmt(*this, true, format, argptr);
+	FARStringFmtV(*this, true, format, argptr);
 	va_end(argptr);
 	return *this;
 }

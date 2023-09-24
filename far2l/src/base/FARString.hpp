@@ -264,3 +264,5 @@ public:
 FARString operator+(const FARString &strSrc1, const FARString &strSrc2);
 FARString operator+(const FARString &strSrc1, const char *lpszSrc2);
 FARString operator+(const FARString &strSrc1, const wchar_t *lpwszSrc2);
+
+void FARStringFmtV(FARString &str, bool append, const wchar_t *format, va_list argptr);

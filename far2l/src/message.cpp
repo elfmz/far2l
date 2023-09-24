@@ -477,8 +477,35 @@ FN_NOINLINE Messager::Messager() {}
 
 FN_NOINLINE Messager::~Messager() {}
 
+Messager &FN_NOINLINE Messager::AddFormat(FarLangMsg fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	AddFormatV(fmt.CPtr(), args);
+	va_end(args);
+	return *this;
+}
+
+Messager &FN_NOINLINE Messager::AddFormat(const wchar_t *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	AddFormatV(fmt, args);
+	va_end(args);
+	return *this;
+}
+
+Messager &FN_NOINLINE Messager::AddFormatV(const wchar_t *fmt, va_list args)
+{
+	FARString str;
+	FARStringFmtV(str, false, fmt, args);
+	Add(str.CPtr());
+	return *this;
+}
+
 Messager &FN_NOINLINE Messager::Add(FarLangMsg v)
 {
+	Wide2MB(v.CPtr());
 	return Add(v.CPtr());
 }
 

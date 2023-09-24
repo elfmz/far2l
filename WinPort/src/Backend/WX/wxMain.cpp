@@ -94,6 +94,9 @@ static void DetectHostAbilities()
 	}
 }
 
+#ifdef __APPLE__
+void MacInit();
+#endif
 
 extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPortMainBackendArg *a)
 {
@@ -101,6 +104,9 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		fprintf(stderr, "This far2l_gui is not compatible and cannot be used\n");
 		return false;
 	}
+#ifdef __APPLE__
+	MacInit();
+#endif
 
 	g_wx_norgb = a->norgb;
 	g_winport_con_out = a->winport_con_out;

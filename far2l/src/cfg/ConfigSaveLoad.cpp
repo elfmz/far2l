@@ -349,41 +349,54 @@ public:
 	int Msg(const wchar_t *title) const
 	{
 		FARString fs, fs2;
-		return Message(MSG_LEFTALIGN, 2, fs.Format(L"%ls - %s.%s", title, _section, _key),
-			fs.Format(L"        Section: %s", _section),
-			fs.Format(L"            Key: %s", _key),
-			fs.Format(L" to config file: %s", (_save ? "saved" : "never")),
-			fs.Format(L"           Type: %s",
+		std::vector<FARString> fsa;
+		Messager m;
+
+		fs.Format(L"%ls - %s.%s", title, _section, _key);
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); // title
+		fs.Format(L"        Section: %s", _section);
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		fs.Format(L"            Key: %s", _key);
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		fs.Format(L" to config file: %s", (_save ? "saved" : "never"));
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		fs.Format(L"           Type: %s",
 				( _type == T_BOOL ? "bool"
 				: ( _type == T_INT ?  "int"
 				: ( _type == T_DWORD ? "dword"
 				: ( _type == T_STR ? "string"
 				: ( _type == T_BIN ? "binary"
-				: "???") ) ) ) ) ),
-			fs.Format(L"  Default value: %ls",
+				: "???") ) ) ) ) );
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		fs.Format(L"  Default value: %ls",
 				( _type == T_BOOL ? (_default.b ? L"true" : L"false")
 				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", _default.i, _default.i).CPtr()
 				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", _default.dw, _default.dw).CPtr()
 				: ( _type == T_STR ? _default.str
 				: ( _type == T_BIN ? ( _default.bin == nullptr ? L"(no default value set)" : fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr() )
-				: L"???"	) ) ) ) )
-				),
-			fs.Format(L"  Current value: %ls",
+				: L"???"	) ) ) ) ) );
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		fs.Format(L"  Current value: %ls",
 				( _type == T_BOOL ? (*_value.b ? L"true" : L"false")
 				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", *_value.i, *_value.i).CPtr()
 				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", *_value.dw, *_value.dw).CPtr()
 				: ( _type == T_STR ? _value.str->CPtr()
 				: ( _type == T_BIN ? fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr()
-				: L"???" ) ) ) ) )
-				),
-			L"",
-			L"Note: some panel parameters after update/reset",
-			L"      not applied immediatly in FAR2L",
-			L"      and need relaunch feature",
-			L"      or may be need save config & restart FAR2L",
-			Msg::Ok,
-			IsNotDefault()==1 ? L"Reset to default" : Msg::Cancel
-			);
+				: L"???" ) ) ) ) ) );
+		fsa.push_back(fs.CPtr());	m.Add(fsa.back()); 
+		if (IsNotDefault()==1) { 
+			m.Add(L"");
+			m.Add(L"Note: some panel parameters after update/reset");
+			m.Add(L"      not applied immediatly in FAR2L");
+			m.Add(L"      and need relaunch feature");
+			m.Add(L"      or may be need save config & restart FAR2L");
+		}
+		m.Add(L"Continue");
+		if (IsNotDefault()==1) { 
+			m.Add(L"Reset to default");
+			return m.Show(MSG_LEFTALIGN, 2);
+		}
+		return m.Show(MSG_LEFTALIGN, 1);
 	}
 
 } s_opt_serializers[] =

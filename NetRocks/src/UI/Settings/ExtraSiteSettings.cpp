@@ -162,7 +162,7 @@ public:
 			TextFromDialogControl(_i_extra, str);
 			sc.SetString("Extra", str);
 			sc.SetInt("CommandTimeLimit", std::max(3, (int)LongLongFromDialogControl(_i_command_time_limit)));
-			sc.SetInt("KeepAlive", std::min(0, (int)LongLongFromDialogControl(_i_keepalive)));
+			sc.SetInt("KeepAlive", std::max(0, (int)LongLongFromDialogControl(_i_keepalive)));
 			sc.SetInt("TimeAdjust", (int)LongLongFromDialogControl(_i_timeadjust));
 
 			{

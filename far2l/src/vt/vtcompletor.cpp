@@ -15,6 +15,7 @@
 #include <string>
 #include <time.h>
 #include <utils.h>
+#include <MakePTYAndFork.h>
 #include <RandomString.h>
 #include "vtcompletor.h"
 
@@ -59,81 +60,18 @@ bool VTCompletor::EnsureStarted()
 
 	const std::string &hc_override = VTSanitizeHistcontrol();
 
-	while (!_pty_used) {
-		int l_ptyMaster = -1,
-			rc = -1;
-		l_ptyMaster = posix_openpt(O_RDWR);
-		if (l_ptyMaster < 0) {
-			break;
-		}
-		MakeFDCloexec(l_ptyMaster);
-		rc = grantpt(l_ptyMaster);
-		if (rc != 0) {
-			fprintf(stderr, "VTCompletor: change the access rights on the slave side of PTY\n");
-			CheckedCloseFD(l_ptyMaster);
-			break;
-		}
-		rc = unlockpt(l_ptyMaster);
-		if (rc != 0) {
-			fprintf(stderr, "VTCompletor: unlock the slave side of PTY\n");
-			CheckedCloseFD(l_ptyMaster);
-			break;
-		}
+	int pty_master = -1;
+	_pid = MakePTYAndFork(pty_master);
+	if (_pid != -1) {
 		_pty_used = true;
-		this->_pid = fork();
-		if (this->_pid == -1) {
-			_pty_used = false;
-			CheckedCloseFD(l_ptyMaster);
-			return false;
-		}
-		if (this->_pid == 0) {
+		if (_pid == 0) {
 			// child process
 			// terminal with one very long line...
 			struct winsize ws = {1, VeryLongTerminalLine, 0, 0};
-			int l_ptySlave = open(ptsname(l_ptyMaster), O_RDWR);
-			if (l_ptySlave < 0) {
-				perror("VTCompletor: open the slave side of PTY");
-				CheckedCloseFD(l_ptyMaster);
-				return false;
-			}
-			CheckedCloseFD(l_ptyMaster);
-			// set terminal size
-			if (ioctl(l_ptySlave, TIOCSWINSZ, &ws) == -1) {
+			if (ioctl(STDOUT_FILENO, TIOCSWINSZ, &ws) == -1) {
 				perror("VTCompletor: ioctl(TIOCSWINSZ)");
 				_exit(1);
 				exit(1);
-			}
-			std::cin.sync();
-			std::cout.flush();
-			std::cerr.flush();
-			std::clog.flush();
-			rc = dup2(l_ptySlave, STDIN_FILENO);
-			if (rc < 0) {
-				perror( "VTCompletor: dup2(stdin)");
-				_exit(2);
-				exit(2);
-			}
-			rc = dup2(l_ptySlave, STDOUT_FILENO);
-			if (rc < 0) {
-				perror( "VTCompletor: dup2(stdout)");
-				_exit(3);
-				exit(3);
-			}
-			rc = dup2(l_ptySlave, STDERR_FILENO);
-			if (rc < 0) {
-				perror( "VTCompletor: dup2(stderr)");
-				_exit(4);
-				exit(4);
-			}
-			CheckedCloseFD(l_ptySlave);
-			if (!hc_override.empty()) {
-				setenv("HISTCONTROL", hc_override.c_str(), 1);
-			}
-			rc = setsid();
-			if (rc < 0) {
-				perror( "VTCompletor: setsid()");
-				_exit(5);
-				exit(5);
 			}
 			execlp("bash", "bash", "--noprofile", "-i", NULL);
 			perror("VTCompletor: execlp");
@@ -141,10 +79,13 @@ bool VTCompletor::EnsureStarted()
 			exit(6);
 		}
 		// parent process
-		this->_pipe_stdin = l_ptyMaster;
-		this->_pipe_stdout = dup(l_ptyMaster);
-		MakeFDCloexec(this->_pipe_stdout);
+		_pipe_stdin = pty_master;
+		_pipe_stdout = dup(pty_master);
+		MakeFDCloexec(_pipe_stdout);
+	} else {
+		CheckedCloseFD(pty_master);
 	}
+
 	if (!_pty_used) {
 		fprintf(stderr, "VTCompletor: fallback to pipes\n");
 		int pipe_in[2] = {}, pipe_out[2] = {};

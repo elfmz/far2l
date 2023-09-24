@@ -21,6 +21,7 @@
 #include <Threaded.h>
 #include "ProtocolSCP.h"
 #include "SSHConnection.h"
+#include "../ShellParseUtils.h"
 #include "../../Op/Utils/ExecCommandFIFO.hpp"
 
 #define QUERY_BY_CMD
@@ -291,20 +292,6 @@ enum DirectoryEnumerMode
 
 class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 {
-	static std::string ExtractStringTail(std::string &line)
-	{
-		std::string out;
-		size_t p = line.rfind(' ');
-		if (p != std::string::npos) {
-			out = line.substr(p + 1);
-			line.resize(p);
-		} else {
-			out.swap(line);
-		}
-
-		return out;
-	}
-
 	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 // PATH/NAME MODE SIZE ACCESS MODIFY CHANGE USER GROUP
@@ -326,13 +313,13 @@ class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 			}
 			_cmd.output.erase(0, p);
 
-			const std::string &str_group = ExtractStringTail(line);
-			const std::string &str_owner = ExtractStringTail(line);
-			const std::string &str_change = ExtractStringTail(line);
-			const std::string &str_modify = ExtractStringTail(line);
-			const std::string &str_access = ExtractStringTail(line);
-			const std::string &str_size = ExtractStringTail(line);
-			const std::string &str_mode = ExtractStringTail(line);
+			const std::string &str_group = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_owner = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_change = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_modify = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_access = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_size = ShellParseUtils::ExtractStringTail(line, " ");
+			const std::string &str_mode = ShellParseUtils::ExtractStringTail(line, " ");
 
 			p = line.rfind('/');
 			if (p != std::string::npos && line.size() > 1) {
@@ -389,61 +376,6 @@ class SCPDirectoryEnumer_ls : public SCPDirectoryEnumer
 {
 	struct timespec _now;
 
-	static unsigned int Char2FileType(char c)
-	{
-		switch (c) {
-			case 'l':
-				return S_IFLNK;
-
-			case 'd':
-				return S_IFDIR;
-
-			case 'c':
-				return S_IFCHR;
-
-			case 'b':
-				return S_IFBLK;
-
-			case 'p':
-				return S_IFIFO;
-
-			case 's':
-				return S_IFSOCK;
-
-			case 'f':
-			default:
-				return S_IFREG;
-		}
-	}
-
-	static unsigned int Triplet2FileMode(const char *c)
-	{
-		unsigned int out = 0;
-		if (c[0] == 'r') out|= 4;
-		if (c[1] == 'w') out|= 2;
-		if (c[2] == 'x' || c[1] == 's' || c[1] == 't') out|= 1;
-		return out;
-	}
-
-	static std::string ExtractStringHead(std::string &line)
-	{
-		std::string out;
-		size_t p = line.find_first_of(" \t");
-		if (p != std::string::npos) {
-			out = line.substr(0, p);
-			while (p < line.size() && (line[p] == ' ' || line[p] == '\t')) {
-				++p;
-			}
-			line.erase(0, p);
-
-		} else {
-			out.swap(line);
-		}
-
-		return out;
-	}
-
-
 	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 /*
@@ -473,120 +405,15 @@ crw-------    1 root     root        3, 144 Jan  1  1970 ttyy0
 				++p;
 			}
 			_cmd.output.erase(0, p);
-			const std::string &str_mode = ExtractStringHead(line);
-			if (line.empty())
-				continue;
 
-			if (line[0] >= '0' && line[0] <= '9') {
-				ExtractStringHead(line); // skip nlinks
-				if (line.empty())
-					continue;
-			}
-			const std::string &str_owner = ExtractStringHead(line);
-			if (line.empty())
-				continue;
-
-			const std::string &str_group = ExtractStringHead(line);
-			if (line.empty())
-				continue;
-
-			const std::string &str_size = ExtractStringHead(line);
-			if (line.empty())
-				continue;
-
-			bool size_is_not_size = false;
-			if (!str_size.empty() && str_size.back() == ',') {
-				// block/char device, size is major, followed by minor
-				ExtractStringHead(line); // really dont care
-				if (line.empty())
-					continue;
-				size_is_not_size = true;
-			}
-
-			const std::string &str_month = ExtractStringHead(line);
-
-			if (line.empty())
-				continue;
-
-			const std::string &str_day = ExtractStringHead(line);
-			if (line.empty())
-				continue;
-
-			const std::string &str_yt = ExtractStringHead(line);
-			if (line.empty())
-				continue;
-
-			file_info.mode = 0;
-			if (str_mode.size() >= 1) {
-				file_info.mode = Char2FileType(str_mode[0]);
-				if (file_info.mode == S_IFLNK) {
-					size_t p = line.find(" -> ");
-					if (p != std::string::npos)
-						line.resize(p);
+			if (ShellParseUtils::ParseLineFromLS(line, name, owner, group,
+					file_info.access_time, file_info.modification_time, file_info.status_change_time,
+					file_info.size, file_info.mode)) {
+				if (!name.empty() && FILENAME_ENUMERABLE(name)) {
+					return true;
 				}
-			}
-
-			if (str_mode.size() >= 4) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 1) << 6;
-			}
-
-			if (str_mode.size() >= 7) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 4) << 3;
-			}
-
-			if (str_mode.size() >= 10) {
-				file_info.mode|= Triplet2FileMode(str_mode.c_str() + 7);
-			}
-
-			const time_t now = _now.tv_sec;
-			struct tm t{};
-			struct tm *tnow = gmtime(&now);
-			if (tnow)
-				t = *tnow;
-
-			if (str_yt.find(':') == std::string::npos) {
-				t.tm_year = DecToULong(str_yt.c_str(), str_yt.length()) - 1900;
-			} else {
-				if (sscanf(str_yt.c_str(), "%d:%d", &t.tm_hour, &t.tm_min) <= -1) {
-					perror("scanf(str_yt)");
-				}
-			}
-			if (strcasecmp(str_month.c_str(), "jan") == 0) t.tm_mon = 0;
-			else if (strcasecmp(str_month.c_str(), "feb") == 0) t.tm_mon = 1;
-			else if (strcasecmp(str_month.c_str(), "mar") == 0) t.tm_mon = 2;
-			else if (strcasecmp(str_month.c_str(), "apr") == 0) t.tm_mon = 3;
-			else if (strcasecmp(str_month.c_str(), "may") == 0) t.tm_mon = 4;
-			else if (strcasecmp(str_month.c_str(), "jun") == 0) t.tm_mon = 5;
-			else if (strcasecmp(str_month.c_str(), "jul") == 0) t.tm_mon = 6;
-			else if (strcasecmp(str_month.c_str(), "aug") == 0) t.tm_mon = 7;
-			else if (strcasecmp(str_month.c_str(), "sep") == 0) t.tm_mon = 8;
-			else if (strcasecmp(str_month.c_str(), "oct") == 0) t.tm_mon = 9;
-			else if (strcasecmp(str_month.c_str(), "nov") == 0) t.tm_mon = 10;
-			else if (strcasecmp(str_month.c_str(), "dec") == 0) t.tm_mon = 11;
-
-			t.tm_mday = atoi(str_day.c_str());
-
-			file_info.status_change_time.tv_sec
-				= file_info.modification_time.tv_sec
-					= file_info.access_time.tv_sec = mktime(&t);
-
-			file_info.size = size_is_not_size ? 0 : atoll(str_size.c_str());
-
-			owner = str_owner;
-			group = str_group;
-
-			p = line.rfind('/');
-			if (p != std::string::npos && line.size() > 1) {
-				name = line.substr(p + 1);
-			} else {
-				name.swap(line);
-			}
-
-			if (name.empty() || !FILENAME_ENUMERABLE(name)) {
 				name.clear();
-				continue;
 			}
-			return true;
 		}
 	}
 

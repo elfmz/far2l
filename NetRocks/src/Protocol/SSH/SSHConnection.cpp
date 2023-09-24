@@ -503,7 +503,7 @@ SSHExecutedCommand::SSHExecutedCommand(std::shared_ptr<SSHConnection> conn, cons
 	}
 
 	if (pipe_cloexec(_kickass) == -1) {
-		throw ProtocolError("pipe", ssh_get_error(_conn->ssh));
+		throw ProtocolError("pipe", errno);
 	}
 
 	MakeFDNonBlocking(_kickass[1]);

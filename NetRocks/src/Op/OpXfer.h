@@ -29,6 +29,7 @@ class OpXfer : protected OpBase, public IBackgroundTask
 	void Rename(const std::set<std::string> &items);
 	void EnsureDstDirExists();
 	void Transfer();
+	void FileDelete(const std::string &path);
 	void DirectoryCopy(const std::string &path_dst, const FileInformation &info);
 	bool SymlinkCopy(const std::string &path_src, const std::string &path_dst);
 	bool FileCopyLoop(const std::string &path_src, const std::string &path_dst, FileInformation &info);

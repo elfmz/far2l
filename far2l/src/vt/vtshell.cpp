@@ -160,6 +160,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			askpass_app = GetHelperPathName("far2l_askpass");
 		}
 
+		std::cin.sync();
+		std::cout.flush();
+		std::cerr.flush();
+		std::clog.flush();
 		int r = fork();
 		if (r != 0) {
 			return r;

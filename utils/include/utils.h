@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdarg>
 #include <sys/types.h>
+#include <string.h>
 #include "cctweaks.h"
 #include "BitTwiddle.hpp"
 #include "MatchWildcard.hpp"

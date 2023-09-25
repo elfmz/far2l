@@ -348,42 +348,60 @@ public:
 
 	int Msg(const wchar_t *title) const
 	{
-		FARString fs, fs2;
-		return Message(MSG_LEFTALIGN, 2, fs.Format(L"%ls - %s.%s", title, _section, _key),
-			fs.Format(L"        Section: %s", _section),
-			fs.Format(L"            Key: %s", _key),
-			fs.Format(L" to config file: %s", (_save ? "saved" : "never")),
-			fs.Format(L"           Type: %s",
-				( _type == T_BOOL ? "bool"
-				: ( _type == T_INT ?  "int"
-				: ( _type == T_DWORD ? "dword"
-				: ( _type == T_STR ? "string"
-				: ( _type == T_BIN ? "binary"
-				: "???") ) ) ) ) ),
-			fs.Format(L"  Default value: %ls",
-				( _type == T_BOOL ? (_default.b ? L"true" : L"false")
-				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", _default.i, _default.i).CPtr()
-				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", _default.dw, _default.dw).CPtr()
-				: ( _type == T_STR ? _default.str
-				: ( _type == T_BIN ? ( _default.bin == nullptr ? L"(no default value set)" : fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr() )
-				: L"???"	) ) ) ) )
-				),
-			fs.Format(L"  Current value: %ls",
-				( _type == T_BOOL ? (*_value.b ? L"true" : L"false")
-				: ( _type == T_INT ? fs2.Format(L"%d = 0x%x", *_value.i, *_value.i).CPtr()
-				: ( _type == T_DWORD ? fs2.Format(L"%d = 0x%x", *_value.dw, *_value.dw).CPtr()
-				: ( _type == T_STR ? _value.str->CPtr()
-				: ( _type == T_BIN ? fs2.Format(L"(binary has length %u bytes)", _bin_size).CPtr()
-				: L"???" ) ) ) ) )
-				),
-			L"",
-			L"Note: some panel parameters after update/reset",
-			L"      not applied immediatly in FAR2L",
-			L"      and need relaunch feature",
-			L"      or may be need save config & restart FAR2L",
-			Msg::Ok,
-			IsNotDefault()==1 ? L"Reset to default" : Msg::Cancel
-			);
+		const char *type_psz;
+		FARString def_str, val_str;
+		switch (_type) {
+			case T_BOOL:
+				type_psz = "bool";
+				def_str = _default.b ? L"true" : L"false";
+				val_str = (*_value.b) ? L"true" : L"false";
+				break;
+			case T_INT:
+				type_psz = "int";
+				def_str.Format(L"%d = 0x%x", _default.i, _default.i);
+				val_str.Format(L"%d = 0x%x", *_value.i, *_value.i);
+				break;
+			case T_DWORD:
+				type_psz = "dword";
+				def_str.Format(L"%u = 0x%x", _default.dw, _default.dw);
+				val_str.Format(L"%u = 0x%x", *_value.dw, *_value.dw);
+				break;
+			case T_STR:
+				type_psz = "string";
+				def_str = _default.str ? _default.str : L"(null)";
+				val_str = *_value.str;
+				break;
+			case T_BIN:
+				type_psz = "binary";
+				if (_default.bin) {
+					def_str.Format(L"(binary has length %u bytes)", _bin_size);
+				} else {
+					def_str = L"(no default value set)";
+				}
+				val_str.Format(L"(binary has length %u bytes)", _bin_size);
+				break;
+			default:
+				type_psz = "???";
+				def_str = L"???";
+				val_str = L"???";
+		}
+
+		ExMessager em;
+		em.AddFormat(L"%ls - %s.%s", title, _section, _key);
+		em.AddFormat(L"        Section: %s", _section);
+		em.AddFormat(L"            Key: %s", _key);
+		em.AddFormat(L" to config file: %s", (_save ? "saved" : "never"));
+		em.AddFormat(L"           Type: %s", type_psz);
+		em.AddFormat(L"  Default value: %ls", def_str.CPtr());
+		em.AddFormat(L"  Current value: %ls", val_str.CPtr());
+		em.Add(L"");
+		em.Add(L"Note: some panel parameters after update/reset");
+		em.Add(L"      not applied immediatly in FAR2L");
+		em.Add(L"      and need relaunch feature");
+		em.Add(L"      or may be need save config & restart FAR2L");
+		em.Add(Msg::Ok);
+		em.Add((IsNotDefault() == 1) ? L"Reset to default" : Msg::Cancel);
+		return em.Show(MSG_LEFTALIGN, 2);
 	}
 
 } s_opt_serializers[] =

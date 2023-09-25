@@ -477,32 +477,6 @@ FN_NOINLINE Messager::Messager() {}
 
 FN_NOINLINE Messager::~Messager() {}
 
-Messager &FN_NOINLINE Messager::AddFormat(FarLangMsg fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	AddFormatV(fmt.CPtr(), args);
-	va_end(args);
-	return *this;
-}
-
-Messager &FN_NOINLINE Messager::AddFormat(const wchar_t *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	AddFormatV(fmt, args);
-	va_end(args);
-	return *this;
-}
-
-Messager &FN_NOINLINE Messager::AddFormatV(const wchar_t *fmt, va_list args)
-{
-	FARString str;
-	FARStringFmtV(str, false, fmt, args);
-	Add(str.CPtr());
-	return *this;
-}
-
 Messager &FN_NOINLINE Messager::Add(FarLangMsg v)
 {
 	return Add(v.CPtr());
@@ -534,6 +508,57 @@ int FN_NOINLINE Messager::Show(DWORD Flags, int Buttons)
 int FN_NOINLINE Messager::Show(int Buttons)
 {
 	return Show(0, Buttons, -1);
+}
+
+///////////////////////////////////
+
+ExMessager::ExMessager(FarLangMsg title) : Messager(title)
+{
+}
+
+ExMessager::ExMessager(const wchar_t *title) : Messager(title)
+{
+}
+
+ExMessager::ExMessager()
+{
+}
+
+ExMessager::~ExMessager()
+{
+}
+
+Messager &FN_NOINLINE ExMessager::AddFormat(FarLangMsg fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	AddFormatV(fmt.CPtr(), args);
+	va_end(args);
+	return *this;
+}
+
+Messager &FN_NOINLINE ExMessager::AddFormat(const wchar_t *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	AddFormatV(fmt, args);
+	va_end(args);
+	return *this;
+}
+
+Messager &FN_NOINLINE ExMessager::AddFormatV(const wchar_t *fmt, va_list args)
+{
+	_owneds.emplace_back();
+	FARStringFmtV(_owneds.back(), false, fmt, args);
+	Add(_owneds.back().CPtr());
+	return *this;
+}
+
+Messager &FN_NOINLINE ExMessager::AddDup(const wchar_t *v)
+{
+	_owneds.emplace_back(v);
+	Add(_owneds.back().CPtr());
+	return *this;
 }
 
 ///////////////////////////////////

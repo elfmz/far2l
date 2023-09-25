@@ -749,6 +749,8 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 		CtrlObject->CmdLine->GetSelection(OldCmdLineSelStart, OldCmdLineSelEnd);
 		CtrlObject->CmdLine->LockUpdatePanel(TRUE);
 
+		Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
+
 		// Цикл исполнения команд меню (CommandX)
 		for (;;) {
 			FormatString strLineName;
@@ -804,7 +806,9 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 
 							// ProcessOSAliases(strCommand);
 							if (!isSilent) {
-								CtrlObject->CmdLine->ExecString(strCommand, FALSE, 0, 0, ListFileUsed);
+								if (!ActivePanel->ProcessPluginEvent(FE_COMMAND, (void *)strCommand.CPtr())) {
+									CtrlObject->CmdLine->ExecString(strCommand, FALSE, 0, 0, ListFileUsed);
+								}
 							} else {
 								SaveScreen SaveScr;
 								CtrlObject->Cp()->LeftPanel->CloseFile();

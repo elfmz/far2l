@@ -1080,5 +1080,31 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		return true;
 	}
 
+	std::string::size_type l = std::wcslen(L"far:view") + 1;
+	if (strCommand.compare(p, l, L"far:view:") == 0	|| strCommand.compare(p, l, L"far:view ") == 0) {
+		p += l;
+		std::string::size_type p2 = strCommand.find_first_not_of(L" \t:", p);
+		if (p2 == std::string::npos)
+			return true;
+		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);
+		if (p3 != std::string::npos)
+			p3 -= p2;
+		new FileViewer(std::make_shared<FileHolder>( strCommand.substr(p2,p3).c_str() ), TRUE);
+		return true;
+	}
+
+	l = std::wcslen(L"far:edit") + 1;
+	if (strCommand.compare(p, l, L"far:edit:") == 0	|| strCommand.compare(p, l, L"far:edit ") == 0) {
+		p += l;
+		std::string::size_type p2 = strCommand.find_first_not_of(L" \t:", p);
+		if (p2 == std::string::npos)
+			return true;
+		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);
+		if (p3 != std::string::npos)
+			p3 -= p2;
+		new FileEditor(std::make_shared<FileHolder>( strCommand.substr(p2,p3).c_str() ), CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		return true;
+	}
+
 	return false;
 }

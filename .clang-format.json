@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "far2l-clang-format",
+  "title": "ClangFormat Options for far2l",
+  "allOf": [
+    {
+      "$ref": "http://jetbrains.com/schema/clangformat.json"
+    }
+  ],
+  "properties": {
+    "UseTab": {
+      "title": "The way to use tab characters in the resulting file.",
+      "x-intellij-html-description": "Modified to match https://github.com/elfmz/llvm-project",
+      "enum": [
+        "Never",
+        "ForIndentation",
+        "ForContinuationAndIndentation",
+        "AlignWithSpaces",
+        "Always",
+        "ForContinuationAndIndentationAndComments"
+      ],
+      "type": "string"
+    },
+    "AlignByTab": {
+      "title": "Align by tab.",
+      "x-intellij-html-description": "Added to match https://github.com/elfmz/llvm-project",
+      "type": "boolean"
+    },
+    "BreakConstructorInitializers": {
+      "title": "Break constructor initializers.",
+      "x-intellij-html-description": "Modified to match https://github.com/elfmz/llvm-project",
+      "enum": [
+        "AfterColonSeparated"
+      ],
+      "type": "string"
+    },
+    "SpaceBeforeAssignmentOperators": {
+      "title": "If `false`, spaces will be removed before assignment operators.",
+      "x-intellij-html-description": "Modified to match https://github.com/elfmz/llvm-project",
+      "enum": [
+        "OnlyTrivial"
+      ],
+      "type": "string"
+    },
+    "AlignConsecutiveMembersAssignments": {
+      "title": "Align consecutive members assignments.",
+      "x-intellij-html-description": "Added to match https://github.com/elfmz/llvm-project",
+      "type": "boolean"
+    },
+    "AllowLongTrailingComments": {
+      "title": "Allow long trailing comments.",
+      "x-intellij-html-description": "Added to match https://github.com/elfmz/llvm-project",
+      "type": "boolean"
+    }
+  }
+}

@@ -86,7 +86,6 @@ bool ClientApp::Open(const char *app, char *const *argv)
 		setenv("TERM", "xterm-mono", 1);
 		unsetenv("COLORFGBG");
 		// Child process
-		// ***
 		// Получаем текущие атрибуты терминала
 		struct termios tios{};
 		if (tcgetattr(STDIN_FILENO, &tios) == -1) {
@@ -102,7 +101,6 @@ bool ClientApp::Open(const char *app, char *const *argv)
 			ForkSafePrint("tcsetattr failed\n");
 			_exit(-1);
 		}
-		// ***
 		// ssh should terminate if terminal closed
 		signal(SIGINT, SIG_DFL);
 		signal(SIGHUP, SIG_DFL);
@@ -325,7 +323,7 @@ WaitResult ClientApp::SendAndWaitReply(const std::string &send_str, const std::v
 {
 	if (g_netrocks_verbosity > 0) {
 		if (hide_in_log) {
-			DebugStr("SEND.HIDE", "***");
+			DebugStr("SEND.HIDE", "???");
 		} else {
 			DebugStr("SEND", send_str);
 		}

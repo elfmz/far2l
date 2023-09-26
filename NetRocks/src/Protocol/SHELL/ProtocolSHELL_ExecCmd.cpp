@@ -186,11 +186,11 @@ void ProtocolSHELL::ExecCmd::IOLoop()
 void *ProtocolSHELL::ExecCmd::ThreadProc()
 {
 	try {
-		fprintf(stderr, "ShellExecutedCommand: ENTERING [%s]\n", _command_line.c_str());
+		fprintf(stderr, "[SHELL] ShellExecutedCommand: ENTERING [%s]\n", _command_line.c_str());
 		IOLoop();
-		fprintf(stderr, "ShellExecutedCommand: LEAVING\n");
+		fprintf(stderr, "[SHELL] ShellExecutedCommand: LEAVING\n");
 	} catch (std::exception &ex) {
-		fprintf(stderr, "ShellExecutedCommand: %s\n", ex.what());
+		fprintf(stderr, "[SHELL] ShellExecutedCommand: %s\n", ex.what());
 	}
 
 	return nullptr;

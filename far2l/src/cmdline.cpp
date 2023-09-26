@@ -1083,7 +1083,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	std::string::size_type l = std::wcslen(L"far:view") + 1;
 	if (strCommand.compare(p, l, L"far:view:") == 0	|| strCommand.compare(p, l, L"far:view ") == 0) {
 		p += l;
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t:", p);
+		std::string::size_type p2 = strCommand.find_first_not_of(L" \t", p);
 		if (p2 == std::string::npos)
 			return true;
 		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);
@@ -1096,7 +1096,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	l = std::wcslen(L"far:edit") + 1;
 	if (strCommand.compare(p, l, L"far:edit:") == 0	|| strCommand.compare(p, l, L"far:edit ") == 0) {
 		p += l;
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t:", p);
+		std::string::size_type p2 = strCommand.find_first_not_of(L" \t", p);
 		if (p2 == std::string::npos)
 			return true;
 		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);

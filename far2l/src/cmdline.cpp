@@ -1064,45 +1064,53 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	if (p == std::string::npos)
 		return false;
 
+	std::string::size_type p2, l;
+
 	if (p > 0) { // before "far:" may be only spaces/tabs
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t");
+		p2 = strCommand.find_first_not_of(L" \t");
 		if (p2 == std::string::npos || p2 < p)
 			return false;
 	}
 
-	if (strCommand.compare(p, std::string::npos, L"far:config") == 0) {
+	l = std::wcslen(L"far:config");
+	if (strCommand.compare(p, l, L"far:config") == 0) {
+		if (strCommand.find_first_not_of(L" \t", p+l) != std::string::npos) // after command available only spaces
+			return false;
 		AdvancedConfig();
 		return true;
 	}
 
-	if (strCommand.compare(p, std::string::npos, L"far:about") == 0) {
+	l = std::wcslen(L"far:about");
+	if (strCommand.compare(p, l, L"far:about") == 0) {
+		if (strCommand.find_first_not_of(L" \t", p+l) != std::string::npos) // after command available only spaces
+			return false;
 		FarAbout(CtrlObject->Plugins);
 		return true;
 	}
 
-	std::string::size_type l = std::wcslen(L"far:view") + 1;
+	l = std::wcslen(L"far:view") + 1;
 	if (strCommand.compare(p, l, L"far:view:") == 0	|| strCommand.compare(p, l, L"far:view ") == 0) {
 		p += l;
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t", p);
+		p2 = strCommand.find_first_not_of(L" \t", p);
 		if (p2 == std::string::npos)
 			return true;
-		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);
-		if (p3 != std::string::npos)
-			p3 -= p2;
-		new FileViewer(std::make_shared<FileHolder>( strCommand.substr(p2,p3).c_str() ), TRUE);
+		l = strCommand.find_first_of(L" \t", p2 + 1);
+		if (l != std::string::npos)
+			l -= p2;
+		new FileViewer(std::make_shared<FileHolder>( strCommand.substr(p2,l).c_str() ), TRUE);
 		return true;
 	}
 
 	l = std::wcslen(L"far:edit") + 1;
 	if (strCommand.compare(p, l, L"far:edit:") == 0	|| strCommand.compare(p, l, L"far:edit ") == 0) {
 		p += l;
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t", p);
+		p2 = strCommand.find_first_not_of(L" \t", p);
 		if (p2 == std::string::npos)
 			return true;
-		std::string::size_type p3 = strCommand.find_first_of(L" \t", p2+1);
-		if (p3 != std::string::npos)
-			p3 -= p2;
-		new FileEditor(std::make_shared<FileHolder>( strCommand.substr(p2,p3).c_str() ), CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		l = strCommand.find_first_of(L" \t", p2 + 1);
+		if (l != std::string::npos)
+			l -= p2;
+		new FileEditor(std::make_shared<FileHolder>( strCommand.substr(p2,l).c_str() ), CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
 		return true;
 	}
 

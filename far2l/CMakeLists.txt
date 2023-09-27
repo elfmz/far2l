@@ -2,8 +2,6 @@ project(far2l)
 
 add_subdirectory (bootstrap)
 
-option(FAR2MACRO "Use Far 2 macro engine" ON)
-
 set(SOURCES
 src/farversion.cpp
 src/cache.cpp
@@ -166,17 +164,27 @@ src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 )
 
+# Option to disable building macro subsystem completely
+option(FAR2MACRO "Use Far 2 macro engine" ON)
+
+# Option to keep TVar implementation even if Far2 marco subsystem is not used
+# (as it may be needed by alternative macro subsystem implementations)
+option(FAR2TVAR  "Use Far 2 TVar" ON)
+
 if(FAR2MACRO)
     list(APPEND SOURCES src/macro/chgmmode.cpp)
     list(APPEND SOURCES src/macro/macro.cpp)
     list(APPEND SOURCES src/macro/syntax.cpp)
     list(APPEND SOURCES src/macro/tvar.cpp)
 else()
-    list(APPEND SOURCES src/macro/tvar.cpp)
-    list(APPEND SOURCES src/macro/nomacro.cpp)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        set_source_files_properties(src/macro/nomacro.cpp PROPERTIES COMPILE_FLAGS "-O0")
+    if(FAR2TVAR)
+        list(APPEND SOURCES src/macro/tvar.cpp)
+        add_compile_definitions(FAR2TVAR)
     endif()
+    list(APPEND SOURCES src/macro/nomacro.cpp)
+    #if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        #set_source_files_properties(src/macro/nomacro.cpp PROPERTIES COMPILE_FLAGS "-O0")
+    #endif()
 endif()
 
 # Set target names for the executables

@@ -1,4 +1,7 @@
 #include <stdio.h>
+#if !defined(__DragonFly__)
+#include <os_call.hpp>
+#endif
 #include "TTYRawMode.h"
 
 TTYRawMode::TTYRawMode(int std_in, int std_out)
@@ -6,8 +9,13 @@ TTYRawMode::TTYRawMode(int std_in, int std_out)
 	// try first stdout, but if it fails - try stdin
 	// this helps to work with specific cases of redirected
 	// output, like working with tee
+#if !defined(__DragonFly__)
+	if (os_call_int(tcgetattr, std_out, &_ts) != 0) {
+		if (os_call_int(tcgetattr, std_in, &_ts) != 0) {
+#else
 	if (tcgetattr(std_out, &_ts) != 0) {
 		if (tcgetattr(std_in, &_ts) != 0) {
+#endif
 			return;
 		}
 		_fd = std_in;

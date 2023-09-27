@@ -23,6 +23,9 @@
 #include <base64.h> 
 #include <StackSerializer.h>
 #include <ScopeHelpers.h>
+#if !defined(__DragonFly__)
+#include <os_call.hpp>
+#endif
 #include "dirmix.hpp"
 #include "vtansi.h"
 #include "vtlog.h"
@@ -279,7 +282,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		} else {
 			_pipes_fallback_in = _pipes_fallback_out = -1;
 			struct termios ts = {};
+#if !defined(__DragonFly__)
+			if (os_call_int(tcgetattr, fd_term, &ts) == 0) {
+#else
 			if (tcgetattr(fd_term, &ts) == 0) {
+#endif
 				ts.c_lflag |= ISIG | ICANON | ECHO;
 #ifdef IUTF8
 				ts.c_iflag |= IUTF8;
@@ -287,7 +294,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				//ts.c_lflag&= ~ECHO;
 				ts.c_cc[VINTR] = 003;
 				// ts.c_cc[VQUIT] = 034;
-				tcsetattr( fd_term, TCSAFLUSH, &ts );
+#if !defined(__DragonFly__)
+				os_call_int(tcsetattr, fd_term, TCSAFLUSH, (const struct termios*)&ts);
+#else
+				tcsetattr( fd_term, TCSAFLUSH, &ts);
+#endif
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);

@@ -212,3 +212,12 @@ void initMacroVarTable(int global)
 void doneMacroVarTable(int global)
 {
 }
+
+// ---
+
+#ifndef FAR2TVAR
+const wchar_t *TVar::s() const { return L""; }
+TVar::~TVar() {}
+TVar::TVar(int64_t v): vType(vtInteger), inum(v), dnum(0.0), str(nullptr) {}
+#endif
+

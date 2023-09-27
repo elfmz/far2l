@@ -1173,14 +1173,18 @@ static void OnSigTstp(int signo)
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, false);
 
-	tcgetattr(g_std_out, &g_ts_cont);
+	if (tcgetattr(g_std_out, &g_ts_cont) == -1) {
+		perror("OnSigTstp - tcgetattr");
+	}
 	raise(SIGSTOP);
 }
 
 
 static void OnSigCont(int signo)
 {
-	tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont );
+	if (tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont ) == -1) {
+		perror("OnSigCont - tcsetattr");
+	}
 	if (g_far2l_tty)
 		TTYNegotiateFar2l(g_std_in, g_std_out, true);
 

@@ -2,6 +2,8 @@ project(far2l)
 
 add_subdirectory (bootstrap)
 
+option(FAR2MACRO "Use Far 2 macro engine" OFF)
+
 set(SOURCES
 src/farversion.cpp
 src/cache.cpp
@@ -95,11 +97,6 @@ src/console/scrbuf.cpp
 src/console/scrobj.cpp
 src/console/scrsaver.cpp
 
-src/macro/chgmmode.cpp
-src/macro/macro.cpp
-src/macro/syntax.cpp
-src/macro/tvar.cpp
-
 src/filemask/CFileMask.cpp
 src/filemask/FileMasksProcessor.cpp
 src/filemask/FileMasksWithExclude.cpp
@@ -168,6 +165,19 @@ src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 )
+
+if(FAR2MACRO)
+    list(APPEND SOURCES src/macro/chgmmode.cpp)
+    list(APPEND SOURCES src/macro/macro.cpp)
+    list(APPEND SOURCES src/macro/syntax.cpp)
+    list(APPEND SOURCES src/macro/tvar.cpp)
+else()
+    list(APPEND SOURCES src/macro/tvar.cpp)
+    list(APPEND SOURCES src/macro/nomacro.cpp)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set_source_files_properties(src/macro/nomacro.cpp PROPERTIES COMPILE_FLAGS "-O0")
+    endif()
+endif()
 
 # Set target names for the executables
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -287,7 +287,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				//ts.c_lflag&= ~ECHO;
 				ts.c_cc[VINTR] = 003;
 				// ts.c_cc[VQUIT] = 034;
-				tcsetattr( fd_term, TCSAFLUSH, &ts );
+				if (tcsetattr( fd_term, TCSAFLUSH, &ts ) == -1) {
+					perror("InitTerminal: tcsetattr");
+				}
+			} else {
+				perror("InitTerminal: tcgetattr");
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);

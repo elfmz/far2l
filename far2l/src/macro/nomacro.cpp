@@ -8,11 +8,11 @@ nomacro.hpp
 
 #include "headers.hpp"
 #include "lockscrn.hpp"
+
 #include "tvar.hpp"
 #include "macroopcode.hpp"
-#include "nomacro.hpp"
-
-#include "nomacro.hpp"
+#include "chgmmode.hpp"
+#include "macro.hpp"
 
 KeyMacro::KeyMacro() {}
 KeyMacro::~KeyMacro() {}

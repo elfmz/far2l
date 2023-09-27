@@ -2,7 +2,7 @@ project(far2l)
 
 add_subdirectory (bootstrap)
 
-option(FAR2MACRO "Use Far 2 macro engine" OFF)
+option(FAR2MACRO "Use Far 2 macro engine" ON)
 
 set(SOURCES
 src/farversion.cpp

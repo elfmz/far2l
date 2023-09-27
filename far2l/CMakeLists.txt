@@ -182,9 +182,6 @@ else()
         add_compile_definitions(FAR2TVAR)
     endif()
     list(APPEND SOURCES src/macro/nomacro.cpp)
-    #if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        #set_source_files_properties(src/macro/nomacro.cpp PROPERTIES COMPILE_FLAGS "-O0")
-    #endif()
 endif()
 
 # Set target names for the executables

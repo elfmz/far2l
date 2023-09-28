@@ -4,14 +4,22 @@ IndentWidth:  4
 TabWidth:     4
 Language:     Cpp
 Standard:     Latest
-SortIncludes: false
+SortIncludes: Never
 
 AccessModifierOffset:              -4
 AlignAfterOpenBracket:             DontAlign
-AlignConsecutiveAssignments:         false
-AlignConsecutiveDeclarations:      false
-AlignConsecutiveBitFields:         true
-AlignConsecutiveMacros:            true
+AlignConsecutiveAssignments:
+  Enabled: false
+AlignConsecutiveDeclarations:
+  Enabled: false
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
 AllowAllArgumentsOnNextLine:       false
 AllowShortFunctionsOnASingleLine:  Inline
 AllowShortLambdasOnASingleLine:    Empty
@@ -25,7 +33,7 @@ IndentCaseLabels:                  true
 BreakBeforeBraces:       Custom
 BraceWrapping:
   AfterClass:            true
-  AfterControlStatement: false
+  AfterControlStatement: Never
   AfterEnum:             true
   AfterFunction:         true
   AfterNamespace:        true

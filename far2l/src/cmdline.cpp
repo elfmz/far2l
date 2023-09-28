@@ -1057,35 +1057,35 @@ void FarAbout(PluginManager &Plugins)
 
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 {
-	bool b_far,  b_edit = false, b_view = false;
+	bool b_far, b_edit = false, b_view = false;
 	std::string::size_type p;
 	std::wstring str_command(CmdLine);
 
 	StrTrim(str_command);
 
-	b_far = str_command.compare(0, 4, L"far:") == 0;
+	b_far = StrStartsFrom(str_command, L"far:");
 	if (!b_far) {
-		b_edit = str_command.compare(0, 5, L"edit:") == 0;
+		b_edit = StrStartsFrom(str_command, L"edit:");
 		if (!b_edit) {
-			b_view = str_command.compare(0, 5, L"view:") == 0;
+			b_view = StrStartsFrom(str_command, L"view:");
 			if (!b_view) {
-				return false; // not find any available prefixes
+				return false; // not found any available prefixes
 			}
 		}
 	}
 
-	if (b_far && str_command.compare(L"far:config") == 0) {
+	if (b_far && str_command == L"far:config") {
 		AdvancedConfig();
 		return true; // prefix correct and was processed
 	}
 
-	if (b_far && str_command.compare(L"far:about") == 0) {
+	if (b_far && str_command == L"far:about") {
 		FarAbout(CtrlObject->Plugins);
 		return true; // prefix correct and was processed
 	}
 
 	p = b_edit ? 5 // wcslen(L"edit:")
-		: ( (b_far && (str_command.compare(0, 9, L"far:edit:") == 0 || str_command.compare(0, 9, L"far:edit ") == 0))
+		: ( (b_far && (StrStartsFrom(str_command, L"far:edit:") || StrStartsFrom(str_command, L"far:edit ") || str_command == L"far:edit"))
 			? 9 // wcslen(L"far:edit:") or wcslen(L"far:edit ")
 			: 0 );
 	if (p > 0) {
@@ -1094,11 +1094,15 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			new FileEditor(
 				std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
 				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
-		return true; // anyway prefix correct and was processed
+		else
+			new FileEditor(
+				std::make_shared<FileHolder>( Msg::NewFileName.CPtr() ),
+				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		return true; // prefix correct and was processed
 	}
 
 	p = b_view ? 5 // wcslen(L"view:")
-		: ( (b_far && (str_command.compare(0, 9, L"far:view:") == 0 || str_command.compare(0, 9, L"far:view ") == 0))
+		: ( (b_far && (StrStartsFrom(str_command, L"far:view:") || StrStartsFrom(str_command, L"far:view ")))
 			? 9 // wcslen(L"far:view:") or wcslen(L"far:view ")
 			: 0 );
 	if (p > 0) {
@@ -1108,5 +1112,5 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		return true; // anyway prefix correct and was processed
 	}
 
-	return false; // not find any available prefixes
+	return false; // not found any available prefixes
 }

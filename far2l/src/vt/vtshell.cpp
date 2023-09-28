@@ -23,7 +23,6 @@
 #include <base64.h> 
 #include <StackSerializer.h>
 #include <ScopeHelpers.h>
-#include <os_call.hpp>
 #include "dirmix.hpp"
 #include "vtansi.h"
 #include "vtlog.h"
@@ -280,7 +279,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		} else {
 			_pipes_fallback_in = _pipes_fallback_out = -1;
 			struct termios ts = {};
-			if (os_call_int(tcgetattr, fd_term, &ts) == 0) {
+			if (tcgetattr(fd_term, &ts) == 0) {
 				ts.c_lflag |= ISIG | ICANON | ECHO;
 #ifdef IUTF8
 				ts.c_iflag |= IUTF8;
@@ -288,7 +287,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				//ts.c_lflag&= ~ECHO;
 				ts.c_cc[VINTR] = 003;
 				// ts.c_cc[VQUIT] = 034;
-				os_call_int(tcsetattr, fd_term, TCSAFLUSH, (const struct termios*)&ts );
+				if (tcsetattr( fd_term, TCSAFLUSH, &ts ) == -1) {
+					perror("InitTerminal: tcsetattr");
+				}
+			} else {
+				perror("InitTerminal: tcgetattr");
 			}
 			_fd_in = fd_term;
 			_fd_out = dup(fd_term);

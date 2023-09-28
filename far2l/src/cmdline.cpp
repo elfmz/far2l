@@ -1057,28 +1057,60 @@ void FarAbout(PluginManager &Plugins)
 
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 {
-	std::wstring strCommand(CmdLine);
+	bool b_far, b_edit = false, b_view = false;
+	std::string::size_type p;
+	std::wstring str_command(CmdLine);
 
-	std::string::size_type p = strCommand.find(L"far:");
+	StrTrim(str_command);
 
-	if (p == std::string::npos)
-		return false;
-
-	if (p > 0) { // before "far:" may be only spaces/tabs
-		std::string::size_type p2 = strCommand.find_first_not_of(L" \t");
-		if (p2 == std::string::npos || p2 < p)
-			return false;
+	b_far = StrStartsFrom(str_command, L"far:");
+	if (!b_far) {
+		b_edit = StrStartsFrom(str_command, L"edit:");
+		if (!b_edit) {
+			b_view = StrStartsFrom(str_command, L"view:");
+			if (!b_view) {
+				return false; // not found any available prefixes
+			}
+		}
 	}
 
-	if (strCommand.compare(p, std::string::npos, L"far:config") == 0) {
+	if (b_far && str_command == L"far:config") {
 		AdvancedConfig();
-		return true;
+		return true; // prefix correct and was processed
 	}
 
-	if (strCommand.compare(p, std::string::npos, L"far:about") == 0) {
+	if (b_far && str_command == L"far:about") {
 		FarAbout(CtrlObject->Plugins);
-		return true;
+		return true; // prefix correct and was processed
 	}
 
-	return false;
+	p = b_edit ? 5 // wcslen(L"edit:")
+		: ( (b_far && (StrStartsFrom(str_command, L"far:edit:") || StrStartsFrom(str_command, L"far:edit ") || str_command == L"far:edit"))
+			? 9 // wcslen(L"far:edit:") or wcslen(L"far:edit ")
+			: 0 );
+	if (p > 0) {
+		p = str_command.find_first_not_of(L" \t", p);
+		if (p != std::string::npos) // after spaces found filename
+			new FileEditor(
+				std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
+				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		else
+			new FileEditor(
+				std::make_shared<FileHolder>( Msg::NewFileName.CPtr() ),
+				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		return true; // prefix correct and was processed
+	}
+
+	p = b_view ? 5 // wcslen(L"view:")
+		: ( (b_far && (StrStartsFrom(str_command, L"far:view:") || StrStartsFrom(str_command, L"far:view ")))
+			? 9 // wcslen(L"far:view:") or wcslen(L"far:view ")
+			: 0 );
+	if (p > 0) {
+		p = str_command.find_first_not_of(L" \t", p);
+		if (p != std::string::npos) // after spaces found filename
+			new FileViewer(std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ), TRUE);
+		return true; // anyway prefix correct and was processed
+	}
+
+	return false; // not found any available prefixes
 }

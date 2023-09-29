@@ -1,10 +1,12 @@
-#include "ClientApp.h"
+#include "WayToShell.h"
+#include "Parse.h"
 #include <utils.h>
 #include <MakePTYAndFork.h>
 #include <time.h>
 #include <termios.h>  // Для работы с терминальными атрибутами
 #include <signal.h>
 #include <os_call.hpp>
+#include <Environment.h>
 #include <MatchWildcard.hpp>
 #include "../../Erroring.h"
 
@@ -42,15 +44,41 @@ static void ForkSafePrint(const char *str)
 	}
 }
 
-ClientApp::ClientApp()
+WayToShell::WayToShell(int fd_ipc_recv, const WayToShellConfig &cfg, const StringConfig &protocol_options)
+	: _fd_ipc_recv(fd_ipc_recv)
 {
+	if (!cfg.command.empty()) {
+		LaunchCommand(cfg, protocol_options);
+	} else if (!cfg.serial.empty()) {
+		OpenSerialPort(cfg, protocol_options);
+	} else {
+		throw ProtocolError("Command or port not specified");
+	}
 }
 
-ClientApp::~ClientApp()
+// That long echo after exit makes things work smooter, dunno why.
+// And it really needs to be rather long
+static const char s_exit_cmd[] = "\nexit\necho =================================\n";
+
+WayToShell::~WayToShell()
 {
-	// Закрыть файловые дескрипторы
+	try {
+		while (FinalRead(100)) {
+			usleep(1000);
+		}
+		if (write(_master_fd, s_exit_cmd, sizeof(s_exit_cmd) - 1) == sizeof(s_exit_cmd) - 1) {
+			FinalRead(1000);
+			fprintf(stderr, "~WayToShell: exit delivered\n");
+		} else {
+			perror("~WayToShell: write exit");
+		}
+
+	} catch (...) {
+		fprintf(stderr, "~WayToShell: exit exception\n");
+	}
+
 	CheckedCloseFD(_master_fd);
-	CheckedCloseFD(_stderr_pipe[0]);
+	CheckedCloseFDPair(_stderr_pipe);
 	if (_pid != (pid_t)-1) {
 		// Проверяем, завершен ли дочерний процесс
 		int status;
@@ -63,18 +91,49 @@ ClientApp::~ClientApp()
 	}
 }
 
-bool ClientApp::Open(const char *app, char *const *argv)
+bool WayToShell::FinalRead(int tmout)
 {
-	if (pipe(_stderr_pipe) < 0) {
-		std::cerr << "pipe failed\n";
-		return false;
+	struct pollfd pfd{};
+	pfd.fd = _master_fd;
+	pfd.events = POLLIN;
+	const int r = os_call_int(poll, &pfd, (nfds_t)1, tmout);
+	return (r > 0 && RecvPolledFD(pfd, STDOUT));
+}
+
+void WayToShell::LaunchCommand(const WayToShellConfig &cfg, const StringConfig &protocol_options)
+{
+	std::string command = cfg.command;
+	for (unsigned i = cfg.options.size(); i--;) { // reversed order for proper replacement
+		Substitute(command, StrPrintf("$OPT%u", i).c_str(), cfg.OptionValue(i, protocol_options));
 	}
+	if (g_netrocks_verbosity > 0) {
+		fprintf(stderr, "WayToShell::LaunchCommand: '%s'\n", command.c_str());
+	}
+
+	if (pipe(_stderr_pipe) < 0) {
+		throw ProtocolError("pipe error", errno);
+	}
+
+	struct Argv : std::vector<char *>
+	{
+		~Argv()
+		{
+			for (auto &arg : *this) {
+				free(arg);
+			}
+		}
+	} argv;
+
+	Environment::ExplodeCommandLine ecl(command);
+	for (const auto &arg : ecl) {
+		argv.emplace_back(strdup(arg.c_str()));
+	}
+	argv.emplace_back(nullptr);
 
 	_pid = MakePTYAndFork(_master_fd);
 
 	if (_pid == (pid_t)-1) {
-		std::cerr << "forkpty failed\n";
-		return false;
+		throw ProtocolError("PTY error", errno);
 	}
 
 	if (_pid == 0) {
@@ -106,7 +165,7 @@ bool ClientApp::Open(const char *app, char *const *argv)
 		signal(SIGHUP, SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
 
-		execvp(app, argv);
+		execvp(*argv.data(), argv.data());
 		ForkSafePrint("execlp failed\n");
 		_exit(-1);
 	}
@@ -119,30 +178,144 @@ bool ClientApp::Open(const char *app, char *const *argv)
 
 	MakeFDNonBlocking(_master_fd);
 	MakeFDNonBlocking(_stderr_pipe[0]);
-	return true;
 }
 
-void ClientApp::GetDescriptors(int &fdinout, int &fderr)
+void WayToShell::OpenSerialPort(const WayToShellConfig &cfg, const StringConfig &protocol_options)
+{
+	const auto &opt_baudrate = cfg.OptionValue(0, protocol_options);
+	const auto &opt_flowctrl = cfg.OptionValue(1, protocol_options);
+	const auto &opt_databits = cfg.OptionValue(2, protocol_options);
+	const auto &opt_stopbits = cfg.OptionValue(3, protocol_options);
+
+	speed_t baudrate;
+	switch (atoi(opt_baudrate.c_str())) {
+		case 50: baudrate = B50; break;
+		case 150: baudrate = B150; break;
+		case 300: baudrate = B300; break;
+		case 600: baudrate = B600; break;
+		case 1200: baudrate = B1200; break;
+		case 2400: baudrate = B2400; break;
+		case 4800: baudrate = B4800; break;
+		case 9600: baudrate = B9600; break;
+		case 19200: baudrate = B19200; break;
+		case 38400: baudrate = B38400; break;
+		case 57600: baudrate = B57600; break;
+		case 115200: baudrate = B115200; break;
+		case 230400: baudrate = B230400; break;
+		case 460800: baudrate = B460800; break;
+		case 500000: baudrate = B500000; break;
+		case 576000: baudrate = B576000; break;
+		case 921600: baudrate = B921600; break;
+		case 1000000: baudrate = B1000000; break;
+		case 1152000: baudrate = B1152000; break;
+		case 1500000: baudrate = B1500000; break;
+		case 2000000: baudrate = B2000000; break;
+		case 2500000: baudrate = B2500000; break;
+		case 3000000: baudrate = B3000000; break;
+		case 3500000: baudrate = B3500000; break;
+		case 4000000: baudrate = B4000000; break;
+		default:
+			throw ProtocolError("Bad baudrate", opt_baudrate.c_str());
+	}
+
+	_master_fd = open(cfg.serial.c_str(), O_RDWR);
+	if (_master_fd == -1) {
+		throw ProtocolError("open port error", cfg.serial.c_str(), errno);
+	}
+
+	struct termios tios{};
+	if (tcgetattr(_master_fd, &tios) != 0) {
+		const int err = errno;
+		close(_master_fd);
+		throw ProtocolError("tcgetattr error", cfg.serial.c_str(), err);
+	}
+
+	tios.c_cflag&= ~PARENB;
+	tios.c_cflag&= ~CSTOPB;
+	tios.c_cflag&= ~CSIZE;
+
+	tios.c_cflag&= ~CRTSCTS;
+	tios.c_cflag|= CREAD | CLOCAL;
+
+	tios.c_lflag&= ~ISIG;
+	tios.c_lflag&= ~ICANON;
+	tios.c_lflag&= ~ECHO;
+	tios.c_lflag&= ~ECHOE;
+	tios.c_lflag&= ~ECHONL;
+
+	tios.c_iflag&= ~(IXON | IXOFF | IXANY);
+	tios.c_iflag&= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
+
+	tios.c_oflag &= ~OPOST;
+	tios.c_oflag &= ~ONLCR;
+
+	tios.c_cc[VTIME] = 0;
+	tios.c_cc[VMIN] = 1;
+
+	switch (atoi(opt_databits.c_str())) {
+		case 5: tios.c_cflag|= CS5; break;
+		case 6: tios.c_cflag|= CS6; break;
+		case 7: tios.c_cflag|= CS7; break;
+		case 8: tios.c_cflag|= CS8; break;
+		default: 
+			close(_master_fd);
+			throw ProtocolError("wrong databits", opt_databits.c_str());
+	}
+
+	if (opt_flowctrl == "Xon/Xoff") {
+		tios.c_iflag|= (IXON | IXOFF);
+	} else if (opt_flowctrl == "RTS/CTS") {
+		tios.c_cflag|= CRTSCTS;
+	} else if (opt_flowctrl != "None") {
+		close(_master_fd);
+		throw ProtocolError("wrong flowctrl", opt_flowctrl.c_str());
+	}
+
+	if (opt_stopbits == "2") {
+		tios.c_cflag|= CSTOPB;
+	} else if (opt_stopbits != "1") {
+		close(_master_fd);
+		throw ProtocolError("wrong stopbits", opt_stopbits.c_str());
+	}
+
+//	cfmakeraw(&tios);
+	cfsetispeed(&tios, baudrate);
+	cfsetospeed(&tios, baudrate);
+
+	if (tcsetattr(_master_fd, TCSANOW, &tios) != 0) {
+		const int err = errno;
+		close(_master_fd);
+		throw ProtocolError("tcsetattr error", cfg.serial.c_str(), err);
+	}
+
+	if (pipe(_stderr_pipe) < 0) { // create dummy pipe, just for genericity
+		const int err = errno;
+		close(_master_fd);
+		throw ProtocolError("pipe error", err);
+	}
+
+	MakeFDNonBlocking(_master_fd);
+	MakeFDNonBlocking(_stderr_pipe[0]);
+}
+
+void WayToShell::GetDescriptors(int &fdinout, int &fderr)
 {
 	fdinout = (_master_fd != -1) ? dup(_master_fd) : -1;
 	fderr = (_stderr_pipe[0] != -1) ? dup(_stderr_pipe[0]) : -1;
 }
 
-void ClientApp::ThrowIfAppExited()
+void WayToShell::ThrowIfAppExited()
 {
 	if (_pid != (pid_t)-1) {
 //		usleep(10000);
 		if (waitpid(_pid, &_pid_status, WNOHANG) == _pid) {
 			_pid = (pid_t)-1;
+			throw ProtocolError("client app exited", _pid_status);
 		}
-	}
-
-	if (_pid == (pid_t)-1) {
-		throw ProtocolError("client app exited", _pid_status);
 	}
 }
 
-bool ClientApp::RecvPolledFD(struct pollfd &fd, enum OutputType output_type)
+bool WayToShell::RecvPolledFD(struct pollfd &fd, enum OutputType output_type)
 {
 	if (!(fd.revents & POLLIN)) {
 		return false;
@@ -154,6 +327,7 @@ bool ClientApp::RecvPolledFD(struct pollfd &fd, enum OutputType output_type)
 	data.resize(data.size() + piece);
 	ssize_t n = os_call_ssize(read, fd.fd, (void *)(data.data() + ofs), piece);
 	if (n <= 0) {
+		fprintf(stderr, " !!! error reading pty n=%ld err=%d\n", n, errno);
 		data.resize(ofs);
 		throw ProtocolError("error reading pty", (output_type == STDERR) ? "stderr" : "stdout", errno);
 	}
@@ -168,7 +342,7 @@ bool ClientApp::RecvPolledFD(struct pollfd &fd, enum OutputType output_type)
 
 // if data is non-NULL then send that data, optionally recving incoming stuff
 // if data is NULL then recv at least some incoming stuff
-unsigned ClientApp::Xfer(const char *data, size_t len)
+unsigned WayToShell::Xfer(const char *data, size_t len)
 {
 	unsigned out = 0;
 	while ((!data && out == 0) || len) {
@@ -177,7 +351,10 @@ unsigned ClientApp::Xfer(const char *data, size_t len)
 		fds[0].events = (data && len) ? POLLIN | POLLOUT : POLLIN;
 		fds[1].fd = _stderr_pipe[0];
 		fds[1].events = POLLIN;
-		const int r = os_call_int(poll, &fds[0], (nfds_t)2, 10000);
+		fds[2].fd = _fd_ipc_recv;
+		fds[2].events = 0; // this poll'ed only for errors
+
+		const int r = os_call_int(poll, &fds[0], (nfds_t)3, 10000);
 		if (r < 0) {
 			throw ProtocolError("error polling pty", errno);
 		}
@@ -192,7 +369,7 @@ unsigned ClientApp::Xfer(const char *data, size_t len)
 			if (RecvPolledFD(fds[1], STDERR)) {
 				out|= STDERR;
 			}
-			if (data && (fds[0].revents & POLLOUT) != 0) {
+			if (data && len && (fds[0].revents & POLLOUT) != 0) {
 				const ssize_t wr = write(_master_fd, data, len);
 				if (wr >= 0) {
 					len-= wr;
@@ -201,22 +378,33 @@ unsigned ClientApp::Xfer(const char *data, size_t len)
 					}
 
 				} else if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
-					throw ProtocolError("error writing pty", errno);
+					throw ProtocolError("pty write error", errno);
 				}
 			}
 			if ( (fds[0].revents & (POLLERR | POLLHUP)) != 0
 					|| (fds[1].revents & (POLLERR | POLLHUP)) != 0) {
-				throw ProtocolError("pty endpoint error", errno);
+				throw ProtocolError("pty disrupted", errno);
+			}
+			if ((fds[2].revents & (POLLERR | POLLHUP)) != 0) {
+				throw ProtocolError("ipc disrupted", errno);
 			}
 		}
 	}
 	return out;
 }
 
-void ClientApp::RecvSomeStdout()
+void WayToShell::RecvSomeStdout()
 {
-	while ((Xfer() & STDOUT) == 0) {
-		;
+	try {
+		while ((Xfer() & STDOUT) == 0) {
+			;
+		}
+	} catch (std::exception &e) {
+		if (_stderr_data.empty()) {
+			throw;
+		}
+		std::string stderr_str(_stderr_data.data(), _stderr_data.size());
+		throw ProtocolError(e.what(), stderr_str.c_str());
 	}
 }
 
@@ -270,7 +458,7 @@ static ssize_t DispatchExpectedReply(std::vector<std::string> &lines, std::vecto
 	}
 }
 
-WaitResult ClientApp::SendAndWaitReplyInner(const std::string &send_str, const std::vector<const char *> &expected_replies)
+WaitResult WayToShell::SendAndWaitReplyInner(const std::string &send_str, const std::vector<const char *> &expected_replies)
 {
 	if (g_netrocks_verbosity > 2) {
 		for (size_t index = 0; index != expected_replies.size(); ++index) {
@@ -278,30 +466,44 @@ WaitResult ClientApp::SendAndWaitReplyInner(const std::string &send_str, const s
 		}
 	}
 	WaitResult wr;
-	for (bool first = true;;first = false) {
-		unsigned xrv;
-		if (first) {
-			xrv = STDOUT | STDERR;
-			if (!send_str.empty()) {
-				xrv|= Xfer(send_str.c_str(), send_str.size());
+	try {
+		for (bool first = true;;first = false) {
+			unsigned xrv;
+			if (first) {
+				xrv = STDOUT | STDERR;
+				if (!send_str.empty()) {
+					xrv|= Xfer(send_str.c_str(), send_str.size());
+				}
+			} else {
+				xrv = Xfer();
 			}
-		} else {
-			xrv = Xfer();
-		}
-		if (xrv & STDOUT) {
-			wr.index = DispatchExpectedReply(wr.stdout_lines, _stdout_data, expected_replies);
-			if (wr.index != -1) {
-				wr.output_type = STDOUT;
-				break;
+			if (xrv & STDOUT) {
+				wr.index = DispatchExpectedReply(wr.stdout_lines, _stdout_data, expected_replies);
+				if (wr.index != -1) {
+					wr.output_type = STDOUT;
+					break;
+				}
+			}
+			if (xrv & STDERR) {
+				wr.index = DispatchExpectedReply(wr.stderr_lines, _stderr_data, expected_replies);
+				if (wr.index != -1) {
+					wr.output_type = STDERR;
+					break;
+				}
 			}
 		}
-		if (xrv & STDERR) {
-			wr.index = DispatchExpectedReply(wr.stderr_lines, _stderr_data, expected_replies);
-			if (wr.index != -1) {
-				wr.output_type = STDERR;
-				break;
-			}
+
+	} catch (std::exception &e) {
+		std::string stderr_str;
+		AppendTrimmedLines(stderr_str, wr.stderr_lines);
+		if (!_stderr_data.empty()) {
+			stderr_str+= '\n';
+			stderr_str.append(_stderr_data.data(), _stderr_data.size());
 		}
+		if (stderr_str.empty()) {
+			throw;
+		}
+		throw ProtocolError(e.what(), stderr_str.c_str());
 	}
 
 	if (g_netrocks_verbosity > 0 && !wr.stdout_lines.empty()) {
@@ -319,7 +521,7 @@ WaitResult ClientApp::SendAndWaitReplyInner(const std::string &send_str, const s
 	return wr;
 }
 
-WaitResult ClientApp::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies, bool hide_in_log)
+WaitResult WayToShell::SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies, bool hide_in_log)
 {
 	if (g_netrocks_verbosity > 0) {
 		if (hide_in_log) {
@@ -332,12 +534,12 @@ WaitResult ClientApp::SendAndWaitReply(const std::string &send_str, const std::v
 	return SendAndWaitReplyInner(send_str, expected_replies);
 }
 
-WaitResult ClientApp::WaitReply(const std::vector<const char *> &expected_replies)
+WaitResult WayToShell::WaitReply(const std::vector<const char *> &expected_replies)
 {
 	return SendAndWaitReplyInner(std::string(), expected_replies);
 }
 
-void ClientApp::Send(const char *data, size_t len)
+void WayToShell::Send(const char *data, size_t len)
 {
 	if (g_netrocks_verbosity > 1) {
 		DebugStr("SEND.BLOB", data, len);
@@ -349,7 +551,7 @@ void ClientApp::Send(const char *data, size_t len)
 	Xfer(data, len);
 }
 
-void ClientApp::Send(const char *data)
+void WayToShell::Send(const char *data)
 {
 	const size_t len = strlen(data);
 	if (g_netrocks_verbosity > 0) {
@@ -359,7 +561,7 @@ void ClientApp::Send(const char *data)
 	Xfer(data, 	len);
 }
 
-void ClientApp::Send(const std::string &line)
+void WayToShell::Send(const std::string &line)
 {
 	if (g_netrocks_verbosity > 0) {
 		DebugStr("SEND.STR", line);
@@ -368,7 +570,7 @@ void ClientApp::Send(const std::string &line)
 	Xfer(line.c_str(), line.size());
 }
 
-void ClientApp::ReadStdout(void *buffer, size_t len)
+void WayToShell::ReadStdout(void *buffer, size_t len)
 {
 	for (size_t ofs = 0;;) {
 		size_t piece = std::min(len - ofs, _stdout_data.size());

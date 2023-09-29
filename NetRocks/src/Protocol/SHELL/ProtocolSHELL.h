@@ -6,9 +6,11 @@
 #include <set>
 #include <ScopeHelpers.h>
 #include <Threaded.h>
+#include <KeyFileHelper.h>
+#include <StringConfig.h>
 #include "../Protocol.h"
 
-#include "ClientApp.h"
+#include "WayToShell.h"
 
 struct RemoteFeats
 {
@@ -28,6 +30,7 @@ class ProtocolSHELL : public IProtocol
 {
 	class ExecCmd : protected Threaded
 	{
+		bool _broken{false};
 		std::string _working_dir;
 		std::string _command_line;
 		std::string _fifo;
@@ -51,24 +54,39 @@ class ProtocolSHELL : public IProtocol
 		virtual void *ThreadProc();
 
 	public:
-		ExecCmd(std::shared_ptr<ClientApp> &app,
+		ExecCmd(std::shared_ptr<WayToShell> &app,
 			const std::string &working_dir,
 			const std::string &command_line,
 			const std::string &fifo);
 		~ExecCmd();
 
 		bool KeepAlive();
+		inline bool IsBroken() const { return _broken; }
 	};
 
-	std::shared_ptr<ClientApp> _app;
+	std::shared_ptr<WayToShell> _way;
 	pid_t _pid{0};
 	RemoteFeats _feats{};
+	int _fd_ipc_recv{-1};
+	StringConfig _protocol_options;
+	std::string _host;
+	unsigned int _port{0};
+	std::string _username;
+	std::string _password;
+
+	std::string _way_name;
 	std::unique_ptr<ExecCmd> _exec_cmd;
 
-public:
+	void SubstituteCreds(std::string &str);
+	void OpenWay();
+	void PerformLogin();
+	void ParseFeatsLine(const std::string &feats_line);
+	void FinalizeExecCmd();
+	void Initialize();
 
-	ProtocolSHELL(const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &protocol_options);
+public:
+	ProtocolSHELL(const std::string &host, unsigned int port, const std::string &username,
+		const std::string &password, const std::string &protocol_options, int fd_ipc_recv);
 	virtual ~ProtocolSHELL();
 
 	virtual void KeepAlive(const std::string &path_to_check);

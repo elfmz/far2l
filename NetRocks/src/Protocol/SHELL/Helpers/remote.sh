@@ -2,7 +2,10 @@
 # All comments and empty lines are discared.
 # Tokens started by SHELLVAR_ and SHELLFCN_ are renamed to shorter names.
 
-export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;
+SAVED_PS1=$PS1;SAVED_PS2=$PS2;SAVED_PS2=$PS3;SAVED_PS4=$PS4;SAVED_PC=$PROMPT_COMMAND;export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;
+#SAVED_STTY=`stty -g`
+#stty -opost -echo
+
 if [ "$0" = "bash" ] || [ "$0" = "-bash" ]; then bind 'set enable-bracketed-paste off'; fi
 export LANG=C
 export LC_TIME=C
@@ -16,7 +19,7 @@ SHELLFCN_SEND_ERROR_AND_RESYNC() {
  echo "resync.req: $1:$ERRID" >>$SHELLVAR_LOG
  echo;echo "+ERROR:$1:$ERRID"
  while true; do
-  read STR || exit
+  $SHELLVAR_READ_FN STR || exit
   echo "resync.rpl: $STR" >>$SHELLVAR_LOG
   [ "$STR" = "SHELL_RESYNCHRONIZATION_ERROR:$1:$ERRID" ] && break
  done
@@ -49,7 +52,7 @@ SHELLFCN_GET_INFO() {
    SHELLVAR_SELECTED_LS_ARGS=$SHELLVAR_LS_ARGS_FOLLOW
   fi
   if [ -n "$5" ]; then
-   ( ( ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$? 1>&2 ) | ( read $5; echo $y ) ) 2>&1
+   ( ( ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$? 1>&2 ) | ( $SHELLVAR_READ_FN $5; echo $y ) ) 2>&1
   else
    ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$?
   fi
@@ -61,7 +64,7 @@ SHELLFCN_GET_SIZE() {
 }
 
 SHELLFCN_CMD_ENUM() {
- read SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
  if [ -n "$SHELLVAR_STAT" ]; then
   stat --format="$SHELLVAR_STAT_FMT" "$SHELLVAR_ARG_PATH"/* "$SHELLVAR_ARG_PATH"/.* 2>>$SHELLVAR_LOG
  elif [ -n "$SHELLVAR_FIND" ]; then
@@ -75,7 +78,7 @@ SHELLFCN_CMD_INFO() {
 # !!! This is a directory with symlinks listing bottleneck !!!
 # TODO: Rewrite so instead of querying files one-by-one do grouped queries with one stat per several files
  while true; do
-  read SHELLVAR_ARG_PATH || exit
+  $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
   [ ! -n "$SHELLVAR_ARG_PATH" ] && break
   SHELLFCN_GET_INFO "$SHELLVAR_ARG_PATH" "$1" "$2" "$3" "$4"
  done
@@ -93,7 +96,7 @@ SHELLFCN_CHOOSE_BLOCK() {
 }
 
 SHELLFCN_CMD_READ() {
- read OFFSET SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN OFFSET SHELLVAR_ARG_PATH || exit
  SIZE=`SHELLFCN_GET_SIZE "$SHELLVAR_ARG_PATH"`
  if [ ! -n "$SIZE" ]; then
     echo '+FAIL'
@@ -103,15 +106,15 @@ SHELLFCN_CMD_READ() {
  if [ -n "$SHELLVAR_DD" ]; then
   while true; do
    REMAIN=`expr $SIZE - $OFFSET`
-   read SHELLVAR_STATE || exit
+   $SHELLVAR_READ_FN SHELLVAR_STATE || exit
    if [ "$SHELLVAR_STATE" = 'abort' ]; then
     echo '+ABORTED'
-    read SHELLVAR_STATE || exit
+    $SHELLVAR_READ_FN SHELLVAR_STATE || exit
     break
    fi
    if [ $REMAIN -le 0 ]; then
     echo '+DONE'
-    read SHELLVAR_STATE || exit
+    $SHELLVAR_READ_FN SHELLVAR_STATE || exit
     break
    fi
    SHELLFCN_CHOOSE_BLOCK $REMAIN $OFFSET
@@ -134,11 +137,11 @@ SHELLFCN_CMD_READ() {
 
  elif [ "$OFFSET" = '0' ]; then
   # no dd? fallback to cat, if can
-  read SHELLVAR_STATE || exit
+  $SHELLVAR_READ_FN SHELLVAR_STATE || exit
   echo '+NEXT:'$SIZE
   cat "$SHELLVAR_ARG_PATH" 2>>$SHELLVAR_LOG
   echo '+DONE'
-  read SHELLVAR_STATE || exit
+  $SHELLVAR_READ_FN SHELLVAR_STATE || exit
 
  else
   echo '+FAIL'
@@ -189,7 +192,7 @@ SHELLFCN_WRITE_BY_BASE64() {
 # $1 - size (ignored as whole line will be read)
 # $2 - offset
 # $3 - file
- read B64LN
+ $SHELLVAR_READ_FN B64LN
  if [ "$2" = '0' ]; then
    echo "$B64LN" | base64 -d >"$3" 2>>$SHELLVAR_LOG
  else
@@ -198,7 +201,7 @@ SHELLFCN_WRITE_BY_BASE64() {
 }
 
 SHELLFCN_CMD_WRITE() {
- read OFFSET SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN OFFSET SHELLVAR_ARG_PATH || exit
  if [ -n "$SHELLVAR_DD" ] || [ -n "$SHELLVAR_HEAD" ] || [ -n "$SHELLVAR_BASE64" ]; then
   SHELLFCN_WRITE=SHELLFCN_WRITE_BY_BASE64
   [ -n "$SHELLVAR_HEAD" ] && SHELLFCN_WRITE=SHELLFCN_WRITE_BY_HEAD
@@ -213,7 +216,7 @@ SHELLFCN_CMD_WRITE() {
   NSEQ=1
   while true; do
    while true; do
-    read SEQ SIZE || exit
+    $SHELLVAR_READ_FN SEQ SIZE || exit
     [ "$SIZE" = '' ] || break
    done
    [ "$SEQ" = '.' ] && break
@@ -233,7 +236,7 @@ SHELLFCN_CMD_WRITE() {
 }
 
 SHELLFCN_CMD_REMOVE_FILE() {
- read SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
  unlink "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 || rm -f "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -242,7 +245,7 @@ SHELLFCN_CMD_REMOVE_FILE() {
 }
 
 SHELLFCN_CMD_REMOVE_DIR() {
- read SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
  rmdir "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 || rm -f "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -251,8 +254,8 @@ SHELLFCN_CMD_REMOVE_DIR() {
 }
 
 SHELLFCN_CMD_CREATE_DIR() {
- read SHELLVAR_ARG_PATH || exit
- read SHELLVAR_ARG_MODE || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_MODE || exit
  mkdir -m "$SHELLVAR_ARG_MODE" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -261,8 +264,8 @@ SHELLFCN_CMD_CREATE_DIR() {
 }
 
 SHELLFCN_CMD_RENAME() {
- read SHELLVAR_ARG_PATH1 || exit
- read SHELLVAR_ARG_PATH2 || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH1 || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH2 || exit
  mv "$SHELLVAR_ARG_PATH1" "$SHELLVAR_ARG_PATH2" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -272,7 +275,7 @@ SHELLFCN_CMD_RENAME() {
 
 SHELLFCN_READLINK_BY_LS() {
 # lrwxrwxrwx 1 root root 7 Feb 11  2023 /bin -> usr/bin
- ls -d $SHELLVAR_LS_ARGS "$1" 2>/dev/null | ( read W1 W2 W3 W4 W5 W6 W7 W8 W9 W10 W11 W12 W13 W14 W15
+ ls -d $SHELLVAR_LS_ARGS "$1" 2>/dev/null | ( $SHELLVAR_READ_FN W1 W2 W3 W4 W5 W6 W7 W8 W9 W10 W11 W12 W13 W14 W15
   RV=$?
   if [ $RV -eq 0 ]; then
    [ "$W14" = '->' ] && echo "$W15"
@@ -289,7 +292,7 @@ SHELLFCN_READLINK_BY_LS() {
 }
 
 SHELLFCN_CMD_READ_SYMLINK() {
- read SHELLVAR_ARG_PATH_LINK || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH_LINK || exit
  LNK=`$SHELLVAR_READLINK_FN "$SHELLVAR_ARG_PATH_LINK" 2>>$SHELLVAR_LOG`
  RV=$?
  if [ $RV -eq 0 ]; then
@@ -300,8 +303,8 @@ SHELLFCN_CMD_READ_SYMLINK() {
 }
 
 SHELLFCN_CMD_MAKE_SYMLINK() {
- read SHELLVAR_ARG_PATH_LINK || exit
- read SHELLVAR_ARG_PATH_FILE || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH_LINK || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH_FILE || exit
  ln -s "$SHELLVAR_ARG_PATH_FILE" "$SHELLVAR_ARG_PATH_LINK" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -310,8 +313,8 @@ SHELLFCN_CMD_MAKE_SYMLINK() {
 }
 
 SHELLFCN_CMD_SET_MODE() {
- read SHELLVAR_ARG_PATH || exit
- read SHELLVAR_ARG_MODE || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_MODE || exit
  chmod "$SHELLVAR_ARG_MODE" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
  if [ "$RV" != "0" ]; then
@@ -320,9 +323,9 @@ SHELLFCN_CMD_SET_MODE() {
 }
 
 SHELLFCN_CMD_EXECUTE() {
- read SHELLVAR_ARG_CMD || exit
- read SHELLVAR_ARG_WD || exit
- read SHELLVAR_ARG_TOKEN || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_CMD || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_WD || exit
+ $SHELLVAR_READ_FN SHELLVAR_ARG_TOKEN || exit
  if cd "$SHELLVAR_ARG_WD"; then
   $SHELLVAR_ARG_CMD
   RV=$?
@@ -355,7 +358,11 @@ SHELLVAR_WRITE_BLOCK=
 SHELLVAR_BASE64=
 SHELLVAR_ERRCNT=0
 SHELLVAR_GREP_ARGS=
+SHELLVAR_READ_FN=read
 
+if echo XXX | read -s XXX >/dev/null 2>&1; then
+ SHELLVAR_READ_FN='read -s'
+fi
 
 if which readlink >>$SHELLVAR_LOG 2>&1; then
  SHELLVAR_READLINK_FN=readlink
@@ -391,7 +398,7 @@ if [ "`echo 'helloworld' | ( head -c 5 > /dev/null 2>>$SHELLVAR_LOG; cat )`" = w
  SHELLVAR_HEAD=Y
 elif [ "`echo 'helloworld' | head -c 5 2>>$SHELLVAR_LOG`" = hello ]; then
  # head is here but it reads stdin with buffering, so let
- # peer know about this so it will pad each unaligned send with \r
+ # peer know about this so it will pad each unaligned send with \n
  SHELLVAR_WRITE_BLOCK=`head -c 131072 /dev/zero | ( head -c 1 > /dev/null; cat ) | wc -c`
  SHELLVAR_WRITE_BLOCK=`expr 131072 - $SHELLVAR_WRITE_BLOCK`
  [ $SHELLVAR_WRITE_BLOCK -le 65536 ] && [ $SHELLVAR_WRITE_BLOCK -gt 1 ] && SHELLVAR_HEAD=Y
@@ -408,33 +415,34 @@ fi
 #SHELLVAR_BASE64=
 #echo "SHELLVAR_LS_ARGS=$SHELLVAR_LS_ARGS"
 
-INFO=
+FEATS=
 if [ -n "$SHELLVAR_STAT" ]; then
- INFO="${INFO}STAT "
+ FEATS="${FEATS}STAT "
 elif [ -n "$SHELLVAR_FIND" ]; then
- INFO="${INFO}FIND "
+ FEATS="${FEATS}FIND "
 else
- INFO="${INFO}LS "
+ FEATS="${FEATS}LS "
 fi
 
 if [ -n "$SHELLVAR_DD" ]; then
- INFO="${INFO}READ_RESUME WRITE_RESUME "
+ FEATS="${FEATS}READ_RESUME WRITE_RESUME "
 elif [ -n "$SHELLVAR_HEAD" ]; then
- INFO="${INFO}READ WRITE_RESUME "
- [ -n "$SHELLVAR_WRITE_BLOCK" ] && INFO="${INFO}WRITE_BLOCK=$SHELLVAR_WRITE_BLOCK "
+ FEATS="${FEATS}READ WRITE_RESUME "
+ [ -n "$SHELLVAR_WRITE_BLOCK" ] && FEATS="${FEATS}WRITE_BLOCK=$SHELLVAR_WRITE_BLOCK "
 elif [ -n "$SHELLVAR_BASE64" ]; then
- INFO="${INFO}READ WRITE_RESUME WRITE_BASE64 "
+ FEATS="${FEATS}READ WRITE_RESUME WRITE_BASE64 "
 else
- INFO="${INFO}READ "
+ FEATS="${FEATS}READ "
 fi
 
-echo " ${INFO}SHELL.FAR2L"
+echo;echo;echo;
 SHELLVAR_NOPROMPT=
 while true; do
  [ ! -n "$SHELLVAR_NOPROMPT" ] && echo && echo '>(((^>'
  SHELLVAR_NOPROMPT=
- read CMD || exit
+ $SHELLVAR_READ_FN CMD || exit
  case "$CMD" in
+  feats ) echo "FEATS ${FEATS} SHELL.FAR2L";;
   enum ) SHELLFCN_CMD_ENUM;;
   linfo ) SHELLFCN_CMD_INFO '0' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
   info ) SHELLFCN_CMD_INFO '1' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
@@ -452,11 +460,15 @@ while true; do
   rdsym ) SHELLFCN_CMD_READ_SYMLINK;;
   mksym ) SHELLFCN_CMD_MAKE_SYMLINK;;
   exec ) SHELLFCN_CMD_EXECUTE;;
-# special cases: casual 'abort' or 'cont' could be from cancelled read operation, so silently skip them
+# Special cases: casual 'abort' or 'cont' could be from cancelled read operation, so silently skip them
   abort ) echo 'Odd abort' >>$SHELLVAR_LOG; SHELLVAR_NOPROMPT=Y;;
   cont ) echo 'Odd cont' >>$SHELLVAR_LOG; SHELLVAR_NOPROMPT=Y;;
   noop ) ;;
-  exit ) echo '73!'; exit 0;;
+  exit ) echo '73!'; exit 0; break;;
+# Another special case - if its part of inital sequence supposed to be sent to shell
+# - lets mimic shell's responce so negotiation sequence will continue.
+# sleep 3 ensures 'fishy' prompt will be printed at the right time moment
+  echo ) echo; echo 'far2l is ready for fishing'; sleep 3;;
   * ) echo "Bad CMD='$CMD'" >>$SHELLVAR_LOG; echo "??? '$CMD'";;
  esac
 done

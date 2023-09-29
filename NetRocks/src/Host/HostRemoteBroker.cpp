@@ -7,8 +7,15 @@
 
 static const std::string s_empty_string;
 
-std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &options);
+std::shared_ptr<IProtocol> CreateProtocol(
+	const std::string &protocol, // protocol name e.g. "ftp", "sftp", "scp" etc
+	const std::string &host,
+	unsigned int port,
+	const std::string &username,
+	const std::string &password,
+	const std::string &options, // StringConfig representing various other options, most of which are protocol-specific
+	int fd_ipc_recv // DONT read this fd, use it only errors checking by poll/select (to know that host process exited)
+);
 
 class HostRemoteBroker : protected IPCEndpoint
 {
@@ -26,7 +33,7 @@ class HostRemoteBroker : protected IPCEndpoint
 
 	std::vector<char> _io_buf;
 
-	void InitConnection()
+	void InitConnection(int fd_recv)
 	{
 		std::string protocol, host, username, password, options;
 		unsigned int port, login_mode;
@@ -42,7 +49,7 @@ class HostRemoteBroker : protected IPCEndpoint
 		RecvString(password);
 		RecvString(options);
 
-		_protocol = CreateProtocol(protocol, host, port, username, password, options);
+		_protocol = CreateProtocol(protocol, host, port, username, password, options, fd_recv);
 
 		if (!_protocol){
 			throw std::runtime_error(std::string("Failed to create protocol: ").append(protocol));
@@ -326,7 +333,7 @@ public:
 		SendPOD((pid_t)getpid());
 
 		for (;;) try {
-			InitConnection();
+			InitConnection(fd_recv);
 			SendPOD(IPC_PI_OK);
 			break;
 

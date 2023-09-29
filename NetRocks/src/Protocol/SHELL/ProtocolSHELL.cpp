@@ -7,8 +7,8 @@
 #include <string>
 #include <fstream>
 #include "ProtocolSHELL.h"
+#include "WayToShellConfig.h"
 #include "Parse.h"
-#include <StringConfig.h>
 #include <base64.h>
 #include <utils.h>
 
@@ -24,9 +24,9 @@ static std::vector<const char *> s_read_replies{"+NEXT:*\n", "+DONE\n", "+FAIL\n
 static std::vector<const char *> s_write_replies{"+OK\n", "+ERROR:*\n"};
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options)
+	const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
 {
-	return std::make_shared<ProtocolSHELL>(host, port, username, password, options);
+	return std::make_shared<ProtocolSHELL>(host, port, username, password, options, fd_ipc_recv);
 }
 
 static uint64_t GetIntegerBeforeStatusReplyLine(const std::string &data, size_t pos)
@@ -43,7 +43,7 @@ static uint64_t GetIntegerBeforeStatusReplyLine(const std::string &data, size_t 
 
 ////////////////////////////
 
-static std::string LoadHelper(const char *helper)
+static std::string LoadRemoteSh(const char *helper)
 {
 	std::ifstream helper_ifs;
 	helper_ifs.open(helper);
@@ -57,6 +57,7 @@ static std::string LoadHelper(const char *helper)
 		orig_len+= tmp_str.size() + 1;
 		// do some compactization
 		StrTrim(tmp_str);
+#if 1
 		// skip no-code lines unless enabled logging (to keep line numbers)
 		if (tmp_str.empty() || tmp_str.front() == '#') {
 			if (g_netrocks_verbosity <= 0) {
@@ -81,6 +82,7 @@ static std::string LoadHelper(const char *helper)
 			auto ir = renamed_vars.emplace(varname, renamed_vars.size());
 			tmp_str.replace(p, e - p, StrPrintf("F%x", ir.first->second));
 		}
+#endif
 		out+= ' '; // prepend each line with space to avoid history pollution (as HISTCONTROL=ignorespace)
 		out+= tmp_str;
 		out+= '\n';
@@ -95,108 +97,144 @@ static std::string LoadHelper(const char *helper)
 	return out;
 }
 
-ProtocolSHELL::ProtocolSHELL(const std::string &host, unsigned int port,
-	const std::string &username, const std::string &password, const std::string &options)
-	:
-	_app(std::make_shared<ClientApp>())
+void ProtocolSHELL::SubstituteCreds(std::string &str)
 {
-	StringConfig protocol_options(options);
-	// ---------------------------------------------
+	Substitute(str, "$HOST", _host);
+	Substitute(str, "$PORT", StrPrintf("%u", _port));
+	Substitute(str, "$USER", _username);
+	Substitute(str, "$PASSWORD", _password);
+}
 
-	if (g_netrocks_verbosity > 0) {
-		fprintf(stderr, "[SHELL] host from config: %s\n", host.c_str());
-		fprintf(stderr, "[SHELL] port from config: %i\n", port);
-		fprintf(stderr, "[SHELL] username from config: %s\n", username.c_str());
-		if (g_netrocks_verbosity > 1) {
-			fprintf(stderr, "[SHELL] password from config: {%lu}\n", password.size());
-		}
+void ProtocolSHELL::OpenWay()
+{
+	_way.reset();
+	WayToShellConfig cfg("SHELL/ways.ini", _way_name);
+	if (!cfg.command.empty()) {
+		SubstituteCreds(cfg.command);
+	}
+	if (!cfg.serial.empty()) {
+		SubstituteCreds(cfg.serial);
+	}
+	_way = std::make_shared<WayToShell>(_fd_ipc_recv, cfg, _protocol_options);
+	fprintf(stderr, "[SHELL] WAY OPENED\n");
+}
+
+void ProtocolSHELL::PerformLogin()
+{
+	KeyFileReadSection rules("SHELL/ways.ini", _way_name + "/LOGIN");
+	if (rules.empty()) {
+		fprintf(stderr, "[SHELL] LOGIN NOT REQUIRED\n");
+		return;
 	}
 
-	std::string ssh_arg = host;
-	if (!username.empty()) {
-		ssh_arg.insert(0, 1, '@');
-		ssh_arg.insert(0, username);
+	std::vector<const char*> replies;
+	for (const auto &it : rules) {
+		if (it.first.empty()) { // special case - initial string
+			std::string line = it.second;
+			SubstituteCreds(line);
+			_way->Send(line);
+		} else {
+			replies.emplace_back(it.first.c_str());
+		}
 	}
-
-	fprintf(stderr, "[SHELL] CONNECT: %s\n", ssh_arg.c_str());
-
-	char ssh_prog[] = "ssh";
-	char ssh_cmd[] = "echo '" GREETING_MSG "';HISTCONTROL=ignorespace sh";
-	char *argv[] = {ssh_prog, (char *)ssh_arg.c_str(), ssh_cmd, NULL};
-	if (!_app->Open(ssh_prog, argv)) {
-		throw ProtocolError("ssh exec failed");
+	if (replies.empty()) {
+		fprintf(stderr, "[SHELL] NON-INTERACTIVE LOGIN DONE\n");
+		return;
 	}
-
-	std::string helper = LoadHelper("SHELL/remote.sh");
-
-	// Мы таки залогинены, спрашивают пароль, ключ незнакомый?
-	std::vector<const char *> login_replies {
-		GREETING_MSG "\n",
-		"Permission denied*\n",
-		"*password: ",
-		"*Enter passphrase for key*",
-		"Are you sure*",
-		"Host key verification failed"
-	};
-
-	auto wr = _app->WaitReply(login_replies);
-	while (wr.index > 0) {
-		if (wr.index == 1) {
-			throw ProtocolAuthFailedError();
+	auto wr = _way->WaitReply(replies);
+	for (;;) {
+		std::string reply = rules.GetString(replies[wr.index]);
+		if (reply == "^") {
+			break;
 		}
-		if (wr.index == 2 || wr.index == 3) {
-			wr = _app->SendAndWaitReply(password + "\n", login_replies, true);
-		}
-		if (wr.index == 4) {
-			wr = _app->SendAndWaitReply("yes\n", login_replies);
-		}
-		if (wr.index == 5) {
+		if (reply == "^STDERR" || reply == "^STDOUT" || reply == "^STD") {
 			std::string s;
-			for (const auto &line : wr.stderr_lines) {
-				s+= line;
+			if (reply == "^STDERR" || reply == "^STD") {
+				AppendTrimmedLines(s, wr.stderr_lines);
 			}
-			if (s.back() == '\n') {
-				s.pop_back();
+			if (reply == "^STDOUT" || reply == "^STD") {
+				AppendTrimmedLines(s, wr.stdout_lines);
 			}
 			throw ProtocolError(s);
 		}
+		if (reply == "^AUTH") {
+			throw ProtocolAuthFailedError();
+		}
+
+		SubstituteCreds(reply);
+		wr = _way->SendAndWaitReply(reply, replies);
+	}
+	fprintf(stderr, "[SHELL] INTERACTIVE LOGIN DONE\n");
+}
+
+void ProtocolSHELL::ParseFeatsLine(const std::string &feats_line)
+{
+	_feats.using_stat = (feats_line.find(" STAT ") != std::string::npos);
+	_feats.using_find = (feats_line.find(" FIND ") != std::string::npos);
+	_feats.using_ls = (feats_line.find(" LS ") != std::string::npos);
+	if (feats_line.find(" READ_RESUME ") != std::string::npos) {
+		_feats.support_read = _feats.support_read_resume = true;
+	}
+	if (!_feats.support_read && feats_line.find(" READ ") != std::string::npos) {
+		_feats.support_read = true;
+	}
+	if (feats_line.find(" WRITE_RESUME ") != std::string::npos) {
+		_feats.support_write = _feats.support_write_resume = true;
+	}
+	if (feats_line.find(" WRITE_BASE64 ") != std::string::npos) {
+		 _feats.support_write = _feats.require_write_base64 = true;
+	}
+	if (!_feats.support_write && feats_line.find(" WRITE ") != std::string::npos) {
+		_feats.support_write = true;
+	}
+	size_t p = feats_line.find(" WRITE_BLOCK=");
+	if (p != std::string::npos) {
+		size_t require_write_block = atoi(feats_line.c_str() + p + 13);
+		_feats.require_write_block = require_write_block;
+		const size_t px = feats_line.find('*', p + 13);
+		if (px != std::string::npos && px < feats_line.find(' ', p + 13)) {
+			_feats.limit_max_blocks = atoi(feats_line.c_str() + px + 1);
+		}
+	}
+}
+
+void ProtocolSHELL::Initialize()
+{
+	_way_name = _protocol_options.GetString("Way");
+	if (_way_name.empty()) { // defaults to very first root section in config file
+		WaysToShell ways("SHELL/ways.ini");
+		if (!ways.empty()) {
+			_way_name = ways.front();
+		}
+		if (_way_name.empty()) {
+			throw ProtocolError("Way not specified");
+		}
+	}
+	fprintf(stderr, "[SHELL] INITIALIZE: '%s'\n", _way_name.c_str());
+
+	if (g_netrocks_verbosity > 0) {
+		fprintf(stderr, "[SHELL] host: '%s'\n", _host.c_str());
+		fprintf(stderr, "[SHELL] port: %i\n", _port);
+		fprintf(stderr, "[SHELL] username: '%s'\n", _username.c_str());
+		if (g_netrocks_verbosity > 1) {
+			fprintf(stderr, "[SHELL] password: {%lu}\n", _password.size());
+		}
 	}
 
-	wr = _app->SendAndWaitReply(helper, s_prompt);
-	// если мы сюда добрались, значит, уже залогинены
-	// fixme: timeout?
-	fprintf(stderr, "[SHELL] CONNECTED\n");
+	OpenWay();
+	PerformLogin();
 
+	auto wr = _way->SendAndWaitReply(LoadRemoteSh("SHELL/remote.sh"), s_prompt);
+	fprintf(stderr, "[SHELL] REMOTE READY\n");
+
+	wr = _way->SendAndWaitReply("feats\n", s_prompt);
 	if (wr.stdout_lines.size() > 1) {
-		auto &info_line = wr.stdout_lines[wr.stdout_lines.size() - 2];
-		while (!info_line.empty() && (info_line.back() == '\r' || info_line.back() == '\n') ) {
-			info_line.pop_back();
-		}
-		_feats.using_stat = (info_line.find(" STAT ") != std::string::npos);
-		_feats.using_find = (info_line.find(" FIND ") != std::string::npos);
-		_feats.using_ls = (info_line.find(" LS ") != std::string::npos);
-		if (info_line.find(" READ_RESUME ") != std::string::npos) {
-			_feats.support_read = _feats.support_read_resume = true;
-		}
-		if (!_feats.support_read && info_line.find(" READ ") != std::string::npos) {
-			_feats.support_read = true;
-		}
-		if (info_line.find(" WRITE_RESUME ") != std::string::npos) {
-			_feats.support_write = _feats.support_write_resume = true;
-		}
-		if (info_line.find(" WRITE_BASE64 ") != std::string::npos) {
-			 _feats.support_write = _feats.require_write_base64 = true;
-		}
-		if (!_feats.support_write && info_line.find(" WRITE ") != std::string::npos) {
-			_feats.support_write = true;
-		}
-		size_t p = info_line.find(" WRITE_BLOCK=");
-		if (p != std::string::npos) {
-			size_t require_write_block = atoi(info_line.c_str() + p + 13);
-			_feats.require_write_block = require_write_block;
-			const size_t px = info_line.find('*', p + 13);
-			if (px != std::string::npos && px < info_line.find(' ', p + 13)) {
-				_feats.limit_max_blocks = atoi(info_line.c_str() + px + 1);
+		for (size_t i = wr.stdout_lines.size() - 1; i--; ) {
+			//INFO ${INFO} SHELL.FAR2L
+			auto &feats_line = wr.stdout_lines[i];
+			if (StrStartsFrom(feats_line, "FEATS ") && StrEndsBy(feats_line, " SHELL.FAR2L\n")) {
+				ParseFeatsLine(feats_line);
+				break;
 			}
 		}
 	}
@@ -206,27 +244,61 @@ ProtocolSHELL::ProtocolSHELL(const std::string &host, unsigned int port,
 		_feats.require_write_block, _feats.limit_max_blocks);
 }
 
+ProtocolSHELL::ProtocolSHELL(const std::string &host, unsigned int port,
+	const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
+	:
+	_fd_ipc_recv(fd_ipc_recv),
+	_protocol_options(options),
+	_host(host),
+	_port(port),
+	_username(username),
+	_password(password)
+{
+	if (_username.empty()) {
+		const char *user = getenv("USER");
+		_username = (user && *user) ? user : "root";
+	}
+	Initialize();
+}
+
 ProtocolSHELL::~ProtocolSHELL()
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
 	_exec_cmd.reset();
 }
 
+void ProtocolSHELL::FinalizeExecCmd()
+{
+	if (_exec_cmd) {
+		const bool broken = _exec_cmd->IsBroken();
+		_exec_cmd.reset();
+		if (broken) {
+			fprintf(stderr, "[SHELL] BROKEN\n");
+			// Rather stupid workaround: just restart _way.
+			// This may cause some amusements,
+			// like auth errors in inconvinient moment of life.
+			// But world is not ideal.
+			_way.reset();
+			Initialize();
+		}
+	}
+}
+
 void ProtocolSHELL::KeepAlive(const std::string &path_to_check)
 {
 	if (_exec_cmd) {
 		if (!_exec_cmd->KeepAlive()) {
-			_exec_cmd.reset();
+			FinalizeExecCmd();
 		}
 	}
 	if (!_exec_cmd) {
-		_app->SendAndWaitReply("noop\n", s_prompt);
+		_way->SendAndWaitReply("noop\n", s_prompt);
 	}
 }
 
 void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
 {
-	_exec_cmd.reset();
+	FinalizeExecCmd();
 	fprintf(stderr, "[SHELL] ProtocolSHELL::GetModes follow_symlink=%d count=%lu\n", follow_symlink, (unsigned long)count);
 	try {
 		std::string request = follow_symlink ? "mode\n" : "lmode\n";
@@ -235,7 +307,7 @@ void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::strin
 			request+= '\n';
 		}
 		request+= '\n';
-		auto wr = _app->SendAndWaitReply(request, s_prompt);
+		auto wr = _way->SendAndWaitReply(request, s_prompt);
 		for (size_t i = 0; i < count; ++i) {
 			if (wr.stdout_lines.size() - 1 >= count - i) {
 				auto &line = wr.stdout_lines[wr.stdout_lines.size() - 1 - (count - i)];
@@ -259,13 +331,13 @@ void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::strin
 mode_t ProtocolSHELL::GetMode(const std::string &path, bool follow_symlink)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest(follow_symlink ? "mode" : "lmode", path, std::string()),
 		s_prompt_or_error);
 	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
 		if (wr.index != 0) {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 		}
 		throw ProtocolError("mode query error");
 	}
@@ -280,14 +352,14 @@ mode_t ProtocolSHELL::GetMode(const std::string &path, bool follow_symlink)
 unsigned long long ProtocolSHELL::GetSize(const std::string &path, bool follow_symlink)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest(follow_symlink ? "size" : "lsize", path, std::string()),
 		s_prompt_or_error);
 
 	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
 		if (wr.index != 0) {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 		}
 		throw ProtocolError("mode query error");
 	}
@@ -302,14 +374,14 @@ unsigned long long ProtocolSHELL::GetSize(const std::string &path, bool follow_s
 void ProtocolSHELL::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest(follow_symlink ? "info" : "linfo", path, std::string()),
 		s_prompt_or_error);
 
 	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
 		if (wr.index != 0) {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 		}
 		throw ProtocolError("mode query error");
 	}
@@ -325,12 +397,12 @@ void ProtocolSHELL::GetInformation(FileInformation &file_info, const std::string
 void ProtocolSHELL::FileDelete(const std::string &path)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("rmfile", path),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("rmfile error");
 	}
 }
@@ -338,12 +410,12 @@ void ProtocolSHELL::FileDelete(const std::string &path)
 void ProtocolSHELL::DirectoryDelete(const std::string &path)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("rmdir", path),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("rmdir error");
 	}
 }
@@ -351,12 +423,12 @@ void ProtocolSHELL::DirectoryDelete(const std::string &path)
 void ProtocolSHELL::DirectoryCreate(const std::string &path, mode_t mode)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("mkdir", path, StrPrintf("0%o", mode & 0777)),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("mkdir error");
 	}
 }
@@ -364,12 +436,12 @@ void ProtocolSHELL::DirectoryCreate(const std::string &path, mode_t mode)
 void ProtocolSHELL::Rename(const std::string &path_old, const std::string &path_new)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("rename", path_old, path_new),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("rename error");
 	}
 }
@@ -378,18 +450,18 @@ void ProtocolSHELL::Rename(const std::string &path_old, const std::string &path_
 void ProtocolSHELL::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
+	FinalizeExecCmd();
 }
 
 void ProtocolSHELL::SetMode(const std::string &path, mode_t mode)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("chmod", path, StrPrintf("0%o", mode & 0777)),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("chmod error");
 	}
 }
@@ -397,12 +469,12 @@ void ProtocolSHELL::SetMode(const std::string &path, mode_t mode)
 void ProtocolSHELL::SymlinkCreate(const std::string &link_path, const std::string &link_target)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	_exec_cmd.reset();
-	auto wr = _app->SendAndWaitReply(
+	FinalizeExecCmd();
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("mksym", link_path, link_target),
 		s_prompt_or_error);
 	if (wr.index != 0) {
-		_app->WaitReply(s_prompt);
+		_way->WaitReply(s_prompt);
 		throw ProtocolError("mksym error");
 	}
 }
@@ -410,10 +482,10 @@ void ProtocolSHELL::SymlinkCreate(const std::string &link_path, const std::strin
 void ProtocolSHELL::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	auto wr = _app->SendAndWaitReply(
+	auto wr = _way->SendAndWaitReply(
 		MultiLineRequest("rdsym", link_path),
 		s_ok_or_error);
-	_app->WaitReply(s_prompt);
+	_way->WaitReply(s_prompt);
 	if (wr.index != 0) {
 		throw ProtocolError("mksym error");
 	}
@@ -430,18 +502,18 @@ void ProtocolSHELL::SymlinkQuery(const std::string &link_path, std::string &link
 
 class SHELLDirectoryEnumer : public IDirectoryEnumer {
 private:
-	std::shared_ptr<ClientApp> _app;
+	std::shared_ptr<WayToShell> _way;
 
 	std::vector<FileInfo> _files;
 	size_t _index = 0;
 
 public:
-	SHELLDirectoryEnumer(std::shared_ptr<ClientApp> &app, const std::string &path, const RemoteFeats &feats)
-		: _app(app)
+	SHELLDirectoryEnumer(std::shared_ptr<WayToShell> &app, const std::string &path, const RemoteFeats &feats)
+		: _way(app)
 	{
-		auto wr = _app->SendAndWaitReply( MultiLineRequest("enum", path), s_prompt_or_error);
+		auto wr = _way->SendAndWaitReply( MultiLineRequest("enum", path), s_prompt_or_error);
 		if (wr.index != 0) {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 			throw ProtocolError("dir query error");
 		}
 		if (feats.using_stat || feats.using_find) {
@@ -492,13 +564,13 @@ public:
 std::shared_ptr<IDirectoryEnumer> ProtocolSHELL::DirectoryEnum(const std::string &path)
 {
 	fprintf(stderr, "[SHELL] Enum '%s'\n", path.c_str());
-	_exec_cmd.reset();
-	return std::shared_ptr<IDirectoryEnumer>(new SHELLDirectoryEnumer(_app, path, _feats));
+	FinalizeExecCmd();
+	return std::shared_ptr<IDirectoryEnumer>(new SHELLDirectoryEnumer(_way, path, _feats));
 }
 
 class SHELLFileReader : public IFileReader
 {
-	std::shared_ptr<ClientApp> _app;
+	std::shared_ptr<WayToShell> _way;
 
 	unsigned long _chunk {0};
 	bool _finished{false};
@@ -506,12 +578,12 @@ class SHELLFileReader : public IFileReader
 
 	void RecvChunkHeader()
 	{
-		WaitResult wr = _app->SendAndWaitReply(_aborting ? "abort\n" : "cont\n", s_read_replies);
+		WaitResult wr = _way->SendAndWaitReply(_aborting ? "abort\n" : "cont\n", s_read_replies);
 		//{"+NEXT:*\n", "+DONE\n", "+FAIL\n", "+ABORTED\n", "+ERROR:*\n"};
 		if (wr.index == 4) {
 			std::string resync = wr.stdout_lines.back();
 			resync.replace(0, 1, "SHELL_RESYNCHRONIZATION_");
-			_app->Send(resync);
+			_way->Send(resync);
 			_finished = true;
 			throw ProtocolError("read error");
 		}
@@ -527,10 +599,10 @@ class SHELLFileReader : public IFileReader
 
 
 public:
-	SHELLFileReader(std::shared_ptr<ClientApp> &app, const std::string &path, unsigned long long resume_pos)
-		: _app(app)
+	SHELLFileReader(std::shared_ptr<WayToShell> &app, const std::string &path, unsigned long long resume_pos)
+		: _way(app)
 	{
-		_app->Send( MultiLineRequest("read", StrPrintf("%llu %s", resume_pos, path.c_str()), "cont"));
+		_way->Send( MultiLineRequest("read", StrPrintf("%llu %s", resume_pos, path.c_str()), "cont"));
 	}
 
 	virtual ~SHELLFileReader()
@@ -547,7 +619,7 @@ public:
 			fprintf(stderr, "[SHELL] ~SHELLFileReader: read ...\n");
 		}
 		try {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 		} catch (std::exception &e) {
 			fprintf(stderr, "[SHELL] ~SHELLFileReader: prompt %s\n", e.what());
 		} catch (...) {
@@ -566,7 +638,7 @@ public:
 				}
 			}
 			const size_t piece = std::min(len - rv, _chunk);
-			_app->ReadStdout((char *)buf + rv, piece);
+			_way->ReadStdout((char *)buf + rv, piece);
 			rv+= piece;
 			_chunk-= piece;
 		}
@@ -576,7 +648,7 @@ public:
 
 class SHELLFileWriter : public IFileWriter
 {
-	std::shared_ptr<ClientApp> _app;
+	std::shared_ptr<WayToShell> _way;
 	RemoteFeats _feats;
 	unsigned int _pending_replies{0};
 	bool _write_completed{false};
@@ -586,27 +658,27 @@ class SHELLFileWriter : public IFileWriter
 	void WaitReply()
 	{
 		--_pending_replies;
-		const auto &wr = _app->WaitReply(s_write_replies); // {"+OK\n", "+ERROR:*\n"};
+		const auto &wr = _way->WaitReply(s_write_replies); // {"+OK\n", "+ERROR:*\n"};
 		if (wr.index == 1) {
 			std::string resync = wr.stdout_lines.back();
 			resync.replace(0, 1, "SHELL_RESYNCHRONIZATION_");
-			_app->Send(resync);
+			_way->Send(resync);
 			throw ProtocolError("write error");
 		}
 	}
 
 public:
-	SHELLFileWriter(std::shared_ptr<ClientApp> &app, const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos, const RemoteFeats &feats)
-		: _app(app), _feats(feats)
+	SHELLFileWriter(std::shared_ptr<WayToShell> &app, const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos, const RemoteFeats &feats)
+		: _way(app), _feats(feats)
 	{
-		_app->Send( MultiLineRequest("write", StrPrintf("%llu %s", resume_pos, path.c_str())));
+		_way->Send( MultiLineRequest("write", StrPrintf("%llu %s", resume_pos, path.c_str())));
 		++_pending_replies;
 	}
 
 	virtual ~SHELLFileWriter()
 	{
 		if (!_write_completed) try {
-			_app->Send(". .\n");
+			_way->Send(". .\n");
 		} catch (std::exception &e) {
 			fprintf(stderr, "[SHELL] ~SHELLFileWriter: dot %s\n", e.what());
 		} catch (...) {
@@ -620,7 +692,7 @@ public:
 			fprintf(stderr, "[SHELL] ~SHELLFileWriter: reply ...\n");
 		}
 		try {
-			_app->WaitReply(s_prompt);
+			_way->WaitReply(s_prompt);
 		} catch (std::exception &e) {
 			fprintf(stderr, "[SHELL] ~SHELLFileReader: prompt %s\n", e.what());
 		} catch (...) {
@@ -632,7 +704,7 @@ public:
 	{
 		if (!_write_completed) {
 			_write_completed = true;
-			_app->Send(". .\n");
+			_way->Send(". .\n");
 		}
 		while (_pending_replies) {
 			WaitReply();
@@ -676,12 +748,12 @@ public:
 				const size_t piece = len - ofs;
 				memcpy(_padded_data.data(), (const char *)buf + ofs, piece);
 				memset(_padded_data.data() + piece, ' ', _feats.require_write_block - piece);
-				WritePiece(piece, (const char *)buf, _padded_data.size());
+				WritePiece(piece, _padded_data.data(), _padded_data.size());
 			}
 			memset(_padded_data.data(), ' ', _padded_data.size());
 //			No need as read skips leading spaces so they can arrive as part of subsequent directive
 //			_padded_data.back() = '\n';
-			_app->Send(_padded_data.data(), _padded_data.size());
+			_way->Send(_padded_data.data(), _padded_data.size());
 
 		} else {
 			WritePiece(len, (const char *)buf, len);
@@ -694,15 +766,15 @@ public:
 			WaitReply();
 		}
 		++_seq;
-		_app->Send(StrPrintf("%lu %lu\n", (unsigned long)_seq, (unsigned long)target_len));
-		_app->Send(data, len);
+		_way->Send(StrPrintf("%lu %lu\n", (unsigned long)_seq, (unsigned long)target_len));
+		_way->Send(data, len);
 		++_pending_replies;
 	}
 };
 
 std::shared_ptr<IFileReader> ProtocolSHELL::FileGet(const std::string &path, unsigned long long resume_pos)
 {
-	_exec_cmd.reset();
+	FinalizeExecCmd();
 
 	if (!_feats.support_read) {
 		throw ProtocolUnsupportedError("read unsupported");
@@ -711,12 +783,12 @@ std::shared_ptr<IFileReader> ProtocolSHELL::FileGet(const std::string &path, uns
 		throw ProtocolUnsupportedError("read-resume unsupported");
 	}
 
-	return std::make_shared<SHELLFileReader>(_app, path, resume_pos);
+	return std::make_shared<SHELLFileReader>(_way, path, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolSHELL::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
-	_exec_cmd.reset();
+	FinalizeExecCmd();
 
 	if (!_feats.support_write) {
 		throw ProtocolUnsupportedError("write unsupported");
@@ -725,5 +797,5 @@ std::shared_ptr<IFileWriter> ProtocolSHELL::FilePut(const std::string &path, mod
 		throw ProtocolUnsupportedError("write-resume unsupported");
 	}
 
-	return std::make_shared<SHELLFileWriter>(_app, path, mode, size_hint, resume_pos, _feats);
+	return std::make_shared<SHELLFileWriter>(_way, path, mode, size_hint, resume_pos, _feats);
 }

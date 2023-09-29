@@ -148,3 +148,28 @@ uint32_t SHELLParseModeByLS(std::string &line)
 	StrTrim(line, " \t\n");
 	return ParseModeByStatOrFindLine(line);
 }
+
+void AppendTrimmedLines(std::string &s, const std::vector<std::string> &lines)
+{
+	for (auto line : lines) {
+		StrTrim(line, " \t\n\r");
+		if (!line.empty()) {
+			if (!s.empty()) {
+				s+= '\n';
+			}
+			s+= line;
+		}
+	}
+}
+
+void Substitute(std::string &str, const char *pattern, const std::string &replacement)
+{
+	for (size_t ofs = 0; ofs < str.size();) {
+		const size_t p = str.find(pattern, ofs);
+		if (p == std::string::npos) {
+			break;
+		}
+		str.replace(p, strlen(pattern), replacement);
+		ofs = p + replacement.size();
+	}
+}

@@ -286,6 +286,9 @@ enum LanguageID
 	MFTPCommandsPipelining,
 	MFTPRestrictDataPeer,
 	MFTPTCPNoDelay,
-	MFTPQuickAck
+	MFTPQuickAck,
 
+	MSHELLOptionsTitle,
+	MSHELLWay,
+	MSHELLWaySettings
 };

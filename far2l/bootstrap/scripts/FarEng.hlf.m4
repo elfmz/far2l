@@ -362,6 +362,8 @@ $ #Keyboard reference#
 
  ~Miscellaneous~@MiscCmd@
 
+ ~Special commands~@SpecCmd@
+
 @MenuCmd
 $ #Menu control commands#
  #Common menu and drop-down list commands#
@@ -899,7 +901,19 @@ Another way to achieve working hotkeys may be changing settings of external appl
 (in order to release needed hotkey combinations) or using exclusive handle hotkeys option
 in the ~interface settings~@InterfSettings@.
 
+@SpecCmd
+$ #Special commands#
+ Special FAR commands starts with the prefix and colon
 
+ #far:about#  - Far information, list and infrmation about plugins
+
+ #far:config# - Configuration editor (draft now)
+
+ #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+
+ #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+
+ #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
 
 @MsWheel
 $ #Mouse: wheel support#

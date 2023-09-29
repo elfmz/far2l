@@ -245,6 +245,8 @@ $ #Billentyűparancsok#
 
  ~Egyebek~@MiscCmd@
 
+ ~Special commands~@SpecCmd@
+
 @MenuCmd
 $ #Menu control commands#
  #Common menu and drop-down list commands#
@@ -785,6 +787,19 @@ $ #Panelvezérlő parancsok - egyebek#
     és húzzuk, vagy mozgathatók a #Ctrl-F5# lenyomása után a
     #kurzornyilakkal# is.
 
+@SpecCmd
+$ #Special commands#
+ Special FAR commands starts with the prefix and colon
+
+ #far:about#  - Far information, list and infrmation about plugins
+
+ #far:config# - Configuration editor (draft now)
+
+ #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+
+ #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+
+ #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
 
 @MsWheel
 $ #Egér: görgő támogatása#

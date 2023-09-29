@@ -370,6 +370,8 @@ $ #Клавиатурные команды#
 
  ~Прочие команды~@MiscCmd@
 
+ ~Special commands~@SpecCmd@
+
 @MenuCmd
 $ #Команды управления меню#
  #Общие команды для меню и выпадающих списков#
@@ -916,6 +918,20 @@ $ #Команды управления панелями - прочие кома�
 Другим способом получить работоспособные горячие кнопки может быть перенастройка
 внешних программ (с целью освободить нужные сочетания) или же использование
 опции эксклюзивной обработки нажатий в ~настройках интерфейса~@InterfSettings@.
+
+@SpecCmd
+$ #Special commands#
+ Special FAR commands starts with the prefix and colon
+
+ #far:about#  - Far information, list and infrmation about plugins
+
+ #far:config# - Configuration editor (draft now)
+
+ #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+
+ #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+
+ #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
 
 @MsWheel
 $ #Мышь: поддержка колеса#

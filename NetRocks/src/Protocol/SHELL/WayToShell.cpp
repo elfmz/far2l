@@ -186,6 +186,7 @@ void WayToShell::OpenSerialPort(const WayToShellConfig &cfg, const StringConfig 
 	const auto &opt_flowctrl = cfg.OptionValue(1, protocol_options);
 	const auto &opt_databits = cfg.OptionValue(2, protocol_options);
 	const auto &opt_stopbits = cfg.OptionValue(3, protocol_options);
+	const auto &opt_parity =   cfg.OptionValue(4, protocol_options);
 
 	speed_t baudrate;
 	switch (atoi(opt_baudrate.c_str())) {
@@ -276,6 +277,19 @@ void WayToShell::OpenSerialPort(const WayToShellConfig &cfg, const StringConfig 
 	} else if (opt_stopbits != "1") {
 		close(_master_fd);
 		throw ProtocolError("wrong stopbits", opt_stopbits.c_str());
+	}
+
+	if (opt_parity == "Odd") {
+		tios.c_cflag|= PARENB;
+		tios.c_cflag|= PARODD;
+
+	} else if (opt_parity == "Even") {
+		tios.c_cflag|= PARENB;
+		tios.c_cflag&= ~PARODD;
+
+	} else if (opt_parity != "None") {
+		close(_master_fd);
+		throw ProtocolError("wrong parity", opt_parity.c_str());
 	}
 
 //	cfmakeraw(&tios);

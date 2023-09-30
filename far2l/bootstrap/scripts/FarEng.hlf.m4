@@ -148,6 +148,10 @@ $ #FAR2L features - Getting Started#
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
 
 
+ #macOS workaround# if far2l in macOS regularly asks permission to folders
+    After command #sudo codesign --force --deep --sign - /Applications/far2l.app# it is enough to confirm permission only once.
+
+
  #Changing font for FAR2L-GUI#
     - Menu(#F9#)->Options->Interface settings->[ Change font ]
 

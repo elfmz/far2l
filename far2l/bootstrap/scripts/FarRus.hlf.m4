@@ -152,6 +152,10 @@ $ #Особенности FAR2L - начало работы#
     - внутри ярлыка #/usr/share/applications/far2l.desktop# заменить #Exec=far2l# на #Exec=env GDK_BACKEND=x11 far2l#
 
 
+ #Костыль для macOS#, если far2l в macOS рагулярно запрашивает доступ к папкам
+    После команды #sudo codesign --force --deep --sign - /Applications/far2l.app# достаточно один раз предоставить разрешение.
+
+
  #Изменение шрифта для FAR2L-GUI#
     - Меню(#F9#)->Параметры->Настройки интерфейса->[ Выбрать шрифт ]
 

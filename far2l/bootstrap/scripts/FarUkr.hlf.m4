@@ -7,68 +7,68 @@ m4_include(`farversion.m4')m4_dnl
 $^#Програма управління файлами та архівами#
 `$^#'FULLVERSIONNOBRACES`#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
-~Індекс файлу допомоги~@Index@
-~Як користуватися допомогою~@Help@
+ ~Індекс файлу допомоги~@Index@
+ ~Як користуватися допомогою~@Help@
 
-~Що таке FAR2L~@About@
-~Ліцензія~@License@
+ ~Що таке FAR2L~@About@
+ ~Ліцензія~@License@
 
-~Режими інтерфейсу~@UIBackends@
-~Параметри командного рядка~@CmdLine@
-~Клавіатурні команди~@KeyRef@
-~Підтримка модулів, що підключаються~@Plugins@
-~Огляд можливостей модулів , що підключаються~@PluginsReviews@
-~Термінал~@Terminal@
+ ~Режими інтерфейсу~@UIBackends@
+ ~Параметри командного рядка~@CmdLine@
+ ~Клавіатурні команди~@KeyRef@
+ ~Підтримка модулів, що підключаються~@Plugins@
+ ~Огляд можливостей модулів , що підключаються~@PluginsReviews@
+ ~Термінал~@Terminal@
 
-~Панелі:~@Panels@ ~Панель файлів~@FilePanel@
-~Дерево папок~@TreePanel@
-~Панель інформації~@InfoPanel@
-~Панель швидкого перегляду~@QViewPanel@
-~Перетягування файлів~@DragAndDrop@
-~Налаштування режимів перегляду панелі файлів~@PanelViewModes@
-~Помітка файлів~@SelectFiles@
+ ~Панелі:~@Panels@ ~Панель файлів~@FilePanel@
+ ~Дерево папок~@TreePanel@
+ ~Панель інформації~@InfoPanel@
+ ~Панель швидкого перегляду~@QViewPanel@
+ ~Перетягування файлів~@DragAndDrop@
+ ~Налаштування режимів перегляду панелі файлів~@PanelViewModes@
+ ~Помітка файлів~@SelectFiles@
 
-~Меню:~@Menus@ ~Меню лівої та правої панелей~@LeftRightMenu@
-~Меню файлів~@FilesMenu@
-~Меню команд~@CmdMenu@
-~Меню параметрів~@OptMenu@
+ ~Меню:~@Menus@ ~Меню лівої та правої панелей~@LeftRightMenu@
+ ~Меню файлів~@FilesMenu@
+ ~Меню команд~@CmdMenu@
+ ~Меню параметрів~@OptMenu@
 
-~Пошук файлу~@FindFile@
-~Історія команд~@History@
-~Пошук папки~@FindFolder@
-~Порівняння папок~@CompFolders@
-~Меню користувача~@UserMenu@
-~Меню переходу~@DriveDlg@
+ ~Пошук файлу~@FindFile@
+ ~Історія команд~@History@
+ ~Пошук папки~@FindFolder@
+ ~Порівняння папок~@CompFolders@
+ ~Меню користувача~@UserMenu@
+ ~Меню переходу~@DriveDlg@
 
-~Асоціації файлів~@FileAssoc@
-~Команди операційної системи~@OSCommands@
-~Закладки~@Bookmarks@
-~Меню фільтрів~@FiltersMenu@
-~Переключення між екранами~@ScrSwitch@
-~Список завдань~@TaskList@
-~Список пристроїв~@HotPlugList@
+ ~Асоціації файлів~@FileAssoc@
+ ~Команди операційної системи~@OSCommands@
+ ~Закладки~@Bookmarks@
+ ~Меню фільтрів~@FiltersMenu@
+ ~Переключення між екранами~@ScrSwitch@
+ ~Список завдань~@TaskList@
+ ~Список пристроїв~@HotPlugList@
 
-~Системні параметри~@SystemSettings@
-~Установки панелі~@PanelSettings@
-~Налаштування інтерфейсу~@InterfSettings@
-~Налаштування введення~@InputSettings@
-~Налаштування діалогів~@DialogSettings@
-~Установки меню~@VMenuSettings@
-~Налаштування командного рядка~@CmdlineSettings@
-~Locations menu settings~@ChangeLocationConfig@
+ ~Системні параметри~@SystemSettings@
+ ~Установки панелі~@PanelSettings@
+ ~Налаштування інтерфейсу~@InterfSettings@
+ ~Налаштування введення~@InputSettings@
+ ~Налаштування діалогів~@DialogSettings@
+ ~Установки меню~@VMenuSettings@
+ ~Налаштування командного рядка~@CmdlineSettings@
+ ~Locations menu settings~@ChangeLocationConfig@
 
-~Розмальовка файлів та групи сортування~@Highlight@
-~Опис файлів~@FileDiz@
-~Установки програми перегляду~@ViewerSettings@
-~Налаштування редактора~@EditorSettings@
+ ~Розмальовка файлів та групи сортування~@Highlight@
+ ~Опис файлів~@FileDiz@
+ ~Установки програми перегляду~@ViewerSettings@
+ ~Налаштування редактора~@EditorSettings@
 
-~Копіювання, перенесення, перейменування та створення посилань~@CopyFiles@
+ ~Копіювання, перенесення, перейменування та створення посилань~@CopyFiles@
 
-~Вбудована програма перегляду~@Viewer@
-~Вбудований редактор~@Editor@
+ ~Вбудована програма перегляду~@Viewer@
+ ~Вбудований редактор~@Editor@
 
-~Маски файлів~@FileMasks@
-~Клавіатурні макрокоманди~@KeyMacro@
+ ~Маски файлів~@FileMasks@
+ ~Клавіатурні макрокоманди~@KeyMacro@
 
 
 @Help
@@ -248,6 +248,8 @@ $ #Клавіатурні команди#
 ~Menu control commands~@MenuCmd@
 
 ~Інші команди~@MiscCmd@
+
+~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -793,6 +795,21 @@ FAR2L також вміє обробляти ~колесо миші~@MsWheel@.
 Іншим способом отримати працездатні гарячі кнопки може бути перенастроювання
 зовнішніх програм (з метою звільнити потрібні поєднання) або використання
 опції ексклюзивної обробки натискань у ~налаштуваннях інтерфейсу~@InterfSettings@.
+
+
+@SpecCmd
+$ #Special commands#
+ Special FAR commands starts with the prefix and colon
+
+ #far:about#  - Far information, list and infrmation about plugins
+
+ #far:config# - Configuration editor (draft now)
+
+ #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+
+ #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+
+ #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
 
 @MsWheel
 $ #Миша: підтримка колеса#

@@ -109,6 +109,12 @@ template <class StrT>
 	return memcmp(haystack.c_str() + haystack.size() - l, needle, l * sizeof(typename StrT::value_type)) ? 0 : l;
 }
 
+template <class StrT>
+	size_t StrEndsBy(const StrT &haystack, const typename StrT::value_type needle)
+{
+	return !haystack.empty() && haystack.back() == needle;
+}
+
 
 const std::string &GetMyHome();
 

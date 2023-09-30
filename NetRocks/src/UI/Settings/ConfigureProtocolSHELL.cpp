@@ -99,6 +99,7 @@ public:
 		_ways_ini = StrWide2MB(G.plugin_path);
 		CutToSlash(_ways_ini, true);
 		_ways_ini+= "SHELL/ways.ini";
+		TranslateInstallPath_Lib2Share(_ways_ini);
 
 		InitializeWays();
 

@@ -298,9 +298,9 @@ void ProtocolSHELL::KeepAlive(const std::string &path_to_check)
 
 void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
 {
-	FinalizeExecCmd();
 	fprintf(stderr, "[SHELL] ProtocolSHELL::GetModes follow_symlink=%d count=%lu\n", follow_symlink, (unsigned long)count);
 	try {
+		FinalizeExecCmd();
 		std::string request = follow_symlink ? "mode\n" : "lmode\n";
 		for (size_t i = 0; i != count; ++i) {
 			request+= pathes[i];

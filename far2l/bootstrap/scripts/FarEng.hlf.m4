@@ -148,6 +148,10 @@ $ #FAR2L features - Getting Started#
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
 
 
+ #macOS workaround# if far2l in macOS regularly asks permission to folders
+    After command #sudo codesign --force --deep --sign - /Applications/far2l.app# it is enough to confirm permission only once.
+
+
  #Changing font for FAR2L-GUI#
     - Menu(#F9#)->Options->Interface settings->[ Change font ]
 
@@ -361,6 +365,8 @@ $ #Keyboard reference#
  ~Menu control commands~@MenuCmd@
 
  ~Miscellaneous~@MiscCmd@
+
+ ~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -899,7 +905,19 @@ Another way to achieve working hotkeys may be changing settings of external appl
 (in order to release needed hotkey combinations) or using exclusive handle hotkeys option
 in the ~interface settings~@InterfSettings@.
 
+@SpecCmd
+$ #Special commands#
+ Special FAR commands starts with the prefix and colon
 
+ #far:about#  - Far information, list and infrmation about plugins
+
+ #far:config# - Configuration editor (draft now)
+
+ #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+
+ #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+
+ #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
 
 @MsWheel
 $ #Mouse: wheel support#

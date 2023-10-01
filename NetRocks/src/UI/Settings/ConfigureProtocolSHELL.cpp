@@ -7,6 +7,7 @@
 #include "../DialogUtils.h"
 #include "../../Globals.h"
 #include "../../Protocol/SHELL/WayToShellConfig.h"
+#include <stdexcept>
 
 /*                                                  55
 345                      28     35                53

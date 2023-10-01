@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include "../../FileInformation.h"
+#include <cstdint>
+
 
 struct FileInfo
 {

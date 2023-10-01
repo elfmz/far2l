@@ -306,8 +306,8 @@ private:
 
 static bool IsFar2lFISHTerminal()
 {
-	const char *term = getenv("TERM");
-	return (term && strncmp(term, "FISH.FAR2L", 10) == 0);
+	const char *fish = getenv("FISH");
+	return (fish && strstr(fish, "far2l") != NULL);
 }
 
 extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))

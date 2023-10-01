@@ -48,6 +48,7 @@ public:
 	VTFar2lExtensios(IVTShell *vt_shell, const std::string &host_id);
 	~VTFar2lExtensios();
 
+	void OnTerminalResized();
 	bool OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent);
 	bool OnInputKey(const KEY_EVENT_RECORD &KeyEvent);
 	void OnInterract(StackSerializer &stk_ser);

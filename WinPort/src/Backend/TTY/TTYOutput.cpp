@@ -177,8 +177,12 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 	ChangeMouse(true);
 
 	if (far2l_tty) {
+		uint64_t wanted_feats = FARTTY_FEAT_COMPACT_INPUT;
+		if (!isatty(_out)) {
+			wanted_feats|= FARTTY_FEAT_TERMINAL_SIZE;
+		}
 		StackSerializer stk_ser;
-		stk_ser.PushNum((uint64_t)(FARTTY_FEAT_COMPACT_INPUT));
+		stk_ser.PushNum(wanted_feats);
 		stk_ser.PushNum(FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInterract(stk_ser);

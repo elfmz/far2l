@@ -11,6 +11,7 @@ export LANG=C
 export LC_TIME=C
 export LS_COLORS=
 export SHELLVAR_LOG=/dev/null
+export FISH=far2l
 #export SHELLVAR_LOG=/tmp/nr-shell.log
 
 SHELLFCN_SEND_ERROR_AND_RESYNC() {
@@ -327,7 +328,7 @@ SHELLFCN_CMD_EXECUTE() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_WD || exit
  $SHELLVAR_READ_FN SHELLVAR_ARG_TOKEN || exit
  if cd "$SHELLVAR_ARG_WD"; then
-  TERM=FISH.FAR2L $SHELLVAR_ARG_CMD
+  eval $SHELLVAR_ARG_CMD
   RV=$?
   echo;echo "$SHELLVAR_ARG_TOKEN:$RV"
  else

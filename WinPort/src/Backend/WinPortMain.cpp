@@ -372,7 +372,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
 		if (!strchr(arg_opts.nodetect, 'f')) {
 	//		tty_raw_mode.reset(new TTYRawMode(std_out));
-			if (tty_raw_mode->Applied()) {
+			if (tty_raw_mode->Applied() || !isatty(std_out)) {
 				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
 				if (arg_opts.far2l_tty) {
 					arg_opts.tty = true;

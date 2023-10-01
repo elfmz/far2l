@@ -233,6 +233,12 @@ Glossary:
 */
 #define FARTTY_FEAT_COMPACT_INPUT             0x00000001
 
+/** Client may specify this wanted extra feature if it supports in-band terminal size events.
+ If server supports this feature it may send such events, however client should be ready to
+ handle usual SIGWINCH signals as well.
+*/
+#define FARTTY_FEAT_TERMINAL_SIZE             0x00000002
+
 /** Server reports this on responce of FARTTY_INTERRACT_CLIP_OPEN if it supports clipboard data ID.
  Clipboard data ID allows client-side caching of clipboard data to avoid known data transfers.
 */
@@ -291,3 +297,8 @@ all arguments are defined by FARTTY_INPUT_* notification ID - see below (stack t
 #define FARTTY_INPUT_KEYDOWN_COMPACT          'C'
 #define FARTTY_INPUT_KEYUP_COMPACT            'c'
 
+/** Server sends this to inform about recent terminal size.
+  uint16_t (terminal width)
+  uint16_t (terminal height)
+*/
+#define FARTTY_INPUT_TERMINAL_SIZE          'S'

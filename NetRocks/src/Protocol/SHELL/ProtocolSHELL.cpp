@@ -572,7 +572,7 @@ class SHELLFileReader : public IFileReader
 {
 	std::shared_ptr<WayToShell> _way;
 
-	unsigned long _chunk {0};
+	size_t _chunk {0};
 	bool _finished{false};
 	bool _aborting{false};
 
@@ -588,7 +588,7 @@ class SHELLFileReader : public IFileReader
 			throw ProtocolError("read error");
 		}
 		if (wr.index == 0) {
-			_chunk = strtoul(wr.stdout_lines.back().c_str() + 6, nullptr, 10);
+			_chunk = (size_t)strtoul(wr.stdout_lines.back().c_str() + 6, nullptr, 10);
 		} else {
 			_chunk = 0;
 		}

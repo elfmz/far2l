@@ -222,7 +222,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )  
+		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
 			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
@@ -346,6 +346,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 	}
 
 	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
@@ -496,6 +498,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 	}
 
 	virtual void OnKeypadChange(unsigned char keypad)
@@ -843,6 +847,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
+		if (_far2l_exts)
+			_far2l_exts->OnTerminalResized();
 
 		std::string cmd_str;
 		if (!_slavename.empty()) {

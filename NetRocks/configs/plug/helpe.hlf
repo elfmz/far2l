@@ -6,7 +6,7 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
- This plugin adds SFTP/SCP/NFS/SMB/WebDAV connectivity to far2l with possibility to add other protocols.
+ This plugin adds SFTP/SCP/SHELL/NFS/SMB/WebDAV connectivity to far2l with possibility to add other protocols.
 
  To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
 
@@ -77,6 +77,7 @@ $^#Site connection editor#
 Also by clicking on #Extra options# button you can modify some ~extra site settings~@ExtraSiteSettings@.
 Also by clicking on #Protocol options# button you can modify some protocol-specific settings.
  ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
+ ~SHELL:// protocols specific options~@ProtocolOptionsSHELL@
  ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
@@ -125,6 +126,21 @@ $^#SFTP:// SCP:// protocols specific options#
  #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er account by using command line like [sudo /usr/lib/openssh/sftp-server]
  #Allowed host keys# if non-empty then forces using only specified key-exchange algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. ssh-rsa if server doesn't support modern ones.
  #OpenSSH config files# allows to specify which OpenSSH config files to use for this connection. By default ~~/.ssh/config and /etc/ssh/ssh_config are used. Note that libssh version prior 0.9.0 always parses default config files regardless of this option (so you can only add extra configs), but since version 0.9.0 its possible to disable/override default config files parsing. To specify more then one file - use colon to separate their pathes.
+
+ ~Contents~@Contents@
+
+@ProtocolOptionsSHELL
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#SHELL:// protocols specific options#
+
+ This dialog allows you to modify "shell://" protocols specific settings.
+ Note that this protocol is specific in a way it communicates with server - instead of using dedicated file access protocol it runs on server special helper script that handles required text commands, allowing to browse and transfer files.
+ Due to this, SHELL protocol in general picky about server's shell and which standard UNIX tools are accessible there.
+ Currently you may choose from two predefines ways to access server's shell - either using installed on #client SSH client# (ssh) either using #serial port interface#.
+ Note that #serial port way# is very sensitive to losses on communication line and sensitive to printouts noise that may arrive from server's kernel or whatever else. So don't use serial port way unless your surely knows what you need and be careful with file transfers afterwards. You may reduce printouts from kernel by following command: #echo 0 > /proc/sys/kernel/printk# before using serial port for this. And make sure serial port is not used by any other process that otherwise can interfere with NetRocks SHELL protocol.
 
  ~Contents~@Contents@
 

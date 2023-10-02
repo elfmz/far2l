@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include "../../FileInformation.h"
+#include <cstdint>
+
 
 struct FileInfo
 {
@@ -23,3 +25,6 @@ void SHELLParseEnumByLS(std::vector<FileInfo> &files, const std::vector<std::str
 void SHELLParseInfoByLS(FileInformation &fi, std::string &line);
 uint64_t SHELLParseSizeByLS(std::string &line);
 uint32_t SHELLParseModeByLS(std::string &line);
+
+void AppendTrimmedLines(std::string &s, const std::vector<std::string> &lines);
+void Substitute(std::string &str, const char *pattern, const std::string &replacement);

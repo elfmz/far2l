@@ -10,13 +10,14 @@ void ConfigureProtocolNFS(std::string &options);
 void ConfigureProtocolWebDAV(std::string &options);
 void ConfigureProtocolWebDAVs(std::string &options);
 void ConfigureProtocolFile(std::string &options);
+void ConfigureProtocolSHELL(std::string &options);
 
 static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
 	{ "sftp", "NetRocks-SFTP", 22, true, true, true, ConfigureProtocolSFTP},
 	{ "scp", "NetRocks-SFTP", 22, true, true, true, ConfigureProtocolSCP},
 #endif
-	{ "shell", "NetRocks-SHELL", 22, true, true, true, nullptr},
+	{ "shell", "NetRocks-SHELL", 22, true, true, true, ConfigureProtocolSHELL},
 
 	{ "ftp", "NetRocks-FTP", 21, true, true, true, ConfigureProtocolFTP},
 #ifdef HAVE_OPENSSL

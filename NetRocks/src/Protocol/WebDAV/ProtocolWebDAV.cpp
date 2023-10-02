@@ -249,7 +249,7 @@ private:
 ////////////////////////////////////////////////////////
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
-		const std::string &username, const std::string &password, const std::string &options)
+		const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
 {
 	if (protocol == "davs") {
 		return std::make_shared<ProtocolWebDAV>("https", host, port, username, password, options);

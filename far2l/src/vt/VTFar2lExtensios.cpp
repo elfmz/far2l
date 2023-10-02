@@ -146,6 +146,21 @@ void VTFar2lExtensios::AllowClipboardRead(bool prolong)
 
 ///
 
+void VTFar2lExtensios::OnTerminalResized()
+{
+	if ( (_xfeatures & FARTTY_FEAT_TERMINAL_SIZE) != 0) {
+		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
+		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )
+					&& csbi.dwSize.X && csbi.dwSize.Y) {
+			StackSerializer stk_ser;
+			stk_ser.PushNum((uint16_t)csbi.dwSize.X);
+			stk_ser.PushNum((uint16_t)csbi.dwSize.Y);
+			stk_ser.PushNum(FARTTY_INPUT_TERMINAL_SIZE);
+			WriteInputEvent(stk_ser);
+		}
+	}
+}
+
 bool VTFar2lExtensios::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 {
 	if (MouseEvent.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) {
@@ -554,6 +569,9 @@ void VTFar2lExtensios::OnInterract(StackSerializer &stk_ser)
 			_xfeatures = 0;
 			stk_ser.PopNum(_xfeatures);
 			stk_ser.Clear();
+			if (_xfeatures & FARTTY_FEAT_TERMINAL_SIZE) {
+				OnTerminalResized();
+			}
 		break;
 
 		case FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT:

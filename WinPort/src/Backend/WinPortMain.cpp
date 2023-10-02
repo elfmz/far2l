@@ -304,6 +304,12 @@ private:
 	ArgOptions(const ArgOptions&) = delete;
 };
 
+static bool IsFar2lFISHTerminal()
+{
+	const char *fish = getenv("FISH");
+	return (fish && strstr(fish, "far2l") != NULL);
+}
+
 extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	std::unique_ptr<ConsoleOutput> winport_con_out(new ConsoleOutput);
@@ -372,7 +378,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
 		if (!strchr(arg_opts.nodetect, 'f')) {
 	//		tty_raw_mode.reset(new TTYRawMode(std_out));
-			if (tty_raw_mode->Applied()) {
+			if (tty_raw_mode->Applied() || IsFar2lFISHTerminal()) {
 				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
 				if (arg_opts.far2l_tty) {
 					arg_opts.tty = true;

@@ -99,7 +99,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 
-	bool GetWinSize(struct winsize &w);
+	void GetWinSize(struct winsize &w);
 	void ChooseSimpleClipboardBackend();
 	void DispatchTermResized(TTYOutput &tty_out);
 	void DispatchOutput(TTYOutput &tty_out);

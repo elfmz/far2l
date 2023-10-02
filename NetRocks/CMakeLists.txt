@@ -25,6 +25,8 @@ src/UI/Settings/ConfigureProtocolFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp
+src/UI/Settings/ConfigureProtocolSHELL.cpp
+src/Protocol/SHELL/WayToShellConfig.cpp
 src/UI/Activities/Confirm.cpp
 src/UI/Activities/ConfirmXfer.cpp
 src/UI/Activities/ConfirmOverwrite.cpp
@@ -68,7 +70,8 @@ add_executable (NetRocks-SHELL
     ${PROTOCOL_SOURCES}
     src/Protocol/SHELL/ProtocolSHELL.cpp
     src/Protocol/SHELL/ProtocolSHELL_ExecCmd.cpp
-    src/Protocol/SHELL/ClientApp.cpp
+    src/Protocol/SHELL/WayToShellConfig.cpp
+    src/Protocol/SHELL/WayToShell.cpp
     src/Protocol/SHELL/Parse.cpp
     src/Protocol/ShellParseUtils.cpp
 )

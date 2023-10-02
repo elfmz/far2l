@@ -1,5 +1,6 @@
 #include <sys/stat.h>
 #include <errno.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -27,6 +28,12 @@ void ProtocolSHELL::ExecCmd::OnReadFDCtl(int fd)
 		} break;
 
 		case ExecFIFO_CtlMsg::CMD_SIGNAL: {
+			if (m.u.signum == SIGKILL || m.u.signum == SIGINT || m.u.signum == SIGQUIT) {
+				char c = 0;
+				if (os_call_ssize(write, _kickass[1], (const void*)&c, sizeof(c)) != 1) {
+					perror("~ExecFIFO_CtlMsg::CMD_SIGNAL: write kickass");
+				}
+			}
 			// SendSignal(m.u.signum);
 		} break;
 	}
@@ -143,6 +150,15 @@ void ProtocolSHELL::ExecCmd::IOLoop()
 				}
 			} else {
 				WriteAll(_fdinout, buf, rlen);
+				for (ssize_t i = 0; i < rlen; ++i) {
+					if (buf[i] == 0x03 || buf[i] == 0x1c) {
+						// hack: handle Ctrl+C by force exiting IO loop, this will leave whole connection in broken state
+						// but its better than not to react at all leaving user with unresponsive command
+						_marker_track.done = true;
+						_marker_track.status = (buf[i] == 0x1c) ? 0 : SIGINT;
+						_broken = true;
+					}
+				}
 				idle = 0;
 			}
 		}
@@ -196,7 +212,7 @@ void *ProtocolSHELL::ExecCmd::ThreadProc()
 	return nullptr;
 }
 
-ProtocolSHELL::ExecCmd::ExecCmd(std::shared_ptr<ClientApp> &app, const std::string &working_dir, const std::string &command_line, const std::string &fifo)
+ProtocolSHELL::ExecCmd::ExecCmd(std::shared_ptr<WayToShell> &way, const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 	:
 	_working_dir(working_dir),
 	_command_line(command_line),
@@ -209,18 +225,18 @@ ProtocolSHELL::ExecCmd::ExecCmd(std::shared_ptr<ClientApp> &app, const std::stri
 	MakeFDNonBlocking(_kickass[1]);
 
 	int fdinout, fderr;
-	app->GetDescriptors(fdinout, fderr);
+	way->GetDescriptors(fdinout, fderr);
 	_fdinout = fdinout;
 	_fderr = fderr;
 
 	RandomStringAppend(_marker_track.marker, 32, 32, RNDF_ALNUM);
-	app->Send( MultiLineRequest("exec", command_line, working_dir, _marker_track.marker));
+	way->Send( MultiLineRequest("exec", command_line, working_dir, _marker_track.marker));
 	_marker_track.marker.insert(0, 1, '\n');
 	_marker_track.marker.append(1, ':');
 
 	if (!StartThread()) {
 		CheckedCloseFDPair(_kickass);
-		app->WaitReply({">(((^>\n"});
+		way->WaitReply({">(((^>\n"});
 		throw std::runtime_error("start thread");
 	}
 }
@@ -252,5 +268,5 @@ bool ProtocolSHELL::ExecCmd::KeepAlive()
 void ProtocolSHELL::ExecuteCommand(const std::string &working_dir, const std::string &command_line, const std::string &fifo)
 {
 	_exec_cmd.reset();
-	_exec_cmd.reset(new ExecCmd(_app, working_dir, command_line, fifo));
+	_exec_cmd.reset(new ExecCmd(_way, working_dir, command_line, fifo));
 }

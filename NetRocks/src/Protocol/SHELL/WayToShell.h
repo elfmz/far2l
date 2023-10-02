@@ -12,6 +12,8 @@
 #include <poll.h>
 #include <algorithm>
 
+#include "WayToShellConfig.h"
+
 enum OutputType
 {
 	STDBAD = 0,
@@ -27,9 +29,10 @@ struct WaitResult
 	OutputType output_type{STDBAD};
 };
 
-class ClientApp
+class WayToShell
 {
-	int _master_fd{(pid_t)-1};
+	int _fd_ipc_recv;
+	int _master_fd{-1};
 	int _stderr_pipe[2]{-1, -1};
 	pid_t _pid{(pid_t)-1};
 	int _pid_status{0};
@@ -44,11 +47,14 @@ class ClientApp
 
 	WaitResult SendAndWaitReplyInner(const std::string &send_str, const std::vector<const char *> &expected_replies);
 
-public:
-	ClientApp();
-	virtual ~ClientApp();
+	bool FinalRead(int tmout);
 
-	bool Open(const char *app, char *const *argv);
+	void LaunchCommand(const WayToShellConfig &cfg, const StringConfig &protocol_options);
+	void OpenSerialPort(const WayToShellConfig &cfg, const StringConfig &protocol_options);
+
+public:
+	WayToShell(int fd_ipc_recv, const WayToShellConfig &cfg, const StringConfig &protocol_options);
+	virtual ~WayToShell();
 
 	void GetDescriptors(int &fdinout, int &fderr);
 

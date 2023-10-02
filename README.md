@@ -172,6 +172,15 @@ Note that this step sometimes fails and may succeed from not very first attempt.
 Its recommended not to do anything on machine while cpack is in progress.
 After .dmg successfully created, you may install it by running `open ...path/to/created/far2l-*.dmg`
 
+##### macOS workaround if far2l in macOS regularly asks permission to folders
+After command
+```
+ sudo codesign --force --deep --sign - /Applications/far2l.app
+```
+it is enough to confirm permission only once.
+
+Details see in [`issue`](https://github.com/elfmz/far2l/issues/1754).
+
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
 ```

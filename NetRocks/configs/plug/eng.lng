@@ -284,3 +284,7 @@
 "En&sure data connection peer matches server"
 "Enable &TCP_NODELAY option"
 "Enable TCP_&QUICKACK option"
+
+"SHELL Protocol Options"
+"&Way to access shell"
+"Shell access way settings"

@@ -165,7 +165,7 @@ $ #FAR2L features - Getting Started#
     FAR2L internal command line work fully only via #bash#.
     You can change shell by Menu(#F9#)->Options->~Command line settings~@CmdlineSettings@->#Use shell# but command line will work with significant restrictions/bugs especially with native shell commands.
     If you system has not #bash# recommend installing it and using only bash in FAR2L.
-    If your system's default shell is not bash, you may be convenient to set your environments variables in bash startup files also.
+    If your system's default shell is not bash, you may be convenient to set your environments variables, aliases etc. in bash startup files also.
 
 
  #Access to remote FAR2L#

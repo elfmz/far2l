@@ -309,7 +309,7 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 	VPRETTY="no"
 	if command -v chafa >/dev/null 2>&1; then
 		VPRETTY="yes"
-		# chafa -c 16 --color-space=din99d --dither=ordered -w 9 --symbols all --fill all !.! && read -n1 -r -p "$1" >>"$2" 2>&1
+		# chafa -c 16 --color-space=din99d --dither=ordered -w 9 --symbols all --fill all !.! && read -n1 -r -p -- "$1" >>"$2" 2>&1
 		TCOLUMNS=$(( ${TCOLUMNS:-80} - 1 ))
 		TCOLORMODE=""
 		if [ ".${TCOLORS}" = ".2" ]; then
@@ -331,7 +331,7 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
 		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area, no colors" >>"$2" 2>&1
 		clear
-		chafa ${VCHAFACOLOR} --color-space=din99d -w 9 --symbols all --fill all "$1" && \
+		chafa ${VCHAFACOLOR} --color-space=din99d -w 9 --symbols all --fill all -- "$1" && \
 			echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area, "${TCOLORMODE}" colors" && \
 			read -n1 -r -p "" >>"$2" 2>&1
 		clear
@@ -665,10 +665,42 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 fi
 
 if [[ "$FILE" == *": unified diff output"* ]]; then
-	if command -v colordiff >/dev/null 2>&1; then
-		cat -- "$1" | colordiff --color=yes >>"$2" 2>&1
+	if ! (( command -v diff-so-fancy >/dev/null 2>&1 ) || ( command -v diff-highlight >/dev/null 2>&1 )); then
+		echo "Install <diff-so-fancy> or <diff-highlight> to see diffs in **human** readable form" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+	fi
+	if command -v diff-so-fancy >/dev/null 2>&1; then
+		echo "Processing file with diff-so-fancy" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" | diff-so-fancy >>"$2" 2>&1
+	elif command -v colordiff >/dev/null 2>&1; then
+		if command -v diff-highlight >/dev/null 2>&1; then
+			echo "Processing file with colordiff and diff-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | colordiff --color=yes | diff-highlight >>"$2" 2>&1
+		else
+			echo "Processing file with colordiff" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | colordiff --color=yes >>"$2" 2>&1
+		fi
+	elif command -v source-highlight >/dev/null 2>&1; then
+		if command -v diff-highlight >/dev/null 2>&1; then
+			echo "Processing file with source-highlight and diff-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | ( source-highlight --failsafe --src-lang=diff --out-format=esc -o STDOUT 2> /dev/null || cat ) | diff-highlight >>"$2" 2>&1
+		else
+			echo "Processing file with source-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | ( source-highlight --failsafe --src-lang=diff --out-format=esc -o STDOUT 2> /dev/null || cat ) >>"$2" 2>&1
+		fi
+	elif command -v diff-highlight >/dev/null 2>&1; then
+		echo "Processing file with diff-highlight ( two colors only ? )" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" | diff-highlight >>"$2" 2>&1
 	else
-		echo "Install <colordiff> to see colored diff" >>"$2" 2>&1
+		echo "Install ( <diff-so-fancy> or <diff-highlight> ) and ( <colordiff> or <source-highlight> ) to see colored diff" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" >>"$2" 2>&1
 	fi
 	echo "----eof----" >>"$2" 2>&1
 	exit 0
@@ -702,7 +734,7 @@ if [[ "$FILE" == *": "*"ASCII text, with very long lines"* ]] \
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c -- "$1" | perl -lane 'print $F[0]' )
+	FILESIZE=$( wc -c -- "$1" | sed -n -e 's:^\([0-9]\{1,\}\)\ .\{0,\}$:\1:p' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024
@@ -791,7 +823,7 @@ if [[ "$FILE" == *": "* ]]; then
 	echo "------------" >>"$2" 2>&1
 	# ??? workaround for bash to get values of variables
 	bash -c "echo ${FOO}" >/dev/null 2>&1
-	FILESIZE=$( wc -c -- "$1" | perl -lane 'print $F[0]' )
+	FILESIZE=$( wc -c -- "$1" | sed -n -e 's:^\([0-9]\{1,\}\)\ .\{0,\}$:\1:p' )
 	FILESIZE=${FILESIZE:-0}
 	echo "File size is "$FILESIZE" bytes" >>"$2" 2>&1
 	VIEWLIMIT=1024

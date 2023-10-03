@@ -161,6 +161,13 @@ $ #FAR2L features - Getting Started#
     In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
 
 
+ #FAR2L command line shell & bash#
+    FAR2L internal command line work fully only via #bash#.
+    You can change shell by Menu(#F9#)->Options->~Command line settings~@CmdlineSettings@->#Use shell# but command line will work with significant restrictions/bugs especially with native shell commands.
+    If you system has not #bash# recommend installing it and using only bash in FAR2L.
+    If your system's default shell is not bash, you may be convenient to set your environments variables, aliases etc. in bash startup files also.
+
+
  #Access to remote FAR2L#
     When the session is terminated, remote FAR2L does not die, but it remains to wait for reconnection (the behavior changed by ~command line switches~@CmdLine@ #--immortal# and #--mortal#), and the next time FAR2L runs, it will find the previous instance and try to reconnect.
     To transfer extended keyboard shortcuts and the clipboard to the remote FAR2L, you must initiate the connection from clients that can do this (see list below).
@@ -175,7 +182,7 @@ You can run #far2l --tty --nodetect# to force not use others clipboard options.
 If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
 
 
- #Full-function work with the system clipboard in a plain terminal version FAR2L TTY#
+ #Full-functional work with the system clipboard in a plain terminal version FAR2L TTY#
     To interact with the system clipboard, you must not forget to enable #OSC 52# in both the #FAR2L settings#
 (see details above),
 and in #terminal settings# option #OSC 52 must be allowed#
@@ -907,17 +914,23 @@ in the ~interface settings~@InterfSettings@.
 
 @SpecCmd
 $ #Special commands#
- Special FAR commands starts with the prefix and colon
+ Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
 
- #far:about#  - Far information, list and infrmation about plugins
+   #far:about#  - Far information, list and infrmation about plugins.
 
- #far:config# - Configuration editor (draft now)
+   #far:config# - Configuration editor (draft now).
 
- #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+   #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
- #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+   #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
 
- #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
+   #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
+
+   #exit#       - reset shell in build-in ~Terminal~@Terminal@.
+
+   #exit far#   - close far2l.
+
+ Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
 
 @MsWheel
 $ #Mouse: wheel support#

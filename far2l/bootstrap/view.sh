@@ -665,10 +665,42 @@ if [[ "$FILE" == *": PDF document"* ]]; then
 fi
 
 if [[ "$FILE" == *": unified diff output"* ]]; then
-	if command -v colordiff >/dev/null 2>&1; then
-		cat -- "$1" | colordiff --color=yes >>"$2" 2>&1
+	if ! (( command -v diff-so-fancy >/dev/null 2>&1 ) || ( command -v diff-highlight >/dev/null 2>&1 )); then
+		echo "Install <diff-so-fancy> or <diff-highlight> to see diffs in **human** readable form" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+	fi
+	if command -v diff-so-fancy >/dev/null 2>&1; then
+		echo "Processing file with diff-so-fancy" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" | diff-so-fancy >>"$2" 2>&1
+	elif command -v colordiff >/dev/null 2>&1; then
+		if command -v diff-highlight >/dev/null 2>&1; then
+			echo "Processing file with colordiff and diff-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | colordiff --color=yes | diff-highlight >>"$2" 2>&1
+		else
+			echo "Processing file with colordiff" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | colordiff --color=yes >>"$2" 2>&1
+		fi
+	elif command -v source-highlight >/dev/null 2>&1; then
+		if command -v diff-highlight >/dev/null 2>&1; then
+			echo "Processing file with source-highlight and diff-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | ( source-highlight --failsafe --src-lang=diff --out-format=esc -o STDOUT 2> /dev/null || cat ) | diff-highlight >>"$2" 2>&1
+		else
+			echo "Processing file with source-highlight" >>"$2" 2>&1
+			echo "------------" >>"$2" 2>&1
+			cat -- "$1" | ( source-highlight --failsafe --src-lang=diff --out-format=esc -o STDOUT 2> /dev/null || cat ) >>"$2" 2>&1
+		fi
+	elif command -v diff-highlight >/dev/null 2>&1; then
+		echo "Processing file with diff-highlight ( two colors only ? )" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" | diff-highlight >>"$2" 2>&1
 	else
-		echo "Install <colordiff> to see colored diff" >>"$2" 2>&1
+		echo "Install ( <diff-so-fancy> or <diff-highlight> ) and ( <colordiff> or <source-highlight> ) to see colored diff" >>"$2" 2>&1
+		echo "------------" >>"$2" 2>&1
+		cat -- "$1" >>"$2" 2>&1
 	fi
 	echo "----eof----" >>"$2" 2>&1
 	exit 0

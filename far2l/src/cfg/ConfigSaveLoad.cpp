@@ -394,14 +394,19 @@ public:
 		em.AddFormat(L"           Type: %s", type_psz);
 		em.AddFormat(L"  Default value: %ls", def_str.CPtr());
 		em.AddFormat(L"  Current value: %ls", val_str.CPtr());
-		em.Add(L"");
-		em.Add(L"Note: some panel parameters after update/reset");
-		em.Add(L"      not applied immediatly in FAR2L");
-		em.Add(L"      and need relaunch feature");
-		em.Add(L"      or may be need save config & restart FAR2L");
-		em.Add(Msg::Ok);
-		em.Add((IsNotDefault() == 1) ? L"Reset to default" : Msg::Cancel);
-		return em.Show(MSG_LEFTALIGN, 2);
+		if (IsNotDefault()==1) {
+			em.Add(L"");
+			em.Add(L"Note: some panel parameters after update/reset");
+			em.Add(L"      not applied immediatly in FAR2L");
+			em.Add(L"      and need relaunch feature");
+			em.Add(L"      or may be need save config & restart FAR2L");
+		}
+		em.Add(L"Continue");
+		if (IsNotDefault()==1) {
+			em.Add(L"Reset to default");
+			return em.Show(MSG_LEFTALIGN, 2);
+		}
+		return em.Show(MSG_LEFTALIGN, 1);
 	}
 
 } s_opt_serializers[] =
@@ -965,7 +970,9 @@ void AdvancedConfig()
 				case KEY_NUMDEL:
 				case KEY_DEL:
 					sel_pos = ListConfig.GetSelectPos();
-					if (sel_pos>=0 && s_opt_serializers[sel_pos].ToDefault()==1) {
+					if (sel_pos>=0 && s_opt_serializers[sel_pos].IsNotDefault()==1
+							&& s_opt_serializers[sel_pos].Msg(AdvancedConfigTitle())==1
+							&& s_opt_serializers[sel_pos].ToDefault()) {
 						s_opt_serializers[sel_pos].MenuListAppend(
 							ListConfig,
 							len_sections, len_keys, len_sections_keys,

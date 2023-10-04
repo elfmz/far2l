@@ -7,11 +7,11 @@ SAVED_PS1=$PS1;SAVED_PS2=$PS2;SAVED_PS2=$PS3;SAVED_PS4=$PS4;SAVED_PC=$PROMPT_COM
 #stty -opost -echo
 
 if [ "$0" = "bash" ] || [ "$0" = "-bash" ]; then bind 'set enable-bracketed-paste off'; fi
+export FISH=far2l
 export LANG=C
 export LC_TIME=C
 export LS_COLORS=
 export SHELLVAR_LOG=/dev/null
-export FISH=far2l
 #export SHELLVAR_LOG=/tmp/nr-shell.log
 
 SHELLFCN_SEND_ERROR_AND_RESYNC() {
@@ -89,11 +89,11 @@ SHELLFCN_CHOOSE_BLOCK() {
 # $1 - size want to write
 # $2 - position want to seek (so chosen block size will be its divider)
    BLOCK=1
-   [ $1 -ge 16 ] && [ `expr '(' $2 / 16 ')' '*' 16` = "$2" ] && BLOCK=16
-   [ $1 -ge 64 ] && [ `expr '(' $2 / 64 ')' '*' 64` = "$2" ] && BLOCK=64
-   [ $1 -ge 512 ] && [ `expr '(' $2 / 512 ')' '*' 512` = "$2" ] && BLOCK=512
-   [ $1 -ge 4096 ] && [ `expr '(' $2 / 4096 ')' '*' 4096` = "$2" ] && BLOCK=4096
-   [ $1 -ge 65536 ] && [ `expr '(' $2 / 65536 ')' '*' 65536` = "$2" ] && BLOCK=65536
+   [ $1 -ge 16 ] && [ `expr $2 % 16` -eq 0 ] && BLOCK=16
+   [ $1 -ge 64 ] && [ `expr $2 % 64` -eq 0 ] && BLOCK=64
+   [ $1 -ge 512 ] && [ `expr $2 % 512` -eq 0 ] && BLOCK=512
+   [ $1 -ge 4096 ] && [ `expr $2 % 4096` -eq 0 ] && BLOCK=4096
+   [ $1 -ge 65536 ] && [ `expr $2 % 65536` -eq 0 ] && BLOCK=65536
 }
 
 SHELLFCN_CMD_READ() {
@@ -136,7 +136,7 @@ SHELLFCN_CMD_READ() {
    OFFSET=`expr $OFFSET + $PIECE`
   done
 
- elif [ "$OFFSET" = '0' ]; then
+ elif [ $OFFSET -eq 0 ]; then
   # no dd? fallback to cat, if can
   $SHELLVAR_READ_FN SHELLVAR_STATE || exit
   echo '+NEXT:'$SIZE
@@ -175,7 +175,7 @@ SHELLFCN_WRITE_BY_HEAD() {
 #  echo "HEADING $1 bytes at $2" >>$SHELLVAR_LOG
 #  echo "HEADED $1 bytes at $2 size before=$(SIZE_BEFORE) after=$(SHELLFCN_GET_SIZE "$3") " >>$SHELLVAR_LOG
  while true; do
-  if [ "$2" = '0' ]; then
+  if [ $2 -eq 0 ]; then
    head -c $SHELLVAR_WBH_SIZE_REMAIN >"$3" 2>>$SHELLVAR_LOG
    SHELLVAR_WBH_RV=$?
   else
@@ -194,7 +194,7 @@ SHELLFCN_WRITE_BY_BASE64() {
 # $2 - offset
 # $3 - file
  $SHELLVAR_READ_FN B64LN
- if [ "$2" = '0' ]; then
+ if [ $2 -eq 0 ]; then
    echo "$B64LN" | base64 -d >"$3" 2>>$SHELLVAR_LOG
  else
    echo "$B64LN" | base64 -d >>"$3" 2>>$SHELLVAR_LOG
@@ -207,7 +207,7 @@ SHELLFCN_CMD_WRITE() {
   SHELLFCN_WRITE=SHELLFCN_WRITE_BY_BASE64
   [ -n "$SHELLVAR_HEAD" ] && SHELLFCN_WRITE=SHELLFCN_WRITE_BY_HEAD
   [ -n "$SHELLVAR_DD" ] && SHELLFCN_WRITE=SHELLFCN_WRITE_BY_DD
-  if ! [ -n "$SHELLVAR_DD" ] && [ "$OFFSET" != '0' ] && ! truncate --size="$OFFSET" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 ; then
+  if ! [ -n "$SHELLVAR_DD" ] && [ $OFFSET -ne 0 ] && ! truncate --size="$OFFSET" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 ; then
    SHELLFCN_SEND_ERROR_AND_RESYNC "$?"
    # avoid futher writings
    SHELLVAR_ARG_PATH=/dev/null
@@ -240,18 +240,14 @@ SHELLFCN_CMD_REMOVE_FILE() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
  unlink "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 || rm -f "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_CMD_REMOVE_DIR() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
  rmdir "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1 || rm -f "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_CMD_CREATE_DIR() {
@@ -259,9 +255,7 @@ SHELLFCN_CMD_CREATE_DIR() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_MODE || exit
  mkdir -m "$SHELLVAR_ARG_MODE" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_CMD_RENAME() {
@@ -269,9 +263,7 @@ SHELLFCN_CMD_RENAME() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_PATH2 || exit
  mv "$SHELLVAR_ARG_PATH1" "$SHELLVAR_ARG_PATH2" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_READLINK_BY_LS() {
@@ -308,9 +300,7 @@ SHELLFCN_CMD_MAKE_SYMLINK() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_PATH_FILE || exit
  ln -s "$SHELLVAR_ARG_PATH_FILE" "$SHELLVAR_ARG_PATH_LINK" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_CMD_SET_MODE() {
@@ -318,9 +308,7 @@ SHELLFCN_CMD_SET_MODE() {
  $SHELLVAR_READ_FN SHELLVAR_ARG_MODE || exit
  chmod "$SHELLVAR_ARG_MODE" "$SHELLVAR_ARG_PATH" >>$SHELLVAR_LOG 2>&1
  RV=$?
- if [ "$RV" != "0" ]; then
-  echo "+ERROR:$RV"
- fi
+ [ $RV -ne 0 ] && echo "+ERROR:$RV"
 }
 
 SHELLFCN_CMD_EXECUTE() {

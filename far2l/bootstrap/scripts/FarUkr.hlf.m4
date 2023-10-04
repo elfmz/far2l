@@ -799,17 +799,23 @@ FAR2L також вміє обробляти ~колесо миші~@MsWheel@.
 
 @SpecCmd
 $ #Special commands#
- Special FAR commands starts with the prefix and colon
+ Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
 
- #far:about#  - Far information, list and infrmation about plugins
+   #far:about#  - Far information, list and infrmation about plugins.
 
- #far:config# - Configuration editor (draft now)
+   #far:config# - Configuration editor (draft now).
 
- #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#
+   #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
- #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty)
+   #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
 
- #edit:# or #far:edit:# or #far:edit# - open in editor new empty file
+   #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
+
+   #exit#       - reset shell in build-in ~Terminal~@Terminal@.
+
+   #exit far#   - close far2l.
+
+ Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
 
 @MsWheel
 $ #Миша: підтримка колеса#

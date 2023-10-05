@@ -305,7 +305,7 @@ void OpXfer::Transfer()
 		try {
 			_dst_host->GetInformation(existing_file_info, path_dst);
 			existing = true;
-		} catch (std::exception &ex) { ; } // FIXME: distinguish unexistence of file from IO failure
+		} catch (std::exception &ex) { (void)ex; } // FIXME: distinguish unexistence of file from IO failure
 
 
 		if (S_ISLNK(e.second.mode)) {

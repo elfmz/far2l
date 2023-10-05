@@ -252,6 +252,7 @@ bool History::SaveHistory()
 		}
 
 	} catch (std::exception &e) {
+		(void)e; // suppress 'set but not used' warning
 	}
 
 	return ret;

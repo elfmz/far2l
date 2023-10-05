@@ -556,6 +556,7 @@ class DavFileIO : public IFileReader, public IFileWriter, protected Threaded
 			memcpy(&_buf[prev_size], data, len);
 
 		} catch (std::exception &ex) {
+			(void)ex;
 			return false;
 		}
 

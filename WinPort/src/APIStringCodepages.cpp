@@ -50,6 +50,7 @@ template <class SRC_T, class DST_T>
 			}
 
 	} catch (ArrayPushBackOverflow &e) {
+		(void)e;
 		WINPORT(SetLastError)( ERROR_INSUFFICIENT_BUFFER );
 		return 0;
 

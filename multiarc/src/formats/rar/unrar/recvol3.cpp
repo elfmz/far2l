@@ -234,7 +234,7 @@ bool RecVolumes3::Restore(CommandData *Cmd,const wchar *Name,bool Silent)
     }
     if (P[1]+P[2]>255)
       continue;
-    if (RecVolNumber!=0 && RecVolNumber!=P[1] || FileNumber!=0 && FileNumber!=P[2])
+    if ((RecVolNumber!=0 && RecVolNumber!=P[1]) || (FileNumber!=0 && FileNumber!=P[2]))
     {
       uiMsg(UIERROR_RECVOLDIFFSETS,CurName,PrevName);
       return false;

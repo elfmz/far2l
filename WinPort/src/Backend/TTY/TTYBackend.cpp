@@ -371,7 +371,7 @@ void TTYBackend::WriterThread()
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
-			AsyncEvent ae;
+			AsyncEvent ae{};
 			ae.all = 0;
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);

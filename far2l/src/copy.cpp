@@ -192,8 +192,8 @@ class CopyProgress
 {
 	ConsoleTitle CopyTitle;
 	wakeful W;
-	SMALL_RECT Rect;
-	wchar_t Bar[100];
+	SMALL_RECT Rect{};
+	wchar_t Bar[100]{};
 	size_t BarSize;
 	bool Move, Total, Time;
 	bool BgInit, ScanBgInit;

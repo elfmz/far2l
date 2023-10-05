@@ -398,7 +398,7 @@ enum REOp
 
 struct REOpCode_data
 {
-	int	op; //movable<int>
+	int	op{}; //movable<int>
 #ifdef RE_DEBUG
 	int	srcpos;
 #endif

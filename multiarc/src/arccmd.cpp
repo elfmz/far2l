@@ -486,7 +486,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		int PathOnly, int FolderMask, const char *LocalAllFilesMask)
 {
 	//  FILE *ListFile;
-	HANDLE ListFile;
+	HANDLE ListFile = INVALID_HANDLE_VALUE;
 	DWORD WriteSize;
 	/*SECURITY_ATTRIBUTES sa;
 

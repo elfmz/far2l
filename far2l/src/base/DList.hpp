@@ -70,7 +70,7 @@ class DList : public CDList
 {
 	struct TNode : Node
 	{
-		Type type;
+		Type type{};
 		TNode(Type *t)
 		{
 			if (t)

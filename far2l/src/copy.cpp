@@ -211,7 +211,7 @@ class CopyProgress
 public:
 	CopyProgress(bool Move, bool Total, bool Time);
 	void CreateBackground();
-	bool Cancelled() { return IsCancelled; };
+	bool Cancelled() { return IsCancelled; }
 	void SetScanName(const wchar_t *Name);
 	void SetNames(const wchar_t *Src, const wchar_t *Dst);
 	void SetProgressValue(UINT64 CompletedSize, UINT64 TotalSize)

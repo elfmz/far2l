@@ -29,14 +29,14 @@ struct ExecFIFO_CtlMsg
 
 struct IFileReader
 {
-	virtual ~IFileReader() {};
+    virtual ~IFileReader() {}
 
 	virtual size_t Read(void *buf, size_t len) = 0;
 };
 
 struct IFileWriter
 {
-	virtual ~IFileWriter() {};
+    virtual ~IFileWriter() {}
 
 	virtual void Write(const void *buf, size_t len) = 0;
 
@@ -46,14 +46,14 @@ struct IFileWriter
 
 struct IDirectoryEnumer
 {
-	virtual ~IDirectoryEnumer() {};
+    virtual ~IDirectoryEnumer() {}
 
 	virtual bool Enum(std::string &name, std::string &owner, std::string &group, FileInformation &file_info) = 0;
 };
 
 struct IProtocol
 {
-	virtual ~IProtocol() {};
+    virtual ~IProtocol() {}
 
 	/* default implementation */
 	virtual void KeepAlive(const std::string &path_to_check)

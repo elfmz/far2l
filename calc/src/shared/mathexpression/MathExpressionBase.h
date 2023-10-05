@@ -631,7 +631,7 @@ protected:
   public:
     string name, description;
     ConstValueNodeFactory( const string & _name, const string & _description=L"" ) : name(_name),description(_description) {}
-    virtual ~ConstValueNodeFactory() {};
+    virtual ~ConstValueNodeFactory() {}
     virtual Node * create_node() const = 0;
     };
 
@@ -640,7 +640,7 @@ protected:
   public:
     string name, description;
     ArgNodeFactory( const string & _name, const string & _description=L"" ) : name(_name),description(_description) {}
-    virtual ~ArgNodeFactory() {};
+    virtual ~ArgNodeFactory() {}
     virtual Node * create_node() const = 0;
     };
 
@@ -649,7 +649,7 @@ protected:
   public:
     string name, description;
     BoundParameterNodeFactory( const string & _name, const string & _description=L"" ) : name(_name),description(_description) {}
-    virtual ~BoundParameterNodeFactory() {};
+    virtual ~BoundParameterNodeFactory() {}
     virtual Node * create_node() const = 0;
     };
 
@@ -658,7 +658,7 @@ protected:
   public:
     string name, description;
     FunctionalNodeFactory ( const string & _name, const string & _description=L"" ) : name(_name),description(_description) {}
-    virtual ~FunctionalNodeFactory() {};
+    virtual ~FunctionalNodeFactory() {}
     virtual Node * create_node( const NodeList & args, const string & fn_name   ) const = 0;
     virtual int getnumargs() const = 0;
     };
@@ -668,7 +668,7 @@ protected:
   public:
     string name, description;
     UnaryOperationNodeFactory ( const string & _name, const string & _description=L"" ) : name(_name),description(_description) {}
-    virtual ~UnaryOperationNodeFactory() {};
+    virtual ~UnaryOperationNodeFactory() {}
     Node * create_node( Node * arg ) const
       { return create_node(NodeList(arg), name);
       }

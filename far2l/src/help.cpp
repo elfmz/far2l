@@ -89,8 +89,8 @@ private:
 	ListNode *topOfStack;
 
 public:
-	CallBackStack() { topOfStack = nullptr; };
-	~CallBackStack() { ClearStack(); };
+	CallBackStack() { topOfStack = nullptr; }
+	~CallBackStack() { ClearStack(); }
 
 public:
 	void ClearStack();

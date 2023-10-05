@@ -61,7 +61,7 @@ public:
   virtual RegionDefine* clone() const = 0;
 
   /** Default Destructor */
-  virtual ~RegionDefine() {};
+  virtual ~RegionDefine() {}
 };
 
 #endif

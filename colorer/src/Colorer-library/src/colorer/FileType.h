@@ -82,8 +82,8 @@ public:
   virtual void setParamValue(const String &name, const String* value) = 0;
 
 protected:
-  FileType() {};
-  virtual ~FileType() {};
+  FileType() {}
+  virtual ~FileType() {}
 };
 
 #endif

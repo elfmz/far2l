@@ -146,7 +146,7 @@ public:
 class CalcApi
 {
 public:
-	virtual ~CalcApi() {};
+	virtual ~CalcApi() {}
 
 	virtual void GetPluginInfo(void *pinfo, const wchar_t *name) = 0;
 	virtual const wchar_t *GetMsg(int MsgId) = 0;

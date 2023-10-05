@@ -783,7 +783,7 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 	struct tm t;
 	localtime_r(&modification_time.tv_sec, &t);
 	strftime(str_mt, sizeof(str_mt) - 1, "%Y%m%d%H%M.%S", &t);
-	int rc;
+	int rc = 0;
 	if (access_time.tv_sec != modification_time.tv_sec) {
 		char str_at[32]{};
 		localtime_r(&access_time.tv_sec, &t);

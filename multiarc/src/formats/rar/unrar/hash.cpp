@@ -30,8 +30,8 @@ bool HashValue::operator == (const HashValue &cmp) const
 {
   if (Type==HASH_NONE || cmp.Type==HASH_NONE)
     return true;
-  if (Type==HASH_RAR14 && cmp.Type==HASH_RAR14 || 
-      Type==HASH_CRC32 && cmp.Type==HASH_CRC32)
+  if ((Type==HASH_RAR14 && cmp.Type==HASH_RAR14) ||
+      (Type==HASH_CRC32 && cmp.Type==HASH_CRC32))
     return CRC32==cmp.CRC32;
   if (Type==HASH_BLAKE2 && cmp.Type==HASH_BLAKE2)
     return memcmp(Digest,cmp.Digest,sizeof(Digest))==0;

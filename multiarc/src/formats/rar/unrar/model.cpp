@@ -172,7 +172,7 @@ inline RARPPM_CONTEXT* ModelPPM::CreateSuccessors(bool Skip,RARPPM_STATE* p1)
 {
   RARPPM_STATE UpState;
   RARPPM_CONTEXT* pc=MinContext, * UpBranch=FoundState->Successor;
-  RARPPM_STATE * p, * ps[MAX_O], ** pps=ps;
+  RARPPM_STATE * p = 0, * ps[MAX_O], ** pps=ps;
   if ( !Skip ) 
   {
     *pps++ = FoundState;
@@ -199,7 +199,7 @@ inline RARPPM_CONTEXT* ModelPPM::CreateSuccessors(bool Skip,RARPPM_STATE* p1)
     else
       p=&(pc->OneState);
 LOOP_ENTRY:
-    if (p->Successor != UpBranch) 
+    if (p && p->Successor != UpBranch) 
     {
       pc=p->Successor;
       break;

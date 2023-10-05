@@ -156,7 +156,7 @@ void ListArchive(CommandData *Cmd)
 
 #ifndef NOVOLUME
         if (Cmd->VolSize!=0 && (Arc.FileHead.SplitAfter ||
-            Arc.GetHeaderType()==HEAD_ENDARC && Arc.EndArcHead.NextVolume) &&
+            (Arc.GetHeaderType()==HEAD_ENDARC && Arc.EndArcHead.NextVolume)) &&
             MergeArchive(Arc,NULL,false,Cmd->Command[0]))
           Arc.Seek(0,SEEK_SET);
         else

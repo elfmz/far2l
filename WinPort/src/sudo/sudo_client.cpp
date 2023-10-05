@@ -13,7 +13,7 @@
 #include "sudo_private.h"
 #include "sudo.h"
 #include "sudo_askpass_ipc.h"
-
+#include "../../WinCompat.h"
 
 namespace Sudo 
 {

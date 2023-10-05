@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <set>
 #include <map>
 #include <Threaded.h>
 #include <StringConfig.h>

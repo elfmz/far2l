@@ -1,3 +1,9 @@
+#include <stddef.h>
+#include "rs.hpp"
+#include "options.hpp"
+#include "recvol.hpp"
+#include "pathfn.hpp"
+
 // Buffer size for all volumes involved.
 static const size_t TotalBufferSize=0x4000000;
 

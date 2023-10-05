@@ -21,6 +21,7 @@
 #include <Threaded.h>
 #include "../Protocol.h"
 #include "SSHConnection.h"
+#include "Erroring.h"
 
 
 void SSHSessionDeleter(ssh_session res)

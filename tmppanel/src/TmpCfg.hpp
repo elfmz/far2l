@@ -1,6 +1,8 @@
 #ifndef __TMPCFG_HPP__
 #define __TMPCFG_HPP__
 
+#include <windows.h>
+
 typedef struct options_s
 {
 	int AddToDisksMenu;

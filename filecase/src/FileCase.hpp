@@ -6,6 +6,8 @@
 #define MODE_LN_WORD 3
 #define MODE_NONE    4
 
+#include "../../WinPort/windows.h"
+
 struct Options
 {
 	int ConvertMode;

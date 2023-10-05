@@ -448,7 +448,7 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	
+
 	/***********************************************************************
 	*              MultiByteToWideChar   (KERNEL32.@)
 	*
@@ -472,7 +472,7 @@ extern "C" {
 	*            is passed, and ERROR_NO_UNICODE_TRANSLATION if no translation is
 	*            possible for src.
 	*/
-	WINPORT_DECL(MultiByteToWideChar, int, ( UINT page, DWORD flags, 
+	WINPORT_DECL(MultiByteToWideChar, int, ( UINT page, DWORD flags,
 		LPCSTR src, int srclen, LPWSTR dst, int dstlen))
 	{
 		//return ::MultiByteToWideChar(page, flags, src, srclen, dst, dstlen);
@@ -699,7 +699,7 @@ extern "C" {
 	*            and dstlen != 0, and ERROR_INVALID_PARAMETER, if an invalid
 	*            parameter was given.
 	*/
-	WINPORT_DECL(WideCharToMultiByte, int, ( UINT page, DWORD flags, LPCWSTR src, 
+	WINPORT_DECL(WideCharToMultiByte, int, ( UINT page, DWORD flags, LPCWSTR src,
 		int srclen, LPSTR dst, int dstlen, LPCSTR defchar, LPBOOL used))
 	{
 		//return ::WideCharToMultiByte(page, flags, src, srclen, dst, dstlen, defchar, used);
@@ -713,7 +713,7 @@ extern "C" {
 			WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
 			return 0;
 		}
-		
+
 		if (srclen < 0) srclen = strlenW(src) + 1;
 
 		WINPORT(SetLastError)( ERROR_SUCCESS );
@@ -747,7 +747,7 @@ extern "C" {
 			}
 			ret = utf7_wcstombs( src, srclen, dst, dstlen );
 			break;
-		
+
 		case CP_UTF16LE:
 			ret = Wide2Bytes<uint16_t, false>( flags, src, srclen, dst, dstlen );
 			break;
@@ -829,7 +829,7 @@ extern "C" {
 				cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
 				return TRUE;
 
-			case CP_UTF16LE: 
+			case CP_UTF16LE:
 				cpinfo->DefaultChar[0] = 0x3f;
 				cpinfo->MaxCharSize = 2;
 				return TRUE;
@@ -838,8 +838,8 @@ extern "C" {
 				cpinfo->DefaultChar[1] = 0x3f;
 				cpinfo->MaxCharSize = 2;
 				return TRUE;
-				
-			case CP_UTF32LE: 
+
+			case CP_UTF32LE:
 				cpinfo->DefaultChar[0] = 0x3f;
 				cpinfo->MaxCharSize = 4;
 				return TRUE;
@@ -870,7 +870,7 @@ extern "C" {
 
 		return TRUE;
 	}
-	
+
 	WINPORT_DECL(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo))
 	{
 		if (!WINPORT(GetCPInfo)( codepage, (LPCPINFO)cpinfo ))

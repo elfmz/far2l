@@ -425,7 +425,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-		virtual T *AddIntEditField(int *Value, int Width)
+		virtual T *AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
 			return nullptr;
 		}

@@ -57,10 +57,10 @@ BOOL net_parse_os_date_time(LPCSTR datestr, Time_t &decoded)
 
 				  3259      A          04-07-00   11:23  24250C2E.PKT
 			   1221444      A          04-04-00   08:01  bcb4up2.exe
-	>> обычные файлы с Arhive атрибутом
+	>> обычные файлы с Archive атрибутом
 
 				293483     RA          04-02-00   08:55  Mablag.rar
-	>> read-only + arhive
+	>> read-only + archive
 
 					 2                 04-07-00   15:14  no-attr
 	>> файл без отрибутов

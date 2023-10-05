@@ -1777,7 +1777,7 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
       bool success = true;
 
       int numargs = ff->getnumargs();
-      bool all_args_are_contants = true;
+      bool all_args_are_constants = true;
 
       //
       // parse argument list
@@ -1793,7 +1793,7 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
           args.push_back(arg);
 
           if( dynamic_cast<ConstValueNode * >(arg) == 0 )
-            { all_args_are_contants = false;
+            { all_args_are_constants = false;
             }
 
           skip_white_spaces(curpos);
@@ -1836,7 +1836,7 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
 
       *ppNode = ff->create_node(args, L"");
 
-      if( all_args_are_contants /* XXX: */ && numargs > 0)
+      if( all_args_are_constants /* XXX: */ && numargs > 0)
         { T value = (*ppNode)->eval();
           delete (*ppNode);
           *ppNode = new ConstValueNode(value);

@@ -283,7 +283,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 			for (j = 1; j < len; ++j)
 				if ((buf[j] == ' ') && (buf[j - 1] != ' ')) {
 					switch (state) {
-						case 1: /* hadling perm */
+						case 1: /* handling perm */
 							if (len > 1 && buf[1] != '-')
 								fp->mode|= S_IRUSR;
 							if (len > 2 && buf[2] != '-')
@@ -398,7 +398,7 @@ int ftpparse(struct ftpparse *fp, const char *buf, int len)
 	/* MultiNet (some spaces removed from examples) */
 	/* "00README.TXT;1      2 30-DEC-1996 17:44 [SYSTEM] (RWED,RWED,RE,RE)" */
 	/* "CORE.DIR;1          1  8-SEP-1996 16:09 [SYSTEM] (RWE,RWE,RE,RE)" */
-	/* and non-MutliNet VMS: */
+	/* and non-MultiNet VMS: */
 	/* "CII-MANUAL.TEX;1  213/216  29-JAN-1996 03:33:12  [ANONYMOU,ANONYMOUS]   (RWED,RWED,,)" */
 	for (i = 0; i < len; ++i)
 		if (buf[i] == ';')

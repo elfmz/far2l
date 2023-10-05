@@ -180,7 +180,7 @@ public:
 /** @defgroup StdLib RTL extension\replacement
 	@{
 
-	Wrapers for stdlib functions and some usefull extended stdlib functions.
+	Wrappers for stdlib functions and some useful extended stdlib functions.
 */
 #if !defined(__FP_NOT_FUNCTIONS__)
 // string extension
@@ -266,7 +266,7 @@ extern LPCSTR _cdecl Message(LPCSTR patt, ...);
 extern LPCSTR WINAPI MessageV(LPCSTR patt, va_list a);
 
 // Utils
-extern LPCSTR WINAPI FCps(char *buff, double val);	// Create CPS value string (Allways 3+1+3+1 length)
+extern LPCSTR WINAPI FCps(char *buff, double val);	// Create CPS value string (Always 3+1+3+1 length)
 extern LPSTR WINAPI AddLastSlash(char *path, char Slash = '/');
 extern LPSTR WINAPI DelLastSlash(char *path, char Slash = '/');
 extern LPCSTR WINAPI FPath(LPCSTR nm, char Slash = '/');

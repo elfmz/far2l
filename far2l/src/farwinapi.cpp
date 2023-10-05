@@ -78,7 +78,7 @@ FindFile::FindFile(LPCWSTR Object, bool ScanSymLink, DWORD WinPortFindFlags)
 	// Strange things happen with ScanSymLink in original code:
 	// looks like tricky attempt to resolve symlinks in path without elevation
 	// while elevation required to perform actual FindFile operation.
-	// It seems this is not necesary for Linux,
+	// It seems this is not necessary for Linux,
 	// if confirmed: ScanSymLink should be removed from here and apiGetFindDataEx
 	WinPortFindFlags|= FIND_FILE_FLAG_NO_CUR_UP;
 

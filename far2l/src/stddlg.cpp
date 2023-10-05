@@ -413,7 +413,7 @@ int WINAPI GetString(const wchar_t *Title, const wchar_t *Prompt, const wchar_t 
 		const wchar_t *SrcText, FARString &strDestText, const wchar_t *HelpTopic, DWORD Flags,
 		int *CheckBoxValue, const wchar_t *CheckBoxText)
 {
-	int Substract = 5;	// дополнительная величина :-)
+	int Subtract = 5;	// дополнительная величина :-)
 	int ExitCode;
 	bool addCheckBox = Flags & FIB_CHECKBOX && CheckBoxValue && CheckBoxText;
 	int offset = addCheckBox ? 2 : 0;
@@ -430,14 +430,14 @@ int WINAPI GetString(const wchar_t *Title, const wchar_t *Prompt, const wchar_t 
 	MakeDialogItemsEx(StrDlgData, StrDlg);
 
 	if (addCheckBox) {
-		Substract-= 2;
+		Subtract-= 2;
 		StrDlg[0].Y2+= 2;
 		StrDlg[4].Selected = (*CheckBoxValue) ? TRUE : FALSE;
 		StrDlg[4].strData = CheckBoxText;
 	}
 
 	if (Flags & FIB_BUTTONS) {
-		Substract-= 3;
+		Subtract-= 3;
 		StrDlg[0].Y2+= 2;
 		StrDlg[2].DefaultButton = FALSE;
 		StrDlg[5 + offset].Y1 = StrDlg[4 + offset].Y1 = 5 + offset;
@@ -479,7 +479,7 @@ int WINAPI GetString(const wchar_t *Title, const wchar_t *Prompt, const wchar_t 
 		StrDlg[2].strData = SrcText;
 
 	{
-		Dialog Dlg(StrDlg, ARRAYSIZE(StrDlg) - Substract, GetStringDlgProc);
+		Dialog Dlg(StrDlg, ARRAYSIZE(StrDlg) - Subtract, GetStringDlgProc);
 		Dlg.SetPosition(-1, -1, 76, offset + ((Flags & FIB_BUTTONS) ? 8 : 6));
 
 		if (HelpTopic)

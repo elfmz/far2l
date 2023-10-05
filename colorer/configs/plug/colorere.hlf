@@ -239,7 +239,7 @@ $# Color style selection
     List of all available color schemes. You can choose what you need.
 
 @exception
-$# Exception occured
+$# Exception occurred
     Exception happened while FarColorer work.
 All further processing would be disabled. You can re-enable
 FarColorer from it's settings menu after locating and removing

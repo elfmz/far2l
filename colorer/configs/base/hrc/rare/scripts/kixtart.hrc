@@ -34,7 +34,7 @@ Created by:
          <regexp match="/(^:[\w\s]+)/" region0="kixLabel"/>
 <!-- Kixtart variables -->
          <regexp match="/(\$\w*)/" region0="kixVar"/>
-<!-- Enviroment Identifier -->
+<!-- Environment Identifier -->
          <regexp match="/\@(\$\w*)/" region0="kixIdent"/>
 <!-- Functions -->
          <keywords ignorecase="yes" region="kixFunc">

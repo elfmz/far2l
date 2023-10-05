@@ -62,10 +62,10 @@ $	Match the end of the string
 \D		non nondigits
 \x		exadecimal digits
 \X		non exadecimal digits
-\c		control charactrs
-\C		non control charactrs
-\p		punctation
-\P		non punctation
+\c		control characters
+\C		non control characters
+\p		punctuation
+\P		non punctuation
 \b		word boundary
 \B		non word boundary
 
@@ -107,7 +107,7 @@ text
 ----------------------------------------------------------------------
 TRexBool trex_search(TRex* exp,const TRexChar* text, const TRexChar** out_begin, const TRexChar** out_end)
 
-searches the first match of the expressin in the string specified in the parameter text.
+searches the first match of the expression in the string specified in the parameter text.
 if the match is found returns TRex_True and the sets out_begin to the beginning of the
 match and out_end at the end of the match; otherwise returns TRex_False.
 
@@ -123,7 +123,7 @@ out_end
 ----------------------------------------------------------------------
 TREX_API TRexBool trex_searchrange(TRex* exp,const TRexChar* text_begin,const TRexChar* text_end,const TRexChar** out_begin, const TRexChar** out_end)
 
-searches the first match of the expressin in the string delimited 
+searches the first match of the expression in the string delimited
 by the parameter text_begin and text_end.
 if the match is found returns TRex_True and the sets out_begin to the beginning of the
 match and out_end at the end of the match; otherwise returns TRex_False.
@@ -131,7 +131,7 @@ match and out_end at the end of the match; otherwise returns TRex_False.
 exp
 	the compiled expression
 text_begin
-	a pointer to the beginnning of the string that has to be tested
+    a pointer to the beginning of the string that has to be tested
 text_end
 	a pointer to the end of the string that has to be tested
 out_begin
@@ -151,7 +151,7 @@ exp
 TRexBool trex_getsubexp(TRex* exp, int n, TRexMatch *submatch)
 
 retrieve the begin and and pointer to the length of the sub expression indexed
-by n. The result is passed trhough the struct TRexMatch:
+by n. The result is passed through the struct TRexMatch:
 
 typedef struct {
 	const TRexChar *begin;

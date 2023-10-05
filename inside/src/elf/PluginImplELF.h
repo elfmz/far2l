@@ -22,5 +22,5 @@ protected:
 
 
 public:
-	PluginImplELF(const char *name, uint8_t bitness, uint8_t endianess);
+	PluginImplELF(const char *name, uint8_t bitness, uint8_t endianness);
 };

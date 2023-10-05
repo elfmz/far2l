@@ -110,7 +110,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
 	fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
 
-// Unzip in MacOS definatelt doesn't have -I and -O options, so dont even try encoding workarounds
+// Unzip in MacOS definitely doesn't have -I and -O options, so dont even try encoding workarounds
 #ifndef __WXOSX__
 	if (ExecCode == 11 && strncmp(Command.c_str(), "unzip ", 6) == 0) {
 		// trying as utf8

@@ -280,7 +280,7 @@ public:
 				/*
 					very simply rounding
 					if the bit from not used last word from temp_table is set to one
-					we're rouding the lowest word in the table
+					we're rounding the lowest word in the table
 
 					in fact there should be a normal addition but
 					we don't use Add() or AddTwoInts() because these methods 
@@ -346,7 +346,7 @@ public:
 				/*
 					very simply rounding
 					if the bit from not used last word from temp_table is set to one
-					we're rouding the lowest word in the table
+					we're rounding the lowest word in the table
 
 					in fact there should be a normal addition but
 					we don't use Add() or AddTwoInts() because these methods 
@@ -1945,7 +1945,7 @@ private:
 
 		if( divisor_table_id == 0 )
 		{
-			// dividor has only one 32-bit word
+			// divider has only one 32-bit word
 
 			uint r;
 			DivInt(divisor.table[0], &r);
@@ -3396,7 +3396,7 @@ public:
 			as well as:
 			"12foo" will be translated to 12 too
 
-		existing first white characters will be ommited
+		existing first white characters will be omitted
 
 		if the value from s is too large the rest digits will be skipped
 
@@ -3938,7 +3938,7 @@ private:
 
 
 	/*!
-		an auxiliary method for outputing to standard streams
+		an auxiliary method for outputting to standard streams
 	*/
 	template<class ostream_type, class string_type>
 	static ostream_type & OutputToStream(ostream_type & s, const UInt<value_size> & l)
@@ -3991,7 +3991,7 @@ private:
 	// char or wchar_t for operator>>
 	char_type z;
 	
-		// operator>> omits white characters if they're set for ommiting
+		// operator>> omits white characters if they're set for omitting
 		s >> z;
 
 		// we're reading only digits (base=10)

@@ -238,7 +238,7 @@ void TTYXClipboard::OnClipboardClose()
 
 	if (_pending_set) {
 		if (!_ttyx->SetClipboard(*_pending_set)) {
-			// SetClipboard may fail only due to IPC failuer (e.g. if broken terminated)
+			// SetClipboard may fail only due to IPC failure (e.g. if broken terminated)
 			if (!_fallback_clipboard) {
 				fprintf(stderr, "TTYXClipboard::OnClipboardClose: switching to fallback\n");
 				_fallback_clipboard.reset(new FSClipboardBackend);

@@ -236,7 +236,7 @@ namespace Sudo
 			bt.SendErrno();
 	}
 
-	static void OnSudoDispatch_TwoPathes(int (*pfn)(const char *, const char *), BaseTransaction &bt)
+	static void OnSudoDispatch_TwoPaths(int (*pfn)(const char *, const char *), BaseTransaction &bt)
 	{
 		std::string path1, path2;
 		
@@ -419,15 +419,15 @@ namespace Sudo
 				break;
 			
 			case SUDO_CMD_RENAME:
-				OnSudoDispatch_TwoPathes(&rename, bt);
+				OnSudoDispatch_TwoPaths(&rename, bt);
 				break;
 
 			case SUDO_CMD_SYMLINK:
-				OnSudoDispatch_TwoPathes(&symlink, bt);
+				OnSudoDispatch_TwoPaths(&symlink, bt);
 				break;
 				
 			case SUDO_CMD_LINK:
-				OnSudoDispatch_TwoPathes(&link, bt);
+				OnSudoDispatch_TwoPaths(&link, bt);
 				break;
 
 			case SUDO_CMD_REALPATH:

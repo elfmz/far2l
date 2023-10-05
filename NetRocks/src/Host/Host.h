@@ -3,7 +3,7 @@
 #include <string>
 #include "../Protocol/Protocol.h"
 
-// all methods of this interface are NOT thread-safe unless explicitely marked as MT-safe
+// all methods of this interface are NOT thread-safe unless explicitly marked as MT-safe
 
 
 struct IHost : IProtocol

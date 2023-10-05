@@ -865,7 +865,7 @@ int PluginManager::GetFile(HANDLE hPlugin, PluginPanelItem *PanelItem, const wch
 			Found = TRUE;
 	}
 
-	ReadUserBackgound(SaveScr);
+	ReadUserBackground(SaveScr);
 	delete SaveScr;
 	return Found;
 }
@@ -879,7 +879,7 @@ int PluginManager::DeleteFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int I
 	int Code = ph->pPlugin->DeleteFiles(ph->hPlugin, PanelItem, ItemsNumber, OpMode);
 
 	if (Code)
-		ReadUserBackgound(&SaveScr);	//???
+		ReadUserBackground(&SaveScr);	//???
 
 	return Code;
 }
@@ -893,7 +893,7 @@ int PluginManager::MakeDirectory(HANDLE hPlugin, const wchar_t **Name, int OpMod
 	int Code = ph->pPlugin->MakeDirectory(ph->hPlugin, Name, OpMode);
 
 	if (Code != -1)		//???BUGBUG
-		ReadUserBackgound(&SaveScr);
+		ReadUserBackground(&SaveScr);
 
 	return Code;
 }
@@ -907,7 +907,7 @@ int PluginManager::ProcessHostFile(HANDLE hPlugin, PluginPanelItem *PanelItem, i
 	int Code = ph->pPlugin->ProcessHostFile(ph->hPlugin, PanelItem, ItemsNumber, OpMode);
 
 	if (Code)	// BUGBUG
-		ReadUserBackgound(&SaveScr);
+		ReadUserBackground(&SaveScr);
 
 	return Code;
 }
@@ -929,7 +929,7 @@ int PluginManager::PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int Item
 	int Code = ph->pPlugin->PutFiles(ph->hPlugin, PanelItem, ItemsNumber, Move, OpMode);
 
 	if (Code)	// BUGBUG
-		ReadUserBackgound(&SaveScr);
+		ReadUserBackground(&SaveScr);
 
 	return Code;
 }
@@ -1655,7 +1655,7 @@ int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target
 	return TRUE;
 }
 
-void PluginManager::ReadUserBackgound(SaveScreen *SaveScr)
+void PluginManager::ReadUserBackground(SaveScreen *SaveScr)
 {
 	FilePanels *FPanel = CtrlObject->Cp();
 	FPanel->LeftPanel->ProcessingPluginCommand++;
@@ -1796,30 +1796,30 @@ static void OnBackgroundTasksChangedSynched()
 		FrameManager->RefreshFrame();
 }
 
-void PluginManager::BackroundTaskStarted(const wchar_t *Info)
+void PluginManager::BackgroundTaskStarted(const wchar_t *Info)
 {
 	{
 		std::lock_guard<std::mutex> lock(BgTasks);
 		auto ir = BgTasks.emplace(Info, 0);
 		ir.first->second++;
-		fprintf(stderr, "PluginManager::BackroundTaskStarted('%ls') - count=%d\n", Info, ir.first->second);
+		fprintf(stderr, "PluginManager::BackgroundTaskStarted('%ls') - count=%d\n", Info, ir.first->second);
 	}
 
 	InterThreadCallAsync(std::bind(OnBackgroundTasksChangedSynched));
 }
 
-void PluginManager::BackroundTaskFinished(const wchar_t *Info)
+void PluginManager::BackgroundTaskFinished(const wchar_t *Info)
 {
 	{
 		std::lock_guard<std::mutex> lock(BgTasks);
 		auto it = BgTasks.find(Info);
 		if (it == BgTasks.end()) {
-			fprintf(stderr, "PluginManager::BackroundTaskFinished('%ls') - no such task!\n", Info);
+			fprintf(stderr, "PluginManager::BackgroundTaskFinished('%ls') - no such task!\n", Info);
 			return;
 		}
 
 		it->second--;
-		fprintf(stderr, "PluginManager::BackroundTaskFinished('%ls') - count=%d\n", Info, it->second);
+		fprintf(stderr, "PluginManager::BackgroundTaskFinished('%ls') - count=%d\n", Info, it->second);
 		if (it->second == 0)
 			BgTasks.erase(it);
 	}

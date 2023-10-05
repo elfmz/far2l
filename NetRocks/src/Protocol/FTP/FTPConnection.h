@@ -77,7 +77,7 @@ public:
 #endif
 
 template <class E = ProtocolError>
-	static void FTPThrowIfBadResponce(const std::string &str, unsigned int reply_code, unsigned int reply_ok_min, unsigned int reply_ok_max)
+	static void FTPThrowIfBadResponse(const std::string &str, unsigned int reply_code, unsigned int reply_ok_min, unsigned int reply_ok_max)
 {
 	if (reply_code < reply_ok_min || reply_code > reply_ok_max) {
 		size_t n = str.size();
@@ -96,14 +96,14 @@ struct FTPConnection : public std::enable_shared_from_this<FTPConnection>
 	std::string _str;
 
 	struct {
-		struct Responce
+		struct Response
 		{
 			unsigned int code;
 			std::string str;
 		};
 
 		std::deque<std::string> requests;
-		std::deque<Responce> responces;
+		std::deque<Response> responses;
 		bool pipelining = false;
 	} _batch;
 
@@ -128,13 +128,13 @@ public:
 	const StringConfig &ProtocolOptions() const { return _protocol_options; }
 
 	void SendRequest(const std::string &str);
-	unsigned int RecvResponce(std::string &str);
-	unsigned int SendRecvResponce(std::string &str);
+	unsigned int RecvResponse(std::string &str);
+	unsigned int SendRecvResponse(std::string &str);
 
-	unsigned int RecvResponceFromTransport(std::string &str);
+	unsigned int RecvResponseFromTransport(std::string &str);
 
-	void RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
-	void SendRecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
+	void RecvResponse(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
+	void SendRecvResponse(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max);
 	void SendRestIfNeeded(unsigned long long rest);
 
 	std::shared_ptr<BaseTransport> DataCommand(const std::string &cmd, unsigned long long rest = 0);

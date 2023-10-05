@@ -583,12 +583,12 @@ void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
 		case 'C': // mouse move
 			break;
 
-		case 'B': // RButon + mouse move
+		case 'B': // RButton + mouse move
 			_mouse.right = true;
 			_mouse.right_ts = 0;
 			break;
 
-		case '@': // LButon + mouse move
+		case '@': // LButton + mouse move
 			_mouse.left = true;
 			_mouse.left_ts = 0;
 			break;

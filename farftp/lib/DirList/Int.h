@@ -40,7 +40,7 @@ struct Time_t
 struct NET_FileEntryInfo : public FTPFileInfo
 {
 	Time_t date;		// Last write time
-	Time_t cr_date;		// Time of ceation
+	Time_t cr_date;		// Time of creation
 	Time_t acc_date;	// Time of last access
 	int64_t size;
 

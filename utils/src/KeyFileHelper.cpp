@@ -551,7 +551,7 @@ KeyFileReadSection::KeyFileReadSection(const std::string &filename, const std::s
 KeyFileReadHelper::KeyFileReadHelper(const std::string &filename, const char *load_only_section, bool case_insensitive)
 	: _kf(case_insensitive), _case_insensitive(case_insensitive)
 {
-	// intentially comparing pointer values
+	// intentionally comparing pointer values
 	if (load_only_section == &sDontLoadLiteral[0]) {
 		return;
 	}

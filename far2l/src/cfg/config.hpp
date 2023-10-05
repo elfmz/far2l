@@ -312,7 +312,7 @@ struct LoadPluginsOptions
 {
 	//  DWORD TypeLoadPlugins;       // see TYPELOADPLUGINSOPTIONS
 	int MainPluginDir;		// TRUE - использовать стандартный путь к основным плагинам
-	int PluginsCacheOnly;	// seting by '/co' switch, not saved in registry
+	int PluginsCacheOnly;	// setting by '/co' switch, not saved in registry
 	int PluginsPersonal;
 
 	FARString strCustomPluginsPath;		// путь для поиска плагинов, указанный в /p
@@ -448,7 +448,7 @@ struct Options
 	int AutoSaveSetup;
 	int SetupArgv;	// количество каталогов в ком.строке ФАРа
 	int ChangeDriveMode;
-	int ChangeDriveDisconnetMode;
+	int ChangeDriveDisconnectMode;
 	FARString ChangeDriveExceptions;
 	FARString ChangeDriveColumn2, ChangeDriveColumn3;
 

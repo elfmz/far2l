@@ -38,7 +38,7 @@ static bool HasElvenEars(const unsigned char *Data, int DataSize)
 		return false;
 	if (Data[4] != 1 && Data[4] != 2) // Bitness: 32/64
 		return false;
-	if (Data[5] != 0 && Data[5] != 1 && Data[5] != 2) // Endianess: None(?)/LSB/MSB
+	if (Data[5] != 0 && Data[5] != 1 && Data[5] != 2) // Endianness: None(?)/LSB/MSB
 		return false;
 	if (Data[6] != 1) // Version: 1
 		return false;

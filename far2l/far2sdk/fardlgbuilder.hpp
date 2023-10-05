@@ -256,7 +256,7 @@ public:
 #endif
 		}
 
-		virtual FarDialogItem *AddIntEditField(int *Value, int Width)
+		virtual FarDialogItem *AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
 			FarDialogItem *Item = AddDialogItem(DI_FIXEDIT, EMPTY_TEXT);
 			Item->Flags |= DIF_MASKEDIT;

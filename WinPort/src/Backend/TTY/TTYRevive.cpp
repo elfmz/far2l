@@ -104,6 +104,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		return notify_pipe;
 
 	} catch (LocalSocketCancelled &e) {
+		(void)e;
 		fprintf(stderr, "TTYReviveMe: kickass signalled\n");
 		char c;
 		if (read(kickass, &c, 1) < 0) {

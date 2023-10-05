@@ -215,7 +215,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 			const char *envs[] = { "DISPLAY", "ICEAUTHORITY", "SESSION_MANAGER",
 				"XAPPLRESDIR", "XCMSDB", "XENVIRONMENT", "XFILESEARCHPATH", "XKEYSYMDB",
 				"XLOCALEDIR", "XMODIFIERS", "XUSERFILESEARCHPATH", "XWTRACE", "XWTRACELC"
-			}; 
+			};
 			uint32_t l;
 			for (const auto &env : envs) {
 				l = strlen(env);

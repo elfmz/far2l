@@ -243,12 +243,12 @@ void OpXfer::Rename(const std::set<std::string> &items)
 			}
 
 			WhatOnErrorWrap<WEK_RENAME>(_wea_state, _state, _base_host.get(), original_path + " -> " + new_path,
-				[&] () mutable 
+				[&] () mutable
 				{
 					_base_host->Rename(original_path, new_path);
 				}
 		);
-		
+
 	}
 }
 
@@ -271,7 +271,7 @@ void OpXfer::EnsureDstDirExists()
 		if (i == _dst_dir.size() || _dst_dir[i] == '/') {
 			const std::string &part_dir = _dst_dir.substr(0, i);
 			WhatOnErrorWrap<WEK_MAKEDIR>(_wea_state, _state, _dst_host.get(), part_dir,
-				[&] () mutable 
+				[&] () mutable
 				{
 					if (!IsDstPathExists(part_dir)) {
 						_dst_host->DirectoryCreate(part_dir, 0751);
@@ -319,7 +319,7 @@ void OpXfer::Transfer()
 			}
 			// if symlink copy failed then fallback to target's content copy
 			WhatOnErrorWrap<WEK_QUERYINFO>(_wea_state, _state, _base_host.get(), e.first,
-				[&] () mutable 
+				[&] () mutable
 				{
 					_base_host->GetInformation(e.second, e.first, true);
 				}
@@ -422,7 +422,7 @@ void OpXfer::Transfer()
 		if (_kind == XK_MOVE) {
 			if (S_ISDIR(rev_i->second.mode)) {
 				WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), rev_i->first,
-					[&] () mutable 
+					[&] () mutable
 					{
 						_base_host->DirectoryDelete(rev_i->first);
 					}

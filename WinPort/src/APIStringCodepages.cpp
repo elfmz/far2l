@@ -65,7 +65,7 @@ template <class SRC_T, class DST_T>
 template <class BYTES_TYPE, bool BYTEREV>
 	static int Wide2Bytes( int flags, const WCHAR *src, int srclen, void *dst, int dstlen)
 {
-	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
+	if (srclen < 0) { // per MSDN - conversion should include terminating NUL char
 		srclen = tzlen(src) + 1;
 	}
 
@@ -104,7 +104,7 @@ template <class BYTES_TYPE, bool BYTEREV>
 template <class BYTES_TYPE, bool BYTEREV>
 	static int Bytes2Wide( int flags, const void *src, int srclen, WCHAR *dst, int dstlen)
 {
-	if (srclen < 0) { // per MSDN - convertion should include terminating NUL char
+	if (srclen < 0) { // per MSDN - conversion should include terminating NUL char
 		srclen = tzlen((const BYTES_TYPE*)src) + 1;
 	} else {
 		srclen/= sizeof(BYTES_TYPE);

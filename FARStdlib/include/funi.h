@@ -58,12 +58,12 @@
 typedef char *FKeyBarTitle[12];
 typedef FKeyBarTitle *PFKeyBarTitle;
 
-// Hot key for operate with codes getted from plugin `ProcessKey` and passed to FPanel `DoProcessKey`
+// Hot key for operate with codes got from plugin `ProcessKey` and passed to FPanel `DoProcessKey`
 #define FHK_MAKE(sh, key) MK_DWORD(((WORD)sh), ((WORD)key))
 #define FHK_SHIFT(hkey)   ((unsigned int)LO_WORD((DWORD)hkey))
 #define FHK_KEY(hkey)     ((int)HI_WORD((DWORD)hkey))
 
-// Usefull console chars
+// Useful console chars
 /*
 #define FAR_SHADOW_CHAR                      '\xB0' //°
 #define FAR_FULL_CHAR                        '\xDB' //Û
@@ -146,7 +146,7 @@ extern int WINAPI FP_Color(int far_color_num);
 
 // --------------------------------------------------------------
 #if !defined(__FP_NOT_FUNCTIONS__)
-extern PluginStartupInfo *FP_Info;	///< Pointer to FAR plugin comunication info structure.
+extern PluginStartupInfo *FP_Info;	///< Pointer to FAR plugin communication info structure.
 extern FarStandardFunctions *FP_FSF;
 extern char *FP_PluginRootKey;
 extern BOOL FP_IsOldFar;
@@ -163,7 +163,7 @@ extern LPCSTR WINAPI FP_GetPluginName(void);
 
 /** @defgroup DefDialog Dialog description
 	@{
-	Usefull tools for define and set arrays of FAR dialog items.
+	Useful tools for define and set arrays of FAR dialog items.
 */
 
 #define FFDI_MASK 0xFFUL
@@ -180,7 +180,7 @@ extern int WINAPI FP_Message(unsigned int Flags, LPCSTR HelpTopic, LPCSTR *Items
 	@{
 
 	[fstd_Msg.cpp]
-	Wrapers for FAR language API.
+	Wrappers for FAR language API.
 */
 #define FMSG(v)   ((LPCSTR)(INT_PTR)(v))
 #define FISMSG(v) ((v) != NULL && (DWORD_PTR)(v) > FAR_MAX_LANGID)
@@ -205,11 +205,11 @@ inline LPCSTR FP_GetMsg(LPCSTR Msg)
 /**@}*/
 
 // --------------------------------------------------------------
-/** @defgroup FarRegXX Regestry manipulations.
+/** @defgroup FarRegXX Registry manipulations.
 	@{
 
 	[fstd_RegXX.cpp]
-	Wrapers for regestry Win API.
+	Wrappers for regestry Win API.
 */
 #if !defined(__FP_NOT_FUNCTIONS__)
 extern int WINAPI FP_GetRegKey(LPCSTR Key, LPCSTR ValueName, DWORD Default);
@@ -266,11 +266,11 @@ extern void WINAPI FP_PopKey(HANDLE PushedKey);
 	@{
 
 	[fstd_ClpS.cpp]
-	Wrapers for clipboard Win API.
+	Wrappers for clipboard Win API.
 */
 #if !defined(__FP_NOT_FUNCTIONS__)
 extern BOOL WINAPI FP_CopyToClipboard(LPVOID Data, SIZE_T DataSize);
-extern BOOL WINAPI FP_GetFromClipboard(LPVOID &Data, SIZE_T &DataSize);		// The calles should call `free()` to recvd data
+extern BOOL WINAPI FP_GetFromClipboard(LPVOID &Data, SIZE_T &DataSize);		// The callees should call `free()` to recvd data
 #endif
 /**@}*/
 

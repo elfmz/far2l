@@ -52,7 +52,7 @@ public:
 	bool Search(const TRexChar* text, const TRexChar** out_begin, const TRexChar** out_end) { 
 		return _exp?(trex_search(_exp,text,out_begin,out_end) != 0):false; 
 	}
-	// Searches for the first match of the expression in a string sarting at text_begin and ending at text_end
+	// Searches for the first match of the expression in a string starting at text_begin and ending at text_end
 	bool SearchRange(const TRexChar* text_begin,const TRexChar* text_end,const TRexChar** out_begin, const TRexChar** out_end) { 
 		return _exp?(trex_searchrange(_exp,text_begin,text_end,out_begin,out_end) != 0):false; 
 	}

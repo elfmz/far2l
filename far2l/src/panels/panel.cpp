@@ -394,9 +394,9 @@ static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 
 int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 {
-	/*Events.DeviceArivalEvent.Reset();
+	/*Events.DeviceArchivalEvent.Reset();
 	Events.DeviceRemoveEvent.Reset();
-	Events.MediaArivalEvent.Reset();
+	Events.MediaArchivalEvent.Reset();
 	Events.MediaRemoveEvent.Reset();*/
 	class Guard_Macro_DskShowPosType	// фигня какая-то
 	{
@@ -503,7 +503,7 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 
 		while (!ChDisk.Done()) {
 			int Key;
-			/*if(Events.DeviceArivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
+			/*if(Events.DeviceArchivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArchivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
 			{
 				Key=KEY_CTRLR;
 			}

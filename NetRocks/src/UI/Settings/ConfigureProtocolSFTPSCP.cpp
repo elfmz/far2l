@@ -9,7 +9,7 @@
 /*                                                         62
 345                      28         39                   60  64
  ================ SFTP Protocol options =====================
-| Authentification:     [COMBOBOX Private key file path:   ] |
+| Authentication:     [COMBOBOX Private key file path:   ]   |
 | [EDIT....................................................] |
 | [ ] Custom subsystem request:                              |
 | [EDIT....................................................] |

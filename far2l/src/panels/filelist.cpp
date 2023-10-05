@@ -2997,7 +2997,7 @@ bool FileList::FileInFilter(long idxItem)
 	return false;
 }
 
-// $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSerach переходим на директорию
+// $ 02.08.2000 IG  Wish.Mix #21 - при нажатии '/' или '\' в QuickSearch переходим на директорию
 bool FileList::FindPartName(const wchar_t *Name, int Next, int Direct, int ExcludeSets)
 {
 	int DirFind = 0;

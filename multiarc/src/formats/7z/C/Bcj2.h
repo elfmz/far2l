@@ -42,7 +42,7 @@ enum
 CBcj2Dec / CBcj2Enc
 bufs sizes:
   BUF_SIZE(n) = lims[n] - bufs[n]
-bufs sizes for BCJ2_STREAM_CALL and BCJ2_STREAM_JUMP must be mutliply of 4:
+bufs sizes for BCJ2_STREAM_CALL and BCJ2_STREAM_JUMP must be multiply of 4:
     (BUF_SIZE(BCJ2_STREAM_CALL) & 3) == 0
     (BUF_SIZE(BCJ2_STREAM_JUMP) & 3) == 0
 */

@@ -318,7 +318,7 @@ enum REOp
 	opLineStart,            // ^
 	opLineEnd,              // $
 	opDataStart,            // \A and ^ in single line mode
-	opDataEnd,              // \Z and $ in signle line mode
+	opDataEnd,              // \Z and $ in single line mode
 
 	opWordBound,            // \b
 	opNotWordBound,         // \B

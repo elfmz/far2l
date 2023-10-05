@@ -35,7 +35,7 @@ enum
 
 	MReplaceInFilelist,
 	MMenuForFilelist,
-	MCopyContens,
+	MCopyContents,
 
 	MFullScreenPanel,
 
@@ -51,7 +51,7 @@ enum
 	MNewPanelForSearchResults,
 	MListFilePath,
 
-	MCopyContensMsg
+	MCopyContentsMsg
 };
 
 #endif	/* __TMPLNG_HPP__ */

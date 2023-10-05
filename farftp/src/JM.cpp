@@ -3,11 +3,11 @@
 #include "Int.h"
 
 /*  1 -       title
-	2 -       --- betweeen commands and status
+	2 -       --- between commands and status
 	3 - [OPT] status
 	4 - [OPT] --- between status and buttons
 			  commands
-	5 - [OPT] --- betweeen commands and status
+	5 - [OPT] --- between commands and status
 	6 - [OPT] button
 	7 - [OPT] button1
 	8 - [OPT] button2
@@ -242,9 +242,9 @@ char *WINAPI PDigit(char *buff, int64_t val, int sz /*=-1*/)
    Output digit to string
    Can delimit thousands by special character
 
-   Fill buffer allways with `sz` characters
+   Fill buffer always with `sz` characters
    If digit less then `sz` in will be added by ' ' at left
-   If digit more then buffer digit will be truncated at left
+   If digit more than buffer digit will be truncated at left
 */
 char *WINAPI FDigit(char *buff, int64_t val, int sz)
 {

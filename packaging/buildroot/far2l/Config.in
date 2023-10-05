@@ -8,7 +8,7 @@ config BR2_PACKAGE_FAR2L
 	select BR2_INSTALL_LIBSTDCPP
 	default n
 	help
-	  Oldschool file manager, with built-in terminal and other usefullness'es
+	  Oldschool file manager, with built-in terminal and other usefulness'es
 
 if BR2_PACKAGE_FAR2L
 

@@ -431,7 +431,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions *op)
 	ci.AddToQueque = FALSE;
 	ci.MsgCode = ocNone;
 	ci.UploadLowCase = Opt.UploadLowCase;
-	// Check othe panel info
+	// Check other panel info
 	PanelInfo pi;
 	FP_Info->Control(INVALID_HANDLE_VALUE, FCTL_GETANOTHERPANELINFO, &pi);
 
@@ -625,7 +625,7 @@ void FTP::ExecuteQueueINT(QueueExecOptions *op)
 
 		if (!rc) {
 			if (p->Download)
-				p->Error.printf(FP_GetMsg(MQErrDowload), __WINError());
+				p->Error.printf(FP_GetMsg(MQErrDownload), __WINError());
 			else
 				p->Error.printf(FP_GetMsg(MQErrUpload), __WINError());
 

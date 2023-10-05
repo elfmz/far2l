@@ -140,7 +140,7 @@ private:
 	wchar_t AttrStr[4];		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
 	IUnmakeWritablePtr FileUnmakeWritable;
 	DWORD SysErrorCode{false};
-	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
+	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрывается (т.е. в деструкторе)
 	bool bEE_READ_Sent{false};
 	FemaleBool m_AddSignature{FB_NO};
 	bool F4KeyOnly{false};

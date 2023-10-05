@@ -11,7 +11,7 @@ extern "C" void
 		CustomPanic(const char *format, va_list args) noexcept
 {
 	// default weak implementation
-	// to be overriden by WinPort implementation if process is hosting it
+	// to be overridden by WinPort implementation if process is hosting it
 	abort();
 }
 

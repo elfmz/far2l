@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <farplug-wide.h>
+#include "FARString.hpp"
 #include "language.hpp"
 #include "bitflags.hpp"
 #include "FARString.hpp"

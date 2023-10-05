@@ -19,10 +19,12 @@
 #endif
 
 #include <pthread.h>
+#include <sched.h>
 
 #endif
 
 #include "7zTypes.h"
+#include <WinCompat.h>
 
 EXTERN_C_BEGIN
 

@@ -20,6 +20,7 @@
 
 #include "FSNotify.h"
 #include <utils.h>
+#include "../../WinPort/WinCompat.h"
 
 #if defined(__CYGWIN__) || defined(__HAIKU__)
 

@@ -1,3 +1,10 @@
+#include "rartypes.hpp"
+#include "pathfn.hpp"
+#include "cmddata.hpp"
+#include "options.hpp"
+#include "match.hpp"
+//#include "pluginold.hpp"
+
 // Return 'true' if we need to exclude the file from processing as result
 // of -x switch. If CheckInclList is true, we also check the file against
 // the include list created with -n switch.

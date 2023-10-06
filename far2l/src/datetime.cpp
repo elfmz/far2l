@@ -529,17 +529,29 @@ size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt)
 
 int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b)
 {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+	LARGE_INTEGER A =
+						{
+								{(LONG)a->dwHighDateTime, a->dwLowDateTime}
+    },
+				B = {{(LONG)b->dwHighDateTime, b->dwLowDateTime}};
+#else
 	LARGE_INTEGER A =
 						{
 								{a->dwLowDateTime, (LONG)a->dwHighDateTime}
     },
 				B = {{b->dwLowDateTime, (LONG)b->dwHighDateTime}};
+#endif
 	return A.QuadPart - B.QuadPart;
 }
 
 uint64_t FileTimeToUI64(const FILETIME *ft)
 {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+	ULARGE_INTEGER A = { {ft->dwHighDateTime, ft->dwLowDateTime} };
+#else
 	ULARGE_INTEGER A = { {ft->dwLowDateTime, ft->dwHighDateTime} };
+#endif
 	return A.QuadPart;
 }
 
@@ -761,7 +773,11 @@ void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeT
 
 void ConvertRelativeDate(const FILETIME &ft, FARString &strDaysText, FARString &strTimeText)
 {
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+	ULARGE_INTEGER time = { {ft.dwHighDateTime, ft.dwLowDateTime}};
+#else
 	ULARGE_INTEGER time = { {ft.dwLowDateTime, ft.dwHighDateTime}};
+#endif
 
 	UINT64 ms = (time.QuadPart/= 10000) % 1000;
 	UINT64 s = (time.QuadPart/= 1000) % 60;

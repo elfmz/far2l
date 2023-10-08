@@ -230,7 +230,7 @@
 "(Specified config files)"
 "Enable &sandbox (if you don't trust server)"
 
-"File Protocol options"
+"Extra connection options"
 "Command to e&xecute on connect:"
 "Command to execute on &disconnect:"
 "Extra &string passed to command:"

@@ -26,25 +26,24 @@ SHELLFCN_SEND_ERROR_AND_RESYNC() {
  done
 }
 
-SHELLFCN_GET_INFO() {
+SHELLFCN_GET_INFO_INNER() {
 # $1 - path
 # $2 - nonempty if follow symlink
 # $3 - stat format
 # $4 - find format
 # $5 - optional ls filter
-
  if [ -n "$SHELLVAR_STAT" ]; then
   if [ -n "$2" ]; then
-   stat -L --format="$3" "$1" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   stat -L --format="$3" "$1"
   else
-   stat --format="$3" "$1" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   stat --format="$3" "$1"
   fi
 
  elif [ -n "$SHELLVAR_FIND" ]; then
   if [ -n "$2" ]; then
-   find -H "$1" -mindepth 0 -maxdepth 0 -printf "$4" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   find -H "$1" -mindepth 0 -maxdepth 0 -printf "$4"
   else
-   find "$1" -mindepth 0 -maxdepth 0 -printf "$4" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   find "$1" -mindepth 0 -maxdepth 0 -printf "$4"
   fi
 
  else
@@ -53,15 +52,27 @@ SHELLFCN_GET_INFO() {
    SHELLVAR_SELECTED_LS_ARGS=$SHELLVAR_LS_ARGS_FOLLOW
   fi
   if [ -n "$5" ]; then
-   ( ( ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$? 1>&2 ) | ( $SHELLVAR_READ_FN $5; echo $y ) ) 2>&1
+   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" | grep $SHELLVAR_GREP_ARGS '^[^cbt]' | ( $SHELLVAR_READ_FN $5; echo $y )
   else
-   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$?
+   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" | grep $SHELLVAR_GREP_ARGS '^[^cbt]'
   fi
  fi
 }
 
 SHELLFCN_GET_SIZE() {
- SHELLFCN_GET_INFO "$1" '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n'
+ SHELLVAR_INFO=`SHELLFCN_GET_INFO_INNER "$1" '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n' 2>>$SHELLVAR_LOG`
+ [ -n "$SHELLVAR_INFO" ] || SHELLVAR_INFO=0
+ echo "$SHELLVAR_INFO"
+}
+
+SHELLFCN_GET_INFO() {
+ SHELLVAR_INFO=`SHELLFCN_GET_INFO_INNER "$@" 2>>$SHELLVAR_LOG`
+ if [ -n "$SHELLVAR_INFO" ]; then
+  echo "+OK:$SHELLVAR_INFO"
+ else
+  SHELLVAR_ERROR=`SHELLFCN_GET_INFO_INNER "$@" 2>&1`
+  echo "+ERROR:$SHELLVAR_ERROR"
+ fi
 }
 
 SHELLFCN_CMD_ENUM() {

@@ -22,6 +22,8 @@ static std::vector<const char *> s_prompt_or_error{">(((^>\n", "+ERROR:*\n"};
 static std::vector<const char *> s_ok_or_error{"+OK:*\n", "+ERROR:*\n"};
 static std::vector<const char *> s_read_replies{"+NEXT:*\n", "+DONE\n", "+FAIL\n", "+ABORTED\n", "+ERROR:*\n"};
 static std::vector<const char *> s_write_replies{"+OK\n", "+ERROR:*\n"};
+static const char s_prefix_error[] = "+ERROR:";
+static const char s_prefix_ok[] = "+OK:";
 
 std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std::string &host, unsigned int port,
 	const std::string &username, const std::string &password, const std::string &options, int fd_ipc_recv)
@@ -308,18 +310,23 @@ void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::strin
 		}
 		request+= '\n';
 		auto wr = _way->SendAndWaitReply(request, s_prompt);
-		for (size_t i = 0; i < count; ++i) {
-			if (wr.stdout_lines.size() - 1 >= count - i) {
-				auto &line = wr.stdout_lines[wr.stdout_lines.size() - 1 - (count - i)];
-				if (StrStartsFrom(line, "+ERROR:")) {
-					modes[i] = ~(mode_t)0;
-				} else if (_feats.using_stat || _feats.using_find) {
-					modes[i] = SHELLParseModeByStatOrFind(line);
+		ASSERT(wr.stdout_lines.size());
+		for (size_t i = count, j = wr.stdout_lines.size() - 1; i && j;) {
+			auto &line = wr.stdout_lines[--j];
+			if (StrStartsFrom(line, s_prefix_ok)) {
+				line.erase(0, sizeof(s_prefix_ok) - 1);
+				if (_feats.using_stat || _feats.using_find) {
+					modes[--i] = SHELLParseModeByStatOrFind(line);
 				} else {
-					modes[i] = SHELLParseModeByLS(line);
+					modes[--i] = SHELLParseModeByLS(line);
 				}
+			}else if (StrStartsFrom(line, s_prefix_error)) {
+				modes[--i] = ~(mode_t)0;
+			} else {
+				fprintf(stderr, "[SHELL] ProtocolSHELL::GetModes: skip - %s\n", line.c_str());
 			}
 		}
+
 	} catch (...) {
 		fprintf(stderr, "[SHELL] ProtocolSHELL::GetModes excpt\n");
 		for (size_t i = 0; i != count; ++i) {
@@ -328,69 +335,60 @@ void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::strin
 	}
 }
 
+void ProtocolSHELL::GetSingleFileInfo(const std::string &path, const char *what)
+{
+	fprintf(stderr, "[SHELL] ProtocolSHELL::%s: %s for '%s'\n", __FUNCTION__, what, path.c_str());
+	FinalizeExecCmd();
+	const auto &wr = _way->SendAndWaitReply(
+		MultiLineRequest(what, path, std::string()),
+		s_prompt);
+	size_t i = wr.stdout_lines.size();
+	if (i--) while (i--) {
+		const auto &line = wr.stdout_lines[i];
+		size_t n = line.size();
+		while (line[n - 1] == '\r' || line[n - 1] == '\n') {
+			--n;
+		}
+		if (StrStartsFrom(line, s_prefix_ok)) {
+			_single_line_info.assign(line.data() + sizeof(s_prefix_ok) - 1, n - (sizeof(s_prefix_ok) - 1));
+			return;
+		}
+		if (StrStartsFrom(line, s_prefix_error)) {
+			_single_line_info.assign(line.data() + sizeof(s_prefix_error) - 1, n - (sizeof(s_prefix_error) - 1));
+			throw ProtocolError(what, _single_line_info.c_str());
+		}
+	}
+	throw ProtocolError(what, "unreplied");
+}
+
 mode_t ProtocolSHELL::GetMode(const std::string &path, bool follow_symlink)
 {
-	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	FinalizeExecCmd();
-	auto wr = _way->SendAndWaitReply(
-		MultiLineRequest(follow_symlink ? "mode" : "lmode", path, std::string()),
-		s_prompt_or_error);
-	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
-		if (wr.index != 0) {
-			_way->WaitReply(s_prompt);
-		}
-		throw ProtocolError("mode query error");
-	}
+	GetSingleFileInfo(path, follow_symlink ? "mode" : "lmode");
 
 	if (_feats.using_stat || _feats.using_find) {
-		return SHELLParseModeByStatOrFind(wr.stdout_lines[wr.stdout_lines.size() - 2]);
+		return SHELLParseModeByStatOrFind(_single_line_info);
 	}
-
-	return SHELLParseModeByLS(wr.stdout_lines[wr.stdout_lines.size() - 2]);
+	return SHELLParseModeByLS(_single_line_info);
 }
 
 unsigned long long ProtocolSHELL::GetSize(const std::string &path, bool follow_symlink)
 {
-	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	FinalizeExecCmd();
-	auto wr = _way->SendAndWaitReply(
-		MultiLineRequest(follow_symlink ? "size" : "lsize", path, std::string()),
-		s_prompt_or_error);
-
-	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
-		if (wr.index != 0) {
-			_way->WaitReply(s_prompt);
-		}
-		throw ProtocolError("mode query error");
-	}
+	GetSingleFileInfo(path, follow_symlink ? "size" : "lsize");
 
 	if (_feats.using_stat || _feats.using_find) {
-		return SHELLParseSizeByStatOrFind(wr.stdout_lines[wr.stdout_lines.size() - 2]);
+		return SHELLParseSizeByStatOrFind(_single_line_info);
 	}
-
-	return SHELLParseSizeByLS(wr.stdout_lines[wr.stdout_lines.size() - 2]);
+	return SHELLParseSizeByLS(_single_line_info);
 }
 
 void ProtocolSHELL::GetInformation(FileInformation &file_info, const std::string &path, bool follow_symlink)
 {
-	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	FinalizeExecCmd();
-	auto wr = _way->SendAndWaitReply(
-		MultiLineRequest(follow_symlink ? "info" : "linfo", path, std::string()),
-		s_prompt_or_error);
-
-	if (wr.index != 0 || wr.stdout_lines.size() < 2) {
-		if (wr.index != 0) {
-			_way->WaitReply(s_prompt);
-		}
-		throw ProtocolError("mode query error");
-	}
+	GetSingleFileInfo(path, follow_symlink ? "info" : "linfo");
 
 	if (_feats.using_stat || _feats.using_find) {
-		SHELLParseInfoByStatOrFind(file_info, wr.stdout_lines[wr.stdout_lines.size() - 2]);
-
+		SHELLParseInfoByStatOrFind(file_info, _single_line_info);
 	} else {
-		SHELLParseInfoByLS(file_info, wr.stdout_lines[wr.stdout_lines.size() - 2]);
+		SHELLParseInfoByLS(file_info, _single_line_info);
 	}
 }
 
@@ -481,23 +479,8 @@ void ProtocolSHELL::SymlinkCreate(const std::string &link_path, const std::strin
 
 void ProtocolSHELL::SymlinkQuery(const std::string &link_path, std::string &link_target)
 {
-	fprintf(stderr, "[SHELL] ProtocolSHELL::%s\n", __FUNCTION__);
-	auto wr = _way->SendAndWaitReply(
-		MultiLineRequest("rdsym", link_path),
-		s_ok_or_error);
-	_way->WaitReply(s_prompt);
-	if (wr.index != 0) {
-		throw ProtocolError("mksym error");
-	}
-	link_target = wr.stdout_lines.back();
-	size_t p = link_target.find(':');
-	if (p != std::string::npos) {
-		link_target.erase(0, p + 1);
-	}
-	p = link_target.find('\n');
-	if (p != std::string::npos) {
-		link_target.resize(p);
-	}
+	GetSingleFileInfo(link_path, "rdsym");
+	link_target.swap(_single_line_info);
 }
 
 class SHELLDirectoryEnumer : public IDirectoryEnumer {

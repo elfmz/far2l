@@ -68,7 +68,6 @@ public:
 	WaitResult SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies, bool hide_in_log = false);
 };
 
-
 std::string MultiLineRequest(std::string line);
 
 template <class... LinesT>

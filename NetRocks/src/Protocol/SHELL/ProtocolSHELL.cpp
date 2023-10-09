@@ -303,7 +303,7 @@ void ProtocolSHELL::GetModes(bool follow_symlink, size_t count, const std::strin
 	fprintf(stderr, "[SHELL] ProtocolSHELL::GetModes follow_symlink=%d count=%lu\n", follow_symlink, (unsigned long)count);
 	try {
 		FinalizeExecCmd();
-		std::string request = follow_symlink ? "mode\n" : "lmode\n";
+		std::string request = follow_symlink ? "modes\n" : "lmodes\n";
 		for (size_t i = 0; i != count; ++i) {
 			request+= pathes[i];
 			request+= '\n';
@@ -339,9 +339,7 @@ void ProtocolSHELL::GetSingleFileInfo(const std::string &path, const char *what)
 {
 	fprintf(stderr, "[SHELL] ProtocolSHELL::%s: %s for '%s'\n", __FUNCTION__, what, path.c_str());
 	FinalizeExecCmd();
-	const auto &wr = _way->SendAndWaitReply(
-		MultiLineRequest(what, path, std::string()),
-		s_prompt);
+	const auto &wr = _way->SendAndWaitReply(MultiLineRequest(what, path), s_prompt);
 	size_t i = wr.stdout_lines.size();
 	if (i--) while (i--) {
 		const auto &line = wr.stdout_lines[i];

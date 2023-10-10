@@ -527,20 +527,17 @@ size_t MkStrFTime(FARString &strDest, const wchar_t *Fmt)
 	return StrFTime(strDest, Fmt, time_now);
 }
 
-int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b)
-{
-	LARGE_INTEGER A =
-						{
-								{a->dwLowDateTime, (LONG)a->dwHighDateTime}
-    },
-				B = {{b->dwLowDateTime, (LONG)b->dwHighDateTime}};
-	return A.QuadPart - B.QuadPart;
-}
-
 uint64_t FileTimeToUI64(const FILETIME *ft)
 {
-	ULARGE_INTEGER A = { {ft->dwLowDateTime, ft->dwHighDateTime} };
-	return A.QuadPart;
+	ULARGE_INTEGER uli;
+	uli.LowPart = ft->dwLowDateTime;
+	uli.HighPart = ft->dwHighDateTime;
+	return uli.QuadPart;
+}
+
+int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b)
+{
+	return (int64_t)FileTimeToUI64(a) - (int64_t)FileTimeToUI64(b);
 }
 
 void GetFileDateAndTime(const wchar_t *Src, LPWORD Dst, size_t Count, int Separator)
@@ -761,13 +758,12 @@ void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeT
 
 void ConvertRelativeDate(const FILETIME &ft, FARString &strDaysText, FARString &strTimeText)
 {
-	ULARGE_INTEGER time = { {ft.dwLowDateTime, ft.dwHighDateTime}};
-
-	UINT64 ms = (time.QuadPart/= 10000) % 1000;
-	UINT64 s = (time.QuadPart/= 1000) % 60;
-	UINT64 m = (time.QuadPart/= 60) % 60;
-	UINT64 h = (time.QuadPart/= 60) % 24;
-	UINT64 d = time.QuadPart/= 24;
+	uint64_t t64 = FileTimeToUI64(&ft);
+	UINT64 ms = (t64/= 10000) % 1000;
+	UINT64 s = (t64/= 1000) % 60;
+	UINT64 m = (t64/= 60) % 60;
+	UINT64 h = (t64/= 60) % 24;
+	UINT64 d = t64/= 24;
 
 	FormatString DaysText;
 	DaysText << d;

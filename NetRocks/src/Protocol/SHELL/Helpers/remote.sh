@@ -26,25 +26,24 @@ SHELLFCN_SEND_ERROR_AND_RESYNC() {
  done
 }
 
-SHELLFCN_GET_INFO() {
+SHELLFCN_GET_INFO_INNER() {
 # $1 - path
 # $2 - nonempty if follow symlink
 # $3 - stat format
 # $4 - find format
 # $5 - optional ls filter
-
  if [ -n "$SHELLVAR_STAT" ]; then
   if [ -n "$2" ]; then
-   stat -L --format="$3" "$1" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   stat -L --format="$3" "$1"
   else
-   stat --format="$3" "$1" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   stat --format="$3" "$1"
   fi
 
  elif [ -n "$SHELLVAR_FIND" ]; then
   if [ -n "$2" ]; then
-   find -H "$1" -mindepth 0 -maxdepth 0 -printf "$4" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   find -H "$1" -mindepth 0 -maxdepth 0 -printf "$4"
   else
-   find "$1" -mindepth 0 -maxdepth 0 -printf "$4" 2>>$SHELLVAR_LOG || echo +ERROR:$?
+   find "$1" -mindepth 0 -maxdepth 0 -printf "$4"
   fi
 
  else
@@ -53,15 +52,27 @@ SHELLFCN_GET_INFO() {
    SHELLVAR_SELECTED_LS_ARGS=$SHELLVAR_LS_ARGS_FOLLOW
   fi
   if [ -n "$5" ]; then
-   ( ( ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$? 1>&2 ) | ( $SHELLVAR_READ_FN $5; echo $y ) ) 2>&1
+   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" | grep $SHELLVAR_GREP_ARGS '^[^cbt]' | ( $SHELLVAR_READ_FN $5; echo $y )
   else
-   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]' || echo +ERROR:$?
+   ls -d $SHELLVAR_SELECTED_LS_ARGS "$1" | grep $SHELLVAR_GREP_ARGS '^[^cbt]'
   fi
  fi
 }
 
 SHELLFCN_GET_SIZE() {
- SHELLFCN_GET_INFO "$1" '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n'
+ SHELLVAR_INFO=`SHELLFCN_GET_INFO_INNER "$1" '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n' 2>>$SHELLVAR_LOG`
+ [ -n "$SHELLVAR_INFO" ] || SHELLVAR_INFO=0
+ echo "$SHELLVAR_INFO"
+}
+
+SHELLFCN_GET_INFO() {
+ SHELLVAR_INFO=`SHELLFCN_GET_INFO_INNER "$@" 2>>$SHELLVAR_LOG`
+ if [ -n "$SHELLVAR_INFO" ]; then
+  echo "+OK:$SHELLVAR_INFO"
+ else
+  SHELLVAR_ERROR=`SHELLFCN_GET_INFO_INNER "$@" 2>&1`
+  echo "+ERROR:$SHELLVAR_ERROR"
+ fi
 }
 
 SHELLFCN_CMD_ENUM() {
@@ -71,11 +82,16 @@ SHELLFCN_CMD_ENUM() {
  elif [ -n "$SHELLVAR_FIND" ]; then
   find -H "$SHELLVAR_ARG_PATH" -mindepth 1 -maxdepth 1 -printf "$SHELLVAR_FIND_FMT" 2>>$SHELLVAR_LOG
  else
-  ls -H $SHELLVAR_LS_ARGS "$SHELLVAR_ARG_PATH" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]'
+  ls $SHELLVAR_LS_ARGS_FOLLOW "$SHELLVAR_ARG_PATH" 2>>$SHELLVAR_LOG | grep $SHELLVAR_GREP_ARGS '^[^cbt]'
  fi
 }
 
-SHELLFCN_CMD_INFO() {
+SHELLFCN_CMD_INFO_SINGLE() {
+ $SHELLVAR_READ_FN SHELLVAR_ARG_PATH || exit
+ SHELLFCN_GET_INFO "$SHELLVAR_ARG_PATH" "$1" "$2" "$3" "$4"
+}
+
+SHELLFCN_CMD_INFO_MULTI() {
 # !!! This is a directory with symlinks listing bottleneck !!!
 # TODO: Rewrite so instead of querying files one-by-one do grouped queries with one stat per several files
  while true; do
@@ -375,6 +391,8 @@ fi
 
 if ls -d -H . >>$SHELLVAR_LOG 2>&1; then
  SHELLVAR_LS_ARGS_FOLLOW="$SHELLVAR_LS_ARGS -H"
+elif ls -d -L . >>$SHELLVAR_LOG 2>&1; then
+ SHELLVAR_LS_ARGS_FOLLOW="$SHELLVAR_LS_ARGS -L"
 else
  SHELLVAR_LS_ARGS_FOLLOW="$SHELLVAR_LS_ARGS"
 fi
@@ -433,12 +451,14 @@ while true; do
  case "$CMD" in
   feats ) echo "FEATS ${FEATS} SHELL.FAR2L";;
   enum ) SHELLFCN_CMD_ENUM;;
-  linfo ) SHELLFCN_CMD_INFO '0' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
-  info ) SHELLFCN_CMD_INFO '1' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
-  lmode ) SHELLFCN_CMD_INFO '0' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
-  mode ) SHELLFCN_CMD_INFO '1' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
-  lsize ) SHELLFCN_CMD_INFO '0' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n';;
-  size ) SHELLFCN_CMD_INFO '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n';;
+  linfo ) SHELLFCN_CMD_INFO_SINGLE '0' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
+  info ) SHELLFCN_CMD_INFO_SINGLE '1' "$SHELLVAR_STAT_FMT_INFO" "$SHELLVAR_FIND_FMT_INFO" '';;
+  lsize ) SHELLFCN_CMD_INFO_SINGLE '0' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n';;
+  size ) SHELLFCN_CMD_INFO_SINGLE '1' "$SHELLVAR_STAT_FMT_SIZE" "$SHELLVAR_FIND_FMT_SIZE" 'n n n n y n';;
+  lmode ) SHELLFCN_CMD_INFO_SINGLE '0' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
+  mode ) SHELLFCN_CMD_INFO_SINGLE '1' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
+  lmodes ) SHELLFCN_CMD_INFO_MULTI '0' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
+  modes ) SHELLFCN_CMD_INFO_MULTI '1' "$SHELLVAR_STAT_FMT_MODE" "$SHELLVAR_FIND_FMT_MODE" 'y n n n n n';;
   read ) SHELLFCN_CMD_READ;;
   write ) SHELLFCN_CMD_WRITE;;
   rmfile ) SHELLFCN_CMD_REMOVE_FILE;;

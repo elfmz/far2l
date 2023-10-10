@@ -76,6 +76,7 @@ class ProtocolSHELL : public IProtocol
 
 	std::string _way_name;
 	std::unique_ptr<ExecCmd> _exec_cmd;
+	std::string _single_line_info;
 
 	void SubstituteCreds(std::string &str);
 	void OpenWay();
@@ -83,6 +84,8 @@ class ProtocolSHELL : public IProtocol
 	void ParseFeatsLine(const std::string &feats_line);
 	void FinalizeExecCmd();
 	void Initialize();
+
+	void GetSingleFileInfo(const std::string &path, const char *what);
 
 public:
 	ProtocolSHELL(const std::string &host, unsigned int port, const std::string &username,

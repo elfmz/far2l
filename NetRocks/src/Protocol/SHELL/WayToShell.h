@@ -13,6 +13,7 @@
 #include <algorithm>
 
 #include "WayToShellConfig.h"
+#include "Request.h"
 
 enum OutputType
 {
@@ -67,13 +68,3 @@ public:
 	WaitResult WaitReply(const std::vector<const char *> &expected_replies);
 	WaitResult SendAndWaitReply(const std::string &send_str, const std::vector<const char *> &expected_replies, bool hide_in_log = false);
 };
-
-std::string MultiLineRequest(std::string line);
-
-template <class... LinesT>
-	std::string MultiLineRequest(std::string line, const std::string &line2, LinesT... other_lines)
-{
-	line+= '\n';
-	line+= line2;
-	return MultiLineRequest(line, other_lines...);
-}

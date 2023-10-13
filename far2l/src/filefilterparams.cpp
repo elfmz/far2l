@@ -801,20 +801,20 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	switch (DateFormat) {
 		case 0:
 			// Маска даты для форматов DD.MM.YYYYY и MM.DD.YYYYY
-			strDateMask.Format(L"99%c99%c99999", DateSeparator, DateSeparator);
+			strDateMask.Format(L"99%c99%c9999N", DateSeparator, DateSeparator);
 			break;
 		case 1:
 			// Маска даты для форматов DD.MM.YYYYY и MM.DD.YYYYY
-			strDateMask.Format(L"99%c99%c99999", DateSeparator, DateSeparator);
+			strDateMask.Format(L"99%c99%c9999N", DateSeparator, DateSeparator);
 			break;
 		default:
 			// Маска даты для формата YYYYY.MM.DD
-			strDateMask.Format(L"99999%c99%c99", DateSeparator, DateSeparator);
+			strDateMask.Format(L"N9999%c99%c99", DateSeparator, DateSeparator);
 			break;
 	}
 
 	// Маска времени
-	strTimeMask.Format(L"99%c99%c99%c999", TimeSeparator, TimeSeparator, DecimalSeparator);
+	strTimeMask.Format(L"99%c99%c99%c99N", TimeSeparator, TimeSeparator, DecimalSeparator);
 	DialogDataEx FilterDlgData[] = {
 		{DI_DOUBLEBOX,   3,           1,  84,     18, {},                                  DIF_SHOWAMPERSAND,                      Msg::FileFilterTitle             },
 

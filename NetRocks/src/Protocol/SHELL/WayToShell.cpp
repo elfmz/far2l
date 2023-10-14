@@ -632,9 +632,3 @@ void WayToShell::ReadStdout(void *buffer, size_t len)
 		DebugStr("STDOUT.BLOB", info);
 	}
 }
-
-std::string MultiLineRequest(std::string line)
-{
-	line+= '\n';
-	return line;
-}

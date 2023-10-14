@@ -35,7 +35,7 @@ bool ExclusiveHotkeys::Available() const
 
 bool ExclusiveHotkeys::IsTriggeringKeyEvent(wxKeyEvent& event)
 {
-	//event.GetRawKeyCode() is GDK_KEY_ contant
+	//event.GetRawKeyCode() is GDK_KEY_ constant
 	return (_alt_left && event.GetRawKeyCode() == 0xffe9)
 		|| (_alt_right && event.GetRawKeyCode() == 0xffea)
 		|| (_ctrl_left && event.GetRawKeyCode() == 0xffe3)

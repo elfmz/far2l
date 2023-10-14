@@ -335,7 +335,7 @@ template <class CodePointT>
 				break;
 			}
 			// cu_data now points to the end of matched sequence
-			// r represents length of matched sequence that preceds cu_data
+			// r represents length of matched sequence that precedes cu_data
 			// Is matched sequence surrounded by 'div' code units or content's edges?
 			const bool left_at_begin = (cu_data - r == (const CodeUnit *)begin);
 			const bool left_div = (left_at_begin && first_fragment)

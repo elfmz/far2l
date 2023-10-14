@@ -4,7 +4,7 @@
 
 /** @ingroup GetMsg
 	@fn LPCSTR FP_GetMsg( int MsgId )
-	@brief Retrive text message by it number.
+	@brief Retrieve text message by it number.
 
 	@param MsgId Index of message in LNG file.
 
@@ -14,7 +14,7 @@
 
 /** @ingroup GetMsg
 	@fn LPCSTR FP_GetMsg( LPCSTR Msg )
-	@brief Retrive text message by it number.
+	@brief Retrieve text message by it number.
 
 	@param Msg Index of message in LNG file. Index can be converted to LPCSTR using FMSG parameter.
 			   You can set this parameter to real local string pointer.
@@ -69,12 +69,12 @@ static LPCSTR WINAPI _FP_GetMsgSTR(LPCSTR String)
 }
 
 /** @var FP_GetMsgINT
-	@brief Callback function for get language message specified by WORD identifer.
+	@brief Callback function for get language message specified by WORD identifier.
 */
 FP_GetMsgINT_t FP_GetMsgINT = _FP_GetMsgINT;
 
 /** @var FP_GetMsgSTR
 	@ingroup GetMsg
-	@brief Callback function for get language message specified by LPCSTR identifer.
+	@brief Callback function for get language message specified by LPCSTR identifier.
 */
 FP_GetMsgSTR_t FP_GetMsgSTR = _FP_GetMsgSTR;

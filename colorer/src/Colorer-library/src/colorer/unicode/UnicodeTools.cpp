@@ -4,7 +4,7 @@
 #include <colorer/unicode/Character.h>
 
 
-//  modifed GetNumber - sign extension!
+//  modified GetNumber - sign extension!
 // 1.1123 .123 0x1f #1f $1f
 bool UnicodeTools::getNumber(const String* pstr, double* res)
 {

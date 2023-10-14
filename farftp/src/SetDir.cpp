@@ -178,7 +178,7 @@ int FTP::SetDirectory(LPCSTR Dir, int OpMode)
 	// FTP
 
 	/* Back to prev directory.
-	   Directories allways separated by '/'!
+	   Directories always separated by '/'!
 	*/
 	if (StrCmp(Dir, "..") == 0) {
 		// Back from root

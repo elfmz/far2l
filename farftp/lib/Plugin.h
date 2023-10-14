@@ -77,7 +77,7 @@ struct OptionsPlugin
 	int ExtCmdView;				// Extended CMD window                                          TRUE
 	int KeepAlive;				// Keep alive period (sec)                                      60
 	int PluginColumnMode;		// Default mode for hosts panel                                 -1 (have no preferred mode)
-	BOOL TimeoutRetry;			// Auto retry operation if timeout error occured                TRUE
+	BOOL TimeoutRetry;			// Auto retry operation if timeout error occurred               TRUE
 	int RetryCount;				// Count of auto retryes                                        0
 	BOOL LogOutput;				// Write output data to log                                     FALSE
 	int LongBeepTimeout;		// long operation beeper
@@ -166,7 +166,7 @@ struct FTPInterface
 	LPCSTR(WINAPI *MessageV)(LPCSTR patt, va_list a);
 	char *(WINAPI *PointToName)(char *Path);
 	char *(WINAPI *FDigit)(char *buff, int64_t Value, int BuffSize /*-1*/);		// Output digit to string. Delimits thousands.
-	LPCSTR(WINAPI *FCps)(char *buff, double val);								// Create CPS value string (Allways 3+1+3+1 length)
+	LPCSTR(WINAPI *FCps)(char *buff, double val);								// Create CPS value string (Always 3+1+3+1 length)
 	int(WINAPI *FMessage)(unsigned int Flags, LPCSTR HelpTopic, LPCSTR *Items, int ItemsNumber,
 			int ButtonsNumber);
 	BOOL(WINAPI *CheckForEsc)(BOOL isConnection, BOOL IgnoreSilent /*=FALSE*/);

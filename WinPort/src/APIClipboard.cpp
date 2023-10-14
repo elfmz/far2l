@@ -139,7 +139,7 @@ extern "C" {
 		DWORD64 magic;
 	};
 
-#define CAH_ALLOCED_MAGIC 0x0610ba10A110CED0
+#define CAH_ALLOCATED_MAGIC 0x0610ba10A110CED0
 #define CAH_FREED_MAGIC   0x0610ba10F4EED000
 
 	WINPORT_DECL(ClipboardAlloc, PVOID, (SIZE_T dwBytes))
@@ -155,7 +155,7 @@ extern "C" {
 			fprintf(stderr, "%s: malloc(%lu) failed\n", __FUNCTION__, (unsigned long)(sizeof(ClipboardAllocHeader) + dwBytes));
 			return NULL;
 		}
-		hdr->magic = CAH_ALLOCED_MAGIC;
+		hdr->magic = CAH_ALLOCATED_MAGIC;
 		hdr->size = (DWORD)dwBytes;
 		void *rv = hdr + 1;
 		memset(rv, 0, payload_size);
@@ -170,7 +170,7 @@ extern "C" {
 	static ClipboardAllocHeader *ClipboardAccess(PVOID hMem)
 	{
 		ClipboardAllocHeader *hdr = (ClipboardAllocHeader *)((char *)hMem - sizeof(ClipboardAllocHeader));
-		ASSERT_MSG(hdr->magic == CAH_ALLOCED_MAGIC, "%s magic (0x%llx)",
+		ASSERT_MSG(hdr->magic == CAH_ALLOCATED_MAGIC, "%s magic (0x%llx)",
 			(hdr->magic == CAH_FREED_MAGIC) ? "freed" : "bad", (unsigned long long)hdr->magic);
 		return hdr;
 	}

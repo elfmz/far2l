@@ -30,7 +30,7 @@
     - General:
       * Update to current Far3 version (dev.build 2728+) 
       * Fixed work with large console buffer (far /W)
-      * Fixed: cursor dissapeared after pressing Enter
+      * Fixed: cursor disapeared after pressing Enter
       * Fixed: error text "expression error" is now cleared correctly after pressing Enter
       * Fixed: plugin crashed on _numer(NaN) or _denom(NaN)
       * Fixed: arith. precision problems in some cases ("30000-6649.23-23350.77")
@@ -184,7 +184,7 @@
 
    Now you can use dialogs for convertations of values (in
    russian language). You can call them from main menu or
-   directry from calculator with F2 key.
+   directory from calculator with F2 key.
    New parser. now you can use different number types,
    formats and etc.
    Functions Integral and Derived were removed.
@@ -204,7 +204,7 @@
 --== Ver 2.65 ==--
 
    With yours requests was changed work in Far's Editor.
-     Now it works alittle diffent: You must use
+     Now it works a little different: You must use
      macroses Alt=, AltH, AltO, AltB - of course, you can
      reassign them.
    Also shortcut keys was added.
@@ -218,7 +218,7 @@
 
 --== Ver 2.05 ==--
 
-   History is avaiable now - Ctrl-Down.
+   History is available now - Ctrl-Down.
    Sign function.
    Suffix output while pressing Enter.
    Syffixes Kb Mb Gb Tb - Translation to Kilo, Mega,

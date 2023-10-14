@@ -10,12 +10,12 @@
 #include <errno.h>
 #include <termios.h>
 
-static volatile int s_group_signal_propogated = -1;
+static volatile int s_group_signal_propagated = -1;
 
-static void SignalPropogatorHandler(int sig)
+static void SignalPropagatorHandler(int sig)
 {
-	if (s_group_signal_propogated != sig) {
-		s_group_signal_propogated = sig;
+	if (s_group_signal_propagated != sig) {
+		s_group_signal_propagated = sig;
 		killpg(0, sig);
 	}
 	if (sig == SIGTERM) {
@@ -23,12 +23,12 @@ static void SignalPropogatorHandler(int sig)
 	}
 }
 
-static void SetupSignalHandlers(bool propogation)
+static void SetupSignalHandlers(bool propagation)
 {
-	signal(SIGHUP, propogation ? SignalPropogatorHandler : SIG_DFL);
-	signal(SIGINT, propogation ? SignalPropogatorHandler : SIG_DFL);
-	signal(SIGQUIT, propogation ? SignalPropogatorHandler : SIG_DFL);
-	signal(SIGTERM, propogation ? SignalPropogatorHandler : SIG_DFL);
+	signal(SIGHUP, propagation ? SignalPropagatorHandler : SIG_DFL);
+	signal(SIGINT, propagation ? SignalPropagatorHandler : SIG_DFL);
+	signal(SIGQUIT, propagation ? SignalPropagatorHandler : SIG_DFL);
+	signal(SIGTERM, propagation ? SignalPropagatorHandler : SIG_DFL);
 	signal(SIGPIPE, SIG_DFL);
 	signal(SIGCHLD, SIG_DFL);
 	signal(SIGSTOP, SIG_DFL);

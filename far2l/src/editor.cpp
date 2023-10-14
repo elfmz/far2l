@@ -2990,7 +2990,7 @@ void Editor::InsertString()
 	/*
 		$ 10.08.2000 skv
 		There is only one return - if new will fail.
-		In this case things are realy bad.
+		In this case things are really bad.
 		Move TextChanged to the end of functions
 		AFTER all modifications are made.
 	*/

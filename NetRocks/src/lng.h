@@ -198,7 +198,7 @@ enum LanguageID
 	MBackgroundTasksMenuPaused,
 	MBackgroundTasksMenuComplete,
 	MBackgroundTasksMenuAborted,
-	MNoBackgrundTasks,
+	MNoBackgroundTasks,
 
 	MConfirmExitFARTitle,
 	MConfirmExitFARText,

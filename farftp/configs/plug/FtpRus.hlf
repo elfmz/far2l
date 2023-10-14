@@ -1635,7 +1635,7 @@ $ #Высокоуровневые FTP команды#
 
   #recv <remote> [<local>]#
   #get <remote> [<local>]#
-    Download file from ftp. If local file name ommited the name of remote file will be used.
+    Download file from ftp. If local file name omitted the name of remote file will be used.
 
   #reget <remote> [<local>]#
     Resume downloading <remote> to <local> file starting from <local> file size.

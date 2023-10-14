@@ -67,7 +67,7 @@ namespace ttmath
 	x = [+|-]Value[operator[+|-]Value][operator[+|-]Value]...
 	where:
 		an operator can be:
-			^ (pow)   (the heighest priority)
+			^ (pow)   (the highest priority)
 
 			* (mul)   (or multiplication without an operator -- short mul)
 			/ (div)   (* and / have the same priority)
@@ -324,7 +324,7 @@ ErrorCode error;
 
 /*!
 	pointer to the currently reading char
-	when an error has occured it may be used to count the index of the wrong character
+	when an error has occurred it may be used to count the index of the wrong character
 */
 const char * pstring;
 
@@ -668,7 +668,7 @@ private:
 
 	'sindex' is pointing on the first argument on our stack 
 			 (the second argument has 'sindex+2'
-			 because 'sindex+1' is guaranted for the 'semicolon' operator)
+			 because 'sindex+1' is guaranteed for the 'semicolon' operator)
 			 the third artument has of course 'sindex+4' etc.
 
 	'result' will be the result of the function
@@ -1497,7 +1497,7 @@ return true;
 					 (function must check whether this is a correct value or not)
 	sindex         - index of the first argument on the stack (sindex is greater than zero)
   					 if there aren't any arguments on the stack 'sindex' pointing on
-					 a non existend element (after the first bracket)
+                     a non existent element (after the first bracket)
 
 	result will be stored in 'stack[sindex-1].value'
 	(we don't have to set the correct type of this element, it'll be set later)
@@ -1975,7 +1975,7 @@ typename OperatorsTable::iterator iter_old, iter_new;
 		
 		if( iter_new == operators_table.end() || !IsSubstring(iter_new->first, oper) )
 		{
-			oper.erase( --oper.end() ); // we've got mininum one element
+			oper.erase( --oper.end() ); // we've got minimum one element
 
 			if( iter_old != operators_table.end() && iter_old->first == oper )
 			{
@@ -2253,7 +2253,7 @@ return code;
 
 	if there aren't any parameters on the stack this method returns
 	'size' equals zero and 'index' pointing after the first bracket
-	(on non-existend element)
+	(on non-existent element)
 */
 void HowManyParameters(int & size, int & index)
 {
@@ -2338,7 +2338,7 @@ int index;
 	else
 	{
 		/*
-			there was a normal bracket (not a funcion)
+			there was a normal bracket (not a function)
 		*/
 		if( amount_of_parameters != 1 )
 			Error( err_unexpected_semicolon_operator );
@@ -2413,7 +2413,7 @@ return 0;
 
 
 /*!
-	we check wheter there are only numerical value's or 'semicolon' operators on the stack
+	we check whether there are only numerical value's or 'semicolon' operators on the stack
 */
 void CheckIntegrityOfStack()
 {

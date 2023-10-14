@@ -89,8 +89,8 @@ private:
 	ListNode *topOfStack;
 
 public:
-	CallBackStack() { topOfStack = nullptr; };
-	~CallBackStack() { ClearStack(); };
+	CallBackStack() { topOfStack = nullptr; }
+	~CallBackStack() { ClearStack(); }
 
 public:
 	void ClearStack();
@@ -356,7 +356,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 		RepeatLastLine = FALSE;
 
-		// заменим табулятор по всем праивилам
+		// заменим табулятор по всем правилам
 		ReplaceTabsBySpaces(strReadStr, CtrlTabSize);
 		RemoveTrailingSpaces(strReadStr);
 

@@ -133,7 +133,7 @@ public:
 
 
 	/*!
-		returning the string represents the currect type of the library
+		returning the string represents the current type of the library
 		we have following types:
 		  asm_vc_32   - with asm code designed for Microsoft Visual C++ (32 bits)
 		  asm_gcc_32  - with asm code designed for GCC (32 bits)
@@ -149,7 +149,7 @@ public:
 
 
 	/*!
-		returning the currect type of the library
+		returning the current type of the library
 	*/
 	static LibTypeCode LibType()
 	{
@@ -1490,7 +1490,7 @@ public:
 
 		e.g.
 		 12.6 mod  3 =  0.6   because  12.6 = 3*4 + 0.6
-		-12.6 mod  3 = -0.6   bacause -12.6 = 3*(-4) + (-0.6)
+		-12.6 mod  3 = -0.6   because -12.6 = 3*(-4) + (-0.6)
 		 12.6 mod -3 =  0.6
 		-12.6 mod -3 = -0.6
 
@@ -3663,7 +3663,7 @@ public:
 		output:
 			return value:
 			0 - ok and 'result' will be an object of type std::string (or std::wstring) which holds the value
-			1 - if there is a carry (it shoudn't be in a normal situation - if it is that means there
+			1 - if there is a carry (it shouldn't be in a normal situation - if it is that means there
 			    is somewhere an error in the library)
 	*/
 	uint ToString(	std::string & result,
@@ -3987,7 +3987,7 @@ private:
 		{
 			// in very rare cases there can be an overflow from ToString_CreateNewMantissaTryExponent
 			// it means that new_exp_ was too small (the problem comes from floating point numbers precision)
-			// so we increse new_exp_ and try again
+			// so we increase new_exp_ and try again
 			new_exp_.AddOne();
 			c += ToString_CreateNewMantissaTryExponent<string_type, char_type>(new_man, conv, new_exp_, new_exp);
 		}
@@ -4509,7 +4509,7 @@ private:
 	/*!
 		an auxiliary method for converting into the string
 
-		this method addes one into the new mantissa
+		this method adds one into the new mantissa
 	*/
 	template<class string_type, class char_type>
 	void ToString_RoundMantissa_AddOneIntoMantissa(string_type & new_man, const Conv & conv) const
@@ -5922,7 +5922,7 @@ public:
 private:
 
 	/*!
-		an auxiliary method for outputing to standard streams
+		an auxiliary method for outputting to standard streams
 	*/
 	template<class ostream_type, class string_type>
 	static ostream_type & OutputToStream(ostream_type & s, const Big<exp,man> & l)
@@ -5978,13 +5978,13 @@ private:
 	bool was_e     = false;
 	
 
-		// operator>> omits white characters if they're set for ommiting
+		// operator>> omits white characters if they're set for omitting
 		s >> z;
 
 		if( z=='-' || z=='+' )
 		{
 			ss += z;
-			s >> z; // we're reading a next character (white characters can be ommited)
+			s >> z; // we're reading a next character (white characters can be omitted)
 		}
 		
 		old_z = 0;

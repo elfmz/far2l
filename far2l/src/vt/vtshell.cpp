@@ -556,10 +556,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 						try {
 							stk_ser.FromBase64(str + 6, strlen(str + 6));
 							id = stk_ser.PopU8();
-							_far2l_exts->OnInterract(stk_ser);
+							_far2l_exts->OnInteract(stk_ser);
 
 						} catch (std::exception &e) {
-							fprintf(stderr, "_far2l_exts->OnInterract: %s\n", e.what());
+							fprintf(stderr, "_far2l_exts->OnInteract: %s\n", e.what());
 							stk_ser.Clear();
 						}
 

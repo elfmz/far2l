@@ -228,7 +228,7 @@
 "WSANO_DATA: Valid name, no data record of requested type"
 "WSANO_ADDRESS: No address, look for MX record"
 
-"Operation successed"
+"Operation succeeded"
 "Unknown socket error"
 "Windows socket error"
 "Keepalive..."

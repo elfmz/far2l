@@ -90,7 +90,7 @@ public:
 		HelpStr = nullptr;
 		if (HStr)
 			HelpStr = wcsdup(HStr);
-	};
+	}
 
 	const HelpRecord &operator=(const HelpRecord &rhs)
 	{
@@ -100,11 +100,11 @@ public:
 		}
 
 		return *this;
-	};
+	}
 
-	bool operator==(const HelpRecord &rhs) const { return !StrCmpI(HelpStr, rhs.HelpStr); };
+	bool operator==(const HelpRecord &rhs) const { return !StrCmpI(HelpStr, rhs.HelpStr); }
 
-	int operator<(const HelpRecord &rhs) const { return StrCmpI(HelpStr, rhs.HelpStr) < 0; };
+	int operator<(const HelpRecord &rhs) const { return StrCmpI(HelpStr, rhs.HelpStr) < 0; }
 
 	~HelpRecord() { free(HelpStr); }
 };

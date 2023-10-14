@@ -72,7 +72,9 @@ add_executable (NetRocks-SHELL
     src/Protocol/SHELL/ProtocolSHELL_ExecCmd.cpp
     src/Protocol/SHELL/WayToShellConfig.cpp
     src/Protocol/SHELL/WayToShell.cpp
+    src/Protocol/SHELL/Request.cpp
     src/Protocol/SHELL/Parse.cpp
+    src/Protocol/SHELL/RemoteSh.cpp
     src/Protocol/ShellParseUtils.cpp
 )
 

@@ -260,7 +260,7 @@ $ # FAR2L: command line switches#
 
   #--tty#
   Runs far2l with ~TTY backend~@UIBackends@ instead of autodetecting GUI/TTY mode. While GUI
-backed is preferred from user experience point of view, sometimes it may be neccessary
+backed is preferred from user experience point of view, sometimes it may be necessary
 to avoid attempt to use GUI mode.
 
   #--notty#
@@ -353,7 +353,7 @@ active panel, the second path - to the passive one:
   - ^<wrap>if a folder or archive is specified, FAR2L will show its contents;
   - ^<wrap>if a file is specified, FAR2L will change to the folder where it
 resides and place the cursor on the file, if it exists;
-  - ^<wrap>when profixes specified (simultaneous use with common paths allowed)
+  - ^<wrap>when prefixes specified (simultaneous use with common paths allowed)
 passive command executes first (passive panel activates temporary). Односимвольные префиксы игнорируются.
   Example: far ma:c:\\Far20.7z "macro:post MsgBox(\\"FAR2L\\",\\"Successfully started\\")"
 
@@ -1478,7 +1478,7 @@ built-in viewer and editor capabilities. You can also open history viewer by scr
 it and everything in shell by pressing #Ctrl+Alt+C#. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
 or lost of unsaved data in killed applications. If far2l works in TTY backend then you can also use #Ctrl+Alt+Z# to put far2l instance to background, releasing terminal but leaving active command execution.
     #Hotkeys and scrolling when NOT running command:# while #Ctrl+Shift+F3/F4# still functioning in such mode you can also use simple #F3/F4# to get history
-opened in viewer/editor respecively. Also you can press #F8# key to cleanup history and screen. You can switch between panels and terminal by pressing #Ctrl+O#
+opened in viewer/editor respectively. Also you can press #F8# key to cleanup history and screen. You can switch between panels and terminal by pressing #Ctrl+O#
 or clicking top left corner.
     #FAR2L terminal extensions# while FAR2L itself is TUI application, it may run in ~GUI or TTY backends modes~@UIBackends@. While TTY backend may function in usual
 terminal like xterm or SSH session but it may also run inside of terminal of GUI-mode far2l gaining capabilities inachievable under 'usual' terminals,
@@ -1538,7 +1538,7 @@ identical to GUI backend (if terminal hosted by GUI far2l).
 
     If you want to run far2l remotely with best UX its recommended to run it within NetRocks
 connection that allows to use TTY|F backend. If this is not wanted for some reason - you also may
-consider running over ssh session with trusted X forwading and compression (ssh -Y -C ...) that
+consider running over ssh session with trusted X forwarding and compression (ssh -Y -C ...) that
 allows using TTY|Xi or at least TTY|X backend. However its highly recommended to
 #do not use trusted X forwarding when connecting to untrusted servers#,
 because X forwarding opens uncontrollable ability for remote code
@@ -1556,7 +1556,7 @@ following operations:
 
     - overwrite destination files when performing file moving;
 
-    - overwrite and delete files with "read only" arrtibute;
+    - overwrite and delete files with "read only" attribute;
 
     - ~drag and drop~@DragAndDrop@ files;
 
@@ -2541,7 +2541,7 @@ including the following variables:
   - #%Backend# - FAR2L UI backend;
   - #%Host# - host name of the machine where FAR2L is running;
   - #%User# - user name under wich FAR2L is running;
-  - #%Admin# - name "Root", if FAR2L runs under root priviledges, otherwise - empty string.
+  - #%Admin# - name "Root", if FAR2L runs under root privileges, otherwise - empty string.
 
 @InputSettings
 $ #Settings dialog: input#
@@ -2556,7 +2556,7 @@ to latin and vice-verse, that subsequentially used in #fast file find by Alt+FIL
 
   #Exclusively handle hotkeys that include#
   This options allows to choose control keys using which in hotkey combination
-will cause FAR2L to capture keyboard input exclusively, thus preventins other
+will cause FAR2L to capture keyboard input exclusively, thus preventing other
 application from interfering with FAR2L hotkeys that contains such control key.
 Note that this options works only in GUI backend mode.
 
@@ -2682,7 +2682,7 @@ $ #Настройка информационной панели#
       ^<wrap>ADCN (Active Directory Canonical Name) - данный формат является путем в иерархической структуре к объекту (логину), например,
       engineering.widget.com/software/JohnDoe
     #Основное имя пользователя#
-      ^<wrap>UPN (User Principial Name) - известен так же как адрес электронной почты, например,
+      ^<wrap>UPN (User Principal Name) - известен так же как адрес электронной почты, например,
       someone@example.com
     #Service Principal#
       www/srv.engineering.com/engineering.com
@@ -2837,7 +2837,7 @@ $ #Viewer: control keys#
     Here user may temporarily filter currently viewed file content using #UNIX grep# tool pattern matching.
     You may specify pattern to match (or several patterns separated by #\|# - as in usual grep) and/or
 pattern that will be excluded from output.
-    Optionally its possible to see specified #lines amount before or after matched region#, as well as
+    Optionally it's possible to see specified #lines amount before or after matched region#, as well as
 use #case sensitive# matching or match #whole words# instead of plain substring.
 
 @ViewerGotoPos
@@ -3207,7 +3207,7 @@ file panel if you chosen filesystem location, or selected Plugin panel will be o
 
      - to delete a bookmark.
 
-    The #Shift-Del# hotkey can be used to force-unmount filesystem that requires root priviledges.
+    The #Shift-Del# hotkey can be used to force-unmount filesystem that requires root privileges.
 
     #Ctrl-1# - #Ctrl-9# switch the display of different information:
 
@@ -3239,7 +3239,7 @@ will be appended to mountpoints entries. For that you need to create text file u
 path #~~/.config/far2l/favorites# and that file must contain lines, each line can have
 one or two or three parts separated by <TAB> character. First part represent path,
 second and third parts are optional and represent information rendered in additional
-columns. Its possible to insert separator with optional title by specifing line
+columns. It's possible to insert separator with optional title by specifying line
 with first part having only '-' character and another part (if present) defining
 title text.
 Note that favorites file can contain shell environment variables denoted with $
@@ -3490,7 +3490,7 @@ $ #Settings dialog: editor#
   #code page#               the file being edited.
 
   #Choose default#          Code page for new files,
-  #code page#               ususally UTF-8.
+  #code page#               usually UTF-8.
 
     If the external editor is assigned to #F4# key, it will be executed only if
 ~associated~@FileAssoc@ editor for the current file type is not defined.
@@ -3985,7 +3985,7 @@ Potential downside includes higher file fragmentation if such regions will be ov
 with normal data in the future.
 
     If #Use copy-on-write# is enabled, then copy routine will use special kernel API
-that copies files in a way, so copied files refer orginal files data and will be really
+that copies files in a way, so copied files refer original files data and will be really
 copied only when that data will be modified in any of files. Note that this functionality
 requires Linux kernel v4.5+ or MacOS 10.12+ and any FS that supports COW files otherwise
 files will be silently copied using conventional way. If being in use this option greatly
@@ -4363,7 +4363,7 @@ happens, which is rather expensive).
 "AZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", #.*# captures the whole string, and then
 rolls back symbol by symbol until it finds Z. On the opposite, if the expression
 is "A.*?Z" then Z is found at once. Not greedy quantifier is also known as
-#mininizing#, it captures minimal possible quantity of symbols, and only if
+#minimizing#, it captures minimal possible quantity of symbols, and only if
 further match fails it captures more.
 
     #Special symbols#
@@ -4550,13 +4550,13 @@ $ #Change location configuration#
     This dialog can be opened by pressing F9 key in Location menu opened by Alt+F1/F2.
     Here you can choose specific kind of items to be included in change Location
 menu: #mountpoints#, #bookmarks# and #plugins#.
-    Also you can customize mountpoints items by specifing wildcards exceptions
+    Also you can customize mountpoints items by specifying wildcards exceptions
 and changing templates of what should be included into additional columns.
     Following abbreviations can be used there to represent values:
     #$T# - total disk space
     #$U# - used disk space
     #$F# - free disk space
-    #$A# - disk space available for non-priviledged user
+    #$A# - disk space available for non-privileged user
     #$u# - percents space used of total
     #$f# - percents space free of total
     #$a# - percents space available of total

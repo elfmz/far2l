@@ -6,6 +6,7 @@
 #include <utime.h>
 #include <dirent.h>
 #include <limits.h>
+#include "Erroring.h"
 
 #ifdef __APPLE__
 	#include <sys/mount.h>
@@ -23,6 +24,7 @@
 #include <CheckedCast.hpp>
 #include <utils.h>
 #include "HostLocal.h"
+#include "../../WinPort/WinCompat.h"
 
 #ifdef NETROCKS_PROTOCOL
 # include <utimens_compat.h>

@@ -350,15 +350,15 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 		_openssl_ctx = std::make_shared<OpenSSLContext>(_protocol_options);
 
 	} else if (_protocol_options.GetInt("ExplicitEncryption", 0)) {
-		unsigned int banner_code = RecvResponceFromTransport(str);
-		FTPThrowIfBadResponce(str, banner_code, 200, 299);
+		unsigned int banner_code = RecvResponseFromTransport(str);
+		FTPThrowIfBadResponse(str, banner_code, 200, 299);
 
 		str = "AUTH TLS";
-		unsigned int reply_code = SendRecvResponce(str);
+		unsigned int reply_code = SendRecvResponse(str);
 		if (reply_code != 234) {
 			if (_protocol_options.GetInt("EncryptionProtocol", 3) < 3) {
 				str = "AUTH SSL";
-				reply_code = SendRecvResponce(str);
+				reply_code = SendRecvResponse(str);
 				if (reply_code == 234) {
 					fprintf(stderr, "FTPConnection: AUTH SSL\n");
 				}
@@ -386,8 +386,8 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 	}
 
 	if (!_openssl_ctx || implicit_encryption) {
-		unsigned int banner_code = RecvResponceFromTransport(str);
-		FTPThrowIfBadResponce(str, banner_code, 200, 299);
+		unsigned int banner_code = RecvResponseFromTransport(str);
+		FTPThrowIfBadResponse(str, banner_code, 200, 299);
 	}
 
 #else
@@ -412,8 +412,8 @@ bool FTPConnection::EnableDataConnectionProtection()
 
 	std::string str_pbsz, str_prot;
 
-	unsigned int code_pbsz = RecvResponce(str_pbsz);
-	unsigned int code_prot = RecvResponce(str_prot);
+	unsigned int code_pbsz = RecvResponse(str_pbsz);
+	unsigned int code_prot = RecvResponse(str_prot);
 
 	if (code_pbsz != 200) {
 		fprintf(stderr, "FTPConnection::EnableDataConnectionProtection: <PBSZ 0> - '%s'\n", str_pbsz.c_str());
@@ -429,7 +429,7 @@ bool FTPConnection::EnableDataConnectionProtection()
 	return true;
 }
 
-unsigned int FTPConnection::RecvResponceFromTransport(std::string &str)
+unsigned int FTPConnection::RecvResponseFromTransport(std::string &str)
 {
 	char match[4];
 	str.clear();
@@ -437,11 +437,11 @@ unsigned int FTPConnection::RecvResponceFromTransport(std::string &str)
 		char ch;
 		do {
 			if (str.size() > 0x100000) {
-				throw std::runtime_error("too long responce");
+				throw std::runtime_error("too long response");
 			}
 			ssize_t r = _transport->Recv(&ch, sizeof(ch));
 			if (r <= 0) {
-				throw std::runtime_error(StrPrintf("read responce error %d", errno));
+				throw std::runtime_error(StrPrintf("read response error %d", errno));
 			}
 			str+= ch;
 		} while (ch != '\n');
@@ -472,51 +472,51 @@ void FTPConnection::BatchPerform()
 	}
 
 	if (_batch.pipelining && _batch.requests.size() > 1) {
-		//_batch.responces.reserve(_batch.responces.size() + _batch.requests.size());
+		//_batch.responses.reserve(_batch.responses.size() + _batch.requests.size());
 		_str.clear();
 		for (const auto &r : _batch.requests) {
 			_str+= r;
 		}
 		_transport->Send(_str.c_str(), _str.size());
 		for (size_t i = _batch.requests.size(); i != 0; --i) {
-			_batch.responces.emplace_back();
-			_batch.responces.back().code = RecvResponceFromTransport(_batch.responces.back().str);
+			_batch.responses.emplace_back();
+			_batch.responses.back().code = RecvResponseFromTransport(_batch.responses.back().str);
 		}
 
 	} else {
 		for (const auto &r : _batch.requests) {
 			_transport->Send(r.c_str(), r.size());
-			_batch.responces.emplace_back();
-			_batch.responces.back().code = RecvResponceFromTransport(_batch.responces.back().str);
+			_batch.responses.emplace_back();
+			_batch.responses.back().code = RecvResponseFromTransport(_batch.responses.back().str);
 		}
 	}
 
 	_batch.requests.clear();
 }
 
-unsigned int FTPConnection::SendRecvResponce(std::string &str)
+unsigned int FTPConnection::SendRecvResponse(std::string &str)
 {
 	if (g_netrocks_verbosity > 1) {
-		fprintf(stderr, "FTPConnection::SendRecvResponce('%s')\n", str.c_str());
+		fprintf(stderr, "FTPConnection::SendRecvResponse('%s')\n", str.c_str());
 		for (const auto &r : _batch.requests) {
-			fprintf(stderr, "FTPConnection::SendRecvResponce: pending request '%s'\n", r.c_str());
+			fprintf(stderr, "FTPConnection::SendRecvResponse: pending request '%s'\n", r.c_str());
 		}
-		for (const auto &r : _batch.responces) {
-			fprintf(stderr, "FTPConnection::SendRecvResponce: pending responce '%s'\n", r.str.c_str());
+		for (const auto &r : _batch.responses) {
+			fprintf(stderr, "FTPConnection::SendRecvResponse: pending response '%s'\n", r.str.c_str());
 		}
 	}
 
-	if (!_batch.requests.empty() || !_batch.responces.empty()) {
-		throw std::runtime_error("FTPConnection::SendRecvResponce while batch not empty");
+	if (!_batch.requests.empty() || !_batch.responses.empty()) {
+		throw std::runtime_error("FTPConnection::SendRecvResponse while batch not empty");
 	}
 
 	str+= FTP_ENDLINE;
 	_transport->Send(str.c_str(), str.size());
 
-	unsigned int reply_code = RecvResponceFromTransport(str);
+	unsigned int reply_code = RecvResponseFromTransport(str);
 
 	if (g_netrocks_verbosity > 1) {
-		fprintf(stderr, "FTPConnection::SendRecvResponce: responce '%s'\n", str.c_str());
+		fprintf(stderr, "FTPConnection::SendRecvResponse: response '%s'\n", str.c_str());
 	}
 
 	return reply_code;
@@ -532,41 +532,41 @@ void FTPConnection::SendRequest(const std::string &str)
 	}
 }
 
-unsigned int FTPConnection::RecvResponce(std::string &str)
+unsigned int FTPConnection::RecvResponse(std::string &str)
 {
 	BatchPerform();
-	if (_batch.responces.empty()) {
-		throw std::runtime_error("FTPConnection::RecvResponce: batch is empty");
+	if (_batch.responses.empty()) {
+		throw std::runtime_error("FTPConnection::RecvResponse: batch is empty");
 	}
 
-	str.swap(_batch.responces.front().str);
-	unsigned int reply_code = _batch.responces.front().code;
-	_batch.responces.pop_front();
+	str.swap(_batch.responses.front().str);
+	unsigned int reply_code = _batch.responses.front().code;
+	_batch.responses.pop_front();
 
 	if (g_netrocks_verbosity > 1) {
-		fprintf(stderr, "FTPConnection::RecvResponce: %s\n", str.c_str());
+		fprintf(stderr, "FTPConnection::RecvResponse: %s\n", str.c_str());
 	}
 
 	return reply_code;
 }
 
-void FTPConnection::RecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
+void FTPConnection::RecvResponse(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
 {
-	unsigned int reply_code = RecvResponce(str);
-	FTPThrowIfBadResponce(str, reply_code, reply_ok_min, reply_ok_max);
+	unsigned int reply_code = RecvResponse(str);
+	FTPThrowIfBadResponse(str, reply_code, reply_ok_min, reply_ok_max);
 }
 
-void FTPConnection::SendRecvResponce(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
+void FTPConnection::SendRecvResponse(std::string &str, unsigned int reply_ok_min, unsigned int reply_ok_max)
 {
-	unsigned int reply_code = SendRecvResponce(str);
-	FTPThrowIfBadResponce(str, reply_code, reply_ok_min, reply_ok_max);
+	unsigned int reply_code = SendRecvResponse(str);
+	FTPThrowIfBadResponse(str, reply_code, reply_ok_min, reply_ok_max);
 }
 
 void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 {
 	if (rest != 0) {
 		std::string str = StrPrintf("REST %lld", rest);
-		unsigned int reply_code = SendRecvResponce(str);
+		unsigned int reply_code = SendRecvResponse(str);
 		if (reply_code < 300 || reply_code >= 400) {
 			throw ProtocolError(StrPrintf(
 				"REST %lld rejected: %u '%s'",
@@ -578,7 +578,7 @@ void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
 {
 	std::string str = "PASV";
-	SendRecvResponce(str, 200, 299);
+	SendRecvResponse(str, 200, 299);
 
 	size_t p = str.find('(');
 	if (p == std::string::npos) {
@@ -602,9 +602,9 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 	data_transport = std::make_shared<SocketTransport>(sin, _protocol_options);
 
 	str = cmd;
-	SendRecvResponce(str, 100, 199);
-//	unsigned int reply_code = RecvResponceFromTransport(str);
-//	FTPThrowIfBadResponce(str, reply_code, 100, 199);
+	SendRecvResponse(str, 100, 199);
+//	unsigned int reply_code = RecvResponseFromTransport(str);
+//	FTPThrowIfBadResponse(str, reply_code, 100, 199);
 }
 
 void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
@@ -637,12 +637,12 @@ void FTPConnection::DataCommand_PORT(std::shared_ptr<BaseTransport> &data_transp
 		(unsigned int)(unsigned char)sa.sa_data[4], (unsigned int)(unsigned char)sa.sa_data[5],
 		(unsigned int)(unsigned char)sa.sa_data[0], (unsigned int)(unsigned char)sa.sa_data[1]);
 
-	SendRecvResponce(str, 200, 299);
+	SendRecvResponse(str, 200, 299);
 
 	SendRestIfNeeded(rest);
 
 	str = cmd;
-	SendRecvResponce(str, 100, 199);
+	SendRecvResponse(str, 100, 199);
 
 	for (;;) {
 		l = sizeof(sin);

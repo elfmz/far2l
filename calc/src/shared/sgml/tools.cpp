@@ -12,7 +12,7 @@ bool inline isspace(wchar_t c)
   if (c==0x20 || c=='\t' || c=='\r' || c=='\n') return true;
   return false;
 };
-//  modifed GetNumber - sign extension!
+//  modified GetNumber - sign extension!
 bool get_number(wchar_t *str, double *res)
 {
 double Numr, r, flt;

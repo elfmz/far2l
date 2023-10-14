@@ -149,7 +149,7 @@ static inline int cmp_names(const WIN32_FIND_DATA &wfd, const FAR_FIND_DATA &ffd
 int TmpPanel::PutDirectoryContents(const TCHAR *Path)
 {
 	if (Opt.SelectedCopyContents == 2) {
-		const TCHAR *MsgItems[] = {GetMsg(MWarning), GetMsg(MCopyContensMsg)};
+		const TCHAR *MsgItems[] = {GetMsg(MWarning), GetMsg(MCopyContentsMsg)};
 		Opt.SelectedCopyContents = !Info.Message(Info.ModuleNumber, FMSG_MB_YESNO, _T("Config"), MsgItems,
 				ARRAYSIZE(MsgItems), 0);
 	}

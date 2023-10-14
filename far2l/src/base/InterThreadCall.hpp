@@ -11,7 +11,7 @@ struct IInterThreadCallDelegate
 	virtual void Finalize(bool discarded) = 0;
 };
 
-// similar to Windows GetCurrentThreadId() but with ability to be overriden
+// similar to Windows GetCurrentThreadId() but with ability to be overridden
 unsigned int GetInterThreadID();
 
 // to be used in cases where two specific threads are known-sure

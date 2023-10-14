@@ -5850,7 +5850,7 @@ enum MACROSETTINGSDLG
 	MS_TEXT_SEQUENCE,
 	MS_EDIT_SEQUENCE,
 	MS_SEPARATOR1,
-	MS_CHECKBOX_OUPUT,
+	MS_CHECKBOX_OUTPUT,
 	MS_CHECKBOX_START,
 	MS_SEPARATOR2,
 	MS_CHECKBOX_A_PANEL,
@@ -5963,7 +5963,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 	MacroSettingsDlg[MS_DOUBLEBOX].strData.Format(Msg::MacroSettingsTitle, strKeyText.CPtr());
 	// if(!(Key&0x7F000000))
 	// MacroSettingsDlg[3].Flags|=DIF_DISABLE;
-	MacroSettingsDlg[MS_CHECKBOX_OUPUT].Selected = Flags & MFLAGS_DISABLEOUTPUT ? 0 : 1;
+	MacroSettingsDlg[MS_CHECKBOX_OUTPUT].Selected = Flags & MFLAGS_DISABLEOUTPUT ? 0 : 1;
 	MacroSettingsDlg[MS_CHECKBOX_START].Selected = Flags & MFLAGS_RUNAFTERFARSTART ? 1 : 0;
 	MacroSettingsDlg[MS_CHECKBOX_A_PLUGINPANEL].Selected =
 			Set3State(Flags, MFLAGS_NOFILEPANELS, MFLAGS_NOPLUGINPANELS);
@@ -5994,7 +5994,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 	if (Dlg.GetExitCode() != MS_BUTTON_OK)
 		return FALSE;
 
-	Flags = MacroSettingsDlg[MS_CHECKBOX_OUPUT].Selected ? 0 : MFLAGS_DISABLEOUTPUT;
+	Flags = MacroSettingsDlg[MS_CHECKBOX_OUTPUT].Selected ? 0 : MFLAGS_DISABLEOUTPUT;
 	Flags|= MacroSettingsDlg[MS_CHECKBOX_START].Selected ? MFLAGS_RUNAFTERFARSTART : 0;
 
 	if (MacroSettingsDlg[MS_CHECKBOX_A_PANEL].Selected) {
@@ -6240,23 +6240,23 @@ int KeyMacro::PopState()
 // Функция получения индекса нужного макроса в массиве
 // Ret=-1 - не найден таковой.
 // если CheckMode=-1 - значит пофигу в каком режиме, т.е. первый попавшийся
-int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
+int KeyMacro::GetIndex(uint32_t Key, int CheckMode, bool UseCommon)
 {
 	if (MacroLIB) {
 		for (int I = 0;; ++I) {
 			int Pos, Len;
 			MacroRecord *MPtr = nullptr;
 
-			if (ChechMode == -1) {
+			if (CheckMode == -1) {
 				Len = MacroLIBCount;
 				MPtr = MacroLIB;
-			} else if (ChechMode >= 0 && ChechMode < MACRO_LAST) {
-				Len = IndexMode[ChechMode][1];
+			} else if (CheckMode >= 0 && CheckMode < MACRO_LAST) {
+				Len = IndexMode[CheckMode][1];
 
 				if (Len)
-					MPtr = MacroLIB + IndexMode[ChechMode][0];
+					MPtr = MacroLIB + IndexMode[CheckMode][0];
 
-				//_SVS(SysLog(L"ChechMode=%d (%d,%d)",ChechMode,IndexMode[ChechMode][0],IndexMode[ChechMode][1]));
+				//_SVS(SysLog(L"CheckMode=%d (%d,%d)",CheckMode,IndexMode[CheckMode][0],IndexMode[CheckMode][1]));
 			} else {
 				Len = 0;
 			}
@@ -6266,17 +6266,17 @@ int KeyMacro::GetIndex(uint32_t Key, int ChechMode, bool UseCommon)
 					if (!((MPtr->Key ^ Key) & ~0xFFFFu)
 							&& (Upper(static_cast<WCHAR>(MPtr->Key)) == Upper(static_cast<WCHAR>(Key)))
 							&& (MPtr->BufferSize > 0)) {
-						// && (ChechMode == -1 || (MPtr->Flags&MFLAGS_MODEMASK) == ChechMode))
+						// && (CheckMode == -1 || (MPtr->Flags&MFLAGS_MODEMASK) == CheckMode))
 						//_SVS(SysLog(L"GetIndex: Pos=%d MPtr->Key=0x%08X", Pos,MPtr->Key));
 						if (!(MPtr->Flags & MFLAGS_DISABLEMACRO))
-							return Pos + ((ChechMode >= 0) ? IndexMode[ChechMode][0] : 0);
+							return Pos + ((CheckMode >= 0) ? IndexMode[CheckMode][0] : 0);
 					}
 				}
 			}
 
 			// здесь смотрим на MACRO_COMMON
-			if (I == 0 && ChechMode != -1 && UseCommon)
-				ChechMode = MACRO_COMMON;
+			if (I == 0 && CheckMode != -1 && UseCommon)
+				CheckMode = MACRO_COMMON;
 			else
 				break;
 		}

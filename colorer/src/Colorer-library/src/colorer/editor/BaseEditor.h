@@ -11,7 +11,7 @@
  * Base Editor functionality.
  * This class implements basic functionality,
  * which could be useful in application's editing system.
- * This includes automatic top-level caching of hilighting
+ * This includes automatic top-level caching of highlighting
  * state, outline structure creation, pair constructions search.
  * This class has event-oriented structure. Each editor event
  * is passed into this object and gets internal processing.

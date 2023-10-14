@@ -12,6 +12,7 @@
 #include <map>
 #include <set>
 #include <deque>
+#include <fstream>
 #include <algorithm>
 #include <libssh/libssh.h>
 #include <libssh/ssh2.h>

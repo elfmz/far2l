@@ -13,13 +13,13 @@
 #include "sudo_private.h"
 #include "sudo.h"
 #include "sudo_askpass_ipc.h"
-
+#include "../../WinCompat.h"
 
 namespace Sudo 
 {
 	std::string g_sudo_title = "SUDO request";
 	std::string g_sudo_prompt = "Enter password";
-	std::string g_sudo_confirm = "Confirm priviledged operation";
+	std::string g_sudo_confirm = "Confirm privileged operation";
 
 	static std::mutex s_uds_mutex;
 	static std::unique_ptr<LocalSocketServer> s_uds;
@@ -140,7 +140,7 @@ namespace Sudo
 			// sudo closes all descriptors except std, so put leash[1] into stdin to make it survive
 			dup2(leash[1], STDIN_FILENO);
 
-			// override stdout handle otherise TTY detach doesnt work while sudo client runs
+			// override stdout handle otherwise TTY detach doesnt work while sudo client runs
 			int fd = open("/dev/null", O_RDWR);
 			if (fd != -1) {
 				dup2(fd, STDOUT_FILENO);

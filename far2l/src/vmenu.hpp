@@ -158,6 +158,12 @@ struct MenuItemEx
 
 	MenuItemEx() { Clear(); }
 
+	MenuItemEx(const MenuItemEx &srcMenu)
+	{
+		Clear();
+		operator=(srcMenu);
+	}
+
 	// UserData не копируется.
 	const MenuItemEx &operator=(const MenuItemEx &srcMenu)
 	{
@@ -347,8 +353,8 @@ public:
 	int FindItem(const FarListFind *FindItem);
 	int FindItem(int StartIndex, const wchar_t *Pattern, DWORD Flags = 0);
 
-	int GetItemCount() { return ItemCount; };
-	int GetShowItemCount() { return ItemCount - ItemHiddenCount; };
+	int GetItemCount() { return ItemCount; }
+	int GetShowItemCount() { return ItemCount - ItemHiddenCount; }
 	int GetVisualPos(int Pos);
 	int VisualPosToReal(int VPos);
 
@@ -372,15 +378,15 @@ public:
 	void SortItems(int Direction = 0, int Offset = 0, BOOL SortForDataDWORD = FALSE);
 	BOOL GetVMenuInfo(struct FarListInfo *Info);
 
-	virtual const wchar_t *GetTypeName() { return L"[VMenu]"; };
+	virtual const wchar_t *GetTypeName() { return L"[VMenu]"; }
 	virtual int GetTypeAndName(FARString &strType, FARString &strName);
 
 	virtual int GetType() { return CheckFlags(VMENU_COMBOBOX) ? MODALTYPE_COMBOBOX : MODALTYPE_VMENU; }
 
 	void SetMaxHeight(int NewMaxHeight);
 
-	int GetVDialogItemID() const { return DialogItemID; };
-	void SetVDialogItemID(int NewDialogItemID) { DialogItemID = NewDialogItemID; };
+	int GetVDialogItemID() const { return DialogItemID; }
+	void SetVDialogItemID(int NewDialogItemID) { DialogItemID = NewDialogItemID; }
 
 	static MenuItemEx *FarList2MenuItem(const FarListItem *Item, MenuItemEx *ListItem);
 	static FarListItem *MenuItem2FarList(const MenuItemEx *ListItem, FarListItem *Item);

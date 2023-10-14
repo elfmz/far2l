@@ -30,7 +30,7 @@ struct DialogItemBinding
 		: BeforeLabelID(-1), AfterLabelID(-1)
 	{
 	}
-	
+
 	virtual ~DialogItemBinding()
 	{
 	}
@@ -391,7 +391,7 @@ class DialogBuilderBase
 		{
 			T *Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			Item->X2 = Item->X1 + ItemWidth(*Item);
-			
+
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
 			Item->X1 = RelativeTo->X2 + 2;
 			if (!Mask)
@@ -425,7 +425,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-		virtual T *AddIntEditField(int *Value, int Width)
+		virtual T *AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
 			return nullptr;
 		}
@@ -514,7 +514,7 @@ class DialogBuilderBase
 				SetNextY(Button);
 			}
 			Button->X2 = Button->X1 + 20;//TODO: FIXME: ItemWidth(*Button);
-			
+
 			id = DialogItemsCount - 1;
 			return Button;
 		}

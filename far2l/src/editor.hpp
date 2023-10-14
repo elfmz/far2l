@@ -91,6 +91,18 @@ struct EditorUndoData
 			delete[] Str;
 		}
 	}
+	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
+	{
+		operator=(src);
+	}
+	EditorUndoData& operator=(const EditorUndoData &src)
+	{
+		if (this != &src)
+		{
+			SetData(src.Type, src.Str, src.EOL, src.StrNum, src.StrPos, src.Length);
+		}
+		return *this;
+	}
 	void SetData(int Type, const wchar_t *Str, const wchar_t *Eol, int StrNum, int StrPos, int Length = -1)
 	{
 		if (Length == -1 && Str)

@@ -232,31 +232,31 @@ private:
 
 	/*!
 	*/
-	void SetMultipler(UInt<value_size> & result)
+	void SetMultiplier(UInt<value_size> & result)
 	{
 		// this guardian is initialized before the program runs (static POD type)
 		static int guardian = 0;
-		static UInt<value_size> multipler;
+		static UInt<value_size> multiplier;
 	
 		if( guardian == 0 )
 		{
-			multipler = 10;
-			multipler.Pow(dec_digits);
+			multiplier = 10;
+			multiplier.Pow(dec_digits);
 			guardian = 1;
 		}
 
-		result = multipler;
+		result = multiplier;
 	}
 
 #else
 
 	/*!
 	*/
-	void SetMultipler(UInt<value_size> & result)
+	void SetMultiplier(UInt<value_size> & result)
 	{
 		// this guardian is initialized before the program runs (static POD type)
 		volatile static sig_atomic_t guardian = 0;
-		static UInt<value_size> * pmultipler;
+		static UInt<value_size> * pMultiplier;
 	
 		// double-checked locking
 		if( guardian == 0 )
@@ -266,13 +266,13 @@ private:
 			// locking
 			if( thread_lock.Lock() )
 			{
-				static UInt<value_size> multipler;
+				static UInt<value_size> multiplier;
 
 				if( guardian == 0 )
 				{
-					pmultipler = &multipler;
-					multipler = 10;
-					multipler.Pow(dec_digits);
+					pMultiplier = &multiplier;
+					multiplier = 10;
+					multiplier.Pow(dec_digits);
 					guardian = 1;
 				}
 			}
@@ -288,7 +288,7 @@ private:
 			// automatically unlocking
 		}
 
-		result = *pmultipler;
+		result = *pMultiplier;
 	}
 
 #endif
@@ -301,7 +301,7 @@ private:
 	template<class char_type>
 	uint FromStringBase(const char_type * s, const char_type ** after_source = 0, bool * value_read = 0)
 	{
-		UInt<value_size> multipler;
+		UInt<value_size> multiplier;
 		const char_type * after;
 		uint c = 0;
 		info = 0;
@@ -324,8 +324,8 @@ private:
 		if( after_source )
 			*after_source = after;
 
-		SetMultipler(multipler);
-		c += value.Mul(multipler);
+		SetMultiplier(multiplier);
+		c += value.Mul(multiplier);
 
 		if( *after == '.' )
 			c += FromStringBaseAfterComma(after+1, after_source);
@@ -341,16 +341,16 @@ private:
 	uint FromStringBaseAfterComma(const char_type * s, const char_type ** after_source = 0, bool * value_read = 0)
 	{
 		UInt<value_size> temp;
-		UInt<value_size> multipler;
+		UInt<value_size> multiplier;
 		sint z;
 		uint c = 0;
 		size_t i = dec_digits;
 
-		SetMultipler(multipler);
+		SetMultiplier(multiplier);
 
 		for( ; i>0 && (z=Misc::CharToDigit(*s, 10)) != -1 ; --i, ++s )
 		{
-			multipler.DivInt(10);
+			multiplier.DivInt(10);
 			temp.SetZero();
 
 			if( value_read )
@@ -359,7 +359,7 @@ private:
 			if( c == 0 )
 			{
 				temp.table[0] = z;
-				c += temp.Mul(multipler);
+				c += temp.Mul(multiplier);
 				c += value.Add(temp);
 			}
 		}

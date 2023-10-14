@@ -1642,7 +1642,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 					Size+= parseExpr(BufPtr, dwExprBuff, 0, 0);
 
 					/*
-					// этого пока ненадо, считаем, что ';' идет сразу за функцией, иначе это отдельный символ ';', который нужно поместить в поток
+					// этого пока не надо, считаем, что ';' идет сразу за функцией, иначе это отдельный символ ';', который нужно поместить в поток
 					while ( *BufPtr && (IsSpace(*BufPtr) || IsEol(*BufPtr)) )
 					{
 						if (IsEol(*BufPtr))
@@ -1868,7 +1868,7 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 				memcpy(CurMacro_Buffer + CurMacroBufferSize, dwExprBuff, Size * sizeof(DWORD));
 				CurMacro_Buffer[CurMacroBufferSize + Size - 6] = MCODE_OP_SAVEREPCOUNT;
 				CurMacro_Buffer[CurMacroBufferSize + Size - 5] = KeyCode;
-				CurMacro_Buffer[CurMacroBufferSize + Size - 4] = 0;		// Initilize 0
+				CurMacro_Buffer[CurMacroBufferSize + Size - 4] = 0;		// Initialize 0
 				CurMacro_Buffer[CurMacroBufferSize + Size - 3] = 0;
 				CurMacro_Buffer[CurMacroBufferSize + Size - 2] = MCODE_OP_JZ;
 				break;

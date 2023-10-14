@@ -12,6 +12,7 @@
 #include <os_call.hpp>
 #include <RandomString.h>
 #include "ProtocolSHELL.h"
+#include "Request.h"
 
 // very poor for now
 
@@ -230,7 +231,7 @@ ProtocolSHELL::ExecCmd::ExecCmd(std::shared_ptr<WayToShell> &way, const std::str
 	_fderr = fderr;
 
 	RandomStringAppend(_marker_track.marker, 32, 32, RNDF_ALNUM);
-	way->Send( MultiLineRequest("exec", command_line, working_dir, _marker_track.marker));
+	way->Send( Request("exec ").Add(command_line, '\n').Add(_marker_track.marker, ' ').Add(working_dir, '\n'));
 	_marker_track.marker.insert(0, 1, '\n');
 	_marker_track.marker.append(1, ':');
 

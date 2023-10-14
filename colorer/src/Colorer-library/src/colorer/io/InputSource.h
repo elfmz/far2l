@@ -60,11 +60,11 @@ namespace colorer {
     relatively to the current.
     @param relPath Relative URI part.
     */
-    virtual InputSource *createRelative(const String *relPath){ return nullptr;};
+    virtual InputSource *createRelative(const String *relPath){ return nullptr;}
 
-    virtual ~InputSource(){};
+    virtual ~InputSource(){}
   protected:
-    InputSource(){};
+    InputSource(){}
   };
 
 
@@ -77,9 +77,9 @@ namespace colorer {
     virtual InputSource *nextInput() const = 0;
     virtual const String *getLocation() const = 0;
 
-    virtual ~MultipleInputSource(){};
+    virtual ~MultipleInputSource(){}
   protected:
-    MultipleInputSource(const String *basePath){};
+    MultipleInputSource(const String *basePath){}
   };
 }
 #endif

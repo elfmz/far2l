@@ -167,7 +167,7 @@
   <word name="selectString"/>
   <word name="selectNumber"/>
   <word name="selectBool"/>-->
-  <!-- other methods (we realy need to create it???) -->
+  <!-- other methods (we really need to create it???) -->
  </keywords>
 </scheme>
 

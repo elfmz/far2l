@@ -346,7 +346,7 @@ class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 	}
 
 public:
-	SCPDirectoryEnumer_stat(std::shared_ptr<SSHConnection> &conn, DirectoryEnumerMode dem, size_t count, const std::string *pathes)
+	SCPDirectoryEnumer_stat(std::shared_ptr<SSHConnection> &conn, DirectoryEnumerMode dem, size_t count, const std::string *paths)
 		: SCPDirectoryEnumer(conn)
 	{
 		std::string command_line = "stat --format=\"%n %f %s %X %Y %Z %U %G\" ";
@@ -354,7 +354,7 @@ public:
 			command_line+= "-L ";
 
 		for (size_t i = 0; i < count; ++i) {
-			const std::string &path_arg = QuotedArg(EnsureNoSlashAtNestedEnd(pathes[i]));
+			const std::string &path_arg = QuotedArg(EnsureNoSlashAtNestedEnd(paths[i]));
 			command_line+= path_arg;
 			if (dem == DEM_LIST) {
 				command_line+= "/.* ";
@@ -418,7 +418,7 @@ crw-------    1 root     root        3, 144 Jan  1  1970 ttyy0
 	}
 
 public:
-	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, const SCPQuirks &quirks, DirectoryEnumerMode dem, size_t count, const std::string *pathes, const struct timespec &now)
+	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, const SCPQuirks &quirks, DirectoryEnumerMode dem, size_t count, const std::string *paths, const struct timespec &now)
 		: SCPDirectoryEnumer(conn), _now(now)
 	{
 		std::string command_line = "LC_TIME=C LS_COLORS= ls ";
@@ -434,7 +434,7 @@ public:
 			command_line+= "-H ";
 
 		for (size_t i = 0; i < count; ++i) {
-			command_line+= QuotedArg(EnsureNoSlashAtNestedEnd(pathes[i]));
+			command_line+= QuotedArg(EnsureNoSlashAtNestedEnd(paths[i]));
 			command_line+= ' ';
 		}
 //		command_line+= "2>/dev/null";
@@ -523,7 +523,7 @@ ProtocolSCP::~ProtocolSCP()
 }
 
 
-void ProtocolSCP::GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
+void ProtocolSCP::GetModes(bool follow_symlink, size_t count, const std::string *paths, mode_t *modes) noexcept
 {
 #ifdef QUERY_BY_CMD
 	size_t j = 0;
@@ -532,17 +532,17 @@ void ProtocolSCP::GetModes(bool follow_symlink, size_t count, const std::string 
 
 		std::shared_ptr<SCPDirectoryEnumer> de;
 		if (_quirks.use_ls) {
-			de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, pathes, _now);
+			de = std::make_shared<SCPDirectoryEnumer_ls>(_conn, _quirks, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, paths, _now);
 		} else {
-			de = std::make_shared<SCPDirectoryEnumer_stat>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, pathes);
+			de = std::make_shared<SCPDirectoryEnumer_stat>(_conn, follow_symlink ? DEM_QUERY_FOLLOW_SYMLINKS : DEM_QUERY, count, paths);
 		}
 
 		std::string name, owner, group;
 		FileInformation file_info;
 		while (j < count && de->Enum(name, owner, group, file_info)) {
 			while (j < count) {
-				size_t p = pathes[j].rfind('/');
-				const char *expected_name = (p == std::string::npos) ? pathes[j].c_str() : pathes[j].c_str() + p + 1;
+				size_t p = paths[j].rfind('/');
+				const char *expected_name = (p == std::string::npos) ? paths[j].c_str() : paths[j].c_str() + p + 1;
 
 				++j;
 				if (name == expected_name) {
@@ -562,7 +562,7 @@ void ProtocolSCP::GetModes(bool follow_symlink, size_t count, const std::string 
 		modes[j] = ~(mode_t)0;
 	}
 #else
-	IProtocol::GetModes(follow_symlink, count, pathes, modes);
+	IProtocol::GetModes(follow_symlink, count, paths, modes);
 #endif
 }
 
@@ -783,7 +783,7 @@ void ProtocolSCP::SetTimes(const std::string &path, const timespec &access_time,
 	struct tm t;
 	localtime_r(&modification_time.tv_sec, &t);
 	strftime(str_mt, sizeof(str_mt) - 1, "%Y%m%d%H%M.%S", &t);
-	int rc;
+	int rc = 0;
 	if (access_time.tv_sec != modification_time.tv_sec) {
 		char str_at[32]{};
 		localtime_r(&access_time.tv_sec, &t);

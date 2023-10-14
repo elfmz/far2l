@@ -59,7 +59,7 @@ LPCSTR FCps4(char *buff, double val)
 
 	`str` points to start of whole string, `x` and `x1` determine portion of
 	string to fill
-	Do not check `x` and `x1` fit at string; do not chage any part of
+	Do not check `x` and `x1` fit at string; do not change any part of
 	string outside of x..x1 bounds
 */
 void PPercent(char *str, int x, int x1, int percent)

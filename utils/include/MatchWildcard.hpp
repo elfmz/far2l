@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 template <class CHAR_T, class CHAR_COMPARE>
 	bool MatchWildcardT(const CHAR_T *str, const CHAR_T *wild)
@@ -26,6 +27,7 @@ template <class CHAR_T, class CHAR_COMPARE>
 			str++;
 
 		} else {
+			assert (mp && cp);
 			wild = mp;
 			str = cp++;
 		}

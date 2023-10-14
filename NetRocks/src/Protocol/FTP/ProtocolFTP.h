@@ -40,7 +40,7 @@ class ProtocolFTP : public IProtocol, public std::enable_shared_from_this<Protoc
 
 	std::string _str;
 
-	bool RecvPwdResponce();
+	bool RecvPwdResponse();
 //	bool RecvPwdAndRememberAsCwd();
 	std::string SplitPathAndNavigate(const std::string &path_name, bool allow_empty_name_part = false);
 	std::string PathAsRelative(const std::string &path);

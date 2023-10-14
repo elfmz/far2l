@@ -1090,7 +1090,7 @@ String* HRCParserImpl::qualifyForeignName(const String* name, QualifyNameType qn
 
 String* HRCParserImpl::useEntities(const String* name)
 {
-  int copypos = 0;
+  size_t copypos = 0;
   size_t epos = 0;
 
   if (!name) {

@@ -42,7 +42,7 @@ static struct FSMagic {
 {"AUTOFS",	0x0187},
 {"CODA",	0x73757245},
 {"CRAMFS",		0x28cd3d45},	/* some random number */
-{"CRAMFS",	0x453dcd28},		/* magic number with the wrong endianess */
+{"CRAMFS",	0x453dcd28},		/* magic number with the wrong endianness */
 {"DEBUGFS",          0x64626720},
 {"SECURITYFS",	0x73636673},
 {"SELINUX",		0xf97cff8c},
@@ -135,7 +135,7 @@ class ThreadedStatFS : Threaded
 		if (r == 0) {
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_bsize; //f_frsize;
-			(*_mps)[_mpi].freee = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
+			(*_mps)[_mpi].free_ = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].read_only = (s.f_flags & ST_RDONLY) != 0;
 			(*_mps)[_mpi].bad = false;
 		}

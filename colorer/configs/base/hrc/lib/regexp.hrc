@@ -39,8 +39,8 @@
 <region name="SymbClass" description="Symbol's class: \d,\w,etc." parent="def:Var"/>
 <region name="Operator" description="Assertions and operators: \B, ?!, etc." parent="def:Keyword"/>
 <region name="SpecOperator" description="Special operators : \1, etc." parent="def:KeywordStrong"/>
-<region name="Quote" description="Qoutes: (),{},[]" parent="MetaSymb"/>
-<region name="SpecQuote" description="Special qoutes" parent="def:StringEdge"/>
+<region name="Quote" description="Quotes: (),{},[]" parent="MetaSymb"/>
+<region name="SpecQuote" description="Special quotes" parent="def:StringEdge"/>
 <region name="SpecArea" description="Special areas: (?i:), etc." parent="def:Keyword"/>
 <region name="InsertArea" description="Special areas: (?i:), etc." parent="def:Insertion"/>
 

@@ -83,7 +83,7 @@ struct TrafficInformation : public ProgressInterface
 	void Resume(LPCSTR LocalFileName);
 	void Resume(int64_t size);
 
-	// Called for every copyed portion
+	// Called for every copied portion
 	BOOL Callback(int Size);
 
 	// Start using traffic (start of whole operation)

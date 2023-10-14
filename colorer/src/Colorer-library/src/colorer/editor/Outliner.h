@@ -30,7 +30,7 @@ public:
   /**
    * Returns reference to item with specified ordinal
    * index in list of currently generated outline items.
-   * Note, that the returned pointer is vaild only between
+   * Note, that the returned pointer is valid only between
    * subsequent parser invocations.
    */
   OutlineItem* getItem(size_t idx);

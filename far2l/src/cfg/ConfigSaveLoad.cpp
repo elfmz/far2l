@@ -559,7 +559,7 @@ public:
 	{true,  NSecSystem, "InactivityExit", &Opt.InactivityExit, 0},
 	{true,  NSecSystem, "InactivityExitTime", &Opt.InactivityExitTime, 15},
 	{true,  NSecSystem, "DriveMenuMode2", &Opt.ChangeDriveMode, -1},
-	{true,  NSecSystem, "DriveDisconnetMode", &Opt.ChangeDriveDisconnetMode, 1},
+	{true,  NSecSystem, "DriveDisconnectMode", &Opt.ChangeDriveDisconnectMode, 1},
 
 	{true,  NSecSystem, "DriveExceptions", &Opt.ChangeDriveExceptions,
 		L"/System/*;/proc;/proc/*;/sys;/sys/*;/dev;/dev/*;/run;/run/*;/tmp;/snap;/snap/*;/private;/private/*;/var/lib/lxcfs;/var/snap/*;/var/spool/cron;/tmp/.*"},

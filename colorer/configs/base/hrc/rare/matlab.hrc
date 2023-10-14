@@ -338,7 +338,7 @@
             <word name="roots"/>
             <word name="poly"/>
          </keywords>
-<!-- Data analize functions -->
+<!-- Data analyze functions -->
          <keywords ignorecase="yes" region="mlStdFunc">
             <word name="sum"/>
             <word name="cumsum"/>

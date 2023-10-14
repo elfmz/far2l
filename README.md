@@ -88,7 +88,7 @@ cmake --build .
 
  * If above commands finished without errors - you may also install far2l, `sudo cmake --install .`
 
- * Also its possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
+ * Also it's possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
 
 ##### Additional build configuration options:
 
@@ -135,7 +135,7 @@ brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
  * Additionally you can enable python support by adding `--with-python@3.10` to the one of two above commands.
 
 ##### Full OSX/MacOS build from sources (harder):
-Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependecies.
+Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependencies.
 
  * Clone:
 ```sh

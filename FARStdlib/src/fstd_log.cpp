@@ -7,7 +7,7 @@
 extern BOOL WINAPI LOGInit(void);
 std::recursive_mutex PLOG_cs;
 
-/** @brief Length of text with std error writen to log file.
+/** @brief Length of text with std error written to log file.
 
 	Length of left part log string with description of __WINError() in moment of write log call.
 	Default value 30 characters.

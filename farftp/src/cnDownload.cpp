@@ -238,7 +238,7 @@ void Connection::recvrequestINT(char *cmd, char *local, char *remote, const char
 								unalign = true;		// flag of timeout witing (optimize)
 						} else {
 							// scatter-gatter for RAID in win32 is very bad on large buffer
-							// and when work without RAID synchronous write speed is independ
+							// and when work without RAID synchronous write speed is independent
 							// if buffer size is >= 2*cluster size
 							int off = 0;
 

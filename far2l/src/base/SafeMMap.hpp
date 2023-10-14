@@ -8,7 +8,7 @@
 This class serves two purposes:
  1. Provides fail-safe memory mapped view of file, in case
 of getting SIGBUS/SIGSEGV due to underlying FS failure it silently
-substitudes file's view with a dummy zero-filled view.
+substitutes file's view with a dummy zero-filled view.
 The only way to be informed about IO error is to use IsDummy()
  2. For unrelevant to mappings SIGBUS/SIGSEGV it generates
 crash reports writing them into ~/.config/far2l/crash.log

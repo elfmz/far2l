@@ -109,7 +109,7 @@ int FTP::MakeDirectory(String &Name, int OpMode)
 		if (hConnect && FTPCreateDirectory(Name.c_str(), OpMode))
 			return TRUE;
 
-		// If conection alive - report error
+		// If connection alive - report error
 		if (FtpCmdLineAlive(hConnect) || IS_SILENT(OpMode))
 			return FALSE;
 

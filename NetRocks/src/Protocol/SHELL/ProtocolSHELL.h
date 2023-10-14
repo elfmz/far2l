@@ -85,7 +85,8 @@ class ProtocolSHELL : public IProtocol
 	void FinalizeExecCmd();
 	void Initialize();
 
-	void GetSingleFileInfo(const std::string &path, const char *what);
+	void GetSingleFileInfo(const char *what, const std::string &path);
+	void SendAndWaitPromptOrError(const char *what, const std::string &request);
 
 public:
 	ProtocolSHELL(const std::string &host, unsigned int port, const std::string &username,

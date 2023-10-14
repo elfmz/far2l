@@ -121,7 +121,7 @@
         <op syntax="&amp;&amp;" priority="1"  mean="op0 _land op1"/>
         <op syntax="land"       priority="1"  mean="op0 _land op1"/>
 
-        <!-- Comparsion
+        <!-- Comparison
              Сравнение -->
         <op syntax="=="         priority="5" mean="op0 _eq op1"/>
         <op syntax="!="         priority="5" mean="op0 _neq op1"/>

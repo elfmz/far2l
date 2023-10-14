@@ -23,9 +23,9 @@ public:
    */
   virtual const RegionDefine* getRegionDefine(const String &name) const = 0;
 
-  virtual ~RegionMapper() {};
+  virtual ~RegionMapper() {}
 protected:
-  RegionMapper() {};
+  RegionMapper() {}
 };
 
 #endif

@@ -15,7 +15,7 @@ struct Mountpoint
 	volatile bool read_only;
 	volatile unsigned long long total;
 	volatile unsigned long long avail;
-	volatile unsigned long long freee;
+	volatile unsigned long long free_;
 };
 
 struct Mountpoints;

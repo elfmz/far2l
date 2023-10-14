@@ -12,6 +12,7 @@ class IOBuffer
 	size_t _min_size, _max_size;
 
 	IOBuffer(const IOBuffer &) = delete;
+	IOBuffer& operator=(const IOBuffer &) = delete;
 
 	bool IncreaseTo(size_t new_size, bool preserve_data = true); //  tries to increase size of buffer (will not go above max_size)
 

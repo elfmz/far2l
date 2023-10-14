@@ -192,8 +192,8 @@ class CopyProgress
 {
 	ConsoleTitle CopyTitle;
 	wakeful W;
-	SMALL_RECT Rect;
-	wchar_t Bar[100];
+	SMALL_RECT Rect{};
+	wchar_t Bar[100]{};
 	size_t BarSize;
 	bool Move, Total, Time;
 	bool BgInit, ScanBgInit;
@@ -211,7 +211,7 @@ class CopyProgress
 public:
 	CopyProgress(bool Move, bool Total, bool Time);
 	void CreateBackground();
-	bool Cancelled() { return IsCancelled; };
+	bool Cancelled() { return IsCancelled; }
 	void SetScanName(const wchar_t *Name);
 	void SetNames(const wchar_t *Src, const wchar_t *Dst);
 	void SetProgressValue(UINT64 CompletedSize, UINT64 TotalSize)
@@ -1143,7 +1143,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 
 				// Если выделенных элементов больше 1 и среди них есть каталог, то всегда
 				// делаем так, чтобы на конце был '/'
-				// деламем так не всегда, а только когда NameTmp не является маской.
+				// делаем так не всегда, а только когда NameTmp не является маской.
 				if (AddSlash && !strNameTmp.ContainsAnyOf("*?"))
 					AddEndSlash(strNameTmp);
 
@@ -1167,7 +1167,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 				SrcPanel->SaveSelection();
 				const auto OldFlagsSYMLINK = Flags.SYMLINK;
 				// собственно - один проход копирования
-				// Mantis#45: Необходимо привсти копирование ссылок на папки с NTFS на FAT к более логичному виду
+				// Mantis#45: Необходимо привести копирование ссылок на папки с NTFS на FAT к более логичному виду
 				{
 					// todo: If dst does not support symlinks
 					// Flags.SYMLINK = COPY_SYMLINK_ASFILE;
@@ -1449,7 +1449,7 @@ LONG_PTR WINAPI CopyDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 ShellCopy::~ShellCopy()
 {
-	_tran(SysLog(L"[%p] ShellCopy::~ShellCopy(), CopyBufer=%p", this, CopyBuffer));
+	_tran(SysLog(L"[%p] ShellCopy::~ShellCopy(), CopyBuffer=%p", this, CopyBuffer));
 
 	// $ 26.05.2001 OT Разрешить перерисовку панелей
 	_tran(SysLog(L"call (*FrameManager)[0]->UnlockRefresh()"));
@@ -1748,12 +1748,12 @@ COPY_CODES ShellCopy::CopyFileTree(const wchar_t *Dest)
 								}
 								case COPY_SUCCESS:
 
-									if (!NeedRename)	// вариант при перемещении содержимого симлика с опцией "копировать содержимое сим..."
+									if (!NeedRename)	// вариант при перемещении содержимого симлинка с опцией "копировать содержимое сим..."
 									{
 										uint64_t CurSize = SrcData.nFileSize;
 										TotalCopiedSize = TotalCopiedSize - CurCopiedSize + CurSize;
 										TotalSkippedSize = TotalSkippedSize + CurSize - CurCopiedSize;
-										continue;	// ... т.к. мы ЭТО не мувили, а скопировали, то все, на этом закончим бадаться с этим файлов
+										continue;	// ... т.к. мы ЭТО не мувили, а скопировали, то все, на этом закончим бодаться с этим файлов
 									}
 							}
 						}
@@ -2871,9 +2871,9 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 				}
 
 				FileViewer Viewer(
-    				// а этот трюк не даст пользователю сменить текущий каталог по CtrlF10 и этим ввести в заблуждение копир: TODODODO
-                    std::make_shared<FileHolder>(ViewName, true),
-                    FALSE, FALSE, TRUE, -1, nullptr, nullptr, FALSE);
+					// а этот трюк не даст пользователю сменить текущий каталог по CtrlF10 и этим ввести в заблуждение копир: TODODODO
+					std::make_shared<FileHolder>(ViewName, true),
+					FALSE, FALSE, TRUE, -1, nullptr, nullptr, FALSE);
 				Viewer.SetDynamicallyBorn(FALSE);
 				FrameManager->ExecuteModalEV();
 				FrameManager->ProcessKey(KEY_CONSOLE_BUFFER_RESIZE);

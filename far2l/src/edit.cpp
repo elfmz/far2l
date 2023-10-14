@@ -2221,7 +2221,7 @@ void Edit::DeleteBlock()
 	SelEnd = 0;
 	Flags.Clear(FEDITLINE_MARKINGBLOCK);
 
-	// OT: Проверка на корректность поведени строки при удалении и вставки
+	// OT: Проверка на корректность поведения строки при удалении и вставки
 	if (Flags.Check((FEDITLINE_PARENT_SINGLELINE | FEDITLINE_PARENT_MULTILINE))) {
 		if (LeftPos > CurPos)
 			LeftPos = CurPos;
@@ -2305,7 +2305,7 @@ void Edit::ApplyColor()
 			RealStart = RealPosToCell(CurItem.StartPos);
 			Start = RealStart - LeftPos;
 		}
-		// Для отптимизации делаем вычисление относительно предыдущей позиции
+		// Для оптимизации делаем вычисление относительно предыдущей позиции
 		else {
 			RealStart = RealPosToCell(TabPos, Pos, CurItem.StartPos, nullptr);
 			Start = RealStart - LeftPos;
@@ -2359,7 +2359,7 @@ void Edit::ApplyColor()
 			End = RealEnd - LeftPos;
 		}
 		/*
-			Для отптимизации делаем вычисление относительно предыдущей позиции (с учётом
+			Для оптимизации делаем вычисление относительно предыдущей позиции (с учётом
 			корректировки относительно табов)
 		*/
 		else {

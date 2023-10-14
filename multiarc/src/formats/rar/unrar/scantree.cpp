@@ -234,7 +234,7 @@ bool ScanTree::GetNextMask()
   wchar *Name=PointToName(CurMask);
   if (*Name==0)
     wcsncatz(CurMask,MASKALL,ASIZE(CurMask));
-  if (Name[0]=='.' && (Name[1]==0 || Name[1]=='.' && Name[2]==0))
+  if (Name[0]=='.' && ((Name[1]==0 || Name[1]=='.') && Name[2]==0))
   {
     AddEndSlash(CurMask,ASIZE(CurMask));
     wcsncatz(CurMask,MASKALL,ASIZE(CurMask));
@@ -273,9 +273,9 @@ SCAN_CODE ScanTree::FindProc(FindData *FD)
     // at top level in recursion mode. We always comrpess the entire directory
     // if folder wildcard is specified.
     bool SearchAll=!IsDir && (Depth>0 || Recurse==RECURSE_ALWAYS ||
-                   FolderWildcards && Recurse!=RECURSE_DISABLE || 
-                   Wildcards && Recurse==RECURSE_WILDCARDS || 
-                   ScanEntireDisk && Recurse!=RECURSE_DISABLE);
+                   (FolderWildcards && Recurse!=RECURSE_DISABLE) ||
+                   (Wildcards && Recurse==RECURSE_WILDCARDS) ||
+                   (ScanEntireDisk && Recurse!=RECURSE_DISABLE));
     if (Depth==0)
       SearchAllInRoot=SearchAll;
     if (SearchAll || Wildcards)

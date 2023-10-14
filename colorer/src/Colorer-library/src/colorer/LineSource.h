@@ -19,14 +19,14 @@ public:
    * @param lno Line number, which will be used as
    * initial position of all subsequend parsing.
    */
-  virtual void startJob(size_t lno) {};
+  virtual void startJob(size_t lno) {}
 
   /**
    * Called by parser, when it has finished text parsing.
    * Could be used to cleanup objects, allocated by last
    * #getLine() call.
    */
-  virtual void endJob(size_t lno) {};
+  virtual void endJob(size_t lno) {}
 
   /**
    * Returns line of text with specified number.
@@ -40,8 +40,8 @@ public:
    */
   virtual SString* getLine(size_t lno) = 0;
 protected:
-  LineSource() {};
-  virtual ~LineSource() {};
+  LineSource() {}
+  virtual ~LineSource() {}
 };
 
 #endif

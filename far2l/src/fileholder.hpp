@@ -16,7 +16,7 @@ public:
 	virtual ~FileHolder();
 
 	bool IsTemporary() const { return _temporary; }
-	const FARString &GetPathName() const { return _file_path_name; };
+	const FARString &GetPathName() const { return _file_path_name; }
 
 	virtual void OnFileEdited(const wchar_t *FileName);
 	virtual void CheckForChanges();

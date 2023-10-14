@@ -1,3 +1,4 @@
+#include <memory>
 #include <vector>
 #include <unistd.h>
 #include <stdlib.h>
@@ -182,14 +183,14 @@ class HostRemoteBroker : protected IPCEndpoint
 		size_t count = 0;
 		RecvPOD(follow_symlink);
 		RecvPOD(count);
-		std::vector<std::string> pathes(count);
+		std::vector<std::string> paths(count);
 		std::vector<mode_t> modes(count);
-		for (auto &path : pathes) {
+		for (auto &path : paths) {
 			RecvString(path);
 		}
-		if (!pathes.empty()) {
-			_keepalive_path = pathes.back();
-			_protocol->GetModes(follow_symlink, count, pathes.data(), modes.data());
+		if (!paths.empty()) {
+			_keepalive_path = paths.back();
+			_protocol->GetModes(follow_symlink, count, paths.data(), modes.data());
 		}
 		SendCommand(IPC_GET_MODES);
 		for (const auto &mode : modes) {

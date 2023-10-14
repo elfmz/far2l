@@ -21,6 +21,7 @@
 #include <Threaded.h>
 #include "../Protocol.h"
 #include "SSHConnection.h"
+#include "Erroring.h"
 
 
 void SSHSessionDeleter(ssh_session res)
@@ -185,7 +186,7 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	// TODO: seccomp: if (protocol_options.GetInt("Sandbox") ) ...
 
 	for (int attempt = 1; ; ++attempt) {
-		time_t connect_attemp_ts = time(NULL);
+		time_t connect_attempt_ts = time(NULL);
 		int rc = ssh_connect(ssh);
 		if (rc == SSH_OK)
 			break;
@@ -199,8 +200,8 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		// retry with increasing up to 5 seconds delay
 		time_t min_delay = (attempt > 5) ? 5 : attempt;
 		time_t ts = time(NULL);
-		if (ts >= connect_attemp_ts && ts - connect_attemp_ts < min_delay) {
-			sleep(min_delay - (ts - connect_attemp_ts));
+		if (ts >= connect_attempt_ts && ts - connect_attempt_ts < min_delay) {
+			sleep(min_delay - (ts - connect_attempt_ts));
 		}
 	}
 

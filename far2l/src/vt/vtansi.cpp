@@ -655,7 +655,7 @@ static void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 {
 	size_t pos = 0;
 	unsigned int index = DecToULong(args, args_size, &pos);
-	// Win <-> TTY color index adjustement
+	// Win <-> TTY color index adjustment
 	index = (((index) & 0b001) << 2 | ((index) & 0b100) >> 2 | ((index) & 0b1010));
 
 	DWORD fg = 0xffffffff, bk = 0xffffffff;
@@ -687,7 +687,7 @@ static void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 void InterpretEscSeq( void )
 {
 	int i;
-	DWORD64 attribut;
+	DWORD64 attribute;
 	CONSOLE_SCREEN_BUFFER_INFO Info;
 	CONSOLE_CURSOR_INFO CursInfo;
 	DWORD len, NumberOfCharsWritten;
@@ -765,8 +765,8 @@ void InterpretEscSeq( void )
 		switch (suffix) {
 		case 'm':
 			ansiState.font_state.ParseSuffixM(es_argv, es_argc);
-			attribut = ansiState.font_state.ToConsoleAttributes();
-			WINPORT(SetConsoleTextAttribute)( hConOut, attribut );
+			attribute = ansiState.font_state.ToConsoleAttributes();
+			WINPORT(SetConsoleTextAttribute)( hConOut, attribute );
 			return;
 
 		case 'J':

@@ -611,7 +611,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 
 	// Keep in mind that key composing combinations with AltGr+.. arrive as keydown of Ctrl+Alt+..
 	// so if event.ControlDown() and event.AltDown() are together then don't believe them and
-	// use only state maintaned key_tracker. Unless under broadway, that may miss separate control
+	// use only state maintained key_tracker. Unless under broadway, that may miss separate control
 	// keys events.
 	if (key_tracker.Alt() || (event.AltDown() && (!event.ControlDown() || g_broadway))) {
 		Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;

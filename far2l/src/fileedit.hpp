@@ -112,15 +112,15 @@ public:
 		Flags.Change(FFILEEDIT_SAVETOSAVEAS, ToSaveAs);
 		InitKeyBar();
 	}
-	virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); };
+	virtual BOOL IsFileModified() const { return m_editor->IsFileModified(); }
 	virtual int GetTypeAndName(FARString &strType, FARString &strName);
 	int EditorControl(int Command, void *Param);
 	void SetCodePage(UINT codepage);	// BUGBUG
-	BOOL IsFileChanged() const { return m_editor->IsFileChanged(); };
+	BOOL IsFileChanged() const { return m_editor->IsFileChanged(); }
 	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	void GetEditorOptions(EditorOptions &EdOpt);
 	void SetEditorOptions(EditorOptions &EdOpt);
-	void CodepageChangedByUser() { Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER); };
+	void CodepageChangedByUser() { Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER); }
 	virtual void Show();
 	void SetPluginTitle(const wchar_t *PluginTitle);
 	static const FileEditor *CurrentEditor;
@@ -140,7 +140,7 @@ private:
 	wchar_t AttrStr[4];		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
 	IUnmakeWritablePtr FileUnmakeWritable;
 	DWORD SysErrorCode{false};
-	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрываеться (т.е. в деструкторе)
+	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрывается (т.е. в деструкторе)
 	bool bEE_READ_Sent{false};
 	FemaleBool m_AddSignature{FB_NO};
 	bool F4KeyOnly{false};
@@ -164,7 +164,7 @@ private:
 	virtual void ShowConsoleTitle();
 	virtual void OnChangeFocus(int focus);
 	virtual void SetScreenPosition();
-	virtual const wchar_t *GetTypeName() { return L"[FileEdit]"; };
+	virtual const wchar_t *GetTypeName() { return L"[FileEdit]"; }
 	virtual int GetType() { return MODALTYPE_EDITOR; }
 	virtual void OnDestroy();
 	virtual int GetCanLoseFocus(int DynamicMode = FALSE);

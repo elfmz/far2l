@@ -300,7 +300,7 @@ slow or ugly ( it works fine for me, that's enough :) .
   />
 </scheme>
 
-<!-- all these check that correct value is entered, and if the entry is last in line, hilight the last character -->
+<!-- all these check that correct value is entered, and if the entry is last in line, highlight the last character -->
 <entity name="Integer" value="(,)?#1(\s*-?\d*(\s+\d?!|))(,|[\d\s]$)" />
 <entity name="Real" value="(,)?#1(\s*-?\d+(\.\d+\.?!|\.\d?=)?(\s+[\.\d]?!|)|\s*,?!)(,|[\.\s\d]$)" />
 <!-- TODO: & by itself and &H without at least 1 digit must be treated as error if a comma follows -->

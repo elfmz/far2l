@@ -1065,7 +1065,7 @@ static void TitleChangeCallback(PVOID ctx)
 // Another level of workaround for #1303 #1454:
 // Problem happens if window title change happened just before repaint but
 // it doesn't happen if title changed after repaint even if just after repaint.
-// So instead of appling new title just when application wanted it to apply
+// So instead of applying new title just when application wanted it to apply
 // - wait until application will invoke some console readout function, meaning
 // it entered idle state and risk of upcoming repaints is much lowered then.
 // Do this by using CALLBACK_EVENT functionality that was added exactly for this.

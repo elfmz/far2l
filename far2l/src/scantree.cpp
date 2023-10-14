@@ -82,7 +82,7 @@ void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
 		ConvertNameToReal(strFindPath.c_str(), ScanDirStack.back().RealPath);
 
 		// check if converted path points to same location is already scanned or to parent path of already scanned location
-		// NB: in original FAR here was exact-match check all pathes (not only symlinks)
+		// NB: in original FAR here was exact-match check all paths (not only symlinks)
 		// that caused excessive scan from FS root cuz in Linux links pointing to / are usual situation unlike Windows
 		// NB2: There're two recursive protection checks, excessive on first look:
 		// Check by path: if real path is equal OR represents parent of some previously scanned path

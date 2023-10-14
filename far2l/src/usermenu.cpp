@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(PROJECT_DI_MEMOEDIT)
 /*
 	Идея в следующем.
-	1. Строки в реестре храняться как и раньше, т.к. CommandXXX
+	1. Строки в реестре хранятся как и раньше, т.к. CommandXXX
 	2. Для DI_MEMOEDIT мы из только преобразовываем в один массив
 */
 #endif
@@ -646,7 +646,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 											nullptr, OPEN_EXISTING))) {
 								apiDeleteFile(strMenuFileName);
 
-								if (Key == KEY_ALTSHIFTF4)	// для тукущего пункта меню закрывать ненадо
+								if (Key == KEY_ALTSHIFTF4)	// для текущего пункта меню закрывать не надо
 									break;
 
 								return 0;
@@ -663,7 +663,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 						MenuModified = true;
 						UserMenu.Hide();
 
-						if (Key == KEY_ALTSHIFTF4)	// для тукущего пункта меню закрывать ненадо
+						if (Key == KEY_ALTSHIFTF4)	// для текущего пункта меню закрывать не надо
 							break;
 
 						return 0;	// Закрыть меню

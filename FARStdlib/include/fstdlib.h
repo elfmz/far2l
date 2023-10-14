@@ -1,5 +1,5 @@
-#ifndef __FAR_PLUGINS_UTILITES
-#define __FAR_PLUGINS_UTILITES
+#ifndef __FAR_PLUGINS_UTILITIES
+#define __FAR_PLUGINS_UTILITIES
 
 /** @mainpage FAR Standard Library
 	@author Jouri Mamaev JouriM@uran.ru
@@ -9,7 +9,7 @@
 	  C++ library for easy create plugins for file and archive manager FAR. <br>
 	  Contains set of classes and functions designed to decrease time for write all types of FAR plugins.
 
-	  Initialy created by JouriM@uran.ru
+	  Initially created by JouriM@uran.ru
 
 	@section Structure Document structure
 	  This documentation structure:
@@ -20,8 +20,8 @@
 	   - Variables    Global variables;
 
 	@section Add Additional helpers.
-	  Additional helpers andd classes does not relatie to FAR API directly but used by other wrapers or
-	  incapsulate usefull functionality.
+	  Additional helpers and classes does not relative to FAR API directly but used by other wrappers or
+	  incapsulate useful functionality.
 
 	  - FP_Screen - helper for save and restore FAR screen buffer. <br>
 					Class for save and restore whole screen buffer.
@@ -344,7 +344,7 @@ public:
 	[fstd_ilist.cpp]
 
 	PluginPanelItem Reserved and can be used to store additional data.
-	This data will be correctly copyed and deleted in FP_ItemList.
+	This data will be correctly copied and deleted in FP_ItemList.
 	You MUST use _Alloc or strdup to allocate data space.
 	Data CAT NOT BE zero sized.
 */

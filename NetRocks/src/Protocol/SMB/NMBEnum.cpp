@@ -39,7 +39,7 @@
 struct __attribute__((__packed__)) NBNSPacket
 {
 	uint16_t transaction_id;
-	uint16_t is_responce : 1;
+	uint16_t is_response : 1;
 	uint16_t opcode     : 4; // NBNS_OP_*
 	uint16_t flags      : 7; // NBNS_FLG_*
 	uint16_t rcode      : 4;
@@ -218,7 +218,7 @@ void *NMBEnum::ThreadProc()
 		ssize_t r = recvfrom(_sc, &s, sizeof(s), 0, (sockaddr *)&sin, &sin_len);
 		if (r >= (ssize_t)sizeof(s.packet)
 			&& sin.sin_family == AF_INET && sin.sin_addr.s_addr != _bcast_addr
-			&& (s.packet.is_responce || s.packet.answer_count)) {
+			&& (s.packet.is_response || s.packet.answer_count)) {
 			//Info &info = _addr2info[sin.sin_addr.s_addr];
 			if (s.packet.tip == BE16(NBNS_TIP_GENERAL)
 			&& s.packet.cls == BE16(NBNS_CLS_INTERNET)) {

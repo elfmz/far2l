@@ -30,7 +30,7 @@ int WINAPI FP_Message(unsigned int Flags, LPCSTR HelpTopic, LPCSTR *Items, int I
 			width = Max(width, strlen(litems[rc]));
 		}
 
-	// Calc if message need to be redrawn with smaller dimentions
+	// Calc if message need to be redrawn with smaller dimensions
 	if (!CMsgWidth || (int)width < CMsgWidth || !CMsgHeight || ItemsNumber < CMsgHeight)
 
 		// Need restore bk

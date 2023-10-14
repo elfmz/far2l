@@ -46,7 +46,7 @@ public:
     return nullptr;
   }
 
-  virtual ~XmlInputSource() {};
+  virtual ~XmlInputSource() {}
 
   static UString getAbsolutePath(const String* basePath, const String* relPath);
   static XMLCh* ExpandEnvironment(const XMLCh* path);
@@ -55,7 +55,7 @@ public:
   static bool isDirectory(const String* path);
   static void getFileFromDir(const String* relPath, std::vector<SString>& files);
 protected:
-  XmlInputSource() {};
+  XmlInputSource() {}
 
 private:
   XmlInputSource(XmlInputSource const &) = delete;

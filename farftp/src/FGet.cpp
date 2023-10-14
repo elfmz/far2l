@@ -34,8 +34,8 @@ void SetupFileTimeNDescription(int OpMode, Connection *hConnect, LPCSTR nm, FILE
 
 int FTP::_FtpGetFile(LPCSTR lpszRemoteFile, LPCSTR lpszNewFile, BOOL Reget, int AsciiMode)
 {
-	/* Local file allways use '\' as separator.
-	   Regardles of remote settings.
+	/* Local file always use '\' as separator.
+	   Regardless of remote settings.
 	*/
 	FixLocalSlash((char *)lpszNewFile);		// Hack it to (char*).
 	FtpSetRetryCount(hConnect, 0);
@@ -168,7 +168,7 @@ int FTP::GetFilesInterface(struct PluginPanelItem *PanelItem, int ItemsNumber, i
 	}
 
 	do {
-		// Copy - allways on local disk
+		// Copy - always on local disk
 		if (!Move) {
 			isDestDir = TRUE;
 			AddEndSlash(ci.DestPath, '/');

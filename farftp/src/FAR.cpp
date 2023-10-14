@@ -102,7 +102,7 @@ void AddPlugin(FTP *ftp)
 	else if (!FTPPanels[2])
 		FTPPanels[2] = ftp;
 	else
-		Assert(!"More then two plugins in a time !!");
+		Assert(!"More than two plugins in a time !!");
 }
 
 void RemovePlugin(FTP *ftp)

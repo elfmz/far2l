@@ -633,7 +633,7 @@ public:
 
 	/*!
 	*
-	*	convertion methods
+	*	conversion methods
 	*
 	*/
 private:
@@ -1442,7 +1442,7 @@ public:
 			as well as:
 			"- 12foo" will be translated to -12 too
 
-		existing first white characters will be ommited
+		existing first white characters will be omitted
 		(between '-' and a first digit can be white characters too)
 
 		after_source (if exists) is pointing at the end of the parsed string
@@ -1812,7 +1812,7 @@ public:
 private:
 
 	/*!
-		an auxiliary method for outputing to standard streams
+		an auxiliary method for outputting to standard streams
 	*/
 	template<class ostream_type, class string_type>
 	static ostream_type & OutputToStream(ostream_type & s, const Int<value_size> & l)
@@ -1866,13 +1866,13 @@ private:
 	// char or wchar_t for operator>>
 	char_type z;
 	
-		// operator>> omits white characters if they're set for ommiting
+		// operator>> omits white characters if they're set for omitting
 		s >> z;
 
 		if( z=='-' || z=='+' )
 		{
 			ss += z;
-			s >> z; // we're reading a next character (white characters can be ommited)
+			s >> z; // we're reading a next character (white characters can be omitted)
 		}
 
 		// we're reading only digits (base=10)

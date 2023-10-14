@@ -318,7 +318,7 @@ enum REOp
 	opLineStart,            // ^
 	opLineEnd,              // $
 	opDataStart,            // \A and ^ in single line mode
-	opDataEnd,              // \Z and $ in signle line mode
+	opDataEnd,              // \Z and $ in single line mode
 
 	opWordBound,            // \b
 	opNotWordBound,         // \B
@@ -398,7 +398,7 @@ enum REOp
 
 struct REOpCode_data
 {
-	int	op; //movable<int>
+	int	op{}; //movable<int>
 #ifdef RE_DEBUG
 	int	srcpos;
 #endif
@@ -892,7 +892,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 		op->srcpos=i+1;
 #endif
 
-		if (inquote && src[i]!=backslashChar)
+		if (inquote && (src[i]!=backslashChar))
 		{
 			op->op=ignorecase?opSymbolIgnoreCase:opSymbol;
 			op->symbol=ignorecase?TOLOWER(src[i]):src[i];
@@ -906,7 +906,7 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 		{
 			i++;
 
-			if (inquote && src[i]!='E')
+			if (inquote && (src[i]!='E'))
 			{
 				op->op=opSymbol;
 				op->symbol=backslashChar;

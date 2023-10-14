@@ -2751,7 +2751,7 @@ $ #Програма перегляду: клавіші керування#
     Here user may temporarily filter currently viewed file content using #UNIX grep# tool pattern matching.
     You may specify pattern to match (or several patterns separated by #\|# - as in usual grep) and/or
 pattern that will be excluded from output.
-    Optionally its possible to see specified #lines amount before or after matched region#, as well as
+    Optionally it's possible to see specified #lines amount before or after matched region#, as well as
 use #case sensitive# matching or match #whole words# instead of plain substring.
 
 @ViewerGotoPos
@@ -3157,7 +3157,7 @@ will be appended to mountpoints entries. For that you need to create text file u
 path #~~/.config/far2l/favorites# and that file must contain lines, each line can have
 one or two or three parts separated by <TAB> character. First part represent path,
 second and third parts are optional and represent information rendered in additional
-columns. Its possible to insert separator with optional title by specifing line
+columns. It's possible to insert separator with optional title by specifing line
 with first part having only '-' character and another part (if present) defining
 title text.
 Note that favorites file can contain shell environment variables denoted with $
@@ -4571,7 +4571,7 @@ and changing templates of what should be included into additional columns.
     #$T# - total disk space
     #$U# - used disk space
     #$F# - free disk space
-    #$A# - disk space available for non-priviledged user
+    #$A# - disk space available for non-privileged user
     #$u# - percents space used of total
     #$f# - percents space free of total
     #$a# - percents space available of total

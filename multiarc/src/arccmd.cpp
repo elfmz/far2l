@@ -110,7 +110,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
 	fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
 
-// Unzip in MacOS definatelt doesn't have -I and -O options, so dont even try encoding workarounds
+// Unzip in MacOS definitely doesn't have -I and -O options, so dont even try encoding workarounds
 #ifndef __WXOSX__
 	if (ExecCode == 11 && strncmp(Command.c_str(), "unzip ", 6) == 0) {
 		// trying as utf8
@@ -486,7 +486,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		int PathOnly, int FolderMask, const char *LocalAllFilesMask)
 {
 	//  FILE *ListFile;
-	HANDLE ListFile;
+	HANDLE ListFile = INVALID_HANDLE_VALUE;
 	DWORD WriteSize;
 	/*SECURITY_ATTRIBUTES sa;
 

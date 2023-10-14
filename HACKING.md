@@ -58,7 +58,7 @@ This two functions not added but changed to use console cells count as string li
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * `FCTL_GETPANELPLUGINHANDLE`
-Can be used to interract with plugin that renders other panel.
+Can be used to interact with plugin that renders other panel.
 `hPlugin` can be set to `PANEL_ACTIVE` or `PANEL_PASSIVE`.
 `Param1` ignored.
 `Param2` points to value of type `HANDLE`, call sets that value to handle of plugin that renders specified panel or `INVALID_HANDLE_VALUE`.

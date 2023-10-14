@@ -1,6 +1,15 @@
 #ifndef _RAR_ARCHIVE_
 #define _RAR_ARCHIVE_
 
+#include <stddef.h>
+#include "options.hpp"
+#include "headers.hpp"
+#include "array.hpp"
+#include "rdwrfn.hpp"
+#include "crypt.hpp"
+#include "file.hpp"
+#include "timefn.hpp"
+
 class PPack;
 class RawRead;
 class RawWrite;

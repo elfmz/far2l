@@ -9,7 +9,7 @@
 */
 class Writer{
 public:
-  virtual ~Writer(){};
+  virtual ~Writer(){}
   /** Writes string */
   virtual void write(const String &string);
   /** Writes string */
@@ -21,7 +21,7 @@ public:
   /** Writes single character */
   virtual void write(wchar c) = 0;
 protected:
-  Writer(){};
+  Writer(){}
 };
 
 #endif

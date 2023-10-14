@@ -201,9 +201,9 @@ void FARString::PrepareForModify(size_t nCapacity)
 
 void FARString::PrepareForModify()
 {
-	// invoke PrepareForModify with current length but not capacity intentially
+	// invoke PrepareForModify with current length but not capacity intentionally
 	// so in case of single owner this will not alter things but in case of
-	// not single owner then new copy will be alloced with capacity == length
+	// not single owner then new copy will be allocated with capacity == length
 	PrepareForModify(m_pContent->GetLength());
 }
 
@@ -318,7 +318,7 @@ FARString& FARString::Append(const char *lpszAdd, UINT CodePage)
 	{
 		int nAddSize = WINPORT(MultiByteToWideChar)(CodePage,0,lpszAdd,-1,nullptr,0);
 		if (nAddSize > 0) {
-			size_t nNewLength = m_pContent->GetLength() + nAddSize - 1; // minus NUL char that implicitely there
+			size_t nNewLength = m_pContent->GetLength() + nAddSize - 1; // minus NUL char that implicitly there
 			PrepareForModify(nNewLength);
 			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszAdd, -1, m_pContent->GetData() + m_pContent->GetLength(), nAddSize);
 			m_pContent->SetLength(nNewLength);

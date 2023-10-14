@@ -519,7 +519,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chdir(const char *pat
 		}
 
 	} else if (access_denied && !IsSudoRegionActive()) {
-		//Workaround to avoid excessive sudo prompt on TAB panel swicth:
+		//Workaround to avoid excessive sudo prompt on TAB panel switch:
 		//set override if path likely to be existing but not accessible 
 		//cuz we're out of sudo region now
 		//Right solution would be putting TAB worker code into sudo region
@@ -616,7 +616,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_futimens(int fd, cons
 	return futimens(fd, times);
 }
 
-static int common_two_pathes(SudoCommand cmd, 
+static int common_two_paths(SudoCommand cmd,
 	int (*pfn)(const char *, const char *), const char *path1, const char *path2, bool modify)
 {
 	int saved_errno = errno;
@@ -632,7 +632,7 @@ static int common_two_pathes(SudoCommand cmd,
 			else
 				errno = saved_errno;
 		} catch(std::exception &e) {
-			fprintf(stderr, "sudo_client: common_two_pathes(%u, '%s', '%s') - error %s\n", cmd, path1, path2, e.what());
+			fprintf(stderr, "sudo_client: common_two_paths(%u, '%s', '%s') - error %s\n", cmd, path1, path2, e.what());
 			r = -1;
 		}
 	}
@@ -642,19 +642,19 @@ static int common_two_pathes(SudoCommand cmd,
 extern "C" __attribute__ ((visibility("default"))) int sdc_rename(const char *path1, const char *path2)
 {
 	ClientReconstructCurDir crcd(path1);
-	return common_two_pathes(SUDO_CMD_RENAME, &rename, path1, path2, true);
+	return common_two_paths(SUDO_CMD_RENAME, &rename, path1, path2, true);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_symlink(const char *path1, const char *path2)
 {
 	ClientReconstructCurDir crcd(path2);
-	return common_two_pathes(SUDO_CMD_SYMLINK, &symlink, path1, path2, true);
+	return common_two_paths(SUDO_CMD_SYMLINK, &symlink, path1, path2, true);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_link(const char *path1, const char *path2)
 {
 	ClientReconstructCurDir crcd(path2);
-	return common_two_pathes(SUDO_CMD_LINK, &link, path1, path2, true);	
+	return common_two_paths(SUDO_CMD_LINK, &link, path1, path2, true);
 }
 
 extern "C" __attribute__ ((visibility("default"))) char *sdc_realpath(const char *path, char *resolved_path)

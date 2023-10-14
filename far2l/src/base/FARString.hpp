@@ -60,7 +60,7 @@ class FARString
 		<Content> represents actual content of string that may be shared across different FARStrings
 		and it must be trivial cuz there is sEmptyData singletone shared across all empty strings and
 		thus it may be accessed during early static objects initialization; using Meyer's singletone
-		implementaion for it would cause compiler to include local static strapping code that has some
+		implementation for it would cause compiler to include local static strapping code that has some
 		runtime overhead. Using trivial class makes possible just to create global static variable that
 		will be resided in BSS and thus will have all fields zero-initialized by linker and ready to use
 		just upon app loading without using initializing c-tor. This is also main reason why cannot use

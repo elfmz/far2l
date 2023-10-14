@@ -135,7 +135,7 @@ class ThreadedStatFS : Threaded
 		if (r == 0) {
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_bsize; //f_frsize;
-			(*_mps)[_mpi].free = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
+			(*_mps)[_mpi].free_ = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].read_only = (s.f_flags & ST_RDONLY) != 0;
 			(*_mps)[_mpi].bad = false;
 		}

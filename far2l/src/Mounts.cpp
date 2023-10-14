@@ -108,10 +108,10 @@ namespace Mounts
 		FileSizeToStr(val, mp.avail, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
 		ReplaceStrings(str, L"$A", val);
 
-		FileSizeToStr(val, mp.free, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		FileSizeToStr(val, mp.free_, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
 		ReplaceStrings(str, L"$F", val);
 
-		FileSizeToStr(val, mp.total - mp.free, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
+		FileSizeToStr(val, mp.total - mp.free_, -1, COLUMN_ECONOMIC | COLUMN_FLOATSIZE | COLUMN_SHOWBYTESINDEX);
 		ReplaceStrings(str, L"$U", val);
 
 		if (mp.total)
@@ -121,13 +121,13 @@ namespace Mounts
 		ReplaceStrings(str, L"$a", val);
 
 		if (mp.total)
-			val.Format(L"%lld", (mp.free * 100) / mp.total);
+			val.Format(L"%lld", (mp.free_ * 100) / mp.total);
 		else
 			val = L"NA";
 		ReplaceStrings(str, L"$f", val);
 
 		if (mp.total)
-			val.Format(L"%lld", ((mp.total - mp.free) * 100) / mp.total);
+			val.Format(L"%lld", ((mp.total - mp.free_) * 100) / mp.total);
 		else
 			val = L"NA";
 		ReplaceStrings(str, L"$u", val);

@@ -1630,7 +1630,7 @@ namespace ttmath
 	ValueType DegToDeg(	const ValueType & d, const ValueType & m, const ValueType & s,
 						ErrorCode * err = 0)
 	{
-	ValueType delimiter, Multiplier;
+	ValueType delimiter, multiplier;
 	uint c = 0;
 
 		if( d.IsNan() || m.IsNan() || s.IsNan() || m.IsSign() || s.IsSign() )
@@ -1643,22 +1643,22 @@ namespace ttmath
 		return delimiter;
 		}
 
-		Multiplier = 60;
+		multiplier = 60;
 		delimiter = 3600;
 
-		c += Multiplier.Mul(m);
-		c += Multiplier.Add(s);
-		c += Multiplier.Div(delimiter);
+		c += multiplier.Mul(m);
+		c += multiplier.Add(s);
+		c += multiplier.Div(delimiter);
 
 		if( d.IsSign() )
-			Multiplier.ChangeSign();
+			multiplier.ChangeSign();
 
-		c += Multiplier.Add(d);
+		c += multiplier.Add(d);
 
 		if( err )
 			*err = c ? err_overflow : err_ok;
 
-	return Multiplier;
+	return multiplier;
 	}
 
 

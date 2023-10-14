@@ -81,18 +81,20 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		uint8_t _id_counter = 0;
 	} _far2l_interacts_sent;
 
-	union AsyncEvent
+	struct AsyncEvent
 	{
-		struct {
-			bool term_resized : 1;
-			bool output : 1;
-			bool title_changed : 1;
-			bool far2l_interact : 1;
-			bool go_background : 1;
-			bool osc52clip_set : 1;
-			bool palette : 1;
-		} flags;
-		uint32_t all;
+		bool term_resized : 1;
+		bool output : 1;
+		bool title_changed : 1;
+		bool far2l_interact : 1;
+		bool go_background : 1;
+		bool osc52clip_set : 1;
+		bool palette : 1;
+
+		inline bool HasAny() const
+		{
+			return term_resized || output || title_changed || far2l_interact || go_background || osc52clip_set || palette;
+		}
 	} _ae{};
 
 	std::string _osc52clip;

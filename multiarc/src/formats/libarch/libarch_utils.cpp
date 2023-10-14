@@ -119,6 +119,14 @@ LibArchOpenRead::LibArchOpenRead(const char *name, const char *cmd, const char *
 	}
 
 	_fmt = archive_format(_arc);
+	if (_fmt == ARCHIVE_FORMAT_MTREE && archive_filter_count(_arc) <= 1
+			&& !StrEndsBy(name, ".tree") && !StrEndsBy(name, ".mtree")) {
+		// https://github.com/elfmz/far2l/issues/1887
+		// https://github.com/libarchive/libarchive/issues/1051
+		EnsureClosed();
+		throw std::runtime_error("mtree avoided");
+	}
+
 	if (_fmt == ARCHIVE_FORMAT_RAW && _ae != nullptr) {
 		const char *name_part = strrchr(name, '/');
 		std::string arc_raw_name(name_part ? name_part + 1 : name);

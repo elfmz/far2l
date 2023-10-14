@@ -80,7 +80,7 @@ void ProcessName(const TCHAR *OldFullName, DWORD FileAttributes)
 #ifdef UNICODE
 				ProcessName(Items[I].lpwszFileName,Items[I].dwFileAttributes);
 #else
-				GetFullName(NewFullName,OldFullName,Items[I].FindData.cFileName);
+				GetFullName(ARRAYSIZE(NewFullName),NewFullName,OldFullName,Items[I].FindData.cFileName);
 				ProcessName(NewFullName,Items[I].FindData.dwFileAttributes);
 #endif
 			}

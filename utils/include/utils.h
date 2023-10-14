@@ -99,6 +99,17 @@ template <class StrT>
 	return i;
 }
 
+template <class CharT>
+	size_t StrEndsBy(const CharT *haystack, const CharT *needle)
+{
+	const size_t hl = tzlen(haystack);
+	const size_t l = tzlen(needle);
+	if (!l || hl < l)
+		return 0;
+
+	return memcmp(haystack + hl - l, needle, l * sizeof(CharT)) ? 0 : l;
+}
+
 template <class StrT>
 	size_t StrEndsBy(const StrT &haystack, const typename StrT::value_type *needle)
 {

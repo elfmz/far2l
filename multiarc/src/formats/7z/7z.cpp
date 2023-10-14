@@ -284,8 +284,8 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
       /*Recover archive       */"",
       /*Add files             */"7z a -y {-p%%P} %%A @%%LN",
       /*Move files            */"7z a -y -sdel {-p%%P} %%A @%%LN",
-      /*Add files and folders */"7z a -y -r {-p%%P} %%A @%%LN",
-      /*Move files and folders*/"7z a -y -r -sdel {-p%%P} %%A @%%LN",
+      /*Add files and folders */"7z a -y {-p%%P} %%A @%%LN",
+      /*Move files and folders*/"7z a -y -sdel {-p%%P} %%A @%%LN",
       /*"All files" mask      */"*"
     };
     if (Command<(int)(ARRAYSIZE(Commands)))

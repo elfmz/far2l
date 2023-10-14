@@ -826,7 +826,7 @@ bool CmdExtract::ExtractCurrentFile(Archive &Arc,size_t HeaderSize,bool &Repeat)
             LinkSuccess=false;
           }
           
-          if (!LinkSuccess || (Arc.Format==RARFMT15 && !FileCreateMode))
+          if (!LinkSuccess || Arc.Format==RARFMT15 && !FileCreateMode)
           {
             // RAR 5.x links have a valid data checksum even in case of
             // failure, because they do not store any data.
@@ -920,7 +920,7 @@ bool CmdExtract::ExtractCurrentFile(Archive &Arc,size_t HeaderSize,bool &Repeat)
       bool SetAttrOnly=LinkEntry && Arc.FileHead.RedirType==FSREDIR_HARDLINK && LinkSuccess;
 
       if (!TestMode && (Command=='X' || Command=='E') &&
-          (!LinkEntry || SetAttrOnly || (Arc.FileHead.RedirType==FSREDIR_FILECOPY && LinkSuccess)) &&
+          (!LinkEntry || SetAttrOnly || Arc.FileHead.RedirType==FSREDIR_FILECOPY && LinkSuccess) && 
           (!BrokenFile || Cmd->KeepBroken))
       {
         // Below we use DestFileName instead of CurFile.FileName,
@@ -1461,7 +1461,7 @@ bool CmdExtract::CheckUnpVer(Archive &Arc,const wchar *ArcFileName)
 // 
 // Alternatively we could collect references while extracting an archive
 // and perform the second extraction pass for references only.
-// But it would be slower for solid archives than scanning headers
+// But it would be slower for solid archives than scaning headers
 // in first pass and extracting everything in second, as implemented now.
 // 
 void CmdExtract::AnalyzeArchive(const wchar *ArcName,bool Volume,bool NewNumbering)

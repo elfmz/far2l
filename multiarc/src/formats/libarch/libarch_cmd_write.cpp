@@ -171,8 +171,8 @@ class LIBARCH_Add
 	static LIBARCH_Add *s_ftw_caller;
 
 	const LibarchCommandOptions &_arc_opts;
-	PathParts _add_pathes;
-	PathParts _well_added_pathes;
+	PathParts _add_paths;
+	PathParts _well_added_paths;
 
 	LibArchOpenWrite *_arc_dst = nullptr;
 
@@ -278,7 +278,7 @@ class LIBARCH_Add
 			_illformed_parts.pop_back();
 		}
 
-		_well_added_pathes.emplace_back(path);
+		_well_added_paths.emplace_back(path);
 	}
 
 	void AddPathHandlingErrors(const char *path)
@@ -328,9 +328,9 @@ public:
 		_cmd(cmd),
 		_good(true)
 	{
-		_add_pathes.reserve(files_cnt);
+		_add_paths.reserve(files_cnt);
 		for (int i = 0; i < files_cnt; ++i) if (files[i]) {
-			_add_pathes.emplace_back(files[i]);
+			_add_paths.emplace_back(files[i]);
 		}
 	}
 
@@ -342,13 +342,13 @@ public:
 	void AddInto(LibArchOpenWrite &arc_dst)
 	{
 		_arc_dst = &arc_dst;
-		for (auto add_path : _add_pathes) try {
+		for (auto add_path : _add_paths) try {
 			// remove ending /* that means all files in dir, that is dir itself
 			while (add_path.size() >= 2 && add_path.rfind("/*") == add_path.size() - 2) {
 				add_path.resize(add_path.size() - 2);
 			}
 
-			// remove ending directoty path with slash, otherwise macos ftw report pathes with double slashes that
+			// remove ending directoty path with slash, otherwise macos ftw report paths with double slashes that
 			// consequently causes resulted zip archive entries not enumed correctly
 			while (add_path.size() > 1 && add_path.back() == '/') {
 				add_path.resize(add_path.size() - 1);
@@ -368,8 +368,8 @@ public:
 	void DoRemoval()
 	{
 		if (*_cmd == 'm' || *_cmd == 'M') {
-			std::sort(_well_added_pathes.begin(), _well_added_pathes.end());
-			for (auto it = _well_added_pathes.rbegin(); it != _well_added_pathes.rend(); ++it) {
+			std::sort(_well_added_paths.begin(), _well_added_paths.end());
+			for (auto it = _well_added_paths.rbegin(); it != _well_added_paths.rend(); ++it) {
 				if (remove(it->c_str()) == 0) {
 					printf("Removed: %s\n", it->c_str());
 				} else {

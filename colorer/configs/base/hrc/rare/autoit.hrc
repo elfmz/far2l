@@ -68,7 +68,7 @@
          <block start="/(^|\,)\s*?(send)\s*?(\,)/i" end="/($)/" scheme="AutoItSend" region01="aiSymb" region02="aiFunc" region03="aiSymb"/>
 <!-- IfMsgBox Command Special Syntax -->
          <block start="/(^|\,)\s*?(ifmsgbox)\s*?(\,)/i" end="/(\,)?#0/" scheme="AutoItIfMsg" region01="aiSymb" region02="aiFunc" region03="aiSymb" region10="aiSymb"/>
-<!-- Enviroment variables -->
+<!-- Environment variables -->
          <regexp match="/(\%.*?\%)/" region0="aiVar"/>
 <!-- Symbols -->
          <regexp match="/[^\\](\\[nt])/" region0="aiSymb"/>

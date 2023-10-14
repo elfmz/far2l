@@ -186,29 +186,29 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 		pListName = PSubstData->pListName;
 		pAnotherListName = PSubstData->pAnotherListName;
 
-		wchar_t Modifers[32] = L"";
+		wchar_t Modifiers[32] = L"";
 		const wchar_t *Ptr;
 
 		if ((Ptr = wcschr(CurStr + 2, L'!'))) {
 			if (Ptr[1] != L'?') {
-				far_wcsncpy(Modifers, CurStr + 2,
-						Min(ARRAYSIZE(Modifers), static_cast<size_t>(Ptr - (CurStr + 2) + 1)));
+				far_wcsncpy(Modifiers, CurStr + 2,
+						Min(ARRAYSIZE(Modifiers), static_cast<size_t>(Ptr - (CurStr + 2) + 1)));
 
 				if (pListName) {
 					if (PSubstData->PassivePanel
 							&& (!pAnotherListName->IsEmpty()
-									|| PSubstData->AnotherPanel->MakeListFile(*pAnotherListName, Modifers))) {
+									|| PSubstData->AnotherPanel->MakeListFile(*pAnotherListName, Modifiers))) {
 						strOut+= *pAnotherListName;
 					}
 
 					if (!PSubstData->PassivePanel
 							&& (!pListName->IsEmpty()
-									|| PSubstData->ActivePanel->MakeListFile(*pListName, Modifers))) {
+									|| PSubstData->ActivePanel->MakeListFile(*pListName, Modifiers))) {
 						strOut+= *pListName;
 					}
 				} else {
 					strOut+= CurStr;
-					strOut+= Modifers;
+					strOut+= Modifiers;
 					strOut+= L"!";
 				}
 
@@ -605,7 +605,7 @@ int ReplaceVariables(FARString &strStr, TSubstData *PSubstData)
 	return 1;
 }
 
-bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifers)
+bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifiers)
 {
 	bool Ret = false;
 
@@ -617,15 +617,15 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifers)
 			LPCVOID Eol = NATIVE_EOL;
 			DWORD EolSize = strlen(NATIVE_EOL);
 
-			if (Modifers && *Modifers) {
-				if (wcschr(Modifers, L'A'))		// ANSI
+			if (Modifiers && *Modifiers) {
+				if (wcschr(Modifiers, L'A'))		// ANSI
 				{
 					CodePage = CP_ACP;
 				} else {
 					DWORD Signature = 0;
 					int SignatureSize = 0;
 
-					if (wcschr(Modifers, L'W'))		// Wide
+					if (wcschr(Modifiers, L'W'))		// Wide
 					{
 						CodePage = CP_UTF16LE;
 						Signature = SIGN_UTF16LE;
@@ -633,7 +633,7 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifers)
 						Eol = NATIVE_EOLW;
 						EolSize = sizeof(wchar_t) * wcslen(NATIVE_EOLW);
 					} else {
-						if (wcschr(Modifers, L'U'))		// UTF8
+						if (wcschr(Modifiers, L'U'))		// UTF8
 						{
 							CodePage = CP_UTF8;
 							Signature = SIGN_UTF8;
@@ -653,8 +653,8 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifers)
 			GetSelNameCompat(nullptr, FileAttr);
 
 			while (GetSelNameCompat(&strFileName, FileAttr)) {
-				if (Modifers && *Modifers) {
-					if (wcschr(Modifers, L'F') && PointToName(strFileName) == strFileName.CPtr())		// 'F' - использовать полный путь; //BUGBUG ?
+				if (Modifiers && *Modifiers) {
+					if (wcschr(Modifiers, L'F') && PointToName(strFileName) == strFileName.CPtr())		// 'F' - использовать полный путь; //BUGBUG ?
 					{
 						FARString strTempFileName = strCurDir;
 
@@ -663,7 +663,7 @@ bool Panel::MakeListFile(FARString &strListFileName, const wchar_t *Modifers)
 						strFileName = strTempFileName;
 					}
 
-					if (wcschr(Modifers, L'Q'))		// 'Q' - заключать имена с пробелами в кавычки;
+					if (wcschr(Modifiers, L'Q'))		// 'Q' - заключать имена с пробелами в кавычки;
 						QuoteSpaceOnly(strFileName);
 				}
 
@@ -751,7 +751,7 @@ static int IsReplaceVariable(const wchar_t *str, int *scr, int *end, int *beg_sc
 		return -1;
 
 	//
-	for (;;)	// analize from !? to ?
+	for (;;)	// analyze from !? to ?
 	{
 		if (!*s)
 			return -1;
@@ -790,7 +790,7 @@ static int IsReplaceVariable(const wchar_t *str, int *scr, int *end, int *beg_sc
 
 	scrtxt = s - 1;		// remember s for return
 
-	for (;;)			// analize from ? or !
+	for (;;)			// analyze from ? or !
 	{
 		if (!*s)
 			return -1;

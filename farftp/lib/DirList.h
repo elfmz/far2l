@@ -36,7 +36,7 @@ struct FTPServerInfo
 };
 
 //------------------------------------------------------------------------
-// Strcture describes one file|dir entry
+// Structure describes one file|dir entry
 //------------------------------------------------------------------------
 // Additional file|dir attributes
 #define NET_FILE_TYPE        0		// File
@@ -66,7 +66,7 @@ struct FTPType
 	BOOL(WINAPI *Parser)
 	(const FTPServerInfo *Server, FTPFileInfo *FileInfo, char *ListingString, int ListingLength);
 	/** Parses one line of received server listing.
-		One line allways contains one file entry.
+		One line always contains one file entry.
 
 		Params:
 		  Server        - IN  - current server information
@@ -114,7 +114,7 @@ struct DirListInterface : public FTPPluginInterface
 
 		return:
 		  Must return FTP_TYPE_DETECT, FTP_TYPE_INVALID on invalid detection or one
-		  of FTP_TYPE_xxx types on successfull detect.
+		  of FTP_TYPE_xxx types on successful detect.
 	*/
 
 	WORD(WINAPI *DetectDirStringType)(const FTPServerInfo *Server, LPCSTR String);
@@ -129,7 +129,7 @@ struct DirListInterface : public FTPPluginInterface
 
 		return:
 		  Must return FTP_TYPE_DETECT, FTP_TYPE_INVALID on invalid detection or one
-		  of FTP_TYPE_xxx types on successfull detect.
+		  of FTP_TYPE_xxx types on successful detect.
 
 		  If detection succeed returned type will be used to select callback to parse
 		  PWD reply.

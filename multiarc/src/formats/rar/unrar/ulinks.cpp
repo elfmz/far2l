@@ -1,4 +1,8 @@
-
+#include "rartypes.hpp"
+#include "os.hpp"
+#include "timefn.hpp"
+#include "filefn.hpp"
+#include "ui.hpp"
 
 static bool UnixSymlink(CommandData *Cmd,const char *Target,const wchar *LinkName,RarTime *ftm,RarTime *fta)
 {

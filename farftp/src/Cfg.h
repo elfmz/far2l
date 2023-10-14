@@ -124,7 +124,7 @@ struct Options : public OptionsPlugin
 	int CmdLogLimit;			// Limit of cmd log file (*1000 bytes)                          100 (100.000 bytes)
 	BOOL CloseDots;				// Switch on ".." to hosts                                      TRUE
 	BOOL QuoteClipboardNames;	// Quote names placed to clipboard
-	BOOL SetHiddenOnAbort;		// Set hidden attribute on uncomplete files
+	BOOL SetHiddenOnAbort;		// Set hidden attribute on incomplete files
 
 								// Techinfos
 	DWORD PwdSecurity;			// Set of SEC_xxx
@@ -140,7 +140,7 @@ struct Options : public OptionsPlugin
 
 	SaveListInfo sli;
 
-	BOOL _ShowPassword;		// Show paswords in any places                                  FALSE
+	BOOL _ShowPassword;		// Show passwords in any places                                  FALSE
 
 	char cmdPut[20];		//"STOR" /*APPE*/
 	char cmdAppe[20];		//"APPE"
@@ -177,7 +177,7 @@ struct Options : public OptionsPlugin
 	char cmdCDUp[20];		//"CDUP"
 	char cmdXCDUp[20];		//"XCUP"
 	char cmdSyst[20];		//"SYST"
-	char cmdSize[20];		//"SISE"
+	char cmdSize[20];		//"SIZE"
 	char cmdStat[20];		//"STAT"
 };
 

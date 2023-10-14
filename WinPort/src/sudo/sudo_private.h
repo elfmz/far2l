@@ -91,6 +91,8 @@ namespace Sudo
 		const char * &_path;
 	public:
 		ClientReconstructCurDir(const char * &path);
+		ClientReconstructCurDir(const ClientReconstructCurDir&) = delete;
+		ClientReconstructCurDir& operator=(const ClientReconstructCurDir&) = delete;
 		~ClientReconstructCurDir();
 	};
 

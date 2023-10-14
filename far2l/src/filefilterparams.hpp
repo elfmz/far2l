@@ -130,6 +130,10 @@ private:
 public:
 	FileFilterParams();
 
+		FileFilterParams(const FileFilterParams &FF)
+		{
+			operator=(FF);
+		}
 	const FileFilterParams &operator=(const FileFilterParams &FF);
 
 	void SetTitle(const wchar_t *Title);

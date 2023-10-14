@@ -1,5 +1,5 @@
 # - Find Xerces-C
-# The following setings are defined
+# The following settings are defined
 # XERCESC_ROOT_DIR, the root of the include and lib directory
 # XERCESC_INCLUDE_DIR, the full path of the include dir (ADVANCED)
 # XERCESC_LIBRARIES, the name of the xerces-c library (ADVANCED)

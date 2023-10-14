@@ -13,7 +13,7 @@
 
 		TODO:
 			- Support for multi line strings (string which contains new line symbols)
-			- Highlight formating characters in strings (e.g. ~S, ~A, etc.)
+			- Highlight formatting characters in strings (e.g. ~S, ~A, etc.)
 			- Do not highlight first parameter in function and macro definition
 	]]></documentation>
 	<contributors><![CDATA[

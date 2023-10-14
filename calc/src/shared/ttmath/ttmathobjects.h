@@ -74,7 +74,7 @@ public:
 	struct Item
 	{
 		// name of a variable of a function
-		// internally we store variables and funcions as std::string (not std::wstring even when wide characters are used)
+		// internally we store variables and functions as std::string (not std::wstring even when wide characters are used)
 		std::string value;
 
 		// number of parameters required by the function

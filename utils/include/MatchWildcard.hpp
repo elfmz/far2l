@@ -25,7 +25,7 @@ template <class CHAR_T, class CHAR_COMPARE>
 			wild++;
 			str++;
 
-		} else {
+		} else if (mp && cp){
 			wild = mp;
 			str = cp++;
 		}

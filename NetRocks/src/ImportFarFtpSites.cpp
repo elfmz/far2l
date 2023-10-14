@@ -6,7 +6,7 @@
 // TODO: remove this code in year >= 2022
 #ifdef WINPORT_REGISTRY
 
-#define FTP_PWD_LEN 150 //max crypted pwd length
+#define FTP_PWD_LEN 150 //max encrypted pwd length
 
 bool SplitLocationSpecification(const char *specification,
 	std::string &protocol, std::string &host, unsigned int &port,

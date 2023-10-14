@@ -152,7 +152,7 @@ bool OpBase::WaitThreadBeforeShowProgress()
 		return true;
 	}
 
-	// avoid annoying poping up of progress dialog while reading error dialog
+	// avoid annoying popping up of progress dialog while reading error dialog
 	while (_wea_state->IsShowingUIRightNow()) {
 		if (WaitThread(100)) {
 			return true;

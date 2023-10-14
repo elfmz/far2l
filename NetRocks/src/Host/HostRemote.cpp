@@ -73,7 +73,7 @@ const std::string &HostRemote::CodepageLocal2Remote(const std::string &str)
 		return str;
 	}
 
-	_codepage_str.resize(_codepage_wstr.size() * 8); // ought to should be enought for any encoding
+	_codepage_str.resize(_codepage_wstr.size() * 8); // ought to should be enough for any encoding
 	const int cp_cvt_rv = WINPORT(WideCharToMultiByte)(_codepage, 0, _codepage_wstr.c_str(),
 			_codepage_wstr.size(), &_codepage_str[0], (int)_codepage_str.size(), nullptr, nullptr);
 	if (cp_cvt_rv <= 0) {
@@ -469,7 +469,7 @@ mode_t HostRemote::GetMode(const std::string &path, bool follow_symlink)
 	return out;
 }
 
-void HostRemote::GetModes(bool follow_symlink, size_t count, const std::string *pathes, mode_t *modes) noexcept
+void HostRemote::GetModes(bool follow_symlink, size_t count, const std::string *paths, mode_t *modes) noexcept
 {
 	size_t j = 0;
 	try {
@@ -479,7 +479,7 @@ void HostRemote::GetModes(bool follow_symlink, size_t count, const std::string *
 		SendPOD(follow_symlink);
 		SendPOD(count);
 		for (size_t i = 0; i < count; ++i) {
-			SendString(CodepageLocal2Remote(pathes[i]));
+			SendString(CodepageLocal2Remote(paths[i]));
 		}
 		RecvReply(IPC_GET_MODES);
 		for (; j < count; ++j) {

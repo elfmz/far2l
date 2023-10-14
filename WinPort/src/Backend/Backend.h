@@ -13,7 +13,7 @@
 class IConsoleOutputBackend
 {
 protected:
-	virtual ~IConsoleOutputBackend() {};
+	virtual ~IConsoleOutputBackend() {}
 
 public:
 	virtual void OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count) = 0;
@@ -39,7 +39,7 @@ class IClipboardBackend
 {
 protected:
 	friend class ClipboardBackendSetter;
-	virtual ~IClipboardBackend() {};
+	virtual ~IClipboardBackend() {}
 
 public:
 	virtual bool OnClipboardOpen() = 0;
@@ -91,7 +91,7 @@ public:
 class IConsoleInput
 {
 protected:
-	virtual ~IConsoleInput() {};
+	virtual ~IConsoleInput() {}
 
 public:
 	virtual void Enqueue(const INPUT_RECORD *data, DWORD size) = 0;
@@ -132,7 +132,7 @@ class ConsoleInputPriority
 class IConsoleOutput
 {
 protected:
-	virtual ~IConsoleOutput() {};
+	virtual ~IConsoleOutput() {}
 
 	friend class DirectLineAccess;
 

@@ -12,7 +12,7 @@
 class HRCParserException : public Exception
 {
 public:
-  HRCParserException() noexcept : Exception("[HRCParserException] ") {};
+  HRCParserException() noexcept : Exception("[HRCParserException] ") {}
   HRCParserException(const String &msg) noexcept : HRCParserException()
   {
     what_str.append(msg);
@@ -76,9 +76,9 @@ public:
   */
   virtual const String *getVersion() = 0;
 
-  virtual ~HRCParser(){};
+  virtual ~HRCParser(){}
 protected:
-  HRCParser(){};
+  HRCParser(){}
 };
 
 

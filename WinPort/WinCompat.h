@@ -1439,7 +1439,7 @@ typedef struct _nlsversioninfo{
     DWORD dwNLSVersionInfoSize;     // sizeof(NLSVERSIONINFO) == 32 bytes
     DWORD dwNLSVersion;
     DWORD dwDefinedVersion;         // Deprecated, use dwNLSVersion instead
-    DWORD dwEffectiveId;            // Deprecated, use guidCustomVerison instead
+    DWORD dwEffectiveId;            // Deprecated, use guidCustomVersion instead
     GUID  guidCustomVersion;        // Explicit sort version
 } NLSVERSIONINFO, *LPNLSVERSIONINFO;
 

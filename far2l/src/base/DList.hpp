@@ -61,8 +61,8 @@ protected:
 
 public:
 	void Clear();
-	size_t Count() const { return count; };
-	bool Empty() const { return !count; };
+	size_t Count() const { return count; }
+	bool Empty() const { return !count; }
 };
 
 template <typename Type>
@@ -70,7 +70,7 @@ class DList : public CDList
 {
 	struct TNode : Node
 	{
-		Type type;
+		Type type{};
 		TNode(Type *t)
 		{
 			if (t)
@@ -84,7 +84,7 @@ class DList : public CDList
 	Node *Type2Node(const Type *item) { return item ? (Node *)((BYTE *)item - sizeof(Node)) : &root; }
 
 public:
-	~DList() { Clear(); };
+	~DList() { Clear(); }
 
 	// создать новый элемент и поместить его в конец списка
 	// возвращает указатель на созданный элемент

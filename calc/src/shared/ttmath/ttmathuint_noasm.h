@@ -54,7 +54,7 @@ namespace ttmath
 {
 
 	/*!
-		returning the string represents the currect type of the library
+		returning the string represents the current type of the library
 		we have following types:
 		  asm_vc_32   - with asm code designed for Microsoft Visual C++ (32 bits)
 		  asm_gcc_32  - with asm code designed for GCC (32 bits)
@@ -79,7 +79,7 @@ namespace ttmath
 
 	
 	/*!
-		returning the currect type of the library
+		returning the current type of the library
 	*/
 	template<uint value_size>
 	LibTypeCode UInt<value_size>::LibType()
@@ -243,7 +243,7 @@ namespace ttmath
 
 
 	/*!
-		this static method addes one vector to the other
+		this static method adds one vector to the other
 		'ss1' is larger in size or equal to 'ss2'
 
 		ss1 points to the first (larger) vector
@@ -661,7 +661,7 @@ namespace ttmath
 		result_high - higher word of the result
 		result_low  - lower word of the result
 	
-		this methos never returns a carry
+		this method never returns a carry
 		this method is used in the second version of the multiplication algorithms
 	*/
 	template<uint value_size>

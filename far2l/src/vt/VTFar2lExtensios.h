@@ -27,21 +27,21 @@ class VTFar2lExtensios
 	bool IsAllowedClipboardRead();
 	void AllowClipboardRead(bool prolong);
 
-	void OnInterract_ClipboardOpen(StackSerializer &stk_ser);
-	void OnInterract_ClipboardClose(StackSerializer &stk_ser);
-	void OnInterract_ClipboardEmpty(StackSerializer &stk_ser);
-	void OnInterract_ClipboardIsFormatAvailable(StackSerializer &stk_ser);
-	void OnInterract_ClipboardSetDataChunk(StackSerializer &stk_ser);
-	void OnInterract_ClipboardSetData(StackSerializer &stk_ser);
-	void OnInterract_ClipboardGetData(StackSerializer &stk_ser);
-	void OnInterract_ClipboardGetDataID(StackSerializer &stk_ser);
-	void OnInterract_ClipboardRegisterFormat(StackSerializer &stk_ser);
-	void OnInterract_Clipboard(StackSerializer &stk_ser);
-	void OnInterract_GetLargestWindowSize(StackSerializer &stk_ser);
-	void OnInterract_ChangeCursorHeigth(StackSerializer &stk_ser);
-	void OnInterract_DisplayNotification(StackSerializer &stk_ser);
-	void OnInterract_SetFKeyTitles(StackSerializer &stk_ser);
-	void OnInterract_GetColorPalette(StackSerializer &stk_ser);
+	void OnInteract_ClipboardOpen(StackSerializer &stk_ser);
+	void OnInteract_ClipboardClose(StackSerializer &stk_ser);
+	void OnInteract_ClipboardEmpty(StackSerializer &stk_ser);
+	void OnInteract_ClipboardIsFormatAvailable(StackSerializer &stk_ser);
+	void OnInteract_ClipboardSetDataChunk(StackSerializer &stk_ser);
+	void OnInteract_ClipboardSetData(StackSerializer &stk_ser);
+	void OnInteract_ClipboardGetData(StackSerializer &stk_ser);
+	void OnInteract_ClipboardGetDataID(StackSerializer &stk_ser);
+	void OnInteract_ClipboardRegisterFormat(StackSerializer &stk_ser);
+	void OnInteract_Clipboard(StackSerializer &stk_ser);
+	void OnInteract_GetLargestWindowSize(StackSerializer &stk_ser);
+	void OnInteract_ChangeCursorHeight(StackSerializer &stk_ser);
+	void OnInteract_DisplayNotification(StackSerializer &stk_ser);
+	void OnInteract_SetFKeyTitles(StackSerializer &stk_ser);
+	void OnInteract_GetColorPalette(StackSerializer &stk_ser);
 
 	void WriteInputEvent(const StackSerializer &stk_ser);
 public:
@@ -51,5 +51,5 @@ public:
 	void OnTerminalResized();
 	bool OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent);
 	bool OnInputKey(const KEY_EVENT_RECORD &KeyEvent);
-	void OnInterract(StackSerializer &stk_ser);
+	void OnInteract(StackSerializer &stk_ser);
 };

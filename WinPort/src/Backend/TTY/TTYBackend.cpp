@@ -216,8 +216,8 @@ void TTYBackend::ReaderThread()
 
 		if (_far2l_tty) {
 			if (!prev_far2l_tty && !_ext_clipboard) {
-				IFar2lInterractor *interractor = this;
-				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interractor);
+				IFar2lInteractor *interactor = this;
+				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interactor);
 			}
 
 		} else {
@@ -371,7 +371,7 @@ void TTYBackend::WriterThread()
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
-			AsyncEvent ae;
+			AsyncEvent ae{};
 			ae.all = 0;
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);
@@ -403,8 +403,8 @@ void TTYBackend::WriterThread()
 				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out->GetTitle()));
 			}
 
-			if (ae.flags.far2l_interract)
-				DispatchFar2lInterract(tty_out);
+			if (ae.flags.far2l_interact)
+				DispatchFar2lInteract(tty_out);
 
 			if (ae.flags.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
@@ -573,38 +573,38 @@ void TTYBackend::DispatchOutput(TTYOutput &tty_out)
 }
 
 
-void TTYBackend::DispatchFar2lInterract(TTYOutput &tty_out)
+void TTYBackend::DispatchFar2lInteract(TTYOutput &tty_out)
 {
-	Far2lInterractV queued;
+	Far2lInteractV queued;
 	{
 		std::unique_lock<std::mutex> lock(_async_mutex);
-		queued.swap(_far2l_interracts_queued);
+		queued.swap(_far2l_interacts_queued);
 	}
 
-	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
 
 	for (auto & i : queued) {
 		uint8_t id = 0;
 		if (i->waited) {
-			if (_far2l_interracts_sent.size() >= 0xff) {
+			if (_far2l_interacts_sent.size() >= 0xff) {
 				fprintf(stderr,
-					"TTYBackend::DispatchFar2lInterract: too many sent interracts - %ld\n",
-					_far2l_interracts_sent.size());
+					"TTYBackend::DispatchFar2lInteract: too many sent interacts - %ld\n",
+					_far2l_interacts_sent.size());
 				i->stk_ser.Clear();
 				i->evnt.Signal();
 				return;
 			}
 			for (;;) {
-				id = ++_far2l_interracts_sent._id_counter;
-				if (id && _far2l_interracts_sent.find(id) == _far2l_interracts_sent.end()) break;
+				id = ++_far2l_interacts_sent._id_counter;
+				if (id && _far2l_interacts_sent.find(id) == _far2l_interacts_sent.end()) break;
 			}
 		}
 		i->stk_ser.PushNum(id);
 
 		if (i->waited)
-			_far2l_interracts_sent.emplace(id, i);
+			_far2l_interacts_sent.emplace(id, i);
 
-		tty_out.SendFar2lInterract(i->stk_ser);
+		tty_out.SendFar2lInteract(i->stk_ser);
 	}
 }
 
@@ -663,8 +663,8 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 
 		try {
 			StackSerializer stk_ser;
-			stk_ser.PushNum(FARTTY_INTERRACT_GET_WINDOW_MAXSIZE);
-			if (Far2lInterract(stk_ser, true)) {
+			stk_ser.PushNum(FARTTY_INTERACT_GET_WINDOW_MAXSIZE);
+			if (Far2lInteract(stk_ser, true)) {
 				stk_ser.PopNum(out.Y);
 				stk_ser.PopNum(out.X);
 				_largest_window_size = out;
@@ -692,9 +692,9 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 			}
 			stk_ser.PushNum(state);
 		}
-		stk_ser.PushNum(FARTTY_INTERRACT_SET_FKEY_TITLES);
+		stk_ser.PushNum(FARTTY_INTERACT_SET_FKEY_TITLES);
 
-		if (Far2lInterract(stk_ser, detect_support)) {
+		if (Far2lInteract(stk_ser, detect_support)) {
 			if (detect_support) {
 				bool supported = false;
 				stk_ser.PopNum(supported);
@@ -722,8 +722,8 @@ BYTE TTYBackend::OnConsoleGetColorPalette()
 
 	if (_far2l_tty) try {
 		StackSerializer stk_ser;
-		stk_ser.PushNum(FARTTY_INTERRACT_GET_COLOR_PALETTE);
-		Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_GET_COLOR_PALETTE);
+		Far2lInteract(stk_ser, true);
 		uint8_t bits, reserved;
 		stk_ser.PopNum(bits);
 		stk_ser.PopNum(reserved);
@@ -752,8 +752,8 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushNum(FARTTY_INTERRACT_CONSOLE_ADHOC_QEDIT);
-		Far2lInterract(stk_ser, false);
+		stk_ser.PushNum(FARTTY_INTERACT_CONSOLE_ADHOC_QEDIT);
+		Far2lInteract(stk_ser, false);
 	} catch (std::exception &) {}
 }
 
@@ -832,8 +832,8 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushNum(maximized ? FARTTY_INTERRACT_WINDOW_MAXIMIZE : FARTTY_INTERRACT_WINDOW_RESTORE);
-		Far2lInterract(stk_ser, false);
+		stk_ser.PushNum(maximized ? FARTTY_INTERACT_WINDOW_MAXIMIZE : FARTTY_INTERACT_WINDOW_RESTORE);
+		Far2lInteract(stk_ser, false);
 	} catch (std::exception &) {}
 }
 
@@ -844,8 +844,8 @@ void TTYBackend::ChooseSimpleClipboardBackend()
 	}
 
 	if (_osc52clip_set) {
-		IOSC52Interractor *interractor = this;
-		_clipboard_backend_setter.Set<OSC52ClipboardBackend>(interractor);
+		IOSC52Interactor *interactor = this;
+		_clipboard_backend_setter.Set<OSC52ClipboardBackend>(interactor);
 	} else {
 		_clipboard_backend_setter.Set<FSClipboardBackend>();
 	}
@@ -860,19 +860,19 @@ void TTYBackend::OSC52SetClipboard(const char *text)
 	_async_cond.notify_all();
 }
 
-bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
+bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 {
 	if (!_far2l_tty || _exiting)
 		return false;
 
-	std::shared_ptr<Far2lInterractData> pfi = std::make_shared<Far2lInterractData>();
+	std::shared_ptr<Far2lInteractData> pfi = std::make_shared<Far2lInteractData>();
 	pfi->stk_ser.Swap(stk_ser);
 	pfi->waited = wait;
 
 	{
 		std::unique_lock<std::mutex> lock(_async_mutex);
-		_far2l_interracts_queued.emplace_back(pfi);
-		_ae.flags.far2l_interract = 1;
+		_far2l_interacts_queued.emplace_back(pfi);
+		_ae.flags.far2l_interact = 1;
 		_async_cond.notify_all();
 	}
 
@@ -881,7 +881,7 @@ bool TTYBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
 
 	pfi->evnt.Wait();
 
-	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
 	if (_exiting)
 		return false;
 
@@ -1057,12 +1057,12 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 	uint8_t id;
 	stk_ser.PopNum(id);
 
-	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
+	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
 
-	auto i = _far2l_interracts_sent.find(id);
-	if (i != _far2l_interracts_sent.end()) {
+	auto i = _far2l_interacts_sent.find(id);
+	if (i != _far2l_interacts_sent.end()) {
 		auto pfi = i->second;
-		_far2l_interracts_sent.erase(i);
+		_far2l_interacts_sent.erase(i);
 		pfi->stk_ser.Swap(stk_ser);
 		pfi->evnt.Signal();
 	}
@@ -1070,12 +1070,12 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 
 void TTYBackend::OnInputBroken()
 {
-	std::unique_lock<std::mutex> lock_sent(_far2l_interracts_sent);
-	for (auto &i : _far2l_interracts_sent) {
+	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
+	for (auto &i : _far2l_interacts_sent) {
 		i.second->stk_ser.Clear();
 		i.second->evnt.Signal();
 	}
-	_far2l_interracts_sent.clear();
+	_far2l_interacts_sent.clear();
 }
 
 DWORD TTYBackend::QueryControlKeys()
@@ -1144,8 +1144,8 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 		StackSerializer stk_ser;
 		stk_ser.PushStr(Wide2MB(text));
 		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushNum(FARTTY_INTERRACT_DESKTOP_NOTIFICATION);
-		Far2lInterract(stk_ser, false);
+		stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
+		Far2lInteract(stk_ser, false);
 	} catch (std::exception &) {}
 }
 
@@ -1201,7 +1201,7 @@ static void OnSigCont(int signo)
 
 static void OnSigHup(int signo)
 {
-	// drop sudo priviledges once pending sudo operation completes
+	// drop sudo privileges once pending sudo operation completes
 	// leaving them is similar to leaving root console unattended
 	sudo_client_drop();
 

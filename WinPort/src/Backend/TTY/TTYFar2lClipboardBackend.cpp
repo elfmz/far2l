@@ -11,8 +11,8 @@
 
 /////////////
 
-TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInterractor *interractor) :
-	_interractor(interractor)
+TTYFar2lClipboardBackend::TTYFar2lClipboardBackend(IFar2lInteractor *interactor) :
+	_interactor(interactor)
 {
 	int fd = open(InMyConfig("tty_clipboard/me").c_str(), O_RDWR|O_CREAT, 0600);
 	ssize_t r = 0;
@@ -50,13 +50,13 @@ TTYFar2lClipboardBackend::~TTYFar2lClipboardBackend()
 	_set_data_thread.reset();
 }
 
-void TTYFar2lClipboardBackend::Far2lInterract(StackSerializer &stk_ser, bool wait)
+void TTYFar2lClipboardBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 {
 	try {
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIPBOARD);
-		_interractor->Far2lInterract(stk_ser, wait);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIPBOARD);
+		_interactor->Far2lInteract(stk_ser, wait);
 	} catch (std::exception &e) {
-		fprintf(stderr, "TTYFar2lClipboardBackend::Far2lInterract: %s\n", e.what());
+		fprintf(stderr, "TTYFar2lClipboardBackend::Far2lInteract: %s\n", e.what());
 	}
 }
 
@@ -78,8 +78,8 @@ bool TTYFar2lClipboardBackend::GetCachedData(UINT format, void *&data, uint32_t 
 	uint64_t id = 0;
 	StackSerializer stk_ser;
 	stk_ser.PushNum(format);
-	stk_ser.PushNum(FARTTY_INTERRACT_CLIP_GETDATAID);
-	Far2lInterract(stk_ser, true);
+	stk_ser.PushNum(FARTTY_INTERACT_CLIP_GETDATAID);
+	Far2lInteract(stk_ser, true);
 	stk_ser.PopNum(id);
 	if (id == 0) { // zero ID means there is no such data, so hint caller to immediately return NULL
 		data = nullptr;
@@ -144,8 +144,8 @@ bool TTYFar2lClipboardBackend::OnClipboardOpen()
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushStr(_client_id);
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_OPEN);
-		Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_OPEN);
+		Far2lInteract(stk_ser, true);
 		switch (stk_ser.PopChar()) {
 			case 1: {
 				if (!stk_ser.IsEmpty()) {
@@ -192,8 +192,8 @@ void TTYFar2lClipboardBackend::OnClipboardClose()
 
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_CLOSE);
-		Far2lInterract(stk_ser, false);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_CLOSE);
+		Far2lInteract(stk_ser, false);
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYFar2lClipboardBackend::OnClipboardClose: %s\n", e.what());
@@ -217,8 +217,8 @@ void TTYFar2lClipboardBackend::OnClipboardEmpty()
 
 	try {
 		StackSerializer stk_ser;
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_EMPTY);
-		Far2lInterract(stk_ser, false);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_EMPTY);
+		Far2lInteract(stk_ser, false);
 
 		std::lock_guard<std::mutex> lock(_mtx);
 		_data_cache.clear();
@@ -248,8 +248,8 @@ bool TTYFar2lClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(format);
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_ISAVAIL);
-		Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_ISAVAIL);
+		Far2lInteract(stk_ser, true);
 		if (stk_ser.PopChar() == 1)
 			return true;
 
@@ -283,15 +283,15 @@ void *TTYFar2lClipboardBackend::SetDataThread::ThreadProc()
 				++i;
 				stk_ser.Push(&_data[ofs], CHUNK_SIZE);
 				stk_ser.PushNum(uint16_t(CHUNK_SIZE >> 8));
-				stk_ser.PushNum(FARTTY_INTERRACT_CLIP_SETDATACHUNK);
+				stk_ser.PushNum(FARTTY_INTERACT_CLIP_SETDATACHUNK);
 				// wait for reply only each 16th request to reduce round-trip delays
-				_backend->Far2lInterract(stk_ser, (i % 16) == 0);
+				_backend->Far2lInteract(stk_ser, (i % 16) == 0);
 				ofs+= CHUNK_SIZE;
 				stk_ser.Clear();
 				if (_cancel) { // discard pending chunks by posting zero-length chunk
 					stk_ser.PushNum(uint16_t(0));
-					stk_ser.PushNum(FARTTY_INTERRACT_CLIP_SETDATACHUNK);
-					_backend->Far2lInterract(stk_ser, false);
+					stk_ser.PushNum(FARTTY_INTERACT_CLIP_SETDATACHUNK);
+					_backend->Far2lInteract(stk_ser, false);
 					throw std::runtime_error("cancelled");
 				}
 				const DWORD busy_period = WINPORT(GetTickCount)() - busy_period_start;
@@ -311,8 +311,8 @@ void *TTYFar2lClipboardBackend::SetDataThread::ThreadProc()
 		stk_ser.Push(&_data[ofs], len);
 		stk_ser.PushNum(len);
 		stk_ser.PushNum(_format);
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_SETDATA);
-		_backend->Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_SETDATA);
+		_backend->Far2lInteract(stk_ser, true);
 		_backend->OnSetDataThreadComplete(this, stk_ser);
 
 	} catch (std::exception &e) {
@@ -453,8 +453,8 @@ void *TTYFar2lClipboardBackend::InnerClipboardGetData(UINT format, uint32_t &len
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(format);
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_GETDATA);
-		Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_GETDATA);
+		Far2lInteract(stk_ser, true);
 		len = stk_ser.PopU32();
 		if (len == (uint32_t)-1) {
 			len = 0;
@@ -502,8 +502,8 @@ UINT TTYFar2lClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszForm
 	try {
 		StackSerializer stk_ser;
 		stk_ser.PushStr(str_mb_format);
-		stk_ser.PushNum(FARTTY_INTERRACT_CLIP_REGISTER_FORMAT);
-		Far2lInterract(stk_ser, true);
+		stk_ser.PushNum(FARTTY_INTERACT_CLIP_REGISTER_FORMAT);
+		Far2lInteract(stk_ser, true);
 		UINT out = stk_ser.PopU32();
 		if (out != 0) {
 			std::lock_guard<std::mutex> lock(_mtx);

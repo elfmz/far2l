@@ -70,7 +70,7 @@ public:
 	void ChangeMouse(bool enable);
 	void ChangeTitle(std::string title);
 
-	void SendFar2lInterract(const StackSerializer &stk_ser);
+	void SendFar2lInteract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
 
 	void CheckiTerm2Hack();

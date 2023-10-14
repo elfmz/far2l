@@ -1566,7 +1566,7 @@ namespace oldfar
 	{
 		EF_HIDEOUT = 0x01,    // dont display output of the command
 		EF_NOWAIT = 0x02,     // dont wait for command completion
-		EF_SUDO = 0x04,       // command must be run with root priviledges
+		EF_SUDO = 0x04,       // command must be run with root privileges
 		EF_NOTIFY = 0x08,     // notify when command completed (if such notifications enabled in settings)
 		EF_NOCMDPRINT = 0x10, // dont print command in command line nor include it to history
 		EF_OPEN = 0x20        // use desktop shell (if present) to open command (e.g. URLs, documents..)
@@ -1818,7 +1818,7 @@ namespace oldfar
 		int                   StartSortOrder;
 		const struct KeyBarTitles *KeyBar;
 		const char           *ShortcutData;
-		long                  Reserverd;
+		long                  Reserved;
 	};
 
 	enum OPENPLUGIN_OPENFROM

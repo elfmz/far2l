@@ -333,7 +333,7 @@ public:
 	int GetFocus() { return (Focus); };
 	int GetType() { return (Type); };
 	void SetUpdateMode(int Mode) { EnableUpdate = Mode; };
-	bool MakeListFile(FARString &strListFileName, const wchar_t *Modifers = nullptr);
+	bool MakeListFile(FARString &strListFileName, const wchar_t *Modifiers = nullptr);
 	int SetCurPath();
 
 	BOOL NeedUpdatePanel(Panel *AnotherPanel);

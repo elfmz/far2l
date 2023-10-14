@@ -27,7 +27,7 @@ enum
 	CommonPanel,
 	SafeModePanel,
 	AnyInPanel,
-	CopyContens,
+	CopyContents,
 	Mode,
 	MenuForFilelist,
 	NewPanelForSearchResults,
@@ -45,7 +45,7 @@ enum
 
 options_t Opt;
 
-static const char REGStr[][8] = {("InDisks"), ("InPlug"), ("Common"), ("Safe"), ("Any"), ("Contens"),
+static const char REGStr[][9] = {("InDisks"), ("InPlug"), ("Common"), ("Safe"), ("Any"), ("Contents"),
 		("Mode"), ("Menu"), ("NewP"), ("Full"), ("ColT"), ("ColW"), ("StatT"), ("StatW"),
 #ifndef UNICODE
 		("DigitV"),
@@ -137,7 +137,7 @@ int Config()
 			/* 6*/ {DI_CHECKBOX, 5, 5, 0, 0, 0, MConfigCommonPanel},
 			/* 7*/ {DI_CHECKBOX, 5, 6, 0, 0, 0, MSafeModePanel},
 			/* 8*/ {DI_CHECKBOX, 5, 7, 0, 0, 0, MAnyInPanel},
-			/* 9*/ {DI_CHECKBOX, 5, 8, 0, 0, DIF_3STATE, MCopyContens},
+			/* 9*/ {DI_CHECKBOX, 5, 8, 0, 0, DIF_3STATE, MCopyContents},
 			/*10*/ {DI_CHECKBOX, DC, 5, 0, 0, 0, MReplaceInFilelist},
 			/*11*/ {DI_CHECKBOX, DC, 6, 0, 0, 0, MMenuForFilelist},
 			/*12*/ {DI_CHECKBOX, DC, 7, 0, 0, 0, MNewPanelForSearchResults},

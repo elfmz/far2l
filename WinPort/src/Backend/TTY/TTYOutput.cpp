@@ -183,9 +183,9 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 		}
 		StackSerializer stk_ser;
 		stk_ser.PushNum(wanted_feats);
-		stk_ser.PushNum(FARTTY_INTERRACT_CHOOSE_EXTRA_FEATURES);
+		stk_ser.PushNum(FARTTY_INTERACT_CHOOSE_EXTRA_FEATURES);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
-		SendFar2lInterract(stk_ser);
+		SendFar2lInteract(stk_ser);
 	}
 
 	Flush();
@@ -215,7 +215,7 @@ TTYOutput::~TTYOutput()
 void TTYOutput::ChangePalette(const TTYBasePalette &palette)
 {
 	for (size_t i = 0; i < BASE_PALETTE_SIZE; ++i) {
-		// Win <-> TTY color index adjustement
+		// Win <-> TTY color index adjustment
 		const unsigned int j = (((i) & 0b001) << 2 | ((i) & 0b100) >> 2 | ((i) & 0b1010));
 		if (_palette.background[i] != palette.background[i] || _palette.foreground[i] != palette.foreground[i]) {
 			_palette.background[i] = palette.background[i];
@@ -263,7 +263,7 @@ void TTYOutput::FinalizeSameChars()
 	}
 
 	// When have queued enough count of same characters:
-	// - Use repeat last char sequence when (#925 #929) terminal is far2l that definately supports it
+	// - Use repeat last char sequence when (#925 #929) terminal is far2l that definitely supports it
 	// - Under other terminals except screen and if repeated char is space - use erase chars + move cursor forward
 	// - Otherwise just output copies of repeated char sequence
 	if (_screen_tty || _same_chars.count <= 5
@@ -369,9 +369,9 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 	if (_far2l_tty) {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(UCHAR(height));
-		stk_ser.PushNum(FARTTY_INTERRACT_SET_CURSOR_HEIGHT);
+		stk_ser.PushNum(FARTTY_INTERACT_SET_CURSOR_HEIGHT);
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
-		SendFar2lInterract(stk_ser);
+		SendFar2lInteract(stk_ser);
 
 	} else if (_kernel_tty) {
 		; // avoid printing 'q' on screen
@@ -508,7 +508,7 @@ void TTYOutput::ChangeTitle(std::string title)
 	Format(ESC "]2;%s\x07", title.c_str());
 }
 
-void TTYOutput::SendFar2lInterract(const StackSerializer &stk_ser)
+void TTYOutput::SendFar2lInteract(const StackSerializer &stk_ser)
 {
 	std::string request = ESC "_far2l:";
 	request+= stk_ser.ToBase64();

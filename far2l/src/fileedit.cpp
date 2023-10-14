@@ -577,7 +577,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 
 			// Ахтунг. Ниже комментарии оставлены в назидании потомкам (до тех пор, пока не измениться манагер)
 			// FrameManager->DeleteFrame(this); // BugZ#546 - Editor валит фар!
-			// CtrlObject->Cp()->Redraw(); //AY: вроде как не надо, делает проблемы с проресовкой если в редакторе из истории попытаться выбрать несуществующий файл
+			// CtrlObject->Cp()->Redraw(); //AY: вроде как не надо, делает проблемы с прорисовкой если в редакторе из истории попытаться выбрать несуществующий файл
 
 			// если прервали загрузку, то фремы нужно проапдейтить, чтобы предыдущие месаги не оставались на экране
 			if (!Opt.Confirm.Esc && UserBreak && ExitCode == XC_LOADING_INTERRUPTED && FrameManager)
@@ -1939,6 +1939,7 @@ int FileEditor::SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFor
 			SysErrorCode = ErrorCode;
 			RetCode = SAVEFILE_ERROR;
 		} catch (std::exception &e) {
+			(void)e;
 			SysErrorCode = ENOMEM;
 			RetCode = SAVEFILE_ERROR;
 		}

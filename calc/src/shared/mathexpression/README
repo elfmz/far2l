@@ -259,8 +259,8 @@ There are know issues, which can lead to some difficulties using the class:
 
 2) Some troubles could be encountered implementing the variable-argument-list user-defined functions.
   Currently, such functions accepts the 'const NodeList & ' as argument list, but NodeList is protected
-  in MathExpresionBase<>. Therefore, you will need implement such functions in the derived class or create
-  a friend. See as an example the 'sum','product', 'min' and 'max' functions in the MathExpresionBase.h.
+  in MathExpressionBase<>. Therefore, you will need implement such functions in the derived class or create
+  a friend. See as an example the 'sum','product', 'min' and 'max' functions in the MathExpressionBase.h.
 
 
 3) C++ function overloading

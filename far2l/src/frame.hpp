@@ -95,9 +95,9 @@ public:
 	virtual int GetType() { return MODALTYPE_VIRTUAL; }
 
 	virtual void OnDestroy();						// вызывается перед уничтожением окна
-	virtual void OnCreate(){};						// вызывается перед созданием окна
+	virtual void OnCreate(){}						// вызывается перед созданием окна
 	virtual void OnChangeFocus(int focus);			// вызывается при смене фокуса
-	virtual void Refresh() { OnChangeFocus(1); };	// Просто перерисоваться :)
+	virtual void Refresh() { OnChangeFocus(1); }	// Просто перерисоваться :)
 
 	virtual void InitKeyBar() {}
 	void SetKeyBar(KeyBar *FrameKeyBar);

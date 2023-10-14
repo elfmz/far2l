@@ -69,7 +69,7 @@ LPCSTR WINAPI FExtOnly(LPCSTR nm, char Slash)
 /*
    Create CPS value string
 
-   The digit allways 3+1+3+1 characters length (8)
+   The digit always 3+1+3+1 characters length (8)
    Digit right alignmented, filled with ' ' at left
 */
 LPCSTR WINAPI FCps(char *buff, double val)

@@ -8,7 +8,7 @@
 #include <StackSerializer.h>
 #include "WinCompat.h"
 #include "Backend.h"
-#include "IFar2lInterractor.h"
+#include "IFar2lInteractor.h"
 #include "FSClipboardBackend.h"
 
 
@@ -45,7 +45,7 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 	std::map<std::string, UINT> _formats_cache;
 
 	std::unique_ptr<FSClipboardBackend> _fallback_backend;
-	IFar2lInterractor *_interractor;
+	IFar2lInteractor *_interactor;
 	std::atomic<int> _no_fallback_open_counter{0};
 	std::shared_ptr<SetDataThread> _set_data_thread;
 
@@ -55,14 +55,14 @@ class TTYFar2lClipboardBackend : public IClipboardBackend
 	std::string _client_id;
 	uint64_t _features = 0;
 
-	void Far2lInterract(StackSerializer &stk_ser, bool wait);
+	void Far2lInteract(StackSerializer &stk_ser, bool wait);
 	bool GetCachedData(UINT format, void *&data, uint32_t &len);
 	void SetCachedData(UINT format, const void *data, uint32_t len, uint64_t id);
 	void OnSetDataThreadComplete(SetDataThread *set_data_thread, StackSerializer &stk_ser);
 	void *InnerClipboardGetData(UINT format, uint32_t &len);
 
 public:
-	TTYFar2lClipboardBackend(IFar2lInterractor *interractor);
+	TTYFar2lClipboardBackend(IFar2lInteractor *interactor);
 	virtual ~TTYFar2lClipboardBackend();
 
 	virtual bool OnClipboardOpen();

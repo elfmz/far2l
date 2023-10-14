@@ -36,7 +36,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 
 SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 {
-	CaseConvertion();
+	CaseConversion();
 	return (INVALID_HANDLE_VALUE);
 }
 

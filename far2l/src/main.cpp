@@ -82,7 +82,7 @@ int DirectRT = 0;
 
 static void print_help(const char *self)
 {
-	printf("FAR2L - oldschool file manager, with built-in terminal and other usefullness'es\n"
+	printf("FAR2L - oldschool file manager, with built-in terminal and other usefulness'es\n"
 			"Usage: %s [switches] [-cd apath [-cd ppath]]\n\n"
 			"where\n"
 			"  apath - path to a folder (or a file or an archive or command with prefix)\n"
@@ -332,7 +332,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 static void SetupFarPath(const char *arg0)
 {
-	InMyTemp();		// pre-cache in env temp pathes
+	InMyTemp();		// pre-cache in env temp paths
 	InitCurrentDirectory();
 
 	char buf[PATH_MAX + 1];

@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <set>
 #include <map>
 #include <Threaded.h>
 #include <StringConfig.h>
@@ -25,6 +24,8 @@
 #define SIMULATED_WRITE_COMPLETE_FAILS_RATE 0
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+class SSHChannel;
+class SSHSession;
 
 #define RESOURCE_CONTAINER(CONTAINER, RESOURCE, DELETER) 		\
 class CONTAINER {						\

@@ -1,5 +1,3 @@
-#include "rar.hpp"
-
 static bool IsAnsiEscComment(const wchar *Data,size_t Size);
 
 bool Archive::GetComment(Array<wchar> *CmtData)
@@ -52,7 +50,7 @@ bool Archive::DoGetComment(Array<wchar> *CmtData)
 #endif
   }
 #ifndef SFX_MODULE
-  if ((Format==RARFMT14 && MainHead.PackComment) || (Format!=RARFMT14 && CommHead.Method!=0x30))
+  if (Format==RARFMT14 && MainHead.PackComment || Format!=RARFMT14 && CommHead.Method!=0x30)
   {
     if (Format!=RARFMT14 && (CommHead.UnpVer < 15 || CommHead.UnpVer > VER_UNPACK || CommHead.Method > 0x35))
       return false;

@@ -1,6 +1,3 @@
-#include "rartypes.hpp"
-#include "unpack.hpp"
-
 #define STARTL1  2
 static unsigned int DecL1[]={0x8000,0xa000,0xc000,0xd000,0xe000,0xea00,
                              0xee00,0xf000,0xf200,0xf200,0xffff};
@@ -309,7 +306,7 @@ void Unpack::LongLZ()
     Length++;
   if (Distance <= 256)
     Length+=8;
-  if (OldAvr3 > 0xb0 || (AvrPlc >= 0x2a00 && OldAvr2 < 0x40))
+  if (OldAvr3 > 0xb0 || AvrPlc >= 0x2a00 && OldAvr2 < 0x40)
     MaxDist3=0x7f00;
   else
     MaxDist3=0x2001;

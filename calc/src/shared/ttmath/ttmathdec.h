@@ -236,16 +236,16 @@ private:
 	{
 		// this guardian is initialized before the program runs (static POD type)
 		static int guardian = 0;
-		static UInt<value_size> Multiplier;
+		static UInt<value_size> multiplier;
 	
 		if( guardian == 0 )
 		{
-			Multiplier = 10;
-			Multiplier.Pow(dec_digits);
+			multiplier = 10;
+			multiplier.Pow(dec_digits);
 			guardian = 1;
 		}
 
-		result = Multiplier;
+		result = multiplier;
 	}
 
 #else
@@ -266,13 +266,13 @@ private:
 			// locking
 			if( thread_lock.Lock() )
 			{
-				static UInt<value_size> Multiplier;
+				static UInt<value_size> multiplier;
 
 				if( guardian == 0 )
 				{
-					pMultiplier = &Multiplier;
-					Multiplier = 10;
-					Multiplier.Pow(dec_digits);
+					pMultiplier = &multiplier;
+					multiplier = 10;
+					multiplier.Pow(dec_digits);
 					guardian = 1;
 				}
 			}
@@ -301,7 +301,7 @@ private:
 	template<class char_type>
 	uint FromStringBase(const char_type * s, const char_type ** after_source = 0, bool * value_read = 0)
 	{
-		UInt<value_size> Multiplier;
+		UInt<value_size> multiplier;
 		const char_type * after;
 		uint c = 0;
 		info = 0;
@@ -324,8 +324,8 @@ private:
 		if( after_source )
 			*after_source = after;
 
-		SetMultiplier(Multiplier);
-		c += value.Mul(Multiplier);
+		SetMultiplier(multiplier);
+		c += value.Mul(multiplier);
 
 		if( *after == '.' )
 			c += FromStringBaseAfterComma(after+1, after_source);
@@ -341,16 +341,16 @@ private:
 	uint FromStringBaseAfterComma(const char_type * s, const char_type ** after_source = 0, bool * value_read = 0)
 	{
 		UInt<value_size> temp;
-		UInt<value_size> Multiplier;
+		UInt<value_size> multiplier;
 		sint z;
 		uint c = 0;
 		size_t i = dec_digits;
 
-		SetMultiplier(Multiplier);
+		SetMultiplier(multiplier);
 
 		for( ; i>0 && (z=Misc::CharToDigit(*s, 10)) != -1 ; --i, ++s )
 		{
-			Multiplier.DivInt(10);
+			multiplier.DivInt(10);
 			temp.SetZero();
 
 			if( value_read )
@@ -359,7 +359,7 @@ private:
 			if( c == 0 )
 			{
 				temp.table[0] = z;
-				c += temp.Mul(Multiplier);
+				c += temp.Mul(multiplier);
 				c += value.Add(temp);
 			}
 		}

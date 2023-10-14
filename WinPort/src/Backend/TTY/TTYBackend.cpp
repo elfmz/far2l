@@ -239,7 +239,7 @@ void TTYBackend::ReaderThread()
 		{
 			std::unique_lock<std::mutex> lock(_async_mutex);
 			_deadio = false;
-			_ae.flags.term_resized = true;
+			_ae.term_resized = true;
 		}
 
 
@@ -336,7 +336,7 @@ void TTYBackend::ReaderLoop()
 			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
 				std::unique_lock<std::mutex> lock(_async_mutex);
-				_ae.flags.output = true;
+				_ae.output = true;
 				_async_cond.notify_all();
 			}
 		}
@@ -356,7 +356,7 @@ void TTYBackend::ReaderLoop()
 			if (_terminal_size_change_id != terminal_size_change_id) {
 				_terminal_size_change_id = terminal_size_change_id;
 				std::unique_lock<std::mutex> lock(_async_mutex);
-				_ae.flags.term_resized = true;
+				_ae.term_resized = true;
 				_async_cond.notify_all();
 			}
 		}
@@ -372,41 +372,40 @@ void TTYBackend::WriterThread()
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
 			AsyncEvent ae{};
-			ae.all = 0;
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);
-				if (_ae.all == 0) {
+				if (!_ae.HasAny()) {
 					_async_cond.wait(lock);
 				}
-				if (_ae.all != 0) {
-					std::swap(ae.all, _ae.all);
-					if (ae.flags.palette) {
+				if (_ae.HasAny()) {
+					std::swap(ae, _ae);
+					if (ae.palette) {
 						_async_cond.notify_all();
 					}
 					break;
 				}
 			} while (!_exiting && !_deadio);
 
-			if (ae.flags.palette) {
+			if (ae.palette) {
 				DispatchPalette(tty_out);
 			}
 
-			if (ae.flags.term_resized) {
+			if (ae.term_resized) {
 				DispatchTermResized(tty_out);
-				ae.flags.output = true;
+				ae.output = true;
 			}
 
-			if (ae.flags.output)
+			if (ae.output)
 				DispatchOutput(tty_out);
 
-			if (ae.flags.title_changed) {
+			if (ae.title_changed) {
 				tty_out.ChangeTitle(StrWide2MB(g_winport_con_out->GetTitle()));
 			}
 
-			if (ae.flags.far2l_interact)
+			if (ae.far2l_interact)
 				DispatchFar2lInteract(tty_out);
 
-			if (ae.flags.osc52clip_set) {
+			if (ae.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
 			}
 
@@ -418,7 +417,7 @@ void TTYBackend::WriterThread()
 			tty_out.Flush();
 			tcdrain(_stdout);
 
-			if (ae.flags.go_background) {
+			if (ae.go_background) {
 				gone_background = true;
 				break;
 			}
@@ -633,7 +632,7 @@ void TTYBackend::KickAss(bool flush_input_queue)
 void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.flags.output = true;
+	_ae.output = true;
 	_async_cond.notify_all();
 }
 
@@ -645,7 +644,7 @@ void TTYBackend::OnConsoleOutputResized()
 void TTYBackend::OnConsoleOutputTitleChanged()
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.flags.title_changed = true;
+	_ae.title_changed = true;
 	_async_cond.notify_all();
 }
 
@@ -776,9 +775,9 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
 		{
 			std::unique_lock<std::mutex> lock(_async_mutex);
-			_ae.flags.palette = true;
+			_ae.palette = true;
 			_async_cond.notify_all();
-			while (_ae.flags.palette) {
+			while (_ae.palette) {
 				_async_cond.wait(lock);
 			}
 		}
@@ -813,9 +812,9 @@ void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *Colo
 	}
 
 	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.flags.palette = true;
+	_ae.palette = true;
 	_async_cond.notify_all();
-	while (_ae.flags.palette) {
+	while (_ae.palette) {
 		_async_cond.wait(lock);
 	}
 }
@@ -856,7 +855,7 @@ void TTYBackend::OSC52SetClipboard(const char *text)
 	fprintf(stderr, "TTYBackend::OSC52SetClipboard\n");
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_osc52clip = text;
-	_ae.flags.osc52clip_set = true;
+	_ae.osc52clip_set = true;
 	_async_cond.notify_all();
 }
 
@@ -872,7 +871,7 @@ bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 	{
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		_far2l_interacts_queued.emplace_back(pfi);
-		_ae.flags.far2l_interact = 1;
+		_ae.far2l_interact = 1;
 		_async_cond.notify_all();
 	}
 
@@ -1157,7 +1156,7 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 
 	if (TryEnterBackgroundMode) {
 		std::unique_lock<std::mutex> lock(_async_mutex);
-		_ae.flags.go_background = true;
+		_ae.go_background = true;
 		_async_cond.notify_all();
 	}
 

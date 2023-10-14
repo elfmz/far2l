@@ -141,7 +141,7 @@ void CaseConversion()
 				{
 					Info.Control(PANEL_ACTIVE,FCTL_GETSELECTEDPANELITEM,I,(LONG_PTR)PPI);
 #endif
-				GetFullName(FullName,CurDir,FileName);
+				GetFullName(ARRAYSIZE(FullName),FullName,CurDir,FileName);
 				ProcessName(FullName,FileAttr);
 #ifdef UNICODE
 					free(PPI);

@@ -25,7 +25,7 @@ $^#Contents
  Tips and tricks:
   - during any NetRocks copy operation (on any panel must be NetRocks, on other side may be standard far2l)
 you can switch it to background;
-  - for controll/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
+  - for control/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
 (available only during background action via Plugin commands list by #F11# or via #F9#/Options/Plugins configuration).
 
 
@@ -198,7 +198,7 @@ $^#FILE:// protocol specific options#
  - type in far2l's command line command "file:" to show local filesystem via NetRocks;
  - during any NetRocks copy operation (on any panel must be NetRocks, on other side may be standard far2l)
 you can switch it to background;
- - for controll/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
+ - for control/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
 (available only during background action via Plugin commands list by #F11# or via #F9#/Options/Plugins configuration).
 
  ~Contents~@Contents@

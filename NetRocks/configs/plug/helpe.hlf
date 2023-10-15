@@ -178,7 +178,7 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
-$^#SFTP:// protocol specific options#
+$^#NFS:// protocol specific options#
 
  This dialog allows you to modify "nfs://" protocol specific settings. Here you can override default user credentials: host, UID, GID and comma-separated list of additional group IDs. Note that some old libnfs may not support this options - in such case they will have no effect.
 

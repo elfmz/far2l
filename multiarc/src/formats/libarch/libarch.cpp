@@ -29,11 +29,11 @@ enum MenuFormats
 
 struct IsArchiveContext
 {
-	const char *Name;
-	const unsigned char *Head;
-	size_t HeadSize;
+	const char *const Name;
+	const unsigned char *const Head;
+	const size_t HeadSize;
+	const off_t FileSize;
 
-	off_t FileSize;
 	off_t Pos;
 	int fd;
 
@@ -116,8 +116,13 @@ static ssize_t IsArchive_Read(struct archive *, void *data, const void **buff)
 	return piece;
 }
 
-static int IsArchive_OpenAndGetFormat(struct archive *a)
+static int IsArchive_OpenAndGetFormat(struct archive *a, void *ctx)
 {
+	archive_read_set_callback_data(a, ctx);
+	archive_read_set_read_callback(a, IsArchive_Read);
+	archive_read_set_seek_callback(a, IsArchive_Seek);
+	archive_read_set_skip_callback(a, IsArchive_Skip);
+	archive_read_set_close_callback(a, IsArchive_Close);
 	int fmt = -1;
 	int r = archive_read_open1(a);
 	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
@@ -137,17 +142,10 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 	if (!a)
 		return FALSE;
 
-	IsArchiveContext ctx = {Name, Data, (size_t)DataSize, (off_t)DataSize, 0, -1, {}};
 	struct stat s{};
-	if (Name && sdc_stat(Name, &s) == 0) {
-		ctx.FileSize = s.st_size;
-	}
+	bool str = (Name && sdc_stat(Name, &s) == 0);
 
-	archive_read_set_read_callback(a, IsArchive_Read);
-	archive_read_set_seek_callback(a, IsArchive_Seek);
-	archive_read_set_skip_callback(a, IsArchive_Skip);
-	archive_read_set_close_callback(a, IsArchive_Close);
-	archive_read_set_callback_data(a, &ctx);
+	IsArchiveContext ctx = {Name, Data, (size_t)DataSize, str ? s.st_size : (off_t)DataSize, 0, -1, {}};
 
 	archive_read_support_filter_all(a);
 	LibArchCall(archive_read_support_format_raw, a);
@@ -157,11 +155,18 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 	LibArchCall(archive_read_support_format_cpio, a);
 	LibArchCall(archive_read_support_format_cab, a);
 
-	int fmt = IsArchive_OpenAndGetFormat(a);
+	int fmt = IsArchive_OpenAndGetFormat(a, &ctx);
+	archive_read_free(a);
 	if (fmt == -1) {
-		archive_read_support_format_all(a);
-		archive_read_support_format_raw(a);
-		fmt = IsArchive_OpenAndGetFormat(a);
+		a = archive_read_new();
+		if (a) {
+			ctx.Pos = 0;
+			archive_read_support_filter_all(a);
+			archive_read_support_format_all(a);
+			archive_read_support_format_raw(a);
+			fmt = IsArchive_OpenAndGetFormat(a, &ctx);
+			archive_read_free(a);
+		}
 	}
 
 	if (fmt == ARCHIVE_FORMAT_MTREE && !StrEndsBy(Name, ".tree") && !StrEndsBy(Name, ".mtree")) {
@@ -174,7 +179,6 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 		fprintf(stderr, "%s: fmt=%d\n", __FUNCTION__, fmt);
 	}
 
-	archive_read_free(a);
 
 	if (ctx.fd != -1) {
 		sdc_close(ctx.fd);

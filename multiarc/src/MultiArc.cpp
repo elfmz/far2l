@@ -225,6 +225,7 @@ PutFiles(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNumber, int
 SHAREDSYMBOL void WINAPI _export ExitFAR()
 {
 	delete ArcPlugin;
+	ArcPlugin = NULL;
 }
 
 SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)

@@ -22,6 +22,13 @@ $^#Contents
 
    ~Contact information~@Contact@
 
+ Tips and tricks:
+  - during any NetRocks copy operation (on any panel must be NetRocks, on other side may be standard far2l)
+you can switch it to background;
+  - for control/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
+(available only during background action via Plugin commands list by #F11# or via #F9#/Options/Plugins configuration).
+
+
 @DisksMenu
 $^#NetRocks plugin#
 $^#Version 1.0#
@@ -81,6 +88,8 @@ Also by clicking on #Protocol options# button you can modify some protocol-speci
  ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
+ DAV:// and DAVS:// protocol specific options
+ ~FILE:// protocol specific options~@ProtocolOptionsFILE@
 
  ~Contents~@Contents@
 
@@ -169,9 +178,28 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
-$^#SFTP:// protocol specific options#
+$^#NFS:// protocol specific options#
 
  This dialog allows you to modify "nfs://" protocol specific settings. Here you can override default user credentials: host, UID, GID and comma-separated list of additional group IDs. Note that some old libnfs may not support this options - in such case they will have no effect.
+
+ ~Contents~@Contents@
+
+@ProtocolOptionsFILE
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#FILE:// protocol specific options#
+
+ Pseudo-protocol "file:" has not additional options.
+
+ You can use "file:" to access to local file system and use background copy operations:
+ - unlike copying by base far2l, the NetRocks can do background copying;
+ - type in far2l's command line command "file:" to show local filesystem via NetRocks;
+ - during any NetRocks copy operation (on any panel must be NetRocks, on other side may be standard far2l)
+you can switch it to background;
+ - for control/cancel any background action you can use ~Background tasks menu~@BackgroundTasksMenu@
+(available only during background action via Plugin commands list by #F11# or via #F9#/Options/Plugins configuration).
 
  ~Contents~@Contents@
 

@@ -116,15 +116,26 @@ static ssize_t IsArchive_Read(struct archive *, void *data, const void **buff)
 	return piece;
 }
 
+static int IsArchive_OpenAndGetFormat(struct archive *a)
+{
+	int fmt = -1;
+	int r = archive_read_open1(a);
+	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
+		archive_entry *ae = nullptr;
+		LibArchCall(archive_read_next_header, a, &ae);
+		if (LibArch_DetectedFormatHasCompression(a)) {
+			fmt = archive_format(a);
+		}
+		archive_read_close(a);
+	}
+	return fmt;
+}
+
 BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Data, int DataSize)
 {
 	struct archive *a = archive_read_new();
 	if (!a)
 		return FALSE;
-
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
-	archive_read_support_format_raw(a);
 
 	IsArchiveContext ctx = {Name, Data, (size_t)DataSize, (off_t)DataSize, 0, -1, {}};
 	struct stat s{};
@@ -138,16 +149,29 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 	archive_read_set_close_callback(a, IsArchive_Close);
 	archive_read_set_callback_data(a, &ctx);
 
-	int r = archive_read_open1(a);
-	if (r == ARCHIVE_OK || r == ARCHIVE_WARN) {
-		archive_entry *ae = nullptr;
-		LibArchCall(archive_read_next_header, a, &ae);
-		if (LibArch_DetectedFormatHasCompression(a)) {
-			r = ARCHIVE_OK;
-		} else {
-			r = ARCHIVE_EOF;
-		}
-		archive_read_close(a);
+	archive_read_support_filter_all(a);
+	LibArchCall(archive_read_support_format_raw, a);
+	LibArchCall(archive_read_support_format_tar, a);
+	LibArchCall(archive_read_support_format_iso9660, a);
+	LibArchCall(archive_read_support_format_gnutar, a);
+	LibArchCall(archive_read_support_format_cpio, a);
+	LibArchCall(archive_read_support_format_cab, a);
+
+	int fmt = IsArchive_OpenAndGetFormat(a);
+	if (fmt == -1) {
+		archive_read_support_format_all(a);
+		archive_read_support_format_raw(a);
+		fmt = IsArchive_OpenAndGetFormat(a);
+	}
+
+	if (fmt == ARCHIVE_FORMAT_MTREE && !StrEndsBy(Name, ".tree") && !StrEndsBy(Name, ".mtree")) {
+		// https://github.com/elfmz/far2l/issues/1887
+        // https://github.com/libarchive/libarchive/issues/1051
+		fprintf(stderr, "%s: mtree avoided\n", __FUNCTION__);
+		fmt = -1;
+
+	} else {
+		fprintf(stderr, "%s: fmt=%d\n", __FUNCTION__, fmt);
 	}
 
 	archive_read_free(a);
@@ -156,9 +180,7 @@ BOOL WINAPI _export LIBARCH_IsArchive(const char *Name, const unsigned char *Dat
 		sdc_close(ctx.fd);
 	}
 
-	fprintf(stderr, "PluginImplArc::sIsSupportedHeading: r=%d\n", r);
-
-	return (r == ARCHIVE_OK) ? TRUE : FALSE;
+	return (fmt != -1) ? TRUE : FALSE;
 }
 
 
@@ -471,4 +493,3 @@ extern "C" int libarch_main(int numargs, char *args[])
 		return -1;
 	}
 }
-

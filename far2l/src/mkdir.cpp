@@ -168,8 +168,7 @@ void ShellMakeDir(Panel *SrcPanel)
 								strOriginalDirName, Msg::Cancel);
 					else
 						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, Msg::CannotCreateFolder,
-								strOriginalDirName, Msg::Ok, Msg::Skip);
-						// after ^^^ for multiple names need logic correction for different reaction to Ok or Skip
+								strOriginalDirName, Msg::Cancel, Msg::Skip);
 
 					bSkip = ret == 1;
 

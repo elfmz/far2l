@@ -168,11 +168,12 @@ void ShellMakeDir(Panel *SrcPanel)
 								strOriginalDirName, Msg::Cancel);
 					else
 						ret = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, Msg::CannotCreateFolder,
-								strOriginalDirName, Msg::Ok, Msg::Skip);
+								strOriginalDirName, Msg::Cancel, Msg::Skip);
 
 					bSkip = ret == 1;
 
-					if (bSuccess || bSkip)
+					if (bSuccess || bSkip
+							|| LastError == ERROR_ALREADY_EXISTS) // Jump to directory also if it existed before creation attempt
 						break;
 					else
 						return;

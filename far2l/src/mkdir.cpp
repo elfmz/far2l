@@ -159,8 +159,12 @@ void ShellMakeDir(Panel *SrcPanel)
 			while (!(bSuccess2 = apiCreateDirectory(strDirName, nullptr))) {
 				int LastError = WINPORT(GetLastError)();
 
-				if (LastError == ERROR_ALREADY_EXISTS || LastError == ERROR_INVALID_NAME
-						|| LastError == ERROR_DIRECTORY) {
+				if (LastError == ERROR_ALREADY_EXISTS) {
+					Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateFolder,
+							strOriginalDirName, Msg::Ok);
+					bSkip = !DirList.IsLastElement(DI);
+					break; // Jump to directory always if it existed before creation attempt
+				} else if (LastError == ERROR_INVALID_NAME || LastError == ERROR_DIRECTORY) {
 					int ret;
 
 					if (DirList.IsLastElement(DI))
@@ -172,8 +176,7 @@ void ShellMakeDir(Panel *SrcPanel)
 
 					bSkip = ret == 1;
 
-					if (bSuccess || bSkip
-							|| LastError == ERROR_ALREADY_EXISTS) // Jump to directory also if it existed before creation attempt
+					if (bSuccess || bSkip)
 						break;
 					else
 						return;

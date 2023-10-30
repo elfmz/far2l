@@ -19,3 +19,12 @@ file(GLOB PLUGINDIRS "${APP_INSTALL_DIR}/Contents/MacOS/Plugins/*")
 foreach(PLUGINDIR ${PLUGINDIRS})
 	execute_process(COMMAND ln -s ../../../Frameworks "${PLUGINDIR}/Frameworks")
 endforeach()
+
+set(CODESIGN_CERT "$ENV{FAR2L_CODESIGN_CERT}")
+
+IF("${CODESIGN_CERT} " STREQUAL " ")
+	message(STATUS "Not signing as FAR2L_CODESIGN_CERT undefined")
+ELSE()
+	message(STATUS "Signing ${APP_INSTALL_DIR} as ${CODESIGN_CERT}")
+	execute_process(COMMAND /usr/bin/codesign -s "${CODESIGN_CERT}" --deep -v "${APP_INSTALL_DIR}")
+ENDIF()

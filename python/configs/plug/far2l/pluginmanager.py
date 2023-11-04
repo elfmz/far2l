@@ -71,6 +71,14 @@ class PluginManager:
         self.info = ffi.cast("struct PluginStartupInfo *", Info)
         self.ffi = ffi
         self.ffic = ffic
+        fname = os.path.join(USERHOME, "plugins.ini")
+        if os.path.isfile(fname):
+            with open(fname, "rt") as fp:
+                ini = configparser.ConfigParser()
+                ini.read_file(fp)
+                if ini.has_section('autoload'):
+                    for name in ini.options('autoload'):
+                        self.pluginInstall(name)
 
     @handle_error
     def pluginRemove(self, name):

@@ -38,7 +38,7 @@ class ProgressThread(threading.Thread):
         self.done = True
 
 class Plugin(PluginBase):
-    label = "Python Progress Demo"
+    label = "Python Progress Dialog"
     openFrom = ["PLUGINSMENU"]
 
     def OnIdle(self, t, dlg):

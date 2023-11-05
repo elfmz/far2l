@@ -5175,6 +5175,18 @@ AskWipeRO
 "Ви хочете знищити його?"
 "Вы жадаеце знішчыць яго?"
 
+DeleteSymLink1
+l:
+"Это symlink на файл"
+"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+upd:"This is a symlink to the file"
+
 DeleteHardLink1
 l:
 "Файл имеет несколько жёстких ссылок"

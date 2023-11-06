@@ -916,7 +916,7 @@ in the ~interface settings~@InterfSettings@.
 $ #Special commands#
  Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
 
-   #far:about#  - Far information, list and infrmation about plugins.
+   #far:about#  - Far information, list and information about plugins.
 
    #far:config# - Configuration editor (draft now).
 

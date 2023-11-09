@@ -200,6 +200,9 @@ class TTYX
 					_xi_leds = INVALID_MODS; // invalidate now, will update when needed
 				}
 			}
+			if (_get_clipboard.state == GetClipboardContext::REQUESTING) {
+				_get_clipboard.state = GetClipboardContext::PRESENT;
+			}
 			return true;
 		}
 		return false;

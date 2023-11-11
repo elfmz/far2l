@@ -254,7 +254,7 @@ static void FormatDeleteMultipleFilesMsg(FARString &strDeleteFilesMsg, const int
 	strDeleteFilesMsg.Format(Msg::AskDeleteItems, SelCount, Ends);
 }
 
-static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
+static bool ShellConfirmDeletion(Panel *SrcPanel, bool &Wipe)
 {
 	const int SelCount = SrcPanel->GetSelCount();
 	if (SelCount <= 0)
@@ -278,7 +278,26 @@ static bool ShellConfirmDeletion(Panel *SrcPanel, bool Wipe)
 		FormatDeleteMultipleFilesMsg(strDeleteFilesMsg, SelCount);
 	}
 
-	if (Opt.Confirm.Delete || SelCount > 1)		// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
+	if (Opt.Confirm.Delete && SelCount == 1 && IsLink)
+	{
+		FARString str;
+		str.Format(L"%ls %ls",  Msg::AskDeleteLink.CPtr(),  (IsDir ? Msg::AskDeleteLinkFolder.CPtr() : Msg::AskDeleteLinkFile.CPtr()));
+		if (Wipe & IsDir)
+			Wipe = false; // never wipe directory by symlink
+		FarLangMsg OkMsg = (Opt.DeleteToRecycleBin ? Msg::DeleteRecycle : Msg::Delete);
+		SetMessageHelp(L"DeleteFile");
+		if (Wipe) {
+			switch (Message(0, 3, Msg::DeleteLinkTitle, Msg::AskDelete, strDeleteFilesMsg, str, Msg::DeleteWipe, OkMsg, Msg::Cancel)) {
+				case 2:
+					return false;
+				case 1:
+					Wipe = false;
+			}
+		}
+		else if (Message(0, 2, Msg::DeleteLinkTitle, Msg::AskDelete, strDeleteFilesMsg, str, OkMsg, Msg::Cancel))
+			return false;
+	}
+	else if (Opt.Confirm.Delete || SelCount > 1)		// || (FileAttr & FILE_ATTRIBUTE_DIRECTORY)))
 	{
 		FarLangMsg TitleMsg = Wipe ? Msg::DeleteWipeTitle : Msg::DeleteTitle;
 		/*
@@ -550,9 +569,26 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 
 	for (;;) {
 		if (Wipe) {
+			bool is_symlink = false;
+			int n_hardlinks = 1;
+			struct stat s{};
+			if ( sdc_lstat(Wide2MB(Name).c_str(), &s) == 0 ) {
+				n_hardlinks = (s.st_nlink > 0) ? s.st_nlink : 1;
+				is_symlink = (s.st_mode & S_IFMT) == S_IFLNK;
+			}
+
 			if (SkipWipeMode != -1) {
 				MsgCode = SkipWipeMode;
-			} else if (GetNumberOfLinks(strFullName) > 1) {
+			} else if (is_symlink) {
+				//                            Файл
+				//                         "имя файла"
+				//                     Это symlink на файл.
+				//  Уничтожение файла приведет к обнулению всех ссылающихся на него файлов.
+				//                        Уничтожать файл?
+				MsgCode = Message(MSG_WARNING, 5, Msg::Error, strFullName, Msg::DeleteSymLink1,
+						Msg::DeleteHardLink2, Msg::DeleteHardLink3, Msg::DeleteFileWipe, Msg::DeleteFileAll,
+						Msg::DeleteFileSkip, Msg::DeleteFileSkipAll, Msg::DeleteCancel);
+			} else if (n_hardlinks > 1) {
 				//                            Файл
 				//                         "имя файла"
 				//                Файл имеет несколько жестких ссылок.
@@ -562,6 +598,7 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 						Msg::DeleteHardLink2, Msg::DeleteHardLink3, Msg::DeleteFileWipe, Msg::DeleteFileAll,
 						Msg::DeleteFileSkip, Msg::DeleteFileSkipAll, Msg::DeleteCancel);
 			}
+			// !!! [All] & [Skip all] now equivalent for wipe symlink & file with several hardlink - may be do separete?
 
 			switch (MsgCode) {
 				case -1:
@@ -629,15 +666,18 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 
 DeletionResult ERemoveDirectory(const wchar_t *Name, bool Wipe)
 {
+	bool is_symlink;
+	struct stat s{};
+
 	ProcessedItems++;
 
 	for (;;) {
-		if (Wipe) {
+		is_symlink = sdc_lstat(Wide2MB(Name).c_str(), &s) == 0 && (s.st_mode & S_IFMT) == S_IFLNK;
+		if (Wipe && !is_symlink) { // !!! silently never wipe symlink, may be need message ???
 			if (WipeDirectory(Name))
 				break;
 		} else {
-			struct stat s{};
-			if (sdc_lstat(Wide2MB(Name).c_str(), &s) == 0 && (s.st_mode & S_IFMT) == S_IFLNK) {
+			if (is_symlink) {
 				if (sdc_unlink(Wide2MB(Name).c_str()) == 0)		// if (apiDeleteFile(Name))
 					break;
 			}

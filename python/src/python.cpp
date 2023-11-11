@@ -116,13 +116,11 @@ bool init_python(std::string program_name)
     PyStatus status;
 
     PyConfig config;
-    PyConfig_InitPythonConfig(&config);
+    PyConfig_InitIsolatedConfig(&config);
 
     //config.utf8_mode = 1;
-    config.parse_argv = 0;
-    config.install_signal_handlers = 0;
-    config.use_environment = 0;
     config.user_site_directory = 1;
+    config.install_signal_handlers = 1;
 
     /* Set the program name before reading the configuration
        (decode byte string from the locale encoding).
@@ -136,11 +134,12 @@ PYTHON_LOG("call PyConfig_Read\n");
     status = PyConfig_Read(&config);
     FAIL_IF_STATUS_EXCEPTION(status);
 
+    PyImport_AppendInittab("far2lc", PyInit_far2lc);
+
 PYTHON_LOG("call Py_InitializeFromConfig\n");
     status = Py_InitializeFromConfig(&config);
     FAIL_IF_STATUS_EXCEPTION(status);
 
-    PyImport_AppendInittab("farl2c", PyInit_far2lc);
 #if 0
 {
     PyObject *sys_path = PySys_GetObject("path");
@@ -157,8 +156,11 @@ done:
     PyConfig_Clear(&config);
     return false;
 #else
-    PyImport_AppendInittab("farl2c", PyInit_far2lc);
+    PyImport_AppendInittab("far2lc", PyInit_far2lc);
     Py_SetProgramName((wchar_t *)program_name.c_str());
+
+    Py_Initialize();
+
     return true;
 #endif
 }
@@ -235,8 +237,6 @@ public:
         initok = init_python(progname);
         if( initok )
         {
-            Py_Initialize();
-
 #ifdef PYPLUGIN_THREADED
             if (!StartThread()) {
                 PYTHON_LOG("StartThread failed, fallback to synchronous initialization\n");

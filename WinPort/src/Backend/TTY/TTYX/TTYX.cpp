@@ -326,6 +326,12 @@ class TTYX
 					}
 				}
 				XFree(data);
+
+			} else {
+				fprintf(stderr, "DispatchSelectionNotify: wrong target=0x%lx\n", (unsigned long)target);
+				if (!target) {
+					_get_clipboard.state = GetClipboardContext::MISSING;
+				}
 			}
 			XDeleteProperty(event.xselection.display, event.xselection.requestor, event.xselection.property);
 

@@ -545,7 +545,7 @@ static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
 			ItemRect.Top+= DlgRect.Top;
 			ItemRect.Bottom+= DlgRect.Top;
 			for (auto x = ItemRect.Left; x <= ItemRect.Right; ++x) {
-				for (auto y = ItemRect.Top; y <= ItemRect.Top; ++y) {
+				for (auto y = ItemRect.Top; y <= ItemRect.Bottom; ++y) {
 					GetColorDlgProc_EnsureColorsAreInverted(x, y);
 				}
 			}

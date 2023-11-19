@@ -880,11 +880,11 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
-	apiGetEnvironmentVariable("HOSTNAME", fs2);
-	fs =      L"             Host: " + fs2;
+	fs =      L"             Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
 	ListAbout.AddItem(fs);
-	apiGetEnvironmentVariable("USER", fs2);
-	fs =      L"             User: " + fs2;
+	fs =      L"             User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
+	ListAbout.AddItem(fs);
+	fs =      L" XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"???");
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");

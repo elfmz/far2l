@@ -131,8 +131,10 @@ $ #FAR2L features - Getting Started#
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
         - #GUI#: uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
-        - #TTYXi#: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of keyboard modifiers), almost perfect UX;
+        - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of keyboard modifiers), almost perfect UX;
         - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
+    You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.
+    Wayland has security restriction for data access via X11; for full functionality run FAR2L-GUI in #xWayland# mode (see below).
     If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
     To force run in terminal mode use #--tty# in command line: #far2l --tty# or #far2l --tty --ee# (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
@@ -142,10 +144,13 @@ $ #FAR2L features - Getting Started#
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
 
 
- #FAR2L within Wayland or within WSL+WSLg (fix clipboard and/or some keys processing in FAR2L-GUI/TTYX)#
-    For adequate work in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#, because FAR2L (GUI and TTYX modes) uses X11 features to work with the clipboard and get extended keyboard shortcuts that may not be fully compatible in plain Wayland:
+ #FAR2L within Wayland or within WSL+WSLg (fix clipboard and/or some keys processing in FAR2L-GUI/TTY|X)#
+    FAR2L (GUI and TTY|X modes) uses X11 features to work with the clipboard and get extended keyboard shortcuts that due to security restrictions, do not work properly in plain Wayland.
+    For adequate work FAR2L GUI in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#:
     - running from console: #GDK_BACKEND=x11 far2l#;
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
+    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run only the TTY backend:
+     - forced non-use of X11 features when running in the console: #far2l --tty --nodetect#
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -158,7 +163,7 @@ $ #FAR2L features - Getting Started#
 
  #Pasting feature in terminals#
     The keyboard shortcut of the #terminal pasting# (terminal simulates keyboard input) and #FAR2L pasting# (FAR2L itself does paste) are different. Note that pasting keyboard shortcut in different terminals is various (and may overlap the standard FAR2L's pasting #Shift-Ins# or #Ctrl-V#).
-    In FAR2L without TTYX (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
+    In FAR2L without TTY|X (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
 
 
  #FAR2L command line shell & bash#
@@ -175,10 +180,10 @@ $ #FAR2L features - Getting Started#
 
  #Special options for configuring FAR2L running in terminal emulators#
     - Menu(#F9#)->Options->Interface settings->#Use OSC52 to set clipboard data#
-(shown in the menu only if FAR2L run in TTY/TTYX mode and all other options for clipboard access are unavailable).
+(shown in the menu only if FAR2L run in TTY/TTY|X mode and all other options for clipboard access are unavailable).
 You can run #far2l --tty --nodetect# to force not use others clipboard options.
     - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
-(shown in the menu only if FAR2L run in TTY/TTYX mode) allows far2l to adjust terminal palette colors.
+(shown in the menu only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
 If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
 
 

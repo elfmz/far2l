@@ -328,10 +328,10 @@ if [[ "$FILE" == *": "*"image data, "* ]] \
 		if [ ! ".${TCOLORMODE}" = "." ]; then
 			VCHAFACOLOR="-c "${TCOLORMODE}
 		fi
-		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} "$1" >>"$2" 2>&1
+		chafa -c none --symbols -all+stipple+braille+ascii+space+extra --size ${TCOLUMNS}x${TLINES} -f symbols -- "$1" >>"$2" 2>&1
 		echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area, no colors" >>"$2" 2>&1
 		clear
-		chafa ${VCHAFACOLOR} --color-space=din99d -w 9 --symbols all --fill all -- "$1" && \
+		chafa ${VCHAFACOLOR} --color-space=din99d -w 9 --symbols all --fill all -f symbols -- "$1" && \
 			echo "Image is viewed by chafa in "${TCOLUMNS}"x"${TLINES}" symbols sized area, "${TCOLORMODE}" colors" && \
 			read -n1 -r -p "" >>"$2" 2>&1
 		clear

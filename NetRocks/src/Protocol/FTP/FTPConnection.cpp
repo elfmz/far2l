@@ -598,7 +598,10 @@ void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transp
 	sockaddr_in sin = {0};
 	sin.sin_family = AF_INET;
 	sin.sin_port = (uint16_t)((v[5] << 8) | v[4]);
-	sin.sin_addr.s_addr = (uint32_t)((v[3] << 24) | (v[2] << 16) | (v[1] << 8) | (v[0]));
+	//sin.sin_addr.s_addr = (uint32_t)((v[3] << 24) | (v[2] << 16) | (v[1] << 8) | (v[0]));
+	struct sockaddr_in peer_sin{};
+	_transport->GetPeerAddress(peer_sin);
+	sin.sin_addr = peer_sin.sin_addr;
 	data_transport = std::make_shared<SocketTransport>(sin, _protocol_options);
 
 	str = cmd;

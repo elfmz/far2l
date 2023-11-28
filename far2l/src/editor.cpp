@@ -1960,6 +1960,7 @@ int Editor::ProcessKey(int Key)
 			if (!Flags.Check(FEDITOR_LOCKMODE)) {
 				Lock();
 				Undo(Key == KEY_CTRLSHIFTZ);
+				Flags.Set(FEDITOR_NEWUNDO);
 				Unlock();
 				Show();
 			}

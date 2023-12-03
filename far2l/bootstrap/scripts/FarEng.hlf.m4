@@ -136,7 +136,9 @@ $ #FAR2L features - Getting Started#
     You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.
     Wayland has security restriction for data access via X11; for full functionality run FAR2L-GUI in #xWayland# mode (see below).
     If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
-    To force run in terminal mode use #--tty# in command line: #far2l --tty# or #far2l --tty --ee# (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
+    To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
+    to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+    (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
  #Keyboard shortcuts are exclusively captured by desktop environment#

@@ -1229,10 +1229,10 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 							int UserBreak = 0;
 							SaveToCache();
 							LoadFile(strLoadedFileName, UserBreak);
+							Show(); // need to force redraw after reload file
 						} else {
 							SetCodePage(codepage);
 						}
-						Show(); // need to force redraw after F8 UTF8<->ANSI/OEM
 						ChangeEditKeyBar();
 					} else
 						Message(0, 1, Msg::EditTitle, L"Save file before changing this codepage", Msg::HOk,

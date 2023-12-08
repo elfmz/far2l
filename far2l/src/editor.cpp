@@ -160,6 +160,7 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	ClearStackBookmarks();
 	TopList = EndList = CurLine = nullptr;
 	NumLastLine = 0;
+	NumLine = 0;
 }
 
 void Editor::KeepInitParameters()

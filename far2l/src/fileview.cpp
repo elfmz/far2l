@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <limits>
 #include "fileview.hpp"
+#include "codepage.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
 #include "ctrlobj.hpp"
@@ -516,7 +517,9 @@ void FileViewer::ShowStatus()
 		NameLength = 20;
 
 	TruncPathStr(strName, NameLength);
-	strStatus.Format(L"%-*ls %5u %13llu %7.7ls %-4lld %ls%3d%%", NameLength, strName.CPtr(), View.VM.CodePage,
+	FARString str_codepage;
+	ShortReadableCodepageName(View.VM.CodePage,str_codepage);
+	strStatus.Format(L"%-*ls %5ls %13llu %7.7ls %-4lld %ls%3d%%", NameLength, strName.CPtr(), str_codepage.CPtr(),
 			View.FileSize, Msg::ViewerStatusCol.CPtr(), View.LeftPos, Opt.ViewerEditorClock ? L"" : L" ",
 			(View.LastPage ? 100 : ToPercent64(View.FilePos, View.FileSize)));
 	SetColor(COL_VIEWERSTATUS);

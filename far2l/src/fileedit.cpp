@@ -1131,14 +1131,13 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				ShowStatus();
 				return TRUE;
 
-			case KEY_F4:
-				if (F4KeyOnly)
-					return TRUE;
-
 			case KEY_SHIFTF10:
 				if (!ProcessKey(KEY_F2))	// учтем факт того, что могли отказаться от сохранения
 					return FALSE;
-				return ProcessQuitKey(0/*FirstSave*/, 0/*NeedQuestion*/);
+
+			case KEY_F4:
+				if (F4KeyOnly)
+					return TRUE;
 
 			case KEY_ESC:
 			case KEY_F10: {

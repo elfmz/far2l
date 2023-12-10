@@ -1022,8 +1022,8 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 							if (!bInPlace) {
 								Message(MSG_WARNING, 1, L"WARNING!",
 										L"Editor will be reopened with new file!", Msg::Ok);
-								int UserBreak;
-								LoadFile(strFullSaveAsName, UserBreak);
+								if (!ReloadFile(strFullSaveAsName))
+									return TRUE;
 								// TODO: возможно подобный ниже код здесь нужен (copy/paste из FileEditor::Init()). оформить его нужно по иному
 								// if(!Opt.Confirm.Esc && UserBreak && ExitCode==XC_LOADING_INTERRUPTED && FrameManager)
 								// FrameManager->RefreshFrame();
@@ -1101,11 +1101,6 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 				Show();
 				return (TRUE);
 			}
-			case KEY_SHIFTF10:
-
-				if (!ProcessKey(KEY_F2))	// учтем факт того, что могли отказаться от сохранения
-					return FALSE;
-
 			case KEY_F5:
 				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
 				m_editor->Show();
@@ -1139,6 +1134,12 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 			case KEY_F4:
 				if (F4KeyOnly)
 					return TRUE;
+
+			case KEY_SHIFTF10:
+				if (!ProcessKey(KEY_F2))	// учтем факт того, что могли отказаться от сохранения
+					return FALSE;
+				return ProcessQuitKey(0/*FirstSave*/, 0/*NeedQuestion*/);
+
 			case KEY_ESC:
 			case KEY_F10: {
 				int FirstSave = 1, NeedQuestion = 1;
@@ -1222,21 +1223,25 @@ int FileEditor::ReProcessKey(int Key, int CalledFromControl)
 							|| IsUTF7(m_codepage) != IsUTF7(codepage)
 							|| IsUTF16(m_codepage) != IsUTF16(codepage)
 							|| IsUTF32(m_codepage) != IsUTF32(codepage);
-					if (!IsFileModified() || !need_reload) {
+					if ((!IsFileModified() || !need_reload)
+							&& apiGetFileAttributes(strLoadedFileName) != INVALID_FILE_ATTRIBUTES) {	// а файл еще существует?
 						Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER);
 						if (need_reload) {
 							m_codepage = codepage;
-							int UserBreak = 0;
 							SaveToCache();
-							LoadFile(strLoadedFileName, UserBreak);
+							if (!ReloadFile(strLoadedFileName))
+								return TRUE;
 						} else {
 							SetCodePage(codepage);
 						}
-						Show(); // need to force redraw after F8 UTF8<->ANSI/OEM
 						ChangeEditKeyBar();
-					} else
-						Message(0, 1, Msg::EditTitle, L"Save file before changing this codepage", Msg::HOk,
-								nullptr);
+					} else {
+						FARString str_tmp, str_from, str_to;
+						ShortReadableCodepageName(m_codepage,str_from);
+						ShortReadableCodepageName(codepage,str_to);
+						str_tmp.Format(L"Save file before changing codepage from %ls to %ls", str_from.CPtr(), str_to.CPtr());
+						Message(0, 1, Msg::EditTitle, str_tmp.CPtr(), Msg::HOk, nullptr);
+					}
 				}
 				return TRUE;
 			}
@@ -1548,6 +1553,27 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 	strLoadedFileName = Name;
 	ChangeEditKeyBar();
 	return TRUE;
+}
+
+bool FileEditor::ReloadFile(const wchar_t *Name)
+{
+	int UserBreak = 0;
+	if (!LoadFile(Name, UserBreak))
+	{
+		if (UserBreak != 1) {
+			WINPORT(SetLastError)(SysErrorCode);
+			Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::EditTitle, Msg::EditCannotOpen, Name,
+					Msg::Ok);
+			ExitCode = XC_OPEN_ERROR;
+		} else {
+			ExitCode = XC_LOADING_INTERRUPTED;
+		}
+		FrameManager->DeleteFrame(); // (!) delete Editor if reloading error or user interrupted
+		return false;
+	}
+	m_editor->Flags.Clear(FEDITOR_MODIFIED);
+	Show(); // need to force redraw after reload file
+	return true;
 }
 
 // TextFormat и Codepage используются ТОЛЬКО, если bSaveAs = true!
@@ -2216,12 +2242,14 @@ void FileEditor::ShowStatus()
 
 	FARString strTabMode;
 	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
+	FARString str_codepage;
+	ShortReadableCodepageName(m_codepage,str_codepage);
 	FormatString FString;
 	FString << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(NameLength) << strLocalTitle << L' '
 			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*' : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-' : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strTabMode << L' '
-			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << m_codepage << L' '
+			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << str_codepage << L' '
 			<< fmt::Expand(7) << Msg::EditStatusLine << L' ' << fmt::Expand(SizeLineStr)
 			<< fmt::Truncate(SizeLineStr) << strLineStr << L' ' << fmt::Expand(5) << Msg::EditStatusCol
 			<< L' ' << fmt::LeftAlign() << fmt::Expand(4) << m_editor->CurLine->GetCellCurPos() + 1 << L' '

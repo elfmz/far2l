@@ -174,8 +174,8 @@ private:
 	BOOL isTemporary();
 	virtual void ResizeConsole();
 	int LoadFile(const wchar_t *Name, int &UserBreak);
+	bool ReloadFile(const wchar_t *Name);
 	// TextFormat, Codepage и AddSignature используются ТОЛЬКО, если bSaveAs = true!
-
 	void SaveContent(const wchar_t *Name, BaseContentWriter *Writer, bool bSaveAs, int TextFormat,
 			UINT codepage, bool AddSignature, int Phase);
 	int SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFormat = 0, UINT Codepage = CP_UTF8,

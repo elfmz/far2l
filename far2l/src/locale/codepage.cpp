@@ -802,3 +802,28 @@ bool IsCodePageSupported(UINT CodePage)
 
 	return GetCodePageInfo(CodePage, cpiex);
 }
+
+void ShortReadableCodepageName(UINT cp, FARString &str_dest)
+{
+	if (cp == CP_UTF8)
+		str_dest = L"UTF-8";
+	/* in Linux ANSI & OEM is less informative than numeric
+	else if (cp == WINPORT(GetACP)())
+		str_dest = L"ANSI";
+	else if (cp == WINPORT(GetOEMCP)())
+		str_dest = L"OEM";*/
+	else if (cp == CP_UTF7)
+		str_dest = L"UTF-7";
+	else if (cp == CP_UTF16LE)
+		str_dest = L"U16LE";
+	else if (cp == CP_UTF16BE)
+		str_dest = L"U16BE";
+	else if (cp == CP_UTF32LE)
+		str_dest = L"U32LE";
+	else if (cp == CP_UTF32BE)
+		str_dest = L"U32BE";
+	else if (cp == CP_KOI8R)
+		str_dest = L"KOI8R";
+	else
+		str_dest.Format(L"%u",cp);
+}

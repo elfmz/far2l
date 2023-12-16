@@ -178,7 +178,11 @@ target_compile_definitions(multiarc PRIVATE -D_7ZIP_ST -D_7ZIP_PPMD_SUPPPORT)
 target_link_libraries(multiarc utils far2l)
 
 if(NOT UNRAR)
-    message(STATUS "${ColorRed}rar archives support disabled due to UNRAR=${UNRAR}.${ColorNormal}")
+    if (LibArchive_FOUND)
+        message(STATUS "Using LibArchive for limited RAR archives support.")
+    else()
+        message(STATUS "${ColorRed}RAR archives support disabled due to UNRAR=${UNRAR} and lack of LibArchive.${ColorNormal}")
+    endif()
 
 elseif("${UNRAR}" STREQUAL "lib")
     message(STATUS "Using system unrar - will need libunrar and unrar tool.")

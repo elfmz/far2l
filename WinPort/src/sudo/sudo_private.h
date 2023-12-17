@@ -38,6 +38,8 @@ namespace Sudo
 		SUDO_CMD_FSFLAGSGET,
 		SUDO_CMD_FSFLAGSSET,
 		SUDO_CMD_FCHMOD,
+		SUDO_CMD_MKFIFO,
+		SUDO_CMD_MKNOD
 	};
 
 	class BaseTransaction

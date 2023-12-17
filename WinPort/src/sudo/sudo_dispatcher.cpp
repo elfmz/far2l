@@ -342,6 +342,34 @@ namespace Sudo
 		}
 		bt.SendInt(r);
 	}
+
+	static void OnSudoDispatch_MkFifo(BaseTransaction &bt)
+	{
+		std::string path;
+		mode_t mode;
+		bt.RecvStr(path);
+		bt.RecvPOD(mode);
+		int r = mkfifo(path.c_str(), mode);
+		bt.SendInt(r);
+		if (r != 0) {
+			bt.SendErrno();
+		}
+	}
+
+	static void OnSudoDispatch_MkNod(BaseTransaction &bt)
+	{
+		std::string path;
+		mode_t mode;
+		dev_t dev;
+		bt.RecvStr(path);
+		bt.RecvPOD(mode);
+		bt.RecvPOD(dev);
+		int r = mknod(path.c_str(), mode, dev);
+		bt.SendInt(r);
+		if (r != 0) {
+			bt.SendErrno();
+		}
+	}
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt)
 	{
@@ -448,6 +476,14 @@ namespace Sudo
 
 			case SUDO_CMD_FCHMOD:
 				OnSudoDispatch_FChMod(bt);
+				break;
+
+			case SUDO_CMD_MKFIFO:
+				OnSudoDispatch_MkFifo(bt);
+				break;
+
+			case SUDO_CMD_MKNOD:
+				OnSudoDispatch_MkNod(bt);
 				break;
 				
 			default:

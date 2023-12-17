@@ -871,7 +871,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		FARString strLinkName;
 
 		if (SelCount == 1) {
-			FSFileFlags FFFlags(strSelName.GetMB());
+			std::unique_ptr<FSFileFlags> FFFlags;
+			if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
+				FFFlags.reset(new FSFileFlags(strSelName.GetMB()));
+			}
 
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
@@ -939,10 +942,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 							(FileMode & AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
 				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected =
-						FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+						(FFFlags && FFFlags->Immutable()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_APPEND].Selected = (FFFlags && FFFlags->Append()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = (FFFlags && FFFlags->Hidden()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
 
@@ -1036,15 +1039,18 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					}
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_OWNER], GetFileOwner, strComputerName, strSelName);
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
-					FSFileFlags FFFlags(strSelName.GetMB());
-					if (FFFlags.Immutable())
-						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
-					if (FFFlags.Append())
-						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
+
+					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
+						FSFileFlags FFFlags(strSelName.GetMB());
+						if (FFFlags.Immutable())
+							AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
+						if (FFFlags.Append())
+							AttrDlg[SA_CHECKBOX_APPEND].Selected++;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-					if (FFFlags.Hidden())
-						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
+						if (FFFlags.Hidden())
+							AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif
+					}
 				}
 			} else {
 				// BUGBUG, copy-paste
@@ -1228,7 +1234,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 					}
 
-					ApplyFSFileFlags(AttrDlg, strSelName);
+					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
+						ApplyFSFileFlags(AttrDlg, strSelName);
+					}
 				}
 				/* Multi *********************************************************** */
 				else {
@@ -1390,12 +1398,16 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										ApplyFSFileFlags(AttrDlg, strFullName);
+										if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
+											ApplyFSFileFlags(AttrDlg, strFullName);
+										}
 									}
 								}
 							}
 						}
-						ApplyFSFileFlags(AttrDlg, strSelName);
+						if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
+							ApplyFSFileFlags(AttrDlg, strSelName);
+						}
 
 					}	// END: while (SrcPanel->GetSelNameCompat(...))
 				}

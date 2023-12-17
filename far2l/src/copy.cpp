@@ -2764,6 +2764,15 @@ DWORD ShellFileTransfer::PieceWrite(const void *Data, DWORD Size)
 
 /////////////////////////////////////////////////////////// END OF ShellFileTransfer
 
+static dev_t GetRDev(FARString SrcName)
+{
+    struct stat st{};
+    if (sdc_stat(SrcName.GetMB().c_str(), &st) == 0) {
+        return st.st_rdev;
+    }
+    return 0;
+}
+
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, FARString &strDestName,
 		int Append)
 {
@@ -2778,6 +2787,16 @@ int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &Src
 			return (MkSymLink(SrcName, strDestName, RPT, true) ? COPY_SUCCESS : COPY_FAILURE);
 		}
 	}
+    if (SrcData.dwFileAttributes & (FILE_ATTRIBUTE_DEVICE_FIFO | FILE_ATTRIBUTE_DEVICE_BLOCK | FILE_ATTRIBUTE_DEVICE_CHAR)) {
+        int r = (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DEVICE_FIFO)
+                    ? sdc_mkfifo(strDestName.GetMB().c_str(), SrcData.dwUnixMode)
+                    : sdc_mknod(strDestName.GetMB().c_str(), SrcData.dwUnixMode, GetRDev(SrcName));
+        if (r == -1) {
+            _localLastError = errno;
+            return COPY_FAILURE;
+        }
+        return COPY_SUCCESS;
+    }
 
 	try {
 #if defined(COW_SUPPORTED) && defined(__APPLE__)

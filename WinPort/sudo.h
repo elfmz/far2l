@@ -72,6 +72,9 @@ extern "C" {
 	__attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, const char *name, const void *value, size_t size, int flags);
 	__attribute__ ((visibility("default"))) int sdc_fs_flags_get(const char *path, unsigned long *flags);
 	__attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags);
+	__attribute__ ((visibility("default"))) int sdc_mkfifo(const char *path, mode_t mode);
+	__attribute__ ((visibility("default"))) int sdc_mknod(const char *path, mode_t mode, dev_t dev);
+
 #ifdef __cplusplus
 }
 

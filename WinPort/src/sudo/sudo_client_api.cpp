@@ -802,10 +802,10 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 	}
 	return r;
 #endif
- }
+}
  
- extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags)
- {
+extern "C" __attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags)
+{
 #if defined(__CYGWIN__) || defined(__HAIKU__)
 	//TODO
 	return 0;
@@ -842,7 +842,59 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_fsetxattr(int fd, con
 	 
 	return r;
 #endif
- }
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_mkfifo(const char *path, mode_t mode)
+{
+	ClientReconstructCurDir crcd(path);
+	int r = mkfifo(path, mode);
+	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true)) {
+		return r;
+	}
+
+	try {
+		ClientTransaction ct(SUDO_CMD_MKFIFO);
+		ct.SendStr(path);
+		ct.SendPOD(mode);
+
+		r = ct.RecvInt();
+		if (r != 0)
+			ct.RecvErrno();
+
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: sdc_mkfifo('%s', 0x%lx) - error %s\n",
+			path, (unsigned long)mode, e.what());
+		r = -1;
+	}
+
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_mknod(const char *path, mode_t mode, dev_t dev)
+{
+	ClientReconstructCurDir crcd(path);
+	int r = mknod(path, mode, dev);
+	if (r == 0 || !IsAccessDeniedErrno() || !TouchClientConnection(true)) {
+		return r;
+	}
+
+	try {
+		ClientTransaction ct(SUDO_CMD_MKNOD);
+		ct.SendStr(path);
+		ct.SendPOD(mode);
+		ct.SendPOD(dev);
+
+		r = ct.RecvInt();
+		if (r != 0)
+			ct.RecvErrno();
+	} catch(std::exception &e) {
+		fprintf(stderr, "sudo_client: sdc_mknod('%s', 0x%lx, 0x%lx) - error %s\n",
+			path, (unsigned long)mode, (unsigned long)dev, e.what());
+		r = -1;
+	}
+
+	return r;
+}
 
 
 } //namespace Sudo

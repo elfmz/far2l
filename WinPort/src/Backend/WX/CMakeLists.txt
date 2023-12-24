@@ -29,6 +29,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         Mac/pasteboard.mm
         Mac/hide.mm
         Mac/init.mm
+        Mac/displaynotify.mm
     )
 endif()
 

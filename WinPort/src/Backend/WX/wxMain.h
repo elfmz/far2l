@@ -32,6 +32,7 @@
 # include "Mac/dockicon.h"
 # include "Mac/touchbar.h"
 # include "Mac/hide.h"
+# include "Mac/displaynotify.h"
 #endif
 
 class WinPortAppThread : public wxThread

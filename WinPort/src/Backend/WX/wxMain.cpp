@@ -1644,14 +1644,20 @@ static std::string GetNotifySH()
 
 void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
+	const std::string &str_title = Wide2MB(title);
+	const std::string &str_text = Wide2MB(text);
+
+#ifdef __APPLE__
+	auto fn = std::bind(MacDisplayNotify, str_title.c_str(), str_text.c_str());
+	CallInMain<bool>(fn);
+
+#else
+
 	static std::string s_notify_sh = GetNotifySH();
 	if (s_notify_sh.empty()) {
 		fprintf(stderr, "OnConsoleDisplayNotification: notify.sh not found\n");
 		return;
 	}
-
-	const std::string &str_title = Wide2MB(title);
-	const std::string &str_text = Wide2MB(text);
 
 	pid_t pid = fork();
 	if (pid == 0) {
@@ -1665,6 +1671,7 @@ void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wcha
 	} else if (pid != -1) {
 		waitpid(pid, 0, 0);
 	}
+#endif
 }
 
 bool WinPortPanel::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)

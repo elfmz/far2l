@@ -60,6 +60,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "FSFileFlags.h"
 
+struct FSFileFlagsSafe : FSFileFlags
+{
+	FSFileFlagsSafe(const FARString &path, DWORD attrs)
+		: FSFileFlags((attrs & FILE_ATTRIBUTE_DEVICE) ? DEVNULL : path.GetMB())
+	{ }
+};
+
 enum SETATTRDLG
 {
 	SA_DOUBLEBOX,
@@ -639,9 +646,9 @@ static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &ComboItem,
 	return true;
 }
 
-static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName)
+static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName, DWORD FileAttr)
 {
-	FSFileFlags FFFlags(strSelName.GetMB());
+	FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
 	if (AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_CHECKED
 			|| AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected == BSTATE_UNCHECKED) {
 		FFFlags.SetImmutable(AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected != BSTATE_UNCHECKED);
@@ -871,11 +878,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		FARString strLinkName;
 
 		if (SelCount == 1) {
-			std::unique_ptr<FSFileFlags> FFFlags;
-			if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-				FFFlags.reset(new FSFileFlags(strSelName.GetMB()));
-			}
-
+			FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
 				DlgParam.SymlinkButtonTitles[1] = Msg::SetAttrSymlinkObjectInfo;
@@ -941,11 +944,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					AttrDlg[AP[i].Item].Selected =
 							(FileMode & AP[i].Mode) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				}
-				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected =
-						(FFFlags && FFFlags->Immutable()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-				AttrDlg[SA_CHECKBOX_APPEND].Selected = (FFFlags && FFFlags->Append()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected = FFFlags.Immutable() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_APPEND].Selected = FFFlags.Append() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = (FFFlags && FFFlags->Hidden()) ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				AttrDlg[SA_CHECKBOX_HIDDEN].Selected = FFFlags.Hidden() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 #endif
 			}
 
@@ -1040,17 +1042,15 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_OWNER], GetFileOwner, strComputerName, strSelName);
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
 
-					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-						FSFileFlags FFFlags(strSelName.GetMB());
-						if (FFFlags.Immutable())
-							AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
-						if (FFFlags.Append())
-							AttrDlg[SA_CHECKBOX_APPEND].Selected++;
+					FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
+					if (FFFlags.Immutable())
+						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
+					if (FFFlags.Append())
+						AttrDlg[SA_CHECKBOX_APPEND].Selected++;
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-						if (FFFlags.Hidden())
-							AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
+					if (FFFlags.Hidden())
+						AttrDlg[SA_CHECKBOX_HIDDEN].Selected++;
 #endif
-					}
 				}
 			} else {
 				// BUGBUG, copy-paste
@@ -1234,9 +1234,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 					}
 
-					if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-						ApplyFSFileFlags(AttrDlg, strSelName);
-					}
+					ApplyFSFileFlags(AttrDlg, strSelName, FileAttr);
 				}
 				/* Multi *********************************************************** */
 				else {
@@ -1398,16 +1396,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-											ApplyFSFileFlags(AttrDlg, strFullName);
-										}
+										ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 									}
 								}
 							}
 						}
-						if ((FileAttr & FILE_ATTRIBUTE_DEVICE) == 0) {
-							ApplyFSFileFlags(AttrDlg, strSelName);
-						}
+						ApplyFSFileFlags(AttrDlg, strSelName, FileAttr);
 
 					}	// END: while (SrcPanel->GetSelNameCompat(...))
 				}

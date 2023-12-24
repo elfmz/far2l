@@ -684,21 +684,65 @@ static void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 	g_orig_palette.emplace(index, std::make_pair(fg, bk));
 }
 
-void InterpretEscSeq( void )
+#define FillBlank( len, Pos )  { \
+	DWORD NumberOfCharsWritten; \
+	WINPORT(FillConsoleOutputCharacter)( hConOut, blank_character, len, Pos, &NumberOfCharsWritten );\
+	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, &NumberOfCharsWritten );\
+}
+
+static void ClearScreenAndHomeCursor(CONSOLE_SCREEN_BUFFER_INFO &Info)
+{
+	COORD Pos;
+	if (Info.srWindow.Top != screen_top || Info.srWindow.Bottom == Info.dwSize.Y - 1) {
+		// Rather than clearing the existing window, make the current
+		// line the new top of the window (assuming this is the first
+		// thing a program does).
+		int range = Info.srWindow.Bottom - Info.srWindow.Top;
+		if (Info.dwCursorPosition.Y + range < Info.dwSize.Y) {
+			Info.srWindow.Top = Info.dwCursorPosition.Y;
+			Info.srWindow.Bottom = Info.srWindow.Top + range;
+		} else {
+			Info.srWindow.Bottom = Info.dwSize.Y - 1;
+			Info.srWindow.Top = Info.srWindow.Bottom - range;
+			SMALL_RECT Rect;
+			Rect.Left = 0;
+			Rect.Right = (Info.dwSize.X - 1);
+			Rect.Top = Info.dwCursorPosition.Y - Info.srWindow.Top;
+			Rect.Bottom = Info.dwCursorPosition.Y - 1;
+			Pos.X = Pos.Y = 0;
+			CHAR_INFO  CharInfo;
+			CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
+			WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
+		}
+		WINPORT(SetConsoleWindowInfo)( hConOut, TRUE, &Info.srWindow );
+		screen_top = Info.srWindow.Top;
+	}
+	Pos.X = 0;
+	Pos.Y = Info.srWindow.Top;
+	DWORD len   = (Info.srWindow.Bottom - Info.srWindow.Top + 1) * Info.dwSize.X;
+	FillBlank( len, Pos );
+	// Not technically correct, but perhaps expected.
+	WINPORT(SetConsoleCursorPosition)( hConOut, Pos );
+}
+
+static void ClearScreenAndHomeCursor()
+{
+	CONSOLE_SCREEN_BUFFER_INFO Info;
+	WINPORT(GetConsoleScreenBufferInfo)( hConOut, &Info );
+	ClearScreenAndHomeCursor(Info);
+}
+
+static void InterpretEscSeq( void )
 {
 	int i;
 	DWORD64 attribute;
 	CONSOLE_SCREEN_BUFFER_INFO Info;
 	CONSOLE_CURSOR_INFO CursInfo;
-	DWORD len, NumberOfCharsWritten;
+	DWORD len;
 	COORD Pos;
 	SMALL_RECT Rect;
 	CHAR_INFO  CharInfo;
 	DWORD      mode;
-
-#define FillBlank( len, Pos )  \
-	WINPORT(FillConsoleOutputCharacter)( hConOut, blank_character, len, Pos, &NumberOfCharsWritten );\
-	WINPORT(FillConsoleOutputAttribute)( hConOut, Info.wAttributes, len, Pos, &NumberOfCharsWritten )
 
 	if (prefix == '[') {
 		if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
@@ -786,34 +830,7 @@ void InterpretEscSeq( void )
 				return;
 
 			case 2:		// ESC[2J Clear screen and home cursor
-				if (Info.srWindow.Top != screen_top || Info.srWindow.Bottom == Info.dwSize.Y - 1) {
-					// Rather than clearing the existing window, make the current
-					// line the new top of the window (assuming this is the first
-					// thing a program does).
-					int range = Info.srWindow.Bottom - Info.srWindow.Top;
-					if (Info.dwCursorPosition.Y + range < Info.dwSize.Y) {
-						Info.srWindow.Top = Info.dwCursorPosition.Y;
-						Info.srWindow.Bottom = Info.srWindow.Top + range;
-					} else {
-						Info.srWindow.Bottom = Info.dwSize.Y - 1;
-						Info.srWindow.Top = Info.srWindow.Bottom - range;
-						Rect.Left = 0;
-						Rect.Right = (Info.dwSize.X - 1);
-						Rect.Top = Info.dwCursorPosition.Y - Info.srWindow.Top;
-						Rect.Bottom = Info.dwCursorPosition.Y - 1;
-						Pos.X = Pos.Y = 0;
-						CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
-						WINPORT(ScrollConsoleScreenBuffer)(hConOut, &Rect, NULL, Pos, &CharInfo);
-					}
-					WINPORT(SetConsoleWindowInfo)( hConOut, TRUE, &Info.srWindow );
-					screen_top = Info.srWindow.Top;
-				}
-				Pos.X = 0;
-				Pos.Y = Info.srWindow.Top;
-				len   = (Info.srWindow.Bottom - Info.srWindow.Top + 1) * Info.dwSize.X;
-				FillBlank( len, Pos );
-				// Not technically correct, but perhaps expected.
-				WINPORT(SetConsoleCursorPosition)( hConOut, Pos );
+				ClearScreenAndHomeCursor(Info);
 				return;
 
 			default:
@@ -1373,6 +1390,7 @@ void ParseAndPrintString(
 					case 'C': ResetTerminal(); break;
 					case '7': SaveCursor(); break;
 					case '8': RestoreCursor(); break;
+					case 'c': ClearScreenAndHomeCursor(); break;
 					default: /*fprintf(stderr, "VTAnsi: state=2 *s=0x%x '%lc'\n", (unsigned int)*s, *s) */ ;
 				}
 				state = 1;

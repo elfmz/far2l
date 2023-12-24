@@ -1571,6 +1571,15 @@ bool FileEditor::ReloadFile(const wchar_t *Name)
 		return false;
 	}
 	m_editor->Flags.Clear(FEDITOR_MODIFIED);
+	if (CtrlObject) {
+		CtrlObject->Plugins.CurEditor = this;
+		if (bEE_READ_Sent) {
+			int FEditEditorID = m_editor->EditorID;
+			CtrlObject->Plugins.ProcessEditorEvent(EE_CLOSE, &FEditEditorID);
+		}
+		CtrlObject->Plugins.ProcessEditorEvent(EE_READ, nullptr);
+		bEE_READ_Sent = true;
+	}
 	Show(); // need to force redraw after reload file
 	return true;
 }

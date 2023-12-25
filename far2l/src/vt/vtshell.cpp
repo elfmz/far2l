@@ -36,6 +36,7 @@
 #include <termios.h> 
 #include "palette.hpp"
 #include "AnsiEsc.hpp"
+#include "TestPath.h"
 
 #define BRACKETED_PASTE_SEQ_START "\x1b[200~"
 #define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
@@ -102,6 +103,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _host_id;
 	unsigned int _exit_code;
 	bool _allow_osc_clipset{false};
+	std::string _init_user_profile;
 
 	static const char *GetSystemShell()
 	{
@@ -158,7 +160,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (Opt.SudoEnabled) {
 			askpass_app = GetHelperPathName("far2l_askpass");
 		}
-
+#ifdef __APPLE__ // workaround for Macos
+		if (strstr(shell_argv.front(), "zsh")) {
+			_init_user_profile = ".zprofile";
+		} else if (strstr(shell_argv.front(), "bash")) {
+			_init_user_profile = ".bash_profile";;
+		}
+#endif
 		std::cin.sync();
 		std::cout.flush();
 		std::cerr.flush();
@@ -858,11 +866,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		// then send sourcing directive (dot) with space trailing to avoid adding it to history
 		cmd_str+= " . ";
+		if (!_init_user_profile.empty()) {
+			_init_user_profile.insert(0, 1, '/');
+			_init_user_profile.insert(0, GetMyHome());
+			if (TestPath(_init_user_profile).Exists()) {
+				cmd_str+= '"';
+				cmd_str+= _init_user_profile;
+				cmd_str+= "\";. ";
+			}
+			_init_user_profile.clear();
+		}
 		cmd_str+= EscapeCmdStr(cce.ScriptFile());
 		cmd_str+= ';';
 		cmd_str+= VT_ComposeMarkerCommand(_exit_marker + "$FARVTRESULT");
 		cmd_str+= '\n';
-
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
 			const std::string &error_str =
 				StrPrintf("\nFar2l::VT: terminal write error %u\n", errno);

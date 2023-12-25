@@ -886,6 +886,8 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs);
 	fs =      L" XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
+	fs =      L"             TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
+	ListAbout.AddItem(fs);
 	fs =      L"      GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
 	fs =      L"  DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");

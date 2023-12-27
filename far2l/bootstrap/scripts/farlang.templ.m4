@@ -1755,6 +1755,39 @@ ConfigInactivityMinutes
 "хвилин"
 "хвілін"
 
+ConfigMakeLinkSuggest
+"При создании ссылки по умолчанию предлагается:"
+"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+upd:"When making a link the default suggestion is"
+
+ConfigMakeLinkSuggestByFileDir
+"Жёсткая для файлов, Символическая для каталогов"
+"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+upd:"Hardlink for files, Symlink for directories"
+
+ConfigMakeLinkSuggestSymlinkAlways
+"Символическая всегда"
+"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+upd:"Symlink always"
+
 ConfigSaveHistory
 "Сохранять &историю команд"
 "Save commands &history"

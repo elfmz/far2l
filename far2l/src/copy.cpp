@@ -904,7 +904,8 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 			ComboList.Items[0].Text = Msg::LinkTypeHardlink;
 			ComboList.Items[1].Text = Msg::LinkTypeSymlink;
 
-			ComboList.Items[CDP.FilesPresent ? 0 : 1].Flags|= LIF_SELECTED;
+			//ComboList.Items[CDP.FilesPresent ? 0 : 1].Flags|= LIF_SELECTED;
+			ComboList.Items[(Opt.MakeLinkSuggestSymlinkAlways || CDP.FolderPresent) ? 1 : 0].Flags|= LIF_SELECTED;
 		} else {
 			ComboList.ItemsNumber = ARRAYSIZE(CopyModeItems);
 			ComboList.Items = CopyModeItems;

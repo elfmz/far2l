@@ -167,6 +167,16 @@ void SystemSettings()
 	Builder.AddTextAfter(InactivityExitTime, Msg::ConfigInactivityMinutes);
 	Builder.LinkFlags(InactivityExit, InactivityExitTime, DIF_DISABLE);
 
+	DialogBuilderListItem CAListItems[] = {
+			{Msg::ConfigMakeLinkSuggestByFileDir, 0},
+			{Msg::ConfigMakeLinkSuggestSymlinkAlways,  1},
+	};
+	Builder.AddText(Msg::ConfigMakeLinkSuggest);
+	DialogItemEx *MakeLinkSuggest =
+		Builder.AddComboBox((int *)&Opt.MakeLinkSuggestSymlinkAlways, 48, CAListItems, ARRAYSIZE(CAListItems),
+				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+	MakeLinkSuggest->Indent(4);
+
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveFoldersHistory, &Opt.SaveFoldersHistory,
 			&Opt.FoldersHistoryCount);

@@ -556,6 +556,8 @@ public:
 	{true,  NSecSystem, "MultiCopy", &Opt.CMOpt.MultiCopy, 0},
 	{true,  NSecSystem, "CopyTimeRule", &Opt.CMOpt.CopyTimeRule, 3},
 
+	{true,  NSecSystem, "MakeLinkSuggestSymlinkAlways", &Opt.MakeLinkSuggestSymlinkAlways, 1},
+
 	{true,  NSecSystem, "InactivityExit", &Opt.InactivityExit, 0},
 	{true,  NSecSystem, "InactivityExitTime", &Opt.InactivityExitTime, 15},
 	{true,  NSecSystem, "DriveMenuMode2", &Opt.ChangeDriveMode, -1},

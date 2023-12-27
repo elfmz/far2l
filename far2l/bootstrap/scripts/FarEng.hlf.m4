@@ -4109,6 +4109,9 @@ and sort the files by hard link number.
 
     Symbolic links point to files and non-local folders, relative paths also supported.
 
+    #Default suggestion# in field #Link type# may be changed in ~System settings~@SystemSettings@ to
+    - Hardlink for files, Symlink for directories
+    - Symlink always
 
 @ErrCopyItSelf
 $ #Error: copy/move onto itself.#

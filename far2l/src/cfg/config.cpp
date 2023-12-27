@@ -173,8 +173,8 @@ void SystemSettings()
 	};
 	Builder.AddText(Msg::ConfigMakeLinkSuggest);
 	DialogItemEx *MakeLinkSuggest =
-	Builder.AddComboBox((int *)&Opt.MakeLinkSuggestSymlinkAlways, 48, CAListItems, ARRAYSIZE(CAListItems),
-			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+		Builder.AddComboBox((int *)&Opt.MakeLinkSuggestSymlinkAlways, 48, CAListItems, ARRAYSIZE(CAListItems),
+				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
 	MakeLinkSuggest->Indent(4);
 
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);

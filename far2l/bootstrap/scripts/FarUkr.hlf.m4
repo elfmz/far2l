@@ -4117,6 +4117,10 @@ $ #Жорсткі посилання, зв'язки папок, символіч
 у своїй підтримуються відносні шляхи.
 
 
+ #Default suggestion# in field #Link type# may be changed in ~System settings~@SystemSettings@ to
+ - Hardlink for files, Symlink for directories
+ - Symlink always
+
 @ErrCopyItSelf
 $ #Помилка: копіювання/перенесення "в себе"#
  Ви не можете копіювати/переносити файл або папку "в себе".

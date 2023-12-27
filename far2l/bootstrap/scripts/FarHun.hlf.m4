@@ -3732,6 +3732,9 @@ linkeket. Mivel a szimbolikus link a mappa csomópontok fejlettebb
 változata, ezért az ilyen linkek fájlokra és nem-helyi mappákra is
 mutathatnak, valamint relatív elérési útvonalak is használhatók.
 
+    #Default suggestion# in field #Link type# may be changed in ~System settings~@SystemSettings@ to
+    - Hardlink for files, Symlink for directories
+    - Symlink always
 
 @ErrCopyItSelf
 $ #Hiba: nem másolható vagy mozgatható önmagára#

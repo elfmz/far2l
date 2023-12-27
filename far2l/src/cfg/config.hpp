@@ -418,6 +418,8 @@ struct Options
 
 	CopyMoveOptions CMOpt;
 
+	int MakeLinkSuggestSymlinkAlways;	// по Alt-F6 предлагать всегда symlink или hardink/symlink в зависимости от того среди выбранных только файлы или и каталоги
+
 	DeleteOptions DelOpt;
 
 	int MultiMakeDir;	// Опция создания нескольких каталогов за один сеанс

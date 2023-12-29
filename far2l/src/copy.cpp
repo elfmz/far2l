@@ -916,7 +916,14 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 			ComboList.Items[CM_APPEND].Text = Msg::CopyAppend;
 			ComboList.Items[CM_ONLYNEWER].Text = Msg::CopyOnlyNewerFiles;
 			ComboList.Items[CM_ASKRO].Text = Msg::CopyAskRO;
-			ComboList.Items[CM_ASK].Flags = LIF_SELECTED;
+			// if uncehcked in Options->Confirmations then disable variants & set only Overwrite
+			if ( (Move && !Opt.Confirm.Move) || (!Move && !Opt.Confirm.Copy) ) {
+				ComboList.Items[CM_OVERWRITE].Flags= LIF_SELECTED;
+				CopyDlg[ID_SC_COMBO].Flags|= DIF_DISABLE;
+				CopyDlg[ID_SC_COMBOTEXT].Flags|= DIF_DISABLE;
+			}
+			else
+				ComboList.Items[CM_ASK].Flags = LIF_SELECTED;
 			ComboList.Items[CM_SEPARATOR].Flags = LIF_SEPARATOR;
 
 			if (Opt.Confirm.RO) {

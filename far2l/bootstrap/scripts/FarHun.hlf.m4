@@ -3589,6 +3589,9 @@ fájlok írják felül a célhelyen létezőket;
     #Csak olvasható fájloknál is kérdez# - ha a célhelyen "csak
 olvasható" attribútumú fájllal találkozik, a
 felülírás előtt újabb megerősítést kér.
+    If the corresponding item in ~Confirmations~@ConfirmDlg@ is unchecked,
+then "Already existing files" are disabled
+and the #Overwrite# action is silently applied.
 
     A ~Rendszer beállítások~@SystemSettings@ menü "Másoláshoz a rendszerrutin
 használata" opciójával a FAR a Windows operációs rendszer CopyFileEx nevű

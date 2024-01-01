@@ -5396,7 +5396,7 @@ int Editor::EditorControl(int Command, void *Param)
 				if (col->EndPos >= 0) {
 					newcol.EndPos = col->EndPos + X1;
 				} else {
-					newcol.EndPos = CurPtr->GetLeftPos() + CurPtr->CellPosToReal(X2 - X1) - 1;//CurPtr->GetLength();
+					newcol.EndPos = CurPtr->GetLeftPos() + CurPtr->CellPosToReal(X2 - X1);//CurPtr->GetLength();
 				}
 				newcol.Color = col->Color;
 

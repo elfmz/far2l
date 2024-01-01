@@ -606,10 +606,10 @@ int FarEditor::editorEvent(int event, void *param)
 
     // fills back
     if (lno == ei.CurLine && showHorizontalCross){
-      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, horzCrossColor);
+      addFARColor(lno, 0, 0, horzCrossColor); // ei.LeftPos + ei.WindowSizeX
     }
     else{
-      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, convert(nullptr));
+      addFARColor(lno, 0, 0, convert(nullptr)); // ei.LeftPos + ei.WindowSizeX
     }
 
     if (showVerticalCross){
@@ -667,7 +667,7 @@ int FarEditor::editorEvent(int event, void *param)
           int lend = l1->end;
 
           if (lend == -1){
-            lend = fullBackground ? ei.LeftPos+ei.WindowSizeX : llen;
+            lend = fullBackground ? 0 : llen; // ei.LeftPos+ei.WindowSizeX
           }
 
           addFARColor(lno, l1->start, lend, col);
@@ -1388,7 +1388,7 @@ void FarEditor::cleanEditor()
   col.concolor = (int)info->AdvControl(info->ModuleNumber,ACTL_GETCOLOR,(void *)COL_EDITORTEXT);
   enterHandler();
   for (int i=0; i<ei.TotalLines; i++){
-    EditorGetString egs;
+/*    EditorGetString egs;
     egs.StringNumber=i;
     info->EditorControl(ECTL_GETSTRING,&egs);
 
@@ -1398,6 +1398,8 @@ void FarEditor::cleanEditor()
     else{
       addFARColor(i,0,egs.StringLength,col);
     }
+*/
+    addFARColor(i,0,0,col);
   }
 }
 

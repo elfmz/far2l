@@ -55,15 +55,16 @@ int main()
 	});
 
 	WriteFunc("IsCharPrefix", [](wchar_t c)->bool {
+		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return (cat == U_SURROGATE);
+		return (cat == U_SURROGATE || jt == U_JT_RIGHT_JOINING);
 	});
 
 	WriteFunc("IsCharSuffix", [](wchar_t c)->bool {
 		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return ( (jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT)
+		return ( (jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT && jt != U_JT_RIGHT_JOINING && jt != U_JT_DUAL_JOINING)
 			|| cat == U_NON_SPACING_MARK || cat == U_COMBINING_SPACING_MARK
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS
 			|| block == UBLOCK_COMBINING_MARKS_FOR_SYMBOLS

@@ -98,7 +98,7 @@ static int ShowBookmarksMenuIteration(int Pos)
 		FolderList.Show();
 
 		while (!FolderList.Done()) {
-			DWORD Key = FolderList.ReadInput();
+			const auto Key = FolderList.ReadInput();
 			int SelPos = FolderList.GetSelectPos();
 
 			switch (Key) {

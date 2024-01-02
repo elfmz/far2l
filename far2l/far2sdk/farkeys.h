@@ -39,8 +39,8 @@ Far Manager plugins that use this header file can be distributed under any
 other possible license with no implications from the above license on them.
 */
 
-#define KEYS_PER_RANGE      0x00080000 // must be power of 2
-#define EXTENDED_KEY_BASE   0x00200000 // must be power of 2
+#define KEYS_PER_RANGE      0x00080000U // must be power of 2
+#define EXTENDED_KEY_BASE   0x00200000U // must be power of 2
 #define INTERNAL_KEY_BASE   (EXTENDED_KEY_BASE + KEYS_PER_RANGE)
 #define INTERNAL_KEY_BASE_2 (EXTENDED_KEY_BASE + 2 * KEYS_PER_RANGE)
 
@@ -48,23 +48,26 @@ other possible license with no implications from the above license on them.
 # define INTERNAL_MACRO_BASE   (EXTENDED_KEY_BASE + 3 * KEYS_PER_RANGE)
 #endif	// END FAR_USE_INTERNALS
 
-
+#ifdef __cplusplus
 enum BaseDefKeyboard : FarKey
+#else
+enum BaseDefKeyboard
+#endif
 {
-	KEY_CTRLMASK = 0xFFC00000,
+	KEY_CTRLMASK = 0xFFC00000U,
 #ifdef FAR_USE_INTERNALS
-	KEY_M_OEM    = 0x00400000,
-	KEY_M_SPEC   = 0x00800000,
-	KEY_ALTDIGIT = 0x01000000,
-	KEY_RSHIFT   = 0x02000000,
+	KEY_M_OEM    = 0x00400000U,
+	KEY_M_SPEC   = 0x00800000U,
+	KEY_ALTDIGIT = 0x01000000U,
+	KEY_RSHIFT   = 0x02000000U,
 #endif	// END FAR_USE_INTERNALS
-	KEY_CTRL     = 0x04000000,
-	KEY_ALT      = 0x08000000,
-	KEY_SHIFT    = 0x10000000,
+	KEY_CTRL     = 0x04000000U,
+	KEY_ALT      = 0x08000000U,
+	KEY_SHIFT    = 0x10000000U,
 	//
-	KEY_RCTRL    = 0x20000000,
-	KEY_RALT     = 0x40000000,
-	// Reserved  = 0x80000000,
+	KEY_RCTRL    = 0x20000000U,
+	KEY_RALT     = 0x40000000U,
+	// Reserved  = 0x80000000U,
 //controls end
 
 	KEY_BRACKET     = '[',
@@ -77,11 +80,11 @@ enum BaseDefKeyboard : FarKey
 	KEY_SEMICOLON   = ';',
 	KEY_BACKSLASH   = '\\',
 
-	KEY_BS    = 0x00000008,
-	KEY_TAB   = 0x00000009,
-	KEY_ENTER = 0x0000000D,
-	KEY_ESC   = 0x0000001B,
-	KEY_SPACE = 0x00000020,
+	KEY_BS    = 0x00000008U,
+	KEY_TAB   = 0x00000009U,
+	KEY_ENTER = 0x0000000DU,
+	KEY_ESC   = 0x0000001BU,
+	KEY_SPACE = 0x00000020U,
 
 	KEY_MASKF = 0x002FFFFF, // mask for base + extended key ranges
 
@@ -269,7 +272,11 @@ enum BaseDefKeyboard : FarKey
 
 };
 
+#ifdef __cplusplus
 enum AddDefKeyboard : FarKey
+#else
+enum AddDefKeyboard
+#endif
 {
 	KEY_CTRLSHIFT = KEY_CTRL | KEY_SHIFT,
 	KEY_ALTSHIFT  = KEY_ALT | KEY_SHIFT,

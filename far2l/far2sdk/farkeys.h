@@ -49,7 +49,7 @@ other possible license with no implications from the above license on them.
 #endif	// END FAR_USE_INTERNALS
 
 
-enum BaseDefKeyboard : FarKey_t
+enum BaseDefKeyboard : FarKey
 {
 	KEY_CTRLMASK = 0xFFC00000,
 #ifdef FAR_USE_INTERNALS
@@ -265,11 +265,11 @@ enum BaseDefKeyboard : FarKey_t
 	KEY_MACRO_ENDBASE = KEY_MACRO_BASE + (KEYS_PER_RANGE - 1),
 #endif	// END FAR_USE_INTERNALS
 
-	KEY_INVALID = (FarKey_t)-1
+	KEY_INVALID = (FarKey)-1
 
 };
 
-enum AddDefKeyboard : FarKey_t
+enum AddDefKeyboard : FarKey
 {
 	KEY_CTRLSHIFT = KEY_CTRL | KEY_SHIFT,
 	KEY_ALTSHIFT  = KEY_ALT | KEY_SHIFT,

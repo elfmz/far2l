@@ -960,7 +960,7 @@ void AdvancedConfig()
 	ListConfig.Show();
 	do {
 		while (!ListConfig.Done()) {
-			FarKey_t Key = ListConfig.ReadInput();
+			FarKey Key = ListConfig.ReadInput();
 			switch (Key) {
 				case KEY_CTRLH:
 					hide_unchanged = !hide_unchanged;

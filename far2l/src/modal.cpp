@@ -59,7 +59,7 @@ void Modal::Process()
 	GetDialogObjectsData();
 }
 
-FarKey_t Modal::ReadInput(INPUT_RECORD *GetReadRec)
+FarKey Modal::ReadInput(INPUT_RECORD *GetReadRec)
 {
 	if (GetReadRec)
 		memset(GetReadRec, 0, sizeof(INPUT_RECORD));
@@ -88,7 +88,7 @@ FarKey_t Modal::ReadInput(INPUT_RECORD *GetReadRec)
 	return (ReadKey);
 }
 
-void Modal::WriteInput(FarKey_t Key)
+void Modal::WriteInput(FarKey Key)
 {
 	WriteKey = Key;
 }

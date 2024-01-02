@@ -529,7 +529,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				continue;
 			}
 
-			FarKey_t Key = HistoryMenu.ReadInput();
+			FarKey Key = HistoryMenu.ReadInput();
 
 			if (TypeHistory == HISTORYTYPE_DIALOG && Key == KEY_TAB)	// Tab в списке хистори диалогов - аналог Enter
 			{

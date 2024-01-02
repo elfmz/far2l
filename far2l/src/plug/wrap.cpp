@@ -811,7 +811,7 @@ unsigned int WINAPI KeyNameToKeyA(const char *Name)
 	return KeyToOldKey(KeyNameToKey(strN));
 }
 
-BOOL WINAPI FarKeyToNameA(FarKey_t Key, char *KeyText, int Size)
+BOOL WINAPI FarKeyToNameA(FarKey Key, char *KeyText, int Size)
 {
 	FARString strKT;
 	int ret = KeyToText(OldKeyToKey(Key), strKT);

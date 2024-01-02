@@ -211,7 +211,7 @@ void QuickView::DisplayObject()
 	Flags.Clear(FSCROBJ_ISREDRAWING);
 }
 
-int64_t QuickView::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t QuickView::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	if (!Directory && QView)
 		return QView->VMProcess(OpCode, vParam, iParam);
@@ -224,7 +224,7 @@ int64_t QuickView::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
-int QuickView::ProcessKey(FarKey_t Key)
+int QuickView::ProcessKey(FarKey Key)
 {
 	if (!IsVisible())
 		return FALSE;

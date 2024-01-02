@@ -177,20 +177,20 @@ private:
 
 private:
 	virtual void DisplayObject();
-	int InsertKey(FarKey_t Key);
-	int RecurseProcessKey(FarKey_t Key);
+	int InsertKey(FarKey Key);
+	int RecurseProcessKey(FarKey Key);
 	void DeleteBlock();
 	void ApplyColor();
 	int GetNextCursorPos(int Position, int Where);
 	void RefreshStrByMask(int InitMode = FALSE);
-	int KeyMatchedMask(FarKey_t Key);
+	int KeyMatchedMask(FarKey Key);
 
 	int ProcessCtrlQ();
 	int ProcessInsDate(const wchar_t *Str);
 	int ProcessInsPlainText(const wchar_t *Str);
 
 	int CheckCharMask(wchar_t Chr);
-	int ProcessInsPath(FarKey_t Key, int PrevSelStart = -1, int PrevSelEnd = 0);
+	int ProcessInsPath(FarKey Key, int PrevSelStart = -1, int PrevSelEnd = 0);
 
 	int RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos);
 	void SanitizeSelectionRange();
@@ -214,9 +214,9 @@ public:
 	UINT GetCodePage();					// BUGBUG
 
 	virtual void FastShow();
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	// ! Функция установки текущих Color,SelColor и ColorUnChanged!
 	void SetObjectColor(int Color, int SelColor = 0xf, int ColorUnChanged = COL_DIALOGEDITUNCHANGED);
@@ -336,8 +336,8 @@ class EditControl : public Edit
 	bool ACState;
 
 	void SetMenuPos(VMenu &menu);
-	void AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock, FarKey_t &BackKey);
-	bool AutoCompleteProc(bool Manual, bool DelBlock, FarKey_t &BackKey);
+	void AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock, FarKey &BackKey);
+	bool AutoCompleteProc(bool Manual, bool DelBlock, FarKey &BackKey);
 	void PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter);
 	void RemoveSelectedCompletionMenuItem(VMenu &ComplMenu);
 

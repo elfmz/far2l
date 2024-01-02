@@ -183,7 +183,7 @@ bool FileFilter::FilterEdit()
 	FilterList.Show();
 
 	while (!FilterList.Done()) {
-		FarKey_t Key = FilterList.ReadInput();
+		FarKey Key = FilterList.ReadInput();
 
 		if (Key == KEY_ADD)
 			Key = L'+';

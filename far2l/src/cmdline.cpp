@@ -142,7 +142,7 @@ void CommandLine::SetCurPos(int Pos, int LeftPos)
 	CmdStr.Redraw();
 }
 
-int64_t CommandLine::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t CommandLine::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	if (OpCode >= MCODE_C_CMDLINE_BOF && OpCode <= MCODE_C_CMDLINE_SELECTED)
 		return CmdStr.VMProcess(OpCode - MCODE_C_CMDLINE_BOF + MCODE_C_BOF, vParam, iParam);
@@ -234,7 +234,7 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	}
 }
 
-int CommandLine::ProcessKey(FarKey_t Key)
+int CommandLine::ProcessKey(FarKey Key)
 {
 	const wchar_t *PStr;
 	FARString strStr;
@@ -529,7 +529,7 @@ int CommandLine::ProcessKey(FarKey_t Key)
 
 			// Сбрасываем выделение на некоторых клавишах
 			if (!Opt.CmdLine.EditBlock) {
-				static FarKey_t UnmarkKeys[] = {KEY_LEFT, KEY_NUMPAD4, KEY_CTRLS, KEY_RIGHT, KEY_NUMPAD6,
+				static FarKey UnmarkKeys[] = {KEY_LEFT, KEY_NUMPAD4, KEY_CTRLS, KEY_RIGHT, KEY_NUMPAD6,
 						KEY_CTRLD, KEY_CTRLLEFT, KEY_CTRLNUMPAD4, KEY_CTRLRIGHT, KEY_CTRLNUMPAD6,
 						KEY_CTRLHOME, KEY_CTRLNUMPAD7, KEY_CTRLEND, KEY_CTRLNUMPAD1, KEY_HOME, KEY_NUMPAD7,
 						KEY_END, KEY_NUMPAD1};

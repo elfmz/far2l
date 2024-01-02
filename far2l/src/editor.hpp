@@ -327,9 +327,9 @@ public:
 	int SetRawData(const wchar_t *SrcBuf, int SizeSrcBuf, int TextFormat);		// преобразование из буфера в список
 	int GetRawData(wchar_t **DestBuf, int &SizeDestBuf, int TextFormat = 0);	// преобразование из списка в буфер
 
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	void KeepInitParameters();
 	void SetStartPos(int LineNum, int CharNum);

@@ -293,8 +293,8 @@ private:
 	void UpdateInternalCounters(DWORD OldFlags, DWORD NewFlags);
 	void RestoreFilteredItems();
 	void FilterStringUpdated(bool bLonger);
-	bool IsFilterEditKey(FarKey_t Key);
-	bool ShouldSendKeyToFilter(FarKey_t Key);
+	bool IsFilterEditKey(FarKey Key);
+	bool ShouldSendKeyToFilter(FarKey Key);
 	bool AddToFilter(const wchar_t *str);
 	// коректировка текущей позиции и флагов SELECTED
 	void UpdateSelectPos();
@@ -336,10 +336,10 @@ public:
 	void GetColors(struct FarListColors *ColorsOut);
 	void SetOneColor(int Index, short Color);
 
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
-	virtual FarKey_t ReadInput(INPUT_RECORD *GetReadRec = nullptr);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual FarKey ReadInput(INPUT_RECORD *GetReadRec = nullptr);
 
 	void DeleteItems();
 	int DeleteItem(int ID, int Count = 1);

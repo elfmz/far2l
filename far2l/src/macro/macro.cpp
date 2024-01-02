@@ -711,7 +711,7 @@ int KeyMacro::LoadMacros(BOOL InitedRAM, BOOL LoadAll)
 	return ErrCount ? FALSE : TRUE;
 }
 
-int KeyMacro::ProcessKey(FarKey_t Key)
+int KeyMacro::ProcessKey(FarKey Key)
 {
 	if (InternalInput || Key == KEY_IDLE || Key == KEY_NONE || !FrameManager->GetCurrentFrame())
 		return FALSE;
@@ -3942,7 +3942,7 @@ static bool __CheckCondForSkip(DWORD Op)
 	return false;
 }
 
-FarKey_t KeyMacro::GetKey()
+FarKey KeyMacro::GetKey()
 {
 	MacroRecord *MR;
 	TVar tmpVar;
@@ -3954,7 +3954,7 @@ FarKey_t KeyMacro::GetKey()
 		return 0;
 	}
 
-	FarKey_t RetKey = 0;		// функция должна вернуть 0 - сигнал о том, что макропоследовательности нет
+	FarKey RetKey = 0;		// функция должна вернуть 0 - сигнал о том, что макропоследовательности нет
 
 	if (Work.Executing == MACROMODE_NOMACRO) {
 		if (!Work.MacroWORK) {
@@ -4942,7 +4942,7 @@ return_func:
 }
 
 // Проверить - есть ли еще клавиша?
-FarKey_t KeyMacro::PeekKey()
+FarKey KeyMacro::PeekKey()
 {
 	if (InternalInput || !Work.MacroWORK)
 		return 0;
@@ -5582,7 +5582,7 @@ void KeyMacro::RunStartMacro()
 LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	FARString strKeyText;
-	static FarKey_t LastKey = 0;
+	static FarKey LastKey = 0;
 	static DlgParam *KMParam = nullptr;
 	int Index;
 
@@ -5797,7 +5797,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, L
 		// if(Param2 == KEY_F1 && LastKey == KEY_F1)
 		// LastKey=-1;
 		// else
-		LastKey = (FarKey_t)Param2;
+		LastKey = (FarKey)Param2;
 		return TRUE;
 	}
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -6286,7 +6286,7 @@ int KeyMacro::GetIndex(uint32_t Key, int CheckMode, bool UseCommon)
 // получение размера, занимаемого указанным макросом
 // Ret= 0 - не найден таковой.
 // если CheckMode=-1 - значит пофигу в каком режиме, т.е. первый попавшийся
-int KeyMacro::GetRecordSize(FarKey_t Key, int CheckMode)
+int KeyMacro::GetRecordSize(FarKey Key, int CheckMode)
 {
 	int Pos = GetIndex(Key, CheckMode);
 

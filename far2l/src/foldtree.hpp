@@ -69,7 +69,7 @@ public:
 	virtual ~FolderTree();
 
 public:
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
 	virtual void InitKeyBar();

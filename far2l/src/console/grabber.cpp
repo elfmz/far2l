@@ -217,7 +217,7 @@ void Grabber::DisplayObject()
 	}
 }
 
-int Grabber::ProcessKey(FarKey_t key)
+int Grabber::ProcessKey(FarKey key)
 {
 	/*
 		$ 14.03.2001 SVS

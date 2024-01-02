@@ -117,7 +117,7 @@ public:
 	int EditorControl(int Command, void *Param);
 	void SetCodePage(UINT codepage);	// BUGBUG
 	BOOL IsFileChanged() const { return m_editor->IsFileChanged(); }
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	void GetEditorOptions(EditorOptions &EdOpt);
 	void SetEditorOptions(EditorOptions &EdOpt);
 	void CodepageChangedByUser() { Flags.Set(FFILEEDIT_CODEPAGECHANGEDBYUSER); }
@@ -154,12 +154,12 @@ private:
 	int ProcessQuitKey(int FirstSave, BOOL NeedQuestion = TRUE);
 	BOOL UpdateFileList();
 	bool DecideAboutSignature();
-	int ReProcessKey(FarKey_t Key, int CalledFromControl = TRUE);
+	int ReProcessKey(FarKey Key, int CalledFromControl = TRUE);
 	bool AskOverwrite(const FARString &FileName);
 	void Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t *Title, DWORD InitFlags, int StartLine,
 			int StartChar, const wchar_t *PluginData, int OpenModeExstFile);
 	virtual void InitKeyBar();
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual void ShowConsoleTitle();
 	virtual void OnChangeFocus(int focus);

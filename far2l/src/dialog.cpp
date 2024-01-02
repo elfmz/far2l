@@ -115,7 +115,7 @@ static inline bool CanGetFocus(int Type)
 	}
 }
 
-bool IsKeyHighlighted(const wchar_t *Str, FarKey_t Key, int Translate, int AmpPos)
+bool IsKeyHighlighted(const wchar_t *Str, FarKey Key, int Translate, int AmpPos)
 {
 	if (AmpPos == -1) {
 		if (!(Str = wcschr(Str, L'&')))
@@ -2300,7 +2300,7 @@ int Dialog::ProcessMoveDialog(DWORD Key)
 	return (FALSE);
 }
 
-int64_t Dialog::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t Dialog::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_F_MENU_CHECKHOTKEY:
@@ -2431,7 +2431,7 @@ int64_t Dialog::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 		Обработка данных от клавиатуры.
 		Перекрывает BaseInput::ProcessKey.
 */
-int Dialog::ProcessKey(FarKey_t Key)
+int Dialog::ProcessKey(FarKey Key)
 {
 	CriticalSectionLock Lock(CS);
 	_DIALOG(CleverSysLog CL(L"Dialog::ProcessKey"));
@@ -3033,7 +3033,7 @@ int Dialog::ProcessKey(FarKey_t Key)
 	return FALSE;
 }
 
-void Dialog::ProcessKey(FarKey_t Key, unsigned ItemPos)
+void Dialog::ProcessKey(FarKey Key, unsigned ItemPos)
 {
 	unsigned SavedFocusPos = FocusPos;
 	FocusPos = ItemPos;
@@ -3901,7 +3901,7 @@ int Dialog::SelectFromComboBox(DialogItemEx *CurItem,
 			}
 
 			INPUT_RECORD ReadRec;
-			FarKey_t Key = ComboBox->ReadInput(&ReadRec);
+			FarKey Key = ComboBox->ReadInput(&ReadRec);
 
 			if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTKEY) && ReadRec.EventType == KEY_EVENT) {
 				if (DlgProc((HANDLE)this, DN_KEY, FocusPos, Key))
@@ -4086,7 +4086,7 @@ int Dialog::CheckHighlights(WORD CheckSymbol, int StartPos)
 	Private:
 	Если жмакнули Alt-???
 */
-int Dialog::ProcessHighlighting(FarKey_t Key, unsigned FocusPos, int Translate)
+int Dialog::ProcessHighlighting(FarKey Key, unsigned FocusPos, int Translate)
 {
 	CriticalSectionLock Lock(CS);
 	int Type;

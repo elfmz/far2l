@@ -84,7 +84,7 @@ public:
 public:
 	void Refresh(bool show, bool force_refresh_fkeys = false);
 
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
 	void SetOwner(ScreenObject *Owner);

@@ -282,7 +282,7 @@ void KeyBar::SetAllGroup(int Group, FarLangMsg BaseMsg, int Count)
 	KeyCounts[Group] = Count;
 }
 
-int KeyBar::ProcessKey(FarKey_t Key)
+int KeyBar::ProcessKey(FarKey Key)
 {
 	switch (Key) {
 		case KEY_KILLFOCUS:
@@ -297,7 +297,7 @@ int KeyBar::ProcessKey(FarKey_t Key)
 int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	INPUT_RECORD rec;
-	FarKey_t Key;
+	FarKey Key;
 
 	if (!IsVisible())
 		return FALSE;
@@ -334,7 +334,7 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	int NewX = MouseEvent->dwMousePosition.X - X1;
 
-	FarKey_t NewKey = (NewX < KeyWidth * 9)
+	FarKey NewKey = (NewX < KeyWidth * 9)
 		? NewX / KeyWidth
 		: 9 + (NewX - KeyWidth * 9) / (KeyWidth + 1);
 

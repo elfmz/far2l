@@ -355,12 +355,12 @@ int FilePanels::SwapPanels()
 	return Ret;
 }
 
-int64_t FilePanels::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t FilePanels::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	return ActivePanel->VMProcess(OpCode, vParam, iParam);
 }
 
-int FilePanels::ProcessKey(FarKey_t Key)
+int FilePanels::ProcessKey(FarKey Key)
 {
 	if (!Key)
 		return TRUE;

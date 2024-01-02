@@ -59,20 +59,20 @@ extern int ReturnAltValue;
 extern bool BracketedPasteMode;
 
 void InitKeysArray();
-bool KeyToKeyLayoutCompare(FarKey_t Key, FarKey_t CompareKey);
-FarKey_t KeyToKeyLayout(FarKey_t Key);
+bool KeyToKeyLayoutCompare(FarKey Key, FarKey CompareKey);
+FarKey KeyToKeyLayout(FarKey Key);
 
 // возвращает: 1 - LeftPressed, 2 - Right Pressed, 3 - Middle Pressed, 0 - none
 DWORD IsMouseButtonPressed();
-int TranslateKeyToVK(FarKey_t Key, int &VirtKey, int &ControlState, INPUT_RECORD *rec = nullptr);
-FarKey_t KeyNameToKey(const wchar_t *Name);
-FarKey_t KeyNameToKey(const wchar_t *Name, uint32_t Default);
-BOOL WINAPI KeyToText(FarKey_t Key, FARString &strKeyText);
+int TranslateKeyToVK(FarKey Key, int &VirtKey, int &ControlState, INPUT_RECORD *rec = nullptr);
+FarKey KeyNameToKey(const wchar_t *Name);
+FarKey KeyNameToKey(const wchar_t *Name, uint32_t Default);
+BOOL WINAPI KeyToText(FarKey Key, FARString &strKeyText);
 unsigned int WINAPI InputRecordToKey(const INPUT_RECORD *Rec);
 DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro = false, bool ProcessMouse = false, bool AllowSynchro = true);
 DWORD PeekInputRecord(INPUT_RECORD *rec, bool ExcludeMacro = true);
-FarKey_t CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros = nullptr);
-FarKey_t WaitKey(DWORD KeyWait = (DWORD)-1, DWORD delayMS = 0, bool ExcludeMacro = true);
+FarKey CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros = nullptr);
+FarKey WaitKey(DWORD KeyWait = (DWORD)-1, DWORD delayMS = 0, bool ExcludeMacro = true);
 int SetFLockState(UINT vkKey, int State);
 int WriteInput(wchar_t Key, DWORD Flags = 0);
 int IsNavKey(DWORD Key);

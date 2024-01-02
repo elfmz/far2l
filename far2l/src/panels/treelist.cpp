@@ -729,7 +729,7 @@ UINT TreeList::CountSlash(const wchar_t *Str)
 	return (Count);
 }
 
-int64_t TreeList::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t TreeList::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_C_EMPTY:
@@ -749,7 +749,7 @@ int64_t TreeList::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 	return 0;
 }
 
-int TreeList::ProcessKey(FarKey_t Key)
+int TreeList::ProcessKey(FarKey Key)
 {
 	if (!IsVisible())
 		return FALSE;

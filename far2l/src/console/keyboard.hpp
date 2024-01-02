@@ -67,10 +67,9 @@ DWORD IsMouseButtonPressed();
 int TranslateKeyToVK(FarKey_t Key, int &VirtKey, int &ControlState, INPUT_RECORD *rec = nullptr);
 FarKey_t KeyNameToKey(const wchar_t *Name);
 FarKey_t KeyNameToKey(const wchar_t *Name, uint32_t Default);
-BOOL WINAPI KeyToText(uint32_t Key, FARString &strKeyText);
+BOOL WINAPI KeyToText(FarKey_t Key, FARString &strKeyText);
 unsigned int WINAPI InputRecordToKey(const INPUT_RECORD *Rec);
-DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro = false, bool ProcessMouse = false,
-		bool AllowSynchro = true);
+DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro = false, bool ProcessMouse = false, bool AllowSynchro = true);
 DWORD PeekInputRecord(INPUT_RECORD *rec, bool ExcludeMacro = true);
 FarKey_t CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros = nullptr);
 FarKey_t WaitKey(DWORD KeyWait = (DWORD)-1, DWORD delayMS = 0, bool ExcludeMacro = true);

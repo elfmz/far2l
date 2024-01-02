@@ -97,7 +97,7 @@ static struct TTable_KeyToVK
 {
 	FarKey_t Key;
 	int VK;
-} Table_KeyToVK[] = {
+} const Table_KeyToVK[] = {
 		//   {KEY_PGUP,          VK_PRIOR},
 		//   {KEY_PGDN,          VK_NEXT},
 		//   {KEY_END,           VK_END},
@@ -139,13 +139,13 @@ static struct TTable_KeyToVK
 
 struct TFKey3
 {
-	DWORD Key;
+	FarKey_t Key;
 	int Len;
 	const wchar_t *Name;
 	const wchar_t *UName;
 };
 
-static TFKey3 FKeys1[] = {
+static const TFKey3 FKeys1[] = {
 		{KEY_RCTRLALTSHIFTRELEASE, 24, L"RightCtrlAltShiftRelease", L"RIGHTCTRLALTSHIFTRELEASE"},
 		{KEY_RCTRLALTSHIFTPRESS,   22, L"RightCtrlAltShiftPress",   L"RIGHTCTRLALTSHIFTPRESS"  },
 		{KEY_CTRLALTSHIFTRELEASE,  19, L"CtrlAltShiftRelease",      L"CTRLALTSHIFTRELEASE"     },
@@ -255,7 +255,7 @@ static TFKey3 FKeys1[] = {
 		{KEY_COMMA,                1,  L",",                        L","                       },
 };
 
-static TFKey3 ModifKeyName[] = {
+static const TFKey3 ModifKeyName[] = {
 		{KEY_RCTRL,  5, L"RCtrl", L"RCTRL"},
 		{KEY_SHIFT,  5, L"Shift", L"SHIFT"},
 		{KEY_CTRL,   4, L"Ctrl",  L"CTRL" },
@@ -266,7 +266,7 @@ static TFKey3 ModifKeyName[] = {
 };
 
 #if defined(SYSLOG)
-static TFKey3 SpecKeyName[] = {
+static const TFKey3 SpecKeyName[] = {
 		{KEY_CONSOLE_BUFFER_RESIZE, 19, L"ConsoleBufferResize", L"CONSOLEBUFFERRESIZE"},
 		{KEY_OP_SELWORD,            10, L"OP_SelWord",          L"OP_SELWORD"         },
 		{KEY_KILLFOCUS,             9,  L"KillFocus",           L"KILLFOCUS"          },
@@ -1623,12 +1623,12 @@ FarKey_t KeyNameToKey(const wchar_t *Name, uint32_t Default)
 	return (Key == KEY_INVALID) ? Default : Key;
 }
 
-BOOL WINAPI KeyToText(uint32_t Key0, FARString &strKeyText0)
+BOOL WINAPI KeyToText(FarKey_t Key0, FARString &strKeyText0)
 {
 	FARString strKeyText;
 	FARString strKeyTemp;
 	int I, Len;
-	DWORD Key = Key0, FKey = Key0 & 0xFFFFFF;
+	DWORD Key = Key0, FKey = STRIP_KEY_CODE(Key0);
 	// if(Key >= KEY_MACRO_BASE && Key <= KEY_MACRO_ENDBASE)
 	//	return KeyMacroToText(Key0, strKeyText0);
 

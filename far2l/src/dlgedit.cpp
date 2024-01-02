@@ -102,7 +102,7 @@ DlgEdit::~DlgEdit()
 #endif
 }
 
-int DlgEdit::ProcessKey(int Key)
+int DlgEdit::ProcessKey(FarKey_t Key)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 
@@ -680,7 +680,7 @@ void DlgEdit::ResizeConsole()
 		lineEdit->ResizeConsole();
 }
 
-int64_t DlgEdit::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t DlgEdit::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 

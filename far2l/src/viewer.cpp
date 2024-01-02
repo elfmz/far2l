@@ -1069,7 +1069,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 		rString.bSelection = true;
 }
 
-int64_t Viewer::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t Viewer::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_C_EMPTY:
@@ -1102,7 +1102,7 @@ int64_t Viewer::VMProcess(int OpCode, void *vParam, int64_t iParam)
 	$ 28.01.2001
 	- Путем проверки ViewFile на nullptr избавляемся от падения
 */
-int Viewer::ProcessKey(int Key)
+int Viewer::ProcessKey(FarKey_t Key)
 {
 	// Pressing Alt together with PageDown/PageUp allows to smoothly
 	// boost scrolling speed, releasing Alt while keeping PageDown/PageUp
@@ -1831,7 +1831,7 @@ int Viewer::ProcessKey(int Key)
 			return TRUE;
 		default:
 
-			if (Key >= L' ' && Key < 0x10000) {
+			if (Key >= L' ' && WCHAR_IS_VALID(Key)) {
 				Search(0, Key);
 				return TRUE;
 			}

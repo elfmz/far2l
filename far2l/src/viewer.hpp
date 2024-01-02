@@ -190,9 +190,9 @@ public:
 	int OpenFile(FileHolderPtr NewFileHolder, int warning);
 	void SetViewKeyBar(KeyBar *ViewKeyBar);
 
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey_t Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	void SetStatusMode(int Mode);
 	void EnableHideCursor(int HideCursor);

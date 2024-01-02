@@ -70,9 +70,9 @@ public:
 	virtual ~QuickView();
 
 public:
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey_t Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	virtual void Update(int Mode);
 	void ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugin);
 	virtual void CloseFile();

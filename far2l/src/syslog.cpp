@@ -635,7 +635,7 @@ FARString __MCODE_ToName(int OpCode)
 #endif
 }
 
-FARString __FARKEY_ToName(int Key)
+FARString __FARKEY_ToName(uint32_t Key)
 {
 #if defined(SYSLOG)
 	FARString Name;

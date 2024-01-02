@@ -98,7 +98,7 @@ bool FileFilter::FilterEdit()
 		if (!i)
 			ListItem.Flags|= LIF_SELECTED;
 
-		int Check = GetCheck(FilterData.getItem(i));
+		auto Check = GetCheck(FilterData.getItem(i));
 
 		if (Check)
 			ListItem.SetCheck(Check);
@@ -140,7 +140,7 @@ bool FileFilter::FilterEdit()
 		ListItem.Clear();
 		FoldersFilter.SetTitle(Msg::FolderFileType);
 		MenuString(ListItem.strName, &FoldersFilter, false, L'0');
-		int Check = GetCheck(&FoldersFilter);
+		auto Check = GetCheck(&FoldersFilter);
 
 		if (Check)
 			ListItem.SetCheck(Check);
@@ -183,7 +183,7 @@ bool FileFilter::FilterEdit()
 	FilterList.Show();
 
 	while (!FilterList.Done()) {
-		int Key = FilterList.ReadInput();
+		FarKey_t Key = FilterList.ReadInput();
 
 		if (Key == KEY_ADD)
 			Key = L'+';
@@ -206,8 +206,8 @@ bool FileFilter::FilterEdit()
 				if (SelPos == (int)FilterData.getCount())
 					break;
 
-				int Check = FilterList.GetCheck(SelPos);
-				int NewCheck;
+				auto Check = FilterList.GetCheck(SelPos);
+				uint32_t NewCheck;
 
 				if (Key == KEY_BS)
 					NewCheck = 0;
@@ -240,7 +240,7 @@ bool FileFilter::FilterEdit()
 					if (FileFilterConfig(FilterData.getItem(SelPos))) {
 						ListItem.Clear();
 						MenuString(ListItem.strName, FilterData.getItem(SelPos));
-						int Check = GetCheck(FilterData.getItem(SelPos));
+						auto Check = GetCheck(FilterData.getItem(SelPos));
 
 						if (Check)
 							ListItem.SetCheck(Check);
@@ -411,7 +411,7 @@ enumFileFilterFlagsType FileFilter::GetFFFT()
 	return FFFT_CUSTOM;
 }
 
-int FileFilter::GetCheck(FileFilterParams *FFP)
+uint32_t FileFilter::GetCheck(FileFilterParams *FFP)
 {
 	DWORD Flags = FFP->GetFlags(GetFFFT());
 
@@ -436,7 +436,7 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 	FileFilterParams *CurFilterData;
 
 	for (int i = 0, j = 0; i < FilterList->GetItemCount(); i++) {
-		int Check = FilterList->GetCheck(i);
+		auto Check = FilterList->GetCheck(i);
 		CurFilterData = nullptr;
 
 		if (i < (int)FilterData.getCount()) {

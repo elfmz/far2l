@@ -209,12 +209,12 @@ void FileViewer::DisplayObject()
 	View.Show();
 }
 
-int64_t FileViewer::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t FileViewer::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	return View.VMProcess(OpCode, vParam, iParam);
 }
 
-int FileViewer::ProcessKey(int Key)
+int FileViewer::ProcessKey(FarKey_t Key)
 {
 	if (RedrawTitle
 			&& (((unsigned int)Key & 0x00ffffff) < KEY_END_FKEY

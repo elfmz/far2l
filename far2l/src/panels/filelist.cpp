@@ -569,7 +569,7 @@ int FileList::SendKeyToPlugin(DWORD Key, BOOL Pred)
 	return FALSE;
 }
 
-int64_t FileList::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t FileList::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_C_ROOTFOLDER: {
@@ -829,7 +829,7 @@ public:
 	virtual ~FileList_TempFileHolder() { CtrlObject->Plugins.ClosePlugin(hPlugin); }
 };
 
-int FileList::ProcessKey(int Key)
+int FileList::ProcessKey(FarKey_t Key)
 {
 
 	FileListItem *CurPtr = nullptr;
@@ -2049,7 +2049,7 @@ int FileList::ProcessKey(int Key)
 						|| (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535))
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_BS && (Key & ~KEY_ALTSHIFT_BASE) != KEY_TAB
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_ENTER && (Key & ~KEY_ALTSHIFT_BASE) != KEY_ESC
-					&& !(Key & EXTENDED_KEY_BASE)) {
+					&& !IS_KEY_EXTENDED(Key)) {
 				//_SVS(SysLog(L">FastFind: Key=%ls",_FARKEY_ToName(Key)));
 				// Скорректирем уже здесь нужные клавиши, т.к. WaitInFastFind
 				// в это время еще равно нулю.
@@ -2650,7 +2650,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	if (MouseEvent->dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED && MouseEvent->dwEventFlags != MOUSE_MOVED) {
-		int Key = KEY_ENTER;
+		FarKey_t Key = KEY_ENTER;
 		if (MouseEvent->dwControlKeyState & SHIFT_PRESSED) {
 			Key|= KEY_SHIFT;
 		}
@@ -3849,7 +3849,7 @@ void FileList::SelectSortMode()
 				MenuNeedRefresh = false;
 			}
 
-			int Key = SortModeMenu.ReadInput();
+			FarKey_t Key = SortModeMenu.ReadInput();
 			int MenuPos = SortModeMenu.GetSelectPos();
 
 			if (Key == KEY_SUBTRACT)
@@ -4288,7 +4288,7 @@ HANDLE FileList::OpenFilePlugin(const wchar_t *FileName, int PushPrev, OPENFILEP
 	return hNewPlugin;
 }
 
-void FileList::ProcessCopyKeys(int Key)
+void FileList::ProcessCopyKeys(FarKey_t Key)
 {
 	if (!ListData.IsEmpty()) {
 		SudoClientRegion sdc_rgn;

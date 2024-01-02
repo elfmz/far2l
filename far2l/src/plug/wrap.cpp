@@ -192,9 +192,9 @@ static void FreeArrayUnicode(wchar_t **lpawszUnicodeString)
 static DWORD OldKeyToKey(DWORD dOldKey)
 {
 	if (dOldKey & 0x100) {
-		dOldKey = (dOldKey ^ 0x100) | EXTENDED_KEY_BASE;
+		dOldKey = (dOldKey ^ 0x100) + EXTENDED_KEY_BASE;
 	} else if (dOldKey & 0x200) {
-		dOldKey = (dOldKey ^ 0x200) | INTERNAL_KEY_BASE;
+		dOldKey = (dOldKey ^ 0x200) + INTERNAL_KEY_BASE;
 	} else {
 		DWORD CleanKey = dOldKey & ~KEY_CTRLMASK;
 
@@ -212,10 +212,10 @@ static DWORD OldKeyToKey(DWORD dOldKey)
 
 DWORD KeyToOldKey(DWORD dKey)
 {
-	if (dKey & EXTENDED_KEY_BASE) {
-		dKey = (dKey ^ EXTENDED_KEY_BASE) | 0x100;
-	} else if (dKey & INTERNAL_KEY_BASE) {
-		dKey = (dKey ^ INTERNAL_KEY_BASE) | 0x200;
+	if (IS_KEY_EXTENDED(dKey)) {
+		dKey = (dKey - EXTENDED_KEY_BASE) | 0x100;
+	} else if (IS_KEY_INTERNAL(dKey)) {
+		dKey = (dKey - INTERNAL_KEY_BASE) | 0x200;
 	} else {
 		DWORD CleanKey = dKey & ~KEY_CTRLMASK;
 
@@ -805,13 +805,13 @@ int WINAPI ProcessNameA(const char *Param1, char *Param2, DWORD Flags)
 	return ret;
 }
 
-int WINAPI KeyNameToKeyA(const char *Name)
+unsigned int WINAPI KeyNameToKeyA(const char *Name)
 {
 	FARString strN(Name);
 	return KeyToOldKey(KeyNameToKey(strN));
 }
 
-BOOL WINAPI FarKeyToNameA(int Key, char *KeyText, int Size)
+BOOL WINAPI FarKeyToNameA(unsigned int Key, char *KeyText, int Size)
 {
 	FARString strKT;
 	int ret = KeyToText(OldKeyToKey(Key), strKT);
@@ -822,7 +822,7 @@ BOOL WINAPI FarKeyToNameA(int Key, char *KeyText, int Size)
 	return ret;
 }
 
-int WINAPI InputRecordToKeyA(const INPUT_RECORD *r)
+unsigned int WINAPI InputRecordToKeyA(const INPUT_RECORD *r)
 {
 	return KeyToOldKey(InputRecordToKey(r));
 }

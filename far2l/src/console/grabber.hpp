@@ -56,7 +56,7 @@ private:
 
 private:
 	virtual void DisplayObject();
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey_t Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	void CopyGrabbedArea(bool append);
 	void Reset();

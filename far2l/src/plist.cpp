@@ -73,7 +73,7 @@ void ShowProcessList()
 
 	while (!ProcList.Done())
 	{
-		int Key=ProcList.ReadInput();
+		FarKey_t Key=ProcList.ReadInput();
 
 		switch (Key)
 		{

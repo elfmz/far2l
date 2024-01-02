@@ -115,7 +115,7 @@ static inline bool CanGetFocus(int Type)
 	}
 }
 
-bool IsKeyHighlighted(const wchar_t *Str, int Key, int Translate, int AmpPos)
+bool IsKeyHighlighted(const wchar_t *Str, FarKey_t Key, int Translate, int AmpPos)
 {
 	if (AmpPos == -1) {
 		if (!(Str = wcschr(Str, L'&')))
@@ -135,14 +135,14 @@ bool IsKeyHighlighted(const wchar_t *Str, int Key, int Translate, int AmpPos)
 
 	wchar_t UpperStrKey = Upper(Str[AmpPos]);
 
-	if (Key < 0xFFFF) {
+	if (WCHAR_IS_VALID(Key)) {
 		return UpperStrKey == Upper(Key) || (Translate && KeyToKeyLayoutCompare(Upper(Key), UpperStrKey));
 	}
 
 	if (Key & KEY_ALT) {
 		uint32_t AltKey = Key & (~KEY_ALT);
 
-		if (AltKey < 0xFFFF) {
+		if (WCHAR_IS_VALID(AltKey)) {
 			if (iswdigit(AltKey) != 0)
 				return (AltKey == (uint32_t)UpperStrKey);
 
@@ -2300,7 +2300,7 @@ int Dialog::ProcessMoveDialog(DWORD Key)
 	return (FALSE);
 }
 
-int64_t Dialog::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t Dialog::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_F_MENU_CHECKHOTKEY:
@@ -2431,7 +2431,7 @@ int64_t Dialog::VMProcess(int OpCode, void *vParam, int64_t iParam)
 		Обработка данных от клавиатуры.
 		Перекрывает BaseInput::ProcessKey.
 */
-int Dialog::ProcessKey(int Key)
+int Dialog::ProcessKey(FarKey_t Key)
 {
 	CriticalSectionLock Lock(CS);
 	_DIALOG(CleverSysLog CL(L"Dialog::ProcessKey"));
@@ -2520,7 +2520,7 @@ int Dialog::ProcessKey(int Key)
 			case KEY_ENTER:
 				VMenu *List = Item[FocusPos]->ListPtr;
 				int CurListPos = List->GetSelectPos();
-				int CheckedListItem = List->GetCheck(-1);
+				auto CheckedListItem = List->GetCheck(-1);
 				List->ProcessKey(Key);
 				int NewListPos = List->GetSelectPos();
 
@@ -2809,7 +2809,7 @@ int Dialog::ProcessKey(int Key)
 			if (Item[FocusPos]->Type == DI_LISTBOX) {
 				VMenu *List = Item[FocusPos]->ListPtr;
 				int CurListPos = List->GetSelectPos();
-				int CheckedListItem = List->GetCheck(-1);
+				auto CheckedListItem = List->GetCheck(-1);
 				List->ProcessKey(Key);
 				int NewListPos = List->GetSelectPos();
 
@@ -3033,7 +3033,7 @@ int Dialog::ProcessKey(int Key)
 	return FALSE;
 }
 
-void Dialog::ProcessKey(int Key, unsigned ItemPos)
+void Dialog::ProcessKey(FarKey_t Key, unsigned ItemPos)
 {
 	unsigned SavedFocusPos = FocusPos;
 	FocusPos = ItemPos;
@@ -3085,7 +3085,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				&& MsX >= X1 + Item[I]->X1 && MsX <= X1 + Item[I]->X2) {
 			VMenu *List = Item[I]->ListPtr;
 			int Pos = List->GetSelectPos();
-			int CheckedListItem = List->GetCheck(-1);
+			auto CheckedListItem = List->GetCheck(-1);
 
 			if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)) {
 				if (FocusPos != I) {
@@ -3901,7 +3901,7 @@ int Dialog::SelectFromComboBox(DialogItemEx *CurItem,
 			}
 
 			INPUT_RECORD ReadRec;
-			int Key = ComboBox->ReadInput(&ReadRec);
+			FarKey_t Key = ComboBox->ReadInput(&ReadRec);
 
 			if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTKEY) && ReadRec.EventType == KEY_EVENT) {
 				if (DlgProc((HANDLE)this, DN_KEY, FocusPos, Key))
@@ -4086,7 +4086,7 @@ int Dialog::CheckHighlights(WORD CheckSymbol, int StartPos)
 	Private:
 	Если жмакнули Alt-???
 */
-int Dialog::ProcessHighlighting(int Key, unsigned FocusPos, int Translate)
+int Dialog::ProcessHighlighting(FarKey_t Key, unsigned FocusPos, int Translate)
 {
 	CriticalSectionLock Lock(CS);
 	int Type;

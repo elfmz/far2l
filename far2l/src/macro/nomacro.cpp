@@ -16,9 +16,9 @@ nomacro.hpp
 
 KeyMacro::KeyMacro() {}
 KeyMacro::~KeyMacro() {}
-uint32_t KeyMacro::ProcessKey(uint32_t Key) { return 0; }
-int KeyMacro::GetKey() { return 0; }
-int KeyMacro::PeekKey() { return 0; }
+int KeyMacro::ProcessKey(FarKey_t Key) { return 0; }
+FarKey_t KeyMacro::GetKey() { return 0; }
+FarKey_t KeyMacro::PeekKey() { return 0; }
 bool KeyMacro::CheckWaitKeyFunc() { return false; }
 int KeyMacro::IsExecutingLastKey() { return 0; }
 void KeyMacro::RunStartMacro() {}

@@ -132,7 +132,7 @@ static void CheckScreenLock()
 	}
 }
 
-static size_t WINAPI FarKeyToName(int Key, wchar_t *KeyText, size_t Size)
+static size_t WINAPI FarKeyToName(unsigned int Key, wchar_t *KeyText, size_t Size)
 {
 	FARString strKT;
 
@@ -153,7 +153,7 @@ static size_t WINAPI FarKeyToName(int Key, wchar_t *KeyText, size_t Size)
 	return (len + 1);
 }
 
-int WINAPI KeyNameToKeyW(const wchar_t *Name)
+unsigned int WINAPI KeyNameToKeyW(const wchar_t *Name)
 {
 	FARString strN(Name);
 	return (int)KeyNameToKey(strN);

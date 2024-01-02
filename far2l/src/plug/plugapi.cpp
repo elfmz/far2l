@@ -898,7 +898,7 @@ static int FarMenuFnSynched(INT_PTR PluginNumber, int X, int Y, int MaxHeight, D
 
 		while (!FarMenu.Done() && !CloseFARMenu) {
 			INPUT_RECORD ReadRec;
-			int ReadKey = GetInputRecord(&ReadRec);
+			const auto ReadKey = GetInputRecord(&ReadRec);
 
 			if (ReadKey == KEY_CONSOLE_BUFFER_RESIZE) {
 				LockScreen LckScr;

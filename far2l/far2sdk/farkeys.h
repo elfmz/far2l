@@ -39,8 +39,8 @@ Far Manager plugins that use this header file can be distributed under any
 other possible license with no implications from the above license on them.
 */
 
-#define KEYS_PER_RANGE      0x00080000
-#define EXTENDED_KEY_BASE   0x00200000
+#define KEYS_PER_RANGE      0x00080000 // must be power of 2
+#define EXTENDED_KEY_BASE   0x00200000 // must be power of 2
 #define INTERNAL_KEY_BASE   (EXTENDED_KEY_BASE + KEYS_PER_RANGE)
 #define INTERNAL_KEY_BASE_2 (EXTENDED_KEY_BASE + 2 * KEYS_PER_RANGE)
 
@@ -83,7 +83,7 @@ enum BaseDefKeyboard : FarKey
 	KEY_ESC   = 0x0000001B,
 	KEY_SPACE = 0x00000020,
 
-	KEY_MASKF = 0x0001FFFFF, // max valid UTF32 is 0x10ffff
+	KEY_MASKF = 0x002FFFFF, // mask for base + extended key ranges
 
 	KEY_FKEY_BEGIN = EXTENDED_KEY_BASE,
 
@@ -228,7 +228,7 @@ enum BaseDefKeyboard : FarKey
 #endif	// END FAR_USE_INTERNALS
 	KEY_VK_0xFF_END = EXTENDED_KEY_BASE + 0x000001FF,
 
-	KEY_END_FKEY = 0x110000, // max valid UTF32 is 0x10ffff
+	KEY_END_FKEY = EXTENDED_KEY_BASE + KEYS_PER_RANGE,
 
 	KEY_NONE = INTERNAL_KEY_BASE_2 + 1,
 	KEY_IDLE = INTERNAL_KEY_BASE_2 + 2,

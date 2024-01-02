@@ -936,7 +936,7 @@ static DWORD _CorrectFastFindKbdLayout(INPUT_RECORD *rec, DWORD Key)
 		// // _SVS(SysLog(L"_CorrectFastFindKbdLayout>>> %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
 		if (rec->Event.KeyEvent.uChar.UnicodeChar
 				&& WCHAR(Key & KEY_MASKF) != rec->Event.KeyEvent.uChar.UnicodeChar)		//???
-			Key = (Key & 0xFFF10000) | rec->Event.KeyEvent.uChar.UnicodeChar;			//???
+			Key = (Key & (~KEY_MASKF)) | (rec->Event.KeyEvent.uChar.UnicodeChar & KEY_MASKF);	//???
 
 																						// // _SVS(SysLog(L"_CorrectFastFindKbdLayout<<< %ls | %ls",_FARKEY_ToName(Key),_INPUT_RECORD_Dump(rec)));
 	}

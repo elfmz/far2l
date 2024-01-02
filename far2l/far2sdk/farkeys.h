@@ -39,9 +39,8 @@ Far Manager plugins that use this header file can be distributed under any
 other possible license with no implications from the above license on them.
 */
 
-
-#define KEYS_PER_RANGE      0x00040000
-#define EXTENDED_KEY_BASE   0x80000000
+#define KEYS_PER_RANGE      0x00080000
+#define EXTENDED_KEY_BASE   0x00200000
 #define INTERNAL_KEY_BASE   (EXTENDED_KEY_BASE + KEYS_PER_RANGE)
 #define INTERNAL_KEY_BASE_2 (EXTENDED_KEY_BASE + 2 * KEYS_PER_RANGE)
 
@@ -52,19 +51,20 @@ other possible license with no implications from the above license on them.
 
 enum BaseDefKeyboard : FarKey_t
 {
-	KEY_CTRLMASK = 0x7FF00000,
+	KEY_CTRLMASK = 0xFFC00000,
 #ifdef FAR_USE_INTERNALS
-	KEY_M_OEM    = 0x00100000,
-	KEY_M_SPEC   = 0x00200000,
-	KEY_ALTDIGIT = 0x00400000,
-	KEY_RSHIFT   = 0x00800000,
+	KEY_M_OEM    = 0x00400000,
+	KEY_M_SPEC   = 0x00800000,
+	KEY_ALTDIGIT = 0x01000000,
+	KEY_RSHIFT   = 0x02000000,
 #endif	// END FAR_USE_INTERNALS
-	KEY_CTRL  = 0x01000000,
-	KEY_ALT   = 0x02000000,
-	KEY_SHIFT = 0x04000000,
+	KEY_CTRL     = 0x04000000,
+	KEY_ALT      = 0x08000000,
+	KEY_SHIFT    = 0x10000000,
 	//
-	KEY_RCTRL = 0x10000000,
-	KEY_RALT  = 0x20000000,
+	KEY_RCTRL    = 0x20000000,
+	KEY_RALT     = 0x40000000,
+	// Reserved  = 0x80000000,
 //controls end
 
 	KEY_BRACKET     = '[',

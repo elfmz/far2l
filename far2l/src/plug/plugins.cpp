@@ -1116,7 +1116,7 @@ void PluginManager::Configure(int StartPos)
 			PluginList.Show();
 
 			while (!PluginList.Done()) {
-				DWORD Key = PluginList.ReadInput();
+				const auto Key = PluginList.ReadInput();
 				int SelPos = PluginList.GetSelectPos();
 				PluginMenuItemData *item = (PluginMenuItemData *)PluginList.GetUserData(nullptr, 0, SelPos);
 
@@ -1267,7 +1267,7 @@ int PluginManager::CommandsMenu(int ModalType, int StartPos, const wchar_t *Hist
 			PluginList.Show();
 
 			while (!PluginList.Done()) {
-				DWORD Key = PluginList.ReadInput();
+				const auto Key = PluginList.ReadInput();
 				int SelPos = PluginList.GetSelectPos();
 				PluginMenuItemData *item = (PluginMenuItemData *)PluginList.GetUserData(nullptr, 0, SelPos);
 

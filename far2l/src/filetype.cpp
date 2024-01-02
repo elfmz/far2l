@@ -590,7 +590,7 @@ void EditFileTypes()
 				MenuModified = false;
 			}
 
-			DWORD Key = TypesMenu.ReadInput();
+			const auto Key = TypesMenu.ReadInput();
 			MenuPos = TypesMenu.GetSelectPos();
 
 			switch (Key) {

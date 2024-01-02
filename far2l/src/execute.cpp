@@ -471,7 +471,7 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 			auto *cp = CtrlObject->Cp();
 			if (!CloseFAR && cp && cp->LeftPanel && cp->RightPanel
 					&& (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
-				FarKey_t Key;
+				FarKey Key;
 				{
 					ChangeMacroMode cmm(MACRO_OTHER);	// prevent macros from intercepting key (#1003)
 					Key = WaitKey();

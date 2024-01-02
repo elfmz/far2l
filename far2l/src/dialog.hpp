@@ -323,7 +323,7 @@ private:
 
 	void ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex);	// обработка DIF_USELASTHISTORY
 
-	int ProcessHighlighting(FarKey_t Key, unsigned FocusPos, int Translate);
+	int ProcessHighlighting(FarKey Key, unsigned FocusPos, int Translate);
 	int CheckHighlights(WORD Chr, int StartPos = 0);
 
 	void SelectOnEntry(unsigned Pos, BOOL Selected);
@@ -361,7 +361,7 @@ private:
 
 	LONG_PTR CallDlgProc(int nMsg, int nParam1, LONG_PTR nParam2);
 
-	void ProcessKey(FarKey_t Key, unsigned ItemPos);
+	void ProcessKey(FarKey Key, unsigned ItemPos);
 
 public:
 	Dialog(DialogItemEx *SrcItem, unsigned SrcItemCount, FARWINDOWPROC DlgProc = nullptr,
@@ -371,9 +371,9 @@ public:
 	virtual ~Dialog();
 
 public:
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	virtual void Show();
 	virtual void Hide();
 	void FastShow() { ShowDialog(); }
@@ -442,7 +442,7 @@ LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 LONG_PTR WINAPI DefDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 
-bool IsKeyHighlighted(const wchar_t *Str, FarKey_t Key, int Translate, int AmpPos = -1);
+bool IsKeyHighlighted(const wchar_t *Str, FarKey Key, int Translate, int AmpPos = -1);
 
 void DataToItemEx(const DialogDataEx *Data, DialogItemEx *Item, int Count);
 

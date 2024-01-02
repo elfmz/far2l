@@ -79,7 +79,7 @@ bool BracketedPasteMode = false;
 // static WCHAR VKeyToASCII[0x200];
 
 static unsigned int AltValue = 0;
-static FarKey_t KeyCodeForALT_LastPressed = 0;
+static FarKey KeyCodeForALT_LastPressed = 0;
 
 static MOUSE_EVENT_RECORD lastMOUSE_EVENT_RECORD;
 static int ShiftPressedLast = FALSE, AltPressedLast = FALSE, CtrlPressedLast = FALSE;
@@ -95,7 +95,7 @@ static int LastShiftEnterPressed = FALSE;
 /* ----------------------------------------------------------------- */
 static struct TTable_KeyToVK
 {
-	FarKey_t Key;
+	FarKey Key;
 	int VK;
 } const Table_KeyToVK[] = {
 		//   {KEY_PGUP,          VK_PRIOR},
@@ -139,7 +139,7 @@ static struct TTable_KeyToVK
 
 struct TFKey3
 {
-	FarKey_t Key;
+	FarKey Key;
 	int Len;
 	const wchar_t *Name;
 	const wchar_t *UName;
@@ -350,7 +350,7 @@ void InitKeysArray()
 }
 
 // Сравнивает если Key и CompareKey это одна и та же клавиша в разных раскладках
-bool KeyToKeyLayoutCompare(FarKey_t Key, FarKey_t CompareKey)
+bool KeyToKeyLayoutCompare(FarKey Key, FarKey CompareKey)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayoutCompare()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X", Key));
@@ -361,7 +361,7 @@ bool KeyToKeyLayoutCompare(FarKey_t Key, FarKey_t CompareKey)
 }
 
 // Должно вернуть клавишный Eng эквивалент Key
-FarKey_t KeyToKeyLayout(FarKey_t Key)
+FarKey KeyToKeyLayout(FarKey Key)
 {
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayout()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X", Key));
@@ -709,7 +709,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 					if (!X && Y == ScrY && CtrlObject->CmdLine->IsVisible()) {
 						for (;;) {
 							INPUT_RECORD tmprec;
-							FarKey_t Key = GetInputRecord(&tmprec);
+							FarKey Key = GetInputRecord(&tmprec);
 
 							if ((DWORD)Key == KEY_NONE
 									|| ((DWORD)Key != KEY_SHIFT && tmprec.Event.KeyEvent.bKeyDown))
@@ -1279,7 +1279,7 @@ DWORD PeekInputRecord(INPUT_RECORD *rec, bool ExcludeMacro)
 	+ Пераметр у фунции WaitKey - возможность ожидать конкретную клавишу
 	Если KeyWait = -1 - как и раньше
 */
-FarKey_t WaitKey(DWORD KeyWait, DWORD delayMS, bool ExcludeMacro)
+FarKey WaitKey(DWORD KeyWait, DWORD delayMS, bool ExcludeMacro)
 {
 	bool Visible = false;
 	bool AdHocQuickEdit = ((KeyWait & (~KEY_CTRLMASK)) != KEY_MSLCLICK);
@@ -1291,7 +1291,7 @@ FarKey_t WaitKey(DWORD KeyWait, DWORD delayMS, bool ExcludeMacro)
 	}
 
 	const clock_t CheckTime = GetProcessUptimeMSec() + delayMS;
-	FarKey_t Key;
+	FarKey Key;
 
 	for (;;) {
 		INPUT_RECORD rec;
@@ -1366,7 +1366,7 @@ int WriteInput(wchar_t Key, DWORD Flags)
 int CheckForEscSilent()
 {
 	INPUT_RECORD rec;
-	FarKey_t Key;
+	FarKey Key;
 	BOOL Processed = TRUE;
 	/*
 		TODO: Здесь, в общем то - ХЗ, т.к.
@@ -1507,12 +1507,12 @@ static FARString &GetShiftKeyName(FARString &strName, DWORD Key, int &Len)
 	5. "Oem" и 5 десятичных цифр (с ведущими нулями)
 	6. только модификаторы (Alt/RAlt/Ctrl/RCtrl/Shift)
 */
-FarKey_t KeyNameToKey(const wchar_t *Name)
+FarKey KeyNameToKey(const wchar_t *Name)
 {
 	if (!Name || !*Name)
 		return KEY_INVALID;
 
-	FarKey_t Key = 0;
+	FarKey Key = 0;
 	// _SVS(SysLog(L"KeyNameToKey('%ls')",Name));
 
 	// Это макроклавиша?
@@ -1617,13 +1617,13 @@ FarKey_t KeyNameToKey(const wchar_t *Name)
 	return (!Key || Pos < Len) ? KEY_INVALID : Key;
 }
 
-FarKey_t KeyNameToKey(const wchar_t *Name, uint32_t Default)
+FarKey KeyNameToKey(const wchar_t *Name, uint32_t Default)
 {
-	const FarKey_t Key = KeyNameToKey(Name);
+	const FarKey Key = KeyNameToKey(Name);
 	return (Key == KEY_INVALID) ? Default : Key;
 }
 
-BOOL WINAPI KeyToText(FarKey_t Key0, FARString &strKeyText0)
+BOOL WINAPI KeyToText(FarKey Key0, FARString &strKeyText0)
 {
 	FARString strKeyText;
 	FARString strKeyTemp;
@@ -1691,7 +1691,7 @@ BOOL WINAPI KeyToText(FarKey_t Key0, FARString &strKeyText0)
 	return TRUE;
 }
 
-int TranslateKeyToVK(FarKey_t Key, int &VirtKey, int &ControlState, INPUT_RECORD *Rec)
+int TranslateKeyToVK(FarKey Key, int &VirtKey, int &ControlState, INPUT_RECORD *Rec)
 {
 	const auto FKey = Key & KEY_MASKF;
 	const auto FShift = Key & KEY_CTRLMASK;	// старший бит используется в других целях!
@@ -1836,7 +1836,7 @@ int IsShiftKey(DWORD Key)
 }
 
 // GetAsyncKeyState(VK_RSHIFT)
-FarKey_t CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros)
+FarKey CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros)
 {
 	_SVS(CleverSysLog Clev(L"CalcKeyCode"));
 	_SVS(SysLog(L"CalcKeyCode -> %ls| RealKey=%d  *NotMacros=%d", _INPUT_RECORD_Dump(rec), RealKey,

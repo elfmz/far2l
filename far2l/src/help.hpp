@@ -170,7 +170,7 @@ public:
 
 public:
 	virtual void Hide();
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual void InitKeyBar();
 	BOOL GetError() { return ErrorHelp; }
@@ -184,7 +184,7 @@ public:
 	virtual int GetTypeAndName(FARString &strType, FARString &strName);
 	virtual int GetType() { return MODALTYPE_HELP; }
 
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam);
 
 	static FARString &MkTopic(INT_PTR PluginNumber, const wchar_t *HelpTopic, FARString &strTopic);
 };

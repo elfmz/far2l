@@ -132,7 +132,7 @@ static void CheckScreenLock()
 	}
 }
 
-static size_t WINAPI FarKeyToName(FarKey_t Key, wchar_t *KeyText, size_t Size)
+static size_t WINAPI FarKeyToName(FarKey Key, wchar_t *KeyText, size_t Size)
 {
 	FARString strKT;
 

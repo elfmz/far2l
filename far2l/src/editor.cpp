@@ -538,7 +538,7 @@ int Editor::BlockEnd2NumLine(int *Pos)
 	return iLine;
 }
 
-int64_t Editor::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t Editor::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	int CurPos = CurLine->GetCurPos();
 
@@ -792,7 +792,7 @@ void Editor::ProcessPasteEvent()
 	Show();
 }
 
-int Editor::ProcessKey(FarKey_t Key)
+int Editor::ProcessKey(FarKey Key)
 {
 	if (Key == KEY_IDLE) {
 		if (Opt.ViewerEditorClock && HostFileEditor && HostFileEditor->IsFullScreen()
@@ -829,7 +829,7 @@ int Editor::ProcessKey(FarKey_t Key)
 			Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
 
 			if (!EdOpt.PersistentBlocks) {
-				static FarKey_t UnmarkKeys[] = {
+				static FarKey UnmarkKeys[] = {
 						KEY_LEFT,
 						KEY_NUMPAD4,
 						KEY_RIGHT,

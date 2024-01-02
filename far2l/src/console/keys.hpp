@@ -60,7 +60,7 @@ other possible license with no implications from the above license on them.
 #include "far2sdk/farkeys.h"
 
 
-#define STRIP_KEY_CODE(K)  (((FarKey_t)(K)) & ~KEY_CTRLMASK)
+#define STRIP_KEY_CODE(K)  (((FarKey)(K)) & ~KEY_CTRLMASK)
 #define KEY_IN_RANGE(K, BASE) ((K) >= (BASE) && (K) < (BASE) + KEYS_PER_RANGE)
 #define IS_KEY_NORMAL(K)      KEY_IN_RANGE((K), 0)
 #define IS_KEY_EXTENDED(K)    KEY_IN_RANGE((K), EXTENDED_KEY_BASE)

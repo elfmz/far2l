@@ -965,7 +965,7 @@ void Help::CorrectPosition()
 		StackData.TopStr = 0;
 }
 
-int64_t Help::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t Help::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_V_HELPFILENAME:							// Help.FileName
@@ -984,7 +984,7 @@ int64_t Help::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 	return 1;
 }
 
-int Help::ProcessKey(FarKey_t Key)
+int Help::ProcessKey(FarKey Key)
 {
 	if (StackData.strSelTopic.IsEmpty())
 		StackData.CurX = StackData.CurY = 0;

@@ -73,7 +73,7 @@ public:
 	virtual ~ScreenObject();
 
 public:
-	virtual int ProcessKey(FarKey_t Key) { return 0; };
+	virtual int ProcessKey(FarKey Key) { return 0; };
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent) { return 0; };
 
 	virtual void Hide();
@@ -85,7 +85,7 @@ public:
 	virtual void SetScreenPosition();
 	virtual void ResizeConsole(){};
 
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0) { return 0; };
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0) { return 0; };
 
 	void Lock();
 	void Unlock();

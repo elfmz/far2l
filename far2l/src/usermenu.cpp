@@ -546,7 +546,7 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 					MenuNeedRefresh = false;
 				}
 
-				FarKey_t Key = UserMenu.ReadInput();
+				FarKey Key = UserMenu.ReadInput();
 				MenuPos = UserMenu.GetSelectPos();
 
 				if ((unsigned int)Key >= KEY_F1 && (unsigned int)Key <= KEY_F24) {

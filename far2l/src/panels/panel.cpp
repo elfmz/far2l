@@ -502,7 +502,7 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 		ChDisk.Show();
 
 		while (!ChDisk.Done()) {
-			FarKey_t Key;
+			FarKey Key;
 			/*if(Events.DeviceArchivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArchivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
 			{
 				Key=KEY_CTRLR;
@@ -915,7 +915,7 @@ void Panel::FastFindProcessName(Edit *FindEdit, const wchar_t *Src, FARString &s
 	}
 }
 
-int64_t Panel::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t Panel::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	return 0;
 }
@@ -949,7 +949,7 @@ void Panel::FastFind(int FirstKey)
 	// // _SVS(CleverSysLog Clev(L"Panel::FastFind"));
 	INPUT_RECORD rec;
 	FARString strLastName, strName;
-	FarKey_t Key, KeyToProcess = 0;
+	FarKey Key, KeyToProcess = 0;
 	WaitInFastFind++;
 	{
 		int FindX = Min(X1 + 9, ScrX - 22);
@@ -1940,7 +1940,7 @@ bool Panel::SaveShortcutFolder(int Pos)
 }
 
 /*
-int Panel::ProcessShortcutFolder(FarKey_t Key,BOOL ProcTreePanel)
+int Panel::ProcessShortcutFolder(FarKey Key,BOOL ProcTreePanel)
 {
 	FARString strShortcutFolder, strPluginModule, strPluginFile, strPluginData;
 

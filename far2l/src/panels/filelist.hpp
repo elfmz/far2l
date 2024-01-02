@@ -279,7 +279,7 @@ private:
 	int PluginPutFilesToAnother(int Move, Panel *AnotherPanel);
 	void ProcessPluginCommand();
 	void PluginClearSelection(PluginPanelItem *ItemList, int ItemNumber);
-	void ProcessCopyKeys(FarKey_t Key);
+	void ProcessCopyKeys(FarKey Key);
 	void ReadSortGroups(bool UpdateFilterCurrentTime = true);
 	int ProcessOneHostFile(int Idx);
 	bool TrySymlinkTraverse();
@@ -293,9 +293,9 @@ public:
 	virtual ~FileList();
 
 public:
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	virtual void MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual void SetFocus();
 	virtual void Update(int Mode);

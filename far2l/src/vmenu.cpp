@@ -668,12 +668,12 @@ void VMenu::FilterStringUpdated(bool bLonger)
 		SetSelectPos(0, 1);
 }
 
-bool VMenu::IsFilterEditKey(FarKey_t Key)
+bool VMenu::IsFilterEditKey(FarKey Key)
 {
 	return (Key >= (int)KEY_SPACE && WCHAR_IS_VALID(Key)) || Key == KEY_BS;
 }
 
-bool VMenu::ShouldSendKeyToFilter(FarKey_t Key)
+bool VMenu::ShouldSendKeyToFilter(FarKey Key)
 {
 	if (Key == KEY_CTRLALTF)
 		return true;
@@ -689,9 +689,9 @@ bool VMenu::ShouldSendKeyToFilter(FarKey_t Key)
 	return false;
 }
 
-FarKey_t VMenu::ReadInput(INPUT_RECORD *GetReadRec)
+FarKey VMenu::ReadInput(INPUT_RECORD *GetReadRec)
 {
-	FarKey_t ReadKey;
+	FarKey ReadKey;
 
 	for (;;) {
 		ReadKey = Modal::ReadInput(GetReadRec);
@@ -707,7 +707,7 @@ FarKey_t VMenu::ReadInput(INPUT_RECORD *GetReadRec)
 	return ReadKey;
 }
 
-int64_t VMenu::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
+int64_t VMenu::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
 	switch (OpCode) {
 		case MCODE_C_EMPTY:
@@ -863,7 +863,7 @@ int64_t VMenu::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 
 bool VMenu::AddToFilter(const wchar_t *str)
 {
-	FarKey_t Key;
+	FarKey Key;
 
 	if (bFilterEnabled && !bFilterLocked) {
 		while ((Key = *str)) {
@@ -881,7 +881,7 @@ bool VMenu::AddToFilter(const wchar_t *str)
 	return false;
 }
 
-int VMenu::ProcessKey(FarKey_t Key)
+int VMenu::ProcessKey(FarKey Key)
 {
 	CriticalSectionLock Lock(CS);
 

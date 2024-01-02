@@ -307,7 +307,7 @@ public:
 	virtual void SetTitle();
 	virtual FARString &GetTitle(FARString &Title, int SubLen = -1, int TruncSize = 0);
 
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	virtual void IfGoHome(wchar_t Drive){};
 

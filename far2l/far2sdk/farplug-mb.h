@@ -15,7 +15,7 @@ namespace oldfar
 	const int NM=MAX_PATH;
 
 	typedef int FarLangMsgID;
-	typedef uint32_t FarKey_t;
+	typedef uint32_t FarKey;
 
 	enum FARMESSAGEFLAGS
 	{
@@ -1486,7 +1486,7 @@ namespace oldfar
 	typedef BOOL (WINAPI *FARSTDADDENDSLASH)(char *Path);
 	typedef int (WINAPI *FARSTDCOPYTOCLIPBOARD)(const char *Data);
 	typedef char   *(WINAPI *FARSTDPASTEFROMCLIPBOARD)(void);
-	typedef FarKey_t (WINAPI *FARSTDINPUTRECORDTOKEY)(const INPUT_RECORD *r);
+	typedef FarKey (WINAPI *FARSTDINPUTRECORDTOKEY)(const INPUT_RECORD *r);
 	typedef int (WINAPI *FARSTDLOCALISLOWER)(unsigned Ch);
 	typedef int (WINAPI *FARSTDLOCALISUPPER)(unsigned Ch);
 	typedef int (WINAPI *FARSTDLOCALISALPHA)(unsigned Ch);
@@ -1527,8 +1527,8 @@ namespace oldfar
 	};
 
 	typedef char*(WINAPI *FARSTDXLAT)(char *Line,int StartPos,int EndPos,const struct CharTableSet *TableSet,DWORD Flags);
-	typedef BOOL (WINAPI *FARSTDKEYTOKEYNAME)(FarKey_t Key,char *KeyText,int Size);
-	typedef FarKey_t (WINAPI *FARSTDKEYNAMETOKEY)(const char *Name);
+	typedef BOOL (WINAPI *FARSTDKEYTOKEYNAME)(FarKey Key,char *KeyText,int Size);
+	typedef FarKey (WINAPI *FARSTDKEYNAMETOKEY)(const char *Name);
 
 	typedef int (WINAPI *FRSUSERFUNC)(
 		const WIN32_FIND_DATAA *FData,

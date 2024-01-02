@@ -81,9 +81,9 @@ public:
 	void Init(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, long ViewStartPos,
 			const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs);
 	virtual void InitKeyBar();
-	virtual int ProcessKey(FarKey_t Key);
+	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	virtual void ShowConsoleTitle();
 	virtual void OnDestroy();
 	virtual void OnChangeFocus(int focus);

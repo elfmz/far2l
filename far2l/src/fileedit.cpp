@@ -693,7 +693,7 @@ void FileEditor::DisplayObject()
 	}
 }
 
-int64_t FileEditor::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t FileEditor::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	if (OpCode == MCODE_V_EDITORSTATE) {
 		DWORD MacroEditState = 0;
@@ -724,7 +724,7 @@ int64_t FileEditor::VMProcess(int OpCode, void *vParam, int64_t iParam)
 	return m_editor->VMProcess(OpCode, vParam, iParam);
 }
 
-int FileEditor::ProcessKey(int Key)
+int FileEditor::ProcessKey(FarKey_t Key)
 {
 	return ReProcessKey(Key, FALSE);
 }
@@ -742,7 +742,7 @@ static void EditorConfigOrgConflictMessage(const FARString &value, const struct 
 		Msg::EditorConfigOrgFile, value, problem, L"", disable_line1, disable_line2, Msg::Ok);
 }
 
-int FileEditor::ReProcessKey(int Key, int CalledFromControl)
+int FileEditor::ReProcessKey(FarKey_t Key, int CalledFromControl)
 {
 	SudoClientRegion sdc_rgn;
 	if (Key != KEY_F4 && Key != KEY_IDLE)
@@ -2615,7 +2615,7 @@ int FileEditor::EditorControl(int Command, void *Param)
 					}
 
 #endif
-					int Key = CalcKeyCode(rec, FALSE);
+					FarKey_t Key = CalcKeyCode(rec, FALSE);
 					ReProcessKey(Key);
 				}
 

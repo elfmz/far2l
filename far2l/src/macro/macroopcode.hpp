@@ -41,8 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	... так же то же необходимо добавлять и в syslog.cpp (функция __MCODE_ToName)
 
 */
-
-enum MACRO_OP_CODE
+typedef uint32_t MacroOpcode_t;
+enum MACRO_OP_CODE : MacroOpcode_t
 {
 	/* ************************************************************************* */
 	MCODE_OP_EXIT = KEY_MACRO_OP_BASE,		// принудительно закончить выполнение макропоследовательности

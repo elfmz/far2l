@@ -652,7 +652,7 @@ void Manager::ProcessMainLoop()
 		WaitInMainLoop =
 				IsPanelsActive() && ((FilePanels *)CurrentFrame)->ActivePanel->GetType() != QVIEW_PANEL;
 		// WaitInFastFind++;
-		int Key = GetInputRecord(&LastInputRecord);
+		FarKey_t Key = GetInputRecord(&LastInputRecord);
 		// WaitInFastFind--;
 		WaitInMainLoop = FALSE;
 

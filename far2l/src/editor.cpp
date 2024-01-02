@@ -538,7 +538,7 @@ int Editor::BlockEnd2NumLine(int *Pos)
 	return iLine;
 }
 
-int64_t Editor::VMProcess(int OpCode, void *vParam, int64_t iParam)
+int64_t Editor::VMProcess(MacroOpcode_t OpCode, void *vParam, int64_t iParam)
 {
 	int CurPos = CurLine->GetCurPos();
 
@@ -792,7 +792,7 @@ void Editor::ProcessPasteEvent()
 	Show();
 }
 
-int Editor::ProcessKey(int Key)
+int Editor::ProcessKey(FarKey_t Key)
 {
 	if (Key == KEY_IDLE) {
 		if (Opt.ViewerEditorClock && HostFileEditor && HostFileEditor->IsFullScreen()
@@ -829,7 +829,7 @@ int Editor::ProcessKey(int Key)
 			Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
 
 			if (!EdOpt.PersistentBlocks) {
-				static int UnmarkKeys[] = {
+				static FarKey_t UnmarkKeys[] = {
 						KEY_LEFT,
 						KEY_NUMPAD4,
 						KEY_RIGHT,
@@ -2459,7 +2459,7 @@ int Editor::ProcessKey(int Key)
 				}
 
 				if (!Pasting && !EdOpt.PersistentBlocks && BlockStart)
-					if ((Key >= 32 && Key < 0x10000) || Key == KEY_ADD || Key == KEY_SUBTRACT ||	// ??? 256 ???
+					if ((Key >= L' ' && WCHAR_IS_VALID(Key)) || Key == KEY_ADD || Key == KEY_SUBTRACT ||	// ??? 256 ???
 							Key == KEY_MULTIPLY || Key == KEY_DIVIDE || Key == KEY_TAB) {
 						DeleteBlock();
 						/*
@@ -2543,7 +2543,7 @@ int Editor::ProcessKey(int Key)
 
 				CurPos = CurLine->GetCurPos();
 
-				if (Key < 0x10000 && CurPos > Length) {
+				if (WCHAR_IS_VALID(Key) && CurPos > Length) {
 
 					// detect space alignment by search for lines starting with space
 					Edit *PrevLine = CurLine->m_prev;
@@ -3530,7 +3530,7 @@ BOOL Editor::Search(int Next)
 
 							int I = 0;
 							for (; SearchLength && strReplaceStrCurrent[I]; I++, SearchLength--) {
-								int Ch = strReplaceStrCurrent[I];
+								unsigned int Ch = strReplaceStrCurrent[I];
 
 								if (Ch == KEY_TAB) {
 									Flags.Clear(FEDITOR_OVERTYPE);
@@ -3560,7 +3560,7 @@ BOOL Editor::Search(int Next)
 								CurLine->SetOvertypeMode(FALSE);
 
 								for (; strReplaceStrCurrent[I]; I++) {
-									int Ch = strReplaceStrCurrent[I];
+									unsigned Ch = strReplaceStrCurrent[I];
 
 									if (Ch != KEY_BS && !(Ch == KEY_DEL || Ch == KEY_NUMDEL))
 										ProcessKey(Ch);

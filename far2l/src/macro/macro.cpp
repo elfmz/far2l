@@ -711,7 +711,7 @@ int KeyMacro::LoadMacros(BOOL InitedRAM, BOOL LoadAll)
 	return ErrCount ? FALSE : TRUE;
 }
 
-uint32_t KeyMacro::ProcessKey(uint32_t Key)
+int KeyMacro::ProcessKey(FarKey_t Key)
 {
 	if (InternalInput || Key == KEY_IDLE || Key == KEY_NONE || !FrameManager->GetCurrentFrame())
 		return FALSE;
@@ -3942,7 +3942,7 @@ static bool __CheckCondForSkip(DWORD Op)
 	return false;
 }
 
-int KeyMacro::GetKey()
+FarKey_t KeyMacro::GetKey()
 {
 	MacroRecord *MR;
 	TVar tmpVar;
@@ -3954,7 +3954,7 @@ int KeyMacro::GetKey()
 		return 0;
 	}
 
-	int RetKey = 0;		// функция должна вернуть 0 - сигнал о том, что макропоследовательности нет
+	FarKey_t RetKey = 0;		// функция должна вернуть 0 - сигнал о том, что макропоследовательности нет
 
 	if (Work.Executing == MACROMODE_NOMACRO) {
 		if (!Work.MacroWORK) {
@@ -4942,7 +4942,7 @@ return_func:
 }
 
 // Проверить - есть ли еще клавиша?
-int KeyMacro::PeekKey()
+FarKey_t KeyMacro::PeekKey()
 {
 	if (InternalInput || !Work.MacroWORK)
 		return 0;
@@ -4989,7 +4989,7 @@ FARString &KeyMacro::MkRegKeyName(int IdxMacro, FARString &strRegKeyName)
 */
 wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer, int BufferSize, const wchar_t *Src)
 {
-	int J, Key;
+	int J;
 	FARString strMacroKeyText;
 	FARString strTextBuffer;
 
@@ -5019,7 +5019,7 @@ wchar_t *KeyMacro::MkTextSequence(DWORD *Buffer, int BufferSize, const wchar_t *
 
 	if (Buffer[0] == MCODE_OP_KEYS)
 		for (J = 1; J < BufferSize; J++) {
-			Key = Buffer[J];
+			const auto Key = Buffer[J];
 
 			if (Key == MCODE_OP_ENDKEYS || Key == MCODE_OP_KEYS)
 				continue;
@@ -5582,7 +5582,7 @@ void KeyMacro::RunStartMacro()
 LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	FARString strKeyText;
-	static int LastKey = 0;
+	static FarKey_t LastKey = 0;
 	static DlgParam *KMParam = nullptr;
 	int Index;
 
@@ -5674,9 +5674,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, L
 			goto M1;
 		}
 	} else if (Msg == DN_KEY
-			&& (((Param2 & KEY_END_SKEY) < KEY_END_FKEY)
-					|| (((Param2 & KEY_END_SKEY) > INTERNAL_KEY_BASE)
-							&& (Param2 & KEY_END_SKEY) < INTERNAL_KEY_BASE_2))) {
+			&& (IS_KEY_NORMAL(STRIP_KEY_CODE(Param2)) || IS_KEY_INTERNAL(STRIP_KEY_CODE(Param2)))) {
 		// if((Param2&0x00FFFFFF) >= 'A' && (Param2&0x00FFFFFF) <= 'Z' && ShiftPressed)
 		// Param2|=KEY_SHIFT;
 
@@ -5799,7 +5797,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, L
 		// if(Param2 == KEY_F1 && LastKey == KEY_F1)
 		// LastKey=-1;
 		// else
-		LastKey = (int)Param2;
+		LastKey = (FarKey_t)Param2;
 		return TRUE;
 	}
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -6288,7 +6286,7 @@ int KeyMacro::GetIndex(uint32_t Key, int CheckMode, bool UseCommon)
 // получение размера, занимаемого указанным макросом
 // Ret= 0 - не найден таковой.
 // если CheckMode=-1 - значит пофигу в каком режиме, т.е. первый попавшийся
-int KeyMacro::GetRecordSize(int Key, int CheckMode)
+int KeyMacro::GetRecordSize(FarKey_t Key, int CheckMode)
 {
 	int Pos = GetIndex(Key, CheckMode);
 

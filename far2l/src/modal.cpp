@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Modal::Modal()
 	:
-	ReadKey(-1), WriteKey(-1), ExitCode(-1), EndLoop(0)
+	ReadKey(KEY_INVALID), WriteKey(KEY_INVALID), ExitCode(-1), EndLoop(0)
 {}
 
 void Modal::Process()
@@ -59,14 +59,14 @@ void Modal::Process()
 	GetDialogObjectsData();
 }
 
-int Modal::ReadInput(INPUT_RECORD *GetReadRec)
+FarKey_t Modal::ReadInput(INPUT_RECORD *GetReadRec)
 {
 	if (GetReadRec)
 		memset(GetReadRec, 0, sizeof(INPUT_RECORD));
 
-	if (WriteKey >= 0) {
+	if (WriteKey != KEY_INVALID) {
 		ReadKey = WriteKey;
-		WriteKey = -1;
+		WriteKey = KEY_INVALID;
 	} else {
 		ReadKey = GetInputRecord(&ReadRec);
 
@@ -88,7 +88,7 @@ int Modal::ReadInput(INPUT_RECORD *GetReadRec)
 	return (ReadKey);
 }
 
-void Modal::WriteInput(int Key)
+void Modal::WriteInput(FarKey_t Key)
 {
 	WriteKey = Key;
 }

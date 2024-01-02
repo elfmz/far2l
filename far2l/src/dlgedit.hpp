@@ -65,7 +65,7 @@ public:
 	DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type);
 	virtual ~DlgEdit();
 
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey_t Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 
 	virtual void Show();
@@ -77,7 +77,7 @@ public:
 	virtual void ShowConsoleTitle();
 	virtual void SetScreenPosition();
 	virtual void ResizeConsole();
-	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	void SetDialogParent(DWORD Sets);
 	void SetDropDownBox(int NewDropDownBox);

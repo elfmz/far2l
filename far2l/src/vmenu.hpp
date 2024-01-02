@@ -111,7 +111,7 @@ struct MenuItemEx
 	short AmpPos;	// Позиция автоназначенной подсветки
 	bool FilteredOut;
 
-	DWORD SetCheck(int Value)
+	DWORD SetCheck(uint32_t Value)
 	{
 		if (Value) {
 			Flags|= LIF_CHECKED;
@@ -189,7 +189,7 @@ struct MenuDataEx
 	DWORD Flags;
 	DWORD AccelKey;
 
-	DWORD SetCheck(int Value)
+	DWORD SetCheck(uint32_t Value)
 	{
 		if (Value) {
 			Flags&= ~0xFFFF;
@@ -293,8 +293,8 @@ private:
 	void UpdateInternalCounters(DWORD OldFlags, DWORD NewFlags);
 	void RestoreFilteredItems();
 	void FilterStringUpdated(bool bLonger);
-	bool IsFilterEditKey(int Key);
-	bool ShouldSendKeyToFilter(int Key);
+	bool IsFilterEditKey(FarKey_t Key);
+	bool ShouldSendKeyToFilter(FarKey_t Key);
 	bool AddToFilter(const wchar_t *str);
 	// коректировка текущей позиции и флагов SELECTED
 	void UpdateSelectPos();
@@ -336,10 +336,10 @@ public:
 	void GetColors(struct FarListColors *ColorsOut);
 	void SetOneColor(int Index, short Color);
 
-	virtual int ProcessKey(int Key);
+	virtual int ProcessKey(FarKey_t Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
-	virtual int64_t VMProcess(int OpCode, void *vParam = nullptr, int64_t iParam = 0);
-	virtual int ReadInput(INPUT_RECORD *GetReadRec = nullptr);
+	virtual int64_t VMProcess(MacroOpcode_t OpCode, void *vParam = nullptr, int64_t iParam = 0);
+	virtual FarKey_t ReadInput(INPUT_RECORD *GetReadRec = nullptr);
 
 	void DeleteItems();
 	int DeleteItem(int ID, int Count = 1);
@@ -366,8 +366,8 @@ public:
 	int GetSelectPos(struct FarListPos *ListPos);
 	int SetSelectPos(struct FarListPos *ListPos);
 	int SetSelectPos(int Pos, int Direct);
-	int GetCheck(int Position = -1);
-	void SetCheck(int Check, int Position = -1);
+	uint32_t GetCheck(int Position = -1);
+	void SetCheck(uint32_t Check, int Position = -1);
 
 	bool UpdateRequired();
 

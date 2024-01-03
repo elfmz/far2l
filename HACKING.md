@@ -67,6 +67,9 @@ Can be used to interact with plugin that renders other panel.
 * `int MayExitFARW();`
 far2l asks plugin if it can exit now. If plugin has some background tasks pending it may block exiting of far2l, however it highly recommended to give user choice using UI prompt.
 
+* `int GetLinkTargetW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode);`
+far2l uses this to resolve symlink destination when user selects plugin's item that has FILE_ATTRIBUTE_REPARSE_POINT. Target is displayed in status field as for local symlinks.
+
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
 * `DM_GETCOLOR` - retrieves current color attributes of selected dialog item

@@ -4805,16 +4805,9 @@ void Editor::VPaste(wchar_t *ClipText)
 						ProcessKey(KEY_END);
 						ProcessKey(KEY_ENTER);
 
-						/*
-							$ 19.05.2001 IS
-							Не вставляем пробелы тогда, когда нас об этом не просят, а
-							именно - при включенном автоотступе ничего вставлять не нужно,
-							оно само вставится и в другом месте.
-						*/
-						if (!EdOpt.AutoIndent)
-							for (int I = 0; I < StartPos; I++)
-								ProcessKey(L' ');
-					}
+						// Mantis 0002966: Неправильная вставка вертикального блока в конце файла
+						for (int I = 0; I < StartPos; I++)
+							ProcessKey(L' ');					}
 				} else {
 					ProcessKey(KEY_DOWN);
 					CurLine->SetCellCurPos(StartPos);
@@ -4978,7 +4971,6 @@ int Editor::EditorControl(int Command, void *Param)
 
 				Flags.Set(FEDITOR_NEWUNDO);
 				InsertString();
-				Show();
 
 				if (!Indent)
 					Pasting--;
@@ -6140,19 +6132,16 @@ void Editor::Xlat()
 // Обновим размер табуляции
 void Editor::SetTabSize(int NewSize)
 {
-	if (NewSize < 1 || NewSize > 512)
-		NewSize = 8;
+	if (NewSize<1 || NewSize>512 || NewSize==EdOpt.TabSize)
+		return; /* Меняем размер табуляции только в том случае, если он
+					на самом деле изменился */
 
-	if (NewSize != EdOpt.TabSize)
-	// Меняем размер табуляции только в том случае, если он на самом деле изменился
-	{
-		EdOpt.TabSize = NewSize;
-		Edit *CurPtr = TopList;
+	EdOpt.TabSize = NewSize;
+	Edit *CurPtr = TopList;
 
-		while (CurPtr) {
-			CurPtr->SetTabSize(NewSize);
-			CurPtr = CurPtr->m_next;
-		}
+	while (CurPtr) {
+		CurPtr->SetTabSize(NewSize);
+		CurPtr = CurPtr->m_next;
 	}
 }
 

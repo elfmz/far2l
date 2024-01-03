@@ -102,7 +102,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _start_marker, _exit_marker;
 	std::string _host_id;
 	unsigned int _exit_code;
-	bool _allow_osc_clipset{false};
+	std::atomic<bool> _allow_osc_clipset{false};
 	std::string _init_user_profile;
 
 	static const char *GetSystemShell()

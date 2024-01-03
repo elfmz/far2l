@@ -122,12 +122,11 @@ public:
 
 void AbortOperationRequest(ProgressState &state, bool force_immediate)
 {
-	if (state.aborting)
-		return;
-
 	bool saved_paused;
 	{ // pause opetation while showing UI abort confirmation
 		std::lock_guard<std::mutex> locker(state.mtx);
+		if (state.aborting)
+			return;
 		saved_paused = state.paused;
 		state.paused = true;
 	}

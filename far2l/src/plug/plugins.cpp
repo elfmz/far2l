@@ -912,6 +912,13 @@ int PluginManager::ProcessHostFile(HANDLE hPlugin, PluginPanelItem *PanelItem, i
 	return Code;
 }
 
+bool PluginManager::GetLinkTarget(HANDLE hPlugin, PluginPanelItem *PanelItem, FARString &result, int OpMode)
+{
+	ChangePriority ChPriority(ChangePriority::NORMAL);
+	PluginHandle *ph = (PluginHandle *)hPlugin;
+	return ph->pPlugin->GetLinkTarget(ph->hPlugin, PanelItem, result, OpMode);
+}
+
 int PluginManager::GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 		const wchar_t **DestPath, int OpMode)
 {

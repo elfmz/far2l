@@ -254,6 +254,7 @@ public:
 	int SetDirectory(HANDLE hPlugin, const wchar_t *Dir, int OpMode);
 	int GetFile(HANDLE hPlugin, PluginPanelItem *PanelItem, const wchar_t *DestPath, FARString &strResultName,
 			int OpMode);
+	bool GetLinkTarget(HANDLE hPlugin, PluginPanelItem *PanelItem, FARString &result, int OpMode);
 	int GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 			const wchar_t **DestPath, int OpMode);
 	int PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode);

@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "FSNotify.h"
 #include <memory>
+#include <map>
 #include <vector>
 #include <deque>
 
@@ -180,6 +181,7 @@ private:
 	FARString strOriginalCurDir;
 	FARString strPluginDizName;
 	ListDataVec ListData;
+	std::map<std::wstring, FARString> SymlinksCache;
 	HANDLE hPlugin;
 	DList<PrevDataItem *> PrevDataList;
 	DList<PluginsListItem *> PluginsList;
@@ -226,7 +228,9 @@ private:
 	DWORD64 GetShowColor(int Position, int ColorType);
 	void ShowSelectedSize();
 	void ShowTotalSize(OpenPluginInfo &Info);
-	int ConvertName(const wchar_t *SrcName, FARString &strDest, int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr);
+	bool ResolveSymlink(FARString &target_path, const wchar_t *link_name, FileListItem *fi);
+	int ConvertName(FARString &strDest, const wchar_t *SrcName,
+		int MaxLength, int RightAlign, int ShowStatus, DWORD dwFileAttr, FileListItem *fi);
 
 	void Select(FileListItem *SelPtr, bool Selection);
 	long SelectFiles(int Mode, const wchar_t *Mask = nullptr);

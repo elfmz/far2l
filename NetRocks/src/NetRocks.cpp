@@ -138,6 +138,10 @@ SHAREDSYMBOL int WINAPI _export GetFilesW(HANDLE hPlugin,struct PluginPanelItem 
 	return ((PluginImpl *)hPlugin)->GetFiles(PanelItem, ItemsNumber, Move, DestPath ? *DestPath : nullptr, OpMode);
 }
 
+SHAREDSYMBOL int WINAPI _export GetLinkTargetW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode)
+{
+	return ((PluginImpl *)hPlugin)->GetLinkTarget(PanelItem, Target, TargetSize, OpMode);
+}
 
 SHAREDSYMBOL int WINAPI _export PutFilesW(HANDLE hPlugin,struct PluginPanelItem *PanelItem,
 	int ItemsNumber,int Move,const wchar_t *SrcPath, int OpMode)

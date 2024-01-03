@@ -4485,4 +4485,5 @@ void FileList::ClearAllItem()
 			i->PrevListData.Clear();	//???
 		}
 	}
+	SymlinksCache.clear();
 }

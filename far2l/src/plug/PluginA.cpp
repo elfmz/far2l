@@ -755,6 +755,11 @@ void PluginA::FreeVirtualFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, in
 	}
 }
 
+bool PluginA::GetLinkTarget(HANDLE hPlugin, PluginPanelItem *PanelItem, FARString &result, int OpMode)
+{
+	return false;
+}
+
 int PluginA::GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 		const wchar_t **DestPath, int OpMode)
 {

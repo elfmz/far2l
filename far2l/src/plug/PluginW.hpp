@@ -33,36 +33,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FARString.hpp"
 
 typedef void(WINAPI *PLUGINCLOSEPLUGINW)(HANDLE hPlugin);
-typedef int(WINAPI *PLUGINCOMPAREW)(HANDLE hPlugin, const PluginPanelItem *Item1,
-		const PluginPanelItem *Item2, unsigned int Mode);
+typedef int(WINAPI *PLUGINCOMPAREW)
+	(HANDLE hPlugin, const PluginPanelItem *Item1, const PluginPanelItem *Item2, unsigned int Mode);
 typedef int(WINAPI *PLUGINCONFIGUREW)(int ItemNumber);
-typedef int(
-		WINAPI *PLUGINDELETEFILESW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
+typedef int(WINAPI *PLUGINDELETEFILESW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
 typedef int(WINAPI *PLUGINMAYEXITFARW)();
 typedef void(WINAPI *PLUGINEXITFARW)();
-typedef void(WINAPI *PLUGINFREEFINDDATAW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
-typedef void(WINAPI *PLUGINFREEVIRTUALFINDDATAW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
-typedef int(WINAPI *PLUGINGETFILESW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
-		const wchar_t **DestPath, int OpMode);
-typedef int(WINAPI *PLUGINGETFINDDATAW)(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber,
-		int OpMode);
+typedef void(WINAPI *PLUGINFREEFINDDATAW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
+typedef void(WINAPI *PLUGINFREEVIRTUALFINDDATAW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber);
+typedef int(WINAPI *PLUGINGETFILESW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t **DestPath, int OpMode);
+typedef int(WINAPI *PLUGINGETLINKTARGETW)
+	(HANDLE hPlugin, struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode);
+typedef int(WINAPI *PLUGINGETFINDDATAW)
+	(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
 typedef int(WINAPI *PLUGINMINFARVERSIONW)();
 typedef void(WINAPI *PLUGINGETOPENPLUGININFOW)(HANDLE hPlugin, OpenPluginInfo *Info);
 typedef void(WINAPI *PLUGINGETPLUGININFOW)(PluginInfo *Info);
-typedef int(WINAPI *PLUGINGETVIRTUALFINDDATAW)(HANDLE hPlugin, PluginPanelItem **pPanelItem,
-		int *pItemsNumber, const wchar_t *Path);
-typedef int(WINAPI *PLUGINMAKEDIRECTORYW)(HANDLE hPlugin, const wchar_t **Name, int OpMode);
-typedef HANDLE(WINAPI *PLUGINOPENFILEPLUGINW)(const wchar_t *Name, const unsigned char *Data, int DataSize,
-		int OpMode);
+typedef int(WINAPI *PLUGINGETVIRTUALFINDDATAW)
+	(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, const wchar_t *Path);
+typedef int(WINAPI *PLUGINMAKEDIRECTORYW)
+	(HANDLE hPlugin, const wchar_t **Name, int OpMode);
+typedef HANDLE(WINAPI *PLUGINOPENFILEPLUGINW)
+	(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode);
 typedef HANDLE(WINAPI *PLUGINOPENPLUGINW)(int OpenFrom, INT_PTR Item);
 typedef int(WINAPI *PLUGINPROCESSEDITOREVENTW)(int Event, void *Param);
 typedef int(WINAPI *PLUGINPROCESSEDITORINPUTW)(const INPUT_RECORD *Rec);
 typedef int(WINAPI *PLUGINPROCESSEVENTW)(HANDLE hPlugin, int Event, void *Param);
-typedef int(WINAPI *PLUGINPROCESSHOSTFILEW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber,
-		int OpMode);
+typedef int(WINAPI *PLUGINPROCESSHOSTFILEW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
 typedef int(WINAPI *PLUGINPROCESSKEYW)(HANDLE hPlugin, int Key, unsigned int ControlState);
-typedef int(WINAPI *PLUGINPUTFILESW)(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
-		const wchar_t *SrcPath, int OpMode);
+typedef int(WINAPI *PLUGINPUTFILESW)
+	(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode);
 typedef int(WINAPI *PLUGINSETDIRECTORYW)(HANDLE hPlugin, const wchar_t *Dir, int OpMode);
 typedef int(WINAPI *PLUGINSETFINDLISTW)(HANDLE hPlugin, const PluginPanelItem *PanelItem, int ItemsNumber);
 typedef void(WINAPI *PLUGINSETSTARTUPINFOW)(const PluginStartupInfo *Info);
@@ -70,8 +75,8 @@ typedef int(WINAPI *PLUGINPROCESSVIEWEREVENTW)(int Event, void *Param);		//* $ 2
 typedef int(WINAPI *PLUGINPROCESSDIALOGEVENTW)(int Event, void *Param);
 typedef int(WINAPI *PLUGINPROCESSSYNCHROEVENTW)(int Event, void *Param);
 #if defined(PROCPLUGINMACROFUNC)
-typedef int(WINAPI *PLUGINPROCESSMACROFUNCW)(const wchar_t *Name, const FarMacroValue *Params, int nParams,
-		FarMacroValue **Results, int *nResults);
+typedef int(WINAPI *PLUGINPROCESSMACROFUNCW)
+	(const wchar_t *Name, const FarMacroValue *Params, int nParams, FarMacroValue **Results, int *nResults);
 #endif
 typedef int(WINAPI *PLUGINANALYSEW)(const AnalyseData *pData);
 typedef int(WINAPI *PLUGINGETCUSTOMDATAW)(const wchar_t *FilePath, wchar_t **CustomData);
@@ -91,6 +96,7 @@ private:
 	PLUGINGETVIRTUALFINDDATAW pGetVirtualFindDataW;
 	PLUGINFREEVIRTUALFINDDATAW pFreeVirtualFindDataW;
 	PLUGINSETDIRECTORYW pSetDirectoryW;
+	PLUGINGETLINKTARGETW pGetLinkTargetW;
 	PLUGINGETFILESW pGetFilesW;
 	PLUGINPUTFILESW pPutFilesW;
 	PLUGINDELETEFILESW pDeleteFilesW;
@@ -135,6 +141,7 @@ public:
 	bool HasOpenPlugin() { return pOpenPluginW != nullptr; }
 	bool HasMakeDirectory() { return pMakeDirectoryW != nullptr; }
 	bool HasDeleteFiles() { return pDeleteFilesW != nullptr; }
+	bool HasGetLinkTarget() { return pGetLinkTargetW != nullptr; }
 	bool HasPutFiles() { return pPutFilesW != nullptr; }
 	bool HasGetFiles() { return pGetFilesW != nullptr; }
 	bool HasSetStartupInfo() { return pSetStartupInfoW != nullptr; }
@@ -189,11 +196,10 @@ public:
 
 	int SetFindList(HANDLE hPlugin, const PluginPanelItem *PanelItem, int ItemsNumber);
 	int GetFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
-	int
-	GetVirtualFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, const wchar_t *Path);
+	int GetVirtualFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pItemsNumber, const wchar_t *Path);
 	int SetDirectory(HANDLE hPlugin, const wchar_t *Dir, int OpMode);
-	int GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,
-			const wchar_t **DestPath, int OpMode);
+	bool GetLinkTarget(HANDLE hPlugin, PluginPanelItem *PanelItem, FARString &result, int OpMode);
+	int GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t **DestPath, int OpMode);
 	int PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode);
 	int DeleteFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
 	int MakeDirectory(HANDLE hPlugin, const wchar_t **Name, int OpMode);

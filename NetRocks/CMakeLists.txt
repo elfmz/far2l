@@ -50,6 +50,7 @@ src/Op/OpXfer.cpp
 src/Op/OpRemove.cpp
 src/Op/OpMakeDirectory.cpp
 src/Op/OpExecute.cpp
+src/Op/OpGetLinkTarget.cpp
 src/Protocol/SplitLocationSpecification.cpp
 src/Protocol/Protocol.cpp
 )

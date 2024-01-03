@@ -14,7 +14,8 @@ public:
 		K_CHANGEMODE,
 		K_ENUMDIR,
 		K_CREATEDIR,
-		K_EXECUTE
+		K_EXECUTE,
+		K_GETLINK,
 	};
 
 	SimpleOperationProgress(Kind kind, const std::string &object, ProgressState &state);

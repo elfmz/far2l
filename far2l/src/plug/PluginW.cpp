@@ -108,6 +108,7 @@ static const char NFMP_FreeFindData[] = "FreeFindDataW";
 static const char NFMP_GetVirtualFindData[] = "GetVirtualFindDataW";
 static const char NFMP_FreeVirtualFindData[] = "FreeVirtualFindDataW";
 static const char NFMP_SetDirectory[] = "SetDirectoryW";
+static const char NFMP_GetLinkTarget[] = "GetLinkTargetW";
 static const char NFMP_GetFiles[] = "GetFilesW";
 static const char NFMP_PutFiles[] = "PutFilesW";
 static const char NFMP_DeleteFiles[] = "DeleteFilesW";
@@ -304,6 +305,7 @@ bool PluginW::Load()
 	GetModuleFN(pGetVirtualFindDataW, NFMP_GetVirtualFindData);
 	GetModuleFN(pFreeVirtualFindDataW, NFMP_FreeVirtualFindData);
 	GetModuleFN(pSetDirectoryW, NFMP_SetDirectory);
+	GetModuleFN(pGetLinkTargetW, NFMP_GetLinkTarget);
 	GetModuleFN(pGetFilesW, NFMP_GetFiles);
 	GetModuleFN(pPutFilesW, NFMP_PutFiles);
 	GetModuleFN(pDeleteFilesW, NFMP_DeleteFiles);
@@ -828,6 +830,23 @@ void PluginW::FreeVirtualFindData(HANDLE hPlugin, PluginPanelItem *PanelItem, in
 		EXECUTE_FUNCTION(pFreeVirtualFindDataW(hPlugin, PanelItem, ItemsNumber), es);
 		(void)es;	// suppress 'set but not used' warning
 	}
+}
+
+bool PluginW::GetLinkTarget(HANDLE hPlugin, PluginPanelItem *PanelItem, FARString &result, int OpMode)
+{
+	if (!pGetLinkTargetW) {
+		return false;
+	}
+	ExecuteStruct es;
+	es.id = EXCEPT_GETLINKTARGET;
+	es.nDefaultResult = -1;
+	wchar_t buf[MAX_PATH + 1] = {0};
+	EXECUTE_FUNCTION_EX(pGetLinkTargetW(hPlugin, PanelItem, buf, ARRAYSIZE(buf), OpMode), es);
+	if (es.nResult <= 0 || size_t(es.nResult) > ARRAYSIZE(buf)) {
+		return false;
+	}
+	result = buf;
+	return true;
 }
 
 int PluginW::GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumber, int Move,

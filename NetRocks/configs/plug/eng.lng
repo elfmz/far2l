@@ -142,6 +142,7 @@
 "Enumerating directory"
 "Creating directory"
 "Executing command"
+"Querying symlink"
 
 "Aborting operation"
 "Confirm abort current operation"

@@ -21,6 +21,7 @@
 #include "Op/OpEnumDirectory.h"
 #include "Op/OpExecute.h"
 #include "Op/OpChangeMode.h"
+#include "Op/OpGetLinkTarget.h"
 
 static std::unique_ptr<ConnectionsPool> g_conn_pool;
 
@@ -552,6 +553,19 @@ int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		default:
 			return FALSE;
 	}
+}
+
+int PluginImpl::GetLinkTarget(struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode)
+{
+	if (!_remote || !PanelItem) {
+		return 0;
+    }
+   	std::wstring result;
+	if (!OpGetLinkTarget(OpMode, _remote, CurrentSiteDir(true), PanelItem).Do(result)) {
+		return 0;
+	}
+	wcsncpy(Target, result.c_str(), TargetSize);
+	return result.size() + 1;
 }
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)

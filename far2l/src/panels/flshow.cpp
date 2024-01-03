@@ -517,26 +517,52 @@ void FileList::ShowTotalSize(OpenPluginInfo &Info)
 	}
 }
 
-int FileList::ConvertName(const wchar_t *SrcName, FARString &strDest, int MaxLength, int RightAlign,
-		int ShowStatus, DWORD FileAttr)
+bool FileList::ResolveSymlink(FARString &target_path, const wchar_t *link_name, FileListItem *fi)
 {
-	if (ShowStatus && PanelMode == NORMAL_PANEL && (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0
-			&& !strCurDir.IsEmpty() && strCurDir[0] == GOOD_SLASH) {
+	std::wstring link_name_str(link_name);
+	auto it = SymlinksCache.find(link_name_str);
+	if (it != SymlinksCache.end()) {
+		target_path = it->second;
+		return true;
+	}
 
+	if (PanelMode == NORMAL_PANEL
+			&& !strCurDir.IsEmpty()
+			&& strCurDir[0] == GOOD_SLASH
+			&& MixToFullPath(link_name, target_path, strCurDir)) {
+		char buf[MAX_PATH + 1] = {0};
+		ssize_t r = sdc_readlink(target_path.GetMB().c_str(), buf, ARRAYSIZE(buf) - 1);
+		if (r <= 0 || r >= (ssize_t)ARRAYSIZE(buf)) {
+			fprintf(stderr, "ResolveSymlink: sdc_readlink errno %u\n", errno);
+			return false;
+		}
+		buf[r] = 0;
+		target_path = buf;
+
+	} else if (PanelMode == PLUGIN_PANEL) {
+		PluginPanelItem pi;
+		FileListToPluginItem(fi, &pi);
+		if (!CtrlObject->Plugins.GetLinkTarget(hPlugin, &pi, target_path, 0)) {
+			fprintf(stderr, "ResolveSymlink: GetLinkTarget failed\n");
+			return false;
+		}
+	} else {
+		return false;
+	}
+	SymlinksCache.emplace(link_name, target_path);
+	return true;
+}
+
+int FileList::ConvertName(FARString &strDest, const wchar_t *SrcName, int MaxLength,
+		int RightAlign, int ShowStatus, DWORD FileAttr, FileListItem *fi)
+{
+	if (ShowStatus && (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
 		FARString strTemp;
-		if (MixToFullPath(SrcName, strTemp, strCurDir)) {
-			char LinkDest[MAX_PATH + 1] = {0};
-			ssize_t r = sdc_readlink(strTemp.GetMB().c_str(), LinkDest, ARRAYSIZE(LinkDest) - 1);
-			if (r > 0 && r < (ssize_t)ARRAYSIZE(LinkDest)) {
-				LinkDest[r] = 0;
-				strTemp = SrcName;
-				strTemp+= L" ->";
-				strTemp+= LinkDest;
-				return ConvertName(strTemp, strDest, MaxLength, RightAlign, ShowStatus,
-						FileAttr & (~(DWORD)FILE_ATTRIBUTE_REPARSE_POINT));
-			} else {
-				fprintf(stderr, "sdc_readlink errno %u\n", errno);
-			}
+		if (ResolveSymlink(strTemp, SrcName, fi)) {
+			strTemp.Insert(0, L" ->");
+			strTemp.Insert(0, SrcName);
+			return ConvertName(strDest, strTemp, MaxLength, RightAlign, ShowStatus,
+					FileAttr & (~(DWORD)FILE_ATTRIBUTE_REPARSE_POINT), fi);
 		}
 	}
 
@@ -965,8 +991,8 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							}
 
 							FARString strName;
-							int TooLong = ConvertName(NamePtr, strName, Width, RightAlign, ShowStatus,
-									ListData[ListPos]->FileAttr);
+							int TooLong = ConvertName(strName, NamePtr, Width, RightAlign,
+								ShowStatus, ListData[ListPos]->FileAttr, ListData[ListPos]);
 							if (CurLeftPos)
 								LeftBracket = TRUE;
 

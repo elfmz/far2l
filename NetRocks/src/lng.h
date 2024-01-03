@@ -144,6 +144,7 @@ enum LanguageID
 	MEnumDirProgressTitle,
 	MCreateDirProgressTitle,
 	MExecuteProgressTitle,
+	MGetLinkProgressTitle,
 
 	MAbortTitle,
 	MAbortText,

@@ -4805,16 +4805,9 @@ void Editor::VPaste(wchar_t *ClipText)
 						ProcessKey(KEY_END);
 						ProcessKey(KEY_ENTER);
 
-						/*
-							$ 19.05.2001 IS
-							Не вставляем пробелы тогда, когда нас об этом не просят, а
-							именно - при включенном автоотступе ничего вставлять не нужно,
-							оно само вставится и в другом месте.
-						*/
-						if (!EdOpt.AutoIndent)
-							for (int I = 0; I < StartPos; I++)
-								ProcessKey(L' ');
-					}
+						// Mantis 0002966: Неправильная вставка вертикального блока в конце файла
+						for (int I = 0; I < StartPos; I++)
+							ProcessKey(L' ');					}
 				} else {
 					ProcessKey(KEY_DOWN);
 					CurLine->SetCellCurPos(StartPos);

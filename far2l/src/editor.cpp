@@ -6140,19 +6140,16 @@ void Editor::Xlat()
 // Обновим размер табуляции
 void Editor::SetTabSize(int NewSize)
 {
-	if (NewSize < 1 || NewSize > 512)
-		NewSize = 8;
+	if (NewSize<1 || NewSize>512 || NewSize==EdOpt.TabSize)
+		return; /* Меняем размер табуляции только в том случае, если он
+					на самом деле изменился */
 
-	if (NewSize != EdOpt.TabSize)
-	// Меняем размер табуляции только в том случае, если он на самом деле изменился
-	{
-		EdOpt.TabSize = NewSize;
-		Edit *CurPtr = TopList;
+	EdOpt.TabSize = NewSize;
+	Edit *CurPtr = TopList;
 
-		while (CurPtr) {
-			CurPtr->SetTabSize(NewSize);
-			CurPtr = CurPtr->m_next;
-		}
+	while (CurPtr) {
+		CurPtr->SetTabSize(NewSize);
+		CurPtr = CurPtr->m_next;
 	}
 }
 

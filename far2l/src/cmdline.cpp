@@ -330,7 +330,7 @@ int CommandLine::ProcessKey(FarKey Key)
 
 	switch (Key) {
 		case KEY_CTRLE:
-		case KEY_CTRLX: {
+		case KEY_CTRLX:
 			if (Key == KEY_CTRLE) {
 				CtrlObject->CmdHistory->GetPrev(strStr);
 			} else {
@@ -339,19 +339,16 @@ int CommandLine::ProcessKey(FarKey Key)
 			CmdStr.DisableAC();
 			SetString(strStr);
 			CmdStr.RevertAC();
-		}
 			return TRUE;
 
 		case KEY_ESC:
-
 			if (Key == KEY_ESC) {
 				// $ 24.09.2000 SVS - Если задано поведение по "Несохранению при Esc", то позицию в хистори не меняем и ставим в первое положение.
 				if (Opt.CmdHistoryRule)
 					CtrlObject->CmdHistory->ResetPosition();
 
 				PStr = L"";
-			} else
-				PStr = strStr;
+			}
 
 			SetString(PStr);
 			return TRUE;

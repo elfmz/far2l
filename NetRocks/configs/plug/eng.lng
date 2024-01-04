@@ -260,8 +260,9 @@
 "Proxy pa&ssword:"
 
 "Confirm change mode"
-"Edit mode of selected object:"
+"Edit mode of selected &object:"
 "Edit mode of %u objects selected in:"
+"That is &symlink pointing to:"
 "&Recurse into subdirectories"
 "User's access"
 "Group's access"

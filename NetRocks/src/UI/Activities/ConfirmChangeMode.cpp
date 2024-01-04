@@ -8,6 +8,8 @@
  ================ Confirm change mode =======================
 | Edit mode of files and directories in:                     |
 | [TEXTBOX                                                 ] |
+| That is symlink pointing to:                               |
+| [TEXTBOX                                                 ] |
 | [x] Recurse into subdirectories                            |
 |------------------------------------------------------------|
 | User's access       Group's access      Other's access     |
@@ -49,7 +51,7 @@ void ConfirmChangeMode::StateToModes(int ctl, mode_t &mode_set, mode_t &mode_cle
 	}
 }
 
-ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, bool may_recurse, mode_t mode_all, mode_t mode_any)
+ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, const std::string &link_target, bool may_recurse, mode_t mode_all, mode_t mode_any)
 {
 	_di.SetBoxTitleItem(MConfirmChangeModeTitle);
 
@@ -61,7 +63,14 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 	_di.AddAtLine(DI_TEXT, 5,62, 0, text.c_str());
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,62, 0, display_path.c_str());
+	_di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, display_path.c_str());
+
+	if (!link_target.empty()) {
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,62, 0, MThatIsSymlink);
+		_di.NextLine();
+		_di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, link_target.c_str());
+	}
 
 	if (may_recurse) {
 		_di.NextLine();

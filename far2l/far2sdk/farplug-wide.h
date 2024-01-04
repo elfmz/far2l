@@ -139,12 +139,7 @@ typedef struct _INPUT_RECORD INPUT_RECORD;
 typedef struct _CHAR_INFO    CHAR_INFO;
 #endif
 
-typedef int FarLangMsgID;
-typedef uint32_t FarKey;
-
-#define FARLANGMSGID_BAD ((FarLangMsgID)-1)
-
-#define CP_AUTODETECT ((UINT)-1)
+#include "farcommon.h"
 
 enum FARMESSAGEFLAGS
 {

@@ -11,11 +11,8 @@ namespace oldfar
 #pragma pack(push,2)
 #endif
 #endif
-
-	const int NM=MAX_PATH;
-
-	typedef int FarLangMsgID;
-	typedef uint32_t FarKey;
+#include "farcommon.h"
+	const int NM = MAX_PATH;
 
 	enum FARMESSAGEFLAGS
 	{

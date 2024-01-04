@@ -2,6 +2,7 @@
 #include <utils.h>
 #include "../UI/Activities/ConfirmChangeMode.h"
 #include "../UI/Activities/SimpleOperationProgress.h"
+#include "OpGetLinkTarget.h"
 
 OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string &base_dir,
 		struct PluginPanelItem *items, int items_count)
@@ -23,15 +24,20 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 		mode_all&= items[i].FindData.dwUnixMode;
 		mode_any|= (items[i].FindData.dwUnixMode & 07777);
 	}
-	std::string display_path = base_dir;
+	std::string display_path = base_dir, link_target;
 	if (items_count == 1) {
 		if (!display_path.empty() && display_path.back() != '/') {
 			display_path+= '/';
 		}
 		Wide2MB(items->FindData.lpwszFileName, display_path, true);
+		if (items->FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			if (!OpGetLinkTarget(0, base_host, base_dir, items).Do(link_target)) {
+				link_target.clear();
+			}
+		}
 	}
 
-	if (!ConfirmChangeMode(items_count, display_path, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
+	if (!ConfirmChangeMode(items_count, display_path, link_target, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
 		throw AbortError();
 	}
 

@@ -14,6 +14,20 @@ OpGetLinkTarget::OpGetLinkTarget(int op_mode, std::shared_ptr<IHost> &base_host,
 
 bool OpGetLinkTarget::Do(std::wstring &result)
 {
+	DoInner();
+	StrMB2Wide(_result, result);
+	return _success;
+}
+
+bool OpGetLinkTarget::Do(std::string &result)
+{
+	DoInner();
+	result = _result;
+	return _success;
+}
+
+void OpGetLinkTarget::DoInner()
+{
 	if (!StartThread()) {
 		;
 	} else if (IS_SILENT(_op_mode)) {
@@ -23,10 +37,6 @@ bool OpGetLinkTarget::Do(std::wstring &result)
 		p.Show();
 		WaitThread();
 	}
-	if (_success) {
-		StrMB2Wide(_result, result);
-	}
-	return _success;
 }
 
 void OpGetLinkTarget::Process()

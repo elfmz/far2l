@@ -265,6 +265,7 @@ enum LanguageID
 	MConfirmChangeModeTitle,
 	MConfirmChangeModeTextOne,
 	MConfirmChangeModeTextMany,
+	MThatIsSymlink,
 	MRecurseSubdirs,
 	MModeUser,
 	MModeGroup,

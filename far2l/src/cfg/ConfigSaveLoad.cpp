@@ -946,7 +946,7 @@ void AdvancedConfig()
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
-	//ListConfig.SetHelp(L"FarConfig");
+	ListConfig.SetHelp(L"SpecCmd");//L"FarConfig");
 
 	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - details, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 

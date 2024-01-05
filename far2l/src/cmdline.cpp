@@ -863,7 +863,7 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
-	//ListAbout.SetHelp(L"FarAbout");
+	ListAbout.SetHelp(L"SpecCmd");//L"FarAbout");
 	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering");
 
 	fs.Format(L"      FAR2L Version: %s", FAR_BUILD);

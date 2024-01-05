@@ -925,7 +925,7 @@ $ #Special commands#
 
    #far:about#  - Far information, list and information about plugins.
 
-   #far:config# - Configuration editor (draft now).
+   #far:config# - Configuration editor.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 

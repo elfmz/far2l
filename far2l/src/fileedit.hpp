@@ -137,7 +137,7 @@ private:
 	FARString strPluginData;
 	FARString strLoadedFileName;
 	FAR_FIND_DATA_EX FileInfo;
-	wchar_t AttrStr[4];		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
+	FARString AttrStr;		// 13.02.2001 IS - Сюда запомним буквы атрибутов, чтобы не вычислять их много раз
 	IUnmakeWritablePtr FileUnmakeWritable;
 	DWORD SysErrorCode{false};
 	bool m_bClosing{false};	// 28.04.2005 AY: true когда редактор закрывается (т.е. в деструкторе)

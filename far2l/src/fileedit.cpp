@@ -419,7 +419,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	m_codepage = codepage;
 	m_editor->SetOwner(this);
 	m_editor->SetCodePage(m_codepage);
-	*AttrStr = 0;
+	AttrStr.Clear();
 	CurrentEditor = this;
 	SetTitle(Title);
 	EditNamesList = nullptr;
@@ -2216,6 +2216,18 @@ FARString &FileEditor::GetTitle(FARString &strLocalTitle, int SubLen, int TruncS
 	return strLocalTitle;
 }
 
+static const struct CharCodeFmtInfo
+{
+	const wchar_t *wide_fmt;
+	size_t wide_width;
+	const wchar_t *mb_fmt;
+	size_t mb_width;
+} s_CCFI[] = {
+	{L"%05o", 8, L"%o", 3},
+	{L"%5d", 7, L"%d", 3},
+	{ L"%04Xh", 6, L"%X", 2}
+};
+
 void FileEditor::ShowStatus()
 {
 	if (m_editor->Locked() || !TitleBarVisible)
@@ -2226,78 +2238,75 @@ void FileEditor::ShowStatus()
 	FARString strLineStr;
 	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
-	int NameLength = Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 14 : 20;
-
-	if (X2 > 80)
-		NameLength+= (X2 - 80);
-
-	if (!strPluginTitle.IsEmpty() || !strTitle.IsEmpty())
-		TruncPathStr(strLocalTitle, (ObjWidth < NameLength ? ObjWidth : NameLength));
-	else
-		TruncPathStr(strLocalTitle, NameLength);
-
-	// предварительный расчет
-	strLineStr.Format(L"%d/%d", m_editor->NumLastLine, m_editor->NumLastLine);
-	int SizeLineStr = (int)strLineStr.GetLength();
-
-	if (SizeLineStr > 12)
-		NameLength-= (SizeLineStr - 12);
-	else
-		SizeLineStr = 12;
 
 	strLineStr.Format(L"%d/%d", m_editor->NumLine + 1, m_editor->NumLastLine);
-	FARString strAttr(AttrStr);
+
+	FARString strCharCode;
+	size_t CharCodeWidth = 5;
+	{
+		const bool UCP = IsUnicodeOrUtfCodePage(m_codepage);
+		const wchar_t *Str = nullptr;
+		int Length = 0;
+		m_editor->CurLine->GetBinaryString(&Str, nullptr, Length);
+		int CurPos = m_editor->CurLine->GetCurPos();
+		const size_t CharCodeInfoIdx = (m_editor->EdOpt.CharCodeBase % ARRAYSIZE(s_CCFI));
+		CharCodeWidth = s_CCFI[CharCodeInfoIdx].wide_width;
+		if (!UCP) {
+			CharCodeWidth+= s_CCFI[CharCodeInfoIdx].mb_width + 3;
+		}
+		if (CurPos < Length) {
+			/*
+				$ 27.02.2001 SVS
+				Показываем в зависимости от базы
+			*/
+			strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].wide_fmt, (unsigned int)Str[CurPos]);
+			if (!UCP) {
+				char C = 0;
+				BOOL UsedDefaultChar = FALSE;
+				WINPORT(WideCharToMultiByte)
+					(m_codepage, WC_NO_BEST_FIT_CHARS, &Str[CurPos], 1, &C, 1, 0, &UsedDefaultChar);
+
+				if (C && !UsedDefaultChar && static_cast<wchar_t>(C) != Str[CurPos]) {
+					strCharCode+= L" (";
+					strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].mb_fmt, (unsigned int)(unsigned char)C);
+					strCharCode+= L")";
+				}
+			}
+		}
+	}
 
 	FARString strTabMode;
 	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
 	FARString str_codepage;
 	ShortReadableCodepageName(m_codepage,str_codepage);
 	FormatString FString;
-	FString << fmt::Cells() << fmt::LeftAlign() << fmt::Expand(NameLength) << strLocalTitle << L' '
+	FString << fmt::Cells() << fmt::LeftAlign()
 			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*' : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-' : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strTabMode << L' '
 			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << str_codepage << L' '
-			<< fmt::Expand(7) << Msg::EditStatusLine << L' ' << fmt::Expand(SizeLineStr)
-			<< fmt::Truncate(SizeLineStr) << strLineStr << L' ' << fmt::Expand(5) << Msg::EditStatusCol
-			<< L' ' << fmt::LeftAlign() << fmt::Expand(4) << m_editor->CurLine->GetCellCurPos() + 1 << L' '
-			<< fmt::Expand(3) << strAttr;
+			<< fmt::Expand(7) << Msg::EditStatusLine << L' '
+			<< fmt::Expand(12) << strLineStr << L' ' //SizeLineStr
+			<< fmt::Expand(5) << Msg::EditStatusCol << L' '
+			<< fmt::LeftAlign() << fmt::Expand(4) << m_editor->CurLine->GetCellCurPos() + 1 << L' '
+			<< AttrStr << (AttrStr.IsEmpty() ? L"" : L" ")
+			<< fmt::Expand(CharCodeWidth) << strCharCode;
 	int StatusWidth = ObjWidth - (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 5 : 0);
 
 	if (StatusWidth < 0)
 		StatusWidth = 0;
 
-	FS << fmt::LeftAlign() << fmt::Size(StatusWidth) << FString.strValue();
-	{
-		const wchar_t *Str;
-		int Length;
-		m_editor->CurLine->GetBinaryString(&Str, nullptr, Length);
-		int CurPos = m_editor->CurLine->GetCurPos();
-
-		if (CurPos < Length) {
-			GotoXY(X2 - (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN) ? 16 : 10), Y1);
-			SetColor(COL_EDITORSTATUS);
-			/*
-				$ 27.02.2001 SVS
-				Показываем в зависимости от базы
-			*/
-			static const wchar_t *FmtWCharCode[] = {L"%05o", L"%5d", L"%04Xh"};
-			mprintf(FmtWCharCode[m_editor->EdOpt.CharCodeBase % ARRAYSIZE(FmtWCharCode)], Str[CurPos]);
-
-			if (!IsUnicodeOrUtfCodePage(m_codepage)) {
-				char C = 0;
-				BOOL UsedDefaultChar = FALSE;
-				WINPORT(WideCharToMultiByte)
-				(m_codepage, WC_NO_BEST_FIT_CHARS, &Str[CurPos], 1, &C, 1, 0, &UsedDefaultChar);
-
-				if (C && !UsedDefaultChar && static_cast<wchar_t>(C) != Str[CurPos]) {
-					static const wchar_t *FmtCharCode[] = {L"%o", L"%d", L"%Xh"};
-					Text(L" (");
-					mprintf(FmtCharCode[m_editor->EdOpt.CharCodeBase % ARRAYSIZE(FmtCharCode)], C);
-					Text(L")");
-				}
-			}
+	FARString StrStatus = FString.strValue();
+	int TitleCells = StatusWidth - StrStatus.CellsCount();
+	if (TitleCells <= 5) {
+		TitleCells = StatusWidth;
+		StrStatus.Clear();
+	}
+	if (TitleCells > 0) {
+		if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
+			TruncStr(strLocalTitle, TitleCells);
 		}
+		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
 	}
 
 	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN))
@@ -2313,19 +2322,16 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 {
 	SudoClientRegion sdc_rgn;
 	DWORD FileAttributes = apiGetFileAttributes(Name);
-	int ind = 0;
-
 	if (FileAttributes != INVALID_FILE_ATTRIBUTES) {
 		if (FileAttributes & FILE_ATTRIBUTE_READONLY)
-			AttrStr[ind++] = L'R';
+			AttrStr+= L'R';
 
 		if (FileAttributes & FILE_ATTRIBUTE_SYSTEM)
-			AttrStr[ind++] = L'S';
+			AttrStr+= L'S';
 
 		if (FileAttributes & FILE_ATTRIBUTE_HIDDEN)
-			AttrStr[ind++] = L'H';
+			AttrStr+= L'H';
 	}
-	AttrStr[ind] = 0;
 	return FileAttributes;
 }
 

@@ -597,6 +597,8 @@ public:
 						return true;
 					}
 					return false;
+				case T_BIN: // TODO
+					return false;
 			}
 		}
 		return false;

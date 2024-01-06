@@ -2304,14 +2304,17 @@ void FileEditor::ShowStatus()
 		if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
 			TruncStr(strLocalTitle, TitleCells);
 		}
-		if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
-			StrStatus+= L' '; // space between status and clock
-		}
 		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
 	}
 
-	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN))
+	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
+		if (X2 > 5) {
+			SetColor(COL_EDITORTEXT);
+			GotoXY(X2 - 5, Y1);
+			Text(L" ", 1);
+		}
 		ShowTime(FALSE);
+	}
 }
 
 /*

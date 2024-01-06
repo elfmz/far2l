@@ -317,10 +317,10 @@ public:
 				mi.strName.Format(L"%s %ls |  bool|%s", (*_value.b == _default.b ? " " : "*"), fsn.CPtr(), (*_value.b ? "true" : "false"));
 				break;
 			case T_INT:
-				mi.strName.Format(L"%s %ls |   int|%d = 0x%x", (*_value.i == _default.i ? " " : "*"), fsn.CPtr(), *_value.i, *_value.i);
+				mi.strName.Format(L"%s %ls |   int|%ld = 0x%lx", (*_value.i == _default.i ? " " : "*"), fsn.CPtr(), *_value.i, *_value.i);
 				break;
 			case T_DWORD:
-				mi.strName.Format(L"%s %ls | dword|%u = 0x%x", (*_value.dw == _default.dw ? " " : "*"), fsn.CPtr(), *_value.dw, *_value.dw);
+				mi.strName.Format(L"%s %ls | dword|%lu = 0x%lx", (*_value.dw == _default.dw ? " " : "*"), fsn.CPtr(), *_value.dw, *_value.dw);
 				break;
 			case T_STR:
 				mi.strName.Format(L"%s %ls |string|%ls", (*_value.str == _default.str ? " " : "*"), fsn.CPtr(), _value.str->CPtr());
@@ -358,13 +358,13 @@ public:
 				break;
 			case T_INT:
 				type_psz = "int";
-				def_str.Format(L"%d = 0x%x", _default.i, _default.i);
-				val_str.Format(L"%d = 0x%x", *_value.i, *_value.i);
+				def_str.Format(L"%ld = 0x%lx", _default.i, _default.i);
+				val_str.Format(L"%ld = 0x%lx", *_value.i, *_value.i);
 				break;
 			case T_DWORD:
 				type_psz = "dword";
-				def_str.Format(L"%u = 0x%x", _default.dw, _default.dw);
-				val_str.Format(L"%u = 0x%x", *_value.dw, *_value.dw);
+				def_str.Format(L"%lu = 0x%lx", _default.dw, _default.dw);
+				val_str.Format(L"%lu = 0x%lx", *_value.dw, *_value.dw);
 				break;
 			case T_STR:
 				type_psz = "string";
@@ -402,11 +402,204 @@ public:
 			em.Add(L"      or may be need save config & restart FAR2L");
 		}
 		em.Add(L"Continue");
+		SetMessageHelp(L"SpecCmd");//L"FarConfig");
 		if (IsNotDefault()==1) {
 			em.Add(L"Reset to default");
 			return em.Show(MSG_LEFTALIGN, 2);
 		}
 		return em.Show(MSG_LEFTALIGN, 1);
+	}
+
+	bool EditDlg(const wchar_t *title) const
+	{
+		bool is_editable = false, is_def = true;
+		const wchar_t *type_pwsz;
+		FARString fs_title,
+				def_str, cur_str, new_str, def_str_hex, cur_str_hex, new_str_hex,
+				fs_section = _section, fs_key = _key;
+		fs_title.Format(L"%ls - %s.%s", title, _section, _key);
+
+		switch (_type) {
+			case T_BOOL:
+				type_pwsz = L"bool";
+				is_editable = true;
+				break;
+			case T_INT:
+				type_pwsz = L"int";
+				is_editable = true;
+				def_str.Format(L"%ld", _default.i);
+				cur_str.Format(L"%ld", *_value.i);
+				def_str_hex.Format(L"%lx", _default.i);
+				cur_str_hex.Format(L"%lx", *_value.i);
+				new_str = cur_str;
+				new_str_hex = cur_str_hex;
+				break;
+			case T_DWORD:
+				type_pwsz = L"dword";
+				is_editable = true;
+				def_str.Format(L"%lu", _default.dw);
+				cur_str.Format(L"%lu", *_value.dw);
+				def_str_hex.Format(L"%lx", _default.dw);
+				cur_str_hex.Format(L"%lx", *_value.dw);
+				new_str = cur_str;
+				new_str_hex = cur_str_hex;
+				break;
+			case T_STR:
+				type_pwsz = L"string";
+				is_editable = true;
+				is_def = (bool) _default.str;
+				def_str = _default.str ? _default.str : L"";
+				cur_str = *_value.str;
+				new_str = cur_str;
+				break;
+			case T_BIN:
+				type_pwsz = L"binary";
+				if (_default.bin) {
+					def_str.Format(L"(binary has length %u bytes)", _bin_size);
+				} else {
+					is_def = false;
+					def_str = L"(no default value set)";
+				}
+				cur_str.Format(L"(binary has length %u bytes)", _bin_size);
+				new_str	= L"(can not process binary)";
+				break;
+			default:
+				type_pwsz = L"???";
+				def_str = L"???";
+				cur_str = L"???";
+				new_str	= L"(can not process unknown type)";
+		}
+
+		const short DLG_HEIGHT = 20, DLG_WIDTH = 76;
+		const wchar_t *mask_int = L"#9999999999";
+		const wchar_t *mask_dword = L"9999999999";
+		//const wchar_t *HexMask = L"HHHHHHHH";
+		DialogDataEx AdvancedConfigDlgData[] = {
+			/*   0 */ {DI_DOUBLEBOX, 3,  1, DLG_WIDTH - 4, DLG_HEIGHT - 2, {}, 0, fs_title.CPtr()},
+			/*   1 */ {DI_TEXT,		 5,  2, 20,             2, {}, 0, L"       Section:"},
+			/*   2 */ {DI_TEXT,		21,  2, DLG_WIDTH - 6,  2, {}, 0, fs_section.CPtr()},
+			/*   3 */ {DI_TEXT,		 5,  3, 20,             3, {}, 0, L"           Key:"},
+			/*   4 */ {DI_TEXT,		21,  3, DLG_WIDTH - 6,  3, {}, 0, fs_key.CPtr()},
+			/*   5 */ {DI_TEXT,		 5,  4, 20,             4, {}, 0, L"to config file:"},
+			/*   6 */ {DI_TEXT,		21,  4, DLG_WIDTH - 6,  4, {}, 0, (_save ? L"saved" : L"never")},
+			/*   7 */ {DI_TEXT,		 5,  5, 20,             5, {}, 0, L"          Type:"},
+			/*   8 */ {DI_TEXT,		21,  5, DLG_WIDTH - 6,  5, {}, 0, type_pwsz},
+			/*   9 */ {DI_TEXT,		 3,  6, 20,             6, {}, DIF_SEPARATOR, L" Values "},
+			/*  10 */ {DI_TEXT,		 5,  7, 13,             7, {}, 0, L"Default:"},
+			/*  11 */ {DI_RADIOBUTTON, 14,  7,  0,             7, {}, DIF_DISABLE | DIF_GROUP, L"false"},
+			/*  12 */ {DI_RADIOBUTTON, 29,  7,  0,             7, {}, DIF_DISABLE, L"true"},
+			/*  13 */ {DI_TEXT,		14,  7, 21,             7, {}, 0, L"Decimal="},
+			/*  14 */ {DI_EDIT,		22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.CPtr()},
+			/*  15 */ {DI_TEXT,		35,  7, 38,             7, {}, 0, L"Hex="},
+			/*  16 */ {DI_EDIT,		39,  7, 52,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
+			/*  17 */ {DI_TEXT,		 5,  8, 13,             8, {}, 0, L"Current:"},
+			/*  18 */ {DI_RADIOBUTTON, 14,  8,  0,             8, {}, DIF_DISABLE | DIF_GROUP, L"false"},
+			/*  19 */ {DI_RADIOBUTTON, 29,  8,  0,             8, {}, DIF_DISABLE, L"true"},
+			/*  20 */ {DI_TEXT,		14,  8, 21,             8, {}, 0, L"Decimal="},
+			/*  21 */ {DI_EDIT,		22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.CPtr()},
+			/*  22 */ {DI_TEXT,		35,  8, 38,             8, {}, 0, L"Hex="},
+			/*  23 */ {DI_EDIT,		39,  8, 52,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
+			/*  24 */ {DI_TEXT,		 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
+			/*  25 */ {DI_TEXT,		 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
+			/*  26 */ {DI_RADIOBUTTON, 14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
+			/*  27 */ {DI_RADIOBUTTON, 29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
+			/*  28 */ {DI_EDIT,		14, 10, 24,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.CPtr()},
+			/*  29 */ {DI_TEXT,		 3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
+			/*  30 */ {DI_TEXT,		 5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some panel parameters after update/reset"},
+			/*  31 */ {DI_TEXT,		 5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediatly in FAR2L"},
+			/*  32 */ {DI_TEXT,		 5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
+			/*  33 */ {DI_TEXT,		 5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
+			/*  34 */ {DI_TEXT,		 3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
+			/*  35 */ {DI_BUTTON,    0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
+			/*  36 */ {DI_BUTTON,    0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
+		};
+		if (!is_def) {
+			AdvancedConfigDlgData[10].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[11].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[12].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[13].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[14].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[15].Flags	|= DIF_DISABLE;
+			AdvancedConfigDlgData[16].Flags	|= DIF_DISABLE;
+		}
+		if (_type == T_BOOL) {
+			AdvancedConfigDlgData[_default.b ? 12 : 11].Selected = 1;
+			AdvancedConfigDlgData[(*_value.b) ? 19 : 18].Selected = 1;
+			AdvancedConfigDlgData[(*_value.b) ? 27 : 26].Selected = 1;
+			AdvancedConfigDlgData[13].Flags =
+			AdvancedConfigDlgData[14].Flags =
+			AdvancedConfigDlgData[15].Flags =
+			AdvancedConfigDlgData[16].Flags =
+			AdvancedConfigDlgData[20].Flags =
+			AdvancedConfigDlgData[21].Flags =
+			AdvancedConfigDlgData[22].Flags =
+			AdvancedConfigDlgData[23].Flags =
+			AdvancedConfigDlgData[28].Flags = DIF_HIDDEN;
+		}
+		else {
+			AdvancedConfigDlgData[11].Flags	=
+			AdvancedConfigDlgData[12].Flags	=
+			AdvancedConfigDlgData[18].Flags =
+			AdvancedConfigDlgData[19].Flags =
+			AdvancedConfigDlgData[26].Flags =
+			AdvancedConfigDlgData[27].Flags	= DIF_HIDDEN;
+			if (_type==T_DWORD) {
+				AdvancedConfigDlgData[28].Type = DI_FIXEDIT;
+				AdvancedConfigDlgData[28].Flags |= DIF_MASKEDIT;
+				AdvancedConfigDlgData[28].Mask = mask_dword;
+			}
+			else if (_type==T_INT) {
+				AdvancedConfigDlgData[28].Type = DI_FIXEDIT;
+				AdvancedConfigDlgData[28].Flags |= DIF_MASKEDIT;
+				AdvancedConfigDlgData[28].Mask = mask_int;
+			}
+			else {
+				AdvancedConfigDlgData[14].X1 = AdvancedConfigDlgData[21].X1 = 14;
+				AdvancedConfigDlgData[14].X2 = AdvancedConfigDlgData[21].X2 = AdvancedConfigDlgData[28].X2 = DLG_WIDTH - 6;
+				AdvancedConfigDlgData[13].Flags =
+				AdvancedConfigDlgData[15].Flags =
+				AdvancedConfigDlgData[16].Flags =
+				AdvancedConfigDlgData[20].Flags =
+				AdvancedConfigDlgData[22].Flags =
+				AdvancedConfigDlgData[23].Flags = DIF_HIDDEN;
+			}
+		}
+		MakeDialogItemsEx(AdvancedConfigDlgData, AdvancedConfigDlg);
+		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg));
+		Dlg.SetPosition(-1, -1, DLG_WIDTH, DLG_HEIGHT);
+		Dlg.SetHelp(L"SpecCmd");//L"FarConfig");
+		Dlg.Process();
+
+		if (Dlg.GetExitCode() == 35) {
+			wchar_t *endptr;
+			switch (_type) {
+				case T_BOOL:
+					if (*_value.b != (bool) AdvancedConfigDlg[27].Selected ) {
+						*_value.b = (bool) AdvancedConfigDlg[27].Selected;
+						return true;
+					}
+					return false;
+				case T_INT:
+					if (AdvancedConfigDlg[28].strData != cur_str) {
+						*_value.i = (int) wcstol(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
+						return true;
+					}
+					return false;
+				case T_DWORD:
+					if (AdvancedConfigDlg[28].strData != cur_str) {
+						*_value.dw = (DWORD) wcstoul(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
+						return true;
+					}
+					return false;
+				case T_STR:
+					if (AdvancedConfigDlg[28].strData != cur_str) {
+						*_value.str = AdvancedConfigDlg[28].strData.CPtr();
+						return true;
+					}
+					return false;
+			}
+		}
+		return false;
 	}
 
 } s_opt_serializers[] =
@@ -946,9 +1139,9 @@ void AdvancedConfig()
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
-	//ListConfig.SetHelp(L"FarConfig");
+	ListConfig.SetHelp(L"SpecCmd");//L"FarConfig");
 
-	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - details, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
+	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - edit, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 
 	for (const auto &opt_ser : s_opt_serializers)
 		opt_ser.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
@@ -1002,9 +1195,8 @@ void AdvancedConfig()
 		if (sel_pos < 0) // exit from loop by ESC or F10 or click outside vmenu
 			break;
 		ListConfig.ClearDone(); // no close after select item by ENTER or dbl mouse click
-		if ( s_opt_serializers[sel_pos].Msg(AdvancedConfigTitle())==1
-				&& s_opt_serializers[sel_pos].ToDefault()==1 ) {
-			s_opt_serializers[sel_pos].MenuListAppend(
+		if ( s_opt_serializers[sel_pos].EditDlg(AdvancedConfigTitle()) ) { // by ENTER - show edit dialog
+			s_opt_serializers[sel_pos].MenuListAppend( // if was change value then regenerate item
 				ListConfig,
 				len_sections, len_keys, len_sections_keys,
 				hide_unchanged, align_dot,

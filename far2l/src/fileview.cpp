@@ -529,9 +529,7 @@ void FileViewer::ShowStatus()
 
 	if (Opt.ViewerEditorClock && IsFullScreen()) {
 		if (X2 > 5) {
-			SetColor(COL_VIEWERTEXT);
-			GotoXY(X2 - 5, Y1);
-			Text(L" ", 1);
+			Text(X2 - 5, Y1, COL_VIEWERTEXT, L" ");
 		}
 		ShowTime(FALSE);
 	}

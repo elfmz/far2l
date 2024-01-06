@@ -2309,9 +2309,7 @@ void FileEditor::ShowStatus()
 
 	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		if (X2 > 5) {
-			SetColor(COL_EDITORTEXT);
-			GotoXY(X2 - 5, Y1);
-			Text(L" ", 1);
+			Text(X2 - 5, Y1, COL_EDITORTEXT, L" ");
 		}
 		ShowTime(FALSE);
 	}

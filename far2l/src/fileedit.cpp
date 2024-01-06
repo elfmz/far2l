@@ -2306,6 +2306,9 @@ void FileEditor::ShowStatus()
 		if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
 			TruncStr(strLocalTitle, TitleCells);
 		}
+		if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
+			StrStatus+= L' ';
+		}
 		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
 	}
 

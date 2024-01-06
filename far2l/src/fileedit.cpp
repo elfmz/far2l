@@ -2223,9 +2223,9 @@ static const struct CharCodeFmtInfo
 	const wchar_t *mb_fmt;
 	size_t mb_width;
 } s_CCFI[] = {
-	{L"%05o", 8, L"%o", 3},
-	{L"%5d", 7, L"%d", 3},
-	{ L"%04Xh", 6, L"%X", 2}
+	{L"%05o", 8, L" (%o)", 6},
+	{L"%5d", 7, L" (%d)", 6},
+	{ L"%04Xh", 6, L" (%X)", 5}
 };
 
 void FileEditor::ShowStatus()
@@ -2252,7 +2252,7 @@ void FileEditor::ShowStatus()
 		const size_t CharCodeInfoIdx = (m_editor->EdOpt.CharCodeBase % ARRAYSIZE(s_CCFI));
 		CharCodeWidth = s_CCFI[CharCodeInfoIdx].wide_width;
 		if (!UCP) {
-			CharCodeWidth+= s_CCFI[CharCodeInfoIdx].mb_width + 3;
+			CharCodeWidth+= s_CCFI[CharCodeInfoIdx].mb_width;
 		}
 		if (CurPos < Length) {
 			/*
@@ -2267,9 +2267,7 @@ void FileEditor::ShowStatus()
 					(m_codepage, WC_NO_BEST_FIT_CHARS, &Str[CurPos], 1, &C, 1, 0, &UsedDefaultChar);
 
 				if (C && !UsedDefaultChar && static_cast<wchar_t>(C) != Str[CurPos]) {
-					strCharCode+= L" (";
 					strCharCode.AppendFormat(s_CCFI[CharCodeInfoIdx].mb_fmt, (unsigned int)(unsigned char)C);
-					strCharCode+= L")";
 				}
 			}
 		}
@@ -2307,7 +2305,7 @@ void FileEditor::ShowStatus()
 			TruncStr(strLocalTitle, TitleCells);
 		}
 		if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
-			StrStatus+= L' ';
+			StrStatus+= L' '; // space between status and clock
 		}
 		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
 	}

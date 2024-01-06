@@ -571,7 +571,6 @@ public:
 		Dlg.Process();
 
 		if (Dlg.GetExitCode() == 35) {
-			wchar_t *endptr;
 			switch (_type) {
 				case T_BOOL:
 					if (*_value.b != (bool) AdvancedConfigDlg[27].Selected ) {
@@ -581,14 +580,22 @@ public:
 					return false;
 				case T_INT:
 					if (AdvancedConfigDlg[28].strData != cur_str) {
-						*_value.i = (int) wcstol(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
-						return true;
+						wchar_t *endptr;
+						int i = (int) wcstol(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
+						if (AdvancedConfigDlg[28].strData.CPtr() != endptr) {
+							*_value.i = i;
+							return true;
+						}
 					}
 					return false;
 				case T_DWORD:
 					if (AdvancedConfigDlg[28].strData != cur_str) {
-						*_value.dw = (DWORD) wcstoul(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
-						return true;
+						wchar_t *endptr;
+						DWORD dw = (DWORD) wcstoul(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
+						if (AdvancedConfigDlg[28].strData.CPtr() != endptr) {
+							*_value.dw = dw;
+							return true;
+						}
 					}
 					return false;
 				case T_STR:

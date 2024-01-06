@@ -591,7 +591,12 @@ int FileList::ConvertName(FARString &strDest, const wchar_t *SrcName, int MaxLen
 			DotPos = NameLength + 1;
 
 		strDest.Copy(SrcName, NameLength);
-		strDest.Append(L'.');
+		if (DotPos > 0 && NameLength > 0 && SrcName[NameLength - 1] == L' ') {
+			strDest.Append(L'.');
+		}
+		if (DotPos > NameLength) {
+			strDest.Append(L' ', DotPos - NameLength);
+		}
 		strDest.Append(DotPtr + 1, DotLength);
 	} else {
 		size_t CellsCount = MaxLength;

@@ -410,6 +410,22 @@ public:
 		return em.Show(MSG_LEFTALIGN, 1);
 	}
 
+	static LONG_PTR WINAPI EditDlgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+	{
+		if (Msg == DN_BTNCLICK) {
+			if ( Param1 == 32 && !SendDlgMessage(hDlg, DM_ENABLE, 29, -1) ) { // to decimal
+				SendDlgMessage(hDlg, DM_ENABLE, 29, TRUE);
+				SendDlgMessage(hDlg, DM_ENABLE, 31, FALSE);
+			}
+			else if ( Param1 == 33 && !SendDlgMessage(hDlg, DM_ENABLE, 31, -1) ) { // to hex
+				SendDlgMessage(hDlg, DM_ENABLE, 29, FALSE);
+				SendDlgMessage(hDlg, DM_ENABLE, 31, TRUE);
+			}
+		}
+
+		return DefDlgProc(hDlg, Msg, Param1, Param2);
+	}
+
 	bool EditDlg(const wchar_t *title) const
 	{
 		bool is_editable = false, is_def = true;
@@ -473,45 +489,50 @@ public:
 		const short DLG_HEIGHT = 20, DLG_WIDTH = 76;
 		const wchar_t *mask_int = L"#9999999999";
 		const wchar_t *mask_dword = L"9999999999";
-		//const wchar_t *HexMask = L"HHHHHHHH";
+		const wchar_t *HexMask = L"HHHHHHHH";
 		DialogDataEx AdvancedConfigDlgData[] = {
-			/*   0 */ {DI_DOUBLEBOX, 3,  1, DLG_WIDTH - 4, DLG_HEIGHT - 2, {}, 0, fs_title.CPtr()},
-			/*   1 */ {DI_TEXT,		 5,  2, 20,             2, {}, 0, L"       Section:"},
-			/*   2 */ {DI_TEXT,		21,  2, DLG_WIDTH - 6,  2, {}, 0, fs_section.CPtr()},
-			/*   3 */ {DI_TEXT,		 5,  3, 20,             3, {}, 0, L"           Key:"},
-			/*   4 */ {DI_TEXT,		21,  3, DLG_WIDTH - 6,  3, {}, 0, fs_key.CPtr()},
-			/*   5 */ {DI_TEXT,		 5,  4, 20,             4, {}, 0, L"to config file:"},
-			/*   6 */ {DI_TEXT,		21,  4, DLG_WIDTH - 6,  4, {}, 0, (_save ? L"saved" : L"never")},
-			/*   7 */ {DI_TEXT,		 5,  5, 20,             5, {}, 0, L"          Type:"},
-			/*   8 */ {DI_TEXT,		21,  5, DLG_WIDTH - 6,  5, {}, 0, type_pwsz},
-			/*   9 */ {DI_TEXT,		 3,  6, 20,             6, {}, DIF_SEPARATOR, L" Values "},
-			/*  10 */ {DI_TEXT,		 5,  7, 13,             7, {}, 0, L"Default:"},
-			/*  11 */ {DI_RADIOBUTTON, 14,  7,  0,             7, {}, DIF_DISABLE | DIF_GROUP, L"false"},
-			/*  12 */ {DI_RADIOBUTTON, 29,  7,  0,             7, {}, DIF_DISABLE, L"true"},
-			/*  13 */ {DI_TEXT,		14,  7, 21,             7, {}, 0, L"Decimal="},
-			/*  14 */ {DI_EDIT,		22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.CPtr()},
-			/*  15 */ {DI_TEXT,		35,  7, 38,             7, {}, 0, L"Hex="},
-			/*  16 */ {DI_EDIT,		39,  7, 52,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
-			/*  17 */ {DI_TEXT,		 5,  8, 13,             8, {}, 0, L"Current:"},
-			/*  18 */ {DI_RADIOBUTTON, 14,  8,  0,             8, {}, DIF_DISABLE | DIF_GROUP, L"false"},
-			/*  19 */ {DI_RADIOBUTTON, 29,  8,  0,             8, {}, DIF_DISABLE, L"true"},
-			/*  20 */ {DI_TEXT,		14,  8, 21,             8, {}, 0, L"Decimal="},
-			/*  21 */ {DI_EDIT,		22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.CPtr()},
-			/*  22 */ {DI_TEXT,		35,  8, 38,             8, {}, 0, L"Hex="},
-			/*  23 */ {DI_EDIT,		39,  8, 52,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
-			/*  24 */ {DI_TEXT,		 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
-			/*  25 */ {DI_TEXT,		 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
-			/*  26 */ {DI_RADIOBUTTON, 14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
-			/*  27 */ {DI_RADIOBUTTON, 29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
-			/*  28 */ {DI_EDIT,		14, 10, 24,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.CPtr()},
-			/*  29 */ {DI_TEXT,		 3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
-			/*  30 */ {DI_TEXT,		 5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some panel parameters after update/reset"},
-			/*  31 */ {DI_TEXT,		 5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediatly in FAR2L"},
-			/*  32 */ {DI_TEXT,		 5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
-			/*  33 */ {DI_TEXT,		 5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
-			/*  34 */ {DI_TEXT,		 3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
-			/*  35 */ {DI_BUTTON,    0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
-			/*  36 */ {DI_BUTTON,    0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
+			/*   0 */ {DI_DOUBLEBOX,	 3,  1, DLG_WIDTH - 4, DLG_HEIGHT - 2, {}, 0, fs_title.CPtr()},
+			/*   1 */ {DI_TEXT,			 5,  2, 20,             2, {}, 0, L"       Section:"},
+			/*   2 */ {DI_TEXT,			21,  2, DLG_WIDTH - 6,  2, {}, 0, fs_section.CPtr()},
+			/*   3 */ {DI_TEXT,			 5,  3, 20,             3, {}, 0, L"           Key:"},
+			/*   4 */ {DI_TEXT,			21,  3, DLG_WIDTH - 6,  3, {}, 0, fs_key.CPtr()},
+			/*   5 */ {DI_TEXT,			 5,  4, 20,             4, {}, 0, L"to config file:"},
+			/*   6 */ {DI_TEXT,			21,  4, DLG_WIDTH - 6,  4, {}, 0, (_save ? L"saved" : L"never")},
+			/*   7 */ {DI_TEXT,			 5,  5, 20,             5, {}, 0, L"          Type:"},
+			/*   8 */ {DI_TEXT,			21,  5, DLG_WIDTH - 6,  5, {}, 0, type_pwsz},
+			/*   9 */ {DI_TEXT,			 3,  6, 20,             6, {}, DIF_SEPARATOR, L" Values "},
+			/*  10 */ {DI_TEXT,			 5,  7, 13,             7, {}, 0, L"Default:"},
+			/*  11 */ {DI_RADIOBUTTON,	14,  7,  0,             7, {}, DIF_DISABLE | DIF_GROUP, L"false"},
+			/*  12 */ {DI_RADIOBUTTON,	29,  7,  0,             7, {}, DIF_DISABLE, L"true"},
+			/*  13 */ {DI_TEXT,			14,  7, 21,             7, {}, 0, L"Decimal="},
+			/*  14 */ {DI_EDIT,			22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.CPtr()},
+			/*  15 */ {DI_TEXT,			35,  7, 40,             7, {}, 0, L"Hex=0x"},
+			/*  16 */ {DI_EDIT,			41,  7, 49,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
+			/*  17 */ {DI_TEXT,			 5,  8, 13,             8, {}, 0, L"Current:"},
+			/*  18 */ {DI_RADIOBUTTON,	14,  8,  0,             8, {}, DIF_DISABLE | DIF_GROUP, L"false"},
+			/*  19 */ {DI_RADIOBUTTON,	29,  8,  0,             8, {}, DIF_DISABLE, L"true"},
+			/*  20 */ {DI_TEXT,			14,  8, 21,             8, {}, 0, L"Decimal="},
+			/*  21 */ {DI_EDIT,			22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.CPtr()},
+			/*  22 */ {DI_TEXT,			35,  8, 40,             8, {}, 0, L"Hex=0x"},
+			/*  23 */ {DI_EDIT,			41,  8, 49,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
+			/*  24 */ {DI_TEXT,			 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
+			/*  25 */ {DI_TEXT,			 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
+			/*  26 */ {DI_RADIOBUTTON,	14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
+			/*  27 */ {DI_RADIOBUTTON,	29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
+			/*  28 */ {DI_TEXT,			14, 10, 21,            10, {}, 0, L"Decimal="},
+			/*  29 */ {DI_EDIT,			22, 10, 32,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.CPtr()},
+			/*  30 */ {DI_TEXT,			35, 10, 40,            10, {}, 0, L"Hex=0x"},
+			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.CPtr()},
+			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
+			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
+			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
+			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some panel parameters after update/reset"},
+			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediatly in FAR2L"},
+			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
+			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
+			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
+			/*  40 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
+			/*  41 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
 		};
 		if (!is_def) {
 			AdvancedConfigDlgData[10].Flags	|= DIF_DISABLE;
@@ -534,7 +555,12 @@ public:
 			AdvancedConfigDlgData[21].Flags =
 			AdvancedConfigDlgData[22].Flags =
 			AdvancedConfigDlgData[23].Flags =
-			AdvancedConfigDlgData[28].Flags = DIF_HIDDEN;
+			AdvancedConfigDlgData[28].Flags =
+			AdvancedConfigDlgData[29].Flags =
+			AdvancedConfigDlgData[30].Flags =
+			AdvancedConfigDlgData[31].Flags =
+			AdvancedConfigDlgData[32].Flags =
+			AdvancedConfigDlgData[33].Flags = DIF_HIDDEN;
 		}
 		else {
 			AdvancedConfigDlgData[11].Flags	=
@@ -544,33 +570,38 @@ public:
 			AdvancedConfigDlgData[26].Flags =
 			AdvancedConfigDlgData[27].Flags	= DIF_HIDDEN;
 			if (_type==T_DWORD) {
-				AdvancedConfigDlgData[28].Type = DI_FIXEDIT;
-				AdvancedConfigDlgData[28].Flags |= DIF_MASKEDIT;
-				AdvancedConfigDlgData[28].Mask = mask_dword;
+				AdvancedConfigDlgData[29].Type = DI_FIXEDIT;
+				AdvancedConfigDlgData[29].Flags |= DIF_MASKEDIT;
+				AdvancedConfigDlgData[29].Mask = mask_dword;
 			}
 			else if (_type==T_INT) {
-				AdvancedConfigDlgData[28].Type = DI_FIXEDIT;
-				AdvancedConfigDlgData[28].Flags |= DIF_MASKEDIT;
-				AdvancedConfigDlgData[28].Mask = mask_int;
+				AdvancedConfigDlgData[29].Type = DI_FIXEDIT;
+				AdvancedConfigDlgData[29].Flags |= DIF_MASKEDIT;
+				AdvancedConfigDlgData[29].Mask = mask_int;
 			}
-			else {
-				AdvancedConfigDlgData[14].X1 = AdvancedConfigDlgData[21].X1 = 14;
-				AdvancedConfigDlgData[14].X2 = AdvancedConfigDlgData[21].X2 = AdvancedConfigDlgData[28].X2 = DLG_WIDTH - 6;
+			else { // T_STR & T_BIN
+				AdvancedConfigDlgData[14].X1 = AdvancedConfigDlgData[21].X1 = AdvancedConfigDlgData[29].X1 = 14;
+				AdvancedConfigDlgData[14].X2 = AdvancedConfigDlgData[21].X2 = AdvancedConfigDlgData[29].X2 = DLG_WIDTH - 6;
 				AdvancedConfigDlgData[13].Flags =
 				AdvancedConfigDlgData[15].Flags =
 				AdvancedConfigDlgData[16].Flags =
 				AdvancedConfigDlgData[20].Flags =
 				AdvancedConfigDlgData[22].Flags =
-				AdvancedConfigDlgData[23].Flags = DIF_HIDDEN;
+				AdvancedConfigDlgData[23].Flags =
+				AdvancedConfigDlgData[28].Flags =
+				AdvancedConfigDlgData[30].Flags =
+				AdvancedConfigDlgData[31].Flags =
+				AdvancedConfigDlgData[32].Flags =
+				AdvancedConfigDlgData[33].Flags = DIF_HIDDEN;
 			}
 		}
 		MakeDialogItemsEx(AdvancedConfigDlgData, AdvancedConfigDlg);
-		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg));
+		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg), EditDlgDlgProc);
 		Dlg.SetPosition(-1, -1, DLG_WIDTH, DLG_HEIGHT);
 		Dlg.SetHelp(L"SpecCmd");//L"FarConfig");
 		Dlg.Process();
 
-		if (Dlg.GetExitCode() == 35) {
+		if (Dlg.GetExitCode() == 40) {
 			switch (_type) {
 				case T_BOOL:
 					if (*_value.b != (bool) AdvancedConfigDlg[27].Selected ) {
@@ -579,28 +610,39 @@ public:
 					}
 					return false;
 				case T_INT:
-					if (AdvancedConfigDlg[28].strData != cur_str) {
+					{
+						int from_edit, base, i;
 						wchar_t *endptr;
-						int i = (int) wcstol(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
-						if (AdvancedConfigDlg[28].strData.CPtr() != endptr) {
+						if ( AdvancedConfigDlg[32].Selected )
+							from_edit = 29, base = 10; // decimal
+						else
+							from_edit = 31, base = 16; // decimal
+						i = (int) wcstol(AdvancedConfigDlg[from_edit].strData.CPtr(), &endptr, base);
+						if (AdvancedConfigDlg[from_edit].strData.CPtr() != endptr && *_value.i != i) {
 							*_value.i = i;
 							return true;
 						}
 					}
 					return false;
 				case T_DWORD:
-					if (AdvancedConfigDlg[28].strData != cur_str) {
+					{
+						int from_edit, base;
+						DWORD dw;
 						wchar_t *endptr;
-						DWORD dw = (DWORD) wcstoul(AdvancedConfigDlg[28].strData.CPtr(), &endptr, 10);
-						if (AdvancedConfigDlg[28].strData.CPtr() != endptr) {
+						if ( AdvancedConfigDlg[32].Selected )
+							from_edit = 29, base = 10; // decimal
+						else
+							from_edit = 31, base = 16; // decimal
+						dw = (DWORD) wcstoul(AdvancedConfigDlg[from_edit].strData.CPtr(), &endptr, base);
+						if (AdvancedConfigDlg[from_edit].strData.CPtr() != endptr && *_value.dw != dw) {
 							*_value.dw = dw;
 							return true;
 						}
 					}
 					return false;
 				case T_STR:
-					if (AdvancedConfigDlg[28].strData != cur_str) {
-						*_value.str = AdvancedConfigDlg[28].strData.CPtr();
+					if (AdvancedConfigDlg[29].strData != cur_str) {
+						*_value.str = AdvancedConfigDlg[29].strData.CPtr();
 						return true;
 					}
 					return false;
@@ -808,6 +850,10 @@ public:
 	{true,  NSecSystem, "OnlyFilesSize", &Opt.OnlyFilesSize, 0},
 	{false, NSecSystem, "UsePrintManager", &Opt.UsePrintManager, 1},
 
+	{false, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
+
+	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
+
 	{false, NSecSystemNowell, "MoveRO", &Opt.Nowell.MoveRO, 1},
 
 	{false, NSecSystemExecutor, "RestoreCP", &Opt.RestoreCPAfterExecute, 1},
@@ -919,12 +965,7 @@ public:
 	{false, NSecPolicies, "ShowHiddenDrives", &Opt.Policies.ShowHiddenDrives, 1},
 	{false, NSecPolicies, "DisabledOptions", &Opt.Policies.DisabledOptions, 0},
 
-
-	{false, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
-
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
-
-	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
@@ -1184,6 +1225,11 @@ void AdvancedConfig()
 							sel_pos);
 						ListConfig.FastShow();
 					}
+					continue;
+				case KEY_ALTF4:
+				case KEY_SHIFTF4:
+				case KEY_F4:
+					ListConfig.ProcessKey(KEY_ENTER);
 					continue;
 				default:
 					ListConfig.ProcessInput();

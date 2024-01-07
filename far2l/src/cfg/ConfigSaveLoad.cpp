@@ -850,6 +850,10 @@ public:
 	{true,  NSecSystem, "OnlyFilesSize", &Opt.OnlyFilesSize, 0},
 	{false, NSecSystem, "UsePrintManager", &Opt.UsePrintManager, 1},
 
+	{false, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
+
+	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
+
 	{false, NSecSystemNowell, "MoveRO", &Opt.Nowell.MoveRO, 1},
 
 	{false, NSecSystemExecutor, "RestoreCP", &Opt.RestoreCPAfterExecute, 1},
@@ -961,12 +965,7 @@ public:
 	{false, NSecPolicies, "ShowHiddenDrives", &Opt.Policies.ShowHiddenDrives, 1},
 	{false, NSecPolicies, "DisabledOptions", &Opt.Policies.DisabledOptions, 0},
 
-
-	{false, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
-
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
-
-	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},

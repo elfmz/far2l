@@ -506,25 +506,25 @@ public:
 			/*  12 */ {DI_RADIOBUTTON,	29,  7,  0,             7, {}, DIF_DISABLE, L"true"},
 			/*  13 */ {DI_TEXT,			14,  7, 21,             7, {}, 0, L"Decimal="},
 			/*  14 */ {DI_EDIT,			22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.CPtr()},
-			/*  15 */ {DI_TEXT,			35,  7, 38,             7, {}, 0, L"Hex="},
-			/*  16 */ {DI_EDIT,			39,  7, 47,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
+			/*  15 */ {DI_TEXT,			35,  7, 40,             7, {}, 0, L"Hex=0x"},
+			/*  16 */ {DI_EDIT,			41,  7, 49,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
 			/*  17 */ {DI_TEXT,			 5,  8, 13,             8, {}, 0, L"Current:"},
 			/*  18 */ {DI_RADIOBUTTON,	14,  8,  0,             8, {}, DIF_DISABLE | DIF_GROUP, L"false"},
 			/*  19 */ {DI_RADIOBUTTON,	29,  8,  0,             8, {}, DIF_DISABLE, L"true"},
 			/*  20 */ {DI_TEXT,			14,  8, 21,             8, {}, 0, L"Decimal="},
 			/*  21 */ {DI_EDIT,			22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.CPtr()},
-			/*  22 */ {DI_TEXT,			35,  8, 38,             8, {}, 0, L"Hex="},
-			/*  23 */ {DI_EDIT,			39,  8, 47,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
+			/*  22 */ {DI_TEXT,			35,  8, 40,             8, {}, 0, L"Hex=0x"},
+			/*  23 */ {DI_EDIT,			41,  8, 49,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
 			/*  24 */ {DI_TEXT,			 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
 			/*  25 */ {DI_TEXT,			 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
 			/*  26 */ {DI_RADIOBUTTON,	14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
 			/*  27 */ {DI_RADIOBUTTON,	29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
 			/*  28 */ {DI_TEXT,			14, 10, 21,            10, {}, 0, L"Decimal="},
 			/*  29 */ {DI_EDIT,			22, 10, 32,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.CPtr()},
-			/*  30 */ {DI_TEXT,			35, 10, 38,            10, {}, 0, L"Hex="},
-			/*  31 */ {DI_FIXEDIT,		39, 10, 47,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.CPtr()},
-			/*  32 */ {DI_RADIOBUTTON,	49, 10, 56,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
-			/*  33 */ {DI_RADIOBUTTON,	57, 10, 63,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
+			/*  30 */ {DI_TEXT,			35, 10, 40,            10, {}, 0, L"Hex=0x"},
+			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.CPtr()},
+			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
+			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
 			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
 			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some panel parameters after update/reset"},
 			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediatly in FAR2L"},
@@ -1225,6 +1225,11 @@ void AdvancedConfig()
 							sel_pos);
 						ListConfig.FastShow();
 					}
+					continue;
+				case KEY_ALTF4:
+				case KEY_SHIFTF4:
+				case KEY_F4:
+					ListConfig.ProcessKey(KEY_ENTER);
 					continue;
 				default:
 					ListConfig.ProcessInput();

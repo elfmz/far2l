@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "message.hpp"
 #include "config.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
 #include "setcolor.hpp"
@@ -607,7 +607,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					CtrlObject->HiFiles->HiEdit(0);
 					break;
 				case MENU_OPTIONS_SAVESETUP:	// Save setup
-					SaveConfig(1);
+					ConfigOptSave(1);
 					break;
 			}
 

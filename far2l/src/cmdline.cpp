@@ -54,7 +54,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include "syslog.hpp"
 #include "config.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptEdit.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
 #include "pathmix.hpp"
@@ -394,7 +395,7 @@ int CommandLine::ProcessKey(FarKey Key)
 		}
 			return TRUE;
 		case KEY_SHIFTF9:
-			SaveConfig(1);
+			ConfigOptSave(1);
 			return TRUE;
 		case KEY_F10:
 			FrameManager->ExitMainLoop(TRUE);
@@ -1078,7 +1079,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	}
 
 	if (b_far && str_command == L"far:config") {
-		AdvancedConfig();
+		ConfigOptEdit();
 		return true; // prefix correct and was processed
 	}
 

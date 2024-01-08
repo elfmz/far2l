@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "config.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "fileowner.hpp"
 #include "dirmix.hpp"
 #include "console.hpp"
@@ -158,7 +158,7 @@ ControlObject::~ControlObject()
 
 	if (Cp() && Cp()->ActivePanel) {
 		if (Opt.AutoSaveSetup)
-			SaveConfig(0);
+			ConfigOptSave(0);
 
 		if (Cp()->ActivePanel->GetMode() != PLUGIN_PANEL) {
 			FARString strCurDir;

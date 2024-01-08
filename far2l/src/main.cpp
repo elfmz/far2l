@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "SafeMMap.hpp"
 #include "ConfigRW.hpp"
-#include "ConfigSaveLoad.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
 
 #ifdef DIRECT_RT
@@ -594,7 +594,7 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
-	LoadConfig();
+	ConfigOptLoad();
 	InitConsole();
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");

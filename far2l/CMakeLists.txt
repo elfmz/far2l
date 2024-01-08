@@ -110,7 +110,8 @@ src/bookmarks/BookmarksLegacy.cpp
 
 src/cfg/AllXLats.cpp
 src/cfg/config.cpp
-src/cfg/ConfigSaveLoad.cpp
+src/cfg/ConfigOpt.cpp
+src/cfg/ConfigOptEdit.cpp
 src/cfg/ConfigRW.cpp
 src/cfg/ConfigLegacy.cpp
 src/cfg/HotkeyLetterDialog.cpp

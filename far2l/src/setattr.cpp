@@ -733,6 +733,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		return false;
 	}
 
+	const short ColX1Of3 = 5;
+	const short ColX2Of3 = ColX1Of3 + (DlgX - 3) / 3;
+	const short ColX3Of3 = ColX2Of3 + (DlgX - 3) / 3;
+
 	DialogDataEx AttrDlgData[] = {
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
@@ -748,28 +752,28 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_COMBOBOX,  18,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 
 		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
-		{DI_CHECKBOX,  5,                   9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  short(DlgX / 3),     9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
+		{DI_CHECKBOX,  ColX1Of3,            9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,  ColX2Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  ColX3Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_CHECKBOX,  5,                   10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  short(DlgX / 3),     10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  ColX1Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,  ColX2Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  ColX3Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,      5,                   11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
-		{DI_TEXT,      short(DlgX / 3),     11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
-		{DI_TEXT,      short(2 * DlgX / 3), 11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,  5,                   12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_CHECKBOX,  5,                   13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_CHECKBOX,  5,                   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_CHECKBOX,  short(DlgX / 3),     12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
-		{DI_CHECKBOX,  short(DlgX / 3),     13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
-		{DI_CHECKBOX,  short(DlgX / 3),     14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
-		{DI_CHECKBOX,  short(2 * DlgX / 3), 14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+		{DI_TEXT,      ColX1Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_TEXT,      ColX2Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_TEXT,      ColX3Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_CHECKBOX,  ColX1Of3,            12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_CHECKBOX,  ColX1Of3,            13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
+		{DI_CHECKBOX,  ColX1Of3,            14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
+		{DI_CHECKBOX,  ColX2Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_CHECKBOX,  ColX2Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_CHECKBOX,  ColX2Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
+		{DI_CHECKBOX,  ColX3Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_CHECKBOX,  ColX3Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_CHECKBOX,  ColX3Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
 		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},

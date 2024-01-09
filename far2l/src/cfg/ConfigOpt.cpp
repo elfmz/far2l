@@ -118,7 +118,7 @@ static constexpr const char *NSecVMenu = "VMenu";
 
 static FARString strKeyNameConsoleDetachKey;
 
-const ConfigOpt g_cfg_opts[] = {
+const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
@@ -434,9 +434,13 @@ const ConfigOpt g_cfg_opts[] = {
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "MBtnClick", &Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},
-	{true,  NSecVMenu, "HistShowTimes", ARRAYSIZE(Opt.HistoryShowTimes), Opt.HistoryShowTimes, nullptr},
-	{}
+	{true,  NSecVMenu, "HistShowTimes", ARRAYSIZE(Opt.HistoryShowTimes), Opt.HistoryShowTimes, nullptr}
 };
+
+size_t ConfigOptCount() noexcept
+{
+	return ARRAYSIZE(g_cfg_opts);
+}
 
 //////////
 
@@ -554,7 +558,7 @@ void ConfigOptLoad()
 	/* <ПРЕПРОЦЕССЫ> *************************************************** */
 	//Opt.LCIDSort=LOCALE_USER_DEFAULT; // проинициализируем на всякий случай
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
-	for (size_t i = 0; g_cfg_opts[i].Valid(); ++i)
+	for (size_t i = ConfigOptCount(); i--;)
 		cfg_reader.LoadOpt(g_cfg_opts[i]);
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
@@ -631,7 +635,7 @@ void ConfigOptAssertLoaded()
 	ASSERT(g_config_ready);
 }
 
-void ConfigOptSave(int Ask)
+void ConfigOptSave(bool Ask)
 {
 	if (Opt.Policies.DisabledOptions&0x20000) // Bit 17 - Сохранить параметры
 		return;
@@ -684,7 +688,7 @@ void ConfigOptSave(int Ask)
 	/* *************************************************** </ПРЕПРОЦЕССЫ> */
 
 	OptConfigWriter cfg_writer;
-	for (size_t i = 0; g_cfg_opts[i].Valid(); ++i)
+	for (size_t i = ConfigOptCount(); i--;)
 		cfg_writer.SaveOpt(g_cfg_opts[i]);
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */

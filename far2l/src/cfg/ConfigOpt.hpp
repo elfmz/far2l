@@ -37,18 +37,17 @@ struct ConfigOpt
 {
 	const char *section;
 	const char *key;
-	WORD  bin_size;  // used only with _type == T_BIN
-	bool  save;   // =true - будет записываться в ConfigOptSave()
+	const WORD  bin_size;  // used only with _type == T_BIN
+	const bool  save;   // =true - будет записываться в ConfigOptSave()
 
 	enum T
 	{
-		T_INVALID = 0,
-		T_STR,
+		T_STR = 0,
 		T_BIN,
 		T_DWORD,
 		T_INT,
 		T_BOOL,
-	} type : 8;
+	} const type : 8;
 
 	union V
 	{
@@ -58,7 +57,7 @@ struct ConfigOpt
 		int *i;
 		bool *b;
 		void *p;
-	} value;
+	} const value;
 
 	union D
 	{
@@ -68,7 +67,7 @@ struct ConfigOpt
 		int i;
 		bool b;
 		void *p;
-	} def;
+	} const def;
 
 	constexpr ConfigOpt(bool save_, const char *section_, const char *key_, WORD size_, BYTE *data_bin_, const BYTE *def_bin_)
 		: section{section_}, key{key_}, bin_size{size_}, save{save_},
@@ -94,16 +93,7 @@ struct ConfigOpt
 		: section{section_}, key{key_}, bin_size{0}, save{save_},
 		type{T_BOOL}, value{.b = data_b_}, def{.b = def_b_}
 	{ }
-
-	constexpr ConfigOpt()
-		: section(nullptr), key(nullptr), bin_size(0), save(false),
-		type{T_INVALID}, value{.p = nullptr}, def{.p = nullptr}
-	{ }
-
-	const bool Valid() const
-	{
-		return type != T_INVALID;
-	}
 };
 
 extern const ConfigOpt g_cfg_opts[];
+size_t ConfigOptCount() noexcept;

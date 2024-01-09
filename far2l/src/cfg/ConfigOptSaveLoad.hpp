@@ -1,5 +1,5 @@
 #pragma once
 
 void ConfigOptLoad();
-void ConfigOptSave(int Ask);
+void ConfigOptSave(bool Ask);
 void ConfigOptAssertLoaded();

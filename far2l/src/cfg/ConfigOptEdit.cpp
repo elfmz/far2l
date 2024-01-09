@@ -532,11 +532,11 @@ void ConfigOptEdit()
 
 	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - edit, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
 
-	for (size_t i = 0; g_cfg_opts[i].Valid(); ++i) {
+	for (size_t i = ConfigOptCount(); i--;) {
 		ConfigOptProps(g_cfg_opts[i])
 			.GetMaxLengthSectKeys(len_sections, len_keys, len_sections_keys);
 	}
-	for (size_t i = 0; g_cfg_opts[i].Valid(); ++i) {
+	for (size_t i = 0; i < ConfigOptCount(); ++i) {
 		ConfigOptProps(g_cfg_opts[i])
 			.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, hide_unchanged, align_dot);
 	}
@@ -585,7 +585,7 @@ void ConfigOptEdit()
 			// regenerate items in loop only if not was contunue
 			sel_pos = ListConfig.GetSelectPos();
 			ListConfig.DeleteItems();
-			for (size_t i = 0; g_cfg_opts[i].Valid(); ++i) {
+			for (size_t i = 0; i < ConfigOptCount(); ++i) {
 				ConfigOptProps(g_cfg_opts[i])
 					.MenuListAppend(ListConfig, len_sections, len_keys, len_sections_keys, hide_unchanged, align_dot);
 			}

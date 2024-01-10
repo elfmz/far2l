@@ -925,7 +925,7 @@ $ #Special commands#
 
    #far:about#  - Far information, list and information about plugins.
 
-   #far:config# - Configuration editor.
+   #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
@@ -938,6 +938,34 @@ $ #Special commands#
    #exit far#   - close far2l.
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
+
+@FarConfig
+$ #Configuration editor#
+ Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+
+ Allows to view and edit all Far Manager’s options.
+
+ Most options can be changed from the ~Options menu~@OptMenu@,
+however some options are available only here or in configuration ini-files.
+
+ If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
+(‘?’ character marked items without default value).
+
+ Besides the list navigation keys, the following key combinations are supported:
+
+ #Enter# or #F4#       Edit the value.
+
+ #Del#               Reset the item to its default value.
+
+ #Ctrl-H#            Toggle display of all or only changed items.
+
+ #Ctrl-A#            Toggle column name arranging by left or by dot.
+
+ #Ctrl-Alt-F#        Toggle quick filtering mode.
+
+ #Esc# or #F10#        Close.
+
+    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @MsWheel
 $ #Mouse: wheel support#

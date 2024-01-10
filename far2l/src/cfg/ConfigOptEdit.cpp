@@ -142,7 +142,7 @@ public:
 		if (len_key > len_keys )
 			len_keys = len_key;
 		const size_t len_section_key = len_section + len_key + 1;
-		if (len_section_key > len_sections_keys )
+		if (len_section_key > len_sections_keys)
 			len_sections_keys = len_section_key;
 	}
 
@@ -248,13 +248,13 @@ public:
 		em.AddFormat(L"  Current value: %ls", val_str.CPtr());
 		if (IsNotDefault()==1) {
 			em.Add(L"");
-			em.Add(L"Note: some panel parameters after update/reset");
+			em.Add(L"Note: some parameters after update/reset");
 			em.Add(L"      not applied immediatly in FAR2L");
 			em.Add(L"      and need relaunch feature");
 			em.Add(L"      or may be need save config & restart FAR2L");
 		}
 		em.Add(L"Continue");
-		SetMessageHelp(L"SpecCmd");//L"FarConfig");
+		SetMessageHelp(L"FarConfig");
 		if (IsNotDefault()==1) {
 			em.Add(L"Reset to default");
 			return em.Show(MSG_LEFTALIGN, 2);
@@ -378,7 +378,7 @@ public:
 			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
 			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
 			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
-			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some panel parameters after update/reset"},
+			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
 			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediatly in FAR2L"},
 			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
 			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
@@ -450,7 +450,7 @@ public:
 		MakeDialogItemsEx(AdvancedConfigDlgData, AdvancedConfigDlg);
 		Dialog Dlg(AdvancedConfigDlg, ARRAYSIZE(AdvancedConfigDlg), EditDlgDlgProc);
 		Dlg.SetPosition(-1, -1, DLG_WIDTH, DLG_HEIGHT);
-		Dlg.SetHelp(L"SpecCmd");//L"FarConfig");
+		Dlg.SetHelp(L"FarConfig");
 		Dlg.Process();
 
 		if (Dlg.GetExitCode() == 40) {
@@ -465,10 +465,10 @@ public:
 					{
 						int from_edit, base, i;
 						wchar_t *endptr;
-						if ( AdvancedConfigDlg[32].Selected )
+						if (AdvancedConfigDlg[32].Selected)
 							from_edit = 29, base = 10; // decimal
 						else
-							from_edit = 31, base = 16; // decimal
+							from_edit = 31, base = 16; // hex
 						i = (int) wcstol(AdvancedConfigDlg[from_edit].strData.CPtr(), &endptr, base);
 						if (AdvancedConfigDlg[from_edit].strData.CPtr() != endptr && *_opt.value.i != i) {
 							*_opt.value.i = i;
@@ -481,10 +481,10 @@ public:
 						int from_edit, base;
 						DWORD dw;
 						wchar_t *endptr;
-						if ( AdvancedConfigDlg[32].Selected )
+						if (AdvancedConfigDlg[32].Selected)
 							from_edit = 29, base = 10; // decimal
 						else
-							from_edit = 31, base = 16; // decimal
+							from_edit = 31, base = 16; // hex
 						dw = (DWORD) wcstoul(AdvancedConfigDlg[from_edit].strData.CPtr(), &endptr, base);
 						if (AdvancedConfigDlg[from_edit].strData.CPtr() != endptr && *_opt.value.dw != dw) {
 							*_opt.value.dw = dw;
@@ -508,8 +508,7 @@ public:
 	}
 };
 
-
-static FARString AdvancedConfigTitle(bool hide_unchanged = false)
+static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 {
 	FARString title = L"far:config";
 	if (hide_unchanged) {
@@ -524,13 +523,13 @@ void ConfigOptEdit()
 	bool hide_unchanged = false, align_dot = false;
 	int sel_pos = 0;
 
-	VMenu ListConfig(AdvancedConfigTitle(hide_unchanged), nullptr, 0, ScrY-4);
+	VMenu ListConfig(ConfigOptEditTitle(hide_unchanged), nullptr, 0, ScrY-4);
 	ListConfig.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListConfig.ClearFlags(VMENU_MOUSEREACTION);
 	//ListConfig.SetFlags(VMENU_WRAPMODE);
-	ListConfig.SetHelp(L"SpecCmd");//L"FarConfig");
+	ListConfig.SetHelp(L"FarConfig");
 
-	ListConfig.SetBottomTitle(L"ESC or F10 - close, ENTER - edit, DEL - to default, Ctrl-Alt-F - filtering, Ctrl-H - changed/all, Ctrl-A - names left/dot");
+	ListConfig.SetBottomTitle(L"F1, Esc or F10, Enter or F4, Del, Ctrl-Alt-F, Ctrl-H, Ctrl-A");
 
 	for (size_t i = ConfigOptCount(); i--;) {
 		ConfigOptProps(g_cfg_opts[i])
@@ -550,7 +549,7 @@ void ConfigOptEdit()
 			switch (Key) {
 				case KEY_CTRLH:
 					hide_unchanged = !hide_unchanged;
-					ListConfig.SetTitle(AdvancedConfigTitle(hide_unchanged));
+					ListConfig.SetTitle(ConfigOptEditTitle(hide_unchanged));
 					break;
 				case KEY_CTRLA:
 					align_dot = !align_dot;
@@ -561,7 +560,7 @@ void ConfigOptEdit()
 					if (sel_pos >= 0) {
 						ConfigOptProps cop(g_cfg_opts[sel_pos]);
 						if (cop.IsNotDefault()==1
-								&& cop.Msg(AdvancedConfigTitle())==1
+								&& cop.Msg(ConfigOptEditTitle())==1
 								&& cop.ToDefault()) {
 							cop.MenuListAppend(
 								ListConfig,
@@ -599,7 +598,7 @@ void ConfigOptEdit()
 			break;
 		ListConfig.ClearDone(); // no close after select item by ENTER or dbl mouse click
 		ConfigOptProps cop(g_cfg_opts[sel_pos]);
-		if (cop.EditDlg(AdvancedConfigTitle()) ) { // by ENTER - show edit dialog
+		if (cop.EditDlg(ConfigOptEditTitle()) ) { // by ENTER - show edit dialog
 			cop.MenuListAppend( // if was change value then regenerate item
 				ListConfig,
 				len_sections, len_keys, len_sections_keys,

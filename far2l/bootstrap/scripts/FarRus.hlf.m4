@@ -561,7 +561,7 @@ FAR2L также позволяет использовать числовую с
     5.txt                            11.txt
     88.txt                           88.txt
 
-  См. также: клавиатурные команды, общие ~для всех меню~@MenuCmd@. 
+  См. также: клавиатурные команды, общие ~для всех меню~@MenuCmd@.
 
 
 @FastFind
@@ -943,7 +943,7 @@ $ #Special commands#
 
    #far:about#  - Far information, list and information about plugins.
 
-   #far:config# - Configuration editor.
+   #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
 
@@ -956,6 +956,34 @@ $ #Special commands#
    #exit far#   - close far2l.
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
+
+@FarConfig
+$ #Редактор конфигурации#
+ Запускается по ~псевдокоманде~@SpecCmd@ #far:config# из внутренней командной строки far2l.
+
+ Позволяет просмотреть и изменить все настройки Far Manager.
+
+ Большинство настроек можно изменить через ~Меню параметров~@OptMenu@,
+но некоторые доступны только отсюда или в конфигурационных ini-файлах.
+
+ Если значение параметра отличается от значения по умолчанию, он помечается символом ‘*’ слева от имени
+(символ ‘?’ помечает параметр, не имеющий значение по умолчанию).
+
+ Кроме клавиш перемещения по списку доступны следующие сочетания:
+
+ #Enter# or #F4#       Редактировать значение.
+
+ #Del#               Сбросить параметр в значение по умолчанию.
+
+ #Ctrl-H#            Переключить отображение всех или только измененных параметров.
+
+ #Ctrl-A#            Переключить выравнивание столбца имени по левому краю или по точке.
+
+ #Ctrl-Alt-F#        Переключить режим режим быстрой фильтрации.
+
+ #Esc# or #F10#        Закрыть.
+
+    См. также: клавиатурные команды, общие ~для всех меню~@MenuCmd@.
 
 @MsWheel
 $ #Мышь: поддержка колеса#

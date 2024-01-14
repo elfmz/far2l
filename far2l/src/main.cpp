@@ -104,11 +104,11 @@ static void print_help(const char *self)
 			"      Allows to specify separate settings identity or FS location.\n"
 			" -v <filename>\n"
 			"      View the specified file.\n"
-			" -v - command line\n"
+			" -v - <command line>\n"
 			"      Executes given command line and opens viewer with its output.\n"
 			" -e[<line>[:<pos>]] [filename]\n"
 			"      Edit the specified file with optional cursor position specification or empty new file.\n"
-			" -e[<line>[:<pos>]] - command line\n"
+			" -e[<line>[:<pos>]] - <command line>\n"
 			"      Executes given command line and opens editor with its output.\n"
 			"\n",
 			self);

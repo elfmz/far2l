@@ -263,8 +263,12 @@ See LICENSE.txt and LICENSE.Far2.txt in sources tree for details
 
 @CmdLine
 $ # FAR2L: command line switches#
-  You can specify following switches in the command line or FAR2L_ARGS environment variable:
+  Actual list see via #far2l -h# or #far2l --help#.
 
+  You can specify following switches in the command line.
+
+
+ #FAR2L backend-specific options:#
   #--tty#
   Runs far2l with ~TTY backend~@UIBackends@ instead of autodetecting GUI/TTY mode. While GUI
 backed is preferred from user experience point of view, sometimes it may be necessary
@@ -290,66 +294,67 @@ runs inside.
   Use PRIMARY selection instead of CLIPBOARD X11 selection. This argument applies only to far2l
 that runs with WX backend.
 
-  #/a#
+  Backend-specific options also can be set via the #FAR2L_ARGS# environment variable
+(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
+
+
+ #FAR2L command-line options:#
+  #-a#
   Disable display of characters with codes 0 - 31 and 255. May be useful when
 executing FAR2L under telnet.
 
-  #/ag#
+  #-ag#
   Disable display of pseudographics with codes > 127.
 
-  #/an#
+  #-an#
   Disable display of pseudographics characters completely.
 
-  #/e[<line>[:<pos>]] <filename>#
-  Edit the specified file. After /e you may optionally specify editor start line
+  #-e[<line>[:<pos>]] <filename>#
+  Edit the specified file. After -e you may optionally specify editor start line
 and line position.
-  For example: far /e70:2 readme.
+  For example: #far2l -e70:2 readme#.
 
-  #/p[<path>]#
+  #-p[<path>]# [Unsupported in far2l]
   Search for "main" plugins in the folder given in <path>.
   Several search paths may be given separated by ';'.
 
-  #/co#
+  #-co#
   Forces FAR2L to load plugins from cache only. Plugins are loaded faster this way,
 but new or changed plugins are not discovered. Should be used ONLY with a stable
 list of plugins. After adding, replacing or deleting a plugin FAR2L should be loaded
 without this switch. If the cache is empty, no plugins will be loaded.
 
-  Remarks about switches /p and /co:
+  Remarks about switches -p and -co:
 
-  - ^<wrap>if /p is empty, then FAR2L will be loaded with no plugins;
-  - ^<wrap>if /p is given with a <path>, then only plugins from <path> will be loaded;
-  - ^<wrap>if only the /co switch is given and plugins cache is not empty, then plugins
+  - ^<wrap>if -p is empty, then FAR2L will be loaded with no plugins;
+  - ^<wrap>if -p is given with a <path>, then only plugins from <path> will be loaded;
+  - ^<wrap>if only the -co switch is given and plugins cache is not empty, then plugins
 will be loaded from cache;
-  - ^<wrap>/co is ignored, if /p is given;
-  - ^<wrap>if /p and /co are not given, then plugins will be loaded from the main folder,
+  - ^<wrap>-co is ignored, if -p is given;
+  - ^<wrap>if -p and -co are not given, then plugins will be loaded from the main folder,
 and from the path given at the "~Path for personal plugins~@PluginsManagerSettings@" parameter.
 
-  #/m#
+  #-m#
   FAR2L will not load macros from the registry when started.
 
-  #/ma#
+  #-ma#
   Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
-  #/u <username>#
-  Allows to have separate settings for different users.
-  For example: far /u guest
+  #-u <identity># or #-u <path>#
+  Allows to specify separate settings identity or FS location.
+  #-u <path>#: in path/.config/ (if path is full path)
+  #-u <identity>#: in ~~/.config/far2l/custom/identity/ or in $XDG_CONFIG_HOME/far2l/custom/identity/
 
-  FAR2L will set the ~environment variable~@FAREnv@ "FARUSER" to the value <username>.
+  #-v <filename>#
+  View the specified file.
+  #-v - <command line>#
+  Executes given command line and opens viewer with its output.
+  For example, #far2l -v - ls# will view ls command output.
 
-  #/v <filename>#
-  View the specified file. If <filename> is `#-#', data is read from the stdin.
-
-  For example, "dir|far /v -" will view dir command output.
-
-  If the input stream is empty when using '-' (for example, you have not specified
-the "dir" command in the provided example), FAR2L will wait forever for the end of data
-in the input stream. This will probably be fixed in a later version of FAR2L.
-
-  #/w#
+  #-w# [Unsupported in far2l]
   Stretch to console window instead of console buffer.
 
-  #/x#
+  #-x# [Unsupported in far2l]
   Disable exception handling. This option has been designed for plugin developers,
 and it is not recommended to specify it during normal operation.
 

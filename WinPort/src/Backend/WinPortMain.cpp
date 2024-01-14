@@ -238,6 +238,8 @@ extern "C" void WinPortHelp()
 	printf("\t--maximize - force maximize window upon launch (only for GUI backend)\n");
 	printf("\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n");
 	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
+    printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
+    printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
 }
 
 struct ArgOptions

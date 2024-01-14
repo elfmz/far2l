@@ -145,6 +145,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 @CmdLine
 $ # FAR: a FAR parancssori kapcsolói#
+  Actual list see via #far2l -h# or #far2l --help#.
+
   A FAR a következő parancssori kapcsolókkal indítható:
 
   #/a#    ^<wrap>Letiltja a 0-31-ig terjedő és a 255-ös ASCII kódú

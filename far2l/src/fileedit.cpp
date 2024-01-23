@@ -1557,6 +1557,7 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 bool FileEditor::ReloadFile(const wchar_t *Name)
 {
 	int UserBreak = 0;
+	m_editor->ProcessKey(KEY_CTRLU);
 	if (!LoadFile(Name, UserBreak))
 	{
 		if (UserBreak != 1) {

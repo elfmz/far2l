@@ -8,6 +8,7 @@
 #include "interf.hpp"
 #include "clipboard.hpp"
 #include "message.hpp"
+#include "mix.hpp"
 #include <signal.h>
 #include <mutex>
 #include <list>
@@ -105,6 +106,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::string _start_marker, _exit_marker;
 	std::string _host_id;
 	unsigned int _exit_code;
+	bool _may_notify{false};
 	std::atomic<bool> _allow_osc_clipset{false};
 	std::string _init_user_profile;
 
@@ -617,6 +619,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					{
 						_exit_code = atoi(&str[6 + _exit_marker.size()]);
 						_exit_marker.clear();
+						if (_may_notify) {
+							DisplayNotification(
+								_exit_code ? Msg::ConsoleCommandFailed : Msg::ConsoleCommandComplete,
+									GetTitle().c_str());
+						}
 //						fprintf(stderr, "_exit_marker=%s _exit_code=%d\n", &str[6], _exit_code);
 					} else {
 						fprintf(stderr,
@@ -951,7 +958,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 
-	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd)
+	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd, bool may_notify)
 	{
 		ASSERT(!_console_handle);
 		_host_id.clear();
@@ -961,6 +968,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_exit_code = -1;
 			return true;
 		}
+		_may_notify = may_notify;
 
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd, MAX_PATH)) {
@@ -1076,7 +1084,7 @@ static int VTShell_ExecuteCommonTail(bool completed)
 	return r;
 }
 
-int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd) 
+int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_notify)
 {	
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	if (g_vt && !g_vt->CheckLeaderAlive()) {
@@ -1086,7 +1094,7 @@ int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd)
 		g_vt.reset(new VTShell);
 	}
 
-	return VTShell_ExecuteCommonTail(g_vt->ExecuteCommand(cmd, need_sudo, may_bgnd));
+	return VTShell_ExecuteCommonTail(g_vt->ExecuteCommand(cmd, need_sudo, may_bgnd, may_notify));
 }
 
 int VTShell_Switch(size_t index)

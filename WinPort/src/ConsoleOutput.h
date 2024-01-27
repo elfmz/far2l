@@ -67,6 +67,8 @@ public:
 	ConsoleOutput();
 	virtual void SetBackend(IConsoleOutputBackend *listener);
 
+	void CopyFrom(const ConsoleOutput &co);
+
 	virtual void SetAttributes(DWORD64 attributes);
 	virtual DWORD64 GetAttributes();
 	virtual void SetCursor(COORD pos);
@@ -115,4 +117,7 @@ public:
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void RepaintsDeferStart();
 	virtual void RepaintsDeferFinish();
+
+	virtual IConsoleOutput *ForkConsoleOutput();
+	virtual void JoinConsoleOutput(IConsoleOutput *con_out);
 };

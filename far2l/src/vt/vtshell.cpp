@@ -1008,6 +1008,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				_vta.OnDetached();
 				DeliverPendingWindowInfo();
 				_console_handle = WINPORT(ForkConsole)();
+				FARString msg(Msg::CommandBackgrounded);
+				msg.Insert(0, L"\n");
+				msg.Append(L"\n");
+				SetColor(COL_HELPTOPIC, true);
+				DWORD dw;
+				WINPORT(WriteConsole)(NULL, msg.CPtr(), msg.GetLength(), &dw, NULL );
 				StartIOReaders();
 				return false;
 			}

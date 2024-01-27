@@ -818,6 +818,11 @@ $ #Configuration editor#
  Most options can be changed from the ~Options menu~@OptMenu@,
 however some options are available only here or in configuration ini-files.
 
+ The options are displayed in a list with four fields per item:
+  #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
+  #-# The type (boolean, integer, dword, string, binary or unknown)
+  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
  If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
 (‘?’ character marked items without default value).
 

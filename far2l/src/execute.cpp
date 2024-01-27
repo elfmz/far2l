@@ -298,20 +298,19 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
 	}
 
-	if (ExecFlags & EF_HIDEOUT) {
+	const bool may_notify = (ExecFlags & (EF_NOTIFY | EF_NOWAIT)) == EF_NOTIFY && Opt.NotifOpt.OnConsole;
+	if (ExecFlags & (EF_HIDEOUT | EF_NOWAIT)) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
+		if (may_notify) {
+			DisplayNotification(
+				r ? Msg::ConsoleCommandFailed : Msg::ConsoleCommandComplete,
+				(ExecFlags & EF_NOCMDPRINT) ? "..." : CmdStr);
+		}
 
 	} else {
 		FarExecuteScope fes((ExecFlags & EF_NOCMDPRINT) ? "" : CmdStr);
-		if (ExecFlags & (EF_NOWAIT | EF_HIDEOUT)) {
-			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
-		} else {
-			r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0, (ExecFlags & EF_MAYBGND) != 0);
-		}
-		if ((ExecFlags & EF_NOTIFY) && Opt.NotifOpt.OnConsole) {
-			DisplayNotification((r == 0) ? Msg::ConsoleCommandComplete : Msg::ConsoleCommandFailed, CmdStr);
-		}
+		r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0, (ExecFlags & EF_MAYBGND) != 0, may_notify);
 	}
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 

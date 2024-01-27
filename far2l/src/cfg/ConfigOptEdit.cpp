@@ -152,36 +152,37 @@ public:
 					int update_id = -1) const
 	{
 		MenuItemEx mi;
-		FARString fsn;
+		FARString fsn, fssave;
 		if (align_dot)
 		 fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
 		else {
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
+		fssave = (_opt.save ? "s" : "-");
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL:
-				mi.strName.Format(L"%s %ls |  bool|%s",
-					(*_opt.value.b == _opt.def.b ? " " : "*"), fsn.CPtr(), (*_opt.value.b ? "true" : "false"));
+				mi.strName.Format(L"%s %ls |  bool|%ls|%s",
+					(*_opt.value.b == _opt.def.b ? " " : "*"), fsn.CPtr(), fssave.CPtr(), (*_opt.value.b ? "true" : "false"));
 				break;
 			case ConfigOpt::T_INT:
-				mi.strName.Format(L"%s %ls |   int|%ld = 0x%lx",
-					(*_opt.value.i == _opt.def.i ? " " : "*"), fsn.CPtr(), *_opt.value.i, *_opt.value.i);
+				mi.strName.Format(L"%s %ls |   int|%ls|%ld = 0x%lx",
+					(*_opt.value.i == _opt.def.i ? " " : "*"), fsn.CPtr(), fssave.CPtr(), *_opt.value.i, *_opt.value.i);
 				break;
 			case ConfigOpt::T_DWORD:
-				mi.strName.Format(L"%s %ls | dword|%lu = 0x%lx",
-					(*_opt.value.dw == _opt.def.dw ? " " : "*"), fsn.CPtr(), *_opt.value.dw, *_opt.value.dw);
+				mi.strName.Format(L"%s %ls | dword|%ls|%lu = 0x%lx",
+					(*_opt.value.dw == _opt.def.dw ? " " : "*"), fsn.CPtr(), fssave.CPtr(), *_opt.value.dw, *_opt.value.dw);
 				break;
 			case ConfigOpt::T_STR:
-				mi.strName.Format(L"%s %ls |string|%ls",
-					(*_opt.value.str == _opt.def.str ? " " : "*"), fsn.CPtr(), _opt.value.str->CPtr());
+				mi.strName.Format(L"%s %ls |string|%ls|%ls",
+					(*_opt.value.str == _opt.def.str ? " " : "*"), fsn.CPtr(), fssave.CPtr(), _opt.value.str->CPtr());
 				break;
 			case ConfigOpt::T_BIN:
-				mi.strName.Format(L"%s %ls |binary|(binary has length %u bytes)",
+				mi.strName.Format(L"%s %ls |binary|%ls|(binary has length %u bytes)",
 					(_opt.def.bin == nullptr || _opt.value.bin == nullptr ? "?"
 						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : "*")),
-					fsn.CPtr(), _opt.bin_size );
+					fsn.CPtr(), fssave.CPtr(), _opt.bin_size );
 				break;
 			default:
 				mi.strName.Format(L"? %ls |unknown type ???", fsn.CPtr());

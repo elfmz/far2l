@@ -269,7 +269,7 @@ public:
 
 		bool Set;
 #if (__WCHAR_MAX__ > 0xffff)
-		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT))
+		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT || chr < 0))
 		{
 			Set = (HighBits.find(chr) != HighBits.end());
 
@@ -286,7 +286,7 @@ public:
 	inline void SetBit(wchar_t chr)
 	{
 #if (__WCHAR_MAX__ > 0xffff)
-		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT))
+		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT || chr < 0))
 		{
 			HighBits.insert(chr);
 		}
@@ -300,7 +300,7 @@ public:
 	inline void ClearBit(wchar_t chr)
 	{
 #if (__WCHAR_MAX__ > 0xffff)
-		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT))
+		if (UNLIKELY(chr >= RE_FAST_CHAR_COUNT || chr < 0))
 		{
 			HighBits.erase(chr);
 		}

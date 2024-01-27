@@ -1588,8 +1588,12 @@ void VTAnsi::OnStart()
 
 void VTAnsi::OnStop()
 {
-	RevertConsoleState(_ctx->vt_shell->ConsoleHandle());
+	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
+	RevertConsoleState(con_hnd);
 	_incomplete.tail.clear();
+	_ctx->orig_palette.clear();
+	_ctx->alternative_screen_buffer.Reset(con_hnd);
+	_ctx->saved_state.ApplyToConsole(con_hnd, false);
 	_ctx->ResetTerminal();
 	_ctx->ansi_state.font_state.FromConsoleAttributes(_ctx->saved_state.csbi.wAttributes);
 }
@@ -1605,9 +1609,6 @@ void VTAnsi::RevertConsoleState(HANDLE con_hnd)
 	for (auto &it : _ctx->orig_palette) { // restore all changed palette colors
 		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
 	}
-	_ctx->orig_palette.clear();
-	_ctx->alternative_screen_buffer.Reset(con_hnd);
-	_ctx->saved_state.ApplyToConsole(con_hnd, false);
 	WINPORT(SetConsoleScrollRegion)(con_hnd, 0, MAXSHORT);
 	WINPORT(SetConsoleTitle)(con_hnd, _saved_title.c_str());
 }

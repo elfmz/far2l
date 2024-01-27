@@ -240,7 +240,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)( NULL, &csbi )
+		if (WINPORT(GetConsoleScreenBufferInfo)(ConsoleHandle(), &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
 			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
@@ -444,7 +444,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		if (!translated.empty()) {
 			if (_slavename.empty() && KeyEvent.uChar.UnicodeChar) {//pipes fallback
-				WINPORT(WriteConsole)( NULL, &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
+				WINPORT(WriteConsole)(ConsoleHandle(), &KeyEvent.uChar.UnicodeChar, 1, &dw, NULL );
 			}
 			DbgPrintEscaped("INPUT", translated.c_str(), translated.size());
 			if (!WriteTerm(translated.c_str(), translated.size())) {
@@ -845,7 +845,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (_last_window_info_ir.EventType == WINDOW_BUFFER_SIZE_EVENT) {
 			DWORD dw = 0;
-			WINPORT(WriteConsoleInput)(NULL, &_last_window_info_ir, 1, &dw);
+			WINPORT(WriteConsoleInput)(ConsoleHandle(), &_last_window_info_ir, 1, &dw);
 			_last_window_info_ir.EventType = 0;
 		}
 	}
@@ -992,6 +992,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		StopIOReaders();
 		WINPORT(JoinConsole)(_console_handle);
 		_console_handle = NULL;
+		OnTerminalResized();
 
 		return ExecuteCommandCommonTail(true);
 	}

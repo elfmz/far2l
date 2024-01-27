@@ -811,10 +811,13 @@ IConsoleOutput *ConsoleOutput::ForkConsoleOutput()
 void ConsoleOutput::JoinConsoleOutput(IConsoleOutput *con_out)
 {
 	ConsoleOutput *co = (ConsoleOutput *)con_out;
-	std::lock_guard<std::mutex> lock(_mutex);
 	unsigned int w = 0, h = 0;
-	_buf.GetSize(w, h);
-	CopyFrom(*co);
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		_buf.GetSize(w, h);
+		CopyFrom(*co);
+		_buf.SetSize(w, h, _attributes);
+	}
 	if (_backend) {
 		SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
 		_backend->OnConsoleOutputUpdated(&screen_rect, 1);

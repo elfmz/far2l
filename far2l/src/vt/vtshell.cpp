@@ -1066,10 +1066,25 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 static std::mutex g_vts_mutex;
 static std::vector<std::unique_ptr<VTShell> > g_vts;
 static std::unique_ptr<VTShell> g_vt;
+static std::atomic<int> g_vt_busy{0};
+
+struct VTShell_BusyScope
+{
+	bool owner;
+	VTShell_BusyScope()
+	{
+		owner = (1 == ++g_vt_busy);
+	}
+	~VTShell_BusyScope()
+	{
+		--g_vt_busy;
+	}
+};
 
 static int VTShell_ExecuteCommonTail(bool completed)
 {
 	if (!completed) {
+		std::lock_guard<std::mutex> lock(g_vts_mutex);
 		g_vts.emplace_back(std::move(g_vt));
 		g_vt.reset();
 		return 0;
@@ -1086,7 +1101,12 @@ static int VTShell_ExecuteCommonTail(bool completed)
 
 int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_notify)
 {	
-	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	VTShell_BusyScope vts_bs;
+	if (!vts_bs.owner) {
+		fprintf(stderr, "%s('%s') - not owner\n", __FUNCTION__, cmd);
+		return -1;
+	}
+
 	if (g_vt && !g_vt->CheckLeaderAlive()) {
 		g_vt.reset();
 	}
@@ -1099,14 +1119,23 @@ int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_not
 
 int VTShell_Switch(size_t index)
 {
-	std::lock_guard<std::mutex> lock(g_vts_mutex);
-	if (index >= g_vts.size()) {
-		fprintf(stderr, "%s: wrong index: %lu >= %lu\n", __FUNCTION__,
-			(unsigned long)index, (unsigned long)g_vts.size());
+	VTShell_BusyScope vts_bs;
+	if (!vts_bs.owner) {
+		fprintf(stderr, "%s(%lu) - not owner\n", __FUNCTION__, (unsigned long)index);
 		return -1;
 	}
-	g_vt = std::move(g_vts[index]);
-	g_vts.erase(g_vts.begin() + index);
+
+	{
+		std::lock_guard<std::mutex> lock(g_vts_mutex);
+		if (index >= g_vts.size()) {
+			fprintf(stderr, "%s: wrong index: %lu >= %lu\n", __FUNCTION__,
+				(unsigned long)index, (unsigned long)g_vts.size());
+			return -1;
+		}
+		g_vt = std::move(g_vts[index]);
+		g_vts.erase(g_vts.begin() + index);
+	}
+
 	return VTShell_ExecuteCommonTail(g_vt->ExecuteCommandContinue());
 }
 
@@ -1120,11 +1149,7 @@ void VTShell_Shutdown()
 
 bool VTShell_Busy()
 {
-	if (!g_vts_mutex.try_lock())
-		return true;
-
-	g_vts_mutex.unlock();
-	return false;
+	return g_vt_busy != 0;
 }
 
 void VTShell_Enum(std::vector<std::string> &vts)

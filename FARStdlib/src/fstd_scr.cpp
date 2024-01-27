@@ -21,7 +21,7 @@ void WINAPI FP_Screen::Save(void)
 
 	if (nSaveCount == 0) {
 		hScreen = FP_Info->SaveScreen(0, 0, -1, -1);
-		WINPORT(GetConsoleTitle)(SaveTitle, ARRAYSIZE(SaveTitle));
+		WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle));
 	}
 
 	nSaveCount++;
@@ -52,7 +52,7 @@ void WINAPI FP_Screen::Restore(void)
 
 	if (nSaveCount == 0) {
 		Log(("SCREEN: RESTORE"));
-		WINPORT(SetConsoleTitle)(SaveTitle);
+		WINPORT(SetConsoleTitle)(NULL, SaveTitle);
 		FP_Info->RestoreScreen(hScreen);
 		FP_Info->Text(0, 0, 0, NULL);
 		hScreen = NULL;

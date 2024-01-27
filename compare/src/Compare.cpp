@@ -1176,7 +1176,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 	//
 	TCHAR cConsoleTitle[MAX_PATH], cBuffer[MAX_PATH];
-	DWORD dwTitleSaved = GetConsoleTitle(cConsoleTitle, ARRAYSIZE(cConsoleTitle));
+	DWORD dwTitleSaved = GetConsoleTitle(NULL, cConsoleTitle, ARRAYSIZE(cConsoleTitle));
 #ifndef UNICODE
 	OSVERSIONINFO ovi;
 	ovi.dwOSVersionInfoSize = sizeof(ovi);
@@ -1185,7 +1185,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	else
 #endif
 		lstrcpy(cBuffer, GetMsg(MComparingFiles));
-	SetConsoleTitle(cBuffer);
+	SetConsoleTitle(NULL, cBuffer);
 
 	//
 
@@ -1270,7 +1270,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	}
 	//
 	if (dwTitleSaved)
-		SetConsoleTitle(cConsoleTitle);
+		SetConsoleTitle(NULL, cConsoleTitle);
 	FreePanelItems(AInfo, PInfo);
 	return INVALID_HANDLE_VALUE;
 }

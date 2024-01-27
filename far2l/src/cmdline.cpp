@@ -873,7 +873,7 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs);
 	fs.Format(L"            Backend: %ls", WinPortBackend());
 	ListAbout.AddItem(fs);
-	fs.Format(L"ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)() );
+	fs.Format(L"ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
 	ListAbout.AddItem(fs);
 	fs.Format(L"              Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
 	ListAbout.AddItem(fs);

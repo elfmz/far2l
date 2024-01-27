@@ -65,7 +65,7 @@ far2l_CheckForInput(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "|k", &dwTimeout))
         return NULL;
 
-    if (WINPORT(WaitConsoleInput)(dwTimeout))
+    if (WINPORT(WaitConsoleInput)(NULL, dwTimeout))
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }

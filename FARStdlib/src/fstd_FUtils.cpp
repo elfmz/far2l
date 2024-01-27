@@ -8,7 +8,7 @@ SaveConsoleTitle::SaveConsoleTitle(BOOL rest /*= TRUE*/)
 	Usage = rest;
 	NeedToRestore = rest;
 	GET_TIME(LastChange);
-	WINPORT(GetConsoleTitle)(SaveTitle, ARRAYSIZE(SaveTitle));
+	WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle));
 	Log(("TITLE: Save"));
 }
 SaveConsoleTitle::~SaveConsoleTitle()
@@ -35,7 +35,7 @@ void SaveConsoleTitle::Text(LPCSTR buff)
 			buff = _buff;
 		}
 	*/
-	WINPORT(SetConsoleTitle)(MB2Wide(buff).c_str());
+	WINPORT(SetConsoleTitle)(NULL, MB2Wide(buff).c_str());
 }
 
 void SaveConsoleTitle::Restore(void) {}

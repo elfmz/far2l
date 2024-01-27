@@ -109,7 +109,7 @@ VTFar2lExtensios::~VTFar2lExtensios()
 	for (;_clipboard_opens > 0; --_clipboard_opens) {
 		WINPORT(CloseClipboard)();
 	}
-	WINPORT(SetConsoleFKeyTitles)(NULL);
+	WINPORT(SetConsoleFKeyTitles)(_vt_shell->ConsoleHandle(), NULL);
 }
 
 void VTFar2lExtensios::WriteInputEvent(const StackSerializer &stk_ser)
@@ -545,7 +545,7 @@ void VTFar2lExtensios::OnInteract_SetFKeyTitles(StackSerializer &stk_ser)
 		}
 	}
 
-	bool out = WINPORT(SetConsoleFKeyTitles)(titles) != FALSE;
+	bool out = WINPORT(SetConsoleFKeyTitles)(_vt_shell->ConsoleHandle(), titles) != FALSE;
 
 	stk_ser.Clear();
 	stk_ser.PushNum(out);
@@ -554,7 +554,7 @@ void VTFar2lExtensios::OnInteract_SetFKeyTitles(StackSerializer &stk_ser)
 void VTFar2lExtensios::OnInteract_GetColorPalette(StackSerializer &stk_ser)
 {
 	stk_ser.Clear();
-	const uint8_t bits = WINPORT(GetConsoleColorPalette)();
+	const uint8_t bits = WINPORT(GetConsoleColorPalette)(_vt_shell->ConsoleHandle());
 	const uint8_t reserved = 0;
 	stk_ser.PushNum(reserved);
 	stk_ser.PushNum(bits);

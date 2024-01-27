@@ -1,6 +1,9 @@
 #pragma once
 #include <string>
+#include <memory>
 #include "IVTShell.h"
+
+struct VTAnsiContext;
 
 class VTAnsi
 {
@@ -9,8 +12,12 @@ class VTAnsi
 	} _incomplete;
 
 	std::wstring _ws, _saved_title;
+	std::unique_ptr<VTAnsiContext> _ctx;
+
+	void RevertConsoleState(HANDLE con_hnd);
+
 	public:
-	VTAnsi(IVTShell *vt_shell);
+	VTAnsi(IVTShell *vtsh);
 	~VTAnsi();
 
 	void DisableOutput();
@@ -23,6 +30,8 @@ class VTAnsi
 
 	void OnStart();
 	void OnStop();
+	void OnDetached();
+	std::string GetTitle();
 };
 
 class VTAnsiSuspend

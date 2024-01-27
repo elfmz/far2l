@@ -225,8 +225,8 @@ static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
 		}
 
 		TCHAR consoleTitle[255];
-		DWORD tlen = GetConsoleTitle(consoleTitle, ARRAYSIZE(consoleTitle));
-		SetConsoleTitle(argv);
+		DWORD tlen = GetConsoleTitle(NULL, consoleTitle, ARRAYSIZE(consoleTitle));
+		SetConsoleTitle(NULL, argv);
 		fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
 		/*
 			BOOL Created=CreateProcess(NULL,fullcmd,NULL,NULL,TRUE,0,NULL,workDir,&si,&pi);
@@ -242,7 +242,7 @@ static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
 		CloseHandle(FileHandle);
 
 		if (tlen)
-			SetConsoleTitle(consoleTitle);
+			SetConsoleTitle(NULL, consoleTitle);
 	}
 
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;

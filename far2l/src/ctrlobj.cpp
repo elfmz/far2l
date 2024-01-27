@@ -234,9 +234,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		Lines.emplace_back(Msg::VTStartTipPendCmdTitle);
 		Lines.emplace_back(Msg::VTStartTipPendCmdFn);
 		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltC);
-		if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-			Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltZ);
-		}
+		Lines.emplace_back(Msg::VTStartTipPendCmdCtrlAltZ);
 		Lines.emplace_back(Msg::VTStartTipPendCmdMouse);
 		Lines.emplace_back(Msg::VTStartTipMouseSelect);
 

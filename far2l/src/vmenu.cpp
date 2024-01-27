@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "cmdline.hpp"
 #include "UsedChars.hpp"
+#include "help.hpp"
 
 VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 		MenuDataEx *Data,				// пункты меню
@@ -122,6 +123,9 @@ VMenu::VMenu(const wchar_t *Title,		// заголовок меню
 
 	if (!CheckFlags(VMENU_LISTBOX))
 		FrameManager->ModalizeFrame(this);
+
+	if (ParentDialog)
+		SetBottomTitle(L"Ctrl-Alt-F"); // by default info about keys for toggle filtering feature
 }
 
 VMenu::~VMenu()
@@ -1149,7 +1153,7 @@ int VMenu::ProcessKey(FarKey Key)
 			if (!CheckKeyHiOrAcc(Key, 0, 0)) {
 				if (Key == KEY_SHIFTF1 || Key == KEY_F1) {
 					if (ParentDialog)
-						;	// ParentDialog->ProcessKey(Key);
+						Help::Present(L"MenuCmd",L"",FHELP_NOSHOWERROR);	// ParentDialog->ProcessKey(Key);
 					else
 						ShowHelp();
 

@@ -1352,7 +1352,7 @@ bool FarEditorSet::checkConEmu()
 
 bool FarEditorSet::checkFarTrueMod()
 {
-  return WINPORT(GetConsoleColorPalette)() >= 24;
+  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
 }
 
 bool FarEditorSet::checkConsoleAnnotationAvailable()

@@ -90,11 +90,6 @@ void VTOutputReader::Stop()
 	}
 }
 
-void VTOutputReader::WaitDeactivation()
-{
-	WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(_deactivated);
-}
-
 void VTOutputReader::KickAss()
 {
 	char c = 0;
@@ -162,9 +157,10 @@ VTInputReader::VTInputReader(IProcessor *processor) : _stop(false), _processor(p
 {
 }
 	
-void VTInputReader::Start()
+void VTInputReader::Start(HANDLE con_hnd)
 {
 	if (!_started) {
+		_con_hnd = con_hnd;
 		_stop = false;
 		WithThread::Start();
 	}
@@ -199,7 +195,7 @@ void VTInputReader::KickInputThread()
 	INPUT_RECORD ir = {};
 	ir.EventType = NOOP_EVENT;
 	DWORD dw = 0;
-	WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+	WINPORT(WriteConsoleInput)(_con_hnd, &ir, 1, &dw);
 }
 
 void *VTInputReader::ThreadProc()
@@ -208,7 +204,7 @@ void *VTInputReader::ThreadProc()
 	while (!_stop) {
 		INPUT_RECORD ir = {0};
 		DWORD dw = 0;
-		if (!WINPORT(ReadConsoleInput)(0, &ir, 1, &dw)) {
+		if (!WINPORT(ReadConsoleInput)(_con_hnd, &ir, 1, &dw)) {
 			perror("VT: ReadConsoleInput");
 			usleep(100000);
 		} else if (ir.EventType == MOUSE_EVENT) {

@@ -441,7 +441,7 @@ DWORD IsMouseButtonPressed()
 	}
 	// IsMouseButtonPressed used within loops, so lets sleep to avoid CPU hogging in that loops
 	// it would be nicer to sleep inside of that loops instead, but keep to original code for now
-	WINPORT(WaitConsoleInput)(10);
+	WINPORT(WaitConsoleInput)(NULL, 10);
 	return MouseButtonState;
 }
 
@@ -668,7 +668,7 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 		}
 
 		ScrBuf.Flush();
-		WINPORT(WaitConsoleInput)(160);
+		WINPORT(WaitConsoleInput)(NULL, 160);
 
 		// Позволяет избежать ситуации блокирования мыши
 		if (Opt.Mouse)	// А нужно ли это условие???
@@ -1323,7 +1323,7 @@ FarKey WaitKey(DWORD KeyWait, DWORD delayMS, bool ExcludeMacro)
 				WaitExpiration = CheckTime - CurTime;
 		}
 
-		WINPORT(WaitConsoleInput)(WaitExpiration);
+		WINPORT(WaitConsoleInput)(NULL, WaitExpiration);
 	}
 
 	if (KeyWait == KEY_CTRLALTSHIFTRELEASE || KeyWait == KEY_RCTRLALTSHIFTRELEASE)

@@ -385,6 +385,17 @@ AskQuit
 "Ви хочете завершити роботу в FAR?"
 "Вы жадаеце выйсці з FAR?"
 
+AskQuitVTS
+"Это так же завершит исполнение %u фоновых команд"
+"This also will terminate %u background commands"
+upd:"This also will terminate %u background commands"
+upd:"This also will terminate %u background commands"
+upd:"This also will terminate %u background commands"
+upd:"This also will terminate %u background commands"
+upd:"This also will terminate %u background commands"
+"Це також завершить виконання %u фонових команд"
+"Гэта таксама завершыць выкананне %u фонавых каманд"
+
 Background
 "&В фон"
 "&Background"
@@ -406,6 +417,17 @@ GetOut
 "&Get out"
 "&Вибратися"
 "&Выбрацца"
+
+CommandBackgrounded
+" *** Команда отправлена в фон, используйте меню Экранов F12 для переключения на нее"
+" *** Command put to background, use Screen menu (F12) to switch to it back"
+upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+" *** Команда відправлена у фон, використовуйте меню Екранів F12 для перемикання на неї"
+" *** Каманда адпраўлена ў фон, выкарыстоўвайце меню Экранаў F12 для пераключэння на яе"
 
 F1
 l:
@@ -6017,15 +6039,15 @@ upd:" Ctrl+Alt+C - terminate everything in this shell.                         "
 
 VTStartTipPendCmdCtrlAltZ
 l:
-" Ctrl+Alt+Z - отправить процесс far2l в фон, освободив терминал.          "
-" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach far2l application to background releasing terminal.  "
-" Ctrl+Alt+Z - надіслати процес far2l у фон, звільнивши термінал.          "
-" Ctrl+Alt+Z - адаслаць працэс far2l у фон, вызваліўшы тэрмінал.           "
+" Ctrl+Alt+Z - отправить команду в фон, освободив терминал.          "
+" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
+" Ctrl+Alt+Z - надіслати команду у фон, звільнивши термінал.          "
+" Ctrl+Alt+Z - адаслаць каманду у фон, вызваліўшы тэрмінал.           "
 
 VTStartTipPendCmdMouse
 l:

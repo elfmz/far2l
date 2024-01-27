@@ -94,6 +94,9 @@ protected:
 	virtual ~IConsoleInput() {}
 
 public:
+	virtual IConsoleInput *ForkConsoleInput() = 0;
+	virtual void JoinConsoleInput(IConsoleInput *con_in) = 0;
+
 	virtual void Enqueue(const INPUT_RECORD *data, DWORD size) = 0;
 	virtual DWORD Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0) = 0;
 	virtual DWORD Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0) = 0;
@@ -141,6 +144,9 @@ protected:
 	virtual void Unlock() = 0;
 
 public:
+	virtual IConsoleOutput *ForkConsoleOutput() = 0;
+	virtual void JoinConsoleOutput(IConsoleOutput *con_out) = 0;
+
 	virtual void SetBackend(IConsoleOutputBackend *listener) = 0;
 
 	virtual void SetAttributes(DWORD64 attributes) = 0;

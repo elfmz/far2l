@@ -56,6 +56,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrbuf.hpp"
 #include "console.hpp"
 #include "InterThreadCall.hpp"
+#include "vt/vtshell.h"
+#include "execute.hpp"
 
 Manager *FrameManager;
 
@@ -345,6 +347,18 @@ int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 	return Counter;
 }
 
+static FARString FrameMenuNumTextPrefix(int I)
+{
+	FARString out;
+	if (I < 10)
+		out.Format(L"&%d. ", I);
+	else if (I < 36)
+		out.Format(L"&%lc. ", I + 55);	// 55='A'-10
+	else
+		out = L"&   ";
+	return out;
+}
+
 /*!
 	\return Возвращает nullptr если нажат "отказ" или если нажат текущий фрейм.
 	Другими словами, если немодальный фрейм не поменялся.
@@ -374,17 +388,11 @@ Frame *Manager::FrameMenu()
 		if (!CheckCanLoseFocus)
 			ModalMenuItem.SetDisable(TRUE);
 
-		for (int I = 0; I < FrameCount; I++) {
-			FARString strType, strName, strNumText;
+		int I = 0;
+		for (; I < FrameCount; I++) {
+			FARString strType, strName, strNumText = FrameMenuNumTextPrefix(I);
 			FrameList[I]->GetTypeAndName(strType, strName);
 			ModalMenuItem.Clear();
-
-			if (I < 10)
-				strNumText.Format(L"&%d. ", I);
-			else if (I < 36)
-				strNumText.Format(L"&%lc. ", I + 55);	// 55='A'-10
-			else
-				strNumText = L"&   ";
 
 			// TruncPathStr(strName,ScrX-24);
 			ReplaceStrings(strName, L"&", L"&&", -1);
@@ -395,6 +403,18 @@ Frame *Manager::FrameMenu()
 			ModalMenu.AddItem(&ModalMenuItem);
 		}
 
+		std::vector<std::string> vts;
+		VTShell_Enum(vts);
+		for (const auto &vt : vts) {
+			ModalMenuItem.Clear();
+			ModalMenuItem.strName.Format(L"%s", vt.c_str());
+			ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
+			ModalMenuItem.strName.Insert(0, FrameMenuNumTextPrefix(I));
+			ModalMenuItem.SetSelect(I == FramePos);
+			ModalMenu.AddItem(&ModalMenuItem);
+			++I;
+		}
+
 		AlreadyShown = TRUE;
 		ModalMenu.Process();
 		AlreadyShown = FALSE;
@@ -403,10 +423,15 @@ Frame *Manager::FrameMenu()
 
 	if (CheckCanLoseFocus) {
 		if (ExitCode >= 0) {
-			ActivateFrame(ExitCode);
-			return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
-							? nullptr
-							: CurrentFrame);
+			if (ExitCode < FrameCount) {
+				ActivateFrame(ExitCode);
+				return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
+								? nullptr
+								: CurrentFrame);
+			} else {
+				SwitchToVT(ExitCode - FrameCount);
+		//		return nullptr;
+			}
 		}
 
 		return (ActivatedFrame == CurrentFrame ? nullptr : CurrentFrame);
@@ -668,17 +693,24 @@ void Manager::ProcessMainLoop()
 	}
 }
 
-static bool ConfirmExit()
+static bool ConfirmExit(size_t vts_cnt)
 {
 	int r;
+	ExMessager m(Msg::Quit);
+	m.Add(Msg::AskQuit);
+	if (vts_cnt) {
+		m.AddFormat(Msg::AskQuitVTS, (unsigned int)vts_cnt);
+	}
+	m.Add(Msg::Yes);
+	m.Add(Msg::No);
 	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
-		r = Message(0, 3, Msg::Quit, Msg::AskQuit, Msg::Yes, Msg::No, Msg::Background);
+		m.Add(Msg::Background);
+		r = m.Show(3);
 		if (r == 2) {
 			WINPORT(ConsoleBackgroundMode)(TRUE);
 		}
-
 	} else {
-		r = Message(0, 2, Msg::Quit, Msg::AskQuit, Msg::Yes, Msg::No);
+		r = m.Show(2);
 	}
 
 	return r == 0;
@@ -691,7 +723,9 @@ void Manager::ExitMainLoop(int Ask)
 		CloseFARMenu = TRUE;
 	};
 
-	if (!Ask || ((!Opt.Confirm.ExitEffective() || ConfirmExit()) && CtrlObject->Plugins.MayExitFar())) {
+
+	size_t vts_cnt = VTShell_Count();
+	if (!Ask || (((!Opt.Confirm.ExitEffective() && !vts_cnt) || ConfirmExit(vts_cnt)) && CtrlObject->Plugins.MayExitFar())) {
 		/*
 			$ 29.12.2000 IS
 			+ Проверяем, сохранены ли все измененные файлы. Если нет, то не выходим
@@ -850,7 +884,6 @@ int Manager::ProcessKey(DWORD Key)
 						//_MANAGER(SysLog(-1));
 						return TRUE;
 					}
-
 					break;	// отдадим F12 дальше по цепочке
 				}
 

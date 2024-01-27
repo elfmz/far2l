@@ -237,6 +237,56 @@ static int NotVTExecute(const char *CmdStr, bool NoWait, bool NeedSudo)
 	return r;
 }
 
+class FarExecuteScope
+{
+	DWORD _dw;
+	DWORD _saved_mode{0};
+
+public:
+	FarExecuteScope(const char *cmd_str)
+	{
+		ProcessShowClock++;
+		if (CtrlObject && CtrlObject->CmdLine) {
+			CtrlObject->CmdLine->ShowBackground();
+			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
+		}
+		//		CtrlObject->CmdLine->SetString(L"", TRUE);
+		ScrBuf.Flush();
+		WINPORT(GetConsoleMode)(NULL, &_saved_mode);
+		WINPORT(SetConsoleMode) (NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | WINDOW_BUFFER_SIZE_EVENT);	// ENABLE_QUICK_EDIT_MODE
+		if (cmd_str) {
+			const std::wstring &ws = MB2Wide(cmd_str);
+			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);
+			WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
+		}
+		WINPORT(SetConsoleFKeyTitles)(NULL, NULL);
+	}
+
+	~FarExecuteScope()
+	{
+		WINPORT(SetConsoleMode)(NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+		WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
+		WINPORT(SetConsoleMode)(NULL, _saved_mode);
+		ScrBuf.FillBuf();
+		if (CtrlObject && CtrlObject->CmdLine) {
+			CtrlObject->CmdLine->SaveBackground();
+		}
+		ProcessShowClock--;
+		SetFarConsoleMode(TRUE);
+		ScrBuf.Flush();
+		if (CtrlObject && CtrlObject->MainKeyBar) {
+			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar, true);
+		}
+	}
+};
+
+void SwitchToVT(size_t vt_index)
+{
+	FarExecuteScope fes(nullptr);
+	VTShell_Switch(vt_index);
+}
+
 static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 	//	fprintf(stderr, "TODO: Execute('%ls')\n", CmdStr);
@@ -248,52 +298,19 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
 	}
 
-	if (ExecFlags & EF_HIDEOUT) {
+	const bool may_notify = (ExecFlags & (EF_NOTIFY | EF_NOWAIT)) == EF_NOTIFY && Opt.NotifOpt.OnConsole;
+	if (ExecFlags & (EF_HIDEOUT | EF_NOWAIT)) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);//otherwise command remain in cmdline
+		if (may_notify) {
+			DisplayNotification(
+				r ? Msg::ConsoleCommandFailed : Msg::ConsoleCommandComplete,
+				(ExecFlags & EF_NOCMDPRINT) ? "..." : CmdStr);
+		}
 
 	} else {
-		ProcessShowClock++;
-		if (CtrlObject && CtrlObject->CmdLine) {
-			CtrlObject->CmdLine->ShowBackground();
-			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
-		}
-		//		CtrlObject->CmdLine->SetString(L"", TRUE);
-		ScrBuf.Flush();
-		DWORD saved_mode = 0, dw;
-		WINPORT(GetConsoleMode)(NULL, &saved_mode);
-		WINPORT(SetConsoleMode)
-		(NULL,
-				saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT
-						| ENABLE_INSERT_MODE | WINDOW_BUFFER_SIZE_EVENT);	// ENABLE_QUICK_EDIT_MODE
-		if ((ExecFlags & EF_NOCMDPRINT) == 0) {
-			const std::wstring &ws = MB2Wide(CmdStr);
-			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &dw, NULL);
-		}
-		WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL);
-		WINPORT(SetConsoleFKeyTitles)(NULL);
-
-		if (ExecFlags & (EF_NOWAIT | EF_HIDEOUT)) {
-			r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
-		} else {
-			r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0);
-		}
-		if ((ExecFlags & EF_NOTIFY) && Opt.NotifOpt.OnConsole) {
-			DisplayNotification((r == 0) ? Msg::ConsoleCommandComplete : Msg::ConsoleCommandFailed, CmdStr);
-		}
-		WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-		WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &dw, NULL);
-		WINPORT(SetConsoleMode)(NULL, saved_mode);
-		ScrBuf.FillBuf();
-		if (CtrlObject && CtrlObject->CmdLine) {
-			CtrlObject->CmdLine->SaveBackground();
-		}
-		ProcessShowClock--;
-		SetFarConsoleMode(TRUE);
-		ScrBuf.Flush();
-		if (CtrlObject && CtrlObject->MainKeyBar) {
-			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar, true);
-		}
+		FarExecuteScope fes((ExecFlags & EF_NOCMDPRINT) ? "" : CmdStr);
+		r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0, (ExecFlags & EF_MAYBGND) != 0, may_notify);
 	}
 	fprintf(stderr, "farExecuteA:('%s', 0x%x): r=%d\n", CmdStr, ExecFlags, r);
 
@@ -369,6 +386,9 @@ ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForId
 	int r = -1;
 	ExecClassifier ec(CmdStr, DirectRun);
 	unsigned int flags = ((Silent || SeparateWindow) ? 0 : EF_NOTIFY);
+	if (!SeparateWindow) {
+		flags|= EF_MAYBGND;
+	}
 	std::string tmp;
 	if (ec.IsDir() && SeparateWindow) {
 		tmp = GetOpenShVerb("dir");

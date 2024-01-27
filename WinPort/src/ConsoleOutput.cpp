@@ -69,7 +69,7 @@ void ConsoleOutput::DeferredRepaints::Add(const SMALL_RECT *areas, size_t cnt)
 
 ConsoleOutput::ConsoleOutput() :
 	_backend(NULL),
-	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT),
+	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS),
 	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
@@ -80,6 +80,19 @@ ConsoleOutput::ConsoleOutput() :
 	_scroll_region.top = 0;
 	_scroll_region.bottom = MAXSHORT;
 	SetSize(80, 25);
+}
+
+
+void ConsoleOutput::CopyFrom(const ConsoleOutput &co)
+{
+	_mode = co._mode;
+	_attributes = co._attributes;
+	_cursor = co._cursor;
+	_title = co._title;
+	_scroll_callback = co._scroll_callback;
+	_scroll_region = co._scroll_region;
+	_buf = co._buf;
+	_prev_pos = co._prev_pos;
 }
 
 void ConsoleOutput::SetBackend(IConsoleOutputBackend *backend)
@@ -244,6 +257,10 @@ DWORD ConsoleOutput::GetMode()
 void ConsoleOutput::SetMode(DWORD mode)
 {
 	std::lock_guard<std::mutex> lock(_mutex);	
+	if ((mode & ENABLE_EXTENDED_FLAGS)==0) {
+		mode&= ~(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
+		mode|= (_mode & (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE));
+	}
 	_mode = mode;
 }
 
@@ -783,3 +800,24 @@ void ConsoleOutput::Unlock()
 	_mutex.unlock();
 }
 
+IConsoleOutput *ConsoleOutput::ForkConsoleOutput()
+{
+	ConsoleOutput *co = new ConsoleOutput;
+	std::lock_guard<std::mutex> lock(_mutex);
+	co->CopyFrom(*this);
+	return co;
+}
+
+void ConsoleOutput::JoinConsoleOutput(IConsoleOutput *con_out)
+{
+	ConsoleOutput *co = (ConsoleOutput *)con_out;
+	std::lock_guard<std::mutex> lock(_mutex);
+	unsigned int w = 0, h = 0;
+	_buf.GetSize(w, h);
+	CopyFrom(*co);
+	if (_backend) {
+		SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
+		_backend->OnConsoleOutputUpdated(&screen_rect, 1);
+	}
+	delete co;
+}

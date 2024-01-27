@@ -209,9 +209,9 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 	(StdInput, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
 
 	WCHAR SaveTitle[512]{};
-	WINPORT(GetConsoleTitle)(SaveTitle, ARRAYSIZE(SaveTitle) - 1);
+	WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
 	if (ShowCommand)
-		WINPORT(SetConsoleTitle)(StrMB2Wide(CmdStr).c_str());
+		WINPORT(SetConsoleTitle)(NULL, StrMB2Wide(CmdStr).c_str());
 
 	/* $ 14.02.2001 raVen
 	   делать окошку minimize, если в фоне */
@@ -235,7 +235,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 	}
 
 	WINPORT(SetLastError)(LastError);
-	WINPORT(SetConsoleTitle)(SaveTitle);
+	WINPORT(SetConsoleTitle)(NULL, SaveTitle);
 	WINPORT(SetConsoleMode)(StdInput, ConsoleMode);
 	if (hScreen) {
 		Info.RestoreScreen(NULL);

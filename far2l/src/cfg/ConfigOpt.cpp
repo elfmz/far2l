@@ -255,7 +255,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "SudoConfirmModify", &Opt.SudoConfirmModify, 1},
 	{true,  NSecSystem, "SudoPasswordExpiration", &Opt.SudoPasswordExpiration, 15 * 60},
 
-	{true,  NSecSystem, "UseCOW", &Opt.CMOpt.SparseFiles, 0},
+	{true,  NSecSystem, "UseCOW", &Opt.CMOpt.UseCOW, 0},
 	{true,  NSecSystem, "SparseFiles", &Opt.CMOpt.SparseFiles, 0},
 	{true,  NSecSystem, "HowCopySymlink", &Opt.CMOpt.HowCopySymlink, 1},
 	{true,  NSecSystem, "WriteThrough", &Opt.CMOpt.WriteThrough, 0},

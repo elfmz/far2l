@@ -441,10 +441,9 @@ Frame *Manager::FrameMenu()
 				return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
 								? nullptr
 								: CurrentFrame);
-			} else if (ExitCode > FrameCount) {
-				CtrlObject->CmdLine->CmdSwitchToBackgroundVT(ExitCode - FrameCount - 1);
-//				SwitchToVT(ExitCode - FrameCount - 1);
-		//		return nullptr;
+			}
+			if (ExitCode > FrameCount) {
+				CtrlObject->CmdLine->SwitchToBackgroundTerminal(ExitCode - FrameCount - 1);
 			}
 		}
 
@@ -719,12 +718,12 @@ static bool ConfirmExit(size_t vts_cnt)
 	m.Add(Msg::No);
 	if (WINPORT(ConsoleBackgroundMode)(FALSE)) {
 		m.Add(Msg::Background);
-		r = m.Show(3);
+		r = m.Show(vts_cnt ? MSG_WARNING : 0, 3);
 		if (r == 2) {
 			WINPORT(ConsoleBackgroundMode)(TRUE);
 		}
 	} else {
-		r = m.Show(2);
+		r = m.Show(vts_cnt ? MSG_WARNING : 0, 2);
 	}
 
 	return r == 0;

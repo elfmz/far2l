@@ -1000,11 +1000,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return ExecuteCommandCommonTail(true);
 	}
 
-	void PrintSpecialNotice(const FarLangMsg &m)
+	void PrintNoticeOnPrimaryConsole(const FarLangMsg &m)
 	{
 		FARString msg(m);
-		msg.Insert(0, L"\n");
-		msg.Append(L"\n");
+		msg.Insert(0, L'\n');
+		msg.Append(L'\n');
 		const DWORD64 saved_color = GetColor();
 		SetColor(COL_HELPTOPIC, true);
 		DWORD dw;
@@ -1025,7 +1025,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				_vta.OnDetached();
 				DeliverPendingWindowInfo();
 				_console_handle = WINPORT(ForkConsole)();//CommandTerminated
-				PrintSpecialNotice(Msg::CommandBackgrounded);
+				PrintNoticeOnPrimaryConsole(Msg::CommandBackgrounded);
 				StartIOReaders();
 				return false;
 			}
@@ -1042,7 +1042,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		DeliverPendingWindowInfo();
 		if (_console_kill_requested) {
 			_console_kill_requested = false;
-			PrintSpecialNotice(Msg::CommandTerminated);
+			PrintNoticeOnPrimaryConsole(Msg::CommandTerminated);
 		}
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);

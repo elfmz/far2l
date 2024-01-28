@@ -442,7 +442,8 @@ Frame *Manager::FrameMenu()
 								? nullptr
 								: CurrentFrame);
 			} else if (ExitCode > FrameCount) {
-				SwitchToVT(ExitCode - FrameCount - 1);
+				CtrlObject->CmdLine->CmdSwitchToBackgroundVT(ExitCode - FrameCount - 1);
+//				SwitchToVT(ExitCode - FrameCount - 1);
 		//		return nullptr;
 			}
 		}

@@ -281,12 +281,6 @@ public:
 	}
 };
 
-void SwitchToVT(size_t vt_index)
-{
-	FarExecuteScope fes(nullptr);
-	VTShell_Switch(vt_index);
-}
-
 static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 {
 	//	fprintf(stderr, "TODO: Execute('%ls')\n", CmdStr);
@@ -428,6 +422,41 @@ int Execute(const wchar_t *CmdStr, bool SeparateWindow, bool DirectRun, bool Wai
 	return ExecuteA(Wide2MB(CmdStr).c_str(), SeparateWindow, DirectRun, WaitForIdle, Silent, RunAs);
 }
 
+void CommandLine::CheckForKeyPressAfterCmd(int r)
+{
+	if (CtrlObject && (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0))) {
+		auto *cp = CtrlObject->Cp();
+		if (!CloseFAR && cp && cp->LeftPanel && cp->RightPanel
+				&& (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
+			FarKey Key;
+			{
+				ChangeMacroMode cmm(MACRO_OTHER);	// prevent macros from intercepting key (#1003)
+				Key = WaitKey();
+			}
+			// allow user to open console log etc directly from pause-on-error state
+			if (Key == KEY_MSWHEEL_UP) {
+				Key|= KEY_CTRL | KEY_SHIFT;
+			}
+			if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT) || Key == KEY_CTRLSHIFTF3 || Key == KEY_F3
+					|| Key == KEY_CTRLSHIFTF4 || Key == KEY_F4 || Key == KEY_F8) {
+				ProcessKey(Key);
+			}
+		}
+	}
+}
+
+int CommandLine::CmdSwitchToBackgroundVT(size_t vt_index)
+{
+	int r;
+	{
+		FarExecuteScope fes(nullptr);
+		r = VTShell_Switch(vt_index);
+	}
+	CheckForKeyPressAfterCmd(r);
+	return r;
+}
+
+
 int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool DirectRun, bool WaitForIdle,
 		bool Silent, bool RunAs)
 {
@@ -485,27 +514,8 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 		} else {
 			perror("sdc_getcwd");
 		}
-
-		if (!SeparateWindow && !Silent && CtrlObject
-				&& (Opt.CmdLine.WaitKeypress > 1 || (Opt.CmdLine.WaitKeypress == 1 && r != 0))) {
-			auto *cp = CtrlObject->Cp();
-			if (!CloseFAR && cp && cp->LeftPanel && cp->RightPanel
-					&& (cp->LeftPanel->IsVisible() || cp->RightPanel->IsVisible())) {
-				FarKey Key;
-				{
-					ChangeMacroMode cmm(MACRO_OTHER);	// prevent macros from intercepting key (#1003)
-					Key = WaitKey();
-				}
-				// allow user to open console log etc directly from pause-on-error state
-				if (Key == KEY_MSWHEEL_UP) {
-					Key|= KEY_CTRL | KEY_SHIFT;
-				}
-				if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT) || Key == KEY_CTRLSHIFTF3 || Key == KEY_F3
-						|| Key == KEY_CTRLSHIFTF4 || Key == KEY_F4 || Key == KEY_F8) {
-					ProcessKey(Key);
-				}
-			}
-		}
+		if (!SeparateWindow && !Silent)
+			CheckForKeyPressAfterCmd(r);
 	}
 
 	if (!Flags.Check(FCMDOBJ_LOCKUPDATEPANEL) && CtrlObject) {

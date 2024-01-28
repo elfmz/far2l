@@ -82,8 +82,6 @@ public:
 	CommandLine();
 	virtual ~CommandLine();
 
-	int CmdSwitchToBackgroundVT(size_t vt_index);
-
 public:
 	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
@@ -102,6 +100,8 @@ public:
 
 	void ExecString(const wchar_t *Str, bool SeparateWindow = false, bool DirectRun = false,
 			bool WaitForIdle = false, bool Silent = false, bool RunAs = false);
+
+	void SwitchToBackgroundTerminal(size_t vt_index);
 
 	void ShowViewEditHistory();
 

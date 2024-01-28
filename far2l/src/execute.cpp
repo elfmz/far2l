@@ -445,7 +445,7 @@ void CommandLine::CheckForKeyPressAfterCmd(int r)
 	}
 }
 
-int CommandLine::CmdSwitchToBackgroundVT(size_t vt_index)
+void CommandLine::SwitchToBackgroundTerminal(size_t vt_index)
 {
 	int r;
 	{
@@ -453,7 +453,6 @@ int CommandLine::CmdSwitchToBackgroundVT(size_t vt_index)
 		r = VTShell_Switch(vt_index);
 	}
 	CheckForKeyPressAfterCmd(r);
-	return r;
 }
 
 

@@ -4226,7 +4226,7 @@ $ #Переключення між екранами#
 екрани.
 
  Additionally there can be multiple terminal commands running in background.
-You may activate any of them from #F12# menu.
+You may view or activate any of them from #F12# menu.
 
  Кількість фонових екранів редагування та перегляду відображається в
 верхньому лівому кутку лівої панелі. Ви можете заборонити показ кількості екранів,

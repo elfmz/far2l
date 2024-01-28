@@ -554,9 +554,9 @@ void ModalViewFile(const std::string &pathname)
 		fprintf(stderr, "%s: viewer error %d for '%s'\n", __FUNCTION__, r, pathname.c_str());
 }
 
-void ViewConsoleHistory(bool modal, bool autoclose)
+void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose)
 {
-	FARString histfile(CtrlObject->CmdLine->GetConsoleLog(true));
+	FARString histfile(CtrlObject->CmdLine->GetConsoleLog(con_hnd, true));
 	if (histfile.IsEmpty())
 		return;
 

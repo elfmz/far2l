@@ -10,6 +10,7 @@ void VTShell_Shutdown();
 struct VTInfo
 {
 	std::string title;
+	HANDLE con_hnd;
 	bool done;
 	int exit_code;
 };

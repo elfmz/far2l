@@ -441,15 +441,15 @@ upd:" *** Command forcefully terminated"
 " *** Каманда завершана прымусова"
 
 BackgroundCommands
-"Фоновые команды терминала"
-"Background terminal commands"
-upd:"Background terminal commands"
-upd:"Background terminal commands"
-upd:"Background terminal commands"
-upd:"Background terminal commands"
-upd:"Background terminal commands"
-"Фонові команди терміналу"
-"Фонавыя каманды тэрмінала"
+"Фоновые команды терминала [F3]"
+"Background terminal commands [F3]"
+upd:"Background terminal commands [F3]"
+upd:"Background terminal commands [F3]"
+upd:"Background terminal commands [F3]"
+upd:"Background terminal commands [F3]"
+upd:"Background terminal commands [F3]"
+"Фонові команди терміналу [F3]"
+"Фонавыя каманды тэрмінала [F3]"
 
 F1
 l:

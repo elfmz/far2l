@@ -89,7 +89,7 @@ public:
 
 	virtual void ResizeConsole();
 
-	std::string GetConsoleLog(bool colored);
+	std::string GetConsoleLog(HANDLE con_hnd, bool colored);
 	int GetCurDir(FARString &strCurDir);
 	BOOL SetCurDir(const wchar_t *CurDir);
 

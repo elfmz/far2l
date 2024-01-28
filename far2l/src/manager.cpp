@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "vt/vtshell.h"
 #include "execute.hpp"
+#include "fileview.hpp"
 
 Manager *FrameManager;
 
@@ -365,6 +366,66 @@ static FARString FrameMenuNumTextPrefix(int i)
 	Если же фрейм поменялся, то тогда функция должна возвратить
 	указатель на предыдущий фрейм.
 */
+
+class FramesMenu : public VMenu 
+{
+	VTInfos _vts;
+	int _vts_base_index{-1};
+
+public:
+	FramesMenu() : VMenu (Msg::ScreensTitle, nullptr, 0, ScrY - 4)
+	{
+		VTShell_Enum(_vts);
+	}
+
+	virtual int ProcessKey(FarKey Key)
+	{
+		if (Key == KEY_F3 && _vts_base_index >= 0
+				&& _vts_base_index <= GetSelectPos()
+				&& _vts_base_index + int(_vts.size()) > GetSelectPos() ) {
+			ViewConsoleHistory(_vts[GetSelectPos() - _vts_base_index].con_hnd, true, false);
+			return TRUE;
+		}
+		return VMenu::ProcessKey(Key);
+	}
+
+	void AddVTSItems(int FramePos)
+	{
+		if (_vts.empty()) {
+			_vts_base_index = -1;
+			return;
+		}
+		_vts_base_index = GetItemCount() + 1;
+		MenuItemEx mi;
+		mi.Clear();
+		mi.strName = Msg::BackgroundCommands;
+		mi.Flags = LIF_SEPARATOR;
+		AddItem(&mi);
+		for (const auto &vt : _vts) {
+			mi.Clear();
+			mi.strName = vt.title;
+			ReplaceStrings(mi.strName, L"&", L"&&", -1);
+			mi.strName.Insert(0, FrameMenuNumTextPrefix(GetItemCount() - 1) );
+			mi.SetSelect(GetItemCount() == FramePos);
+			if (vt.done)
+				mi.SetCheck(vt.exit_code ? L'!' : L'#');
+
+			AddItem(&mi);
+		}
+	}
+
+	int Do()
+	{
+		VMenu::Process();
+		int r = Modal::GetExitCode();
+		if (_vts_base_index >= 0 && r >= _vts_base_index && r < GetItemCount()) {
+			CtrlObject->CmdLine->SwitchToBackgroundTerminal(r - _vts_base_index);
+			return -1;
+		}
+		return r;
+	}
+};
+
 Frame *Manager::FrameMenu()
 {
 	/*
@@ -380,7 +441,8 @@ Frame *Manager::FrameMenu()
 	int ExitCode, CheckCanLoseFocus = CurrentFrame->GetCanLoseFocus();
 	{
 		MenuItemEx ModalMenuItem;
-		VMenu ModalMenu(Msg::ScreensTitle, nullptr, 0, ScrY - 4);
+		FramesMenu ModalMenu;
+
 		ModalMenu.SetHelp(L"ScrSwitch");
 		ModalMenu.SetFlags(VMENU_WRAPMODE);
 		ModalMenu.SetPosition(-1, -1, 0, 0);
@@ -406,45 +468,20 @@ Frame *Manager::FrameMenu()
 			ModalMenu.AddItem(&ModalMenuItem);
 		}
 
-		VTInfos vts;
-		VTShell_Enum(vts);
-		if (!vts.empty()) {
-			ModalMenuItem.Clear();
-			ModalMenuItem.strName = Msg::BackgroundCommands;
-			ModalMenuItem.Flags = LIF_SEPARATOR;
-			ModalMenu.AddItem(&ModalMenuItem);
-			++I;
-			for (const auto &vt : vts) {
-				ModalMenuItem.Clear();
-				ModalMenuItem.strName = vt.title;
-				ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
-				ModalMenuItem.strName.Insert(0, FrameMenuNumTextPrefix(I - 1) );
-				ModalMenuItem.SetSelect(I == FramePos);
-				if (vt.done)
-					ModalMenuItem.SetCheck(vt.exit_code ? L'!' : L'#');
-
-				ModalMenu.AddItem(&ModalMenuItem);
-				++I;
-			}
-		}
+		ModalMenu.AddVTSItems(FramePos);
 
 		AlreadyShown = TRUE;
-		ModalMenu.Process();
+		ExitCode = ModalMenu.Do();
 		AlreadyShown = FALSE;
-		ExitCode = ModalMenu.Modal::GetExitCode();
+//		ExitCode = ModalMenu.Modal::GetExitCode();
 	}
 
 	if (CheckCanLoseFocus) {
-		if (ExitCode >= 0) {
-			if (ExitCode < FrameCount) {
-				ActivateFrame(ExitCode);
-				return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
-								? nullptr
-								: CurrentFrame);
-			}
-			if (ExitCode > FrameCount) {
-				CtrlObject->CmdLine->SwitchToBackgroundTerminal(ExitCode - FrameCount - 1);
-			}
+		if (ExitCode >= 0 && ExitCode < FrameCount) {
+			ActivateFrame(ExitCode);
+			return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
+							? nullptr
+							: CurrentFrame);
 		}
 
 		return (ActivatedFrame == CurrentFrame ? nullptr : CurrentFrame);

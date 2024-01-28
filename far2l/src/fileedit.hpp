@@ -196,4 +196,4 @@ private:
 };
 
 bool dlgOpenEditor(FARString &strFileName, UINT &codepage);
-void EditConsoleHistory(bool modal);
+void EditConsoleHistory(HANDLE con_hnd, bool modal);

@@ -154,11 +154,11 @@ namespace VTLog
 			}
 		}
 		
-		void DumpToFile(int fd, DumpState &ds, bool colored)
+		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
 			for (auto m : _memories) {
-				if (!m.first && (ds.nonempty || !m.second.empty())) {
+				if (m.first == con_hnd && (ds.nonempty || !m.second.empty())) {
 					ds.nonempty = true;
 					if (!colored) {
 						for (;;) {
@@ -242,15 +242,15 @@ namespace VTLog
 		g_lines.Reset();
 	}
 	
-	static void AppendScreenLines(std::string &s, DumpState &ds, bool colored)
+	static void AppendScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 0) {
+		if (WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 0) {
 			std::vector<CHAR_INFO> line(csbi.dwSize.X);
 			COORD buf_pos = { }, buf_size = {csbi.dwSize.X, 1};
 			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
 			for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
-				if (WINPORT(ReadConsoleOutput)(NULL, &line[0], buf_size, buf_pos, &rc)) {
+				if (WINPORT(ReadConsoleOutput)(con_hnd, &line[0], buf_size, buf_pos, &rc)) {
 					unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
 					if (width || ds.nonempty) {
 						ds.nonempty = true;
@@ -262,7 +262,7 @@ namespace VTLog
 		}		
 	}
 	
-	std::string GetAsFile(bool colored, bool append_screen_lines)
+	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines)
 	{
 		char name[128];
 		SYSTEMTIME st;
@@ -280,10 +280,10 @@ namespace VTLog
 		}
 			
 		DumpState ds;
-		g_lines.DumpToFile(fd, ds, colored);
+		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			AppendScreenLines(s, ds, colored);
+			AppendScreenLines(con_hnd, s, ds, colored);
 			if (!s.empty()) {
 				if (write(fd, s.c_str(), s.size()) != (int)s.size())
 					perror("VTLog: write");				

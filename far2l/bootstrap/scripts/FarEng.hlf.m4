@@ -4219,7 +4219,7 @@ screen, #Ctrl-Shift-Tab# to the previous, #F12# shows a list of all available
 screens.
 
     Additionally there can be multiple terminal commands running in background.
-You may activate any of them also from #F12# menu.
+You may view or activate any of them also from #F12# menu.
 
     The number of background terminal commands, viewers and editors is displayed
 in the left panel upper left corner. This may be disabled by using

@@ -122,4 +122,4 @@ public:
 };
 
 void ModalViewFile(const std::string &pathname);
-void ViewConsoleHistory(bool modal, bool autoclose);
+void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose);

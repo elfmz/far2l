@@ -130,11 +130,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return env_shell;
 	}
 
-	virtual HANDLE ConsoleHandle()
-	{
-		return _console_handle;
-	}
-
 	int ExecLeaderProcess()
 	{
 		std::string home = GetMyHome();
@@ -489,9 +484,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		SetFarConsoleMode(TRUE);
 		if (kind == CLK_EDIT)
-			EditConsoleHistory(true);
+			EditConsoleHistory(NULL, true);
 		else
-			ViewConsoleHistory(true, kind == CLK_VIEW_AUTOCLOSE);
+			ViewConsoleHistory(NULL, true, kind == CLK_VIEW_AUTOCLOSE);
 
 		CtrlObject->CmdLine->ShowBackground();
 		ScrBuf.Flush();
@@ -961,6 +956,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CheckedCloseFD(_pipes_fallback_out);
 	}
 
+	virtual HANDLE ConsoleHandle()
+	{
+		return _console_handle;
+	}
+
 	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd, bool may_notify)
 	{
 		ASSERT(!_console_handle);
@@ -1181,6 +1181,7 @@ void VTShell_Enum(VTInfos &vts)
 	for (const auto &vt : g_vts) {
 		vts.emplace_back();
 		auto &vti = vts.back();
+		vti.con_hnd = vt->ConsoleHandle();
 		vti.title = vt->GetTitle();
 		vti.done = vt->IsDone();
 		vti.exit_code = vt->CommandExitCode();

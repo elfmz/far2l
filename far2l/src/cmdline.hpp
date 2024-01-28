@@ -76,10 +76,13 @@ private:
 	bool ProcessFarCommands(const wchar_t *CmdLine);
 	void DrawComboBoxMark(wchar_t MarkChar);
 	void ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir, FARString strFile=L"");
+	void CheckForKeyPressAfterCmd(int r);
 
 public:
 	CommandLine();
 	virtual ~CommandLine();
+
+	int CmdSwitchToBackgroundVT(size_t vt_index);
 
 public:
 	virtual int ProcessKey(FarKey Key);

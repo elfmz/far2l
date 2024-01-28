@@ -386,15 +386,15 @@ AskQuit
 "Вы жадаеце выйсці з FAR?"
 
 AskQuitVTS
-"Это так же завершит исполнение %u фоновых команд"
-"This also will terminate %u background command(s)"
-upd:"This also will terminate %u background command(s)"
-upd:"This also will terminate %u background command(s)"
-upd:"This also will terminate %u background command(s)"
-upd:"This also will terminate %u background command(s)"
-upd:"This also will terminate %u background command(s)"
-"Це також завершить виконання %u фонових команд"
-"Гэта таксама завершыць выкананне %u фонавых каманд"
+"ЭТО ТАК ЖЕ ЗАВЕРШИТ ИСПОЛНЕНИЕ %u ФОНОВЫХ КОМАНД"
+"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+upd:"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+upd:"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+upd:"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+upd:"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+upd:"THIS WILL ALSO TERMINATE %u BACKGROUND COMMAND(S)"
+"ЦЕ ТАКОЖ ЗАВЕРШИТЬ ВИКОНАННЯ %u ФОНОВИХ КОМАНД"
+"ГЭТА ТАКСАМА ЗАВЕРШЫЦЬ ВЫКАНАННЕ %u ФОНАВЫХ КАМАНД"
 
 Background
 "&В фон"
@@ -6061,15 +6061,15 @@ upd:" Ctrl+Alt+C - terminate everything in this shell.                         "
 
 VTStartTipPendCmdCtrlAltZ
 l:
-" Ctrl+Alt+Z - отправить команду в фон, освободив терминал.          "
-" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-upd:" Ctrl+Alt+Z - detach command to background releasing terminal.  "
-" Ctrl+Alt+Z - надіслати команду у фон, звільнивши термінал.          "
-" Ctrl+Alt+Z - адаслаць каманду у фон, вызваліўшы тэрмінал.           "
+" Ctrl+Alt+Z - отправить команду в фон, освободив терминал.                "
+" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+upd:" Ctrl+Alt+Z - detach command to background releasing terminal.            "
+" Ctrl+Alt+Z - надіслати команду у фон, звільнивши термінал.               "
+" Ctrl+Alt+Z - адаслаць каманду у фон, вызваліўшы тэрмінал.                "
 
 VTStartTipPendCmdMouse
 l:

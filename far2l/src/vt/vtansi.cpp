@@ -510,26 +510,7 @@ struct VTAnsiContext
 			return;
 		
 		fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
-		if (vt_shell) {
-			vt_shell->InjectInput(seq);
-			return;
-		}
-
-
-		std::vector<INPUT_RECORD> irs(strlen(seq));
-		for (size_t i = 0; i < irs.size(); ++i) {
-			INPUT_RECORD &ir = irs[i];
-			ir.EventType = KEY_EVENT;
-			ir.Event.KeyEvent.bKeyDown = TRUE;
-			ir.Event.KeyEvent.wRepeatCount = 1;
-			ir.Event.KeyEvent.wVirtualKeyCode = 0;
-			ir.Event.KeyEvent.wVirtualScanCode = 0;
-			ir.Event.KeyEvent.dwControlKeyState = 0;
-			ir.Event.KeyEvent.uChar.UnicodeChar = seq[i];
-		}
-
-		DWORD out;
-		WINPORT(WriteConsoleInput)( vt_shell->ConsoleHandle(), &irs[0], irs.size(), &out );
+		vt_shell->InjectInput(seq);
 	}
 
 
@@ -762,8 +743,7 @@ struct VTAnsiContext
 					case MEX_VT200_HIGHLIGHT_MOUSE:
 					case MEX_BTN_EVENT_MOUSE:
 					case MEX_ANY_EVENT_MOUSE:
-						if (vt_shell)
-							vt_shell->OnMouseExpectation( (suffix == 'h') ? (MouseExpectation)es_argv[i] : MEX_NONE );
+						vt_shell->OnMouseExpectation( (suffix == 'h') ? (MouseExpectation)es_argv[i] : MEX_NONE );
 						break;
 
 	//				case 47: case 1047:
@@ -771,13 +751,11 @@ struct VTAnsiContext
 	//					break;
 
 					case 2004:
-						if (vt_shell)
-							vt_shell->OnBracketedPasteExpectation(suffix == 'h');
+						vt_shell->OnBracketedPasteExpectation(suffix == 'h');
 						break;
 
 					case 9001:
-						if (vt_shell)
-							vt_shell->OnWin32InputMode(suffix == 'h');
+						vt_shell->OnWin32InputMode(suffix == 'h');
 						break;
 
 					case 1049:
@@ -798,8 +776,7 @@ struct VTAnsiContext
 						break;
 
 					case 1:
-						if (vt_shell)
-							vt_shell->OnKeypadChange((suffix == 'h') ? 1 : 0);
+						vt_shell->OnKeypadChange((suffix == 'h') ? 1 : 0);
 						break;
 
 					default:
@@ -1197,7 +1174,7 @@ struct VTAnsiContext
 			} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
 
-			} else if (vt_shell) {
+			} else {
 				vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
 			}
 		}
@@ -1245,7 +1222,7 @@ struct VTAnsiContext
 					_attr_stack.pop_back();
 				}
 
-			} else if (vt_shell) {
+			} else {
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}

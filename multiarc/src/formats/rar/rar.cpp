@@ -163,8 +163,13 @@ int WINAPI _export RAR_GetArcItem(struct ArcItemInfo *Info)
 
 	Wide2MB(HeaderData.FileNameW, wcsnlen(HeaderData.FileNameW, ARRAYSIZE(HeaderData.FileNameW)),
 			Info->PathName);
-	Info->dwFileAttributes = WINPORT(EvaluateAttributes)(HeaderData.FileAttr, HeaderData.FileNameW);
-	Info->dwUnixMode = HeaderData.FileAttr;
+	if (HeaderData.HostOS >= 3) { // Unix, Mac
+		Info->dwUnixMode = HeaderData.FileAttr;
+		Info->dwFileAttributes = WINPORT(EvaluateAttributes)(Info->dwUnixMode, HeaderData.FileNameW);
+	} else {
+		Info->dwUnixMode = (HeaderData.Flags & RHDF_DIRECTORY) ? S_IFDIR : S_IFREG;
+		Info->dwFileAttributes = HeaderData.FileAttr & COMPATIBLE_FILE_ATTRIBUTES;
+	}
 
 	// HeaderData.FileAttr is unreliable - sometimes its a UNIX mode, sometimes Windows attributes
 	// so sync with directory attribute in HeaderData.Flags

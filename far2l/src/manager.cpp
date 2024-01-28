@@ -347,15 +347,15 @@ int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 	return Counter;
 }
 
-static FARString FrameMenuNumTextPrefix(int i, char sep)
+static FARString FrameMenuNumTextPrefix(int i)
 {
 	FARString out;
 	if (i < 10)
-		out.Format(L"&%d%c ", i, sep);
+		out.Format(L"&%d ", i);
 	else if (i - 10 < 'Z' - 'A')
-		out.Format(L"&%c%c ", char(i - 10 + 'A'), sep);
+		out.Format(L"&%c ", char(i - 10 + 'A'));
 	else
-		out.Format(L"& %c ", sep);
+		out.Format(L"&  ");
 	return out;
 }
 
@@ -390,16 +390,19 @@ Frame *Manager::FrameMenu()
 
 		int I = 0;
 		for (; I < FrameCount; I++) {
-			FARString strType, strName, strNumText = FrameMenuNumTextPrefix(I, '.');
+			/* "*" если файл изменен */
+			FARString strNumText = FrameMenuNumTextPrefix(I);
+			FARString strType, strName;
 			FrameList[I]->GetTypeAndName(strType, strName);
 			ModalMenuItem.Clear();
 
 			// TruncPathStr(strName,ScrX-24);
 			ReplaceStrings(strName, L"&", L"&&", -1);
-			/* добавляется "*" если файл изменен */
-			ModalMenuItem.strName.Format(L"%ls%-10.10ls %lc %ls", strNumText.CPtr(), strType.CPtr(),
-					(FrameList[I]->IsFileModified() ? L'*' : L' '), strName.CPtr());
+			ModalMenuItem.strName.Format(L"%ls%-10.10ls %ls", strNumText.CPtr(), strType.CPtr(), strName.CPtr());
 			ModalMenuItem.SetSelect(I == FramePos);
+			if (FrameList[I]->IsFileModified())
+				ModalMenuItem.SetCheck(L'*');
+
 			ModalMenu.AddItem(&ModalMenuItem);
 		}
 
@@ -415,10 +418,11 @@ Frame *Manager::FrameMenu()
 				ModalMenuItem.Clear();
 				ModalMenuItem.strName = vt.title;
 				ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
-				ModalMenuItem.strName.Insert(0,
-					FrameMenuNumTextPrefix(I - 1, vt.done ? (vt.exit_code ? '!' : '#') : '.')
-				);
+				ModalMenuItem.strName.Insert(0, FrameMenuNumTextPrefix(I - 1) );
 				ModalMenuItem.SetSelect(I == FramePos);
+				if (vt.done)
+					ModalMenuItem.SetCheck(vt.exit_code ? L'!' : L'#');
+
 				ModalMenu.AddItem(&ModalMenuItem);
 				++I;
 			}

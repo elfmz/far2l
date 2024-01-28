@@ -181,7 +181,7 @@ public:
 
     ++_index;
 
-    attribs&=~ (FILE_ATTRIBUTE_BROKEN | FILE_ATTRIBUTE_EXECUTABLE);
+    attribs&= COMPATIBLE_FILE_ATTRIBUTES;
     Info->dwFileAttributes = attribs;
     Info->dwUnixMode = is_dir ? 0755 : 0644;
     Info->nFileSize = file_size;

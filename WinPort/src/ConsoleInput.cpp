@@ -164,7 +164,7 @@ unsigned int ConsoleInput::CurrentPriority() const
 }
 
 
-IConsoleInput *ConsoleInput::ForkConsoleInput()
+IConsoleInput *ConsoleInput::ForkConsoleInput(HANDLE con_handle)
 {
 	return new ConsoleInput;
 }

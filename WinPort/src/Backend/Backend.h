@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x06
+#define FAR2L_BACKEND_ABI_VERSION	0x07
 
 class IConsoleOutputBackend
 {
@@ -94,7 +94,7 @@ protected:
 	virtual ~IConsoleInput() {}
 
 public:
-	virtual IConsoleInput *ForkConsoleInput() = 0;
+	virtual IConsoleInput *ForkConsoleInput(HANDLE con_handle) = 0;
 	virtual void JoinConsoleInput(IConsoleInput *con_in) = 0;
 
 	virtual void Enqueue(const INPUT_RECORD *data, DWORD size) = 0;
@@ -144,7 +144,7 @@ protected:
 	virtual void Unlock() = 0;
 
 public:
-	virtual IConsoleOutput *ForkConsoleOutput() = 0;
+	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle) = 0;
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out) = 0;
 
 	virtual void SetBackend(IConsoleOutputBackend *listener) = 0;

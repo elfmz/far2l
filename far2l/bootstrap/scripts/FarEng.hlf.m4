@@ -4218,9 +4218,12 @@ panels and screens with these instances. #Ctrl-Tab# switches to the next
 screen, #Ctrl-Shift-Tab# to the previous, #F12# shows a list of all available
 screens.
 
-    The number of background viewers and editors is displayed in the left panel
-upper left corner. This may be disabled by using ~Panel settings~@PanelSettings@
-dialog.
+    Additionally there can be multiple terminal commands running in background.
+You may activate any of them also from #F12# menu.
+
+    The number of background terminal commands, viewers and editors is displayed
+in the left panel upper left corner. This may be disabled by using
+~Panel settings~@PanelSettings@ dialog.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 

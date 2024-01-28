@@ -416,7 +416,7 @@ Frame *Manager::FrameMenu()
 				ModalMenuItem.strName = vt.title;
 				ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
 				ModalMenuItem.strName.Insert(0,
-					FrameMenuNumTextPrefix(I, vt.done ? (vt.exit_code ? '!' : '#') : '.')
+					FrameMenuNumTextPrefix(I - 1, vt.done ? (vt.exit_code ? '!' : '#') : '.')
 				);
 				ModalMenuItem.SetSelect(I == FramePos);
 				ModalMenu.AddItem(&ModalMenuItem);

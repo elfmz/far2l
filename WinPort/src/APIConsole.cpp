@@ -43,8 +43,8 @@ extern "C" {
 		ForkedConsole *fc = NULL;
 		try {
 			fc = new ForkedConsole;
-			fc->con_in = g_winport_con_in->ForkConsoleInput();
-			fc->con_out = g_winport_con_out->ForkConsoleOutput();
+			fc->con_in = g_winport_con_in->ForkConsoleInput(fc);
+			fc->con_out = g_winport_con_out->ForkConsoleOutput(fc);
 
 		} catch(...) {
 			WINPORT(JoinConsole)(fc);

@@ -355,7 +355,7 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 		COORD line_size = {(SHORT)width, 1};
 		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
 		_buf.Read(&_temp_chars[0], line_size, tmp_pos, line_rect);
-		_scroll_callback.pfn(_scroll_callback.context, width, &_temp_chars[0]);
+		_scroll_callback.pfn(_scroll_callback.context, _con_handle, width, &_temp_chars[0]);
 	}
 	
 	COORD tmp_size = {(SHORT)width, (SHORT)(height - 1 - _scroll_region.top)};
@@ -800,11 +800,12 @@ void ConsoleOutput::Unlock()
 	_mutex.unlock();
 }
 
-IConsoleOutput *ConsoleOutput::ForkConsoleOutput()
+IConsoleOutput *ConsoleOutput::ForkConsoleOutput(HANDLE con_handle)
 {
 	ConsoleOutput *co = new ConsoleOutput;
 	std::lock_guard<std::mutex> lock(_mutex);
 	co->CopyFrom(*this);
+	co->_con_handle = con_handle;
 	return co;
 }
 

@@ -993,6 +993,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	bool ExecuteCommandContinue()
 	{
 		StopIOReaders();
+		VTLog::ConsoleJoined(_console_handle);
 		WINPORT(JoinConsole)(_console_handle);
 		_console_handle = NULL;
 		OnTerminalResized();

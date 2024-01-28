@@ -8,6 +8,7 @@
 
 class ConsoleOutput : public IConsoleOutput
 {
+	HANDLE _con_handle{NULL};
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
 	std::vector<CHAR_INFO> _temp_chars;
@@ -62,12 +63,11 @@ class ConsoleOutput : public IConsoleOutput
 	virtual CHAR_INFO *LockedDirectLineAccess(size_t line_index, unsigned int &width);
 	virtual void Unlock();
 	void SetUpdateCellArea(SMALL_RECT &area, COORD pos);
+	void CopyFrom(const ConsoleOutput &co);
 
 public:
 	ConsoleOutput();
 	virtual void SetBackend(IConsoleOutputBackend *listener);
-
-	void CopyFrom(const ConsoleOutput &co);
 
 	virtual void SetAttributes(DWORD64 attributes);
 	virtual DWORD64 GetAttributes();
@@ -118,6 +118,6 @@ public:
 	virtual void RepaintsDeferStart();
 	virtual void RepaintsDeferFinish();
 
-	virtual IConsoleOutput *ForkConsoleOutput();
+	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle);
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out);
 };

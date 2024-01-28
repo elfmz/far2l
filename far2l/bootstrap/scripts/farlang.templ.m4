@@ -387,12 +387,12 @@ AskQuit
 
 AskQuitVTS
 "Это так же завершит исполнение %u фоновых команд"
-"This also will terminate %u background commands"
-upd:"This also will terminate %u background commands"
-upd:"This also will terminate %u background commands"
-upd:"This also will terminate %u background commands"
-upd:"This also will terminate %u background commands"
-upd:"This also will terminate %u background commands"
+"This also will terminate %u background command(s)"
+upd:"This also will terminate %u background command(s)"
+upd:"This also will terminate %u background command(s)"
+upd:"This also will terminate %u background command(s)"
+upd:"This also will terminate %u background command(s)"
+upd:"This also will terminate %u background command(s)"
 "Це також завершить виконання %u фонових команд"
 "Гэта таксама завершыць выкананне %u фонавых каманд"
 
@@ -420,14 +420,36 @@ GetOut
 
 CommandBackgrounded
 " *** Команда отправлена в фон, используйте меню Экранов F12 для переключения на нее"
-" *** Command put to background, use Screen menu (F12) to switch to it back"
-upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
-upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
-upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
-upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
-upd:" *** Command put to background, use Screen menu (F12) to switch to it back"
+" *** Command put to background, use Screen menu (F12) to switch back to it"
+upd:" *** Command put to background, use Screen menu (F12) to switch back to it"
+upd:" *** Command put to background, use Screen menu (F12) to switch back to it"
+upd:" *** Command put to background, use Screen menu (F12) to switch back to it"
+upd:" *** Command put to background, use Screen menu (F12) to switch back to it"
+upd:" *** Command put to background, use Screen menu (F12) to switch back to it"
 " *** Команда відправлена у фон, використовуйте меню Екранів F12 для перемикання на неї"
 " *** Каманда адпраўлена ў фон, выкарыстоўвайце меню Экранаў F12 для пераключэння на яе"
+
+CommandTerminated
+" *** Команда завершена принудительно"
+" *** Command forcefully terminated"
+upd:" *** Command forcefully terminated"
+upd:" *** Command forcefully terminated"
+upd:" *** Command forcefully terminated"
+upd:" *** Command forcefully terminated"
+upd:" *** Command forcefully terminated"
+" *** Команда завершена примусово"
+" *** Каманда завершана прымусова"
+
+BackgroundCommands
+"Фоновые команды терминала"
+"Background terminal commands"
+upd:"Background terminal commands"
+upd:"Background terminal commands"
+upd:"Background terminal commands"
+upd:"Background terminal commands"
+upd:"Background terminal commands"
+"Фонові команди терміналу"
+"Фонавыя каманды тэрмінала"
 
 F1
 l:

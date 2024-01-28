@@ -347,15 +347,15 @@ int Manager::CountFramesWithName(const wchar_t *Name, BOOL IgnoreCase)
 	return Counter;
 }
 
-static FARString FrameMenuNumTextPrefix(int I)
+static FARString FrameMenuNumTextPrefix(int i, char sep)
 {
 	FARString out;
-	if (I < 10)
-		out.Format(L"&%d. ", I);
-	else if (I < 36)
-		out.Format(L"&%lc. ", I + 55);	// 55='A'-10
+	if (i < 10)
+		out.Format(L"&%d%c ", i, sep);
+	else if (i - 10 < 'Z' - 'A')
+		out.Format(L"&%c%c ", char(i - 10 + 'A'), sep);
 	else
-		out = L"&   ";
+		out.Format(L"& %c ", sep);
 	return out;
 }
 
@@ -390,7 +390,7 @@ Frame *Manager::FrameMenu()
 
 		int I = 0;
 		for (; I < FrameCount; I++) {
-			FARString strType, strName, strNumText = FrameMenuNumTextPrefix(I);
+			FARString strType, strName, strNumText = FrameMenuNumTextPrefix(I, '.');
 			FrameList[I]->GetTypeAndName(strType, strName);
 			ModalMenuItem.Clear();
 
@@ -403,16 +403,25 @@ Frame *Manager::FrameMenu()
 			ModalMenu.AddItem(&ModalMenuItem);
 		}
 
-		std::vector<std::string> vts;
+		VTInfos vts;
 		VTShell_Enum(vts);
-		for (const auto &vt : vts) {
+		if (!vts.empty()) {
 			ModalMenuItem.Clear();
-			ModalMenuItem.strName.Format(L"%s", vt.c_str());
-			ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
-			ModalMenuItem.strName.Insert(0, FrameMenuNumTextPrefix(I));
-			ModalMenuItem.SetSelect(I == FramePos);
+			ModalMenuItem.strName = Msg::BackgroundCommands;
+			ModalMenuItem.Flags = LIF_SEPARATOR;
 			ModalMenu.AddItem(&ModalMenuItem);
 			++I;
+			for (const auto &vt : vts) {
+				ModalMenuItem.Clear();
+				ModalMenuItem.strName = vt.title;
+				ReplaceStrings(ModalMenuItem.strName, L"&", L"&&", -1);
+				ModalMenuItem.strName.Insert(0,
+					FrameMenuNumTextPrefix(I, vt.done ? (vt.exit_code ? '!' : '#') : '.')
+				);
+				ModalMenuItem.SetSelect(I == FramePos);
+				ModalMenu.AddItem(&ModalMenuItem);
+				++I;
+			}
 		}
 
 		AlreadyShown = TRUE;
@@ -428,8 +437,8 @@ Frame *Manager::FrameMenu()
 				return (ActivatedFrame == CurrentFrame || !CurrentFrame->GetCanLoseFocus()
 								? nullptr
 								: CurrentFrame);
-			} else {
-				SwitchToVT(ExitCode - FrameCount);
+			} else if (ExitCode > FrameCount) {
+				SwitchToVT(ExitCode - FrameCount - 1);
 		//		return nullptr;
 			}
 		}

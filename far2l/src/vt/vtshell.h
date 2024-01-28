@@ -6,7 +6,17 @@ int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_not
 bool VTShell_Busy();
 void VTShell_Shutdown();
 
+
+struct VTInfo
+{
+	std::string title;
+	bool done;
+	int exit_code;
+};
+
+typedef std::vector<VTInfo> VTInfos;
+
 size_t VTShell_Count();
-void VTShell_Enum(std::vector<std::string> &vts);
+void VTShell_Enum(VTInfos &vts);
 int VTShell_Switch(size_t index);
 

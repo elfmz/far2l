@@ -56,8 +56,14 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 		char suffix = 'M';
 		if (MouseEvent.dwEventFlags & MOUSE_MOVED) {
 			action = 35;
+			if (ibut) {
+				action = (ibut == 1) ? 0 : ((ibut == 2) ? 1 : 2);
+				action|= 32;
+			}
+
 		} else if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
 			action = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 64 : 65;
+
 		} else {
 			int abut = ibut;
 			if (ibut == 0 && _sgr_prev_ibut != 0) {

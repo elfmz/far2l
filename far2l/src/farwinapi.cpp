@@ -68,6 +68,9 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX &Find
 	FindData.nHardLinks = wfd.nHardLinks;
 	FindData.nBlockSize = wfd.nBlockSize;
 
+	if (FindData.nHardLinks > 1)
+		FindData.dwFileAttributes |= FILE_ATTRIBUTE_HARDLINKS;
+
 	FindData.strFileName.CopyArray(wfd.cFileName);
 }
 
@@ -583,6 +586,9 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 	FindData.nHardLinks = (DWORD)s.st_nlink;
 	FindData.nBlockSize = (DWORD)s.st_blksize;
 	FindData.strFileName = PointToName(lpwszFileName);
+
+	if (FindData.nHardLinks > 1)
+		FindData.dwFileAttributes |= FILE_ATTRIBUTE_HARDLINKS;
 
 	return TRUE;
 }

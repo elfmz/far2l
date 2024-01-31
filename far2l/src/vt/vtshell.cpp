@@ -1057,6 +1057,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_far2l_exts.reset();
 		_host_id.clear();
 		_mouse.reset();
+		_mouse_expectations = 0;
 		return true;
 	}
 

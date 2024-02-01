@@ -270,8 +270,11 @@ enum BaseDefKeyboard
 	KEY_MACRO_ENDBASE = KEY_MACRO_BASE + (KEYS_PER_RANGE - 1),
 #endif	// END FAR_USE_INTERNALS
 
+#ifdef __cplusplus
 	KEY_INVALID = (FarKey)-1
-
+#else
+	KEY_INVALID = -1
+#endif
 };
 
 #ifdef __cplusplus

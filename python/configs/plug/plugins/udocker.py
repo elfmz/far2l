@@ -85,10 +85,10 @@ class Plugin(PluginVFS):
         self.clt.push(self.device, sqname, dqname)
 
     def devDelete(self, dqname):
-        pass
+        self.clt.remove(self.device, dqname)
 
     def devMakeDirectory(self, dqname):
-        pass
+        self.clt.mkdir(self.device, dqname)
 
     def setName(self, i, name, attr, size):
         self.names[i] = self.s2f(name)
@@ -111,26 +111,26 @@ class Plugin(PluginVFS):
     def addResult(self, result):
         n = 0
         for rec in result:
-            if rec.name in (".", ".."):
+            if rec.st_name in (".", ".."):
                 continue
             n += 1
         self.Items = self.ffi.new("struct PluginPanelItem []", n)
         self.names = [None] * n
         i = 0
         for rec in result:
-            if rec.name in (".", ".."):
+            if rec.st_name in (".", ".."):
                 continue
             attr = 0
-            attr |= FILE_ATTRIBUTE_DIRECTORY if rec.mode & stat.S_IFDIR else 0
-            attr |= FILE_ATTRIBUTE_DEVICE if rec.mode & stat.S_IFCHR else 0
-            attr |= FILE_ATTRIBUTE_ARCHIVE if rec.mode & stat.S_IFREG else 0
+            attr |= FILE_ATTRIBUTE_DIRECTORY if rec.st_mode & stat.S_IFDIR else 0
+            attr |= FILE_ATTRIBUTE_DEVICE if rec.st_mode & stat.S_IFCHR else 0
+            attr |= FILE_ATTRIBUTE_ARCHIVE if rec.st_mode & stat.S_IFREG else 0
             # log.debug('{} mode={:5o} attr={} perms={}'.format(rec.name, rec.mode, attr, rec.perms))
             # datetime.datetime.fromtimestamp(rec.time).strftime('%Y-%m-%d %H:%M:%S')
-            item = self.setName(i, rec.name, attr, rec.size)
-            item.dwUnixMode = rec.mode
+            item = self.setName(i, rec.st_name, attr, rec.st_size)
+            item.dwUnixMode = rec.st_mode
 
             t = (
-                int(time.mktime(rec.date.timetuple())) + EPOCH_DIFFERENCE
+                int(time.mktime(rec.st_mtime.timetuple())) + EPOCH_DIFFERENCE
             ) * TICKS_PER_SECOND
             item.ftLastWriteTime.dwHighDateTime = t >> 32
             item.ftLastWriteTime.dwLowDateTime = t & 0xFFFFFFFF

@@ -182,6 +182,16 @@ jadoxa@yahoo.com.au
 
 #include "vtlog.h"
 
+enum AnsiMouseExpectation
+{
+	AMEX_X10_MOUSE             = 9,
+	AMEX_VT200_MOUSE           = 1000,
+	AMEX_VT200_HIGHLIGHT_MOUSE = 1001,
+	AMEX_BTN_EVENT_MOUSE       = 1002,
+	AMEX_ANY_EVENT_MOUSE       = 1003,
+	AMEX_SGR_EXT_MOUSE         = 1006
+};
+
 struct VTAnsiState
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -738,12 +748,21 @@ struct VTAnsiContext
 			if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 				for (i = 0; i < es_argc; ++i) {
 					switch (es_argv[i]) {
-					case MEX_X10_MOUSE:
-					case MEX_VT200_MOUSE:
-					case MEX_VT200_HIGHLIGHT_MOUSE:
-					case MEX_BTN_EVENT_MOUSE:
-					case MEX_ANY_EVENT_MOUSE:
-						vt_shell->OnMouseExpectation( (suffix == 'h') ? (MouseExpectation)es_argv[i] : MEX_NONE );
+					case AMEX_X10_MOUSE:
+						vt_shell->OnMouseExpectation(MEX_X10_MOUSE, suffix == 'h');
+						break;
+					case AMEX_VT200_MOUSE:
+					case AMEX_VT200_HIGHLIGHT_MOUSE:
+						vt_shell->OnMouseExpectation(MEX_VT200_MOUSE, suffix == 'h');
+						break;
+					case AMEX_BTN_EVENT_MOUSE:
+						vt_shell->OnMouseExpectation(MEX_BTN_EVENT_MOUSE, suffix == 'h');
+						break;
+					case AMEX_ANY_EVENT_MOUSE:
+						vt_shell->OnMouseExpectation(MEX_ANY_EVENT_MOUSE, suffix == 'h');
+						break;
+					case AMEX_SGR_EXT_MOUSE:
+						vt_shell->OnMouseExpectation(MEX_SGR_EXT_MOUSE, suffix == 'h');
 						break;
 
 	//				case 47: case 1047:

@@ -104,6 +104,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::unique_ptr<VTMouse> _mouse;
 	std::mutex _read_state_mutex, _write_term_mutex;
+	uint32_t _mouse_expectations{0};
 
 	std::string _start_marker, _exit_marker;
 	std::string _host_id;
@@ -531,14 +532,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_keypad = keypad;
 	}
 
-	virtual void OnMouseExpectation(MouseExpectation mex)
+	virtual void OnMouseExpectation(MouseExpectation mex, bool enable)
 	{
 		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
-		_mouse.reset();
-		if (mex != MEX_NONE) {
-			_mouse.reset(new VTMouse(this, mex));
+		const auto prev_mouse_expectations = _mouse_expectations;
+		if (enable) {
+			_mouse_expectations|= mex;
+		} else {
+			_mouse_expectations&= ~(uint32_t)mex;
+		}
+		if (prev_mouse_expectations != _mouse_expectations) {
+			_mouse.reset();
+			_mouse.reset(new VTMouse(this, _mouse_expectations));
 		}
 	}
 
@@ -1050,6 +1057,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_far2l_exts.reset();
 		_host_id.clear();
 		_mouse.reset();
+		_mouse_expectations = 0;
 		return true;
 	}
 

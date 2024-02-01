@@ -370,9 +370,9 @@ bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFi
 void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType,
 		const wchar_t *FMask, const wchar_t *Title)
 {
-	const wchar_t AttrC[] = L"RAHSDCEI$TLOVXBYKFN";
+	const wchar_t AttrC[] = L"RAHSD<CEI$TLOVXBYKFN";
 	const DWORD AttrF[ARRAYSIZE(AttrC) - 1] = {FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_ARCHIVE,
-			FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_SYSTEM, FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_COMPRESSED,
+			FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_SYSTEM, FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_COMPRESSED,
 			FILE_ATTRIBUTE_ENCRYPTED, FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, FILE_ATTRIBUTE_SPARSE_FILE,
 			FILE_ATTRIBUTE_TEMPORARY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_OFFLINE,
 			FILE_ATTRIBUTE_VIRTUAL, FILE_ATTRIBUTE_EXECUTABLE, FILE_ATTRIBUTE_BROKEN,
@@ -509,6 +509,7 @@ enum enumFileFilterConfig
 	ID_FF_HIDDEN,
 	ID_FF_SYSTEM,
 	ID_FF_DIRECTORY,
+	ID_FF_HARDLINKS,
 	ID_FF_COMPRESSED,
 	ID_FF_ENCRYPTED,
 	ID_FF_NOTINDEXED,
@@ -816,7 +817,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	// Маска времени
 	strTimeMask.Format(L"99%c99%c99%c99N", TimeSeparator, TimeSeparator, DecimalSeparator);
 	DialogDataEx FilterDlgData[] = {
-		{DI_DOUBLEBOX,   3,           1,  84,     18, {},                                  DIF_SHOWAMPERSAND,                      Msg::FileFilterTitle             },
+		{DI_DOUBLEBOX,   3,           1,  84,     19, {},                                  DIF_SHOWAMPERSAND,                      Msg::FileFilterTitle             },
 
 		{DI_TEXT,        5,           2,  0,      2,  {},                                  DIF_FOCUS,                              Msg::FileFilterName              },
 		{DI_EDIT,        5,           2,  82,     2,  {(DWORD_PTR)FilterNameHistoryName},  DIF_HISTORY,                            L""                              },
@@ -857,6 +858,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    7,           13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrH             },
 		{DI_CHECKBOX,    7,           14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrS             },
 		{DI_CHECKBOX,    7,           15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrD             },
+		{DI_CHECKBOX,    7,           16, 0,      16, {},                                  DIF_3STATE,                             Msg::FileFilterAttrHardLinks     },
 
 		{DI_CHECKBOX,    26,          11, 0,      11, {},                                  DIF_3STATE,                             Msg::FileFilterAttrC             },
 		{DI_CHECKBOX,    26,          12, 0,      12, {},                                  DIF_3STATE,                             Msg::FileFilterAttrE             },
@@ -875,29 +877,29 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    64,          13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevFIFO       },
 		{DI_CHECKBOX,    64,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevSock       },
 
-		{DI_TEXT,        -1,          14, 0,      14, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
-		{DI_TEXT,        7,           15, 0,      15, {},                                  0,                                      Msg::HighlightMarkChar           },
-		{DI_FIXEDIT,     5,           15, 5,      15, {},                                  0,                                      L""                              },
-		{DI_CHECKBOX,    0,           15, 0,      15, {},                                  0,                                      Msg::HighlightTransparentMarkChar},
+		{DI_TEXT,        -1,          15, 0,      15, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
+		{DI_TEXT,        7,           16, 0,      16, {},                                  0,                                      Msg::HighlightMarkChar           },
+		{DI_FIXEDIT,     5,           16, 5,      16, {},                                  0,                                      L""                              },
+		{DI_CHECKBOX,    0,           16, 0,      16, {},                                  0,                                      Msg::HighlightTransparentMarkChar},
 
-		{DI_BUTTON,      5,           16, 0,      16, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName1          },
-		{DI_BUTTON,      0,           16, 0,      16, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking1           },
-		{DI_BUTTON,      5,           17, 0,      17, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName2          },
-		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking2           },
-		{DI_BUTTON,      5,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName3          },
-		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking3           },
-		{DI_BUTTON,      5,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName4          },
-		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking4           },
+		{DI_BUTTON,      5,           17, 0,      17, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName1          },
+		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking1           },
+		{DI_BUTTON,      5,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName2          },
+		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking2           },
+		{DI_BUTTON,      5,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName3          },
+		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking3           },
+		{DI_BUTTON,      5,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName4          },
+		{DI_BUTTON,      0,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking4           },
 
-		{DI_USERCONTROL, 73 - 15 - 1, 16, 73 - 2, 19, {},                                  DIF_NOFOCUS,                            L""                              },
-		{DI_CHECKBOX,    5,           20, 0,      20, {},                                  0,                                      Msg::HighlightContinueProcessing },
+		{DI_USERCONTROL, 73 - 15 - 1, 17, 73 - 2, 20, {},                                  DIF_NOFOCUS,                            L""                              },
+		{DI_CHECKBOX,    5,           21, 0,      21, {},                                  0,                                      Msg::HighlightContinueProcessing },
 
-		{DI_TEXT,        0,           16, 0,      16, {},                                  DIF_SEPARATOR,                          L""                              },
+		{DI_TEXT,        0,           17, 0,      17, {},                                  DIF_SEPARATOR,                          L""                              },
 
-		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_DEFAULT | DIF_CENTERGROUP,          Msg::Ok                          },
-		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterReset             },
-		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_CENTERGROUP,                        Msg::FileFilterCancel            },
-		{DI_BUTTON,      0,           17, 0,      17, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterMakeTransparent   }
+		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_DEFAULT | DIF_CENTERGROUP,          Msg::Ok                          },
+		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterReset             },
+		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_CENTERGROUP,                        Msg::FileFilterCancel            },
+		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterMakeTransparent   }
 	};
 	FilterDlgData[0].Data = (ColorConfig ? Msg::FileHilightTitle : Msg::FileFilterTitle);
 	MakeDialogItemsEx(FilterDlgData, FilterDlg);
@@ -1034,6 +1036,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 					: AttrClear & FILE_ATTRIBUTE_DIRECTORY
 					? 0
 					: 2);
+	FilterDlg[ID_FF_HARDLINKS].Selected = (AttrSet & FILE_ATTRIBUTE_HARDLINKS ? 1
+					: AttrClear & FILE_ATTRIBUTE_HARDLINKS
+					? 0
+					: 2);
 	FilterDlg[ID_FF_NOTINDEXED].Selected = (AttrSet & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ? 1
 					: AttrClear & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
 					? 0
@@ -1157,6 +1163,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			AttrSet|= (FilterDlg[ID_FF_COMPRESSED].Selected == 1 ? FILE_ATTRIBUTE_COMPRESSED : 0);
 			AttrSet|= (FilterDlg[ID_FF_ENCRYPTED].Selected == 1 ? FILE_ATTRIBUTE_ENCRYPTED : 0);
 			AttrSet|= (FilterDlg[ID_FF_DIRECTORY].Selected == 1 ? FILE_ATTRIBUTE_DIRECTORY : 0);
+			AttrSet|= (FilterDlg[ID_FF_HARDLINKS].Selected == 1 ? FILE_ATTRIBUTE_HARDLINKS : 0);
 			AttrSet|= (FilterDlg[ID_FF_NOTINDEXED].Selected == 1 ? FILE_ATTRIBUTE_NOT_CONTENT_INDEXED : 0);
 			AttrSet|= (FilterDlg[ID_FF_SPARSE].Selected == 1 ? FILE_ATTRIBUTE_SPARSE_FILE : 0);
 			AttrSet|= (FilterDlg[ID_FF_TEMP].Selected == 1 ? FILE_ATTRIBUTE_TEMPORARY : 0);
@@ -1177,6 +1184,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			AttrClear|= (FilterDlg[ID_FF_COMPRESSED].Selected == 0 ? FILE_ATTRIBUTE_COMPRESSED : 0);
 			AttrClear|= (FilterDlg[ID_FF_ENCRYPTED].Selected == 0 ? FILE_ATTRIBUTE_ENCRYPTED : 0);
 			AttrClear|= (FilterDlg[ID_FF_DIRECTORY].Selected == 0 ? FILE_ATTRIBUTE_DIRECTORY : 0);
+			AttrClear|= (FilterDlg[ID_FF_HARDLINKS].Selected == 0 ? FILE_ATTRIBUTE_HARDLINKS : 0);
 			AttrClear|= (FilterDlg[ID_FF_NOTINDEXED].Selected == 0 ? FILE_ATTRIBUTE_NOT_CONTENT_INDEXED : 0);
 			AttrClear|= (FilterDlg[ID_FF_SPARSE].Selected == 0 ? FILE_ATTRIBUTE_SPARSE_FILE : 0);
 			AttrClear|= (FilterDlg[ID_FF_TEMP].Selected == 0 ? FILE_ATTRIBUTE_TEMPORARY : 0);

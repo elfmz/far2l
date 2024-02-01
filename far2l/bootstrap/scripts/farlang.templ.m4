@@ -25010,6 +25010,17 @@ FileFilterAttrSparse
 "&Розріджений"
 "Разрэджаны"
 
+FileFilterAttrHardLinks
+"Болee одной жёсткой ссылки"
+"Has more than one hard &link"
+"Má více než jeden pevný link"
+"Mehr als ein harder Link"
+upd:"Has more than one hardlink"
+"Ma &więcej niż jeden link"
+"Tiene mas de un enlace duro"
+"Понад одне жорстке посилання"
+"Больш адной жорсткай спасылкі"
+
 FileFilterAttrT
 "&Временный"
 "Temporar&y"

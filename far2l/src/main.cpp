@@ -727,7 +727,7 @@ int _cdecl main(int argc, char *argv[])
 			return sudo_main_askpass();
 		if (strcmp(name, "far2l_sudoapp") == 0)
 			return sudo_main_dispatcher(argc - 1, argv + 1);
-		if (argc >= 4) {
+		if (argc >= 5) {
 			if (strcmp(argv[1], "--libexec") == 0) {
 				return libexec(argv[2], argv[3], argv[4], argc - 5, argv + 5);
 			}

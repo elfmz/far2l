@@ -24,26 +24,26 @@ class Entry(object):
         name=None,
         date_re=None,
     ):
-        self.mode = 0
-        self.perms = perms
-        self.links = int(links)
-        self.uid = int(uid)
-        self.gid = int(gid)
-        self.size = int(size)
-        self.date = datetime.strptime(date, date_re)
-        self.name = name
+        self.st_mode = 0
+        self.st_perms = perms
+        self.st_links = int(links)
+        self.st_uid = int(uid)
+        self.st_gid = int(gid)
+        self.st_size = int(size)
+        self.st_mtime = datetime.strptime(date, date_re)
+        self.st_name = name
 
-        if (self.perms[0] if self.perms else None) == "l" and " -> " in self.name:
+        if (self.st_perms[0] if self.st_perms else None) == "l" and " -> " in self.st_name:
             try:
-                name, target = self.name.split(" -> ")
+                name, target = self.st_name.split(" -> ")
             except ValueError:
                 return
-            self.name = name
+            self.st_name = name
 
         self.perms2mode()
 
     def perms2mode(self):
-        perms = self.perms[1:]
+        perms = self.st_perms[1:]
         lperms = len(perms)
         mode = 0
         # Check if 'perms' has the right format
@@ -56,7 +56,7 @@ class Entry(object):
 
                 mode += 1 << pos if c in "rwxst" else 0
                 pos -= 1
-        self.mode = (
+        self.st_mode = (
             mode
             | {
                 "-": 0,
@@ -66,15 +66,15 @@ class Entry(object):
                 "l": stat.S_IFLNK,
                 "p": 0,  # stat.S_IF???,
                 "s": 0,  # stat.S_IF???,
-            }[self.perms[0]]
+            }[self.st_perms[0]]
         )
 
     def __str__(self):
-        if not self.name:
+        if not self.st_name:
             return ""
 
         template = (
-            "{mode:5o} {perms} {links:>4} {uid:<8} {gid:<8} {size:>8} {date} {name}"
+            "{st_mode:5o} {st_perms} {st_links:>4} {st_uid:<8} {st_gid:<8} {st_size:>8} {st_mtime} {st_name}"
         )
         return template.format(**self.__dict__)
 
@@ -117,12 +117,12 @@ class Docker(object):
     date_re = "%Y-%m-%d %H:%M"
     file_re = (
         "^"
-        "(?P<perms>[-bcdlps][-rwxsStT]{9})\s+"
-        "(?P<links>\d+)\s"
+        "(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+"
+        "(?P<links>\d+)\s+"
         "(?P<uid>\d+)\s+"
         "(?P<gid>\d+)\s+"
-        "(?P<size>\d+)\s"
-        "(?P<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2})\s"
+        "(?P<size>\d+)\s+"
+        "(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+"
         "(?P<name>.*)"
     )
 
@@ -142,6 +142,8 @@ class Docker(object):
                 if line.split()[0] != "total":
                     log.debug("ignored entry in ({}): {}".format(top, line))
                 continue
+            else:
+                print('rm', line)
             entry = Entry(**rm.groupdict(), date_re=self.date_re)
             result.append(entry)
         return result
@@ -156,11 +158,17 @@ class Docker(object):
         for line in lines:
             log.debug("push:".format(line))
 
+    def mkdir(self, deviceid, dqname):
+        self.run("exec", deviceid, "mkdir", dqname)
+
+    def remove(self, deviceid, dqname):
+        self.run("exec", deviceid, "rm", "-rf", dqname)
+
 
 if __name__ == "__main__":
     cls = Docker()
     info = cls.list()
     print(info)
-    result = cls.ls(info[0][0], "/")
+    result = cls.ls(info[0][0], "/etc")
     for e in result:
         print(e)

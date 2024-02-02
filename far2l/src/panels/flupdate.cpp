@@ -642,7 +642,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 
 		TotalFileSize+= CurListData->FileSize;
 	}
-	if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
+	if (!ListData.IsEmpty() && ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING)))
 		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(),
 				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
 

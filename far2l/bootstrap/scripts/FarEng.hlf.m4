@@ -138,6 +138,7 @@ $ # FAR2L features - Getting Started#
     If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
     To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
     to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+    run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 

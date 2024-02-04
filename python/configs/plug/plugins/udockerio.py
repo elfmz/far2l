@@ -8,7 +8,15 @@ import subprocess
 import re
 import logging
 
-log = logging.getLogger(__name__)
+if __name__ == "__main__":
+    import sys
+    class Log:
+        def debug(self, msg):
+            sys.stdout.write(msg)
+            sys.stdout.write('\n')
+    log = Log()
+else:
+    log = logging.getLogger(__name__)
 
 
 class Entry(object):
@@ -20,6 +28,8 @@ class Entry(object):
         uid=0,
         gid=0,
         size=None,
+        devmaj=None,
+        devmin=None,
         date=None,
         name=None,
         date_re=None,
@@ -29,7 +39,14 @@ class Entry(object):
         self.st_links = int(links)
         self.st_uid = int(uid)
         self.st_gid = int(gid)
-        self.st_size = int(size)
+        if devmin is not None:
+            self.devmaj = int(devmaj)
+            self.devmin = int(devmin)
+            self.st_size = 0
+        else:
+            self.devmaj = None
+            self.devmin = None
+            self.st_size = int(size)
         self.st_mtime = datetime.strptime(date, date_re)
         self.st_name = name
 
@@ -115,7 +132,17 @@ class Docker(object):
 
     ls = "/bin/ls -anL --full-time {}"
     date_re = "%Y-%m-%d %H:%M"
-    file_re = (
+    file_re1 = (
+        "^"
+        "(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+"
+        "(?P<links>\d+)\s+"
+        "(?P<uid>\d+)\s+"
+        "(?P<gid>\d+)\s+"
+        "(?P<devmaj>\d+),\s+(?P<devmin>\d+)\s+"
+        "(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+"
+        "(?P<name>.*)"
+    )
+    file_re2 = (
         "^"
         "(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+"
         "(?P<links>\d+)\s+"
@@ -127,7 +154,8 @@ class Docker(object):
     )
 
     def ls(self, deviceid, top):
-        file_re = re.compile(self.file_re)
+        file_re1 = re.compile(self.file_re1)
+        file_re2 = re.compile(self.file_re2)
         lines = self.run(
             "exec", deviceid, "/bin/ls", "-anL", "--time-style=long-iso", top
         )
@@ -137,13 +165,13 @@ class Docker(object):
             if not line:
                 continue
             line = line.decode()
-            rm = file_re.match(line)
+            rm = file_re1.match(line)
+            if not rm:
+                rm = file_re2.match(line)
             if not rm:
                 if line.split()[0] != "total":
                     log.debug("ignored entry in ({}): {}".format(top, line))
                 continue
-            else:
-                print('rm', line)
             entry = Entry(**rm.groupdict(), date_re=self.date_re)
             result.append(entry)
         return result
@@ -169,6 +197,6 @@ if __name__ == "__main__":
     cls = Docker()
     info = cls.list()
     print(info)
-    result = cls.ls(info[0][0], "/etc")
+    result = cls.ls(info[0][0], "/dev")
     for e in result:
         print(e)

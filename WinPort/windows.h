@@ -90,6 +90,7 @@
 #define    SetFilePointerEx       WINPORT(SetFilePointerEx)
 #define    SetFilePointer         WINPORT(SetFilePointer)
 #define    GetFileTime            WINPORT(GetFileTime)
+#define    SetFileTime            WINPORT(SetFileTime)
 #define    SetEndOfFile           WINPORT(SetEndOfFile)
 #define    FlushFileBuffers       WINPORT(FlushFileBuffers)
 #define    GetFileType            WINPORT(GetFileType)

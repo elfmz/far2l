@@ -38,7 +38,7 @@ static IConsoleInput *ChooseConIn(HANDLE hConsole)
 
 extern "C" {
 
-	WINPORT_DECL(ForkConsole,HANDLE,(VOID))
+	WINPORT_DECL(ForkConsole,HANDLE,())
 	{
 		ForkedConsole *fc = NULL;
 		try {

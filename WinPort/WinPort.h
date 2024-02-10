@@ -22,7 +22,7 @@ extern "C" {
 	const wchar_t *WinPortBackend();
 
 	///console API
-	WINPORT_DECL(ForkConsole,HANDLE,(VOID));
+	WINPORT_DECL(ForkConsole,HANDLE,());
 	WINPORT_DECL(JoinConsole,VOID,(HANDLE hConsole));
 
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput));

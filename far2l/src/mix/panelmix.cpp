@@ -508,7 +508,7 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime, int ColumnType, DWO
 
 	ConvertDate(*FileTime, strDateStr, strTimeStr, ColumnWidth, Brief, TextMonth, FullYear);
 
-	strResult << fmt::Expand(Width) << fmt::Truncate(Width);
+	strResult << fmt::Size(Width);
 	switch (ColumnType) {
 		case DATE_COLUMN:
 			strResult << strDateStr;
@@ -517,7 +517,7 @@ const FARString FormatStr_DateTime(const FILETIME *FileTime, int ColumnType, DWO
 			strResult << strTimeStr;
 			break;
 		default:
-			strResult << strDateStr << L" " << strTimeStr;
+			strResult << (strDateStr + L" " + strTimeStr);
 			break;
 	}
 

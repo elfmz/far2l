@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="powershell">
 <annotation><documentation><![CDATA[
 
-powershell.hrc by Roman Kuzmin, aka nightroman, 2019-11-17
+powershell.hrc by Roman Kuzmin, aka nightroman, 2022-02-05
 visual.hrd is recommended as optimized for powershell.hrc
 
 Regex syntax in strings after regex operators, [regex], and <#regex#>
@@ -72,9 +72,9 @@ SQL syntax in here-strings after <#sql#>
 
 <entity name="s-label" value="(?:(?{Label}:%sname;)\s+)?"/>
 <entity name="vbody" value="(?:(?{VarPrefix}\w+::?!))?(?:%vname;(?:::?!)?)+"/>
+<entity name="re-ops" value="-[cCiI]?(?:match|notmatch|replace|split)"/>
 
 <scheme name="base">
-    <regexp match="/(?{def:default}^\s+)/"/>
     <inherit scheme="comment"/>
     <regexp match="/(?{Escape}`.?)/"/>
 </scheme>
@@ -160,6 +160,10 @@ SQL syntax in here-strings after <#sql#>
         <word name="$HOME"/>
         <word name="$Host"/>
         <word name="$Input"/>
+        <word name="$IsCoreCLR"/>
+        <word name="$IsLinux"/>
+        <word name="$IsMacOS"/>
+        <word name="$IsWindows"/>
         <word name="$LastExitCode"/>
         <word name="$Matches"/>
         <word name="$MyInvocation"/>
@@ -169,12 +173,15 @@ SQL syntax in here-strings after <#sql#>
         <word name="$PSBoundParameters"/>
         <word name="@PSBoundParameters"/>
         <word name="$PSCmdlet"/>
+        <word name="$PSCommandPath"/>
         <word name="$PSCulture"/>
         <word name="$PSDebugContext"/>
+        <word name="$PSEdition"/>
         <word name="$PSHOME"/>
         <word name="$PSItem"/>
         <word name="$PSScriptRoot"/>
         <word name="$PSSenderInfo"/>
+        <word name="$PSStyle"/>
         <word name="$PSUICulture"/>
         <word name="$PSVersionTable"/>
         <word name="$PWD"/>
@@ -214,6 +221,7 @@ SQL syntax in here-strings after <#sql#>
         <word name="$PSSessionApplicationName"/>
         <word name="$PSSessionConfigurationName"/>
         <word name="$PSSessionOption"/>
+        <word name="$Transcript"/>
         <word name="$VerbosePreference"/>
         <word name="$WarningPreference"/>
         <word name="$WhatIfPreference"/>
@@ -817,19 +825,19 @@ SQL syntax in here-strings after <#sql#>
 
     <!--op @'RE'@-->
     <block scheme="regexp:pcre.regexp" region="String" inner-region="yes"
-    start="/(?{start}(?{Keyword}-[cCiI]?(?:match|notmatch|replace))\s*(?{SyntaxEdge}@'$))/i" end="/(?{end}(?{SyntaxEdge}^'@))/"/>
+    start="/(?{start}(?{Keyword}%re-ops;)\s*(?{SyntaxEdge}@'$))/i" end="/(?{end}(?{SyntaxEdge}^'@))/"/>
 
     <!--op 'RE'-->
     <block scheme="re-apos1" region="String" inner-region="yes"
-    start="/(?{start}(?{Keyword}-[cCiI]?(?:match|notmatch|replace))\s*(?{SyntaxEdge}'))/i" end="/(?{end}(?{SyntaxEdge}'))/"/>
+    start="/(?{start}(?{Keyword}%re-ops;)\s*(?{SyntaxEdge}'))/i" end="/(?{end}(?{SyntaxEdge}'))/"/>
 
     <!--op @"RE"@-->
     <block scheme="re-quot2" region="String" inner-region="yes"
-    start="/(?{start}(?{Keyword}-[cCiI]?(?:match|notmatch|replace))\s*(?{SyntaxEdge}@&#34;$))/i" end="/(?{end}(?{SyntaxEdge}^&#34;@))/"/>
+    start="/(?{start}(?{Keyword}%re-ops;)\s*(?{SyntaxEdge}@&#34;$))/i" end="/(?{end}(?{SyntaxEdge}^&#34;@))/"/>
 
     <!--op "RE"-->
     <block scheme="re-quot1" region="String" inner-region="yes"
-    start="/(?{start}(?{Keyword}-[cCiI]?(?:match|notmatch|replace))\s*(?{SyntaxEdge}&#34;))/i" end="/(?{end}(?{SyntaxEdge}&#34;))/"/>
+    start="/(?{start}(?{Keyword}%re-ops;)\s*(?{SyntaxEdge}&#34;))/i" end="/(?{end}(?{SyntaxEdge}&#34;))/"/>
 
     <!--@''@-->
     <block scheme="def:empty" region="String"

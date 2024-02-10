@@ -48,39 +48,83 @@
 
     <scheme name="asm_registers">
       <regexp match="/\b(st(\(\s*([0-7])\s*\))?)\b/i" region0="asmRegister" region3="asmNumDec"/>
-      <regexp match="/\b[dtc]r[0-7]\b/i" region0="asmRegister"/>
-      <regexp match="/\bx?mm[0-7]\b/i" region0="asmRegister"/>
+      <regexp match="/\b([dc]r([0-9]|1[0-5])|tr[0-7])\b/i" region0="asmRegister"/>
+      <regexp match="/\b(mm[0-7]|(x|y|z)mm([12]?[0-9]|3[01]))\b/i" region0="asmRegister"/>
       <keywords ignorecase="yes" region="asmRegister">
+        <word name="rax"/>
         <word name="eax"/>
         <word name="ax"/>
         <word name="al"/>
         <word name="ah"/>
+        <word name="rbx"/>
         <word name="ebx"/>
         <word name="bx"/>
         <word name="bl"/>
         <word name="bh"/>
+        <word name="rcx"/>
         <word name="ecx"/>
         <word name="cx"/>
         <word name="cl"/>
         <word name="ch"/>
+        <word name="rdx"/>
         <word name="edx"/>
         <word name="dx"/>
         <word name="dl"/>
         <word name="dh"/>
+        <word name="rsi"/>
         <word name="esi"/>
         <word name="si"/>
+        <word name="sil"/>
+        <word name="rdi"/>
         <word name="edi"/>
         <word name="di"/>
+        <word name="dil"/>
+        <word name="rbp"/>
         <word name="ebp"/>
         <word name="bp"/>
+        <word name="bpl"/>
+        <word name="rsp"/>
         <word name="esp"/>
         <word name="sp"/>
+        <word name="spl"/>
         <word name="cs"/>
         <word name="ds"/>
         <word name="es"/>
         <word name="ss"/>
         <word name="gs"/>
         <word name="fs"/>
+        <word name="r8"/>
+        <word name="r8d"/>
+        <word name="r8w"/>
+        <word name="r8b"/>
+        <word name="r9"/>
+        <word name="r9d"/>
+        <word name="r9w"/>
+        <word name="r9b"/>
+        <word name="r10"/>
+        <word name="r10d"/>
+        <word name="r10w"/>
+        <word name="r10b"/>
+        <word name="r11"/>
+        <word name="r11d"/>
+        <word name="r11w"/>
+        <word name="r11b"/>
+        <word name="r12"/>
+        <word name="r12d"/>
+        <word name="r12w"/>
+        <word name="r12b"/>
+        <word name="r13"/>
+        <word name="r13d"/>
+        <word name="r13w"/>
+        <word name="r13b"/>
+        <word name="r14"/>
+        <word name="r14d"/>
+        <word name="r14w"/>
+        <word name="r14b"/>
+        <word name="r15"/>
+        <word name="r15d"/>
+        <word name="r15w"/>
+        <word name="r15b"/>
       </keywords>
     </scheme>
     <scheme name="asm_shared">
@@ -1165,6 +1209,7 @@
         <word name="LOADALL286"/>
         <word name="SAL"/>
         <word name="SALC"/>
+        <word name="SETALC"/>
         <word name="SMI"/>
         <word name="UD1"/>
         <word name="UMOV"/>
@@ -1235,12 +1280,19 @@
       <regexp match="/;\!\!.*$/" region0="asmToDo"/>
       <regexp match="/;\?\?.*$/" region0="asmToDo"/>
       <regexp match="/;.*$/" region0="asmComment"/>
+      <regexp match="/\/\/.*$/" region0="asmComment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+             region00="def:PairStart" region10="def:PairEnd"/>
       <!-- NASM macros -->
       <block start="/^\s*(\%i?macro)\s+(\w+)([^;]*)/" end="/^\s*(\%endm(acro)?)/" scheme="nasm_mac" region="Insertion" region01="Directive" region02="asmMnemonics" region03="asmLabel" region11="Directive" region00="PairStart" region10="PairEnd"/>
       <block start="/^\s*\M(\%endm)?!\%\w+/" end="/$/" scheme="nasm_prepr" region="Directive"/>
       <!-- Primitive directives -->
       <regexp match="/^\[.*?\]/" region0="asmDirective"/>
       <block start="/(COMMENT) (.)/i" end="/\y2/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
+      <block start="/if\s+0/i" end="/end\s+if/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
+      <block start="/\%if\s+0\s*$/i" end="/\%endif/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
+      <block start="/rept\s+0\s*(\{|$)/i" end="/\}/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
+      <block start="/%%\s*(\{|$)/" end="/\}/" scheme="Comment" region="asmComment" region01="asmDefinition" region02="asmDefinition" region00="PairStart" region10="PairEnd"/>
       <inherit scheme="baseasm"/>
       <inherit scheme="asm_tasm"/>
       <inherit scheme="asm_nasm"/>

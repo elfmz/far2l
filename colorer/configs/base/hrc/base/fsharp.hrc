@@ -5,11 +5,11 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 <type name="fsharp">
-<annotation><documentation><![CDATA[
+<annotation><documentation>
 
-fsharp.hrc by Roman Kuzmin, aka nightroman, 2019-02-01
+fsharp.hrc by Roman Kuzmin aka NightRoman 2022-01-27
 
-]]></documentation></annotation>
+</documentation></annotation>
 
 <region parent="def:Comment" name="Comment"/>
 <region parent="def:CommentDoc" name="CommentDoc"/>
@@ -23,290 +23,315 @@ fsharp.hrc by Roman Kuzmin, aka nightroman, 2019-02-01
 <region parent="def:Keyword" name="Keyword"/>
 <region parent="def:NumberDec" name="NumberDec"/>
 <region parent="def:NumberFloat" name="NumberFloat"/>
+<region parent="def:NumberHex" name="NumberBit"/>
 <region parent="def:NumberHex" name="NumberHex"/>
+<region parent="def:NumberHex" name="NumberOct"/>
 <region parent="def:Operator" name="Operator"/>
 <region parent="def:PairEnd" name="PairEnd"/>
 <region parent="def:PairStart" name="PairStart"/>
 <region parent="def:String" name="String"/>
 <region parent="def:StringContent" name="StringContent"/>
+<region parent="def:StringEdge" name="StringEdge"/>
 <region parent="def:TypeKeyword" name="AttrBlock"/>
 <region parent="def:TypeKeyword" name="AttrIdent"/>
 
-<!-- Identifier -->
-<entity name="ident" value="(?:[_a-zA-Z][.\w&apos;]*|``.+?``)"/>
+<entity name="hex" value="0-9a-fA-F"/>
+<entity name="ident" value="(?:\d?!\w[.\w&apos;]*|``.+?``)"/>
+<entity name="escape" value="\\(?:[\\ntbrafv&quot;&apos;]|$|u[%hex;]{4}|U[%hex;]{8}|\d\d\d)"/>
 
-<!-- Escaped -->
+<!-- Simple string and interpolated -->
 <scheme name="FSSimpleString">
-<regexp match="/\\[ntbrafv\\&quot;&apos;]|\\$|\\u[\da-fA-F]{4}|\\U[\da-fA-F]{8}|\\\d\d\d/" region="StringContent"/>
+  <regexp match="/%escape;/" region="StringContent"/>
 </scheme>
+<scheme name="FSSimpleInterp">
+  <regexp match="/\{\{|%escape;|\}\}/" region="StringContent"/>
+  <block scheme="fsharp" start="/(?{PairStart}(?{StringEdge}\{))/" end="/(?{PairEnd}(?{StringEdge}\}))/"/>
+</scheme>
+
+<!-- Verbatim string and interpolated -->
 <scheme name="FSVerbatimString">
-<regexp match="/&quot;&quot;/" region="StringContent"/>
+  <regexp match="/&quot;&quot;/" region="StringContent"/>
 </scheme>
-<scheme name="FSVerbatimString2">
+<scheme name="FSVerbatimInterp">
+  <regexp match="/\{\{|&quot;&quot;|\}\}/" region="StringContent"/>
+  <block scheme="fsharp" start="/(?{PairStart}(?{StringEdge}\{))/" end="/(?{PairEnd}(?{StringEdge}\}))/"/>
+</scheme>
+
+<!-- Triple string and interpolated -->
+<scheme name="FSTripleString">
+</scheme>
+<scheme name="FSTripleInterp">
+  <regexp match="/\{\{|\}\}/" region="StringContent"/>
+  <block scheme="fsharp" start="/(?{PairStart}(?{StringEdge}\{))/" end="/(?{PairEnd}(?{StringEdge}\}))/"/>
 </scheme>
 
 <!-- Identifier -->
 <scheme name="Identifier">
-<regexp match="/%ident;/" region="Identifier"/>
+  <regexp match="/%ident;/" region="Identifier"/>
 </scheme>
 
 <!-- Attribute -->
 <scheme name="Attribute">
-<regexp match="/%ident;/" region="AttrIdent"/>
+  <regexp match="/%ident;/" region="AttrIdent"/>
 </scheme>
 
 <!-- Number -->
-<entity name="numexp" value="(?:[eE][\-+]?\d+)"/>
-<entity name="numsuf" value="[fFmM]?"/>
-<entity name="intsuf" value="(y|uy|s|us|L|UL)?"/>
+<entity name="num_exp" value="(?:[eE][\-+]?\d+)"/>
+<entity name="num_suf" value="[fFmM]?"/>
+<entity name="int_suf" value="(y|uy|s|us|L|UL|I)?"/>
 <scheme name="FSNumber">
-<regexp match="/\B\.?~1\.\d+%numexp;?%numsuf;\b/i" region="NumberFloat"/>
-<regexp match="/\b\d+\.\.?!\d*(?:%numexp;?%numsuf;\b|\B)/i" region="NumberFloat"/>
-<regexp match="/\b\d+%numexp;%numsuf;\b/i" region="NumberFloat"/>
-<regexp match="/\b0[xX][\da-fA-F]+%intsuf;(?:Fun)?\b/i" region="NumberHex"/>
-<regexp match="/\b\d+%intsuf;\b/i" region="NumberDec"/>
+  <regexp match="/\B\.?~1\.\d+%num_exp;?%num_suf;\b/" region="NumberFloat"/>
+  <regexp match="/\b\d+\.\.?!\d*(?:%num_exp;?%num_suf;\b|\B)/" region="NumberFloat"/>
+  <regexp match="/\b\d+%num_exp;%num_suf;\b/i" region="NumberFloat"/>
+  <regexp match="/\b0[xX][%hex;][%hex;_]*%int_suf;(?:[Ff]un)?\b/i" region="NumberHex"/>
+  <regexp match="/\b0[oO][0-7][0-7_]*%int_suf;\b/i" region="NumberOct"/>
+  <regexp match="/\b0[bB][01][01_]*%int_suf;\b/i" region="NumberBit"/>
+  <regexp match="/\b\d[\d_]*%int_suf;\b/i" region="NumberDec"/>
 </scheme>
 
 <!-- Content (**) -->
 <scheme name="FSCommentContent">
-<block start="/&quot;/" end="/&quot;B?/" scheme="def:Comment" region="Comment" region00="PairStart" region10="PairEnd"/>
+  <block start="/&quot;/" end="/&quot;B?/" scheme="def:Comment" region="Comment" region00="PairStart" region10="PairEnd"/>
+</scheme>
+
+<!-- [<Attribute>] -->
+<scheme name="FSAttribute">
+  <inherit scheme="fsharp">
+    <virtual scheme="Identifier" subst-scheme="Attribute"/>
+  </inherit>
 </scheme>
 
 <!-- Main scheme -->
 <scheme name="fsharp">
+  <!-- Special (*) -->
+  <regexp match="/\(\*\)/" region="Operator"/>
 
-<!-- Special (*) -->
-<regexp match="/\(\*\)/" region="Operator"/>
+  <!-- Block comment -->
+  <block start="/\(\*/" end="/\*\)/" scheme="FSCommentContent" region00="PairStart" region10="PairEnd" region="Comment"/>
 
-<!-- Block comment -->
-<block start="/\(\*/" end="/\*\)/" scheme="FSCommentContent" region00="PairStart" region10="PairEnd" region="Comment"/>
+  <!-- Line comment -->
+  <regexp match="/(?:^|\s)(////(?:\s+.*|$))/" region="Comment" region1="def:Outlined"/>
+  <regexp match="/(?:^|\s)(///)(\s+.*|$)/" region1="CommentDoc" region2="Comment"/>
+  <regexp match="/\/\/.*/" region="Comment"/>
 
-<!-- Line comment -->
-<regexp match="/(?:^|\s)(////(?:\s+.*|$))/" region="Comment" region1="def:Outlined"/>
-<regexp match="/(?:^|\s)(///)(\s+.*|$)/" region1="CommentDoc" region2="Comment"/>
-<regexp match="/\/\/.*/" region="Comment"/>
+  <!-- Strings -->
+  <block scheme="FSTripleInterp" start="/(?{PairStart}(?{StringEdge}\$&quot;&quot;&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;&quot;&quot;B?))/" region="String"/>
+  <block scheme="FSTripleString" start="/(?{PairStart}(?{StringEdge}&quot;&quot;&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;&quot;&quot;B?))/" region="String"/>
+  <block scheme="FSVerbatimInterp" start="/(?{PairStart}(?{StringEdge}\$@&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;B?))/" region="String"/>
+  <block scheme="FSVerbatimString" start="/(?{PairStart}(?{StringEdge}@&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;B?))/" region="String"/>
+  <block scheme="FSSimpleInterp" start="/(?{PairStart}(?{StringEdge}\$&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;B?))/" region="String"/>
+  <block scheme="FSSimpleString" start="/(?{PairStart}(?{StringEdge}&quot;))/" end="/(?{PairEnd}(?{StringEdge}&quot;B?))/" region="String"/>
 
-<!-- String -->
-<block start="/&quot;&quot;&quot;/" end="/&quot;&quot;&quot;B?/" scheme="FSVerbatimString2" region="String" region00="PairStart" region10="PairEnd"/>
-<block start="/@&quot;/" end="/&quot;B?/" scheme="FSVerbatimString" region="String" region00="PairStart" region10="PairEnd"/>
-<block start="/&quot;/" end="/&quot;B?/" scheme="FSSimpleString" region="String" region00="PairStart" region10="PairEnd"/>
+  <!-- Character -->
+  <regexp match="/&apos;(\\&apos;|\\[bnrt\\&apos;&quot;]|\\u[\da-fA-F]{4}|\\U[\da-fA-F]{8}|.)&apos;B?/" region="String"/>
 
-<!-- Character -->
-<regexp match="/&apos;(\\&apos;|\\[bnrt\\&apos;&quot;]|\\u[\da-fA-F]{4}|\\U[\da-fA-F]{8}|.)&apos;B?/" region="String"/>
+  <!-- Array -->
+  <block start="/(\[\|)/" end="/(\|\])/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
 
-<!-- Array -->
-<block start="/(\[\|)/" end="/(\|\])/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
+  <!-- Attribute -->
+  <block start="/(\[&lt;)/" end="/(&gt;\])/" scheme="FSAttribute" region00="AttrBlock" region01="PairStart" region10="AttrBlock" region11="PairEnd"/>
 
-<!-- Attribute -->
-<block start="/(\[&lt;)/" end="/(&gt;\])/" scheme="FSAttribute" region00="AttrBlock" region01="PairStart" region10="AttrBlock" region11="PairEnd"/>
+  <!-- Anonymous record -->
+  <block start="/(\{\|)/" end="/(\|\})/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
 
-<!-- Anonymous record -->
-<block start="/(\{\|)/" end="/(\|\})/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
+  <!-- Code Quotation -->
+  <block start="/(&lt;@@)/" end="/(@@&gt;)/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
+  <block start="/(&lt;@)/" end="/(@&gt;)/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
 
-<!-- Code Quotation -->
-<block start="/(&lt;@@)/" end="/(@@&gt;)/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
-<block start="/(&lt;@)/" end="/(@&gt;)/" scheme="fsharp" region00="def:Symbol" region01="PairStart" region10="def:Symbol" region11="PairEnd"/>
+  <!-- Bracket -->
+  <inherit scheme="def:PairedBrackets">
+  <virtual scheme="def:PairedBrackets" subst-scheme="fsharp"/>
+  </inherit>
 
-<!-- Bracket -->
-<inherit scheme="def:PairedBrackets">
-<virtual scheme="def:PairedBrackets" subst-scheme="fsharp"/>
-</inherit>
+  <!-- Directive -->
+  <regexp match="/^\s*#(if|else|endif|light|nowarn|r|reference|I|Include|load)\b/" region="Directive"/>
+  <regexp match="/^#!.*/" region="Directive"/>
 
-<!-- Directive -->
-<regexp match="/^\s*#(if|else|endif|light|nowarn|r|reference|I|Include|load)\b/" region="Directive"/>
+  <!-- Value -->
+  <regexp region="def:Outlined"
+  match="/^\s*(static)?\b\s*(let)\b\s*(rec|inline|mutable)?\b\s*(public|private|internal)?\s+(%ident;)?/"
+  region1="Keyword" region2="Keyword" region3="Keyword" region4="Keyword" region5="Value"
+  />
 
-<!-- Value -->
-<regexp region="def:Outlined"
-match="/^\s*(static)?\b\s*(let)\b\s*(rec|inline|mutable)?\b\s*(public|private|internal)?\s+(%ident;)?/"
-region1="Keyword" region2="Keyword" region3="Keyword" region4="Keyword" region5="Value"
-/>
+  <!-- Module -->
+  <regexp region="def:Outlined"
+  match="/^\s*(?{Keyword}module|namespace)\b(?:\s+(?{Keyword}public|private|internal))?(?:\s+(?{Keyword}rec))?\s+(?{Module}%ident;)/"
+  />
 
-<!-- Module -->
-<regexp region="def:Outlined"
-match="/^\s*(?{Keyword}module|namespace)\b(?:\s+(?{Keyword}public|private|internal))?(?:\s+(?{Keyword}rec))?\s+(?{Module}%ident;)/"
-/>
+  <!-- Type -->
+  <regexp region="def:Outlined"
+  match="/^\s*(type|interface|exception)\b\s*(public|private|internal)?\s+(%ident;)/"
+  region1="Keyword" region2="Keyword" region3="Type"
+  />
 
-<!-- Type -->
-<regexp region="def:Outlined"
-match="/^\s*(type|interface|exception)\b\s*(public|private|internal)?\s+(%ident;)/"
-region1="Keyword" region2="Keyword" region3="Type"
-/>
+  <!-- Member -->
+  <regexp region="def:Outlined"
+  match="/^\s+(static)?\b\s*(member|override|abstract|default)\b\s*(val|inline)?\b\s*(public|private|internal)?\s+(%ident;|\(?=)/"
+  region1="Keyword" region2="Keyword" region3="Keyword" region4="Keyword" region5="Member"
+  />
 
-<!-- Member -->
-<regexp region="def:Outlined"
-match="/^\s+(static)?\b\s*(member|override|abstract|default)\b\s*(val|inline)?\b\s*(public|private|internal)?\s+(%ident;|\(?=)/"
-region1="Keyword" region2="Keyword" region3="Keyword" region4="Keyword" region5="Member"
-/>
+  <keywords region="Constant">
+  <word name="__SOURCE_DIRECTORY__"/>
+  <word name="__SOURCE_FILE__"/>
+  <word name="__LINE__"/>
+  <word name="false"/>
+  <word name="null"/>
+  <word name="true"/>
+  </keywords>
 
-<keywords region="Constant">
-<word name="__SOURCE_DIRECTORY__"/>
-<word name="__SOURCE_FILE__"/>
-<word name="__LINE__"/>
-<word name="false"/>
-<word name="null"/>
-<word name="true"/>
-</keywords>
+  <!-- Keyword -->
+  <keywords region="Keyword">
+  <word name="abstract"/>
+  <word name="and"/>
+  <word name="as"/>
+  <word name="assert"/>
+  <word name="base"/>
+  <word name="begin"/>
+  <word name="class"/>
+  <word name="default"/>
+  <word name="delegate"/>
+  <word name="do"/>
+  <word name="done"/>
+  <word name="downcast"/>
+  <word name="downto"/>
+  <word name="elif"/>
+  <word name="else"/>
+  <word name="end"/>
+  <word name="exception"/>
+  <word name="extern"/>
+  <word name="finally"/>
+  <word name="for"/>
+  <word name="fun"/>
+  <word name="function"/>
+  <word name="global"/>
+  <word name="if"/>
+  <word name="in"/>
+  <word name="inherit"/>
+  <word name="inline"/>
+  <word name="interface"/>
+  <word name="internal"/>
+  <word name="lazy"/>
+  <word name="let"/>
+  <word name="match"/>
+  <word name="member"/>
+  <word name="module"/>
+  <word name="mutable"/>
+  <word name="namespace"/>
+  <word name="new"/>
+  <word name="not"/>
+  <word name="of"/>
+  <word name="open"/>
+  <word name="or"/>
+  <word name="override"/>
+  <word name="private"/>
+  <word name="public"/>
+  <word name="rec"/>
+  <word name="return"/>
+  <word name="static"/>
+  <word name="struct"/>
+  <word name="then"/>
+  <word name="to"/>
+  <word name="try"/>
+  <word name="type"/>
+  <word name="upcast"/>
+  <word name="use"/>
+  <word name="val"/>
+  <word name="void"/>
+  <word name="when"/>
+  <word name="while"/>
+  <word name="with"/>
+  <word name="yield"/>
+  <!-- OCaml -->
+  <word name="asr"/>
+  <word name="land"/>
+  <word name="lor"/>
+  <word name="lsl"/>
+  <word name="lsr"/>
+  <word name="lxor"/>
+  <word name="mod"/>
+  <word name="sig"/>
+  <!-- Reserved -->
+  <word name="atomic"/>
+  <word name="break"/>
+  <word name="checked"/>
+  <word name="component"/>
+  <word name="const"/>
+  <word name="constraint"/>
+  <word name="constructor"/>
+  <word name="continue"/>
+  <word name="eager"/>
+  <word name="event"/>
+  <word name="external"/>
+  <word name="fixed"/>
+  <word name="functor"/>
+  <word name="include"/>
+  <word name="method"/>
+  <word name="mixin"/>
+  <word name="object"/>
+  <word name="parallel"/>
+  <word name="process"/>
+  <word name="protected"/>
+  <word name="pure"/>
+  <word name="sealed"/>
+  <word name="tailcall"/>
+  <word name="trait"/>
+  <word name="virtual"/>
+  <word name="volatile"/>
+  </keywords>
 
-<!-- Keyword -->
-<keywords region="Keyword">
-<word name="abstract"/>
-<word name="and"/>
-<word name="as"/>
-<word name="assert"/>
-<word name="base"/>
-<word name="begin"/>
-<word name="class"/>
-<word name="default"/>
-<word name="delegate"/>
-<word name="do"/>
-<word name="done"/>
-<word name="downcast"/>
-<word name="downto"/>
-<word name="elif"/>
-<word name="else"/>
-<word name="end"/>
-<word name="exception"/>
-<word name="extern"/>
-<word name="finally"/>
-<word name="for"/>
-<word name="fun"/>
-<word name="function"/>
-<word name="global"/>
-<word name="if"/>
-<word name="in"/>
-<word name="inherit"/>
-<word name="inline"/>
-<word name="interface"/>
-<word name="internal"/>
-<word name="lazy"/>
-<word name="let"/>
-<word name="match"/>
-<word name="member"/>
-<word name="module"/>
-<word name="mutable"/>
-<word name="namespace"/>
-<word name="new"/>
-<word name="not"/>
-<word name="of"/>
-<word name="open"/>
-<word name="or"/>
-<word name="override"/>
-<word name="private"/>
-<word name="public"/>
-<word name="rec"/>
-<word name="return"/>
-<word name="static"/>
-<word name="struct"/>
-<word name="then"/>
-<word name="to"/>
-<word name="try"/>
-<word name="type"/>
-<word name="upcast"/>
-<word name="use"/>
-<word name="val"/>
-<word name="void"/>
-<word name="when"/>
-<word name="while"/>
-<word name="with"/>
-<word name="yield"/>
-<!-- OCaml -->
-<word name="asr"/>
-<word name="land"/>
-<word name="lor"/>
-<word name="lsl"/>
-<word name="lsr"/>
-<word name="lxor"/>
-<word name="mod"/>
-<word name="sig"/>
-<!-- Reserved -->
-<word name="atomic"/>
-<word name="break"/>
-<word name="checked"/>
-<word name="component"/>
-<word name="const"/>
-<word name="constraint"/>
-<word name="constructor"/>
-<word name="continue"/>
-<word name="eager"/>
-<word name="event"/>
-<word name="external"/>
-<word name="fixed"/>
-<word name="functor"/>
-<word name="include"/>
-<word name="method"/>
-<word name="mixin"/>
-<word name="object"/>
-<word name="parallel"/>
-<word name="process"/>
-<word name="protected"/>
-<word name="pure"/>
-<word name="sealed"/>
-<word name="tailcall"/>
-<word name="trait"/>
-<word name="virtual"/>
-<word name="volatile"/>
-</keywords>
+  <!-- Operator -->
+  <keywords region="Operator">
+  <symb name="!"/>
+  <symb name="%"/>
+  <symb name="&amp;"/>
+  <symb name="&amp;&amp;"/>
+  <symb name="&amp;&amp;&amp;"/>
+  <symb name="*"/>
+  <symb name="**"/>
+  <symb name="+"/>
+  <symb name=","/>
+  <symb name="-"/>
+  <symb name="-&gt;"/>
+  <symb name="."/>
+  <symb name=".."/>
+  <symb name="/"/>
+  <symb name=":"/>
+  <symb name="::"/>
+  <symb name=":="/>
+  <symb name=":&gt;"/>
+  <symb name=":?"/>
+  <symb name=":?&gt;"/>
+  <symb name=";"/>
+  <symb name="&lt;"/>
+  <symb name="&lt;&lt;"/>
+  <symb name="&lt;&lt;&lt;"/>
+  <symb name="&lt;-"/>
+  <symb name="&lt;&gt;"/>
+  <symb name="&lt;="/>
+  <symb name="&lt;|"/>
+  <symb name="="/>
+  <symb name="&gt;"/>
+  <symb name="&gt;&gt;"/>
+  <symb name="&gt;&gt;&gt;"/>
+  <symb name="&gt;="/>
+  <symb name="?"/>
+  <symb name="@"/>
+  <symb name="^^^"/>
+  <symb name="|"/>
+  <symb name="||"/>
+  <symb name="|||"/>
+  <symb name="|&gt;"/>
+  <symb name="~~"/>
+  <symb name="~~~"/>
+  <symb name="~-"/>
+  <symb name="~+"/>
+  </keywords>
 
-<!-- Operator -->
-<keywords region="Operator">
-<symb name="!"/>
-<symb name="%"/>
-<symb name="&amp;"/>
-<symb name="&amp;&amp;"/>
-<symb name="&amp;&amp;&amp;"/>
-<symb name="*"/>
-<symb name="**"/>
-<symb name="+"/>
-<symb name=","/>
-<symb name="-"/>
-<symb name="-&gt;"/>
-<symb name="."/>
-<symb name=".."/>
-<symb name="/"/>
-<symb name=":"/>
-<symb name="::"/>
-<symb name=":="/>
-<symb name=":&gt;"/>
-<symb name=":?"/>
-<symb name=":?&gt;"/>
-<symb name=";"/>
-<symb name="&lt;"/>
-<symb name="&lt;&lt;"/>
-<symb name="&lt;&lt;&lt;"/>
-<symb name="&lt;-"/>
-<symb name="&lt;&gt;"/>
-<symb name="&lt;="/>
-<symb name="&lt;|"/>
-<symb name="="/>
-<symb name="&gt;"/>
-<symb name="&gt;&gt;"/>
-<symb name="&gt;&gt;&gt;"/>
-<symb name="&gt;="/>
-<symb name="?"/>
-<symb name="@"/>
-<symb name="^^^"/>
-<symb name="|"/>
-<symb name="||"/>
-<symb name="|||"/>
-<symb name="|&gt;"/>
-<symb name="~~"/>
-<symb name="~~~"/>
-<symb name="~-"/>
-<symb name="~+"/>
-</keywords>
+  <!-- Identifier -->
+  <inherit scheme="Identifier"/>
 
-<!-- Identifier -->
-<inherit scheme="Identifier"/>
-
-<!-- Number -->
-<inherit scheme="FSNumber"/>
-
-</scheme>
-
-<scheme name="FSAttribute">
-<inherit scheme="fsharp">
-  <virtual scheme="Identifier" subst-scheme="Attribute"/>
-</inherit>
+  <!-- Number -->
+  <inherit scheme="FSNumber"/>
 </scheme>
 
 </type>

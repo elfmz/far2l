@@ -9,7 +9,7 @@
  <annotation>
  <documentation>
     Go syntax description
-    
+
     https://golang.org/ref/spec
  </documentation><contributors><![CDATA[
     Mikhail Kupchik <Mikhail.Kupchik@gmail.com>
@@ -31,6 +31,7 @@
   <region name="Symbol" parent="def:Symbol"/>
 
   <region name="Keywords" parent="def:Keyword"/>
+  <region name="FunctionKeyword" parent="def:FunctionKeyword"/>
 
 
   <scheme name="Character">
@@ -48,7 +49,7 @@
   <entity name='format' value='[\-\+\#0]*?[\d\*]*(?{}\.[\d\*]+)?[Ll]?[a-z]'/>
   <scheme name="StringContent">
    <regexp match="/\\\\$/" region="def:Error"/>
-	 <regexp match="/((\%)[\dA-Z_]{2,}(\%))(%format;|%)?!/" region1="def:Var" region2="def:PairStart" region3="def:PairEnd"/>
+   <regexp match="/((\%)[\dA-Z_]{2,}(\%))(%format;|%)?!/" region1="def:Var" region2="def:PairStart" region3="def:PairEnd"/>
    <regexp match="/\\[^xX\d]/" region="StringEscape"/>
    <regexp match="/\\$/" region="StringEscape"/>
    <regexp match="/\\x[\da-fA-F]{1,8}/i" region="StringEscape"/>
@@ -79,7 +80,7 @@
           region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
    <block start="/(\{)/" end="/(\})/" scheme="Expression"
           region00="Symbol" region01="PairStart" region10="Symbol" region11="PairEnd"/>
-   
+
    <inherit scheme="Character"/>
    <inherit scheme="String"/>
    <inherit scheme="RawString"/>
@@ -101,7 +102,9 @@
       <end region0="def:PairEnd"><![CDATA[/\*\//]]></end>
    </block>
 
-   
+   <!-- Keyword func -->
+   <regexp match="/\b(func)\b/i" region1="FunctionKeyword" region="def:Outlined"/>
+
    <!-- Go keywords -->
    <keywords region="Keywords">
       <word name="break" />
@@ -109,26 +112,25 @@
       <word name="chan" />
       <word name="const" />
       <word name="continue" />
-      <word name="default" />    
-      <word name="defer" />      
-      <word name="else" />       
+      <word name="default" />
+      <word name="defer" />
+      <word name="else" />
       <word name="fallthrough" />
-      <word name="for" />        
-      <word name="func" />  
-      <word name="go" />    
-      <word name="goto" />  
-      <word name="if" />    
+      <word name="for" />
+      <word name="go" />
+      <word name="goto" />
+      <word name="if" />
       <word name="import" />
       <word name="interface" />
-      <word name="map" />      
-      <word name="package" />  
-      <word name="range" />    
-      <word name="return" />   
+      <word name="map" />
+      <word name="package" />
+      <word name="range" />
+      <word name="return" />
       <word name="select" />
       <word name="struct" />
       <word name="switch" />
-      <word name="type" />  
-      <word name="var" />   
+      <word name="type" />
+      <word name="var" />
    </keywords>
 
    <keywords region="Symbol">

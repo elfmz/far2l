@@ -141,53 +141,116 @@
   <inherit scheme="cpp-qt-label"/>
 
   <keywords region="c:KeywordANSI">
+   <word name="alignas"/>
+   <word name="alignof"/>
    <word name="and"/>
    <word name="and_eq"/>
+   <word name="asm"/>
+   <word name="atomic_cancel"/>
+   <word name="atomic_commit"/>
+   <word name="atomic_noexcept"/>
+   <word name="auto" region="c:KeywordANSI.typenames"/>
    <word name="bitand"/>
    <word name="bitor"/>
    <word name="bool" region="c:KeywordANSI.typenames"/>
+   <word name="break"/>
+   <word name="case"/>
    <word name="catch"/>
-   <word name="compl"/>
-   <word name="const_cast"/>
+   <word name="char" region="c:KeywordANSI.typenames"/>
+   <word name="char16_t" region="c:KeywordANSI.typenames"/>
+   <word name="char32_t" region="c:KeywordANSI.typenames"/>
+   <word name="char8_t" region="c:KeywordANSI.typenames"/>
    <word name="class"/>
+   <word name="co_await"/>
+   <word name="co_return"/>
+   <word name="co_yield"/>
+   <word name="compl"/>
+   <word name="concept"/>
+   <word name="const"/>
+   <word name="const_cast"/>
+   <word name="consteval"/>
+   <word name="constexpr"/>
+   <word name="constinit"/>
+   <word name="continue"/>
+   <word name="decltype"/>
+   <word name="default"/>
    <word name="delete"/>
+   <word name="do"/>
+   <word name="double" region="c:KeywordANSI.typenames"/>
    <word name="dynamic_cast"/>
+   <word name="else"/>
+   <word name="enum"/>
+   <word name="explicit"/>
+   <word name="export"/>
+   <word name="extern"/>
    <word name="false"/>
+   <word name="final"/>
+   <word name="float" region="c:KeywordANSI.typenames"/>
+   <word name="for"/>
    <word name="friend"/>
+   <word name="goto"/>
+   <word name="if"/>
+   <word name="import"/>
+   <word name="inline"/>
+   <word name="int" region="c:KeywordANSI.typenames"/>
+   <word name="long" region="c:KeywordANSI.typenames"/>
+   <word name="module"/>
    <word name="mutable"/>
    <word name="namespace"/>
    <word name="new"/>
+   <word name="noexcept"/>
    <word name="not"/>
    <word name="not_eq"/>
+   <word name="nullptr" region="c:KeywordConstant"/>
    <word name="operator"/>
    <word name="or"/>
    <word name="or_eq"/>
-   <word name="offsetof"/>
+   <word name="override"/>
    <word name="private"/>
    <word name="protected"/>
    <word name="public"/>
+   <word name="reflexpr"/>
+   <word name="register"/>
    <word name="reinterpret_cast"/>
+   <word name="requires"/>
+   <word name="return"/>
+   <word name="short"/>
+   <word name="signed"/>
+   <word name="sizeof"/>
+   <word name="static"/>
+   <word name="static_assert"/>
    <word name="static_cast"/>
+   <word name="struct"/>
+   <word name="switch"/>
+   <word name="synchronized"/>
    <word name="template"/>
    <word name="this"/>
+   <word name="thread_local"/>
    <word name="throw"/>
+   <word name="transaction_safe"/>
+   <word name="transaction_safe_dynamic"/>
    <word name="true"/>
    <word name="try"/>
+   <word name="typedef"/>
    <word name="typeid"/>
    <word name="typename"/>
+   <word name="union"/>
+   <word name="unsigned" region="c:KeywordANSI.typenames"/>
+   <word name="using"/>
    <word name="virtual"/>
-   <word name="constexpr"/>
-   <word name="noexcept"/>
+   <word name="void" region="c:KeywordANSI.typenames"/>
+   <word name="volatile"/>
+   <word name="wchar_t" region="c:KeywordANSI.typenames"/>
+   <word name="while"/>
    <word name="xor"/>
    <word name="xor_eq"/>
+
    <word name="__based"/>
    <word name="__novtordisp"/>
    <word name="__self"/>
    <word name="__single_inheritance"/>
    <word name="__uuidof"/>
    <word name="__virtual_inheritance"/>
-
-   <word name="nullptr" region="c:KeywordConstant"/>
   </keywords>
 
 
@@ -409,6 +472,9 @@
    <word name="pointer_to_binary_function"/>
    <word name="unary_negate"/>
    <word name="binary_negate"/>
+
+   <!-- Other functions -->
+   <word name="offsetof"/>
 
    <!-- stdexept -->
    <word name="exception"/>

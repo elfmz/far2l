@@ -1,7 +1,7 @@
         <hrd class="rgb" name="default" description="far2l default">
             <location link="&hrd;/rgb/default.hrd"/>
         </hrd>    
-        <hrd class="rgb" name="blue" description="White (crimsoned)">
+        <hrd class="rgb" name="white" description="White (crimsoned)">
             <location link="&hrd;/rgb/white.hrd"/>
         </hrd>
         <hrd class="rgb" name="blue" description="Blue (far-truemod)">

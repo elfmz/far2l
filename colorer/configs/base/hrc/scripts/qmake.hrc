@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding='UTF-8'?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
-	"http://colorer.sf.net/2003/hrc.dtd">
+  "http://colorer.sf.net/2003/hrc.dtd">
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd"
  >
 
 <type name="qmake">
-	<annotation><documentation>
-		Qt qmake pro/pri file syntax
-	</documentation><contributors><![CDATA[
-		Eugene Efremov <4mirror@mail.ru>
-	]]></contributors>
+  <annotation><documentation>
+    Qt qmake pro/pri file syntax
+  </documentation><contributors><![CDATA[
+    Eugene Efremov <4mirror@mail.ru>
+  ]]></contributors>
 </annotation>
 
 <region name="corevar" parent="def:Directive"/>
@@ -36,541 +36,760 @@
 <!-- [\\]?~1\s*\M(?{}$|#) -->
 
 <scheme name="comment">
-	<block start='/#/' end='/$/' scheme='def:Comment' region='def:Comment'/>
+  <block start='/#/' end='/$/' scheme='def:Comment' region='def:Comment'/>
 </scheme>
 
 
 <scheme name='vars'>
-	<block start='/\${2}\M[\w_]+\(/' end='/\)?#1/' 
-		scheme='functions' region='var'
-	/>
-	<regexp match='/\${2}[\w_.]+\b/' region='var'/>
-	
-	
-	<block start='/\${1,2}(\()/' end='/(\))/' 
-		scheme='funstring' region='var'
-		region00='def:PairStart' region10='def:PairEnd'
-		region01='def:SymbolStrong' region11='def:SymbolStrong'
-	/>
-	<block start='/\${1,2}(\{)/' end='/(\})/' 
-		scheme='funstring' region='var'
-		region00='def:PairStart' region10='def:PairEnd'
-		region01='def:SymbolStrong' region11='def:SymbolStrong'
-	/>
-	<regexp match='/(\${2}(\[))[\w_.]+((\]))/' region='var' 
-		region1='def:PairStart' region2='def:SymbolStrong'
-		region3='def:PairEnd'   region4='def:SymbolStrong'
-	/>
+  <block start='/\${2}\M[\w_]+\(/' end='/\)?#1/'
+    scheme='functions' region='var'
+  />
+  <regexp match='/\${2}[\w_.]+\b/' region='var'/>
+
+
+  <block start='/\${1,2}(\()/' end='/(\))/'
+    scheme='funstring' region='var'
+    region00='def:PairStart' region10='def:PairEnd'
+    region01='def:SymbolStrong' region11='def:SymbolStrong'
+  />
+  <block start='/\${1,2}(\{)/' end='/(\})/'
+    scheme='funstring' region='var'
+    region00='def:PairStart' region10='def:PairEnd'
+    region01='def:SymbolStrong' region11='def:SymbolStrong'
+  />
+  <regexp match='/(\${2}(\[))[\w_.]+((\]))/' region='var'
+    region1='def:PairStart' region2='def:SymbolStrong'
+    region3='def:PairEnd'   region4='def:SymbolStrong'
+  />
 </scheme>
 
 <scheme name="varstring">
-	<regexp match='/\\$/' region='def:CharacterContent'/>
-	<inherit scheme="comment"/>
-	<inherit scheme="opt"/>
-	<inherit scheme="vars"/>
+  <regexp match='/\\$/' region='def:CharacterContent'/>
+  <inherit scheme="comment"/>
+  <inherit scheme="opt"/>
+  <inherit scheme="vars"/>
 </scheme>
 
 
 
 <scheme name='varre.content'>
-	<block start="/~(.)/" end="/(\y1)/" scheme='regexp:pcre.regexp'
-		region00='regexp:SpecQuote' region10='regexp:SpecQuote'
-		region11='regexp:SpecQuote'
-	/>
+  <block start="/~(.)/" end="/(\y1)/" scheme='regexp:pcre.regexp'
+    region00='regexp:SpecQuote' region10='regexp:SpecQuote'
+    region11='regexp:SpecQuote'
+  />
 </scheme>
 
 <scheme name='varre'>
-	<block start="/(s)\M(.)/" end="/(\y2)([egimosx]*)/" 
-		scheme='varre.content' region='string.var.re'
-		region00='regexp:SpecQuote' region10='regexp:SpecQuote'
-		region02='def:PairStart' region11='def:PairEnd'
-		region01='regexp:SpecArea' region12='regexp:SpecArea'
-	/>
-	<!-- 
-	
-	todo: regexp -->
+  <block start="/(s)\M(.)/" end="/(\y2)([egimosx]*)/"
+    scheme='varre.content' region='string.var.re'
+    region00='regexp:SpecQuote' region10='regexp:SpecQuote'
+    region02='def:PairStart' region11='def:PairEnd'
+    region01='regexp:SpecArea' region12='regexp:SpecArea'
+  />
+  <!--
+
+  todo: regexp -->
 </scheme>
 
 
 <scheme name="vardecl">
-	<inherit scheme="corevar"/>
-	
-	<block start='/[\+\-\*]?\=/' end='/%strn;/' 
-		scheme='varstring' region='string.var' region00='op'
-	/>
-	<block start='/\~\=/' end='/%strn;/' 
-		scheme='varre' region='string.var' region00='op'
-	/>
-	
+  <inherit scheme="corevar"/>
+
+  <block start='/[\+\-\*]?\=/' end='/%strn;/'
+    scheme='varstring' region='string.var' region00='op'
+  />
+  <block start='/\~\=/' end='/%strn;/'
+    scheme='varre' region='string.var' region00='op'
+  />
+
 </scheme>
 
 <scheme name='vardecl.qt'>
-	<inherit scheme="vardecl">
-		<virtual scheme="opt" subst-scheme="opt.qt"/>
-	</inherit>
+  <inherit scheme="vardecl">
+    <virtual scheme="opt" subst-scheme="opt.qt"/>
+  </inherit>
 </scheme>
 <scheme name='vardecl.conf'>
-	<inherit scheme="vardecl">
-		<virtual scheme="opt" subst-scheme="opt.conf"/>
-	</inherit>
+  <inherit scheme="vardecl">
+    <virtual scheme="opt" subst-scheme="opt.conf"/>
+  </inherit>
 </scheme>
 <scheme name='vardecl.tpl'>
-	<inherit scheme="vardecl">
-		<virtual scheme="opt" subst-scheme="opt.tpl"/>
-	</inherit>
+  <inherit scheme="vardecl">
+    <virtual scheme="opt" subst-scheme="opt.tpl"/>
+  </inherit>
 </scheme>
 
 
 
 <scheme name='fun'>
-	<inherit scheme='opt.qt'/>
-	<inherit scheme='opt.conf'/>
-	<inherit scheme='opt.tpl'/>
-	<inherit scheme='opt.mk'/>
-	<inherit scheme='keys'/>
-	
-	<block start="/(\()/" end="/(\))/" 
-		scheme="funstring" region='string'
-		region00="def:Symbol" region01="def:PairStart" 
-		region10="def:Symbol" region11="def:PairEnd"
-	/>
+  <inherit scheme='opt.qt'/>
+  <inherit scheme='opt.conf'/>
+  <inherit scheme='opt.tpl'/>
+  <inherit scheme='opt.mk'/>
+  <inherit scheme='keys'/>
+
+  <block start="/(\()/" end="/(\))/"
+    scheme="funstring" region='string'
+    region00="def:Symbol" region01="def:PairStart"
+    region10="def:Symbol" region11="def:PairEnd"
+  />
 </scheme>
 
 <scheme name='funstring'>
-	<keywords region='op'>
-		<symb name='!'/>
-		<symb name=','/>
-		<symb name='*'/>
-		<symb name='|'/>
-		<symb name='&amp;'/>
-	</keywords>
-	
-	<inherit scheme="varstring"/>
-	
-	<inherit scheme='fun'/>
-	<inherit scheme='corevar'/>
+  <keywords region='op'>
+    <symb name='!'/>
+    <symb name=','/>
+    <symb name='*'/>
+    <symb name='|'/>
+    <symb name='&amp;'/>
+  </keywords>
+
+  <inherit scheme="varstring"/>
+
+  <inherit scheme='fun'/>
+  <inherit scheme='corevar'/>
 </scheme>
 
 
 <scheme name='functions'>
-	<keywords region='op'>
-		<symb name='*'/>
-		<symb name='!'/>
-		<symb name='|'/>
-		<symb name='&amp;'/>
-		<symb name=':' region='def:SymbolStrong'/>
-	</keywords>
-	
-	<regexp match='/\Mdefine(Test|Replace)\s*\(\s*([\w_]+)\s*\)/' region2='function'/>
-	<inherit scheme='fun'/>
+  <keywords region='op'>
+    <symb name='*'/>
+    <symb name='!'/>
+    <symb name='|'/>
+    <symb name='&amp;'/>
+    <symb name=':' region='def:SymbolStrong'/>
+  </keywords>
+
+  <regexp match='/\Mdefine(Test|Replace)\s*\(\s*([\w_]+)\s*\)/' region2='function'/>
+  <inherit scheme='fun'/>
 </scheme>
 
 
 
 <scheme name="qmake">
-	<inherit scheme="comment"/>
-	
-	<block start='/\MQT\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.qt' region='var'/>
-	<block start='/\MCONFIG\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.conf' region='var'/>
-	<block start='/\MTEMPLATE\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.tpl' region='var'/>
-	<block start='/\M[\w_.]+\s*[\+\-\*\~]?\=/' end='/%strn;/'  scheme='vardecl' region='var'/>
-	
-	<inherit scheme="functions"/>
-	
-	<block start="/(\{)/" end="/(\})/" scheme="qmake" 
-		region00="def:SymbolStrong" region01="def:PairStart" 
-		region10="def:SymbolStrong" region11="def:PairEnd"
-	/>
+  <inherit scheme="comment"/>
+
+  <block start='/\MQT\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.qt' region='var'/>
+  <block start='/\MCONFIG\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.conf' region='var'/>
+  <block start='/\MTEMPLATE\s*[\+\-\*]?\=/' end='/%strn;/'  scheme='vardecl.tpl' region='var'/>
+  <block start='/\M[\w_.]+\s*[\+\-\*\~]?\=/' end='/%strn;/'  scheme='vardecl' region='var'/>
+
+  <inherit scheme="functions"/>
+
+  <block start="/(\{)/" end="/(\})/" scheme="qmake"
+    region00="def:SymbolStrong" region01="def:PairStart"
+    region10="def:SymbolStrong" region11="def:PairEnd"
+  />
 </scheme>
 
 
 <scheme name="corevar">
-	<keywords region='corevar' worddiv='[^\w\d_.]'>
-		<word name='CONFIG'/>
-		<word name='DEFINES'/>
-		<word name='DEF_FILE'/>
-		<word name='DEPENDPATH'/>
-		<word name='DEPLOYMENT'/>
-		<word name='DEPLOYMENT_PLUGIN'/>
-		<word name='DESTDIR'/>
-		<word name='DESTDIR_TARGET'/>
-		<word name='DLLDESTDIR'/>
-		<word name='DISTFILES'/>
-		<word name='DSP_TEMPLATE'/>
-		<word name='FORMS'/>
-		<word name='FORMS3'/>
-		<word name='HEADERS'/>
-		<word name='INCLUDEPATH'/>
-		<word name='INSTALLS'/>
-		<word name='LEXIMPLS'/>
-		<word name='LEXOBJECTS'/>
-		<word name='LEXSOURCES'/>
-		<word name='LIBPATH'/>
-		<word name='LIBS'/>
-		<word name='LITERAL_HASH'/>
-		<word name='MAKEFILE'/>
-		<word name='MAKEFILE_GENERATOR'/>
-		<word name='MOC_DIR'/>
-		<word name='OBJECTS'/>
-		<word name='OBJECTS_DIR'/>
-		<word name='OBJMOC'/>
-		<word name='POST_TARGETDEPS'/>
-		<word name='PRE_TARGETDEPS'/>
-		<word name='PRECOMPILED_HEADER'/>
-		<word name='QMAKE'/>
-		<word name='QMAKESPEC'/>
-		<word name='QMAKE_APP_FLAG'/>
-		<word name='QMAKE_APP_OR_DLL'/>
-		<word name='QMAKE_AR_CMD'/>
-		<word name='QMAKE_BUNDLE_DATA'/>
-		<word name='QMAKE_BUNDLE_EXTENSION'/>
-		<word name='QMAKE_CC'/>
-		<word name='QMAKE_CFLAGS_DEBUG'/>
-		<word name='QMAKE_CFLAGS_MT'/>
-		<word name='QMAKE_CFLAGS_MT_DBG'/>
-		<word name='QMAKE_CFLAGS_MT_DLL'/>
-		<word name='QMAKE_CFLAGS_MT_DLLDBG'/>
-		<word name='QMAKE_CFLAGS_RELEASE'/>
-		<word name='QMAKE_CFLAGS_SHLIB'/>
-		<word name='QMAKE_CFLAGS_THREAD'/>
-		<word name='QMAKE_CFLAGS_WARN_OFF'/>
-		<word name='QMAKE_CFLAGS_WARN_ON'/>
-		<word name='QMAKE_CLEAN'/>
-		<word name='QMAKE_CXX'/>
-		<word name='QMAKE_CXXFLAGS'/>
-		<word name='QMAKE_CXXFLAGS_DEBUG'/>
-		<word name='QMAKE_CXXFLAGS_MT'/>
-		<word name='QMAKE_CXXFLAGS_MT_DBG'/>
-		<word name='QMAKE_CXXFLAGS_MT_DLL'/>
-		<word name='QMAKE_CXXFLAGS_MT_DLLDBG'/>
-		<word name='QMAKE_CXXFLAGS_RELEASE'/>
-		<word name='QMAKE_CXXFLAGS_SHLIB'/>
-		<word name='QMAKE_CXXFLAGS_THREAD'/>
-		<word name='QMAKE_CXXFLAGS_WARN_OFF'/>
-		<word name='QMAKE_CXXFLAGS_WARN_ON'/>
-		<word name='QMAKE_DISTCLEAN'/>
-		<word name='QMAKE_EXTENSION_SHLIB'/>
-		<word name='QMAKE_EXT_MOC'/>
-		<word name='QMAKE_EXT_UI'/>
-		<word name='QMAKE_EXT_PRL'/>
-		<word name='QMAKE_EXT_LEX'/>
-		<word name='QMAKE_EXT_YACC'/>
-		<word name='QMAKE_EXT_OBJ'/>
-		<word name='QMAKE_EXT_CPP'/>
-		<word name='QMAKE_EXT_H'/>
-		<word name='QMAKE_FAILED_REQUIREMENTS'/>
-		<word name='QMAKE_FILETAGS'/>
-		<word name='QMAKE_FRAMEWORK_BUNDLE_NAME'/>
-		<word name='QMAKE_FRAMEWORK_VERSION'/>
-		<word name='QMAKE_INCDIR'/>
-		<word name='QMAKE_INCDIR_OPENGL'/>
-		<word name='QMAKE_INCDIR_QT'/>
-		<word name='QMAKE_INCDIR_THREAD'/>
-		<word name='QMAKE_INCDIR_X11'/>
-		<word name='QMAKE_LFLAGS'/>
-		<word name='QMAKE_LFLAGS_CONSOLE'/>
-		<word name='QMAKE_LFLAGS_CONSOLE_DLL'/>
-		<word name='QMAKE_LFLAGS_DEBUG'/>
-		<word name='QMAKE_LFLAGS_PLUGIN'/>
-		<word name='QMAKE_LFLAGS_QT_DLL'/>
-		<word name='QMAKE_LFLAGS_RELEASE'/>
-		<word name='QMAKE_LFLAGS_SHAPP'/>
-		<word name='QMAKE_LFLAGS_SHLIB'/>
-		<word name='QMAKE_LFLAGS_SONAME'/>
-		<word name='QMAKE_LFLAGS_THREAD'/>
-		<word name='QMAKE_LFLAGS_WINDOWS'/>
-		<word name='QMAKE_LFLAGS_WINDOWS_DLL'/>
-		<word name='QMAKE_LIBDIR'/>
-		<word name='QMAKE_LIBDIR_FLAGS'/>
-		<word name='QMAKE_LIBDIR_OPENGL'/>
-		<word name='QMAKE_LIBDIR_QT'/>
-		<word name='QMAKE_LIBDIR_X11'/>
-		<word name='QMAKE_LIBS'/>
-		<word name='QMAKE_LIBS_CONSOLE'/>
-		<word name='QMAKE_LIBS_OPENGL'/>
-		<word name='QMAKE_LIBS_OPENGL_QT'/>
-		<word name='QMAKE_LIBS_QT'/>
-		<word name='QMAKE_LIBS_QT_DLL'/>
-		<word name='QMAKE_LIBS_QT_OPENGL'/>
-		<word name='QMAKE_LIBS_QT_THREAD'/>
-		<word name='QMAKE_LIBS_RT'/>
-		<word name='QMAKE_LIBS_RTMT'/>
-		<word name='QMAKE_LIBS_THREAD'/>
-		<word name='QMAKE_LIBS_WINDOWS'/>
-		<word name='QMAKE_LIBS_X11'/>
-		<word name='QMAKE_LIBS_X11SM'/>
-		<word name='QMAKE_LIB_FLAG'/>
-		<word name='QMAKE_LINK_SHLIB_CMD'/>
-		<word name='QMAKE_POST_LINK'/>
-		<word name='QMAKE_PRE_LINK'/>
-		<word name='QMAKE_LN_SHLIB'/>
-		<word name='QMAKE_MAC_SDK'/>
-		<word name='QMAKE_MACOSX_DEPLOYMENT_TARGET'/>
-		<word name='QMAKE_MAKEFILE'/>
-		<word name='QMAKE_MOC_SRC'/>
-		<word name='QMAKE_QMAKE'/>
-		<word name='QMAKE_QT_DLL'/>
-		<word name='QMAKE_RESOURCE_FLAGS'/>
-		<word name='QMAKE_RUN_CC'/>
-		<word name='QMAKE_RUN_CC_IMP'/>
-		<word name='QMAKE_RUN_CXX'/>
-		<word name='QMAKE_RUN_CXX_IMP'/>
-		<word name='QMAKE_TARGET'/>
-		<word name='QMAKE_UIC'/>
-		<word name='QT'/>
-		<word name='QTPLUGIN'/>
-		<word name='QT_VERSION'/>
-		<word name='QT_MAJOR_VERSION'/>
-		<word name='QT_MINOR_VERSION'/>
-		<word name='QT_PATCH_VERSION'/>
-		<word name='RC_FILE'/>
-		<word name='RCC_DIR'/>
-		<word name='REQUIRES'/>
-		<word name='RES_FILE'/>
-		<word name='SIGNATURE_FILE'/>
-		<word name='SOURCES'/>
-		<word name='SRCMOC'/>
-		<word name='SUBDIRS'/>
-		<word name='TARGET'/>
-		<word name='TARGET_EXT'/>
-		<word name='TARGET_x'/>
-		<word name='TARGET_x.y.z'/>
-		<word name='TEMPLATE'/>
-		<word name='TRANSLATIONS'/>
-		<word name='UICIMPLS'/>
-		<word name='UICOBJECTS'/>
-		<word name='UI_DIR'/>
-		<word name='UI_HEADERS_DIR'/>
-		<word name='UI_SOURCES_DIR'/>
-		<word name='VERSION'/>
-		<word name='VER_MAJ'/>
-		<word name='VER_MIN'/>
-		<word name='VER_PAT'/>
-		<word name='VPATH'/>
-		<word name='YACCIMPLS'/>
-		<word name='YACCOBJECTS'/>
-		<word name='YACCSOURCES'/>
-		
-		<word name='RESOURCES'/>
-	</keywords>
+  <keywords region='corevar' worddiv='[^\w\d_.]'>
+    <!-- Qt 5.15 -->
+    <word name='_PRO_FILE_'/>
+    <word name='_PRO_FILE_PWD_'/>
+    <word name='ANDROID_ABI'/>
+    <word name='ANDROID_ABIS'/>
+    <word name='ANDROID_API_VERSION'/>
+    <word name='ANDROID_BUNDLED_JAR_DEPENDENCIES'/>
+    <word name='ANDROID_DEPLOYMENT_DEPENDENCIES'/>
+    <word name='ANDROID_DEPLOYMENT_SETTINGS_FILE'/>
+    <word name='ANDROID_EXTRA_LIBS'/>
+    <word name='ANDROID_EXTRA_PLUGINS'/>
+    <word name='ANDROID_FEATURES'/>
+    <word name='ANDROID_LIB_DEPENDENCIES'/>
+    <word name='ANDROID_MIN_SDK_VERSION'/>
+    <word name='ANDROID_PACKAGE_SOURCE_DIR'/>
+    <word name='ANDROID_PERMISSIONS'/>
+    <word name='ANDROID_TARGET_SDK_VERSION'/>
+    <word name='ANDROID_VERSION_CODE'/>
+    <word name='ANDROID_VERSION_NAME'/>
+    <word name='CONFIG'/>
+    <word name='DEF_FILE'/>
+    <word name='DEFINES'/>
+    <word name='DEFINES_DEBUG'/>
+    <word name='DEFINES_RELEASE'/>
+    <word name='DEPENDPATH'/>
+    <word name='DESTDIR'/>
+    <word name='DISTFILES'/>
+    <word name='DLLDESTDIR'/>
+    <word name='EXTRA_TRANSLATIONS'/>
+    <word name='FORMS'/>
+    <word name='GUID'/>
+    <word name='HEADERS'/>
+    <word name='ICON'/>
+    <word name='IDLSOURCES'/>
+    <word name='INCLUDEPATH'/>
+    <word name='INSTALLS'/>
+    <word name='JAVA_HOME'/>
+    <word name='LEXIMPLS'/>
+    <word name='LEXOBJECTS'/>
+    <word name='LEXSOURCES'/>
+    <word name='LIBS'/>
+    <word name='LIBS_PRIVATE'/>
+    <word name='LITERAL_HASH'/>
+    <word name='MAKEFILE'/>
+    <word name='MAKEFILE_GENERATOR'/>
+    <word name='MOC_DIR'/>
+    <word name='MSVCPROJ_'/>
+    <word name='OBJECTIVE_HEADERS'/>
+    <word name='OBJECTIVE_SOURCES'/>
+    <word name='OBJECTS'/>
+    <word name='OBJECTS_DIR'/>
+    <word name='OUT_PWD'/>
+    <word name='POST_TARGETDEPS'/>
+    <word name='PRE_TARGETDEPS'/>
+    <word name='PRECOMPILED_HEADER'/>
+    <word name='PWD'/>
+    <word name='QM_FILES_INSTALL_PATH'/>
+    <word name='QM_FILES_RESOURCE_PREFIX'/>
+    <word name='QMAKE'/>
+    <word name='QMAKE_AR_CMD'/>
+    <word name='QMAKE_BUNDLE_DATA'/>
+    <word name='QMAKE_BUNDLE_EXTENSION'/>
+    <word name='QMAKE_CC'/>
+    <word name='QMAKE_CFLAGS'/>
+    <word name='QMAKE_CFLAGS_DEBUG'/>
+    <word name='QMAKE_CFLAGS_RELEASE'/>
+    <word name='QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO'/>
+    <word name='QMAKE_CFLAGS_SHLIB'/>
+    <word name='QMAKE_CFLAGS_THREAD'/>
+    <word name='QMAKE_CFLAGS_WARN_OFF'/>
+    <word name='QMAKE_CFLAGS_WARN_ON'/>
+    <word name='QMAKE_CLEAN'/>
+    <word name='QMAKE_CXX'/>
+    <word name='QMAKE_CXXFLAGS'/>
+    <word name='QMAKE_CXXFLAGS_DEBUG'/>
+    <word name='QMAKE_CXXFLAGS_RELEASE'/>
+    <word name='QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO'/>
+    <word name='QMAKE_CXXFLAGS_SHLIB'/>
+    <word name='QMAKE_CXXFLAGS_THREAD'/>
+    <word name='QMAKE_CXXFLAGS_WARN_OFF'/>
+    <word name='QMAKE_CXXFLAGS_WARN_ON'/>
+    <word name='QMAKE_DEVELOPMENT_TEAM'/>
+    <word name='QMAKE_DISTCLEAN'/>
+    <word name='QMAKE_EXT_CPP'/>
+    <word name='QMAKE_EXT_H'/>
+    <word name='QMAKE_EXT_LEX'/>
+    <word name='QMAKE_EXT_MOC'/>
+    <word name='QMAKE_EXT_OBJ'/>
+    <word name='QMAKE_EXT_PRL'/>
+    <word name='QMAKE_EXT_UI'/>
+    <word name='QMAKE_EXT_YACC'/>
+    <word name='QMAKE_EXTENSION_SHLIB'/>
+    <word name='QMAKE_EXTENSION_STATICLIB'/>
+    <word name='QMAKE_EXTRA_COMPILERS'/>
+    <word name='QMAKE_EXTRA_TARGETS'/>
+    <word name='QMAKE_FAILED_REQUIREMENTS'/>
+    <word name='QMAKE_FRAMEWORK_BUNDLE_NAME'/>
+    <word name='QMAKE_FRAMEWORK_VERSION'/>
+    <word name='QMAKE_HOST'/>
+    <word name='QMAKE_INCDIR'/>
+    <word name='QMAKE_INCDIR_EGL'/>
+    <word name='QMAKE_INCDIR_OPENGL'/>
+    <word name='QMAKE_INCDIR_OPENGL_ES2'/>
+    <word name='QMAKE_INCDIR_OPENVG'/>
+    <word name='QMAKE_INCDIR_X11'/>
+    <word name='QMAKE_INFO_PLIST'/>
+    <word name='QMAKE_IOS_DEPLOYMENT_TARGET'/>
+    <word name='QMAKE_LFLAGS'/>
+    <word name='QMAKE_LFLAGS_APP'/>
+    <word name='QMAKE_LFLAGS_CONSOLE'/>
+    <word name='QMAKE_LFLAGS_DEBUG'/>
+    <word name='QMAKE_LFLAGS_PLUGIN'/>
+    <word name='QMAKE_LFLAGS_REL_RPATH'/>
+    <word name='QMAKE_LFLAGS_RELEASE'/>
+    <word name='QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO'/>
+    <word name='QMAKE_LFLAGS_RPATH'/>
+    <word name='QMAKE_LFLAGS_RPATHLINK'/>
+    <word name='QMAKE_LFLAGS_SHLIB'/>
+    <word name='QMAKE_LFLAGS_SONAME'/>
+    <word name='QMAKE_LFLAGS_THREAD'/>
+    <word name='QMAKE_LFLAGS_WINDOWS'/>
+    <word name='QMAKE_LIB_FLAG'/>
+    <word name='QMAKE_LIBDIR'/>
+    <word name='QMAKE_LIBDIR_EGL'/>
+    <word name='QMAKE_LIBDIR_FLAGS'/>
+    <word name='QMAKE_LIBDIR_OPENGL'/>
+    <word name='QMAKE_LIBDIR_OPENVG'/>
+    <word name='QMAKE_LIBDIR_POST'/>
+    <word name='QMAKE_LIBDIR_X11'/>
+    <word name='QMAKE_LIBS'/>
+    <word name='QMAKE_LIBS_EGL'/>
+    <word name='QMAKE_LIBS_OPENGL'/>
+    <word name='QMAKE_LIBS_OPENGL_ES1'/>
+    <word name='QMAKE_LIBS_OPENVG'/>
+    <word name='QMAKE_LIBS_PRIVATE'/>
+    <word name='QMAKE_LIBS_THREAD'/>
+    <word name='QMAKE_LIBS_X11'/>
+    <word name='QMAKE_LINK'/>
+    <word name='QMAKE_LINK_SHLIB_CMD'/>
+    <word name='QMAKE_LN_SHLIB'/>
+    <word name='QMAKE_LRELEASE_FLAGS'/>
+    <word name='QMAKE_MAC_SDK'/>
+    <word name='QMAKE_MACOSX_DEPLOYMENT_TARGET'/>
+    <word name='QMAKE_MAKEFILE'/>
+    <word name='QMAKE_MANIFEST'/>
+    <word name='QMAKE_OBJECTIVE_CFLAGS'/>
+    <word name='QMAKE_POST_LINK'/>
+    <word name='QMAKE_PRE_LINK'/>
+    <word name='QMAKE_PROJECT_NAME'/>
+    <word name='QMAKE_PROVISIONING_PROFILE'/>
+    <word name='QMAKE_QMAKE'/>
+    <word name='QMAKE_REL_RPATH_BASE'/>
+    <word name='QMAKE_RESOURCE_FLAGS'/>
+    <word name='QMAKE_RPATHDIR'/>
+    <word name='QMAKE_RPATHLINKDIR'/>
+    <word name='QMAKE_RUN_CC'/>
+    <word name='QMAKE_RUN_CC_IMP'/>
+    <word name='QMAKE_RUN_CXX'/>
+    <word name='QMAKE_RUN_CXX_IMP'/>
+    <word name='QMAKE_SONAME_PREFIX'/>
+    <word name='QMAKE_TARGET'/>
+    <word name='QMAKE_TARGET_COMPANY'/>
+    <word name='QMAKE_TARGET_COPYRIGHT'/>
+    <word name='QMAKE_TARGET_DESCRIPTION'/>
+    <word name='QMAKE_TARGET_PRODUCT'/>
+    <word name='QMAKE_TVOS_DEPLOYMENT_TARGET'/>
+    <word name='QMAKE_UIC_FLAGS'/>
+    <word name='QMAKE_WATCHOS_DEPLOYMENT_TARGET'/>
+    <word name='QMAKESPEC'/>
+    <word name='QML_FOREIGN_METATYPES'/>
+    <word name='QML_IMPORT_MAJOR_VERSION'/>
+    <word name='QML_IMPORT_MINOR_VERSION'/>
+    <word name='QML_IMPORT_NAME'/>
+    <word name='QML_IMPORT_PATH'/>
+    <word name='QML_IMPORT_VERSION'/>
+    <word name='QMLPATHS'/>
+    <word name='QT'/>
+    <word name='QT_MAJOR_VERSION'/>
+    <word name='QT_MINOR_VERSION'/>
+    <word name='QT_PATCH_VERSION'/>
+    <word name='QT_VERSION'/>
+    <word name='QTPLUGIN'/>
+    <word name='RC_CODEPAGE'/>
+    <word name='RC_DEFINES'/>
+    <word name='RC_FILE'/>
+    <word name='RC_ICONS'/>
+    <word name='RC_INCLUDEPATH'/>
+    <word name='RC_LANG'/>
+    <word name='RCC_DIR'/>
+    <word name='REQUIRES'/>
+    <word name='RES_FILE'/>
+    <word name='RESOURCES'/>
+    <word name='SOURCES'/>
+    <word name='SUBDIRS'/>
+    <word name='TARGET'/>
+    <word name='TARGET_EXT'/>
+    <!-- TODO: word name='TARGET_x'/ -->
+    <!-- TODO: word name='TARGET_x.y.z'/ -->
+    <word name='TEMPLATE'/>
+    <word name='TRANSLATIONS'/>
+    <word name='UI_DIR'/>
+    <word name='VER_MAJ'/>
+    <word name='VER_MIN'/>
+    <word name='VER_PAT'/>
+    <word name='VERSION'/>
+    <word name='VERSION_PE_HEADER'/>
+    <word name='VPATH'/>
+    <word name='WINDOWS_TARGET_PLATFORM_MIN_VERSION'/>
+    <word name='WINDOWS_TARGET_PLATFORM_VERSION'/>
+    <word name='WINRT_MANIFEST'/>
+    <word name='YACCSOURCES'/>
+
+    <!-- Undocumented, or legacy Qt versions -->
+    <word name='_QMAKE_CONF_'/>
+    <word name='ARGS'/>
+    <word name='DEPLOYMENT'/>
+    <word name='DEPLOYMENT_PLUGIN'/>
+    <word name='DESTDIR_TARGET'/>
+    <word name='DSP_TEMPLATE'/>
+    <word name='FORMS3'/>
+    <word name='GENERATED_SOURCES'/>
+    <word name='LIBPATH'/>
+    <word name='OBJMOC'/>
+    <word name='QMAKE_APP_FLAG'/>
+    <word name='QMAKE_APP_OR_DLL'/>
+    <word name='QMAKE_APPLE_DEVICE_ARCHS'/>
+    <word name='QMAKE_CFLAGS_MT'/>
+    <word name='QMAKE_CFLAGS_MT_DBG'/>
+    <word name='QMAKE_CFLAGS_MT_DLL'/>
+    <word name='QMAKE_CFLAGS_MT_DLLDBG'/>
+    <word name='QMAKE_CXXFLAGS_MT'/>
+    <word name='QMAKE_CXXFLAGS_MT_DBG'/>
+    <word name='QMAKE_CXXFLAGS_MT_DLL'/>
+    <word name='QMAKE_CXXFLAGS_MT_DLLDBG'/>
+    <word name='QMAKE_FILETAGS'/>
+    <word name='QMAKE_INCDIR_QT'/>
+    <word name='QMAKE_INCDIR_THREAD'/>
+    <word name='QMAKE_LFLAGS_CONSOLE_DLL'/>
+    <word name='QMAKE_LFLAGS_QT_DLL'/>
+    <word name='QMAKE_LFLAGS_SHAPP'/>
+    <word name='QMAKE_LFLAGS_WINDOWS_DLL'/>
+    <word name='QMAKE_LIBDIR_QT'/>
+    <word name='QMAKE_LIBS_CONSOLE'/>
+    <word name='QMAKE_LIBS_OPENGL_QT'/>
+    <word name='QMAKE_LIBS_QT'/>
+    <word name='QMAKE_LIBS_QT_DLL'/>
+    <word name='QMAKE_LIBS_QT_OPENGL'/>
+    <word name='QMAKE_LIBS_QT_THREAD'/>
+    <word name='QMAKE_LIBS_RT'/>
+    <word name='QMAKE_LIBS_RTMT'/>
+    <word name='QMAKE_LIBS_WINDOWS'/>
+    <word name='QMAKE_LIBS_X11SM'/>
+    <word name='QMAKE_MOC_SRC'/>
+    <word name='QMAKE_QT_DLL'/>
+    <word name='QMAKE_SUBSTITUTES'/>
+    <word name='QMAKE_UIC'/>
+    <word name='SIGNATURE_FILE'/>
+    <word name='SRCMOC'/>
+    <word name='UI_HEADERS_DIR'/>
+    <word name='UI_SOURCES_DIR'/>
+    <word name='UICIMPLS'/>
+    <word name='UICOBJECTS'/>
+    <word name='YACCIMPLS'/>
+    <word name='YACCOBJECTS'/>
+  </keywords>
 </scheme>
 
 
 <scheme name='opt'/>
 
 <scheme name='opt.tpl'>
-	<keywords region='opt.tpl'>
-		<word name='app'/>
-		<word name='lib'/>
-		<word name='subdirs'/>
-		<word name='vcapp'/>
-		<word name='vclib'/>
-	</keywords>
+  <keywords region='opt.tpl'>
+    <word name='app'/>
+    <word name='lib'/>
+    <word name='subdirs'/>
+    <word name='vcapp'/>
+    <word name='vclib'/>
+  </keywords>
 </scheme>
 
-<scheme name='opt.conf'>	
-	<keywords region='opt.conf'>
-		<word name='release'/>
-		<word name='debug'/>
-		<word name='debug_and_release'/>
-		<word name='build_all'/>
-		<word name='ordered'/>
-		<word name='warn_on'/>
-		<word name='warn_off'/>
-		<word name='qt'/>
-		<word name='opengl'/>
-		<word name='thread'/>
-		<word name='x11'/>
-		<word name='windows'/>
-		<word name='console'/>
-		<word name='shared'/>
-		<word name='dll'/>
-		<word name='static'/>
-		<word name='staticlib'/>
-		<word name='plugin'/>
-		<word name='designer'/>
-		<word name='uic3'/>
-		<word name='no_lflags_merge'/>
-		<word name='resources'/>
-		<word name='exceptions'/>
-		<word name='rtti'/>
-		<word name='stl'/>
-		<word name='flat'/>
-		<word name='embed_manifest_dll'/>
-		<word name='embed_manifest_exe'/>
-		<word name='ppc'/>
-		<word name='x86'/>
-		<word name='app_bundle'/>
-		<word name='lib_bundle'/>
-	</keywords>
+<scheme name='opt.conf'>
+  <keywords region='opt.conf'>
+    <!-- Qt 5.15 -->
+    <word name='app_bundle'/>
+    <word name='autogen_precompile_source'/>
+    <word name='build_all'/>
+    <word name='c++11'/>
+    <word name='c++14'/>
+    <word name='c++17'/>
+    <word name='c++1z'/>
+    <word name='c++2a'/>
+    <word name='c++2b'/>
+    <word name='c++latest'/>
+    <word name='c11'/>
+    <word name='c17'/>
+    <word name='c18'/>
+    <word name='c99'/>
+    <word name='cmdline'/>
+    <word name='compile_included_sources'/>
+    <word name='console'/>
+    <word name='create_libtool'/>
+    <word name='create_pc'/>
+    <word name='create_prl'/>
+    <word name='debug'/>
+    <word name='debug_and_release'/>
+    <word name='debug_and_release_target'/>
+    <word name='depend_includepath'/>
+    <word name='designer'/>
+    <word name='dll'/>
+    <word name='dont_recurse'/>
+    <word name='embed_manifest_dll'/>
+    <word name='embed_manifest_exe'/>
+    <word name='embed_translations'/>
+    <word name='exceptions'/>
+    <word name='exceptions_off'/>
+    <word name='flat'/>
+    <word name='hide_symbols'/>
+    <word name='insignificant_test'/>
+    <word name='largefile'/>
+    <word name='lib_bundle'/>
+    <word name='link_prl'/>
+    <word name='lrelease'/>
+    <word name='ltcg'/>
+    <word name='metatypes'/>
+    <word name='no_batch'/>
+    <word name='no_include_pwd'/>
+    <word name='no_install_prl'/>
+    <word name='no_lflags_merge'/>
+    <word name='ordered'/>
+    <word name='plugin'/>
+    <word name='plugin_bundle'/>
+    <word name='precompile_header'/>
+    <word name='precompile_header_c'/>
+    <word name='qmltypes'/>
+    <word name='qt'/>
+    <word name='release'/>
+    <word name='rtti'/>
+    <word name='rtti_off'/>
+    <word name='separate_debug_info'/>
+    <word name='shared'/>
+    <word name='skip_target_version_ext'/>
+    <word name='static'/>
+    <word name='staticlib'/>
+    <word name='stl'/>
+    <word name='stl_off'/>
+    <word name='strict_c'/>
+    <word name='strict_c++'/>
+    <word name='suppress_vcproj_warnings'/>
+    <word name='testcase'/>
+    <word name='thread'/>
+    <word name='utf8_source'/>
+    <word name='warn_off'/>
+    <word name='warn_on'/>
+    <word name='windeployqt'/>
+    <word name='windows'/>
+    <word name='x11'/>
+
+    <!-- Undocumented, or legacy Qt versions -->
+    <word name='opengl'/>
+    <word name='ppc'/>
+    <word name='resources'/>
+    <word name='uic3'/>
+    <word name='x86'/>
+  </keywords>
 </scheme>
 
-<scheme name='opt.qt'>	
-	<keywords region='opt.qt'>
-		<word name='core'/>
-		<word name='gui'/>
-		<word name='network'/>
-		<word name='opengl'/>
-		<word name='phonon'/>
-		<word name='sql'/>
-		<word name='svg'/>
-		<word name='xml'/>
-		<word name='webkit'/>
-		<word name='qt3support'/>
-	</keywords>
+<scheme name='opt.qt'>
+  <keywords region='opt.qt'>
+    <word name='concurrent'/>
+    <word name='core'/>
+    <word name='gui'/>
+    <word name='network'/>
+    <word name='opengl'/>
+    <word name='phonon'/>
+    <word name='qt3support'/><!-- only in Qt 4 -->
+    <word name='quick'/>
+    <word name='quickcontrols2'/>
+    <word name='sql'/>
+    <word name='svg'/>
+    <word name='webchannel'/>
+    <word name='webkit'/><!-- only in Qt 4 -->
+    <word name='webview'/>
+    <word name='widgets'/>
+    <word name='xml'/>
+  </keywords>
 </scheme>
 
 <scheme name='opt.mk'>
-	<keywords region='opt.mk' worddiv='[^\w\d_\-\+]'>
-		<word name='aix'/>
-		<word name='-g++'/>
-		<word name='aix-g++'/>
-		<word name='aix-g++-64'/>
-		<word name='aix-xlc'/>
-		<word name='aix-xlc-64'/>
-		<word name='common'/>
-		<word name='cygwin'/>
-		<word name='cygwin-g++'/>
-		<word name='embedded'/>
-		<word name='darwin'/>
-		<word name='darwin-g++'/>
-		<word name='default'/>
-		<word name='features'/>
-		<word name='freebsd'/>
-		<word name='freebsd-g++'/>
-		<word name='freebsd-g++34'/>
-		<word name='freebsd-g++40'/>
-		<word name='freebsd-icc'/>
-		<word name='hpux'/>
-		<word name='hpux-acc'/>
-		<word name='hpux-acc-64'/>
-		<word name='hpux-acc-o64'/>
-		<word name='hpux-g++'/>
-		<word name='hpux-g++-64'/>
-		<word name='hpuxi-acc-32'/>
-		<word name='hpuxi-acc-64'/>
-		<word name='hurd-g++'/>
-		<word name='irix'/>
-		<word name='irix-cc'/>
-		<word name='irix-cc-64'/>
-		<word name='irix-g++'/>
-		<word name='irix-g++-64'/>
-		<word name='linux'/>
-		<word name='linux-cxx'/>
-		<word name='linux-ecc-64'/>
-		<word name='linux-g++'/>
-		<word name='linux-g++-32'/>
-		<word name='linux-g++-64'/>
-		<word name='linux-icc'/>
-		<word name='linux-icc-32'/>
-		<word name='linux-icc-64'/>
-		<word name='linux-kcc'/>
-		<word name='linux-llvm'/>
-		<word name='linux-lsb-g++'/>
-		<word name='linux-pgcc'/>
-		<word name='lynxos-g++'/>
-		<word name='mac'/>
-		<word name='macx'/>
-		<word name='macx-g++'/>
-		<word name='macx-icc'/>
-		<word name='macx-llvm'/>
-		<word name='macx-pbuilder'/>
-		<word name='macx-xcode'/>
-		<word name='macx-xlc'/>
-		<word name='netbsd-g++'/>
-		<word name='openbsd-g++'/>
-		<word name='qws'/>
-		<word name='qnx'/>
-		<word name='sco'/>
-		<word name='sco-cc'/>
-		<word name='sco-g++'/>
-		<word name='solaris'/>
-		<word name='solaris-cc'/>
-		<word name='solaris-cc-64'/>
-		<word name='solaris-g++'/>
-		<word name='solaris-g++-64'/>
-		<word name='tru64'/>
-		<word name='tru64-cxx'/>
-		<word name='tru64-g++'/>
-		<word name='unix'/>
-		<word name='unixware'/>
-		<word name='unixware-cc'/>
-		<word name='unixware-g++'/>
-		<word name='win32'/>
-		<word name='win32-icc'/>
-		<word name='win32-borland'/>
-		<word name='win32-g++'/>
-		<word name='win32-msvc'/>
-		<word name='win32-msvc.net'/>
-		<word name='win32-msvc2002'/>
-		<word name='win32-msvc2003'/>
-		<word name='win32-msvc2005'/>
-		<word name='win32-msvc2008'/>
-		<word name='wince'/>
-		<word name='wince50standard'/>
-		<word name='wince50standard-armv4i-msvc2005'/>
-		<word name='wince50standard-armv4i-msvc2008'/>
-		<word name='wince50standard-mipsii-msvc2005'/>
-		<word name='wince50standard-mipsii-msvc2008'/>
-		<word name='wince50standard-mipsiv-msvc2005'/>
-		<word name='wince50standard-mipsiv-msvc2008'/>
-		<word name='wince50standard-sh4-msvc2005'/>
-		<word name='wince50standard-sh4-msvc2008'/>
-		<word name='wince50standard-x86-msvc2005'/>
-		<word name='wince50standard-x86-msvc2008'/>
-		<word name='wince60standard-armv4i-msvc2005'/>
-		<word name='wincewm50pocket'/>
-		<word name='wincewm50pocket-msvc2005'/>
-		<word name='wincewm50pocket-msvc2008'/>
-		<word name='wincewm50smart-msvc2005'/>
-		<word name='wincewm50smart-msvc2008'/>
-		<word name='wincewm60professional-msvc2005'/>
-		<word name='wincewm60professional-msvc2008'/>
-		<word name='wincewm60standard-msvc2005'/>
-		<word name='wincewm60standard-msvc2008'/>
-	</keywords>
+  <keywords region='opt.mk' worddiv='[^\w\d_\-\+]'>
+    <word name='aix'/>
+    <word name='-g++'/>
+    <word name='aix-g++'/>
+    <word name='aix-g++-64'/>
+    <word name='aix-xlc'/>
+    <word name='aix-xlc-64'/>
+    <word name='common'/>
+    <word name='cygwin'/>
+    <word name='cygwin-g++'/>
+    <word name='embedded'/>
+    <word name='darwin'/>
+    <word name='darwin-g++'/>
+    <word name='default'/>
+    <word name='features'/>
+    <word name='freebsd'/>
+    <word name='freebsd-g++'/>
+    <word name='freebsd-g++34'/>
+    <word name='freebsd-g++40'/>
+    <word name='freebsd-icc'/>
+    <word name='hpux'/>
+    <word name='hpux-acc'/>
+    <word name='hpux-acc-64'/>
+    <word name='hpux-acc-o64'/>
+    <word name='hpux-g++'/>
+    <word name='hpux-g++-64'/>
+    <word name='hpuxi-acc-32'/>
+    <word name='hpuxi-acc-64'/>
+    <word name='hurd-g++'/>
+    <word name='irix'/>
+    <word name='irix-cc'/>
+    <word name='irix-cc-64'/>
+    <word name='irix-g++'/>
+    <word name='irix-g++-64'/>
+    <word name='linux'/>
+    <word name='linux-cxx'/>
+    <word name='linux-ecc-64'/>
+    <word name='linux-g++'/>
+    <word name='linux-g++-32'/>
+    <word name='linux-g++-64'/>
+    <word name='linux-icc'/>
+    <word name='linux-icc-32'/>
+    <word name='linux-icc-64'/>
+    <word name='linux-kcc'/>
+    <word name='linux-llvm'/>
+    <word name='linux-lsb-g++'/>
+    <word name='linux-pgcc'/>
+    <word name='lynxos-g++'/>
+    <word name='mac'/>
+    <word name='macx'/>
+    <word name='macos'/>
+    <word name='macx-g++'/>
+    <word name='macx-icc'/>
+    <word name='macx-llvm'/>
+    <word name='macx-pbuilder'/>
+    <word name='macx-xcode'/>
+    <word name='macx-xlc'/>
+    <word name='netbsd-g++'/>
+    <word name='openbsd-g++'/>
+    <word name='qws'/>
+    <word name='qnx'/>
+    <word name='sco'/>
+    <word name='sco-cc'/>
+    <word name='sco-g++'/>
+    <word name='solaris'/>
+    <word name='solaris-cc'/>
+    <word name='solaris-cc-64'/>
+    <word name='solaris-g++'/>
+    <word name='solaris-g++-64'/>
+    <word name='tru64'/>
+    <word name='tru64-cxx'/>
+    <word name='tru64-g++'/>
+    <word name='unix'/>
+    <word name='unixware'/>
+    <word name='unixware-cc'/>
+    <word name='unixware-g++'/>
+    <word name='win32'/>
+    <word name='win32-icc'/>
+    <word name='win32-borland'/>
+    <word name='win32-g++'/>
+    <word name='win32-msvc'/>
+    <word name='win32-msvc.net'/>
+    <word name='win32-msvc2002'/>
+    <word name='win32-msvc2003'/>
+    <word name='win32-msvc2005'/>
+    <word name='win32-msvc2008'/>
+    <word name='wince'/>
+    <word name='wince50standard'/>
+    <word name='wince50standard-armv4i-msvc2005'/>
+    <word name='wince50standard-armv4i-msvc2008'/>
+    <word name='wince50standard-mipsii-msvc2005'/>
+    <word name='wince50standard-mipsii-msvc2008'/>
+    <word name='wince50standard-mipsiv-msvc2005'/>
+    <word name='wince50standard-mipsiv-msvc2008'/>
+    <word name='wince50standard-sh4-msvc2005'/>
+    <word name='wince50standard-sh4-msvc2008'/>
+    <word name='wince50standard-x86-msvc2005'/>
+    <word name='wince50standard-x86-msvc2008'/>
+    <word name='wince60standard-armv4i-msvc2005'/>
+    <word name='wincewm50pocket'/>
+    <word name='wincewm50pocket-msvc2005'/>
+    <word name='wincewm50pocket-msvc2008'/>
+    <word name='wincewm50smart-msvc2005'/>
+    <word name='wincewm50smart-msvc2008'/>
+    <word name='wincewm60professional-msvc2005'/>
+    <word name='wincewm60professional-msvc2008'/>
+    <word name='wincewm60standard-msvc2005'/>
+    <word name='wincewm60standard-msvc2008'/>
+  </keywords>
 </scheme>
 
-<scheme name='keys'>	
-	<keywords region='keys'>
-		<word name='true'/>
-		<word name='false'/>
-		
-		<word name='unset'/>
-		
-		<word name='next'/>
-		<word name='if'/>
-		<word name='else'/>
-		<word name='return'/>
-		<word name='defineTest'/>
-		<word name='defineReplace'/>
-		
-		<word name='basename'/>
-		<word name='CONFIG'/>
-		<word name='contains'/>
-		<word name='count'/>
-		<word name='dirname'/>
-		<word name='error'/>
-		<word name='equals'/>
-		<word name='eval'/>
-		<word name='exists'/>
-		<word name='find'/>
-		<word name='for'/>
-		<word name='include'/>
-		<word name='infile'/>
-		<word name='isEmpty'/>
-		<word name='isEqual'/>
-		<word name='join'/>
-		<word name='member'/>
-		<word name='message'/>
-		<word name='prompt'/>
-		<word name='quote'/>
-		<word name='replace'/>
-		<word name='sprintf'/>
-		<word name='system'/>
-		<word name='unique'/>
-		<word name='warning'/>
-	</keywords>
+<scheme name='keys'>
+  <keywords region='keys'>
+    <word name='true'/>
+    <word name='false'/>
+
+    <word name='if'/>
+    <word name='else'/>
+    <word name='return'/>
+    <word name='defineTest'/>
+    <word name='defineReplace'/>
+
+    <!-- Built-in Test Functions -->
+    <word name='cache'/>
+    <word name='CONFIG'/>
+    <word name='contains'/>
+    <word name='count'/>
+    <word name='debug'/>
+    <word name='defined'/>
+    <word name='equals'/>
+    <word name='error'/>
+    <word name='eval'/>
+    <word name='exists'/>
+    <word name='export'/>
+    <word name='for'/>
+    <word name='greaterThan'/>
+    <word name='if'/>
+    <word name='include'/>
+    <word name='infile'/>
+    <word name='isActiveConfig'/>
+    <word name='isEmpty'/>
+    <word name='isEqual'/>
+    <word name='lessThan'/>
+    <word name='load'/>
+    <word name='log'/>
+    <word name='message'/>
+    <word name='mkpath'/>
+    <word name='requires'/>
+    <word name='system'/>
+    <word name='touch'/>
+    <word name='unset'/>
+    <word name='versionAtLeast'/>
+    <word name='versionAtMost'/>
+    <word name='warning'/>
+    <word name='write_file'/>
+    <!-- Test Function Library -->
+    <word name='packagesExist'/>
+    <word name='prepareRecursiveTarget'/>
+    <word name='qtCompileTest'/>
+    <word name='qtHaveModule'/>
+
+    <!-- Built-in Replace Functions -->
+    <word name='absolute_path'/>
+    <word name='basename'/>
+    <word name='cat'/>
+    <word name='clean_path'/>
+    <word name='dirname'/>
+    <word name='enumerate_vars'/>
+    <word name='escape_expand'/>
+    <word name='find'/>
+    <word name='files'/>
+    <word name='first'/>
+    <word name='format_number'/>
+    <word name='fromfile'/>
+    <word name='getenv'/>
+    <word name='join'/>
+    <word name='last'/>
+    <word name='list'/>
+    <word name='lower'/>
+    <word name='member'/>
+    <word name='num_add'/>
+    <word name='prompt'/>
+    <word name='quote'/>
+    <word name='re_escape'/>
+    <word name='read_registry'/>
+    <word name='relative_path'/>
+    <word name='replace'/>
+    <word name='resolve_depends'/>
+    <word name='reverse'/>
+    <word name='section'/>
+    <word name='shadowed'/>
+    <word name='shell_path'/>
+    <word name='shell_quote'/>
+    <word name='size'/>
+    <word name='sort_depends'/>
+    <word name='sorted'/>
+    <word name='split'/>
+    <word name='sprintf'/>
+    <word name='str_member'/>
+    <word name='str_size'/>
+    <word name='system'/>
+    <word name='system_path'/>
+    <word name='system_quote'/>
+    <word name='take_first'/>
+    <word name='take_last'/>
+    <word name='unique'/>
+    <word name='upper'/>
+    <word name='val_escape'/>
+
+    <!-- from http://www.qtcentre.org/wiki/index.php?title=Undocumented_qmake - no longer available -->
+    <word name='break'/>
+    <word name='next'/>
+    <word name='clear'/>
+    <word name='fromFile'/><!-- see 'fromfile' above -->
+    <word name='inFile'/><!-- see 'infile' above -->
+  </keywords>
 </scheme>
 
 </type>

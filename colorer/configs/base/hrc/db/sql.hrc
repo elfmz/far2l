@@ -300,6 +300,7 @@ With help of:
             <word name="FOLLOWING"/>
             <word name="FOR"/>
             <word name="FORALL"/>
+            <word name="FOREACH"/>
             <word name="FORM"/>
             <word name="FORMAT"/>
             <word name="FREELIST"/>
@@ -956,6 +957,7 @@ With help of:
          <regexp match="/^\s*(REM\s+).*$/i" region0="sqlComment" region1="sqlComment"/>
          <block start="/\/\//" end="/$/" scheme="Comment" region="sqlComment"/>
          <block start="/\/\*/" end="/\*\//" scheme="Comment" region="sqlComment" region00="PairStart" region10="PairEnd"/>
+         <block start="/\{/" end="/\}/" scheme="Comment" region="sqlComment" region00="PairStart" region10="PairEnd"/>
 <!-- strings -->
          <regexp match="/(&#34;(\\.|[^\\&#34;])*?&#34;)/" region="sqlQuotedIdentifier"/>
          <block start="/'/" end="/'/" scheme="stringApost" region="sqlString"/>
@@ -970,14 +972,17 @@ With help of:
          <block start="/\b(if)\b/i" end="/\b(end([\s])*if)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(case)\b/i" end="/\b(end(\s*case)?)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(loop)\b/i" end="/\b(end([\s])*loop)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(begin\s+work)\b/i" end="/\b(commit\s+work)\b/ix" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(begin)\b/i" end="/\b(end)\b/ix" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(foreach)\b/i" end="/\b(end([\s])*foreach)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(while)\b/i" end="/\b(end([\s])*while)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(create(\s)*or(\s)*replace(\s)*(package(\s+body)?|type\s+body)\s+(\b\S+\b)(\s)+(is|as))\b/i" end="/\b(end)\b/i" scheme="sql" region00="tsqlWord" region10="tsqlWord" region01="PairStart" region11="PairEnd" region07="Text"/>
 
          <inherit scheme='noxml-content'/>
          <inherit scheme='sql-content'/>
       </scheme>
-      
-      
+
+
       <!-- suppot sql in xml -->
       <scheme name='noxml-content'>
          <keywords region="sqlSymb">
@@ -986,7 +991,7 @@ With help of:
             <symb name="&gt;"/>
          </keywords>
       </scheme>
-      
+
       <scheme name="sql-content">
 <!-- Numbers -->
          <inherit scheme="CHexNumber"/>
@@ -1082,6 +1087,7 @@ With help of:
             <word name="CURRENT_USER"/>
             <word name="CURSOR"/>
             <word name="DATE"/>
+            <word name="DATETIME"/>
             <word name="DAY"/>
             <word name="DEALLOCATE"/>
             <word name="DEC"/>
@@ -1100,6 +1106,7 @@ With help of:
             <word name="DOMAIN"/>
             <word name="DOUBLE"/>
             <word name="DROP"/>
+            <word name="ELIF"/>
             <word name="ELSE"/>
             <word name="END"/>
             <word name="END-EXEC"/>
@@ -1128,6 +1135,7 @@ With help of:
             <word name="GRANT"/>
             <word name="GROUP"/>
             <word name="HAVING"/>
+            <word name="HOLD"/>
             <word name="HOUR"/>
             <word name="IDENTITY"/>
             <word name="IMMEDIATE"/>
@@ -1209,10 +1217,12 @@ With help of:
             <word name="SECOND"/>
             <word name="SECTION"/>
             <word name="SELECT"/>
+            <word name="SERIAL"/>
             <word name="SESSION"/>
             <word name="SESSION_USER"/>
             <word name="SET"/>
             <word name="SIZE"/>
+            <word name="SMALLFLOAT"/>
             <word name="SMALLINT"/>
             <word name="SOME"/>
             <word name="SPACE"/>
@@ -1357,6 +1367,7 @@ With help of:
             <word name="keyset"/>
             <word name="kill"/>
             <word name="left"/>
+            <word name="let"/>
             <word name="level"/>
             <word name="like"/>
             <word name="lineno"/>
@@ -1450,6 +1461,7 @@ With help of:
             <word name="uncommitted"/>
             <word name="union"/>
             <word name="unique"/>
+            <word name="unload"/>
             <word name="update"/>
             <word name="updatetext"/>
             <word name="use"/>
@@ -1588,7 +1600,7 @@ With help of:
             <word name="dump"/>
 <!-- +. -->
          </keywords>
-         <regexp match="/\w+ : \M ([\w\s]|$)/x" region0="Label"/>
+         <regexp match="/\w+\s* : \M ([\w\s]|$)/x" region0="Label"/>
          <inherit scheme="plSqlKeywords"/>
       </scheme>
 

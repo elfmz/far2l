@@ -144,6 +144,7 @@
  <regexp match="/\\[aenrtfv]/" region0="Symbol"/> <!-- спецсимволы  -->
  <regexp match="/\\c./" region0="Symbol"/>       <!-- спецсимволы  -->
  <regexp match="/\\[0-9a-fA-F]{2}/" region0="SpecOperator"/>	   <!-- Классы символов -->
+ <regexp match="/\\k(&lt;\d?!\w+&gt;|'\d?!\w+')/" region0="SpecOperator"/> <!-- named backreference -->
  <inherit scheme="std.base"/>
 </scheme>
 
@@ -178,6 +179,11 @@
  <inherit scheme="string"/>
  <block start="/(\()(\?&lt;?[\=\!])/" end="/(\))/" scheme="pcre.regexp"
   region00="def:PairStart" region01="Quote" region02="Operator"
+  region10="def:PairEnd" region11="Quote"
+ />
+ <!-- named capture groups -->
+ <block start="/(\()(\?(&lt;\d?!\w+&gt;|'\d?!\w+'))/" end="/(\))/" scheme="pcre.regexp"
+  region00="def:PairStart" region01="Quote" region02="SpecOperator"
   region10="def:PairEnd" region11="Quote"
  />
  <block start="/(\s\s+|\x09)\#/" end="/$/"

@@ -6,7 +6,7 @@
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 <type name="farmenu">
- 
+
  <annotation><documentation>
    FarMenu.Ini (F2 in Far manager)
  </documentation><contributors><![CDATA[
@@ -29,7 +29,7 @@
   region00="def:PairStart" region10="def:PairEnd"
   region01="symb.struct" region11="symb.struct"
  />
- 
+
  <inherit scheme="menu"/>
 </scheme>
 
@@ -38,30 +38,34 @@
  <block start="/(\{)/" end="/(\})/" scheme="menu"
   region00="def:PairStart" region10="def:PairEnd"
   region01="symb.struct" region11="symb.struct"
- /> 
- 
- <regexp match="/^(\S*\:)\s+(.*)$/" region="def:String" 
+ />
+
+ <regexp match="/^(\S*\:)\s+(.*)$/" region="def:String"
   region1="label" region2="def:Outlined"
- /> 
- 
+ />
+
  <inherit scheme="farsymb"/>
+
+ <block start="/^\s+(?{def:KeywordStrong}lua:)/" end="/$/" scheme="lua:lua"/>
+ <block start="/^\s+(?{def:KeywordStrong}v?ps:)/" end="/$/" scheme="powershell:powershell"/>
+
  <block start="/&quot;/" end="/&quot;/" scheme="str" region="def:String"/>
- 
+
  <inherit scheme="def:Path"/>
  <regexp match="/\w+\:/" region="def:KeywordStrong"/>
- 
+
  <block start="/(\()\M\!/" end="/(\))/" scheme="menu"
   region00="def:PairStart" region10="def:PairEnd"
   region01="symb.struct" region11="symb.struct"
  />
- 
+
  <inherit scheme="Batch:Batch"/>
 </scheme>
 
 
-<!-- 
+<!--
  -
- - Metasumbols 
+ - Metasumbols
  -
  - -->
 
@@ -91,7 +95,7 @@
 
 
 <scheme name="farsymb">
- <block start="/(\!)\M\?/" end="/(\!)/" 
+ <block start="/(\!)\M\?/" end="/(\!)/"
   region="input" scheme="farsymb.input"
   region00="symb.struct" region10="symb.struct"
   region01="def:PairStart" region11="def:PairEnd"
@@ -99,7 +103,7 @@
  <!--regexp match="/(\!\?).*?(\?).*?(\!)/" region="def:String"
   region1="symb" region2="symb" region3="symb"
  /-->
- <inherit scheme="farsymb.content"/> 
+ <inherit scheme="farsymb.content"/>
 </scheme>
 
 <scheme name="farsymb.content">

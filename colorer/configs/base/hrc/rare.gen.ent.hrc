@@ -1,58 +1,41 @@
-  <prototype name="parser" group="rare.inet" description="Parser">
-    <location link="rare/gen/parser.hrc"/>
-    <filename>/\.(p|html)$/i</filename>
-    <firstline>/^[\@\^]\w+/</firstline>
-  </prototype>
-  
-  <prototype name="log4j" group="rare.inet" description="Apache Log4j Config" targetNamespace="http://jakarta.apache.org/log4j/">
-    <location link="rare/gen/log4j.hrc"/>
-    <firstline weight='4'>/&lt;!DOCTYPE\s+log4j:configuration\b/</firstline>
-    <filename weight='2'>/\.xml$/ix</filename>
-  </prototype>
+    <prototype name="parser" group="rare.inet" description="Parser">
+        <location link="rare/gen/parser.hrc" />
+        <filename>/\.(p|html)$/i</filename>
+        <firstline>/^[\@\^]\w+/</firstline>
+    </prototype>
 
-  
-  <prototype name="ibatis2-sql-map" group="rare.inet" description="iBATIS 2 SQL Map"
-   targetNamespace="http://ibatis.apache.org/dtd/sql-map-2.dtd">
-    <location link="rare/gen/ibatis2-sql-map.hrc"/>
-    <firstline weight="6">/http:\/\/(ibatis\.apache\.org|www\.ibatis\.com)\/dtd\/sql-map-2\.dtd/</firstline>
-    <filename weight="0.5">/\.xml$/i</filename>
-  </prototype>
-  <prototype name="ibatis2-sql-map-config" group="rare.inet" description="iBATIS 2 SQL Map Config"
-   targetNamespace="http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
-    <location link="rare/gen/ibatis2-sql-map-config.hrc"/>
-    <firstline weight="6">/http:\/\/(ibatis\.apache\.org|www\.ibatis\.com)\/dtd\/sql-map-config-2\.dtd/</firstline>
-    <filename weight="0.5">/\.xml$/i</filename>
-  </prototype>
-  <package name='ibatis2-sql-map-pack'>
-    <location link="rare/gen/ibatis2-sql-map-pack.hrc"/>
-  </package>
-  <prototype name="yml" group="rare.inet" description="Yandex Market Language" targetNamespace='http://market.yandex.ru/'>
-    <location link="rare/gen/yml.hrc"/>
-    <firstline weight='4'>/&lt;!DOCTYPE\s+yml_catalog\b/</firstline>
-    <filename weight='2'>/\.xml$/ix</filename>
-  </prototype>
-  
-  
-  <package name="xsieve.xsd-pack" description="XSieve internal pack"  targetNamespace="http://xsieve.sourceforge.net">
-    <location link="rare/gen/xsieve.xsd-pack.hrc"/>
-  </package>
-  <prototype name="xsieve" group="rare.scripts" description="XSieve xslt">
-    <location link="rare/gen/xsieve.hrc"/>
-    <filename>/\.xsl$/i</filename>
-    <firstline weight='5'>/\bxmlns:s\s*=\s*(["'])http:\/\/xsieve\.sourceforge\.net\1/</firstline>
-  </prototype>  
-  
+    <prototype name="log4j" group="rare.inet" description="Apache Log4j Config" targetNamespace="http://jakarta.apache.org/log4j/">
+        <location link="rare/gen/log4j.hrc" />
+        <filename weight='2'>/\.xml$/ix</filename>
+        <firstline weight='4'>/&lt;!DOCTYPE\s+log4j:configuration\b/</firstline>
+    </prototype>
 
-<!-- ***** BEGIN LICENSE BLOCK *****
-   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
-   - This program is free software; you can redistribute it and/or
-   - modify it under the terms of the GNU General Public License
-   - as published by the Free Software Foundation; either version 2
-   - of the License, or (at your option) any later version.
-   - This program is distributed in the hope that it will be useful,
-   - but WITHOUT ANY WARRANTY; without even the implied warranty of
-   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   - GNU General Public License for more details.
-   - You should have received a copy of the GNU General Public License
-   - along with this program; If not, see <http://www.gnu.org/licenses/>.
-   - ***** END LICENSE BLOCK ***** -->
+
+    <prototype name="ibatis2-sql-map" group="rare.inet" description="iBATIS 2 SQL Map" targetNamespace="http://ibatis.apache.org/dtd/sql-map-2.dtd">
+        <location link="rare/gen/ibatis2-sql-map.hrc" />
+        <filename weight="0.5">/\.xml$/i</filename>
+        <firstline weight="6">/http:\/\/(ibatis\.apache\.org|www\.ibatis\.com)\/dtd\/sql-map-2\.dtd/</firstline>
+    </prototype>
+    <prototype name="ibatis2-sql-map-config" group="rare.inet" description="iBATIS 2 SQL Map Config" targetNamespace="http://ibatis.apache.org/dtd/sql-map-config-2.dtd">
+        <location link="rare/gen/ibatis2-sql-map-config.hrc" />
+        <filename weight="0.5">/\.xml$/i</filename>
+        <firstline weight="6">/http:\/\/(ibatis\.apache\.org|www\.ibatis\.com)\/dtd\/sql-map-config-2\.dtd/</firstline>
+    </prototype>
+    <package name='ibatis2-sql-map-pack' description="ibatis2-sql-map-pack">
+        <location link="rare/gen/ibatis2-sql-map-pack.hrc" />
+    </package>
+    <prototype name="yml" group="rare.inet" description="Yandex Market Language" targetNamespace='http://market.yandex.ru/'>
+        <location link="rare/gen/yml.hrc" />
+        <filename weight='2'>/\.xml$/ix</filename>
+        <firstline weight='4'>/&lt;!DOCTYPE\s+yml_catalog\b/</firstline>
+    </prototype>
+
+
+    <package name="xsieve.xsd-pack" description="XSieve internal pack" targetNamespace="http://xsieve.sourceforge.net">
+        <location link="rare/gen/xsieve.xsd-pack.hrc" />
+    </package>
+    <prototype name="xsieve" group="rare.scripts" description="XSieve xslt">
+        <location link="rare/gen/xsieve.hrc" />
+        <filename>/\.xsl$/i</filename>
+        <firstline weight='5'>/\bxmlns:s\s*=\s*(["'])http:\/\/xsieve\.sourceforge\.net\1/</firstline>
+    </prototype>

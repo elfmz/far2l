@@ -4,203 +4,252 @@
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
-<!--
-    C# Syntax description
-With help of:
+  <!--
+  C# syntax description
+  With help of:
     Alexey Drugobitskiy <msfun@rambler.ru>
-    Roman Kuzmin
--->
-   <type name="csharp">
+    Roman Kuzmin aka NightRoman
+  -->
+  <type name="csharp">
+    <region name="Comment" parent="def:Comment"/>
+    <region name="Directive" parent="def:Directive"/>
+    <region name="Error" parent="def:Error"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="String" parent="def:String"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="SymbolStrong" parent="def:SymbolStrong"/>
 
-      <import type="def"/>
+    <region name="Name" parent="def:Identifier"/>
+    <region name="Class" parent="def:Identifier"/>
+    <region name="Function" parent="def:Identifier"/>
+    <region name="Delegate" parent="def:Identifier"/>
 
-      <region name="csComment" parent="Comment"/>
-      <region name="csKeyword" parent="Keyword"/>
-      <region name="csString" parent="String"/>
-      <region name="csSymbol" parent="Symbol"/>
-      <region name="csSymbolStrong" parent="SymbolStrong"/>
-      <region name="csOpenStruct" parent="PairStart"/>
-      <region name="csCloseStruct" parent="PairEnd"/>
-      <region name="csError" parent="Error"/>
+    <region name="Apos" parent="def:StringEdge"/>
+    <region name="Quot" parent="def:StringEdge"/>
+    <region name="Escape" parent="def:StringContent"/>
 
-      <region name="FuncOutline" parent="def:Outlined"/>
-      <region name="ClassOutline" parent="def:Outlined"/>
-      <region name="IntfOutline" parent="def:Outlined"/>
-      <region name="DelegOutline" parent="def:Outlined"/>
-      <region name="vbString" parent="def:String"/>
-      <region name="string.quote" parent="def:StringEdge"/>
-      <region name="string.escape" parent="def:StringContent"/>
+    <region name="start" parent="def:PairStart"/>
+    <region name="end" parent="def:PairEnd"/>
 
-      <scheme name="verbatim-string">
-         <block start="/(?{def:PairStart}(?{string.quote}@&quot;))/" end="/(?{def:PairEnd}(?{string.quote}&quot;))/" region="vbString" scheme="vbstring.content"/>
-      </scheme>
+    <entity name="hex" value="[0-9a-fA-F]"/>
+    <entity name="type_space" value="\w[\w\[\]\s.,&lt;&gt;*]*?\??\s+"/>
+    <entity name="string_escape" value="\\([&apos;&quot;\\0abfnrtv]|x%hex;{1,4}|u%hex;{4}|U00%hex;{6})"/>
 
-     <scheme name="vbstring.content">
-     	<regexp match="/(?{string.escape}&quot;&quot;)/"/>
-     </scheme>
+    <!--raw string-->
+    <scheme name="RawString">
+      <block scheme="def:empty" start="/(?{start}\$*(?{Quot}&quot;{3,}))/" end="/(?{end}(?{Quot}\y{Quot}))/" region="String"/>
+    </scheme>
 
-      <scheme name="csharp">
-         <inherit scheme="verbatim-string"/>
-         <inherit scheme="CString"/>
-         <inherit scheme="CHexNumber"/>
-         <inherit scheme="FloatNumber"/>
-         <inherit scheme="DecNumber"/>
-         <inherit scheme="PairedBrackets">
-            <virtual scheme="PairedBrackets" subst-scheme="csharp"/>
-         </inherit>
-         <block start="/\/\*/" end="/\*\//" scheme="Comment" region="csComment" region00="csOpenStruct" region10="csCloseStruct"/>
-         <block start="/\/\//" end="/$/" scheme="Comment" region="csComment"/>
-         <regexp match="/'(.|\\['])'/" region0="csString"/>
-         <block start="/^\s*(#region) (.*)$/" end="/^\s*(#endregion)(.*)$/" scheme="csharp" region01="csOpenStruct" region11="csCloseStruct" region00="Directive" region10="Directive" region02="Comment" region12="Comment"/>
-         <block start="/(\()/" end="/(\))/" scheme="csharp" region00="csSymbol" region10="csSymbol" region01="csOpenStruct" region11="csCloseStruct"/>
-         <block start="/(\{)/" end="/(\})/" scheme="csharp" region00="csSymbolStrong" region10="csSymbolStrong" region01="csOpenStruct" region11="csCloseStruct"/>
-         <block start="/(\[)/" end="/(\])/" scheme="csharp" region00="csSymbol" region10="csSymbol" region01="csOpenStruct" region11="csCloseStruct"/>
+    <!--interpolated verbatim string-->
+    <scheme name="IVString">
+      <block scheme="IVStringContent" start="/(?{start}(?{Quot}\$@&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="IVStringContent">
+      <regexp match="/\{\{|\}\}|&quot;&quot;/" region="Escape"/>
+      <block scheme="csharp" start="/(?{start}(?{SymbolStrong}\{))/" end="/(?{end}(?{SymbolStrong}\}))/" region="Name"/>
+    </scheme>
 
-         <regexp><![CDATA[
-           /^ \M \s*
-           (\w [\w*\[\]\s]+? [*\[\]\s]) (delegate \s* \([\w_*~,\[\]\s]*\)\s*)?
+    <!--interpolated string-->
+    <scheme name="IString">
+      <block scheme="IStringContent" start="/(?{start}(?{Quot}\$&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="IStringContent">
+      <regexp match="/(?{Escape}(\{\{|\}\}|%string_escape;))/"/>
+      <block scheme="csharp" start="/(?{start}(?{SymbolStrong}\{))/" end="/(?{end}(?{SymbolStrong}\}))/" region="Name"/>
+    </scheme>
 
-           (?{csharp:FuncOutline}
-            ([\w.]+?)
-           )
+    <!--verbatim string-->
+    <scheme name="VString">
+      <block scheme="VStringContent" start="/(?{start}(?{Quot}@&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="VStringContent">
+      <regexp match="/&quot;&quot;/" region="Escape"/>
+    </scheme>
 
-           (\sfor)?~4 (\sif)?~3 (\swhile)?~6 (\sdo)?~3 (\sswitch)?~7 (\scatch)?~6 (\sforeach)?~8
+    <!--string-->
+    <scheme name="String">
+      <block scheme="StringContent" start="/(?{start}(?{Quot}&quot;))/" end="/(?{end}(?{Quot}&quot;))/" region="String"/>
+    </scheme>
+    <scheme name="StringContent">
+      <regexp match="/(?{Escape}%string_escape;)/"/>
+    </scheme>
 
-           \s* \( (.* \( [^\(\)]* \))* ( [^\)]*?\) | [^\);]*? )
-           \s* ($|\{|\/) /x
-         ]]></regexp>
-         <regexp><![CDATA[
-           /\M
-           (?:class|struct|enum) \s+
-           (?{ClassOutline}
-            [\:\w]+ [\:\w\s]*? ([^;]|$)
-           )/x
-         ]]></regexp>
-         <regexp><![CDATA[
-           /\M
-           (?:interface) \s+
-           (?{IntfOutline}
-            [\:\w]+ [\:\w\s]*? ([^;]|$)
-           )/x
-         ]]></regexp>
-         <regexp><![CDATA[
-           /\M
-           (?:delegate) \s+
-           (?{DelegOutline}
-            [\:\w]+ [\:\w\s]*? ([^;]|$)
-           )/x
-         ]]></regexp>
+    <scheme name="Char">
+      <regexp match="/(?{Apos}')((?{Escape}\\('|\\|&quot;|0|u%hex;{4}|x%hex;{1,4}))|(?{String}.))(?{Apos}')/"/>
+    </scheme>
 
-         <keywords region="csSymbol">
-            <symb name=";" region="csSymbolStrong"/>
-            <symb name=":"/>
-            <symb name="+"/>
-            <symb name="-"/>
-            <symb name="*"/>
-            <symb name="/"/>
-            <symb name="%"/>
-            <symb name="="/>
-            <symb name="."/>
-            <symb name=","/>
-            <symb name="&lt;"/>
-            <symb name="&gt;"/>
-            <symb name="!"/>
-         </keywords>
-         <keywords region="csError">
-            <symb name="{"/>
-            <symb name="}"/>
-            <symb name="("/>
-            <symb name=")"/>
-            <symb name="["/>
-            <symb name="]"/>
-            <symb name="*/"/>
-         </keywords>
-         <keywords region="csKeyword">
-            <word name="abstract"/>
-            <word name="as"/>
-            <word name="base"/>
-            <word name="bool"/>
-            <word name="yield break"/>
-            <word name="break"/>
-            <word name="byte"/>
-            <word name="case"/>
-            <word name="catch"/>
-            <word name="char"/>
-            <word name="checked"/>
-            <word name="class"/>
-            <word name="const"/>
-            <word name="continue"/>
-            <word name="decimal"/>
-            <word name="default"/>
-            <word name="delegate"/>
-            <word name="do"/>
-            <word name="double"/>
-            <word name="else"/>
-            <word name="enum"/>
-            <word name="event"/>
-            <word name="explicit"/>
-            <word name="extern"/>
-            <word name="false"/>
-            <word name="finally"/>
-            <word name="fixed"/>
-            <word name="float"/>
-            <word name="for"/>
-            <word name="foreach"/>
-            <word name="get"/>
-            <word name="goto"/>
-            <word name="if"/>
-            <word name="implicit"/>
-            <word name="in"/>
-            <word name="int"/>
-            <word name="interface"/>
-            <word name="internal"/>
-            <word name="is"/>
-            <word name="lock"/>
-            <word name="long"/>
-            <word name="namespace"/>
-            <word name="new"/>
-            <word name="null"/>
-            <word name="object"/>
-            <word name="operator"/>
-            <word name="out"/>
-            <word name="override"/>
-            <word name="params"/>
-            <word name="private"/>
-            <word name="protected"/>
-            <word name="public"/>
-            <word name="readonly"/>
-            <word name="ref"/>
-            <word name="return"/>
-            <word name="yield return"/>
-            <word name="sbyte"/>
-            <word name="sealed"/>
-            <word name="set"/>
-            <word name="short"/>
-            <word name="sizeof"/>
-            <word name="stackalloc"/>
-            <word name="static"/>
-            <word name="string"/>
-            <word name="struct"/>
-            <word name="switch"/>
-            <word name="this"/>
-            <word name="throw"/>
-            <word name="true"/>
-            <word name="try"/>
-            <word name="typeof"/>
-            <word name="uint"/>
-            <word name="ulong"/>
-            <word name="unchecked"/>
-            <word name="unsafe"/>
-            <word name="ushort"/>
-            <word name="using"/>
-            <word name="var"/>
-            <word name="virtual"/>
-            <word name="void"/>
-            <word name="while"/>
-         </keywords>
-      </scheme>
+    <scheme name="Comment">
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment" region00="start" region10="end"/>
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="Comment"/>
+    </scheme>
 
-   </type>
+    <scheme name="csharp">
+      <inherit scheme="RawString"/>
+      <inherit scheme="IVString"/>
+      <inherit scheme="IString"/>
+      <inherit scheme="VString"/>
+      <inherit scheme="String"/>
+      <inherit scheme="Char"/>
+
+      <inherit scheme="def:CHexNumber"/>
+      <inherit scheme="def:FloatNumber"/>
+      <inherit scheme="def:DecNumber"/>
+
+      <inherit scheme="def:PairedBrackets">
+        <virtual scheme="def:PairedBrackets" subst-scheme="csharp"/>
+      </inherit>
+
+      <inherit scheme="Comment"/>
+
+      <!--#region-->
+      <block scheme="csharp">
+        <start>/^\s*(?{start}(?{Directive}(?{def:Outlined}#region)))\b\s*(?{Comment}.*)/</start>
+        <end>/^\s*(?{end}(?{Directive}#endregion))\b\s*(?{Comment}.*)/</end>
+      </block>
+
+      <!--function-->
+      <regexp>
+        /^\s*\M
+          ((else|new|return|throw)\b)?!
+          %type_space;
+
+          (?{def:Outlined}(?{Function}[\w.]+))
+
+          (\s* &lt; \s* \w [\w,\s]*? &gt;)?
+
+          \s* \( (.* \( [^\(\)]* \))* ( [^\)]*?\) | [^\);]*? )
+          \s* ($|\{|\/)
+        /x
+      </regexp>
+
+      <!--class, struct, interface, enum, record-->
+      <regexp>
+        /
+          ((?{Keyword}partial)\s+)?
+          (?{Keyword}class|struct|interface|enum|record(?:\s+(?:struct|class))?)\s+
+          (?{def:Outlined}(?{Class}\w+))
+        /x
+      </regexp>
+
+      <!--delegate-->
+      <regexp>
+        /
+          (?{Keyword}delegate)\s+
+          \M
+          %type_space;
+          (?{def:Outlined}(?{Delegate}\w+))
+        /x
+      </regexp>
+
+      <keywords region="Symbol">
+        <symb name=";" region="SymbolStrong"/>
+        <symb name=":"/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="="/>
+        <symb name="."/>
+        <symb name=","/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="!"/>
+      </keywords>
+      <keywords region="Keyword">
+        <word name="abstract"/>
+        <word name="as"/>
+        <word name="async"/>
+        <word name="await"/>
+        <word name="base"/>
+        <word name="bool"/>
+        <word name="break"/>
+        <word name="byte"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="char"/>
+        <word name="checked"/>
+        <word name="class"/>
+        <word name="const"/>
+        <word name="continue"/>
+        <word name="decimal"/>
+        <word name="default"/>
+        <word name="delegate"/>
+        <word name="do"/>
+        <word name="double"/>
+        <word name="else"/>
+        <word name="enum"/>
+        <word name="event"/>
+        <word name="explicit"/>
+        <word name="extern"/>
+        <word name="false"/>
+        <word name="finally"/>
+        <word name="fixed"/>
+        <word name="float"/>
+        <word name="for"/>
+        <word name="foreach"/>
+        <word name="get"/>
+        <word name="goto"/>
+        <word name="if"/>
+        <word name="implicit"/>
+        <word name="in"/>
+        <word name="int"/>
+        <word name="interface"/>
+        <word name="internal"/>
+        <word name="is"/>
+        <word name="lock"/>
+        <word name="long"/>
+        <word name="namespace"/>
+        <word name="new"/>
+        <word name="null"/>
+        <word name="object"/>
+        <word name="operator"/>
+        <word name="out"/>
+        <word name="override"/>
+        <word name="params"/>
+        <word name="private"/>
+        <word name="protected"/>
+        <word name="public"/>
+        <word name="readonly"/>
+        <word name="ref"/>
+        <word name="return"/>
+        <word name="sbyte"/>
+        <word name="sealed"/>
+        <word name="set"/>
+        <word name="short"/>
+        <word name="sizeof"/>
+        <word name="stackalloc"/>
+        <word name="static"/>
+        <word name="string"/>
+        <word name="struct"/>
+        <word name="switch"/>
+        <word name="this"/>
+        <word name="throw"/>
+        <word name="true"/>
+        <word name="try"/>
+        <word name="typeof"/>
+        <word name="uint"/>
+        <word name="ulong"/>
+        <word name="unchecked"/>
+        <word name="unsafe"/>
+        <word name="ushort"/>
+        <word name="using"/>
+        <word name="var"/>
+        <word name="virtual"/>
+        <word name="void"/>
+        <word name="while"/>
+      </keywords>
+
+      <regexp match="/(?{Keyword}yield)\s+(?{Keyword}break|return)\b/"/>
+
+      <keywords region="Error">
+        <symb name="}"/>
+        <symb name=")"/>
+        <symb name="]"/>
+      </keywords>
+    </scheme>
+
+  </type>
 </hrc>
 <!-- ***** BEGIN LICENSE BLOCK *****
    - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.

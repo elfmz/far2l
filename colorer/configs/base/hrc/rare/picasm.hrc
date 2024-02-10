@@ -101,7 +101,7 @@
             <word name="addwf"/>
             <word name="addwfc"/>
             <word name="andlw"/>
-            <word name="sndwf"/>
+            <word name="andwf"/>
             <word name="banksel"/>
             <word name="bankisel"/>
             <word name="bc"/>
@@ -366,4 +366,3 @@
    - You should have received a copy of the GNU General Public License
    - along with this program; If not, see <http://www.gnu.org/licenses/>.
    - ***** END LICENSE BLOCK ***** -->
-

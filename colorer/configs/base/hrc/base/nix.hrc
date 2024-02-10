@@ -74,7 +74,7 @@
       <block start="/(\[)/"   end="/(\])/" scheme="NixExpression" region00="Symbol"        region01="PairStart" region10="Symbol"        region11="PairEnd"/>
 
       <regexp match=    "/[\w\d._+-]*(\/[\w\d._+-]+)+/"                           region0="Path"/>
-      <regexp match=              "/~(\/[\w\d._+-]+)+/"                           region0="Path"/>
+      <regexp match=             "/\~(\/[\w\d._+-]+)+/"                           region0="Path"/>
       <regexp match="/&lt;[\w\d._+-]+(\/[\w\d._+-]+)*&gt;/"                       region0="Path"/>
       <regexp match="/[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9%/?:@&amp;=+$,_.!~*'-]+/" region0="URL"/>
       <block start="/(&quot;)/"       end="/(&quot;)/"       scheme="String"      region="String" region00="def:StringEdge" region01="def:PairStart" region10="def:StringEdge" region11="def:PairEnd"/>

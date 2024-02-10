@@ -27,6 +27,8 @@
      - move win32 & doxygen to separate files
     Mike Gorchak <mike@malva.ua>
      - updated functions according to OpenGL 1.5, GLU 1.3, GLX 1.4
+    Ivan Shatsky <ivan.shatsky@gmail.com>
+     - add C++11 string literals
   ]]></contributors>
   </annotation>
 
@@ -132,9 +134,14 @@
    <regexp match="/'.*?'/" region="def:Error"/>
   </scheme>
 
+  <entity name='DelimChars' value='[!"#\%\x26\x27\*\+,\-\.\x2F:;0123456789\x3C\=\x3E\?ABCDEFGHIJKLMNOPQRSTUVWXYZ\[\]\^_abcdefghijklmnopqrstuvwxyz\{\|\}\~]'/>
   <scheme name="String">
-   <block start="/(?{def:StringEdge}[Ll]?&#34;)/" end="/(?{def:StringEdge}&#34;)/"
+   <block start="/(?{def:StringEdge}(L|U|u8?)?&#34;)/" end="/(?{def:StringEdge}&#34;)/"
           scheme="StringContent" region="String" inner-region="yes"
+          region00='def:PairStart' region10='def:PairEnd'
+   />
+   <block start="/(?{def:StringEdge}(L|U|u8?)?R&#34;(%DelimChars;{0,16})\()/" end="/(?{def:StringEdge}\)\y2&#34;)/"
+          scheme="RawStringContent" region="String" inner-region="yes"
           region00='def:PairStart' region10='def:PairEnd'
    />
   </scheme>
@@ -152,6 +159,9 @@
    <inherit scheme="TabsAsErrors"/>
   </scheme>
   
+  <scheme name="RawStringContent">
+  </scheme>
+
   <scheme name="PreprocLine">
    <block start='/line\s+(\d+)\s+(("))/' end='/(")/'
     scheme="def:Path" region="PreprocInclude" 

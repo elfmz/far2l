@@ -43,6 +43,12 @@
          <!--inherit scheme="text"/ ??? -->
       </scheme>
 
+	<!-- solve the issue with $( ... ) -->
+	<!-- https://forum.farmanager.com/viewtopic.php?p=165951#p165951 -->
+	<scheme name="awkComplexArg">
+		<regexp match="/\$\(/" />
+		<inherit scheme="awk" />
+	</scheme>
 
       <scheme name="awk">
          <!--inherit scheme="def:unixCommentDirective"/-->
@@ -62,6 +68,13 @@
          <regexp match="/'((\/dev\/(stderr|stdin|stdout|pid|ppid|pgrpid|user|(fd\/\d)))|(\/inet\/(tcp|udp|raw)\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?))'/" region="awkIOredir"/>
          <regexp match="/&#34;((\/dev\/(stderr|stdin|stdout|pid|ppid|pgrpid|user|(fd\/\d)))|(\/inet\/(tcp|udp|raw)\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?\/[a-zA-Z0-9\.\-\_]+?))&#34;/" region="awkIOredir"/>
 <!-- Argument -->
+	<!-- solve the issue with $( ... ) -->
+	<!-- https://forum.farmanager.com/viewtopic.php?p=165951#p165951 -->
+	<block start='/(\$\()/' end='/(\))/'
+		scheme='awkComplexArg'
+		region00="SymbolStrong" region01="def:PairStart"
+		region10="SymbolStrong" region11="def:PairEnd"
+	/>
          <regexp match="/(\$[0-9]+)([^0-9\s\+\-\*\/\=\;\:\^&amp;\%\!\,\)\]]*)/" region0="awkArg" region2="Error"/>
          <regexp match="/\$[a-zA-Z\_]+([a-zA-Z0-9\_]*)([^a-zA-Z0-9\_\s\+\-\*\/\=\;\:\^&amp;\%\!\,\)\]]*)/" region0="awkArg" region2="Error"/>
          <regexp match="/\$[^a-zA-Z0-9\_]*/" region="Error"/>

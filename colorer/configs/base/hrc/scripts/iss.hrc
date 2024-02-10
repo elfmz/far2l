@@ -12,8 +12,8 @@
   by Alex Yackimoff (http://yackimoff.cjb.net)
      Denis Rybakov (http://aquaticat.narod.ru/far/)
 
-  Last changes - 21 Apr 2005
-  Last supported verision of Inno Setup - 5.1.2-beta (2005-04-14)
+  Last changes - 14 Jan 2021
+  Last supported verision of Inno Setup - 6.1.2
 -->
    <type name="iss">
 
@@ -141,112 +141,155 @@
          <inherit scheme="issCommon"/>
 
          <keywords ignorecase="yes" region="issParameter">
-            <word name="ArchitecturesAllowed"/>
-            <word name="ArchitecturesInstallIn64BitMode"/>
-            <word name="AppendDefaultDirName"/>
-            <word name="AppendDefaultGroupName"/>
-            <word name="AppComments"/>
-            <word name="AppContact"/>
-            <word name="AppName"/>
-            <word name="AppVername"/>
-            <word name="AppModifyPath"/>
-            <word name="AppReadmeFile"/>
-            <word name="DefaultDirname"/>
-            <word name="CodeFile"/>
-            <word name="InternalCompressLevel"/>
-            <word name="DiskClusterSize"/>
-            <word name="DiskSize"/>
-            <word name="DiskSpanning"/>
-            <word name="DontMergeDuplicateFiles"/>
-            <word name="MergeDuplicateFiles"/>
-            <word name="Encryption"/>
-            <word name="OutputBaseFilename"/>
-            <word name="OutputDir"/>
-            <word name="ReserveBytes"/>
-            <word name="SourceDir"/>
-            <word name="UseSetupLdr"/>
-            <word name="AdminPrivilegesRequired"/>
+            <word name="AllowCancelDuringInstall"/>
+            <word name="AllowNetworkDrive"/>
             <word name="AllowNoIcons"/>
             <word name="AllowRootDirectory"/>
-            <word name="AllowCancelDuringInstall"/>
-            <word name="AlwaysCreateUninstallIcon"/>
+            <word name="AllowUNCPath"/>
             <word name="AlwaysRestart"/>
             <word name="AlwaysShowComponentsList"/>
             <word name="AlwaysShowDirOnReadyPage"/>
             <word name="AlwaysShowGroupOnReadyPage"/>
             <word name="AlwaysUsePersonalGroup"/>
+            <word name="AppComments"/>
+            <word name="AppContact"/>
+            <word name="AppCopyright"/>
+            <word name="AppendDefaultDirName"/>
+            <word name="AppendDefaultGroupName"/>
             <word name="AppId"/>
+            <word name="AppModifyPath"/>
             <word name="AppMutex"/>
+            <word name="AppName"/>
             <word name="AppPublisher"/>
             <word name="AppPublisherURL"/>
+            <word name="AppReadmeFile"/>
+            <word name="AppSupportPhone"/>
             <word name="AppSupportURL"/>
             <word name="AppUpdatesURL"/>
+            <word name="AppVerName"/>
             <word name="AppVersion"/>
+            <word name="ArchitecturesAllowed"/>
+            <word name="ArchitecturesInstallIn64BitMode"/>
+            <word name="ASLRCompatible"/>
+            <word name="BackColor"/>
+            <word name="BackColor2"/>
+            <word name="BackColorDirection"/>
+            <word name="BackSolid"/>
             <word name="ChangesAssociations"/>
             <word name="ChangesEnvironment"/>
+            <word name="CloseApplications"/>
+            <word name="CloseApplicationsFilter"/>
+            <word name="Compression"/>
+            <word name="CompressionThreads"/>
             <word name="CreateAppDir"/>
             <word name="CreateUninstallRegKey"/>
-            <word name="Compression"/>
-            <word name="DefaultGroupname"/>
-            <word name="DetectLanguageUsingLocale"/>
+            <word name="DefaultDialogFontName"/>
+            <word name="DefaultDirName"/>
+            <word name="DefaultGroupName"/>
+            <word name="DefaultUserInfoName"/>
+            <word name="DefaultUserInfoOrg"/>
+            <word name="DefaultUserInfoSerial"/>
+            <word name="DEPCompatible"/>
             <word name="DirExistsWarning"/>
-            <word name="DisableAppendDir"/>
             <word name="DisableDirPage"/>
             <word name="DisableFinishedPage"/>
             <word name="DisableProgramGroupPage"/>
             <word name="DisableReadyMemo"/>
             <word name="DisableReadyPage"/>
-            <word name="DisablestartupPrompt"/>
+            <word name="DisableStartupPrompt"/>
+            <word name="DisableWelcomePage"/>
+            <word name="DiskClusterSize"/>
+            <word name="DiskSliceSize"/>
+            <word name="DiskSpanning"/>
             <word name="EnableDirDoesntExistWarning"/>
+            <word name="Encryption"/>
             <word name="ExtraDiskSpaceRequired"/>
+            <word name="FlatComponentsList"/>
             <word name="InfoAfterFile"/>
             <word name="InfoBeforeFile"/>
+            <word name="InternalCompressLevel"/>
             <word name="LanguageDetectionMethod"/>
             <word name="LicenseFile"/>
-            <word name="MessagesFile"/>
+            <word name="LZMAAlgorithm"/>
+            <word name="LZMABlockSize"/>
+            <word name="LZMADictionarySize"/>
+            <word name="LZMAMatchFinder"/>
+            <word name="LZMANumBlockThreads"/>
+            <word name="LZMANumFastBytes"/>
+            <word name="LZMAUseSeparateProcess"/>
+            <word name="MergeDuplicateFiles"/>
             <word name="MinVersion"/>
+            <word name="MissingRunOnceIdsWarning"/>
             <word name="OnlyBelowVersion"/>
+            <word name="Output"/>
+            <word name="OutputBaseFilename"/>
+            <word name="OutputDir"/>
+            <word name="OutputManifestFile"/>
             <word name="Password"/>
-            <word name="TimeStampsInUTC"/>
-            <word name="TimeStampRounding"/>
-            <word name="Uninstallable"/>
-            <word name="UninstallDisplayIcon"/>
-            <word name="UninstallDisplayname"/>
-            <word name="UninstallFilesDir"/>
-            <word name="UninstallIconname"/>
-            <word name="UninstallLogMode"/>
-            <word name="UpdateUninstallLogAppname"/>
-            <word name="UsePreviousAppDir"/>
-            <word name="UsePreviousGroup"/>
-            <word name="UsePreviousSetupType"/>
-            <word name="UsePreviousTasks"/>
-            <word name="AppCopyright"/>
-            <word name="BackColor"/>
-            <word name="BackColor2"/>
-            <word name="BackColorDirection"/>
-            <word name="BackSolid"/>
-            <word name="FlatComponentsList"/>
+            <word name="PrivilegesRequired"/>
+            <word name="PrivilegesRequiredOverridesAllowed"/>
+            <word name="ReserveBytes"/>
+            <word name="RestartApplications"/>
+            <word name="RestartIfNeededByRun"/>
+            <word name="SetupIconFile"/>
+            <word name="SetupLogging"/>
+            <word name="SetupMutex"/>
             <word name="ShowComponentSizes"/>
             <word name="ShowLanguageDialog"/>
+            <word name="ShowTasksTreeLines"/>
+            <word name="SignedUninstaller"/>
+            <word name="SignedUninstallerDir"/>
+            <word name="SignTool"/>
+            <word name="SignToolMinimumTimeBetween"/>
+            <word name="SignToolRetryCount"/>
+            <word name="SignToolRetryDelay"/>
+            <word name="SignToolRunMinimized"/>
+            <word name="SlicesPerDisk"/>
             <word name="SolidCompression"/>
-            <word name="WindowShowCaption"/>
-            <word name="WindowstartMaximized"/>
+            <word name="SourceDir"/>
+            <word name="TerminalServicesAware"/>
+            <word name="TimeStampRounding"/>
+            <word name="TimeStampsInUTC"/>
+            <word name="TouchDate"/>
+            <word name="TouchTime"/>
+            <word name="Uninstallable"/>
+            <word name="UninstallDisplayIcon"/>
+            <word name="UninstallDisplayName"/>
+            <word name="UninstallDisplaySize"/>
+            <word name="UninstallFilesDir"/>
+            <word name="UninstallLogMode"/>
+            <word name="UninstallRestartComputer"/>
+            <word name="UpdateUninstallLogAppName"/>
+            <word name="UsedUserAreasWarning"/>
+            <word name="UsePreviousAppDir"/>
+            <word name="UsePreviousGroup"/>
+            <word name="UsePreviousLanguage"/>
+            <word name="UsePreviousPrivigeles"/>
+            <word name="UsePreviousSetupType"/>
+            <word name="UsePreviousTasks"/>
+            <word name="UsePreviousUserInfo"/>
+            <word name="UserInfoPage"/>
+            <word name="UseSetupLdr"/>
+            <word name="VersionInfoCompany"/>
+            <word name="VersionInfoCopyright"/>
+            <word name="VersionInfoDescription"/>
+            <word name="VersionInfoOriginalFileName"/>
+            <word name="VersionInfoProductName"/>
+            <word name="VersionInfoProductTextVersion"/>
+            <word name="VersionInfoProductVersion"/>
+            <word name="VersionInfoTextVersion"/>
+            <word name="VersionInfoVersion"/>
             <word name="WindowResizable"/>
+            <word name="WindowShowCaption"/>
+            <word name="WindowStartMaximized"/>
             <word name="WindowVisible"/>
-            <word name="WizardImageBackregion"/>
+            <word name="WizardImageAlphaFormat"/>
             <word name="WizardImageFile"/>
+            <word name="WizardImageStretch"/>
+            <word name="WizardResizable"/>
+            <word name="WizardSizePercent"/>
             <word name="WizardSmallImageFile"/>
             <word name="WizardStyle"/>
-            <word name="Bits"/>
-            <word name="DisableDirExistsWarning"/>
-            <word name="OverwriteUninstRegEntries"/>
-            <word name="VersionInfoVersion"/>
-            <word name="VersionInfoCompany"/>
-            <word name="VersionInfoDescription"/>
-            <word name="VersionInfoTextVersion"/>
-            <word name="SetupIconFile"/>
-            <word name="WizardImageStretch"/>
-            <word name="WizardImageBackColor"/>
          </keywords>
       </scheme>
 
@@ -254,10 +297,11 @@
          <inherit scheme="issCommon"/>
 
          <keywords ignorecase="yes" region="issParameter">
+            <word name="Check"/>
+            <word name="Languages"/>
             <word name="MinVersion"/>
             <word name="OnlyBelowVersion"/>
             <word name="Permission"/>
-            <word name="Check"/>
          </keywords>
       </scheme>
 
@@ -282,51 +326,63 @@
             <word name="BeforeInstall"/>
             <word name="Source"/>
             <word name="DestDir"/>
-            <word name="Destname"/>
+            <word name="DestName"/>
             <word name="Excludes"/>
+            <word name="ExternalSize"/>
             <word name="CopyMode"/>
             <word name="Attribs"/>
             <word name="FontInstall"/>
             <word name="Flags"/>
             <word name="Permissions"/>
+            <word name="StrongAssemblyName"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
 <!--CopyMode-->
+            <word name="alwaysoverwrite"/>
+            <word name="alwaysskipifsameorolder"/>
             <word name="dontcopy"/>
             <word name="normal"/>
             <word name="onlyifdoesntexist"/>
-            <word name="alwaysoverwrite"/>
-            <word name="alwaysskipifsameorolder"/>
 <!--Attribs-->
             <word name="readonly"/>
             <word name="hidden"/>
             <word name="system"/>
 <!--Flags-->
-            <word name="comparetimestampalso"/>
+            <word name="allowunsafefiles"/>
+            <word name="comparetimestamp"/>
             <word name="confirmoverwrite"/>
             <word name="createallsubdirs"/>
             <word name="deleteafterinstall"/>
             <word name="dontverifychecksum"/>
             <word name="external"/>
             <word name="fontisnttruetype"/>
+            <word name="gacinstall"/>
             <word name="ignoreversion"/>
             <word name="isreadme"/>
             <word name="nocompression"/>
-            <word name="noregerror"/>
             <word name="noencryption"/>
+            <word name="noregerror"/>
             <word name="onlyifdestfileexists"/>
             <word name="overwritereadonly"/>
+            <word name="promptifolder"/>
             <word name="recursesubdirs"/>
             <word name="regserver"/>
             <word name="regtypelib"/>
             <word name="replacesameversion"/>
             <word name="restartreplace"/>
             <word name="sharedfile"/>
+            <word name="sign"/>
+            <word name="signonce"/>
             <word name="skipifsourcedoesntexist"/>
+            <word name="solidbreak"/>
             <word name="sortfilesbyextension"/>
+            <word name="sortfilesbyname"/>
+            <word name="touch"/>
             <word name="uninsneveruninstall"/>
             <word name="uninsnosharedfileprompt"/>
+            <word name="uninsremovereadonly"/>
             <word name="uninsrestartdelete"/>
+            <word name="unsetntfscompression"/>
             <word name="32bit"/>
             <word name="64bit"/>
          </keywords>
@@ -382,10 +438,11 @@
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
             <word name="checkablealone"/>
+            <word name="dontinheritcheck"/>
+            <word name="exclusive"/>
             <word name="fixed"/>
             <word name="restart"/>
             <word name="disablenouninstallwarning"/>
-            <word name="dontinheritcheck"/>
          </keywords>
       </scheme>
 
@@ -393,18 +450,19 @@
          <inherit scheme="issCommonParams"/>
 
          <block start="/(Components)(:)/i" end="/(;)|$/" scheme="issEmpty" region01="issParameter" region02="issSymb" region11="issSymb" region="issTasks"/>
-         <block start="/(name)(:)/i" end="/(;)|$/" scheme="issEmpty" region01="issParameter" region02="issSymb" region11="issSymb" region="issTasks"/>
+         <block start="/(Name)(:)/i" end="/(;)|$/" scheme="issEmpty" region01="issParameter" region02="issSymb" region11="issSymb" region="issTasks"/>
          <inherit scheme="nameDescFlags"/>
          <keywords ignorecase="yes" region="issParameter">
             <word name="GroupDescription"/>
             <word name="Components"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
-            <word name="exclusive"/>
             <word name="checkablealone"/>
+            <word name="checkedonce"/>
+            <word name="dontinheritcheck"/>
+            <word name="exclusive"/>
             <word name="restart"/>
             <word name="unchecked"/>
-            <word name="dontinheritcheck"/>
          </keywords>
       </scheme>
 
@@ -419,8 +477,10 @@
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
             <word name="deleteafterinstall"/>
+            <word name="setntfscompression"/>
             <word name="uninsalwaysuninstall"/>
             <word name="uninsneveruninstall"/>
+            <word name="unsetntfscompression"/>
          </keywords>
       </scheme>
 
@@ -439,12 +499,17 @@
             <word name="Comment"/>
             <word name="IconFilename"/>
             <word name="IconIndex"/>
+            <word name="HotKey"/>
+            <word name="AppUserModelID"/>
+            <word name="AppUserModelToastActivatorCLSID"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
             <word name="closeonexit"/>
             <word name="createonlyiffileexists"/>
             <word name="dontcloseonexit"/>
+            <word name="excludefromshowinnewinstall"/>
             <word name="foldershortcut"/>
+            <word name="preventpinning"/>
             <word name="runmaximized"/>
             <word name="runminimized"/>
             <word name="uninsneveruninstall"/>
@@ -479,7 +544,7 @@
             <word name="AfterInstall"/>
             <word name="BeforeInstall"/>
             <word name="Type"/>
-            <word name="name"/>
+            <word name="Name"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
             <word name="files"/>
@@ -496,9 +561,9 @@
             <word name="BeforeInstall"/>
             <word name="Root"/>
             <word name="Subkey"/>
-            <word name="valueType"/>
-            <word name="valuename"/>
-            <word name="valueData"/>
+            <word name="ValueType"/>
+            <word name="ValueName"/>
+            <word name="ValueData"/>
             <word name="Flags"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
@@ -506,15 +571,17 @@
             <word name="HKCR"/>
             <word name="HKCU"/>
             <word name="HKLM"/>
+            <word name="HKA"/>
             <word name="HKU"/>
             <word name="HKCC"/>
             <word name="name"/>
-<!--valueType-->
+<!--ValueType-->
             <word name="none"/>
             <word name="string"/>
             <word name="expandsz"/>
             <word name="multisz"/>
             <word name="dword"/>
+            <word name="qword"/>
             <word name="binary"/>
 <!--Flags-->
             <word name="createvalueifdoesntexist"/>
@@ -543,14 +610,20 @@
             <word name="StatusMsg"/>
             <word name="RunOnceId"/>
             <word name="Flags"/>
+            <word name="Verb"/>
          </keywords>
          <keywords ignorecase="yes" region="issFlags">
+            <word name="32bit"/>
+            <word name="64bit"/>
+            <word name="dontlogparameters"/>
             <word name="nowait"/>
+            <word name="runascurrentuser"/>
             <word name="shellexec"/>
             <word name="skipifdoesntexist"/>
             <word name="runmaximized"/>
             <word name="runminimized"/>
             <word name="waituntilidle"/>
+            <word name="waituntilterminated"/>
          </keywords>
       </scheme>
 
@@ -560,11 +633,11 @@
          <keywords ignorecase="yes" region="issFlags">
             <word name="hidewizard"/>
             <word name="postinstall"/>
+            <word name="runasoriginaluser"/>
             <word name="shellexec"/>
             <word name="skipifsilent"/>
             <word name="skipifnotsilient"/>
             <word name="unchecked"/>
-            <word name="waituntilterminated"/>
          </keywords>
       </scheme>
 

@@ -123,7 +123,7 @@ transforms your commands into the corresponding external archiver calls.
   ~FAR2L features - Getting Started~@Far2lGettingStarted@
 
 @Far2lGettingStarted
-$ #FAR2L features - Getting Started#
+$ # FAR2L features - Getting Started#
     FAR2L is Linux port FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
@@ -138,6 +138,7 @@ $ #FAR2L features - Getting Started#
     If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
     To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
     to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+    run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -1506,7 +1507,7 @@ $ #Menus: options menu#
    See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @Terminal
-$ #Terminal
+$ #Terminal#
     #FAR2L# contains built-in terminal emulator, allowing to execute command line applications see their output and control functionality.
 In order to keep usual shell experience far2l first launches supported user's shell in interactive mode and sends it commands typed
 in its own command line.
@@ -1515,13 +1516,14 @@ by default by giving options while you're typing command. Second is driven by ba
 #SHIFT+double-TAB# (quickly press TAB twice while keeping SHIFT pressed).
     #'exit' command behaviour:# typing 'exit' command will cause back shell to exit but will not close whole far2l application to close and next
 command execution request will spawn new back shell instance. This allows to 'reset' shell environment from exported variables and other settings.
-In case you want to exit far2l by typing command: type 'exit far' pseudo-command - it will be recognized by far2l as whole app close request.
+In case you want to exit far2l by typing command: type 'exit far' ~pseudo-command~@SpecCmd@ - it will be recognized by far2l as whole app close request.
     #Hotkeys and scrolling during running command:# you can use #Ctrl+Shift+F3# to open history of output in built-in viewer or
 #Ctrl+Shift+F4# to open it in built-in editor. This allows efficient commands output investigation, including scrolling possibility, using
 built-in viewer and editor capabilities. You can also open history viewer by scrolling mouse wheel up, following scroll til bottom of output
 - will hide that viewer. #Ctrl+C, Ctrl+Z# hotkeys trigger usual signals, however in case hard stuck of command line application you can hard kill
 it and everything in shell by pressing #Ctrl+Alt+C#. Note that its not recommended to use that hotkey without real need cuz it may cause corruption
-or lost of unsaved data in killed applications. You can also use #Ctrl+Alt+Z# to put command execution to background. You may return to background'ed command from ~Screens switching menu~@ScrSwitch@ (F12 in panels).
+or lost of unsaved data in killed applications. You can also use #Ctrl+Alt+Z# to put command execution to background.
+You may return to background'ed command from ~Screens switching menu~@ScrSwitch@ (#F12# in panels).
     #Hotkeys and scrolling when NOT running command:# while #Ctrl+Shift+F3/F4# still functioning in such mode you can also use simple #F3/F4# to get history
 opened in viewer/editor respectively. Also you can press #F8# key to cleanup history and screen. You can switch between panels and terminal by pressing #Ctrl+O#
 or clicking top left corner.
@@ -1531,7 +1533,7 @@ like live full keyboard keys recognition with with keydown/up reaction. Also 'ho
 You can use this functionality by running TTY far2l inside of ssh client session opened in 'host' far2l or, what is more easy, by using SSH-capable plugin,
 like NetRocks SFTP/SCP protocols to execute remote commands.
 
-  Text selected with mouse automatically copied to clipboard
+  Text selected with mouse automatically copied to clipboard.
 
   Previous command                                          #Up, Ctrl-E#
   Next command                                            #Down, Ctrl-X#
@@ -1566,8 +1568,10 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   Put far2l instance to background                          #Ctrl+Alt+Z#
     (only if far2l works in TTY backend)
 
+  See also: ~pseudo-commands~@SpecCmd@
+
 @UIBackends
-$ #UI Backends
+$ #UI Backends#
     Depending on build options and available platform features #FAR2L# can render
 its interface using different so-called backends:
 
@@ -4219,7 +4223,7 @@ screen, #Ctrl-Shift-Tab# to the previous, #F12# shows a list of all available
 screens.
 
     Additionally there can be multiple terminal commands running in background.
-You may view or activate any of them also from #F12# menu: use F3 to view
+You may view or activate any of them also from #F12# menu: use #F3# to view
 current command output or Enter to switch to it in terminal.
 
     The number of background terminal commands, viewers and editors is displayed

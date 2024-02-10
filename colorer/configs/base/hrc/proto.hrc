@@ -1,1094 +1,1096 @@
 <?xml version="1.0" encoding='UTF-8'?>
-<!DOCTYPE hrc PUBLIC
-  "-//Cail Lomecb//DTD Colorer HRC take5//EN"
-  "http://colorer.sf.net/2003/hrc.dtd"
-[
-  <!-- include -->
-  <!ENTITY scripts-colorer-protos  SYSTEM "scripts.colorer.ent.hrc">
-  <!ENTITY scripts-far-protos  SYSTEM "scripts.far.ent.hrc">
-  <!ENTITY scripts-ini-protos  SYSTEM "scripts.ini.ent.hrc">
-  <!ENTITY scripts-msg-protos  SYSTEM "scripts.msg.ent.hrc">
-
-  <!ENTITY rare-ie-weidu-protos  SYSTEM "rare.ie-weidu.ent.hrc">
-  <!ENTITY rare-j2ee-protos  SYSTEM "rare.j2ee.ent.hrc">
-  <!ENTITY rare-qrm-protos  SYSTEM "rare.qrm.ent.hrc">
-  <!ENTITY rare-scripts-protos  SYSTEM "rare.scripts.ent.hrc">
-  <!ENTITY rare-gen-protos  SYSTEM "rare.gen.ent.hrc">
-
-  <!-- auto -->
-  <!ENTITY php-proto-gen  SYSTEM "php-prot.ent.hrc">
+<!DOCTYPE hrc [
+    <!-- include -->
+    <!ENTITY scripts-colorer-protos SYSTEM "scripts.colorer.ent.hrc">
+    <!ENTITY scripts-far-protos SYSTEM "scripts.far.ent.hrc">
+    <!ENTITY scripts-ini-protos SYSTEM "scripts.ini.ent.hrc">
+    <!ENTITY scripts-msg-protos SYSTEM "scripts.msg.ent.hrc">
+    <!ENTITY rare-ie-weidu-protos SYSTEM "rare.ie-weidu.ent.hrc">
+    <!ENTITY rare-j2ee-protos SYSTEM "rare.j2ee.ent.hrc">
+    <!ENTITY rare-qrm-protos SYSTEM "rare.qrm.ent.hrc">
+    <!ENTITY rare-scripts-protos SYSTEM "rare.scripts.ent.hrc">
+    <!ENTITY rare-gen-protos SYSTEM "rare.gen.ent.hrc">
+    <!-- auto -->
+    <!ENTITY php-proto-gen SYSTEM "php-prot.ent.hrc">
 ]>
 
-<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
-
-  <annotation>
-   <documentation>
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+    <annotation>
+        <documentation>
    This is a base HRC file with prototype defines and types linking information.
    </documentation>
-  </annotation>
+    </annotation>
 
-  <!--  main languages  -->
-  <prototype name="c" group="main" description="C">
-    <location link="base/c.hrc"/>
-    <filename>/\.c$/i</filename>
-    <parameters>
-      <param name="ansi-defines" value="true" description="Use ANSI C standard library keywords"/>
-      <param name="win32-specific" value="true" description="Use Windows specific definitions"/>
-      <param name="unix-specific" value="true" description="Use Unix/Linux specific definitions"/>
-      <param name="doxygen-comments" value="true" description="Use Doxygen syntax in comments"/>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
-      <param name="include-in-outline" value="false" description="Shows #include in the outline list"/>
-      <param name="define-in-outline" value="false" description="Shows #define in the outline list"/>
-    </parameters>
-  </prototype>
-  <prototype name="cpp" group="main" description="C++">
-    <location link="base/cpp.hrc"/>
-    <filename>/\.(cpp|cxx|cc|hpp|h)$/i</filename>
-    <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
-    <firstline>/\#include/</firstline>
-    <firstline>/\#define|\#if/</firstline>
-    <parameters>
-      <param name="qt-defines" value="true" description="Use QT specific keywords"/>
-      <param name="stl-defines" value="true" description="Use STL specific keywords"/>
-      <param name="afx-defines" value="true" description="Highlight MFC autogenerateg block"/>
-      <param name="win32-specific" value="true" description="Use Windows specific definitions"/>
-      <param name="unix-specific" value="true" description="Use Unix/Linux specific definitions"/>
-      <param name="doxygen-comments" value="true" description="Use Doxygen syntax in comments"/>
-      <!-- firstline -->
-      <param name='firstlines'     value='10'   description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='2000' description="bytes for 'firstline'"/>
-    </parameters>
-  </prototype>
-  <package name="cpp-qt" description="C++ + Qt">
-   <location link="base/cpp-qt.hrc"/>
-  </package>
-  <prototype name="d" group="main" description="D">
-    <location link="base/d.hrc"/>
-    <filename>/\.di?$/i</filename>
-    <firstline>/^\s*(module|import) .*;/</firstline>
-    <parameters>
-      <param name="format-str" value="true" description="Highlight printf-like %format in strings"/>
-      <param name="use_phobos" value="true" description="Use Phobos library keywords"/>
-      <param name="use_tango" value="false" description="Use Tango library keywords"/>
-      <param name="d2" value="true" description="Use D 2.0 language features"/>
-      <!-- firstline -->
-      <param name='firstlines'     value='10'   description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='2000' description="bytes for 'firstline'"/>
-    </parameters>
-  </prototype>
+    <!--  main languages  -->
+    <prototype name="c" group="main" description="C">
+        <location link="base/c.hrc" />
+        <filename>/\.c$/i</filename>
+        <parameters>
+            <param name="ansi-defines" value="true" description="Use ANSI C standard library keywords" />
+            <param name="win32-specific" value="true" description="Use Windows specific definitions" />
+            <param name="unix-specific" value="true" description="Use Unix/Linux specific definitions" />
+            <param name="doxygen-comments" value="true" description="Use Doxygen syntax in comments" />
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
+            <param name="include-in-outline" value="false" description="Shows #include in the outline list" />
+            <param name="define-in-outline" value="false" description="Shows #define in the outline list" />
+        </parameters>
+    </prototype>
+    <prototype name="cpp" group="main" description="C++">
+        <location link="base/cpp.hrc" />
+        <filename>/\.(cpp|cxx|cc|hpp|h)$/i</filename>
+        <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
+        <firstline>/\#include/</firstline>
+        <firstline>/\#define|\#if/</firstline>
+        <parameters>
+            <param name="qt-defines" value="true" description="Use QT specific keywords" />
+            <param name="stl-defines" value="true" description="Use STL specific keywords" />
+            <param name="afx-defines" value="true" description="Highlight MFC autogenerateg block" />
+            <param name="win32-specific" value="true" description="Use Windows specific definitions" />
+            <param name="unix-specific" value="true" description="Use Unix/Linux specific definitions" />
+            <param name="doxygen-comments" value="true" description="Use Doxygen syntax in comments" />
+            <!-- firstline -->
+            <param name='firstlines' value='10' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='2000' description="bytes for 'firstline'" />
+        </parameters>
+    </prototype>
+    <package name="cpp-qt" description="C++ + Qt">
+        <location link="base/cpp-qt.hrc" />
+    </package>
+    <prototype name="d" group="main" description="D">
+        <location link="base/d.hrc" />
+        <filename>/\.di?$/i</filename>
+        <firstline>/^\s*(module|import) .*;/</firstline>
+        <parameters>
+            <param name="format-str" value="true" description="Highlight printf-like %format in strings" />
+            <param name="use_phobos" value="true" description="Use Phobos library keywords" />
+            <param name="use_tango" value="false" description="Use Tango library keywords" />
+            <param name="d2" value="true" description="Use D 2.0 language features" />
+            <!-- firstline -->
+            <param name='firstlines' value='10' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='2000' description="bytes for 'firstline'" />
+        </parameters>
+    </prototype>
 
-  <prototype name="asm" group="main" description="ASM">
-    <location link="base/asm.hrc"/>
-    <filename>/\.(mac|asm|inc|i32|cod)$/i</filename>
-    <firstline>/^\s*;/</firstline>
-  </prototype>
-  <prototype name="perl" group="main" description="Perl">
-    <location link="base/perl.hrc"/>
-    <filename weight="3">/\.(pl[sx]?|pm|pod|t|ph)$/i</filename>
-    <firstline weight='2'>/^\#!\s*.+perl\b/</firstline>
-    <firstline>/perl/i</firstline>
-    <parameters>
-      <param name="use-packages" value="true" description="Highlight perl packages"/>
-      <param name="data-code" value="true" description="Treat __DATA__ sections as code"/>
-    </parameters>
-  </prototype>
-  <prototype name="java" group="main" description="Java">
-    <location link="base/java.hrc"/>
-    <filename>/\.ja(va|v|d)$/i</filename>
-    <firstline weight='2'>/^\/\/ Decompiled by Jad/</firstline>
-    <parameters>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
-      <param name="outlined-new" value="false" description="Outline creation of instances"/>
-      <param name="j2se-core-classes" value="true" description="Use names of J2SE core classes"/>
-      <param name="j2se-xml-classes" value="true" description="Use names of J2SE Xml classes"/>
-      <param name="j2se-javax-classes" value="false" description="Use names of J2SE javax.* classes"/>
-      <param name="j2se-gui-classes" value="false" description="Use names of J2SE applet, Awt and Swing classes"/>
-      <param name="j2se-omg-classes" value="false" description="Use names of J2SE org.omg.* classes"/>
-    </parameters>
-  </prototype>
-  <prototype name="idl" group="main" description="IDL">
-    <location link="base/idl.hrc"/>
-    <filename>/\.(hvs|[io]dl)$/i</filename>
-    <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
-    <firstline>/\#include/</firstline>
-  </prototype>
-  <prototype name="pascal" group="main" description="Pascal">
-    <location link="base/pascal.hrc"/>
-    <filename>/\.(\~?pas|dpr|dpk|inc|int|pp)$/i</filename>
-    <firstline>/^(\{|\/\/|resourcestring|program|library|unit|package)/i</firstline>
-  </prototype>
-  <prototype name="csharp" group="main" description="C#">
-    <location link="base/csharp.hrc"/>
-    <filename>/\.cs$/i</filename>
-  </prototype>
-  <prototype name="fsharp" group="main" description="F#">
-    <location link="base/fsharp.hrc"/>
-    <filename weight="9">/\.fs(i|l|x|y|script)?$/i</filename>
-  </prototype>
-  <prototype name="jsnet" group="main" description="JS.NET">
-    <location link="base/js.net.hrc"/>
-    <filename weight="0.5">/\.js$/i</filename>
-  </prototype>
-  <prototype name="vbnet" group="main" description="VB.NET">
-    <location link="base/vb.net.hrc"/>
-    <filename>/\.vb$/i</filename>
-  </prototype>
-  <!-- warning!! extensions conflict with Fortran -->
-  <prototype name="forth" group="main" description="Forth">
-    <location link="base/forth.hrc"/>
-    <filename>/\.(fth|f32|f|spf)$/i</filename>
-  </prototype>
-  <prototype name="fortran" group="main" description="Fortran">
-    <location link="base/fortran.hrc"/>
-    <filename>/\.(for|f90|f95|f3?)$/i</filename>
-  </prototype>
-  <prototype name="vbasic" group="main" description="Visual Basic">
-    <location link="base/vbasic.hrc"/>
-    <filename>/\.(bas|vbp|frm|cls)$/i</filename>
-    <firstline>/^(VERSION|VBWIZARD) \d+.\d+/</firstline>
-  </prototype>
-  <prototype name="python" group="main" description="Python">
-    <location link="base/python.hrc"/>
-    <filename>/\.(py|pyw|pys)$/i</filename>
-    <firstline weight='2'>/^\#!\S*.+python/</firstline>
-    <firstline>/^("""|import)/</firstline>
-  </prototype>
-  <prototype name="lua" group="main" description="Lua">
-    <location link="base/lua.hrc"/>
-    <filename>/\.(w?lua)$/i</filename>
-  </prototype>
-  <prototype name="ruby" group="main" description="Ruby">
-    <location link="base/ruby.hrc"/>
-    <filename>/\.(rb|rbw|ruby|rake)$/i</filename>
-    <filename>/Rakefile$/i</filename>
-    <firstline weight='4'>/-\*- ruby -\*-/i</firstline>
-    <firstline>/bin\/ruby/i</firstline>
-  </prototype>
-  <prototype name="nix" group="main" description="Nix">
-    <location link="base/nix.hrc"/>
-    <filename>/\.(nix)$/i</filename>
-    <parameters>
-      <param name="tabs-as-errors" value="true" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="true" description="Shows trailing spaces as error"/>
-    </parameters>
-  </prototype>
-  <prototype name="haxe" group="main" description="Haxe">
-    <location link="base/haxe.hrc"/>
-    <filename>/\.hx$/i</filename>
-  </prototype>
-  <prototype name="scala" group="main" description="Scala">
-    <location link="base/scala.hrc"/>
-    <filename>/\.(scala|sc|sbt)$/i</filename>
-  </prototype>
-  <prototype name="tcltk" group="main" description="Tcl/Tk/Expect">
-    <location link="base/tcltk.hrc"/>
-    <filename>/\.(tcl|tk|exp)$/i</filename>
-    <firstline>/^\#(!\s*.+(tcl|wi)?sh\b)/</firstline>
-  </prototype>
-  <prototype name="go" group="main" description="Go">
-    <location link="base/go.hrc"/>
-    <filename>/\.go$/i</filename>
-    <parameters>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-    </parameters>
-  </prototype>
-  <prototype name="kotlin" group="main" description="Kotlin">
-    <location link="base/kotlin.hrc"/>
-    <filename>/\.kt$/i</filename>
-  </prototype>
-  <prototype name="groovy" group="main" description="Groovy">
-    <location link="base/groovy.hrc"/>
-    <filename>/\.groovy$/i</filename>
-    <filename>/\.gdsl$/i</filename>
-    <filename>/Jenkinsfile/i</filename>
-    <firstline>/^import/</firstline>
-    <firstline>/^#!groovy/</firstline>
-    <parameters>
-      <param name="j2se-classes" value="true" description="Use some common used J2SE class names"/>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
-    </parameters>
-  </prototype>
+    <prototype name="asm" group="main" description="ASM">
+        <location link="base/asm.hrc" />
+        <filename>/\.(asm|fasm|nasm|masm|tasm|uasm|farm|fasmarm|asmarm|s|inc|i32|cod|asi|mac)$/i</filename>
+        <firstline>/^\s*;/</firstline>
+        <firstline>/^\s*\.model\b/i</firstline>
+        <firstline>/^\s*\.8086\b/</firstline>
+        <firstline>/^\s*\.186\b/</firstline>
+        <firstline>/^\s*\.286p?\b/i</firstline>
+        <firstline>/^\s*p286\b/i</firstline>
+        <firstline>/^\s*\.386p?\b/i</firstline>
+        <firstline>/^\s*p386\b/i</firstline>
+        <firstline>/^\s*\.486p?\b/i</firstline>
+        <firstline>/^\s*p486\b/i</firstline>
+        <firstline>/^\s*\.586p?\b/i</firstline>
+        <firstline>/^\s*p586\b/i</firstline>
+        <firstline>/^\s*\.686p?\b/i</firstline>
+        <firstline>/^\s*p686\b/i</firstline>
+        <firstline>/^\s*\.?code\b/i</firstline>
+        <firstline>/^\s*\.?data\b/i</firstline>
+        <firstline>/^\s*\.?bss\b/i</firstline>
+        <firstline>/^\s*\.?stack\b/i</firstline>
+        <firstline>/^\s*org\b/i</firstline>
+        <firstline>/^\s*include\b/i</firstline>
+        <firstline>/^\s*format\b/i</firstline>
+        <firstline>/^\s*option\b/i</firstline>
+        <firstline>/^\s*bits\b/i</firstline>
+        <firstline>/^\s*use16\b/i</firstline>
+        <firstline>/^\s*use32\b/i</firstline>
+        <firstline>/^\s*use64\b/i</firstline>
+    </prototype>
+    <prototype name="perl" group="main" description="Perl">
+        <location link="base/perl.hrc" />
+        <filename weight="3">/\.(pl[sx]?|pm|pod|t|ph)$/i</filename>
+        <firstline weight='2'>/^\#!\s*.+perl\b/</firstline>
+        <firstline>/perl/i</firstline>
+        <parameters>
+            <param name="use-packages" value="true" description="Highlight perl packages" />
+            <param name="data-code" value="true" description="Treat __DATA__ sections as code" />
+        </parameters>
+    </prototype>
+    <prototype name="java" group="main" description="Java">
+        <location link="base/java.hrc" />
+        <filename>/\.ja(va|v|d)$/i</filename>
+        <firstline weight='2'>/^\/\/ Decompiled by Jad/</firstline>
+        <firstline weight='2'>/^\/\*\r?\n \* Decompiled with CFR/</firstline> <!-- support another java decompiler https://github.com/leibnitz27/cfr -->
+        <parameters>
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
+            <param name="outlined-new" value="false" description="Outline creation of instances" />
+            <param name="j2se-core-classes" value="true" description="Use names of J2SE core classes" />
+            <param name="j2se-xml-classes" value="true" description="Use names of J2SE Xml classes" />
+            <param name="j2se-javax-classes" value="false" description="Use names of J2SE javax.* classes" />
+            <param name="j2se-gui-classes" value="false" description="Use names of J2SE applet, Awt and Swing classes" />
+            <param name="j2se-omg-classes" value="false" description="Use names of J2SE org.omg.* classes" />
+        </parameters>
+    </prototype>
+    <prototype name="idl" group="main" description="IDL">
+        <location link="base/idl.hrc" />
+        <filename>/\.(hvs|[io]dl)$/i</filename>
+        <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
+        <firstline>/\#include/</firstline>
+    </prototype>
+    <prototype name="pascal" group="main" description="Pascal">
+        <location link="base/pascal.hrc" />
+        <filename>/\.(\~?pas|dpr|dpk|inc|int|pp)$/i</filename>
+        <firstline>/^(\{|\/\/|resourcestring|program|library|unit|package)/i</firstline>
+    </prototype>
+    <prototype name="csharp" group="main" description="C#">
+        <location link="base/csharp.hrc" />
+        <filename>/\.csx?$/i</filename>
+    </prototype>
+    <prototype name="fsharp" group="main" description="F#">
+        <location link="base/fsharp.hrc" />
+        <filename weight="9">/\.fs(i|l|x|y|script)?$/i</filename>
+    </prototype>
+    <prototype name="jsnet" group="main" description="JS.NET">
+        <location link="base/js.net.hrc" />
+        <filename weight="0.5">/\.js$/i</filename>
+    </prototype>
+    <prototype name="vbnet" group="main" description="VB.NET">
+        <location link="base/vb.net.hrc" />
+        <filename>/\.vb$/i</filename>
+    </prototype>
+    <!-- warning!! extensions conflict with Fortran -->
+    <prototype name="forth" group="main" description="Forth">
+        <location link="base/forth.hrc" />
+        <filename>/\.(fth|f32|f|spf)$/i</filename>
+    </prototype>
+    <prototype name="fortran" group="main" description="Fortran">
+        <location link="base/fortran.hrc" />
+        <filename>/\.(for|f90|f95|f3?)$/i</filename>
+    </prototype>
+    <prototype name="vbasic" group="main" description="Visual Basic">
+        <location link="base/vbasic.hrc" />
+        <filename>/\.(bas|vbp|frm|cls)$/i</filename>
+        <firstline>/^(VERSION|VBWIZARD) \d+.\d+/</firstline>
+    </prototype>
+    <prototype name="python" group="main" description="Python">
+        <location link="base/python.hrc" />
+        <filename>/\.(py|pyw|pys)$/i</filename>
+        <firstline weight='2'>/^\#!\S*.+python/</firstline>
+        <firstline>/^("""|import)/</firstline>
+    </prototype>
+    <prototype name="lua" group="main" description="Lua">
+        <location link="base/lua.hrc" />
+        <filename>/\.(w?lua)$/i</filename>
+    </prototype>
+    <prototype name="ruby" group="main" description="Ruby">
+        <location link="base/ruby.hrc" />
+        <filename>/\.(rb|rbw|ruby|rake)$/i</filename>
+        <filename>/Rakefile$/i</filename>
+        <firstline weight='4'>/-\*- ruby -\*-/i</firstline>
+        <firstline>/bin\/ruby/i</firstline>
+    </prototype>
+    <prototype name="nix" group="main" description="Nix">
+        <location link="base/nix.hrc" />
+        <filename>/\.(nix)$/i</filename>
+        <parameters>
+            <param name="tabs-as-errors" value="true" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="true" description="Shows trailing spaces as error" />
+        </parameters>
+    </prototype>
+    <prototype name="haxe" group="main" description="Haxe">
+        <location link="base/haxe.hrc" />
+        <filename>/\.hx$/i</filename>
+    </prototype>
+    <prototype name="scala" group="main" description="Scala">
+        <location link="base/scala.hrc" />
+        <filename>/\.(scala|sc|sbt)$/i</filename>
+    </prototype>
+    <prototype name="tcltk" group="main" description="Tcl/Tk/Expect">
+        <location link="base/tcltk.hrc" />
+        <filename>/\.(tcl|tk|exp)$/i</filename>
+        <firstline>/^\#(!\s*.+(tcl|wi)?sh\b)/</firstline>
+    </prototype>
+    <prototype name="go" group="main" description="Go">
+        <location link="base/go.hrc" />
+        <filename>/\.go$/i</filename>
+        <parameters>
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+        </parameters>
+    </prototype>
+    <prototype name="kotlin" group="main" description="Kotlin">
+        <location link="base/kotlin.hrc" />
+        <filename>/\.kt$/i</filename>
+    </prototype>
+    <prototype name="groovy" group="main" description="Groovy">
+        <location link="base/groovy.hrc" />
+        <filename>/\.groovy$/i</filename>
+        <filename>/\.gdsl$/i</filename>
+        <filename>/\.gradle$/i</filename>
+        <filename>/Jenkinsfile/i</filename>
+        <firstline>/^import/</firstline>
+        <firstline>/^#!groovy/</firstline>
+        <parameters>
+            <param name="j2se-classes" value="true" description="Use some common used J2SE class names" />
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
+        </parameters>
+    </prototype>
 
-  <prototype name="rust" group="main" description="Rust">
-    <location link="base/rust.hrc"/>
-    <filename>/\.rs$/i</filename>
-  </prototype>
+    <prototype name="rust" group="main" description="Rust">
+        <location link="base/rust.hrc" />
+        <filename>/\.rs$/i</filename>
+    </prototype>
 
-  <!--  inet languages  -->
-  <package name="html-entity" description="(x)html entities">
-   <location link="inet/gen/html-entity.hrc"/>
-  </package>
-  <prototype name="html" group="inet" description="html">
-    <location link="inet/html.hrc"/>
-    <filename>/\.[^ptr]??html?$/i</filename>
-    <firstline>/^\s*&lt;((!DOCTYPE\s+)?HTML|!\-\-)/i</firstline>
-    <parameters>
-      <param name="conditional-comments" value="true" description="IE conditional comments"/>
-      <param name="html-pairs" value="true" description="Highlighting some known HTML Pair tags. Please, use &lt; /&gt; syntax for singles like p, td, tr etc.."/>
-    </parameters>
-  </prototype>
+    <!--  inet languages  -->
+    <package name="html-entity" description="(x)html entities">
+        <location link="inet/gen/html-entity.hrc" />
+    </package>
+    <prototype name="html" group="inet" description="html">
+        <location link="inet/html.hrc" />
+        <filename>/\.[^ptr]??html?$/i</filename>
+        <firstline>/^\s*&lt;((!DOCTYPE\s+)?HTML|!\-\-)/i</firstline>
+        <parameters>
+            <param name="conditional-comments" value="true" description="IE conditional comments" />
+            <param name="html-pairs" value="true" description="Highlighting some known HTML Pair tags. Please, use &lt; /&gt; syntax for singles like p, td, tr etc.." />
+        </parameters>
+    </prototype>
 
-  <prototype name="css" group="inet" description="css">
-    <location link="inet/css.hrc"/>
-    <filename>/\.css$/i</filename>
-    <parameters>
-     <param name="html-css" value="true" description="Default use css for HTML"/>
-     <param name="svg-css" value="false" description="Default use css for SVG"/>
-    </parameters>
-  </prototype>
-  <prototype name="html-css" group="inet" description="css for html">
-    <location link="inet/html-css.hrc"/>
-    <filename weight="0">/\.css$/i</filename>
-  </prototype>
-  <prototype name="svg-css" group="inet" description="css for svg">
-    <location link="inet/svg-css.hrc"/>
-    <filename weight="0">/\.css$/i</filename>
-  </prototype>
-  <prototype name="sass" group="inet" description="SASS">
-    <location link="inet/sass.hrc"/>
-    <filename>/\.sass$/i</filename>
-  </prototype>
-  <prototype name="less" group="inet" description="Less css">
-    <location link="inet/less.hrc"/>
-    <filename>/\.less$/</filename>
-  </prototype>
-  <prototype name="smarty" group="inet" description="Smarty PHP Templates">
-    <location link="inet/smarty.hrc"/>
-    <filename weight="10">/\.smarty$/</filename>
-  </prototype>
-  <prototype name="ss" group="inet" description="SilverStripe">
-    <location link="inet/ss.hrc"/>
-    <filename weight="10">/\.ss$/</filename>
-  </prototype>
-  <prototype name="twig" group="inet" description="Twig PHP Templates">
-    <location link="inet/twig.hrc"/>
-    <filename weight="10">/\.twig$/</filename>
-  </prototype>
+    <prototype name="css" group="inet" description="css">
+        <location link="inet/css.hrc" />
+        <filename>/\.css$/i</filename>
+        <parameters>
+            <param name="html-css" value="true" description="Default use css for HTML" />
+            <param name="svg-css" value="false" description="Default use css for SVG" />
+        </parameters>
+    </prototype>
+    <prototype name="html-css" group="inet" description="css for html">
+        <location link="inet/html-css.hrc" />
+        <filename weight="0">/\.css$/i</filename>
+    </prototype>
+    <prototype name="svg-css" group="inet" description="css for svg">
+        <location link="inet/svg-css.hrc" />
+        <filename weight="0">/\.css$/i</filename>
+    </prototype>
+    <prototype name="sass" group="inet" description="SASS">
+        <location link="inet/sass.hrc" />
+        <filename>/\.sass$/i</filename>
+    </prototype>
+    <prototype name="less" group="inet" description="Less css">
+        <location link="inet/less.hrc" />
+        <filename>/\.less$/</filename>
+    </prototype>
+    <prototype name="smarty" group="inet" description="Smarty PHP Templates">
+        <location link="inet/smarty.hrc" />
+        <filename weight="10">/\.smarty$/</filename>
+    </prototype>
+    <prototype name="ss" group="inet" description="SilverStripe">
+        <location link="inet/ss.hrc" />
+        <filename weight="10">/\.ss$/</filename>
+    </prototype>
+    <prototype name="twig" group="inet" description="Twig PHP Templates">
+        <location link="inet/twig.hrc" />
+        <filename weight="10">/\.twig$/</filename>
+    </prototype>
 
-  <prototype name="haml" group="inet" description="HAML">
-    <location link="inet/haml.hrc"/>
-    <filename>/\.haml$/i</filename>
-  </prototype>
-  <prototype name="shpaml" group="inet" description="SHPAML">
-    <location link="inet/shpaml.hrc"/>
-    <filename>/\.shpaml$/i</filename>
-  </prototype>
-  <prototype name="erb" group="inet" description="ERB">
-    <location link="inet/erb.hrc"/>
-    <filename weight='4'>/\.(erb|rhtml|html\.erb)$/i</filename>
-  </prototype>
+    <prototype name="haml" group="inet" description="HAML">
+        <location link="inet/haml.hrc" />
+        <filename>/\.haml$/i</filename>
+    </prototype>
+    <prototype name="shpaml" group="inet" description="SHPAML">
+        <location link="inet/shpaml.hrc" />
+        <filename>/\.shpaml$/i</filename>
+    </prototype>
+    <prototype name="erb" group="inet" description="ERB">
+        <location link="inet/erb.hrc" />
+        <filename weight='4'>/\.(erb|rhtml|html\.erb)$/i</filename>
+    </prototype>
 
-  <prototype name="jsp" group="inet" description="jsp">
-    <location link="inet/jsp.hrc"/>
-    <filename>/\.(jspf?|tag)$/i</filename>
-  </prototype>
-  <prototype name="gsp" group="inet" description="gsp">
-   <location link="inet/gsp.hrc"/>
-   <filename>/\.gsp$/i</filename>
-  </prototype>
+    <prototype name="jsp" group="inet" description="jsp">
+        <location link="inet/jsp.hrc" />
+        <filename>/\.(jspf?|tag)$/i</filename>
+    </prototype>
+    <prototype name="gsp" group="inet" description="gsp">
+        <location link="inet/gsp.hrc" />
+        <filename>/\.gsp$/i</filename>
+    </prototype>
 
-  <prototype name="php" group="inet" description="php">
-    <location link="inet/php.hrc"/>
-    <filename>/\.(php\d?|phtml|thtml|inc)$/i</filename>
-    <firstline>/^&lt;\?(php)/</firstline>
-    <firstline weight='2'>/^#!\S*(php)/</firstline>
-    <parameters>
-      <param name="posix-re" value="false" description='Use eregs highlightning'/>
-      <param name="include-base-consts"   value="true" description='PHP Predefined Constants'/>
-      <param name="docblock" value="true" description="DocBlock highlightning"/>
-      &php-proto-gen;
-    </parameters>
-  </prototype>
+    <prototype name="php" group="inet" description="php">
+        <location link="inet/php.hrc" />
+        <filename>/\.(php\d?|phtml|thtml|inc)$/i</filename>
+        <firstline>/^&lt;\?(php)/</firstline>
+        <firstline weight='2'>/^#!\S*(php)/</firstline>
+        <parameters>
+            <param name="posix-re" value="false" description='Use eregs highlightning' />
+            <param name="include-base-consts" value="true" description='PHP Predefined Constants' />
+            <param name="docblock" value="true" description="DocBlock highlightning" />
+            &php-proto-gen;
+        </parameters>
+    </prototype>
 
-  <prototype name="xhtml-trans" group="inet" description="xhtml transitional" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="inet/gen/xhtml-trans.hrc"/>
-    <filename>/\.html?$/ix</filename>
-    <filename>/\.xhtml?$/ix</filename>
-    <firstline weight='0.5'>/^&lt;\?xml/</firstline>
-    <firstline weight='2'>/DTD XHTML.*?Transitional/i</firstline>
-  </prototype>
-  <prototype name="xhtml-strict" group="inet" description="xhtml strict" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="inet/gen/xhtml-strict.hrc"/>
-    <filename>/\.html?$/ix</filename>
-    <filename>/\.xhtml?$/ix</filename>
-    <firstline weight='0.5'>/^&lt;\?xml/</firstline>
-    <firstline weight='2'>/DTD XHTML.*?Strict/i</firstline>
-  </prototype>
-  <prototype name="xhtml-frameset" group="inet" description="xhtml frameset" targetNamespace="http://www.w3.org/1999/xhtml">
-    <location link="inet/gen/xhtml-frameset.hrc"/>
-    <filename>/\.html?$/ix</filename>
-    <filename>/\.xhtml?$/ix</filename>
-    <firstline weight='0.5'>/^&lt;\?xml/</firstline>
-    <firstline weight='2'>/DTD XHTML.*?Frameset/i</firstline>
-  </prototype>
+    <prototype name="xhtml-trans" group="inet" description="xhtml transitional" targetNamespace="http://www.w3.org/1999/xhtml">
+        <location link="inet/gen/xhtml-trans.hrc" />
+        <filename>/\.html?$/ix</filename>
+        <filename>/\.xhtml?$/ix</filename>
+        <firstline weight='0.5'>/^&lt;\?xml/</firstline>
+        <firstline weight='2'>/DTD XHTML.*?Transitional/i</firstline>
+    </prototype>
+    <prototype name="xhtml-strict" group="inet" description="xhtml strict" targetNamespace="http://www.w3.org/1999/xhtml">
+        <location link="inet/gen/xhtml-strict.hrc" />
+        <filename>/\.html?$/ix</filename>
+        <filename>/\.xhtml?$/ix</filename>
+        <firstline weight='0.5'>/^&lt;\?xml/</firstline>
+        <firstline weight='2'>/DTD XHTML.*?Strict/i</firstline>
+    </prototype>
+    <prototype name="xhtml-frameset" group="inet" description="xhtml frameset" targetNamespace="http://www.w3.org/1999/xhtml">
+        <location link="inet/gen/xhtml-frameset.hrc" />
+        <filename>/\.html?$/ix</filename>
+        <filename>/\.xhtml?$/ix</filename>
+        <firstline weight='0.5'>/^&lt;\?xml/</firstline>
+        <firstline weight='2'>/DTD XHTML.*?Frameset/i</firstline>
+    </prototype>
 
-  <package name="asp" description="Active Server Pages">
-   <location link="inet/asp.hrc"/>
-  </package>
-  <prototype name="asp.vb" group="inet" description="asp - VBScript">
-    <location link="inet/asp.vb.hrc"/>
-    <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
-    <firstline weight='2'>/language\s*=.*vbscript/i</firstline>
-    <firstline>/&lt;\%/i</firstline>
-  </prototype>
-  <prototype name="asp.js" group="inet" description="asp - JavaScript">
-    <location link="inet/asp.js.hrc"/>
-    <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
-    <firstline weight='2'>/language\s*=.*j(ava)?script/i</firstline>
-  </prototype>
-  <prototype name="asp.ps" group="inet" description="asp - PerlScript">
-    <location link="inet/asp.ps.hrc"/>
-    <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
-    <firstline weight='2'>/language\s*=.*perlscript/i</firstline>
-  </prototype>
-  <prototype name="adp" group="inet" description="AOLserver Dynamic Pages">
-    <location link="inet/adp.hrc"/>
-    <filename>/\.adp$/i</filename>
-    <firstline weight='2'>/language\s*=.*tcltk/i</firstline>
-    <firstline>/&lt;\%/i</firstline>
-  </prototype>
-  <prototype name="svg" group="inet" description="SVG 1.0" targetNamespace="http://www.w3.org/2000/svg">
-    <location link="inet/gen/svg.hrc"/>
-    <filename>/\.svg$/ix</filename>
-  </prototype>
-  <prototype name="coldfusion" group="inet" description="ColdFusion">
-    <location link="inet/coldfusion.hrc"/>
-    <filename>/\.cf[mc]$/i</filename>
-  </prototype>
-  <prototype name="jScript" group="inet" description="JavaScript">
-    <location link="inet/jscript.hrc"/>
-    <filename>/\.(js|mocha|ts)$/i</filename>
-  </prototype>
-  <prototype name="actionscript" group="inet" description="ActionScript">
-    <location link="inet/actionscript.hrc"/>
-    <filename>/\.(as|jsfl)$/i</filename>
-  </prototype>
-  <prototype name="vbScript" group="inet" description="VBScript">
-    <location link="inet/vbscript.hrc"/>
-    <filename>/\.vbs$/i</filename>
-  </prototype>
+    <package name="asp" description="Active Server Pages">
+        <location link="inet/asp.hrc" />
+    </package>
+    <prototype name="asp.vb" group="inet" description="asp - VBScript">
+        <location link="inet/asp.vb.hrc" />
+        <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
+        <firstline weight='2'>/language\s*=.*vbscript/i</firstline>
+        <firstline>/&lt;\%/i</firstline>
+    </prototype>
+    <prototype name="asp.js" group="inet" description="asp - JavaScript">
+        <location link="inet/asp.js.hrc" />
+        <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
+        <firstline weight='2'>/language\s*=.*j(ava)?script/i</firstline>
+    </prototype>
+    <prototype name="asp.ps" group="inet" description="asp - PerlScript">
+        <location link="inet/asp.ps.hrc" />
+        <filename>/\.(as[pa]|ht[rxa]|inc)$/i</filename>
+        <firstline weight='2'>/language\s*=.*perlscript/i</firstline>
+    </prototype>
+    <prototype name="adp" group="inet" description="AOLserver Dynamic Pages">
+        <location link="inet/adp.hrc" />
+        <filename>/\.adp$/i</filename>
+        <firstline weight='2'>/language\s*=.*tcltk/i</firstline>
+        <firstline>/&lt;\%/i</firstline>
+    </prototype>
+    <prototype name="svg" group="inet" description="SVG 1.0" targetNamespace="http://www.w3.org/2000/svg">
+        <location link="inet/gen/svg.hrc" />
+        <filename>/\.svg$/ix</filename>
+    </prototype>
+    <prototype name="coldfusion" group="inet" description="ColdFusion">
+        <location link="inet/coldfusion.hrc" />
+        <filename>/\.cf[mc]$/i</filename>
+    </prototype>
+    <prototype name="jScript" group="inet" description="JavaScript">
+        <location link="inet/jscript.hrc" />
+        <filename>/\.(cjs|mjs|js|mocha|ts)$/i</filename>
+    </prototype>
+    <prototype name="actionscript" group="inet" description="ActionScript">
+        <location link="inet/actionscript.hrc" />
+        <filename>/\.(as|jsfl)$/i</filename>
+    </prototype>
+    <prototype name="vbScript" group="inet" description="VBScript">
+        <location link="inet/vbscript.hrc" />
+        <filename>/\.vbs$/i</filename>
+    </prototype>
 
-  <prototype name="rss" group="inet" description="rss" targetNamespace="http://purl.org/rss/1.0/">
-    <location link="inet/gen/rss.hrc"/>
-    <filename>/\.rss$/i</filename>
-    <filename weight='1.5'>/^rss/i</filename>
-    <firstline>/xmlns="http:\/\/purl\.org\/rss\/1\.0\/"/</firstline>
-    <firstline>/&lt;rss version="0\.91"&gt;/</firstline>
-  </prototype>
-  <prototype name="htc" group="inet" description="HTC">
-    <location link="inet/gen/htc.hrc"/>
-    <filename weight='3'>/\.htc$/i</filename>
-  </prototype>
-  <prototype name="xbl" group="inet" description="Mozilla XBL" targetNamespace="http://www.mozilla.org/xbl">
-    <location link="inet/gen/xbl.hrc"/>
-    <filename weight='0.5'>/\.xml$/i</filename>
-    <firstline weight="5">/\bxmlns\s*=\s*(["'])http:\/\/www\.mozilla\.org\/xbl\1/</firstline>
-  </prototype>
-  <prototype name="wml" group="inet" description="wml" targetNamespace="http://www.wapforum.org/2001/wml">
-    <location link="inet/gen/wml.hrc"/>
-    <filename>/\.wml$/i</filename>
-  </prototype>
-  <prototype name="mxml" group="inet" description="MXML">
-    <location link="inet/mxml.hrc"/>
-    <filename>/\.mxml$/i</filename>
-  </prototype>
-
-
-  <!--  xml types  -->
-  <prototype name="xml" group="xml" description="xml">
-    <location link="xml/xml.hrc"/>
-    <filename>/\.(xml|\w*proj|gi2|gpr|ui)$/i</filename>
-    <filename>/\.(wxs|fb2)$/i</filename>
-    <firstline>/^&lt;\?xml | &lt;\!DOCTYPE | xmlns /x</firstline>
-    <firstline>/^\s*&lt;\w+&gt;\s*/</firstline><!-- (\s+\w+\s*=\*([&quot;&apos;]).+?\2)*\s* -->
-    <parameters>
-      <!-- firstline -->
-      <param name='firstlines'     value='10'   description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='2000' description="bytes for 'firstline'"/>
-    </parameters>
-
-  </prototype>
-  <package name="xmlns" description="xml namespace" targetNamespace="http://www.w3.org/XML/1998/namespace">
-    <location link="xml/gen/xmlns.hrc"/>
-  </package>
-  <package name="xlink" description="xlink" targetNamespace="http://www.w3.org/1999/xlink">
-    <location link="xml/gen/xlink.hrc"/>
-  </package>
-  <package name="xinclude" description="xinclude" targetNamespace="http://www.w3.org/1999/xinclude">
-    <location link="xml/gen/xinclude.hrc"/>
-  </package>
-  <package name="xpath" description="xpath 1.0">
-    <location link="xml/xpath.hrc"/>
-  </package>
-  <package name="xpath2" description="xpath 2.0">
-    <location link="xml/xpath2.hrc"/>
-  </package>
-
-
-  <prototype name="dtd" group="xml" description="dtd">
-    <location link="xml/dtd.hrc"/>
-    <filename>/\.(dtd|ent|mod)$/i</filename>
-  </prototype>
-  <prototype name="dtdcatalog" group="xml" description="dtd/sgml catalog">
-    <location link="xml/dtdcatalog.hrc"/>
-    <filename>/\.(cat|soc)$/i</filename>
-  </prototype>
-
-  <prototype name="xslt" group="xml" description="xslt 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="xml/gen/xslt.hrc"/>
-    <filename>/\.xslt?$/i</filename>
-    <firstline>/ xsl:stylesheet /x</firstline>
-    <firstline>/ XSL\/Transform /x</firstline>
-    <parameters>
-      <!-- firstline -->
-      <param name='firstlines'     value='10'   description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='2000' description="bytes for 'firstline'"/>
-    </parameters>
-  </prototype>
-  <!-- targetNamespace duplicate. It's not good... -->
-  <prototype name="xslt2" group="xml" description="xslt 2.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="xml/gen/xslt2.hrc"/>
-    <filename>/\.xslt?2?$/i</filename>
-    <firstline weight="3">/\b(stylesheet|transform)\s+ .* \bversion\s*=\s*([&quot;&apos;])2\.0\2 /sx</firstline>
-  </prototype>
-  <prototype name="xquery" group="xml" description="xquery 1.0">
-    <location link="xml/xquery.hrc"/>
-    <filename>/\.xq$/i</filename>
-    <firstline weight="2">/^\s*xquery\s+version\b/x</firstline>
-  </prototype>
-  <prototype name="xslfo" group="xml" description="xslfo 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
-    <location link="xml/gen/xslfo.hrc"/>
-    <filename>/\.(xslfo?|fo)$/i</filename>
-  </prototype>
-
-  <prototype name="xmlschema" group="xml" description="XML Schema" targetNamespace="http://www.w3.org/2001/XMLSchema">
-    <location link="xml/gen/xmlschema.hrc"/>
-    <filename>/\.xsd?$/i</filename>
-  </prototype>
-  <package name="xsi" description="XML Schema instance" targetNamespace="http://www.w3.org/2001/XMLSchema-instance">
-    <location link="xml/gen/xmlschema-instance.hrc"/>
-  </package>
-
-  <prototype name="relaxng" group="xml" description="Relax NG" targetNamespace="http://relaxng.org/ns/structure/1.0">
-    <location link="xml/gen/relaxng.hrc"/>
-    <filename>/\.rng$/ix</filename>
-  </prototype>
-  <prototype name="schematron" group="xml" description="schematron" targetNamespace="http://www.ascc.net/xml/schematron">
-    <location link="xml/gen/schematron.hrc"/>
-    <filename>/\.sch$/ix</filename>
-  </prototype>
+    <prototype name="rss" group="inet" description="rss" targetNamespace="http://purl.org/rss/1.0/">
+        <location link="inet/gen/rss.hrc" />
+        <filename>/\.rss$/i</filename>
+        <filename weight='1.5'>/^rss/i</filename>
+        <firstline>/xmlns="http:\/\/purl\.org\/rss\/1\.0\/"/</firstline>
+        <firstline>/&lt;rss version="0\.91"&gt;/</firstline>
+    </prototype>
+    <prototype name="htc" group="inet" description="HTC">
+        <location link="inet/gen/htc.hrc" />
+        <filename weight='3'>/\.htc$/i</filename>
+    </prototype>
+    <prototype name="xbl" group="inet" description="Mozilla XBL" targetNamespace="http://www.mozilla.org/xbl">
+        <location link="inet/gen/xbl.hrc" />
+        <filename weight='0.5'>/\.xml$/i</filename>
+        <firstline weight="5">/\bxmlns\s*=\s*(["'])http:\/\/www\.mozilla\.org\/xbl\1/</firstline>
+    </prototype>
+    <prototype name="wml" group="inet" description="wml" targetNamespace="http://www.wapforum.org/2001/wml">
+        <location link="inet/gen/wml.hrc" />
+        <filename>/\.wml$/i</filename>
+    </prototype>
+    <prototype name="mxml" group="inet" description="MXML">
+        <location link="inet/mxml.hrc" />
+        <filename>/\.mxml$/i</filename>
+    </prototype>
+    <prototype name="graphql" group="inet" description="GraphQL">
+        <location link="inet/graphql.hrc" />
+        <filename>/\.(graphql|gql)$/i</filename>
+    </prototype>
 
 
-  <package name="wsdl-soap" description="wsdl soap binding" targetNamespace="http://schemas.xmlsoap.org/wsdl/soap/">
-    <location link="xml/gen/wsdl-soap.hrc"/>
-  </package>
-  <prototype name="wsdl" group="xml" description="wsdl 1.1" targetNamespace="http://schemas.xmlsoap.org/wsdl/">
-    <location link="xml/gen/wsdl.hrc"/>
-    <filename>/\.wsdl$/ix</filename>
-  </prototype>
+    <!--  xml types  -->
+    <prototype name="xml" group="xml" description="xml">
+        <location link="xml/xml.hrc" />
+        <filename>/\.(xml|\w*proj|gi2|gpr|ui)$/i</filename>
+        <filename>/\.(wxs|fb2)$/i</filename>
+        <firstline>/^&lt;\?xml | &lt;\!DOCTYPE | xmlns /x</firstline>
+        <firstline>/^\s*&lt;\w+&gt;\s*/</firstline> <!-- (\s+\w+\s*=\*([&quot;&apos;]).+?\2)*\s* -->
+        <parameters>
+            <!-- firstline -->
+            <param name='firstlines' value='10' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='2000' description="bytes for 'firstline'" />
+        </parameters>
 
-  <package name="rdfs" description="RDF schema" targetNamespace="http://www.w3.org/2000/01/rdf-schema#">
-    <location link="xml/gen/rdfs.hrc"/>
-  </package>
-  <prototype name="rdf" group="xml" description="RDF" targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <location link="xml/gen/rdf.hrc"/>
-    <filename>/\.rdf$/ix</filename>
-  </prototype>
-
-
-  <prototype name="xmlcatalog" group="xml" description="XML Catalog" targetNamespace="urn:oasis:names:tc:entity:xmlns:xml:catalog">
-    <location link="xml/gen/xmlcatalog.hrc"/>
-    <filename>/\.xml$/ix</filename>
-    <firstline weight='5'>/-\/{2}OASIS\/{2}DTD Entity Resolution XML Catalog V1\.0\/{2}EN/</firstline>
-  </prototype>
-  <prototype name="docbook" group="xml" description="DocBook 4.2">
-    <location link="xml/gen/docbook.hrc"/>
-    <filename>/\.(dbk?|docbook)$/i</filename>
-    <firstline weight='3'>/DOCTYPE article/</firstline>
-    <firstline weight='3'>/DocBook XML/</firstline>
-    <firstline weight='3'>/&lt;(article|book)/s</firstline>
-  </prototype>
-  <prototype name="mathml" group="xml" description="MathML2">
-    <location link="xml/gen/mathml.hrc"/>
-    <filename>/\.(math?|mml)$/i</filename>
-    <firstline weight='3'>/MathML/</firstline>
-  </prototype>
+    </prototype>
+    <package name="xmlns" description="xml namespace" targetNamespace="http://www.w3.org/XML/1998/namespace">
+        <location link="xml/gen/xmlns.hrc" />
+    </package>
+    <package name="xlink" description="xlink" targetNamespace="http://www.w3.org/1999/xlink">
+        <location link="xml/gen/xlink.hrc" />
+    </package>
+    <package name="xinclude" description="xinclude" targetNamespace="http://www.w3.org/1999/xinclude">
+        <location link="xml/gen/xinclude.hrc" />
+    </package>
+    <package name="xpath" description="xpath 1.0">
+        <location link="xml/xpath.hrc" />
+    </package>
+    <package name="xpath2" description="xpath 2.0">
+        <location link="xml/xpath2.hrc" />
+    </package>
 
 
-  <!--  database languages  -->
-  <prototype name="clarion" group="database" description="Clarion">
-    <location link="db/clarion.hrc"/>
-    <filename>/\.cl[aw]$/i</filename>
-  </prototype>
-  <!-- warning!! extensions conflict with Clipper -->
-  <prototype name="Clipper" group="database" description="Clipper">
-    <location link="db/clipper.hrc"/>
-    <filename>/\.(ch|prg)$/i</filename>
-    <firstline>/\#include/</firstline>
-    <firstline>/\#define|\#if/</firstline>
-  </prototype>
-  <prototype name="foxpro" group="database" description="FoxPro">
-    <location link="db/foxpro.hrc"/>
-    <filename>/\.(prg|spr|mpr)$/i</filename>
-  </prototype>
-  <prototype name="sqlj" group="database" description="SQLJ (Java sql)">
-    <location link="db/sqlj.hrc"/>
-    <filename>/\.sqlj$/i</filename>
-  </prototype>
-  <prototype name="paradox" group="database" description="Paradox">
-    <location link="db/paradox.hrc"/>
-    <filename>/\.sc$/i</filename>
-  </prototype>
-  <prototype name="sql" group="database" description="SQL, PL/SQL">
-    <location link="db/sql.hrc"/>
-    <filename>/\.sql$/i</filename>
-      <parameters>
-        <param name="backslash_escapes" value="true" description="Treat \' in character literals as an escaped '"/>
-      </parameters>
-  </prototype>
-  <prototype name="mysql" group="database" description="MySQL">
-   <location link="db/mysql.hrc"/>
-   <filename>/\.sql$/i</filename>
-  </prototype>
+    <prototype name="dtd" group="xml" description="dtd">
+        <location link="xml/dtd.hrc" />
+        <filename>/\.(dtd|ent|mod)$/i</filename>
+    </prototype>
+    <prototype name="dtdcatalog" group="xml" description="dtd/sgml catalog">
+        <location link="xml/dtdcatalog.hrc" />
+        <filename>/\.(cat|soc)$/i</filename>
+    </prototype>
 
-  <!--  scripts  -->
-  &scripts-ini-protos;
+    <prototype name="xslt" group="xml" description="xslt 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
+        <location link="xml/gen/xslt.hrc" />
+        <filename>/\.xslt?$/i</filename>
+        <firstline>/ xsl:stylesheet /x</firstline>
+        <firstline>/ XSL\/Transform /x</firstline>
+        <parameters>
+            <!-- firstline -->
+            <param name='firstlines' value='10' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='2000' description="bytes for 'firstline'" />
+        </parameters>
+    </prototype>
+    <!-- targetNamespace duplicate. It's not good... -->
+    <prototype name="xslt2" group="xml" description="xslt 2.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
+        <location link="xml/gen/xslt2.hrc" />
+        <filename>/\.xslt?2?$/i</filename>
+        <firstline weight="3">/\b(stylesheet|transform)\s+ .* \bversion\s*=\s*([&quot;&apos;])2\.0\2 /sx</firstline>
+    </prototype>
+    <prototype name="xquery" group="xml" description="xquery 1.0">
+        <location link="xml/xquery.hrc" />
+        <filename>/\.xq$/i</filename>
+        <firstline weight="2">/^\s*xquery\s+version\b/x</firstline>
+    </prototype>
+    <prototype name="xslfo" group="xml" description="xslfo 1.0" targetNamespace="http://www.w3.org/1999/XSL/Transform">
+        <location link="xml/gen/xslfo.hrc" />
+        <filename>/\.(xslfo?|fo)$/i</filename>
+    </prototype>
 
-  <prototype name="Batch" group="scripts" description="Batch/Config.sys/NTcmd">
-    <location link="scripts/batch.hrc"/>
-    <filename>/\.(Cmd|Bat|nt|btm|sys)$/i</filename>
-  </prototype>
-  <prototype name="apache" group="scripts" description="Apache httpd.conf">
-    <location link="scripts/apache.hrc"/>
-    <filename weight="3">/(httpd\.conf|srm\.conf|access\.conf|\.htaccess|apache\.conf)$/i</filename>
-  </prototype>
-  <prototype name="shell" group="scripts" description="sh/ksh/bash script">
-    <location link="scripts/sh.hrc"/>
-    <filename>/\.(sh|spec)$/i</filename>
-    <filename>/^PKGBUILD$/i</filename>
-    <filename>/\.(bash_|z)?profile/</filename>
-    <filename>/\.(ba|k|z)?shrc/</filename>
-    <firstline weight='2'>/^\#(!\s*.+sh\b)/</firstline>
-  </prototype>
-  <prototype name="avisynth" group="scripts" description="AviSynth">
-    <location link="scripts/avisynth.hrc"/>
-    <filename>/\.avsi?$/i</filename>
-  </prototype>
-  <prototype name="config" group="scripts" description="Config, INI and CTL">
-    <location link="scripts/config.hrc"/>
-    <filename>/\.(ctl|tpl|ini|cfg|inf|srg|conf|types|tab|dof|dsk|lng)$/i</filename>
-    <firstline>/^[;\[\#]/</firstline>
-  </prototype>
-  <prototype name="awk" group="scripts" description="AWK">
-    <location link="scripts/awk.hrc"/>
-    <filename weight='5'>/\.awk$/i</filename>
-    <firstline>/^# gawk/i</firstline>
-  </prototype>
-  <prototype name="powershell" group="scripts" description="PowerShell">
-    <filename>/\.ps(m|d)?1$/i</filename>
-    <location link="scripts/powershell.hrc"/>
-  </prototype>
-  <prototype name="r" group="scripts" description="R">
-    <filename>/\.(R|Rhistory|Rprofile)$/i</filename>
-    <location link="scripts/r.hrc"/>
-  </prototype>
-  <prototype name="markdown" group="scripts" description="markdown">
-    <filename>/\.(text|md|markdown)$/i</filename>
-    <location link="misc/markdown.hrc"/>
-  </prototype>
+    <prototype name="xmlschema" group="xml" description="XML Schema" targetNamespace="http://www.w3.org/2001/XMLSchema">
+        <location link="xml/gen/xmlschema.hrc" />
+        <filename>/\.xsd?$/i</filename>
+    </prototype>
+    <package name="xsi" description="XML Schema instance" targetNamespace="http://www.w3.org/2001/XMLSchema-instance">
+        <location link="xml/gen/xmlschema-instance.hrc" />
+    </package>
+
+    <prototype name="relaxng" group="xml" description="Relax NG" targetNamespace="http://relaxng.org/ns/structure/1.0">
+        <location link="xml/gen/relaxng.hrc" />
+        <filename>/\.rng$/ix</filename>
+    </prototype>
+    <prototype name="schematron" group="xml" description="schematron" targetNamespace="http://www.ascc.net/xml/schematron">
+        <location link="xml/gen/schematron.hrc" />
+        <filename>/\.sch$/ix</filename>
+    </prototype>
 
 
-  &scripts-colorer-protos;
+    <package name="wsdl-soap" description="wsdl soap binding" targetNamespace="http://schemas.xmlsoap.org/wsdl/soap/">
+        <location link="xml/gen/wsdl-soap.hrc" />
+    </package>
+    <prototype name="wsdl" group="xml" description="wsdl 1.1" targetNamespace="http://schemas.xmlsoap.org/wsdl/">
+        <location link="xml/gen/wsdl.hrc" />
+        <filename>/\.wsdl$/ix</filename>
+    </prototype>
+
+    <package name="rdfs" description="RDF schema" targetNamespace="http://www.w3.org/2000/01/rdf-schema#">
+        <location link="xml/gen/rdfs.hrc" />
+    </package>
+    <prototype name="rdf" group="xml" description="RDF" targetNamespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <location link="xml/gen/rdf.hrc" />
+        <filename>/\.rdf$/ix</filename>
+    </prototype>
+
+
+    <prototype name="xmlcatalog" group="xml" description="XML Catalog" targetNamespace="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+        <location link="xml/gen/xmlcatalog.hrc" />
+        <filename>/\.xml$/ix</filename>
+        <firstline weight='5'>/-\/{2}OASIS\/{2}DTD Entity Resolution XML Catalog V1\.0\/{2}EN/</firstline>
+    </prototype>
+    <prototype name="docbook" group="xml" description="DocBook 4.2">
+        <location link="xml/gen/docbook.hrc" />
+        <filename>/\.(dbk?|docbook)$/i</filename>
+        <firstline weight='3'>/DOCTYPE article/</firstline>
+        <firstline weight='3'>/DocBook XML/</firstline>
+        <firstline weight='3'>/&lt;(article|book)/s</firstline>
+    </prototype>
+    <prototype name="mathml" group="xml" description="MathML2">
+        <location link="xml/gen/mathml.hrc" />
+        <filename>/\.(math?|mml)$/i</filename>
+        <firstline weight='3'>/MathML/</firstline>
+    </prototype>
+
+
+    <!--  database languages  -->
+    <prototype name="clarion" group="database" description="Clarion">
+        <location link="db/clarion.hrc" />
+        <filename>/\.cl[aw]$/i</filename>
+    </prototype>
+    <!-- warning!! extensions conflict with Clipper -->
+    <prototype name="Clipper" group="database" description="Clipper">
+        <location link="db/clipper.hrc" />
+        <filename>/\.(ch|prg)$/i</filename>
+        <firstline>/\#include/</firstline>
+        <firstline>/\#define|\#if/</firstline>
+    </prototype>
+    <prototype name="foxpro" group="database" description="FoxPro">
+        <location link="db/foxpro.hrc" />
+        <filename>/\.(prg|spr|mpr)$/i</filename>
+    </prototype>
+    <prototype name="sqlj" group="database" description="SQLJ (Java sql)">
+        <location link="db/sqlj.hrc" />
+        <filename>/\.sqlj$/i</filename>
+    </prototype>
+    <prototype name="paradox" group="database" description="Paradox">
+        <location link="db/paradox.hrc" />
+        <filename>/\.sc$/i</filename>
+    </prototype>
+    <prototype name="sql" group="database" description="SQL, PL/SQL">
+        <location link="db/sql.hrc" />
+        <filename>/\.sql$/i</filename>
+        <parameters>
+            <param name="backslash_escapes" value="true" description="Treat \' in character literals as an escaped '" />
+        </parameters>
+    </prototype>
+    <prototype name="mysql" group="database" description="MySQL">
+        <location link="db/mysql.hrc" />
+        <filename>/\.sql$/i</filename>
+    </prototype>
+
+    <!--  scripts  -->
+    &scripts-ini-protos;
+    <prototype name="Batch" group="scripts" description="Batch/Config.sys/NTcmd">
+        <location link="scripts/batch.hrc" />
+        <filename>/\.(Cmd|Bat|nt|btm|sys)$/i</filename>
+    </prototype>
+    <prototype name="apache" group="scripts" description="Apache httpd.conf">
+        <location link="scripts/apache.hrc" />
+        <filename weight="3">/(httpd\.conf|srm\.conf|access\.conf|\.htaccess|apache\.conf)$/i</filename>
+    </prototype>
+    <prototype name="shell" group="scripts" description="sh/ksh/bash script">
+        <location link="scripts/sh.hrc" />
+        <filename>/\.(sh|spec)$/i</filename>
+        <filename>/^PKGBUILD$/i</filename>
+        <filename>/\.(bash_|z)?profile/</filename>
+        <filename>/\.(ba|k|z)?shrc/</filename>
+        <firstline weight='2'>/^\#(!\s*.+sh\b)/</firstline>
+    </prototype>
+    <prototype name="avisynth" group="scripts" description="AviSynth">
+        <location link="scripts/avisynth.hrc" />
+        <filename>/\.avsi?$/i</filename>
+    </prototype>
+    <prototype name="config" group="scripts" description="Config, INI and CTL">
+        <location link="scripts/config.hrc" />
+        <filename>/\.(ctl|tpl|ini|cfg|inf|srg|conf|types|tab|dof|dsk|lng|editorconfig)$/i</filename>
+        <firstline>/^[;\[\#]/</firstline>
+    </prototype>
+    <prototype name="awk" group="scripts" description="AWK">
+        <location link="scripts/awk.hrc" />
+        <filename weight='5'>/\.awk$/i</filename>
+        <firstline>/^# gawk/i</firstline>
+    </prototype>
+    <prototype name="powershell" group="scripts" description="PowerShell">
+        <location link="scripts/powershell.hrc" />
+        <filename>/\.ps(m|d)?1$/i</filename>
+    </prototype>
+    <prototype name="r" group="scripts" description="R">
+        <location link="scripts/r.hrc" />
+        <filename>/\.(R|Rhistory|Rprofile)$/i</filename>
+    </prototype>
+    <prototype name="markdown" group="scripts" description="markdown">
+        <location link="misc/markdown.hrc" />
+        <filename>/\.(text|md|markdown)$/i</filename>
+    </prototype>
+    &scripts-colorer-protos;
   &scripts-far-protos;
-
-
-
-  <prototype name="makefile" group="scripts" description="makefile">
-    <location link="scripts/makefile.hrc"/>
-    <filename>/(makefile | tools\.ini) | \.(mak|gmk|ds(p|w)|bp(k|r|g))$/ix</filename>
-    <filename weight='3'>/\.mk$/i</filename>
-    <!--firstline>/Microsoft Developer Studio Project File/i</firstline>
+    <prototype name="makefile" group="scripts" description="makefile">
+        <location link="scripts/makefile.hrc" />
+        <filename>/(makefile | tools\.ini) | \.(mak|gmk|ds(p|w)|bp(k|r|g))$/ix</filename>
+        <filename weight='3'>/\.mk$/i</filename>
+        <!--firstline>/Microsoft Developer Studio Project File/i</firstline>
     <firstline>/^\!if/i</firstline-->
-    <firstline>/makefile/s</firstline>
-    <parameters>
-      <param name="gnu" value="false" description="use GNU make only"/>
-    </parameters>
-  </prototype>
-  <prototype name="qmake" group="scripts" description="Qt qmake">
-    <location link="scripts/qmake.hrc"/>
-    <filename>/\.pr[oif]$/i</filename>
-  </prototype>
-  <prototype name="cmake" group="scripts" description="CMake script">
-    <location link="scripts/cmake/cmake.hrc"/>
-    <filename>/(\.cmake)$/i</filename>
-    <filename weight="3">/(^CMakeLists\.txt)$/i</filename>
-    <firstline weight="2">/^cmake_minimum_required/xi</firstline>
-  </prototype>
-  <prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
-    <location link="scripts/solution.hrc"/>
-    <filename>/\.sln$/</filename>
-  </prototype>
+        <firstline>/makefile/s</firstline>
+        <parameters>
+            <param name="gnu" value="false" description="use GNU make only" />
+        </parameters>
+    </prototype>
+    <prototype name="qmake" group="scripts" description="Qt qmake">
+        <location link="scripts/qmake.hrc" />
+        <filename>/\.pr[oif]$/i</filename>
+    </prototype>
+    <prototype name="cmake" group="scripts" description="CMake script">
+        <location link="scripts/cmake/cmake.hrc" />
+        <filename>/(\.cmake)$/i</filename>
+        <filename weight="3">/(^CMakeLists\.txt)$/i</filename>
+        <firstline weight="2">/^cmake_minimum_required/xi</firstline>
+    </prototype>
+    <prototype name="solution" group="scripts" description="Microsoft Visual Studio Solution File">
+        <location link="scripts/solution.hrc" />
+        <filename>/\.sln$/</filename>
+    </prototype>
 
-  <prototype name="mkb" group="scripts" description="Project build file for Airplay SDK">
-    <filename>/\.mk[bf]$/i</filename>
-    <location link="scripts/mkb.hrc"/>
-  </prototype>
-  <prototype name="ant" group="scripts" description="Ant's build.xml" targetNamespace="http://jakarta.apache.org/ant/">
-    <location link="scripts/gen/ant.hrc"/>
-    <filename weight='4'>/\bbuild\.xml$/ix</filename>
-    <firstline weight='5'>/&lt;project\b/</firstline>
-  </prototype>
+    <prototype name="mkb" group="scripts" description="Project build file for Airplay SDK">
+        <location link="scripts/mkb.hrc" />
+        <filename>/\.mk[bf]$/i</filename>
+    </prototype>
+    <prototype name="ant" group="scripts" description="Ant's build.xml" targetNamespace="http://jakarta.apache.org/ant/">
+        <location link="scripts/gen/ant.hrc" />
+        <filename weight='4'>/\bbuild\.xml$/ix</filename>
+        <firstline weight='5'>/&lt;project\b/</firstline>
+    </prototype>
 
-  <prototype name="acapella" group="scripts" description="Acapella">
-    <location link="scripts/acapella/acapella.hrc"/>
-    <filename>/\.(script|proc|param|parameter)$/i</filename>
-    <parameters>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
-    </parameters>
-  </prototype>
+    <prototype name="acapella" group="scripts" description="Acapella">
+        <location link="scripts/acapella/acapella.hrc" />
+        <filename>/\.(script|proc|param|parameter)$/i</filename>
+        <parameters>
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
+        </parameters>
+    </prototype>
 
-  <prototype name="qrc" group="scripts" description="qrc">
-    <location link="scripts/gen/qrc.hrc"/>
-    <filename>/\.qrc$/ix</filename>
-  </prototype>
+    <prototype name="qrc" group="scripts" description="qrc">
+        <location link="scripts/gen/qrc.hrc" />
+        <filename>/\.qrc$/ix</filename>
+    </prototype>
 
- <prototype name="m4" group="scripts" description="M4">
-    <location link="scripts/m4.hrc"/>
-    <filename>/\.m4$/i</filename>
-  </prototype>
-  <prototype name="linkdef" group="scripts" description="Link Defines">
-    <location link="scripts/linkdef.hrc"/>
-    <filename weight='3'>/\.def$/i</filename>
-  </prototype>
-  <prototype name="resources" group="scripts" description="Resources">
-    <location link="scripts/resrc.hrc"/>
-    <filename>/\.(rc|dlg)$/i</filename>
-  </prototype>
+    <prototype name="m4" group="scripts" description="M4">
+        <location link="scripts/m4.hrc" />
+        <filename>/\.m4$/i</filename>
+    </prototype>
+    <prototype name="linkdef" group="scripts" description="Link Defines">
+        <location link="scripts/linkdef.hrc" />
+        <filename weight='3'>/\.def$/i</filename>
+    </prototype>
+    <prototype name="resources" group="scripts" description="Resources">
+        <location link="scripts/resrc.hrc" />
+        <filename>/\.(rc|dlg)$/i</filename>
+    </prototype>
 
-  <prototype name="javacc" group="scripts" description="Java Compiler Compiler">
-    <location link="scripts/javacc.hrc"/>
-    <filename>/\.jjt?$/i</filename>
-  </prototype>
-  <prototype name="javaProperties" group="scripts" description="Java properties">
-    <location link="scripts/javaprop.hrc"/>
-    <filename>/\.pro(p(erties)?)?$/i</filename>
-  </prototype>
-  <prototype name="javapolicy" group="scripts" description="Java policy">
-    <location link="scripts/javapolicy.hrc"/>
-    <filename>/\.policy$/i</filename>
-  </prototype>
-  <prototype name="asn1" group="scripts" description="ASN.1/ECN">
-    <location link="scripts/asn1.hrc"/>
-    <filename>/\.(asn|asn1|ecn|edm|elm|mib)$/i</filename>
-    <filename>/-mib$/i</filename>
-  </prototype>
-  <prototype name="lex" group="scripts" description="Lex">
-    <location link="scripts/lex.hrc"/>
-    <filename>/\.(l|f?lex)+$/i</filename>
-  </prototype>
-  <prototype name="yacc" group="scripts" description="YACC">
-    <location link="scripts/yacc.hrc"/>
-    <filename>/\.y+$/i</filename>
-  </prototype>
-  <prototype name="lemon" group="scripts" description="Lemon">
-    <location link="scripts/lemon.hrc"/>
-    <!-- warning!! extensions conflict with YACC -->
-    <filename weight='1'>/\.y$/i</filename>
-  </prototype>
+    <prototype name="javacc" group="scripts" description="Java Compiler Compiler">
+        <location link="scripts/javacc.hrc" />
+        <filename>/\.jjt?$/i</filename>
+    </prototype>
+    <prototype name="javaProperties" group="scripts" description="Java properties">
+        <location link="scripts/javaprop.hrc" />
+        <filename>/\.pro(p(erties)?)?$/i</filename>
+    </prototype>
+    <prototype name="javapolicy" group="scripts" description="Java policy">
+        <location link="scripts/javapolicy.hrc" />
+        <filename>/\.policy$/i</filename>
+    </prototype>
+    <prototype name="asn1" group="scripts" description="ASN.1/ECN">
+        <location link="scripts/asn1.hrc" />
+        <filename>/\.(asn|asn1|ecn|edm|elm|mib)$/i</filename>
+        <filename>/-mib$/i</filename>
+    </prototype>
+    <prototype name="lex" group="scripts" description="Lex">
+        <location link="scripts/lex.hrc" />
+        <filename>/\.(l|f?lex)+$/i</filename>
+    </prototype>
+    <prototype name="yacc" group="scripts" description="YACC">
+        <location link="scripts/yacc.hrc" />
+        <filename>/\.y+$/i</filename>
+    </prototype>
+    <prototype name="lemon" group="scripts" description="Lemon">
+        <location link="scripts/lemon.hrc" />
+        <!-- warning!! extensions conflict with YACC -->
+        <filename weight='1'>/\.y$/i</filename>
+    </prototype>
 
 
-  <prototype name="delphiform" group="scripts" description="Delphi form">
-    <location link="scripts/dfm.hrc"/>
-    <filename>/\.dfm$/i</filename>
-  </prototype>
-  <prototype name="pnuts" group="scripts" description="Java: Pnuts">
-    <location link="scripts/pnuts.hrc"/>
-    <filename>/\.pnut$/i</filename>
-    <parameters>
-      <param name="pnuts-modules" value="true" description="Use some common Pnuts module function names"/>
-      <param name="j2se-classes" value="true" description="Use some common used J2SE class names"/>
-      <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error"/>
-      <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error"/>
-    </parameters>
-  </prototype>
+    <prototype name="delphiform" group="scripts" description="Delphi form">
+        <location link="scripts/dfm.hrc" />
+        <filename>/\.dfm$/i</filename>
+    </prototype>
+    <prototype name="pnuts" group="scripts" description="Java: Pnuts">
+        <location link="scripts/pnuts.hrc" />
+        <filename>/\.pnut$/i</filename>
+        <parameters>
+            <param name="pnuts-modules" value="true" description="Use some common Pnuts module function names" />
+            <param name="j2se-classes" value="true" description="Use some common used J2SE class names" />
+            <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
+            <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
+        </parameters>
+    </prototype>
 
     <prototype name="scons" group="scripts" description="SCons">
-    <location link="scripts/scons.hrc"/>
-    <filename>/SCons(truct|cript)$/i</filename>
-  </prototype>
-  <prototype name="rtf" group="scripts" description="RTF text">
-    <location link="scripts/rtf.hrc"/>
-    <filename>/\.rtf$/i</filename>
-  </prototype>
-  <prototype name="TeX" group="scripts" description="TeX">
-    <location link="scripts/tex.hrc"/>
-    <filename>/\.(tex|cls|sty|ltx|ltr|dtx)$/i</filename>
-  </prototype>
-  <prototype name="graphviz" group="scripts" description="GraphViz dot">
-    <location link="scripts/graphviz.hrc"/>
-    <filename>/\.dot+$/i</filename>
-  </prototype>
-  <prototype name="dcl" group="scripts" description="OpenVMS DCL">
-    <location link="scripts/dcl.hrc"/>
-    <filename>/\.com$/i</filename>
-  </prototype>
-  <prototype name="vrml" group="scripts" description="VRML">
-    <location link="scripts/vrml.hrc"/>
-    <filename>/\.wrl$/i</filename>
-  </prototype>
+        <location link="scripts/scons.hrc" />
+        <filename>/SCons(truct|cript)$/i</filename>
+    </prototype>
+    <prototype name="rtf" group="scripts" description="RTF text">
+        <location link="scripts/rtf.hrc" />
+        <filename>/\.rtf$/i</filename>
+    </prototype>
+    <prototype name="TeX" group="scripts" description="TeX">
+        <location link="scripts/tex.hrc" />
+        <filename>/\.(tex|cls|sty|ltx|ltr|dtx)$/i</filename>
+    </prototype>
+    <prototype name="graphviz" group="scripts" description="GraphViz dot">
+        <location link="scripts/graphviz.hrc" />
+        <filename>/\.dot+$/i</filename>
+    </prototype>
+    <prototype name="dcl" group="scripts" description="OpenVMS DCL">
+        <location link="scripts/dcl.hrc" />
+        <filename>/\.com$/i</filename>
+    </prototype>
+    <prototype name="vrml" group="scripts" description="VRML">
+        <location link="scripts/vrml.hrc" />
+        <filename>/\.wrl$/i</filename>
+    </prototype>
 
-  <prototype name="wsc" group="scripts" description="wsc" targetNamespace="uri:wsc">
-    <!-- NOTE! 'targetNamespace' is fictive, used only for xsd2hrc -->
-    <location link="scripts/gen/wsc.hrc"/>
-    <filename>/\.wsc$/i</filename>
-  </prototype>
-  <prototype name="wsf" group="scripts" description="wsf">
-    <location link="scripts/gen/wsf.hrc"/>
-    <filename>/\.wsf$/i</filename>
-  </prototype>
-  <prototype name="squirrel" group="scripts" description="squirrel">
-    <location link="scripts/squirrel.hrc"/>
-    <filename>/\.nut$/i</filename>
-  </prototype>
+    <prototype name="wsc" group="scripts" description="wsc" targetNamespace="uri:wsc">
+        <!-- NOTE! 'targetNamespace' is fictive, used only for xsd2hrc -->
+        <location link="scripts/gen/wsc.hrc" />
+        <filename>/\.wsc$/i</filename>
+    </prototype>
+    <prototype name="wsf" group="scripts" description="wsf">
+        <location link="scripts/gen/wsf.hrc" />
+        <filename>/\.wsf$/i</filename>
+    </prototype>
+    <prototype name="squirrel" group="scripts" description="squirrel">
+        <location link="scripts/squirrel.hrc" />
+        <filename>/\.nut$/i</filename>
+    </prototype>
 
 
-  <prototype name="rarscript" group="scripts.install" description="RAR Install Script">
-    <location link="scripts/rarscrpt.hrc"/>
-    <filename>/\.s$/i</filename>
-  </prototype>
-  <prototype name="nsi" group="scripts.install" description="Nullsoft Install Script">
-    <location link="scripts/nsi.hrc"/>
-    <filename>/\.ns[ih]$/i</filename>
-  </prototype>
-  <prototype name="iss" group="scripts.install" description="InnoSetup script">
-    <location link="scripts/iss.hrc"/>
-    <filename>/\.iss$/i</filename>
-  </prototype>
-  <prototype name="isScripts" group="scripts.install" description="IS script">
-    <location link="scripts/rul.hrc"/>
-    <filename>/\.rul$/i</filename>
-  </prototype>
+    <prototype name="rarscript" group="scripts.install" description="RAR Install Script">
+        <location link="scripts/rarscrpt.hrc" />
+        <filename>/\.s$/i</filename>
+    </prototype>
+    <prototype name="nsi" group="scripts.install" description="Nullsoft Install Script">
+        <location link="scripts/nsi.hrc" />
+        <filename>/\.ns[ih]$/i</filename>
+    </prototype>
+    <prototype name="iss" group="scripts.install" description="InnoSetup script">
+        <location link="scripts/iss.hrc" />
+        <filename>/\.iss$/i</filename>
+    </prototype>
+    <prototype name="isScripts" group="scripts.install" description="IS script">
+        <location link="scripts/rul.hrc" />
+        <filename>/\.rul$/i</filename>
+    </prototype>
 
-  <!--  rare languages  -->
-
-  &rare-j2ee-protos;
+    <!--  rare languages  -->
+    &rare-j2ee-protos;
   &rare-gen-protos;
   &rare-scripts-protos;
   &rare-qrm-protos;
   &rare-ie-weidu-protos;
+    <prototype name="c1c" group="rare" description="1C">
+        <location link="rare/1c.hrc" />
+        <filename>/\.1c$/i</filename>
+    </prototype>
+    <prototype name="ada" group="rare" description="Ada">
+        <location link="rare/ada.hrc" />
+        <filename>/\.ad[sbc]$/i</filename>
+    </prototype>
+    <prototype name="abap4" group="rare" description="ABAP/4">
+        <location link="rare/abap4.hrc" />
+        <filename>/\.abap4?$/i</filename>
+    </prototype>
+    <prototype name="asasm" group="rare" description="ASASM">
+        <location link="rare/asasm.hrc" />
+        <filename>/\.asasm$/i</filename>
+    </prototype>
+    <prototype name="AutoIt" group="rare" description="AutoIt 2.x">
+        <location link="rare/autoit.hrc" />
+        <filename>/\.aut$/i</filename>
+    </prototype>
 
-  <prototype name="c1c" group="rare" description="1C">
-    <location link="rare/1c.hrc"/>
-    <filename>/\.1c$/i</filename>
-  </prototype>
-  <prototype name="ada" group="rare" description="Ada">
-    <location link="rare/ada.hrc"/>
-    <filename>/\.ad[sbc]$/i</filename>
-  </prototype>
-  <prototype name="abap4" group="rare" description="ABAP/4">
-    <location link="rare/abap4.hrc"/>
-    <filename>/\.abap4?$/i</filename>
-  </prototype>
-  <prototype name="asasm" group="rare" description="ASASM">
-    <location link="rare/asasm.hrc"/>
-    <filename>/\.asasm$/i</filename>
-  </prototype>
-  <prototype name="AutoIt" group="rare" description="AutoIt 2.x">
-    <location link="rare/autoit.hrc"/>
-    <filename>/\.aut$/i</filename>
-  </prototype>
-
-  <!--  !! you may wish to swap next two types
+    <!--  !! you may wish to swap next two types
   because of collision with extensions  -->
-  <prototype name="dssp" group="rare" description="Dssp">
-    <location link="rare/dssp.hrc"/>
-    <filename>/\.dsp$/i</filename>
-    <firstline>/PROGRAM/si</firstline>
-  </prototype>
-  <prototype name="adsp" group="rare" description="ADSP-21xx Asm">
-    <location link="rare/adsp.hrc"/>
-    <filename>/\.(dsp|sys)$/i</filename>
-  </prototype>
-  <prototype name="Baan" group="rare" description="Baan">
-    <location link="rare/baan.hrc"/>
-    <filename>/\.cln$/i</filename>
-  </prototype>
-  <prototype name="cobol" group="rare" description="Cobol Fixed format">
-    <location link="rare/cobol.hrc"/>
-    <filename>/\.(cob|cbl)$/i</filename>
-  </prototype>
-  <prototype name="cobolfr" group="rare" description="Cobol Free format">
-    <location link="rare/cobolfr.hrc"/>
-    <firstline>/SOURCEFORMAT\"FREE\"/i</firstline>
-    <firstline>/^IDENTIFICATION/i</firstline>
-    <filename>/\.(cob|cbl)$/i</filename>
-  </prototype>
-  <prototype name="cache" group="rare" description="Cache/Open-M">
-    <location link="rare/cache.hrc"/>
-    <filename>/\.(rsa|ro|rtn|inc|int|mac|cdl)$/i</filename>
-    <firstline>/^(Cache|OpenM)[^\^]+\^(IN[TC]|MAC)[^\^]*\^.*$/i</firstline>
-  </prototype>
-  <prototype name="cup" group="rare" description="CUP">
-    <location link="rare/cup.hrc"/>
-    <filename>/\.cup$/i</filename>
-  </prototype>
-  <prototype name="diet" group="rare" description="Vibe.d Diet Templates">
-    <location link="rare/diet.hrc"/>
-    <filename>/\.dt$/i</filename>
-  </prototype>
-  <prototype name="eiffel" group="rare" description="Eiffel">
-    <location link="rare/eiffel.hrc"/>
-    <filename>/\.e$/i</filename>
-  </prototype>
-  <prototype name="erlang" group="rare" description="Erlang">
-    <location link="rare/erlang.hrc"/>
-    <filename>/\.[eh]rl$/i</filename>
-  </prototype>
-  <prototype name="icon" group="rare" description="Icon">
-    <location link="rare/icon.hrc"/>
-    <filename>/\.icn$/i</filename>
-  </prototype>
-  <prototype name="lisp" group="rare" description="Lisp">
-    <location link="rare/lisp.hrc"/>
-    <filename>/\.(lsp|lisp|scm|elc|el)$/i</filename>
-  </prototype>
-  <prototype name="mako" group="rare" description="Mako templates">
-    <location link="rare/mako.hrc"/>
-    <!-- extension conflicts with Makefile, hence weight is less than 2 -->
-    <filename weight="1.5">/\.mako?$/i</filename>
-    <firstline>/\&lt;%/</firstline>
-  </prototype>
-  <prototype name="matlab" group="rare" description="MatLab">
-    <location link="rare/matlab.hrc"/>
-    <filename>/\.m$/i</filename>
-  </prototype>
-  <!-- warning!! extensions conflict with link defines -->
-  <prototype name="modula2" group="rare" description="Modula2 and Oberon2">
-    <location link="rare/modula.hrc"/>
-    <filename>/\.(mod|ob2|odf|def)$/i</filename>
-    <firstline>/\(\*|MODULE|DEFINITION|IMPLEMENTATION|&lt;\*/</firstline>
-  </prototype>
-  <prototype name="nesc" group="rare" description="nesC">
-    <location link="rare/nesc.hrc"/>
-    <filename>/\.nc$/i</filename>
-  </prototype>
-  <prototype name="picasm" group="rare" description="PicAsm">
-    <location link="rare/picasm.hrc"/>
-    <filename>/\.(asm|pic)$/i</filename>
-  </prototype>
-  <prototype name="pl1" group="rare" description="PL1">
-    <location link="rare/pl1.hrc"/>
-    <filename>/\.pl[1i]$/i</filename>
-  </prototype>
-  <prototype name="rexx" group="rare" description="Rexx">
-    <location link="rare/rexx.hrc"/>
-    <filename>/\.(rex|cmd)$/i</filename>
-    <firstline>/(REM)\/\*/i</firstline>
-    <firstline>/^# regina/i</firstline>
-    <firstline weight='2'>/^\/\*\s*REXX\s*\*\//i</firstline>
-  </prototype>
- <prototype name="jcl" group="rare" description="JCL">
-    <location link="rare/jcl.hrc"/>
-    <filename>/\.jcl$/i</filename>
-  </prototype>
+    <prototype name="dssp" group="rare" description="Dssp">
+        <location link="rare/dssp.hrc" />
+        <filename>/\.dsp$/i</filename>
+        <firstline>/PROGRAM/si</firstline>
+    </prototype>
+    <prototype name="adsp" group="rare" description="ADSP-21xx Asm">
+        <location link="rare/adsp.hrc" />
+        <filename>/\.(dsp|sys)$/i</filename>
+    </prototype>
+    <prototype name="Baan" group="rare" description="Baan">
+        <location link="rare/baan.hrc" />
+        <filename>/\.cln$/i</filename>
+    </prototype>
+    <prototype name="cobol" group="rare" description="Cobol Fixed format">
+        <location link="rare/cobol.hrc" />
+        <filename>/\.(cob|cbl)$/i</filename>
+    </prototype>
+    <prototype name="cobolfr" group="rare" description="Cobol Free format">
+        <location link="rare/cobolfr.hrc" />
+        <filename>/\.(cob|cbl)$/i</filename>
+        <firstline>/SOURCEFORMAT\"FREE\"/i</firstline>
+        <firstline>/^IDENTIFICATION/i</firstline>
+    </prototype>
+    <prototype name="cache" group="rare" description="Cache/Open-M">
+        <location link="rare/cache.hrc" />
+        <filename>/\.(rsa|ro|rtn|inc|int|mac|cdl)$/i</filename>
+        <firstline>/^(Cache|OpenM)[^\^]+\^(IN[TC]|MAC)[^\^]*\^.*$/i</firstline>
+    </prototype>
+    <prototype name="cup" group="rare" description="CUP">
+        <location link="rare/cup.hrc" />
+        <filename>/\.cup$/i</filename>
+    </prototype>
+    <prototype name="diet" group="rare" description="Vibe.d Diet Templates">
+        <location link="rare/diet.hrc" />
+        <filename>/\.dt$/i</filename>
+    </prototype>
+    <prototype name="eiffel" group="rare" description="Eiffel">
+        <location link="rare/eiffel.hrc" />
+        <filename>/\.e$/i</filename>
+    </prototype>
+    <prototype name="erlang" group="rare" description="Erlang">
+        <location link="rare/erlang.hrc" />
+        <filename>/\.[eh]rl$/i</filename>
+    </prototype>
+    <prototype name="icon" group="rare" description="Icon">
+        <location link="rare/icon.hrc" />
+        <filename>/\.icn$/i</filename>
+    </prototype>
+    <prototype name="lisp" group="rare" description="Lisp">
+        <location link="rare/lisp.hrc" />
+        <filename>/\.(lsp|lisp|scm|elc|el)$/i</filename>
+    </prototype>
+    <prototype name="mako" group="rare" description="Mako templates">
+        <location link="rare/mako.hrc" />
+        <!-- extension conflicts with Makefile, hence weight is less than 2 -->
+        <filename weight="1.5">/\.mako?$/i</filename>
+        <firstline>/\&lt;%/</firstline>
+    </prototype>
+    <prototype name="matlab" group="rare" description="MatLab">
+        <location link="rare/matlab.hrc" />
+        <filename>/\.m$/i</filename>
+    </prototype>
+    <!-- warning!! extensions conflict with link defines -->
+    <prototype name="modula2" group="rare" description="Modula2 and Oberon2">
+        <location link="rare/modula.hrc" />
+        <filename>/\.(mod|ob2|odf|def)$/i</filename>
+        <firstline>/\(\*|MODULE|DEFINITION|IMPLEMENTATION|&lt;\*/</firstline>
+    </prototype>
+    <prototype name="nesc" group="rare" description="nesC">
+        <location link="rare/nesc.hrc" />
+        <filename>/\.nc$/i</filename>
+    </prototype>
+    <prototype name="picasm" group="rare" description="PicAsm">
+        <location link="rare/picasm.hrc" />
+        <filename>/\.(asm|pic)$/i</filename>
+    </prototype>
+    <prototype name="pl1" group="rare" description="PL1">
+        <location link="rare/pl1.hrc" />
+        <filename>/\.pl[1i]$/i</filename>
+    </prototype>
+    <prototype name="rexx" group="rare" description="Rexx">
+        <location link="rare/rexx.hrc" />
+        <filename>/\.(rex|cmd)$/i</filename>
+        <firstline>/(REM)\/\*/i</firstline>
+        <firstline>/^# regina/i</firstline>
+        <firstline weight='2'>/^\/\*\s*REXX\s*\*\//i</firstline>
+    </prototype>
+    <prototype name="jcl" group="rare" description="JCL">
+        <location link="rare/jcl.hrc" />
+        <filename>/\.jcl$/i</filename>
+    </prototype>
 
-  <prototype name="sml" group="rare" description="Standard ML">
-    <location link="rare/sml.hrc"/>
-    <filename>/\.(sml|sig)$/i</filename>
-  </prototype>
-  <prototype name="haskell" group="rare" description="Haskell">
-    <location link="rare/haskell.hrc"/>
-    <filename>/\.hs$/i</filename>
-  </prototype>
-  <prototype name="ocaml" group="rare" description="OCaml">
-    <location link="rare/ocaml.hrc"/>
-    <filename>/\.ml[ilpy]?$/i</filename>
-  </prototype>
-  <prototype name="sicstusProlog" group="rare" description="Sicstus Prolog">
-    <location link="rare/sprolog.hrc"/>
-    <filename>/\.pl$/i</filename>
-  </prototype>
-  <prototype name="stata" group="rare" description="STATA">
-    <location link="rare/stata.hrc"/>
-    <filename>/\.a?do$/i</filename>
-  </prototype>
-  <prototype name="turboProlog" group="rare" description="Turbo Prolog">
-    <location link="rare/tprolog.hrc"/>
-    <filename>/\.tpl$/i</filename>
-  </prototype>
-  <prototype name="verilog" group="rare" description="Verilog HDL">
-    <location link="rare/verilog.hrc"/>
-    <filename weight='3'>/\.g?v$/i</filename>
-  </prototype>
-  <prototype name="vhdl" group="rare" description="VHDL">
-    <location link="rare/vhdl.hrc"/>
-    <filename>/\.vhdl?$/i</filename>
-  </prototype>
- <prototype name="ahdl" group="rare" description="AHDL">
-   <location link="rare/ahdl.hrc"/>
-   <filename>/\.(tdf|tdo|ahdl)$/i</filename>
- </prototype>
-  <prototype name="ubasic" group="rare" description="UniVision Basic">
-    <location link="rare/ubasic.hrc"/>
-    <filename>/\.uvbasic$/i</filename>
-    <firstline>/^(PROGRAM\s+\w+$|(SUBROUTINE|EXTERNALFUNCTION)\s+\w+(\s+)?(\(.*\))?$)/</firstline>
-  </prototype>
-  <prototype name="z80" group="rare" description="z80asm">
-    <location link="rare/z80.hrc"/>
-    <filename>/\.za$/i</filename>
-  </prototype>
-  <prototype name="asm80" group="rare" description="asm80">
-    <location link="rare/asm80.hrc"/>
-    <filename>/\.a80$/i</filename>
-  </prototype>
-  <prototype name="a51" group="rare" description="8051 asm">
-    <location link="rare/a51-5.hrc"/>
-    <filename>/\.a5[12]$/i</filename>
-  </prototype>
-  <prototype name="avr" group="rare" description="AVR asm">
-    <location link="rare/avr-5.hrc"/>
-    <filename>/\.(asm|inc|avr)$/i</filename>
-    <firstline>/^\s*;/</firstline>
-  </prototype>
-  <prototype name="mason" group="rare" description="mason">
-    <location link="rare/mason.hrc"/>
-    <filename>/\.mc$/i</filename>
-  </prototype>
-  <prototype name="postscript" group="rare" description="PostScript">
-    <location link="rare/postscript.hrc"/>
-    <filename>/\.(e?ps|pfa|gsf)$/i</filename>
-    <firstline weight="3">/^\%\!PS/</firstline>
-    <firstline>/^\%\!/</firstline>
-  </prototype>
-  <!-- flex extension conflicts -->
-  <prototype name="flex" group="rare" description="FlexScript">
-    <location link="rare/flex.hrc"/>
-    <filename>/\.(src|inc|inf)$/i</filename>
-    <firstline>/\*{10}/</firstline>
-  </prototype>
-   <prototype name="llvm" group="rare" description="LLVM IR">
-    <location link="rare/llvm.hrc"/>
-    <filename weight='3'>/\.ll$/i</filename>
-   </prototype>
-   <prototype name="json" group="rare" description="JSON">
-    <location link="rare/json.hrc"/>
-    <filename weight='3'>/\.json$/i</filename>
-   </prototype>
-   <prototype name="yaml" group="rare" description="YAML">
-     <location link="rare/yaml.hrc"/>
-     <filename weight="10">/\.ya?ml$/</filename>
-   </prototype>
+    <prototype name="sml" group="rare" description="Standard ML">
+        <location link="rare/sml.hrc" />
+        <filename>/\.(sml|sig)$/i</filename>
+    </prototype>
+    <prototype name="haskell" group="rare" description="Haskell">
+        <location link="rare/haskell.hrc" />
+        <filename>/\.hs$/i</filename>
+    </prototype>
+    <prototype name="ocaml" group="rare" description="OCaml">
+        <location link="rare/ocaml.hrc" />
+        <filename>/\.ml[ilpy]?$/i</filename>
+    </prototype>
+    <prototype name="sicstusProlog" group="rare" description="Sicstus Prolog">
+        <location link="rare/sprolog.hrc" />
+        <filename>/\.pl$/i</filename>
+    </prototype>
+    <prototype name="stata" group="rare" description="STATA">
+        <location link="rare/stata.hrc" />
+        <filename>/\.a?do$/i</filename>
+    </prototype>
+    <prototype name="turboProlog" group="rare" description="Turbo Prolog">
+        <location link="rare/tprolog.hrc" />
+        <filename>/\.tpl$/i</filename>
+    </prototype>
+    <prototype name="verilog" group="rare" description="Verilog HDL">
+        <location link="rare/verilog.hrc" />
+        <filename weight='3'>/\.g?v$/i</filename>
+    </prototype>
+    <prototype name="vhdl" group="rare" description="VHDL">
+        <location link="rare/vhdl.hrc" />
+        <filename>/\.vhdl?$/i</filename>
+    </prototype>
+    <prototype name="ahdl" group="rare" description="AHDL">
+        <location link="rare/ahdl.hrc" />
+        <filename>/\.(tdf|tdo|ahdl)$/i</filename>
+    </prototype>
+    <prototype name="ubasic" group="rare" description="UniVision Basic">
+        <location link="rare/ubasic.hrc" />
+        <filename>/\.uvbasic$/i</filename>
+        <firstline>/^(PROGRAM\s+\w+$|(SUBROUTINE|EXTERNALFUNCTION)\s+\w+(\s+)?(\(.*\))?$)/</firstline>
+    </prototype>
+    <prototype name="z80" group="rare" description="z80asm">
+        <location link="rare/z80.hrc" />
+        <filename>/\.za$/i</filename>
+    </prototype>
+    <prototype name="asm80" group="rare" description="asm80">
+        <location link="rare/asm80.hrc" />
+        <filename>/\.a80$/i</filename>
+    </prototype>
+    <prototype name="a51" group="rare" description="8051 asm">
+        <location link="rare/a51-5.hrc" />
+        <filename>/\.a5[12]$/i</filename>
+    </prototype>
+    <prototype name="avr" group="rare" description="AVR asm">
+        <location link="rare/avr-5.hrc" />
+        <filename>/\.(asm|inc|avr)$/i</filename>
+        <firstline>/^\s*;/</firstline>
+    </prototype>
+    <prototype name="mason" group="rare" description="mason">
+        <location link="rare/mason.hrc" />
+        <filename>/\.mc$/i</filename>
+    </prototype>
+    <prototype name="postscript" group="rare" description="PostScript">
+        <location link="rare/postscript.hrc" />
+        <filename>/\.(e?ps|pfa|gsf)$/i</filename>
+        <firstline weight="3">/^\%\!PS/</firstline>
+        <firstline>/^\%\!/</firstline>
+    </prototype>
+    <!-- flex extension conflicts -->
+    <prototype name="flex" group="rare" description="FlexScript">
+        <location link="rare/flex.hrc" />
+        <filename>/\.(src|inc|inf)$/i</filename>
+        <firstline>/\*{10}/</firstline>
+    </prototype>
+    <prototype name="llvm" group="rare" description="LLVM IR">
+        <location link="rare/llvm.hrc" />
+        <filename weight='3'>/\.ll$/i</filename>
+    </prototype>
+    <prototype name="json" group="rare" description="JSON">
+        <location link="rare/json.hrc" />
+        <filename weight='3'>/\.json$/i</filename>
+    </prototype>
+    <prototype name="yaml" group="rare" description="YAML">
+        <location link="rare/yaml.hrc" />
+        <filename weight="10">/\.ya?ml$/</filename>
+    </prototype>
 
-  <!--  other types  -->
-  &scripts-msg-protos;
+    <!--  other types  -->
+    &scripts-msg-protos;
+    <prototype name="ass" group="other" description="(Advanced) SubStation Alpha script">
+        <location link="misc/assa.hrc" />
+        <filename>/\.(ssa|ass)$/</filename>
+        <firstline weight='2'>/^(...)?\[Script Info\]/</firstline>
+    </prototype>
+    <prototype name="srt" group="other" description="SRT subs">
+        <location link="misc/srt.hrc" />
+        <filename weight="10">/\.srt$/</filename>
+    </prototype>
+    <prototype name="cue" group="other" description="Cue sheet">
+        <location link="misc/cue.hrc" />
+        <filename>/\.cue$/</filename>
+    </prototype>
+    <prototype name="ddoc" group="other" description="Ddoc">
+        <location link="misc/ddoc.hrc" />
+        <filename>/\.dd(oc)?$/i</filename>
+        <firstline weight="3">/^Ddoc/x</firstline>
+        <parameters>
+            <!-- firstline -->
+            <param name='firstlines' value='1' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='5' description="bytes for 'firstline'" />
+        </parameters>
+    </prototype>
+    <prototype name="filesbbs" group="other" description="files.bbs">
+        <location link="misc/filesbbs.hrc" />
+        <filename>/(files\.bbs|descript\.ion|file_id.diz)/i</filename>
+    </prototype>
+    <prototype name="diff" group="other" description="Diff/Patch">
+        <location link="misc/diff.hrc" />
+        <filename>/\.(diff.*|patch|rej(ect)?)$/i</filename>
+        <firstline weight='2'>/^(diff|Index|---|\+\+\+|\*\*\*)/si</firstline>
+        <firstline>/^(\d+,\d+\w\d+ | \d+\w\d+)/i</firstline>
+        <!-- mercurial `hg inc -p` format detection -->
+        <firstline>/^comparing with/</firstline>
+        <!-- mercurial `hg log -p` -->
+        <firstline>/^changeset:/</firstline>
+        <parameters>
+            <param name="trailing-space" value="false" description="Mark trailing spaces as errors" />
+            <param name="space-before-tab" value="false" description="Mark leading spaces before tabs as errors" />
+            <param name="indent-with-non-tab" value="false" description="Mark 8 or more leading spaces as errors" />
+            <param name="indent-with-tab" value="false" description="Mark leading tabs as errors" />
+        </parameters>
+    </prototype>
+    <prototype name="mediawiki" group="other" description="MediaWiki">
+        <location link="misc/mediawiki.hrc" />
+        <filename>/\.(mw|mediawiki)$/i</filename>
+    </prototype>
+    <prototype name="text" group="other" description="plain text">
+        <location link="misc/text.hrc" />
+        <filename>/(read\.?me|\.txt$|\.rus|\.nfo|\.log|.*install.*|.*ChangeLog.*|AUTHORS|COPYING|FAQ|LICENSE|TODO$)/i</filename>
+        <filename>/\.spo/ix</filename>
+    </prototype>
 
-  <prototype name="ass" group="other" description="(Advanced) SubStation Alpha script">
-    <location link="misc/assa.hrc"/>
-    <filename>/\.(ssa|ass)$/</filename>
-    <firstline weight='2'>/^(...)?\[Script Info\]/</firstline>
-  </prototype>
-  <prototype name="srt" group="other" description="SRT subs">
-    <location link="misc/srt.hrc"/>
-    <filename weight="10">/\.srt$/</filename>
-  </prototype>
-  <prototype name="cue" group="other" description="Cue sheet">
-    <location link="misc/cue.hrc"/>
-    <filename>/\.cue$/</filename>
-  </prototype>
-  <prototype name="ddoc" group="other" description="Ddoc">
-    <location link="misc/ddoc.hrc"/>
-    <filename>/\.dd(oc)?$/i</filename>
-    <firstline weight="3">/^Ddoc/x</firstline>
-    <parameters>
-      <!-- firstline -->
-      <param name='firstlines'     value='1' description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='5' description="bytes for 'firstline'"/>
-    </parameters>
-  </prototype>
-  <prototype name="filesbbs" group="other" description="files.bbs">
-    <location link="misc/filesbbs.hrc"/>
-    <filename>/(files\.bbs|descript\.ion|file_id.diz)/i</filename>
-  </prototype>
-  <prototype name="diff" group="other" description="Diff/Patch">
-    <location link="misc/diff.hrc"/>
-    <filename>/\.(diff.*|patch|rej(ect)?)$/i</filename>
-    <firstline weight='2'>/^(diff|Index|---|\+\+\+|\*\*\*)/si</firstline>
-    <firstline>/^(\d+,\d+\w\d+ | \d+\w\d+)/i</firstline>
-     <!-- mercurial `hg inc -p` format detection -->
-    <firstline>/^comparing with/</firstline>
-     <!-- mercurial `hg log -p` -->
-    <firstline>/^changeset:/</firstline>
-    <parameters>
-      <param name="trailing-space"      value="false" description="Mark trailing spaces as errors"/>
-      <param name="space-before-tab"    value="false" description="Mark leading spaces before tabs as errors"/>
-      <param name="indent-with-non-tab" value="false" description="Mark 8 or more leading spaces as errors"/>
-      <param name="indent-with-tab"     value="false" description="Mark leading tabs as errors"/>
-    </parameters>
-  </prototype>
-  <prototype name="mediawiki" group="other" description="MediaWiki">
-    <location link="misc/mediawiki.hrc"/>
-    <filename>/\.(mw|mediawiki)$/i</filename>
-  </prototype>
-  <prototype name="text" group="other" description="plain text">
-    <location link="misc/text.hrc"/>
-    <filename>/(read\.?me|\.txt$|\.rus|\.nfo|\.log|.*install.*|.*ChangeLog.*|AUTHORS|COPYING|FAQ|LICENSE|TODO$)/i</filename>
-    <filename>/\.spo/ix</filename>
-  </prototype>
+    <prototype name="default" group="other" description="default type">
+        <filename weight='1'>//</filename>
+        <parameters>
+            <!-- firstline -->
+            <param name='firstlines' value='4' description="lines for 'firstline'" />
+            <param name='firstlinebytes' value='500' description="bytes for 'firstline'" />
+        </parameters>
+    </prototype>
 
-  <prototype name="default" group="other" description="default type">
-    <filename weight='1'>//</filename>
-    <parameters>
-      <!-- firstline -->
-      <param name='firstlines'     value='4'   description="lines for 'firstline'"/>
-      <param name='firstlinebytes' value='500' description="bytes for 'firstline'"/>
-    </parameters>
-  </prototype>
-
-  <type name="default"><scheme name='default'/></type>
+    <type name="default">
+        <scheme name='default' />
+    </type>
 
 
-  <!--  packages  -->
+    <!--  packages  -->
 
-  <package name="def" description="core definitions">
-    <location link="lib/default.hrc"/>
-  </package>
-  <package name="uri" description="URI (RFC 2396)">
-    <location link="lib/uri.hrc"/>
-  </package>
-  <package name="ole" description="OLE Commons">
-    <location link="lib/ole.hrc"/>
-  </package>
-  <package name="regexp" description="Regexp common library">
-    <location link="lib/regexp.hrc"/>
-  </package>
-  <package name="far" description="FAR Manager common expressions">
-    <location link="lib/far.hrc"/>
-  </package>
-  <package name="msg" description="message package">
-    <location link="lib/message.hrc"/>
-  </package>
-  <package name="doxygen" description="Doxygen">
-   <location link="lib/doxygen.hrc"/>
-  </package>
+    <package name="def" description="core definitions">
+        <location link="lib/default.hrc" />
+    </package>
+    <package name="uri" description="URI (RFC 2396)">
+        <location link="lib/uri.hrc" />
+    </package>
+    <package name="ole" description="OLE Commons">
+        <location link="lib/ole.hrc" />
+    </package>
+    <package name="regexp" description="Regexp common library">
+        <location link="lib/regexp.hrc" />
+    </package>
+    <package name="far" description="FAR Manager common expressions">
+        <location link="lib/far.hrc" />
+    </package>
+    <package name="msg" description="message package">
+        <location link="lib/message.hrc" />
+    </package>
+    <package name="doxygen" description="Doxygen">
+        <location link="lib/doxygen.hrc" />
+    </package>
 
 </hrc>
-<!-- ***** BEGIN LICENSE BLOCK *****
-   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
-   - Copyright (C) Eugene Efremov <4mirror@mail.ru>
-   - This program is free software; you can redistribute it and/or
-   - modify it under the terms of the GNU General Public License
-   - as published by the Free Software Foundation; either version 2
-   - of the License, or (at your option) any later version.
-   - This program is distributed in the hope that it will be useful,
-   - but WITHOUT ANY WARRANTY; without even the implied warranty of
-   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   - GNU General Public License for more details.
-   - You should have received a copy of the GNU General Public License
-   - along with this program; If not, see <http://www.gnu.org/licenses/>.
-   - ***** END LICENSE BLOCK ***** -->

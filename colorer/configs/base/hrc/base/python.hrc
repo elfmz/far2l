@@ -9,10 +9,11 @@
  <annotation>
   <documentation>
     Python syntax description for Colorer Library.
-    http://docs.python.org/ref/grammar.txt
+    https://docs.python.org/3/reference/grammar.html
   </documentation>
   <contributors><![CDATA[
     anatoly techtonik <techtonik@php.net>
+    Nikita Kniazev <kniazev.nikita@gmail.com>
   ]]></contributors>
  </annotation>
 
@@ -21,11 +22,16 @@
   <region name="pyComment" parent="def:Comment"/>
   <region name="pyString" parent="def:String"/>
   <region name="pyStringEscape" parent="def:StringContent"/>
+  <region name="pyStringEdge" parent="def:StringEdge"/>
+  <region name="pyBytes" parent="pyString"/>
+  <region name="pyBytesEdge" parent="pyStringEdge"/>
   <region name="pyNumber" parent="def:Number"/>
   <region name="pyNumberDec" parent="def:NumberDec"/>
   <region name="pyNumberOct" parent="def:NumberOct"/>
   <region name="pyNumberHex" parent="def:NumberHex"/>
+  <region name="pyNumberBin" parent="def:NumberBin"/>
   <region name="pyNumberFloat" parent="def:NumberFloat"/>
+  <region name="pyNumberComplex" parent="def:Number"/>
   <region name="pyNumberSuffix" parent="def:NumberSuffix"/>
   <region name="pyOperator" parent="def:Operator"/>
   <region name="pyDelimiter" parent="def:Symbol"/>
@@ -33,39 +39,129 @@
   <region name="pySpecialName" parent="def:ParameterStrong"/>
   <region name="pyFunction" parent="def:FunctionKeyword"/>
 
+  <entity name="digit"          value="[0-9]" />
 
-  <scheme name="RawStringSingle"> <!-- single-quoted strings should end with slash if span multiple lines -->
-    <regexp match="/[^\\']$/" region="def:Error" />   <!-- error if end of line is not quote or escape -->
-    <regexp match="/\\$/" region="pyStringEscape" />  <!-- highlight escape at end of line -->
-    <regexp match="/\\'/" region="pyStringEscape" />  <!-- highlight escape quoted in the middle -->
+  <entity name="digitpart"      value="(?:%digit;(?:_?%digit;)*)" />
+  <entity name="exponent"       value="(?:[eE][+-]?%digitpart;)" />
+
+  <!-- String and bytes literal : https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals -->
+  <!-- In raw literals escaping with backslash works differently,
+       it simply advances parser over the escaped character, e.g.
+       r'\'' produces string with two characters, that's why it's not highlighted -->
+  <scheme name="RawStringContent">
+    <regexp match="/\\\\/" />
+    <regexp match="/\\[&apos;&quot;]/" />
+    <block start="/\\$/" end="/^/" scheme="def:empty" region="pyStringEscape" />
   </scheme>
-  <scheme name="RawStringDouble">
-    <regexp match="/[^\\&quot;]$/" region="def:Error" />
-    <regexp match="/\\$/" region="pyStringEscape" />
-    <regexp match="/\\&quot;/" region="pyStringEscape" />
+  <scheme name="RawBytesContent">
+    <regexp match="/[^\x00-\x7F]/" region="def:Error" />
+    <inherit scheme="RawStringContent" />
   </scheme>
   <!-- highlight non-raw string contents -->
-  <scheme name="StringCommon">
-    <regexp match="/\\./" region="pyStringEscape" />
+  <scheme name="ContentCommon">
+    <regexp match="/\\[\n\\&apos;&quot;abfnrtv]/" region="pyStringEscape" />
+    <regexp match="/\\[0-7]{1,3}/" region="pyStringEscape" />
+    <regexp match="/\\x[0-9a-fA-F]{2}/" region="pyStringEscape" />
+    <regexp match="/\\x[0-9a-fA-F]{0,2}/" region="def:Error" />
   </scheme>
-  <scheme name="StringSingle"> <!-- single-quoted strings should end with slash if span multiple lines -->
-    <regexp match="/(\\).$/" region="def:Error" region1="pyStringEscape" />
-    <inherit scheme="RawStringSingle" />
-    <inherit scheme="StringCommon" />
+  <scheme name="StringContent">
+    <regexp match="/\\u[0-9a-fA-F]{4}/" region="pyStringEscape" />
+    <regexp match="/\\u[0-9a-fA-F]{0,4}/" region="def:Error" />
+    <regexp match="/\\U[0-9a-fA-F]{8}/" region="pyStringEscape" />
+    <regexp match="/\\U[0-9a-fA-F]{0,8}/" region="def:Error" />
+    <regexp match="/(\\N\{)[^&apos;&quot;\{\}]*(\})/" region="pyStringEscape"
+      region1="def:PairStart" region2="def:PairEnd" />
+    <regexp match="/\\N\{?/" region="def:Error" />
+    <inherit scheme="ContentCommon" />
+    <inherit scheme="RawStringContent" />
+    <regexp match="/\\/" region="def:ErrorText" />
   </scheme>
-  <scheme name="StringDouble"> <!-- double-quoted strings should also end with slash to span multiple lines -->
-    <regexp match="/(\\).$/" region="def:Error" region1="pyStringEscape" />
-    <inherit scheme="RawStringDouble" />
-    <inherit scheme="StringCommon" />
+  <scheme name="BytesContent">
+    <inherit scheme="ContentCommon" />
+    <inherit scheme="RawBytesContent" />
+    <regexp match="/\\/" region="def:ErrorText" />
+  </scheme>
+  <!-- Formatted string Contents -->
+  <!-- TODO: Error at any backslash occurance -->
+  <!-- TODO: Error at any quote/apostrophe occurance (the type which literal is opened with) -->
+  <scheme name="FormatSpec">
+    <regexp match="/[^\{\}]/" region="pyString" />
+    <inherit scheme="ReplacementField" />
+  </scheme>
+  <scheme name="FExpression">
+    <regexp match="/(!)([sra])?([^:\}]+)?/" priority="low"
+       region1="pyStringEdge" region2="pyString" region3="def:Error" />
+    <block start="/:/" end="/($|\}?=)/" scheme="FormatSpec" region00="pyStringEdge" />
+    <regexp match="/(=)\s*([^!:\}]+)?/" priority="low" region1="pyDelimiter" region2="def:Error" />
+    <inherit scheme="python" />
+  </scheme>
+  <scheme name="ReplacementField">
+    <block start="/(\{)/" end="/($|\})/"
+       scheme="FExpression" region="def:Insertion"
+       region00="def:PairStart" region10="def:PairEnd" 
+       region01="pyStringEdge" region11="pyStringEdge" />
+  </scheme>
+  <scheme name="FStringCommon">
+    <regexp match="/\{{2}|\}{2}/" region="pyStringEscape" />
+    <inherit scheme="ReplacementField" />
+  </scheme>
+  <scheme name="FStringContent">
+    <inherit scheme="FStringCommon" />
+    <inherit scheme="StringContent" />
+  </scheme>
+  <scheme name="RawFStringContent">
+    <inherit scheme="FStringCommon" />
+    <inherit scheme="RawStringContent" />
+  </scheme>
+  <scheme name="StringAndBytesLiterals">
+    <block start="/(u?(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="StringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(r(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="RawStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(b(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="BytesContent" region="pyBytes" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyBytesEdge" region11="pyBytesEdge" />
+    <block start="/((?:rb|br)(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="RawBytesContent" region="pyBytes" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyBytesEdge" region11="pyBytesEdge" />
+    <block start="/(f(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="FStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/((?:fr|rf)(?{Delim}&apos;{3}|&quot;{3}))/i" end="/(\y{Delim})/"
+       scheme="RawFStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <!-- Same as above but for singlequotes -->
+    <block start="/(u?(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="StringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(r(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="RawStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/(b(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="BytesContent" region="pyBytes" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyBytesEdge" region11="pyBytesEdge" />
+    <block start="/((?:rb|br)(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="RawBytesContent" region="pyBytes" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyBytesEdge" region11="pyBytesEdge" />
+    <block start="/(f(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="FStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
+    <block start="/((?:fr|rf)(?{Delim}&apos;|&quot;))/i" end="/($|\y{Delim})/"
+       scheme="RawFStringContent" region="pyString" inner-region="yes"
+       region00="def:PairStart" region10="def:PairEnd" region01="pyStringEdge" region11="pyStringEdge" />
   </scheme>
 
 
   <scheme name="Keywords">
-   <!-- python keywords : http://docs.python.org/ref/keywords.html -->
+   <!-- python keywords : https://docs.python.org/3/reference/lexical_analysis.html#keywords -->
    <keywords ignorecase="no" region="pyKeyword">
     <word name="and"/>
     <word name="as"/>
     <word name="assert"/>
+    <word name="async"/>
+    <word name="await"/>
     <word name="break"/>
     <word name="class"/>
     <word name="continue"/>
@@ -84,6 +180,7 @@
     <word name="in"/>
     <word name="is"/>
     <word name="lambda"/>
+    <word name="nonlocal"/>
     <word name="not"/>
     <word name="or"/>
     <word name="pass"/>
@@ -102,13 +199,20 @@
     <!-- TODO: consider changing region to something more colorful like
                pySpecialName for good visual text anchoring    -->
     <keywords ignorecase="no" region="pyFunction">
-      <!-- built-in functions -->
+      <!-- built-in functions : https://docs.python.org/3/library/functions.html#built-in-funcs -->
       <word name="__import__"/>
       <word name="abs"/>
+      <word name="aiter"/>
       <word name="all"/>
       <word name="any"/>
+      <word name="anext"/>
+      <word name="ascii"/>
       <word name="basestring"/>
+      <word name="bin"/>
       <word name="bool"/>
+      <word name="breakpoint"/>
+      <word name="bytearray"/>
+      <word name="bytes"/>
       <word name="callable"/>
       <word name="chr"/>
       <word name="classmethod"/>
@@ -125,6 +229,7 @@
       <word name="file"/>
       <word name="filter"/>
       <word name="float"/>
+      <word name="format"/>
       <word name="frozenset"/>
       <word name="getattr"/>
       <word name="globals"/>
@@ -144,7 +249,9 @@
       <word name="long"/>
       <word name="map"/>
       <word name="max"/>
+      <word name="memoryview"/>
       <word name="min"/>
+      <word name="next"/>
       <word name="object"/>
       <word name="oct"/>
       <word name="open"/>
@@ -179,96 +286,180 @@
 
   <scheme name="SpecialNames">
    <keywords ignorecase="no" region="pySpecialName">
-     <!-- Built-in Constants : http://docs.python.org/lib/node8.html -->
+     <!-- Built-in Constants : https://docs.python.org/3/library/constants.html#built-in-consts -->
      <word name="False"/>
      <word name="True"/>
      <word name="None"/>
      <word name="NotImplemented"/>
      <word name="Ellipsis"/>
-     <!-- Built-in Exceptions: http://docs.python.org/lib/module-exceptions.html -->
+     <word name="__debug__"/>
+     <!-- Constants added by the site module : https://docs.python.org/3/library/constants.html#constants-added-by-the-site-module -->
+     <word name="quit"/>
+     <word name="exit"/>
+     <word name="copyright"/>
+     <word name="license"/>
+     <!-- List of names imported by * : https://docs.python.org/3/tutorial/modules.html#importing-from-a-package -->
+     <word name="__all__"/>
+     <!-- Built-in Exceptions : https://docs.python.org/3/library/exceptions.html -->
+     <!-- Tests in https://github.com/python/cpython/blob/main/Lib/test/exception_hierarchy.txt -->
      <word name="BaseException"/>
-     <word name="SystemExit"/>
-     <word name="KeyboardInterrupt"/>
      <word name="Exception"/>
-     <word name="GeneratorExit"/>
-     <word name="StopIteration"/>
-     <word name="StandardError"/>
      <word name="ArithmeticError"/>
-     <word name="FloatingPointError"/>
-     <word name="OverflowError"/>
-     <word name="ZeroDivisionError"/>
+     <word name="BufferError"/>
+     <word name="LookupError"/>
      <word name="AssertionError"/>
      <word name="AttributeError"/>
-     <word name="EnvironmentError"/>
-     <word name="IOError"/>
-     <word name="OSError"/>
-     <word name="WindowsError"/>
-     <word name="VMSError"/>
      <word name="EOFError"/>
+     <word name="FloatingPointError"/>
+     <word name="GeneratorExit"/>
      <word name="ImportError"/>
-     <word name="LookupError"/>
+     <word name="ModuleNotFoundError"/>
      <word name="IndexError"/>
      <word name="KeyError"/>
+     <word name="KeyboardInterrupt"/>
      <word name="MemoryError"/>
      <word name="NameError"/>
-     <word name="UnboundLocalError"/>
+     <word name="NotImplementedError"/>
+     <word name="OSError"/>
+     <word name="OverflowError"/>
+     <word name="RecursionError"/>
      <word name="ReferenceError"/>
      <word name="RuntimeError"/>
-     <word name="NotImplementedError"/>
+     <word name="StopIteration"/>
+     <word name="StopAsyncIteration"/>
      <word name="SyntaxError"/>
      <word name="IndentationError"/>
      <word name="TabError"/>
      <word name="SystemError"/>
+     <word name="SystemExit"/>
      <word name="TypeError"/>
-     <word name="ValueError"/>
+     <word name="UnboundLocalError"/>
      <word name="UnicodeError"/>
-     <word name="UnicodeDecodeError"/>
      <word name="UnicodeEncodeError"/>
+     <word name="UnicodeDecodeError"/>
      <word name="UnicodeTranslateError"/>
+     <word name="ValueError"/>
+     <word name="ZeroDivisionError"/>
+     <word name="EnvironmentError"/>
+     <word name="IOError"/>
+     <word name="WindowsError"/>
+     <word name="BlockingIOError"/>
+     <word name="ChildProcessError"/>
+     <word name="ConnectionError"/>
+     <word name="BrokenPipeError"/>
+     <word name="ConnectionAbortedError"/>
+     <word name="ConnectionRefusedError"/>
+     <word name="ConnectionResetError"/>
+     <word name="FileExistsError"/>
+     <word name="FileNotFoundError"/>
+     <word name="InterruptedError"/>
+     <word name="IsADirectoryError"/>
+     <word name="NotADirectoryError"/>
+     <word name="PermissionError"/>
+     <word name="ProcessLookupError"/>
+     <word name="TimeoutError"/>
      <word name="Warning"/>
+     <word name="UserWarning"/>
      <word name="DeprecationWarning"/>
      <word name="PendingDeprecationWarning"/>
-     <word name="RuntimeWarning"/>
      <word name="SyntaxWarning"/>
-     <word name="UserWarning"/>
+     <word name="RuntimeWarning"/>
      <word name="FutureWarning"/>
      <word name="ImportWarning"/>
      <word name="UnicodeWarning"/>
+     <word name="EncodingWarning"/>
+     <word name="BytesWarning"/>
+     <word name="ResourceWarning"/>
+     <word name="ExceptionGroup"/>
+     <word name="BaseExceptionGroup"/>
+     <!-- Python 2 only -->
+     <word name="StandardError"/>
+     <word name="VMSError"/>
    </keywords>
 
    <!-- python magic -->
    <keywords ignorecase="no" region="pySpecialName">
-     <!-- User-defined functions special attributes : http://docs.python.org/reference/datamodel.html -->
-     <word name="func_doc"/>
+     <!-- User-defined functions special attributes : https://docs.python.org/3/reference/datamodel.html -->
      <word name="__doc__"/>
-     <word name="func_name"/>
      <word name="__name__"/>
+     <word name="__qualname__"/>
      <word name="__module__"/>
+     <word name="__defaults__"/>
+     <word name="__code__"/>
+     <word name="__globals__"/>
+     <word name="__dict__"/>
+     <word name="__closure__"/>
+     <word name="__annotations__"/>
+     <word name="__kwdefaults__"/>
+     <word name="func_doc"/>
+     <word name="func_name"/>
      <word name="func_defaults"/>
      <word name="func_code"/>
      <word name="func_globals"/>
      <word name="func_dict"/>
      <word name="func_closure"/>
-     <!-- User-defined methods special attributes -->
+     <!-- User-defined instance methods attributes -->
      <word name="im_self"/>
      <word name="im_func"/>
      <word name="im_class"/>
      <word name="__self__"/>
      <word name="__func__"/>
      <!-- Module attributes -->
-     <word name="__dict__"/>
+     <word name="__name__"/>
+     <word name="__doc__"/>
      <word name="__file__"/>
-     <!-- Class attributes -->
+     <word name="__annotations__"/>
+     <word name="__dict__"/>
+     <!-- Custom class attributes -->
+     <word name="__name__"/>
      <word name="__module__"/>
+     <word name="__dict__"/>
      <word name="__bases__"/>
+     <word name="__doc__"/>
+     <word name="__annotations__"/>
      <!-- Class instance attributes -->
+     <word name="__dict__"/>
      <word name="__class__"/>
-     <!-- Special method names : http://docs.python.org/ref/specialnames.html -->
+     <!-- Code object attributes -->
+     <word name="co_argcount"/>
+     <word name="co_posonlyargcount"/>
+     <word name="co_kwonlyargcount"/>
+     <word name="co_nlocals"/>
+     <word name="co_stacksize"/>
+     <word name="co_flags"/>
+     <word name="co_code"/>
+     <word name="co_consts"/>
+     <word name="co_names"/>
+     <word name="co_varnames"/>
+     <word name="co_filename"/>
+     <word name="co_name"/>
+     <word name="co_qualname"/>
+     <word name="co_firstlineno"/>
+     <word name="co_linetable"/>
+     <word name="co_exceptiontable"/>
+     <word name="co_freevars"/>
+     <word name="co_cellvars"/>
+     <!-- Frame object attributes -->
+     <word name="f_back"/>
+     <word name="f_locals"/>
+     <word name="f_lineno"/>
+     <word name="f_trace"/>
+     <word name="f_lasti"/>
+     <word name="f_globals"/>
+     <word name="f_builtins"/>
+     <word name="f_code"/>
+     <!-- Traceback objects -->
+     <word name="__traceback__"/>
+     <word name="tb_frame"/>
+     <word name="tb_next"/>
+     <!-- Special method names : https://docs.python.org/3/reference/datamodel.html#special-method-names -->
      <word name="__new__"/>
      <word name="__init__"/>
      <word name="__del__"/>
      <word name="__repr__"/>
      <word name="__str__"/>
+     <word name="__bytes__"/>
+     <word name="__format__"/>
      <word name="__lt__"/>
      <word name="__le__"/>
      <word name="__eq__"/>
@@ -277,35 +468,50 @@
      <word name="__ge__"/>
      <word name="__cmp__"/>
      <word name="__hash__"/>
-     <word name="__nonzero__"/>
-     <word name="__unicode__"/>
-     <!-- Customized attribute access -->
+     <word name="__bool__"/>
+     <!-- Customized attribute access : https://docs.python.org/3/reference/datamodel.html#customizing-attribute-access -->
      <word name="__getattr__"/>
+     <word name="__getattribute__"/>
      <word name="__setattr__"/>
      <word name="__delattr__"/>
-     <word name="__getattribute__"/>
-     <!-- Implementing descriptors -->
+     <word name="__dir__"/>
+     <!-- Implementing descriptors : https://docs.python.org/3/reference/datamodel.html#implementing-descriptors -->
      <word name="__get__"/>
      <word name="__set__"/>
      <word name="__delete__"/>
-
-
+     <word name="__objclass__"/>
+     <!-- __slots__ -->
      <word name="__slots__"/>
+     <word name="__weakref__"/>
      <word name="__metaclass__"/>
+     <!-- Customizing class creation -->
+     <word name="__init_subclass__"/>
+     <word name="__set_name__"/>
+     <!-- Preparing the class namespace -->
+     <word name="__prepare__"/>
+     <!-- Customizing instance and subclass checks -->
+     <word name="__instancecheck__"/>
+     <word name="__subclasscheck__"/>
+     <!-- Emulating generic types -->
+     <word name="__class_getitem__"/>
+     <!-- Emulating callable objects -->
      <word name="__call__"/>
-
-
-     <!-- Emulating containers -->
+     <!-- Emulating container types -->
      <word name="__len__"/>
+     <word name="__length_hint__"/>
      <word name="__getitem__"/>
      <word name="__setitem__"/>
      <word name="__delitem__"/>
+     <word name="__missing__"/>
      <word name="__iter__"/>
+     <word name="__reversed__"/>
      <word name="__contains__"/>
      <!-- Emulating numeric types -->
      <word name="__add__"/>
      <word name="__sub__"/>
      <word name="__mul__"/>
+     <word name="__matmul__"/>
+     <word name="__truediv__"/>
      <word name="__floordiv__"/>
      <word name="__mod__"/>
      <word name="__divmod__"/>
@@ -315,14 +521,10 @@
      <word name="__and__"/>
      <word name="__xor__"/>
      <word name="__or__"/>
-
-     <word name="__div__"/>
-     <word name="__truediv__"/>
-
      <word name="__radd__"/>
      <word name="__rsub__"/>
      <word name="__rmul__"/>
-     <word name="__rdiv__"/>
+     <word name="__rmatmul__"/>
      <word name="__rtruediv__"/>
      <word name="__rfloordiv__"/>
      <word name="__rmod__"/>
@@ -333,11 +535,10 @@
      <word name="__rand__"/>
      <word name="__rxor__"/>
      <word name="__ror__"/>
-
      <word name="__iadd__"/>
      <word name="__isub__"/>
      <word name="__imul__"/>
-     <word name="__idiv__"/>
+     <word name="__imatmul__"/>
      <word name="__itruediv__"/>
      <word name="__ifloordiv__"/>
      <word name="__imod__"/>
@@ -347,28 +548,90 @@
      <word name="__iand__"/>
      <word name="__ixor__"/>
      <word name="__ior__"/>
-
      <word name="__neg__"/>
      <word name="__pos__"/>
      <word name="__abs__"/>
      <word name="__invert__"/>
-
      <word name="__complex__"/>
      <word name="__int__"/>
      <word name="__long__"/>
      <word name="__float__"/>
-
-     <word name="__oct__"/>
-     <word name="__hex__"/>
-
      <word name="__index__"/>
-
-     <word name="__coerce__"/>
-
+     <word name="__round__"/>
+     <word name="__trunc__"/>
+     <word name="__floor__"/>
+     <word name="__ceil__"/>
      <!-- With Statement Context Managers -->
-
      <word name="__enter__"/>
      <word name="__exit__"/>
+     <!-- Customizing positional arguments in class pattern matching -->
+     <word name="__match_args__"/>
+     <!-- Awaitable Objects -->
+     <word name="__await__"/>
+     <!-- Asynchronous Iterators -->
+     <word name="__aiter__"/>
+     <word name="__anext__"/>
+     <!-- Asynchronous Context Managers -->
+     <word name="__aenter__"/>
+     <word name="__aexit__"/>
+     <!-- Python 2 only -->
+     <word name="__nonzero__"/>
+     <word name="__unicode__"/>
+     <word name="__div__"/>
+     <word name="__rdiv__"/>
+     <word name="__idiv__"/>
+     <word name="__oct__"/>
+     <word name="__hex__"/>
+     <word name="__coerce__"/>
+     <word name="__getslice__"/>
+     <word name="__setslice__"/>
+     <word name="__delslice__"/>
+
+     <!-- Special Attributes : https://docs.python.org/3/library/stdtypes.html#special-attributes -->
+     <word name="__dict__"/>
+     <word name="__class__"/>
+     <word name="__bases__"/>
+     <word name="__name__"/>
+     <word name="__qualname__"/>
+     <word name="__mro__"/>
+     <word name="mro"/>
+     <word name="__subclasses__"/>
+     <!-- Iterator Types : https://docs.python.org/3/library/stdtypes.html#iterator-types -->
+     <word name="__iter__"/>
+     <word name="__next__"/>
+
+     <!-- Import-related module attributes : https://docs.python.org/3/reference/import.html#import-related-module-attributes -->
+     <word name="__name__"/>
+     <word name="__loader__"/>
+     <word name="__package__"/>
+     <word name="__spec__"/>
+     <word name="__path__"/>
+     <word name="__file__"/>
+     <word name="__cached__"/>
+
+     <!-- Pickling Class Instances : https://docs.python.org/3/library/pickle.html#pickling-class-instances -->
+     <word name="__getnewargs_ex__"/>
+     <word name="__getnewargs__"/>
+     <word name="__getstate__"/>
+     <word name="__setstate__"/>
+     <word name="__reduce__"/>
+     <word name="__reduce_ex__"/>
+     <!-- Python 2 only -->
+     <word name="__getinitargs__"/>
+
+     <!-- PathLike interface : https://docs.python.org/3/library/os.html#os.PathLike -->
+     <word name="__fspath__"/>
+
+     <!-- sys.getsizeof interface : https://docs.python.org/3/library/sys.html#sys.getsizeof -->
+     <word name="__sizeof__"/>
+
+     <!-- https://docs.python.org/3/library/abc.html#abc.ABCMeta.__subclasshook__ -->
+     <word name="__subclasshook__"/>
+
+     <!-- Shallow and deep special methods : https://docs.python.org/3/library/copy.html?highlight=__deepcopy__ -->
+     <word name="__copy__"/>
+     <word name="__deepcopy__"/>
+
    </keywords>
   </scheme>
 
@@ -378,6 +641,7 @@
    <regexp match="/\M(?{pyOutline}^\s*(class|def)\s+\w+)/" />
    <regexp match="/\M(?{pyOutline}^if\s+__name__\s+==\s+(&apos;|&quot;)__main__\1)/x"/>
 
+   <inherit scheme="StringAndBytesLiterals" />
    <inherit scheme="Keywords"/>
    <inherit scheme="SpecialNames"/>
    <inherit scheme="Functions"/>
@@ -390,7 +654,7 @@
         todo - make it match only at file start -->
    <regexp match="/^# (-\+- |vim:fileen)coding[=:]\s*(\w+).*/" region="pyComment" region2="pySpecialName"/>
 
-   <!-- python operators : http://docs.python.org/ref/keywords.html -->
+   <!-- python operators : https://docs.python.org/3/reference/lexical_analysis.html#operators -->
    <keywords region="pyOperator">
     <symb name="+"/>
     <symb name="-"/>
@@ -399,18 +663,21 @@
     <symb name="/"/>
     <symb name="//"/>
     <symb name="%"/>
+    <symb name="@"/>
     <symb name="&lt;&lt;"/>
     <symb name=">>"/>
     <symb name="&amp;"/>
     <symb name="|"/>
     <symb name="^"/>
     <symb name="~"/>
+    <symb name=":="/>
     <symb name="&lt;"/>
     <symb name=">"/>
     <symb name="&lt;="/>
     <symb name=">="/>
     <symb name="=="/>
     <symb name="!="/>
+    <!-- Python 2 only -->
     <symb name="&lt;>"/>
    </keywords>
 
@@ -418,70 +685,67 @@
    <!-- basic python comment - consider it everything after # till the end of line -->
    <block start="/#/" end="/$/" region="pyComment" scheme="def:Comment"/>
 
-   <!-- python strings : http://docs.python.org/ref/strings.html -->
-   <block start="/(u|U)?(r|R)?(&quot;{3}|&apos;{3})/" end="/\y3/"
-      region00="def:PairStart" region10="def:PairEnd"
-      scheme="def:Comment" region="pyComment" />
-      <!-- TODO: better scheme for multiline comments/docstrings -->
-      <!-- scheme="StringCommon" region="pyString" /> -->
-   <block start="/(u|U)?(&apos;)/"              end="/\y2/"
-      region00="def:PairStart" region10="def:PairEnd" scheme="StringSingle" region="pyString" />
-   <block start="/(u|U)?(&quot;)/"              end="/\y2/"
-      region00="def:PairStart" region10="def:PairEnd" scheme="StringDouble" region="pyString" />
-   <block start="/(u|U)?(r|R)(&apos;)/"  end="/\y3/"
-      region00="def:PairStart" region10="def:PairEnd" scheme="RawStringSingle" region="pyString" />
-   <block start="/(u|U)?(r|R)(&quot;)/"  end="/\y3/"
-      region00="def:PairStart" region10="def:PairEnd" scheme="RawStringDouble" region="pyString" />
-
-   <!-- python floats and imaginary numbers : http://docs.python.org/ref/floating.html -->
-   <!-- placed before integers to avoid confusion with octals, where exponent will get an error -->
-   <regexp match="/\B\.\d[\d_]*([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
-   <regexp match="/\b\d[\d_]*\.[\d_]*([Ee][-+]?\d+)?([jJ])?(\w*)/" region0="pyNumberFloat" region2="pyNumberSuffix" region3="def:Error" />
-   <regexp match="/\b\d+([Ee][-+]?\d+)?([jJ])?(\w*)\b/" region0="pyNumber" region1="pyNumberSuffix" region2="def:Error" />
-
-
-   <!-- python integers : https://docs.python.org/2/reference/lexical_analysis.html#integer-and-long-integer-literals -->
+   <!-- Imaginary literals : https://docs.python.org/3/reference/lexical_analysis.html#imaginary-literals -->
+   <!-- placed before integers to avoid confusion with python2 octals, where exponent will get an error -->
+   <regexp match="/\B\.%digitpart;(%exponent;?j)(\w+)?/i" region0="pyNumberComplex" region1="pyNumberSuffix" region2="def:Error" />
+   <regexp match="/\b%digitpart;(?:\.%digitpart;?)?(%exponent;?j)(\w+)?/i" region0="pyNumberComplex" region1="pyNumberSuffix" region2="def:Error" />
+   <!-- Floating point literals : https://docs.python.org/3/reference/lexical_analysis.html#floating-point-literals -->
+   <regexp match="/\B\.%digitpart;(%exponent;)?(\w+)?/" region0="pyNumberFloat" region1="pyNumberSuffix" region2="def:Error" />
+   <regexp match="/\b%digitpart;(?:(%exponent;)|\.%digitpart;?(%exponent;)?)(\w+)?/" region0="pyNumberFloat" region1="pyNumberSuffix" region2="pyNumberSuffix" region3="def:Error" />
+   <!-- Integer literals : https://docs.python.org/3/reference/lexical_analysis.html#integer-literals -->
    <!-- hex -->
-   <regexp match="/\b(0[xX][0-9a-fA-F_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0x(?:_?[0-9a-fA-F])*)(L)?(\w+)?\b/i" region1="pyNumberHex" region2="pyNumberSuffix" region3="def:Error" />
    <!-- binary -->
-   <regexp match="/\b(0b[01_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0b(?:_?[01])*)(L)?(\w+)?\b/i" region1="pyNumberBin" region2="pyNumberSuffix" region3="def:Error" />
    <!-- octal -->
-   <regexp match="/\b(0o?[0-7_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b(0o(?:_?[0-7])*)(L)?(\w+)?\b/i" region1="pyNumberOct" region2="pyNumberSuffix" region3="def:Error" />
    <!-- decimal -->
-   <regexp match="/\b([1-9][\d_]*)([Ll])?(\w*)\b/" region1="pyNumber" region2="pyNumberSuffix" region3="def:Error" />
+   <regexp match="/\b([1-9](?:_?\d)*|0+(?:_?0)*)(L)?(\w+)?\b/i" region1="pyNumberDec" region2="pyNumberSuffix" region3="def:Error" />
+   <!-- python2 octal, python3 syntax error -->
+   <regexp match="/\b(0[0-7]*)(L)?(\w+)?\b/i" region1="pyNumberOct" region2="pyNumberSuffix" region3="def:Error" />
 
 
-   <!-- python delimiters : http://docs.python.org/ref/delimiters.html -->
+   <!-- python delimiters : https://docs.python.org/3/reference/lexical_analysis.html#delimiters -->
    <keywords region="pyDelimiter">
-    <symb name="+"/>
     <symb name="("/>
     <symb name=")"/>
     <symb name="["/>
     <symb name="]"/>
     <symb name="{"/>
     <symb name="}"/>
-    <symb name="@"/>
     <symb name=","/>
     <symb name=":"/>
     <symb name="."/>
-    <symb name="`"/>
-    <symb name="="/>
     <symb name=";"/>
+    <symb name="@"/>
+    <symb name="="/>
+    <symb name="->"/>
     <symb name="+="/>
     <symb name="-="/>
     <symb name="*="/>
     <symb name="/="/>
     <symb name="//="/>
     <symb name="%="/>
+    <symb name="@="/>
     <symb name="&amp;="/>
     <symb name="|="/>
     <symb name="^="/>
     <symb name=">>="/>
     <symb name="&lt;&lt;="/>
     <symb name="**="/>
+    <!-- Python 2 only -->
+    <symb name="`"/>
+   </keywords>
+   <!-- The following printing ASCII characters are not used in Python.
+        Their occurrence outside string literals and comments is an unconditional error: -->
+   <keywords region="def:Error">
+    <symb name="$"/>
+    <symb name="?"/>
+    <!--symb name="`"/-->
    </keywords>
 
   </scheme>
+
  </type>
 
 </hrc>

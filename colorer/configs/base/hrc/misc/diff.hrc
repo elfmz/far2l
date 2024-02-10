@@ -84,6 +84,9 @@ With Help of
 <!-- Numbers -->
          <regexp match="/\b0[xX][\da-fA-F]+\b/" region0="diffNumb"/>
          <regexp match="/\d+/" region0="diffNumb"/>
+<!-- git inline diff -->
+	     <regexp match="/\[\-.*?\-\]/" region0="diffOrg"/>
+	     <regexp match="/\{\+.*?\+\}/" region0="diffNew"/>
       </scheme>
 
    </type>

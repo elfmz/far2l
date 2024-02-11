@@ -11,7 +11,7 @@ namespace VTLog
 
 	void ConsoleJoined(HANDLE con_hnd);
 
-	void Reset();
+	void Reset(HANDLE con_hnd);
 
 	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines = true);
 	

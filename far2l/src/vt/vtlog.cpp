@@ -122,17 +122,12 @@ namespace VTLog
 	}
 
 	
-	class Lines
+	static class Lines
 	{
 		std::mutex _mutex;
 		std::list< std::pair<HANDLE, std::string> > _memories;
 		
 	public:
-		~Lines()
-		{
-			Reset();
-		}
-
 		void Add(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
 		{
 			const size_t limit = (size_t)std::max(Opt.CmdLine.VTLogLimit, 2);
@@ -176,10 +171,16 @@ namespace VTLog
 			}
 		}
 		
-		void Reset()
+		void Reset(HANDLE con_hnd)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
-			_memories.clear();
+			for (auto it = _memories.begin(); it != _memories.end();) {
+				if (it->first == con_hnd) {
+					it = _memories.erase(it);
+				} else {
+					++it;
+				}
+			}
 		}
 
 		void ConsoleJoined(HANDLE con_hnd)
@@ -237,9 +238,9 @@ namespace VTLog
 		g_lines.ConsoleJoined(con_hnd);
 	}
 	
-	void Reset()
+	void Reset(HANDLE con_hnd)
 	{
-		g_lines.Reset();
+		g_lines.Reset(con_hnd);
 	}
 	
 	static void AppendScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)

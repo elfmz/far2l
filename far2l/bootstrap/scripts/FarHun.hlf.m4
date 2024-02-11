@@ -223,7 +223,7 @@ használat közben alkalmazni.
 
   #/set:<parameter>=<value>#
   Override the configuration parameter, see ~far:config~@FarConfig@ for details.
-  Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:System.FindFolders=false
+  Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0x10001 -set:System.FindFolders=false
 
 
     A parancssorban megadható legfeljebb két olyan elérési út, ami mappára,

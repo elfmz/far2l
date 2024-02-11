@@ -231,7 +231,7 @@ far2l, який працює у режимі WX.
 
  #/set:<parameter>=<value>#
  Перевизначити параметр конфігурації, подробиці дивіться ~far:config~@FarConfig@.
- Приклад: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:System.FindFolders=false
+ Приклад: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0x10001 -set:System.FindFolders=false
 
 
  У командному рядку можна вказати не більше двох шляхів (до каталогів, файлів, архівів)

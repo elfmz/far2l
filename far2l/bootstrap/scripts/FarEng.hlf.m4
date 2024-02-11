@@ -359,6 +359,10 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   Disable exception handling. This option has been designed for plugin developers,
 and it is not recommended to specify it during normal operation.
 
+  #-set:<parameter>=<value>#
+  Override the configuration parameter, see ~far:config~@FarConfig@ for details.
+  Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0x10001 -set:System.FindFolders=false
+
 
   It is possible to specify at most two paths (to folders, files or archives) or
 two commands with plugin prefix in the command line. The first path applies to the

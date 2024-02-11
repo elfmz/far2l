@@ -97,3 +97,4 @@ struct ConfigOpt
 
 extern const ConfigOpt g_cfg_opts[];
 size_t ConfigOptCount() noexcept;
+int ConfigOptGetIndex(const wchar_t *name);

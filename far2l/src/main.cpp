@@ -110,6 +110,9 @@ static void print_help(const char *self)
 			"      Edit the specified file with optional cursor position specification or empty new file.\n"
 			" -e[<line>[:<pos>]] - <command line>\n"
 			"      Executes given command line and opens editor with its output.\n"
+			" -set:<parameter>=<value>\n"
+			"      Override the configuration parameter, see far:config for details.\n"
+			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false\n"
 			"\n",
 			self);
 	WinPortHelp();
@@ -439,6 +442,11 @@ int FarAppMain(int argc, char **argv)
 		bool switchHandled = false;
 		if ((arg_w[0] == L'/' || arg_w[0] == L'-') && arg_w[1]) {
 			switchHandled = true;
+			if (!StrCmpNI(arg_w.c_str() + 1, L"SET:", 4))
+			{
+				Opt.CmdLineStrings.emplace_back(arg_w.c_str() + 5);
+				continue;
+			}
 			switch (Upper(arg_w[1])) {
 				case L'A':
 

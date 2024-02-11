@@ -522,7 +522,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void OnConsoleSwitch()
 	{
 		InterThreadLockAndWake ittlaw;
-//		_console_handle = WINPORT(ForkConsole)();
 		_console_switch_requested = true;
 	}
 
@@ -1004,6 +1003,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		WINPORT(JoinConsole)(_console_handle);
 		_console_handle = NULL;
 		OnTerminalResized();
+		_vta.OnReattached();
 
 		return ExecuteCommandCommonTail(true);
 	}

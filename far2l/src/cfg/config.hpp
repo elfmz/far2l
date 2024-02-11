@@ -616,6 +616,8 @@ struct Options
 	FARString strWindowTitle;
 
 	bool IsFirstStart;
+
+	std::vector<std::wstring> CmdLineStrings;
 };
 
 extern Options Opt;

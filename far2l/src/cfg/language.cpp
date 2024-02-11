@@ -91,8 +91,10 @@ static FILE *TryOpenLangFile(const wchar_t *Path, const wchar_t *Mask, const wch
 	}
 
 	if (!LangFile) {
-		if (!strEngFileName.IsEmpty())
+		if (!strEngFileName.IsEmpty()) {
 			strFileName = std::move(strEngFileName);
+			strLangName = L"English";
+		}
 
 		if (!strFileName.IsEmpty()) {
 			LangFile = fopen(Wide2MB(strFileName).c_str(), FOPEN_READ);

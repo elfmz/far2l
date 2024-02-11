@@ -268,7 +268,7 @@ int CommandLine::ProcessKey(FarKey Key)
 				Msg::ClearTerminalTitle, Msg::ClearTerminalQuestion, Msg::Ok, Msg::Cancel) == 0) {
 			ClearScreen(COL_COMMANDLINEUSERSCREEN);
 			SaveBackground();
-			VTLog::Reset();
+			VTLog::Reset(NULL);
 			ShowBackground();
 			Redraw();
 			//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);

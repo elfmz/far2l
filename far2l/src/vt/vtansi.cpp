@@ -334,7 +334,7 @@ struct VTAnsiContext
 
 // ========== Print Buffer functions
 
-	void ApplyConsoleTitle()
+	void ApplyConsoleTitle(HANDLE con_hnd)
 	{
 		std::wstring title(1, L'[');
 		{
@@ -342,7 +342,7 @@ struct VTAnsiContext
 			title+= StrMB2Wide(cur_title);
 		}
 		title+= L']';
-		WINPORT(SetConsoleTitle)(vt_shell->ConsoleHandle(), title.c_str());
+		WINPORT(SetConsoleTitle)(con_hnd, title.c_str());
 	}
 
 //-----------------------------------------------------------------------------
@@ -1188,7 +1188,7 @@ struct VTAnsiContext
 					cur_title.swap(os_cmd_arg);
 				}
 				os_cmd_arg.clear();
-				ApplyConsoleTitle();
+				ApplyConsoleTitle(con_hnd);
 
 			} else if (es_argc >= 1 && (es_argv[0] == 4 || es_argv[0] == 104)) {
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
@@ -1596,13 +1596,26 @@ void VTAnsi::OnStop()
 
 void VTAnsi::OnDetached()
 {
+	WINPORT(GetConsoleScrollRegion)(NULL, &_detached_state.scrl_top, &_detached_state.scrl_bottom);
 	RevertConsoleState(NULL);
 }
 
+void VTAnsi::OnReattached()
+{
+	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
+	for (auto it : _detached_state.palette) {
+		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
+	}
+	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
+	_ctx->ApplyConsoleTitle(con_hnd);
+}
+
+
 void VTAnsi::RevertConsoleState(HANDLE con_hnd)
 {
-//	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
-	for (auto &it : _ctx->orig_palette) { // restore all changed palette colors
+	// restore all changed palette colors with swapping altered values in case will reattach
+	_detached_state.palette = _ctx->orig_palette;
+	for (auto &it : _detached_state.palette) {
 		WINPORT(OverrideConsoleColor)(con_hnd, it.first, &it.second.first, &it.second.second);
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, 0, MAXSHORT);

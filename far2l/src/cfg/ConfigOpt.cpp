@@ -569,6 +569,61 @@ static void SanitizePalette()
 	}
 }
 
+void ConfigOptFromCmdLine()
+{
+	for (auto Str: Opt.CmdLineStrings)
+	{
+		auto pName = Str.c_str();
+		auto pVal = wcschr(pName, L'=');
+		if (pVal)
+		{
+			FARString strName(pName, pVal - pName);
+			pVal++;
+			int index = ConfigOptGetIndex(strName.CPtr());
+			switch (g_cfg_opts[index].type)
+			{
+				case ConfigOpt::T_DWORD:
+					if (iswdigit(*pVal)) {
+						static auto formats = { L"%u%lc", L"0x%x%lc", L"0X%x%lc" };
+						unsigned int ui; wchar_t wc;
+						for (auto fmt: formats) {
+							if (1 == swscanf(pVal, fmt, &ui, &wc)) {
+								*g_cfg_opts[index].value.dw = (DWORD) ui;
+								break;
+							}
+						}
+					}
+					break;
+				case ConfigOpt::T_INT:
+					if (iswdigit(*pVal) || (*pVal == L'-' && iswdigit(pVal[1]))) {
+						static auto formats = { L"%d%lc", L"0x%x%lc", L"0X%x%lc" };
+						int i; wchar_t wc;
+						for (auto fmt: formats) {
+							if (1 == swscanf(pVal, fmt, &i, &wc)) {
+								*g_cfg_opts[index].value.i = i;
+								break;
+							}
+						}
+					}
+					break;
+				case ConfigOpt::T_BOOL:
+					if ( !StrCmpI(pVal,L"1") || !StrCmpI(pVal,L"true") )
+						*g_cfg_opts[index].value.b = true;
+					else if ( !StrCmpI(pVal,L"0") || !StrCmpI(pVal,L"false") )
+						*g_cfg_opts[index].value.b = false;
+					break;
+				case ConfigOpt::T_STR:
+					*g_cfg_opts[index].value.str = pVal;
+					break;
+				//case ConfigOpt::REG_BINARY:
+				default:
+					break;
+			}
+		}
+	}
+	Opt.CmdLineStrings.clear();
+}
+
 void ConfigOptLoad()
 {
 	OptConfigReader cfg_reader;
@@ -580,41 +635,7 @@ void ConfigOptLoad()
 		cfg_reader.LoadOpt(g_cfg_opts[i]);
 
 	/* Command line directives */
-	for (auto Str: Opt.CmdLineStrings)
-	{
-		auto pName = Str.c_str();
-		auto pVal = wcschr(pName, L'=');
-		if (pVal)
-		{
-			FARString strName(pName, pVal - pName);
-			pVal++;
-			int i = ConfigOptGetIndex(strName.CPtr());
-			switch (g_cfg_opts[i].type)
-			{
-				case ConfigOpt::T_DWORD:
-					if (iswdigit(*pVal))
-						*g_cfg_opts[i].value.dw = (DWORD) _wtoi(pVal);
-					break;
-				case ConfigOpt::T_INT:
-					if (iswdigit(*pVal) || (*pVal == L'-' && iswdigit(pVal[1])))
-						*g_cfg_opts[i].value.i = (int) _wtoi(pVal);
-					break;
-				case ConfigOpt::T_BOOL:
-					if ( !StrCmpI(pVal,L"1") || !StrCmpI(pVal,L"true") )
-						*g_cfg_opts[i].value.b = true;
-					else if ( !StrCmpI(pVal,L"0") || !StrCmpI(pVal,L"false") )
-						*g_cfg_opts[i].value.b = false;
-					break;
-				case ConfigOpt::T_STR:
-					*g_cfg_opts[i].value.str = pVal;
-					break;
-				//case ConfigOpt::REG_BINARY:
-				default:
-					break;
-			}
-		}
-	}
-	Opt.CmdLineStrings.clear();
+	ConfigOptFromCmdLine();
 
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 

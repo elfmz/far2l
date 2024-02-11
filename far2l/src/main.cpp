@@ -112,7 +112,7 @@ static void print_help(const char *self)
 			"      Executes given command line and opens editor with its output.\n"
 			" -set:<parameter>=<value>\n"
 			"      Override the configuration parameter, see far:config for details.\n"
-			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:System.FindFolders=false\n"
+			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false\n"
 			"\n",
 			self);
 	WinPortHelp();

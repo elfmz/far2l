@@ -46,7 +46,7 @@ UserDefinedListItem::~UserDefinedListItem()
 
 bool UserDefinedListItem::operator==(const UserDefinedListItem &rhs) const
 {
-	return (Str && rhs.Str) ? (!StrCmpI(Str, rhs.Str)) : false;
+	return (Str && rhs.Str) ? (!StrCmp(Str, rhs.Str)) : false;
 }
 
 int UserDefinedListItem::operator<(const UserDefinedListItem &rhs) const
@@ -56,7 +56,7 @@ int UserDefinedListItem::operator<(const UserDefinedListItem &rhs) const
 	else if (!rhs.Str)
 		return -1;
 	else
-		return StrCmpI(Str, rhs.Str) < 0;
+		return StrCmp(Str, rhs.Str) < 0;
 }
 
 const UserDefinedListItem &UserDefinedListItem::operator=(const UserDefinedListItem &rhs)

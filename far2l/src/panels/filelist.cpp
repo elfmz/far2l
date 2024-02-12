@@ -522,8 +522,17 @@ int _cdecl SortList(const void *el1, const void *el2)
 			NameCmp = ListCaseSensitiveSort ? StrCmp(Ext1, Ext2) : StrCmpI(Ext1, Ext2);
 	}
 
-	if (!NameCmp)
+	if (!NameCmp) {
+		if (!ListCaseSensitiveSort) {
+			// fallback to case insensitive mode for a sake of predictable ordering
+			// in case of same strings when using case insensitive comparing
+			ListCaseSensitiveSort = TRUE;
+			const auto CaseSensitiveResult = SortList(el1, el2);
+			ListCaseSensitiveSort = FALSE;
+			return CaseSensitiveResult;
+		}
 		NameCmp = (SPtr1->Position > SPtr2->Position) ? 1 : -1;
+	}
 
 	return NameCmp * ListSortOrder;
 }

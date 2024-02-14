@@ -161,6 +161,7 @@ void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> 
         files.push_back(SString(relPath) + "/" + dire->d_name);
       }
     }
+    closedir(dir);
   }
 }
 #endif

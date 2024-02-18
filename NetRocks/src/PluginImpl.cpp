@@ -637,6 +637,12 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 	return 1;
 }
 
+static bool NoControls(unsigned int ControlState)
+{
+	return (ControlState & (PKF_CONTROL | PKF_ALT | PKF_SHIFT)) == 0;
+}
+
+
 int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 {
 //	fprintf(stderr, "NetRocks::ProcessKey(0x%x, 0x%x)\n", Key, ControlState);
@@ -649,8 +655,8 @@ int PluginImpl::ProcessKey(int Key, unsigned int ControlState)
 		return ByKey_TryEnterSelectedSite() ? TRUE : FALSE;
 	}
 
-	if (Key == VK_F5 || Key == VK_F6) {
-		return ByKey_TryCrossload(Key==VK_F6) ? TRUE : FALSE;
+	if ((Key == VK_F5 || Key == VK_F6) && NoControls(ControlState)) {
+		return ByKey_TryCrossload(Key == VK_F6) ? TRUE : FALSE;
 	}
 
 	if (Key == VK_F4 && !_remote

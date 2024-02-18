@@ -154,12 +154,15 @@ namespace ShellParseUtils
 		}
 
 		static const time_t now = time(NULL);
-		struct tm t{};
+		struct tm t{}, tn{};
 		struct tm *tnow = gmtime(&now);
-		if (tnow)
+		if (tnow) {
+			tn = *tnow;
 			t = *tnow;
-
+		}
+		bool has_year = false;
 		if (str_yt.find(':') == std::string::npos) {
+			has_year = true;
 			t.tm_year = DecToULong(str_yt.c_str(), str_yt.length()) - 1900;
 		} else if (sscanf(str_yt.c_str(), "%d:%d", &t.tm_hour, &t.tm_min) <= -1) {
 			perror("scanf(str_yt)");
@@ -177,6 +180,9 @@ namespace ShellParseUtils
 		else if (strcasecmp(str_month.c_str(), "oct") == 0) t.tm_mon = 9;
 		else if (strcasecmp(str_month.c_str(), "nov") == 0) t.tm_mon = 10;
 		else if (strcasecmp(str_month.c_str(), "dec") == 0) t.tm_mon = 11;
+		if (!has_year && t.tm_mon > tn.tm_mon && t.tm_year) {
+			--t.tm_year;
+		}
 
 		t.tm_mday = atoi(str_day.c_str());
 

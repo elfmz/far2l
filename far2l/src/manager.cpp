@@ -1435,10 +1435,9 @@ void Manager::RefreshCommit()
 		CtrlObject->Macro.SetMode(RefreshedFrame->GetMacroMode());
 	}
 
-	if ((Opt.ViewerEditorClock
-				&& (RefreshedFrame->GetType() == MODALTYPE_EDITOR
-						|| RefreshedFrame->GetType() == MODALTYPE_VIEWER))
-			|| (WaitInMainLoop && Opt.Clock))
+	if ((RefreshedFrame->GetType() == MODALTYPE_EDITOR || RefreshedFrame->GetType() == MODALTYPE_VIEWER)
+			? Opt.ViewerEditorClock
+			: (WaitInMainLoop && Opt.Clock))
 		ShowTime(1);
 }
 

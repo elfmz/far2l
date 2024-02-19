@@ -44,7 +44,7 @@ other possible license with no implications from the above license on them.
 */
 
 #define FARMANAGERVERSION_MAJOR 2
-#define FARMANAGERVERSION_MINOR 5
+#define FARMANAGERVERSION_MINOR 6
 
 #ifndef RC_INVOKED
 

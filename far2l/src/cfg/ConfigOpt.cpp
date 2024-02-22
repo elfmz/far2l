@@ -580,6 +580,8 @@ void ConfigOptFromCmdLine()
 			FARString strName(pName, pVal - pName);
 			pVal++;
 			int index = ConfigOptGetIndex(strName.CPtr());
+			if (index<0)
+				continue;
 			switch (g_cfg_opts[index].type)
 			{
 				case ConfigOpt::T_DWORD:

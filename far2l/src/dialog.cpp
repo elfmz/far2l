@@ -1053,44 +1053,57 @@ void Dialog::ProcessLastHistory(DialogItemEx *CurItem, int MsgIndex)
 	}
 }
 
+
+static int ToRange(int Val, int Min, int Max)
+{
+	return std::min(std::max(Val, Min), Max);
+}
+
 // Изменение координат и/или размеров итема диалога.
-BOOL Dialog::SetItemRect(unsigned ID, SMALL_RECT *Rect)
+BOOL Dialog::SetItemRect(unsigned ID, SMALL_RECT *aRect)
 {
 	CriticalSectionLock Lock(CS);
 
 	if (ID >= ItemCount)
 		return FALSE;
 
+
+	auto Rect = *aRect;
+	Rect.Left = ToRange(Rect.Left, 0, X2-X1);
+	Rect.Top = ToRange(Rect.Top, 0, Y2-Y1);
+	Rect.Right = ToRange(Rect.Right, Rect.Left, X2-X1);
+	Rect.Bottom = ToRange(Rect.Bottom, Rect.Top, Y2-Y1);
+
 	DialogItemEx *CurItem = Item[ID];
 	int Type = CurItem->Type;
-	CurItem->X1 = Rect->Left;
-	CurItem->Y1 = (Rect->Top < 0) ? 0 : Rect->Top;
+	CurItem->X1 = Rect.Left;
+	CurItem->Y1 = (Rect.Top < 0) ? 0 : Rect.Top;
 
 	if (FarIsEdit(Type)) {
 		DlgEdit *DialogEdit = (DlgEdit *)CurItem->ObjPtr;
-		CurItem->X2 = Rect->Right;
-		CurItem->Y2 = (Type == DI_MEMOEDIT ? Rect->Bottom : 0);
-		DialogEdit->SetPosition(X1 + Rect->Left, Y1 + Rect->Top, X1 + Rect->Right, Y1 + Rect->Top);
+		CurItem->X2 = Rect.Right;
+		CurItem->Y2 = (Type == DI_MEMOEDIT ? Rect.Bottom : 0);
+		DialogEdit->SetPosition(X1 + Rect.Left, Y1 + Rect.Top, X1 + Rect.Right, Y1 + Rect.Top);
 	} else if (Type == DI_LISTBOX) {
-		CurItem->X2 = Rect->Right;
-		CurItem->Y2 = Rect->Bottom;
-		CurItem->ListPtr->SetPosition(X1 + Rect->Left, Y1 + Rect->Top, X1 + Rect->Right, Y1 + Rect->Bottom);
+		CurItem->X2 = Rect.Right;
+		CurItem->Y2 = Rect.Bottom;
+		CurItem->ListPtr->SetPosition(X1 + Rect.Left, Y1 + Rect.Top, X1 + Rect.Right, Y1 + Rect.Bottom);
 		CurItem->ListPtr->SetMaxHeight(CurItem->Y2 - CurItem->Y1 + 1);
 	}
 
 	switch (Type) {
 		case DI_TEXT:
-			CurItem->X2 = Rect->Right;
+			CurItem->X2 = Rect.Right;
 			CurItem->Y2 = 0;	// ???
 			break;
 		case DI_VTEXT:
 			CurItem->X2 = 0;	// ???
-			CurItem->Y2 = Rect->Bottom;
+			CurItem->Y2 = Rect.Bottom;
 		case DI_DOUBLEBOX:
 		case DI_SINGLEBOX:
 		case DI_USERCONTROL:
-			CurItem->X2 = Rect->Right;
-			CurItem->Y2 = Rect->Bottom;
+			CurItem->X2 = Rect.Right;
+			CurItem->Y2 = Rect.Bottom;
 			break;
 	}
 

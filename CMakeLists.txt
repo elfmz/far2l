@@ -45,10 +45,11 @@ endif()
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
     if(GIT_FOUND)
-        execute_process(COMMAND "${GIT_EXECUTABLE}" show --no-patch --format=%cs HEAD
+        execute_process(COMMAND "${GIT_EXECUTABLE}" show --no-patch --format=%ci HEAD
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-            OUTPUT_VARIABLE GIT_DATE
+            OUTPUT_VARIABLE GIT_DATE_FULL
             OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(SUBSTRING ${GIT_DATE_FULL} 0 10 GIT_DATE)
         execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
             OUTPUT_VARIABLE GIT_HASH

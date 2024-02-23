@@ -10,8 +10,28 @@
 class SudoAskpassScreen
 {
 	ConsoleInputPriority _cip;
+	struct FinalScreenUpdater
+	{
+		// deliver WINDOW_BUFFER_SIZE_EVENT after screen restored
+		// to ensure proper repaints of far2l's controls
+		INPUT_RECORD ir;
+
+		FinalScreenUpdater()
+		{
+			unsigned int w{80}, h{25};
+			g_winport_con_out->GetSize(w, h);
+			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
+			ir.Event.WindowBufferSizeEvent.dwSize.X = w;
+			ir.Event.WindowBufferSizeEvent.dwSize.Y = h;
+		}
+
+		~FinalScreenUpdater()
+		{
+			g_winport_con_in->Enqueue(&ir, 1);
+		}
+	} _fsu;
+
 	SavedScreen _ss;
-	INPUT_RECORD _ir_resized;
 	unsigned int _width = 0, _height = 0;
 	std::string _title, _text, _key_hint;
 	std::wstring _input;
@@ -70,7 +90,7 @@ class SudoAskpassScreen
 			switch (ir.EventType) {
 				case WINDOW_BUFFER_SIZE_EVENT:
 					_ss.Restore();
-					_ir_resized = ir;
+					_fsu.ir = ir;
 					_need_repaint = true;
 					break;
 
@@ -209,7 +229,7 @@ public:
 		_key_hint("Confirm by <Enter> Cancel by <Esc>"),
 		_password_expected(password_expected)
 	{
-		_ir_resized.EventType = NOOP_EVENT;
+		_input.reserve(64);// to help secure cleanup in d-tor
 		Repaint();
 	}
 
@@ -218,8 +238,6 @@ public:
 		for (wchar_t &c : _input) {
 			*static_cast<volatile wchar_t *>(&c) = 0;
 		}
-		if (_ir_resized.EventType != NOOP_EVENT)
-				g_winport_con_in->Enqueue(&_ir_resized, 1);
 	}
 
 	bool Loop()

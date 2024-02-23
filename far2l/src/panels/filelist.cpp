@@ -4111,7 +4111,9 @@ bool FileList::ApplyCommand()
 			if (!strConvertedCommand.IsEmpty()) {
 				// ProcessOSAliases(strConvertedCommand);
 
-				if (!isSilent)																			// TODO: Здесь не isSilent!
+				if (CtrlObject->CmdLine->ProcessFarCommands(strConvertedCommand))	// far commands always not silent
+					;
+				else if (!isSilent)																		// TODO: Здесь не isSilent!
 				{
 					CtrlObject->CmdLine->ExecString(strConvertedCommand, FALSE, 0, 0, ListFileUsed);	// Param2 == TRUE?
 																										// if (!(Opt.ExcludeCmdHistory&EXCLUDECMDHISTORY_NOTAPPLYCMD))

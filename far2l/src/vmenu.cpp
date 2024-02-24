@@ -953,6 +953,7 @@ int VMenu::ProcessKey(FarKey Key)
 		}
 		case KEY_ESC:
 		case KEY_F10: {
+			EnableFilter(false);
 			if (!ParentDialog || CheckFlags(VMENU_COMBOBOX)) {
 				EndLoop = TRUE;
 				Modal::ExitCode = -1;
@@ -1080,13 +1081,7 @@ int VMenu::ProcessKey(FarKey Key)
 			break;
 		}
 		case KEY_CTRLALTF: {
-			bFilterEnabled = !bFilterEnabled;
-			bFilterLocked = false;
-			strFilter.Clear();
-
-			if (!bFilterEnabled)
-				RestoreFilteredItems();
-
+			EnableFilter(!bFilterEnabled);
 			DisplayObject();
 			break;
 		}
@@ -2741,4 +2736,14 @@ void VMenu::SortItems(int Direction, int Offset, BOOL SortForDataDWORD)
 	UpdateSelectPos();
 
 	SetFlags(VMENU_UPDATEREQUIRED);
+}
+
+void VMenu::EnableFilter(bool Enable)
+{
+	bFilterEnabled = Enable;
+	bFilterLocked = false;
+	strFilter.Clear();
+
+	if (!Enable)
+		RestoreFilteredItems();
 }

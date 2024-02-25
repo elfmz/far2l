@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <limits>
 
 #include "farversion.h"
+#include <sys/utsname.h>
 
 CommandLine::CommandLine()
 	:
@@ -867,72 +868,71 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.SetHelp(L"SpecCmd");//L"FarAbout");
 	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-Alt-F - filtering");
 
-	fs.Format(L"      FAR2L Version: %s", FAR_BUILD);
+	fs.Format(L"         FAR2L Version: %s", FAR_BUILD);
 	ListAbout.AddItem(fs);
-	fs.Format(L"           Platform: %s", FAR_PLATFORM);
+	fs.Format(L"              Platform: %s", FAR_PLATFORM);
 	ListAbout.AddItem(fs);
-	fs.Format(L"            Backend: %ls", WinPortBackend());
+	fs.Format(L"               Backend: %ls", WinPortBackend());
 	ListAbout.AddItem(fs);
-	fs.Format(L"ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
+	fs.Format(L"   ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
 	ListAbout.AddItem(fs);
-	fs.Format(L"              Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
+	fs.Format(L"                 Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
 	ListAbout.AddItem(fs);
 	//apiGetEnvironmentVariable("FARPID", fs2);
 	//fs = L"           PID: " + fs2;
-	fs.Format(L"                PID: %lu", (unsigned long)getpid());
+	fs.Format(L"                   PID: %lu", (unsigned long)getpid());
 	ListAbout.AddItem(fs);
 
 
 	ListAbout.AddItem(L"");
-	fs =      L"               Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
+	struct utsname un;
+	fs =      L"                 uname: ";
+	if (uname(&un)==0)
+		fs.AppendFormat(L"%s %s %s %s", un.sysname, un.release, un.version, un.machine);
 	ListAbout.AddItem(fs);
-	fs =      L"               User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
+	fs =      L"                  Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
 	ListAbout.AddItem(fs);
-	fs =      L"   XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
+	fs =      L"                  User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
 	ListAbout.AddItem(fs);
-	fs =      L"               TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
+	fs =      L"      XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
-	fs =      L"          COLORTERM: " + (apiGetEnvironmentVariable("COLORTERM", fs2) ? fs2 : L"");
+	fs =      L"                  TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
-	fs =      L"        GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
+	fs =      L"             COLORTERM: " + (apiGetEnvironmentVariable("COLORTERM", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
-	fs =      L"    DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
+	fs =      L"           GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
+	ListAbout.AddItem(fs);
+	fs =      L"       DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 
 	//apiGetEnvironmentVariable("FARLANG", fs2);
-	fs =      L"      Main language: " + Opt.strLanguage;
+	fs =      L" Main | Help languages: " + Opt.strLanguage + L" | " + Opt.strHelpLanguage;
 	ListAbout.AddItem(fs);
 
-	fs =      L"      Help language: " + Opt.strHelpLanguage;
-	ListAbout.AddItem(fs);
-
-	fs.Format(L"       OEM codepage: %u", WINPORT(GetOEMCP)() );
-	ListAbout.AddItem(fs);
-
-	fs.Format(L"      ANSI codepage: %u", WINPORT(GetACP)() );
+	fs.Format(L"  OEM | ANSI codepages: %u | %u", WINPORT(GetOEMCP)(), WINPORT(GetACP)() );
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 
 	//apiGetEnvironmentVariable("FARHOME", fs2);
-	fs =      L"      Far directory: \"" + g_strFarPath.GetMB() + L"\"";
+	fs =      L"         Far directory: \"" + g_strFarPath.GetMB() + L"\"";
 	ListAbout.AddItem(fs);
 
-	fs.Format(L"   Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
+	fs.Format(L"      Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
 	ListAbout.AddItem(fs);
 
-	fs.Format(L"    Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
+	fs.Format(L"       Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
 	ListAbout.AddItem(fs);
 
-	fs.Format(L"     Temp directory: \"%s\"", InMyTemp("").c_str() );
+	fs.Format(L"        Temp directory: \"%s\"", InMyTemp("").c_str() );
 	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 
 	npl = Plugins.GetPluginsCount();
-	fs.Format(L" Number of plugins: %d", npl);
+	fs.Format(L"    Number of plugins: %d", npl);
 	ListAbout.AddItem(fs);
 
 	for(int i = 0; i < npl; i++)

@@ -256,7 +256,9 @@ bool ProcessLocalFileTypes(const wchar_t *Name, int Mode, bool CanAddHistory, FA
 
 			// ProcessOSAliases(strCommand);
 
-			if (!isSilent) {
+			if (CtrlObject->CmdLine->ProcessFarCommands(strCommand))	// far commands always not silent
+				;
+			else if (!isSilent) {
 				CtrlObject->CmdLine->ExecString(strCommand, false, false, ListFileUsed);
 			} else {
 #if 1

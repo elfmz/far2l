@@ -298,6 +298,7 @@ private:
 	bool AddToFilter(const wchar_t *str);
 	// коректировка текущей позиции и флагов SELECTED
 	void UpdateSelectPos();
+	void EnableFilter(bool Enable);
 
 public:
 	VMenu(const wchar_t *Title, MenuDataEx *Data, int ItemCount, int MaxHeight = 0, DWORD Flags = 0,

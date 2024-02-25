@@ -805,7 +805,9 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 							}
 
 							// ProcessOSAliases(strCommand);
-							if (!isSilent) {
+							if (CtrlObject->CmdLine->ProcessFarCommands(strCommand))	// far commands always not silent
+								;
+							else if (!isSilent) {
 								if (!ActivePanel->ProcessPluginEvent(FE_COMMAND, (void *)strCommand.CPtr())) {
 									CtrlObject->CmdLine->ExecString(strCommand, FALSE, 0, 0, ListFileUsed);
 								}

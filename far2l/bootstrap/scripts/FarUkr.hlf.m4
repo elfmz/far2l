@@ -458,7 +458,7 @@ $ #Швидкий пошук у панелях#
 
 
 @CmdLineCmd
-$ # Командний рядок
+$ #Командний рядок#
  #Загальні команди#
 
  Символ вліво #Left,Ctrl-S#
@@ -526,6 +526,8 @@ $ # Командний рядок
 ^<wrap>* для локальних дисків - повне ім'я з урахуванням ~символічних~@HardSymLink@ посилань.
 
 6. ^<wrap>Про кнопкосполучення та інші особливості вбудованого емулятора терміналу ~читайте тут~@Terminal@
+
+    See also ~Special commands~@SpecCmd@.
 
 @FuncCmd
 $ #Команда управління панелями - сервісні команди#
@@ -808,7 +810,9 @@ FAR2L також вміє обробляти ~колесо миші~@MsWheel@.
 
 @SpecCmd
 $ #Special commands#
- Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
+ Special FAR pseudo-command usually starting with a prefix and a colon are processed
+in the far2l ~internal command line~@CmdLineCmd@ and
+in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@.
 
    #far:about#  - Far information, list and information about plugins.
 
@@ -2135,8 +2139,9 @@ $ #Меню користувача#
  Ви можете закрити меню на будь-якому рівні вкладеності, натиснувши #Shift-F10#.
 
  також
- список ~макроклавіш~@KeyMacroUserMenuList@, доступних у меню користувача.
- Common ~menu~@MenuCmd@ keyboard commands.
+    ~Special commands~@SpecCmd@.
+    список ~макроклавіш~@KeyMacroUserMenuList@, доступних у меню користувача.
+    Common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssoc
 $ #Асоціації файлів#
@@ -2167,7 +2172,9 @@ $ #Асоціації файлів#
 FAR2L намагається використовувати асоціації Windows для запуску цього типу
 файлів.
 
-    See also: common ~menu~@MenuCmd@ keyboard commands.
+    See also:
+      ~Special commands~@SpecCmd@.
+      common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssocModify
 $ #Налаштування асоціації файлів#
@@ -4252,7 +4259,8 @@ $ # Застосувати команду
 однойменні RAR-архіви. Команда 'explorer /select,!.!' запустить провідник і
 встановить курсор на поточному файлі чи папці.
 
-також ~"Команда операційної системи"~@OSCommands@
+ See also ~"Special commands"~@SpecCmd@
+ також ~"Команда операційної системи"~@OSCommands@
 
 
 @OSCommands

@@ -520,6 +520,7 @@ be vannak kapcsolva.
 beszúrása" parancs a fájlok helyi nevét illeszti be, elérési útjukkal és
 ~szimbolikus linkjeikkel~@HardSymLink@ együtt.
 
+    See also ~Special commands~@SpecCmd@.
 
 @FuncCmd
 $ #Panelvezérlő parancsok - rendszerparancsok#
@@ -796,7 +797,9 @@ $ #Panelvezérlő parancsok - egyebek#
 
 @SpecCmd
 $ #Special commands#
- Special FAR pseudo-command usually starting with a prefix and a colon are processed in the far2l internal command line.
+ Special FAR pseudo-command usually starting with a prefix and a colon are processed
+in the far2l ~internal command line~@CmdLineCmd@ and
+in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@.
 
    #far:about#  - Far information, list and information about plugins.
 
@@ -1923,9 +1926,9 @@ akár almenü volt megnyitva benne.
 
 
     See also:
- 
-    The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
-    Common ~menu~@MenuCmd@ keyboard commands.
+      ~Special commands~@SpecCmd@.
+      The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssoc
 $ #Fájltársítások#
@@ -1952,7 +1955,9 @@ társításokat menüből választhatjuk ki.
 #fájltípusainak használata# opció be van kapcsolva, a FAR megpróbálja a
 Windows társításait alkalmazni.
 
-    See also: common ~menu~@MenuCmd@ keyboard commands.
+    See also:
+      ~Special commands~@SpecCmd@.
+      common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssocModify
 $ #Fájltársítások: szerkesztés#
@@ -3865,6 +3870,7 @@ megegyező nevű RAR tömörített fájlokba mozgatja a kijelölt fájlokat. Az
 "explorer /select,!.!" parancs megnyitja a Windows Intézőt és ráállítja a
 kurzort az aktuális fájlra vagy mappára.
 
+    See also ~Special commands~@SpecCmd@
     Lásd még ~Operációs rendszer parancsok~@OSCommands@.
 
 

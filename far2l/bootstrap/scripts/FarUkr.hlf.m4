@@ -2583,12 +2583,22 @@ $ #Налаштування командного рядка#
 
 @AutoCompleteSettings
 $ #Налаштування автозавершення та історії#
-  #Шаблони &винятковий# also affect which commands are stored in far2l history.
-  For example, adding " *"  (mandatory in quotes) excludes from adding in history
-  commands that start with a space (similar to the bash $HISTCONTROL=ignorespace).
-  Info: in far2l history work like bash $HISTCONTROL
-   with options ignoredups (lines which match the previous line are not saved)
-   и erasedups (all previous lines matching the current line are removed from the history).
+  #Показувати список#
+  Show list with autocomplete suggestions.
+
+  #Модальний режим#
+  in mode #[x] Модальний режим# selected list item put in command line only after #Enter#,
+  in mode #[ ] Модальний режим# selected list item put in command line immediately.
+
+  #Підставляти перший відповідний варіант#
+  The first matched item is append immediately after symbols in the command line.
+
+  #Шаблони винятковий# also affect which commands are stored in far2l history.
+  For example, adding #" *"# (mandatory in quotes) excludes from adding in history
+  commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
+  Info: in far2l history work like bash #$HISTCONTROL#
+   with options #ignoredups# (lines which match the previous line are not saved)
+   and #erasedups# (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
 $ #Налаштування інформаційної панелі#

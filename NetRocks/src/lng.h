@@ -284,6 +284,7 @@ enum LanguageID
 	MSFTPListCommand,
 	MSFTPServerCodepage,
 	MFTPPassiveMode,
+	MFTPListAutodetect,
 	MFTPUseMLSDMLST,
 	MFTPCommandsPipelining,
 	MFTPRestrictDataPeer,

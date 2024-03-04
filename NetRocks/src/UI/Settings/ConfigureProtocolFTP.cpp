@@ -83,6 +83,7 @@ public:
 		_di_encryption_protocol.Add("TLS1.1");
 		_di_encryption_protocol.Add("TLS1.2");
 
+		_di_list_command.Add(MFTPListAutodetect);
 		_di_list_command.Add("LIST -la");
 		_di_list_command.Add("LIST");
 
@@ -101,7 +102,7 @@ public:
 		_di.NextLine();
 
 		_di.AddAtLine(DI_TEXT, 5,44, 0, MSFTPListCommand);
-		_i_list_command = _di.AddAtLine(DI_COMBOBOX, 45,62, 0, "LIST -la");
+		_i_list_command = _di.AddAtLine(DI_COMBOBOX, 45,62, 0, MFTPListAutodetect);
 		_di[_i_list_command].ListItems = _di_list_command.Get();
 		_di.NextLine();
 
@@ -146,7 +147,10 @@ public:
 		if (_i_explicit_encryption != -1) {
 			SetCheckedDialogControl(_i_explicit_encryption, sc.GetInt("ExplicitEncryption", 0) != 0);
 		}
-		TextToDialogControl(_i_list_command, sc.GetString("ListCommand", "LIST -la"));
+		const auto &list_cmd = sc.GetString("ListCommand", "");
+		if (!list_cmd.empty())
+			TextToDialogControl(_i_list_command, list_cmd);
+
 		SetCheckedDialogControl(_i_passive_mode, sc.GetInt("Passive", 1) != 0);
 		SetCheckedDialogControl(_i_use_mlsd_mlst, sc.GetInt("MLSDMLST", 1) != 0);
 		SetCheckedDialogControl(_i_commands_pipelining, sc.GetInt("CommandsPipelining", 0) != 0);
@@ -162,6 +166,9 @@ public:
 			}
 			std::string str;
 			TextFromDialogControl(_i_list_command, str);
+			if (!str.empty() && str.front() == '<' && str.back() == '>') {
+				str.clear();
+			}
 			sc.SetString("ListCommand", str);
 			sc.SetInt("EncryptionProtocol", GetDialogListPosition(_i_encryption_protocol));
 			sc.SetInt("Passive", IsCheckedDialogControl(_i_passive_mode) ? 1 : 0);

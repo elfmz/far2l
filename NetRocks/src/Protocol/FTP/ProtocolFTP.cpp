@@ -35,7 +35,16 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 
 	FTPThrowIfBadResponse<ProtocolAuthFailedError>(_str, reply_code, 200, 299);
 
-	_cmd.list_ = _conn->ProtocolOptions().GetString("ListCommand", "LIST -la");
+	_cmd.list_ = _conn->ProtocolOptions().GetString("ListCommand", "");
+	if (_cmd.list_.empty()) {
+		_str.assign("LIST -la .");
+		reply_code = _conn->SendRecvResponse(_str);
+		if (reply_code >= 200 && reply_code < 299) {
+			_cmd.list_ = "LIST -la";
+		} else {
+			_cmd.list_ = "LIST";
+		}
+	}
 
 	if (_conn->ProtocolOptions().GetInt("MLSDMLST", 1) != 0) {
 		_str.assign("FEAT");

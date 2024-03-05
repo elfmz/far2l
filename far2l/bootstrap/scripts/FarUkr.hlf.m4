@@ -1504,10 +1504,10 @@ $ #Режими інтерфейсу#
 клавіатурних поєднань та інших зручностей.
 
     - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
-in pure TTY| to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings,
+in pure TTY| to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings;
 TTY|X uses X11 to access clipboard):
         - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
-        - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty or in Wez's Terminal.
+        - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
         - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
 
 @ConfirmDlg

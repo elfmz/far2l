@@ -1602,6 +1602,12 @@ to listen all your keystrokes, grab clipboard content, get windows snapshots etc
 is the only secure way to run far2l remotely on untrusted server while supporting all usual far2l
 hotkeys and other UX conveniences.
 
+    - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
+to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings):
+        - #TTY|Xa backend:# renders into Apple iTerm2 terminal.
+        - #TTY|Xk backend:# renders into kovidgoyal's Kitty or in Wez's Terminal.
+        - #TTY|Xw backend:# renders into Windows Terminal.
+    List and links to supported terminals see in ~Getting Started~@Far2lGettingStarted@.
 
 @ConfirmDlg
 $ #Confirmations#

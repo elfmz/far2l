@@ -302,7 +302,7 @@ void TTYBackend::ReaderLoop()
 
 		// Enable esc expiration on Wayland as Xi not work there
 		const char *xdg_st = getenv("XDG_SESSION_TYPE");
-		if (xdg_st && strcasecmp(xdg_st, "wayland") == 0) {
+		if ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) && !_esc_expiration) {
 			_esc_expiration = 100;
 		}
 

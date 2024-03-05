@@ -227,7 +227,11 @@ void TTYBackend::ReaderThread()
 				const char *xdg_st = getenv("XDG_SESSION_TYPE");
 				bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
 
-				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !on_wayland);
+				const char *gb = getenv("GDK_BACKEND");
+				const char *qqp = getenv("QT_QPA_PLATFORM");
+				bool is_still_x11 = (gb && strcasecmp(gb, "x11") == 0) || (qqp && strcasecmp(qqp, "xcb") == 0);
+
+				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && (!on_wayland || is_still_x11));
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -303,7 +307,14 @@ void TTYBackend::ReaderLoop()
 		// Enable esc expiration on Wayland as Xi not work there
 		const char *xdg_st = getenv("XDG_SESSION_TYPE");
 		if ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) && !_esc_expiration) {
-			_esc_expiration = 100;
+
+			const char *gb = getenv("GDK_BACKEND");
+			const char *qqp = getenv("QT_QPA_PLATFORM");
+			bool is_still_x11 = (gb && strcasecmp(gb, "x11") == 0) || (qqp && strcasecmp(qqp, "xcb") == 0);
+
+			if (!is_still_x11) {
+				_esc_expiration = 100;
+			}
 		}
 
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {

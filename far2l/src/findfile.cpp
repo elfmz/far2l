@@ -536,26 +536,32 @@ static void InitInFileSearchHex()
 
 static void InitInFileSearch()
 {
-	if (!InFileSearchInited && !strFindStr.IsEmpty())
-		try {
+	if (InFileSearchInited)
+		return;
 
-			findPattern.reset(new FindPattern(CmpCase != 0 && !SearchHex, WholeWords != 0 && !SearchHex));
+	if (strFindStr.IsEmpty()) {
+		findPattern.reset();
+		return;
+	}
 
-			if (SearchHex) {
-				InitInFileSearchHex();
+	try {
+		findPattern.reset(new FindPattern(CmpCase != 0 && !SearchHex, WholeWords != 0 && !SearchHex));
 
-			} else {
-				InitInFileSearchText();
-			}
+		if (SearchHex) {
+			InitInFileSearchHex();
 
-			findPattern->GetReady();
-			InFileSearchInited = true;
-
-		} catch (std::exception &e) {
-			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
-			FARString err_str(e.what());
-			Message(MSG_WARNING, 1, Msg::Error, err_str, Msg::Ok);
+		} else {
+			InitInFileSearchText();
 		}
+
+		findPattern->GetReady();
+		InFileSearchInited = true;
+
+	} catch (std::exception &e) {
+		fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+		FARString err_str(e.what());
+		Message(MSG_WARNING, 1, Msg::Error, err_str, Msg::Ok);
+	}
 }
 
 static void ReleaseInFileSearch()

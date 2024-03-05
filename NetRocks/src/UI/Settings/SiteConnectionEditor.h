@@ -1,14 +1,17 @@
 #pragma once
 #include <string>
+#include <map>
 #include <windows.h>
 #include "../DialogUtils.h"
 #include "../../SitesConfig.h"
 
 class SiteConnectionEditor : protected BaseDialog
 {
+	friend class ProtocolOptionsScope;
 	SitesConfigLocation _sites_cfg_location;
 	std::string _initial_display_name, _display_name;
-	std::string _initial_protocol, _protocol, _host, _username, _password, _directory, _protocol_options;
+	std::string _protocol, _host, _username, _password, _directory;
+	std::map<std::string, std::string> _protocols_options;
 	unsigned int _login_mode = 0;
 	unsigned int _initial_port = 0, _port = 0;
 
@@ -40,7 +43,7 @@ class SiteConnectionEditor : protected BaseDialog
 
 	void Load();
 	bool Save();
-	void EnsureTimeStamp();
+	void EnsureTimeStamp(std::string &protocol_options);
 
 public:
 	SiteConnectionEditor(const SitesConfigLocation &sites_cfg_location, const std::string &display_name);

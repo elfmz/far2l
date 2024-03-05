@@ -35,8 +35,7 @@ ProtocolFTP::ProtocolFTP(const std::string &protocol, const std::string &host, u
 
 	FTPThrowIfBadResponse<ProtocolAuthFailedError>(_str, reply_code, 200, 299);
 
-	_cmd.list_ = _conn->ProtocolOptions().GetString("ListCommand", "LIST -la");
-
+	_cmd.list_ = _conn->ProtocolOptions().GetString("ListCommand", "");
 	if (_conn->ProtocolOptions().GetInt("MLSDMLST", 1) != 0) {
 		_str.assign("FEAT");
 		reply_code = _conn->SendRecvResponse(_str);
@@ -680,6 +679,20 @@ std::shared_ptr<IDirectoryEnumer> ProtocolFTP::NavigatedDirectoryEnum()
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerMLSD(_conn, data_transport));
 
 	} else {
+		if (_cmd.list_.empty()) {
+			try {
+				std::shared_ptr<BaseTransport> tmp_data_transport = _conn->DataCommand("LIST -la");
+				auto tmp_enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, tmp_data_transport));
+				std::string tmp_name, tmp_owner, tmp_group;
+				FileInformation tmp_file_info;
+				tmp_enumer->Enum(tmp_name, tmp_owner, tmp_group, tmp_file_info);
+				_cmd.list_ = "LIST -la";
+			} catch (std::exception &) {
+				_cmd.list_ = "LIST";
+			}
+			fprintf(stderr, "NR/FTP - list cmd: '%s'\n", _cmd.list_.c_str());
+		}
+
 		std::shared_ptr<BaseTransport> data_transport = _conn->DataCommand(_cmd.list_);
 		enumer = std::shared_ptr<IDirectoryEnumer>(new FTPDirectoryEnumerLIST(_conn, data_transport));
 	}

@@ -1648,6 +1648,12 @@ $ #Режимы интерфейса#
 единственным безопасным методом удаленного запуска far2l на не доверенном сервере с поддержкой всех привычных
 клавиатурных сочетаний и прочих удобств.
 
+    - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
+to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings):
+        - #TTY|Xa backend:# renders into Apple iTerm2 terminal.
+        - #TTY|Xk backend:# renders into kovidgoyal's Kitty or in Wez's Terminal.
+        - #TTY|Xw backend:# renders into Windows Terminal.
+    List and links to supported terminals see in ~Getting Started~@Far2lGettingStarted@.
 
 @ConfirmDlg
 $ #Подтверждения#

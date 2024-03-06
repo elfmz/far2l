@@ -135,10 +135,12 @@ $ # FAR2L features - Getting Started#
         - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
     You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.
     Wayland has security restriction for data access via X11; for full functionality run FAR2L-GUI in #xWayland# mode (see below).
-    If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
-    To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
-    to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
-    run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
+    Far2l running and selecting backend:
+        - if you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode;
+        - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
+        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
+        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -152,8 +154,8 @@ $ # FAR2L features - Getting Started#
     For adequate work FAR2L GUI in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#:
     - running from console: #GDK_BACKEND=x11 far2l#;
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
-    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run only the TTY backend:
-     - forced non-use of X11 features when running in the console: #far2l --tty --nodetect#
+    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run the TTY or only TTY|X backend:
+     - forced non-use of X11 extended keys features when running in the console: #far2l --tty --nodetect=xi#
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders

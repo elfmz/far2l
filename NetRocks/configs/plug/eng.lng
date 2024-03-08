@@ -281,6 +281,7 @@
 "Directory &list command:"
 "Server &codepage"
 "&Passive mode"
+"<Autodetect>"
 "Use &MLSD/MLST if possible"
 "Enable commands pipe&lining"
 "En&sure data connection peer matches server"

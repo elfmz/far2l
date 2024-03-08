@@ -155,7 +155,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 		int First = TRUE;
 
 		while (WPanel->GetSelNameCompat(&strFileNameL, FileAttrL)) {
-			QuoteSpaceOnly(strFileNameL);
+			EscapeSpace(strFileNameL); //QuoteSpaceOnly(strFileNameL);
 
 			// Вот здесь фиг его знает - нужно/ненужно...
 			// если будет нужно - раскомментируем :-)

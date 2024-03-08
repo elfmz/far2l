@@ -2681,12 +2681,22 @@ feature is disabled while a macro is being recorded or executed.
 
 @AutoCompleteSettings
 $ #Settings dialog: AutoComplete & History#
+  #Show list#
+  Show list with autocomplete suggestions.
+
+  #Modal mode#
+  in mode #[x] Modal mode# selected list item put in command line only after #Enter#,
+  in mode #[ ] Modal mode# selected list item put in command line immediately.
+
+  #Append first matched item#
+  The first matched item is append immediately after symbols in the command line.
+
   #Exceptions wildcards# also affect which commands are stored in far2l history.
-  For example, adding " *"  (mandatory in quotes) excludes from adding in history
-  commands that start with a space (similar to the bash $HISTCONTROL=ignorespace).
-  Info: in far2l history work like bash $HISTCONTROL
-   with options ignoredups (lines which match the previous line are not saved)
-   и erasedups (all previous lines matching the current line are removed from the history).
+  For example, adding #" *"# (mandatory in quotes) excludes from adding in history
+  commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
+  Info: in far2l history work like bash #$HISTCONTROL#
+   with options #ignoredups# (lines which match the previous line are not saved)
+   and #erasedups# (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
 $ #Настройка информационной панели#

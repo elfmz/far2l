@@ -1,8 +1,8 @@
 freebsd_test_task:
     freebsd_instance:
-        image_family: freebsd-13-2
+        image_family: freebsd-14-0
     name: cirrus/FreeBSD
-    install_script: pkg install -y cmake git pkgconf bash wx32-gtk3 libssh openssl libnfs neon libarchive samba413 pcre uchardet xerces-c3
+    install_script: pkg install -y cmake git pkgconf bash wx32-gtk3 libssh openssl libnfs neon libarchive samba416 pcre uchardet xerces-c3
     script: mkdir build && cd build && cmake .. && make -j $(getconf _NPROCESSORS_ONLN) && ./install/far2l --help
 
 macos_test_task:

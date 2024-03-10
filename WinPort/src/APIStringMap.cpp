@@ -98,8 +98,14 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 			* and skips white space and punctuation characters for
 			* NORM_IGNORESYMBOLS.
 			*/
-			if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
-				continue;
+			if (flags & NORM_IGNORESYMBOLS) {
+				if (uint64_t(wch) <= 0xffff) {
+					if (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE))
+						continue;
+				} else if (iswspace(wch) || iswpunct(wch)) {
+					continue;
+				}
+			}
 			len++;
 		}
 		return len;
@@ -110,9 +116,15 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 		for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
 		{
 			WCHAR wch = *src;
-			if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
-				continue;
-			*dst_ptr++ = towupper(wch);
+			if (uint64_t(wch) <= 0xffff) {
+				if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+					continue;
+				*dst_ptr++ = toupperW(wch);
+			} else {
+				if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
+					continue;
+				*dst_ptr++ = towupper(wch);
+			}
 			dstlen--;
 		}
 	}
@@ -121,9 +133,17 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 		for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
 		{
 			WCHAR wch = *src;
-			if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
-				continue;
-			*dst_ptr++ = towlower(wch);
+			if (uint64_t(wch) <= 0xffff) {
+				if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+					continue;
+				*dst_ptr++ = tolowerW(wch);
+
+			} else {
+				if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
+					continue;
+				*dst_ptr++ = towlower(wch);
+			}
+
 			dstlen--;
 		}
 	}
@@ -137,8 +157,12 @@ WINPORT_DECL(LCMapStringEx, INT, (LPCWSTR name, DWORD flags, LPCWSTR src, INT sr
 		for (dst_ptr = dst; srclen && dstlen; src++, srclen--)
 		{
 			WCHAR wch = *src;
-			if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch)))
+			if (uint64_t(wch) <= 0xffff) {
+				if ((flags & NORM_IGNORESYMBOLS) && (get_char_typeW(wch) & (C1_PUNCT | C1_SPACE)))
+					continue;
+			} else if ((flags & NORM_IGNORESYMBOLS) && (iswspace(wch) || iswpunct(wch))) {
 				continue;
+			}
 			*dst_ptr++ = wch;
 			dstlen--;
 		}
@@ -182,7 +206,6 @@ INT WINAPI WINPORT(CompareStringEx)(LPCWSTR locale, DWORD flags, LPCWSTR str1, I
 	if (len2 < 0) len2 = wcslen(str2);
 
 	ret = wine_compare_string(flags, str1, len1, str2, len2);
-
 	if (ret) /* need to translate result */
 		return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
 	return CSTR_EQUAL;
@@ -198,6 +221,89 @@ WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags,
 	int l1 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString1, cchCount1, &wstr1[0], wstr1.size() - 1 );
 	int l2 = WINPORT(MultiByteToWideChar)(CP_ACP, 0, lpString2, cchCount2, &wstr2[0], wstr2.size() - 1);
 	return WINPORT(CompareString)( Locale, dwCmpFlags, &wstr1[0], l1, &wstr2[0], l2);
+}
+
+static BOOL WINPORT(GetStringType)( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
+{
+	static const unsigned char type2_map[16] =
+	{
+		C2_NOTAPPLICABLE,      /* unassigned */
+		C2_LEFTTORIGHT,        /* L */
+		C2_RIGHTTOLEFT,        /* R */
+		C2_EUROPENUMBER,       /* EN */
+		C2_EUROPESEPARATOR,    /* ES */
+		C2_EUROPETERMINATOR,   /* ET */
+		C2_ARABICNUMBER,       /* AN */
+		C2_COMMONSEPARATOR,    /* CS */
+		C2_BLOCKSEPARATOR,     /* B */
+		C2_SEGMENTSEPARATOR,   /* S */
+		C2_WHITESPACE,         /* WS */
+		C2_OTHERNEUTRAL,       /* ON */
+		C2_RIGHTTOLEFT,        /* AL */
+		C2_NOTAPPLICABLE,      /* NSM */
+		C2_NOTAPPLICABLE,      /* BN */
+		C2_OTHERNEUTRAL        /* LRE, LRO, RLE, RLO, PDF */
+	};
+
+	if (!src)
+	{
+		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+		return FALSE;
+	}
+
+	if (count == -1) count = wcslen(src) + 1;
+	switch(type)
+	{
+	case CT_CTYPE1:
+		while (count--) *chartype++ = get_char_typeW( *src++ ) & 0xfff;
+		break;
+	case CT_CTYPE2:
+		while (count--) *chartype++ = type2_map[get_char_typeW( *src++ ) >> 12];
+		break;
+	case CT_CTYPE3:
+		{
+			while (count--)
+			{
+				int c = *src;
+				WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
+
+				type1 = get_char_typeW( *src++ ) & 0xfff;
+				/* try to construct type3 from type1 */
+				if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
+				if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
+				if ((c>=0x30A0)&&(c<=0x30FF)) type3 |= C3_KATAKANA;
+				if ((c>=0x3040)&&(c<=0x309F)) type3 |= C3_HIRAGANA;
+				if ((c>=0x4E00)&&(c<=0x9FAF)) type3 |= C3_IDEOGRAPH;
+				if (c == 0x0640) type3 |= C3_KASHIDA;
+				if ((c>=0x3000)&&(c<=0x303F)) type3 |= C3_SYMBOL;
+
+				if ((c>=0xD800)&&(c<=0xDBFF)) type3 |= C3_HIGHSURROGATE;
+				if ((c>=0xDC00)&&(c<=0xDFFF)) type3 |= C3_LOWSURROGATE;
+
+				if ((c>=0xFF00)&&(c<=0xFF60)) type3 |= C3_FULLWIDTH;
+				if ((c>=0xFF00)&&(c<=0xFF20)) type3 |= C3_SYMBOL;
+				if ((c>=0xFF3B)&&(c<=0xFF40)) type3 |= C3_SYMBOL;
+				if ((c>=0xFF5B)&&(c<=0xFF60)) type3 |= C3_SYMBOL;
+				if ((c>=0xFF21)&&(c<=0xFF3A)) type3 |= C3_ALPHA;
+				if ((c>=0xFF41)&&(c<=0xFF5A)) type3 |= C3_ALPHA;
+				if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_FULLWIDTH;
+				if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_SYMBOL;
+
+				if ((c>=0xFF61)&&(c<=0xFFDC)) type3 |= C3_HALFWIDTH;
+				if ((c>=0xFF61)&&(c<=0xFF64)) type3 |= C3_SYMBOL;
+				if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_KATAKANA;
+				if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_ALPHA;
+				if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_HALFWIDTH;
+				if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_SYMBOL;
+				*chartype++ = type3;
+			}
+			break;
+		}
+	default:
+		WINPORT(SetLastError)( ERROR_INVALID_PARAMETER );
+		return FALSE;
+	}
+	return TRUE;
 }
 
 //////////////////////////
@@ -222,21 +328,37 @@ extern "C" {
 
 	WINPORT_DECL(IsCharLower, BOOL, (WCHAR ch))
 	{
+		if (uint64_t(ch) <= 0xffff) {
+			WORD type;
+			return WINPORT(GetStringType)( CT_CTYPE1, &ch, 1, &type ) && (type & C1_LOWER);
+		}
 		return iswlower(ch);
 	}
 
 	WINPORT_DECL(IsCharUpper, BOOL, (WCHAR ch))
 	{
+		if (uint64_t(ch) <= 0xffff) {
+			WORD type;
+			return WINPORT(GetStringType)( CT_CTYPE1, &ch, 1, &type ) && (type & C1_UPPER);
+		}
 		return iswupper(ch);
 	}
 
 	WINPORT_DECL(IsCharAlphaNumeric, BOOL, (WCHAR ch))
 	{
+		if (uint64_t(ch) <= 0xffff) {
+			WORD type;
+			return WINPORT(GetStringType)( CT_CTYPE1, &ch, 1, &type ) && (type & (C1_ALPHA|C1_DIGIT));
+		}
 		return iswalnum(ch);
 	}
 
 	WINPORT_DECL(IsCharAlpha, BOOL, (WCHAR ch))
 	{
+		if (uint64_t(ch) <= 0xffff) {
+			WORD type;
+			return WINPORT(GetStringType)( CT_CTYPE1, &ch, 1, &type ) && (type & C1_ALPHA);
+		}
 		return iswalpha(ch);
 	}
 

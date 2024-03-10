@@ -41,7 +41,7 @@ class SudoAskpassScreen
 		RES_CANCEL
 	} _result = RES_PENDING;
 	bool _password_expected = false;
-	bool _need_repaint = false;
+	bool _need_repaint = true;
 
 	// 0 - password is empty, 1 - non-empty but yet not hashed, otherwise - hash value
 	uint64_t _panno_hash = 0;
@@ -137,18 +137,31 @@ class SudoAskpassScreen
 				ci.Attributes = (x == _rect.Left || x == _rect.Right || y == _rect.Top || y == _rect.Bottom)
 					? AttrFrame : AttrInner;
 				COORD pos{x, y};
-				g_winport_con_out->Write(ci, pos);
+				// force repant if frame is damaged (likely by app's interface painted from other thread)
+				if (!_need_repaint && (y == _rect.Top || x == _rect.Left || x == _rect.Right)) {
+					CHAR_INFO ci_orig{};
+					g_winport_con_out->Read(ci_orig, pos);
+					if (ci_orig.Char.UnicodeChar != ci.Char.UnicodeChar || ci_orig.Attributes != ci.Attributes) {
+						_need_repaint = true;
+					}
+				}
+				if (_need_repaint) {
+					g_winport_con_out->Write(ci, pos);
+				}
 			}
 		}
 
-		g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-		WriteCentered(_title, _rect.Top + 1);
-		WriteCentered(_key_hint, _rect.Top + 3);
+		if (_need_repaint) {
+			g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			WriteCentered(_title, _rect.Top + 1);
+			WriteCentered(_key_hint, _rect.Top + 3);
 
-		g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-		WriteCentered(_text, _rect.Top + 2);
-		if (_password_expected) {
-			PaintPasswordPanno();
+			g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+			WriteCentered(_text, _rect.Top + 2);
+			if (_password_expected) {
+				PaintPasswordPanno();
+			}
+			_need_repaint = false;
 		}
 	}
 
@@ -246,19 +259,17 @@ public:
 			if (g_winport_con_in->WaitForNonEmptyWithTimeout(700, _cip)) {
 				DispatchInput();
 
-			} else if (_password_expected) {
-				const uint64_t hash = TypedPasswordHash();
-				if (_panno_hash != hash) {
-					_panno_hash = hash;
-					_need_repaint = true;
+			} else {
+				if (_password_expected) {
+					const uint64_t hash = TypedPasswordHash();
+					if (_panno_hash != hash) {
+						_panno_hash = hash;
+					}
 				}
-			}
 
-			if (_result != RES_PENDING)
-				return _result == RES_OK;
+				if (_result != RES_PENDING)
+					return _result == RES_OK;
 
-			if (_need_repaint) {
-				_need_repaint = false;
 				Repaint();
 			}
 		}

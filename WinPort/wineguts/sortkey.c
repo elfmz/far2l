@@ -195,6 +195,12 @@ static void eval_weights(WCHAR ch1, WCHAR ch2, unsigned int types, unsigned int 
     if ((*r1 == *r2) && (types & CASE_WEIGHT) != 0) {
         *r1 = (w1 >> 4) & 0x0f;
         *r2 = (w2 >> 4) & 0x0f;
+        if (*r1 && *r2 && *r1 != *r2) {
+            // dirty workaround to make BIG letters be first in sort
+            int t = *r1;
+            *r1 = *r2;
+            *r2 = t;
+        }
     }
 }
 

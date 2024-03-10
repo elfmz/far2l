@@ -135,10 +135,12 @@ $ # FAR2L features - Getting Started#
         - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
     You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.
     Wayland has security restriction for data access via X11; for full functionality run FAR2L-GUI in #xWayland# mode (see below).
-    If you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode.
-    To force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
-    to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
-    run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
+    Far2l running and selecting backend:
+        - if you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode;
+        - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
+        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
+        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -152,8 +154,8 @@ $ # FAR2L features - Getting Started#
     For adequate work FAR2L GUI in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#:
     - running from console: #GDK_BACKEND=x11 far2l#;
     - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
-    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run only the TTY backend:
-     - forced non-use of X11 features when running in the console: #far2l --tty --nodetect#
+    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run the TTY or only TTY|X backend:
+     - forced non-use of X11 extended keys features when running in the console: #far2l --tty --nodetect=xi#
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -200,29 +202,33 @@ and in #terminal settings# option #OSC 52 must be allowed#
  #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
     - Internal terminal in FAR2L-GUI (Linux, macOS, *BSD),
 see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
-(keys and clipboard by FAR2L TTY extensions support)
+(~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(keys by kovidgoyal's kitty keyboard protocol; for clipboard need turn on OSC 52)
+(~TTY|k backend~@UIBackends@: keys by kovidgoyal's kitty keyboard protocol;
+for clipboard need turn on OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; keys in Windows by win32-input-mode which enable by default; for clipboard need turn on OSC 52)
+(~TTY|k backend~@UIBackends@: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol;
+~TTY|w backend~@UIBackends@: keys in Windows by win32-input-mode which enable by default;
+for clipboard need turn on OSC 52)
 [in macOS & in Windows in wezterm the kitty keyboard protocol support not working]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(keys by iTerm2 "raw keyboard" protocol; for clipboard need turn on OSC 52)
+(~TTY|a backend~@UIBackends@: keys by iTerm2 "raw keyboard" protocol;
+for clipboard need turn on OSC 52)
 
     - Windows Terminal
-(keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
     - putty4far2l (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
-(keys and clipboard by FAR2L TTY extensions support)
+(~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
-(keys and clipboard by FAR2L TTY extensions support)
+(~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
 
     - putty-nd (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
-(keys and clipboard by FAR2L TTY extensions support)
+(~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
 
 
  #Location of FAR2L settings and history#
@@ -1602,6 +1608,13 @@ to listen all your keystrokes, grab clipboard content, get windows snapshots etc
 is the only secure way to run far2l remotely on untrusted server while supporting all usual far2l
 hotkeys and other UX conveniences.
 
+    - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
+in pure TTY| to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings;
+TTY|X uses X11 to access clipboard):
+        - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
+        - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
+        - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
+    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted@.
 
 @ConfirmDlg
 $ #Confirmations#

@@ -123,14 +123,18 @@ WINE_UNICODE_INLINE int wine_is_dbcs_leadbyte( const union cptable *table, unsig
 
 WINE_UNICODE_INLINE WCHAR tolowerW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_lower[];
-    return ch + wine_casemap_lower[wine_casemap_lower[((USHORT)ch) >> 8] + (ch & 0xff)];
+    extern const USHORT wine_casemap_lower[];
+    USHORT chu = (USHORT)ch;
+    chu+= wine_casemap_lower[wine_casemap_lower[chu >> 8] + (chu & 0xff)];
+    return chu;
 }
 
 WINE_UNICODE_INLINE WCHAR toupperW( WCHAR ch )
 {
-    extern const WCHAR wine_casemap_upper[];
-    return ch + wine_casemap_upper[wine_casemap_upper[((USHORT)ch) >> 8] + (ch & 0xff)];
+    extern const USHORT wine_casemap_upper[];
+    USHORT chu = (USHORT)ch;
+    chu+= wine_casemap_upper[wine_casemap_upper[chu >> 8] + (chu & 0xff)];
+    return chu;
 }
 
 /* the character type contains the C1_* flags in the low 12 bits */

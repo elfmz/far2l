@@ -139,10 +139,12 @@ $ # Особенности FAR2L - начало работы#
         - #TTY# - чистый терминальный режим, никаких иксовых зависимостей, UX с некоторыми ограничениями (полноценно работает при запуске в соответствующих эмуляторах терминалов, используя их расширенные возможности передачи клавиш, см. список ниже).
     Версию FAR2L и используемый бекенд можно увидеть в заголовке окна или через ~псевдо-команду~@SpecCmd@ #far:about#.
     В Wayland получение данных через X11 ограничено; для полноценной работы запускайте FAR2L-GUI в режиме #xWayland# (см. ниже).
-    Если у Вас установлена версия GUI, то при запуске будет пытаться использоваться она.
-    Для принудительного запуска терминального варианта TTY|Xi используйте в командной строке: #far2l --tty#;
-    для принудительного запуска минимального варианта TTY используйте в командной строке: #far2l --tty --nodetect --ee#;
-    фоновый запуск FAR2L-GUI из командной строки без блокировки терминала: #far2l --notty &#
+    Запуск far2l и выбор бекенда:
+        - если у Вас установлена версия GUI, то при запуске будет пытаться использоваться она;
+        - для принудительного запуска терминального варианта TTY|Xi используйте в командной строке: #far2l --tty#;
+        - для принудительного запуска терминального варианта TTY|X используйте в командной строке: #far2l --tty --nodetect=xi#;
+        - для принудительного запуска минимального варианта TTY используйте в командной строке: #far2l --tty --nodetect --ee#;
+        - фоновый запуск FAR2L-GUI из командной строки без блокировки терминала: #far2l --notty &#
     (подробнее про ключи запуска в ~Параметры командной строки~@CmdLine@ или #far2l --help#).
 
 
@@ -156,8 +158,8 @@ $ # Особенности FAR2L - начало работы#
     Для адекватной работы FAR GUI в Wayland помогает запустить в режиме #xWayland#, указав переменную среды #GDK_BACKEND=x11#:
     - запуск из консоли: #GDK_BACKEND=x11 far2l#;
     - внутри ярлыка #/usr/share/applications/far2l.desktop# заменить #Exec=far2l# на #Exec=env GDK_BACKEND=x11 far2l#
-    При запуске в эмуляторе терминала режим xWayland не даёт полноценного доступа и тут совет запускать только бекенд TTY:
-    - принудительное неиспользование возможностей X11 при запуске в консоли: #far2l --tty --nodetect#
+    При запуске в эмуляторе терминала режим xWayland не даёт полноценного доступа и тут совет запускать бекенд TTY или только TTY|X:
+    - принудительное неиспользование расширенных клавиатурных возможностей X11 при запуске в консоли: #far2l --tty --nodetect=xi#
 
 
  #Костыль для macOS#, если far2l в macOS рагулярно запрашивает доступ к папкам
@@ -204,29 +206,33 @@ $ # Особенности FAR2L - начало работы#
  #Терминалы и ssh-клиенты, поддерживающие расширенные сочетания клавиш FAR2L для чистой терминальной версии FAR2L TTY#
     - Встроенный терминал FAR2L-GUI (Linux, macOS, *BSD),
 см. ~Режимы интерфейса~@UIBackends@ и в помощи #NetRocks plugin# раздел #Command line and remote FAR2L#
-(клавиши и буфер обмена через FAR2L TTY extensions support)
+(~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
-(клавиши через kovidgoyal's kitty keyboard protocol; для взаимодействия с клипбордом включить OSC 52)
+(~TTY|k режим~@UIBackends@: клавиши через kovidgoyal's kitty keyboard protocol;
+для взаимодействия с клипбордом включить OSC 52)
 
     - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(клавиши в Linux, FreeBSD через kovidgoyal's kitty keyboard protocol; клавиши в Windows через win32-input-mode, который включен по умолчанию; для взаимодействия с клипбордом включить OSC 52)
+(~TTY|k режим~@UIBackends@: клавиши в Linux, FreeBSD через kovidgoyal's kitty keyboard protocol;
+~TTY|w режим~@UIBackends@: клавиши в Windows через win32-input-mode, который включен по умолчанию;
+для взаимодействия с клипбордом включить OSC 52)
 [в macOS и в Windows в wezterm поддержка режима kitty не работает]
 
     - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
-(клавиши через iTerm2 "raw keyboard" protocol; для взаимодействия с клипбордом включить OSC 52)
+(~TTY|a режим~@UIBackends@: клавиши через iTerm2 "raw keyboard" protocol; для взаимодействия с клипбордом включить OSC 52)
 
     - Windows Terminal [в win11 стоит из коробки, в win10 надо ставить]
-(клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52; присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
+(~TTY|w режим~@UIBackends@: клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52;
+присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
     - putty4far2l (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
-(клавиши и буфер обмена через FAR2L TTY extensions support)
+(~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
-(клавиши и буфер обмена через FAR2L TTY extensions support)
+(~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
 
     - putty-nd (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
-(клавиши и буфер обмена через FAR2L TTY extensions support)
+(~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
 
 
  #Расположение персональных настроек FAR2L и истории#
@@ -1648,6 +1654,13 @@ $ #Режимы интерфейса#
 единственным безопасным методом удаленного запуска far2l на не доверенном сервере с поддержкой всех привычных
 клавиатурных сочетаний и прочих удобств.
 
+    - Terminal emulators specific Backends (uses these terminal extensions to get state of all keyboard keys;
+in pure TTY| to access clipboard you must turn on OSC 52 in both the FAR2L settings and the terminal settings;
+TTY|X uses X11 to access clipboard):
+        - #TTY|a# or #TTY|Xa backend:# renders into Apple iTerm2 terminal.
+        - #TTY|k# or #TTY|Xk backend:# renders into kovidgoyal's Kitty (and any terminals with kovidgoyal's kitty keyboard protocol).
+        - #TTY|w# or #TTY|Xw backend:# renders into Windows Terminal (and any terminals with win32 input mode).
+    List and links to supported terminals see in ~FAR2L features - Getting Started~@Far2lGettingStarted@.
 
 @ConfirmDlg
 $ #Подтверждения#

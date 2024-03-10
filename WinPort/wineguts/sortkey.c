@@ -270,7 +270,8 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         }
 
         eval_weights(dstr1[dpos1], dstr2[dpos2], types, &ce1, &ce2);
-        if (ce1 - ce2) return ce1 - ce2;
+        if (ce1 && ce2 && ce1 != ce2)
+            return ce1 - ce2;
         if (!ce1 || ce2)
           inc_str_pos(&str1, &len1, &dpos1, &dlen1);
         if (!ce2 || ce1)

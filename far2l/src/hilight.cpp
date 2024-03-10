@@ -198,6 +198,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 
 		Colors.bTransparent = (dwMarkChar & 0xFF0000);
+		dwMarkChar &= 0x0000FFFF;
 
 		if (dwMarkLen) {
 			if (dwMarkLen > HIGHLIGHT_MAX_MARK_LENGTH)
@@ -205,10 +206,9 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 
 			memcpy(&Colors.Mark[0], strMark.GetBuffer(), sizeof(wchar_t) * dwMarkLen);
 			strMark.ReleaseBuffer();
-
 		}
-		else if (dwMarkChar & 0x0000FFFF) {
-			Colors.Mark[0] = dwMarkChar & 0x0000FFFF;
+		else if (dwMarkChar) {
+			Colors.Mark[0] = dwMarkChar;
 			dwMarkLen = 1;
 		}
 

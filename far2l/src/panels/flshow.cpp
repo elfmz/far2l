@@ -947,13 +947,13 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 
 							{ // Draw mark str
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
-
-								if ( Opt.Highlight && Width > 1 && hl->MarkLen) {
+								if ( Opt.Highlight && Width > 2 && hl->MarkLen ) {
 
 									const auto OldColor = GetColor();
-									const size_t outlen = std::min((size_t)(Width - 1), hl->MarkLen);
+									size_t	ng = Width, outlen;
 
-									Width -= outlen;
+									outlen = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
+									Width -= ng;
 
 									if (!ShowStatus)
 										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKCHAR);
@@ -961,7 +961,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 									Text(hl->Mark, outlen);
 									SetColor(OldColor);
 								}
-							} // Draw mark str
+							}
 
 							const wchar_t *NamePtr = ListData[ListPos]->strName;
 							const wchar_t *NameCopy = NamePtr;

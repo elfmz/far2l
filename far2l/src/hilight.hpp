@@ -58,9 +58,9 @@ struct HighlightDataColor
 	DWORD64 Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor];
 							// if HIBYTE == 0xFF then transparent
 							// nonzero upper 3 bytes meaning foreground RGB, nonzero lower 3 bytes meaning background RGB
-	wchar_t	Mark[HIGHLIGHT_MAX_MARK_LENGTH + 1]; 	// + null terminator
-	size_t	MarkLen;
-	bool	bTransparent;
+	wchar_t	 Mark[HIGHLIGHT_MAX_MARK_LENGTH + 1]; 	// + null terminator
+	uint32_t MarkLen;
+	bool	 bTransparent;
 };
 
 class HighlightFiles

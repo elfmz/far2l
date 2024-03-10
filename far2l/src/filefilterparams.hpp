@@ -156,7 +156,7 @@ public:
 	bool GetSize(const wchar_t **SizeAbove, const wchar_t **SizeBelow) const;
 	bool GetAttr(DWORD *AttrSet, DWORD *AttrClear) const;
 	void GetColors(HighlightDataColor *Colors) const;
-	wchar_t GetMarkChar() const;
+
 	int GetSortGroup() const { return FHighlight.SortGroup; }
 	bool GetContinueProcessing() const { return FHighlight.bContinueProcessing; }
 	DWORD GetFlags(enumFileFilterFlagsType FType) const { return FFlags[FType]; }

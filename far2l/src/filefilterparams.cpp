@@ -260,11 +260,6 @@ void FileFilterParams::GetColors(HighlightDataColor *Colors) const
 	*Colors = FHighlight.Colors;
 }
 
-wchar_t FileFilterParams::GetMarkChar() const
-{
-	return (wchar_t)(FHighlight.Colors.MarkChar & 0xffff);	// higher half used for something else
-}
-
 bool FileFilterParams::FileInFilter(const FileListItem &fli, uint64_t CurrentTime) const
 {
 	return FileInFilterImpl(fli.strName, fli.FileAttr, fli.FileSize, fli.CreationTime, fli.AccessTime,
@@ -381,12 +376,17 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 	const wchar_t Format1b[] = L"%-22.22ls %lc %-38.38ls %-2.2ls %lc %ls";
 	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
 	const wchar_t Format1d[] = L"   %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
-	const wchar_t Format2[] = L"%-3.3ls %lc %-38.38ls %-3.3ls %lc %ls";
+
+	const wchar_t Format2[] = L"%ls %lc %-38.38ls %-3.3ls %lc %ls";
+//	const wchar_t Format2[] = L"%-5.5ls %lc %-38.38ls %-3.3ls %lc %ls";
 	const wchar_t DownArrow = 0x2193;
 	const wchar_t *Name, *Mask;
-	wchar_t MarkChar[] = L"\" \"";
 	DWORD IncludeAttr, ExcludeAttr;
 	bool UseMask, UseSize, UseDate, RelativeDate;
+
+	HighlightDataColor hl;
+	#define	MARK_STRING_PREVIEW_LENGTH	5
+	wchar_t MarkStrPrw[MARK_STRING_PREVIEW_LENGTH + 4] = {0};
 
 	if (bPanelType) {
 		Name = Title;
@@ -396,10 +396,20 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 		ExcludeAttr = FILE_ATTRIBUTE_DIRECTORY;
 		RelativeDate = UseDate = UseSize = false;
 	} else {
-		MarkChar[1] = FF->GetMarkChar();
 
-		if (!MarkChar[1])
-			*MarkChar = 0;
+		FF->GetColors(&hl);
+		size_t	ng = 0, mcl = 0;
+
+		if (hl.MarkLen) {
+			ng = MARK_STRING_PREVIEW_LENGTH;
+			mcl = StrSizeOfCells(hl.Mark, hl.MarkLen, ng, false);
+			memcpy(MarkStrPrw, hl.Mark, mcl * sizeof(wchar_t));
+			ng = StrCellsCount( MarkStrPrw, mcl );
+		}
+		for (int i = ng; i < MARK_STRING_PREVIEW_LENGTH; i++, mcl++) {
+			MarkStrPrw[mcl] = 32;
+		}
+		MarkStrPrw[mcl] = 0;
 
 		Name = FF->GetTitle();
 		UseMask = FF->GetMask(&Mask);
@@ -442,7 +452,7 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 		if (FF->GetContinueProcessing())
 			SizeDate[2] = DownArrow;
 
-		strDest.Format(Format2, MarkChar, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
+		strDest.Format(Format2, MarkStrPrw, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
 				UseMask ? Mask : L"");
 	} else {
 		SizeDate[2] = 0;
@@ -461,6 +471,27 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 
 	RemoveTrailingSpaces(strDest);
 }
+
+struct filterpar_highlight_state_s
+{
+	CHAR_INFO vbuff[32 * 4];
+	uint32_t outlen[4];
+	HighlightDataColor hl;
+
+//	CHAR_INFO vbuff[64];	// draw buffer
+//	uint64_t color;			// rgb | flags | index
+//	uint32_t id;
+//	uint32_t offset;
+//	uint32_t index;			// foreground or background index
+//	bool bTransparent;		// color = 0
+//	std::function<void()> RefreshColor;
+//	size_t Offset;
+
+//	intptr_t WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2);
+//LONG_PTR WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+
+//	color_panel_state();
+};
 
 enum enumFileFilterConfig
 {
@@ -552,14 +583,23 @@ enum enumFileFilterConfig
 	ID_FF_MAKETRANSPARENT,
 };
 
-static void HighlightDlgUpdateUserControl(CHAR_INFO *VBufColorExample, HighlightDataColor &Colors)
-{
-	const wchar_t *ptr;
-	DWORD64 Color;
-	const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
+#if 0
 
-	for (int j = 0; j < 4; j++) {
-		Color = (Colors.Color[HIGHLIGHTCOLORTYPE_FILE][j] & 0xFFFFFFFFFFFF00FF);
+static void HighlightDlgUpdateUserControl(filterpar_highlight_state_s *fphlstate)
+{
+	DWORD64 Color, ColorM;
+	const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
+	static const wchar_t *wstrFilenameExample = L"filename.ext";
+	HighlightDataColor *hl = &fphlstate->hl;
+	size_t	ng = 12, mcl;
+	mcl = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
+	ng = StrCellsCount( hl->Mark, mcl );
+
+	for (int i = 0; i < 4; i++) {
+
+		CHAR_INFO *vbuff = &fphlstate->vbuff[26 * i];
+
+		Color = (hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFFFFFFFFFFFF00FF);
 		if (Color) {
 			if (Color & 0x000000FFFFFF0000) {
 				Color|= FOREGROUND_TRUECOLOR;
@@ -568,31 +608,45 @@ static void HighlightDlgUpdateUserControl(CHAR_INFO *VBufColorExample, Highlight
 				Color|= BACKGROUND_TRUECOLOR;
 			}
 		} else {
-			Color = FarColorToReal(FarColor[j]);
+			Color = FarColorToReal(FarColor[i]);
 		}
 
-		if (Colors.MarkChar & 0x0000FFFF)
-			ptr = Msg::HighlightExample2;
+		if (hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF)
+			ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF;
 		else
-			ptr = Msg::HighlightExample1;
+			ColorM = Color;
 
-		for (int k = 0; k < 15; k++) {
-			VBufColorExample[15 * j + k].Char.UnicodeChar = ptr[k];
-			VBufColorExample[15 * j + k].Attributes = Color;
+		vbuff->Char.UnicodeChar = BoxSymbols[BS_V2];
+		vbuff->Attributes = FarColorToReal(COL_PANELBOX);
+		++vbuff;
+
+		for (int j = 0; j < mcl ; j++) {
+			vbuff[j].Char.UnicodeChar = hl->Mark[j];
+			vbuff[j].Attributes = ColorM;
 		}
+		vbuff += mcl;
 
-		if (Colors.MarkChar & 0x0000FFFF) {
-			VBufColorExample[15 * j + 1].Char.UnicodeChar = (WCHAR)Colors.MarkChar & 0x0000FFFF;
-
-			if (Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][j] & 0x00FF)
-				VBufColorExample[15 * j + 1].Attributes =
-						Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][j] & 0x00FF;
+		for (int j = 0; j < 12 ; j++) {
+			vbuff[j].Char.UnicodeChar = wstrFilenameExample[j];
+			vbuff[j].Attributes = Color;
 		}
+		vbuff += 12;
 
-		VBufColorExample[15 * j].Attributes = FarColorToReal(COL_PANELBOX);
-		VBufColorExample[15 * j + 14].Attributes = FarColorToReal(COL_PANELBOX);
+		for (int j = 0; j < 12 - ng ; j++) { // trailing spaces
+			vbuff[j].Char.UnicodeChar = 32;
+			vbuff[j].Attributes = Color;
+		}
+		vbuff += 12 - ng;
+
+		fphlstate->outlen[i] = 12 + mcl + (12 - ng) + 2;
+
+		vbuff->Char.UnicodeChar = BoxSymbols[BS_V1];
+		vbuff->Attributes = FarColorToReal(COL_PANELBOX);
 	}
+
 }
+
+#endif
 
 void FilterDlgRelativeDateItemsUpdate(HANDLE hDlg, bool bClear)
 {
@@ -626,11 +680,75 @@ void FilterDlgRelativeDateItemsUpdate(HANDLE hDlg, bool bClear)
 
 LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
+	filterpar_highlight_state_s *fphlstate = (filterpar_highlight_state_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+	bool	bColorConfig = (fphlstate);
+
 	switch (Msg) {
 		case DN_INITDIALOG: {
 			FilterDlgRelativeDateItemsUpdate(hDlg, false);
 			return TRUE;
 		}
+
+		case DN_DRAWDLGITEM: {
+
+			if (Param1 != ID_HER_COLOREXAMPLE) 
+				break;
+
+			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
+			static const wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
+			static const wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
+			static const wchar_t *wstrFilenameExample = L"filename.ext";
+			static const wchar_t *wstrSpaces = L"                               ";
+
+			HighlightDataColor *hl = &fphlstate->hl;
+			DWORD64 Color, ColorM, ColorB = FarColorToReal(COL_PANELBOX);
+
+			FarDialogItem di;
+			SendDlgMessage(hDlg, DM_GETDLGITEMSHORT, Param1, (LONG_PTR)&di);
+			SMALL_RECT drect;
+			SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&drect);
+
+			size_t	ng = 12, mcl;
+			mcl = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
+			ng = StrCellsCount( hl->Mark, mcl );
+
+			for (int i = 0; i < 4; i++) {
+
+				int x = drect.Left + di.X1;
+				int y = drect.Top + di.Y1 + i;
+
+				Color = (hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFFFFFFFFFFFF00FF);
+				if (Color) {
+					if (Color & 0x000000FFFFFF0000) {
+						Color|= FOREGROUND_TRUECOLOR;
+					}
+					if (Color & 0xFFFFFF0000000000) {
+						Color|= BACKGROUND_TRUECOLOR;
+					}
+				} else {
+					Color = FarColorToReal(FarColor[i]);
+				}
+
+				if (hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF)
+					ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF;
+				else
+					ColorM = Color;
+
+				Text(x, y, ColorB, VerticalLine0, 1);
+				x++;
+				Text(x, y, ColorM, hl->Mark, mcl);
+				x += ng;
+				Text(x, y, Color, wstrFilenameExample, 12);
+				x += 12;
+				Text(x, y, Color, wstrSpaces, 12-ng);
+				x += (12 - ng);
+				Text(x, y, ColorB, VerticalLine1, 1);
+			}
+
+			return 0;
+		}
+		break;
+
 		case DN_BTNCLICK: {
 			if (Param1 == ID_FF_CURRENT || Param1 == ID_FF_BLANK)		// Current и Blank
 			{
@@ -662,7 +780,6 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			} else if (Param1 == ID_FF_RESET)		// Reset
 			{
 				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
-				LONG_PTR ColorConfig = SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_FF_MASKEDIT, (LONG_PTR)L"*");
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_FF_SIZEFROMEDIT, (LONG_PTR)L"");
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_FF_SIZETOEDIT, (LONG_PTR)L"");
@@ -671,7 +788,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					SendDlgMessage(hDlg, DM_SETCHECK, I, BSTATE_3STATE);
 				}
 
-				if (!ColorConfig)
+				if (!bColorConfig)
 					SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_DIRECTORY, BSTATE_UNCHECKED);
 
 				FarListPos LPos = {0, 0};
@@ -682,7 +799,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_DATERELATIVE, BSTATE_UNCHECKED);
 				FilterDlgRelativeDateItemsUpdate(hDlg, true);
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_MATCHATTRIBUTES,
-						ColorConfig ? BSTATE_UNCHECKED : BSTATE_CHECKED);
+						bColorConfig ? BSTATE_UNCHECKED : BSTATE_CHECKED);
 				SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 				break;
 			} else if (Param1 == ID_FF_MAKETRANSPARENT) {
@@ -702,34 +819,32 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		case DN_MOUSECLICK:
 
 			if ((Msg == DN_BTNCLICK && Param1 >= ID_HER_NORMALFILE && Param1 <= ID_HER_SELECTEDCURSORMARKING)
-					|| (Msg == DN_MOUSECLICK && Param1 == ID_HER_COLOREXAMPLE
-							&& ((MOUSE_EVENT_RECORD *)Param2)->dwButtonState
-									== FROM_LEFT_1ST_BUTTON_PRESSED)) {
-				HighlightDataColor *EditData =
-						(HighlightDataColor *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+					|| (Msg == DN_MOUSECLICK && Param1 == ID_HER_COLOREXAMPLE && 
+						((MOUSE_EVENT_RECORD *)Param2)->dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)) {
 
 				if (Msg == DN_MOUSECLICK) {
 					Param1 = ID_HER_NORMALFILE + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
 
 					if (((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.X == 1
-							&& (EditData->MarkChar & 0x0000FFFF))
+							&& (fphlstate->hl.MarkLen))
 						Param1 = ID_HER_NORMALMARKING + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
 				}
 
 				// Color[0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor]
-				DWORD64 Color = EditData->Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
+				DWORD64 Color = fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
 				GetColorDialogForFileFilter(Color);
-				EditData->Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2] = Color;
-				FarDialogItem *ColorExample =
-						(FarDialogItem *)malloc(SendDlgMessage(hDlg, DM_GETDLGITEM, ID_HER_COLOREXAMPLE, 0));
-				SendDlgMessage(hDlg, DM_GETDLGITEM, ID_HER_COLOREXAMPLE, (LONG_PTR)ColorExample);
-				wchar_t MarkChar[2];
-				// MarkChar это FIXEDIT размером в 1 символ так что проверять размер строки не надо
-				SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)MarkChar);
-				EditData->MarkChar = *MarkChar;
-				HighlightDlgUpdateUserControl(ColorExample->Param.VBuf, *EditData);
-				SendDlgMessage(hDlg, DM_SETDLGITEM, ID_HER_COLOREXAMPLE, (LONG_PTR)ColorExample);
-				free(ColorExample);
+				fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2] = Color;
+				
+				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_MARKEDIT, 0);
+				if (nLength > HIGHLIGHT_MAX_MARK_LENGTH ) {
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
+				}
+				else {
+					SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
+					fphlstate->hl.MarkLen = nLength;
+				}
+
+//				HighlightDlgUpdateUserControl(fphlstate);
 				return TRUE;
 			}
 
@@ -737,18 +852,17 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		case DN_EDITCHANGE:
 
 			if (Param1 == ID_HER_MARKEDIT) {
-				HighlightDataColor *EditData =
-						(HighlightDataColor *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-				FarDialogItem *ColorExample =
-						(FarDialogItem *)malloc(SendDlgMessage(hDlg, DM_GETDLGITEM, ID_HER_COLOREXAMPLE, 0));
-				SendDlgMessage(hDlg, DM_GETDLGITEM, ID_HER_COLOREXAMPLE, (LONG_PTR)ColorExample);
-				wchar_t MarkChar[2];
-				// MarkChar это FIXEDIT размером в 1 символ так что проверять размер строки не надо
-				SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)MarkChar);
-				EditData->MarkChar = *MarkChar;
-				HighlightDlgUpdateUserControl(ColorExample->Param.VBuf, *EditData);
-				SendDlgMessage(hDlg, DM_SETDLGITEM, ID_HER_COLOREXAMPLE, (LONG_PTR)ColorExample);
-				free(ColorExample);
+
+				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_MARKEDIT, 0);
+				if (nLength > HIGHLIGHT_MAX_MARK_LENGTH ) {
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
+				}
+				else {
+					SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
+					fphlstate->hl.MarkLen = nLength;
+				}
+
+//				HighlightDlgUpdateUserControl(fphlstate);
 				return TRUE;
 			}
 
@@ -766,8 +880,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				bTemp = bTemp && (!*temp || CheckFileSizeStringFormat(temp));
 
 				if (!bTemp) {
-					LONG_PTR ColorConfig = SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-					Message(MSG_WARNING, 1, ColorConfig ? Msg::FileHilightTitle : Msg::FileFilterTitle,
+					Message(MSG_WARNING, 1, bColorConfig ? Msg::FileHilightTitle : Msg::FileFilterTitle,
 							Msg::BadFileSizeFormat, Msg::Ok);
 					return FALSE;
 				}
@@ -781,7 +894,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 {
-	const wchar_t VerticalLine[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+	static const wchar_t VerticalLine[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 			BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
 	// Временная маска.
 	CFileMask FileMask;
@@ -878,8 +991,8 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    64,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevSock       },
 
 		{DI_TEXT,        -1,          15, 0,      15, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
-		{DI_TEXT,        7,           16, 0,      16, {},                                  0,                                      Msg::HighlightMarkChar           },
-		{DI_FIXEDIT,     5,           16, 5,      16, {},                                  0,                                      L""                              },
+		{DI_TEXT,        16,          16, 0,      16, {},                                  0,                                      Msg::HighlightMarking            },
+		{DI_EDIT,        5,           16, 14,     16, {},                                  0,                                      L""                              },
 		{DI_CHECKBOX,    0,           16, 0,      16, {},                                  0,                                      Msg::HighlightTransparentMarkChar},
 
 		{DI_BUTTON,      5,           17, 0,      17, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName1          },
@@ -891,7 +1004,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_BUTTON,      5,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName4          },
 		{DI_BUTTON,      0,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking4           },
 
-		{DI_USERCONTROL, 73 - 15 - 1, 17, 73 - 2, 20, {},                                  DIF_NOFOCUS,                            L""                              },
+		{DI_USERCONTROL, 54,          17, 79,     20, {},                                  DIF_NOFOCUS,                            L""                              },
 		{DI_CHECKBOX,    5,           21, 0,      21, {},                                  0,                                      Msg::HighlightContinueProcessing },
 
 		{DI_TEXT,        0,           17, 0,      17, {},                                  DIF_SEPARATOR,                          L""                              },
@@ -946,16 +1059,18 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 				+ (int)FilterDlg[ID_HER_NORMALFILE].strData.GetLength()
 				- (FilterDlg[ID_HER_NORMALFILE].strData.Contains(L'&') ? 1 : 0) + 1;
 
-	CHAR_INFO VBufColorExample[15 * 4] = {};
-	HighlightDataColor Colors;
-	FF->GetColors(&Colors);
-	HighlightDlgUpdateUserControl(VBufColorExample, Colors);
-	FilterDlg[ID_HER_COLOREXAMPLE].VBuf = VBufColorExample;
-	wchar_t MarkChar[] = {(wchar_t)Colors.MarkChar & 0x0000FFFF, 0};
-	FilterDlg[ID_HER_MARKEDIT].strData = MarkChar;
-	FilterDlg[ID_HER_MARKTRANSPARENT].Selected = (Colors.MarkChar & 0xFF0000 ? 1 : 0);
+	filterpar_highlight_state_s fphlstate;
+
+	FF->GetColors(&fphlstate.hl);
+//	HighlightDlgUpdateUserControl(&fphlstate);
+	FilterDlg[ID_HER_COLOREXAMPLE].VBuf = fphlstate.vbuff;
+
+	FilterDlg[ID_HER_MARKEDIT].strData = fphlstate.hl.Mark;
+	FilterDlg[ID_HER_MARKTRANSPARENT].Selected = (fphlstate.hl.bTransparent ? 1 : 0);
+
 	FilterDlg[ID_HER_CONTINUEPROCESSING].Selected = (FF->GetContinueProcessing() ? 1 : 0);
 	FilterDlg[ID_FF_NAMEEDIT].strData = FF->GetTitle();
+
 	const wchar_t *FMask;
 	FilterDlg[ID_FF_MATCHMASK].Selected = FF->GetMask(&FMask) ? 1 : 0;
 	FilterDlg[ID_FF_MASKEDIT].strData = FMask;
@@ -1095,7 +1210,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	}
 
 	Dialog Dlg(FilterDlg, ARRAYSIZE(FilterDlg), FileFilterConfigDlgProc,
-			(LONG_PTR)(ColorConfig ? &Colors : nullptr));
+			(LONG_PTR)(ColorConfig ? &fphlstate : nullptr));
 	Dlg.SetHelp(ColorConfig ? L"HighlightEdit" : L"Filter");
 	Dlg.SetPosition(-1, -1, FilterDlg[ID_FF_TITLE].X2 + 4, FilterDlg[ID_FF_TITLE].Y2 + 2);
 	Dlg.SetAutomation(ID_FF_MATCHMASK, ID_FF_MASKEDIT, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
@@ -1130,12 +1245,9 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			if (FilterDlg[ID_FF_MATCHMASK].Selected && !FileMask.Set(FilterDlg[ID_FF_MASKEDIT].strData, 0))
 				continue;
 
-			if (FilterDlg[ID_HER_MARKTRANSPARENT].Selected)
-				Colors.MarkChar|= 0x00FF0000;
-			else
-				Colors.MarkChar&= 0x0000FFFF;
+			fphlstate.hl.bTransparent = FilterDlg[ID_HER_MARKTRANSPARENT].Selected;
 
-			FF->SetColors(&Colors);
+			FF->SetColors(&fphlstate.hl);
 			FF->SetContinueProcessing(FilterDlg[ID_HER_CONTINUEPROCESSING].Selected != 0);
 			FF->SetTitle(FilterDlg[ID_FF_NAMEEDIT].strData);
 			FF->SetMask(FilterDlg[ID_FF_MATCHMASK].Selected != 0, FilterDlg[ID_FF_MASKEDIT].strData);

@@ -8,7 +8,7 @@
 
 #include "unicode.h"
 
-static const WCHAR table[5856] =
+static const USHORT table[5856] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0100, 0x0160, 0x0100,
@@ -933,7 +933,7 @@ static const WCHAR table[5856] =
     0x05d1, 0x05bf, 0x05db, 0x05bf, 0x05e4, 0x05bf, 0x0000, 0x0000
 };
 
-static const WCHAR compatmap_table[8154] =
+static const USHORT compatmap_table[8154] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0100, 0x0150, 0x0160, 0x0100,
@@ -2200,7 +2200,7 @@ static const WCHAR compatmap_table[8154] =
     0x25cb
 };
 
-static const WCHAR *get_compatmap_entry( WCHAR ch, unsigned int *len )
+static const USHORT *get_compatmap_entry( WCHAR ch, unsigned int *len )
 {
     unsigned short offset_offs = compatmap_table[compatmap_table[((USHORT)ch) >> 8] + ((ch >> 4) & 0xf)] + (ch & 0xf);
     unsigned short start = compatmap_table[offset_offs];
@@ -2217,7 +2217,7 @@ static const WCHAR *get_compatmap_entry( WCHAR ch, unsigned int *len )
 
 unsigned int DECLSPEC_HIDDEN wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
-    const WCHAR *ptr = NULL;
+    const USHORT *ptr = NULL;
     unsigned int res, len, dst_pos = 0;
 
     *dst = ch;

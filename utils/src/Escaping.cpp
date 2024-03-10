@@ -91,14 +91,14 @@ void QuoteCmdArg(std::wstring &str) { QuoteCmdArgT(str); }
 
 void QuoteCmdArgIfNeed(std::string &str)
 {
-	if (str.find_first_of(" \"\'\r\n\t&|;,()`$") != std::string::npos) {
+	if (str.find_first_of(" \\\"\'\r\n\t&|;,()`$") != std::string::npos) {
 		QuoteCmdArg(str);
 	}
 }
 
 void QuoteCmdArgIfNeed(std::wstring &str)
 {
-	if (str.find_first_of(L" \"\'\r\n\t&|;,()`$") != std::wstring::npos) {
+	if (str.find_first_of(L" \\\"\'\r\n\t&|;,()`$") != std::wstring::npos) {
 		QuoteCmdArg(str);
 	}
 }

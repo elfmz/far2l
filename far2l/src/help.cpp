@@ -1266,7 +1266,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		DeleteEndSlash(strFullPath, true);
 		strFullPath+= L"/";
 		strFullPath+= strNewTopic.CPtr() + (IsSlash(strNewTopic.At(0)) ? 1 : 0);
-		BOOL addSlash = DeleteEndSlash(strFullPath);
+		bool addSlash = DeleteEndSlash(strFullPath);
 		ConvertNameToFull(strFullPath, strNewTopic);
 		strFullPath.Format(addSlash ? HelpFormatLink : HelpFormatLinkModule, strNewTopic.CPtr(),
 				wcschr(StackData.strSelTopic.CPtr() + 2, HelpEndLink) + 1);

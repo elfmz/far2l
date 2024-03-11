@@ -838,6 +838,11 @@ void TTYBackend::OnConsoleSaveWindowState()
 {
 }
 
+void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
+{
+
+}
+
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {
@@ -908,11 +913,6 @@ void TTYBackend::OnConsoleExit()
 		_async_cond.notify_all();
 	}
 	KickAss();
-}
-
-void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
-{
-
 }
 
 bool TTYBackend::OnConsoleIsActive()

@@ -309,10 +309,13 @@ void InterfaceSettings()
 		Builder.AddCheckbox(Msg::ConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 		Builder.AddCheckbox(Msg::ConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
 
-		DialogItemEx *CursorEdit = Builder.AddIntEditField(&Opt.CursorBlinkTime, 3);
-		Builder.AddTextAfter(CursorEdit, Msg::ConfigCursorBlinkInt);
-
 		const DWORD supported_tweaks = ApplyConsoleTweaks();
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_BLINK_RATE) {
+
+			DialogItemEx *CursorEdit = Builder.AddIntEditField(&Opt.CursorBlinkTime, 3);
+			Builder.AddTextAfter(CursorEdit, Msg::ConfigCursorBlinkInt);
+		}
+
 		int ChangeFontID = -1;
 		DialogItemEx *ChangeFontItem = nullptr;
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {

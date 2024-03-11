@@ -1607,7 +1607,7 @@ void WinPortPanel::OnConsoleSetTweaksSync( wxCommandEvent& event )
 
 DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	DWORD64 out = TWEAK_STATUS_SUPPORT_CHANGE_FONT;
+	DWORD64 out = TWEAK_STATUS_SUPPORT_CHANGE_FONT | TWEAK_STATUS_SUPPORT_BLINK_RATE;
 
 	if (_paint_context.IsSharpSupported())
 		out|= TWEAK_STATUS_SUPPORT_PAINT_SHARP;

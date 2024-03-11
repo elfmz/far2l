@@ -187,6 +187,10 @@ static unsigned int eval_weight(WCHAR ch, unsigned int types)
         out|= (0xe - (cw & 0xe)) << 23; // workaround to make big letters be first
         out<<= 1;
         out|= (cw & 1);
+
+        if ((get_char_typeW(ch) & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+            out|= 0x20000000;
+        }
     }
     return out;
 }

@@ -292,11 +292,11 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 	return Ret;
 }
 
-BOOL DeleteEndSlash(std::wstring &strPath, bool AllEndSlash)
+bool DeleteEndSlash(std::wstring &strPath, bool AllEndSlash)
 {
-	BOOL out = FALSE;
+	bool out = false;
 	while (!strPath.empty() && IsSlash(strPath.back())) {
-		out = TRUE;
+		out = true;
 		strPath.pop_back();
 		if (!AllEndSlash)
 			break;
@@ -304,7 +304,7 @@ BOOL DeleteEndSlash(std::wstring &strPath, bool AllEndSlash)
 	return out;
 }
 
-BOOL DeleteEndSlash(FARString &strPath, bool AllEndSlash)
+bool DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 {
 	size_t LenToSlash = strPath.GetLength();
 
@@ -315,10 +315,10 @@ BOOL DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 	}
 
 	if (LenToSlash == strPath.GetLength())
-		return FALSE;
+		return false;
 
 	strPath.Truncate(LenToSlash);
-	return TRUE;
+	return true;
 }
 
 bool CutToSlash(FARString &strStr, bool bInclude)

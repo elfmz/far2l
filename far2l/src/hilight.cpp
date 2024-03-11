@@ -62,7 +62,7 @@ struct HighlightStrings
 			*Mask, *NormalColor, *SelectedColor, *CursorColor, *SelectedCursorColor, *MarkCharNormalColor,
 			*MarkCharSelectedColor, *MarkCharCursorColor, *MarkCharSelectedCursorColor, *MarkChar,
 			*ContinueProcessing, *UseDate, *DateType, *DateAfter, *DateBefore, *DateRelative, *UseSize,
-			*SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList;
+			*SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList, *MarkStr;
 };
 
 static const HighlightStrings HLS = {"UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet",
@@ -70,7 +70,7 @@ static const HighlightStrings HLS = {"UseAttr", "IncludeAttributes", "ExcludeAtt
 		"SelectedCursorColor", "MarkCharNormalColor", "MarkCharSelectedColor", "MarkCharCursorColor",
 		"MarkCharSelectedCursorColor", "MarkChar", "ContinueProcessing", "UseDate", "DateType", "DateAfter",
 		"DateBefore", "DateRelative", "UseSize", "SizeAboveS", "SizeBelowS", "HighlightEdit",
-		"HighlightList"};
+		"HighlightList", "MarkStr" };
 
 static const char fmtFirstGroup[] = "Group%d";
 static const char fmtUpperGroup[] = "UpperGroup%d";
@@ -191,7 +191,31 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 			cfg_reader.GetULL(HLS.MarkCharCursorColor, 0);
 	Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] =
 			cfg_reader.GetULL(HLS.MarkCharSelectedCursorColor, 0);
-	Colors.MarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
+
+	{ // Load Mark str
+		FARString strMark = cfg_reader.GetString(HLS.MarkStr, L"");
+		DWORD dwMarkLen = strMark.GetLength();
+		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
+
+		Colors.bTransparent = (dwMarkChar & 0xFF0000);
+		dwMarkChar &= 0x0000FFFF;
+
+		if (dwMarkLen) {
+			if (dwMarkLen > HIGHLIGHT_MAX_MARK_LENGTH)
+				dwMarkLen = HIGHLIGHT_MAX_MARK_LENGTH;
+
+			memcpy(&Colors.Mark[0], strMark.GetBuffer(), sizeof(wchar_t) * dwMarkLen);
+			strMark.ReleaseBuffer();
+		}
+		else if (dwMarkChar) {
+			Colors.Mark[0] = dwMarkChar;
+			dwMarkLen = 1;
+		}
+
+		Colors.Mark[dwMarkLen] = 0; // terminate
+		Colors.MarkLen = dwMarkLen;
+	}
+
 	HData->SetColors(&Colors);
 	HData->SetContinueProcessing(cfg_reader.GetInt(HLS.ContinueProcessing, 0) != 0);
 }
@@ -261,9 +285,11 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{0xFF00, 0xFF00, 0xFF00, 0xFF00, // Color[0]
-		0xFF00, 0xFF00, 0xFF00, 0xFF00}, // Color[1]
-		0x00FF0000 // MarkChar
+		{0xFF00, 0xFF00, 0xFF00, 0xFF00,	// Color[0][4]
+		0xFF00, 0xFF00, 0xFF00, 0xFF00},	// Color[1][4]
+		{0}, 								// wchar_t	Mark
+		0,     								// size_t	MarkLen;
+		true   								// bool	bTransparent;
 	};
 
 const HighlightDataColor ZeroColors{0};
@@ -309,8 +335,10 @@ static void ApplyColors(HighlightDataColor *DestColors, HighlightDataColor *SrcC
 	}
 
 	// Унаследуем пометку из Src если она не прозрачная
-	if (!(SrcColors->MarkChar & 0x00FF0000))
-		DestColors->MarkChar = SrcColors->MarkChar;
+	if (!SrcColors->bTransparent && SrcColors->MarkLen) {
+		DestColors->MarkLen = SrcColors->MarkLen;
+		memcpy(&DestColors->Mark[0], &SrcColors->Mark[0], sizeof(wchar_t) * SrcColors->MarkLen);
+	}
 }
 
 /*
@@ -344,8 +372,8 @@ static void ApplyFinalColors(HighlightDataColor *Colors)
 		}
 
 	// Если символ пометки прозрачный то его как бы и нет вообще.
-	if (Colors->MarkChar & 0x00FF0000)
-		Colors->MarkChar = 0;
+//	if (Colors->MarkChar & 0x00FF0000)
+//		Colors->MarkChar = 0;
 
 	// Параноя но случится может:
 	// Обработаем black on black снова чтоб обработались унаследованые цвета.
@@ -769,20 +797,24 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	DWORD DateType;
 	FILETIME DateAfter, DateBefore;
 	bool bRelative;
+
 	cfg_writer.SetInt(HLS.UseDate,
 			CurHiData->GetDate(&DateType, &DateAfter, &DateBefore, &bRelative) ? 1 : 0);
 	cfg_writer.SetUInt(HLS.DateType, DateType);
 	cfg_writer.SetPOD(HLS.DateAfter, DateAfter);
 	cfg_writer.SetPOD(HLS.DateBefore, DateBefore);
 	cfg_writer.SetInt(HLS.DateRelative, bRelative ? 1 : 0);
+
 	const wchar_t *SizeAbove = nullptr, *SizeBelow = nullptr;
 	cfg_writer.SetInt(HLS.UseSize, CurHiData->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0);
 	cfg_writer.SetString(HLS.SizeAbove, SizeAbove);
 	cfg_writer.SetString(HLS.SizeBelow, SizeBelow);
+
 	DWORD AttrSet = 0, AttrClear = 0;
 	cfg_writer.SetInt(HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
 	cfg_writer.SetUInt((bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes), AttrSet);
 	cfg_writer.SetUInt((bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes), AttrClear);
+
 	HighlightDataColor Colors{};
 	CurHiData->GetColors(&Colors);
 	cfg_writer.SetULL(HLS.NormalColor, Colors.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
@@ -800,7 +832,20 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 			Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_UNDERCURSOR]);
 	cfg_writer.SetULL(HLS.MarkCharSelectedCursorColor,
 			Colors.Color[HIGHLIGHTCOLORTYPE_MARKCHAR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
-	cfg_writer.SetUInt(HLS.MarkChar, Colors.MarkChar);
+
+	{ // Save Mark str
+		FARString strMark = L"";
+		DWORD dwMarkChar = (Colors.MarkLen == 1) ? Colors.Mark[0] : 0;
+		dwMarkChar |= (0xFF0000 * Colors.bTransparent);
+
+		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
+
+		if (Colors.MarkLen > 1)
+			strMark = Colors.Mark;
+
+		cfg_writer.SetString(HLS.MarkStr, strMark);
+	}
+
 	cfg_writer.SetInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
 
@@ -856,8 +901,14 @@ void HighlightFiles::SaveHiData()
 
 static bool operator==(const HighlightDataColor &color1, const HighlightDataColor &color2)
 {
-	if (color1.MarkChar != color2.MarkChar)
+	if (color1.MarkLen != color2.MarkLen)
 		return false;
+	if (color1.bTransparent != color2.bTransparent)
+		return false;
+
+	if (color1.MarkLen)
+		if (memcmp(&color1.Mark[0], &color2.Mark[0], sizeof(wchar_t) * color1.MarkLen))
+			return false;
 
 	for (size_t i = 0; i < ARRAYSIZE(color1.Color); ++i) {
 		for (size_t j = 0; j < ARRAYSIZE(color1.Color[i]); ++j) {
@@ -874,7 +925,7 @@ struct HighlightDataColorHash
 {
 	size_t operator()(const HighlightDataColor &color) const
 	{
-		size_t out = color.MarkChar;
+		size_t out = color.MarkLen * 0xFFFF;
 		for (size_t i = 0; i < ARRAYSIZE(color.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(color.Color[i]); ++j) {
 				out^= color.Color[i][j] + ((i ^ j) << 16);

@@ -12366,27 +12366,27 @@ l:
 "Редагування розмальовки файлів"
 "Мяняць афарбоўку файлаў"
 
-HighlightMarkChar
-"Оп&циональный символ пометки,"
-"Optional markin&g character,"
-"Volitelný &znak pro označení určených souborů,"
-"Optionale Markierun&g mit Zeichen,"
-"Megadható &jelölő karakter"
-"Opcjonalny znak &wyróżniający zaznaczone pliki,"
-"Ca&racter opcional para marcar archivos específicos"
-"Оп&ціональний символ позначки,"
-"Ап&цыянальны сімвал адзнакі,"
+HighlightMarking
+"Ма&ркировка"
+"Markin&g"
+"O&značení"
+"Markierun&g"
+"&Jelzés"
+"Cecho&wanie"
+"Ma&rcado"
+"Ма&ркування"
+"М&аркіроўка"
 
 HighlightTransparentMarkChar
-"прозра&чный"
-"tra&nsparent"
-"průh&ledný"
-"tra&nsparent"
+"Прозра&чный"
+"Tra&nsparent"
+"Průh&ledný"
+"Tra&nsparent"
 "át&látszó"
-"prze&zroczyste"
-"tra&nsparente"
-"проз&орий"
-"празр&ысты"
+"Prze&zroczyste"
+"Tra&nsparente"
+"Проз&орий"
+"Празр&ысты"
 
 HighlightColors
 " Цвета файлов (\"чёрный на чёрном\" - цвет по умолчанию) "
@@ -12506,7 +12506,7 @@ HighlightExample2
 "║ fájlneve.kit│"
 "║ nazwa.roz   │"
 "║ nombre.ext  │"
-"║filename.ext │"
+"║ filename.ext│"
 "║ filename.ext│"
 
 HighlightContinueProcessing

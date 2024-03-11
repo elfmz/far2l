@@ -85,6 +85,7 @@ void GetRealCursorPos(SHORT &X, SHORT &Y);
 void ScrollScreen(int Count);
 
 void Text(int X, int Y, int Color, const WCHAR *Str);
+void Text(int X, int Y, int Color, const WCHAR *Str, size_t Length);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
 void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);

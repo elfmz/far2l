@@ -191,8 +191,10 @@ static unsigned int eval_weight(WCHAR ch, unsigned int types)
     }
     if (ch != '.') {
         const unsigned short cht = get_char_typeW(ch);
-        if ((cht & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+        if ((cht & C1_DIGIT) != 0) {
             out|= 0x40000000;
+        }else if ((cht & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+            out|= 0x60000000;
         } else if ((cht & C1_PUNCT) == 0) {
             out|= 0x20000000;
         } else {
@@ -277,7 +279,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         ce1 = eval_weight(dstr1[dpos1], types);
         ce2 = eval_weight(dstr2[dpos2], types);
         if (ce1 && ce2 && ce1 != ce2)
-            return ce1 - ce2;
+            return (ce1 > ce2) ? 1 : -1;
         if (!ce1 || ce2)
           inc_str_pos(&str1, &len1, &dpos1, &dlen1);
         if (!ce2 || ce1)
@@ -309,7 +311,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         if (ce2) break;
         inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
-    return len1 - len2;
+    return (len1 > len2) ? 1 : ((len1 < len2) ? -1 : 0);
 }
 
 int wine_compare_string(int flags, const WCHAR *str1, int len1,

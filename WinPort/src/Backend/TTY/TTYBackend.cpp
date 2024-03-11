@@ -910,6 +910,11 @@ void TTYBackend::OnConsoleExit()
 	KickAss();
 }
 
+void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
+{
+
+}
+
 bool TTYBackend::OnConsoleIsActive()
 {
 	return false;//true;

@@ -127,6 +127,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecScreen, "ScreenSaver", &Opt.ScreenSaver, 0},
 	{true,  NSecScreen, "ScreenSaverTime", &Opt.ScreenSaverTime, 5},
 	{false, NSecScreen, "DeltaXY", &Opt.ScrSize.dwDeltaXY, 0},
+	{true,  NSecScreen, "CursorBlinkInterval", &Opt.CursorBlinkTime, 500},
 
 	{true,  NSecCmdline, "UsePromptFormat", &Opt.CmdLine.UsePromptFormat, 0},
 	{true,  NSecCmdline, "PromptFormat", &Opt.CmdLine.strPromptFormat, L"$p$# "},
@@ -642,6 +643,12 @@ void ConfigOptLoad()
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 
 	SanitizeHistoryCounts();
+
+	if (Opt.CursorBlinkTime < 100)
+		Opt.CursorBlinkTime = 100;
+
+	if (Opt.CursorBlinkTime > 500)
+		Opt.CursorBlinkTime = 500;
 
 	if (Opt.ShowMenuBar)
 		Opt.ShowMenuBar = 1;

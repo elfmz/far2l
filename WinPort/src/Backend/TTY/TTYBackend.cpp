@@ -226,9 +226,8 @@ void TTYBackend::ReaderThread()
 				// disable xi on Wayland as it not work there anyway and also causes delays
 				const char *xdg_st = getenv("XDG_SESSION_TYPE");
 				bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
-				char *wayland_display = getenv("WAYLAND_DISPLAY");
 
-				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !on_wayland && !wayland_display);
+				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !on_wayland);
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -303,8 +302,7 @@ void TTYBackend::ReaderLoop()
 
 		// Enable esc expiration on Wayland as Xi not work there
 		const char *xdg_st = getenv("XDG_SESSION_TYPE");
-		char *wayland_display = getenv("WAYLAND_DISPLAY");
-		if (((xdg_st && strcasecmp(xdg_st, "wayland") == 0) || wayland_display) && !_esc_expiration) {
+		if (!_esc_expiration && (xdg_st && strcasecmp(xdg_st, "wayland") == 0)) {
 			_esc_expiration = 100;
 		}
 

@@ -238,6 +238,8 @@ extern "C" void WinPortHelp()
 	printf("\t--maximize - force maximize window upon launch (only for GUI backend)\n");
 	printf("\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n");
 	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
+    printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
+    printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
 }
 
 struct ArgOptions
@@ -304,6 +306,12 @@ private:
 	ArgOptions(const ArgOptions&) = delete;
 };
 
+static bool IsFar2lFISHTerminal()
+{
+	const char *fish = getenv("FISH");
+	return (fish && strstr(fish, "far2l") != NULL);
+}
+
 extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))
 {
 	std::unique_ptr<ConsoleOutput> winport_con_out(new ConsoleOutput);
@@ -324,6 +332,20 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		arg_opts.tty = true;
 	}
 #endif
+
+	const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
+	char *wayland_display = getenv("WAYLAND_DISPLAY");
+	char *ffw = getenv("FAR2L_FORCE_WAYLAND");
+	if ((on_wayland || wayland_display) && !ffw) {
+		// stay on x11 by default until remaining wayland clipboard bugs
+		// like
+		// https://github.com/elfmz/far2l/issues/2053
+		// or
+		// https://github.com/elfmz/far2l/issues/1658
+		// are fixed
+		setenv("GDK_BACKEND", "x11", TRUE);
+	}
 
 	char *ea = getenv("FAR2L_ARGS");
 	if (ea != nullptr && *ea) {
@@ -372,7 +394,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
 		if (!strchr(arg_opts.nodetect, 'f')) {
 	//		tty_raw_mode.reset(new TTYRawMode(std_out));
-			if (tty_raw_mode->Applied()) {
+			if (tty_raw_mode->Applied() || IsFar2lFISHTerminal()) {
 				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
 				if (arg_opts.far2l_tty) {
 					arg_opts.tty = true;

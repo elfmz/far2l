@@ -184,12 +184,19 @@ static unsigned int eval_weight(WCHAR ch, unsigned int types)
     if ((types & CASE_WEIGHT) != 0) {
         // some trickery to high-case chars be before low-case ones but still with proper alphabetic ordering
         unsigned int cw = ((w >> 4) & 0xf);
-        out|= (0xe - (cw & 0xe)) << 23; // workaround to make big letters be first
-        out<<= 1;
-        out|= (cw & 1);
+        out|= (0xc - (cw & 0xc)) << 22; // workaround to make big letters be first
+        out<<= 2;
+        out|= (cw & 3);
 
-        if ((get_char_typeW(ch) & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
-            out|= 0x20000000;
+        if (ch != '.') {
+            const unsigned short cht = get_char_typeW(ch);
+            if ((cht & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+                out|= 0x40000000;
+            } else if ((cht & C1_PUNCT) == 0) {
+                out|= 0x20000000;
+            } else {
+                out|= 0x10000000;
+            }
         }
     }
     return out;

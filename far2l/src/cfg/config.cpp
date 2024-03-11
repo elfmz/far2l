@@ -309,6 +309,9 @@ void InterfaceSettings()
 		Builder.AddCheckbox(Msg::ConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 		Builder.AddCheckbox(Msg::ConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
 
+		DialogItemEx *CursorEdit = Builder.AddIntEditField(&Opt.CursorBlinkTime, 3);
+		Builder.AddTextAfter(CursorEdit, Msg::ConfigCursorBlinkInt);
+
 		const DWORD supported_tweaks = ApplyConsoleTweaks();
 		int ChangeFontID = -1;
 		DialogItemEx *ChangeFontItem = nullptr;
@@ -362,6 +365,8 @@ void InterfaceSettings()
 
 		WINPORT(ConsoleChangeFont)();
 	}
+
+	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 }
 
 void AutoCompleteSettings()

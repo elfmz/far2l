@@ -167,41 +167,28 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
     return key_ptr[3] - dst;
 }
 
-enum weight
-{
-    UNICODE_WEIGHT = 0x01,
-    DIACRITIC_WEIGHT = 0x02,
-    CASE_WEIGHT = 0x04
-};
+#define DIACRITIC_WEIGHT 0x01
+#define CASE_WEIGHT      0x02
 
-static void eval_weights(WCHAR ch1, WCHAR ch2, unsigned int types, unsigned int *r1, unsigned int *r2)
+static unsigned int eval_weight(WCHAR ch, unsigned int types)
 {
-    unsigned int w1 = collation_table[collation_table[((USHORT)ch1) >> 8] + (ch1 & 0xff)];
-    unsigned int w2 = collation_table[collation_table[((USHORT)ch2) >> 8] + (ch2 & 0xff)];
-    if (w1 == (unsigned int)-1)
-        w1 = ch1;
-    if (w2 == (unsigned int)-1)
-        w2 = ch2;
-    *r1 = 0;
-    *r2 = 0;
-    if (types & UNICODE_WEIGHT) {
-        *r1 = w1 >> 16;
-        *r2 = w2 >> 16;
+    unsigned int out;
+    unsigned int w = collation_table[collation_table[((USHORT)ch) >> 8] + (ch & 0xff)];
+    if (w == (unsigned int)-1)
+        w = ch;
+    out = (w >> 16) & 0xffff;
+
+    if ((types & DIACRITIC_WEIGHT) != 0) {
+        out|= (((w >> 8) & 0xff) << 16);
     }
-    if ((*r1 == *r2) && (types & DIACRITIC_WEIGHT) != 0) {
-        *r1 = (w1 >> 8) & 0xff;
-        *r2 = (w2 >> 8) & 0xff;
+    if ((types & CASE_WEIGHT) != 0) {
+        // some trickery to high-case chars be before low-case ones but still with proper alphabetic ordering
+        unsigned int cw = ((w >> 4) & 0xf);
+        out|= (0xe - (cw & 0xe)) << 23; // workaround to make big letters be first
+        out<<= 1;
+        out|= (cw & 1);
     }
-    if ((*r1 == *r2) && (types & CASE_WEIGHT) != 0) {
-        *r1 = (w1 >> 4) & 0x0f;
-        *r2 = (w2 >> 4) & 0x0f;
-        if (*r1 && *r2 && *r1 != *r2) {
-            // dirty workaround to make BIG letters be first in sort
-            int t = *r1;
-            *r1 = *r2;
-            *r2 = t;
-        }
-    }
+    return out;
 }
 
 static void inc_str_pos(const WCHAR **str, int *len, int *dpos, int *dlen)
@@ -258,7 +245,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
        /* hyphen and apostrophe are treated differently depending on
         * whether SORT_STRINGSORT specified or not
         */
-        if ((types & UNICODE_WEIGHT) != 0 && !(flags & SORT_STRINGSORT))
+        if (!(flags & SORT_STRINGSORT))
         {
             if (dstr1[dpos1] == '-' || dstr1[dpos1] == '\'')
             {
@@ -275,7 +262,8 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
             }
         }
 
-        eval_weights(dstr1[dpos1], dstr2[dpos2], types, &ce1, &ce2);
+        ce1 = eval_weight(dstr1[dpos1], types);
+        ce2 = eval_weight(dstr2[dpos2], types);
         if (ce1 && ce2 && ce1 != ce2)
             return ce1 - ce2;
         if (!ce1 || ce2)
@@ -292,7 +280,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         }
         if (!dlen1) dlen1 = wine_decompose(0, *str1, dstr1, 4);
 
-        eval_weights(dstr1[dpos1], 0, types, &ce1, &ce2);
+        ce1 = eval_weight(dstr1[dpos1], types);
         if (ce1) break;
         inc_str_pos(&str1, &len1, &dpos1, &dlen1);
     }
@@ -305,7 +293,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         }
         if (!dlen2) dlen2 = wine_decompose(0, *str2, dstr2, 4);
 
-        eval_weights(0, dstr2[dpos2], types, &ce1, &ce2);
+        ce2 = eval_weight(dstr2[dpos2], types);
         if (ce2) break;
         inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
@@ -315,7 +303,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
 int wine_compare_string(int flags, const WCHAR *str1, int len1,
                         const WCHAR *str2, int len2)
 {
-    unsigned int types = UNICODE_WEIGHT;
+    unsigned int types = 0;
     if (!(flags & NORM_IGNORENONSPACE))
         types|= DIACRITIC_WEIGHT;
     if (!(flags & NORM_IGNORECASE))

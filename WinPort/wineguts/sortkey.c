@@ -174,24 +174,30 @@ static unsigned int eval_weight(WCHAR ch, unsigned int types)
 {
     unsigned int out;
     unsigned int w = collation_table[collation_table[((USHORT)ch) >> 8] + (ch & 0xff)];
-    if (w == (unsigned int)-1)
+    if (w == (unsigned int)-1) {
         w = ch;
+    }
     out = (w >> 16) & 0xffff;
 
     if ((types & DIACRITIC_WEIGHT) != 0) {
         out|= (((w >> 8) & 0xff) << 16);
     }
-    if ((types & CASE_WEIGHT) != 0) {
-        // some trickery to high-case chars be before low-case ones but still with proper alphabetic ordering
-        unsigned int cw = ((w >> 4) & 0xf);
-        out|= (0xe - (cw & 0xe)) << 23; // workaround to make big letters be first
-        out<<= 1;
-        out|= (cw & 1);
-
-        if ((get_char_typeW(ch) & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+    if (ch != '.') { // dot is first
+        const unsigned short t = get_char_typeW(ch);
+        if ((t & C1_DIGIT) != 0) {
+            out|= 0x40000000;
+        }else if ((t & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+            out|= 0x60000000;
+        } else if ((t & C1_PUNCT) == 0) {
             out|= 0x20000000;
+        } else {
+            out|= 0x10000000;
+        }
+        if ((t & C1_UPPER) == 0 && (types & CASE_WEIGHT) != 0) {
+            out|= 0x08000000;
         }
     }
+
     return out;
 }
 
@@ -269,7 +275,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         ce1 = eval_weight(dstr1[dpos1], types);
         ce2 = eval_weight(dstr2[dpos2], types);
         if (ce1 && ce2 && ce1 != ce2)
-            return ce1 - ce2;
+            return (ce1 > ce2) ? 1 : -1;
         if (!ce1 || ce2)
           inc_str_pos(&str1, &len1, &dpos1, &dlen1);
         if (!ce2 || ce1)
@@ -301,7 +307,7 @@ static inline int compare_weights(int flags, const WCHAR *str1, int len1,
         if (ce2) break;
         inc_str_pos(&str2, &len2, &dpos2, &dlen2);
     }
-    return len1 - len2;
+    return (len1 > len2) ? 1 : ((len1 < len2) ? -1 : 0);
 }
 
 int wine_compare_string(int flags, const WCHAR *str1, int len1,

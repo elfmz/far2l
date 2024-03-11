@@ -174,31 +174,27 @@ static unsigned int eval_weight(WCHAR ch, unsigned int types)
 {
     unsigned int out;
     unsigned int w = collation_table[collation_table[((USHORT)ch) >> 8] + (ch & 0xff)];
-    if (w == (unsigned int)-1)
+    if (w == (unsigned int)-1) {
         w = ch;
+    }
     out = (w >> 16) & 0xffff;
 
     if ((types & DIACRITIC_WEIGHT) != 0) {
         out|= (((w >> 8) & 0xff) << 16);
     }
-    if ((types & CASE_WEIGHT) != 0) {
-        // some trickery to high-case chars be before low-case ones but still with proper alphabetic ordering
-        unsigned int cw = ((w >> 4) & 0xf);
-        cw^= 0xf; // workaround to make big letters be first
-        out|= (cw & 0xc) << 22;
-        out<<= 2;
-        out|= (cw & 3);
-    }
-    if (ch != '.') {
-        const unsigned short cht = get_char_typeW(ch);
-        if ((cht & C1_DIGIT) != 0) {
+    if (ch != '.') { // dot is first
+        const unsigned short t = get_char_typeW(ch);
+        if ((t & C1_DIGIT) != 0) {
             out|= 0x40000000;
-        }else if ((cht & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
+        }else if ((t & (C1_PUNCT | C1_SPACE | C1_CNTRL | C1_BLANK)) == 0) {
             out|= 0x60000000;
-        } else if ((cht & C1_PUNCT) == 0) {
+        } else if ((t & C1_PUNCT) == 0) {
             out|= 0x20000000;
         } else {
             out|= 0x10000000;
+        }
+        if ((t & C1_UPPER) == 0 && (types & CASE_WEIGHT) != 0) {
+            out|= 0x08000000;
         }
     }
 

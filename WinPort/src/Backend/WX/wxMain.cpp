@@ -118,6 +118,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	MacInit();
 #endif
 
+
 	g_wx_norgb = a->norgb;
 	g_winport_con_out = a->winport_con_out;
 	g_winport_con_in = a->winport_con_in;

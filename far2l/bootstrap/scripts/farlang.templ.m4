@@ -2231,6 +2231,17 @@ ConfigSaverMinutes
 "хвилин"
 "хвілін"
 
+ConfigCursorBlinkInt
+"Интервал мигания курсора (мс)"
+"Cursor &blink interval (ms)"
+"Interval blikání kurzoru (ms)"
+"Cursor-Blinkintervall (ms)"
+"A kurzor villogásának időköze (ms)"
+"Interwał mrugania kursora (ms)"
+"Intervalo de parpadeo del cursor (ms)"
+"Інтервал миготіння курсору (мс)"
+"Інтэрвал міргання курсора (мс)"
+
 ConfigConsoleChangeFont
 "Выбрать шри&фт"
 "Change &font"

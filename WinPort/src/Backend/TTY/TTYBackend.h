@@ -136,6 +136,7 @@ protected:
 	virtual bool OnConsoleSetFKeyTitles(const char **titles);
 	virtual BYTE OnConsoleGetColorPalette();
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
+	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);

@@ -335,8 +335,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 	const char *xdg_st = getenv("XDG_SESSION_TYPE");
 	bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
-	char *wayland_display = getenv("WAYLAND_DISPLAY");
-	char *ffw = getenv("FAR2L_FORCE_WAYLAND");
+	const char *wayland_display = getenv("WAYLAND_DISPLAY");
+	const char *ffw = getenv("FAR2L_FORCE_WAYLAND");
 	if ((on_wayland || wayland_display) && !ffw) {
 		// stay on x11 by default until remaining upstream wayland-related clipboard bugs like
 		// https://github.com/elfmz/far2l/issues/2053

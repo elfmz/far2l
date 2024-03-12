@@ -33,6 +33,7 @@ public:
 	virtual bool OnConsoleSetFKeyTitles(const char **titles) = 0;
 	virtual BYTE OnConsoleGetColorPalette() = 0;
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
+	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 };
 
 class IClipboardBackend
@@ -151,6 +152,8 @@ public:
 
 	virtual void SetAttributes(DWORD64 attributes) = 0;
 	virtual DWORD64 GetAttributes() = 0;
+
+	virtual void SetCursorBlinkTime(DWORD interval) = 0;
 	virtual void SetCursor(COORD pos) = 0;
 	virtual void SetCursor(UCHAR height, bool visible) = 0;
 	virtual COORD GetCursor() = 0;

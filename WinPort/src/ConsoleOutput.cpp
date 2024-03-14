@@ -148,6 +148,13 @@ void ConsoleOutput::SetCursor(COORD pos)
 	}
 }
 
+void ConsoleOutput::SetCursorBlinkTime(DWORD interval)
+{
+	if (_backend) {
+		_backend->OnConsoleSetCursorBlinkTime(interval);
+	}
+}
+
 void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 {
 	SMALL_RECT area;

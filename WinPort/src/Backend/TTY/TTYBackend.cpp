@@ -840,6 +840,11 @@ void TTYBackend::OnConsoleSaveWindowState()
 {
 }
 
+void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
+{
+
+}
+
 void TTYBackend::OnConsoleSetMaximized(bool maximized)
 {
 	try {

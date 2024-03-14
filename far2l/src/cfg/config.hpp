@@ -397,6 +397,7 @@ struct Options
 	int InactivityExitTime;
 	int ShowHidden;
 	int Highlight;
+	int CursorBlinkTime;
 
 	FARString strLeftFolder;
 	FARString strRightFolder;

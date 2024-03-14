@@ -239,11 +239,23 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 
 	PVOID p = nullptr;		
 	if (format==CF_UNICODETEXT || format==CF_TEXT) {
-		wxTextDataObject data;
-		if (!wxTheClipboard->GetData( data ))
-			return nullptr;
 
-		const wxString &wx_str = data.GetText();
+		wxString wx_str;
+		wxCustomDataObject customData(wxT("text/plain;charset=utf-8"));
+		if (!wxTheClipboard->GetData(customData)) {
+			wxTextDataObject data;
+			if (!wxTheClipboard->GetData( data ))
+				return nullptr;
+			wx_str = data.GetText();
+		} else {
+			const void* data = customData.GetData();
+			size_t dataSize = customData.GetSize();
+            if (dataSize > 0)
+            {
+				wxString tmp_str(static_cast<const char*>(data), dataSize);
+				wx_str = tmp_str;
+			}
+		}
 
 		if (format == CF_UNICODETEXT) {
 			const auto &wc = wx_str.wc_str();

@@ -71,6 +71,8 @@ public:
 
 	virtual void SetAttributes(DWORD64 attributes);
 	virtual DWORD64 GetAttributes();
+
+	virtual	void SetCursorBlinkTime(DWORD interval);
 	virtual void SetCursor(COORD pos);
 	virtual void SetCursor(UCHAR height, bool visible);
 	virtual COORD GetCursor();

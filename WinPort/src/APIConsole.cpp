@@ -154,6 +154,11 @@ extern "C" {
 		return TRUE;
 	}
 
+	WINPORT_DECL(SetConsoleCursorBlinkTime,VOID,(HANDLE hConsoleOutput, DWORD dwMilliseconds ))
+	{
+		ChooseConOut(hConsoleOutput)->SetCursorBlinkTime(dwMilliseconds);
+	}
+
 	WINPORT_DECL(GetConsoleCursorInfo,BOOL,(HANDLE hConsoleOutput,CONSOLE_CURSOR_INFO *lpConsoleCursorInfo))
 	{
 		UCHAR height;

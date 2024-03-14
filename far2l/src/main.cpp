@@ -604,6 +604,8 @@ int FarAppMain(int argc, char **argv)
 
 	ConfigOptLoad();
 	InitConsole();
+	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
+
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
 

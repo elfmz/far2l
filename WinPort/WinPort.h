@@ -48,6 +48,7 @@ extern "C" {
 	WINPORT_DECL(FillConsoleOutputAttribute, BOOL, (HANDLE hConsoleOutput, DWORD64 qAttributes, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten));
 	WINPORT_DECL(FillConsoleOutputCharacter, BOOL, (HANDLE hConsoleOutput, WCHAR cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
 	WINPORT_DECL(SetConsoleActiveScreenBuffer, BOOL,(HANDLE hConsoleOutput));
+	WINPORT_DECL(SetConsoleCursorBlinkTime,VOID,(HANDLE hConsoleOutput, DWORD dwMilliseconds ));
 
 	WINPORT_DECL(FlushConsoleInputBuffer,BOOL,(HANDLE hConsoleInput));
 	WINPORT_DECL(GetNumberOfConsoleInputEvents,BOOL,(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents));
@@ -95,6 +96,7 @@ extern "C" {
 #define TWEAK_STATUS_SUPPORT_OSC52CLIP_SET	0x04
 #define TWEAK_STATUS_SUPPORT_CHANGE_FONT	0x08
 #define TWEAK_STATUS_SUPPORT_TTY_PALETTE	0x10
+#define TWEAK_STATUS_SUPPORT_BLINK_RATE		0x20
 
 	WINPORT_DECL(SaveConsoleWindowState,VOID,());
 	WINPORT_DECL(ConsoleChangeFont, VOID, ());

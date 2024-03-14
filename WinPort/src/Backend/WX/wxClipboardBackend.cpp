@@ -201,7 +201,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
+
 	if (format==CF_UNICODETEXT) {
+
+		wxCustomDataObject *dos = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		std::string tmp = wxString((const wchar_t *)data).ToStdString();
+		dos->SetData(tmp.length(), tmp.data());
+		g_wx_data_to_clipboard->Add(dos);
+
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString((const wchar_t *)data)));
 
 #if (CLIPBOARD_HACK)
@@ -209,6 +216,12 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #endif
 
 	} else if (format==CF_TEXT) {
+
+		wxCustomDataObject *dos = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		std::string tmp = wxString::FromUTF8((const char *)data).ToStdString();
+		dos->SetData(tmp.length(), tmp.data());
+		g_wx_data_to_clipboard->Add(dos);
+
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
@@ -241,21 +254,27 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 	if (format==CF_UNICODETEXT || format==CF_TEXT) {
 
 		wxString wx_str;
-		wxCustomDataObject customData(wxT("text/plain;charset=utf-8"));
-		if (!wxTheClipboard->GetData(customData)) {
-			wxTextDataObject data;
-			if (!wxTheClipboard->GetData( data ))
-				return nullptr;
+		bool dataFound = false;
+
+		wxTextDataObject data;
+		if (wxTheClipboard->GetData( data )) {
 			wx_str = data.GetText();
-		} else {
-			const void* data = customData.GetData();
-			size_t dataSize = customData.GetSize();
-            if (dataSize > 0)
-            {
-				wxString tmp_str(static_cast<const char*>(data), dataSize);
-				wx_str = tmp_str;
+			dataFound = true;
+		}
+
+		wxCustomDataObject customDataTextUtf8(wxT("text/plain;charset=utf-8"));
+		if (!dataFound && wxTheClipboard->GetData(customDataTextUtf8)) {
+			const void* data = customDataTextUtf8.GetData();
+			size_t dataSize = customDataTextUtf8.GetSize();
+			if (dataSize > 0)
+			{
+				wx_str = wxString(static_cast<const char*>(data), dataSize);
+				dataFound = true;
 			}
 		}
+
+		if (!dataFound)
+			return nullptr;
 
 		if (format == CF_UNICODETEXT) {
 			const auto &wc = wx_str.wc_str();

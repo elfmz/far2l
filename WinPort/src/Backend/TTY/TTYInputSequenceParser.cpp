@@ -335,8 +335,15 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	}
 
 	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
-		if (l < 5)
+		if (l < 5) {
 			return 0;
+		}
+
+		fprintf(stderr, "valid mouse input: ==");
+		for (size_t i = 0; i < l && s[i] != '\0'; i++) {
+			fprintf(stderr, "%c", s[i]);
+		}
+		fprintf(stderr, "==\n");
 
 		ParseMouse(s[2], s[3], s[4]);
 		return 5;
@@ -350,7 +357,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			return r;
 		}
 	}
-	
+
 	r = ParseNChars2Key(s, l);
 	if (r != 0)
 		return r;
@@ -360,12 +367,13 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
 		}
-	}	
+	}
 
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsWinTermEscapeSequence(s, l);
-		if (r != TTY_PARSED_BADSEQUENCE)
+		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
+		}
 	}
 
 	// be well-responsive on panic-escaping
@@ -452,6 +460,25 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
+
+	//work-around for double encoded mouse events in win32-input mode
+	if ((l > 6 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';' ) || _win32_accumulate) {
+		_win32_accumulate = _win_mouse_buffer.size() > 5 ? false : true;
+		fprintf(stderr, "Parsing win-32 mouse: ");
+		for (size_t i = 0; i < l && s[i] != '\0'; i++) {
+			_temp_buf.emplace_back(s[i]);
+			fprintf(stderr, "%c", s[i]);
+		}
+		fprintf(stderr, " lenght: %ld\n", l);
+
+		size_t r = TryParseAsWinTermPackedEscapeSequence(s, l);
+
+		fprintf(stderr, "------------------\n");
+		return r;
+	} else {
+		_win32_accumulate = false;
+	}
+
 	size_t r = ParseIntoPending(s, l);
 
 	if ( (r == TTY_PARSED_WANTMORE || r == TTY_PARSED_BADSEQUENCE) && idle_expired && *s == 0x1b) {

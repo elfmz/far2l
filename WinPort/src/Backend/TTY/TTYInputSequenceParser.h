@@ -130,6 +130,11 @@ class TTYInputSequenceParser
 
 
 public:
+	//work-around for double encoded mouse events in win32-input mode
+	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
+	std::vector<char> _temp_buf;         // debug buffer
+	bool _win32_accumulate = false;      // flag for parse accumulated sequence from
+
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 
 	size_t Parse(const char *s, size_t l, bool idle_expired); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence

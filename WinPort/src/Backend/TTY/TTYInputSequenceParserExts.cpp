@@ -164,7 +164,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 57407 : case 57419 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD8; break;
 		case 57408 : case 57421 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD9; break;
 		case 57409 : case 57426 : ir.Event.KeyEvent.wVirtualKeyCode = VK_DECIMAL; break;
-		
+
 		case 57410 : ir.Event.KeyEvent.wVirtualKeyCode = VK_DIVIDE; break;
 		case 57411 : ir.Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY; break;
 		case 57412 : ir.Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
@@ -229,7 +229,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 
 		case 57360 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMLOCK; break;
 		case 57358 : ir.Event.KeyEvent.wVirtualKeyCode = VK_CAPITAL; break;
-		
+
 	}
 	switch (s[i]) {
 		case 'A': ir.Event.KeyEvent.wVirtualKeyCode = VK_UP;
@@ -241,7 +241,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
-		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME; 
+		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
@@ -252,7 +252,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	if (ir.Event.KeyEvent.wVirtualScanCode == 0) {
-		ir.Event.KeyEvent.wVirtualScanCode = 
+		ir.Event.KeyEvent.wVirtualScanCode =
 			WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	}
 
@@ -344,6 +344,46 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
+//work-around for double encoded mouse events in win32-input mode
+size_t TTYInputSequenceParser::TryParseAsWinTermPackedEscapeSequence(const char *s, size_t l)
+{
+	int args[6] = {0};
+	int args_cnt = 0;
+
+	size_t n;
+	for (size_t i = n = 1;; ++i) {
+		if (i == l) {
+			if(args[2] > 0){
+				fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)args[2]);
+				_win_mouse_buffer.push_back((unsigned char)args[2]); //we need only second arg (UnicodeChar) in decimal
+			}
+			fprintf(stderr, "\nwant mooore characters... \n");
+			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
+		}
+		if (s[i] == '_' || s[i] == ';') {
+			if (args_cnt == ARRAYSIZE(args)) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
+			if (i > n) {
+				args[args_cnt] = atoi(&s[n]);
+			}
+			++args_cnt;
+			n = i + 1;
+			if (s[i] == '_') {
+				break;
+			}
+
+		}
+	}
+
+	if(args[2] > 0){
+		fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
+		_win_mouse_buffer.push_back((unsigned char)args[2]);
+	}
+
+	return n;
+}
+
 size_t TTYInputSequenceParser::ReadUTF8InHex(const char *s, wchar_t *uni_char)
 {
 	unsigned char bytes[4] = {0};
@@ -401,7 +441,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 
 	// Flags changed event: esc ] 1337 ; f ; flags ^G
 	if (s[6] == 'f') {
-		
+
 		bool go = false;
 		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
@@ -608,7 +648,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		case 0x7D: vkc = VK_DOWN; break; // Down
 		case 0x7E: vkc = VK_UP; break; // Up
 	}
-	
+
 	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
 
 	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
@@ -636,7 +676,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			INPUT_RECORD ir = {};
 			ir.EventType = KEY_EVENT;
 			ir.Event.KeyEvent.wVirtualKeyCode = vkc;
-			ir.Event.KeyEvent.wVirtualScanCode = 
+			ir.Event.KeyEvent.wVirtualScanCode =
 				WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 			ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
 			ir.Event.KeyEvent.bKeyDown = TRUE;
@@ -650,7 +690,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wVirtualKeyCode = vkc;
-	ir.Event.KeyEvent.wVirtualScanCode = 
+	ir.Event.KeyEvent.wVirtualScanCode =
 		WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
 	ir.Event.KeyEvent.bKeyDown = (s[6] == 'd' ? TRUE : FALSE);

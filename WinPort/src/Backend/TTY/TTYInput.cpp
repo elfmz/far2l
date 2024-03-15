@@ -45,6 +45,23 @@ void TTYInput::OnBufUpdated(bool idle)
 {
 	while (!_buf.empty()) {
 		size_t decoded = _parser.Parse(&_buf[0], _buf.size(), idle);
+
+		//work-around for double encoded mouse events in win32-input mode
+		if (_parser._win_mouse_buffer.size() > 5) {
+
+			fprintf(stderr, "!!!parse accumulated \n");
+			fprintf(stderr, "++temp buf: \n");
+			for (const auto& ch : _parser._temp_buf) {
+				fprintf(stderr, "%c", ch);
+			}
+			fprintf(stderr, "\n++temp buf\n");
+			_parser._temp_buf.clear();
+
+			_parser._win32_accumulate = false;
+			_parser.Parse(&_parser._win_mouse_buffer[0], _parser._win_mouse_buffer.size(), idle);
+			_parser._win_mouse_buffer.clear();
+		}
+
 		switch (decoded) {
 			case TTY_PARSED_PLAINCHARS:
 				decoded = BufTryDecodeUTF8();

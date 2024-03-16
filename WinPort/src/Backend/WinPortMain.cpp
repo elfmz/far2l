@@ -248,7 +248,7 @@ struct ArgOptions
 	bool tty = false, far2l_tty = false, notty = false, norgb = false;
 	bool mortal = false;
 	std::string ext_clipboard;
-	unsigned int esc_expiration = 100; // by unxed: 100 by default
+	unsigned int esc_expiration = 0;
 	std::vector<char *> filtered_argv;
 
 	ArgOptions() = default;

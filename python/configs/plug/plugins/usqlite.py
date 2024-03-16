@@ -3,7 +3,7 @@ import tempfile
 import logging
 import sqlite3
 from far2l.plugin import PluginVFS
-
+from far2l import fardialogbuilder as fdb
 
 log = logging.getLogger(__name__)
 
@@ -207,13 +207,65 @@ limit {}, {}
         #log.debug("usqlite.SqlDataHandler.FreeFindData({0}, {1}, n.names={2}, n.Items={3})".format(PanelItem, ItemsNumber, len(self.names), len(self.Items)))
         self.Items = []
         self.names = []
-        self.rows = []
 
     def SetDirectory(self, dirname):
         if dirname == '..':
             self.parent.dbhandler = SqlMetadataHandler(self.parent, self.parent.dbconn)
             return 1
         return 0
+
+    def EditRow(self, rec):
+        #log.debug(f'EditRec: {rec}')
+
+        @self.ffi.callback("FARWINDOWPROC")
+        def DialogProc(hDlg, Msg, Param1, Param2):
+            return self.parent.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        fields = []
+        for fldno in range(1, len(rec)):
+            name = self.desc[fldno]
+            v = rec[fldno]
+            if isinstance(v, str):
+                pass
+            elif isinstance(v, int):
+                v = str(v)
+            else:
+                v = str(v)
+            if len(v) > 64:
+                v = v[:64]+' ...'
+            fields.append(
+                fdb.HSizer(
+                    fdb.TEXT(None, self.desc[fldno][0]+':'),
+                    fdb.TEXT(self.desc[fldno][0], v),
+                )
+            )
+        fields.append(
+            fdb.HLine()
+        )
+        fields.append(
+            fdb.HSizer(
+                fdb.BUTTON("vcancel", "Cancel", default=True, flags=self.ffic.DIF_CENTERGROUP),
+#                fdb.BUTTON("vupdate", "Update", flags=self.ffic.DIF_CENTERGROUP),
+            )
+        )
+        b = fdb.DialogBuilder(
+            self.parent,
+            DialogProc,
+            f"SQLite rec: {self.tablename}/{rec[0]}",
+            "helptopic",
+            0,
+            fdb.VSizer(
+                *list(fields)
+            ),
+        )
+        dlg = b.build(-1, -1)
+        res = self.parent.info.DialogRun(dlg.hDlg)
+        log.debug(f'EditRec: res={res}')
+        if res not in (-1, dlg.ID_vcancel):
+            #dlg.GetText(dlg.ID_vapath),
+            #log.debug(f'saverec: {rec}')
+            pass
+        self.parent.info.DialogFree(dlg.hDlg)
 
     def ProcessKey(self, Key, ControlState):
         #log.debug('usqlite.SqlDataHandler.ProcessKey: key:{:x} state:{:x} f4:{}'.format(Key, ControlState, Key == self.ffic.VK_F4))
@@ -222,6 +274,10 @@ limit {}, {}
                 pnli, pnlidata = self.GetCurrentPanelItem()
                 if pnli:
                     rowid = pnli.FindData.nPhysicalSize
+                    for rec in self.rows:
+                        if rec[0] == rowid:
+                            self.EditRow(rec)
+                            break
                 return True
             elif Key == self.ffic.VK_F6:
                 #log.debug('F6')

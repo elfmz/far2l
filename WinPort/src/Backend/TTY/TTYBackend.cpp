@@ -207,6 +207,16 @@ void TTYBackend::UpdateBackendIdentification()
 	g_winport_backend = s_backend_identification;
 }
 
+static bool UnderWayland()
+{
+	const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	if (xdg_st && strcasecmp(xdg_st, "wayland") == 0)
+		return true;
+	if (getenv("WAYLAND_DISPLAY"))
+		return true;
+	return false;
+}
+
 void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
@@ -224,11 +234,7 @@ void TTYBackend::ReaderThread()
 			if (!strchr(_nodetect, 'x') || strstr(_nodetect, "xi")) {
 
 				// disable xi on Wayland as it not work there anyway and also causes delays
-				const char *xdg_st = getenv("XDG_SESSION_TYPE");
-				bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
-				const char *wayland_display = getenv("WAYLAND_DISPLAY");
-
-				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !on_wayland && !wayland_display);
+				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !UnderWayland());
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -302,9 +308,7 @@ void TTYBackend::ReaderLoop()
 		int rs;
 
 		// Enable esc expiration on Wayland as Xi not work there
-		const char *xdg_st = getenv("XDG_SESSION_TYPE");
-		const char *wayland_display = getenv("WAYLAND_DISPLAY");
-		if (!_esc_expiration && ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) || wayland_display)) {
+		if (!_esc_expiration && UnderWayland()) {
 			_esc_expiration = 100;
 		}
 

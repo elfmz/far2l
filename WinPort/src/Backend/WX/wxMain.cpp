@@ -90,6 +90,11 @@ static void DetectHostAbilities()
 		g_wayland = true;
 	}
 
+	const char *wayland_display = getenv("WAYLAND_DISPLAY");
+	if (wayland_display) {
+		g_wayland = true;
+	}
+
 	const char *ssh_conn = getenv("SSH_CONNECTION");
 	if (ssh_conn && *ssh_conn
 		&& strstr(ssh_conn, "127.0.0.") == NULL

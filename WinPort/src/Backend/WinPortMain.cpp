@@ -248,7 +248,7 @@ struct ArgOptions
 	bool tty = false, far2l_tty = false, notty = false, norgb = false;
 	bool mortal = false;
 	std::string ext_clipboard;
-	unsigned int esc_expiration = 0;
+	unsigned int esc_expiration = 100; // by unxed: 100 by default
 	std::vector<char *> filtered_argv;
 
 	ArgOptions() = default;
@@ -332,22 +332,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		arg_opts.tty = true;
 	}
 #endif
-
-	const char *xdg_st = getenv("XDG_SESSION_TYPE");
-	bool on_wayland = (xdg_st && strcasecmp(xdg_st, "wayland") == 0);
-	const char *wayland_display = getenv("WAYLAND_DISPLAY");
-	const char *ffw = getenv("FAR2L_FORCE_WAYLAND");
-	if ((on_wayland || wayland_display) && !ffw) {
-		// stay on x11 by default until remaining upstream wayland-related clipboard bugs like
-		// https://github.com/elfmz/far2l/issues/2053
-		// https://github.com/wxWidgets/wxWidgets/issues/24391
-		// https://github.com/elfmz/far2l/issues/1658
-		// https://github.com/wxWidgets/wxWidgets/issues/23544
-		// https://bugreports.qt.io/browse/QTBUG-123176
-		// https://github.com/microsoft/wslg/issues/1044#issuecomment-1989572893
-		// are fixed
-		setenv("GDK_BACKEND", "x11", TRUE);
-	}
 
 	char *ea = getenv("FAR2L_ARGS");
 	if (ea != nullptr && *ea) {

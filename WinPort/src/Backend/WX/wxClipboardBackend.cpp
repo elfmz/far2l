@@ -203,24 +203,22 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 
 	if (format==CF_UNICODETEXT) {
+		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		wxString wx_str((const wchar_t *)data);
+		const std::string &tmp = wx_str.ToStdString();
+		cdo->SetData(tmp.size() + 1, tmp.c_str()); // including ending NUL char
+		g_wx_data_to_clipboard->Add(cdo);
 
-		wxCustomDataObject *dos = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-		std::string tmp = wxString((const wchar_t *)data).ToStdString();
-		dos->SetData(tmp.length(), tmp.data());
-		g_wx_data_to_clipboard->Add(dos);
-
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString((const wchar_t *)data)));
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
 	} else if (format==CF_TEXT) {
-
-		wxCustomDataObject *dos = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-		std::string tmp = wxString::FromUTF8((const char *)data).ToStdString();
-		dos->SetData(tmp.length(), tmp.data());
-		g_wx_data_to_clipboard->Add(dos);
+		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		cdo->SetData(strlen((const char *)data) + 1, data); // including ending NUL char
+		g_wx_data_to_clipboard->Add(cdo);
 
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 #if (CLIPBOARD_HACK)
@@ -254,27 +252,28 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 	if (format==CF_UNICODETEXT || format==CF_TEXT) {
 
 		wxString wx_str;
-		bool dataFound = false;
+		bool data_found = false;
 
 		wxTextDataObject data;
 		if (wxTheClipboard->GetData( data )) {
 			fprintf(stderr, "OnClipboardGetData(%u) - found wx-compatible text format\n", format);
 			wx_str = data.GetText();
-			dataFound = true;
+			data_found = true;
 		}
 
-		wxCustomDataObject customDataTextUtf8(wxT("text/plain;charset=utf-8"));
-		if (!dataFound && wxTheClipboard->GetData(customDataTextUtf8)) {
-			const void* data = customDataTextUtf8.GetData();
-			size_t dataSize = customDataTextUtf8.GetSize();
-			if (dataSize > 0) {
+		wxCustomDataObject cdo_utf8(wxT("text/plain;charset=utf-8"));
+		if (!data_found && wxTheClipboard->GetData(cdo_utf8)) {
+			const void* cdo_data = cdo_utf8.GetData();
+			size_t cdo_size = cdo_utf8.GetSize();
+			if (cdo_size > 0) {
 				fprintf(stderr, "OnClipboardGetData(%u) - found MIME-compatible text format\n", format);
-				wx_str = wxString(static_cast<const char*>(data), dataSize);
-				dataFound = true;
+				const char *str = static_cast<const char*>(cdo_data);
+				wx_str = wxString::FromUTF8(str, strnlen(str, cdo_size));
+				data_found = true;
 			}
 		}
 
-		if (!dataFound) {
+		if (!data_found) {
 			fprintf(stderr, "OnClipboardGetData(%u) - no supported text format found\n", format);
 			return nullptr;
 		}

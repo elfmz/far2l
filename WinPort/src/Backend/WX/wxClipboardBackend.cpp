@@ -258,6 +258,7 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 
 		wxTextDataObject data;
 		if (wxTheClipboard->GetData( data )) {
+			fprintf(stderr, "OnClipboardGetData(%u) - found wx-compatible text format\n", format);
 			wx_str = data.GetText();
 			dataFound = true;
 		}
@@ -266,15 +267,17 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		if (!dataFound && wxTheClipboard->GetData(customDataTextUtf8)) {
 			const void* data = customDataTextUtf8.GetData();
 			size_t dataSize = customDataTextUtf8.GetSize();
-			if (dataSize > 0)
-			{
+			if (dataSize > 0) {
+				fprintf(stderr, "OnClipboardGetData(%u) - found MIME-compatible text format\n", format);
 				wx_str = wxString(static_cast<const char*>(data), dataSize);
 				dataFound = true;
 			}
 		}
 
-		if (!dataFound)
+		if (!dataFound) {
+			fprintf(stderr, "OnClipboardGetData(%u) - no supported text format found\n", format);
 			return nullptr;
+		}
 
 		if (format == CF_UNICODETEXT) {
 			const auto &wc = wx_str.wc_str();

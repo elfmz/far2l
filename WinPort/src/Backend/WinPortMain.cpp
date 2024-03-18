@@ -455,7 +455,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						"case \"$1\" in\n"
 						"get)\n"
 						"     if command -v cscript.exe >/dev/null 2>&1; then\n"
-        				"		cscript.exe //Nologo \\\\\\\\wsl.localhost\\\\\"$WSL_DISTRO_NAME\"\\\\\"$HOME\"\\\\.config\\\\far2l\\\\getclipboard.vbs \n"
+        				"		cscript.exe //Nologo \\\\\\\\wsl.localhost\\\\\"$WSL_DISTRO_NAME\"\\\\" + InMyConfig("getclipboard.vbs") + " \n"
 						"     else\n"
 						"     	powershell.exe -Command Get-Clipboard\n"
 						"     fi\n"

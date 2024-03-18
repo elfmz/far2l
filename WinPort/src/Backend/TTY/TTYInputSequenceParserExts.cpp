@@ -345,6 +345,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	   ) {
 		// use separate buffer for data from sequences encoded twice
 		// append ir.Event.KeyEvent.uChar.UnicodeChar to it here
+		// see https://github.com/elfmz/far2l/issues/2072
 
 		// for now, just drop this data
 	} else {

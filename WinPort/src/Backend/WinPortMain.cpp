@@ -454,7 +454,11 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						"#!/bin/bash\n\n"
 						"case \"$1\" in\n"
 						"get)\n"
-						"    powershell.exe -Command Get-Clipboard\n"
+						"     if command -v cscript.exe >/dev/null 2>&1; then\n"
+        				"		cscript.exe //Nologo \\\\\\\\wsl.localhost\\\\\"$WSL_DISTRO_NAME\"\\\\\"$HOME\"\\\\.config\\\\far2l\\\\getclipboard.vbs \n"
+						"     else\n"
+						"     	powershell.exe -Command Get-Clipboard\n"
+						"     fi\n"
 						";;\n"
 						"set)\n"
 						"    CONTENT=$(cat)\n"
@@ -465,6 +469,16 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						"    (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)\n"
 						";;\n"
 						"esac\n";
+
+						std::string wsl_clipboard_workaround_vbs = 
+							"WScript.StdOut.Write CreateObject(\"HTMLFile\").ParentWindow.ClipboardData.GetData(\"Text\")\n";
+						const std::string &ext_clipboard_vbs = InMyConfig("getclipboard.vbs");
+						std::ifstream infile_vbs(ext_clipboard_vbs);
+						if (!infile_vbs.is_open()) {
+							std::ofstream out(ext_clipboard_vbs);
+							out << wsl_clipboard_workaround_vbs;
+							out.close();
+						}
 
 						const std::string &ext_clipboard = InMyConfig("clipboard.wsl");
 						arg_opts.ext_clipboard = ext_clipboard;

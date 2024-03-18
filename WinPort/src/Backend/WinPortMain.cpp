@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -463,8 +465,20 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						"    (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)\n"
 						";;\n"
 						"esac\n";
+
+						const std::string &ext_clipboard = InMyConfig("clipboard.wsl");
+						arg_opts.ext_clipboard = ext_clipboard;
+
+						std::ifstream infile(arg_opts.ext_clipboard);
+						if (!infile.is_open()) {
+							std::ofstream out(arg_opts.ext_clipboard);
+							out << wsl_clipboard_workaround;
+							out.close();
+							chmod(arg_opts.ext_clipboard.c_str(), 0755);
+						}
+
 				}
-				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(wsl_clipboard_workaround.c_str());
+				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
@@ -476,8 +490,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;
 					if (!wsl_clipboard_workaround.empty()) {
-						wsl_clipboard_workaround.clear();
-						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(wsl_clipboard_workaround.c_str());
+						arg_opts.ext_clipboard.clear();
 					}
 				}
 			} else {

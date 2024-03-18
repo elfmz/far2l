@@ -365,9 +365,10 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		arg_opts.ParseArg(argv[i], false);
 	}
 
-	const char *xdg_st = getenv("XDG_SESSION_TYPE");
-	bool on_wayland = ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) || getenv("WAYLAND_DISPLAY"));
-	if (((on_wayland && getenv("WSL_DISTRO_NAME")) && !arg_opts.wayland) || arg_opts.x11) {
+	//const char *xdg_st = getenv("XDG_SESSION_TYPE");
+	//bool on_wayland = ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) || getenv("WAYLAND_DISPLAY"));
+	if (arg_opts.x11) {
+	//if (((on_wayland && getenv("WSL_DISTRO_NAME")) && !arg_opts.wayland) || arg_opts.x11) {
 		// on wslg stay on x11 by default until remaining upstream wayland-related clipboard bug is fixed
 		// https://github.com/microsoft/wslg/issues/1216
 		setenv("GDK_BACKEND", "x11", TRUE);
@@ -442,14 +443,42 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
 			if (WinPortMainBackend_p) {
 				g_winport_backend = L"GUI";
+
+				std::string wsl_clipboard_workaround = "";
+				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME")) {
+					// we are under WSL
+					// lets apply clipboard workaround
+					wsl_clipboard_workaround = 
+						"#!/bin/bash\n\n"
+						"case \"$1\" in\n"
+						"get)\n"
+						"    powershell.exe -Command Get-Clipboard\n"
+						";;\n"
+						"set)\n"
+						"    CONTENT=$(cat)\n"
+						"    echo \"$CONTENT\" | clip.exe\n"
+						"    echo \"$CONTENT\"\n"
+						";;\n"
+						"\"\")\n"
+						"    (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)\n"
+						";;\n"
+						"esac\n";
+				}
+				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(wsl_clipboard_workaround.c_str());
+
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);
+
 				WinPortMainBackendArg a{FAR2L_BACKEND_ABI_VERSION,
 					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in, !arg_opts.ext_clipboard.empty(), arg_opts.norgb};
 				if (!WinPortMainBackend_p(&a) ) {
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;
+					if (!wsl_clipboard_workaround.empty()) {
+						wsl_clipboard_workaround.clear();
+						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(wsl_clipboard_workaround.c_str());
+					}
 				}
 			} else {
 				fprintf(stderr, "Cannot find backend entry point, error %s\n", dlerror());

@@ -335,7 +335,23 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	ir.Event.KeyEvent.dwControlKeyState = args[4];
 	ir.Event.KeyEvent.wRepeatCount = args[5];
 
-	_ir_pending.emplace_back(ir);
+	if (
+		(ir.Event.KeyEvent.wVirtualKeyCode == 0) &&
+		(ir.Event.KeyEvent.wVirtualScanCode == 0) &&
+		(ir.Event.KeyEvent.bKeyDown == 1) &&
+		(ir.Event.KeyEvent.dwControlKeyState == 0) &&
+		(ir.Event.KeyEvent.wRepeatCount == 1) &&
+		getenv("WT_SESSION") // apply this hackfix only under Windows Terminal
+	   ) {
+		// use separate buffer for data from sequences encoded twice
+		// append ir.Event.KeyEvent.uChar.UnicodeChar to it here
+
+		// for now, just drop this data
+	} else {
+
+		_ir_pending.emplace_back(ir);
+	}
+
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
 		_using_extension = 'w';

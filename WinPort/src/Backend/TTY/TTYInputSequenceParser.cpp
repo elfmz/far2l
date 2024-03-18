@@ -356,17 +356,17 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return r;
 
 	if (l > 1 && s[0] == '[') {
+		r = TryParseAsWinTermEscapeSequence(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE)
+			return r;
+	}
+
+	if (l > 1 && s[0] == '[') {
 		r = TryParseAsKittyEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
 		}
 	}	
-
-	if (l > 1 && s[0] == '[') {
-		r = TryParseAsWinTermEscapeSequence(s, l);
-		if (r != TTY_PARSED_BADSEQUENCE)
-			return r;
-	}
 
 	// be well-responsive on panic-escaping
 	for (size_t i = 0; (i + 1) < l; ++i) {

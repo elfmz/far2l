@@ -368,7 +368,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	//const char *xdg_st = getenv("XDG_SESSION_TYPE");
 	//bool on_wayland = ((xdg_st && strcasecmp(xdg_st, "wayland") == 0) || getenv("WAYLAND_DISPLAY"));
 	if (arg_opts.x11) {
-	//if (((on_wayland && getenv("WSL_DISTRO_NAME")) && !arg_opts.wayland) || arg_opts.x11) {
+	//if (((on_wayland && getenv("WSL_DISTRO_NAME")) && !arg_opts.wayland && !getenv("FAR2L_WSL_NATIVE")) || arg_opts.x11) {
 		// on wslg stay on x11 by default until remaining upstream wayland-related clipboard bug is fixed
 		// https://github.com/microsoft/wslg/issues/1216
 		setenv("GDK_BACKEND", "x11", TRUE);

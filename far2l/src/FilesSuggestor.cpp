@@ -243,7 +243,6 @@ void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu, int escapin
 
 	for (auto &suggestion : _suggestions) {
 		FARString str_tmp(orig_prefix);
-		fprintf(stderr, " MenuFilesSuggestor::Suggest(): suggestion.name=\"%s\"\n", suggestion.name.c_str());
 		if (last_arg.quot == Environment::QUOT_DOUBLE) {
 			str_tmp+= EscapeCmdStr(suggestion.name);
 		} else if (last_arg.quot == Environment::QUOT_NONE) {

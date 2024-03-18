@@ -123,7 +123,7 @@ bool CheckUpdateAnotherPanel(Panel *SrcPanel, const wchar_t *SelName)
 	return false;
 }
 
-int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
+int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2, int escaping)
 {
 	int RetCode = FALSE;
 	int NeedRealName = FALSE;
@@ -190,7 +190,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2)
 					AddEndSlash(strPathName);
 				}
 
-				if (Opt.QuotedName & QUOTEDNAME_INSERT)
+				if (escaping & Opt.QuotedName & QUOTEDNAME_INSERT)
 					EscapeSpace(strPathName);
 
 				if (Param2)

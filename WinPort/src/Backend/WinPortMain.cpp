@@ -445,7 +445,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				g_winport_backend = L"GUI";
 
 				std::string wsl_clipboard_workaround = "";
-				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME")) {
+				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
 					// we are under WSL
 					// lets apply clipboard workaround
 					wsl_clipboard_workaround = 

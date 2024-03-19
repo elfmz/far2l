@@ -363,6 +363,10 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return r;
 	}
 
+	//win32-input-mode must be checked before kitty
+	//TODO: need to check for private mode sequence been recived somewhere here
+	//for win32-input-mode -- "\x1B[?9001h"
+	//for kitty -- "\x1B[>1u"
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsWinTermEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
@@ -370,7 +374,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			return r;
 		}
 	}
-	
+
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsKittyEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
@@ -455,7 +459,6 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 			return 1;
 
 		default:
-			fprintf(stderr, "PARSED_PLAINCHARS  ");
 			return (size_t)TTY_PARSED_PLAINCHARS;
 	}
 
@@ -466,17 +469,21 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
 	//work-around for double encoded mouse events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
-	//following codes are part of X10 mouse command and must be parsed in separate buffer
+	//following codes are part of X10 input sequence and must be parsed in separate buffer
 	if ((l > 6 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';') || _win32_accumulate) {
+		/*
 		fprintf(stderr, "Parsing win-32 mouse: ");
 		for (size_t i = 0; i < l && s[i] != '\0'; i++) {
 			fprintf(stderr, "%c", s[i]);
 		}
 		fprintf(stderr, " lenght: %ld\n", l);
+		*/
 
 		size_t r = TryUnwrappWinMouseEscapeSequence(s, l);
 
-		fprintf(stderr, "parsed lenght: %ld------------------\n", r);
+		//fprintf(stderr, "parsed lenght: %ld------------------\n", r);
+		//now we check if _win_mouse_buffer has enough characters for X10 mouse input sequence
+		//in future we may also need to check for SGR extended mouse reporting
 		_win32_accumulate = _win_mouse_buffer.size() > 5 ? false : true;
 		return r;
 	}
@@ -645,6 +652,19 @@ void TTYInputSequenceParser::OnBracketedPaste(bool start)
 	ir.EventType = BRACKETED_PASTE_EVENT;
 	ir.Event.BracketedPaste.bStartPaste = start ? TRUE : FALSE;
 	_ir_pending.emplace_back(ir);
+}
+
+//work-around for double encoded mouse events in win32-input mode
+void TTYInputSequenceParser::ParseWinMouseBuffer(bool idle)
+{
+	if (_win_mouse_buffer.size() > 5) {
+		_win32_accumulate = false;
+		Parse(&_win_mouse_buffer[0], _win_mouse_buffer.size(), idle);
+		_win_mouse_buffer.clear();
+		fprintf(stderr, "!!!parsed accumulated mouse sequence \n");
+	} else {
+		return;
+	}
 }
 
 //////////////////

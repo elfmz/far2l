@@ -303,6 +303,13 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	int args[6] = {0};
 	int args_cnt = 0;
 
+	//skip two sequences for WSL double encoded mouse work-around
+	if (_skip_two_sequence < 2) {
+		fprintf(stderr, "skipped...");
+		 ++_skip_two_sequence;
+		return l;
+	}
+
 	size_t n;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
@@ -326,16 +333,21 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
-	INPUT_RECORD ir = {};
-	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.wVirtualKeyCode = args[0];
-	ir.Event.KeyEvent.wVirtualScanCode = args[1];
-	ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
-	ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
-	ir.Event.KeyEvent.dwControlKeyState = args[4];
-	ir.Event.KeyEvent.wRepeatCount = args[5];
 
-	_ir_pending.emplace_back(ir);
+
+	if ( !((args[0] == 0) && (args[1] == 0) && (args[3] == 1) && (args[4] == 0)) )
+	{
+		INPUT_RECORD ir = {};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wVirtualKeyCode = args[0];
+		ir.Event.KeyEvent.wVirtualScanCode = args[1];
+		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+		ir.Event.KeyEvent.dwControlKeyState = args[4];
+		ir.Event.KeyEvent.wRepeatCount = args[5];
+		_ir_pending.emplace_back(ir);
+	}
+
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
 		_using_extension = 'w';
@@ -345,7 +357,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 }
 
 //work-around for double encoded mouse events in win32-input mode
-size_t TTYInputSequenceParser::TryParseAsWinTermPackedEscapeSequence(const char *s, size_t l)
+size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, size_t l)
 {
 	int args[6] = {0};
 	int args_cnt = 0;
@@ -353,15 +365,11 @@ size_t TTYInputSequenceParser::TryParseAsWinTermPackedEscapeSequence(const char 
 	size_t n;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
-			if(args[2] > 0){
-				fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)args[2]);
-				_win_mouse_buffer.push_back((unsigned char)args[2]); //we need only second arg (UnicodeChar) in decimal
-			}
 			fprintf(stderr, "\nwant mooore characters... \n");
 			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
 		}
 		if (s[i] == '_' || s[i] == ';') {
-			if (args_cnt == ARRAYSIZE(args)) {
+ 			if (args_cnt == ARRAYSIZE(args)) {
 				return TTY_PARSED_BADSEQUENCE;
 			}
 			if (i > n) {
@@ -373,13 +381,18 @@ size_t TTYInputSequenceParser::TryParseAsWinTermPackedEscapeSequence(const char 
 				break;
 			}
 
+		} else if (s[i] < '0' || s[i] > '9') {
+			return TTY_PARSED_BADSEQUENCE;
 		}
 	}
 
-	if(args[2] > 0){
+	if(args[2] > 0 && args[3] == 1){ // only KeyDown and valid char should pass
 		fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
 		_win_mouse_buffer.push_back((unsigned char)args[2]);
 	}
+
+	//counter for skip two win32 codes in end of input
+	_skip_two_sequence = 0;
 
 	return n;
 }

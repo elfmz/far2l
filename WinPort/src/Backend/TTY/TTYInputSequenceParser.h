@@ -72,8 +72,11 @@ struct ITTYInputSpecialSequenceHandler
 	virtual void OnInputBroken() = 0;
 };
 
+//wait for more characters from input buffer
 #define TTY_PARSED_WANTMORE         ((size_t)0)
+//no sequence encountered, plain text recognized
 #define TTY_PARSED_PLAINCHARS       ((size_t)-1)
+//unrecognized sequence, skip ESC char (0x1b) and continue
 #define TTY_PARSED_BADSEQUENCE      ((size_t)-2)
 
 class TTYInputSequenceParser
@@ -104,6 +107,9 @@ class TTYInputSequenceParser
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
 	char _using_extension = 0;
+	//work-around for double encoded mouse events in win32-input mode
+	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
+	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
 
 	void AssertNoConflicts();
 
@@ -131,13 +137,23 @@ class TTYInputSequenceParser
 
 
 public:
-	//work-around for double encoded mouse events in win32-input mode
-	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
-	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
-	int _skip_two_sequence = 0;          // counter for skip unwanted sequences after mouse input
 
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 
-	size_t Parse(const char *s, size_t l, bool idle_expired); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
+	/**
+	 * parse and schedule input from recognized sequence.
+	 * returns number of parsed bytes, numbers below 1 is error flags of following meaning:
+	 * +  0 - (TTY_PARSED_WANTMORE) wait for more characters from input buffer
+	 * + -1 - (TTY_PARSED_PLAINCHARS) no sequence encountered, plain text recognized
+	 * + -2 - (TTY_PARSED_BADSEQUENCE) unrecognized sequence, skip ESC char (0x1b) and continue
+	*/
+	size_t Parse(const char *s, size_t l, bool idle_expired);
+
+	/**
+	 * parse and schedule mouse sequence from _win_mouse_buffer.
+	 * executed only if _win_mouse_buffer contains valid number of characters
+	 * for X10 mouse sequence
+	*/
+	void ParseWinMouseBuffer(bool idle_expired);
 	char UsingExtension() const { return _using_extension; };
 };

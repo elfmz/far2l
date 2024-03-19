@@ -303,13 +303,6 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	int args[6] = {0};
 	int args_cnt = 0;
 
-	//skip two sequences for WSL double encoded mouse work-around
-	if (_skip_two_sequence < 2) {
-		fprintf(stderr, "skipped...");
-		 ++_skip_two_sequence;
-		return l;
-	}
-
 	size_t n;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
@@ -321,8 +314,8 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 			}
 			if (i > n) {
 				args[args_cnt] = atoi(&s[n]);
+				++args_cnt;
 			}
-			++args_cnt;
 			n = i + 1;
 			if (s[i] == '_') {
 				break;
@@ -335,6 +328,8 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 
 
 
+	//do not create invalid input event
+	//wVirtualKeyCode, wVirtualScanCode 0 with bKeyDown 1 doesn't make sense
 	if ( !((args[0] == 0) && (args[1] == 0) && (args[3] == 1) && (args[4] == 0)) )
 	{
 		INPUT_RECORD ir = {};
@@ -356,7 +351,10 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	return n;
 }
 
-//work-around for double encoded mouse events in win32-input mode
+//work-around for double encoded mouse events in win32-input mode.
+//maybe it will be better not copy/paste TryParseAsWinTermEscapeSequence here
+//but passing yet another flag to it is less readable.
+//so keep it this way until microsoft fix their stuff in the win32-input protocol
 size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, size_t l)
 {
 	int args[6] = {0};
@@ -365,7 +363,7 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 	size_t n;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
-			fprintf(stderr, "\nwant mooore characters... \n");
+			//fprintf(stderr, "\nwant mooore characters... \n");
 			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
 		}
 		if (s[i] == '_' || s[i] == ';') {
@@ -374,8 +372,8 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 			}
 			if (i > n) {
 				args[args_cnt] = atoi(&s[n]);
+				++args_cnt;
 			}
-			++args_cnt;
 			n = i + 1;
 			if (s[i] == '_') {
 				break;
@@ -387,12 +385,9 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 	}
 
 	if(args[2] > 0 && args[3] == 1){ // only KeyDown and valid char should pass
-		fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
+		//fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
 		_win_mouse_buffer.push_back((unsigned char)args[2]);
 	}
-
-	//counter for skip two win32 codes in end of input
-	_skip_two_sequence = 0;
 
 	return n;
 }

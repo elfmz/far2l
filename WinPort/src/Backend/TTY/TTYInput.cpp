@@ -48,12 +48,7 @@ void TTYInput::OnBufUpdated(bool idle)
 
 		//work-around for double encoded mouse events in win32-input mode
 		//here we parse mouse sequence from accumulated buffer
-		if (_parser._win_mouse_buffer.size() > 5) {
-			_parser._win32_accumulate = false;
-			_parser.Parse(&_parser._win_mouse_buffer[0], _parser._win_mouse_buffer.size(), idle);
-			_parser._win_mouse_buffer.clear();
-			fprintf(stderr, "!!!parsed accumulated mouse sequence \n");
-		}
+		_parser.ParseWinMouseBuffer(idle);
 
 		switch (decoded) {
 			case TTY_PARSED_PLAINCHARS:

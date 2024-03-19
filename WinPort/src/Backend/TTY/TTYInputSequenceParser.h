@@ -119,6 +119,7 @@ class TTYInputSequenceParser
 	void ParseMouse(char action, char col, char raw);
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
+	size_t TryUnwrappWinMouseEscapeSequence(const char *s, size_t l);
 	size_t ReadUTF8InHex(const char *s, wchar_t *uni_char);
 	size_t TryParseAsITerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
@@ -132,8 +133,8 @@ class TTYInputSequenceParser
 public:
 	//work-around for double encoded mouse events in win32-input mode
 	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
-	std::vector<char> _temp_buf;         // debug buffer
-	bool _win32_accumulate = false;      // flag for parse accumulated sequence from
+	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
+	int _skip_two_sequence = 0;          // counter for skip unwanted sequences after mouse input
 
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 

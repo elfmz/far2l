@@ -412,6 +412,13 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
+	// workaround for https://github.com/elfmz/far2l/issues/1889
+	const char *tp = getenv("TERM_PROGRAM");
+	if (tp && strcasecmp(tp, "WezTerm") == 0) {
+		MoveCursorStrict(y, x);
+		return;
+	}
+	
 	if (_cursor.y != y && _cursor.x != x) {
 		MoveCursorStrict(y, x);
 

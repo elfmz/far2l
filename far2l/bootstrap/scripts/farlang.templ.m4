@@ -17529,6 +17529,17 @@ SetColorSet
 "Встановити"
 "Ужыць"
 
+SetColorReset
+"&Сбросить"
+"&Reset"
+upd:"&Reset"
+upd:"&Reset"
+upd:"&Reset"
+upd:"&Reset"
+"&Reiniciar"
+"&Скинути"
+"&Зкінуць"
+
 SetColorCancel
 "Отменить"
 "Cancel"

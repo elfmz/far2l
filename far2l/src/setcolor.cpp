@@ -54,6 +54,8 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 void GetColor(int PaletteIndex);
 static VMenu *MenuToRedraw1 = nullptr, *MenuToRedraw2 = nullptr, *MenuToRedraw3 = nullptr;
 
+static wchar_t ColorDialogForeRGB[16], ColorDialogBackRGB[16];
+
 // 0,1 - dialog,warn List
 // 2,3 - dialog,warn Combobox
 static int ListPaletteItems[4][13] = {
@@ -428,10 +430,10 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 void GetColor(int PaletteIndex)
 {
 	ChangeMacroMode chgMacroMode(MACRO_MENU);
-	WORD NewColor = Palette[PaletteIndex - COL_FIRSTPALETTECOLOR];
+	uint16_t NewColor = Palette[PaletteIndex - COL_FIRSTPALETTECOLOR];
 
-	if (GetColorDialog(NewColor)) {
-		Palette[PaletteIndex - COL_FIRSTPALETTECOLOR] = static_cast<BYTE>(NewColor);
+	if (GetColorDialog(&NewColor)) {
+		Palette[PaletteIndex - COL_FIRSTPALETTECOLOR] = static_cast<uint16_t>(NewColor);
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->LeftPanel->Redraw();
@@ -463,290 +465,648 @@ void GetColor(int PaletteIndex)
 	}
 }
 
-//////////////////////////////////////
-static wchar_t ColorDialogForeRGB[16], ColorDialogBackRGB[16];
-
-static void UpdateRGBFromDialog(HANDLE hDlg)
+enum enumColorPanelElements
 {
-	SendDlgMessage(hDlg, DM_GETTEXTPTR, 36, (LONG_PTR)ColorDialogForeRGB);
-	SendDlgMessage(hDlg, DM_GETTEXTPTR, 38, (LONG_PTR)ColorDialogBackRGB);
-}
+	ID_CP_CHECKBOX = 0,
+	ID_CP_TEXT,
+	ID_CP_COLORS_RECT,
+	ID_CP_CHECKBOX_RGB,
+	ID_CP_EDIT_RGB,
+	ID_CP_BUTTON_256,
+	ID_CP_BUTTON_RGB,
+	ID_CP_RGB_SAMPLE,
+	ID_CP_RGB_PREFIX,
+	ID_CP_TOTAL
+};
 
-static DWORD ReverseColorBytes(DWORD Color)
+enum enumSetColorDialog
 {
-	return (Color & 0x00ff00) | ((Color >> 16) & 0xff) | ((Color & 0xff) << 16);
-}
+	ID_ST_TITLE = 0,
 
-static DWORD ColorDialogForeRGBValue()
+	ID_ST_SEPARATOR,
+	ID_ST_SEPARATOR2,
+	ID_ST_SEPARATOR3,
+	ID_ST_SEPARATOR4,
+	ID_ST_SEPARATOR5,
+
+	ID_CP_FIRST,
+	/// enumColorPanelElements foreground
+	ID_ST_CHECKBOX_FOREGROUND = ID_CP_FIRST,
+	ID_ST_TEXT_FOREGROUND,
+	ID_ST_FG_COLORS_RECT,
+	ID_ST_CHECKBOX_RGB1,
+	ID_ST_EDIT_FORERGB,
+	ID_ST_BUTTON_F256,
+	ID_ST_BUTTON_FRGB,
+	ID_ST_FRGB_SMAPLE,
+	ID_ST_FRGB_PREFIX,
+
+	/// enumColorPanelElements background
+	ID_ST_CHECKBOX_BACKGROUND,
+	ID_ST_TEXT_BACKGROUND,
+	ID_ST_BG_COLORS_RECT,
+	ID_ST_CHECKBOX_RGB2,
+	ID_ST_EDIT_BACKRGB,
+	ID_ST_BUTTON_B256,
+	ID_ST_BUTTON_BRGB,
+	ID_ST_BRGB_SMAPLE,
+	ID_ST_BRGB_PREFIX,
+
+	/// text style checkboxes
+	ID_ST_TEXT_STYLE,
+	ID_ST_CHECKBOX_STYLE_INHERIT,
+	ID_ST_CHECKBOX_STYLE_BOLD,
+	ID_ST_CHECKBOX_STYLE_ITALIC,
+	ID_ST_CHECKBOX_STYLE_OVERLINE,
+	ID_ST_CHECKBOX_STYLE_STRIKEOUT,
+	ID_ST_CHECKBOX_STYLE_INVERSE,
+	ID_ST_CHECKBOX_STYLE_BLINK,
+
+	ID_ST_COLOREXAMPLE,
+
+	ID_ST_BUTTON_SETCOLOR,
+	ID_ST_BUTTON_RESTORE,
+	ID_ST_BUTTON_CANCEL
+};
+
+struct color_panel_s
 {
-	return ReverseColorBytes(((DWORD)wcstoul(ColorDialogForeRGB, nullptr, 16)));
-}
+	CHAR_INFO vbuff[64];
+	CHAR_INFO vbuff_rgb[8];
+	uint64_t color;		// rgb
+	uint32_t id;
+	uint32_t offset;
+	uint32_t index;		// foreground or background index 0 - 15
+	bool bTransparent;
+	bool bRGB;
+	wchar_t wsRGB[16];
 
-static DWORD ColorDialogBackRGBValue()
-{
-	return (ReverseColorBytes((DWORD)wcstoul(ColorDialogBackRGB, nullptr, 16)));
-}
-
-static DWORD64 ColorDialogForeRGBMask()
-{
-	return DWORD64(ColorDialogForeRGBValue()) << 16;
-}
-
-static DWORD64 ColorDialogBackRGBMask()
-{
-	return DWORD64(ColorDialogBackRGBValue()) << 40;
-}
-
-static void GetColorDlgProc_EnsureColorsAreInverted(SHORT x, SHORT y)
-{
-	CHAR_INFO ci{};
-	SMALL_RECT Rect = {x, y, x, y};
-	WINPORT(ReadConsoleOutput)(0, &ci, COORD{1, 1}, COORD{0, 0}, &Rect);
-	if (ci.Attributes & COMMON_LVB_REVERSE_VIDEO)
-		return;	// this cell is already tweaked during prev paint
-
-	DWORD64 InvColors = COMMON_LVB_REVERSE_VIDEO;
-
-	InvColors|= ((ci.Attributes & 0x0f) << 4) | ((ci.Attributes & 0xf0) >> 4);
-
-	InvColors|= (ci.Attributes & (COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT));
-
-	if (ci.Attributes & FOREGROUND_TRUECOLOR) {
-		SET_RGB_BACK(InvColors, GET_RGB_FORE(ci.Attributes));
+	void update_index(int32_t newindex) {
+		newindex &= 15;
+		vbuff[index * 3 + 1].Char.UnicodeChar = 32;
+		vbuff[newindex * 3 + 1].Char.UnicodeChar = L'\x2022'; // DOT
+		index = newindex;
 	}
 
-	if (ci.Attributes & BACKGROUND_TRUECOLOR) {
-		SET_RGB_FORE(InvColors, GET_RGB_BACK(ci.Attributes));
+	void update_rgb_color_from_str( ) {
+		uint32_t rgb = wcstoul(wsRGB, nullptr, 16);
+		color = (rgb & 0x00FF00) | ((rgb >> 16) & 0xFF) | ((rgb & 0xFF) << 16);
+		update_rgb_sample( );
 	}
 
-	DWORD NumberOfAttrsWritten{};
-	WINPORT(FillConsoleOutputAttribute) (0, InvColors, 1, COORD{x, y}, &NumberOfAttrsWritten);
-}
+	void update_str_from_rgb_color( ) {
+		uint32_t rgb = (color & 0x00FF00) | ((color >> 16) & 0xFF) | ((color & 0xFF) << 16);
+		swprintf(wsRGB, 16, L"%06X", rgb);
+	}
 
-static void GetColorDlgProc_OnDrawn(HANDLE hDlg)
+	void update_rgb_sample( ) {
+		const uint64_t attr = ((color << 40) | BACKGROUND_TRUECOLOR) + (((~(color) & 0xFFFFFF) << 16) | FOREGROUND_TRUECOLOR) + 7;
+
+		vbuff_rgb[0].Char.UnicodeChar = 32;
+		vbuff_rgb[0].Attributes = attr;
+		vbuff_rgb[1].Char.UnicodeChar = L'\x2022'; // DOT
+		vbuff_rgb[1].Attributes = attr;
+		vbuff_rgb[2].Char.UnicodeChar = 32;
+		vbuff_rgb[2].Attributes = attr;
+	}
+
+	intptr_t WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2);
+};
+
+#define SET_COLOR_USED_FONTSTYLES (COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)
+
+struct set_color_s
 {
-	UpdateRGBFromDialog(hDlg);
+	enum {
+		IDC_FOREGROUND_PANEL = 0,
+		IDC_BACKGROUND_PANEL = 1
+	};
+	color_panel_s cPanel[2];
 
-	// Trick to fix #1392:
-	// For foreground-colored boxes invert Fg&Bg colors and add COMMON_LVB_REVERSE_VIDEO attribute
-	// this will put real colors on them if mapping of colors is different for Fg and Bg indexes
+	CHAR_INFO samplevbuff[132];
+	uint64_t color;
+	uint64_t smpcolor;
+	uint64_t mask;
+	uint64_t flags;
+//	bool	bInheritStyle;
 
-	// Ensure everything is on screen and will use console API then
-	ScrBuf.Flush();
+	uint64_t basecolor;
 
-	SMALL_RECT DlgRect{};
-	SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&DlgRect);
-	SMALL_RECT ItemRect{};
+	set_color_s() {
 
-	for (int ID = 2; ID <= 17; ++ID) {
-		if (SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID, (LONG_PTR)&ItemRect)) {
-			ItemRect.Left+= DlgRect.Left;
-			ItemRect.Right+= DlgRect.Left;
-			ItemRect.Top+= DlgRect.Top;
-			ItemRect.Bottom+= DlgRect.Top;
-			for (auto x = ItemRect.Left; x <= ItemRect.Right; ++x) {
-				for (auto y = ItemRect.Top; y <= ItemRect.Bottom; ++y) {
-					GetColorDlgProc_EnsureColorsAreInverted(x, y);
-				}
-			}
+		memset(this, 0, sizeof(set_color_s));
+
+		draw_panels_vbuff( );
+
+		cPanel[IDC_FOREGROUND_PANEL].id = IDC_FOREGROUND_PANEL;
+		cPanel[IDC_FOREGROUND_PANEL].offset = ID_CP_FIRST;
+		cPanel[IDC_BACKGROUND_PANEL].id = IDC_BACKGROUND_PANEL;
+		cPanel[IDC_BACKGROUND_PANEL].offset = ID_CP_FIRST + ID_CP_TOTAL;
+	}
+
+	void update_panel_indexes(void)
+	{
+		cPanel[IDC_FOREGROUND_PANEL].update_index(color & 0xF);
+		cPanel[IDC_BACKGROUND_PANEL].update_index((color & 0xFF) >> 4);
+	}
+
+	void set_color(const uint64_t color)
+	{
+		this->color = color;
+		flags = (color & 0x000000000000FF00) >> 8;
+		mask = 0xFFFFFFFFFFFFFFFF;
+
+		this->basecolor = 0;
+
+		cPanel[IDC_FOREGROUND_PANEL].bTransparent = false;
+		cPanel[IDC_BACKGROUND_PANEL].bTransparent = false;
+		cPanel[IDC_FOREGROUND_PANEL].color = (color >> 16) & 0xFFFFFF;
+		cPanel[IDC_BACKGROUND_PANEL].color = (color >> 40);
+
+		if (color & FOREGROUND_TRUECOLOR)
+			cPanel[IDC_FOREGROUND_PANEL].bRGB = true;
+
+		if (color & BACKGROUND_TRUECOLOR)
+			cPanel[IDC_BACKGROUND_PANEL].bRGB = true;
+
+		update_panel_indexes();
+
+		cPanel[IDC_FOREGROUND_PANEL].update_str_from_rgb_color( );
+		cPanel[IDC_BACKGROUND_PANEL].update_str_from_rgb_color( );
+
+		cPanel[IDC_FOREGROUND_PANEL].update_rgb_sample( );
+		cPanel[IDC_BACKGROUND_PANEL].update_rgb_sample( );
+
+		update_color( );
+	}
+
+	void set_mask(const uint64_t mask)
+	{
+		this->mask = mask;
+
+		if (!(mask & 0xF))
+			cPanel[IDC_FOREGROUND_PANEL].bTransparent = true;
+
+		if (!(mask & 0xF0))
+			cPanel[IDC_BACKGROUND_PANEL].bTransparent = true;
+	}
+
+	void update_color(void)
+	{
+		color = 0;
+		color |= cPanel[IDC_FOREGROUND_PANEL].index;
+		color |= cPanel[IDC_BACKGROUND_PANEL].index << 4;
+		color |= (cPanel[IDC_FOREGROUND_PANEL].color << 16) & 0x000000FFFFFF0000;
+		color |= cPanel[IDC_BACKGROUND_PANEL].color << 40;
+
+		if (cPanel[IDC_FOREGROUND_PANEL].bRGB)
+			color |= FOREGROUND_TRUECOLOR;
+
+		if (cPanel[IDC_BACKGROUND_PANEL].bRGB)
+			color |= BACKGROUND_TRUECOLOR;
+
+		mask = 0xFFFFFFFFFFFFFFFF;
+		smpcolor = color;
+
+		if (cPanel[IDC_FOREGROUND_PANEL].bTransparent) {
+			mask &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
+			smpcolor &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
+		}
+		if (cPanel[IDC_BACKGROUND_PANEL].bTransparent) {
+			mask &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+			smpcolor &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+		}
+
+		draw_sample_vbuff();
+	}
+
+	void draw_sample_vbuff(void);
+	void draw_panels_vbuff(void);
+};
+
+void set_color_s::draw_sample_vbuff(void)
+{
+	static const wchar_t *sample_text_str = L"Text Text Text Text Text Text Text Text Text Text";
+
+	for (int i = 0; i < 4; i++) {
+		const uint64_t attr = (i > 0) ? smpcolor : smpcolor & 0xFF;
+
+		for(int g = 0; g < 33; g++) {
+			CHAR_INFO *const vbuff = samplevbuff + i * 33;
+
+			vbuff[g].Char.UnicodeChar = sample_text_str[g];
+			vbuff[g].Attributes = attr;
 		}
 	}
 }
 
-static LONG_PTR GetColorDlgProc_CtlColorDlgItem(HANDLE hDlg, int ID, LONG_PTR DefaultColor, bool UseTrueColor)
+void set_color_s::draw_panels_vbuff(void)
 {
-	if (UseTrueColor) {
-		DialogItemTrueColors ditc{};
-		FarTrueColorFromRGB(ditc.Normal.Fore, ColorDialogForeRGBValue());
-		FarTrueColorFromRGB(ditc.Normal.Back, ColorDialogBackRGBValue());
-		SendDlgMessage(hDlg, DM_SETTRUECOLOR, ID, (LONG_PTR)&ditc);
+	static const uint16_t dotfc[16] = { 15, 15, 15, 0, 0, 0, 0, 0,		// foreground dot colors
+										15,  0,  0, 0, 0, 0, 0, 0 };
+
+	// For foreground-colored boxes invert Fg&Bg colors and add COMMON_LVB_REVERSE_VIDEO attribute
+	// this will put real colors on them if mapping of colors is different for Fg and Bg indexes
+	// 0xBF
+
+	// Fill foreground colors rect
+	for (int i = 0; i < 16; i++) {
+		CHAR_INFO *const vbuff = cPanel[IDC_FOREGROUND_PANEL].vbuff;
+		const uint16_t attr = ((dotfc[i] << 4) + i) | COMMON_LVB_REVERSE_VIDEO;
+
+		vbuff[i * 3 + 0].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 0].Attributes = attr;
+		vbuff[i * 3 + 1].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 1].Attributes = attr;
+		vbuff[i * 3 + 2].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 2].Attributes = attr;
 	}
 
-	int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-	return (DefaultColor & 0xFFFFFF00U) | ((*CurColor) & 0xFF);
+	// Fill background colors rect
+	for (int i = 0; i < 16; i++) {
+		CHAR_INFO *const vbuff = cPanel[IDC_BACKGROUND_PANEL].vbuff;
+		const uint16_t attr = (i << 4) + dotfc[i];
+
+		vbuff[i * 3 + 0].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 0].Attributes = attr;
+		vbuff[i * 3 + 1].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 1].Attributes = attr;
+		vbuff[i * 3 + 2].Char.UnicodeChar = 32;
+		vbuff[i * 3 + 2].Attributes = attr;
+	}
 }
 
-static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+#define DM_UPDATECURSOR (DM_USER + 1)
+#define DM_UPDATECOLORCODE (DM_USER + 2)
+
+intptr_t WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
 {
+	auto update_cursor = [=]() {
+		COORD coord;
+		coord.X = (index & 7) * 3 + 1;
+		coord.Y = (index > 7);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_CP_COLORS_RECT + offset, (intptr_t)&coord);
+	};
+
+	auto update_index_and_cursor = [&](uint32_t newindex) {
+		update_index(newindex);
+		update_cursor();
+		SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
+	};
+
+	switch(Param1) {
+	case ID_CP_RGB_PREFIX: {
+		if (Msg == DN_CTLCOLORDLGITEM) {
+			if (bRGB)
+				return FarColorToReal(COL_DIALOGEDIT);
+			else
+				return FarColorToReal(COL_DIALOGEDITDISABLED);
+		}
+	}
+	break;
+
+	case ID_CP_RGB_SAMPLE:
+		if (Msg == DN_DRAWDLGITEM) {
+			if (!bRGB)
+				return 0;
+		}
+	break;
+
+	case ID_CP_CHECKBOX:
+		if (Msg == DN_BTNCLICK) {
+			bTransparent = (!SendDlgMessage(hDlg, DM_GETCHECK, ID_CP_CHECKBOX + offset, 0));
+			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
+		}
+	break;
+
+	case ID_CP_CHECKBOX_RGB:
+		if (Msg == DN_BTNCLICK) {
+			bRGB = SendDlgMessage(hDlg, DM_GETCHECK, ID_CP_CHECKBOX_RGB + offset, 0);
+			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
+		}
+	break;
+
+	case ID_CP_EDIT_RGB:
+		if (Msg == DN_EDITCHANGE) {
+			SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_CP_EDIT_RGB + offset, (uintptr_t)wsRGB);
+			update_rgb_color_from_str( );
+			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
+		}
+	break;
+
+	case ID_CP_COLORS_RECT:
+		switch(Msg) {
+
+		case DM_UPDATECURSOR:
+			update_cursor();
+		break;
+
+//		case DN_BTNCLICK:
+		case DN_MOUSECLICK: {
+			MOUSE_EVENT_RECORD *mEv = (MOUSE_EVENT_RECORD *)Param2;
+			uint32_t newindex = mEv->dwMousePosition.X / 3 + (mEv->dwMousePosition.Y & 1) * 8;
+			update_index_and_cursor(newindex);
+		}
+		break;
+
+		case DN_KEY:
+			switch(Param2) {
+
+			case KEY_LEFT:
+			case KEY_NUMPAD4: 
+			case KEY_MSWHEEL_LEFT:
+				update_index_and_cursor(index - 1);
+			break;
+
+			case KEY_RIGHT:
+			case KEY_NUMPAD6:
+			case KEY_MSWHEEL_RIGHT:
+				update_index_and_cursor(index + 1);
+			break;
+
+			case KEY_UP:
+			case KEY_NUMPAD8:
+			case KEY_MSWHEEL_UP:
+			case KEY_PGUP:
+			case KEY_NUMPAD9:
+				update_index_and_cursor(index - 8);
+			break;
+
+			case KEY_DOWN:
+			case KEY_NUMPAD2:
+			case KEY_MSWHEEL_DOWN:
+			case KEY_PGDN:
+			case KEY_NUMPAD3:
+				update_index_and_cursor(index + 8);
+			break;
+
+			case KEY_HOME:
+			case KEY_NUMPAD7:
+				update_index_and_cursor(0);
+			break;
+
+			case KEY_END:
+			case KEY_NUMPAD1:
+				update_index_and_cursor(15);
+			break;
+			}
+
+		break;
+		}
+
+	break;
+	}
+
+	return -1;
+}
+
+static intptr_t WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+{
+	set_color_s *colorState = (set_color_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+
 	switch (Msg) {
-		case DN_CTLCOLORDLGITEM:
-			if (Param1 >= 41 && Param1 <= 43) {
-				return GetColorDlgProc_CtlColorDlgItem(hDlg, Param1, Param2, Param1 >= 42);
-			}
-			break;
 
-		case DN_BTNCLICK:
+	case DM_UPDATECOLORCODE: {
+		colorState->update_color();
+		SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+	}
+	break;
 
-			if ( (Param1 >= 2 && Param1 <= 17) || (Param1 >= 19 && Param1 <= 34)) {
-				int NewColor;
-				int *CurColor = (int *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-				FarDialogItem *DlgItem =
-						(FarDialogItem *)malloc(SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, 0));
-				SendDlgMessage(hDlg, DM_GETDLGITEM, Param1, (LONG_PTR)DlgItem);
-				NewColor = *CurColor;
+	case DN_INITDIALOG: {
+		SendDlgMessage(hDlg, DM_SETCURSORSIZE, ID_ST_FG_COLORS_RECT, Opt.CursorSize[1]);
+		SendDlgMessage(hDlg, DM_SETCURSORSIZE, ID_ST_BG_COLORS_RECT, Opt.CursorSize[1]);
 
-				if (Param1 <= 17)		// Fore
-				{
-					NewColor&= ~0x0F;
-					NewColor|= (DlgItem->Flags & B_MASK) >> 4;
-				} else // if (Param1 >= 19) // Back 
-				{
-					NewColor&= ~0xF0;
-					NewColor|= DlgItem->Flags & B_MASK;
-				}
+		SendDlgMessage(hDlg, DM_SETFOCUS, ID_ST_FG_COLORS_RECT, 0);
+		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_FG_COLORS_RECT, 0);
+		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_BG_COLORS_RECT, 0);
+	}
+	break;
 
-				if (NewColor != *CurColor)
-					*CurColor = NewColor;
+	case DN_BTNCLICK:
+	case DN_MOUSECLICK: {
+	}
+	break;
 
-				free(DlgItem);
-				return TRUE;
-			}
-			break;
+//				if (Msg == DN_MOUSECLICK) {
+//					Param1 = ID_HER_NORMALFILE + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
 
-		case DN_DRAWDIALOGDONE:
-			GetColorDlgProc_OnDrawn(hDlg);
-			break;
+//					if (((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.X == 1
+//							&& (EditData->MarkLen))
+//						Param1 = ID_HER_NORMALMARKING + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
+//				}
 
-		case DN_EDITCHANGE:
-			if (Param1 == 36 || Param1 == 38) {
-				GetColorDlgProc_OnDrawn(hDlg);
-			}
-			break;
+///		case DN_CLOSE:
+///			UpdateRGBFromDialog(hDlg);
+///			break;
+	}
 
-		case DN_CLOSE:
-			UpdateRGBFromDialog(hDlg);
-			break;
+	if (Param1 >= ID_CP_FIRST && Param1 < ID_CP_FIRST + ID_CP_TOTAL * 2) {
+		const uint32_t id = (Param1 >= ID_CP_FIRST + ID_CP_TOTAL);
+		const uint32_t rv = colorState->cPanel[id].ColorPanelUserProc(hDlg, Msg, (Param1 - id * ID_CP_TOTAL) - ID_CP_FIRST, Param2);
+
+		if (rv != -1)
+			return rv;
 	}
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static bool GetColorDialogInner(bool bForFileFilter, DWORD64 &Color, bool bCentered)
+static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
 {
-	const wchar_t *HexMask = L"HHHHHH";
-	swprintf(ColorDialogForeRGB, ARRAYSIZE(ColorDialogForeRGB), L"%06X", ReverseColorBytes((Color >> 16) & 0xffffff));
-	swprintf(ColorDialogBackRGB, ARRAYSIZE(ColorDialogBackRGB), L"%06X", ReverseColorBytes((Color >> 40) & 0xffffff));
+	const wchar_t VerticalLine[] = { BoxSymbols[BS_T_H2V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],BoxSymbols[BS_V1], 
+			BoxSymbols[BS_V1],BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], 
+			BoxSymbols[BS_V1],BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
+
+	const wchar_t HorizontalLine[] = { BoxSymbols[BS_L_H1V2], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_R_H1V1], 0};
+
+	const wchar_t HorizontalMini[] = { BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], 
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1],
+			BoxSymbols[BS_H1], BoxSymbols[BS_H1], BoxSymbols[BS_H1], 0 };
+
+	static const wchar_t *HexMask = L"HHHHHH";
+
+	if (!color) return false;
+	uint64_t resetcolor = *color;
+
+	set_color_s	colorState;
+	colorState.set_color(*color);
+	if (mask)
+		colorState.set_mask(*mask);
 
 	DialogDataEx ColorDlgData[] = {
-		/*   0 */ {DI_DOUBLEBOX, 3, 1, 39, 14, {}, 0, Msg::SetColorTitle},
 
-		/*   1 */ {DI_SINGLEBOX, 5, 2, 20, 7, {}, 0, Msg::SetColorForeground},
-		/*   2 */ {DI_RADIOBUTTON, 7, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   3 */ {DI_RADIOBUTTON, 7, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   4 */ {DI_RADIOBUTTON, 7, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   5 */ {DI_RADIOBUTTON, 7, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   6 */ {DI_RADIOBUTTON, 10, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   7 */ {DI_RADIOBUTTON, 10, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   8 */ {DI_RADIOBUTTON, 10, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*   9 */ {DI_RADIOBUTTON, 10, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  10 */ {DI_RADIOBUTTON, 13, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  11 */ {DI_RADIOBUTTON, 13, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  12 */ {DI_RADIOBUTTON, 13, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  13 */ {DI_RADIOBUTTON, 13, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  14 */ {DI_RADIOBUTTON, 16, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  15 */ {DI_RADIOBUTTON, 16, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  16 */ {DI_RADIOBUTTON, 16, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  17 */ {DI_RADIOBUTTON, 16, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		{DI_DOUBLEBOX, 3, 1, 55, 18, {}, 0, Msg::SetColorTitle},
 
-		/*  18 */ {DI_SINGLEBOX, 22, 2, 37, 7, {}, 0, Msg::SetColorBackground},
-		/*  19 */ {DI_RADIOBUTTON, 24, 3, 0, 3, {}, F_LIGHTGRAY | B_BLACK | DIF_GROUP | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  20 */ {DI_RADIOBUTTON, 24, 4, 0, 4, {}, F_BLACK | B_RED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  21 */ {DI_RADIOBUTTON, 24, 5, 0, 5, {}, F_LIGHTGRAY | B_DARKGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  22 */ {DI_RADIOBUTTON, 24, 6, 0, 6, {}, F_BLACK | B_LIGHTRED | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  23 */ {DI_RADIOBUTTON, 27, 3, 0, 3, {}, F_LIGHTGRAY | B_BLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  24 */ {DI_RADIOBUTTON, 27, 4, 0, 4, {}, F_BLACK | B_MAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  25 */ {DI_RADIOBUTTON, 27, 5, 0, 5, {}, F_BLACK | B_LIGHTBLUE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  26 */ {DI_RADIOBUTTON, 27, 6, 0, 6, {}, F_BLACK | B_LIGHTMAGENTA | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  27 */ {DI_RADIOBUTTON, 30, 3, 0, 3, {}, F_BLACK | B_GREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  28 */ {DI_RADIOBUTTON, 30, 4, 0, 4, {}, F_BLACK | B_BROWN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  29 */ {DI_RADIOBUTTON, 30, 5, 0, 5, {}, F_BLACK | B_LIGHTGREEN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  30 */ {DI_RADIOBUTTON, 30, 6, 0, 6, {}, F_BLACK | B_YELLOW | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  31 */ {DI_RADIOBUTTON, 33, 3, 0, 3, {}, F_BLACK | B_CYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  32 */ {DI_RADIOBUTTON, 33, 4, 0, 4, {}, F_BLACK | B_LIGHTGRAY | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  33 */ {DI_RADIOBUTTON, 33, 5, 0, 5, {}, F_BLACK | B_LIGHTCYAN | DIF_SETCOLOR | DIF_MOVESELECT, L""},
-		/*  34 */ {DI_RADIOBUTTON, 33, 6, 0, 6, {}, F_BLACK | B_WHITE | DIF_SETCOLOR | DIF_MOVESELECT, L""},
+		{DI_TEXT,  0, 16,  0, 16, {}, DIF_SEPARATOR, L""},
+		{DI_VTEXT, 39, 1, 39, 16, {}, DIF_BOXCOLOR, VerticalLine},
+		{DI_TEXT, 3, 6,  39, 6, {}, DIF_BOXCOLOR, HorizontalLine},
+		{DI_TEXT, 3, 11, 39, 11, {}, DIF_BOXCOLOR, HorizontalLine},
+		{DI_TEXT, 41, 4, 54, 4, {}, DIF_BOXCOLOR, HorizontalMini},
 
-		/*  35 */ {DI_TEXT,         7,   7,  11, 7,  {}, DIF_HIDDEN, L"RGB#:"},
-		/*  36 */ {DI_FIXEDIT,     13,   7,  18, 7,  {(DWORD_PTR)HexMask}, DIF_HIDDEN | DIF_MASKEDIT, ColorDialogForeRGB},
-		/*  37 */ {DI_TEXT,        24,   7,  28, 7,  {}, DIF_HIDDEN, L"RGB#:"},
-		/*  38 */ {DI_FIXEDIT,     30,   7,  35, 7,  {(DWORD_PTR)HexMask}, DIF_HIDDEN | DIF_MASKEDIT, ColorDialogBackRGB},
+		{DI_CHECKBOX, 5, 2, 20, 2, {}, DIF_AUTOMATION, Msg::SetColorForeground},
+		{DI_TEXT, 5, 2, 20, 2, {}, DIF_HIDDEN, Msg::SetColorForeground},
+		{DI_USERCONTROL, 5, 3, 28, 4, {}, 0, L"" },
+		{DI_CHECKBOX, 30, 2, 36, 2, {}, DIF_AUTOMATION, L"RGB#"},
+		{DI_FIXEDIT, 31, 3, 37, 3, {(DWORD_PTR)HexMask}, DIF_MASKEDIT, colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].wsRGB},
+		{DI_BUTTON, 30, 4, 36, 4, {}, DIF_BTNNOCLOSE, L"256‥"},
+		{DI_BUTTON, 30, 5, 36, 5, {}, DIF_BTNNOCLOSE, L"RGB‥"},
+		{DI_USERCONTROL, 26, 5, 28, 5, {}, DIF_NOFOCUS, L"" },
+		{DI_TEXT, 30, 3, 30, 3, {}, 0, L"#"},
 
-		/*  39 */ {DI_CHECKBOX,  5, 9, 0, 9, {}, DIF_HIDDEN, Msg::SetColorForeTransparent},
-		/*  40 */ {DI_CHECKBOX, 22, 9, 0, 9, {}, DIF_HIDDEN, Msg::SetColorBackTransparent},
+		{DI_CHECKBOX, 5, 7, 20, 7, {}, DIF_AUTOMATION, Msg::SetColorBackground},
+		{DI_TEXT, 5, 7, 20, 7, {}, DIF_HIDDEN, Msg::SetColorBackground},
+		{DI_USERCONTROL, 5, 8, 28, 9, {}, 0, L"" },
+		{DI_CHECKBOX, 30, 7, 36, 7, {}, DIF_AUTOMATION, L"RGB#"},
+		{DI_FIXEDIT, 31, 8, 37, 8, {(DWORD_PTR)HexMask}, DIF_MASKEDIT, colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].wsRGB},
+		{DI_BUTTON, 30, 9, 36, 9, {}, DIF_BTNNOCLOSE, L"256‥"},
+		{DI_BUTTON, 30, 10, 36, 10, {}, DIF_BTNNOCLOSE, L"RGB‥"},
+		{DI_USERCONTROL, 26, 10, 28, 10, {}, DIF_NOFOCUS, L"" },
+		{DI_TEXT, 30, 8, 30, 8, {}, 0, L"#"},
 
-		/*  41 */ {DI_TEXT,   5,   9, 37,  9, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  42 */ {DI_TEXT,   5,  10, 37, 10, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  43 */ {DI_TEXT,   5,  11, 37, 11, {}, DIF_SETCOLOR, Msg::SetColorSample},
-		/*  44 */ {DI_TEXT,   0,  12,  0, 12, {}, DIF_SEPARATOR, L""},
-		/*  45 */ {DI_BUTTON, 0,  13,  0, 13, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
-		/*  46 */ {DI_BUTTON, 0,  13,  0, 13, {}, DIF_CENTERGROUP, Msg::SetColorCancel},
+		{DI_TEXT, 41, 2, 48, 2, {}, 0, L"Style:"},
+		{DI_CHECKBOX, 41, 3, 48, 3, {}, 0, L"Inherit"},
+		{DI_CHECKBOX, 41, 5, 48, 5, {}, 0, L"Bold"},
+		{DI_CHECKBOX, 41, 6, 48, 6, {}, 0, L"Italic"},
+		{DI_CHECKBOX, 41, 7, 48, 7, {}, 0, L"Overline"},
+		{DI_CHECKBOX, 41, 8, 48, 8, {}, 0, L"Strikeout"},
+		{DI_CHECKBOX, 41, 9, 48, 9, {}, 0, L"Inverse"},
+		{DI_CHECKBOX, 41, 10, 48, 10, {}, 0, L"Blink"},
+
+		{DI_USERCONTROL, 5, 12, 37, 15, {}, DIF_NOFOCUS, L"" },
+
+		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
+		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetColorReset},
+		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_CENTERGROUP, Msg::SetColorCancel},
+
 	};
+
 	MakeDialogItemsEx(ColorDlgData, ColorDlg);
+
 	int ExitCode;
-	WORD CurColor = Color;
 
-	for (size_t i = 2; i <= 17; i++) {
-		if (static_cast<WORD>((ColorDlg[i].Flags & B_MASK) >> 4) == (Color & F_MASK)) {
-			ColorDlg[i].Selected = 1;
-			ColorDlg[i].Focus = TRUE;
-			break;
+	ColorDlg[ID_ST_FG_COLORS_RECT].VBuf = colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].vbuff;
+	ColorDlg[ID_ST_BG_COLORS_RECT].VBuf = colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].vbuff;
+	ColorDlg[ID_ST_FRGB_SMAPLE].VBuf = colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].vbuff_rgb;
+	ColorDlg[ID_ST_BRGB_SMAPLE].VBuf = colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].vbuff_rgb;
+	ColorDlg[ID_ST_COLOREXAMPLE].VBuf = colorState.samplevbuff;
+
+	if (colorState.color & FOREGROUND_TRUECOLOR) {
+		ColorDlg[ID_ST_CHECKBOX_RGB1].Selected = 1;
+		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bRGB = true;
+	}
+	else {
+		ColorDlg[ID_ST_CHECKBOX_RGB1].Selected = 0;
+		ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_DISABLE;
+	}
+
+	if (colorState.color & BACKGROUND_TRUECOLOR) {
+		ColorDlg[ID_ST_CHECKBOX_RGB2].Selected = 1;
+		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bRGB = true;
+	}
+	else {
+		ColorDlg[ID_ST_CHECKBOX_RGB2].Selected = 0;
+		ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_DISABLE;
+	}
+
+	if (mask) {
+		if (colorState.mask & 0xF) {
+			ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Selected = 1;
+		}
+		else {
+			ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Selected = 0;
+			colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bTransparent = true;
+			ColorDlg[ID_ST_FG_COLORS_RECT].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_CHECKBOX_RGB1].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_HIDDEN;
+		}
+
+		if (colorState.mask & 0xF0) {
+			ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Selected = 1;
+		}
+		else {
+			ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Selected = 0;
+			colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bTransparent = true;
+			ColorDlg[ID_ST_BG_COLORS_RECT].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_CHECKBOX_RGB2].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_HIDDEN;
+			ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_HIDDEN;
 		}
 	}
+	else {
+		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bTransparent = false;
+		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bTransparent = false;
 
-	for (size_t i = 19; i <= 34; i++) {
-		if (static_cast<WORD>(ColorDlg[i].Flags & B_MASK) == (Color & B_MASK)) {
-			ColorDlg[i].Selected = 1;
-			break;
-		}
+		ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Flags |= (DIF_HIDDEN | DIF_DISABLE);
+		ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Flags |= (DIF_HIDDEN | DIF_DISABLE);
+		ColorDlg[ID_ST_TEXT_FOREGROUND].Flags ^= DIF_HIDDEN;
+		ColorDlg[ID_ST_TEXT_BACKGROUND].Flags ^= DIF_HIDDEN;
+
+		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bRGB = false;
+		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bRGB = false;
+
+		ColorDlg[ID_ST_CHECKBOX_RGB1].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_DISABLE;
+
+		ColorDlg[ID_ST_CHECKBOX_RGB2].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_DISABLE;
+		ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_DISABLE;
 	}
 
-	for (size_t i = 41; i <= 43; i++) {
-		ColorDlg[i].Flags = (ColorDlg[i].Flags & ~DIF_COLORMASK) | (Color & 0xffff);
-	}
+//	colorState.update_color( );
 
-	if (bForFileFilter) {
-		ColorDlg[0].Y2+= 2;
-		ColorDlg[1].Y2++;
-		ColorDlg[18].Y2++;
+	Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&colorState);
+	Dlg.SetPosition(-1, -1, 59, 20);
 
-		for (size_t i = 35; i <= 40; ++i) {
-			ColorDlg[i].Flags&= ~DIF_HIDDEN;
-		}
-		for (size_t i = 41; i <= 46; i++) {
-			ColorDlg[i].Y1+= 2;
-			ColorDlg[i].Y2+= 2;
-		}
-		ColorDlg[39].Selected = (Color & 0x0F00 ? 1 : 0);
-		ColorDlg[40].Selected = (Color & 0xF000 ? 1 : 0);
-	}
+	for (int i = ID_ST_FG_COLORS_RECT; i < ID_ST_FG_COLORS_RECT + ID_CP_TOTAL - 2; i++)
+		Dlg.SetAutomation(ID_ST_CHECKBOX_FOREGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);
 
-	{
-		Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&CurColor);
+	for (int i = ID_ST_BG_COLORS_RECT; i < ID_ST_BG_COLORS_RECT + ID_CP_TOTAL - 2; i++)
+		Dlg.SetAutomation(ID_ST_CHECKBOX_BACKGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);
 
-		if (bCentered)
-			Dlg.SetPosition(-1, -1, 39 + 4, 15 + (bForFileFilter ? 3 : 2));
-		else
-			Dlg.SetPosition(37, 2, 75 + 4, 16 + (bForFileFilter ? 3 : 2));
+	for (int i = ID_ST_EDIT_FORERGB; i < ID_ST_EDIT_FORERGB + 4; i++)
+		Dlg.SetAutomation(ID_ST_CHECKBOX_RGB1, i, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
-		Dlg.Process();
-		ExitCode = Dlg.GetExitCode();
-	}
+	for (int i = ID_ST_EDIT_BACKRGB; i < ID_ST_EDIT_BACKRGB + 4; i++)
+		Dlg.SetAutomation(ID_ST_CHECKBOX_RGB2, i, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
-	if (ExitCode == 45) {
-		Color = CurColor & 0xffff;
 
-		if (ColorDlg[39].Selected)
-			Color|= 0x0F00;
-		else
-			Color&= 0xF0FF;
+	Dlg.Process();
+	ExitCode = Dlg.GetExitCode();
 
-		if (ColorDlg[40].Selected)
-			Color|= 0xF000;
-		else
-			Color&= 0x0FFF;
+	if (ExitCode == ID_ST_BUTTON_SETCOLOR) {
 
-		Color|= ColorDialogForeRGBMask();
-		Color|= ColorDialogBackRGBMask();
+		colorState.update_color( );
+
+		*color = colorState.color;
+		if (mask) *mask = colorState.mask;
 
 		return true;
 	}
@@ -754,16 +1114,18 @@ static bool GetColorDialogInner(bool bForFileFilter, DWORD64 &Color, bool bCente
 	return false;
 }
 
-bool GetColorDialogForFileFilter(DWORD64 &Color)
+bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask)
 {
-	return GetColorDialogInner(true, Color, true);
+	return GetColorDialogInner(color, mask, true);
 }
 
-bool GetColorDialog(WORD &Color, bool bCentered)
+bool GetColorDialog(uint16_t *color, bool bCentered)
 {
-	DWORD64 ColorRGB = Color;
-	bool out = GetColorDialogInner(false, ColorRGB, bCentered);
-	Color = ColorRGB & 0xffff;
+	if (!color) return false;
+
+	uint64_t color64 = *color;
+	bool out = GetColorDialogInner(&color64, NULL, bCentered);
+	*color = (uint16_t)(color64 & 0xFFFF);
+
 	return out;
 }
-

@@ -956,7 +956,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 									Width -= ng;
 
 									if (!ShowStatus)
-										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKCHAR);
+										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKSTR);
 
 									Text(hl->Mark, outlen);
 									SetColor(OldColor);

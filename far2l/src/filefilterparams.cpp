@@ -477,20 +477,6 @@ struct filterpar_highlight_state_s
 	CHAR_INFO vbuff[32 * 4];
 	uint32_t outlen[4];
 	HighlightDataColor hl;
-
-//	CHAR_INFO vbuff[64];	// draw buffer
-//	uint64_t color;			// rgb | flags | index
-//	uint32_t id;
-//	uint32_t offset;
-//	uint32_t index;			// foreground or background index
-//	bool bTransparent;		// color = 0
-//	std::function<void()> RefreshColor;
-//	size_t Offset;
-
-//	intptr_t WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2);
-//LONG_PTR WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
-
-//	color_panel_state();
 };
 
 enum enumFileFilterConfig
@@ -611,8 +597,8 @@ static void HighlightDlgUpdateUserControl(filterpar_highlight_state_s *fphlstate
 			Color = FarColorToReal(FarColor[i]);
 		}
 
-		if (hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF)
-			ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF;
+		if (hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] & 0x00FF)
+			ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] & 0x00FF;
 		else
 			ColorM = Color;
 
@@ -643,7 +629,6 @@ static void HighlightDlgUpdateUserControl(filterpar_highlight_state_s *fphlstate
 		vbuff->Char.UnicodeChar = BoxSymbols[BS_V1];
 		vbuff->Attributes = FarColorToReal(COL_PANELBOX);
 	}
-
 }
 
 #endif
@@ -696,8 +681,8 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				break;
 
 			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
-			static const wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
-			static const wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
+			const wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
+			const wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
 			static const wchar_t *wstrFilenameExample = L"filename.ext";
 			static const wchar_t *wstrSpaces = L"                               ";
 
@@ -730,8 +715,8 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					Color = FarColorToReal(FarColor[i]);
 				}
 
-				if (hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF)
-					ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKCHAR][i] & 0x00FF;
+				if (hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] & 0x00FF)
+					ColorM = hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] & 0x00FF;
 				else
 					ColorM = Color;
 
@@ -832,9 +817,9 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				}
 
 				// Color[0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor]
-				DWORD64 Color = fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
-				GetColorDialogForFileFilter(Color);
-				fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2] = Color;
+				uint64_t *color = &fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
+				uint64_t *mask  = &fphlstate->hl.Mask[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
+				GetColorDialogForFileFilter(color, mask);
 				
 				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_MARKEDIT, 0);
 				if (nLength > HIGHLIGHT_MAX_MARK_LENGTH ) {
@@ -1070,7 +1055,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	FilterDlg[ID_HER_COLOREXAMPLE].VBuf = fphlstate.vbuff;
 
 	FilterDlg[ID_HER_MARKEDIT].strData = fphlstate.hl.Mark;
-	FilterDlg[ID_HER_MARKTRANSPARENT].Selected = (fphlstate.hl.bTransparent ? 1 : 0);
+	FilterDlg[ID_HER_MARKTRANSPARENT].Selected = (fphlstate.hl.bMarkInherit ? 1 : 0);
 
 	FilterDlg[ID_HER_CONTINUEPROCESSING].Selected = (FF->GetContinueProcessing() ? 1 : 0);
 	FilterDlg[ID_FF_NAMEEDIT].strData = FF->GetTitle();
@@ -1249,7 +1234,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			if (FilterDlg[ID_FF_MATCHMASK].Selected && !FileMask.Set(FilterDlg[ID_FF_MASKEDIT].strData, 0))
 				continue;
 
-			fphlstate.hl.bTransparent = FilterDlg[ID_HER_MARKTRANSPARENT].Selected;
+			fphlstate.hl.bMarkInherit = FilterDlg[ID_HER_MARKTRANSPARENT].Selected;
 
 			FF->SetColors(&fphlstate.hl);
 			FF->SetContinueProcessing(FilterDlg[ID_HER_CONTINUEPROCESSING].Selected != 0);

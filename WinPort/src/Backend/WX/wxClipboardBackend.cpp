@@ -206,7 +206,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		wxString wx_str((const wchar_t *)data);
 		const std::string &tmp = wx_str.ToStdString();
-		cdo->SetData(tmp.size() + 1, tmp.c_str()); // including ending NUL char
+		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
 
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
@@ -217,7 +217,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format==CF_TEXT) {
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-		cdo->SetData(strlen((const char *)data) + 1, data); // including ending NUL char
+		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
 
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));

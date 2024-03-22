@@ -21,15 +21,15 @@ size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char act
 	}
 
 	int action = (int)s[2] - 32;
-	int col    = std::max((int)s[3] - 33, 1); //(unsigned char)'!');
-	int row    = std::max((int)s[4] - 33, 1); //(unsigned char)'!');
+	//make coordinates zero-based
+	int colunm = (int)s[3] - 33;
+	int row    = (int)s[4] - 33;
 
 	if (action > 255 - 32) {
 		return TTY_PARSED_BADSEQUENCE;
 	}
 
-
-	AddPendingMouseEvent(action, col, row);
+	AddPendingMouseEvent(action, colunm, row);
 
 	return 5;
 }
@@ -85,9 +85,9 @@ size_t TTYInputSequenceParser::ParseSGRMouse(const char *s, size_t l)
 		action = pressed ? pars[0] : 3;
 	}
 
-	//make sure coordinates zero-based and positive
-	colunm = std::max(--pars[1], 1);
-	row    = std::max(--pars[2], 1);
+	//make coordinates zero-based
+	colunm = --pars[1];
+	row    = --pars[2];
 
 	AddPendingMouseEvent(action, colunm, row);
 

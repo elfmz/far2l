@@ -552,7 +552,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 	action = action & ~(_shift_ind | _alt_ind | _ctrl_ind);
 	switch (action) {
 		case 0: // char ' ', left press
-			if (now - _mouse.left_ts <= 500) {
+			if (now - _mouse.left_ts <= 800) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 				_mouse.left_ts = 0;
 			} else {
@@ -564,7 +564,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 			break;
 
 		case 1: //char '!', middle press
-			if (now - _mouse.middle_ts <= 500) {
+			if (now - _mouse.middle_ts <= 800) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 				_mouse.middle_ts = 0;
 			} else {
@@ -576,7 +576,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 			break;
 
 		case 2: // char '"', right press
-			if (now - _mouse.right_ts <= 500) {
+			if (now - _mouse.right_ts <= 800) {
 				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 				_mouse.right_ts = 0;
 			} else {

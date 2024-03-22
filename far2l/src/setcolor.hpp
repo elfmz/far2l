@@ -37,4 +37,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void SetColors();
 bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask);
-bool GetColorDialog(uint16_t *color, bool bCentered = false);
+bool GetColorDialog16(uint16_t *color, bool bCentered = true);

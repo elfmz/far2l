@@ -54,8 +54,6 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 void GetColor(int PaletteIndex);
 static VMenu *MenuToRedraw1 = nullptr, *MenuToRedraw2 = nullptr, *MenuToRedraw3 = nullptr;
 
-static wchar_t ColorDialogForeRGB[16], ColorDialogBackRGB[16];
-
 // 0,1 - dialog,warn List
 // 2,3 - dialog,warn Combobox
 static int ListPaletteItems[4][13] = {
@@ -432,7 +430,7 @@ void GetColor(int PaletteIndex)
 	ChangeMacroMode chgMacroMode(MACRO_MENU);
 	uint16_t NewColor = Palette[PaletteIndex - COL_FIRSTPALETTECOLOR];
 
-	if (GetColorDialog(&NewColor)) {
+	if (GetColorDialog16(&NewColor)) {
 		Palette[PaletteIndex - COL_FIRSTPALETTECOLOR] = static_cast<uint16_t>(NewColor);
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
@@ -514,13 +512,16 @@ enum enumSetColorDialog
 
 	/// text style checkboxes
 	ID_ST_TEXT_STYLE,
-	ID_ST_CHECKBOX_STYLE_INHERIT,
-	ID_ST_CHECKBOX_STYLE_BOLD,
+	ID_ST_CHECKBOX_STYLE_ENABLE,
+	ID_ST_CHECKBOX_STYLE_FIRST,
+	ID_ST_CHECKBOX_STYLE_BOLD = ID_ST_CHECKBOX_STYLE_FIRST,
 	ID_ST_CHECKBOX_STYLE_ITALIC,
 	ID_ST_CHECKBOX_STYLE_OVERLINE,
 	ID_ST_CHECKBOX_STYLE_STRIKEOUT,
-	ID_ST_CHECKBOX_STYLE_INVERSE,
+	ID_ST_CHECKBOX_STYLE_UNDERLINE,
 	ID_ST_CHECKBOX_STYLE_BLINK,
+	ID_ST_CHECKBOX_STYLE_INVERSE,
+	ID_ST_CHECKBOX_STYLE_LAST = ID_ST_CHECKBOX_STYLE_INVERSE,
 
 	ID_ST_COLOREXAMPLE,
 
@@ -528,6 +529,24 @@ enum enumSetColorDialog
 	ID_ST_BUTTON_RESTORE,
 	ID_ST_BUTTON_CANCEL
 };
+
+typedef struct st_font_style_bind_s {
+	int32_t	id;
+	int64_t	flags;
+} st_font_style_bind_t;
+
+static st_font_style_bind_t sup_styles[] = {
+
+	{ID_ST_CHECKBOX_STYLE_STRIKEOUT, COMMON_LVB_STRIKEOUT},
+	{ID_ST_CHECKBOX_STYLE_UNDERLINE, COMMON_LVB_UNDERSCORE},
+	{ID_ST_CHECKBOX_STYLE_INVERSE,   COMMON_LVB_REVERSE_VIDEO},
+};
+
+#define ST_ALL_FONT_STYLES (\
+							  COMMON_LVB_STRIKEOUT\
+							| COMMON_LVB_UNDERSCORE\
+							| COMMON_LVB_REVERSE_VIDEO\
+)
 
 struct color_panel_s
 {
@@ -551,7 +570,7 @@ struct color_panel_s
 	void update_rgb_color_from_str( ) {
 		uint32_t rgb = wcstoul(wsRGB, nullptr, 16);
 		color = (rgb & 0x00FF00) | ((rgb >> 16) & 0xFF) | ((rgb & 0xFF) << 16);
-		update_rgb_sample( );
+		draw_rgb_sample( );
 	}
 
 	void update_str_from_rgb_color( ) {
@@ -559,7 +578,7 @@ struct color_panel_s
 		swprintf(wsRGB, 16, L"%06X", rgb);
 	}
 
-	void update_rgb_sample( ) {
+	void draw_rgb_sample( ) {
 		const uint64_t attr = ((color << 40) | BACKGROUND_TRUECOLOR) + (((~(color) & 0xFFFFFF) << 16) | FOREGROUND_TRUECOLOR) + 7;
 
 		vbuff_rgb[0].Char.UnicodeChar = 32;
@@ -573,8 +592,6 @@ struct color_panel_s
 	intptr_t WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2);
 };
 
-#define SET_COLOR_USED_FONTSTYLES (COMMON_LVB_REVERSE_VIDEO | COMMON_LVB_UNDERSCORE | COMMON_LVB_STRIKEOUT)
-
 struct set_color_s
 {
 	enum {
@@ -585,12 +602,17 @@ struct set_color_s
 
 	CHAR_INFO samplevbuff[132];
 	uint64_t color;
+	uint64_t style;
+	uint64_t style_inherit;
 	uint64_t smpcolor;
 	uint64_t mask;
+	uint64_t resetcolor;
+	uint64_t resetmask;
 	uint64_t flags;
-//	bool	bInheritStyle;
-
-	uint64_t basecolor;
+	bool bTransparencyEnabled;
+	bool bRGBEnabled;
+	bool bStyleEnabled;
+	bool bStyle;
 
 	set_color_s() {
 
@@ -604,6 +626,18 @@ struct set_color_s
 		cPanel[IDC_BACKGROUND_PANEL].offset = ID_CP_FIRST + ID_CP_TOTAL;
 	}
 
+	inline void enable_RGB(const bool bEnable) {
+		bRGBEnabled = bEnable;
+	}
+
+	inline void enable_transparency(const bool bEnable) {
+		bTransparencyEnabled = bEnable;
+	}
+
+	inline void enable_font_styles(const bool bEnable) {
+		bStyleEnabled = bEnable;
+	}
+
 	void update_panel_indexes(void)
 	{
 		cPanel[IDC_FOREGROUND_PANEL].update_index(color & 0xF);
@@ -612,43 +646,73 @@ struct set_color_s
 
 	void set_color(const uint64_t color)
 	{
-		this->color = color;
-		flags = (color & 0x000000000000FF00) >> 8;
+		this->color = resetcolor = color;
 		mask = 0xFFFFFFFFFFFFFFFF;
-
-		this->basecolor = 0;
+		flags = (color & 0x000000000000FF00) >> 8;
 
 		cPanel[IDC_FOREGROUND_PANEL].bTransparent = false;
 		cPanel[IDC_BACKGROUND_PANEL].bTransparent = false;
-		cPanel[IDC_FOREGROUND_PANEL].color = (color >> 16) & 0xFFFFFF;
-		cPanel[IDC_BACKGROUND_PANEL].color = (color >> 40);
-
-		if (color & FOREGROUND_TRUECOLOR)
-			cPanel[IDC_FOREGROUND_PANEL].bRGB = true;
-
-		if (color & BACKGROUND_TRUECOLOR)
-			cPanel[IDC_BACKGROUND_PANEL].bRGB = true;
 
 		update_panel_indexes();
 
-		cPanel[IDC_FOREGROUND_PANEL].update_str_from_rgb_color( );
-		cPanel[IDC_BACKGROUND_PANEL].update_str_from_rgb_color( );
+		if (bRGBEnabled) {
+			cPanel[IDC_FOREGROUND_PANEL].color = (color >> 16) & 0xFFFFFF;
+			cPanel[IDC_BACKGROUND_PANEL].color = (color >> 40);
 
-		cPanel[IDC_FOREGROUND_PANEL].update_rgb_sample( );
-		cPanel[IDC_BACKGROUND_PANEL].update_rgb_sample( );
+			if (color & 0x000000FFFFFF0000 || color & FOREGROUND_TRUECOLOR) {
+				cPanel[IDC_FOREGROUND_PANEL].bRGB = true;
+			}
 
-		update_color( );
+			if (color & 0xFFFFFF0000000000 || color & BACKGROUND_TRUECOLOR) {
+				cPanel[IDC_BACKGROUND_PANEL].bRGB = true;
+			}
+
+			cPanel[IDC_FOREGROUND_PANEL].update_str_from_rgb_color( );
+			cPanel[IDC_BACKGROUND_PANEL].update_str_from_rgb_color( );
+
+			cPanel[IDC_FOREGROUND_PANEL].draw_rgb_sample( );
+			cPanel[IDC_BACKGROUND_PANEL].draw_rgb_sample( );
+		}
+
+		style = style_inherit = 0;
+
+		if (bStyleEnabled) {
+			style = color & ST_ALL_FONT_STYLES;
+			if (style)
+				bStyle = true;
+		}
 	}
 
 	void set_mask(const uint64_t mask)
 	{
-		this->mask = mask;
+		this->mask = resetmask = mask;
 
-		if (!(mask & 0xF))
-			cPanel[IDC_FOREGROUND_PANEL].bTransparent = true;
+		if (bTransparencyEnabled) {
+			if (!(mask & 0xF))
+				cPanel[IDC_FOREGROUND_PANEL].bTransparent = true;
 
-		if (!(mask & 0xF0))
-			cPanel[IDC_BACKGROUND_PANEL].bTransparent = true;
+			if (!(mask & 0xF0))
+				cPanel[IDC_BACKGROUND_PANEL].bTransparent = true;
+		}
+
+		style_inherit = 0;
+
+		if (bStyleEnabled) {
+			style_inherit = (~mask) & ST_ALL_FONT_STYLES;
+			style_inherit &= ~style;
+
+			if (style_inherit)
+				bStyle = true;
+		}
+	}
+
+	void reset_color(void)
+	{
+		set_color(resetcolor);
+		if (bTransparencyEnabled) {
+			set_mask(resetmask);
+		}
+		update_color( );
 	}
 
 	void update_color(void)
@@ -656,25 +720,40 @@ struct set_color_s
 		color = 0;
 		color |= cPanel[IDC_FOREGROUND_PANEL].index;
 		color |= cPanel[IDC_BACKGROUND_PANEL].index << 4;
-		color |= (cPanel[IDC_FOREGROUND_PANEL].color << 16) & 0x000000FFFFFF0000;
-		color |= cPanel[IDC_BACKGROUND_PANEL].color << 40;
 
-		if (cPanel[IDC_FOREGROUND_PANEL].bRGB)
-			color |= FOREGROUND_TRUECOLOR;
+		if (bRGBEnabled) {
+			if (cPanel[IDC_FOREGROUND_PANEL].bRGB && cPanel[IDC_FOREGROUND_PANEL].color) {
+				color |= (cPanel[IDC_FOREGROUND_PANEL].color << 16) & 0x000000FFFFFF0000;
+				color |= FOREGROUND_TRUECOLOR;
+			}
 
-		if (cPanel[IDC_BACKGROUND_PANEL].bRGB)
-			color |= BACKGROUND_TRUECOLOR;
+			if (cPanel[IDC_BACKGROUND_PANEL].bRGB && cPanel[IDC_BACKGROUND_PANEL].color) {
+				color |= cPanel[IDC_BACKGROUND_PANEL].color << 40;
+				color |= BACKGROUND_TRUECOLOR;
+			}
+		}
 
 		mask = 0xFFFFFFFFFFFFFFFF;
+
+		if (bStyleEnabled && bStyle)
+			color |= style;
+
 		smpcolor = color;
 
-		if (cPanel[IDC_FOREGROUND_PANEL].bTransparent) {
-			mask &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
-			smpcolor &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
-		}
-		if (cPanel[IDC_BACKGROUND_PANEL].bTransparent) {
-			mask &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
-			smpcolor &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+		if (bTransparencyEnabled) {
+
+			if (cPanel[IDC_FOREGROUND_PANEL].bTransparent) {
+				mask ^= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+				smpcolor &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
+			}
+
+			if (cPanel[IDC_BACKGROUND_PANEL].bTransparent) {
+				mask ^= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
+				smpcolor &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+			}
+
+			if (bStyle)
+				mask ^= style_inherit;
 		}
 
 		draw_sample_vbuff();
@@ -864,10 +943,67 @@ static intptr_t WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_
 {
 	set_color_s *colorState = (set_color_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 
+	auto update_dialog_items = [=]() {
+
+		if (colorState->bTransparencyEnabled) {
+
+			for (int g = 0; g < 2; g++ ) {
+				const size_t offset = colorState->cPanel[g].offset;
+				bool bSet = !colorState->cPanel[g].bTransparent;
+				SendDlgMessage(hDlg, DM_SETCHECK, ID_CP_CHECKBOX + offset, bSet);
+				for (size_t i = ID_CP_COLORS_RECT + offset; i <= ID_CP_RGB_PREFIX + offset; i++)
+					SendDlgMessage(hDlg, DM_SHOWITEM, i, bSet);
+			}
+
+			for (size_t i = 0; i < ARRAYSIZE(sup_styles); i++) {
+				SendDlgMessage(hDlg, DM_SET3STATE, sup_styles[i].id, true);
+
+				if (colorState->style_inherit & sup_styles[i].flags)
+					SendDlgMessage(hDlg, DM_SETCHECK, sup_styles[i].id, BSTATE_3STATE);
+				else
+					SendDlgMessage(hDlg, DM_SETCHECK, sup_styles[i].id, (bool)(colorState->style & sup_styles[i].flags));
+			}
+		}
+
+		for (int g = 0; g < 2; g++ ) {
+			const size_t offset = colorState->cPanel[g].offset;
+
+			bool bSet = colorState->cPanel[g].bRGB;
+			SendDlgMessage(hDlg, DM_SETCHECK, ID_CP_CHECKBOX_RGB + offset, bSet);
+			for (size_t i = ID_CP_EDIT_RGB + offset; i <= ID_CP_RGB_PREFIX + offset; i++)
+				SendDlgMessage(hDlg, DM_ENABLE, i, bSet);
+
+			SendDlgMessage(hDlg, DM_ENABLE, ID_CP_CHECKBOX_RGB + offset, colorState->bRGBEnabled);
+		}
+
+		if (colorState->bStyleEnabled) {
+
+			for (size_t i = 0; i < ARRAYSIZE(sup_styles); i++)
+				SendDlgMessage(hDlg, DM_ENABLE, sup_styles[i].id, colorState->bStyle);
+
+			SendDlgMessage(hDlg, DM_SETCHECK, ID_ST_CHECKBOX_STYLE_ENABLE, colorState->bStyle);
+		}
+		SendDlgMessage(hDlg, DM_ENABLE, ID_ST_CHECKBOX_STYLE_ENABLE, colorState->bStyleEnabled);
+
+	};
+
+	auto set_focus = [=]() {
+
+		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_FG_COLORS_RECT, 0);
+		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_BG_COLORS_RECT, 0);
+
+		if (!colorState->cPanel[set_color_s::IDC_FOREGROUND_PANEL].bTransparent)
+			SendDlgMessage(hDlg, DM_SETFOCUS, ID_ST_FG_COLORS_RECT, 0);
+		else if (!colorState->cPanel[set_color_s::IDC_BACKGROUND_PANEL].bTransparent)
+			SendDlgMessage(hDlg, DM_SETFOCUS, ID_ST_BG_COLORS_RECT, 0);
+		else
+			SendDlgMessage(hDlg, DM_SETFOCUS, ID_ST_CHECKBOX_FOREGROUND, 0);
+	};
+
 	switch (Msg) {
 
 	case DM_UPDATECOLORCODE: {
-		colorState->update_color();
+		colorState->update_color( );
 		SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 	}
 	break;
@@ -875,34 +1011,69 @@ static intptr_t WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_
 	case DN_INITDIALOG: {
 		SendDlgMessage(hDlg, DM_SETCURSORSIZE, ID_ST_FG_COLORS_RECT, Opt.CursorSize[1]);
 		SendDlgMessage(hDlg, DM_SETCURSORSIZE, ID_ST_BG_COLORS_RECT, Opt.CursorSize[1]);
-
-		SendDlgMessage(hDlg, DM_SETFOCUS, ID_ST_FG_COLORS_RECT, 0);
-		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_FG_COLORS_RECT, 0);
-		SendDlgMessage(hDlg, DM_UPDATECURSOR, ID_ST_BG_COLORS_RECT, 0);
+		set_focus( );
+		update_dialog_items( );
 	}
 	break;
 
-	case DN_BTNCLICK:
+	case DN_BTNCLICK: {
+		if (Param1 == ID_ST_CHECKBOX_STYLE_ENABLE) {
+			colorState->bStyle = (bool)(SendDlgMessage(hDlg, DM_GETCHECK, ID_ST_CHECKBOX_STYLE_ENABLE, 0));
+			colorState->update_color( );
+			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+			break;
+		}
+
+		if (Param1 >= ID_ST_CHECKBOX_STYLE_FIRST && Param1 <= ID_ST_CHECKBOX_STYLE_LAST) {
+			for (size_t i = 0; i < ARRAYSIZE(sup_styles); i++) {
+				const int &id = sup_styles[i].id;
+				const int &stf = sup_styles[i].flags;
+				if (id != Param1)
+					continue;
+
+				int iState = (int)SendDlgMessage(hDlg, DM_GETCHECK, id, 0);
+
+				if (iState == BSTATE_UNCHECKED) {
+					colorState->style &= (~stf);
+					colorState->style_inherit &= (~stf);
+				}
+				else if (iState == BSTATE_CHECKED) {
+					colorState->style |= stf;
+					colorState->style_inherit &= (~stf);
+				}
+				else if (iState == BSTATE_3STATE) {
+					colorState->style_inherit |= stf;
+					colorState->style &= (~stf);
+				}
+
+				colorState->update_color( );
+				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+			}
+			break;
+		}
+
+		if (Param1 == ID_ST_BUTTON_RESTORE) {
+			colorState->reset_color( );
+			SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_ST_EDIT_FORERGB, (uintptr_t)colorState->cPanel[set_color_s::IDC_FOREGROUND_PANEL].wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_ST_EDIT_BACKRGB, (uintptr_t)colorState->cPanel[set_color_s::IDC_BACKGROUND_PANEL].wsRGB);
+			set_focus( );
+			update_dialog_items( );
+			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+			break;
+		}
+
+	}
+	break;
+
 	case DN_MOUSECLICK: {
 	}
 	break;
 
-//				if (Msg == DN_MOUSECLICK) {
-//					Param1 = ID_HER_NORMALFILE + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
-
-//					if (((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.X == 1
-//							&& (EditData->MarkLen))
-//						Param1 = ID_HER_NORMALMARKING + ((MOUSE_EVENT_RECORD *)Param2)->dwMousePosition.Y * 2;
-//				}
-
-///		case DN_CLOSE:
-///			UpdateRGBFromDialog(hDlg);
-///			break;
-	}
+	} // switch
 
 	if (Param1 >= ID_CP_FIRST && Param1 < ID_CP_FIRST + ID_CP_TOTAL * 2) {
 		const uint32_t id = (Param1 >= ID_CP_FIRST + ID_CP_TOTAL);
-		const uint32_t rv = colorState->cPanel[id].ColorPanelUserProc(hDlg, Msg, (Param1 - id * ID_CP_TOTAL) - ID_CP_FIRST, Param2);
+		const intptr_t rv = colorState->cPanel[id].ColorPanelUserProc(hDlg, Msg, (Param1 - id * ID_CP_TOTAL) - ID_CP_FIRST, Param2);
 
 		if (rv != -1)
 			return rv;
@@ -911,7 +1082,7 @@ static intptr_t WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
+static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool bFontStyles, bool bCentered)
 {
 	const wchar_t VerticalLine[] = { BoxSymbols[BS_T_H2V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],BoxSymbols[BS_V1], 
 			BoxSymbols[BS_V1],BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], 
@@ -932,12 +1103,17 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
 	static const wchar_t *HexMask = L"HHHHHH";
 
 	if (!color) return false;
-	uint64_t resetcolor = *color;
 
 	set_color_s	colorState;
+	colorState.enable_RGB(bRGB);
+	colorState.enable_font_styles(bFontStyles);
 	colorState.set_color(*color);
-	if (mask)
+	if (mask) {
+		colorState.enable_transparency(true);
 		colorState.set_mask(*mask);
+	}
+
+	colorState.update_color( );
 
 	DialogDataEx ColorDlgData[] = {
 
@@ -970,13 +1146,14 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
 		{DI_TEXT, 30, 8, 30, 8, {}, 0, L"#"},
 
 		{DI_TEXT, 41, 2, 48, 2, {}, 0, L"Style:"},
-		{DI_CHECKBOX, 41, 3, 48, 3, {}, 0, L"Inherit"},
-		{DI_CHECKBOX, 41, 5, 48, 5, {}, 0, L"Bold"},
-		{DI_CHECKBOX, 41, 6, 48, 6, {}, 0, L"Italic"},
-		{DI_CHECKBOX, 41, 7, 48, 7, {}, 0, L"Overline"},
-		{DI_CHECKBOX, 41, 8, 48, 8, {}, 0, L"Strikeout"},
-		{DI_CHECKBOX, 41, 9, 48, 9, {}, 0, L"Inverse"},
-		{DI_CHECKBOX, 41, 10, 48, 10, {}, 0, L"Blink"},
+		{DI_CHECKBOX, 41, 3, 48, 3, {}, DIF_AUTOMATION, L"Enable"},
+		{DI_CHECKBOX, 41, 5, 48, 5, {}, DIF_DISABLE, L"Bold"},
+		{DI_CHECKBOX, 41, 6, 48, 6, {}, DIF_DISABLE, L"Italic"},
+		{DI_CHECKBOX, 41, 7, 48, 7, {}, DIF_DISABLE, L"Overline"},
+		{DI_CHECKBOX, 41, 8, 48, 8, {}, DIF_DISABLE, L"Strikeout"},
+		{DI_CHECKBOX, 41, 9, 48, 9, {}, DIF_DISABLE, L"Underline"},
+		{DI_CHECKBOX, 41, 10, 48, 10, {}, DIF_DISABLE, L"Blink"},
+		{DI_CHECKBOX, 41, 11, 48, 11, {}, DIF_DISABLE, L"Inverse"},
 
 		{DI_USERCONTROL, 5, 12, 37, 15, {}, DIF_NOFOCUS, L"" },
 
@@ -988,118 +1165,40 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
 
 	MakeDialogItemsEx(ColorDlgData, ColorDlg);
 
-	int ExitCode;
-
 	ColorDlg[ID_ST_FG_COLORS_RECT].VBuf = colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].vbuff;
 	ColorDlg[ID_ST_BG_COLORS_RECT].VBuf = colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].vbuff;
 	ColorDlg[ID_ST_FRGB_SMAPLE].VBuf = colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].vbuff_rgb;
 	ColorDlg[ID_ST_BRGB_SMAPLE].VBuf = colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].vbuff_rgb;
 	ColorDlg[ID_ST_COLOREXAMPLE].VBuf = colorState.samplevbuff;
 
-	if (colorState.color & FOREGROUND_TRUECOLOR) {
-		ColorDlg[ID_ST_CHECKBOX_RGB1].Selected = 1;
-		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bRGB = true;
-	}
-	else {
-		ColorDlg[ID_ST_CHECKBOX_RGB1].Selected = 0;
-		ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_DISABLE;
-	}
-
-	if (colorState.color & BACKGROUND_TRUECOLOR) {
-		ColorDlg[ID_ST_CHECKBOX_RGB2].Selected = 1;
-		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bRGB = true;
-	}
-	else {
-		ColorDlg[ID_ST_CHECKBOX_RGB2].Selected = 0;
-		ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_DISABLE;
-	}
-
-	if (mask) {
-		if (colorState.mask & 0xF) {
-			ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Selected = 1;
-		}
-		else {
-			ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Selected = 0;
-			colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bTransparent = true;
-			ColorDlg[ID_ST_FG_COLORS_RECT].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_CHECKBOX_RGB1].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_HIDDEN;
-		}
-
-		if (colorState.mask & 0xF0) {
-			ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Selected = 1;
-		}
-		else {
-			ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Selected = 0;
-			colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bTransparent = true;
-			ColorDlg[ID_ST_BG_COLORS_RECT].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_CHECKBOX_RGB2].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_HIDDEN;
-			ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_HIDDEN;
-		}
-	}
-	else {
-		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bTransparent = false;
-		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bTransparent = false;
-
+	if (!mask) {
 		ColorDlg[ID_ST_CHECKBOX_FOREGROUND].Flags |= (DIF_HIDDEN | DIF_DISABLE);
 		ColorDlg[ID_ST_CHECKBOX_BACKGROUND].Flags |= (DIF_HIDDEN | DIF_DISABLE);
 		ColorDlg[ID_ST_TEXT_FOREGROUND].Flags ^= DIF_HIDDEN;
 		ColorDlg[ID_ST_TEXT_BACKGROUND].Flags ^= DIF_HIDDEN;
-
-		colorState.cPanel[set_color_s::IDC_FOREGROUND_PANEL].bRGB = false;
-		colorState.cPanel[set_color_s::IDC_BACKGROUND_PANEL].bRGB = false;
-
-		ColorDlg[ID_ST_CHECKBOX_RGB1].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_EDIT_FORERGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_F256].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_FRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_FRGB_SMAPLE].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_FRGB_PREFIX].Flags |= DIF_DISABLE;
-
-		ColorDlg[ID_ST_CHECKBOX_RGB2].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_EDIT_BACKRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_B256].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BUTTON_BRGB].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BRGB_SMAPLE].Flags |= DIF_DISABLE;
-		ColorDlg[ID_ST_BRGB_PREFIX].Flags |= DIF_DISABLE;
 	}
-
-//	colorState.update_color( );
 
 	Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&colorState);
 	Dlg.SetPosition(-1, -1, 59, 20);
 
-	for (int i = ID_ST_FG_COLORS_RECT; i < ID_ST_FG_COLORS_RECT + ID_CP_TOTAL - 2; i++)
+	for (size_t i = ID_ST_FG_COLORS_RECT; i <= ID_ST_FRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_FOREGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);
 
-	for (int i = ID_ST_BG_COLORS_RECT; i < ID_ST_BG_COLORS_RECT + ID_CP_TOTAL - 2; i++)
+	for (size_t i = ID_ST_BG_COLORS_RECT; i <= ID_ST_BRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_BACKGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);
 
-	for (int i = ID_ST_EDIT_FORERGB; i < ID_ST_EDIT_FORERGB + 4; i++)
+	for (size_t i = ID_ST_EDIT_FORERGB; i <= ID_ST_FRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_RGB1, i, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
-	for (int i = ID_ST_EDIT_BACKRGB; i < ID_ST_EDIT_BACKRGB + 4; i++)
+	for (size_t i = ID_ST_EDIT_BACKRGB; i <= ID_ST_BRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_RGB2, i, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
+	for (size_t i = 0; i < ARRAYSIZE(sup_styles); i++) {
+		Dlg.SetAutomation(ID_ST_CHECKBOX_STYLE_ENABLE, sup_styles[i].id, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
+	}
 
 	Dlg.Process();
-	ExitCode = Dlg.GetExitCode();
+	int ExitCode = Dlg.GetExitCode();
 
 	if (ExitCode == ID_ST_BUTTON_SETCOLOR) {
 
@@ -1116,15 +1215,15 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bCentered)
 
 bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask)
 {
-	return GetColorDialogInner(color, mask, true);
+	return GetColorDialogInner(color, mask, true, true, true);
 }
 
-bool GetColorDialog(uint16_t *color, bool bCentered)
+bool GetColorDialog16(uint16_t *color, bool bCentered)
 {
 	if (!color) return false;
 
 	uint64_t color64 = *color;
-	bool out = GetColorDialogInner(&color64, NULL, bCentered);
+	bool out = GetColorDialogInner(&color64, NULL, false, false, bCentered);
 	*color = (uint16_t)(color64 & 0xFFFF);
 
 	return out;

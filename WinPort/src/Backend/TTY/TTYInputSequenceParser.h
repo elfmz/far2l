@@ -107,6 +107,12 @@ class TTYInputSequenceParser
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
 	char _using_extension = 0;
+	//bit indicators for modifier keys in mouse input sequence
+	const unsigned int
+		_shift_ind = 0x04,
+		_alt_ind   = 0x08,
+		_ctrl_ind  = 0x10;
+
 	//work-around for double encoded mouse events in win32-input mode
 	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
 	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
@@ -122,7 +128,26 @@ class TTYInputSequenceParser
 	void AddStrCursors(WORD vk, const char *code);
 
 	size_t ParseNChars2Key(const char *s, size_t l);
-	void ParseMouse(char action, char col, char raw);
+
+	/**
+	 * Parse X10 mouse report sequence.
+	 * looks like x1B[Mabc
+	*/
+	size_t ParseX10Mouse(const char *s, size_t l);
+
+	/**
+	 * Parse mouse from SGR Extended coordinates sequence.
+	 * looks like x1B[<a;b;cM or x1B[<a;b;cm,
+	*/
+	size_t ParseSGRMouse(const char *s, size_t l);
+
+	/**
+	 * Schedule mouse event.
+	 * constuct INPUT_RECORD of mouse event and appending it to _ir_pending
+	 * Params have to be parsed from input sequence by ether of ParseX10Mouse() or ParseSGRMouse()
+	*/
+	void AddPendingMouseEvent(int action, int col, int row);
+
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
 	size_t TryUnwrappWinMouseEscapeSequence(const char *s, size_t l);

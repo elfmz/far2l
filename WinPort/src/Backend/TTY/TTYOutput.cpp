@@ -495,9 +495,11 @@ void TTYOutput::ChangeKeypad(bool app)
 
 void TTYOutput::ChangeMouse(bool enable)
 {
-	Format(ESC "[?1000%c", enable ? 'h' : 'l');
-	Format(ESC "[?1001%c", enable ? 'h' : 'l');
-	Format(ESC "[?1002%c", enable ? 'h' : 'l');
+	Format(ESC "[?1000%c", enable ? 'h' : 'l'); // highlight mouse reporting (SET_VT200_MOUSE).
+	Format(ESC "[?1001%c", enable ? 'h' : 'l'); // X10 mouse reporting (SET_VT200_HIGHLIGHT_MOUSE).
+	Format(ESC "[?1002%c", enable ? 'h' : 'l'); // mouse drag reporting (SET_BTN_EVENT_MOUSE).
+	Format(ESC "[?1003%c", enable ? 'h' : 'l'); // mouse move reporting (SET_ANY_EVENT_MOUSE).
+	Format(ESC "[?1006%c", enable ? 'h' : 'l'); // SGR extended mouse reporting (SET_SGR_EXT_MODE_MOUSE).
 }
 
 void TTYOutput::ChangeTitle(std::string title)

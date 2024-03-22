@@ -248,10 +248,10 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 			hl.Mask[j][i] = 0xFFFFFFFFFFFFFFFF;
 
 			if (hl.Color[j][i] & 0x0000000000000F00) // transparent foreground
-				hl.Mask[j][i] &= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
+				hl.Mask[j][i] ^= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
 
 			if (hl.Color[j][i] & 0x000000000000F000) // transparent background
-				hl.Mask[j][i] &= (0x000000FFFFFF000F | FOREGROUND_TRUECOLOR);
+				hl.Mask[j][i] ^= (0xFFFFFF00000000F0 | BACKGROUND_TRUECOLOR);
 
 			hl.Color[j][i] &= 0xFFFFFFFFFFFF00FF;
 
@@ -401,6 +401,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 
 	// Унаследуем пометку из Src если она не прозрачная
 	if (!hlSrc->bMarkInherit && hlSrc->MarkLen) {
+
 		hlDst->MarkLen = hlSrc->MarkLen;
 		memcpy(&hlDst->Mark[0], &hlSrc->Mark[0], sizeof(wchar_t) * hlSrc->MarkLen);
 	}

@@ -9,11 +9,30 @@
 size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char action, char col, char raw)
 {
 	/*
-	"\x1B[M" has been recognized.
-	mouse report: "\x1b[Mayx" where:
-		* 'A' button number plus 32, can`t be greater than 223. Codes higher than 113 not used
-		* 'Y' column number (one-based) plus 32.
-		* 'X' row number (one-based) plus 32.
+	`\x1B[M` has been recognized.
+	mouse report: `\x1b[Mayx` where:
+		* `a` - button number plus 32, can`t be greater than 223. Codes higher than 113 not used
+		* `y` - column number (one-based) plus 32.
+		* `x` - row number (one-based) plus 32.
+	X button Encoding:
+		|7|6|5|4|3|2|1|0|
+		| |W|H|M|C|S|B|B|
+		bits 0 and 1 are used for button:
+			* 00 - MB1 pressed (left)
+			* 01 - MB2 pressed (middle)
+			* 10 - MB3 pressed (right)
+			* 11 - released (none)
+		Next three bits indicate modifier keys:
+			* 0x04 - shift
+			* 0x08 - alt (meta)
+			* 0x10 - ctrl
+		32 (x20) is added for drag events:
+			For example, motion into cell x,y with button 1 down is reported as `\x1b[M@yx`.
+				( @  = 32 + 0 (button 1) + 32 (motion indicator) ).
+			Similarly, motion with button 3 down is reported as `\x1b[MByx`.
+			    ( B  = 32 + 2 (button 3) + 32 (motion indicator) ).
+		64 (x40) is added for wheel events.
+		    so wheel up is 64, and wheel down is 65.
 	valid lenght is 5
 	*/
 	if (l < 5) {
@@ -25,7 +44,7 @@ size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char act
 	int colunm = (int)s[3] - 33;
 	int row    = (int)s[4] - 33;
 
-	if (action > 255 - 32) {
+	if (action > 223) {
 		return TTY_PARSED_BADSEQUENCE;
 	}
 
@@ -37,17 +56,18 @@ size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char act
 size_t TTYInputSequenceParser::ParseSGRMouse(const char *s, size_t l)
 {
 	/*
-	"\x1B[<" has been recognized.
+	`\x1B[<` has been recognized.
 	https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
 	Sequence looks like "\x1B[<a;y;xM" or "\x1B[<a;y;xm", where:
-		* 'a' is a sequence of digits representing the button number in decimal.
-		* 'y' is a sequence of digits representing the column number (one-based) in decimal.
-		* 'x' is a sequence of digits representing the row number (one-based) in decimal.
-	The sequence ends with 'M' on button press and on 'm' on button release. (not sure if we need take it in account)
+		* `a` - is a sequence of digits representing the button number in decimal.
+		* `y` - is a sequence of digits representing the column number (one-based) in decimal.
+		* `x` - is a sequence of digits representing the row number (one-based) in decimal.
+	button encoding same as the X10 variant does not add 32
+	The sequence ends with `M` on button press and on `m` on button release.
 	*/
 
-	int pars[3]  = {0};
-	int pars_cnt = 0;
+	int params[3]  = {0};
+	int params_cnt = 0;
 	int action, colunm, row;
 	bool pressed = false;
 
@@ -57,12 +77,12 @@ size_t TTYInputSequenceParser::ParseSGRMouse(const char *s, size_t l)
 			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
 		}
 		if (s[i] == 'M' || s[i] == 'm' || s[i] == ';') {
-			if (pars_cnt == ARRAYSIZE(pars)) {
+			if (params_cnt == ARRAYSIZE(params)) {
 				return TTY_PARSED_BADSEQUENCE;
 			}
 			if (i > n) {
-				pars[pars_cnt] = atoi(&s[n]);
-				++pars_cnt;
+				params[params_cnt] = atoi(&s[n]);
+				++params_cnt;
 			}
 			n = i + 1;
 			if (s[i] == 'M' || s[i] == 'm') {
@@ -76,18 +96,15 @@ size_t TTYInputSequenceParser::ParseSGRMouse(const char *s, size_t l)
 	}
 
 	//here we need to correct mouse move code science it conflict with button release
-	if ((pars[0] & ~(_shift_ind | _alt_ind | _ctrl_ind)) == 35 && !pressed) {
-		action = 35;
-		if (pars[0] & _shift_ind) action |= _shift_ind;
-		if (pars[0] & _ctrl_ind)  action |= _ctrl_ind;
-		if (pars[0] & _alt_ind)   action |= _alt_ind;
+	if ((params[0] & ~(_shift_ind | _alt_ind | _ctrl_ind)) != 35) {
+		action = pressed ? params[0] : 3;
 	} else {
-		action = pressed ? pars[0] : 3;
+		action = params[0];
 	}
 
 	//make coordinates zero-based
-	colunm = --pars[1];
-	row    = --pars[2];
+	colunm = --params[1];
+	row    = --params[2];
 
 	AddPendingMouseEvent(action, colunm, row);
 

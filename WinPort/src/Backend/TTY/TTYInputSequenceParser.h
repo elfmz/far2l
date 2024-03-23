@@ -131,13 +131,13 @@ class TTYInputSequenceParser
 
 	/**
 	 * Parse X10 mouse report sequence.
-	 * looks like x1B[Mabc
+	 * looks like `x1B[Mayx`
 	*/
 	size_t ParseX10Mouse(const char *s, size_t l);
 
 	/**
 	 * Parse mouse from SGR Extended coordinates sequence.
-	 * looks like x1B[<a;b;cM or x1B[<a;b;cm,
+	 * looks like `\x1B[<a;y;xM` or `\x1B[<a;y;xm`,
 	*/
 	size_t ParseSGRMouse(const char *s, size_t l);
 

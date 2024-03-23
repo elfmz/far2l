@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Shell Scripts (POSIX)
+
+        Based on:
+            IEEE Std 1003.1-2008
+            https://pubs.opengroup.org/onlinepubs/9699919799/utilities/toc.html
+
+        Notes:
+            - nested here-docs are not supported.
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="shell-posix" group="scripts" description="Shell script (POSIX)">
+            <location link="scripts/shell-posix.hrc"/>
+            <filename>/\.(sh|spec)$/i</filename>
+            <filename>/^PKGBUILD$/i</filename>
+            <firstline weight='3'>/^\#(!\s*.+sh\b)/</firstline>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="shell-posix">
+
+<import type="def"/>
+
+<region name="Text" parent="def:Text"/>
+<region name="Comment" parent="def:Comment"/>
+<region name="String"  parent="def:String"/>
+<region name="Operator" parent="def:Operator"/>
+<region name="TestOperator" parent="def:Operator"/>
+
+<region name="Number" parent="def:Number"/>
+<region name="NumberDec" parent="def:NumberDec"/>
+<region name="NumberHex" parent="def:NumberHex"/>
+<region name="NumberBin" parent="def:NumberBin"/>
+<region name="NumberOct" parent="def:NumberOct"/>
+<region name="NumberFloat" parent="def:NumberFloat"/>
+<region name="NumberSuffix" parent="def:NumberSuffix"/>
+<region name="NumberPrefix" parent="def:NumberPrefix"/>
+
+<region name="StringEscape" parent="def:StringContent"/>
+<region name="StringEdge" parent="def:StringEdge"/>
+
+<region name="Variable" parent="def:Var"/>
+<region name="VariableStrong" parent="def:VarStrong"/>
+<region name="VariableSpecial" parent="def:Constant"/>
+<region name="VariablePrefix" parent="def:Prefix"/>
+
+<region name="Symbol" parent="def:Symbol"/>
+<region name="SymbolStrong" parent="def:SymbolStrong"/>
+
+<region name="RedirectDescriptor" parent="def:Prefix"/>
+<region name="RedirectPrefix" parent="Operator"/>
+<region name="RedirectSymbol" parent="InterfaceKeyword"/>
+
+<region name="HeredocDescriptor" parent="def:Prefix"/>
+<region name="HeredocOperator" parent="Operator"/>
+<region name="HeredocAnchor" parent="def:Label"/>
+<region name="Heredoc" parent="def:String"/>
+
+<region name="FunctionName" parent="def:ClassKeyword"/>
+<region name="FunctionKeyword" parent="def:KeywordStrong"/>
+<region name="CommandPrefix" parent="def:Prefix"/>
+<region name="CommandReserved" parent="def:Keyword"/>
+<region name="CommandBuiltin" parent="def:FunctionKeyword"/>
+
+<region name="PairStart" parent="def:PairStart"/>
+<region name="PairEnd" parent="def:PairEnd"/>
+
+<region name="Insertion" parent="def:Insertion"/>
+
+<region name="Error" parent="def:Error"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<entity name="word" value="[a-zA-Z_][\w_]*"/>
+<entity name="var" value="%word;"/>
+<entity name="specvar" value="ENV|HOME|IFS|LANG|LANGUAGE|LC_ALL|LC_COLLATE|LC_TYPE|LC_MESSAGES|LINENO|NLSPATH|PATH|PPID|PS1|PS2|PS4|PWD"/>
+<entity name="specvar-strict" value="[\d#*@?$!-]"/>
+
+<entity name="utility_no-param" value="batch|false|logname|times|true|tty"/>
+<entity name="utility_one-param" value="uname"/>
+<entity name="utility_one-param-number" value="break|continue|exit|return|shift|fg|sleep"/>
+<entity name="utility_common" value="alias|ar|at|awk|basename|bc|bg|cal|cat|cd|chgrp|chmod|chown|cksum|cmp|comm|command|compress|cp|crontab|csplit|cut|date|dd|df|diff|dirname|du|echo|ed|env|eval|ex|expand|expr|fc|file|find|fold|fuser|getconf|getopts|grep|hash|head|iconv|id|ipcrm|ipcs|jobs|join|kill|link|ln|locale|localedef|logger|ls|mailx|make|man|mesg|mkdir|mkfifo|more|mv|newgrp|nice|nl|nm|nohup|od|paste|patch|pathchk|pr|printf|ps|pwd|read|renice|rm|rmdir|sed|set|sh|sort|split|strings|strip|stty|tabs|tail|tee|time|touch|tput|tr|trap|tsort|type|ulimit|umask|unalias|uncompress|unexpand|uniq|unlink|vi|wait|wc|who|write|xargs|zcat"/>
+
+<entity name="wrdbreakchars" value="|;#)&amp;`"/>
+<entity name="wrdbreak" value="[%wrdbreakchars;]"/>
+<entity name="wrdnotbreak" value="[^%wrdbreakchars;]"/>
+<entity name="cmdbreak" value="%wrdbreak;|$"/>
+
+<scheme name="shell-posix">
+    <inherit scheme="def:unixCommentFirstline">
+        <virtual scheme="def:def" subst-scheme="script"/>
+    </inherit>
+</scheme>
+
+<scheme name="script">
+    <regexp match="/\s+/"/>
+    <inherit scheme="comments"/>
+    <inherit scheme="operators"/>
+    <block start="/!\s*/" end="/\M%cmdbreak;/" scheme="script_control" region00="CommandReserved"/>
+    <block start="/(fi\b|then\b|elif\b|else\b|do\b|done\b|esac\b|\}|\))?!/" end="/\M%cmdbreak;/" scheme="script_control"/>
+    <!-- there must be no control words outside the control schemes -->
+    <keywords region="Error">
+        <word name="fi"/>
+        <word name="then"/>
+        <word name="elif"/>
+        <word name="else"/>
+        <word name="do"/>
+        <word name="done"/>
+        <word name=")"/>
+        <word name="}"/>
+    </keywords>
+</scheme>
+
+<scheme name="script_control">
+
+    <!-- subshell ( ... ) -->
+    <block start="/(\()/" end="/(\))/" scheme="script"
+        region00="Symbol"    region10="Symbol"
+        region01="PairStart" region11="PairEnd"/>
+    <block start="/(\))?#1/" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+
+    <!-- group { ... } -->
+    <block start="/(\{)/" end="/(\})/" scheme="script"
+        region00="SymbolStrong"    region10="SymbolStrong"
+        region01="PairStart"       region11="PairEnd"/>
+    <block start="/(\})?#1/" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+
+    <!-- functions -->
+    <block start="/\b(%word;)\s*(\(\s*\))\s*/" end="//" scheme="script"
+        region01="FunctionName" region02="Symbol"/>
+
+    <!-- if ... fi -->
+    <block start="/\M\b(if)\b/" end="/\b(fi)\b/" scheme="if"
+        region01="PairStart" region10="PairEnd"
+        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/(fi)?#2/" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+
+    <!-- for ... done -->
+    <block start="/\M\b(for)\b/" end="/\b(done)\b/" scheme="for"
+        region01="PairStart" region10="PairEnd"
+        region00="CommandReserved" region11="CommandReserved"/>
+
+    <!-- while/until ... done -->
+    <block start="/\M\b(while|until)\b/" end="/\b(done)\b/" scheme="while"
+        region01="PairStart" region10="PairEnd"
+        region00="CommandReserved" region11="CommandReserved"/>
+
+    <block start="/(done)?#4/" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+
+    <!-- for case ... esac -->
+    <block start="/\M\b(case)\b/" end="/\b(esac)\b/" scheme="case"
+        region01="PairStart"       region10="PairEnd"
+        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/(esac)?#4/" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+
+    <block start="//" end="/\M%cmdbreak;/"
+        scheme="script_simple"/>
+
+</scheme>
+
+<scheme name="script_simple">
+    <inherit scheme="variable_assignments"/>
+    <inherit scheme="redirections_start"/>
+    <block start="/\M(`|[^}%wrdbreakchars;\s])/" end="/\M%cmdbreak;/" scheme="script_command"/>
+</scheme>
+
+<scheme name="script_command">
+    <!-- test/[ commands -->
+    <block start="/(\[)(\s|$)?=/" end="/((\M(^|\s?#1|[^\\]?#1[;])(?{Symbol}\])))/" scheme="test"
+        region01="PairStart" region11="PairEnd"
+        region00="Symbol"    region10="Symbol"/>
+    <block start="/\btest\b/" end="/\M%cmdbreak;/" scheme="test"
+        region00="CommandBuiltin"/>
+    <!-- : -->
+    <block start="/:\M(\s+|$)/" end="/\M%cmdbreak;/" scheme="script_parameters"
+        region00="CommandBuiltin" region="Comment"/>
+    <!-- . -->
+    <block start="/\.(\s+|$)/" end="/\M%cmdbreak;/" scheme="cmd-one-parameter"
+        region00="CommandBuiltin"/>
+    <!-- <utility> <single parameter> -->
+    <block start="/\b(%utility_one-param;)\b\s*/" end="/\M%cmdbreak;/" scheme="cmd-one-parameter"
+        region00="CommandBuiltin"/>
+    <!-- <utility> <number expected> -->
+    <block start="/\b(%utility_one-param-number;)\b\s*/" end="/\M%cmdbreak;/" scheme="cmd-one-parameter-number"
+        region00="CommandBuiltin"/>
+    <!-- <utility> ... -->
+    <block start="/\b(%utility_common;)\b/" end="/\M%cmdbreak;/" scheme="script_parameters"
+        region00="CommandBuiltin"/>
+    <!-- <utility> -->
+    <block start="/\b(%utility_no-param;)\b/" end="/\M%cmdbreak;/" scheme="cmd-error"
+        region00="CommandBuiltin"/>
+    <!-- exec ... -->
+    <block start="/\b(exec)\b\s*/" end="/\M%cmdbreak;/" scheme="script_command"
+        region01="CommandBuiltin"/>
+    <!-- export/readonly -p -->
+    <block start="/\b(export|readonly)\s+(-p)\b/" end="/\M%cmdbreak;/" scheme="cmd-error"
+        region01="CommandBuiltin"/>
+    <!-- export/readonly name[=word]... -->
+    <block start="/\b(export|readonly)\b/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variable-assignments"
+        region00="CommandBuiltin"/>
+    <!-- unset [-fv] ... -->
+    <block start="/\b(unset)\b(\s+-[fv]{1,2})?\M\s*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variables"
+        region01="CommandBuiltin"/>
+    <!-- other command -->
+    <block start="//" end="/\M%cmdbreak;/" scheme="script_parameters"/>
+</scheme>
+
+<scheme name="script_parameters">
+    <inherit scheme="escapes"/>
+    <inherit scheme="redirections_start"/>
+    <inherit scheme="redirections_end"/>
+    <inherit scheme="script_words"/>
+</scheme>
+
+<scheme name="script_words">
+    <inherit scheme="escapes"/>
+    <inherit scheme="strings"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="evaluations"/>
+    <inherit scheme="numbers"/>
+    <!-- errors -->
+    <keywords region="Error">
+        <symb name="$"/>
+    </keywords>
+</scheme>
+
+<scheme name="script_words.maybe-variable">
+    <inherit scheme="escapes"/>
+    <inherit scheme="strings"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="evaluations"/>
+    <inherit scheme="numbers"/>
+    <inherit scheme="variable_names"/>
+    <!-- errors -->
+    <keywords region="Error">
+        <symb name="$"/>
+    </keywords>
+</scheme>
+
+<scheme name="double_quoted_string">
+    <regexp match="/\\[$`&quot;\\]/" region="StringEscape"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="evaluations"/>
+    <keywords region="Error">
+        <symb name="$"/>
+    </keywords>
+</scheme>
+
+<scheme name="redirections_start">
+    <!-- redirects from/to discriptor  -->
+    <regexp match="/((^|\s*\b[^\\]?#1)\d*|\s?#1)(&lt;&gt;|&gt;&gt;|&gt;\||&lt;|&gt;)\s*(&amp;)(\d*)(-)?\s*/"
+        region1="RedirectDescriptor" region3="RedirectSymbol"
+        region4="RedirectPrefix" region5="RedirectDescriptor"
+        region6="RedirectPrefix"/>
+    <!-- redirects from/to file -->
+    <!-- &lt;(&lt;)?! - to not capture heredocs -->
+    <block start="/((^|\s*\b[^\\]?#1)\d*|\s?#1)(&lt;&gt;|&gt;&gt;|&gt;\||&lt;|&gt;)(&lt;|\()?!\s*/"
+        end="/\M(^|[^\\]?#1)[%wrdbreakchars;\s]|$/"
+        scheme="script_words" region01="RedirectDescriptor" region03="RedirectSymbol"/>
+</scheme>
+
+<scheme name="redirections_end">
+    <!-- if we catch something that looks like a redirection/heredoc, consider
+         that everything through the end of the command is a redirection -->
+    <block start="/\M[^\\]?#1\d*[^\\]?#1[&lt;&gt;](\()?!/" end="/\M%cmdbreak;/" scheme="redirections_end_caught"/>
+</scheme>
+
+<scheme name="heredoc_quoted">
+    <!-- if we have something before heredoc body, treat it as possible redirections -->
+    <block start="/(.)?#1\M.+$/" end="/\M$/" scheme="redirections_end_caught"/>
+    <!-- heredoc body -->
+    <block start="/\M./" end="/$/" scheme="def:empty" region="String" priority="low" />
+</scheme>
+
+<scheme name="heredoc">
+    <!-- if we have something before heredoc body, treat it as possible redirections -->
+    <block start="/(.)?#1\M.+$/" end="/\M$/" scheme="redirections_end_caught"/>
+    <!-- heredoc body -->
+    <block start="/\M./" end="/$/" scheme="double_quoted_string" region="String" priority="low" />
+</scheme>
+
+<scheme name="redirections_end_caught">
+    <inherit scheme="redirections_start"/>
+    <!-- heredoc in form [n]<<'word' -->
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*([&quot;&apos;])(?{HeredocAnchor}[\w\d_-]+)(\1)/"
+        end="/^(\y{HeredocAnchor})$/" scheme="heredoc_quoted"
+        region01="StringEdge" region02="StringEdge" region11="HeredocAnchor"
+        region00="PairStart"  region10="PairEnd"/>
+    <!-- heredoc in form [n]<<\word -->
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*(\\)(?{HeredocAnchor}[\w\d_-]+)/"
+        end="/^(\y{HeredocAnchor})$/" scheme="heredoc_quoted"
+        region01="StringEdge" region11="HeredocAnchor"
+        region00="PairStart"  region10="PairEnd"/>
+    <!-- heredoc in form [n]<<word -->
+    <block start="/(?{HeredocDescriptor}\d*)(?{HeredocOperator}&lt;&lt;-?)\s*(?{HeredocAnchor}[\w\d_-]+)/"
+        end="/^(\y{HeredocAnchor})$/" scheme="heredoc"
+        region11="HeredocAnchor"
+        region00="PairStart" region10="PairEnd"/>
+     <!-- anything unexpected is an error -->
+     <!-- regexp match="/[^%wrdbreakchars;\s]*/" region="Error"/ -->
+</scheme>
+
+<scheme name="variable_assignments_caught">
+    <!-- variable name -->
+    <block start="/\M%var;/" end="/\M(=)/" scheme="variable_names" region11="Symbol"/>
+    <!-- expression -->
+    <block start="/=\m/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
+</scheme>
+
+<scheme name="variable_assignments">
+    <block start="/\s*\M(%var;)(=)/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignments_caught"/>
+</scheme>
+
+<scheme name="strings">
+    <!-- single quote strings -->
+    <block start="/(&apos;)/" end="/(&apos;)/" region="String" scheme="def:empty"
+        region01="PairStart"  region11="PairEnd"
+        region00="StringEdge" region10="StringEdge"/>
+    <!-- double quote strings -->
+    <block start="/(&quot;)/" end="/(&quot;)/" region="String" scheme="double_quoted_string"
+        region01="PairStart"  region11="PairEnd"
+        region00="StringEdge" region10="StringEdge"/>
+</scheme>
+
+<scheme name="variable_expansion">
+    <block start="/(\{)?#1\M((%specvar-strict;)|[\w_]+)/"
+        end="/~(?:(?:%specvar-strict;)|(?:[\w_]+))\m((\:?[?=+-])|(#{1,2})|(%{1,2}))/"
+        scheme="variable_names"/>
+    <block start="/(\})?!/" end="/\M\}/" scheme="parameter_expansion" region="String"/>
+</scheme>
+
+<scheme name="variables">
+    <!-- variable $VAR -->
+    <block start="/(\$)\M((%specvar-strict;)|(%var;))/" end="/\M[^\w_]|%cmdbreak;/"
+        region01="VariableStrong" scheme="variable_names"/>
+    <!-- variable ${VAR} / ${#VAR} -->
+    <block start="/((\$\{))(#)?\M((%specvar-strict;)|[\w_]+)\}/" end="/~(?:(?:%specvar-strict;)|(?:[\w_]+))\m((\}))/"
+        region01="VariableStrong" region11="VariableStrong"
+        region03="VariablePrefix"
+        region02="PairStart"      region12="PairEnd"
+        scheme="variable_names"/>
+    <!-- variable ${VAR:-...}, ${VAR+...} etc., ${VAR#...}, ${VAR%%...} etc. -->
+    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(?{VariablePrefix}(\:?[?=+-])|(#{1,2})|(%{1,2}))/"
+        end="/(\})/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_expansion"/>
+</scheme>
+
+<!--
+
+    Here we difine a script where 'evaluation_backquote' scheme is disabled.
+
+    This is necessary because the 'evaluation_backquote' schema has the same
+    start and end anchors '`'. If we use the 'script' schema inside 'evaluation_backquote',
+    the terminating anchor '`' inside will simply start a new 'evaluation_backquote'
+    region. This leads to multiple nested `evaluation_backquote` schemes
+    that never end.
+
+    It is possible to avoid that by setting attribute priority="low" to
+    the scheme 'evaluation_backquote'. However, the scheme 'scripts' defines
+    that scheme 'words' can also end by the anchor '`'. This has the effect
+    of closing the 'scripts' schema, but the 'evaluation_backquote' schema
+    remains open.
+
+    That is why here we define a scheme without the 'evaluation_backquote'. By this
+    we avoid nested 'evaluation_backquote' schemas without the priority="low" attribute.
+
+-->
+
+<scheme name="script_without_backquote">
+    <inherit scheme="script">
+        <virtual scheme="evaluation_backquote" subst-scheme="def:empty"/>
+    </inherit>
+</scheme>
+
+<scheme name="evaluation_backquote">
+    <block start="/(`)/" end="/(`)/" scheme="script_without_backquote" region="Insertion"
+        region01="PairStart" region11="PairEnd"
+        region00="Symbol"    region10="Symbol"/>
+</scheme>
+
+<scheme name="evaluations">
+    <!-- Arithmetic Expansion $(( ... )) -->
+    <block start="/(\$\(\()/" end="/(\)\))/" scheme="arithmetic_expansion" region="Variable"
+        region01="PairStart" region11="PairEnd"
+        region00="Symbol"    region10="Symbol"/>
+    <!-- subshell $( ... ) -->
+    <block start="/(\$\()/" end="/(\))/" scheme="script" region="Insertion"
+        region01="PairStart" region11="PairEnd"
+        region00="Symbol"    region10="Symbol"/>
+    <!-- subshell `...` -->
+    <inherit scheme="evaluation_backquote"/>
+</scheme>
+
+<scheme name="numbers">
+    <regexp match="/([\w+-])?~1-?\d+\b/" region="Number"/>
+    <regexp match="/\b\d+\b/" region="Number"/>
+</scheme>
+
+<scheme name="comments">
+    <!-- linear comment -->
+    <block start="/(^|(\s|%wrdbreak;)?#1)\#/" end="/$/" scheme="def:Comment" region="Comment"/>
+</scheme>
+
+<scheme name="escapes">
+    <!-- spaces between backslash and EOL are usually unexpected -->
+    <block start="/\\\s+$/" end="/$/" scheme="def:empty" region="Error"/>
+    <!-- escape new line -->
+    <block start="/\\$/" end="/^/" scheme="def:empty"/>
+    <!-- ignore other escaped char -->
+    <regexp match="/\\./"/>
+</scheme>
+
+<scheme name="parameter_expansion">
+    <!-- paraeter_expansion region intended to be a string. Thus, mark
+         escaped symbols as StringEscape -->
+    <regexp match="/\\./" region="StringEscape"/>
+    <inherit scheme="escapes"/>
+    <inherit scheme="strings"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="evaluations"/>
+    <inherit scheme="numbers"/>
+</scheme>
+
+<scheme name="arithmetic_expansion">
+    <inherit scheme="strings"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="evaluations"/>
+    <inherit scheme="escapes"/>
+    <inherit scheme="numbers"/>
+    <inherit scheme="variable_names"/>
+    <keywords region="Symbol">
+        <symb name="=="/>         <symb name="*="/>
+        <symb name="/="/>         <symb name="%="/>
+        <symb name="+="/>         <symb name="-="/>
+        <symb name="&amp;="/>     <symb name="^="/>
+        <symb name="|="/>         <symb name="!="/>
+        <symb name="++"/>         <symb name="--"/>
+        <symb name="+"/>          <symb name="-"/>
+        <symb name="~"/>          <symb name="!"/>
+        <symb name="*"/>          <symb name="/"/>
+        <symb name="="/>
+        <symb name="%"/>
+        <symb name="&lt;&lt;="/>  <symb name="&ge;&ge;="/>
+        <symb name="&lt;&lt;"/>   <symb name="&gt;&gt;"/>
+        <symb name="&lt;="/>      <symb name="&gt;="/>
+        <symb name="&lt;"/>       <symb name="&gt;"/>
+        <symb name="&amp;&amp;"/> <symb name="||"/>
+        <symb name="&amp;"/>      <symb name="^"/>
+        <symb name="|"/>
+        <symb name="("/>          <symb name=")"/>
+    </keywords>
+</scheme>
+
+<scheme name="operators">
+    <keywords region="Operator">
+        <symb name="&amp;"/> <symb name="&amp;&amp;"/>
+        <symb name="|"/>     <symb name="||"/>
+    </keywords>
+    <keywords region="SymbolStrong">
+        <symb name=";"/>
+    </keywords>
+    <regexp match="/&amp;/" region="Operator"/>
+</scheme>
+
+<scheme name="variable_names">
+    <!-- plain special/normal variable VAR -->
+    <regexp match="/\b((?{VariableSpecial}(%specvar;)((\w)?!|$))|(?{Variable}(%var;)))\b/"/>
+    <regexp match="/(\$)?#1(?{VariableSpecial}%specvar-strict;)/"/>
+    <regexp match="/(\$|\{|#)?#1(?{VariableSpecial}%specvar-strict;)((\w)?!|$)/"/>
+    <regexp match="/(\{|#)?#1(?{Variable}[\w_]+)/"/>
+</scheme>
+
+<scheme name="if">
+    <!-- if/elif ... then -->
+    <block start="/\b(if|elif)\b/" end="/\s*\M\b(then)\b/" scheme="script"
+        region00="CommandReserved" region11="CommandReserved"/>
+    <!-- then ... fi/elif/else -->
+    <block start="/\bthen\b/" end="/\s*\M\b(fi|elif|else)\b/" scheme="script"
+        region00="CommandReserved" region11="CommandReserved"/>
+    <!-- else ... fi -->
+    <block start="/\belse\b/" end="/\s*\M\b(fi)\b/" scheme="script"
+        region00="CommandReserved" region11="CommandReserved"/>
+</scheme>
+
+<scheme name="while">
+    <!-- while/until ... do -->
+    <block start="/\b(while|until)\b/" end="/\s*\M\b(do)\b/" scheme="script"
+        region00="CommandReserved" region11="CommandReserved"/>
+    <!-- do ... done -->
+    <block start="/\bdo\b/" end="/\s*\M\b(done)\b/" scheme="script"
+        region00="CommandReserved" region11="CommandReserved"/>
+</scheme>
+
+<scheme name="for">
+    <inherit scheme="comments"/>
+    <!-- for VAR ... done -->
+    <block start="/\b(for)\b\s*/" end="/\s*(?{Error}[^;#]*?)(\M(?{SymbolStrong};)|\bin\b|\s+|#|$)/"
+        scheme="script_words.maybe-variable" region01="CommandReserved"/>
+    <!-- in ... -->
+    <block start="/\s*\b(in)\b/" end="/\M(;|#|$)/" scheme="script_words"
+        region01="CommandReserved" region11="SymbolStrong"/>
+    <!-- do ... done -->
+    <block start="/\s*\b(do)\b/" end="/\s*\M\b(done)\b/" scheme="script"
+        region01="CommandReserved" region11="CommandReserved"/>
+    <!-- anything else is an error -->
+    <block start="/(done)?!\s*\m/" end="/\M(%cmdbreak;)/" scheme="def:empty"
+        region="Error" region11="SymbolStrong"/>
+</scheme>
+
+<scheme name="case">
+    <!-- case ... in -->
+    <block start="/(case)\m/" end="/\s+(\Min)\s*/" scheme="script_words"
+        region01="CommandReserved" region11="CommandReserved"/>
+    <!-- each pattern -->
+    <block start="/(in|;;)(\s*esac)?!\m/" end="/\M(\)(\s*|$)|esac)/"
+        scheme="parameter_expansion" region="String"/>
+    <!-- each body -->
+    <block start="/((\)))(\s*|$)/" end="/\M((;;|esac))/" scheme="script"
+        region01="PairStart"    region12="PairEnd"
+        region02="SymbolStrong" region11="SymbolStrong"/>
+</scheme>
+
+<scheme name="test">
+    <inherit scheme="script_parameters"/>
+    <keywords region="TestOperator">
+        <word name="-b"/> <word name="-c"/> <word name="-d"/>
+        <word name="-e"/> <word name="-f"/> <word name="-g"/>
+        <word name="-G"/> <word name="-k"/> <word name="-h"/>
+        <word name="-L"/> <word name="-n"/> <word name="-O"/>
+        <word name="-p"/> <word name="-r"/> <word name="-S"/>
+        <word name="-s"/> <word name="-t"/> <word name="-u"/>
+        <word name="-w"/> <word name="-x"/>
+        <word name="-ef"/> <word name="-nt"/> <word name="-ot"/>
+        <word name="-z"/> <word name="-n"/> <word name="-o"/>
+        <word name="-v"/> <word name="-R"/> <word name="!"/>
+        <word name="-a"/>
+        <word name="-eq"/> <word name="-ne"/> <word name="-lt"/>
+        <word name="-le"/> <word name="-gt"/> <word name="-ge"/>
+        <word name="="/> <word name="!="/>
+        <word name="!"/>
+    </keywords>
+</scheme>
+
+<scheme name="cmd-error">
+    <!-- skip whitespace -->
+    <regexp match="/\s+/"/>
+    <inherit scheme="redirections_end"/>
+    <regexp match="/%wrdnotbreak;/" region="Error"/>
+</scheme>
+
+<scheme name="cmd-one-parameter-number">
+    <inherit scheme="redirections_end"/>
+    <block start="/\M[$`\d&quot;&apos;]/" end="/\M\s|%cmdbreak;/" scheme="script_words"
+        region="Number"/>
+    <block start="//" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+</scheme>
+
+<scheme name="cmd-one-parameter">
+    <inherit scheme="redirections_end"/>
+    <block start="/\M%wrdnotbreak;/" end="/\M\s|%cmdbreak;/" scheme="script_parameters"/>
+    <block start="//" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+</scheme>
+
+<scheme name="cmd-parameter-variable-assignments">
+    <!-- skip whitespace -->
+    <regexp match="/\s+/"/>
+    <inherit scheme="redirections_end"/>
+    <inherit scheme="script_parameters"/>
+    <inherit scheme="variable_assignments"/>
+    <inherit scheme="variable_names"/>
+    <!-- anything else is an error -->
+    <block start="//" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+</scheme>
+
+<scheme name="cmd-parameter-variables">
+    <!-- skip whitespace -->
+    <regexp match="/\s+/"/>
+    <inherit scheme="redirections_end"/>
+    <inherit scheme="script_parameters"/>
+    <inherit scheme="variable_names"/>
+    <!-- anything else is an error -->
+    <block start="//" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+</scheme>
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

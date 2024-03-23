@@ -126,7 +126,7 @@ bool IsCharFullWidth(wchar_t c)
 		case 0x1faf0 ... 0x1faf6:
 		case 0x20000 ... 0x2fffd:
 		case 0x30000 ... 0x3fffd:
-			return true;
+			return (wcwidth(c) == 0);
 		default: return false;
 	}
 }
@@ -200,7 +200,7 @@ bool IsCharPrefix(wchar_t c)
 		case 0x10fbd:
 		case 0x10fc2: case 0x10fc3:
 		case 0x10fc9:
-			return true;
+			return (wcwidth(c) == 0);
 		default: return false;
 	}
 }
@@ -515,7 +515,7 @@ bool IsCharSuffix(wchar_t c)
 		case 0x1e8d0 ... 0x1e8d6:
 		case 0x1e944 ... 0x1e94a:
 		case 0xe0100 ... 0xe01ef:
-			return true;
+			return (wcwidth(c) == 0);
 		default: return false;
 	}
 }

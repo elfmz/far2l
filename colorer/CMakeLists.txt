@@ -1,12 +1,15 @@
 project(colorer)
 
 
-set(LIBCOLORER_TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src")
+#set(LIBCOLORER_TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src")
 
-include(src/Colorer-library/cmake/utils.cmake)
+#include(src/Colorer-library/cmake/colorer_extract_version.cmake)
 
-colorer_extract_version()
-message(STATUS "Build Colorer: ${COLORER_VERSION}")
+#colorer_extract_version()
+#message(STATUS "Build Colorer: ${COLORER_VERSION}")
+
+set(COLORER_BUILD_TOOLS OFF CACHE BOOL "Build colorer tools")
+set(COLORER_USE_DEPENDS_FROM_SYSTEM ON CACHE BOOL "Use dependencies installed in system")
 
 set(SOURCES
     src/pcolorer2/ChooseTypeMenu.h
@@ -53,9 +56,7 @@ if (USESPDLOG)
 endif()
 
 
-add_library(colorer MODULE ${SOURCES})
-
-FIND_PACKAGE(XercesC REQUIRED)
+find_package(XercesC REQUIRED)
 
 # sometimes libstd requires linking to libfmt, sometimes not
 # so, if libfmt there - lets link to it, if not - then dont care
@@ -75,9 +76,10 @@ else()
     set(fmt_LIBRARY_OPTIONAL "")
 endif()
 
+add_library(colorer MODULE ${SOURCES})
+
 target_include_directories(colorer
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/Colorer-library/src
-    PUBLIC ${XERCESC_INCLUDE_DIR}
     )
 
 if(USESPDLOG)
@@ -85,8 +87,6 @@ if(USESPDLOG)
 endif()
 
 target_link_libraries(colorer
-    ${XERCESC_LIBRARIES}
-    ${fmt_LIBRARY_OPTIONAL}
     utils
     colorer_lib
     far2l
@@ -100,7 +100,7 @@ target_compile_definitions(colorer PUBLIC
 )
 
 
-target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
+#target_include_directories(colorer PRIVATE ${LIBCOLORER_TREE}/src)
 target_include_directories(colorer PRIVATE src/pcolorer2)
 target_include_directories(colorer PRIVATE src)
 target_include_directories(colorer PRIVATE ../WinPort)
@@ -117,5 +117,5 @@ add_custom_command(TARGET colorer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
 )
 
-add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
+add_subdirectory("src/Colorer-library" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 

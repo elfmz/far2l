@@ -1,6 +1,6 @@
 #ifndef _COLORER_MEMORYFILE_H_
 #define _COLORER_MEMORYFILE_H_
-#include <minizip/unzip.h>
+#include "minizip/unzip.h"
 
 typedef struct{
   const unsigned char *stream;

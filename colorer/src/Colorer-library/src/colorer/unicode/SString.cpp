@@ -33,13 +33,7 @@ SString::SString(const char* string, size_t s, size_t l)
   construct(&ds, 0, ds.length());
 }
 
-SString::SString(const w2char* string, size_t s, size_t l)
-{
-  CString ds(string, s, l);
-  construct(&ds, 0, ds.length());
-}
-
-SString::SString(const w4char* string, size_t s, size_t l)
+SString::SString(const wchar* string, size_t s, size_t l)
 {
   CString ds(string, s, l);
   construct(&ds, 0, ds.length());
@@ -56,13 +50,9 @@ SString::SString(char* str, int enc)
   construct(&ds, 0, ds.length());
 }
 
-SString::SString(const wchar_t* str)
+SString::SString(wchar* str)
 {
-#if (__WCHAR_MAX__ > 0xffff)
-  CString ds((const w4char *)str, 0, npos);
-#else
-  CString ds((const w2char *)str, 0, npos);
-#endif
+  CString ds(str, 0, npos);
   construct(&ds, 0, ds.length());
 }
 
@@ -109,7 +99,7 @@ SString &SString::append(const String* string, size_t maxlen)
 
 SString &SString::append(const String &string, size_t maxlen)
 {
-  const size_t len_new = len + std::min(maxlen, string.length());
+  const size_t len_new = len + (maxlen <= string.length() ? maxlen: string.length());
 
   if (alloc < len_new) {
     std::unique_ptr<wchar[]> wstr_new(new wchar[len_new * 2]);

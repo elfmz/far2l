@@ -296,10 +296,10 @@ void HRCParserImpl::addPrototype(const xercesc::DOMElement* elem)
     //  return;
   }
   auto* type = new FileTypeImpl(this);
-  type->name.reset(new SString(CString(typeName)));
-  type->description.reset(new SString(CString(typeDescription)));
+  type->name = std::make_unique<SString>(CString(typeName));
+  type->description = std::make_unique<SString>(CString(typeDescription));
   if (typeGroup != nullptr) {
-    type->group.reset(new SString(CString(typeGroup)));
+    type->group = std::make_unique<SString>(CString(typeGroup));
   }
   if (xercesc::XMLString::equals(elem->getNodeName(), hrcTagPackage)) {
     type->isPackage = true;
@@ -368,7 +368,7 @@ void HRCParserImpl::addPrototypeDetectParam(const xercesc::DOMElement* elem)
   CString weight = CString(elem->getAttribute(hrcFilenameAttrWeight));
   UnicodeTools::getNumber(&weight, &prior);
   auto* ftc = new FileTypeChooser(ctype, prior, matchRE);
-  parseProtoType->chooserVector.emplace_back(ftc);
+  parseProtoType->chooserVector.push_back(ftc);
 }
 
 void HRCParserImpl::addPrototypeParameters(const xercesc::DOMElement* elem)
@@ -386,9 +386,9 @@ void HRCParserImpl::addPrototypeParameters(const xercesc::DOMElement* elem)
         }
         CString d_name = CString(name);
         TypeParameter* tp = parseProtoType->addParam(&d_name);
-        tp->default_value.reset(new SString(CString(value)));
+        tp->default_value = std::make_unique<SString>(CString(value));
         if (*descr != '\0') {
-          tp->description.reset(new SString(CString(descr)));
+          tp->description = std::make_unique<SString>(CString(descr));
         }
       }
       continue;
@@ -609,7 +609,7 @@ void HRCParserImpl::addSchemeInherit(SchemeImpl* scheme, const xercesc::DOMEleme
   }
   auto* scheme_node = new SchemeNode();
   scheme_node->type = SchemeNode::SNT_INHERIT;
-  scheme_node->schemeName.reset(new SString(CString(nqSchemeName)));
+  scheme_node->schemeName = std::make_unique<SString>(CString(nqSchemeName));
   CString dnqSchemeName = CString(nqSchemeName);
   String* schemeName = qualifyForeignName(&dnqSchemeName, QNT_SCHEME, false);
   if (schemeName == nullptr) {
@@ -672,7 +672,7 @@ void HRCParserImpl::addSchemeRegexp(SchemeImpl* scheme, const xercesc::DOMElemen
   CString dhrcRegexpAttrPriority = CString(elem->getAttribute(hrcRegexpAttrPriority));
   scheme_node->lowPriority = CString("low").equals(&dhrcRegexpAttrPriority);
   scheme_node->type = SchemeNode::SNT_RE;
-  scheme_node->start.reset(new CRegExp(entMatchParam));
+  scheme_node->start = std::make_unique<CRegExp>(entMatchParam);
   if (!scheme_node->start || !scheme_node->start->isOk())
     logger->error("fault compiling regexp '{0}' in scheme '{1}'", entMatchParam->getChars(), scheme->schemeName->getChars());
   delete entMatchParam;
@@ -756,7 +756,7 @@ void HRCParserImpl::addSchemeBlock(SchemeImpl* scheme, const xercesc::DOMElement
     return;
   }
   auto* scheme_node = new SchemeNode();
-  scheme_node->schemeName.reset(new SString(CString(schemeName)));
+  scheme_node->schemeName = std::make_unique<SString>(CString(schemeName));
   CString attr_pr = CString(elem->getAttribute(hrcBlockAttrPriority));
   CString attr_cpr = CString(elem->getAttribute(hrcBlockAttrContentPriority));
   CString attr_ireg = CString(elem->getAttribute(hrcBlockAttrInnerRegion));
@@ -764,12 +764,12 @@ void HRCParserImpl::addSchemeBlock(SchemeImpl* scheme, const xercesc::DOMElement
   scheme_node->lowContentPriority = CString("low").equals(&attr_cpr);
   scheme_node->innerRegion = CString("yes").equals(&attr_ireg);
   scheme_node->type = SchemeNode::SNT_SCHEME;
-  scheme_node->start.reset(new CRegExp(startParam));
+  scheme_node->start = std::make_unique<CRegExp>(startParam);
   scheme_node->start->setPositionMoves(false);
   if (!scheme_node->start->isOk()) {
     logger->error("fault compiling regexp '{0}' in scheme '{1}'", startParam->getChars(), scheme->schemeName->getChars());
   }
-  scheme_node->end .reset(new CRegExp());
+  scheme_node->end = std::make_unique<CRegExp>();
   scheme_node->end->setPositionMoves(true);
   scheme_node->end->setBackRE(scheme_node->start.get());
   scheme_node->end->setRE(endParam);
@@ -812,7 +812,7 @@ void HRCParserImpl::addSchemeKeywords(SchemeImpl* scheme, const xercesc::DOMElem
     delete entWordDiv;
   }
 
-  scheme_node->kwList.reset(new KeywordList);
+  scheme_node->kwList = std::make_unique<KeywordList>();
   scheme_node->kwList->num = getSchemeKeywordsCount(elem);
 
   scheme_node->kwList->kwList = new KeywordInfo[scheme_node->kwList->num];
@@ -863,7 +863,7 @@ void HRCParserImpl::addKeyword(SchemeNode* scheme_node, const Region* brgn, cons
   }
 
   int pos = scheme_node->kwList->num;
-  scheme_node->kwList->kwList[pos].keyword.reset(new SString(CString(param)));
+  scheme_node->kwList->kwList[pos].keyword = std::make_unique<SString>(CString(param));
   scheme_node->kwList->kwList[pos].region = rgn;
   scheme_node->kwList->kwList[pos].isSymbol = (type == 2);
   scheme_node->kwList->kwList[pos].ssShorter = -1;
@@ -1090,7 +1090,7 @@ String* HRCParserImpl::qualifyForeignName(const String* name, QualifyNameType qn
 
 String* HRCParserImpl::useEntities(const String* name)
 {
-  size_t copypos = 0;
+  int copypos = 0;
   size_t epos = 0;
 
   if (!name) {
@@ -1169,7 +1169,7 @@ const Region* HRCParserImpl::getNCRegion(const String* name, bool logErrors)
 
 const Region* HRCParserImpl::getNCRegion(const xercesc::DOMElement* el, const String &tag)
 {
-  const XMLCh* par = el->getAttribute(tag.getW2Chars());
+  const XMLCh* par = el->getAttribute(tag.getWChars());
   if (*par == '\0') {
     return nullptr;
   }

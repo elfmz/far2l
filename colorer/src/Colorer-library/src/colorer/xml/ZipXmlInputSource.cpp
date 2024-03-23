@@ -1,7 +1,7 @@
 #include <colorer/xml/ZipXmlInputSource.h>
 #include <minizip/unzip.h>
 #include <xercesc/util/XMLString.hpp>
-#include <colorer/io/MemoryFile.h>
+#include <colorer/xml/MemoryFile.h>
 
 ZipXmlInputSource::ZipXmlInputSource(const XMLCh* path, const XMLCh* base)
 {
@@ -57,7 +57,7 @@ void ZipXmlInputSource::create(const XMLCh* path, const XMLCh* base)
   str.append(CString(jar_input_source->getInputSource()->getSystemId()));
   str.append(CString("!"));
   str.append(in_jar_location.get());
-  setSystemId(str.getW2Chars());
+  setSystemId(str.getWChars());
 }
 
 ZipXmlInputSource::~ZipXmlInputSource()
@@ -67,7 +67,7 @@ ZipXmlInputSource::~ZipXmlInputSource()
 
 uXmlInputSource ZipXmlInputSource::createRelative(const XMLCh* relPath) const
 {
-  return std::unique_ptr<ZipXmlInputSource>(new ZipXmlInputSource(relPath, this->getSystemId()));
+  return std::make_unique<ZipXmlInputSource>(relPath, this->getSystemId());
 }
 
 xercesc::InputSource* ZipXmlInputSource::getInputSource()

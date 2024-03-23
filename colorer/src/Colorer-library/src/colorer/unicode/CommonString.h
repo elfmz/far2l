@@ -2,13 +2,13 @@
 #define _COLORER_COMMONSTRING_H_
 
 #include <wchar.h>
-#include <stdint.h>
-#include <xercesc/util/XMLChar.hpp>
 
 /// default unicode char definition
-
+#ifdef WIN32
 typedef wchar_t wchar;
-typedef XMLCh w2char;
+#else
+typedef char16_t wchar;
+#endif
 typedef char32_t w4char;
 typedef unsigned char byte;
 

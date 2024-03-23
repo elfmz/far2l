@@ -3,7 +3,6 @@
 
 #include <colorer/Exception.h>
 #include <colorer/handlers/RegionDefine.h>
-#include <colorer/unicode/CString.h>
 
 /**
  * Contains information about region mapping into textual prefix/suffix.
@@ -33,13 +32,13 @@ public:
     end_text = _etext;
     start_back = _sback;
     end_back = _eback;
-    type = RegionDefine::TEXT_REGION;
+    type = RegionDefine::RegionDefineType::TEXT_REGION;
   }
 
   TextRegion()
   {
     start_text = end_text = start_back = end_back = nullptr;
-    type = RegionDefine::TEXT_REGION;
+    type = RegionDefine::RegionDefineType::TEXT_REGION;
   }
 
   /**
@@ -60,7 +59,7 @@ public:
   static const TextRegion* cast(const RegionDefine* rd)
   {
     if (rd == nullptr) return nullptr;
-    if (rd->type != RegionDefine::TEXT_REGION) {
+    if (rd->type != RegionDefine::RegionDefineType::TEXT_REGION) {
       throw Exception(CString("Bad type cast exception into TextRegion"));
     }
     const TextRegion* tr = (const TextRegion*)(rd);

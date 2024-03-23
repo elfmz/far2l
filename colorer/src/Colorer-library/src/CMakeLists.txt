@@ -1,7 +1,5 @@
-project(colorer_lib)
-
 #====================================================
-# colorer
+# colorer source
 #====================================================
 set(SRC_COLORER
     colorer/Common.h
@@ -18,6 +16,7 @@ set(SRC_COLORER
     colorer/common/Colorer.h
     colorer/common/Exception.cpp
     colorer/common/Features.h
+    colorer/common/platform.h
     colorer/cregexp/cregexp.cpp
     colorer/cregexp/cregexp.h
     colorer/editor/BaseEditor.cpp
@@ -48,8 +47,6 @@ set(SRC_COLORER
     colorer/io/FileWriter.h
     colorer/io/InputSource.cpp
     colorer/io/InputSource.h
-    colorer/io/SharedInputSource.cpp
-    colorer/io/SharedInputSource.h
     colorer/io/StreamWriter.cpp
     colorer/io/StreamWriter.h
     colorer/io/Writer.cpp
@@ -116,107 +113,133 @@ set(SRC_COLORER
     colorer/xml/XmlParserErrorHandler.cpp
     colorer/xml/XmlParserErrorHandler.h
     colorer/xml/XmlTagDefs.h
+)
+
+if(COLORER_USE_JARINPUTSOURCE)
+    set(COLORER_FEATURE_JARINPUTSOURCE 1)
+    set(SRC_COLORER_JAR
+        colorer/xml/MemoryFile.cpp
+        colorer/xml/MemoryFile.h
+        colorer/xml/ZipXmlInputSource.cpp
+        colorer/xml/ZipXmlInputSource.h
     )
+endif()
 
-# Disabled by DCOLORER_FEATURE_JARINPUTSOURCE=FALSE
-#    colorer/xml/ZipXmlInputSource.cpp
-#    colorer/xml/ZipXmlInputSource.h
-#    colorer/io/JARInputSource.cpp
-#    colorer/io/JARInputSource.h
-#    colorer/io/MemoryFile.cpp
-#    colorer/io/MemoryFile.h
+if (COLORER_USE_DUMMY_LOGGER)
+    set(COLORER_FEATURE_DUMMYLOGGER 1)
+endif ()
 
-# Disabled by COLORER_FEATURE_HTTPINPUTSOURCE=FALSE
-#    colorer/io/HTTPInputSource.cpp
-#    colorer/io/HTTPInputSource.h
+#====================================================
+# Generate headers
+#====================================================
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/colorer/common/Features.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/colorer/common/Features.h
+)
 
 #====================================================
 # common flags
 #====================================================
-set(COLORER_DEF -DNOGDI -DCOLORER_FEATURE_HTTPINPUTSOURCE=FALSE -DCOLORER_FEATURE_JARINPUTSOURCE=FALSE)
+set(COLORER_DEF -DNOGDI)
 if (MSVC)
-    set(COLORER_DEF ${COLORER_DEF} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
+  set(COLORER_DEF ${COLORER_DEF} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 endif ()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    # defaut for gcc
-    # CMAKE_CXX_FLAGS=
-    # CMAKE_CXX_FLAGS_DEBUG= -g
-    # CMAKE_CXX_FLAGS_RELEASE= -O3 -DNDEBUG
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  # default for gcc
+  # CMAKE_CXX_FLAGS=
+  # CMAKE_CXX_FLAGS_DEBUG= -g
+  # CMAKE_CXX_FLAGS_RELEASE= -O3 -DNDEBUG
 
-    # set only new flags
-    set(FLAGS_CXX_DEFAULT -fpermissive -Wall)
-    set(FLAGS_CXX_RELEASE)
-    set(FLAGS_CXX_DEBUG)
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # defaut for msvc
-    # CMAKE_C_FLAGS= /DWIN32 /D_WINDOWS
-    # CMAKE_C_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
-    # CMAKE_C_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
+  # set only new flags
+  set(FLAGS_CXX_DEFAULT -fpermissive -Wall)
+  set(FLAGS_CXX_RELEASE)
+  set(FLAGS_CXX_DEBUG)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
-    # CMAKE_CXX_FLAGS= /DWIN32 /D_WINDOWS /GR /EHsc
-    # CMAKE_CXX_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
-    # CMAKE_CXX_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
+  # default for msvc
+  # CMAKE_CXX_FLAGS= /DWIN32 /D_WINDOWS /GR /EHsc
+  # CMAKE_CXX_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
+  # CMAKE_CXX_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
 
-    set(FLAGS_C_DEFAULT /Zi)
-    set(FLAGS_C_RELEASE /W3)
-    set(FLAGS_C_DEBUG /W4)
-    set(FLAGS_CXX_DEFAULT /Zi)
-    set(FLAGS_CXX_RELEASE /W3)
-    set(FLAGS_CXX_DEBUG /W4)
-
-endif ()
-
-#====================================================
-# build
-#====================================================
-
-add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
-
-FIND_PACKAGE(XercesC REQUIRED)
-
-target_include_directories(colorer_lib
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${XERCESC_INCLUDE_DIR}
-)
-
-target_compile_definitions(colorer_lib PRIVATE
-    ${COLORER_DEF}
-    ${SPDLOG_DEFINES}
-    __unix__
-)
-
-if(USESPDLOG)
-    target_include_directories(colorer_lib PUBLIC ${SPDLOG_INCLUDE_DIR})
+  set(FLAGS_CXX_DEFAULT)
+  set(FLAGS_CXX_RELEASE /W3 /WX)
+  set(FLAGS_CXX_DEBUG /W4)
 endif()
 
-target_link_libraries(colorer_lib
-    PUBLIC ${XERCESC_LIBRARIES}
-    ${THREAD_LIBS}
-)
-
-#set_target_properties(colorer_lib PROPERTIES
-#    CXX_STANDARD 17
-#    CXX_STANDARD_REQUIRED YES
-#    CXX_EXTENSIONS NO
-#    )
-
-# set options for target
 set(MAIN_FLAGS_CXX_DEBUG ${FLAGS_CXX_DEBUG} ${FLAGS_CXX_DEFAULT})
 set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
 set(MAIN_FLAGS_C_DEBUG ${FLAGS_C_DEBUG} ${FLAGS_C_DEFAULT})
 set(MAIN_FLAGS_C_RELEASE ${FLAGS_C_RELEASE} ${FLAGS_C_DEFAULT})
+#====================================================
+# build
+#====================================================
 
-if (${CMAKE_BUILD_TYPE} MATCHES Debug)
-    target_compile_options(colorer_lib
-        PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_DEBUG}>
-        PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_DEBUG}>
-        )
+add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_JAR})
+target_include_directories(colorer_lib PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+if (COLORER_USE_DEPENDS_FROM_SYSTEM)
+    target_link_libraries(colorer_lib
+        PUBLIC XercesC::XercesC
+    )
 else ()
-    target_compile_options(colorer_lib
-        PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_RELEASE}>
-        PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_RELEASE}>
+    target_include_directories(colorer_lib
+        PUBLIC ../external/xercesc/src
+        PUBLIC ${xerces-c_BINARY_DIR}/src
+    )
+    target_link_libraries(colorer_lib
+        PUBLIC xerces-c
+    )
+endif ()
+
+if (NOT COLORER_USE_DUMMY_LOGGER)
+    if (NOT COLORER_USE_DEPENDS_FROM_SYSTEM)
+        target_include_directories(colorer_lib
+            PUBLIC ../external/spdlog/include
         )
+        target_link_libraries(colorer_lib
+            PUBLIC ${THREAD_LIBS}
+            PUBLIC spdlog::spdlog
+        )
+    else ()
+        target_link_libraries(colorer_lib
+            PUBLIC spdlog::spdlog
+        )
+    endif ()
+endif ()
+
+if(COLORER_USE_JARINPUTSOURCE)
+    if(COLORER_USE_DEPENDS_FROM_SYSTEM)
+        target_link_libraries(colorer_lib PUBLIC minizip::minizip)
+    else()
+        target_link_libraries(colorer_lib PUBLIC ZLIB::MINIZIP)
+        target_include_directories(colorer_lib
+            PUBLIC ../external/zlib/contrib
+        )
+    endif()
+endif()
+
+target_compile_definitions(colorer_lib PUBLIC ${COLORER_DEF})
+set_target_properties(colorer_lib PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+    )
+
+# set options for target
+if (${CMAKE_BUILD_TYPE} MATCHES Debug)
+  target_compile_options(colorer_lib
+      PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_DEBUG}>
+      PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_DEBUG}>
+      )
+else ()
+  target_compile_options(colorer_lib
+      PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_RELEASE}>
+      PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_RELEASE}>
+      )
 endif ()
 
 set_target_properties(colorer_lib PROPERTIES
@@ -225,17 +248,3 @@ set_target_properties(colorer_lib PROPERTIES
     SOVERSION ${COLORER_VERSION_MAJOR}
     DEBUG_POSTFIX "d"
     )
-#====================================================
-# test
-#====================================================
-
-# static analyze
-if (COLORER_PVS_STUDIO_CHECK)
-    pvs_studio_add_target(TARGET ${PROJECT_NAME}.analyze ALL
-        ANALYZE ${PROJECT_NAME}
-        MODE GA 64 OP CS
-        CFG_TEXT "exclude-path=*/external/*"
-        OUTPUT FORMAT errorfile
-        LOG ${PROJECT_NAME}.err)
-endif ()
-

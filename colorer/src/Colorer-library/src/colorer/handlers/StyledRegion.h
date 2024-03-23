@@ -3,7 +3,6 @@
 
 #include <colorer/Exception.h>
 #include <colorer/handlers/RegionDefine.h>
-#include <colorer/unicode/CString.h>
 
 /**
  * Contains information about region mapping into real colors.
@@ -33,7 +32,7 @@ public:
   /** Common constructor */
   StyledRegion(bool _bfore, bool _bback, unsigned int _fore, unsigned int _back, unsigned int _style)
   {
-    type = RegionDefine::STYLED_REGION;
+    type = RegionDefine::RegionDefineType::STYLED_REGION;
     bfore = _bfore;
     bback = _bback;
     fore = _fore;
@@ -44,7 +43,7 @@ public:
   /** Empty constructor */
   StyledRegion()
   {
-    type = RegionDefine::STYLED_REGION;
+    type = RegionDefine::RegionDefineType::STYLED_REGION;
     bfore = bback = false;
     fore = back = 0;
     style = 0;
@@ -66,7 +65,7 @@ public:
   static const StyledRegion* cast(const RegionDefine* rd)
   {
     if (rd == nullptr) return nullptr;
-    if (rd->type != RegionDefine::STYLED_REGION) throw Exception(CString("Bad type cast exception into StyledRegion"));
+    if (rd->type != RegionDefine::RegionDefineType::STYLED_REGION) throw Exception(CString("Bad type cast exception into StyledRegion"));
     const StyledRegion* sr = (const StyledRegion*)(rd);
     return sr;
   }

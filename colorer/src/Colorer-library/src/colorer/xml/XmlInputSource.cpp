@@ -1,7 +1,7 @@
 #include <colorer/xml/XmlInputSource.h>
 #include <colorer/xml/LocalFileXmlInputSource.h>
-#if COLORER_FEATURE_JARINPUTSOURCE
-# include <colorer/xml/ZipXmlInputSource.h>
+#ifdef COLORER_FEATURE_JARINPUTSOURCE
+#include <colorer/xml/ZipXmlInputSource.h>
 #endif
 #include <colorer/Exception.h>
 #include <xercesc/util/XMLString.hpp>
@@ -17,8 +17,8 @@
 uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, XmlInputSource* base)
 {
   if (xercesc::XMLString::startsWith(path, kJar)) {
-#if COLORER_FEATURE_JARINPUTSOURCE
-    return std::unique_ptr<ZipXmlInputSource>(new ZipXmlInputSource(path, base));
+#ifdef COLORER_FEATURE_JARINPUTSOURCE
+    return std::make_unique<ZipXmlInputSource>(path, base);
 #else
     throw InputSourceException(CString("ZipXmlInputSource not supported"));
 #endif
@@ -26,7 +26,7 @@ uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, XmlInputSource* b
   if (base) {
     return base->createRelative(path);
   }
-  return std::unique_ptr<LocalFileXmlInputSource>(new LocalFileXmlInputSource(path, nullptr));
+  return std::make_unique<LocalFileXmlInputSource>(path, nullptr);
 }
 
 uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, const XMLCh* base)
@@ -35,13 +35,13 @@ uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, const XMLCh* base
     throw InputSourceException(CString("XmlInputSource::newInstance: path is nullptr"));
   }
   if (xercesc::XMLString::startsWith(path, kJar) || (base != nullptr && xercesc::XMLString::startsWith(base, kJar))) {
-#if COLORER_FEATURE_JARINPUTSOURCE
-    return std::unique_ptr<ZipXmlInputSource>(new ZipXmlInputSource(path, base));
+#ifdef COLORER_FEATURE_JARINPUTSOURCE
+    return std::make_unique<ZipXmlInputSource>(path, base);
 #else
     throw InputSourceException(CString("ZipXmlInputSource not supported"));
 #endif
   }
-  return std::unique_ptr<LocalFileXmlInputSource>(new LocalFileXmlInputSource(path, base));
+  return std::make_unique<LocalFileXmlInputSource>(path, base);
 }
 
 UString XmlInputSource::getAbsolutePath(const String* basePath, const String* relPath)
@@ -88,12 +88,12 @@ UString XmlInputSource::getClearPath(const String* basePath, const String* relPa
 {
   UString clear_path(new SString(relPath));
   if (relPath->indexOf(CString("%")) != String::npos) {
-    XMLCh* e_path = ExpandEnvironment(clear_path.get()->getW2Chars());
+    XMLCh* e_path = ExpandEnvironment(clear_path.get()->getWChars());
     clear_path.reset(new SString(CString(e_path)));
     delete[] e_path;
   }
   if (isRelative(clear_path.get())) {
-    clear_path = getAbsolutePath(basePath, clear_path.get());
+    clear_path = std::move(getAbsolutePath(basePath, clear_path.get()));
     if (clear_path->startsWith(CString("file://"))) {
       clear_path.reset(new SString(clear_path.get(), 7, -1));
     }
@@ -166,3 +166,10 @@ void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> 
 }
 #endif
 
+bool XmlInputSource::isUriFile(const String* path, const String* base)
+{
+  if ((path->startsWith(SString("jar:"))) || (base && base->startsWith(SString("jar:")))) {
+    return false;
+  }
+  return true;
+}

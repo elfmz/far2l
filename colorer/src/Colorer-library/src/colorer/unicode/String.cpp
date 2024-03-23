@@ -1,30 +1,52 @@
-#include <xercesc/util/XercesDefs.hpp>
 #include <colorer/unicode/String.h>
 #include <colorer/unicode/Character.h>
 #include <colorer/unicode/Encodings.h>
-#include <stdlib.h>
 
 #ifdef __unix__
-#include <strings.h>
-
 extern "C" int stricmp(const char* c1, const char* c2)
 {
-  return strcasecmp(c1, c2);
+  unsigned int i1, i2;
+  while (*c1 || *c2) {
+    i1 = Character::toLowerCase(*c1);
+    i2 = Character::toLowerCase(*c2);
+    if (i1 < i2) return -1;
+    if (i1 > i2) return 1;
+    if (!i1) return -1;
+    if (!i2) return 1;
+    c1++;
+    c2++;
+  }
+  return 0;
 }
 
 extern "C" int strnicmp(const char* c1, const char* c2, unsigned int len)
 {
-  return strncasecmp(c1, c2, len);
+  unsigned int i1, i2;
+  while ((*c1 || *c2) && len) {
+    i1 = Character::toLowerCase(*c1);
+    i2 = Character::toLowerCase(*c2);
+    if (i1 < i2) return -1;
+    if (i1 > i2) return 1;
+    if (!i1) return -1;
+    if (!i2) return 1;
+    c1++;
+    c2++;
+    len--;
+  }
+  return 0;
 }
 #endif
 
 String::String()
 {
+  ret_char_val = nullptr;
+  ret_wchar_val = nullptr;
 }
 
 String::~String()
 {
-  free(ret_val);
+  delete[] ret_char_val;
+  delete[] ret_wchar_val;
 }
 
 bool String::operator==(const String &str) const
@@ -88,45 +110,24 @@ int String::compareToIgnoreCase(const String &str) const
   return 0;
 }
 
-const w4char* String::getW4Chars() const
+size_t String::getWChars(wchar** chars) const
 {
-  // TODO: use real UCS16->UTF32 conversion if needed
-  w4char *ret_w4char_val = (w4char *)realloc(ret_val, (length() + 1) * sizeof(w4char));
-  if (!ret_w4char_val) return nullptr;
-  ret_val = ret_w4char_val;
-
+  *chars = new wchar[length() + 1];
   size_t i;
   for (i = 0; i < length(); i++) {
-    ret_w4char_val[i] = w4char((*this)[i]);
+    (*chars)[i] = (*this)[i];
   }
-  ret_w4char_val[i] = 0;
-  return ret_w4char_val;
+  (*chars)[i] = 0;
+  return length();
 }
 
-const w2char* String::getW2Chars() const
-{
-  // TODO: use real UCS32->UTF16 conversion if needed
-  w2char *ret_w2char_val = (w2char *)realloc(ret_val, (length() + 1) * sizeof(w2char));
-  if (!ret_w2char_val) return nullptr;
-  ret_val = ret_w2char_val;
-
-  size_t i;
-  for (i = 0; i < length(); i++) {
-    ret_w2char_val[i] = w2char((*this)[i]);
-  }
-  ret_w2char_val[i] = 0;
-  return ret_w2char_val;
-}
-
-const char* String::getChars(int encoding) const
+size_t String::getBytes(byte** bytes, int encoding) const
 {
   if (encoding == -1) encoding = Encodings::getDefaultEncodingIndex();
   size_t len = length();
   if (encoding == Encodings::ENC_UTF16 || encoding == Encodings::ENC_UTF16BE) len = len * 2;
   if (encoding == Encodings::ENC_UTF32 || encoding == Encodings::ENC_UTF32BE) len = len * 4;
-  char *ret_char_val = (char *)realloc(ret_val, len + 1);
-  if (!ret_char_val) { return "[NO MEMORY]"; }
-  ret_val = ret_char_val;
+  *bytes = new byte[len + 1];
   byte buf[8];
   size_t cpos = 0;
   for (size_t i = 0; i < length(); i++) {
@@ -135,16 +136,32 @@ const char* String::getChars(int encoding) const
     if (cpos + retLen > len) {
       if (i == 0) len = 8;
       else len = (len * length()) / i + 8;
-      ret_char_val = (char *)realloc(ret_char_val, len + 1);
-      if (!ret_char_val) { return "[NO MEMORY]"; }
-      ret_val = ret_char_val;
+      byte* copy_buf = new byte[len + 1];
+      for (size_t cp = 0; cp < cpos; cp++) {
+        copy_buf[cp] = (*bytes)[cp];
+      }
+      delete[] *bytes;
+      *bytes = copy_buf;
     }
     for (size_t cpidx = 0; cpidx < retLen; cpidx++)
-      ret_char_val[cpos++] = buf[cpidx];
+      (*bytes)[cpos++] = buf[cpidx];
   }
-  ret_char_val[cpos] = 0;
+  (*bytes)[cpos] = 0;
+  return cpos;
+}
 
+const char* String::getChars(int encoding) const
+{
+  delete[] ret_char_val;
+  getBytes((byte**)&ret_char_val, encoding);
   return ret_char_val;
+}
+
+const wchar* String::getWChars() const
+{
+  delete[] ret_wchar_val;
+  getWChars((wchar**)&ret_wchar_val);
+  return ret_wchar_val;
 }
 
 size_t String::indexOf(wchar wc, size_t pos) const

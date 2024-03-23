@@ -55,7 +55,7 @@ int Encodings::getEncodingIndex(const char* enc)
 {
   if (!enc) return -1;
   for (int i = 0; i < encAliasesNum; i++)
-    if (!strcasecmp(arr_idxEncodings[i].name, enc)) {
+    if (!stricmp(arr_idxEncodings[i].name, enc)) {
       return arr_idxEncodings[i].pos;
     }
   return -1;
@@ -131,7 +131,7 @@ size_t Encodings::toBytes(int encoding, wchar wc, byte* dest)
     dest[0] = (wc >> 8) & 0xFF;
     return 2;
   }
-#if (__WCHAR_MAX__ > 0xffff) // impossible for 16-bit wchar
+#if 0 // impossible for 16-bit wchar
   if (encoding == ENC_UTF32) {
     dest[0] = wc & 0xFF;
     dest[1] = (wc >> 8) & 0xFF;

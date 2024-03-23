@@ -9,22 +9,19 @@
 #include <windows.h>
 #endif
 
+#include <colorer/parsers/CatalogParser.h>
+#include <colorer/parsers/HRCParserImpl.h>
+#include <colorer/parsers/ParserFactory.h>
+#include <colorer/parsers/ParserFactoryException.h>
+#include <colorer/parsers/TextParserImpl.h>
+#include <colorer/viewer/TextLinesStore.h>
+#include <colorer/xml/XStr.h>
+#include <colorer/xml/XmlInputSource.h>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinFileInputStream.hpp>
-
-#include <colorer/parsers/ParserFactory.h>
-#include <colorer/parsers/CatalogParser.h>
-#include <colorer/viewer/TextLinesStore.h>
-#include <colorer/parsers/HRCParserImpl.h>
-#include <colorer/parsers/TextParserImpl.h>
-#include <colorer/parsers/ParserFactoryException.h>
-
-#include <colorer/xml/XmlInputSource.h>
-#include <colorer/xml/XStr.h>
 #include "ParserFactory.h"
 
-
-ParserFactory::ParserFactory(): hrc_parser(new HRCParserImpl())
+ParserFactory::ParserFactory() : hrc_parser(new HRCParserImpl())
 {
   RegExpStack = nullptr;
   RegExpStack_Size = 0;
@@ -48,15 +45,15 @@ SString ParserFactory::searchCatalog() const
     try {
       logger->debug("test path '{0}'", path.getChars());
 
-      uXmlInputSource catalog = XmlInputSource::newInstance(path.getW2Chars(), static_cast<XMLCh*>(nullptr));
+      uXmlInputSource catalog = XmlInputSource::newInstance(path.getWChars(), static_cast<XMLCh*>(nullptr));
 
       std::unique_ptr<xercesc::BinInputStream> stream(catalog->makeStream());
       right_path = SString(catalog->getInputSource()->getSystemId());
 
       logger->debug("found valid path '{0}' = '{1}'", path.getChars(), right_path.getChars());
       break;
-    } catch (const Exception &e) {
-      logger->error( e.what());
+    } catch (const Exception& e) {
+      logger->error(e.what());
     }
   }
   logger->debug("end search catalog.xml");
@@ -68,7 +65,7 @@ SString ParserFactory::searchCatalog() const
 }
 
 #ifdef _WIN32
-void ParserFactory::getPossibleCatalogPaths(std::vector<SString> &paths) const
+void ParserFactory::getPossibleCatalogPaths(std::vector<SString>& paths) const
 {
   // image_path/  image_path/..
   HMODULE hmod = GetModuleHandle(nullptr);
@@ -106,7 +103,7 @@ void ParserFactory::getPossibleCatalogPaths(std::vector<SString> &paths) const
           paths.emplace_back(SString(tls.getLine(0)));
         }
       }
-    } catch (InputSourceException &) { //-V565
+    } catch (InputSourceException&) {  //-V565
       // it`s ok. the error is not interesting
     }
   }
@@ -114,7 +111,7 @@ void ParserFactory::getPossibleCatalogPaths(std::vector<SString> &paths) const
 #endif
 
 #ifdef __unix__
-void ParserFactory::getPossibleCatalogPaths(std::vector<SString> &paths) const
+void ParserFactory::getPossibleCatalogPaths(std::vector<SString>& paths) const
 {
   // %COLORER5CATALOG%
   char* colorer5_catalog = getenv("COLORER5CATALOG");
@@ -131,7 +128,7 @@ void ParserFactory::getPossibleCatalogPaths(std::vector<SString> &paths) const
       if (tls.getLineCount() > 0) {
         paths.emplace_back(SString(tls.getLine(0)));
       }
-    } catch (InputSourceException &) { //-V565
+    } catch (InputSourceException&) {  //-V565
       // it`s ok. the error is not interesting
     }
   }
@@ -153,23 +150,26 @@ void ParserFactory::loadCatalog(const String* catalog_path)
     base_catalog_path = SString(catalog_path);
   }
 
-
   parseCatalog(base_catalog_path);
   logger->debug("begin load hrc files");
-  for (const auto& location : hrc_locations) {
+  for (auto location : hrc_locations) {
     try {
       logger->debug("try load '{0}'", location.getChars());
-      auto clear_path = XmlInputSource::getClearPath(&base_catalog_path, &location);
-      if (XmlInputSource::isDirectory(clear_path.get())) {
-        std::vector<SString> paths;
-        XmlInputSource::getFileFromDir(clear_path.get(), paths);
-        for (const auto& files : paths) {
-          loadHrc(&files, &base_catalog_path);
+      if (XmlInputSource::isUriFile(&base_catalog_path, &location)) {
+        auto clear_path = XmlInputSource::getClearPath(&base_catalog_path, &location);
+        if (XmlInputSource::isDirectory(clear_path.get())) {
+          std::vector<SString> paths;
+          XmlInputSource::getFileFromDir(clear_path.get(), paths);
+          for (auto files : paths) {
+            loadHrc(&files, &base_catalog_path);
+          }
+        } else {
+          loadHrc(clear_path.get(), &base_catalog_path);
         }
       } else {
-        loadHrc(clear_path.get(), &base_catalog_path);
+        loadHrc(&location, &base_catalog_path);
       }
-    } catch (const Exception &e) {
+    } catch (const Exception& e) {
       logger->error("{0}", e.what());
     }
   }
@@ -179,16 +179,16 @@ void ParserFactory::loadCatalog(const String* catalog_path)
 
 void ParserFactory::loadHrc(const String* hrc_path, const String* base_path) const
 {
-  uXmlInputSource dfis = XmlInputSource::newInstance(hrc_path->getW2Chars(), base_path->getW2Chars());
+  uXmlInputSource dfis = XmlInputSource::newInstance(hrc_path->getWChars(), base_path->getWChars());
   try {
     hrc_parser->loadSource(dfis.get());
-  } catch (Exception &e) {
+  } catch (Exception& e) {
     logger->error("Can't load hrc: {0}", XStr(dfis->getInputSource()->getSystemId()).get_char());
     logger->error("{0}", e.what());
   }
 }
 
-void ParserFactory::parseCatalog(const SString &catalog_path)
+void ParserFactory::parseCatalog(const SString& catalog_path)
 {
   hrc_locations.clear();
   hrd_nodes.clear();
@@ -212,7 +212,7 @@ const char* ParserFactory::getVersion()
   return "Colorer-take5 Library be5 28 May 2006";
 }
 
-size_t ParserFactory::countHRD(const String &classID)
+size_t ParserFactory::countHRD(const String& classID)
 {
   auto hash = hrd_nodes.find(classID);
   if (hash == hrd_nodes.end()) {
@@ -225,30 +225,30 @@ std::vector<SString> ParserFactory::enumHRDClasses()
 {
   std::vector<SString> result;
   result.reserve(hrd_nodes.size());
-  for (auto & hrd_node : hrd_nodes) {
+  for (auto& hrd_node : hrd_nodes) {
     result.push_back(hrd_node.first);
   }
   return result;
 }
 
-std::vector<const HRDNode*> ParserFactory::enumHRDInstances(const String &classID)
+std::vector<const HRDNode*> ParserFactory::enumHRDInstances(const String& classID)
 {
   auto hash = hrd_nodes.find(classID);
   std::vector<const HRDNode*> result;
   result.reserve(hash->second->size());
-  for (auto & p : *hash->second) {
+  for (auto& p : *hash->second) {
     result.push_back(p.get());
   }
   return result;
 }
 
-const HRDNode* ParserFactory::getHRDNode(const String &classID, const String &nameID)
+const HRDNode* ParserFactory::getHRDNode(const String& classID, const String& nameID)
 {
   auto hash = hrd_nodes.find(classID);
   if (hash == hrd_nodes.end()) {
     throw ParserFactoryException(SString("can't find HRDClass '") + classID + "'");
   }
-  for (auto & p : *hash->second) {
+  for (auto& p : *hash->second) {
     if (nameID.compareTo(p.get()->hrd_name) == 0) {
       return p.get();
     }
@@ -294,13 +294,13 @@ StyledHRDMapper* ParserFactory::createStyledMapper(const String* classID, const 
   auto hrd_node = getHRDNode(*class_id, *name_id);
 
   auto* mapper = new StyledHRDMapper();
-  for (const auto & idx : hrd_node->hrd_location)
+  for (const auto& idx : hrd_node->hrd_location)
     if (idx.length() != 0) {
       uXmlInputSource dfis = nullptr;
       try {
-        dfis = XmlInputSource::newInstance(idx.getW2Chars(), base_catalog_path.getW2Chars());
+        dfis = XmlInputSource::newInstance(idx.getWChars(), base_catalog_path.getWChars());
         mapper->loadRegionMappings(dfis.get());
-      } catch (Exception &e) {
+      } catch (Exception& e) {
         logger->error("Can't load hrd:");
         logger->error("{0}", e.what());
         throw ParserFactoryException(CString("Error load hrd"));
@@ -325,13 +325,13 @@ TextHRDMapper* ParserFactory::createTextMapper(const String* nameID)
   auto hrd_node = getHRDNode(d_text, *name_id);
 
   auto* mapper = new TextHRDMapper();
-  for (const auto & idx : hrd_node->hrd_location)
+  for (const auto& idx : hrd_node->hrd_location)
     if (idx.length() != 0) {
       uXmlInputSource dfis = nullptr;
       try {
-        dfis = XmlInputSource::newInstance(idx.getW2Chars(), base_catalog_path.getW2Chars());
+        dfis = XmlInputSource::newInstance(idx.getWChars(), base_catalog_path.getWChars());
         mapper->loadRegionMappings(dfis.get());
-      } catch (Exception &e) {
+      } catch (Exception& e) {
         logger->error("Can't load hrd: ");
         logger->error("{0}", e.what());
       }
@@ -342,11 +342,7 @@ TextHRDMapper* ParserFactory::createTextMapper(const String* nameID)
 void ParserFactory::addHrd(std::unique_ptr<HRDNode> hrd)
 {
   if (hrd_nodes.find(hrd->hrd_class) == hrd_nodes.end()) {
-    hrd_nodes.emplace(hrd->hrd_class,
-		std::unique_ptr<std::vector<std::unique_ptr<HRDNode>>>(new std::vector<std::unique_ptr<HRDNode>>));
+    hrd_nodes.emplace(hrd->hrd_class, std::make_unique<std::vector<std::unique_ptr<HRDNode>>>());
   }
   hrd_nodes.at(hrd->hrd_class)->emplace_back(std::move(hrd));
 }
-
-
-

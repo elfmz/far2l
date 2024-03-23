@@ -27,7 +27,7 @@ public:
   */
   DString(const SString &cstring, size_t s = 0, size_t l = npos);
 
-  ~DString() {};
+  ~DString() {}
 
   DString(DString const &) = delete;
   DString &operator=(DString const &) = delete;

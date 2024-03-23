@@ -50,7 +50,7 @@ CString::CString(const byte* stream, size_t size, int def_encoding)
     if (stream[0] == 0x3C && stream[1] == 0x3F) {
       size_t p;
       size_t cps = 0, cpe = 0;
-      for (p = 2; p < 100 && stream[p] != 0x3F && stream[p + 1] != 0x3C; p++) {
+      for (p = 2; stream[p] != 0x3F && stream[p + 1] != 0x3C && p < 100; p++) {
         if (cps && stream[p] == stream[cps - 1]) {
           cpe = p;
           break;
@@ -92,7 +92,7 @@ CString::CString(const byte* stream, size_t size, int def_encoding)
   }
 
   if (type == ST_UTF16 || type == ST_UTF16_BE) {
-    w2str = (w2char*)stream;
+    wstr = (wchar*)stream;
     len = size / 2;
   } else if (type == ST_UTF32 || type == ST_UTF32_BE) {
     w4str = (w4char*)stream;
@@ -135,15 +135,15 @@ CString::CString(const char* string, size_t s, size_t l, int encoding)
   if (encodingIdx == -1) encodingIdx = Encodings::getDefaultEncodingIndex();
 }
 
-CString::CString(const w2char* string, size_t s, size_t l)
+CString::CString(const wchar* string, size_t s, size_t l)
 {
   type = ST_UTF16;
-  w2str = string;
+  wstr = string;
   start = s;
   len = l;
   encodingIdx = -1;
   if (len == npos)
-    for (len = 0; w2str[len + s]; len++);
+    for (len = 0; wstr[len + s]; len++);
 }
 
 CString::CString(const w4char* string, size_t s, size_t l)
@@ -155,25 +155,6 @@ CString::CString(const w4char* string, size_t s, size_t l)
   encodingIdx = -1;
   if (len == npos)
     for (len = 0; w4str[len + s]; len++);
-}
-
-CString::CString(const wchar* string, size_t s, size_t l)
-{
-  start = s;
-  len = l;
-  encodingIdx = -1;
-
-#if (__WCHAR_MAX__ > 0xffff)
-  type = ST_UTF32;
-  w4str = (const w4char*)string;
-  if (len == npos)
-    for (len = 0; w4str[len + s]; len++);
-#else
-  type = ST_UTF16;
-  w2str = (const w2char*)string;
-  if (len == npos)
-    for (len = 0; w2str[len + s]; len++);
-#endif
 }
 
 CString::CString(const String* cstring, size_t s, size_t l)
@@ -221,9 +202,9 @@ wchar CString::operator[](size_t i) const
       case ST_CHAR:
         return Encodings::toWChar(encodingIdx, str[start + i]);
       case ST_UTF16:
-        return w2str[start + i];
+        return wstr[start + i];
       case ST_UTF16_BE:
-        return (w2str[start + i] >> 8) | ((w2str[start + i] & 0xFF) << 8);
+        return (wstr[start + i] >> 8) | ((wstr[start + i] & 0xFF) << 8);
       case ST_CSTRING:
         return (*cstr)[start + i];
       case ST_UTF8:

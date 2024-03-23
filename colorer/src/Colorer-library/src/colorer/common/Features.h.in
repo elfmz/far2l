@@ -1,0 +1,20 @@
+#ifndef COLORER_FEATURES_H
+#define COLORER_FEATURES_H
+
+#ifdef COLORER_ENABLE_TRACE
+#define CTRACE(info) info
+#else
+#define CTRACE(info)
+#endif
+
+/**
+  If defined, JAR InputSource is implemented.
+*/
+#cmakedefine COLORER_FEATURE_JARINPUTSOURCE
+
+/**
+  If defined, dummy logger is used.
+*/
+#cmakedefine COLORER_FEATURE_DUMMYLOGGER
+
+#endif // COLORER_FEATURES_H

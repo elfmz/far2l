@@ -34,10 +34,9 @@ public:
    * @param str source string, can't be null.
    */
   SString(const char* string, size_t s = 0, size_t l = npos);
-  SString(const w2char* string, size_t s = 0, size_t l = npos);
-  SString(const w4char* string, size_t s = 0, size_t l = npos);
+  SString(const wchar* string, size_t s = 0, size_t l = npos);
   SString(char* str, int enc = -1);
-  SString(const wchar_t* str);
+  SString(wchar* str);
 
   /**
    * String constructor from integer number

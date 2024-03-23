@@ -4,7 +4,6 @@
 #include <colorer/handlers/RegionDefine.h>
 #include <colorer/handlers/StyledRegion.h>
 #include <colorer/handlers/TextRegion.h>
-#include <colorer/Region.h>
 #include <colorer/Scheme.h>
 
 /** Defines region position properties.

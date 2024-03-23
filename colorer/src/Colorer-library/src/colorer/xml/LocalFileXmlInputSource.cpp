@@ -6,7 +6,7 @@
 
 LocalFileXmlInputSource::LocalFileXmlInputSource(const XMLCh* path, const XMLCh* base)
 {
-  input_source.reset( new xercesc::LocalFileInputSource(base, path));
+  input_source = std::make_unique<xercesc::LocalFileInputSource>(base, path);
   if (xercesc::XMLString::findAny(path, kPercent) != nullptr) {
     XMLCh* e_path = ExpandEnvironment(path);
     input_source->setSystemId(e_path);
@@ -29,7 +29,7 @@ xercesc::BinInputStream* LocalFileXmlInputSource::makeStream() const
 
 uXmlInputSource LocalFileXmlInputSource::createRelative(const XMLCh* relPath) const
 {
-  return std::unique_ptr<LocalFileXmlInputSource>(new LocalFileXmlInputSource(relPath, input_source->getSystemId()));
+  return std::make_unique<LocalFileXmlInputSource>(relPath, input_source->getSystemId());
 }
 
 xercesc::InputSource* LocalFileXmlInputSource::getInputSource()

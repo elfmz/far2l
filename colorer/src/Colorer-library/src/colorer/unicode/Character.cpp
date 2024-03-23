@@ -8,7 +8,7 @@ wchar Character::toLowerCase(wchar c)
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Ll) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c + 1;
-  return (wchar)(unsigned short)(c - wchar(c1 >> 16));
+  return c - wchar(c1 >> 16);
 }
 
 wchar Character::toUpperCase(wchar c)
@@ -16,7 +16,7 @@ wchar Character::toUpperCase(wchar c)
   unsigned long c1 = CHAR_PROP(c);
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lu) return c;
   if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Lt) return c - 1;
-  return (wchar)(unsigned short)(c - wchar(c1 >> 16));
+  return c - wchar(c1 >> 16);
 }
 
 wchar Character::toTitleCase(wchar c)
@@ -28,7 +28,7 @@ wchar Character::toTitleCase(wchar c)
     return c;
   } else // has no titlecase form
     if (CHAR_CATEGORY(c1) == CHAR_CATEGORY_Ll)
-      return (wchar)(unsigned short)(c - wchar(c1 >> 16));
+      return c - wchar(c1 >> 16);
   return c;
 }
 

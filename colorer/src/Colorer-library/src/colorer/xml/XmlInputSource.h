@@ -54,6 +54,8 @@ public:
   static UString getClearPath(const String* basePath, const String* relPath);
   static bool isDirectory(const String* path);
   static void getFileFromDir(const String* relPath, std::vector<SString>& files);
+
+  static bool isUriFile(const String* path, const String* base);
 protected:
   XmlInputSource() {}
 

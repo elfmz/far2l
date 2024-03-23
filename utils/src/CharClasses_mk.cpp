@@ -36,7 +36,7 @@ template <class FN>
 	if (checkLength) {
 		printf("\t\t\treturn (wcwidth(c) == 0);\n");
 	} else {
-		printf("\t\t\treturn true;\n");
+		printf("\t\t\treturn (wcwidth(c) == 2);\n");
 	}
 	printf("\t\tdefault: return false;\n");
 	printf("\t}\n");

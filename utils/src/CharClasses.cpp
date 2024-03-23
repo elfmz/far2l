@@ -126,7 +126,7 @@ bool IsCharFullWidth(wchar_t c)
 		case 0x1faf0 ... 0x1faf6:
 		case 0x20000 ... 0x2fffd:
 		case 0x30000 ... 0x3fffd:
-			return (wcwidth(c) == 0);
+			return (wcwidth(c) == 2);
 		default: return false;
 	}
 }

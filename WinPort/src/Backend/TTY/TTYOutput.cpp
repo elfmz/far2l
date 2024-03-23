@@ -296,6 +296,12 @@ void TTYOutput::FinalizeSameChars()
 
 void TTYOutput::WriteWChar(WCHAR wch)
 {
+	for (int i = 0; i < 32; i++) {
+		if ((i != 27) && (wch == i)) {
+			wch = L' ';
+		}
+	}
+
 	if (_same_chars.count == 0) {
 		_same_chars.wch = wch;
 
@@ -395,6 +401,15 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
+
+	// workaround for https://github.com/elfmz/far2l/issues/1889
+	if (!_far2l_tty) {
+		Format(ESC "[%d;%dH", y, x);
+		_cursor.x = x;
+		_cursor.y = y;
+		return;
+	}
+
 	if (x == 1) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
@@ -412,6 +427,12 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
+	// workaround for https://github.com/elfmz/far2l/issues/1889
+	if (!_far2l_tty) {
+		MoveCursorStrict(y, x);
+		return;
+	}
+
 	if (_cursor.y != y && _cursor.x != x) {
 		MoveCursorStrict(y, x);
 

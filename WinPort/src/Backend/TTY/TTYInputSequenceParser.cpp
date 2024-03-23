@@ -553,7 +553,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 	switch (action) {
 		case 0: // char ' ', left press
 			if (now - _mouse.left_ts <= 800) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.left_ts = 0;
 			} else {
 				_mouse.left_ts = now;
@@ -565,7 +565,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 		case 1: //char '!', middle press
 			if (now - _mouse.middle_ts <= 800) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.middle_ts = 0;
 			} else {
 				_mouse.middle_ts = now;
@@ -577,7 +577,7 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 		case 2: // char '"', right press
 			if (now - _mouse.right_ts <= 800) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.right_ts = 0;
 			} else {
 				_mouse.right_ts = now;
@@ -593,13 +593,13 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 		//wheel move
 		case 64: // char '`', wheel up
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-			ir.Event.MouseEvent.dwButtonState|= (0x0001 <<16);
+			ir.Event.MouseEvent.dwEventFlags |= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState |= (0x0001 <<16);
 			break;
 
 		case 65: // char 'a', wheel down
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-			ir.Event.MouseEvent.dwButtonState|= (0xffff << 16);
+			ir.Event.MouseEvent.dwEventFlags |= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState |= (0xffff << 16);
 			break;
 
 		//drag
@@ -626,14 +626,17 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 			return;
 	}
 
-	if (_mouse.left)
-			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_1ST_BUTTON_PRESSED;
+	if (_mouse.left) {
+		ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+	}
 
-	if (_mouse.middle)
-			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_2ND_BUTTON_PRESSED;
+	if (_mouse.middle) {
+		ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+	}
 
-	if (_mouse.right)
-			ir.Event.MouseEvent.dwButtonState|= RIGHTMOST_BUTTON_PRESSED;
+	if (_mouse.right) {
+		ir.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+	}
 
 	_ir_pending.emplace_back(ir);
 }

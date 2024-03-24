@@ -45,6 +45,11 @@ void TTYInput::OnBufUpdated(bool idle)
 {
 	while (!_buf.empty()) {
 		size_t decoded = _parser.Parse(&_buf[0], _buf.size(), idle);
+
+		//work-around for double encoded mouse events in win32-input mode
+		//here we parse mouse sequence from accumulated buffer
+		_parser.ParseWinMouseBuffer(idle);
+
 		switch (decoded) {
 			case TTY_PARSED_PLAINCHARS:
 				decoded = BufTryDecodeUTF8();

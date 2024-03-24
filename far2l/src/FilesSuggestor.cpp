@@ -175,14 +175,20 @@ void *FilesSuggestor::ThreadProc()
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu)
+void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu, int escaping)
 {
 	if (!filter || !*filter) {
 		return;
 	}
 
 	std::string filter_mb;
-	Wide2MB(filter, filter_mb);
+	if (!escaping) {
+		FARString filter_escaping = filter;
+		EscapeSpace(filter_escaping);
+		Wide2MB(filter_escaping, filter_mb);
+	}
+	else
+		Wide2MB(filter, filter_mb);
 	std::string orig_filter_mb = filter_mb;
 
 	Environment::Arguments args;
@@ -254,6 +260,9 @@ void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu)
 		} else if (last_arg.quot == Environment::QUOT_SINGLE
 				|| last_arg.quot == Environment::QUOT_DOLLAR_SINGLE) {
 			str_tmp+= L'\'';
+		}
+		if (!escaping) {
+			UnEscapeSpace(str_tmp);
 		}
 		menu.AddItem(str_tmp);
 	}

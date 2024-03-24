@@ -6,6 +6,111 @@
 #include "Backend.h"
 
 
+size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char action, char col, char raw)
+{
+	/*
+	`\x1B[M` has been recognized.
+	mouse report: `\x1b[Mayx` where:
+		* `a` - button number plus 32, can`t be greater than 223. Codes higher than 113 not used
+		* `y` - column number (one-based) plus 32.
+		* `x` - row number (one-based) plus 32.
+	X button Encoding:
+		|7|6|5|4|3|2|1|0|
+		| |W|H|M|C|S|B|B|
+		bits 0 and 1 are used for button:
+			* 00 - MB1 pressed (left)
+			* 01 - MB2 pressed (middle)
+			* 10 - MB3 pressed (right)
+			* 11 - released (none)
+		Next three bits indicate modifier keys:
+			* 0x04 - shift
+			* 0x08 - alt (meta)
+			* 0x10 - ctrl
+		32 (x20) is added for drag events:
+			For example, motion into cell x,y with button 1 down is reported as `\x1b[M@yx`.
+				( @  = 32 + 0 (button 1) + 32 (motion indicator) ).
+			Similarly, motion with button 3 down is reported as `\x1b[MByx`.
+			    ( B  = 32 + 2 (button 3) + 32 (motion indicator) ).
+		64 (x40) is added for wheel events.
+		    so wheel up is 64, and wheel down is 65.
+	valid lenght is 5
+	*/
+	if (l < 5) {
+		return TTY_PARSED_WANTMORE;
+	}
+
+	int action = (int)s[2] - 32;
+	//make coordinates zero-based
+	int colunm = (int)s[3] - 33;
+	int row    = (int)s[4] - 33;
+
+	if (action > 223) {
+		return TTY_PARSED_BADSEQUENCE;
+	}
+
+	AddPendingMouseEvent(action, colunm, row);
+
+	return 5;
+}
+
+size_t TTYInputSequenceParser::ParseSGRMouse(const char *s, size_t l)
+{
+	/*
+	`\x1B[<` has been recognized.
+	https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates
+	Sequence looks like "\x1B[<a;y;xM" or "\x1B[<a;y;xm", where:
+		* `a` - is a sequence of digits representing the button number in decimal.
+		* `y` - is a sequence of digits representing the column number (one-based) in decimal.
+		* `x` - is a sequence of digits representing the row number (one-based) in decimal.
+	button encoding same as the X10 variant does not add 32
+	The sequence ends with `M` on button press and on `m` on button release.
+	*/
+
+	int params[3]  = {0};
+	int params_cnt = 0;
+	int action, colunm, row;
+	bool pressed = false;
+
+	size_t n;
+	for (size_t i = n = 2;; ++i) {
+		if (i == l) {
+			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
+		}
+		if (s[i] == 'M' || s[i] == 'm' || s[i] == ';') {
+			if (params_cnt == ARRAYSIZE(params)) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
+			if (i > n) {
+				params[params_cnt] = atoi(&s[n]);
+				++params_cnt;
+			}
+			n = i + 1;
+			if (s[i] == 'M' || s[i] == 'm') {
+				pressed = (s[i] == 'M');
+				break;
+			}
+
+		} else if (s[i] < '0' || s[i] > '9') {
+			return TTY_PARSED_BADSEQUENCE;
+		}
+	}
+
+	//here we need to correct mouse move code science it conflict with button release
+	if ((params[0] & ~(_shift_ind | _alt_ind | _ctrl_ind)) != 35) {
+		action = pressed ? params[0] : 3;
+	} else {
+		action = params[0];
+	}
+
+	//make coordinates zero-based
+	colunm = --params[1];
+	row    = --params[2];
+
+	AddPendingMouseEvent(action, colunm, row);
+
+	return n;
+}
+
 size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size_t l)
 {
 	// kovidgoyal's kitty keyboard protocol (progressive enhancement flags 15) support
@@ -164,7 +269,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 57407 : case 57419 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD8; break;
 		case 57408 : case 57421 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD9; break;
 		case 57409 : case 57426 : ir.Event.KeyEvent.wVirtualKeyCode = VK_DECIMAL; break;
-		
+
 		case 57410 : ir.Event.KeyEvent.wVirtualKeyCode = VK_DIVIDE; break;
 		case 57411 : ir.Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY; break;
 		case 57412 : ir.Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
@@ -229,7 +334,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 
 		case 57360 : ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMLOCK; break;
 		case 57358 : ir.Event.KeyEvent.wVirtualKeyCode = VK_CAPITAL; break;
-		
+
 	}
 	switch (s[i]) {
 		case 'A': ir.Event.KeyEvent.wVirtualKeyCode = VK_UP;
@@ -241,7 +346,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
-		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME; 
+		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
@@ -252,7 +357,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	if (ir.Event.KeyEvent.wVirtualScanCode == 0) {
-		ir.Event.KeyEvent.wVirtualScanCode = 
+		ir.Event.KeyEvent.wVirtualScanCode =
 			WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	}
 
@@ -314,8 +419,8 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 			}
 			if (i > n) {
 				args[args_cnt] = atoi(&s[n]);
+				++args_cnt;
 			}
-			++args_cnt;
 			n = i + 1;
 			if (s[i] == '_') {
 				break;
@@ -326,21 +431,69 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
-	INPUT_RECORD ir = {};
-	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.wVirtualKeyCode = args[0];
-	ir.Event.KeyEvent.wVirtualScanCode = args[1];
-	ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
-	ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
-	ir.Event.KeyEvent.dwControlKeyState = args[4];
-	ir.Event.KeyEvent.wRepeatCount = args[5];
 
-	_ir_pending.emplace_back(ir);
+
+	//do not create invalid input event
+	//wVirtualKeyCode, wVirtualScanCode 0 with bKeyDown 1 doesn't make sense
+	if ( !((args[0] == 0) && (args[1] == 0) && (args[3] == 1) && (args[4] == 0)) )
+	{
+		INPUT_RECORD ir = {};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wVirtualKeyCode = args[0];
+		ir.Event.KeyEvent.wVirtualScanCode = args[1];
+		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+		ir.Event.KeyEvent.dwControlKeyState = args[4];
+		ir.Event.KeyEvent.wRepeatCount = args[5];
+		_ir_pending.emplace_back(ir);
+	}
+
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
 		_using_extension = 'w';
 		_handler->OnUsingExtension(_using_extension);
 	}
+	return n;
+}
+
+//work-around for double encoded mouse events in win32-input mode.
+//maybe it will be better not copy/paste TryParseAsWinTermEscapeSequence here
+//but passing yet another flag to it is less readable.
+//so keep it this way until microsoft fix their stuff in the win32-input protocol
+size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, size_t l)
+{
+	int args[6] = {0};
+	int args_cnt = 0;
+
+	size_t n;
+	for (size_t i = n = 1;; ++i) {
+		if (i == l) {
+			//fprintf(stderr, "\nwant mooore characters... \n");
+			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
+		}
+		if (s[i] == '_' || s[i] == ';') {
+ 			if (args_cnt == ARRAYSIZE(args)) {
+				return TTY_PARSED_BADSEQUENCE;
+			}
+			if (i > n) {
+				args[args_cnt] = atoi(&s[n]);
+				++args_cnt;
+			}
+			n = i + 1;
+			if (s[i] == '_') {
+				break;
+			}
+
+		} else if (s[i] < '0' || s[i] > '9') {
+			return TTY_PARSED_BADSEQUENCE;
+		}
+	}
+
+	if(args[2] > 0 && args[3] == 1){ // only KeyDown and valid char should pass
+		//fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
+		_win_mouse_buffer.push_back((unsigned char)args[2]);
+	}
+
 	return n;
 }
 
@@ -401,7 +554,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 
 	// Flags changed event: esc ] 1337 ; f ; flags ^G
 	if (s[6] == 'f') {
-		
+
 		bool go = false;
 		int vkc = 0, vsc = 0, kd = 0, cks = 0;
 
@@ -608,7 +761,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 		case 0x7D: vkc = VK_DOWN; break; // Down
 		case 0x7E: vkc = VK_UP; break; // Up
 	}
-	
+
 	if (!vkc && uni_char) { vkc = VK_UNASSIGNED; }
 
 	if (keycode == 0x3D) flags_win |= ENHANCED_KEY; // RightOption
@@ -636,7 +789,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			INPUT_RECORD ir = {};
 			ir.EventType = KEY_EVENT;
 			ir.Event.KeyEvent.wVirtualKeyCode = vkc;
-			ir.Event.KeyEvent.wVirtualScanCode = 
+			ir.Event.KeyEvent.wVirtualScanCode =
 				WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 			ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
 			ir.Event.KeyEvent.bKeyDown = TRUE;
@@ -650,7 +803,7 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wVirtualKeyCode = vkc;
-	ir.Event.KeyEvent.wVirtualScanCode = 
+	ir.Event.KeyEvent.wVirtualScanCode =
 		WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
 	ir.Event.KeyEvent.uChar.UnicodeChar = uni_char;
 	ir.Event.KeyEvent.bKeyDown = (s[6] == 'd' ? TRUE : FALSE);

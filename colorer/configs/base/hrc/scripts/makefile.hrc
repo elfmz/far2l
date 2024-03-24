@@ -542,8 +542,6 @@
 		<symb name='%'/>
 		<symb name='|'/>
 		<symb name='^'/>
-		<symb name=''/>
-		<symb name=''/>
 	</keywords>
 </scheme>
 

@@ -4,6 +4,8 @@ run-name: build for commit ${{ github.sha }}
 on:
   workflow_dispatch:
   push:
+    branches:
+      - staging
 
 jobs:
   build-portable:
@@ -51,7 +53,7 @@ jobs:
           STANDALONE: true
         shell: alpine.sh {0}
         run: |
-          export VERSION=$(cat packaging/version)-beta
+          export VERSION=$(cat packaging/version)_${{ github.repository_owner }}_${{ github.ref_name }}
           export PKG_NAME=far2l_${VERSION}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
@@ -96,7 +98,7 @@ jobs:
           APPIMAGE: true
         shell: bash
         run: |
-          export VERSION=$(cat packaging/version)-beta
+          export VERSION=$(cat packaging/version)_${{ github.repository_owner }}_${{ github.ref_name }}
           export PKG_NAME=far2l_${VERSION}_$(uname -m)
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 

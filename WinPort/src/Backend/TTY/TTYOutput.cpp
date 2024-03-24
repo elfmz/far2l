@@ -395,6 +395,15 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
+
+	const char *tp = getenv("TERM_PROGRAM");
+	if (tp && strcasecmp(tp, "WezTerm") == 0) {
+		Format(ESC "[%d;%dH", y, x);
+		_cursor.x = x;
+		_cursor.y = y;
+		return;
+	}
+
 	if (x == 1) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
@@ -412,6 +421,13 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
+	// workaround for https://github.com/elfmz/far2l/issues/1889
+	const char *tp = getenv("TERM_PROGRAM");
+	if (tp && strcasecmp(tp, "WezTerm") == 0) {
+		MoveCursorStrict(y, x);
+		return;
+	}
+
 	if (_cursor.y != y && _cursor.x != x) {
 		MoveCursorStrict(y, x);
 

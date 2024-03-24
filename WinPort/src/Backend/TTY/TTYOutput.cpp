@@ -159,6 +159,10 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 {
 	const char *env = getenv("TERM");
 	_screen_tty = (env && strncmp(env, "screen", 6) == 0); // TERM=screen.xterm-256color
+
+	env = getenv("TERM_PROGRAM");
+	_wezterm = (env && strcasecmp(env, "WezTerm") == 0);
+
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;
 	if (ioctl(out, KDGETLED, &leds) == 0) {
@@ -395,16 +399,7 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
-
-	const char *tp = getenv("TERM_PROGRAM");
-	if (tp && strcasecmp(tp, "WezTerm") == 0) {
-		Format(ESC "[%d;%dH", y, x);
-		_cursor.x = x;
-		_cursor.y = y;
-		return;
-	}
-
-	if (x == 1) {
+	if (x == 1 && !_wezterm) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
 		} else if (_far2l_tty) { // many other terminals support this too, but not all (see #1725)
@@ -422,13 +417,7 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
 	// workaround for https://github.com/elfmz/far2l/issues/1889
-	const char *tp = getenv("TERM_PROGRAM");
-	if (tp && strcasecmp(tp, "WezTerm") == 0) {
-		MoveCursorStrict(y, x);
-		return;
-	}
-
-	if (_cursor.y != y && _cursor.x != x) {
+	if ((_cursor.y != y && _cursor.x != x) || _wezterm) {
 		MoveCursorStrict(y, x);
 
 	} else if (x != _cursor.x) {
@@ -494,8 +483,11 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 			WriteWChar(L' ');
 
 		} else if (comp_seq) {
-			for (; *comp_seq; ++comp_seq) {
+			if (*comp_seq) {
 				WriteWChar(*comp_seq);
+				while (*(++comp_seq)) {
+					WriteWChar(ShouldPrintWCharAsSpace(*comp_seq) ? L' ' : *comp_seq);
+				}
 			}
 
 		} else {

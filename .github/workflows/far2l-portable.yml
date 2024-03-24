@@ -53,8 +53,8 @@ jobs:
           STANDALONE: true
         shell: alpine.sh {0}
         run: |
-          export VERSION=$(cat packaging/version)_${{ github.repository_owner }}_${{ github.ref_name }}
-          export PKG_NAME=far2l_${VERSION}_${ARCH}
+          export VERSION=$(cat packaging/version)
+          export PKG_NAME=far2l_${VERSION}_${{ github.repository_owner }}_${{ github.ref_name }}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact
@@ -98,8 +98,8 @@ jobs:
           APPIMAGE: true
         shell: bash
         run: |
-          export VERSION=$(cat packaging/version)_${{ github.repository_owner }}_${{ github.ref_name }}
-          export PKG_NAME=far2l_${VERSION}_$(uname -m)
+          export VERSION=$(cat packaging/version)
+          export PKG_NAME=far2l_${VERSION}_${{ github.repository_owner }}_${{ github.ref_name }}_$(uname -m)
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact

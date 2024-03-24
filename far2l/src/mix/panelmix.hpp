@@ -38,7 +38,7 @@ class Panel;
 void ShellUpdatePanels(Panel *SrcPanel, BOOL NeedSetUpADir = FALSE);
 bool CheckUpdateAnotherPanel(Panel *SrcPanel, const wchar_t *SelName);
 
-int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2);
+int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2, int escaping = 1); // by default escaping filenames
 
 const FARString FormatStr_Attribute(DWORD FileAttributes, DWORD UnixMode, int Width = -1);
 const FARString FormatStr_DateTime(const FILETIME *FileTime, int ColumnType, DWORD Flags, int Width);

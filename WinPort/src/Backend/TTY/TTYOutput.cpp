@@ -403,6 +403,7 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 // ESC[#;#H Moves cursor to line #, column #
 
 	// workaround for https://github.com/elfmz/far2l/issues/1889
+	// also affects https://github.com/elfmz/far2l/issues/2084
 	if (!_far2l_tty) {
 		Format(ESC "[%d;%dH", y, x);
 		_cursor.x = x;
@@ -428,6 +429,7 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
 	// workaround for https://github.com/elfmz/far2l/issues/1889
+	// also affects https://github.com/elfmz/far2l/issues/2084
 	if (!_far2l_tty) {
 		MoveCursorStrict(y, x);
 		return;

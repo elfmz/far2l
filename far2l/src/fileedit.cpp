@@ -2325,6 +2325,7 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 {
 	SudoClientRegion sdc_rgn;
 	DWORD FileAttributes = apiGetFileAttributes(Name);
+	AttrStr.Clear();
 	if (FileAttributes != INVALID_FILE_ATTRIBUTES) {
 		if (FileAttributes & FILE_ATTRIBUTE_READONLY)
 			AttrStr+= L'R';

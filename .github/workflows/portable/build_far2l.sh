@@ -34,15 +34,16 @@ fi
 if [[ "$APPIMAGE" == "true" ]]; then
   export DISABLE_COPYRIGHT_FILES_DEPLOYMENT=1
   export NO_STRIP=1
+  APPRUN_PATH=$REPO_DIR/.github/workflows/portable/AppRun
   # export APPIMAGE_EXTRACT_AND_RUN=1
   export ARCH=$(uname -m)
   ( cd $REPO_DIR && \
     AppDir/usr/bin/far2l --help >/dev/null && \
-    sed 's|@APP@|far2l|' -i AppRun && chmod +x AppRun && \
+    sed 's|@APP@|far2l|' -i $APPRUN_PATH && chmod +x $APPRUN_PATH && \
     wget --no-check-certificate https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-$ARCH.AppImage && \
     wget --no-check-certificate https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage && \
     chmod +x *.AppImage && \
-    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=AppRun && \
+    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=$APPRUN_PATH && \
     ./appimagetool-*.AppImage -v AppDir $PKG_NAME.AppImage )
   find $REPO_DIR -type f -name $PKG_NAME.AppImage -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_}.AppImage.tar --transform 's|.*/||' {}" \;
 fi

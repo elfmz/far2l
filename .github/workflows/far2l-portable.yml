@@ -6,7 +6,7 @@ on:
   push:
 
 jobs:
-  build-chroot:
+  build-portable:
     name: build ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -56,7 +56,7 @@ jobs:
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: far2l-${{ matrix.arch }}
           path: |
@@ -101,7 +101,7 @@ jobs:
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: far2l-AppImage-${{ matrix.os }}
           path: |
@@ -111,25 +111,29 @@ jobs:
   release:
     # if: ${{ false }} # disable for now
     name: Upload release assets
-    needs: [build-chroot, build-AppImage]
+    needs: [build-portable, build-AppImage]
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Get commit date
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "DATE=$(git log -1 --format=%ci | date -f - +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "DATE=$(gh api repos/$REPO/commits/$BRANCH --jq '.commit.committer.date' | date -f - +%Y%m%d%H%M)" >> $GITHUB_ENV
 
       - name: Upload release assets
         uses: andelf/nightly-release@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          prerelease: true
-          tag_name: ${{ github.ref_name }}
+          prerelease: false
+          tag_name: latest
           name: ${{ env.DATE }}
           body: |
             ${{ github.repository }}@${{ github.sha }}

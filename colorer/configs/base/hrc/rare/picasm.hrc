@@ -304,7 +304,6 @@
             <word name="portf"/>
             <word name="trisf"/>
             <word name="latf"/>
-
             <word name="option_reg"/>
             <word name="pcon"/>
          </keywords>
@@ -319,7 +318,6 @@
             <symb name="~"/>
             <symb name="("/>
             <symb name=")"/>
-            <symb name=""/>
             <symb name="&lt;"/>
             <symb name="&lt;&lt;"/>
             <symb name="&lt;="/>

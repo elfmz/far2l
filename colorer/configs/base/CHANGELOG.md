@@ -15,13 +15,14 @@
 - [csharp] recognise functions with nullable results
 
 ### Changed
-- Simplified catalog.xml. 
+- Simplified catalog.xml.
 - Use new xsd schema for catalog.xml.
 - Common.jar rename to common.zip
 - reformat proto.hrc and included files; changed namespace.
 - Tweak visual.hrd xml CData markup
 - remove obsolete from visual-rgb.hrd
 - [groovy] add .gradle as groovy
+- Use the new shell-posix schema for shell scripts by default
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -37,6 +38,11 @@
 - [csharp] support C# 11 raw strings
 - [cpp] add support for C++11 string literals
 - [asm] add new registers, blocks. New masks for filenames and firstline
+- [shell-posix] add a new schema for POSIX shell with block structures and error checking
+- [shell-bash] add a new schema for bash script based on shell-posix
+- [asm] add directives
+- [c] add unix standard functions, const and others
+- [cpp] add some c++11 types
 
 ## [1.2.0] - 2021-09-12
 

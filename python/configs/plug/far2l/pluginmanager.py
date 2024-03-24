@@ -144,17 +144,20 @@ class PluginManager:
         }
         name = id2name[OpenFrom]
         log.debug("pluginGetFrom({0} ({1}), {2})".format(OpenFrom, name, Item))
-        for plugin in self.plugins:
-            openFrom = plugin.Plugin.openFrom
-            log.debug(
-                "pluginGetFrom(openok={0}, no={1} : {2})".format(
-                    name in openFrom, Item, plugin.Plugin.name
+        if 0:
+            for plugin in self.plugins:
+                openFrom = plugin.Plugin.openFrom
+                log.debug(
+                    "pluginGetFrom(openok={0}, no={1} : {2})".format(
+                        name in openFrom, Item, plugin.Plugin.name
+                    )
                 )
-            )
-            if name in openFrom:
-                if not Item:
-                    return plugin
-                Item -= 1
+                if name in openFrom:
+                    if not Item:
+                        return plugin
+                    Item -= 1
+        elif Item < len(self.plugins):
+            return self.plugins[Item]
         return None
 
     def s2f(self, s):

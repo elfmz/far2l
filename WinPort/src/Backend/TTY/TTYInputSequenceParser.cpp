@@ -334,15 +334,23 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return 5;
 	}
 
-	if (l > 1 && s[0] == '[' && s[1] == 'M') { // mouse report: "\x1b[MAYX"
-		if (l < 5)
-			return 0;
+	size_t r = 0;
 
-		ParseMouse(s[2], s[3], s[4]);
-		return 5;
+	if (l > 1 && s[0] == '[' && s[1] == 'M') {
+		// X10 mouse report: "\x1b[MAYX"
+		r = ParseX10Mouse(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE) {
+			return r;
+		}
 	}
 
-	size_t r = 0;
+	if (l > 1 && s[0] == '[' && s[1] == '<') {
+		// SGR extended mouse report: "x1B[<a;b;cM" or "x1B[<a;b;cm"
+		r = ParseSGRMouse(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE) {
+			return r;
+		}
+	}
 
 	if (l > 5 && s[0] == ']' && s[1] == '1' && s[2] == '3' && s[3] == '3' && s[4] == '7' && s[5] == ';') {
 		r = TryParseAsITerm2EscapeSequence(s, l);
@@ -350,23 +358,27 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			return r;
 		}
 	}
-	
+
 	r = ParseNChars2Key(s, l);
-	if (r != 0)
+	if (r != 0) {
 		return r;
+	}
+
+	//win32-input-mode must be checked before kitty
+	if (l > 1 && s[0] == '[') {
+		r = TryParseAsWinTermEscapeSequence(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE) {
+			return r;
+		}
+	}
 
 	if (l > 1 && s[0] == '[') {
 		r = TryParseAsKittyEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
 		}
-	}	
-
-	if (l > 1 && s[0] == '[') {
-		r = TryParseAsWinTermEscapeSequence(s, l);
-		if (r != TTY_PARSED_BADSEQUENCE)
-			return r;
 	}
+
 
 	// be well-responsive on panic-escaping
 	for (size_t i = 0; (i + 1) < l; ++i) {
@@ -452,6 +464,26 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
+	//work-around for double encoded mouse events in win32-input mode
+	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
+	//following codes are part of some mouse input sequence and must be parsed in separate buffer
+	if ((l > 6 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';') || _win32_accumulate) {
+		size_t r = TryUnwrappWinMouseEscapeSequence(s, l);
+
+		//now we check if _win_mouse_buffer has enough characters for some mouse input sequence
+		if (_win_mouse_buffer.size() > 2 && _win_mouse_buffer[2] == '<') {
+			//seems like SGR extended mouse reporting,
+			//keep accumulate characters until terminator encountered
+			_win32_accumulate = (_win_mouse_buffer.back() == 'M' || _win_mouse_buffer.back() == 'm') ? false : true;
+		} else {
+			//seems like X10 mouse reporting,
+			//keep accumulate characters until we get 6 of them
+			_win32_accumulate = _win_mouse_buffer.size() > 5 ? false : true;
+		}
+
+		return r;
+	}
+
 	size_t r = ParseIntoPending(s, l);
 
 	if ( (r == TTY_PARSED_WANTMORE || r == TTY_PARSED_BADSEQUENCE) && idle_expired && *s == 0x1b) {
@@ -502,112 +534,111 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 }
 
-void TTYInputSequenceParser::ParseMouse(char action, char col, char raw)
+void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 {
 	INPUT_RECORD ir = {};
 	ir.EventType = MOUSE_EVENT;
-	ir.Event.MouseEvent.dwMousePosition.X = ((unsigned char)col - (unsigned char)'!');
-	ir.Event.MouseEvent.dwMousePosition.Y = ((unsigned char)raw - (unsigned char)'!');
+	ir.Event.MouseEvent.dwMousePosition.X = col;
+	ir.Event.MouseEvent.dwMousePosition.Y = row;
 	DWORD now = WINPORT(GetTickCount)();
 
-	switch (action) {
-		case '0': // ctrl+left press
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
+	//check bit indicators
+	if (action & _shift_ind) ir.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
+	if (action & _ctrl_ind)  ir.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+	if (action & _alt_ind)   ir.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
 
-		case ' ': // left press
-			if (now - _mouse.left_ts <= 500) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+	//and remove them
+	//it makes process soooo much easier
+	action = action & ~(_shift_ind | _alt_ind | _ctrl_ind);
+	switch (action) {
+		case 0: // char ' ', left press
+			if (now - _mouse.left_ts <= 800) {
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.left_ts = 0;
-			} else
+			} else {
 				_mouse.left_ts = now;
+			}
 
 			_mouse.middle_ts = _mouse.right_ts = 0;
 			_mouse.left = true;
 			break;
 
-		case '1': // ctrl+middle press
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case '!': // middle press
-			if (now - _mouse.middle_ts <= 500) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+		case 1: //char '!', middle press
+			if (now - _mouse.middle_ts <= 800) {
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.middle_ts = 0;
-			} else
+			} else {
 				_mouse.middle_ts = now;
+			}
 
 			_mouse.left_ts = _mouse.right_ts = 0;
 			_mouse.middle = true;
 			break;
 
-		case '2': // ctrl+right press
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case '"': // right press
-			if (now - _mouse.right_ts <= 500) {
-				ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
+		case 2: // char '"', right press
+			if (now - _mouse.right_ts <= 800) {
+				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.right_ts = 0;
-			} else
+			} else {
 				_mouse.right_ts = now;
+			}
+
 			_mouse.left_ts = _mouse.middle_ts = 0;
 			_mouse.right = true;
 			break;
 
-
-		case '3': // ctrl+* depress
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case '#': // * depress
+		case 3: // char '#', release buttons
 			_mouse.left = _mouse.middle = _mouse.right = false;
 			break;
 
-		case 'p':
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case '`':
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-			ir.Event.MouseEvent.dwButtonState|= (0x0001 <<16);
+		//wheel move
+		case 64: // char '`', wheel up
+			ir.Event.MouseEvent.dwEventFlags |= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState |= (0x0001 <<16);
 			break;
 
-		case 'q':
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case 'a':
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-			ir.Event.MouseEvent.dwButtonState|= (0xffff << 16);
+		case 65: // char 'a', wheel down
+			ir.Event.MouseEvent.dwEventFlags |= MOUSE_WHEELED;
+			ir.Event.MouseEvent.dwButtonState |= (0xffff << 16);
 			break;
 
-
-		case 'P': // ctrl + mouse move
-			ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
-
-		case 'C': // mouse move
+		//drag
+		case 32: // char '@', left button drag
+			_mouse.left = true;
+			_mouse.left_ts = 0;
 			break;
 
-		case 'B': // RButton + mouse move
+		case 33: // char 'A', middle button drag
+			_mouse.middle = true;
+			_mouse.middle_ts = 0;
+			break;
+
+		case 34: // char 'B', right button drag
 			_mouse.right = true;
 			_mouse.right_ts = 0;
 			break;
 
-		case '@': // LButton + mouse move
-			_mouse.left = true;
-			_mouse.left_ts = 0;
+		case 35: // char 'C', mouse move
+			ir.Event.MouseEvent.dwEventFlags |= MOUSE_MOVED;
 			break;
 
 		default:
 			return;
 	}
 
-	if (_mouse.left)
-			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_1ST_BUTTON_PRESSED;
+	if (_mouse.left) {
+		ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_1ST_BUTTON_PRESSED;
+	}
 
-	if (_mouse.middle)
-			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_2ND_BUTTON_PRESSED;
+	if (_mouse.middle) {
+		ir.Event.MouseEvent.dwButtonState |= FROM_LEFT_2ND_BUTTON_PRESSED;
+	}
 
-	if (_mouse.right)
-			ir.Event.MouseEvent.dwButtonState|= RIGHTMOST_BUTTON_PRESSED;
+	if (_mouse.right) {
+		ir.Event.MouseEvent.dwButtonState |= RIGHTMOST_BUTTON_PRESSED;
+	}
 
-	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
-
+	_ir_pending.emplace_back(ir);
 }
 
 void TTYInputSequenceParser::OnBracketedPaste(bool start)
@@ -616,6 +647,29 @@ void TTYInputSequenceParser::OnBracketedPaste(bool start)
 	ir.EventType = BRACKETED_PASTE_EVENT;
 	ir.Event.BracketedPaste.bStartPaste = start ? TRUE : FALSE;
 	_ir_pending.emplace_back(ir);
+}
+
+//work-around for double encoded mouse events in win32-input mode
+void TTYInputSequenceParser::ParseWinMouseBuffer(bool idle)
+{
+	bool check = false;
+
+	if (_win_mouse_buffer.size() > 2 && _win_mouse_buffer[2] == '<') {
+		//seems like SGR extended mouse reporting,
+		check = (_win_mouse_buffer.back() == 'M' || _win_mouse_buffer.back() == 'm');
+	} else {
+		//seems like X10 mouse reporting,
+		check = (_win_mouse_buffer.size() > 5 && _win_mouse_buffer[2] == 'M');
+	}
+
+	if (check) {
+		_win32_accumulate = false;
+		Parse(&_win_mouse_buffer[0], _win_mouse_buffer.size(), idle);
+		_win_mouse_buffer.clear();
+		//fprintf(stderr, "!!!parsed accumulated mouse sequence \n");
+	} else {
+		return;
+	}
 }
 
 //////////////////

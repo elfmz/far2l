@@ -10,20 +10,6 @@ fi
 if [[ "$STANDALONE" == "true" ]]; then
   CMAKE_OPTS+=( "-DUSEWX=no" )
 fi
-if [[ "$PLUGINS_EXTRA" == "true" ]]; then
-  for plug in netcfgplugin sqlplugin processes ; do
-    git clone --depth 1 https://github.com/VPROFi/$plug.git && \
-    ( cd $plug && \
-      find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
-      mv src/* . && rm -rf src )
-    echo "add_subdirectory($plug)" >> CMakeLists.txt
-  done
-fi
-if [[ "$PLUGINS" == "false" ]]; then
-  CMAKE_OPTS+=( "-DCOLORER=no -DNETROCKS=no -DALIGN=no -DAUTOWRAP=no -DCALC=no \
-    -DCOMPARE=no -DDRAWLINE=no -DEDITCASE=no -DEDITORCOMP=no -DFILECASE=no \
-    -DINCSRCH=no -DINSIDE=no -DMULTIARC=no -DSIMPLEINDENT=no -DTMPPANEL=no" )
-fi
 
 # QUILT_PATCHES=$REPO_DIR/patches quilt push -a
 

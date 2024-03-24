@@ -72,8 +72,11 @@ struct ITTYInputSpecialSequenceHandler
 	virtual void OnInputBroken() = 0;
 };
 
+//wait for more characters from input buffer
 #define TTY_PARSED_WANTMORE         ((size_t)0)
+//no sequence encountered, plain text recognized
 #define TTY_PARSED_PLAINCHARS       ((size_t)-1)
+//unrecognized sequence, skip ESC char (0x1b) and continue
 #define TTY_PARSED_BADSEQUENCE      ((size_t)-2)
 
 class TTYInputSequenceParser
@@ -104,6 +107,15 @@ class TTYInputSequenceParser
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
 	char _using_extension = 0;
+	//bit indicators for modifier keys in mouse input sequence
+	const unsigned int
+		_shift_ind = 0x04,
+		_alt_ind   = 0x08,
+		_ctrl_ind  = 0x10;
+
+	//work-around for double encoded mouse events in win32-input mode
+	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
+	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
 
 	void AssertNoConflicts();
 
@@ -116,9 +128,29 @@ class TTYInputSequenceParser
 	void AddStrCursors(WORD vk, const char *code);
 
 	size_t ParseNChars2Key(const char *s, size_t l);
-	void ParseMouse(char action, char col, char raw);
+
+	/**
+	 * Parse X10 mouse report sequence.
+	 * looks like `x1B[Mayx`
+	*/
+	size_t ParseX10Mouse(const char *s, size_t l);
+
+	/**
+	 * Parse mouse from SGR Extended coordinates sequence.
+	 * looks like `\x1B[<a;y;xM` or `\x1B[<a;y;xm`,
+	*/
+	size_t ParseSGRMouse(const char *s, size_t l);
+
+	/**
+	 * Schedule mouse event.
+	 * constuct INPUT_RECORD of mouse event and appending it to _ir_pending
+	 * Params have to be parsed from input sequence by ether of ParseX10Mouse() or ParseSGRMouse()
+	*/
+	void AddPendingMouseEvent(int action, int col, int row);
+
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
+	size_t TryUnwrappWinMouseEscapeSequence(const char *s, size_t l);
 	size_t ReadUTF8InHex(const char *s, wchar_t *uni_char);
 	size_t TryParseAsITerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
@@ -130,8 +162,23 @@ class TTYInputSequenceParser
 
 
 public:
+
 	TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *handler);
 
-	size_t Parse(const char *s, size_t l, bool idle_expired); // 0 - need more, -1 - not sequence, -2 - unrecognized sequence, >0 - sequence
+	/**
+	 * parse and schedule input from recognized sequence.
+	 * returns number of parsed bytes, numbers below 1 is error flags of following meaning:
+	 * +  0 - (TTY_PARSED_WANTMORE) wait for more characters from input buffer
+	 * + -1 - (TTY_PARSED_PLAINCHARS) no sequence encountered, plain text recognized
+	 * + -2 - (TTY_PARSED_BADSEQUENCE) unrecognized sequence, skip ESC char (0x1b) and continue
+	*/
+	size_t Parse(const char *s, size_t l, bool idle_expired);
+
+	/**
+	 * parse and schedule mouse sequence from _win_mouse_buffer.
+	 * executed only if _win_mouse_buffer contains valid number of characters
+	 * for X10 mouse sequence
+	*/
+	void ParseWinMouseBuffer(bool idle_expired);
 	char UsingExtension() const { return _using_extension; };
 };

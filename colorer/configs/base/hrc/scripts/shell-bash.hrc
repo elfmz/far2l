@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Shell Scripts (bash)
+
+        Based on:
+            https://www.gnu.org/software/bash/manual/bash.html
+            This is Edition 5.2, last updated 19 September 2022
+
+        Notes:
+            - nested here-docs are not supported.
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="shell-bash" group="scripts" description="Shell script (bash)">
+            <location link="scripts/shell-posix.hrc"/>
+            <filename>/\.sh$/i</filename>
+            <filename>/\.bash$/i</filename>
+            <firstline weight='4'>/^\#(!\s*.+bash\b)/</firstline>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="shell-bash">
+
+<import type="def"/>
+<import type="shell-posix"/>
+
+<region name="Text" parent="shell-posix:Text"/>
+<region name="Comment" parent="shell-posix:Comment"/>
+<region name="String" parent="shell-posix:String"/>
+<region name="Number" parent="shell-posix:Number"/>
+<region name="NumberDec" parent="shell-posix:NumberDec"/>
+<region name="NumberHex" parent="shell-posix:NumberHex"/>
+<region name="NumberBin" parent="shell-posix:NumberBin"/>
+<region name="NumberOct" parent="shell-posix:NumberOct"/>
+<region name="NumberFloat" parent="shell-posix:NumberFloat"/>
+<region name="NumberSuffix" parent="shell-posix:NumberSuffix"/>
+<region name="NumberPrefix" parent="shell-posix:NumberPrefix"/>
+<region name="Operator" parent="shell-posix:Operator"/>
+<region name="StringEscape" parent="shell-posix:StringEscape"/>
+<region name="StringEdge" parent="shell-posix:StringEdge"/>
+<region name="Variable" parent="shell-posix:Variable"/>
+<region name="VariableStrong" parent="shell-posix:VariableStrong"/>
+<region name="VariableSpecial" parent="shell-posix:VariableSpecial"/>
+<region name="Symbol" parent="shell-posix:Symbol"/>
+<region name="SymbolStrong" parent="shell-posix:SymbolStrong"/>
+<region name="PairStart" parent="shell-posix:PairStart"/>
+<region name="PairEnd" parent="shell-posix:PairEnd"/>
+<region name="Error" parent="shell-posix:Error"/>
+<region name="FunctionName" parent="shell-posix:FunctionName"/>
+<region name="FunctionKeyword" parent="shell-posix:FunctionKeyword"/>
+<region name="RedirectDescriptor" parent="shell-posix:RedirectDescriptor"/>
+<region name="RedirectPrefix" parent="shell-posix:RedirectPrefix"/>
+<region name="RedirectSymbol" parent="shell-posix:RedirectSymbol"/>
+<region name="CommandPrefix" parent="shell-posix:CommandPrefix"/>
+<region name="VariablePrefix" parent="shell-posix:VariablePrefix"/>
+<region name="Insertion" parent="shell-posix:Insertion"/>
+<region name="TestOperator" parent="shell-posix:TestOperator"/>
+<region name="CommandReserved" parent="shell-posix:CommandReserved"/>
+<region name="HeredocDescriptor" parent="shell-posix:HeredocDescriptor"/>
+<region name="HeredocOperator" parent="shell-posix:HeredocOperator"/>
+<region name="HeredocAnchor" parent="shell-posix:HeredocAnchor"/>
+<region name="Heredoc" parent="shell-posix:Heredoc"/>
+<region name="CommandBuiltin" parent="shell-posix:CommandBuiltin"/>
+
+<!-- for testing -->
+<region name="Test" parent="shell-posix:Test"/>
+<region name="Test2" parent="shell-posix:Test2"/>
+
+<entity name="word" value="[a-zA-Z_][\w_]*"/>
+<entity name="var" value="%word;"/>
+<entity name="specvar-strict" value="[\d#*@?$!-]"/>
+<entity name="specvar" value="
+    CDPATH|HOME|IFS|MAIL|MAILPATH|OPTARG|OPTIND|PATH|PS1|PS2|
+    _|BASH|BASHOPTS|BASHPID|BASH_ALIASES|BASH_ARGC|
+    BASH_ARGV|BASH_ARGV0|BASH_CMDS|BASH_COMMAND|BASH_COMPAT|BASH_ENV|
+    BASH_EXECUTION_STRING|BASH_LINENO|BASH_LOADABLES_PATH|BASH_REMATCH|
+    BASH_SOURCE|BASH_SUBSHELL|BASH_VERSINFO|BASH_VERSION|BASH_XTRACEFD|
+    CHILD_MAX|COLUMNS|COMP_CWORD|COMP_LINE|COMP_POINT|COMP_TYPE|COMP_KEY|
+    COMP_WORDBREAKS|COMP_WORDS|COMPREPLY|COPROC|DIRSTACK|EMACS|ENV|EPOCHREALTIME|
+    EPOCHSECONDS|EUID|EXECIGNORE|FCEDIT|FIGNORE|FUNCNAME|FUNCNEST|GLOBIGNORE|
+    GROUPS|histchars|HISTCMD|HISTCONTROL|HISTFILE|HISTFILESIZE|HISTIGNORE|
+    HISTSIZE|HISTTIMEFORMAT|HOSTFILE|HOSTNAME|HOSTTYPE|IGNOREEOF|INPUTRC|
+    INSIDE_EMACS|LANG|LC_ALL|LC_COLLATE|LC_CTYPE|LC_MESSAGES|LC_NUMERIC|
+    LC_TIME|LINENO|LINES|MACHTYPE|MAILCHECK|MAPFILE|OLDPWD|OPTERR|OSTYPE|
+    PIPESTATUS|POSIXLY_CORRECT|PPID|PROMPT_COMMAND|PROMPT_DIRTRIM|PS0|PS3|PS4|
+    PWD|RANDOM|READLINE_ARGUMENT|READLINE_LINE|READLINE_MARK|READLINE_POINT|
+    REPLY|SECONDS|SHELL|SHELLOPTS|SHLVL|SRANDOM|TIMEFORMAT|TMOUT|TMPDIR|UID
+"/>
+
+<!-- entity name="utility_no-param" value=""/ -->
+<entity name="utility_one-param" value="source|suspend"/>
+<entity name="utility_one-param-number" value="caller|logout"/>
+<entity name="utility_common" value="
+    bind|enable|help|mapfile|readarray|shopt|
+    bash|
+    dirs|pushd|popd|disown|
+    compgen|complete|compopt|
+    history
+"/>
+
+<entity name="funcname" value="[!*+,./:=?@A-Z\[\]\^_a-z{}~][#%0-9!*+,./:=?@A-Z\[\]\^_a-z{}~-]*"/>
+
+<entity name="wrdbreakchars" value="|;#)&amp;`"/>
+<entity name="wrdbreak" value="[%wrdbreakchars;]"/>
+<entity name="wrdnotbreak" value="[^%wrdbreakchars;]"/>
+<entity name="cmdbreak" value="%wrdbreak;|$"/>
+
+<scheme name="shell-bash">
+    <inherit scheme="shell-posix:shell-posix">
+        <virtual scheme="shell-posix:script" subst-scheme="script"/>
+    </inherit>
+</scheme>
+
+<scheme name="script">
+    <inherit scheme="shell-posix:script">
+        <virtual scheme="shell-posix:script_control" subst-scheme="script_control"/>
+    </inherit>
+</scheme>
+
+<scheme name="script_control">
+
+    <!-- select ... done -->
+    <block start="/\M\b(select)\b/" end="/\b(done)\b/" scheme="select"
+        region01="PairStart" region10="PairEnd"
+        region00="CommandReserved" region11="CommandReserved"/>
+
+    <!-- (( ... )) -->
+    <block start="/(\(\()/" end="/(\)\))/" scheme="shell-arithmetic"
+        region01="PairStart" region10="PairEnd"
+        region00="Symbol"    region11="Symbol"/>
+
+    <!-- [[ ... ]] -->
+    <block start="/(\[\[)/" end="/(\]\])/" scheme="test-bash"
+        region01="PairStart" region10="PairEnd"
+        region00="Symbol"    region11="Symbol"/>
+
+    <!-- coproc ... -->
+    <block start="/\M\b(coproc)\b/" end="/\M%cmdbreak;/" scheme="coproc"
+        region01="CommandReserved"/>
+
+    <!-- functions: <funcname> () ... -->
+    <block start="/(%funcname;)\s*(=)?~1(\(\s*\))\s*/" end="/\M%cmdbreak;/" scheme="script"
+        region01="FunctionName" region03="Symbol"/>
+    <!-- functions: function <funcname> [()] ... -->
+    <block start="/\b(function)\s+(%funcname;)(\s+\(\s*\))?/" end="/\M%cmdbreak;/" scheme="script"
+        region01="CommandReserved" region02="FunctionName" region03="Symbol"/>
+    <!-- anything else that starts with the keyword 'function' is an error -->
+    <block start="/\b(function)\b\s*(?{Error}.*?)\M(%cmdbreak;)/" end="/\M%cmdbreak;/" scheme="def:empty"
+        region01="CommandReserved"/>
+
+    <inherit scheme="shell-posix:script_control">
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+        <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
+        <virtual scheme="shell-posix:for" subst-scheme="for"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:script_control" subst-scheme="script_control"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+        <virtual scheme="shell-posix:script_without_backquote" subst-scheme="script_without_backquote"/>
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_command" subst-scheme="script_command"/>
+    </inherit>
+
+</scheme>
+
+<scheme name="script_command">
+
+    <!-- . -->
+    <block start="/\.(\s+|$)/" end="/\M%cmdbreak;/" scheme="script_parameters"
+        region00="CommandBuiltin"/>
+
+    <!-- export -fnp name[=word]... -->
+    <block start="/\b(export)\b(\s+-[fnp]+)*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variable-assignments"
+        region01="CommandBuiltin"/>
+
+    <!-- readonly -aAfp name[=word]... -->
+    <block start="/\b(readonly)\b(\s+-[aAfp]+)*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variable-assignments"
+        region01="CommandBuiltin"/>
+
+    <!-- declare/local/typeset -aAfFgiIlnrtux -p name[=word]... -->
+    <block start="/\b(declare|local|typeset)\b(\s+-[aAfFgiIlnrtuxp]+)*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variable-assignments"
+        region01="CommandBuiltin"/>
+
+    <!-- unset -fnv name... -->
+    <block start="/\b(unset)\b(\s+-[fnv]+)*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variables"
+        region01="CommandBuiltin"/>
+
+    <!-- builtin ... -->
+    <block start="/\b(builtin)\b\s*/" end="/\M%cmdbreak;/" scheme="script_command"
+        region01="CommandBuiltin"/>
+
+    <!-- let ... -->
+    <block start="/\blet\b/" end="/\M%cmdbreak;/" scheme="shell-arithmetic"
+        region00="CommandBuiltin"/>
+
+    <!-- <utility> <single parameter> -->
+    <block start="/\b(%utility_one-param;)\b\s*/" end="/\M%cmdbreak;/" scheme="cmd-one-parameter"
+        region00="CommandBuiltin"/>
+    <!-- <utility> <number expected> -->
+    <block start="/\b(%utility_one-param-number;)\b\s*/" end="/\M%cmdbreak;/" scheme="cmd-one-parameter-number"
+        region00="CommandBuiltin"/>
+    <!-- <utility> ... -->
+    <block start="/\b(%utility_common;)\b/x" end="/\M%cmdbreak;/" scheme="script_parameters"
+        region00="CommandBuiltin"/>
+    <!-- <utility> -->
+    <!-- block start="/\b(%utility_no-param;)\b/" end="/\M%cmdbreak;/" scheme="cmd-error"
+        region00="CommandBuiltin"/ -->
+
+    <inherit scheme="shell-posix:script_command">
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+        <virtual scheme="shell-posix:script_without_backquote" subst-scheme="script_without_backquote"/>
+    </inherit>
+</scheme>
+
+<scheme name="script_parameters">
+    <inherit scheme="shell-posix:script_parameters">
+    </inherit>
+</scheme>
+
+<scheme name="evaluations">
+    <inherit scheme="shell-posix:evaluations">
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="script_without_backquote">
+    <inherit scheme="script">
+        <virtual scheme="evaluation_backquote" subst-scheme="def:empty"/>
+    </inherit>
+</scheme>
+
+<scheme name="string-ansi-c">
+    <regexp match="/\\(
+        [abeEfnrtv\\&apos;&quot;?] |
+        [0-7]{1,3} |
+        x[0-9a-fA-F]{1,2} |
+        u[0-9a-fA-F]{1,4} |
+        U[0-9a-fA-F]{1,8} |
+        cx
+    )/x" region="StringEscape"/>
+</scheme>
+
+<scheme name="double_quoted_string">
+    <block start="/\M\$[&apos;&quot;]/" end="//" scheme="strings-dollar"/>
+    <inherit scheme="shell-posix:double_quoted_string">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="strings-dollar">
+    <!-- single quote strings -->
+    <block start="/(\$&apos;)/" end="/(&apos;)/" region="String" scheme="string-ansi-c"
+        region01="PairStart"  region11="PairEnd"
+        region00="StringEdge" region10="StringEdge"/>
+    <!-- locale-specific translations -->
+    <block start="/(\$&quot;)/" end="/(&quot;)/" region="String" scheme="double_quoted_string"
+        region01="PairStart"  region11="PairEnd"
+        region00="StringEdge" region10="StringEdge"/>
+</scheme>
+
+<scheme name="strings">
+    <inherit scheme="strings-dollar"/>
+    <inherit scheme="shell-posix:strings">
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+    </inherit>
+</scheme>
+
+<scheme name="parameter_expansion">
+    <inherit scheme="shell-posix:parameter_expansion">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+    </inherit>
+</scheme>
+
+<scheme name="arithmetic_expansion">
+    <inherit scheme="shell-posix:arithmetic_expansion">
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="script_words">
+    <!-- Process Substitution: <(list) and >(list) -->
+    <block start="/([&lt;&gt;]\()/" end="/(\))/" scheme="script"
+        region00="CommandReserved" region10="CommandReserved"
+        region01="PairStart"       region11="PairEnd"/>
+    <inherit scheme="shell-posix:script_words">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+        <virtual scheme="shell-posix:evaluations" subst-scheme="evaluations"/>
+    </inherit>
+</scheme>
+
+<scheme name="redirections_start">
+    <!-- redirections: &>word &>>word -->
+    <block start="/((^|\s*\b[^\\]?#1)\d*|\s?#1)(&amp;&gt;&gt;?)\s*/"
+        end="/\M(^|[^\\]?#1)[%wrdbreakchars;\s]|$/"
+        scheme="script_words" region01="RedirectDescriptor" region03="RedirectSymbol"/>
+    <!-- here strings -->
+    <block start="/((^|\s*\b[^\\]?#1)\d*|\s?#1)(&gt;&gt;&gt;|&lt;&lt;&lt;)\s*/"
+        end="/\M(^|[^\\]?#1)[%wrdbreakchars;\s]|$/"
+        scheme="script_words" region01="RedirectDescriptor" region03="RedirectSymbol"/>
+    <inherit scheme="shell-posix:redirections_start">
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+    </inherit>
+</scheme>
+
+<scheme name="variable_names">
+    <!-- plain special variable VAR -->
+    <regexp match="/\b(?{VariableSpecial}(%specvar;)((\w)?!|$))\b/x"/>
+    <regexp match="/(\{!)?#2(?{VariableSpecial}%specvar-strict;)((\w)?!|$)/"/>
+    <inherit scheme="shell-posix:variable_names"/>
+</scheme>
+
+<scheme name="script_words.maybe-variable">
+    <inherit scheme="shell-posix:script_words.maybe-variable">
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+<scheme name="variable_expansion_substring">
+    <!-- variable name -->
+    <block start="/(\{)?#1/" end="/:|$/" scheme="variable_names"/>
+    <!-- possible 2nd block -->
+    <block start="/:/" end="/\M[:\}]|$/" scheme="parameter_expansion" region="String"
+        region00="VariablePrefix"/>
+    <!-- the 1st block -->
+    <block start="/(\})?!(:)?#1/" end="/\M[:\}]|$/" scheme="parameter_expansion" region="String"/>
+</scheme>
+
+<scheme name="variable_expansion_replacement">
+    <!-- variable name -->
+    <block start="/(\{)?#1/" end="/\/[#%/]?|$/" scheme="variable_names"/>
+    <!-- possible 2nd block -->
+    <block start="/\//" end="/\M[\/\}]|$/" scheme="parameter_expansion" region="String"
+        region00="VariablePrefix"/>
+    <!-- the 1st block -->
+    <block start="/(\})?!((\/)?#1|(\/[#%/])?#2)/" end="/\M[\/\}]|$/" region="String"
+        scheme="parameter_expansion"/>
+</scheme>
+
+<scheme name="variable_expansion">
+    <block start="/(\{)?#1\M((%specvar-strict;)|[\w_]+)/"
+        end="/~(?:(?:%specvar-strict;)|(?:[\w_]+))\m(\^{1,2}|,{1,2})/"
+        scheme="variable_names"/>
+    <inherit scheme="shell-posix:variable_expansion">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="variable_array">
+    <!-- hash key -->
+    <block start="/(\[)/" end="/\M((\]))/" scheme="parameter_expansion" region="String"
+                                  region13="Symbol"
+        region00="VariableStrong" region11="VariableStrong"
+        region01="PairStart"      region12="PairEnd"/>
+    <!-- variable ${VAR:...}, ${VAR:...:...} -->
+    <block start="/\](?{VariablePrefix}\:([?=+-])?!)/" end="/\M\}|$/"
+        scheme="variable_expansion_substring"/>
+    <!-- ${VAR@...} -->
+    <regexp match="/\](?{VariablePrefix}@[UuLQEPAKak])/"/>
+    <!-- ${VAR^...} ${VAR^^...} ${VAR,...} ${VAR,,...}
+         ${VAR:-...}, ${VAR+...} etc., ${VAR#...}, ${VAR%%...} etc. -->
+    <block start="/\]\m(?{VariablePrefix}\^{1,2}|,{1,2}|#{1,2}|%{1,2}|:?[?=+-])/" end="/\M\}|$/"
+        region="String" scheme="parameter_expansion"/>
+    <!-- ${VAR/.../...} ${VAR//.../...} etc. -->
+    <block start="/\](?{VariablePrefix}\/[#%/]?)/" end="/\M\}|$/"
+        scheme="variable_expansion_replacement"/>
+</scheme>
+
+<scheme name="variables">
+
+    <!-- variable ${VAR:...}, ${VAR:...:...} -->
+    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(?{VariablePrefix}\:([?=+-])?!)/"
+        end="/(\}|$)/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_expansion_substring"/>
+    <!-- ${!VAR} -->
+    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)(\})?=/"
+        end="/(\}|$)/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_names"/>
+    <!-- ${!prefix*} ${!prefix@} -->
+    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)([*@]|\[[*@]\])?=/"
+        end="/(?{VariablePrefix}[*@]|\[[*@]\])(\}|$)/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_names"/>
+    <!-- ${VAR@...} -->
+    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(@[UuLQEPAKak])?=/"
+        end="/(?{VariablePrefix}@[UuLQEPAKak])(\}|$)/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_names"/>
+    <!-- ${VAR^...} ${VAR^^...} ${VAR,...} ${VAR,,...} -->
+    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(?{VariablePrefix}\^{1,2}|,{1,2})/"
+        end="/(\})/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_expansion"/>
+    <!-- ${VAR/.../...} ${VAR//.../...} etc. -->
+    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(?{VariablePrefix}\/[#%/]?)/"
+        end="/(\}|$)/"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_expansion_replacement"/>
+
+    <!-- ${!VAR[...]} ${#VAR[...]} -->
+    <block start="/((\$\{))(?{VariablePrefix}[!#])[\w_]+\M\[.*\]\}/"
+        end="/\]\m((\}|$))/"
+        region00="Variable"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_assignment_array_hash"/>
+    <!-- ${VAR[...]...} -->
+    <block start="/((\$\{))[\w_]+\M\[.*\]/"
+        end="/(\}|$)/"
+        region00="Variable"
+        region02="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"
+        scheme="variable_array"/>
+
+    <inherit scheme="shell-posix:variables">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+<scheme name="variable_assignments_caught">
+    <inherit scheme="shell-posix:variable_assignments_caught">
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+<scheme name="variable_assignment_array_hash">
+    <!-- hash key -->
+    <block start="/(\[)/" end="/\M((\]))(=)?/" scheme="parameter_expansion" region="String"
+                                  region13="Symbol"
+        region00="VariableStrong" region11="VariableStrong"
+        region01="PairStart"      region12="PairEnd"/>
+    <!-- hash value -->
+    <block start="/\]=\m/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
+</scheme>
+
+<scheme name="variable_assignment_array">
+    <!-- variable name -->
+    <block start="/\M%var;/" end="/\M(\+?\=\()/" scheme="variable_names"/>
+    <!-- array elements [key]=value ... -->
+    <block start="/(\+?\=)((\())\s*(\[)?=/" end="/\M((\)))/" scheme="variable_assignment_array_hash"
+        region01="Symbol"
+        region02="Symbol"    region11="Symbol"
+        region03="PairStart" region12="PairEnd"/>
+    <!-- array elements value ... -->
+    <block start="/(\+?\=)((\())/" end="/\M((\)))/" scheme="parameter_expansion" region="String"
+        region01="Symbol"
+        region02="Symbol"    region11="Symbol"
+        region03="PairStart" region12="PairEnd"/>
+</scheme>
+
+<scheme name="variable_assignment_array_element">
+    <!-- variable name -->
+    <block start="/\M%var;/" end="/\M(\[)/" scheme="variable_names"/>
+    <!-- hash key/value -->
+    <block start="/\M\[/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignment_array_hash"/>
+</scheme>
+
+<scheme name="variable_assignments">
+    <!-- whole array assignment -->
+    <block start="/\s*\M(%var;)\+?\=\(/" end="/\)/" scheme="variable_assignment_array"/>
+    <!-- element array assignment -->
+    <block start="/\s*\M(%var;)\[.*\]=/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignment_array_element"/>
+    <inherit scheme="shell-posix:variable_assignments">
+        <virtual scheme="shell-posix:variable_assignments_caught" subst-scheme="variable_assignments_caught"/>
+    </inherit>
+</scheme>
+
+<scheme name="for-arithmetic">
+    <block start="/((\(\()|;)/" end="/\M((\)\))|(?{Symbol};))/" scheme="shell-arithmetic"/>
+</scheme>
+
+<scheme name="for">
+    <!-- for (( expr1 ; expr2 ; expr3 )) ... done -->
+    <block start="/\b(for)\s+\M((\(\())/" end="/((\)\)))\s*(?{Error}.*?)\M(;|#|$)/" scheme="for-arithmetic"
+        region01="CommandReserved"
+        region03="Symbol"          region12="Symbol"
+        region02="PairStart"       region11="PairEnd"/>
+    <inherit scheme="shell-posix:for">
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+    </inherit>
+</scheme>
+
+<scheme name="select">
+    <inherit scheme="comments"/>
+    <!-- select VAR ... done -->
+    <block start="/\b(select)\b\s*/" end="/\s*(?{Error}[^;#]*?)(\M(?{SymbolStrong};)|\bin\b|\s+|#|$)/"
+        scheme="script_words.maybe-variable" region01="CommandReserved"/>
+    <!-- in ... -->
+    <block start="/\s*\b(in)\b/" end="/(;|#|$)/" scheme="script_words"
+        region01="CommandReserved" region11="SymbolStrong"/>
+    <!-- do ... done -->
+    <block start="/\s*\b(do)\b/" end="/\s*\M\b(done)\b/" scheme="script"
+        region01="CommandReserved" region11="CommandReserved"/>
+    <!-- anything else is an error -->
+    <block start="/(done)?!\s*\m/" end="/\M(%cmdbreak;)/" scheme="def:empty"
+        region="Error" region11="SymbolStrong"/>
+</scheme>
+
+<scheme name="shell-arithmetic">
+    <inherit scheme="shell-posix:escapes"/>
+    <inherit scheme="strings"/>
+    <inherit scheme="variables"/>
+    <inherit scheme="shell-posix:evaluations"/>
+    <inherit scheme="comments"/>
+
+    <!-- octal / hex / any-base numbers + variable value -->
+    <regexp match="/\b(0|0[xX]|[2-9]#|[1-5][0-9]#|6[0-4]#)\M\$/" region="NumberPrefix"/>
+    <!-- hex numbers -->
+    <regexp match="/\b(?{NumberPrefix}0[xX]|16#)[0-9a-fA-F]+\b/" region="NumberHex"/>
+    <!-- bad hex numbers -->
+    <regexp match="/\b(?{NumberPrefix}0[xX]|16#)\w+?\b/" region="Error"/>
+    <!-- octal numbers -->
+    <regexp match="/\b(?{NumberPrefix}0|8#)[0-7]+\b/" region="NumberOct"/>
+    <!-- bad octal numbers -->
+    <regexp match="/\b(?{NumberPrefix}0|8#)\w+?\b/" region="Error"/>
+    <!-- bin numbers -->
+    <regexp match="/\b(?{NumberPrefix}2#)[0-1]+\b/" region="NumberBin"/>
+    <!-- bad bin numbers -->
+    <regexp match="/\b(?{NumberPrefix}2#)\w+?\b/" region="Error"/>
+    <!-- dec numbers -->
+    <regexp match="/\b(?{NumberPrefix}10#)[0-9]+\b/" region="NumberDec"/>
+    <!-- bad dec numbers -->
+    <regexp match="/\b(?{NumberPrefix}10#)\w+?\b/" region="Error"/>
+    <!-- any base numbers -->
+    <regexp match="/\b(?{NumberPrefix}[2-9]#|[1-5][0-9]#|6[0-4]#)[0-9a-zA-Z@_]+\b/" region="Number"/>
+    <!-- bad any base numbers -->
+    <regexp match="/\b\d+#\w+?\b/" region="Error"/>
+
+    <inherit scheme="shell-posix:numbers"/>
+
+    <!-- increment / decrement -->
+    <block start="/(\+\+|--)\M%var;\b/" end="/~%var;\m\b/" scheme="variable_names"
+        region01="Symbol"/>
+    <block start="/\b\M%var;(\+\+|--)/" end="/~%var;\m(\+\+|--)/" scheme="variable_names"
+        region01="Symbol"/>
+    <!-- assignments -->
+    <block start="/\b\M%var;\s*(([\^*/%+&amp;|-]|&lt;&lt;|&gt;&gt;)?\=)/" end="/~%var;\m.*?\=/"
+        scheme="variable_names" region01="Symbol"/>
+    <!-- anything that looks like a variable is a variable -->
+    <inherit scheme="variable_names"/>
+    <keywords region="Symbol">
+        <symb name="+"/>          <symb name="-"/>
+        <symb name="~"/>          <symb name="!"/>
+        <symb name="**"/>         <symb name="/"/>
+        <symb name="%"/>          <symb name="*"/>
+        <symb name="&lt;&lt;"/>   <symb name="&gt;&gt;"/>
+        <symb name="&lt;="/>      <symb name="&gt;="/>
+        <symb name="&lt;"/>       <symb name="&gt;"/>
+        <symb name="=="/>         <symb name="!="/>
+        <symb name="&amp;&amp;"/> <symb name="||"/>
+        <symb name="&amp;"/>      <symb name="^"/>
+        <symb name="|"/>
+    </keywords>
+</scheme>
+
+<scheme name="test-bash-regexp">
+    <inherit scheme="regexp:posix.regexp">
+        <virtual scheme="regexp:string" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="test-bash">
+    <!-- =~ $VAR / =~ ${VAR} -->
+    <block start="/(\s)?#1(?{Symbol}=\~)\s+\M\$/" end="/\s+|$/" scheme="variables"/>
+    <!-- =~ <regexp> -->
+    <block start="/(\s)?#1(?{Symbol}=\~)\s+/" end="/\s+|$/" scheme="test-bash-regexp" region="String"/>
+    <inherit scheme="shell-posix:test">
+        <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
+        <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
+    </inherit>
+</scheme>
+
+<scheme name="coproc">
+    <!-- coproc VAR { ... } -->
+    <block start="/\b(coproc)\M\s+(%var;)\s+\{/" end="/\M%cmdbreak;/" scheme="coproc-variable"/>
+    <!-- coproc ... -->
+    <block start="/\b(coproc)\b\s*/" end="/\M%cmdbreak;/" scheme="script"/>
+</scheme>
+
+<scheme name="coproc-variable">
+    <block start="/(coproc)?#6\s+/" end="/\M\s|%cmdbreak;/" scheme="script_words.maybe-variable"/>
+    <block start="/\s*/" end="/\M%cmdbreak;/" scheme="script"/>
+</scheme>
+
+<scheme name="cmd-error">
+    <inherit scheme="shell-posix:cmd-error">
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+    </inherit>
+</scheme>
+
+<scheme name="cmd-one-parameter-number">
+    <inherit scheme="shell-posix:cmd-one-parameter-number">
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+    </inherit>
+</scheme>
+
+<scheme name="cmd-one-parameter">
+    <inherit scheme="shell-posix:cmd-one-parameter">
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+    </inherit>
+</scheme>
+
+<scheme name="cmd-parameter-variable-assignments">
+    <inherit scheme="shell-posix:cmd-parameter-variable-assignments">
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+        <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+<scheme name="cmd-parameter-variables">
+    <inherit scheme="shell-posix:cmd-parameter-variable-assignments">
+        <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+        <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

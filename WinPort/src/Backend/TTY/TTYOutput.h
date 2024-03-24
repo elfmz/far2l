@@ -38,7 +38,7 @@ class TTYOutput
 	} _true_colors;
 
 	int _out;
-	bool _far2l_tty, _norgb, _kernel_tty, _screen_tty;
+	bool _far2l_tty, _norgb, _kernel_tty, _screen_tty, _wezterm;
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};

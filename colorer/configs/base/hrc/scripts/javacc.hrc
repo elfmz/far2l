@@ -203,7 +203,7 @@
        <!-- GP: End -->
 
        <inherit scheme="Keywords-javaccClasses"/>
-       <inherit scheme="java:Keywords-j2seClasses"/>
+       <inherit scheme="pnuts:Keywords-j2seClasses"/>
 
        <regexp match="/\M \b (?{MethodOutline}[\:\w_*&amp;~]+?) \s* \( [^\)\(]*? \) [\w\s\{]*? $/x"/>
        <!-- return new Object(...) -->

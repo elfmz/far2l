@@ -455,7 +455,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 				    char buf[PATH_MAX];
 				    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf)-1);
-					fprintf(stderr, "*0 %li\n", len);
 				    if (len != -1) {
 				        buf[len] = '\0';
 
@@ -466,17 +465,11 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 							path = path.substr(0, lastSlashPos);
 						}
 
-						fprintf(stderr, "*1 %s\n", path.c_str());
-
 						if (TranslateInstallPath_Bin2Share(path)) {
 							path += "/" APP_BASENAME;
 						}
 
-						fprintf(stderr, "*2 %s\n", path.c_str());
-
 						path += "/wslgclip.sh";
-
-						fprintf(stderr, "*3 %s\n", path.c_str());
 
 						arg_opts.ext_clipboard = path;
 						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());

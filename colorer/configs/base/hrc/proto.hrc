@@ -591,11 +591,23 @@
     </prototype>
     <prototype name="shell" group="scripts" description="sh/ksh/bash script">
         <location link="scripts/sh.hrc" />
+        <firstline>/^\#(!\s*.+sh\b)/</firstline>
+    </prototype>
+    <prototype name="shell-posix" group="scripts" description="Shell Scripts (POSIX)">
+        <location link="scripts/shell-posix.hrc" />
         <filename>/\.(sh|spec)$/i</filename>
         <filename>/^PKGBUILD$/i</filename>
-        <filename>/\.(bash_|z)?profile/</filename>
-        <filename>/\.(ba|k|z)?shrc/</filename>
-        <firstline weight='2'>/^\#(!\s*.+sh\b)/</firstline>
+        <filename>/\.z?profile/</filename>
+        <filename>/\.(k|z)?shrc/</filename>
+        <firstline weight='3'>/^\#(!\s*.+sh\b)/</firstline>
+    </prototype>
+    <prototype name="shell-bash" group="scripts" description="Shell Scripts (bash)">
+        <location link="scripts/shell-bash.hrc" />
+        <filename weight='3'>/\.sh$/i</filename>
+        <filename weight='5'>/\.bash$/i</filename>
+        <filename>/\.bash_profile/</filename>
+        <filename>/\.bashrc/</filename>
+        <firstline weight='5'>/^\#!(\s*.+bash\b)/</firstline>
     </prototype>
     <prototype name="avisynth" group="scripts" description="AviSynth">
         <location link="scripts/avisynth.hrc" />

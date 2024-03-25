@@ -189,6 +189,28 @@ FARString &EscapeSpace(FARString &strStr)
 	return strStr;
 }
 
+static FARString unEscapeSpace(const wchar_t *str)
+{
+	if (*str == L'\0')
+		return "''";
+	FARString result;
+	for (const wchar_t *cur = str; *cur; ++cur) {
+		if (*cur == L'\\' && *(cur+1) != L'\\')
+			continue;
+		result.Append(*cur);
+	}
+	return result;
+}
+
+FARString &UnEscapeSpace(FARString &strStr)
+{
+	if (strStr.IsEmpty() || strStr.Contains(L'\\')) {
+		strStr.Copy(unEscapeSpace(strStr.CPtr()));
+	}
+
+	return strStr;
+}
+
 wchar_t *WINAPI QuoteSpaceOnly(wchar_t *Str)
 {
 	if (wcschr(Str, L' '))

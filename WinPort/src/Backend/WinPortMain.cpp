@@ -450,8 +450,9 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
 					// we are under WSL
 					// lets apply clipboard workaround
-					std::string path(getenv("FARHOME"));
-					if (path) {
+					char* fh = getenv("FARHOME");
+					if (fh) {
+						std::string path(fh);
 						path += "/wslgclip.sh";
 						arg_opts.ext_clipboard = path;
 						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());

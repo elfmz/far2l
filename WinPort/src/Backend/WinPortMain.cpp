@@ -36,6 +36,8 @@
 #include "SudoAskpassImpl.h"
 
 #include <memory>
+#include <iostream>
+#include <filesystem>
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
@@ -458,6 +460,11 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				        buf[len] = '\0';
 
 				        std::string path(buf);
+
+						size_t lastSlashPos = path.find_last_of("/\\");
+						if (lastSlashPos != std::string::npos) {
+							path = path.substr(0, lastSlashPos);
+						}
 
 						fprintf(stderr, "*1 %s\n", path.c_str());
 

@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <termios.h> 
 #include <dlfcn.h>
-#include <libgen.h>
 
 #ifdef __linux__
 # include <termios.h>
@@ -36,6 +35,7 @@
 #include "SudoAskpassImpl.h"
 
 #include <memory>
+
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
@@ -450,14 +450,49 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
 					// we are under WSL
 					// lets apply clipboard workaround
-					char* fh = getenv("FARHOME");
-					if (fh) {
-						std::string path(fh);
-						path += "/wslgclip.sh";
-						arg_opts.ext_clipboard = path;
-						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
-					}
+					wsl_clipboard_workaround = 
+						"#!/bin/bash\n\n"
+						"case \"$1\" in\n"
+						"get)\n"
+						"     if command -v cscript.exe >/dev/null 2>&1; then\n"
+        				"		cscript.exe //Nologo \\\\\\\\wsl.localhost\\\\\"$WSL_DISTRO_NAME\"\\\\" + InMyConfig("getclipboard.vbs") + " \n"
+						"     else\n"
+						"     	powershell.exe -Command Get-Clipboard\n"
+						"     fi\n"
+						";;\n"
+						"set)\n"
+						"    CONTENT=$(cat)\n"
+						"    echo \"$CONTENT\" | clip.exe\n"
+						"    echo \"$CONTENT\"\n"
+						";;\n"
+						"\"\")\n"
+						"    (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)\n"
+						";;\n"
+						"esac\n";
+
+						std::string wsl_clipboard_workaround_vbs = 
+							"WScript.StdOut.Write CreateObject(\"HTMLFile\").ParentWindow.ClipboardData.GetData(\"Text\")\n";
+						const std::string &ext_clipboard_vbs = InMyConfig("getclipboard.vbs");
+						std::ifstream infile_vbs(ext_clipboard_vbs);
+						if (!infile_vbs.is_open()) {
+							std::ofstream out(ext_clipboard_vbs);
+							out << wsl_clipboard_workaround_vbs;
+							out.close();
+						}
+
+						const std::string &ext_clipboard = InMyConfig("clipboard.wsl");
+						arg_opts.ext_clipboard = ext_clipboard;
+
+						std::ifstream infile(arg_opts.ext_clipboard);
+						if (!infile.is_open()) {
+							std::ofstream out(arg_opts.ext_clipboard);
+							out << wsl_clipboard_workaround;
+							out.close();
+							chmod(arg_opts.ext_clipboard.c_str(), 0755);
+						}
+
 				}
+				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;

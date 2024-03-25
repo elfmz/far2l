@@ -454,8 +454,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 					ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
 					if (len >= 0) {
 						path[len] = '\0';
-						std:string path = dirname(path);
-						std:string path += "/wslgclip.sh";
+						std::string path = dirname(path);
+						path += "/wslgclip.sh";
 						arg_opts.ext_clipboard = path;
 					}
 				}

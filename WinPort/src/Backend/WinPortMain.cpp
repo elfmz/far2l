@@ -450,7 +450,14 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
 					// we are under WSL
 					// lets apply clipboard workaround
-					arg_opts.ext_clipboard = GetHelperPathName("wslgclip.sh");
+					char path[PATH_MAX];
+					ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+					if (len >= 0) {
+						path[len] = '\0';
+						std:string path = dirname(path);
+						std:string path += "/wslgclip.sh";
+						arg_opts.ext_clipboard = path;
+					}
 				}
 				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 

@@ -92,12 +92,18 @@ class TTYInputSequenceParser
 
 
 	struct {
-		bool left = false;
+		//click indicators
+		bool left   = false;
 		bool middle = false;
-		bool right = false;
-		DWORD left_ts = 0;
+		bool right  = false;
+		//double click threshold
+		DWORD left_ts   = 0;
 		DWORD middle_ts = 0;
-		DWORD right_ts = 0;
+		DWORD right_ts  = 0;
+		//indicators of pressed state for avoiding "blinking" event while button is held
+		bool left_pressed   = false;
+		bool middle_pressed = false;
+		bool right_pressed  = false;
 	} _mouse;
 
 	ITTYInputSpecialSequenceHandler *_handler;

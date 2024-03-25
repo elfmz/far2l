@@ -460,10 +460,10 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 							path.erase(pos + 1);
 							path += "wslgсlip.sh";
 							arg_opts.ext_clipboard = path;
+							ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 						}
 					}
 				}
-				ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;

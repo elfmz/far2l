@@ -446,7 +446,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			if (WinPortMainBackend_p) {
 				g_winport_backend = L"GUI";
 
-				std::string wsl_clipboard_workaround = "";
+				bool wsl_clipboard_workaround = false;
 				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
 					// we are under WSL
 					// lets apply clipboard workaround
@@ -456,6 +456,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						path += "/wslgclip.sh";
 						arg_opts.ext_clipboard = path;
 						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
+						wsl_clipboard_workaround = true;
 					}
 				}
 
@@ -468,7 +469,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				if (!WinPortMainBackend_p(&a) ) {
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;
-					if (!wsl_clipboard_workaround.empty()) {
+					if (wsl_clipboard_workaround) {
 						arg_opts.ext_clipboard.clear();
 					}
 				}

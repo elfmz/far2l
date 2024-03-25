@@ -11,6 +11,7 @@ CTestTestfile.cmake
 install/
 tools/
 *.a
+far2l/bootstrap
 python/staging
 python/python
 python/incpy

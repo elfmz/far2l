@@ -1,4 +1,5 @@
 #!/bin/sh
+# workaround for https://github.com/elfmz/far2l/issues/1658
 
 script_path=$(dirname "$(readlink -f "$0")")
 

@@ -11,8 +11,6 @@ if [[ "$STANDALONE" == "true" ]]; then
   CMAKE_OPTS+=( "-DUSEWX=no" )
 fi
 
-# QUILT_PATCHES=$REPO_DIR/patches quilt push -a
-
 mkdir -p $BUILD_DIR && cd $BUILD_DIR && \
 cmake -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
@@ -34,16 +32,16 @@ fi
 if [[ "$APPIMAGE" == "true" ]]; then
   export DISABLE_COPYRIGHT_FILES_DEPLOYMENT=1
   export NO_STRIP=1
-  APPRUN_PATH=$REPO_DIR/.github/workflows/portable/AppRun
   # export APPIMAGE_EXTRACT_AND_RUN=1
   export ARCH=$(uname -m)
+  APPRUN_FILE=$REPO_DIR/.github/workflows/portable/AppRun
   ( cd $REPO_DIR && \
     AppDir/usr/bin/far2l --help >/dev/null && \
-    sed 's|@APP@|far2l|' -i $APPRUN_PATH && chmod +x $APPRUN_PATH && \
+    sed 's|@APP@|far2l|' -i $APPRUN_FILE && chmod +x $APPRUN_FILE && \
     wget --no-check-certificate https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-$ARCH.AppImage && \
     wget --no-check-certificate https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage && \
     chmod +x *.AppImage && \
-    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=$APPRUN_PATH && \
+    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=$APPRUN_FILE && \
     ./appimagetool-*.AppImage -v AppDir $PKG_NAME.AppImage )
   find $REPO_DIR -type f -name $PKG_NAME.AppImage -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_}.AppImage.tar --transform 's|.*/||' {}" \;
 fi

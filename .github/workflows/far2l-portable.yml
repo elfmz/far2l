@@ -4,8 +4,7 @@ run-name: build for commit ${{ github.sha }}
 on:
   workflow_dispatch:
   push:
-    branches:
-      - staging
+    branches: [staging]
 
 jobs:
   build-portable:
@@ -124,10 +123,10 @@ jobs:
       - name: Get commit date
         env:
           REPO: ${{ github.repository }}
-          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "DATE=$(gh api repos/$REPO/commits/$BRANCH --jq '.commit.committer.date' | date -f - +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "DATE=$(gh api repos/$REPO/commits/$SHA --jq '.commit.committer.date' | date -f - +%Y%m%d%H%M)" >> $GITHUB_ENV
 
       - name: Upload release assets
         uses: andelf/nightly-release@main

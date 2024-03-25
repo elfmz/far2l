@@ -452,9 +452,9 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 					// lets apply clipboard workaround
 					char* fh = getenv("FARHOME");
 					if (fh) {
-						std::string path(fh);
-						path += "/wslgclip.sh";
-						arg_opts.ext_clipboard = path;
+						wsl_clipboard_workaround = fh;
+						wsl_clipboard_workaround += "/wslgclip.sh";
+						arg_opts.ext_clipboard = wsl_clipboard_workaround;
 						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 					}
 				}

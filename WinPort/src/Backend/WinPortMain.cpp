@@ -458,7 +458,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						std::string::size_type pos = path.find_last_of('/');
 						if (pos != std::string::npos) {
 							path.erase(pos + 1);
-							path += "wslgсlip.sh";
+							path += "wslgclip.sh";
 							arg_opts.ext_clipboard = path;
 							ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 						}

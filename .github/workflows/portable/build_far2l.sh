@@ -26,7 +26,7 @@ find $REPO_DIR -type d -path "*/AppDir" -exec tar cJvf far2l.tar.xz -C {} . \;
 if [[ "$STANDALONE" == "true" ]]; then
   ( cd $INSTALL_DIR && ./far2l --help >/dev/null && bash -x $REPO_DIR/.github/workflows/portable/make_standalone.sh ) && \
   makeself --keep-umask $REPO_DIR/$BUILD_DIR/$INSTALL_DIR $PKG_NAME.run "FAR2L File Manager" ./far2l && \
-  find $REPO_DIR -type f -name $PKG_NAME.run -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_}.run.tar --transform 's|.*/||' {}" \;
+  find $REPO_DIR -type f -name $PKG_NAME.run -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_${GH_NAME}_}.run.tar --transform 's|.*/||' {}" \;
 fi
 
 if [[ "$APPIMAGE" == "true" ]]; then
@@ -43,7 +43,7 @@ if [[ "$APPIMAGE" == "true" ]]; then
     chmod +x *.AppImage && \
     ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=$APPRUN_FILE && \
     ./appimagetool-*.AppImage -v AppDir $PKG_NAME.AppImage )
-  find $REPO_DIR -type f -name $PKG_NAME.AppImage -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_}.AppImage.tar --transform 's|.*/||' {}" \;
+  find $REPO_DIR -type f -name $PKG_NAME.AppImage -exec bash -c "tar cvf ${PKG_NAME/${VERSION}_${GH_NAME}_}.AppImage.tar --transform 's|.*/||' {}" \;
 fi
 
 ccache --max-size=50M --show-stats

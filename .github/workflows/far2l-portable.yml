@@ -49,11 +49,12 @@ jobs:
           ARCH: ${{ matrix.arch }}
           CCACHE_DIR: ${{ github.workspace }}/.ccache
           DESTDIR: ${{ github.workspace }}/AppDir
+          GH_NAME: ${{ github.repository_owner }}_${{ github.ref_name }}
           STANDALONE: true
         shell: alpine.sh {0}
         run: |
           export VERSION=$(cat packaging/version)
-          export PKG_NAME=far2l_${VERSION}_${{ github.repository_owner }}_${{ github.ref_name }}_${ARCH}
+          export PKG_NAME=far2l_${VERSION}_${GH_NAME}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact
@@ -94,11 +95,12 @@ jobs:
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
           DESTDIR: ${{ github.workspace }}/AppDir
+          GH_NAME: ${{ github.repository_owner }}_${{ github.ref_name }}
           APPIMAGE: true
         shell: bash
         run: |
           export VERSION=$(cat packaging/version)
-          export PKG_NAME=far2l_${VERSION}_${{ github.repository_owner }}_${{ github.ref_name }}_$(uname -m)
+          export PKG_NAME=far2l_${VERSION}_${GH_NAME}_$(uname -m)
           bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
 
       - name: Upload artifact

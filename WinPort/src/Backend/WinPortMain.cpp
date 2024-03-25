@@ -461,7 +461,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 				        std::string path(buf);
 
-						size_t lastSlashPos = path.find_last_of("/\\");
+						size_t lastSlashPos = path.find_last_of("/");
 						if (lastSlashPos != std::string::npos) {
 							path = path.substr(0, lastSlashPos);
 						}
@@ -469,7 +469,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						fprintf(stderr, "*1 %s\n", path.c_str());
 
 						if (TranslateInstallPath_Bin2Share(path)) {
-							path += APP_BASENAME "/";
+							path += "/" APP_BASENAME;
 						}
 
 						fprintf(stderr, "*2 %s\n", path.c_str());

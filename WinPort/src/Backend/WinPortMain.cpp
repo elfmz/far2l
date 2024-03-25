@@ -453,7 +453,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 				    char buf[PATH_MAX];
 				    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf)-1);
-					fprintf(stderr, "*0 %i\n", len);
+					fprintf(stderr, "*0 %li\n", len);
 				    if (len != -1) {
 				        buf[len] = '\0';
 

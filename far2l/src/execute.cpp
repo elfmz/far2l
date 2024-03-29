@@ -401,10 +401,13 @@ ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForId
 			tmp = GetOpenShVerb("other");
 		}
 	} else if (SeparateWindow) {
-        if(ec.IsBrokenSymlink()) return -1;
+        if(ec.IsBrokenSymlink()) {
+            return -1;
+        }
 		tmp = GetOpenShVerb("exec");
-	} else
-		return farExecuteA(CmdStr, flags);
+    } else {
+        return farExecuteA(CmdStr, flags);
+    }
 
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT;		// open.sh doesnt print anything

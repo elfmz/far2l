@@ -544,15 +544,15 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 	//check bit indicators
 	if (action & _shift_ind) ir.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
-	if (action & _ctrl_ind)  ir.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-	if (action & _alt_ind)   ir.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
+	if (action & _alt_ind)   ir.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+	if (action & _ctrl_ind)  ir.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
 
 	//and remove them
 	//it makes process soooo much easier
 	action = action & ~(_shift_ind | _alt_ind | _ctrl_ind);
 	switch (action) {
 		case 0: // char ' ', left press
-			if (now - _mouse.left_ts <= 800) {
+			if (now - _mouse.left_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.left_ts = 0;
 			} else {
@@ -561,10 +561,11 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 			_mouse.middle_ts = _mouse.right_ts = 0;
 			_mouse.left = true;
+			_mouse.left_pressed = true;
 			break;
 
 		case 1: //char '!', middle press
-			if (now - _mouse.middle_ts <= 800) {
+			if (now - _mouse.middle_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.middle_ts = 0;
 			} else {
@@ -573,10 +574,11 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 			_mouse.left_ts = _mouse.right_ts = 0;
 			_mouse.middle = true;
+			_mouse.middle_pressed =true;
 			break;
 
 		case 2: // char '"', right press
-			if (now - _mouse.right_ts <= 800) {
+			if (now - _mouse.right_ts <= 500) {
 				ir.Event.MouseEvent.dwEventFlags |= DOUBLE_CLICK;
 				_mouse.right_ts = 0;
 			} else {
@@ -585,10 +587,17 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 
 			_mouse.left_ts = _mouse.middle_ts = 0;
 			_mouse.right = true;
+			_mouse.right_pressed = true;
 			break;
 
 		case 3: // char '#', release buttons
-			_mouse.left = _mouse.middle = _mouse.right = false;
+			//on release reset clicks and helds
+			_mouse.left   = false;
+			_mouse.middle = false;
+			_mouse.right  = false;
+			_mouse.left_pressed   = false;
+			_mouse.middle_pressed = false;
+			_mouse.right_pressed  = false;
 			break;
 
 		//wheel move
@@ -603,19 +612,34 @@ void TTYInputSequenceParser::AddPendingMouseEvent(int action, int col, int row)
 			break;
 
 		//drag
+		//while button already pressed we have to avoid sending another button event
+		//otherwise FAR will be constantly change UI state under stream of clicks
+		//just consider it mouse move
 		case 32: // char '@', left button drag
-			_mouse.left = true;
-			_mouse.left_ts = 0;
+			if (_mouse.left_pressed) {
+				ir.Event.MouseEvent.dwEventFlags |= MOUSE_MOVED;
+			} else {
+				_mouse.left = true;
+				_mouse.left_ts = 0;
+			}
 			break;
 
 		case 33: // char 'A', middle button drag
-			_mouse.middle = true;
-			_mouse.middle_ts = 0;
+			if (_mouse.middle_pressed) {
+				ir.Event.MouseEvent.dwEventFlags |= MOUSE_MOVED;
+			} else {
+				_mouse.middle = true;
+				_mouse.middle_ts = 0;
+			}
 			break;
 
 		case 34: // char 'B', right button drag
-			_mouse.right = true;
-			_mouse.right_ts = 0;
+			if (_mouse.right_pressed) {
+				ir.Event.MouseEvent.dwEventFlags |= MOUSE_MOVED;
+			} else {
+				_mouse.right = true;
+				_mouse.right_ts = 0;
+			}
 			break;
 
 		case 35: // char 'C', mouse move

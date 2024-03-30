@@ -114,7 +114,7 @@ public:
 		struct stat s = {0};
 		if (stat(arg0.c_str(), &s) == -1) {
 			fprintf(stderr, "ExecClassifier('%s', %d) - stat error %u\n", cmd, direct, errno);
-            if ((errno==ENOENT /*|| errno==EACCES*/) && lstat(arg0.c_str(), &s) != -1)
+            if ((errno==ENOENT || errno==EACCES) && lstat(arg0.c_str(), &s) != -1)
             {
                 _brokensymlink=true;
                 fprintf(stderr, "ExecClassifier: broken symbolic link!\n");

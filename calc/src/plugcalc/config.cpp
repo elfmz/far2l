@@ -243,6 +243,7 @@ bool ConfigDialog()
 	FarDialogItem *dlg = new FarDialogItem[num];
 	if (!dlg)
 		return false;
+	memset(dlg, 0, num * sizeof(FarDialogItem));
 	int Y1 = 0;
 	for (int i = 0; i < num; i++)
 	{
@@ -269,6 +270,8 @@ bool ConfigDialog()
 		}
 		else
 		{
+			if (dlgItems[i].Type == DI_BUTTON && (dlgItems[i].Flags & DIF_DEFAULT))
+				dlg[i].DefaultButton = 1;
 			dlg[i].PtrData = dlgItems[i].name_ID ? api->GetMsg(dlgItems[i].name_ID) : L"";
 			if (dlgItems[i].prop_ivalue && !dlgItems[i].prop_svalue)
 				dlg[i].Param.Selected = *dlgItems[i].prop_ivalue;

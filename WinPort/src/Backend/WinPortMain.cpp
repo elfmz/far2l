@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <termios.h> 
 #include <dlfcn.h>
-#include <libgen.h>
 
 #ifdef __linux__
 # include <termios.h>
@@ -448,32 +447,22 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			if (WinPortMainBackend_p) {
 				g_winport_backend = L"GUI";
 
-				bool wsl_clipboard_workaround = false;
-				if (arg_opts.ext_clipboard.empty() && getenv("WSL_DISTRO_NAME") && !getenv("FAR2L_WSL_NATIVE")) {
-					// we are under WSL
-					// lets apply clipboard workaround
-
-				    char buf[PATH_MAX];
-				    ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf)-1);
-				    if (len != -1) {
-				        buf[len] = '\0';
-
-				        std::string path(buf);
-
-						size_t lastSlashPos = path.find_last_of("/");
-						if (lastSlashPos != std::string::npos) {
-							path = path.substr(0, lastSlashPos);
-						}
-
-						if (TranslateInstallPath_Bin2Share(path)) {
-							path += "/" APP_BASENAME;
-						}
-
-						path += "/wslgclip.sh";
-
-						arg_opts.ext_clipboard = path;
+				bool wsl_clipboard_workaround = (arg_opts.ext_clipboard.empty()
+					&& getenv("WSL_DISTRO_NAME")
+					&& !getenv("FAR2L_WSL_NATIVE"));
+				if (wsl_clipboard_workaround) {
+					arg_opts.ext_clipboard = full_exe_path;
+					if (TranslateInstallPath_Bin2Share(arg_opts.ext_clipboard)) {
+						ReplaceFileNamePart(arg_opts.ext_clipboard, APP_BASENAME "/wslgclip.sh");
+					} else {
+						ReplaceFileNamePart(arg_opts.ext_clipboard, "wslgclip.sh");
+					}
+					if (TestPath(arg_opts.ext_clipboard).Executable()) {
+						fprintf(stderr, "WSL cliboard workaround: '%s'\n", arg_opts.ext_clipboard.c_str());
 						ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
-						wsl_clipboard_workaround = true;
+					} else {
+						fprintf(stderr, "Can't use WSL cliboard workaround: '%s'\n", arg_opts.ext_clipboard.c_str());
+						arg_opts.ext_clipboard.clear();
 					}
 				}
 

@@ -117,7 +117,7 @@ public:
             if ((errno==ENOENT || errno==EACCES) && lstat(arg0.c_str(), &s) != -1)
             {
                 _brokensymlink=true;
-                fprintf(stderr, "ExecClassifier: broken symbolic link!\n");
+                fprintf(stderr, "ExecClassifier: broken or inaccessible symbolic link\n");
             }
 			return;
 		}

@@ -35,8 +35,6 @@
 #include "SudoAskpassImpl.h"
 
 #include <memory>
-#include <iostream>
-#include <filesystem>
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;

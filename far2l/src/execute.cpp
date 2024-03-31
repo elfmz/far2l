@@ -114,6 +114,11 @@ public:
 		struct stat s = {0};
 		if (stat(arg0.c_str(), &s) == -1) {
 			fprintf(stderr, "ExecClassifier('%s', %d) - stat error %u\n", cmd, direct, errno);
+            if ((errno==ENOENT || errno==EACCES) && lstat(arg0.c_str(), &s) != -1)
+            {
+                _file = true;
+                fprintf(stderr, "ExecClassifier: broken or inaccessible symbolic link\n");
+            }
 			return;
 		}
 
@@ -396,8 +401,9 @@ ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForId
 		}
 	} else if (SeparateWindow) {
 		tmp = GetOpenShVerb("exec");
-	} else
-		return farExecuteA(CmdStr, flags);
+    } else {
+        return farExecuteA(CmdStr, flags);
+    }
 
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT;		// open.sh doesnt print anything

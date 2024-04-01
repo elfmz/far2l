@@ -7,7 +7,7 @@
 /// g++ -O2 ./CharClasses_mk.cpp -o /tmp/CharClasses_mk -licuuc && /tmp/CharClasses_mk > CharClasses.cpp
 
 template <class FN>
-	static void WriteFunc(const char *name, FN fn, bool checkLength)
+	static void WriteFunc(const char *name, FN fn)
 {
 	UChar32 c, last = 0x10ffff;
 	UChar32 start = 0;
@@ -33,11 +33,7 @@ template <class FN>
 			start = 0;
 		}
 	}
-	if (checkLength) {
-		printf("\t\t\treturn (wcwidth(c) == 0);\n");
-	} else {
-		printf("\t\t\treturn (wcwidth(c) == 2);\n");
-	}
+	printf("\t\t\treturn true;\n");
 	printf("\t\tdefault: return false;\n");
 	printf("\t}\n");
 	printf("}\n\n");
@@ -56,26 +52,37 @@ int main()
 	WriteFunc("IsCharFullWidth", [](wchar_t c)->bool {
 		const auto ea_width = u_getIntPropertyValue(c, UCHAR_EAST_ASIAN_WIDTH);
 		return ea_width == U_EA_FULLWIDTH || ea_width == U_EA_WIDE;
-	}, false);
+	});
 
 	WriteFunc("IsCharPrefix", [](wchar_t c)->bool {
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return (cat == U_SURROGATE || jt == U_JT_RIGHT_JOINING);
-	}, true);
+		return (cat == U_SURROGATE || ((jt == U_JT_RIGHT_JOINING) && (cat != U_OTHER_LETTER) && (cat != U_OTHER_NUMBER)));
+	});
 
 	WriteFunc("IsCharSuffix", [](wchar_t c)->bool {
 		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return ( (jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT && jt != U_JT_RIGHT_JOINING && jt != U_JT_DUAL_JOINING)
-			|| cat == U_NON_SPACING_MARK || cat == U_COMBINING_SPACING_MARK
+		return (
+				(jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT && jt != U_JT_RIGHT_JOINING && jt != U_JT_DUAL_JOINING) &&
+				(cat != U_MODIFIER_LETTER) &&
+				(cat != U_OTHER_LETTER) &&
+				(cat != U_OTHER_NUMBER) &&
+				(cat != U_OTHER_PUNCTUATION)
+			)
+			|| cat == U_NON_SPACING_MARK
+			|| cat == U_COMBINING_SPACING_MARK
+			|| cat == U_ENCLOSING_MARK
+			|| cat == U_FORMAT_CHAR
+
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS
 			|| block == UBLOCK_COMBINING_MARKS_FOR_SYMBOLS
 			|| block == UBLOCK_COMBINING_HALF_MARKS
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_SUPPLEMENT
-			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_EXTENDED);
-	}, true);
+			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_EXTENDED
+			;
+	});
 
 	printf("bool IsCharXxxfix(wchar_t c)\n");
 	printf("{\n");

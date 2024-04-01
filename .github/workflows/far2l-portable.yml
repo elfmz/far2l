@@ -130,19 +130,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           prerelease: false
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}-release
           name: ${{ env.DATE }}
           body: |
             ## Download and run
             ### Self-extractable tar-archive
             * with TTY X/Xi backend
             ```
-            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/far2l_x86_64.run.tar | tar -xv -C /tmp && /tmp/far2l_*.run
+            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}-release/far2l_x86_64.run.tar | tar -xv -C /tmp && /tmp/far2l_*.run
             ```
             ### AppImage
             * with wx-GUI
             ```
-            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/far2l_x86_64.AppImage.tar | tar -xv -C /tmp && /tmp/far2l_*.AppImage
+            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}-release/far2l_x86_64.AppImage.tar | tar -xv -C /tmp && /tmp/far2l_*.AppImage
             ```
           files: |
             ./**/far2l_*.run.tar

@@ -31,6 +31,7 @@
 #include "WinPortHandle.h"
 #include "ExtClipboardBackend.h"
 #include "PathHelpers.h"
+#include "TestServer.h"
 #include "../sudo/sudo_askpass_ipc.h"
 #include "SudoAskpassImpl.h"
 
@@ -253,6 +254,7 @@ struct ArgOptions
 	bool x11 = false;
 	bool wayland = false;
 	std::string ext_clipboard;
+	std::string test_id;
 	unsigned int esc_expiration = 0;
 	std::vector<char *> filtered_argv;
 
@@ -289,6 +291,9 @@ struct ArgOptions
 
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
+
+		} else if (strstr(a, "--test=") == a) {
+			test_id = a + 7;
 
 		} else if (strstr(a, "--ee") == a) {
 			esc_expiration = (a[4] == '=') ? atoi(&a[5]) : 100;
@@ -432,7 +437,10 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 	}
 //	g_winport_con_out->WriteString(L"Hello", 5);
-
+	std::unique_ptr<TestServer> test_server;
+	if (!arg_opts.test_id.empty()) {
+		test_server.reset(new TestServer(arg_opts.test_id));
+	}
 	int result = -1;
 	if (!arg_opts.tty) {
 		std::string gui_path = full_exe_path;

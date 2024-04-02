@@ -1,15 +1,14 @@
 #pragma once
 #include <utils.h>
-#include <LocalSocket.h>
 #include <Threaded.h>
 #include <atomic>
+#include <string>
 #include "TestProtocol.h"
 
-class TestServer : protected Threaded
+class TestController : protected Threaded
 {
-	LocalSocketServer _sock;
-	int _kickass[2];
 	std::atomic<bool> _stop{false};
+	std::string _ipc_server;
 
 	union TestBuf
 	{
@@ -28,13 +27,13 @@ class TestServer : protected Threaded
 	} _buf;
 
 	virtual void *ThreadProc();
-	void ClientLoop();
+	void ClientLoop(const std::string &ipc_client);
 	size_t ClientDispatchStatus();
 	size_t ClientDispatchReadCell(size_t len);
 	size_t ClientDispatchWaitString(size_t len);
 	size_t ClientDispatchSendKey(size_t len);
 
 public:
-	TestServer(const std::string &id);
-	~TestServer();
+	TestController(const std::string &id);
+	~TestController();
 };

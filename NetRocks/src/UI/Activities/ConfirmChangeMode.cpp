@@ -10,14 +10,14 @@
 | [TEXTBOX                                                 ] |
 | That is symlink pointing to:                               |
 | [TEXTBOX                                                 ] |
-| [x] Recurse into subdirectories                            |
+| Owner:      [TEXTBOX                                     ] |
+| Group:      [TEXTBOX                                     ] |
 |------------------------------------------------------------|
-| User's access       Group's access      Other's access     |
-| [x] Read            [x] Read            [x] Read           |
-| [x] Write           [x] Write           [ ] Write          |
-| [ ] Execute         [ ] Execute         [ ] Execute        |
+| User:       [x] R   [x] W   [x] X   [ ] SUID       Octal:  |
+| Group:      [x] R   [ ] W   [x] X   [ ] SGID        ____   |
+| Other:      [x] R   [ ] W   [ ] X   [ ] Sticky             |
 |------------------------------------------------------------|
-| [ ] Set UID         [ ] Set GID         [ ] Sticky         |
+| [ ] Recurse into subdirectories                            |
 |------------------------------------------------------------|
 |   [  Proceed  ]                  [        Cancel       ]   |
  ============================================================
@@ -51,7 +51,9 @@ void ConfirmChangeMode::StateToModes(int ctl, mode_t &mode_set, mode_t &mode_cle
 	}
 }
 
-ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, const std::string &link_target, bool may_recurse, mode_t mode_all, mode_t mode_any)
+ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, const std::string &link_target,
+	const std::wstring &owner, const std::wstring &group,
+	bool may_recurse, mode_t mode_all, mode_t mode_any)
 {
 	_di.SetBoxTitleItem(MConfirmChangeModeTitle);
 
@@ -72,62 +74,60 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 		_di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, link_target.c_str());
 	}
 
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR, MOwnerTitle);
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,16, 0, MOwner);
+	_di.AddAtLine(DI_EDIT, 17,62, DIF_READONLY, owner.c_str());
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,16, 0, MGroup);
+	_di.AddAtLine(DI_EDIT, 17,62, DIF_READONLY, group.c_str());
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR, MPermissionsTtitle);
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeUser);
+	_i_mode_user_read = _di.AddAtLine(DI_CHECKBOX, 19,23, DIF_3STATE, MModeRead);
+	StateFromModes(_i_mode_user_read, may_recurse, mode_all, mode_any, S_IRUSR);
+	_i_mode_user_write = _di.AddAtLine(DI_CHECKBOX, 26,30, DIF_3STATE, MModeWrite);
+	StateFromModes(_i_mode_user_write, may_recurse, mode_all, mode_any, S_IWUSR);
+	_i_mode_user_execute = _di.AddAtLine(DI_CHECKBOX, 33,37, DIF_3STATE, MModeExecute);
+	StateFromModes(_i_mode_user_execute, may_recurse, mode_all, mode_any, S_IXUSR);
+	_i_mode_set_uid = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSetUID);
+	StateFromModes(_i_mode_set_uid, may_recurse, mode_all, mode_any, S_ISUID);
+	_di.AddAtLine(DI_TEXT, 56,62, 0, "Octal:");
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeGroup);
+	_i_mode_group_read = _di.AddAtLine(DI_CHECKBOX, 19,23, DIF_3STATE, MModeRead);
+	StateFromModes(_i_mode_group_read, may_recurse, mode_all, mode_any, S_IRGRP);
+	_i_mode_group_write = _di.AddAtLine(DI_CHECKBOX, 26,30, DIF_3STATE, MModeWrite);
+	StateFromModes(_i_mode_group_write, may_recurse, mode_all, mode_any, S_IWGRP);
+	_i_mode_group_execute = _di.AddAtLine(DI_CHECKBOX, 33,37, DIF_3STATE, MModeExecute);
+	StateFromModes(_i_mode_group_execute, may_recurse, mode_all, mode_any, S_IXGRP);
+	_i_mode_set_gid = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSetGID);
+	StateFromModes(_i_mode_set_gid, may_recurse, mode_all, mode_any, S_ISGID);
+	_i_octal = _di.AddAtLine(DI_TEXT, 57,62, 0);
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeOther);
+	_i_mode_other_read = _di.AddAtLine(DI_CHECKBOX, 19,23, DIF_3STATE, MModeRead);
+	StateFromModes(_i_mode_other_read, may_recurse, mode_all, mode_any, S_IROTH);
+	_i_mode_other_write = _di.AddAtLine(DI_CHECKBOX, 26,30, DIF_3STATE, MModeWrite);
+	StateFromModes(_i_mode_other_write, may_recurse, mode_all, mode_any, S_IWOTH);
+	_i_mode_other_execute = _di.AddAtLine(DI_CHECKBOX, 33,37, DIF_3STATE, MModeExecute);
+	StateFromModes(_i_mode_other_execute, may_recurse, mode_all, mode_any, S_IXOTH);
+	_i_mode_sticky = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSticky);
+	StateFromModes(_i_mode_sticky, may_recurse, mode_all, mode_any, S_ISVTX);
+
 	if (may_recurse) {
 		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
+		_di.NextLine();
 		_i_recurse_subdirs = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRecurseSubdirs);
-		SetCheckedDialogControl(_i_recurse_subdirs);
+		//SetCheckedDialogControl(_i_recurse_subdirs);
 	}
-
-	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
-
-	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,24, 0, MModeUser);
-	_di.AddAtLine(DI_TEXT, 25,44, 0, MModeGroup);
-	_di.AddAtLine(DI_TEXT, 45,62, 0, MModeOther);
-
-	_di.NextLine();
-	_i_mode_user_read = _di.AddAtLine(DI_CHECKBOX, 5,24, DIF_3STATE, MModeRead);
-	StateFromModes(_i_mode_user_read, may_recurse, mode_all, mode_any, S_IRUSR);
-
-	_i_mode_group_read = _di.AddAtLine(DI_CHECKBOX, 25,44, DIF_3STATE, MModeRead);
-	StateFromModes(_i_mode_group_read, may_recurse, mode_all, mode_any, S_IRGRP);
-
-	_i_mode_other_read = _di.AddAtLine(DI_CHECKBOX, 45,62, DIF_3STATE, MModeRead);
-	StateFromModes(_i_mode_other_read, may_recurse, mode_all, mode_any, S_IROTH);
-
-	_di.NextLine();
-	_i_mode_user_write = _di.AddAtLine(DI_CHECKBOX, 5,24, DIF_3STATE, MModeWrite);
-	StateFromModes(_i_mode_user_write, may_recurse, mode_all, mode_any, S_IWUSR);
-
-	_i_mode_group_write = _di.AddAtLine(DI_CHECKBOX, 25,44, DIF_3STATE, MModeWrite);
-	StateFromModes(_i_mode_group_write, may_recurse, mode_all, mode_any, S_IWGRP);
-
-	_i_mode_other_write = _di.AddAtLine(DI_CHECKBOX, 45,62, DIF_3STATE, MModeWrite);
-	StateFromModes(_i_mode_other_write, may_recurse, mode_all, mode_any, S_IWOTH);
-
-	_di.NextLine();
-	_i_mode_user_execute = _di.AddAtLine(DI_CHECKBOX, 5,24, DIF_3STATE, MModeExecute);
-	StateFromModes(_i_mode_user_execute, may_recurse, mode_all, mode_any, S_IXUSR);
-
-	_i_mode_group_execute = _di.AddAtLine(DI_CHECKBOX, 25,44, DIF_3STATE, MModeExecute);
-	StateFromModes(_i_mode_group_execute, may_recurse, mode_all, mode_any, S_IXGRP);
-
-	_i_mode_other_execute = _di.AddAtLine(DI_CHECKBOX, 45,62, DIF_3STATE, MModeExecute);
-	StateFromModes(_i_mode_other_execute, may_recurse, mode_all, mode_any, S_IXOTH);
-
-	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
-
-	_di.NextLine();
-	_i_mode_set_uid = _di.AddAtLine(DI_CHECKBOX, 5,24, DIF_3STATE, MModeSetUID);
-	StateFromModes(_i_mode_set_uid, may_recurse, mode_all, mode_any, S_ISUID);
-
-	_i_mode_set_gid = _di.AddAtLine(DI_CHECKBOX, 25,44, DIF_3STATE, MModeSetGID);
-	StateFromModes(_i_mode_set_gid, may_recurse, mode_all, mode_any, S_ISGID);
-
-	_i_mode_sticky = _di.AddAtLine(DI_CHECKBOX, 45,62, DIF_3STATE, MModeSticky);
-	StateFromModes(_i_mode_sticky, may_recurse, mode_all, mode_any, S_ISVTX);
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
@@ -138,6 +138,48 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 
 	SetFocusedDialogControl(_i_proceed);
 	SetDefaultDialogControl(_i_proceed);
+
+	CalcBitsCharFromModeCheckBoxes();
+}
+
+char ConfirmChangeMode::GetBitCharFromModeCheckBoxes(int _i1, int _i2, int _i3)
+{
+	int i1, i2, i3;
+
+	i1 = Get3StateDialogControl(_i1);
+	i2 = Get3StateDialogControl(_i2);
+	i3 = Get3StateDialogControl(_i3);
+	if (i1 == BSTATE_3STATE || i2 == BSTATE_3STATE || i3 == BSTATE_3STATE)
+		return '_';
+	else {
+		int i = (i1 == BSTATE_CHECKED ? 1 : 0) + (i2 == BSTATE_CHECKED ? 2 : 0) + (i3 == BSTATE_CHECKED ? 4 : 0);
+		char buffer[3] = {0};
+		snprintf(buffer, 2, "%o", i);
+		return buffer[0];
+	}
+}
+
+void ConfirmChangeMode::CalcBitsCharFromModeCheckBoxes()
+{
+	char str_octal[5] = {0};
+	str_octal[0] = GetBitCharFromModeCheckBoxes(_i_mode_sticky, _i_mode_set_gid, _i_mode_set_uid);
+	str_octal[1] = GetBitCharFromModeCheckBoxes(_i_mode_user_execute,  _i_mode_user_write,  _i_mode_user_read);
+	str_octal[2] = GetBitCharFromModeCheckBoxes(_i_mode_group_execute, _i_mode_group_write, _i_mode_group_read);
+	str_octal[3] = GetBitCharFromModeCheckBoxes(_i_mode_other_execute, _i_mode_other_write, _i_mode_other_read);
+	TextToDialogControl(_i_octal, str_octal);
+}
+
+LONG_PTR ConfirmChangeMode::DlgProc(int msg, int param1, LONG_PTR param2)
+{
+	if (msg == DN_BTNCLICK && (
+			param1 == _i_mode_user_read || param1 == _i_mode_user_write || param1 == _i_mode_user_execute
+				|| param1 == _i_mode_group_read || param1 == _i_mode_group_write || param1 == _i_mode_group_execute
+				|| param1 == _i_mode_other_read || param1 == _i_mode_other_write || param1 == _i_mode_other_execute
+				|| param1 == _i_mode_set_uid || param1 == _i_mode_set_gid || param1 == _i_mode_sticky )) {
+		CalcBitsCharFromModeCheckBoxes();
+	}
+
+	return BaseDialog::DlgProc(msg, param1, param2);
 }
 
 bool ConfirmChangeMode::Ask(bool &recurse, mode_t &mode_set, mode_t &mode_clear)

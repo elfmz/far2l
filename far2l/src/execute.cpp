@@ -76,7 +76,7 @@ static WCHAR eol[2] = {'\r', '\n'};
 
 class ExecClassifier
 {
-	bool _dir, _file, _executable, _prefixed;
+    bool _dir, _file, _executable, _prefixed, _brokensymlink;
 
 	bool IsExecutableByExtension(const char *s)
 	{
@@ -90,7 +90,7 @@ class ExecClassifier
 public:
 	ExecClassifier(const char *cmd, bool direct)
 		:
-		_dir(false), _file(false), _executable(false), _prefixed(false)
+        _dir(false), _file(false), _executable(false), _prefixed(false), _brokensymlink(false)
 	{
 		Environment::ExplodeCommandLine ecl(cmd);
 		if (!ecl.empty() && ecl.back() == "&") {
@@ -114,6 +114,11 @@ public:
 		struct stat s = {0};
 		if (stat(arg0.c_str(), &s) == -1) {
 			fprintf(stderr, "ExecClassifier('%s', %d) - stat error %u\n", cmd, direct, errno);
+            if ((errno==ENOENT || errno==EACCES) && lstat(arg0.c_str(), &s) != -1)
+            {
+                _brokensymlink=true;
+                fprintf(stderr, "ExecClassifier: broken or inaccessible symbolic link\n");
+            }
 			return;
 		}
 
@@ -161,6 +166,7 @@ public:
 	bool IsFile() const { return _file; }
 	bool IsDir() const { return _dir; }
 	bool IsExecutable() const { return _executable; }
+	bool IsBrokenSymlink() const { return _brokensymlink; }
 };
 
 static std::string GetOpenShVerb(const char *verb)
@@ -395,9 +401,13 @@ ExecuteA(const char *CmdStr, bool SeparateWindow, bool DirectRun, bool WaitForId
 			tmp = GetOpenShVerb("other");
 		}
 	} else if (SeparateWindow) {
+        if(ec.IsBrokenSymlink()) {
+            return -1;
+        }
 		tmp = GetOpenShVerb("exec");
-	} else
-		return farExecuteA(CmdStr, flags);
+    } else {
+        return farExecuteA(CmdStr, flags);
+    }
 
 	if (!tmp.empty()) {
 		flags|= EF_NOWAIT | EF_HIDEOUT;		// open.sh doesnt print anything

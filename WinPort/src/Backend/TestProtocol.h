@@ -4,10 +4,11 @@
 
 enum TestCommand
 {
-	TEST_CMD_STATUS = 0,
-	TEST_CMD_READ_CELL = 1,
-	TEST_CMD_WAIT_STRING = 2,
-	TEST_CMD_SEND_KEY = 101,
+	TEST_CMD_DETACH = 0,
+	TEST_CMD_STATUS = 1,
+	TEST_CMD_READ_CELL,
+	TEST_CMD_WAIT_STRING,
+	TEST_CMD_SEND_KEY,
 };
 
 struct TestReplyStatus
@@ -19,7 +20,7 @@ struct TestReplyStatus
 	uint32_t cur_y;
 	uint32_t width;
 	uint32_t height;
-	char title[512]; // truncated if longer
+	char title[2048]; // truncated if longer
 };
 
 struct TestRequestReadCell
@@ -32,7 +33,7 @@ struct TestRequestReadCell
 struct TestReplyReadCell
 {
 	uint64_t attributes;
-	char str[512]; // more than one UTF character if cell contains composite character
+	char str[2048]; // more than one UTF character if cell contains composite character
 };
 
 struct TestRequestWaitString
@@ -43,11 +44,12 @@ struct TestRequestWaitString
 	uint32_t top;
 	uint32_t width;
 	uint32_t height;
-	char str[512];
+	char str[2048]; // double NULL-terminated array of strings of total maximum length 2048
 };
 
 struct TestReplyWaitString
-{ // string position or {-1, -1} if string not found before wait timed out
+{ // string index and position or {-1, -1, -1} if string not found before wait timed out
+	uint32_t i;
 	uint32_t x;
 	uint32_t y;
 };

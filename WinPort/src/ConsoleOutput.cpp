@@ -127,6 +127,14 @@ void ConsoleOutput::SetUpdateCellArea(SMALL_RECT &area, COORD pos)
 	}
 }
 
+void ConsoleOutput::LockedChangeIdUpdate()
+{
+	if (!++_change_id) {
+		_change_id  = 1;
+	}
+	_change_id_cond.notify_all();
+}
+
 void ConsoleOutput::SetCursor(COORD pos)
 {
 	SMALL_RECT area[2];
@@ -142,6 +150,7 @@ void ConsoleOutput::SetCursor(COORD pos)
 			_deferred_repaints.Add(&area[0], 2);
 			return;
 		}
+		LockedChangeIdUpdate();
 	}
 	if (_backend) {
 		_backend->OnConsoleOutputUpdated(&area[0], 2);
@@ -167,6 +176,7 @@ void ConsoleOutput::SetCursor(UCHAR height, bool visible)
 			_deferred_repaints.Add(area);
 			return;
 		}
+		LockedChangeIdUpdate();
 	}
 	if (_backend) {
 		_backend->OnConsoleOutputUpdated(&area, 1);
@@ -286,7 +296,7 @@ void ConsoleOutput::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos
 			_deferred_repaints.Add(screen_rect);
 			return;
 		}
-
+		LockedChangeIdUpdate();
 	}
 	if (_backend) {
 		_backend->OnConsoleOutputUpdated(&screen_rect, 1);
@@ -315,6 +325,7 @@ bool ConsoleOutput::Write(const CHAR_INFO &data, COORD screen_pos)
 			_deferred_repaints.Add(area);
 			return true;
 		}
+		LockedChangeIdUpdate();
 	}
 
 	if (_backend) {
@@ -543,7 +554,9 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 			}
 			return rv;
 		}
+		LockedChangeIdUpdate();
 	}
+
 	if (_backend) {
 		if (refresh_pos_areas) {
 			_backend->OnConsoleOutputUpdated(&areas[0], refresh_main_area ? 3 : 2);
@@ -674,6 +687,7 @@ bool ConsoleOutput::Scroll(const SMALL_RECT *lpScrollRectangle,
 			}
 			return true;
 		}
+		LockedChangeIdUpdate();
 	}
 
 	if (_backend) {
@@ -783,6 +797,9 @@ void ConsoleOutput::RepaintsDeferFinish()
 		ASSERT(_repaint_defer > 0);
 		--_repaint_defer;
 		deferred_repaints.swap(_deferred_repaints);
+		if (!deferred_repaints.empty()) {
+			LockedChangeIdUpdate();
+		}
 	}
 	if (!deferred_repaints.empty() && _backend) {
 		_backend->OnConsoleOutputUpdated(&deferred_repaints[0], deferred_repaints.size());
@@ -825,10 +842,24 @@ void ConsoleOutput::JoinConsoleOutput(IConsoleOutput *con_out)
 		_buf.GetSize(w, h);
 		CopyFrom(*co);
 		_buf.SetSize(w, h, _attributes);
+		LockedChangeIdUpdate();
 	}
 	if (_backend) {
 		SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
 		_backend->OnConsoleOutputUpdated(&screen_rect, 1);
 	}
 	delete co;
+}
+
+unsigned int ConsoleOutput::WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec)
+{
+	std::unique_lock<std::mutex> lock(_mutex);
+	while (_change_id == prev_change_id) {
+		if (timeout_msec == (unsigned int)-1) {
+			_change_id_cond.wait(lock);
+		} else if (_change_id_cond.wait_for(lock, std::chrono::milliseconds(timeout_msec)) != std::cv_status::no_timeout) {
+			break;
+		}
+	}
+	return _change_id;
 }

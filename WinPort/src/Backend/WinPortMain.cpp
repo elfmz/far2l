@@ -1,4 +1,5 @@
 #include <fstream>
+#include <memory>
 
 #include <sys/ioctl.h>
 #include <signal.h>
@@ -31,11 +32,11 @@
 #include "WinPortHandle.h"
 #include "ExtClipboardBackend.h"
 #include "PathHelpers.h"
-#include "TestServer.h"
 #include "../sudo/sudo_askpass_ipc.h"
 #include "SudoAskpassImpl.h"
-
-#include <memory>
+#ifdef TESTING
+# include "TestController.h"
+#endif
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
@@ -244,6 +245,9 @@ extern "C" void WinPortHelp()
 	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
     printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
     printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
+#ifdef TESTING
+	printf("\t--test=/UNIX/socket/path - activate built-in smoke tests facilities\n");
+#endif
 }
 
 struct ArgOptions
@@ -394,6 +398,13 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 	argc = (int)arg_opts.filtered_argv.size();
 
+#ifndef TESTING
+	if (!arg_opts.test_id.empty()) {
+		fprintf(stderr, "Testing facilities not enabled, rebuild with -DTESTING=YES to use --test= argument\n");
+		return -1;
+	}
+#endif
+
 	FDScope std_in(dup(0));
 	FDScope std_out(dup(1));
 
@@ -437,10 +448,13 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		ext_clipboard_backend_setter.Set<ExtClipboardBackend>(arg_opts.ext_clipboard.c_str());
 	}
 //	g_winport_con_out->WriteString(L"Hello", 5);
-	std::unique_ptr<TestServer> test_server;
+#ifdef TESTING
+	std::unique_ptr<TestController> test_ctl;
 	if (!arg_opts.test_id.empty()) {
-		test_server.reset(new TestServer(arg_opts.test_id));
+		test_ctl.reset(new TestController(arg_opts.test_id));
 	}
+#endif
+
 	int result = -1;
 	if (!arg_opts.tty) {
 		std::string gui_path = full_exe_path;

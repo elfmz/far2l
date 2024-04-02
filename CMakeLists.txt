@@ -95,6 +95,10 @@ endif()
 
 ##############################
 
+if (NOT DEFINED TESTING)
+    set(TESTING "NO")
+endif()
+
 if (NOT DEFINED USEWX)
     set(USEWX "YES")
 endif()

@@ -18,9 +18,9 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 	for (int i = 0; i < items_count; ++i) {
 		if (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			has_dirs = true;
-			mode_all = 0;
+			/*mode_all = 0;
 			mode_any = 07777;
-			break;
+			break;*/
 		}
 		mode_all&= items[i].FindData.dwUnixMode;
 		mode_any|= (items[i].FindData.dwUnixMode & 07777);

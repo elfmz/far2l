@@ -253,9 +253,9 @@ LONG_PTR ConfirmChangeMode::DlgProc(int msg, int param1, LONG_PTR param2)
 	else if (msg == DN_BTNCLICK) {
 		if ( param1 == _i_original ) {
 			_b_check_or_edit_process = true;
-			Set3StateDialogControl(_i_mode_sticky,        _original_mode_set_uid);
+			Set3StateDialogControl(_i_mode_sticky,        _original_mode_sticky);
 			Set3StateDialogControl(_i_mode_set_gid,       _original_mode_set_gid);
-			Set3StateDialogControl(_i_mode_set_uid,       _original_mode_sticky);
+			Set3StateDialogControl(_i_mode_set_uid,       _original_mode_set_uid);
 			Set3StateDialogControl(_i_mode_user_execute,  _original_mode_user_execute);
 			Set3StateDialogControl(_i_mode_user_write,    _original_mode_user_write);
 			Set3StateDialogControl(_i_mode_user_read,     _original_mode_user_read);

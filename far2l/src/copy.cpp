@@ -2625,10 +2625,17 @@ void ShellFileTransfer::Do()
 			_XAttrCopyPtr->ApplyToCopied(_DestFile);
 
 		if (_Flags.COPYACCESSMODE
-				&& (_ModeToCreateWith != _SrcData.dwUnixMode || (g_umask & _SrcData.dwUnixMode) != 0))
+                /*&& (_ModeToCreateWith != _SrcData.dwUnixMode || (g_umask & _SrcData.dwUnixMode) != 0)*/)
 			_DestFile.Chmod(_SrcData.dwUnixMode);
 
-		_DestFile.SetTime(nullptr, nullptr, &_SrcData.ftLastWriteTime, nullptr);
+        //_DestFile.SetTime(nullptr, nullptr, &_SrcData.ftLastWriteTime, nullptr);
+
+        struct timespec ts[2] = {};
+        WINPORT(FileTime_Win32ToUnix)(&_SrcData.ftUnixAccessTime, &ts[0]);
+        WINPORT(FileTime_Win32ToUnix)(&_SrcData.ftUnixModificationTime, &ts[1]);
+        if (sdc_utimens(_strDestName.GetMB().c_str(), ts) == -1) {
+            fprintf(stderr, "sdc_utimens error %d for '%s'\n", errno, _strDestName.GetMB().c_str());
+        }
 	}
 
 	if (!_DestFile.Close()) {

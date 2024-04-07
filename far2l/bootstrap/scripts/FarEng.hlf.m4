@@ -131,15 +131,20 @@ $ # FAR2L features - Getting Started#
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
         - #GUI#: uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
-        - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of keyboard modifiers), almost perfect UX;
-        - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the relevant terminal emulators, using their advanced keyboard-protocols, see list below).
+        - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
+(to access clipboard and to get state of all keyboard modifiers), almost perfect UX;
+        - #TTY|X#: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
+        - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions
+(works fully when running in the terminal emulators,
+which provide clipboard access and has their advanced keyboard-protocols, see list below).
     You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.
-    Wayland has security restriction for data access via X11; for full functionality run FAR2L-GUI in #xWayland# mode (see below).
+    #TTY|Xi# does not work under Wayland due to Wayland's security restriction,
+when it starts, far2l switches to #TTY|X# without i.
     Far2l running and selecting backend:
         - if you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode;
         - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
-        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
-        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect --ee#;
+        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi --ee#;
+        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect=x --ee#;
         - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
@@ -147,15 +152,6 @@ $ # FAR2L features - Getting Started#
  #Keyboard shortcuts are exclusively captured by desktop environment#
     Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings.
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
-
-
- #FAR2L within Wayland or within WSL+WSLg (fix clipboard and/or some keys processing in FAR2L-GUI/TTY|X)#
-    FAR2L (GUI and TTY|X modes) uses X11 features to work with the clipboard and get extended keyboard shortcuts that due to security restrictions, do not work properly in plain Wayland.
-    For adequate work FAR2L GUI in Wayland it helps to start FAR2L in mode #xWayland# by setting the environment variable #GDK_BACKEND=x11#:
-    - running from console: #GDK_BACKEND=x11 far2l#;
-    - inside desktop entry #/usr/share/applications/far2l.desktop# replace #Exec=far2l# with #Exec=env GDK_BACKEND=x11 far2l#
-    For applications running in a terminal emulator, xWayland mode does not provide full access, and the advice is to run the TTY or only TTY|X backend:
-     - forced non-use of X11 extended keys features when running in the console: #far2l --tty --nodetect=xi#
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -3328,10 +3324,17 @@ character like $HOME, and shell commands substitution, i.e. $(/path/to/some/scri
 will invoke that script.sh and its output will be embedded into content of this file
 during processing. This allows to implement custom dynamic locations list composing.
 
+    If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
+then check #Exceptions list# in ~Location Menu Options~@ChangeLocationConfig@ (#F9#).
+E.g., the #/run/*# pattern is included there by default.
+If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
+you need to delete #/run/*# substring from exceptions list.
+After that add more accurate patterns such as #/run/user/*#
+in order to hide garbage mountpoints from the Location menu.
+
     See also:
- 
-    The list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
-    Common ~menu~@MenuCmd@ keyboard commands.
+      The list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 
 @DisconnectDrive

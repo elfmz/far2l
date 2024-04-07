@@ -72,16 +72,18 @@ static int CheckForHardcodedByName(const char *cs)
             {"ISO-8859-8",28598},          // Hebrew
             {"ISO-8859-9",28599},          // Latin-5; Turkish
             {"ISO-8859-10",28600},         // Latin-6; Nordic
-            {"ISO-8859-11",28601},         // Thai
+            {"ISO-8859-11",874},           // Thai (in fact, it's 28601 but it's not supported by far2l)
             {"ISO-8859-13",28603},         // Latin-7; Baltic Rim (Estonian)
+            {"ISO-8859-14",28604},         // Latin-8; iso-celtic
             {"ISO-8859-15",28605},         // Latin-9; Western European
             {"ISO-8859-16",28606},         // Latin-10; South-Eastern European
-            {"TIS-620",28601},             // Thai
+            {"TIS-620",874},               // Thai
             {"MAC-CYRILLIC",10007},        // Cyrillic (Mac)
             {"MAC-CENTRALEUROPE",10029},   // Mac OS Central European
             {"KOI8-R",20866},              // Cyrillic
             {"EUC-JP",20932},              // Japanese
             {"ISO-2022-JP",50220},         // Japanese
+            {"ISO-2022-CN",50227},         // Chinese Simplified
             {"Johab",1361},                // Korean
             {"SHIFT_JIS",932},             // Japanese
             {"EUC-KR",51949},              // Korean
@@ -92,7 +94,7 @@ static int CheckForHardcodedByName(const char *cs)
         };
 
     // the rest:
-    // ASCII, EUC-TW, GEORGIAN-ACADEMY, GEORGIAN-PS, HZ-GB-2312, ISO-2022-CN, VISCII
+    // ASCII, EUC-TW, GEORGIAN-ACADEMY, GEORGIAN-PS, HZ-GB-2312, VISCII
 
     auto r= encodings.find(cs);
     return r==encodings.end() ? -1 : r->second;

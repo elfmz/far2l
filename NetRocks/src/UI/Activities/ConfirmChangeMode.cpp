@@ -137,6 +137,8 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 
 	if (may_recurse) {
 		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,62, DIF_DISABLE, "(X will automatic add to directories if it had original R)");
+		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 		_di.NextLine();
 		_i_recurse_subdirs = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRecurseSubdirs);

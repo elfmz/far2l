@@ -57,20 +57,31 @@ int main()
 	WriteFunc("IsCharPrefix", [](wchar_t c)->bool {
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return (cat == U_SURROGATE || jt == U_JT_RIGHT_JOINING);
+		return (cat == U_SURROGATE || ((jt == U_JT_RIGHT_JOINING) && (cat != U_OTHER_LETTER) && (cat != U_OTHER_NUMBER)));
 	});
 
 	WriteFunc("IsCharSuffix", [](wchar_t c)->bool {
 		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);
 		const auto cat = u_getIntPropertyValue(c, UCHAR_GENERAL_CATEGORY);
-		return ( (jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT && jt != U_JT_RIGHT_JOINING && jt != U_JT_DUAL_JOINING)
-			|| cat == U_NON_SPACING_MARK || cat == U_COMBINING_SPACING_MARK
+		return (
+				(jt != U_JT_NON_JOINING && jt != U_JT_TRANSPARENT && jt != U_JT_RIGHT_JOINING && jt != U_JT_DUAL_JOINING) &&
+				(cat != U_MODIFIER_LETTER) &&
+				(cat != U_OTHER_LETTER) &&
+				(cat != U_OTHER_NUMBER) &&
+				(cat != U_OTHER_PUNCTUATION)
+			)
+			|| cat == U_NON_SPACING_MARK
+			|| cat == U_COMBINING_SPACING_MARK
+			|| cat == U_ENCLOSING_MARK
+			|| cat == U_FORMAT_CHAR
+
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS
 			|| block == UBLOCK_COMBINING_MARKS_FOR_SYMBOLS
 			|| block == UBLOCK_COMBINING_HALF_MARKS
 			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_SUPPLEMENT
-			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_EXTENDED);
+			|| block == UBLOCK_COMBINING_DIACRITICAL_MARKS_EXTENDED
+			;
 	});
 
 	printf("bool IsCharXxxfix(wchar_t c)\n");

@@ -72,7 +72,7 @@ static int CheckForHardcodedByName(const char *cs)
             {"ISO-8859-8",28598},          // Hebrew
             {"ISO-8859-9",28599},          // Latin-5; Turkish
             {"ISO-8859-10",28600},         // Latin-6; Nordic
-            {"ISO-8859-11",28601},         // Thai
+            {"ISO-8859-11",874},           // Thai (in fact, it's 28601 but it's not supported by far2l)
             {"ISO-8859-13",28603},         // Latin-7; Baltic Rim (Estonian)
             {"ISO-8859-14",28604},         // Latin-8; iso-celtic
             {"ISO-8859-15",28605},         // Latin-9; Western European

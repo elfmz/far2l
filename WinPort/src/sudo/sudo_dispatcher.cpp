@@ -236,6 +236,20 @@ namespace Sudo
 			bt.SendErrno();
 	}
 
+    static void OnSudoDispatch_FUTimens(BaseTransaction &bt)
+    {
+        struct timespec times[2];
+        int fd = bt.RecvFD();
+
+        bt.RecvPOD(times[0]);
+        bt.RecvPOD(times[1]);
+
+        int r = futimens(fd, times);
+        bt.SendInt(r);
+        if (r==-1)
+            bt.SendErrno();
+    }
+
 	static void OnSudoDispatch_TwoPaths(int (*pfn)(const char *, const char *), BaseTransaction &bt)
 	{
 		std::string path1, path2;
@@ -445,8 +459,12 @@ namespace Sudo
 			case SUDO_CMD_UTIMENS:
 				OnSudoDispatch_UTimens(bt);
 				break;
-			
-			case SUDO_CMD_RENAME:
+
+            case SUDO_CMD_FUTIMENS:
+                OnSudoDispatch_FUTimens(bt);
+                break;
+
+            case SUDO_CMD_RENAME:
 				OnSudoDispatch_TwoPaths(&rename, bt);
 				break;
 

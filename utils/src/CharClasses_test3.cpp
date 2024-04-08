@@ -1550,9 +1550,10 @@ int wcw(wchar_t wc) {
 
     switch (width) {
         // Some sensible defaults
+        case widechar_unassigned:
+        	return -1;
         case widechar_nonprint:
         case widechar_combining:
-        case widechar_unassigned:
         case widechar_non_character:
             return 0;
         case widechar_ambiguous:

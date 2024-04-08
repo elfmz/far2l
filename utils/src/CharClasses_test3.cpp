@@ -1570,21 +1570,24 @@ int wcw(wchar_t wc) {
 
 int main() {
 
+	//printf("%i %i %i %i %i %i %i\n", widechar_unassigned, widechar_nonprint, widechar_combining,
+	//	widechar_non_character, widechar_ambiguous, widechar_private_use, widechar_widened_in_9);
+
 	// Simple test showing differences between char width detected by wcwidth() and by CharClasses.cpp functions
 
 	int ct = 0, last = 0x10ffff;
 	for (int i=0; i<=last; i++) {
 		if (IsCharFullWidth(i) && (wcw(i) != 2) && (wcw(i) != -1)) {
-			printf("i=%i IsCharFullWidth(i)=true wcw(i)=%i\n", i, wcw(i));
+			printf("i=%i IsCharFullWidth(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
 		if (IsCharPrefix(i) && (wcw(i) != 0) && (wcw(i) != -1)) {
-			printf("i=%i IsCharPrefix(i)=true wcw(i)=%i\n", i, wcw(i));
+			printf("i=%i IsCharPrefix(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
 		if (IsCharSuffix(i) && (wcw(i) != 0) && (wcw(i) != -1)) {
-			printf("i=%i IsCharSuffix(i)=true wcw(i)=%i\n", i, wcw(i));
+			printf("i=%i IsCharSuffix(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
 		if ((wcw(i) != 1) && !IsCharXxxfix(i) && !IsCharFullWidth(i) && (wcw(i) != -1)) {
-			printf("i=%i IsCharFullWidth(i)=false IsCharXxxfix(i)=false wcw(i)=%i\n", i, wcw(i));
+			printf("i=%i IsCharFullWidth(i)=false IsCharXxxfix(i)=false widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
 	}
 

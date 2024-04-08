@@ -281,6 +281,10 @@
 "SGID"
 "Sticky"
 "Or&iginal"
+" Timestamp YYYY-MM-DD hh:mm:ss.ms (read only) "
+"Last access time:"
+"Last modification time:"
+"Last status change time:"
 
 "FTP Protocol Options"
 "FTPS Protocol Options"

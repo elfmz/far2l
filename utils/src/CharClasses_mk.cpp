@@ -62,10 +62,7 @@ int main()
 
 	WriteFunc("IsCharSuffix", [](wchar_t c)->bool {
 
-		if (c < 32) {
-			if ((c != 25) && (c != 29))  { return false; }
-			else { return true; }
-		}
+		if (c < 32) return (c == 25) || (c == 29);
 
 		const auto block = u_getIntPropertyValue(c, UCHAR_BLOCK);
 		const auto jt = u_getIntPropertyValue(c, UCHAR_JOINING_TYPE);

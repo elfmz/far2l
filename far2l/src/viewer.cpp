@@ -595,7 +595,10 @@ void Viewer::ShowPage(int nMode)
 				}
 			}
 
-			if (StrLen > LeftPos + Width && ViOpt.ShowArrows) {
+			//due to low reliability of unicode wrapping,
+			//left arrow char "»" may appear even in already wrapped line
+			//better disable it in wrap mode
+			if (StrLen > LeftPos + Width && (!VM.Wrap && ViOpt.ShowArrows)) {
 				GotoXY(XX2, Y);
 				SetColor(COL_VIEWERARROWS);
 				BoxText(0xbb);

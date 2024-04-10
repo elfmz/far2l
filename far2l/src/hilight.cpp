@@ -236,7 +236,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		hl.MarkLen = dwMarkLen;
 	}
 
-#if 1 // 
+#if 1 //
 	  // FIXME: Temporary code for compatibility with old settings where there are no transparency masks for colors
 
 	for (int j = 0; j < 2; j++) {
@@ -264,7 +264,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 	}
 
 	   // FIXME: Temporary code for compatibility with old settings where there are no transparency masks for colors
-#endif // 
+#endif //
 
 	HData->SetColors(&hl);
 	HData->SetContinueProcessing(cfg_reader.GetInt(HLS.ContinueProcessing, 0) != 0);
@@ -845,7 +845,7 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	HighlightDataColor hl;
 	CurHiData->GetColors(&hl);
 
-	cfg_writer.SetULL(HLS.NormalColor, 
+	cfg_writer.SetULL(HLS.NormalColor,
 			hl.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
 	cfg_writer.SetULL(HLS.SelectedColor,
 			hl.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);
@@ -862,7 +862,7 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	cfg_writer.SetULL(HLS.MarkCharSelectedCursorColor,
 			hl.Color[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
 
-	cfg_writer.SetULL(HLS.NormalColorMask, 
+	cfg_writer.SetULL(HLS.NormalColorMask,
 			hl.Mask[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL]);
 	cfg_writer.SetULL(HLS.SelectedColorMask,
 			hl.Mask[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED]);

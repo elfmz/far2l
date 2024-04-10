@@ -13,9 +13,9 @@
 | Owner:      [TEXTBOX                                     ] |
 | Group:      [TEXTBOX                                     ] |
 |------------------------------------------------------------|
-| User:       [x] R   [x] W   [x] X   [ ] SUID       Octal:  |
-| Group:      [x] R   [ ] W   [x] X   [ ] SGID        ____   |
-| Other:      [x] R   [ ] W   [ ] X   [ ] Sticky             |
+| User:     [x] R   [x] W   [x] X   [ ] SUID    Octal: SUGO  |
+| Group:    [x] R   [ ] W   [x] X   [ ] SGID          [TEXT] |
+| Other:    [x] R   [ ] W   [ ] X   [ ] Sticky  [ Original ] |
 |------------------------------------------------------------|
 | [ ] Recurse into subdirectories                            |
 |------------------------------------------------------------|
@@ -27,10 +27,10 @@
 void ConfirmChangeMode::StateFromModes(int ctl, bool recurse, mode_t mode_all, mode_t mode_any, mode_t bit)
 {
 	int state;
-	if (recurse) {
+	/*if (recurse) {
 		state = BSTATE_3STATE;
 
-	} else if (bit & mode_all) {
+	} else*/ if (bit & mode_all) {
 		state = BSTATE_CHECKED;
 
 	} else if (bit & mode_any) {
@@ -96,7 +96,7 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 	StateFromModes(_i_mode_user_execute, may_recurse, mode_all, mode_any, S_IXUSR);
 	_i_mode_set_uid = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSetUID);
 	StateFromModes(_i_mode_set_uid, may_recurse, mode_all, mode_any, S_ISUID);
-	_di.AddAtLine(DI_TEXT, 56,62, 0, "Octal:");
+	_di.AddAtLine(DI_TEXT, 52,62, 0, "Octal: SUGO");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeGroup);
@@ -108,7 +108,7 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 	StateFromModes(_i_mode_group_execute, may_recurse, mode_all, mode_any, S_IXGRP);
 	_i_mode_set_gid = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSetGID);
 	StateFromModes(_i_mode_set_gid, may_recurse, mode_all, mode_any, S_ISGID);
-	_i_octal = _di.AddAtLine(DI_TEXT, 57,62, 0);
+	_i_octal = _di.AddAtLine(DI_FIXEDIT, 59,62, DIF_MASKEDIT, "", "####");
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeOther);
@@ -120,8 +120,24 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 	StateFromModes(_i_mode_other_execute, may_recurse, mode_all, mode_any, S_IXOTH);
 	_i_mode_sticky = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSticky);
 	StateFromModes(_i_mode_sticky, may_recurse, mode_all, mode_any, S_ISVTX);
+	_i_original = _di.AddAtLine(DI_BUTTON, 52,62, DIF_BTNNOCLOSE, MModeOriginal);
+
+	_original_mode_user_read     = Get3StateDialogControl(_i_mode_user_read);
+	_original_mode_user_write    = Get3StateDialogControl(_i_mode_user_write);
+	_original_mode_user_execute  = Get3StateDialogControl(_i_mode_user_execute);
+	_original_mode_group_read    = Get3StateDialogControl(_i_mode_group_read);
+	_original_mode_group_write   = Get3StateDialogControl(_i_mode_group_write);
+	_original_mode_group_execute = Get3StateDialogControl(_i_mode_group_execute);
+	_original_mode_other_read    = Get3StateDialogControl(_i_mode_other_read);
+	_original_mode_other_write   = Get3StateDialogControl(_i_mode_other_write);
+	_original_mode_other_execute = Get3StateDialogControl(_i_mode_other_execute);
+	_original_mode_set_uid       = Get3StateDialogControl(_i_mode_set_uid);
+	_original_mode_set_gid       = Get3StateDialogControl(_i_mode_set_gid);
+	_original_mode_sticky        = Get3StateDialogControl(_i_mode_sticky);
 
 	if (may_recurse) {
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,62, DIF_DISABLE, "(X will automatic add to directories if it had original R)");
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 		_di.NextLine();
@@ -150,7 +166,7 @@ char ConfirmChangeMode::GetBitCharFromModeCheckBoxes(int _i1, int _i2, int _i3)
 	i2 = Get3StateDialogControl(_i2);
 	i3 = Get3StateDialogControl(_i3);
 	if (i1 == BSTATE_3STATE || i2 == BSTATE_3STATE || i3 == BSTATE_3STATE)
-		return '_';
+		return '-';
 	else {
 		int i = (i1 == BSTATE_CHECKED ? 1 : 0) + (i2 == BSTATE_CHECKED ? 2 : 0) + (i3 == BSTATE_CHECKED ? 4 : 0);
 		char buffer[3] = {0};
@@ -169,14 +185,122 @@ void ConfirmChangeMode::CalcBitsCharFromModeCheckBoxes()
 	TextToDialogControl(_i_octal, str_octal);
 }
 
+void ConfirmChangeMode::GetModeCheckBoxesFromChar(char c, int _i1, int _i2, int _i3)
+{
+	switch(c) {
+		case '0':
+			Set3StateDialogControl(_i1, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i2, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i3, BSTATE_UNCHECKED);
+			break;
+		case '1':
+			Set3StateDialogControl(_i1, BSTATE_CHECKED);
+			Set3StateDialogControl(_i2, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i3, BSTATE_UNCHECKED);
+			break;
+		case '2':
+			Set3StateDialogControl(_i1, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i2, BSTATE_CHECKED);
+			Set3StateDialogControl(_i3, BSTATE_UNCHECKED);
+			break;
+		case '3':
+			Set3StateDialogControl(_i1, BSTATE_CHECKED);
+			Set3StateDialogControl(_i2, BSTATE_CHECKED);
+			Set3StateDialogControl(_i3, BSTATE_UNCHECKED);
+			break;
+		case '4':
+			Set3StateDialogControl(_i1, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i2, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i3, BSTATE_CHECKED);
+			break;
+		case '5':
+			Set3StateDialogControl(_i1, BSTATE_CHECKED);
+			Set3StateDialogControl(_i2, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i3, BSTATE_CHECKED);
+			break;
+		case '6':
+			Set3StateDialogControl(_i1, BSTATE_UNCHECKED);
+			Set3StateDialogControl(_i2, BSTATE_CHECKED);
+			Set3StateDialogControl(_i3, BSTATE_CHECKED);
+			break;
+		case '7':
+			Set3StateDialogControl(_i1, BSTATE_CHECKED);
+			Set3StateDialogControl(_i2, BSTATE_CHECKED);
+			Set3StateDialogControl(_i3, BSTATE_CHECKED);
+			break;
+		default:
+			Set3StateDialogControl(_i1, BSTATE_3STATE);
+			Set3StateDialogControl(_i2, BSTATE_3STATE);
+			Set3StateDialogControl(_i3, BSTATE_3STATE);
+			break;
+	}
+}
+
 LONG_PTR ConfirmChangeMode::DlgProc(int msg, int param1, LONG_PTR param2)
 {
-	if (msg == DN_BTNCLICK && (
-			param1 == _i_mode_user_read || param1 == _i_mode_user_write || param1 == _i_mode_user_execute
-				|| param1 == _i_mode_group_read || param1 == _i_mode_group_write || param1 == _i_mode_group_execute
-				|| param1 == _i_mode_other_read || param1 == _i_mode_other_write || param1 == _i_mode_other_execute
-				|| param1 == _i_mode_set_uid || param1 == _i_mode_set_gid || param1 == _i_mode_sticky )) {
-		CalcBitsCharFromModeCheckBoxes();
+	if (msg == DN_EDITCHANGE) {
+		if (param1 == _i_octal && !_b_check_or_edit_process) {
+			_b_check_or_edit_process = true;
+			std::string str_octal;
+			TextFromDialogControl(_i_octal, str_octal);
+			int length = str_octal.length();
+			GetModeCheckBoxesFromChar(length<1 ? ' ' : str_octal[0], _i_mode_sticky, _i_mode_set_gid, _i_mode_set_uid);
+			GetModeCheckBoxesFromChar(length<2 ? ' ' : str_octal[1], _i_mode_user_execute,  _i_mode_user_write,  _i_mode_user_read);
+			GetModeCheckBoxesFromChar(length<3 ? ' ' : str_octal[2], _i_mode_group_execute, _i_mode_group_write, _i_mode_group_read);
+			GetModeCheckBoxesFromChar(length<4 ? ' ' : str_octal[3], _i_mode_other_execute, _i_mode_other_write, _i_mode_other_read);
+			_b_check_or_edit_process = false;
+			return TRUE;
+		}
+	}
+	else if (msg == DN_BTNCLICK) {
+		if ( param1 == _i_original ) {
+			_b_check_or_edit_process = true;
+			Set3StateDialogControl(_i_mode_sticky,        _original_mode_sticky);
+			Set3StateDialogControl(_i_mode_set_gid,       _original_mode_set_gid);
+			Set3StateDialogControl(_i_mode_set_uid,       _original_mode_set_uid);
+			Set3StateDialogControl(_i_mode_user_execute,  _original_mode_user_execute);
+			Set3StateDialogControl(_i_mode_user_write,    _original_mode_user_write);
+			Set3StateDialogControl(_i_mode_user_read,     _original_mode_user_read);
+			Set3StateDialogControl(_i_mode_group_execute, _original_mode_group_execute);
+			Set3StateDialogControl(_i_mode_group_write,   _original_mode_group_write);
+			Set3StateDialogControl(_i_mode_group_read,    _original_mode_group_read);
+			Set3StateDialogControl(_i_mode_other_execute, _original_mode_other_execute);
+			Set3StateDialogControl(_i_mode_other_write,   _original_mode_other_write);
+			Set3StateDialogControl(_i_mode_other_read,    _original_mode_other_read);
+			CalcBitsCharFromModeCheckBoxes();
+			_b_check_or_edit_process = false;
+			return TRUE;
+		}
+		else if ( param1 == _i_recurse_subdirs ) {
+			if (IsCheckedDialogControl(_i_recurse_subdirs)) {
+				_b_check_or_edit_process = true;
+				Set3StateDialogControl(_i_mode_sticky, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_set_gid, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_set_uid, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_user_execute, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_user_write, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_user_read, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_group_execute, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_group_write, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_group_read, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_other_execute, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_other_write, BSTATE_3STATE);
+				Set3StateDialogControl(_i_mode_other_read, BSTATE_3STATE);
+				CalcBitsCharFromModeCheckBoxes();
+				_b_check_or_edit_process = false;
+			}
+			return TRUE;
+		}
+		else if ( !_b_check_or_edit_process &&
+					(param1 == _i_mode_user_read || param1 == _i_mode_user_write || param1 == _i_mode_user_execute
+					|| param1 == _i_mode_group_read || param1 == _i_mode_group_write || param1 == _i_mode_group_execute
+					|| param1 == _i_mode_other_read || param1 == _i_mode_other_write || param1 == _i_mode_other_execute
+					|| param1 == _i_mode_set_uid || param1 == _i_mode_set_gid || param1 == _i_mode_sticky )) {
+			_b_check_or_edit_process = true;
+			CalcBitsCharFromModeCheckBoxes();
+			_b_check_or_edit_process = false;
+			return TRUE;
+		}
 	}
 
 	return BaseDialog::DlgProc(msg, param1, param2);

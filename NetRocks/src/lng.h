@@ -283,6 +283,7 @@ enum LanguageID
 	MModeSetUID,
 	MModeSetGID,
 	MModeSticky,
+	MModeOriginal,
 
 	MFTPOptionsTitle,
 	MFTPSOptionsTitle,

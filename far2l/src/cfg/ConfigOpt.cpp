@@ -67,6 +67,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AllXLats.hpp"
 #include "ConfigOpt.hpp"
 #include "ConfigOptSaveLoad.hpp"
+#include "pick_color256.hpp"
+#include "pick_colorRGB.hpp"
 
 void SanitizeHistoryCounts();
 
@@ -120,6 +122,8 @@ static FARString strKeyNameConsoleDetachKey;
 
 const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
+	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, g_tempcolors256},
+	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, (BYTE *)g_tempcolorsRGB},
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-setcolor.hpp
+pick_color256.hpp
 
 Установка фаровских цветов
 */
@@ -35,4 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-void SetColors();
+#define TEMP_COLORS256_SIZE 20
+extern uint8_t g_tempcolors256[20];
+
+bool GetPickColorDialog256(uint32_t *color, bool bCentered = true);

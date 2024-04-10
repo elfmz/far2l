@@ -17451,6 +17451,50 @@ SetColorItemsTitle
 "Елементи групи"
 "Элемент суполкі"
 
+PickColorHue
+"&Оттенок"
+"H&ue"
+"&Odstín"
+"&Farbton"
+"&Árnyalat"
+"&Odcień"
+"&Tono"
+"&Відтінок"
+"&Адзін"
+
+PickColorUseGray
+"Использовать первые 16 и оттенки серого"
+"Use the first 16 and shades of gray"
+"Použijte první 16 a odstíny šedi"
+"Verwenden Sie die ersten 16 und Grautöne"
+"Használja az első 16 és a szürke árnyalatokat"
+"Użyj pierwszych 16 i odcieni szarości"
+"Usar los primeros 16 y tonos grises"
+"Використовуйте перші 16 та відтінки сірого"
+"Выкарыстоўвайце першыя 16 і адзінцы сірого"
+
+PickColorSat
+"&Насыщенность"
+"&Saturation"
+"&Saturace"
+"&Sättigung"
+"&Telítettség"
+"&Nasycenie"
+"&Saturación"
+"&Насиченість"
+"&Насыцэнне"
+
+PickColorColors
+"&Цвета"
+"&Colors"
+"&Barvy"
+"&Farben"
+"&Színek"
+"&Kolory"
+"&Colores"
+"&Кольори"
+"&Колеры"
+
 SetColorTitle
 l:
 "Цвет"

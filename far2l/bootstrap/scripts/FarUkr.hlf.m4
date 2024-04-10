@@ -3232,6 +3232,14 @@ character like $HOME, and shell commands substitution, i.e. $(/path/to/some/scri
 will invoke that script.sh and its output will be embedded into content of this file
 during processing. This allows to implement custom dynamic locations list composing.
 
+    If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
+then check #Exceptions list# in ~Location Menu Options~@ChangeLocationConfig@ (#F9#).
+E.g., the #/run/*# pattern is included there by default.
+If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
+you need to delete #/run/*# substring from exceptions list.
+After that add more accurate patterns such as #/run/user/*#
+in order to hide garbage mountpoints from the Location menu.
+
  також
     список ~макроклавіш~@KeyMacroDisksList@, доступних у меню переходу.
     Common ~menu~@MenuCmd@ keyboard commands.

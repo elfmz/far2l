@@ -80,13 +80,13 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const std::string &nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
 	_ext_clipboard(ext_clipboard),
 	_norgb(norgb),
-	_nodetect(nodetect),
+    _nodetect(nodetect),
 	_far2l_tty(far2l_tty),
 	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
@@ -231,10 +231,9 @@ void TTYBackend::ReaderThread()
 			}
 
 		} else {
-			if (!strchr(_nodetect, 'x') || strstr(_nodetect, "xi")) {
-
+            if (_nodetect.find('x')==std::string::npos || _nodetect.find("xi")!=std::string::npos) {
 				// disable xi on Wayland as it not work there anyway and also causes delays
-				_ttyx = StartTTYX(_full_exe_path, !strstr(_nodetect, "xi") && !UnderWayland());
+                _ttyx = StartTTYX(_full_exe_path, _nodetect.find("xi")==std::string::npos && !UnderWayland());
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -1242,7 +1241,7 @@ static void OnSigHup(int signo)
 }
 
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, const std::string &nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
 

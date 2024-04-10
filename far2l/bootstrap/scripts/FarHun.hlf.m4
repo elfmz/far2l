@@ -2868,8 +2868,16 @@ párbeszédablakát.
     A #Shift-F1# pluginen lenyomva meghívja a plugin helyzetérzékeny
 súgóját (ha a súgófájl létezik).
 
+    If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
+then check #Exceptions list# in Location Menu Options (#F9#).
+E.g., the #/run/*# pattern is included there by default.
+If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
+you need to delete #/run/*# substring from exceptions list.
+After that add more accurate patterns such as #/run/user/*#
+in order to hide garbage mountpoints from the Location menu.
+
     See also:
-    Common ~menu~@MenuCmd@ keyboard commands.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 @DisconnectDrive
 $ #Hálózati meghajtó leválasztása#

@@ -358,6 +358,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
 		}
 
+		// Если у метки black on black, то возьмем ей цвета и маску от имени
 		if (!(hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] & 0xFF)) {
 
 			hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Color[HIGHLIGHTCOLORTYPE_FILE][i];
@@ -368,6 +369,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 
 static void ApplyStartColors(HighlightDataColor *hl)
 {
+	// Начинаем с цветов "по умолчанию" и далее их раскрашиваем
 	for (int i = 0; i < 4; i++) {
 		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
 		hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i] |= 0xFFFFFFFFFFFFFFFF;
@@ -391,7 +393,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 		for (int i = 0; i < 4; i++) {
 
 			// Если текущие цвета в Src (fore и/или back) не прозрачные
-			// то унаследуем их в Dest.
+			// то унаследуем их в Dest. (включая флаги стилей)
 
 			if (hlSrc->Mask[j][i]) {
 				hlDst->Color[j][i] = (hlDst->Color[j][i] & (~hlSrc->Mask[j][i])) | (hlSrc->Color[j][i] & hlSrc->Mask[j][i]);
@@ -399,11 +401,24 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 		}
 	}
 
-	// Унаследуем пометку из Src если она не прозрачная
-	if (!hlSrc->bMarkInherit && hlSrc->MarkLen) {
-
-		hlDst->MarkLen = hlSrc->MarkLen;
-		memcpy(&hlDst->Mark[0], &hlSrc->Mark[0], sizeof(wchar_t) * hlSrc->MarkLen);
+	// Унаследуем пометку из Src в Dst если она есть
+	if (hlSrc->MarkLen) {
+		// Если нет наследования в Src, то просто заменим местку на новую в Dst
+		if (!hlSrc->bMarkInherit) {
+			hlDst->MarkLen = hlSrc->MarkLen;
+			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
+		}
+		else { // Если есть наследование, добавим метку к старой
+			uint32_t freespace = (HIGHLIGHT_MAX_MARK_LENGTH - hlDst->MarkLen);
+			if (freespace) { // Если есть хоть какое то место, добавим что влезет
+				uint32_t copylen =  (freespace < hlSrc->MarkLen) ? hlSrc->MarkLen - freespace : hlSrc->MarkLen;
+				memcpy(hlDst->Mark + hlDst->MarkLen, hlSrc->Mark, sizeof(wchar_t) * copylen);
+				hlDst->MarkLen += copylen;
+			}
+		}
+	}
+	else if (!hlSrc->bMarkInherit) { // Если нет наследования и метка пустая, то убираем метку совсем
+		hlDst->MarkLen = 0;
 	}
 }
 

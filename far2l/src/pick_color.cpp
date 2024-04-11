@@ -158,20 +158,16 @@ struct color_panel_s
 	}
 
 	void update_rgb_color_from_str( ) {
-//		uint32_t rgb = wcstoul(wsRGB, nullptr, 16);
-//		color = (rgb & 0x00FF00) | ((rgb >> 16) & 0xFF) | ((rgb & 0xFF) << 16);
 		color = RGB_2_BGR(wcstoul(wsRGB, nullptr, 16));
 
 		draw_rgb_sample( );
 	}
 
 	void update_str_from_rgb_color( ) {
-//		uint32_t rgb = (color & 0x00FF00) | ((color >> 16) & 0xFF) | ((color & 0xFF) << 16);
 		swprintf(wsRGB, 16, L"%06X", RGB_2_BGR(color));
 	}
 
 	void draw_rgb_sample( ) {
-//		const uint64_t attr = ((color << 40) | BACKGROUND_TRUECOLOR) + (((~(color) & 0xFFFFFF) << 16) | FOREGROUND_TRUECOLOR) + 7;
 		const uint64_t attr = ATTR_RGBBACK_NEGF(color);
 
 		vbuff_rgb[0].Char.UnicodeChar = 32;
@@ -360,10 +356,32 @@ void set_color_s::draw_sample_vbuff(void)
 {
 	static const wchar_t *sample_text_str = L"Text Text Text Text Text Text Text Text Text Text";
 
-	for (int i = 0; i < 4; i++) {
+	if (bTransparencyEnabled && !(color & 0xFF)) {
+
+		size_t blackonblacklen = wcslen(Msg::SetColorBlackOnBlack);
+		size_t defcolorlen = wcslen(Msg::SetColorDefaultColor);
+		const uint64_t attr = 15;
+
+		for (size_t g = 0; g < 4 * 33  ; g++) {
+			samplevbuff[g].Char.UnicodeChar = 32;
+			samplevbuff[g].Attributes = attr;
+		}
+		for (size_t g = 0; g < std::min(33ul, blackonblacklen) ; g++) {
+			samplevbuff[g].Char.UnicodeChar = Msg::SetColorBlackOnBlack[g];
+			samplevbuff[g].Attributes = attr;
+		}
+		for (size_t g = 0; g < std::min(33ul, defcolorlen) ; g++) {
+			samplevbuff[g + 33].Char.UnicodeChar = Msg::SetColorDefaultColor[g];
+			samplevbuff[g + 33].Attributes = attr;
+		}
+
+		return;
+	}
+
+	for (size_t i = 0; i < 4; i++) {
 		const uint64_t attr = (i > 0) ? smpcolor : smpcolor & 0xFF;
 
-		for(int g = 0; g < 33; g++) {
+		for(size_t g = 0; g < 33; g++) {
 			CHAR_INFO *const vbuff = samplevbuff + i * 33;
 
 			vbuff[g].Char.UnicodeChar = sample_text_str[g];
@@ -382,7 +400,7 @@ void set_color_s::draw_panels_vbuff(void)
 	// 0xBF
 
 	// Fill foreground colors rect
-	for (int i = 0; i < 16; i++) {
+	for (size_t i = 0; i < 16; i++) {
 		CHAR_INFO *const vbuff = cPanel[IDC_FOREGROUND_PANEL].vbuff;
 //		const uint16_t attr = ((dotfc[i] << 4) + i) | COMMON_LVB_REVERSE_VIDEO;
 		const uint16_t attr = (( ((~i)&0XF) << 4) + i) | COMMON_LVB_REVERSE_VIDEO;
@@ -396,7 +414,7 @@ void set_color_s::draw_panels_vbuff(void)
 	}
 
 	// Fill background colors rect
-	for (int i = 0; i < 16; i++) {
+	for (size_t i = 0; i < 16; i++) {
 		CHAR_INFO *const vbuff = cPanel[IDC_BACKGROUND_PANEL].vbuff;
 //		const uint16_t attr = (i << 4) + dotfc[i];
 		const uint16_t attr = (i << 4) + ((~i)&0XF);
@@ -744,9 +762,21 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 
 	colorState.update_color( );
 
+	size_t extrasize = 10;
+	{
+		size_t ml;
+		if ((ml = wcslen(Msg::PickColorStyleOverline)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleStrikeout)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleUnderline)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleInverse)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleBlinking)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleBold)) > extrasize) extrasize = ml;
+		if ((ml = wcslen(Msg::PickColorStyleItalic)) > extrasize) extrasize = ml;
+	}
+
 	DialogDataEx ColorDlgData[] = {
 
-		{DI_DOUBLEBOX, 3, 1, 55, 18, {}, 0, Msg::SetColorTitle},
+		{DI_DOUBLEBOX, 3, 1, int16_t(46 + extrasize), 18, {}, 0, Msg::SetColorTitle},
 
 		{DI_TEXT,  0, 16,  0, 16, {}, DIF_SEPARATOR, L""},
 		{DI_VTEXT, 39, 1, 39, 16, {}, DIF_BOXCOLOR, VerticalLine},
@@ -774,22 +804,22 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 		{DI_USERCONTROL, 26, 10, 28, 10, {}, DIF_NOFOCUS, L"" },
 		{DI_TEXT, 30, 8, 30, 8, {}, 0, L"#"},
 
-		{DI_TEXT, 41, 2, 48, 2, {}, 0, L"Style:"},
-		{DI_CHECKBOX, 41, 3, 48, 3, {}, DIF_AUTOMATION, L"Enable"},
-		{DI_CHECKBOX, 41, 5, 48, 5, {}, DIF_DISABLE, L"Bold"},
-		{DI_CHECKBOX, 41, 6, 48, 6, {}, DIF_DISABLE, L"Italic"},
-		{DI_CHECKBOX, 41, 7, 48, 7, {}, DIF_DISABLE, L"Overline"},
-		{DI_CHECKBOX, 41, 8, 48, 8, {}, DIF_DISABLE, L"Strikeout"},
-		{DI_CHECKBOX, 41, 9, 48, 9, {}, DIF_DISABLE, L"Underline"},
-		{DI_CHECKBOX, 41, 10, 48, 10, {}, DIF_DISABLE, L"Blink"},
-		{DI_CHECKBOX, 41, 11, 48, 11, {}, DIF_DISABLE, L"Inverse"},
+		{DI_TEXT, 41, 2, 48, 2, {}, 0, Msg::PickColorStyle},
+		{DI_CHECKBOX, 41, 3, 48, 3, {}, DIF_AUTOMATION, Msg::PickColorEnableStyle},
+
+		{DI_CHECKBOX, 41, 5, 48, 5, {}, DIF_DISABLE, Msg::PickColorStyleBold},
+		{DI_CHECKBOX, 41, 6, 48, 6, {}, DIF_DISABLE, Msg::PickColorStyleItalic},
+		{DI_CHECKBOX, 41, 7, 48, 7, {}, DIF_DISABLE, Msg::PickColorStyleOverline},
+		{DI_CHECKBOX, 41, 8, 48, 8, {}, DIF_DISABLE, Msg::PickColorStyleStrikeout},
+		{DI_CHECKBOX, 41, 9, 48, 9, {}, DIF_DISABLE, Msg::PickColorStyleUnderline},
+		{DI_CHECKBOX, 41, 10, 48, 10, {}, DIF_DISABLE, Msg::PickColorStyleBlinking},
+		{DI_CHECKBOX, 41, 11, 48, 11, {}, DIF_DISABLE, Msg::PickColorStyleInverse},
 
 		{DI_USERCONTROL, 5, 12, 37, 15, {}, DIF_NOFOCUS, L"" },
 
 		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetColorSet},
 		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetColorReset},
 		{DI_BUTTON, 0, 17, 0, 17, {}, DIF_CENTERGROUP, Msg::SetColorCancel},
-
 	};
 
 	MakeDialogItemsEx(ColorDlgData, ColorDlg);
@@ -808,7 +838,7 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 	}
 
 	Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&colorState);
-	Dlg.SetPosition(-1, -1, 59, 20);
+	Dlg.SetPosition(-1, -1, 50 + extrasize, 20);
 
 	for (size_t i = ID_ST_FG_COLORS_RECT; i <= ID_ST_FRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_FOREGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);

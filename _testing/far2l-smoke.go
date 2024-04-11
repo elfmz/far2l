@@ -5,17 +5,32 @@ import (
 	"os"
 	"net"
 	"fmt"
+	"time"
+	"io/ioutil"
 	"encoding/binary"
 	"path/filepath"
     "github.com/ActiveState/termtest"
+    "github.com/dop251/goja"
 )
+
+type far2l_Status struct {
+	width uint32
+	height uint32
+	title string
+}
+
+type far2l_FoundString struct {
+	i uint32
+	x uint32
+	y uint32
+}
 
 var g_socket *net.UnixConn
 var g_addr *net.UnixAddr
 var g_buf [4096]byte
-var g_width uint32
-var g_height uint32
-var g_title string
+var g_app *termtest.ConsoleProcess
+var g_vm *goja.Runtime
+var g_status far2l_Status
 
 func stringFromBytes(buf []byte) string {
 	last := 0
@@ -24,32 +39,36 @@ func stringFromBytes(buf []byte) string {
 	return string(buf[0:last])
 }
 
-func far2l_ReqRecvStatus() {
+func far2l_ReqRecvStatus() far2l_Status {
 	binary.LittleEndian.PutUint32(g_buf[0:], 1)
 	n, err := g_socket.WriteTo(g_buf[0:4], g_addr)
 	if err != nil || n != 4 {
 		panic(err)
 	}
-	far2l_RecvStatus()
+	return far2l_RecvStatus()
 }
 
-func far2l_RecvStatus() {
+func far2l_RecvStatus() far2l_Status {
 	n, addr, err := g_socket.ReadFromUnix(g_buf[:])
     if err != nil || n != 2068 {
         panic(err)
     }
 	g_addr = addr
-	g_width = binary.LittleEndian.Uint32(g_buf[12:])
-	g_height = binary.LittleEndian.Uint32(g_buf[16:])
-	g_title = stringFromBytes(g_buf[20:])
-	fmt.Println("addr:", g_addr, "width:", g_width, "height:", g_height, "title:", g_title)
+
+	g_status.width = binary.LittleEndian.Uint32(g_buf[12:])
+	g_status.height = binary.LittleEndian.Uint32(g_buf[16:])
+	g_status.title = stringFromBytes(g_buf[20:])
+	fmt.Println("addr:", g_addr, "width:", g_status.width, "height:", g_status.height, "title:", g_status.title)
+	return g_status
 }
 
-func far2l_ReqRecvWaitString(str string, x uint32, y uint32, w uint32, h uint32, tmout uint32) {
-	far2l_ReqRecvWaitStrings([]string{str}, x, y, w, h, tmout)
+func far2l_ReqRecvWaitString(str string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
+	return far2l_ReqRecvWaitStrings([]string{str}, x, y, w, h, tmout)
 }
 
-func far2l_ReqRecvWaitStrings(str_vec []string, x uint32, y uint32, w uint32, h uint32, tmout uint32) {
+func far2l_ReqRecvWaitStrings(str_vec []string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
+	if w == 0xffffffff { w = g_status.width; }
+	if h == 0xffffffff { h = g_status.height; }
 	binary.LittleEndian.PutUint32(g_buf[0:], 3)
 	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
 	binary.LittleEndian.PutUint32(g_buf[8:], x) //left
@@ -81,12 +100,18 @@ func far2l_ReqRecvWaitStrings(str_vec []string, x uint32, y uint32, w uint32, h 
     if err != nil || n != 12 {
         panic(err)
     }
-	found_i := binary.LittleEndian.Uint32(g_buf[0:])
-	found_x := binary.LittleEndian.Uint32(g_buf[4:])
-	found_y := binary.LittleEndian.Uint32(g_buf[8:])
-	fmt.Println("Waited string i:", found_i, "found at x:", found_x, "y:", found_y)
+	out := far2l_FoundString {
+		i:  binary.LittleEndian.Uint32(g_buf[0:]),
+		x: binary.LittleEndian.Uint32(g_buf[4:]),
+		y: binary.LittleEndian.Uint32(g_buf[8:]),
+	}
+	if out.i < uint32(len(str_vec)) {
+		fmt.Println("Waited string i:", out.i, "found at x:", out.x, "y:", out.y, "-", str_vec[out.i])
+	} else {
+		fmt.Println("Wait strings timeout", str_vec)
+	}
+	return out
 }
-
 
 func far2l_ReqBye() {
 	binary.LittleEndian.PutUint32(g_buf[0:], 0)
@@ -96,19 +121,41 @@ func far2l_ReqBye() {
 	}
 }
 
+func far2l_WriteTTY(s string) {
+    g_app.Send(s)
+}
+
+func far2l_ExpectExit(code int, timeout_ms int) string {
+    _, err:= g_app.ExpectExitCode(code, time.Duration(timeout_ms) * 1000000)
+	if err != nil {
+		fmt.Println("ExpectExit", err)
+		return err.Error()
+	}
+	return ""
+}
+
+func far2l_Log(message string) {
+	log.Print(message)
+}
+
+func far2l_Fatal(message string) {
+	log.Fatal(message)
+}
+
+
 func main() {
-	if len(os.Args) != 4 {
-		log.Fatal("Usage: far2l-smoke /path/to/far2l /path/to/test /path/to/results/dir\n")
+	if len(os.Args) < 4 {
+		log.Fatal("Usage: far2l-smoke /path/to/far2l /path/to/results/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
 	}
 	far2l_bin, err := filepath.Abs(os.Args[1])
     if err != nil {
         log.Fatal(err)
     }
-	far2l_sock, err := filepath.Abs(filepath.Join(os.Args[3], "far2l.sock"))
+	far2l_sock, err := filepath.Abs(filepath.Join(os.Args[2], "far2l.sock"))
     if err != nil {
         log.Fatal(err)
     }
-	far2l_log, err := filepath.Abs(filepath.Join(os.Args[3], "far2l.log"))
+	far2l_log, err := filepath.Abs(filepath.Join(os.Args[2], "far2l.log"))
     if err != nil {
         log.Fatal(err)
     }
@@ -116,7 +163,7 @@ func main() {
 	os.Remove(far2l_sock)
 	defer os.Remove(far2l_sock)
 
-    g_socket, err = net.ListenUnixgram("unixgram", &net.UnixAddr{far2l_sock, "unixgram"})
+    g_socket, err = net.ListenUnixgram("unixgram", &net.UnixAddr{Name:far2l_sock, Net:"unixgram"})
     if err != nil {
         log.Fatal(err)
     }
@@ -126,12 +173,39 @@ func main() {
 		Args: []string{far2l_bin, "--tty", "--nodetect", "--mortal", "--test=" + far2l_sock, "-cd", "/usr/include"},
 		Environment : []string{"FAR2L_STD=" + far2l_log},
     }
-    app, err := termtest.New(opts)
-	if err != nil {
-		log.Fatal(err)
+
+	/* initialize */
+	fmt.Println("Initializing JS VM...")
+	g_vm = goja.New()
+
+	/* goja does not expose a standard "global" by default */
+	_, err = g_vm.RunString("var global = (function(){ return this; }).call(null);")
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_WaitStrings", far2l_ReqRecvWaitStrings)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_WaitString", far2l_ReqRecvWaitString)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_Status", far2l_ReqRecvStatus)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_WriteTTY", far2l_WriteTTY)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_Bye", far2l_ReqBye)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_ExpectExit", far2l_ExpectExit)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_Log", far2l_Log)
+	if err != nil { panic(err) }
+	err = g_vm.Set("far2l_Fatal", far2l_Fatal)
+	if err != nil { panic(err) }
+
+
+
+	for i := 3; i < len(os.Args); i++ {
+		fmt.Println("---> Running test:", os.Args[i])
+		runTest(opts, os.Args[i])
 	}
-	fmt.Println("Waiting for status....")
-	far2l_RecvStatus()
+
+/*
 	fmt.Println("Talking....")
     //app.Expect("/usr/include")
 	far2l_ReqRecvWaitStrings([]string{"foobar", "/usr/include"}, 0, 0, g_width, 1, 1000)
@@ -144,4 +218,27 @@ func main() {
     app.Send("\r\n")
 	far2l_ReqBye()
     app.ExpectExitCode(0)
+*/
+}
+
+func runTest(opts termtest.Options, file string) {
+	var err error
+    g_app, err = termtest.New(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer g_app.Close()
+	fmt.Println("Waiting far2l start....")
+	fst:= far2l_RecvStatus()
+	far2l_ReqRecvWaitStrings([]string{"foobar", "/usr/include"}, 0, 0, fst.width, 1, 1000)
+
+	fmt.Println("Testing....")
+	data, err := ioutil.ReadFile(file)
+	if err != nil { panic(err) }
+	src := string(data)
+	rv, err := g_vm.RunString(src)
+	if err != nil { panic(err) }
+	if code := rv.Export().(int64); code != 0 {
+ 	   fmt.Println("[FAILED] Error", code, "from test", file)
+	}
 }

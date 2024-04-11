@@ -719,7 +719,7 @@ static intptr_t WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			case KEY_PGDN:
 			case KEY_NUMPAD3:
 			case KEY_LEFT:
-			case KEY_NUMPAD4: 
+			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT: {
 				if (colorState->hsvbuff[id] < 4)
 					colorState->hsvbuff[id] = 0;
@@ -751,7 +751,7 @@ static intptr_t WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			const uint32_t id = Param1 - ID_PC256_COLOR_HUE;
 			switch(Param2) {
 			case KEY_LEFT:
-			case KEY_NUMPAD4: 
+			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT: {
 				if (colorState->hsvrgbbuff[id] <= 0)
 					break;
@@ -801,7 +801,7 @@ static intptr_t WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			case KEY_PGUP:
 			case KEY_NUMPAD9:
 			case KEY_LEFT:
-			case KEY_NUMPAD4: 
+			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT:
 				update_temp_index_and_cursor(index - 1, true);
 			break;
@@ -835,7 +835,7 @@ static intptr_t WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			uint32_t &index = colorState->index;
 			switch(Param2) {
 			case KEY_LEFT:
-			case KEY_NUMPAD4: 
+			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT:
 				update_tab_index_and_cursor(index - 1);
 			break;

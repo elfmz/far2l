@@ -432,7 +432,7 @@ void set_color_s::draw_panels_vbuff(void)
 #define DM_UPDATECURSOR (DM_USER + 1)
 #define DM_UPDATECOLORCODE (DM_USER + 2)
 
-intptr_t WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
 {
 	auto update_cursor = [=]() {
 		COORD coord;
@@ -588,7 +588,7 @@ intptr_t WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 	return -1;
 }
 
-static intptr_t WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
 {
 	set_color_s *colorState = (set_color_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 

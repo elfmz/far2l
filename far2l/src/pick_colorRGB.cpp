@@ -466,7 +466,7 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 	vbuff[index].Char.UnicodeChar = L'\x2022'; // DOT
 }
 
-static intptr_t WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
 {
 	pick_colorRGB_s *colorState = (pick_colorRGB_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 	volatile uint32_t &mode = colorState->mode;

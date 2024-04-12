@@ -490,6 +490,26 @@ void BaseDialog::FileSizeToDialogControl(int ctl, unsigned long long value)
 	TextToDialogControl(ctl, FileSizeString(value));
 }
 
+bool BaseDialog::DateTimeToDialogControl(int ctl, const FILETIME *ft)
+{
+	if (!ft->dwHighDateTime) {
+		//TextToDialogControl(ctl, "");
+		return false;
+	}
+
+	FILETIME ct;
+	SYSTEMTIME st;
+	WINPORT(FileTimeToLocalFileTime)(ft, &ct);
+	WINPORT(FileTimeToSystemTime)(&ct, &st);
+
+	char str[0x100] = {};
+	snprintf(str, sizeof(str) - 1, "%04u-%02u-%02u %02u:%02u:%02u.%03u",
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	TextToDialogControl(ctl, str);
+
+	return true;
+}
+
 void BaseDialog::TimePeriodToDialogControl(int ctl, unsigned long long msec_ull)
 {
 //	unsigned long long msec_ull = msec.count();

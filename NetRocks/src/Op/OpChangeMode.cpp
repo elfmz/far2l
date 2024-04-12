@@ -40,6 +40,9 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 		}
 	}
 	std::string display_path = base_dir, link_target;
+	FILETIME ftCreationTime = {0};
+	FILETIME ftLastAccessTime = {0};
+	FILETIME ftLastWriteTime = {0};
 	if (items_count == 1) {
 		if (!display_path.empty() && display_path.back() != '/') {
 			display_path+= '/';
@@ -50,9 +53,14 @@ OpChangeMode::OpChangeMode(std::shared_ptr<IHost> &base_host, const std::string 
 				link_target.clear();
 			}
 		}
+		ftCreationTime = items->FindData.ftCreationTime;
+		ftLastAccessTime = items->FindData.ftLastAccessTime;
+		ftLastWriteTime = items->FindData.ftLastWriteTime;
 	}
 
-	if (!ConfirmChangeMode(items_count, display_path, link_target, owner, group, has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
+	if (!ConfirmChangeMode(items_count, display_path, link_target, owner, group,
+			ftCreationTime, ftLastAccessTime, ftLastWriteTime,
+			has_dirs, mode_all, mode_any).Ask(_recurse, _mode_set, _mode_clear)) {
 		throw AbortError();
 	}
 

@@ -111,6 +111,8 @@ protected:
 
 	void FileSizeToDialogControl(int ctl, unsigned long long value);
 
+	bool DateTimeToDialogControl(int ctl, const FILETIME *ft);
+
 	void TimePeriodToDialogControl(int ctl, unsigned long long msec);
 
 	void ProgressBarToDialogControl(int ctl, int percents = -1);

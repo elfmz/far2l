@@ -670,6 +670,9 @@ class ListPwGrEnt {
 	std::vector<FarListItem> Items;
 	FarList List;
 	void Append(const wchar_t *s) {
+		for(const FarListItem& item : Items) // skip adding duplicates
+			if ( !wcscmp(item.Text, s) )
+				return;
 		Items.emplace_back();
 		Items.back().Flags = 0;
 		Items.back().Text = wcsdup(s);

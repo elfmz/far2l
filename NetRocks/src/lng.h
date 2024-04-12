@@ -284,6 +284,10 @@ enum LanguageID
 	MModeSetGID,
 	MModeSticky,
 	MModeOriginal,
+	MTimeTitle,
+	MTimeAccess,
+	MTimeModification,
+	MTimeChange,
 
 	MFTPOptionsTitle,
 	MFTPSOptionsTitle,

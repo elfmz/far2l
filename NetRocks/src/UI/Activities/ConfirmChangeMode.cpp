@@ -53,6 +53,7 @@ void ConfirmChangeMode::StateToModes(int ctl, mode_t &mode_set, mode_t &mode_cle
 
 ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &display_path, const std::string &link_target,
 	const std::wstring &owner, const std::wstring &group,
+	FILETIME ftCreationTime, FILETIME ftLastAccessTime, FILETIME ftLastWriteTime,
 	bool may_recurse, mode_t mode_all, mode_t mode_any)
 {
 	_di.SetBoxTitleItem(MConfirmChangeModeTitle);
@@ -72,6 +73,26 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 		_di.AddAtLine(DI_TEXT, 5,62, 0, MThatIsSymlink);
 		_di.NextLine();
 		_di.AddAtLine(DI_EDIT, 5,62, DIF_READONLY, link_target.c_str());
+	}
+
+	if (ftCreationTime.dwHighDateTime != 0 || ftCreationTime.dwLowDateTime != 0
+			|| ftLastAccessTime.dwHighDateTime != 0 || ftLastAccessTime.dwLowDateTime != 0
+			|| ftLastWriteTime.dwHighDateTime != 0 || ftLastWriteTime.dwLowDateTime != 0) {
+		int i;
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR, MTimeTitle);
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,35, 0, MTimeAccess);
+		i = _di.AddAtLine(DI_EDIT, 37,62, DIF_READONLY);
+		DateTimeToDialogControl(i, &ftLastAccessTime);
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,35, 0, MTimeModification);
+		i = _di.AddAtLine(DI_EDIT, 37,62, DIF_READONLY);
+		DateTimeToDialogControl(i, &ftLastWriteTime);
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,35, 0, MTimeChange);
+		i = _di.AddAtLine(DI_EDIT, 37,62, DIF_READONLY);
+		DateTimeToDialogControl(i, &ftCreationTime);
 	}
 
 	_di.NextLine();
@@ -137,7 +158,7 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 
 	if (may_recurse) {
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,62, DIF_DISABLE, "(X will automatic add to directories if it had original R)");
+		_di.AddAtLine(DI_TEXT, 5,62, DIF_DISABLE, "(X will be automatically added to dirs having original R)");
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 		_di.NextLine();

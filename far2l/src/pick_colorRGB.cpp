@@ -33,20 +33,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 #include <wchar.h>
+#include "setcolor.hpp"
+#include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
-
+#include "pick_color.hpp"
+#include "pick_color_common.hpp"
 #include "keys.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
-
+#include "vmenu.hpp"
 #include "dialog.hpp"
+#include "filepanels.hpp"
+#include "ctrlobj.hpp"
 #include "savescr.hpp"
 #include "scrbuf.hpp"
+#include "panel.hpp"
+#include "chgmmode.hpp"
 #include "interf.hpp"
 #include "palette.hpp"
 #include "config.hpp"
 
-#include "pick_color_common.hpp"
+#include "VT256ColorTable.h" // For g_VT256ColorTable[VT_256COLOR_TABLE_COUNT]
 
 uint32_t g_tempcolorsRGB[20] = {
 		0x48533A, 0x637350, 0x48533A, 0x637350, 0x48533A, 0x637350, 0x48533A, 0x637350, 

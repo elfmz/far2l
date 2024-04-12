@@ -445,7 +445,7 @@ void pick_color256_s::draw_table_vbuff(void)
 	vbuff[index].Char.UnicodeChar = L'\x2022'; // DOT
 }
 
-static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	pick_color256_s *colorState = (pick_color256_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 	uint32_t &mode = colorState->mode;
@@ -454,7 +454,7 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 
 	auto update_index_text = [&]() {
 		swprintf(wsIndex, 16, L"%3u/255", colorState->index256);
-		SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_PC256_TEXT_INFO, (uintptr_t)wsIndex);
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_PC256_TEXT_INFO, (LONG_PTR)wsIndex);
 	};
 
 	auto update_table_cursor = [=]() {
@@ -463,20 +463,20 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			coord = { int16_t(colorState->index & 63), int16_t(colorState->index >> 6) };
 		else
 			coord = { int16_t(((colorState->index & 15) << 2) + 1), int16_t(((colorState->index >> 4) << 1) + 1)};
-		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_TABLE, (intptr_t)&coord);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_TABLE, (LONG_PTR)&coord);
 	};
 
 	auto update_controls_cursor = [=]() {
 		COORD coord = {(colorState->mode == 1) ? int16_t(colorState->hsvt.h >> 2) : int16_t(colorState->hsvt.s >> 2), 0};
-		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_CONTROL1, (intptr_t)&coord);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_CONTROL1, (LONG_PTR)&coord);
 		coord = {int16_t(colorState->hsvt.v >> 2), 0 };
-		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_CONTROL2, (intptr_t)&coord);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_CONTROL2, (LONG_PTR)&coord);
 	};
 
 	auto on_update_hsvrgb = [=](uint32_t upid) {
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 		colorState->on_update_hsvrgb(upid);
-		SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_PC256_EDIT_RGB, (uintptr_t)colorState->wsRGB);
+		SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_PC256_EDIT_RGB, (LONG_PTR)colorState->wsRGB);
 		update_table_cursor();
 		update_controls_cursor();
 		update_index_text();
@@ -509,7 +509,7 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			newindex += 20;
 		newindex %= 20;
 		COORD coord = { int16_t(newindex * 2), 0 };
-		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_TEMP, (intptr_t)&coord);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PC256_COLOR_TEMP, (LONG_PTR)&coord);
 		colorState->update_temp_index(newindex);
 		if (bRedraw)
 			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
@@ -557,7 +557,7 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 			break;
 		}
 		if (Param1 == ID_PC256_EDIT_RGB) {
-			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_PC256_EDIT_RGB, (uintptr_t)colorState->wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_PC256_EDIT_RGB, (LONG_PTR)colorState->wsRGB);
 			break;
 		}
 	break;
@@ -577,11 +577,11 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 
 		union { SMALL_RECT drect; uint64_t i64drect; };
 		union { SMALL_RECT irect; uint64_t i64irect; };
-		SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (intptr_t)&drect);
+		SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&drect);
 		drect.Right = drect.Left;
 		drect.Bottom = drect.Top;
 
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID_PC256_COLOR_TABLE, (intptr_t)&irect);
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID_PC256_COLOR_TABLE, (LONG_PTR)&irect);
 		i64irect += i64drect;
 
 		if (!mouseB)
@@ -646,7 +646,7 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, int
 
 	case DN_EDITCHANGE:
 		if (Param1 == ID_PC256_EDIT_RGB) {
-			SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_PC256_EDIT_RGB, (uintptr_t)colorState->wsRGB);
+			SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_PC256_EDIT_RGB, (LONG_PTR)colorState->wsRGB);
 			uint32_t newrgb = RGB_2_BGR(wcstoul(colorState->wsRGB, nullptr, 16));
 			if (newrgb != colorState->rgb) {
 				colorState->rgb = newrgb;

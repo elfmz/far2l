@@ -179,7 +179,7 @@ struct color_panel_s
 		vbuff_rgb[2].Attributes = attr;
 	}
 
-	intptr_t WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2);
+	LONG_PTR WINAPI ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 };
 
 struct set_color_s
@@ -432,13 +432,13 @@ void set_color_s::draw_panels_vbuff(void)
 #define DM_UPDATECURSOR (DM_USER + 1)
 #define DM_UPDATECOLORCODE (DM_USER + 2)
 
-LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	auto update_cursor = [=]() {
 		COORD coord;
 		coord.X = (index & 7) * 3 + 1;
 		coord.Y = (index > 7);
-		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_CP_COLORS_RECT + offset, (intptr_t)&coord);
+		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_CP_COLORS_RECT + offset, (LONG_PTR)&coord);
 	};
 
 	auto update_index_and_cursor = [&](uint32_t newindex) {
@@ -481,7 +481,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 
 	case ID_CP_EDIT_RGB:
 		if (Msg == DN_EDITCHANGE) {
-			SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_CP_EDIT_RGB + offset, (uintptr_t)wsRGB);
+			SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_CP_EDIT_RGB + offset, (LONG_PTR)wsRGB);
 			update_rgb_color_from_str( );
 			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
 		}
@@ -501,7 +501,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 			color = g_VT256ColorTable[(index256 - 16) & 255];
 			update_str_from_rgb_color( );
 			draw_rgb_sample( );
-			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_CP_EDIT_RGB + offset, (uintptr_t)wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_CP_EDIT_RGB + offset, (LONG_PTR)wsRGB);
 			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
 		}
 	break;
@@ -516,7 +516,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 			color = newrgb;
 			update_str_from_rgb_color( );
 			draw_rgb_sample( );
-			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_CP_EDIT_RGB + offset, (uintptr_t)wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_CP_EDIT_RGB + offset, (LONG_PTR)wsRGB);
 			SendDlgMessage(hDlg, DM_UPDATECOLORCODE, 0, 0);
 		}
 	break;
@@ -588,7 +588,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 	return -1;
 }
 
-static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_t Param2)
+static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	set_color_s *colorState = (set_color_s *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 
@@ -703,8 +703,8 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_
 		if (Param1 == ID_ST_BUTTON_RESTORE) {
 			SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 			colorState->reset_color( );
-			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_ST_EDIT_FORERGB, (uintptr_t)colorState->cPanel[set_color_s::IDC_FOREGROUND_PANEL].wsRGB);
-			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_ST_EDIT_BACKRGB, (uintptr_t)colorState->cPanel[set_color_s::IDC_BACKGROUND_PANEL].wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_ST_EDIT_FORERGB, (LONG_PTR)colorState->cPanel[set_color_s::IDC_FOREGROUND_PANEL].wsRGB);
+			SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_ST_EDIT_BACKRGB, (LONG_PTR)colorState->cPanel[set_color_s::IDC_BACKGROUND_PANEL].wsRGB);
 			set_focus( );
 			update_dialog_items( );
 			SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
@@ -721,7 +721,7 @@ static LONG_PTR WINAPI GetColorDlgProc(HANDLE hDlg, int Msg, int Param1, intptr_
 
 	if (Param1 >= ID_CP_FIRST && Param1 < ID_CP_FIRST + ID_CP_TOTAL * 2) {
 		const uint32_t id = (Param1 >= ID_CP_FIRST + ID_CP_TOTAL);
-		const intptr_t rv = colorState->cPanel[id].ColorPanelUserProc(hDlg, Msg, (Param1 - id * ID_CP_TOTAL) - ID_CP_FIRST, Param2);
+		const LONG_PTR rv = colorState->cPanel[id].ColorPanelUserProc(hDlg, Msg, (Param1 - id * ID_CP_TOTAL) - ID_CP_FIRST, Param2);
 
 		if (rv != -1)
 			return rv;

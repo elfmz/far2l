@@ -1,7 +1,9 @@
-far2l_WriteTTY("\x1b[21~");
-far2l_WaitString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
-far2l_Log("Got exit....")
-far2l_WriteTTY("\r\n");
-far2l_Bye("\r\n");
-far2l_ExpectExit(0, 10000)
+StartApp(["--tty", "--nodetect", "--mortal", "-cd", "/usr/include"]);
+ExpectString("/usr/include", 0, 0, -1, -1, 10000);
+status = AppStatus();
+LogInfo("Status: Width=" + status.Width + " Height=" + status.Width + " Title: " + status.Title);
+WriteTTY("\x1b[21~");
+ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
+WriteTTY("\r\n");
+ExpectAppExit(0, 10000)
 0;

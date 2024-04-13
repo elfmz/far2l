@@ -228,7 +228,7 @@ Supporting extended far2l keyboard shortcuts and clipboard access
  * Wez's Terminal Emulator (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
  * iTerm2 (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
  * Windows Terminal (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support)
- * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
+ * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/ivanshatsky/putty4far2l/releases
  * Kitty (another fork of Putty) also have far2l TTY extensions support: https://github.com/cyd01/KiTTY
  * putty-nd, one more putty fork with extensions support: https://sourceforge.net/p/putty-nd/
 

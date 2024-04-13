@@ -346,7 +346,7 @@ public:
 	{
 		EC_ENABLEAUTOCOMPLETE       = 0x1,
 		EC_ENABLEFNCOMPLETE         = 0x2,
-		EC_ENABLEFNCOMPLETE_ESCAPED = EC_ENABLEFNCOMPLETE | 0x4,
+		EC_ENABLEFNCOMPLETE_ESCAPED = 0x4,
 	};
 
 	EditControl(ScreenObject *pOwner = nullptr, Callback *aCallback = nullptr, bool bAllocateData = true,

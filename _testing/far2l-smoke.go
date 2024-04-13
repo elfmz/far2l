@@ -27,6 +27,32 @@ type far2l_FoundString struct {
 	Y uint32
 }
 
+type far2l_CellRaw struct {
+	Text string
+	Attributes uint64
+}
+
+type far2l_Cell struct {
+	Text string
+	BackTrue uint32
+	ForeTrue uint32
+	BackRGBI uint8
+	ForeRGBI uint8
+	IsBackTrue bool
+	IsForeTrue bool
+	ForeBlue bool
+	ForeGreen bool
+	ForeRed bool
+	ForeIntense bool
+	BackBlue bool
+	BackGreen bool
+	BackRed bool
+	BackIntense bool
+	ReverseVideo bool
+	Underscore bool
+	Strikeout bool
+}
+
 var g_far2l_log string
 var g_far2l_sock string
 var g_far2l_bin string
@@ -101,7 +127,7 @@ func far2l_ReqRecvExpectString(str string, x uint32, y uint32, w uint32, h uint3
 func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
 	if w == 0xffffffff { w = g_status.Width; }
 	if h == 0xffffffff { h = g_status.Height; }
-	binary.LittleEndian.PutUint32(g_buf[0:], 3)
+	binary.LittleEndian.PutUint32(g_buf[0:], 3) //TEST_CMD_WAIT_STRING
 	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
 	binary.LittleEndian.PutUint32(g_buf[8:], x) //left
 	binary.LittleEndian.PutUint32(g_buf[12:], y) //top
@@ -143,6 +169,48 @@ func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, 
 		fmt.Println("Wait strings timeout", str_vec)
 	}
 	return out
+}
+
+func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
+	binary.LittleEndian.PutUint32(g_buf[0:], 2) // TEST_CMD_READ_CELL
+	binary.LittleEndian.PutUint32(g_buf[4:], x) // left
+	binary.LittleEndian.PutUint32(g_buf[8:], y) // top
+	n, err := g_socket.WriteTo(g_buf[0:12], g_addr)
+	if err != nil || n != 12 {
+		panic(err)
+	}
+	n, err = g_socket.Read(g_buf[:])
+    if err != nil || n != 2056 {
+        panic(err)
+    }
+	return far2l_CellRaw {
+		Text: stringFromBytes(g_buf[8:]),
+		Attributes: binary.LittleEndian.Uint64(g_buf[0:]),
+	}
+}
+
+func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
+	raw_cell := far2l_ReqRecvReadCellRaw(x, y)
+	return far2l_Cell {
+		Text:         raw_cell.Text,
+		BackTrue:     uint32((raw_cell.Attributes >> 40) & 0xFFFFFF),
+		ForeTrue:     uint32((raw_cell.Attributes >> 16) & 0xFFFFFF),
+		BackRGBI:     uint8(((raw_cell.Attributes >> 4) & 0xF)),
+		ForeRGBI:     uint8((raw_cell.Attributes & 0xF)),
+		IsBackTrue:   (raw_cell.Attributes & 0x0200) != 0,
+		IsForeTrue:   (raw_cell.Attributes & 0x0100) != 0,
+		ForeBlue:     (raw_cell.Attributes & 0x0001) != 0,
+		ForeGreen:    (raw_cell.Attributes & 0x0002) != 0,
+		ForeRed:      (raw_cell.Attributes & 0x0004) != 0,
+		ForeIntense:  (raw_cell.Attributes & 0x0008) != 0,
+		BackBlue:     (raw_cell.Attributes & 0x0010) != 0,
+		BackGreen:    (raw_cell.Attributes & 0x0020) != 0,
+		BackRed:      (raw_cell.Attributes & 0x0040) != 0,
+		BackIntense:  (raw_cell.Attributes & 0x0080) != 0,
+		ReverseVideo: (raw_cell.Attributes & 0x4000) != 0,
+		Underscore:   (raw_cell.Attributes & 0x8000) != 0,
+		Strikeout:    (raw_cell.Attributes & 0x2000) != 0,
+	}
 }
 
 func far2l_ReqBye() {
@@ -204,6 +272,11 @@ func initVM() {
 	err = g_vm.Set("StartApp", far2l_Start)
 	if err != nil { panic(err) }
 	err = g_vm.Set("AppStatus", far2l_ReqRecvStatus)
+	if err != nil { panic(err) }
+
+	err = g_vm.Set("ReadCellRaw", far2l_ReqRecvReadCellRaw)
+	if err != nil { panic(err) }
+	err = g_vm.Set("ReadCell", far2l_ReqRecvReadCell)
 	if err != nil { panic(err) }
 
 	err = g_vm.Set("ExpectStrings", far2l_ReqRecvExpectStrings)

@@ -2671,7 +2671,7 @@ void EditControl::PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strF
 			if (!m_pSuggestor)
 				m_pSuggestor.reset(new MenuFilesSuggestor);
 
-			m_pSuggestor->Suggest(strFilter, ComplMenu, 0); // 0 - always not escaping path names
+			m_pSuggestor->Suggest(strFilter, ComplMenu, ECFlags.Check(EC_ENABLEFNCOMPLETE_ESCAPED));
 		}
 	}
 }

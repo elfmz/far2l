@@ -175,7 +175,7 @@ void *FilesSuggestor::ThreadProc()
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu, int escaping)
+void MenuFilesSuggestor::Suggest(const wchar_t *filter, VMenu& menu, bool escaping)
 {
 	if (!filter || !*filter) {
 		return;

@@ -51,6 +51,7 @@ class ConfirmChangeMode : protected BaseDialog
 public:
 	ConfirmChangeMode(int selected_count, const std::string &display_path, const std::string &link_target,
 		const std::wstring &owner, const std::wstring &group,
+		FILETIME ftCreationTime, FILETIME ftLastAccessTime, FILETIME ftLastWriteTime,
 		bool may_recurse, mode_t mode_all, mode_t mode_any);
 
 	bool Ask(bool &recurse, mode_t &mode_set, mode_t &mode_clear);

@@ -613,7 +613,25 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_utimens(const char *f
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_futimens(int fd, const struct timespec times[2])
 {
-	return futimens(fd, times);
+    int saved_errno = errno;
+    int r = futimens(fd, times);
+    if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
+        try {
+            ClientTransaction ct(SUDO_CMD_FUTIMENS);
+            ct.SendFD(fd);
+            ct.SendPOD(times[0]);
+            ct.SendPOD(times[1]);
+            r = ct.RecvInt();
+            if (r==-1)
+                ct.RecvErrno();
+            else
+                errno = saved_errno;
+        } catch(std::exception &e) {
+            fprintf(stderr, "sudo_client: sdc_futimens('%d') - error %s\n", fd, e.what());
+            r = -1;
+        }
+    }
+    return r;
 }
 
 static int common_two_paths(SudoCommand cmd,

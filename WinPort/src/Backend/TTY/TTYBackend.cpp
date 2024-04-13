@@ -219,7 +219,7 @@ static bool UnderWayland()
 
 void TTYBackend::ReaderThread()
 {
-    bool prev_far2l_tty = false;
+	bool prev_far2l_tty = false;
 	while (!_exiting) {
 		_far2l_cursor_height = -1; // force cursor height update on next output dispatch
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
@@ -231,10 +231,10 @@ void TTYBackend::ReaderThread()
 			}
 
 		} else {
-            if ((_nodetect & NODETECT_X)==0) {
+			if ((_nodetect & NODETECT_X)==0) {
 
 				// disable xi on Wayland as it not work there anyway and also causes delays
-                _ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
+				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {

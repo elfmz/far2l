@@ -5,8 +5,8 @@ if [ "$APP" = "" ]; then
 	echo 'Note that far2l must be built with -DTESTING=Yes'
 	exit 1
 fi
-if [ ! -f ./far2l-smoke ]; then
-	echo PREPARE
+if [ ! -f ./far2l-smoke ] || [ ./far2l-smoke -ot ./far2l-smoke.go ]; then
+	echo '--->' Prepare
 	go get far2l-smoke
 	echo PREPARE: downloading modules
 	go mod download
@@ -14,4 +14,4 @@ if [ ! -f ./far2l-smoke ]; then
 	go build
 	echo PREPARE: done
 fi
-./far2l-smoke "$APP" /tmp/far2l-smoke/output tests/test*.js 
+./far2l-smoke "$APP" /tmp/far2l-smoke/output tests/*.js 

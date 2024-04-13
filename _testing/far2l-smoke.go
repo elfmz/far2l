@@ -261,7 +261,6 @@ func main() {
 }
 
 func runTest(file string) {
-	fmt.Println("Testing....")
 	defer far2l_Close()
 	data, err := ioutil.ReadFile(file)
 	if err != nil { panic(err) }

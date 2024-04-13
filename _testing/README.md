@@ -61,7 +61,35 @@ Returns more 'decomposed' (comparing to Raw version) structure wich has followin
 
 ---------------------------------------------------------
 
-`ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`
+`BoundedLines(left, top, width, height, " \t")`
+
+Returns array of lines bounded by specified rectangle.
+Optionally trims edges of each line from trim_chars characters if its not empty.
+
+---------------------------------------------------------
+
+`SurroundedLines(x, y, "║═│─", " \t")`
+
+Returns array of lines bounded by any of specified in boundary_chars characters.
+x, y represends coordinates of any cell inside of required area
+Optionally trims edges of each line from trim_chars characters if its not empty.
+
+---------------------------------------------------------
+
+`CheckCellChar(x, y, "abcdef...")`  
+`CheckCellCharOrDie(x, y, "abcdef...")`
+
+Checks if cell under specified coordinates contains any of characters contained in specified string.
+
+Returns matched character. But if no character matched then:
+ * CheckCellChar returns empty string
+ * CheckCellCharOrDie aborts execution
+
+
+---------------------------------------------------------
+
+`ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
+`ExpectStringsOrDie(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`
 
 Waits given amount of milliseconds for any of given strings will appear in provided rectangular area.
 
@@ -69,39 +97,45 @@ Returns result as structure of following fields, that defines index of found str
  * I uint32
  * X uint32
  * Y uint32
-In case no string found before timeout reached - all fields set to 0xffffffff (-1)
+In case no string found before timeout reached:
+ * ExpectStrings returns all fields set to 0xffffffff (-1)
+ * ExpectStringsOrDie aborts execution
 
 ---------------------------------------------------------
 
-`ExpectString("string", x, y, w, h, timeout_ms)`
+`ExpectString("string", x, y, w, h, timeout_ms)`  
+`ExpectStringOrDie("string", x, y, w, h, timeout_ms)`
 
 Simplified version of ExpectStrings that waits for one string only.
 
-Returns same structure as ExpectStrings.
+Returns same as ExpectStrings.
 
 ---------------------------------------------------------
 
-`ExpectAppExit(code, timeout_ms)`
+`ExpectAppExit(code, timeout_ms)`  
+`ExpectAppExitOrDie(code, timeout_ms)`
 
 Expects that far2l will exit with specified exit code withing given milliseconds of timeout.
 
-Returns empty string if everything happen as expected, otherwise will return string with problem description.
+Returns empty string if everything happen as expected, otherwise:
+ * ExpectAppExit returns string with problem description
+ * ExpectAppExitOrDie aborts execution
 
 ---------------------------------------------------------
 
-`LogInfo(string)`
+`LogInfo("string")`
 
 Writes given string to test output.
 
 ---------------------------------------------------------
 
-`LogFatal(string)`
+`LogFatal("string")`
 
 Writes given string to test output and aborts tests.
 
 ---------------------------------------------------------
 
-`WriteTTY(string)`
+`WriteTTY("string")`
 
 Writes given string to stdin of pseudoterminal where tested far2l is running.
 
@@ -109,7 +143,7 @@ Writes given string to stdin of pseudoterminal where tested far2l is running.
 
 `CtrlC()`
 
-Generates Ctrl+C event on pseudoterminal where tested far2l is running.
+Generates Ctrl+C for tested far2l.
 
 ---------------------------------------------------------
 
@@ -118,3 +152,9 @@ Generates Ctrl+C event on pseudoterminal where tested far2l is running.
 Runs given command, returns empty string if start succeeded and command returned zero code, otherwise returns error description.
 
 Note that command is run NOT in pseudoterminal where tested far2l is running.
+
+---------------------------------------------------------
+
+`Sleep(msec)`
+
+Pauses execution for specified amount of milliseconds

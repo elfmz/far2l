@@ -221,15 +221,24 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **CLion**: the same as **QtCreator**.
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
 
-### Useful 3rd-party extras
+### Terminals and SSH clients
+Supporting extended far2l keyboard shortcuts and clipboard access
 
- * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
+ * kovidgoyal's kitty (Linux, macOS, *BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
+ * Wez's Terminal Emulator (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
+ * iTerm2 (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
+ * Windows Terminal (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support)
  * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/unxed/putty4far2l
  * Kitty (another fork of Putty) also have far2l TTY extensions support: https://github.com/cyd01/KiTTY
  * putty-nd, one more putty fork with extensions support: https://sourceforge.net/p/putty-nd/
+
+### Useful 3rd-party extras
+
+ * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
  * Turbo Vision, TUI framework supporting far2l terminal extensions: https://github.com/magiblot/tvision
  * turbo, text editor supporting far2l terminal extensions: https://github.com/magiblot/turbo
- * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2l-deb/blob/master/misc/far2l_import.pl
+ * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
+ * Community wiki & tips (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
 ## Notes on porting and FAR Plugin API changes
  * See HACKING.md

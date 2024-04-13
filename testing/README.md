@@ -126,15 +126,15 @@ Writes given string to test output and aborts tests.
 
 ---------------------------------------------------------
 
-`WriteTTY("string")`
+`TTYWrite("string")`
 
 Writes given string to stdin of pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------
 
-`CtrlC()`
+`TTYCtrlC()`
 
-Generates Ctrl+C for tested far2l.
+Generates Ctrl+C for pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------
 
@@ -152,40 +152,40 @@ Pauses execution for specified amount of milliseconds
 
 ---------------------------------------------------------
 
-`ToggleShift(pressed bool)`
-`ToggleLCtrl(pressed bool)`
-`ToggleRCtrl(pressed bool)`
-`ToggleLAlt(pressed bool)`
+`ToggleShift(pressed bool)`  
+`ToggleLCtrl(pressed bool)`  
+`ToggleRCtrl(pressed bool)`  
+`ToggleLAlt(pressed bool)`  
 `ToggleRAlt(pressed bool)`
 
 Simulate changing state of specific named control key. Changed state affects all following keypresses.
 
 ---------------------------------------------------------
 
-`TypeBack`  
-`TypeEnter`  
-`TypeEscape`  
-`TypePageUp`  
-`TypePageDown`  
-`TypeEnd`  
-`TypeHome`  
-`TypeLeft`  
-`TypeUp`  
-`TypeRight`  
-`TypeDown`  
-`TypeIns`  
-`TypeDel`
+`TypeBack()`  
+`TypeEnter()`  
+`TypeEscape()`  
+`TypePageUp()`  
+`TypePageDown()`  
+`TypeEnd()`  
+`TypeHome()`  
+`TypeLeft()`  
+`TypeUp()`  
+`TypeRight()`  
+`TypeDown()`  
+`TypeIns()`  
+`TypeDel()`
 
 Simulate typing of specific named key
 
 ---------------------------------------------------------
 
-`TypeAdd`  
-`TypeSub`  
-`TypeMul`  
-`TypeDiv`  
-`TypeSeparator`  
-`TypeDecimal`
+`TypeAdd()`  
+`TypeSub()`  
+`TypeMul()`  
+`TypeDiv()`  
+`TypeSeparator()`  
+`TypeDecimal()`
 
 Simulate typing of specific named NumPad key
 

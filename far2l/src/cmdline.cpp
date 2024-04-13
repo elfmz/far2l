@@ -77,7 +77,8 @@ CommandLine::CommandLine()
 	:
 	CmdStr(CtrlObject->Cp(), 0, true, CtrlObject->CmdHistory, 0,
 			(Opt.CmdLine.AutoComplete ? EditControl::EC_ENABLEAUTOCOMPLETE : 0)
-					| EditControl::EC_ENABLEFNCOMPLETE),
+					| EditControl::EC_ENABLEFNCOMPLETE
+					| EditControl::EC_ENABLEFNCOMPLETE_ESCAPED),
 	BackgroundScreen(nullptr),
 	LastCmdPartLength(-1),
 	PushDirStackSize(0)

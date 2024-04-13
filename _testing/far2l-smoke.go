@@ -6,6 +6,7 @@ import (
 	"net"
 	"fmt"
 	"time"
+	"strings"
 	"os/exec"
 	"io/ioutil"
 	"encoding/binary"
@@ -124,6 +125,10 @@ func far2l_ReqRecvExpectString(str string, x uint32, y uint32, w uint32, h uint3
 	return far2l_ReqRecvExpectStrings([]string{str}, x, y, w, h, tmout)
 }
 
+func far2l_ReqRecvExpectStringOrDie(str string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
+	return far2l_ReqRecvExpectStringsOrDie([]string{str}, x, y, w, h, tmout)
+}
+
 func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
 	if w == 0xffffffff { w = g_status.Width; }
 	if h == 0xffffffff { h = g_status.Height; }
@@ -171,6 +176,15 @@ func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, 
 	return out
 }
 
+func far2l_ReqRecvExpectStringsOrDie(str_vec []string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
+	out := far2l_ReqRecvExpectStrings(str_vec, x, y, w, h, tmout)
+	if out.I == 0xffffffff {
+		panic(fmt.Sprintf("Couldn't find at [%d +%d : %d +%d] any of expected strings: %v", x, w, y, h, str_vec))
+	}
+	return out
+}
+
+
 func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
 	binary.LittleEndian.PutUint32(g_buf[0:], 2) // TEST_CMD_READ_CELL
 	binary.LittleEndian.PutUint32(g_buf[4:], x) // left
@@ -213,6 +227,66 @@ func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
 	}
 }
 
+func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, trim_chars string) []string {
+	lines:= []string{}
+	for y := top; y < top + height; y++ {
+		line:= ""
+		for x := left; x < left + width; x++ {
+			cell := far2l_ReqRecvReadCellRaw(x, y)
+			line += cell.Text
+		}
+		if trim_chars != "" {
+			lines = append(lines, strings.Trim(line, trim_chars))
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	return lines
+}
+
+func far2l_SurroundedLines(x uint32, y uint32, boundary_chars string, trim_chars string) []string {
+	var left, top, width, height uint32
+	far2l_ReqRecvStatus()
+
+	for left = x; left > 0 && far2l_CheckCellChar(left - 1, y, boundary_chars) == ""; left-- {
+	}
+
+	for width = 1; left + width < g_status.Width && far2l_CheckCellChar(left + width, y, boundary_chars) == ""; width++ {
+	}
+
+	// top & bottom edges has some quirks due to they may contains captions, hints, time etc..
+	for top = y; top > 0 &&
+		far2l_CheckCellChar(left, top - 1, boundary_chars) == "" &&
+		far2l_CheckCellChar(left + width / 2, top - 1, boundary_chars) == "" &&
+		far2l_CheckCellChar(left + width - 1, top - 1, boundary_chars) == ""; top-- {
+	}
+
+	for height = 1; top + height < g_status.Height &&
+		far2l_CheckCellChar(left, top + height, boundary_chars) == "" &&
+		far2l_CheckCellChar(left + width / 2, top + height, boundary_chars) == "" &&
+		far2l_CheckCellChar(left + width - 1, top + height, boundary_chars) == ""; height++ {
+	}
+
+	return far2l_BoundedLines(left, top, width, height, trim_chars)
+}
+
+func far2l_CheckCellChar(x uint32, y uint32, chars string) string {
+	cell := far2l_ReqRecvReadCellRaw(x, y)
+	if cell.Text != "" && strings.Contains(chars, cell.Text) {
+		return cell.Text
+	}
+	return ""
+}
+
+func far2l_CheckCellCharOrDie(x uint32, y uint32, chars string) string {
+	out:= far2l_CheckCellChar(x, y, chars)
+	if out == "" {
+		panic(fmt.Sprintf("Cell at %d:%d doesnt represent any of: %s", x, y, chars))
+	}
+	return out
+}
+
+
 func far2l_ReqBye() {
 	binary.LittleEndian.PutUint32(g_buf[0:], 0)
 	n, err := g_socket.WriteTo(g_buf[0:4], g_addr)
@@ -229,6 +303,13 @@ func far2l_ExpectExit(code int, timeout_ms int) string {
 		return err.Error()
 	}
 	return ""
+}
+
+func far2l_ExpectExitOrDie(code int, timeout_ms int) {
+	out:= far2l_ExpectExit(code, timeout_ms)
+	if out != "" {
+		panic("ExpectExit: " + out)
+	}
 }
 
 func LogInfo(message string) {
@@ -260,6 +341,10 @@ func RunCmd(args []string) string {
 	return ""
 }
 
+func Sleep(msec uint32) {
+	time.Sleep(time.Duration(msec) * time.Millisecond)
+}
+
 func initVM() {
 	/* initialize */
 	fmt.Println("Initializing JS VM...")
@@ -278,13 +363,27 @@ func initVM() {
 	if err != nil { panic(err) }
 	err = g_vm.Set("ReadCell", far2l_ReqRecvReadCell)
 	if err != nil { panic(err) }
+	err = g_vm.Set("CheckCellChar", far2l_CheckCellChar)
+	if err != nil { panic(err) }
+	err = g_vm.Set("CheckCellCharOrDie", far2l_CheckCellCharOrDie)
+	if err != nil { panic(err) }
+	err = g_vm.Set("BoundedLines", far2l_BoundedLines)
+	if err != nil { panic(err) }
+	err = g_vm.Set("SurroundedLines", far2l_SurroundedLines)
+	if err != nil { panic(err) }
 
 	err = g_vm.Set("ExpectStrings", far2l_ReqRecvExpectStrings)
 	if err != nil { panic(err) }
+	err = g_vm.Set("ExpectStringsOrDie", far2l_ReqRecvExpectStringsOrDie)
+	if err != nil { panic(err) }
 	err = g_vm.Set("ExpectString", far2l_ReqRecvExpectString)
+	if err != nil { panic(err) }
+	err = g_vm.Set("ExpectStringOrDie", far2l_ReqRecvExpectStringOrDie)
 	if err != nil { panic(err) }
 
 	err = g_vm.Set("ExpectAppExit", far2l_ExpectExit)
+	if err != nil { panic(err) }
+	err = g_vm.Set("ExpectAppExitOrDie", far2l_ExpectExitOrDie)
 	if err != nil { panic(err) }
 
 	err = g_vm.Set("LogInfo", LogInfo)
@@ -296,6 +395,8 @@ func initVM() {
 	err = g_vm.Set("CtrlC", CtrlC)
 	if err != nil { panic(err) }
 	err = g_vm.Set("RunCmd", RunCmd)
+	if err != nil { panic(err) }
+	err = g_vm.Set("Sleep", Sleep)
 	if err != nil { panic(err) }
 }
 

@@ -436,7 +436,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 		else { // Если есть наследование, добавим метку к старой
 			uint32_t freespace = (HIGHLIGHT_MAX_MARK_LENGTH - hlDst->MarkLen);
 			if (freespace) { // Если есть хоть какое то место, добавим что влезет
-				uint32_t copylen = (freespace < hlSrc->MarkLen) ? hlSrc->MarkLen - freespace : hlSrc->MarkLen;
+				uint32_t copylen = (freespace < hlSrc->MarkLen) ? freespace : hlSrc->MarkLen;
 				memcpy(hlDst->Mark + hlDst->MarkLen, hlSrc->Mark, sizeof(wchar_t) * copylen);
 				hlDst->MarkLen += copylen;
 			}

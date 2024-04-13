@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -e
+
 mkdir -p /tmp/far2l-smoke/output
 APP="$1"
 if [ "$APP" = "" ]; then

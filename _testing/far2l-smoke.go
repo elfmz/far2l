@@ -35,12 +35,12 @@ type far2l_CellRaw struct {
 
 type far2l_Cell struct {
 	Text string
-	BackTrue uint32
-	ForeTrue uint32
-	BackRGBI uint8
-	ForeRGBI uint8
-	IsBackTrue bool
-	IsForeTrue bool
+	BackTC uint32
+	ForeTC uint32
+	Back uint8
+	Fore uint8
+	IsBackTC bool
+	IsForeTC bool
 	ForeBlue bool
 	ForeGreen bool
 	ForeRed bool
@@ -207,12 +207,12 @@ func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
 	raw_cell := far2l_ReqRecvReadCellRaw(x, y)
 	return far2l_Cell {
 		Text:         raw_cell.Text,
-		BackTrue:     uint32((raw_cell.Attributes >> 40) & 0xFFFFFF),
-		ForeTrue:     uint32((raw_cell.Attributes >> 16) & 0xFFFFFF),
-		BackRGBI:     uint8(((raw_cell.Attributes >> 4) & 0xF)),
-		ForeRGBI:     uint8((raw_cell.Attributes & 0xF)),
-		IsBackTrue:   (raw_cell.Attributes & 0x0200) != 0,
-		IsForeTrue:   (raw_cell.Attributes & 0x0100) != 0,
+		BackTC:       uint32((raw_cell.Attributes >> 40) & 0xFFFFFF),
+		ForeTC:       uint32((raw_cell.Attributes >> 16) & 0xFFFFFF),
+		Back:         uint8(((raw_cell.Attributes >> 4) & 0xF)),
+		Fore:         uint8((raw_cell.Attributes & 0xF)),
+		IsBackTC:     (raw_cell.Attributes & 0x0200) != 0,
+		IsForeTC:     (raw_cell.Attributes & 0x0100) != 0,
 		ForeBlue:     (raw_cell.Attributes & 0x0001) != 0,
 		ForeGreen:    (raw_cell.Attributes & 0x0002) != 0,
 		ForeRed:      (raw_cell.Attributes & 0x0004) != 0,

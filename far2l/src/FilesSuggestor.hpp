@@ -38,5 +38,5 @@ class MenuFilesSuggestor : protected FilesSuggestor
 	std::vector<Suggestion> _suggestions;
 
 public:
-	void Suggest(const wchar_t *filter, VMenu& menu, int escaping = 1); // escaping = 0 - filter & results without escaping
+	void Suggest(const wchar_t *filter, VMenu& menu, bool escaping = true); // escaping = 0 - filter & results without escaping
 };

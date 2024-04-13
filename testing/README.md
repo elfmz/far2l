@@ -149,3 +149,60 @@ Note that command is run NOT in pseudoterminal where tested far2l is running.
 `Sleep(msec)`
 
 Pauses execution for specified amount of milliseconds
+
+---------------------------------------------------------
+
+`ToggleShift(pressed bool)`
+`ToggleLCtrl(pressed bool)`
+`ToggleRCtrl(pressed bool)`
+`ToggleLAlt(pressed bool)`
+`ToggleRAlt(pressed bool)`
+
+Simulate changing state of specific named control key. Changed state affects all following keypresses.
+
+---------------------------------------------------------
+
+`TypeBack`  
+`TypeEnter`  
+`TypeEscape`  
+`TypePageUp`  
+`TypePageDown`  
+`TypeEnd`  
+`TypeHome`  
+`TypeLeft`  
+`TypeUp`  
+`TypeRight`  
+`TypeDown`  
+`TypeIns`  
+`TypeDel`
+
+Simulate typing of specific named key
+
+---------------------------------------------------------
+
+`TypeAdd`  
+`TypeSub`  
+`TypeMul`  
+`TypeDiv`  
+`TypeSeparator`  
+`TypeDecimal`
+
+Simulate typing of specific named NumPad key
+
+---------------------------------------------------------
+
+`TypeDigit(n)`
+
+Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on
+
+---------------------------------------------------------
+
+`TypeFKey(n)`
+
+Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on
+
+---------------------------------------------------------
+
+`TypeText("someText to Type")`
+
+Simulates typing of specified text char-by-char according

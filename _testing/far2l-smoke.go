@@ -341,6 +341,13 @@ func RunCmd(args []string) string {
 	return ""
 }
 
+func RunCmdOrDie(args []string) {
+	out:= RunCmd(args)
+	if out != "" {
+		panic("RunCmdOrDie: " + out)
+	}
+}
+
 func Sleep(msec uint32) {
 	time.Sleep(time.Duration(msec) * time.Millisecond)
 }
@@ -395,6 +402,8 @@ func initVM() {
 	err = g_vm.Set("CtrlC", CtrlC)
 	if err != nil { panic(err) }
 	err = g_vm.Set("RunCmd", RunCmd)
+	if err != nil { panic(err) }
+	err = g_vm.Set("RunCmdOrDie", RunCmdOrDie)
 	if err != nil { panic(err) }
 	err = g_vm.Set("Sleep", Sleep)
 	if err != nil { panic(err) }

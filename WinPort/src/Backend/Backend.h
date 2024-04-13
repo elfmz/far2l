@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x07
+#define FAR2L_BACKEND_ABI_VERSION	0x08
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -151,6 +151,8 @@ protected:
 	virtual void Unlock() = 0;
 
 public:
+	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1) = 0;
+
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle) = 0;
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out) = 0;
 

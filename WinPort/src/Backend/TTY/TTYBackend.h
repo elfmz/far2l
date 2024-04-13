@@ -20,7 +20,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	int _stdin = 0, _stdout = 1;
 	bool _ext_clipboard;
 	bool _norgb;
-    DWORD _nodetect = NODETECT_NONE;
+	DWORD _nodetect = NODETECT_NONE;
 	bool _far2l_tty = false;
 	bool _osc52clip_set = false;
 

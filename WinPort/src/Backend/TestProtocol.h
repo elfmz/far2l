@@ -62,6 +62,5 @@ struct TestRequestSendKey
 	uint32_t key_code;
 	uint32_t scan_code;
 	uint8_t  pressed;
+	uint8_t  reserved[3];
 };
-
-

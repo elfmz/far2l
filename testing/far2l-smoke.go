@@ -64,6 +64,11 @@ var g_app *termtest.ConsoleProcess
 var g_vm *goja.Runtime
 var g_status far2l_Status
 var g_far2l_running bool
+var g_lctrl bool
+var g_rctrl bool
+var g_lalt bool
+var g_ralt bool
+var g_shift bool
 
 func stringFromBytes(buf []byte) string {
 	last := 0
@@ -254,7 +259,7 @@ func far2l_SurroundedLines(x uint32, y uint32, boundary_chars string, trim_chars
 	for width = 1; left + width < g_status.Width && far2l_CheckCellChar(left + width, y, boundary_chars) == ""; width++ {
 	}
 
-	// top & bottom edges has some quirks due to they may contains captions, hints, time etc..
+	// top & bottom edges has some quirks due to they may contains caption, hints, time etc..
 	for top = y; top > 0 &&
 		far2l_CheckCellChar(left, top - 1, boundary_chars) == "" &&
 		far2l_CheckCellChar(left + width / 2, top - 1, boundary_chars) == "" &&
@@ -312,23 +317,113 @@ func far2l_ExpectExitOrDie(code int, timeout_ms int) {
 	}
 }
 
-func LogInfo(message string) {
+func log_Info(message string) {
 	log.Print(message)
 }
 
-func LogFatal(message string) {
+func log_Fatal(message string) {
 	log.Fatal(message)
 }
 
-func WriteTTY(s string) {
+func tty_Write(s string) {
     g_app.Send(s)
 }
 
-func CtrlC() {
+func tty_CtrlC() {
     g_app.SendCtrlC()
 }
 
-func RunCmd(args []string) string {
+func far2l_ToggleShift(pressed bool) {
+	g_shift = pressed
+	far2l_SendKeyEvent(0, 0x10, pressed)
+}
+
+func far2l_ToggleLCtrl(pressed bool) {
+	g_lctrl = pressed
+	far2l_SendKeyEvent(0, 0x11, pressed)
+}
+
+func far2l_ToggleRCtrl(pressed bool) {
+	g_rctrl = pressed
+	far2l_SendKeyEvent(0, 0x11, pressed)
+}
+
+func far2l_ToggleLAlt(pressed bool) {
+	g_lalt = pressed
+	far2l_SendKeyEvent(0, 0x12, pressed)
+}
+
+func far2l_ToggleRAlt(pressed bool) {
+	g_ralt = pressed
+	far2l_SendKeyEvent(0, 0x12, pressed)
+}
+
+func far2l_TypeFKey(n uint32) { far2l_TypeVK(0x6F + n) }
+func far2l_TypeDigit(n uint32) { far2l_TypeVK(0x60 + n) }
+
+func far2l_TypeAdd()      { far2l_TypeVK(0x6B) }
+func far2l_TypeSub()      { far2l_TypeVK(0x6D) }
+func far2l_TypeMul()      { far2l_TypeVK(0x6A) }
+func far2l_TypeDiv()      { far2l_TypeVK(0x6F) }
+func far2l_TypeSeparator(){ far2l_TypeVK(0x6C) }
+func far2l_TypeDecimal()  { far2l_TypeVK(0x6E) }
+
+func far2l_TypeBack()     { far2l_TypeVK(0x08) }
+func far2l_TypeEnter()    { far2l_TypeVK(0x0D) }
+func far2l_TypeEscape()   { far2l_TypeVK(0x1B) }
+func far2l_TypePageUp()   { far2l_TypeVK(0x21) }
+func far2l_TypePageDown() { far2l_TypeVK(0x22) }
+func far2l_TypeEnd()      { far2l_TypeVK(0x23) }
+func far2l_TypeHome()     { far2l_TypeVK(0x24) }
+func far2l_TypeLeft()     { far2l_TypeVK(0x25) }
+func far2l_TypeUp()       { far2l_TypeVK(0x26) }
+func far2l_TypeRight()    { far2l_TypeVK(0x27) }
+func far2l_TypeDown()     { far2l_TypeVK(0x28) }
+func far2l_TypeIns()      { far2l_TypeVK(0x2D) }
+func far2l_TypeDel()      { far2l_TypeVK(0x2E) }
+
+
+func far2l_TypeVK(key_code uint32) {
+	far2l_SendKeyEvent(0, key_code, true)
+	far2l_SendKeyEvent(0, key_code, false)
+}
+
+
+func far2l_TypeText(text string) {
+    for _, r := range text {
+		far2l_SendKeyEvent(uint32(r), 0, true)
+		far2l_SendKeyEvent(uint32(r), 0, false)
+    }
+}
+
+func far2l_SendKeyEvent(utf32_code uint32, key_code uint32, pressed bool) {
+	if key_code == 0 && utf32_code != 0 {
+		if utf32_code >= 'a' && utf32_code <= 'z' {
+			key_code = 'A' + (utf32_code - 'a')
+		} else if (utf32_code <= 0x7f) {
+			key_code = utf32_code
+		}
+	}
+	var controls uint32 = 0
+	if g_lctrl { controls |= 0x0008 } // LEFT_CTRL_PRESSED
+	if g_rctrl { controls |= 0x0004 } // RIGHT_CTRL_PRESSED
+	if g_lalt  { controls |= 0x0002 } // LEFT_ALT_PRESSED
+	if g_ralt  { controls |= 0x0001 } // RIGHT_ALT_PRESSED
+	if g_shift { controls |= 0x0010 } // SHFIT_PRESSED
+	binary.LittleEndian.PutUint32(g_buf[0:], 4) // TEST_CMD_SEND_KEY
+	binary.LittleEndian.PutUint32(g_buf[4:], controls)
+	binary.LittleEndian.PutUint32(g_buf[8:], utf32_code)
+	binary.LittleEndian.PutUint32(g_buf[12:], key_code)
+	binary.LittleEndian.PutUint32(g_buf[16:], 0)
+	binary.LittleEndian.PutUint32(g_buf[20:], 0)
+	if pressed { g_buf[20] = 1 }
+	n, err := g_socket.WriteTo(g_buf[0:24], g_addr)
+	if err != nil || n != 24 {
+		panic(err)
+	}
+}
+
+func aux_RunCmd(args []string) string {
 	prog, err := exec.LookPath(args[0])
 	if err != nil {
 		return err.Error()
@@ -341,14 +436,14 @@ func RunCmd(args []string) string {
 	return ""
 }
 
-func RunCmdOrDie(args []string) {
-	out:= RunCmd(args)
+func aux_RunCmdOrDie(args []string) {
+	out:= aux_RunCmd(args)
 	if out != "" {
 		panic("RunCmdOrDie: " + out)
 	}
 }
 
-func Sleep(msec uint32) {
+func aux_Sleep(msec uint32) {
 	time.Sleep(time.Duration(msec) * time.Millisecond)
 }
 
@@ -361,52 +456,69 @@ func initVM() {
 	_, err:= g_vm.RunString("var global = (function(){ return this; }).call(null);")
 	if err != nil { panic(err) }
 
-	err = g_vm.Set("StartApp", far2l_Start)
-	if err != nil { panic(err) }
-	err = g_vm.Set("AppStatus", far2l_ReqRecvStatus)
-	if err != nil { panic(err) }
+	setVMFunction("StartApp", far2l_Start)
+	setVMFunction("AppStatus", far2l_ReqRecvStatus)
+	setVMFunction("ReadCellRaw", far2l_ReqRecvReadCellRaw)
+	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
+	setVMFunction("CheckCellChar", far2l_CheckCellChar)
+	setVMFunction("CheckCellCharOrDie", far2l_CheckCellCharOrDie)
+	setVMFunction("BoundedLines", far2l_BoundedLines)
+	setVMFunction("SurroundedLines", far2l_SurroundedLines)
 
-	err = g_vm.Set("ReadCellRaw", far2l_ReqRecvReadCellRaw)
-	if err != nil { panic(err) }
-	err = g_vm.Set("ReadCell", far2l_ReqRecvReadCell)
-	if err != nil { panic(err) }
-	err = g_vm.Set("CheckCellChar", far2l_CheckCellChar)
-	if err != nil { panic(err) }
-	err = g_vm.Set("CheckCellCharOrDie", far2l_CheckCellCharOrDie)
-	if err != nil { panic(err) }
-	err = g_vm.Set("BoundedLines", far2l_BoundedLines)
-	if err != nil { panic(err) }
-	err = g_vm.Set("SurroundedLines", far2l_SurroundedLines)
-	if err != nil { panic(err) }
+	setVMFunction("ExpectStrings", far2l_ReqRecvExpectStrings)
+	setVMFunction("ExpectStringsOrDie", far2l_ReqRecvExpectStringsOrDie)
+	setVMFunction("ExpectString", far2l_ReqRecvExpectString)
+	setVMFunction("ExpectStringOrDie", far2l_ReqRecvExpectStringOrDie)
 
-	err = g_vm.Set("ExpectStrings", far2l_ReqRecvExpectStrings)
-	if err != nil { panic(err) }
-	err = g_vm.Set("ExpectStringsOrDie", far2l_ReqRecvExpectStringsOrDie)
-	if err != nil { panic(err) }
-	err = g_vm.Set("ExpectString", far2l_ReqRecvExpectString)
-	if err != nil { panic(err) }
-	err = g_vm.Set("ExpectStringOrDie", far2l_ReqRecvExpectStringOrDie)
-	if err != nil { panic(err) }
+	setVMFunction("ExpectAppExit", far2l_ExpectExit)
+	setVMFunction("ExpectAppExitOrDie", far2l_ExpectExitOrDie)
 
-	err = g_vm.Set("ExpectAppExit", far2l_ExpectExit)
-	if err != nil { panic(err) }
-	err = g_vm.Set("ExpectAppExitOrDie", far2l_ExpectExitOrDie)
-	if err != nil { panic(err) }
+	setVMFunction("ToggleShift", far2l_ToggleShift)	
+	setVMFunction("ToggleLCtrl", far2l_ToggleLCtrl)	
+	setVMFunction("ToggleRCtrl", far2l_ToggleRCtrl)
+	setVMFunction("ToggleLAlt", far2l_ToggleLAlt)	
+	setVMFunction("ToggleRAlt", far2l_ToggleRAlt)
+	setVMFunction("TypeText", far2l_TypeText)
+	setVMFunction("TypeVK", far2l_TypeVK)
+	setVMFunction("TypeFKey", far2l_TypeFKey)
+	setVMFunction("TypeDigit", far2l_TypeDigit)
+	setVMFunction("TypeAdd", far2l_TypeAdd)
+	setVMFunction("TypeSub", far2l_TypeSub)
+	setVMFunction("TypeMul", far2l_TypeMul)
+	setVMFunction("TypeDiv", far2l_TypeDiv)
+	setVMFunction("TypeSeparator", far2l_TypeSeparator)
+	setVMFunction("TypeDecimal", far2l_TypeDecimal)
 
-	err = g_vm.Set("LogInfo", LogInfo)
-	if err != nil { panic(err) }
-	err = g_vm.Set("LogFatal", LogFatal)
-	if err != nil { panic(err) }
-	err = g_vm.Set("WriteTTY", WriteTTY)
-	if err != nil { panic(err) }
-	err = g_vm.Set("CtrlC", CtrlC)
-	if err != nil { panic(err) }
-	err = g_vm.Set("RunCmd", RunCmd)
-	if err != nil { panic(err) }
-	err = g_vm.Set("RunCmdOrDie", RunCmdOrDie)
-	if err != nil { panic(err) }
-	err = g_vm.Set("Sleep", Sleep)
-	if err != nil { panic(err) }
+	setVMFunction("TypeEnter", far2l_TypeEnter)
+	setVMFunction("TypeEscape", far2l_TypeEscape)
+	setVMFunction("TypePageUp", far2l_TypePageUp)
+	setVMFunction("TypePageDown", far2l_TypePageDown)
+	setVMFunction("TypeEnd", far2l_TypeEnd)
+	setVMFunction("TypeHome", far2l_TypeHome)
+	setVMFunction("TypeLeft", far2l_TypeLeft)
+	setVMFunction("TypeUp", far2l_TypeUp)
+	setVMFunction("TypeRight", far2l_TypeRight)
+	setVMFunction("TypeDown", far2l_TypeDown)
+	setVMFunction("TypeIns", far2l_TypeIns)
+	setVMFunction("TypeDel", far2l_TypeDel)
+	setVMFunction("TypeBack", far2l_TypeBack)
+
+	setVMFunction("TTYWrite", tty_Write)
+	setVMFunction("TTYCtrlC", tty_CtrlC)
+
+	setVMFunction("LogInfo", log_Info)
+	setVMFunction("LogFatal", log_Fatal)
+
+	setVMFunction("RunCmd", aux_RunCmd)
+	setVMFunction("RunCmdOrDie", aux_RunCmdOrDie)
+	setVMFunction("Sleep", aux_Sleep)
+}
+
+func setVMFunction(name string, value interface{}) {
+	err := g_vm.Set(name, value)
+	if err != nil {
+		panic(fmt.Sprintf("VMSet(%s): %v", name, err))
+	}
 }
 
 func main() {
@@ -445,6 +557,11 @@ func main() {
 
 func runTest(file string) {
 	defer far2l_Close()
+	g_lctrl = false
+	g_rctrl = false
+	g_lalt = false
+	g_ralt = false
+	g_shift = false
 	data, err := ioutil.ReadFile(file)
 	if err != nil { panic(err) }
 	src := string(data)

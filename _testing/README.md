@@ -32,14 +32,13 @@ Returns structure which has following fields:
 
 `ReadCell(x, y)`
 
-Reads screen cell at specified coordinates.
-
+Reads screen cell at specified coordinates.  
 Returns more 'decomposed' (comparing to Raw version) structure wich has following fields:
  * Text string           - string representing contained character
  * BackTC uint32         - 24 bit foreground color if its used
  * ForeTC uint32         - 24 bit background color if its used
- * BackRGBI uint8        - 4 bit base foreground color
- * ForeRGBI uint8        - 4 bit base background color
+ * Back uint8            - 4 bit base foreground color
+ * Fore uint8            - 4 bit base background color
  * IsBackTC bool         - true if 24 bit foreground color is used
  * IsForeTC bool         - true if 24 bit background color is used
  * ForeBlue bool         - true if base foreground color has blue component
@@ -74,8 +73,7 @@ Optionally trims edges of each line from trim_chars characters if its not empty.
 `CheckCellChar(x, y, "abcdef...")`  
 `CheckCellCharOrDie(x, y, "abcdef...")`
 
-Checks if cell under specified coordinates contains any of characters contained in specified string.
-
+Checks if cell under specified coordinates contains any of characters contained in specified string.  
 Returns matched character. But if no character matched then:
  * CheckCellChar returns empty string
  * CheckCellCharOrDie aborts execution
@@ -86,8 +84,7 @@ Returns matched character. But if no character matched then:
 `ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
 `ExpectStringsOrDie(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`
 
-Waits given amount of milliseconds for any of given strings will appear in provided rectangular area.
-
+Waits given amount of milliseconds for any of given strings will appear in provided rectangular area.  
 Returns result as structure of following fields, that defines index of found string and its coordinates:
  * I uint32
  * X uint32
@@ -102,8 +99,7 @@ In case no string found before timeout reached:
 `ExpectString("string", x, y, w, h, timeout_ms)`  
 `ExpectStringOrDie("string", x, y, w, h, timeout_ms)`
 
-Simplified version of ExpectStrings that waits for one string only.
-
+Simplified version of ExpectStrings that waits for one string only.  
 Returns same as ExpectStrings.
 
 ---------------------------------------------------------
@@ -111,8 +107,7 @@ Returns same as ExpectStrings.
 `ExpectAppExit(code, timeout_ms)`  
 `ExpectAppExitOrDie(code, timeout_ms)`
 
-Expects that far2l will exit with specified exit code withing given milliseconds of timeout.
-
+Expects that far2l will exit with specified exit code withing given milliseconds of timeout.  
 Returns empty string if everything happen as expected, otherwise:
  * ExpectAppExit returns string with problem description
  * ExpectAppExitOrDie aborts execution
@@ -143,10 +138,10 @@ Generates Ctrl+C for tested far2l.
 
 ---------------------------------------------------------
 
-`RunCmd(["prog", "arg1", "arg2" ...])`
+`RunCmd(["prog", "arg1", "arg2" ...])`  
+`RunCmdOrDie(["prog", "arg1", "arg2" ...])`
 
-Runs given command, returns empty string if start succeeded and command returned zero code, otherwise returns error description.
-
+Runs given command, returns empty string if start succeeded and command returned zero code, otherwise returns error description or aborts if its RunCmdOrDie.  
 Note that command is run NOT in pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------

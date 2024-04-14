@@ -296,8 +296,7 @@ struct ArgOptions
 			} else if (strchr(a+11,'x')) {
 				nodetect = NODETECT_X;
 			}
-			if(strchr(a+11,'f'))
-			{
+			if(strchr(a+11,'f')) {
 				nodetect |= NODETECT_F;
 			}
 		} else if (strstr(a, "--clipboard=") == a) {

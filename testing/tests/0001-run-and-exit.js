@@ -13,6 +13,7 @@ LogInfo("Right panel:" + lines)
 TypeFKey(10)
 //TTYWrite("\x1b[21~");
 ExpectString("Do you want to quit FAR?", 0, 0, -1, -1, 10000)
-TTYWrite("\r\n");
+//TTYWrite("\r\n");
+TypeEnter()
 ExpectAppExit(0, 10000)
 0;

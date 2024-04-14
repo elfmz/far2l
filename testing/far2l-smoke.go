@@ -76,6 +76,7 @@ var g_lalt bool
 var g_ralt bool
 var g_shift bool
 var g_recv_timeout uint32 = 30
+var g_workdir string
 
 func stringFromBytes(buf []byte) string {
 	last := 0
@@ -480,6 +481,22 @@ func aux_Sleep(msec uint32) {
 	time.Sleep(time.Duration(msec) * time.Millisecond)
 }
 
+func aux_WorkDir() string {
+	return g_workdir
+}
+
+func aux_MkdirsAll(pathes []string, perm os.FileMode) error {
+	var out error = nil
+	for _, path := range pathes {
+		err:= os.MkdirAll(path, perm)
+		if err != nil {
+			log.Printf("MkdirsAll: error %v creating %v", err, path)
+			out = err
+		}
+	}
+	return out
+}
+
 func initVM() {
 	/* initialize */
 	fmt.Println("Initializing JS VM...")
@@ -548,6 +565,25 @@ func initVM() {
 	setVMFunction("RunCmd", aux_RunCmd)
 	setVMFunction("RunCmdOrDie", aux_RunCmdOrDie)
 	setVMFunction("Sleep", aux_Sleep)
+
+	setVMFunction("Chmod", os.Chmod)
+	setVMFunction("Chown", os.Chown)
+	setVMFunction("Chtimes", os.Chtimes)
+	setVMFunction("Mkdir", os.Mkdir)
+	setVMFunction("MkdirAll", os.MkdirAll)
+	setVMFunction("MkdirTemp", os.MkdirTemp)
+	setVMFunction("Remove", os.Remove)
+	setVMFunction("RemoveAll", os.RemoveAll)
+	setVMFunction("Rename", os.Rename)
+	setVMFunction("ReadFile", os.ReadFile)
+	setVMFunction("WriteFile", os.WriteFile)
+	setVMFunction("Truncate", os.Truncate)
+	setVMFunction("ReadDir", os.ReadDir)
+	setVMFunction("Symlink", os.Symlink)
+	setVMFunction("Readlink", os.Readlink)
+
+	setVMFunction("WorkDir", aux_WorkDir)
+	setVMFunction("MkdirsAll", aux_MkdirsAll)
 }
 
 func setVMFunction(name string, value interface{}) {
@@ -559,9 +595,6 @@ func setVMFunction(name string, value interface{}) {
 
 func main() {
 	var err error
-	if len(os.Args) < 4 {
-		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/results/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
-	}
 	arg_ofs:= 1
 	for ;arg_ofs < len(os.Args); arg_ofs++ {
 		if os.Args[arg_ofs] == "-t" && arg_ofs + 1 < len(os.Args) {
@@ -574,12 +607,16 @@ func main() {
 		}
 	}
 
-	g_far2l_sock, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "far2l.sock"))
+	if len(os.Args) < arg_ofs + 3 {
+		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/work/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
+	}
+
+	g_workdir, err = filepath.Abs(os.Args[arg_ofs + 1])
 	if err != nil { log.Fatal(err) }
-	g_far2l_log, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "far2l.log"))
-	if err != nil { log.Fatal(err) }
-	g_far2l_snapshot, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "snapshot.log"))
-	if err != nil { log.Fatal(err) }
+
+	g_far2l_sock = filepath.Join(g_workdir, "far2l.sock")
+	g_far2l_log = filepath.Join(g_workdir, "far2l.log")
+	g_far2l_snapshot = filepath.Join(g_workdir, "snapshot.log")
 
 	os.Remove(g_far2l_sock)
 	defer os.Remove(g_far2l_sock)

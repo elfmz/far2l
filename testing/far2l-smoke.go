@@ -17,9 +17,13 @@ import (
 )
 
 type far2l_Status struct {
+	Title string
 	Width uint32
 	Height uint32
-	Title string
+	CurX uint32
+	CurY uint32
+	CurH uint8
+	CurV bool
 }
 
 type far2l_FoundString struct {
@@ -63,7 +67,7 @@ var g_buf [4096]byte
 var g_app *termtest.ConsoleProcess
 var g_vm *goja.Runtime
 var g_status far2l_Status
-var g_far2l_running bool
+var g_far2l_running bool = false
 var g_lctrl bool
 var g_rctrl bool
 var g_lalt bool
@@ -75,6 +79,13 @@ func stringFromBytes(buf []byte) string {
 	for ; last < len(buf) && buf[last] != 0; last++ {
 	}
 	return string(buf[0:last])
+}
+
+func far2l_Close() {
+	if g_far2l_running {
+		g_far2l_running = false
+		g_app.Close()
+	}
 }
 
 func far2l_Start(args []string) far2l_Status {
@@ -96,13 +107,6 @@ func far2l_Start(args []string) far2l_Status {
 	return far2l_RecvStatus()
 }
 
-func far2l_Close() {
-	if g_far2l_running {
-		g_far2l_running = false
-		g_app.Close()
-	}
-}
-
 func far2l_ReqRecvStatus() far2l_Status {
 	binary.LittleEndian.PutUint32(g_buf[0:], 1)
 	n, err := g_socket.WriteTo(g_buf[0:4], g_addr)
@@ -119,10 +123,13 @@ func far2l_RecvStatus() far2l_Status {
     }
 	g_addr = addr
 
+	g_status.Title = stringFromBytes(g_buf[20:])
+	g_status.CurH = g_buf[2]
+	g_status.CurV = g_buf[3] != 0
+	g_status.CurX = binary.LittleEndian.Uint32(g_buf[4:])
+	g_status.CurY = binary.LittleEndian.Uint32(g_buf[8:])
 	g_status.Width = binary.LittleEndian.Uint32(g_buf[12:])
 	g_status.Height = binary.LittleEndian.Uint32(g_buf[16:])
-	g_status.Title = stringFromBytes(g_buf[20:])
-//	fmt.Println("addr:", g_addr, "width:", g_status.Width, "height:", g_status.Height, "title:", g_status.Title)
 	return g_status
 }
 
@@ -230,6 +237,19 @@ func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
 		Underscore:   (raw_cell.Attributes & 0x8000) != 0,
 		Strikeout:    (raw_cell.Attributes & 0x2000) != 0,
 	}
+}
+
+func far2l_CheckBoundedLineOrDie(expected string, left uint32, top uint32, width uint32, trim_chars string) string {
+	line:= far2l_BoundedLine(left, top, width, trim_chars)
+	if line != expected {
+		panic(fmt.Sprintf("Line at [%d +%d : %d] not expected: '%v'", left, width, top, line))
+	}
+	return line
+}
+
+func far2l_BoundedLine(left uint32, top uint32, width uint32, trim_chars string) string {
+	lines:= far2l_BoundedLines(left, top, width, 1, trim_chars)
+	return lines[0]
 }
 
 func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, trim_chars string) []string {
@@ -462,7 +482,10 @@ func initVM() {
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
 	setVMFunction("CheckCellChar", far2l_CheckCellChar)
 	setVMFunction("CheckCellCharOrDie", far2l_CheckCellCharOrDie)
+	
 	setVMFunction("BoundedLines", far2l_BoundedLines)
+	setVMFunction("BoundedLine", far2l_BoundedLine)
+	setVMFunction("CheckBoundedLineOrDie", far2l_CheckBoundedLineOrDie)
 	setVMFunction("SurroundedLines", far2l_SurroundedLines)
 
 	setVMFunction("ExpectStrings", far2l_ReqRecvExpectStrings)
